@@ -150,9 +150,10 @@ lvgl:
               # 27 à 123 px) pendant ~1,5 s au démarrage. Valeurs de roboto_130_b
               # (Roboto 700, 130 px) : chiffre 75 px de large (tabulaire), « : »
               # 37 px, encre des chiffres à 27-123 px du haut du label.
-              #   - cadre 75 × 104 à y 27 (clock_roller.yaml, gabarit des 4 rouleaux) :
-              #     l'encre + 4 px de marge en haut et en bas, soit l'encre à 32 px du
-              #     haut de la tuile (bordure 1 px). Plus
+              #   - cadre 75 × 104 à y 26 (clock_roller.yaml, gabarit des 4 rouleaux) :
+              #     l'encre + 3 px de marge en haut et 5 en bas ; l'encre visible (bpp 2 :
+              #     la 1re rangée des chiffres ronds est vide) à 32 px du haut de la tuile
+              #     (bordure 1 px), autant que sous la ligne de base de la date. Plus
               #     court que le label (152 px), sinon le chiffre qui arrive, posé
               #     un cadre plus bas, déborderait sur la date ;
               #   - label à y -23 : remonte l'encre dans le cadre ;
@@ -168,7 +169,7 @@ lvgl:
               # 8 labels via g_clock_roller.
               - !include { file: ui_components/clock_roller.yaml, vars: { d: h10, x: 27 } }
               - !include { file: ui_components/clock_roller.yaml, vars: { d: h1, x: 102 } }
-              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: 4, styles: [style_police_horloge, style_horloge_text_soft] }
+              - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: 3, styles: [style_police_horloge, style_horloge_text_soft] }
               - !include { file: ui_components/clock_roller.yaml, vars: { d: m10, x: 222 } }
               - !include { file: ui_components/clock_roller.yaml, vars: { d: m1, x: 297 } }
               - label: { id: lbl_date, text: "", align: TOP_MID, y: 135, styles: [style_police_date, style_horloge_text_soft] }

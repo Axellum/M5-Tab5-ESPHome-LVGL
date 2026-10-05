@@ -47,34 +47,47 @@ def test_roboto_redonne_la_geometrie_du_yaml():
     assert xs == police_theme.X_CADRES, f"X_CADRES {police_theme.X_CADRES} ≠ x des rouleaux de tab5-lvgl.yaml {xs}"
 
 
-def _encre(m: dict) -> tuple[int, int, int]:
-    """Haut de l'encre des chiffres dans le label, encre la plus à gauche et la plus à
-    droite dans le cadre (mêmes arrondis que police_theme.geometrie_horloge)."""
+def _encre_metriques(m: dict) -> dict:
+    """Encre des chiffres d'après les métriques (mêmes arrondis que geometrie_horloge)."""
     t = m["horloge"]["taille"]
     e = t / m["unites_em"]
     asc = math.ceil(m["ascendante"] * e)
     g = m["chiffres"]
-    haut = min(asc - math.ceil(g[c][4] * e) for c in police_theme.CHIFFRES)
     x0 = {c: (police_theme.CADRE_L - round(g[c][0] * e)) // 2 for c in police_theme.CHIFFRES}
-    gauche = min(x0[c] + math.floor(g[c][1] * e) for c in police_theme.CHIFFRES)
-    droite = max(x0[c] + math.ceil(g[c][2] * e) for c in police_theme.CHIFFRES)
-    return haut, gauche, droite
+    return {"haut": min(asc - math.ceil(g[c][4] * e) for c in police_theme.CHIFFRES),
+            "gauche": min(x0[c] + math.floor(g[c][1] * e) for c in police_theme.CHIFFRES),
+            "droite": max(x0[c] + math.ceil(g[c][2] * e) for c in police_theme.CHIFFRES)}
+
+
+def test_l_encre_visible_est_dans_celle_des_metriques():
+    """encre_visible() (FreeType, bpp 2) ne peut que rogner l'encre des métriques : au plus
+    une rangée ou une colonne de pixels trop pâles (± 1 px d'arrondi de FreeType)."""
+    for cle, m in _mesures().items():
+        v, f = m["encre"], _encre_metriques(m)
+        assert len(v["gauche"]) == len(v["droite"]) == 10, cle
+        assert -1 <= v["haut"] - f["haut"] <= 2, cle
+        assert -1 <= min(v["gauche"]) - f["gauche"] <= 2 and -1 <= f["droite"] - max(v["droite"]) <= 2, cle
 
 
 def test_marges_egales_dans_la_tuile_horloge():
-    """Demande d'Axel (05/10/2026) : la même marge en haut (encre des chiffres) et en bas
-    (ligne de base de la date), l'encre de HH:MM centrée entre la gauche et la droite,
-    quelle que soit la police. Tuile de 401 × 210 à bordure de 1 px : theme_polices()
-    retranche la bordure réelle du thème."""
+    """Demande d'Axel (05/10/2026) : la même marge en haut (encre visible des chiffres) et
+    en bas (ligne de base de la date), l'encre de HH:MM centrée entre la gauche et la
+    droite, quelle que soit la police. Tuile de 401 × 210 à bordure de 1 px :
+    theme_polices() retranche la bordure réelle du thème. Vérifié sur la galerie de la CI
+    (17 thèmes mesurables : haut prévu = haut mesuré, au pixel)."""
     marge, x_cadres = police_theme.MARGE, police_theme.X_CADRES
     for cle, m in _mesures().items():
         h = m["horloge"]
-        haut, gauche, droite = _encre(m)
-        assert 1 + h["cadre_y"] + h["y"] + haut == marge, f"{cle} : encre des chiffres pas à {marge} px du haut"
+        v = m["encre"]
+        assert 1 + h["cadre_y"] + h["y"] + v["haut"] == marge, f"{cle} : encre des chiffres pas à {marge} px du haut"
         assert 1 + police_theme.DATE_BASE == 210 - marge, "ligne de base de la date pas à MARGE px du bas"
-        a_gauche = 1 + x_cadres[0] + h["dx"] + gauche
-        a_droite = 401 - (1 + x_cadres[3] + h["dx"] + droite)
-        assert 0 <= a_droite - a_gauche <= 1, f"{cle} : HH:MM pas centré ({a_gauche} / {a_droite} px)"
+        # « 00:00 » : marges gauche et droite à 3 px près ; en moyenne sur les heures, dx est
+        # le meilleur décalage (un px de plus ou de moins écarte davantage).
+        a_gauche = 1 + x_cadres[0] + h["dx"] + v["gauche"][0]
+        a_droite = 401 - (1 + x_cadres[3] + h["dx"] + v["droite"][0])
+        assert abs(a_droite - a_gauche) <= 3, f"{cle} : « 00:00 » pas centré ({a_gauche} / {a_droite} px)"
+        e = police_theme.ecart_horizontal
+        assert e(v, h["dx"]) <= min(e(v, h["dx"] - 1), e(v, h["dx"] + 1)), cle
         # Le chiffre qui arrive traverse tout le cadre : il reste au-dessus de l'encre de
         # la date (au plus 40 px au-dessus de sa ligne de base, à 45 px).
         assert 0 <= h["cadre_y"] and h["cadre_y"] + police_theme.CADRE_H <= police_theme.DATE_BASE - 40, cle
@@ -91,7 +104,7 @@ def test_ligne_de_base_de_la_date_au_meme_endroit_pour_chaque_police():
 def test_geometrie_de_l_horloge_recalculee_pour_chaque_police():
     for cle, m in _mesures().items():
         taille = m["horloge"]["taille"]
-        assert police_theme.geometrie_horloge(_metriques(m), taille) == m["horloge"], cle
+        assert police_theme.geometrie_horloge(_metriques(m), taille, m["encre"]) == m["horloge"], cle
         # La plus grande taille qui tient : toutes celles au-dessus débordent du cadre.
         for t in range(taille + 1, police_theme.MAX_TAILLE["horloge"] + 1):
             assert police_theme.geometrie_horloge(_metriques(m), t) is None, f"{cle} : {t} px tiendrait"
@@ -145,6 +158,6 @@ def test_polices_generees_sans_glyphe_absent():
     assert "police_essai_sans_700_30" in lambda_yaml[2]
     assert lambda_yaml[-1].endswith(", horloge, id(lbl_date));")
     # Ardoise : les trois Roboto (0, 1, 2) ; l'essai : ses polices, la date en Roboto (son y).
-    assert cpp[-3].startswith("    {0, 1, 2, -23, 181, 4, 135, 27, 0},")
+    assert cpp[-3].startswith("    {0, 1, 2, -23, 181, 3, 135, 26, 0},")
     assert cpp[-2].startswith("    {3, 1, 4, -20, 182, 13, 135, 25, 1},")
     assert "static constexpr int16_t kCadreX[] = {27, 102, 222, 297};" in cpp

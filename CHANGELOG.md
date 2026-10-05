@@ -12,10 +12,14 @@ centrale ; les titres des pages de prévisions sans « Prévisions horaires 1/2 
 « Prévisions journalières 2/3 », dans la police de la date ; les popups qui avaient une
 autre police de la même taille ; les polices et les textes de langue devenus inutiles.
 - **Horloge** : 32 px entre le bord extérieur de la tuile et l'encre des chiffres en haut,
-  la ligne de base de la date en bas, et HH:MM centré à l'encre près, dans les 18 thèmes.
+  la ligne de base de la date en bas, dans les 18 thèmes ; HH:MM centré en moyenne sur les
+  heures possibles (l'écart gauche / droite dépend des chiffres : un « 1 » est étroit).
   `theme_polices()` pose maintenant les cadres des rouleaux pour chaque police et retranche
-  la bordure du thème (0 à 4 px, d'un seul côté pour Relief doux, Obsidienne, Capsule…),
-  qui décalait l'heure : Relief doux mesurait 34 px en haut pour 30 en bas.
+  la bordure du thème (0 à 4 px, parfois d'un seul côté : Relief doux, Obsidienne, Terre
+  cuite…), qui décalait l'heure : Relief doux mesurait 34 px en haut pour 30 en bas.
+  L'encre se mesure telle qu'elle s'affiche : en bpp 2, ESPHome vide la 1re rangée des
+  chiffres ronds de Roboto ou de Nunito (`tools/police_theme.py` les rend avec FreeType
+  comme lui) ; les cadres Roboto passent de y 27 à 26.
 - **Police de la date du thème** (`style_police_date`) sur les températures et la consigne
   de la clim (avant 32 et 55 px), « Ok Nabu », les textes de la carte centrale (planning,
   pluie, alertes, réponse vocale, info sur une ligne ; sur deux lignes, l'info reste en

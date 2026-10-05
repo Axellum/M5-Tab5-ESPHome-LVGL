@@ -204,6 +204,11 @@ def test_deux_points_a_la_hauteur_des_chiffres():
 
 
 ASCENDANTE_45 = 42         # Roboto 700 à 45 px (lbl_date) : ceil(1900 × 45 / 2048)
+# bpp 2 : ESPHome vide les pixels de couverture < 64/255 ; la 1re rangée du haut des
+# chiffres ronds de Roboto 130 en fait partie, l'encre VISIBLE commence 1 px plus bas
+# (FreeType comme ESPHome, `encre` de Tab5/themes/_polices.yaml ; rendu de la CI du
+# 05/10/2026 : 33 px en haut pour 32 en bas avec le cadre à y 27).
+RANGEE_VIDE_HAUT = 1
 CHIFFRE_0_X = (95, 1080)   # xMin, xMax du « 0 » (Tab5/themes/_polices.yaml)
 
 
@@ -217,7 +222,7 @@ def test_marges_egales_dans_la_tuile():
     _, styles = _styles()
     bordure = styles[tuile["styles"]]["border_width"]
     y_label = rouleaux[0]["widgets"][0]["label"]["y"]
-    haut = bordure + rouleaux[0]["y"] + y_label + px["encre_haut"]
+    haut = bordure + rouleaux[0]["y"] + y_label + px["encre_haut"] + RANGEE_VIDE_HAUT
     bas = tuile["height"] - (bordure + date["y"] + ASCENDANTE_45)
     assert haut == bas, f"marges inégales : {haut} px en haut, {bas} px en bas"
     e = _styles()[0]["roboto_130_b"]["size"] / UNITES_EM

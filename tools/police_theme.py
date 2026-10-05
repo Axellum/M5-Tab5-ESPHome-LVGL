@@ -33,6 +33,12 @@ sur un jeu fixe (UNIVERS : Latin-1, Latin étendu A, ponctuation typographique),
 tools/gen_themes.py ne demande à ESPHome que les glyphes présents (ESPHome refuse un
 glyphe absent). Les chiffres et le « : » de l'horloge doivent exister dans la police.
 
+Les marges se mesurent à l'encre VISIBLE : ESPHome compile les polices en bpp 2 et vide
+tout pixel de couverture < 64/255 (esphome/components/font, glyph_to_glyphinfo), si bien
+que la 1re rangée des chiffres ronds de certaines polices disparaît (Roboto, Nunito : 1 px).
+encre_visible() rend les chiffres avec FreeType comme ESPHome pour la situer ; vérifié sur
+la galerie de la CI du 05/10/2026 (17 thèmes sur 17 mesurables au pixel près).
+
 La géométrie est calculée pour une tuile à bordure de 1 px sur chaque côté (Ardoise) :
 theme_polices() (tab5_theme.cpp) retranche la bordure du thème, qui va de 0 à 4 px et
 peut ne border qu'un côté, pour garder MARGE px depuis le bord extérieur de la tuile.
@@ -40,7 +46,7 @@ peut ne border qu'un côté, pour garder MARGE px depuis le bord extérieur de l
 Il écrit `Tab5/themes/_polices.yaml` : les métriques des chiffres et du « : » (pour que
 pytest refasse la géométrie de l'horloge hors ligne, tests/test_polices_themes.py), les
 caractères absents et les tailles retenues. Roboto 700 y figure comme référence : ses
-valeurs doivent redonner la géométrie actuelle (130 px, y -23, cadres à y 27, « : » à 181 ;
+valeurs doivent redonner la géométrie actuelle (130 px, y -23, cadres à y 26, « : » à 181 ;
 date 45 à y 135 ; titres 32). tools/gen_themes.py lit ce fichier. À relancer après l'ajout d'une police à
 un thème (pytest le signale) ou d'un titre de popup nettement plus long.
 
@@ -70,7 +76,7 @@ REFERENCE = "Roboto@700"
 
 # Géométrie de la tuile horloge (tab5-lvgl.yaml, clock_roller.yaml ; tests/test_horloge.py).
 CADRE_L, CADRE_H = 75, 104
-CADRE_Y = 27                    # y du cadre en Roboto : encre des chiffres (4 px dans le cadre) à MARGE
+CADRE_Y = 26                    # y du cadre en Roboto : encre visible des chiffres à MARGE du haut
 MARGE = 32                      # bord extérieur de la tuile → encre des chiffres, ligne de base de la date
 MARGE_MIN = 2
 X_CADRES = (27, 102, 222, 297)  # x des rouleaux h10, h1, m10, m1 (tab5-lvgl.yaml)
@@ -236,17 +242,47 @@ def mesurer(chemin: Path, caracteres: str) -> dict:
     }
 
 
+def encre_visible(chemin: Path, taille: int, bpp: int = 2) -> dict:
+    """Encre des chiffres telle qu'ESPHome la compile : FreeType à `taille` px, pixels de
+    couverture < 256 / 2^bpp vidés (glyph_to_glyphinfo). Haut et bas des dix chiffres dans
+    le label (depuis sa ligne du haut : ascendante arrondie au pixel supérieur - bitmap_top) ;
+    gauche et droite de chaque chiffre (0 à 9) dans le cadre de CADRE_L px où le label est
+    centré."""
+    import freetype
+
+    face = freetype.Face(str(chemin))
+    face.set_pixel_sizes(taille, 0)
+    asc = -(-face.size.ascender // 64)
+    seuil = 256 // (1 << bpp)
+    haut, bas, gauche, droite = 10 ** 6, -1, [], []
+    for c in CHIFFRES:
+        face.load_char(c, freetype.FT_LOAD_RENDER | freetype.FT_LOAD_NO_BITMAP)
+        g = face.glyph
+        bm, pas = g.bitmap, g.bitmap.pitch
+        pixels = [bm.buffer[y * pas:y * pas + bm.width] for y in range(bm.rows)]
+        lignes = [y for y, r in enumerate(pixels) if max(r, default=0) >= seuil]
+        colonnes = [x for x in range(bm.width) if any(r[x] >= seuil for r in pixels)]
+        x0 = (CADRE_L - (-(-g.metrics.horiAdvance // 64))) // 2
+        haut = min(haut, asc - g.bitmap_top + lignes[0])
+        bas = max(bas, asc - g.bitmap_top + lignes[-1] + 1)
+        gauche.append(x0 + g.bitmap_left + colonnes[0])
+        droite.append(x0 + g.bitmap_left + colonnes[-1] + 1)
+    return {"haut": haut, "bas": bas, "gauche": gauche, "droite": droite}
+
+
 # --- Calculs (repris tels quels par tests/test_polices_themes.py) -------------------
 
-def geometrie_horloge(m: dict, taille: int) -> dict | None:
+def geometrie_horloge(m: dict, taille: int, visible: dict | None = None) -> dict | None:
     """Arrondis de FreeType, ceux d'ESPHome (tests/test_horloge.py) : ascendante et haut de
     l'encre au pixel supérieur, bas de l'encre au pixel inférieur, avance au plus proche.
     None si un chiffre ou le « : » ne tient pas.
 
     y : le label dans son cadre (encre centrée) ; cadre_y : le cadre dans la tuile, l'encre
-    des chiffres à MARGE px de son bord extérieur (bordure de 1 px) ; dx : décalage des
-    cadres et du « : » qui centre l'encre de HH:MM (chiffre le plus à gauche dans son cadre
-    contre le plus à droite), le pixel impair à droite."""
+    visible des chiffres (`visible`, encre_visible() ; à défaut, celle des métriques) à MARGE
+    px de son bord extérieur (bordure de 1 px) ; dx : décalage des cadres et du « : » qui
+    centre l'encre de HH:MM. L'écart gauche / droite dépend des chiffres affichés (un « 1 »
+    est étroit) : avec `visible`, dx rend minimal l'écart moyen sur les heures possibles
+    (dizaine d'heures 0 à 2, minute 0 à 9) ; sans, il centre les chiffres extrêmes."""
     e = taille / m["unites_em"]
     asc = math.ceil(m["ascendante"] * e)
     g = m["glyphes"]
@@ -267,12 +303,25 @@ def geometrie_horloge(m: dict, taille: int) -> dict | None:
     if avance_dp > fente:
         return None
     y = round((CADRE_H - (haut + bas)) / 2)
-    cadre_y = (MARGE - 1) - (y + haut)
     # Encre à gauche : X_CADRES[0] + dx + gauche ; à droite : TUILE_UTILE - (X_CADRES[3] + dx + droite).
     dx = (TUILE_UTILE - X_CADRES[3] - droite - X_CADRES[0] - gauche) // 2
+    if visible is not None:
+        haut = visible["haut"]
+        dx = min(range(-CADRE_L // 4, CADRE_L // 4 + 1),
+                 key=lambda d: (ecart_horizontal(visible, d), abs(d), d))
+    cadre_y = (MARGE - 1) - (y + haut)
     return {"taille": taille, "y": y, "cadre_y": cadre_y, "dx": dx,
             "x_deux_points": X_H1 + CADRE_L + (fente - avance_dp + 1) // 2 + dx,
             "y_deux_points": cadre_y + y}
+
+
+def ecart_horizontal(visible: dict, dx: int) -> float:
+    """Écart moyen entre la marge gauche et la marge droite de l'encre de HH:MM, sur les
+    dizaines d'heures 0 à 2 et les minutes 0 à 9 (encre_visible(), cadres décalés de dx)."""
+    ecarts = [abs((X_CADRES[0] + dx + visible["gauche"][a])
+                  - (TUILE_UTILE - (X_CADRES[3] + dx + visible["droite"][b])))
+              for a in range(3) for b in range(10)]
+    return sum(ecarts) / len(ecarts)
 
 
 def y_date(m: dict, taille: int) -> int:
@@ -293,12 +342,15 @@ def largeur(m: dict, texte: str, taille: int, ref: dict | None = None) -> int:
     return total
 
 
-def tailles(m: dict, ref: dict, liste_dates: list[str], liste_titres: list[str]) -> dict:
+def tailles(m: dict, ref: dict, liste_dates: list[str], liste_titres: list[str],
+            chemin: Path | None = None) -> dict:
     out = {}
     for t in range(MAX_TAILLE["horloge"], MIN_TAILLE["horloge"] - 1, -1):
-        geo = geometrie_horloge(m, t)
-        if geo:
-            out["horloge"] = geo
+        if geometrie_horloge(m, t):
+            visible = encre_visible(chemin, t) if chemin is not None else None
+            out["horloge"] = geometrie_horloge(m, t, visible)
+            if visible is not None:
+                out["encre"] = visible
             break
     for t in range(MAX_TAILLE["date"], MIN_TAILLE["date"] - 1, -1):
         if max(largeur(m, d, t, ref) for d in liste_dates) <= TUILE_UTILE - 2 * MARGE_DATE:
@@ -329,17 +381,18 @@ def main() -> int:
     if hors_univers:
         print(f"[KO] caractères d'affichage hors du jeu mesuré (UNIVERS) : {''.join(hors_univers)!r}")
         return 1
-    mesures = {}
+    mesures, fichiers = {}, {}
     for cle in familles_citees():
         famille, graisse = cle.rsplit("@", 1)
-        mesures[cle] = mesurer(telecharger(famille, int(graisse)), UNIVERS)
+        fichiers[cle] = telecharger(famille, int(graisse))
+        mesures[cle] = mesurer(fichiers[cle], UNIVERS)
     ref = mesures[REFERENCE]
     sortie = {}
     for cle, m in mesures.items():
         if set(CHIFFRES + ":") & set(m["manquants"]):
             print(f"[KO] {cle} : chiffres ou « : » absents ({m['manquants']!r}), pas d'horloge possible")
             return 1
-        r = tailles(m, ref, liste_dates, liste_titres)
+        r = tailles(m, ref, liste_dates, liste_titres, fichiers[cle])
         sortie[cle] = {
             "sha256": m["sha256"], "unites_em": m["unites_em"], "ascendante": m["ascendante"],
             # Absents du fichier (dans UNIVERS) : dessinés par la Roboto du même rôle.
@@ -347,11 +400,12 @@ def main() -> int:
             **r,
             "chiffres": {c: m["glyphes"][c] for c in CHIFFRES + ":"},
         }
-        print(f"[OK] {cle} : " + ", ".join(f"{k} {v['taille']}" for k, v in r.items())
+        print(f"[OK] {cle} : " + ", ".join(f"{k} {v['taille']}" for k, v in r.items() if "taille" in v)
               + (f" ; absents : {m['manquants']!r}" if m["manquants"] else ""))
     entete = ("# Écrit par tools/police_theme.py — ne pas modifier à la main (ADR-0029, lot 3).\n"
               "# Métriques en unités de police (fontTools, fichier de Google Fonts) ; tailles et\n"
               "# positions en px. chiffres : caractère → [avance, xMin, xMax, yMin, yMax].\n"
+              "# encre : encre visible des chiffres à la taille de l'horloge (FreeType, bpp 2).\n"
               "# tests/test_polices_themes.py refait la géométrie de l'horloge depuis ces valeurs.\n")
     texte = yaml.safe_dump(sortie, allow_unicode=True, sort_keys=False, width=110,
                            default_flow_style=None)
