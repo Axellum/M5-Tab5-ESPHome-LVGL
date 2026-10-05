@@ -261,6 +261,8 @@ Shown only if sensors are picked in the « Énergie · Energy » section of the 
 
 HA pushes only while the popup is open (package `tab5_energie.yaml`); instant transitions, like every popup.
 
+![Energy popup, Days view: four live cards and the production of the last 30 days (CI render, demo data)](images/tab5_energie_en.png)
+
 ---
 
 ## Color coding for readability
@@ -592,6 +594,8 @@ N'apparaît que si des capteurs sont choisis dans la section « Énergie · Ener
 - Avant la réponse de Home Assistant : « En attente de Home Assistant » ; section vide : « Aucun capteur d'énergie choisi ».
 
 HA ne pousse que pendant que le popup est ouvert (package `tab5_energie.yaml`) ; transitions instantanées, comme tous les popups.
+
+![Popup Énergie, vue Jours : quatre cartes en direct et la production des 30 derniers jours (rendu de la CI, données de démonstration)](images/tab5_energie.png)
 
 ---
 

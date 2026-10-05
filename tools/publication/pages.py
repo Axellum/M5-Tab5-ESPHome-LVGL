@@ -61,6 +61,7 @@ IMAGES = {
     "m5stack-tab5-arcade-games-lvgl.jpg": "tab5_photo_arcade_selector.jpg",
     "m5stack-tab5-themes-light-dark.jpg": "tab5_themes.jpg",
     "m5stack-tab5-home-assistant-dashboard.png": "ha_tableau_tab5.png",
+    "m5stack-tab5-solar-energy-popup.png": "tab5_energie_en.png",
     "m5stack-tab5-chess-game-esp32-p4.jpg": "tab5_photo_chess.jpg",
     "m5stack-tab5-lode-runner-game.jpg": "tab5_photo_lode_runner.jpg",
     "m5stack-tab5-breakout-game-tilt.jpg": "tab5_photo_arkanoid.jpg",

@@ -19,7 +19,7 @@
 
 ---
 
-**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, TV remote, alarm clock — and 8 offline games, in seven languages. Eighteen themes, light or dark, chosen from Home Assistant.
+**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, solar energy, TV remote, alarm clock — and 8 offline games, in seven languages. Eighteen themes, light or dark, chosen from Home Assistant.
 
 ![Animated tour of the M5Stack Tab5 Home Assistant screen: home, devices, plants, climate, lights, TV remote and console](docs/images/tab5_ui_tour.gif)
 
@@ -103,6 +103,10 @@ Just want to see it running before setting up Home Assistant? → [`docs/demo_mo
 
 ![Tab5 view of the Home Assistant dashboard: brightness, volume and screen of the tablet, alarm clock, appointments and voice assistant](docs/images/ha_tableau_tab5.png)
 
+**Solar energy** (optional) — the Energy popup, from the sensors picked in the blueprint ([solar energy](docs/installation.md#solar-energy-optional); CI render, demo data):
+
+![Energy popup of the Tab5: solar, home, grid and battery right now, and the solar production of the last 30 days as bars](docs/images/tab5_energie_en.png)
+
 ---
 
 ## What this is
@@ -129,6 +133,7 @@ A single 1280×720 page organized in functional areas, all driven by Home Assist
 - **Plants** — soil moisture card for up to 5 BLE plant sensors, dynamically sorted, color-coded by level (red = dry, green = optimal, blue = too wet); a long press opens a 5-card detail popup (moisture + watering status, fertility, light, temperature, sensor battery)
 - **Console** — diagnostics + HA management overlay (RAM/PSRAM, Wi-Fi, uptime, volume, re-push screen, reload automations, restart HA / reboot tablet behind confirm), opened via its dedicated button
 - **Themes** — 18 themes (colours, shapes, fonts of the clock, the date and the titles), each light or dark, switched at once from Home Assistant (« Thème », « Clair ou sombre ») or from a row of the console; « Auto » follows the sun through the « Tab5 — thème jour/nuit » automation. The games keep their own dark colours ([settings](docs/installation.md#tablet-settings-and-options))
+- **Energy** (optional) — popup for a solar installation: solar, home, grid and home battery right now, and the production per hour, day and month from Home Assistant's statistics; an icon of the status strip shows by its colour the production as a share of the panels' peak power. The tablet's original battery gets its own icon, behind the « Tab5 Batterie montée » switch ([solar energy](docs/installation.md#solar-energy-optional))
 - **Arcade** — 8 fullscreen game consoles (experimental prototypes — first-pass AI-generated code to test what's possible on an ESP32-P4): **Fil d'Or** (marble roguelite, tilt-controlled), **Arcanoïde** (Breakout clone), **Neon Apron** (pinball, portrait), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (trivia quiz), **Dames Tab** (draughts 10×10), **Roi Noir** (FIDE chess with embedded AI). All 100% local, zero HA/network dependency, NVS persistence. Opened via a 4×2 selector grid triggered by tapping the greenhouse temperature
 - **Popup Assistant** — near-fullscreen modal showing the STT transcription ("Your request") and the LLM reply rendered as Markdown (tables, bold, code, images downloaded on demand); left panel = settings (brain selector Domotique/Discussion, Ok Nabu toggle, volume, text size A-/A+)
 - **Popup Calendar** — monthly 7×6 grid computed locally from SNTP; work hours inside cells, color-coded markers (public holidays, school holidays, appointments, birthdays); tap a day for a detail sub-popup; HA enriches on demand
@@ -312,6 +317,8 @@ python tools/test_go_engine.py && python tools/test_chess_perft.py && python too
 - **Security issue** → report it privately, see [`SECURITY.md`](SECURITY.md).
 - **Contributing** → [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
+**Thanks** to [@husyildiz](https://github.com/husyildiz), whose ideas, tests and reports in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) brought the step-by-step install page, the Turkish screen, the weather outside France, the original battery, the Energy popup for solar panels and the weather picked in the blueprint.
+
 English or French, both are welcome.
 
 ---
@@ -376,7 +383,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 ---
 
-**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues. Dix-huit thèmes, clairs ou sombres, au choix depuis Home Assistant.
+**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, énergie solaire, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues. Dix-huit thèmes, clairs ou sombres, au choix depuis Home Assistant.
 
 **[Site](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/)** · **[Installer](#démarrage-rapide)** · **[Essayer sans Home Assistant](docs/demo_mode.md)** · **[Compatibilité matérielle](#compatibilité-matérielle)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)** · **[L'histoire du projet](#note-personnelle)**
 
@@ -468,6 +475,10 @@ L'interface est compilée en C++ et embarquée dans le firmware de l'appareil. E
 
 ![Vue Tab5 du tableau de bord de Home Assistant : luminosité, volume et écran de la tablette, réveil, rendez-vous et assistant vocal](docs/images/ha_tableau_tab5.png)
 
+**Énergie solaire** (facultatif) — le popup Énergie, d'après les capteurs choisis dans le blueprint ([énergie solaire](docs/installation.md#énergie-solaire-facultatif) ; rendu de la CI, données de démonstration) :
+
+![Popup Énergie du Tab5 : solaire, maison, réseau et batterie en direct, et la production solaire des 30 derniers jours en barres](docs/images/tab5_energie.png)
+
 ---
 
 ## Choix de conception
@@ -494,6 +505,7 @@ Une page unique 1280×720 organisée en zones fonctionnelles, toutes alimentées
 - **Plantes** — carte d'humidité du sol pour jusqu'à 5 capteurs BLE, triés dynamiquement, code couleur par niveau (rouge = sec, vert = optimal, bleu = trop humide) ; un appui long ouvre un popup détail à 5 cartes (humidité + statut d'arrosage, fertilité, lumière, température, batterie du capteur)
 - **Console** — overlay diagnostics + gestion HA (RAM/PSRAM, Wi-Fi, uptime, volume, re-pousse écran, reload automations, restart HA / reboot tablette derrière confirmation), ouvert via son bouton dédié
 - **Thèmes** — 18 thèmes (couleurs, formes, polices de l'heure, de la date et des titres), chacun clair ou sombre, changés aussitôt depuis Home Assistant (« Thème », « Clair ou sombre ») ou depuis une rangée de la console ; « Auto » suit le soleil par l'automatisation « Tab5 — thème jour/nuit ». Les jeux gardent leurs couleurs sombres ([réglages](docs/installation.md#réglages-et-options-de-la-tablette))
+- **Énergie** (facultatif) — popup pour une installation solaire : solaire, maison, réseau et batterie de la maison en direct, et la production par heure, jour et mois tirée des statistiques de Home Assistant ; une icône du bandeau d'état montre par sa couleur la production rapportée à la puissance crête des panneaux. La batterie d'origine de la tablette a aussi son icône, derrière l'interrupteur « Tab5 Batterie montée » ([énergie solaire](docs/installation.md#énergie-solaire-facultatif))
 - **Arcade** — 8 consoles de jeu plein écran (prototypes expérimentaux — premier jet généré par IA pour tester ce qu'un ESP32-P4 peut faire) : **Fil d'Or** (roguelite de bille, pilotage inclinaison), **Arcanoïde** (casse-briques), **Neon Apron** (flipper, portrait), **Coureur d'Or** (Lode Runner), **Go Tab** (Go 9×9/13×13/19×19), **Trial Poursuite** (quiz), **Dames Tab** (dames 10×10), **Roi Noir** (échecs FIDE avec IA embarquée). Tous 100 % locaux, zéro dépendance HA/réseau, persistance NVS. Ouverts via une grille sélecteur 4×2 déclenchée par tap sur la température serre
 - **Popup Assistant** — modal quasi plein écran affichant la transcription STT (« Votre demande ») et la réponse LLM rendue en Markdown (tableaux, gras, code, images téléchargées à la demande) ; panneau gauche = réglages (sélecteur cerveau Domotique/Discussion, Ok Nabu ON/OFF, volume, taille texte A-/A+)
 - **Popup Calendrier** — grille mensuelle 7×6 calculée localement depuis SNTP ; heures de travail dans les cases, marqueurs colorés (fériés, vacances scolaires, RDV, anniversaires) ; tap sur un jour = sous-popup détail ; HA enrichit à la demande
@@ -583,6 +595,8 @@ Le moteur est optionnel pour le tableau de bord push (l’écran marche sans lui
 - **Quelque chose ne marche pas ?** → [ouvrez une issue](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues/new/choose) ; le formulaire demande votre puce écran et votre version d'ESPHome.
 - **Faille de sécurité** → à signaler en privé, voir [`SECURITY.md`](SECURITY.md#version-française).
 - **Contribuer** → [`CONTRIBUTING.md`](CONTRIBUTING.md#version-française) et le [code de conduite](CODE_OF_CONDUCT.md#version-française).
+
+**Merci** à [@husyildiz](https://github.com/husyildiz), dont les idées, les essais et les retours dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) ont amené la page d'installation pas à pas, l'écran en turc, la météo hors de France, la batterie d'origine, le popup Énergie pour les panneaux solaires et la météo choisie dans le blueprint.
 
 Anglais ou français, les deux sont bienvenus.
 
