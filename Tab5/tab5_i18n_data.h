@@ -1895,7 +1895,7 @@ static const char* const kI18nKeys[] = {
     "vendredi",
     "vive",
     "{jour_court} {quantieme} {mois_court}",
-    "{jour} : #fb923c {horaire}#",
+    "{jour} : #{couleur} {horaire}#",
     "{jour} : pas d'horaire",
     "{jour} : repos",
     "{jour} : {horaire}",
@@ -2868,7 +2868,7 @@ static const char* const kI18n_en[] = {
     "Friday",  // "vendredi"
     "brisk",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
-    "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
+    "{jour}: #{couleur} {horaire}#",  // "{jour} : #{couleur} {horaire}#"
     "{jour}: no hours",  // "{jour} : pas d'horaire"
     "{jour}: day off",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
@@ -3841,7 +3841,7 @@ static const char* const kI18n_de[] = {
     "Freitag",  // "vendredi"
     "flott",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
-    "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
+    "{jour}: #{couleur} {horaire}#",  // "{jour} : #{couleur} {horaire}#"
     "{jour}: keine Zeiten",  // "{jour} : pas d'horaire"
     "{jour}: frei",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
@@ -4814,7 +4814,7 @@ static const char* const kI18n_nl[] = {
     "vrijdag",  // "vendredi"
     "vlot",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
-    "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
+    "{jour}: #{couleur} {horaire}#",  // "{jour} : #{couleur} {horaire}#"
     "{jour}: geen tijden",  // "{jour} : pas d'horaire"
     "{jour}: vrij",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
@@ -5787,7 +5787,7 @@ static const char* const kI18n_es[] = {
     "viernes",  // "vendredi"
     "ágil",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
-    "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
+    "{jour}: #{couleur} {horaire}#",  // "{jour} : #{couleur} {horaire}#"
     "{jour}: sin horario",  // "{jour} : pas d'horaire"
     "{jour}: libre",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
@@ -6760,7 +6760,7 @@ static const char* const kI18n_it[] = {
     "venerdì",  // "vendredi"
     "svelta",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
-    "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
+    "{jour}: #{couleur} {horaire}#",  // "{jour} : #{couleur} {horaire}#"
     "{jour}: nessun orario",  // "{jour} : pas d'horaire"
     "{jour}: riposo",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
@@ -7733,7 +7733,7 @@ static const char* const kI18n_tr[] = {
     "Cuma",  // "vendredi"
     "canlı",  // "vive"
     "{quantieme} {mois_court} {jour_court}",  // "{jour_court} {quantieme} {mois_court}"
-    "{jour}: #fb923c {horaire}#",  // "{jour} : #fb923c {horaire}#"
+    "{jour}: #{couleur} {horaire}#",  // "{jour} : #{couleur} {horaire}#"
     "{jour}: saat yok",  // "{jour} : pas d'horaire"
     "{jour}: izin",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"

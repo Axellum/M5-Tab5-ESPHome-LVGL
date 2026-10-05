@@ -29,6 +29,58 @@ propre ».
   taille de la date (45 px). **Bouton muet retiré** de l'accueil : le son se coupe depuis
   le popup Assistant vocal.
 
+### 2026-10-05 — Documentation : énergie solaire, nouveautés du site, merci à husyildiz
+
+Demande d'Axel avant la release : l'énergie solaire manquait au README et au site, et un
+remerciement à @husyildiz.
+- **README** (EN, FR) : énergie solaire dans l'accroche et dans « Ce que ça fait » (popup,
+  icône du bandeau, batterie d'origine), avec une capture du popup Énergie (vue Jours,
+  rendu de la CI, données de démonstration) ; même capture dans `docs/installation.md`
+  (section « Énergie solaire ») et `docs/screens.md`.
+- **Merci** à [@husyildiz](https://github.com/husyildiz) dans la section Communauté du
+  README et sur le site : ses idées, essais et retours de la discussion #278 ont amené la
+  page d'installation pas à pas, l'écran en turc, la météo hors de France, la batterie
+  d'origine, le popup Énergie et la météo choisie dans le blueprint.
+- **Site** : carte et section « Énergie solaire », « Thèmes » et « Énergie solaire » dans
+  le sommaire ; « Nouveautés » s'arrêtait à la 3.1 : cartes 3.6, 3.5 et 3.4 à la place de
+  3.1, 3.0.1 et 3.0 (toujours dans les releases et ce journal) ; « À savoir » ne cite
+  plus OpenWeatherMap et MeteoAlarm comme seules sources hors de France.
+
+### 2026-10-05 — Documentation : thèmes, réglages de la tablette, captures de Home Assistant
+
+Demande d'Axel pour la release : docs et descriptifs à jour, quelques captures des thèmes
+et de Home Assistant, l'installation et les options bien expliquées.
+- **README** (EN, FR) : les dix-huit thèmes dans l'accroche, « Pourquoi celui-ci » et
+  « Ce que ça fait » ; une planche de six thèmes (rendus de la CI) ; la vue Tab5 du
+  tableau de bord de Home Assistant ; après l'installation, liens vers le tableau de bord
+  et les réglages.
+- **`docs/installation.md`** : nouvelle section « Réglages et options de la tablette »
+  (thème, clair ou sombre, nuit, langue, écran, son, réseau, batterie, « Aller à
+  l'écran », réveil, rendez-vous, voix, et où les trouver) ; captures de Home Assistant :
+  listes « Tab5 · », vues Tab5 et Santé du tableau de bord, colonne « Tablette » des
+  réglages, carte Configuration de l'appareil (recadrées, sans donnée personnelle).
+- **Site** : étiquette et carte « 18 thèmes », section Thèmes avec la planche, étape
+  « tableau de bord et réglages » avec sa capture ; « Home Assistant d'abord » ne parle
+  plus du dépôt ni de Python (inutiles depuis l'ADR-0024, le site disait encore le
+  contraire) ; sources de la pluie et des vigilances à jour (Buienradar, DWD, Met.no,
+  Open-Meteo, CAP Alerts).
+- `docs/screens.md`, `docs/ui_design.md` (thèmes ; la couleur des horaires vient de la
+  palette, plus de « logique de couleur côté Home Assistant »),
+  `HomeAssistant_Config/README.md` (automatisation « Tab5 — thème jour/nuit »),
+  `Tab5/README.md` et l'inventaire (plus de « thème Slate »).
+- `tests/test_doc_comptes.py` : le nombre de thèmes écrit dans le README, le site,
+  `docs/screens.md` et `docs/installation.md` est compté dans `Tab5/themes/`.
+
+### 2026-10-05 — Thèmes : horaires du planning lisibles en mode clair
+
+Le bandeau du planning écrivait « Auj. » et les horaires en blanc, en dur : en mode
+clair, sur le bandeau clair des thèmes qui ne le gardent pas sombre (Ardoise, Almanach
+imprimé, Ardoise douce, Bento, Graphite, Terre cuite), on ne les voyait presque plus.
+Les couleurs du planning (horaires, embauche tôt, « Dem. », « Aucun travail de prévu »)
+et celle de l'embauche tôt du jour touché viennent désormais de la palette du bandeau,
+et le texte est recalculé au changement de thème. Vu sur la galerie des thèmes du rendu
+hors tablette.
+
 ### 2026-10-05 — Thèmes : les dix-sept thèmes de la galerie, Relief doux par défaut
 
 Demande d'Axel : « mets tous les thèmes qu'on a faits ce soir », Relief doux par défaut.

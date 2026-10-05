@@ -262,6 +262,8 @@ Shown only if sensors are picked in the « Énergie · Energy » section of the 
 
 HA pushes only while the popup is open (package `tab5_energie.yaml`); instant transitions, like every popup.
 
+![Energy popup, Days view: four live cards and the production of the last 30 days (CI render, demo data)](images/tab5_energie_en.png)
+
 ---
 
 ## Color coding for readability
@@ -292,6 +294,10 @@ Color is used consistently as a primary information channel — to let you read 
 **Microphone icon:** see Voice assistant above.
 
 All interface colours live in one palette, `struct Palette` in `tab5_tokens.h` (included by `tab5_custom.h`); `UIColor` is the active one. The YAML takes them through the role styles of `tab5-styles.yaml` (`style_text_dim`…), the games keep their own dark palettes ([ADR-0029](decisions/0029-themes-palette.md)). Eighteen themes, each with a dark and a light mode, change the colours, the shapes (radius, borders, shadows) and the fonts of the time, the date and the titles; a new tablet starts in « Relief doux ».
+
+![Six themes of the Tab5 screen drawn by the firmware itself: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](images/tab5_themes.jpg)
+
+The theme, the mode (Sombre, Clair, Auto) and the « Nuit (thème auto) » switch are entities of the tablet: [Tablet settings](installation.md#theme-light-or-dark).
 
 ---
 
@@ -591,6 +597,8 @@ N'apparaît que si des capteurs sont choisis dans la section « Énergie · Ener
 
 HA ne pousse que pendant que le popup est ouvert (package `tab5_energie.yaml`) ; transitions instantanées, comme tous les popups.
 
+![Popup Énergie, vue Jours : quatre cartes en direct et la production des 30 derniers jours (rendu de la CI, données de démonstration)](images/tab5_energie.png)
+
 ---
 
 ## Coloration sémantique
@@ -621,6 +629,10 @@ La couleur est utilisée de façon systématique comme canal d'information prima
 **Icône microphone :** voir Assistant vocal ci-dessus.
 
 Toutes les couleurs de l'interface vivent dans une palette, `struct Palette` de `tab5_tokens.h` (inclus par `tab5_custom.h`) ; `UIColor` est la palette active. Le YAML les prend par les styles de rôle de `tab5-styles.yaml` (`style_text_dim`…), les jeux gardent leurs palettes sombres ([ADR-0029](decisions/0029-themes-palette.md)). Dix-huit thèmes, chacun en sombre et en clair, changent les couleurs, les formes (rayons, bordures, ombres) et les polices de l'heure, de la date et des titres ; une tablette neuve démarre en « Relief doux ».
+
+![Six thèmes de l'écran du Tab5 dessinés par le firmware lui-même : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](images/tab5_themes.jpg)
+
+Le thème, le mode (Sombre, Clair, Auto) et l'interrupteur « Nuit (thème auto) » sont des entités de la tablette : [réglages de la tablette](installation.md#thème-clair-ou-sombre).
 
 ---
 

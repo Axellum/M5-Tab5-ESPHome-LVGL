@@ -93,7 +93,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Aucun travail de prévu": "Geen werk gepland"
 "Jour": "Dag"
 "{jour} : {horaire}": "{jour}: {horaire}"
-"{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"
+"{jour} : #{couleur} {horaire}#": "{jour}: #{couleur} {horaire}#"
 "{jour} : repos": "{jour}: vrij"
 "{jour} : pas d'horaire": "{jour}: geen tijden"
 "Alerte Météo Rouge en cours ! Restez prudent.": "Weeralarm code rood! Wees voorzichtig."

@@ -95,7 +95,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Aucun travail de prévu": "Keine Arbeit geplant"
 "Jour": "Tag"
 "{jour} : {horaire}": "{jour}: {horaire}"
-"{jour} : #fb923c {horaire}#": "{jour}: #fb923c {horaire}#"
+"{jour} : #{couleur} {horaire}#": "{jour}: #{couleur} {horaire}#"
 "{jour} : repos": "{jour}: frei"
 "{jour} : pas d'horaire": "{jour}: keine Zeiten"
 "Alerte Météo Rouge en cours ! Restez prudent.": "Unwetterwarnung Rot aktiv! Bleib vorsichtig."

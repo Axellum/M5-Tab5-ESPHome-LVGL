@@ -51,6 +51,8 @@ Why this matters on an ESP32-P4 with 768 KB of internal SRAM:
 
 In practice, moving from inline to global styles freed roughly 40 KB of PSRAM in this project.
 
+**Themes.** Every shared style reads the active palette (`UIColor`) through a lambda, and the eighteen themes swap the palette, the shapes (radius, borders, shadows) and three display fonts while the screen runs ([ADR-0029](decisions/0029-themes-palette.md)). That is why a widget never carries a colour of its own: ESPHome would freeze it at compile time and no theme could change it.
+
 ---
 
 ## Dynamic color
@@ -63,7 +65,7 @@ LVGL supports inline color tags in label text strings. A label can receive a str
 
 LVGL parses the hex color tag and renders "27°C" in orange, then "Salon" in the label's default color. No additional code required.
 
-This is used for the calendar screen (event colors matching Google Calendar's event colors) and for temperature displays (blue below 18°C, green 18–24°C, orange above 24°C). The color logic runs on the Home Assistant side, embedded in the Jinja template that builds the payload string. The device just displays what it receives.
+This is used for the work hours of the central card, early shifts in their own colour. The colours are picked on the device, from the palette of the active theme, and the text is built again when the theme changes: a colour written into a text is not repainted by a style (a white written there made the hours invisible in the light themes, fixed before 3.6.0).
 
 ---
 
@@ -147,6 +149,8 @@ Pourquoi ça compte sur un ESP32-P4 avec 768 KB de SRAM interne :
 
 En pratique, le passage des styles inline aux styles globaux a libéré environ 40 KB de PSRAM dans ce projet.
 
+**Thèmes.** Chaque style partagé lit la palette active (`UIColor`) par une lambda, et les dix-huit thèmes changent la palette, les formes (rayons, bordures, ombres) et trois polices d'affichage pendant que l'écran tourne ([ADR-0029](decisions/0029-themes-palette.md)). C'est pourquoi un widget ne porte jamais de couleur à lui : ESPHome la figerait à la compilation et aucun thème ne pourrait la changer.
+
 ---
 
 ## Couleur dynamique
@@ -159,7 +163,7 @@ LVGL supporte des tags de couleur inline dans les chaînes de texte des labels :
 
 LVGL parse le tag de couleur hex et rend "27°C" en orange, puis "Salon" dans la couleur par défaut du label. Aucun code supplémentaire requis.
 
-C'est utilisé pour l'écran calendrier (couleurs d'événements correspondant aux couleurs Google Calendar) et pour les affichages de température (bleu sous 18°C, vert 18–24°C, orange au-dessus). La logique de couleur tourne côté Home Assistant, embarquée dans le template Jinja qui construit la chaîne payload. L'appareil affiche simplement ce qu'il reçoit.
+C'est utilisé pour les horaires de la carte centrale, les postes du matin dans leur couleur. Les couleurs sont choisies sur l'appareil, dans la palette du thème actif, et le texte est reconstruit au changement de thème : une couleur écrite dans un texte n'est pas repeinte par un style (un blanc écrit là rendait les horaires invisibles dans les thèmes clairs, corrigé avant la 3.6.0).
 
 ---
 
