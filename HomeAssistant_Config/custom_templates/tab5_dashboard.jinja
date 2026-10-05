@@ -1041,7 +1041,7 @@ views:
               | {{ t('Entités HA indisponibles', 'Unavailable HA entities') }} | {% raw %}{{ states('sensor.tab5_unavailable_count') }}{% endraw %} |
 {%- endif %}
 {%- if T.wifi %}
-              | {{ t('Signal Wi-Fi', 'Wi-Fi signal') }} | {% raw %}{{ states('{% endraw %}{{ T.wifi }}{% raw %}') }}{% endraw %} dBm |
+              | {{ t('Signal Wi-Fi', 'Wi-Fi signal') }} | {% raw %}{% set w = states('{% endraw %}{{ T.wifi }}{% raw %}') %}{{ (w | float | round | int) ~ ' dBm' if is_number(w) else '—' }}{% endraw %} |
 {%- endif %}
 {#- Gardes de santé présentes ; « coupées » = interrupteur sur off (normal pendant une OTA). #}
 {%- set gardes = [A.tab5_health_api_off_2min, A.tab5_health_primary_off_5min, A.tab5_health_unexpected_reboot,
