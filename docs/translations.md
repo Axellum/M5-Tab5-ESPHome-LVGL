@@ -12,6 +12,7 @@ Every language was written by an AI, like the rest of the project. The author ch
 
 - **From Home Assistant:** the tablet exposes a select entity **« Langue »** (Configuration). Pick `Français`, `English`, `Deutsch`, `Nederlands`, `Español`, `Italiano` or `Türkçe`: the tablet restarts and comes back in the new language. It remembers the choice.
 - **Spoken sentences** (alarm reminders, « shutter stopped ») follow the screen language, but the voice that reads them is the one of the tablet's voice pipeline in Home Assistant: give it a voice of the same language.
+- **The Home Assistant dashboard** written by `custom_templates/tab5_dashboard.jinja` (labels and explanations of the Tab5, Settings and Health views) follows the screen language too, when you write it again after changing the language ([installation](installation.md#step-7--a-home-assistant-dashboard-for-the-tablet-optional)). Its German, Dutch, Spanish, Italian and Turkish texts were written by an AI too and have not been reviewed.
 - **Default of a first boot:** `tab5_langue: English` in `Tab5/user_entities.yaml` (the native name of the language). Without that line, French.
 
 What does **not** change: entity names, select options and the states Home Assistant reads (for example « Heure fixe », « Écran courant »). Renaming them would break your history and automations, so they stay as they are in every language. Since lot 4c, Home Assistant no longer sends sentences: it sends **codes** (rain level and start time, update and error counts…), and the tablet writes the sentence in its own language — « Averses dans 12 mn » or “Showers in 12 min”, counted down on the tablet's clock. Forecast day labels are translated when shown. What stays as HA sends it: your own data (calendar event titles, update names, sensor names).
@@ -42,6 +43,8 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
    python -m pytest tests/test_i18n.py
    ```
 
+6. The Home Assistant dashboard (`HomeAssistant_Config/custom_templates/tab5_dashboard.jinja`) has its own table: add the language to `code` (top of the macro) and its translation to each entry of `TRADUCTIONS` (end of the file); `tests/test_tableau_de_bord.py` lists what is missing.
+
 **Characters:** the screen fonts carry Latin-1, the Windows-1252 punctuation and the Turkish letters Ğ ğ İ ı Ş ş (`&latin1` in `Tab5/tab5-styles.yaml`). That covers English, German, Spanish, Italian, Portuguese, Dutch, Turkish and the Nordic languages. Polish, Czech, Cyrillic or Greek need that glyph set extended first: it costs flash on every text font (the five Turkish letters added 2,464 bytes to the firmware); the names Home Assistant sends for the tiles are filtered to the same set (`kHorsLatin1` in `Tab5/tab5_tuiles.cpp`, kept equal by `tests/test_tuiles_firmware.py`); `tests/test_i18n.py` refuses a translation whose characters the fonts don't have — they would show as empty boxes.
 
 ## Rules for contributors
@@ -63,6 +66,7 @@ Toutes les langues ont été écrites par une IA, comme le reste du projet. L'au
 
 - **Depuis Home Assistant :** la tablette expose un select **« Langue »** (Configuration). Choisissez `Français`, `English`, `Deutsch`, `Nederlands`, `Español`, `Italiano` ou `Türkçe` : la tablette redémarre et revient dans la nouvelle langue. Elle garde ce choix.
 - **Les phrases parlées** (rappels du réveil, « Volet arrêté ») suivent la langue de l'écran, mais la voix qui les lit est celle du pipeline vocal de la tablette dans Home Assistant : donnez-lui une voix de la même langue.
+- **Le tableau de bord Home Assistant** écrit par `custom_templates/tab5_dashboard.jinja` (libellés et explications des vues Tab5, Réglages et Santé) suit aussi la langue de l'écran, quand vous le réécrivez après avoir changé de langue ([installation](installation.md#étape-7--un-tableau-de-bord-home-assistant-pour-la-tablette-facultatif)). Ses textes allemands, néerlandais, espagnols, italiens et turcs ont eux aussi été écrits par une IA et ne sont pas relus.
 - **Au premier démarrage :** `tab5_langue: English` dans `Tab5/user_entities.yaml` (le nom de la langue dans la langue elle-même). Sans cette ligne, le français.
 
 Ce qui **ne change pas** : les noms d'entités, les options de select et les états que lit Home Assistant (par exemple « Heure fixe », « Écran courant »). Les renommer casserait votre historique et vos automatisations : ils restent tels quels dans toutes les langues. Depuis le lot 4c, Home Assistant n'envoie plus de phrases mais des **codes** (niveau et heure de début de la pluie, nombre de mises à jour et d'erreurs…), et la tablette écrit la phrase dans sa langue — « Averses dans 12 mn » ou “Showers in 12 min”, décomptée avec sa propre horloge. Les libellés des jours des prévisions sont traduits à l'affichage. Ce qui reste tel que HA l'envoie : vos propres données (titres des événements du calendrier, noms des mises à jour et des capteurs).
@@ -92,6 +96,8 @@ Chaque langue est un fichier, `Tab5/lang/<code>.yaml` : un mapping plat `"texte 
    python tools/i18n_keys.py       # liste les textes qui manquent encore, par langue
    python -m pytest tests/test_i18n.py
    ```
+
+6. Le tableau de bord Home Assistant (`HomeAssistant_Config/custom_templates/tab5_dashboard.jinja`) a sa propre table : ajoutez la langue à `code` (haut de la macro) et sa traduction à chaque entrée de `TRADUCTIONS` (fin du fichier) ; `tests/test_tableau_de_bord.py` liste ce qui manque.
 
 **Caractères :** les polices de l'écran portent le Latin-1, la ponctuation Windows-1252 et les lettres turques Ğ ğ İ ı Ş ş (`&latin1` dans `Tab5/tab5-styles.yaml`). Ça couvre l'anglais, l'allemand, l'espagnol, l'italien, le portugais, le néerlandais, le turc et les langues nordiques. Le polonais, le tchèque, le cyrillique ou le grec demandent d'abord d'étendre ce jeu de glyphes : ça coûte de la flash sur chaque police de texte (les cinq lettres turques ont ajouté 2 464 octets au firmware) ; les noms que Home Assistant envoie pour les tuiles sont filtrés au même jeu (`kHorsLatin1` dans `Tab5/tab5_tuiles.cpp`, tenu égal par `tests/test_tuiles_firmware.py`) ; `tests/test_i18n.py` refuse une traduction dont les polices n'ont pas les caractères — ils s'afficheraient en carrés vides.
 

@@ -4,6 +4,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-05 — Tableau de bord HA dans les sept langues de l'écran
+
+Demandé par Axel après les vues Réglages et Santé : leurs explications n'existaient qu'en
+français et en anglais.
+- Les 250 textes du tableau de bord (libellés, explications, cases « En bref ») suivent la
+  langue de l'écran : français, anglais, allemand, néerlandais, espagnol, italien ou turc ;
+  une autre langue donne l'anglais. `t(français, anglais)` ne change pas : les cinq autres
+  langues viennent de la table `TRADUCTIONS` en fin de macro (clé = le texte français).
+- Traductions écrites par une IA (une par langue, d'après le français et l'anglais, avec le
+  vocabulaire de `Tab5/lang/<code>.yaml`), non relues.
+- `tests/test_tableau_de_bord.py` : chaque texte rendu a ses cinq traductions, sans entrée
+  orpheline ; aucune traduction n'a d'apostrophe ou de guillemet droits ; ses espaces de
+  début et de fin suivent l'anglais (morceaux de phrase) ; le rendu complet passe dans les
+  sept langues ; une langue inconnue donne l'anglais.
+- `docs/translations.md` (choisir la langue, ajouter une langue) et l'étape 7 de
+  `docs/installation.md`.
+
 ### 2026-10-05 — Tableau de bord HA : la vue « Santé » explique quoi faire
 
 Même traitement que la vue Réglages, demandé par Axel.
