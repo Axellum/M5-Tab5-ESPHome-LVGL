@@ -53,8 +53,6 @@ NON_MONTREES = {
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",
     "temperature-serre-mois": "temperature-serre montre la même fenêtre ; les vues sont décrites",
     # Images à tirer du rendu de la PR (tools/site/images_notice.py), puis citées.
-    "temperature-serre": "image à tirer du premier rendu",
-    "temperature-dehors": "image à tirer du premier rendu",
 }
 
 
