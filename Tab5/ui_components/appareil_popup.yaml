@@ -13,7 +13,9 @@
 #         options de la tuile (« Allumer seulement », confirmation) ;
 #       - COMMANDE : un grand interrupteur vertical façon HA (remplissage en haut et en
 #         couleur allumé, en bas et gris éteint ; plein pour une scène), et dessous ce
-#         que fera l'appui (« Éteindre », « Allumer », « Lancer », « Confirmer ? »).
+#         que fera l'appui (« Éteindre », « Allumer », « Lancer »), en ambre quand il
+#         attend sa confirmation (option k : l'état dit alors « Confirmer ? », comme la
+#         tuile).
 #       Titre = nom de la tuile. Tout est repeint par tab5_tuiles.cpp quand l'état de la
 #       tuile change, popup ouvert (popup_appareil_etat).
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
@@ -134,6 +136,12 @@ obj:
                     styles: style_bg_arc_track
                     bg_opa: COVER
                     border_width: 0
+                    # Ni marge, ni ombre, ni contour du thème : le remplissage (y 190 + 190)
+                    # tient pile dans les 380 px, et le bouton ne défile pas sous le doigt.
+                    pad_all: 0
+                    shadow_width: 0
+                    outline_width: 0
+                    scrollable: false
                     on_short_click:
                       - lambda: 'popup_appareil_appui();'
                     widgets:
@@ -152,7 +160,8 @@ obj:
                           widgets:
                             - label: { id: appareil_commande_icone, text: "\U000F0425", align: CENTER, text_font: mdi_font_45, styles: style_text_dim }
 
-                # Ce que fera l'appui (« Éteindre », « Allumer », « Lancer », « Confirmer ? »).
+                # Ce que fera l'appui (« Éteindre », « Allumer », « Lancer » ; ambre pendant
+                # une confirmation, « OK » après un lancement).
                 - label:
                     id: appareil_action
                     text: "Allumer"
