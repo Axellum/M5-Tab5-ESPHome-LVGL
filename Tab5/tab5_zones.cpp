@@ -133,7 +133,7 @@ const char* batterie_glyphe(PresenceBatterie presence, float niveau, bool en_cha
 // Couleur de l'icône batterie, une seule source pour le bandeau et la console. La prise
 // n'est ni une alerte ni un niveau : couleur du texte du thème. Relue dans la palette
 // active à chaque peinture (zones_rejouer_theme, ADR-0029).
-lv_color_t batterie_couleur() {
+uint32_t batterie_couleur() {
     return s_batterie.detection.presence == PresenceBatterie::ABSENTE ? UIColor.TEXT_SOFT
                                                                        : get_battery_color(s_batterie.niveau);
 }
