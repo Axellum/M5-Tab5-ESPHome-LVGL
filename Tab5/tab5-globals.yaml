@@ -1,6 +1,7 @@
 # [AI-CONTEXT]
 # @file tab5-globals.yaml
-# @role Variables globales de l'interface (état des volets, page courante, mode vocal).
+# @role Variables globales de l'interface (état des volets, page courante, mode vocal,
+#       réveil, extinction auto de l'écran).
 # @ai_instruction Ne déclarer ici que les variables globales pures.
 # ============================================================================
 # tab5-globals.yaml — État partagé entre tous les packages (voir table complète
@@ -197,4 +198,24 @@ globals:
   - id: alarm_ring_sub
     type: std::string
     initial_value: '""'
+    restore_value: false
+
+  # --- Extinction automatique de l'écran (select « Tab5 Extinction auto de l'écran »,
+  # tab5-ha-controls.yaml ; discussion #278, 06/10/2026) ---
+  # millis() du dernier allumage du rétroéclairage, posé par `on_turn_on` du light
+  # `backlight` (tab5-hardware.yaml). L'inactivité de LVGL ne repart de zéro qu'à un
+  # appui lu par l'indev, et LVGL est en pause écran éteint : un rallumage par HA, par
+  # la tape, par le réveil ou même par le toucher la laisse ancienne, et l'écran se
+  # rééteindrait au tick suivant. L'extinction compte donc depuis le plus récent des
+  # deux instants (dernier appui, dernier allumage).
+  - id: ecran_allume_ms
+    type: uint32_t
+    initial_value: '0'
+    restore_value: false
+  # Mise à jour du firmware en cours : vrai sur `on_begin` des deux `ota:`
+  # (tab5-hardware.yaml, publication-commune.yaml), faux sur `on_abort` / `on_error` ;
+  # une OTA réussie redémarre la tablette. L'écran ne s'éteint pas seul pendant une OTA.
+  - id: ota_en_cours
+    type: bool
+    initial_value: 'false'
     restore_value: false

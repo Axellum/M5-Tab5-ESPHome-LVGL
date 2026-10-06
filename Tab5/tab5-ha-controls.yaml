@@ -4,8 +4,11 @@
 # @role Entités ESPHome supplémentaires exposées à Home Assistant pour observer
 #       et piloter l'écran depuis un dashboard HA (« Console Tab5 »), sans être
 #       devant la dalle. Aussi des réglages de l'écran gardés en mémoire (langue,
-#       interrupteurs « Tab5 Batterie montée » et « Tab5 Appareils sur la météo »),
-#       qui passent chacun par une fonction C++ nommée (règle 2).
+#       interrupteurs « Tab5 Batterie montée », « Tab5 Appareils sur la météo » et
+#       « Tab5 Rallumer l'écran à Okay Nabu », lu par tab5-assist.yaml),
+#       qui passent chacun par une fonction C++ nommée (règle 2), et l'extinction
+#       automatique de l'écran (select « Tab5 Extinction auto de l'écran » + son
+#       interval de 10 s : réveil, assistant vocal, jeu et OTA l'empêchent).
 # @architecture_constraint Ce fichier ne construit AUCUN widget LVGL. Il se
 #       contente (a) de lire l'état de l'UI et (b) de rejouer exactement les
 #       mêmes chemins d'ouverture que les boutons de l'écran — pour que l'état
@@ -283,6 +286,31 @@ select:
           else:
             - lambda: 'i18n_set_language(i);'
 
+  # Extinction automatique de l'écran (06/10/2026, discussion #278 : « sur batterie ou
+  # sur USB, l'écran ne devrait se réveiller que quand on le touche »). Après ce délai
+  # sans toucher la dalle, l'écran s'éteint comme quand HA l'éteint (light.turn_off de
+  # `backlight`, qui met LVGL en pause) ; le toucher, la tape (« Tab5 Tap-to-Wake »),
+  # HA et le réveil le rallument comme avant. « Jamais » par défaut : rien ne change
+  # pour qui ne choisit rien. Les options sont lues par HA : jamais traduites. La
+  # tablette garde l'INDEX choisi (restore_value) : une option nouvelle s'ajoute à la
+  # fin, et DELAIS_MIN de l'interval en bas de ce fichier suit le même ordre
+  # (tests/test_extinction_auto.py).
+  - platform: template
+    id: tab5_extinction_auto
+    name: "Tab5 Extinction auto de l'écran"
+    icon: mdi:monitor-off
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Jamais"
+      - "1 min"
+      - "2 min"
+      - "5 min"
+      - "10 min"
+      - "30 min"
+    initial_option: "Jamais"
+
 switch:
   # Batterie de la tablette montée (04/10/2026) : montre son icône dans le bandeau
   # d'état, en dernier (niveau, charge et tension : tab5-sensors-diagnostics.yaml).
@@ -316,6 +344,20 @@ switch:
     restore_mode: RESTORE_DEFAULT_ON
     on_state:
       - lambda: 'tuiles_appareils_meteo(x);'
+
+  # « Okay Nabu » rallume l'écran éteint (06/10/2026, demande d'Axel avec l'extinction
+  # auto, discussion #278). Lu par la branche START_PIPELINE de tab5_wake_word_dispatch
+  # (tab5-assist.yaml) : seulement quand le pipeline démarre vraiment (mot de réveil
+  # actif, HA joignable), jamais sur « Stop ». Allumé par défaut ; éteint, l'écran reste
+  # noir et la réponse n'est que parlée (comme avant), pour qui ne veut le rallumer qu'au
+  # toucher : le mot de réveil se déclenche parfois seul (télé, conversation).
+  - platform: template
+    id: tab5_ecran_okay_nabu
+    name: "Tab5 Rallumer l'écran à Okay Nabu"
+    icon: mdi:account-voice
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
 
 button:
   # Recharge le mois courant + M+1 du calendrier (même script que le pré-fetch
@@ -360,3 +402,45 @@ interval:
                 id: tab5_volume_apply
                 vol: !lambda 'return id(speaker_player)->volume;'
                 push_device: false
+
+  # Extinction automatique de l'écran (select « Tab5 Extinction auto de l'écran »
+  # plus haut). Vérifiée toutes les 10 s : à « 1 min », l'écran s'éteint entre 60 et
+  # 70 s après le dernier toucher. L'inactivité compte depuis le plus récent de deux
+  # instants : le dernier appui lu par LVGL (ui_idle_ms(), le compteur du retour à
+  # l'accueil, aussi remis à zéro par chaque étape du pipeline vocal) et le dernier
+  # allumage (ecran_allume_ms, posé par on_turn_on de `backlight`, tab5-hardware.yaml) :
+  # LVGL est en pause écran éteint, un rallumage par HA ou par la tape laisserait
+  # sinon une inactivité ancienne et l'écran se rééteindrait aussitôt.
+  # Jamais pendant :
+  #   - le réveil qui sonne (`alarm_ringing`, tab5-alarm.yaml) ;
+  #   - l'assistant vocal : pipeline en cours (`va` is_running/is_continuous, comme la
+  #     condition `voice_assistant.is_running`), ou réponse parlée pas finie
+  #     (`va_stop_armed`, armé à l'écoute, désarmé quand le haut-parleur se tait) ;
+  #   - un jeu de l'Arcade ouvert (GameRegistry::any_open() : une partie en pause,
+  #     c'est zéro toucher pendant des minutes, comme pour le retour à l'accueil) ;
+  #   - une mise à jour du firmware (`ota_en_cours`).
+  # Pas avant la fin du démarrage (`boot_complete`).
+  - interval: 10s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              // Délai de chaque option du select, dans le même ordre (0 = « Jamais »).
+              constexpr uint32_t DELAIS_MIN[] = {0, 1, 2, 5, 10, 30};
+              constexpr size_t NB_DELAIS = sizeof(DELAIS_MIN) / sizeof(DELAIS_MIN[0]);
+              const auto choix = id(tab5_extinction_auto).active_index();
+              if (!choix.has_value() || *choix == 0 || *choix >= NB_DELAIS) return false;
+              if (!id(boot_complete) || !id(backlight).remote_values.is_on()) return false;
+              if (id(alarm_ringing)) return false;
+              if (id(va)->is_running() || id(va)->is_continuous() || id(va_stop_armed)) return false;
+              if (GameRegistry::any_open()) return false;
+              if (id(ota_en_cours)) return false;
+              const uint32_t depuis_allumage = millis() - id(ecran_allume_ms);
+              const uint32_t inactif = std::min(ui_idle_ms(), depuis_allumage);
+              return inactif >= DELAIS_MIN[*choix] * 60000u;
+          then:
+            # [AI-DEBUG] « Pourquoi l'écran s'est éteint ? » : cette ligne le dit.
+            - logger.log:
+                level: INFO
+                format: "Extinction auto de l'ecran (inactivite)"
+            - light.turn_off: backlight
