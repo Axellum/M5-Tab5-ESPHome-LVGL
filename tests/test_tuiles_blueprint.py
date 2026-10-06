@@ -300,6 +300,8 @@ def _maison():
         Etat("calendar.agenda", "off", friendly_name="Agenda"),
         Etat("input_text.volet_serre_etat", "En_mouvement"),
         Etat("script.tab5_volet_action", "off"),
+        # Liste du package : le volet de l'entrée Volet, comme chez l'auteur.
+        Etat("select.tab5_volet_a_course_simulee", "cover.volet_serre"),
     ]
 
 
@@ -814,6 +816,70 @@ def test_volet_suivi_par_le_package():
                               Etat("input_text.volet_serre_etat", "En_mouvement")))
     assert p["volet_suivi"] == "cover.volet_serre"
     assert p["tuiles_a_pousser"] == ["t41"]
+
+
+def _liste_du_package(choix):
+    """La maison de test, la liste « Tab5 · volet à course simulée » sur `choix`."""
+    return _maison_avec(Etat("select.tab5_volet_a_course_simulee", choix))
+
+
+def _etat_de_tuile(p, cle):
+    return {e[0]: e[1:] for e in _defs(p.etats_tuiles())}[cle]
+
+
+def test_package_sans_volet_choisi_ne_rend_muet_aucun_volet():
+    """Discussion #278 (06/10/2026) : le package copié, sa liste laissée sur « Aucun ». Son
+    script s'arrête alors sans rien commander : le blueprint ne doit pas lui confier le
+    volet de l'entrée Volet (avant, la seule présence du script suffisait)."""
+    etats = _liste_du_package("Aucun")
+    for emplacement, action, attendu in (("t41", "ouvrir", ("cover.open_cover", "cover.volet_serre")),
+                                         ("t41", "arreter", ("cover.stop_cover", "cover.volet_serre")),
+                                         ("volet", "fermer", ("cover.close_cover", "cover.volet_serre"))):
+        p = _passage(_evenement("action", emplacement=emplacement, action=action), etats=etats)
+        assert p["volet_suivi"] == "" and p["volet_par_package"] is False
+        p.variables_du_bloc("volet")  # l'entrée Volet, lue par la branche 3.x
+        alias, sequence = p.aiguillage()
+        assert alias is not None and _action_rendue(p, sequence) == attendu, (emplacement, action)
+    # Son état est le vrai, plus celui que tient le package (« En_mouvement » ici).
+    assert _etat_de_tuile(_passage(etats=etats), "t41")[0] == "unknown"
+
+
+def test_le_package_suit_le_volet_de_sa_liste():
+    """Liste sur un autre volet que l'entrée Volet : c'est lui que suit le package, et
+    l'entrée Volet est commandée directement."""
+    etats = _liste_du_package("cover.store")
+    p = _passage(_evenement("action", emplacement="t04", action="ouvrir"), etats=etats)
+    assert p["volet_suivi"] == "cover.store" and p["volet_par_package"] is False
+    assert _action_rendue(p, p.aiguillage()[1]) == ("script.turn_on", "script.tab5_volet_action")
+    p = _passage(_evenement("action", emplacement="volet", action="ouvrir"), etats=etats)
+    p.variables_du_bloc("volet")
+    assert _action_rendue(p, p.aiguillage()[1]) == ("cover.open_cover", "cover.volet_serre")
+    # Package absent (pas de script) : la liste ne compte plus.
+    sans_script = [e for e in etats if e.entity_id != "script.tab5_volet_action"]
+    assert _passage(etats=sans_script)["volet_suivi"] == ""
+
+
+def test_volet_choisi_dans_la_liste_repousse_ses_tuiles():
+    """Le volet suivi dépend de la liste : la changer repousse les tuiles de l'ancien et
+    du nouveau volet, chacune avec la bonne source d'état."""
+    aucun = Etat("select.tab5_volet_a_course_simulee", "Aucun")
+    serre = Etat("select.tab5_volet_a_course_simulee", "cover.volet_serre")
+    store = Etat("select.tab5_volet_a_course_simulee", "cover.store")
+    # Choisi : sa tuile prend l'état tenu par le package (« En_mouvement »).
+    p = _passage(_declencheur("volet_choisi", aucun, serre))
+    assert p["tuiles_a_pousser"] == ["t41"] and p.conditions()
+    assert _etat_de_tuile(p, "t41")[0] == "opening"
+    # Remis à « Aucun » : son état réel revient, tuile et entrée Volet (3.x).
+    p = _passage(_declencheur("volet_choisi", serre, aucun), etats=_liste_du_package("Aucun"))
+    assert p["tuiles_a_pousser"] == ["t41"] and p.conditions()
+    assert _etat_de_tuile(p, "t41")[0] == "unknown"
+    p.variables_du_bloc("volet")
+    branche = _chercher(p.corps["actions"],
+                        lambda d: d.get("alias") == "Volet qui signale sa course : son état a changé")
+    assert p.modele(branche["conditions"])
+    # D'un volet à l'autre : les tuiles des deux (le store est dans les pièces 1 et 2).
+    p = _passage(_declencheur("volet_choisi", serre, store), etats=_liste_du_package("cover.store"))
+    assert sorted(p["tuiles_a_pousser"]) == ["t04", "t11", "t41"]
 
 
 def test_accueil_3x_les_declencheurs_3x_poussent_ses_tuiles():

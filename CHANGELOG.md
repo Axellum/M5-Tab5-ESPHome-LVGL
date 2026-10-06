@@ -11,6 +11,28 @@ météo au choix, tableau de bord), puis
 [v3.7.0-rc.2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.2)
 le 05/10/2026, qui ajoute le popup du volet (#333) et la doc des deux modes vocaux (#334).
 
+### 2026-10-06 — Volet : le package du volet à course simulée ne le rend plus muet
+
+Retour de la discussion #278 : popup du volet ouvert, mais ni Ouvrir, ni Stop, ni Fermer ne
+faisaient rien (et avant, l'appui court ne faisait qu'ouvrir). Home Assistant seulement :
+**réimporter le blueprint** ; firmware inchangé.
+- **Le blueprint « Tab5 — emplacements » ne confie un volet au package optionnel
+  `volet_serre_tracking.yaml` que si sa liste « Tab5 · volet à course simulée » nomme ce
+  volet.** Avant, la seule présence du package suffisait : copié sans choisir de volet (la
+  liste reste sur « Aucun »), il recevait les commandes du volet de l'entrée Volet et son
+  script s'arrêtait sans rien commander ; la tuile restait sur l'état « Fermé » qu'il tient
+  (d'où l'appui court qui n'envoyait que « ouvrir »), et le popup n'avait pas de curseur.
+  Sur « Aucun », chaque volet est maintenant commandé directement, avec son vrai état.
+- Le volet suivi est celui de la liste, même s'il n'est pas dans l'entrée Volet : sa tuile
+  passe par le script, l'entrée Volet est commandée directement.
+- Changer la liste repousse aussitôt les tuiles de l'ancien et du nouveau volet (nouveau
+  déclencheur `volet_choisi`), et l'état du volet de l'entrée Volet ; le package optionnel
+  repousse aussi le sien (« Sync Tab5 Volet Serre » se déclenche sur la liste).
+- Chez qui a choisi son volet dans la liste (l'auteur), rien ne change.
+- Tests du rendu du blueprint (`tests/test_tuiles_blueprint.py`) : liste sur « Aucun », liste
+  sur un autre volet, liste changée ; contre-épreuve faite (rouges sur l'ancien blueprint).
+  Docs (`HomeAssistant_Config/README.md`, étape 1 du guide), `AGENTS.md`, cartographie.
+
 ### 2026-10-05 — Le site s'ouvre sur l'accueil avec menu, et c'est le README
 
 Lot 4 du site de documentation (ADR-0030, amendement du 05/10) : l'adresse du site ouvrait encore

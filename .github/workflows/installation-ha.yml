@@ -122,8 +122,8 @@ jobs:
         run: python tools/installation_ha/preparer_config.py --sortie ha-config
       - name: check_config de Home Assistant (installation par défaut, puis avec les optionnels)
         # Les optionnels (HomeAssistant_Config/optionnel/, tab5_optionnel/ de l'archive) ne
-        # sont pas installés par défaut : le volet à course simulée prendrait la main sur
-        # le volet du blueprint. Leur configuration est quand même vérifiée par HA.
+        # sont pas installés par défaut : le volet choisi dans la liste du volet à course
+        # simulée passerait par son script. Leur configuration est quand même vérifiée par HA.
         run: |
           docker pull -q "$HA_IMAGE"
           docker run --rm --entrypoint python3 -v "$PWD/ha-config:/config" "$HA_IMAGE" \
