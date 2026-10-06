@@ -117,6 +117,8 @@ select:
       - "Énergie"
       # Réglages de la tablette (06/10/2026), à la fin pour la même raison.
       - "Réglages"
+      # Historique des alertes (lot 4 du plan des alertes, 06/10/2026), à la fin aussi.
+      - "Alertes"
     on_value:
       # Les popups sont des enfants de `page_main` : si la tablette est sur le
       # sélecteur Arcade ou dans une partie, en ouvrir un jouerait hors écran
@@ -230,6 +232,9 @@ select:
               break;
             case 10:  // Réglages : son script pose les widgets et peint avant d'ouvrir.
               id(tab5_reglages_ouvrir).execute();
+              break;
+            case 11:  // Alertes : son script pose les widgets et demande l'historique à HA.
+              id(tab5_alertes_ouvrir).execute();
               break;
             default:
               if (target != nullptr) {

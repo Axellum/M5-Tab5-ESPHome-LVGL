@@ -70,6 +70,7 @@ esphome:
     - Tab5/tab5_reglages.cpp
     - Tab5/tab5_economie.h
     - Tab5/tab5_economie.cpp
+    - Tab5/tab5_alertes.cpp
     - Tab5/game_common.h
     - Tab5/marble_game.h
     - Tab5/marble_game.cpp
@@ -197,6 +198,7 @@ packages:
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml
   tab5_rangee: !include Tab5/tab5-rangee.yaml
   tab5_energie: !include Tab5/tab5-energie.yaml
+  tab5_alertes: !include Tab5/tab5-alertes.yaml
   tab5_zones: !include Tab5/tab5-zones.yaml
   tab5_reglages: !include Tab5/tab5-reglages.yaml
   tab5_economie: !include Tab5/tab5-economie.yaml

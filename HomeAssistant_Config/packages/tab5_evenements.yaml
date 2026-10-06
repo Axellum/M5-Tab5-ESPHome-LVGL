@@ -13,6 +13,7 @@
 #       tab5_calendrier_mois (annee, mois) → script.tab5_calendrier_mois (tab5_calendar.yaml)
 #       tab5_calendrier_jour (date)        → script.tab5_calendrier_jour (tab5_calendar.yaml)
 #       tab5_alerte_lue (alert_id)         → script.tab5_dismiss_alert (tab5_alerts.yaml)
+#       tab5_alertes_historique            → script.tab5_push_alertes_historique (tab5_push.yaml)
 #       tab5_voix_stop                     → media_player.media_stop, lecteur de la tablette
 #       tab5_mode_assistant (option)       → select.select_option, select de pipeline de la tablette
 #                                            (Discussion : « Tab5 · pipeline de discussion »)
@@ -82,6 +83,9 @@ automation:
       - trigger: event
         event_type: esphome.tab5_alerte_lue
         id: alerte_lue
+      - trigger: event
+        event_type: esphome.tab5_alertes_historique
+        id: alertes_historique
       - trigger: event
         event_type: esphome.tab5_voix_stop
         id: voix_stop
@@ -186,6 +190,17 @@ automation:
                     data:
                       variables:
                         alert_id: "{{ trigger.event.data.alert_id | string }}"
+
+          - alias: "Historique des alertes (popup « Alertes » ouvert)"
+            conditions:
+              - condition: trigger
+                id: alertes_historique
+            sequence:
+              - if: "{{ states['script.tab5_push_alertes_historique'] is not none }}"
+                then:
+                  - action: script.turn_on
+                    target:
+                      entity_id: script.tab5_push_alertes_historique
 
           - alias: "Voix interrompue : arrêt du lecteur de la tablette"
             conditions:

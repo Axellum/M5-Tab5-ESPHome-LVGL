@@ -44,7 +44,7 @@
 A single 1280×720 page: windows open with a tap, a long press or a swipe — each of them is in the [user manual](docs/notice/README.md).
 
 - **Weather** — rain in the next hour, hourly and 15-day forecast, weather warnings ([below](#rain-in-the-next-hour-weather-warnings)).
-- **Central card** — every 8 s: work hours, rain graph, warnings, a 3-day calendar recap and up to 4 banners pushed by Home Assistant; a tap dismisses a banner ([home screen](docs/notice/home.md)).
+- **Central card** — every 8 s: work hours, rain graph, warnings, a 3-day calendar recap and up to 4 banners pushed by Home Assistant, the alerts you subscribed to; a tap dismisses a banner, a long press shows the 20 latest alerts ([home screen](docs/notice/home.md), [alerts](docs/notice/alerts.md)).
 - **Rooms** — the bottom row: up to 5 rooms of 5 devices (lights, switches, shutters, media players, scenes, sensors), with their names and icons taken from Home Assistant ([bottom row and rooms](docs/notice/tiles.md)).
 - **Climate** — modes, a thermostat arc, presets and airflow; the controls are dimmed, not hidden, when the unit is off ([climate](docs/notice/climate.md)).
 - **Lights** — the room's lights (up to 5): brightness arc with shortcuts, 3 whites and 12 colours ([lights](docs/notice/lights.md)).
@@ -213,7 +213,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 Une seule page de 1280×720 : les fenêtres s'ouvrent d'un appui, d'un appui long ou d'un glissement — chacune est dans la [notice d'utilisation](docs/notice/README.md#version-française).
 
 - **Météo** — pluie dans l'heure, prévisions horaires et à 15 jours, vigilances ([plus bas](#pluie-dans-lheure-vigilances)).
-- **Carte centrale** — toutes les 8 s : horaires, graphe de pluie, vigilances, récap du calendrier sur 3 jours et jusqu'à 4 bandeaux poussés par Home Assistant ; un appui masque un bandeau ([écran d'accueil](docs/notice/home.md#version-française)).
+- **Carte centrale** — toutes les 8 s : horaires, graphe de pluie, vigilances, récap du calendrier sur 3 jours et jusqu'à 4 bandeaux poussés par Home Assistant, les alertes auxquelles vous êtes abonné ; un appui masque un bandeau, un appui long montre les 20 dernières alertes ([écran d'accueil](docs/notice/home.md#version-française), [alertes](docs/notice/alerts.md#version-française)).
 - **Pièces** — la rangée du bas : jusqu'à 5 pièces de 5 appareils (lumières, interrupteurs, volets, lecteurs multimédia, scènes, capteurs), avec leurs noms et icônes pris dans Home Assistant ([rangée du bas et pièces](docs/notice/tiles.md#version-française)).
 - **Clim** — modes, arc de thermostat, préréglages et flux d'air ; les commandes sont grisées, pas masquées, quand la clim est éteinte ([clim](docs/notice/climate.md#version-française)).
 - **Lumières** — les lumières de la pièce (5 au plus) : arc de luminosité avec raccourcis, 3 blancs et 12 couleurs ([lumières](docs/notice/lights.md#version-française)).

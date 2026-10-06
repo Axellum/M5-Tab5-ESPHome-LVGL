@@ -31,18 +31,29 @@
   laquelle on n'est pas abonné reste suivie (sans être affichée) : s'y réabonner ne fait pas
   revenir ce qui était déjà lu.
 
-  Trois macros :
+  Macros :
     tab5_alertes_logique(memoire, sources, evenement, maintenant, abonnements)
         PURE : ni états de HA ni heure. Testée hors HA par tests/test_alertes_ha.py, qui
         rejoue redémarrages, plantages, versions, coupures et taps.
     tab5_alertes_sources(suivi, anciennes, seuil_pile)
         Ce que disent les états de HA en ce moment (suivi : pour le doute et les piles).
+    tab5_alertes_abonnements()
+        Les listes « Tab5 · alertes … », lues dans HA (JSON).
     tab5_alertes_memoire(type_evt, donnees)
-        Colle les deux : mémoire = attributs du capteur, heure = now().
+        Colle les trois : mémoire = attributs du capteur, heure = now().
+    tab5_alertes_historique_liste(memoire, abonnements, n) et
+    tab5_alertes_historique_payload(memoire, abonnements)
+        PURES : l'historique des alertes abonnées (n au plus, la plus récente d'abord), en
+        JSON pour le tableau de bord, en payload pour la tablette (action
+        tab5_maj_alertes_historique : « apparue|lue|terminée|gravité|libellé » séparés par
+        « ; », 20 au plus, heures en secondes epoch, 0 = pas encore).
+    tab5_alertes_historique(format)
+        Les mêmes, lues dans HA : format = 'payload' ou 'liste'.
 
   Mémoire rendue (JSON) : suivi {id: {c clé, r révision, d début, f fin (0 = en cours),
   g gravité, t libellé codé, s source}}, lues {id: révision}, historique (30 au plus, le
-  plus récent d'abord : i, r, t, g, a apparue, l lue, f terminée ; 0 = pas encore),
+  plus récent d'abord : i, r, t, g, s, a apparue, l lue, f terminée ; 0 = pas encore ; s
+  depuis le lot 4, déduite de l'id pour les entrées d'avant),
   demarrage, reglages, affichees (triées : gravité puis la plus ancienne ; i = id#rév).
 
   Déploiement : ce fichier va dans config/custom_templates/ de Home Assistant, puis
@@ -108,7 +119,7 @@
       {%- for e in ns.hist -%}
         {%- set h.l = h.l + [dict(e, f=maintenant) if e.i == id and (e.f | int(0)) == 0 else e] -%}
       {%- endfor -%}
-      {%- set ns.hist = [{'i': id, 'r': r, 't': a.t, 'g': a.g, 'a': maintenant, 'l': 0, 'f': 0}] + h.l -%}
+      {%- set ns.hist = [{'i': id, 'r': r, 't': a.t, 'g': a.g, 's': a.s, 'a': maintenant, 'l': 0, 'f': 0}] + h.l -%}
     {%- endif -%}
   {%- endfor -%}
 
@@ -154,14 +165,9 @@
 
   {#- 4. Affichables : en cours, abonnées. -#}
   {%- set rang = {'Rouge': 0, 'Orange': 1, 'Jaune': 2} -%}
-  {%- set seuil = rang.get(ab.get('vigilance', 'Jaune'), -1) -%}
   {%- set af = namespace(l=[]) -%}
   {%- for id, e in ns.suivi.items() if (e.f | int(0)) == 0 -%}
-    {%- set abonnee = (e.s == 'maj' and (ab.get('maj', 'toutes') == 'toutes'
-                                          or (ab.get('maj') == 'ha' and e.g == 'Rouge')))
-                      or (e.s == 'vigilance' and rang.get(e.g, 9) <= seuil)
-                      or (e.s not in ['maj', 'vigilance'] and ab.get(e.s, true)) -%}
-    {%- if abonnee -%}
+    {%- if _abonnee(e.s, e.g, ab) -%}
       {%- set af.l = af.l + [{'id': id, 'r': e.r, 'g': e.g, 't': e.t, 's': e.s, 'd': e.d, 'o': rang.get(e.g, 3)}] -%}
     {%- endif -%}
   {%- endfor -%}
@@ -197,6 +203,42 @@
   {%- endfor -%}
   {{- {'suivi': ns.suivi, 'lues': ns.lues, 'historique': ns.hist[:30], 'demarrage': ns.demarrage,
        'reglages': ns.reglages, 'affichees': aff.l} | to_json -}}
+{%- endmacro -%}
+
+{#- Abonnée (listes « Tab5 · alertes … ») ? Rend « o » si oui, rien sinon (une macro rend du
+    texte). Source inconnue (entrée d'historique d'avant le lot 4) : montrée. -#}
+{%- macro _abonnee(s, g, ab) -%}
+  {%- set rang = {'Rouge': 0, 'Orange': 1, 'Jaune': 2} -%}
+  {%- set seuil = rang.get(ab.get('vigilance', 'Jaune'), -1) -%}
+  {{- 'o' if (s == 'maj' and (ab.get('maj', 'toutes') == 'toutes' or (ab.get('maj') == 'ha' and g == 'Rouge')))
+             or (s == 'vigilance' and rang.get(g, 9) <= seuil)
+             or (s not in ['maj', 'vigilance'] and ab.get(s, true)) else '' -}}
+{%- endmacro -%}
+
+{#- ── Historique (lot 4 : popup « Alertes » de la tablette, tableau de bord) ─────────── -#}
+{%- macro tab5_alertes_historique_liste(memoire, abonnements, n) -%}
+  {%- set m = memoire if memoire is mapping else {} -%}
+  {%- set ab = abonnements if abonnements is mapping else {} -%}
+  {%- set h = m.get('historique') -%}
+  {%- set ns = namespace(l=[]) -%}
+  {%- for e in (h if h is sequence and h is not string and h is not mapping else []) if e is mapping -%}
+    {%- set i = e.get('i', '') | string -%}
+    {%- set s = e.get('s') or ('maj' if i.startswith('update.') else 'vigilance' if i == 'meteo:vigilance'
+                               else 'indispo' if i == 'ha:indispo' else '') -%}
+    {%- if ns.l | count < n and _abonnee(s, e.get('g', ''), ab) -%}
+      {%- set ns.l = ns.l + [e] -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {{- ns.l | to_json -}}
+{%- endmacro -%}
+
+{%- macro tab5_alertes_historique_payload(memoire, abonnements) -%}
+  {%- set ns = namespace(r=[]) -%}
+  {%- for e in tab5_alertes_historique_liste(memoire, abonnements, 20) | from_json -%}
+    {%- set ns.r = ns.r + [[e.get('a', 0) | int(0), e.get('l', 0) | int(0), e.get('f', 0) | int(0),
+                            e.get('g', ''), _propre(e.get('t', ''))] | join('|')] -%}
+  {%- endfor -%}
+  {{- ns.r | join(';') -}}
 {%- endmacro -%}
 
 {#- ── Ce que disent les états de HA ─────────────────────────────────────────────────── -#}
@@ -285,6 +327,19 @@
 {%- endmacro -%}
 
 {#- ── Le capteur « Tab5 Alertes » ───────────────────────────────────────────────────── -#}
+{#- Abonnements : listes « Tab5 · alertes … » (packages/tab5_alerts.yaml) ; liste absente =
+    choix par défaut (le premier de chaque liste). -#}
+{%- macro tab5_alertes_abonnements() -%}
+  {%- set maj = states('input_select.tab5_alertes_maj') -%}
+  {%- set vigilance = states('input_select.tab5_alertes_vigilance') -%}
+  {{- {'maj': {'Home Assistant seulement': 'ha', 'Aucune': 'aucune'}.get(maj, 'toutes'),
+       'vigilance': vigilance if vigilance in ['Orange', 'Rouge', 'Aucune'] else 'Jaune',
+       'probleme': states('input_select.tab5_alertes_problemes') != 'Non',
+       'indispo': states('input_select.tab5_alertes_indisponibles') != 'Non',
+       'etiquette': states('input_select.tab5_alertes_etiquette') != 'Non',
+       'pile': states('input_select.tab5_alertes_piles') != 'Aucune'} | to_json -}}
+{%- endmacro -%}
+
 {%- macro tab5_alertes_memoire(type_evt, donnees) -%}
   {%- set etat = states.sensor.tab5_alertes -%}
   {%- set m = etat.attributes if etat is not none else {} -%}
@@ -292,20 +347,19 @@
   {#- L'ancienne liste n'est lue qu'à la première fois (mémoire vide). -#}
   {%- set anciennes = (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto', '') | list
                       if suivi is none else [] -%}
-  {#- Abonnements : listes « Tab5 · alertes … » (packages/tab5_alerts.yaml) ; liste absente =
-      choix par défaut (le premier de chaque liste). -#}
-  {%- set maj = states('input_select.tab5_alertes_maj') -%}
   {%- set pile = states('input_select.tab5_alertes_piles') -%}
   {%- set seuil = pile.split(' ')[0] | int(20) if pile.endswith('%') else 20 -%}
-  {%- set abonnements = {
-        'maj': {'Home Assistant seulement': 'ha', 'Aucune': 'aucune'}.get(maj, 'toutes'),
-        'vigilance': states('input_select.tab5_alertes_vigilance')
-                     if states('input_select.tab5_alertes_vigilance') in ['Orange', 'Rouge', 'Aucune'] else 'Jaune',
-        'probleme': states('input_select.tab5_alertes_problemes') != 'Non',
-        'indispo': states('input_select.tab5_alertes_indisponibles') != 'Non',
-        'etiquette': states('input_select.tab5_alertes_etiquette') != 'Non',
-        'pile': pile != 'Aucune'} -%}
+  {%- set abonnements = tab5_alertes_abonnements() | from_json -%}
   {%- set sources = tab5_alertes_sources(suivi or {}, anciennes, seuil) | from_json -%}
   {{- tab5_alertes_logique(m, sources, {'type': type_evt, 'data': donnees or {}},
                            now().timestamp() | int, abonnements) -}}
+{%- endmacro -%}
+
+{#- Historique lu dans HA : format = 'payload' (action tab5_maj_alertes_historique de la
+    tablette) ou 'liste' (JSON, tableau de bord). -#}
+{%- macro tab5_alertes_historique(format) -%}
+  {%- set etat = states.sensor.tab5_alertes -%}
+  {%- set m = etat.attributes if etat is not none else {} -%}
+  {%- set ab = tab5_alertes_abonnements() | from_json -%}
+  {{- tab5_alertes_historique_payload(m, ab) if format == 'payload' else tab5_alertes_historique_liste(m, ab, 20) -}}
 {%- endmacro -%}

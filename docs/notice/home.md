@@ -53,6 +53,7 @@ It changes every 8 seconds between the day's schedule, the rain in the next hour
 
 - **Tap** on the schedule, the rain or the warnings: the next panel at once.
 - **Tap** on a message or an alert: it is dismissed and does not come back, until Home Assistant sends a new one.
+- **Long press**, whatever it shows: the [alerts window](alerts.md), the 20 latest alerts with when they appeared, were read and ended.
 
 It also shows, for a moment, the tablet's spoken answer, a day's schedule (when you tap that day's temperatures, see [bottom row](tiles.md)), the dates of another forecast page, or the name of the room in device mode.
 
@@ -111,5 +112,6 @@ Elle passe toutes les 8 secondes du planning du jour à la pluie de l'heure qui 
 
 - **Tap** sur le planning, la pluie ou les vigilances : le panneau suivant, tout de suite.
 - **Tap** sur un message ou une alerte : il est écarté et ne revient pas, jusqu'à ce que Home Assistant en envoie un nouveau.
+- **Appui long**, quoi qu'elle montre : la [fenêtre des alertes](alerts.md#version-française), les 20 dernières alertes avec l'heure où elles sont apparues, ont été lues et se sont terminées.
 
 Elle montre aussi, un moment, la réponse parlée de la tablette, le planning d'un jour (quand vous touchez les températures de ce jour, voir la [rangée du bas](tiles.md#version-française)), les dates d'une autre page de prévisions, ou le nom de la pièce en mode appareils.

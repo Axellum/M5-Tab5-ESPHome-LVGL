@@ -1,0 +1,70 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file alertes_popup.yaml
+# @role Popup « Alertes » (lot 4 du plan des alertes de la carte centrale, 06/10/2026) :
+#       l'historique des 20 dernières alertes, une ligne chacune (pastille de la gravité,
+#       libellé, « apparue 14 h 02 · lue 14 h 10 · terminée 15 h 30 »), et « Tout marquer
+#       comme lu » dans la barre de titre. Ouvert par un appui long sur la carte centrale
+#       de l'accueil (tab5-lvgl.yaml) ou par « Aller à l'écran → Alertes ».
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Alertes » dans
+#       tab5_modal_registry_init). Corps : x 24..1226, y 72..670, une carte de verre qui
+#       défile (alertes_liste). Les lignes, et la colonne flex qui les range, sont créées
+#       et peintes par tab5_alertes.cpp : aucune valeur posée ici. Le bouton est 10 px à gauche de la
+#       croix, comme « Aujourd'hui » du calendrier (calendar_popup.yaml).
+# @ai_instruction Un widget de plus = son champ dans AlertesUI (tab5_custom.h) et sa ligne
+#       dans le script tab5_alertes_ouvrir (tab5-alertes.yaml).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: alertes_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(alertes_popup));" } }
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0E81", icon_style: "style_text_accent", title: "Alertes", title_id: "alertes_popup_titre", close_btn_id: "btn_alertes_close", close_lambda: "animate_popup_close(id(alertes_popup));" } }
+
+          # « Tout marquer comme lu » : masqué quand rien n'est à lire (tab5_alertes.cpp).
+          - button:
+              id: btn_alertes_tout_lu
+              align: TOP_RIGHT
+              x: -100
+              y: 4
+              width: 380
+              height: 44
+              hidden: true
+              styles: style_clim_btn
+              on_short_click:
+                - script.execute: tab5_alertes_tout_lu
+              widgets:
+                - label: { text: "Tout marquer comme lu", align: CENTER, width: 360, long_mode: DOT, text_align: CENTER, text_font: roboto_22 }
+
+          # ═══ HISTORIQUE : une ligne par alerte, la plus récente en haut ═══
+          - obj:
+              id: alertes_liste
+              align: TOP_LEFT
+              x: 24
+              y: ${modal_body_y}
+              width: 1202
+              height: 598
+              styles: style_glass_card
+              pad_all: 10
+              scrollbar_mode: ACTIVE
+              scroll_dir: VER
+
+          # Avant la première liste de Home Assistant, ou liste vide (« Aucune alerte »).
+          - label: { id: alertes_attente, text: "En attente de Home Assistant", align: CENTER, y: 36, styles: style_text_dim }
