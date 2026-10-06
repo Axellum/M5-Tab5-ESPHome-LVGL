@@ -59,9 +59,9 @@ obj:
               widgets:
                 # « Aujourd'hui · 12.4 kWh », « 30 derniers jours · … », « 12 derniers mois · … »
                 - label: { id: energie_titre, text: "", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
-                - !include { file: energie_vue_btn.yaml, vars: { n: "0", x_pos: "-338", label_text: "Heures" } }
-                - !include { file: energie_vue_btn.yaml, vars: { n: "1", x_pos: "-178", label_text: "Jours" } }
-                - !include { file: energie_vue_btn.yaml, vars: { n: "2", x_pos: "-18", label_text: "Mois" } }
+                - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "0", x_pos: "-338", label_text: "Heures" } }
+                - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "1", x_pos: "-178", label_text: "Jours" } }
+                - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "2", x_pos: "-18", label_text: "Mois" } }
                 # Barres, repère, maximum et axe : créés par tab5_energie.cpp (1166 × 286).
                 - obj:
                     id: energie_zone

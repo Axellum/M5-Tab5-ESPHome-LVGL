@@ -63,6 +63,7 @@ script:
           ModalRegistry::add(id(layer_console_sys),      "Console système",  ModalRegistry::POPUP);
           ModalRegistry::add(id(energie_popup),          "Énergie",          ModalRegistry::POPUP);
           ModalRegistry::add(id(reglages_popup),         "Réglages",         ModalRegistry::POPUP);
+          ModalRegistry::add(id(historique_popup),       "Température",      ModalRegistry::POPUP);
           ModalRegistry::add(id(cal_day_popup),          nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(overlay_confirm_ha),     nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(overlay_confirm_reboot), nullptr,            ModalRegistry::SUBWINDOW);

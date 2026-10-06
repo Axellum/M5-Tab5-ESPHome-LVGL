@@ -102,6 +102,8 @@ esphome:
     - Tab5/tab5_rangee.cpp
     # Popup Énergie : instantané solaire et historique de production (ADR-0028, 04/10/2026).
     - Tab5/tab5_energie.cpp
+    # Popup Température : historique des deux températures et prévision (ADR-0032, 06/10/2026).
+    - Tab5/tab5_historique.cpp
     # Thèmes de l'écran : palette active et repeinture des modules (ADR-0029, lot 2).
     - Tab5/tab5_theme.cpp
     # Popup Réglages de la tablette : peinture des choix (06/10/2026).
@@ -357,6 +359,8 @@ packages:
   tab5_rangee: !include Tab5/tab5-rangee.yaml
   # Popup Énergie (ADR-0028) : APRES tab5_lvgl (widgets), ouvert par une tuile ou par HA.
   tab5_energie: !include Tab5/tab5-energie.yaml
+  # Popup Température (ADR-0032) : APRES tab5_lvgl (widgets), ouvert par un appui long.
+  tab5_historique: !include Tab5/tab5-historique.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les
   # valeurs par défaut des entity_… : une clé de Tab5/user_entities.yaml l'emporte.
   tab5_zones: !include Tab5/tab5-zones.yaml

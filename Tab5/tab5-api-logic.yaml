@@ -632,6 +632,35 @@ api:
       then:
         - lambda: 'energie_historique(vue, debut, valeurs);'
 
+    # Historique des températures (ADR-0032) : réponse à l'événement esphome.tab5_historique
+    # (cle, vue), par script.tab5_historique (packages/tab5_historique.yaml) que lance le
+    # blueprint « Tab5 — emplacements ». Rien n'est gardé : tout repart à l'ouverture.
+    - service: tab5_maj_historique
+      description: "Popup Température : la courbe d'une des deux températures de l'accueil, et la prévision de la météo à la suite de la seconde."
+      variables:
+        cle:
+          type: string
+          description: "salon (température de la pièce) ou serre (seconde température)"
+          example: "serre"
+        vue:
+          type: string
+          description: "jour (24 h, créneaux d'une heure), semaine (7 jours, trois heures) ou mois (30 jours, un jour)"
+          example: "jour"
+        entete:
+          type: string
+          description: "nom|debut|pas|maintenant|actuel|exterieur — nom affiché (vide : celui de l'emplacement), début du premier créneau en heure locale AAAA-MM-JJTHH:MM, minutes par créneau, minutes de debut à maintenant, valeur actuelle (nan sans), 1 si la seconde température est dehors"
+          example: "Serre|2026-06-15T07:00|60|1485|18.2|0"
+        mesures:
+          type: string
+          description: "moy,min,max de chaque créneau depuis debut, séparés par ; (vide = pas de donnée), 64 au plus"
+          example: "17.1,16.8,17.5;16.9,16.6,17.2;;16.5,16.2,16.8"
+        previsions:
+          type: string
+          description: "minute,moy[,min,max] de chaque point de prévision (minutes depuis debut, dans l'ordre), séparés par ; — vide pour la pièce ou sans météo, 48 au plus"
+          example: "1500,19.4;1560,20.8;1620,22.1"
+      then:
+        - lambda: 'historique_recu(cle, vue, entete, mesures, previsions);'
+
 # Fenêtre d'appairage (lot 6b, ADR-0020) : une tablette qui n'a pas encore de clé API
 # (neuve, ou jamais ajoutée à HA) n'accepte le premier contact de HA que pendant les
 # 30 minutes qui suivent son démarrage. Passé ce délai, elle refuse toute connexion et

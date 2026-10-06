@@ -3,6 +3,8 @@
 # @file climate_card.yaml
 # @role Zone clim dashboard : températures Salon/Serre hors carte, verre
 #       `style_clim_carte_page` uniquement autour de − / température cible / +.
+#       Appui long sur une des deux températures : son historique (popup « Température »,
+#       ADR-0032) ; appui court sur la serre : l'arcade.
 # @architecture_constraint Grille du haut (tab5-lvgl.yaml, 05/10/2026) : la carte occupe la
 #                          colonne de droite sous HA / Sys / TV (855-1260, bord droit
 #                          aligné sur le bandeau central). Tuile verre 405 × 90, bas à y 308
@@ -75,7 +77,24 @@ obj:
         widgets:
           - label: { id: icon_serre, text: "\U000F002D", text_font: mdi_font_45, styles: style_text_dim }
           - label: { id: current_serre, text: "-- °", styles: [style_police_date, style_text_temp_max] }
-    # Zone tactile sur la température serre → ouvre le sélecteur de jeux Arcade.
+    # Zone tactile sur la température de la pièce → appui long : son historique (popup
+    # « Température », ADR-0032, 06/10/2026). Couvre la rangée salon (14..192 au pire,
+    # y 24..85) : x 6..192 et y 22..86, sans toucher la zone serre (dès 199). Pièce
+    # absente (zones_apply_ui) : rangée masquée, l'appui ne fait rien.
+    - button:
+        id: btn_salon_historique
+        align: TOP_LEFT
+        x: 6
+        y: 22
+        width: 186
+        height: 64
+        styles: style_invisible
+        on_long_press:
+          - lambda: 'if (!zone_absente(Zone::SALON)) id(tab5_historique_ouvrir).execute(std::string("salon"));'
+    # Zone tactile sur la température serre → appui court : le sélecteur de jeux Arcade ;
+    # appui long : l'historique et la prévision de la seconde température (ADR-0032 ; LVGL
+    # n'envoie pas l'appui court après un appui long). Sans serre, l'icône est une manette
+    # et l'appui long ne fait rien.
     # [26/07/2026] FIX : la zone était posée à côté de ce qu'elle est censée
     # couvrir (elle ne touchait QUE l'icône, jamais la valeur affichée : taper la
     # température ne déclenchait rien). Depuis le 05/10/2026 (rangée de 45 px) : la
@@ -92,6 +111,8 @@ obj:
         styles: style_invisible
         on_short_click:
           - script.execute: tab5_arcade_open
+        on_long_press:
+          - lambda: 'if (!zone_absente(Zone::SERRE)) id(tab5_historique_ouvrir).execute(std::string("serre"));'
 
     # ═══ Zone verre uniquement autour de − / cible / + ═══
     - obj:
