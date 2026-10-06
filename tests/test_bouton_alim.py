@@ -11,7 +11,9 @@ Ce fichier lit le vrai code (tab5_journal.cpp n'est pas compilable sur PC : il d
 d'ESPHome) et rend la vraie garde « reboot inattendu » de packages/tab5_health.yaml :
 - ESP_RST_WDT seul n'est pas une anomalie ; panique, chiens de garde de tâche et
   d'interruption, baisse de tension, micro-coupure, blocage du CPU le restent ;
-- un rapport de plantage pose toujours l'anomalie, quelle que soit la raison ;
+- un rapport de plantage (lu par `crash_handler_has_data()` : le logger l'écrit avant que
+  le déclencheur `on_message` existe) fait d'ESP_RST_WDT un plantage, et ses lignes,
+  rejouées dans le journal, posent l'anomalie ;
 - le filtre du capteur remplace le texte d'ESPHome pour ESP_RST_WDT, par le libellé du
   bouton sans rapport, par un libellé de plantage avec ;
 - la garde HA laisse passer le libellé du bouton et notifie celui du plantage."""
@@ -67,9 +69,18 @@ def _anormales_du_code():
 
 
 def _anomalie(raison, rapport_plantage):
-    """Le classement du firmware, tel que le code le décrit : raison anormale ou rapport
-    de plantage (bit kPlantage posé par journal_log_message)."""
-    return raison in _anormales_du_code() or rapport_plantage
+    """Évalue `reset_anormal()` du vrai code : son expression C++ traduite en Python, avec
+    `raison_anormale(r)` lue elle aussi dans le code."""
+    corps = _fonction(_code(), "bool reset_anormal(esp_reset_reason_t r, bool rapport_plantage)")
+    m = re.fullmatch(r"\s*return (.+?);\s*", corps, re.S)
+    assert m, "reset_anormal() n'est plus une seule expression"
+    expr = " ".join(m.group(1).split())
+    expr = expr.replace("raison_anormale(r)", "(r in anormales)")
+    expr = re.sub(r"\b(ESP_RST_\w+)\b", r"'\1'", expr)
+    expr = expr.replace("||", " or ").replace("&&", " and ")
+    return bool(eval(expr, {"__builtins__": {}},  # noqa: S307 (expression lue dans le dépôt)
+                     {"r": raison, "rapport_plantage": rapport_plantage,
+                      "anormales": _anormales_du_code()}))
 
 
 def test_le_chien_de_garde_seul_n_est_pas_une_anomalie():
@@ -83,13 +94,28 @@ def test_les_vraies_anomalies_alertent_toujours():
     assert _anomalie("ESP_RST_WDT", rapport_plantage=True)
 
 
-def test_un_rapport_de_plantage_pose_toujours_l_anomalie():
-    corps = _fonction(_code(), "void journal_log_message(")
-    m = re.search(r"if \(crash\) \{(.*?)\n    \}", corps, re.S)
-    assert m, "branche `if (crash)` introuvable dans journal_log_message"
-    # Inconditionnel : la première instruction de la branche.
-    assert m.group(1).strip().startswith("s_j.anomalie |= kPlantage;")
-    assert "s_rapport_plantage = true;" in m.group(1)
+def test_un_rapport_de_plantage_est_lu_et_pose_l_anomalie():
+    code = _code()
+    # Le logger écrit le rapport avant que le déclencheur on_message existe : le journal le
+    # lit à l'ouverture, par ESPHome, et le classement en dépend.
+    ouvrir = _fonction(code, "void ouvrir_session()")
+    assert "s_rapport_plantage = esphome::esp32::crash_handler_has_data();" in ouvrir
+    assert ("if (reset_anormal(r, s_rapport_plantage) && !s_installation) "
+            "s_j.anomalie |= kPlantage;") in ouvrir
+    # Ses lignes, rejouées hors du chemin du logger, posent aussi l'anomalie.
+    message = _fonction(code, "void journal_log_message(")
+    assert "if (crash && !s_rejeu_en_cours) return;" in message
+    assert "if (crash) s_j.anomalie |= kPlantage;" in message
+    assert "rejouer_rapport();" not in message  # ses ESP_LOGE repasseraient par le logger
+    rejeu = _fonction(code, "void rejouer_rapport()")
+    assert "esphome::esp32::crash_handler_log();" in rejeu
+    assert "reset_anormal(s_raison, true)" in rejeu
+    for fonction in ("void journal_tick()", "bool journal_has_report()"):
+        assert "rejouer_rapport();" in _fonction(code, fonction), fonction
+    # Effacé seulement une fois livré à HA avec le journal.
+    livre = _fonction(code, "void journal_mark_delivered()")
+    assert "if (s_rapport_dans_journal) {" in livre
+    assert "crash_handler_clear();" in livre
 
 
 def test_le_texte_du_journal_distingue_bouton_et_plantage():

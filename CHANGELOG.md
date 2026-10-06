@@ -32,6 +32,12 @@ alerterait sur le nouveau texte).
   déclenche. Une panique, un chien de garde de tâche ou d'interruption, une baisse de
   tension, une micro-coupure, un blocage du CPU, un Wi-Fi absent et **tout chien de garde
   accompagné d'un rapport `esp32.crash`** alertent toujours.
+- **Rapport de plantage d'ESPHome** : le logger l'écrit avant que le déclencheur
+  `on_message` du journal existe, il n'y entrait donc jamais (trouvé à la relecture de ce
+  lot). Le journal le lit maintenant par `esp32::crash_handler_has_data()`, le rejoue dans ses
+  lignes quand la raison du reset est un plantage, et l'efface une fois le journal arrivé à HA
+  (comme ESPHome après un abonnement aux logs) : un vieux rapport jamais lu ne fait pas passer
+  les appuis suivants sur le bouton pour des plantages.
 - **Entité « Tab5 Raison du redémarrage »** : pour cette raison, ESPHome répète la source du
   dernier redémarrage demandé, qu'il n'efface jamais (`debug_esp32.cpp`). Le filtre publie
   maintenant `Power button or RTC watchdog (rst 0x..)`, ou `Crash, other watchdogs (rst 0x..)`

@@ -19,9 +19,19 @@
  *         ESP-Hosted « not yet up » et les drapeaux d'état d'ESPHome sont normaux
  *         (fausse alerte au flash du 26/09/2026, 22:23).
  *       Le rapport de plantage d'ESPHome (étiquette « esp32.crash », PC et pile
- *       d'appels des deux cœurs) est écrit au démarrage : il entre dans le journal.
+ *       d'appels des deux cœurs) est écrit par Logger::pre_setup(), AVANT que le
+ *       déclencheur `on_message` existe (main.cpp généré : pre_setup() puis
+ *       `new LoggerMessageTrigger`) : il n'arrive jamais ici au démarrage, seulement
+ *       aux abonnements aux logs, bien après 5 s (lignes ignorées). Depuis le 06/10/2026
+ *       le journal le lit par `esp32::crash_handler_has_data()` (posé par arch_init(),
+ *       avant tout) et le rejoue (`crash_handler_log()`, hors du chemin du logger : au
+ *       premier journal_tick() ou à l'envoi) quand la raison du reset est un plantage ;
+ *       une fois le journal livré à HA, `crash_handler_clear()`, comme ESPHome après
+ *       un abonnement aux logs : sinon un vieux rapport jamais lu ferait passer chaque
+ *       appui sur le bouton d'alimentation pour un plantage.
  * @regle_absolue Aucun log ici : `journal_log_message()` est appelée PAR le logger,
- *                un ESP_LOG* bouclerait. Aucune allocation sur ce chemin, sauf la
+ *                un ESP_LOG* bouclerait (seul rejouer_rapport() en fait écrire, et
+ *                jamais depuis ce chemin : journal_tick() et journal_has_report()). Aucune allocation sur ce chemin, sauf la
  *                relecture de la copie NVS (une fois par démarrage, tampon PSRAM rendu).
  * @memory_constraint 32 lignes de 104 o en `.noinit` (≈ 3,3 Ko de RAM interne).
  * Numérotation : #1 = premier démarrage depuis le dernier envoi ; #0 = la suite du
@@ -56,8 +66,8 @@
  *     (startup_funcs.c, init_disable_rtc_wdt). En marche, il n'est réarmé que par
  *     esp_restart (garde de 1 s, system_internal.c) et par le gestionnaire de panique
  *     (panic.c), APRÈS qu'ESPHome a écrit son rapport (crash_handler.cpp enveloppe
- *     esp_panic_handler) : un vrai plantage arrive donc avec `esp32.crash`, qui pose
- *     kPlantage plus bas, et alerte toujours.
+ *     esp_panic_handler) : un vrai plantage arrive donc avec un rapport
+ *     (crash_handler_has_data()), qui pose kPlantage, et alerte toujours.
  *   - Ce qui n'alerte plus : un démarrage bloqué plus de 9 s (bootloader), et un chien
  *     de garde de timer qui réinitialise sans passer par la panique (interruptions
  *     bloquées). Rares ; la raison et le code « rst » restent dans l'historique de HA.
@@ -75,6 +85,9 @@
 #if __has_include(<esp_rom_sys.h>)
 #include <esp_rom_sys.h>  // code de reset brut du ROM ; absent du rendu hors tablette
 #define TAB5_JOURNAL_CODE_ROM 1
+#endif
+#ifdef USE_ESP32_CRASH_HANDLER
+#include "esphome/components/esp32/crash_handler.h"
 #endif
 #include <cstdio>
 #include <cstring>
@@ -140,14 +153,23 @@ bool s_installation = false;    // neuve ET relancée par le chien de garde RTC
 bool s_wifi_vu = false;         // réseau joint au moins une fois depuis le démarrage
 esp_reset_reason_t s_raison = ESP_RST_UNKNOWN;  // lue une fois, à l'ouverture
 unsigned s_code_rom = 0;        // code brut du ROM (« rst 0x.. »), 0 hors tablette
-bool s_rapport_plantage = false;  // rapport `esp32.crash` lu à ce démarrage
-int s_repere = -1;              // ligne du repère de ce démarrage, à réécrire
+bool s_rapport_plantage = false;  // rapport de plantage d'ESPHome valide à ce démarrage
+bool s_rejeu_fait = false;      // rapport rejoué (ou écarté) une fois par démarrage
+bool s_rejeu_en_cours = false;  // ses lignes passent malgré la règle des 5 s
+#ifdef USE_ESP32_CRASH_HANDLER
+bool s_rapport_dans_journal = false;  // rejoué : à effacer une fois le journal livré
+#endif
 
-// Reset anormal à lui seul. ESP_RST_WDT n'y est PAS (voir [AI-WARNING] en tête) : sans
-// rapport de plantage c'est le bouton d'alimentation, avec, le rapport pose kPlantage.
+// Reset anormal à lui seul. ESP_RST_WDT n'y est PAS (voir [AI-WARNING] en tête) : il ne
+// l'est qu'avec un rapport de plantage (reset_anormal()), sinon c'est le bouton.
 bool raison_anormale(esp_reset_reason_t r) {
     return r == ESP_RST_PANIC || r == ESP_RST_INT_WDT || r == ESP_RST_TASK_WDT ||
            r == ESP_RST_BROWNOUT || r == ESP_RST_PWR_GLITCH || r == ESP_RST_CPU_LOCKUP;
+}
+
+// Reset qui pose kPlantage : raison anormale, ou chien de garde AVEC rapport de plantage.
+bool reset_anormal(esp_reset_reason_t r, bool rapport_plantage) {
+    return raison_anormale(r) || (r == ESP_RST_WDT && rapport_plantage);
 }
 
 const char* raison_texte(esp_reset_reason_t r) {
@@ -233,24 +255,6 @@ void preparer_pref() {
     s_pref_ok = true;
 }
 
-// Pose le repère du démarrage, ou le réécrit quand le rapport de plantage arrive après
-// lui (ESP_RST_WDT : « bouton » devient « plantage »). Jamais de second repère.
-void ecrire_repere() {
-    char texte[kTexte];
-    char repere[kTexte];
-    texte_demarrage(texte, sizeof(texte));
-    snprintf(repere, sizeof(repere), "démarrage, raison : %s", texte);
-    if (s_repere >= 0) {
-        Ligne& l = s_j.lignes[s_repere];
-        if (l.boot == s_j.demarrages && l.niveau == '>') {
-            snprintf(l.texte, sizeof(l.texte), "%s", repere);
-        }
-        return;
-    }
-    s_repere = s_j.tete;
-    ajouter('>', repere);
-}
-
 // Au premier appel de chaque démarrage : valide la RAM conservée (sinon, mise sous
 // tension : on repart de la copie NVS s'il y en a une) et pose le repère du démarrage.
 void ouvrir_session() {
@@ -281,11 +285,35 @@ void ouvrir_session() {
 #ifdef TAB5_JOURNAL_CODE_ROM
     s_code_rom = (unsigned) esp_rom_get_reset_reason(0);
 #endif
+#ifdef USE_ESP32_CRASH_HANDLER
+    // Lu par arch_init() avant tout, encore valide ici (voir l'en-tête).
+    s_rapport_plantage = esphome::esp32::crash_handler_has_data();
+#endif
     s_installation = s_neuve && r == ESP_RST_WDT;
     if (s_j.demarrages < 0xFFFF) s_j.demarrages++;
     // kPlantage et kWifi d'un démarrage précédent restent posés jusqu'à l'envoi.
-    if (raison_anormale(r) && !s_installation) s_j.anomalie |= kPlantage;
-    ecrire_repere();
+    if (reset_anormal(r, s_rapport_plantage) && !s_installation) s_j.anomalie |= kPlantage;
+    char texte[kTexte];
+    char repere[kTexte];
+    texte_demarrage(texte, sizeof(texte));
+    snprintf(repere, sizeof(repere), "démarrage, raison : %s", texte);
+    ajouter('>', repere);
+}
+
+// Rejoue le rapport de plantage d'ESPHome dans le journal, une fois par démarrage et
+// seulement si la raison du reset est un plantage (un vieux rapport jamais lu ne
+// s'accroche pas à un redémarrage normal). Jamais depuis journal_log_message() : ses
+// ESP_LOGE repassent par le logger, donc par le journal.
+void rejouer_rapport() {
+    if (s_rejeu_fait) return;
+    s_rejeu_fait = true;
+#ifdef USE_ESP32_CRASH_HANDLER
+    if (!s_rapport_plantage || !reset_anormal(s_raison, true)) return;
+    s_rejeu_en_cours = true;
+    esphome::esp32::crash_handler_log();
+    s_rejeu_en_cours = false;
+    s_rapport_dans_journal = true;
+#endif
 }
 
 void copier_en_nvs() {
@@ -311,9 +339,9 @@ void journal_log_message(uint8_t level, const char* tag, const char* message) {
     ouvrir_session();
     const bool idf = tag != nullptr && strcmp(tag, "esp-idf") == 0;
     const bool crash = tag != nullptr && strcmp(tag, "esp32.crash") == 0;
-    // Le rapport de plantage est écrit au démarrage, puis réécrit à l'abonnement aux
-    // logs de chaque client : on ne garde que le premier passage.
-    if (crash && esphome::millis() > 5000) return;
+    // Le rapport de plantage n'arrive ici que rejoué par rejouer_rapport(), ou réécrit à
+    // l'abonnement aux logs de chaque client (ignoré : c'est le même).
+    if (crash && !s_rejeu_en_cours) return;
     const bool ha = ha_connecte();
     if (ha) marquer_ha_vu();
     const bool erreur = level <= ESPHOME_LOG_LEVEL_ERROR || idf;
@@ -325,21 +353,14 @@ void journal_log_message(uint8_t level, const char* tag, const char* message) {
     copier_sans_ansi(texte, sizeof(texte), message);
     // Une ligne seule ne justifie un envoi qu'après la première connexion à HA ; avant,
     // c'est le démarrage, gardé comme contexte. Un rapport de plantage, toujours.
-    if (crash) {
-        s_j.anomalie |= kPlantage;
-        // ESP_RST_WDT avec rapport : un vrai plantage, pas le bouton (repère réécrit).
-        if (!s_rapport_plantage) {
-            s_rapport_plantage = true;
-            if (s_raison == ESP_RST_WDT) ecrire_repere();
-        }
-    } else if (erreur && s_ha_vu) {
-        s_j.anomalie |= kErreur;
-    }
+    if (crash) s_j.anomalie |= kPlantage;
+    else if (erreur && s_ha_vu) s_j.anomalie |= kErreur;
     ajouter(erreur ? 'E' : 'W', texte);
 }
 
 void journal_tick() {
     ouvrir_session();
+    rejouer_rapport();
     if (s_marque_a_ecrire) {
         s_marque_a_ecrire = false;
         const uint32_t marque = kMagic;
@@ -373,6 +394,7 @@ void journal_tick() {
 // jamais joint HA (Wi-Fi absent, ou HA absent plus d'une heure : reboot_timeout).
 bool journal_has_report() {
     ouvrir_session();
+    rejouer_rapport();  // avant l'envoi, si journal_tick() n'est pas encore passé
     if (ha_connecte()) marquer_ha_vu();
     return s_j.nb > 0 && (s_j.anomalie != 0 || s_j.demarrages > 1);
 }
@@ -389,8 +411,8 @@ std::string journal_reset_reason() {
     return texte;
 }
 
-// Filtre du capteur debug. Le capteur est publié par dump_config(), après le setup du
-// logger qui écrit le rapport de plantage : s_rapport_plantage est déjà à jour.
+// Filtre du capteur debug (publié par dump_config(), bien après arch_init() qui lit le
+// rapport de plantage : s_rapport_plantage est à jour dès ouvrir_session()).
 std::string journal_raison_ha(const std::string& raison) {
     ouvrir_session();
     if (s_installation) return std::string(kRaisonInstallationHa) + " (" + raison + ")";
@@ -447,4 +469,12 @@ void journal_mark_delivered() {
         s_copie_en_nvs = false;
     }
     s_nb_copie = 0xFFFF;
+#ifdef USE_ESP32_CRASH_HANDLER
+    // Rapport livré à HA avec le journal : effacé pour le démarrage suivant, comme
+    // ESPHome après un abonnement aux logs (il reste lisible pendant celui-ci).
+    if (s_rapport_dans_journal) {
+        esphome::esp32::crash_handler_clear();
+        s_rapport_dans_journal = false;
+    }
+#endif
 }
