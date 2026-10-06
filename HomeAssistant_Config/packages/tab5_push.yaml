@@ -453,7 +453,7 @@ automation:
 
   # ============================================================================
   # PUSH ALERTES / SANTÉ HA (chemin court, faible latence).
-  # Un dismiss, une vigilance Météo-France ou une MAJ HA ne relancent PAS la chaîne
+  # Une alerte lue ou nouvelle, une vigilance ou la pluie ne relancent PAS la chaîne
   # prévisions/calendrier de `tab5_ha_hmi_updater` : ce chemin ne pousse QUE les
   # sections 1 (alerte MF), 7 (bandeau info) et 7b (rotateur d'alertes HA), via le
   # même script que la poussée complète — aucun delay, aucun appel API. Un changement
@@ -470,13 +470,10 @@ automation:
         entity_id: sensor.tab5_pluie_dans_l_heure
       - platform: state
         entity_id: sensor.tab5_vigilance
+      # Alertes à lire (packages/tab5_alerts.yaml) : nouvelle, changée, lue, terminée.
       - platform: state
-        entity_id:
-          - update.home_assistant_core_update
-          - update.home_assistant_supervisor_update
-          - update.home_assistant_operating_system_update
-      - platform: state
-        entity_id: input_text.tab5_alerts_dismissed
+        entity_id: sensor.tab5_alertes
+        attribute: affichees
     condition:
       - condition: state
         entity_id: input_boolean.is_primary_active
@@ -650,18 +647,17 @@ script:
   # (section `automation:` de ce package), pas par le Tab5. Chaque bloc n'existe
   # qu'ici au lieu d'être recopié dans la poussée complète ET dans son automatisation
   # « au changement ». mode: queued — chaque passage relit l'état courant, le dernier
-  # gagne. tab5_push_alertes lit input_text.tab5_alerts_dismissed et
-  # sensor.tab5_unavailable_count, fournis par packages/tab5_alerts.yaml.
+  # gagne. tab5_push_alertes lit sensor.tab5_alertes (packages/tab5_alerts.yaml) :
+  # les alertes à lire, déjà triées.
   # ─────────────────────────────────────────────────────────────────────────────
 
   tab5_push_alertes:
     alias: "Tab5 — pousser vigilance, bandeau info et alertes HA"
     description: >-
-      Sections 1 (code de pluie + vigilance, capteurs normalisés), 7 (bandeau info) et 7b
-      (rotateur d'alertes HA) de l'écran Tab5. Appelé par la poussée complète
-      (tab5_ha_hmi_updater) et par la poussée légère (tab5_ha_hmi_alerts_push).
-      Les mises à jour, capteurs « problem » et le compte d'indisponibles sont
-      relevés UNE fois (variables) au lieu de trois.
+      Sections 1 (code de pluie + vigilance, capteurs normalisés), 7 (bandeau info :
+      la vigilance à lire) et 7b (les 4 premières alertes à lire) de l'écran Tab5,
+      d'après sensor.tab5_alertes (packages/tab5_alerts.yaml). Appelé par la poussée
+      complète (tab5_ha_hmi_updater) et par la poussée légère (tab5_ha_hmi_alerts_push).
     mode: queued
     max: 10
     fields:
@@ -688,68 +684,37 @@ script:
         condition: template
         value_template: "{{ not (vigilance_seule | default(false)) }}"
       - variables:
-          critiques:
-            - update.home_assistant_core_update
-            - update.home_assistant_supervisor_update
-            - update.home_assistant_operating_system_update
-          dismissed: >-
-            {{ (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto', '') | list }}
-          alerte: "{{ states('sensor.tab5_vigilance') }}"
-          maj: >-
-            {%- set ns = namespace(l=[]) -%}
-            {%- for u in states.update | selectattr('state', 'eq', 'on') | rejectattr('entity_id', 'in', dismissed) | sort(attribute='entity_id') -%}
-            {%- set ns.l = ns.l + [[u.entity_id, u.attributes.title | default(u.attributes.friendly_name, true)]] -%}
-            {%- endfor -%}
-            {{- ns.l -}}
-          problemes: >-
-            {%- set ns = namespace(l=[]) -%}
-            {%- for p in states.binary_sensor | selectattr('attributes.device_class', 'defined') | selectattr('attributes.device_class', 'eq', 'problem') | selectattr('state', 'eq', 'on') | rejectattr('entity_id', 'in', dismissed) | sort(attribute='entity_id') -%}
-            {%- set ns.l = ns.l + [[p.entity_id, p.attributes.friendly_name | default(p.entity_id, true)]] -%}
-            {%- endfor -%}
-            {{- ns.l -}}
-          indispo: >-
-            {{ 0 if 'ha:unavailable' in dismissed else states('sensor.tab5_unavailable_count') | int(0) }}
+          # Alertes à lire, triées (gravité, puis la plus ancienne) : i = « id#révision »,
+          # renvoyé tel quel par la tablette au tap ; t = libellé codé, composé par la
+          # tablette dans sa langue.
+          alertes: "{{ state_attr('sensor.tab5_alertes', 'affichees') or [] }}"
+          vigi: >-
+            {%- set v = alertes | selectattr('s', 'eq', 'vigilance') | list -%}
+            {{ v[0] if v else {'i': '', 'g': ''} }}
       - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
         continue_on_error: true
         data:
           # Code composé par la tablette dans sa langue (lot 4c) :
           # @ha|nb MAJ|titre de la MAJ s'il n'y en a qu'une|nb erreurs|nb indispo|jaune 0/1|vigilance
-          # vigilance = rouge, orange ou vide. Même logique qu'avant : une vigilance rouge
-          # ou orange non acquittée remplace la ligne HA ; une jaune la préfixe.
+          # Depuis les alertes du 06/10/2026, les MAJ, erreurs et indisponibles sont des
+          # bandeaux d'alerte (section 7b) : ce bandeau ne dit plus que la vigilance à
+          # lire (rouge ou orange : bannière ; jaune : « Vigilance Jaune »), vide sinon.
           texte: >-
-            {%- set meteo_key = 'meteo:' ~ (alerte | lower) if alerte in ['Rouge', 'Orange', 'Jaune'] else '' -%}
-            {%- set meteo_vu = meteo_key != '' and meteo_key in dismissed -%}
-            {%- set vigi = (alerte | lower) if alerte in ['Rouge', 'Orange'] and not meteo_vu else '' -%}
-            {%- set jaune = 1 if alerte == 'Jaune' and not meteo_vu else 0 -%}
-            {%- set titre = (maj[0][1] | string | replace('|', '/')) if maj | length == 1 else '' -%}
-            @ha|{{ maj | length }}|{{ titre }}|{{ problemes | length }}|{{ indispo }}|{{ jaune }}|{{ vigi }}
+            {%- set niveau = vigi.g | lower -%}
+            @ha|0||0|0|{{ 1 if niveau == 'jaune' else 0 }}|{{ niveau if niveau in ['rouge', 'orange'] else '' }}
           couleur: >-
-            {%- if alerte == 'Rouge' -%}Rouge
-            {%- elif alerte in ['Orange', 'Jaune'] -%}Orange
-            {%- elif problemes | length > 0 or maj | map(attribute=0) | select('in', critiques) | list | length > 0 -%}Rouge
-            {%- elif maj | length > 0 -%}Orange
-            {%- else -%}Blanc
-            {%- endif -%}
-          meteo_id: >-
-            {{ 'meteo:' ~ (alerte | lower) if alerte in ['Rouge', 'Orange', 'Jaune'] else '' }}
+            {{ 'Rouge' if vigi.g == 'Rouge' else ('Orange' if vigi.g in ['Orange', 'Jaune'] else 'Blanc') }}
+          meteo_id: "{{ vigi.i }}"
       - action: esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk
         continue_on_error: true
         data:
           payload: >-
             {%- set ns = namespace(r=[]) -%}
-            {%- for u in maj -%}
+            {%- for a in alertes if a.s != 'vigilance' -%}
             {%- if ns.r | length < 4 -%}
-            {%- set ns.r = ns.r + [u[0] ~ '|' ~ ('Rouge' if u[0] in critiques else 'Orange') ~ '|@maj:' ~ (u[1] | string | replace(';', ','))] -%}
+            {%- set ns.r = ns.r + [a.i ~ '|' ~ ('Rouge' if a.g == 'Rouge' else 'Orange') ~ '|' ~ a.t] -%}
             {%- endif -%}
             {%- endfor -%}
-            {%- for p in problemes -%}
-            {%- if ns.r | length < 4 -%}
-            {%- set ns.r = ns.r + [p[0] ~ '|Rouge|' ~ p[1]] -%}
-            {%- endif -%}
-            {%- endfor -%}
-            {%- if ns.r | length < 4 and indispo > 0 -%}
-            {%- set ns.r = ns.r + ['ha:unavailable|Orange|@indispo:' ~ indispo] -%}
-            {%- endif -%}
             {{- ns.r | join(';') -}}
 
   tab5_push_meteo:
