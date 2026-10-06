@@ -2,18 +2,26 @@
 # [AI-CONTEXT]
 # @file switches_card.yaml
 # @role Calque du mode HA (bouton « HA », ADR-0023) : 5 cartes = les 5 tuiles de la pièce
-#       de la page courante. Icône (palette, 70 px), nom (onglet titre, coupé avec « … »)
-#       et ligne d'état sont posés par tab5_tuiles.cpp (peindre_cartes) ; les cartes vides
-#       sont masquées et les autres centrées. Tap et appui long : tuile_appui(), qui envoie
-#       la commande du type de la tuile (ou, en mode héritage, celle de la 3.x).
+#       de la page courante. Depuis le 06/10/2026 (discussion #278 : « buttons can be like
+#       ha dashboard buttons »), chaque carte ressemble à la carte « tile » d'un tableau de
+#       bord Home Assistant, en version verticale : l'icône (palette, 70 px) dans une
+#       pastille ronde de la couleur de son état (couleur à 20 %, icône pleine), le nom
+#       dessous, l'état sous le nom. Pastille, icône, nom (coupé avec « … ») et ligne
+#       d'état sont posés par tab5_tuiles.cpp (peindre_carte) ; les cartes vides sont
+#       masquées et les autres centrées. Tap et appui long sur la pastille : tuile_appui(),
+#       qui envoie la commande du type de la tuile ou ouvre son popup (ou, en mode
+#       héritage, ce que faisait la 3.x). Toucher du nom : sens d'un volet.
 #       Alterne avec forecast_daily.yaml/forecast_hourly.yaml : tuiles_mode_ha().
-# @architecture_constraint Onglet Titre (`switch_card_title_tab.yaml`) et Onglet État
+# @architecture_constraint Nom (`switch_card_title_tab.yaml`) et état
 #                          (`switch_card_state_tab.yaml`) sont factorisés (#T164, même motif x5).
 #                          Le corps reste écrit cinq fois : les ids `icon_swN` doivent rester
 #                          littéraux (motif `icon_sw?` de la règle 7, palette des tuiles) et
-#                          `sw_card_N` sont lus par tab5-tuiles.yaml.
+#                          `sw_card_N` / `sw_pastille_N` sont lus par tab5-tuiles.yaml.
+#                          Le bouton invisible ne couvre que la pastille (130 × 130, comme
+#                          avant) : un geste parti ailleurs sur la carte reste un swipe.
 # @ai_instruction Icônes, titres, états, couleurs et positions sont écrits par le C++ —
-#                 les textes et glyphes d'ici ne sont que ceux d'avant la première image.
+#                 les textes, glyphes et couleurs d'ici ne sont que ceux d'avant la
+#                 première image. La pastille et le nom ne prennent pas l'appui du bouton.
 # ============================================================================
 obj:
   id: layer_switches
@@ -33,33 +41,37 @@ obj:
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}
         height: ${meteo_cell_height}
-        styles: style_transparent
+        styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         widgets:
-          # Corps Sombre
+          # Pastille ronde : la couleur de l'état à 20 % (posée par le C++), l'icône pleine.
           - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
+              id: sw_pastille_0
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              radius: 65
+              styles: style_bg_dim
+              bg_opa: 20%
+              border_width: 0
+              clickable: false
+              scrollable: false
               widgets:
                 - label: { id: icon_sw0, text: "\U000F0379", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
-                - button:
-                    id: btn_sw0_action
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(0, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(0, true);'
-          # Onglets Titre + État (factorisés, #T164) APRÈS le corps : dessinés par-dessus,
-          # comme les tuiles de prévisions (forecast_daily.yaml).
+          - button:
+              id: btn_sw0_action
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              styles: style_invisible
+              on_short_click:
+                - lambda: 'tuile_appui(0, false);'
+              on_long_press:
+                - lambda: 'tuile_appui(0, true);'
           - !include { file: switch_card_title_tab.yaml, vars: { idx: "0", title: "PC Bureau" } }
           - !include { file: switch_card_state_tab.yaml, vars: { idx: "0", state_text: "Éteint" } }
-
     # Tuile 1
     - obj:
         id: sw_card_1
@@ -67,30 +79,37 @@ obj:
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}
         height: ${meteo_cell_height}
-        styles: style_transparent
+        styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         widgets:
+          # Pastille ronde : la couleur de l'état à 20 % (posée par le C++), l'icône pleine.
           - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
+              id: sw_pastille_1
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              radius: 65
+              styles: style_bg_dim
+              bg_opa: 20%
+              border_width: 0
+              clickable: false
+              scrollable: false
               widgets:
                 - label: { id: icon_sw1, text: "\U000F111E", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
-                - button:
-                    id: btn_sw1_action
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(1, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(1, true);'
+          - button:
+              id: btn_sw1_action
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              styles: style_invisible
+              on_short_click:
+                - lambda: 'tuile_appui(1, false);'
+              on_long_press:
+                - lambda: 'tuile_appui(1, true);'
           - !include { file: switch_card_title_tab.yaml, vars: { idx: "1", title: "Volet" } }
           - !include { file: switch_card_state_tab.yaml, vars: { idx: "1", state_text: "Fermé" } }
-
     # Tuile 2
     - obj:
         id: sw_card_2
@@ -98,30 +117,37 @@ obj:
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}
         height: ${meteo_cell_height}
-        styles: style_transparent
+        styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         widgets:
+          # Pastille ronde : la couleur de l'état à 20 % (posée par le C++), l'icône pleine.
           - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
+              id: sw_pastille_2
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              radius: 65
+              styles: style_bg_dim
+              bg_opa: 20%
+              border_width: 0
+              clickable: false
+              scrollable: false
               widgets:
                 - label: { id: icon_sw2, text: "\U000F02E3", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
-                - button:
-                    id: btn_sw2_action
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(2, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(2, true);'
+          - button:
+              id: btn_sw2_action
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              styles: style_invisible
+              on_short_click:
+                - lambda: 'tuile_appui(2, false);'
+              on_long_press:
+                - lambda: 'tuile_appui(2, true);'
           - !include { file: switch_card_title_tab.yaml, vars: { idx: "2", title: "Chambre" } }
           - !include { file: switch_card_state_tab.yaml, vars: { idx: "2", state_text: "Éteint" } }
-
     # Tuile 3
     - obj:
         id: sw_card_3
@@ -129,30 +155,37 @@ obj:
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}
         height: ${meteo_cell_height}
-        styles: style_transparent
+        styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         widgets:
+          # Pastille ronde : la couleur de l'état à 20 % (posée par le C++), l'icône pleine.
           - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
+              id: sw_pastille_3
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              radius: 65
+              styles: style_bg_dim
+              bg_opa: 20%
+              border_width: 0
+              clickable: false
+              scrollable: false
               widgets:
                 - label: { id: icon_sw3, text: "\U000F04B9", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
-                - button:
-                    id: btn_sw3_action
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(3, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(3, true);'
+          - button:
+              id: btn_sw3_action
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              styles: style_invisible
+              on_short_click:
+                - lambda: 'tuile_appui(3, false);'
+              on_long_press:
+                - lambda: 'tuile_appui(3, true);'
           - !include { file: switch_card_title_tab.yaml, vars: { idx: "3", title: "Salon" } }
           - !include { file: switch_card_state_tab.yaml, vars: { idx: "3", state_text: "Éteint" } }
-
     # Tuile 4
     - obj:
         id: sw_card_4
@@ -160,26 +193,34 @@ obj:
         y: ${meteo_cell_y}
         width: ${meteo_cell_width}
         height: ${meteo_cell_height}
-        styles: style_transparent
+        styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         widgets:
+          # Pastille ronde : la couleur de l'état à 20 % (posée par le C++), l'icône pleine.
           - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
+              id: sw_pastille_4
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              radius: 65
+              styles: style_bg_dim
+              bg_opa: 20%
+              border_width: 0
+              clickable: false
+              scrollable: false
               widgets:
                 - label: { id: icon_sw4, text: "\U000F1051", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
-                - button:
-                    id: btn_sw4_action
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(4, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(4, true);'
+          - button:
+              id: btn_sw4_action
+              align: TOP_MID
+              y: 26
+              width: 130
+              height: 130
+              styles: style_invisible
+              on_short_click:
+                - lambda: 'tuile_appui(4, false);'
+              on_long_press:
+                - lambda: 'tuile_appui(4, true);'
           - !include { file: switch_card_title_tab.yaml, vars: { idx: "4", title: "LEDs" } }
           - !include { file: switch_card_state_tab.yaml, vars: { idx: "4", state_text: "Éteint" } }

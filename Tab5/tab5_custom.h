@@ -984,7 +984,10 @@ struct TuilesUI {
     lv_obj_t* jour_titre[5] = {};          // j{T}_day
     lv_obj_t* heure_titre[5] = {};         // h(4−T)_time
     // Cartes du mode HA (switches_card.yaml) : carte T = tuile T de la pièce courante.
+    // Depuis le 06/10/2026, façon carte « tile » de HA : l'icône dans une pastille ronde
+    // de la couleur de son état (carte_pastille, sw_pastille_N), le nom, l'état dessous.
     lv_obj_t* carte[5] = {};
+    lv_obj_t* carte_pastille[5] = {};
     lv_obj_t* carte_icone[5] = {};
     lv_obj_t* carte_nom[5] = {};
     lv_obj_t* carte_etat[5] = {};
@@ -1010,6 +1013,18 @@ struct TuilesUI {
     lv_obj_t* vol_etat = nullptr;         // volet_etat : l'état en mots
     lv_obj_t* vol_cadre = nullptr;        // volet_cadre : le volet dessiné, zone de glissement
     lv_obj_t* vol_tablier = nullptr;      // volet_tablier : les lames, glissent dans la fenêtre
+    // Popup d'un appareil (appareil_popup.yaml, 06/10/2026) : ouvert par l'appui long d'une
+    // tuile int, act, ou med sans l'option t.
+    lv_obj_t* app_popup = nullptr;        // appareil_popup
+    lv_obj_t* app_titre = nullptr;        // appareil_popup_titre
+    lv_obj_t* app_pastille = nullptr;     // appareil_pastille : cercle de la couleur de l'état
+    lv_obj_t* app_icone = nullptr;        // appareil_icone : palette des tuiles (mdi_font_70)
+    lv_obj_t* app_etat = nullptr;         // appareil_etat : l'état en mots
+    lv_obj_t* app_piece = nullptr;        // appareil_piece : « Pièce : … »
+    lv_obj_t* app_options = nullptr;      // appareil_options : options de la tuile
+    lv_obj_t* app_remplissage = nullptr;  // appareil_remplissage : dans le grand bouton
+    lv_obj_t* app_commande_icone = nullptr;  // appareil_commande_icone (mdi_font_45)
+    lv_obj_t* app_action = nullptr;       // appareil_action : ce que fera l'appui
     // Volet 3.x (mode héritage) : sens de la prochaine commande.
     bool* volet_sens = nullptr;           // &id(volet_target_open)
     // Commandes, posées par le script (lambdas sans capture) : événement
@@ -1215,6 +1230,11 @@ void popup_volet_commande(const char* action);
 // le dessin et le nombre suivent ; relâcher : « position » part). Une fois, depuis
 // tab5_tuiles_ui.
 void tuiles_brancher_popup_volet();
+
+// Popup d'un appareil (appareil_popup.yaml, ouvert par l'appui long d'une tuile int, act,
+// ou med sans l'option t, 06/10/2026, discussion #278). Son grand bouton : exactement le
+// toucher de la tuile du popup (même commande, même confirmation avec l'option k).
+void popup_appareil_appui();
 
 // Popup lumière (ouvert par l'appui long d'une tuile lum) : ses lignes sont les lumières
 // de la pièce, dans l'ordre des tuiles. Choisit la ligne `idx` (script
