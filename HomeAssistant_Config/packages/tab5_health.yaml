@@ -171,8 +171,12 @@ automation:
   # « First boot after install (…) » : premier démarrage après une installation par
   # l'USB, flash effacée, que le flash termine par un reset du chien de garde RTC
   # (« other watchdogs », fausse alerte à l'installation à neuf du 28/09/2026 ; le
-  # firmware ne l'excuse que si sa mémoire vient d'être effacée). Sans raison fraîche
-  # (délai dépassé), on notifie : mieux vaut une alerte de trop qu'un plantage muet.
+  # firmware ne l'excuse que si sa mémoire vient d'être effacée). Depuis le 06/10/2026
+  # (discussion #278) : « Power button or RTC watchdog (…) », un appui sur le bouton
+  # d'alimentation (chien de garde sans rapport de plantage, voir Tab5/tab5_journal.cpp) ;
+  # un chien de garde AVEC rapport (« Crash, other watchdogs ») notifie toujours. Sans
+  # raison fraîche (délai dépassé), on notifie : mieux vaut une alerte de trop qu'un
+  # plantage muet.
   - id: tab5_health_unexpected_reboot
     alias: "Tab5 Santé — reboot inattendu (nouveau démarrage)"
     description: >-
@@ -214,6 +218,7 @@ automation:
           demande: >-
             {{ wait.completed and (raison is match('Reboot request from ')
                or raison is match('First boot after install')
+               or raison is match('Power button or RTC watchdog')
                or raison in ['software via esp_restart', 'USB peripheral']) }}
       - condition: template
         value_template: "{{ not demande }}"
