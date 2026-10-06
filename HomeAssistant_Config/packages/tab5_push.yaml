@@ -708,12 +708,14 @@ script:
       - action: esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk
         continue_on_error: true
         data:
+          # Les quatre premières (déjà rangées : rouge, orange, jaune, puis la plus
+          # ancienne). Au-delà, un en-tête « @n:total » : la tablette affiche le rang de
+          # chaque bandeau, « 2/6 ». Un jeton sans « | » : un firmware d'avant l'ignore.
           payload: >-
-            {%- set ns = namespace(r=[]) -%}
-            {%- for a in alertes if a.s != 'vigilance' -%}
-            {%- if ns.r | length < 4 -%}
+            {%- set autres = alertes | rejectattr('s', 'eq', 'vigilance') | list -%}
+            {%- set ns = namespace(r=['@n:' ~ (autres | count)] if autres | count > 4 else []) -%}
+            {%- for a in autres[:4] -%}
             {%- set ns.r = ns.r + [a.i ~ '|' ~ ('Rouge' if a.g == 'Rouge' else 'Orange') ~ '|' ~ a.t] -%}
-            {%- endif -%}
             {%- endfor -%}
             {{- ns.r | join(';') -}}
 
