@@ -272,6 +272,10 @@ lvgl:
                       id(sys_uptime).has_state(), id(sys_uptime).state,
                       id(sys_wifi_rssi).has_state(), id(sys_wifi_rssi).state,
                       id(sys_core_temp).has_state(), id(sys_core_temp).state);
+                  // Batterie tout de suite ; charge du processeur : point de départ, « -- »
+                  // jusqu'au tick 2 s suivant (tab5_console.cpp, 06/10/2026).
+                  update_console_batterie_ui(id(lbl_sys_batterie_icone), id(lbl_sys_batterie_val));
+                  update_console_cpu_ui(id(lbl_sys_cpu_val), true);
                   // État connexion HA immédiat (sinon "--" jusqu'au prochain tick 2s)
                   if (id(lbl_sys_ha_val) != nullptr) {
                     bool ha_ok = id(status_ha).state;

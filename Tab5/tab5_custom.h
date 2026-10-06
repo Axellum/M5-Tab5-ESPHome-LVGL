@@ -392,6 +392,19 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
 // l'interval 2 s de tab5-sensors-diagnostics.yaml quand la console est visible.
 void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok);
 
+// Console système, carte SYSTÈME (discussion #278, 06/10/2026). Appelées par l'interval
+// 2 s de tab5-sensors-diagnostics.yaml quand la console est visible, et à son ouverture
+// (appui long sur l'engrenage, tab5-lvgl.yaml).
+// « Charge CPU » : charge de chaque cœur (« 4% · 37% », cœur 0 puis cœur 1) depuis
+// l'appel précédent, d'après le temps de leur tâche inactive (tab5_console.cpp).
+// `ouverture` (ou un appel précédent de plus de 5 s) : point de départ seulement, « -- ».
+// « -- » aussi sans les statistiques de FreeRTOS (rendu hors tablette).
+void update_console_cpu_ui(lv_obj_t* lbl, bool ouverture);
+// « Batterie » : niveau et tension, « Sur USB » sans batterie détectée, « Non montée »
+// interrupteur « Tab5 Batterie montée » éteint (batterie_texte_console, tab5_core.h) ;
+// l'icône du bandeau à gauche de la valeur, masquée interrupteur éteint (tab5_zones.cpp).
+void update_console_batterie_ui(lv_obj_t* icone, lv_obj_t* valeur);
+
 // Version du logiciel ESP-Hosted du co-processeur Wi-Fi (ESP32-C6), « x.y.z », lue par
 // RPC sur le lien SDIO (réponse attendue au plus 1 s). false si le lien ne répond pas.
 // Capteur « Tab5 C6 Version » de tab5-sensors-diagnostics.yaml.

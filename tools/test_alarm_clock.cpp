@@ -11,7 +11,8 @@
  * minimum), calendrier daté par son jour d'ancrage (bug §2.2 de l'audit),
  * changements d'heure, rendez-vous. Aussi les conversions des nombres reçus de HA
  * (tab5_float_vers_int : « inf » ou « 1e30 » → entier borné, lot A de l'audit du 30/09),
- * et la décision « batterie de la tablette montée ou pas » (batterie_lecture, 05/10).
+ * et la décision « batterie de la tablette montée ou pas » (batterie_lecture, 05/10),
+ * puis les lignes « Batterie » et « Charge CPU » de la console système (06/10).
  *
  * Build & run (CI, job `python`) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o test_alarm_clock \
@@ -517,6 +518,47 @@ static void test_batterie_presence() {
     expect(kBatterieTensionMin == 6.0f && kBatterieFenetreMs == 10u * MIN, "seuil 6,0 V, fenêtre 10 min");
 }
 
+// Console système, lignes « Batterie » et « Charge CPU » (discussion #278, 06/10/2026).
+// La règle qui compte : jamais de pourcentage sans batterie détectée (le 8,39 V du
+// chargeur ferait 100 %, le 5,71 V de l'USB 0 %), quel que soit le niveau reçu.
+static void test_console_batterie_et_cpu() {
+    using P = PresenceBatterie;
+    char b[48];
+    batterie_texte_console(b, sizeof(b), false, P::PRESENTE, 78.0f, 7.62f);
+    expect_str(b, "Non mont\xC3\xA9" "e", "interrupteur éteint : « Non montée », même batterie détectée");
+    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, NAN, 5.71f);
+    expect_str(b, "Sur USB", "sans batterie (5,71 V) : « Sur USB »");
+    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, 100.0f, 8.39f);
+    expect_str(b, "Sur USB", "sans batterie, niveau 100 % reçu quand même : pas de pourcentage");
+    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, 0.0f, 4.2f);
+    expect_str(b, "Sur USB", "sans batterie, niveau 0 % reçu quand même : pas de pourcentage");
+    batterie_texte_console(b, sizeof(b), true, P::INCONNUE, 50.0f, 7.4f);
+    expect_str(b, "--", "avant la première décision : « -- », ni niveau ni tension");
+    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, 78.4f, 7.623f);
+    expect_str(b, "78% \xC2\xB7 7.62 V", "batterie : niveau puis tension");
+    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, NAN, 7.2f);
+    expect_str(b, "-- \xC2\xB7 7.20 V", "batterie, niveau pas encore publié : la tension seule");
+    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, 100.0f, NAN);
+    expect_str(b, "100%", "batterie, tension inconnue : le niveau seul");
+    batterie_texte_console(b, 4, true, P::PRESENTE, 78.0f, 7.62f);
+    expect(std::strlen(b) == 3, "tampon court : texte coupé, terminé");
+    i18n_set_language(1);
+    batterie_texte_console(b, sizeof(b), false, P::INCONNUE, NAN, NAN);
+    expect_str(b, "Not fitted", "« Non montée » traduit en anglais");
+    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, NAN, NAN);
+    expect_str(b, "On USB", "« Sur USB » traduit en anglais");
+    i18n_set_language(0);
+
+    // Charge d'un cœur : part de la fenêtre passée hors de la tâche inactive.
+    expect(cpu_charge_pct(1000, 1000 + 2000000, 2000000) == 0, "cœur au repos toute la fenêtre : 0 %");
+    expect(cpu_charge_pct(1000, 1000, 2000000) == 100, "tâche inactive jamais servie : 100 %");
+    expect(cpu_charge_pct(0, 1500000, 2000000) == 25, "1,5 s de repos sur 2 s : 25 %");
+    expect(cpu_charge_pct(0, 1990000, 2000000) == 1, "0,5 % arrondi à 1 %");
+    expect(cpu_charge_pct(0, 2100000, 2000000) == 0, "repos compté un peu au-delà de la fenêtre : 0 %, pas négatif");
+    expect(cpu_charge_pct(0xFFFFFF00u, 0x00000100u, 1000) == 49, "compteur 32 bits rebouclé : la différence compte");
+    expect(cpu_charge_pct(0, 0, 0) == -1, "durée nulle : pas de mesure");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -538,6 +580,7 @@ int main() {
     test_langue();
     test_nombres_de_ha();
     test_batterie_presence();
+    test_console_batterie_et_cpu();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

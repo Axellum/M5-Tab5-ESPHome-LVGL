@@ -219,6 +219,10 @@ select:
                      // d'ouverture, comme son bouton (tab5-lvgl.yaml).
               lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
               lv_obj_move_to_index(id(layer_console_sys), -1);
+              // Comme l'appui long : batterie tout de suite, charge du processeur
+              // repartie de zéro (sinon l'ancienne valeur jusqu'au tick 2 s).
+              update_console_batterie_ui(id(lbl_sys_batterie_icone), id(lbl_sys_batterie_val));
+              update_console_cpu_ui(id(lbl_sys_cpu_val), true);
               break;
             case 9:  // Énergie (ADR-0028) : son script pose les widgets à la première
                      // ouverture et demande ses données à HA.

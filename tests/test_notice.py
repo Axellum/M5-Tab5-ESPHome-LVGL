@@ -54,6 +54,8 @@ NON_MONTREES = {
     "temperature-serre-mois": "temperature-serre montre la même fenêtre ; les vues sont décrites",
     # Images à tirer du rendu de la PR (tools/site/images_notice.py), puis citées.
     "appareil-scene": "appareil montre la même fenêtre ; la scène est décrite dans tiles.md",
+    "console-batterie-en-charge": "console-batterie montre la même ligne ; l'éclair est décrit",
+    "console-sans-batterie": "console-batterie montre la même ligne ; « Sur USB » est décrit",
 }
 
 
