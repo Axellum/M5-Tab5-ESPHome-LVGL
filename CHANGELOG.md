@@ -36,6 +36,9 @@ Lot 4 du plan des alertes de la carte centrale. Firmware et Home Assistant.
 - **Tableau de bord HA** (vue Santé) : la même liste, en tableau (apparue, lue, terminée), dans
   les 7 langues.
 - Notice : nouvelle page « Alertes » ; l'appui long de la carte centrale décrit sur l'accueil.
+- Décision : [ADR-0034](docs/decisions/0034-central-card-alerts.md) (lot 5) rassemble les choix
+  des lots 0 à 4 : mémoire et révision dans HA, abonnements, ordre à l'écran, historique à la
+  demande, et les écarts au plan.
 - **Preuves** : `tests/test_alertes_ha.py` (payload rendu depuis le vrai modèle, 20 au plus,
   abonnements, entrées d'avant, câblage tablette ↔ HA), écran « alertes » du rendu hors
   tablette, graine du fuzz des sanitizers pour la nouvelle action.

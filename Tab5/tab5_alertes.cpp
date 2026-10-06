@@ -1,7 +1,8 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_alertes.cpp
- * @role Popup « Alertes » (lot 4 du plan des alertes de la carte centrale, 06/10/2026) :
+ * @role Popup « Alertes » (lot 4 du plan des alertes de la carte centrale, 06/10/2026,
+ *       ADR-0034) :
  *       l'historique des 20 dernières alertes, une ligne chacune (pastille de la gravité,
  *       libellé, puis « apparue 14 h 02 · lue 14 h 10 · terminée 15 h 30 »), et le bouton
  *       « Tout marquer comme lu ». Ouvert par un appui long sur la carte centrale de
