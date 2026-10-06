@@ -466,6 +466,13 @@ ECRANS: tuple[Ecran, ...] = (
                               Toucher(*REGLAGES_LANGUE_EN, selon_langue=(("en", *REGLAGES_LANGUE_FR),))),
           (Toucher(*REGLAGES_ANNULER),)),
     Ecran("console-systeme", (Long(*BOUTON_SYS),)),
+    # Ligne « Batterie » de la carte SYSTÈME (discussion #278, 06/10/2026) : batterie
+    # détectée (niveau, tension, icône du bandeau), en charge, puis sans batterie (« Sur
+    # USB », la prise). Sans l'interrupteur, « console-systeme » montre « Non montée ».
+    Ecran("console-batterie", (_batterie(True, 78.0), Long(*BOUTON_SYS)), SANS_BATTERIE),
+    Ecran("console-batterie-en-charge", (_batterie(True, 60.0, True), Long(*BOUTON_SYS)), SANS_BATTERIE),
+    Ecran("console-sans-batterie",
+          (_batterie(True, en_charge=True, tension=TENSION_SANS_BATTERIE), Long(*BOUTON_SYS)), SANS_BATTERIE),
     Ecran("console-confirmer-redemarrage-ha", (Long(*BOUTON_SYS), Toucher(*CONSOLE_REDEMARRER_HA)),
           (Toucher(*CONFIRMATION_ANNULER),)),
     Ecran("console-confirmer-reboot", (Long(*BOUTON_SYS), Toucher(*CONSOLE_REBOOT)),

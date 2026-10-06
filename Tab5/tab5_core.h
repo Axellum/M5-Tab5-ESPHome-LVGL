@@ -4,7 +4,9 @@
  * @role Logique PURE partagée par le HMI et le réveil : données calendrier /
  *       prévisions poussées par HA, dates locales (J+n, numéro de jour civil),
  *       jours et mois en toutes lettres. Et la décision « batterie montée ou
- *       pas » d'après la tension (batterie_lecture, 05/10/2026).
+ *       pas » d'après la tension (batterie_lecture, 05/10/2026), le texte de la
+ *       ligne « Batterie » et le calcul de la « Charge CPU » de la console système
+ *       (06/10/2026).
  * @architecture_constraint Aucune dépendance ESPHome ni LVGL : ce fichier et
  *       tab5_core.cpp se compilent sur PC (tools/test_alarm_clock.cpp, g++ en CI).
  *       C'est ce qui permet de tester le moteur du réveil sans l'appareil — audit
@@ -14,6 +16,7 @@
  *       un test de simuler « aujourd'hui », un changement d'heure ou une nuit sans HA.
  */
 #pragma once
+#include <cstddef>
 #include <cstdint>
 #include <ctime>
 #include <string>
@@ -160,3 +163,19 @@ struct DetectionBatterie {
 // finie (INA226 muet) ne change rien. Met `d` à jour et renvoie la présence décidée.
 // Pure (ni ESPHome ni LVGL) : testée par tools/test_alarm_clock.cpp.
 PresenceBatterie batterie_lecture(DetectionBatterie& d, float tension, uint32_t maintenant_ms);
+
+// ─── Console système : lignes « Batterie » et « Charge CPU » (discussion #278, 06/10/2026) ───
+// Texte de la ligne « Batterie » : « Non montée » si l'interrupteur « Tab5 Batterie
+// montée » est éteint, « Sur USB » si la tension dit qu'il n'y a pas de batterie, « -- »
+// avant la première lecture, sinon « 78% · 7.62 V » (niveau puis tension, « -- » pour
+// une valeur inconnue). Jamais de pourcentage sans batterie détectée : sans elle, le
+// 8,39 V du chargeur donnerait 100 % et le 5,71 V de l'USB 0 %. Pure, testée par
+// tools/test_alarm_clock.cpp.
+void batterie_texte_console(char* buf, size_t n, bool montee, PresenceBatterie presence,
+                            float niveau, float tension);
+
+// Charge d'un cœur, en % entier (0 à 100), sur une fenêtre de `duree_us` µs, d'après le
+// compteur de temps de sa tâche inactive (FreeRTOS, en µs) lu au début et à la fin.
+// Compteur de 32 bits qui reboucle en 71 min : seule la différence compte. -1 si la
+// durée est nulle. Pure, testée par tools/test_alarm_clock.cpp.
+int cpu_charge_pct(uint32_t inactif_avant, uint32_t inactif_apres, uint32_t duree_us);

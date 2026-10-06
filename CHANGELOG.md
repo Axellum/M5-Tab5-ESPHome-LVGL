@@ -40,6 +40,26 @@ blueprint plus ancien laisse la clim et le volume de la tablette.
   position (ouvert / fermé sans position réglable), valeur d'un nombre, bornées aux limites de
   l'appareil.
 
+### 2026-10-06 — Console système : batterie et charge du processeur
+
+Demandé dans la discussion #278 (husyildiz, tablette sur batterie : voir le pourcentage, la
+tension et la charge du processeur dans le menu système). Firmware seulement ; aucune entité
+Home Assistant ajoutée.
+- **Batterie** (carte SYSTÈME) : niveau et tension (« 78% · 7.62 V »), avec l'icône du bandeau
+  d'état (même glyphe, même couleur ; un éclair pendant la charge). « Sur USB » quand aucune
+  batterie n'est détectée, « Non montée » tant que l'interrupteur « Tab5 Batterie montée » est
+  éteint, « -- » avant la première lecture : jamais de faux 0 % ou 100 %
+  (`batterie_texte_console()`, `tab5_core.cpp`, testé par `tools/test_alarm_clock.cpp`).
+- **Charge CPU** : l'occupation de chacun des deux cœurs sur les 2 dernières secondes
+  (« 4% · 37% », cœur 0 puis cœur 1 ; la boucle d'ESPHome, écran compris, est sur le cœur 1 :
+  une moyenne masquerait un cœur saturé). Mesurée par le temps de la tâche inactive de chaque
+  cœur, que FreeRTOS compte avec `CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS` (nouvelle option de
+  `tab5-hardware.yaml`) ; lue seulement console ouverte. Coût estimé, non mesuré : une lecture
+  d'horloge par changement de tâche, 12 octets par tâche (`docs/performance.md`).
+- La carte SYSTÈME passe de quatre à six lignes, au pas de 39 px au lieu de 52 ; les autres
+  cartes ne bougent pas. Trois écrans de plus dans le rendu hors tablette (batterie, en charge,
+  sans batterie), notice de la console complétée.
+
 ### 2026-10-06 — Cartes du mode HA dessinées comme la carte « tile » de HA
 
 Demandé dans la discussion #278 (« buttons can be like ha dashboard buttons »). Firmware seul :

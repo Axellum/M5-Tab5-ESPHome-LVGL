@@ -338,8 +338,9 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_services.cpp", "parse_and_update_vigilance"): ("alerte_slot_*",),
     ("tab5_services.cpp", "update_rain_predict_icon_ui"): ("icon_rain_predict",),
     ("tab5_zones.cpp", "zones_apply_ui"): ("icon_serre",),
-    # Batterie de la tablette dans le bandeau d'état (04/10/2026).
-    ("tab5_zones.cpp", "batterie_glyphe"): ("icon_batterie",),
+    # Batterie de la tablette dans le bandeau d'état (04/10/2026) et sur la ligne
+    # « Batterie » de la console système (06/10/2026, mdi_font_32).
+    ("tab5_zones.cpp", "batterie_glyphe"): ("icon_batterie", "lbl_sys_batterie_icone"),
     # Production solaire dans le bandeau d'état (04/10/2026).
     ("tab5_zones.cpp", "solaire_glyphe"): ("icon_solaire",),
     # Palette des tuiles de pièce (ADR-0023) : table au niveau du fichier, d'où la fonction vide.
