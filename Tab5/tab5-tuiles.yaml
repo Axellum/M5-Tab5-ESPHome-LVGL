@@ -85,6 +85,11 @@ script:
           u.carte[2] = id(sw_card_2);
           u.carte[3] = id(sw_card_3);
           u.carte[4] = id(sw_card_4);
+          u.carte_pastille[0] = id(sw_pastille_0);
+          u.carte_pastille[1] = id(sw_pastille_1);
+          u.carte_pastille[2] = id(sw_pastille_2);
+          u.carte_pastille[3] = id(sw_pastille_3);
+          u.carte_pastille[4] = id(sw_pastille_4);
           u.carte_icone[0] = id(icon_sw0);
           u.carte_icone[1] = id(icon_sw1);
           u.carte_icone[2] = id(icon_sw2);

@@ -970,7 +970,10 @@ struct TuilesUI {
     lv_obj_t* jour_titre[5] = {};          // j{T}_day
     lv_obj_t* heure_titre[5] = {};         // h(4−T)_time
     // Cartes du mode HA (switches_card.yaml) : carte T = tuile T de la pièce courante.
+    // Depuis le 06/10/2026, façon carte « tile » de HA : l'icône dans une pastille ronde
+    // de la couleur de son état (carte_pastille, sw_pastille_N), le nom, l'état dessous.
     lv_obj_t* carte[5] = {};
+    lv_obj_t* carte_pastille[5] = {};
     lv_obj_t* carte_icone[5] = {};
     lv_obj_t* carte_nom[5] = {};
     lv_obj_t* carte_etat[5] = {};

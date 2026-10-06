@@ -288,6 +288,23 @@ def test_widgets_poses_sans_toucher_a_l_on_boot():
     assert "tab5_tuiles: !include Tab5/tab5-tuiles.yaml" in _lire("tab5-ha-hmi.yaml")
 
 
+def test_cartes_du_mode_ha_facon_carte_tile():
+    """Carte « tile » de HA (06/10/2026, discussion #278) : l'icône dans une pastille
+    ronde de la couleur de l'état, le bouton sur la pastille, le nom dans un cadre
+    cliquable (sens d'un volet), sans onglet."""
+    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    carte = _lire("Tab5", "ui_components", "switches_card.yaml")
+    for t in range(5):
+        assert f"u.carte_pastille[{t}] = id(sw_pastille_{t});" in tuiles
+        pastille = carte.split(f"id: sw_pastille_{t}\n", 1)[1].split("- button:", 1)[0]
+        assert f"id: icon_sw{t}," in pastille and "clickable: false" in pastille
+        bouton = carte.split(f"id: btn_sw{t}_action\n", 1)[1].split("!include", 1)[0]
+        assert f"tuile_appui({t}, false);" in bouton and f"tuile_appui({t}, true);" in bouton
+    assert "ui_fond(u.carte_pastille[t], v.couleur_carte);" in _fonction(_cpp(), "peindre_carte")
+    titre = _lire("Tab5", "ui_components", "switch_card_title_tab.yaml")
+    assert titre.split("\nobj:", 1)[1].count("widgets:") == 1, "le nom garde son cadre (parent cliquable)"
+
+
 def test_mode_ha_seule_source_et_swipe_par_piece():
     assert "show_switches" not in _lire("Tab5", "tab5-globals.yaml").split("globals:", 1)[1].split("#", 1)[0]
     central = _lire("Tab5", "tab5_central.cpp")

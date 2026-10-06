@@ -885,9 +885,13 @@ void ui_fond(lv_obj_t* obj, uint32_t hex) {
     lv_obj_set_style_bg_color(obj, voulu, LV_PART_MAIN);
 }
 
-// Onglets titre et état des cartes : 200 px, 6 px de marge de chaque côté.
-constexpr int32_t kLargeurOnglet = 188;
+// Nom et état d'une carte du mode HA : la carte fait 230 px, 12 px de marge de chaque
+// côté (façon carte « tile » de HA depuis le 06/10/2026 : plus d'onglets de 200 px).
+constexpr int32_t kLargeurCarteTexte = 206;
 
+// Une carte du mode HA, façon carte « tile » de HA (06/10/2026, discussion #278) :
+// l'icône en couleur pleine dans une pastille ronde de la même couleur à 20 % (opacité
+// posée par switches_card.yaml), le nom, l'état dans sa couleur.
 void peindre_carte(int r, int t) {
     const TuilesUI& u = g_tuiles_ui;
     if (u.carte_icone[t] == nullptr) return;
@@ -895,8 +899,9 @@ void peindre_carte(int r, int t) {
     vue(r, t, v);
     if (v.icone_carte != nullptr) ui_text(u.carte_icone[t], v.icone_carte);
     ui_text_color(u.carte_icone[t], v.couleur_carte);
-    ui_texte_coupe(u.carte_nom[t], v.nom, kLargeurOnglet);
-    ui_texte_coupe(u.carte_etat[t], v.ligne, kLargeurOnglet);
+    ui_fond(u.carte_pastille[t], v.couleur_carte);
+    ui_texte_coupe(u.carte_nom[t], v.nom, kLargeurCarteTexte);
+    ui_texte_coupe(u.carte_etat[t], v.ligne, kLargeurCarteTexte);
     ui_text_color(u.carte_etat[t], v.couleur_ligne);
 }
 
