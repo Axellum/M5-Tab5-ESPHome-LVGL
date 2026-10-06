@@ -50,8 +50,6 @@ NON_MONTREES = {
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
     "console-batterie-en-charge": "console-batterie montre la même ligne ; l'éclair est décrit",
     "console-sans-batterie": "console-batterie montre la même ligne ; « Sur USB » est décrit",
-    # Provisoire (06/10/2026) : image à tirer du rendu de la CI de la PR de la console.
-    "console-batterie": "image à tirer du premier rendu de la CI qui le contient",
 }
 
 
