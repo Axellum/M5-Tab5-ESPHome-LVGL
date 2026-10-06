@@ -32,6 +32,7 @@ The date changes colour with the day's weather warnings (yellow, orange, red). I
 ## Temperatures and climate (9, 10)
 
 - The two temperatures: the room (sofa) and a second sensor (greenhouse). A **tap on the second one** opens the [Arcade](arcade.md); without a second sensor, a gamepad stands in its place and does the same.
+- A **long press on either temperature** opens its [history](temperature.md): 24 hours, 7 or 30 days, and the weather forecast for the second one.
 - **Target temperature**: a tap opens the [climate window](climate.md).
 - **−** and **+**: one step down or up. The new target shows at once; quick taps add up and leave as one command when you stop.
 
@@ -91,6 +92,7 @@ La date change de couleur avec les vigilances météo du jour (jaune, orange, ro
 ## Températures et clim (9, 10)
 
 - Les deux températures : la pièce (canapé) et une seconde sonde (serre). Un **tap sur la seconde** ouvre l'[Arcade](arcade.md#version-française) ; sans seconde sonde, une manette prend sa place et fait de même.
+- Un **appui long sur l'une des deux températures** ouvre son [historique](temperature.md#version-française) : 24 heures, 7 ou 30 jours, et la prévision de la météo pour la seconde.
 - **Consigne** : un tap ouvre la [fenêtre de la clim](climate.md#version-française).
 - **−** et **+** : un pas de moins ou de plus. La nouvelle consigne s'affiche tout de suite ; des taps rapides s'additionnent et partent en une seule commande quand vous vous arrêtez.
 

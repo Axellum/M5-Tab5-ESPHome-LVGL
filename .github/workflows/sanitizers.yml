@@ -3,7 +3,7 @@ name: Sanitizers (tablette virtuelle)
 # Lot B de l'audit du 30/09/2026. La tablette virtuelle (tab5-rendu-host.yaml, plateforme
 # `host`) compilée avec AddressSanitizer et UndefinedBehaviorSanitizer, puis :
 #   1. un témoin positif prouve que la détection marche (sinon « 0 rapport » ne prouve rien) ;
-#   2. les 19 services de HA sont fuzzés (tools/sanitizers/fuzz_services.py) ;
+#   2. les 20 services de HA sont fuzzés (tools/sanitizers/fuzz_services.py) ;
 #   3. les cas ciblés, fenêtres ouvertes (tools/sanitizers/cibles_ub.py) ;
 #   4. tous les écrans sont ouverts et refermés (tools/rendu/capturer.py).
 # Chaque étape échoue au premier rapport ASan/UBSan, lu dans le journal de la tablette
@@ -88,7 +88,7 @@ jobs:
           echo "Programme : \`$prog\` ; fonctions ASan : $asan ; UBSan float → int : $flot" >> "$GITHUB_STEP_SUMMARY"
           [ "$asan" -gt 0 ] && [ "$flot" -gt 0 ] || { echo "::error::programme compilé sans sanitizers"; exit 1; }
           echo "PROG=$prog" >> "$GITHUB_ENV"
-      - name: Fuzzing des 19 services
+      - name: Fuzzing des 20 services
         if: always() && env.PROG != ''
         env:
           ESPHOME_PREFDIR: ${{ runner.temp }}/prefs

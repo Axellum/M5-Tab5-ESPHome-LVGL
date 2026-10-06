@@ -1,0 +1,72 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-historique.yaml
+# @role Popup « Température » (ADR-0032, 06/10/2026) : pose les widgets que
+#       tab5_historique.cpp dessine (g_historique_ui) et sa demande à Home Assistant.
+#         - tab5_historique_ouvrir (cle = salon | serre) : ouvre le popup, depuis un appui
+#           long sur une des deux températures de l'accueil (climate_card.yaml). Pose les
+#           widgets à la première ouverture, puis historique_ouvrir() : vue 24 h, dessin,
+#           demande à HA.
+#         - tab5_historique_demande : événement esphome.tab5_historique (cle, vue = jour |
+#           semaine | mois), émis à l'ouverture et à chaque bouton de vue. Le blueprint
+#           « Tab5 — emplacements » y répond en lançant script.tab5_historique
+#           (HomeAssistant_Config/packages/tab5_historique.yaml), qui pousse la série
+#           (action tab5_maj_historique, tab5-api-logic.yaml).
+# @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
+#       nomme aucune entité, elle dit seulement quelle température et quelle vue elle
+#       montre. Chargé APRÈS tab5_lvgl : il référence des widgets. Aucun lv_* ici.
+# @ai_instruction Un widget de plus = son champ dans HistoriqueUI (tab5_custom.h) et sa
+#       ligne ici. La commande est une lambda SANS capture (pointeur de fonction), comme
+#       celle de tab5-energie.yaml.
+# ============================================================================
+
+script:
+  - id: tab5_historique_ouvrir
+    parameters:
+      cle: string
+    then:
+      - lambda: |-
+          HistoriqueUI& u = g_historique_ui;
+          if (u.popup == nullptr) {
+            u.carte[0] = id(historique_carte_0);
+            u.carte[1] = id(historique_carte_1);
+            u.carte[2] = id(historique_carte_2);
+            u.carte[3] = id(historique_carte_3);
+            u.nom[0] = id(historique_nom_0);
+            u.nom[1] = id(historique_nom_1);
+            u.nom[2] = id(historique_nom_2);
+            u.nom[3] = id(historique_nom_3);
+            u.valeur[0] = id(historique_valeur_0);
+            u.valeur[1] = id(historique_valeur_1);
+            u.valeur[2] = id(historique_valeur_2);
+            u.valeur[3] = id(historique_valeur_3);
+            u.detail[0] = id(historique_detail_0);
+            u.detail[1] = id(historique_detail_1);
+            u.detail[2] = id(historique_detail_2);
+            u.detail[3] = id(historique_detail_3);
+            u.titre = id(historique_titre);
+            u.vue_btn[0] = id(historique_vue_0);
+            u.vue_btn[1] = id(historique_vue_1);
+            u.vue_btn[2] = id(historique_vue_2);
+            u.zone = id(historique_zone);
+            u.police = id(roboto_22);
+            u.demander = [](const char* c, const char* vue) {
+              id(tab5_historique_demande).execute(std::string(c), std::string(vue));
+            };
+            // En dernier : historique_ouvrir() ne fait rien tant que popup est nul.
+            u.popup = id(historique_popup);
+          }
+          historique_ouvrir(cle);
+
+  - id: tab5_historique_demande
+    mode: queued
+    max_runs: 3
+    parameters:
+      cle: string
+      vue: string
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_historique
+          data:
+            cle: !lambda 'return cle;'
+            vue: !lambda 'return vue;'

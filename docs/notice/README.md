@@ -18,7 +18,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 6 | Home Assistant button | bottom row: weather ↔ your devices | Energy window, with a solar production |
 | 7 | Gear button | settings | system console |
 | 8 | Gamepad button | Arcade, the games | TV remote, with a TV |
-| 9 | Second temperature (greenhouse) | Arcade, the games | — |
+| 9 | Second temperature (greenhouse) | Arcade, the games | its history and the forecast |
 | 10 | Climate: target, − and + | target: climate window; − / +: one step | — |
 | 11 | Row under the clock: plants and sensors | next line | on the plants: plant details |
 | 12 | Central card | next panel, or dismiss a message | Alerts window |
@@ -48,6 +48,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Alarm clock | tap on the clock | [Alarm clock](alarm.md) |
 | Voice assistant | long press on the microphone | [Voice](voice.md) |
 | Energy | a solar or energy card, or a long press on the Home Assistant button | [Energy](energy.md) |
+| Temperature | long press on one of the two temperatures | [Temperature](temperature.md) |
 | Plants | long press on the plants line, under the clock | [Plants](plants.md) |
 | Alerts | long press on the central card | [Alerts](alerts.md) |
 | Settings | the gear button | [Settings](settings.md) |
@@ -78,7 +79,7 @@ Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt u
 | 6 | Bouton Home Assistant | rangée du bas : météo ↔ vos appareils | fenêtre Énergie, avec une production solaire |
 | 7 | Bouton engrenage | réglages | console système |
 | 8 | Bouton manette | Arcade, les jeux | télécommande TV, avec une TV |
-| 9 | Seconde température (serre) | Arcade, les jeux | — |
+| 9 | Seconde température (serre) | Arcade, les jeux | son historique et la prévision |
 | 10 | Clim : consigne, − et + | consigne : fenêtre de la clim ; − / + : un pas | — |
 | 11 | Rangée sous l'horloge : plantes et capteurs | ligne suivante | sur les plantes : détail des plantes |
 | 12 | Carte centrale | panneau suivant, ou écarter un message | fenêtre des alertes |
@@ -108,6 +109,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Réveil | tap sur l'horloge | [Réveil](alarm.md#version-française) |
 | Assistant vocal | appui long sur le micro | [Voix](voice.md#version-française) |
 | Énergie | une carte solaire ou énergie, ou un appui long sur le bouton Home Assistant | [Énergie](energy.md#version-française) |
+| Température | appui long sur l'une des deux températures | [Température](temperature.md#version-française) |
 | Plantes | appui long sur la ligne des plantes, sous l'horloge | [Plantes](plants.md#version-française) |
 | Alertes | appui long sur la carte centrale | [Alertes](alerts.md#version-française) |
 | Réglages | le bouton engrenage | [Réglages](settings.md#version-française) |

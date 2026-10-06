@@ -1258,6 +1258,28 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Aucun capteur d'énergie choisi": "Ningún sensor de energía elegido"
 "Aucun historique": "Sin historial"
 
+# Popup Température (ADR-0032) : historique des deux températures de l'accueil
+"24 h": "24 h"
+"7 jours": "7 días"
+"30 jours": "30 días"
+"MAINTENANT": "AHORA"
+"MINIMUM": "MÍNIMA"
+"MAXIMUM": "MÁXIMA"
+"PRÉVU": "PREVISTA"
+"DEHORS, PRÉVU": "FUERA, PREVISTA"
+"Moyenne": "Media"
+"Minimum": "Mínima"
+"24 dernières heures": "Últimas 24 horas"
+"7 derniers jours": "Últimos 7 días"
+"Extérieur": "Exterior"
+"Serre": "Invernadero"
+"Intérieur": "Interior"
+"Maintenant": "Ahora"
+"Prévu": "Prevista"
+"Dehors, prévu": "Fuera, prevista"
+"Mesuré": "Medida"
+"Minimum et maximum": "Mínima y máxima"
+
 # Thèmes (ADR-0029) : mode de la rangée « Thème » de la console système
 "Sombre": "Oscuro"
 "Clair": "Claro"

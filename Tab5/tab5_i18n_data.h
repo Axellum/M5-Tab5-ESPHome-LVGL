@@ -8,9 +8,29 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1013;
+static const uint16_t kI18nKeyCount = 1033;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1111,11 +1131,14 @@ static const char* const kI18nKeys[] = {
     "1er",
     "2 Jours",
     "2 min",
+    "24 dernières heures",
+    "24 h",
     "25 coups sans pion ni prise",
     "3 Jours",
     "3 billes - lanceur en bas de l'écran",
     "3 s d'invulnérabilité par salle",
     "30 derniers jours",
+    "30 jours",
     "30 min",
     "4 Jours",
     "4,4 cases/s - rythme d'origine",
@@ -1124,6 +1147,8 @@ static const char* const kI18nKeys[] = {
     "5,7 cases/s",
     "6 salles. 2 à 5 minutes.  Difficulté : %s",
     "6,7 cases/s",
+    "7 derniers jours",
+    "7 jours",
     "8 consoles — une seule à la fois",
     "8 niveaux, 3 vies, power-ups",
     "8,0 cases/s",
@@ -1328,10 +1353,12 @@ static const char* const kI18nKeys[] = {
     "Cumul carrière : %lu points",
     "Cœur de braise",
     "D-pad + 2 boutons creuser",
+    "DEHORS, PRÉVU",
     "DIFFICULTÉ",
     "Dames internationales — dames volantes",
     "Damier",
     "De %s à %s%s",
+    "Dehors, prévu",
     "Dem.",
     "Demain",
     "Demain {heure}",
@@ -1387,6 +1414,7 @@ static const char* const kI18nKeys[] = {
     "Exact — %s remporte la partie !",
     "Expert",
     "Extinction auto",
+    "Extérieur",
     "FIN DE PARTIE",
     "FINALE — %s",
     "Facile",
@@ -1451,6 +1479,7 @@ static const char* const kI18nKeys[] = {
     "Internationales 10×10",
     "Internationales 10×10\nPrise majoritaire · rafles",
     "Intersection occupée",
+    "Intérieur",
     "Invulnérable - hors concours",
     "Irréversible",
     "Jamais",
@@ -1536,12 +1565,16 @@ static const char* const kI18nKeys[] = {
     "Luminosité",
     "Lumière",
     "Lun",
+    "MAINTENANT",
     "MAISON",
     "MAJ Écran",
+    "MAXIMUM",
+    "MINIMUM",
     "MODE",
     "MULTIBALL TERMINÉ",
     "Mai",
     "Main d'Ariane",
+    "Maintenant",
     "Maintiens ici pour armer,\nrelâche pour tirer",
     "Mar",
     "Marchand",
@@ -1555,6 +1588,9 @@ static const char* const kI18nKeys[] = {
     "Menu principal",
     "Mer",
     "Mes Plantes",
+    "Mesuré",
+    "Minimum",
+    "Minimum et maximum",
     "Mix",
     "Mixte",
     "Mode",
@@ -1564,6 +1600,7 @@ static const char* const kI18nKeys[] = {
     "Mois",
     "Mouvement",
     "Moyen",
+    "Moyenne",
     "Moyennes + difficiles",
     "Mur plein",
     "MÉMOIRE",
@@ -1627,6 +1664,7 @@ static const char* const kI18nKeys[] = {
     "POSITION",
     "PROCHAINE SONNERIE",
     "PROMOTION",
+    "PRÉVU",
     "PV %d/%d%s",
     "PV invulnérable",
     "Page suivante",
@@ -1685,6 +1723,7 @@ static const char* const kI18nKeys[] = {
     "Progressif",
     "Proposer nulle",
     "Présent",
+    "Prévu",
     "Prêt",
     "Purement cosmétique",
     "Pyramide",
@@ -1821,6 +1860,7 @@ static const char* const kI18nKeys[] = {
     "Sensibilité IMU : %d/5",
     "Sensibilité du nudge : %s",
     "Sept",
+    "Serre",
     "Seuil",
     "Si l'écran est à l'envers dans vos mains",
     "Si la bille part du mauvais côté",
@@ -2128,11 +2168,14 @@ static const char* const kI18n_en[] = {
     "1",  // "1er"
     "2 Days",  // "2 Jours"
     "2 min",  // "2 min"
+    "Last 24 hours",  // "24 dernières heures"
+    "24 h",  // "24 h"
     "25 moves with no man move or capture",  // "25 coups sans pion ni prise"
     "3 Days",  // "3 Jours"
     "3 balls - plunger at the bottom",  // "3 billes - lanceur en bas de l'écran"
     "3 s of invulnerability per room",  // "3 s d'invulnérabilité par salle"
     "Last 30 days",  // "30 derniers jours"
+    "30 days",  // "30 jours"
     "30 min",  // "30 min"
     "4 Days",  // "4 Jours"
     "4.4 tiles/s - original pace",  // "4,4 cases/s - rythme d'origine"
@@ -2141,6 +2184,8 @@ static const char* const kI18n_en[] = {
     "5.7 tiles/s",  // "5,7 cases/s"
     "6 rooms. 2 to 5 minutes.  Difficulty: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6.7 tiles/s",  // "6,7 cases/s"
+    "Last 7 days",  // "7 derniers jours"
+    "7 days",  // "7 jours"
     "8 consoles — one at a time",  // "8 consoles — une seule à la fois"
     "8 levels, 3 lives, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8.0 tiles/s",  // "8,0 cases/s"
@@ -2345,10 +2390,12 @@ static const char* const kI18n_en[] = {
     "Career total: %lu points",  // "Cumul carrière : %lu points"
     "Ember Heart",  // "Cœur de braise"
     "D-pad + 2 dig buttons",  // "D-pad + 2 boutons creuser"
+    "OUTDOORS, FORECAST",  // "DEHORS, PRÉVU"
     "DIFFICULTY",  // "DIFFICULTÉ"
     "International draughts — flying kings",  // "Dames internationales — dames volantes"
     "Checkerboard",  // "Damier"
     "From %s to %s%s",  // "De %s à %s%s"
+    "Outdoors, forecast",  // "Dehors, prévu"
     "Tmrw.",  // "Dem."
     "Tomorrow",  // "Demain"
     "Tomorrow {heure}",  // "Demain {heure}"
@@ -2404,6 +2451,7 @@ static const char* const kI18n_en[] = {
     "Correct — %s wins the game!",  // "Exact — %s remporte la partie !"
     "Expert",  // "Expert"
     "Auto screen off",  // "Extinction auto"
+    "Outdoors",  // "Extérieur"
     "GAME OVER",  // "FIN DE PARTIE"
     "FINAL — %s",  // "FINALE — %s"
     "Easy",  // "Facile"
@@ -2468,6 +2516,7 @@ static const char* const kI18n_en[] = {
     "Intl 10x10",  // "Internationales 10×10"
     "International 10×10\nMax capture · multi-jumps",  // "Internationales 10×10\nPrise majoritaire · rafles"
     "Point occupied",  // "Intersection occupée"
+    "Indoors",  // "Intérieur"
     "Invulnerable - unranked",  // "Invulnérable - hors concours"
     "Irreversible",  // "Irréversible"
     "Never",  // "Jamais"
@@ -2553,12 +2602,16 @@ static const char* const kI18n_en[] = {
     "Brightness",  // "Luminosité"
     "Light",  // "Lumière"
     "Mon",  // "Lun"
+    "NOW",  // "MAINTENANT"
     "HOME",  // "MAISON"
     "Refresh screen",  // "MAJ Écran"
+    "MAXIMUM",  // "MAXIMUM"
+    "MINIMUM",  // "MINIMUM"
     "MODE",  // "MODE"
     "MULTIBALL OVER",  // "MULTIBALL TERMINÉ"
     "May",  // "Mai"
     "Ariadne's Hand",  // "Main d'Ariane"
+    "Now",  // "Maintenant"
     "Hold here to charge,\nrelease to launch",  // "Maintiens ici pour armer,\nrelâche pour tirer"
     "Tue",  // "Mar"
     "Merchant",  // "Marchand"
@@ -2572,6 +2625,9 @@ static const char* const kI18n_en[] = {
     "Main menu",  // "Menu principal"
     "Wed",  // "Mer"
     "My plants",  // "Mes Plantes"
+    "Measured",  // "Mesuré"
+    "Minimum",  // "Minimum"
+    "Minimum and maximum",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Mixed",  // "Mixte"
     "Mode",  // "Mode"
@@ -2581,6 +2637,7 @@ static const char* const kI18n_en[] = {
     "Months",  // "Mois"
     "Moving",  // "Mouvement"
     "Medium",  // "Moyen"
+    "Average",  // "Moyenne"
     "Medium + hard",  // "Moyennes + difficiles"
     "Solid wall",  // "Mur plein"
     "MEMORY",  // "MÉMOIRE"
@@ -2644,6 +2701,7 @@ static const char* const kI18n_en[] = {
     "POSITION",  // "POSITION"
     "NEXT ALARM",  // "PROCHAINE SONNERIE"
     "PROMOTION",  // "PROMOTION"
+    "FORECAST",  // "PRÉVU"
     "HP %d/%d%s",  // "PV %d/%d%s"
     "HP invulnerable",  // "PV invulnérable"
     "Next page",  // "Page suivante"
@@ -2702,6 +2760,7 @@ static const char* const kI18n_en[] = {
     "Gradual",  // "Progressif"
     "Offer a draw",  // "Proposer nulle"
     "Home",  // "Présent"
+    "Forecast",  // "Prévu"
     "Ready",  // "Prêt"
     "Purely cosmetic",  // "Purement cosmétique"
     "Pyramid",  // "Pyramide"
@@ -2838,6 +2897,7 @@ static const char* const kI18n_en[] = {
     "IMU sensitivity: %d/5",  // "Sensibilité IMU : %d/5"
     "Nudge sensitivity: %s",  // "Sensibilité du nudge : %s"
     "Sep",  // "Sept"
+    "Greenhouse",  // "Serre"
     "Threshold",  // "Seuil"
     "If the screen appears upside down",  // "Si l'écran est à l'envers dans vos mains"
     "If the ball goes the wrong way",  // "Si la bille part du mauvais côté"
@@ -3145,11 +3205,14 @@ static const char* const kI18n_de[] = {
     "1",  // "1er"
     "2 Tage",  // "2 Jours"
     "2 min",  // "2 min"
+    "Letzte 24 Stunden",  // "24 dernières heures"
+    "24 h",  // "24 h"
     "25 Züge ohne Steinzug oder Schlag",  // "25 coups sans pion ni prise"
     "3 Tage",  // "3 Jours"
     "3 Bälle - Abschuss unten am Bildschirm",  // "3 billes - lanceur en bas de l'écran"
     "3 s Unverwundbarkeit pro Raum",  // "3 s d'invulnérabilité par salle"
     "Letzte 30 Tage",  // "30 derniers jours"
+    "30 Tage",  // "30 jours"
     "30 min",  // "30 min"
     "4 Tage",  // "4 Jours"
     "4,4 Felder/s - Originaltempo",  // "4,4 cases/s - rythme d'origine"
@@ -3158,6 +3221,8 @@ static const char* const kI18n_de[] = {
     "5,7 Felder/s",  // "5,7 cases/s"
     "6 Räume. 2 bis 5 Minuten.  Schwierigkeit: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 Felder/s",  // "6,7 cases/s"
+    "Letzte 7 Tage",  // "7 derniers jours"
+    "7 Tage",  // "7 jours"
     "8 Konsolen — immer nur eine",  // "8 consoles — une seule à la fois"
     "8 Level, 3 Leben, Power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 Felder/s",  // "8,0 cases/s"
@@ -3362,10 +3427,12 @@ static const char* const kI18n_de[] = {
     "Karriere gesamt: %lu Punkte",  // "Cumul carrière : %lu points"
     "Glutherz",  // "Cœur de braise"
     "D-Pad + 2 Grabetasten",  // "D-pad + 2 boutons creuser"
+    "DRAUSSEN, PROGNOSE",  // "DEHORS, PRÉVU"
     "SCHWIERIGKEIT",  // "DIFFICULTÉ"
     "Internationale Dame — fliegende Damen",  // "Dames internationales — dames volantes"
     "Schachbrett",  // "Damier"
     "Von %s bis %s%s",  // "De %s à %s%s"
+    "Draußen, Prognose",  // "Dehors, prévu"
     "Morg.",  // "Dem."
     "Morgen",  // "Demain"
     "Morgen {heure}",  // "Demain {heure}"
@@ -3421,6 +3488,7 @@ static const char* const kI18n_de[] = {
     "Richtig — %s gewinnt das Spiel!",  // "Exact — %s remporte la partie !"
     "Experte",  // "Expert"
     "Auto-Abschaltung",  // "Extinction auto"
+    "Außen",  // "Extérieur"
     "SPIELENDE",  // "FIN DE PARTIE"
     "FINALE — %s",  // "FINALE — %s"
     "Leicht",  // "Facile"
@@ -3485,6 +3553,7 @@ static const char* const kI18n_de[] = {
     "Int. 10x10",  // "Internationales 10×10"
     "Int. Dame 10×10\nMaximalschlag · Ketten",  // "Internationales 10×10\nPrise majoritaire · rafles"
     "Punkt besetzt",  // "Intersection occupée"
+    "Innen",  // "Intérieur"
     "Unverwundbar - außer Wertung",  // "Invulnérable - hors concours"
     "Unumkehrbar",  // "Irréversible"
     "Nie",  // "Jamais"
@@ -3570,12 +3639,16 @@ static const char* const kI18n_de[] = {
     "Helligkeit",  // "Luminosité"
     "Licht",  // "Lumière"
     "Mo",  // "Lun"
+    "JETZT",  // "MAINTENANT"
     "HAUS",  // "MAISON"
     "Aktualisieren",  // "MAJ Écran"
+    "MAXIMUM",  // "MAXIMUM"
+    "MINIMUM",  // "MINIMUM"
     "MODUS",  // "MODE"
     "MULTIBALL VORBEI",  // "MULTIBALL TERMINÉ"
     "Mai",  // "Mai"
     "Ariadnes Hand",  // "Main d'Ariane"
+    "Jetzt",  // "Maintenant"
     "Hier halten zum Spannen,\nloslassen zum Abschießen",  // "Maintiens ici pour armer,\nrelâche pour tirer"
     "Di",  // "Mar"
     "Händler",  // "Marchand"
@@ -3589,6 +3662,9 @@ static const char* const kI18n_de[] = {
     "Hauptmenü",  // "Menu principal"
     "Mi",  // "Mer"
     "Pflanzen",  // "Mes Plantes"
+    "Gemessen",  // "Mesuré"
+    "Minimum",  // "Minimum"
+    "Minimum und Maximum",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Kombi",  // "Mixte"
     "Modus",  // "Mode"
@@ -3598,6 +3674,7 @@ static const char* const kI18n_de[] = {
     "Monate",  // "Mois"
     "Fährt",  // "Mouvement"
     "Mittel",  // "Moyen"
+    "Mittel",  // "Moyenne"
     "Mittel + schwer",  // "Moyennes + difficiles"
     "Volle Mauer",  // "Mur plein"
     "SPEICHER",  // "MÉMOIRE"
@@ -3661,6 +3738,7 @@ static const char* const kI18n_de[] = {
     "POSITION",  // "POSITION"
     "NÄCHSTER WECKRUF",  // "PROCHAINE SONNERIE"
     "UMWANDLUNG",  // "PROMOTION"
+    "PROGNOSE",  // "PRÉVU"
     "LP %d/%d%s",  // "PV %d/%d%s"
     "LP unverwundbar",  // "PV invulnérable"
     "Nächste Seite",  // "Page suivante"
@@ -3719,6 +3797,7 @@ static const char* const kI18n_de[] = {
     "Ansteigend",  // "Progressif"
     "Remis anbieten",  // "Proposer nulle"
     "Anwesend",  // "Présent"
+    "Prognose",  // "Prévu"
     "Bereit",  // "Prêt"
     "Rein kosmetisch",  // "Purement cosmétique"
     "Pyramide",  // "Pyramide"
@@ -3855,6 +3934,7 @@ static const char* const kI18n_de[] = {
     "IMU-Empfindlichkeit: %d/5",  // "Sensibilité IMU : %d/5"
     "Nudge-Empfindlichkeit: %s",  // "Sensibilité du nudge : %s"
     "Sep",  // "Sept"
+    "Gewächshaus",  // "Serre"
     "Schwelle",  // "Seuil"
     "Falls das Bild in deinen Händen kopfsteht",  // "Si l'écran est à l'envers dans vos mains"
     "Rollt der Ball zur falschen Seite?",  // "Si la bille part du mauvais côté"
@@ -4162,11 +4242,14 @@ static const char* const kI18n_nl[] = {
     "1",  // "1er"
     "2 dagen",  // "2 Jours"
     "2 min",  // "2 min"
+    "Laatste 24 uur",  // "24 dernières heures"
+    "24 u",  // "24 h"
     "25 zetten zonder schijf of slag",  // "25 coups sans pion ni prise"
     "3 dagen",  // "3 Jours"
     "3 ballen - plunjer onderaan",  // "3 billes - lanceur en bas de l'écran"
     "3 s onkwetsbaar per kamer",  // "3 s d'invulnérabilité par salle"
     "Laatste 30 dagen",  // "30 derniers jours"
+    "30 dagen",  // "30 jours"
     "30 min",  // "30 min"
     "4 dagen",  // "4 Jours"
     "4,4 vakjes/s - origineel tempo",  // "4,4 cases/s - rythme d'origine"
@@ -4175,6 +4258,8 @@ static const char* const kI18n_nl[] = {
     "5,7 vakjes/s",  // "5,7 cases/s"
     "6 kamers. 2 tot 5 minuten.  Moeilijkheid: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 vakjes/s",  // "6,7 cases/s"
+    "Laatste 7 dagen",  // "7 derniers jours"
+    "7 dagen",  // "7 jours"
     "8 consoles — één tegelijk",  // "8 consoles — une seule à la fois"
     "8 levels, 3 levens, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 vakjes/s",  // "8,0 cases/s"
@@ -4379,10 +4464,12 @@ static const char* const kI18n_nl[] = {
     "Carrièretotaal: %lu punten",  // "Cumul carrière : %lu points"
     "Gloeiend hart",  // "Cœur de braise"
     "D-pad + 2 graafknoppen",  // "D-pad + 2 boutons creuser"
+    "BUITEN, VERWACHT",  // "DEHORS, PRÉVU"
     "MOEILIJKHEID",  // "DIFFICULTÉ"
     "Internationaal dammen — vliegende dammen",  // "Dames internationales — dames volantes"
     "Dambord",  // "Damier"
     "Van %s tot %s%s",  // "De %s à %s%s"
+    "Buiten, verwacht",  // "Dehors, prévu"
     "Morg.",  // "Dem."
     "Morgen",  // "Demain"
     "Morgen {heure}",  // "Demain {heure}"
@@ -4438,6 +4525,7 @@ static const char* const kI18n_nl[] = {
     "Goed — %s wint het spel!",  // "Exact — %s remporte la partie !"
     "Expert",  // "Expert"
     "Automatisch uit",  // "Extinction auto"
+    "Buiten",  // "Extérieur"
     "EINDE SPEL",  // "FIN DE PARTIE"
     "FINALE — %s",  // "FINALE — %s"
     "Simpel",  // "Facile"
@@ -4502,6 +4590,7 @@ static const char* const kI18n_nl[] = {
     "Intl 10x10",  // "Internationales 10×10"
     "Internationaal 10×10\nMaximumslag · meerslagen",  // "Internationales 10×10\nPrise majoritaire · rafles"
     "Punt bezet",  // "Intersection occupée"
+    "Binnen",  // "Intérieur"
     "Onkwetsbaar - telt niet mee",  // "Invulnérable - hors concours"
     "Onomkeerbaar",  // "Irréversible"
     "Nooit",  // "Jamais"
@@ -4587,12 +4676,16 @@ static const char* const kI18n_nl[] = {
     "Helderheid",  // "Luminosité"
     "Licht",  // "Lumière"
     "Ma",  // "Lun"
+    "NU",  // "MAINTENANT"
     "HUIS",  // "MAISON"
     "Scherm verversen",  // "MAJ Écran"
+    "MAXIMUM",  // "MAXIMUM"
+    "MINIMUM",  // "MINIMUM"
     "MODUS",  // "MODE"
     "MULTIBALL VOORBIJ",  // "MULTIBALL TERMINÉ"
     "Mei",  // "Mai"
     "Ariadnes hand",  // "Main d'Ariane"
+    "Nu",  // "Maintenant"
     "Hier vasthouden: spannen,\nloslaten: schieten",  // "Maintiens ici pour armer,\nrelâche pour tirer"
     "Di",  // "Mar"
     "Koopman",  // "Marchand"
@@ -4606,6 +4699,9 @@ static const char* const kI18n_nl[] = {
     "Hoofdmenu",  // "Menu principal"
     "Wo",  // "Mer"
     "Mijn planten",  // "Mes Plantes"
+    "Gemeten",  // "Mesuré"
+    "Minimum",  // "Minimum"
+    "Minimum en maximum",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Mix",  // "Mixte"
     "Modus",  // "Mode"
@@ -4615,6 +4711,7 @@ static const char* const kI18n_nl[] = {
     "Maanden",  // "Mois"
     "Beweegt",  // "Mouvement"
     "Normaal",  // "Moyen"
+    "Gemiddeld",  // "Moyenne"
     "Normaal + moeilijk",  // "Moyennes + difficiles"
     "Volle muur",  // "Mur plein"
     "GEHEUGEN",  // "MÉMOIRE"
@@ -4678,6 +4775,7 @@ static const char* const kI18n_nl[] = {
     "POSITIE",  // "POSITION"
     "VOLGEND ALARM",  // "PROCHAINE SONNERIE"
     "PROMOTIE",  // "PROMOTION"
+    "VERWACHT",  // "PRÉVU"
     "HP %d/%d%s",  // "PV %d/%d%s"
     "HP onkwetsbaar",  // "PV invulnérable"
     "Volgende pagina",  // "Page suivante"
@@ -4736,6 +4834,7 @@ static const char* const kI18n_nl[] = {
     "Oplopend",  // "Progressif"
     "Remise aanbieden",  // "Proposer nulle"
     "Aanwezig",  // "Présent"
+    "Verwacht",  // "Prévu"
     "Klaar",  // "Prêt"
     "Puur cosmetisch",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -4872,6 +4971,7 @@ static const char* const kI18n_nl[] = {
     "IMU-gevoeligheid: %d/5",  // "Sensibilité IMU : %d/5"
     "Nudgegevoeligheid: %s",  // "Sensibilité du nudge : %s"
     "Sep",  // "Sept"
+    "Kas",  // "Serre"
     "Drempel",  // "Seuil"
     "Als het scherm ondersteboven staat",  // "Si l'écran est à l'envers dans vos mains"
     "Als de bal de verkeerde kant op gaat",  // "Si la bille part du mauvais côté"
@@ -5179,11 +5279,14 @@ static const char* const kI18n_es[] = {
     "1",  // "1er"
     "2 días",  // "2 Jours"
     "2 min",  // "2 min"
+    "Últimas 24 horas",  // "24 dernières heures"
+    "24 h",  // "24 h"
     "25 jugadas sin mover peón ni capturar",  // "25 coups sans pion ni prise"
     "3 días",  // "3 Jours"
     "3 bolas - lanzador abajo",  // "3 billes - lanceur en bas de l'écran"
     "3 s de invulnerabilidad por sala",  // "3 s d'invulnérabilité par salle"
     "Últimos 30 días",  // "30 derniers jours"
+    "30 días",  // "30 jours"
     "30 min",  // "30 min"
     "4 días",  // "4 Jours"
     "4,4 casillas/s - ritmo original",  // "4,4 cases/s - rythme d'origine"
@@ -5192,6 +5295,8 @@ static const char* const kI18n_es[] = {
     "5,7 casillas/s",  // "5,7 cases/s"
     "6 salas. De 2 a 5 minutos.  Dificultad: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 casillas/s",  // "6,7 cases/s"
+    "Últimos 7 días",  // "7 derniers jours"
+    "7 días",  // "7 jours"
     "8 consolas — una a la vez",  // "8 consoles — une seule à la fois"
     "8 niveles, 3 vidas, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 casillas/s",  // "8,0 cases/s"
@@ -5396,10 +5501,12 @@ static const char* const kI18n_es[] = {
     "Total de carrera: %lu puntos",  // "Cumul carrière : %lu points"
     "Corazón de brasa",  // "Cœur de braise"
     "Cruceta + 2 botones de cavar",  // "D-pad + 2 boutons creuser"
+    "FUERA, PREVISTA",  // "DEHORS, PRÉVU"
     "DIFICULTAD",  // "DIFFICULTÉ"
     "Damas internacionales — damas voladoras",  // "Dames internationales — dames volantes"
     "Damero",  // "Damier"
     "De %s a %s%s",  // "De %s à %s%s"
+    "Fuera, prevista",  // "Dehors, prévu"
     "Mañana",  // "Dem."
     "Mañana",  // "Demain"
     "Mañana {heure}",  // "Demain {heure}"
@@ -5455,6 +5562,7 @@ static const char* const kI18n_es[] = {
     "Correcto — ¡%s gana la partida!",  // "Exact — %s remporte la partie !"
     "Experto",  // "Expert"
     "Apagado automático",  // "Extinction auto"
+    "Exterior",  // "Extérieur"
     "FIN DE PARTIDA",  // "FIN DE PARTIE"
     "FINAL — %s",  // "FINALE — %s"
     "Fácil",  // "Facile"
@@ -5519,6 +5627,7 @@ static const char* const kI18n_es[] = {
     "Int. 10x10",  // "Internationales 10×10"
     "Internacionales 10×10\nCaptura máxima · cadenas",  // "Internationales 10×10\nPrise majoritaire · rafles"
     "Intersección ocupada",  // "Intersection occupée"
+    "Interior",  // "Intérieur"
     "Invulnerable - fuera de concurso",  // "Invulnérable - hors concours"
     "Irreversible",  // "Irréversible"
     "Nunca",  // "Jamais"
@@ -5604,12 +5713,16 @@ static const char* const kI18n_es[] = {
     "Brillo",  // "Luminosité"
     "Luz",  // "Lumière"
     "Lun",  // "Lun"
+    "AHORA",  // "MAINTENANT"
     "CASA",  // "MAISON"
     "Refrescar pantalla",  // "MAJ Écran"
+    "MÁXIMA",  // "MAXIMUM"
+    "MÍNIMA",  // "MINIMUM"
     "MODO",  // "MODE"
     "FIN DEL MULTIBALL",  // "MULTIBALL TERMINÉ"
     "May",  // "Mai"
     "Mano de Ariadna",  // "Main d'Ariane"
+    "Ahora",  // "Maintenant"
     "Mantén aquí para cargar,\nsuelta para lanzar",  // "Maintiens ici pour armer,\nrelâche pour tirer"
     "Mar",  // "Mar"
     "Mercader",  // "Marchand"
@@ -5623,6 +5736,9 @@ static const char* const kI18n_es[] = {
     "Menú principal",  // "Menu principal"
     "Mié",  // "Mer"
     "Mis plantas",  // "Mes Plantes"
+    "Medida",  // "Mesuré"
+    "Mínima",  // "Minimum"
+    "Mínima y máxima",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Mixto",  // "Mixte"
     "Modo",  // "Mode"
@@ -5632,6 +5748,7 @@ static const char* const kI18n_es[] = {
     "Meses",  // "Mois"
     "Moviendo",  // "Mouvement"
     "Media",  // "Moyen"
+    "Media",  // "Moyenne"
     "Medias + difíciles",  // "Moyennes + difficiles"
     "Muro sólido",  // "Mur plein"
     "MEMORIA",  // "MÉMOIRE"
@@ -5695,6 +5812,7 @@ static const char* const kI18n_es[] = {
     "POSICIÓN",  // "POSITION"
     "PRÓXIMA ALARMA",  // "PROCHAINE SONNERIE"
     "CORONACIÓN",  // "PROMOTION"
+    "PREVISTA",  // "PRÉVU"
     "PV %d/%d%s",  // "PV %d/%d%s"
     "PV invulnerable",  // "PV invulnérable"
     "Página siguiente",  // "Page suivante"
@@ -5753,6 +5871,7 @@ static const char* const kI18n_es[] = {
     "Progresivo",  // "Progressif"
     "Ofrecer tablas",  // "Proposer nulle"
     "Presente",  // "Présent"
+    "Prevista",  // "Prévu"
     "Listo",  // "Prêt"
     "Puramente estético",  // "Purement cosmétique"
     "Pirámide",  // "Pyramide"
@@ -5889,6 +6008,7 @@ static const char* const kI18n_es[] = {
     "Sensibilidad IMU: %d/5",  // "Sensibilité IMU : %d/5"
     "Sensibilidad del nudge: %s",  // "Sensibilité du nudge : %s"
     "Sept",  // "Sept"
+    "Invernadero",  // "Serre"
     "Umbral",  // "Seuil"
     "Si la pantalla está al revés en tus manos",  // "Si l'écran est à l'envers dans vos mains"
     "Si la bola va al lado contrario",  // "Si la bille part du mauvais côté"
@@ -6196,11 +6316,14 @@ static const char* const kI18n_it[] = {
     "1°",  // "1er"
     "2 giorni",  // "2 Jours"
     "2 min",  // "2 min"
+    "Ultime 24 ore",  // "24 dernières heures"
+    "24 h",  // "24 h"
     "25 mosse di sole dame, senza prese",  // "25 coups sans pion ni prise"
     "3 giorni",  // "3 Jours"
     "3 palle - lanciatore in basso",  // "3 billes - lanceur en bas de l'écran"
     "3 s di invulnerabilità per stanza",  // "3 s d'invulnérabilité par salle"
     "Ultimi 30 giorni",  // "30 derniers jours"
+    "30 giorni",  // "30 jours"
     "30 min",  // "30 min"
     "4 giorni",  // "4 Jours"
     "4,4 caselle/s - ritmo originale",  // "4,4 cases/s - rythme d'origine"
@@ -6209,6 +6332,8 @@ static const char* const kI18n_it[] = {
     "5,7 caselle/s",  // "5,7 cases/s"
     "6 stanze. Da 2 a 5 minuti.  Difficoltà: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 caselle/s",  // "6,7 cases/s"
+    "Ultimi 7 giorni",  // "7 derniers jours"
+    "7 giorni",  // "7 jours"
     "8 console — una alla volta",  // "8 consoles — une seule à la fois"
     "8 livelli, 3 vite, power-up",  // "8 niveaux, 3 vies, power-ups"
     "8,0 caselle/s",  // "8,0 cases/s"
@@ -6413,10 +6538,12 @@ static const char* const kI18n_it[] = {
     "Totale carriera: %lu punti",  // "Cumul carrière : %lu points"
     "Cuore di brace",  // "Cœur de braise"
     "D-pad + 2 pulsanti scava",  // "D-pad + 2 boutons creuser"
+    "FUORI, PREVISTA",  // "DEHORS, PRÉVU"
     "DIFFICOLTÀ",  // "DIFFICULTÉ"
     "Dama internazionale — dame volanti",  // "Dames internationales — dames volantes"
     "Scacchiera",  // "Damier"
     "Dalle %s alle %s%s",  // "De %s à %s%s"
+    "Fuori, prevista",  // "Dehors, prévu"
     "Domani",  // "Dem."
     "Domani",  // "Demain"
     "Domani {heure}",  // "Demain {heure}"
@@ -6472,6 +6599,7 @@ static const char* const kI18n_it[] = {
     "Esatto — %s vince la partita!",  // "Exact — %s remporte la partie !"
     "Esperto",  // "Expert"
     "Spegnimento automatico",  // "Extinction auto"
+    "Esterno",  // "Extérieur"
     "FINE PARTITA",  // "FIN DE PARTIE"
     "FINALE — %s",  // "FINALE — %s"
     "Facile",  // "Facile"
@@ -6536,6 +6664,7 @@ static const char* const kI18n_it[] = {
     "Internaz. 10x10",  // "Internationales 10×10"
     "Internazionale 10×10\nPresa massima · a catena",  // "Internationales 10×10\nPrise majoritaire · rafles"
     "Punto occupato",  // "Intersection occupée"
+    "Interno",  // "Intérieur"
     "Invulnerabile - fuori classifica",  // "Invulnérable - hors concours"
     "Irreversibile",  // "Irréversible"
     "Mai",  // "Jamais"
@@ -6621,12 +6750,16 @@ static const char* const kI18n_it[] = {
     "Luminosità",  // "Luminosité"
     "Luce",  // "Lumière"
     "Lun",  // "Lun"
+    "ORA",  // "MAINTENANT"
     "CASA",  // "MAISON"
     "Aggiorna schermo",  // "MAJ Écran"
+    "MASSIMA",  // "MAXIMUM"
+    "MINIMA",  // "MINIMUM"
     "MODALITÀ",  // "MODE"
     "MULTIBALL FINITO",  // "MULTIBALL TERMINÉ"
     "Mag",  // "Mai"
     "Mano di Arianna",  // "Main d'Ariane"
+    "Ora",  // "Maintenant"
     "Tieni premuto per caricare,\nrilascia per lanciare",  // "Maintiens ici pour armer,\nrelâche pour tirer"
     "Mar",  // "Mar"
     "Mercante",  // "Marchand"
@@ -6640,6 +6773,9 @@ static const char* const kI18n_it[] = {
     "Menu principale",  // "Menu principal"
     "Mer",  // "Mer"
     "Piante",  // "Mes Plantes"
+    "Misurata",  // "Mesuré"
+    "Minima",  // "Minimum"
+    "Minima e massima",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Misto",  // "Mixte"
     "Modalità",  // "Mode"
@@ -6649,6 +6785,7 @@ static const char* const kI18n_it[] = {
     "Mesi",  // "Mois"
     "In moto",  // "Mouvement"
     "Medio",  // "Moyen"
+    "Media",  // "Moyenne"
     "Medie + difficili",  // "Moyennes + difficiles"
     "Muro pieno",  // "Mur plein"
     "MEMORIA",  // "MÉMOIRE"
@@ -6712,6 +6849,7 @@ static const char* const kI18n_it[] = {
     "POSIZIONE",  // "POSITION"
     "PROSSIMA SVEGLIA",  // "PROCHAINE SONNERIE"
     "PROMOZIONE",  // "PROMOTION"
+    "PREVISTA",  // "PRÉVU"
     "PV %d/%d%s",  // "PV %d/%d%s"
     "PV invulnerabile",  // "PV invulnérable"
     "Pagina seguente",  // "Page suivante"
@@ -6770,6 +6908,7 @@ static const char* const kI18n_it[] = {
     "Progressivo",  // "Progressif"
     "Proponi patta",  // "Proposer nulle"
     "Presente",  // "Présent"
+    "Prevista",  // "Prévu"
     "Pronto",  // "Prêt"
     "Puramente estetico",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
@@ -6906,6 +7045,7 @@ static const char* const kI18n_it[] = {
     "Sensibilità IMU: %d/5",  // "Sensibilité IMU : %d/5"
     "Sensibilità del nudge: %s",  // "Sensibilité du nudge : %s"
     "Set",  // "Sept"
+    "Serra",  // "Serre"
     "Soglia",  // "Seuil"
     "Se lo schermo ti appare capovolto",  // "Si l'écran est à l'envers dans vos mains"
     "Se la palla va dalla parte sbagliata",  // "Si la bille part du mauvais côté"
@@ -7213,11 +7353,14 @@ static const char* const kI18n_tr[] = {
     "1",  // "1er"
     "2 Gün",  // "2 Jours"
     "2 dk",  // "2 min"
+    "Son 24 saat",  // "24 dernières heures"
+    "24 sa",  // "24 h"
     "Taş hamlesi ve alma yok: 25 hamle",  // "25 coups sans pion ni prise"
     "3 Gün",  // "3 Jours"
     "3 bilye - fırlatıcı ekranın altında",  // "3 billes - lanceur en bas de l'écran"
     "Oda başına 3 sn dokunulmazlık",  // "3 s d'invulnérabilité par salle"
     "Son 30 gün",  // "30 derniers jours"
+    "30 gün",  // "30 jours"
     "30 dk",  // "30 min"
     "4 Gün",  // "4 Jours"
     "4,4 kare/sn - özgün tempo",  // "4,4 cases/s - rythme d'origine"
@@ -7226,6 +7369,8 @@ static const char* const kI18n_tr[] = {
     "5,7 kare/sn",  // "5,7 cases/s"
     "6 oda. 2-5 dakika.  Zorluk: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 kare/sn",  // "6,7 cases/s"
+    "Son 7 gün",  // "7 derniers jours"
+    "7 gün",  // "7 jours"
     "8 konsol — aynı anda yalnız biri",  // "8 consoles — une seule à la fois"
     "8 seviye, 3 can, güçlendirme",  // "8 niveaux, 3 vies, power-ups"
     "8,0 kare/sn",  // "8,0 cases/s"
@@ -7430,10 +7575,12 @@ static const char* const kI18n_tr[] = {
     "Kariyer toplamı: %lu puan",  // "Cumul carrière : %lu points"
     "Kor Yürek",  // "Cœur de braise"
     "Yön tuşları + 2 kazma düğmesi",  // "D-pad + 2 boutons creuser"
+    "DIŞARI, TAHMİN",  // "DEHORS, PRÉVU"
     "ZORLUK",  // "DIFFICULTÉ"
     "Uluslararası dama — uçan damalar",  // "Dames internationales — dames volantes"
     "Damalı",  // "Damier"
     "%s – %s%s",  // "De %s à %s%s"
+    "Dışarı, tahmin",  // "Dehors, prévu"
     "Yarın",  // "Dem."
     "Yarın",  // "Demain"
     "Yarın {heure}",  // "Demain {heure}"
@@ -7489,6 +7636,7 @@ static const char* const kI18n_tr[] = {
     "Doğru — oyunu %s kazandı!",  // "Exact — %s remporte la partie !"
     "Uzman",  // "Expert"
     "Otomatik kapanma",  // "Extinction auto"
+    "Dış ortam",  // "Extérieur"
     "OYUN BİTTİ",  // "FIN DE PARTIE"
     "FİNAL — %s",  // "FINALE — %s"
     "Kolay",  // "Facile"
@@ -7553,6 +7701,7 @@ static const char* const kI18n_tr[] = {
     "Uluslararası 10x10",  // "Internationales 10×10"
     "Uluslararası 10×10\nÇoğunluk alma · zincir",  // "Internationales 10×10\nPrise majoritaire · rafles"
     "Kesişim dolu",  // "Intersection occupée"
+    "İç ortam",  // "Intérieur"
     "Dokunulmaz - sıralama dışı",  // "Invulnérable - hors concours"
     "Geri alınamaz",  // "Irréversible"
     "Asla",  // "Jamais"
@@ -7638,12 +7787,16 @@ static const char* const kI18n_tr[] = {
     "Parlaklık",  // "Luminosité"
     "Işık",  // "Lumière"
     "Pzt",  // "Lun"
+    "ŞİMDİ",  // "MAINTENANT"
     "EV",  // "MAISON"
     "Ekranı yenile",  // "MAJ Écran"
+    "EN YÜKSEK",  // "MAXIMUM"
+    "EN DÜŞÜK",  // "MINIMUM"
     "MOD",  // "MODE"
     "MULTIBALL BİTTİ",  // "MULTIBALL TERMINÉ"
     "May",  // "Mai"
     "Ariadne'nin Eli",  // "Main d'Ariane"
+    "Şimdi",  // "Maintenant"
     "Kurmak için basılı tut,\nfırlatmak için bırak",  // "Maintiens ici pour armer,\nrelâche pour tirer"
     "Sal",  // "Mar"
     "Tüccar",  // "Marchand"
@@ -7657,6 +7810,9 @@ static const char* const kI18n_tr[] = {
     "Ana menü",  // "Menu principal"
     "Çar",  // "Mer"
     "Bitkilerim",  // "Mes Plantes"
+    "Ölçülen",  // "Mesuré"
+    "En düşük",  // "Minimum"
+    "En düşük ve en yüksek",  // "Minimum et maximum"
     "Karma",  // "Mix"
     "Karma",  // "Mixte"
     "Mod",  // "Mode"
@@ -7666,6 +7822,7 @@ static const char* const kI18n_tr[] = {
     "Aylar",  // "Mois"
     "Hareket",  // "Mouvement"
     "Orta",  // "Moyen"
+    "Ortalama",  // "Moyenne"
     "Orta + zor",  // "Moyennes + difficiles"
     "Düz duvar",  // "Mur plein"
     "BELLEK",  // "MÉMOIRE"
@@ -7729,6 +7886,7 @@ static const char* const kI18n_tr[] = {
     "KONUM",  // "POSITION"
     "SONRAKİ ALARM",  // "PROCHAINE SONNERIE"
     "TERFİ",  // "PROMOTION"
+    "TAHMİN",  // "PRÉVU"
     "Can %d/%d%s",  // "PV %d/%d%s"
     "Can dokunulmaz",  // "PV invulnérable"
     "Sonraki sayfa",  // "Page suivante"
@@ -7787,6 +7945,7 @@ static const char* const kI18n_tr[] = {
     "Kademeli",  // "Progressif"
     "Beraberlik öner",  // "Proposer nulle"
     "Evde",  // "Présent"
+    "Tahmin",  // "Prévu"
     "Hazır",  // "Prêt"
     "Tamamen kozmetik",  // "Purement cosmétique"
     "Piramit",  // "Pyramide"
@@ -7923,6 +8082,7 @@ static const char* const kI18n_tr[] = {
     "IMU hassasiyeti: %d/5",  // "Sensibilité IMU : %d/5"
     "Dürtme hassasiyeti: %s",  // "Sensibilité du nudge : %s"
     "Eyl",  // "Sept"
+    "Sera",  // "Serre"
     "Eşik",  // "Seuil"
     "Ekran elinde ters duruyorsa",  // "Si l'écran est à l'envers dans vos mains"
     "Bilye yanlış tarafa gidiyorsa",  // "Si la bille part du mauvais côté"

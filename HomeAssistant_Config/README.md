@@ -74,6 +74,7 @@ The automation:
 - runs the screen's commands (`esphome.tab5_action` events: toggle, brightness, colour, setpoint, HVAC mode, TV keys and apps, shutter…): a 3.x slot on the chosen entity, a tile (`tRT`) or a room (`pR`, « Tout éteindre ») according to the domain of the tile's entity — never on an entity that no tile holds. Events need no « allow the device to perform Home Assistant actions » option;
 - answers the zones request (`esphome.tab5_zones`, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)): an empty slot, or an entity that doesn't exist, disappears from the screen;
 - answers the Energy popup (`esphome.tab5_energie`, the view shown): starts `script.tab5_energie` with the sensors of its « Energy » section, or answers « no sensor chosen » when the section is empty.
+- answers the Temperature popup (`esphome.tab5_historique`, the temperature and the view shown, [ADR-0032](../docs/decisions/0032-temperature-history-popup.md)): starts `script.tab5_historique` with the sensor of that slot and the box « La seconde température est dehors · The second temperature is outdoors ».
 
 No placeholder: the file is generic. Changing a device (or the weather) is an edit of the automation in HA's UI — no flash, no restart. The block between `# >>> icones` and `# <<< icones` (the icon palette) is written by `tools/gen_tuiles_icones.py`.
 
@@ -148,6 +149,15 @@ Backend of the firmware's **Energy popup** ([ADR-0028](../docs/decisions/0028-so
 - the live values (`tab5_maj_energie`): solar, home, grid, battery and today's production, again at each change of a chosen sensor (every 5 s at most), as long as the tablet's « Écran courant » says « Énergie » (15 minutes at most).
 
 Nothing is pushed while the popup is closed. Without this package, the popup waits (« En attente de Home Assistant »). With two tablets opening it at the same time, the last request wins.
+
+---
+
+### `packages/tab5_historique.yaml` — the Temperature popup
+Backend of the firmware's **Temperature popup** ([ADR-0032](../docs/decisions/0032-temperature-history-popup.md)), opened by a long press on one of the two home-screen temperatures. One script, `tab5_historique` (`mode: parallel`), started by the blueprint with the sensor of that slot; it pushes `tab5_maj_historique` **once** per request:
+- the curve of the view shown: mean, minimum and maximum of each hour (24 h), of each 3 hours (7 days) or of each day (30 days), read from the **recorder's long-term statistics** (`recorder.get_statistics`; no helper, no extra database write). The sensor needs a `state_class` (thermometers have `measurement`); without one, the popup says « Aucun historique »;
+- for the second temperature, the forecast of the weather entity used by the tablet (`sensor.tab5_meteo`, `weather.get_forecasts`): hour by hour when it provides it, day by day otherwise and for 30 days.
+
+Nothing is pushed while the popup is closed. Without this package, the popup waits (« En attente de Home Assistant »).
 
 ---
 
@@ -321,6 +331,7 @@ L'automatisation :
 - exécute les commandes de l'écran (événements `esphome.tab5_action` : bascule, luminosité, couleur, consigne, mode, touches et applications de la TV, volet…) : un emplacement 3.x sur l'entité choisie, une tuile (`tRT`) ou une pièce (`pR`, « Tout éteindre ») selon le domaine de l'entité de la tuile — jamais sur une entité qu'aucune tuile ne porte. Un événement n'exige pas l'option « autoriser l'appareil à effectuer des actions Home Assistant » ;
 - répond à la demande des zones (`esphome.tab5_zones`, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)) : un emplacement vide, ou une entité qui n'existe pas, disparaît de l'écran ;
 - répond au popup Énergie (`esphome.tab5_energie`, la vue montrée) : lance `script.tab5_energie` avec les capteurs de sa section « Énergie », ou répond « aucun capteur choisi » si elle est vide.
+- répond au popup Température (`esphome.tab5_historique`, la température et la vue montrées, [ADR-0032](../docs/decisions/0032-temperature-history-popup.md)) : lance `script.tab5_historique` avec le capteur de cet emplacement et la case « La seconde température est dehors · The second temperature is outdoors ».
 
 Aucun placeholder : le fichier est générique. Changer d'appareil (ou de météo) = modifier l'automatisation dans l'interface de HA, ni flash ni redémarrage. Le bloc entre `# >>> icones` et `# <<< icones` (la palette des icônes) est écrit par `tools/gen_tuiles_icones.py`.
 
@@ -395,6 +406,15 @@ Ce qui alimente le **popup Énergie** du firmware ([ADR-0028](../docs/decisions/
 - l'instantané (`tab5_maj_energie`) : solaire, maison, réseau, batterie et production du jour, de nouveau à chaque changement d'un capteur choisi (5 s au plus souvent), tant que l'« Écran courant » de la tablette vaut « Énergie » (15 minutes au plus).
 
 Rien n'est poussé quand le popup est fermé. Sans ce package, le popup attend (« En attente de Home Assistant »). Avec deux tablettes qui l'ouvrent en même temps, la dernière demande l'emporte.
+
+---
+
+### `packages/tab5_historique.yaml` — le popup Température
+Ce qui alimente le **popup Température** du firmware ([ADR-0032](../docs/decisions/0032-temperature-history-popup.md)), ouvert par un appui long sur l'une des deux températures de l'accueil. Un script, `tab5_historique` (`mode: parallel`), lancé par le blueprint avec le capteur de cet emplacement ; il pousse `tab5_maj_historique` **une fois** par demande :
+- la courbe de la vue montrée : moyenne, minimum et maximum de chaque heure (24 h), de chaque tranche de trois heures (7 jours) ou de chaque jour (30 jours), lus dans les **statistiques longue durée du recorder** (`recorder.get_statistics` ; ni entrée auxiliaire, ni écriture de plus en base). Le capteur doit avoir un `state_class` (les thermomètres ont `measurement`) ; sans, le popup dit « Aucun historique » ;
+- pour la seconde température, la prévision de l'entité météo de la tablette (`sensor.tab5_meteo`, `weather.get_forecasts`) : heure par heure si elle la fournit, par jour sinon et pour 30 jours.
+
+Rien n'est poussé quand le popup est fermé. Sans ce package, le popup attend (« En attente de Home Assistant »).
 
 ---
 

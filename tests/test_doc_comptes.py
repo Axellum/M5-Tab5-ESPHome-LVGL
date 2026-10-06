@@ -380,7 +380,8 @@ def _demo():
     """Actions appelées par la démo (tests/test_demo.py le vérifie en la jouant)."""
     return set(demo_pusher.SERVICES_ATTENDUS) | {demo_pusher.SERVICE_TUILES,
                                                  demo_pusher.SERVICE_ENERGIE,
-                                                 demo_pusher.SERVICE_ENERGIE_HISTORIQUE}
+                                                 demo_pusher.SERVICE_ENERGIE_HISTORIQUE,
+                                                 demo_pusher.SERVICE_HISTORIQUE}
 
 
 def _noms(texte):
@@ -411,13 +412,15 @@ def test_agents_services_de_la_demo():
      r"Les services restants sont hors périmètre par choix (.*?)\n", 1),
 ], ids=["en", "fr"])
 def test_demo_mode_services(motif_nombre, motif_restants, langue):
-    """« nine dashboard push services » + zones + emplacements + tuiles + énergie, nommées à part ;
+    """« nine dashboard push services » + zones + emplacements + tuiles + énergie + historique,
+    nommées à part ;
     les services restants, tous nommés."""
     texte = _lire(DEMO_MODE)
     nombre, restants = re.search(motif_nombre, texte), re.search(motif_restants, texte)
     assert nombre and restants, "docs/demo_mode.md : phrase changée, adapter les motifs"
     a_part = {"tab5_maj_zones", "tab5_maj_emplacements", demo_pusher.SERVICE_TUILES,
-              demo_pusher.SERVICE_ENERGIE, demo_pusher.SERVICE_ENERGIE_HISTORIQUE}
+              demo_pusher.SERVICE_ENERGIE, demo_pusher.SERVICE_ENERGIE_HISTORIQUE,
+              demo_pusher.SERVICE_HISTORIQUE}
     assert nombre.group(1) == _en_lettres(len(_demo() - a_part))[langue]
     assert sorted(set(_noms(restants.group(1)))) == sorted(set(_services()) - _demo())
 

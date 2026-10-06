@@ -267,6 +267,19 @@ HA pushes only while the popup is open (package `tab5_energie.yaml`); instant tr
 
 ---
 
+## Temperature popup — history and forecast
+
+Opened by a long press on one of the two home-screen temperatures ([ADR-0032](decisions/0032-temperature-history-popup.md)): the room's (`salon` slot) or the second one (`serre` slot, a greenhouse or outdoors). A tap on the second one still opens the Arcade.
+
+- **Top**: **Now** (and the average of the period), **Minimum** and **Maximum** with when they were reached, each in the screen's temperature colour. For the second temperature, a fourth card: the highest forecast temperature, the lowest below.
+- **Bottom**: the title gives the place (the sensor's area, pushed by HA) and the period; three buttons switch between **24 h** (hour by hour), **7 days** (every three hours) and **30 days** (day by day). The accent line is the mean of each slot, ending on the current value (a dot); a pale bar behind it goes from the minimum to the maximum. Grid every 1, 2, 5, 10… degrees, time axis every 3 h, 6 h, a day…
+- **Forecast** (second temperature only): a gold line on a tinted background after a « Maintenant » mark, with gold min-max bars for a day-by-day forecast. The blueprint box « La seconde température est dehors » makes it extend the curve (« Prévu »); unticked, it is the outdoor forecast next to a greenhouse (« Dehors, prévu »).
+- Before Home Assistant answers: « En attente de Home Assistant »; sensor without statistics: « Aucun historique ».
+
+HA pushes once per request, only while the popup is open (package `tab5_historique.yaml`, recorder statistics and `weather.get_forecasts`); the tablet keeps the three views of the temperature shown in PSRAM (~6 KB) and nothing in NVS.
+
+---
+
 ## Color coding for readability
 
 Color is used consistently as a primary information channel — to let you read state at a glance without reading labels.
@@ -612,6 +625,19 @@ N'apparaît que si des capteurs sont choisis dans la section « Énergie · Ener
 HA ne pousse que pendant que le popup est ouvert (package `tab5_energie.yaml`) ; transitions instantanées, comme tous les popups.
 
 ![Popup Énergie, vue Jours : quatre cartes en direct et la production des 30 derniers jours (rendu de la CI, données de démonstration)](images/tab5_energie.png)
+
+---
+
+## Popup Température — historique et prévision
+
+S'ouvre par un appui long sur l'une des deux températures de l'accueil ([ADR-0032](decisions/0032-temperature-history-popup.md)) : celle de la pièce (emplacement `salon`) ou la seconde (emplacement `serre`, une serre ou dehors). Un tap sur la seconde ouvre toujours l'Arcade.
+
+- **En haut** : **Maintenant** (et la moyenne de la période), **Minimum** et **Maximum** avec leur moment, chacun dans la couleur de température de l'écran. Pour la seconde température, une quatrième carte : la température prévue la plus haute, la plus basse dessous.
+- **En bas** : le titre donne le lieu (la pièce du capteur, poussée par HA) et la période ; trois boutons passent de **24 h** (heure par heure) à **7 jours** (toutes les trois heures) et **30 jours** (jour par jour). La ligne d'accent est la moyenne de chaque créneau, finie sur la valeur actuelle (un point) ; une barre pâle derrière elle va du minimum au maximum. Graduations tous les 1, 2, 5, 10… degrés, axe des temps toutes les 3 h, 6 h, un jour…
+- **Prévision** (seconde température seulement) : une ligne or sur un fond teinté après le trait « Maintenant », avec les barres mini-maxi or d'une prévision par jour. La case du blueprint « La seconde température est dehors » lui fait prolonger la courbe (« Prévu ») ; décochée, c'est la prévision de dehors à côté d'une serre (« Dehors, prévu »).
+- Avant que Home Assistant réponde : « En attente de Home Assistant » ; capteur sans statistiques : « Aucun historique ».
+
+HA pousse une fois par demande, seulement popup ouvert (package `tab5_historique.yaml`, statistiques du recorder et `weather.get_forecasts`) ; la tablette garde les trois vues de la température montrée en PSRAM (~6 Ko), rien en NVS.
 
 ---
 

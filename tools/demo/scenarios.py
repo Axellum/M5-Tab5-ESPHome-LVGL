@@ -12,6 +12,7 @@ sans revérifier contre le firmware réel.
 from __future__ import annotations
 
 import datetime as _dt
+import math
 import re
 from dataclasses import dataclass, field
 
@@ -507,6 +508,115 @@ def build_energie_historique(vue: str, aujourd_hui: _dt.date) -> dict:
         _nombre_ou_vide(vue, v)
         assert v in ("", "nan") or float(v) >= 0, f"{vue} : production négative {v!r}"
     return {"vue": vue, "debut": debut_energie(vue, aujourd_hui).isoformat(), "valeurs": ";".join(valeurs)}
+
+
+# ---------------------------------------------------------------------------
+# Popup Température (ADR-0032) : l'historique d'une des deux températures de l'accueil
+# et, pour la seconde, la prévision de la météo. Ce que pousserait script.tab5_historique
+# (HomeAssistant_Config/packages/tab5_historique.yaml) en réponse à l'événement
+# esphome.tab5_historique (cle, vue), action tab5_maj_historique :
+#   entete = « nom|debut|pas|maintenant|actuel|exterieur » (debut AAAA-MM-JJTHH:MM local,
+#   minutes à l'horloge locale), mesures = « moy,min,max » par créneau, « ; » (nb + 1
+#   créneaux, le dernier en cours), previsions = « minute,moy[,min,max] », « ; ».
+# Courbes inventées, finies sur la valeur de l'accueil (EMPLACEMENTS) : la pièce chauffée,
+# une serre qui monte au soleil ; dehors, la prévision (ou toute la courbe si la seconde
+# température est dehors : la case du blueprint).
+# ---------------------------------------------------------------------------
+
+HISTORIQUE_CLES = ("salon", "serre")
+# vue : (minutes par créneau, créneaux complets avant celui en cours)
+HISTORIQUE_VUES = {"jour": (60, 24), "semaine": (180, 56), "mois": (1440, 30)}
+HISTORIQUE_PREV_MAX = 48     # Prev p[kPrevMax] de tab5_historique.cpp
+HISTORIQUE_MESURES_MAX = 64  # Point m[kMesuresMax]
+
+
+def _onde(t: _dt.datetime, pic: float, ampl: float, periode_j: float, ampl_j: float) -> float:
+    """Une journée (maximum à l'heure `pic`) et une dérive de quelques jours."""
+    h = t.hour + t.minute / 60
+    jours = t.toordinal() + h / 24
+    return ampl * math.sin(2 * math.pi * (h - pic + 6) / 24) + ampl_j * math.sin(2 * math.pi * jours / periode_j)
+
+
+def _dehors(t: _dt.datetime) -> float:
+    return 18.0 + _onde(t, 15, 6.0, 4.1, 1.5)
+
+
+def _courbe(cle: str, exterieur: bool):
+    """Température de la démo à l'instant t (heure locale naïve), avant recalage."""
+    if cle == "salon":
+        return lambda t: 20.8 + _onde(t, 18, 0.8, 5.3, 0.4)
+    if exterieur:
+        return _dehors
+    return lambda t: 19.0 + _onde(t, 14, 5.0, 6.7, 1.2)
+
+
+def debut_historique(vue: str, maintenant: _dt.datetime) -> _dt.datetime:
+    """Premier créneau : l'heure, les trois heures ou le jour en cours, moins nb créneaux
+    (comme le package, à l'horloge locale)."""
+    pas, nb = HISTORIQUE_VUES[vue]
+    n = maintenant.replace(second=0, microsecond=0)
+    if vue == "mois":
+        return n.replace(hour=0, minute=0) - _dt.timedelta(days=nb)
+    h = pas // 60
+    return n.replace(hour=n.hour // h * h, minute=0) - _dt.timedelta(minutes=pas * nb)
+
+
+def _minutes(a: _dt.datetime, b: _dt.datetime) -> int:
+    return int((b - a).total_seconds() // 60)
+
+
+def build_historique(cle: str, vue: str, maintenant: _dt.datetime, exterieur: bool = False) -> dict:
+    """Variables de tab5_maj_historique pour une température et une vue, à `maintenant`
+    (heure locale naïve). exterieur : la seconde température est dehors."""
+    assert cle in HISTORIQUE_CLES and vue in HISTORIQUE_VUES, (cle, vue)
+    exterieur = exterieur and cle == "serre"
+    pas, nb = HISTORIQUE_VUES[vue]
+    debut = debut_historique(vue, maintenant)
+    actuel = float(EMPLACEMENTS[cle][1])
+    brute = _courbe(cle, exterieur)
+    decalage = actuel - brute(maintenant)
+    temp = (lambda t: brute(t) + decalage)
+
+    mesures = []
+    for i in range(nb + 1):
+        t, fin = debut + _dt.timedelta(minutes=i * pas), min(debut + _dt.timedelta(minutes=(i + 1) * pas), maintenant)
+        valeurs = []
+        while t < fin:
+            valeurs.append(temp(t))
+            t += _dt.timedelta(minutes=10)
+        if not valeurs:
+            valeurs = [temp(fin)]
+        mesures.append(f"{sum(valeurs) / len(valeurs):.1f},{min(valeurs):.1f},{max(valeurs):.1f}")
+    assert len(mesures) == nb + 1 <= HISTORIQUE_MESURES_MAX, vue
+
+    previsions = []
+    if cle == "serre":
+        # Dehors : la courbe recalée la prolonge ; une serre : la prévision de dehors.
+        prevue = temp if exterieur else _dehors
+        if vue == "mois":
+            for j in range(1, 8):
+                jour = (maintenant + _dt.timedelta(days=j)).replace(hour=0, minute=0, second=0, microsecond=0)
+                heures = [prevue(jour + _dt.timedelta(hours=h)) for h in range(24)]
+                mn, mx = min(heures), max(heures)
+                midi = jour.replace(hour=12)
+                previsions.append(f"{_minutes(debut, midi)},{(mn + mx) / 2:.1f},{mn:.1f},{mx:.1f}")
+        else:
+            horizon, tous = (24, 1) if vue == "jour" else (72, 3)
+            t = maintenant.replace(minute=0, second=0, microsecond=0) + _dt.timedelta(hours=1)
+            while t <= maintenant + _dt.timedelta(hours=horizon):
+                if t.hour % tous == 0:
+                    previsions.append(f"{_minutes(debut, t)},{prevue(t):.1f}")
+                t += _dt.timedelta(hours=1)
+    assert len(previsions) <= HISTORIQUE_PREV_MAX, vue
+    minutes = [int(p.split(",")[0]) for p in previsions]
+    assert minutes == sorted(set(minutes)), "prévision hors de l'ordre"
+
+    nom = {"salon": "Salon", "serre": "Jardin" if exterieur else "Serre"}[cle]
+    entete = "|".join([nom, debut.strftime("%Y-%m-%dT%H:%M"), str(pas), str(_minutes(debut, maintenant)),
+                       f"{actuel:.1f}", "1" if exterieur else "0"])
+    assert len(entete.split("|")) == 6 and ";" not in entete
+    return {"cle": cle, "vue": vue, "entete": entete, "mesures": ";".join(mesures),
+            "previsions": ";".join(previsions)}
 
 
 # ---------------------------------------------------------------------------

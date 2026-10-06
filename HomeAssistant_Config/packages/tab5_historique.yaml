@@ -1,0 +1,227 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_historique.yaml
+# @role Popup « Température » de la tablette (ADR-0032, 06/10/2026) : l'historique d'une
+#       des deux températures de l'accueil et, pour la seconde (serre ou dehors), la
+#       prévision de la météo à sa suite. La tablette émet esphome.tab5_historique
+#       (cle = salon | serre, vue = jour | semaine | mois) à l'ouverture du popup (appui
+#       long sur la température) et à chaque bouton de vue ; le blueprint « Tab5 —
+#       emplacements », qui connaît le capteur de chaque emplacement, lance
+#       script.tab5_historique avec lui. Le script pousse UNE fois l'action
+#       tab5_maj_historique de la tablette : rien ne repart tant que le popup ne redemande
+#       pas, et rien n'est poussé quand il est fermé.
+# @payload_contract tab5_maj_historique (cle, vue, entete, mesures, previsions) :
+#       entete = « nom|debut|pas|maintenant|actuel|exterieur » — nom affiché (pièce du
+#       capteur, sinon son appareil, sinon son nom ; « | » et « ; » retirés, 40 caractères),
+#       debut = AAAA-MM-JJTHH:MM local du premier créneau, pas = minutes par créneau,
+#       maintenant = minutes de debut à maintenant (à l'heure de l'horloge locale),
+#       actuel = état du capteur (nan sans), exterieur = 1 si la seconde température est
+#       dehors (case du blueprint), 0 sinon ;
+#       mesures = « moy,min,max » de chaque créneau depuis debut, séparés par « ; », nb + 1
+#       créneaux (le dernier contient maintenant), un créneau sans ligne laissé vide ;
+#       mesures vide = aucune ligne du recorder (le popup dit « Aucun historique ») ;
+#       previsions = « minute,moy » (heure par heure, demi-journée) ou « minute,moy,min,max »
+#       (par jour : moyenne de la mini et de la maxi, placée à midi), minutes depuis debut,
+#       dans l'ordre, 48 au plus ; vide pour la pièce ou sans météo.
+# @data_sources Statistiques du recorder (recorder.get_statistics, types mean / min / max),
+#       sans helper ni écriture en base : période hour pour 24 h (créneaux d'une heure, 24
+#       complets) et 7 jours (créneaux de trois heures calés sur 0 h, 3 h… : 56 complets,
+#       chacun = moyenne des moyennes horaires, mini des minis, maxi des maxis), période day
+#       pour 30 jours (30 jours complets, calés sur minuit). Les statistiques horaires sont
+#       gardées sans limite par HA : les trois vues marchent dès que le capteur a un
+#       state_class (measurement, comme les thermomètres) ; sans, la courbe est vide.
+#       Prévision (seconde température seulement) : weather.get_forecasts sur l'entité de
+#       sensor.tab5_meteo (packages/tab5_meteo_sources.yaml) : heure par heure si l'entité
+#       la fournit (24 h pour 24 h, 72 h toutes les 3 h pour 7 jours), par jour (ou
+#       demi-journée) sinon et pour 30 jours (demain, 3 jours, 7 jours selon la vue).
+# @limits Heure locale « à l'horloge » : un créneau qui traverse un changement d'heure
+#       compte une heure de plus ou de moins, sans décaler les suivants. mode parallel :
+#       deux demandes rapprochées (deux vues, deux tablettes) reçoivent chacune leur réponse
+#       (tablette = préfixe de ses actions ; le popup range chaque réponse sous sa vue et
+#       ignore celle d'une autre température).
+# @ai_warning Ne JAMAIS passer now() brut à une action : les bornes sont des datetimes
+#       locaux remis à la minute (replace(second=0, microsecond=0)), envoyés en ISO avec
+#       leur décalage horaire (piège de packages/tab5_push.yaml).
+# @tests tests/test_historique.py rend ces modèles sur des réponses de get_statistics et
+#       de get_forecasts simulées et compare à un calcul Python indépendant.
+# @install Nécessite homeassistant.packages: !include_dir_named packages
+# ============================================================================
+
+script:
+  tab5_historique:
+    alias: "Tab5 — popup Température (historique et prévision)"
+    description: >-
+      Appelé par le blueprint « Tab5 — emplacements » quand la tablette ouvre l'historique
+      d'une de ses deux températures ou change de vue. Pousse la courbe de la vue demandée
+      et, pour la seconde température, la prévision de la météo (ADR-0032).
+    mode: parallel
+    max: 6
+    fields:
+      tablette:
+        description: "Préfixe des actions de la tablette (entrée « tablette » du blueprint)"
+        example: tab5_ha_hmi
+      cle:
+        description: "Température montrée : salon (la pièce) ou serre (la seconde)"
+        example: serre
+      vue:
+        description: "Vue montrée par le popup : jour (24 h), semaine (7 jours) ou mois (30 jours)"
+        example: jour
+      capteur:
+        description: "Capteur de température de l'emplacement (vide : aucun)"
+        example: sensor.serre_temperature
+      exterieur:
+        description: "La seconde température est dehors (case serre_exterieure du blueprint)"
+        example: false
+    variables:
+      vue_demandee: "{{ vue if vue in ['jour', 'semaine', 'mois'] else 'jour' }}"
+      cle_demandee: "{{ cle if cle in ['salon', 'serre'] else 'salon' }}"
+      # states[''] lève une erreur (domaine invalide) : le « . » d'abord.
+      entite: "{{ capteur if capteur is string and '.' in capteur and states[capteur] is not none else '' }}"
+      pas: "{{ {'jour': 60, 'semaine': 180, 'mois': 1440}[vue_demandee] }}"
+      # Créneaux complets avant celui qui contient maintenant.
+      nb: "{{ {'jour': 24, 'semaine': 56, 'mois': 30}[vue_demandee] }}"
+      # Début du premier créneau : l'heure ronde (24 h), le multiple de trois heures (7
+      # jours) ou minuit (30 jours) qui contient maintenant, moins nb créneaux, à l'horloge
+      # locale (l'arithmétique d'un datetime de HA garde l'heure affichée).
+      debut: >-
+        {%- set n = now().replace(second=0, microsecond=0) -%}
+        {%- if vue_demandee == 'mois' -%}
+          {{ (n.replace(hour=0, minute=0) - timedelta(days=nb)).isoformat() }}
+        {%- else -%}
+          {%- set h = pas // 60 -%}
+          {{ (n.replace(hour=(n.hour // h) * h, minute=0) - timedelta(minutes=pas * nb)).isoformat() }}
+        {%- endif -%}
+      # Minutes de debut à maintenant, à l'horloge locale (le décalage horaire de chacun
+      # compté : un changement d'heure entre les deux ne décale pas l'axe).
+      maintenant: >-
+        {%- set d0 = as_datetime(debut) -%}
+        {%- set n = now() -%}
+        {{ (((n - d0).total_seconds() + (n.utcoffset() - d0.utcoffset()).total_seconds()) / 60) | int }}
+      nom: >-
+        {%- if entite -%}
+          {%- set dev = device_id(entite) -%}
+          {%- set n = area_name(entite) or (device_attr(dev, 'name_by_user') if dev else none)
+                      or (device_attr(dev, 'name') if dev else none) or state_attr(entite, 'friendly_name') or '' -%}
+          {{ (n | string | replace('|', ' ') | replace(';', ' ') | trim)[:40] }}
+        {%- else -%}
+          {{ '' }}
+        {%- endif -%}
+      actuel: "{{ (states(entite) | float | round(1)) if entite and states(entite) | is_number else 'nan' }}"
+      # Prévision : la seconde température seulement, sur l'entité météo des poussées.
+      meteo: "{{ (state_attr('sensor.tab5_meteo', 'entite') or '') if cle_demandee == 'serre' else '' }}"
+      # Heure par heure (24 h, 7 jours) si l'entité le sait ; sinon, et pour 30 jours, par
+      # jour (ou par demi-journée) ; heure par heure aussi pour 30 jours si l'entité ne
+      # fait que ça (type_jours de sensor.tab5_meteo = le meilleur type « jours » géré).
+      type_prev: >-
+        {%- set heures = state_attr('sensor.tab5_meteo', 'heures_ok') | default(false, true) | bool(false) -%}
+        {%- set jours = state_attr('sensor.tab5_meteo', 'type_jours') or '' -%}
+        {%- if not meteo -%}{{ '' }}
+        {%- elif heures and (vue_demandee != 'mois' or jours not in ['daily', 'twice_daily']) -%}hourly
+        {%- else -%}{{ jours if jours in ['daily', 'twice_daily'] else '' }}
+        {%- endif -%}
+      # Horizon de la prévision et, heure par heure, un point toutes les `pas_prev` heures
+      # (au plus 28 points ; le popup en garde 48).
+      horizon: "{{ {'jour': 24, 'semaine': 72, 'mois': 168}[vue_demandee] }}"
+      pas_prev: "{{ {'jour': 1, 'semaine': 3, 'mois': 6}[vue_demandee] }}"
+      jours_prev: "{{ {'jour': 1, 'semaine': 3, 'mois': 7}[vue_demandee] }}"
+    sequence:
+      # Toujours appelée, au même niveau que ce qui lit sa réponse (une variable posée
+      # dans un if n'en sort pas) ; sans capteur, sur une liste vide.
+      - action: recorder.get_statistics
+        data:
+          start_time: "{{ debut }}"
+          statistic_ids: "{{ [entite] if entite else [] }}"
+          period: "{{ 'day' if vue_demandee == 'mois' else 'hour' }}"
+          types:
+            - mean
+            - min
+            - max
+        response_variable: stats
+        continue_on_error: true
+      - variables:
+          # Lignes du recorder rangées par créneau, à l'horloge locale : « moy,min,max ».
+          mesures: >-
+            {%- set lignes = stats.statistics.get(entite, []) if entite and stats is defined and stats is mapping
+                  and stats.statistics is defined else [] -%}
+            {%- set d0 = as_datetime(debut) -%}
+            {%- set ns = namespace(d={}) -%}
+            {%- for r in lignes if r.get('mean') is number -%}
+              {%- set l = as_local(as_datetime(r.start)) -%}
+              {%- set m = ((l - d0).total_seconds() + (l.utcoffset() - d0.utcoffset()).total_seconds()) / 60 -%}
+              {%- set i = (m // pas) | int -%}
+              {%- if 0 <= i <= nb -%}
+                {%- set k = i | string -%}
+                {%- set a = ns.d.get(k, [0, 0, none, none]) -%}
+                {%- set mn = r.get('min') if r.get('min') is number else r.mean -%}
+                {%- set mx = r.get('max') if r.get('max') is number else r.mean -%}
+                {%- set ns.d = dict(ns.d, **{k: [a[0] + r.mean, a[1] + 1,
+                      mn if a[2] is none or mn < a[2] else a[2], mx if a[3] is none or mx > a[3] else a[3]]}) -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- set ns2 = namespace(l=[]) -%}
+            {%- for i in range(nb + 1) -%}
+              {%- set a = ns.d.get(i | string) -%}
+              {%- set ns2.l = ns2.l + [([(a[0] / a[1]) | round(1), a[2] | round(1), a[3] | round(1)] | join(',')) if a else ''] -%}
+            {%- endfor -%}
+            {{ ns2.l | join(';') if ns.d else '' }}
+          entete: >-
+            {{ [nom, as_datetime(debut).strftime('%Y-%m-%dT%H:%M'), pas, maintenant, actuel,
+                1 if cle_demandee == 'serre' and exterieur | bool(false) else 0] | join('|') }}
+      # La prévision, puis la poussée, dans chaque branche : une variable ou une réponse
+      # posée dans un if n'en sort pas.
+      - if: "{{ type_prev != '' }}"
+        then:
+          - action: weather.get_forecasts
+            data:
+              type: "{{ type_prev }}"
+            target:
+              entity_id: "{{ meteo }}"
+            response_variable: prev
+            continue_on_error: true
+          - variables:
+              # Points après maintenant, jusqu'à l'horizon : heure par heure à leur heure
+              # (un toutes les pas_prev heures) ; par jour ou demi-journée, à partir de
+              # demain, sur jours_prev jours : à midi pour un jour (avec sa mini et sa
+              # maxi), à son heure pour une demi-journée.
+              previsions: >-
+                {%- set brut = prev.get(meteo, {}).get('forecast', []) if prev is defined and prev is mapping else [] -%}
+                {%- set d0 = as_datetime(debut) -%}
+                {%- set n = now() -%}
+                {%- set ns = namespace(l=[]) -%}
+                {%- for f in brut if f.get('temperature') is number and f.get('datetime') -%}
+                  {%- set l = as_local(as_datetime(f.datetime)) -%}
+                  {%- if type_prev == 'hourly' -%}
+                    {%- set ok = l > n and l <= n + timedelta(hours=horizon) and l.hour % pas_prev == 0 -%}
+                    {%- set t = l -%}
+                  {%- else -%}
+                    {%- set ok = l.date() > n.date() and l.date() <= (n + timedelta(days=jours_prev)).date() -%}
+                    {%- set t = l.replace(hour=12, minute=0, second=0, microsecond=0) if type_prev == 'daily' else l -%}
+                  {%- endif -%}
+                  {%- if ok and ns.l | count < 48 -%}
+                    {%- set m = (((t - d0).total_seconds() + (t.utcoffset() - d0.utcoffset()).total_seconds()) / 60) | int -%}
+                    {%- if type_prev == 'daily' and f.get('templow') is number -%}
+                      {%- set v = [m, ((f.temperature + f.templow) / 2) | round(1), f.templow | round(1), f.temperature | round(1)] -%}
+                    {%- else -%}
+                      {%- set v = [m, f.temperature | round(1)] -%}
+                    {%- endif -%}
+                    {%- set ns.l = ns.l + [v | join(',')] -%}
+                  {%- endif -%}
+                {%- endfor -%}
+                {{ ns.l | join(';') }}
+          - action: "esphome.{{ tablette }}_tab5_maj_historique"
+            data:
+              cle: "{{ cle_demandee }}"
+              vue: "{{ vue_demandee }}"
+              entete: "{{ entete }}"
+              mesures: "{{ mesures }}"
+              previsions: "{{ previsions }}"
+            continue_on_error: true
+        else:
+          - action: "esphome.{{ tablette }}_tab5_maj_historique"
+            data:
+              cle: "{{ cle_demandee }}"
+              vue: "{{ vue_demandee }}"
+              entete: "{{ entete }}"
+              mesures: "{{ mesures }}"
+              previsions: ""
+            continue_on_error: true
