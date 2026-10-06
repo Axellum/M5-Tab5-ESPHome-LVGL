@@ -376,9 +376,15 @@ def test_le_volet_dessine_suit_la_position_de_ha():
     le doigt ; sans position connue, le dessin montre l'état et le nombre disparaît."""
     cpp = _cpp()
     peindre = _fonction(cpp, "popup_volet_peindre")
-    garde = peindre.split("if (!s_pv.saisi) {", 1)
-    assert len(garde) == 2, "jamais sous le doigt"
-    assert "popup_volet_dessiner(s_pv.pos, estompe);" in garde[1].split("}", 1)[0]
+    # Jamais sous le doigt, ni entre le relâcher et le prochain état de HA (un repeint de
+    # thème gardait la position de HA à chaud et celle du doigt à froid : rendu « clair »).
+    assert "if (!s_pv.saisi && !s_pv.cible) s_pv.pos = vol_position_dessin(e, s_pv.estompe);" in peindre
+    assert "popup_volet_dessiner(s_pv.pos, s_pv.estompe);" in peindre
+    envoi = _fonction(cpp, "popup_volet_envoyer_position")
+    assert envoi.index('u.envoyer(cle, "position", valeur);') < envoi.index("s_pv.cible = true;")
+    recu = _fonction(cpp, "tuiles_etat_recu")
+    assert recu.index("if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;") < recu.index("peindre_tuile(r, t);")
+    assert cpp.count("s_pv.cible = true;") == 1 and cpp.count("s_pv.cible = false;") == 1
     assert "ui_hidden(u.vol_position, !connue);" in peindre
     dessiner = _fonction(cpp, "popup_volet_dessiner")
     assert "ui_y(g_tuiles_ui.vol_tablier, -(std::clamp(pos, 0, 100) * kVoletFenetreH) / 100);" in dessiner

@@ -31,7 +31,7 @@
 #       branchés en C++ (tuiles_brancher_popup_volet), qui seul sait ignorer un toucher
 #       sans glissement et un PRESS_LOST ; il y crée aussi les lames du tablier (builder,
 #       règle 5) et leur style, dont il pose les couleurs (palette du thème) à chaque repeint.
-#       Hauteur de la fenêtre (468) et des lames : kVoletFenetreH / kVoletLameH de
+#       Hauteur de la fenêtre (456) et des lames : kVoletFenetreH / kVoletLameH de
 #       tab5_tuiles.cpp (tests/test_tuiles_firmware.py compare les deux).
 # @ai_instruction `scrollable: false` partout — NE PAS retirer. `clickable: false` sur la
 #       fenêtre et le tablier : le toucher doit arriver au cadre, seul à porter les
@@ -77,15 +77,16 @@ obj:
 
                 # Le volet dessiné : un cadre (bâti et coffre, zone de glissement) qui
                 # tient la fenêtre ; dans la fenêtre, le tablier glisse verticalement
-                # (y = −position × 468 / 100) et la fenêtre le rogne : à 100 % il est
-                # rentré dans le coffre, à 0 % il couvre toute la vitre.
+                # (y = −position × 456 / 100) et la fenêtre le rogne : à 100 % il est
+                # rentré dans le coffre, à 0 % il couvre toute la vitre. Haut et bas du
+                # cadre (y 56..566) alignés sur ceux des boutons Ouvrir et Fermer.
                 - obj:
                     id: volet_cadre
                     align: TOP_LEFT
                     x: 56
                     y: 56
                     width: 336
-                    height: 524
+                    height: 510
                     styles: [style_bg_arc_track, style_border_glass_rim]
                     bg_opa: COVER
                     border_width: 2
@@ -95,15 +96,15 @@ obj:
                     scrollable: false
                     widgets:
                       # Vitre : l'accent très estompé sur le bâti (la lumière du dehors).
-                      # Bordure de 2 px du cadre comprise : 12 px du bord, 44 en haut
+                      # Bordure de 2 px du cadre comprise : 12 px du bord, 42 en haut
                       # (le coffre), 12 en bas.
                       - obj:
                           id: volet_fenetre
                           align: TOP_LEFT
                           x: 10
-                          y: 42
+                          y: 40
                           width: 312
-                          height: 468
+                          height: 456
                           styles: style_bg_accent
                           bg_opa: 15%
                           border_width: 0
@@ -112,14 +113,14 @@ obj:
                           clickable: false
                           scrollable: false
                           widgets:
-                            # Tablier : 13 lames de 36 px créées en C++ (lames_construire).
+                            # Tablier : 12 lames de 38 px créées en C++ (lames_construire).
                             - obj:
                                 id: volet_tablier
                                 align: TOP_LEFT
                                 x: 0
                                 y: 0
                                 width: 312
-                                height: 468
+                                height: 456
                                 styles: style_transparent
                                 clickable: false
                                 scrollable: false

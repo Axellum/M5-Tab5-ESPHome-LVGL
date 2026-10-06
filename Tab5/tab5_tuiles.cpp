@@ -1162,6 +1162,8 @@ struct PopupVolet {
     int tuile = -1;
     bool saisi = false;   // un doigt tient le volet (position connue à l'appui)
     bool glisse = false;  // il a glissé au-delà du seuil : son relâcher envoie la position
+    bool cible = false;   // position envoyée : dessinée jusqu'au prochain état de HA
+    bool estompe = false; // position dessinée = un repère (position inconnue)
     int32_t y_appui = 0;  // ordonnée du doigt à l'appui (écran)
     int pos_appui = 0;    // position dessinée à l'appui
     int pos = 0;          // position dessinée : 0 fermé, 100 ouvert
@@ -1174,9 +1176,9 @@ constexpr int32_t kVoletEtatSous = 360;
 constexpr int32_t kVoletEtatSeul = 272;
 constexpr int32_t kVoletTitreLargeur = 1000;
 // Volet dessiné : hauteur de la fenêtre et du tablier (volet_fenetre, volet_tablier de
-// volet_popup.yaml, tests/test_tuiles_firmware.py compare), lames de 36 px.
-constexpr int32_t kVoletFenetreH = 468;
-constexpr int32_t kVoletLameH = 36;
+// volet_popup.yaml, tests/test_tuiles_firmware.py compare), lames de 38 px.
+constexpr int32_t kVoletFenetreH = 456;
+constexpr int32_t kVoletLameH = 38;
 constexpr int kVoletLames = kVoletFenetreH / kVoletLameH;
 static_assert(kVoletLames * kVoletLameH == kVoletFenetreH, "les lames couvrent la fenêtre");
 // Un doigt qui bouge de moins que ça n'a pas glissé : un toucher n'envoie rien (pas
@@ -1253,7 +1255,7 @@ void popup_volet_nombre(int pos) {
     ui_text(g_tuiles_ui.vol_nombre, buf);
 }
 
-// Builder des lames (règle 5) : 13 lames de 36 px empilées dans le tablier, chacune un
+// Builder des lames (règle 5) : 12 lames de 38 px empilées dans le tablier, chacune un
 // aplat d'accent et un joint de 4 px en bas, toutes sur le style partagé s_lame. La
 // dernière (en bas) fait le bord du tablier. Non cliquables : le toucher va au cadre.
 void lames_construire(lv_obj_t* tablier) {
@@ -1310,13 +1312,13 @@ void popup_volet_peindre() {
     const bool connue = vol_position_connue(e);
     ui_hidden(u.vol_position, !connue);
     // Pas pendant un glissement : le retour de HA ferait sauter le volet sous le doigt
-    // (le dessin et le nombre suivent alors le doigt, volet_cadre_rappel).
-    if (!s_pv.saisi) {
-        bool estompe = false;
-        s_pv.pos = vol_position_dessin(e, estompe);
-        popup_volet_dessiner(s_pv.pos, estompe);
-        if (connue) popup_volet_nombre(s_pv.pos);
-    }
+    // (le dessin et le nombre suivent alors le doigt, volet_cadre_rappel). Ni après le
+    // relâcher, tant que HA n'a pas poussé d'état (tuiles_etat_recu) : un repeint de
+    // thème ou de définitions garde la position envoyée, comme un démarrage à froid.
+    if (!s_pv.saisi && !s_pv.cible) s_pv.pos = vol_position_dessin(e, s_pv.estompe);
+    // Toujours redessiné : les couleurs des lames suivent la palette (thème).
+    popup_volet_dessiner(s_pv.pos, s_pv.estompe);
+    if (connue) popup_volet_nombre(s_pv.pos);
     uint32_t couleur = UIColor.INACTIVE;
     ui_text(u.vol_etat, vol_etat_mots(e, couleur));
     ui_text_color(u.vol_etat, couleur);
@@ -1350,6 +1352,7 @@ bool popup_volet_envoyer_position() {
     snprintf(valeur, sizeof(valeur), "%d", std::clamp(s_pv.pos, 0, 100));
     const char cle[4] = {'t', static_cast<char>('0' + s_pv.piece), static_cast<char>('0' + s_pv.tuile), '\0'};
     u.envoyer(cle, "position", valeur);
+    s_pv.cible = true;
     return true;
 }
 
@@ -1369,6 +1372,7 @@ void volet_cadre_rappel(lv_event_t* ev) {
             s_pv.saisi = popup_volet_valide() && vol_position_connue(s_etats[s_pv.piece][s_pv.tuile]);
             s_pv.y_appui = p.y;
             s_pv.pos_appui = s_pv.pos;
+            if (s_pv.saisi) s_pv.estompe = false;
             break;
         case LV_EVENT_PRESSING: {
             if (!s_pv.saisi) break;
@@ -1540,6 +1544,8 @@ bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n
     Etat& e = s_etats[r][t];
     etat_lire(e, reste, n_reste);
     if (s_m.tuiles[r][t].type == static_cast<uint8_t>(Type::VOL)) vol_sens_suivre(e);
+    // Popup du volet : un état poussé remplace la position envoyée au relâcher.
+    if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;
     if (!heritage()) peindre_tuile(r, t);
     return true;
 }
