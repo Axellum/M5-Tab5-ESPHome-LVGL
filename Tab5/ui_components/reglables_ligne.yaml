@@ -1,0 +1,23 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 10x par reglables_liste.yaml :
+# une ligne de la liste de la tuile − / + (ADR-0032) = un appareil (la clim du blueprint,
+# un appareil de la section « Tuile − / + » du blueprint, le volume de la tablette).
+# Var : n (0 à 9, rang dans la liste, nombre NON quoté : c'est l'argument int de
+# reglables_choisir()).
+# Icône (palette des tuiles, mdi_font_45 : MDI_CODE_TARGETS, motif reglable_ligne_*_icone),
+# nom et valeur : textes, couleurs et liseré de la ligne choisie posés par
+# tab5_reglables.cpp (peindre_liste), qui masque aussi les lignes en trop.
+button:
+  id: "reglable_ligne_${n}"
+  width: 100%
+  height: 52
+  hidden: true
+  # Fond invisible ; à l'appui, la couleur du texte atténué (style_bg_dim) à 25 %.
+  styles: [style_invisible, style_bg_dim]
+  radius: 14
+  pressed: { bg_opa: 25% }
+  on_short_click:
+    - lambda: 'reglables_choisir(${n});'
+  widgets:
+    - label: { id: "reglable_ligne_${n}_icone", text: "", align: LEFT_MID, x: 12, text_font: mdi_font_45, styles: style_text_dim }
+    - label: { id: "reglable_ligne_${n}_nom", text: "", align: LEFT_MID, x: 70, text_font: roboto_32_b }
+    - label: { id: "reglable_ligne_${n}_valeur", text: "", align: RIGHT_MID, x: -12, text_font: roboto_32_b }

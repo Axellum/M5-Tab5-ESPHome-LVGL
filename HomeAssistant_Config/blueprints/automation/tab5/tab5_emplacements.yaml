@@ -49,6 +49,12 @@
 #         « hLI » avec celles des tuiles, états « hLI » avec ceux des tuiles (variable
 #         rangee, déclencheurs rangee_n). Affichage seul : hors de `tuiles`, donc hors de
 #         la liste blanche des commandes.
+#       - section « Tuile − / + » (ADR-0032, 06/10/2026), facultative : d'autres appareils
+#         que la clim pour les boutons − / + de l'accueil, choisis sur la tablette.
+#         Définitions « rN|type|icône|options|lien|min|max|pas|unité|nom » avec celles des
+#         tuiles, états « rN|état|valeur » (variables reglables, reglables_bornes,
+#         déclencheurs reglable_…) ; la commande « regler » (ou « consigne » pour une
+#         clim) ne vise que ces entités-là.
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -455,6 +461,62 @@ blueprint:
             entity:
               filter:
                 - domain: climate
+    # Tuile − / + au choix (ADR-0032, 06/10/2026) : d'autres appareils que la clim pour
+    # les boutons − / + de l'accueil, choisis sur la tablette dans une liste qui se
+    # déroule au toucher de la température du salon. Clés rN de tab5_maj_tuiles
+    # (définitions) et de tab5_maj_emplacements (états) ; un firmware plus ancien les
+    # ignore (la clim seule, comme avant). Seules ces entités-là reçoivent « regler ».
+    tuile_reglage:
+      name: Tuile − / + · − / + tile
+      icon: mdi:plus-minus-variant
+      collapsed: true
+      description: >-
+        D'autres appareils à régler avec les boutons − / + de l'accueil (firmware plus
+        récent que 3.6.0). Toucher la température du salon déroule la liste : la clim
+        ci-dessus, ces appareils, puis le volume de la tablette ; le choix reste jusqu'au
+        suivant, même après un redémarrage. Toucher la valeur entre − et + ouvre le popup
+        de l'appareil quand il en a un (lampe ou volet placé dans une pièce, TV avec sa
+        télécommande, clim).
+
+
+        Other devices to adjust with the − / + buttons of the home page (firmware newer
+        than 3.6.0). Touching the living-room temperature unfolds the list: the climate
+        above, these devices, then the tablet's volume; the choice stays until the next
+        one, even after a reboot. Touching the value between − and + opens the device's
+        popup when it has one (a light or a shutter placed in a room, a TV with its
+        remote, a climate).
+      input:
+        reglables:
+          name: Appareils · Devices
+          description: >-
+            Huit au plus, dans l'ordre de la liste : volume d'un lecteur ou d'une barre de
+            son, luminosité d'une lampe, consigne d'un thermostat, d'un chauffe-eau ou d'un
+            humidificateur, vitesse d'un ventilateur, position d'un volet ou d'une vanne,
+            valeur d'un nombre. Un appareil en lecture seule (section des tuiles) n'y entre
+            pas.
+
+
+            Eight at most, in the order of the list: volume of a player or a soundbar,
+            brightness of a light, setpoint of a thermostat, a water heater or a
+            humidifier, speed of a fan, position of a shutter or a valve, value of a
+            number. A device set to read only (tiles section) is left out.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain:
+                    - media_player
+                    - light
+                    - climate
+                    - water_heater
+                    - humidifier
+                    - fan
+                    - cover
+                    - valve
+                    - number
+                    - input_number
     plantes:
       name: Plantes · Plants
       icon: mdi:sprout
@@ -1042,7 +1104,7 @@ trace:
 
 variables:
   # >>> icones (généré par tools/gen_tuiles_icones.py, ne pas éditer)
-  # Source : Tab5/tuiles_icones.yaml (52 codes). L'icône d'une tuile : celle
+  # Source : Tab5/tuiles_icones.yaml (53 codes). L'icône d'une tuile : celle
   # de la personnalisation, sinon l'attribut `icon` de l'entité, sinon sa classe, sinon
   # son domaine ; un « mdi: » hors palette retombe sur le défaut de son domaine.
   icones_mdi:
@@ -1172,6 +1234,9 @@ variables:
     "mdi:gamepad": console
     "mdi:gamepad-variant": console
     "mdi:gamepad-variant-outline": console
+    "mdi:tablet": tablette
+    "mdi:tablet-dashboard": tablette
+    "mdi:tablet-cellphone": tablette
     "mdi:coffee-maker": cafetiere
     "mdi:coffee-maker-outline": cafetiere
     "mdi:coffee-maker-check": cafetiere
@@ -1456,6 +1521,8 @@ variables:
     - !input rangee_ligne_3
   rangee_plantes: !input rangee_plantes
   rangee_duree: !input rangee_duree
+  # Tuile − / + au choix (ADR-0032) : appareils choisis, dans l'ordre.
+  reglables_choix: !input reglables
   # clé -> entité (chaîne vide si rien n'est choisi). Les détails des pots viennent de
   # l'appareil du capteur d'humidité, par classe (vérifié sur des Flower Care).
   sources: >-
@@ -1589,6 +1656,79 @@ variables:
     {{ v if states['script.tab5_volet_action'] is not none and v.startswith('cover.') and states[v] is not none else '' }}
   # L'entrée Volet (3.x) passe par le package seulement si c'est ce volet-là.
   volet_par_package: "{{ volet_suivi != '' and volet_suivi == sources.volet }}"
+  # Tuile − / + au choix (ADR-0032) : type par domaine, le tableau de l'ADR (kTypes de
+  # Tab5/tab5_reglables.cpp ; tests/test_reglables.py compare). Un autre domaine n'y
+  # entre pas.
+  types_reglables:
+    media_player: son
+    light: lum
+    climate: cli
+    water_heater: eau
+    humidifier: hum
+    fan: ven
+    cover: vol
+    valve: vol
+    number: nbr
+    input_number: nbr
+  # [{cle: 'rN', e: entité, type}] : les huit premières entités choisies qui existent et
+  # dont le domaine a un type, sans la clim du blueprint (la tablette la met déjà en
+  # tête de sa liste), sans doublon ni appareil en lecture seule (personnalisation des
+  # tuiles). C'est la liste blanche des commandes « regler » et « consigne » d'une clé rN.
+  reglables: >-
+    {%- set brut = reglables_choix -%}
+    {%- set liste = [brut] if brut is string else (brut if brut else []) -%}
+    {%- set ns = namespace(l=[], vus=[]) -%}
+    {%- for e in liste -%}
+      {%- if ns.l | count < 8 and e is string and e.split('.')[0] in types_reglables and states[e] is not none
+            and e != sources.clim and e not in ns.vus
+            and perso.get(e, {}).get('comportement', 'normal') != 'lecture_seule' -%}
+        {%- set ns.l = ns.l + [{'cle': 'r' ~ (ns.l | count), 'e': e, 'type': types_reglables[e.split('.')[0]]}] -%}
+        {%- set ns.vus = ns.vus + [e] -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{ ns.l }}
+  # Bornes de chacun : clé rN -> [min, max, pas, unité], lues sur l'appareil. Volume,
+  # luminosité, vitesse, humidité et position en % ; une lampe sans variateur, un volet
+  # ou une vanne sans position réglable ne connaissent que 0 et 100 (pas de 100 : − ferme
+  # ou éteint, + ouvre ou allume). Consigne : bornes et pas de l'appareil, unité d'une
+  # entité weather.* comme pour la clim (ADR-0026). Nombre : ses min, max, step et unité
+  # (7 octets au plus). La même table borne la valeur reçue de la tablette.
+  reglables_bornes: >-
+    {%- set u = namespace(s='') -%}
+    {%- for w in states.weather if not u.s -%}
+      {%- set t = w.attributes.get('temperature_unit', '') | string -%}
+      {%- if t in ['°C', '°F'] -%}{%- set u.s = t -%}{%- endif -%}
+    {%- endfor -%}
+    {%- set ns = namespace(d={}) -%}
+    {%- for r in reglables -%}
+      {%- set a = states[r.e].attributes -%}
+      {%- if r.type in ['cli', 'eau'] -%}
+        {%- set mn = a.get('min_temp') | float(16.0 if r.type == 'cli' else 30.0) -%}
+        {%- set mx = a.get('max_temp') | float(30.0 if r.type == 'cli' else 70.0) -%}
+        {%- set unite = u.s if u.s else ('°F' if r.type == 'cli' and mn >= 40 else '°C') -%}
+        {%- set pas = a.get('target_temp_step') | float(0) -%}
+        {%- set b = [mn, mx, pas if pas > 0 else (1.0 if unite == '°F' else 0.5), unite] -%}
+      {%- elif r.type == 'hum' -%}
+        {%- set b = [a.get('min_humidity') | float(0), a.get('max_humidity') | float(100), 5, '%'] -%}
+      {%- elif r.type == 'ven' -%}
+        {%- set pas = a.get('percentage_step') | float(0) -%}
+        {%- set b = [0, 100, (pas | round(2)) if pas >= 5 else 10, '%'] -%}
+      {%- elif r.type == 'lum' -%}
+        {%- set modes = a.get('supported_color_modes') or [] -%}
+        {%- set b = [0, 100, 10 if modes | reject('in', ['onoff', 'unknown']) | list | count > 0 else 100, '%'] -%}
+      {%- elif r.type == 'vol' -%}
+        {%- set b = [0, 100, 10 if (a.get('supported_features') | int(0)) // 4 % 2 == 1 and r.e != volet_suivi else 100, '%'] -%}
+      {%- elif r.type == 'nbr' -%}
+        {%- set v = namespace(s=(a.get('unit_of_measurement') or '') | string) -%}
+        {%- for i in range(8) -%}{%- if v.s.encode('utf-8') | length > 7 -%}{%- set v.s = v.s[:-1] -%}{%- endif -%}{%- endfor -%}
+        {%- set pas = a.get('step') | float(1) -%}
+        {%- set b = [a.get('min') | float(0), a.get('max') | float(100), pas if pas > 0 else 1, v.s] -%}
+      {%- else -%}
+        {%- set b = [0, 100, 5, '%'] -%}
+      {%- endif -%}
+      {%- set ns.d = dict(ns.d, **{r.cle: b}) -%}
+    {%- endfor -%}
+    {{ ns.d }}
   # Clés poussées par tab5_maj_emplacements (clim et volet ont leurs actions).
   cles_emplacements:
     - lumiere_1
@@ -1717,7 +1857,7 @@ variables:
   # repartent (avec tous les états), sans attendre une reconnexion.
   redefinir: >-
     {{ protocole == 2
-       and (trigger.id.startswith('piece_') or trigger.id.startswith('rangee_')
+       and (trigger.id.startswith('piece_') or trigger.id.startswith('rangee_') or trigger.id.startswith('reglable')
             or trigger.id in ['pc', 'tv', 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3'])
        and trigger.from_state is defined and (trigger.from_state is none or trigger.to_state is none) }}
   # Tuiles à pousser (clés tRT), et éléments de la rangée sous l'horloge (clés hLI,
@@ -1763,6 +1903,18 @@ variables:
       {%- else -%}
         {{ tuiles | selectattr('s', 'eq', trigger.id) | selectattr('type', 'in', types_immediats) | map(attribute='cle') | list }}
       {%- endif -%}
+    {%- else -%}
+      {{ [] }}
+    {%- endif -%}
+  # Appareils de la tuile − / + (clés rN, ADR-0032) : tous après les définitions ; un
+  # quand son entité change ce que la tuile montre (déclencheurs reglable_… : l'état, ou
+  # l'attribut de sa valeur). Poussés seulement au protocole 2 (un firmware qui ne les
+  # connaît pas ignore la clé).
+  reglables_a_pousser: >-
+    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha', 'zones'] or redefinir -%}
+      {{ reglables | map(attribute='cle') | list }}
+    {%- elif trigger.from_state is defined and trigger.id.startswith('reglable') -%}
+      {{ reglables | selectattr('e', 'eq', trigger.entity_id) | map(attribute='cle') | list }}
     {%- else -%}
       {{ [] }}
     {%- endif -%}
@@ -2128,6 +2280,51 @@ triggers:
     from: *etats_visibles
     not_to: *etats_visibles
     id: rangee_3_sortie
+  # Tuile − / + au choix (ADR-0032) : l'état (`to: ~`, sans les attributs), puis
+  # l'attribut qui porte la valeur réglée tant que l'appareil reste allumé ou en place
+  # (not_from / not_to [null] : l'allumage et l'extinction sont vus par « reglable »).
+  # Un nombre porte sa valeur dans son état. Jamais sur tous les attributs : un lecteur
+  # en change à chaque morceau (titre, position de lecture).
+  - trigger: state
+    entity_id: !input reglables
+    to: ~
+    id: reglable
+  - trigger: state
+    entity_id: !input reglables
+    attribute: volume_level
+    not_from: [null]
+    not_to: [null]
+    id: reglable_volume
+  - trigger: state
+    entity_id: !input reglables
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: reglable_luminosite
+  - trigger: state
+    entity_id: !input reglables
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: reglable_consigne
+  - trigger: state
+    entity_id: !input reglables
+    attribute: humidity
+    not_from: [null]
+    not_to: [null]
+    id: reglable_humidite
+  - trigger: state
+    entity_id: !input reglables
+    attribute: percentage
+    not_from: [null]
+    not_to: [null]
+    id: reglable_vitesse
+  - trigger: state
+    entity_id: !input reglables
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: reglable_position
   # Volet suivi par le package volet_serre_tracking.yaml : son état est dans le
   # package (le moteur ne donne pas de position). Sans le package, ne se déclenche jamais.
   - trigger: state
@@ -2233,7 +2430,8 @@ conditions:
         {{ meteo_a_ecrire | count > 0 }}
       {%- else -%}
         {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie'] or cles | count > 0
-           or solaire_a_pousser or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
+           or solaire_a_pousser
+           or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0 or reglables_a_pousser | count > 0)) }}
       {%- endif -%}
   # Déclencheurs venus de HA (rechargement, démarrage, mesures, changements d'état) : seulement
   # si une tablette est connectée, sinon « Action … not found » (pas encore ajoutée)
@@ -2452,17 +2650,26 @@ actions:
                 {%- elif c == 'allumer_seulement' and commande == 'eteindre' -%}
                 {%- else -%}{{ commande }}
                 {%- endif -%}
+              # Appareil de la tuile − / + (rN, ADR-0032) : son entité, si elle existe
+              # encore. La liste reglables est la liste blanche : une clé rN qui n'y est
+              # pas ne commande rien.
+              reglable: "{{ reglables | selectattr('cle', 'eq', emplacement) | first | default({}, true) }}"
+              r_entite: "{{ reglable.e if reglable and states[reglable.e] is not none else '' }}"
+              r_domaine: "{{ r_entite.split('.')[0] if r_entite else '' }}"
               # Clim visée par le popup (ADR-0027) : celle du blueprint (emplacement
               # « clim »), ou celle d'une tuile (tRT dont l'entité est une clim : la liste
               # blanche reste « une entité qu'une tuile porte »). Les mêmes branches
-              # « Clim : … » traduisent pour les deux.
+              # « Clim : … » traduisent pour les deux. Une clim de la tuile − / + (rN,
+              # ADR-0032) aussi, pour sa consigne seulement.
               clim_cible: >-
                 {%- if emplacement == 'clim' -%}{{ clim }}
                 {%- elif t_domaine == 'climate' -%}{{ t_entite }}
+                {%- elif r_domaine == 'climate' and commande == 'consigne' -%}{{ r_entite }}
                 {%- endif -%}
-              # Sa commande : telle quelle pour la clim du blueprint ; pour une tuile, après
-              # son comportement (lecture seule : rien ; allumer seulement : pas d'arrêt).
-              clim_commande: "{{ commande if emplacement == 'clim' else t_commande }}"
+              # Sa commande : telle quelle pour la clim du blueprint et celle de la tuile
+              # − / + ; pour une tuile, après son comportement (lecture seule : rien ;
+              # allumer seulement : pas d'arrêt).
+              clim_commande: "{{ commande if emplacement == 'clim' or r_domaine == 'climate' else t_commande }}"
           - choose:
               - alias: "Lumière : basculer"
                 conditions: "{{ emplacement.startswith('lumiere_') and commande == 'basculer' and cible != '' }}"
@@ -2808,6 +3015,90 @@ actions:
                         target:
                           entity_id: "{{ lampes }}"
 
+              # ---- Tuile − / + au choix (ADR-0032), par domaine de l'entité de rN ----
+              # La valeur visée, un nombre (sinon rien), bornée à reglables_bornes ; une clim
+              # passe par « Clim : consigne » (commande consigne, clim_cible). 0 éteint une
+              # lampe ou un ventilateur ; sans position réglable, un volet ou une vanne
+              # s'ouvre au-dessus de 50 et se ferme en dessous.
+              - alias: "Tuile − / + : régler (volume, luminosité, vitesse, humidité, position, consigne, nombre)"
+                conditions: "{{ commande == 'regler' and r_entite != '' and r_domaine != 'climate' and valeur | is_number }}"
+                sequence:
+                  - variables:
+                      bornes: "{{ reglables_bornes.get(reglable.cle, [0, 100, 1, '']) }}"
+                      v: "{{ [[valeur | float(0), bornes[0] | float(0)] | max, bornes[1] | float(100)] | min }}"
+                      position_reglable: >-
+                        {{ r_domaine in ['cover', 'valve'] and r_entite != volet_suivi
+                           and (state_attr(r_entite, 'supported_features') | int(0)) // 4 % 2 == 1 }}
+                  - choose:
+                      - conditions: "{{ r_domaine == 'media_player' }}"
+                        sequence:
+                          - action: media_player.volume_set
+                            target:
+                              entity_id: "{{ r_entite }}"
+                            data:
+                              volume_level: "{{ (v / 100) | round(2) }}"
+                      - conditions: "{{ r_domaine in ['light', 'fan'] and v <= 0 }}"
+                        sequence:
+                          - action: "{{ r_domaine }}.turn_off"
+                            target:
+                              entity_id: "{{ r_entite }}"
+                      - conditions: "{{ r_domaine == 'light' }}"
+                        sequence:
+                          - action: light.turn_on
+                            target:
+                              entity_id: "{{ r_entite }}"
+                            data:
+                              brightness_pct: "{{ v | round(0) | int }}"
+                      - conditions: "{{ r_domaine == 'fan' }}"
+                        sequence:
+                          - action: fan.set_percentage
+                            target:
+                              entity_id: "{{ r_entite }}"
+                            data:
+                              percentage: "{{ v | round(0) | int }}"
+                      - conditions: "{{ r_domaine == 'humidifier' }}"
+                        sequence:
+                          - action: humidifier.set_humidity
+                            target:
+                              entity_id: "{{ r_entite }}"
+                            data:
+                              humidity: "{{ v | round(0) | int }}"
+                      - conditions: "{{ r_domaine == 'water_heater' }}"
+                        sequence:
+                          - action: water_heater.set_temperature
+                            target:
+                              entity_id: "{{ r_entite }}"
+                            data:
+                              temperature: "{{ v }}"
+                      - conditions: "{{ position_reglable }}"
+                        sequence:
+                          - action: "{{ r_domaine }}.set_{{ r_domaine }}_position"
+                            target:
+                              entity_id: "{{ r_entite }}"
+                            data:
+                              position: "{{ v | round(0) | int }}"
+                      - alias: "Volet suivi par le package (course simulée)"
+                        conditions: "{{ r_entite == volet_suivi }}"
+                        sequence:
+                          - action: script.turn_on
+                            target:
+                              entity_id: script.tab5_volet_action
+                            data:
+                              variables:
+                                action: "{{ 'open' if v >= 50 else 'close' }}"
+                      - conditions: "{{ r_domaine in ['cover', 'valve'] }}"
+                        sequence:
+                          - action: "{{ r_domaine }}.{{ 'open' if v >= 50 else 'close' }}_{{ r_domaine }}"
+                            target:
+                              entity_id: "{{ r_entite }}"
+                      - conditions: "{{ r_domaine in ['number', 'input_number'] }}"
+                        sequence:
+                          - action: "{{ r_domaine }}.set_value"
+                            target:
+                              entity_id: "{{ r_entite }}"
+                            data:
+                              value: "{{ v }}"
+
       - alias: "Clim : son état a changé"
         conditions: "{{ trigger.id == 'clim' and clim != '' }}"
         sequence:
@@ -2988,6 +3279,30 @@ actions:
                 {%- endfor -%}
               {%- endif -%}
             {%- endfor -%}
+            {#- Tuile − / + au choix (ADR-0032) : « rN|type|icône|options|lien|min|max|pas|
+                unité|nom; ». Icône comme une tuile (personnalisée, attribut icon, classe,
+                domaine) ; option t = la TV du blueprint (sa valeur ouvre la télécommande) ;
+                lien = la première tuile qui porte la même entité (sa valeur ouvre le popup
+                de cette tuile), vide sinon ; bornes de reglables_bornes ; nom personnalisé,
+                sinon celui de l'entité. -#}
+            {%- for g in reglables -%}
+              {%- set dom = g.e.split('.')[0] -%}
+              {%- set p = perso.get(g.e, {}) -%}
+              {%- set classe = (state_attr(g.e, 'device_class') or '') | string -%}
+              {%- set defaut = icones_defaut.get(dom ~ '.' ~ classe, icones_defaut.get(dom, '')) if classe else icones_defaut.get(dom, '') -%}
+              {%- set mdi = (p.get('icone') or state_attr(g.e, 'icon') or '') | string -%}
+              {%- set icone = icones_mdi.get(mdi, defaut) if mdi else defaut -%}
+              {%- set lien = tuiles | selectattr('e', 'eq', g.e) | map(attribute='cle') | first | default('') -%}
+              {%- set b = reglables_bornes.get(g.cle, [0, 100, 1, '']) -%}
+              {%- set nom = (p.get('nom') or state_attr(g.e, 'friendly_name') or g.e) | string | trim -%}
+              {#- Option t (la TV du blueprint) : hors du motif des options des tuiles, que
+                  tests/test_tuiles_blueprint.py compte une fois chacune. -#}
+              {%- set opt = 't' if dom == 'media_player' and g.e == sources.tv else '' -%}
+              {%- set ns.r = ns.r ~ g.cle ~ '|' ~ g.type ~ '|' ~ icone ~ '|' ~ opt
+                            ~ '|' ~ lien ~ '|' ~ b[0] ~ '|' ~ b[1] ~ '|' ~ b[2] ~ '|'
+                            ~ (b[3] | string | replace('|', '/') | replace(';', ',')) ~ '|'
+                            ~ (nom | replace('|', '/') | replace(';', ',')) ~ ';' -%}
+            {%- endfor -%}
             {{ ns.r }}
       - if: "{{ protocole == 2 }}"
         then:
@@ -3063,4 +3378,59 @@ actions:
           - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
             data:
               payload: "{{ reglages_tuiles ~ etats_tuiles ~ etats_clims }}"
+            continue_on_error: true
+  # Tuile − / + au choix (ADR-0032) : « rN|état|valeur; », valeur dans l'unité de sa
+  # définition : volume, luminosité, vitesse et position en % (0 pour une lampe ou un
+  # ventilateur éteint ; 0 / 100 pour un volet sans position, fermé / ouvert), consigne
+  # d'une clim ou d'un chauffe-eau, humidité visée, valeur d'un nombre ; nan quand HA n'en
+  # a pas (lecteur éteint, sans volume). Le volet à course simulée : l'état tenu par son
+  # package, comme ses tuiles.
+  - if: "{{ protocole == 2 and reglables_a_pousser | count > 0 }}"
+    then:
+      - variables:
+          etats_reglables: >-
+            {%- set ns = namespace(r='') -%}
+            {%- for g in reglables if g.cle in reglables_a_pousser and states[g.e] is not none -%}
+              {%- set st = states[g.e] -%}
+              {%- set a = st.attributes -%}
+              {%- set etat = st.state -%}
+              {%- if g.e == volet_suivi -%}
+                {%- set etat = {'En_mouvement': 'opening', 'Ouvert': 'open', 'Ferme': 'closed', 'Partiel': 'open'}.get(states('input_text.volet_serre_etat'), etat) -%}
+              {%- endif -%}
+              {%- set pas = reglables_bornes.get(g.cle, [0, 100, 1, ''])[2] | float(1) -%}
+              {%- if g.type == 'son' -%}
+                {#- Lecteur éteint : pas de volume_level (`float('nan')` rendrait le texte
+                    « nan », qu'on ne multiplie pas). -#}
+                {%- set vl = a.get('volume_level') -%}
+                {%- set v = ((vl | float(0)) * 100) | round(0) if vl | is_number else 'nan' -%}
+              {%- elif g.type in ['lum', 'ven'] -%}
+                {%- set brut = a.get('brightness') if g.type == 'lum' else a.get('percentage') -%}
+                {%- if etat == 'off' -%}
+                  {%- set v = 0 -%}
+                {%- elif brut is none -%}
+                  {#- Allumé sans valeur (lampe sans variateur, ventilateur à une vitesse). -#}
+                  {%- set v = 100 if etat == 'on' else 'nan' -%}
+                {%- elif g.type == 'lum' -%}
+                  {#- Lampe allumée qui annonce 0 (Govee) : 1 %, jamais « éteinte » à l'écran. -#}
+                  {%- set v = [(brut | float(0) / 2.55) | round(0), 1] | max -%}
+                {%- else -%}
+                  {%- set v = brut | float('nan') -%}
+                {%- endif -%}
+              {%- elif g.type in ['cli', 'eau'] -%}
+                {%- set v = a.get('temperature') | float('nan') -%}
+              {%- elif g.type == 'hum' -%}
+                {%- set v = a.get('humidity') | float('nan') -%}
+              {%- elif g.type == 'vol' -%}
+                {%- set v = a.get('current_position') | float('nan') if pas < 100 else ({'open': 100, 'closed': 0}.get(etat, 'nan')) -%}
+              {%- else -%}
+                {%- set v = st.state | float('nan') -%}
+              {%- endif -%}
+              {%- set ns.r = ns.r ~ g.cle ~ '|' ~ (etat | string | replace('|', '/') | replace(';', ',')) ~ '|' ~ v ~ ';' -%}
+            {%- endfor -%}
+            {{ ns.r }}
+      - if: "{{ etats_reglables != '' }}"
+        then:
+          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+            data:
+              payload: "{{ etats_reglables }}"
             continue_on_error: true

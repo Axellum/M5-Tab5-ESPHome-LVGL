@@ -173,6 +173,11 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 # ligne des plantes, Plantes.
 SOUS_HORLOGE = (640, 270)
 SERRE = (1172, 158)           # court : Arcade
+# Tuile − / + (ADR-0032) : court sur la température du salon (btn_reglables_liste,
+# climate_card.yaml : carte en 855, 110, zone 4..196 × 22..86), la liste ; ses lignes
+# (reglables_liste.yaml : panneau en 740, 110, bord 2 + marge 6, lignes de 52 + 2).
+SALON = (955, 164)
+LIGNES_REGLABLES = tuple((1000, 110 + 2 + 6 + 54 * k + 26) for k in range(10))
 CONSIGNE_CLIM = (1061, 251)   # court : Climatisation
 TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
 # Long : Lumières. Avec les pièces (ADR-0023), les lampes T2 et T3 de la pièce de
@@ -405,6 +410,12 @@ ECRANS: tuple[Ecran, ...] = (
     # l'accueil ne la remet pas, `fermer` finit le tour jusqu'à la première.
     Ecran("accueil-rangee-ligne-2", (Toucher(*SOUS_HORLOGE),), (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE))),
     Ecran("accueil-rangee-ligne-3", (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE)), (Toucher(*SOUS_HORLOGE),)),
+    # Tuile − / + (ADR-0032) : la liste (clim, les quatre appareils de la démo,
+    # scenarios.REGLABLES, la tablette ; le retour à l'accueil la ferme), puis l'enceinte
+    # (ligne 4) choisie à la place de la clim ; le choix reste en NVS : `fermer` remet la clim.
+    Ecran("accueil-tuile-liste", (Toucher(*SALON),)),
+    Ecran("accueil-tuile-enceinte", (Toucher(*SALON), Toucher(*LIGNES_REGLABLES[4])),
+          (Toucher(*SALON), Toucher(*LIGNES_REGLABLES[0]))),
 
     # --- Fenêtres ---------------------------------------------------------------------
     Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Toucher(*HORLOGE))),

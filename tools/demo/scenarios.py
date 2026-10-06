@@ -60,16 +60,18 @@ def zone_de(cle: str) -> str:
 
 
 def build_emplacements_payload(absentes: frozenset = frozenset(), pieces: dict | None = None,
-                               clim: dict | None = None, rangee: "Rangee | None" = None) -> str:
+                               clim: dict | None = None, rangee: "Rangee | None" = None,
+                               reglables: tuple = ()) -> str:
     """tab5_maj_emplacements : tous les emplacements, sauf ceux d'une zone retirée
     (`--maison-minimale` : comme le blueprint, rien n'est poussé pour une case vide).
     Avec `pieces` (firmware qui a tab5_maj_tuiles), les états des tuiles suivent (clés
     tRT, build_etats_tuiles) ; `clim` = celle de la scène, pour la tuile de la clim ;
-    `rangee` : les états de la rangée sous l'horloge après eux (clés hLI, ADR-0031)."""
+    `rangee` : les états de la rangée sous l'horloge après eux (clés hLI, ADR-0031) ;
+    `reglables` : puis ceux des appareils de la tuile − / + (clés rN, ADR-0032)."""
     payload = "".join(f"{cle}|{etat}|{valeur};" for cle, (etat, valeur) in EMPLACEMENTS.items()
                       if zone_de(cle) not in absentes)
     if pieces is not None:
-        payload += build_etats_tuiles(pieces, clim, rangee)
+        payload += build_etats_tuiles(pieces, clim, rangee) + build_etats_reglables(reglables)
     assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
     return payload
 
@@ -301,11 +303,12 @@ def _tuiles_de(pieces: dict):
             yield f"t{r}{t}", tuile
 
 
-def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None) -> str:
+def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None, reglables: tuple = ()) -> str:
     """tab5_maj_tuiles : « pR|nom;tRT|type|icône|options|complément|nom;… » (ADR-0023).
     Instantané complet : une tuile ou une pièce absente est vide. Une pièce sans nom n'a
     pas d'entrée « p » (la tablette écrit « Pièce n »). `rangee` : la rangée sous
-    l'horloge à la suite (build_rangee_payload, ADR-0031)."""
+    l'horloge à la suite (build_rangee_payload, ADR-0031) ; `reglables` : les appareils
+    de la tuile − / + (build_reglables_payload, ADR-0032)."""
     entrees = []
     for r, piece in sorted(pieces.items()):
         if piece.nom:
@@ -314,6 +317,7 @@ def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None) -> str:
             entrees.append("|".join((cle, tuile.type, tuile.icone, tuile.options,
                                      echapper(tuile.complement), echapper(tuile.nom))))
     payload = "".join(f"{e};" for e in entrees) + (build_rangee_payload(rangee) if rangee is not None else "")
+    payload += build_reglables_payload(reglables)
     assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
     return payload
 
@@ -412,6 +416,78 @@ def build_rangee_payload(rangee: Rangee) -> str:
         entrees.append("|".join((cle, t.type, t.icone, t.options, echapper(t.complement), echapper(t.nom),
                                  element.classe)))
     return "".join(f"{e};" for e in entrees)
+
+
+# ---------------------------------------------------------------------------
+# Tuile − / + (ADR-0032) : les − / + de la carte clim règlent l'appareil choisi sur la
+# tablette dans une liste (la clim du blueprint, ces appareils, le volume de la
+# tablette). Le blueprint pousse, après la rangée dans tab5_maj_tuiles,
+# « rN|type|icône|options|lien|min|max|pas|unité|nom; » (N de 0 à 7 ; option t = la TV
+# du blueprint ; lien = la tuile tRT qui porte la même entité) ; les états
+# « rN|état|valeur; » suivent ceux de la rangée.
+# ---------------------------------------------------------------------------
+
+TYPES_REGLABLE = ("son", "lum", "cli", "eau", "hum", "ven", "vol", "nbr")
+REGLABLES_MAX = 8
+
+
+@dataclass(frozen=True)
+class Reglable:
+    """Un appareil de la tuile − / + : sa définition et son état."""
+    type: str                                 # TYPES_REGLABLE
+    nom: str
+    icone: str = ""                           # code de la palette, '' = défaut du type
+    options: str = ""                         # t : la TV du blueprint
+    lien: str = ""                            # tRT de la tuile de la même entité, '' sinon
+    bornes: tuple = ("0", "100", "5", "%")    # min, max, pas, unité
+    etat: str = "on"                          # état HA tel quel
+    valeur: str = "nan"                       # dans l'unité des bornes, nan sinon
+
+
+# Les appareils de la démo : la TV du salon (éteinte, sans volume : « -- »), la lampe
+# d'ambiance et l'enceinte du jardin (leurs tuiles t02 et t42 : la valeur ouvre leur
+# popup), un radiateur sans tuile. Le rendu capture la liste et l'enceinte choisie
+# (tools/rendu/ecrans.py, « accueil-tuile-liste » et « accueil-tuile-enceinte »).
+REGLABLES = (
+    Reglable("son", "Télévision", "tv", "t", "t00", etat="off"),
+    Reglable("lum", "Lampe d'ambiance", "canape", lien="t02", bornes=("0", "100", "10", "%"), valeur="71"),
+    Reglable("cli", "Radiateur de la chambre", "radiateur", bornes=("7", "30", "0.5", "°C"), etat="heat",
+             valeur="19.5"),
+    Reglable("son", "Enceinte", "enceinte", lien="t42", etat="playing", valeur="35"),
+)
+
+
+def reglables_de(absentes: frozenset) -> tuple:
+    """Les appareils poussés : la maison minimale (des zones retirées) n'en a pas."""
+    return () if absentes else REGLABLES
+
+
+def _reglables_de(reglables: tuple):
+    """(clé « rN », appareil) vérifié, dans l'ordre de la liste."""
+    assert len(reglables) <= REGLABLES_MAX, "huit au plus"
+    for n, r in enumerate(reglables):
+        cle = f"r{n}"
+        assert r.type in TYPES_REGLABLE, f"{cle} : type inconnu {r.type!r}"
+        assert _CODE_ICONE.fullmatch(r.icone), f"{cle} : code d'icône hors palette {r.icone!r}"
+        assert r.options in ("", "t") and (r.options != "t" or r.type == "son"), f"{cle} : option {r.options!r}"
+        assert r.lien == "" or (len(r.lien) == 3 and r.lien[0] == "t" and r.lien[1] in "01234"
+                                and r.lien[2] in "01234"), f"{cle} : lien {r.lien!r}"
+        mn, mx, pas, unite = r.bornes
+        assert float(mn) < float(mx) and float(pas) > 0, f"{cle} : bornes {r.bornes}"
+        assert len(unite.encode("utf-8")) <= 7, f"{cle} : unité de 7 octets au plus"
+        assert r.etat and (_nombre(r.valeur) is not None or r.valeur == "nan"), f"{cle} : état"
+        yield cle, r
+
+
+def build_reglables_payload(reglables: tuple) -> str:
+    """Définitions de la tuile − / + dans tab5_maj_tuiles (ADR-0032)."""
+    return "".join("|".join((cle, r.type, r.icone, r.options, r.lien, *r.bornes[:3], echapper(r.bornes[3]),
+                             echapper(r.nom))) + ";" for cle, r in _reglables_de(reglables))
+
+
+def build_etats_reglables(reglables: tuple) -> str:
+    """États de la tuile − / + dans tab5_maj_emplacements : « rN|état|valeur; »."""
+    return "".join(f"{cle}|{echapper(r.etat)}|{r.valeur};" for cle, r in _reglables_de(reglables))
 
 
 def nom_de_la_piece(r: int, piece: Piece) -> str:

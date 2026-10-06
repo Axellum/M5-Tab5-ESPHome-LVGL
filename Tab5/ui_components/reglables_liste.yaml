@@ -1,0 +1,58 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file reglables_liste.yaml
+# @role Liste de la tuile − / + (ADR-0032, demande d'Axel du 06/10/2026) : toucher l'icône
+#       ou la température du salon (btn_reglables_liste, climate_card.yaml) la déroule ;
+#       une ligne par appareil réglable : la clim du blueprint (si elle existe), les
+#       appareils de la section « Tuile − / + » du blueprint, le volume de la tablette
+#       toujours en dernier. Toucher une ligne choisit l'appareil (mémorisé, NVS) et
+#       ferme la liste ; toucher ailleurs la ferme.
+# @architecture_constraint Ce n'est pas un popup modal : pas de scrim ni d'en-tête
+#       (style_glass_card, pas style_modal_card — ADR-0009 vise les fenêtres modales).
+#       Le capteur plein écran transparent `reglables_liste` porte le panneau ; il est
+#       enregistré en SUBWINDOW (tab5_modal_registry_init) : refermé avec les popups,
+#       et par l'intervalle d'inactivité (tab5-scripts.yaml). Masquage sec, sans fondu.
+#       Inclus APRÈS les cartes du tableau de bord et AVANT les popups : la liste couvre
+#       la carte clim, un popup ouvert depuis une ligne la couvre.
+# @ai_instruction Panneau : bord droit sur celui de la carte clim (1260), haut sur le
+#       sien (110). 10 lignes de 52 px + 9 écarts de 2 + 2 × 6 de marge = 550 px :
+#       jusqu'à y 660 au pire (8 appareils + clim + tablette). Une ligne de plus =
+#       kReglablesLignes (tab5_custom.h), une ligne ici et ses pointeurs dans
+#       tab5-reglables.yaml.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: reglables_liste
+  x: 0
+  y: 0
+  width: 1280
+  height: 720
+  hidden: true
+  styles: style_invisible
+  scrollable: false
+  on_short_click:
+    - lambda: 'reglables_liste_fermer();'
+  widgets:
+    - obj:
+        id: reglables_panneau
+        x: 740
+        y: 110
+        width: 520
+        height: SIZE_CONTENT
+        styles: style_glass_card
+        pad_all: 6
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          pad_row: 2
+        widgets:
+          - !include { file: reglables_ligne.yaml, vars: { n: 0 } }
+          - !include { file: reglables_ligne.yaml, vars: { n: 1 } }
+          - !include { file: reglables_ligne.yaml, vars: { n: 2 } }
+          - !include { file: reglables_ligne.yaml, vars: { n: 3 } }
+          - !include { file: reglables_ligne.yaml, vars: { n: 4 } }
+          - !include { file: reglables_ligne.yaml, vars: { n: 5 } }
+          - !include { file: reglables_ligne.yaml, vars: { n: 6 } }
+          - !include { file: reglables_ligne.yaml, vars: { n: 7 } }
+          - !include { file: reglables_ligne.yaml, vars: { n: 8 } }
+          - !include { file: reglables_ligne.yaml, vars: { n: 9 } }

@@ -67,6 +67,7 @@ script:
           ModalRegistry::add(id(overlay_confirm_ha),     nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(overlay_confirm_reboot), nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(reglages_confirmation),  nullptr,            ModalRegistry::SUBWINDOW);
+          ModalRegistry::add(id(reglables_liste),        nullptr,            ModalRegistry::SUBWINDOW);
 
   # Commande d'un emplacement de la maison (lot 6a, ADR-0019) : la tablette ne
   # connaît plus aucune entité de la maison. Événement esphome.tab5_action, traité
@@ -178,6 +179,8 @@ script:
           // qu'à l'immobilité). Sans cette marque, le rattrapage de 5 s
           // recopierait le niveau périmé par-dessus le réglage en cours.
           if (push_device) id(volume_push_ts) = millis();
+          // Tuile − / + : le volume de la tablette y est un appareil (ADR-0032).
+          reglables_volume_tablette();
       - if:
           condition:
             lambda: 'return push_device;'
@@ -464,6 +467,10 @@ interval:
               if (idle >= UIIdle::POPUP_MS) id(tab5_lvgl)->show_page(0, LV_SCREEN_LOAD_ANIM_NONE, 0);
               return;
           }
+
+          // Liste de la tuile − / + (ADR-0032) : une sous-fenêtre, pas un popup ; elle
+          // se referme après la même inactivité.
+          if (idle >= UIIdle::POPUP_MS && reglables_liste_ouverte()) reglables_liste_fermer();
 
           if (ModalRegistry::any_popup_visible()) {
               if (idle < UIIdle::POPUP_MS) return;

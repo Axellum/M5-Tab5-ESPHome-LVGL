@@ -231,6 +231,11 @@ def test_ce_que_le_job_attend_est_ce_que_calcule_le_blueprint():
     # Rangée sous l'horloge (ADR-0031) : le bouton (action) sauté, quatre au plus, ligne 2 vide.
     assert verifier.rangee_attendue() == [("h00", "cap"), ("h01", "cap"), ("h02", "bin"), ("h03", "bin"),
                                           ("h20", "cap")]
+    # Tuile − / + (ADR-0032) : la clim du blueprint et la serrure sautées, la vanne sans lien.
+    assert [(r["cle"], r["e"]) for r in passage["reglables"]] == [
+        ("r0", "media_player.living_room"), ("r1", "light.ceiling_lights"), ("r2", "climate.heatpump"),
+        ("r3", "cover.kitchen_window"), ("r4", "valve.front_garden")]
+    assert verifier.juger_definitions(definitions.replace("|t20|", "|t21|"), icones)
     # Clim de tuile (ADR-0027) : ses clés cr/ce, pas celles de la clim du blueprint.
     reglages, clims = passage["reglages_tuiles"], passage["etats_clims"]
     assert verifier.juger_clims(reglages, clims) == []

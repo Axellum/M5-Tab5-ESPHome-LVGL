@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 992;
+static const uint16_t kI18nKeyCount = 993;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -1811,6 +1812,7 @@ static const char* const kI18nKeys[] = {
     "TOUS LES NIVEAUX !",
     "TOUT EFFACER ?",
     "Tab contre Tab",
+    "Tablette",
     "Taille affichée : %s",
     "Taille du goban  —  9x9 / 13x13 / 19x19",
     "Taille du texte",
@@ -2807,6 +2809,7 @@ static const char* const kI18n_en[] = {
     "ALL LEVELS CLEARED!",  // "TOUS LES NIVEAUX !"
     "CLEAR EVERYTHING?",  // "TOUT EFFACER ?"
     "Tab vs Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Size shown: %s",  // "Taille affichée : %s"
     "Board size  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Text size",  // "Taille du texte"
@@ -3803,6 +3806,7 @@ static const char* const kI18n_de[] = {
     "ALLE LEVEL GESCHAFFT!",  // "TOUS LES NIVEAUX !"
     "ALLES LÖSCHEN?",  // "TOUT EFFACER ?"
     "Tab gegen Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Angezeigte Größe: %s",  // "Taille affichée : %s"
     "Brettgröße  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Textgröße",  // "Taille du texte"
@@ -4799,6 +4803,7 @@ static const char* const kI18n_nl[] = {
     "ALLE LEVELS GEHAALD!",  // "TOUS LES NIVEAUX !"
     "ALLES WISSEN?",  // "TOUT EFFACER ?"
     "Tab tegen Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Getoonde grootte: %s",  // "Taille affichée : %s"
     "Gobangrootte  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Tekstgrootte",  // "Taille du texte"
@@ -5795,6 +5800,7 @@ static const char* const kI18n_es[] = {
     "¡TODOS LOS NIVELES!",  // "TOUS LES NIVEAUX !"
     "¿BORRAR TODO?",  // "TOUT EFFACER ?"
     "Tab contra Tab",  // "Tab contre Tab"
+    "Tableta",  // "Tablette"
     "Tamaño mostrado: %s",  // "Taille affichée : %s"
     "Tamaño del goban  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Tamaño del texto",  // "Taille du texte"
@@ -6791,6 +6797,7 @@ static const char* const kI18n_it[] = {
     "TUTTI I LIVELLI!",  // "TOUS LES NIVEAUX !"
     "CANCELLARE TUTTO?",  // "TOUT EFFACER ?"
     "Tab vs Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Goban mostrato: %s",  // "Taille affichée : %s"
     "Goban  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Dimensione testo",  // "Taille du texte"
@@ -7787,6 +7794,7 @@ static const char* const kI18n_tr[] = {
     "TÜM SEVİYELER!",  // "TOUS LES NIVEAUX !"
     "HEPSİ SİLİNSİN Mİ?",  // "TOUT EFFACER ?"
     "Tab - Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Gösterilen boyut: %s",  // "Taille affichée : %s"
     "Tahta boyutu  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Metin boyutu",  // "Taille du texte"

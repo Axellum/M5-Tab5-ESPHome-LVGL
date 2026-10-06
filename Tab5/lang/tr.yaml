@@ -194,6 +194,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Climate popup --------------------------------------------------------------
 "Climatisation Salon": "Salon klima"
 "Climatisation": "Klima"
+"Tablette": "Tablet"
 "MODE": "MOD"
 "clim|Chaud": "Isıtma"
 "Sec": "Kuru"

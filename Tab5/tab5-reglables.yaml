@@ -1,0 +1,84 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-reglables.yaml
+# @role Tuile − / + au choix (ADR-0032, 06/10/2026) : pose les widgets que
+#       tab5_reglables.cpp dessine (g_reglables_ui) — ceux de la carte clim
+#       (climate_card.yaml) et de la liste (reglables_liste.yaml) — et les rappels vers
+#       les scripts (volume de la tablette, événement tab5_action, débounce). Le modèle
+#       (définitions rN de l'action tab5_maj_tuiles, états rN de tab5_maj_emplacements),
+#       le choix mémorisé (NVS) et le dessin vivent dans tab5_reglables.cpp.
+# @architecture_constraint id() n'existe que dans une lambda YAML : tab5_zones_apply
+#       (tab5-zones.yaml), lancé à la fin du setup AVANT la première image, exécute ce
+#       script avant zones_apply_ui(), qui peint la tuile. Chargé APRÈS tab5_lvgl : il
+#       référence des widgets. Aucun lv_* ici.
+# @ai_instruction Un widget de plus = son champ dans ReglablesUI (tab5_custom.h) et sa
+#       ligne ici. Une ligne de liste de plus = kReglablesLignes et quatre lignes ici.
+# ============================================================================
+
+script:
+  - id: tab5_reglables_ui
+    then:
+      - lambda: |-
+          ReglablesUI& u = g_reglables_ui;
+          u.zone = id(climate_controls_zone);
+          u.consigne_clim = id(clim_target);
+          u.rangee = id(reglable_rangee);
+          u.icone = id(reglable_icone);
+          u.valeur = id(reglable_valeur);
+          u.liste = id(reglables_liste);
+          u.ligne[0] = id(reglable_ligne_0);
+          u.ligne_icone[0] = id(reglable_ligne_0_icone);
+          u.ligne_nom[0] = id(reglable_ligne_0_nom);
+          u.ligne_valeur[0] = id(reglable_ligne_0_valeur);
+          u.ligne[1] = id(reglable_ligne_1);
+          u.ligne_icone[1] = id(reglable_ligne_1_icone);
+          u.ligne_nom[1] = id(reglable_ligne_1_nom);
+          u.ligne_valeur[1] = id(reglable_ligne_1_valeur);
+          u.ligne[2] = id(reglable_ligne_2);
+          u.ligne_icone[2] = id(reglable_ligne_2_icone);
+          u.ligne_nom[2] = id(reglable_ligne_2_nom);
+          u.ligne_valeur[2] = id(reglable_ligne_2_valeur);
+          u.ligne[3] = id(reglable_ligne_3);
+          u.ligne_icone[3] = id(reglable_ligne_3_icone);
+          u.ligne_nom[3] = id(reglable_ligne_3_nom);
+          u.ligne_valeur[3] = id(reglable_ligne_3_valeur);
+          u.ligne[4] = id(reglable_ligne_4);
+          u.ligne_icone[4] = id(reglable_ligne_4_icone);
+          u.ligne_nom[4] = id(reglable_ligne_4_nom);
+          u.ligne_valeur[4] = id(reglable_ligne_4_valeur);
+          u.ligne[5] = id(reglable_ligne_5);
+          u.ligne_icone[5] = id(reglable_ligne_5_icone);
+          u.ligne_nom[5] = id(reglable_ligne_5_nom);
+          u.ligne_valeur[5] = id(reglable_ligne_5_valeur);
+          u.ligne[6] = id(reglable_ligne_6);
+          u.ligne_icone[6] = id(reglable_ligne_6_icone);
+          u.ligne_nom[6] = id(reglable_ligne_6_nom);
+          u.ligne_valeur[6] = id(reglable_ligne_6_valeur);
+          u.ligne[7] = id(reglable_ligne_7);
+          u.ligne_icone[7] = id(reglable_ligne_7_icone);
+          u.ligne_nom[7] = id(reglable_ligne_7_nom);
+          u.ligne_valeur[7] = id(reglable_ligne_7_valeur);
+          u.ligne[8] = id(reglable_ligne_8);
+          u.ligne_icone[8] = id(reglable_ligne_8_icone);
+          u.ligne_nom[8] = id(reglable_ligne_8_nom);
+          u.ligne_valeur[8] = id(reglable_ligne_8_valeur);
+          u.ligne[9] = id(reglable_ligne_9);
+          u.ligne_icone[9] = id(reglable_ligne_9_icone);
+          u.ligne_nom[9] = id(reglable_ligne_9_nom);
+          u.ligne_valeur[9] = id(reglable_ligne_9_valeur);
+          u.volume = &id(system_volume);
+          // Volume de la tablette : le point d'entrée unique (tab5_volume_apply,
+          // tab5-scripts.yaml), qui pousse au haut-parleur après son propre débounce.
+          u.volume_regler = [](float v) { id(tab5_volume_apply).execute(v, true); };
+          u.envoyer = [](const char* e, const char* a, const char* v) {
+            id(tab5_action).execute(std::string(e), std::string(a), std::string(v));
+          };
+          u.debounce = []() { id(tab5_debounce_reglable).execute(); };
+
+  # − / + d'un appareil de Home Assistant : chaque appui relance le délai, une seule
+  # commande part quand le doigt s'arrête (même principe que tab5_debounce_clim_temp).
+  - id: tab5_debounce_reglable
+    mode: restart
+    then:
+      - delay: 250ms
+      - lambda: 'reglables_envoyer_attente();'

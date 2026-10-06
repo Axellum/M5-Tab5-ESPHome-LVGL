@@ -172,6 +172,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Climate popup --------------------------------------------------------------
 "Climatisation Salon": "Airco woonkamer"
 "Climatisation": "Airco"
+"Tablette": "Tablet"
 "MODE": "MODUS"
 "clim|Chaud": "Warm"
 "Sec": "Droog"
