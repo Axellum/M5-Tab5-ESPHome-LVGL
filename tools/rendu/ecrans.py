@@ -139,6 +139,11 @@ REPONSE_ASSISTANT = (
 )
 
 ALERTES_HA = "update.home_assistant_core_update|Rouge|@maj:Home Assistant Core;ha:unavailable|Orange|@indispo:3"
+# Six alertes à lire (lot 3 des alertes, 06/10/2026) : en-tête « @n:6 » et les quatre
+# premières, rangées par HA (rouge d'abord) ; chaque bandeau affiche son rang, « 2/6 ».
+ALERTES_HA_SIX = ("@n:6;binary_sensor.fuite_cuisine#1|Rouge|Fuite cuisine;"
+                  "update.home_assistant_core_update#1|Rouge|@maj:Home Assistant Core;"
+                  "ha:indispo#1|Orange|@indispo:3;sensor.porte_entree_batterie#1|Orange|Porte entrée 12 %")
 
 # Vigilance de la scène 2 (orange), puis retour à celle de la scène 3, la dernière
 # poussée par capturer.py. Heure figée : les codes de pluie sont ceux des scènes.
@@ -179,6 +184,11 @@ TUILES = {"chambre": (640, 572), "salon": (890, 572)}
 TUILE_VOLET = (390, 572)
 VOLET_SANS_POSITION = Service("tab5_maj_emplacements", (("payload", "t01|closing|nan|;"),))
 VOLET_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t01|opening|45|;"),))
+# Le volet dessiné du popup (06/10/2026), tiré du doigt vers le bas : 150 px de la fenêtre
+# de 456 px, de 45 % à 13 % (volet_cadre_rappel, tab5_tuiles.cpp). Vertical, au-dessus
+# des tuiles : ni swipe de page ni bouton sous le doigt. Le relâcher envoie « position »,
+# que personne n'applique ici : la capture montre le volet là où le doigt l'a laissé.
+VOLET_TIRE = Glisser(265, 250, 265, 400)
 
 # Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
 # un bouton (un bouton garde l'appui et se déclencherait au relâché).
@@ -378,6 +388,9 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-alertes-ha",
           (Service("tab5_maj_alertes_ha_bulk", (("payload", ALERTES_HA),)), _panneau(4)),
           (Service("tab5_maj_alertes_ha_bulk", (("payload", ""),)), _panneau(3))),
+    Ecran("accueil-alertes-ha-compteur",
+          (Service("tab5_maj_alertes_ha_bulk", (("payload", ALERTES_HA_SIX),)), _panneau(5)),
+          (Service("tab5_maj_alertes_ha_bulk", (("payload", ""),)), _panneau(3))),
     # Le planning du jour touché reste 6 s ; la réponse vocale 8 s, puis relance le
     # rotateur (tab5-assist.yaml) : on l'arrête de nouveau sur le panneau des scènes.
     Ecran("accueil-planning-du-jour", (Toucher(*TUILE_J1_TEMP),), (Attendre(6.5),)),
@@ -421,6 +434,7 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("lumieres-salon", (Long(*TUILES["salon"]),)),
     Ecran("volet", (Long(*TUILE_VOLET),)),
     Ecran("volet-sans-position", (VOLET_SANS_POSITION, Long(*TUILE_VOLET)), (VOLET_DE_LA_DEMO,)),
+    Ecran("volet-glisse", (Long(*TUILE_VOLET), VOLET_TIRE)),
     # Popup d'un appareil : un interrupteur « allumer seulement », une scène, et une
     # scène à confirmer après un appui sur le grand bouton (« Confirmer ? »).
     Ecran("appareil", (VERS_LA_DROITE, Long(*TUILE_ORDINATEUR)), (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),

@@ -6,7 +6,14 @@
 #        tuile de l'ADR-0023, rien d'autre), icon (glyphe MDI en mdi_font_45 : il doit
 #        figurer dans la liste `glyphs` de mdi_font_45), icon_style (style de rôle
 #        style_text_*, la couleur suit le thème), text (le mot, traduit au démarrage).
-# Créé le 05/10/2026 (popup du volet, discussion #278).
+# Créé le 05/10/2026 (popup du volet, discussion #278). Le 06/10/2026 (même discussion :
+# « buttons can be like ha dashboard buttons ») : l'icône dans une pastille ronde teintée,
+# le mot à côté, comme une tuile de Home Assistant. Le bouton garde le verre partagé
+# (style_clim_btn : formes du thème et effet d'appui des boutons de rayon 18).
+# @ai_instruction La pastille est un obj : `clickable: false` — NE PAS retirer, sinon elle
+#        prend l'appui à la place du bouton et on_short_click ne part plus.
+#        Teinte : TEXT_SOFT à 14 % sur le verre (style de rôle + opacité locale), plus
+#        claire en thème sombre, plus foncée en thème clair.
 # ═══════════════════════════════════════════════════════
 button:
   align: TOP_LEFT
@@ -18,5 +25,18 @@ button:
   on_short_click:
     - lambda: 'popup_volet_commande("${commande}");'
   widgets:
-    - label: { text: "${icon}", align: LEFT_MID, x: 36, text_font: mdi_font_45, styles: "${icon_style}" }
-    - label: { text: "${text}", align: LEFT_MID, x: 110, text_font: roboto_32_b }
+    - obj:
+        align: LEFT_MID
+        x: 12
+        width: 100
+        height: 100
+        styles: style_bg_soft
+        bg_opa: 14%
+        border_width: 0
+        radius: 50
+        pad_all: 0
+        clickable: false
+        scrollable: false
+        widgets:
+          - label: { text: "${icon}", align: CENTER, text_font: mdi_font_45, styles: "${icon_style}" }
+    - label: { text: "${text}", align: LEFT_MID, x: 132, text_font: roboto_32_b }
