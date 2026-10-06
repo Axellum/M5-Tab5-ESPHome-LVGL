@@ -1206,6 +1206,44 @@ int reglages_langue_confirmer();
 // « Annuler », voile ou croix : referme la confirmation.
 void reglages_confirmation_fermer();
 
+// =============================================================================
+// Historique des alertes (lot 4 du plan des alertes, 06/10/2026) — tab5_alertes.cpp
+// =============================================================================
+// Popup « Alertes » (alertes_popup.yaml) : les 20 dernières alertes, une ligne chacune
+// (pastille de la gravité, libellé, « apparue 14 h 02 · lue 14 h 10 · terminée 15 h 30 »),
+// et « Tout marquer comme lu ». Ouvert par un appui long sur la carte centrale ou par
+// « Aller à l'écran → Alertes ». Home Assistant répond à l'événement
+// esphome.tab5_alertes_historique par l'action tab5_maj_alertes_historique.
+//
+// Widgets posés par le script tab5_alertes_ouvrir (tab5-alertes.yaml) à la première
+// ouverture : id() n'existe que dans une lambda YAML.
+struct AlertesUI {
+    lv_obj_t* popup = nullptr;                          // alertes_popup
+    lv_obj_t* liste = nullptr;                          // alertes_liste : lignes créées en C++
+    lv_obj_t* attente = nullptr;                        // alertes_attente : rien reçu, ou liste vide
+    lv_obj_t* tout_lu = nullptr;                        // btn_alertes_tout_lu
+    const esphome::font::Font* police = nullptr;        // roboto_32_b : libellés
+    const esphome::font::Font* police_heures = nullptr; // roboto_22 : heures
+    // Événement esphome.tab5_alertes_historique (script tab5_alertes_demande, lambda sans capture).
+    void (*demander)() = nullptr;
+};
+extern AlertesUI g_alertes_ui;
+
+// Action tab5_maj_alertes_historique : « apparue|lue|terminée|gravité|libellé » séparés
+// par « ; », la plus récente d'abord, 20 au plus. Heures en secondes epoch (0 = pas
+// encore) ; gravité Rouge, Orange ou Jaune ; libellé codé comme ceux des bandeaux
+// (« @maj:titre », « @indispo:nombre », « @vigi:niveau ») ou nom d'une entité.
+void alertes_historique_recu(const std::string& payload);
+// Ouvre le popup, le peint avec la dernière liste reçue, et demande la nouvelle à HA.
+void alertes_ouvrir();
+// « Tout marquer comme lu » : marque lues les lignes en cours, avant la réponse de HA.
+void alertes_tout_lu_local();
+// « Tout marquer comme lu » sur la carte centrale : les 4 bandeaux d'alertes HA et la
+// vigilance du bandeau info sont lus tout de suite (acquittements locaux), comme un tap
+// sur chacun ; HA reçoit alert_id « * » et lit aussi celles qui n'avaient pas de bandeau.
+void central_tout_marquer_lu(HaAlertSlotUI slots[4], lv_obj_t* lbl_info, const std::string& info_id,
+                             std::string& dismissed_local, CentralPanelCtx& ctx);
+
 // Appui sur la tuile T de la pièce de la page courante (tuile météo ou carte du mode
 // HA) : commande selon le type et les options (tableau de l'ADR-0023), popup, ou rien.
 void tuile_appui(int tuile, bool long_appui);

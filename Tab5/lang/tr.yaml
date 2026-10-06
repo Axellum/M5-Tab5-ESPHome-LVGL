@@ -1248,3 +1248,13 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Langue": "Dil"
 "Changer de langue ?": "Dil değiştirilsin mi?"
 "La tablette redémarre en {langue}.": "Tablet {langue} diliyle yeniden başlar."
+# Historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026)
+"Alertes": "Uyarılar"
+"Tout marquer comme lu": "Tümünü okundu işaretle"
+"Aucune alerte": "Uyarı yok"
+"apparue %s": "çıktı %s"
+"lue %s": "okundu %s"
+"terminée %s": "bitti %s"
+"%d h %02d": "%d:%02d"
+"Vigilance Rouge": "Kırmızı uyarı"
+"Vigilance Orange": "Turuncu uyarı"

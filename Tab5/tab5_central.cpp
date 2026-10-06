@@ -335,9 +335,11 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
 }
 
 // Libellés codés (lot 4c, 27/09/2026), composés dans la langue de la tablette :
-// « @maj:<titre> » → « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo ». Tout
-// autre libellé (nom d'un capteur en erreur, ancien package HA) s'affiche tel quel.
-static std::string decode_ha_alert_text(const char* brut) {
+// « @maj:<titre> » → « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo »,
+// « @vigi:<niveau> » → « Vigilance Rouge » (historique des alertes, lot 4 du
+// 06/10/2026). Tout autre libellé (nom d'un capteur en erreur, ancien package HA)
+// s'affiche tel quel.
+std::string ha_alerte_texte(const char* brut) {
     char tmp[200];
     if (strncmp(brut, "@maj:", 5) == 0) {
         snprintf(tmp, sizeof(tmp), tr("1 MAJ · %s"), brut + 5);
@@ -346,6 +348,13 @@ static std::string decode_ha_alert_text(const char* brut) {
     if (strncmp(brut, "@indispo:", 9) == 0) {
         snprintf(tmp, sizeof(tmp), tr("%d indispo"), atoi(brut + 9));
         return tmp;
+    }
+    if (strncmp(brut, "@vigi:", 6) == 0) {
+        const char* niveau = brut + 6;
+        if (strcmp(niveau, "Rouge") == 0) return tr("Vigilance Rouge");
+        if (strcmp(niveau, "Orange") == 0) return tr("Vigilance Orange");
+        if (strcmp(niveau, "Jaune") == 0) return tr("Vigilance Jaune");
+        return normalize_text_utf8(niveau);
     }
     return normalize_text_utf8(brut);
 }
@@ -408,7 +417,7 @@ bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
                 continue;
             }
             *slots[slot_idx].id_store = aid;
-            std::string texte = decode_ha_alert_text(parts[2]);
+            std::string texte = ha_alerte_texte(parts[2]);
             ctx.has_ha[slot_idx] = !texte.empty();
             colorer_niveau(slot_idx, slots[slot_idx].lbl, parts[1]);
             lv_label_set_recolor(slots[slot_idx].lbl, false);
@@ -490,6 +499,23 @@ void dismiss_ha_alert_slot_immediate(int slot_idx, lv_obj_t* wrap, lv_obj_t* lbl
     id_store.clear();
     ctx.has_ha[slot_idx] = false;
     retirer_panneau(kHaAlertPanelBase + slot_idx, lbl, wrap, ctx);
+}
+
+// « Tout marquer comme lu » (popup Alertes, lot 4) : mêmes gestes qu'un tap sur chaque
+// bandeau (tab5_dismiss_ha_alert, tab5_dismiss_info_tap), sans l'événement : le script
+// tab5_alertes_tout_lu envoie un seul alert_id « * ».
+void central_tout_marquer_lu(HaAlertSlotUI slots[4], lv_obj_t* lbl_info, const std::string& info_id,
+                             std::string& dismissed_local, CentralPanelCtx& ctx) {
+    for (int i = 0; i < kHaAlertSlotCount; i++) {
+        HaAlertSlotUI& s = slots[i];
+        if (s.id_store == nullptr || s.id_store->empty()) continue;
+        tab5_dismiss_local_add(dismissed_local, *s.id_store);
+        dismiss_ha_alert_slot_immediate(i, s.wrap, s.lbl, *s.id_store, ctx);
+    }
+    if (ctx.has_info && !info_id.empty()) {
+        tab5_dismiss_local_add(dismissed_local, info_id);
+        dismiss_central_info_immediate(lbl_info, ctx);
+    }
 }
 
 // Pose le titre sans rien decider de la visibilite, dans la police de la date

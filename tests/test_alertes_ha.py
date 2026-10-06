@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 from pathlib import Path
 
 import jinja2
@@ -603,3 +604,118 @@ def test_une_pile_revient_apres_une_recharge():
     c(avance=300)             # vraie fin
     assert "sensor.pot" not in c.m["suivi"]
     assert c(pile) == ["sensor.pot#1"]
+
+
+# ─── Historique (lot 4 : popup « Alertes » de la tablette, tableau de bord) ───────
+
+TAB5 = RACINE / "Tab5"
+
+
+def historique(memoire, abonnements=None, payload=True):
+    nom = "tab5_alertes_historique_payload" if payload else "tab5_alertes_historique_liste"
+    args = "m, a" if payload else "m, a, 20"
+    gabarit = _env().from_string(f"{{% from 'tab5_alertes.jinja' import {nom} %}}{{{{ {nom}({args}) }}}}")
+    rendu = gabarit.render(m=memoire, a=abonnements or TOUT)
+    return rendu if payload else json.loads(rendu)
+
+
+def _entree(i, s=None, g="Orange", t="Porte", a=T0, lue=0, f=0):
+    e = {"i": i, "r": 1, "t": t, "g": g, "a": a, "l": lue, "f": f}
+    if s is not None:
+        e["s"] = s
+    return e
+
+
+def test_une_nouvelle_entree_garde_sa_source():
+    c = Capteur()
+    c({"update.x": maj("1.0"), "binary_sensor.f": probleme()})
+    assert {e["i"]: e["s"] for e in c.m["historique"]} == {"update.x": "maj", "binary_sensor.f": "probleme"}
+
+
+def test_payload_de_l_historique():
+    """« apparue|lue|terminée|gravité|libellé » séparés par « ; », 20 au plus, la plus
+    récente d'abord : ce que lit alertes_historique_recu() (Tab5/tab5_alertes.cpp)."""
+    h = [_entree(f"binary_sensor.p{i}", "etiquette", a=T0 - i, lue=T0 if i % 2 else 0, f=T0 + 5 if i % 3 == 0 else 0)
+         for i in range(25)]
+    h[1]["t"] = "A|B;C"
+    entrees = historique({"historique": h}).split(";")
+    assert len(entrees) == 20
+    champs = [e.split("|") for e in entrees]
+    assert all(len(c) == 5 for c in champs)
+    assert [int(c[0]) for c in champs] == [T0 - i for i in range(20)]
+    assert champs[0][1:3] == ["0", str(T0 + 5)] and champs[1][1:3] == [str(T0), "0"]
+    assert champs[1][4] == "A/B,C"   # ni « | » ni « ; » dans un libellé
+
+
+def test_l_historique_suit_les_abonnements():
+    h = [_entree("update.x", "maj", "Orange", "@maj:Paquet"),
+         _entree("update.core", "maj", "Rouge", "@maj:Core"),
+         _entree("meteo:vigilance", "vigilance", "Jaune", "@vigi:Jaune"),
+         _entree("binary_sensor.fuite", "probleme", "Rouge", "Fuite"),
+         _entree("binary_sensor.porte", "etiquette"),
+         # Entrées d'avant le lot 4 : sans source, déduite de l'id quand c'est possible.
+         _entree("update.vieux"), _entree("meteo:vigilance", g="Jaune"), _entree("binary_sensor.ancien")]
+    tout = [e["i"] for e in historique({"historique": h}, payload=False)]
+    assert tout == [e["i"] for e in h]
+    choix = {"maj": "ha", "vigilance": "Orange", "probleme": False, "indispo": True, "etiquette": True}
+    assert [e["i"] for e in historique({"historique": h}, choix, payload=False)] == \
+        ["update.core", "binary_sensor.porte", "binary_sensor.ancien"]
+    assert historique({}) == "" and historique({"historique": "abîmé"}) == ""
+
+
+def test_l_historique_lu_dans_ha():
+    h = [_entree("update.x", "maj", t="@maj:Paquet"), _entree("binary_sensor.porte", "etiquette")]
+    etats = [Etat("sensor.tab5_alertes", "1", {"historique": h}),
+             Etat("input_select.tab5_alertes_maj", "Aucune")]
+    gabarit = _env(etats).from_string(
+        "{% from 'tab5_alertes.jinja' import tab5_alertes_historique %}"
+        "{{ tab5_alertes_historique('payload') }}#{{ tab5_alertes_historique('liste') }}")
+    payload, liste = gabarit.render().split("#", 1)
+    assert payload == f"{T0}|0|0|Orange|Porte"
+    assert [e["i"] for e in json.loads(liste)] == ["binary_sensor.porte"]
+    # Sans le capteur (package absent) : rien, pas d'erreur.
+    assert _env().from_string("{% from 'tab5_alertes.jinja' import tab5_alertes_historique %}"
+                              "{{ tab5_alertes_historique('payload') }}").render() == ""
+
+
+def test_l_historique_part_a_la_demande_de_la_tablette():
+    """La tablette le demande à l'ouverture du popup (esphome.tab5_alertes_historique) ; HA
+    le repousse quand il change pendant que « Écran courant » vaut « Alertes ». Un firmware
+    d'avant n'émet pas l'événement et n'affiche jamais « Alertes » : l'action absente n'est
+    jamais appelée (« Action not found » arrête un script, continue_on_error n'y peut rien)."""
+    push = _charger("packages", "tab5_push.yaml")
+    script = json.dumps(push["script"]["tab5_push_alertes_historique"]["sequence"], ensure_ascii=False)
+    assert "esphome.tab5_ha_hmi_tab5_maj_alertes_historique" in script
+    assert "tab5_alertes_historique('payload')" in script
+    auto = next(a for a in push["automation"] if a["id"] == "tab5_ha_hmi_alertes_historique_push")
+    assert {"entity_id": "sensor.tab5_alertes", "attribute": "historique"}.items() <= auto["trigger"][0].items()
+    assert "is_state', 'Alertes')" in json.dumps(auto["condition"], ensure_ascii=False)
+    # « Alertes » : le nom du popup dans le registre (« Écran courant ») et l'option du
+    # select « Aller à l'écran ».
+    assert '"Alertes",          ModalRegistry::POPUP' in (TAB5 / "tab5-scripts.yaml").read_text(encoding="utf-8")
+    assert '      - "Alertes"\n' in (TAB5 / "tab5-ha-controls.yaml").read_text(encoding="utf-8")
+    evenements = json.dumps(_charger("packages", "tab5_evenements.yaml"), ensure_ascii=False)
+    assert "esphome.tab5_alertes_historique" in evenements and "script.tab5_push_alertes_historique" in evenements
+    firmware = (TAB5 / "tab5-alertes.yaml").read_text(encoding="utf-8")
+    assert "event: esphome.tab5_alertes_historique" in firmware
+    assert 'alert_id: "*"' in firmware   # « Tout marquer comme lu »
+
+
+def _entrees_valides(payload):
+    entrees = payload.split(";")
+    assert 0 < len(entrees) <= 20
+    for e in entrees:
+        a, lue, f, g, t = e.split("|")
+        assert int(a) > 0 and int(lue) >= 0 and int(f) >= 0 and g in {"Rouge", "Orange", "Jaune"} and t
+    return entrees
+
+
+def test_les_donnees_du_rendu_et_du_fuzz_suivent_le_format():
+    import sys
+    sys.path.insert(0, str(RACINE / "tools" / "rendu"))
+    import ecrans
+    rendu = _entrees_valides(ecrans.HISTORIQUE_ALERTES)
+    assert [int(e.split("|")[0]) for e in rendu] == sorted((int(e.split("|")[0]) for e in rendu), reverse=True)
+    graine = re.search(r'"tab5_maj_alertes_historique": \{"payload": "([^"]+)"',
+                       (RACINE / "tools" / "sanitizers" / "fuzz_services.py").read_text(encoding="utf-8"))
+    assert graine and _entrees_valides(graine.group(1))
