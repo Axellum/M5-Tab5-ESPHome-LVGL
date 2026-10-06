@@ -18,14 +18,18 @@
 #                          à 6-64 px du haut du slot ; ligne de la police = 70 px pile, d'où
 #                          scrollable: false sur chaque slot). 4 × 70 = 280 px ≤ 401 (SPACE_EVENLY,
 #                          pad_column à 0 : sans lui le thème ajoute 14 px entre les slots,
-#                          vu le 03/10/2026 avec « Planta 2 » rogné). Garder la zone d'appui
-#                          long `btn_pots_detail_zone` (tab5-lvgl.yaml) de la même géométrie.
+#                          vu le 03/10/2026 avec « Planta 2 » rogné).
+# @architecture_constraint Depuis le 06/10/2026 (ADR-0031), c'est la ligne des plantes de la
+#                          rangée sous l'horloge : seul enfant du panneau rangee_plantes
+#                          (rangee.yaml, à y 244), qui l'anime comme la carte centrale. Le
+#                          panneau, pas cette carte, est masqué quand la ligne n'est pas à
+#                          l'écran ; l'appui long (`btn_rangee`, tab5-lvgl.yaml) n'ouvre
+#                          « Mes Plantes » que sur elle.
 # ============================================================================
 obj:
   id: moisture_sensors_card
-  align: TOP_MID
   x: 0
-  y: 244
+  y: 0
   width: 401
   height: 70
   styles: style_transparent

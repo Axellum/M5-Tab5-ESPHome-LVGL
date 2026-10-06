@@ -15,6 +15,42 @@ le 06/10/2026 : le package du volet à course simulée ne rend plus le volet mue
 extinction automatique de l'écran au choix et rallumage à « Okay Nabu » (#342), notice
 d'utilisation (#339).
 
+### 2026-10-06 — Rangée sous l'horloge : jusqu'à trois lignes de capteurs, plus les plantes
+
+Demande d'Axel : sous l'horloge, la zone des pots ne montrait que les plantes. Elle devient une
+**rangée** de lignes qui tournent avec la carte centrale ([ADR-0031](docs/decisions/0031-row-under-the-clock.md)).
+Firmware et blueprint ; un firmware plus ancien ignore les nouvelles clés (plantes seules), un
+blueprint plus ancien garde l'écran d'avant.
+- **Blueprint « Tab5 — emplacements », nouvelle section repliée « Sous l'horloge · Under the
+  clock »** : trois lignes de quatre appareils au plus (capteurs, détecteurs, interrupteurs,
+  lampes, clims… ; pas les scènes, scripts et boutons), la place de la ligne des plantes (en
+  premier par défaut, deuxième, troisième ou masquée) et la durée d'une ligne (8 à 120 s, par pas
+  de 8 s, 32 s par défaut). Laissée vide, rien ne change.
+- **Calage** : la carte centrale garde ses 8 s ; la rangée change tous les N tours, 0,2 s avant
+  elle (rotateur `tab5_central_rotator_auto` : 7,8 s, la rangée, 0,2 s, la carte), pour un
+  enchaînement de haut en bas, avec la même animation que la carte centrale. Un appui sur la
+  rangée passe à la ligne suivante ; un appui long sur la ligne des plantes ouvre Mes Plantes.
+  De petits tirets sous la rangée montrent la ligne affichée.
+- **Dessin** : une icône par appareil, la valeur des capteurs et des clims, à la plus grande taille
+  qui tient dans la largeur de l'horloge (la police de la date du thème, puis plus petit, puis
+  icône au-dessus de la valeur). Valeur colorée selon sa mesure : échelle des températures
+  (« 21.4 ° », °F ramené), de l'humidité, des batteries, or pour la puissance et l'énergie (W /
+  kW). Les tuiles des pièces gardent leurs couleurs.
+- **Affichage seul** : les éléments de la rangée sont à part des tuiles (variable `rangee` du
+  blueprint), la liste blanche des commandes ne les connaît pas.
+- Contrat : clés `hp|place`, `hd|secondes` et `hLI|type|icône|options|complément|nom|classe` dans
+  `tab5_maj_tuiles`, états `hLI|état|valeur|couleur` dans `tab5_maj_emplacements` (préfixe `h`
+  pour ne pas se confondre avec le bandeau d'état). Modèle et NVS à part (« RAN1 ») dans
+  `tab5_tuiles.cpp` ; dessin et rotation dans la nouvelle unité `tab5_rangee.cpp`, nouveau package
+  `tab5-rangee.yaml`, composants `rangee.yaml` et `rangee_element.yaml` ; la zone tactile
+  `btn_pots_detail_zone` devient `btn_rangee`.
+- Démo : trois lignes (plantes, climat, énergie et maison) ; le rendu hors tablette capture les
+  lignes 2 et 3 (`accueil-rangee-ligne-2`, `-3`). Le job « Installation dans un HA neuf » vérifie
+  les clés de la rangée dans un vrai Home Assistant. Tests `tests/test_rangee.py` (calage,
+  bornes, clés des deux côtés, blueprint rendu, aucune commande, rendu). Docs : notice (écran
+  d'accueil, plantes), étape 6 de l'installation, architecture, cartographie, `Tab5/README.md`.
+  **Pas encore essayé sur la tablette.**
+
 ### 2026-10-06 — Écran : extinction automatique au choix, rallumage à « Okay Nabu »
 
 Demande de la discussion #278 : « sur batterie ou sur USB, l'écran ne devrait se réveiller que

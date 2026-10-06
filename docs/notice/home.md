@@ -4,7 +4,7 @@
 
 ---
 
-The top of the screen never changes: voice, clock, buttons, temperatures, climate and plants. The numbers are those of the [overview](README.md).
+The top of the screen never changes: voice, clock, buttons, temperatures, climate and the row under the clock. The numbers are those of the [overview](README.md).
 
 ## Voice: Domo, microphone, Discu, Ok Nabu (1 to 4)
 
@@ -35,9 +35,15 @@ The date changes colour with the day's weather warnings (yellow, orange, red). I
 - **Target temperature**: a tap opens the [climate window](climate.md).
 - **−** and **+**: one step down or up. The new target shows at once; quick taps add up and leave as one command when you stop.
 
-## Plants (11)
+## Row under the clock (11)
 
-Four icons, one per pot, coloured by soil moisture (red: to water, green: fine, blue: too wet). A **long press** opens the [plant details](plants.md). Without plant sensors, the area stays empty.
+Up to three lines of four sensors, plus the plants line, chosen in the « Tab5 — emplacements » blueprint (section « Sous l'horloge · Under the clock »). With two lines or more they take turns, just before the central card changes (every 32 seconds by default, set in the blueprint), and small dashes under the row show which line is on.
+
+- **The plants line**: four icons, one per pot, coloured by soil moisture (red: to water, green: fine, blue: too wet). A **long press** opens the [plant details](plants.md).
+- **A sensor line**: an icon per device, and the value of each sensor, coloured by what it measures (temperatures on the screen's scale, humidity, battery, gold for power and energy). A switch, a light or a detector shows its state; it is not controlled from here.
+- **Tap**: the next line at once.
+
+Without plant sensors and without a sensor line, the area stays empty.
 
 ## Central card (12)
 
@@ -56,7 +62,7 @@ It also shows, for a moment, the tablet's spoken answer, a day's schedule (when 
 
 ---
 
-Le haut de l'écran ne change jamais : voix, horloge, boutons, températures, clim et plantes. Les numéros sont ceux de la [vue d'ensemble](README.md#version-française).
+Le haut de l'écran ne change jamais : voix, horloge, boutons, températures, clim et rangée sous l'horloge. Les numéros sont ceux de la [vue d'ensemble](README.md#version-française).
 
 ## Voix : Domo, micro, Discu, Ok Nabu (1 à 4)
 
@@ -87,9 +93,15 @@ La date change de couleur avec les vigilances météo du jour (jaune, orange, ro
 - **Consigne** : un tap ouvre la [fenêtre de la clim](climate.md#version-française).
 - **−** et **+** : un pas de moins ou de plus. La nouvelle consigne s'affiche tout de suite ; des taps rapides s'additionnent et partent en une seule commande quand vous vous arrêtez.
 
-## Plantes (11)
+## Rangée sous l'horloge (11)
 
-Quatre icônes, une par pot, colorées selon l'humidité de la terre (rouge : à arroser, vert : bien, bleu : trop humide). Un **appui long** ouvre le [détail des plantes](plants.md#version-française). Sans capteurs de plantes, la zone reste vide.
+Jusqu'à trois lignes de quatre capteurs, plus la ligne des plantes, choisies dans le blueprint « Tab5 — emplacements » (section « Sous l'horloge · Under the clock »). À partir de deux lignes, elles se relaient juste avant que la carte centrale change (toutes les 32 secondes d'origine, réglable dans le blueprint), et de petits tirets sous la rangée montrent la ligne affichée.
+
+- **La ligne des plantes** : quatre icônes, une par pot, colorées selon l'humidité de la terre (rouge : à arroser, vert : bien, bleu : trop humide). Un **appui long** ouvre le [détail des plantes](plants.md#version-française).
+- **Une ligne de capteurs** : une icône par appareil, et la valeur de chaque capteur, colorée selon ce qu'il mesure (températures sur l'échelle de l'écran, humidité, batterie, or pour la puissance et l'énergie). Un interrupteur, une lampe ou un détecteur montre son état ; il ne se commande pas d'ici.
+- **Tap** : la ligne suivante, tout de suite.
+
+Sans capteurs de plantes ni ligne de capteurs, la zone reste vide.
 
 ## Carte centrale (12)
 

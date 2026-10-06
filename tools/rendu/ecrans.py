@@ -157,7 +157,9 @@ DOMO, DISCU = (72, 150), (340, 150)
 # zone absente). Sans TV, HA et Sys glisseraient d'une colonne (zones_apply_ui).
 # tests/test_rendu_ecrans.py les compare aux boutons de Tab5/tab5-lvgl.yaml.
 BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
-POTS = (640, 270)             # long : Plantes
+# Rangée sous l'horloge (ADR-0031, zone btn_rangee) : court, ligne suivante ; long sur la
+# ligne des plantes, Plantes.
+SOUS_HORLOGE = (640, 270)
 SERRE = (1172, 158)           # court : Arcade
 CONSIGNE_CLIM = (1061, 251)   # court : Climatisation
 TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
@@ -376,6 +378,11 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-solaire-bon", (_solaire("60"),), SANS_SOLAIRE),
     Ecran("accueil-solaire-fort", (_solaire("95"),), SANS_SOLAIRE),
     Ecran("accueil-solaire-et-batterie", (_batterie(True, 95.0), _solaire("60")), SANS_BATTERIE + SANS_SOLAIRE),
+    # Rangée sous l'horloge (ADR-0031) : trois lignes dans la démo (plantes, climat,
+    # énergie et maison ; scenarios.RANGEE). Un appui passe à la suivante ; le retour à
+    # l'accueil ne la remet pas, `fermer` finit le tour jusqu'à la première.
+    Ecran("accueil-rangee-ligne-2", (Toucher(*SOUS_HORLOGE),), (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE))),
+    Ecran("accueil-rangee-ligne-3", (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE)), (Toucher(*SOUS_HORLOGE),)),
 
     # --- Fenêtres ---------------------------------------------------------------------
     Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Toucher(*HORLOGE))),
@@ -391,7 +398,7 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("volet", (Long(*TUILE_VOLET),)),
     Ecran("volet-sans-position", (VOLET_SANS_POSITION, Long(*TUILE_VOLET)), (VOLET_DE_LA_DEMO,)),
     Ecran("climatisation", (Toucher(*CONSIGNE_CLIM),)),
-    Ecran("plantes", (Long(*POTS),)),
+    Ecran("plantes", (Long(*SOUS_HORLOGE),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis
     # les vues Jours et Mois par « Aller à l'écran ». Données : la scène (demo_pusher,
     # _pousser_energie), datée du jour figé des captures.

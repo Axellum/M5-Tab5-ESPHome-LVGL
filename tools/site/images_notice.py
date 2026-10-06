@@ -66,7 +66,7 @@ REPERES = {
     8: (ecrans.BOUTON_TV, (-63, -40)),
     9: (ecrans.SERRE, (84, 34)),
     10: (ecrans.CONSIGNE_CLIM, (-113, -24)),
-    11: (ecrans.POTS, (-190, -27)),
+    11: (ecrans.SOUS_HORLOGE, (-190, -27)),
     12: (centre_du_widget("central_card"), (-612, -36)),
     13: (ecrans.TUILES["chambre"], (-92, -70)),
     14: (ecrans.TUILE_J1_TEMP, (-72, -22)),

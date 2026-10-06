@@ -408,11 +408,12 @@ void zones_apply_ui() {
     ui_hidden(u.val_serre, sans_serre);
     ui_text(u.icon_serre, sans_serre ? "\U000F0297" : "\U000F002D");
 
-    // Pots : rangée de l'accueil et popup « Mes Plantes ».
+    // Pots : ligne des plantes de la rangée sous l'horloge (sans pot, elle sort de la
+    // rotation, ADR-0031 ; la rangée disparaît s'il n'y a rien d'autre) et popup « Mes
+    // Plantes ».
     const int n_pots = zones_pots_presents();
-    ui_hidden(u.pots_row, n_pots == 0);
-    ui_hidden(u.pots_zone, n_pots == 0);
     moisture_slots_refresh();
+    rangee_appliquer_ui();
     {
         int32_t largeur = 1250;  // modal_card_w (tab5-ui-tokens.yaml)
         for (lv_obj_t* c : u.pot_card) {

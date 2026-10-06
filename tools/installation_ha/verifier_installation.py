@@ -180,6 +180,22 @@ PERSONNALISATION = [
     {"entite": "light.office_rgbw_lights", "nom": "Bureau | CI; test", "icone": "mdi:led-strip-variant",
      "comportement": "confirmer"},
 ]
+# Rangée sous l'horloge (ADR-0031) : ligne 1 de six entités, dont quatre ont un élément
+# (le bouton, une action, est sauté ; la lampe, cinquième, n'a plus de place) ; ligne 2
+# vide ; ligne 3 d'un capteur. Plantes en deuxième, 40 s par ligne.
+RANGEE = {
+    "rangee_ligne_1": ["sensor.serre_ci_temperature", "button.push", "sensor.outside_humidity",
+                       "binary_sensor.movement_backyard", "lock.front_door", "light.bed_light"],
+    "rangee_ligne_3": ["sensor.telephone_ci_batterie"],
+    "rangee_plantes": "1",
+    "rangee_duree": 40,
+}
+# Ce que le blueprint doit calculer pour la rangée (champs : complement, classe).
+RANGEE_DETAILS = {
+    "h00": {"complement": "°C", "classe": "temperature"},
+    "h03": {"complement": "lock"},
+    "h20": {"complement": "%", "classe": "battery"},
+}
 # Type de tuile par domaine : variables.types_par_domaine du blueprint
 # (tests/test_installation_ha.py compare).
 TYPES_PAR_DOMAINE = {
@@ -346,7 +362,7 @@ def erreurs_de_trace(trace: dict) -> list[str]:
 def entrees_blueprint() -> dict[str, Any]:
     """Entrées de l'automatisation (use_blueprint.input) : emplacements 3.x, pièces et
     personnalisation."""
-    return {**EMPLACEMENTS, **PIECES, "personnalisation": PERSONNALISATION}
+    return {**EMPLACEMENTS, **PIECES, **RANGEE, "personnalisation": PERSONNALISATION}
 
 
 def entites_de_test() -> list[str]:
@@ -356,6 +372,9 @@ def entites_de_test() -> list[str]:
         if cle.endswith("_tuiles"):
             entites.update(valeur)
     entites.update(p["entite"] for p in PERSONNALISATION)
+    for cle, valeur in RANGEE.items():
+        if cle.startswith("rangee_ligne_"):
+            entites.update(valeur)
     return sorted(entites)
 
 
@@ -382,6 +401,16 @@ def tuiles_attendues() -> list[tuple[str, str]]:
     return tuiles
 
 
+def rangee_attendue() -> list[tuple[str, str]]:
+    """(clé, type) des éléments de la rangée sous l'horloge (ADR-0031) : les quatre
+    premières entités de chaque ligne dont le type n'est pas une action."""
+    elements = []
+    for n in range(3):
+        types = [TYPES_PAR_DOMAINE[e.split(".")[0]] for e in RANGEE.get(f"rangee_ligne_{n + 1}", [])]
+        elements += [(f"h{n}{i}", t) for i, t in enumerate([t for t in types if t != "act"][:4])]
+    return elements
+
+
 def entrees_de(payload: str) -> list[list[str]]:
     """« a|b;c|d; » → [['a', 'b'], ['c', 'd']] (définitions et états des tuiles)."""
     return [e.split("|") for e in (payload or "").split(";") if e]
@@ -393,8 +422,22 @@ def juger_definitions(definitions: str, icones_mdi: dict[str, str]) -> list[str]
     entrees = entrees_de(definitions)
     pieces = {e[0]: e for e in entrees if e[0].startswith("p")}
     tuiles = {e[0]: e for e in entrees if e[0].startswith("t")}
-    if mauvaises := [e for e in entrees if (len(e) != 2 if e[0].startswith("p") else len(e) != 6)]:
+    rangee = {e[0]: e for e in entrees if re.fullmatch(r"h[0-4][0-4]", e[0])}
+    reglages = {e[0]: e for e in entrees if e[0] in ("hp", "hd")}
+    # pR et hp / hd : deux champs ; hLI : sept (la classe en plus) ; tRT : six.
+    if mauvaises := [e for e in entrees
+                     if len(e) != (2 if e[0].startswith("p") or e[0] in reglages else 7 if e[0] in rangee else 6)]:
         problemes.append(f"entrées mal formées : {mauvaises}")
+    attendus = {"hp": str(RANGEE["rangee_plantes"]), "hd": str(RANGEE["rangee_duree"])}
+    if {c: e[1] for c, e in reglages.items()} != attendus:
+        problemes.append(f"réglages de la rangée {list(reglages.values())} au lieu de {attendus}")
+    if [(cle, e[1]) for cle, e in rangee.items()] != rangee_attendue():
+        problemes.append(f"rangée {[(c, e[1]) for c, e in rangee.items()]} au lieu de {rangee_attendue()}")
+    for cle, details in RANGEE_DETAILS.items():
+        for champ, attendu in details.items():
+            vu = rangee.get(cle, [""] * 7)[{"complement": 4, "classe": 6}[champ]]
+            if vu != attendu:
+                problemes.append(f"{cle}.{champ} = {vu!r} au lieu de {attendu!r}")
     attendues = tuiles_attendues()
     if [(cle, e[1]) for cle, e in tuiles.items()] != attendues:
         problemes.append(f"tuiles {[(c, e[1]) for c, e in tuiles.items()]} au lieu de {attendues}")
@@ -1198,8 +1241,10 @@ async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rappor
                      " ; ".join(problemes))
     rapport.info(f"définitions : {definitions}")
     etats = variables.get("etats_tuiles") or ""
-    rapport.verifier([e[0] for e in entrees_de(etats)] == tuiles and all(len(e) == 4 for e in entrees_de(etats)),
-                     "pièces : l'état de chaque tuile est calculé après les définitions (tRT|état|valeur|couleur)",
+    rangee = [cle for cle, _ in rangee_attendue()]
+    rapport.verifier([e[0] for e in entrees_de(etats)] == tuiles + rangee and all(len(e) == 4 for e in entrees_de(etats)),
+                     "pièces : l'état de chaque tuile et de chaque élément de la rangée est calculé après les "
+                     "définitions (tRT|état|valeur|couleur, hLI de même)",
                      f"etats_tuiles = {etats!r}")
     reglages_clims = variables.get("reglages_tuiles") or ""
     etats_clims = variables.get("etats_clims") or ""
@@ -1217,8 +1262,9 @@ async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rappor
         # Et les états tRT ne partent pas non plus, ni les clims des tuiles (crRT, ceRT).
         trt = [a for _, trace in traces.items() for a in appels_de_trace(trace)
                if str(a.get("service", "")).endswith("_tab5_maj_emplacements")
-               and re.search(r"(^|;)(t|cr|ce)[0-4][0-4][|]", str((a.get("service_data") or {}).get("payload", "")))]
-        rapport.verifier(not trt, "protocole 1 : aucun état de tuile (tRT, crRT, ceRT) poussé", f"{len(trt)} poussée(s)")
+               and re.search(r"(^|;)(t|cr|ce|h)[0-4][0-4][|]", str((a.get("service_data") or {}).get("payload", "")))]
+        rapport.verifier(not trt, "protocole 1 : aucun état de tuile (tRT, crRT, ceRT) ni de la rangée (hLI) poussé",
+                         f"{len(trt)} poussée(s)")
     else:
         charges = [(a.get("service_data") or {}).get("payload") for _, a in appels]
         rapport.verifier(definitions in charges, "protocole 2 : tab5_maj_tuiles appelée avec les définitions",

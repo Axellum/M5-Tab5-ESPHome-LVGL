@@ -43,6 +43,12 @@
 #         Plusieurs sources (05/10/2026, discussion #278) : energie_solaire_autres et
 #         energie_production_autres s'ajoutent aux champs principaux ; puissances et
 #         compteurs sont additionnés (energie_solaires, energie_productions).
+#       - section « Sous l'horloge » (ADR-0031, 06/10/2026), facultative : la rangée sous
+#         l'horloge de l'accueil, jusqu'à trois lignes de quatre éléments plus celle des
+#         plantes. Définitions « hp » (place des plantes), « hd » (durée d'une ligne) et
+#         « hLI » avec celles des tuiles, états « hLI » avec ceux des tuiles (variable
+#         rangee, déclencheurs rangee_n). Affichage seul : hors de `tuiles`, donc hors de
+#         la liste blanche des commandes.
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -500,6 +506,132 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: moisture
+    # Rangée sous l'horloge (ADR-0031, 06/10/2026) : jusqu'à trois lignes de quatre
+    # éléments, plus celle des plantes, qui tournent avec la carte centrale. Affichage
+    # seul : aucune commande ne vise un élément de la rangée (variable rangee, hors de
+    # `tuiles`). Clés hLI, hp et hd de tab5_maj_tuiles, états hLI de
+    # tab5_maj_emplacements ; un firmware plus ancien les ignore (plantes seules).
+    sous_horloge:
+      name: Sous l'horloge · Under the clock
+      icon: mdi:view-sequential
+      collapsed: true
+      description: >-
+        La rangée sous l'horloge de l'accueil (firmware plus récent que 3.6.0) : jusqu'à
+        trois lignes de quatre capteurs, plus celle des plantes. Elles tournent avec la
+        carte centrale ; un appui passe à la ligne suivante. Une valeur prend la couleur
+        de sa mesure (température, humidité, batterie, puissance). Affichage seul : un
+        interrupteur ou une lampe montre son état, sans se commander d'ici.
+
+
+        The row under the clock of the home page (firmware newer than 3.6.0): up to three
+        lines of four sensors, plus the plants line. They rotate with the central card; a
+        tap shows the next line. A value takes the colour of its measurement
+        (temperature, humidity, battery, power). Display only: a switch or a light shows
+        its state, without being controlled from here.
+      input:
+        rangee_ligne_1:
+          name: Ligne 1 · Line 1
+          description: >-
+            Quatre au plus, de gauche à droite : températures, humidités, production,
+            batteries, détecteurs de présence ou d'ouverture, interrupteurs. Un capteur
+            montre sa valeur, les autres leur icône.
+
+
+            Four at most, left to right: temperatures, humidity, production, batteries,
+            presence or opening detectors, switches. A sensor shows its value, the others
+            their icon.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: &domaines_rangee
+                    - sensor
+                    - number
+                    - input_number
+                    - binary_sensor
+                    - device_tracker
+                    - person
+                    - lock
+                    - climate
+                    - light
+                    - switch
+                    - input_boolean
+                    - fan
+                    - humidifier
+                    - automation
+                    - cover
+                    - valve
+                    - media_player
+        rangee_ligne_2:
+          name: Ligne 2 · Line 2
+          description: >-
+            Quatre au plus. Une ligne vide est sautée.
+
+
+            Four at most. An empty line is skipped.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_rangee
+        rangee_ligne_3:
+          name: Ligne 3 · Line 3
+          description: >-
+            Quatre au plus. Avec la ligne des plantes, la rangée garde trois lignes : la
+            dernière attend que les plantes soient masquées.
+
+
+            Four at most. With the plants line the row keeps three lines: the last one
+            waits until the plants are hidden.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_rangee
+        rangee_plantes:
+          name: Ligne des plantes · Plants line
+          description: >-
+            Sa place dans la rangée (les pots de la section Plantes). Un appui long sur
+            elle ouvre Mes Plantes.
+
+
+            Its place in the row (the pots of the Plants section). A long press on it
+            opens My Plants.
+          default: "0"
+          selector:
+            select:
+              options:
+                - value: "0"
+                  label: "En premier · First"
+                - value: "1"
+                  label: "En deuxième · Second"
+                - value: "2"
+                  label: "En troisième · Third"
+                - value: masquees
+                  label: "Masquée · Hidden"
+        rangee_duree:
+          name: Durée d'une ligne · Time per line
+          description: >-
+            La carte centrale change toutes les 8 secondes ; la rangée change un tour
+            sur n, juste avant elle, pour un enchaînement de haut en bas.
+
+
+            The central card changes every 8 seconds; the row changes every n turns,
+            just before it, so the screen changes from top to bottom.
+          default: 32
+          selector:
+            number:
+              min: 8
+              max: 120
+              step: 8
+              unit_of_measurement: s
+              mode: slider
     planning:
       name: Planning de travail · Work schedule
       icon: mdi:calendar-clock
@@ -1317,6 +1449,13 @@ variables:
     - !input piece_4_nom
     - !input piece_5_nom
   personnalisation: !input personnalisation
+  # Rangée sous l'horloge (ADR-0031) : lignes choisies, place des plantes, durée.
+  rangee_lignes:
+    - !input rangee_ligne_1
+    - !input rangee_ligne_2
+    - !input rangee_ligne_3
+  rangee_plantes: !input rangee_plantes
+  rangee_duree: !input rangee_duree
   # clé -> entité (chaîne vide si rien n'est choisi). Les détails des pots viennent de
   # l'appareil du capteur d'humidité, par classe (vérifié sur des Flower Care).
   sources: >-
@@ -1414,6 +1553,24 @@ variables:
           {%- endif -%}
         {%- endfor -%}
       {%- endif -%}
+    {%- endfor -%}
+    {{ ns.l }}
+  # Rangée sous l'horloge (ADR-0031) : [{cle: 'hLI', l: L, r: -1, e: entité, type, s: ''}],
+  # les quatre premières entités de chaque ligne qui existent et dont le domaine a un
+  # type, sauf les actions (scènes, scripts, boutons : rien à montrer). À part de
+  # `tuiles` : la liste blanche des commandes de l'écran ne les connaît pas.
+  rangee: >-
+    {%- set ns = namespace(l=[], i=0) -%}
+    {%- for n in range(3) -%}
+      {%- set brut = rangee_lignes[n] -%}
+      {%- set liste = [brut] if brut is string else (brut if brut else []) -%}
+      {%- set ns.i = 0 -%}
+      {%- for e in liste -%}
+        {%- if ns.i < 4 and e is string and types_par_domaine.get(e.split('.')[0], 'act') != 'act' and states[e] is not none -%}
+          {%- set ns.l = ns.l + [{'cle': 'h' ~ n ~ ns.i, 'l': n, 'r': -1, 'e': e, 'type': types_par_domaine[e.split('.')[0]], 's': ''}] -%}
+          {%- set ns.i = ns.i + 1 -%}
+        {%- endif -%}
+      {%- endfor -%}
     {%- endfor -%}
     {{ ns.l }}
   # Clims des tuiles (ADR-0027) : les tuiles cli qui ne sont pas la clim du blueprint
@@ -1560,31 +1717,37 @@ variables:
   # repartent (avec tous les états), sans attendre une reconnexion.
   redefinir: >-
     {{ protocole == 2
-       and (trigger.id.startswith('piece_') or trigger.id in ['pc', 'tv', 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3'])
+       and (trigger.id.startswith('piece_') or trigger.id.startswith('rangee_')
+            or trigger.id in ['pc', 'tv', 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3'])
        and trigger.from_state is defined and (trigger.from_state is none or trigger.to_state is none) }}
-  # Tuiles à pousser (clés tRT). Toutes après les définitions ; une tuile quand son
-  # entité change ce que l'écran montre (état, luminosité, couleur, position, consigne
-  # d'une clim : les − / + du popup comptent à partir d'elle) ; les types_mesures avec
-  # les mesures lentes. Calculées quel que soit le protocole (la trace montre ce qui
-  # partirait), poussées seulement au protocole 2.
+  # Tuiles à pousser (clés tRT), et éléments de la rangée sous l'horloge (clés hLI,
+  # ADR-0031). Toutes après les définitions ; une tuile quand son entité change ce que
+  # l'écran montre (état, luminosité, couleur, position, consigne d'une clim : les − / +
+  # du popup comptent à partir d'elle) ; un élément de la rangée quand son état change ;
+  # les types_mesures avec les mesures lentes. Calculées quel que soit le protocole (la
+  # trace montre ce qui partirait), poussées seulement au protocole 2.
   tuiles_a_pousser: >-
     {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha', 'zones'] or redefinir -%}
-      {{ tuiles | map(attribute='cle') | list }}
+      {{ (tuiles + rangee) | map(attribute='cle') | list }}
     {%- elif trigger.id == 'mesures' -%}
       {%- set ns = namespace(l=[]) -%}
-      {%- for t in tuiles if t.type in types_mesures and states[t.e] is not none -%}
+      {%- for t in tuiles + rangee if t.type in types_mesures and states[t.e] is not none -%}
         {%- set depuis = states[t.e].last_changed if t.type == 'cap' else states[t.e].last_updated -%}
         {%- if (now() - depuis).total_seconds() < fenetre_mesures -%}{%- set ns.l = ns.l + [t.cle] -%}{%- endif -%}
       {%- endfor -%}
       {{ ns.l }}
     {%- elif trigger.id == 'volet_suivi' -%}
-      {{ (tuiles | selectattr('e', 'eq', volet_suivi) | map(attribute='cle') | list) if volet_suivi else [] }}
+      {{ ((tuiles + rangee) | selectattr('e', 'eq', volet_suivi) | map(attribute='cle') | list) if volet_suivi else [] }}
     {%- elif trigger.id == 'volet_choisi' -%}
       {#- Volet changé dans la liste du package : les tuiles de l'ancien (son état réel
           revient) et du nouveau (l'état tenu par le package). -#}
       {%- set vises = [trigger.from_state.state if trigger.from_state else '',
                        trigger.to_state.state if trigger.to_state else ''] | select('match', '^cover[.]') | list -%}
-      {{ tuiles | selectattr('e', 'in', vises) | map(attribute='cle') | list }}
+      {{ (tuiles + rangee) | selectattr('e', 'in', vises) | map(attribute='cle') | list }}
+    {%- elif trigger.from_state is defined and trigger.id.startswith('rangee_') -%}
+      {#- Rangée : l'état seulement (déclencheurs rangee_n et rangee_n_sortie). -#}
+      {{ rangee | selectattr('l', 'eq', trigger.id[7] | int - 1) | selectattr('e', 'eq', trigger.entity_id)
+         | selectattr('type', 'in', types_immediats) | map(attribute='cle') | list }}
     {%- elif trigger.from_state is defined and (trigger.id.startswith('piece_') or trigger.id in ['pc', 'tv', 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3']) -%}
       {%- set avant = trigger.from_state -%}
       {%- set apres = trigger.to_state -%}
@@ -1936,6 +2099,35 @@ triggers:
     not_from: [null]
     not_to: [null]
     id: piece_5_consigne
+  # Rangée sous l'horloge (ADR-0031) : l'état seulement, comme piece_n et piece_n_sortie
+  # (une mesure part avec les mesures lentes) ; elle ne montre ni luminosité ni position.
+  - trigger: state
+    entity_id: !input rangee_ligne_1
+    to: *etats_visibles
+    id: rangee_1
+  - trigger: state
+    entity_id: !input rangee_ligne_1
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: rangee_1_sortie
+  - trigger: state
+    entity_id: !input rangee_ligne_2
+    to: *etats_visibles
+    id: rangee_2
+  - trigger: state
+    entity_id: !input rangee_ligne_2
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: rangee_2_sortie
+  - trigger: state
+    entity_id: !input rangee_ligne_3
+    to: *etats_visibles
+    id: rangee_3
+  - trigger: state
+    entity_id: !input rangee_ligne_3
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: rangee_3_sortie
   # Volet suivi par le package volet_serre_tracking.yaml : son état est dans le
   # package (le moteur ne donne pas de position). Sans le package, ne se déclenche jamais.
   - trigger: state
@@ -2715,14 +2907,25 @@ actions:
               {%- set ns.l = ns.l + [saisi if saisi else commune] -%}
             {%- endfor -%}
             {{ ns.l }}
-          # « pR|nom; » puis « tRT|type|icône|options|complément|nom; » (ADR-0023).
+          # « pR|nom; » puis « tRT|type|icône|options|complément|nom; » (ADR-0023) ; puis la
+          # rangée sous l'horloge (ADR-0031) : « hp|place des plantes; » (0 à 2, « - » :
+          # masquées), « hd|secondes d'une ligne; », « hLI|type|icône|options|complément|
+          # nom|classe; » (classe d'appareil : la couleur de la valeur). n = 5 : la rangée,
+          # avec la même traduction que les tuiles.
           definitions: >-
             {%- set ns = namespace(r='') -%}
-            {%- for n in range(5) -%}
-              {%- set dans = tuiles | selectattr('r', 'eq', n) | list -%}
+            {%- for n in range(6) -%}
+              {%- set dans = (tuiles | selectattr('r', 'eq', n) | list) if n < 5 else rangee -%}
+              {%- if n == 5 -%}
+                {%- set piece = '' -%}
+                {%- set ns.r = ns.r ~ 'hp|' ~ ('-' if rangee_plantes not in ['0', '1', '2'] else rangee_plantes)
+                              ~ ';hd|' ~ (rangee_duree | float(32) | round(0) | int) ~ ';' -%}
+              {%- endif -%}
               {%- if dans | count > 0 -%}
-                {%- set piece = noms_pieces[n] | string -%}
-                {%- set ns.r = ns.r ~ 'p' ~ n ~ '|' ~ (piece | replace('|', '/') | replace(';', ',')) ~ ';' -%}
+                {%- if n < 5 -%}
+                  {%- set piece = noms_pieces[n] | string -%}
+                  {%- set ns.r = ns.r ~ 'p' ~ n ~ '|' ~ (piece | replace('|', '/') | replace(';', ',')) ~ ';' -%}
+                {%- endif -%}
                 {%- for t in dans -%}
                   {%- set dom = t.e.split('.')[0] -%}
                   {%- set p = perso.get(t.e, {}) -%}
@@ -2780,7 +2983,8 @@ actions:
                   {%- endif -%}
                   {%- set ns.r = ns.r ~ t.cle ~ '|' ~ t.type ~ '|' ~ icone ~ '|' ~ options ~ '|'
                                 ~ (complement | replace('|', '/') | replace(';', ',')) ~ '|'
-                                ~ (nom.s | replace('|', '/') | replace(';', ',')) ~ ';' -%}
+                                ~ (nom.s | replace('|', '/') | replace(';', ','))
+                                ~ (('|' ~ (classe | replace('|', '/') | replace(';', ','))) if n == 5 else '') ~ ';' -%}
                 {%- endfor -%}
               {%- endif -%}
             {%- endfor -%}
@@ -2794,13 +2998,14 @@ actions:
   # États : « tRT|état|valeur|couleur; » (ADR-0023). Valeur = luminosité 0-255 (lum),
   # position (vol), la mesure (cap), la température de la pièce (cli), nan sinon ;
   # couleur = « RRGGBB » d'une lumière allumée qui donne rgb_color. Dans la même
-  # poussée, les clims des tuiles (crRT avant, ceRT après, ADR-0027).
+  # poussée, les clims des tuiles (crRT avant, ceRT après, ADR-0027) et les éléments de
+  # la rangée sous l'horloge (« hLI|état|valeur|couleur; », mêmes champs, ADR-0031).
   - if: "{{ tuiles_a_pousser | count > 0 }}"
     then:
       - variables:
           etats_tuiles: >-
             {%- set ns = namespace(r='') -%}
-            {%- for t in tuiles if t.cle in tuiles_a_pousser and states[t.e] is not none -%}
+            {%- for t in tuiles + rangee if t.cle in tuiles_a_pousser and states[t.e] is not none -%}
               {%- set st = states[t.e] -%}
               {%- if t.e == volet_suivi -%}
                 {%- set etat = {'En_mouvement': 'opening', 'Ouvert': 'open', 'Ferme': 'closed', 'Partiel': 'open'}.get(states('input_text.volet_serre_etat'), st.state) -%}

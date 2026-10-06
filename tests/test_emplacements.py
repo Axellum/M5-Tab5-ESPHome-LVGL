@@ -70,6 +70,11 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
             assert "default" in entree, f"entrée {nom} obligatoire"
             if nom == "tablette":
                 continue
+            # Réglages de la rangée sous l'horloge (ADR-0031) : non remplis, ceux du
+            # firmware (plantes en premier, 32 s ; tests/test_rangee.py compare).
+            if nom in ("rangee_plantes", "rangee_duree"):
+                assert entree["default"] == {"rangee_plantes": "0", "rangee_duree": 32}[nom], nom
+                continue
             if "text" in entree["selector"]:  # nom d'une pièce (ADR-0023)
                 assert entree["default"] == "", f"{nom} : un nom vide doit valoir \"\""
             elif "select" in entree["selector"]:  # source météo : « liste » = celle de HA

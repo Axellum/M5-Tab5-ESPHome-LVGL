@@ -40,3 +40,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0028](0028-solar-energy-popup.md) | An Energy popup for a solar installation — sensors picked in the blueprint, live values and production history (recorder statistics) pushed by HA while the popup is open |
 | [0029](0029-themes-palette.md) | Themes — one C++ palette (`struct Palette`, `UIColor` = the active one), role styles in the YAML instead of colours set on widgets, games stay dark |
 | [0030](0030-documentation-site.md) | A documentation website built from `docs/` — MkDocs with Material, no plugin, the language split and the links done by `tools/site/construire.py` |
+| [0031](0031-row-under-the-clock.md) | A row under the clock — up to three lines of four sensors plus the plants line, rotating with the central card, picked in the blueprint (`hLI`, `hp`, `hd`) |

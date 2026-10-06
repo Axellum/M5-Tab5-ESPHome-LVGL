@@ -344,8 +344,10 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     # Ses glyphes s'affichent sur les cartes du mode HA (icon_sw*, mdi_font_70), dans les
     # épaules des tuiles (icon_card_*, mdi_font_32) et dans le sélecteur du popup lumière
     # (icon_light_sel_*, mdi_font_45) : tools/gen_tuiles_icones.py les écrit dans ces trois
-    # polices (POLICES), à garder d'accord avec cette ligne.
-    ("tab5_tuiles_icones.h", ""): ("icon_sw?", "icon_card_*", "icon_light_sel_*"),
+    # polices (POLICES), à garder d'accord avec cette ligne. La rangée sous l'horloge
+    # (ADR-0031, rangee_icone_*, déclarés en mdi_font_32) passe ses icônes en 45 ou 70 px
+    # selon la ligne (tab5_rangee.cpp) : les mêmes trois polices.
+    ("tab5_tuiles_icones.h", ""): ("icon_sw?", "icon_card_*", "icon_light_sel_*", "rangee_icone_*"),
     ("tab5-sensors-domotique.yaml", "moisture_1"): ("icon_pot_s*",),
 }
 

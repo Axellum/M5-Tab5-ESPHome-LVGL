@@ -211,6 +211,8 @@ def test_ce_que_le_job_attend_est_ce_que_calcule_le_blueprint():
         "light.bed_light": {"supported_color_modes": ["color_temp", "hs"]},
         "light.ceiling_lights": {"supported_color_modes": ["color_temp", "hs"]},
         "sensor.outside_temperature": {"unit_of_measurement": "°C", "device_class": "temperature"},
+        "sensor.serre_ci_temperature": {"unit_of_measurement": "°C", "device_class": "temperature"},
+        "sensor.telephone_ci_batterie": {"unit_of_measurement": "%", "device_class": "battery"},
         "binary_sensor.movement_backyard": {"device_class": "motion"},
     }
     etats = []
@@ -225,7 +227,10 @@ def test_ce_que_le_job_attend_est_ce_que_calcule_le_blueprint():
                                                 "tab5_emplacements.yaml"))
     assert verifier.juger_definitions(definitions, icones) == []
     etats_tuiles = verifier.entrees_de(passage.etats_tuiles())
-    assert [e[0] for e in etats_tuiles] == [c for c, _ in verifier.tuiles_attendues()]
+    assert [e[0] for e in etats_tuiles] == [c for c, _ in verifier.tuiles_attendues() + verifier.rangee_attendue()]
+    # Rangée sous l'horloge (ADR-0031) : le bouton (action) sauté, quatre au plus, ligne 2 vide.
+    assert verifier.rangee_attendue() == [("h00", "cap"), ("h01", "cap"), ("h02", "bin"), ("h03", "bin"),
+                                          ("h20", "cap")]
     # Clim de tuile (ADR-0027) : ses clés cr/ce, pas celles de la clim du blueprint.
     reglages, clims = passage["reglages_tuiles"], passage["etats_clims"]
     assert verifier.juger_clims(reglages, clims) == []
