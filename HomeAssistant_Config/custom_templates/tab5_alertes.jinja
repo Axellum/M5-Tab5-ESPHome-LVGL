@@ -19,16 +19,24 @@
   Sources et ce qui fait une révision :
     maj        update.* à « on »                   latest_version
     probleme   binary_sensor « problem » à « on »  (aucune : revient après une vraie fin)
+    etiquette  entités à l'étiquette « Tab5 · alerte » allumées, ouvertes, déverrouillées,
+               bloquées ou déclenchées              (aucune : revient après une vraie fin)
+    pile       capteurs « battery » sous le seuil, (aucune : revient après une recharge
+               binaires « battery » à « on »        au-dessus du seuil + 10 %)
     indispo    entités indisponibles depuis 10 min UNE NOUVELLE entité (la liste gardée
                                                     est l'union depuis le début)
     vigilance  sensor.tab5_vigilance Jaune+        niveau ET phénomènes
+
+  Abonnements : listes « Tab5 · alertes … » de packages/tab5_alerts.yaml. Une source à
+  laquelle on n'est pas abonné reste suivie (sans être affichée) : s'y réabonner ne fait pas
+  revenir ce qui était déjà lu.
 
   Trois macros :
     tab5_alertes_logique(memoire, sources, evenement, maintenant, abonnements)
         PURE : ni états de HA ni heure. Testée hors HA par tests/test_alertes_ha.py, qui
         rejoue redémarrages, plantages, versions, coupures et taps.
-    tab5_alertes_sources(suivi_ids, anciennes)
-        Ce que disent les états de HA en ce moment.
+    tab5_alertes_sources(suivi, anciennes, seuil_pile)
+        Ce que disent les états de HA en ce moment (suivi : pour le doute et les piles).
     tab5_alertes_memoire(type_evt, donnees)
         Colle les deux : mémoire = attributs du capteur, heure = now().
 
@@ -195,10 +203,43 @@
 {#- Libellé sans les séparateurs du payload de la tablette (« | » et « ; »). -#}
 {%- macro _propre(texte) -%}{{ texte | string | replace('|', '/') | replace(';', ',') | trim }}{%- endmacro -%}
 
-{%- macro tab5_alertes_sources(suivi_ids, anciennes) -%}
+{%- macro tab5_alertes_sources(suivi, anciennes, seuil_pile) -%}
+  {%- set suivi = suivi if suivi is mapping else {} -%}
   {%- set critiques = ['update.home_assistant_core_update', 'update.home_assistant_supervisor_update',
                        'update.home_assistant_operating_system_update'] -%}
   {%- set ns = namespace(a={}, inc=[], abs=[]) -%}
+  {#- Entités à l'étiquette « Tab5 · alerte » : en alerte quand elles sont allumées, ouvertes,
+      déverrouillées, bloquées ou déclenchées (alarme). Rouge pour la fumée, le gaz, le CO,
+      l'eau et la sécurité. Écrites d'abord : une mise à jour ou un capteur « problème »
+      étiqueté garde sa propre source. -#}
+  {%- set rouges = ['smoke', 'gas', 'carbon_monoxide', 'moisture', 'safety'] -%}
+  {%- for i in label_entities('Tab5 · alerte') | sort -%}
+    {%- set e = states[i] -%}
+    {%- if e is not none and e.state in ['on', 'open', 'opening', 'unlocked', 'jammed', 'triggered'] -%}
+      {%- set ns.a = dict(ns.a, **{i: {'c': 'on', 's': 'etiquette', 't': _propre(e.name),
+            'g': 'Rouge' if e.attributes.device_class | default('') in rouges or e.state == 'triggered' else 'Orange'}}) -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {#- Piles faibles (capteurs « battery » en %, ou binaires « battery » allumés) : sous le
+      seuil ; une pile déjà suivie le reste jusqu'au seuil + 10 % (pas d'aller-retour à
+      chaque pour cent). -#}
+  {#- Pas les téléphones et tablettes de l'application mobile : rechargés chaque jour. -#}
+  {%- set mobiles = integration_entities('mobile_app') -%}
+  {%- for p in states.sensor | selectattr('attributes.device_class', 'defined')
+                             | selectattr('attributes.device_class', 'eq', 'battery')
+                             | selectattr('state', 'is_number')
+                             | rejectattr('entity_id', 'in', mobiles) -%}
+    {%- set v = p.state | float(100) -%}
+    {%- if v < seuil_pile or (p.entity_id in suivi and v < seuil_pile + 10) -%}
+      {%- set ns.a = dict(ns.a, **{p.entity_id: {'c': 'bas', 'g': 'Orange', 's': 'pile',
+            't': _propre(p.name) ~ ' ' ~ (v | round(0) | int) ~ ' %'}}) -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for p in states.binary_sensor | selectattr('attributes.device_class', 'defined')
+                                    | selectattr('attributes.device_class', 'eq', 'battery')
+                                    | selectattr('state', 'eq', 'on') -%}
+    {%- set ns.a = dict(ns.a, **{p.entity_id: {'c': 'bas', 'g': 'Orange', 's': 'pile', 't': _propre(p.name)}}) -%}
+  {%- endfor -%}
   {%- for u in states.update | selectattr('state', 'eq', 'on') -%}
     {%- set titre = u.attributes.title | default(u.name, true) -%}
     {%- set ns.a = dict(ns.a, **{u.entity_id: {
@@ -229,10 +270,10 @@
           'g': v, 't': '@vigi:' ~ v, 's': 'vigilance'}}) -%}
   {%- endif -%}
   {#- Suivies mais plus en cours : source dans le doute, ou entité disparue. -#}
-  {%- for i in suivi_ids if i not in ns.a -%}
+  {%- for i in suivi.keys() | list if i not in ns.a -%}
     {%- if i == 'meteo:vigilance' -%}
       {%- if v not in ['Vert', 'Jaune', 'Orange', 'Rouge'] -%}{%- set ns.inc = ns.inc + [i] -%}{%- endif -%}
-    {%- elif i.startswith('update.') or i.startswith('binary_sensor.') -%}
+    {%- elif '.' in i and ':' not in i -%}
       {%- if states[i] is none -%}
         {%- set ns.abs = ns.abs + [i] -%}
       {%- elif states(i) in ['unavailable', 'unknown'] -%}
@@ -251,8 +292,20 @@
   {#- L'ancienne liste n'est lue qu'à la première fois (mémoire vide). -#}
   {%- set anciennes = (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto', '') | list
                       if suivi is none else [] -%}
-  {%- set sources = tab5_alertes_sources((suivi or {}).keys() | list, anciennes) | from_json -%}
-  {%- set abonnements = {'maj': 'toutes', 'probleme': true, 'indispo': true, 'vigilance': 'Jaune'} -%}
+  {#- Abonnements : listes « Tab5 · alertes … » (packages/tab5_alerts.yaml) ; liste absente =
+      choix par défaut (le premier de chaque liste). -#}
+  {%- set maj = states('input_select.tab5_alertes_maj') -%}
+  {%- set pile = states('input_select.tab5_alertes_piles') -%}
+  {%- set seuil = pile.split(' ')[0] | int(20) if pile.endswith('%') else 20 -%}
+  {%- set abonnements = {
+        'maj': {'Home Assistant seulement': 'ha', 'Aucune': 'aucune'}.get(maj, 'toutes'),
+        'vigilance': states('input_select.tab5_alertes_vigilance')
+                     if states('input_select.tab5_alertes_vigilance') in ['Orange', 'Rouge', 'Aucune'] else 'Jaune',
+        'probleme': states('input_select.tab5_alertes_problemes') != 'Non',
+        'indispo': states('input_select.tab5_alertes_indisponibles') != 'Non',
+        'etiquette': states('input_select.tab5_alertes_etiquette') != 'Non',
+        'pile': pile != 'Aucune'} -%}
+  {%- set sources = tab5_alertes_sources(suivi or {}, anciennes, seuil) | from_json -%}
   {{- tab5_alertes_logique(m, sources, {'type': type_evt, 'data': donnees or {}},
                            now().timestamp() | int, abonnements) -}}
 {%- endmacro -%}
