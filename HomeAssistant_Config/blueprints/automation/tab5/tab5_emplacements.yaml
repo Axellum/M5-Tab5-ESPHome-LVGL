@@ -43,6 +43,10 @@
 #         Plusieurs sources (05/10/2026, discussion #278) : energie_solaire_autres et
 #         energie_production_autres s'ajoutent aux champs principaux ; puissances et
 #         compteurs sont additionnés (energie_solaires, energie_productions).
+#       - popup « Température » (ADR-0032, 06/10/2026) : à l'événement esphome.tab5_historique
+#         (cle = salon | serre, vue), lance script.tab5_historique (packages/tab5_historique.yaml)
+#         avec le capteur de l'emplacement et la case serre_exterieure (« la seconde
+#         température est dehors »), qui pousse sa courbe et, pour la seconde, la prévision ;
 #       - section « Sous l'horloge » (ADR-0031, 06/10/2026), facultative : la rangée sous
 #         l'horloge de l'accueil, jusqu'à trois lignes de quatre éléments plus celle des
 #         plantes. Définitions « hp » (place des plantes), « hd » (durée d'une ligne) et
@@ -427,16 +431,34 @@ blueprint:
         serre_temperature:
           name: Seconde température (serre) · Second temperature (greenhouse)
           description: >-
-            Sans elle, une manette ouvre l'arcade à sa place.
+            Sans elle, une manette ouvre l'arcade à sa place. Un appui long sur l'une des
+            deux températures montre son historique ; celui de la seconde montre aussi la
+            prévision de la météo (packages/tab5_historique.yaml).
 
 
-            Without it, a gamepad opens the arcade in its place.
+            Without it, a gamepad opens the arcade in its place. A long press on either
+            temperature shows its history; the second one's also shows the weather forecast
+            (packages/tab5_historique.yaml).
           default: []
           selector:
             entity:
               filter:
                 - domain: sensor
                   device_class: temperature
+        serre_exterieure:
+          name: La seconde température est dehors · The second temperature is outdoors
+          description: >-
+            Cochée : dans son historique, la prévision de la météo prolonge sa courbe.
+            Décochée (une serre, une autre pièce) : la prévision reste à part, sous le nom
+            « Dehors, prévu ».
+
+
+            Ticked: in its history, the weather forecast extends its curve. Unticked (a
+            greenhouse, another room): the forecast stays apart, named « Outdoors,
+            forecast ».
+          default: false
+          selector:
+            boolean: {}
     climatisation:
       name: Climatisation · Climate
       icon: mdi:air-conditioner
@@ -1854,6 +1876,8 @@ variables:
   # capteur, sans crête ou sans aucune valeur : l'icône disparaît. Unité lue sur chaque
   # capteur (W, kW ou MW ; W sinon).
   energie_crete: !input energie_crete
+  # Popup Température (ADR-0032) : la seconde température est-elle dehors ?
+  serre_exterieure: !input serre_exterieure
   solaire_pourcent: >-
     {%- set crete = energie_crete | float(0) -%}
     {%- set ns = namespace(w=0, n=0) -%}
@@ -1898,6 +1922,10 @@ triggers:
   - trigger: event
     event_type: esphome.tab5_energie
     id: energie
+  # Popup Température (ADR-0032) : ouvert, ou sa vue changée (données cle, vue).
+  - trigger: event
+    event_type: esphome.tab5_historique
+    id: historique
   - trigger: state
     entity_id: !input lumiere_1
     id: lumiere_1
@@ -2215,7 +2243,7 @@ conditions:
   # tests/test_garde_origine.py vérifie cette garde sur chaque automatisation.
   - condition: template
     value_template: >-
-      {%- if trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie'] -%}
+      {%- if trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique'] -%}
         {%- set d = trigger.event.data.device_id | default('', true) | string -%}
         {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
       {%- else -%}
@@ -2232,7 +2260,7 @@ conditions:
       {%- if trigger.id in meteo_declencheurs -%}
         {{ meteo_a_ecrire | count > 0 }}
       {%- else -%}
-        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie'] or cles | count > 0
+        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie', 'historique'] or cles | count > 0
            or solaire_a_pousser or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
       {%- endif -%}
   # Déclencheurs venus de HA (rechargement, démarrage, mesures, changements d'état) : seulement
@@ -2242,7 +2270,7 @@ conditions:
   # prouvent d'eux-mêmes qu'elle est là. La météo (meteo_declencheurs) n'écrit que dans HA.
   - condition: template
     value_template: >-
-      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie'] + meteo_declencheurs
+      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique'] + meteo_declencheurs
          or integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
             | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
             | list | count > 0 }}
@@ -2420,6 +2448,29 @@ actions:
                           {{ dict(energie, solaires=energie_solaires, productions=energie_productions,
                                   reseau_inverse=energie_reseau_inverse | bool(false),
                                   batterie_inverse=energie_batterie_inverse | bool(false)) }}
+
+      # Popup Température (ADR-0032) : la tablette dit quelle température (salon, serre) et
+      # quelle vue (jour, semaine, mois) elle montre ; le script du package tab5_historique
+      # lit les statistiques du recorder et la prévision, et pousse la série
+      # (script.turn_on : sans attendre, la file de cette automatisation reste libre). Sans
+      # le package : rien, le popup attend.
+      - alias: "La tablette ouvre l'historique d'une température"
+        conditions: "{{ trigger.id == 'historique' }}"
+        sequence:
+          - if: >-
+              {{ states['script.tab5_historique'] is not none
+                 and trigger.event.data.cle | default('') in ['salon', 'serre'] }}
+            then:
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_historique
+                data:
+                  variables:
+                    tablette: "{{ tablette }}"
+                    cle: "{{ trigger.event.data.cle }}"
+                    vue: "{{ trigger.event.data.vue | default('jour', true) }}"
+                    capteur: "{{ sources.get(trigger.event.data.cle, '') }}"
+                    exterieur: "{{ trigger.event.data.cle == 'serre' and serre_exterieure | bool(false) }}"
 
       - alias: "La tablette demande quelles zones sont absentes"
         conditions: "{{ trigger.id in ['zones', 'pipeline_discussion'] }}"
