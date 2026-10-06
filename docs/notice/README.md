@@ -19,7 +19,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 7 | Gear button | settings | system console |
 | 8 | Gamepad button | Arcade, the games | TV remote, with a TV |
 | 9 | Second temperature (greenhouse) | Arcade, the games | its history and the forecast |
-| 10 | Climate: target, − and + | target: climate window; − / +: one step | — |
+| 10 | Climate: target, − and + | target: climate window (another device chosen: its window); − / +: one step | — |
 | 11 | Row under the clock: plants and sensors | next line | on the plants: plant details |
 | 12 | Central card | next panel, or dismiss a message | Alerts window |
 | 13 | A card of the bottom row (its large icon) | the command of its device | the window of its device |
@@ -80,7 +80,7 @@ Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt u
 | 7 | Bouton engrenage | réglages | console système |
 | 8 | Bouton manette | Arcade, les jeux | télécommande TV, avec une TV |
 | 9 | Seconde température (serre) | Arcade, les jeux | son historique et la prévision |
-| 10 | Clim : consigne, − et + | consigne : fenêtre de la clim ; − / + : un pas | — |
+| 10 | Clim : consigne, − et + | consigne : fenêtre de la clim (un autre appareil choisi : sa fenêtre) ; − / + : un pas | — |
 | 11 | Rangée sous l'horloge : plantes et capteurs | ligne suivante | sur les plantes : détail des plantes |
 | 12 | Carte centrale | panneau suivant, ou écarter un message | fenêtre des alertes |
 | 13 | Une carte de la rangée du bas (sa grande icône) | la commande de son appareil | la fenêtre de son appareil |

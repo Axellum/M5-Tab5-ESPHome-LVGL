@@ -654,6 +654,20 @@ void clim_blueprint_recu(float consigne, float piece) {
         popup_piece_ui(piece);
     }
     clim_recolorer();
+    reglables_clim_changee();  // sa ligne de la liste de la tuile − / + (ADR-0033)
+}
+
+const char* clim_nom() { return s_clim.nom; }
+
+uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur) {
+    clim_format_consigne(s_clim, buf, n, s_clim_consigne);
+    static const std::string kSansMode;
+    const std::string& mode = g_clim_ui.mode_bp != nullptr ? *g_clim_ui.mode_bp : kSansMode;
+    couleur_valeur = couleur_consigne(mode);
+    if (mode == "cool" || mode == "heat") return couleur_valeur;
+    if (mode == "off") return UIColor.TEXT_DIM;
+    if (mode == "unavailable" || mode == "unknown") return UIColor.INACTIVE;
+    return UIColor.SUCCESS;
 }
 
 void clim_recolorer() {

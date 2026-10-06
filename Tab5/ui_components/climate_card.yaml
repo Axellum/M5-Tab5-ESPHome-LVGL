@@ -2,7 +2,8 @@
 # [AI-CONTEXT]
 # @file climate_card.yaml
 # @role Zone clim dashboard : températures Salon/Serre hors carte, verre
-#       `style_clim_carte_page` uniquement autour de − / température cible / +.
+#       `style_clim_carte_page` uniquement autour de − / température cible / + —
+#       la « tuile − / + », qui règle l'appareil choisi (ADR-0033).
 #       Appui long sur une des deux températures : son historique (popup « Température »,
 #       ADR-0032) ; appui court sur la serre : l'arcade.
 # @architecture_constraint Grille du haut (tab5-lvgl.yaml, 05/10/2026) : la carte occupe la
@@ -18,13 +19,22 @@
 #                          tab5-sensors-domotique.yaml). `clim_target` est aussi poussé par
 #                          tab5_maj_clim (autoritaire), MAIS mis à jour de façon OPTIMISTE au
 #                          tap ± ci-dessous (21/07) via update_clim_target_ui + débounce.
+# @architecture_constraint Tuile − / + au choix (ADR-0033, 06/10/2026) : toucher l'icône ou la
+#                          température du salon (btn_reglables_liste) déroule la liste
+#                          (reglables_liste.yaml) : la clim du blueprint, les appareils de la
+#                          section « Tuile − / + » du blueprint, le volume de la tablette. Le
+#                          choix reste (NVS). Clim choisie : tout ce qui suit est inchangé.
+#                          Autre appareil : clim_target est masqué, reglable_rangee montre son
+#                          icône et sa valeur ; − / + passent par reglables_pas() et la valeur
+#                          par reglables_valeur_appui() (tab5_reglables.cpp).
 # @ai_instruction Les boutons +/- reprennent le mécanisme optimiste+débounce du popup
 #                 (accumulation dans clim_target_temp, un seul set_temperature par geste via
 #                 tab5_debounce_clim_temp). Pas et bornes : clim_consigne_suivante() (réglages
 #                 de l'appareil, ADR-0026), jamais de 0.5f / 16 / 30 en dur. Le clic sur la
 #                 cible ouvre le popup sur la clim du blueprint (ADR-0027 : il peut aussi
 #                 montrer celle d'une tuile). Conteneur parent = transparent (ids conservés).
-#                 La carte montre TOUJOURS la clim du blueprint (ses globals clim_*).
+#                 La consigne (clim_target) montre TOUJOURS la clim du blueprint (ses globals
+#                 clim_*), même masquée quand un autre appareil est choisi.
 # ═══════════════════════════════════════════════════════
 obj:
   id: climate_card
@@ -77,20 +87,6 @@ obj:
         widgets:
           - label: { id: icon_serre, text: "\U000F002D", text_font: mdi_font_45, styles: style_text_dim }
           - label: { id: current_serre, text: "-- °", styles: [style_police_date, style_text_temp_max] }
-    # Zone tactile sur la température de la pièce → appui long : son historique (popup
-    # « Température », ADR-0032, 06/10/2026). Couvre la rangée salon (14..192 au pire,
-    # y 24..85) : x 6..192 et y 22..86, sans toucher la zone serre (dès 199). Pièce
-    # absente (zones_apply_ui) : rangée masquée, l'appui ne fait rien.
-    - button:
-        id: btn_salon_historique
-        align: TOP_LEFT
-        x: 6
-        y: 22
-        width: 186
-        height: 64
-        styles: style_invisible
-        on_long_press:
-          - lambda: 'if (!zone_absente(Zone::SALON)) id(tab5_historique_ouvrir).execute(std::string("salon"));'
     # Zone tactile sur la température serre → appui court : le sélecteur de jeux Arcade ;
     # appui long : l'historique et la prévision de la seconde température (ADR-0032 ; LVGL
     # n'envoie pas l'appui court après un appui long). Sans serre, l'icône est une manette
@@ -114,6 +110,27 @@ obj:
         on_long_press:
           - lambda: 'if (!zone_absente(Zone::SERRE)) id(tab5_historique_ouvrir).execute(std::string("serre"));'
 
+    # Zone tactile sur l'icône et la température du salon → déroule la liste des
+    # appareils de la tuile − / + (ADR-0033, demande d'Axel du 06/10/2026). Même boîte que
+    # celle de la serre, côté gauche : la rangée salon occupe au plus 14..192 et y 24..85 ;
+    # la zone couvre 4..196 et y 22..86, sans toucher btn_serre_games (199..399) ni
+    # climate_controls_zone (dès y 108). Elle reste là sans capteur du salon (sa place).
+    # Appui long : l'historique de la température de la pièce (popup « Température »,
+    # ADR-0032) ; pièce absente, il ne fait rien. Une seule zone pour les deux gestes
+    # (LVGL n'envoie pas l'appui court après un appui long), comme btn_serre_games.
+    - button:
+        id: btn_reglables_liste
+        align: TOP_LEFT
+        x: 4
+        y: 22
+        width: 192
+        height: 64
+        styles: style_invisible
+        on_short_click:
+          - lambda: 'reglables_liste_basculer();'
+        on_long_press:
+          - lambda: 'if (!zone_absente(Zone::SALON)) id(tab5_historique_ouvrir).execute(std::string("salon"));'
+
     # ═══ Zone verre uniquement autour de − / cible / + ═══
     - obj:
         id: climate_controls_zone
@@ -133,16 +150,44 @@ obj:
               # Police de la date du thème (05/10/2026, avant roboto_55_b).
               styles: style_police_date
 
+          # Autre appareil que la clim (ADR-0033) : son icône (palette des tuiles) et sa
+          # valeur dans la police de la date, centrées entre − et + (75..330 : 255 px ;
+          # « 100 % » et une icône de 45 px en prennent ~180). Masquée quand la clim est
+          # choisie ; peinte par tab5_reglables.cpp.
+          - obj:
+              id: reglable_rangee
+              align: CENTER
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              hidden: true
+              styles: style_transparent
+              scrollable: false
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_cross: CENTER
+                pad_column: 8
+              widgets:
+                - label: { id: reglable_icone, text: "", text_font: mdi_font_45, styles: style_text_dim }
+                - label: { id: reglable_valeur, text: "--", styles: style_police_date }
+
           - button:
               id: btn_clim_target_click
               align: CENTER
-              width: 150
+              # 200 : couvre la valeur d'un autre appareil (icône + texte, jusqu'à 243 px)
+              # sans toucher − (13 à 75) ni + (330 à 392).
+              width: 200
               height: 68
               styles: style_invisible
               on_short_click:
                 # Le popup montre la clim du blueprint, celle de cette carte (il a pu
-                # montrer celle d'une tuile, ADR-0027).
+                # montrer celle d'une tuile, ADR-0027). Un autre appareil choisi (ADR-0033) :
+                # le popup de sa tuile ou la télécommande, sinon rien.
                 - lambda: |-
+                    if (!reglables_clim_choisie()) {
+                      reglables_valeur_appui();
+                      return;
+                    }
                     clim_afficher_blueprint();
                     animate_popup_open(id(clim_options_popup));
 
@@ -163,11 +208,18 @@ obj:
                 # ne mettait jamais à jour le global → taps rapides = même valeur renvoyée +
                 # aucun retour visuel avant le push HA. Pas et bornes : ceux de l'appareil
                 # (clé climr, ADR-0026), 0,5 entre 16 et 30 tant que HA ne les a pas donnés.
-                - lambda: |-
-                    const float t = clim_consigne_suivante(id(clim_target_temp), -1);
-                    id(clim_target_temp) = t;
-                    update_clim_target_ui(id(clim_target), nullptr, t);
-                - script.execute: tab5_debounce_clim_temp
+                # Un autre appareil choisi (ADR-0033) : reglables_pas(), même principe.
+                - if:
+                    condition:
+                      lambda: 'return reglables_clim_choisie();'
+                    then:
+                      - lambda: |-
+                          const float t = clim_consigne_suivante(id(clim_target_temp), -1);
+                          id(clim_target_temp) = t;
+                          update_clim_target_ui(id(clim_target), nullptr, t);
+                      - script.execute: tab5_debounce_clim_temp
+                    else:
+                      - lambda: 'reglables_pas(-1);'
               widgets:
                 - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56 }
 
@@ -183,10 +235,16 @@ obj:
                 bg_opa: 30%
               on_short_click:
                 # Optimiste + débounce (même mécanisme que le popup) — voir bouton −.
-                - lambda: |-
-                    const float t = clim_consigne_suivante(id(clim_target_temp), +1);
-                    id(clim_target_temp) = t;
-                    update_clim_target_ui(id(clim_target), nullptr, t);
-                - script.execute: tab5_debounce_clim_temp
+                - if:
+                    condition:
+                      lambda: 'return reglables_clim_choisie();'
+                    then:
+                      - lambda: |-
+                          const float t = clim_consigne_suivante(id(clim_target_temp), +1);
+                          id(clim_target_temp) = t;
+                          update_clim_target_ui(id(clim_target), nullptr, t);
+                      - script.execute: tab5_debounce_clim_temp
+                    else:
+                      - lambda: 'reglables_pas(+1);'
               widgets:
                 - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56 }

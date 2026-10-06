@@ -15,6 +15,31 @@ le 06/10/2026 : le package du volet à course simulée ne rend plus le volet mue
 extinction automatique de l'écran au choix et rallumage à « Okay Nabu » (#342), notice
 d'utilisation (#339).
 
+### 2026-10-06 — Tuile − / + : les boutons de la carte clim règlent l'appareil de votre choix
+
+Demande d'Axel : les − / + de la carte clim de l'accueil (en haut à droite) ne réglaient que la
+clim. Ils règlent désormais l'appareil choisi dans une liste qui se déroule au toucher de
+l'icône ou de la température du salon ([ADR-0033](docs/decisions/0033-adjustable-tile.md)).
+Firmware et blueprint ; un firmware plus ancien ignore les nouvelles clés (la clim seule), un
+blueprint plus ancien laisse la clim et le volume de la tablette.
+- **La liste** : la clim du blueprint en tête, les appareils de la nouvelle section repliée
+  « Tuile − / + · − / + tile » du blueprint « Tab5 — emplacements » (huit au plus, dans l'ordre
+  choisi : volume d'une TV ou d'une barre de son, luminosité d'une lampe, consigne d'un
+  thermostat ou d'un chauffe-eau, humidité, vitesse d'un ventilateur, position d'un volet ou
+  d'une vanne, valeur d'un nombre), et toujours en dernier le volume de la tablette. Un toucher
+  choisit ; un toucher ailleurs ferme la liste.
+- **Le choix reste**, même après un redémarrage, et suit l'appareil si sa place change dans le
+  blueprint. Clim choisie : rien ne change. Autre appareil : son icône et sa valeur s'affichent
+  entre − et + ; la valeur bouge tout de suite, d'un pas de l'appareil (5 % pour un volume,
+  10 % pour une lumière, le pas du thermostat…), et une seule commande part quand le doigt
+  s'arrête.
+- **Toucher la valeur** ouvre la fenêtre de l'appareil quand il en a une : la clim, une lampe
+  ou un volet placé dans une pièce, la télécommande de la TV.
+- **Côté Home Assistant**, la commande « regler » (ou « consigne » pour une clim) ne vise que
+  les appareils de la section : volume, luminosité (0 éteint), vitesse, humidité, consigne,
+  position (ouvert / fermé sans position réglable), valeur d'un nombre, bornées aux limites de
+  l'appareil.
+
 ### 2026-10-06 — Popup Température : historique des deux températures, et prévision
 
 Demande d'Axel : un historique en popup au clic long sur la température de la pièce, et pour la

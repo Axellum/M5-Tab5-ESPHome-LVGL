@@ -52,6 +52,7 @@ from scenarios import (
     build_tuiles_payload,
     build_zones_absentes,
     rangee_de,
+    reglables_de,
     build_energie_historique,
     build_energie_payload,
     ENERGIE_VUES,
@@ -397,13 +398,14 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
     pieces = None
     if SERVICE_TUILES in services_par_nom:
         pieces = pieces_de(absentes)
-        await appeler(SERVICE_TUILES, payload=build_tuiles_payload(pieces, rangee_de(absentes)))
+        await appeler(SERVICE_TUILES, payload=build_tuiles_payload(pieces, rangee_de(absentes),
+                                                                   reglables_de(absentes)))
         await attendre(DELAI_ENTRE_BLOCS)
 
     # Emplacements de la maison (lot 6a), comme le blueprint à chaque connexion.
     await appeler("tab5_maj_emplacements",
                   payload=build_emplacements_payload(absentes, pieces, _clim_poussee(scene, absentes),
-                                                     rangee_de(absentes)))
+                                                     rangee_de(absentes), reglables_de(absentes)))
 
     # Popup Énergie (ADR-0028) : la maison solaire de la démo, sauf maison minimale.
     if not absentes:

@@ -2420,6 +2420,7 @@ void theme_rejouer_ui() {
     rain_predict_rejouer();
     tuiles_rejouer_theme();
     rangee_rejouer_theme();
+    reglables_rejouer_theme();
     cartes_rejouer_theme();
     energie_rejouer_theme();
     reglages_rejouer_theme();

@@ -191,6 +191,11 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 # ligne des plantes, Plantes.
 SOUS_HORLOGE = (640, 270)
 SERRE = (1172, 158)           # court : Arcade
+# Tuile − / + (ADR-0033) : court sur la température du salon (btn_reglables_liste,
+# climate_card.yaml : carte en 855, 110, zone 4..196 × 22..86), la liste ; ses lignes
+# (reglables_liste.yaml : panneau en 740, 110, bord 2 + marge 6, lignes de 52 + 2).
+SALON = (955, 164)
+LIGNES_REGLABLES = tuple((1000, 110 + 2 + 6 + 54 * k + 26) for k in range(10))
 CONSIGNE_CLIM = (1061, 251)   # court : Climatisation
 TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
 CARTE_CENTRALE = (640, 375)   # long : historique des alertes (popup « Alertes »)
@@ -318,7 +323,8 @@ REGLAGES_LANGUE_EN, REGLAGES_LANGUE_FR = (875, 572), (734, 572)
 REGLAGES_ANNULER = (816, 446)
 
 # Popup Température (ADR-0032, historique_popup.yaml) : appui long sur la température de
-# la pièce (btn_salon_historique, x 861-1047 et y 132-196 à l'écran) ou sur la seconde
+# la pièce (btn_reglables_liste, aussi la liste de la tuile − / + au toucher court ; x 859-1051
+# et y 132-196 à l'écran) ou sur la seconde
 # (SERRE). Boutons de vue : carte du graphique à y 253-685 à l'écran, boutons de 150 × 48
 # à 18, 178 et 338 px de son bord droit (x 1241). Le rendu ne répond à aucun événement :
 # il pousse lui-même la réponse de script.tab5_historique, datée de l'heure figée.
@@ -453,6 +459,12 @@ ECRANS: tuple[Ecran, ...] = (
     # l'accueil ne la remet pas, `fermer` finit le tour jusqu'à la première.
     Ecran("accueil-rangee-ligne-2", (Toucher(*SOUS_HORLOGE),), (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE))),
     Ecran("accueil-rangee-ligne-3", (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE)), (Toucher(*SOUS_HORLOGE),)),
+    # Tuile − / + (ADR-0033) : la liste (clim, les quatre appareils de la démo,
+    # scenarios.REGLABLES, la tablette ; le retour à l'accueil la ferme), puis l'enceinte
+    # (ligne 4) choisie à la place de la clim ; le choix reste en NVS : `fermer` remet la clim.
+    Ecran("accueil-tuile-liste", (Toucher(*SALON),)),
+    Ecran("accueil-tuile-enceinte", (Toucher(*SALON), Toucher(*LIGNES_REGLABLES[4])),
+          (Toucher(*SALON), Toucher(*LIGNES_REGLABLES[0]))),
 
     # --- Fenêtres ---------------------------------------------------------------------
     Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Toucher(*HORLOGE))),

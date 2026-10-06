@@ -1636,6 +1636,8 @@ void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) { ui_texte_
 
 bool tuiles_definir(const std::string& payload) {
     charger();
+    // Tuile − / + au choix (ADR-0033) : ses clés rN sont dans le même instantané.
+    const bool reglables_changes = reglables_definir(payload);
     // Instantané complet : ce qui n'est pas listé est vide. Construit à part (tas, le temps
     // de la comparaison), pour n'écrire la NVS et ne redessiner que si quelque chose change.
     std::unique_ptr<Modele> neuf(new Modele());
@@ -1654,7 +1656,7 @@ bool tuiles_definir(const std::string& payload) {
         debut = fin + 1;
     }
     const bool rangee_changee = rangee_definir(*rangee);
-    if (std::memcmp(neuf.get(), &s_m, sizeof(Modele)) == 0) return rangee_changee;
+    if (std::memcmp(neuf.get(), &s_m, sizeof(Modele)) == 0) return rangee_changee || reglables_changes;
     // Une tuile qui change d'appareil repart grisée : l'état reçu était celui de l'ancien.
     // Sa clim aussi est oubliée (ADR-0027) : le blueprint renvoie ses réglages juste après.
     for (int r = 0; r < kPieces; r++)
@@ -2016,6 +2018,37 @@ static void tuile_appui_piece(int r, int t, bool long_appui) {
     }
     envoyer_tuile(r, t, action);
     if (type == Type::ACT) minuterie_armer(s_ok, r, t, kOkMs);
+}
+
+// Tuile − / + au choix (ADR-0033) : le toucher de la valeur d'un appareil qui est aussi
+// dans une pièce ouvre le popup de sa tuile, quelle que soit la page affichée — celui de
+// son appui long (lumière, volet sans l'option k, télécommande de la TV), ou de son appui
+// pour une clim. Option r (lecture seule) : rien, comme sur la tuile.
+bool tuile_ouvrir_popup(int r, int t) {
+    charger();
+    if (heritage() || !tuile_presente(r, t)) return false;
+    const Def& d = s_m.tuiles[r][t];
+    if (d.options & OPT_R) return false;
+    switch (static_cast<Type>(d.type)) {
+        case Type::LUM:
+            popup_lumiere_ouvrir(r, t);
+            return true;
+        case Type::VOL:
+            if (d.options & OPT_K) return false;
+            popup_volet_ouvrir(r, t);
+            return true;
+        case Type::MED:
+            if (!(d.options & OPT_T)) return false;
+            ouvrir_popup(g_tuiles_ui.popup_tv);
+            return true;
+        case Type::CLI:
+            if (d.options & OPT_M) clim_afficher_blueprint();
+            else if (!clim_afficher_tuile(r, t)) return false;
+            ouvrir_popup(g_tuiles_ui.popup_clim);
+            return true;
+        default:
+            return false;
+    }
 }
 
 void tuile_appui(int t, bool long_appui) {

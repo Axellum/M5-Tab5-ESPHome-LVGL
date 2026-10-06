@@ -606,6 +606,8 @@ lvgl:
         - !include ui_components/forecast_daily.yaml
         - !include ui_components/forecast_hourly.yaml
         - !include ui_components/switches_card.yaml
+        # Liste de la tuile − / + (ADR-0033) : au-dessus des cartes, sous les popups.
+        - !include ui_components/reglables_liste.yaml
         - !include ui_components/console_sys.yaml
         - !include ui_components/climate_popup.yaml
         - !include ui_components/light_popup.yaml

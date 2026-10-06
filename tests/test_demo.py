@@ -165,15 +165,20 @@ def test_firmware_3_2_definitions_puis_etats(monkeypatch):
         noms = [nom for nom, _ in appels]
         assert noms.index(demo_pusher.SERVICE_TUILES) < noms.index("tab5_maj_emplacements")
         pieces, rangee = scenarios.pieces_de(absentes), scenarios.rangee_de(absentes)
+        reglables = scenarios.reglables_de(absentes)
         donnees = dict(appels)
-        assert donnees[demo_pusher.SERVICE_TUILES]["payload"] == scenarios.build_tuiles_payload(pieces, rangee)
+        assert donnees[demo_pusher.SERVICE_TUILES]["payload"] == scenarios.build_tuiles_payload(
+            pieces, rangee, reglables)
         clim = None if "clim" in absentes else scenarios.SCENES[2].clim
         assert donnees["tab5_maj_emplacements"]["payload"] == scenarios.build_emplacements_payload(
-            absentes, pieces, clim, rangee)
+            absentes, pieces, clim, rangee, reglables)
         assert re.search(r"(^|;)t00\|", donnees["tab5_maj_emplacements"]["payload"])
         # Rangée sous l'horloge (ADR-0031) : ses réglages toujours, ses éléments s'il y en a.
         assert "hp|0;hd|32;" in donnees[demo_pusher.SERVICE_TUILES]["payload"]
         assert bool(re.search(r"(^|;)h00\|", donnees["tab5_maj_emplacements"]["payload"])) == (not absentes)
+        # Tuile − / + (ADR-0033) : ses appareils dans la maison complète seulement.
+        for service in (demo_pusher.SERVICE_TUILES, "tab5_maj_emplacements"):
+            assert bool(re.search(r"(^|;)r0\|", donnees[service]["payload"])) == (not absentes)
 
 
 def test_commandes_des_tuiles_journalisees(caplog):

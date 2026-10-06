@@ -138,6 +138,10 @@ icones:
     allume: F02B4 controller
     mdi: [controller, controller-off, controller-classic, controller-classic-outline, gamepad,
           gamepad-variant, gamepad-variant-outline]
+  # La tablette elle-même : son volume, en bas de la liste de la tuile − / + (ADR-0033).
+  - code: tablette
+    eteint: F04F6 tablet
+    mdi: [tablet, tablet-dashboard, tablet-cellphone]
   - code: cafetiere
     eteint: F109F coffee-maker
     mdi: [coffee-maker, coffee-maker-outline, coffee-maker-check, coffee-maker-check-outline,

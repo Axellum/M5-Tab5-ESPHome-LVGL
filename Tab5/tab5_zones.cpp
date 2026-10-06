@@ -318,6 +318,13 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
             debut = fin + 1;
             continue;
         }
+        // Tuile − / + au choix (ADR-0033) : « rN|état|valeur » (tab5_reglables.cpp).
+        if (p1 != std::string::npos && p1 < fin &&
+            reglables_etat_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
+            appliquees++;
+            debut = fin + 1;
+            continue;
+        }
         if (p1 != std::string::npos && p1 < fin) {
             const size_t p2 = payload.find('|', p1 + 1);
             const bool trois = (p2 != std::string::npos && p2 < fin);
@@ -443,8 +450,10 @@ void zones_apply_ui() {
     // Popup lumière : son sélecteur liste les lumières de la pièce, à l'ouverture
     // (tab5_tuiles.cpp) ; en mode héritage, les lampes présentes.
 
-    // Carte clim : − / consigne / + (le popup s'ouvre depuis la consigne).
-    ui_hidden(u.clim_zone, zone_absente(Zone::CLIM));
+    // Carte clim : − / consigne / + (le popup s'ouvre depuis la consigne). Depuis
+    // l'ADR-0033, ses − / + règlent l'appareil choisi (clim, appareils du blueprint,
+    // tablette) : masquée sans clim ni appareil, comme avant sans clim (tab5_reglables.cpp).
+    reglables_appliquer_ui();
 
     // Températures : salon masqué ; sans serre, l'icône devient une manette, la zone
     // tactile de l'arcade (btn_serre_games) reste à la même place.

@@ -65,6 +65,7 @@ esphome:
     - Tab5/tab5_zones.cpp
     - Tab5/tab5_tuiles.cpp
     - Tab5/tab5_rangee.cpp
+    - Tab5/tab5_reglables.cpp
     - Tab5/tab5_energie.cpp
     - Tab5/tab5_historique.cpp
     - Tab5/tab5_theme.cpp
@@ -198,6 +199,7 @@ packages:
   tab5_alarm: !include Tab5/tab5-alarm.yaml
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml
   tab5_rangee: !include Tab5/tab5-rangee.yaml
+  tab5_reglables: !include Tab5/tab5-reglables.yaml
   tab5_energie: !include Tab5/tab5-energie.yaml
   tab5_historique: !include Tab5/tab5-historique.yaml
   tab5_alertes: !include Tab5/tab5-alertes.yaml

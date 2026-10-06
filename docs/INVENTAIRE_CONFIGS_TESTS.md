@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29** (61 composants UI dont 32 inclus par `tab5-lvgl.yaml`, 23 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29** (63 composants UI dont 33 inclus par `tab5-lvgl.yaml`, 23 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 

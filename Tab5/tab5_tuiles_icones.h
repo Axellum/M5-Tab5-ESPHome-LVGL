@@ -25,7 +25,7 @@ struct TuileIcone {
 
 namespace tuiles_icones {
 
-// 52 codes, 81 glyphes distincts.
+// 53 codes, 82 glyphes distincts.
 inline constexpr TuileIcone kPalette[] = {
     {"ampoule",        "\U000F0335", "\U000F06E8"},  // lightbulb / lightbulb-on
     {"plafonnier",     "\U000F0769", "\U000F0769"},  // ceiling-light
@@ -44,6 +44,7 @@ inline constexpr TuileIcone kPalette[] = {
     {"tv",             "\U000F083B", "\U000F0502"},  // television-off / television
     {"enceinte",       "\U000F04C4", "\U000F04C3"},  // speaker-off / speaker
     {"console",        "\U000F02B5", "\U000F02B4"},  // controller-off / controller
+    {"tablette",       "\U000F04F6", "\U000F04F6"},  // tablet
     {"cafetiere",      "\U000F109F", "\U000F109F"},  // coffee-maker
     {"lave_linge",     "\U000F11BD", "\U000F072A"},  // washing-machine-off / washing-machine
     {"lave_vaisselle", "\U000F11B9", "\U000F0AAC"},  // dishwasher-off / dishwasher

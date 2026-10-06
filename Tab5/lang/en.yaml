@@ -180,6 +180,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Climate popup --------------------------------------------------------------
 "Climatisation Salon": "Living room AC"
 "Climatisation": "Air conditioning"
+"Tablette": "Tablet"   # tuile − / + : le volume de la tablette (ADR-0033)
 "MODE": "MODE"
 "clim|Chaud": "Heat"
 "Sec": "Dry"

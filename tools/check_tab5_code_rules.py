@@ -351,7 +351,17 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     # (ADR-0031, rangee_icone_*, déclarés en mdi_font_32) passe ses icônes en 45 ou 70 px
     # selon la ligne (tab5_rangee.cpp) : les mêmes trois polices. Le popup d'un appareil
     # (appareil_icone, mdi_font_70, 06/10/2026) montre l'icône de sa tuile comme les cartes.
-    ("tab5_tuiles_icones.h", ""): ("icon_sw?", "icon_card_*", "icon_light_sel_*", "rangee_icone_*", "appareil_icone"),
+    # La tuile − / + (ADR-0033, tab5_reglables.cpp) montre la même palette en mdi_font_45 :
+    # reglable_icone sur la carte clim, reglable_ligne_*_icone dans sa liste.
+    ("tab5_tuiles_icones.h", ""): (
+        "icon_sw?",
+        "icon_card_*",
+        "icon_light_sel_*",
+        "rangee_icone_*",
+        "appareil_icone",
+        "reglable_icone",
+        "reglable_ligne_*_icone",
+    ),
     ("tab5-sensors-domotique.yaml", "moisture_1"): ("icon_pot_s*",),
 }
 

@@ -155,6 +155,29 @@ void rangee_appliquer_ui();
 void rangee_definitions_changees();
 void rangee_element_change(int l, int i);
 
+// --- Tuile − / + au choix (tab5_reglables.cpp, ADR-0033) ---
+// tuiles_definir (tab5_tuiles.cpp) : les entrées « rN|type|icône|options|lien|min|max|pas|
+// unité|nom » du même instantané (sans clé r : aucun appareil du blueprint). Vrai si
+// elles ont changé.
+bool reglables_definir(const std::string& payload);
+// emplacements_appliquer (tab5_zones.cpp) : « rN|état|valeur ». Faux si la clé n'est pas
+// la leur : l'entrée suit alors la table des emplacements 3.x.
+bool reglables_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n_reste);
+// zones_apply_ui : la tuile − / + (masquée sans clim ni appareil) et ce qu'elle montre.
+void reglables_appliquer_ui();
+// tab5_cards.cpp, la clim du blueprint a changé (consigne, mode) : sa ligne de la liste.
+void reglables_clim_changee();
+// theme_rejouer_ui (tab5_theme.cpp).
+void reglables_rejouer_theme();
+// tab5_tuiles.cpp : ouvre le popup de la tuile tRT (lumière, volet, télécommande, clim :
+// ce que fait son appui long, ou son appui pour une clim). Faux si elle n'en a pas.
+bool tuile_ouvrir_popup(int r, int t);
+// tab5_cards.cpp, pour la liste de la tuile − / + : nom de la clim du blueprint (vide
+// tant que HA ne l'a pas donné) ; sa consigne écrite comme sur la carte (« 21.5 »,
+// « -- ») et sa couleur (bleu en froid, rouge en chaud), et la couleur de son icône.
+const char* clim_nom();
+uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
+
 // --- Alertes (tab5_central.cpp) ---
 // Libellé codé d'une alerte, composé dans la langue de l'écran : « @maj:<titre> » →
 // « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo », « @vigi:<niveau> » →

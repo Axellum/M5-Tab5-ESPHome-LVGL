@@ -45,6 +45,7 @@ Generated from `Tab5/tuiles_icones.yaml` by `tools/gen_tuiles_icones.py` (do not
 | `tv` | television-off / television | television, television-off, television-classic, television-classic-off, television-box, television-ambient-light, cast, cast-off, cast-connected, cast-variant | type `med`, `media_player`, `media_player.tv` |
 | `enceinte` | speaker-off / speaker | speaker, speaker-off, speaker-wireless, speaker-multiple, speaker-bluetooth, cast-audio, cast-audio-variant, soundbar, audio-video, audio-video-off | `media_player.speaker`, `media_player.receiver` |
 | `console` | controller-off / controller | controller, controller-off, controller-classic, controller-classic-outline, gamepad, gamepad-variant, gamepad-variant-outline |  |
+| `tablette` | tablet | tablet, tablet-dashboard, tablet-cellphone |  |
 | `cafetiere` | coffee-maker | coffee-maker, coffee-maker-outline, coffee-maker-check, coffee-maker-check-outline, coffee, coffee-outline, coffee-off, coffee-off-outline, kettle, kettle-outline |  |
 | `lave_linge` | washing-machine-off / washing-machine | washing-machine, washing-machine-off, washing-machine-alert, tumble-dryer, tumble-dryer-off |  |
 | `lave_vaisselle` | dishwasher-off / dishwasher | dishwasher, dishwasher-off, dishwasher-alert |  |
@@ -127,6 +128,7 @@ Générée depuis `Tab5/tuiles_icones.yaml` par `tools/gen_tuiles_icones.py` (ne
 | `tv` | television-off / television | television, television-off, television-classic, television-classic-off, television-box, television-ambient-light, cast, cast-off, cast-connected, cast-variant | type `med`, `media_player`, `media_player.tv` |
 | `enceinte` | speaker-off / speaker | speaker, speaker-off, speaker-wireless, speaker-multiple, speaker-bluetooth, cast-audio, cast-audio-variant, soundbar, audio-video, audio-video-off | `media_player.speaker`, `media_player.receiver` |
 | `console` | controller-off / controller | controller, controller-off, controller-classic, controller-classic-outline, gamepad, gamepad-variant, gamepad-variant-outline |  |
+| `tablette` | tablet | tablet, tablet-dashboard, tablet-cellphone |  |
 | `cafetiere` | coffee-maker | coffee-maker, coffee-maker-outline, coffee-maker-check, coffee-maker-check-outline, coffee, coffee-outline, coffee-off, coffee-off-outline, kettle, kettle-outline |  |
 | `lave_linge` | washing-machine-off / washing-machine | washing-machine, washing-machine-off, washing-machine-alert, tumble-dryer, tumble-dryer-off |  |
 | `lave_vaisselle` | dishwasher-off / dishwasher | dishwasher, dishwasher-off, dishwasher-alert |  |
