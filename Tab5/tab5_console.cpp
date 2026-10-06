@@ -197,7 +197,8 @@ struct EchantillonCpu {
 };
 EchantillonCpu s_cpu;
 
-#if defined(ESP_PLATFORM) && defined(CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS) && !defined(CONFIG_FREERTOS_UNICORE)
+#if defined(ESP_PLATFORM) && defined(CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS) && \
+    !defined(CONFIG_FREERTOS_UNICORE) && !defined(CONFIG_FREERTOS_SMP)
 // FreeRTOS n'ajoute le temps de la tâche en cours qu'au moment où elle cède la main :
 // la tâche inactive de l'autre cœur peut tourner depuis longtemps sans que son compteur
 // avance. Un appel inter-cœurs (esp_ipc, tâche de priorité > 0) la fait céder la main,
@@ -207,7 +208,10 @@ void cpu_rien(void*) {}
 
 bool cpu_lire(EchantillonCpu& e) {
     const uint32_t autre = xPortGetCoreID() == 0 ? 1 : 0;
-    esp_ipc_call_blocking(autre, cpu_rien, nullptr);
+    if (esp_ipc_call_blocking(autre, cpu_rien, nullptr) != ESP_OK) {
+        e.valide = false;
+        return false;  // compteur de l'autre cœur peut-être en retard : « -- »
+    }
     e.t_us = esp_timer_get_time();
     for (int c = 0; c < 2; c++) e.inactif[c] = static_cast<uint32_t>(ulTaskGetIdleRunTimeCounterForCore(c));
     e.valide = true;

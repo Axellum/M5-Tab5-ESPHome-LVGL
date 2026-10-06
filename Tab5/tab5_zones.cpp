@@ -352,7 +352,7 @@ void batterie_charge_ui(bool en_charge) {
 }
 
 bool batterie_tension_ui(float tension, uint32_t maintenant_ms) {
-    if (std::isfinite(tension)) s_batterie.tension = tension;
+    s_batterie.tension = tension;  // NAN si l'INA226 ne répond pas : la console n'affiche pas une vieille tension
     const PresenceBatterie avant = s_batterie.detection.presence;
     const PresenceBatterie apres = batterie_lecture(s_batterie.detection, tension, maintenant_ms);
     if (apres == avant) return false;
