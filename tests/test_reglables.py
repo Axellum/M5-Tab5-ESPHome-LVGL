@@ -181,6 +181,29 @@ def test_bornes_par_type():
     assert b == {"r0": [0, 100, 100, "%"], "r1": [20.0, 60.0, 0.5, "°C"], "r2": [0, 100, 100, "%"]}
 
 
+def test_bornes_avec_unites_enum_de_ha():
+    """Dans un vrai HA, temperature_unit d'une météo et unit_of_measurement d'un nombre
+    peuvent être des StrEnum (UnitOfTemperature). `| string` les laisse telles quelles :
+    rangées dans la table, son texte n'est plus un littéral Python (« <UnitOfTemperature…> »)
+    et HA garde la table en texte — « 'str object' has no attribute 'get' » à la connexion
+    (job « Installation dans un HA neuf », 06/10/2026)."""
+    from enum import StrEnum
+
+    class UnitOfTemperature(StrEnum):
+        CELSIUS = "°C"
+
+    etats = _maison() + [
+        bp.Etat("weather.maison", "sunny", friendly_name="Maison", temperature_unit=UnitOfTemperature.CELSIUS),
+        bp.Etat("number.consigne_enum", "45", friendly_name="Consigne", min=20, max=60, step=0.5,
+                unit_of_measurement=UnitOfTemperature.CELSIUS),
+    ]
+    entrees = {**bp.ENTREES, "reglables": ["climate.chambre", "number.consigne_enum"]}
+    b = _passage(entrees=entrees, etats=etats)["reglables_bornes"]
+    assert isinstance(b, dict), f"bornes restées en texte : {b!r}"
+    assert b == {"r0": [7.0, 35.0, 0.5, "°C"], "r1": [20.0, 60.0, 0.5, "°C"]}
+    assert all(type(v[3]) is str for v in b.values())
+
+
 def test_definitions_avec_celles_des_tuiles():
     p = _passage()
     defs = bp._defs(p.definitions())

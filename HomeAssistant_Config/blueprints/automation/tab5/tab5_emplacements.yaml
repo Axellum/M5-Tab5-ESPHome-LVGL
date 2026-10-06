@@ -1693,10 +1693,13 @@ variables:
   # ou éteint, + ouvre ou allume). Consigne : bornes et pas de l'appareil, unité d'une
   # entité weather.* comme pour la clim (ADR-0026). Nombre : ses min, max, step et unité
   # (7 octets au plus). La même table borne la valeur reçue de la tablette.
+  # Unités par « '' ~ » : dans HA ce sont des StrEnum, que « | string » laisse telles
+  # quelles ; rangées dans la table, elles l'empêchent d'être relue (elle resterait du
+  # texte : « 'str object' has no attribute 'get' »). tests/test_reglables.py.
   reglables_bornes: >-
     {%- set u = namespace(s='') -%}
     {%- for w in states.weather if not u.s -%}
-      {%- set t = w.attributes.get('temperature_unit', '') | string -%}
+      {%- set t = '' ~ w.attributes.get('temperature_unit', '') -%}
       {%- if t in ['°C', '°F'] -%}{%- set u.s = t -%}{%- endif -%}
     {%- endfor -%}
     {%- set ns = namespace(d={}) -%}
@@ -1719,7 +1722,7 @@ variables:
       {%- elif r.type == 'vol' -%}
         {%- set b = [0, 100, 10 if (a.get('supported_features') | int(0)) // 4 % 2 == 1 and r.e != volet_suivi else 100, '%'] -%}
       {%- elif r.type == 'nbr' -%}
-        {%- set v = namespace(s=(a.get('unit_of_measurement') or '') | string) -%}
+        {%- set v = namespace(s='' ~ (a.get('unit_of_measurement') or '')) -%}
         {%- for i in range(8) -%}{%- if v.s.encode('utf-8') | length > 7 -%}{%- set v.s = v.s[:-1] -%}{%- endif -%}{%- endfor -%}
         {%- set pas = a.get('step') | float(1) -%}
         {%- set b = [a.get('min') | float(0), a.get('max') | float(100), pas if pas > 0 else 1, v.s] -%}
