@@ -31,6 +31,7 @@ redémarrage de Home Assistant. Lot 0 du plan des alertes de la carte centrale. 
   sauvegarde après l'écriture) ; le job « Installation dans un HA neuf » retient une alerte lue,
   tue HA (`docker kill`) puis le redémarre proprement, et la retrouve à chaque fois ; en
   contre-épreuve, une valeur posée sans sauvegarde est bien perdue au plantage.
+
 ### 2026-10-06 — Bouton d'alimentation : un redémarrage, plus une alerte de plantage
 
 Signalé dans la discussion #278 et reproduit le même jour sur la tablette d'Axel : un appui
