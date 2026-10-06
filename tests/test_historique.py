@@ -80,6 +80,19 @@ def test_vues_cles_et_limites_du_firmware():
     assert f"ns.l | count < {prev_max}" in _lire(PACKAGE)
 
 
+def test_bornes_de_lecture_du_firmware():
+    """historique_recu() rejette un pas, une minute ou une température hors de ses bornes
+    (payload faux, et pas de débordement en entier) : celles du package doivent y tenir."""
+    cpp = _lire(CPP)
+    borne = lambda nom: float(re.search(rf"constexpr float {nom} = ([\d.e+]+)f;", cpp).group(1))
+    pas_max = max(pas for pas, _ in scenarios.HISTORIQUE_VUES.values())
+    assert pas_max <= borne("kPasMax")
+    # Vue 30 jours : 30 jours + aujourd'hui, puis 7 jours de prévision au plus, à midi.
+    pas, nb = scenarios.HISTORIQUE_VUES["mois"]
+    assert (nb + 7) * pas + 720 <= borne("kMinutesMax")
+    assert borne("kTempMax") >= 150, "une température en °F doit passer"
+
+
 def _lire_comme_le_firmware(entete, mesures, previsions):
     """Découpe de historique_recu() : 6 champs « | », créneaux « ; » de 3 champs « , »
     (un créneau vide final n'est pas lu), points « minute,moy[,min,max] » dans l'ordre."""
