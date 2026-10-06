@@ -98,6 +98,8 @@ esphome:
     - Tab5/tab5_zones.cpp
     # Pièces et tuiles génériques décrites par HA (ADR-0023, 28/09/2026).
     - Tab5/tab5_tuiles.cpp
+    # Rangée sous l'horloge : plantes et lignes de capteurs qui se relaient (ADR-0031, 06/10/2026).
+    - Tab5/tab5_rangee.cpp
     # Popup Énergie : instantané solaire et historique de production (ADR-0028, 04/10/2026).
     - Tab5/tab5_energie.cpp
     # Thèmes de l'écran : palette active et repeinture des modules (ADR-0029, lot 2).
@@ -349,6 +351,8 @@ packages:
   tab5_alarm: !include Tab5/tab5-alarm.yaml
   # Pièces et tuiles (ADR-0023) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml
+  # Rangée sous l'horloge (ADR-0031) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
+  tab5_rangee: !include Tab5/tab5-rangee.yaml
   # Popup Énergie (ADR-0028) : APRES tab5_lvgl (widgets), ouvert par une tuile ou par HA.
   tab5_energie: !include Tab5/tab5-energie.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les

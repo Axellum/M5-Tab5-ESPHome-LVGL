@@ -283,23 +283,50 @@ lvgl:
             widgets:
               - label: { text: "\U000F07C0", align: CENTER, text_font: mdi_font_70 }
 
-        # ==================== MOISTURE SENSORS ====================
-        - !include ui_components/moisture_sensors.yaml
+        # ==================== RANGÉE SOUS L'HORLOGE (ADR-0031) ====================
+        # Les plantes et jusqu'à trois lignes de capteurs décrites par HA, qui se
+        # relaient calées sur la carte centrale (tab5_rangee.cpp).
+        - !include ui_components/rangee.yaml
 
-        # Zone tactile invisible par-dessus les 4 slots pots (même géométrie que
-        # moisture_sensors_card) : appui long -> popup détails plantes. Un tap court
-        # reste sans effet, comme avant.
+        # Zone tactile invisible par-dessus la rangée (même géométrie que rangee_capteurs) :
+        # toucher -> ligne suivante ; appui long sur la ligne des plantes -> popup détails
+        # plantes (rien sur une ligne de capteurs : affichage seul). Masquée avec la rangée.
         - button:
-            id: btn_pots_detail_zone
+            id: btn_rangee
             align: TOP_MID
             x: 0
             y: 244
             width: 401
             height: 70
             styles: style_invisible
+            on_short_click:
+              - lambda: 'rangee_toucher();'
             on_long_press:
               - lambda: |-
-                  animate_popup_open(id(pots_detail_popup));
+                  if (rangee_plantes_affichees()) animate_popup_open(id(pots_detail_popup));
+
+        # Pastilles de la rangée : une par ligne, sous elle (entre ses icônes, encre jusqu'à
+        # y 308, et la carte centrale, y 333), comme celles de la carte centrale ;
+        # masquées sous deux lignes (tab5_rangee.cpp, pastilles()).
+        - obj:
+            id: rangee_pastilles
+            align: TOP_MID
+            x: 0
+            y: 319
+            width: SIZE_CONTENT
+            height: SIZE_CONTENT
+            styles: style_transparent
+            hidden: true
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: CENTER
+              flex_align_cross: CENTER
+              pad_column: 6
+            widgets:
+              - obj: { id: rangee_pastille_0, width: 30, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 100%, border_width: 0 }
+              - obj: { id: rangee_pastille_1, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+              - obj: { id: rangee_pastille_2, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
 
         # ==================== CLIMATE CONTROL (MIDDLE RIGHT) ====================
 

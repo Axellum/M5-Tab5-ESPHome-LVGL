@@ -290,10 +290,25 @@ script:
   # Pas de rotation sous un popup ouvert (audit 25/09/2026, lot 3) : la transition
   # repeignait toutes les 8 s la bande centrale avec le voile et la carte du popup
   # par-dessus (LVGL ne saute pas une zone couverte de semi-transparent).
+  # Rangée sous l'horloge (ADR-0031) : calée sur ce rotateur (demande d'Axel du
+  # 06/10/2026). À chaque tour, 0,2 s AVANT la carte centrale, rangee_tour() compte ; au
+  # N-ième (durée d'une ligne du blueprint, en tours de 8 s), la rangée change de ligne,
+  # et la carte centrale suit juste après : une cascade de haut en bas (animations de
+  # 190 ms). Tour compté hors de l'accueil aussi (la carte centrale, elle, n'y tourne
+  # pas), jamais écran éteint ni popup ouvert. 7,8 s + 0,2 s = la période de 8 s
+  # (kTourCentralS de tab5_tuiles.cpp, tests/test_rangee.py).
   - id: tab5_central_rotator_auto
     mode: restart
     then:
-      - delay: 8s
+      - delay: 7800ms
+      - if:
+          condition:
+            and:
+              - light.is_on: backlight
+              - lambda: 'return !ModalRegistry::any_popup_visible();'
+          then:
+            - lambda: 'rangee_tour();'
+      - delay: 200ms
       - if:
           condition:
             and:

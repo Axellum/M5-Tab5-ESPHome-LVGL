@@ -1,0 +1,94 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file rangee.yaml
+# @role Rangée sous l'horloge (ADR-0031, 06/10/2026) : la place des plantes de l'accueil
+#       (401 × 70, la largeur de l'horloge), où se relaient jusqu'à trois lignes — celle
+#       des plantes et des lignes de capteurs décrites par Home Assistant. Trois panneaux
+#       de 401 × 70 superposés, un seul visible :
+#         - rangee_plantes : la ligne des plantes (moisture_sensors.yaml, inchangée) ;
+#         - rangee_a, rangee_b : les lignes de capteurs, remplies en alternance par
+#           tab5_rangee.cpp (celle qui entre n'est jamais celle qui sort), 4 éléments
+#           chacune (rangee_element.yaml).
+# @architecture_constraint Chaque panneau a UN enfant, son contenu : transition_widgets()
+#       (tab5_anim.cpp) l'anime, comme les panneaux de la carte centrale. La rangée coupe
+#       ce qui en sort (pas d'OVERFLOW_VISIBLE) : le contenu qui glisse de 28 px ne passe
+#       ni sur l'horloge ni sur les pastilles. scrollable: false partout : le glissement
+#       (translate_y) ne doit jamais rendre un panneau défilant. La zone tactile
+#       (btn_rangee) et les pastilles (rangee_pastilles) sont dans tab5-lvgl.yaml, à la
+#       même géométrie. Les plantes au départ : l'écran d'avant la rangée tant que HA n'a
+#       rien envoyé.
+# ============================================================================
+obj:
+  id: rangee_capteurs
+  align: TOP_MID
+  x: 0
+  y: 244
+  width: 401
+  height: 70
+  styles: style_transparent
+  scrollable: false
+  scrollbar_mode: "OFF"
+  widgets:
+    - obj:
+        id: rangee_plantes
+        width: 401
+        height: 70
+        styles: style_transparent
+        scrollable: false
+        scrollbar_mode: "OFF"
+        widgets:
+          - !include moisture_sensors.yaml
+
+    - obj:
+        id: rangee_a
+        width: 401
+        height: 70
+        styles: style_transparent
+        scrollable: false
+        scrollbar_mode: "OFF"
+        hidden: true
+        widgets:
+          - obj:
+              width: 401
+              height: 70
+              styles: style_transparent
+              scrollable: false
+              scrollbar_mode: "OFF"
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_main: SPACE_EVENLY
+                flex_align_cross: CENTER
+                pad_column: 0
+              widgets:
+                - !include { file: rangee_element.yaml, vars: { el: "a0" } }
+                - !include { file: rangee_element.yaml, vars: { el: "a1" } }
+                - !include { file: rangee_element.yaml, vars: { el: "a2" } }
+                - !include { file: rangee_element.yaml, vars: { el: "a3" } }
+
+    - obj:
+        id: rangee_b
+        width: 401
+        height: 70
+        styles: style_transparent
+        scrollable: false
+        scrollbar_mode: "OFF"
+        hidden: true
+        widgets:
+          - obj:
+              width: 401
+              height: 70
+              styles: style_transparent
+              scrollable: false
+              scrollbar_mode: "OFF"
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_main: SPACE_EVENLY
+                flex_align_cross: CENTER
+                pad_column: 0
+              widgets:
+                - !include { file: rangee_element.yaml, vars: { el: "b0" } }
+                - !include { file: rangee_element.yaml, vars: { el: "b1" } }
+                - !include { file: rangee_element.yaml, vars: { el: "b2" } }
+                - !include { file: rangee_element.yaml, vars: { el: "b3" } }

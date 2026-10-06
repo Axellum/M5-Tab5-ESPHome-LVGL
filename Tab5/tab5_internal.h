@@ -129,6 +129,31 @@ void tuiles_swipe_ha(bool gauche);
 void texte_ha_copier(char* dst, size_t cap, const char* src, size_t n);
 void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
 
+// --- Rangée sous l'horloge (ADR-0031) : modèle dans tab5_tuiles.cpp, dessin dans
+// tab5_rangee.cpp ---
+// Un élément tel qu'il s'affiche : icône de la palette et sa couleur ; un capteur ou une
+// clim (mesure) y ajoute sa valeur, déjà écrite (« 21.4 ° », « 2.4 kW », « -- »).
+struct RangeeElement {
+    bool mesure = false;
+    const char* icone = nullptr;
+    uint32_t couleur = 0;
+    char texte[24] = "";
+    uint32_t couleur_texte = 0;
+};
+// tab5_tuiles.cpp. Place de la ligne des plantes (0 à 2, -1 masquée) ; tours de la carte
+// centrale par ligne (1 à 15) ; ligne de capteurs l (0 à 2) définie ; élément i (0 à 3)
+// de la ligne l (faux s'il est vide).
+int rangee_place_plantes();
+int rangee_tours();
+bool rangee_ligne_remplie(int l);
+bool rangee_element(int l, int i, RangeeElement& out);
+// tab5_rangee.cpp. zones_apply_ui : tout redessiner (lignes, pots présents) ; les
+// définitions de la rangée ont changé (tuiles_definir) ; l'état de l'élément i de la
+// ligne l est arrivé (tuiles_etat_recu).
+void rangee_appliquer_ui();
+void rangee_definitions_changees();
+void rangee_element_change(int l, int i);
+
 // --- Énergie (tab5_energie.cpp, ADR-0028) ---
 // Puissance ou énergie en unités courtes : W / kW / MW → « 850 W », « 3.45 kW », « 12.5 kW » ;
 // Wh / kWh / MWh → « 4.20 kWh », « 312 kWh », « 3.85 MWh ». Faux (rien d'écrit) pour
@@ -177,6 +202,7 @@ void vigilance_rejouer();
 void rain_bars_rejouer();
 void rain_predict_rejouer();
 void tuiles_rejouer_theme();
+void rangee_rejouer_theme();
 // Mesures des capteurs (températures, pots, carte PC), clim et plantes de l'accueil.
 void cartes_rejouer_theme();
 void energie_rejouer_theme();
