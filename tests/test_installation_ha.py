@@ -52,8 +52,8 @@ def test_preparer_ecrit_une_installation_complete(tmp_path):
     copie = sortie / "blueprints" / "automation" / preparer.CHEMIN_BLUEPRINT
     assert copie.read_bytes() == preparer.BLUEPRINT.read_bytes()
     assert (sortie / "automations.yaml").read_text(encoding="utf-8").strip() == "[]"
-    # Package optionnel (volet à course simulée) : pas par défaut, il prendrait la main
-    # sur le volet du blueprint (variable volet_par_package).
+    # Package optionnel (volet à course simulée) : pas par défaut, le volet choisi dans
+    # sa liste passerait par son script (variables volet_suivi, volet_par_package).
     assert not (sortie / "packages" / "volet_serre_tracking.yaml").exists()
 
 

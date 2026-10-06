@@ -1420,11 +1420,18 @@ variables:
   # (option m, dont climr et tab5_maj_clim portent les réglages et l'état). Chacune a ses
   # réglages (clé crRT) et son état (clé ceRT) ; son appui ouvre le popup pour elle.
   tuiles_clim: "{{ tuiles | selectattr('type', 'eq', 'cli') | rejectattr('e', 'eq', sources.clim) | list }}"
-  volet_par_package: "{{ states['script.tab5_volet_action'] is not none }}"
-  # Le volet que suit le package volet_serre_tracking.yaml : l'entrée Volet (3.x). Sa
-  # tuile montre l'état tenu par le package (input_text.volet_serre_etat), ses
-  # commandes passent par script.tab5_volet_action.
-  volet_suivi: "{{ sources.volet if volet_par_package and sources.volet else '' }}"
+  # Le volet que suit le package volet_serre_tracking.yaml : celui que nomme sa liste
+  # « Tab5 · volet à course simulée », s'il existe. Sa tuile montre l'état tenu par le
+  # package (input_text.volet_serre_etat), ses commandes passent par
+  # script.tab5_volet_action. Liste sur « Aucun » (son défaut) ou package absent : '',
+  # chaque volet est commandé directement. Avant le 06/10/2026, la seule présence du
+  # script suffisait : un package copié sans choisir le volet rendait muet celui de
+  # l'entrée Volet, le script s'arrêtant sur « Aucun » (discussion #278).
+  volet_suivi: >-
+    {%- set v = states('select.tab5_volet_a_course_simulee') -%}
+    {{ v if states['script.tab5_volet_action'] is not none and v.startswith('cover.') and states[v] is not none else '' }}
+  # L'entrée Volet (3.x) passe par le package seulement si c'est ce volet-là.
+  volet_par_package: "{{ volet_suivi != '' and volet_suivi == sources.volet }}"
   # Clés poussées par tab5_maj_emplacements (clim et volet ont leurs actions).
   cles_emplacements:
     - lumiere_1
@@ -1572,6 +1579,12 @@ variables:
       {{ ns.l }}
     {%- elif trigger.id == 'volet_suivi' -%}
       {{ (tuiles | selectattr('e', 'eq', volet_suivi) | map(attribute='cle') | list) if volet_suivi else [] }}
+    {%- elif trigger.id == 'volet_choisi' -%}
+      {#- Volet changé dans la liste du package : les tuiles de l'ancien (son état réel
+          revient) et du nouveau (l'état tenu par le package). -#}
+      {%- set vises = [trigger.from_state.state if trigger.from_state else '',
+                       trigger.to_state.state if trigger.to_state else ''] | select('match', '^cover[.]') | list -%}
+      {{ tuiles | selectattr('e', 'in', vises) | map(attribute='cle') | list }}
     {%- elif trigger.from_state is defined and (trigger.id.startswith('piece_') or trigger.id in ['pc', 'tv', 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3']) -%}
       {%- set avant = trigger.from_state -%}
       {%- set apres = trigger.to_state -%}
@@ -1928,6 +1941,13 @@ triggers:
   - trigger: state
     entity_id: input_text.volet_serre_etat
     id: volet_suivi
+  # Volet choisi (ou remis à « Aucun ») dans la liste « Tab5 · volet à course simulée » :
+  # volet_suivi change, les tuiles concernées et le volet de l'entrée Volet repartent
+  # avec la bonne source d'état. Sans le package, ne se déclenche jamais.
+  - trigger: state
+    entity_id: select.tab5_volet_a_course_simulee
+    to: ~
+    id: volet_choisi
   # Pipeline de discussion choisi, ou remis à « Aucun » (liste du package) : la réponse
   # des zones repart, sans attendre que la tablette la redemande (boutons Domo / Discu).
   # Sans la liste (package plus ancien), ne se déclenche jamais.
@@ -2020,7 +2040,7 @@ conditions:
       {%- if trigger.id in meteo_declencheurs -%}
         {{ meteo_a_ecrire | count > 0 }}
       {%- else -%}
-        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'pipeline_discussion', 'energie'] or cles | count > 0
+        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie'] or cles | count > 0
            or solaire_a_pousser or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0)) }}
       {%- endif -%}
   # Déclencheurs venus de HA (rechargement, démarrage, mesures, changements d'état) : seulement
@@ -2618,8 +2638,10 @@ actions:
               swing: "{{ state_attr(clim, 'swing_mode') | default('stop', true) }}"
             continue_on_error: true
 
+      # Aussi quand la liste du package ne nomme plus ce volet (volet_choisi) : son état
+      # réel revient à l'écran.
       - alias: "Volet qui signale sa course : son état a changé"
-        conditions: "{{ trigger.id == 'volet' and volet != '' and not volet_par_package }}"
+        conditions: "{{ trigger.id in ['volet', 'volet_choisi'] and volet != '' and not volet_par_package }}"
         sequence:
           - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
             data:

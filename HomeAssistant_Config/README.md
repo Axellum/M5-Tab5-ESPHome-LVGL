@@ -172,7 +172,7 @@ Tapping a banner on screen removes it immediately and stores its id here, so a r
 ---
 
 ### `optionnel/volet_serre_tracking.yaml` — optional
-**Not installed by default** (`tab5_optionnel/` in the release archive): copy it into `config/packages/` only for a shutter that reports neither position nor travel, then pick it in « Tab5 · volet à course simulée ». While `script.tab5_volet_action` exists, the blueprint hands the shutter buttons to it instead of the shutter chosen in the automation.
+**Not installed by default** (`tab5_optionnel/` in the release archive): copy it into `config/packages/` only for a shutter that reports neither position nor travel, then pick it in « Tab5 · volet à course simulée ». Once a shutter is picked there, the blueprint hands that shutter's buttons to `script.tab5_volet_action`; on « Aucun » (the default) every shutter is driven directly.
 
 Everything for a roller shutter whose motor reports **no position and no end-stop** (typical cheap Tuya module): the two helpers (an `input_boolean` armed for the measured travel time, an `input_text` carrying the label shown on screen), the central script `tab5_volet_action` called by the Tab5, `tab5_volet_updater`, which pushes the label to `tab5_maj_volet_etat`, and `volet_serre_track_direct_cover`, which updates the helpers when the shutter is commanded some other way (HA UI, sunrise/sunset automation, another integration) so the screen follows.
 
@@ -416,7 +416,7 @@ Un tap sur un bandeau le retire tout de suite et mémorise son id ici : un re-pu
 ---
 
 ### `optionnel/volet_serre_tracking.yaml` — optionnel
-**Pas installé par défaut** (`tab5_optionnel/` dans l'archive de la release) : copiez-le dans `config/packages/` seulement pour un volet qui ne signale ni sa position ni sa course, puis choisissez-le dans « Tab5 · volet à course simulée ». Tant que `script.tab5_volet_action` existe, le blueprint lui confie les boutons du volet au lieu du volet choisi dans l'automatisation.
+**Pas installé par défaut** (`tab5_optionnel/` dans l'archive de la release) : copiez-le dans `config/packages/` seulement pour un volet qui ne signale ni sa position ni sa course, puis choisissez-le dans « Tab5 · volet à course simulée ». Une fois un volet choisi là, le blueprint confie les boutons de ce volet à `script.tab5_volet_action` ; sur « Aucun » (le défaut), chaque volet est commandé directement.
 
 Tout ce qu'il faut pour un volet dont le moteur ne renvoie **ni position ni fin de course** (module Tuya bas de gamme typique) : les deux helpers (un `input_boolean` armé pendant la durée de course mesurée, un `input_text` qui porte le libellé affiché à l'écran), le script central `tab5_volet_action` appelé par le Tab5, `tab5_volet_updater`, qui pousse le libellé vers `tab5_maj_volet_etat`, et `volet_serre_track_direct_cover`, qui met les helpers à jour quand le volet est commandé autrement (interface HA, automatisation lever/coucher, autre intégration) pour que l'écran suive.
 

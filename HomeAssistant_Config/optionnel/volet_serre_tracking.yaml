@@ -9,10 +9,11 @@
 #       autres), recharger, puis choisir le volet dans la liste « Tab5 · volet a
 #       course simulee ». Un volet qui signale opening/closing n'en a pas besoin :
 #       le blueprint « Tab5 — emplacements » le pilote et pousse son etat.
-# @ai_warning Pas dans packages/ : des que `script.tab5_volet_action` existe, le
-#       blueprint lui confie les commandes du volet (variable `volet_par_package`)
-#       au lieu de piloter l'entite choisie dans l'automatisation. Livre par
-#       defaut, ce package aurait rendu muet le volet de tous les autres.
+# @ai_warning Pas dans packages/ : le volet nomme dans la liste « Tab5 · volet a
+#       course simulee » recoit les commandes de ce script au lieu de celles du
+#       blueprint (variables `volet_suivi` et `volet_par_package`). Depuis le
+#       06/10/2026, liste sur « Aucun » = aucun effet ; avant, la seule presence du
+#       script rendait muet le volet de l'entree Volet (discussion #278).
 #
 # @architecture_constraint Le moteur ne renvoie NI position NI fin de course. On
 #       maintient donc l'etat cote HA : un input_boolean « en mouvement » arme
@@ -186,6 +187,11 @@ automation:
         entity_id: input_text.volet_serre_etat
       - platform: state
         entity_id: input_boolean.volet_serre_mouvement
+      # Volet choisi dans la liste : l'écran prend tout de suite l'état tenu ici (le
+      # blueprint ne confie ce volet au package qu'une fois nommé dans la liste).
+      - platform: state
+        entity_id: select.tab5_volet_a_course_simulee
+        to: ~
     condition:
       - condition: state
         entity_id: input_boolean.is_primary_active
