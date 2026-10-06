@@ -866,6 +866,20 @@ void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) {
     ui_text(lbl, buf);
 }
 
+// Fond local d'un objet (pastille, remplissage), écrit seulement s'il change : comme
+// ui_text_color (tab5_internal.h), un lv_obj_set_style_* invalide l'objet même à
+// valeur égale.
+void ui_fond(lv_obj_t* obj, uint32_t hex) {
+    if (obj == nullptr) return;
+    const lv_color_t voulu = lv_color_hex(hex);
+    lv_style_value_t cur;
+    if (lv_obj_get_local_style_prop(obj, LV_STYLE_BG_COLOR, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND &&
+        lv_color_eq(cur.color, voulu)) {
+        return;
+    }
+    lv_obj_set_style_bg_color(obj, voulu, LV_PART_MAIN);
+}
+
 // Onglets titre et état des cartes : 200 px, 6 px de marge de chaque côté.
 constexpr int32_t kLargeurOnglet = 188;
 
