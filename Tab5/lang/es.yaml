@@ -150,6 +150,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Stop": "Parar"
 "En mouvement": "En movimiento"
 "Partiel": "Entreabierta"
+# Device popup (long press of a switch, scene or media tile, 2026-10-06)
+"ÉTAT": "ESTADO"
+"COMMANDE": "CONTROL"
+"Appareil": "Dispositivo"
+"Allumer": "Encender"
+"Éteindre": "Apagar"
+"En cours": "En curso"
+"Pièce : %s": "Estancia: %s"
+"Allumer seulement": "Solo encender"
+"Confirmer chaque commande": "Confirmar cada orden"
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Estancia %d/%d"
 "Aucun appareil": "Ningún dispositivo"

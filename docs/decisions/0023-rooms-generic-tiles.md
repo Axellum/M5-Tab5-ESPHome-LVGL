@@ -48,10 +48,10 @@ In every text field `|` becomes `/` and `;` becomes `,` (as today).
 | Type | HA domains | Tap | Long press |
 |---|---|---|---|
 | `lum` | `light` | `basculer` | light popup (the room's `lum` tiles) |
-| `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | — |
+| `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | device popup (update 2026-10-06, below) |
 | `vol` | `cover`, `valve` | moving → `arreter` (pause); else the chosen direction (`ouvrir` / `fermer`, see below) | shutter popup (update 2026-10-05, below); with `k`, the other one of `ouvrir`/`fermer` |
-| `med` | `media_player` | `basculer` | TV remote, with `t` |
-| `act` | `scene`, `script`, `button`, `input_button` | `lancer` | — |
+| `med` | `media_player` | `basculer` | TV remote, with `t`; else the device popup (update 2026-10-06) |
+| `act` | `scene`, `script`, `button`, `input_button` | `lancer` | device popup (update 2026-10-06) |
 | `cap` | `sensor`, `number`, `input_number` | — (read only) | — |
 | `bin` | `binary_sensor`, `device_tracker`, `person`, `lock` | — (read only) | — |
 | `cli` | `climate` | climate popup: the blueprint's with `m`, else its own once HA sent its settings ([ADR-0027](0027-climate-per-tile.md)) | — |
@@ -147,3 +147,16 @@ Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discu
 - **Follows Home Assistant.** Each pushed position redraws the curtain at once — that is the « animation »: the drawing goes down as the real shutter does, push after push. No interpolation nor fade (the author's preference: instant transitions). Never under the finger.
 - **Unknown position** (`nan`, `-1`, offline, nothing received): no drag, no number; the drawing shows the state — `open` up, `closed` down, anything else half-way with faded slats.
 - **Buttons.** Ouvrir / Stop / Fermer keep the shared glass button (`style_clim_btn`, theme shapes and press effect); their icon sits in a round badge tinted with `TEXT_SOFT` at 14 %, like a Home Assistant tile.
+
+## Update — 2026-10-06: the device popup (long press)
+
+Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (« buttons can have pop up screen like ha dashboard »). The long press of an `int` or `act` tile, or of a `med` tile without `t`, used to do nothing.
+
+- **Gesture.** That long press (weather shoulders or HA-mode card) opens the **device popup** on that tile, the « more info » window of a Home Assistant dashboard. A `med` with `t` keeps the TV remote; option `r`: nothing, as before (no tap at all); legacy mode: unchanged. The tap is unchanged.
+- **Popup** (`ui_components/appareil_popup.yaml`, `tab5_tuiles.cpp`, registered as « Appareil », shared chrome of [ADR-0009](0009-modal-shell-header.md)): title = the tile's name; left card, the tile's icon in a round badge of its state's colour, the state in words (the HA-mode card's line; « Prêt » / « En cours » for an `act`), the room, and the tile's options (`o`, `k`) in words; right card, one large vertical switch (filled at the top and coloured when on, at the bottom and grey when off, filled for an `act`) and, under it, what a press does (« Allumer », « Éteindre », « Lancer »).
+- **Command.** The large switch runs **the tile's own tap**, through the same function (`tuile_appui_piece`): `basculer` (`allumer` with `o`) or `lancer`, the same confirmation with `k` (the first press arms the tile's 3 s timer; the tile and the popup both ask « Confirmer ? »; a second press sends), the same « OK » after `lancer`. No new command, no change to the contract or to Home Assistant.
+- **Data.** Only what HA already pushes for the tiles (definition and state). The time of the last change, the attributes, the history are not pushed: not shown.
+
+## Update — 2026-10-06: HA-mode cards drawn like Home Assistant's « tile » card
+
+Same discussion (« buttons can be like ha dashboard buttons »). The five HA-mode cards lose their title and state tabs and look like the vertical « tile » card of a Home Assistant dashboard: the icon (palette, 70 px) at full strength in a round badge of the same colour at 20 % (`sw_pastille_N`, coloured by `peindre_carte` from the colour the card already used), the name under it, the state line under the name in its colour. Same widgets otherwise (`icon_swN`, `lbl_swN_title`, `lbl_swN_state`, the 130 × 130 invisible button now over the badge, the name's frame still the target of the shutter-direction tap), same colours and words, same 230 × 275 cards and centring. The weather tiles and their shoulders are unchanged.

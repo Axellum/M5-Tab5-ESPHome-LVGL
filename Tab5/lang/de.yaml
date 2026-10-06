@@ -133,6 +133,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Stop": "Stopp"
 "En mouvement": "In Bewegung"
 "Partiel": "Teilweise"
+# Device popup (long press of a switch, scene or media tile, 2026-10-06)
+"ÉTAT": "ZUSTAND"
+"COMMANDE": "STEUERUNG"
+"Appareil": "Gerät"
+"Allumer": "Einschalten"
+"Éteindre": "Ausschalten"
+"En cours": "Läuft"
+"Pièce : %s": "Raum: %s"
+"Allumer seulement": "Nur einschalten"
+"Confirmer chaque commande": "Jeden Befehl bestätigen"
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Raum %d/%d"
 "Aucun appareil": "Kein Gerät"

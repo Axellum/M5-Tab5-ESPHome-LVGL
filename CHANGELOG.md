@@ -44,7 +44,41 @@ un package HA ; sans le package, le popup attend.
   changements d'heure, calcul Python à part ; aussi rendus par le HA d'Axel sur ses vraies
   statistiques). Non essayé sur la tablette.
 
+### 2026-10-06 — Cartes du mode HA dessinées comme la carte « tile » de HA
 
+Demandé dans la discussion #278 (« buttons can be like ha dashboard buttons »). Firmware seul :
+ni le contrat avec Home Assistant ni le blueprint ne changent ; les cartes météo non plus.
+- **Plus d'onglets sur les cinq cartes du mode HA** : chaque carte ressemble à la carte « tile »
+  d'un tableau de bord Home Assistant, en version verticale. L'icône est dans une pastille ronde
+  de la couleur de son état (la couleur à 20 %, l'icône pleine), le nom dessous, l'état sous le
+  nom dans sa couleur. Mêmes couleurs et mêmes mots qu'avant, repeints au changement de thème.
+- **Mêmes gestes** : tap et appui long sur la pastille (même zone de 130 × 130 que l'ancien
+  bouton), toucher du nom pour le sens d'un volet ; ailleurs sur la carte, un geste reste un
+  glissement de pièce.
+
+### 2026-10-06 — Popup d'un appareil à l'appui long, comme dans un tableau de bord HA
+
+Demandé dans la discussion #278 (« buttons can have pop up screen like ha dashboard »). L'appui
+long d'un interrupteur, d'une prise, d'un ventilateur, d'une scène, d'un script, d'un bouton ou
+d'un lecteur qui n'est pas la TV du blueprint ne faisait rien. Firmware seul : ni le contrat avec
+Home Assistant ni le blueprint ne changent.
+- **Nouveau popup « Appareil »** (`appareil_popup.yaml`, un seul pour tous ces types, chrome
+  partagé, inscrit au registre) : à gauche l'icône de la tuile dans une pastille ronde de la
+  couleur de son état, l'état en mots, la pièce et les options de la tuile (« Allumer
+  seulement », « Confirmer chaque commande ») ; à droite un grand interrupteur vertical façon HA
+  (rempli en haut et en couleur allumé, en bas et gris éteint, plein pour une scène) et ce que
+  fera l'appui.
+- **Le grand bouton refait le toucher de la tuile**, par la même fonction : même commande
+  (`basculer`, `allumer` avec « Allumer seulement », `lancer`), même confirmation (« Confirmer »
+  n'est jamais contourné : le premier appui arme, la tuile et le popup demandent « Confirmer ? »),
+  même « OK » après une scène. « Lecture seule » : ni toucher ni popup, comme avant. Lumières,
+  volets, clims, TV et énergie gardent leurs popups.
+- Seulement ce que HA pousse déjà pour les tuiles : pas de « dernière modification » ni
+  d'historique.
+- Rendu hors tablette : trois écrans (`appareil`, `appareil-scene`, `appareil-confirmer`). Tests
+  dans `tests/test_tuiles_firmware.py`. Docs : notice (tableau des appuis, « Fenêtre de
+  l'appareil »), `docs/screens.md`, ADR-0023 (mise à jour du 06/10/2026), cartographie.
+  **Pas encore essayé sur la tablette.**
 
 ### 2026-10-06 — Popup du volet : un volet dessiné à faire glisser, des boutons façon HA
 
