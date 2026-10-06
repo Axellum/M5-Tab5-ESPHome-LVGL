@@ -284,6 +284,11 @@ struct HaAlertSlotUI {
     lv_obj_t* cpt;
 };
 
+// Les 4 bandeaux (ha_alert_panel.yaml, n = 0-3), seule table : remplie par le script
+// tab5_ha_alert_slots_init (tab5-alertes.yaml), que chaque lecteur appelle avant de
+// lire. Pointeurs nuls tant qu'il n'a pas tourné.
+extern HaAlertSlotUI g_ha_alert_slots[kHaAlertSlotCount];
+
 // La police des bandeaux est celle du YAML (ha_alert_panel.yaml, police de la date) :
 // la reposer à chaque push relançait la mise en page pour rien (audit 26/09, lot 3).
 // Renvoie true quand une alerte rouge nouvelle vient de prendre la carte : l'appelant

@@ -32,6 +32,9 @@ CentralPanelCtx g_central_ctx;
 WeatherDaySlot g_day_slots[5];
 WeatherHourSlot g_hour_slots[5];
 
+// Bandeaux d'alerte HA de la carte centrale (script tab5_ha_alert_slots_init).
+HaAlertSlotUI g_ha_alert_slots[kHaAlertSlotCount];
+
 // Donnees planning/previsions remplies par parse_and_update_*_bulk (tab5_forecast.cpp),
 // lues par la carte centrale, les services et le calendrier.
 DayForecastData cal_jours_data[15];

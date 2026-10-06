@@ -21,6 +21,19 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-06 — Bandeaux d'alerte HA : une seule table pour leurs widgets
+
+Refactor : rien ne doit changer à l'écran ni pour Home Assistant. Les widgets des 4 bandeaux
+d'alerte HA de la carte centrale (cadre, texte, compteur « 2/6 ») et leur id d'acquittement
+étaient listés dans trois lambdas : le service `tab5_maj_alertes_ha_bulk`, le tap
+`tab5_dismiss_ha_alert` et « Tout marquer comme lu » (`tab5_alertes_tout_lu`).
+- Ils ne sont plus écrits qu'une fois, dans le script `tab5_ha_alert_slots_init`
+  (`Tab5/tab5-alertes.yaml`), qui remplit le tableau global `g_ha_alert_slots`
+  (`Tab5/tab5_custom.h`). Idempotent, comme le registre des modales : chaque lecteur l'appelle
+  avant de lire, car le service de HA peut arriver avant l'`on_boot`, qui attend HA jusqu'à
+  30 s.
+- L'`on_boot` est inchangé : il nomme toujours les 4 cadres (`g_central_ctx.ha_wrap`).
+
 ### 2026-10-06 — Docs : pourquoi les entités de la tablette restent en français
 
 Demande d'un utilisateur : les réglages et capteurs en anglais. Home Assistant reconnaît une entité
