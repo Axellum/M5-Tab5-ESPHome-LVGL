@@ -45,7 +45,7 @@ I have been using an M5Stack Tab5 as the screen of my home for a few months. I'm
 
 **Limits**
 
-- Tested every day on the ST7123 revision only. The ST7121 and the original ILI9881C builds compile but have never run here.
+- Used every day on the ST7123 revision; the ST7121 build runs on another user's unit; the original ILI9881C build compiles but has never run.
 - The layout started from my home: outside the rooms, each zone has a single place (one climate card, one TV, two temperatures, up to 5 plants).
 - It was written with AI assistants; I'm more the architect than the author.
 

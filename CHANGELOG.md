@@ -21,6 +21,15 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-06 — Docs : la ST7121 tourne chez un utilisateur
+
+La doc disait encore la révision ST7121 « compilée, jamais essayée ». Un utilisateur fait
+tourner ce firmware sur sa ST7121 depuis octobre 2026 (écran, tactile, mot d'activation :
+[discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : README,
+`docs/hardware.md`, `docs/installation/flash.md`, `docs/architecture.md`, la cartographie et deux
+commentaires du firmware le disent désormais. L'ILI9881C d'origine reste compilée sans avoir
+jamais tourné.
+
 ### 2026-10-06 — Tuile − / + : les boutons de la carte clim règlent l'appareil de votre choix
 
 Demande d'Axel : les − / + de la carte clim de l'accueil (en haut à droite) ne réglaient que la

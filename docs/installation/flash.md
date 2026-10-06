@@ -17,7 +17,7 @@ The display chip is printed on the sticker on the back of the tablet, just above
 | Display chip | Units made | With this firmware |
 |---|---|---|
 | ST7123 | October 2025 → April 2026 | the author's unit, used every day |
-| ST7121 | since April 2026 | built, never run with this firmware; the same settings were reported working by another user |
+| ST7121 | since April 2026 | runs on another user's unit since October 2026 |
 | ILI9881C | May → October 2025 | built, never tested |
 
 A unit labelled « ST7123 » may carry an ST7121: if you are unsure, try one, then the other.
@@ -68,7 +68,7 @@ La puce d'écran est écrite sur l'autocollant au dos de la tablette, juste au-d
 | Puce d'écran | Fabriquées | Avec ce firmware |
 |---|---|---|
 | ST7123 | octobre 2025 → avril 2026 | celle de l'auteur, utilisée tous les jours |
-| ST7121 | depuis avril 2026 | compilée, jamais essayée avec ce firmware ; les mêmes réglages sont signalés fonctionnels par un autre utilisateur |
+| ST7121 | depuis avril 2026 | tourne chez un autre utilisateur depuis octobre 2026 |
 | ILI9881C | mai → octobre 2025 | compilée, jamais essayée |
 
 Une tablette étiquetée « ST7123 » peut porter une ST7121 : dans le doute, essayez l'une, puis l'autre.
