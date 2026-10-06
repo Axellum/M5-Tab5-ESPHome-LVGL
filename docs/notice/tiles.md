@@ -24,7 +24,7 @@ The home page shows today and the next four days.
 
 ![Device mode: the five devices of the first room](../images/notice/accueil-ha-piece-1-en.webp)
 
-A tap on the Home Assistant button: each card shows a device of the room, with its icon, its name and its state (« 71 % », « Off », « Moving », « Offline » when Home Assistant cannot reach it…). The central card gives the room, « Room 1/5 » and its name.
+A tap on the Home Assistant button: each card shows a device of the room, like a card of a Home Assistant dashboard: its icon in a round badge of its state's colour, its name and, under it, its state (« 71 % », « Off », « Moving », « Offline » when Home Assistant cannot reach it…). The central card gives the room, « Room 1/5 » and its name.
 
 - **Swipe**: the next or previous room that has devices. With a single room, nothing happens.
 - Another tap on the Home Assistant button: back to the weather. Device mode never goes back by itself.
@@ -36,10 +36,10 @@ On a device card, or on the weather icon of a card that holds a device:
 | Device | Tap | Long press |
 |---|---|---|
 | Light | on / off | [lights window](lights.md) |
-| Switch, plug, fan… | on / off | — |
+| Switch, plug, fan… | on / off | [device window](#device-window) |
 | Shutter, valve | moving: stop; open: close; otherwise: open | [shutter window](shutters.md) |
-| TV, media player | on / off | [TV remote](tv.md), for the TV picked in the blueprint |
-| Scene, script, button | runs it; the state shows « OK » for a second | — |
+| TV, media player | on / off | [TV remote](tv.md), for the TV picked in the blueprint; another player: [device window](#device-window) |
+| Scene, script, button | runs it; the state shows « OK » for a second | [device window](#device-window) |
 | Climate | [climate window](climate.md), for this unit | — |
 | Sensor of the « Énergie · Energy » section | [energy window](energy.md) | [energy window](energy.md) |
 | Other sensor | — (it only shows its value) | — |
@@ -47,8 +47,21 @@ On a device card, or on the weather icon of a card that holds a device:
 **Customised cards** (blueprint section « Personnaliser des tuiles », [step 6](../installation/devices.md)):
 
 - *on only*: a tap turns the device on, never off;
-- *confirm*: the first tap only asks, the state shows « Confirm? » and the icon turns amber; a second tap within 3 s sends. On a shutter, the long press then sends the other way (open or close), confirmed the same way, instead of opening the window;
-- *read only*: the card shows the state and does nothing.
+- *confirm*: the first tap only asks, the state shows « Confirm? » and the icon turns amber; a second tap within 3 s sends. On a shutter, the long press then sends the other way (open or close), confirmed the same way, instead of opening the window. In the device window, the large button asks the same way;
+- *read only*: the card shows the state and does nothing, and opens no window.
+
+## Device window
+
+A long press on a switch, a plug, a fan, a scene, a script, a button, or a media player that is not the blueprint's TV opens its window, like the « more info » window of a Home Assistant dashboard. Title: the card's name.
+
+![Long press on the computer: its window, on, set to « Turn on only »](../images/notice/appareil-en.webp)
+
+- **On the left**, its icon in a round badge of its state's colour, the state in words (« On », « Off », « Play », « Offline »…; « Ready » for a scene), its room, and the card's customisation (« Turn on only », « Confirm each command »).
+- **On the right**, a large switch: filled at the top and coloured when the device is on, at the bottom and grey when it is off, filled for a scene. A tap does exactly what a tap on the card does: on / off (on only for a card set to *on only*), or runs the scene; under it, what a tap will do. A card set to *confirm* asks here too: the first tap only arms (« Confirm? », amber), a second within 3 s sends.
+
+![A card set to « Confirm »: the first tap arms, the window asks « Confirm? »](../images/notice/appareil-confirmer-en.webp)
+
+- The window follows the device while it is open. The cross, or a tap outside the card, closes it.
 
 ---
 
@@ -76,7 +89,7 @@ La page d'accueil montre aujourd'hui et les quatre jours suivants.
 
 ![Le mode appareils : les cinq appareils de la première pièce](../images/notice/accueil-ha-piece-1-fr.webp)
 
-Un tap sur le bouton Home Assistant : chaque carte montre un appareil de la pièce, avec son icône, son nom et son état (« 71 % », « Éteint », « Mouvement », « Hors ligne » quand Home Assistant ne le joint pas…). La carte centrale donne la pièce, « Pièce 1/5 » et son nom.
+Un tap sur le bouton Home Assistant : chaque carte montre un appareil de la pièce, comme une carte d'un tableau de bord Home Assistant : son icône dans une pastille ronde de la couleur de son état, son nom et, dessous, son état (« 71 % », « Éteint », « Mouvement », « Hors ligne » quand Home Assistant ne le joint pas…). La carte centrale donne la pièce, « Pièce 1/5 » et son nom.
 
 - **Glisser** : la pièce suivante ou précédente qui a des appareils. Avec une seule pièce, rien ne se passe.
 - Un nouveau tap sur le bouton Home Assistant : retour à la météo. Le mode appareils ne revient jamais seul à la météo.
@@ -88,10 +101,10 @@ Sur une carte d'appareil, ou sur l'icône météo d'une carte qui porte un appar
 | Appareil | Tap | Appui long |
 |---|---|---|
 | Lumière | allumer / éteindre | [fenêtre des lumières](lights.md#version-française) |
-| Interrupteur, prise, ventilateur… | allumer / éteindre | — |
+| Interrupteur, prise, ventilateur… | allumer / éteindre | [fenêtre de l'appareil](#fenêtre-de-lappareil) |
 | Volet, vanne | en mouvement : stop ; ouvert : fermer ; sinon : ouvrir | [fenêtre du volet](shutters.md#version-française) |
-| TV, lecteur multimédia | allumer / éteindre | [télécommande TV](tv.md#version-française), pour la TV choisie dans le blueprint |
-| Scène, script, bouton | le lance ; l'état affiche « OK » une seconde | — |
+| TV, lecteur multimédia | allumer / éteindre | [télécommande TV](tv.md#version-française), pour la TV choisie dans le blueprint ; un autre lecteur : [fenêtre de l'appareil](#fenêtre-de-lappareil) |
+| Scène, script, bouton | le lance ; l'état affiche « OK » une seconde | [fenêtre de l'appareil](#fenêtre-de-lappareil) |
 | Clim | [fenêtre de la clim](climate.md#version-française), pour cet appareil | — |
 | Capteur de la section « Énergie · Energy » | [fenêtre de l'énergie](energy.md#version-française) | [fenêtre de l'énergie](energy.md#version-française) |
 | Autre capteur | — (il montre seulement sa valeur) | — |
@@ -99,5 +112,18 @@ Sur une carte d'appareil, ou sur l'icône météo d'une carte qui porte un appar
 **Cartes personnalisées** (section « Personnaliser des tuiles » du blueprint, [étape 6](../installation/devices.md#version-française)) :
 
 - *allumer seulement* : un tap allume l'appareil, jamais ne l'éteint ;
-- *confirmer* : le premier tap demande seulement, l'état affiche « Confirmer ? » et l'icône passe en ambre ; un second tap dans les 3 s envoie. Sur un volet, l'appui long envoie alors l'autre sens (ouvrir ou fermer), confirmé de la même façon, au lieu d'ouvrir la fenêtre ;
-- *lecture seule* : la carte montre l'état et ne fait rien.
+- *confirmer* : le premier tap demande seulement, l'état affiche « Confirmer ? » et l'icône passe en ambre ; un second tap dans les 3 s envoie. Sur un volet, l'appui long envoie alors l'autre sens (ouvrir ou fermer), confirmé de la même façon, au lieu d'ouvrir la fenêtre. Dans la fenêtre de l'appareil, le grand bouton demande de la même façon ;
+- *lecture seule* : la carte montre l'état, ne fait rien et n'ouvre aucune fenêtre.
+
+## Fenêtre de l'appareil
+
+Un appui long sur un interrupteur, une prise, un ventilateur, une scène, un script, un bouton, ou un lecteur multimédia qui n'est pas la TV du blueprint ouvre sa fenêtre, comme la fenêtre « plus d'infos » d'un tableau de bord Home Assistant. Titre : le nom de la carte.
+
+![Appui long sur l'ordinateur : sa fenêtre, allumé, réglé sur « Allumer seulement »](../images/notice/appareil-fr.webp)
+
+- **À gauche**, son icône dans une pastille ronde de la couleur de son état, l'état en mots (« Allumé », « Éteint », « Lecture », « Hors ligne »… ; « Prêt » pour une scène), sa pièce, et la personnalisation de la carte (« Allumer seulement », « Confirmer chaque commande »).
+- **À droite**, un grand interrupteur : rempli en haut et en couleur quand l'appareil est allumé, en bas et gris quand il est éteint, plein pour une scène. Un tap fait exactement ce que fait un tap sur la carte : allumer / éteindre (allumer seulement pour une carte *allumer seulement*), ou lancer la scène ; dessous, ce que fera le tap. Une carte *confirmer* demande ici aussi : le premier tap arme seulement (« Confirmer ? », en ambre), un second dans les 3 s envoie.
+
+![Une carte « Confirmer » : le premier tap arme, la fenêtre demande « Confirmer ? »](../images/notice/appareil-confirmer-fr.webp)
+
+- La fenêtre suit l'appareil tant qu'elle est ouverte. La croix, ou un tap hors de la carte, la ferme.

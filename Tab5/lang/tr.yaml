@@ -149,6 +149,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Stop": "Dur"
 "En mouvement": "Hareket ediyor"
 "Partiel": "Kısmen açık"
+# Device popup (long press of a switch, scene or media tile, 2026-10-06)
+"ÉTAT": "DURUM"
+"COMMANDE": "KOMUT"
+"Appareil": "Cihaz"
+"Allumer": "Aç"
+"Éteindre": "Kapat"
+"En cours": "Çalışıyor"
+"Pièce : %s": "Oda: %s"
+"Allumer seulement": "Yalnızca aç"
+"Confirmer chaque commande": "Her komutu onayla"
 # Rooms and tiles (ADR-0023): room title, state lines of the HA cards
 "Pièce %d/%d": "Oda %d/%d"
 "Aucun appareil": "Cihaz yok"

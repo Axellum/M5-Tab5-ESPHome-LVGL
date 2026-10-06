@@ -35,6 +35,65 @@ Home Assistant ajoutée.
   cartes ne bougent pas. Trois écrans de plus dans le rendu hors tablette (batterie, en charge,
   sans batterie), notice de la console complétée.
 
+### 2026-10-06 — Cartes du mode HA dessinées comme la carte « tile » de HA
+
+Demandé dans la discussion #278 (« buttons can be like ha dashboard buttons »). Firmware seul :
+ni le contrat avec Home Assistant ni le blueprint ne changent ; les cartes météo non plus.
+- **Plus d'onglets sur les cinq cartes du mode HA** : chaque carte ressemble à la carte « tile »
+  d'un tableau de bord Home Assistant, en version verticale. L'icône est dans une pastille ronde
+  de la couleur de son état (la couleur à 20 %, l'icône pleine), le nom dessous, l'état sous le
+  nom dans sa couleur. Mêmes couleurs et mêmes mots qu'avant, repeints au changement de thème.
+- **Mêmes gestes** : tap et appui long sur la pastille (même zone de 130 × 130 que l'ancien
+  bouton), toucher du nom pour le sens d'un volet ; ailleurs sur la carte, un geste reste un
+  glissement de pièce.
+
+### 2026-10-06 — Popup d'un appareil à l'appui long, comme dans un tableau de bord HA
+
+Demandé dans la discussion #278 (« buttons can have pop up screen like ha dashboard »). L'appui
+long d'un interrupteur, d'une prise, d'un ventilateur, d'une scène, d'un script, d'un bouton ou
+d'un lecteur qui n'est pas la TV du blueprint ne faisait rien. Firmware seul : ni le contrat avec
+Home Assistant ni le blueprint ne changent.
+- **Nouveau popup « Appareil »** (`appareil_popup.yaml`, un seul pour tous ces types, chrome
+  partagé, inscrit au registre) : à gauche l'icône de la tuile dans une pastille ronde de la
+  couleur de son état, l'état en mots, la pièce et les options de la tuile (« Allumer
+  seulement », « Confirmer chaque commande ») ; à droite un grand interrupteur vertical façon HA
+  (rempli en haut et en couleur allumé, en bas et gris éteint, plein pour une scène) et ce que
+  fera l'appui.
+- **Le grand bouton refait le toucher de la tuile**, par la même fonction : même commande
+  (`basculer`, `allumer` avec « Allumer seulement », `lancer`), même confirmation (« Confirmer »
+  n'est jamais contourné : le premier appui arme, la tuile et le popup demandent « Confirmer ? »),
+  même « OK » après une scène. « Lecture seule » : ni toucher ni popup, comme avant. Lumières,
+  volets, clims, TV et énergie gardent leurs popups.
+- Seulement ce que HA pousse déjà pour les tuiles : pas de « dernière modification » ni
+  d'historique.
+- Rendu hors tablette : trois écrans (`appareil`, `appareil-scene`, `appareil-confirmer`). Tests
+  dans `tests/test_tuiles_firmware.py`. Docs : notice (tableau des appuis, « Fenêtre de
+  l'appareil »), `docs/screens.md`, ADR-0023 (mise à jour du 06/10/2026), cartographie.
+  **Pas encore essayé sur la tablette.**
+
+### 2026-10-06 — Popup du volet : un volet dessiné à faire glisser, des boutons façon HA
+
+Demandé dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) :
+« comme l'animation de HA, pas un simple curseur », et des boutons comme ceux d'un tableau de
+bord HA. Firmware seul : même commande, même événement, même branche du blueprint.
+- **Un volet dessiné à la place du curseur** : une fenêtre dont le tablier à lames descend
+  depuis le coffre selon la position. On le fait glisser du doigt, vers le haut ou le bas,
+  n'importe où sur la fenêtre : le dessin et le « 45 % » suivent le doigt, et la position
+  (`position`, 0-100) ne part **qu'au relâcher**, comme avant. Un simple toucher n'envoie rien.
+- **Il suit le vrai volet** tant que le popup est ouvert : chaque position poussée par Home
+  Assistant le redessine aussitôt, sans fondu ni animation à lui (le volet dessiné descend quand
+  le vrai descend). Jamais sous le doigt.
+- **Volet sans position** (`nan`, volet à course simulée, hors ligne) : pas de glissement ni de
+  nombre ; le dessin montre l'état (ouvert en haut, fermé en bas, sinon à mi-hauteur, lames
+  estompées) et les mots restent (« Ouvert », « Fermé », « Partiel », « En mouvement »,
+  « Hors ligne »).
+- **Ouvrir / Stop / Fermer** : l'icône dans une pastille ronde teintée, comme une tuile de Home
+  Assistant ; le bouton garde le verre et l'effet d'appui du thème.
+- Aucun texte nouveau à l'écran. ADR-0023 (mise à jour du 06/10/2026), `docs/screens.md`,
+  notice `shutters.md`, `Tab5/README.md` ; tests du glissement (rien pendant, rien sans
+  position, une fois au relâcher) et de la géométrie (`tests/test_tuiles_firmware.py`) ; un
+  écran de plus au rendu hors tablette (`volet-glisse`, le volet tiré du doigt).
+
 ### 2026-10-06 — Alertes : le rang « 2/6 » et l'alerte rouge en premier sur l'écran
 
 Lot 3 du plan des alertes de la carte centrale. Firmware et Home Assistant.

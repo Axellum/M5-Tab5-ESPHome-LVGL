@@ -48,10 +48,10 @@ In every text field `|` becomes `/` and `;` becomes `,` (as today).
 | Type | HA domains | Tap | Long press |
 |---|---|---|---|
 | `lum` | `light` | `basculer` | light popup (the room's `lum` tiles) |
-| `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | — |
+| `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | device popup (update 2026-10-06, below) |
 | `vol` | `cover`, `valve` | moving → `arreter` (pause); else the chosen direction (`ouvrir` / `fermer`, see below) | shutter popup (update 2026-10-05, below); with `k`, the other one of `ouvrir`/`fermer` |
-| `med` | `media_player` | `basculer` | TV remote, with `t` |
-| `act` | `scene`, `script`, `button`, `input_button` | `lancer` | — |
+| `med` | `media_player` | `basculer` | TV remote, with `t`; else the device popup (update 2026-10-06) |
+| `act` | `scene`, `script`, `button`, `input_button` | `lancer` | device popup (update 2026-10-06) |
 | `cap` | `sensor`, `number`, `input_number` | — (read only) | — |
 | `bin` | `binary_sensor`, `device_tracker`, `person`, `lock` | — (read only) | — |
 | `cli` | `climate` | climate popup: the blueprint's with `m`, else its own once HA sent its settings ([ADR-0027](0027-climate-per-tile.md)) | — |
@@ -77,7 +77,7 @@ All tiles after the definitions; one tile when its entity changes (state, bright
 |---|---|---|
 | `basculer`, `allumer`, `eteindre` | '' | `lum`, `int`, `med` |
 | `ouvrir`, `fermer`, `arreter` | '' | `vol` |
-| `position` | 0-100 | `vol` (shutter popup: the slider, on release) |
+| `position` | 0-100 | `vol` (shutter popup: the drawn shutter, on release) |
 | `lancer` | '' | `act` |
 | `luminosite` / `luminosite_pct` / `couleur` | 0-255 / 10-100 / colour name | `lum` (popup) |
 | `pR` + `eteindre` | '' | every `lum` tile of room `R` (popup « Tout éteindre ») |
@@ -137,3 +137,26 @@ Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discu
 - **Popup** (`ui_components/volet_popup.yaml`, `tab5_tuiles.cpp`, registered as « Volet », shared chrome of [ADR-0009](0009-modal-shell-header.md)): title = the tile's name; left card, the position in large digits (« 45 % ») and the state in words below; right card, **Ouvrir / Stop / Fermer**, which send the tile's own `ouvrir` / `arreter` / `fermer`. A 0-100 % slider shows only when the position is known (a value 0-100 with an online state): it sends **`position`** with the value **on release only**, never while dragging. Unknown position (`nan`: a shutter that does not report one; `-1`: the simulated shutter's « Partiel ») shows the state alone, in words: « Ouvert », « Fermé », « Partiel » (stopped half-way), « En mouvement », « Hors ligne ». The popup follows its tile's pushes while it is open (never under the finger).
 - **Home Assistant.** The blueprint's « Tuile : position » branch calls `cover.set_cover_position` / `valve.set_valve_position` on the entity of **that tile only** (the same whitelist as the other tile commands, behind the same origin guard), when the entity can set a position (`supported_features` bit 4, `SET_POSITION`), with the value clamped to 0-100. The simulated shutter of `optionnel/volet_serre_tracking.yaml` has no real position: its states now push `nan` at both ends of the course instead of 100 / 0 (the arrow flips the same way), so the tablet gives it no slider, and the branch skips it.
 - **Compatibility.** An older blueprint has no branch for `position`: the slider then does nothing (the buttons still work). An older firmware never sends it.
+
+## Update — 2026-10-06: a drawn shutter instead of the slider
+
+Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (« maybe like the HA animation, not a basic slider; buttons can be like HA dashboard buttons »).
+
+- **Drawn shutter.** The slider of the left card is replaced by a window (`volet_cadre` → `volet_fenetre` → `volet_tablier`, `volet_popup.yaml`) whose slatted curtain sits at `y = −position × 456 / 100` and is clipped by the window: at 100 % it is back in the box, at 0 % it covers the glass. The 12 slats are built once in C++ (`lames_construire()`, one shared `lv_style_t` coloured from the active palette, so a theme repaints them). The large « 45 % » and the state in words move to the right of the drawing.
+- **Same contract.** Dragging the window (up = open, down = close, relative to where the finger landed) moves the curtain and the number; the release sends the same **`position`** 0-100 on the same path (`esphome.tab5_action`, tile key `tRT`, the blueprint's « Tuile : position » branch). The sent position stays drawn until Home Assistant pushes the tile's next state (a theme or definitions repaint keeps it). Nothing is sent while dragging, nor for a touch under 12 px, nor when the position is unknown at press or at release. No API service or variable changes.
+- **Follows Home Assistant.** Each pushed position redraws the curtain at once — that is the « animation »: the drawing goes down as the real shutter does, push after push. No interpolation nor fade (the author's preference: instant transitions). Never under the finger.
+- **Unknown position** (`nan`, `-1`, offline, nothing received): no drag, no number; the drawing shows the state — `open` up, `closed` down, anything else half-way with faded slats.
+- **Buttons.** Ouvrir / Stop / Fermer keep the shared glass button (`style_clim_btn`, theme shapes and press effect); their icon sits in a round badge tinted with `TEXT_SOFT` at 14 %, like a Home Assistant tile.
+
+## Update — 2026-10-06: the device popup (long press)
+
+Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (« buttons can have pop up screen like ha dashboard »). The long press of an `int` or `act` tile, or of a `med` tile without `t`, used to do nothing.
+
+- **Gesture.** That long press (weather shoulders or HA-mode card) opens the **device popup** on that tile, the « more info » window of a Home Assistant dashboard. A `med` with `t` keeps the TV remote; option `r`: nothing, as before (no tap at all); legacy mode: unchanged. The tap is unchanged.
+- **Popup** (`ui_components/appareil_popup.yaml`, `tab5_tuiles.cpp`, registered as « Appareil », shared chrome of [ADR-0009](0009-modal-shell-header.md)): title = the tile's name; left card, the tile's icon in a round badge of its state's colour, the state in words (the HA-mode card's line; « Prêt » / « En cours » for an `act`), the room, and the tile's options (`o`, `k`) in words; right card, one large vertical switch (filled at the top and coloured when on, at the bottom and grey when off, filled for an `act`) and, under it, what a press does (« Allumer », « Éteindre », « Lancer »).
+- **Command.** The large switch runs **the tile's own tap**, through the same function (`tuile_appui_piece`): `basculer` (`allumer` with `o`) or `lancer`, the same confirmation with `k` (the first press arms the tile's 3 s timer; the tile and the popup both ask « Confirmer ? »; a second press sends), the same « OK » after `lancer`. No new command, no change to the contract or to Home Assistant.
+- **Data.** Only what HA already pushes for the tiles (definition and state). The time of the last change, the attributes, the history are not pushed: not shown.
+
+## Update — 2026-10-06: HA-mode cards drawn like Home Assistant's « tile » card
+
+Same discussion (« buttons can be like ha dashboard buttons »). The five HA-mode cards lose their title and state tabs and look like the vertical « tile » card of a Home Assistant dashboard: the icon (palette, 70 px) at full strength in a round badge of the same colour at 20 % (`sw_pastille_N`, coloured by `peindre_carte` from the colour the card already used), the name under it, the state line under the name in its colour. Same widgets otherwise (`icon_swN`, `lbl_swN_title`, `lbl_swN_state`, the 130 × 130 invisible button now over the badge, the name's frame still the target of the shutter-direction tap), same colours and words, same 230 × 275 cards and centring. The weather tiles and their shoulders are unchanged.

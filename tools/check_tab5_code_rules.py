@@ -333,6 +333,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
         "icon_card_droite_j0", "icon_card_shutter_arrow", "icon_card_light_j*", "icon_card_h*_d"),
     ("tab5_tuiles.cpp", "glyphe_fleche"): (
         "icon_card_droite_j0", "icon_card_shutter_arrow", "icon_card_light_j*", "icon_card_h*_d"),
+    # Popup d'un appareil (06/10/2026) : icône du grand bouton (marche / arrêt, lecture).
+    ("tab5_tuiles.cpp", "glyphe_commande"): ("appareil_commande_icone",),
     ("tab5_services.cpp", "parse_and_update_vigilance"): ("alerte_slot_*",),
     ("tab5_services.cpp", "update_rain_predict_icon_ui"): ("icon_rain_predict",),
     ("tab5_zones.cpp", "zones_apply_ui"): ("icon_serre",),
@@ -347,8 +349,9 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     # (icon_light_sel_*, mdi_font_45) : tools/gen_tuiles_icones.py les écrit dans ces trois
     # polices (POLICES), à garder d'accord avec cette ligne. La rangée sous l'horloge
     # (ADR-0031, rangee_icone_*, déclarés en mdi_font_32) passe ses icônes en 45 ou 70 px
-    # selon la ligne (tab5_rangee.cpp) : les mêmes trois polices.
-    ("tab5_tuiles_icones.h", ""): ("icon_sw?", "icon_card_*", "icon_light_sel_*", "rangee_icone_*"),
+    # selon la ligne (tab5_rangee.cpp) : les mêmes trois polices. Le popup d'un appareil
+    # (appareil_icone, mdi_font_70, 06/10/2026) montre l'icône de sa tuile comme les cartes.
+    ("tab5_tuiles_icones.h", ""): ("icon_sw?", "icon_card_*", "icon_light_sel_*", "rangee_icone_*", "appareil_icone"),
     ("tab5-sensors-domotique.yaml", "moisture_1"): ("icon_pot_s*",),
 }
 

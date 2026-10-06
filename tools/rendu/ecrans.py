@@ -184,6 +184,11 @@ TUILES = {"chambre": (640, 572), "salon": (890, 572)}
 TUILE_VOLET = (390, 572)
 VOLET_SANS_POSITION = Service("tab5_maj_emplacements", (("payload", "t01|closing|nan|;"),))
 VOLET_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t01|opening|45|;"),))
+# Le volet dessiné du popup (06/10/2026), tiré du doigt vers le bas : 150 px de la fenêtre
+# de 456 px, de 45 % à 13 % (volet_cadre_rappel, tab5_tuiles.cpp). Vertical, au-dessus
+# des tuiles : ni swipe de page ni bouton sous le doigt. Le relâcher envoie « position »,
+# que personne n'applique ici : la capture montre le volet là où le doigt l'a laissé.
+VOLET_TIRE = Glisser(265, 250, 265, 400)
 
 # Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
 # un bouton (un bouton garde l'appui et se déclencherait au relâché).
@@ -275,6 +280,16 @@ CONFIRMATION_ANNULER = (813, 596)   # jamais « Confirmer » (1049, 596)
 # droit).
 TUILE_SOLAIRE = (390, 572)
 FERMER_POPUP = (1215, 41)
+# Popup d'un appareil (06/10/2026, appareil_popup.yaml), par l'appui long de trois tuiles
+# de la démo : « Ordinateur » (int, option o, allumé ; pièce « Bureau », page 1, T0),
+# « Soirée cinéma » (act, accueil, T4) et « Je pars » (act à confirmer, option k ; pièce
+# « Entrée », page 3, T3). Le grand bouton de la carte COMMANDE (180 × 380, à x 840 et
+# y 72 + 64 de la carte modale posée à 15 px des bords) : un appui y arme la
+# confirmation de « Je pars », la capture la montre (3 s).
+TUILE_ORDINATEUR = (140, 572)
+TUILE_SCENE = (1140, 572)
+TUILE_JE_PARS = (890, 572)
+BOUTON_APPAREIL = (1048, 341)
 ENERGIE_VUES = {"heures": (828, 347), "jours": (988, 347), "mois": (1148, 347)}
 # Popup Réglages (reglages_popup.yaml) : carte APPARENCE à (652, 87) à l'écran ; pastilles
 # « English » et « Français » (x 158 et 17, y 457, 131 × 56 dans la carte) ; « Annuler » de
@@ -419,6 +434,13 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("lumieres-salon", (Long(*TUILES["salon"]),)),
     Ecran("volet", (Long(*TUILE_VOLET),)),
     Ecran("volet-sans-position", (VOLET_SANS_POSITION, Long(*TUILE_VOLET)), (VOLET_DE_LA_DEMO,)),
+    Ecran("volet-glisse", (Long(*TUILE_VOLET), VOLET_TIRE)),
+    # Popup d'un appareil : un interrupteur « allumer seulement », une scène, et une
+    # scène à confirmer après un appui sur le grand bouton (« Confirmer ? »).
+    Ecran("appareil", (VERS_LA_DROITE, Long(*TUILE_ORDINATEUR)), (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
+    Ecran("appareil-scene", (Long(*TUILE_SCENE),)),
+    Ecran("appareil-confirmer", (VERS_LA_GAUCHE, Long(*TUILE_JE_PARS), Toucher(*BOUTON_APPAREIL)),
+          (Attendre(3.5), Toucher(*FERMER_POPUP), VERS_LA_DROITE)),
     Ecran("climatisation", (Toucher(*CONSIGNE_CLIM),)),
     Ecran("plantes", (Long(*SOUS_HORLOGE),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis

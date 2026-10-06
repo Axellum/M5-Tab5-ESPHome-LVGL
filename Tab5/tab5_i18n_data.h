@@ -8,9 +8,18 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 995;
+static const uint16_t kI18nKeyCount = 1004;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1134,6 +1143,8 @@ static const char* const kI18nKeys[] = {
     "Aimant mineur",
     "Alerte Météo Orange en cours ! Restez prudent.",
     "Alerte Météo Rouge en cours ! Restez prudent.",
+    "Allumer",
+    "Allumer seulement",
     "Allumé",
     "Amateur",
     "Ampoule",
@@ -1154,6 +1165,7 @@ static const char* const kI18nKeys[] = {
     "Août",
     "Aperçu du territoire : ACTIVÉ",
     "Aperçu du territoire : DÉSACTIVÉ",
+    "Appareil",
     "Appuyer sur un emplacement le fait passer à l'objet suivant.",
     "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement.",
     "Appuyez sur le micro puis parlez…",
@@ -1219,6 +1231,7 @@ static const char* const kI18nKeys[] = {
     "Btn",
     "CATÉGORIE AU CHOIX",
     "CLASSEMENT",
+    "COMMANDE",
     "COMMANDES",
     "COMMENCER LA PARTIE",
     "CONFIRMER",
@@ -1278,6 +1291,7 @@ static const char* const kI18nKeys[] = {
     "Confirmation, coordonnées, secousse",
     "Confirmer",
     "Confirmer ?",
+    "Confirmer chaque commande",
     "Confirmer la remise à zéro",
     "Confirmé",
     "Connecté",
@@ -1353,6 +1367,7 @@ static const char* const kI18nKeys[] = {
     "Emplacement %d : %s",
     "Emplacement %d : vide",
     "En attente de Home Assistant",
+    "En cours",
     "En mouvement",
     "Erreur",
     "Escalier",
@@ -1630,6 +1645,7 @@ static const char* const kI18nKeys[] = {
     "Pièce",
     "Pièce %d",
     "Pièce %d/%d",
+    "Pièce : %s",
     "Pluie",
     "Pluie faible",
     "Pluie modérée",
@@ -1957,6 +1973,7 @@ static const char* const kI18nKeys[] = {
     "ÉCHEC !",
     "ÉCRAN",
     "ÉQUIPES",
+    "ÉTAT",
     "Écaille de bronze",
     "Échec et mat",
     "Échecs FIDE complets\n5 niveaux d'IA embarquée",
@@ -1967,6 +1984,7 @@ static const char* const kI18nKeys[] = {
     "Énergie",
     "Équipe : %s",
     "Équipement",
+    "Éteindre",
     "Éteint",
     "Évaluation au HUD",
     "à vous",
@@ -2133,6 +2151,8 @@ static const char* const kI18n_en[] = {
     "Minor Magnet",  // "Aimant mineur"
     "Orange weather warning in progress! Stay safe.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Red weather warning in progress! Stay safe.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Turn on",  // "Allumer"
+    "Turn on only",  // "Allumer seulement"
     "On",  // "Allumé"
     "Amateur",  // "Amateur"
     "Bulb",  // "Ampoule"
@@ -2153,6 +2173,7 @@ static const char* const kI18n_en[] = {
     "Aug",  // "Août"
     "Territory preview: ON",  // "Aperçu du territoire : ACTIVÉ"
     "Territory preview: OFF",  // "Aperçu du territoire : DÉSACTIVÉ"
+    "Device",  // "Appareil"
     "Tapping a slot switches it to the next item.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tapping an owned item sells it back for half its price. A sold item is also unequipped.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tap the mic, then speak…",  // "Appuyez sur le micro puis parlez…"
@@ -2218,6 +2239,7 @@ static const char* const kI18n_en[] = {
     "Btn",  // "Btn"
     "CHOOSE A CATEGORY",  // "CATÉGORIE AU CHOIX"
     "LEADERBOARD",  // "CLASSEMENT"
+    "CONTROL",  // "COMMANDE"
     "CONTROLS",  // "COMMANDES"
     "START THE GAME",  // "COMMENCER LA PARTIE"
     "CONFIRM",  // "CONFIRMER"
@@ -2277,6 +2299,7 @@ static const char* const kI18n_en[] = {
     "Confirmation, coordinates, shake",  // "Confirmation, coordonnées, secousse"
     "Confirm",  // "Confirmer"
     "Confirm?",  // "Confirmer ?"
+    "Confirm each command",  // "Confirmer chaque commande"
     "Confirm reset",  // "Confirmer la remise à zéro"
     "Advanced",  // "Confirmé"
     "Connected",  // "Connecté"
@@ -2352,6 +2375,7 @@ static const char* const kI18n_en[] = {
     "Slot %d: %s",  // "Emplacement %d : %s"
     "Slot %d: empty",  // "Emplacement %d : vide"
     "Waiting for Home Assistant",  // "En attente de Home Assistant"
+    "Running",  // "En cours"
     "Moving",  // "En mouvement"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
@@ -2629,6 +2653,7 @@ static const char* const kI18n_en[] = {
     "Room",  // "Pièce"
     "Room %d",  // "Pièce %d"
     "Room %d/%d",  // "Pièce %d/%d"
+    "Room: %s",  // "Pièce : %s"
     "Rain",  // "Pluie"
     "Light rain",  // "Pluie faible"
     "Moderate rain",  // "Pluie modérée"
@@ -2956,6 +2981,7 @@ static const char* const kI18n_en[] = {
     "CHECK!",  // "ÉCHEC !"
     "SCREEN",  // "ÉCRAN"
     "TEAMS",  // "ÉQUIPES"
+    "STATE",  // "ÉTAT"
     "Bronze Scale",  // "Écaille de bronze"
     "Checkmate",  // "Échec et mat"
     "Full FIDE chess\n5 on-device AI levels",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
@@ -2966,6 +2992,7 @@ static const char* const kI18n_en[] = {
     "Energy",  // "Énergie"
     "Team: %s",  // "Équipe : %s"
     "Equipment",  // "Équipement"
+    "Turn off",  // "Éteindre"
     "Off",  // "Éteint"
     "HUD evaluation",  // "Évaluation au HUD"
     "you",  // "à vous"
@@ -3132,6 +3159,8 @@ static const char* const kI18n_de[] = {
     "Kleiner Magnet",  // "Aimant mineur"
     "Unwetterwarnung Orange aktiv! Bleib vorsichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Unwetterwarnung Rot aktiv! Bleib vorsichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Einschalten",  // "Allumer"
+    "Nur einschalten",  // "Allumer seulement"
     "An",  // "Allumé"
     "Amateur",  // "Amateur"
     "Lampe",  // "Ampoule"
@@ -3152,6 +3181,7 @@ static const char* const kI18n_de[] = {
     "Aug",  // "Août"
     "Gebietsvorschau: AN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebietsvorschau: AUS",  // "Aperçu du territoire : DÉSACTIVÉ"
+    "Gerät",  // "Appareil"
     "Tippen auf einen Platz wechselt zum nächsten Gegenstand.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Ein Gegenstand im Besitz wird per Tippen zum halben Preis verkauft. Verkauftes wird auch abgelegt.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Mikrofon antippen, dann sprechen…",  // "Appuyez sur le micro puis parlez…"
@@ -3217,6 +3247,7 @@ static const char* const kI18n_de[] = {
     "Tasten",  // "Btn"
     "FREIE KATEGORIE",  // "CATÉGORIE AU CHOIX"
     "BESTENLISTE",  // "CLASSEMENT"
+    "STEUERUNG",  // "COMMANDE"
     "STEUERUNG",  // "COMMANDES"
     "SPIEL STARTEN",  // "COMMENCER LA PARTIE"
     "BESTÄTIGEN",  // "CONFIRMER"
@@ -3276,6 +3307,7 @@ static const char* const kI18n_de[] = {
     "Bestätigung, Koordinaten, Schütteln",  // "Confirmation, coordonnées, secousse"
     "Bestätigen",  // "Confirmer"
     "Bestätigen?",  // "Confirmer ?"
+    "Jeden Befehl bestätigen",  // "Confirmer chaque commande"
     "Reset bestätigen",  // "Confirmer la remise à zéro"
     "Erfahren",  // "Confirmé"
     "Verbunden",  // "Connecté"
@@ -3351,6 +3383,7 @@ static const char* const kI18n_de[] = {
     "Platz %d: %s",  // "Emplacement %d : %s"
     "Platz %d: leer",  // "Emplacement %d : vide"
     "Warte auf Home Assistant",  // "En attente de Home Assistant"
+    "Läuft",  // "En cours"
     "In Bewegung",  // "En mouvement"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
@@ -3628,6 +3661,7 @@ static const char* const kI18n_de[] = {
     "Raum",  // "Pièce"
     "Raum %d",  // "Pièce %d"
     "Raum %d/%d",  // "Pièce %d/%d"
+    "Raum: %s",  // "Pièce : %s"
     "Regen",  // "Pluie"
     "Leichter Regen",  // "Pluie faible"
     "Mäßiger Regen",  // "Pluie modérée"
@@ -3955,6 +3989,7 @@ static const char* const kI18n_de[] = {
     "SCHACH!",  // "ÉCHEC !"
     "BILDSCHIRM",  // "ÉCRAN"
     "TEAMS",  // "ÉQUIPES"
+    "ZUSTAND",  // "ÉTAT"
     "Bronzeschuppe",  // "Écaille de bronze"
     "Schachmatt",  // "Échec et mat"
     "Schach nach FIDE-Regeln\n5 KI-Stufen im Gerät",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
@@ -3965,6 +4000,7 @@ static const char* const kI18n_de[] = {
     "Energie",  // "Énergie"
     "Team: %s",  // "Équipe : %s"
     "Ausrüstung",  // "Équipement"
+    "Ausschalten",  // "Éteindre"
     "Aus",  // "Éteint"
     "Bewertung im HUD",  // "Évaluation au HUD"
     "du",  // "à vous"
@@ -4131,6 +4167,8 @@ static const char* const kI18n_nl[] = {
     "Kleine magneet",  // "Aimant mineur"
     "Weeralarm code oranje! Wees voorzichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Weeralarm code rood! Wees voorzichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Aanzetten",  // "Allumer"
+    "Alleen aanzetten",  // "Allumer seulement"
     "Aan",  // "Allumé"
     "Amateur",  // "Amateur"
     "Lamp",  // "Ampoule"
@@ -4151,6 +4189,7 @@ static const char* const kI18n_nl[] = {
     "Aug",  // "Août"
     "Gebiedsweergave: AAN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebiedsweergave: UIT",  // "Aperçu du territoire : DÉSACTIVÉ"
+    "Apparaat",  // "Appareil"
     "Tik op een vak om naar het volgende voorwerp te wisselen.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tik op een voorwerp in je bezit om het voor de halve prijs te verkopen. Een verkocht voorwerp gaat ook uit je uitrusting.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tik op de microfoon en spreek…",  // "Appuyez sur le micro puis parlez…"
@@ -4216,6 +4255,7 @@ static const char* const kI18n_nl[] = {
     "Knp",  // "Btn"
     "KIES EEN CATEGORIE",  // "CATÉGORIE AU CHOIX"
     "RANGLIJST",  // "CLASSEMENT"
+    "BEDIENING",  // "COMMANDE"
     "BEDIENING",  // "COMMANDES"
     "SPEL STARTEN",  // "COMMENCER LA PARTIE"
     "BEVESTIGEN",  // "CONFIRMER"
@@ -4275,6 +4315,7 @@ static const char* const kI18n_nl[] = {
     "Bevestiging, coördinaten, schudden",  // "Confirmation, coordonnées, secousse"
     "Bevestigen",  // "Confirmer"
     "Bevestigen?",  // "Confirmer ?"
+    "Elke opdracht bevestigen",  // "Confirmer chaque commande"
     "Reset bevestigen",  // "Confirmer la remise à zéro"
     "Gevorderd",  // "Confirmé"
     "Verbonden",  // "Connecté"
@@ -4350,6 +4391,7 @@ static const char* const kI18n_nl[] = {
     "Vak %d: %s",  // "Emplacement %d : %s"
     "Vak %d: leeg",  // "Emplacement %d : vide"
     "Wachten op Home Assistant",  // "En attente de Home Assistant"
+    "Bezig",  // "En cours"
     "In beweging",  // "En mouvement"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
@@ -4627,6 +4669,7 @@ static const char* const kI18n_nl[] = {
     "Kamer",  // "Pièce"
     "Kamer %d",  // "Pièce %d"
     "Kamer %d/%d",  // "Pièce %d/%d"
+    "Kamer: %s",  // "Pièce : %s"
     "Regen",  // "Pluie"
     "Lichte regen",  // "Pluie faible"
     "Matige regen",  // "Pluie modérée"
@@ -4954,6 +4997,7 @@ static const char* const kI18n_nl[] = {
     "SCHAAK!",  // "ÉCHEC !"
     "SCHERM",  // "ÉCRAN"
     "TEAMS",  // "ÉQUIPES"
+    "STATUS",  // "ÉTAT"
     "Bronzen schub",  // "Écaille de bronze"
     "Schaakmat",  // "Échec et mat"
     "Volledig FIDE-schaak\n5 niveaus ingebouwde AI",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
@@ -4964,6 +5008,7 @@ static const char* const kI18n_nl[] = {
     "Energie",  // "Énergie"
     "Team: %s",  // "Équipe : %s"
     "Uitrusting",  // "Équipement"
+    "Uitzetten",  // "Éteindre"
     "Uit",  // "Éteint"
     "Evaluatie in HUD",  // "Évaluation au HUD"
     "jij",  // "à vous"
@@ -5130,6 +5175,8 @@ static const char* const kI18n_es[] = {
     "Imán menor",  // "Aimant mineur"
     "¡Alerta meteorológica naranja! Ten cuidado.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "¡Alerta meteorológica roja! Ten cuidado.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Encender",  // "Allumer"
+    "Solo encender",  // "Allumer seulement"
     "ON",  // "Allumé"
     "Aficionado",  // "Amateur"
     "Lámpara",  // "Ampoule"
@@ -5150,6 +5197,7 @@ static const char* const kI18n_es[] = {
     "Ago",  // "Août"
     "Vista del territorio: SÍ",  // "Aperçu du territoire : ACTIVÉ"
     "Vista del territorio: NO",  // "Aperçu du territoire : DÉSACTIVÉ"
+    "Dispositivo",  // "Appareil"
     "Tocar una ranura la cambia al objeto siguiente.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocar un objeto que ya tienes lo vende a mitad de precio. Un objeto vendido también se quita del equipo.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Toca el micro y habla…",  // "Appuyez sur le micro puis parlez…"
@@ -5215,6 +5263,7 @@ static const char* const kI18n_es[] = {
     "Botones",  // "Btn"
     "CATEGORÍA A ELEGIR",  // "CATÉGORIE AU CHOIX"
     "CLASIFICACIÓN",  // "CLASSEMENT"
+    "CONTROL",  // "COMMANDE"
     "CONTROLES",  // "COMMANDES"
     "EMPEZAR LA PARTIDA",  // "COMMENCER LA PARTIE"
     "CONFIRMAR",  // "CONFIRMER"
@@ -5274,6 +5323,7 @@ static const char* const kI18n_es[] = {
     "Confirmación, coordenadas, sacudida",  // "Confirmation, coordonnées, secousse"
     "Confirmar",  // "Confirmer"
     "¿Confirmar?",  // "Confirmer ?"
+    "Confirmar cada orden",  // "Confirmer chaque commande"
     "Confirmar el reinicio",  // "Confirmer la remise à zéro"
     "Avanzado",  // "Confirmé"
     "Conectado",  // "Connecté"
@@ -5349,6 +5399,7 @@ static const char* const kI18n_es[] = {
     "Ranura %d: %s",  // "Emplacement %d : %s"
     "Ranura %d: vacía",  // "Emplacement %d : vide"
     "Esperando a Home Assistant",  // "En attente de Home Assistant"
+    "En curso",  // "En cours"
     "En movimiento",  // "En mouvement"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
@@ -5626,6 +5677,7 @@ static const char* const kI18n_es[] = {
     "Interior",  // "Pièce"
     "Estancia %d",  // "Pièce %d"
     "Estancia %d/%d",  // "Pièce %d/%d"
+    "Estancia: %s",  // "Pièce : %s"
     "Lluvia",  // "Pluie"
     "Lluvia débil",  // "Pluie faible"
     "Lluvia moderada",  // "Pluie modérée"
@@ -5953,6 +6005,7 @@ static const char* const kI18n_es[] = {
     "¡JAQUE!",  // "ÉCHEC !"
     "PANTALLA",  // "ÉCRAN"
     "EQUIPOS",  // "ÉQUIPES"
+    "ESTADO",  // "ÉTAT"
     "Escama de bronce",  // "Écaille de bronze"
     "Jaque mate",  // "Échec et mat"
     "Ajedrez FIDE completo\n5 niveles de IA integrada",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
@@ -5963,6 +6016,7 @@ static const char* const kI18n_es[] = {
     "Energía",  // "Énergie"
     "Equipo: %s",  // "Équipe : %s"
     "Equipo",  // "Équipement"
+    "Apagar",  // "Éteindre"
     "OFF",  // "Éteint"
     "Evaluación en el HUD",  // "Évaluation au HUD"
     "tuyo",  // "à vous"
@@ -6129,6 +6183,8 @@ static const char* const kI18n_it[] = {
     "Magnete minore",  // "Aimant mineur"
     "Allerta meteo arancione in corso! Fai attenzione.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Allerta meteo rossa in corso! Fai attenzione.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Accendi",  // "Allumer"
+    "Solo accensione",  // "Allumer seulement"
     "Acceso",  // "Allumé"
     "Amatore",  // "Amateur"
     "Lampadina",  // "Ampoule"
@@ -6149,6 +6205,7 @@ static const char* const kI18n_it[] = {
     "Ago",  // "Août"
     "Anteprima territorio: ATTIVA",  // "Aperçu du territoire : ACTIVÉ"
     "Anteprima territorio: DISATTIVATA",  // "Aperçu du territoire : DÉSACTIVÉ"
+    "Dispositivo",  // "Appareil"
     "Tocca uno slot per passare all'oggetto successivo.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocca un oggetto posseduto per rivenderlo a metà prezzo. Un oggetto rivenduto viene anche tolto dall'equipaggiamento.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tocca il microfono, poi parla…",  // "Appuyez sur le micro puis parlez…"
@@ -6214,6 +6271,7 @@ static const char* const kI18n_it[] = {
     "Pulsanti",  // "Btn"
     "CATEGORIA A SCELTA",  // "CATÉGORIE AU CHOIX"
     "CLASSIFICA",  // "CLASSEMENT"
+    "COMANDO",  // "COMMANDE"
     "COMANDI",  // "COMMANDES"
     "INIZIA LA PARTITA",  // "COMMENCER LA PARTIE"
     "CONFERMA",  // "CONFIRMER"
@@ -6273,6 +6331,7 @@ static const char* const kI18n_it[] = {
     "Conferma, coordinate, scossa",  // "Confirmation, coordonnées, secousse"
     "Conferma",  // "Confirmer"
     "Confermare?",  // "Confirmer ?"
+    "Conferma ogni comando",  // "Confirmer chaque commande"
     "Conferma l'azzeramento",  // "Confirmer la remise à zéro"
     "Avanzato",  // "Confirmé"
     "Connesso",  // "Connecté"
@@ -6348,6 +6407,7 @@ static const char* const kI18n_it[] = {
     "Slot %d: %s",  // "Emplacement %d : %s"
     "Slot %d: vuoto",  // "Emplacement %d : vide"
     "In attesa di Home Assistant",  // "En attente de Home Assistant"
+    "In corso",  // "En cours"
     "In movimento",  // "En mouvement"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
@@ -6625,6 +6685,7 @@ static const char* const kI18n_it[] = {
     "Stanza",  // "Pièce"
     "Stanza %d",  // "Pièce %d"
     "Stanza %d/%d",  // "Pièce %d/%d"
+    "Stanza: %s",  // "Pièce : %s"
     "Pioggia",  // "Pluie"
     "Pioggia debole",  // "Pluie faible"
     "Pioggia moderata",  // "Pluie modérée"
@@ -6952,6 +7013,7 @@ static const char* const kI18n_it[] = {
     "SCACCO!",  // "ÉCHEC !"
     "SCHERMO",  // "ÉCRAN"
     "SQUADRE",  // "ÉQUIPES"
+    "STATO",  // "ÉTAT"
     "Scaglia di bronzo",  // "Écaille de bronze"
     "Scacco matto",  // "Échec et mat"
     "Scacchi FIDE completi\n5 livelli di IA integrata",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
@@ -6962,6 +7024,7 @@ static const char* const kI18n_it[] = {
     "Energia",  // "Énergie"
     "Squadra: %s",  // "Équipe : %s"
     "Equipaggiamento",  // "Équipement"
+    "Spegni",  // "Éteindre"
     "Spento",  // "Éteint"
     "Valutazione HUD",  // "Évaluation au HUD"
     "tuo",  // "à vous"
@@ -7128,6 +7191,8 @@ static const char* const kI18n_tr[] = {
     "Küçük Mıknatıs",  // "Aimant mineur"
     "Turuncu hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Kırmızı hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Aç",  // "Allumer"
+    "Yalnızca aç",  // "Allumer seulement"
     "Açık",  // "Allumé"
     "Amatör",  // "Amateur"
     "Ampul",  // "Ampoule"
@@ -7148,6 +7213,7 @@ static const char* const kI18n_tr[] = {
     "Ağu",  // "Août"
     "Alan önizlemesi: AÇIK",  // "Aperçu du territoire : ACTIVÉ"
     "Alan önizlemesi: KAPALI",  // "Aperçu du territoire : DÉSACTIVÉ"
+    "Cihaz",  // "Appareil"
     "Bir yuvaya dokunmak onu sonraki eşyaya geçirir.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Sahip olunan bir eşyaya dokunmak onu fiyatının yarısına geri satar. Satılan eşya teçhizattan da çıkarılır.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Mikrofona dokun, sonra konuş…",  // "Appuyez sur le micro puis parlez…"
@@ -7213,6 +7279,7 @@ static const char* const kI18n_tr[] = {
     "Düğme",  // "Btn"
     "KATEGORİ SEÇ",  // "CATÉGORIE AU CHOIX"
     "SIRALAMA",  // "CLASSEMENT"
+    "KOMUT",  // "COMMANDE"
     "KOMUTLAR",  // "COMMANDES"
     "OYUNA BAŞLA",  // "COMMENCER LA PARTIE"
     "ONAYLA",  // "CONFIRMER"
@@ -7272,6 +7339,7 @@ static const char* const kI18n_tr[] = {
     "Onay, koordinatlar, sallama",  // "Confirmation, coordonnées, secousse"
     "Onayla",  // "Confirmer"
     "Onayla?",  // "Confirmer ?"
+    "Her komutu onayla",  // "Confirmer chaque commande"
     "Sıfırlamayı onayla",  // "Confirmer la remise à zéro"
     "İleri",  // "Confirmé"
     "Bağlı",  // "Connecté"
@@ -7347,6 +7415,7 @@ static const char* const kI18n_tr[] = {
     "Yuva %d: %s",  // "Emplacement %d : %s"
     "Yuva %d: boş",  // "Emplacement %d : vide"
     "Home Assistant bekleniyor",  // "En attente de Home Assistant"
+    "Çalışıyor",  // "En cours"
     "Hareket ediyor",  // "En mouvement"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
@@ -7624,6 +7693,7 @@ static const char* const kI18n_tr[] = {
     "Oda",  // "Pièce"
     "Oda %d",  // "Pièce %d"
     "Oda %d/%d",  // "Pièce %d/%d"
+    "Oda: %s",  // "Pièce : %s"
     "Yağmur",  // "Pluie"
     "Hafif yağmur",  // "Pluie faible"
     "Orta yağmur",  // "Pluie modérée"
@@ -7951,6 +8021,7 @@ static const char* const kI18n_tr[] = {
     "ŞAH!",  // "ÉCHEC !"
     "EKRAN",  // "ÉCRAN"
     "TAKIMLAR",  // "ÉQUIPES"
+    "DURUM",  // "ÉTAT"
     "Tunç Pul",  // "Écaille de bronze"
     "Şah mat",  // "Échec et mat"
     "Tam FIDE satranç\n5 seviye yerleşik YZ",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
@@ -7961,6 +8032,7 @@ static const char* const kI18n_tr[] = {
     "Enerji",  // "Énergie"
     "Takım: %s",  // "Équipe : %s"
     "Teçhizat",  // "Équipement"
+    "Kapat",  // "Éteindre"
     "Kapalı",  // "Éteint"
     "Ekranda değerlendirme",  // "Évaluation au HUD"
     "sende",  // "à vous"

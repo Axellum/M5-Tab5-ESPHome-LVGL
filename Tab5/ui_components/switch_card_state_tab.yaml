@@ -1,13 +1,13 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par switches_card.yaml.
 # Vars: idx, state_text (texte initial seulement). `lbl_swN_state` = ligne d'état de la
 # tuile (ADR-0023 : « 60 % », « Mouvement », « 21.4 °C », « Confirmer ? »…), écrite et
-# recolorée par tab5_tuiles.cpp — ne pas dupliquer. 200 px comme l'onglet titre (130
-# jusqu'au 28/09/2026 : « Mouvement » débordait déjà).
-obj:
-  align: BOTTOM_MID
-  y: 0
-  width: 200
-  height: 45
-  styles: style_meteo_card_page
-  widgets:
-    - label: { id: "lbl_sw${idx}_state", text: "${state_text}", align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+# recolorée par tab5_tuiles.cpp (coupée avec « … » au-delà de 206 px) — ne pas dupliquer.
+# Depuis le 06/10/2026 (carte « tile » de HA, discussion #278) : plus d'onglet, l'état
+# s'écrit sous le nom, dans la couleur de l'état.
+label:
+  id: "lbl_sw${idx}_state"
+  text: "${state_text}"
+  align: TOP_MID
+  y: 210
+  text_font: roboto_32_b
+  styles: style_text_dim

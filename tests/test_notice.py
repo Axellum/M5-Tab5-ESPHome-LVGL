@@ -48,6 +48,7 @@ NON_MONTREES = {
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "energie-mois": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
+    "appareil-scene": "appareil montre la même fenêtre ; la scène est décrite dans tiles.md",
     "console-batterie-en-charge": "console-batterie montre la même ligne ; l'éclair est décrit",
     "console-sans-batterie": "console-batterie montre la même ligne ; « Sur USB » est décrit",
 }
