@@ -77,6 +77,14 @@ obj:
                     min_value: 10
                     max_value: 100
                     value: 100
+                    # Mêmes styles que le curseur du volume (console_sys.yaml) : couleurs du thème.
+                    styles: style_bg_arc_track
+                    radius: 10
+                    indicator:
+                      styles: style_bg_accent
+                      radius: 10
+                    knob:
+                      styles: style_bg_soft
                     # Le nombre suit le doigt ; le rétroéclairage part une fois le doigt
                     # immobile (tab5_reglages_luminosite, 150 ms) : un light.turn_on par
                     # pas aurait publié chaque pas vers HA (API et recorder).

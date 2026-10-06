@@ -302,7 +302,7 @@ Le tableau ci-dessous couvre les composants **domotique**. Les 11 autres fichier
 | `energie_popup.yaml` | 77 | Popup Énergie (ADR-0028) : chrome partagé, 4 cartes `energie_carte.yaml`, graphique (titre, 3 boutons `energie_vue_btn.yaml`, zone des barres dessinée par `tab5_energie.cpp`), message d'attente | Inclus par `tab5-lvgl.yaml` |
 | `energie_carte.yaml` | 26 | Template carte de l'instantané (288×210, var `n`) : nom, icône, valeur, deux lignes | Réutilisé 4× |
 | `energie_vue_btn.yaml` | 19 | Template bouton de vue Heures / Jours / Mois (vars `n`, `x_pos`, `label_text`), appelle `energie_choisir_vue(n)` | Réutilisé 3× |
-| `reglages_popup.yaml` | 194 | Popup Réglages (06/10/2026) : chrome partagé, carte ÉCRAN (curseur de luminosité qui écrit `backlight`, extinction auto, rallumer à « Okay Nabu », rallumer d'une tape) et carte APPARENCE (thème entre deux flèches, clair ou sombre, nuit du mode Auto, 7 langues), calque de confirmation de la langue | Inclus par `tab5-lvgl.yaml` |
+| `reglages_popup.yaml` | 202 | Popup Réglages (06/10/2026) : chrome partagé, carte ÉCRAN (curseur de luminosité qui écrit `backlight`, extinction auto, rallumer à « Okay Nabu », rallumer d'une tape) et carte APPARENCE (thème entre deux flèches, clair ou sombre, nuit du mode Auto, 7 langues), calque de confirmation de la langue | Inclus par `tab5-lvgl.yaml` |
 | `reglages_choix_btn.yaml` | 30 | Template bouton à choix (vars `id`, `x`, `y`, `w`, `reglage`, `valeur`, `label_text`) : `script.tab5_reglages_choisir` ; surbrillance posée par `reglages_peindre()` | Réutilisé 22× |
 | `reglages_rangee.yaml` | 21 | Template titre de rangée (vars `y`, `icon`, `label_text`) : icône `mdi_font_32` + libellé sur 40 px, non cliquable | Réutilisé 8× |
 
