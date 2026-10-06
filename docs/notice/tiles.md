@@ -54,8 +54,13 @@ On a device card, or on the weather icon of a card that holds a device:
 
 A long press on a switch, a plug, a fan, a scene, a script, a button, or a media player that is not the blueprint's TV opens its window, like the « more info » window of a Home Assistant dashboard. Title: the card's name.
 
+![Long press on the computer: its window, on, set to « Turn on only »](../images/notice/appareil-en.webp)
+
 - **On the left**, its icon in a round badge of its state's colour, the state in words (« On », « Off », « Play », « Offline »…; « Ready » for a scene), its room, and the card's customisation (« Turn on only », « Confirm each command »).
 - **On the right**, a large switch: filled at the top and coloured when the device is on, at the bottom and grey when it is off, filled for a scene. A tap does exactly what a tap on the card does: on / off (on only for a card set to *on only*), or runs the scene; under it, what a tap will do. A card set to *confirm* asks here too: the first tap only arms (« Confirm? », amber), a second within 3 s sends.
+
+![A card set to « Confirm »: the first tap arms, the window asks « Confirm? »](../images/notice/appareil-confirmer-en.webp)
+
 - The window follows the device while it is open. The cross, or a tap outside the card, closes it.
 
 ---
@@ -114,6 +119,11 @@ Sur une carte d'appareil, ou sur l'icône météo d'une carte qui porte un appar
 
 Un appui long sur un interrupteur, une prise, un ventilateur, une scène, un script, un bouton, ou un lecteur multimédia qui n'est pas la TV du blueprint ouvre sa fenêtre, comme la fenêtre « plus d'infos » d'un tableau de bord Home Assistant. Titre : le nom de la carte.
 
+![Appui long sur l'ordinateur : sa fenêtre, allumé, réglé sur « Allumer seulement »](../images/notice/appareil-fr.webp)
+
 - **À gauche**, son icône dans une pastille ronde de la couleur de son état, l'état en mots (« Allumé », « Éteint », « Lecture », « Hors ligne »… ; « Prêt » pour une scène), sa pièce, et la personnalisation de la carte (« Allumer seulement », « Confirmer chaque commande »).
 - **À droite**, un grand interrupteur : rempli en haut et en couleur quand l'appareil est allumé, en bas et gris quand il est éteint, plein pour une scène. Un tap fait exactement ce que fait un tap sur la carte : allumer / éteindre (allumer seulement pour une carte *allumer seulement*), ou lancer la scène ; dessous, ce que fera le tap. Une carte *confirmer* demande ici aussi : le premier tap arme seulement (« Confirmer ? », en ambre), un second dans les 3 s envoie.
+
+![Une carte « Confirmer » : le premier tap arme, la fenêtre demande « Confirmer ? »](../images/notice/appareil-confirmer-fr.webp)
+
 - La fenêtre suit l'appareil tant qu'elle est ouverte. La croix, ou un tap hors de la carte, la ferme.

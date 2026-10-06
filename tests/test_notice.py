@@ -45,9 +45,7 @@ NON_MONTREES = {
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "energie-mois": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
-    "appareil": "décrit dans tiles.md ; son image attend le premier rendu de la PR",
-    "appareil-scene": "décrit dans tiles.md ; son image attend le premier rendu de la PR",
-    "appareil-confirmer": "décrit dans tiles.md ; son image attend le premier rendu de la PR",
+    "appareil-scene": "appareil montre la même fenêtre ; la scène est décrite dans tiles.md",
 }
 
 
