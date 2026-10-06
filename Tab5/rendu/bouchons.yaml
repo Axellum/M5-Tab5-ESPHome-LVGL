@@ -81,6 +81,14 @@ switch:
     platform: template
     pin: !remove
     optimistic: true
+  # « Tab5 Tap-to-Wake » vit dans tab5-imu.yaml (IMU, absent du rendu) : le popup
+  # Réglages le lit et l'écrit (« Rallumer l'écran d'une tape »).
+  - platform: template
+    id: tab5_tap_to_wake
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      - script.execute: tab5_reglages_sync_ui
 
 binary_sensor:
   # Prise casque (expander) : jamais branchée ici.

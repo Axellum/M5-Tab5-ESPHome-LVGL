@@ -180,6 +180,7 @@ void tuiles_rejouer_theme();
 // Mesures des capteurs (températures, pots, carte PC), clim et plantes de l'accueil.
 void cartes_rejouer_theme();
 void energie_rejouer_theme();
+void reglages_rejouer_theme();
 void zones_rejouer_theme();
 void assist_rejouer_theme();
 void cal_detail_rejouer();
