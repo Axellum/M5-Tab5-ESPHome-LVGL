@@ -28,7 +28,7 @@ Your devices — lights, shutters, climate, plants, TV, sensors — are picked i
 | Pièce 2 to 5 · Room 2 to 5 (folded) | the rooms one or two swipes away | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
 | Personnaliser des tuiles · Customise tiles (folded) | another name, icon or behaviour for a tile (on only, confirm, read only) | [tile icons](../tiles_icons.md) |
 | TV, téléphone · TV, phone | the TV, its remote, the phone battery | [other zones](adapt-to-your-home.md#other-zones) |
-| Températures · Temperatures | room temperature and humidity, a second temperature (greenhouse) | |
+| Températures · Temperatures | room temperature and humidity, a second temperature (greenhouse) and whether it is outdoors | [temperature history](adapt-to-your-home.md#temperature-history) |
 | Climatisation · Climate | the climate unit of the home card | [climate, any brand](adapt-to-your-home.md#limits) |
 | Plantes · Plants | up to five moisture sensors | |
 | Sous l'horloge · Under the clock (folded) | up to three lines of four sensors under the clock (temperatures, humidity, production, batteries, detectors, switches: shown, not controlled), the place of the plants line, the time per line | [user manual, home screen](../notice/home.md) |
@@ -74,7 +74,7 @@ Vos appareils — lumières, volets, clim, plantes, TV, capteurs — se choisiss
 | Pièce 2 à 5 · Room 2 to 5 (repliées) | les pièces à un ou deux glissements | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
 | Personnaliser des tuiles · Customise tiles (repliée) | un autre nom, une autre icône ou un comportement pour une tuile (allumer seulement, confirmer, lecture seule) | [icônes des tuiles](../tiles_icons.md#version-française) |
 | TV, téléphone · TV, phone | la TV, sa télécommande, la batterie du téléphone | [autres zones](adapt-to-your-home.md#autres-zones) |
-| Températures · Temperatures | température et humidité de la pièce, une seconde température (serre) | |
+| Températures · Temperatures | température et humidité de la pièce, une seconde température (serre) et si elle est dehors | [historique des températures](adapt-to-your-home.md#historique-des-températures) |
 | Climatisation · Climate | la clim de la carte de l'accueil | [clim, toutes marques](adapt-to-your-home.md#limites) |
 | Plantes · Plants | jusqu'à cinq capteurs d'humidité | |
 | Sous l'horloge · Under the clock (repliée) | jusqu'à trois lignes de quatre capteurs sous l'horloge (températures, humidités, production, batteries, détecteurs, interrupteurs : montrés, pas commandés), la place de la ligne des plantes, la durée d'une ligne | [notice, écran d'accueil](../notice/home.md#version-française) |
