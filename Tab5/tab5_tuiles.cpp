@@ -14,9 +14,12 @@
  *         - Mode héritage : tant qu'aucune définition n'est arrivée (drapeau en NVS), la
  *           pièce 0 est construite depuis les emplacements 3.x (PC/TV, volet, trois
  *           lumières), avec leurs noms, icônes, comportements et commandes 3.x.
- *         - Popups des tuiles : lumière (appui long d'une lum) et volet (appui long d'une
- *           vol sans l'option k, 05/10/2026 : position, curseur envoyé au relâcher,
- *           Ouvrir / Stop / Fermer), repeints quand l'état de leur tuile change.
+ *         - Popups des tuiles : lumière (appui long d'une lum), volet (appui long d'une
+ *           vol sans l'option k, 05/10/2026 : position, volet dessiné qu'on fait glisser
+ *           (06/10/2026), envoyé au relâcher, Ouvrir / Stop / Fermer) et appareil (appui
+ *           long d'une int, d'une act ou d'une med sans l'option t, 06/10/2026 : la
+ *           fenêtre « plus d'infos » d'un tableau de bord HA, dont le grand bouton refait
+ *           le toucher de la tuile), repeints quand l'état de leur tuile change.
  *         - Rangée sous l'horloge (ADR-0031, 06/10/2026) : trois lignes de quatre
  *           éléments au plus, mêmes types que les tuiles, dans la même action
  *           (« hLI|type|icône|options|complément|nom|classe », « hp|place des plantes »)
@@ -485,6 +488,7 @@ struct Vue {
     char ligne[40] = "";                // ligne d'état de la carte
     uint32_t couleur_ligne = UIColor.INACTIVE;
     bool agit = false;                  // un appui fait quelque chose
+    bool actif = false;                 // allumé, ouvert, en lecture… (icône « on »)
 };
 
 // Minuteries d'une tuile : confirmation (option k, 3 s) et « OK » après « lancer » (1 s).
@@ -761,6 +765,7 @@ void vue_def(const Def& d, const Etat& e, int r, int t, Vue& v) {
     v.icone = v.icone_carte = icone;
     v.couleur = v.couleur_carte = c;
     v.couleur_ligne = c_ligne;
+    v.actif = actif;
 }
 
 void vue_nouvelle(int r, int t, Vue& v) { vue_def(s_m.tuiles[r][t], s_etats[r][t], r, t, v); }
@@ -866,9 +871,27 @@ void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) {
     ui_text(lbl, buf);
 }
 
-// Onglets titre et état des cartes : 200 px, 6 px de marge de chaque côté.
-constexpr int32_t kLargeurOnglet = 188;
+// Fond local d'un objet (pastille, remplissage), écrit seulement s'il change : comme
+// ui_text_color (tab5_internal.h), un lv_obj_set_style_* invalide l'objet même à
+// valeur égale.
+void ui_fond(lv_obj_t* obj, uint32_t hex) {
+    if (obj == nullptr) return;
+    const lv_color_t voulu = lv_color_hex(hex);
+    lv_style_value_t cur;
+    if (lv_obj_get_local_style_prop(obj, LV_STYLE_BG_COLOR, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND &&
+        lv_color_eq(cur.color, voulu)) {
+        return;
+    }
+    lv_obj_set_style_bg_color(obj, voulu, LV_PART_MAIN);
+}
 
+// Nom et état d'une carte du mode HA : la carte fait 230 px, 12 px de marge de chaque
+// côté (façon carte « tile » de HA depuis le 06/10/2026 : plus d'onglets de 200 px).
+constexpr int32_t kLargeurCarteTexte = 206;
+
+// Une carte du mode HA, façon carte « tile » de HA (06/10/2026, discussion #278) :
+// l'icône en couleur pleine dans une pastille ronde de la même couleur à 20 % (opacité
+// posée par switches_card.yaml), le nom, l'état dans sa couleur.
 void peindre_carte(int r, int t) {
     const TuilesUI& u = g_tuiles_ui;
     if (u.carte_icone[t] == nullptr) return;
@@ -876,8 +899,9 @@ void peindre_carte(int r, int t) {
     vue(r, t, v);
     if (v.icone_carte != nullptr) ui_text(u.carte_icone[t], v.icone_carte);
     ui_text_color(u.carte_icone[t], v.couleur_carte);
-    ui_texte_coupe(u.carte_nom[t], v.nom, kLargeurOnglet);
-    ui_texte_coupe(u.carte_etat[t], v.ligne, kLargeurOnglet);
+    ui_fond(u.carte_pastille[t], v.couleur_carte);
+    ui_texte_coupe(u.carte_nom[t], v.nom, kLargeurCarteTexte);
+    ui_texte_coupe(u.carte_etat[t], v.ligne, kLargeurCarteTexte);
     ui_text_color(u.carte_etat[t], v.couleur_ligne);
 }
 
@@ -948,12 +972,14 @@ void peindre_meteo() {
 
 void popup_lumiere_etat(int r, int t);
 void popup_volet_etat(int r, int t);
+void popup_appareil_etat(int r, int t);
 
 // Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
 void peindre_tuile(int r, int t) {
     if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
     popup_lumiere_etat(r, t);
     popup_volet_etat(r, t);
+    popup_appareil_etat(r, t);
     if (r != piece_courante()) return;
     if (g_central_ctx.ha_mode) {
         if (tuile_presente(r, t)) peindre_carte(r, t);
@@ -1147,23 +1173,54 @@ void ouvrir_popup(lv_obj_t* popup) {
 
 // ─── Popup du volet (05/10/2026, discussion #278) ───────────────────────────────────
 //
-// Appui long d'une tuile vol sans l'option k : la position en grand, l'état en mots, un
-// curseur 0-100 % (position connue seulement, envoyée au relâcher : action « position »)
-// et Ouvrir / Stop / Fermer (les commandes de la tuile). Tant qu'il est ouvert, il suit
-// l'état de SA tuile (peindre_tuile → popup_volet_etat).
+// Appui long d'une tuile vol sans l'option k : un volet dessiné (06/10/2026, même
+// discussion : « like ha animation, not a basic slider ») qu'on fait glisser du doigt
+// (position connue seulement, envoyée au relâcher : action « position »), la position en
+// grand, l'état en mots et Ouvrir / Stop / Fermer (les commandes de la tuile). Tant qu'il
+// est ouvert, il suit l'état de SA tuile (peindre_tuile → popup_volet_etat) : chaque
+// position poussée par HA redessine le tablier directement, sans interpolation ni fondu
+// (préférence d'Axel : transitions instantanées) — le volet dessiné descend quand le vrai
+// descend, au rythme des poussées.
 
 struct PopupVolet {
     int piece = -1;
     int tuile = -1;
-    bool glisse = false;  // le curseur a été pressé : son relâcher envoie la position
+    bool saisi = false;   // un doigt tient le volet (position connue à l'appui)
+    bool glisse = false;  // il a glissé au-delà du seuil : son relâcher envoie la position
+    bool cible = false;   // position envoyée : dessinée jusqu'au prochain état de HA
+    bool estompe = false; // position dessinée = un repère (position inconnue)
+    int32_t y_appui = 0;  // ordonnée du doigt à l'appui (écran)
+    int pos_appui = 0;    // position dessinée à l'appui
+    int pos = 0;          // position dessinée : 0 fermé, 100 ouvert
 };
 PopupVolet s_pv;
 
 // Géométrie (volet_popup.yaml) : l'état sous la position, ou seul au milieu de la carte
 // (598 px de haut, 53 px de texte) ; titre : la barre d'en-tête moins l'icône et la croix.
-constexpr int32_t kVoletEtatSous = 250;
+constexpr int32_t kVoletEtatSous = 360;
 constexpr int32_t kVoletEtatSeul = 272;
 constexpr int32_t kVoletTitreLargeur = 1000;
+// Volet dessiné : hauteur de la fenêtre et du tablier (volet_fenetre, volet_tablier de
+// volet_popup.yaml, tests/test_tuiles_firmware.py compare), lames de 38 px.
+constexpr int32_t kVoletFenetreH = 456;
+constexpr int32_t kVoletLameH = 38;
+constexpr int kVoletLames = kVoletFenetreH / kVoletLameH;
+static_assert(kVoletLames * kVoletLameH == kVoletFenetreH, "les lames couvrent la fenêtre");
+// Un doigt qui bouge de moins que ça n'a pas glissé : un toucher n'envoie rien (pas
+// d'ordre de plus à un volet en route).
+constexpr int32_t kVoletSeuilGlisse = 12;
+// Position inconnue, ni ouvert ni fermé (partiel, en mouvement, hors ligne) : le tablier
+// à mi-hauteur, lames estompées — un repère, pas une mesure.
+constexpr int kVoletMilieu = 50;
+
+// Style partagé des lames, créé avec elles (lames_construire). Ses couleurs viennent de
+// la palette active et sont reposées par popup_volet_dessiner quand elles changent
+// (thème, volet estompé) : un seul lv_obj_report_style_change, pas un par lame.
+lv_style_t s_lame;
+bool s_lame_pret = false;
+uint32_t s_lame_fond = 0;
+uint32_t s_lame_joint = 0;
+lv_opa_t s_lame_opa = LV_OPA_COVER;
 
 bool popup_volet_ouvert() {
     const lv_obj_t* p = g_tuiles_ui.vol_popup;
@@ -1184,6 +1241,18 @@ bool popup_volet_valide() {
 bool vol_position_connue(const Etat& e) {
     if (!e.recu || est(e.brut, "unavailable") || est(e.brut, "unknown")) return false;
     return !std::isnan(e.valeur) && e.valeur >= 0.0f && e.valeur <= 100.0f;
+}
+
+// Position à dessiner : la vraie si elle est connue ; sinon l'état — fermé en bas, ouvert
+// en haut, le reste (partiel, en mouvement, hors ligne, rien reçu) à mi-hauteur, estompé.
+int vol_position_dessin(const Etat& e, bool& estompe) {
+    estompe = false;
+    if (vol_position_connue(e)) return tab5_float_vers_int(e.valeur, 0, 100, 0);
+    if (e.recu && est(e.brut, "closed")) return 0;
+    // « open » sans position (NaN) : ouvert ; avec -1 (volet à course simulée) : partiel.
+    if (e.recu && est(e.brut, "open") && !(e.valeur < 0.0f)) return 100;
+    estompe = true;
+    return kVoletMilieu;
 }
 
 // L'état en mots, dans les couleurs de la tuile. Ouvert mais arrêté en route (-1 du
@@ -1211,7 +1280,54 @@ void popup_volet_nombre(int pos) {
     ui_text(g_tuiles_ui.vol_nombre, buf);
 }
 
-// Titre, position (rangée « 45 % » et curseur, ou rien), état en mots.
+// Builder des lames (règle 5) : 12 lames de 38 px empilées dans le tablier, chacune un
+// aplat d'accent et un joint de 4 px en bas, toutes sur le style partagé s_lame. La
+// dernière (en bas) fait le bord du tablier. Non cliquables : le toucher va au cadre.
+void lames_construire(lv_obj_t* tablier) {
+    lv_style_init(&s_lame);
+    lv_style_set_radius(&s_lame, 0);
+    lv_style_set_pad_all(&s_lame, 0);
+    lv_style_set_bg_opa(&s_lame, LV_OPA_COVER);
+    lv_style_set_border_side(&s_lame, LV_BORDER_SIDE_BOTTOM);
+    lv_style_set_border_width(&s_lame, 4);
+    lv_style_set_border_opa(&s_lame, LV_OPA_60);
+    s_lame_fond = UIColor.ACCENT;
+    s_lame_joint = UIColor.GLASS_LO;
+    s_lame_opa = LV_OPA_COVER;
+    lv_style_set_bg_color(&s_lame, lv_color_hex(s_lame_fond));
+    lv_style_set_border_color(&s_lame, lv_color_hex(s_lame_joint));
+    s_lame_pret = true;
+    for (int i = 0; i < kVoletLames; i++) {
+        lv_obj_t* lame = lv_obj_create(tablier);
+        lv_obj_remove_style_all(lame);
+        lv_obj_add_style(lame, &s_lame, LV_PART_MAIN);
+        lv_obj_remove_flag(lame, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_remove_flag(lame, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_pos(lame, 0, i * kVoletLameH);
+        lv_obj_set_size(lame, lv_pct(100), kVoletLameH);
+    }
+}
+
+// Le volet dessiné à `pos` (0 fermé, 100 ouvert) : le tablier remonte de pos % de la
+// fenêtre, qui le rogne (à 100 % il est rentré dans le coffre). Lames pleines, ou
+// estompées quand la position n'est qu'un repère.
+void popup_volet_dessiner(int pos, bool estompe) {
+    ui_y(g_tuiles_ui.vol_tablier, -(std::clamp(pos, 0, 100) * kVoletFenetreH) / 100);
+    if (!s_lame_pret) return;
+    const uint32_t fond = UIColor.ACCENT;
+    const uint32_t joint = UIColor.GLASS_LO;
+    const lv_opa_t opa = estompe ? LV_OPA_40 : LV_OPA_COVER;
+    if (fond == s_lame_fond && joint == s_lame_joint && opa == s_lame_opa) return;
+    s_lame_fond = fond;
+    s_lame_joint = joint;
+    s_lame_opa = opa;
+    lv_style_set_bg_color(&s_lame, lv_color_hex(fond));
+    lv_style_set_border_color(&s_lame, lv_color_hex(joint));
+    lv_style_set_bg_opa(&s_lame, opa);
+    lv_obj_report_style_change(&s_lame);
+}
+
+// Titre, volet dessiné, position (rangée « 45 % », ou rien), état en mots.
 void popup_volet_peindre() {
     const TuilesUI& u = g_tuiles_ui;
     if (u.vol_popup == nullptr || !popup_volet_valide()) return;
@@ -1220,14 +1336,14 @@ void popup_volet_peindre() {
     ui_texte_coupe(u.vol_titre, s_m.tuiles[r][t].nom, kVoletTitreLargeur);
     const bool connue = vol_position_connue(e);
     ui_hidden(u.vol_position, !connue);
-    ui_hidden(u.vol_curseur_cadre, !connue);
-    // Pas pendant un glissement : le retour de HA ferait sauter le curseur sous le doigt
-    // (le nombre suit alors le doigt, volet_curseur_rappel).
-    if (connue && u.vol_curseur != nullptr && !lv_obj_has_state(u.vol_curseur, LV_STATE_PRESSED)) {
-        const int pos = tab5_float_vers_int(e.valeur, 0, 100, 0);
-        lv_slider_set_value(u.vol_curseur, pos, LV_ANIM_OFF);
-        popup_volet_nombre(pos);
-    }
+    // Pas pendant un glissement : le retour de HA ferait sauter le volet sous le doigt
+    // (le dessin et le nombre suivent alors le doigt, volet_cadre_rappel). Ni après le
+    // relâcher, tant que HA n'a pas poussé d'état (tuiles_etat_recu) : un repeint de
+    // thème ou de définitions garde la position envoyée, comme un démarrage à froid.
+    if (!s_pv.saisi && !s_pv.cible) s_pv.pos = vol_position_dessin(e, s_pv.estompe);
+    // Toujours redessiné : les couleurs des lames suivent la palette (thème).
+    popup_volet_dessiner(s_pv.pos, s_pv.estompe);
+    if (connue) popup_volet_nombre(s_pv.pos);
     uint32_t couleur = UIColor.INACTIVE;
     ui_text(u.vol_etat, vol_etat_mots(e, couleur));
     ui_text_color(u.vol_etat, couleur);
@@ -1249,43 +1365,196 @@ void popup_volet_etat(int r, int t) {
     if (popup_volet_ouvert() && r == s_pv.piece && t == s_pv.tuile) popup_volet_peindre();
 }
 
-// Relâcher du curseur : « position » + 0-100 à la tuile du popup (événement
+// Relâcher après un glissement : « position » + 0-100 à la tuile du popup (événement
 // esphome.tab5_action ; le blueprint la passe à cover / valve.set_…_position de l'entité
-// de CETTE tuile, quand elle sait le faire).
-void popup_volet_envoyer_position() {
+// de CETTE tuile, quand elle sait le faire). Rien sans position connue au relâcher (le
+// volet a pu passer hors ligne pendant le geste) : vrai si la position est partie.
+bool popup_volet_envoyer_position() {
     const TuilesUI& u = g_tuiles_ui;
-    if (!popup_volet_valide() || u.envoyer == nullptr || u.vol_curseur == nullptr) return;
+    if (!popup_volet_valide() || u.envoyer == nullptr) return false;
+    if (!vol_position_connue(s_etats[s_pv.piece][s_pv.tuile])) return false;
     char valeur[8];
-    snprintf(valeur, sizeof(valeur), "%d", static_cast<int>(lv_slider_get_value(u.vol_curseur)));
+    snprintf(valeur, sizeof(valeur), "%d", std::clamp(s_pv.pos, 0, 100));
     const char cle[4] = {'t', static_cast<char>('0' + s_pv.piece), static_cast<char>('0' + s_pv.tuile), '\0'};
     u.envoyer(cle, "position", valeur);
+    s_pv.cible = true;
+    return true;
 }
 
-// Curseur : le nombre suit le doigt ; seul le relâcher envoie (un seul set_position par
-// geste), et seulement si la valeur a bougé : un toucher du bouton sans glisser ne donne
-// pas d'ordre de plus à un volet en route. VALUE_CHANGED ne vient que du doigt
-// (lv_slider_set_value du repeint ne l'émet pas). PRESS_LOST aussi : un doigt qui
-// glisse hors du curseur le relâche ailleurs.
-void volet_curseur_rappel(lv_event_t* ev) {
-    lv_obj_t* c = g_tuiles_ui.vol_curseur;
-    if (c == nullptr) return;
+// Cadre du volet dessiné : on attrape le tablier n'importe où et on le tire. Son bord suit
+// le doigt (vers le bas, il descend : la position baisse) ; seul le relâcher envoie (un
+// seul set_position par geste), et seulement après un vrai glissement (kVoletSeuilGlisse) :
+// un toucher n'envoie rien. Position inconnue à l'appui : rien ne glisse. PRESS_LOST
+// aussi : un doigt perdu en route relâche ailleurs. Après un toucher, ou un relâcher qui
+// n'envoie rien, le dessin reprend l'état de HA (popup_volet_peindre).
+void volet_cadre_rappel(lv_event_t* ev) {
+    lv_point_t p = {0, 0};
+    lv_indev_t* indev = lv_indev_active();
+    if (indev != nullptr) lv_indev_get_point(indev, &p);
     switch (lv_event_get_code(ev)) {
         case LV_EVENT_PRESSED:
             s_pv.glisse = false;
+            s_pv.saisi = popup_volet_valide() && vol_position_connue(s_etats[s_pv.piece][s_pv.tuile]);
+            s_pv.y_appui = p.y;
+            s_pv.pos_appui = s_pv.pos;
+            if (s_pv.saisi) s_pv.estompe = false;
             break;
-        case LV_EVENT_VALUE_CHANGED:
+        case LV_EVENT_PRESSING: {
+            if (!s_pv.saisi) break;
+            const int32_t dy = p.y - s_pv.y_appui;
+            if (!s_pv.glisse && std::abs(dy) < kVoletSeuilGlisse) break;
             s_pv.glisse = true;
-            popup_volet_nombre(static_cast<int>(lv_slider_get_value(c)));
+            const int pos = std::clamp(s_pv.pos_appui - static_cast<int>(dy * 100 / kVoletFenetreH), 0, 100);
+            if (pos == s_pv.pos) break;
+            s_pv.pos = pos;
+            popup_volet_dessiner(pos, false);
+            popup_volet_nombre(pos);
             break;
+        }
         case LV_EVENT_RELEASED:
-        case LV_EVENT_PRESS_LOST:
-            if (!s_pv.glisse) break;
+        case LV_EVENT_PRESS_LOST: {
+            const bool envoyer = s_pv.saisi && s_pv.glisse;
+            s_pv.saisi = false;
             s_pv.glisse = false;
-            popup_volet_envoyer_position();
+            if (envoyer && popup_volet_envoyer_position()) break;
+            popup_volet_peindre();
             break;
+        }
         default:
             break;
     }
+}
+
+// ─── Popup d'un appareil (06/10/2026, discussion #278) ──────────────────────────────
+//
+// « Buttons can have pop up screen like ha dashboard » : l'appui long d'une tuile qui
+// n'avait pas de popup (int, act, med sans l'option t) ouvre, pour cette tuile, la
+// fenêtre « plus d'infos » d'un tableau de bord HA : son icône dans une pastille ronde
+// de la couleur de son état, l'état en mots, sa pièce, ses options, et un grand bouton
+// qui fait EXACTEMENT ce que fait le toucher de la tuile (tuile_appui_piece) : même
+// commande, même confirmation (option k : la minuterie de la tuile, la tuile ET le popup
+// demandent « Confirmer ? »), même « OK » après « lancer ». Il ne montre que ce que HA
+// pousse déjà pour les tuiles (définition, état) : rien d'inventé. Tant qu'il est
+// ouvert, il suit l'état de SA tuile (peindre_tuile → popup_appareil_etat).
+
+struct PopupAppareil {
+    int piece = -1;
+    int tuile = -1;
+};
+PopupAppareil s_pa;
+
+// Géométrie (appareil_popup.yaml) : titre = la barre d'en-tête moins l'icône et la
+// croix ; textes de la carte ÉTAT (800 px) et de la carte COMMANDE (386 px) ; grand
+// bouton de 380 px, rempli à moitié (allumé : en haut ; éteint : en bas) ou en entier
+// (scène, script, bouton).
+constexpr int32_t kAppareilTitreLargeur = 1000;
+constexpr int32_t kAppareilTexteLargeur = 740;
+constexpr int32_t kAppareilActionLargeur = 350;
+constexpr int32_t kAppareilBoutonHauteur = 380;
+
+// Les types qui ont ce popup : int, act, et med sans l'option t (avec t, la télécommande).
+bool a_popup_appareil(Type type, uint8_t options) {
+    switch (type) {
+        case Type::INT: case Type::ACT: return true;
+        case Type::MED: return (options & OPT_T) == 0;
+        default: return false;
+    }
+}
+
+bool popup_appareil_ouvert() {
+    const lv_obj_t* p = g_tuiles_ui.app_popup;
+    return p != nullptr && !lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN);
+}
+
+// La tuile du popup a-t-elle toujours ce popup ? (les définitions peuvent changer popup
+// ouvert ; option r : jamais ; le mode héritage n'ouvre jamais ce popup.)
+bool popup_appareil_valide() {
+    const int r = s_pa.piece, t = s_pa.tuile;
+    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles || heritage()) return false;
+    const Def& d = s_m.tuiles[r][t];
+    return !(d.options & OPT_R) && a_popup_appareil(static_cast<Type>(d.type), d.options);
+}
+
+// Glyphe du grand bouton (mdi_font_45, règle 9) : lecture pour une scène, un script, un
+// bouton ; marche / arrêt sinon.
+const char* glyphe_commande(bool lancer) {
+    return lancer ? "\U000F040A" : "\U000F0425";
+}
+
+// Tout le popup, depuis la définition et l'état de sa tuile (vue_def : les mêmes mots,
+// icône et couleurs que la carte du mode HA).
+void popup_appareil_peindre() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.app_popup == nullptr || !popup_appareil_valide()) return;
+    const int r = s_pa.piece, t = s_pa.tuile;
+    const Def& d = s_m.tuiles[r][t];
+    const Etat& e = s_etats[r][t];
+    const Type type = static_cast<Type>(d.type);
+    Vue v;
+    vue_def(d, e, r, t, v);
+    const bool lancer = type == Type::ACT;
+    const bool confirmer = minuterie_sur(s_confirmation, r, t);
+    const bool ok = minuterie_sur(s_ok, r, t);
+    ui_texte_coupe(u.app_titre, d.nom, kAppareilTitreLargeur);
+    // Pastille : l'icône de la tuile en couleur pleine sur sa couleur à 20 % (le YAML).
+    if (v.icone_carte != nullptr) ui_text(u.app_icone, v.icone_carte);
+    ui_text_color(u.app_icone, v.couleur_carte);
+    ui_fond(u.app_pastille, v.couleur_carte);
+    // État en mots : la ligne d'état de la carte, sauf « Lancer » (une action, pas un
+    // état) : un script en route (« on ») dit « En cours », le reste « Prêt ».
+    const char* etat = v.ligne;
+    if (lancer && std::strcmp(v.ligne, tr("Lancer")) == 0) etat = est(e.brut, "on") ? tr("En cours") : tr("Prêt");
+    ui_texte_coupe(u.app_etat, etat, kAppareilTexteLargeur);
+    ui_text_color(u.app_etat, v.couleur_ligne);
+    // La pièce : son nom, ou « Pièce n » quand HA n'en donne pas.
+    char buf[64];
+    if (s_m.pieces[r][0] != '\0') snprintf(buf, sizeof(buf), tr("Pièce : %s"), s_m.pieces[r]);
+    else snprintf(buf, sizeof(buf), tr("Pièce %d"), r + 1);
+    ui_texte_coupe(u.app_piece, buf, kAppareilTexteLargeur);
+    // Options de la tuile (blueprint, « Personnaliser des tuiles »), une par ligne.
+    char options[96] = "";
+    if ((d.options & OPT_O) && !lancer) snprintf(options, sizeof(options), "%s", tr("Allumer seulement"));
+    if (d.options & OPT_K) {
+        const size_t n = std::strlen(options);
+        snprintf(options + n, sizeof(options) - n, "%s%s", n > 0 ? "\n" : "", tr("Confirmer chaque commande"));
+    }
+    ui_text(u.app_options, options);
+    ui_hidden(u.app_options, options[0] == '\0');
+    // Grand bouton : rempli en haut quand l'appareil est allumé, en bas sinon, en entier
+    // pour une scène ; dans la couleur de la carte (ambre pendant une confirmation).
+    lv_obj_t* f = u.app_remplissage;
+    const int32_t h = lancer ? kAppareilBoutonHauteur : kAppareilBoutonHauteur / 2;
+    if (f != nullptr && lv_obj_get_style_height(f, LV_PART_MAIN) != h) lv_obj_set_height(f, h);
+    ui_y(f, (lancer || v.actif) ? 0 : kAppareilBoutonHauteur - h);
+    ui_fond(f, v.couleur_carte);
+    ui_text(u.app_commande_icone, glyphe_commande(lancer));
+    ui_text_color(u.app_commande_icone, v.couleur_carte);
+    // Ce que fera l'appui : la commande de la tuile (basculer, allumer avec l'option o,
+    // lancer), dite en mots ; ambre quand elle attend sa confirmation.
+    const char* action = tr("Éteindre");
+    if (lancer) action = ok ? "OK" : tr("Lancer");
+    else if ((d.options & OPT_O) || !v.actif) action = tr("Allumer");
+    uint32_t c_action = UIColor.ACCENT;
+    if (confirmer) c_action = UIColor.WARNING;
+    else if (ok) c_action = UIColor.SUCCESS;
+    else if (!lancer && (d.options & OPT_O) && v.actif) c_action = UIColor.TEXT_DIM;  // déjà allumé
+    ui_texte_coupe(u.app_action, action, kAppareilActionLargeur);
+    ui_text_color(u.app_action, c_action);
+}
+
+void popup_appareil_ouvrir(int r, int t) {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.app_popup == nullptr) return;
+    s_pa = PopupAppareil{};
+    s_pa.piece = r;
+    s_pa.tuile = t;
+    popup_appareil_peindre();
+    animate_popup_open(u.app_popup);
+}
+
+// Un état ou une minuterie a changé : le popup, s'il montre cette tuile.
+void popup_appareil_etat(int r, int t) {
+    if (popup_appareil_ouvert() && r == s_pa.piece && t == s_pa.tuile) popup_appareil_peindre();
 }
 
 // Mode héritage : les gestes de la 3.1 (tuile 0 PC + télécommande, 1 volet, 2-4 lumières).
@@ -1414,6 +1683,11 @@ bool tuiles_definir(const std::string& payload) {
         if (popup_volet_valide()) popup_volet_peindre();
         else animate_popup_close(g_tuiles_ui.vol_popup);
     }
+    // Même chose pour le popup d'un appareil (tuile devenue lecture seule, autre type…).
+    if (popup_appareil_ouvert()) {
+        if (popup_appareil_valide()) popup_appareil_peindre();
+        else animate_popup_close(g_tuiles_ui.app_popup);
+    }
     tuiles_appliquer_ui();
     return true;
 }
@@ -1434,6 +1708,8 @@ bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n
     Etat& e = s_etats[r][t];
     etat_lire(e, reste, n_reste);
     if (s_m.tuiles[r][t].type == static_cast<uint8_t>(Type::VOL)) vol_sens_suivre(e);
+    // Popup du volet : un état poussé remplace la position envoyée au relâcher.
+    if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;
     if (!heritage()) peindre_tuile(r, t);
     return true;
 }
@@ -1525,13 +1801,15 @@ void tuiles_peindre_meteo() {
 }
 
 // Thèmes (ADR-0029) : tuiles, cartes, bouton « HA » (sa garde au changement forcée),
-// popups lumière et volet, depuis le dernier état ; rien avant le premier dessin des tuiles.
+// popups lumière, volet et appareil, depuis le dernier état ; rien avant le premier
+// dessin des tuiles.
 void tuiles_rejouer_theme() {
     if (!s_charge) return;
     s_bouton_actif = !g_central_ctx.ha_mode;
     tuiles_appliquer_ui();
     if (s_pl.n > 0) popup_lumiere_peindre();
     if (popup_volet_ouvert()) popup_volet_peindre();
+    if (popup_appareil_ouvert()) popup_appareil_peindre();
 }
 
 void tuiles_repeindre(int r, int t) {
@@ -1656,11 +1934,10 @@ void tuiles_brancher_titres() {
     }
 }
 
-void tuile_appui(int t, bool long_appui) {
-    charger();
-    // Mode météo sans appareils : boutons masqués ; pas d'appui non plus par une autre voie.
-    if (!g_central_ctx.ha_mode && !s_appareils_meteo) return;
-    const int r = piece_courante();
+// Appui sur la tuile T de la pièce R : tuile de la page courante (tuile_appui), ou grand
+// bouton du popup d'un appareil (popup_appareil_appui, appui court). Un seul chemin pour
+// les deux : la même commande, la même confirmation (option k), le même « OK ».
+static void tuile_appui_piece(int r, int t, bool long_appui) {
     if (!tuile_presente(r, t)) return;
     if (heritage()) {
         appui_heritage(t, long_appui);
@@ -1682,7 +1959,11 @@ void tuile_appui(int t, bool long_appui) {
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::INT:
-            if (long_appui) return;
+            // Appui long (06/10/2026, discussion #278) : le popup de l'appareil.
+            if (long_appui) {
+                popup_appareil_ouvrir(r, t);
+                return;
+            }
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::VOL:
@@ -1696,14 +1977,20 @@ void tuile_appui(int t, bool long_appui) {
             action = long_appui ? vol_appui_long(e) : vol_appui(e);
             break;
         case Type::MED:
+            // Appui long : la télécommande de la TV du blueprint (option t), sinon le popup
+            // de l'appareil (06/10/2026).
             if (long_appui) {
                 if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);
+                else popup_appareil_ouvrir(r, t);
                 return;
             }
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::ACT:
-            if (long_appui) return;
+            if (long_appui) {
+                popup_appareil_ouvrir(r, t);
+                return;
+            }
             action = "lancer";
             break;
         case Type::CLI:
@@ -1764,6 +2051,13 @@ bool tuile_ouvrir_popup(int r, int t) {
     }
 }
 
+void tuile_appui(int t, bool long_appui) {
+    charger();
+    // Mode météo sans appareils : boutons masqués ; pas d'appui non plus par une autre voie.
+    if (!g_central_ctx.ha_mode && !s_appareils_meteo) return;
+    tuile_appui_piece(piece_courante(), t, long_appui);
+}
+
 void tuiles_heritage_pc(bool actif) {
     charger();
     s_h.pc = actif;
@@ -1808,13 +2102,24 @@ void popup_volet_commande(const char* action) {
     envoyer_tuile(s_pv.piece, s_pv.tuile, action);
 }
 
+// Grand bouton du popup d'un appareil : le toucher de SA tuile, par le même chemin.
+void popup_appareil_appui() {
+    charger();
+    if (!popup_appareil_valide()) return;
+    tuile_appui_piece(s_pa.piece, s_pa.tuile, false);
+}
+
 void tuiles_brancher_popup_volet() {
     static bool fait = false;
-    lv_obj_t* curseur = g_tuiles_ui.vol_curseur;
-    if (fait || curseur == nullptr) return;
+    lv_obj_t* cadre = g_tuiles_ui.vol_cadre;
+    if (fait || cadre == nullptr || g_tuiles_ui.vol_tablier == nullptr) return;
     fait = true;
-    for (lv_event_code_t code : {LV_EVENT_PRESSED, LV_EVENT_VALUE_CHANGED, LV_EVENT_RELEASED, LV_EVENT_PRESS_LOST})
-        lv_obj_add_event_cb(curseur, volet_curseur_rappel, code, nullptr);
+    lames_construire(g_tuiles_ui.vol_tablier);
+    // Un glissement sur le volet ne remonte pas en geste jusqu'à la page (le swipe des
+    // prévisions, sous le popup).
+    lv_obj_remove_flag(cadre, LV_OBJ_FLAG_GESTURE_BUBBLE);
+    for (lv_event_code_t code : {LV_EVENT_PRESSED, LV_EVENT_PRESSING, LV_EVENT_RELEASED, LV_EVENT_PRESS_LOST})
+        lv_obj_add_event_cb(cadre, volet_cadre_rappel, code, nullptr);
 }
 
 void popup_lumiere_tout_eteindre() {

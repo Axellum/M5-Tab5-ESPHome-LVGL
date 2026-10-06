@@ -502,7 +502,9 @@ def test_carte_de_l_accueil_reste_la_clim_du_blueprint():
 
 def test_ouverture_et_fermeture_du_popup():
     tuiles = _lire("Tab5", "tab5_tuiles.cpp")
-    appui = tuiles.split("void tuile_appui(int t, bool long_appui) {", 1)[1].split("\n}\n", 1)[0]
+    # Le corps de l'appui d'une tuile (tuile_appui le passe à la pièce courante, le popup
+    # d'un appareil à la sienne, 06/10/2026).
+    appui = tuiles.split("static void tuile_appui_piece(int r, int t, bool long_appui) {", 1)[1].split("\n}\n", 1)[0]
     assert "type == Type::CLI && clim_tuile_connue(r, t)" in appui
     assert "if (d.options & OPT_M) clim_afficher_blueprint();" in appui
     assert "else if (!clim_afficher_tuile(r, t)) return;" in appui

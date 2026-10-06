@@ -1,13 +1,17 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par switches_card.yaml.
 # Vars: idx, title (texte initial seulement). `lbl_swN_title` porte le nom de la tuile
-# (ADR-0023), écrit par tab5_tuiles.cpp et coupé avec « … » au-delà de 188 px.
-# 200 px (et non 130 comme les jours) : « PC Bureau » 152 px, « Woonkamer » 173 px en
-# Roboto 32 gras (mesuré le 27/09/2026) ; la carte fait 230.
+# (ADR-0023), écrit par tab5_tuiles.cpp et coupé avec « … » au-delà de 206 px.
+# Depuis le 06/10/2026 (carte « tile » de HA, discussion #278) : plus d'onglet, le nom
+# s'écrit sur la carte, sous la pastille. Le cadre reste : tuiles_brancher_titres() rend
+# cliquable le PARENT du libellé (toucher du nom = sens d'un volet) ; sans lui, ce serait
+# toute la carte. « PC Bureau » 152 px, « Woonkamer » 173 px en Roboto 32 gras (mesuré
+# le 27/09/2026) ; la carte fait 230.
 obj:
   align: TOP_MID
-  y: 7
-  width: 200
+  y: 166
+  width: 214
   height: 40
-  styles: style_meteo_card_page
+  styles: style_transparent
+  scrollable: false
   widgets:
     - label: { id: "lbl_sw${idx}_title", text: "${title}", align: CENTER, text_font: roboto_32_b }

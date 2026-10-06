@@ -57,6 +57,7 @@ script:
           ModalRegistry::add(id(calendar_popup),         "Calendrier",       ModalRegistry::POPUP);
           ModalRegistry::add(id(light_options_popup),    "Lumières",         ModalRegistry::POPUP);
           ModalRegistry::add(id(volet_popup),            "Volet",            ModalRegistry::POPUP);
+          ModalRegistry::add(id(appareil_popup),         "Appareil",         ModalRegistry::POPUP);
           ModalRegistry::add(id(clim_options_popup),     "Climatisation",    ModalRegistry::POPUP);
           ModalRegistry::add(id(pots_detail_popup),      "Plantes",          ModalRegistry::POPUP);
           ModalRegistry::add(id(tv_remote_popup),        "Télécommande TV",  ModalRegistry::POPUP);
