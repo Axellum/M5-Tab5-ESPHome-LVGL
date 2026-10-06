@@ -55,6 +55,9 @@ from scenarios import (
     build_energie_historique,
     build_energie_payload,
     ENERGIE_VUES,
+    build_historique,
+    HISTORIQUE_CLES,
+    HISTORIQUE_VUES,
     code_pluie,
     build_heures_bulk_payload,
     build_pluie_1h_bulk_payload,
@@ -96,6 +99,11 @@ SERVICE_TUILES = "tab5_maj_tuiles"
 # trouve ses données.
 SERVICE_ENERGIE = "tab5_maj_energie"
 SERVICE_ENERGIE_HISTORIQUE = "tab5_maj_energie_historique"
+# Popup Température (ADR-0032) : absent d'un firmware plus ancien. HA ne pousse qu'à
+# l'ouverture du popup (événement esphome.tab5_historique) et le popup ignore une réponse
+# pour une autre température : la démo ne répond qu'à l'événement (le rendu pousse
+# lui-même, tools/rendu/ecrans.py).
+SERVICE_HISTORIQUE = "tab5_maj_historique"
 
 
 def lire_contrat(chemin: Path = API_LOGIC) -> dict[str, tuple[str, ...]]:
@@ -236,6 +244,13 @@ def _dry_run(absentes: frozenset) -> None:
                 debut = len(tablette.appels)
                 asyncio.run(_pousser_scene(tablette, services, scene, absentes, attendre=_sans_attente))
                 appels_par_scene.append((scene.nom, tablette.appels[debut:]))
+            # Popup Température (ADR-0032) : la réponse à chaque événement possible.
+            debut = len(tablette.appels)
+            for cle in HISTORIQUE_CLES:
+                for vue in HISTORIQUE_VUES:
+                    asyncio.run(_pousser_historique(tablette, services, cle, vue, _dt.datetime(2026, 6, 16, 7, 45)))
+            appels_par_scene.append(("popup Température (événement esphome.tab5_historique)",
+                                     tablette.appels[debut:]))
             if not avec_tuiles:
                 print()
                 print(f"=== Firmware 3.x (sans {SERVICE_TUILES}) : "
@@ -302,6 +317,20 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
     for vue in vues:
         await _appeler(client, services_par_nom, SERVICE_ENERGIE_HISTORIQUE,
                        **build_energie_historique(vue, jour))
+
+
+async def _pousser_historique(client, services_par_nom: dict, cle: str, vue: str,
+                              maintenant: _dt.datetime | None = None) -> None:
+    """Réponse de script.tab5_historique (packages/tab5_historique.yaml) à l'événement
+    esphome.tab5_historique : la courbe de la vue, et la prévision de la seconde
+    température. Rien sur un firmware sans le popup Température."""
+    if SERVICE_HISTORIQUE not in services_par_nom:
+        return
+    if cle not in HISTORIQUE_CLES:
+        return
+    vue = vue if vue in HISTORIQUE_VUES else "jour"
+    await _appeler(client, services_par_nom, SERVICE_HISTORIQUE,
+                   **build_historique(cle, vue, maintenant or _dt.datetime.now()))
 
 
 async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozenset,
@@ -383,7 +412,7 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
 
 
 def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None = None,
-                        repondre_energie=None):
+                        repondre_energie=None, repondre_historique=None):
     """Callback appelé quand le firmware envoie un homeassistant.event: (bouton pressé,
     demande à HA ; depuis l'ADR-0025 il n'envoie plus de homeassistant.service:, un
     firmware 3.1 ou plus ancien si).
@@ -401,6 +430,9 @@ def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None 
 
     L'événement esphome.tab5_energie (popup Énergie ouvert, ou sa vue changée, ADR-0028)
     reçoit la réponse de script.tab5_energie : repondre_energie(vue) la planifie.
+
+    L'événement esphome.tab5_historique (popup Température ouvert, ou sa vue changée,
+    ADR-0032) reçoit celle de script.tab5_historique : repondre_historique(cle, vue).
     """
 
     def _gerer(call) -> None:
@@ -410,6 +442,11 @@ def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None 
         if getattr(call, "is_event", False) and call.service == "esphome.tab5_energie":
             if repondre_energie is not None:
                 repondre_energie(dict(call.data).get("vue", "heures"))
+            return
+        if getattr(call, "is_event", False) and call.service == "esphome.tab5_historique":
+            if repondre_historique is not None:
+                data = dict(call.data)
+                repondre_historique(data.get("cle", ""), data.get("vue", "jour"))
             return
         if not interactive:
             return
@@ -474,11 +511,19 @@ async def _run(host: str, key: str | None, interval: float, interactive: bool, a
         taches.add(tache)
         tache.add_done_callback(taches.discard)
 
+    def repondre_historique(cle: str, vue: str) -> None:
+        logger.info("Popup Température -> %s, %s", cle, vue)
+        tache = asyncio.get_running_loop().create_task(
+            _pousser_historique(client, services_par_nom, cle, vue))
+        taches.add(tache)
+        tache.add_done_callback(taches.discard)
+
     # Plus d'abonnement de la tablette à des entités (lot 6a) : on_state_sub reste
     # branché pour un firmware plus ancien, sans rien y répondre.
     client.subscribe_home_assistant_states_and_services(
         on_state=lambda state: None,
-        on_service_call=_gerer_appel_service(interactive, repondre_zones, pieces, repondre_energie),
+        on_service_call=_gerer_appel_service(interactive, repondre_zones, pieces, repondre_energie,
+                                             repondre_historique),
         on_state_sub=lambda entity_id, attribute: logger.info(
             "Abonnement à %s demandé par un firmware d'avant le lot 6a — ignoré", entity_id),
     )

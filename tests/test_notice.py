@@ -36,6 +36,7 @@ APPUIS_LONGS = {
     "btn_control_ha": "home.md",
     "btn_control_tv": "home.md",
     "btn_rangee": "plants.md",
+    "climate_card.yaml": "temperature.md",
     "forecast_daily.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
     "switches_card.yaml": "tiles.md",
@@ -48,6 +49,12 @@ NON_MONTREES = {
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "energie-mois": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
+    "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
+    "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",
+    "temperature-serre-mois": "temperature-serre montre la même fenêtre ; les vues sont décrites",
+    # Images à tirer du rendu de la PR (tools/site/images_notice.py), puis citées.
+    "temperature-serre": "image à tirer du premier rendu",
+    "temperature-dehors": "image à tirer du premier rendu",
 }
 
 

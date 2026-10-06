@@ -25,7 +25,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
-from scenarios import PAGE_DE_LA_PIECE, PIECES, SCENES, build_alerte_payload, code_pluie  # noqa: E402
+from scenarios import (PAGE_DE_LA_PIECE, PIECES, SCENES, build_alerte_payload, build_historique,  # noqa: E402
+                       code_pluie)
 
 
 @dataclass(frozen=True)
@@ -288,6 +289,20 @@ ENERGIE_VUES = {"heures": (828, 347), "jours": (988, 347), "mois": (1148, 347)}
 REGLAGES_LANGUE_EN, REGLAGES_LANGUE_FR = (875, 572), (734, 572)
 REGLAGES_ANNULER = (816, 446)
 
+# Popup Température (ADR-0032, historique_popup.yaml) : appui long sur la température de
+# la pièce (btn_salon_historique, x 861-1047 et y 132-196 à l'écran) ou sur la seconde
+# (SERRE). Boutons de vue : carte du graphique à y 253-685 à l'écran, boutons de 150 × 48
+# à 18, 178 et 338 px de son bord droit (x 1241). Le rendu ne répond à aucun événement :
+# il pousse lui-même la réponse de script.tab5_historique, datée de l'heure figée.
+SALON_TEMP = (954, 158)
+TEMPERATURE_VUES = {"jour": (828, 287), "semaine": (988, 287), "mois": (1148, 287)}
+MOMENT_DES_CAPTURES = _dt.datetime(2026, 6, 16, 7, 45)
+
+
+def _historique(cle: str, vue: str, exterieur: bool = False) -> Service:
+    """Ce que pousserait script.tab5_historique (tools/demo/scenarios.py)."""
+    return Service("tab5_maj_historique", tuple(build_historique(cle, vue, MOMENT_DES_CAPTURES, exterieur).items()))
+
 
 # ---------------------------------------------------------------------------
 # Arcade : sélecteur et consoles. Menus centrés en x = 640 (360 pour Neon Apron).
@@ -433,6 +448,15 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("energie-heures", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)), (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
     Ecran("energie-jours", (Aller("Énergie"), Toucher(*ENERGIE_VUES["jours"]))),
     Ecran("energie-mois", (Aller("Énergie"), Toucher(*ENERGIE_VUES["mois"]))),
+    # Température (ADR-0032) : la pièce sur 24 h ; la seconde température, une serre avec
+    # la prévision de dehors à part, sur les trois vues ; puis dehors (case du blueprint
+    # cochée), la prévision qui prolonge la courbe.
+    Ecran("temperature-salon", (Long(*SALON_TEMP), _historique("salon", "jour"))),
+    Ecran("temperature-serre", (Long(*SERRE), _historique("serre", "jour"))),
+    Ecran("temperature-serre-semaine",
+          (Long(*SERRE), Toucher(*TEMPERATURE_VUES["semaine"]), _historique("serre", "semaine"))),
+    Ecran("temperature-serre-mois", (Long(*SERRE), Toucher(*TEMPERATURE_VUES["mois"]), _historique("serre", "mois"))),
+    Ecran("temperature-dehors", (Long(*SERRE), _historique("serre", "jour", exterieur=True))),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     Ecran("reglages", (Toucher(*BOUTON_SYS),)),
     Ecran("reglages-langue", (Toucher(*BOUTON_SYS),
