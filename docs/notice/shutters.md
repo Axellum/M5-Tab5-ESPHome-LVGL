@@ -15,6 +15,8 @@
 - To its right, the position in large digits and the state in words: « Open », « Closed », « Partly open », « Moving », « Offline ».
 - The drawing follows the real shutter while it moves, never under your finger.
 
+![The shutter dragged down with a finger, from 45 % to 13 %](../images/notice/volet-glisse-en.webp)
+
 **Controls** (right): **Open**, **Stop**, **Close**.
 
 A shutter that does not report its position cannot be dragged: the drawing shows its state (open at the top, closed at the bottom, half-way with faded slats otherwise) and the words, without a number:
@@ -39,6 +41,8 @@ A shutter card set to *confirm* in the blueprint does not open this window: its 
 - **Faites-le glisser** du doigt vers le haut ou le bas, depuis n'importe où sur la fenêtre, et **levez le doigt** : le volet va à cette position. Le dessin et le nombre suivent le doigt ; rien ne part pendant le glissement, et un simple toucher n'envoie rien.
 - À sa droite, la position en grands chiffres et l'état en mots : « Ouvert », « Fermé », « Partiel », « En mouvement », « Hors ligne ».
 - Le dessin suit le vrai volet pendant qu'il bouge, jamais sous votre doigt.
+
+![Le volet tiré du doigt vers le bas, de 45 % à 13 %](../images/notice/volet-glisse-fr.webp)
 
 **Commandes** (à droite) : **Ouvrir**, **Stop**, **Fermer**.
 

@@ -45,7 +45,6 @@ NON_MONTREES = {
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "energie-mois": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
-    "volet-glisse": "volet montre la même fenêtre ; le glissement est décrit en mots",
 }
 
 
