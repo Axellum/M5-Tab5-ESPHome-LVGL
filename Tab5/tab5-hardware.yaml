@@ -248,6 +248,12 @@ touchscreen:
       x_max: 720
       y_min: 0
       y_max: 1280
+    # Mode économie (tab5-economie.yaml) : un écran assombri faute de toucher reprend sa
+    # luminosité dès le doigt posé. L'activité est notée tout de suite : LVGL ne lit le
+    # toucher qu'à son prochain tour, le script la verrait sinon encore ancienne.
+    on_touch:
+      - lambda: 'ui_mark_activity();'
+      - script.execute: tab5_economie_appliquer
     on_release:
       then:
         - if:
@@ -261,10 +267,19 @@ output:
     pin: GPIO22
     id: backlight_pwm
     frequency: 1000Hz
+  # Mode économie d'énergie (tab5-economie.yaml) : la lumière écrit ici, et le PWM reçoit
+  # le minimum de sa demande et du plafond du mode (economie_sortie_retro,
+  # tab5_economie.cpp). La lumière, donc HA, le curseur des Réglages et le réveil,
+  # garde la luminosité choisie ; elle revient telle quelle quand le mode s'arrête.
+  - platform: template
+    id: backlight_plafonne
+    type: float
+    write_action:
+      - lambda: 'id(backlight_pwm).set_level(economie_sortie_retro(state));'
 
 light:
   - platform: monochromatic
-    output: backlight_pwm
+    output: backlight_plafonne
     name: "Display Backlight"
     id: backlight
     restore_mode: RESTORE_DEFAULT_ON
@@ -275,6 +290,8 @@ light:
       # allumage, quelle qu'en soit la source (toucher, tape, HA, réveil, démarrage),
       # sans toucher à l'horloge d'inactivité de LVGL (voir ecran_allume_ms).
       - lambda: 'id(ecran_allume_ms) = millis();'
+      # Mode économie : un écran rallumé n'est plus « sans toucher », son plafond suit.
+      - script.execute: tab5_economie_appliquer
     on_turn_off:
       - lvgl.pause:
 

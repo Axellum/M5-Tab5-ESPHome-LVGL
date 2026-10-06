@@ -44,6 +44,32 @@ un package HA ; sans le package, le popup attend.
   changements d'heure, calcul Python à part ; aussi rendus par le HA d'Axel sur ses vraies
   statistiques). Non essayé sur la tablette.
 
+### 2026-10-06 — Mode économie d'énergie, enclenché tout seul sur batterie
+
+Firmware seul (et une carte du tableau de bord). Demande d'Axel après la discussion #278.
+- **Réglage de l'appareil « Tab5 Économie d'énergie »** (select, config, gardé en mémoire) :
+  Jamais, **Sur batterie** (défaut) ou Toujours. Sur secteur, le défaut ne change rien.
+- **Mode actif** : luminosité plafonnée à 50 % ; au plus bas (10 %, le minimum du curseur des
+  Réglages) après 30 s sans toucher, et dès que la batterie descend à 35 % (elle remonte à
+  40 %) ; un toucher la rend tout de suite. Le plafond s'applique à la sortie du
+  rétroéclairage : HA, le curseur des Réglages et le réveil gardent la luminosité choisie, qui
+  revient telle quelle quand le mode s'arrête. Plus aucune animation de l'interface (panneau
+  tournant, alertes, glissements, fondus, icônes, horloge) ; LVGL limité à 30 images/s, sauf
+  pendant un jeu. Pas d'assombrissement pendant le réveil, la voix, un jeu ou une mise à jour :
+  la même liste que l'extinction auto, qui la calcule.
+- **« Sur batterie » se décide au courant de la batterie**, lu par l'INA226 toutes les 60 s :
+  au-dessus de 50 mA de décharge, sur batterie ; sous 20 mA, sur secteur ; jamais en charge
+  ni sans batterie détectée. Deux entités de diagnostic : **Tab5 Courant batterie** (A, + = la
+  batterie se décharge ; désactivée par défaut, comme la tension) et **Tab5 Sur batterie**. Le
+  sens du courant vient de M5Unified (`getBatteryCurrent`) ; il n'a encore été vu sur aucune
+  tablette : à vérifier avec une batterie montée (l'auteur n'en a pas).
+- **Preuves** : `tools/test_alarm_clock.cpp` (règles pures de `tab5_economie.h` : seuils et
+  hystérésis du courant et du niveau, débranchée à 20 % basse tout de suite, décision par
+  option) ; `tests/test_economie.py` (options dans l'ordre de l'enum, la lumière passe par la
+  sortie plafonnée, le courant décide, l'extinction range ses raisons avant son délai, plancher =
+  minimum du curseur) ; `esphome config` valide (tablette et rendu hors tablette). Non testé
+  sur une tablette.
+
 ### 2026-10-06 — Console système : batterie et charge du processeur
 
 Demandé dans la discussion #278 (husyildiz, tablette sur batterie : voir le pourcentage, la

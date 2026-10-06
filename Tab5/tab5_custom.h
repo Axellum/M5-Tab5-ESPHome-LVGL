@@ -113,6 +113,11 @@ void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer);
 // changement de calque (le calque glisse déjà, un rouleau en plus = bruit).
 extern bool g_forecast_roll_suppress;
 
+// Mode économie d'énergie (tab5_economie.h) : true = plus aucune animation de ce
+// fichier (panneau tournant, alertes, glissements, fondus, icônes, horloge), chaque
+// transition pose directement son état final. Les jeux gardent les leurs.
+void animations_reduites(bool reduites);
+
 // =============================================================================
 // Horloge à rouleau — un rouleau PAR CHIFFRE (H H : M M)
 // Chaque chiffre est un conteneur qui rogne (LVGL clippe les enfants au

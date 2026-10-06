@@ -12,7 +12,9 @@
  * changements d'heure, rendez-vous. Aussi les conversions des nombres reçus de HA
  * (tab5_float_vers_int : « inf » ou « 1e30 » → entier borné, lot A de l'audit du 30/09),
  * et la décision « batterie de la tablette montée ou pas » (batterie_lecture, 05/10),
- * puis les lignes « Batterie » et « Charge CPU » de la console système (06/10).
+ * puis les lignes « Batterie » et « Charge CPU » de la console système (06/10),
+ * et les règles du mode économie d'énergie (tab5_economie.h, header seul, 06/10) :
+ * sur batterie au courant de l'INA226, batterie basse, plafond de luminosité.
  *
  * Build & run (CI, job `python`) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o test_alarm_clock \
@@ -23,6 +25,7 @@
  */
 #include "alarm_clock.h"
 #include "tab5_core.h"
+#include "tab5_economie.h"
 #include "tab5_i18n.h"
 
 #include <cmath>
@@ -559,6 +562,91 @@ static void test_console_batterie_et_cpu() {
     expect(cpu_charge_pct(0, 0, 0) == -1, "durée nulle : pas de mesure");
 }
 
+// Mode économie d'énergie (06/10/2026) : sur batterie d'après le courant de l'INA226
+// (+ = décharge), batterie basse à 35 % (retour à 40 %), et la décision appliquée.
+static void test_economie() {
+    {
+        EtatEconomie e;
+        expect(!economie_courant_lu(e, 0.30f, false, false) && !e.sur_batterie,
+               "éco : pas de batterie détectée, jamais sur batterie");
+        expect(!economie_courant_lu(e, 0.30f, true, true) && !e.sur_batterie,
+               "éco : en charge, jamais sur batterie (même avec du courant)");
+        expect(economie_courant_lu(e, 0.30f, true, false) && e.sur_batterie, "éco : 300 mA de décharge → sur batterie");
+        expect(!economie_courant_lu(e, 0.035f, true, false) && e.sur_batterie, "éco : 35 mA, entre les seuils, reste");
+        expect(!economie_courant_lu(e, NAN, true, false) && e.sur_batterie, "éco : lecture ratée, rien ne change");
+        expect(economie_courant_lu(e, 0.010f, true, false) && !e.sur_batterie, "éco : 10 mA → secteur");
+        expect(!economie_courant_lu(e, 0.035f, true, false) && !e.sur_batterie, "éco : 35 mA depuis le secteur, reste");
+        expect(!economie_courant_lu(e, -0.80f, true, false) && !e.sur_batterie, "éco : courant de charge (−), secteur");
+        expect(economie_courant_lu(e, 0.050f, true, false) && e.sur_batterie, "éco : 50 mA pile, sur batterie");
+        expect(economie_en_charge(e, true) && !e.sur_batterie, "éco : la charge reprend, secteur tout de suite");
+        expect(!economie_en_charge(e, true), "éco : déjà sur secteur, rien ne change");
+    }
+    {
+        EtatEconomie e;
+        expect(!economie_niveau_lu(e, 20.0f) && !e.batterie_basse, "éco : 20 % sur secteur, pas basse");
+        expect(economie_courant_lu(e, 0.30f, true, false) && e.batterie_basse,
+               "éco : débranchée à 20 %, basse dès qu'elle se sait sur batterie");
+        economie_en_charge(e, true);
+        expect(!e.batterie_basse, "éco : rebranchée, plus basse");
+        economie_courant_lu(e, 0.30f, true, false);
+        expect(!economie_niveau_lu(e, 30.0f) && e.batterie_basse, "éco : 30 %, basse");
+        expect(!economie_niveau_lu(e, 38.0f) && e.batterie_basse, "éco : 38 %, reste basse (retour à 40 %)");
+        expect(!economie_niveau_lu(e, NAN) && e.batterie_basse, "éco : niveau inconnu, décision gardée");
+        expect(economie_niveau_lu(e, 40.0f) && !e.batterie_basse, "éco : 40 %, plus basse");
+        expect(!economie_niveau_lu(e, 36.0f) && !e.batterie_basse, "éco : 36 % en descendant, pas encore basse");
+        expect(economie_niveau_lu(e, 35.0f) && e.batterie_basse, "éco : 35 % pile, basse");
+    }
+    {
+        EntreesEconomie in;
+        in.ecran_allume = true;
+        in.veille_permise = true;
+        in.inactif_ms = 0;
+        in.choix = static_cast<uint8_t>(ChoixEconomie::JAMAIS);
+        in.sur_batterie = true;
+        in.batterie_basse = true;
+        DecisionEconomie d = economie_decider(in);
+        expect(!d.active && d.plafond == 1.0f && d.periode_ms == kEcoPeriodeNormaleMs && !d.animations_reduites,
+               "éco « Jamais » : rien ne change, même sur batterie basse");
+        in.choix = static_cast<uint8_t>(ChoixEconomie::SUR_BATTERIE);
+        in.sur_batterie = false;
+        in.batterie_basse = false;
+        d = economie_decider(in);
+        expect(!d.active && d.plafond == 1.0f, "éco « Sur batterie » sur secteur : inactif");
+        in.sur_batterie = true;
+        d = economie_decider(in);
+        expect(d.active && d.plafond == kEcoPlafond && d.periode_ms == kEcoPeriodeMs && d.animations_reduites,
+               "éco « Sur batterie » sur batterie : plafond 50 %, 30 images/s, sans animation");
+        in.batterie_basse = true;
+        d = economie_decider(in);
+        expect(d.plafond == kEcoPlancher && !d.assombri, "éco : batterie basse, au plus bas");
+        in.batterie_basse = false;
+        in.choix = static_cast<uint8_t>(ChoixEconomie::TOUJOURS);
+        in.sur_batterie = false;
+        in.inactif_ms = kEcoAssombrirMs - 1;
+        d = economie_decider(in);
+        expect(d.active && !d.assombri && d.plafond == kEcoPlafond, "éco « Toujours » : 29,999 s sans toucher, pas encore");
+        in.inactif_ms = kEcoAssombrirMs;
+        d = economie_decider(in);
+        expect(d.assombri && d.plafond == kEcoPlancher, "éco : 30 s sans toucher, au plus bas");
+        in.veille_permise = false;
+        d = economie_decider(in);
+        expect(!d.assombri && d.plafond == kEcoPlafond, "éco : réveil, voix ou jeu, jamais assombri");
+        in.veille_permise = true;
+        in.ecran_allume = false;
+        d = economie_decider(in);
+        expect(!d.assombri, "éco : écran éteint, pas « assombri »");
+        in.ecran_allume = true;
+        in.jeu_ouvert = true;
+        d = economie_decider(in);
+        expect(d.periode_ms == kEcoPeriodeNormaleMs && d.animations_reduites, "éco : un jeu garde ses 60 images/s");
+        in.choix = 7;
+        d = economie_decider(in);
+        expect(!d.active, "éco : index inconnu = Jamais");
+    }
+    expect(kEcoPlancher == 0.10f && kEcoPlafond == 0.50f && kEcoNiveauBas == 35.0f && kEcoAssombrirMs == 30000u,
+           "éco : plancher 10 % (minimum du curseur), plafond 50 %, basse à 35 %, 30 s");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -581,6 +669,7 @@ int main() {
     test_nombres_de_ha();
     test_batterie_presence();
     test_console_batterie_et_cpu();
+    test_economie();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;
