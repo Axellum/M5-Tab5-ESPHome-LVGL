@@ -89,7 +89,7 @@ Low-level hardware configuration:
 ---
 
 ### `ecran-*.yaml`
-Screen and touch of one Tab5 revision, picked at compile time by `tab5_ecran:` in `Tab5/user_entities.yaml`: `st7123` (the default, the author's tablet), `st7121` or `ili9881c` (compiled by CI, never tested on a tablet). Each file only holds what changes from one revision to the next — the `mipi_dsi` model and the touch platform (`st7123`, or `gt911` on the original ILI9881C) — and extends the `tab5_display` and `touch` entries of `tab5-hardware.yaml` with `!extend`. See [`docs/hardware.md`](hardware.md#hardware-revisions).
+Screen and touch of one Tab5 revision, picked at compile time by `tab5_ecran:` in `Tab5/user_entities.yaml`: `st7123` (the default, the author's tablet), `st7121` (runs on a user's tablet since October 2026) or `ili9881c` (compiled by CI, never tested on a tablet). Each file only holds what changes from one revision to the next — the `mipi_dsi` model and the touch platform (`st7123`, or `gt911` on the original ILI9881C) — and extends the `tab5_display` and `touch` entries of `tab5-hardware.yaml` with `!extend`. See [`docs/hardware.md`](hardware.md#hardware-revisions).
 
 ---
 
@@ -407,7 +407,7 @@ Configuration matérielle bas niveau :
 ---
 
 ### `ecran-*.yaml`
-Écran et tactile d'une révision du Tab5, choisie à la compilation par `tab5_ecran:` dans `Tab5/user_entities.yaml` : `st7123` (par défaut, la tablette de l'auteur), `st7121` ou `ili9881c` (compilées par la CI, jamais testées sur une tablette). Chaque fichier ne contient que ce qui change d'une révision à l'autre — le modèle `mipi_dsi` et la plateforme tactile (`st7123`, ou `gt911` sur l'ILI9881C d'origine) — et étend les entrées `tab5_display` et `touch` de `tab5-hardware.yaml` par `!extend`. Voir [`docs/hardware.md`](hardware.md#révisions-matérielles).
+Écran et tactile d'une révision du Tab5, choisie à la compilation par `tab5_ecran:` dans `Tab5/user_entities.yaml` : `st7123` (par défaut, la tablette de l'auteur), `st7121` (tourne chez un utilisateur depuis octobre 2026) ou `ili9881c` (compilée par la CI, jamais testée sur une tablette). Chaque fichier ne contient que ce qui change d'une révision à l'autre — le modèle `mipi_dsi` et la plateforme tactile (`st7123`, ou `gt911` sur l'ILI9881C d'origine) — et étend les entrées `tab5_display` et `touch` de `tab5-hardware.yaml` par `!extend`. Voir [`docs/hardware.md`](hardware.md#révisions-matérielles).
 
 ---
 
