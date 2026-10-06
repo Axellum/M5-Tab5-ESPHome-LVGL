@@ -1,0 +1,161 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file appareil_popup.yaml
+# @role Popup d'un appareil (06/10/2026, discussion #278 : « buttons can have pop up
+#       screen like ha dashboard »), la fenêtre « plus d'infos » d'un tableau de bord
+#       Home Assistant. Ouvert par l'appui long d'une tuile qui n'avait pas de popup :
+#       int (interrupteur, prise, ventilateur…), act (scène, script, bouton) et med sans
+#       l'option t (un lecteur qui n'est pas la TV du blueprint) — tuile_appui_piece,
+#       tab5_tuiles.cpp. UN seul popup pour tous ces types, paramétré par le C++
+#       (popup_appareil_peindre). Deux cartes de verre :
+#       - ÉTAT : l'icône de la tuile dans une pastille ronde de la couleur de son état,
+#         l'état en mots (« Allumé », « Lecture », « Hors ligne »…), la pièce et les
+#         options de la tuile (« Allumer seulement », confirmation) ;
+#       - COMMANDE : un grand interrupteur vertical façon HA (remplissage en haut et en
+#         couleur allumé, en bas et gris éteint ; plein pour une scène), et dessous ce
+#         que fera l'appui (« Éteindre », « Allumer », « Lancer », « Confirmer ? »).
+#       Titre = nom de la tuile. Tout est repeint par tab5_tuiles.cpp quand l'état de la
+#       tuile change, popup ouvert (popup_appareil_etat).
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Appareil » dans
+#       tab5_modal_registry_init). Le grand bouton fait EXACTEMENT ce que fait le
+#       toucher de la tuile (popup_appareil_appui → tuile_appui_piece) : même commande
+#       (basculer, allumer avec l'option o, lancer), même confirmation (option k), même
+#       « OK » ; une tuile en lecture seule (option r) n'ouvre jamais ce popup.
+#       Corps : x 24..1226, y 72..670 (cartes de 800 et 386 px, 16 px d'écart, comme le
+#       popup du volet). Ne pas renommer les ids appareil_* : posés dans g_tuiles_ui
+#       (tab5-tuiles.yaml).
+# @ai_instruction `scrollable: false` partout — NE PAS retirer. Le remplissage du bouton
+#       est `clickable: false` : sinon il prendrait l'appui à la place du bouton. Les
+#       couleurs (pastille, remplissage, textes d'état) sont posées par le C++ depuis la
+#       palette du thème ; ici, celles d'avant la première image. Icône de la pastille :
+#       palette des tuiles (mdi_font_70) ; icône du bouton : glyphe_commande()
+#       (mdi_font_45, règle 9). Un texte de plus = sa ligne dans Tab5/lang/*.yaml.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: appareil_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(appareil_popup));" } }
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          # Titre : le nom de la tuile, posé par popup_appareil_peindre().
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F07D0", icon_style: "style_text_accent", title: "Appareil", title_id: "appareil_popup_titre", close_btn_id: "btn_appareil_close", close_lambda: "animate_popup_close(id(appareil_popup));" } }
+
+          # ═══ CARTE ÉTAT (gauche) : pastille, état en mots, pièce, options ═══
+          - obj:
+              align: TOP_LEFT
+              x: 24
+              y: ${modal_body_y}
+              width: 800
+              height: 598
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "ÉTAT", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+
+                # Pastille ronde : la couleur de l'état à 20 % (posée par le C++), l'icône
+                # de la tuile en couleur pleine, comme la carte « tile » de HA.
+                - obj:
+                    id: appareil_pastille
+                    align: TOP_MID
+                    y: 84
+                    width: 150
+                    height: 150
+                    radius: 75
+                    styles: style_bg_dim
+                    bg_opa: 20%
+                    border_width: 0
+                    scrollable: false
+                    widgets:
+                      - label: { id: appareil_icone, text: "\U000F1A26", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
+
+                - label:
+                    id: appareil_etat
+                    text: "--"
+                    align: TOP_MID
+                    y: 256
+                    styles: style_police_date
+
+                - label:
+                    id: appareil_piece
+                    text: "Pièce"
+                    align: TOP_MID
+                    y: 346
+                    text_font: roboto_32_b
+                    styles: style_text_dim
+
+                # Options de la tuile, une par ligne (masqué sans option).
+                - label:
+                    id: appareil_options
+                    text: ""
+                    align: TOP_MID
+                    y: 406
+                    text_font: roboto_32_b
+                    text_align: CENTER
+                    hidden: true
+                    styles: style_text_dim
+
+          # ═══ CARTE COMMANDE (droite) : le grand interrupteur ═══
+          - obj:
+              align: TOP_LEFT
+              x: 840
+              y: ${modal_body_y}
+              width: 386
+              height: 598
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "COMMANDE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+
+                # Piste verticale (180 × 380), le remplissage dedans : en haut allumé,
+                # en bas éteint, toute la hauteur pour une scène (tab5_tuiles.cpp).
+                - button:
+                    id: appareil_bouton
+                    align: TOP_MID
+                    y: 64
+                    width: 180
+                    height: 380
+                    radius: 90
+                    styles: style_bg_arc_track
+                    bg_opa: COVER
+                    border_width: 0
+                    on_short_click:
+                      - lambda: 'popup_appareil_appui();'
+                    widgets:
+                      - obj:
+                          id: appareil_remplissage
+                          align: TOP_MID
+                          y: 190
+                          width: 180
+                          height: 190
+                          radius: 90
+                          styles: style_bg_dim
+                          bg_opa: 35%
+                          border_width: 0
+                          clickable: false
+                          scrollable: false
+                          widgets:
+                            - label: { id: appareil_commande_icone, text: "\U000F0425", align: CENTER, text_font: mdi_font_45, styles: style_text_dim }
+
+                # Ce que fera l'appui (« Éteindre », « Allumer », « Lancer », « Confirmer ? »).
+                - label:
+                    id: appareil_action
+                    text: "Allumer"
+                    align: TOP_MID
+                    y: 480
+                    styles: style_police_date

@@ -15,6 +15,30 @@ le 06/10/2026 : le package du volet à course simulée ne rend plus le volet mue
 extinction automatique de l'écran au choix et rallumage à « Okay Nabu » (#342), notice
 d'utilisation (#339).
 
+### 2026-10-06 — Popup d'un appareil à l'appui long, comme dans un tableau de bord HA
+
+Demandé dans la discussion #278 (« buttons can have pop up screen like ha dashboard »). L'appui
+long d'un interrupteur, d'une prise, d'un ventilateur, d'une scène, d'un script, d'un bouton ou
+d'un lecteur qui n'est pas la TV du blueprint ne faisait rien. Firmware seul : ni le contrat avec
+Home Assistant ni le blueprint ne changent.
+- **Nouveau popup « Appareil »** (`appareil_popup.yaml`, un seul pour tous ces types, chrome
+  partagé, inscrit au registre) : à gauche l'icône de la tuile dans une pastille ronde de la
+  couleur de son état, l'état en mots, la pièce et les options de la tuile (« Allumer
+  seulement », « Confirmer chaque commande ») ; à droite un grand interrupteur vertical façon HA
+  (rempli en haut et en couleur allumé, en bas et gris éteint, plein pour une scène) et ce que
+  fera l'appui.
+- **Le grand bouton refait le toucher de la tuile**, par la même fonction : même commande
+  (`basculer`, `allumer` avec « Allumer seulement », `lancer`), même confirmation (« Confirmer »
+  n'est jamais contourné : le premier appui arme, la tuile et le popup demandent « Confirmer ? »),
+  même « OK » après une scène. « Lecture seule » : ni toucher ni popup, comme avant. Lumières,
+  volets, clims, TV et énergie gardent leurs popups.
+- Seulement ce que HA pousse déjà pour les tuiles : pas de « dernière modification » ni
+  d'historique.
+- Rendu hors tablette : trois écrans (`appareil`, `appareil-scene`, `appareil-confirmer`). Tests
+  dans `tests/test_tuiles_firmware.py`. Docs : notice (tableau des appuis, « Fenêtre de
+  l'appareil »), `docs/screens.md`, ADR-0023 (mise à jour du 06/10/2026), cartographie.
+  **Pas encore essayé sur la tablette.**
+
 ### 2026-10-06 — Rangée sous l'horloge : jusqu'à trois lignes de capteurs, plus les plantes
 
 Demande d'Axel : sous l'horloge, la zone des pots ne montrait que les plantes. Elle devient une

@@ -48,10 +48,10 @@ In every text field `|` becomes `/` and `;` becomes `,` (as today).
 | Type | HA domains | Tap | Long press |
 |---|---|---|---|
 | `lum` | `light` | `basculer` | light popup (the room's `lum` tiles) |
-| `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | — |
+| `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | device popup (update 2026-10-06, below) |
 | `vol` | `cover`, `valve` | moving → `arreter` (pause); else the chosen direction (`ouvrir` / `fermer`, see below) | shutter popup (update 2026-10-05, below); with `k`, the other one of `ouvrir`/`fermer` |
-| `med` | `media_player` | `basculer` | TV remote, with `t` |
-| `act` | `scene`, `script`, `button`, `input_button` | `lancer` | — |
+| `med` | `media_player` | `basculer` | TV remote, with `t`; else the device popup (update 2026-10-06) |
+| `act` | `scene`, `script`, `button`, `input_button` | `lancer` | device popup (update 2026-10-06) |
 | `cap` | `sensor`, `number`, `input_number` | — (read only) | — |
 | `bin` | `binary_sensor`, `device_tracker`, `person`, `lock` | — (read only) | — |
 | `cli` | `climate` | climate popup: the blueprint's with `m`, else its own once HA sent its settings ([ADR-0027](0027-climate-per-tile.md)) | — |
@@ -137,3 +137,12 @@ Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discu
 - **Popup** (`ui_components/volet_popup.yaml`, `tab5_tuiles.cpp`, registered as « Volet », shared chrome of [ADR-0009](0009-modal-shell-header.md)): title = the tile's name; left card, the position in large digits (« 45 % ») and the state in words below; right card, **Ouvrir / Stop / Fermer**, which send the tile's own `ouvrir` / `arreter` / `fermer`. A 0-100 % slider shows only when the position is known (a value 0-100 with an online state): it sends **`position`** with the value **on release only**, never while dragging. Unknown position (`nan`: a shutter that does not report one; `-1`: the simulated shutter's « Partiel ») shows the state alone, in words: « Ouvert », « Fermé », « Partiel » (stopped half-way), « En mouvement », « Hors ligne ». The popup follows its tile's pushes while it is open (never under the finger).
 - **Home Assistant.** The blueprint's « Tuile : position » branch calls `cover.set_cover_position` / `valve.set_valve_position` on the entity of **that tile only** (the same whitelist as the other tile commands, behind the same origin guard), when the entity can set a position (`supported_features` bit 4, `SET_POSITION`), with the value clamped to 0-100. The simulated shutter of `optionnel/volet_serre_tracking.yaml` has no real position: its states now push `nan` at both ends of the course instead of 100 / 0 (the arrow flips the same way), so the tablet gives it no slider, and the branch skips it.
 - **Compatibility.** An older blueprint has no branch for `position`: the slider then does nothing (the buttons still work). An older firmware never sends it.
+
+## Update — 2026-10-06: the device popup (long press)
+
+Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (« buttons can have pop up screen like ha dashboard »). The long press of an `int` or `act` tile, or of a `med` tile without `t`, used to do nothing.
+
+- **Gesture.** That long press (weather shoulders or HA-mode card) opens the **device popup** on that tile, the « more info » window of a Home Assistant dashboard. A `med` with `t` keeps the TV remote; option `r`: nothing, as before (no tap at all); legacy mode: unchanged. The tap is unchanged.
+- **Popup** (`ui_components/appareil_popup.yaml`, `tab5_tuiles.cpp`, registered as « Appareil », shared chrome of [ADR-0009](0009-modal-shell-header.md)): title = the tile's name; left card, the tile's icon in a round badge of its state's colour, the state in words (the HA-mode card's line; « Prêt » / « En cours » for an `act`), the room, and the tile's options (`o`, `k`) in words; right card, one large vertical switch (filled at the top and coloured when on, at the bottom and grey when off, filled for an `act`) and, under it, what a press does (« Allumer », « Éteindre », « Lancer »).
+- **Command.** The large switch runs **the tile's own tap**, through the same function (`tuile_appui_piece`): `basculer` (`allumer` with `o`) or `lancer`, the same confirmation with `k` (the first press arms the tile's 3 s timer; the tile and the popup both ask « Confirmer ? »; a second press sends), the same « OK » after `lancer`. No new command, no change to the contract or to Home Assistant.
+- **Data.** Only what HA already pushes for the tiles (definition and state). The time of the last change, the attributes, the history are not pushed: not shown.

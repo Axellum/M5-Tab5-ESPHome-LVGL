@@ -14,9 +14,12 @@
  *         - Mode héritage : tant qu'aucune définition n'est arrivée (drapeau en NVS), la
  *           pièce 0 est construite depuis les emplacements 3.x (PC/TV, volet, trois
  *           lumières), avec leurs noms, icônes, comportements et commandes 3.x.
- *         - Popups des tuiles : lumière (appui long d'une lum) et volet (appui long d'une
+ *         - Popups des tuiles : lumière (appui long d'une lum), volet (appui long d'une
  *           vol sans l'option k, 05/10/2026 : position, curseur envoyé au relâcher,
- *           Ouvrir / Stop / Fermer), repeints quand l'état de leur tuile change.
+ *           Ouvrir / Stop / Fermer) et appareil (appui long d'une int, d'une act ou d'une
+ *           med sans l'option t, 06/10/2026 : la fenêtre « plus d'infos » d'un tableau
+ *           de bord HA, dont le grand bouton refait le toucher de la tuile), repeints
+ *           quand l'état de leur tuile change.
  *         - Rangée sous l'horloge (ADR-0031, 06/10/2026) : trois lignes de quatre
  *           éléments au plus, mêmes types que les tuiles, dans la même action
  *           (« hLI|type|icône|options|complément|nom|classe », « hp|place des plantes »)
@@ -485,6 +488,7 @@ struct Vue {
     char ligne[40] = "";                // ligne d'état de la carte
     uint32_t couleur_ligne = UIColor.INACTIVE;
     bool agit = false;                  // un appui fait quelque chose
+    bool actif = false;                 // allumé, ouvert, en lecture… (icône « on »)
 };
 
 // Minuteries d'une tuile : confirmation (option k, 3 s) et « OK » après « lancer » (1 s).
@@ -761,6 +765,7 @@ void vue_def(const Def& d, const Etat& e, int r, int t, Vue& v) {
     v.icone = v.icone_carte = icone;
     v.couleur = v.couleur_carte = c;
     v.couleur_ligne = c_ligne;
+    v.actif = actif;
 }
 
 void vue_nouvelle(int r, int t, Vue& v) { vue_def(s_m.tuiles[r][t], s_etats[r][t], r, t, v); }
@@ -962,12 +967,14 @@ void peindre_meteo() {
 
 void popup_lumiere_etat(int r, int t);
 void popup_volet_etat(int r, int t);
+void popup_appareil_etat(int r, int t);
 
 // Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
 void peindre_tuile(int r, int t) {
     if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
     popup_lumiere_etat(r, t);
     popup_volet_etat(r, t);
+    popup_appareil_etat(r, t);
     if (r != piece_courante()) return;
     if (g_central_ctx.ha_mode) {
         if (tuile_presente(r, t)) peindre_carte(r, t);
@@ -1302,6 +1309,138 @@ void volet_curseur_rappel(lv_event_t* ev) {
     }
 }
 
+// ─── Popup d'un appareil (06/10/2026, discussion #278) ──────────────────────────────
+//
+// « Buttons can have pop up screen like ha dashboard » : l'appui long d'une tuile qui
+// n'avait pas de popup (int, act, med sans l'option t) ouvre, pour cette tuile, la
+// fenêtre « plus d'infos » d'un tableau de bord HA : son icône dans une pastille ronde
+// de la couleur de son état, l'état en mots, sa pièce, ses options, et un grand bouton
+// qui fait EXACTEMENT ce que fait le toucher de la tuile (tuile_appui_piece) : même
+// commande, même confirmation (option k : la minuterie de la tuile, la tuile ET le popup
+// demandent « Confirmer ? »), même « OK » après « lancer ». Il ne montre que ce que HA
+// pousse déjà pour les tuiles (définition, état) : rien d'inventé. Tant qu'il est
+// ouvert, il suit l'état de SA tuile (peindre_tuile → popup_appareil_etat).
+
+struct PopupAppareil {
+    int piece = -1;
+    int tuile = -1;
+};
+PopupAppareil s_pa;
+
+// Géométrie (appareil_popup.yaml) : titre = la barre d'en-tête moins l'icône et la
+// croix ; textes de la carte ÉTAT (800 px) et de la carte COMMANDE (386 px) ; grand
+// bouton de 380 px, rempli à moitié (allumé : en haut ; éteint : en bas) ou en entier
+// (scène, script, bouton).
+constexpr int32_t kAppareilTitreLargeur = 1000;
+constexpr int32_t kAppareilTexteLargeur = 740;
+constexpr int32_t kAppareilActionLargeur = 350;
+constexpr int32_t kAppareilBoutonHauteur = 380;
+
+// Les types qui ont ce popup : int, act, et med sans l'option t (avec t, la télécommande).
+bool a_popup_appareil(Type type, uint8_t options) {
+    switch (type) {
+        case Type::INT: case Type::ACT: return true;
+        case Type::MED: return (options & OPT_T) == 0;
+        default: return false;
+    }
+}
+
+bool popup_appareil_ouvert() {
+    const lv_obj_t* p = g_tuiles_ui.app_popup;
+    return p != nullptr && !lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN);
+}
+
+// La tuile du popup a-t-elle toujours ce popup ? (les définitions peuvent changer popup
+// ouvert ; option r : jamais ; le mode héritage n'ouvre jamais ce popup.)
+bool popup_appareil_valide() {
+    const int r = s_pa.piece, t = s_pa.tuile;
+    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles || heritage()) return false;
+    const Def& d = s_m.tuiles[r][t];
+    return !(d.options & OPT_R) && a_popup_appareil(static_cast<Type>(d.type), d.options);
+}
+
+// Glyphe du grand bouton (mdi_font_45, règle 9) : lecture pour une scène, un script, un
+// bouton ; marche / arrêt sinon.
+const char* glyphe_commande(bool lancer) {
+    return lancer ? "\U000F040A" : "\U000F0425";
+}
+
+// Tout le popup, depuis la définition et l'état de sa tuile (vue_def : les mêmes mots,
+// icône et couleurs que la carte du mode HA).
+void popup_appareil_peindre() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.app_popup == nullptr || !popup_appareil_valide()) return;
+    const int r = s_pa.piece, t = s_pa.tuile;
+    const Def& d = s_m.tuiles[r][t];
+    const Etat& e = s_etats[r][t];
+    const Type type = static_cast<Type>(d.type);
+    Vue v;
+    vue_def(d, e, r, t, v);
+    const bool lancer = type == Type::ACT;
+    const bool confirmer = minuterie_sur(s_confirmation, r, t);
+    const bool ok = minuterie_sur(s_ok, r, t);
+    ui_texte_coupe(u.app_titre, d.nom, kAppareilTitreLargeur);
+    // Pastille : l'icône de la tuile en couleur pleine sur sa couleur à 20 % (le YAML).
+    if (v.icone_carte != nullptr) ui_text(u.app_icone, v.icone_carte);
+    ui_text_color(u.app_icone, v.couleur_carte);
+    ui_fond(u.app_pastille, v.couleur_carte);
+    // État en mots : la ligne d'état de la carte, sauf « Lancer » (une action, pas un
+    // état) : un script en route (« on ») dit « En cours », le reste « Prêt ».
+    const char* etat = v.ligne;
+    if (lancer && std::strcmp(v.ligne, tr("Lancer")) == 0) etat = est(e.brut, "on") ? tr("En cours") : tr("Prêt");
+    ui_texte_coupe(u.app_etat, etat, kAppareilTexteLargeur);
+    ui_text_color(u.app_etat, v.couleur_ligne);
+    // La pièce : son nom, ou « Pièce n » quand HA n'en donne pas.
+    char buf[64];
+    if (s_m.pieces[r][0] != '\0') snprintf(buf, sizeof(buf), tr("Pièce : %s"), s_m.pieces[r]);
+    else snprintf(buf, sizeof(buf), tr("Pièce %d"), r + 1);
+    ui_texte_coupe(u.app_piece, buf, kAppareilTexteLargeur);
+    // Options de la tuile (blueprint, « Personnaliser des tuiles »), une par ligne.
+    char options[96] = "";
+    if ((d.options & OPT_O) && !lancer) snprintf(options, sizeof(options), "%s", tr("Allumer seulement"));
+    if (d.options & OPT_K) {
+        const size_t n = std::strlen(options);
+        snprintf(options + n, sizeof(options) - n, "%s%s", n > 0 ? "\n" : "", tr("Confirmer chaque commande"));
+    }
+    ui_text(u.app_options, options);
+    ui_hidden(u.app_options, options[0] == '\0');
+    // Grand bouton : rempli en haut quand l'appareil est allumé, en bas sinon, en entier
+    // pour une scène ; dans la couleur de la carte (ambre pendant une confirmation).
+    lv_obj_t* f = u.app_remplissage;
+    const int32_t h = lancer ? kAppareilBoutonHauteur : kAppareilBoutonHauteur / 2;
+    if (f != nullptr && lv_obj_get_style_height(f, LV_PART_MAIN) != h) lv_obj_set_height(f, h);
+    ui_y(f, (lancer || v.actif) ? 0 : kAppareilBoutonHauteur - h);
+    ui_fond(f, v.couleur_carte);
+    ui_text(u.app_commande_icone, glyphe_commande(lancer));
+    ui_text_color(u.app_commande_icone, v.couleur_carte);
+    // Ce que fera l'appui : la commande de la tuile (basculer, allumer avec l'option o,
+    // lancer), dite en mots ; ambre quand elle attend sa confirmation.
+    const char* action = tr("Éteindre");
+    if (lancer) action = ok ? "OK" : tr("Lancer");
+    else if ((d.options & OPT_O) || !v.actif) action = tr("Allumer");
+    uint32_t c_action = UIColor.ACCENT;
+    if (confirmer) c_action = UIColor.WARNING;
+    else if (ok) c_action = UIColor.SUCCESS;
+    else if (!lancer && (d.options & OPT_O) && v.actif) c_action = UIColor.TEXT_DIM;  // déjà allumé
+    ui_texte_coupe(u.app_action, action, kAppareilActionLargeur);
+    ui_text_color(u.app_action, c_action);
+}
+
+void popup_appareil_ouvrir(int r, int t) {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.app_popup == nullptr) return;
+    s_pa = PopupAppareil{};
+    s_pa.piece = r;
+    s_pa.tuile = t;
+    popup_appareil_peindre();
+    animate_popup_open(u.app_popup);
+}
+
+// Un état ou une minuterie a changé : le popup, s'il montre cette tuile.
+void popup_appareil_etat(int r, int t) {
+    if (popup_appareil_ouvert() && r == s_pa.piece && t == s_pa.tuile) popup_appareil_peindre();
+}
+
 // Mode héritage : les gestes de la 3.1 (tuile 0 PC + télécommande, 1 volet, 2-4 lumières).
 void appui_heritage(int t, bool long_appui) {
     switch (t) {
@@ -1426,6 +1565,11 @@ bool tuiles_definir(const std::string& payload) {
         if (popup_volet_valide()) popup_volet_peindre();
         else animate_popup_close(g_tuiles_ui.vol_popup);
     }
+    // Même chose pour le popup d'un appareil (tuile devenue lecture seule, autre type…).
+    if (popup_appareil_ouvert()) {
+        if (popup_appareil_valide()) popup_appareil_peindre();
+        else animate_popup_close(g_tuiles_ui.app_popup);
+    }
     tuiles_appliquer_ui();
     return true;
 }
@@ -1537,13 +1681,15 @@ void tuiles_peindre_meteo() {
 }
 
 // Thèmes (ADR-0029) : tuiles, cartes, bouton « HA » (sa garde au changement forcée),
-// popups lumière et volet, depuis le dernier état ; rien avant le premier dessin des tuiles.
+// popups lumière, volet et appareil, depuis le dernier état ; rien avant le premier
+// dessin des tuiles.
 void tuiles_rejouer_theme() {
     if (!s_charge) return;
     s_bouton_actif = !g_central_ctx.ha_mode;
     tuiles_appliquer_ui();
     if (s_pl.n > 0) popup_lumiere_peindre();
     if (popup_volet_ouvert()) popup_volet_peindre();
+    if (popup_appareil_ouvert()) popup_appareil_peindre();
 }
 
 void tuiles_repeindre(int r, int t) {
@@ -1668,11 +1814,10 @@ void tuiles_brancher_titres() {
     }
 }
 
-void tuile_appui(int t, bool long_appui) {
-    charger();
-    // Mode météo sans appareils : boutons masqués ; pas d'appui non plus par une autre voie.
-    if (!g_central_ctx.ha_mode && !s_appareils_meteo) return;
-    const int r = piece_courante();
+// Appui sur la tuile T de la pièce R : tuile de la page courante (tuile_appui), ou grand
+// bouton du popup d'un appareil (popup_appareil_appui, appui court). Un seul chemin pour
+// les deux : la même commande, la même confirmation (option k), le même « OK ».
+static void tuile_appui_piece(int r, int t, bool long_appui) {
     if (!tuile_presente(r, t)) return;
     if (heritage()) {
         appui_heritage(t, long_appui);
@@ -1694,7 +1839,11 @@ void tuile_appui(int t, bool long_appui) {
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::INT:
-            if (long_appui) return;
+            // Appui long (06/10/2026, discussion #278) : le popup de l'appareil.
+            if (long_appui) {
+                popup_appareil_ouvrir(r, t);
+                return;
+            }
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::VOL:
@@ -1708,14 +1857,20 @@ void tuile_appui(int t, bool long_appui) {
             action = long_appui ? vol_appui_long(e) : vol_appui(e);
             break;
         case Type::MED:
+            // Appui long : la télécommande de la TV du blueprint (option t), sinon le popup
+            // de l'appareil (06/10/2026).
             if (long_appui) {
                 if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);
+                else popup_appareil_ouvrir(r, t);
                 return;
             }
             action = (d.options & OPT_O) ? "allumer" : "basculer";
             break;
         case Type::ACT:
-            if (long_appui) return;
+            if (long_appui) {
+                popup_appareil_ouvrir(r, t);
+                return;
+            }
             action = "lancer";
             break;
         case Type::CLI:
@@ -1743,6 +1898,13 @@ void tuile_appui(int t, bool long_appui) {
     }
     envoyer_tuile(r, t, action);
     if (type == Type::ACT) minuterie_armer(s_ok, r, t, kOkMs);
+}
+
+void tuile_appui(int t, bool long_appui) {
+    charger();
+    // Mode météo sans appareils : boutons masqués ; pas d'appui non plus par une autre voie.
+    if (!g_central_ctx.ha_mode && !s_appareils_meteo) return;
+    tuile_appui_piece(piece_courante(), t, long_appui);
 }
 
 void tuiles_heritage_pc(bool actif) {
@@ -1787,6 +1949,13 @@ void popup_volet_commande(const char* action) {
     charger();
     if (action == nullptr || !popup_volet_valide()) return;
     envoyer_tuile(s_pv.piece, s_pv.tuile, action);
+}
+
+// Grand bouton du popup d'un appareil : le toucher de SA tuile, par le même chemin.
+void popup_appareil_appui() {
+    charger();
+    if (!popup_appareil_valide()) return;
+    tuile_appui_piece(s_pa.piece, s_pa.tuile, false);
 }
 
 void tuiles_brancher_popup_volet() {

@@ -2,7 +2,7 @@
 # [AI-CONTEXT]
 # @file tab5-tuiles.yaml
 # @role Pièces et tuiles génériques (ADR-0023, 28/09/2026) : pose les widgets que
-#       tab5_tuiles.cpp dessine (g_tuiles_ui, popups lumière et volet compris) et ses
+#       tab5_tuiles.cpp dessine (g_tuiles_ui, popups lumière, volet et appareil compris) et ses
 #       deux commandes (événement esphome.tab5_action, tap du volet 3.x). Le modèle, la NVS et le dessin vivent
 #       dans tab5_tuiles.cpp ; les définitions arrivent par l'action tab5_maj_tuiles et
 #       les états par tab5_maj_emplacements (clés tRT), tab5-api-logic.yaml.
@@ -132,6 +132,17 @@ script:
           u.vol_etat = id(volet_etat);
           u.vol_curseur_cadre = id(volet_curseur_cadre);
           u.vol_curseur = id(volet_curseur);
+          // Popup d'un appareil (appui long d'une tuile int, act, med sans t, 06/10/2026).
+          u.app_popup = id(appareil_popup);
+          u.app_titre = id(appareil_popup_titre);
+          u.app_pastille = id(appareil_pastille);
+          u.app_icone = id(appareil_icone);
+          u.app_etat = id(appareil_etat);
+          u.app_piece = id(appareil_piece);
+          u.app_options = id(appareil_options);
+          u.app_remplissage = id(appareil_remplissage);
+          u.app_commande_icone = id(appareil_commande_icone);
+          u.app_action = id(appareil_action);
           u.volet_sens = &id(volet_target_open);
           u.envoyer = [](const char* e, const char* a, const char* v) {
             id(tab5_action).execute(std::string(e), std::string(a), std::string(v));
