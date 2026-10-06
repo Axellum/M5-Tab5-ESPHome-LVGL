@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29** (52 composants UI dont 28 inclus par `tab5-lvgl.yaml`, 21 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29** (54 composants UI dont 28 inclus par `tab5-lvgl.yaml`, 21 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 
@@ -55,7 +55,7 @@
 | `console_sys.yaml` | `Tab5/ui_components/` | Console Système en 4 cartes. |
 | `light_popup.yaml` | `Tab5/ui_components/` | Popup contrôle lumière. |
 | `tv_remote_popup.yaml` | `Tab5/ui_components/` | Popup télécommande TV Samsung. |
-| `moisture_sensors.yaml` | `Tab5/ui_components/` | 4 slots UI humidité plantes. |
+| `rangee.yaml` | `Tab5/ui_components/` | Rangée sous l'horloge (ADR-0031) : ligne des plantes (`moisture_sensors.yaml`, 4 slots humidité) et lignes de capteurs. |
 | `pots_popup.yaml` | `Tab5/ui_components/` | Popup détails plantes. |
 | `calendar_popup.yaml` | `Tab5/ui_components/` | Popup calendrier mensuel. |
 | `assistant_popup.yaml` | `Tab5/ui_components/` | Popup assistant vocal. |

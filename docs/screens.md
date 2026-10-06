@@ -12,7 +12,7 @@ This page describes what the Tab5 actually shows and does — verified against t
 
 There is a **single 1280×720 page** (`page_main`), not a tab-navigated set of screens. Three regions:
 
-1. **Home area** — always visible: clock, indoor sensors, quick actions, compact climate card, plant moisture card.
+1. **Home area** — always visible: clock, indoor sensors, quick actions, compact climate card, and the row under the clock (plants and sensors).
 2. **Central card** — a small area that automatically rotates between planning, rain forecast, weather alerts and an info panel (calendar recap / alert text).
 3. **Bottom card region** — either the 5-card weather forecast (with the devices of each page's room in the tiles' shoulders), or, in HA mode, the 5 device cards of the current room.
 
@@ -43,7 +43,7 @@ Always-visible content at the top of the screen:
 - Microphone icon with pipeline state color (see Voice assistant below), between the two voice-mode buttons (Home Assistant agent vs. conversation/LLM pipeline), and under them the wide **Ok Nabu: ON / OFF** wake-word button (the mute button is in the assistant popup since 2026-10-05)
 - **HA**, **Sys** and **TV** buttons, top right. The home buttons show their icon only, all at the same size (125 × 90, icons of 70 px); the three columns of the top area sit 20 px from the screen edges like the central card, with their tops aligned at y 20 and their bottoms at y 308, 25 px above the central card
 - **Compact climate card** — current temperature (living room + greenhouse/serre sensors) and the target temperature with +/− buttons; tapping the target opens the climate popup (see Climate below)
-- **Plant moisture card** — 4 slots for up to 5 BLE soil moisture sensors (see Plant moisture below)
+- **Row under the clock** — the plants line (4 slots for up to 5 BLE soil moisture sensors, see Plant moisture below) and up to three lines of sensors picked in the blueprint, rotating with the central card (see Row under the clock below)
 
 ---
 
@@ -118,6 +118,16 @@ The controls are dimmed (not hidden) when the AC is off, so the layout stays sta
 
 ---
 
+## Row under the clock
+
+Under the clock, a 401 × 70 px row ([ADR-0031](decisions/0031-row-under-the-clock.md), `tab5_rangee.cpp`, `ui_components/rangee.yaml`) shows one line at a time: the plants line (below) and up to three lines of four devices picked in the « Sous l'horloge · Under the clock » section of the « Tab5 — emplacements » blueprint, three lines at most in all. The blueprint also sets where the plants line goes (first by default, second, third or hidden) and how long a line stays (8 to 120 s in steps of 8 s, 32 s by default).
+
+- **Timing.** The central card keeps its 8 s. `tab5_central_rotator_auto` waits 7.8 s, turns the row (`rangee_tour()`), waits 0.2 s and moves the central card: when the row changes, it does just before the card, with the same short slide and fade (`transition_widgets()`). It does not turn with the screen off or a window open.
+- **Layout.** Icons only (no sensor on the line): 70 px icons, like the pots. With values: the largest size that fits — the date's font of the theme with 45 px icons, then 32 px bold, then 22 px, then the icon above its value; past that the value is cut with « … ».
+- **Colours.** An icon is coloured like a tile (on, off, offline). A value follows its measurement: the temperature scale (written « 21.4 ° »; °F brought back to °C for the colour), humidity and moisture the plant scale, batteries the battery scale, gold for power and energy (W / kW, kWh / MWh).
+- **Touch.** A tap shows the next line at once and restarts its time; a long press on the plants line opens the plant details. The row commands nothing: a switch or a light only shows its state.
+- Small dashes under the row (two or three) show which line is on; one line alone has none.
+
 ## Plant moisture card
 
 Monitors up to 5 BLE soil moisture sensors, but only **4 slots are shown** (`sort_and_update_moisture_slots()`, `tab5_*.cpp`). The sensors are sorted by moisture level (driest to wettest) each update, then mapped to slots as: driest, 2nd-driest, **the median-ranked sensor** (it shows that one sensor's raw reading, it is not a computed arithmetic average of all 5), and wettest. Because the mapping is by rank rather than by fixed sensor identity, *which* physical pot appears in which slot changes over time as moisture levels shift.
@@ -126,7 +136,7 @@ Each slot shows the sensor's icon only, in its moisture-level color (see Color c
 
 ### Plant details popup — long press
 
-A **long press anywhere on the moisture card** opens a near-fullscreen modal (1250×690 card, 15 px from the screen edges) with **5 fixed glass cards — one per sensor** (card N = sensor `moisture_N`, same icon as the dashboard, no dynamic sorting here). Each card shows:
+A **long press on the plants line** of the row under the clock opens a near-fullscreen modal (1250×690 card, 15 px from the screen edges) with **5 fixed glass cards — one per sensor** (card N = sensor `moisture_N`, same icon as the dashboard, no dynamic sorting here). Each card shows:
 
 - the pot name and its plant icon, colored by moisture level (same scale as the dashboard)
 - the soil-moisture % (large) and a watering status: **OK** (green), **Bientôt sec** (≤ 20 %, amber), **À arroser !** (≤ 14 %, red — aligned with the `get_humidity_color()` red zone) or **Hors ligne** (sensor unavailable)
@@ -333,7 +343,7 @@ Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié cont
 
 Il y a une **page unique 1280×720** (`page_main`), pas un jeu d'écrans navigués par onglets. Trois zones :
 
-1. **Zone d'accueil** — toujours visible : horloge, capteurs intérieurs, actions rapides, carte clim compacte, carte humidité plantes.
+1. **Zone d'accueil** — toujours visible : horloge, capteurs intérieurs, actions rapides, carte clim compacte, et la rangée sous l'horloge (plantes et capteurs).
 2. **Carte centrale** — une petite zone qui alterne automatiquement entre planning, prévision de pluie, alertes météo et un panneau info (récap calendrier / texte d'alerte).
 3. **Zone de cartes du bas** — soit les 5 cartes prévisions météo (avec, dans leurs épaules, les appareils de la pièce de chaque page), soit, en mode HA, les 5 cartes d'appareil de la pièce courante.
 
@@ -364,7 +374,7 @@ Contenu toujours visible en haut de l'écran :
 - Icône microphone avec couleur d'état du pipeline (voir Assistant vocal ci-dessous), entre les deux boutons de mode vocal (agent Home Assistant vs pipeline conversation/LLM), et dessous le large bouton **Ok Nabu: ON / OFF** du mot de réveil (le bouton muet est dans le popup assistant depuis le 05/10/2026)
 - Boutons **HA**, **Sys** et **TV**, en haut à droite. Les boutons de l'accueil n'affichent que leur icône, tous à la même taille (125 × 90, icônes de 70 px) ; les trois colonnes du haut sont à 20 px des bords de l'écran comme la carte centrale, hauts alignés à y 20 et bas à y 308, 25 px au-dessus de la carte centrale
 - **Carte clim compacte** — température actuelle (capteurs salon + serre) et température cible avec boutons +/− ; taper sur la cible ouvre le popup clim (voir Climatisation ci-dessous)
-- **Carte humidité plantes** — 4 emplacements pour jusqu'à 5 capteurs BLE d'humidité du sol (voir Humidité des plantes ci-dessous)
+- **Rangée sous l'horloge** — la ligne des plantes (4 emplacements pour jusqu'à 5 capteurs BLE d'humidité du sol, voir Humidité des plantes ci-dessous) et jusqu'à trois lignes de capteurs choisies dans le blueprint, qui tournent avec la carte centrale (voir Rangée sous l'horloge ci-dessous)
 
 ---
 
@@ -439,6 +449,16 @@ Les contrôles sont estompés (non cachés) quand le clim est éteint, pour gard
 
 ---
 
+## Rangée sous l'horloge
+
+Sous l'horloge, une rangée de 401 × 70 px ([ADR-0031](decisions/0031-row-under-the-clock.md), `tab5_rangee.cpp`, `ui_components/rangee.yaml`) montre une ligne à la fois : la ligne des plantes (plus bas) et jusqu'à trois lignes de quatre appareils choisies dans la section « Sous l'horloge · Under the clock » du blueprint « Tab5 — emplacements », trois lignes au plus en tout. Le blueprint règle aussi la place de la ligne des plantes (en premier d'origine, deuxième, troisième ou masquée) et la durée d'une ligne (8 à 120 s par pas de 8 s, 32 s d'origine).
+
+- **Calage.** La carte centrale garde ses 8 s. `tab5_central_rotator_auto` attend 7,8 s, fait tourner la rangée (`rangee_tour()`), attend 0,2 s et fait avancer la carte : quand la rangée change, c'est juste avant la carte, avec le même court glissement en fondu (`transition_widgets()`). Elle ne tourne pas écran éteint ni fenêtre ouverte.
+- **Mise en page.** Icônes seules (aucun capteur sur la ligne) : icônes de 70 px, comme les pots. Avec des valeurs : la plus grande taille qui tient — la police de la date du thème avec des icônes de 45 px, puis 32 px en gras, puis 22 px, puis l'icône au-dessus de sa valeur ; au-delà, la valeur est coupée par « … ».
+- **Couleurs.** Une icône est colorée comme une tuile (allumé, éteint, hors ligne). Une valeur suit sa mesure : l'échelle des températures (écrite « 21.4 ° » ; °F ramené en °C pour la couleur), l'humidité celle des plantes, les batteries celle des batteries, l'or pour la puissance et l'énergie (W / kW, kWh / MWh).
+- **Toucher.** Un appui montre la ligne suivante tout de suite et repart de zéro pour sa durée ; un appui long sur la ligne des plantes ouvre le détail des plantes. La rangée ne commande rien : un interrupteur ou une lampe montre seulement son état.
+- De petits tirets sous la rangée (deux ou trois) montrent la ligne affichée ; une ligne seule n'en a pas.
+
 ## Carte humidité des plantes
 
 Surveille jusqu'à 5 capteurs BLE d'humidité du sol, mais seuls **4 emplacements sont affichés** (`sort_and_update_moisture_slots()`, `tab5_*.cpp`). Les capteurs sont triés par niveau d'humidité (du plus sec au plus humide) à chaque mise à jour, puis mappés sur les emplacements ainsi : le plus sec, le 2e plus sec, **le capteur de rang médian** (ça affiche la lecture brute de ce capteur précis, ce n'est pas une moyenne arithmétique calculée sur les 5), et le plus humide. Comme le mapping se fait par rang plutôt que par identité fixe du capteur, *quel* pot apparaît dans quel emplacement change dans le temps selon l'évolution de l'humidité.
@@ -447,7 +467,7 @@ Chaque emplacement n'affiche que l'icône du capteur, dans sa couleur de niveau 
 
 ### Popup détails plantes — appui long
 
-Un **appui long n'importe où sur la carte des pots** ouvre un modal quasi plein écran (carte 1250×690 à 15 px des bords) avec **5 cartes de verre fixes — une par capteur** (carte N = capteur `moisture_N`, même icône que le dashboard, pas de tri dynamique ici). Chaque carte affiche :
+Un **appui long sur la ligne des plantes** de la rangée sous l'horloge ouvre un modal quasi plein écran (carte 1250×690 à 15 px des bords) avec **5 cartes de verre fixes — une par capteur** (carte N = capteur `moisture_N`, même icône que le dashboard, pas de tri dynamique ici). Chaque carte affiche :
 
 - le nom du pot et son icône de plante, colorée par le niveau d'humidité (même échelle que le dashboard)
 - le % d'humidité du sol (en grand) et un statut d'arrosage : **OK** (vert), **Bientôt sec** (≤ 20 %, ambre), **À arroser !** (≤ 14 %, rouge — aligné sur la zone rouge de `get_humidity_color()`) ou **Hors ligne** (capteur indisponible)

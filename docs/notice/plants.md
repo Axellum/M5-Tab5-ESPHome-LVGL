@@ -4,9 +4,9 @@
 
 ---
 
-On the home screen, one icon per pot, from the driest on the left to the wettest on the right, an offline sensor last in grey. With five pots there are four icons: the driest, the next one, the middle one and the wettest. Which pot sits where changes as they dry. The colour: red, to water; green, fine; blue, too wet.
+On the home screen, in the plants line under the clock, one icon per pot, from the driest on the left to the wettest on the right, an offline sensor last in grey. With five pots there are four icons: the driest, the next one, the middle one and the wettest. Which pot sits where changes as they dry. The colour: red, to water; green, fine; blue, too wet.
 
-**Opens with** a long press on those icons. A tap does nothing.
+**Opens with** a long press on those icons. A tap shows the next line of the row, if it has others ([home screen](home.md)).
 
 ![My plants: five pots, each with its moisture, its state, fertility, light, temperature and battery](../images/notice/plantes-en.webp)
 
@@ -23,9 +23,9 @@ Apart from its ×, the window has no button: it only shows. The values follow th
 
 ---
 
-Sur l'écran d'accueil, une icône par pot, du plus sec à gauche au plus humide à droite, un capteur hors ligne en dernier, en gris. Avec cinq pots, il y a quatre icônes : le plus sec, le suivant, celui du milieu et le plus humide. Quel pot est où change à mesure qu'ils sèchent. La couleur : rouge, à arroser ; vert, bien ; bleu, trop humide.
+Sur l'écran d'accueil, dans la ligne des plantes sous l'horloge, une icône par pot, du plus sec à gauche au plus humide à droite, un capteur hors ligne en dernier, en gris. Avec cinq pots, il y a quatre icônes : le plus sec, le suivant, celui du milieu et le plus humide. Quel pot est où change à mesure qu'ils sèchent. La couleur : rouge, à arroser ; vert, bien ; bleu, trop humide.
 
-**S'ouvre par** un appui long sur ces icônes. Un tap ne fait rien.
+**S'ouvre par** un appui long sur ces icônes. Un tap montre la ligne suivante de la rangée, s'il y en a d'autres ([écran d'accueil](home.md#version-française)).
 
 ![Mes plantes : cinq pots, chacun avec son humidité, son état, la fertilité, la lumière, la température et la batterie](../images/notice/plantes-fr.webp)
 
