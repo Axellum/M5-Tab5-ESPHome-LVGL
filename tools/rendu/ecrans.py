@@ -30,11 +30,16 @@ from scenarios import PAGE_DE_LA_PIECE, PIECES, SCENES, build_alerte_payload, co
 
 @dataclass(frozen=True)
 class Toucher:
-    """Appui du doigt en (x, y). `duree` en ms : 1000 et plus pour un appui long."""
+    """Appui du doigt en (x, y). `duree` en ms : 1000 et plus pour un appui long.
+    `selon_langue` : ((suffixe, x, y), …), un autre point pour les captures de ce suffixe."""
     x: int
     y: int
     duree: int = 150
     apres: float = 0.6
+    selon_langue: tuple = ()
+
+    def point(self, suffixe: str) -> tuple[int, int]:
+        return next(((x, y) for s, x, y in self.selon_langue if s == suffixe), (self.x, self.y))
 
 
 def Long(x: int, y: int, apres: float = 0.8) -> Toucher:  # noqa: N802 — se lit comme une étape
@@ -266,10 +271,11 @@ CONFIRMATION_ANNULER = (813, 596)   # jamais « Confirmer » (1049, 596)
 TUILE_SOLAIRE = (390, 572)
 FERMER_POPUP = (1215, 41)
 ENERGIE_VUES = {"heures": (828, 347), "jours": (988, 347), "mois": (1148, 347)}
-# Popup Réglages (reglages_popup.yaml) : carte APPARENCE à (652, 87) à l'écran ; pastille
-# « English » (x 158, y 457, 131 × 56 dans la carte) ; « Annuler » de la confirmation
-# (centre de la carte − 130, + 60). Jamais « Confirmer » : la tablette redémarrerait.
-REGLAGES_LANGUE_EN = (875, 572)
+# Popup Réglages (reglages_popup.yaml) : carte APPARENCE à (652, 87) à l'écran ; pastilles
+# « English » et « Français » (x 158 et 17, y 457, 131 × 56 dans la carte) ; « Annuler » de
+# la confirmation (centre de la carte − 130, + 60). Jamais « Confirmer » : la tablette
+# redémarrerait. La langue de l'écran n'ouvre pas la confirmation : « Français » en anglais.
+REGLAGES_LANGUE_EN, REGLAGES_LANGUE_FR = (875, 572), (734, 572)
 REGLAGES_ANNULER = (816, 446)
 
 
@@ -415,7 +421,8 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("energie-mois", (Aller("Énergie"), Toucher(*ENERGIE_VUES["mois"]))),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     Ecran("reglages", (Toucher(*BOUTON_SYS),)),
-    Ecran("reglages-langue", (Toucher(*BOUTON_SYS), Toucher(*REGLAGES_LANGUE_EN)),
+    Ecran("reglages-langue", (Toucher(*BOUTON_SYS),
+                              Toucher(*REGLAGES_LANGUE_EN, selon_langue=(("en", *REGLAGES_LANGUE_FR),))),
           (Toucher(*REGLAGES_ANNULER),)),
     Ecran("console-systeme", (Long(*BOUTON_SYS),)),
     Ecran("console-confirmer-redemarrage-ha", (Long(*BOUTON_SYS), Toucher(*CONSOLE_REDEMARRER_HA)),
