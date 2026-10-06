@@ -172,6 +172,11 @@ TUILES = {"chambre": (640, 572), "salon": (890, 572)}
 TUILE_VOLET = (390, 572)
 VOLET_SANS_POSITION = Service("tab5_maj_emplacements", (("payload", "t01|closing|nan|;"),))
 VOLET_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t01|opening|45|;"),))
+# Le volet dessiné du popup (06/10/2026), tiré du doigt vers le bas : 150 px de la fenêtre
+# de 468 px, de 45 % à 13 % (volet_cadre_rappel, tab5_tuiles.cpp). Vertical, au-dessus
+# des tuiles : ni swipe de page ni bouton sous le doigt. Le relâcher envoie « position »,
+# que personne n'applique ici : la capture montre le volet là où le doigt l'a laissé.
+VOLET_TIRE = Glisser(265, 250, 265, 400)
 
 # Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
 # un bouton (un bouton garde l'appui et se déclencherait au relâché).
@@ -397,6 +402,7 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("lumieres-salon", (Long(*TUILES["salon"]),)),
     Ecran("volet", (Long(*TUILE_VOLET),)),
     Ecran("volet-sans-position", (VOLET_SANS_POSITION, Long(*TUILE_VOLET)), (VOLET_DE_LA_DEMO,)),
+    Ecran("volet-glisse", (Long(*TUILE_VOLET), VOLET_TIRE)),
     Ecran("climatisation", (Toucher(*CONSIGNE_CLIM),)),
     Ecran("plantes", (Long(*SOUS_HORLOGE),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis

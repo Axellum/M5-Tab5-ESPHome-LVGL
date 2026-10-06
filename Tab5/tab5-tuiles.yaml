@@ -130,8 +130,8 @@ script:
           u.vol_position = id(volet_position);
           u.vol_nombre = id(volet_nombre);
           u.vol_etat = id(volet_etat);
-          u.vol_curseur_cadre = id(volet_curseur_cadre);
-          u.vol_curseur = id(volet_curseur);
+          u.vol_cadre = id(volet_cadre);
+          u.vol_tablier = id(volet_tablier);
           u.volet_sens = &id(volet_target_open);
           u.envoyer = [](const char* e, const char* a, const char* v) {
             id(tab5_action).execute(std::string(e), std::string(a), std::string(v));
@@ -141,5 +141,5 @@ script:
           u.energie_ouvrir = []() { id(tab5_energie_ouvrir).execute(); };
           // Toucher d'un titre = sens d'un volet (28/09) ; une fois, les pointeurs posés.
           tuiles_brancher_titres();
-          // Curseur du popup du volet : glisser, relâcher (une fois aussi).
+          // Volet dessiné du popup : ses lames, glisser, relâcher (une fois aussi).
           tuiles_brancher_popup_volet();
