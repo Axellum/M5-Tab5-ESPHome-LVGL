@@ -8,9 +8,18 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1024;
+static const uint16_t kI18nKeyCount = 1033;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1054,6 +1063,7 @@ static const char* const kI18nKeys[] = {
     "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo",
     "%d demi-coups joués",
     "%d erreurs",
+    "%d h %02d",
     "%d heures",
     "%d heures %d",
     "%d indispo",
@@ -1168,6 +1178,7 @@ static const char* const kI18nKeys[] = {
     "Aimant mineur",
     "Alerte Météo Orange en cours ! Restez prudent.",
     "Alerte Météo Rouge en cours ! Restez prudent.",
+    "Alertes",
     "Allumer",
     "Allumer seulement",
     "Allumé",
@@ -1216,6 +1227,7 @@ static const char* const kI18nKeys[] = {
     "Aucun score pour l'instant.\nLance une partie !",
     "Aucun travail de prévu",
     "Aucun échange",
+    "Aucune alerte",
     "Aucune partie en cours",
     "Aucune partie sauvegardée",
     "Aucune question jouée",
@@ -1908,6 +1920,7 @@ static const char* const kI18nKeys[] = {
     "Tournez la tablette à la verticale",
     "Tout est enregistré et survit au redémarrage.",
     "Tout le Top 10 local, meilleur score compris.",
+    "Tout marquer comme lu",
     "Tout vivant",
     "Tout éteindre",
     "Toutes les parties et les réglages sont conservés dans le Tab.",
@@ -1949,6 +1962,8 @@ static const char* const kI18nKeys[] = {
     "Vies  oo",
     "Vies %d",
     "Vigilance Jaune",
+    "Vigilance Orange",
+    "Vigilance Rouge",
     "Vitalité",
     "Vitesse",
     "Vitesse de démo",
@@ -1967,6 +1982,7 @@ static const char* const kI18nKeys[] = {
     "Zigzag",
     "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.",
     "août",
+    "apparue %s",
     "au Tab",
     "aucun",
     "avril",
@@ -1982,6 +1998,7 @@ static const char* const kI18nKeys[] = {
     "jeudi",
     "juillet",
     "juin",
+    "lue %s",
     "lundi",
     "mai",
     "mardi",
@@ -1999,6 +2016,7 @@ static const char* const kI18nKeys[] = {
     "samedi",
     "septembre",
     "t.rapide",
+    "terminée %s",
     "vendredi",
     "vive",
     "{jour_court} {quantieme} {mois_court}",
@@ -2082,6 +2100,7 @@ static const char* const kI18n_en[] = {
     "%d half-moves  ·  level %s  ·  local rating: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d half-moves played",  // "%d demi-coups joués"
     "%d errors",  // "%d erreurs"
+    "%d:%02d",  // "%d h %02d"
     "%d:00",  // "%d heures"
     "%d:%02d",  // "%d heures %d"
     "%d unavailable",  // "%d indispo"
@@ -2196,6 +2215,7 @@ static const char* const kI18n_en[] = {
     "Minor Magnet",  // "Aimant mineur"
     "Orange weather warning in progress! Stay safe.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Red weather warning in progress! Stay safe.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Alerts",  // "Alertes"
     "Turn on",  // "Allumer"
     "Turn on only",  // "Allumer seulement"
     "On",  // "Allumé"
@@ -2244,6 +2264,7 @@ static const char* const kI18n_en[] = {
     "No scores yet.\nStart a game!",  // "Aucun score pour l'instant.\nLance une partie !"
     "No work scheduled",  // "Aucun travail de prévu"
     "No exchange",  // "Aucun échange"
+    "No alerts",  // "Aucune alerte"
     "No game in progress",  // "Aucune partie en cours"
     "No saved game",  // "Aucune partie sauvegardée"
     "No questions played",  // "Aucune question jouée"
@@ -2936,6 +2957,7 @@ static const char* const kI18n_en[] = {
     "Turn the tablet upright",  // "Tournez la tablette à la verticale"
     "Everything is saved and survives a restart.",  // "Tout est enregistré et survit au redémarrage."
     "The whole local top 10, best score included.",  // "Tout le Top 10 local, meilleur score compris."
+    "Mark all as read",  // "Tout marquer comme lu"
     "All alive",  // "Tout vivant"
     "All off",  // "Tout éteindre"
     "All games and settings are kept on the Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -2977,6 +2999,8 @@ static const char* const kI18n_en[] = {
     "Lives  oo",  // "Vies  oo"
     "Lives %d",  // "Vies %d"
     "Yellow warning",  // "Vigilance Jaune"
+    "Orange warning",  // "Vigilance Orange"
+    "Red warning",  // "Vigilance Rouge"
     "Vitality",  // "Vitalité"
     "Speed",  // "Vitesse"
     "Demo speed",  // "Vitesse de démo"
@@ -2995,6 +3019,7 @@ static const char* const kI18n_en[] = {
     "Zigzag",  // "Zigzag"
     "Left zone / right zone = flippers (hold). Bottom center = plunger.\nShake the tablet to nudge the ball — three nudges in a row and it's TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "August",  // "août"
+    "appeared %s",  // "apparue %s"
     "Tab",  // "au Tab"
     "none",  // "aucun"
     "April",  // "avril"
@@ -3010,6 +3035,7 @@ static const char* const kI18n_en[] = {
     "Thursday",  // "jeudi"
     "July",  // "juillet"
     "June",  // "juin"
+    "read %s",  // "lue %s"
     "Monday",  // "lundi"
     "May",  // "mai"
     "Tuesday",  // "mardi"
@@ -3027,6 +3053,7 @@ static const char* const kI18n_en[] = {
     "Saturday",  // "samedi"
     "September",  // "septembre"
     "v.fast",  // "t.rapide"
+    "ended %s",  // "terminée %s"
     "Friday",  // "vendredi"
     "brisk",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -3110,6 +3137,7 @@ static const char* const kI18n_de[] = {
     "%d Halbzüge  ·  Stufe %s  ·  lokale Wertung: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d Halbzüge gespielt",  // "%d demi-coups joués"
     "%d Fehler",  // "%d erreurs"
+    "%d:%02d",  // "%d h %02d"
     "%d Uhr",  // "%d heures"
     "%d Uhr %d",  // "%d heures %d"
     "%d offline",  // "%d indispo"
@@ -3224,6 +3252,7 @@ static const char* const kI18n_de[] = {
     "Kleiner Magnet",  // "Aimant mineur"
     "Unwetterwarnung Orange aktiv! Bleib vorsichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Unwetterwarnung Rot aktiv! Bleib vorsichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Warnungen",  // "Alertes"
     "Einschalten",  // "Allumer"
     "Nur einschalten",  // "Allumer seulement"
     "An",  // "Allumé"
@@ -3272,6 +3301,7 @@ static const char* const kI18n_de[] = {
     "Noch keine Scores.\nStarte ein Spiel!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Keine Arbeit geplant",  // "Aucun travail de prévu"
     "Kein Austausch",  // "Aucun échange"
+    "Keine Warnungen",  // "Aucune alerte"
     "Kein laufendes Spiel",  // "Aucune partie en cours"
     "Kein gespeichertes Spiel",  // "Aucune partie sauvegardée"
     "Keine Fragen gespielt",  // "Aucune question jouée"
@@ -3964,6 +3994,7 @@ static const char* const kI18n_de[] = {
     "Tablet hochkant drehen",  // "Tournez la tablette à la verticale"
     "Alles wird gespeichert und übersteht Neustarts.",  // "Tout est enregistré et survit au redémarrage."
     "Die ganze lokale Top 10, inkl. Highscore.",  // "Tout le Top 10 local, meilleur score compris."
+    "Alle als gelesen markieren",  // "Tout marquer comme lu"
     "Alles lebt",  // "Tout vivant"
     "Alle aus",  // "Tout éteindre"
     "Alle Partien und Einstellungen bleiben im Tab gespeichert.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -4005,6 +4036,8 @@ static const char* const kI18n_de[] = {
     "Leben  oo",  // "Vies  oo"
     "Leben %d",  // "Vies %d"
     "Warnstufe Gelb",  // "Vigilance Jaune"
+    "Warnstufe Orange",  // "Vigilance Orange"
+    "Warnstufe Rot",  // "Vigilance Rouge"
     "Vitalität",  // "Vitalité"
     "Tempo",  // "Vitesse"
     "Demo-Tempo",  // "Vitesse de démo"
@@ -4023,6 +4056,7 @@ static const char* const kI18n_de[] = {
     "Zickzack",  // "Zigzag"
     "Linke / rechte Zone = Flipper (halten). Unten Mitte = Abschuss.\nTablet schütteln, um den Ball anzustoßen — dreimal zu viel und es gibt TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "August",  // "août"
+    "erschienen %s",  // "apparue %s"
     "Tab",  // "au Tab"
     "keine",  // "aucun"
     "April",  // "avril"
@@ -4038,6 +4072,7 @@ static const char* const kI18n_de[] = {
     "Donnerstag",  // "jeudi"
     "Juli",  // "juillet"
     "Juni",  // "juin"
+    "gelesen %s",  // "lue %s"
     "Montag",  // "lundi"
     "Mai",  // "mai"
     "Dienstag",  // "mardi"
@@ -4055,6 +4090,7 @@ static const char* const kI18n_de[] = {
     "Samstag",  // "samedi"
     "September",  // "septembre"
     "rasant",  // "t.rapide"
+    "beendet %s",  // "terminée %s"
     "Freitag",  // "vendredi"
     "flott",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -4138,6 +4174,7 @@ static const char* const kI18n_nl[] = {
     "%d halve zetten  ·  niveau %s  ·  lokale rating: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d halve zetten gespeeld",  // "%d demi-coups joués"
     "%d fouten",  // "%d erreurs"
+    "%d:%02d",  // "%d h %02d"
     "%d uur",  // "%d heures"
     "%d uur %d",  // "%d heures %d"
     "%d onbeschikbaar",  // "%d indispo"
@@ -4252,6 +4289,7 @@ static const char* const kI18n_nl[] = {
     "Kleine magneet",  // "Aimant mineur"
     "Weeralarm code oranje! Wees voorzichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Weeralarm code rood! Wees voorzichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Meldingen",  // "Alertes"
     "Aanzetten",  // "Allumer"
     "Alleen aanzetten",  // "Allumer seulement"
     "Aan",  // "Allumé"
@@ -4300,6 +4338,7 @@ static const char* const kI18n_nl[] = {
     "Nog geen scores.\nStart een spel!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Geen werk gepland",  // "Aucun travail de prévu"
     "Geen uitwisseling",  // "Aucun échange"
+    "Geen meldingen",  // "Aucune alerte"
     "Geen spel bezig",  // "Aucune partie en cours"
     "Geen opgeslagen spel",  // "Aucune partie sauvegardée"
     "Geen vragen gespeeld",  // "Aucune question jouée"
@@ -4992,6 +5031,7 @@ static const char* const kI18n_nl[] = {
     "Houd de tablet rechtop",  // "Tournez la tablette à la verticale"
     "Alles wordt bewaard, ook na een herstart.",  // "Tout est enregistré et survit au redémarrage."
     "De hele lokale top 10, inclusief beste score.",  // "Tout le Top 10 local, meilleur score compris."
+    "Alles als gelezen markeren",  // "Tout marquer comme lu"
     "Alles levend",  // "Tout vivant"
     "Alles uit",  // "Tout éteindre"
     "Alle partijen en opties blijven bewaard in de Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -5033,6 +5073,8 @@ static const char* const kI18n_nl[] = {
     "Levens  oo",  // "Vies  oo"
     "Levens %d",  // "Vies %d"
     "Code geel",  // "Vigilance Jaune"
+    "Code oranje",  // "Vigilance Orange"
+    "Code rood",  // "Vigilance Rouge"
     "Vitaliteit",  // "Vitalité"
     "Snelheid",  // "Vitesse"
     "Demosnelheid",  // "Vitesse de démo"
@@ -5051,6 +5093,7 @@ static const char* const kI18n_nl[] = {
     "Zigzag",  // "Zigzag"
     "Linkerzone / rechterzone = flippers (vasthouden). Midden onder = plunjer.\nSchud de tablet om de bal te duwen — drie keer te veel op rij en het is TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "augustus",  // "août"
+    "verschenen %s",  // "apparue %s"
     "Tab",  // "au Tab"
     "geen",  // "aucun"
     "april",  // "avril"
@@ -5066,6 +5109,7 @@ static const char* const kI18n_nl[] = {
     "donderdag",  // "jeudi"
     "juli",  // "juillet"
     "juni",  // "juin"
+    "gelezen %s",  // "lue %s"
     "maandag",  // "lundi"
     "mei",  // "mai"
     "dinsdag",  // "mardi"
@@ -5083,6 +5127,7 @@ static const char* const kI18n_nl[] = {
     "zaterdag",  // "samedi"
     "september",  // "septembre"
     "z.snel",  // "t.rapide"
+    "beëindigd %s",  // "terminée %s"
     "vrijdag",  // "vendredi"
     "vlot",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -5166,6 +5211,7 @@ static const char* const kI18n_es[] = {
     "%d medias jugadas  ·  nivel %s  ·  clasificación local: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d medias jugadas",  // "%d demi-coups joués"
     "%d errores",  // "%d erreurs"
+    "%d:%02d",  // "%d h %02d"
     "%d horas",  // "%d heures"
     "%d y %d",  // "%d heures %d"
     "%d no disponibles",  // "%d indispo"
@@ -5280,6 +5326,7 @@ static const char* const kI18n_es[] = {
     "Imán menor",  // "Aimant mineur"
     "¡Alerta meteorológica naranja! Ten cuidado.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "¡Alerta meteorológica roja! Ten cuidado.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Alertas",  // "Alertes"
     "Encender",  // "Allumer"
     "Solo encender",  // "Allumer seulement"
     "ON",  // "Allumé"
@@ -5328,6 +5375,7 @@ static const char* const kI18n_es[] = {
     "Aún no hay puntuaciones.\n¡Empieza una partida!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Sin trabajo previsto",  // "Aucun travail de prévu"
     "Sin intercambio",  // "Aucun échange"
+    "Sin alertas",  // "Aucune alerte"
     "Ninguna partida en curso",  // "Aucune partie en cours"
     "Ninguna partida guardada",  // "Aucune partie sauvegardée"
     "Sin preguntas jugadas",  // "Aucune question jouée"
@@ -6020,6 +6068,7 @@ static const char* const kI18n_es[] = {
     "Gira la tableta en vertical",  // "Tournez la tablette à la verticale"
     "Todo se guarda y sobrevive al reinicio.",  // "Tout est enregistré et survit au redémarrage."
     "Todo el Top 10 local, récord incluido.",  // "Tout le Top 10 local, meilleur score compris."
+    "Marcar todo como leído",  // "Tout marquer comme lu"
     "Todo vivo",  // "Tout vivant"
     "Apagar todo",  // "Tout éteindre"
     "Todas las partidas y ajustes se guardan en el Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -6061,6 +6110,8 @@ static const char* const kI18n_es[] = {
     "Vidas  oo",  // "Vies  oo"
     "Vidas %d",  // "Vies %d"
     "Alerta amarilla",  // "Vigilance Jaune"
+    "Alerta naranja",  // "Vigilance Orange"
+    "Alerta roja",  // "Vigilance Rouge"
     "Vitalidad",  // "Vitalité"
     "Velocidad",  // "Vitesse"
     "Velocidad de demo",  // "Vitesse de démo"
@@ -6079,6 +6130,7 @@ static const char* const kI18n_es[] = {
     "Zigzag",  // "Zigzag"
     "Zona izquierda / derecha = paletas (mantener). Abajo al centro = lanzador.\nSacude la tableta para empujar la bola — tres abusos seguidos y es TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "agosto",  // "août"
+    "aparecida %s",  // "apparue %s"
     "del Tab",  // "au Tab"
     "ninguno",  // "aucun"
     "abril",  // "avril"
@@ -6094,6 +6146,7 @@ static const char* const kI18n_es[] = {
     "jueves",  // "jeudi"
     "julio",  // "juillet"
     "junio",  // "juin"
+    "leída %s",  // "lue %s"
     "lunes",  // "lundi"
     "mayo",  // "mai"
     "martes",  // "mardi"
@@ -6111,6 +6164,7 @@ static const char* const kI18n_es[] = {
     "sábado",  // "samedi"
     "septiembre",  // "septembre"
     "m.rápida",  // "t.rapide"
+    "terminada %s",  // "terminée %s"
     "viernes",  // "vendredi"
     "ágil",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -6194,6 +6248,7 @@ static const char* const kI18n_it[] = {
     "%d semimosse  ·  livello %s  ·  punteggio locale: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d semimosse giocate",  // "%d demi-coups joués"
     "%d errori",  // "%d erreurs"
+    "%d:%02d",  // "%d h %02d"
     "%d",  // "%d heures"
     "%d e %d",  // "%d heures %d"
     "%d non disp.",  // "%d indispo"
@@ -6308,6 +6363,7 @@ static const char* const kI18n_it[] = {
     "Magnete minore",  // "Aimant mineur"
     "Allerta meteo arancione in corso! Fai attenzione.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Allerta meteo rossa in corso! Fai attenzione.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Avvisi",  // "Alertes"
     "Accendi",  // "Allumer"
     "Solo accensione",  // "Allumer seulement"
     "Acceso",  // "Allumé"
@@ -6356,6 +6412,7 @@ static const char* const kI18n_it[] = {
     "Ancora nessun punteggio.\nInizia una partita!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Nessun lavoro previsto",  // "Aucun travail de prévu"
     "Nessuno scambio",  // "Aucun échange"
+    "Nessun avviso",  // "Aucune alerte"
     "Nessuna partita in corso",  // "Aucune partie en cours"
     "Nessuna partita salvata",  // "Aucune partie sauvegardée"
     "Nessuna domanda giocata",  // "Aucune question jouée"
@@ -7048,6 +7105,7 @@ static const char* const kI18n_it[] = {
     "Ruota il tablet in verticale",  // "Tournez la tablette à la verticale"
     "Tutto viene salvato e resta dopo un riavvio.",  // "Tout est enregistré et survit au redémarrage."
     "Tutta la Top 10 locale, record compreso.",  // "Tout le Top 10 local, meilleur score compris."
+    "Segna tutto come letto",  // "Tout marquer comme lu"
     "Tutti vivi",  // "Tout vivant"
     "Spegni tutto",  // "Tout éteindre"
     "Partite e opzioni restano salvate nel Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -7089,6 +7147,8 @@ static const char* const kI18n_it[] = {
     "Vite  oo",  // "Vies  oo"
     "Vite %d",  // "Vies %d"
     "Allerta gialla",  // "Vigilance Jaune"
+    "Allerta arancione",  // "Vigilance Orange"
+    "Allerta rossa",  // "Vigilance Rouge"
     "Vitalità",  // "Vitalité"
     "Velocità",  // "Vitesse"
     "Velocità demo",  // "Vitesse de démo"
@@ -7107,6 +7167,7 @@ static const char* const kI18n_it[] = {
     "Zigzag",  // "Zigzag"
     "Zona sinistra / destra = flipper (tieni premuto). In basso al centro = lanciatore.\nScuoti il tablet per spingere la palla — tre volte di troppo di fila ed è TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "agosto",  // "août"
+    "comparso %s",  // "apparue %s"
     "del Tab",  // "au Tab"
     "nessuno",  // "aucun"
     "aprile",  // "avril"
@@ -7122,6 +7183,7 @@ static const char* const kI18n_it[] = {
     "giovedì",  // "jeudi"
     "luglio",  // "juillet"
     "giugno",  // "juin"
+    "letto %s",  // "lue %s"
     "lunedì",  // "lundi"
     "maggio",  // "mai"
     "martedì",  // "mardi"
@@ -7139,6 +7201,7 @@ static const char* const kI18n_it[] = {
     "sabato",  // "samedi"
     "settembre",  // "septembre"
     "rapidiss",  // "t.rapide"
+    "terminato %s",  // "terminée %s"
     "venerdì",  // "vendredi"
     "svelta",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -7222,6 +7285,7 @@ static const char* const kI18n_tr[] = {
     "%d yarım hamle  ·  seviye %s  ·  yerel derece: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d yarım hamle oynandı",  // "%d demi-coups joués"
     "%d hata",  // "%d erreurs"
+    "%d:%02d",  // "%d h %02d"
     "%d:00",  // "%d heures"
     "%d:%02d",  // "%d heures %d"
     "%d erişilemez",  // "%d indispo"
@@ -7336,6 +7400,7 @@ static const char* const kI18n_tr[] = {
     "Küçük Mıknatıs",  // "Aimant mineur"
     "Turuncu hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Kırmızı hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Rouge en cours ! Restez prudent."
+    "Uyarılar",  // "Alertes"
     "Aç",  // "Allumer"
     "Yalnızca aç",  // "Allumer seulement"
     "Açık",  // "Allumé"
@@ -7384,6 +7449,7 @@ static const char* const kI18n_tr[] = {
     "Henüz skor yok.\nBir oyun başlat!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Planlı iş yok",  // "Aucun travail de prévu"
     "Akış yok",  // "Aucun échange"
+    "Uyarı yok",  // "Aucune alerte"
     "Devam eden oyun yok",  // "Aucune partie en cours"
     "Kayıtlı oyun yok",  // "Aucune partie sauvegardée"
     "Oynanan soru yok",  // "Aucune question jouée"
@@ -8076,6 +8142,7 @@ static const char* const kI18n_tr[] = {
     "Tableti dik çevir",  // "Tournez la tablette à la verticale"
     "Her şey kaydedilir, yeniden başlatmada korunur.",  // "Tout est enregistré et survit au redémarrage."
     "Yerel ilk 10'un tamamı, en iyi skor dahil.",  // "Tout le Top 10 local, meilleur score compris."
+    "Tümünü okundu işaretle",  // "Tout marquer comme lu"
     "Hepsi canlı",  // "Tout vivant"
     "Hepsini kapat",  // "Tout éteindre"
     "Tüm oyunlar ve ayarlar Tab'da saklanır.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -8117,6 +8184,8 @@ static const char* const kI18n_tr[] = {
     "Can  oo",  // "Vies  oo"
     "Can %d",  // "Vies %d"
     "Sarı uyarı",  // "Vigilance Jaune"
+    "Turuncu uyarı",  // "Vigilance Orange"
+    "Kırmızı uyarı",  // "Vigilance Rouge"
     "Canlılık",  // "Vitalité"
     "Hız",  // "Vitesse"
     "Demo hızı",  // "Vitesse de démo"
@@ -8135,6 +8204,7 @@ static const char* const kI18n_tr[] = {
     "Zikzak",  // "Zigzag"
     "Sol bölge / sağ bölge = flipperler (basılı tut). Alt orta = fırlatıcı.\nBilyeyi itmek için tableti salla — üst üste üç kez abartırsan TILT olur.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "Ağustos",  // "août"
+    "çıktı %s",  // "apparue %s"
     "Tab'da",  // "au Tab"
     "yok",  // "aucun"
     "Nisan",  // "avril"
@@ -8150,6 +8220,7 @@ static const char* const kI18n_tr[] = {
     "Perşembe",  // "jeudi"
     "Temmuz",  // "juillet"
     "Haziran",  // "juin"
+    "okundu %s",  // "lue %s"
     "Pazartesi",  // "lundi"
     "Mayıs",  // "mai"
     "Salı",  // "mardi"
@@ -8167,6 +8238,7 @@ static const char* const kI18n_tr[] = {
     "Cumartesi",  // "samedi"
     "Eylül",  // "septembre"
     "ç.hızlı",  // "t.rapide"
+    "bitti %s",  // "terminée %s"
     "Cuma",  // "vendredi"
     "canlı",  // "vive"
     "{quantieme} {mois_court} {jour_court}",  // "{jour_court} {quantieme} {mois_court}"

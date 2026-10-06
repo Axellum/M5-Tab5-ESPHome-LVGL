@@ -37,6 +37,12 @@ APPUIS_LONGS = {
     "btn_control_tv": "home.md",
     "btn_rangee": "plants.md",
     "climate_card.yaml": "temperature.md",
+    # Carte centrale : chaque panneau de l'accueil ouvre l'historique des alertes.
+    "btn_alerts_mf_tap": "home.md",
+    "btn_info_tap": "home.md",
+    "btn_planning_tap": "home.md",
+    "btn_rain_tap": "home.md",
+    "ha_alert_panel.yaml": "home.md",
     "forecast_daily.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
     "switches_card.yaml": "tiles.md",

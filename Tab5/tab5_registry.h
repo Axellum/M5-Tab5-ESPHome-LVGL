@@ -81,7 +81,7 @@ enum Kind : uint8_t {
                 // (sonnerie du réveil)
 };
 
-constexpr int MAX = 24;  // 17 inscrites au 06/10/2026 (popups Réglages et Appareil) : de la marge
+constexpr int MAX = 24;  // 18 inscrites au 06/10/2026 (popups Réglages, Appareil et Alertes) : de la marge
 
 // true dès que tab5_modal_registry_init a rempli la table.
 bool ready();

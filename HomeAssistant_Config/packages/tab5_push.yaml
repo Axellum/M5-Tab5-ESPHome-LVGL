@@ -483,6 +483,27 @@ automation:
         data:
           vigilance_seule: "{{ trigger.entity_id == 'sensor.tab5_pluie_dans_l_heure' }}"
 
+  # Historique des alertes (lot 4) : il change (alerte nouvelle, lue, terminée) pendant
+  # que le popup « Alertes » d'une tablette est ouvert (« Écran courant », mis à jour
+  # toutes les 5 s) : on le repousse. Popup fermé : rien, il est demandé à l'ouverture.
+  - id: tab5_ha_hmi_alertes_historique_push
+    alias: "MAJ Ecran Tab5 Historique des alertes (popup ouvert)"
+    mode: queued
+    max: 3
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: sensor.tab5_alertes
+        attribute: historique
+    condition:
+      - condition: template
+        value_template: >-
+          {{ integration_entities('esphome') | select('match', 'sensor[.].*_ecran_courant$')
+             | select('is_state', 'Alertes') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
+             | list | count > 0 }}
+    action:
+      - action: script.tab5_push_alertes_historique
+
   # ============================================================================
   # PUSH METEO ACTUELLE — au changement (26/09/2026)
   # ----------------------------------------------------------------------------
@@ -718,6 +739,30 @@ script:
             {%- set ns.r = ns.r + [a.i ~ '|' ~ ('Rouge' if a.g == 'Rouge' else 'Orange') ~ '|' ~ a.t] -%}
             {%- endfor -%}
             {{- ns.r | join(';') -}}
+
+  # Historique des alertes (lot 4, popup « Alertes » de la tablette) : les 20 dernières
+  # alertes abonnées, à la demande (événement esphome.tab5_alertes_historique, émis à
+  # l'ouverture du popup, packages/tab5_evenements.yaml) et quand l'historique change
+  # pendant que le popup est ouvert (tab5_ha_hmi_alertes_historique_push). Un firmware
+  # d'avant n'émet jamais l'événement et n'affiche jamais « Alertes » : ce script ne
+  # l'appelle donc jamais (une action absente arrêterait le script, « Action not
+  # found » n'est pas rattrapé par continue_on_error).
+  tab5_push_alertes_historique:
+    alias: "Tab5 — pousser l'historique des alertes"
+    description: >-
+      Les 20 dernières alertes abonnées de sensor.tab5_alertes (packages/tab5_alerts.yaml),
+      pour le popup « Alertes » de la tablette : « apparue|lue|terminée|gravité|libellé »
+      séparés par « ; » (custom_templates/tab5_alertes.jinja).
+    mode: queued
+    max: 3
+    sequence:
+      - condition: template
+        value_template: *tab5_connectee
+      - action: esphome.tab5_ha_hmi_tab5_maj_alertes_historique
+        continue_on_error: true
+        data:
+          payload: >-
+            {% from 'tab5_alertes.jinja' import tab5_alertes_historique %}{{ tab5_alertes_historique('payload') }}
 
   tab5_push_meteo:
     alias: "Tab5 — pousser la météo actuelle et les probabilités"

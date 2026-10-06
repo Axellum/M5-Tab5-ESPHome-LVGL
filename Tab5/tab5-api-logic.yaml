@@ -661,6 +661,20 @@ api:
       then:
         - lambda: 'historique_recu(cle, vue, entete, mesures, previsions);'
 
+    # Historique des alertes (lot 4 du plan des alertes, 06/10/2026) : réponse à
+    # l'événement esphome.tab5_alertes_historique (ouverture du popup « Alertes »), par
+    # script.tab5_push_alertes_historique (packages/tab5_push.yaml), qui la repousse
+    # aussi quand l'historique change pendant que le popup est ouvert.
+    - service: tab5_maj_alertes_historique
+      description: "Popup Alertes : les 20 dernières alertes, la plus récente d'abord."
+      variables:
+        payload:
+          type: string
+          description: "Entrées « apparue|lue|terminée|gravité|libellé » séparées par ; — heures en secondes epoch (0 = pas encore), gravité Rouge, Orange ou Jaune, libellé codé comme ceux des bandeaux (« @maj:titre », « @indispo:nombre », « @vigi:niveau ») ou nom d'une entité. 20 entrées au plus."
+          example: "1791381720|1791382200|0|Rouge|@maj:Home Assistant Core;1791370000|0|1791375400|Orange|Porte du garage"
+      then:
+        - lambda: 'alertes_historique_recu(payload);'
+
 # Fenêtre d'appairage (lot 6b, ADR-0020) : une tablette qui n'a pas encore de clé API
 # (neuve, ou jamais ajoutée à HA) n'accepte le premier contact de HA que pendant les
 # 30 minutes qui suivent son démarrage. Passé ce délai, elle refuse toute connexion et

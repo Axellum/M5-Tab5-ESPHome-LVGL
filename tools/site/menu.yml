@@ -117,6 +117,9 @@
         - en: Plants
           fr: Plantes
           page: docs/notice/plants.md
+        - en: Alerts
+          fr: Alertes
+          page: docs/notice/alerts.md
         - en: Settings
           fr: Réglages
           page: docs/notice/settings.md

@@ -505,6 +505,7 @@ font:
       - "\U000F09D3"  # calendar-star
       - "\U000F0D90"  # monitor-off (Réglages : extinction auto)
       - "\U000F0E17"  # calendar-month
+      - "\U000F0E81"  # bell-alert-outline (popup Alertes : en-tête)
       - "\U000F1051"  # led-strip-variant
       - "\U000F1056"  # party-popper
       - "\U000F111C"  # window-shutter

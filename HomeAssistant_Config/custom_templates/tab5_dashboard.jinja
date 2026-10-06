@@ -1346,6 +1346,17 @@ views:
 {%- endif %}
 {%- endfor %}
 {%- if 'sensor.tab5_alertes' in present %}
+          # Historique des alertes (lot 4 du plan des alertes) : les 20 dernières alertes abonnées,
+          # comme le popup « Alertes » de la tablette (custom_templates/tab5_alertes.jinja). Avant
+          # la tuile : la fin du bloc qui suit mangerait la fin de sa dernière ligne.
+          - type: markdown
+            content: |-
+              #### {{ t('Historique des alertes', 'Alert history') }}
+              {% raw %}{% from 'tab5_alertes.jinja' import tab5_alertes_historique %}{% set h = tab5_alertes_historique('liste') | from_json %}{% if h %}{% endraw %}
+              | | {{ t('Alerte', 'Alert') }} | {{ t('Apparue', 'Appeared') }} | {{ t('Lue', 'Read') }} | {{ t('Terminée', 'Ended') }} |
+              |---|---|---|---|---|{% raw %}{% for e in h %}{% endraw %}
+              | {% raw %}{{ '🔴' if e.g == 'Rouge' else '🟡' if e.g == 'Jaune' else '🟠' }} | {% set x = e.t | string %}{{ x[5:] ~ ' · {% endraw %}{{ t('mise à jour', 'update') }}{% raw %}' if x.startswith('@maj:') else x[9:] ~ ' {% endraw %}{{ t('indisponibles', 'unavailable') }}{% raw %}' if x.startswith('@indispo:') else '{% endraw %}{{ t('Vigilance météo', 'Weather warning') }}{% raw %}' if x.startswith('@vigi:') else x }} | {{ (e.a | int(0)) | timestamp_custom('%d/%m %H:%M') if e.a else '—' }} | {{ (e.l | int(0)) | timestamp_custom('%d/%m %H:%M') if e.l else '—' }} | {{ (e.f | int(0)) | timestamp_custom('%d/%m %H:%M') if e.f else '—' }} |{% endfor %}{% endraw %}
+              {% raw %}{% else %}{% endraw %}{{ t('Aucune alerte', 'No alerts') }}{% raw %}{% endif %}{% endraw %}
           - type: tile
             entity: sensor.tab5_alertes
             name: "{{ t("Alertes à lire sur l'écran", 'Alerts to read on screen') }}"
@@ -2979,5 +2990,59 @@ views:
     'nl': 'Een melding blijft op de middelste kaart tot je erop tikt. Gelezen komt ze alleen terug als ze verandert (nieuwe versie, andere weerwaarschuwing, nieuw niet-beschikbare entiteit) of als ze stopt en opnieuw begint. Om een deur, een lek of een slot te volgen: maak het label „Tab5 · alerte” aan en zet het op de entiteit. Telefoons van de mobiele app tellen niet als batterijen.',
     'es': 'Una alerta se queda en la tarjeta central hasta que la tocas. Una vez leída, solo vuelve si cambia (nueva versión, otro aviso, nueva entidad no disponible) o si termina y empieza de nuevo. Para seguir una puerta, una fuga o una cerradura: crea la etiqueta «Tab5 · alerte» y ponla en la entidad. Los teléfonos de la aplicación móvil no cuentan como pilas.',
     'it': 'Un avviso resta sulla scheda centrale finché non lo tocchi. Letto, torna solo se cambia (nuova versione, altra allerta, nuova entità non disponibile) o se finisce e ricomincia. Per seguire una porta, una perdita o una serratura: crea l’etichetta «Tab5 · alerte» e mettila sull’entità. I telefoni dell’app mobile non contano come batterie.',
-    'tr': 'Bir uyarı, dokunana kadar orta kartta kalır. Okunduktan sonra yalnızca değişirse (yeni sürüm, başka hava uyarısı, yeni kullanılamayan varlık) ya da bitip yeniden başlarsa geri gelir. Bir kapıyı, sızıntıyı veya kilidi izlemek için: “Tab5 · alerte” etiketini oluştur ve varlığa ekle. Mobil uygulamanın telefonları pil sayılmaz.'}
+    'tr': 'Bir uyarı, dokunana kadar orta kartta kalır. Okunduktan sonra yalnızca değişirse (yeni sürüm, başka hava uyarısı, yeni kullanılamayan varlık) ya da bitip yeniden başlarsa geri gelir. Bir kapıyı, sızıntıyı veya kilidi izlemek için: “Tab5 · alerte” etiketini oluştur ve varlığa ekle. Mobil uygulamanın telefonları pil sayılmaz.'},
+  'Historique des alertes': {
+    'de': 'Warnungsverlauf',
+    'nl': 'Meldingengeschiedenis',
+    'es': 'Historial de alertas',
+    'it': 'Cronologia degli avvisi',
+    'tr': 'Uyarı geçmişi'},
+  'Alerte': {
+    'de': 'Warnung',
+    'nl': 'Melding',
+    'es': 'Alerta',
+    'it': 'Avviso',
+    'tr': 'Uyarı'},
+  'Apparue': {
+    'de': 'Erschienen',
+    'nl': 'Verschenen',
+    'es': 'Aparecida',
+    'it': 'Comparso',
+    'tr': 'Çıktı'},
+  'Lue': {
+    'de': 'Gelesen',
+    'nl': 'Gelezen',
+    'es': 'Leída',
+    'it': 'Letto',
+    'tr': 'Okundu'},
+  'Terminée': {
+    'de': 'Beendet',
+    'nl': 'Beëindigd',
+    'es': 'Terminada',
+    'it': 'Terminato',
+    'tr': 'Bitti'},
+  'mise à jour': {
+    'de': 'Update',
+    'nl': 'update',
+    'es': 'actualización',
+    'it': 'aggiornamento',
+    'tr': 'güncelleme'},
+  'indisponibles': {
+    'de': 'nicht verfügbar',
+    'nl': 'niet beschikbaar',
+    'es': 'no disponibles',
+    'it': 'non disponibili',
+    'tr': 'kullanılamıyor'},
+  'Vigilance météo': {
+    'de': 'Wetterwarnung',
+    'nl': 'Weerwaarschuwing',
+    'es': 'Aviso meteorológico',
+    'it': 'Allerta meteo',
+    'tr': 'Hava uyarısı'},
+  'Aucune alerte': {
+    'de': 'Keine Warnungen',
+    'nl': 'Geen meldingen',
+    'es': 'Sin alertas',
+    'it': 'Nessun avviso',
+    'tr': 'Uyarı yok'}
 } -%}

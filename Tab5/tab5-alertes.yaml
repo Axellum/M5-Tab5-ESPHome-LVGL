@@ -1,0 +1,69 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-alertes.yaml
+# @role Popup « Alertes » (lot 4 du plan des alertes de la carte centrale, 06/10/2026) :
+#       pose les widgets que tab5_alertes.cpp peint (g_alertes_ui) et ses deux demandes à
+#       Home Assistant.
+#         - tab5_alertes_ouvrir : ouvre le popup (appui long sur la carte centrale de
+#           l'accueil, tab5-lvgl.yaml, ou « Aller à l'écran → Alertes »). Pose les widgets
+#           à la première ouverture, puis alertes_ouvrir() : dernière liste reçue, demande.
+#         - tab5_alertes_demande : événement esphome.tab5_alertes_historique. HA y répond
+#           par l'action tab5_maj_alertes_historique (tab5-api-logic.yaml) :
+#           packages/tab5_evenements.yaml lance script.tab5_push_alertes_historique
+#           (packages/tab5_push.yaml), qui repousse aussi la liste quand elle change
+#           pendant que « Écran courant » vaut « Alertes ».
+#         - tab5_alertes_tout_lu : bouton « Tout marquer comme lu » : les bandeaux de la
+#           carte centrale sont lus tout de suite, comme un tap sur chacun
+#           (central_tout_marquer_lu), et HA reçoit esphome.tab5_alerte_lue avec
+#           alert_id « * », qu'il applique à toutes les alertes abonnées à lire.
+# @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
+#       nomme aucune entité. Chargé APRÈS tab5_lvgl : il référence des widgets. Aucun lv_*
+#       ici. La commande est une lambda SANS capture (pointeur de fonction), comme celle
+#       de tab5-energie.yaml.
+# @ai_instruction Un widget de plus = son champ dans AlertesUI (tab5_custom.h) et sa ligne
+#       ici.
+# ============================================================================
+
+script:
+  - id: tab5_alertes_ouvrir
+    then:
+      - lambda: |-
+          AlertesUI& u = g_alertes_ui;
+          if (u.popup == nullptr) {
+            u.liste = id(alertes_liste);
+            u.attente = id(alertes_attente);
+            u.tout_lu = id(btn_alertes_tout_lu);
+            u.police = id(roboto_32_b);
+            u.police_heures = id(roboto_22);
+            u.demander = []() { id(tab5_alertes_demande).execute(); };
+            // En dernier : alertes_ouvrir() ne fait rien tant que popup est nul.
+            u.popup = id(alertes_popup);
+          }
+          alertes_ouvrir();
+
+  - id: tab5_alertes_demande
+    mode: queued
+    max_runs: 2
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_alertes_historique
+
+  - id: tab5_alertes_tout_lu
+    mode: single
+    then:
+      - lambda: |-
+          HaAlertSlotUI slots[4] = {
+            {id(ha_alert_wrapper_0), id(lbl_ha_alert_0), &id(ha_alert_id_0), id(lbl_ha_alert_cpt_0)},
+            {id(ha_alert_wrapper_1), id(lbl_ha_alert_1), &id(ha_alert_id_1), id(lbl_ha_alert_cpt_1)},
+            {id(ha_alert_wrapper_2), id(lbl_ha_alert_2), &id(ha_alert_id_2), id(lbl_ha_alert_cpt_2)},
+            {id(ha_alert_wrapper_3), id(lbl_ha_alert_3), &id(ha_alert_id_3), id(lbl_ha_alert_cpt_3)},
+          };
+          central_tout_marquer_lu(slots, id(lbl_info_text), id(info_meteo_dismiss_id),
+                                  id(tab5_dismissed_local), g_central_ctx);
+          alertes_tout_lu_local();
+      # Événement (ADR-0025) → script.tab5_dismiss_alert, alert_id « * ».
+      - homeassistant.event:
+          event: esphome.tab5_alerte_lue
+          data:
+            alert_id: "*"
+      - script.execute: tab5_central_rotator_auto
