@@ -12,6 +12,6 @@
 # nocturne `tab5_alerts_dismissed_cleanup`, que ce snippet seul ne fournit pas.
   tab5_alerts_dismissed:
     name: "Tab5 alertes HA ignorées"
-    initial: ""
+    # Sans `initial` : HA la restaure au redémarrage (avec, les alertes lues revenaient).
     max: 255
     icon: mdi:bell-check
