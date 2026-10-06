@@ -5,8 +5,8 @@
 #       5 cartes de verre FIXES (carte N = capteur moisture_N, MÊME icône que le dashboard) :
 #       nom, icône colorée par l'humidité, % humidité, statut (OK / Bientôt sec /
 #       À arroser / Hors ligne) + 4 métriques (fertilité EC, éclairement, température,
-#       batterie du capteur). Ouvert par on_long_press de btn_pots_detail_zone
-#       (tab5-lvgl.yaml, zone tactile invisible sur les 4 slots pots du dashboard).
+#       batterie du capteur). Ouvert par on_long_press de btn_rangee (tab5-lvgl.yaml, zone
+#       tactile de la rangée sous l'horloge, ADR-0031) quand la ligne des plantes est affichée.
 # @architecture_constraint Contrairement aux 4 slots du dashboard (tri dynamique
 #       sort_and_update_moisture_slots), les 5 cartes sont FIXES. Les valeurs arrivent en
 #       continu : humidité+statut via update_pots_popup_moisture_ui (ancre
