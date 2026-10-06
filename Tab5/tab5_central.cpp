@@ -227,6 +227,8 @@ void advance_central_panel_rotator(CentralPanelCtx& ctx) {
 // (elle ne bloque pas la carte : la météo et la pluie restent visibles). Vrai quand la
 // carte vient de changer sous les yeux : l'appelant relance le minuteur du rotateur,
 // pour qu'elle reste un tour entier.
+static void sync_central_panel_visibility(CentralPanelCtx& ctx);  // plus bas
+
 // Popup ouvert : le panneau est posé sans transition (le rotateur, lui, ne tourne pas
 // sous un popup), et la carte est juste resynchronisée sous le voile.
 static bool alerte_rouge_en_tete(int panel, CentralPanelCtx& ctx) {
