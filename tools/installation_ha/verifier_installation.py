@@ -279,6 +279,10 @@ SERVICE_BULK = f"{PREFIXE_ACTIONS}_tab5_maj_alertes_ha_bulk"
 # Réglages de test (événement tab5_alertes_recalculer) : fin confirmée tout de suite,
 # pas de grâce après un démarrage.
 REGLAGES_ALERTES = {"delai_fin": 0, "grace": 0}
+# Abonnements (lot 2) : listes de packages/tab5_alerts.yaml, étiquette cherchée par son nom.
+LISTE_MAJ = "input_select.tab5_alertes_maj"
+LISTE_ETIQUETTE = "input_select.tab5_alertes_etiquette"
+ETIQUETTE_ALERTE = "Tab5 · alerte"
 MEMOIRE_ALERTES = "input_text.tab5_alerts_dismissed"
 TEMOIN_NON_SAUVE = "ci:temoin"
 # `docker restart` tue le conteneur après 10 s par défaut : un arrêt propre de HA peut
@@ -1730,6 +1734,50 @@ async def verifier_alertes(ha: HA, rapport: Rapport) -> None:
     passage = next((h for h in attributs.get("historique") or [] if h.get("i") == installee), {})
     rapport.verifier(int(passage.get("f") or 0) > 0, f"l'historique garde {installee}, terminée",
                      f"entrée = {passage!r}")
+    await verifier_abonnements(ha, lue, rapport)
+
+
+def sources_affichees(attributs: dict) -> set[str]:
+    return {str(a.get("s")) for a in attributs.get("affichees") or []}
+
+
+async def choisir(ha: HA, liste: str, option: str) -> None:
+    await ha.post("/api/services/input_select/select_option", {"entity_id": liste, "option": option})
+
+
+async def verifier_abonnements(ha: HA, lue: str, rapport: Rapport) -> None:
+    """Abonnements (listes « Tab5 · alertes … ») : désabonnées, les alertes partent tout de
+    suite ; réabonnées, ce qui était lu le reste. Étiquette « Tab5 · alerte » posée sur un
+    capteur allumé de la démo : il devient une alerte."""
+    await choisir(ha, LISTE_MAJ, "Aucune")
+    attributs = await attendre_alertes(ha, lambda a: "maj" not in sources_affichees(a), 20)
+    rapport.verifier("maj" not in sources_affichees(attributs),
+                     "désabonnée des mises à jour (« Aucune »), leurs alertes partent tout de suite",
+                     f"à lire = {ids_affiches(attributs)}")
+    await choisir(ha, LISTE_MAJ, "Toutes")
+    attributs = await attendre_alertes(ha, lambda a: "maj" in sources_affichees(a), 20)
+    rapport.verifier("maj" in sources_affichees(attributs) and lue not in ids_affiches(attributs),
+                     f"réabonnée, les mises à jour reviennent, sauf {lue} déjà lue",
+                     f"à lire = {ids_affiches(attributs)}")
+
+    # Le capteur binaire allumé de la démo qui n'est pas un « problème » (sinon il serait
+    # déjà une alerte) : seule l'étiquette peut le rendre visible.
+    etats = await ha.etats()
+    allume = next((e for e, x in sorted(etats.items()) if e.startswith("binary_sensor.") and x["state"] == "on"
+                   and (x.get("attributes") or {}).get("device_class") != "problem"), None)
+    if allume is None:
+        rapport.echec("aucun capteur binaire allumé dans la démo pour l'étiquette « Tab5 · alerte »")
+        return
+    etiquette = await ha.ws.commande("config/label_registry/create", name=ETIQUETTE_ALERTE)
+    await ha.ws.commande("config/entity_registry/update", entity_id=allume, labels=[etiquette["label_id"]])
+    attributs = await attendre_alertes(ha, lambda a: allume in ids_affiches(a), 20)
+    rapport.verifier(allume in ids_affiches(attributs) and "etiquette" in sources_affichees(attributs),
+                     f"l'étiquette « {ETIQUETTE_ALERTE} » fait de {allume} une alerte",
+                     f"à lire = {ids_affiches(attributs)}")
+    await choisir(ha, LISTE_ETIQUETTE, "Non")
+    attributs = await attendre_alertes(ha, lambda a: allume not in ids_affiches(a), 20)
+    rapport.verifier(allume not in ids_affiches(attributs),
+                     "désabonnée de l'étiquette, l'alerte part", f"à lire = {ids_affiches(attributs)}")
 
 
 async def scenario(args, rapport: Rapport) -> None:

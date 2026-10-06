@@ -30,6 +30,7 @@ Each list has a two-language name, « français · english » (« Tab5 · agenda
 | Tab5 · capteur de présence | screen on at presence, off after 15 min without | nothing |
 | Tab5 · TV Samsung, Tab5 · adresse de la TV | app buttons of the TV popup (Samsung Tizen) | the only Samsung Smart TV; the address given by a router tracker when it reports one, otherwise type its IP |
 | Tab5 · pipeline de discussion | the voice assistant of the screen's « Discu » mode ([the two modes](settings.md#voice-assistant-the-two-modes)) | nothing: the Domo / Discu buttons are then hidden |
+| Tab5 · alertes : mises à jour, vigilance à partir de, capteurs « problème », entités indisponibles, étiquette « Tab5 · alerte », piles sous | what shows as an alert on the central card, until you tap it; to follow a door, a leak or a lock, create the « Tab5 · alerte » label in Home Assistant and put it on the entity | everything (updates: all; warnings: from yellow; batteries: below 20 %, phones of the mobile app left out) |
 
 Outside France, or for another rain or warning source: [weather providers](weather.md). The weather sources can also be set in the blueprint of step 6 (its « Météo · Weather » section): filled, it writes its choice into these lists and wins over them.
 
@@ -77,6 +78,7 @@ Chaque liste porte un nom en deux langues, « français · english » (« Tab5 �
 | Tab5 · capteur de présence | écran allumé à la présence, éteint après 15 min sans | rien |
 | Tab5 · TV Samsung, Tab5 · adresse de la TV | boutons d'applications du popup TV (Samsung Tizen) | la seule TV Samsung Smart TV ; l'adresse donnée par un suivi du routeur s'il la connaît, sinon tapez son IP |
 | Tab5 · pipeline de discussion | l'assistant vocal du mode « Discu » de l'écran ([les deux modes](settings.md#assistant-vocal--les-deux-modes)) | rien : les boutons Domo / Discu sont alors masqués |
+| Tab5 · alertes : mises à jour, vigilance à partir de, capteurs « problème », entités indisponibles, étiquette « Tab5 · alerte », piles sous | ce qui s'affiche en alerte sur la carte centrale, jusqu'au tap ; pour suivre une porte, une fuite ou une serrure, créez l'étiquette « Tab5 · alerte » dans Home Assistant et posez-la sur l'entité | tout (mises à jour : toutes ; vigilance : à partir du jaune ; piles : sous 20 %, sans les téléphones de l'application mobile) |
 
 Hors de France, ou pour une autre source de pluie ou de vigilances : [fournisseurs météo](weather.md#version-française). Les sources météo se règlent aussi dans le blueprint de l'étape 6 (sa section « Météo · Weather ») : remplie, elle écrit son choix dans ces listes et prime sur elles.
 

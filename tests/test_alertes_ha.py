@@ -42,8 +42,10 @@ def _charger(*chemin: str):
 # ─── Les états de HA, juste ce que lit la macro ──────────────────────────────────
 
 class Etat:
-    def __init__(self, entity_id, state, attributes=None, depuis=None):
+    def __init__(self, entity_id, state, attributes=None, depuis=None, etiquettes=(), integration=""):
         self.entity_id = entity_id
+        self.etiquettes = list(etiquettes)
+        self.integration = integration
         self.state = state
         self.attributes = dict(attributes or {})
         self.domain = entity_id.split(".", 1)[0]
@@ -87,14 +89,26 @@ def _env(etats=(), maintenant=T0):
     env = ImmutableSandboxedEnvironment(loader=jinja2.FileSystemLoader(str(MACROS)),
                                         extensions=["jinja2.ext.loopcontrols"],
                                         undefined=jinja2.StrictUndefined)
-    etats = States(etats)
+    liste = list(etats)
+    etats = States(liste)
     env.globals.update(
         states=etats, timedelta=dt.timedelta,
+        label_entities=lambda nom: [e.entity_id for e in liste if nom in e.etiquettes],
+        integration_entities=lambda nom: [e.entity_id for e in liste if e.integration == nom],
         now=lambda: dt.datetime.fromtimestamp(maintenant, dt.timezone.utc),
         state_attr=lambda e, a: etats[e].attributes.get(a) if etats[e] else None,
     )
     env.filters.update(to_json=lambda v: json.dumps(v, ensure_ascii=False), from_json=json.loads)
+    env.tests["is_number"] = _est_un_nombre
     return env
+
+
+def _est_un_nombre(valeur) -> bool:
+    """Le test is_number de HA : un nombre fini, ou un texte qui en est un."""
+    try:
+        return float(valeur) not in (float("inf"), float("-inf")) and float(valeur) == float(valeur)
+    except (TypeError, ValueError):
+        return False
 
 
 def logique(memoire, sources, evenement="tick", maintenant=T0, abonnements=None, data=None):
@@ -411,10 +425,10 @@ def test_rien_ne_change_quand_rien_ne_change():
 
 # ─── Les états de HA ─────────────────────────────────────────────────────────────
 
-def sources(etats, suivi_ids=(), anciennes=()):
+def sources(etats, suivi_ids=(), anciennes=(), seuil=20):
     gabarit = _env(etats).from_string(
-        "{% from 'tab5_alertes.jinja' import tab5_alertes_sources %}{{ tab5_alertes_sources(i, a) }}")
-    return json.loads(gabarit.render(i=list(suivi_ids), a=list(anciennes)))
+        "{% from 'tab5_alertes.jinja' import tab5_alertes_sources %}{{ tab5_alertes_sources(i, a, s) }}")
+    return json.loads(gabarit.render(i={i: {} for i in suivi_ids}, a=list(anciennes), s=seuil))
 
 
 def test_sources_lues_dans_les_etats_de_ha():
@@ -463,3 +477,129 @@ def test_le_capteur_lit_sa_propre_memoire(premiere):
         "{% from 'tab5_alertes.jinja' import tab5_alertes_memoire %}{{ tab5_alertes_memoire('tick', {}) }}")
     m = json.loads(gabarit.render())
     assert ("update.x" in m["lues"]) is premiere
+
+
+# ─── Abonnements (lot 2) ─────────────────────────────────────────────────────────
+
+LISTES = {
+    "tab5_alertes_maj": ["Toutes", "Home Assistant seulement", "Aucune"],
+    "tab5_alertes_vigilance": ["Jaune", "Orange", "Rouge", "Aucune"],
+    "tab5_alertes_problemes": ["Oui", "Non"],
+    "tab5_alertes_indisponibles": ["Oui", "Non"],
+    "tab5_alertes_etiquette": ["Oui", "Non"],
+}
+
+
+def test_les_abonnements_sont_des_listes_qui_gardent_le_choix():
+    """Sans `initial`, une liste démarre sur sa première option (le choix par défaut,
+    tout affiché, piles sous 20 %) puis HA restaure le choix. Chaque liste fait recalculer
+    les alertes tout de suite, et la macro lit exactement ces options."""
+    listes = _charger("packages", "tab5_alerts.yaml")["input_select"]
+    for cle, options in LISTES.items():
+        assert listes[cle]["options"] == options, cle
+    piles = listes["tab5_alertes_piles"]["options"]
+    assert piles[0] == "20 %" and piles[-1] == "Aucune"
+    assert all(o.endswith(" %") and o.split(" ")[0].isdigit() for o in piles[:-1])
+    for cle, conf in listes.items():
+        assert "initial" not in conf, cle
+        assert conf["name"].startswith("Tab5 · alertes : "), cle
+    surveillees = {e for t in _bloc_alertes()["triggers"] if t.get("trigger") == "state"
+                   for e in ([t["entity_id"]] if isinstance(t["entity_id"], str) else t["entity_id"])}
+    assert {f"input_select.{cle}" for cle in listes} <= surveillees
+    macro = (MACROS / "tab5_alertes.jinja").read_text(encoding="utf-8")
+    for cle in listes:
+        assert f"input_select.{cle}" in macro, cle
+
+
+def memoire(etats):
+    gabarit = _env(etats).from_string(
+        "{% from 'tab5_alertes.jinja' import tab5_alertes_memoire %}{{ tab5_alertes_memoire('tick', {}) }}")
+    return json.loads(gabarit.render())
+
+
+MAISON = [
+    Etat("update.esphome_update", "on", {"latest_version": "2"}),
+    Etat("update.home_assistant_core_update", "on", {"latest_version": "2026.10.0"}),
+    Etat("binary_sensor.fuite", "on", {"device_class": "problem"}),
+    Etat("binary_sensor.porte", "on", {"device_class": "door"}, etiquettes=["Tab5 · alerte"]),
+    Etat("sensor.pot_batterie", "12", {"device_class": "battery"}),
+    Etat("sensor.vieux", "unavailable"),
+    Etat("sensor.tab5_vigilance", "Orange", {"phenomenes": "Orange"}),
+]
+
+
+def test_abonnements_lus_dans_les_listes():
+    tout = [a["i"].split("#")[0] for a in memoire(MAISON)["affichees"]]
+    assert set(tout) == {"update.esphome_update", "update.home_assistant_core_update", "binary_sensor.fuite",
+                         "binary_sensor.porte", "sensor.pot_batterie", "ha:indispo", "meteo:vigilance"}
+    choix = [Etat("input_select.tab5_alertes_maj", "Home Assistant seulement"),
+             Etat("input_select.tab5_alertes_vigilance", "Rouge"),
+             Etat("input_select.tab5_alertes_problemes", "Non"),
+             Etat("input_select.tab5_alertes_indisponibles", "Non"),
+             Etat("input_select.tab5_alertes_etiquette", "Non"),
+             Etat("input_select.tab5_alertes_piles", "Aucune")]
+    m = memoire(MAISON + choix)
+    assert [a["i"] for a in m["affichees"]] == ["update.home_assistant_core_update#1"]
+    # Pas affichées, mais suivies : s'y réabonner ne fait pas revenir ce qui était lu.
+    assert {"binary_sensor.fuite", "binary_sensor.porte", "sensor.pot_batterie"} <= set(m["suivi"])
+    seuil_10 = memoire(MAISON[:-3] + [Etat("sensor.pot_batterie", "12", {"device_class": "battery"}),
+                                      Etat("input_select.tab5_alertes_piles", "10 %")])
+    assert "sensor.pot_batterie" not in seuil_10["suivi"]
+
+
+def test_desabonnee_puis_reabonnee_une_alerte_lue_ne_revient_pas():
+    porte = {"binary_sensor.porte": {"c": "on", "g": "Orange", "t": "Porte", "s": "etiquette"}}
+    c = Capteur()
+    c(porte)
+    c.tap("binary_sensor.porte#1", porte)
+    c.ab = dict(TOUT, etiquette=False)
+    assert c(porte) == []
+    c.ab = TOUT
+    assert c(porte) == []
+
+
+def test_etiquette_et_piles_lues_dans_les_etats_de_ha():
+    alerte = ["Tab5 · alerte"]
+    etats = [
+        Etat("binary_sensor.porte", "on", {"device_class": "door", "friendly_name": "Porte"}, etiquettes=alerte),
+        Etat("binary_sensor.fumee", "on", {"device_class": "smoke"}, etiquettes=alerte),
+        Etat("binary_sensor.fenetre", "off", {"device_class": "window"}, etiquettes=alerte),
+        Etat("lock.entree", "unlocked", etiquettes=alerte),
+        Etat("alarm_control_panel.maison", "triggered", etiquettes=alerte),
+        Etat("cover.garage", "open", etiquettes=alerte),
+        Etat("binary_sensor.sans_etiquette", "on", {"device_class": "door"}),
+        Etat("update.etiquetee", "on", {"latest_version": "3"}, etiquettes=alerte),
+        Etat("sensor.pot_1", "15", {"device_class": "battery", "friendly_name": "Pot 1"}),
+        Etat("sensor.pot_2", "25", {"device_class": "battery"}),
+        Etat("sensor.pot_3", "25", {"device_class": "battery"}),
+        Etat("sensor.pot_4", "31", {"device_class": "battery"}),
+        Etat("sensor.pot_5", "unavailable", {"device_class": "battery"}),
+        Etat("sensor.telephone", "5", {"device_class": "battery"}, integration="mobile_app"),
+        Etat("binary_sensor.detecteur_pile", "on", {"device_class": "battery"}),
+    ]
+    s = sources(etats, ["sensor.pot_3", "sensor.pot_4", "sensor.pot_5"])
+    a = s["actives"]
+    assert a["binary_sensor.porte"] == {"c": "on", "g": "Orange", "t": "Porte", "s": "etiquette"}
+    assert a["binary_sensor.fumee"]["g"] == "Rouge" and a["alarm_control_panel.maison"]["g"] == "Rouge"
+    assert a["lock.entree"]["s"] == a["cover.garage"]["s"] == "etiquette"
+    assert a["update.etiquetee"]["s"] == "maj"  # une mise à jour garde sa source
+    assert a["sensor.pot_1"] == {"c": "bas", "g": "Orange", "t": "Pot 1 15 %", "s": "pile"}
+    # Suivie, une pile le reste jusqu'au seuil + 10 % ; pas une nouvelle à 25 %.
+    assert "sensor.pot_3" in a and "sensor.pot_2" not in a and "sensor.pot_4" not in a
+    assert a["binary_sensor.detecteur_pile"]["s"] == "pile"
+    assert set(a) == {"binary_sensor.porte", "binary_sensor.fumee", "lock.entree", "alarm_control_panel.maison",
+                      "cover.garage", "update.etiquetee", "sensor.pot_1", "sensor.pot_3",
+                      "binary_sensor.detecteur_pile", "ha:indispo"}
+    # Une pile indisponible : dans le doute ; une rechargée (31 %) : fin.
+    assert s["incertains"] == ["sensor.pot_5"] and s["absents"] == []
+
+
+def test_une_pile_revient_apres_une_recharge():
+    pile = {"sensor.pot": {"c": "bas", "g": "Orange", "t": "Pot 15 %", "s": "pile"}}
+    c = Capteur()
+    c(pile)
+    c.tap("sensor.pot#1", pile)
+    c()                       # rechargée
+    c(avance=300)             # vraie fin
+    assert "sensor.pot" not in c.m["suivi"]
+    assert c(pile) == ["sensor.pot#1"]

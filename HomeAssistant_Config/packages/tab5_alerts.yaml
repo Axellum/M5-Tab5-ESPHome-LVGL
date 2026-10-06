@@ -8,7 +8,8 @@
 #       Toute la logique est dans custom_templates/tab5_alertes.jinja (règles en tête
 #       du fichier, testées par tests/test_alertes_ha.py) : une alerte = une source +
 #       une révision ; lue, elle ne revient que si elle change ou si elle s'arrête
-#       vraiment puis recommence (plan des alertes du 06/10/2026).
+#       vraiment puis recommence (plan des alertes du 06/10/2026). Les listes
+#       « Tab5 · alertes … » (abonnements, ci-dessous) choisissent ce qui s'affiche.
 # @ai_instruction Le tap sur un bandeau émet esphome.tab5_alerte_lue (alert_id =
 #       « id#révision » reçu de HA), que packages/tab5_evenements.yaml traduit en
 #       script.tab5_dismiss_alert, qui relaie l'événement interne tab5_alertes_lue au
@@ -30,8 +31,58 @@
 #       custom_templates/tab5_alertes.jinja (archive tab5_home_assistant.zip).
 # ============================================================================
 
+input_select:
+  # Abonnements : ce qui s'affiche en alerte sur la tablette. Des listes plutôt que des
+  # interrupteurs : sans `initial`, une liste démarre sur sa PREMIÈRE option (le choix
+  # par défaut) puis HA restaure le choix à chaque redémarrage ; un input_boolean sans
+  # `initial` démarrerait éteint, et avec `initial` il oublierait le choix (lot 0).
+  # Options en français : lues par custom_templates/tab5_alertes.jinja.
+  tab5_alertes_maj:
+    name: "Tab5 · alertes : mises à jour · alerts: updates"
+    icon: mdi:package-up
+    options:
+      - "Toutes"
+      - "Home Assistant seulement"
+      - "Aucune"
+  tab5_alertes_vigilance:
+    name: "Tab5 · alertes : vigilance à partir de · alerts: weather warnings from"
+    icon: mdi:alert-outline
+    options:
+      - "Jaune"
+      - "Orange"
+      - "Rouge"
+      - "Aucune"
+  tab5_alertes_problemes:
+    name: "Tab5 · alertes : capteurs « problème » · alerts: problem sensors"
+    icon: mdi:alert-circle-outline
+    options:
+      - "Oui"
+      - "Non"
+  tab5_alertes_indisponibles:
+    name: "Tab5 · alertes : entités indisponibles · alerts: unavailable entities"
+    icon: mdi:help-network-outline
+    options:
+      - "Oui"
+      - "Non"
+  tab5_alertes_etiquette:
+    name: "Tab5 · alertes : étiquette « Tab5 · alerte » · alerts: « Tab5 · alerte » label"
+    icon: mdi:label-outline
+    options:
+      - "Oui"
+      - "Non"
+  tab5_alertes_piles:
+    name: "Tab5 · alertes : piles sous · alerts: batteries below"
+    icon: mdi:battery-alert-variant-outline
+    options:
+      - "20 %"
+      - "10 %"
+      - "15 %"
+      - "25 %"
+      - "30 %"
+      - "Aucune"
+
 input_text:
-  # Ancienne liste des alertes lues (jusqu'à la 3.7) : lue une seule fois, quand le
+  # Ancienne liste des alertes lues (avant le 06/10/2026) : lue une seule fois, quand le
   # capteur « Tab5 Alertes » démarre sans mémoire, puis plus jamais écrite.
   tab5_alerts_dismissed:
     name: "Tab5 alertes HA ignorées"
@@ -71,6 +122,16 @@ template:
         id: tick
       - trigger: state
         entity_id: sensor.tab5_vigilance
+        id: tick
+      # Un abonnement change : ses alertes partent ou arrivent tout de suite.
+      - trigger: state
+        entity_id:
+          - input_select.tab5_alertes_maj
+          - input_select.tab5_alertes_vigilance
+          - input_select.tab5_alertes_problemes
+          - input_select.tab5_alertes_indisponibles
+          - input_select.tab5_alertes_etiquette
+          - input_select.tab5_alertes_piles
         id: tick
       - trigger: event
         event_type: tab5_alertes_lue

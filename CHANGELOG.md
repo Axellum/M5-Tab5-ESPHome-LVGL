@@ -15,6 +15,30 @@ le 06/10/2026 : le package du volet à course simulée ne rend plus le volet mue
 extinction automatique de l'écran au choix et rallumage à « Okay Nabu » (#342), notice
 d'utilisation (#339).
 
+### 2026-10-06 — Alertes : choisir ce qui s'affiche (abonnements)
+
+Lot 2 du plan des alertes de la carte centrale. HA seul, aucun changement de firmware.
+- **Six listes « Tab5 · alertes : … »** (`packages/tab5_alerts.yaml`), à régler dans HA ou sur
+  la page Réglages du tableau de bord de la tablette (nouvelle section « Alertes ») : mises à
+  jour (toutes / Home Assistant seulement / aucune), vigilance à partir du jaune, de l'orange ou
+  du rouge (ou aucune), capteurs « problème », entités indisponibles, étiquette
+  « Tab5 · alerte », piles sous 10 à 30 %. Par défaut : tout, piles sous 20 %. Des listes plutôt
+  que des interrupteurs : sans `initial`, une liste démarre sur sa première option puis HA
+  restaure le choix (un `input_boolean` sans `initial` démarrerait éteint).
+- **Étiquette « Tab5 · alerte »** : toute entité qui la porte devient une alerte quand elle est
+  allumée, ouverte, déverrouillée, bloquée ou déclenchée (porte, fuite, serrure, alarme) ; rouge
+  pour la fumée, le gaz, le CO, l'eau et la sécurité.
+- **Piles faibles** : capteurs `battery` sous le seuil (sauf les téléphones de l'application
+  mobile, rechargés chaque jour), ou binaires `battery` allumés. Une pile reste en alerte
+  jusqu'à 10 % au-dessus du seuil ; après une recharge, elle revient si elle retombe.
+- Se désabonner masque tout de suite ; les alertes restent suivies, donc se réabonner ne fait
+  pas revenir ce qui était déjà lu. Une source suivie qui devient indisponible ou inconnue est
+  dans le doute, quel que soit son domaine (plus seulement les mises à jour et les capteurs
+  binaires).
+- **Preuves** : `tests/test_alertes_ha.py` (listes, lecture des abonnements, étiquette, piles,
+  réabonnement) ; le job « Installation dans un HA neuf » désabonne puis réabonne les mises à
+  jour, pose l'étiquette sur un capteur de la démo et se désabonne de l'étiquette.
+
 ### 2026-10-06 — Boutons du haut : un appui long chacun, popup Réglages sur la tablette
 
 Demande d'Axel : compléter les trois boutons du haut par un appui long, et régler la tablette sans
