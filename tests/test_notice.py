@@ -32,6 +32,9 @@ ANNOTE = "accueil-annote"
 APPUIS_LONGS = {
     "btn_assist_trigger": "voice.md",
     "btn_clock_calendar_zone": "calendar.md",
+    "btn_control_console": "home.md",
+    "btn_control_ha": "home.md",
+    "btn_control_tv": "home.md",
     "btn_pots_detail_zone": "plants.md",
     "forecast_daily.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
@@ -45,6 +48,9 @@ NON_MONTREES = {
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "energie-mois": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
+    # Provisoire (06/10/2026) : images à tirer du rendu de la CI de la PR du popup Réglages.
+    "reglages": "image à tirer du premier rendu de la CI qui le contient",
+    "reglages-langue": "image à tirer du premier rendu de la CI qui le contient",
 }
 
 

@@ -153,8 +153,10 @@ def _panneau(n: int) -> Service:
 HORLOGE = (640, 105)          # court : Réveil · long : Calendrier
 MICRO = (206, 145)            # long : Assistant vocal
 DOMO, DISCU = (72, 150), (340, 150)
-# Rangée du haut avec la TV : le rendu pousse une maison complète (capturer.py, aucune
-# zone absente). Sans TV, HA et Sys glisseraient d'une colonne (zones_apply_ui).
+# Rangée du haut (06/10/2026 : fixe, avec ou sans TV) : HA (court : appareils, long :
+# Énergie), engrenage (court : Réglages, long : Console système), manette (court :
+# Arcade, long : télécommande TV). Le rendu pousse une maison complète (capturer.py,
+# aucune zone absente) : la mini icône de la TV est sur la manette.
 # tests/test_rendu_ecrans.py les compare aux boutons de Tab5/tab5-lvgl.yaml.
 BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 POTS = (640, 270)             # long : Plantes
@@ -251,7 +253,8 @@ def ecrans_des_pieces(pieces: dict) -> tuple:
 REVEIL_TESTER = (550, 641)
 SONNERIE_ARRETER = (440, 540)
 CAL_JOUR_18 = (642, 342)      # cellule du jeudi 18 (rangée 2, colonne 3)
-CONSOLE_REDEMARRER_HA, CONSOLE_REBOOT = (801, 631), (1060, 631)
+# Carte GESTION de la console : deux rangées de deux boutons de 247 × 107 (06/10/2026).
+CONSOLE_REDEMARRER_HA, CONSOLE_REBOOT = (801, 611), (1060, 611)
 CONFIRMATION_ANNULER = (813, 596)   # jamais « Confirmer » (1049, 596)
 # Popup Énergie (ADR-0028, energie_popup.yaml) : la tuile du capteur solaire de la démo
 # (pièce « Bureau », page 1 des heures, T1 : deuxième tuile, x 275-505), la croix de
@@ -261,6 +264,11 @@ CONFIRMATION_ANNULER = (813, 596)   # jamais « Confirmer » (1049, 596)
 TUILE_SOLAIRE = (390, 572)
 FERMER_POPUP = (1215, 41)
 ENERGIE_VUES = {"heures": (828, 347), "jours": (988, 347), "mois": (1148, 347)}
+# Popup Réglages (reglages_popup.yaml) : carte APPARENCE à (652, 87) à l'écran ; pastille
+# « English » (x 158, y 457, 131 × 56 dans la carte) ; « Annuler » de la confirmation
+# (centre de la carte − 130, + 60). Jamais « Confirmer » : la tablette redémarrerait.
+REGLAGES_LANGUE_EN = (875, 572)
+REGLAGES_ANNULER = (816, 446)
 
 
 # ---------------------------------------------------------------------------
@@ -398,11 +406,14 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("energie-heures", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)), (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
     Ecran("energie-jours", (Aller("Énergie"), Toucher(*ENERGIE_VUES["jours"]))),
     Ecran("energie-mois", (Aller("Énergie"), Toucher(*ENERGIE_VUES["mois"]))),
-    Ecran("telecommande-tv", (Toucher(*BOUTON_TV),)),
-    Ecran("console-systeme", (Toucher(*BOUTON_SYS),)),
-    Ecran("console-confirmer-redemarrage-ha", (Toucher(*BOUTON_SYS), Toucher(*CONSOLE_REDEMARRER_HA)),
+    Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
+    Ecran("reglages", (Toucher(*BOUTON_SYS),)),
+    Ecran("reglages-langue", (Toucher(*BOUTON_SYS), Toucher(*REGLAGES_LANGUE_EN)),
+          (Toucher(*REGLAGES_ANNULER),)),
+    Ecran("console-systeme", (Long(*BOUTON_SYS),)),
+    Ecran("console-confirmer-redemarrage-ha", (Long(*BOUTON_SYS), Toucher(*CONSOLE_REDEMARRER_HA)),
           (Toucher(*CONFIRMATION_ANNULER),)),
-    Ecran("console-confirmer-reboot", (Toucher(*BOUTON_SYS), Toucher(*CONSOLE_REBOOT)),
+    Ecran("console-confirmer-reboot", (Long(*BOUTON_SYS), Toucher(*CONSOLE_REBOOT)),
           (Toucher(*CONFIRMATION_ANNULER),)),
 
     # --- Arcade -----------------------------------------------------------------------
