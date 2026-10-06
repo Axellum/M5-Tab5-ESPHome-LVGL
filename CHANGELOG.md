@@ -34,6 +34,24 @@ d'alerte HA de la carte centrale (cadre, texte, compteur « 2/6 ») et leur id d
   30 s.
 - L'`on_boot` est inchangé : il nomme toujours les 4 cadres (`g_central_ctx.ha_wrap`).
 
+### 2026-10-06 — Docs : pourquoi les entités de la tablette restent en français
+
+Demande d'un utilisateur : les réglages et capteurs en anglais. Home Assistant reconnaît une entité
+ESPHome à son nom (identifiant `{mac}/{appareil}/{type}/{nom}` d'aioesphomeapi) : traduire les noms
+créerait de nouvelles entités sur chaque tablette déjà installée et casserait le tableau de bord et
+les automatisations, qui retrouvent les entités par la fin de leur entity_id. Les noms restent donc
+en français ; `docs/installation/settings.md` et `docs/translations.md` le disent et renvoient au
+tableau de bord, dont les libellés suivent la langue de l'écran (ou `tab5_dashboard(langue='English')`).
+
+### 2026-10-06 — Docs : la ST7121 tourne chez un utilisateur
+
+La doc disait encore la révision ST7121 « compilée, jamais essayée ». Un utilisateur fait
+tourner ce firmware sur sa ST7121 depuis octobre 2026 (écran, tactile, mot d'activation :
+[discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : README,
+`docs/hardware.md`, `docs/installation/flash.md`, `docs/architecture.md`, la cartographie et deux
+commentaires du firmware le disent désormais. L'ILI9881C d'origine reste compilée sans avoir
+jamais tourné.
+
 ### 2026-10-06 — Tuile − / + : les boutons de la carte clim règlent l'appareil de votre choix
 
 Demande d'Axel : les − / + de la carte clim de l'accueil (en haut à droite) ne réglaient que la

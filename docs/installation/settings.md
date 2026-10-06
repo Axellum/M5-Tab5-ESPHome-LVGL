@@ -10,6 +10,8 @@ Every setting of the tablet is an entity of its device in Home Assistant, and th
 - the device page, right below: *Settings → Devices & services → ESPHome →* your tablet, cards **Controls** and **Configuration**;
 - on the tablet itself, the **Settings** window (a tap on the gear button, top right): brightness, auto screen off, both ways to wake the screen, theme, light or dark, night switch and language ([user manual](../notice/settings.md)).
 
+**The device page shows the entities under their French names, whatever the screen language.** Home Assistant identifies an ESPHome entity by its name: translating these names would create new entities on every tablet already installed, and the dashboard and the automations would lose track of them. For labels in your language, use the dashboard: it follows the screen language, or write it with `tab5_dashboard(langue='English')` ([step 7](dashboard.md)). The « Tab5 · » lists of the Home Assistant files are named in French and English.
+
 <p><img src="../images/ha_reglages_tablette.png" width="57%" alt="« Tablette » column of the Settings view: screen language, theme, light or dark, wake with a tap, battery fitted, night switch, audio output, Wi-Fi antenna"> <img src="../images/ha_appareil_configuration.png" width="40%" alt="Configuration card of the tablet's device page in Home Assistant: screen to show, voice settings, light or dark, language, night switch, theme, volume"></p>
 
 ## Theme, light or dark
@@ -85,6 +87,8 @@ Chaque réglage de la tablette est une entité de son appareil dans Home Assista
 - la vue **Réglages** du [tableau de bord de la tablette](dashboard.md#version-française), à gauche ci-dessous : sa colonne « Tablette » ;
 - la page de l'appareil, à droite ci-dessous : *Paramètres → Appareils et services → ESPHome →* votre tablette, cartes **Contrôles** et **Configuration** ;
 - sur la tablette elle-même, la fenêtre **Réglages** (un tap sur le bouton engrenage, en haut à droite) : luminosité, extinction auto, les deux façons de rallumer l'écran, thème, clair ou sombre, nuit et langue ([notice](../notice/settings.md#version-française)).
+
+**La page de l'appareil montre les entités sous leur nom français, quelle que soit la langue de l'écran.** Home Assistant reconnaît une entité ESPHome à son nom : traduire ces noms créerait de nouvelles entités sur chaque tablette déjà installée, et le tableau de bord comme les automatisations perdraient leur trace. Pour des libellés dans votre langue, passez par le tableau de bord : il suit la langue de l'écran, ou écrivez-le avec `tab5_dashboard(langue='English')` ([étape 7](dashboard.md#version-française)). Les listes « Tab5 · » des fichiers Home Assistant sont nommées en français et en anglais.
 
 <p><img src="../images/ha_reglages_tablette.png" width="57%" alt="Colonne « Tablette » de la vue Réglages : langue de l'écran, thème, clair ou sombre, rallumer d'une tape, batterie montée, nuit, sortie audio, antenne Wi-Fi"> <img src="../images/ha_appareil_configuration.png" width="40%" alt="Carte Configuration de la page de la tablette dans Home Assistant : écran à afficher, réglages de la voix, clair ou sombre, langue, nuit, thème, volume"></p>
 
