@@ -2,10 +2,14 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4× par tab5-lvgl.yaml :
 # un bandeau d'alerte / info HA de la carte centrale (panneaux 4 à 7 du rotateur).
 # vars : n (0-3 — suffixe des ids ha_alert_wrapper_${n}, btn_ha_alert_tap_${n},
-#        lbl_ha_alert_${n} et numéro de slot passé à tab5_dismiss_ha_alert).
+#        lbl_ha_alert_${n}, lbl_ha_alert_cpt_${n} et numéro de slot passé à
+#        tab5_dismiss_ha_alert).
 # Masqué par défaut ; le texte et la visibilité sont posés par
 # parse_and_update_ha_alerts_bulk() (tab5_central.cpp, service
 # tab5_maj_alertes_ha_bulk). Un tap = lu définitif + ligne suivante.
+# Compteur « 2/6 » (lbl_ha_alert_cpt_${n}, alertes du 06/10/2026, lot 3) : affiché à
+# droite du texte seulement quand HA a plus d'alertes à lire que les 4 bandeaux ;
+# masqué, la rangée flex l'ignore et le texte reste centré comme avant.
 # Sorti de tab5-lvgl.yaml le 25/09/2026 (audit, lot 8e) : 4 copies de 21 lignes.
 # Piège YAML : dans un mapping en ligne `{ … }`, une valeur contenant `${…}` doit être
 # entre guillemets, sinon l'accolade casse la syntaxe (yamllint le signale).
@@ -24,8 +28,22 @@ obj:
   widgets:
     # Le texte en PREMIER enfant, à côté du bouton et pas dedans : c'est lui que la
     # transition du rotateur fait glisser (transition_widgets, tab5_anim.cpp), comme
-    # pour les autres panneaux de la carte centrale.
-    - label: { id: "lbl_ha_alert_${n}", text: "", align: CENTER, styles: [style_police_date, style_bandeau_text_soft] }
+    # pour les autres panneaux de la carte centrale. Une rangée (texte + compteur),
+    # comme celle du panneau pluie : le compteur glisse avec le texte.
+    - obj:
+        align: CENTER
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        styles: style_transparent
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: CENTER
+          flex_align_cross: CENTER
+          pad_column: 18
+        widgets:
+          - label: { id: "lbl_ha_alert_${n}", text: "", styles: [style_police_date, style_bandeau_text_soft] }
+          - label: { id: "lbl_ha_alert_cpt_${n}", text: "", hidden: true, styles: style_bandeau_text_dim }
     - button:
         id: btn_ha_alert_tap_${n}
         align: CENTER

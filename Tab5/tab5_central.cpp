@@ -15,6 +15,7 @@
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"
+#include "tab5_registry.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <array>
@@ -145,6 +146,10 @@ static uint32_t ha_alert_couleur_niveau(uint8_t niveau) {
     return UIBandeau.TEXT_PRIMARY;
 }
 
+// Dernière vigilance rouge montrée en premier (update_info_text_ui) : une seule fois
+// par identifiant, pas à chaque poussée.
+static std::string s_info_rouge_vue;
+
 // Thèmes (ADR-0029, lot 2) : le niveau posé sur chaque label coloré par un niveau (4
 // alertes HA, bandeau info) et le label de la réponse vocale, pour les repeindre au
 // changement de thème (central_rejouer_theme()).
@@ -191,6 +196,21 @@ static bool central_panel_is_active(int panel, const CentralPanelCtx& ctx) {
     return active[panel];
 }
 
+// Met un panneau sur la carte : avec la transition du rotateur s'il a la carte, sinon
+// l'index seulement (le panneau s'affichera quand la carte lui reviendra).
+static void aller_au_panneau(int panel, CentralPanelCtx& ctx) {
+    if (panel == ctx.current_panel) return;
+    if (!rotator_owns_card(ctx)) {
+        ctx.current_panel = panel;  // index seulement : la carte est occupée
+        return;
+    }
+
+    lv_obj_t* out_obj = central_panel_wrapper(ctx.current_panel, ctx);
+    lv_obj_t* in_obj = central_panel_wrapper(panel, ctx);
+    transition_widgets(out_obj, in_obj);
+    ctx.current_panel = panel;
+}
+
 void advance_central_panel_rotator(CentralPanelCtx& ctx) {
     int next_panel = ctx.current_panel;
     int attempts = 0;
@@ -199,16 +219,27 @@ void advance_central_panel_rotator(CentralPanelCtx& ctx) {
         if (central_panel_is_active(next_panel, ctx)) break;
         attempts++;
     }
-    if (next_panel == ctx.current_panel) return;
-    if (!rotator_owns_card(ctx)) {
-        ctx.current_panel = next_panel;  // index seulement : la carte est occupée
-        return;
-    }
+    aller_au_panneau(next_panel, ctx);
+}
 
-    lv_obj_t* out_obj = central_panel_wrapper(ctx.current_panel, ctx);
-    lv_obj_t* in_obj = central_panel_wrapper(next_panel, ctx);
-    transition_widgets(out_obj, in_obj);
-    ctx.current_panel = next_panel;
+// Une alerte rouge qui arrive passe en premier (plan des alertes du 06/10/2026) : elle
+// prend la carte tout de suite au lieu d'attendre son tour, puis tourne avec le reste
+// (elle ne bloque pas la carte : la météo et la pluie restent visibles). Vrai quand la
+// carte vient de changer sous les yeux : l'appelant relance le minuteur du rotateur,
+// pour qu'elle reste un tour entier.
+static void sync_central_panel_visibility(CentralPanelCtx& ctx);  // plus bas
+
+// Popup ouvert : le panneau est posé sans transition (le rotateur, lui, ne tourne pas
+// sous un popup), et la carte est juste resynchronisée sous le voile.
+static bool alerte_rouge_en_tete(int panel, CentralPanelCtx& ctx) {
+    if (!central_panel_is_active(panel, ctx) || ctx.current_panel == panel) return false;
+    if (ModalRegistry::any_popup_visible()) {
+        ctx.current_panel = panel;
+        sync_central_panel_visibility(ctx);
+        return false;
+    }
+    aller_au_panneau(panel, ctx);
+    return rotator_owns_card(ctx);
 }
 
 // Coupe l'animation d'un panneau (transition du rotateur, entrée d'un bandeau d'alerte)
@@ -295,6 +326,7 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
         lv_label_set_recolor(slot.lbl, false);
         lv_label_set_text(slot.lbl, "");
     }
+    if (slot.cpt) lv_obj_add_flag(slot.cpt, LV_OBJ_FLAG_HIDDEN);
     if (slot.wrap) {
         lv_obj_add_flag(slot.wrap, LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_x(slot.wrap, 0);  // Reset X (animate_alert_enter peut avoir laisse un offset)
@@ -318,7 +350,7 @@ static std::string decode_ha_alert_text(const char* brut) {
     return normalize_text_utf8(brut);
 }
 
-void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
+bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
     CentralPanelCtx& ctx, std::string& dismissed_local) {
 
     // 1E : Sauvegarde des IDs precedents pour detecter les nouvelles alertes.
@@ -327,13 +359,14 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
         if (slots[i].id_store) prev_ids[i] = *slots[i].id_store;
     }
     int new_alert_slot = -1;
+    int new_red_slot = -1;
 
     // Rejet AVANT de vider les slots : vidés puis rejetés, ils restaient vides alors
     // que le YAML recopiait les anciens has_ha = true — le rotateur montrait des
     // panneaux vides et le tap d'acquittement n'avait plus d'id (audit 25/09, §2.4).
     if (payload.length() > 1024) {
         ESP_LOGE("TAB5", "Payload alertes HA trop long (%d octets).", (int) payload.length());
-        return;
+        return false;
     }
 
     for (int i = 0; i < kHaAlertSlotCount; i++) {
@@ -343,7 +376,7 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
 
     if (payload.empty()) {
         sync_central_panel_visibility(ctx);
-        return;
+        return false;
     }
 
     char buf[1025];
@@ -351,16 +384,26 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     buf[sizeof(buf) - 1] = '\0';
 
     int slot_idx = 0;
+    // En-tête « @n:N » (alertes du 06/10/2026, lot 3) : HA a N alertes à lire en tout,
+    // plus que les 4 bandeaux. Un jeton d'un seul champ : l'ancien firmware l'ignore.
+    int a_lire = 0;
+    int masquees_ici = 0;  // tapées sur la dalle, pas encore retirées par HA
     std::vector<std::string> ids_seen;
     char* saveptr1 = nullptr;
     char* token = strtok_r(buf, ";", &saveptr1);
     while (token != nullptr && slot_idx < kHaAlertSlotCount) {
+        if (strncmp(token, "@n:", 3) == 0) {
+            a_lire = atoi(token + 3);
+            token = strtok_r(nullptr, ";", &saveptr1);
+            continue;
+        }
         char* parts[3];
         const int num_parts = split_fields(token, '|', parts, 3);
         if (num_parts >= 3 && slots[slot_idx].wrap && slots[slot_idx].lbl && slots[slot_idx].id_store) {
             std::string aid = parts[0];
             ids_seen.push_back(aid);
             if (tab5_dismiss_local_has(dismissed_local, aid)) {
+                masquees_ici++;
                 token = strtok_r(nullptr, ";", &saveptr1);
                 continue;
             }
@@ -371,12 +414,13 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
             lv_label_set_recolor(slots[slot_idx].lbl, false);
             ui_text(slots[slot_idx].lbl, texte.c_str());
             // 1E : Detecte si cette alerte est nouvelle (ID absent du precedent batch).
-            if (new_alert_slot < 0) {
-                bool is_new = true;
-                for (int j = 0; j < kHaAlertSlotCount; j++) {
-                    if (prev_ids[j] == aid) { is_new = false; break; }
-                }
-                if (is_new) new_alert_slot = slot_idx;
+            bool is_new = true;
+            for (int j = 0; j < kHaAlertSlotCount; j++) {
+                if (prev_ids[j] == aid) { is_new = false; break; }
+            }
+            if (is_new && new_alert_slot < 0) new_alert_slot = slot_idx;
+            if (is_new && new_red_slot < 0 && ctx.has_ha[slot_idx] && ha_alert_niveau(parts[1]) == 2) {
+                new_red_slot = slot_idx;
             }
             slot_idx++;
         }
@@ -385,7 +429,24 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
 
     tab5_dismiss_local_prune(dismissed_local, ids_seen);
 
+    // Compteur « k/N » : seulement quand des alertes à lire attendent derrière les
+    // bandeaux affichés (celles tapées ici ne comptent plus).
+    const int total = a_lire - masquees_ici;
+    if (total > slot_idx) {
+        char cpt[16];
+        for (int i = 0; i < slot_idx; i++) {
+            if (!slots[i].cpt) continue;
+            snprintf(cpt, sizeof(cpt), "%d/%d", i + 1, total);
+            ui_text(slots[i].cpt, cpt);
+            lv_obj_remove_flag(slots[i].cpt, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+
     sync_central_panel_visibility(ctx);
+
+    // Une alerte rouge nouvelle prend la carte tout de suite (sa transition tient lieu
+    // d'entrée animée).
+    if (new_red_slot >= 0 && alerte_rouge_en_tete(kHaAlertPanelBase + new_red_slot, ctx)) return true;
 
     // 1E : Anime l'entree du bandeau si une nouvelle alerte est active — seulement si le
     // rotateur a la carte : l'animation démasque le bandeau, qui passait sinon par-dessus
@@ -396,6 +457,9 @@ void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
             animate_alert_enter(slots[new_alert_slot].wrap);
         }
     }
+    // Alerte rouge nouvelle arrivée sur le panneau déjà affiché : un tour entier aussi.
+    return new_red_slot >= 0 && rotator_owns_card(ctx) && !ModalRegistry::any_popup_visible() &&
+           ctx.current_panel == kHaAlertPanelBase + new_red_slot;
 }
 
 // Tap d'acquittement (info, alerte HA ; drapeau déjà baissé par l'appelant) : le
@@ -546,12 +610,12 @@ static std::string compose_info_code(const std::string& code, const std::string&
     return ligne;
 }
 
-void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
+bool update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
     const std::string& texte, const std::string& couleur, const std::string& meteo_id,
     std::string& dismissed_local, CentralPanelCtx& ctx,
     esphome::font::Font* font_small) {
 
-    if (!lbl_info) return;
+    if (!lbl_info) return false;
 
     std::string t = trim_ws(texte);
 
@@ -565,7 +629,7 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
                 ctx.has_info = false;
                 lv_label_set_recolor(lbl_info, false);
                 lv_label_set_text(lbl_info, "");
-                return;
+                return false;
             }
             t = normalize_text_utf8(t);
         } else {
@@ -582,14 +646,14 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
             if (ctx.planning_off) {
                 // Pas de planning (lot 5) : le panneau actif suivant, ou une carte vide.
                 sync_central_panel_visibility(ctx);
-                return;
+                return false;
             }
             // Transition visible seulement si le rotateur a la carte : sinon elle
             // faisait surgir le panneau planning par-dessus le titre de page.
             if (rotator_owns_card(ctx)) transition_widgets(info_wrap, planning_wrap);
             ctx.current_panel = 0;
         }
-        return;
+        return false;
     }
 
     bool multi_ligne = t.find('\n') != std::string::npos;
@@ -603,6 +667,17 @@ void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
 
     lv_label_set_recolor(lbl_info, has_recolor_markup);
     lv_label_set_text(lbl_info, t.c_str());
+
+    // Vigilance rouge nouvelle (son identifiant change avec le niveau ou les phénomènes) :
+    // elle passe en premier, comme un bandeau d'alerte rouge.
+    if (ha_alert_niveau(couleur) != 2 || meteo_id.empty() || meteo_id == s_info_rouge_vue ||
+        tab5_dismiss_local_has(dismissed_local, meteo_id)) {
+        return false;
+    }
+    s_info_rouge_vue = meteo_id;
+    // Déjà sur la carte : elle y reste un tour entier aussi.
+    if (ctx.current_panel == kInfoPanel) return rotator_owns_card(ctx) && !ModalRegistry::any_popup_visible();
+    return alerte_rouge_en_tete(kInfoPanel, ctx);
 }
 
 // -----------------------------------------------------------------------------

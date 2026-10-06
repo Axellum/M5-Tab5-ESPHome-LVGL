@@ -38,6 +38,26 @@ bord HA. Firmware seul : même commande, même événement, même branche du blu
   position, une fois au relâcher) et de la géométrie (`tests/test_tuiles_firmware.py`) ; un
   écran de plus au rendu hors tablette (`volet-glisse`, le volet tiré du doigt).
 
+### 2026-10-06 — Alertes : le rang « 2/6 » et l'alerte rouge en premier sur l'écran
+
+Lot 3 du plan des alertes de la carte centrale. Firmware et Home Assistant.
+- **Rang « 2/6 »** : quand Home Assistant a plus de quatre alertes à lire, chaque bandeau affiche
+  son rang à droite du texte, en petit et atténué ; avec quatre alertes ou moins, rien ne change.
+  HA ajoute en tête du payload de `tab5_maj_alertes_ha_bulk` un jeton `@n:total`, sans « | » :
+  un firmware d'avant l'ignore, le package peut donc partir avant le flash.
+- **Une alerte rouge passe en premier** : une alerte rouge nouvelle (capteur « problème »,
+  fumée, gaz, fuite, mise à jour de HA Core, Supervisor ou OS, vigilance rouge) prend la carte
+  centrale tout de suite au lieu d'attendre son tour, puis tourne avec le reste (elle ne bloque
+  pas la carte : la météo et la pluie restent visibles). Le rotateur repart de zéro pour qu'elle reste un tour
+  entier. L'ordre des bandeaux reste celui de HA : rouge, orange, jaune, puis de la plus
+  ancienne à la plus récente.
+- Le cache local des taps est déjà par révision (les ids « id#révision » du lot 1) : rien à
+  changer.
+- **Preuves** : `tests/test_alertes_ecran.py` (payload rendu depuis le vrai modèle du package :
+  sans en-tête jusqu'à quatre, `@n:6` et les quatre premières au-delà, vigilance hors compte,
+  en-tête sans « | ») ; graine du fuzz des sanitizers avec l'en-tête ; écran
+  « accueil-alertes-ha-compteur » ajouté au rendu hors tablette.
+
 ### 2026-10-06 — Alertes : choisir ce qui s'affiche (abonnements)
 
 Lot 2 du plan des alertes de la carte centrale. HA seul, aucun changement de firmware.

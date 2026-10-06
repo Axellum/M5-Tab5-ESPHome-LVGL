@@ -335,9 +335,13 @@ api:
             cle += '\x1f';
             cle += id(tab5_dismissed_local);
             if (push_unchanged(PushChannel::INFO, cle)) return;
-            update_info_text_ui(id(lbl_info_text), id(info_wrapper), id(planning_wrapper),
-                texte, couleur, meteo_id, id(tab5_dismissed_local), g_central_ctx,
-                id(roboto_32_b));
+            // Vigilance rouge nouvelle montrée tout de suite : le rotateur repart de zéro
+            // pour qu'elle reste un tour entier (alertes du 06/10/2026, lot 3).
+            if (update_info_text_ui(id(lbl_info_text), id(info_wrapper), id(planning_wrapper),
+                    texte, couleur, meteo_id, id(tab5_dismissed_local), g_central_ctx,
+                    id(roboto_32_b))) {
+              id(tab5_central_rotator_auto).execute();
+            }
 
     - service: tab5_maj_reponse_vocale
       description: "Réponse vocale courte, affichée sous l'assistant sur l'écran d'accueil."
@@ -387,7 +391,7 @@ api:
       variables:
         payload:
           type: string
-          description: "Jusqu'à quatre alertes « id|couleur|libellé » séparées par ; — couleur Rouge ou Orange, id renvoyé tel quel à l'acquittement quand l'écran est tapé. Libellés codés, composés par la tablette dans sa langue : « @maj:titre » et « @indispo:nombre »."
+          description: "Jusqu'à quatre alertes « id|couleur|libellé » séparées par ; — couleur Rouge ou Orange, id renvoyé tel quel à l'acquittement quand l'écran est tapé. Libellés codés, composés par la tablette dans sa langue : « @maj:titre » et « @indispo:nombre ». En tête, « @n:nombre » quand il y a plus de quatre alertes à lire : chaque bandeau affiche alors son rang, « 2/6 »."
           example: "update.home_assistant_core_update|Rouge|@maj:Home Assistant Core;ha:unavailable|Orange|@indispo:3"
       then:
         - lambda: |-
@@ -398,13 +402,17 @@ api:
             cle += id(tab5_dismissed_local);
             if (push_unchanged(PushChannel::ALERTES_HA, cle)) return;
             HaAlertSlotUI slots[4] = {
-              {id(ha_alert_wrapper_0), id(lbl_ha_alert_0), &id(ha_alert_id_0)},
-              {id(ha_alert_wrapper_1), id(lbl_ha_alert_1), &id(ha_alert_id_1)},
-              {id(ha_alert_wrapper_2), id(lbl_ha_alert_2), &id(ha_alert_id_2)},
-              {id(ha_alert_wrapper_3), id(lbl_ha_alert_3), &id(ha_alert_id_3)},
+              {id(ha_alert_wrapper_0), id(lbl_ha_alert_0), &id(ha_alert_id_0), id(lbl_ha_alert_cpt_0)},
+              {id(ha_alert_wrapper_1), id(lbl_ha_alert_1), &id(ha_alert_id_1), id(lbl_ha_alert_cpt_1)},
+              {id(ha_alert_wrapper_2), id(lbl_ha_alert_2), &id(ha_alert_id_2), id(lbl_ha_alert_cpt_2)},
+              {id(ha_alert_wrapper_3), id(lbl_ha_alert_3), &id(ha_alert_id_3), id(lbl_ha_alert_cpt_3)},
             };
-            parse_and_update_ha_alerts_bulk(payload, slots, g_central_ctx,
-                id(tab5_dismissed_local));
+            // Alerte rouge nouvelle montrée tout de suite : le rotateur repart de zéro
+            // pour qu'elle reste un tour entier (alertes du 06/10/2026, lot 3).
+            if (parse_and_update_ha_alerts_bulk(payload, slots, g_central_ctx,
+                    id(tab5_dismissed_local))) {
+              id(tab5_central_rotator_auto).execute();
+            }
 
     # Conservé pour compat (anciennes automations) — le bandeau est désormais dérivé
     # localement après tab5_maj_previsions_jours_bulk via build_planning_lines_from_jours().

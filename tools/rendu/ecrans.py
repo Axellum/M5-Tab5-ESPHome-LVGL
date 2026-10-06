@@ -139,6 +139,11 @@ REPONSE_ASSISTANT = (
 )
 
 ALERTES_HA = "update.home_assistant_core_update|Rouge|@maj:Home Assistant Core;ha:unavailable|Orange|@indispo:3"
+# Six alertes à lire (lot 3 des alertes, 06/10/2026) : en-tête « @n:6 » et les quatre
+# premières, rangées par HA (rouge d'abord) ; chaque bandeau affiche son rang, « 2/6 ».
+ALERTES_HA_SIX = ("@n:6;binary_sensor.fuite_cuisine#1|Rouge|Fuite cuisine;"
+                  "update.home_assistant_core_update#1|Rouge|@maj:Home Assistant Core;"
+                  "ha:indispo#1|Orange|@indispo:3;sensor.porte_entree_batterie#1|Orange|Porte entrée 12 %")
 
 # Vigilance de la scène 2 (orange), puis retour à celle de la scène 3, la dernière
 # poussée par capturer.py. Heure figée : les codes de pluie sont ceux des scènes.
@@ -372,6 +377,9 @@ ECRANS: tuple[Ecran, ...] = (
           (Service("tab5_maj_alerte_meteo_france", (("payload", VIGILANCE_SCENE_3),)), _panneau(3))),
     Ecran("accueil-alertes-ha",
           (Service("tab5_maj_alertes_ha_bulk", (("payload", ALERTES_HA),)), _panneau(4)),
+          (Service("tab5_maj_alertes_ha_bulk", (("payload", ""),)), _panneau(3))),
+    Ecran("accueil-alertes-ha-compteur",
+          (Service("tab5_maj_alertes_ha_bulk", (("payload", ALERTES_HA_SIX),)), _panneau(5)),
           (Service("tab5_maj_alertes_ha_bulk", (("payload", ""),)), _panneau(3))),
     # Le planning du jour touché reste 6 s ; la réponse vocale 8 s, puis relance le
     # rotateur (tab5-assist.yaml) : on l'arrête de nouveau sur le panneau des scènes.
