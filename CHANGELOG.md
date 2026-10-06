@@ -21,6 +21,15 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-06 — Docs : pourquoi les entités de la tablette restent en français
+
+Demande d'un utilisateur : les réglages et capteurs en anglais. Home Assistant reconnaît une entité
+ESPHome à son nom (identifiant `{mac}/{appareil}/{type}/{nom}` d'aioesphomeapi) : traduire les noms
+créerait de nouvelles entités sur chaque tablette déjà installée et casserait le tableau de bord et
+les automatisations, qui retrouvent les entités par la fin de leur entity_id. Les noms restent donc
+en français ; `docs/installation/settings.md` et `docs/translations.md` le disent et renvoient au
+tableau de bord, dont les libellés suivent la langue de l'écran (ou `tab5_dashboard(langue='English')`).
+
 ### 2026-10-06 — Docs : la ST7121 tourne chez un utilisateur
 
 La doc disait encore la révision ST7121 « compilée, jamais essayée ». Un utilisateur fait
