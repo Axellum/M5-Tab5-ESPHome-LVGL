@@ -139,6 +139,16 @@ Those three lines repeat ~50 times per second. The black screen is a *consequenc
 
 ---
 
+### Crash alert after a press on the power button (2026-10-06)
+
+**Symptom:** a short press on the power button reboots the tablet in about 10 s, then Home Assistant sends « Tab5 : journal du démarrage (plantage (chien de garde)) » to the phone. The journal has only the usual boot lines (ESP-Hosted « not yet up », touch polling, Wi-Fi associating), no `esp32.crash` line. Meanwhile `Tab5 Raison du redémarrage` shows `Reboot request from esphome.ota`, although the last update was hours earlier. Reported in discussion #278 (tablet with a battery, 3.7.0-rc.2), reproduced the same day on a tablet powered by USB.
+
+**Root cause:** not a crash. The firmware does not handle the power button: the hardware resets the chip, and `esp_reset_reason()` reads `ESP_RST_WDT`, a reason the journal counted as a crash. ESPHome's `debug` component, for that reason, shows the source stored by the last *requested* reboot (`components/debug/debug_esp32.cpp`), which it never clears: a stale text.
+
+**Fix (firmware after 3.7.0-rc.3, and `packages/tab5_health.yaml`):** a watchdog reset with no crash report is now a normal boot: « bouton d'alimentation ou chien de garde RTC (rst 0x..) » in the journal, no event sent; `Power button or RTC watchdog (rst 0x..)` in the entity, which the « reboot inattendu » guard lets through. Update both the firmware and the HA files: with only the new firmware, the old guard would alert on the new text. A watchdog reset with a crash report still alerts. Details in [`debugging.md`](debugging.md).
+
+---
+
 ### False positives worth knowing about (don't "fix" these again)
 
 - **Forecast pagination "wrap-around"**: the 5 forecast pages (indices 0–4) intentionally do **not** wrap from 4 back to 0 on a further right-swipe. This was already "corrected" once by an LLM audit that assumed non-wrapping was a bug, then reverted. See [`docs/decisions/`](decisions/README.md).
@@ -253,6 +263,14 @@ Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *cons
 **Cause racine :** Home Assistant, pas le firmware. `Tab5 Uptime` est passé de secondes (`s`) à une heure de démarrage sans unité, sous le même nom, donc la même entité. À la reconnexion, l'intégration ESPHome de HA met à jour l'entité existante sur place et ne recopie l'unité que si la nouvelle n'est pas vide (`homeassistant/components/esphome/sensor.py`, `_on_static_info_update`) : l'ancien `s` reste, et HA refuse d'écrire un état horodaté qui porte une unité.
 
 **Correctif :** recharger une fois l'intégration ESPHome de l'appareil (Paramètres → Appareils et services → ESPHome → l'appareil → ⋮ → Recharger), ou redémarrer Home Assistant. L'entité est reconstruite depuis la description de l'appareil, sans unité. Fait le 26/09/2026 à 21:39.
+
+### Alerte de plantage après un appui sur le bouton d'alimentation (06/10/2026)
+
+**Symptôme :** un appui court sur le bouton d'alimentation redémarre la tablette en ~10 s, puis Home Assistant envoie « Tab5 : journal du démarrage (plantage (chien de garde)) » sur le téléphone. Le journal ne contient que les lignes habituelles du démarrage (ESP-Hosted « not yet up », tactile, Wi-Fi qui s'associe), aucune ligne `esp32.crash`. En même temps, `Tab5 Raison du redémarrage` affiche `Reboot request from esphome.ota`, alors que la dernière mise à jour date de plusieurs heures. Signalé dans la discussion #278 (tablette avec batterie, 3.7.0-rc.2), reproduit le même jour sur une tablette alimentée par l'USB.
+
+**Cause racine :** pas un plantage. Le firmware ne gère pas le bouton d'alimentation : c'est le matériel qui réinitialise la puce, et `esp_reset_reason()` lit `ESP_RST_WDT`, une raison que le journal comptait comme un plantage. Pour cette raison, le composant `debug` d'ESPHome affiche la source enregistrée par le dernier redémarrage *demandé* (`components/debug/debug_esp32.cpp`), qu'il n'efface jamais : un texte périmé.
+
+**Correctif (firmware après la 3.7.0-rc.3, et `packages/tab5_health.yaml`) :** un reset du chien de garde sans rapport de plantage est un démarrage normal : « bouton d'alimentation ou chien de garde RTC (rst 0x..) » dans le journal, aucun événement envoyé ; `Power button or RTC watchdog (rst 0x..)` dans l'entité, que la garde « reboot inattendu » laisse passer. Mettre à jour le firmware ET les fichiers HA : avec le nouveau firmware seul, l'ancienne garde alerterait sur le nouveau texte. Un chien de garde avec rapport de plantage alerte toujours. Détail dans [`debugging.md`](debugging.md#version-française).
 
 ### Faux positifs à connaître (ne pas re-"corriger")
 

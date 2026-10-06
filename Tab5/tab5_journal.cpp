@@ -31,14 +31,51 @@
  * chien de garde RTC : ESP_RST_WDT, « other watchdogs » pour ESPHome. Sans la marque,
  * le premier démarrage d'une installation passait pour un plantage (alerte sur le
  * téléphone, vu à l'installation à neuf du 28/09). Seul ce cas est excusé : une panique
- * ou un chien de garde de tâche alertent toujours, même au premier démarrage. Le Wi-Fi
+ * ou un chien de garde de tâche alertent toujours, même au premier démarrage. (Depuis le
+ * 06/10, ESP_RST_WDT sans rapport n'alerte plus du tout, voir plus bas ; la marque garde
+ * son libellé propre, « First boot after install ».) Le Wi-Fi
  * pas encore réglé et HA qui tarde à ajouter la tablette ne sont pas des anomalies non
  * plus, tant que la tablette n'a jamais vu son réseau.
+ *
+ * [AI-WARNING] ESP_RST_WDT SANS rapport de plantage n'est pas une anomalie (06/10/2026,
+ * discussion #278). Un appui court sur le bouton d'alimentation redémarre la tablette
+ * en ~10 s avec cette raison, sans aucun rapport `esp32.crash` (vu chez husyildiz, avec
+ * batterie, et reproduit chez Axel, sur USB, le 06/10 à 13:39). Le firmware ne gère pas
+ * ce bouton : c'est le matériel. Aucune source trouvée sur son câblage (doc et schéma
+ * de M5Stack muets), donc aucun moyen sûr de le reconnaître : on l'appelle « bouton
+ * d'alimentation ou chien de garde RTC » et on joint le code brut du ROM
+ * (`esp_rom_get_reset_reason(0)`, « rst 0x.. ») pour trancher au prochain appui.
+ * Pourquoi c'est sûr sur cette config (ESP-IDF 5.5.5, sources locales lues) :
+ *   - esp32p4/reset_reason.c : ESP_RST_WDT regroupe six codes du ROM, chiens de garde
+ *     RTC (CORE_RWDT 0x09, CPU_RWDT 0x0D, SYS_RWDT 0x10), super chien de garde (0x12) et
+ *     chiens de garde des groupes de timers (CORE_MWDT 0x07, CPU_MWDT 0x0B). Les chiens
+ *     de garde de tâche et d'interruption passent par la panique : raison
+ *     ESP_RST_TASK_WDT / ESP_RST_INT_WDT (indice gardé en RTC), qui alertent toujours.
+ *   - CONFIG_BOOTLOADER_WDT_ENABLE=y, 9000 ms, DISABLE_IN_USER_CODE non posé : le
+ *     chien de garde RTC ne surveille que le démarrage, l'application le coupe
+ *     (startup_funcs.c, init_disable_rtc_wdt). En marche, il n'est réarmé que par
+ *     esp_restart (garde de 1 s, system_internal.c) et par le gestionnaire de panique
+ *     (panic.c), APRÈS qu'ESPHome a écrit son rapport (crash_handler.cpp enveloppe
+ *     esp_panic_handler) : un vrai plantage arrive donc avec `esp32.crash`, qui pose
+ *     kPlantage plus bas, et alerte toujours.
+ *   - Ce qui n'alerte plus : un démarrage bloqué plus de 9 s (bootloader), et un chien
+ *     de garde de timer qui réinitialise sans passer par la panique (interruptions
+ *     bloquées). Rares ; la raison et le code « rst » restent dans l'historique de HA.
+ *   - Un redémarrage demandé (OTA, bouton de HA) donne ESP_RST_SW sur cette tablette :
+ *     `rst:0xc (SW_CPU_RESET)` au port série, et plus de 20 OTA du 01 au 06/10 sans
+ *     aucun événement `esphome.tab5_journal` (base de HA). Le texte « Reboot request
+ *     from … » qu'ESPHome lit pour ESP_RST_WDT (debug_esp32.cpp : la source enregistrée
+ *     par on_shutdown n'est jamais effacée) est donc périmé ici : journal_raison_ha()
+ *     le remplace.
  */
 #include "tab5_custom.h"
 #include <esp_attr.h>
 #include <esp_heap_caps.h>
 #include <esp_system.h>
+#if __has_include(<esp_rom_sys.h>)
+#include <esp_rom_sys.h>  // code de reset brut du ROM ; absent du rendu hors tablette
+#define TAB5_JOURNAL_CODE_ROM 1
+#endif
 #include <cstdio>
 #include <cstring>
 
@@ -51,6 +88,10 @@ constexpr const char* kTexteInstallation = "premier démarrage après installati
 // Préfixe lu par la garde « reboot inattendu » (packages/tab5_health.yaml) : ne pas le
 // changer sans elle (tests/test_premier_demarrage.py compare les deux).
 constexpr const char* kRaisonInstallationHa = "First boot after install";
+// ESP_RST_WDT sans rapport de plantage (06/10/2026) : le bouton d'alimentation, en
+// pratique. Préfixe lu aussi par la garde « reboot inattendu » (tests/test_bouton_alim.py).
+constexpr const char* kTexteBouton = "bouton d'alimentation ou chien de garde RTC";
+constexpr const char* kRaisonBoutonHa = "Power button or RTC watchdog";
 constexpr int kLignes = 32;
 constexpr int kTexte = 96;
 
@@ -97,11 +138,16 @@ bool s_neuve = false;           // marque absente au démarrage (flash effacée)
 bool s_marque_a_ecrire = false;
 bool s_installation = false;    // neuve ET relancée par le chien de garde RTC
 bool s_wifi_vu = false;         // réseau joint au moins une fois depuis le démarrage
+esp_reset_reason_t s_raison = ESP_RST_UNKNOWN;  // lue une fois, à l'ouverture
+unsigned s_code_rom = 0;        // code brut du ROM (« rst 0x.. »), 0 hors tablette
+bool s_rapport_plantage = false;  // rapport `esp32.crash` lu à ce démarrage
+int s_repere = -1;              // ligne du repère de ce démarrage, à réécrire
 
+// Reset anormal à lui seul. ESP_RST_WDT n'y est PAS (voir [AI-WARNING] en tête) : sans
+// rapport de plantage c'est le bouton d'alimentation, avec, le rapport pose kPlantage.
 bool raison_anormale(esp_reset_reason_t r) {
     return r == ESP_RST_PANIC || r == ESP_RST_INT_WDT || r == ESP_RST_TASK_WDT ||
-           r == ESP_RST_WDT || r == ESP_RST_BROWNOUT || r == ESP_RST_PWR_GLITCH ||
-           r == ESP_RST_CPU_LOCKUP;
+           r == ESP_RST_BROWNOUT || r == ESP_RST_PWR_GLITCH || r == ESP_RST_CPU_LOCKUP;
 }
 
 const char* raison_texte(esp_reset_reason_t r) {
@@ -122,6 +168,19 @@ const char* raison_texte(esp_reset_reason_t r) {
         case ESP_RST_PWR_GLITCH: return "micro-coupure d'alimentation";
         case ESP_RST_CPU_LOCKUP: return "plantage (blocage du CPU)";
         default:                 return "inconnue";
+    }
+}
+
+// Raison de CE démarrage, en clair. ESP_RST_WDT : « plantage » seulement avec un rapport
+// de plantage, sinon le bouton ; avec le code du ROM dans les deux cas.
+void texte_demarrage(char* buf, size_t taille) {
+    if (s_installation) {
+        snprintf(buf, taille, "%s", kTexteInstallation);
+    } else if (s_raison == ESP_RST_WDT) {
+        snprintf(buf, taille, "%s (rst 0x%02X)",
+                 s_rapport_plantage ? raison_texte(s_raison) : kTexteBouton, s_code_rom);
+    } else {
+        snprintf(buf, taille, "%s", raison_texte(s_raison));
     }
 }
 
@@ -174,6 +233,24 @@ void preparer_pref() {
     s_pref_ok = true;
 }
 
+// Pose le repère du démarrage, ou le réécrit quand le rapport de plantage arrive après
+// lui (ESP_RST_WDT : « bouton » devient « plantage »). Jamais de second repère.
+void ecrire_repere() {
+    char texte[kTexte];
+    char repere[kTexte];
+    texte_demarrage(texte, sizeof(texte));
+    snprintf(repere, sizeof(repere), "démarrage, raison : %s", texte);
+    if (s_repere >= 0) {
+        Ligne& l = s_j.lignes[s_repere];
+        if (l.boot == s_j.demarrages && l.niveau == '>') {
+            snprintf(l.texte, sizeof(l.texte), "%s", repere);
+        }
+        return;
+    }
+    s_repere = s_j.tete;
+    ajouter('>', repere);
+}
+
 // Au premier appel de chaque démarrage : valide la RAM conservée (sinon, mise sous
 // tension : on repart de la copie NVS s'il y en a une) et pose le repère du démarrage.
 void ouvrir_session() {
@@ -200,14 +277,15 @@ void ouvrir_session() {
     s_neuve = !(s_pref_marque.load(&marque) && marque == kMagic);
     s_marque_a_ecrire = s_neuve;
     const esp_reset_reason_t r = esp_reset_reason();
+    s_raison = r;
+#ifdef TAB5_JOURNAL_CODE_ROM
+    s_code_rom = (unsigned) esp_rom_get_reset_reason(0);
+#endif
     s_installation = s_neuve && r == ESP_RST_WDT;
     if (s_j.demarrages < 0xFFFF) s_j.demarrages++;
     // kPlantage et kWifi d'un démarrage précédent restent posés jusqu'à l'envoi.
     if (raison_anormale(r) && !s_installation) s_j.anomalie |= kPlantage;
-    char repere[kTexte];
-    snprintf(repere, sizeof(repere), "démarrage, raison : %s",
-             s_installation ? kTexteInstallation : raison_texte(r));
-    ajouter('>', repere);
+    ecrire_repere();
 }
 
 void copier_en_nvs() {
@@ -247,8 +325,16 @@ void journal_log_message(uint8_t level, const char* tag, const char* message) {
     copier_sans_ansi(texte, sizeof(texte), message);
     // Une ligne seule ne justifie un envoi qu'après la première connexion à HA ; avant,
     // c'est le démarrage, gardé comme contexte. Un rapport de plantage, toujours.
-    if (crash) s_j.anomalie |= kPlantage;
-    else if (erreur && s_ha_vu) s_j.anomalie |= kErreur;
+    if (crash) {
+        s_j.anomalie |= kPlantage;
+        // ESP_RST_WDT avec rapport : un vrai plantage, pas le bouton (repère réécrit).
+        if (!s_rapport_plantage) {
+            s_rapport_plantage = true;
+            if (s_raison == ESP_RST_WDT) ecrire_repere();
+        }
+    } else if (erreur && s_ha_vu) {
+        s_j.anomalie |= kErreur;
+    }
     ajouter(erreur ? 'E' : 'W', texte);
 }
 
@@ -298,13 +384,23 @@ bool journal_is_serious() {
 
 std::string journal_reset_reason() {
     ouvrir_session();
-    return s_installation ? kTexteInstallation : raison_texte(esp_reset_reason());
+    char texte[kTexte];
+    texte_demarrage(texte, sizeof(texte));
+    return texte;
 }
 
+// Filtre du capteur debug. Le capteur est publié par dump_config(), après le setup du
+// logger qui écrit le rapport de plantage : s_rapport_plantage est déjà à jour.
 std::string journal_raison_ha(const std::string& raison) {
     ouvrir_session();
-    if (!s_installation) return raison;
-    return std::string(kRaisonInstallationHa) + " (" + raison + ")";
+    if (s_installation) return std::string(kRaisonInstallationHa) + " (" + raison + ")";
+    if (s_raison != ESP_RST_WDT) return raison;
+    // ESP_RST_WDT : le « Reboot request from … » d'ESPHome serait celui d'un redémarrage
+    // précédent (voir [AI-WARNING] en tête) ; on ne le garde pas.
+    char texte[64];
+    snprintf(texte, sizeof(texte), "%s (rst 0x%02X)",
+             s_rapport_plantage ? "Crash, other watchdogs" : kRaisonBoutonHa, s_code_rom);
+    return texte;
 }
 
 std::string journal_boot_count() {
