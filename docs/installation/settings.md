@@ -32,6 +32,7 @@ The theme names stay as they are in every language: they are names. Six of them:
 | Display Backlight (Luminosité) | on / off, brightness | the screen backlight |
 | Tab5 Extinction auto de l'écran (Extinction auto de l'écran) | Jamais, 1 min, 2 min, 5 min, 10 min, 30 min; Jamais (never) by default | turns the screen off after that long without a touch, the way Home Assistant turns it off; a touch, a tap (Tap-to-Wake), Home Assistant or the alarm clock turn it back on. Never while the alarm rings, while the voice assistant listens or answers, while a game is open or during an update |
 | Tab5 Tap-to-Wake (Rallumer l'écran d'une tape) | on / off, on by default | a tap on the tablet lights the screen up again when it is off |
+| Tab5 Rallumer l'écran à Okay Nabu (Rallumer l'écran à Okay Nabu) | on / off, on by default | « Okay Nabu » lights the screen up again when it is off, as the assistant starts listening (not « Stop »). Off, the screen stays dark and the answer is only spoken |
 | Volume | 0 to 100 % | speaker volume; also in the console and the assistant popup |
 | Speaker Enable (Haut-parleur) | on / off | turns the speaker on or off (a line of the IO expander) |
 | Tab5 DAC Output (Sortie audio) | LINE1, LINE2, BOTH | output of the ES8388 audio chip; the author's tablet uses LINE1 |
@@ -106,6 +107,7 @@ Les noms des thèmes restent les mêmes dans toutes les langues : ce sont des no
 | Display Backlight (Luminosité) | allumé / éteint, luminosité | le rétroéclairage de l'écran |
 | Tab5 Extinction auto de l'écran (Extinction auto de l'écran) | Jamais, 1 min, 2 min, 5 min, 10 min, 30 min ; Jamais par défaut | éteint l'écran après ce délai sans toucher, comme quand Home Assistant l'éteint ; un toucher, une tape (Tap-to-Wake), Home Assistant ou le réveil le rallument. Jamais pendant que le réveil sonne, que l'assistant vocal écoute ou répond, qu'un jeu est ouvert ou pendant une mise à jour |
 | Tab5 Tap-to-Wake (Rallumer l'écran d'une tape) | allumé / éteint, allumé par défaut | une tape sur la tablette rallume l'écran éteint |
+| Tab5 Rallumer l'écran à Okay Nabu (Rallumer l'écran à Okay Nabu) | allumé / éteint, allumé par défaut | « Okay Nabu » rallume l'écran éteint, quand l'assistant se met à écouter (pas « Stop »). Éteint, l'écran reste noir et la réponse est seulement parlée |
 | Volume | 0 à 100 % | volume du haut-parleur ; aussi dans la console et le popup de l'assistant |
 | Speaker Enable (Haut-parleur) | allumé / éteint | allume ou coupe le haut-parleur (une ligne de l'expandeur d'E/S) |
 | Tab5 DAC Output (Sortie audio) | LINE1, LINE2, BOTH | sortie de la puce audio ES8388 ; la tablette de l'auteur est sur LINE1 |

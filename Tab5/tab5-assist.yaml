@@ -285,6 +285,18 @@ script:
           condition:
             lambda: 'return action == WakeWord::START_PIPELINE;'
           then:
+            # Écran éteint : « Okay Nabu » le rallume, si l'interrupteur « Tab5 Rallumer
+            # l'écran à Okay Nabu » (tab5-ha-controls.yaml) est allumé. Ici et pas dans le
+            # trigger : seulement quand l'écoute démarre vraiment, jamais sur « Stop ».
+            # L'extinction auto repart de cet allumage (ecran_allume_ms) et attend la fin
+            # de la réponse (va_stop_armed).
+            - if:
+                condition:
+                  and:
+                    - switch.is_on: tab5_ecran_okay_nabu
+                    - light.is_off: backlight
+                then:
+                  - light.turn_on: backlight
             - voice_assistant.start:
                 wake_word: !lambda return wake_word;
 

@@ -80,6 +80,7 @@
   ('theme_nuit', 'switch', 'nuit_theme_auto'),
   ('tape', 'switch', 'tap_to_wake'), ('batterie_montee', 'switch', 'tab5_batterie_montee'),
   ('appareils_meteo', 'switch', 'tab5_appareils_sur_la_meteo'),
+  ('okay_nabu', 'switch', 'tab5_rallumer_l_ecran_a_okay_nabu'),
   ('extinction', 'select', 'tab5_extinction_auto_de_l_ecran'),
   ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
   ('zones', 'sensor', 'zones_masquees'),
@@ -711,6 +712,7 @@ views:
             heading_style: subtitle
 {%- endif %}
 {%- for cle, fr_, en_, icone in [('tape', "Rallumer l'écran d'une tape", 'Wake the screen with a tap', 'mdi:gesture-tap'),
+                                  ('okay_nabu', "Rallumer l'écran à Okay Nabu", 'Wake the screen with Okay Nabu', 'mdi:account-voice'),
                                   ('batterie_montee', 'Batterie montée', 'Battery fitted', 'mdi:battery'),
                                   ('appareils_meteo', 'Appareils sur la météo', 'Devices on the forecast', 'mdi:lightbulb-outline')] %}
 {%- if T[cle] %}
@@ -2018,6 +2020,12 @@ views:
     'es': 'Reactivar la pantalla con un toque',
     'it': 'Riaccendi lo schermo con un tocco',
     'tr': 'Ekranı dokunarak uyandır'},
+  "Rallumer l'écran à Okay Nabu": {
+    'de': 'Bildschirm mit Okay Nabu aufwecken',
+    'nl': 'Scherm wekken met Okay Nabu',
+    'es': 'Reactivar la pantalla con Okay Nabu',
+    'it': 'Riaccendi lo schermo con Okay Nabu',
+    'tr': 'Okay Nabu ile ekranı uyandır'},
   'Batterie montée': {
     'de': 'Batterie eingebaut',
     'nl': 'Batterij gemonteerd',

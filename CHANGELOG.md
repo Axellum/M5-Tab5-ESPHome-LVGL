@@ -11,7 +11,7 @@ météo au choix, tableau de bord), puis
 [v3.7.0-rc.2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.2)
 le 05/10/2026, qui ajoute le popup du volet (#333) et la doc des deux modes vocaux (#334).
 
-### 2026-10-06 — Écran : extinction automatique au choix
+### 2026-10-06 — Écran : extinction automatique au choix, rallumage à « Okay Nabu »
 
 Demande de la discussion #278 : « sur batterie ou sur USB, l'écran ne devrait se réveiller que
 quand on le touche ». Jusqu'ici rien n'éteignait l'écran tout seul (la main ou l'automatisation de
@@ -32,7 +32,14 @@ présence de HA). Firmware ; le tableau de bord de HA gagne la carte.
 - Tableau de bord : la carte « Extinction auto de l'écran » dans la colonne « Tablette » de la vue
   Réglages, juste avant la tape (7 langues). Docs : réglages, notice (« Écran éteint »),
   `Tab5/README.md`, cartographie. Test `tests/test_extinction_auto.py` (options, défaut, ordre des
-  délais, exclusions, allumage, OTA). Non testé sur la tablette.
+  délais, exclusions, allumage, OTA). Essayé sur la tablette d'Axel le 06/10/2026 : l'écran se
+  rallume après la mise à jour et le reste marche.
+- **Nouveau réglage de l'appareil « Tab5 Rallumer l'écran à Okay Nabu »** (interrupteur, catégorie
+  configuration, **allumé par défaut**) : écran éteint, « Okay Nabu » le rallume quand l'assistant se
+  met vraiment à écouter (mot de réveil actif, HA joignable), jamais sur « Stop » (branche
+  `START_PIPELINE` de `tab5_wake_word_dispatch`). Avant, la réponse n'était que parlée, écran noir.
+  Éteint, rien ne change : pour qui ne veut le rallumer qu'au toucher, le mot de réveil se
+  déclenchant parfois seul. Carte dans la vue Réglages (7 langues), réglages, notice, test.
 
 ### 2026-10-06 — Volet : le package du volet à course simulée ne le rend plus muet
 

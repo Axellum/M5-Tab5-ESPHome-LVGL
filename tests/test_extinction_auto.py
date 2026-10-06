@@ -111,6 +111,24 @@ def test_globals_declares():
     assert ids["ota_en_cours"].get("restore_value") is False
 
 
+def test_okay_nabu_rallume_l_ecran_seulement_au_demarrage_du_pipeline():
+    """« Okay Nabu » rallume l'écran éteint si l'interrupteur est allumé (défaut), et
+    seulement dans la branche START_PIPELINE : ni « Stop », ni mot de réveil ignoré."""
+    s = next(s for s in _yaml("tab5-ha-controls.yaml")["switch"] if s.get("id") == "tab5_ecran_okay_nabu")
+    assert s["name"] == "Tab5 Rallumer l'écran à Okay Nabu"
+    assert s["restore_mode"] == "RESTORE_DEFAULT_ON" and s["entity_category"] == "config"
+    script = next(x for x in _yaml("tab5-assist.yaml")["script"] if x["id"] == "tab5_wake_word_dispatch")
+    branches = {b["if"]["condition"]["lambda"]: b["if"]["then"] for b in script["then"] if "if" in b}
+    demarre = next(v for k, v in branches.items() if "WakeWord::START_PIPELINE" in k)
+    allume = demarre[0]["if"]
+    assert allume["condition"] == {"and": [{"switch.is_on": "tab5_ecran_okay_nabu"}, {"light.is_off": "backlight"}]}
+    assert allume["then"] == [{"light.turn_on": "backlight"}]
+    assert "voice_assistant.start" in demarre[1], "l'écran se rallume avant que l'écoute démarre"
+    for cle, actions in branches.items():
+        if "START_PIPELINE" not in cle:
+            assert "tab5_ecran_okay_nabu" not in yaml.safe_dump(actions, allow_unicode=True), cle
+
+
 def test_chaque_ota_pose_et_leve_ota_en_cours():
     for fichier in ("tab5-hardware.yaml", "publication-commune.yaml"):
         for ota in _yaml(fichier)["ota"]:
