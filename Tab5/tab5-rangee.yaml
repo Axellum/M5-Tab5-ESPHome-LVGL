@@ -1,0 +1,62 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-rangee.yaml
+# @role Rangée sous l'horloge (ADR-0031, 06/10/2026) : pose les widgets que
+#       tab5_rangee.cpp dessine (g_rangee_ui). Le modèle (définitions hLI / hp / hd de
+#       l'action tab5_maj_tuiles, états hLI de tab5_maj_emplacements) et sa NVS vivent
+#       dans tab5_tuiles.cpp, le dessin et la rotation dans tab5_rangee.cpp ; la rotation
+#       est donnée par le rotateur de la carte centrale (tab5_central_rotator_auto,
+#       tab5-scripts.yaml), la zone tactile et les pastilles sont dans tab5-lvgl.yaml.
+# @architecture_constraint id() n'existe que dans une lambda YAML : tab5_zones_apply
+#       (tab5-zones.yaml), lancé à la fin du setup AVANT la première image, exécute ce
+#       script avant zones_apply_ui(), qui dessine la rangée. Chargé APRÈS tab5_lvgl :
+#       il référence des widgets. Aucun lv_* ici.
+# @ai_instruction Un widget de plus pour la rangée = son champ dans RangeeUI
+#       (tab5_custom.h) et sa ligne ici.
+# ============================================================================
+
+script:
+  - id: tab5_rangee_ui
+    then:
+      - lambda: |-
+          RangeeUI& u = g_rangee_ui;
+          u.zone = id(rangee_capteurs);
+          u.toucher = id(btn_rangee);
+          u.panneau_plantes = id(rangee_plantes);
+          u.panneau[0] = id(rangee_a);
+          u.panneau[1] = id(rangee_b);
+          u.element[0][0] = id(rangee_el_a0);
+          u.element[0][1] = id(rangee_el_a1);
+          u.element[0][2] = id(rangee_el_a2);
+          u.element[0][3] = id(rangee_el_a3);
+          u.element[1][0] = id(rangee_el_b0);
+          u.element[1][1] = id(rangee_el_b1);
+          u.element[1][2] = id(rangee_el_b2);
+          u.element[1][3] = id(rangee_el_b3);
+          u.icone[0][0] = id(rangee_icone_a0);
+          u.icone[0][1] = id(rangee_icone_a1);
+          u.icone[0][2] = id(rangee_icone_a2);
+          u.icone[0][3] = id(rangee_icone_a3);
+          u.icone[1][0] = id(rangee_icone_b0);
+          u.icone[1][1] = id(rangee_icone_b1);
+          u.icone[1][2] = id(rangee_icone_b2);
+          u.icone[1][3] = id(rangee_icone_b3);
+          u.texte[0][0] = id(rangee_texte_a0);
+          u.texte[0][1] = id(rangee_texte_a1);
+          u.texte[0][2] = id(rangee_texte_a2);
+          u.texte[0][3] = id(rangee_texte_a3);
+          u.texte[1][0] = id(rangee_texte_b0);
+          u.texte[1][1] = id(rangee_texte_b1);
+          u.texte[1][2] = id(rangee_texte_b2);
+          u.texte[1][3] = id(rangee_texte_b3);
+          u.pastilles_cadre = id(rangee_pastilles);
+          u.pastilles[0] = id(rangee_pastille_0);
+          u.pastilles[1] = id(rangee_pastille_1);
+          u.pastilles[2] = id(rangee_pastille_2);
+          // Grande taille des valeurs : la police de la date, celle du thème (ADR-0029).
+          u.date = id(lbl_date);
+          u.police_icone[0] = id(mdi_font_70);
+          u.police_icone[1] = id(mdi_font_45);
+          u.police_icone[2] = id(mdi_font_32);
+          u.police_texte[0] = id(roboto_32_b);
+          u.police_texte[1] = id(roboto_22);

@@ -859,8 +859,7 @@ struct ZonesUI {
     lv_obj_t* val_salon = nullptr;
     lv_obj_t* icon_serre = nullptr;    // devient une manette sans capteur de serre
     lv_obj_t* val_serre = nullptr;
-    lv_obj_t* pots_row = nullptr;      // rangée des pots de l'accueil
-    lv_obj_t* pots_zone = nullptr;     // sa zone d'appui long
+    // La ligne des plantes sous l'horloge suit la rangée (g_rangee_ui, ADR-0031).
     lv_obj_t* pot_card[5] = {};        // cartes du popup « Mes Plantes »
     // Mode vocal Domotique / Discussion (zone DISCUSSION) : boutons de l'accueil, du
     // popup assistant, et le titre « Cerveau / LLM » de ce dernier.
@@ -1014,6 +1013,37 @@ struct TuilesUI {
     void (*energie_ouvrir)() = nullptr;
 };
 extern TuilesUI g_tuiles_ui;
+
+// =============================================================================
+// Rangée sous l'horloge (tab5_rangee.cpp, ADR-0031) : la ligne des plantes et jusqu'à
+// trois lignes de quatre éléments décrits par HA (clés hLI de tab5_maj_tuiles), trois
+// lignes à l'écran au plus, qui se relaient calées sur la carte centrale.
+// =============================================================================
+// Widgets, posés par le script tab5_rangee_ui (tab5-rangee.yaml) avant le premier dessin.
+struct RangeeUI {
+    lv_obj_t* zone = nullptr;              // rangee_capteurs : 401 × 70 sous l'horloge
+    lv_obj_t* toucher = nullptr;           // btn_rangee : toucher, appui long
+    lv_obj_t* panneau_plantes = nullptr;   // rangee_plantes (moisture_sensors_card dedans)
+    lv_obj_t* panneau[2] = {};             // rangee_a, rangee_b : lignes de capteurs, en alternance
+    lv_obj_t* element[2][4] = {};          // rangee_el_a0 … rangee_el_b3
+    lv_obj_t* icone[2][4] = {};            // rangee_icone_a0 …
+    lv_obj_t* texte[2][4] = {};            // rangee_texte_a0 …
+    lv_obj_t* pastilles_cadre = nullptr;   // rangee_pastilles
+    lv_obj_t* pastilles[3] = {};           // rangee_pastille_0 … 2
+    lv_obj_t* date = nullptr;              // lbl_date : sa police (celle du thème) = valeurs de 45 px
+    esphome::font::Font* police_icone[3] = {};  // mdi_font_70, mdi_font_45, mdi_font_32
+    esphome::font::Font* police_texte[2] = {};  // roboto_32_b, roboto_22
+};
+extern RangeeUI g_rangee_ui;
+// Rotateur de la carte centrale (tab5_central_rotator_auto), 0,2 s avant qu'elle tourne :
+// un tour de plus ; au N-ième, la ligne suivante.
+void rangee_tour();
+// Toucher de la rangée : la ligne suivante, le compte des tours repart.
+void rangee_toucher();
+// La ligne des plantes est-elle à l'écran ? (son appui long ouvre « Mes Plantes »)
+bool rangee_plantes_affichees();
+// Rendu hors tablette (rendu_panneau) : la première ligne, sans animation, compte à zéro.
+void rangee_recaler();
 
 // =============================================================================
 // Énergie (ADR-0028, discussion #278) — tab5_energie.cpp

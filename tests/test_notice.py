@@ -35,7 +35,7 @@ APPUIS_LONGS = {
     "btn_control_console": "home.md",
     "btn_control_ha": "home.md",
     "btn_control_tv": "home.md",
-    "btn_pots_detail_zone": "plants.md",
+    "btn_rangee": "plants.md",
     "forecast_daily.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
     "switches_card.yaml": "tiles.md",

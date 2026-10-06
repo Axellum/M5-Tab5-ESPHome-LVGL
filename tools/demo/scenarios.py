@@ -60,15 +60,16 @@ def zone_de(cle: str) -> str:
 
 
 def build_emplacements_payload(absentes: frozenset = frozenset(), pieces: dict | None = None,
-                               clim: dict | None = None) -> str:
+                               clim: dict | None = None, rangee: "Rangee | None" = None) -> str:
     """tab5_maj_emplacements : tous les emplacements, sauf ceux d'une zone retirée
     (`--maison-minimale` : comme le blueprint, rien n'est poussé pour une case vide).
     Avec `pieces` (firmware qui a tab5_maj_tuiles), les états des tuiles suivent (clés
-    tRT, build_etats_tuiles) ; `clim` = celle de la scène, pour la tuile de la clim."""
+    tRT, build_etats_tuiles) ; `clim` = celle de la scène, pour la tuile de la clim ;
+    `rangee` : les états de la rangée sous l'horloge après eux (clés hLI, ADR-0031)."""
     payload = "".join(f"{cle}|{etat}|{valeur};" for cle, (etat, valeur) in EMPLACEMENTS.items()
                       if zone_de(cle) not in absentes)
     if pieces is not None:
-        payload += build_etats_tuiles(pieces, clim)
+        payload += build_etats_tuiles(pieces, clim, rangee)
     assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
     return payload
 
@@ -300,10 +301,11 @@ def _tuiles_de(pieces: dict):
             yield f"t{r}{t}", tuile
 
 
-def build_tuiles_payload(pieces: dict) -> str:
+def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None) -> str:
     """tab5_maj_tuiles : « pR|nom;tRT|type|icône|options|complément|nom;… » (ADR-0023).
     Instantané complet : une tuile ou une pièce absente est vide. Une pièce sans nom n'a
-    pas d'entrée « p » (la tablette écrit « Pièce n »)."""
+    pas d'entrée « p » (la tablette écrit « Pièce n »). `rangee` : la rangée sous
+    l'horloge à la suite (build_rangee_payload, ADR-0031)."""
     entrees = []
     for r, piece in sorted(pieces.items()):
         if piece.nom:
@@ -311,20 +313,105 @@ def build_tuiles_payload(pieces: dict) -> str:
         for cle, tuile in _tuiles_de({r: piece}):
             entrees.append("|".join((cle, tuile.type, tuile.icone, tuile.options,
                                      echapper(tuile.complement), echapper(tuile.nom))))
-    payload = "".join(f"{e};" for e in entrees)
+    payload = "".join(f"{e};" for e in entrees) + (build_rangee_payload(rangee) if rangee is not None else "")
     assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
     return payload
 
 
-def build_etats_tuiles(pieces: dict, clim: dict | None = None) -> str:
+def build_etats_tuiles(pieces: dict, clim: dict | None = None, rangee: "Rangee | None" = None) -> str:
     """Clés tRT de tab5_maj_emplacements : « tRT|état|valeur|couleur;… », toutes les
-    tuiles, comme le blueprint juste après les définitions. `clim` : voir etat_tuile."""
+    tuiles, comme le blueprint juste après les définitions. `clim` : voir etat_tuile.
+    `rangee` : puis les éléments de la rangée sous l'horloge (clés hLI, mêmes champs)."""
     parts = []
     for cle, tuile in _tuiles_de(pieces):
         etat, valeur, couleur = etat_tuile(tuile, clim)
         verifier_etat(cle, tuile, etat, valeur, couleur)
         parts.append(f"{cle}|{echapper(etat)}|{valeur}|{couleur};")
+    for cle, element in _elements_de(rangee) if rangee is not None else ():
+        t = element.tuile
+        verifier_etat(cle, t, t.etat, t.valeur, t.couleur)
+        parts.append(f"{cle}|{echapper(t.etat)}|{t.valeur}|{t.couleur};")
     return "".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# Rangée sous l'horloge (ADR-0031) : jusqu'à trois lignes de quatre éléments, plus la
+# ligne des plantes, qui tournent avec la carte centrale. Le blueprint pousse, après les
+# pièces dans tab5_maj_tuiles, « hp|place des plantes;hd|secondes d'une ligne; » puis
+# « hLI|type|icône|options|complément|nom|classe; » (élément I de la ligne L : les six
+# champs d'une tuile, plus la classe d'appareil, qui colore la valeur) ; les états
+# « hLI|état|valeur|couleur; » suivent ceux des tuiles. Pas d'action (les scènes,
+# scripts et boutons n'ont rien à montrer) : la rangée ne commande rien.
+# ---------------------------------------------------------------------------
+
+PLACES_PLANTES = ("0", "1", "2", "-")
+ELEMENTS_PAR_LIGNE = 4
+LIGNES_MAX = 3
+
+
+@dataclass(frozen=True)
+class Element:
+    """Un élément de la rangée : une tuile (définition et état) et sa classe d'appareil."""
+    tuile: Tuile
+    classe: str = ""   # device_class : temperature, humidity, battery, power… ('' : aucune)
+
+
+@dataclass(frozen=True)
+class Rangee:
+    lignes: tuple          # LIGNES_MAX lignes au plus, de ELEMENTS_PAR_LIGNE éléments au plus
+    plantes: str = "0"     # place de la ligne des plantes (PLACES_PLANTES ; « - » : masquée)
+    duree: int = 32        # secondes d'une ligne (arrondies aux tours de 8 s de la carte centrale)
+
+
+# La rangée de la démo : les plantes d'abord (les pots de EMPLACEMENTS), puis une ligne
+# « climat » (quatre valeurs sur les échelles de température et d'humidité de l'écran)
+# et une ligne « énergie et maison » (production en or, batterie sur son échelle, mêmes
+# valeurs que l'instantané du popup Énergie, ENERGIE_INSTANTANE ; une
+# présence et une prise en icônes). Trois lignes : le rendu les capture une à une
+# (tools/rendu/ecrans.py, « accueil-rangee-ligne-2 » et « -3 »).
+RANGEE = Rangee((
+    (Element(Tuile("cap", "Salon", "thermometre", complement="°C", etat="21.4", valeur="21.4"), "temperature"),
+     Element(Tuile("cap", "Chambre", "thermometre", complement="°C", etat="19.8", valeur="19.8"), "temperature"),
+     Element(Tuile("cap", "Humidité du salon", "humidite", complement="%", etat="58", valeur="58"), "humidity"),
+     Element(Tuile("cap", "Extérieur", "thermometre", complement="°C", etat="17.8", valeur="17.8"), "temperature")),
+    (Element(Tuile("cap", "Solaire", "solaire", "e", complement="W", etat="1450", valeur="1450"), "power"),
+     Element(Tuile("cap", "Batterie de la maison", "batterie", complement="%", etat="64", valeur="64"), "battery"),
+     Element(Tuile("bin", "Présence", "presence", complement="presence", etat="on")),
+     Element(Tuile("int", "Prise du bureau", "prise", etat="on"))),
+))
+# `--maison-minimale` : aucune ligne choisie, les réglages par défaut (plantes seules).
+RANGEE_MINIMALE = Rangee(())
+
+
+def rangee_de(absentes: frozenset) -> Rangee:
+    """La rangée poussée : la maison minimale (des zones retirées) n'en a pas."""
+    return RANGEE_MINIMALE if absentes else RANGEE
+
+
+def _elements_de(rangee: Rangee):
+    """(clé « hLI », élément) vérifié, ligne par ligne, comme une tuile plus sa classe."""
+    assert rangee.plantes in PLACES_PLANTES, f"place des plantes {rangee.plantes!r}"
+    assert 1 <= rangee.duree <= 999, f"durée d'une ligne {rangee.duree}"
+    assert len(rangee.lignes) <= LIGNES_MAX, "trois lignes au plus"
+    for l, ligne in enumerate(rangee.lignes):
+        assert 0 < len(ligne) <= ELEMENTS_PAR_LIGNE, f"ligne {l} : un à quatre éléments"
+        for i, element in enumerate(ligne):
+            cle = f"h{l}{i}"
+            verifier_definition(cle, element.tuile)
+            assert element.tuile.type != "act", f"{cle} : une action n'a rien à montrer"
+            assert _CODE_ICONE.fullmatch(element.classe), f"{cle} : classe d'appareil {element.classe!r}"
+            yield cle, element
+
+
+def build_rangee_payload(rangee: Rangee) -> str:
+    """Définitions de la rangée dans tab5_maj_tuiles : « hp|place;hd|secondes;
+    hLI|type|icône|options|complément|nom|classe;… » (ADR-0031)."""
+    entrees = [f"hp|{rangee.plantes}", f"hd|{rangee.duree}"]
+    for cle, element in _elements_de(rangee):
+        t = element.tuile
+        entrees.append("|".join((cle, t.type, t.icone, t.options, echapper(t.complement), echapper(t.nom),
+                                 element.classe)))
+    return "".join(f"{e};" for e in entrees)
 
 
 def nom_de_la_piece(r: int, piece: Piece) -> str:

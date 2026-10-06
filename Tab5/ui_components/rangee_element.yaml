@@ -1,0 +1,28 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 8x par rangee.yaml : un
+# élément d'une ligne de capteurs de la rangée sous l'horloge (ADR-0031), 4 par panneau,
+# 2 panneaux. Var : el (« a0 » … « b3 » : panneau a ou b, élément 0 à 3).
+# Icône + valeur côte à côte, ou l'une au-dessus de l'autre : tab5_rangee.cpp (remplir)
+# choisit les polices et le sens (flex ROW / COLUMN) selon la place, masque la valeur
+# d'un appareil qui n'en a pas et l'élément vide. pad_column = kEcart de tab5_rangee.cpp.
+# Couleurs posées par le C++ (règle 8). L'icône est en mdi_font_32 ici, en 45 ou 70 px
+# selon la ligne : la palette des tuiles est dans les trois (MDI_CODE_TARGETS,
+# motif rangee_icone_*). La valeur prend la police de la date du thème (45 px) quand le
+# C++ ne lui en pose pas une plus petite.
+obj:
+  id: "rangee_el_${el}"
+  width: SIZE_CONTENT
+  height: SIZE_CONTENT
+  styles: style_transparent
+  scrollable: false
+  hidden: true
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_main: CENTER
+    flex_align_cross: CENTER
+    flex_align_track: CENTER
+    pad_column: 6
+    pad_row: 0
+  widgets:
+    - label: { id: "rangee_icone_${el}", text: "", text_font: mdi_font_32 }
+    - label: { id: "rangee_texte_${el}", text: "", styles: style_police_date }

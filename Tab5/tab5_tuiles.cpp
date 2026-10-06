@@ -17,6 +17,11 @@
  *         - Popups des tuiles : lumière (appui long d'une lum) et volet (appui long d'une
  *           vol sans l'option k, 05/10/2026 : position, curseur envoyé au relâcher,
  *           Ouvrir / Stop / Fermer), repeints quand l'état de leur tuile change.
+ *         - Rangée sous l'horloge (ADR-0031, 06/10/2026) : trois lignes de quatre
+ *           éléments au plus, mêmes types que les tuiles, dans la même action
+ *           (« hLI|type|icône|options|complément|nom|classe », « hp|place des plantes »)
+ *           et les mêmes états (clés hLI). Modèle et NVS ici (clé à part, magie « RAN1 »),
+ *           dessin et rotation dans tab5_rangee.cpp (rangee_element, plus bas).
  * @architecture_constraint Pièce R ↔ page du bas dans l'ordre où un swipe les atteint depuis
  *       l'accueil : R0 = page 2 (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0. Tuile T = position
  *       visuelle, 0 = gauche (sur les pages horaires, l'objet h(4−T)).
@@ -101,13 +106,48 @@ constexpr uint8_t SENS_FERMER = 2;
 constexpr uint32_t kMagic = 0x54554931;    // « TUI1 »
 constexpr uint32_t kPrefKey = 0x7475696C;  // « tuil »
 
+// Rangée sous l'horloge (ADR-0031) : trois lignes de quatre éléments, décrits comme des
+// tuiles, plus la classe d'appareil d'un capteur (sa couleur : température, humidité,
+// batterie, puissance). Dans sa propre préférence : le modèle des pièces, et donc ce qui
+// est gardé en NVS depuis la 3.2, ne change pas de taille.
+constexpr int kLignes = 3;
+constexpr int kElements = 4;
+constexpr size_t kClasse = 16;  // classe d'appareil (device_class) : [a-z0-9_]{1,15}
+
+struct DefRangee {
+    Def d;
+    char classe[kClasse];
+};
+
+// Exactement ce qui part en NVS (octets seulement, sans bourrage : memcmp fiable).
+struct ModeleRangee {
+    uint32_t magic;
+    int8_t plantes;       // place de la ligne des plantes : 0 à 2, -1 masquée
+    uint8_t tours;        // une ligne dure `tours` tours de la carte centrale (1 à 15)
+    uint8_t reserve[2];
+    DefRangee el[kLignes][kElements];
+};
+
+constexpr uint32_t kMagicRangee = 0x52414E31;    // « RAN1 »
+constexpr uint32_t kPrefKeyRangee = 0x72616E67;  // « rang »
+// La rangée est calée sur le rotateur de la carte centrale (demande d'Axel du 06/10/2026) :
+// un tour = sa période, 8 s (tab5_central_rotator_auto, tab5-scripts.yaml : 7,8 s, la
+// rangée, puis 0,2 s et la carte centrale ; tests/test_rangee.py compare). Le blueprint
+// envoie la durée d'une ligne en secondes (« hd|32 ») ; sans elle, 4 tours (32 s).
+constexpr int kTourCentralS = 8;
+constexpr uint8_t kToursDefaut = 4;
+constexpr uint8_t kToursMax = 15;
+
 // ~2,3 Ko lus au dessin et aux poussées seulement : en PSRAM (BSS externe, remise à zéro
 // au démarrage, CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY), pas dans les ~226 Ko de
-// RAM interne libre.
+// RAM interne libre. La rangée (~1,2 Ko avec ses états) aussi.
 EXT_RAM_BSS_ATTR Modele s_m;
 EXT_RAM_BSS_ATTR Etat s_etats[kPieces][kTuiles];
+EXT_RAM_BSS_ATTR ModeleRangee s_rg;
+EXT_RAM_BSS_ATTR Etat s_etats_rg[kLignes][kElements];
 bool s_charge = false;
 esphome::ESPPreferenceObject s_pref;
+esphome::ESPPreferenceObject s_pref_rg;
 // Interrupteur « Tab5 Appareils sur la météo » (tab5-ha-controls.yaml, 05/10/2026,
 // discussion #278) : éteint, le mode météo montre les prévisions seules — ni épaules, ni
 // bouton d'action, ni bascule du sens d'un volet par le titre. Le mode HA ne change pas.
@@ -132,6 +172,19 @@ void charger() {
     } else {
         s_m = Modele{};
         s_m.magic = kMagic;
+    }
+    for (auto& ligne : s_etats_rg)
+        for (Etat& e : ligne) etat_vider(e);
+    s_pref_rg = esphome::global_preferences->make_preference<ModeleRangee>(kPrefKeyRangee);
+    ModeleRangee g{};
+    if (s_pref_rg.load(&g) && g.magic == kMagicRangee) {
+        s_rg = g;
+        ESP_LOGI("tab5.tuiles", "Rangée sous l'horloge relue de la NVS");
+    } else {
+        // Rien reçu : les plantes seules, en première ligne (l'écran d'avant l'ADR-0031).
+        s_rg = ModeleRangee{};
+        s_rg.magic = kMagicRangee;
+        s_rg.tours = kToursDefaut;
     }
 }
 
@@ -208,8 +261,9 @@ void copier_texte(char* dst, size_t cap, const char* src, size_t n) {
     }
 }
 
-// Code de palette : [a-z0-9_]{1,15}, sinon vide (défaut du type).
+// Code de palette, ou classe d'appareil : [a-z0-9_]{1,15}, sinon vide (défaut du type).
 void copier_icone(char* dst, const char* src, size_t n) {
+    static_assert(kClasse == kIcone, "copier_icone sert aussi aux classes d'appareil");
     std::memset(dst, 0, kIcone);
     if (n == 0 || n >= kIcone) return;
     for (size_t i = 0; i < n; i++) {
@@ -257,24 +311,58 @@ int decouper(const char* s, size_t n, Champ* out, int max) {
     return k;
 }
 
-// Une entrée de tab5_maj_tuiles dans `m` ; une clé inconnue est ignorée.
-void lire_entree(const char* s, size_t n, Modele& m) {
-    Champ f[6];
-    const int nf = decouper(s, n, f, 6);
-    if (nf < 2) return;
-    int r = 0, t = 0;
-    if (f[0].n == 2 && f[0].p[0] == 'p' && chiffre_0_4(f[0].p[1], r)) {
-        copier_texte(m.pieces[r], kNom, f[1].p, f[1].n);
-        return;
-    }
-    if (f[0].n != 3 || f[0].p[0] != 't' || !chiffre_0_4(f[0].p[1], r) || !chiffre_0_4(f[0].p[2], t)) return;
-    Def& d = m.tuiles[r][t];
+// « type|icône|options|complément|nom » (champs 1 à 5 d'une entrée tRT ou hLI) dans `d`.
+void lire_def(const Champ* f, int nf, Def& d) {
     d.type = static_cast<uint8_t>(lire_type(f[1].p, f[1].n));
     if (nf > 2) copier_icone(d.icone, f[2].p, f[2].n);
     if (nf > 3) d.options = lire_options(f[3].p, f[3].n);
     if (nf > 4) copier_texte(d.complement, kComplement, f[4].p, f[4].n);
     if (nf > 5) copier_texte(d.nom, kNom, f[5].p, f[5].n);
     if (d.type == static_cast<uint8_t>(Type::VIDE)) d = Def{};
+}
+
+// Une entrée de tab5_maj_tuiles dans `m` (pièces) ou `g` (rangée sous l'horloge) ; une
+// clé inconnue est ignorée.
+void lire_entree(const char* s, size_t n, Modele& m, ModeleRangee& g) {
+    Champ f[7];
+    const int nf = decouper(s, n, f, 7);
+    if (nf < 2) return;
+    int r = 0, t = 0;
+    if (f[0].n == 2 && f[0].p[0] == 'p' && chiffre_0_4(f[0].p[1], r)) {
+        copier_texte(m.pieces[r], kNom, f[1].p, f[1].n);
+        return;
+    }
+    // « hp|0 » à « hp|2 » : place de la ligne des plantes ; autre chose (« hp|- ») : masquée.
+    if (f[0].n == 2 && f[0].p[0] == 'h' && f[0].p[1] == 'p') {
+        int place = 0;
+        const bool ok = f[1].n == 1 && chiffre_0_4(f[1].p[0], place) && place < kLignes;
+        g.plantes = static_cast<int8_t>(ok ? place : -1);
+        return;
+    }
+    // « hd|secondes » : durée d'une ligne, arrondie au tour de la carte centrale le plus
+    // proche (1 à 15 tours) ; illisible : le défaut.
+    if (f[0].n == 2 && f[0].p[0] == 'h' && f[0].p[1] == 'd') {
+        int s = 0;
+        bool ok = f[1].n > 0 && f[1].n <= 3;
+        for (size_t k = 0; ok && k < f[1].n; k++) {
+            ok = f[1].p[k] >= '0' && f[1].p[k] <= '9';
+            s = s * 10 + (f[1].p[k] - '0');
+        }
+        const int tours = (s + kTourCentralS / 2) / kTourCentralS;
+        g.tours = ok ? static_cast<uint8_t>(std::max(1, std::min<int>(kToursMax, tours))) : kToursDefaut;
+        return;
+    }
+    // « hLI|type|icône|options|complément|nom|classe » : élément I de la ligne L.
+    if (f[0].n == 3 && f[0].p[0] == 'h') {
+        int l = 0, i = 0;
+        if (!chiffre_0_4(f[0].p[1], l) || l >= kLignes || !chiffre_0_4(f[0].p[2], i) || i >= kElements) return;
+        DefRangee& e = g.el[l][i];
+        lire_def(f, nf, e.d);
+        if (nf > 6 && e.d.type != static_cast<uint8_t>(Type::VIDE)) copier_icone(e.classe, f[6].p, f[6].n);
+        return;
+    }
+    if (f[0].n != 3 || f[0].p[0] != 't' || !chiffre_0_4(f[0].p[1], r) || !chiffre_0_4(f[0].p[2], t)) return;
+    lire_def(f, nf, m.tuiles[r][t]);
 }
 
 // ─── Mode héritage : les emplacements 3.x forment la pièce 0 ─────────────────────────
@@ -539,15 +627,15 @@ void vue_fleche_volet(const Etat& e, Vue& v) {
     }
 }
 
-void vue_nouvelle(int r, int t, Vue& v) {
-    const Def& d = s_m.tuiles[r][t];
-    const Etat& e = s_etats[r][t];
+// Ce que montre l'appareil `d` dans l'état `e` (tuile tRT ; élément de la rangée sous
+// l'horloge avec r = -1 : aucune minuterie, aucune clim de tuile ne le vise).
+void vue_def(const Def& d, const Etat& e, int r, int t, Vue& v) {
     const Type type = static_cast<Type>(d.type);
     const char* s = e.brut;
     bool actif = false;
     uint32_t c = UIColor.TEXT_DIM;
     v.nom = d.nom;
-    v.agit = type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t));
+    v.agit = type_agit(type, d.options, type == Type::CLI && r >= 0 && clim_tuile_connue(r, t));
     switch (type) {
         case Type::LUM:
             actif = est(s, "on");
@@ -674,6 +762,8 @@ void vue_nouvelle(int r, int t, Vue& v) {
     v.couleur = v.couleur_carte = c;
     v.couleur_ligne = c_ligne;
 }
+
+void vue_nouvelle(int r, int t, Vue& v) { vue_def(s_m.tuiles[r][t], s_etats[r][t], r, t, v); }
 
 // Mode héritage : ce que la 3.1 montrait, à l'identique (ou presque : « -- » avant la
 // première donnée, comme les tuiles).
@@ -1215,6 +1305,57 @@ void appui_heritage(int t, bool long_appui) {
     }
 }
 
+// ─── Rangée sous l'horloge (ADR-0031) ───────────────────────────────────────────────
+
+// Définitions de la rangée lues dans tab5_maj_tuiles : gardées et redessinées si elles
+// changent. Un élément qui change d'appareil repart grisé (son état était l'ancien).
+bool rangee_definir(const ModeleRangee& neuf) {
+    if (std::memcmp(&neuf, &s_rg, sizeof(ModeleRangee)) == 0) return false;
+    int n = 0;
+    for (int l = 0; l < kLignes; l++)
+        for (int i = 0; i < kElements; i++) {
+            if (std::memcmp(&neuf.el[l][i], &s_rg.el[l][i], sizeof(DefRangee)) != 0) etat_vider(s_etats_rg[l][i]);
+            if (neuf.el[l][i].d.type != static_cast<uint8_t>(Type::VIDE)) n++;
+        }
+    s_rg = neuf;
+    s_pref_rg.save(&s_rg);
+    ESP_LOGI("tab5.tuiles", "Rangée sous l'horloge : %d élément(s), plantes %d, %d tour(s) par ligne", n,
+             s_rg.plantes + 1, s_rg.tours);
+    rangee_definitions_changees();
+    return true;
+}
+
+// « état|valeur|couleur » (le reste d'une entrée tRT ou hLI de tab5_maj_emplacements).
+void etat_lire(Etat& e, const char* reste, size_t n_reste) {
+    Champ f[3];
+    const int nf = decouper(reste, n_reste, f, 3);
+    const size_t n = nf > 0 ? std::min(f[0].n, kEtat - 1) : 0;
+    std::memset(e.brut, 0, sizeof(e.brut));
+    if (n > 0) std::memcpy(e.brut, f[0].p, n);
+    e.valeur = NAN;
+    if (nf > 1 && f[1].n > 0 && f[1].n < 24) {
+        char tmp[24];
+        std::memcpy(tmp, f[1].p, f[1].n);
+        tmp[f[1].n] = '\0';
+        char* bout = nullptr;
+        const float v = strtof(tmp, &bout);
+        if (bout != tmp) e.valeur = v;  // « nan » donne NaN aussi
+    }
+    e.a_couleur = false;
+    if (nf > 2 && f[2].n == 6) {
+        char tmp[7];
+        std::memcpy(tmp, f[2].p, 6);
+        tmp[6] = '\0';
+        char* bout = nullptr;
+        const unsigned long c = strtoul(tmp, &bout, 16);
+        if (bout == tmp + 6) {
+            e.couleur = static_cast<uint32_t>(c);
+            e.a_couleur = true;
+        }
+    }
+    e.recu = true;
+}
+
 }  // namespace
 
 TuilesUI g_tuiles_ui;
@@ -1231,14 +1372,20 @@ bool tuiles_definir(const std::string& payload) {
     std::unique_ptr<Modele> neuf(new Modele());
     neuf->magic = kMagic;
     neuf->recues = 1;
+    // La rangée sous l'horloge aussi (ADR-0031) : sans clé h, les plantes seules, en
+    // première ligne — un blueprint d'avant la rangée garde l'écran d'avant.
+    std::unique_ptr<ModeleRangee> rangee(new ModeleRangee());
+    rangee->magic = kMagicRangee;
+    rangee->tours = kToursDefaut;
     size_t debut = 0;
     while (debut < payload.size()) {
         size_t fin = payload.find(';', debut);
         if (fin == std::string::npos) fin = payload.size();
-        lire_entree(payload.data() + debut, fin - debut, *neuf);
+        lire_entree(payload.data() + debut, fin - debut, *neuf, *rangee);
         debut = fin + 1;
     }
-    if (std::memcmp(neuf.get(), &s_m, sizeof(Modele)) == 0) return false;
+    const bool rangee_changee = rangee_definir(*rangee);
+    if (std::memcmp(neuf.get(), &s_m, sizeof(Modele)) == 0) return rangee_changee;
     // Une tuile qui change d'appareil repart grisée : l'état reçu était celui de l'ancien.
     // Sa clim aussi est oubliée (ADR-0027) : le blueprint renvoie ses réglages juste après.
     for (int r = 0; r < kPieces; r++)
@@ -1271,38 +1418,83 @@ bool tuiles_definir(const std::string& payload) {
 
 bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n_reste) {
     int r = 0, t = 0;
-    if (n_cle != 3 || cle[0] != 't' || !chiffre_0_4(cle[1], r) || !chiffre_0_4(cle[2], t)) return false;
+    if (n_cle != 3) return false;
+    // Élément I de la ligne L de la rangée sous l'horloge (ADR-0031).
+    if (cle[0] == 'h') {
+        if (!chiffre_0_4(cle[1], r) || r >= kLignes || !chiffre_0_4(cle[2], t) || t >= kElements) return false;
+        charger();
+        etat_lire(s_etats_rg[r][t], reste, n_reste);
+        rangee_element_change(r, t);
+        return true;
+    }
+    if (cle[0] != 't' || !chiffre_0_4(cle[1], r) || !chiffre_0_4(cle[2], t)) return false;
     charger();
-    Champ f[3];
-    const int nf = decouper(reste, n_reste, f, 3);
     Etat& e = s_etats[r][t];
-    const size_t n = nf > 0 ? std::min(f[0].n, kEtat - 1) : 0;
-    std::memset(e.brut, 0, sizeof(e.brut));
-    if (n > 0) std::memcpy(e.brut, f[0].p, n);
-    e.valeur = NAN;
-    if (nf > 1 && f[1].n > 0 && f[1].n < 24) {
-        char tmp[24];
-        std::memcpy(tmp, f[1].p, f[1].n);
-        tmp[f[1].n] = '\0';
-        char* bout = nullptr;
-        const float v = strtof(tmp, &bout);
-        if (bout != tmp) e.valeur = v;  // « nan » donne NaN aussi
-    }
-    e.a_couleur = false;
-    if (nf > 2 && f[2].n == 6) {
-        char tmp[7];
-        std::memcpy(tmp, f[2].p, 6);
-        tmp[6] = '\0';
-        char* bout = nullptr;
-        const unsigned long c = strtoul(tmp, &bout, 16);
-        if (bout == tmp + 6) {
-            e.couleur = static_cast<uint32_t>(c);
-            e.a_couleur = true;
-        }
-    }
-    e.recu = true;
+    etat_lire(e, reste, n_reste);
     if (s_m.tuiles[r][t].type == static_cast<uint8_t>(Type::VOL)) vol_sens_suivre(e);
     if (!heritage()) peindre_tuile(r, t);
+    return true;
+}
+
+// ─── Rangée sous l'horloge (ADR-0031), lue par tab5_rangee.cpp ──────────────────────
+
+int rangee_place_plantes() {
+    charger();
+    return s_rg.plantes;
+}
+
+int rangee_tours() {
+    charger();
+    return std::max<int>(1, s_rg.tours);
+}
+
+bool rangee_ligne_remplie(int l) {
+    charger();
+    if (l < 0 || l >= kLignes) return false;
+    for (const DefRangee& g : s_rg.el[l])
+        if (g.d.type != static_cast<uint8_t>(Type::VIDE)) return true;
+    return false;
+}
+
+// Un élément : l'icône et sa couleur comme sur une tuile (vue_def) ; un capteur ou une
+// clim y ajoute sa valeur. Celle d'un capteur est écrite court (« 21.4 ° », « 2.4 kW »)
+// et colorée selon sa nature (classe d'appareil) : l'échelle des températures de
+// l'écran, celle de l'humidité, celle des batteries, l'or pour la puissance et l'énergie.
+// Les tuiles gardent leurs couleurs (« INFO » pour un capteur qui n'est pas en °).
+bool rangee_element(int l, int i, RangeeElement& out) {
+    charger();
+    out = RangeeElement{};
+    if (l < 0 || l >= kLignes || i < 0 || i >= kElements) return false;
+    const DefRangee& g = s_rg.el[l][i];
+    const Type type = static_cast<Type>(g.d.type);
+    if (type == Type::VIDE) return false;
+    const Etat& e = s_etats_rg[l][i];
+    Vue v;
+    vue_def(g.d, e, -1, i, v);
+    out.icone = v.icone;
+    out.couleur = v.couleur;
+    out.mesure = type == Type::CAP || type == Type::CLI;
+    if (!out.mesure) return true;
+    snprintf(out.texte, sizeof(out.texte), "%s", v.ligne);
+    out.couleur_texte = v.couleur_ligne;
+    // Pas encore reçu, hors ligne, ou pas un nombre : le texte de la tuile.
+    if (type != Type::CAP || !e.recu || std::isnan(e.valeur) || est(e.brut, "unavailable") || est(e.brut, "unknown"))
+        return true;
+    const char* unite = g.d.complement;
+    const bool degres = std::strncmp(unite, "\xC2\xB0", 2) == 0 || est(g.classe, "temperature");
+    uint32_t c = v.couleur;
+    if (degres) {
+        formater_mesure(out.texte, sizeof(out.texte), e.valeur, "\xC2\xB0");
+        // Échelle en °C : une mesure en °F y est ramenée.
+        c = get_temperature_color(est(unite, "\xC2\xB0" "F") ? (e.valeur - 32.0f) * 5.0f / 9.0f : e.valeur);
+    } else {
+        if (!energie_formater(out.texte, sizeof(out.texte), e.valeur, unite))
+            formater_mesure(out.texte, sizeof(out.texte), e.valeur, unite);
+        if (est(g.classe, "humidity") || est(g.classe, "moisture")) c = get_humidity_color(e.valeur);
+        else if (est(g.classe, "battery")) c = get_battery_color(e.valeur);
+        else if (est(g.classe, "power") || est(g.classe, "energy") || est(g.d.icone, "solaire")) c = UIColor.GOLD;
+    }
+    out.couleur = out.couleur_texte = c;
     return true;
 }
 
