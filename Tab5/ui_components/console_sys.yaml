@@ -6,7 +6,7 @@
 #       y=380, 20 px de marge basse) :
 #       MÉMOIRE (SRAM/PSRAM/bloc max/flash), RÉSEAU (Wi-Fi/IP/signal/état HA),
 #       SYSTÈME (uptime/temp CPU/charge CPU/temps de boucle/batterie + volume, six
-#       lignes au pas de 40 px depuis le 06/10/2026), GESTION (MAJ écran,
+#       lignes au pas de 39 px depuis le 06/10/2026), GESTION (MAJ écran,
 #       recharge automations ; redémarrage HA, reboot tablette : 2 rangées de
 #       2 boutons 247x107, pas de 117 px ; le thème est passé dans le popup
 #       Réglages le 06/10/2026).
@@ -155,38 +155,40 @@ obj:
               widgets:
                 - label: { text: "SYSTÈME", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-                # Six lignes au pas de 40 px (52 avant le 06/10/2026, quatre lignes) : la
-                # charge du processeur et la batterie y sont entrées sans toucher aux
-                # autres cartes ; le volume finit 12 px au-dessus du bas de la carte.
-                - label: { text: "Temps actif", align: TOP_LEFT, x: 22, y: 46, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_uptime_val, text: "--", align: TOP_RIGHT, x: -22, y: 46, text_font: roboto_32_b, styles: style_text_console_value }
+                # Six lignes au pas de 39 px depuis y 42 (avant le 06/10/2026 : quatre
+                # lignes au pas de 52 depuis y 50) : la charge du processeur et la batterie
+                # y sont entrées sans toucher aux autres cartes. Le bouton du curseur de
+                # volume dépasse de 10 px sous la barre : il finit 14 px au-dessus du bas
+                # de la carte, autant que le titre sous le haut (mesuré sur le rendu).
+                - label: { text: "Temps actif", align: TOP_LEFT, x: 22, y: 42, text_font: roboto_32_b, styles: style_text_console_label }
+                - label: { id: lbl_sys_uptime_val, text: "--", align: TOP_RIGHT, x: -22, y: 42, text_font: roboto_32_b, styles: style_text_console_value }
 
-                - label: { text: "Temp. CPU", align: TOP_LEFT, x: 22, y: 86, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_temp_val, text: "--", align: TOP_RIGHT, x: -22, y: 86, text_font: roboto_32_b, styles: style_text_console_value }
+                - label: { text: "Temp. CPU", align: TOP_LEFT, x: 22, y: 81, text_font: roboto_32_b, styles: style_text_console_label }
+                - label: { id: lbl_sys_temp_val, text: "--", align: TOP_RIGHT, x: -22, y: 81, text_font: roboto_32_b, styles: style_text_console_value }
 
                 # Charge de chaque cœur, « cœur 0 · cœur 1 » (discussion #278, 06/10/2026) :
                 # update_console_cpu_ui (tab5_console.cpp), interval 2 s console ouverte.
-                - label: { text: "Charge CPU", align: TOP_LEFT, x: 22, y: 126, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_cpu_val, text: "--", align: TOP_RIGHT, x: -22, y: 126, text_font: roboto_32_b, styles: style_text_console_value }
+                - label: { text: "Charge CPU", align: TOP_LEFT, x: 22, y: 120, text_font: roboto_32_b, styles: style_text_console_label }
+                - label: { id: lbl_sys_cpu_val, text: "--", align: TOP_RIGHT, x: -22, y: 120, text_font: roboto_32_b, styles: style_text_console_value }
 
-                - label: { text: "Temps de boucle", align: TOP_LEFT, x: 22, y: 166, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_loop_val, text: "--", align: TOP_RIGHT, x: -22, y: 166, text_font: roboto_32_b, styles: style_text_console_value }
+                - label: { text: "Temps de boucle", align: TOP_LEFT, x: 22, y: 159, text_font: roboto_32_b, styles: style_text_console_label }
+                - label: { id: lbl_sys_loop_val, text: "--", align: TOP_RIGHT, x: -22, y: 159, text_font: roboto_32_b, styles: style_text_console_value }
 
                 # Batterie de la tablette (discussion #278, 06/10/2026) : niveau et tension, ou
                 # « Sur USB » / « Non montée » (update_console_batterie_ui, tab5_zones.cpp).
                 # L'icône est celle du bandeau ; le C++ la pose à gauche de la valeur.
-                - label: { text: "Batterie", align: TOP_LEFT, x: 22, y: 206, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_batterie_icone, text: "\U000F0091", align: TOP_RIGHT, x: -160, y: 209, text_font: mdi_font_32, styles: style_text_console_label, hidden: true }
-                - label: { id: lbl_sys_batterie_val, text: "--", align: TOP_RIGHT, x: -22, y: 206, text_font: roboto_32_b, styles: style_text_console_value }
+                - label: { text: "Batterie", align: TOP_LEFT, x: 22, y: 198, text_font: roboto_32_b, styles: style_text_console_label }
+                - label: { id: lbl_sys_batterie_icone, text: "\U000F0091", align: TOP_RIGHT, x: -160, y: 201, text_font: mdi_font_32, styles: style_text_console_label, hidden: true }
+                - label: { id: lbl_sys_batterie_val, text: "--", align: TOP_RIGHT, x: -22, y: 198, text_font: roboto_32_b, styles: style_text_console_value }
 
                 # Volume (le label % est mis à jour par le slider lui-même)
-                - label: { text: "\U000F0581", align: TOP_LEFT, x: 22, y: 246, text_font: mdi_font_32, styles: style_text_console_label }
-                - label: { id: lbl_sys_vol_val, text: "100%", align: TOP_RIGHT, x: -22, y: 250, styles: style_text_console_value }
+                - label: { text: "\U000F0581", align: TOP_LEFT, x: 22, y: 236, text_font: mdi_font_32, styles: style_text_console_label }
+                - label: { id: lbl_sys_vol_val, text: "100%", align: TOP_RIGHT, x: -22, y: 240, styles: style_text_console_value }
                 - slider:
                     id: slider_volume
                     align: TOP_LEFT
                     x: 70
-                    y: 252
+                    y: 242
                     width: 330
                     height: 24
                     min_value: 0
@@ -207,7 +209,7 @@ obj:
                           id: tab5_volume_apply
                           vol: !lambda 'return x / 100.0f;'
                           push_device: true
-                - label: { text: "\U000F057E", align: TOP_LEFT, x: 416, y: 246, text_font: mdi_font_32, styles: style_text_console_label }
+                - label: { text: "\U000F057E", align: TOP_LEFT, x: 416, y: 236, text_font: mdi_font_32, styles: style_text_console_label }
 
           # ═══ CARTE GESTION (bas droite) ═══
           - obj:

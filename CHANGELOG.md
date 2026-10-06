@@ -31,7 +31,7 @@ Home Assistant ajoutée.
   cœur, que FreeRTOS compte avec `CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS` (nouvelle option de
   `tab5-hardware.yaml`) ; lue seulement console ouverte. Coût estimé, non mesuré : une lecture
   d'horloge par changement de tâche, 12 octets par tâche (`docs/performance.md`).
-- La carte SYSTÈME passe de quatre à six lignes, au pas de 40 px au lieu de 52 ; les autres
+- La carte SYSTÈME passe de quatre à six lignes, au pas de 39 px au lieu de 52 ; les autres
   cartes ne bougent pas. Trois écrans de plus dans le rendu hors tablette (batterie, en charge,
   sans batterie), notice de la console complétée.
 
