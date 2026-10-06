@@ -51,6 +51,36 @@ Home Assistant ni le blueprint ne changent.
   l'appareil »), `docs/screens.md`, ADR-0023 (mise à jour du 06/10/2026), cartographie.
   **Pas encore essayé sur la tablette.**
 
+### 2026-10-06 — Alertes : une alerte lue ne revient que si elle change
+
+Lot 1 du plan des alertes de la carte centrale (demande d'Axel : une alerte reste jusqu'au
+tap, puis ne revient plus, même après un redémarrage de HA, sauf si elle change). HA seul,
+aucun changement de firmware : la tablette renvoie déjà l'id reçu tel quel au tap.
+- **Capteur « Tab5 Alertes »** (`sensor.tab5_alertes`, `packages/tab5_alerts.yaml`, logique
+  dans le nouveau `custom_templates/tab5_alertes.jinja`) : il suit les mises à jour, les
+  capteurs `problem`, les entités indisponibles depuis 10 min et la vigilance. Une alerte = une
+  source + une **révision** ; la tablette reçoit « id#révision » et renvoie celle qu'elle
+  montrait. Lue, l'alerte ne revient que si elle change (version plus récente, autre niveau ou
+  phénomènes, nouvelle entité indisponible) ou si elle s'arrête vraiment puis recommence :
+  revenue à la normale 5 min, ou disparue 1 h ; jamais sur une source indisponible ou
+  inconnue, ni dans les 15 min qui suivent un démarrage de HA. Non lue, une alerte revenue à
+  la normale quitte l'écran tout de suite.
+- **Historique** : les 30 dernières alertes (apparue, lue, terminée) dans l'attribut
+  `historique`, pour le popup et le tableau de bord des lots suivants.
+- **Mémoire** : le capteur restaure ses attributs au démarrage, et l'automatisation
+  `tab5_alertes_sauvegarde` écrit les états restaurés sur le disque dès qu'une alerte est lue.
+  Le calcul est d'un seul tenant (les `variables:` du bloc à déclencheurs) : un tap n'est pas
+  perdu derrière le calcul de la minute.
+- **Reprise** : l'ancienne liste `input_text.tab5_alerts_dismissed` est lue une fois, puis plus
+  écrite. Sauf « ha:unavailable », qui rendait muette pour toujours l'alerte des indisponibles :
+  après le déploiement, elle apparaît une fois. La purge nocturne de 4 h disparaît.
+- **Poussées** (`packages/tab5_push.yaml`) : bandeaux et bandeau info lus dans le capteur ; le
+  bandeau info ne dit plus que la vigilance (MAJ, erreurs et indisponibles sont des bandeaux).
+- **Preuves** : `tests/test_alertes_ha.py` rejoue la macro réelle (bac à sable Jinja) sur les
+  redémarrages, plantages, versions, coupures et taps ; le job « Installation dans un HA neuf »
+  lit une alerte de démo, vérifie le payload poussé, tue puis redémarre HA, et installe une
+  mise à jour.
+
 ### 2026-10-06 — Alertes : une alerte lue ne revient plus après un redémarrage de HA
 
 Demande d'Axel : une alerte touchée sur la tablette ne doit plus revenir, même après un

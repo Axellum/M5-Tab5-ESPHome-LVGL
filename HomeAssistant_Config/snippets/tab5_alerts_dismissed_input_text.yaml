@@ -7,9 +7,11 @@
 # une config de production, où les copies dans configuration.yaml / scripts.yaml /
 # automations.yaml ont dû être retirées au profit du seul package).
 #
-# Le package reste la voie recommandée : il apporte aussi les scripts
-# `tab5_dismiss_alert`, le capteur `sensor.tab5_unavailable_count` et la purge
-# nocturne `tab5_alerts_dismissed_cleanup`, que ce snippet seul ne fournit pas.
+# Depuis le 06/10/2026, cette liste n'est plus que l'ancienne mémoire des alertes
+# lues : le capteur « Tab5 Alertes » du package la lit une fois, quand il démarre
+# sans mémoire, puis ne l'écrit plus. Seul, ce snippet n'affiche aucune alerte : le
+# package apporte le capteur, le script `tab5_dismiss_alert` et
+# `sensor.tab5_unavailable_count`.
   tab5_alerts_dismissed:
     name: "Tab5 alertes HA ignorées"
     # Sans `initial` : HA la restaure au redémarrage (avec, les alertes lues revenaient).
