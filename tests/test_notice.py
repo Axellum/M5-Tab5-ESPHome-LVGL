@@ -48,9 +48,6 @@ NON_MONTREES = {
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "energie-mois": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
-    # Provisoire (06/10/2026) : images à tirer du rendu de la CI de la PR du popup Réglages.
-    "reglages": "image à tirer du premier rendu de la CI qui le contient",
-    "reglages-langue": "image à tirer du premier rendu de la CI qui le contient",
 }
 
 
