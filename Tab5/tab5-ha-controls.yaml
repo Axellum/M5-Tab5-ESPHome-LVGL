@@ -434,21 +434,27 @@ interval:
   #     c'est zéro toucher pendant des minutes, comme pour le retour à l'accueil) ;
   #   - une mise à jour du firmware (`ota_en_cours`).
   # Pas avant la fin du démarrage (`boot_complete`).
+  # Cette liste sert aussi au mode économie (tab5-economie.yaml), qui n'assombrit pas
+  # l'écran pour les mêmes raisons : la condition la range dans `ecran_veille_permise`
+  # avant de regarder le délai, que l'extinction auto soit choisie ou pas.
   - interval: 10s
     then:
       - if:
           condition:
             lambda: |-
+              const bool permise =
+                  id(boot_complete) && id(backlight).remote_values.is_on() &&
+                  !id(alarm_ringing) &&
+                  !(id(va)->is_running() || id(va)->is_continuous() || id(va_stop_armed)) &&
+                  !GameRegistry::any_open() &&
+                  !id(ota_en_cours);
+              id(ecran_veille_permise) = permise;
               // Délai de chaque option du select, dans le même ordre (0 = « Jamais »).
               constexpr uint32_t DELAIS_MIN[] = {0, 1, 2, 5, 10, 30};
               constexpr size_t NB_DELAIS = sizeof(DELAIS_MIN) / sizeof(DELAIS_MIN[0]);
               const auto choix = id(tab5_extinction_auto).active_index();
               if (!choix.has_value() || *choix == 0 || *choix >= NB_DELAIS) return false;
-              if (!id(boot_complete) || !id(backlight).remote_values.is_on()) return false;
-              if (id(alarm_ringing)) return false;
-              if (id(va)->is_running() || id(va)->is_continuous() || id(va_stop_armed)) return false;
-              if (GameRegistry::any_open()) return false;
-              if (id(ota_en_cours)) return false;
+              if (!permise) return false;
               const uint32_t depuis_allumage = millis() - id(ecran_allume_ms);
               const uint32_t inactif = std::min(ui_idle_ms(), depuis_allumage);
               return inactif >= DELAIS_MIN[*choix] * 60000u;

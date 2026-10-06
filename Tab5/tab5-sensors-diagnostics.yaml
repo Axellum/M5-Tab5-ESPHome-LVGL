@@ -148,6 +148,11 @@ binary_sensor:
     # si l'interrupteur « Tab5 Batterie montée » est allumé (tab5-ha-controls.yaml).
     on_state:
       - lambda: 'batterie_charge_ui(x);'
+      # Mode économie (tab5-economie.yaml) : la charge reprend, la tablette n'est plus
+      # sur batterie, sans attendre la lecture suivante du courant.
+      - lambda: |-
+          if (economie_charge(x)) id(tab5_sur_batterie).publish_state(false);
+      - script.execute: tab5_economie_appliquer
 
   # Batterie détectée (discussion #278, 05/10/2026) : la décision de la tablette, d'après
   # la tension (batterie_tension_ui, on_raw_value de batterie_tension plus bas ; règle
@@ -317,10 +322,12 @@ sensor:
 
   # Tension de la batterie (INA226, présent en 0x41 sur la tablette de l'auteur le
   # 26/09/2026 ; 0x40, défaut d'ESPHome, est l'ES7210). Shunt et max_current de la
-  # config de référence ESPHome, utiles au seul courant (non publié). Publiée à 50 mV
+  # config de référence ESPHome, utiles au seul courant. Publiée à 50 mV
   # près (≈ 2 %) ou toutes les 15 min. Sans batterie, elle lit le chargeur ou l'USB :
   # 4,2 V (husyildiz), 4,2 ↔ 8,39 V ou 5,71 V stable (tablette de l'auteur, 03 et
   # 04/10/2026) ; d'où disabled_by_default, et « Tab5 Batterie détectée ».
+  # ESPHome lit la tension avant le courant à chaque mesure (ina226.cpp) : quand le
+  # courant arrive, « batterie détectée » a déjà vu la lecture du même instant.
   - platform: ina226
     i2c_id: bsp_bus
     address: 0x41
@@ -348,6 +355,28 @@ sensor:
               id(batterie_detectee).publish_state(batterie_presente());
               id(batterie_niveau).publish_state(x);
             }
+    # Courant de la batterie (06/10/2026, mode économie) : + = elle se décharge, la
+    # tablette tourne sur elle ; − = elle charge. Sens d'après M5Unified
+    # (getBatteryCurrent : le shunt du Tab5 est câblé pour que la charge se lise
+    # négative ; ESPHome publie le registre signé tel quel), pas encore vu sur une
+    # tablette. Chaque lecture (avant les filtres) décide « Tab5 Sur batterie »
+    # (tab5_economie.h). Sans batterie il ne veut rien dire : désactivé par défaut,
+    # comme la tension.
+    current:
+      id: batterie_courant
+      name: "Tab5 Courant batterie"
+      accuracy_decimals: 3
+      entity_category: diagnostic
+      disabled_by_default: true
+      filters:
+        - or:
+            - throttle: 15min
+            - delta: 0.05
+      on_raw_value:
+        - lambda: |-
+            economie_courant(x, batterie_presente(), id(batterie_en_charge).state);
+            id(tab5_sur_batterie).publish_state(economie_sur_batterie());
+        - script.execute: tab5_economie_appliquer
 
   # Niveau d'après la tension, droite de battery-percentage.yaml (référence ESPHome) :
   # 6,0 V = 0 %, 8,23 V = 100 % ; trop haut pendant la charge. Inconnu (pas 0 ni 100 %)
@@ -373,6 +402,9 @@ sensor:
     # n'est pas détectée (batterie_peindre lit la décision, pas ce niveau).
     on_value:
       - lambda: 'batterie_niveau_ui(x);'
+      # Mode économie : à 35 % ou moins sur batterie, la luminosité au plus bas.
+      - lambda: 'economie_niveau(x);'
+      - script.execute: tab5_economie_appliquer
 
 select:
   - platform: template
