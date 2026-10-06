@@ -39,4 +39,5 @@ def test_seul_le_chien_de_garde_rtc_est_excuse():
     # premier démarrage : l'excuse ne porte que sur ESP_RST_WDT.
     texte = JOURNAL.read_text(encoding="utf-8")
     assert "s_installation = s_neuve && r == ESP_RST_WDT;" in texte
-    assert "if (raison_anormale(r) && !s_installation) s_j.anomalie |= kPlantage;" in texte
+    assert ("if (reset_anormal(r, s_rapport_plantage) && !s_installation) "
+            "s_j.anomalie |= kPlantage;") in texte

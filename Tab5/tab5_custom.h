@@ -775,9 +775,11 @@ void journal_tick();
 // Script tab5_journal_envoi, à chaque connexion de HA :
 bool journal_has_report();          // autre chose qu'un démarrage normal
 bool journal_is_serious();          // plantage, erreur ou démarrage sans HA
-std::string journal_reset_reason(); // raison du dernier démarrage, en clair
+std::string journal_reset_reason(); // raison du dernier démarrage, en clair (+ code ROM si chien de garde)
 // Filtre du capteur « Tab5 Raison du redémarrage » : premier démarrage après une
-// installation par l'USB (flash effacée) → « First boot after install (…) ».
+// installation par l'USB (flash effacée) → « First boot after install (…) » ; chien de
+// garde sans rapport de plantage (bouton d'alimentation, 06/10/2026) → « Power button or
+// RTC watchdog (rst 0x..) », au lieu d'un « Reboot request from … » périmé.
 std::string journal_raison_ha(const std::string& raison);
 std::string journal_boot_count();   // démarrages depuis le dernier envoi
 std::string journal_report_text();  // lignes en attente, une par ligne

@@ -189,6 +189,11 @@ text_sensor:
   # flash finit par un reset du chien de garde RTC, « other watchdogs » devient « First
   # boot after install (other watchdogs) », que la garde « reboot inattendu » de
   # packages/tab5_health.yaml ne signale pas (voir Tab5/tab5_journal.cpp).
+  # Appui sur le bouton d'alimentation (06/10/2026, discussion #278) : chien de garde
+  # sans rapport de plantage. ESPHome y affichait la source du dernier redémarrage
+  # DEMANDÉ (« Reboot request from esphome.ota », jamais effacée) : le filtre publie
+  # « Power button or RTC watchdog (rst 0x..) » à la place, que la garde ne signale pas
+  # non plus ; avec un rapport de plantage, « Crash, other watchdogs (rst 0x..) ».
   - platform: debug
     reset_reason:
       name: "Tab5 Raison du redémarrage"
