@@ -250,7 +250,9 @@ void refresh_forecast_page_title_ui(int forecast_page,
 // Panneau info central (récap calendrier ou bannière alerte) — logique déplacée
 // depuis tab5-api-logic.yaml pour fiabiliser polices LVGL et accents UTF-8.
 // Pose ctx.has_info ; bandeau vidé alors qu'il est affiché → retour au planning.
-void update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
+// Renvoie true quand une vigilance rouge nouvelle vient de prendre la carte (même règle
+// que les bandeaux d'alertes HA).
+bool update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* planning_wrap,
     const std::string& texte, const std::string& couleur, const std::string& meteo_id,
     std::string& dismissed_local, CentralPanelCtx& ctx,
     esphome::font::Font* font_small);
@@ -268,17 +270,20 @@ constexpr int kHaAlertSlotCount = 4;
 
 void advance_central_panel_rotator(CentralPanelCtx& ctx);
 
-// Un bandeau HA : ses widgets et son id d'acquittement. Sa présence est
-// ctx.has_ha[slot], posée par parse_and_update_ha_alerts_bulk.
+// Un bandeau HA : ses widgets (texte, compteur « 2/6 ») et son id d'acquittement. Sa
+// présence est ctx.has_ha[slot], posée par parse_and_update_ha_alerts_bulk.
 struct HaAlertSlotUI {
     lv_obj_t* wrap;
     lv_obj_t* lbl;
     std::string* id_store;
+    lv_obj_t* cpt;
 };
 
 // La police des bandeaux est celle du YAML (ha_alert_panel.yaml, police de la date) :
 // la reposer à chaque push relançait la mise en page pour rien (audit 26/09, lot 3).
-void parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
+// Renvoie true quand une alerte rouge nouvelle vient de prendre la carte : l'appelant
+// relance le minuteur du rotateur pour qu'elle reste un tour entier.
+bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
     CentralPanelCtx& ctx, std::string& dismissed_local);
 
 // Masquage immédiat au tap (feedback visuel avant le round-trip HA).

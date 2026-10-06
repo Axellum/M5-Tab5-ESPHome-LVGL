@@ -59,7 +59,7 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_info_texte": {"texte": "@ha|1|Home Assistant Core|0|0|0|", "couleur": "Blanc", "meteo_id": "meteo:orange"},
     "tab5_maj_reponse_vocale": {"texte": "Il fait 21 degrés dans le salon."},
     "tab5_assist_reponse": {"texte": "**Salon** : 21 degrés", "image_url": ""},
-    "tab5_maj_alertes_ha_bulk": {"payload": "update.home_assistant_core_update|Rouge|@maj:Home Assistant Core;ha:unavailable|Orange|@indispo:3"},
+    "tab5_maj_alertes_ha_bulk": {"payload": "@n:6;update.home_assistant_core_update#1|Rouge|@maj:Home Assistant Core;ha:indispo#2|Orange|@indispo:3"},
     "tab5_maj_planning": {"ligne1": "Auj : TRAVAIL 08:00-16:00", "ligne2": "Demain : repos"},
     "tab5_maj_rdv_prochains": {"payload": "1789552800|Dentiste~1789639200|Réunion équipe"},
     "tab5_maj_calendrier_mois": {
