@@ -15,6 +15,29 @@ le 06/10/2026 : le package du volet à course simulée ne rend plus le volet mue
 extinction automatique de l'écran au choix et rallumage à « Okay Nabu » (#342), notice
 d'utilisation (#339).
 
+### 2026-10-06 — Popup du volet : un volet dessiné à faire glisser, des boutons façon HA
+
+Demandé dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) :
+« comme l'animation de HA, pas un simple curseur », et des boutons comme ceux d'un tableau de
+bord HA. Firmware seul : même commande, même événement, même branche du blueprint.
+- **Un volet dessiné à la place du curseur** : une fenêtre dont le tablier à lames descend
+  depuis le coffre selon la position. On le fait glisser du doigt, vers le haut ou le bas,
+  n'importe où sur la fenêtre : le dessin et le « 45 % » suivent le doigt, et la position
+  (`position`, 0-100) ne part **qu'au relâcher**, comme avant. Un simple toucher n'envoie rien.
+- **Il suit le vrai volet** tant que le popup est ouvert : chaque position poussée par Home
+  Assistant le redessine aussitôt, sans fondu ni animation à lui (le volet dessiné descend quand
+  le vrai descend). Jamais sous le doigt.
+- **Volet sans position** (`nan`, volet à course simulée, hors ligne) : pas de glissement ni de
+  nombre ; le dessin montre l'état (ouvert en haut, fermé en bas, sinon à mi-hauteur, lames
+  estompées) et les mots restent (« Ouvert », « Fermé », « Partiel », « En mouvement »,
+  « Hors ligne »).
+- **Ouvrir / Stop / Fermer** : l'icône dans une pastille ronde teintée, comme une tuile de Home
+  Assistant ; le bouton garde le verre et l'effet d'appui du thème.
+- Aucun texte nouveau à l'écran. ADR-0023 (mise à jour du 06/10/2026), `docs/screens.md`,
+  notice `shutters.md`, `Tab5/README.md` ; tests du glissement (rien pendant, rien sans
+  position, une fois au relâcher) et de la géométrie (`tests/test_tuiles_firmware.py`) ; un
+  écran de plus au rendu hors tablette (`volet-glisse`, le volet tiré du doigt).
+
 ### 2026-10-06 — Alertes : le rang « 2/6 » et l'alerte rouge en premier sur l'écran
 
 Lot 3 du plan des alertes de la carte centrale. Firmware et Home Assistant.

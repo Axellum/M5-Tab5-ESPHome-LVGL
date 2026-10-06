@@ -1008,8 +1008,8 @@ struct TuilesUI {
     lv_obj_t* vol_position = nullptr;     // volet_position : rangée « 45 % »
     lv_obj_t* vol_nombre = nullptr;       // volet_nombre : chiffres (police de l'horloge)
     lv_obj_t* vol_etat = nullptr;         // volet_etat : l'état en mots
-    lv_obj_t* vol_curseur_cadre = nullptr;  // volet_curseur_cadre : curseur et ses bornes
-    lv_obj_t* vol_curseur = nullptr;      // volet_curseur : position 0-100
+    lv_obj_t* vol_cadre = nullptr;        // volet_cadre : le volet dessiné, zone de glissement
+    lv_obj_t* vol_tablier = nullptr;      // volet_tablier : les lames, glissent dans la fenêtre
     // Volet 3.x (mode héritage) : sens de la prochaine commande.
     bool* volet_sens = nullptr;           // &id(volet_target_open)
     // Commandes, posées par le script (lambdas sans capture) : événement
@@ -1211,8 +1211,9 @@ void tuiles_heritage_volet_sens();
 // l'option k, 05/10/2026, discussion #278). Boutons Ouvrir / Stop / Fermer : la commande
 // `action` (ouvrir, arreter, fermer) à la tuile du popup, comme son appui.
 void popup_volet_commande(const char* action);
-// Branche les événements du curseur (glisser : le nombre suit ; relâcher : « position »
-// part). Une fois, depuis tab5_tuiles_ui.
+// Construit les lames du volet dessiné et branche les événements de son cadre (glisser :
+// le dessin et le nombre suivent ; relâcher : « position » part). Une fois, depuis
+// tab5_tuiles_ui.
 void tuiles_brancher_popup_volet();
 
 // Popup lumière (ouvert par l'appui long d'une tuile lum) : ses lignes sont les lumières

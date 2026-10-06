@@ -5,13 +5,20 @@
 #       fenêtre, et les boutons aussi »). Ouvert par l'appui long d'une tuile vol (tuile
 #       météo ou carte du mode HA, tuile_appui → popup_volet_ouvrir, tab5_tuiles.cpp),
 #       sur ce volet. Deux cartes de verre :
-#       - POSITION : la position en grand (« 45 », chiffres de l'horloge, « % » de la
-#         date), l'état en mots dessous (« Partiel », « En mouvement »…) et un curseur
-#         0-100 % qui n'envoie qu'au relâcher. Position inconnue (NaN, -1 du volet à
-#         course simulée, volet qui ne la donne pas) : l'état en mots seul, sans curseur ;
-#       - COMMANDES : Ouvrir / Stop / Fermer (gabarit volet_btn.yaml).
+#       - POSITION : un volet dessiné (06/10/2026, discussion #278 : « like ha animation,
+#         not a basic slider ») — une fenêtre dont le tablier à lames descend depuis le
+#         coffre selon la position — et, à sa droite, la position en grand (« 45 »,
+#         chiffres de l'horloge, « % » de la date) avec l'état en mots dessous
+#         (« Partiel », « En mouvement »…). On fait glisser le volet du doigt, vers le
+#         haut ou le bas : le dessin et le nombre suivent, la position part au relâcher.
+#         Position inconnue (NaN, -1 du volet à course simulée, volet qui ne la donne
+#         pas) : le dessin montre l'état (ouvert en haut, fermé en bas, sinon à
+#         mi-hauteur en lames estompées), sans glissement ni nombre ;
+#       - COMMANDES : Ouvrir / Stop / Fermer (gabarit volet_btn.yaml), l'icône dans une
+#         pastille ronde, comme les boutons d'un tableau de bord de Home Assistant.
 #       Titre = nom de la tuile. Tout est repeint par tab5_tuiles.cpp quand l'état ou la
-#       position du volet change, popup ouvert (popup_volet_etat).
+#       position du volet change, popup ouvert (popup_volet_etat), sans animation :
+#       chaque position poussée redessine directement (« transitions instantanées »).
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
 #       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Volet » dans
 #       tab5_modal_registry_init). Commandes : celles des tuiles (ouvrir, fermer, arreter)
@@ -19,13 +26,18 @@
 #       blueprint « Tab5 — emplacements » les applique à l'entité de CETTE tuile.
 #       Corps : x 24..1226, y 72..670 (cartes de 800 et 386 px, 16 px d'écart).
 #       Ne pas renommer volet_popup / volet_popup_titre / volet_nombre / volet_position /
-#       volet_etat / volet_curseur_cadre / volet_curseur : posés dans g_tuiles_ui
-#       (tab5-tuiles.yaml). Le curseur n'a pas d'on_value ici : ses événements (glisser,
-#       relâcher) sont branchés en C++ (tuiles_brancher_popup_volet), qui seul sait
-#       ignorer un relâcher sans glissement et un PRESS_LOST.
-# @ai_instruction `scrollable: false` partout — NE PAS retirer. Le label volet_nombre est
-#       dans la police de l'horloge (chiffres et « : » seulement) : n'y écrire que des
-#       chiffres. Un texte de plus = sa ligne dans Tab5/lang/*.yaml (gen_i18n.py).
+#       volet_etat / volet_cadre / volet_tablier : posés dans g_tuiles_ui
+#       (tab5-tuiles.yaml). Le cadre n'a pas d'événement ici : glisser et relâcher sont
+#       branchés en C++ (tuiles_brancher_popup_volet), qui seul sait ignorer un toucher
+#       sans glissement et un PRESS_LOST ; il y crée aussi les lames du tablier (builder,
+#       règle 5) et leur style, dont il pose les couleurs (palette du thème) à chaque repeint.
+#       Hauteur de la fenêtre (456) et des lames : kVoletFenetreH / kVoletLameH de
+#       tab5_tuiles.cpp (tests/test_tuiles_firmware.py compare les deux).
+# @ai_instruction `scrollable: false` partout — NE PAS retirer. `clickable: false` sur la
+#       fenêtre et le tablier : le toucher doit arriver au cadre, seul à porter les
+#       événements du glissement. Le label volet_nombre est dans la police de l'horloge
+#       (chiffres et « : » seulement) : n'y écrire que des chiffres. Un texte de plus = sa
+#       ligne dans Tab5/lang/*.yaml (gen_i18n.py).
 # ═══════════════════════════════════════════════════════
 obj:
   id: volet_popup
@@ -51,7 +63,7 @@ obj:
           # Titre : le nom de la tuile, posé par popup_volet_peindre().
           - !include { file: modal_header.yaml, vars: { icon: "\U000F111E", icon_style: "style_text_accent", title: "Volet", title_id: "volet_popup_titre", close_btn_id: "btn_volet_close", close_lambda: "animate_popup_close(id(volet_popup));" } }
 
-          # ═══ CARTE POSITION (gauche) : position en grand, état, curseur ═══
+          # ═══ CARTE POSITION (gauche) : le volet dessiné, la position, l'état ═══
           - obj:
               align: TOP_LEFT
               x: 24
@@ -63,12 +75,64 @@ obj:
               widgets:
                 - label: { text: "POSITION", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
+                # Le volet dessiné : un cadre (bâti et coffre, zone de glissement) qui
+                # tient la fenêtre ; dans la fenêtre, le tablier glisse verticalement
+                # (y = −position × 456 / 100) et la fenêtre le rogne : à 100 % il est
+                # rentré dans le coffre, à 0 % il couvre toute la vitre. Haut et bas du
+                # cadre (y 56..566) alignés sur ceux des boutons Ouvrir et Fermer.
+                - obj:
+                    id: volet_cadre
+                    align: TOP_LEFT
+                    x: 56
+                    y: 56
+                    width: 336
+                    height: 510
+                    styles: [style_bg_arc_track, style_border_glass_rim]
+                    bg_opa: COVER
+                    border_width: 2
+                    border_opa: 60%
+                    radius: 16
+                    pad_all: 0
+                    scrollable: false
+                    widgets:
+                      # Vitre : l'accent très estompé sur le bâti (la lumière du dehors).
+                      # Bordure de 2 px du cadre comprise : 12 px du bord, 42 en haut
+                      # (le coffre), 12 en bas.
+                      - obj:
+                          id: volet_fenetre
+                          align: TOP_LEFT
+                          x: 10
+                          y: 40
+                          width: 312
+                          height: 456
+                          styles: style_bg_accent
+                          bg_opa: 15%
+                          border_width: 0
+                          radius: 0
+                          pad_all: 0
+                          clickable: false
+                          scrollable: false
+                          widgets:
+                            # Tablier : 12 lames de 38 px créées en C++ (lames_construire).
+                            - obj:
+                                id: volet_tablier
+                                align: TOP_LEFT
+                                x: 0
+                                y: 0
+                                width: 312
+                                height: 456
+                                styles: style_transparent
+                                clickable: false
+                                scrollable: false
+
                 # « 45 % » : chiffres dans la police de l'horloge, « % » dans celle de la
                 # date, posés côte à côte (flex), le « % » remonté sur la ligne de base.
+                # Centré sur la place à droite du volet (x 392..800 : milieu à +196).
                 - obj:
                     id: volet_position
                     align: TOP_MID
-                    y: 74
+                    x: 196
+                    y: 184
                     width: SIZE_CONTENT
                     height: SIZE_CONTENT
                     styles: style_transparent
@@ -90,43 +154,9 @@ obj:
                     id: volet_etat
                     text: "--"
                     align: TOP_MID
+                    x: 196
                     y: 272
                     styles: style_police_date
-
-                # Curseur 0-100 % (gauche fermé, droite ouvert) : seulement si la position
-                # est connue ; envoie « position » au relâcher (tab5_tuiles.cpp).
-                - obj:
-                    id: volet_curseur_cadre
-                    align: TOP_MID
-                    y: 396
-                    width: 760
-                    height: 136
-                    styles: style_transparent
-                    scrollable: false
-                    hidden: true
-                    widgets:
-                      - slider:
-                          id: volet_curseur
-                          align: TOP_MID
-                          y: 24
-                          width: 680
-                          height: 40
-                          min_value: 0
-                          max_value: 100
-                          value: 0
-                          styles: style_bg_arc_track
-                          # Piste opaque : le thème ne donne au fond du curseur qu'une
-                          # opacité réduite, la partie vide disparaissait en thème sombre.
-                          bg_opa: COVER
-                          radius: 20
-                          indicator:
-                            styles: style_bg_accent
-                            radius: 20
-                          knob:
-                            styles: style_bg_soft
-                            pad_all: 8
-                      - label: { text: "Fermé", align: TOP_LEFT, x: 40, y: 84, styles: style_text_dim }
-                      - label: { text: "Ouvert", align: TOP_RIGHT, x: -40, y: 84, styles: style_text_dim }
 
           # ═══ CARTE COMMANDES (droite) : Ouvrir / Stop / Fermer ═══
           - obj:
