@@ -174,7 +174,10 @@ void solaire_recu(const char* valeur, size_t n) {
     const bool visibilite = std::isnan(v) != std::isnan(s_solaire);
     s_solaire = v;
     solaire_peindre();
-    if (visibilite) bandeau_apply_ui();
+    if (visibilite) {
+        bandeau_apply_ui();
+        ui_hidden(g_zones_ui.mini_solaire, std::isnan(s_solaire));
+    }
 }
 
 void charger() {
@@ -358,6 +361,8 @@ bool batterie_tension_ui(float tension, uint32_t maintenant_ms) {
 
 bool batterie_presente() { return s_batterie.detection.presence == PresenceBatterie::PRESENTE; }
 
+bool solaire_present() { return !std::isnan(s_solaire); }
+
 // Thèmes (ADR-0029) : icônes de la batterie (montée) et du solaire (valeur reçue).
 void zones_rejouer_theme() {
     if (s_batterie.montee) batterie_peindre();
@@ -383,12 +388,11 @@ void zones_apply_ui() {
     batterie_peindre();
     solaire_peindre();
 
-    // Rangée HA / Sys / TV (haut droite) : sans TV, HA et Sys glissent d'une colonne.
-    // Mêmes x que tab5-lvgl.yaml (855 / 995 / 1135, bord droit à 1260).
-    const bool sans_tv = zone_absente(Zone::TV);
-    ui_hidden(u.btn_tv, sans_tv);
-    ui_x(u.btn_ha, sans_tv ? 995 : 855);
-    ui_x(u.btn_sys, sans_tv ? 1135 : 995);
+    // Boutons du haut (06/10/2026) : ils restent à leur place, la manette ouvre l'Arcade
+    // même sans TV. Leur mini icône dit que l'appui long a de quoi ouvrir : la
+    // télécommande sur la manette, le popup Énergie sur « HA » (production solaire reçue).
+    ui_hidden(u.mini_tv, zone_absente(Zone::TV));
+    ui_hidden(u.mini_solaire, !solaire_present());
 
     // Tuiles (épaules, boutons) et calque « HA » : ce sont les tuiles de la pièce de la
     // page (ADR-0023) — tuiles_appliquer_ui(), en fin de fonction ; en mode héritage,

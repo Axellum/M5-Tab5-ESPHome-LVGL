@@ -211,7 +211,7 @@ extern CentralPanelCtx g_central_ctx;
 
 // Gestion du geste de swipe (page_main.on_gesture) : pagination previsions
 // horaires/journalieres (0-4) dans la bande centrale+basse (y >= 333). Console diag :
-// uniquement via btn_control_console (plus de swipe haut/bas). En mode HA (ADR-0023) :
+// uniquement par appui long sur btn_control_console (plus de swipe haut/bas). En mode HA (ADR-0023) :
 // pièce suivante / précédente qui a des appareils, les calques météo restent masqués.
 // La page courante est ctx.forecast_page.
 void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
@@ -848,9 +848,12 @@ enum BandeauIcone : uint8_t {
 // Widgets que le masquage touche, posés par le script tab5_zones_apply (tab5-zones.yaml).
 struct ZonesUI {
     lv_obj_t* bandeau[BANDEAU_NB] = {};  // bandeau d'état, indexé par BandeauIcone
-    lv_obj_t* btn_ha = nullptr;        // rangée HA / Sys / TV
-    lv_obj_t* btn_sys = nullptr;
-    lv_obj_t* btn_tv = nullptr;
+    // Mini icônes des boutons du haut (06/10/2026) : l'appui long du bouton a de quoi
+    // ouvrir — panneau solaire sur « HA » (popup Énergie), écran sur la manette
+    // (télécommande TV). Les trois boutons ne bougent plus : la manette ouvre l'Arcade
+    // même sans TV.
+    lv_obj_t* mini_solaire = nullptr;  // icon_ha_solaire (btn_control_ha)
+    lv_obj_t* mini_tv = nullptr;       // icon_jeux_tv (btn_control_tv)
     // Les cartes du calque « HA » et le sélecteur du popup lumière suivent les pièces
     // depuis l'ADR-0023 (g_tuiles_ui, tab5_tuiles.cpp).
     lv_obj_t* clim_zone = nullptr;     // − / consigne / +
@@ -900,6 +903,10 @@ bool batterie_tension_ui(float tension, uint32_t maintenant_ms);
 // Vrai si une batterie est détectée (faux tant qu'aucune lecture n'a décidé) : le
 // niveau « Tab5 Batterie » vaut inconnu sans elle.
 bool batterie_presente();
+// Vrai quand HA pousse la production solaire (clé solaire de tab5_maj_emplacements :
+// puissance crête choisie dans le blueprint) : l'appui long du bouton « HA » ouvre alors
+// le popup Énergie, et sa mini icône le signale.
+bool solaire_present();
 // Tuile i (0 à 4) de l'accueil : son appareil est-il absent ?
 bool zone_tuile_absente(int tuile);
 // Nombre de pots présents (0 à 5).
@@ -1086,6 +1093,81 @@ void energie_ouvrir();
 // Boutons Heures / Jours / Mois : change la vue et la demande à HA.
 void energie_choisir_vue(int vue);
 
+// =============================================================================
+// Réglages de la tablette (06/10/2026, demande d'Axel) — tab5_reglages.cpp
+// =============================================================================
+// Popup « Réglages » (reglages_popup.yaml), ouvert par un tap sur le bouton central du
+// haut (engrenage ; son appui long ouvre la console système) ou par « Aller à l'écran →
+// Réglages ». Les réglages de l'écran qu'on veut changer sans passer par Home Assistant :
+// luminosité, extinction auto, rallumage par « Okay Nabu » et par une tape ; thème,
+// clair ou sombre, nuit du mode Auto, langue. Chacun reste l'entité exposée à HA : le
+// popup ne garde rien, il écrit l'entité (script tab5_reglages_choisir) et se repeint
+// depuis elle (tab5_reglages_sync_ui, lancé par chaque entité quand elle change).
+//
+// Réglage d'un bouton à choix (reglages_choix_btn.yaml, paramètre `reglage` du script
+// tab5_reglages_choisir ; `valeur` = index de l'option, 1/0 pour Oui/Non, ±1 pour le
+// thème). Les valeurs sont écrites en nombres dans le YAML : ne pas les renuméroter.
+enum ReglageId : int {
+    REGLAGE_EXTINCTION = 0,   // select « Tab5 Extinction auto de l'écran » (index)
+    REGLAGE_OKAY_NABU = 1,    // interrupteur « Tab5 Rallumer l'écran à Okay Nabu »
+    REGLAGE_TAPE = 2,         // interrupteur « Tab5 Tap-to-Wake »
+    REGLAGE_THEME = 3,        // select « Thème » : −1 précédent, +1 suivant (en boucle)
+    REGLAGE_MODE = 4,         // select « Clair ou sombre » (index)
+    REGLAGE_NUIT = 5,         // interrupteur « Nuit (thème auto) »
+    REGLAGE_LANGUE = 6,       // select « Langue » : demande confirmation (redémarrage)
+};
+
+// Boutons à choix : autant que d'options (Oui/Non : 0 = Oui, 1 = Non). Langues : une
+// pastille par langue de Tab5/lang/, nom natif écrit par reglages_preparer().
+constexpr int REGLAGES_NB_EXTINCTION = 6;
+constexpr int REGLAGES_NB_MODES = 3;
+constexpr int REGLAGES_NB_LANGUES = 7;
+
+// Widgets posés par le script tab5_reglages_ouvrir (tab5-reglages.yaml) à la première
+// ouverture : id() n'existe que dans une lambda YAML.
+struct ReglagesUI {
+    lv_obj_t* popup = nullptr;                        // reglages_popup
+    lv_obj_t* lum_slider = nullptr;                   // reglages_lum_slider
+    lv_obj_t* lum_valeur = nullptr;                   // reglages_lum_valeur (« 80 % »)
+    lv_obj_t* extinction[REGLAGES_NB_EXTINCTION] = {};
+    lv_obj_t* okay_nabu[2] = {};
+    lv_obj_t* tape[2] = {};
+    lv_obj_t* theme_nom = nullptr;                    // reglages_theme_nom
+    lv_obj_t* mode[REGLAGES_NB_MODES] = {};
+    lv_obj_t* nuit[2] = {};
+    lv_obj_t* langue[REGLAGES_NB_LANGUES] = {};
+    lv_obj_t* confirmation = nullptr;                 // reglages_confirmation
+    lv_obj_t* confirmation_texte = nullptr;           // reglages_confirmation_texte
+};
+extern ReglagesUI g_reglages_ui;
+
+// État des entités, lu par tab5_reglages_sync_ui (index des selects, interrupteurs,
+// luminosité du rétroéclairage en %).
+struct ReglagesEtat {
+    int luminosite = 100;
+    int extinction = 0;
+    bool okay_nabu = true;
+    bool tape = true;
+    int theme = 0;
+    int mode = 0;
+    bool nuit = false;
+    int langue = 0;
+};
+
+// Noms natifs des langues sur leurs pastilles (une fois, à la première ouverture).
+void reglages_preparer();
+// Repeint le popup (choix en couleur d'accent). Sans effet avant la première ouverture.
+void reglages_peindre(const ReglagesEtat& e);
+// Valeur affichée à côté du curseur de luminosité, pendant qu'on le glisse.
+void reglages_luminosite_ui(int pourcent);
+// Pastille d'une langue : ouvre la confirmation (la tablette redémarre pour changer de
+// langue). Rien pour la langue en cours.
+void reglages_langue_demander(int langue);
+// « Confirmer » : referme la confirmation et rend la langue choisie (−1 : aucune).
+int reglages_langue_confirmer();
+// « Annuler », voile ou croix : referme la confirmation.
+void reglages_confirmation_fermer();
+
 // Appui sur la tuile T de la pièce de la page courante (tuile météo ou carte du mode
 // HA) : commande selon le type et les options (tableau de l'ADR-0023), popup, ou rien.
 void tuile_appui(int tuile, bool long_appui);
@@ -1158,9 +1240,6 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
 // Vrai une fois le démarrage fini (tous les setup et les on_boot synchrones) : les
 // modules ont leurs widgets et peuvent repeindre.
 bool theme_ui_pret();
-// Rangée « Thème » de la console système : nom du thème (nom propre, écrit comme dans
-// le select de Home Assistant) et mode (Sombre, Clair, Auto), traduit à l'affichage.
-void theme_console_libelles(lv_obj_t* lbl_theme, lv_obj_t* lbl_mode, int theme, int mode);
 // Après une bascule : chaque module C++ repeint les couleurs qu'il a posées lui-même,
 // depuis son dernier état (les styles partagés sont repeints par tab5-themes.yaml ;
 // les fonctions de chaque module : tab5_internal.h).
