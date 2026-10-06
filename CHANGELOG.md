@@ -13,7 +13,13 @@ le 05/10/2026, qui ajoute le popup du volet (#333) et la doc des deux modes voca
 [v3.7.0-rc.3](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.3)
 le 06/10/2026 : le package du volet à course simulée ne rend plus le volet muet (#341),
 extinction automatique de l'écran au choix et rallumage à « Okay Nabu » (#342), notice
-d'utilisation (#339).
+d'utilisation (#339), puis
+[v3.7.0-rc.4](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.4)
+le 06/10/2026 : rangée sous l'horloge (#344), appui long sur les boutons du haut et popup
+Réglages (#345), le bouton d'alimentation n'est plus un plantage (#347), alertes lues retenues,
+abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet dessiné (#349),
+popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
+console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
 ### 2026-10-06 — Tuile − / + : les boutons de la carte clim règlent l'appareil de votre choix
 
