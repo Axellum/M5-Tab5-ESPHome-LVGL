@@ -22,7 +22,7 @@ lvgl:
       on_gesture:
         then:
           # [AI-CONTEXT] Pagination previsions (swipe gauche/droite, y>=333 carte centrale)
-          # deleguee a handle_swipe_gesture(). Console diag : btn_control_console uniquement.
+          # deleguee a handle_swipe_gesture(). Console diag : appui long sur btn_control_console uniquement.
           - lambda: |-
               lv_indev_t * indev = lv_indev_active();
               if (indev) {
@@ -219,8 +219,12 @@ lvgl:
 
         # --- Top Right Buttons (même habillage verre que Domo/Discu) ---
         # Icône seule (05/10/2026). x 855 / 995 / 1135 : bord droit à 1260 comme le
-        # bandeau central ; sans TV, zones_apply_ui() (tab5_zones.cpp) glisse HA et Sys
-        # d'une colonne avec ces mêmes x.
+        # bandeau central. Chaque bouton a un tap et un appui long (06/10/2026, demande
+        # d'Axel) ; une mini icône (mdi_font_26, le jeu du bandeau d'état en haut à gauche)
+        # en haut à droite de la tuile dit que l'appui long a de quoi ouvrir. Les trois
+        # restent à leur place : sans TV, la manette ouvre toujours l'Arcade.
+        # pad_all: 0 : la mini icône se pose au pixel près (le thème ajoutait ~21 px de
+        # marge intérieure), l'icône centrale ne bouge pas.
         - button:
             id: btn_control_ha
             align: TOP_LEFT
@@ -229,6 +233,7 @@ lvgl:
             width: 125
             height: 90
             radius: 18
+            pad_all: 0
             styles: style_clim_btn_page
             on_short_click:
               # Mode HA (ADR-0023) : les cartes de la pièce de la page courante (ou de la
@@ -236,9 +241,17 @@ lvgl:
               # pièce dans la carte centrale, bouton en couleur d'accent. Masqué sans
               # aucun appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp).
               - lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);'
+            on_long_press:
+              # Popup Énergie (ADR-0028), quand HA pousse la production solaire (puissance
+              # crête choisie dans le blueprint) : la mini icône du panneau le signale.
+              - lambda: 'if (solaire_present()) id(tab5_energie_ouvrir).execute();'
             widgets:
               - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, text_font: mdi_font_70 }
+              # Montrée par zones_apply_ui() / solaire_recu() (tab5_zones.cpp).
+              - label: { id: icon_ha_solaire, text: "\U000F0D9B", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
 
+        # Engrenage : tap = Réglages de la tablette (tab5-reglages.yaml), appui long =
+        # console système (avant le 06/10/2026, le flocon l'ouvrait d'un tap).
         - button:
             id: btn_control_console
             align: TOP_LEFT
@@ -247,8 +260,11 @@ lvgl:
             width: 125
             height: 90
             radius: 18
+            pad_all: 0
             styles: style_clim_btn_page
             on_short_click:
+              - script.execute: tab5_reglages_ouvrir
+            on_long_press:
               - lambda: |-
                   lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_move_to_index(id(layer_console_sys), -1);
@@ -263,11 +279,13 @@ lvgl:
                     lv_obj_set_style_text_color(id(lbl_sys_ha_val),
                         lv_color_hex(ha_ok ? UIColor.SUCCESS : UIColor.ERROR), LV_PART_MAIN);
                   }
-              # Rangée « Thème » (tab5-themes.yaml), dans la langue de l'écran.
-              - script.execute: tab5_theme_console
             widgets:
-              - label: { text: "\U000F0717", align: CENTER, text_font: mdi_font_70 }
+              - label: { text: "\U000F0493", align: CENTER, text_font: mdi_font_70 }
 
+        # Manette : tap = Arcade (comme la seconde température), appui long = télécommande
+        # TV quand une TV est choisie dans le blueprint (zone TV) : la mini icône de l'écran
+        # le signale. Avant le 06/10/2026, ce bouton était la télécommande et disparaissait
+        # sans TV.
         - button:
             id: btn_control_tv
             align: TOP_LEFT
@@ -276,12 +294,17 @@ lvgl:
             width: 125
             height: 90
             radius: 18
+            pad_all: 0
             styles: style_clim_btn_page
             on_short_click:
-              - lambda: |-
-                  animate_popup_open(id(tv_remote_popup));
+              - script.execute: tab5_arcade_open
+            on_long_press:
+              - lambda: 'if (!zone_absente(Zone::TV)) animate_popup_open(id(tv_remote_popup));'
             widgets:
-              - label: { text: "\U000F07C0", align: CENTER, text_font: mdi_font_70 }
+              - label: { text: "\U000F0297", align: CENTER, text_font: mdi_font_70 }
+              # Montrée par zones_apply_ui() (tab5_zones.cpp) ; même glyphe que la
+              # télécommande (en-tête de tv_remote_popup.yaml).
+              - label: { id: icon_jeux_tv, text: "\U000F07C0", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
 
         # ==================== RANGÉE SOUS L'HORLOGE (ADR-0031) ====================
         # Les plantes et jusqu'à trois lignes de capteurs décrites par HA, qui se
@@ -577,6 +600,7 @@ lvgl:
         - !include ui_components/tv_remote_popup.yaml
         - !include ui_components/pots_popup.yaml
         - !include ui_components/energie_popup.yaml
+        - !include ui_components/reglages_popup.yaml
         - !include ui_components/calendar_popup.yaml
         - !include ui_components/assistant_popup.yaml
         - !include ui_components/alarm_popup.yaml

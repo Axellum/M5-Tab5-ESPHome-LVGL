@@ -8,7 +8,7 @@ Every setting of the tablet is an entity of its device in Home Assistant, and th
 
 - the **Settings** view of the [tablet's dashboard](dashboard.md), left below: its « Tablette » column;
 - the device page, right below: *Settings → Devices & services → ESPHome →* your tablet, cards **Controls** and **Configuration**;
-- for the theme, the tablet itself: the system console (« Sys » button) has a row with the current theme and mode, and a tap moves to the next one.
+- on the tablet itself, the **Settings** window (a tap on the gear button, top right): brightness, auto screen off, both ways to wake the screen, theme, light or dark, night switch and language ([user manual](../notice/settings.md)).
 
 <p><img src="../images/ha_reglages_tablette.png" width="57%" alt="« Tablette » column of the Settings view: screen language, theme, light or dark, wake with a tap, battery fitted, night switch, audio output, Wi-Fi antenna"> <img src="../images/ha_appareil_configuration.png" width="40%" alt="Configuration card of the tablet's device page in Home Assistant: screen to show, voice settings, light or dark, language, night switch, theme, volume"></p>
 
@@ -39,7 +39,7 @@ The theme names stay as they are in every language: they are names. Six of them:
 | WiFi Antenna (Antenne Wi-Fi) | Internal, External | the internal antenna, or one on the external connector |
 | Tab5 Batterie montée (Batterie montée) | on / off, off by default | shows the battery icon in the status strip: a plug while « Tab5 Batterie détectée » says no battery (a reading below 6 V in the last 10 minutes; the charger says « charging » even without one), else the battery's level |
 | Tab5 Appareils sur la météo (Appareils sur la météo) | on / off, on by default | shows the rooms' devices on the forecast cards (icons and touch actions). Off, the forecast cards show the weather only; the « HA » button still shows the rooms and their devices |
-| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie | opens that screen or popup, from the dashboard or an automation, then goes back to « — ». A game in progress is closed first |
+| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie, Réglages | opens that screen or popup, from the dashboard or an automation, then goes back to « — ». A game in progress is closed first |
 | Recharger le calendrier | button | asks Home Assistant again for this month and the next, when a new appointment is not on screen yet |
 
 ## Alarm clock, appointments, voice
@@ -83,7 +83,7 @@ Chaque réglage de la tablette est une entité de son appareil dans Home Assista
 
 - la vue **Réglages** du [tableau de bord de la tablette](dashboard.md#version-française), à gauche ci-dessous : sa colonne « Tablette » ;
 - la page de l'appareil, à droite ci-dessous : *Paramètres → Appareils et services → ESPHome →* votre tablette, cartes **Contrôles** et **Configuration** ;
-- pour le thème, la tablette elle-même : la console système (bouton « Sys ») a une rangée avec le thème et le mode en cours, un appui passe au suivant.
+- sur la tablette elle-même, la fenêtre **Réglages** (un tap sur le bouton engrenage, en haut à droite) : luminosité, extinction auto, les deux façons de rallumer l'écran, thème, clair ou sombre, nuit et langue ([notice](../notice/settings.md#version-française)).
 
 <p><img src="../images/ha_reglages_tablette.png" width="57%" alt="Colonne « Tablette » de la vue Réglages : langue de l'écran, thème, clair ou sombre, rallumer d'une tape, batterie montée, nuit, sortie audio, antenne Wi-Fi"> <img src="../images/ha_appareil_configuration.png" width="40%" alt="Carte Configuration de la page de la tablette dans Home Assistant : écran à afficher, réglages de la voix, clair ou sombre, langue, nuit, thème, volume"></p>
 
@@ -114,7 +114,7 @@ Les noms des thèmes restent les mêmes dans toutes les langues : ce sont des no
 | WiFi Antenna (Antenne Wi-Fi) | Internal, External | l'antenne interne, ou une antenne sur le connecteur externe |
 | Tab5 Batterie montée (Batterie montée) | allumé / éteint, éteint par défaut | montre l'icône de batterie dans le bandeau d'état : une prise tant que « Tab5 Batterie détectée » dit qu'il n'y a pas de batterie (une lecture sous 6 V dans les 10 dernières minutes ; le chargeur dit « en charge » même sans batterie), sinon le niveau de la batterie |
 | Tab5 Appareils sur la météo (Appareils sur la météo) | allumé / éteint, allumé par défaut | montre les appareils des pièces sur les cartes de prévisions (icônes et appuis). Éteint, les cartes de prévisions montrent la météo seule ; le bouton « HA » montre toujours les pièces et leurs appareils |
-| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie | ouvre cet écran ou ce popup, depuis le tableau de bord ou une automatisation, puis revient à « — ». Un jeu en cours est d'abord fermé |
+| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie, Réglages | ouvre cet écran ou ce popup, depuis le tableau de bord ou une automatisation, puis revient à « — ». Un jeu en cours est d'abord fermé |
 | Recharger le calendrier | bouton | redemande à Home Assistant le mois en cours et le suivant, quand un nouveau rendez-vous n'est pas encore à l'écran |
 
 ## Réveil, rendez-vous, voix

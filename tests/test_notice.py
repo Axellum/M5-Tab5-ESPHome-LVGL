@@ -32,6 +32,9 @@ ANNOTE = "accueil-annote"
 APPUIS_LONGS = {
     "btn_assist_trigger": "voice.md",
     "btn_clock_calendar_zone": "calendar.md",
+    "btn_control_console": "home.md",
+    "btn_control_ha": "home.md",
+    "btn_control_tv": "home.md",
     "btn_rangee": "plants.md",
     "forecast_daily.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",

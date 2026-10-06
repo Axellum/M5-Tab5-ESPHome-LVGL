@@ -43,7 +43,7 @@ def test_appuis_dans_l_ecran():
         points = []
         for etape in _etapes(ecran):
             if isinstance(etape, Toucher):
-                points.append((etape.x, etape.y))
+                points += [(etape.x, etape.y)] + [(x, y) for _, x, y in etape.selon_langue]
             elif isinstance(etape, Glisser):
                 points += [(etape.x1, etape.y1), (etape.x2, etape.y2)]
         for x, y in points:

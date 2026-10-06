@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a tap on the snowflake button, top right of the home screen.
+**Opens with** a long press on the gear button, top right of the home screen (a tap opens the [settings](settings.md)).
 
 ![The system console: memory, network, system with the volume, and the management buttons](../images/notice/console-systeme-en.webp)
 
@@ -14,15 +14,13 @@
 
 - **Refresh screen**: Home Assistant sends everything again. The first thing to try when the screen shows old data.
 - **Reload automations**: Home Assistant reloads its automations.
-- The theme's name (« Relief doux » on a new tablet): the next theme, among 21.
-- **Dark**, **Light** or **Auto**: the mode of the theme, in that order. Auto: light by day, dark at night.
 - **Restart HA** and **Reboot tablet** ask first:
 
 ![The confirmation: Restart the tablet? with Cancel and Confirm](../images/notice/console-confirmer-reboot-en.webp)
 
 **Cancel** or **Confirm**; after Reboot tablet, the tablet restarts at once.
 
-The theme and the mode are also entities of the tablet in Home Assistant ([tablet settings](../installation/settings.md#theme-light-or-dark)). To read what the tablet receives, the console is not enough: see [debugging](../debugging.md).
+The theme, light or dark and the language are in the [settings](settings.md). To read what the tablet receives, the console is not enough: see [debugging](../debugging.md).
 
 ---
 
@@ -30,7 +28,7 @@ The theme and the mode are also entities of the tablet in Home Assistant ([table
 
 ---
 
-**S'ouvre par** un tap sur le bouton flocon, en haut à droite de l'accueil.
+**S'ouvre par** un appui long sur le bouton engrenage, en haut à droite de l'accueil (un tap ouvre les [réglages](settings.md#version-française)).
 
 ![La console système : mémoire, réseau, système avec le volume, et les boutons de gestion](../images/notice/console-systeme-fr.webp)
 
@@ -40,12 +38,10 @@ The theme and the mode are also entities of the tablet in Home Assistant ([table
 
 - **MAJ Écran** : Home Assistant renvoie tout. Le premier essai quand l'écran montre des données anciennes.
 - **Recharger autos** : Home Assistant recharge ses automatisations.
-- Le nom du thème (« Relief doux » sur une tablette neuve) : le thème suivant, parmi 21.
-- **Sombre**, **Clair** ou **Auto** : le mode du thème, dans cet ordre. Auto : clair le jour, sombre la nuit.
 - **Redémarrer HA** et **Reboot tablette** demandent d'abord :
 
 ![La confirmation : Redémarrer la tablette ? avec Annuler et Confirmer](../images/notice/console-confirmer-reboot-fr.webp)
 
 **Annuler** ou **Confirmer** ; après Reboot tablette, la tablette redémarre tout de suite.
 
-Le thème et le mode sont aussi des entités de la tablette dans Home Assistant ([réglages de la tablette](../installation/settings.md#thème-clair-ou-sombre)). Pour lire ce que la tablette reçoit, la console ne suffit pas : voir [diagnostiquer](../debugging.md#version-française).
+Le thème, clair ou sombre et la langue sont dans les [réglages](settings.md#version-française). Pour lire ce que la tablette reçoit, la console ne suffit pas : voir [diagnostiquer](../debugging.md#version-française).

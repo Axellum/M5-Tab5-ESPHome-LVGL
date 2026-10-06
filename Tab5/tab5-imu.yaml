@@ -93,6 +93,9 @@ switch:
     id: tab5_tap_to_wake
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
+    # Popup Réglages (tab5-reglages.yaml, « Rallumer l'écran d'une tape »).
+    on_state:
+      - script.execute: tab5_reglages_sync_ui
 
 # --- Cadence de poll adaptative -------------------------------------------
 # Le jeu a besoin d'une entrée réactive (~30 Hz) ; écran éteint, 10 Hz suffit

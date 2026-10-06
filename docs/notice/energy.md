@@ -4,7 +4,7 @@
 
 ---
 
-Only if sensors are picked in the « Énergie · Energy » section of the blueprint ([solar energy](../installation/adapt-to-your-home.md#solar-energy-optional)). **Opens with** a tap or a long press on one of those sensors' cards ([bottom row](tiles.md)), the solar one with its solar-panel icon.
+Only if sensors are picked in the « Énergie · Energy » section of the blueprint ([solar energy](../installation/adapt-to-your-home.md#solar-energy-optional)). **Opens with** a tap or a long press on one of those sensors' cards ([bottom row](tiles.md)), the solar one with its solar-panel icon. When the solar production shows in the status row, a long press on the Home Assistant button, top right of the home screen, opens it too.
 
 ![The energy window, Days view: solar, home, grid and battery, then the production of the last 30 days](../images/notice/energie-jours-en.webp)
 
@@ -19,7 +19,7 @@ The history needs the produced-energy sensor; without it, the live cards fill th
 
 ---
 
-Seulement si des capteurs sont choisis dans la section « Énergie · Energy » du blueprint ([énergie solaire](../installation/adapt-to-your-home.md#énergie-solaire-facultatif)). **S'ouvre par** un tap ou un appui long sur la carte d'un de ces capteurs ([rangée du bas](tiles.md#version-française)), celle du solaire avec son icône de panneau.
+Seulement si des capteurs sont choisis dans la section « Énergie · Energy » du blueprint ([énergie solaire](../installation/adapt-to-your-home.md#énergie-solaire-facultatif)). **S'ouvre par** un tap ou un appui long sur la carte d'un de ces capteurs ([rangée du bas](tiles.md#version-française)), celle du solaire avec son icône de panneau. Quand la production solaire s'affiche dans la ligne d'état, un appui long sur le bouton Home Assistant, en haut à droite de l'accueil, l'ouvre aussi.
 
 ![La fenêtre de l'énergie, vue Jours : solaire, maison, réseau et batterie, puis la production des 30 derniers jours](../images/notice/energie-jours-fr.webp)
 

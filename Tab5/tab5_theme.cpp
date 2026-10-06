@@ -2413,15 +2413,6 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
     if (date != nullptr) lv_obj_align(date, LV_ALIGN_TOP_MID, (dg - dd) / 2, p.y_date + dh);
 }
 
-void theme_console_libelles(lv_obj_t* lbl_theme, lv_obj_t* lbl_mode, int theme, int mode) {
-    // Mêmes valeurs, dans le même ordre, que les options du select « Clair ou sombre ».
-    static const char* const kModes[] = {tr_noop("Sombre"), tr_noop("Clair"), tr_noop("Auto")};
-    if (theme < 0 || theme >= THEME_COUNT) theme = 0;
-    if (mode < 0 || mode > 2) mode = 0;
-    if (lbl_theme != nullptr) lv_label_set_text(lbl_theme, THEMES[theme].nom);
-    if (lbl_mode != nullptr) lv_label_set_text(lbl_mode, tr(kModes[mode]));
-}
-
 void theme_rejouer_ui() {
     central_rejouer_theme();
     vigilance_rejouer();
@@ -2431,6 +2422,7 @@ void theme_rejouer_ui() {
     rangee_rejouer_theme();
     cartes_rejouer_theme();
     energie_rejouer_theme();
+    reglages_rejouer_theme();
     zones_rejouer_theme();
     assist_rejouer_theme();
     cal_detail_rejouer();

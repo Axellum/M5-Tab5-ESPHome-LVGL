@@ -42,9 +42,8 @@ script:
           u.bandeau[BANDEAU_REVEIL] = id(icon_alarm_status);
           u.bandeau[BANDEAU_SOLAIRE] = id(icon_solaire);
           u.bandeau[BANDEAU_BATTERIE] = id(icon_batterie);
-          u.btn_ha = id(btn_control_ha);
-          u.btn_sys = id(btn_control_console);
-          u.btn_tv = id(btn_control_tv);
+          u.mini_solaire = id(icon_ha_solaire);
+          u.mini_tv = id(icon_jeux_tv);
           u.clim_zone = id(climate_controls_zone);
           u.icon_salon = id(icon_salon);
           u.val_salon = id(val_temp_salon);

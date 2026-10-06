@@ -1,0 +1,30 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Bouton à choix du popup « Réglages » (reglages_popup.yaml, 06/10/2026),
+# réutilisé 22 fois : extinction auto (6), Oui / Non (3 × 2), clair ou sombre (3),
+# langues (7). Un appui écrit l'entité par le script tab5_reglages_choisir
+# (tab5-reglages.yaml) ; la surbrillance de l'option active est posée par
+# reglages_peindre() (tab5_reglages.cpp), qui lit le texte comme premier enfant du bouton.
+# vars : id, x, y, w (hauteur fixe 56 px), reglage (ReglageId de tab5_custom.h, en nombre),
+#        valeur (index de l'option ; Oui = 1, Non = 0), label_text (traduit au démarrage ;
+#        vide pour les langues, dont reglages_preparer() écrit le nom natif).
+# Piège ESPHome (comme alarm_step_script_btn.yaml) : `reglage` et `valeur` doivent rester
+# des nombres NON quotés dans les vars, sinon ils partent en chaîne.
+# ═══════════════════════════════════════════════════════
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: ${w}
+  height: 56
+  radius: 14
+  pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - script.execute:
+        id: tab5_reglages_choisir
+        reglage: ${reglage}
+        valeur: ${valeur}
+  widgets:
+    - label: { text: "${label_text}", align: CENTER }

@@ -114,6 +114,9 @@
         - en: Plants
           fr: Plantes
           page: docs/notice/plants.md
+        - en: Settings
+          fr: Réglages
+          page: docs/notice/settings.md
         - en: System console
           fr: Console système
           page: docs/notice/console.md

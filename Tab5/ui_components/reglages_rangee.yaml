@@ -1,0 +1,21 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Titre d'une rangée du popup « Réglages » (reglages_popup.yaml, 06/10/2026),
+# réutilisé 8 fois (règle 5) : icône MDI et libellé sur 40 px de haut, à x 17 dans sa
+# carte ; la commande de la rangée est posée 40 px plus bas par le popup. Non cliquable :
+# les boutons de la rangée commencent juste en dessous.
+# vars : y (haut de la rangée dans sa carte), icon (glyphe MDI en mdi_font_32 : il doit
+#        figurer dans la liste `glyphs` de mdi_font_32, sinon il s'affiche vide, règle 9),
+#        label_text (traduit au démarrage).
+# ═══════════════════════════════════════════════════════
+obj:
+  align: TOP_LEFT
+  x: 17
+  y: ${y}
+  width: 555
+  height: 40
+  styles: style_invisible
+  scrollable: false
+  clickable: false
+  widgets:
+    - label: { text: "${icon}", align: TOP_LEFT, x: 0, y: 0, text_font: mdi_font_32, styles: style_text_dim }
+    - label: { text: "${label_text}", align: TOP_LEFT, x: 40, y: 4, styles: style_text_dim }
