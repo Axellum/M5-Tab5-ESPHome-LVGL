@@ -130,15 +130,26 @@ const char* batterie_glyphe(PresenceBatterie presence, float niveau, bool en_cha
     return "\U000F0083";                           // battery-alert
 }
 
+// Couleur de l'icône batterie, une seule source pour le bandeau et la console. La prise
+// n'est ni une alerte ni un niveau : couleur du texte du thème. Relue dans la palette
+// active à chaque peinture (zones_rejouer_theme, ADR-0029).
+lv_color_t batterie_couleur() {
+    return s_batterie.detection.presence == PresenceBatterie::ABSENTE ? UIColor.TEXT_SOFT
+                                                                       : get_battery_color(s_batterie.niveau);
+}
+
+// Icône de la ligne « Batterie » de la console système, retenue par
+// update_console_batterie_ui() pour que zones_rejouer_theme() la repeigne : sa couleur est
+// posée en style local, un changement de thème ne la touche pas sinon (rendu « clair »,
+// bascule à chaud contre démarrage à froid, 06/10/2026). Le widget vit autant que l'écran.
+lv_obj_t* s_console_batterie_icone = nullptr;
+
 void batterie_peindre() {
     lv_obj_t* const icone = g_zones_ui.bandeau[BANDEAU_BATTERIE];
     if (icone == nullptr) return;
     const PresenceBatterie presence = s_batterie.detection.presence;
     ui_text(icone, batterie_glyphe(presence, s_batterie.niveau, s_batterie.en_charge));
-    // La prise n'est ni une alerte ni un niveau : couleur du texte du thème, relue à
-    // chaque peinture (zones_rejouer_theme, ADR-0029).
-    ui_text_color(icone, presence == PresenceBatterie::ABSENTE ? UIColor.TEXT_SOFT
-                                                               : get_battery_color(s_batterie.niveau));
+    ui_text_color(icone, batterie_couleur());
 }
 
 // Production solaire : le panneau seul à tous les paliers, c'est la couleur qui donne la
@@ -376,11 +387,11 @@ void update_console_batterie_ui(lv_obj_t* icone, lv_obj_t* valeur) {
                            s_batterie.tension);
     ui_text(valeur, buf);
     if (icone == nullptr) return;
+    s_console_batterie_icone = icone;
     ui_hidden(icone, !s_batterie.montee);
     if (!s_batterie.montee) return;
     ui_text(icone, batterie_glyphe(presence, s_batterie.niveau, s_batterie.en_charge));
-    ui_text_color(icone, presence == PresenceBatterie::ABSENTE ? UIColor.TEXT_SOFT
-                                                               : get_battery_color(s_batterie.niveau));
+    ui_text_color(icone, batterie_couleur());
     lv_point_t taille;
     lv_text_get_size(&taille, buf, lv_obj_get_style_text_font(valeur, LV_PART_MAIN), 0, 0, LV_COORD_MAX,
                      LV_TEXT_FLAG_NONE);
@@ -390,9 +401,13 @@ void update_console_batterie_ui(lv_obj_t* icone, lv_obj_t* valeur) {
 
 bool solaire_present() { return !std::isnan(s_solaire); }
 
-// Thèmes (ADR-0029) : icônes de la batterie (montée) et du solaire (valeur reçue).
+// Thèmes (ADR-0029) : icônes de la batterie (montée ; bandeau et console système) et du
+// solaire (valeur reçue).
 void zones_rejouer_theme() {
-    if (s_batterie.montee) batterie_peindre();
+    if (s_batterie.montee) {
+        batterie_peindre();
+        if (s_console_batterie_icone != nullptr) ui_text_color(s_console_batterie_icone, batterie_couleur());
+    }
     solaire_peindre();
 }
 
