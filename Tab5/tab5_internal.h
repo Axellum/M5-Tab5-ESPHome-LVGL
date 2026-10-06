@@ -137,7 +137,8 @@ struct RangeeElement {
     bool mesure = false;
     const char* icone = nullptr;
     uint32_t couleur = 0;
-    char texte[24] = "";
+    char texte[40] = "";                // taille de la ligne d'une tuile (Vue::ligne) : un état
+                                        // texte n'est pas coupé au milieu d'un caractère
     uint32_t couleur_texte = 0;
 };
 // tab5_tuiles.cpp. Place de la ligne des plantes (0 à 2, -1 masquée) ; tours de la carte
