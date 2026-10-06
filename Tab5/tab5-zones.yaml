@@ -33,7 +33,7 @@ script:
       # Widgets de la rangée sous l'horloge (ADR-0031, tab5-rangee.yaml) : zones_apply_ui()
       # la dessine (plantes présentes ou non), avant la première image.
       - script.execute: tab5_rangee_ui
-      # Widgets de la tuile − / + au choix (ADR-0032, tab5-reglables.yaml) : zones_apply_ui()
+      # Widgets de la tuile − / + au choix (ADR-0033, tab5-reglables.yaml) : zones_apply_ui()
       # la montre ou la masque et peint l'appareil choisi, avant la première image.
       - script.execute: tab5_reglables_ui
       - lambda: |-

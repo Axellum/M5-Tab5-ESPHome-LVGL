@@ -1067,7 +1067,7 @@ bool rangee_plantes_affichees();
 void rangee_recaler();
 
 // =============================================================================
-// Tuile − / + au choix (tab5_reglables.cpp, ADR-0032) : les boutons − / + de la carte
+// Tuile − / + au choix (tab5_reglables.cpp, ADR-0033) : les boutons − / + de la carte
 // clim de l'accueil règlent la clim du blueprint, un appareil choisi dans le blueprint
 // (clés rN) ou le volume de la tablette, choisi dans une liste qui se déroule au
 // toucher de la température du salon. Le choix reste en NVS.

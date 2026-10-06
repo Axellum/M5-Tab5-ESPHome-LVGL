@@ -19,7 +19,7 @@ d'utilisation (#339).
 
 Demande d'Axel : les − / + de la carte clim de l'accueil (en haut à droite) ne réglaient que la
 clim. Ils règlent désormais l'appareil choisi dans une liste qui se déroule au toucher de
-l'icône ou de la température du salon ([ADR-0032](docs/decisions/0032-adjustable-tile.md)).
+l'icône ou de la température du salon ([ADR-0033](docs/decisions/0033-adjustable-tile.md)).
 Firmware et blueprint ; un firmware plus ancien ignore les nouvelles clés (la clim seule), un
 blueprint plus ancien laisse la clim et le volume de la tablette.
 - **La liste** : la clim du blueprint en tête, les appareils de la nouvelle section repliée

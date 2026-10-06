@@ -49,7 +49,7 @@
 #         « hLI » avec celles des tuiles, états « hLI » avec ceux des tuiles (variable
 #         rangee, déclencheurs rangee_n). Affichage seul : hors de `tuiles`, donc hors de
 #         la liste blanche des commandes.
-#       - section « Tuile − / + » (ADR-0032, 06/10/2026), facultative : d'autres appareils
+#       - section « Tuile − / + » (ADR-0033, 06/10/2026), facultative : d'autres appareils
 #         que la clim pour les boutons − / + de l'accueil, choisis sur la tablette.
 #         Définitions « rN|type|icône|options|lien|min|max|pas|unité|nom » avec celles des
 #         tuiles, états « rN|état|valeur » (variables reglables, reglables_bornes,
@@ -461,7 +461,7 @@ blueprint:
             entity:
               filter:
                 - domain: climate
-    # Tuile − / + au choix (ADR-0032, 06/10/2026) : d'autres appareils que la clim pour
+    # Tuile − / + au choix (ADR-0033, 06/10/2026) : d'autres appareils que la clim pour
     # les boutons − / + de l'accueil, choisis sur la tablette dans une liste qui se
     # déroule au toucher de la température du salon. Clés rN de tab5_maj_tuiles
     # (définitions) et de tab5_maj_emplacements (états) ; un firmware plus ancien les
@@ -1521,7 +1521,7 @@ variables:
     - !input rangee_ligne_3
   rangee_plantes: !input rangee_plantes
   rangee_duree: !input rangee_duree
-  # Tuile − / + au choix (ADR-0032) : appareils choisis, dans l'ordre.
+  # Tuile − / + au choix (ADR-0033) : appareils choisis, dans l'ordre.
   reglables_choix: !input reglables
   # clé -> entité (chaîne vide si rien n'est choisi). Les détails des pots viennent de
   # l'appareil du capteur d'humidité, par classe (vérifié sur des Flower Care).
@@ -1656,7 +1656,7 @@ variables:
     {{ v if states['script.tab5_volet_action'] is not none and v.startswith('cover.') and states[v] is not none else '' }}
   # L'entrée Volet (3.x) passe par le package seulement si c'est ce volet-là.
   volet_par_package: "{{ volet_suivi != '' and volet_suivi == sources.volet }}"
-  # Tuile − / + au choix (ADR-0032) : type par domaine, le tableau de l'ADR (kTypes de
+  # Tuile − / + au choix (ADR-0033) : type par domaine, le tableau de l'ADR (kTypes de
   # Tab5/tab5_reglables.cpp ; tests/test_reglables.py compare). Un autre domaine n'y
   # entre pas.
   types_reglables:
@@ -1909,7 +1909,7 @@ variables:
     {%- else -%}
       {{ [] }}
     {%- endif -%}
-  # Appareils de la tuile − / + (clés rN, ADR-0032) : tous après les définitions ; un
+  # Appareils de la tuile − / + (clés rN, ADR-0033) : tous après les définitions ; un
   # quand son entité change ce que la tuile montre (déclencheurs reglable_… : l'état, ou
   # l'attribut de sa valeur). Poussés seulement au protocole 2 (un firmware qui ne les
   # connaît pas ignore la clé).
@@ -2283,7 +2283,7 @@ triggers:
     from: *etats_visibles
     not_to: *etats_visibles
     id: rangee_3_sortie
-  # Tuile − / + au choix (ADR-0032) : l'état (`to: ~`, sans les attributs), puis
+  # Tuile − / + au choix (ADR-0033) : l'état (`to: ~`, sans les attributs), puis
   # l'attribut qui porte la valeur réglée tant que l'appareil reste allumé ou en place
   # (not_from / not_to [null] : l'allumage et l'extinction sont vus par « reglable »).
   # Un nombre porte sa valeur dans son état. Jamais sur tous les attributs : un lecteur
@@ -2653,7 +2653,7 @@ actions:
                 {%- elif c == 'allumer_seulement' and commande == 'eteindre' -%}
                 {%- else -%}{{ commande }}
                 {%- endif -%}
-              # Appareil de la tuile − / + (rN, ADR-0032) : son entité, si elle existe
+              # Appareil de la tuile − / + (rN, ADR-0033) : son entité, si elle existe
               # encore. La liste reglables est la liste blanche : une clé rN qui n'y est
               # pas ne commande rien.
               reglable: "{{ reglables | selectattr('cle', 'eq', emplacement) | first | default({}, true) }}"
@@ -2663,7 +2663,7 @@ actions:
               # « clim »), ou celle d'une tuile (tRT dont l'entité est une clim : la liste
               # blanche reste « une entité qu'une tuile porte »). Les mêmes branches
               # « Clim : … » traduisent pour les deux. Une clim de la tuile − / + (rN,
-              # ADR-0032) aussi, pour sa consigne seulement.
+              # ADR-0033) aussi, pour sa consigne seulement.
               clim_cible: >-
                 {%- if emplacement == 'clim' -%}{{ clim }}
                 {%- elif t_domaine == 'climate' -%}{{ t_entite }}
@@ -3018,7 +3018,7 @@ actions:
                         target:
                           entity_id: "{{ lampes }}"
 
-              # ---- Tuile − / + au choix (ADR-0032), par domaine de l'entité de rN ----
+              # ---- Tuile − / + au choix (ADR-0033), par domaine de l'entité de rN ----
               # La valeur visée, un nombre (sinon rien), bornée à reglables_bornes ; une clim
               # passe par « Clim : consigne » (commande consigne, clim_cible). 0 éteint une
               # lampe ou un ventilateur ; sans position réglable, un volet ou une vanne
@@ -3282,7 +3282,7 @@ actions:
                 {%- endfor -%}
               {%- endif -%}
             {%- endfor -%}
-            {#- Tuile − / + au choix (ADR-0032) : « rN|type|icône|options|lien|min|max|pas|
+            {#- Tuile − / + au choix (ADR-0033) : « rN|type|icône|options|lien|min|max|pas|
                 unité|nom; ». Icône comme une tuile (personnalisée, attribut icon, classe,
                 domaine) ; option t = la TV du blueprint (sa valeur ouvre la télécommande) ;
                 lien = la première tuile qui porte la même entité (sa valeur ouvre le popup
@@ -3382,7 +3382,7 @@ actions:
             data:
               payload: "{{ reglages_tuiles ~ etats_tuiles ~ etats_clims }}"
             continue_on_error: true
-  # Tuile − / + au choix (ADR-0032) : « rN|état|valeur; », valeur dans l'unité de sa
+  # Tuile − / + au choix (ADR-0033) : « rN|état|valeur; », valeur dans l'unité de sa
   # définition : volume, luminosité, vitesse et position en % (0 pour une lampe ou un
   # ventilateur éteint ; 0 / 100 pour un volet sans position, fermé / ouvert), consigne
   # d'une clim ou d'un chauffe-eau, humidité visée, valeur d'un nombre ; nan quand HA n'en

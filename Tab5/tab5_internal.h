@@ -155,7 +155,7 @@ void rangee_appliquer_ui();
 void rangee_definitions_changees();
 void rangee_element_change(int l, int i);
 
-// --- Tuile − / + au choix (tab5_reglables.cpp, ADR-0032) ---
+// --- Tuile − / + au choix (tab5_reglables.cpp, ADR-0033) ---
 // tuiles_definir (tab5_tuiles.cpp) : les entrées « rN|type|icône|options|lien|min|max|pas|
 // unité|nom » du même instantané (sans clé r : aucun appareil du blueprint). Vrai si
 // elles ont changé.

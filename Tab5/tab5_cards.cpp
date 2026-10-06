@@ -654,7 +654,7 @@ void clim_blueprint_recu(float consigne, float piece) {
         popup_piece_ui(piece);
     }
     clim_recolorer();
-    reglables_clim_changee();  // sa ligne de la liste de la tuile − / + (ADR-0032)
+    reglables_clim_changee();  // sa ligne de la liste de la tuile − / + (ADR-0033)
 }
 
 const char* clim_nom() { return s_clim.nom; }

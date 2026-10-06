@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tuile − / + au choix (ADR-0032) : les boutons − / + de la carte clim de l'accueil
+"""Tuile − / + au choix (ADR-0033) : les boutons − / + de la carte clim de l'accueil
 règlent l'appareil choisi dans une liste (la clim du blueprint, les appareils de la
 section « Tuile − / + » du blueprint, le volume de la tablette).
 

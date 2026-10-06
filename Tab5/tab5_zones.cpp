@@ -305,7 +305,7 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
             debut = fin + 1;
             continue;
         }
-        // Tuile − / + au choix (ADR-0032) : « rN|état|valeur » (tab5_reglables.cpp).
+        // Tuile − / + au choix (ADR-0033) : « rN|état|valeur » (tab5_reglables.cpp).
         if (p1 != std::string::npos && p1 < fin &&
             reglables_etat_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
             appliquees++;
@@ -409,7 +409,7 @@ void zones_apply_ui() {
     // (tab5_tuiles.cpp) ; en mode héritage, les lampes présentes.
 
     // Carte clim : − / consigne / + (le popup s'ouvre depuis la consigne). Depuis
-    // l'ADR-0032, ses − / + règlent l'appareil choisi (clim, appareils du blueprint,
+    // l'ADR-0033, ses − / + règlent l'appareil choisi (clim, appareils du blueprint,
     // tablette) : masquée sans clim ni appareil, comme avant sans clim (tab5_reglables.cpp).
     reglables_appliquer_ui();
 

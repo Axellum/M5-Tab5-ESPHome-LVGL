@@ -1,5 +1,5 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 10x par reglables_liste.yaml :
-# une ligne de la liste de la tuile − / + (ADR-0032) = un appareil (la clim du blueprint,
+# une ligne de la liste de la tuile − / + (ADR-0033) = un appareil (la clim du blueprint,
 # un appareil de la section « Tuile − / + » du blueprint, le volume de la tablette).
 # Var : n (0 à 9, rang dans la liste, nombre NON quoté : c'est l'argument int de
 # reglables_choisir()).

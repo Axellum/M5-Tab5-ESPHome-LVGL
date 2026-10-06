@@ -1636,7 +1636,7 @@ void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) { ui_texte_
 
 bool tuiles_definir(const std::string& payload) {
     charger();
-    // Tuile − / + au choix (ADR-0032) : ses clés rN sont dans le même instantané.
+    // Tuile − / + au choix (ADR-0033) : ses clés rN sont dans le même instantané.
     const bool reglables_changes = reglables_definir(payload);
     // Instantané complet : ce qui n'est pas listé est vide. Construit à part (tas, le temps
     // de la comparaison), pour n'écrire la NVS et ne redessiner que si quelque chose change.
@@ -2020,7 +2020,7 @@ static void tuile_appui_piece(int r, int t, bool long_appui) {
     if (type == Type::ACT) minuterie_armer(s_ok, r, t, kOkMs);
 }
 
-// Tuile − / + au choix (ADR-0032) : le toucher de la valeur d'un appareil qui est aussi
+// Tuile − / + au choix (ADR-0033) : le toucher de la valeur d'un appareil qui est aussi
 // dans une pièce ouvre le popup de sa tuile, quelle que soit la page affichée — celui de
 // son appui long (lumière, volet sans l'option k, télécommande de la TV), ou de son appui
 // pour une clim. Option r (lecture seule) : rien, comme sur la tuile.

@@ -193,7 +193,7 @@ RANGEE = {
     "rangee_plantes": "1",
     "rangee_duree": 40,
 }
-# Tuile − / + (ADR-0032) : la TV du blueprint (option t, sa tuile t20), la clim du
+# Tuile − / + (ADR-0033) : la TV du blueprint (option t, sa tuile t20), la clim du
 # blueprint (sautée : la tablette la met déjà en tête), une lampe (t03, lumiere_2), la
 # clim de tuile (t24), un volet (t11), la vanne (sixième de sa pièce : sans tuile ni
 # lien) et la serrure (sans type : sautée).
@@ -467,7 +467,7 @@ def juger_definitions(definitions: str, icones_mdi: dict[str, str]) -> list[str]
                      if len(e) != (2 if e[0].startswith("p") or e[0] in reglages else 7 if e[0] in rangee
                                    else 10 if e[0] in reglables else 6)]:
         problemes.append(f"entrées mal formées : {mauvaises}")
-    # Tuile − / + (ADR-0032) : type, option t et lien ; bornes en nombres, min < max, pas > 0.
+    # Tuile − / + (ADR-0033) : type, option t et lien ; bornes en nombres, min < max, pas > 0.
     vus = [(cle, e[1], e[3], e[4]) for cle, e in reglables.items()]
     if vus != REGLABLES_ATTENDUS:
         problemes.append(f"tuile − / + {vus} au lieu de {REGLABLES_ATTENDUS}")
@@ -1328,7 +1328,7 @@ async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rappor
         rapport.verifier(reglages_clims + etats + etats_clims in poussees,
                          "protocole 2 : clims des tuiles poussées avec les états des tuiles (crRT, tRT, ceRT)",
                          f"{len(poussees)} poussée(s) de tab5_maj_emplacements")
-        # Tuile − / + (ADR-0032) : « rN|état|valeur » de chaque appareil, poussé à part.
+        # Tuile − / + (ADR-0033) : « rN|état|valeur » de chaque appareil, poussé à part.
         etats_reglables = variables.get("etats_reglables") or ""
         cles = [cle for cle, *_ in REGLABLES_ATTENDUS]
         rapport.verifier([e[0] for e in entrees_de(etats_reglables)] == cles

@@ -1,4 +1,4 @@
-# ADR-0032: The − / + tile of the climate card adjusts a device chosen on the tablet — the climate, up to eight devices picked in the blueprint, or the tablet's volume
+# ADR-0033: The − / + tile of the climate card adjusts a device chosen on the tablet — the climate, up to eight devices picked in the blueprint, or the tablet's volume
 
 **Status:** Accepted (2026-10-06, asked for and decided by the author; not yet tried on a tablet)
 **Date:** 2026-10-06

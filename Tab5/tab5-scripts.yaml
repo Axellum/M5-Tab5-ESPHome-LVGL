@@ -180,7 +180,7 @@ script:
           // qu'à l'immobilité). Sans cette marque, le rattrapage de 5 s
           // recopierait le niveau périmé par-dessus le réglage en cours.
           if (push_device) id(volume_push_ts) = millis();
-          // Tuile − / + : le volume de la tablette y est un appareil (ADR-0032).
+          // Tuile − / + : le volume de la tablette y est un appareil (ADR-0033).
           reglables_volume_tablette();
       - if:
           condition:
@@ -469,7 +469,7 @@ interval:
               return;
           }
 
-          // Liste de la tuile − / + (ADR-0032) : une sous-fenêtre, pas un popup ; elle
+          // Liste de la tuile − / + (ADR-0033) : une sous-fenêtre, pas un popup ; elle
           // se referme après la même inactivité.
           if (idle >= UIIdle::POPUP_MS && reglables_liste_ouverte()) reglables_liste_fermer();
 

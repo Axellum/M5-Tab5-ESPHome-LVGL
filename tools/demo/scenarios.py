@@ -67,7 +67,7 @@ def build_emplacements_payload(absentes: frozenset = frozenset(), pieces: dict |
     Avec `pieces` (firmware qui a tab5_maj_tuiles), les états des tuiles suivent (clés
     tRT, build_etats_tuiles) ; `clim` = celle de la scène, pour la tuile de la clim ;
     `rangee` : les états de la rangée sous l'horloge après eux (clés hLI, ADR-0031) ;
-    `reglables` : puis ceux des appareils de la tuile − / + (clés rN, ADR-0032)."""
+    `reglables` : puis ceux des appareils de la tuile − / + (clés rN, ADR-0033)."""
     payload = "".join(f"{cle}|{etat}|{valeur};" for cle, (etat, valeur) in EMPLACEMENTS.items()
                       if zone_de(cle) not in absentes)
     if pieces is not None:
@@ -308,7 +308,7 @@ def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None, reglables
     Instantané complet : une tuile ou une pièce absente est vide. Une pièce sans nom n'a
     pas d'entrée « p » (la tablette écrit « Pièce n »). `rangee` : la rangée sous
     l'horloge à la suite (build_rangee_payload, ADR-0031) ; `reglables` : les appareils
-    de la tuile − / + (build_reglables_payload, ADR-0032)."""
+    de la tuile − / + (build_reglables_payload, ADR-0033)."""
     entrees = []
     for r, piece in sorted(pieces.items()):
         if piece.nom:
@@ -419,7 +419,7 @@ def build_rangee_payload(rangee: Rangee) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Tuile − / + (ADR-0032) : les − / + de la carte clim règlent l'appareil choisi sur la
+# Tuile − / + (ADR-0033) : les − / + de la carte clim règlent l'appareil choisi sur la
 # tablette dans une liste (la clim du blueprint, ces appareils, le volume de la
 # tablette). Le blueprint pousse, après la rangée dans tab5_maj_tuiles,
 # « rN|type|icône|options|lien|min|max|pas|unité|nom; » (N de 0 à 7 ; option t = la TV
@@ -480,7 +480,7 @@ def _reglables_de(reglables: tuple):
 
 
 def build_reglables_payload(reglables: tuple) -> str:
-    """Définitions de la tuile − / + dans tab5_maj_tuiles (ADR-0032)."""
+    """Définitions de la tuile − / + dans tab5_maj_tuiles (ADR-0033)."""
     return "".join("|".join((cle, r.type, r.icone, r.options, r.lien, *r.bornes[:3], echapper(r.bornes[3]),
                              echapper(r.nom))) + ";" for cle, r in _reglables_de(reglables))
 

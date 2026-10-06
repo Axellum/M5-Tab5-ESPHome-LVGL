@@ -1,7 +1,7 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_reglables.cpp
- * @role Tuile − / + au choix (ADR-0032, 06/10/2026, demande d'Axel) : les boutons − / +
+ * @role Tuile − / + au choix (ADR-0033, 06/10/2026, demande d'Axel) : les boutons − / +
  *       de la carte clim de l'accueil (climate_card.yaml) règlent l'appareil choisi dans
  *       une liste qui se déroule au toucher de la température du salon :
  *         - la clim du blueprint, en tête quand elle existe : rien ne change pour elle
@@ -47,7 +47,7 @@ namespace {
 constexpr int kHA = 8;  // appareils du blueprint (« huit au plus »)
 static_assert(kReglablesLignes == kHA + 2, "clim + appareils du blueprint + tablette");
 
-// Types de la clé rN (tableau de l'ADR-0032 ; types_reglables du blueprint).
+// Types de la clé rN (tableau de l'ADR-0033 ; types_reglables du blueprint).
 enum class Type : uint8_t { VIDE, SON, LUM, CLI, EAU, HUM, VEN, VOL, NBR };
 constexpr const char* kTypes[] = {"", "son", "lum", "cli", "eau", "hum", "ven", "vol", "nbr"};
 constexpr int kNbTypes = sizeof(kTypes) / sizeof(kTypes[0]);

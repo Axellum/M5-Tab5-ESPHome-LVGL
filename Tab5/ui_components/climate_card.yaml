@@ -3,7 +3,7 @@
 # @file climate_card.yaml
 # @role Zone clim dashboard : températures Salon/Serre hors carte, verre
 #       `style_clim_carte_page` uniquement autour de − / température cible / + —
-#       la « tuile − / + », qui règle l'appareil choisi (ADR-0032).
+#       la « tuile − / + », qui règle l'appareil choisi (ADR-0033).
 # @architecture_constraint Grille du haut (tab5-lvgl.yaml, 05/10/2026) : la carte occupe la
 #                          colonne de droite sous HA / Sys / TV (855-1260, bord droit
 #                          aligné sur le bandeau central). Tuile verre 405 × 90, bas à y 308
@@ -17,7 +17,7 @@
 #                          tab5-sensors-domotique.yaml). `clim_target` est aussi poussé par
 #                          tab5_maj_clim (autoritaire), MAIS mis à jour de façon OPTIMISTE au
 #                          tap ± ci-dessous (21/07) via update_clim_target_ui + débounce.
-# @architecture_constraint Tuile − / + au choix (ADR-0032, 06/10/2026) : toucher l'icône ou la
+# @architecture_constraint Tuile − / + au choix (ADR-0033, 06/10/2026) : toucher l'icône ou la
 #                          température du salon (btn_reglables_liste) déroule la liste
 #                          (reglables_liste.yaml) : la clim du blueprint, les appareils de la
 #                          section « Tuile − / + » du blueprint, le volume de la tablette. Le
@@ -103,7 +103,7 @@ obj:
         on_short_click:
           - script.execute: tab5_arcade_open
     # Zone tactile sur l'icône et la température du salon → déroule la liste des
-    # appareils de la tuile − / + (ADR-0032, demande d'Axel du 06/10/2026). Même boîte que
+    # appareils de la tuile − / + (ADR-0033, demande d'Axel du 06/10/2026). Même boîte que
     # celle de la serre, côté gauche : la rangée salon occupe au plus 14..192 et y 24..85 ;
     # la zone couvre 4..196 et y 22..86, sans toucher btn_serre_games (199..399) ni
     # climate_controls_zone (dès y 108). Elle reste là sans capteur du salon (sa place).
@@ -137,7 +137,7 @@ obj:
               # Police de la date du thème (05/10/2026, avant roboto_55_b).
               styles: style_police_date
 
-          # Autre appareil que la clim (ADR-0032) : son icône (palette des tuiles) et sa
+          # Autre appareil que la clim (ADR-0033) : son icône (palette des tuiles) et sa
           # valeur dans la police de la date, centrées entre − et + (75..330 : 255 px ;
           # « 100 % » et une icône de 45 px en prennent ~180). Masquée quand la clim est
           # choisie ; peinte par tab5_reglables.cpp.
@@ -168,7 +168,7 @@ obj:
               styles: style_invisible
               on_short_click:
                 # Le popup montre la clim du blueprint, celle de cette carte (il a pu
-                # montrer celle d'une tuile, ADR-0027). Un autre appareil choisi (ADR-0032) :
+                # montrer celle d'une tuile, ADR-0027). Un autre appareil choisi (ADR-0033) :
                 # le popup de sa tuile ou la télécommande, sinon rien.
                 - lambda: |-
                     if (!reglables_clim_choisie()) {
@@ -195,7 +195,7 @@ obj:
                 # ne mettait jamais à jour le global → taps rapides = même valeur renvoyée +
                 # aucun retour visuel avant le push HA. Pas et bornes : ceux de l'appareil
                 # (clé climr, ADR-0026), 0,5 entre 16 et 30 tant que HA ne les a pas donnés.
-                # Un autre appareil choisi (ADR-0032) : reglables_pas(), même principe.
+                # Un autre appareil choisi (ADR-0033) : reglables_pas(), même principe.
                 - if:
                     condition:
                       lambda: 'return reglables_clim_choisie();'

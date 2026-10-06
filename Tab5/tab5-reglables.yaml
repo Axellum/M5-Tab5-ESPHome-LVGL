@@ -1,7 +1,7 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file tab5-reglables.yaml
-# @role Tuile − / + au choix (ADR-0032, 06/10/2026) : pose les widgets que
+# @role Tuile − / + au choix (ADR-0033, 06/10/2026) : pose les widgets que
 #       tab5_reglables.cpp dessine (g_reglables_ui) — ceux de la carte clim
 #       (climate_card.yaml) et de la liste (reglables_liste.yaml) — et les rappels vers
 #       les scripts (volume de la tablette, événement tab5_action, débounce). Le modèle

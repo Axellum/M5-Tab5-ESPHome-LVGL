@@ -176,7 +176,7 @@ def test_firmware_3_2_definitions_puis_etats(monkeypatch):
         # Rangée sous l'horloge (ADR-0031) : ses réglages toujours, ses éléments s'il y en a.
         assert "hp|0;hd|32;" in donnees[demo_pusher.SERVICE_TUILES]["payload"]
         assert bool(re.search(r"(^|;)h00\|", donnees["tab5_maj_emplacements"]["payload"])) == (not absentes)
-        # Tuile − / + (ADR-0032) : ses appareils dans la maison complète seulement.
+        # Tuile − / + (ADR-0033) : ses appareils dans la maison complète seulement.
         for service in (demo_pusher.SERVICE_TUILES, "tab5_maj_emplacements"):
             assert bool(re.search(r"(^|;)r0\|", donnees[service]["payload"])) == (not absentes)
 

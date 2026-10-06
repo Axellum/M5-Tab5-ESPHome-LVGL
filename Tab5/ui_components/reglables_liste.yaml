@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file reglables_liste.yaml
-# @role Liste de la tuile − / + (ADR-0032, demande d'Axel du 06/10/2026) : toucher l'icône
+# @role Liste de la tuile − / + (ADR-0033, demande d'Axel du 06/10/2026) : toucher l'icône
 #       ou la température du salon (btn_reglables_liste, climate_card.yaml) la déroule ;
 #       une ligne par appareil réglable : la clim du blueprint (si elle existe), les
 #       appareils de la section « Tuile − / + » du blueprint, le volume de la tablette
