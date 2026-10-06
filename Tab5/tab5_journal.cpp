@@ -193,16 +193,16 @@ const char* raison_texte(esp_reset_reason_t r) {
     }
 }
 
-// Raison de CE démarrage, en clair. ESP_RST_WDT : « plantage » seulement avec un rapport
-// de plantage, sinon le bouton ; avec le code du ROM dans les deux cas.
-void texte_demarrage(char* buf, size_t taille) {
+// Raison de CE démarrage, en clair, après `prefixe`. ESP_RST_WDT : « plantage » seulement
+// avec un rapport de plantage, sinon le bouton ; avec le code du ROM dans les deux cas.
+void texte_demarrage(char* buf, size_t taille, const char* prefixe) {
     if (s_installation) {
-        snprintf(buf, taille, "%s", kTexteInstallation);
+        snprintf(buf, taille, "%s%s", prefixe, kTexteInstallation);
     } else if (s_raison == ESP_RST_WDT) {
-        snprintf(buf, taille, "%s (rst 0x%02X)",
+        snprintf(buf, taille, "%s%s (rst 0x%02X)", prefixe,
                  s_rapport_plantage ? raison_texte(s_raison) : kTexteBouton, s_code_rom);
     } else {
-        snprintf(buf, taille, "%s", raison_texte(s_raison));
+        snprintf(buf, taille, "%s%s", prefixe, raison_texte(s_raison));
     }
 }
 
@@ -293,10 +293,8 @@ void ouvrir_session() {
     if (s_j.demarrages < 0xFFFF) s_j.demarrages++;
     // kPlantage et kWifi d'un démarrage précédent restent posés jusqu'à l'envoi.
     if (reset_anormal(r, s_rapport_plantage) && !s_installation) s_j.anomalie |= kPlantage;
-    char texte[kTexte];
     char repere[kTexte];
-    texte_demarrage(texte, sizeof(texte));
-    snprintf(repere, sizeof(repere), "démarrage, raison : %s", texte);
+    texte_demarrage(repere, sizeof(repere), "démarrage, raison : ");
     ajouter('>', repere);
 }
 
@@ -407,7 +405,7 @@ bool journal_is_serious() {
 std::string journal_reset_reason() {
     ouvrir_session();
     char texte[kTexte];
-    texte_demarrage(texte, sizeof(texte));
+    texte_demarrage(texte, sizeof(texte), "");
     return texte;
 }
 

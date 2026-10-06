@@ -119,7 +119,7 @@ def test_un_rapport_de_plantage_est_lu_et_pose_l_anomalie():
 
 
 def test_le_texte_du_journal_distingue_bouton_et_plantage():
-    corps = _fonction(_code(), "void texte_demarrage(char* buf, size_t taille)")
+    corps = _fonction(_code(), "void texte_demarrage(char* buf, size_t taille, const char* prefixe)")
     assert "s_raison == ESP_RST_WDT" in corps
     assert "s_rapport_plantage ? raison_texte(s_raison) : kTexteBouton" in corps
     assert "bouton d'alimentation" in _constante("kTexteBouton")
