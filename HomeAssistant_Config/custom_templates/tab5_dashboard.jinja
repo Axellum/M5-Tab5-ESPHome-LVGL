@@ -132,8 +132,7 @@
 {%- set IDS = ['tab5_ha_hmi_updater', 'tab5_ha_hmi_alerts_push', 'tab5_ha_hmi_meteo_push', 'tab5_rdv_push',
                'tab5_evenements', 'tab5_volet_updater', 'tab5_screen_presence_wifi', 'tab5_micro_absence',
                'tab5_health_api_off_2min', 'tab5_health_primary_off_5min', 'tab5_health_unexpected_reboot',
-               'tab5_health_template_error', 'tab5_health_fichiers_ha', 'tab5_health_journal',
-               'tab5_alerts_dismissed_cleanup'] -%}
+               'tab5_health_template_error', 'tab5_health_fichiers_ha', 'tab5_health_journal'] -%}
 {#- Chaque id a sa clé, vide si l'automatisation manque : pas d'avertissement dans le journal de HA. -#}
 {%- for id in IDS -%}{%- set ns.a = dict(ns.a, **{id: ''}) -%}{%- endfor -%}
 {%- for a in states.automation -%}
@@ -1286,8 +1285,7 @@ views:
                          ('tab5_health_unexpected_reboot', 'Redémarrage inattendu', 'Unexpected restart'),
                          ('tab5_health_template_error', 'Erreur dans une poussée', 'Error in a push'),
                          ('tab5_health_fichiers_ha', 'Fichiers HA en retard', 'HA files out of date'),
-                         ('tab5_health_journal', 'Journal des démarrages', 'Start log'),
-                         ('tab5_alerts_dismissed_cleanup', 'Purge des alertes ignorées', 'Dismissed alerts cleanup')] %}
+                         ('tab5_health_journal', 'Journal des démarrages', 'Start log')] %}
 {%- if A[id] %}
           - type: tile
             entity: {{ A[id] }}
@@ -1297,11 +1295,11 @@ views:
               - type: toggle
 {%- endif %}
 {%- endfor %}
-{%- if 'input_text.tab5_alerts_dismissed' in present %}
+{%- if 'sensor.tab5_alertes' in present %}
           - type: tile
-            entity: input_text.tab5_alerts_dismissed
-            name: "{{ t("Alertes HA ignorées sur l'écran", 'HA alerts dismissed on screen') }}"
-            icon: mdi:bell-off-outline
+            entity: sensor.tab5_alertes
+            name: "{{ t("Alertes à lire sur l'écran", 'Alerts to read on screen') }}"
+            icon: mdi:bell-alert-outline
             grid_options:
               columns: 12
 {%- endif %}
@@ -2824,18 +2822,12 @@ views:
     'es': 'Registro de arranques',
     'it': 'Log degli avvii',
     'tr': 'Başlatma günlüğü'},
-  'Purge des alertes ignorées': {
-    'de': 'Bereinigung ignorierter Warnungen',
-    'nl': 'Opschonen genegeerde meldingen',
-    'es': 'Limpieza de alertas ignoradas',
-    'it': 'Pulizia degli avvisi ignorati',
-    'tr': 'Yok sayılan uyarıları temizleme'},
-  "Alertes HA ignorées sur l'écran": {
-    'de': 'Am Bildschirm ignorierte HA-Warnungen',
-    'nl': 'Genegeerde HA-meldingen op het scherm',
-    'es': 'Alertas HA ignoradas en pantalla',
-    'it': 'Avvisi HA ignorati sullo schermo',
-    'tr': 'Ekranda yok sayılan HA uyarıları'},
+  "Alertes à lire sur l'écran": {
+    'de': 'Ungelesene Warnungen am Bildschirm',
+    'nl': 'Ongelezen meldingen op het scherm',
+    'es': 'Alertas por leer en la pantalla',
+    'it': 'Avvisi da leggere sullo schermo',
+    'tr': 'Ekranda okunacak uyarılar'},
   'Créer les emplacements': {
     'de': 'Bildschirmplätze erstellen',
     'nl': 'Schermvakken aanmaken',
