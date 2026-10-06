@@ -2,7 +2,9 @@
  * [AI-CONTEXT]
  * @file tab5_console.cpp
  * @role Console système : ligne status (uptime / Wi-Fi / temp CPU), synchro volume et
- *       icônes mute, diagnostics mémoire/réseau.
+ *       icônes mute, diagnostics mémoire/réseau, charge de chaque cœur du processeur
+ *       (update_console_cpu_ui, 06/10/2026 ; la ligne « Batterie » est dans
+ *       tab5_zones.cpp, avec l'état de la batterie).
  *       Unité de compilation issue de la scission de tab5_custom.cpp (lot (e) de
  *       l'audit du 06/09/2026, faite le 08/09/2026) : mêmes fonctions, même ordre,
  *       aucune logique modifiée.
@@ -18,6 +20,13 @@
 #include <esp_heap_caps.h>
 #include <esp_hosted.h>
 #include <esp_hosted_host_fw_ver.h>
+#if defined(ESP_PLATFORM)
+#include <esp_ipc.h>
+#include <esp_timer.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/idf_additions.h>  // ulTaskGetIdleRunTimeCounterForCore
+#endif
 #include <cinttypes>
 #include <ctime>
 #include <cstring>
@@ -165,6 +174,80 @@ void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok) {
     if (lbl == nullptr) return;
     ui_text(lbl, tr(ha_ok ? "Connecté" : "Hors ligne"));
     ui_text_color(lbl, ha_ok ? UIColor.SUCCESS : UIColor.ERROR);
+}
+
+// =============================================================================
+// Charge du processeur, cœur par cœur (discussion #278, 06/10/2026)
+// =============================================================================
+// D'après le temps passé par la tâche inactive de chaque cœur, compté par FreeRTOS
+// (CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS, tab5-hardware.yaml : horloge esp_timer, 1 µs)
+// à chaque changement de tâche. La lecture ne coûte rien hors console : appelée par
+// l'interval de 2 s seulement quand la console est visible, et à son ouverture.
+// Cœur par cœur plutôt qu'une moyenne : la boucle d'ESPHome (LVGL, API, lambdas) est
+// épinglée sur le cœur 1 (esp32/core.cpp d'ESPHome) ; sur le cœur 0, les tâches
+// épinglées d'ESP-IDF (esp_timer, mDNS : sdkconfig), lwIP et les autres sans affinité
+// vont où il y a de la place. Une boucle saturée, l'autre cœur au repos, ferait une
+// moyenne de 50 % : rien ne dirait que l'écran rame.
+// Rendu hors tablette (plateforme host, ni FreeRTOS ni esp_ipc) : « -- ».
+namespace {
+struct EchantillonCpu {
+    bool valide = false;
+    int64_t t_us = 0;
+    uint32_t inactif[2] = {0, 0};
+};
+EchantillonCpu s_cpu;
+
+#if defined(ESP_PLATFORM) && defined(CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS) && \
+    !defined(CONFIG_FREERTOS_UNICORE) && !defined(CONFIG_FREERTOS_SMP)
+// FreeRTOS n'ajoute le temps de la tâche en cours qu'au moment où elle cède la main :
+// la tâche inactive de l'autre cœur peut tourner depuis longtemps sans que son compteur
+// avance. Un appel inter-cœurs (esp_ipc, tâche de priorité > 0) la fait céder la main,
+// donc compter, juste avant la lecture. Celle du cœur courant ne tourne pas : c'est la
+// boucle d'ESPHome qui lit.
+void cpu_rien(void*) {}
+
+bool cpu_lire(EchantillonCpu& e) {
+    const uint32_t autre = xPortGetCoreID() == 0 ? 1 : 0;
+    if (esp_ipc_call_blocking(autre, cpu_rien, nullptr) != ESP_OK) {
+        e.valide = false;
+        return false;  // compteur de l'autre cœur peut-être en retard : « -- »
+    }
+    e.t_us = esp_timer_get_time();
+    for (int c = 0; c < 2; c++) e.inactif[c] = static_cast<uint32_t>(ulTaskGetIdleRunTimeCounterForCore(c));
+    e.valide = true;
+    return true;
+}
+#else
+bool cpu_lire(EchantillonCpu& e) {
+    e.valide = false;
+    return false;
+}
+#endif
+}  // namespace
+
+void update_console_cpu_ui(lv_obj_t* lbl, bool ouverture) {
+    if (lbl == nullptr) return;
+    EchantillonCpu e;
+    if (!cpu_lire(e)) {
+        ui_text(lbl, "--");
+        return;
+    }
+    // Ouverture, ou échantillon trop vieux (console fermée entre-temps) : point de départ.
+    const int64_t duree = e.t_us - s_cpu.t_us;
+    if (ouverture || !s_cpu.valide || duree > 5000000) {
+        s_cpu = e;
+        ui_text(lbl, "--");
+        return;
+    }
+    // Moins d'une seconde (interval tombé juste après l'ouverture) : fenêtre trop courte,
+    // on garde le point de départ et l'affichage.
+    if (duree < 1000000) return;
+    const int c0 = cpu_charge_pct(s_cpu.inactif[0], e.inactif[0], static_cast<uint32_t>(duree));
+    const int c1 = cpu_charge_pct(s_cpu.inactif[1], e.inactif[1], static_cast<uint32_t>(duree));
+    s_cpu = e;
+    char buf[24];
+    snprintf(buf, sizeof(buf), "%d%% \xC2\xB7 %d%%", c0, c1);
+    ui_text(lbl, buf);
 }
 
 // =============================================================================

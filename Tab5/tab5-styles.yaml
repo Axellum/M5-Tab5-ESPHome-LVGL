@@ -459,6 +459,13 @@ font:
       - "\U000F0045"  # arrow-down
       - "\U000F005D"  # arrow-up
       - "\U000F0079"  # battery
+      # Ligne « Batterie » de la console système (06/10/2026) : les glyphes de
+      # batterie_glyphe() (tab5_zones.cpp), comme l'icône du bandeau ; la prise plus bas.
+      - "\U000F0083"  # battery-alert
+      - "\U000F0084"  # battery-charging
+      - "\U000F0091"  # battery-unknown
+      - "\U000F12A1"  # battery-low
+      - "\U000F12A2"  # battery-medium
       - "\U000F00D6"  # briefcase
       - "\U000F00DF"  # brightness-6 (Réglages : luminosité)
       - "\U000F00EB"  # cake-variant

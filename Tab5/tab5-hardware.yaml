@@ -75,6 +75,16 @@ esp32:
       # la main sur la même adresse ne serait plus détecté par la tablette.
       CONFIG_LWIP_DHCP_DOES_ARP_CHECK: "n"
       CONFIG_LWIP_DHCP_DOES_NOT_CHECK_OFFERED_IP: "y"
+      # Statistiques de temps d'exécution de FreeRTOS (06/10/2026, discussion #278) : la
+      # « Charge CPU » de la console système, cœur par cœur, d'après le temps de la tâche
+      # inactive de chaque cœur (update_console_cpu_ui, tab5_console.cpp ; lue seulement
+      # console ouverte). Horloge esp_timer (1 µs, défaut), compteur 32 bits (défaut) :
+      # seules des différences sur 2 s sont calculées, le rebouclage en 71 min ne gêne
+      # pas. Coût (estimé, non mesuré sur la tablette) : une lecture d'esp_timer à chaque
+      # changement de tâche, 12 o par tâche (compteur + numéros de traçage que l'option
+      # active, CONFIG_FREERTOS_USE_TRACE_FACILITY) et quelques octets par file ; les
+      # fonctions de mise en forme (vTaskList…) ne sont pas appelées, donc pas liées.
+      CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS: "y"
       # Pas de réglage LVGL ici : ESPHome compile LVGL avec -DLV_KCONFIG_IGNORE, les
       # CONFIG_LV_* du sdkconfig sont ignorés (la transition du thème, posée ici le
       # 26/09/2026, n'a jamais agi : 80 ms toujours dans le binaire, vu le 28/09). Les

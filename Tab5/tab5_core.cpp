@@ -207,3 +207,37 @@ PresenceBatterie batterie_lecture(DetectionBatterie& d, float tension, uint32_t 
     d.presence = d.basse_vue ? PresenceBatterie::ABSENTE : PresenceBatterie::PRESENTE;
     return d.presence;
 }
+
+// ─── Console système : « Batterie » et « Charge CPU » (discussion #278, 06/10/2026) ───
+
+void batterie_texte_console(char* buf, size_t n, bool montee, PresenceBatterie presence,
+                            float niveau, float tension) {
+    if (buf == nullptr || n == 0) return;
+    if (!montee) {
+        snprintf(buf, n, "%s", tr("Non montée"));
+        return;
+    }
+    if (presence == PresenceBatterie::ABSENTE) {
+        snprintf(buf, n, "%s", tr("Sur USB"));
+        return;
+    }
+    const bool a_niveau = presence == PresenceBatterie::PRESENTE && std::isfinite(niveau);
+    const bool a_tension = presence == PresenceBatterie::PRESENTE && std::isfinite(tension);
+    if (!a_niveau && !a_tension) {
+        snprintf(buf, n, "--");
+    } else if (!a_tension) {
+        snprintf(buf, n, "%.0f%%", niveau);
+    } else if (!a_niveau) {
+        snprintf(buf, n, "-- \xC2\xB7 %.2f V", tension);
+    } else {
+        snprintf(buf, n, "%.0f%% \xC2\xB7 %.2f V", niveau, tension);
+    }
+}
+
+int cpu_charge_pct(uint32_t inactif_avant, uint32_t inactif_apres, uint32_t duree_us) {
+    if (duree_us == 0) return -1;
+    const uint32_t inactif = inactif_apres - inactif_avant;  // non signé : rebouclage compris
+    if (inactif >= duree_us) return 0;
+    const uint64_t occupe = static_cast<uint64_t>(duree_us - inactif);
+    return static_cast<int>((occupe * 100u + duree_us / 2u) / duree_us);
+}
