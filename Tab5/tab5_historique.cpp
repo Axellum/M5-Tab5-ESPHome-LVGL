@@ -159,6 +159,25 @@ float lire_nombre(const char* d, size_t n) {
     return v;
 }
 
+// Bornes de lecture : au-delà, c'est un payload faux, pas une mesure. Elles gardent aussi
+// les conversions en entier et les calculs de minutes sans débordement (le fuzz des
+// sanitizers envoie 1e30). La vue 30 jours et ses 7 jours de prévision vont jusqu'à 54 000 minutes.
+constexpr float kMinutesMax = 1.0e6f;
+constexpr float kPasMax = 1440.0f;   // un créneau d'un jour au plus
+constexpr float kTempMax = 1000.0f;
+
+// Température : NAN si illisible ou hors de ±kTempMax.
+float lire_temperature(const char* d, size_t n) {
+    const float v = lire_nombre(d, n);
+    return std::fabs(v) <= kTempMax ? v : NAN;   // fabs(NAN) <= x est faux
+}
+
+// Minutes depuis le premier créneau : NAN si illisible, négatif ou au-delà de kMinutesMax.
+float lire_minutes(const char* d, size_t n) {
+    const float v = lire_nombre(d, n);
+    return v >= 0.0f && v <= kMinutesMax ? v : NAN;
+}
+
 int index_de(const std::string& nom, const char* const* noms, int nb) {
     for (int k = 0; k < nb; k++)
         if (nom == noms[k]) return k;
@@ -377,14 +396,26 @@ void peindre_graphique() {
     if (s_courbe == nullptr || s_mem == nullptr) return;
     const Serie& s = s_mem->series[s_vue];
 
-    // Titre : « nom · période ». Sans nom poussé : celui de l'emplacement.
+    // Titre : « nom · période ». Sans nom poussé : celui de l'emplacement. Un nom long est
+    // coupé (« … »), jamais la période : le nom seul, à la largeur que la période laisse.
     static const char* const kPeriodes[NB_VUES] = {tr_noop("24 dernières heures"), tr_noop("7 derniers jours"),
                                                    tr_noop("30 derniers jours")};
     const char* nom = s.nom;
     if (!s.recue || nom[0] == '\0') nom = s_cle == SERRE ? (s.exterieur ? tr("Extérieur") : tr("Serre")) : tr("Intérieur");
-    char titre[96];
-    snprintf(titre, sizeof(titre), "%s \xC2\xB7 %s", nom, tr(kPeriodes[s_vue]));
-    texte_ha_coupe(u.titre, titre, kTitreW);
+    char suffixe[64];
+    snprintf(suffixe, sizeof(suffixe), " \xC2\xB7 %s", tr(kPeriodes[s_vue]));
+    int32_t largeur_nom = kTitreW;
+    const lv_font_t* police = lv_obj_get_style_text_font(u.titre, LV_PART_MAIN);
+    if (police != nullptr) {
+        lv_point_t taille;
+        lv_text_get_size(&taille, suffixe, police, lv_obj_get_style_text_letter_space(u.titre, LV_PART_MAIN), 0,
+                         LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+        largeur_nom -= taille.x;
+    }
+    texte_ha_coupe(u.titre, nom, largeur_nom);
+    char titre[128];
+    snprintf(titre, sizeof(titre), "%s%s", lv_label_get_text(u.titre), suffixe);
+    ui_text(u.titre, titre);
 
     // Étendue des valeurs : créneaux, valeur actuelle, prévision.
     float lo = NAN, hi = NAN;
@@ -462,6 +493,13 @@ void peindre_graphique() {
         ui_hidden(s_maintenant, true);
     }
 
+    // Milieu du créneau k, jamais après « Maintenant » : le créneau en cours n'est pas fini
+    // (30 jours à 7 h 45 : son milieu, midi, serait déjà dans la partie prévue).
+    auto milieu = [&s](int k) {
+        const double m = (k + 0.5) * s.pas;
+        return s.maintenant >= k * s.pas && s.maintenant < m ? static_cast<double>(s.maintenant) : m;
+    };
+
     // Barres du minimum au maximum de chaque créneau, 70 % de sa largeur.
     const double px_creneau = static_cast<double>(s.pas) / fin * largeur_trace;
     int32_t larg_barre = static_cast<int32_t>(px_creneau * 0.7);
@@ -472,7 +510,7 @@ void peindre_graphique() {
             ui_hidden(s_bandes[k], true);
             continue;
         }
-        const int32_t xc = x_de((k + 0.5) * s.pas);
+        const int32_t xc = x_de(milieu(k));
         const int32_t y1 = y_de(s.m[k].mx);
         int32_t h = y_de(s.m[k].mn) - y1;
         if (h < 3) h = 3;
@@ -482,16 +520,18 @@ void peindre_graphique() {
     // Courbe des moyennes (au milieu de chaque créneau), finie par la valeur actuelle.
     lv_point_precise_t* pts = s_mem->courbe;
     int np = 0;
-    int32_t dernier = -1;
+    double dernier = -1;
     for (int k = 0; k < s.n && np < kMesuresMax; k++) {
         if (std::isnan(s.m[k].moy)) continue;
-        pts[np].x = static_cast<lv_value_precise_t>(x_de((k + 0.5) * s.pas));
+        dernier = milieu(k);
+        pts[np].x = static_cast<lv_value_precise_t>(x_de(dernier));
         pts[np].y = static_cast<lv_value_precise_t>(y_de(s.m[k].moy));
-        dernier = static_cast<int32_t>((k + 0.5) * s.pas);
         np++;
     }
     const bool actuel = !std::isnan(s.actuel);
     if (actuel && s.maintenant >= dernier) {
+        // Créneau en cours posé sur le trait : la valeur actuelle prend sa place.
+        if (np > 0 && dernier == s.maintenant) np--;
         pts[np].x = static_cast<lv_value_precise_t>(x_maintenant);
         pts[np].y = static_cast<lv_value_precise_t>(y_de(s.actuel));
         np++;
@@ -713,8 +753,8 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
     char date[24] = {};
     std::memcpy(date, d, n < sizeof(date) - 1 ? n : sizeof(date) - 1);
     int an = 2000, mo = 1, jo = 1, he = 0, mi = 0;
-    if (std::sscanf(date, "%d-%d-%d%*c%d:%d", &an, &mo, &jo, &he, &mi) != 5 || mo < 1 || mo > 12 || jo < 1 ||
-        jo > 31 || he < 0 || he > 23 || mi < 0 || mi > 59) {
+    if (std::sscanf(date, "%d-%d-%d%*c%d:%d", &an, &mo, &jo, &he, &mi) != 5 || an < 1970 || an > 2200 || mo < 1 ||
+        mo > 12 || jo < 1 || jo > 31 || he < 0 || he > 23 || mi < 0 || mi > 59) {
         an = 2000;   // illisible : seuls les libellés de l'axe s'en servent
         mo = jo = 1;
         he = mi = 0;
@@ -722,13 +762,13 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
     s.debut_jour = jours_depuis_civil(an, mo, jo);
     s.debut_min = he * 60 + mi;
     champ_suivant(p, fin, '|', d, n);
-    const float pas = lire_nombre(d, n);
-    s.pas = std::isnan(pas) || pas < 1.0f ? 60 : static_cast<int32_t>(pas);
+    const float pas = lire_minutes(d, n);
+    s.pas = std::isnan(pas) || pas < 1.0f || pas > kPasMax ? 60 : static_cast<int32_t>(pas);
     champ_suivant(p, fin, '|', d, n);
-    const float maintenant = lire_nombre(d, n);
-    s.maintenant = std::isnan(maintenant) || maintenant < 0.0f ? 0 : static_cast<int32_t>(maintenant);
+    const float maintenant = lire_minutes(d, n);
+    s.maintenant = std::isnan(maintenant) ? 0 : static_cast<int32_t>(maintenant);
     champ_suivant(p, fin, '|', d, n);
-    s.actuel = lire_nombre(d, n);
+    s.actuel = lire_temperature(d, n);
     champ_suivant(p, fin, '|', d, n);
     s.exterieur = n == 1 && *d == '1';
 
@@ -743,11 +783,11 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
         size_t ne = 0;
         Point& pt = s.m[s.n++];
         champ_suivant(q, qf, ',', e, ne);
-        pt.moy = lire_nombre(e, ne);
+        pt.moy = lire_temperature(e, ne);
         champ_suivant(q, qf, ',', e, ne);
-        pt.mn = lire_nombre(e, ne);
+        pt.mn = lire_temperature(e, ne);
         champ_suivant(q, qf, ',', e, ne);
-        pt.mx = lire_nombre(e, ne);
+        pt.mx = lire_temperature(e, ne);
     }
     // Points de prévision « minute,moy[,min,max] », dans l'ordre du temps.
     p = previsions.data();
@@ -759,16 +799,16 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
         const char* e = nullptr;
         size_t ne = 0;
         champ_suivant(q, qf, ',', e, ne);
-        const float minute = lire_nombre(e, ne);
+        const float minute = lire_minutes(e, ne);
         if (std::isnan(minute)) continue;
         Prev& pv = s.p[s.np];
         pv.minute = static_cast<int32_t>(minute);
         champ_suivant(q, qf, ',', e, ne);
-        pv.moy = lire_nombre(e, ne);
+        pv.moy = lire_temperature(e, ne);
         champ_suivant(q, qf, ',', e, ne);
-        pv.mn = lire_nombre(e, ne);
+        pv.mn = lire_temperature(e, ne);
         champ_suivant(q, qf, ',', e, ne);
-        pv.mx = lire_nombre(e, ne);
+        pv.mx = lire_temperature(e, ne);
         if (s.np > 0 && pv.minute <= s.p[s.np - 1].minute) continue;   // hors de l'ordre : ignoré
         s.np++;
     }
