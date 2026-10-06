@@ -15,6 +15,22 @@ le 06/10/2026 : le package du volet à course simulée ne rend plus le volet mue
 extinction automatique de l'écran au choix et rallumage à « Okay Nabu » (#342), notice
 d'utilisation (#339).
 
+### 2026-10-06 — Alertes : une alerte lue ne revient plus après un redémarrage de HA
+
+Demande d'Axel : une alerte touchée sur la tablette ne doit plus revenir, même après un
+redémarrage de Home Assistant. Lot 0 du plan des alertes de la carte centrale. HA seul.
+- **Cause** : `input_text.tab5_alerts_dismissed` (`packages/tab5_alerts.yaml`, et son snippet)
+  était déclaré avec `initial: ""`. Avec une valeur de départ, HA ne restaure pas l'ancienne
+  (code de l'`input_text` de HA 2026.9.4) : la liste des alertes lues était vidée à chaque
+  démarrage. Vu chez l'auteur dans l'historique de HA, le 29/09 à 13 h 43 et le 03/10 à 4 h 49,
+  aux deux démarrages de HA.
+- **Plantage** : HA n'écrit ces états sur le disque qu'à l'arrêt propre et toutes les 15 min
+  (`STATE_DUMP_INTERVAL`). Le démarrage du 03/10 suivait un plantage, sans arrêt propre : le
+  script du tap appelle maintenant `homeassistant.save_persistent_states` juste après.
+- **Preuves** : `tests/test_alertes_ha.py` (aucun `input_text` des packages avec `initial:`,
+  sauvegarde après l'écriture) ; le job « Installation dans un HA neuf » retient une alerte lue,
+  tue HA (`docker kill`) puis le redémarre proprement, et la retrouve à chaque fois ; en
+  contre-épreuve, une valeur posée sans sauvegarde est bien perdue au plantage.
 ### 2026-10-06 — Bouton d'alimentation : un redémarrage, plus une alerte de plantage
 
 Signalé dans la discussion #278 et reproduit le même jour sur la tablette d'Axel : un appui
