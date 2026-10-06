@@ -19,7 +19,7 @@ The Tab5 never polls Home Assistant's state ([ADR-0001](decisions/0001-push-only
 ## Key design decisions
 
 - **Push-only, zero polling.** The device never requests state from Home Assistant. Automations on the HA side detect changes and push data to the screen via native ESPHome service calls. In the other direction the tablet sends events, never Home Assistant actions ([ADR-0025](decisions/0025-events-only.md)). CPU stays near zero when nothing changes.
-- **Modular YAML.** The ESPHome configuration is split across twenty-one files by concern (tokens, hardware, screen revision, publication channel, diagnostics sensors, home-automation sensors, API logic, styles, globals, scripts, UI, arcade, calendar, voice assistant, IMU, HA controls, alarm clock, rooms and tiles, energy popup, zones, themes), each independently readable. Most stay under 500 lines; only the largest (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`, `tab5-themes.yaml`) go beyond, and the UI is further split into 52 reusable `ui_components/*.yaml`.
+- **Modular YAML.** The ESPHome configuration is split across twenty-two files by concern (tokens, hardware, screen revision, publication channel, diagnostics sensors, home-automation sensors, API logic, styles, globals, scripts, UI, arcade, calendar, voice assistant, IMU, HA controls, alarm clock, rooms and tiles, energy popup, zones, settings popup, themes), each independently readable. Most stay under 500 lines; only the largest (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`, `tab5-themes.yaml`) go beyond, and the UI is further split into 55 reusable `ui_components/*.yaml`.
 - **Native LVGL, no web stack.** LVGL refreshes up to 60 times a second from a framebuffer in the ESP32-P4's PSRAM and redraws only what changed. Measured on the tablet (firmware 3.2.0, 2026-09-28): a changed value or the clock's minute redraws in under 10 ms, the rotating panel in the middle in 15-21 ms per frame, the whole screen in 133 ms, and a popup opens in 126-197 ms. Vector fonts (Material Design Icons) replace image files entirely.
 - **Data packing.** Complex payloads (15-day forecast, hourly forecast, weather alerts) are serialized as delimited strings on the HA side and parsed in C++ on the device — one network call, zero subsequent requests.
 - **Offline resilience.** All C++ lambdas check `api.connected()` and `has_state()` before touching the UI. If HA restarts, the last known state stays on screen — and the device stays usable on its own (clock, arcade, diagnostics console). It only reboots itself after a full hour without any API client (`api: reboot_timeout: 60min`), a deliberate anti-"zombie" safety net rather than a reaction to a short HA outage.
@@ -58,6 +58,7 @@ packages:
   tab5_tuiles:     !include Tab5/tab5-tuiles.yaml         # rooms and tiles (ADR-0023), after tab5_lvgl
   tab5_energie:    !include Tab5/tab5-energie.yaml        # Energy popup (ADR-0028), after tab5_lvgl
   tab5_zones:      !include Tab5/tab5-zones.yaml          # optional zones (ADR-0018), after tab5_lvgl
+  tab5_reglages:   !include Tab5/tab5-reglages.yaml       # Settings popup, after tab5_lvgl
   tab5_themes:     !include Tab5/tab5-themes.yaml         # themes (ADR-0029), LAST: repaints the packages above
 ```
 
@@ -159,7 +160,7 @@ Variables here are typed and initialized. Uninitialized globals on ESP32 are und
 ---
 
 ### `tab5-lvgl.yaml`
-The UI layout. Declares the pages, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. It `!include`s 28 `ui_components/*.yaml` files directly (climate card/popup, light popup, shutter popup, TV remote popup, system console, assistant/calendar/plant popups, alarm popup and ring overlay, forecast cards, moisture gauges, switches card, the HA alert banner of the central card — one file included four times with `vars` —, the arcade selector and the 8 games); those in turn include the parametrized sub-templates (`pot_detail_card.yaml`, `modal_header.yaml`…), for 52 component files in total.
+The UI layout. Declares the pages, panels, labels, buttons, arcs, and icons, plus swipe gesture handling. It `!include`s 29 `ui_components/*.yaml` files directly (climate card/popup, light popup, shutter popup, TV remote popup, system console, settings popup, assistant/calendar/plant popups, alarm popup and ring overlay, forecast cards, moisture gauges, switches card, the HA alert banner of the central card — one file included four times with `vars` —, the arcade selector and the 8 games); those in turn include the parametrized sub-templates (`pot_detail_card.yaml`, `modal_header.yaml`…), for 55 component files in total.
 
 **The dashboard is a single LVGL page, not a multi-page tab-bar layout** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — every home-automation feature lives on one 1280×720 `page_main`, reachable by tap, long-press or swipe. The only other pages are the 9 gaming ones (`page_arcade` + one per console), all declared `skip: true` so swipe navigation can never land on them; they are not part of the dashboard flow.
 
@@ -176,23 +177,24 @@ page_main (1280×720, the whole dashboard)
 │   └── forecast card   (`layer_forecast_daily` / `layer_forecast_hourly` — weather, 5 tabs)
 ├── climate_popup   (near-fullscreen modal, opened by tapping the climate card)
 ├── light_popup     (near-fullscreen modal, opened by tapping a light switch card)
-├── tv_remote_popup (Samsung remote, opened by the TV button or a long-press on
-│                    the PC card — `remote.*` services via HA)
+├── tv_remote_popup (Samsung remote, opened by a long press on the gamepad button
+│                    or on the PC card — `remote.*` services via HA)
 ├── assistant_popup (STT transcription + Markdown LLM reply, long-press on the mic)
 ├── calendar_popup  (monthly 7×6 grid, long-press on the clock)
 ├── pots_popup      (5 plant-detail cards, long-press on the moisture slots)
-└── console_sys     (system console: diagnostics + volume + HA management with
-                     confirm overlays, opened by `btn_control_console`, top right)
+├── console_sys     (system console: diagnostics + volume + HA management with
+│                    confirm overlays, long press on `btn_control_console`, top right)
+└── reglages_popup  (settings: screen and appearance, tap on `btn_control_console`)
 
 separate pages, outside the dashboard flow (all `skip: true` — see §6):
-├── page_arcade   (4×2 selector, opened by tapping the greenhouse temperature)
+├── page_arcade   (4×2 selector, opened by the gamepad button or the greenhouse temperature)
 └── page_marble / page_arkanoid / page_pinball / page_lode / page_go /
     page_trivia / page_chess / page_draughts      (one per console)
 ```
 
 Navigation is by touch (opening/closing the climate/light popups and the console button, and toggling the bottom card region between the weather mode and the HA mode) and by swipe gesture, handled in C++ (`handle_swipe_gesture()` in `tab5_central.cpp`):
 - swipe left/right on the lower band of the screen (`y ≥ 333`) → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, with the deliberate wrap documented in `forecast_page_suivante()`) in weather mode; in HA mode, the same gesture goes to the next / previous **room** that has a device, in the same page order, and never shows the weather layers again under the cards
-- since the 14/07/2026 rework there is **no** up/down swipe anymore — the console opens via its dedicated button only
+- since the 14/07/2026 rework there is **no** up/down swipe anymore — the console opens by a long press on the gear button only
 
 Since 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) each forecast page is also a room of up to five devices described by Home Assistant (`tab5_tuiles.cpp`). The HA mode flag is `g_central_ctx.ha_mode` (the former `show_switches` global is gone); `tuiles_mode_ha()` crossfades the weather layer and `layer_switches` (hidden via `LV_OBJ_FLAG_HIDDEN`, never removed), paints the five cards of the current room, puts the room title in the central card and highlights the « HA » button (`tab5-lvgl.yaml`, `btn_control_ha`). See the `[AI-CONTEXT]` headers of `Tab5/tab5_tuiles.cpp` and `ui_components/switches_card.yaml` for the source-level notes.
 
@@ -247,6 +249,9 @@ Energy popup ([ADR-0028](decisions/0028-solar-energy-popup.md)): the `tab5_energ
 
 ### `tab5-zones.yaml`
 Optional zones ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md)): a zone whose slot is not chosen in the « Tab5 — emplacements » blueprint, or whose entity does not exist, disappears from the screen with its buttons. `tab5_zones_demande` asks Home Assistant once per connection (`esphome.tab5_zones` event), the blueprint answers with the `tab5_maj_zones` action, and `tab5_zones_apply` hands the widgets to `zones_apply_ui()` (`tab5_zones.cpp`, where the decision lives) and publishes the « Zones masquées » diagnostic sensor. It is run at the end of setup, after each HA answer, and when data brings a zone back. Loaded after `tab5-lvgl.yaml`.
+
+### `tab5-reglages.yaml`
+Settings popup (2026-10-06): the screen settings one may want to change without Home Assistant — brightness, auto screen off, waking on « Okay Nabu » and with a tap, theme, light or dark, the night switch of Auto mode, language. Opened by a tap on the gear button (`btn_control_console`, whose long press keeps the system console) or by « Aller à l'écran → Réglages ». `tab5_reglages_ouvrir` hands `g_reglages_ui` the widgets of `ui_components/reglages_popup.yaml` on the first opening; `tab5_reglages_sync_ui` reads the entities and calls `reglages_peindre()` (`tab5_reglages.cpp`), and every entity set there runs it from its own `on_value` / `on_state`, so the popup shows what Home Assistant sees, whoever made the change; `tab5_reglages_choisir` writes an entity, and the language first asks for a confirmation (`tab5_reglages_langue_confirmer`), since it restarts the tablet. Nothing is stored here: the settings remain the entities (`restore_value` / `restore_mode`). No `lv_*` here; loaded after `tab5-lvgl.yaml` and before `tab5-themes.yaml`.
 
 ### `tab5-themes.yaml`
 Themes ([ADR-0029](decisions/0029-themes-palette.md)): the « Thème » select (one option per file of `Tab5/themes/`), the « Clair ou sombre » select (Sombre, Clair, Auto) and the « Nuit (thème auto) » switch that Home Assistant turns on at sunset (`tab5_push.yaml`, automation « Tab5 — thème jour/nuit »). `tab5_theme_choisir` picks the palette (`theme_selectionner()`, `tab5_theme.cpp`); `tab5_theme_repeindre` repaints without a reboot: the shared styles first (block generated by `tools/gen_themes.py`), then, once setup is complete, every colour set at runtime (`theme_rejouer_ui()`, one replay function per C++ unit, plus the sensor icons). A theme may also change the shapes of nine shared styles, keep the banner and the clock dark in light mode, and set the fonts of the time, the date and the titles (lot 3). The games keep the dark palette ([ADR-0014](decisions/0014-game-common-helpers-local-palettes.md)). Loaded LAST: its repaint reads the widgets, sensors and scripts of every package above.
@@ -341,7 +346,7 @@ Le Tab5 n'interroge jamais l'état de Home Assistant ([ADR-0001](decisions/0001-
 ## Choix de conception
 
 - **Push uniquement, zéro polling.** L'appareil ne demande jamais son état à Home Assistant. Les automations côté HA détectent les changements et poussent les données vers l'écran via des appels de service ESPHome natifs. Dans l'autre sens, la tablette émet des événements, jamais des actions Home Assistant ([ADR-0025](decisions/0025-events-only.md)). Le CPU reste proche de zéro quand rien ne change.
-- **YAML modulaire.** La configuration ESPHome est découpée en vingt et un fichiers par domaine (tokens, hardware, révision d'écran, canal de publication, capteurs diagnostics, capteurs domotique, logique API, styles, globales, scripts, UI, arcade, calendrier, assistant vocal, IMU, entités HA, réveil, pièces et tuiles, popup Énergie, zones, thèmes), chacun lisible indépendamment. La plupart tiennent sous 500 lignes ; seuls les plus gros (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`, `tab5-themes.yaml`) dépassent, et l'UI est encore découpée en 52 `ui_components/*.yaml` réutilisables.
+- **YAML modulaire.** La configuration ESPHome est découpée en vingt-deux fichiers par domaine (tokens, hardware, révision d'écran, canal de publication, capteurs diagnostics, capteurs domotique, logique API, styles, globales, scripts, UI, arcade, calendrier, assistant vocal, IMU, entités HA, réveil, pièces et tuiles, popup Énergie, zones, popup Réglages, thèmes), chacun lisible indépendamment. La plupart tiennent sous 500 lignes ; seuls les plus gros (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`, `tab5-themes.yaml`) dépassent, et l'UI est encore découpée en 55 `ui_components/*.yaml` réutilisables.
 - **LVGL natif, pas de stack web.** LVGL rafraîchit jusqu'à 60 fois par seconde, depuis un framebuffer en PSRAM, et ne redessine que ce qui a changé. Mesuré sur la tablette (firmware 3.2.0, 28/09/2026) : une valeur ou la minute de l'horloge se redessine en moins de 10 ms, le panneau tournant du centre en 15 à 21 ms par image, l'écran entier en 133 ms, et un popup s'ouvre en 126 à 197 ms. Les polices vectorielles (Material Design Icons) remplacent complètement les fichiers image.
 - **Compression de données.** Les payloads complexes (prévisions 15 jours, prévisions horaires, alertes météo) sont sérialisés en chaînes délimitées côté HA et parsés en C++ sur l'appareil — un seul appel réseau, zéro requête suivante.
 - **Résilience hors-ligne.** Toutes les lambdas C++ vérifient `api.connected()` et `has_state()` avant de toucher l'UI. Si HA redémarre, le dernier état connu reste affiché — et l'appareil reste utilisable seul (horloge, arcade, console diag). Il ne se redémarre de lui-même qu'après une heure entière sans aucun client API (`api: reboot_timeout: 60min`), un filet anti-« zombie » assumé, pas une réaction à une coupure HA passagère.
@@ -439,7 +444,7 @@ Les variables ici sont typées et initialisées. Les globales non initialisées 
 ---
 
 ### `tab5-lvgl.yaml`
-La mise en page UI. Déclare les pages, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Il `!include` directement 28 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup du volet, popup télécommande TV, console système, popups assistant/calendrier/plantes, fenêtre du réveil et calque de sonnerie, cartes prévisions, jauges humidité, carte switches, le bandeau d'alerte HA de la carte centrale — un fichier inclus quatre fois avec `vars` —, le sélecteur arcade et les 8 jeux) ; ceux-ci incluent à leur tour les sous-templates paramétrés (`pot_detail_card.yaml`, `modal_header.yaml`…), soit 52 fichiers de composants au total.
+La mise en page UI. Déclare les pages, panneaux, labels, boutons, arcs et icônes, ainsi que la gestion des gestes swipe. Il `!include` directement 29 fichiers `ui_components/*.yaml` (carte/popup clim, popup lumière, popup du volet, popup télécommande TV, console système, popup Réglages, popups assistant/calendrier/plantes, fenêtre du réveil et calque de sonnerie, cartes prévisions, jauges humidité, carte switches, le bandeau d'alerte HA de la carte centrale — un fichier inclus quatre fois avec `vars` —, le sélecteur arcade et les 8 jeux) ; ceux-ci incluent à leur tour les sous-templates paramétrés (`pot_detail_card.yaml`, `modal_header.yaml`…), soit 55 fichiers de composants au total.
 
 **Le dashboard tient sur une seule page LVGL, pas une navigation multi-pages par onglets** ([ADR-0002](decisions/0002-single-page-swipe-navigation.md)) — toute la domotique vit sur un `page_main` unique en 1280×720, accessible au tap, à l'appui long ou au swipe. Les seules autres pages sont les 9 pages gaming (`page_arcade` + une par console), toutes en `skip: true` pour que le swipe ne puisse jamais y atterrir ; elles ne font pas partie du parcours dashboard.
 
@@ -458,23 +463,24 @@ page_main (1280×720, tout le dashboard)
 │   └── carte prévisions (`layer_forecast_daily` / `layer_forecast_hourly` — météo, 5 onglets)
 ├── climate_popup   (modale quasi plein écran, ouverte au tap sur la carte clim)
 ├── light_popup     (modale quasi plein écran, ouverte au tap sur une carte switch lumière)
-├── tv_remote_popup (télécommande Samsung, ouverte par le bouton TV ou un appui
-│                    long sur la carte PC — services `remote.*` via HA)
+├── tv_remote_popup (télécommande Samsung, ouverte par un appui long sur le bouton
+│                    manette ou sur la carte PC — services `remote.*` via HA)
 ├── assistant_popup (transcription STT + réponse LLM en Markdown, appui long micro)
 ├── calendar_popup  (grille mensuelle 7×6, appui long sur l'horloge)
 ├── pots_popup      (5 cartes détail plantes, appui long sur les slots humidité)
-└── console_sys     (Console Système : diagnostics + volume + gestion HA avec
-                     overlays de confirmation, ouverte par `btn_control_console`)
+├── console_sys     (Console Système : diagnostics + volume + gestion HA avec
+│                    overlays de confirmation, appui long sur `btn_control_console`)
+└── reglages_popup  (réglages : écran et apparence, tap sur `btn_control_console`)
 
 pages séparées, hors parcours dashboard (toutes en `skip: true` — voir §6) :
-├── page_arcade   (sélecteur 4×2, ouvert au tap sur la température de la serre)
+├── page_arcade   (sélecteur 4×2, ouvert par le bouton manette ou la température de la serre)
 └── page_marble / page_arkanoid / page_pinball / page_lode / page_go /
     page_trivia / page_chess / page_draughts      (une par console)
 ```
 
 La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière et du bouton console, et bascule de la zone du bas entre le mode météo et le mode HA) et par geste swipe, géré en C++ (`handle_swipe_gesture()` dans `tab5_central.cpp`) :
 - swipe gauche/droite sur la bande basse de l'écran (`y ≥ 333`) → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, avec le bouclage volontaire documenté dans `forecast_page_suivante()`) en mode météo ; en mode HA, le même geste va à la **pièce** suivante / précédente qui a un appareil, dans le même ordre de pages, sans jamais réafficher les calques météo sous les cartes
-- depuis la refonte du 14/07/2026 il n'y a **plus** de swipe haut/bas — la console s'ouvre uniquement par son bouton dédié
+- depuis la refonte du 14/07/2026 il n'y a **plus** de swipe haut/bas — la console s'ouvre uniquement par un appui long sur le bouton engrenage
 
 Depuis la 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)), chaque page de prévisions est aussi une pièce de cinq appareils au plus, décrite par Home Assistant (`tab5_tuiles.cpp`). Le drapeau du mode HA est `g_central_ctx.ha_mode` (l'ancien global `show_switches` a disparu) ; `tuiles_mode_ha()` fait le fondu entre le calque météo et `layer_switches` (cachés via `LV_OBJ_FLAG_HIDDEN`, jamais retirés), peint les cinq cartes de la pièce courante, met le titre de la pièce dans la carte centrale et met en valeur le bouton « HA » (`tab5-lvgl.yaml`, `btn_control_ha`) — voir les blocs `[AI-CONTEXT]` de `Tab5/tab5_tuiles.cpp` et de `ui_components/switches_card.yaml`.
 
@@ -529,6 +535,9 @@ Popup Énergie ([ADR-0028](decisions/0028-solar-energy-popup.md)) : le script `t
 
 ### `tab5-zones.yaml`
 Zones optionnelles ([ADR-0018](decisions/0018-optional-zones-confirmed-by-ha.md)) : une zone dont l'emplacement n'est pas choisi dans le blueprint « Tab5 — emplacements », ou dont l'entité n'existe pas, disparaît de l'écran avec ses boutons. `tab5_zones_demande` interroge Home Assistant une fois par connexion (événement `esphome.tab5_zones`), le blueprint répond par l'action `tab5_maj_zones`, et `tab5_zones_apply` passe les widgets à `zones_apply_ui()` (`tab5_zones.cpp`, où vit la décision) et publie le capteur de diagnostic « Zones masquées ». Il est lancé à la fin du setup, après chaque réponse de HA, et quand une donnée fait revenir une zone. Chargé après `tab5-lvgl.yaml`.
+
+### `tab5-reglages.yaml`
+Popup Réglages (06/10/2026) : les réglages de l'écran qu'on veut changer sans Home Assistant — luminosité, extinction auto, rallumage à « Okay Nabu » et d'une tape, thème, clair ou sombre, interrupteur de nuit du mode Auto, langue. Ouvert d'un tap sur le bouton engrenage (`btn_control_console`, dont l'appui long garde la console système) ou par « Aller à l'écran → Réglages ». `tab5_reglages_ouvrir` pose dans `g_reglages_ui` les widgets de `ui_components/reglages_popup.yaml` à la première ouverture ; `tab5_reglages_sync_ui` lit les entités et appelle `reglages_peindre()` (`tab5_reglages.cpp`), et chaque entité réglée là le lance depuis son propre `on_value` / `on_state` : le popup montre ce que voit Home Assistant, qui que ce soit qui ait changé le réglage ; `tab5_reglages_choisir` écrit une entité, et la langue demande d'abord une confirmation (`tab5_reglages_langue_confirmer`), puisqu'elle redémarre la tablette. Rien n'est gardé ici : les réglages restent les entités (`restore_value` / `restore_mode`). Aucun `lv_*` ici ; chargé après `tab5-lvgl.yaml` et avant `tab5-themes.yaml`.
 
 ### `tab5-themes.yaml`
 Thèmes ([ADR-0029](decisions/0029-themes-palette.md)) : le select « Thème » (une option par fichier de `Tab5/themes/`), le select « Clair ou sombre » (Sombre, Clair, Auto) et l'interrupteur « Nuit (thème auto) » que Home Assistant allume au coucher du soleil (`tab5_push.yaml`, automatisation « Tab5 — thème jour/nuit »). `tab5_theme_choisir` choisit la palette (`theme_selectionner()`, `tab5_theme.cpp`) ; `tab5_theme_repeindre` repeint sans redémarrer : d'abord les styles partagés (bloc généré par `tools/gen_themes.py`), puis, le setup fini, chaque couleur posée à l'exécution (`theme_rejouer_ui()`, une fonction de rejeu par unité C++, plus les icônes des capteurs). Un thème peut aussi changer les formes de neuf styles partagés, garder le bandeau et l'horloge sombres en mode clair, et choisir les polices de l'heure, de la date et des titres (lot 3). Les jeux gardent la palette sombre ([ADR-0014](decisions/0014-game-common-helpers-local-palettes.md)). Chargé EN DERNIER : sa repeinture lit les widgets, capteurs et scripts de tous les packages ci-dessus.

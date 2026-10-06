@@ -4,7 +4,7 @@
 
 ---
 
-Eight small games, early prototypes made with AI, that run on the tablet alone: no Home Assistant, no network. **Opens with** a tap on the second temperature of the home screen (greenhouse), or on the gamepad that stands in its place.
+Eight small games, early prototypes made with AI, that run on the tablet alone: no Home Assistant, no network. **Opens with** a tap on the gamepad button, top right of the home screen, or on the second temperature (greenhouse); without a greenhouse sensor, a gamepad stands in its place and does the same.
 
 ![The Arcade: eight cards, one per game](../images/notice/arcade-en.webp)
 
@@ -32,7 +32,7 @@ The rules, levels and settings of each game, in French: [Arcade, the eight conso
 
 ---
 
-Huit petits jeux, des prototypes faits avec l'IA, qui tournent sur la tablette seule : ni Home Assistant, ni réseau. **S'ouvre par** un tap sur la seconde température de l'accueil (serre), ou sur la manette qui prend sa place.
+Huit petits jeux, des prototypes faits avec l'IA, qui tournent sur la tablette seule : ni Home Assistant, ni réseau. **S'ouvre par** un tap sur le bouton manette, en haut à droite de l'accueil, ou sur la seconde température (serre) ; sans sonde de serre, une manette prend sa place et fait de même.
 
 ![L'Arcade : huit cartes, une par jeu](../images/notice/arcade-fr.webp)
 

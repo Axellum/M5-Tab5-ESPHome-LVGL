@@ -25,9 +25,9 @@ The date changes colour with the day's weather warnings (yellow, orange, red). I
 
 ## The three buttons, top right (6 to 8)
 
-- **Home Assistant** (house): the bottom row shows your **devices** instead of the weather; tap again for the weather. It is lit while it shows the devices. Not shown when no room has a device. Details: [bottom row and rooms](tiles.md).
-- **Snowflake**: the [system console](console.md).
-- **Computer**: the [TV remote](tv.md). Not shown without a TV; the two other buttons then move one column right.
+- **Home Assistant** (house): a tap shows your **devices** in the bottom row instead of the weather; tap again for the weather. It is lit while it shows the devices. Not shown when no room has a device. Details: [bottom row and rooms](tiles.md). A **long press** opens the [Energy window](energy.md) when the solar production shows in the status row, top left: a small solar panel then marks the button, in its top-right corner.
+- **Gear**: a tap opens the [settings](settings.md) (brightness, screen off, theme, language…); a **long press**, the [system console](console.md).
+- **Gamepad**: a tap opens the [Arcade](arcade.md); a **long press**, the [TV remote](tv.md) when a TV is picked in the blueprint: a small screen then marks the button, in its top-right corner. Without a TV, the button stays and its long press does nothing.
 
 ## Temperatures and climate (9, 10)
 
@@ -77,9 +77,9 @@ La date change de couleur avec les vigilances météo du jour (jaune, orange, ro
 
 ## Les trois boutons, en haut à droite (6 à 8)
 
-- **Home Assistant** (maison) : la rangée du bas montre vos **appareils** au lieu de la météo ; un nouveau tap revient à la météo. Il est allumé tant qu'il montre les appareils. Absent quand aucune pièce n'a d'appareil. Le détail : [rangée du bas et pièces](tiles.md#version-française).
-- **Flocon** : la [console système](console.md#version-française).
-- **Ordinateur** : la [télécommande TV](tv.md#version-française). Absent sans TV ; les deux autres boutons glissent alors d'une colonne vers la droite.
+- **Home Assistant** (maison) : un tap montre vos **appareils** dans la rangée du bas au lieu de la météo ; un nouveau tap revient à la météo. Il est allumé tant qu'il montre les appareils. Absent quand aucune pièce n'a d'appareil. Le détail : [rangée du bas et pièces](tiles.md#version-française). Un **appui long** ouvre la [fenêtre Énergie](energy.md#version-française) quand la production solaire s'affiche dans la ligne d'état, en haut à gauche : un petit panneau solaire marque alors le bouton, dans son coin en haut à droite.
+- **Engrenage** : un tap ouvre les [réglages](settings.md#version-française) (luminosité, extinction, thème, langue…) ; un **appui long**, la [console système](console.md#version-française).
+- **Manette** : un tap ouvre l'[Arcade](arcade.md#version-française) ; un **appui long**, la [télécommande TV](tv.md#version-française) quand une TV est choisie dans le blueprint : un petit écran marque alors le bouton, dans son coin en haut à droite. Sans TV, le bouton reste et son appui long ne fait rien.
 
 ## Températures et clim (9, 10)
 

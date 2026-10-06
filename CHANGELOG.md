@@ -15,6 +15,39 @@ le 06/10/2026 : le package du volet à course simulée ne rend plus le volet mue
 extinction automatique de l'écran au choix et rallumage à « Okay Nabu » (#342), notice
 d'utilisation (#339).
 
+### 2026-10-06 — Boutons du haut : un appui long chacun, popup Réglages sur la tablette
+
+Demande d'Axel : compléter les trois boutons du haut par un appui long, et régler la tablette sans
+passer par Home Assistant. Firmware seulement ; Home Assistant inchangé.
+- **Bouton de droite** : le tap ouvre l'**Arcade** (icône manette, au lieu de l'ordinateur) ;
+  l'appui long, la **télécommande TV** quand une TV est choisie dans le blueprint. Le bouton ne
+  disparaît plus sans TV, et les deux autres ne glissent plus d'une colonne.
+- **Bouton Home Assistant** : tap inchangé ; l'appui long ouvre le **popup Énergie** quand la
+  production solaire est reçue (la même condition que son icône dans la ligne d'état).
+- Ces deux appuis longs ne servent que si la TV ou le solaire est là : une **mini icône** de
+  26 px (petit écran, panneau solaire : les glyphes déjà employés dans la ligne d'état et
+  l'en-tête de la télécommande) s'affiche alors dans le coin en haut à droite du bouton.
+- **Bouton central** (engrenage, au lieu du flocon) : le tap ouvre le nouveau **popup Réglages**,
+  l'appui long la console système.
+- **Popup Réglages** (`reglages_popup.yaml`, `tab5-reglages.yaml`, `tab5_reglages.cpp`), chrome
+  partagé (ADR-0009) : carte ÉCRAN — luminosité (curseur 10-100 %), extinction auto, rallumer
+  l'écran à « Okay Nabu », rallumer d'une tape ; carte APPARENCE — thème (flèches), clair ou
+  sombre, nuit du mode Auto, langue (les 7, chacune dans sa langue, derrière une confirmation
+  puisque la tablette redémarre). Chaque bouton écrit l'entité que voit HA, et chaque entité
+  repeint le popup quand elle change : il suit l'état réel, même changé depuis HA (sauf le
+  curseur de luminosité, relu à chaque ouverture). Le curseur n'envoie qu'un `light.turn_on`
+  par geste (150 ms après le dernier pas).
+  Aussi ouvrable par « Aller à l'écran → Réglages » (option ajoutée en fin de liste).
+- **Le thème et son mode quittent la console** (rangée retirée, cartes GESTION en 2 × 2) pour
+  le popup Réglages ; `tab5_theme_console` et `theme_console_libelles()` sont supprimés.
+- 20 textes nouveaux, traduits dans les 6 langues. Notice (accueil, vue d'ensemble, nouvelle
+  page Réglages, console, TV, Arcade, Énergie), `docs/screens.md`, réglages, architecture,
+  cartographie, `Tab5/README.md`. Écrans « reglages » et « reglages-langue » ajoutés au rendu
+  hors tablette (et la télécommande, la console y passent par l'appui long). Test
+  `tests/test_reglages.py` : numéros des réglages, une pastille par option dans l'ordre du
+  select, une par langue, boutons posés à leur index, registre des fenêtres assez grand
+  (`ModalRegistry::MAX` passe de 16, atteint, à 24).
+
 ### 2026-10-06 — Écran : extinction automatique au choix, rallumage à « Okay Nabu »
 
 Demande de la discussion #278 : « sur batterie ou sur USB, l'écran ne devrait se réveiller que

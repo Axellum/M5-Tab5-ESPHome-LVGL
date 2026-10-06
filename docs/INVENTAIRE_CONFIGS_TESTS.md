@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29** (52 composants UI dont 28 inclus par `tab5-lvgl.yaml`, 21 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29** (55 composants UI dont 29 inclus par `tab5-lvgl.yaml`, 21 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 
@@ -43,7 +43,7 @@
 
 ### 1.3 Composants UI (`Tab5/ui_components/*.yaml`)
 
-50 fichiers, dont 27 inclus directement par `tab5-lvgl.yaml` (recompté le 01/10/2026, après les gabarits de l'horloge et de la pluie). Exemples :
+55 fichiers, dont 29 inclus directement par `tab5-lvgl.yaml` (recompté le 06/10/2026, après le popup Réglages). Exemples :
 
 | Fichier | Emplacement | Rôle |
 |---|---|---|
@@ -53,6 +53,7 @@
 | `forecast_hourly.yaml` | `Tab5/ui_components/` | 5 cartes prévisions horaires. |
 | `switches_card.yaml` | `Tab5/ui_components/` | Cartes switches (PC, volet, lumières). |
 | `console_sys.yaml` | `Tab5/ui_components/` | Console Système en 4 cartes. |
+| `reglages_popup.yaml` | `Tab5/ui_components/` | Popup Réglages : écran et apparence. |
 | `light_popup.yaml` | `Tab5/ui_components/` | Popup contrôle lumière. |
 | `tv_remote_popup.yaml` | `Tab5/ui_components/` | Popup télécommande TV Samsung. |
 | `moisture_sensors.yaml` | `Tab5/ui_components/` | 4 slots UI humidité plantes. |
