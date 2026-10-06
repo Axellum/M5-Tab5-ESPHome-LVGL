@@ -43,8 +43,11 @@ matériel, comme un nouvel utilisateur, puis vérifier que tout marche.
       le tableau de bord de la tablette (custom_templates/tab5_dashboard.jinja) rendu par HA, ses
       entités toutes présentes, enregistré et relu ; journal de HA sans erreur Tab5. Ce que
       montre l'écran entre la création de l'automatisation et le redémarrage est
-      rapporté (capture 1), sans faire échouer. Avec --interface, en dernier : les
-      captures de l'interface de HA du guide d'installation (captures_ha.py).
+      rapporté (capture 1), sans faire échouer. Avec --interface : les captures de
+      l'interface de HA du guide d'installation (captures_ha.py). En dernier, la mémoire
+      des alertes lues (packages/tab5_alerts.yaml) après un plantage de HA (`docker
+      kill`) puis un redémarrage propre, avec une contre-épreuve : une valeur posée sans
+      sauvegarde est bien perdue au plantage.
 @contraintes Le mot de passe du compte est tiré au hasard ici et n'est jamais affiché ;
       la clé API est lue dans .storage par `docker exec` (fichiers de root dans le
       conteneur) et n'est jamais affichée non plus, seulement sa longueur.
@@ -263,6 +266,16 @@ MAJ_ECRAN = (801, 488)
 EVT_MOIS = "esphome.tab5_calendrier_mois"
 EVT_MAJ_ECRAN = "esphome.tab5_maj_ecran"
 EVT_REDEMARRAGE = "esphome.tab5_redemarrage_ha_confirme"
+
+# Mémoire des alertes lues (packages/tab5_alerts.yaml, 06/10/2026) : un tap retenu doit
+# survivre à un plantage de HA et à un redémarrage propre. Le témoin est posé sans
+# sauvegarde : le plantage doit le perdre (contre-épreuve : le test sait voir une perte).
+MEMOIRE_ALERTES = "input_text.tab5_alerts_dismissed"
+ALERTE_LUE = "update.ci_alerte_lue"
+TEMOIN_NON_SAUVE = "ci:temoin"
+# `docker restart` tue le conteneur après 10 s par défaut : un arrêt propre de HA peut
+# durer plus longtemps.
+ARRET_PROPRE_S = 120
 
 # Tolérance sur « reçu après la clé » : HA écrit .storage une seconde après le
 # changement (Store, SAVE_DELAY), et ce script le relit toutes les 0,25 s.
@@ -1535,6 +1548,63 @@ async def rapporter_traces(ha: HA, item_id: str, depuis: float, rapport: Rapport
         rapport.info(f"{item_id} : {t.get('trigger')} — {resume_passage(t)}")
 
 
+async def redemarrer_ha(ha: HA, brutal: bool) -> None:
+    """Plantage (`docker kill` : SIGKILL, aucun arrêt propre, comme le SIGBUS vu chez
+    l'auteur le 03/10/2026) ou redémarrage propre ; puis HA de nouveau RUNNING."""
+    commandes = ((["kill", ha.conteneur], ["start", ha.conteneur]) if brutal
+                 else (["restart", "-t", str(ARRET_PROPRE_S), ha.conteneur],))
+    for commande in commandes:
+        proc = await asyncio.create_subprocess_exec(
+            "docker", *commande, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        _, erreur = await proc.communicate()
+        if proc.returncode != 0:
+            raise Echec(f"docker {' '.join(commande)} : {erreur.decode(errors='replace')[:200]}")
+    # Pas attendre_http() : une fois l'onboarding fini, HA ne publie plus /api/onboarding
+    # (404 à chaque essai, vu dans la CI du 06/10/2026). Le jeton reste valable.
+    fin = time.monotonic() + 300
+    while time.monotonic() < fin:
+        try:
+            if (await ha.get("/api/config")).get("state") == "RUNNING":
+                return
+        except Exception:  # noqa: BLE001 — HA redémarre : connexion refusée, 502…
+            pass
+        await asyncio.sleep(2)
+    raise Echec("Home Assistant n'est pas revenu (état RUNNING) dans les 300 s après son redémarrage")
+
+
+async def etat_de(ha: HA, entity_id: str) -> str | None:
+    try:
+        etat = await ha.get(f"/api/states/{entity_id}")
+    except Echec:
+        return None
+    return etat.get("state") if isinstance(etat, dict) else None
+
+
+async def verifier_memoire_alertes(ha: HA, rapport: Rapport) -> None:
+    """Une alerte lue reste lue après un plantage puis un redémarrage propre de HA
+    (packages/tab5_alerts.yaml : pas d'`initial:`, sauvegarde après chaque tap)."""
+    await ha.post("/api/services/input_text/set_value",
+                  {"entity_id": MEMOIRE_ALERTES, "value": TEMOIN_NON_SAUVE})
+    await redemarrer_ha(ha, brutal=True)
+    valeur = await etat_de(ha, MEMOIRE_ALERTES)
+    rapport.verifier(valeur != TEMOIN_NON_SAUVE,
+                     "contre-épreuve : posée sans sauvegarde, la valeur est perdue au plantage de HA",
+                     f"valeur gardée ({valeur!r}) : le plantage n'en est pas un, le test ne prouve rien")
+
+    await ha.post("/api/services/script/tab5_dismiss_alert", {"alert_id": ALERTE_LUE})
+    valeur = await etat_de(ha, MEMOIRE_ALERTES)
+    if not rapport.verifier(ALERTE_LUE in (valeur or "").split("|"),
+                            "script.tab5_dismiss_alert retient l'alerte lue", f"mémoire = {valeur!r}"):
+        return
+    for brutal, texte in ((True, "après un plantage de HA (docker kill)"),
+                          (False, "après un redémarrage propre de HA")):
+        await redemarrer_ha(ha, brutal)
+        valeur = await etat_de(ha, MEMOIRE_ALERTES)
+        rapport.verifier(ALERTE_LUE in (valeur or "").split("|"),
+                         f"{texte}, l'alerte lue est toujours retenue",
+                         f"mémoire = {valeur!r} : l'alerte reviendrait sur l'écran")
+
+
 async def scenario(args, rapport: Rapport) -> None:
     import aiohttp
 
@@ -1635,6 +1705,8 @@ async def scenario(args, rapport: Rapport) -> None:
                     ha, rapport, args.interface, client_id=CLIENT_ID,
                     entite_tablette=f"binary_sensor.{PREFIXE_ENTITES}_ha_api_status",
                     automatisation=ID_AUTOMATISATION, alias=ALIAS_AUTOMATISATION, modele=APPEL_TABLEAU)
+            # En dernier : HA est tué puis redémarré (journal déjà jugé, captures faites).
+            await verifier_memoire_alertes(ha, rapport)
     finally:
         await tablette.arreter()
 

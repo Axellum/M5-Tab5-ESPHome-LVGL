@@ -11,18 +11,27 @@
 #       push, lourd (~5,5 s de delays + calendrier + météo), pour rien.
 #       Si la valeur ne change pas (id déjà acquitté), rien n'est repoussé :
 #       il n'y a rien de nouveau à afficher.
-#       Le firmware appelle script.tab5_dismiss_alert directement (tap sur une
-#       alerte ou sur le bandeau info, tab5-scripts.yaml). Retirés le 26/09/2026
-#       (audit ressources, lot 2), faute d'appelant : l'automation qui écoutait
-#       l'événement esphome.tab5_alert_dismiss (jamais émis, dernier passage le
-#       16/07/2026) et le script tab5_dismiss_info_panel.
+#       Le tap sur une alerte ou sur le bandeau info émet l'événement
+#       esphome.tab5_alerte_lue (tab5-scripts.yaml, ADR-0025), que
+#       packages/tab5_evenements.yaml traduit en script.tab5_dismiss_alert.
+#       Retirés le 26/09/2026 (audit ressources, lot 2), faute d'appelant :
+#       l'automation qui écoutait l'événement esphome.tab5_alert_dismiss (jamais
+#       émis, dernier passage le 16/07/2026) et le script tab5_dismiss_info_panel.
+# @ai_warning Mémoire des alertes lues (06/10/2026) : PAS d'`initial:` sur
+#       input_text.tab5_alerts_dismissed. Avec `initial: ""`, HA la vidait à chaque
+#       démarrage et toutes les alertes lues revenaient (vu chez l'auteur le 29/09
+#       et le 03/10, aux deux démarrages de HA). Et après chaque tap,
+#       homeassistant.save_persistent_states : HA n'écrit l'état restauré sur le
+#       disque qu'à l'arrêt propre et toutes les 15 min ; un plantage (le 03/10, sans
+#       arrêt propre) perdait les taps d'avant. Vérifié par le job « Installation
+#       dans un HA neuf » (verifier_memoire_alertes : arrêt brutal puis propre).
 # @install Nécessite homeassistant.packages: !include_dir_named packages
 # ============================================================================
 
 input_text:
   tab5_alerts_dismissed:
     name: "Tab5 alertes HA ignorées"
-    initial: ""
+    # Sans `initial` : HA la restaure au redémarrage (voir @ai_warning en tête).
     max: 255
     icon: mdi:bell-check
 
@@ -53,6 +62,9 @@ script:
           entity_id: input_text.tab5_alerts_dismissed
         data:
           value: "{{ new_val[:255] }}"
+      # Sur le disque tout de suite : un plantage de HA ne perd plus ce tap.
+      - action: homeassistant.save_persistent_states
+        continue_on_error: true
 
 template:
   # ==========================================================================

@@ -48,6 +48,57 @@ passer par Home Assistant. Firmware seulement ; Home Assistant inchangé.
   select, une par langue, boutons posés à leur index, registre des fenêtres assez grand
   (`ModalRegistry::MAX` passe de 16, atteint, à 24).
 
+### 2026-10-06 — Alertes : une alerte lue ne revient plus après un redémarrage de HA
+
+Demande d'Axel : une alerte touchée sur la tablette ne doit plus revenir, même après un
+redémarrage de Home Assistant. Lot 0 du plan des alertes de la carte centrale. HA seul.
+- **Cause** : `input_text.tab5_alerts_dismissed` (`packages/tab5_alerts.yaml`, et son snippet)
+  était déclaré avec `initial: ""`. Avec une valeur de départ, HA ne restaure pas l'ancienne
+  (code de l'`input_text` de HA 2026.9.4) : la liste des alertes lues était vidée à chaque
+  démarrage. Vu chez l'auteur dans l'historique de HA, le 29/09 à 13 h 43 et le 03/10 à 4 h 49,
+  aux deux démarrages de HA.
+- **Plantage** : HA n'écrit ces états sur le disque qu'à l'arrêt propre et toutes les 15 min
+  (`STATE_DUMP_INTERVAL`). Le démarrage du 03/10 suivait un plantage, sans arrêt propre : le
+  script du tap appelle maintenant `homeassistant.save_persistent_states` juste après.
+- **Preuves** : `tests/test_alertes_ha.py` (aucun `input_text` des packages avec `initial:`,
+  sauvegarde après l'écriture) ; le job « Installation dans un HA neuf » retient une alerte lue,
+  tue HA (`docker kill`) puis le redémarre proprement, et la retrouve à chaque fois ; en
+  contre-épreuve, une valeur posée sans sauvegarde est bien perdue au plantage.
+
+### 2026-10-06 — Bouton d'alimentation : un redémarrage, plus une alerte de plantage
+
+Signalé dans la discussion #278 et reproduit le même jour sur la tablette d'Axel : un appui
+court sur le bouton d'alimentation redémarre la tablette, puis Home Assistant envoyait
+« Tab5 : journal du démarrage (plantage (chien de garde)) » sur le téléphone, et l'entité
+« Tab5 Raison du redémarrage » affichait « Reboot request from esphome.ota », la source de la
+dernière mise à jour, des heures plus tôt. Firmware et `packages/tab5_health.yaml` : mettre à
+jour les fichiers HA **avant ou avec** le firmware (sans eux, la garde « reboot inattendu »
+alerterait sur le nouveau texte).
+- **Journal des démarrages** (`Tab5/tab5_journal.cpp`) : un reset du chien de garde
+  (`ESP_RST_WDT`) **sans rapport de plantage** n'est plus une anomalie. Il s'appelle
+  « bouton d'alimentation ou chien de garde RTC (rst 0x..) », avec le code de reset brut du
+  ROM, et n'envoie rien. Le firmware ne gère pas ce bouton et aucune source ne dit comment
+  il est câblé : le code `rst` dira au prochain appui lequel des six chiens de garde du P4 il
+  déclenche. Une panique, un chien de garde de tâche ou d'interruption, une baisse de
+  tension, une micro-coupure, un blocage du CPU, un Wi-Fi absent et **tout chien de garde
+  accompagné d'un rapport `esp32.crash`** alertent toujours.
+- **Rapport de plantage d'ESPHome** : le logger l'écrit avant que le déclencheur
+  `on_message` du journal existe, il n'y entrait donc jamais (trouvé à la relecture de ce
+  lot). Le journal le lit maintenant par `esp32::crash_handler_has_data()`, le rejoue dans ses
+  lignes quand la raison du reset est un plantage, et l'efface une fois le journal arrivé à HA
+  (comme ESPHome après un abonnement aux logs) : un vieux rapport jamais lu ne fait pas passer
+  les appuis suivants sur le bouton pour des plantages.
+- **Entité « Tab5 Raison du redémarrage »** : pour cette raison, ESPHome répète la source du
+  dernier redémarrage demandé, qu'il n'efface jamais (`debug_esp32.cpp`). Le filtre publie
+  maintenant `Power button or RTC watchdog (rst 0x..)`, ou `Crash, other watchdogs (rst 0x..)`
+  avec un rapport de plantage.
+- **Garde « reboot inattendu »** (`packages/tab5_health.yaml`) : laisse passer
+  `Power button or RTC watchdog`, comme un redémarrage demandé.
+- Ce qui n'alerte plus : un démarrage bloqué plus de 9 s (chien de garde RTC du bootloader)
+  et un chien de garde de timer qui réinitialise sans passer par la panique ; l'historique de
+  l'entité les garde. Test `tests/test_bouton_alim.py` (lit le classement dans le vrai code
+  et rend la garde HA) ; cas dans `docs/troubleshooting.md`.
+
 ### 2026-10-06 — Rangée sous l'horloge : jusqu'à trois lignes de capteurs, plus les plantes
 
 Demande d'Axel : sous l'horloge, la zone des pots ne montrait que les plantes. Elle devient une
