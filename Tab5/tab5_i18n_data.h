@@ -8,9 +8,12 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 992;
+static const uint16_t kI18nKeyCount = 995;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1248,6 +1251,7 @@ static const char* const kI18nKeys[] = {
     "Changer de variante",
     "Changer les réglages",
     "Charge",
+    "Charge CPU",
     "Chargement image...",
     "Chargement...",
     "Chaud",
@@ -1561,6 +1565,7 @@ static const char* const kI18nKeys[] = {
     "Noir l'emporte",
     "Noirs",
     "Non",
+    "Non montée",
     "Normal",
     "Normale",
     "Nouvelle",
@@ -1805,6 +1810,7 @@ static const char* const kI18nKeys[] = {
     "Sports & Loisirs",
     "Statistiques",
     "Stop",
+    "Sur USB",
     "Synchronisation...",
     "TEMPS DE RÉPONSE",
     "TEMPÉRATURE",
@@ -2244,6 +2250,7 @@ static const char* const kI18n_en[] = {
     "Switch stats variant",  // "Changer de variante"
     "Change settings",  // "Changer les réglages"
     "Charging",  // "Charge"
+    "CPU load",  // "Charge CPU"
     "Loading image...",  // "Chargement image..."
     "Loading...",  // "Chargement..."
     "Warm",  // "Chaud"
@@ -2557,6 +2564,7 @@ static const char* const kI18n_en[] = {
     "Black wins",  // "Noir l'emporte"
     "Black",  // "Noirs"
     "No",  // "Non"
+    "Not fitted",  // "Non montée"
     "Normal",  // "Normal"
     "Normal",  // "Normale"
     "New",  // "Nouvelle"
@@ -2801,6 +2809,7 @@ static const char* const kI18n_en[] = {
     "Sports & Leisure",  // "Sports & Loisirs"
     "Statistics",  // "Statistiques"
     "Stop",  // "Stop"
+    "On USB",  // "Sur USB"
     "Syncing...",  // "Synchronisation..."
     "ANSWER TIME",  // "TEMPS DE RÉPONSE"
     "TEMPERATURE",  // "TEMPÉRATURE"
@@ -3240,6 +3249,7 @@ static const char* const kI18n_de[] = {
     "Variante wechseln",  // "Changer de variante"
     "Einstellungen ändern",  // "Changer les réglages"
     "Lädt",  // "Charge"
+    "CPU-Last",  // "Charge CPU"
     "Lade Bild...",  // "Chargement image..."
     "Lädt...",  // "Chargement..."
     "Warm",  // "Chaud"
@@ -3553,6 +3563,7 @@ static const char* const kI18n_de[] = {
     "Schwarz gewinnt",  // "Noir l'emporte"
     "Schwarz",  // "Noirs"
     "Nein",  // "Non"
+    "Nicht eingebaut",  // "Non montée"
     "Normal",  // "Normal"
     "Normal",  // "Normale"
     "Neu",  // "Nouvelle"
@@ -3797,6 +3808,7 @@ static const char* const kI18n_de[] = {
     "Sport & Freizeit",  // "Sports & Loisirs"
     "Statistik",  // "Statistiques"
     "Stopp",  // "Stop"
+    "USB-Betrieb",  // "Sur USB"
     "Synchronisiere...",  // "Synchronisation..."
     "ANTWORTZEIT",  // "TEMPS DE RÉPONSE"
     "TEMPERATUR",  // "TEMPÉRATURE"
@@ -4236,6 +4248,7 @@ static const char* const kI18n_nl[] = {
     "Stats-variant wisselen",  // "Changer de variante"
     "Opties wijzigen",  // "Changer les réglages"
     "Laden",  // "Charge"
+    "CPU-belasting",  // "Charge CPU"
     "Afbeelding laden...",  // "Chargement image..."
     "Laden...",  // "Chargement..."
     "Warm",  // "Chaud"
@@ -4549,6 +4562,7 @@ static const char* const kI18n_nl[] = {
     "Zwart wint",  // "Noir l'emporte"
     "Zwart",  // "Noirs"
     "Nee",  // "Non"
+    "Niet geplaatst",  // "Non montée"
     "Normaal",  // "Normal"
     "Normaal",  // "Normale"
     "Nieuw",  // "Nouvelle"
@@ -4793,6 +4807,7 @@ static const char* const kI18n_nl[] = {
     "Sport & Ontspanning",  // "Sports & Loisirs"
     "Statistieken",  // "Statistiques"
     "Stop",  // "Stop"
+    "Via USB",  // "Sur USB"
     "Synchroniseren...",  // "Synchronisation..."
     "ANTWOORDTIJD",  // "TEMPS DE RÉPONSE"
     "TEMPERATUUR",  // "TEMPÉRATURE"
@@ -5232,6 +5247,7 @@ static const char* const kI18n_es[] = {
     "Cambiar de variante",  // "Changer de variante"
     "Cambiar ajustes",  // "Changer les réglages"
     "Carga",  // "Charge"
+    "Carga CPU",  // "Charge CPU"
     "Cargando imagen...",  // "Chargement image..."
     "Cargando...",  // "Chargement..."
     "Cálido",  // "Chaud"
@@ -5545,6 +5561,7 @@ static const char* const kI18n_es[] = {
     "Gana Negro",  // "Noir l'emporte"
     "Negras",  // "Noirs"
     "No",  // "Non"
+    "No instalada",  // "Non montée"
     "Normal",  // "Normal"
     "Normal",  // "Normale"
     "Nueva",  // "Nouvelle"
@@ -5789,6 +5806,7 @@ static const char* const kI18n_es[] = {
     "Deportes y Ocio",  // "Sports & Loisirs"
     "Estadísticas",  // "Statistiques"
     "Parar",  // "Stop"
+    "Por USB",  // "Sur USB"
     "Sincronizando...",  // "Synchronisation..."
     "TIEMPO DE RESPUESTA",  // "TEMPS DE RÉPONSE"
     "TEMPERATURA",  // "TEMPÉRATURE"
@@ -6228,6 +6246,7 @@ static const char* const kI18n_it[] = {
     "Cambia variante",  // "Changer de variante"
     "Cambia le opzioni",  // "Changer les réglages"
     "Carica",  // "Charge"
+    "Carico CPU",  // "Charge CPU"
     "Carico l'immagine...",  // "Chargement image..."
     "Caricamento...",  // "Chargement..."
     "Caldo",  // "Chaud"
@@ -6541,6 +6560,7 @@ static const char* const kI18n_it[] = {
     "Vince il Nero",  // "Noir l'emporte"
     "Nero",  // "Noirs"
     "No",  // "Non"
+    "Non montata",  // "Non montée"
     "Normale",  // "Normal"
     "Normale",  // "Normale"
     "Nuova",  // "Nouvelle"
@@ -6785,6 +6805,7 @@ static const char* const kI18n_it[] = {
     "Sport & Tempo libero",  // "Sports & Loisirs"
     "Statistiche",  // "Statistiques"
     "Stop",  // "Stop"
+    "Via USB",  // "Sur USB"
     "Sincronizzo...",  // "Synchronisation..."
     "TEMPO DI RISPOSTA",  // "TEMPS DE RÉPONSE"
     "TEMPERATURA",  // "TEMPÉRATURE"
@@ -7224,6 +7245,7 @@ static const char* const kI18n_tr[] = {
     "Varyantı değiştir",  // "Changer de variante"
     "Ayarları değiştir",  // "Changer les réglages"
     "Şarj",  // "Charge"
+    "CPU yükü",  // "Charge CPU"
     "Görsel yükleniyor...",  // "Chargement image..."
     "Yükleniyor...",  // "Chargement..."
     "Sıcak",  // "Chaud"
@@ -7537,6 +7559,7 @@ static const char* const kI18n_tr[] = {
     "Siyah kazandı",  // "Noir l'emporte"
     "Siyah",  // "Noirs"
     "Hayır",  // "Non"
+    "Takılı değil",  // "Non montée"
     "Normal",  // "Normal"
     "Normal",  // "Normale"
     "Yeni",  // "Nouvelle"
@@ -7781,6 +7804,7 @@ static const char* const kI18n_tr[] = {
     "Spor & Hobi",  // "Sports & Loisirs"
     "İstatistikler",  // "Statistiques"
     "Dur",  // "Stop"
+    "USB ile",  // "Sur USB"
     "Eşitleniyor...",  // "Synchronisation..."
     "YANIT SÜRESİ",  // "TEMPS DE RÉPONSE"
     "SICAKLIK",  // "TEMPÉRATURE"
