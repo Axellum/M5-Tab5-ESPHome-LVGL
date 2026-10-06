@@ -401,15 +401,11 @@ api:
             cle += '\x1f';
             cle += id(tab5_dismissed_local);
             if (push_unchanged(PushChannel::ALERTES_HA, cle)) return;
-            HaAlertSlotUI slots[4] = {
-              {id(ha_alert_wrapper_0), id(lbl_ha_alert_0), &id(ha_alert_id_0), id(lbl_ha_alert_cpt_0)},
-              {id(ha_alert_wrapper_1), id(lbl_ha_alert_1), &id(ha_alert_id_1), id(lbl_ha_alert_cpt_1)},
-              {id(ha_alert_wrapper_2), id(lbl_ha_alert_2), &id(ha_alert_id_2), id(lbl_ha_alert_cpt_2)},
-              {id(ha_alert_wrapper_3), id(lbl_ha_alert_3), &id(ha_alert_id_3), id(lbl_ha_alert_cpt_3)},
-            };
+            // Widgets des 4 bandeaux : g_ha_alert_slots (tab5-alertes.yaml).
+            id(tab5_ha_alert_slots_init).execute();
             // Alerte rouge nouvelle montrée tout de suite : le rotateur repart de zéro
             // pour qu'elle reste un tour entier (alertes du 06/10/2026, lot 3).
-            if (parse_and_update_ha_alerts_bulk(payload, slots, g_central_ctx,
+            if (parse_and_update_ha_alerts_bulk(payload, g_ha_alert_slots, g_central_ctx,
                     id(tab5_dismissed_local))) {
               id(tab5_central_rotator_auto).execute();
             }

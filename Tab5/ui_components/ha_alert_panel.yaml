@@ -4,6 +4,10 @@
 # vars : n (0-3 — suffixe des ids ha_alert_wrapper_${n}, btn_ha_alert_tap_${n},
 #        lbl_ha_alert_${n}, lbl_ha_alert_cpt_${n} et numéro de slot passé à
 #        tab5_dismiss_ha_alert).
+# La logique (service, tap, « Tout marquer comme lu ») ne nomme ses widgets et son id
+# d'acquittement (global ha_alert_id_${n}) qu'une fois : le script
+# tab5_ha_alert_slots_init (tab5-alertes.yaml). Le cadre est aussi nommé dans l'on_boot
+# (g_central_ctx.ha_wrap, tab5-ha-hmi.yaml et tab5-rendu-host.yaml).
 # Masqué par défaut ; le texte et la visibilité sont posés par
 # parse_and_update_ha_alerts_bulk() (tab5_central.cpp, service
 # tab5_maj_alertes_ha_bulk). Un tap = lu définitif + ligne suivante.

@@ -370,8 +370,8 @@ script:
 
   # Tap annonce HA (panneaux 4-7) : dismiss définitif + ligne suivante.
   # Script unique paramétré (slot 0-3) — remplace les ex-tab5_dismiss_ha_alert_0..3
-  # identiques (#3). Les 4 objets/globals par slot sont résolus par tableaux indexés
-  # (pattern &id(bool)/&id(std::string) déjà utilisé dans tab5-api-logic.yaml).
+  # identiques (#3). Widgets et id du bandeau : g_ha_alert_slots, table unique remplie
+  # par tab5_ha_alert_slots_init (tab5-alertes.yaml).
   - id: tab5_dismiss_ha_alert
     mode: restart
     parameters:
@@ -379,13 +379,13 @@ script:
     then:
       - lambda: |-
           id(temp_dismiss_alert_id) = "";
-          lv_obj_t* wraps[4] = {id(ha_alert_wrapper_0), id(ha_alert_wrapper_1), id(ha_alert_wrapper_2), id(ha_alert_wrapper_3)};
-          lv_obj_t* lbls[4]  = {id(lbl_ha_alert_0), id(lbl_ha_alert_1), id(lbl_ha_alert_2), id(lbl_ha_alert_3)};
-          std::string* ids[4] = {&id(ha_alert_id_0), &id(ha_alert_id_1), &id(ha_alert_id_2), &id(ha_alert_id_3)};
-          if (slot < 0 || slot > 3 || ids[slot]->size() == 0) return;
-          id(temp_dismiss_alert_id) = *ids[slot];
+          id(tab5_ha_alert_slots_init).execute();
+          if (slot < 0 || slot >= kHaAlertSlotCount) return;
+          HaAlertSlotUI& s = g_ha_alert_slots[slot];
+          if (s.id_store == nullptr || s.id_store->empty()) return;
+          id(temp_dismiss_alert_id) = *s.id_store;
           tab5_dismiss_local_add(id(tab5_dismissed_local), id(temp_dismiss_alert_id));
-          dismiss_ha_alert_slot_immediate(slot, wraps[slot], lbls[slot], *ids[slot], g_central_ctx);
+          dismiss_ha_alert_slot_immediate(slot, s.wrap, s.lbl, *s.id_store, g_central_ctx);
       - if:
           condition:
             lambda: 'return id(temp_dismiss_alert_id).size() > 0;'
