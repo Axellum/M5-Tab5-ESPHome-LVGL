@@ -1559,8 +1559,17 @@ async def redemarrer_ha(ha: HA, brutal: bool) -> None:
         _, erreur = await proc.communicate()
         if proc.returncode != 0:
             raise Echec(f"docker {' '.join(commande)} : {erreur.decode(errors='replace')[:200]}")
-    await ha.attendre_http()
-    await ha.attendre_demarrage()
+    # Pas attendre_http() : une fois l'onboarding fini, HA ne publie plus /api/onboarding
+    # (404 à chaque essai, vu dans la CI du 06/10/2026). Le jeton reste valable.
+    fin = time.monotonic() + 300
+    while time.monotonic() < fin:
+        try:
+            if (await ha.get("/api/config")).get("state") == "RUNNING":
+                return
+        except Exception:  # noqa: BLE001 — HA redémarre : connexion refusée, 502…
+            pass
+        await asyncio.sleep(2)
+    raise Echec("Home Assistant n'est pas revenu (état RUNNING) dans les 300 s après son redémarrage")
 
 
 async def etat_de(ha: HA, entity_id: str) -> str | None:
