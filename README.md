@@ -36,7 +36,7 @@
 - **Seven languages, down to the details.** French, English, German, Dutch, Spanish, Italian and Turkish, switched from Home Assistant: menus, games, dates, the texts Home Assistant sends and the spoken alarm briefing. Translated by an AI; the author only checked the French ([translations](docs/translations.md)).
 - **Twenty-one themes, light or dark.** Colours, shapes and the fonts of the clock change at once, without a restart, from Home Assistant or the tablet's console; « Auto » turns light at sunrise and dark at sunset ([themes](docs/installation/settings.md#theme-light-or-dark)).
 - **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
-- **Documented and tested like a product.** 32 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
+- **Documented and tested like a product.** 33 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
 - **Runs on the ST7123 revision, and builds for the ST7121 and the original ILI9881C**, while most published Tab5 examples only cover the original one.
 
 ## What it does
@@ -44,7 +44,7 @@
 A single 1280×720 page: windows open with a tap, a long press or a swipe — each of them is in the [user manual](docs/notice/README.md).
 
 - **Weather** — rain in the next hour, hourly and 15-day forecast, weather warnings ([below](#rain-in-the-next-hour-weather-warnings)).
-- **Central card** — every 8 s: work hours, rain graph, warnings, a 3-day calendar recap and up to 4 banners pushed by Home Assistant; a tap dismisses a banner ([home screen](docs/notice/home.md)).
+- **Central card** — every 8 s: work hours, rain graph, warnings, a 3-day calendar recap and up to 4 banners pushed by Home Assistant, the alerts you subscribed to; a tap dismisses a banner, a long press shows the 20 latest alerts ([home screen](docs/notice/home.md), [alerts](docs/notice/alerts.md)).
 - **Rooms** — the bottom row: up to 5 rooms of 5 devices (lights, switches, shutters, media players, scenes, sensors), with their names and icons taken from Home Assistant ([bottom row and rooms](docs/notice/tiles.md)).
 - **Climate** — modes, a thermostat arc, presets and airflow; the controls are dimmed, not hidden, when the unit is off ([climate](docs/notice/climate.md)).
 - **Lights** — the room's lights (up to 5): brightness arc with shortcuts, 3 whites and 12 colours ([lights](docs/notice/lights.md)).
@@ -205,7 +205,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 - **Sept langues, jusque dans les détails.** Français, anglais, allemand, néerlandais, espagnol, italien et turc, au choix depuis Home Assistant : menus, jeux, dates, textes envoyés par Home Assistant et briefing parlé du réveil. Traduites par une IA ; l'auteur n'a relu que le français ([traductions](docs/translations.md#version-française)).
 - **Vingt et un thèmes, clairs ou sombres.** Couleurs, formes et polices de l'horloge changent aussitôt, sans redémarrer, depuis Home Assistant ou la console de la tablette ; « Auto » passe en clair au lever du soleil et en sombre à son coucher ([thèmes](docs/installation/settings.md#thème-clair-ou-sombre)).
 - **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
-- **Documenté et testé comme un produit.** 32 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
+- **Documenté et testé comme un produit.** 33 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
 - **Tourne sur la révision ST7123, et compile pour la ST7121 et l'ILI9881C d'origine**, alors que la plupart des exemples Tab5 publiés ne couvrent que celle d'origine.
 
 ## Ce que ça fait
@@ -213,7 +213,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 Une seule page de 1280×720 : les fenêtres s'ouvrent d'un appui, d'un appui long ou d'un glissement — chacune est dans la [notice d'utilisation](docs/notice/README.md#version-française).
 
 - **Météo** — pluie dans l'heure, prévisions horaires et à 15 jours, vigilances ([plus bas](#pluie-dans-lheure-vigilances)).
-- **Carte centrale** — toutes les 8 s : horaires, graphe de pluie, vigilances, récap du calendrier sur 3 jours et jusqu'à 4 bandeaux poussés par Home Assistant ; un appui masque un bandeau ([écran d'accueil](docs/notice/home.md#version-française)).
+- **Carte centrale** — toutes les 8 s : horaires, graphe de pluie, vigilances, récap du calendrier sur 3 jours et jusqu'à 4 bandeaux poussés par Home Assistant, les alertes auxquelles vous êtes abonné ; un appui masque un bandeau, un appui long montre les 20 dernières alertes ([écran d'accueil](docs/notice/home.md#version-française), [alertes](docs/notice/alerts.md#version-française)).
 - **Pièces** — la rangée du bas : jusqu'à 5 pièces de 5 appareils (lumières, interrupteurs, volets, lecteurs multimédia, scènes, capteurs), avec leurs noms et icônes pris dans Home Assistant ([rangée du bas et pièces](docs/notice/tiles.md#version-française)).
 - **Clim** — modes, arc de thermostat, préréglages et flux d'air ; les commandes sont grisées, pas masquées, quand la clim est éteinte ([clim](docs/notice/climate.md#version-française)).
 - **Lumières** — les lumières de la pièce (5 au plus) : arc de luminosité avec raccourcis, 3 blancs et 12 couleurs ([lumières](docs/notice/lights.md#version-française)).

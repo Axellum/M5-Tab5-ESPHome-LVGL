@@ -2424,6 +2424,7 @@ void theme_rejouer_ui() {
     cartes_rejouer_theme();
     energie_rejouer_theme();
     reglages_rejouer_theme();
+    alertes_rejouer_theme();
     zones_rejouer_theme();
     assist_rejouer_theme();
     cal_detail_rejouer();

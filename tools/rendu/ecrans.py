@@ -145,6 +145,23 @@ ALERTES_HA_SIX = ("@n:6;binary_sensor.fuite_cuisine#1|Rouge|Fuite cuisine;"
                   "update.home_assistant_core_update#1|Rouge|@maj:Home Assistant Core;"
                   "ha:indispo#1|Orange|@indispo:3;sensor.porte_entree_batterie#1|Orange|Porte entrée 12 %")
 
+# Historique des alertes (popup « Alertes », lot 4 du plan des alertes du 06/10/2026),
+# autour du jour figé : à lire, lue, terminée, d'aujourd'hui (l'heure seule) et des jours
+# d'avant (« Lun 15 16 h 00 »). « apparue|lue|terminée|gravité|libellé », la plus récente
+# d'abord, comme packages/tab5_push.yaml (script tab5_push_alertes_historique).
+HISTORIQUE_ALERTES = ";".join(
+    f"{_epoch(2026, 6, *a)}|{_epoch(2026, 6, *l) if l else 0}|{_epoch(2026, 6, *f) if f else 0}|{g}|{t}"
+    for a, l, f, g, t in (
+        ((16, 7, 31), None, None, "Rouge", "Fuite cuisine"),
+        ((16, 6, 58), (16, 7, 20), None, "Rouge", "@maj:Home Assistant Core"),
+        ((15, 16, 0), (15, 18, 5), (16, 6, 0), "Orange", "@vigi:Orange"),
+        ((15, 9, 10), None, None, "Orange", "Porte entrée 12 %"),
+        ((14, 21, 40), (14, 22, 2), (15, 8, 15), "Orange", "@indispo:3"),
+        ((14, 18, 30), None, (14, 18, 52), "Orange", "Porte du garage"),
+        ((12, 10, 0), (12, 10, 30), (13, 9, 0), "Orange", "@maj:ESPHome"),
+        ((11, 14, 0), (11, 15, 0), (12, 6, 0), "Jaune", "@vigi:Jaune"),
+    ))
+
 # Vigilance de la scène 2 (orange), puis retour à celle de la scène 3, la dernière
 # poussée par capturer.py. Heure figée : les codes de pluie sont ceux des scènes.
 VIGILANCE_ORANGE = build_alerte_payload(phrase_pluie=code_pluie(*SCENES[1].pluie), **SCENES[1].alerte)
@@ -180,6 +197,7 @@ SALON = (955, 164)
 LIGNES_REGLABLES = tuple((1000, 110 + 2 + 6 + 54 * k + 26) for k in range(10))
 CONSIGNE_CLIM = (1061, 251)   # court : Climatisation
 TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
+CARTE_CENTRALE = (640, 375)   # long : historique des alertes (popup « Alertes »)
 # Long : Lumières. Avec les pièces (ADR-0023), les lampes T2 et T3 de la pièce de
 # l'accueil (tools/demo/scenarios.py) : le popup liste les lumières de la pièce.
 TUILES = {"chambre": (640, 572), "salon": (890, 572)}
@@ -453,6 +471,10 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("appareil-confirmer", (VERS_LA_GAUCHE, Long(*TUILE_JE_PARS), Toucher(*BOUTON_APPAREIL)),
           (Attendre(3.5), Toucher(*FERMER_POPUP), VERS_LA_DROITE)),
     Ecran("climatisation", (Toucher(*CONSIGNE_CLIM),)),
+    # Historique des alertes (lot 4 du plan des alertes) : la liste d'abord, comme HA la
+    # pousserait, puis l'appui long sur la carte centrale.
+    Ecran("alertes", (Service("tab5_maj_alertes_historique", (("payload", HISTORIQUE_ALERTES),)),
+                      Long(*CARTE_CENTRALE))),
     Ecran("plantes", (Long(*SOUS_HORLOGE),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis
     # les vues Jours et Mois par « Aller à l'écran ». Données : la scène (demo_pusher,

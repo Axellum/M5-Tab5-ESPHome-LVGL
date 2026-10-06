@@ -40,6 +40,34 @@ blueprint plus ancien laisse la clim et le volume de la tablette.
   position (ouvert / fermé sans position réglable), valeur d'un nombre, bornées aux limites de
   l'appareil.
 
+### 2026-10-06 — Alertes : l'historique, et « Tout marquer comme lu »
+
+Lot 4 du plan des alertes de la carte centrale. Firmware et Home Assistant.
+- **Popup « Alertes »** : un appui long sur la carte centrale de l'accueil, quoi qu'elle montre,
+  ouvre l'historique des 20 dernières alertes, une ligne chacune : une pastille de sa couleur,
+  son texte, puis « apparue 14 h 02 · lue 14 h 10 · terminée 15 h 30 » (l'heure seule
+  aujourd'hui, le jour avant l'heure sinon). Pastille vive : à lire ; pâle : lue, en cours ;
+  texte gris : terminée. Aussi par « Aller à l'écran → Alertes ».
+- **« Tout marquer comme lu »**, dans la barre de titre du popup : les bandeaux de la carte
+  centrale sont lus tout de suite, et HA reçoit `alert_id` « * », qui lit aussi les alertes
+  qui n'avaient pas de bandeau. Le bouton disparaît quand rien n'est à lire.
+- **À la demande** : le popup demande l'historique à l'ouverture (événement
+  `esphome.tab5_alertes_historique`), HA répond par la nouvelle action
+  `tab5_maj_alertes_historique` (script `tab5_push_alertes_historique` de `tab5_push.yaml`)
+  et la repousse tant que le popup est ouvert et que l'historique change. Un firmware d'avant
+  n'émet jamais l'événement : **l'ordre de mise à jour firmware / HA est indifférent**.
+- L'historique suit les **abonnements** (lot 2) : une alerte d'une source désabonnée n'y
+  figure pas. Chaque entrée garde désormais sa source ; celles d'avant la déduisent de leur id.
+- **Tableau de bord HA** (vue Santé) : la même liste, en tableau (apparue, lue, terminée), dans
+  les 7 langues.
+- Notice : nouvelle page « Alertes » ; l'appui long de la carte centrale décrit sur l'accueil.
+- Décision : [ADR-0034](docs/decisions/0034-central-card-alerts.md) (lot 5) rassemble les choix
+  des lots 0 à 4 : mémoire et révision dans HA, abonnements, ordre à l'écran, historique à la
+  demande, et les écarts au plan.
+- **Preuves** : `tests/test_alertes_ha.py` (payload rendu depuis le vrai modèle, 20 au plus,
+  abonnements, entrées d'avant, câblage tablette ↔ HA), écran « alertes » du rendu hors
+  tablette, graine du fuzz des sanitizers pour la nouvelle action.
+
 ### 2026-10-06 — Mode économie d'énergie, enclenché tout seul sur batterie
 
 Firmware seul (et une carte du tableau de bord). Demande d'Axel après la discussion #278.

@@ -21,7 +21,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 9 | Second temperature (greenhouse) | Arcade, the games | — |
 | 10 | Climate: target, − and + | target: climate window (another device chosen: its window); − / +: one step | — |
 | 11 | Row under the clock: plants and sensors | next line | on the plants: plant details |
-| 12 | Central card | next panel, or dismiss a message | — |
+| 12 | Central card | next panel, or dismiss a message | Alerts window |
 | 13 | A card of the bottom row (its large icon) | the command of its device | the window of its device |
 | 14 | A day's temperatures | that day's schedule, for 6 s | — |
 
@@ -49,6 +49,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Voice assistant | long press on the microphone | [Voice](voice.md) |
 | Energy | a solar or energy card, or a long press on the Home Assistant button | [Energy](energy.md) |
 | Plants | long press on the plants line, under the clock | [Plants](plants.md) |
+| Alerts | long press on the central card | [Alerts](alerts.md) |
 | Settings | the gear button | [Settings](settings.md) |
 | System console | long press on the gear button | [System console](console.md) |
 | Arcade | the gamepad button, or the greenhouse temperature | [Arcade](arcade.md) |
@@ -80,7 +81,7 @@ Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt u
 | 9 | Seconde température (serre) | Arcade, les jeux | — |
 | 10 | Clim : consigne, − et + | consigne : fenêtre de la clim (un autre appareil choisi : sa fenêtre) ; − / + : un pas | — |
 | 11 | Rangée sous l'horloge : plantes et capteurs | ligne suivante | sur les plantes : détail des plantes |
-| 12 | Carte centrale | panneau suivant, ou écarter un message | — |
+| 12 | Carte centrale | panneau suivant, ou écarter un message | fenêtre des alertes |
 | 13 | Une carte de la rangée du bas (sa grande icône) | la commande de son appareil | la fenêtre de son appareil |
 | 14 | Les températures d'un jour | le planning de ce jour, 6 s | — |
 
@@ -108,6 +109,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Assistant vocal | appui long sur le micro | [Voix](voice.md#version-française) |
 | Énergie | une carte solaire ou énergie, ou un appui long sur le bouton Home Assistant | [Énergie](energy.md#version-française) |
 | Plantes | appui long sur la ligne des plantes, sous l'horloge | [Plantes](plants.md#version-française) |
+| Alertes | appui long sur la carte centrale | [Alertes](alerts.md#version-française) |
 | Réglages | le bouton engrenage | [Réglages](settings.md#version-française) |
 | Console système | appui long sur le bouton engrenage | [Console système](console.md#version-française) |
 | Arcade | le bouton manette, ou la température de la serre | [Arcade](arcade.md#version-française) |

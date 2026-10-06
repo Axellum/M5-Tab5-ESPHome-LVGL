@@ -112,6 +112,8 @@ esphome:
     # tools/test_alarm_clock.cpp) et état de la tablette.
     - Tab5/tab5_economie.h
     - Tab5/tab5_economie.cpp
+    # Popup Alertes : historique des alertes (lot 4 du plan des alertes, 06/10/2026).
+    - Tab5/tab5_alertes.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
     - Tab5/game_common.h
@@ -365,6 +367,9 @@ packages:
   tab5_reglables: !include Tab5/tab5-reglables.yaml
   # Popup Énergie (ADR-0028) : APRES tab5_lvgl (widgets), ouvert par une tuile ou par HA.
   tab5_energie: !include Tab5/tab5-energie.yaml
+  # Popup Alertes (lot 4 du plan des alertes) : APRES tab5_lvgl (widgets), ouvert par un
+  # appui long sur la carte centrale ou par HA.
+  tab5_alertes: !include Tab5/tab5-alertes.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les
   # valeurs par défaut des entity_… : une clé de Tab5/user_entities.yaml l'emporte.
   tab5_zones: !include Tab5/tab5-zones.yaml

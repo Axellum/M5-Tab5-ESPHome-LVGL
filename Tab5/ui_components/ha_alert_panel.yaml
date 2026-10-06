@@ -10,6 +10,8 @@
 # Compteur « 2/6 » (lbl_ha_alert_cpt_${n}, alertes du 06/10/2026, lot 3) : affiché à
 # droite du texte seulement quand HA a plus d'alertes à lire que les 4 bandeaux ;
 # masqué, la rangée flex l'ignore et le texte reste centré comme avant.
+# Appui long (comme sur les autres panneaux de l'accueil) : popup « Alertes », historique
+# des 20 dernières alertes (lot 4, tab5_alertes.cpp).
 # Sorti de tab5-lvgl.yaml le 25/09/2026 (audit, lot 8e) : 4 copies de 21 lignes.
 # Piège YAML : dans un mapping en ligne `{ … }`, une valeur contenant `${…}` doit être
 # entre guillemets, sinon l'accolade casse la syntaxe (yamllint le signale).
@@ -54,3 +56,6 @@ obj:
           - script.execute:
               id: tab5_dismiss_ha_alert
               slot: ${n}
+        # Appui long : historique des alertes (popup « Alertes », lot 4).
+        on_long_press:
+          - script.execute: tab5_alertes_ouvrir

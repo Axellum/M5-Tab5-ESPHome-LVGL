@@ -1199,3 +1199,13 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Langue": "Language"
 "Changer de langue ?": "Change language?"
 "La tablette redémarre en {langue}.": "The tablet restarts in {langue}."
+# Historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026)
+"Alertes": "Alerts"
+"Tout marquer comme lu": "Mark all as read"
+"Aucune alerte": "No alerts"
+"apparue %s": "appeared %s"
+"lue %s": "read %s"
+"terminée %s": "ended %s"
+"%d h %02d": "%d:%02d"
+"Vigilance Rouge": "Red warning"
+"Vigilance Orange": "Orange warning"

@@ -359,6 +359,8 @@ lvgl:
 
         - !include ui_components/climate_card.yaml
         # ==================== CENTRAL CARD (Alertes, Pluie, Planning) ====================
+        # Appui long sur un panneau de l'accueil (planning, pluie, vigilance, info, alertes HA) :
+        # historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026).
         - obj:
             id: central_card
             x: 20
@@ -403,6 +405,8 @@ lvgl:
                         styles: style_invisible
                         on_short_click:
                           - script.execute: tab5_central_panel_next
+                        on_long_press:
+                          - script.execute: tab5_alertes_ouvrir
 
               # Pluie Wrapper
               - obj:
@@ -469,6 +473,8 @@ lvgl:
                         styles: style_invisible
                         on_short_click:
                           - script.execute: tab5_central_panel_next
+                        on_long_press:
+                          - script.execute: tab5_alertes_ouvrir
 
               # Réponse vocale IA (remplace le rotateur 8s le temps de l'affichage)
               - obj:
@@ -505,6 +511,8 @@ lvgl:
                         styles: style_invisible
                         on_short_click:
                           - script.execute: tab5_central_panel_next
+                        on_long_press:
+                          - script.execute: tab5_alertes_ouvrir
 
               # Titre de page previsions (pages horaires / journalieres, masque sur accueil),
               # rempli par update_central_forecast_page_ui() (tab5_central.cpp) : une ligne,
@@ -555,6 +563,8 @@ lvgl:
                         styles: style_invisible
                         on_short_click:
                           - script.execute: tab5_dismiss_info_tap
+                        on_long_press:
+                          - script.execute: tab5_alertes_ouvrir
 
               # Alertes HA individuelles (panneaux 4-7, tap = lu définitif + ligne suivante)
               - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 0 } }
@@ -607,6 +617,7 @@ lvgl:
         - !include ui_components/pots_popup.yaml
         - !include ui_components/energie_popup.yaml
         - !include ui_components/reglages_popup.yaml
+        - !include ui_components/alertes_popup.yaml
         - !include ui_components/calendar_popup.yaml
         - !include ui_components/assistant_popup.yaml
         - !include ui_components/alarm_popup.yaml

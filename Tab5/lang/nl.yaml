@@ -1201,3 +1201,13 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Langue": "Taal"
 "Changer de langue ?": "Taal wijzigen?"
 "La tablette redémarre en {langue}.": "De tablet herstart in het {langue}."
+# Historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026)
+"Alertes": "Meldingen"
+"Tout marquer comme lu": "Alles als gelezen markeren"
+"Aucune alerte": "Geen meldingen"
+"apparue %s": "verschenen %s"
+"lue %s": "gelezen %s"
+"terminée %s": "beëindigd %s"
+"%d h %02d": "%d:%02d"
+"Vigilance Rouge": "Code rood"
+"Vigilance Orange": "Code oranje"

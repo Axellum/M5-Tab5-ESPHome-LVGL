@@ -178,6 +178,13 @@ bool tuile_ouvrir_popup(int r, int t);
 const char* clim_nom();
 uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 
+// --- Alertes (tab5_central.cpp) ---
+// Libellé codé d'une alerte, composé dans la langue de l'écran : « @maj:<titre> » →
+// « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo », « @vigi:<niveau> » →
+// « Vigilance Rouge »… Tout autre libellé (nom d'une entité) s'affiche tel quel. Bandeaux
+// de la carte centrale et historique du popup « Alertes » (tab5_alertes.cpp).
+std::string ha_alerte_texte(const char* brut);
+
 // --- Énergie (tab5_energie.cpp, ADR-0028) ---
 // Puissance ou énergie en unités courtes : W / kW / MW → « 850 W », « 3.45 kW », « 12.5 kW » ;
 // Wh / kWh / MWh → « 4.20 kWh », « 312 kWh », « 3.85 MWh ». Faux (rien d'écrit) pour
@@ -231,6 +238,7 @@ void rangee_rejouer_theme();
 void cartes_rejouer_theme();
 void energie_rejouer_theme();
 void reglages_rejouer_theme();
+void alertes_rejouer_theme();
 void zones_rejouer_theme();
 void assist_rejouer_theme();
 void cal_detail_rejouer();
