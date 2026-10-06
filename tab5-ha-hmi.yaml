@@ -106,6 +106,10 @@ esphome:
     - Tab5/tab5_theme.cpp
     # Popup Réglages de la tablette : peinture des choix (06/10/2026).
     - Tab5/tab5_reglages.cpp
+    # Mode économie d'énergie (06/10/2026) : règles pures (compilées aussi sur PC par
+    # tools/test_alarm_clock.cpp) et état de la tablette.
+    - Tab5/tab5_economie.h
+    - Tab5/tab5_economie.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
     - Tab5/game_common.h
@@ -362,6 +366,9 @@ packages:
   tab5_zones: !include Tab5/tab5-zones.yaml
   # Popup Réglages (06/10/2026) : APRES tab5_lvgl (widgets), ouvert par l'engrenage ou par HA.
   tab5_reglages: !include Tab5/tab5-reglages.yaml
+  # Mode économie d'énergie (06/10/2026) : plafond du rétroéclairage, animations, cadence
+  # de LVGL. Ses entrées viennent du matériel (INA226, toucher), qui lance son script.
+  tab5_economie: !include Tab5/tab5-economie.yaml
   # Thèmes (ADR-0029) : EN DERNIER, sa repeinture lit les widgets, les capteurs et les
   # scripts des packages ci-dessus.
   tab5_themes: !include Tab5/tab5-themes.yaml

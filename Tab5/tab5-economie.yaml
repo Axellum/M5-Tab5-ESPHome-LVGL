@@ -1,0 +1,93 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-economie.yaml
+# @role Mode économie d'énergie (06/10/2026, demande d'Axel) : le select « Tab5 Économie
+#       d'énergie » (Jamais / Sur batterie, le défaut / Toujours), l'état « Tab5 Sur
+#       batterie », et le script qui applique la décision de tab5_economie.h. Actif :
+#         - luminosité plafonnée à 50 %, au plus bas (10 %, le minimum du curseur des
+#           Réglages) après 30 s sans toucher ou à 35 % de batterie ou moins ;
+#         - plus aucune animation de l'interface (tab5_anim.cpp) ;
+#         - LVGL limité à 30 images/s, sauf pendant un jeu.
+#       « Sur batterie » se décide au courant de l'INA226 (tab5-sensors-diagnostics.yaml) :
+#       sans batterie détectée, ou en charge, jamais.
+# @architecture_constraint Ce fichier ne lit que des entités, des globals et des
+#       fonctions C++ : il est aussi chargé par le rendu hors tablette, où rien ne
+#       l'enclenche (pas de batterie, « Sur batterie » par défaut). Ses entrées :
+#         - courant, niveau et charge de la batterie : tab5-sensors-diagnostics.yaml
+#           (economie_courant, economie_niveau, economie_charge) ;
+#         - « rien ne retient l'écran » : global ecran_veille_permise, posé par
+#           l'extinction auto (tab5-ha-controls.yaml), une seule liste de raisons ;
+#         - le rétroéclairage passe par l'output template backlight_plafonne
+#           (tab5-hardware.yaml) : le plafond s'applique à la sortie, HA et le curseur
+#           des Réglages gardent la luminosité choisie. Le toucher et l'allumage relancent
+#           le script tout de suite (même fichier).
+# @ai_instruction Les options sont lues par HA : jamais traduites. La tablette garde
+#       l'INDEX choisi : une option nouvelle s'ajoute à la fin, avec sa valeur dans
+#       ChoixEconomie (tab5_economie.h ; tests/test_economie.py relit les deux).
+# ============================================================================
+
+select:
+  - platform: template
+    id: tab5_economie
+    name: "Tab5 Économie d'énergie"
+    icon: mdi:leaf
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Jamais"
+      - "Sur batterie"
+      - "Toujours"
+    # Sur secteur, rien ne change : seule une tablette qui tourne sur sa batterie
+    # passe en économie.
+    initial_option: "Sur batterie"
+    on_value:
+      - script.execute: tab5_economie_appliquer
+
+binary_sensor:
+  # La tablette tourne-t-elle sur sa batterie ? Décidé à chaque lecture du courant de
+  # l'INA226 (toutes les 60 s ; tab5_economie.h) et dès que la charge reprend. Toujours
+  # éteint sans batterie détectée. Publié par tab5-sensors-diagnostics.yaml.
+  - platform: template
+    id: tab5_sur_batterie
+    name: "Tab5 Sur batterie"
+    icon: mdi:power-plug-off
+    entity_category: diagnostic
+
+script:
+  # Applique la décision du mode (economie_decider, tab5_economie.h). Lancé chaque
+  # seconde (interval plus bas : l'assombrissement après 30 s sans toucher, un jeu qui
+  # s'ouvre ou se ferme) et tout de suite par le select, le toucher, l'allumage de
+  # l'écran, le courant, le niveau et la charge de la batterie. Ne touche au PWM et à
+  # LVGL que si leur valeur change.
+  - id: tab5_economie_appliquer
+    then:
+      - lambda: |-
+          EntreesEconomie in;
+          const auto choix = id(tab5_economie).active_index();
+          in.choix = choix.has_value() ? (uint8_t) *choix : 0;
+          in.sur_batterie = economie_sur_batterie();
+          in.batterie_basse = economie_batterie_basse();
+          in.ecran_allume = id(backlight).remote_values.is_on();
+          in.veille_permise = id(ecran_veille_permise);
+          const uint32_t depuis_allumage = millis() - id(ecran_allume_ms);
+          in.inactif_ms = std::min(ui_idle_ms(), depuis_allumage);
+          in.jeu_ouvert = GameRegistry::any_open();
+          const DecisionEconomie d = economie_decider(in);
+          // Le plafond passe par la même correction gamma que la lumière : la sortie
+          // compare deux valeurs de la même échelle (backlight_plafonne).
+          if (economie_plafond_sortie(id(backlight).gamma_correct_lut(d.plafond))) {
+            // [AI-DEBUG] « Pourquoi l'écran a baissé ? » : cette ligne le dit.
+            ESP_LOGI("economie", "Plafond du retroeclairage %d %% (mode %s%s%s)",
+                     (int) lroundf(d.plafond * 100.0f), d.active ? "actif" : "inactif",
+                     d.assombri ? ", sans toucher" : "",
+                     in.batterie_basse ? ", batterie basse" : "");
+            id(backlight_pwm).set_level(economie_sortie_actuelle());
+          }
+          if (economie_periode(d.periode_ms)) id(tab5_lvgl)->set_refresh_interval(d.periode_ms);
+          animations_reduites(d.animations_reduites);
+
+interval:
+  - interval: 1s
+    then:
+      - script.execute: tab5_economie_appliquer
