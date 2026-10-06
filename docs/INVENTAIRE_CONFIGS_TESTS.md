@@ -89,7 +89,8 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 |---|---|---|
 | `packages/tab5_push.yaml` | `HomeAssistant_Config/packages/` | Package principal : automatisations de poussée, scripts `tab5_push_*`, scripts appelés par le Tab5, capteur de pluie, garde-fou `is_primary_active`. |
 | `packages/tab5_evenements.yaml` | `HomeAssistant_Config/packages/` | Demandes de la tablette (ADR-0025) : une automatisation traduit les événements `esphome.tab5_*` en une liste blanche d'actions (annonces, calendrier, alertes lues, voix, pipeline, console système), pour un appareil de modèle `tab5-ha-hmi` seulement. Remplace l'option « actions HA ». |
-| `packages/tab5_alerts.yaml` | `HomeAssistant_Config/packages/` | Package alertes HA. |
+| `packages/tab5_alerts.yaml` | `HomeAssistant_Config/packages/` | Alertes de la carte centrale : capteur « Tab5 Alertes » (en cours, lues, historique), script `tab5_dismiss_alert`, sauvegarde des alertes lues, `sensor.tab5_unavailable_count`. |
+| `custom_templates/tab5_alertes.jinja` | `HomeAssistant_Config/custom_templates/` | Logique des alertes (06/10/2026) : révisions, fin confirmée, alertes lues, historique (importée par `tab5_alerts.yaml`, règles en tête du fichier). |
 | `packages/tab5_calendar.yaml` | `HomeAssistant_Config/packages/` | Package calendrier HA. |
 | `custom_templates/tab5_calendar.jinja` | `HomeAssistant_Config/custom_templates/` | Macros Jinja du calendrier (importées par `tab5_calendar.yaml`). |
 | `custom_templates/tab5_dashboard.jinja` | `HomeAssistant_Config/custom_templates/` | Macro `tab5_dashboard()` (04/10/2026) : écrit le tableau de bord HA de la tablette (vues Tab5, Réglages, Santé) avec les entités de la maison, trouvées par le modèle de l'appareil ; rendue dans Outils de développement → Modèle (`docs/installation.md`, étape 7). |
@@ -98,7 +99,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `packages/tab5_tv.yaml` | `HomeAssistant_Config/packages/` | Package TV HA (TV et adresse choisies dans HA, plus de `!secret`). |
 | `packages/tab5_reglages.yaml` | `HomeAssistant_Config/packages/` | Réglages choisis dans HA (listes « Tab5 · … » : agendas, téléphone, présence), tablette détectée par son modèle, miroirs pour les déclencheurs. |
 | `optionnel/volet_serre_tracking.yaml` | `HomeAssistant_Config/optionnel/` | Package volet **optionnel** (pas installé par défaut) : helpers, script, synchro écran, suivi des commandes directes ; volet choisi dans HA. |
-| `snippets/tab5_alerts_dismissed_input_text.yaml` | `HomeAssistant_Config/snippets/` | Snippet input_text alertes. |
+| `snippets/tab5_alerts_dismissed_input_text.yaml` | `HomeAssistant_Config/snippets/` | Snippet de l'ancienne liste des alertes lues (reprise une fois par le capteur « Tab5 Alertes »). |
 | `snippets/tab5_assist_reponse_exemple.yaml` | `HomeAssistant_Config/snippets/` | Exemple (non chargé) : réponse du moteur vers le popup Assistant. |
 
 ---
@@ -124,6 +125,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_capture_serie.py` | `tests/` | Unitaire | Capture d'un plantage sur le port série (`tools/capture_serie.py`) : bloc de panique RISC-V repéré jusqu'au redémarrage, adresses à décoder sans doublon, redémarrages comptés, rien de signalé pour un démarrage normal, jamais de port deviné entre deux appareils Espressif. |
 | `test_meme_code.py` | `tests/` | Unitaire | Même code qu'une image publiée (`tools/publication/meme_code.py`) : signature SBv2 et heure de compilation ignorées, taille différente ou code déplacé refusés, image non signée refusée. |
 | `test_alarme_popup.py` | `tests/` | Contenu | Popup du réveil, barre du bas : la ligne « prochain rendez-vous » passe par `texte_ha_coupe()` (une ligne, « … »), sans largeur fixe dans `alarm_popup.yaml`, et sa limite `kLargeurRdvSuivant` (`alarm_render.cpp`) s'arrête avant le bouton « Tester », recalculé depuis le YAML. |
+| `test_alertes_ha.py` | `tests/` | Contenu + rendu | Alertes côté HA : aucun `input_text` des packages avec `initial:`, calcul d'un seul tenant, sauvegarde des alertes lues ; la macro réelle de `tab5_alertes.jinja` rendue en bac à sable Jinja et rejouée (redémarrages, plantages, versions, coupures, taps, abonnements, reprise de l'ancienne liste). |
 | `test_geometrie_partagee.py` | `tests/` | Contenu | Géométrie écrite en YAML et en C++ tenue égale : jeton `${central_w}` (`tab5-ui-tokens.yaml`) = `kLargeurPanneauCentral` (`tab5_central.cpp`), plus de 1180 en clair ; en-têtes « Lun »…« Dim » de `calendar_popup.yaml` sur les colonnes `kCalColX0`/`kCalColPas`/`kCalColW` de `tab5_calendar.cpp`, grille centrée dans la carte modale. |
 | `test_improv_serie.py` | `tests/` | Unitaire | Wi-Fi par Improv sur l'USB (`tools/improv_serie.py`, `migrer_vers_3.py --port`) : paquets conformes (en-tête, longueur, somme de contrôle, saut de ligne), lecture au milieu du journal, réglage réussi / réseau introuvable / tablette muette face à une fausse liaison série, mot de passe jamais affiché, `secrets.yaml` lu en YAML. |
 | `test_render_ha_config.py` | `tests/` | Unitaire | Copie des fichiers HA publics, détection de fuite d'identifiants réels et de placeholder restant (`tools/render_ha_config.py`) ; aucun placeholder dans le dépôt. |
