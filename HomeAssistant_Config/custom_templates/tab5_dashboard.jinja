@@ -82,6 +82,8 @@
   ('appareils_meteo', 'switch', 'tab5_appareils_sur_la_meteo'),
   ('okay_nabu', 'switch', 'tab5_rallumer_l_ecran_a_okay_nabu'),
   ('extinction', 'select', 'tab5_extinction_auto_de_l_ecran'),
+  ('economie', 'select', 'tab5_economie_d_energie'), ('sur_batterie', 'binary_sensor', 'tab5_sur_batterie'),
+  ('courant', 'sensor', 'tab5_courant_batterie'),
   ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
   ('zones', 'sensor', 'zones_masquees'),
   ('reveil_en_cours', 'binary_sensor', 'reveil_en_cours'), ('prochain_reveil', 'sensor', 'prochain_reveil'),
@@ -734,6 +736,20 @@ views:
             heading: "{{ t('Éteint, les prévisions montrent la météo seule ; le bouton HA garde les appareils', 'Off: the forecast cards show the weather only; the HA button still shows the devices') }}"
             heading_style: subtitle
 {%- endif %}
+{#- Économie d'énergie (firmware du 06/10/2026) : « Sur batterie » d'après le courant de l'INA226. #}
+{%- if T.economie %}
+          - type: tile
+            entity: {{ T.economie }}
+            name: "{{ t("Économie d'énergie", 'Energy saving') }}"
+            icon: mdi:leaf
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+          - type: heading
+            heading: "{{ t('Luminosité plafonnée à 50 %, au plus bas après 30 s sans toucher ou sous 35 % de batterie ; sans animation', 'Brightness capped at 50%, lowest after 30 s without a touch or below 35% battery; no animation') }}"
+            heading_style: subtitle
+{%- endif %}
 {%- if T.theme_nuit %}
           - type: tile
             entity: {{ T.theme_nuit }}
@@ -1227,7 +1243,8 @@ views:
 {%- endif %}
 {#- Batterie: entités désactivées par défaut dans HA (à activer), cartes visibles seulement
     quand « Batterie montée » est allumé. #}
-{%- for ent, fr_, en_ in [(T.batterie, 'Batterie', 'Battery'), (T.tension, 'Tension', 'Voltage'), (T.en_charge, 'En charge', 'Charging')] %}
+{%- for ent, fr_, en_ in [(T.batterie, 'Batterie', 'Battery'), (T.tension, 'Tension', 'Voltage'), (T.en_charge, 'En charge', 'Charging'),
+                          (T.sur_batterie, 'Sur batterie', 'On battery'), (T.courant, 'Courant', 'Current')] %}
 {%- if ent %}
           - type: tile
             entity: {{ ent }}
@@ -2081,6 +2098,18 @@ views:
     'es': 'Desactivado: las tarjetas de previsión solo muestran el tiempo; el botón HA sigue mostrando los dispositivos',
     'it': 'Disattivo: le schede delle previsioni mostrano solo il meteo; il pulsante HA mostra ancora i dispositivi',
     'tr': 'Kapalıyken tahmin kartları yalnızca havayı gösterir; HA düğmesi cihazları göstermeye devam eder'},
+  "Économie d'énergie": {
+    'de': 'Energiesparen',
+    'nl': 'Energiebesparing',
+    'es': 'Ahorro de energía',
+    'it': 'Risparmio energetico',
+    'tr': 'Enerji tasarrufu'},
+  'Luminosité plafonnée à 50 %, au plus bas après 30 s sans toucher ou sous 35 % de batterie ; sans animation': {
+    'de': 'Helligkeit auf 50 % begrenzt, ganz dunkel nach 30 s ohne Berührung oder unter 35 % Akku; ohne Animation',
+    'nl': 'Helderheid begrensd op 50 %, op het laagst na 30 s zonder aanraking of onder 35 % batterij; zonder animatie',
+    'es': 'Brillo limitado al 50 %, al mínimo tras 30 s sin tocar o por debajo del 35 % de batería; sin animación',
+    'it': 'Luminosità limitata al 50 %, al minimo dopo 30 s senza tocco o sotto il 35 % di batteria; senza animazioni',
+    'tr': 'Parlaklık %50 ile sınırlı; 30 sn dokunulmazsa veya pil %35 altına inerse en düşükte; animasyon yok'},
   'Nuit (thème auto)': {
     'de': 'Nacht (Auto-Design)',
     'nl': 'Nacht (auto-thema)',
@@ -2729,6 +2758,18 @@ views:
     'es': 'Cargando',
     'it': 'In carica',
     'tr': 'Şarj oluyor'},
+  'Sur batterie': {
+    'de': 'Im Akkubetrieb',
+    'nl': 'Op batterij',
+    'es': 'Con batería',
+    'it': 'A batteria',
+    'tr': 'Pilde'},
+  'Courant': {
+    'de': 'Strom',
+    'nl': 'Stroom',
+    'es': 'Corriente',
+    'it': 'Corrente',
+    'tr': 'Akım'},
   'Poussées HA → tablette': {
     'de': 'HA → Tablet-Pushes',
     'nl': 'Pushes HA → tablet',

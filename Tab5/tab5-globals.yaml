@@ -219,3 +219,11 @@ globals:
     type: bool
     initial_value: 'false'
     restore_value: false
+  # Rien ne retient l'écran tel qu'il est : écran allumé, démarrage fini, ni réveil qui
+  # sonne, ni assistant vocal, ni jeu, ni mise à jour. Calculé toutes les 10 s par
+  # l'extinction auto (tab5-ha-controls.yaml), lu par le mode économie
+  # (tab5-economie.yaml), qui n'assombrit pas pour les mêmes raisons : une seule liste.
+  - id: ecran_veille_permise
+    type: bool
+    initial_value: 'false'
+    restore_value: false

@@ -10,7 +10,7 @@ The screen settings you may want to change without opening Home Assistant. **Ope
 
 **Screen**
 
-- **Brightness**: the slider, from 10 to 100 %.
+- **Brightness**: the slider, from 10 to 100 %. On battery the energy saving mode caps it at 50 %, then lowers it to the minimum after 30 s without a touch or below 35 % battery: the entity « Tab5 Économie d'énergie » in Home Assistant chooses **Jamais** (never), **Sur batterie** (on battery, the default) or **Toujours** (always) ([tablet settings](../installation/settings.md)).
 - **Auto screen off**: **Never**, or 1, 2, 5, 10 or 30 min without a touch. Never while the alarm rings, the voice assistant is busy or a game is open.
 - **Wake the screen on « Okay Nabu »**: **Yes** or **No**. With No, the screen stays dark and the answer is only spoken.
 - **Wake the screen with a tap**: **Yes** or **No**, a small knock on the case.
@@ -38,7 +38,7 @@ Les réglages de l'écran qu'on veut changer sans ouvrir Home Assistant. **S'ouv
 
 **Écran**
 
-- **Luminosité** : le curseur, de 10 à 100 %.
+- **Luminosité** : le curseur, de 10 à 100 %. Sur batterie, le mode économie la plafonne à 50 %, puis la met au plus bas après 30 s sans toucher ou sous 35 % de batterie : l'entité « Tab5 Économie d'énergie » de Home Assistant choisit **Jamais**, **Sur batterie** (d'origine) ou **Toujours** ([réglages de la tablette](../installation/settings.md#version-française)).
 - **Extinction auto** : **Jamais**, ou 1, 2, 5, 10 ou 30 min sans toucher. Jamais pendant que le réveil sonne, que l'assistant vocal travaille ou qu'un jeu est ouvert.
 - **Rallumer l'écran à « Okay Nabu »** : **Oui** ou **Non**. Sur Non, l'écran reste noir et la réponse est seulement parlée.
 - **Rallumer l'écran d'une tape** : **Oui** ou **Non**, un petit coup sur le boîtier.
