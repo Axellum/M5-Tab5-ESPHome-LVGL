@@ -9,7 +9,11 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 05/10/2026 sur `52a0dba` (batterie ou USB, plusieurs sources solaires, appareils sur la
 météo au choix, tableau de bord), puis
 [v3.7.0-rc.2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.2)
-le 05/10/2026, qui ajoute le popup du volet (#333) et la doc des deux modes vocaux (#334).
+le 05/10/2026, qui ajoute le popup du volet (#333) et la doc des deux modes vocaux (#334), puis
+[v3.7.0-rc.3](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.3)
+le 06/10/2026 : le package du volet à course simulée ne rend plus le volet muet (#341),
+extinction automatique de l'écran au choix et rallumage à « Okay Nabu » (#342), notice
+d'utilisation (#339).
 
 ### 2026-10-06 — Écran : extinction automatique au choix, rallumage à « Okay Nabu »
 
