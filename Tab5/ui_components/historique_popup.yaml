@@ -1,0 +1,72 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file historique_popup.yaml
+# @role Popup « Température » (ADR-0032, 06/10/2026) : en haut la valeur actuelle, le
+#       minimum et le maximum de la période (et la prévision pour la seconde
+#       température) ; en bas la courbe, ses trois vues (24 h / 7 jours / 30 jours) et la
+#       prévision de la météo à sa suite. Ouvert par un appui long sur une des deux
+#       températures de l'accueil (climate_card.yaml → tab5_historique_ouvrir).
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Température » dans
+#       tab5_modal_registry_init). Corps : x 24..1226, y 72..670 — cartes de 150 px en
+#       haut (y 72), graphique de 432 px en dessous (y 238, 16 px d'écart, bas à 670).
+#       Tout ce qui bouge est écrit par tab5_historique.cpp (cartes montrées, largeurs,
+#       titre, tracé) : aucune valeur posée ici.
+# @ai_instruction Un widget de plus = son champ dans HistoriqueUI (tab5_custom.h) et sa
+#       ligne dans le script tab5_historique_ouvrir (tab5-historique.yaml).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: historique_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(historique_popup));" } }
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F050F", icon_style: "style_text_info", title: "Température", title_id: "historique_popup_titre", close_btn_id: "btn_historique_close", close_lambda: "animate_popup_close(id(historique_popup));" } }
+
+          # ═══ CHIFFRES : maintenant, minimum, maximum (+ prévu pour la seconde) ═══
+          - !include { file: historique_carte.yaml, vars: { n: "0" } }
+          - !include { file: historique_carte.yaml, vars: { n: "1" } }
+          - !include { file: historique_carte.yaml, vars: { n: "2" } }
+          - !include { file: historique_carte.yaml, vars: { n: "3" } }
+
+          # ═══ COURBE : la période choisie, puis la prévision ═══
+          - obj:
+              align: TOP_LEFT
+              x: 24
+              y: 238
+              width: 1202
+              height: 432
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                # « Chambre · 24 dernières heures » (nom poussé par HA, ou celui de l'emplacement)
+                - label: { id: historique_titre, text: "", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
+                - !include { file: vue_btn.yaml, vars: { prefixe: historique, n: "0", x_pos: "-338", label_text: "24 h" } }
+                - !include { file: vue_btn.yaml, vars: { prefixe: historique, n: "1", x_pos: "-178", label_text: "7 jours" } }
+                - !include { file: vue_btn.yaml, vars: { prefixe: historique, n: "2", x_pos: "-18", label_text: "30 jours" } }
+                # Graduations, barres, courbes, axe, légende et message d'attente : créés par
+                # tab5_historique.cpp (1166 × 344).
+                - obj:
+                    id: historique_zone
+                    align: TOP_LEFT
+                    x: 18
+                    y: 72
+                    width: 1166
+                    height: 344
+                    styles: style_transparent
+                    scrollable: false

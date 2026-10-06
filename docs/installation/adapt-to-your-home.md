@@ -31,6 +31,14 @@ A solar installation gets its own popup ([ADR-0028](../decisions/0028-solar-ener
 
 Section left empty: nothing changes on the screen.
 
+## Temperature history
+
+A long press on one of the two home-screen temperatures opens its history ([ADR-0032](../decisions/0032-temperature-history-popup.md)): 24 hours, 7 days or 30 days, from Home Assistant's long-term statistics, and the weather forecast for the second temperature.
+
+1. The `tab5_historique.yaml` package (in the archive of [step 1](home-assistant-files.md)) sends the curve while the popup is open. Without it, the popup says « En attente de Home Assistant ».
+2. If your second temperature is **outdoors**, tick « La seconde température est dehors · The second temperature is outdoors » in the « Tab5 — emplacements » automation (section « Températures · Temperatures »): the forecast then extends its curve. Unticked (a greenhouse), the forecast stays apart, as « Outdoors, forecast ».
+3. The sensor needs statistics (a `state_class`, which thermometers have); the forecast is that of the weather entity picked for the tablet.
+
 ## Other zones
 
 **What you don't have disappears**, with its buttons ([ADR-0018](../decisions/0018-optional-zones-confirmed-by-ha.md), [ADR-0019](../decisions/0019-logical-slots-blueprint.md)).
@@ -100,6 +108,14 @@ Une installation solaire a son propre popup ([ADR-0028](../decisions/0028-solar-
 ![Popup Énergie du Tab5, vue Jours : solaire, maison, réseau et batterie en direct, et la production des 30 derniers jours (rendu de la CI, données de démonstration)](../images/tab5_energie.png)
 
 Section laissée vide : rien ne change à l'écran.
+
+## Historique des températures
+
+Un appui long sur l'une des deux températures de l'accueil ouvre son historique ([ADR-0032](../decisions/0032-temperature-history-popup.md)) : 24 heures, 7 jours ou 30 jours, d'après les statistiques longue durée de Home Assistant, et la prévision de la météo pour la seconde température.
+
+1. Le package `tab5_historique.yaml` (dans l'archive de l'[étape 1](home-assistant-files.md#version-française)) envoie la courbe tant que le popup est ouvert. Sans lui, le popup affiche « En attente de Home Assistant ».
+2. Si votre seconde température est **dehors**, cochez « La seconde température est dehors · The second temperature is outdoors » dans l'automatisation « Tab5 — emplacements » (section « Températures · Temperatures ») : la prévision prolonge alors sa courbe. Décochée (une serre), la prévision reste à part, sous « Dehors, prévu ».
+3. Le capteur doit avoir des statistiques (un `state_class`, comme les thermomètres) ; la prévision est celle de l'entité météo choisie pour la tablette.
 
 ## Autres zones
 

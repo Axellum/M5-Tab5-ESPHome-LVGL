@@ -1,0 +1,23 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Carte chiffrée du popup « Température » (ADR-0032), réutilisée 4 fois par
+# historique_popup.yaml : 0 maintenant, 1 minimum, 2 maximum, 3 prévu (seconde
+# température seulement).
+# vars : n (0-3, suffixe des ids lus par tab5_historique.cpp via g_historique_ui).
+# Ne rien assigner ici : tab5_historique.cpp écrit le nom, la valeur (couleur de la
+# température) et le détail (heure ou jour du minimum, moyenne…), montre la carte 3 pour
+# la seconde température et répartit les cartes sur toute la largeur (x, largeur ; 150 px
+# de haut).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "historique_carte_${n}"
+  align: TOP_LEFT
+  x: 24
+  y: ${modal_body_y}
+  width: 288
+  height: 150
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    - label: { id: "historique_nom_${n}", text: "", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+    - label: { id: "historique_valeur_${n}", text: "--", align: TOP_LEFT, x: 22, y: 44, styles: style_police_date }
+    - label: { id: "historique_detail_${n}", text: "", align: TOP_LEFT, x: 22, y: 110, styles: style_text_dim }

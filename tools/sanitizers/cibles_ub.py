@@ -13,6 +13,7 @@ pendant ce cas, lus dans le journal de la tablette (tools/sanitizers/rapports.py
   R2c bornes de clim « -1e30 » (climr)                  (tab5_cards.cpp puis lv_map de LVGL)
   R1  luminosité « inf » dans les emplacements          (tab5_tuiles.cpp)
   R2b humidité « inf » / « 1e30 »                        (tab5_forecast.cpp)
+  R3  historique « 1e30 » : pas, minutes, températures   (tab5_historique.cpp)
 
 Sorties : cibles.json, cibles.md, tablette.log. Code de sortie 1 si un rapport, si la
 tablette s'arrête ou si une fenêtre attendue manque dans ecrans.py.
@@ -61,6 +62,18 @@ CAS = [
      {"condition": "sunny", "temperature": "inf", "humidite": "inf"}, None),
     ("R2b humidité 1e30", "tab5_maj_meteo_actuelle",
      {"condition": "sunny", "temperature": "1e30", "humidite": "-1e30"}, None),
+    # Popup Température ouvert (vue 24 h, la réponse valide vient des gestes de l'écran) :
+    # pas, maintenant et minutes de prévision hors des bornes, températures infinies.
+    ("R3 historique 1e30", "tab5_maj_historique",
+     {"cle": "serre", "vue": "jour", "entete": "Serre|2026-06-15T07:00|1e30|1e30|1e30|1",
+      "mesures": "1e30,-1e30,inf;-1e30,1e30,nan;" * 8,
+      "previsions": "1e30,20;-1e30,1e30,-1e30,1e30;99999999999999999999,20;2147483648,1e30"},
+     "temperature-serre"),
+    ("R3 historique date et pas", "tab5_maj_historique",
+     {"cle": "serre", "vue": "jour", "entete": "Serre|2147483647-12-31T23:59|0.5|-1e30|-1e30|0",
+      "mesures": "20,19,21;" * 64 + "20,19,21",
+      "previsions": ";".join(f"{1000000 * k},20,-1e30,1e30" for k in range(60))},
+     "temperature-serre"),
 ]
 
 

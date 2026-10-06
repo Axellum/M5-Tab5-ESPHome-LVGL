@@ -40,6 +40,35 @@ blueprint plus ancien laisse la clim et le volume de la tablette.
   position (ouvert / fermé sans position réglable), valeur d'un nombre, bornées aux limites de
   l'appareil.
 
+### 2026-10-06 — Popup Température : historique des deux températures, et prévision
+
+Demande d'Axel : un historique en popup au clic long sur la température de la pièce, et pour la
+seconde (la serre ; dehors pour la plupart des maisons), l'historique et la prévision, en
+graphique ([ADR-0032](docs/decisions/0032-temperature-history-popup.md)). Firmware, blueprint et
+un package HA ; sans le package, le popup attend.
+- **Appui long sur l'une des deux températures** de l'accueil : popup « Température ». En haut,
+  Maintenant (et la moyenne), Minimum et Maximum (avec leur moment) ; pour la seconde, une
+  quatrième carte, la prévision (sa maxi, sa mini dessous). En bas, la courbe des moyennes, une
+  barre pâle du minimum au maximum de chaque créneau, le point de la valeur actuelle. Trois vues :
+  **24 h** (par heure), **7 jours** (par trois heures), **30 jours** (par jour). L'appui court
+  sur la seconde température ouvre toujours l'arcade.
+- **Prévision**, seconde température seulement : en or, sur un fond teinté après « Maintenant »,
+  avec la barre mini-maxi d'une prévision par jour. Nouvelle case du blueprint, **« La seconde
+  température est dehors »** : cochée, la prévision prolonge la courbe ; décochée (une serre),
+  elle reste à part sous le nom « Dehors, prévu ».
+- **Rien de stocké sur la tablette, rien poussé popup fermé** : l'ouverture et chaque bouton de
+  vue émettent `esphome.tab5_historique` ; le blueprint lance `script.tab5_historique`
+  (`packages/tab5_historique.yaml`), qui lit les **statistiques longue durée du recorder** (aucun
+  helper, aucune écriture en base ; le capteur doit avoir un `state_class`) et la prévision de
+  l'entité météo de la tablette, puis pousse une fois la nouvelle action `tab5_maj_historique`.
+  Les minutes sont comptées à l'horloge locale : un changement d'heure ne décale pas l'axe.
+- ~6 Ko de PSRAM à la première ouverture, widgets créés une fois ; tracé en `lv_line` et barres
+  (pas de `lv_chart` dans ce firmware). `energie_vue_btn.yaml` devient `vue_btn.yaml`, partagé
+  par les deux popups. Démo, rendu (cinq écrans), notice (page Température) et
+  `tests/test_historique.py` (modèles du package rendus sur des réponses simulées, deux
+  changements d'heure, calcul Python à part ; aussi rendus par le HA d'Axel sur ses vraies
+  statistiques). Non essayé sur la tablette.
+
 ### 2026-10-06 — Alertes : l'historique, et « Tout marquer comme lu »
 
 Lot 4 du plan des alertes de la carte centrale. Firmware et Home Assistant.

@@ -1223,6 +1223,28 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Aucun capteur d'énergie choisi": "Enerji sensörü seçilmedi"
 "Aucun historique": "Geçmiş yok"
 
+# Popup Température (ADR-0032) : historique des deux températures de l'accueil
+"24 h": "24 sa"
+"7 jours": "7 gün"
+"30 jours": "30 gün"
+"MAINTENANT": "ŞİMDİ"
+"MINIMUM": "EN DÜŞÜK"
+"MAXIMUM": "EN YÜKSEK"
+"PRÉVU": "TAHMİN"
+"DEHORS, PRÉVU": "DIŞARI, TAHMİN"
+"Moyenne": "Ortalama"
+"Minimum": "En düşük"
+"24 dernières heures": "Son 24 saat"
+"7 derniers jours": "Son 7 gün"
+"Extérieur": "Dış ortam"
+"Serre": "Sera"
+"Intérieur": "İç ortam"
+"Maintenant": "Şimdi"
+"Prévu": "Tahmin"
+"Dehors, prévu": "Dışarı, tahmin"
+"Mesuré": "Ölçülen"
+"Minimum et maximum": "En düşük ve en yüksek"
+
 # Thèmes (ADR-0029) : mode de la rangée « Thème » de la console système
 "Sombre": "Koyu"
 "Clair": "Açık"

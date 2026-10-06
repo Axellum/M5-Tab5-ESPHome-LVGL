@@ -36,6 +36,7 @@ APPUIS_LONGS = {
     "btn_control_ha": "home.md",
     "btn_control_tv": "home.md",
     "btn_rangee": "plants.md",
+    "climate_card.yaml": "temperature.md",
     # Carte centrale : chaque panneau de l'accueil ouvre l'historique des alertes.
     "btn_alerts_mf_tap": "home.md",
     "btn_info_tap": "home.md",
@@ -54,6 +55,10 @@ NON_MONTREES = {
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "energie-mois": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
+    "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
+    "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",
+    "temperature-serre-mois": "temperature-serre montre la même fenêtre ; les vues sont décrites",
+    # Images à tirer du rendu de la PR (tools/site/images_notice.py), puis citées.
     "appareil-scene": "appareil montre la même fenêtre ; la scène est décrite dans tiles.md",
     "console-batterie-en-charge": "console-batterie montre la même ligne ; l'éclair est décrit",
     "console-sans-batterie": "console-batterie montre la même ligne ; « Sur USB » est décrit",

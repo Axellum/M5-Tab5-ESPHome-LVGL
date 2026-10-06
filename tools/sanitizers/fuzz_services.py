@@ -72,6 +72,9 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_zones": {"absentes": "clim,pot_4,pot_5"},
     "tab5_maj_emplacements": {"payload": "lumiere_1|on|180;salon|21.4|21.4;t02|on|128|FFB347;t01|open|45|;climr|16|30|0.5|°C|7|Salon;"},
     "tab5_maj_tuiles": {"payload": "p0|Salon;t00|lum|lampadaire|d||Lampadaire;t01|vol||||Volet;t02|cap|thermometre||°C|Température;"},
+    "tab5_maj_historique": {"cle": "serre", "vue": "jour", "entete": "Serre|2026-06-15T07:00|60|1485|18.2|0",
+                            "mesures": "17.1,16.8,17.5;16.9,16.6,17.2;;16.5,16.2,16.8",
+                            "previsions": "1500,19.4;1560,20.8;1620,22.1"},
 }
 
 NOMBRES = ["", "-1", "0", "15", "16", "31", "32", "99", "255", "256", "2147483647", "-2147483648",

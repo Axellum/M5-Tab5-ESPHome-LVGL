@@ -238,6 +238,7 @@ void rangee_rejouer_theme();
 void cartes_rejouer_theme();
 void energie_rejouer_theme();
 void reglages_rejouer_theme();
+void historique_rejouer_theme();
 void alertes_rejouer_theme();
 void zones_rejouer_theme();
 void assist_rejouer_theme();

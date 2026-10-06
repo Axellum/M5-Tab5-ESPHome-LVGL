@@ -32,6 +32,7 @@ The date changes colour with the day's weather warnings (yellow, orange, red). I
 ## Temperatures and climate (9, 10)
 
 - The two temperatures: the room (sofa) and a second sensor (greenhouse). A **tap on the second one** opens the [Arcade](arcade.md); without a second sensor, a gamepad stands in its place and does the same.
+- A **long press on either temperature** opens its [history](temperature.md): 24 hours, 7 or 30 days, and the weather forecast for the second one.
 - **Target temperature**: a tap opens the [climate window](climate.md).
 - **−** and **+**: one step down or up. The new target shows at once; quick taps add up and leave as one command when you stop.
 - **Another device for − and +**: a tap on the first temperature (the room) unfolds a list — the climate, the devices chosen in the « Tab5 — emplacements » blueprint (section « Tuile − / + · − / + tile »: a TV or soundbar volume, a light's brightness, a thermostat, a water heater, a humidifier, a fan's speed, a shutter's position, a number), then the tablet's volume. Tap one: − and + now adjust it, its icon and value show between them, and it stays chosen, even after a restart. A tap elsewhere closes the list. A tap on the value opens the device's window when it has one (a light or a shutter placed in a room, the TV's remote), otherwise nothing.
@@ -92,6 +93,7 @@ La date change de couleur avec les vigilances météo du jour (jaune, orange, ro
 ## Températures et clim (9, 10)
 
 - Les deux températures : la pièce (canapé) et une seconde sonde (serre). Un **tap sur la seconde** ouvre l'[Arcade](arcade.md#version-française) ; sans seconde sonde, une manette prend sa place et fait de même.
+- Un **appui long sur l'une des deux températures** ouvre son [historique](temperature.md#version-française) : 24 heures, 7 ou 30 jours, et la prévision de la météo pour la seconde.
 - **Consigne** : un tap ouvre la [fenêtre de la clim](climate.md#version-française).
 - **−** et **+** : un pas de moins ou de plus. La nouvelle consigne s'affiche tout de suite ; des taps rapides s'additionnent et partent en une seule commande quand vous vous arrêtez.
 - **Un autre appareil pour − et +** : un tap sur la première température (la pièce) déroule une liste — la clim, les appareils choisis dans le blueprint « Tab5 — emplacements » (section « Tuile − / + · − / + tile » : volume d'une TV ou d'une barre de son, luminosité d'une lampe, un thermostat, un chauffe-eau, un humidificateur, la vitesse d'un ventilateur, la position d'un volet, un nombre), puis le volume de la tablette. Un tap en choisit un : − et + le règlent désormais, son icône et sa valeur s'affichent entre les deux, et il reste choisi, même après un redémarrage. Un tap ailleurs ferme la liste. Un tap sur la valeur ouvre la fenêtre de l'appareil quand il en a une (une lampe ou un volet placé dans une pièce, la télécommande de la TV), sinon rien.

@@ -111,6 +111,9 @@
         - en: Energy
           fr: Énergie
           page: docs/notice/energy.md
+        - en: Temperature
+          fr: Température
+          page: docs/notice/temperature.md
         - en: Plants
           fr: Plantes
           page: docs/notice/plants.md
