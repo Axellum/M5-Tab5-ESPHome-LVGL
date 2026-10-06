@@ -31,7 +31,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 
 ## Everywhere
 
-- **Screen off**: a touch turns it back on. So does a knock on the case, while the device switch « Tab5 Tap-to-Wake » is on (it is by default).
+- **Screen off**: a touch turns it back on. So does a knock on the case, while the device switch « Tab5 Tap-to-Wake » is on (it is by default). It goes off by itself only if you pick a delay in « Tab5 Extinction auto de l'écran » (« Jamais », never, by default): after that long without a touch, but never while the alarm rings, the voice assistant is busy or a game is open.
 - **A window** (lights, climate, calendar…) closes with its **×**, top right, or with a tap on the dark area around it. Left alone 45 s without a touch, it closes by itself; a game never does.
 - **Another forecast page** comes back to the home page after 25 s without a touch.
 - What you don't have is not shown: no TV, no TV button (the two others move right); no conversation pipeline, no Domo / Discu buttons; no greenhouse sensor, a gamepad icon in its place, still opening the Arcade; no plants, no pots.
@@ -89,7 +89,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 
 ## Partout
 
-- **Écran éteint** : un toucher le rallume. Un petit coup sur le boîtier aussi, tant que l'interrupteur « Tab5 Tap-to-Wake » de l'appareil est allumé (il l'est d'origine).
+- **Écran éteint** : un toucher le rallume. Un petit coup sur le boîtier aussi, tant que l'interrupteur « Tab5 Tap-to-Wake » de l'appareil est allumé (il l'est d'origine). Il ne s'éteint seul que si vous choisissez un délai dans « Tab5 Extinction auto de l'écran » (« Jamais » d'origine) : après ce délai sans toucher, mais jamais pendant que le réveil sonne, que l'assistant vocal travaille ou qu'un jeu est ouvert.
 - **Une fenêtre** (lumières, clim, calendrier…) se ferme avec sa **×**, en haut à droite, ou d'un tap sur la zone sombre autour. Laissée 45 s sans toucher, elle se ferme seule ; un jeu, jamais.
 - **Une autre page de prévisions** revient à la page d'accueil après 25 s sans toucher.
 - Ce que vous n'avez pas n'apparaît pas : sans TV, pas de bouton TV (les deux autres se décalent à droite) ; sans pipeline de discussion, pas de boutons Domo / Discu ; sans capteur de serre, une manette à sa place, qui ouvre toujours l'Arcade ; sans plantes, pas de pots.

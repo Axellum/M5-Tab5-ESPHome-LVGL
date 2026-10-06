@@ -2,6 +2,9 @@
 # @file tab5-hardware.yaml
 # @role Configuration bas niveau (I2C, I2S, DSI Display, Audio, DAC).
 # @ai_instruction FICHIER CRITIQUE. Ne modifier AUCUNE broche GPIO ou fréquence I2C sans l'accord d'Axel.
+# @note Le light `backlight` note l'heure de chaque allumage (`ecran_allume_ms`) et les
+#       deux `ota:` posent `ota_en_cours` : l'extinction auto de l'écran les lit
+#       (tab5-ha-controls.yaml). Ne pas renommer ces globals sans elle.
 # ============================================================================
 # [2026.7.0] st7123 est un composant officiel ESPHome : plus d'external_components ni de
 # dossier Tab5/my_components/ (retire du depot le 06/07/2026, PR #15).
@@ -174,6 +177,16 @@ ota:
     # L'écran noir après OTA (co-processeur C6 non réinitialisé par un reboot
     # logiciel, cf. docs/troubleshooting.md) ne se règle par AUCUN redémarrage
     # logiciel, seulement par un cycle d'alimentation : ne pas remettre de on_end.
+    # Mise à jour en cours (06/10/2026) : l'extinction auto de l'écran
+    # (tab5-ha-controls.yaml) attend la fin. Une OTA réussie redémarre (rien à
+    # remettre) ; une OTA ratée ou coupée rend la main. Même bloc dans
+    # publication-commune.yaml pour l'OTA lancée depuis HA.
+    on_begin:
+      - globals.set: { id: ota_en_cours, value: 'true' }
+    on_abort:
+      - globals.set: { id: ota_en_cours, value: 'false' }
+    on_error:
+      - globals.set: { id: ota_en_cours, value: 'false' }
 
 safe_mode:
   num_attempts: 10
@@ -248,6 +261,10 @@ light:
     default_transition_length: 250ms
     on_turn_on:
       - lvgl.resume:
+      # Extinction auto de l'écran (tab5-ha-controls.yaml) : le délai repart de cet
+      # allumage, quelle qu'en soit la source (toucher, tape, HA, réveil, démarrage),
+      # sans toucher à l'horloge d'inactivité de LVGL (voir ecran_allume_ms).
+      - lambda: 'id(ecran_allume_ms) = millis();'
     on_turn_off:
       - lvgl.pause:
 

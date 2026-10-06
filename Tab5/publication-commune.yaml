@@ -13,8 +13,16 @@
 # OTA commun applique `signed_ota_verification`, comme pour `ota: esphome`). Le
 # certificat HTTPS n'est pas vérifié (`verify_ssl: false`, tab5-assist.yaml) : c'est la
 # signature qui garantit l'origine de l'image.
+# Mise à jour en cours : même `ota_en_cours` que l'OTA `esphome` (tab5-hardware.yaml),
+# lu par l'extinction auto de l'écran (tab5-ha-controls.yaml), qui attend la fin.
 ota:
   - platform: http_request
+    on_begin:
+      - globals.set: { id: ota_en_cours, value: 'true' }
+    on_abort:
+      - globals.set: { id: ota_en_cours, value: 'false' }
+    on_error:
+      - globals.set: { id: ota_en_cours, value: 'false' }
 
 update:
   - platform: http_request

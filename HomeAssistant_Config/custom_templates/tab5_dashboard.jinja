@@ -80,6 +80,7 @@
   ('theme_nuit', 'switch', 'nuit_theme_auto'),
   ('tape', 'switch', 'tap_to_wake'), ('batterie_montee', 'switch', 'tab5_batterie_montee'),
   ('appareils_meteo', 'switch', 'tab5_appareils_sur_la_meteo'),
+  ('extinction', 'select', 'tab5_extinction_auto_de_l_ecran'),
   ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
   ('zones', 'sensor', 'zones_masquees'),
   ('reveil_en_cours', 'binary_sensor', 'reveil_en_cours'), ('prochain_reveil', 'sensor', 'prochain_reveil'),
@@ -690,7 +691,8 @@ views:
             icon: mdi:tablet
 {%- for cle, fr_, en_, icone in [('langue', "Langue de l'écran", 'Screen language', 'mdi:translate'),
                                   ('theme', 'Thème', 'Theme', 'mdi:palette'),
-                                  ('theme_mode', 'Clair ou sombre', 'Light or dark', 'mdi:theme-light-dark')] %}
+                                  ('theme_mode', 'Clair ou sombre', 'Light or dark', 'mdi:theme-light-dark'),
+                                  ('extinction', "Extinction auto de l'écran", 'Screen auto-off', 'mdi:monitor-off')] %}
 {%- if T[cle] %}
           - type: tile
             entity: {{ T[cle] }}
@@ -702,6 +704,12 @@ views:
                 style: dropdown
 {%- endif %}
 {%- endfor %}
+{#- Extinction auto (firmware du 06/10/2026, discussion #278) : juste avant la tape, qui rallume. #}
+{%- if T.extinction %}
+          - type: heading
+            heading: "{{ t('Délai sans toucher ; jamais pendant le réveil, la voix ou un jeu', 'Time without a touch; never while the alarm rings, during voice or a game') }}"
+            heading_style: subtitle
+{%- endif %}
 {%- for cle, fr_, en_, icone in [('tape', "Rallumer l'écran d'une tape", 'Wake the screen with a tap', 'mdi:gesture-tap'),
                                   ('batterie_montee', 'Batterie montée', 'Battery fitted', 'mdi:battery'),
                                   ('appareils_meteo', 'Appareils sur la météo', 'Devices on the forecast', 'mdi:lightbulb-outline')] %}
@@ -1992,6 +2000,18 @@ views:
     'es': 'Claro u oscuro',
     'it': 'Chiaro o scuro',
     'tr': 'Açık veya koyu'},
+  "Extinction auto de l'écran": {
+    'de': 'Bildschirm automatisch aus',
+    'nl': 'Scherm automatisch uit',
+    'es': 'Apagado automático de la pantalla',
+    'it': 'Spegnimento automatico dello schermo',
+    'tr': 'Ekranı otomatik kapat'},
+  'Délai sans toucher ; jamais pendant le réveil, la voix ou un jeu': {
+    'de': 'Zeit ohne Berührung; nie während der Wecker klingelt, bei Sprache oder einem Spiel',
+    'nl': 'Tijd zonder aanraking; nooit terwijl de wekker afgaat, bij spraak of een spel',
+    'es': 'Tiempo sin tocar; nunca mientras suena la alarma, con la voz o en un juego',
+    'it': 'Tempo senza tocco; mai mentre suona la sveglia, con la voce o in un gioco',
+    'tr': 'Dokunmadan geçen süre; alarm çalarken, sesli asistanda veya oyunda asla'},
   "Rallumer l'écran d'une tape": {
     'de': 'Bildschirm per Tipp aufwecken',
     'nl': 'Scherm wekken met een tik',

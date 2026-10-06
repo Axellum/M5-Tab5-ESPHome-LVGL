@@ -31,7 +31,7 @@ If you add a genuinely new architectural constraint or a non-obvious decision wh
 ## File descriptions
 
 ### `tab5-hardware.yaml`
-Low-level hardware: display/touch settings shared by every Tab5 revision (pins, dimensions, calibration, wake-on-touch), ES8388 DAC I2C init, speaker/mic I2S, PI4IOE5V6408 GPIO expander (Wi-Fi power/antenna switches), `ota:` and `esp32: … signed_ota_verification` (since 3.0: no encryption and no password, but the tablet only accepts a firmware signed with the key of the one it runs — `tab5_signature.pem`, gitignored, see ADR-0020). The audio hardware stays here (shared I2S bus, ES7210 mic ADC, ES8388 DAC, `media_player`); the voice pipeline itself moved to `tab5-assist.yaml` on 2026-09-25 (audit lot 8c).
+Low-level hardware: display/touch settings shared by every Tab5 revision (pins, dimensions, calibration, wake-on-touch), ES8388 DAC I2C init, speaker/mic I2S, PI4IOE5V6408 GPIO expander (Wi-Fi power/antenna switches), the backlight `light` (its `on_turn_on` stamps `ecran_allume_ms` for the screen auto-off), `ota:` (sets `ota_en_cours` while an update runs) and `esp32: … signed_ota_verification` (since 3.0: no encryption and no password, but the tablet only accepts a firmware signed with the key of the one it runs — `tab5_signature.pem`, gitignored, see ADR-0020). The audio hardware stays here (shared I2S bus, ES7210 mic ADC, ES8388 DAC, `media_player`); the voice pipeline itself moved to `tab5-assist.yaml` on 2026-09-25 (audit lot 8c).
 
 ### `ecran-st7123.yaml` / `ecran-st7121.yaml` / `ecran-ili9881c.yaml`
 What differs between Tab5 revisions: display model and touch platform, applied with `!extend` onto `tab5_display` and `touch` from `tab5-hardware.yaml`. One of them is included by `tab5-ha-hmi.yaml`, chosen by `tab5_ecran:` in `user_entities.yaml` (default `st7123`, the only one tested on a device). See [`../docs/hardware.md`](../docs/hardware.md#hardware-revisions).
@@ -187,6 +187,8 @@ L'autre moitié du contrat. **Le firmware n'appelle aucune action de HA** (plus 
 | `ha_alert_id_0…3` | string | ids des bandeaux alertes/infos HA (`tab5_maj_alertes_ha_bulk`) — leur présence et le panneau affiché vivent dans `g_central_ctx` (voir plus haut) ; `tab5_dismissed_local` mémorise les ids masqués au tap |
 | `current_light_slot` | string | cible des commandes du popup lumière : clé de la tuile choisie (`tRT`, ADR-0023), ou `lumiere_1` à `lumiere_3` en mode héritage (posé par `popup_lumiere_choisir()`) |
 | `va_stop_armed` | bool | modèle wake word « Stop » armé (volet en mouvement) |
+| `ecran_allume_ms` | uint32_t | `millis()` du dernier allumage du rétroéclairage (`on_turn_on` de `backlight`) : l'extinction auto de l'écran (select « Tab5 Extinction auto de l'écran », `tab5-ha-controls.yaml`) compte depuis le plus récent de cet instant et du dernier appui lu par LVGL |
+| `ota_en_cours` | bool | mise à jour du firmware en cours (`on_begin` / `on_abort` / `on_error` des deux `ota:`) : pas d'extinction auto pendant une OTA |
 | `system_volume`, `system_muted` | float/bool | volume haut-parleur |
 | `cal_view_year`, `cal_view_month`, `cal_detail_date` | int/int/string | popup calendrier : mois affiché + date du détail ouvert (le cache mensuel vit en `static` dans `tab5_calendar.cpp`) |
 
