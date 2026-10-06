@@ -1,0 +1,150 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-reglages.yaml
+# @role Popup « Réglages » de la tablette (06/10/2026, demande d'Axel) : pose les widgets
+#       que tab5_reglages.cpp peint (g_reglages_ui) et écrit les entités.
+#         - tab5_reglages_ouvrir : bouton central du haut (tap ; l'appui long reste la
+#           console système) ou « Aller à l'écran → Réglages ». Pose les widgets à la
+#           première ouverture, peint, ouvre.
+#         - tab5_reglages_sync_ui : lit les entités et repeint. Lancé par chaque entité
+#           réglable ici quand elle change (son on_value / on_state), que le changement
+#           vienne du popup ou de Home Assistant.
+#         - tab5_reglages_choisir : un bouton à choix (reglages_choix_btn.yaml) écrit son
+#           entité ; la langue demande d'abord confirmation (elle redémarre la tablette).
+#         - tab5_reglages_langue_confirmer : « Confirmer » de cette confirmation.
+#         - tab5_reglages_luminosite : le curseur, temporisé (un light.turn_on par geste).
+# @architecture_constraint Les réglages restent les entités exposées à HA (restore_value /
+#       restore_mode) : le popup ne garde rien. Chargé APRÈS tab5_lvgl (il référence des
+#       widgets) et avant tab5_themes. Aucun lv_* ici : la peinture est en C++. Le curseur
+#       de luminosité écrit `backlight` par tab5_reglages_luminosite ; il ne suit pas un
+#       changement de HA fait popup ouvert (relu à chaque ouverture).
+# @ai_instruction Un réglage de plus : voir l'en-tête de tab5_reglages.cpp.
+# ============================================================================
+
+script:
+  - id: tab5_reglages_ouvrir
+    then:
+      - lambda: |-
+          ReglagesUI& u = g_reglages_ui;
+          if (u.popup == nullptr) {
+            u.lum_slider = id(reglages_lum_slider);
+            u.lum_valeur = id(reglages_lum_valeur);
+            u.extinction[0] = id(reglages_extinction_0);
+            u.extinction[1] = id(reglages_extinction_1);
+            u.extinction[2] = id(reglages_extinction_2);
+            u.extinction[3] = id(reglages_extinction_3);
+            u.extinction[4] = id(reglages_extinction_4);
+            u.extinction[5] = id(reglages_extinction_5);
+            // Oui / Non : 0 = Oui, 1 = Non (reglages_peindre).
+            u.okay_nabu[0] = id(reglages_okay_nabu_oui);
+            u.okay_nabu[1] = id(reglages_okay_nabu_non);
+            u.tape[0] = id(reglages_tape_oui);
+            u.tape[1] = id(reglages_tape_non);
+            u.theme_nom = id(reglages_theme_nom);
+            u.mode[0] = id(reglages_mode_0);
+            u.mode[1] = id(reglages_mode_1);
+            u.mode[2] = id(reglages_mode_2);
+            u.nuit[0] = id(reglages_nuit_oui);
+            u.nuit[1] = id(reglages_nuit_non);
+            u.langue[0] = id(reglages_langue_0);
+            u.langue[1] = id(reglages_langue_1);
+            u.langue[2] = id(reglages_langue_2);
+            u.langue[3] = id(reglages_langue_3);
+            u.langue[4] = id(reglages_langue_4);
+            u.langue[5] = id(reglages_langue_5);
+            u.langue[6] = id(reglages_langue_6);
+            u.confirmation = id(reglages_confirmation);
+            u.confirmation_texte = id(reglages_confirmation_texte);
+            // En dernier : reglages_peindre() ne fait rien tant que popup est nul.
+            u.popup = id(reglages_popup);
+            reglages_preparer();
+          }
+          reglages_confirmation_fermer();
+      # Peint avant d'ouvrir : aucune image avec l'état d'une ouverture précédente.
+      - script.execute: tab5_reglages_sync_ui
+      - lambda: 'animate_popup_open(id(reglages_popup));'
+
+  - id: tab5_reglages_sync_ui
+    then:
+      - lambda: |-
+          if (g_reglages_ui.popup == nullptr) return;  // jamais ouvert : rien à peindre
+          ReglagesEtat e;
+          e.luminosite = (int) lroundf(id(backlight).remote_values.get_brightness() * 100.0f);
+          e.extinction = (int) id(tab5_extinction_auto).active_index().value_or(0);
+          e.okay_nabu = id(tab5_ecran_okay_nabu).state;
+          e.tape = id(tab5_tap_to_wake).state;
+          e.theme = (int) id(tab5_theme).active_index().value_or(0);
+          e.mode = (int) id(tab5_theme_mode).active_index().value_or(0);
+          e.nuit = id(tab5_theme_nuit).state;
+          e.langue = (int) id(tab5_langue).active_index().value_or(0);
+          reglages_peindre(e);
+
+  # `reglage` : ReglageId (tab5_custom.h) ; `valeur` : index de l'option, 1 / 0 pour
+  # Oui / Non, ±1 pour le thème. L'entité changée relance tab5_reglages_sync_ui.
+  - id: tab5_reglages_choisir
+    mode: queued
+    max_runs: 4
+    parameters:
+      reglage: int
+      valeur: int
+    then:
+      - lambda: |-
+          switch (reglage) {
+            case REGLAGE_EXTINCTION: {
+              auto call = id(tab5_extinction_auto).make_call();
+              call.set_index(valeur);
+              call.perform();
+              break;
+            }
+            case REGLAGE_OKAY_NABU:
+              if (valeur != 0) id(tab5_ecran_okay_nabu).turn_on(); else id(tab5_ecran_okay_nabu).turn_off();
+              break;
+            case REGLAGE_TAPE:
+              if (valeur != 0) id(tab5_tap_to_wake).turn_on(); else id(tab5_tap_to_wake).turn_off();
+              break;
+            case REGLAGE_THEME: {
+              auto call = id(tab5_theme).make_call();
+              if (valeur < 0) call.select_previous(true); else call.select_next(true);
+              call.perform();
+              break;
+            }
+            case REGLAGE_MODE: {
+              auto call = id(tab5_theme_mode).make_call();
+              call.set_index(valeur);
+              call.perform();
+              break;
+            }
+            case REGLAGE_NUIT:
+              if (valeur != 0) id(tab5_theme_nuit).turn_on(); else id(tab5_theme_nuit).turn_off();
+              break;
+            case REGLAGE_LANGUE:
+              reglages_langue_demander(valeur);
+              break;
+            default:
+              break;
+          }
+
+  # Curseur de luminosité : chaque pas relance le délai, un seul light.turn_on part une
+  # fois le doigt immobile (comme l'arc du popup lumière, tab5_debounce_light_brightness).
+  # 10 % au moins (plage du curseur) : à 0, la lumière s'éteindrait, et LVGL avec elle.
+  - id: tab5_reglages_luminosite
+    mode: restart
+    parameters:
+      pourcent: int
+    then:
+      - delay: 150ms
+      - light.turn_on:
+          id: backlight
+          brightness: !lambda 'return pourcent / 100.0f;'
+          transition_length: 0s
+
+  # « Confirmer » : le select « Langue » redémarre la tablette dans la nouvelle langue
+  # (son on_value, tab5-ha-controls.yaml).
+  - id: tab5_reglages_langue_confirmer
+    then:
+      - lambda: |-
+          const int langue = reglages_langue_confirmer();
+          if (langue < 0) return;
+          auto call = id(tab5_langue).make_call();
+          call.set_index(langue);
+          call.perform();

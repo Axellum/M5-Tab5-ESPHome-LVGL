@@ -1,37 +1,92 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file packages/tab5_alerts.yaml
-# @role File d'alertes HA pour le rotateur Tab5 (panneaux 4-7) + dismiss au tap.
-# @ai_instruction Après un acquittement, les scripts ne relancent PAS
-#       l'automation de push complète : l'automation « push léger »
-#       (id tab5_ha_hmi_alerts_push, packages/tab5_push.yaml) se
-#       déclenche déjà sur tout changement de input_text.tab5_alerts_dismissed
-#       et repousse les sections 1, 7 et 7b filtrées par la liste. L'ancien
-#       automation.trigger explicite (retiré le 08/09/2026) provoquait un second
-#       push, lourd (~5,5 s de delays + calendrier + météo), pour rien.
-#       Si la valeur ne change pas (id déjà acquitté), rien n'est repoussé :
-#       il n'y a rien de nouveau à afficher.
-#       Le tap sur une alerte ou sur le bandeau info émet l'événement
-#       esphome.tab5_alerte_lue (tab5-scripts.yaml, ADR-0025), que
-#       packages/tab5_evenements.yaml traduit en script.tab5_dismiss_alert.
-#       Retirés le 26/09/2026 (audit ressources, lot 2), faute d'appelant :
-#       l'automation qui écoutait l'événement esphome.tab5_alert_dismiss (jamais
-#       émis, dernier passage le 16/07/2026) et le script tab5_dismiss_info_panel.
-# @ai_warning Mémoire des alertes lues (06/10/2026) : PAS d'`initial:` sur
-#       input_text.tab5_alerts_dismissed. Avec `initial: ""`, HA la vidait à chaque
-#       démarrage et toutes les alertes lues revenaient (vu chez l'auteur le 29/09
-#       et le 03/10, aux deux démarrages de HA). Et après chaque tap,
-#       homeassistant.save_persistent_states : HA n'écrit l'état restauré sur le
-#       disque qu'à l'arrêt propre et toutes les 15 min ; un plantage (le 03/10, sans
-#       arrêt propre) perdait les taps d'avant. Vérifié par le job « Installation
-#       dans un HA neuf » (verifier_memoire_alertes : arrêt brutal puis propre).
-# @install Nécessite homeassistant.packages: !include_dir_named packages
+# @role Les alertes de la carte centrale du Tab5 : le capteur « Tab5 Alertes »
+#       (sensor.tab5_alertes) tient ce qui est en cours, ce qui a été lu et
+#       l'historique ; packages/tab5_push.yaml (script tab5_push_alertes) en tire les
+#       4 bandeaux d'alertes (panneaux 4-7) et le bandeau info (vigilance).
+#       Toute la logique est dans custom_templates/tab5_alertes.jinja (règles en tête
+#       du fichier, testées par tests/test_alertes_ha.py) : une alerte = une source +
+#       une révision ; lue, elle ne revient que si elle change ou si elle s'arrête
+#       vraiment puis recommence (plan des alertes du 06/10/2026). Les listes
+#       « Tab5 · alertes … » (abonnements, ci-dessous) choisissent ce qui s'affiche.
+# @ai_instruction Le tap sur un bandeau émet esphome.tab5_alerte_lue (alert_id =
+#       « id#révision » reçu de HA), que packages/tab5_evenements.yaml traduit en
+#       script.tab5_dismiss_alert, qui relaie l'événement interne tab5_alertes_lue au
+#       capteur. Les alertes lues changent : l'automatisation « sauvegarde » écrit les
+#       états restaurés sur le disque, et la poussée légère (tab5_ha_hmi_alerts_push)
+#       repousse les bandeaux. Pour marquer tout comme lu : alert_id « * ».
+# @ai_warning Calcul d'un seul tenant : la mémoire est rendue par les `variables:` du
+#       bloc à déclencheurs, que HA rend sans interruption (HA 2026.9.4,
+#       TriggerUpdateCoordinator._handle_triggered). Ne pas passer par `actions:` : leur
+#       script est en mode « single » et ignore un déclenchement arrivé pendant le
+#       précédent (un tap perdu derrière le calcul de la minute).
+# @ai_warning Mémoire des alertes lues : HA n'écrit les états restaurés sur le disque
+#       qu'à l'arrêt propre et toutes les 15 min (STATE_DUMP_INTERVAL) ; un plantage
+#       (le 03/10/2026, sans arrêt propre) perdait les taps d'avant. D'où la
+#       sauvegarde à chaque changement des alertes lues. Et jamais d'`initial:` sur un
+#       input_text : HA ne le restaurerait pas (lot 0, le 06/10/2026). Vérifié par le
+#       job « Installation dans un HA neuf » (verifier_alertes).
+# @install Nécessite homeassistant.packages: !include_dir_named packages et
+#       custom_templates/tab5_alertes.jinja (archive tab5_home_assistant.zip).
 # ============================================================================
 
+input_select:
+  # Abonnements : ce qui s'affiche en alerte sur la tablette. Des listes plutôt que des
+  # interrupteurs : sans `initial`, une liste démarre sur sa PREMIÈRE option (le choix
+  # par défaut) puis HA restaure le choix à chaque redémarrage ; un input_boolean sans
+  # `initial` démarrerait éteint, et avec `initial` il oublierait le choix (lot 0).
+  # Options en français : lues par custom_templates/tab5_alertes.jinja.
+  tab5_alertes_maj:
+    name: "Tab5 · alertes : mises à jour · alerts: updates"
+    icon: mdi:package-up
+    options:
+      - "Toutes"
+      - "Home Assistant seulement"
+      - "Aucune"
+  tab5_alertes_vigilance:
+    name: "Tab5 · alertes : vigilance à partir de · alerts: weather warnings from"
+    icon: mdi:alert-outline
+    options:
+      - "Jaune"
+      - "Orange"
+      - "Rouge"
+      - "Aucune"
+  tab5_alertes_problemes:
+    name: "Tab5 · alertes : capteurs « problème » · alerts: problem sensors"
+    icon: mdi:alert-circle-outline
+    options:
+      - "Oui"
+      - "Non"
+  tab5_alertes_indisponibles:
+    name: "Tab5 · alertes : entités indisponibles · alerts: unavailable entities"
+    icon: mdi:help-network-outline
+    options:
+      - "Oui"
+      - "Non"
+  tab5_alertes_etiquette:
+    name: "Tab5 · alertes : étiquette « Tab5 · alerte » · alerts: « Tab5 · alerte » label"
+    icon: mdi:label-outline
+    options:
+      - "Oui"
+      - "Non"
+  tab5_alertes_piles:
+    name: "Tab5 · alertes : piles sous · alerts: batteries below"
+    icon: mdi:battery-alert-variant-outline
+    options:
+      - "20 %"
+      - "10 %"
+      - "15 %"
+      - "25 %"
+      - "30 %"
+      - "Aucune"
+
 input_text:
+  # Ancienne liste des alertes lues (avant le 06/10/2026) : lue une seule fois, quand le
+  # capteur « Tab5 Alertes » démarre sans mémoire, puis plus jamais écrite.
   tab5_alerts_dismissed:
     name: "Tab5 alertes HA ignorées"
-    # Sans `initial` : HA la restaure au redémarrage (voir @ai_warning en tête).
+    # Sans `initial` : HA la restaure au redémarrage.
     max: 255
     icon: mdi:bell-check
 
@@ -41,43 +96,73 @@ script:
     mode: queued
     fields:
       alert_id:
-        description: "Identifiant stable de l'alerte (entity_id ou ha:unavailable)"
+        description: "« id#révision » reçu par la tablette (un id sans révision lit la révision en cours), ou « * » pour tout marquer comme lu"
         required: true
         selector:
           text:
     sequence:
-      - variables:
-          aid: "{{ alert_id | string | trim }}"
-          current: "{{ states('input_text.tab5_alerts_dismissed') }}"
-          new_val: >
-            {% set ids = (current or '').split('|') | reject('equalto','') | list %}
-            {% if aid and aid not in ids %}
-              {{ (ids + [aid]) | join('|') }}
-            {% else %}
-              {{ ids | join('|') }}
-            {% endif %}
-      - action: input_text.set_value
-        continue_on_error: true
-        target:
-          entity_id: input_text.tab5_alerts_dismissed
-        data:
-          value: "{{ new_val[:255] }}"
-      # Sur le disque tout de suite : un plantage de HA ne perd plus ce tap.
-      - action: homeassistant.save_persistent_states
-        continue_on_error: true
+      - event: tab5_alertes_lue
+        event_data:
+          alert_id: "{{ alert_id | string | trim }}"
 
 template:
   # ==========================================================================
-  # Compte des entités "unavailable" — sorti du hot-path des poussées écran (#2).
-  # Le scan complet de la state machine (~centaines d'entités) était refait à
-  # CHAQUE poussée dans la section 7 (texte) ET 7b (rotateur) — soit 2× par push,
-  # sur des poussées parfois fréquentes (changement météo). Ce capteur le calcule
-  # UNE fois. `trigger:` (et non `state:`) est OBLIGATOIRE : un capteur `state:`
-  # qui itère `states` se réévaluerait à chaque changement d'état HA (pire que le
-  # problème d'origine). Ici : recalcul toutes les 2 min + au démarrage HA — la
-  # latence de « N indispo » (≤ 2 min) est sans importance pour un bandeau d'état.
-  # Consommé via `states('sensor.tab5_unavailable_count') | int(0)` (défaut 0 tant
-  # que le capteur n'existe pas → dégradation propre avant déploiement).
+  # « Tab5 Alertes » : état = nombre d'alertes à lire ; attributs = la mémoire
+  # (custom_templates/tab5_alertes.jinja). Chaque minute, au démarrage de HA (début de
+  # la grâce de 15 min), à chaque vigilance, à chaque tap et à la demande
+  # (événement tab5_alertes_recalculer, dont les réglages de test delai_fin et grace,
+  # en secondes, utilisés par la CI). Sans changement, l'état n'est pas réécrit.
+  # ==========================================================================
+  - triggers:
+      - trigger: homeassistant
+        event: start
+        id: demarrage
+      - trigger: time_pattern
+        minutes: "/1"
+        id: tick
+      - trigger: state
+        entity_id: sensor.tab5_vigilance
+        id: tick
+      # Un abonnement change : ses alertes partent ou arrivent tout de suite.
+      - trigger: state
+        entity_id:
+          - input_select.tab5_alertes_maj
+          - input_select.tab5_alertes_vigilance
+          - input_select.tab5_alertes_problemes
+          - input_select.tab5_alertes_indisponibles
+          - input_select.tab5_alertes_etiquette
+          - input_select.tab5_alertes_piles
+        id: tick
+      - trigger: event
+        event_type: tab5_alertes_lue
+        id: lue
+      - trigger: event
+        event_type: tab5_alertes_recalculer
+        id: reglage
+    variables:
+      memoire: >-
+        {% from 'tab5_alertes.jinja' import tab5_alertes_memoire %}
+        {{ tab5_alertes_memoire(trigger.id, trigger.event.data if trigger.platform == 'event' else {}) | from_json }}
+    sensor:
+      - name: "Tab5 Alertes"
+        unique_id: tab5_alertes
+        default_entity_id: sensor.tab5_alertes
+        icon: mdi:bell-alert-outline
+        state: "{{ memoire.affichees | count }}"
+        attributes:
+          affichees: "{{ memoire.affichees }}"
+          suivi: "{{ memoire.suivi }}"
+          lues: "{{ memoire.lues }}"
+          historique: "{{ memoire.historique }}"
+          demarrage: "{{ memoire.demarrage }}"
+          reglages: "{{ memoire.reglages }}"
+
+  # ==========================================================================
+  # Compte des entités "unavailable" (tableau de bord du Tab5, carte Santé). Les
+  # alertes ont leur propre liste : seulement les entités indisponibles depuis 10 min.
+  # `trigger:` (et non `state:`) est OBLIGATOIRE : un capteur `state:` qui itère
+  # `states` se réévaluerait à chaque changement d'état HA. Ici : toutes les 2 min et
+  # au démarrage de HA.
   # ==========================================================================
   - trigger:
       - platform: homeassistant
@@ -100,42 +185,17 @@ template:
           {{ ns.n }}
 
 automation:
-  - id: tab5_alerts_dismissed_cleanup
-    alias: "Tab5 — purge alertes ignorées obsolètes"
-    description: >-
-      Retire de tab5_alerts_dismissed les IDs dont la source n'existe plus
-      (MAJ installée, capteur OK).
-    mode: single
-    trigger:
-      - platform: time
-        at: "04:00:00"
-    action:
-      - variables:
-          dismissed: "{{ (states('input_text.tab5_alerts_dismissed') or '').split('|') | reject('equalto','') | list }}"
-          kept: >
-            {% set ns = namespace(out=[]) %}
-            {% for aid in dismissed %}
-              {% if aid == 'ha:unavailable' %}
-                {% set ns.out = ns.out + [aid] %}
-              {% elif aid.startswith('meteo:') %}
-                {% set lvl = states('sensor.tab5_vigilance') | lower %}
-                {% if aid == 'meteo:' ~ lvl %}
-                  {% set ns.out = ns.out + [aid] %}
-                {% endif %}
-              {% elif aid.startswith('update.') %}
-                {% if is_state(aid, 'on') %}
-                  {% set ns.out = ns.out + [aid] %}
-                {% endif %}
-              {# '.' : un id qui n'est pas une entité (id de test, ancien format)
-                 rendait « unknown » et restait pour toujours (vu le 27/09/2026). #}
-              {% elif '.' in aid and states(aid) in ['on', 'unavailable', 'unknown'] %}
-                {% set ns.out = ns.out + [aid] %}
-              {% endif %}
-            {% endfor %}
-            {{ ns.out | join('|') }}
-      - action: input_text.set_value
+  # Une alerte lue est écrite sur le disque tout de suite : après un plantage de HA,
+  # elle ne revient pas (voir @ai_warning en tête).
+  - id: tab5_alertes_sauvegarde
+    alias: "Tab5 — sauvegarder les alertes lues"
+    mode: queued
+    max: 3
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: sensor.tab5_alertes
+        attribute: lues
+    actions:
+      - action: homeassistant.save_persistent_states
         continue_on_error: true
-        target:
-          entity_id: input_text.tab5_alerts_dismissed
-        data:
-          value: "{{ kept }}"

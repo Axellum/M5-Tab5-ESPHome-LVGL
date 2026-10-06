@@ -115,6 +115,8 @@ select:
       - "Console système"
       # ADR-0028 : à la fin, les index des autres options ne bougent pas.
       - "Énergie"
+      # Réglages de la tablette (06/10/2026), à la fin pour la même raison.
+      - "Réglages"
     on_value:
       # Les popups sont des enfants de `page_main` : si la tablette est sur le
       # sélecteur Arcade ou dans une partie, en ouvrir un jouerait hors écran
@@ -222,6 +224,9 @@ select:
                      // ouverture et demande ses données à HA.
               id(tab5_energie_ouvrir).execute();
               break;
+            case 10:  // Réglages : son script pose les widgets et peint avant d'ouvrir.
+              id(tab5_reglages_ouvrir).execute();
+              break;
             default:
               if (target != nullptr) {
                 animate_popup_open(target);
@@ -310,6 +315,9 @@ select:
       - "10 min"
       - "30 min"
     initial_option: "Jamais"
+    on_value:
+      # Popup Réglages (tab5-reglages.yaml) : repeint s'il a déjà été ouvert.
+      - script.execute: tab5_reglages_sync_ui
 
 switch:
   # Batterie de la tablette montée (04/10/2026) : montre son icône dans le bandeau
@@ -358,6 +366,8 @@ switch:
     entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      - script.execute: tab5_reglages_sync_ui
 
 button:
   # Recharge le mois courant + M+1 du calendrier (même script que le pré-fetch

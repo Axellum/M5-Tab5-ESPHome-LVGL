@@ -132,8 +132,7 @@
 {%- set IDS = ['tab5_ha_hmi_updater', 'tab5_ha_hmi_alerts_push', 'tab5_ha_hmi_meteo_push', 'tab5_rdv_push',
                'tab5_evenements', 'tab5_volet_updater', 'tab5_screen_presence_wifi', 'tab5_micro_absence',
                'tab5_health_api_off_2min', 'tab5_health_primary_off_5min', 'tab5_health_unexpected_reboot',
-               'tab5_health_template_error', 'tab5_health_fichiers_ha', 'tab5_health_journal',
-               'tab5_alerts_dismissed_cleanup'] -%}
+               'tab5_health_template_error', 'tab5_health_fichiers_ha', 'tab5_health_journal'] -%}
 {#- Chaque id a sa clé, vide si l'automatisation manque : pas d'avertissement dans le journal de HA. -#}
 {%- for id in IDS -%}{%- set ns.a = dict(ns.a, **{id: ''}) -%}{%- endfor -%}
 {%- for a in states.automation -%}
@@ -828,6 +827,39 @@ views:
             content: |-
               {{ t("**Téléphone** (application mobile de Home Assistant) : son retour allume l'écran, son départ l'éteint. **Capteur de présence** : une présence allume l'écran, 15 min sans présence l'éteignent, sauf pendant le réveil.", "**Phone** (Home Assistant mobile app): its return turns the screen on, its departure turns it off. **Presence sensor**: presence turns the screen on, 15 min without presence turn it off, except while the alarm rings.") }}
 {%- endif %}
+{%- if 'input_select.tab5_alertes_maj' in present %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: "{{ t('Alertes', 'Alerts') }}"
+            icon: mdi:bell-alert-outline
+          - type: heading
+            heading: "{{ t("Ce qui s'affiche en alerte sur la carte centrale", 'What shows as an alert on the central card') }}"
+            heading_style: subtitle
+{%- for e, fr_, en_, icone in [('input_select.tab5_alertes_maj', 'Mises à jour', 'Updates', 'mdi:package-up'),
+                               ('input_select.tab5_alertes_vigilance', 'Vigilance à partir de', 'Weather warnings from', 'mdi:alert-outline'),
+                               ('input_select.tab5_alertes_problemes', 'Capteurs « problème »', 'Problem sensors', 'mdi:alert-circle-outline'),
+                               ('input_select.tab5_alertes_indisponibles', 'Entités indisponibles', 'Unavailable entities', 'mdi:help-network-outline'),
+                               ('input_select.tab5_alertes_etiquette', 'Étiquette « Tab5 · alerte »', '« Tab5 · alerte » label', 'mdi:label-outline'),
+                               ('input_select.tab5_alertes_piles', 'Piles sous', 'Batteries below', 'mdi:battery-alert-variant-outline')] %}
+{%- if e in present %}
+          - type: tile
+            entity: {{ e }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endfor %}
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("Une alerte reste sur la carte centrale jusqu'au tap. Lue, elle ne revient que si elle change (nouvelle version, autre vigilance, nouvelle entité indisponible) ou si elle s'arrête puis recommence. Pour suivre une porte, une fuite ou une serrure : créez l'étiquette « Tab5 · alerte » et posez-la sur l'entité. Les téléphones de l'application mobile ne comptent pas dans les piles.", "An alert stays on the central card until you tap it. Once read, it only comes back if it changes (new version, other warning, newly unavailable entity) or if it ends and starts again. To follow a door, a leak or a lock: create the « Tab5 · alerte » label and put it on the entity. Phones of the mobile app don't count as batteries.") }}
+{%- endif %}
       - type: grid
         cards:
           - type: heading
@@ -1286,8 +1318,7 @@ views:
                          ('tab5_health_unexpected_reboot', 'Redémarrage inattendu', 'Unexpected restart'),
                          ('tab5_health_template_error', 'Erreur dans une poussée', 'Error in a push'),
                          ('tab5_health_fichiers_ha', 'Fichiers HA en retard', 'HA files out of date'),
-                         ('tab5_health_journal', 'Journal des démarrages', 'Start log'),
-                         ('tab5_alerts_dismissed_cleanup', 'Purge des alertes ignorées', 'Dismissed alerts cleanup')] %}
+                         ('tab5_health_journal', 'Journal des démarrages', 'Start log')] %}
 {%- if A[id] %}
           - type: tile
             entity: {{ A[id] }}
@@ -1297,11 +1328,11 @@ views:
               - type: toggle
 {%- endif %}
 {%- endfor %}
-{%- if 'input_text.tab5_alerts_dismissed' in present %}
+{%- if 'sensor.tab5_alertes' in present %}
           - type: tile
-            entity: input_text.tab5_alerts_dismissed
-            name: "{{ t("Alertes HA ignorées sur l'écran", 'HA alerts dismissed on screen') }}"
-            icon: mdi:bell-off-outline
+            entity: sensor.tab5_alertes
+            name: "{{ t("Alertes à lire sur l'écran", 'Alerts to read on screen') }}"
+            icon: mdi:bell-alert-outline
             grid_options:
               columns: 12
 {%- endif %}
@@ -2824,18 +2855,12 @@ views:
     'es': 'Registro de arranques',
     'it': 'Log degli avvii',
     'tr': 'Başlatma günlüğü'},
-  'Purge des alertes ignorées': {
-    'de': 'Bereinigung ignorierter Warnungen',
-    'nl': 'Opschonen genegeerde meldingen',
-    'es': 'Limpieza de alertas ignoradas',
-    'it': 'Pulizia degli avvisi ignorati',
-    'tr': 'Yok sayılan uyarıları temizleme'},
-  "Alertes HA ignorées sur l'écran": {
-    'de': 'Am Bildschirm ignorierte HA-Warnungen',
-    'nl': 'Genegeerde HA-meldingen op het scherm',
-    'es': 'Alertas HA ignoradas en pantalla',
-    'it': 'Avvisi HA ignorati sullo schermo',
-    'tr': 'Ekranda yok sayılan HA uyarıları'},
+  "Alertes à lire sur l'écran": {
+    'de': 'Ungelesene Warnungen am Bildschirm',
+    'nl': 'Ongelezen meldingen op het scherm',
+    'es': 'Alertas por leer en la pantalla',
+    'it': 'Avvisi da leggere sullo schermo',
+    'tr': 'Ekranda okunacak uyarılar'},
   'Créer les emplacements': {
     'de': 'Bildschirmplätze erstellen',
     'nl': 'Schermvakken aanmaken',
@@ -2859,5 +2884,59 @@ views:
     'nl': 'Tablet niet gevonden: voeg hem toe in Home Assistant (ESPHome-integratie) en probeer het opnieuw.',
     'es': 'Tableta no encontrada: añádela en Home Assistant (integración ESPHome) y vuelve a intentarlo.',
     'it': 'Tablet non trovato: aggiungilo in Home Assistant (integrazione ESPHome), poi riprova.',
-    'tr': 'Tablet bulunamadı: Home Assistant’a ekle (ESPHome entegrasyonu), sonra tekrar dene.'}
+    'tr': 'Tablet bulunamadı: Home Assistant’a ekle (ESPHome entegrasyonu), sonra tekrar dene.'},
+  'Alertes': {
+    'de': 'Warnungen',
+    'nl': 'Meldingen',
+    'es': 'Alertas',
+    'it': 'Avvisi',
+    'tr': 'Uyarılar'},
+  "Ce qui s'affiche en alerte sur la carte centrale": {
+    'de': 'Was als Warnung auf der mittleren Karte erscheint',
+    'nl': 'Wat als melding op de middelste kaart verschijnt',
+    'es': 'Lo que aparece como alerta en la tarjeta central',
+    'it': 'Cosa compare come avviso sulla scheda centrale',
+    'tr': 'Orta kartta uyarı olarak görünenler'},
+  'Mises à jour': {
+    'de': 'Updates',
+    'nl': 'Updates',
+    'es': 'Actualizaciones',
+    'it': 'Aggiornamenti',
+    'tr': 'Güncellemeler'},
+  'Vigilance à partir de': {
+    'de': 'Wetterwarnungen ab',
+    'nl': 'Weerwaarschuwingen vanaf',
+    'es': 'Avisos meteorológicos desde',
+    'it': 'Allerte meteo da',
+    'tr': 'Hava uyarıları şu seviyeden'},
+  'Capteurs « problème »': {
+    'de': 'Problem-Sensoren',
+    'nl': 'Probleemsensoren',
+    'es': 'Sensores de problema',
+    'it': 'Sensori di problema',
+    'tr': 'Sorun sensörleri'},
+  'Entités indisponibles': {
+    'de': 'Nicht verfügbare Entitäten',
+    'nl': 'Niet-beschikbare entiteiten',
+    'es': 'Entidades no disponibles',
+    'it': 'Entità non disponibili',
+    'tr': 'Kullanılamayan varlıklar'},
+  'Étiquette « Tab5 · alerte »': {
+    'de': 'Label „Tab5 · alerte“',
+    'nl': 'Label „Tab5 · alerte”',
+    'es': 'Etiqueta «Tab5 · alerte»',
+    'it': 'Etichetta «Tab5 · alerte»',
+    'tr': '“Tab5 · alerte” etiketi'},
+  'Piles sous': {
+    'de': 'Batterien unter',
+    'nl': 'Batterijen onder',
+    'es': 'Pilas por debajo de',
+    'it': 'Batterie sotto',
+    'tr': 'Şunun altındaki piller'},
+  "Une alerte reste sur la carte centrale jusqu'au tap. Lue, elle ne revient que si elle change (nouvelle version, autre vigilance, nouvelle entité indisponible) ou si elle s'arrête puis recommence. Pour suivre une porte, une fuite ou une serrure : créez l'étiquette « Tab5 · alerte » et posez-la sur l'entité. Les téléphones de l'application mobile ne comptent pas dans les piles.": {
+    'de': 'Eine Warnung bleibt auf der mittleren Karte, bis du sie antippst. Gelesen kommt sie nur zurück, wenn sie sich ändert (neue Version, andere Wetterwarnung, neu nicht verfügbare Entität) oder wenn sie endet und neu beginnt. Um eine Tür, ein Leck oder ein Schloss zu verfolgen: Lege das Label „Tab5 · alerte“ an und setze es auf die Entität. Handys der Mobile-App zählen nicht als Batterien.',
+    'nl': 'Een melding blijft op de middelste kaart tot je erop tikt. Gelezen komt ze alleen terug als ze verandert (nieuwe versie, andere weerwaarschuwing, nieuw niet-beschikbare entiteit) of als ze stopt en opnieuw begint. Om een deur, een lek of een slot te volgen: maak het label „Tab5 · alerte” aan en zet het op de entiteit. Telefoons van de mobiele app tellen niet als batterijen.',
+    'es': 'Una alerta se queda en la tarjeta central hasta que la tocas. Una vez leída, solo vuelve si cambia (nueva versión, otro aviso, nueva entidad no disponible) o si termina y empieza de nuevo. Para seguir una puerta, una fuga o una cerradura: crea la etiqueta «Tab5 · alerte» y ponla en la entidad. Los teléfonos de la aplicación móvil no cuentan como pilas.',
+    'it': 'Un avviso resta sulla scheda centrale finché non lo tocchi. Letto, torna solo se cambia (nuova versione, altra allerta, nuova entità non disponibile) o se finisce e ricomincia. Per seguire una porta, una perdita o una serratura: crea l’etichetta «Tab5 · alerte» e mettila sull’entità. I telefoni dell’app mobile non contano come batterie.',
+    'tr': 'Bir uyarı, dokunana kadar orta kartta kalır. Okunduktan sonra yalnızca değişirse (yeni sürüm, başka hava uyarısı, yeni kullanılamayan varlık) ya da bitip yeniden başlarsa geri gelir. Bir kapıyı, sızıntıyı veya kilidi izlemek için: “Tab5 · alerte” etiketini oluştur ve varlığa ekle. Mobil uygulamanın telefonları pil sayılmaz.'}
 } -%}

@@ -181,7 +181,8 @@ class Rendu:
 
     async def jouer(self, etape) -> None:
         if isinstance(etape, Toucher):
-            await self.appeler("rendu_toucher", x=etape.x, y=etape.y, duree=etape.duree)
+            x, y = etape.point(self.suffixe)
+            await self.appeler("rendu_toucher", x=x, y=y, duree=etape.duree)
             await asyncio.sleep(etape.duree / 1000 + etape.apres)
         elif isinstance(etape, Glisser):
             await self.appeler("rendu_glisser", x1=etape.x1, y1=etape.y1, x2=etape.x2, y2=etape.y2)

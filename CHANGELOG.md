@@ -38,6 +38,93 @@ bord HA. Firmware seul : même commande, même événement, même branche du blu
   position, une fois au relâcher) et de la géométrie (`tests/test_tuiles_firmware.py`) ; un
   écran de plus au rendu hors tablette (`volet-glisse`, le volet tiré du doigt).
 
+### 2026-10-06 — Alertes : choisir ce qui s'affiche (abonnements)
+
+Lot 2 du plan des alertes de la carte centrale. HA seul, aucun changement de firmware.
+- **Six listes « Tab5 · alertes : … »** (`packages/tab5_alerts.yaml`), à régler dans HA ou sur
+  la page Réglages du tableau de bord de la tablette (nouvelle section « Alertes ») : mises à
+  jour (toutes / Home Assistant seulement / aucune), vigilance à partir du jaune, de l'orange ou
+  du rouge (ou aucune), capteurs « problème », entités indisponibles, étiquette
+  « Tab5 · alerte », piles sous 10 à 30 %. Par défaut : tout, piles sous 20 %. Des listes plutôt
+  que des interrupteurs : sans `initial`, une liste démarre sur sa première option puis HA
+  restaure le choix (un `input_boolean` sans `initial` démarrerait éteint).
+- **Étiquette « Tab5 · alerte »** : toute entité qui la porte devient une alerte quand elle est
+  allumée, ouverte, déverrouillée, bloquée ou déclenchée (porte, fuite, serrure, alarme) ; rouge
+  pour la fumée, le gaz, le CO, l'eau et la sécurité.
+- **Piles faibles** : capteurs `battery` sous le seuil (sauf les téléphones de l'application
+  mobile, rechargés chaque jour), ou binaires `battery` allumés. Une pile reste en alerte
+  jusqu'à 10 % au-dessus du seuil ; après une recharge, elle revient si elle retombe.
+- Se désabonner masque tout de suite ; les alertes restent suivies, donc se réabonner ne fait
+  pas revenir ce qui était déjà lu. Une source suivie qui devient indisponible ou inconnue est
+  dans le doute, quel que soit son domaine (plus seulement les mises à jour et les capteurs
+  binaires).
+- **Preuves** : `tests/test_alertes_ha.py` (listes, lecture des abonnements, étiquette, piles,
+  réabonnement) ; le job « Installation dans un HA neuf » désabonne puis réabonne les mises à
+  jour, pose l'étiquette sur un capteur de la démo et se désabonne de l'étiquette.
+
+### 2026-10-06 — Boutons du haut : un appui long chacun, popup Réglages sur la tablette
+
+Demande d'Axel : compléter les trois boutons du haut par un appui long, et régler la tablette sans
+passer par Home Assistant. Firmware seulement ; Home Assistant inchangé.
+- **Bouton de droite** : le tap ouvre l'**Arcade** (icône manette, au lieu de l'ordinateur) ;
+  l'appui long, la **télécommande TV** quand une TV est choisie dans le blueprint. Le bouton ne
+  disparaît plus sans TV, et les deux autres ne glissent plus d'une colonne.
+- **Bouton Home Assistant** : tap inchangé ; l'appui long ouvre le **popup Énergie** quand la
+  production solaire est reçue (la même condition que son icône dans la ligne d'état).
+- Ces deux appuis longs ne servent que si la TV ou le solaire est là : une **mini icône** de
+  26 px (petit écran, panneau solaire : les glyphes déjà employés dans la ligne d'état et
+  l'en-tête de la télécommande) s'affiche alors dans le coin en haut à droite du bouton.
+- **Bouton central** (engrenage, au lieu du flocon) : le tap ouvre le nouveau **popup Réglages**,
+  l'appui long la console système.
+- **Popup Réglages** (`reglages_popup.yaml`, `tab5-reglages.yaml`, `tab5_reglages.cpp`), chrome
+  partagé (ADR-0009) : carte ÉCRAN — luminosité (curseur 10-100 %), extinction auto, rallumer
+  l'écran à « Okay Nabu », rallumer d'une tape ; carte APPARENCE — thème (flèches), clair ou
+  sombre, nuit du mode Auto, langue (les 7, chacune dans sa langue, derrière une confirmation
+  puisque la tablette redémarre). Chaque bouton écrit l'entité que voit HA, et chaque entité
+  repeint le popup quand elle change : il suit l'état réel, même changé depuis HA (sauf le
+  curseur de luminosité, relu à chaque ouverture). Le curseur n'envoie qu'un `light.turn_on`
+  par geste (150 ms après le dernier pas).
+  Aussi ouvrable par « Aller à l'écran → Réglages » (option ajoutée en fin de liste).
+- **Le thème et son mode quittent la console** (rangée retirée, cartes GESTION en 2 × 2) pour
+  le popup Réglages ; `tab5_theme_console` et `theme_console_libelles()` sont supprimés.
+- 20 textes nouveaux, traduits dans les 6 langues. Notice (accueil, vue d'ensemble, nouvelle
+  page Réglages, console, TV, Arcade, Énergie), `docs/screens.md`, réglages, architecture,
+  cartographie, `Tab5/README.md`. Écrans « reglages » et « reglages-langue » ajoutés au rendu
+  hors tablette (et la télécommande, la console y passent par l'appui long). Test
+  `tests/test_reglages.py` : numéros des réglages, une pastille par option dans l'ordre du
+  select, une par langue, boutons posés à leur index, registre des fenêtres assez grand
+  (`ModalRegistry::MAX` passe de 16, atteint, à 24).
+
+### 2026-10-06 — Alertes : une alerte lue ne revient que si elle change
+
+Lot 1 du plan des alertes de la carte centrale (demande d'Axel : une alerte reste jusqu'au
+tap, puis ne revient plus, même après un redémarrage de HA, sauf si elle change). HA seul,
+aucun changement de firmware : la tablette renvoie déjà l'id reçu tel quel au tap.
+- **Capteur « Tab5 Alertes »** (`sensor.tab5_alertes`, `packages/tab5_alerts.yaml`, logique
+  dans le nouveau `custom_templates/tab5_alertes.jinja`) : il suit les mises à jour, les
+  capteurs `problem`, les entités indisponibles depuis 10 min et la vigilance. Une alerte = une
+  source + une **révision** ; la tablette reçoit « id#révision » et renvoie celle qu'elle
+  montrait. Lue, l'alerte ne revient que si elle change (version plus récente, autre niveau ou
+  phénomènes, nouvelle entité indisponible) ou si elle s'arrête vraiment puis recommence :
+  revenue à la normale 5 min, ou disparue 1 h ; jamais sur une source indisponible ou
+  inconnue, ni dans les 15 min qui suivent un démarrage de HA. Non lue, une alerte revenue à
+  la normale quitte l'écran tout de suite.
+- **Historique** : les 30 dernières alertes (apparue, lue, terminée) dans l'attribut
+  `historique`, pour le popup et le tableau de bord des lots suivants.
+- **Mémoire** : le capteur restaure ses attributs au démarrage, et l'automatisation
+  `tab5_alertes_sauvegarde` écrit les états restaurés sur le disque dès qu'une alerte est lue.
+  Le calcul est d'un seul tenant (les `variables:` du bloc à déclencheurs) : un tap n'est pas
+  perdu derrière le calcul de la minute.
+- **Reprise** : l'ancienne liste `input_text.tab5_alerts_dismissed` est lue une fois, puis plus
+  écrite. Sauf « ha:unavailable », qui rendait muette pour toujours l'alerte des indisponibles :
+  après le déploiement, elle apparaît une fois. La purge nocturne de 4 h disparaît.
+- **Poussées** (`packages/tab5_push.yaml`) : bandeaux et bandeau info lus dans le capteur ; le
+  bandeau info ne dit plus que la vigilance (MAJ, erreurs et indisponibles sont des bandeaux).
+- **Preuves** : `tests/test_alertes_ha.py` rejoue la macro réelle (bac à sable Jinja) sur les
+  redémarrages, plantages, versions, coupures et taps ; le job « Installation dans un HA neuf »
+  lit une alerte de démo, vérifie le payload poussé, tue puis redémarre HA, et installe une
+  mise à jour.
+
 ### 2026-10-06 — Alertes : une alerte lue ne revient plus après un redémarrage de HA
 
 Demande d'Axel : une alerte touchée sur la tablette ne doit plus revenir, même après un

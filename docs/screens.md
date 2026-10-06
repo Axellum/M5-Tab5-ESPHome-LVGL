@@ -18,7 +18,7 @@ There is a **single 1280×720 page** (`page_main`), not a tab-navigated set of s
 
 ![The single main page on the real device (July 2026)](images/tab5_photo_home.jpg)
 
-Windows open on top of this page — lights, shutter, climate, TV remote, voice assistant, calendar, alarm clock, plants, energy and the system console — and the Arcade's games on pages of their own. Which touch opens each one and what every button does: the [user manual](notice/README.md); this page explains how each part works. The console opens with its button (`btn_control_console`, top right), not by swipe since the 14/07/2026 gesture rework.
+Windows open on top of this page — lights, shutter, climate, TV remote, voice assistant, calendar, alarm clock, plants, energy, settings and the system console — and the Arcade's games on pages of their own. Which touch opens each one and what every button does: the [user manual](notice/README.md); this page explains how each part works. The settings open with a tap on the gear button (`btn_control_console`, top right) and the console with a long press on it; the console is no longer opened by swipe since the 14/07/2026 gesture rework.
 
 ---
 
@@ -41,7 +41,7 @@ Always-visible content at the top of the screen:
 - Current time and date
 - Indoor temperature and humidity
 - Microphone icon with pipeline state color (see Voice assistant below), between the two voice-mode buttons (Home Assistant agent vs. conversation/LLM pipeline), and under them the wide **Ok Nabu: ON / OFF** wake-word button (the mute button is in the assistant popup since 2026-10-05)
-- **HA**, **Sys** and **TV** buttons, top right. The home buttons show their icon only, all at the same size (125 × 90, icons of 70 px); the three columns of the top area sit 20 px from the screen edges like the central card, with their tops aligned at y 20 and their bottoms at y 308, 25 px above the central card
+- **HA**, **Settings** (gear) and **Arcade** (gamepad) buttons, top right, each with a long press since 2026-10-06: the Energy popup when the solar production is received (`solaire_present()`), the system console, the TV remote when the TV zone is present. A 26 px mini icon in the top-right corner of the HA and gamepad buttons (`icon_ha_solaire`, `icon_jeux_tv`: the glyphs of the status row and of the remote's header) says when that long press does something; the buttons no longer move without a TV. The home buttons show their icon only, all at the same size (125 × 90, icons of 70 px); the three columns of the top area sit 20 px from the screen edges like the central card, with their tops aligned at y 20 and their bottoms at y 308, 25 px above the central card
 - **Compact climate card** — current temperature (living room + greenhouse/serre sensors) and the target temperature with +/− buttons; tapping the target opens the climate popup (see Climate below)
 - **Row under the clock** — the plants line (4 slots for up to 5 BLE soil moisture sensors, see Plant moisture below) and up to three lines of sensors picked in the blueprint, rotating with the central card (see Row under the clock below)
 
@@ -70,7 +70,7 @@ If neither rain, MF alerts, info nor HA alert slots are active, the rotation jus
 
 Since 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) each of the 5 pages of the bottom row is also a **room** of up to 5 devices, described by Home Assistant (blueprint « Tab5 — emplacements », action `tab5_maj_tuiles`; states through `tab5_maj_emplacements`, keys `tRT`). Room 0 is the home page (days 0-4), rooms 1 and 2 the next daily pages (swipe left), rooms 3 and 4 the hourly pages (swipe right); tile T is the visual position, 0 = left. The definitions are kept in NVS, so the rooms are drawn before HA answers; the states are not (greyed « -- » until the first push). Model and drawing: `tab5_tuiles.cpp`.
 
-The `btn_control_ha` button (top right, Home Assistant icon) toggles the region between the **weather mode** and the **HA mode** (`tuiles_mode_ha()`, flag `g_central_ctx.ha_mode`). It shows an accent border and icon while HA mode is on, and is hidden when no room has a device. « Aller à l'écran → Accueil » (the Home Assistant select) leaves HA mode.
+The `btn_control_ha` button (top right, Home Assistant icon) toggles the region between the **weather mode** and the **HA mode** (`tuiles_mode_ha()`, flag `g_central_ctx.ha_mode`). It shows an accent border and icon while HA mode is on, and is hidden when no room has a device. Its long press opens the Energy popup when the solar production is received. « Aller à l'écran → Accueil » (the Home Assistant select) leaves HA mode.
 
 ### Weather mode (default)
 
@@ -209,15 +209,25 @@ The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab
 
 ## Console (diagnostics overlay)
 
-Opened via the console button (`btn_control_console`, top right of the home area). A 1180×680 modal card organized in **four glass cards**:
+Opened by a long press on the gear button (`btn_control_console`, top right of the home area; a tap opens the settings). A 1180×680 modal card organized in **four glass cards**:
 - **MÉMOIRE** — SRAM/PSRAM usage bars, max free block, flash size
 - **RÉSEAU** — Wi-Fi SSID, IP, signal strength, and HA connection status (`lbl_sys_ha_val`, green/red)
 - **SYSTÈME** — uptime, CPU temperature, loop time, plus the volume slider with a live % readout
-- **GESTION** — HA management buttons: « MAJ Écran » (re-arms the push flag and re-triggers the screen-push automation — the direct remedy for the recurring frozen-screen incident), « Recharger autos » (`automation.reload`), « Redémarrer HA » and « Reboot tablette » — the last two behind Annuler/Confirmer overlays (no more invisible double-tap arming); a middle row picks the theme and the mode (Sombre → Clair → Auto, the screen repaints at once, [ADR-0029](decisions/0029-themes-palette.md))
+- **GESTION** — HA management buttons: « MAJ Écran » (re-arms the push flag and re-triggers the screen-push automation — the direct remedy for the recurring frozen-screen incident), « Recharger autos » (`automation.reload`), « Redémarrer HA » and « Reboot tablette » — the last two behind Annuler/Confirmer overlays (no more invisible double-tap arming) — in a 2 × 2 grid since the theme row moved to the settings popup (2026-10-06)
 
 It is **not** a log viewer (use `tools/tab5_logs.py` for payloads and events). See [`docs/debugging.md`](debugging.md) for more on using it to diagnose issues.
 
 ![System console on the real device](images/tab5_photo_console_v2.jpg)
+
+---
+
+## Settings popup
+
+Opened by a tap on the gear button (`btn_control_console`, top right) or by « Aller à l'écran → Réglages » (`reglages_popup.yaml`, the shared modal chrome of ADR-0009; scripts in `tab5-reglages.yaml`, painting in `tab5_reglages.cpp`). Two glass cards:
+- **ÉCRAN** — a brightness slider (10-100 %, it writes the backlight itself), the auto screen-off delay (Jamais, 1, 2, 5, 10, 30 min), and Oui / Non for waking the screen on « Okay Nabu » and with a tap;
+- **APPARENCE** — the theme between two arrows (previous / next, wrapping round), Sombre / Clair / Auto, Oui / Non for the night switch of Auto mode, and the seven languages, each in its own name. A language asks first (Annuler / Confirmer): the tablet restarts to apply it.
+
+Each button writes the device entity Home Assistant sees (`tab5_reglages_choisir`), and each of those entities repaints the popup when it changes (`tab5_reglages_sync_ui`, run from its `on_value` / `on_state`): a change made from Home Assistant shows at once, and the option in force has an accent border. The brightness slider is read when the popup opens. The same settings in Home Assistant: [Tablet settings](installation/settings.md).
 
 ---
 
@@ -237,7 +247,7 @@ The popup is context-aware: the long press opens it on the pressed light, and th
 
 ## TV remote popup
 
-A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1250×690 card — the shared modal tokens of ADR-0009, 15 px from the screen edges): power, source and menu keys, a round navigation pad with OK, a volume column with mute, the Play · Pause · Back · Home keys and a row of app buttons (Netflix, Prime, YouTube, CANAL+, PC). Opened by long-pressing a media tile with the TV option (`t`; the PC card in legacy mode) or via the TV button (`btn_control_tv`); every key emits a `tab5_action` event (`emplacement: tv`, [ADR-0025](decisions/0025-events-only.md)) that the blueprint automation sends to the remote picked in « Télécommande de la TV » (`remote.send_command`), the app buttons through `script.tab5_tv_app` (`tab5_tv.yaml`) — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
+A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1250×690 card — the shared modal tokens of ADR-0009, 15 px from the screen edges): power, source and menu keys, a round navigation pad with OK, a volume column with mute, the Play · Pause · Back · Home keys and a row of app buttons (Netflix, Prime, YouTube, CANAL+, PC). Opened by long-pressing a media tile with the TV option (`t`; the PC card in legacy mode) or by a long press on the gamepad button (`btn_control_tv`, when the TV zone is present); every key emits a `tab5_action` event (`emplacement: tv`, [ADR-0025](decisions/0025-events-only.md)) that the blueprint automation sends to the remote picked in « Télécommande de la TV » (`remote.send_command`), the app buttons through `script.tab5_tv_app` (`tab5_tv.yaml`) — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
 
 ![TV remote popup on the real device](images/tab5_photo_tv_remote.jpg)
 
@@ -245,7 +255,7 @@ A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1250×690 card — 
 
 ## Energy popup — solar installation (optional)
 
-Shown only if sensors are picked in the « Énergie · Energy » section of the blueprint ([ADR-0028](decisions/0028-solar-energy-popup.md)). Opened by tapping a sensor tile of that section (tile option `e`; the solar sensor gets the solar-panel icon) or by « Aller à l'écran → Énergie ». Same modal chrome as the other popups (`energie_popup.yaml`, ADR-0009), drawn by `tab5_energie.cpp`:
+Shown only if sensors are picked in the « Énergie · Energy » section of the blueprint ([ADR-0028](decisions/0028-solar-energy-popup.md)). Opened by tapping a sensor tile of that section (tile option `e`; the solar sensor gets the solar-panel icon), by a long press on the HA button when the solar production is received, or by « Aller à l'écran → Énergie ». Same modal chrome as the other popups (`energie_popup.yaml`, ADR-0009), drawn by `tab5_energie.cpp`:
 
 - **Top, live**: up to four glass cards — **Solar** (power, « Today » production), **Home** (consumption), **Grid** (power, « From the grid » / « To the grid » / « No exchange »), **Battery** (level with a battery icon that follows it, « Charging » / « Discharging » / « Idle », temperature). A card without a sensor disappears and the others share the width. Units stay short (W, kW, kWh).
 - **Bottom, history** (needs the produced-energy sensor): the title gives the period and its total (« Today · 3.20 kWh »), three buttons switch between **Hours** (24 bars, today), **Days** (30 days) and **Months** (12 months). Gold bars, the current slot in the accent colour, a line at the maximum with its value. Without that sensor, the cards fill the popup.
@@ -288,7 +298,7 @@ All interface colours live in one palette, `struct Palette` in `tab5_tokens.h` (
 
 ![Six themes of the Tab5 screen drawn by the firmware itself: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](images/tab5_themes.jpg)
 
-The theme, the mode (Sombre, Clair, Auto) and the « Nuit (thème auto) » switch are entities of the tablet: [Tablet settings](installation/settings.md#theme-light-or-dark).
+The theme, the mode (Sombre, Clair, Auto) and the « Nuit (thème auto) » switch are entities of the tablet, also in the settings popup: [Tablet settings](installation/settings.md#theme-light-or-dark).
 
 ---
 
@@ -307,7 +317,7 @@ Since 3.2 every `vol` tile is a shutter or a valve of its own (tap: stop while i
 
 > **Status: early prototypes.** First-pass AI-generated games, built to see what LVGL + C++ can do on an ESP32-P4. Functional but unpolished — proof of concept, not finished product.
 
-Opened by **tapping the greenhouse temperature** (`btn_serre_games` in `climate_card.yaml`) — the single entry point. The selector shows a 4×2 grid of 8 cards (298×252 each) with an MDI icon, the game name and a one-line description.
+Opened by **tapping the gamepad button** (`btn_control_tv`, top right) or **the greenhouse temperature** (`btn_serre_games` in `climate_card.yaml`). The selector shows a 4×2 grid of 8 cards (298×252 each) with an MDI icon, the game name and a one-line description.
 
 ![Arcade selector on the real device](images/tab5_photo_arcade_selector.jpg)
 
@@ -349,7 +359,7 @@ Il y a une **page unique 1280×720** (`page_main`), pas un jeu d'écrans navigu�
 
 ![La page unique sur l'appareil réel (juillet 2026)](images/tab5_photo_home.jpg)
 
-Des fenêtres s'ouvrent par-dessus cette page — lumières, volet, clim, télécommande TV, assistant vocal, calendrier, réveil, plantes, énergie et console système — et les jeux de l'Arcade sur des pages à eux. Quel toucher ouvre chacune et ce que fait chaque bouton : la [notice d'utilisation](notice/README.md#version-française) ; cette page explique comment marche chaque partie. La console s'ouvre par son bouton (`btn_control_console`, en haut à droite), plus par swipe depuis la refonte gestuelle du 14/07/2026.
+Des fenêtres s'ouvrent par-dessus cette page — lumières, volet, clim, télécommande TV, assistant vocal, calendrier, réveil, plantes, énergie, réglages et console système — et les jeux de l'Arcade sur des pages à eux. Quel toucher ouvre chacune et ce que fait chaque bouton : la [notice d'utilisation](notice/README.md#version-française) ; cette page explique comment marche chaque partie. Les réglages s'ouvrent d'un tap sur le bouton engrenage (`btn_control_console`, en haut à droite) et la console d'un appui long ; la console ne s'ouvre plus par swipe depuis la refonte gestuelle du 14/07/2026.
 
 ---
 
@@ -372,7 +382,7 @@ Contenu toujours visible en haut de l'écran :
 - Heure et date actuelles
 - Température et humidité intérieure
 - Icône microphone avec couleur d'état du pipeline (voir Assistant vocal ci-dessous), entre les deux boutons de mode vocal (agent Home Assistant vs pipeline conversation/LLM), et dessous le large bouton **Ok Nabu: ON / OFF** du mot de réveil (le bouton muet est dans le popup assistant depuis le 05/10/2026)
-- Boutons **HA**, **Sys** et **TV**, en haut à droite. Les boutons de l'accueil n'affichent que leur icône, tous à la même taille (125 × 90, icônes de 70 px) ; les trois colonnes du haut sont à 20 px des bords de l'écran comme la carte centrale, hauts alignés à y 20 et bas à y 308, 25 px au-dessus de la carte centrale
+- Boutons **HA**, **Réglages** (engrenage) et **Arcade** (manette), en haut à droite, chacun avec un appui long depuis le 06/10/2026 : le popup Énergie quand la production solaire est reçue (`solaire_present()`), la console système, la télécommande TV quand la zone TV est présente. Une mini icône de 26 px dans le coin en haut à droite des boutons HA et manette (`icon_ha_solaire`, `icon_jeux_tv` : les glyphes de la ligne d'état et de l'en-tête de la télécommande) dit quand cet appui long fait quelque chose ; les boutons ne glissent plus sans TV. Les boutons de l'accueil n'affichent que leur icône, tous à la même taille (125 × 90, icônes de 70 px) ; les trois colonnes du haut sont à 20 px des bords de l'écran comme la carte centrale, hauts alignés à y 20 et bas à y 308, 25 px au-dessus de la carte centrale
 - **Carte clim compacte** — température actuelle (capteurs salon + serre) et température cible avec boutons +/− ; taper sur la cible ouvre le popup clim (voir Climatisation ci-dessous)
 - **Rangée sous l'horloge** — la ligne des plantes (4 emplacements pour jusqu'à 5 capteurs BLE d'humidité du sol, voir Humidité des plantes ci-dessous) et jusqu'à trois lignes de capteurs choisies dans le blueprint, qui tournent avec la carte centrale (voir Rangée sous l'horloge ci-dessous)
 
@@ -401,7 +411,7 @@ Si ni pluie, ni alertes MF, ni info, ni slots HA ne sont actifs, la rotation gar
 
 Depuis la 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)), chacune des 5 pages du bas est aussi une **pièce** de 5 appareils au plus, décrite par Home Assistant (blueprint « Tab5 — emplacements », action `tab5_maj_tuiles` ; états par `tab5_maj_emplacements`, clés `tRT`). La pièce 0 est l'accueil (jours 0-4), les pièces 1 et 2 les pages journalières suivantes (swipe vers la gauche), les pièces 3 et 4 les pages horaires (swipe vers la droite) ; la tuile T est la position visuelle, 0 = gauche. Les définitions sont gardées en NVS : les pièces se dessinent avant que HA réponde ; pas les états (« -- » grisé jusqu'à la première poussée). Modèle et dessin : `tab5_tuiles.cpp`.
 
-Le bouton `btn_control_ha` (en haut à droite, icône Home Assistant) bascule la zone entre le **mode météo** et le **mode HA** (`tuiles_mode_ha()`, drapeau `g_central_ctx.ha_mode`). Il prend une bordure et une icône d'accent quand le mode HA est actif, et disparaît quand aucune pièce n'a d'appareil. « Aller à l'écran → Accueil » (le select de Home Assistant) quitte le mode HA.
+Le bouton `btn_control_ha` (en haut à droite, icône Home Assistant) bascule la zone entre le **mode météo** et le **mode HA** (`tuiles_mode_ha()`, drapeau `g_central_ctx.ha_mode`). Il prend une bordure et une icône d'accent quand le mode HA est actif, et disparaît quand aucune pièce n'a d'appareil. Son appui long ouvre le popup Énergie quand la production solaire est reçue. « Aller à l'écran → Accueil » (le select de Home Assistant) quitte le mode HA.
 
 ### Mode météo (par défaut)
 
@@ -540,15 +550,25 @@ Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`sele
 
 ## Console (overlay diagnostics)
 
-Ouvert via le bouton console (`btn_control_console`, en haut à droite de la zone d'accueil). Une carte modale 1180×680 organisée en **quatre cartes de verre** :
+Ouvert par un appui long sur le bouton engrenage (`btn_control_console`, en haut à droite de la zone d'accueil ; un tap ouvre les réglages). Une carte modale 1180×680 organisée en **quatre cartes de verre** :
 - **MÉMOIRE** — barres SRAM/PSRAM, bloc max, taille flash
 - **RÉSEAU** — SSID Wi-Fi, IP, signal, et état de la connexion HA (`lbl_sys_ha_val`, vert/rouge)
 - **SYSTÈME** — uptime, température CPU, temps de boucle, plus le slider volume avec % affiché en direct
-- **GESTION** — boutons de gestion HA : « MAJ Écran » (réarme le flag de push et redéclenche l'automation de push écran — le remède direct à l'incident récurrent d'écran figé), « Recharger autos » (`automation.reload`), « Redémarrer HA » et « Reboot tablette » — les deux derniers derrière des overlays Annuler/Confirmer (fini l'armement invisible par double-tap) ; une rangée du milieu choisit le thème et le mode (Sombre → Clair → Auto, l'écran se repeint aussitôt, [ADR-0029](decisions/0029-themes-palette.md))
+- **GESTION** — boutons de gestion HA : « MAJ Écran » (réarme le flag de push et redéclenche l'automation de push écran — le remède direct à l'incident récurrent d'écran figé), « Recharger autos » (`automation.reload`), « Redémarrer HA » et « Reboot tablette » — les deux derniers derrière des overlays Annuler/Confirmer (fini l'armement invisible par double-tap)  — en grille 2 × 2 depuis que la rangée du thème est passée dans le popup Réglages (06/10/2026)
 
 Ce n'est **pas** un visualiseur de logs (utiliser `tools/tab5_logs.py` pour les payloads et événements). Voir [`docs/debugging.md`](debugging.md) pour plus de détails sur son usage en debug.
 
 ![Console Système sur l'appareil réel](images/tab5_photo_console_v2.jpg)
+
+---
+
+## Popup Réglages
+
+Ouvert d'un tap sur le bouton engrenage (`btn_control_console`, en haut à droite) ou par « Aller à l'écran → Réglages » (`reglages_popup.yaml`, le chrome modal partagé de l'ADR-0009 ; scripts dans `tab5-reglages.yaml`, peinture dans `tab5_reglages.cpp`). Deux cartes de verre :
+- **ÉCRAN** — un curseur de luminosité (10-100 %, il écrit lui-même le rétroéclairage), le délai d'extinction auto (Jamais, 1, 2, 5, 10, 30 min), et Oui / Non pour rallumer l'écran à « Okay Nabu » et d'une tape ;
+- **APPARENCE** — le thème entre deux flèches (précédent / suivant, en boucle), Sombre / Clair / Auto, Oui / Non pour l'interrupteur de nuit du mode Auto, et les sept langues, chacune écrite dans sa langue. Une langue demande d'abord (Annuler / Confirmer) : la tablette redémarre pour l'appliquer.
+
+Chaque bouton écrit l'entité de l'appareil que voit Home Assistant (`tab5_reglages_choisir`), et chacune de ces entités repeint le popup quand elle change (`tab5_reglages_sync_ui`, lancé depuis son `on_value` / `on_state`) : un changement fait depuis Home Assistant s'affiche aussitôt, et l'option en vigueur a une bordure d'accent. Le curseur de luminosité est relu à l'ouverture du popup. Les mêmes réglages dans Home Assistant : [réglages de la tablette](installation/settings.md#version-française).
 
 ---
 
@@ -568,7 +588,7 @@ Le popup est contextuel : l'appui long l'ouvre sur la lumière appuyée, et le s
 
 ## Popup télécommande TV
 
-Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1250×690 — les tokens modaux partagés de l'ADR-0009, 15 px des bords) : touches marche, source et menu, pad de navigation rond avec OK, colonne du volume avec muet, touches Lecture · Pause · Retour · Accueil et une rangée de boutons d'applications (Netflix, Prime, YouTube, CANAL+, PC). Ouverte par appui long sur une tuile multimédia avec l'option TV (`t` ; la carte PC en mode héritage) ou via le bouton TV (`btn_control_tv`) ; chaque touche émet un événement `tab5_action` (`emplacement: tv`, [ADR-0025](decisions/0025-events-only.md)) que l'automatisation du blueprint envoie à la télécommande choisie dans « Télécommande de la TV » (`remote.send_command`), les boutons d'applications par `script.tab5_tv_app` (`tab5_tv.yaml`) — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
+Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1250×690 — les tokens modaux partagés de l'ADR-0009, 15 px des bords) : touches marche, source et menu, pad de navigation rond avec OK, colonne du volume avec muet, touches Lecture · Pause · Retour · Accueil et une rangée de boutons d'applications (Netflix, Prime, YouTube, CANAL+, PC). Ouverte par appui long sur une tuile multimédia avec l'option TV (`t` ; la carte PC en mode héritage) ou par un appui long sur le bouton manette (`btn_control_tv`, quand la zone TV est présente) ; chaque touche émet un événement `tab5_action` (`emplacement: tv`, [ADR-0025](decisions/0025-events-only.md)) que l'automatisation du blueprint envoie à la télécommande choisie dans « Télécommande de la TV » (`remote.send_command`), les boutons d'applications par `script.tab5_tv_app` (`tab5_tv.yaml`) — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
 
 ![Popup télécommande TV sur l'appareil réel](images/tab5_photo_tv_remote.jpg)
 
@@ -576,7 +596,7 @@ Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 125
 
 ## Popup Énergie — installation solaire (facultatif)
 
-N'apparaît que si des capteurs sont choisis dans la section « Énergie · Energy » du blueprint ([ADR-0028](decisions/0028-solar-energy-popup.md)). S'ouvre d'un toucher sur une tuile capteur de cette section (option de tuile `e` ; le capteur solaire prend l'icône du panneau solaire) ou par « Aller à l'écran → Énergie ». Même chrome modal que les autres popups (`energie_popup.yaml`, ADR-0009), dessiné par `tab5_energie.cpp` :
+N'apparaît que si des capteurs sont choisis dans la section « Énergie · Energy » du blueprint ([ADR-0028](decisions/0028-solar-energy-popup.md)). S'ouvre d'un toucher sur une tuile capteur de cette section (option de tuile `e` ; le capteur solaire prend l'icône du panneau solaire), d'un appui long sur le bouton HA quand la production solaire est reçue, ou par « Aller à l'écran → Énergie ». Même chrome modal que les autres popups (`energie_popup.yaml`, ADR-0009), dessiné par `tab5_energie.cpp` :
 
 - **En haut, en direct** : jusqu'à quatre cartes de verre — **Solaire** (puissance, production « Aujourd'hui »), **Maison** (consommation), **Réseau** (puissance, « Depuis le réseau » / « Vers le réseau » / « Aucun échange »), **Batterie** (niveau avec une icône de batterie qui le suit, « Charge » / « Décharge » / « Au repos », température). Une carte sans capteur disparaît et les autres se partagent la largeur. Unités courtes (W, kW, kWh).
 - **En bas, l'historique** (il faut le capteur d'énergie produite) : le titre donne la période et son total (« Aujourd'hui · 3.20 kWh »), trois boutons passent des **Heures** (24 barres, aujourd'hui) aux **Jours** (30 jours) et aux **Mois** (12 mois). Barres dorées, le créneau en cours dans la couleur d'accent, une ligne au maximum avec sa valeur. Sans ce capteur, les cartes remplissent le popup.
@@ -619,7 +639,7 @@ Toutes les couleurs de l'interface vivent dans une palette, `struct Palette` de 
 
 ![Six thèmes de l'écran du Tab5 dessinés par le firmware lui-même : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](images/tab5_themes.jpg)
 
-Le thème, le mode (Sombre, Clair, Auto) et l'interrupteur « Nuit (thème auto) » sont des entités de la tablette : [réglages de la tablette](installation/settings.md#thème-clair-ou-sombre).
+Le thème, le mode (Sombre, Clair, Auto) et l'interrupteur « Nuit (thème auto) » sont des entités de la tablette, aussi dans le popup Réglages : [réglages de la tablette](installation/settings.md#thème-clair-ou-sombre).
 
 ---
 
@@ -638,7 +658,7 @@ Depuis la 3.2, chaque tuile `vol` est un volet ou une vanne à elle seule (appui
 
 > **Statut : prototypes précoces.** Premiers jets générés par IA pour tester les capacités de LVGL + C++ sur ESP32-P4. Fonctionnels mais non finalisés — preuve de concept, pas produit fini.
 
-Ouvert par **tap sur la température serre** (`btn_serre_games` dans `climate_card.yaml`). Le sélecteur affiche une grille 4×2 de 8 cartes (298×252 chacune), avec icône MDI, nom du jeu, et description courte.
+Ouvert par **tap sur le bouton manette** (`btn_control_tv`, en haut à droite) ou **sur la température serre** (`btn_serre_games` dans `climate_card.yaml`). Le sélecteur affiche une grille 4×2 de 8 cartes (298×252 chacune), avec icône MDI, nom du jeu, et description courte.
 
 ![Sélecteur Arcade sur l'appareil réel](images/tab5_photo_arcade_selector.jpg)
 

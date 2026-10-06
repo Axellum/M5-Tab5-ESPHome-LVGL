@@ -338,17 +338,9 @@ script:
           const auto mode = id(tab5_theme_mode).active_index();
           if (theme_selectionner(theme.value_or(0), mode.value_or(0), id(tab5_theme_nuit).state))
             id(tab5_theme_repeindre).execute();
-      # Même sans changement de palette (Sombre → Auto la nuit) : le libellé du mode change.
-      - script.execute: tab5_theme_console
-
-  # Rangée « Thème » de la console système (ui_components/console_sys.yaml) : à chaque
-  # choix et à l'ouverture de la console (btn_control_console, tab5-lvgl.yaml), car
-  # un choix restauré au démarrage peut précéder la langue de l'écran.
-  - id: tab5_theme_console
-    then:
-      - lambda: |-
-          theme_console_libelles(id(lbl_console_theme), id(lbl_console_theme_mode),
-              id(tab5_theme).active_index().value_or(0), id(tab5_theme_mode).active_index().value_or(0));
+      # Popup Réglages (tab5-reglages.yaml) : nom du thème, mode et nuit choisis, même
+      # sans changement de palette (Sombre → Auto la nuit), dans les couleurs du thème.
+      - script.execute: tab5_reglages_sync_ui
 
   # restart : un nouveau changement pendant l'attente du démarrage reprend du début.
   - id: tab5_theme_repeindre

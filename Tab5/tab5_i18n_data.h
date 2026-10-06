@@ -8,9 +8,29 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 972;
+static const uint16_t kI18nKeyCount = 992;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1059,21 +1079,26 @@ static const char* const kI18nKeys[] = {
     "-1 px de rayon : bille plus difficile à toucher",
     "1 MAJ · %s",
     "1 erreur",
+    "1 min",
     "1 à 6 équipes",
+    "10 min",
     "10,0 cases/s - réflexes exigés",
     "12 derniers mois",
     "15 min",
     "15 min + 10 s",
     "1er",
     "2 Jours",
+    "2 min",
     "25 coups sans pion ni prise",
     "3 Jours",
     "3 billes - lanceur en bas de l'écran",
     "3 s d'invulnérabilité par salle",
     "30 derniers jours",
+    "30 min",
     "4 Jours",
     "4,4 cases/s - rythme d'origine",
     "40 coups sans pion ni prise",
+    "5 min",
     "5,7 cases/s",
     "6 salles. 2 à 5 minutes.  Difficulté : %s",
     "6,7 cases/s",
@@ -1083,6 +1108,7 @@ static const char* const kI18nKeys[] = {
     "9 min",
     "ACTIF",
     "AMPOULE",
+    "APPARENCE",
     "Abandon",
     "Abandon  —  comptage indicatif : %.1f contre %.1f",
     "Abandonner",
@@ -1218,6 +1244,7 @@ static const char* const kI18nKeys[] = {
     "Cette action est définitive.",
     "Cette action est irréversible.",
     "Chambre",
+    "Changer de langue ?",
     "Changer de variante",
     "Changer les réglages",
     "Charge",
@@ -1227,6 +1254,7 @@ static const char* const kI18nKeys[] = {
     "Choix du mode, de la couleur, du niveau et de la pendule",
     "Chute nette. Reprends ton souffle.",
     "Clair",
+    "Clair ou sombre",
     "Classement",
     "Classement local : %u Elo   ·   %u parties contre le Tab",
     "Classement local : %u Elo   ·   %u parties jouées",
@@ -1327,6 +1355,7 @@ static const char* const kI18nKeys[] = {
     "Eval %+.1f",
     "Exact — %s remporte la partie !",
     "Expert",
+    "Extinction auto",
     "FIN DE PARTIE",
     "FINALE — %s",
     "Facile",
@@ -1393,6 +1422,7 @@ static const char* const kI18nKeys[] = {
     "Intersection occupée",
     "Invulnérable - hors concours",
     "Irréversible",
+    "Jamais",
     "Janv",
     "Jeu",
     "Jouable",
@@ -1428,10 +1458,12 @@ static const char* const kI18nKeys[] = {
     "La partie sera reprise plus tard",
     "La pendule est arrêtée",
     "La pierre gagne cette manche.",
+    "La tablette redémarre en {langue}.",
     "Lance la partie",
     "Lance la partie avec ces réglages",
     "Lancer",
     "Lancer une run",
+    "Langue",
     "Le Tab abandonne",
     "Le Tab accepte la nulle",
     "Le Tab accepte s'il n'est pas mieux",
@@ -1470,6 +1502,7 @@ static const char* const kI18nKeys[] = {
     "Les âmes sont déjà mises de côté.",
     "Lettres A..T et chiffres autour du goban",
     "Lode Runner 1983\nCreuse · grimpe · fuis",
+    "Luminosité",
     "Lumière",
     "Lun",
     "MAISON",
@@ -1527,6 +1560,7 @@ static const char* const kI18nKeys[] = {
     "Noir (premier)",
     "Noir l'emporte",
     "Noirs",
+    "Non",
     "Normal",
     "Normale",
     "Nouvelle",
@@ -1534,6 +1568,7 @@ static const char* const kI18nKeys[] = {
     "Nouvelle partie, 3 billes",
     "Nov",
     "Nudge, sens de l'écran, calibration",
+    "Nuit (mode Auto)",
     "Nulle automatique après 50 coups sans prise ni pion",
     "Nulle déclarée en mode démo",
     "Nulle par accord entre les joueurs",
@@ -1547,6 +1582,7 @@ static const char* const kI18nKeys[] = {
     "Or restant %d",
     "Orientation : %s",
     "Oscillation",
+    "Oui",
     "Oui, tout effacer",
     "Ouvert",
     "Ouverture",
@@ -1631,6 +1667,8 @@ static const char* const kI18nKeys[] = {
     "RDV avant",
     "RDV silencieux",
     "RECORD %s",
+    "Rallumer l'écran d'une tape",
+    "Rallumer l'écran à « Okay Nabu »",
     "Ramasse tout l'or, échappe aux gardes, grimpe en haut.",
     "Rang  Score      Niv  Contrôle\n",
     "Rapide",
@@ -1789,6 +1827,7 @@ static const char* const kI18nKeys[] = {
     "Temps écoulé — matériel insuffisant pour mater",
     "Température",
     "Tester",
+    "Thème",
     "Top 10 local",
     "Top 10 local (NVS)",
     "Top 10 local - conservé en NVS, survit aux reboots et aux OTA.",
@@ -1910,6 +1949,7 @@ static const char* const kI18nKeys[] = {
     "À arroser !",
     "À vous",
     "ÉCHEC !",
+    "ÉCRAN",
     "ÉQUIPES",
     "Écaille de bronze",
     "Échec et mat",
@@ -2035,21 +2075,26 @@ static const char* const kI18n_en[] = {
     "-1 px radius: marble harder to hit",  // "-1 px de rayon : bille plus difficile à toucher"
     "1 update · %s",  // "1 MAJ · %s"
     "1 error",  // "1 erreur"
+    "1 min",  // "1 min"
     "1 to 6 teams",  // "1 à 6 équipes"
+    "10 min",  // "10 min"
     "10.0 tiles/s - quick reflexes",  // "10,0 cases/s - réflexes exigés"
     "Last 12 months",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
     "2 Days",  // "2 Jours"
+    "2 min",  // "2 min"
     "25 moves with no man move or capture",  // "25 coups sans pion ni prise"
     "3 Days",  // "3 Jours"
     "3 balls - plunger at the bottom",  // "3 billes - lanceur en bas de l'écran"
     "3 s of invulnerability per room",  // "3 s d'invulnérabilité par salle"
     "Last 30 days",  // "30 derniers jours"
+    "30 min",  // "30 min"
     "4 Days",  // "4 Jours"
     "4.4 tiles/s - original pace",  // "4,4 cases/s - rythme d'origine"
     "40 moves with no man move or capture",  // "40 coups sans pion ni prise"
+    "5 min",  // "5 min"
     "5.7 tiles/s",  // "5,7 cases/s"
     "6 rooms. 2 to 5 minutes.  Difficulty: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6.7 tiles/s",  // "6,7 cases/s"
@@ -2059,6 +2104,7 @@ static const char* const kI18n_en[] = {
     "9 min",  // "9 min"
     "ON",  // "ACTIF"
     "BULB",  // "AMPOULE"
+    "APPEARANCE",  // "APPARENCE"
     "Resign",  // "Abandon"
     "Resignation  —  estimated count: %.1f vs %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Give up",  // "Abandonner"
@@ -2194,6 +2240,7 @@ static const char* const kI18n_en[] = {
     "This cannot be undone.",  // "Cette action est définitive."
     "This cannot be undone.",  // "Cette action est irréversible."
     "Bedroom",  // "Chambre"
+    "Change language?",  // "Changer de langue ?"
     "Switch stats variant",  // "Changer de variante"
     "Change settings",  // "Changer les réglages"
     "Charging",  // "Charge"
@@ -2203,6 +2250,7 @@ static const char* const kI18n_en[] = {
     "Choose mode, color, level and clock",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Clean fall. Catch your breath.",  // "Chute nette. Reprends ton souffle."
     "Light",  // "Clair"
+    "Light or dark",  // "Clair ou sombre"
     "Leaderboard",  // "Classement"
     "Local rating: %u Elo   ·   %u games vs Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Local rating: %u Elo   ·   %u games played",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -2303,6 +2351,7 @@ static const char* const kI18n_en[] = {
     "Eval %+.1f",  // "Eval %+.1f"
     "Correct — %s wins the game!",  // "Exact — %s remporte la partie !"
     "Expert",  // "Expert"
+    "Auto screen off",  // "Extinction auto"
     "GAME OVER",  // "FIN DE PARTIE"
     "FINAL — %s",  // "FINALE — %s"
     "Easy",  // "Facile"
@@ -2369,6 +2418,7 @@ static const char* const kI18n_en[] = {
     "Point occupied",  // "Intersection occupée"
     "Invulnerable - unranked",  // "Invulnérable - hors concours"
     "Irreversible",  // "Irréversible"
+    "Never",  // "Jamais"
     "Jan",  // "Janv"
     "Thu",  // "Jeu"
     "Playable",  // "Jouable"
@@ -2404,10 +2454,12 @@ static const char* const kI18n_en[] = {
     "You can resume the game later",  // "La partie sera reprise plus tard"
     "The clock is stopped",  // "La pendule est arrêtée"
     "The stone wins this round.",  // "La pierre gagne cette manche."
+    "The tablet restarts in {langue}.",  // "La tablette redémarre en {langue}."
     "Starts the game",  // "Lance la partie"
     "Start with these settings",  // "Lance la partie avec ces réglages"
     "Run",  // "Lancer"
     "Start a run",  // "Lancer une run"
+    "Language",  // "Langue"
     "Tab resigns",  // "Le Tab abandonne"
     "Tab accepts the draw",  // "Le Tab accepte la nulle"
     "Tab accepts if it is not ahead",  // "Le Tab accepte s'il n'est pas mieux"
@@ -2446,6 +2498,7 @@ static const char* const kI18n_en[] = {
     "Your souls are already set aside.",  // "Les âmes sont déjà mises de côté."
     "Letters A..T and numbers around the board",  // "Lettres A..T et chiffres autour du goban"
     "Lode Runner 1983\nDig · climb · run",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Brightness",  // "Luminosité"
     "Light",  // "Lumière"
     "Mon",  // "Lun"
     "HOME",  // "MAISON"
@@ -2503,6 +2556,7 @@ static const char* const kI18n_en[] = {
     "Black (first)",  // "Noir (premier)"
     "Black wins",  // "Noir l'emporte"
     "Black",  // "Noirs"
+    "No",  // "Non"
     "Normal",  // "Normal"
     "Normal",  // "Normale"
     "New",  // "Nouvelle"
@@ -2510,6 +2564,7 @@ static const char* const kI18n_en[] = {
     "New game, 3 balls",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
     "Nudge, screen flip, calibration",  // "Nudge, sens de l'écran, calibration"
+    "Night (Auto mode)",  // "Nuit (mode Auto)"
     "Auto draw after 50 moves, no capture or pawn move",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Draw declared in demo mode",  // "Nulle déclarée en mode démo"
     "Draw by mutual agreement",  // "Nulle par accord entre les joueurs"
@@ -2523,6 +2578,7 @@ static const char* const kI18n_en[] = {
     "Gold left %d",  // "Or restant %d"
     "Orientation: %s",  // "Orientation : %s"
     "Swing",  // "Oscillation"
+    "Yes",  // "Oui"
     "Yes, clear everything",  // "Oui, tout effacer"
     "Open",  // "Ouvert"
     "Shift start",  // "Ouverture"
@@ -2607,6 +2663,8 @@ static const char* const kI18n_en[] = {
     "Appt lead",  // "RDV avant"
     "Silent appts",  // "RDV silencieux"
     "BEST %s",  // "RECORD %s"
+    "Wake the screen with a tap",  // "Rallumer l'écran d'une tape"
+    "Wake the screen on “Okay Nabu”",  // "Rallumer l'écran à « Okay Nabu »"
     "Grab all the gold, dodge the guards, climb to the top.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
     "Rank  Score      Lvl  Control\n",  // "Rang  Score      Niv  Contrôle\n"
     "Fast",  // "Rapide"
@@ -2765,6 +2823,7 @@ static const char* const kI18n_en[] = {
     "Time out — insufficient material to mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperature",  // "Température"
     "Test",  // "Tester"
+    "Theme",  // "Thème"
     "Local top 10",  // "Top 10 local"
     "Local top 10 (NVS)",  // "Top 10 local (NVS)"
     "Local top 10 - kept in NVS, survives reboots and OTA updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -2886,6 +2945,7 @@ static const char* const kI18n_en[] = {
     "Needs water!",  // "À arroser !"
     "Your move",  // "À vous"
     "CHECK!",  // "ÉCHEC !"
+    "SCREEN",  // "ÉCRAN"
     "TEAMS",  // "ÉQUIPES"
     "Bronze Scale",  // "Écaille de bronze"
     "Checkmate",  // "Échec et mat"
@@ -3011,21 +3071,26 @@ static const char* const kI18n_de[] = {
     "-1 px Radius: Kugel schwerer zu treffen",  // "-1 px de rayon : bille plus difficile à toucher"
     "1 Update · %s",  // "1 MAJ · %s"
     "1 Fehler",  // "1 erreur"
+    "1 min",  // "1 min"
     "1 bis 6 Teams",  // "1 à 6 équipes"
+    "10 min",  // "10 min"
     "10,0 Felder/s - schnelle Reflexe",  // "10,0 cases/s - réflexes exigés"
     "Letzte 12 Monate",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
     "2 Tage",  // "2 Jours"
+    "2 min",  // "2 min"
     "25 Züge ohne Steinzug oder Schlag",  // "25 coups sans pion ni prise"
     "3 Tage",  // "3 Jours"
     "3 Bälle - Abschuss unten am Bildschirm",  // "3 billes - lanceur en bas de l'écran"
     "3 s Unverwundbarkeit pro Raum",  // "3 s d'invulnérabilité par salle"
     "Letzte 30 Tage",  // "30 derniers jours"
+    "30 min",  // "30 min"
     "4 Tage",  // "4 Jours"
     "4,4 Felder/s - Originaltempo",  // "4,4 cases/s - rythme d'origine"
     "40 Züge ohne Steinzug oder Schlag",  // "40 coups sans pion ni prise"
+    "5 min",  // "5 min"
     "5,7 Felder/s",  // "5,7 cases/s"
     "6 Räume. 2 bis 5 Minuten.  Schwierigkeit: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 Felder/s",  // "6,7 cases/s"
@@ -3035,6 +3100,7 @@ static const char* const kI18n_de[] = {
     "9 min",  // "9 min"
     "AN",  // "ACTIF"
     "LAMPE",  // "AMPOULE"
+    "AUSSEHEN",  // "APPARENCE"
     "Aufgeben",  // "Abandon"
     "Aufgabe  —  geschätzte Zählung: %.1f zu %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Aufgeben",  // "Abandonner"
@@ -3170,6 +3236,7 @@ static const char* const kI18n_de[] = {
     "Dies ist endgültig.",  // "Cette action est définitive."
     "Dies ist unumkehrbar.",  // "Cette action est irréversible."
     "Schlafz.",  // "Chambre"
+    "Sprache wechseln?",  // "Changer de langue ?"
     "Variante wechseln",  // "Changer de variante"
     "Einstellungen ändern",  // "Changer les réglages"
     "Lädt",  // "Charge"
@@ -3179,6 +3246,7 @@ static const char* const kI18n_de[] = {
     "Modus, Farbe, Stufe und Uhr wählen",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Glatter Sturz. Atme durch.",  // "Chute nette. Reprends ton souffle."
     "Hell",  // "Clair"
+    "Hell oder dunkel",  // "Clair ou sombre"
     "Bestenliste",  // "Classement"
     "Lokale Wertung: %u Elo   ·   %u Partien gegen den Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Lokale Wertung: %u Elo   ·   %u Partien gespielt",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -3279,6 +3347,7 @@ static const char* const kI18n_de[] = {
     "Eval %+.1f",  // "Eval %+.1f"
     "Richtig — %s gewinnt das Spiel!",  // "Exact — %s remporte la partie !"
     "Experte",  // "Expert"
+    "Auto-Abschaltung",  // "Extinction auto"
     "SPIELENDE",  // "FIN DE PARTIE"
     "FINALE — %s",  // "FINALE — %s"
     "Leicht",  // "Facile"
@@ -3345,6 +3414,7 @@ static const char* const kI18n_de[] = {
     "Punkt besetzt",  // "Intersection occupée"
     "Unverwundbar - außer Wertung",  // "Invulnérable - hors concours"
     "Unumkehrbar",  // "Irréversible"
+    "Nie",  // "Jamais"
     "Jan",  // "Janv"
     "Do",  // "Jeu"
     "Spielbar",  // "Jouable"
@@ -3380,10 +3450,12 @@ static const char* const kI18n_de[] = {
     "Kann später fortgesetzt werden",  // "La partie sera reprise plus tard"
     "Die Uhr ist angehalten",  // "La pendule est arrêtée"
     "Der Stein gewinnt diese Runde.",  // "La pierre gagne cette manche."
+    "Das Tablet startet auf {langue} neu.",  // "La tablette redémarre en {langue}."
     "Startet die Partie",  // "Lance la partie"
     "Startet mit diesen Einstellungen",  // "Lance la partie avec ces réglages"
     "Starten",  // "Lancer"
     "Run starten",  // "Lancer une run"
+    "Sprache",  // "Langue"
     "Tab gibt auf",  // "Le Tab abandonne"
     "Tab nimmt Remis an",  // "Le Tab accepte la nulle"
     "Tab nimmt an, wenn er nicht besser steht",  // "Le Tab accepte s'il n'est pas mieux"
@@ -3422,6 +3494,7 @@ static const char* const kI18n_de[] = {
     "Die Seelen sind schon gesichert.",  // "Les âmes sont déjà mises de côté."
     "Buchstaben A..T und Zahlen am Brettrand",  // "Lettres A..T et chiffres autour du goban"
     "Lode Runner 1983\nGraben · klettern · fliehen",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Helligkeit",  // "Luminosité"
     "Licht",  // "Lumière"
     "Mo",  // "Lun"
     "HAUS",  // "MAISON"
@@ -3479,6 +3552,7 @@ static const char* const kI18n_de[] = {
     "Schwarz (beginnt)",  // "Noir (premier)"
     "Schwarz gewinnt",  // "Noir l'emporte"
     "Schwarz",  // "Noirs"
+    "Nein",  // "Non"
     "Normal",  // "Normal"
     "Normal",  // "Normale"
     "Neu",  // "Nouvelle"
@@ -3486,6 +3560,7 @@ static const char* const kI18n_de[] = {
     "Neues Spiel, 3 Bälle",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
     "Nudge, Bildausrichtung, Kalibrierung",  // "Nudge, sens de l'écran, calibration"
+    "Nacht (Modus Auto)",  // "Nuit (mode Auto)"
     "Autom. Remis nach 50 Zügen ohne Schlag oder Bauernzug",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Remis im Demomodus erklärt",  // "Nulle déclarée en mode démo"
     "Remis durch Einigung",  // "Nulle par accord entre les joueurs"
@@ -3499,6 +3574,7 @@ static const char* const kI18n_de[] = {
     "Gold übrig %d",  // "Or restant %d"
     "Ausrichtung: %s",  // "Orientation : %s"
     "Schwenken",  // "Oscillation"
+    "Ja",  // "Oui"
     "Ja, alles löschen",  // "Oui, tout effacer"
     "Offen",  // "Ouvert"
     "Schicht",  // "Ouverture"
@@ -3583,6 +3659,8 @@ static const char* const kI18n_de[] = {
     "Vor Termin",  // "RDV avant"
     "Termine stumm",  // "RDV silencieux"
     "REKORD %s",  // "RECORD %s"
+    "Bildschirm durch Antippen einschalten",  // "Rallumer l'écran d'une tape"
+    "Bildschirm bei „Okay Nabu“ einschalten",  // "Rallumer l'écran à « Okay Nabu »"
     "Sammle alles Gold, entkomme den Wachen, klettere hoch.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
     "Rang  Score      Lvl  Steuerung\n",  // "Rang  Score      Niv  Contrôle\n"
     "Schnell",  // "Rapide"
@@ -3741,6 +3819,7 @@ static const char* const kI18n_de[] = {
     "Zeit ist um — zu wenig Material zum Mattsetzen",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatur",  // "Température"
     "Testen",  // "Tester"
+    "Design",  // "Thème"
     "Lokale Top 10",  // "Top 10 local"
     "Lokale Top 10 (NVS)",  // "Top 10 local (NVS)"
     "Lokale Top 10 - in NVS gespeichert, übersteht Neustarts und OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -3862,6 +3941,7 @@ static const char* const kI18n_de[] = {
     "Gießen!",  // "À arroser !"
     "Dein Zug",  // "À vous"
     "SCHACH!",  // "ÉCHEC !"
+    "BILDSCHIRM",  // "ÉCRAN"
     "TEAMS",  // "ÉQUIPES"
     "Bronzeschuppe",  // "Écaille de bronze"
     "Schachmatt",  // "Échec et mat"
@@ -3987,21 +4067,26 @@ static const char* const kI18n_nl[] = {
     "-1 px straal: knikker lastiger te raken",  // "-1 px de rayon : bille plus difficile à toucher"
     "1 update · %s",  // "1 MAJ · %s"
     "1 fout",  // "1 erreur"
+    "1 min",  // "1 min"
     "1 tot 6 teams",  // "1 à 6 équipes"
+    "10 min",  // "10 min"
     "10,0 vakjes/s - snelle reflexen",  // "10,0 cases/s - réflexes exigés"
     "Laatste 12 maanden",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
     "2 dagen",  // "2 Jours"
+    "2 min",  // "2 min"
     "25 zetten zonder schijf of slag",  // "25 coups sans pion ni prise"
     "3 dagen",  // "3 Jours"
     "3 ballen - plunjer onderaan",  // "3 billes - lanceur en bas de l'écran"
     "3 s onkwetsbaar per kamer",  // "3 s d'invulnérabilité par salle"
     "Laatste 30 dagen",  // "30 derniers jours"
+    "30 min",  // "30 min"
     "4 dagen",  // "4 Jours"
     "4,4 vakjes/s - origineel tempo",  // "4,4 cases/s - rythme d'origine"
     "40 zetten zonder schijf of slag",  // "40 coups sans pion ni prise"
+    "5 min",  // "5 min"
     "5,7 vakjes/s",  // "5,7 cases/s"
     "6 kamers. 2 tot 5 minuten.  Moeilijkheid: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 vakjes/s",  // "6,7 cases/s"
@@ -4011,6 +4096,7 @@ static const char* const kI18n_nl[] = {
     "9 min",  // "9 min"
     "AAN",  // "ACTIF"
     "LAMP",  // "AMPOULE"
+    "WEERGAVE",  // "APPARENCE"
     "Opgeven",  // "Abandon"
     "Opgegeven  —  indicatieve telling: %.1f tegen %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Opgeven",  // "Abandonner"
@@ -4146,6 +4232,7 @@ static const char* const kI18n_nl[] = {
     "Dit is definitief.",  // "Cette action est définitive."
     "Dit is onomkeerbaar.",  // "Cette action est irréversible."
     "Slaapkamer",  // "Chambre"
+    "Taal wijzigen?",  // "Changer de langue ?"
     "Stats-variant wisselen",  // "Changer de variante"
     "Opties wijzigen",  // "Changer les réglages"
     "Laden",  // "Charge"
@@ -4155,6 +4242,7 @@ static const char* const kI18n_nl[] = {
     "Kies modus, kleur, niveau en klok",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Zuivere val. Kom even op adem.",  // "Chute nette. Reprends ton souffle."
     "Licht",  // "Clair"
+    "Licht of donker",  // "Clair ou sombre"
     "Ranglijst",  // "Classement"
     "Lokale rating: %u Elo   ·   %u partijen tegen de Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Lokale rating: %u Elo   ·   %u partijen gespeeld",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -4255,6 +4343,7 @@ static const char* const kI18n_nl[] = {
     "Eval %+.1f",  // "Eval %+.1f"
     "Goed — %s wint het spel!",  // "Exact — %s remporte la partie !"
     "Expert",  // "Expert"
+    "Automatisch uit",  // "Extinction auto"
     "EINDE SPEL",  // "FIN DE PARTIE"
     "FINALE — %s",  // "FINALE — %s"
     "Simpel",  // "Facile"
@@ -4321,6 +4410,7 @@ static const char* const kI18n_nl[] = {
     "Punt bezet",  // "Intersection occupée"
     "Onkwetsbaar - telt niet mee",  // "Invulnérable - hors concours"
     "Onomkeerbaar",  // "Irréversible"
+    "Nooit",  // "Jamais"
     "Jan",  // "Janv"
     "Do",  // "Jeu"
     "Speelbaar",  // "Jouable"
@@ -4356,10 +4446,12 @@ static const char* const kI18n_nl[] = {
     "Je kunt het spel later hervatten",  // "La partie sera reprise plus tard"
     "De klok staat stil",  // "La pendule est arrêtée"
     "De steen wint deze ronde.",  // "La pierre gagne cette manche."
+    "De tablet herstart in het {langue}.",  // "La tablette redémarre en {langue}."
     "Start de partij",  // "Lance la partie"
     "Start met deze opties",  // "Lance la partie avec ces réglages"
     "Starten",  // "Lancer"
     "Start een run",  // "Lancer une run"
+    "Taal",  // "Langue"
     "Tab geeft op",  // "Le Tab abandonne"
     "Tab accepteert remise",  // "Le Tab accepte la nulle"
     "Tab accepteert als hij niet voorstaat",  // "Le Tab accepte s'il n'est pas mieux"
@@ -4398,6 +4490,7 @@ static const char* const kI18n_nl[] = {
     "Je zielen zijn al veiliggesteld.",  // "Les âmes sont déjà mises de côté."
     "Letters A..T en cijfers rond de goban",  // "Lettres A..T et chiffres autour du goban"
     "Lode Runner 1983\nGraaf · klim · vlucht",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Helderheid",  // "Luminosité"
     "Licht",  // "Lumière"
     "Ma",  // "Lun"
     "HUIS",  // "MAISON"
@@ -4455,6 +4548,7 @@ static const char* const kI18n_nl[] = {
     "Zwart (begint)",  // "Noir (premier)"
     "Zwart wint",  // "Noir l'emporte"
     "Zwart",  // "Noirs"
+    "Nee",  // "Non"
     "Normaal",  // "Normal"
     "Normaal",  // "Normale"
     "Nieuw",  // "Nouvelle"
@@ -4462,6 +4556,7 @@ static const char* const kI18n_nl[] = {
     "Nieuw spel, 3 ballen",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
     "Nudge, schermstand, kalibratie",  // "Nudge, sens de l'écran, calibration"
+    "Nacht (modus Auto)",  // "Nuit (mode Auto)"
     "Automatisch remise na 50 zetten zonder slag of pionzet",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Remise verklaard in demomodus",  // "Nulle déclarée en mode démo"
     "Remise in onderling overleg",  // "Nulle par accord entre les joueurs"
@@ -4475,6 +4570,7 @@ static const char* const kI18n_nl[] = {
     "Goud over %d",  // "Or restant %d"
     "Oriëntatie: %s",  // "Orientation : %s"
     "Zwenken",  // "Oscillation"
+    "Ja",  // "Oui"
     "Ja, alles wissen",  // "Oui, tout effacer"
     "Open",  // "Ouvert"
     "Werkbegin",  // "Ouverture"
@@ -4559,6 +4655,8 @@ static const char* const kI18n_nl[] = {
     "Herinnering",  // "RDV avant"
     "Stille afspraken",  // "RDV silencieux"
     "RECORD %s",  // "RECORD %s"
+    "Scherm aan met een tik",  // "Rallumer l'écran d'une tape"
+    "Scherm aan bij „Okay Nabu”",  // "Rallumer l'écran à « Okay Nabu »"
     "Pak al het goud, ontwijk de bewakers, klim naar boven.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
     "Rang  Score      Lvl  Besturing\n",  // "Rang  Score      Niv  Contrôle\n"
     "Snel",  // "Rapide"
@@ -4717,6 +4815,7 @@ static const char* const kI18n_nl[] = {
     "Tijd om — te weinig materiaal voor mat",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatuur",  // "Température"
     "Testen",  // "Tester"
+    "Thema",  // "Thème"
     "Lokale top 10",  // "Top 10 local"
     "Lokale top 10 (NVS)",  // "Top 10 local (NVS)"
     "Lokale top 10 - bewaard in NVS, overleeft herstarts en OTA-updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -4838,6 +4937,7 @@ static const char* const kI18n_nl[] = {
     "Water geven!",  // "À arroser !"
     "Jouw zet",  // "À vous"
     "SCHAAK!",  // "ÉCHEC !"
+    "SCHERM",  // "ÉCRAN"
     "TEAMS",  // "ÉQUIPES"
     "Bronzen schub",  // "Écaille de bronze"
     "Schaakmat",  // "Échec et mat"
@@ -4963,21 +5063,26 @@ static const char* const kI18n_es[] = {
     "-1 px de radio: canica más difícil de alcanzar",  // "-1 px de rayon : bille plus difficile à toucher"
     "1 actualización · %s",  // "1 MAJ · %s"
     "1 error",  // "1 erreur"
+    "1 min",  // "1 min"
     "1 a 6 equipos",  // "1 à 6 équipes"
+    "10 min",  // "10 min"
     "10,0 casillas/s - reflejos rápidos",  // "10,0 cases/s - réflexes exigés"
     "Últimos 12 meses",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
     "2 días",  // "2 Jours"
+    "2 min",  // "2 min"
     "25 jugadas sin mover peón ni capturar",  // "25 coups sans pion ni prise"
     "3 días",  // "3 Jours"
     "3 bolas - lanzador abajo",  // "3 billes - lanceur en bas de l'écran"
     "3 s de invulnerabilidad por sala",  // "3 s d'invulnérabilité par salle"
     "Últimos 30 días",  // "30 derniers jours"
+    "30 min",  // "30 min"
     "4 días",  // "4 Jours"
     "4,4 casillas/s - ritmo original",  // "4,4 cases/s - rythme d'origine"
     "40 jugadas sin mover peón ni capturar",  // "40 coups sans pion ni prise"
+    "5 min",  // "5 min"
     "5,7 casillas/s",  // "5,7 cases/s"
     "6 salas. De 2 a 5 minutos.  Dificultad: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 casillas/s",  // "6,7 cases/s"
@@ -4987,6 +5092,7 @@ static const char* const kI18n_es[] = {
     "9 min",  // "9 min"
     "ACTIVO",  // "ACTIF"
     "LÁMPARA",  // "AMPOULE"
+    "APARIENCIA",  // "APPARENCE"
     "Rendirse",  // "Abandon"
     "Abandono  —  conteo orientativo: %.1f contra %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Abandonar",  // "Abandonner"
@@ -5122,6 +5228,7 @@ static const char* const kI18n_es[] = {
     "Esta acción es definitiva.",  // "Cette action est définitive."
     "Esta acción es irreversible.",  // "Cette action est irréversible."
     "Dormitorio",  // "Chambre"
+    "¿Cambiar de idioma?",  // "Changer de langue ?"
     "Cambiar de variante",  // "Changer de variante"
     "Cambiar ajustes",  // "Changer les réglages"
     "Carga",  // "Charge"
@@ -5131,6 +5238,7 @@ static const char* const kI18n_es[] = {
     "Elige modo, color, nivel y reloj",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caída limpia. Recupera el aliento.",  // "Chute nette. Reprends ton souffle."
     "Claro",  // "Clair"
+    "Claro u oscuro",  // "Clair ou sombre"
     "Clasificación",  // "Classement"
     "Clasificación local: %u Elo   ·   %u partidas contra el Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Clasificación local: %u Elo   ·   %u partidas jugadas",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -5231,6 +5339,7 @@ static const char* const kI18n_es[] = {
     "Eval %+.1f",  // "Eval %+.1f"
     "Correcto — ¡%s gana la partida!",  // "Exact — %s remporte la partie !"
     "Experto",  // "Expert"
+    "Apagado automático",  // "Extinction auto"
     "FIN DE PARTIDA",  // "FIN DE PARTIE"
     "FINAL — %s",  // "FINALE — %s"
     "Fácil",  // "Facile"
@@ -5297,6 +5406,7 @@ static const char* const kI18n_es[] = {
     "Intersección ocupada",  // "Intersection occupée"
     "Invulnerable - fuera de concurso",  // "Invulnérable - hors concours"
     "Irreversible",  // "Irréversible"
+    "Nunca",  // "Jamais"
     "Ene",  // "Janv"
     "Jue",  // "Jeu"
     "Jugable",  // "Jouable"
@@ -5332,10 +5442,12 @@ static const char* const kI18n_es[] = {
     "Podrás reanudarla más tarde",  // "La partie sera reprise plus tard"
     "El reloj está parado",  // "La pendule est arrêtée"
     "La piedra gana esta ronda.",  // "La pierre gagne cette manche."
+    "La tableta se reinicia en {langue}.",  // "La tablette redémarre en {langue}."
     "Empieza la partida",  // "Lance la partie"
     "Empieza con estos ajustes",  // "Lance la partie avec ces réglages"
     "Iniciar",  // "Lancer"
     "Iniciar una run",  // "Lancer une run"
+    "Idioma",  // "Langue"
     "El Tab se rinde",  // "Le Tab abandonne"
     "El Tab acepta tablas",  // "Le Tab accepte la nulle"
     "El Tab acepta si no va ganando",  // "Le Tab accepte s'il n'est pas mieux"
@@ -5374,6 +5486,7 @@ static const char* const kI18n_es[] = {
     "Las almas ya están a salvo.",  // "Les âmes sont déjà mises de côté."
     "Letras A..T y números alrededor del goban",  // "Lettres A..T et chiffres autour du goban"
     "Lode Runner 1983\nCava · trepa · huye",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Brillo",  // "Luminosité"
     "Luz",  // "Lumière"
     "Lun",  // "Lun"
     "CASA",  // "MAISON"
@@ -5431,6 +5544,7 @@ static const char* const kI18n_es[] = {
     "Negro (empieza)",  // "Noir (premier)"
     "Gana Negro",  // "Noir l'emporte"
     "Negras",  // "Noirs"
+    "No",  // "Non"
     "Normal",  // "Normal"
     "Normal",  // "Normale"
     "Nueva",  // "Nouvelle"
@@ -5438,6 +5552,7 @@ static const char* const kI18n_es[] = {
     "Nueva partida, 3 bolas",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
     "Nudge, orientación, calibración",  // "Nudge, sens de l'écran, calibration"
+    "Noche (modo Auto)",  // "Nuit (mode Auto)"
     "Tablas automáticas tras 50 jugadas sin captura ni peón",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Tablas declaradas en modo demo",  // "Nulle déclarée en mode démo"
     "Tablas por mutuo acuerdo",  // "Nulle par accord entre les joueurs"
@@ -5451,6 +5566,7 @@ static const char* const kI18n_es[] = {
     "Oro restante %d",  // "Or restant %d"
     "Orientación: %s",  // "Orientation : %s"
     "Oscilación",  // "Oscillation"
+    "Sí",  // "Oui"
     "Sí, borrar todo",  // "Oui, tout effacer"
     "Abierta",  // "Ouvert"
     "Turno",  // "Ouverture"
@@ -5535,6 +5651,8 @@ static const char* const kI18n_es[] = {
     "Antes de cita",  // "RDV avant"
     "Citas en silencio",  // "RDV silencieux"
     "RÉCORD %s",  // "RECORD %s"
+    "Encender la pantalla con un toque",  // "Rallumer l'écran d'une tape"
+    "Encender la pantalla con «Okay Nabu»",  // "Rallumer l'écran à « Okay Nabu »"
     "Recoge todo el oro, esquiva a los guardias, trepa arriba.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
     "Pos.  Puntos     Niv  Control\n",  // "Rang  Score      Niv  Contrôle\n"
     "Rápida",  // "Rapide"
@@ -5693,6 +5811,7 @@ static const char* const kI18n_es[] = {
     "Tiempo agotado — material insuficiente para dar mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
     "Probar",  // "Tester"
+    "Tema",  // "Thème"
     "Top 10 local",  // "Top 10 local"
     "Top 10 local (NVS)",  // "Top 10 local (NVS)"
     "Top 10 local - guardado en NVS, sobrevive a reinicios y OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -5814,6 +5933,7 @@ static const char* const kI18n_es[] = {
     "¡Regar!",  // "À arroser !"
     "Tu turno",  // "À vous"
     "¡JAQUE!",  // "ÉCHEC !"
+    "PANTALLA",  // "ÉCRAN"
     "EQUIPOS",  // "ÉQUIPES"
     "Escama de bronce",  // "Écaille de bronze"
     "Jaque mate",  // "Échec et mat"
@@ -5939,21 +6059,26 @@ static const char* const kI18n_it[] = {
     "-1 px di raggio: biglia più difficile da colpire",  // "-1 px de rayon : bille plus difficile à toucher"
     "1 aggiorn. · %s",  // "1 MAJ · %s"
     "1 errore",  // "1 erreur"
+    "1 min",  // "1 min"
     "1–6 squadre",  // "1 à 6 équipes"
+    "10 min",  // "10 min"
     "10,0 caselle/s - riflessi pronti",  // "10,0 cases/s - réflexes exigés"
     "Ultimi 12 mesi",  // "12 derniers mois"
     "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1°",  // "1er"
     "2 giorni",  // "2 Jours"
+    "2 min",  // "2 min"
     "25 mosse di sole dame, senza prese",  // "25 coups sans pion ni prise"
     "3 giorni",  // "3 Jours"
     "3 palle - lanciatore in basso",  // "3 billes - lanceur en bas de l'écran"
     "3 s di invulnerabilità per stanza",  // "3 s d'invulnérabilité par salle"
     "Ultimi 30 giorni",  // "30 derniers jours"
+    "30 min",  // "30 min"
     "4 giorni",  // "4 Jours"
     "4,4 caselle/s - ritmo originale",  // "4,4 cases/s - rythme d'origine"
     "40 mosse di sole dame, senza prese",  // "40 coups sans pion ni prise"
+    "5 min",  // "5 min"
     "5,7 caselle/s",  // "5,7 cases/s"
     "6 stanze. Da 2 a 5 minuti.  Difficoltà: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 caselle/s",  // "6,7 cases/s"
@@ -5963,6 +6088,7 @@ static const char* const kI18n_it[] = {
     "9 min",  // "9 min"
     "ATTIVA",  // "ACTIF"
     "LUCI",  // "AMPOULE"
+    "ASPETTO",  // "APPARENCE"
     "Abbandona",  // "Abandon"
     "Abbandono  —  conteggio indicativo: %.1f a %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Abbandona",  // "Abandonner"
@@ -6098,6 +6224,7 @@ static const char* const kI18n_it[] = {
     "Questa azione è definitiva.",  // "Cette action est définitive."
     "Questa azione è irreversibile.",  // "Cette action est irréversible."
     "Camera",  // "Chambre"
+    "Cambiare lingua?",  // "Changer de langue ?"
     "Cambia variante",  // "Changer de variante"
     "Cambia le opzioni",  // "Changer les réglages"
     "Carica",  // "Charge"
@@ -6107,6 +6234,7 @@ static const char* const kI18n_it[] = {
     "Scegli modalità, colore, livello e orologio",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caduta netta. Riprendi fiato.",  // "Chute nette. Reprends ton souffle."
     "Chiaro",  // "Clair"
+    "Chiaro o scuro",  // "Clair ou sombre"
     "Classifica",  // "Classement"
     "Punteggio locale: %u Elo   ·   %u partite contro il Tab",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Punteggio locale: %u Elo   ·   %u partite giocate",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -6207,6 +6335,7 @@ static const char* const kI18n_it[] = {
     "Val %+.1f",  // "Eval %+.1f"
     "Esatto — %s vince la partita!",  // "Exact — %s remporte la partie !"
     "Esperto",  // "Expert"
+    "Spegnimento automatico",  // "Extinction auto"
     "FINE PARTITA",  // "FIN DE PARTIE"
     "FINALE — %s",  // "FINALE — %s"
     "Facile",  // "Facile"
@@ -6273,6 +6402,7 @@ static const char* const kI18n_it[] = {
     "Punto occupato",  // "Intersection occupée"
     "Invulnerabile - fuori classifica",  // "Invulnérable - hors concours"
     "Irreversibile",  // "Irréversible"
+    "Mai",  // "Jamais"
     "Gen",  // "Janv"
     "Gio",  // "Jeu"
     "Giocabile",  // "Jouable"
@@ -6308,10 +6438,12 @@ static const char* const kI18n_it[] = {
     "Potrai riprendere la partita dopo",  // "La partie sera reprise plus tard"
     "L'orologio è fermo",  // "La pendule est arrêtée"
     "La pietra vince questo round.",  // "La pierre gagne cette manche."
+    "Il tablet si riavvia in {langue}.",  // "La tablette redémarre en {langue}."
     "Avvia la partita",  // "Lance la partie"
     "Avvia con queste opzioni",  // "Lance la partie avec ces réglages"
     "Avvia",  // "Lancer"
     "Inizia una run",  // "Lancer une run"
+    "Lingua",  // "Langue"
     "Il Tab abbandona",  // "Le Tab abandonne"
     "Il Tab accetta la patta",  // "Le Tab accepte la nulle"
     "Il Tab accetta se non è in vantaggio",  // "Le Tab accepte s'il n'est pas mieux"
@@ -6350,6 +6482,7 @@ static const char* const kI18n_it[] = {
     "Le anime sono già al sicuro.",  // "Les âmes sont déjà mises de côté."
     "Lettere A..T e numeri attorno al goban",  // "Lettres A..T et chiffres autour du goban"
     "Lode Runner 1983\nScava · sali · fuggi",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Luminosità",  // "Luminosité"
     "Luce",  // "Lumière"
     "Lun",  // "Lun"
     "CASA",  // "MAISON"
@@ -6407,6 +6540,7 @@ static const char* const kI18n_it[] = {
     "Nero (inizi)",  // "Noir (premier)"
     "Vince il Nero",  // "Noir l'emporte"
     "Nero",  // "Noirs"
+    "No",  // "Non"
     "Normale",  // "Normal"
     "Normale",  // "Normale"
     "Nuova",  // "Nouvelle"
@@ -6414,6 +6548,7 @@ static const char* const kI18n_it[] = {
     "Nuova partita, 3 palle",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
     "Nudge, orientamento, calibrazione",  // "Nudge, sens de l'écran, calibration"
+    "Notte (modalità Auto)",  // "Nuit (mode Auto)"
     "Patta automatica dopo 50 mosse senza prese né pedoni",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Patta dichiarata in modalità demo",  // "Nulle déclarée en mode démo"
     "Patta d'accordo tra i giocatori",  // "Nulle par accord entre les joueurs"
@@ -6427,6 +6562,7 @@ static const char* const kI18n_it[] = {
     "Oro rimasto %d",  // "Or restant %d"
     "Orientamento: %s",  // "Orientation : %s"
     "Oscillazione",  // "Oscillation"
+    "Sì",  // "Oui"
     "Sì, cancella tutto",  // "Oui, tout effacer"
     "Aperta",  // "Ouvert"
     "Inizio turno",  // "Ouverture"
@@ -6511,6 +6647,8 @@ static const char* const kI18n_it[] = {
     "Preavviso",  // "RDV avant"
     "Appunt. muti",  // "RDV silencieux"
     "RECORD %s",  // "RECORD %s"
+    "Riaccendi lo schermo con un tocco",  // "Rallumer l'écran d'une tape"
+    "Riaccendi lo schermo con «Okay Nabu»",  // "Rallumer l'écran à « Okay Nabu »"
     "Raccogli tutto l'oro, sfuggi alle guardie, sali in cima.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
     "Pos.  Punti      Liv  Controllo\n",  // "Rang  Score      Niv  Contrôle\n"
     "Rapida",  // "Rapide"
@@ -6669,6 +6807,7 @@ static const char* const kI18n_it[] = {
     "Tempo scaduto — materiale insufficiente",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
     "Prova",  // "Tester"
+    "Tema",  // "Thème"
     "Top 10 locale",  // "Top 10 local"
     "Top 10 locale (NVS)",  // "Top 10 local (NVS)"
     "Top 10 locale - salvata in NVS, resiste a riavvii e OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -6790,6 +6929,7 @@ static const char* const kI18n_it[] = {
     "Da annaffiare!",  // "À arroser !"
     "Tocca a te",  // "À vous"
     "SCACCO!",  // "ÉCHEC !"
+    "SCHERMO",  // "ÉCRAN"
     "SQUADRE",  // "ÉQUIPES"
     "Scaglia di bronzo",  // "Écaille de bronze"
     "Scacco matto",  // "Échec et mat"
@@ -6915,21 +7055,26 @@ static const char* const kI18n_tr[] = {
     "-1 px yarıçap: bilye daha zor vurulur",  // "-1 px de rayon : bille plus difficile à toucher"
     "1 güncelleme · %s",  // "1 MAJ · %s"
     "1 hata",  // "1 erreur"
+    "1 dk",  // "1 min"
     "1-6 takım",  // "1 à 6 équipes"
+    "10 dk",  // "10 min"
     "10,0 kare/sn - refleks şart",  // "10,0 cases/s - réflexes exigés"
     "Son 12 ay",  // "12 derniers mois"
     "15 dk",  // "15 min"
     "15 dk + 10 sn",  // "15 min + 10 s"
     "1",  // "1er"
     "2 Gün",  // "2 Jours"
+    "2 dk",  // "2 min"
     "Taş hamlesi ve alma yok: 25 hamle",  // "25 coups sans pion ni prise"
     "3 Gün",  // "3 Jours"
     "3 bilye - fırlatıcı ekranın altında",  // "3 billes - lanceur en bas de l'écran"
     "Oda başına 3 sn dokunulmazlık",  // "3 s d'invulnérabilité par salle"
     "Son 30 gün",  // "30 derniers jours"
+    "30 dk",  // "30 min"
     "4 Gün",  // "4 Jours"
     "4,4 kare/sn - özgün tempo",  // "4,4 cases/s - rythme d'origine"
     "Taş hamlesi ve alma yok: 40 hamle",  // "40 coups sans pion ni prise"
+    "5 dk",  // "5 min"
     "5,7 kare/sn",  // "5,7 cases/s"
     "6 oda. 2-5 dakika.  Zorluk: %s",  // "6 salles. 2 à 5 minutes.  Difficulté : %s"
     "6,7 kare/sn",  // "6,7 cases/s"
@@ -6939,6 +7084,7 @@ static const char* const kI18n_tr[] = {
     "9 dk",  // "9 min"
     "AÇIK",  // "ACTIF"
     "AMPUL",  // "AMPOULE"
+    "GÖRÜNÜM",  // "APPARENCE"
     "Pes",  // "Abandon"
     "Pes  —  tahmini sayım: %.1f - %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Bırak",  // "Abandonner"
@@ -7074,6 +7220,7 @@ static const char* const kI18n_tr[] = {
     "Bu işlem kalıcıdır.",  // "Cette action est définitive."
     "Bu işlem geri alınamaz.",  // "Cette action est irréversible."
     "Yatak odası",  // "Chambre"
+    "Dil değiştirilsin mi?",  // "Changer de langue ?"
     "Varyantı değiştir",  // "Changer de variante"
     "Ayarları değiştir",  // "Changer les réglages"
     "Şarj",  // "Charge"
@@ -7083,6 +7230,7 @@ static const char* const kI18n_tr[] = {
     "Mod, renk, seviye ve saat seçimi",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Temiz bir düşüş. Nefes al.",  // "Chute nette. Reprends ton souffle."
     "Açık",  // "Clair"
+    "Açık veya koyu",  // "Clair ou sombre"
     "Sıralama",  // "Classement"
     "Yerel derece: %u Elo   ·   Tab'a karşı %u oyun",  // "Classement local : %u Elo   ·   %u parties contre le Tab"
     "Yerel derece: %u Elo   ·   %u oyun oynandı",  // "Classement local : %u Elo   ·   %u parties jouées"
@@ -7183,6 +7331,7 @@ static const char* const kI18n_tr[] = {
     "Değ. %+.1f",  // "Eval %+.1f"
     "Doğru — oyunu %s kazandı!",  // "Exact — %s remporte la partie !"
     "Uzman",  // "Expert"
+    "Otomatik kapanma",  // "Extinction auto"
     "OYUN BİTTİ",  // "FIN DE PARTIE"
     "FİNAL — %s",  // "FINALE — %s"
     "Kolay",  // "Facile"
@@ -7249,6 +7398,7 @@ static const char* const kI18n_tr[] = {
     "Kesişim dolu",  // "Intersection occupée"
     "Dokunulmaz - sıralama dışı",  // "Invulnérable - hors concours"
     "Geri alınamaz",  // "Irréversible"
+    "Asla",  // "Jamais"
     "Oca",  // "Janv"
     "Per",  // "Jeu"
     "Oynanabilir",  // "Jouable"
@@ -7284,10 +7434,12 @@ static const char* const kI18n_tr[] = {
     "Oyuna sonra devam edebilirsin",  // "La partie sera reprise plus tard"
     "Saat durduruldu",  // "La pendule est arrêtée"
     "Bu eli taş kazandı.",  // "La pierre gagne cette manche."
+    "Tablet {langue} diliyle yeniden başlar.",  // "La tablette redémarre en {langue}."
     "Oyunu başlatır",  // "Lance la partie"
     "Oyunu bu ayarlarla başlatır",  // "Lance la partie avec ces réglages"
     "Başlat",  // "Lancer"
     "Sefer başlat",  // "Lancer une run"
+    "Dil",  // "Langue"
     "Tab pes etti",  // "Le Tab abandonne"
     "Tab beraberliği kabul etti",  // "Le Tab accepte la nulle"
     "Tab, önde değilse kabul eder",  // "Le Tab accepte s'il n'est pas mieux"
@@ -7326,6 +7478,7 @@ static const char* const kI18n_tr[] = {
     "Ruhlar zaten kenara ayrıldı.",  // "Les âmes sont déjà mises de côté."
     "Tahtanın çevresinde A..T harfleri ve rakamlar",  // "Lettres A..T et chiffres autour du goban"
     "Lode Runner 1983\nKaz · tırman · kaç",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
+    "Parlaklık",  // "Luminosité"
     "Işık",  // "Lumière"
     "Pzt",  // "Lun"
     "EV",  // "MAISON"
@@ -7383,6 +7536,7 @@ static const char* const kI18n_tr[] = {
     "Siyah (ilk)",  // "Noir (premier)"
     "Siyah kazandı",  // "Noir l'emporte"
     "Siyah",  // "Noirs"
+    "Hayır",  // "Non"
     "Normal",  // "Normal"
     "Normal",  // "Normale"
     "Yeni",  // "Nouvelle"
@@ -7390,6 +7544,7 @@ static const char* const kI18n_tr[] = {
     "Yeni oyun, 3 bilye",  // "Nouvelle partie, 3 billes"
     "Kas",  // "Nov"
     "Dürtme, ekran yönü, kalibrasyon",  // "Nudge, sens de l'écran, calibration"
+    "Gece (Otomatik mod)",  // "Nuit (mode Auto)"
     "Alma veya piyon hamlesi olmadan 50 hamlede otomatik beraberlik",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Demo modunda beraberlik ilan edildi",  // "Nulle déclarée en mode démo"
     "Oyuncuların anlaşmasıyla beraberlik",  // "Nulle par accord entre les joueurs"
@@ -7403,6 +7558,7 @@ static const char* const kI18n_tr[] = {
     "Kalan altın %d",  // "Or restant %d"
     "Yön: %s",  // "Orientation : %s"
     "Salınım",  // "Oscillation"
+    "Evet",  // "Oui"
     "Evet, hepsini sil",  // "Oui, tout effacer"
     "Açık",  // "Ouvert"
     "Mesai başı",  // "Ouverture"
@@ -7487,6 +7643,8 @@ static const char* const kI18n_tr[] = {
     "Randevu ön.",  // "RDV avant"
     "Sessiz randevu",  // "RDV silencieux"
     "REKOR %s",  // "RECORD %s"
+    "Dokununca ekranı aç",  // "Rallumer l'écran d'une tape"
+    "«Okay Nabu» ile ekranı aç",  // "Rallumer l'écran à « Okay Nabu »"
     "Tüm altını topla, muhafızlardan kaç, tepeye tırman.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
     "Sıra  Skor      Sev  Kontrol\n",  // "Rang  Score      Niv  Contrôle\n"
     "Hızlı",  // "Rapide"
@@ -7645,6 +7803,7 @@ static const char* const kI18n_tr[] = {
     "Süre doldu — mat için yetersiz materyal",  // "Temps écoulé — matériel insuffisant pour mater"
     "Sıcaklık",  // "Température"
     "Dene",  // "Tester"
+    "Tema",  // "Thème"
     "Yerel ilk 10",  // "Top 10 local"
     "Yerel ilk 10 (NVS)",  // "Top 10 local (NVS)"
     "Yerel ilk 10 - NVS'de saklanır, yeniden başlatma ve OTA'da korunur.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -7766,6 +7925,7 @@ static const char* const kI18n_tr[] = {
     "Sulanmalı!",  // "À arroser !"
     "Sıra sende",  // "À vous"
     "ŞAH!",  // "ÉCHEC !"
+    "EKRAN",  // "ÉCRAN"
     "TAKIMLAR",  // "ÉQUIPES"
     "Tunç Pul",  // "Écaille de bronze"
     "Şah mat",  // "Échec et mat"

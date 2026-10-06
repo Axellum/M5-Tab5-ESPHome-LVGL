@@ -267,11 +267,23 @@ EVT_MOIS = "esphome.tab5_calendrier_mois"
 EVT_MAJ_ECRAN = "esphome.tab5_maj_ecran"
 EVT_REDEMARRAGE = "esphome.tab5_redemarrage_ha_confirme"
 
-# Mémoire des alertes lues (packages/tab5_alerts.yaml, 06/10/2026) : un tap retenu doit
-# survivre à un plantage de HA et à un redémarrage propre. Le témoin est posé sans
-# sauvegarde : le plantage doit le perdre (contre-épreuve : le test sait voir une perte).
+# Alertes de la carte centrale (packages/tab5_alerts.yaml, plan du 06/10/2026) : une
+# alerte lue ne revient ni après un plantage de HA ni après un redémarrage propre ; finie,
+# elle part d'elle-même. Les mises à jour de l'intégration demo sont les alertes. Le
+# témoin est posé dans l'ancienne liste sans sauvegarde : le plantage doit le perdre
+# (contre-épreuve : le test sait voir une perte).
+CAPTEUR_ALERTES = "sensor.tab5_alertes"
+ID_SAUVEGARDE = "tab5_alertes_sauvegarde"
+SCRIPT_ALERTES = "tab5_push_alertes"
+SERVICE_BULK = f"{PREFIXE_ACTIONS}_tab5_maj_alertes_ha_bulk"
+# Réglages de test (événement tab5_alertes_recalculer) : fin confirmée tout de suite,
+# pas de grâce après un démarrage.
+REGLAGES_ALERTES = {"delai_fin": 0, "grace": 0}
+# Abonnements (lot 2) : listes de packages/tab5_alerts.yaml, étiquette cherchée par son nom.
+LISTE_MAJ = "input_select.tab5_alertes_maj"
+LISTE_ETIQUETTE = "input_select.tab5_alertes_etiquette"
+ETIQUETTE_ALERTE = "Tab5 · alerte"
 MEMOIRE_ALERTES = "input_text.tab5_alerts_dismissed"
-ALERTE_LUE = "update.ci_alerte_lue"
 TEMOIN_NON_SAUVE = "ci:temoin"
 # `docker restart` tue le conteneur après 10 s par défaut : un arrêt propre de HA peut
 # durer plus longtemps.
@@ -1580,29 +1592,192 @@ async def etat_de(ha: HA, entity_id: str) -> str | None:
     return etat.get("state") if isinstance(etat, dict) else None
 
 
-async def verifier_memoire_alertes(ha: HA, rapport: Rapport) -> None:
-    """Une alerte lue reste lue après un plantage puis un redémarrage propre de HA
-    (packages/tab5_alerts.yaml : pas d'`initial:`, sauvegarde après chaque tap)."""
+async def attributs_alertes(ha: HA) -> dict:
+    try:
+        etat = await ha.get(f"/api/states/{CAPTEUR_ALERTES}")
+    except Echec:
+        return {}
+    return (etat.get("attributes") or {}) if isinstance(etat, dict) else {}
+
+
+def ids_affiches(attributs: dict) -> list[str]:
+    """Ids (sans la révision) des alertes à lire, dans l'ordre de l'écran."""
+    return [str(a.get("i", "")).split("#")[0] for a in attributs.get("affichees") or []]
+
+
+async def attendre_alertes(ha: HA, condition, delai: float = 60.0) -> dict:
+    """Relance le calcul des alertes (événement tab5_alertes_recalculer, réglages de
+    test) jusqu'à ce que ses attributs vérifient `condition` ; les derniers lus sinon."""
+    fin = time.monotonic() + delai
+    attributs: dict = {}
+    while time.monotonic() < fin:
+        await ha.post("/api/events/tab5_alertes_recalculer", REGLAGES_ALERTES)
+        await asyncio.sleep(1)
+        attributs = await attributs_alertes(ha)
+        if condition(attributs):
+            break
+    return attributs
+
+
+async def poussee_alertes(ha: HA, apres: float, delai: float = 30.0) -> str | None:
+    """Payload des bandeaux d'alertes (tab5_maj_alertes_ha_bulk) de la dernière poussée
+    finie (script tab5_push_alertes) commencée à `apres` ou plus tard."""
+    fin = time.monotonic() + delai
+    while time.monotonic() < fin:
+        passages = sorted((t for t in await ha.traces(SCRIPT_ALERTES, "script")
+                           if t.get("state") == "stopped"
+                           and horodatage((t.get("timestamp") or {}).get("start")) >= apres),
+                          key=lambda t: horodatage(t["timestamp"]["start"]))
+        if passages:
+            trace = await ha.trace(SCRIPT_ALERTES, passages[-1]["run_id"], "script")
+            for appel in appels_de_trace(trace):
+                if appel.get("service") == SERVICE_BULK:
+                    return str((appel.get("service_data") or {}).get("payload", ""))
+        await asyncio.sleep(1)
+    return None
+
+
+async def attendre_sauvegarde(ha: HA, apres: float, delai: float = 30.0) -> bool:
+    """L'automatisation « sauvegarder les alertes lues » a fini un passage commencé à
+    `apres` ou plus tard (états restaurés écrits sur le disque)."""
+    fin = time.monotonic() + delai
+    while time.monotonic() < fin:
+        etat = await entite_automatisation(ha, ID_SAUVEGARDE) or {}
+        attributs = etat.get("attributes") or {}
+        if horodatage(attributs.get("last_triggered")) >= apres and not attributs.get("current"):
+            return True
+        await asyncio.sleep(0.5)
+    return False
+
+
+async def verifier_alertes(ha: HA, rapport: Rapport) -> None:
+    """Les alertes de la carte centrale dans un vrai HA (la logique elle-même est rejouée
+    hors HA par tests/test_alertes_ha.py) : une alerte lue quitte les bandeaux poussés,
+    ne revient ni après un plantage ni après un redémarrage propre de HA ; une mise à jour
+    installée sort des alertes et reste dans l'historique."""
+    attributs = await attendre_alertes(
+        ha, lambda a: any(x.get("s") == "maj" for x in a.get("affichees") or []))
+    maj = [a for a in attributs.get("affichees") or [] if a.get("s") == "maj"]
+    if not rapport.verifier(len(maj) >= 2, "les mises à jour de démo sont des alertes à lire (sensor.tab5_alertes)",
+                            f"alertes à lire : {attributs.get('affichees')!r}"):
+        return
+    # À installer : une mise à jour installable (bit INSTALL), sans progression de
+    # préférence (plus rapide) ; à lire : la première autre alerte, donc poussée.
+    etats = await ha.etats()
+
+    def fonctions(alerte: dict) -> int:
+        entite = etats.get(str(alerte["i"]).split("#")[0]) or {}
+        return int((entite.get("attributes") or {}).get("supported_features") or 0)
+
+    installables = sorted((a for a in maj if fonctions(a) & 1), key=lambda a: bool(fonctions(a) & 4))
+    a_installer = installables[0] if installables else None
+    a_lire = next(a for a in maj if a is not a_installer)
+    lue, rev = str(a_lire["i"]).split("#")
+    rapport.info(f"alertes à lire : {[a['i'] for a in attributs.get('affichees') or []]} ; "
+                 f"lue : {a_lire['i']}, installée : {a_installer and a_installer['i']}")
+
+    # La tablette reçoit « id#révision » (et le renvoie tel quel au tap).
+    avant = time.time()
+    await ha.post(f"/api/services/script/{SCRIPT_ALERTES}", {})
+    payload = await poussee_alertes(ha, avant - TOLERANCE_CLE)
+    rapport.verifier(f"{a_lire['i']}|" in (payload or ""),
+                     f"la tablette reçoit l'alerte avec sa révision ({a_lire['i']})", f"payload = {payload!r}")
+
+    # Contre-épreuve : une valeur posée sans sauvegarde est perdue au plantage.
     await ha.post("/api/services/input_text/set_value",
                   {"entity_id": MEMOIRE_ALERTES, "value": TEMOIN_NON_SAUVE})
     await redemarrer_ha(ha, brutal=True)
+    await ha.websocket()  # l'ancien est mort avec HA
     valeur = await etat_de(ha, MEMOIRE_ALERTES)
     rapport.verifier(valeur != TEMOIN_NON_SAUVE,
                      "contre-épreuve : posée sans sauvegarde, la valeur est perdue au plantage de HA",
                      f"valeur gardée ({valeur!r}) : le plantage n'en est pas un, le test ne prouve rien")
 
-    await ha.post("/api/services/script/tab5_dismiss_alert", {"alert_id": ALERTE_LUE})
-    valeur = await etat_de(ha, MEMOIRE_ALERTES)
-    if not rapport.verifier(ALERTE_LUE in (valeur or "").split("|"),
-                            "script.tab5_dismiss_alert retient l'alerte lue", f"mémoire = {valeur!r}"):
+    # Le tap, comme packages/tab5_evenements.yaml le relaie.
+    tap = time.time()
+    await ha.post("/api/services/script/tab5_dismiss_alert", {"alert_id": a_lire["i"]})
+    attributs = await attendre_alertes(ha, lambda a: str((a.get("lues") or {}).get(lue)) == rev, 20)
+    if not rapport.verifier(str((attributs.get("lues") or {}).get(lue)) == rev and lue not in ids_affiches(attributs),
+                            f"le tap marque {a_lire['i']} comme lue, elle n'est plus à lire",
+                            f"lues = {attributs.get('lues')!r}, à lire = {ids_affiches(attributs)}"):
         return
+    payload = await poussee_alertes(ha, tap)
+    rapport.verifier(payload is not None and f"{lue}#" not in payload,
+                     "la poussée qui suit le tap retire l'alerte lue des bandeaux de la tablette",
+                     f"payload = {payload!r}")
+    rapport.verifier(await attendre_sauvegarde(ha, tap),
+                     "l'alerte lue est écrite sur le disque tout de suite (tab5_alertes_sauvegarde)",
+                     "aucun passage fini en 30 s")
+
     for brutal, texte in ((True, "après un plantage de HA (docker kill)"),
                           (False, "après un redémarrage propre de HA")):
+        redemarre = time.time()
         await redemarrer_ha(ha, brutal)
-        valeur = await etat_de(ha, MEMOIRE_ALERTES)
-        rapport.verifier(ALERTE_LUE in (valeur or "").split("|"),
-                         f"{texte}, l'alerte lue est toujours retenue",
-                         f"mémoire = {valeur!r} : l'alerte reviendrait sur l'écran")
+        attributs = await attendre_alertes(ha, lambda a: int(a.get("demarrage") or 0) >= redemarre - TOLERANCE_CLE)
+        rapport.verifier(int(attributs.get("demarrage") or 0) >= redemarre - TOLERANCE_CLE,
+                         f"{texte}, les alertes sont recalculées au démarrage", f"demarrage = {attributs.get('demarrage')!r}")
+        rapport.verifier(str((attributs.get("lues") or {}).get(lue)) == rev and lue not in ids_affiches(attributs),
+                         f"{texte}, l'alerte lue ne revient pas",
+                         f"lues = {attributs.get('lues')!r}, à lire = {ids_affiches(attributs)}")
+    await ha.websocket()
+
+    # Une mise à jour installée : l'alerte part, son passage reste dans l'historique.
+    if a_installer is None:
+        rapport.echec(f"aucune mise à jour de démo installable : {maj!r}")
+        return
+    installee = str(a_installer["i"]).split("#")[0]
+    await ha.post("/api/services/update/install", {"entity_id": installee})
+    attributs = await attendre_alertes(ha, lambda a: installee not in (a.get("suivi") or {}))
+    rapport.verifier(installee not in (attributs.get("suivi") or {}) and installee not in ids_affiches(attributs),
+                     f"{installee} installée : l'alerte n'est plus à lire ni suivie",
+                     f"à lire = {ids_affiches(attributs)}, suivies = {list(attributs.get('suivi') or {})}")
+    passage = next((h for h in attributs.get("historique") or [] if h.get("i") == installee), {})
+    rapport.verifier(int(passage.get("f") or 0) > 0, f"l'historique garde {installee}, terminée",
+                     f"entrée = {passage!r}")
+    await verifier_abonnements(ha, lue, rapport)
+
+
+def sources_affichees(attributs: dict) -> set[str]:
+    return {str(a.get("s")) for a in attributs.get("affichees") or []}
+
+
+async def choisir(ha: HA, liste: str, option: str) -> None:
+    await ha.post("/api/services/input_select/select_option", {"entity_id": liste, "option": option})
+
+
+async def verifier_abonnements(ha: HA, lue: str, rapport: Rapport) -> None:
+    """Abonnements (listes « Tab5 · alertes … ») : désabonnées, les alertes partent tout de
+    suite ; réabonnées, ce qui était lu le reste. Étiquette « Tab5 · alerte » posée sur un
+    capteur allumé de la démo : il devient une alerte."""
+    await choisir(ha, LISTE_MAJ, "Aucune")
+    attributs = await attendre_alertes(ha, lambda a: "maj" not in sources_affichees(a), 20)
+    rapport.verifier("maj" not in sources_affichees(attributs),
+                     "désabonnée des mises à jour (« Aucune »), leurs alertes partent tout de suite",
+                     f"à lire = {ids_affiches(attributs)}")
+    await choisir(ha, LISTE_MAJ, "Toutes")
+    attributs = await attendre_alertes(ha, lambda a: "maj" in sources_affichees(a), 20)
+    rapport.verifier("maj" in sources_affichees(attributs) and lue not in ids_affiches(attributs),
+                     f"réabonnée, les mises à jour reviennent, sauf {lue} déjà lue",
+                     f"à lire = {ids_affiches(attributs)}")
+
+    # Le capteur binaire allumé de la démo qui n'est pas un « problème » (sinon il serait
+    # déjà une alerte) : seule l'étiquette peut le rendre visible.
+    etats = await ha.etats()
+    allume = next((e for e, x in sorted(etats.items()) if e.startswith("binary_sensor.") and x["state"] == "on"
+                   and (x.get("attributes") or {}).get("device_class") != "problem"), None)
+    if allume is None:
+        rapport.echec("aucun capteur binaire allumé dans la démo pour l'étiquette « Tab5 · alerte »")
+        return
+    etiquette = await ha.ws.commande("config/label_registry/create", name=ETIQUETTE_ALERTE)
+    await ha.ws.commande("config/entity_registry/update", entity_id=allume, labels=[etiquette["label_id"]])
+    attributs = await attendre_alertes(ha, lambda a: allume in ids_affiches(a), 20)
+    rapport.verifier(allume in ids_affiches(attributs) and "etiquette" in sources_affichees(attributs),
+                     f"l'étiquette « {ETIQUETTE_ALERTE} » fait de {allume} une alerte",
+                     f"à lire = {ids_affiches(attributs)}")
+    await choisir(ha, LISTE_ETIQUETTE, "Non")
+    attributs = await attendre_alertes(ha, lambda a: allume not in ids_affiches(a), 20)
+    rapport.verifier(allume not in ids_affiches(attributs),
+                     "désabonnée de l'étiquette, l'alerte part", f"à lire = {ids_affiches(attributs)}")
 
 
 async def scenario(args, rapport: Rapport) -> None:
@@ -1706,7 +1881,7 @@ async def scenario(args, rapport: Rapport) -> None:
                     entite_tablette=f"binary_sensor.{PREFIXE_ENTITES}_ha_api_status",
                     automatisation=ID_AUTOMATISATION, alias=ALIAS_AUTOMATISATION, modele=APPEL_TABLEAU)
             # En dernier : HA est tué puis redémarré (journal déjà jugé, captures faites).
-            await verifier_memoire_alertes(ha, rapport)
+            await verifier_alertes(ha, rapport)
     finally:
         await tablette.arreter()
 
