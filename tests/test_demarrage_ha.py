@@ -56,7 +56,7 @@ def test_la_poussee_complete_part_au_demarrage_de_ha():
               if c.get("condition") == "trigger" and isinstance(c.get("id"), list)]
     avec_reconnexion = [l for l in listes if "tab5_connected" in l]
     assert len(avec_reconnexion) == 2, listes
-    assert all(set(l) == {"tab5_connected", "resync", "demarrage_ha"} for l in avec_reconnexion), listes
+    assert all(set(l) == {"tab5_connected", "demarrage_ha"} for l in avec_reconnexion), listes
 
 
 def _garde_des_3_minutes(auto):

@@ -1004,6 +1004,45 @@ def test_piece_tout_eteindre():
     assert _rendre(p.env, p.aiguillage()[1][0]["variables"]["lampes"], p.ctx) == []
 
 
+def _avec_comportement(entite, comportement, **autres):
+    """ENTREES avec `entite` personnalisée en tête (la première ligne compte)."""
+    return {**ENTREES, **autres,
+            "personnalisation": [{"entite": entite, "comportement": comportement}] + ENTREES["personnalisation"]}
+
+
+def _lampes(p):
+    alias, sequence = p.aiguillage()
+    return alias, _rendre(p.env, sequence[0]["variables"]["lampes"], p.ctx)
+
+
+@pytest.mark.parametrize("comportement, attendu", [
+    ("normal", ["light.chevet", "light.plafond"]),
+    # Audit du 07/10/2026 (UI-2) : « Confirmer » n'est jamais contourné par un seul toucher
+    # (ADR-0036), même par « Éteindre les lumières » de toute la pièce.
+    ("confirmer", ["light.chevet"]),
+    ("allumer_seulement", ["light.chevet"]),
+    ("lecture_seule", ["light.chevet"]),
+])
+def test_piece_tout_eteindre_epargne_les_lampes_protegees(comportement, attendu):
+    alias, lampes = _lampes(_commande("p0", "eteindre", entrees=_avec_comportement("light.plafond", comportement)))
+    assert alias.startswith("Pièce : tout éteindre")
+    assert lampes == attendu
+
+
+@pytest.mark.parametrize("comportement, attendu", [
+    ("normal", ["light.chevet", "light.plafond"]),
+    ("confirmer", ["light.chevet"]),
+    ("allumer_seulement", ["light.chevet"]),
+    ("lecture_seule", ["light.chevet"]),
+])
+def test_tout_eteindre_des_lumieres_3x_epargne_les_lampes_protegees(comportement, attendu):
+    """Mode héritage (lumieres / eteindre) : les mêmes lampes épargnées."""
+    entrees = _avec_comportement("light.plafond", comportement, lumiere_2="light.plafond")
+    alias, lampes = _lampes(_commande("lumieres", "eteindre", entrees=entrees))
+    assert alias == "Tout éteindre"
+    assert lampes == attendu
+
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Popup du volet (05/10/2026, discussion #278) : « position » au relâcher du curseur

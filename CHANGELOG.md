@@ -9,6 +9,44 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-07 — Home Assistant : correctifs de l'audit du 07/10, plus de `is_primary_active`
+
+- **Plus de garde-fou `input_boolean.is_primary_active`** (décision de l'auteur) : ce reste de
+  l'ancienne bascule entre deux Home Assistant ([ADR-0008](docs/decisions/0008-single-ha-instance.md))
+  conditionnait toutes les poussées ; resté à `off`, il figeait l'écran sans aucune erreur. Il
+  disparaît, avec l'automatisation `force_primary_active_on_boot`, sa garde de santé « OFF depuis
+  5 min », sa tuile, sa ligne et sa pastille du tableau de bord. « MAJ Écran » ne fait plus que
+  relancer la poussée complète.
+- **« Éteindre les lumières » d'une pièce épargne une lampe réglée sur « Confirmer »**, comme
+  « Allumer seulement » et « Lecture seule » : une commande confirmée ne passe jamais par un seul
+  toucher ([ADR-0036](docs/decisions/0036-quick-action-wheel.md)). « Tout éteindre » de l'ancien
+  mode (lumières 1 à 3) suit la même règle.
+- **Bandeaux d'alerte** : le libellé est coupé à 100 caractères et le message ne dépasse plus
+  jamais 1 024 octets ; une alerte au texte très long faisait refuser tout le message par la
+  tablette, et les quatre bandeaux restaient sur les anciennes alertes.
+- **Pluie dans l'heure** : un changement du code ou des barres de pluie ne relance plus toute la
+  poussée complète (calendrier, prévisions, ~8 envois) ; la poussée légère envoie le code et les 9
+  barres, seulement quand l'un des deux change. La poussée complète renvoie encore les barres toutes
+  les 10 minutes.
+- **Jour travaillé des tuiles météo** calculé comme dans le calendrier (macros de
+  `custom_templates/tab5_calendar.jinja`) : le jour de fin d'un événement « journée entière » n'est
+  plus compté, les jours du milieu d'un événement de plusieurs jours le sont ; le lendemain d'une
+  garde de nuit n'est plus marqué travaillé. Le réveil lit aussi les événements par ces macros.
+- **Plus de poussée perdue** : la poussée complète (`queued`, 3 en file) et celle des rendez-vous
+  (`queued`, 2) ne laissent plus tomber une reconnexion de la tablette arrivée pendant un passage ;
+  le blueprint garde 50 déclenchements en file au lieu de 25 (éteindre toute la maison en produit
+  ~30).
+- **Popup Énergie** : les statistiques du recorder ne sont plus redemandées qu'au plus toutes les 5
+  minutes tant qu'il reste ouvert (au lieu de toutes les 5 s) ; l'instantané suit toujours.
+- **Calendrier** : une année ou un mois qui n'est pas un nombre arrête la réponse sans erreur.
+- **Mise à jour** : remplacer les packages, le blueprint et `custom_templates/` (le package
+  principal et celui du réveil importent maintenant `tab5_calendar.jinja`), recharger les modèles
+  Jinja puis la configuration YAML. L'entité `input_boolean.is_primary_active` et les
+  automatisations « Force Primary Active on Boot » et « Tab5 Santé — is_primary_active OFF depuis
+  5 min » disparaissent : si Home Assistant les garde en « indisponible », les supprimer dans
+  Paramètres → Entités. Refaire le tableau de bord (étape 7 du guide). Rien à changer sur la
+  tablette. Non essayé sur un vrai Home Assistant.
+
 ### 2026-10-07 — Correctifs de l'audit du 07/10 (firmware)
 
 - **La roue d'actions rapides dit « Détails »** au lieu de « Réglages » pour ouvrir la fenêtre

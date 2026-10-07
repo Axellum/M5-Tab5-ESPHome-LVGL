@@ -80,9 +80,12 @@ script:
           {{ integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
              | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
              | list | count > 0 }}
+      # int(0), plus `| int` nu (audit du 07/10/2026, HA-15) : une année ou un mois qui
+      # n'est pas un nombre (événement tiré à la main, champ vide) levait une erreur de
+      # rendu dans le journal. Hors bornes : arrêt sans erreur, juste après.
       - variables:
-          y: "{{ annee | int }}"
-          m: "{{ mois | int }}"
+          y: "{{ annee | int(0) }}"
+          m: "{{ mois | int(0) }}"
           # Le calendrier Google "Jours fériés et autres fêtes" mélange vrais
           # fériés et fêtes civiles (Heure d'été, Fête des Mères...) : seuls
           # ces intitulés colorent un jour en férié.
@@ -100,6 +103,8 @@ script:
             - "La Toussaint"
             - "L'Armistice"
             - "Noël"
+      - condition: template
+        value_template: "{{ 1970 <= (y | int(0)) <= 2100 and 1 <= (m | int(0)) <= 12 }}"
       # Agendas choisis dans HA : entity_id, ou '' s'il n'est pas choisi ou n'existe
       # plus. `agendas` = ceux à interroger (sans doublon : un même agenda peut servir
       # à deux rôles).

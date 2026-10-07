@@ -13,5 +13,5 @@ The device never requests its own state. All data flow is one-directional: Home 
 ## Consequences
 
 - CPU/network usage stays near zero when nothing changes — no wasted polling cycles, no unnecessary Wi-Fi radio wake-ups.
-- The device has no way to "catch up" on missed state on its own; if an automation fails to fire (see [`docs/troubleshooting.md`](../troubleshooting.md) — the `is_primary_active` incident), the screen silently goes stale with no error surfaced. This tradeoff was accepted; the mitigation is `continue_on_error: true` + guard automations on the HA side, not a pull fallback on the device side.
+- The device has no way to "catch up" on missed state on its own; if an automation fails to fire (see [`docs/troubleshooting.md`](../troubleshooting.md) — the `is_primary_active` incident), the screen silently goes stale with no error surfaced. This tradeoff was accepted; the mitigation is `continue_on_error: true` + guard automations on the HA side, not a pull fallback on the device side. (The `is_primary_active` flag behind that incident was itself removed in 3.8: a shared gate on every push was one more way to go stale silently.)
 - Adding a new piece of displayed state always means adding both an HA-side push automation *and* a device-side `api: services:` handler — there is no single place to "just read a sensor."

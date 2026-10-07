@@ -24,6 +24,8 @@ from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PAQUETS = os.path.join(REPO, "HomeAssistant_Config", "packages")
+# config/custom_templates/ de HA : `{% from 'tab5_calendar.jinja' import … %}` y cherche.
+MODELES = os.path.join(REPO, "HomeAssistant_Config", "custom_templates")
 ISTANBUL = dt.timezone(dt.timedelta(hours=3))  # UTC+3 toute l'année depuis 2016
 MAINTENANT = dt.datetime(2026, 10, 2, 20, 30, tzinfo=ISTANBUL)
 # Entité créée par l'accueil de HA (appareil « Forecast » + nom du domicile).
@@ -150,7 +152,8 @@ def _as_timestamp(valeur, defaut=_SANS_DEFAUT):
 
 
 def _environnement(etats, maintenant=MAINTENANT):
-    env = ImmutableSandboxedEnvironment(undefined=jinja2.StrictUndefined)
+    env = ImmutableSandboxedEnvironment(undefined=jinja2.StrictUndefined,
+                                        loader=jinja2.FileSystemLoader(MODELES))
     env.globals.update(
         states=etats, state_attr=etats.attr, now=lambda: maintenant, timedelta=dt.timedelta,
         as_timestamp=_as_timestamp,

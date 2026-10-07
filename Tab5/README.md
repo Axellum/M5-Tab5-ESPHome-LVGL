@@ -200,7 +200,7 @@ L'autre moitié du contrat. **Le firmware n'appelle aucune action de HA** (plus 
 | `tab5_alertes_historique` | — | `tab5_alertes_demande` (ouverture du popup Alertes) | `tab5_evenements.yaml` → `script.tab5_push_alertes_historique` (package `tab5_push.yaml`) → `tab5_maj_alertes_historique` |
 | `tab5_voix_stop` | — | `tab5_vocal_interrupt` | `tab5_evenements.yaml` → `media_player.media_stop` (lecteur de la tablette) |
 | `tab5_mode_assistant` | option (`preferred` / `Discussion LLM`) | `tab5_set_assist_mode` (boutons, et au démarrage) | `tab5_evenements.yaml` → `select.select_option` (select de pipeline de la tablette, si l'option existe) |
-| `tab5_maj_ecran` | — | console, « MAJ Écran » | `tab5_evenements.yaml` → `input_boolean.turn_on` (`is_primary_active`) + `automation.trigger` (id `tab5_ha_hmi_updater`) ; blueprint : emplacements, tuiles et zones |
+| `tab5_maj_ecran` | — | console, « MAJ Écran » | `tab5_evenements.yaml` → `automation.trigger` (id `tab5_ha_hmi_updater`) ; blueprint : emplacements, tuiles et zones |
 | `tab5_recharger_automatisations` | — | console, « Recharger autos » | `tab5_evenements.yaml` → `automation.reload` |
 | `tab5_redemarrage_ha_confirme` | — | console, « Confirmer » de l'écran de confirmation | `tab5_evenements.yaml` → `homeassistant.restart` (seul chemin) |
 | `tab5_alarm_start` / `_stop` / `_snooze` / `_timeout` | — | réveil | aucun dans le projet : pour les automatisations de l'utilisateur |

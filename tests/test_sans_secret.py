@@ -128,11 +128,32 @@ def test_aucune_entite_a_regler_pour_un_binaire_publie():
     assert actives == [], f"clé active inutile dans le modèle : {actives}"
 
     push = _yaml("HomeAssistant_Config", "packages", "tab5_push.yaml")
-    assert "is_primary_active" in push["input_boolean"]
     assert [a for a in push["automation"] if a.get("id") == "tab5_ha_hmi_updater"]
     evenements = _lire("HomeAssistant_Config", "packages", "tab5_evenements.yaml")
     assert "selectattr('attributes.id', 'eq', 'tab5_ha_hmi_updater')" in evenements
-    assert "input_boolean.is_primary_active" in evenements
+
+
+def test_garde_fou_is_primary_active_retire():
+    """Le garde-fou input_boolean.is_primary_active (vestige de la bascule entre deux
+    instances HA, ADR-0008) est retiré depuis la 3.8 (audit du 07/10/2026) : resté à `off`,
+    il figeait l'écran sans erreur. Aucun fichier HA ne doit le définir, le tester ni le
+    rallumer ; seul un commentaire d'historique peut encore le nommer."""
+    from pathlib import Path
+    racine = Path(REPO) / "HomeAssistant_Config"
+    fichiers = [f for motif in ("packages/*.yaml", "optionnel/*.yaml", "blueprints/**/*.yaml",
+                                "custom_templates/*.jinja", "snippets/**/*.yaml")
+                for f in sorted(racine.glob(motif))]
+    assert fichiers
+    fautifs = []
+    for f in fichiers:
+        for n, ligne in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+            code = ligne.split("#", 1)[0] if f.suffix == ".yaml" else ligne
+            if "is_primary_active" in code or "force_primary_active_on_boot" in code:
+                fautifs.append(f"{f.relative_to(racine)}:{n}")
+    assert not fautifs, fautifs
+    push = _yaml("HomeAssistant_Config", "packages", "tab5_push.yaml")
+    assert "input_boolean" not in push
+    assert not [a for a in push["automation"] if a.get("id") == "force_primary_active_on_boot"]
 
 
 def test_ci_sans_secrets_factices():

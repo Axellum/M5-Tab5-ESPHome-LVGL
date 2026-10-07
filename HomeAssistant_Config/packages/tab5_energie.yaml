@@ -30,6 +30,13 @@
 #       cours complété par les 5 minutes de l'heure en cours et le partiel (les heures
 #       complètes y sont déjà ; juste après le changement d'heure, la dernière peut
 #       manquer quelques minutes, le temps que le recorder la compile).
+#       Statistiques de 5 minutes redemandées au plus une fois toutes les 5 minutes (et à
+#       minuit) tant que le popup reste ouvert (audit du 07/10/2026, PERF-4) : elles ne
+#       changent pas plus vite. Entre deux, la réponse précédente sert, et le partiel
+#       (état actuel − dernier « state » de cette réponse) couvre tout ce qui a été
+#       produit depuis : la production du jour reste exacte, l'instantané est relu à
+#       chaque tour comme avant. Seule la barre de l'heure en cours peut prendre, juste
+#       après le changement d'heure, quelques minutes de la précédente.
 #       Le capteur d'énergie doit avoir des statistiques (state_class total_increasing ou
 #       total, comme ceux du tableau Énergie de HA) ; sinon l'historique est vide.
 #       Plusieurs sources (05/10/2026, discussion #278) : solaire = somme des puissances
@@ -112,6 +119,13 @@ script:
       # l'écran d'avant pendant ce temps. Il ne compte qu'après cette grâce.
       grace: 12
       duree_max: 900
+      # Dernière demande des statistiques de 5 minutes (PERF-4) : instant et minuit de
+      # cette demande. Variables du script : la boucle les met à jour (HA, depuis 2025.4,
+      # écrit une variable existante là où elle est définie, ScriptRunVariables._assign,
+      # vérifié dans le code de 2026.8.0 et 2026.9.4), comme la réponse `cinq`, créée au
+      # niveau du script, qui reste donc lisible d'un tour à l'autre.
+      stats_t: 0
+      stats_minuit: ""
     sequence:
       - repeat:
           sequence:
@@ -119,22 +133,29 @@ script:
                 minuit: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
                 t_attente: "{{ now().timestamp() }}"
             # Statistiques de 5 minutes du jour : production du jour et vue des heures.
-            # Toujours appelée, au même niveau que ce qui la lit (une variable posée dans
-            # un if n'en sort pas) : sans capteur d'énergie, sur un autre capteur choisi,
-            # et rien ne lit la réponse (lignes5 est vide sans production). Tous les
-            # compteurs en une demande ; units convertit chacun en kWh.
-            - action: recorder.get_statistics
-              data:
-                start_time: "{{ minuit }}"
-                statistic_ids: "{{ productions if productions else [suivis | first | default('')] }}"
-                period: 5minute
-                types:
-                  - change
-                  - state
-                units:
-                  energy: kWh
-              response_variable: cinq
-              continue_on_error: true
+            # Au premier tour, puis au plus une fois toutes les 5 minutes, et à minuit
+            # (PERF-4, voir @data_sources) ; aussi tant qu'aucune réponse n'est arrivée.
+            # Sans capteur d'énergie, sur un autre capteur choisi, et rien ne lit la
+            # réponse (lignes5 est vide sans production). Tous les compteurs en une
+            # demande ; units convertit chacun en kWh. La réponse d'une action dans un `if`
+            # reste lisible après lui (variable nouvelle créée au niveau du script).
+            - if: "{{ cinq is not defined or stats_minuit != minuit or now().timestamp() - (stats_t | float(0)) >= 300 }}"
+              then:
+                - action: recorder.get_statistics
+                  data:
+                    start_time: "{{ minuit }}"
+                    statistic_ids: "{{ productions if productions else [suivis | first | default('')] }}"
+                    period: 5minute
+                    types:
+                      - change
+                      - state
+                    units:
+                      energy: kWh
+                  response_variable: cinq
+                  continue_on_error: true
+                - variables:
+                    stats_t: "{{ now().timestamp() }}"
+                    stats_minuit: "{{ minuit }}"
             - variables:
                 # Lignes de 5 minutes de TOUS les compteurs, à la suite : les sommes par
                 # heure (et celle du jour) additionnent les compteurs ; une heure où un
