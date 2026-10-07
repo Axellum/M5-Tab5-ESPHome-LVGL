@@ -153,6 +153,23 @@ Those three lines repeat ~50 times per second. The black screen is a *consequenc
 
 ---
 
+### Tab5 integration (HACS): a message in Repairs
+
+**Symptom:** after an update of the « Tab5 — fichiers HA · HA files » integration and a restart, *Settings → Repairs* shows a message whose title starts with « Tab5 ».
+
+**Root cause:** at start, the integration puts the files of its version in place, checks the configuration, reloads the YAML, then checks that the sensor « Tab5 · version des fichiers HA » shows the new version ([updates](installation/updates.md#home-assistant-files)). When a step does not end as expected, it says so in Repairs.
+
+**Fix**, by message:
+
+- **« Tab5: no Home Assistant files in the integration »**: the integration was copied from the repository, which holds its code but not the files. Install it through HACS ([with HACS](installation/home-assistant-files.md#with-hacs)), which downloads `tab5_hacs.zip` from the release, then restart.
+- **« Tab5: Home Assistant does not load the packages »**: the files are in `config/packages/`, but `configuration.yaml` has no `packages:` line. Add it ([step 2](installation/home-assistant-files.md#2-one-line-in-configurationyaml)), check the configuration, then restart.
+- **« Tab5: restart Home Assistant to finish »**: the files are in place, but a reload was not enough (a part that only loads at start, a reload that failed, or a configuration that already had an error). Open the message and submit: the integration checks the configuration, then restarts Home Assistant. If it answers that the configuration has an error, fix it first (*Developer tools → YAML → Check configuration*). With « Then update the tablet » ticked, the firmware of this version starts after this restart, once the tablet's « Firmware » entity offers it.
+- **« Tab5: the files X were not installed »**: the configuration check found a new error or warning with the new files, or writing them failed. The previous files were put back: nothing changed, and the firmware of this version is not started. The reason is in the log (*Settings → System → Logs*, search « tab5 »). If it is in one of your own files, fix it; otherwise please report it ([issues](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues)). The integration tries again at each start of Home Assistant.
+
+To go back to older files by hand: [putting older files back](installation/updates.md#putting-older-files-back-by-hand).
+
+---
+
 ### False positives worth knowing about (don't "fix" these again)
 
 - **Forecast pagination "wrap-around"**: the 5 forecast pages (indices 0–4) intentionally do **not** wrap from 4 back to 0 on a further right-swipe. This was already "corrected" once by an LLM audit that assumed non-wrapping was a bug, then reverted. See [`docs/decisions/`](decisions/README.md).
@@ -279,6 +296,21 @@ Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *cons
 **Cause racine :** pas un plantage. Le firmware ne gère pas le bouton d'alimentation : c'est le matériel qui réinitialise la puce, et `esp_reset_reason()` lit `ESP_RST_WDT`, une raison que le journal comptait comme un plantage. Pour cette raison, le composant `debug` d'ESPHome affiche la source enregistrée par le dernier redémarrage *demandé* (`components/debug/debug_esp32.cpp`), qu'il n'efface jamais : un texte périmé.
 
 **Correctif (firmware après la 3.7.0-rc.3, et `packages/tab5_health.yaml`) :** un reset du chien de garde sans rapport de plantage est un démarrage normal : « bouton d'alimentation ou chien de garde RTC (rst 0x..) » dans le journal, aucun événement envoyé ; `Power button or RTC watchdog (rst 0x..)` dans l'entité, que la garde « reboot inattendu » laisse passer. Mettre à jour le firmware ET les fichiers HA : avec le nouveau firmware seul, l'ancienne garde alerterait sur le nouveau texte. Un chien de garde avec rapport de plantage alerte toujours. Détail dans [`debugging.md`](debugging.md#version-française).
+
+### Intégration Tab5 (HACS) : un message dans Réparations
+
+**Symptôme :** après une mise à jour de l'intégration « Tab5 — fichiers HA · HA files » et un redémarrage, *Paramètres → Réparations* montre un message dont le titre commence par « Tab5 ».
+
+**Cause racine :** au démarrage, l'intégration pose les fichiers de sa version, vérifie la configuration, recharge le YAML, puis vérifie que le capteur « Tab5 · version des fichiers HA » donne la nouvelle version ([mises à jour](installation/updates.md#fichiers-home-assistant)). Quand une étape ne finit pas comme prévu, elle le dit dans Réparations.
+
+**Correctif**, selon le message :
+
+- **« Tab5 : aucun fichier Home Assistant dans l'intégration »** : l'intégration a été copiée depuis le dépôt, qui a son code mais pas les fichiers. Installez-la par HACS ([avec HACS](installation/home-assistant-files.md#avec-hacs)), qui télécharge `tab5_hacs.zip` de la release, puis redémarrez.
+- **« Tab5 : Home Assistant ne charge pas les packages »** : les fichiers sont dans `config/packages/`, mais `configuration.yaml` n'a pas de ligne `packages:`. Ajoutez-la ([étape 2](installation/home-assistant-files.md#2-une-ligne-dans-configurationyaml)), vérifiez la configuration, puis redémarrez.
+- **« Tab5 : redémarrez Home Assistant pour finir »** : les fichiers sont en place, mais un rechargement n'a pas suffi (une partie qui ne se charge qu'au démarrage, un rechargement qui a échoué, ou une configuration qui avait déjà une erreur). Ouvrez le message et validez : l'intégration vérifie la configuration, puis redémarre Home Assistant. Si elle répond que la configuration a une erreur, corrigez-la d'abord (*Outils de développement → YAML → Vérifier la configuration*). Avec « Mettre ensuite la tablette à jour » coché, le firmware de cette version part après ce redémarrage, dès que l'entité « Firmware » de la tablette le propose.
+- **« Tab5 : les fichiers X n'ont pas été installés »** : la vérification de la configuration a trouvé une nouvelle erreur ou un nouvel avertissement avec les nouveaux fichiers, ou leur écriture a échoué. Les fichiers précédents ont été remis : rien n'a changé, et le firmware de cette version n'est pas lancé. La raison est dans le journal (*Paramètres → Système → Journaux*, cherchez « tab5 »). Si elle est dans un de vos propres fichiers, corrigez-le ; sinon, merci de la signaler ([issues](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues)). L'intégration réessaie à chaque démarrage de Home Assistant.
+
+Pour revenir à la main à des fichiers plus anciens : [remettre des fichiers plus anciens](installation/updates.md#remettre-à-la-main-des-fichiers-plus-anciens).
 
 ### Faux positifs à connaître (ne pas re-"corriger")
 
