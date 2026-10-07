@@ -193,6 +193,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Ampoule Salon": "Salon ampulü"
 "Ampoule LEDs": "LED şerit"
 "Tout éteindre": "Hepsini kapat"
+# Popup Maison (ADR-0037) : titre, et le bouton de sa barre de titre.
+"Maison": "Ev"
+"Éteindre les lumières": "Işıkları kapat"
 "LUMINOSITÉ": "PARLAKLIK"
 "COULEURS": "RENKLER"
 "Chaud": "Sıcak"

@@ -171,6 +171,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Ampoule Salon": "Living room bulb"
 "Ampoule LEDs": "LED strip"
 "Tout éteindre": "All off"
+# Popup Maison (ADR-0037) : titre, et le bouton de sa barre de titre.
+"Maison": "Home"
+"Éteindre les lumières": "Lights off"
 "LUMINOSITÉ": "BRIGHTNESS"
 "COULEURS": "COLORS"
 "Chaud": "Warm"

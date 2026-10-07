@@ -184,6 +184,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Ampoule Salon": "Lampadina soggiorno"
 "Ampoule LEDs": "Striscia LED"
 "Tout éteindre": "Spegni tutto"
+# Popup Maison (ADR-0037) : titre, et le bouton de sa barre de titre.
+"Maison": "Casa"
+"Éteindre les lumières": "Spegni le luci"
 "LUMINOSITÉ": "LUMINOSITÀ"
 "COULEURS": "COLORI"
 "Chaud": "Caldo"
