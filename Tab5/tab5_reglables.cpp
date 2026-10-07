@@ -309,12 +309,19 @@ void vue(const Entree& en, Vue& v) {
             snprintf(v.nom, sizeof(v.nom), "%s", (nom != nullptr && nom[0] != '\0') ? nom : tr("Climatisation"));
             return;
         }
-        case Sorte::TABLETTE:
-            v.icone = tuile_icone("tablette", false, nullptr);
+        case Sorte::TABLETTE: {
+            // Le son de la tablette : un haut-parleur, barré à 0 % ou en muet. « Tablette »
+            // et l'icône d'une tablette ne disaient pas que c'était son volume (discussion
+            // #278, 07/10/2026). « Son de la tablette » : « Volume de la tablette » ne tient
+            // pas dans kLargeurNom en roboto_32_b (306 px pour 290).
+            const float pct = volume_tablette_pct();
+            const bool muet = g_reglables_ui.muet != nullptr && *g_reglables_ui.muet;
+            v.icone = tuile_icone("enceinte", !muet && pct > 0.0f, nullptr);
             v.couleur_icone = UIColor.INFO;
-            formater(v.valeur, sizeof(v.valeur), volume_tablette_pct(), kPasTablette, "%");
-            snprintf(v.nom, sizeof(v.nom), "%s", tr("Tablette"));
+            formater(v.valeur, sizeof(v.valeur), pct, kPasTablette, "%");
+            snprintf(v.nom, sizeof(v.nom), "%s", tr("Son de la tablette"));
             return;
+        }
         case Sorte::HA:
         default: {
             const Def& d = s_m.d[en.i];

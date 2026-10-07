@@ -97,6 +97,8 @@ void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
 // Muet : l'icone du popup assistant peint `system_muted` (le bouton Muet de
 // l'accueil est retire depuis le 05/10/2026). Un seul endroit la pose.
 void ui_sync_mute_icon(lv_obj_t* icon_assist, bool muted) {
+    // Tuile − / + (ADR-0033) : le son de la tablette y montre aussi le muet.
+    reglables_volume_tablette();
     if (icon_assist == nullptr) return;
     ui_text(icon_assist, muted ? "\U000F0581" : "\U000F057E");
     ui_text_color(icon_assist, muted ? UIColor.ERROR : UIColor.TEXT_SOFT);

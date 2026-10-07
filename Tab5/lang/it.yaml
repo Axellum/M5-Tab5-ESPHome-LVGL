@@ -200,7 +200,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # Ventilazione.
 "Climatisation Salon": "Clima soggiorno"
 "Climatisation": "Climatizzatore"
-"Tablette": "Tablet"
+"Son de la tablette": "Volume del tablet"
 "MODE": "MODALITÀ"
 "clim|Chaud": "Caldo"
 "Sec": "Deumidif."
