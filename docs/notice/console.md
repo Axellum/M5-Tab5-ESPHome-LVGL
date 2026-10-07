@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a long press on the gear button, top right of the home screen (a tap opens the [settings](settings.md)).
+**Opens with** a long press on the gear button, top right of the home screen (a tap opens the [settings](settings.md)), unless the blueprint gives that long press another screen ([home screen](home.md#the-three-buttons-top-right-6-to-8)); then with the tablet's « Aller à l'écran » entity in Home Assistant.
 
 ![The system console: memory, network, system with the volume, and the management buttons](../images/notice/console-systeme-en.webp)
 
@@ -33,7 +33,7 @@ The theme, light or dark and the language are in the [settings](settings.md). To
 
 ---
 
-**S'ouvre par** un appui long sur le bouton engrenage, en haut à droite de l'accueil (un tap ouvre les [réglages](settings.md#version-française)).
+**S'ouvre par** un appui long sur le bouton engrenage, en haut à droite de l'accueil (un tap ouvre les [réglages](settings.md#version-française)), sauf si le blueprint donne un autre écran à cet appui long ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)) ; alors par l'entité « Aller à l'écran » de la tablette dans Home Assistant.
 
 ![La console système : mémoire, réseau, système avec le volume, et les boutons de gestion](../images/notice/console-systeme-fr.webp)
 

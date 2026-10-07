@@ -52,13 +52,46 @@ constexpr char kCleClimReglages[] = "climr";
 // plus ancien l'ignore. Ne pas la renommer sans le blueprint (tests/test_solaire.py).
 constexpr char kCleSolaire[] = "solaire";
 
+// Appuis longs des trois boutons du haut (07/10/2026) dans tab5_maj_emplacements :
+// « appuis|maison|engrenage|manette », un code par bouton (kCodesEcran, ou « auto »).
+// Poussée par le blueprint (section « Boutons du haut ») avec tous les états. Une clé et
+// pas une action, comme solaire : un firmware plus ancien l'ignore et garde ses appuis
+// longs. Codes lus par le blueprint : ni traduits ni renommés sans lui (tests/test_appuis.py).
+constexpr char kCleAppuis[] = "appuis";
+struct CodeEcran {
+    const char* code;
+    Ecran ecran;
+};
+// L'INDEX d'un code dans cette table est ce que garde la NVS (SauvegardeAppuis) : un code
+// de plus s'ajoute à la FIN, aucun ne se retire ni ne se déplace.
+constexpr CodeEcran kCodesEcran[] = {
+    {"rien", Ecran::AUCUN},          {"assistant", Ecran::ASSISTANT}, {"calendrier", Ecran::CALENDRIER},
+    {"reveil", Ecran::REVEIL},       {"clim", Ecran::CLIM},           {"plantes", Ecran::PLANTES},
+    {"tv", Ecran::TV},               {"console", Ecran::CONSOLE},     {"energie", Ecran::ENERGIE},
+    {"reglages", Ecran::REGLAGES},   {"alertes", Ecran::ALERTES},     {"arcade", Ecran::ARCADE},
+};
+// « auto » : l'appui long d'avant le choix (06/10/2026), par bouton (ordre de BoutonHaut).
+constexpr int8_t kAuto = -1;
+constexpr Ecran kEcranAuto[BOUTON_HAUT_NB] = {Ecran::ENERGIE, Ecran::CONSOLE, Ecran::TV};
+
 constexpr uint32_t kMagic = 0x5A4F4E31;    // « ZON1 »
 constexpr uint32_t kPrefKey = 0x7A6F6E65;  // « zone »
+constexpr uint32_t kMagicAppuis = 0x41505031;    // « APP1 »
+constexpr uint32_t kPrefKeyAppuis = 0x61707569;  // « apui »
 
 struct Sauvegarde {
     uint32_t magic;
     uint32_t absentes;
 };
+
+// Choix des appuis longs, gardés en NVS : la mini icône est juste dès le démarrage,
+// avant que HA les repousse. Par bouton : l'index du code dans kCodesEcran (stable même si
+// l'enum Ecran gagne une valeur avant ARCADE), -1 pour « auto ».
+struct SauvegardeAppuis {
+    uint32_t magic;
+    int8_t code[BOUTON_HAUT_NB];
+};
+constexpr int kNbCodes = static_cast<int>(sizeof(kCodesEcran) / sizeof(kCodesEcran[0]));
 
 uint32_t s_absentes = 0;  // zones masquées, gardées en NVS
 uint32_t s_vues = 0;      // entités suivies entendues depuis le démarrage
@@ -67,6 +100,9 @@ bool s_charge = false;
 // même au mode démo (qui n'est pas « Home Assistant »). Réarmé à chaque connexion de HA.
 bool s_demande = true;
 esphome::ESPPreferenceObject s_pref;
+// Écran de l'appui long de chaque bouton (BoutonHaut) : kAuto, ou une valeur d'Ecran.
+int8_t s_appuis[BOUTON_HAUT_NB] = {kAuto, kAuto, kAuto};
+esphome::ESPPreferenceObject s_pref_appuis;
 
 constexpr uint32_t bit_de(Zone z) { return 1u << static_cast<int>(z); }
 
@@ -189,7 +225,7 @@ void solaire_recu(const char* valeur, size_t n) {
     solaire_peindre();
     if (visibilite) {
         bandeau_apply_ui();
-        ui_hidden(g_zones_ui.mini_solaire, std::isnan(s_solaire));
+        boutons_haut_apply_ui();  // Énergie disponible ou non pour un appui long
     }
 }
 
@@ -199,6 +235,92 @@ void charger() {
     s_pref = esphome::global_preferences->make_preference<Sauvegarde>(kPrefKey);
     Sauvegarde s{};
     if (s_pref.load(&s) && s.magic == kMagic) s_absentes = s.absentes;
+    s_pref_appuis = esphome::global_preferences->make_preference<SauvegardeAppuis>(kPrefKeyAppuis);
+    SauvegardeAppuis a{};
+    if (s_pref_appuis.load(&a) && a.magic == kMagicAppuis) {
+        for (int b = 0; b < BOUTON_HAUT_NB; b++) {
+            const int c = a.code[b];
+            s_appuis[b] = (c >= 0 && c < kNbCodes) ? static_cast<int8_t>(kCodesEcran[c].ecran) : kAuto;
+        }
+    }
+}
+
+// Un code d'appui long (champ de la clé appuis) : une valeur d'Ecran, ou kAuto pour
+// « auto », un champ vide ou un code inconnu (blueprint plus récent que ce firmware).
+int8_t appui_code(const char* p, size_t n) {
+    for (const CodeEcran& c : kCodesEcran) {
+        if (std::strlen(c.code) == n && std::strncmp(p, c.code, n) == 0) return static_cast<int8_t>(c.ecran);
+    }
+    return kAuto;
+}
+
+const char* appui_nom(int8_t choix) {
+    if (choix == kAuto) return "auto";
+    for (const CodeEcran& c : kCodesEcran) {
+        if (static_cast<int8_t>(c.ecran) == choix) return c.code;
+    }
+    return "?";
+}
+
+// « appuis|maison|engrenage|manette » : un champ manquant vaut « auto ». Gardé en NVS et
+// repeint seulement s'il change (poussé à chaque connexion).
+void appuis_recu(const char* valeur, size_t n) {
+    charger();
+    int8_t choix[BOUTON_HAUT_NB] = {kAuto, kAuto, kAuto};
+    size_t debut = 0;
+    for (int b = 0; b < BOUTON_HAUT_NB && debut <= n; b++) {
+        const char* sep = static_cast<const char*>(std::memchr(valeur + debut, '|', n - debut));
+        const size_t fin = sep != nullptr ? static_cast<size_t>(sep - valeur) : n;
+        choix[b] = appui_code(valeur + debut, fin - debut);
+        debut = fin + 1;
+    }
+    if (std::memcmp(choix, s_appuis, sizeof(choix)) == 0) return;
+    std::memcpy(s_appuis, choix, sizeof(choix));
+    SauvegardeAppuis a;
+    std::memset(&a, 0, sizeof(a));  // octet de bourrage compris : rien d'indéterminé en NVS
+    a.magic = kMagicAppuis;
+    for (int b = 0; b < BOUTON_HAUT_NB; b++) {
+        a.code[b] = -1;
+        for (int c = 0; c < kNbCodes; c++) {
+            if (static_cast<int8_t>(kCodesEcran[c].ecran) == s_appuis[b]) a.code[b] = static_cast<int8_t>(c);
+        }
+    }
+    s_pref_appuis.save(&a);
+    ESP_LOGI("TAB5", "Appuis longs : maison %s, engrenage %s, manette %s", appui_nom(s_appuis[BOUTON_MAISON]),
+             appui_nom(s_appuis[BOUTON_ENGRENAGE]), appui_nom(s_appuis[BOUTON_MANETTE]));
+    boutons_haut_apply_ui();
+}
+
+// Glyphe de la mini icône du bouton b (mdi_font_26), nullptr = masquée. « auto » : celles
+// du 06/10/2026 (panneau solaire, écran de la télécommande, rien sur l'engrenage). Un
+// écran choisi : le glyphe de l'en-tête de son popup (tests/test_appuis.py), sauf la
+// console (son en-tête garde le flocon de l'ancien bouton, qui se lirait « clim ») et
+// l'Arcade (sans en-tête : la manette).
+const char* mini_glyphe(BoutonHaut b, int8_t choix) {
+    if (choix == kAuto) {
+        if (!ecran_disponible(kEcranAuto[b])) return nullptr;
+        switch (b) {
+            case BOUTON_MAISON: return "\U000F0D9B";   // solar-panel (icône du bandeau d'état)
+            case BOUTON_MANETTE: return "\U000F07C0";  // desktop-classic (télécommande TV)
+            default: return nullptr;
+        }
+    }
+    const Ecran e = static_cast<Ecran>(choix);
+    if (!ecran_disponible(e)) return nullptr;
+    switch (e) {
+        case Ecran::ASSISTANT: return "\U000F036C";   // microphone
+        case Ecran::CALENDRIER: return "\U000F0E17";  // calendar-month
+        case Ecran::REVEIL: return "\U000F0020";      // alarm
+        case Ecran::CLIM: return "\U000F0717";        // snowflake
+        case Ecran::PLANTES: return "\U000F024A";     // flower
+        case Ecran::TV: return "\U000F07C0";          // desktop-classic
+        case Ecran::CONSOLE: return "\U000F018D";     // console
+        case Ecran::ENERGIE: return "\U000F0A72";     // solar-power
+        case Ecran::REGLAGES: return "\U000F0493";    // cog
+        case Ecran::ALERTES: return "\U000F0E81";     // bell-alert-outline
+        case Ecran::ARCADE: return "\U000F0297";      // gamepad-variant
+        default: return nullptr;
+    }
 }
 
 void sauver() {
@@ -311,6 +433,14 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
             debut = fin + 1;
             continue;
         }
+        // Appuis longs des boutons du haut : « appuis|maison|engrenage|manette ».
+        if (p1 != std::string::npos && p1 < fin && p1 - debut == sizeof(kCleAppuis) - 1 &&
+            payload.compare(debut, p1 - debut, kCleAppuis) == 0) {
+            appuis_recu(payload.data() + p1 + 1, fin - p1 - 1);
+            appliquees++;
+            debut = fin + 1;
+            continue;
+        }
         // Clims des tuiles (ADR-0027) : « crRT|réglages » et « ceRT|état » (tab5_cards.cpp).
         if (p1 != std::string::npos && p1 < fin &&
             clim_tuile_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
@@ -408,6 +538,40 @@ void update_console_batterie_ui(lv_obj_t* icone, lv_obj_t* valeur) {
 
 bool solaire_present() { return !std::isnan(s_solaire); }
 
+bool ecran_sans_zone(Ecran e) {
+    switch (e) {
+        case Ecran::CLIM: return zone_absente(Zone::CLIM);
+        case Ecran::PLANTES: return zones_pots_presents() == 0;
+        case Ecran::TV: return zone_absente(Zone::TV);
+        default: return false;
+    }
+}
+
+bool ecran_disponible(Ecran e) {
+    if (e == Ecran::AUCUN || e == Ecran::ACCUEIL || e >= Ecran::NB) return false;
+    if (e == Ecran::ENERGIE && !solaire_present()) return false;
+    return !ecran_sans_zone(e);
+}
+
+int bouton_haut_ecran(BoutonHaut b) {
+    if (b >= BOUTON_HAUT_NB) return 0;
+    charger();
+    const int8_t c = s_appuis[b];
+    const Ecran e = c == kAuto ? kEcranAuto[b] : static_cast<Ecran>(c);
+    return ecran_disponible(e) ? static_cast<int>(e) : 0;
+}
+
+void boutons_haut_apply_ui() {
+    charger();
+    for (int b = 0; b < BOUTON_HAUT_NB; b++) {
+        lv_obj_t* const icone = g_zones_ui.mini[b];
+        if (icone == nullptr) continue;  // avant tab5_zones_apply (setup)
+        const char* glyphe = mini_glyphe(static_cast<BoutonHaut>(b), s_appuis[b]);
+        if (glyphe != nullptr) ui_text(icone, glyphe);
+        ui_hidden(icone, glyphe == nullptr);
+    }
+}
+
 // Thèmes (ADR-0029) : icônes de la batterie (montée ; bandeau et console système) et du
 // solaire (valeur reçue).
 void zones_rejouer_theme() {
@@ -438,10 +602,10 @@ void zones_apply_ui() {
     solaire_peindre();
 
     // Boutons du haut (06/10/2026) : ils restent à leur place, la manette ouvre l'Arcade
-    // même sans TV. Leur mini icône dit que l'appui long a de quoi ouvrir : la
-    // télécommande sur la manette, le popup Énergie sur « HA » (production solaire reçue).
-    ui_hidden(u.mini_tv, zone_absente(Zone::TV));
-    ui_hidden(u.mini_solaire, !solaire_present());
+    // même sans TV. Leur mini icône dit ce qu'ouvre l'appui long, quand il ouvre quelque
+    // chose (choix du blueprint depuis le 07/10/2026 ; « auto » : la télécommande sur la
+    // manette, le popup Énergie sur « HA » quand la production solaire est reçue).
+    boutons_haut_apply_ui();
 
     // Tuiles (épaules, boutons) et calque « HA » : ce sont les tuiles de la pièce de la
     // page (ADR-0023) — tuiles_appliquer_ui(), en fin de fonction ; en mode héritage,

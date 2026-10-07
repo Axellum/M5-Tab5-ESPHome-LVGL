@@ -75,6 +75,11 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
             if nom in ("rangee_plantes", "rangee_duree"):
                 assert entree["default"] == {"rangee_plantes": "0", "rangee_duree": 32}[nom], nom
                 continue
+            # Appuis longs des boutons du haut (07/10/2026) : non remplis, ceux d'avant le
+            # choix (tests/test_appuis.py).
+            if nom.startswith("appui_"):
+                assert entree["default"] == "auto", f"{nom} : non rempli doit valoir \"auto\""
+                continue
             if "text" in entree["selector"]:  # nom d'une pièce (ADR-0023)
                 assert entree["default"] == "", f"{nom} : un nom vide doit valoir \"\""
             elif "select" in entree["selector"]:  # source météo : « liste » = celle de HA

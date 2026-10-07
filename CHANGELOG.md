@@ -21,6 +21,36 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-07 — Boutons du haut : l'écran de l'appui long au choix dans le blueprint
+
+Demande d'Axel : choisir dans le blueprint la page qu'ouvre l'appui long de chacun des trois
+boutons en haut à droite de l'accueil (maison, engrenage, manette). Les taps ne changent pas.
+- **Blueprint** « Tab5 — emplacements » : nouvelle section repliée « Boutons du haut · Top
+  buttons », une liste par bouton : Automatique (comme avant : Énergie avec la production
+  solaire, console système, télécommande avec une TV), Rien, ou un écran (assistant vocal,
+  calendrier, réveil, clim, plantes, télécommande TV, console, Énergie, réglages, alertes,
+  Arcade). Poussé avec tous les états dans une clé de plus de `tab5_maj_emplacements`,
+  `appuis|maison|engrenage|manette` ; aucune variable nouvelle. Un code inconnu vaut « auto ».
+- **Compatibilité** : un firmware plus ancien ignore la clé (lu dans `emplacements_appliquer()`
+  de la 3.6.0 et de la 3.7.0-rc.4 : aucune route ne la prend, la table 3.x ne la connaît pas) et garde ses
+  appuis longs ; déployer le blueprint avant ou après le firmware, dans n'importe quel ordre.
+- **Firmware** : une seule routine d'ouverture, le script `tab5_ecran_ouvrir`
+  (`tab5-ha-controls.yaml`), pour le select « Aller à l'écran » et les trois appuis longs
+  (garde de la sonnerie, zones absentes, écran déjà affiché, fermeture des autres, compteur
+  d'inactivité) ; la console s'ouvre par un seul script, `tab5_console_ouvrir`, qui donne
+  aussi au select la ligne d'état et l'état de HA tout de suite. Choix gardés en NVS
+  (`tab5_zones.cpp`) : la mini icône est juste dès le démarrage.
+- **Mini icônes** : une de plus, sur l'engrenage. En « auto », celles d'avant ; avec un écran
+  choisi et disponible, le glyphe de l'en-tête de sa fenêtre (console : `console`, son en-tête
+  garde le flocon de la clim ; Arcade : la manette) ; masquée sinon. Neuf glyphes ajoutés à
+  `mdi_font_26`.
+- **Preuves** : `tests/test_appuis.py` (mêmes codes des deux côtés, enum `Ecran` = options du
+  select, trois boutons par la routine unique, glyphes des en-têtes, rendu du vrai modèle Jinja :
+  défauts, choix, valeurs inconnues, déclencheurs). Écran « accueil-appuis-choisis » ajouté au
+  rendu hors tablette ; la clé entre dans la graine du fuzz des sanitizers. Docs : notice
+  (accueil, vue d'ensemble, console), sections du blueprint (`docs/installation/devices.md`),
+  `docs/screens.md`, `Tab5/README.md`, cartographie.
+
 ### 2026-10-07 — Intégration « Tab5 » pour HACS : publication et guide (lot 2)
 
 - Chaque release joint désormais `tab5_hacs.zip`, l'asset que HACS télécharge

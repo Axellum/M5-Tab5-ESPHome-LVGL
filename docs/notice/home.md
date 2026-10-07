@@ -29,6 +29,8 @@ The date changes colour with the day's weather warnings (yellow, orange, red). I
 - **Gear**: a tap opens the [settings](settings.md) (brightness, screen off, theme, language…); a **long press**, the [system console](console.md).
 - **Gamepad**: a tap opens the [Arcade](arcade.md); a **long press**, the [TV remote](tv.md) when a TV is picked in the blueprint: a small screen then marks the button, in its top-right corner. Without a TV, the button stays and its long press does nothing.
 
+**Another screen on a long press.** What these three long presses open is chosen in the « Tab5 — emplacements » blueprint, section « Boutons du haut · Top buttons »: Automatic (what is described above), Nothing, or a screen — voice assistant, calendar, alarm clock, climate, plants, TV remote, system console, Energy, settings, alerts, Arcade. The taps do not change. A small icon in the button's top-right corner shows the chosen screen (the one of its window's title). A screen your home lacks (no climate, no plant, no TV, no solar production for Energy) does not open, and the icon is not shown. If the gear no longer opens the console, the tablet's « Aller à l'écran » entity in Home Assistant still does.
+
 ## Temperatures and climate (9, 10)
 
 - The two temperatures: the room (sofa) and a second sensor (greenhouse). A **tap on the second one** opens the [Arcade](arcade.md); without a second sensor, a gamepad stands in its place and does the same.
@@ -89,6 +91,8 @@ La date change de couleur avec les vigilances météo du jour (jaune, orange, ro
 - **Home Assistant** (maison) : un tap montre vos **appareils** dans la rangée du bas au lieu de la météo ; un nouveau tap revient à la météo. Il est allumé tant qu'il montre les appareils. Absent quand aucune pièce n'a d'appareil. Le détail : [rangée du bas et pièces](tiles.md#version-française). Un **appui long** ouvre la [fenêtre Énergie](energy.md#version-française) quand la production solaire s'affiche dans la ligne d'état, en haut à gauche : un petit panneau solaire marque alors le bouton, dans son coin en haut à droite.
 - **Engrenage** : un tap ouvre les [réglages](settings.md#version-française) (luminosité, extinction, thème, langue…) ; un **appui long**, la [console système](console.md#version-française).
 - **Manette** : un tap ouvre l'[Arcade](arcade.md#version-française) ; un **appui long**, la [télécommande TV](tv.md#version-française) quand une TV est choisie dans le blueprint : un petit écran marque alors le bouton, dans son coin en haut à droite. Sans TV, le bouton reste et son appui long ne fait rien.
+
+**Un autre écran à l'appui long.** Ce qu'ouvrent ces trois appuis longs se choisit dans le blueprint « Tab5 — emplacements », section « Boutons du haut · Top buttons » : Automatique (ce qui est décrit ci-dessus), Rien, ou un écran — assistant vocal, calendrier, réveil, clim, plantes, télécommande TV, console système, Énergie, réglages, alertes, Arcade. Les taps ne changent pas. Une petite icône dans le coin en haut à droite du bouton montre l'écran choisi (celle du titre de sa fenêtre). Un écran absent de la maison (pas de clim, pas de plante, pas de TV, pas de production solaire pour Énergie) ne s'ouvre pas, et l'icône ne s'affiche pas. Si l'engrenage n'ouvre plus la console, l'entité « Aller à l'écran » de la tablette dans Home Assistant l'ouvre toujours.
 
 ## Températures et clim (9, 10)
 

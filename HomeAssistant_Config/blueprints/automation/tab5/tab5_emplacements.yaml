@@ -59,6 +59,11 @@
 #         tuiles, états « rN|état|valeur » (variables reglables, reglables_bornes,
 #         déclencheurs reglable_…) ; la commande « regler » (ou « consigne » pour une
 #         clim) ne vise que ces entités-là.
+#       - section « Boutons du haut » (07/10/2026), facultative : l'écran qu'ouvre l'appui
+#         long de chacun des trois boutons en haut à droite de l'accueil. Clé
+#         « appuis|maison|engrenage|manette » de tab5_maj_emplacements (variable appuis),
+#         avec tous les états ; un code inconnu part en « auto ». Un firmware plus ancien
+#         l'ignore et garde ses appuis longs.
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -716,6 +721,85 @@ blueprint:
               step: 8
               unit_of_measurement: s
               mode: slider
+    # Boutons du haut (07/10/2026, demande d'Axel) : l'écran qu'ouvre l'appui long de chacun
+    # des trois boutons en haut à droite de l'accueil. Les taps ne changent pas. Clé
+    # « appuis » de tab5_maj_emplacements (variable appuis) ; un firmware plus ancien
+    # l'ignore. Codes = kCodesEcran de Tab5/tab5_zones.cpp, plus « auto »
+    # (tests/test_appuis.py) : ni traduits ni renommés sans le firmware.
+    boutons_haut:
+      name: Boutons du haut · Top buttons
+      icon: mdi:gesture-tap-hold
+      collapsed: true
+      description: >-
+        L'écran qu'ouvre l'appui long de chacun des trois boutons en haut à droite de
+        l'accueil (firmware plus récent que 3.7.0-rc.4 ; un plus ancien garde ses appuis
+        longs). Le tap ne change pas : appareils, Réglages, Arcade. Automatique : Énergie
+        sur la maison (quand la production solaire s'affiche), console système sur
+        l'engrenage, télécommande sur la manette (quand une TV est choisie). Un écran
+        absent de la maison (clim, plantes, TV, production solaire pour Énergie) ne s'ouvre
+        pas. Une petite icône dans le coin du bouton montre l'écran choisi. Si
+        l'engrenage n'ouvre plus la console, elle reste joignable par l'entité « Aller à
+        l'écran » de la tablette. Le bouton maison est masqué quand aucune pièce n'a
+        d'appareil.
+
+
+        The screen a long press opens on each of the three buttons at the top right of the
+        home page (firmware newer than 3.7.0-rc.4; an older one keeps its long presses).
+        The tap does not change: devices, Settings, Arcade. Automatic: Energy on the house
+        (when the solar production shows), the system console on the gear, the remote on
+        the gamepad (when a TV is picked). A screen your home lacks (climate, plants, TV,
+        solar production for Energy) does not open. A small icon in the button's corner
+        shows the chosen screen. If the gear no longer opens the console, it stays
+        reachable from the tablet's « Aller à l'écran » entity. The house button is hidden
+        when no room has a device.
+      input:
+        appui_maison:
+          name: "Maison : appui long · House: long press"
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: &ecrans_appui_long
+                - label: "Automatique : comme aujourd'hui · Automatic: as today"
+                  value: auto
+                - label: "Rien · Nothing"
+                  value: rien
+                - label: "Assistant vocal · Voice assistant"
+                  value: assistant
+                - label: "Calendrier · Calendar"
+                  value: calendrier
+                - label: "Réveil · Alarm clock"
+                  value: reveil
+                - label: "Climatisation · Climate"
+                  value: clim
+                - label: "Plantes · Plants"
+                  value: plantes
+                - label: "Télécommande TV · TV remote"
+                  value: tv
+                - label: "Console système · System console"
+                  value: console
+                - label: "Énergie · Energy"
+                  value: energie
+                - label: "Réglages · Settings"
+                  value: reglages
+                - label: "Alertes · Alerts"
+                  value: alertes
+                - label: "Arcade"
+                  value: arcade
+        appui_engrenage:
+          name: "Engrenage : appui long · Gear: long press"
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *ecrans_appui_long
+        appui_manette:
+          name: "Manette : appui long · Gamepad: long press"
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *ecrans_appui_long
     planning:
       name: Planning de travail · Work schedule
       icon: mdi:calendar-clock
@@ -2062,6 +2146,22 @@ variables:
     {%- endfor -%}
     {{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha']
        or (trigger.id == 'mesures' and energie_crete | float(0) > 0 and ns.change) }}
+  # Appuis longs des boutons du haut (section « Boutons du haut ») : « appuis|maison|
+  # engrenage|manette; », poussé avec tous les états (connexion, rechargement — dont
+  # l'enregistrement de l'automatisation —, MAJ Écran, démarrage de HA). Un code hors de
+  # la liste (automatisation écrite à la main) part en « auto ».
+  appuis_choix:
+    - !input appui_maison
+    - !input appui_engrenage
+    - !input appui_manette
+  appuis: >-
+    {%- set codes = ['auto', 'rien', 'assistant', 'calendrier', 'reveil', 'clim', 'plantes', 'tv',
+                     'console', 'energie', 'reglages', 'alertes', 'arcade'] -%}
+    {%- set ns = namespace(l=[]) -%}
+    {%- for c in appuis_choix -%}
+      {%- set ns.l = ns.l + [c if c is string and c in codes else 'auto'] -%}
+    {%- endfor -%}
+    appuis|{{ ns.l | join('|') }};
 
 triggers:
   - trigger: event
@@ -2495,6 +2595,11 @@ actions:
             {%- set ns.r = ns.r ~ c ~ '|' ~ (states(x) | replace('|', '/') | replace(';', ',')) ~ '|' ~ v ~ ';' -%}
           {%- endif -%}
         {%- endfor -%}
+        {#- Appuis longs des boutons du haut (variable appuis), avec tous les états. Un
+            firmware sans ce choix ignore la clé (clé inconnue). -#}
+        {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] -%}
+          {%- set ns.r = ns.r ~ appuis -%}
+        {%- endif -%}
         {#- Icône solaire du bandeau : « solaire|pourcentage; » (voir solaire_a_pousser). Un
             firmware sans cette icône ignore la clé (clé inconnue). -#}
         {%- if solaire_a_pousser -%}

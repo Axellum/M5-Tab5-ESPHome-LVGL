@@ -518,7 +518,7 @@ def test_ouverture_et_fermeture_du_popup():
     assert popup.count('close_lambda: "animate_popup_close(id(clim_options_popup)); clim_afficher_blueprint();"') == 2
     carte = _lire("Tab5", "ui_components", "climate_card.yaml")
     assert "clim_afficher_blueprint();\n                    animate_popup_open(id(clim_options_popup));" in carte
-    assert re.search(r"case 5:[^\n]*\n(?:\s*//[^\n]*\n)*\s*clim_afficher_blueprint\(\);",
+    assert re.search(r"case Ecran::CLIM:[^\n]*\n(?:\s*//[^\n]*\n)*\s*clim_afficher_blueprint\(\);",
                      _lire("Tab5", "tab5-ha-controls.yaml"))
     # Popup refermé par close_all() (inactivité) : la clim affichée revient au premier
     # retour de HA, avant qu'il ne soit rangé.

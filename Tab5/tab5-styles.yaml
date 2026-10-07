@@ -595,25 +595,36 @@ font:
       - "\U000F036C"  # microphone
 
   # 26 px — barre d'état (réveil, Wi-Fi, PC, production solaire, batterie de la
-  # tablette, ou une prise sans batterie) et pluie des cartes horaires.
+  # tablette, ou une prise sans batterie), pluie des cartes horaires, et mini icônes des
+  # trois boutons du haut : l'écran qu'ouvre leur appui long (mini_glyphe, tab5_zones.cpp,
+  # 07/10/2026 : le glyphe de l'en-tête de chaque popup).
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_26
     size: 26
     bpp: 1
     glyphs:
-      - "\U000F0020"  # alarm
+      - "\U000F0020"  # alarm (aussi mini icône : Réveil)
       - "\U000F0023"  # alarm-off
       - "\U000F0079"  # battery (batterie de la tablette, > 80 %)
       - "\U000F0083"  # battery-alert (< 20 %)
       - "\U000F0084"  # battery-charging (en charge)
       - "\U000F0091"  # battery-unknown (pas de mesure)
       - "\U000F011E"  # cellphone-basic
+      - "\U000F018D"  # console (mini icône : Console système)
+      - "\U000F024A"  # flower (mini icône : Plantes)
+      - "\U000F0297"  # gamepad-variant (mini icône : Arcade)
+      - "\U000F036C"  # microphone (mini icône : Assistant vocal)
       - "\U000F0379"  # monitor
+      - "\U000F0493"  # cog (mini icône : Réglages)
       - "\U000F0596"  # weather-pouring
       - "\U000F05A9"  # wifi
       - "\U000F06A5"  # power-plug (tablette sans batterie détectée)
+      - "\U000F0717"  # snowflake (mini icône : Climatisation)
       - "\U000F07C0"  # desktop-classic (mini icône de la manette : télécommande TV, 06/10/2026)
-      - "\U000F0D9B"  # solar-panel (production solaire du bandeau, tous les paliers)
+      - "\U000F0A72"  # solar-power (mini icône : Énergie choisie dans le blueprint)
+      - "\U000F0D9B"  # solar-panel (production solaire du bandeau, tous les paliers ; mini icône « auto » de « HA »)
+      - "\U000F0E17"  # calendar-month (mini icône : Calendrier)
+      - "\U000F0E81"  # bell-alert-outline (mini icône : Alertes)
       - "\U000F12A1"  # battery-low (20 à 40 %)
       - "\U000F12A2"  # battery-medium (41 à 80 %)
 

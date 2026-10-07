@@ -256,6 +256,16 @@ def _solaire(pourcent: str) -> Service:
 SANS_SOLAIRE = (_solaire("nan"),)
 
 
+def _appuis(maison: str, engrenage: str, manette: str) -> Service:
+    """Appuis longs des trois boutons du haut, comme les pousse le blueprint (clé appuis de
+    tab5_maj_emplacements, section « Boutons du haut » ; codes de kCodesEcran ou « auto »)."""
+    return Service("tab5_maj_emplacements", (("payload", f"appuis|{maison}|{engrenage}|{manette};"),))
+
+
+# Le choix reste en NVS : retour à « auto » (les mini icônes d'avant) pour les autres écrans.
+APPUIS_AUTO = (_appuis("auto", "auto", "auto"),)
+
+
 def _appareils_meteo(montres: bool) -> Service:
     """rendu_appareils_meteo (Tab5/rendu/bouchons.yaml) : interrupteur « Tab5 Appareils sur
     la météo » (discussion #278). Éteint, les prévisions ne montrent pas les appareils."""
@@ -454,6 +464,9 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-solaire-bon", (_solaire("60"),), SANS_SOLAIRE),
     Ecran("accueil-solaire-fort", (_solaire("95"),), SANS_SOLAIRE),
     Ecran("accueil-solaire-et-batterie", (_batterie(True, 95.0), _solaire("60")), SANS_BATTERIE + SANS_SOLAIRE),
+    # Appuis longs au choix (07/10/2026) : la mini icône de chaque bouton du haut montre
+    # l'écran choisi (en-tête de sa fenêtre) : alertes, calendrier, Arcade.
+    Ecran("accueil-appuis-choisis", (_appuis("alertes", "calendrier", "arcade"),), APPUIS_AUTO),
     # Rangée sous l'horloge (ADR-0031) : trois lignes dans la démo (plantes, climat,
     # énergie et maison ; scenarios.RANGEE). Un appui passe à la suivante ; le retour à
     # l'accueil ne la remet pas, `fermer` finit le tour jusqu'à la première.

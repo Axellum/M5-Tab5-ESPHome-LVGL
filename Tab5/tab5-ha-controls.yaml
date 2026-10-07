@@ -18,8 +18,12 @@
 #       s'y enregistre UNE fois, le text_sensor la nomme aussitôt. Pour l'ouvrir
 #       depuis HA, ajouter en plus son option au `select` ci-dessous avec le
 #       MÊME libellé (c'est par ce nom que `ModalRegistry::find()` la retrouve —
-#       tools/check_tab5_registry.py le vérifie), et un `case` si son ouverture
-#       passe par un script.
+#       tools/check_tab5_registry.py le vérifie), sa valeur à la même place dans
+#       l'enum Ecran (tab5_custom.h, tests/test_appuis.py), et un `case` dans
+#       tab5_ecran_ouvrir si son ouverture passe par un script.
+#       tab5_ecran_ouvrir (07/10/2026) est la SEULE routine d'ouverture d'un écran :
+#       le select et les appuis longs des trois boutons du haut (tab5-lvgl.yaml,
+#       écran choisi dans le blueprint) l'appellent, rien n'est recopié.
 # @ai_instruction Le volume ne s'écrit JAMAIS directement ici : tout passe par
 #       `script.tab5_volume_apply` (tab5-scripts.yaml), point d'entrée unique
 #       partagé avec les deux sliders de l'écran.
@@ -120,146 +124,20 @@ select:
       # Historique des alertes (lot 4 du plan des alertes, 06/10/2026), à la fin aussi.
       - "Alertes"
     on_value:
-      # Les popups sont des enfants de `page_main` : si la tablette est sur le
-      # sélecteur Arcade ou dans une partie, en ouvrir un jouerait hors écran
-      # pendant que l'utilisateur regarde toujours le jeu — et « Accueil » ne
-      # ramènerait rien. On revient donc d'abord sur le dashboard, en fermant le
-      # jeu par la liste unique `tab5_games_close_all` (jamais recopiée : c'est
-      # elle qui restaure aussi la rotation paysage après « Neon Apron »).
-      # Conditionné : rejouer `page.show` alors qu'on y est déjà provoquerait un
-      # rechargement d'écran visible pour rien.
+      # Toute l'ouverture est dans tab5_ecran_ouvrir (script en fin de fichier), partagé
+      # avec les appuis longs des boutons du haut : l'index de l'option EST la valeur
+      # d'Ecran (tab5_custom.h). « — » (0) : position de repos, aucune action. Puis le
+      # geste est consommé : on repasse en position de repos pour que la même
+      # destination puisse être redemandée juste après (même quand l'ouverture est
+      # refusée : sonnerie, zone absente, écran déjà affiché).
       - if:
           condition:
-            and:
-              # `return` dans une lambda ne sort que de la lambda, pas de la
-              # séquence : le filtre « — » doit être dans la condition.
-              - lambda: 'return i != 0;'
-              - not:
-                  lvgl.page.is_showing: page_main
+            lambda: 'return i != 0;'
           then:
-            - script.execute: tab5_games_close_all
-            - lvgl.page.show: page_main
-      - lambda: |-
-          if (i == 0) return;  // « — » : position de repos, aucune action
-
-          // [26/08/2026] SONNERIE EN COURS : refuser d'ouvrir une fenêtre.
-          // `alarm_ring_layer` est un calque plein cadre que alarm_clock.cpp
-          // (alarm_ring_show) remonte au premier plan à chaque affichage. Or le
-          // premier plan que pose `animate_popup_open(target)` ci-dessous s'applique
-          // SANS CONDITION : un popup ouvert depuis HA pendant que le réveil
-          // sonne passerait donc PAR-DESSUS l'écran de sonnerie et masquerait
-          // son bouton d'arrêt. C'est le pendant exact de la protection déjà en
-          // place contre la fermeture automatique (alarm_ring_layer est un LAYER
-          // du ModalRegistry : nommé, jamais refermé par close_all()) : tant que
-          // ça sonne, ce calque ne doit être ni refermé, ni recouvert.
-          // « Accueil » (i == 1) reste AUTORISÉ : il ne fait que fermer les
-          // popups et revenir sur page_main, ce qui RÉVÈLE la sonnerie au lieu
-          // de la cacher — utile si une partie était ouverte quand elle a
-          // démarré. ESP_LOGI et pas ESP_LOGD : un refus muet serait
-          // indiscernable d'une commande perdue, et le projet tourne à INFO.
-          if (i >= 2 && id(alarm_ringing)) {
-            ESP_LOGI("TAB5", "Ouverture d'ecran refusee depuis HA : le reveil sonne");
-            id(tab5_goto_screen).publish_state("—");
-            return;
-          }
-
-          // Zone absente de cette maison (lot 5, tab5-zones.yaml) : sa fenêtre n'aurait
-          // rien à montrer ni à piloter. Les options restent : HA lit la liste fixe.
-          if ((i == 5 && zone_absente(Zone::CLIM)) || (i == 6 && zones_pots_presents() == 0) ||
-              (i == 7 && zone_absente(Zone::TV))) {
-            ESP_LOGI("TAB5", "Aller a l'ecran : '%s' absent de cette maison", x.c_str());
-            id(tab5_goto_screen).publish_state("—");
-            return;
-          }
-
-          // Cible déjà affichée : ne rien faire, sinon le fermer-puis-rouvrir
-          // ci-dessous se verrait comme un clignotement. La cible est retrouvée
-          // PAR SON LIBELLÉ dans ModalRegistry (x = option choisie) : l'option
-          // du select et le nom enregistré dans tab5_modal_registry_init doivent
-          // être identiques — tools/check_tab5_registry.py le vérifie. Un écart
-          // serait sinon un no-op muet sur les cas 5-7 (clim, plantes, TV) : on
-          // le journalise à WARN, le projet tourne à INFO.
-          id(tab5_modal_registry_init).execute();
-          lv_obj_t* target = ModalRegistry::find(x.c_str());
-          if (i >= 2 && target == nullptr) {
-            ESP_LOGW("TAB5", "Aller a l'ecran : option '%s' sans fenetre enregistree", x.c_str());
-          }
-          if (target != nullptr && !lv_obj_has_flag(target, LV_OBJ_FLAG_HIDDEN)) {
-            // Re-demander l'écran déjà affiché sert à prolonger son affichage.
-            ui_mark_activity();
-            id(tab5_goto_screen).publish_state("—");
-            return;
-          }
-
-          // Fermeture de tout ce qui est ouvert — même chemin que le retour
-          // automatique à l'inactivité (tab5-scripts.yaml), pour laisser
-          // exactement le même état derrière soi.
-          ModalRegistry::close_all();
-          id(assist_popup_open) = false;
-          // « Accueil » quitte aussi le mode HA (ADR-0023) : la météo de la page revient.
-          if (i == 1) tuiles_mode_ha(false);
-
-          switch (i) {
-            case 2:  // L'assistant a son propre script : il arme aussi l'état
-                     // vocal et la synchro des réglages du panneau gauche.
-              id(tab5_assist_open).execute();
-              break;
-            case 3:  // Le calendrier a besoin de son mois courant + du rendu.
-              id(tab5_calendar_open).execute();
-              break;
-            case 4:  // Le réveil resynchronise g_alarm_cfg et recalcule la
-                     // prochaine sonnerie avant de s'afficher, sinon la carte
-                     // « Prochaine sonnerie » montrerait un état périmé.
-              id(tab5_alarm_open).execute();
-              break;
-            case 5:  // La clim du blueprint : le popup a pu montrer celle d'une
-                     // tuile (ADR-0027) et être refermé par close_all() ci-dessus.
-              clim_afficher_blueprint();
-              if (target != nullptr) animate_popup_open(target);
-              break;
-            case 8:  // La console est un layer plein cadre : pas d'animation
-                     // d'ouverture, comme son bouton (tab5-lvgl.yaml).
-              lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_move_to_index(id(layer_console_sys), -1);
-              // Comme l'appui long : batterie tout de suite, charge du processeur
-              // repartie de zéro (sinon l'ancienne valeur jusqu'au tick 2 s).
-              update_console_batterie_ui(id(lbl_sys_batterie_icone), id(lbl_sys_batterie_val));
-              update_console_cpu_ui(id(lbl_sys_cpu_val), true);
-              break;
-            case 9:  // Énergie (ADR-0028) : son script pose les widgets à la première
-                     // ouverture et demande ses données à HA.
-              id(tab5_energie_ouvrir).execute();
-              break;
-            case 10:  // Réglages : son script pose les widgets et peint avant d'ouvrir.
-              id(tab5_reglages_ouvrir).execute();
-              break;
-            case 11:  // Alertes : son script pose les widgets et demande l'historique à HA.
-              id(tab5_alertes_ouvrir).execute();
-              break;
-            default:
-              if (target != nullptr) {
-                animate_popup_open(target);
-              }
-              break;
-          }
-          // OUVERTURE PROGRAMMÉE : remettre le compteur d'inactivité à zéro est
-          // OBLIGATOIRE, pas un confort. Le retour automatique de
-          // `tab5-scripts.yaml` tourne toutes les SECONDES et referme tout popup
-          // dès que `ui_idle_ms() >= 45 s` — or personne n'a touché la dalle, le
-          // compteur est donc déjà très au-delà. Sans cette ligne, le popup
-          // ouvert depuis HA est refermé au tick suivant, en moins d'une
-          // seconde : la commande semble ne rien faire. Même piège que celui
-          // déjà traité pour le pipeline vocal (`tab5_vocal_arm_stop`), et c'est
-          // exactement l'usage documenté de `ui_mark_activity()` dans
-          // `tab5_custom.h` : « ouverture programmée d'un popup ».
-          // « Accueil » (i == 1) en est exclu : il ne laisse rien d'ouvert, et
-          // geler le compteur retarderait pour rien le retour auto de la page
-          // météo (25 s).
-          if (i >= 2) ui_mark_activity();
-
-          // Le geste est consommé : on repasse en position de repos pour que la
-          // même destination puisse être redemandée juste après.
-          id(tab5_goto_screen).publish_state("—");
+            - script.execute:
+                id: tab5_ecran_ouvrir
+                ecran: !lambda 'return i;'
+            - lambda: 'id(tab5_goto_screen).publish_state("—");'
 
   # Langue de l'écran (lot 4 de l'audit « ouverture », 27/09/2026). Les options sont
   # les noms natifs de Tab5/lang/*.yaml, DANS L'ORDRE de leurs `_index` : la tablette
@@ -469,3 +347,153 @@ interval:
                 level: INFO
                 format: "Extinction auto de l'ecran (inactivite)"
             - light.turn_off: backlight
+
+script:
+  # Ouverture d'un écran (07/10/2026) : la routine UNIQUE du select « Aller à l'écran »
+  # (plus haut) et des appuis longs des trois boutons du haut (tab5-lvgl.yaml, écran
+  # choisi dans le blueprint, bouton_haut_ecran()). `ecran` = valeur d'Ecran
+  # (tab5_custom.h) : l'index d'une option du select, ou ARCADE, qui n'en est pas une
+  # (lancer l'Arcade à distance n'a pas d'usage). Tout s'exécute pendant l'appel (aucun
+  # délai) ; le select se remet lui-même sur « — » ensuite.
+  - id: tab5_ecran_ouvrir
+    mode: single
+    parameters:
+      ecran: int
+    then:
+      # Les popups sont des enfants de `page_main` : si la tablette est sur le
+      # sélecteur Arcade ou dans une partie, en ouvrir un jouerait hors écran
+      # pendant que l'utilisateur regarde toujours le jeu — et « Accueil » ne
+      # ramènerait rien. On revient donc d'abord sur le dashboard, en fermant le
+      # jeu par la liste unique `tab5_games_close_all` (jamais recopiée : c'est
+      # elle qui restaure aussi la rotation paysage après « Neon Apron »).
+      # Conditionné : rejouer `page.show` alors qu'on y est déjà provoquerait un
+      # rechargement d'écran visible pour rien. (Un appui long vient toujours de
+      # page_main.)
+      - if:
+          condition:
+            and:
+              # `return` dans une lambda ne sort que de la lambda, pas de la
+              # séquence : le filtre « — » doit être dans la condition.
+              - lambda: 'return ecran > 0 && ecran < static_cast<int>(Ecran::NB);'
+              - not:
+                  lvgl.page.is_showing: page_main
+          then:
+            - script.execute: tab5_games_close_all
+            - lvgl.page.show: page_main
+      - lambda: |-
+          if (ecran <= 0 || ecran >= static_cast<int>(Ecran::NB)) return;  // « — » ou inconnu
+          const Ecran e = static_cast<Ecran>(ecran);
+          // Libellé de l'option du select (c'est aussi le nom de la fenêtre dans
+          // ModalRegistry) ; aucun pour l'Arcade, qui n'est pas une option.
+          const char* nom = static_cast<size_t>(ecran) < id(tab5_goto_screen).size()
+                                ? id(tab5_goto_screen).option_at(ecran) : "Arcade";
+
+          // [26/08/2026] SONNERIE EN COURS : refuser d'ouvrir une fenêtre.
+          // `alarm_ring_layer` est un calque plein cadre que alarm_clock.cpp
+          // (alarm_ring_show) remonte au premier plan à chaque affichage. Or le
+          // premier plan que pose `animate_popup_open(target)` ci-dessous s'applique
+          // SANS CONDITION : un popup ouvert depuis HA pendant que le réveil
+          // sonne passerait donc PAR-DESSUS l'écran de sonnerie et masquerait
+          // son bouton d'arrêt. C'est le pendant exact de la protection déjà en
+          // place contre la fermeture automatique (alarm_ring_layer est un LAYER
+          // du ModalRegistry : nommé, jamais refermé par close_all()) : tant que
+          // ça sonne, ce calque ne doit être ni refermé, ni recouvert.
+          // « Accueil » reste AUTORISÉ : il ne fait que fermer les
+          // popups et revenir sur page_main, ce qui RÉVÈLE la sonnerie au lieu
+          // de la cacher — utile si une partie était ouverte quand elle a
+          // démarré. ESP_LOGI et pas ESP_LOGD : un refus muet serait
+          // indiscernable d'une commande perdue, et le projet tourne à INFO.
+          if (e != Ecran::ACCUEIL && id(alarm_ringing)) {
+            ESP_LOGI("TAB5", "Ouverture d'ecran refusee : le reveil sonne");
+            return;
+          }
+
+          // Zone absente de cette maison (lot 5, tab5-zones.yaml) : sa fenêtre n'aurait
+          // rien à montrer ni à piloter. Les options restent : HA lit la liste fixe.
+          // (Un appui long ne demande jamais un écran absent : bouton_haut_ecran().)
+          if (ecran_sans_zone(e)) {
+            ESP_LOGI("TAB5", "Aller a l'ecran : '%s' absent de cette maison", nom);
+            return;
+          }
+
+          // Cible déjà affichée : ne rien faire, sinon le fermer-puis-rouvrir
+          // ci-dessous se verrait comme un clignotement. La cible est retrouvée
+          // PAR SON LIBELLÉ dans ModalRegistry (nom = option du select) : l'option
+          // du select et le nom enregistré dans tab5_modal_registry_init doivent
+          // être identiques — tools/check_tab5_registry.py le vérifie. Un écart
+          // serait sinon un no-op muet sur les cas clim, plantes, TV : on
+          // le journalise à WARN, le projet tourne à INFO.
+          id(tab5_modal_registry_init).execute();
+          lv_obj_t* target = e != Ecran::ARCADE ? ModalRegistry::find(nom) : nullptr;
+          if (e != Ecran::ACCUEIL && e != Ecran::ARCADE && target == nullptr) {
+            ESP_LOGW("TAB5", "Aller a l'ecran : option '%s' sans fenetre enregistree", nom);
+          }
+          if (target != nullptr && !lv_obj_has_flag(target, LV_OBJ_FLAG_HIDDEN)) {
+            // Re-demander l'écran déjà affiché sert à prolonger son affichage.
+            ui_mark_activity();
+            return;
+          }
+
+          // Fermeture de tout ce qui est ouvert — même chemin que le retour
+          // automatique à l'inactivité (tab5-scripts.yaml), pour laisser
+          // exactement le même état derrière soi.
+          ModalRegistry::close_all();
+          id(assist_popup_open) = false;
+          // « Accueil » quitte aussi le mode HA (ADR-0023) : la météo de la page revient.
+          if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);
+
+          switch (e) {
+            case Ecran::ASSISTANT:  // L'assistant a son propre script : il arme aussi
+                                    // l'état vocal et la synchro des réglages du panneau gauche.
+              id(tab5_assist_open).execute();
+              break;
+            case Ecran::CALENDRIER:  // Le calendrier a besoin de son mois courant + du rendu.
+              id(tab5_calendar_open).execute();
+              break;
+            case Ecran::REVEIL:  // Le réveil resynchronise g_alarm_cfg et recalcule la
+                                 // prochaine sonnerie avant de s'afficher, sinon la carte
+                                 // « Prochaine sonnerie » montrerait un état périmé.
+              id(tab5_alarm_open).execute();
+              break;
+            case Ecran::CLIM:  // La clim du blueprint : le popup a pu montrer celle d'une
+                               // tuile (ADR-0027) et être refermé par close_all() ci-dessus.
+              clim_afficher_blueprint();
+              if (target != nullptr) animate_popup_open(target);
+              break;
+            case Ecran::CONSOLE:  // Layer plein cadre, ligne d'état et état de HA tout de
+                                  // suite : son script (tab5-scripts.yaml).
+              id(tab5_console_ouvrir).execute();
+              break;
+            case Ecran::ENERGIE:  // Énergie (ADR-0028) : son script pose les widgets à la
+                                  // première ouverture et demande ses données à HA.
+              id(tab5_energie_ouvrir).execute();
+              break;
+            case Ecran::REGLAGES:  // Réglages : son script pose les widgets et peint avant d'ouvrir.
+              id(tab5_reglages_ouvrir).execute();
+              break;
+            case Ecran::ALERTES:  // Alertes : son script pose les widgets et demande l'historique à HA.
+              id(tab5_alertes_ouvrir).execute();
+              break;
+            case Ecran::ARCADE:  // Le sélecteur de jeux : une autre page LVGL.
+              id(tab5_arcade_open).execute();
+              break;
+            default:
+              if (target != nullptr) {
+                animate_popup_open(target);
+              }
+              break;
+          }
+          // OUVERTURE PROGRAMMÉE : remettre le compteur d'inactivité à zéro est
+          // OBLIGATOIRE, pas un confort. Le retour automatique de
+          // `tab5-scripts.yaml` tourne toutes les SECONDES et referme tout popup
+          // dès que `ui_idle_ms() >= 45 s` — or personne n'a touché la dalle, le
+          // compteur est donc déjà très au-delà. Sans cette ligne, le popup
+          // ouvert depuis HA est refermé au tick suivant, en moins d'une
+          // seconde : la commande semble ne rien faire. Même piège que celui
+          // déjà traité pour le pipeline vocal (`tab5_vocal_arm_stop`), et c'est
+          // exactement l'usage documenté de `ui_mark_activity()` dans
+          // `tab5_custom.h` : « ouverture programmée d'un popup ».
+          // « Accueil » en est exclu : il ne laisse rien d'ouvert, et
+          // geler le compteur retarderait pour rien le retour auto de la page
+          // météo (25 s).
+          if (e != Ecran::ACCUEIL) ui_mark_activity();
