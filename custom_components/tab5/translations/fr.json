@@ -1,0 +1,62 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tab5 — fichiers Home Assistant",
+        "description": "Cette intégration installe les fichiers Home Assistant du projet M5Stack Tab5 (packages, modèles, blueprint) et les remplace à chaque mise à jour faite par HACS. Les anciens fichiers sont gardés dans `tab5_sauvegardes/`. Vos propres packages, modèles et blueprints ne sont jamais touchés.\n\nÀ mettre une fois dans `configuration.yaml`, si ce n'est pas déjà fait :\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```",
+        "data": {
+          "mettre_a_jour_tablette": "Mettre ensuite la tablette à jour"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Une fois les fichiers en place, installer le firmware de la même version dès que l'entité « Firmware » de la tablette le propose."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "L'intégration Tab5 est déjà ajoutée."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tab5 — fichiers Home Assistant",
+        "data": {
+          "mettre_a_jour_tablette": "Mettre ensuite la tablette à jour",
+          "reinstaller": "Réinstaller maintenant les fichiers de cette version"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Une fois les fichiers en place, installer le firmware de la même version dès que l'entité « Firmware » de la tablette le propose.",
+          "reinstaller": "Pour un fichier du Tab5 effacé ou modifié par erreur. Les fichiers actuels sont d'abord sauvegardés."
+        }
+      }
+    }
+  },
+  "issues": {
+    "fichiers_absents": {
+      "title": "Tab5 : aucun fichier Home Assistant dans l'intégration",
+      "description": "L'intégration Tab5 {version} ne contient aucun fichier : elle a été copiée depuis le dépôt au lieu d'être installée depuis une release. Installez-la par HACS (dépôt personnalisé), qui télécharge `tab5_hacs.zip` de la release."
+    },
+    "configuration_invalide": {
+      "title": "Tab5 : les fichiers {version} n'ont pas été installés",
+      "description": "Les nouveaux fichiers du Tab5 n'ont pas pu être posés (la vérification de la configuration a trouvé une erreur avec eux, ou leur écriture a échoué) : les fichiers précédents ont été remis, rien n'a changé. La raison est dans le journal (Paramètres → Système → Journaux, « tab5 »). Merci de la signaler : https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues"
+    },
+    "packages_absents": {
+      "title": "Tab5 : Home Assistant ne charge pas les packages",
+      "description": "Les fichiers du Tab5 sont dans `config/packages/`, mais Home Assistant ne lit pas ce dossier. Ajoutez ces deux lignes à `configuration.yaml` (la ligne `homeassistant:` une seule fois), vérifiez la configuration, puis redémarrez :\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```"
+    },
+    "redemarrage_requis": {
+      "title": "Tab5 : redémarrez Home Assistant pour finir",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Redémarrer Home Assistant",
+            "description": "Les fichiers du Tab5 {version} sont en place, mais certains ne prennent effet qu'après un redémarrage. Validez pour redémarrer Home Assistant maintenant."
+          }
+        },
+        "error": {
+          "configuration_invalide": "La configuration a une erreur : corrigez-la d'abord (Outils de développement → YAML → Vérifier la configuration)."
+        }
+      }
+    }
+  }
+}
