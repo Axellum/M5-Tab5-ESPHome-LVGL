@@ -45,3 +45,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0033](0033-adjustable-tile.md) | The − / + tile of the climate card adjusts a device chosen on the tablet — the climate, up to eight devices picked in the blueprint (`rN`), or the tablet's volume |
 | [0034](0034-central-card-alerts.md) | Alerts of the central card — HA remembers each alert and its revision, a read alert comes back only when it changes, subscriptions and history live in HA |
 | [0035](0035-hacs-integration-ha-files.md) | A « Tab5 » integration, installed by HACS, puts the Home Assistant files in place in one click — the release asset carries the files, backup, configuration check and rollback, then the firmware of the same version |
+| [0037](0037-house-popup.md) | A House popup — every room of the blueprint at once, one column per room, rows drawn and touched like the tiles, « Éteindre les lumières » in the title bar |

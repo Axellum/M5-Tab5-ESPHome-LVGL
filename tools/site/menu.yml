@@ -120,6 +120,9 @@
         - en: Alerts
           fr: Alertes
           page: docs/notice/alerts.md
+        - en: House
+          fr: Maison
+          page: docs/notice/house.md
         - en: Settings
           fr: Réglages
           page: docs/notice/settings.md

@@ -160,3 +160,7 @@ Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discu
 ## Update — 2026-10-06: HA-mode cards drawn like Home Assistant's « tile » card
 
 Same discussion (« buttons can be like ha dashboard buttons »). The five HA-mode cards lose their title and state tabs and look like the vertical « tile » card of a Home Assistant dashboard: the icon (palette, 70 px) at full strength in a round badge of the same colour at 20 % (`sw_pastille_N`, coloured by `peindre_carte` from the colour the card already used), the name under it, the state line under the name in its colour. Same widgets otherwise (`icon_swN`, `lbl_swN_title`, `lbl_swN_state`, the 130 × 130 invisible button now over the badge, the name's frame still the target of the shutter-direction tap), same colours and words, same 230 × 275 cards and centring. The weather tiles and their shoulders are unchanged.
+
+## Update — 2026-10-07: the House popup
+
+Same discussion (#278, « the whole house at once »). [ADR-0037](0037-house-popup.md) adds a House popup: one column per room (R = 0 → 4), one row per tile, painted by the cards' function (`peindre_vue_sur()`, factored out of `peindre_carte()`) and touched through `tuile_appui_piece()`. The light popup's « Tout éteindre » became `tuiles_piece_eteindre(R)`, also called by the popup's « Éteindre les lumières » for each room with a `lum` tile. `peindre_tuile()` and `tuiles_appliquer_ui()` notify the popup, which repaints only while shown. Nothing changes in what HA sends or receives.

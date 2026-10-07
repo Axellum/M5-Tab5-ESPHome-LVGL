@@ -95,6 +95,8 @@ The 5 cards (`switches_card.yaml`) show the room of the current page, each drawn
 
 **Swipe in HA mode** goes to the next / previous room that has a device, in the order of the weather pages (same wrap); the weather layers stay hidden and the pagination dots follow. With one room only, a swipe does nothing. Entering HA mode on a page without devices jumps to the nearest room that has some; leaving it shows the weather of the current page.
 
+**Tap on the room's name** (the central card's title, HA mode only): the [House popup](#house-popup--every-room-at-once).
+
 ![HA mode on the real device (3.1, before rooms)](images/tab5_photo_domo.jpg)
 
 ---
@@ -281,6 +283,19 @@ HA pushes once per request, only while the popup is open (package `tab5_historiq
 
 ---
 
+## House popup — every room at once
+
+Opened by a tap on the room's name in HA mode, or by « Aller à l'écran → Maison » ([ADR-0037](decisions/0037-house-popup.md), discussion #278). Shared chrome (ADR-0009), card of 1250 × 690, title « Maison ».
+
+- **One column per room** of the blueprint that has devices, room 1 → 5 (the blueprint's order, not the pages'), width (1250 − 24 − 12 (n − 1)) / n: about 235 px with five rooms, 607 px with two. Header: the room's name, or « Pièce n »; « Aucun appareil » without any room.
+- **One row per device** (104 px, glass card): the palette icon (32 px) in a 56 px badge of its state's colour, the name and the state line, painted by the same `Vue` as the HA-mode card (`tuile_peindre_ligne()`), cut with « … » at the column's width.
+- **Gestures of the tile**: tap, long press and the « ⋯ » button (36 px, only on the types that have a long press: not `cap`, `bin`, nor a tile with the `r` option) go through `tuile_appui_piece()`; a climate's long press opens its popup, like its tap. A popup opened from a row comes over the House popup, which stays behind; the inactivity closes both.
+- **« Éteindre les lumières »** in the title bar, shown when a room has a `lum` tile: the light popup's « Tout éteindre » (`pR` / `eteindre`) for each of those rooms, no confirmation.
+
+Nothing new with Home Assistant: no event, action or blueprint input. Widgets are YAML templates (`maison_popup.yaml`, 5 headers, 25 rows), laid out and painted at each opening and repainted while shown when a state or the definitions change.
+
+---
+
 ## Color coding for readability
 
 Color is used consistently as a primary information channel — to let you read state at a glance without reading labels.
@@ -456,6 +471,8 @@ Appui court et appui long pour chaque sorte d'appareil, et les comportements « 
 Les 5 cartes (`switches_card.yaml`) montrent la pièce de la page courante, chacune dessinée comme la carte « tile » d'un tableau de bord Home Assistant dans sa forme verticale (depuis le 06/10/2026, discussion #278) : l'icône de la palette (70 px) dans une pastille ronde de la couleur de son état (la couleur à 20 %, l'icône pleine ; tap et appui long sur la pastille), le nom dessous (coupé avec « … » ; un tap dessus inverse le sens d'un volet), et sous le nom une ligne d'état traduite par la tablette — « 60 % », « Allumé » / « Éteint », « Mouvement » / « 45 % » / « Ouvert » / « Fermé », « Lecture » / « Pause », « Lancer », la valeur et l'unité d'un capteur, « Détecté » / « Présent » / « Verrouillé »… selon la classe d'appareil, la température de la pièce d'une clim ; « Hors ligne », grisé, quand l'entité est indisponible — et une couleur selon le type et l'état (la couleur propre d'une lumière quand elle en donne une). Les tuiles vides sont masquées et les autres centrées. La carte centrale affiche « Pièce n/N » au-dessus du nom de la pièce ; le rotateur est en pause. Appui court et long : [notice](notice/tiles.md#tap-et-appui-long-par-appareil).
 
 **Swipe en mode HA** : pièce suivante / précédente qui a un appareil, dans l'ordre des pages météo (même bouclage) ; les calques météo restent masqués et les pastilles suivent. Avec une seule pièce, un swipe ne fait rien. Entrer en mode HA sur une page sans appareil saute à la pièce la plus proche qui en a ; en sortir montre la météo de la page courante.
+
+**Tap sur le nom de la pièce** (le titre de la carte centrale, en mode HA seulement) : le [popup Maison](#popup-maison--toutes-les-pièces-dun-coup).
 
 ![Mode HA sur l'appareil réel (3.1, avant les pièces)](images/tab5_photo_domo.jpg)
 
@@ -640,6 +657,19 @@ S'ouvre par un appui long sur l'une des deux températures de l'accueil ([ADR-00
 - Avant que Home Assistant réponde : « En attente de Home Assistant » ; capteur sans statistiques : « Aucun historique ».
 
 HA pousse une fois par demande, seulement popup ouvert (package `tab5_historique.yaml`, statistiques du recorder et `weather.get_forecasts`) ; la tablette garde les trois vues de la température montrée en PSRAM (~6 Ko), rien en NVS.
+
+---
+
+## Popup Maison — toutes les pièces d'un coup
+
+Ouvert par un tap sur le nom de la pièce en mode HA, ou par « Aller à l'écran → Maison » ([ADR-0037](decisions/0037-house-popup.md), discussion #278). Chrome partagé (ADR-0009), carte de 1250 × 690, titre « Maison ».
+
+- **Une colonne par pièce** du blueprint qui a des appareils, pièce 1 → 5 (l'ordre du blueprint, pas celui des pages), largeur (1250 − 24 − 12 (n − 1)) / n : environ 235 px avec cinq pièces, 607 px avec deux. En-tête : le nom de la pièce, ou « Pièce n » ; « Aucun appareil » sans aucune pièce.
+- **Une ligne par appareil** (104 px, carte de verre) : l'icône de la palette (32 px) dans une pastille de 56 px de la couleur de son état, le nom et la ligne d'état, peints par la même `Vue` que la carte du mode HA (`tuile_peindre_ligne()`), coupés avec « … » à la largeur de la colonne.
+- **Gestes de la tuile** : le tap, l'appui long et le bouton « ⋯ » (36 px, seulement sur les types qui ont un appui long : ni `cap`, ni `bin`, ni une tuile à l'option `r`) passent par `tuile_appui_piece()` ; l'appui long d'une clim ouvre son popup, comme son tap. Un popup ouvert depuis une ligne passe devant le popup Maison, qui reste derrière ; l'inactivité ferme les deux.
+- **« Éteindre les lumières »** dans la barre de titre, visible quand une pièce a une tuile `lum` : le « Tout éteindre » du popup lumière (`pR` / `eteindre`) pour chacune de ces pièces, sans confirmation.
+
+Rien de nouveau avec Home Assistant : ni événement, ni action, ni entrée de blueprint. Les widgets sont des gabarits YAML (`maison_popup.yaml`, 5 en-têtes, 25 lignes), disposés et peints à chaque ouverture et repeints, tant qu'il est affiché, quand un état ou les définitions changent.
 
 ---
 

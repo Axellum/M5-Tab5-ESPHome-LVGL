@@ -37,6 +37,7 @@ APPUIS_LONGS = {
     "btn_control_tv": "home.md",
     "btn_rangee": "plants.md",
     "climate_card.yaml": "temperature.md",
+    "maison_ligne.yaml": "house.md",
     # Carte centrale : chaque panneau de l'accueil ouvre l'historique des alertes.
     "btn_alerts_mf_tap": "home.md",
     "btn_info_tap": "home.md",
@@ -62,6 +63,9 @@ NON_MONTREES = {
     "appareil-scene": "appareil montre la même fenêtre ; la scène est décrite dans tiles.md",
     "console-batterie-en-charge": "console-batterie montre la même ligne ; l'éclair est décrit",
     "console-sans-batterie": "console-batterie montre la même ligne ; « Sur USB » est décrit",
+    "maison": "image à tirer du rendu de la PR du popup Maison, puis citer dans house.md",
+    "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
+    "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
 }
 
 
