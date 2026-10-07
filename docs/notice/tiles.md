@@ -36,7 +36,7 @@ On a device card, or on the weather icon of a card that holds a device:
 
 | Device | Tap | Long press |
 |---|---|---|
-| Light | on / off | with a dimmer: [quick actions](#quick-actions); otherwise the [lights window](lights.md) |
+| Light | on / off | [quick actions](#quick-actions); set to *confirm*, the [lights window](lights.md) |
 | Switch, plug, fan… | on / off | [device window](#device-window) |
 | Shutter, valve | moving: stop; open: close; otherwise: open | [quick actions](#quick-actions) |
 | TV, media player | on / off | [TV remote](tv.md), for the TV picked in the blueprint; another player: [device window](#device-window) |
@@ -53,14 +53,20 @@ On a device card, or on the weather icon of a card that holds a device:
 
 ## Quick actions
 
-A long press on a light with a dimmer, a shutter or a climate shows its main actions in round buttons, on an arc above the card:
+A long press on a light, a shutter or a climate opens a wheel on the card. In the middle, the device: its icon, its state, a thin gauge (brightness, position or target temperature) and its name. Above, a ring of round buttons:
 
-- **light**: off, 10 %, 50 %, 100 %;
-- **shutter**: open, stop, close, and 50 % when it reports its position;
-- **climate**: off, then its modes (heat, cool, dry, fan only);
-- then **⋯**, which opens its window ([lights](lights.md), [shutter](shutters.md), [climate](climate.md)).
+- **Home**, on the left: the [house window](house.md), with every room (not there when the wheel is opened from that window);
+- the device's main commands, and its families of settings, marked with a dot: a tap on a family unfolds its choices on a second ring, above it;
+- **Settings**, on the right: the device's full window ([lights](lights.md), [shutter](shutters.md), [climate](climate.md)).
 
-The button of the current state is tinted with the card's colour. A tap on a button sends it and closes the arc; a tap anywhere else closes it. It also closes by itself after a while.
+| Device | First ring | Families (second ring) |
+|---|---|---|
+| Light with a dimmer | off when it is on, on when it is off | brightness 10, 25, 50, 75, 100 %; a colour light also has whites (warm, cream, cold) and colours (red, orange, gold, green, blue, purple) |
+| Light without a dimmer | on, off | a colour light: whites and colours |
+| Shutter, valve | open, stop, close | position 25, 50, 75 %, when it reports its position |
+| Climate | off | mode (heat, cool, dry, fan only: those the unit has); target (the current one and two steps on each side); options (Eco, Boost, Quiet, Swing, Breeze: those the unit has) |
+
+The current state glows in the card's colour. A tap on a command or a choice sends it and closes the wheel. A tap elsewhere, or on the device in the middle, folds the second ring, then closes the wheel. It also closes by itself after a while. A light set to *on only* has no « off ».
 
 ## Device window
 
@@ -113,7 +119,7 @@ Sur une carte d'appareil, ou sur l'icône météo d'une carte qui porte un appar
 
 | Appareil | Tap | Appui long |
 |---|---|---|
-| Lumière | allumer / éteindre | avec variateur : [actions rapides](#actions-rapides) ; sinon la [fenêtre des lumières](lights.md#version-française) |
+| Lumière | allumer / éteindre | [actions rapides](#actions-rapides) ; réglée sur *confirmer*, la [fenêtre des lumières](lights.md#version-française) |
 | Interrupteur, prise, ventilateur… | allumer / éteindre | [fenêtre de l'appareil](#fenêtre-de-lappareil) |
 | Volet, vanne | en mouvement : stop ; ouvert : fermer ; sinon : ouvrir | [actions rapides](#actions-rapides) |
 | TV, lecteur multimédia | allumer / éteindre | [télécommande TV](tv.md#version-française), pour la TV choisie dans le blueprint ; un autre lecteur : [fenêtre de l'appareil](#fenêtre-de-lappareil) |
@@ -130,14 +136,20 @@ Sur une carte d'appareil, ou sur l'icône météo d'une carte qui porte un appar
 
 ## Actions rapides
 
-Un appui long sur une lumière à variateur, un volet ou une clim montre ses actions principales en boutons ronds, sur un arc au-dessus de la carte :
+Un appui long sur une lumière, un volet ou une clim ouvre une roue sur la carte. Au centre, l'appareil : son icône, son état, une fine jauge (luminosité, position ou consigne) et son nom. Au-dessus, un anneau de boutons ronds :
 
-- **lumière** : éteindre, 10 %, 50 %, 100 % ;
-- **volet** : ouvrir, stop, fermer, et 50 % s'il donne sa position ;
-- **clim** : arrêt, puis ses modes (chaud, froid, sec, ventilation) ;
-- puis **⋯**, qui ouvre sa fenêtre ([lumières](lights.md#version-française), [volet](shutters.md#version-française), [clim](climate.md#version-française)).
+- **Maison**, à gauche : la [fenêtre Maison](house.md#version-française), avec toutes les pièces (absent quand la roue est ouverte depuis cette fenêtre) ;
+- les commandes principales de l'appareil, et ses familles de réglages, marquées d'un point : un tap sur une famille déplie ses choix sur un second anneau, au-dessus d'elle ;
+- **Réglages**, à droite : la fenêtre complète de l'appareil ([lumières](lights.md#version-française), [volet](shutters.md#version-française), [clim](climate.md#version-française)).
 
-Le bouton de l'état actuel est teinté de la couleur de la carte. Un tap sur un bouton l'envoie et ferme l'arc ; un tap ailleurs le ferme. Il se ferme aussi tout seul au bout d'un moment.
+| Appareil | Premier anneau | Familles (second anneau) |
+|---|---|---|
+| Lumière à variateur | éteindre quand elle est allumée, allumer quand elle est éteinte | luminosité 10, 25, 50, 75, 100 % ; une lumière à couleur a aussi les blancs (chaud, crème, froid) et les couleurs (rouge, orange, or, vert, bleu, violet) |
+| Lumière sans variateur | allumer, éteindre | une lumière à couleur : blancs et couleurs |
+| Volet, vanne | ouvrir, stop, fermer | position 25, 50, 75 %, s'il donne sa position |
+| Clim | arrêt | mode (chaud, froid, sec, ventilation : ceux de l'appareil) ; consigne (l'actuelle et deux pas de chaque côté) ; options (Éco, Boost, Silence, Oscillation, Brise : celles de l'appareil) |
+
+L'état actuel brille de la couleur de la carte. Un tap sur une commande ou un choix l'envoie et ferme la roue. Un tap ailleurs, ou sur l'appareil au centre, replie le second anneau, puis ferme la roue. Elle se ferme aussi toute seule au bout d'un moment. Une lumière réglée sur *allumer seulement* n'a pas « éteindre ».
 
 ## Fenêtre de l'appareil
 
