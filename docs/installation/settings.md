@@ -24,7 +24,7 @@ Every setting of the tablet is an entity of its device in Home Assistant, and th
 
 The theme names stay as they are in every language: they are names. Six of them:
 
-![Six themes of the Tab5 screen drawn by the firmware itself: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](../images/tab5_themes.jpg)
+![Six themes of the Tab5 home screen drawn by the firmware itself: Pixel dark with a kitchen leak alert, Bonbon light with the living room's devices, Sorbet dark with a weather warning, Béton brut light with a low battery alert, Zen Sumi dark with the garden's devices and Capsule light with rain in 10 minutes](../images/tab5_themes_en.jpg)
 
 ## Screen, sound and network
 
@@ -102,7 +102,7 @@ Chaque réglage de la tablette est une entité de son appareil dans Home Assista
 
 Les noms des thèmes restent les mêmes dans toutes les langues : ce sont des noms. Six d'entre eux :
 
-![Six thèmes de l'écran du Tab5 dessinés par le firmware lui-même : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](../images/tab5_themes.jpg)
+![Six thèmes de l'accueil du Tab5 dessinés par le firmware lui-même : Pixel sombre avec une alerte de fuite en cuisine, Bonbon clair avec les appareils du salon, Sorbet sombre avec une vigilance météo, Béton brut clair avec une alerte de pile faible, Zen Sumi sombre avec les appareils du jardin et Capsule clair avec de la pluie dans 10 minutes](../images/tab5_themes.jpg)
 
 ## Écran, son et réseau
 

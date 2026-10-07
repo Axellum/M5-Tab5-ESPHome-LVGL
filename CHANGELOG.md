@@ -4,6 +4,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-07 — Images du README et du site, HACS dans le dépannage
+
+- **Photo d'en-tête** : la photo de la tablette de l'auteur, prise le 07/10/2026 (sans
+  métadonnées), remplace celle de juillet en tête du README (donc de l'accueil du site), en haut de
+  « Écrans » et dans l'image de partage du site (`tab5_social_preview.jpg`).
+- **Galerie du README** : les 12 photos de juillet (interface d'alors, en français même dans la
+  partie anglaise) laissent la place à 18 écrans dessinés par le firmware lui-même sur un PC
+  (rendu hors tablette, données de démonstration), chacun dans un autre thème, en anglais dans la
+  partie anglaise et en français dans la française (`docs/images/galerie/`).
+- **Tour animé** : refait depuis le rendu de `main` (thème par défaut), 11 écrans dont la maison,
+  la roue d'actions et l'énergie, un par langue (`tab5_ui_tour_en.webp`, `tab5_ui_tour_fr.webp`).
+- **Planche des thèmes** : six accueils (Pixel, Bonbon, Sorbet, Béton brut, Zen Sumi, Capsule),
+  deux en mode pièces, quatre avec une alerte différente sur la carte centrale, en anglais
+  (`tab5_themes_en.jpg`) et en français (`tab5_themes.jpg`) ; README, « Écrans » et « Réglages ».
+- **« Écrans »** (`docs/screens.md`) : les photos de juillet deviennent les rendus de la notice,
+  les trois jeux montrés aussi dans la partie anglaise. Les anciennes photos restent dans
+  `docs/images/` pour le kit de presse.
+- **HACS** : nouvel incident « Ajout de Tab5 dans HACS : « Dépôt introuvable », ou une boîte
+  vide » (dernière release complète avant la 3.7.0 ; textes de HACS pas encore chargés au premier
+  passage par le lien, vu avec HACS 2.0.5), et un renvoi depuis l'étape 2 de « Avec HACS ». Ajout du
+  dépôt par le bouton essayé le 07/10 avec la 3.7.0 stable : HACS propose la v3.7.0 ;
+  téléchargement et ajout de l'intégration pas encore essayés par l'auteur.
+
 ## [3.7.0] — 2026-10-07
 
 De `v3.6.0` à aujourd'hui : quarante-neuf pull requests (#326 → #375 ; #369 est une discussion),
