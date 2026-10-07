@@ -4,7 +4,7 @@
 
 ---
 
-This page describes what the Tab5 actually shows and does — verified against the firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_*.cpp`) on 2026-07-06, re-checked 2026-07-14 (info panel, console button, swipe zones). The previous version of this page described a 6-tab, multi-screen navigation bar that no longer exists (and may never have shipped) — see [ADR-0002](decisions/0002-single-page-swipe-navigation.md) for why. If anything below stops matching the running firmware, the firmware is right — fix this page.
+This page describes what the Tab5 actually shows and does — verified against the firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_*.cpp`) on 2026-07-06, re-checked 2026-07-14 (info panel, console button, swipe zones). Since 2026-10-07 the pictures are renders of the current firmware (drawn by the firmware itself on a PC, with demo data, in the default theme), except the photo of the main page. The previous version of this page described a 6-tab, multi-screen navigation bar that no longer exists (and may never have shipped) — see [ADR-0002](decisions/0002-single-page-swipe-navigation.md) for why. If anything below stops matching the running firmware, the firmware is right — fix this page.
 
 ---
 
@@ -16,7 +16,7 @@ There is a **single 1280×720 page** (`page_main`), not a tab-navigated set of s
 2. **Central card** — a small area that automatically rotates between planning, rain forecast, weather alerts and an info panel (calendar recap / alert text).
 3. **Bottom card region** — either the 5-card weather forecast (with the devices of each page's room in the tiles' shoulders), or, in HA mode, the 5 device cards of the current room.
 
-![The single main page on the real device (July 2026)](images/tab5_photo_home.jpg)
+![The single main page on the author's tablet, screen in French (October 2026)](images/tab5_hero_4x3.jpg)
 
 Windows open on top of this page — lights, shutter, climate, TV remote, voice assistant, calendar, alarm clock, plants, energy, settings and the system console — and the Arcade's games on pages of their own. Which touch opens each one and what every button does: the [user manual](notice/README.md); this page explains how each part works. The settings open with a tap on the gear button (`btn_control_console`, top right) and the console with a long press on it; the console is no longer opened by swipe since the 14/07/2026 gesture rework.
 
@@ -99,7 +99,7 @@ The 5 cards (`switches_card.yaml`) show the room of the current page, each drawn
 
 **Tap on the room's name** (the central card's title, HA mode only): the [House popup](#house-popup--every-room-at-once).
 
-![HA mode on the real device (3.1, before rooms)](images/tab5_photo_domo.jpg)
+![HA mode: the five devices of the first room under its name (render, demo data)](images/notice/accueil-ha-piece-1-en.webp)
 
 ---
 
@@ -119,7 +119,7 @@ Two levels of control. The compact card drives the blueprint's `climate` entity 
 
 The controls are dimmed (not hidden) when the AC is off, so the layout stays stable.
 
-![Climate popup on the real device](images/tab5_photo_climate_popup_v2.jpg)
+![Climate popup (render, demo data)](images/notice/climatisation-en.webp)
 
 ---
 
@@ -149,7 +149,7 @@ A **long press on the plants line** of the row under the clock opens a near-full
 
 Values are pushed continuously by the `pot*_ec/lux/temp/bat` HA sensors (`update_pot_metric_ui()`, `tab5_*.cpp`) — the popup needs no sync on open. Tapping the dark overlay or the × button (the shared 80×44 glass button) closes it. Components: `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
 
-![Plant details popup on the real device (Pot 5 offline)](images/tab5_photo_plants.jpg)
+![Plant details popup, Pot 2 needs water (render, demo data)](images/notice/plantes-en.webp)
 
 ---
 
@@ -166,7 +166,7 @@ Home Assistant then enriches each viewed month **on demand** (`script.tab5_calen
 
 **Tapping a day** opens a 780×540 detail sub-popup (`script.tab5_calendrier_jour`): "Mardi 21 Juillet" title and up to 6 typed lines with colored MDI icons — holiday name, school-holiday label, work hours, timed appointments, birthdays, civil observances — with "Chargement...", "Rien de prévu ce jour" and "Home Assistant hors ligne" states. Closing follows the v2 popup recipe (the shared 80×44 glass × buttons, `scrollable: false` everywhere). Components: `calendar_popup.yaml` + `cal_grid_build()` (42 cells built in C++) + HA package `HomeAssistant_Config/packages/tab5_calendar.yaml`.
 
-![Calendar popup on the real device](images/tab5_photo_calendar.jpg)
+![Calendar popup (render, demo data)](images/notice/calendrier-en.webp)
 
 ---
 
@@ -208,7 +208,7 @@ The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab
 
 **Assistant popup** (long press on the microphone, `btn_assist_trigger`; its buttons: [user manual](notice/voice.md#the-voice-assistant-window)). In conversation mode a voice request opens it by itself (`on_stt_end` → `tab5_assist_on_request`); in Home Assistant mode the central card's 8 s banner stays the quick feedback. The answer is rendered from Markdown (tables re-aligned approximately — proportional font since 26/09/2026 —, bold, code, bullets), plus an image downloaded on demand (`online_image`, PNG → RGB565, 760×360). The engine can push a rich answer through the `tab5_assist_reponse` service (variables `texte` = Markdown, `image_url` = optional PNG).
 
-![Voice assistant popup on the real device](images/tab5_photo_assistant_popup.jpg)
+![Voice assistant popup with a rich answer (render, demo data)](images/notice/assistant-reponse-en.webp)
 
 ---
 
@@ -222,7 +222,7 @@ Opened by a long press on the gear button (`btn_control_console`, top right of t
 
 It is **not** a log viewer (use `tools/tab5_logs.py` for payloads and events). See [`docs/debugging.md`](debugging.md) for more on using it to diagnose issues.
 
-![System console on the real device](images/tab5_photo_console_v2.jpg)
+![System console (render: the memory and CPU load stay empty off the tablet)](images/notice/console-systeme-en.webp)
 
 ---
 
@@ -246,7 +246,7 @@ Long-pressing a light tile — its weather shoulders or its HA-mode card — (in
 
 The popup is context-aware: the long press opens it on the pressed light, and the selector goes through `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles.cpp`), which sets the `current_light_slot` global to the tile's key (`tRT`, or `lumiere_N` in legacy mode) and syncs the title, selector, power icon and arc — one popup for every light of every room.
 
-![Light popup on the real device](images/tab5_photo_light_popup_v2.jpg)
+![Light popup (render, demo data)](images/notice/lumieres-chambre-en.webp)
 
 ---
 
@@ -254,7 +254,7 @@ The popup is context-aware: the long press opens it on the pressed light, and th
 
 A near-fullscreen Samsung TV remote (`tv_remote_popup.yaml`, 1250×690 card — the shared modal tokens of ADR-0009, 15 px from the screen edges): power, source and menu keys, a round navigation pad with OK, a volume column with mute, the Play · Pause · Back · Home keys and a row of app buttons (Netflix, Prime, YouTube, CANAL+, PC). Opened by long-pressing a media tile with the TV option (`t`; the PC card in legacy mode) or by a long press on the gamepad button (`btn_control_tv`, when the TV zone is present); every key emits a `tab5_action` event (`emplacement: tv`, [ADR-0025](decisions/0025-events-only.md)) that the blueprint automation sends to the remote picked in « Télécommande de la TV » (`remote.send_command`), the app buttons through `script.tab5_tv_app` (`tab5_tv.yaml`) — the Tab5 carries no IR hardware, HA's Samsung integration does the work. Tapping the dark overlay closes it.
 
-![TV remote popup on the real device](images/tab5_photo_tv_remote.jpg)
+![TV remote popup (render)](images/notice/telecommande-tv-en.webp)
 
 ---
 
@@ -327,7 +327,7 @@ Color is used consistently as a primary information channel — to let you read 
 
 All interface colours live in one palette, `struct Palette` in `tab5_tokens.h` (included by `tab5_custom.h`); `UIColor` is the active one. The YAML takes them through the role styles of `tab5-styles.yaml` (`style_text_dim`…), the games keep their own dark palettes ([ADR-0029](decisions/0029-themes-palette.md)). Twenty-one themes, each with a dark and a light mode, change the colours, the shapes (radius, borders, shadows) and the fonts of the time, the date and the titles; a new tablet starts in « Relief doux ».
 
-![Six themes of the Tab5 screen drawn by the firmware itself: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](images/tab5_themes.jpg)
+![Six themes of the Tab5 home screen drawn by the firmware itself: Pixel dark with a kitchen leak alert, Bonbon light with the living room's devices, Sorbet dark with a weather warning, Béton brut light with a low battery alert, Zen Sumi dark with the garden's devices and Capsule light with rain in 10 minutes](images/tab5_themes_en.jpg)
 
 The theme, the mode (Sombre, Clair, Auto) and the « Nuit (thème auto) » switch are entities of the tablet, also in the settings popup: [Tablet settings](installation/settings.md#theme-light-or-dark).
 
@@ -357,7 +357,7 @@ Since 3.2 every `vol` tile is a shutter or a valve of its own (tap: stop while i
 
 Opened by **tapping the gamepad button** (`btn_control_tv`, top right) or **the greenhouse temperature** (`btn_serre_games` in `climate_card.yaml`). The selector shows a 4×2 grid of 8 cards (298×252 each) with an MDI icon, the game name and a one-line description.
 
-![Arcade selector on the real device](images/tab5_photo_arcade_selector.jpg)
+![Arcade selector (render)](images/notice/arcade-en.webp)
 
 Each console is its **own fullscreen LVGL page** (`page_marble`, `page_chess`… declared `skip: true` in `tab5-lvgl.yaml` so swipe navigation can't reach them), not an overlay stacked on the dashboard. Documented ADR-0009 exception: no modal chrome. Shared architecture: YAML = empty containers, all content in C++, `lv_timer` created on open / destroyed on close, pre-allocated LVGL pool (zero allocation in the tick), NVS persistence, **zero HA or network dependency**.
 
@@ -372,6 +372,14 @@ Each console is its **own fullscreen LVGL page** (`page_marble`, `page_chess`…
 | 7 | **Dames Tab** | International draughts 10×10 (8×8 checkers option), 4 AI levels | Touch |
 | 8 | **Roi Noir** | FIDE chess, 5 AI levels, perft-validated | Touch |
 
+| Roi Noir (chess) | Arcanoïde (breakout) |
+|:-:|:-:|
+| ![Roi Noir, the board at the start of a game (render)](images/galerie/roi-noir-en.webp) | ![Arcanoïde, the first level (render)](images/galerie/arcanoide-en.webp) |
+
+| Coureur d'Or (Lode Runner) |
+|:-:|
+| ![Coureur d'Or, the first level (render)](images/galerie/coureur-dor-en.webp) |
+
 Exiting any game: hub → "Quitter" (clean return to `page_arcade` then the dashboard: timer stopped, score saved to NVS, and for Neon Apron the landscape rotation is restored).
 
 → Full technical details per game: [`docs/arcade.md`](arcade.md)
@@ -383,7 +391,7 @@ Exiting any game: hub → "Quitter" (clean return to `page_arcade` then the dash
 
 ---
 
-Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_*.cpp`) le 06/07/2026, re-vérifié le 14/07/2026 (panneau info, bouton console, zones de swipe), complété le 27/07/2026 (popups assistant/calendrier/plantes, section Arcade, photos appareil réel) et re-vérifié le 30/07/2026 (migration des jeux vers des pages LVGL dédiées, remplacement de « Flip Noir » par « Neon Apron »). L'ancienne version de cette page décrivait une navigation par barre d'onglets à 6 écrans qui n'existe plus (et n'a peut-être jamais été livrée telle quelle) — voir [ADR-0002](decisions/0002-single-page-swipe-navigation.md). Si quelque chose ci-dessous ne correspond plus au firmware réel, c'est le firmware qui a raison — corrigez cette page.
+Cette page décrit ce que le Tab5 affiche et fait réellement — vérifié contre le firmware (`tab5-lvgl.yaml`, `ui_components/*.yaml`, `tab5_*.cpp`) le 06/07/2026, re-vérifié le 14/07/2026 (panneau info, bouton console, zones de swipe), complété le 27/07/2026 (popups assistant/calendrier/plantes, section Arcade, photos appareil réel ; depuis le 07/10/2026, ces photos sont remplacées par des rendus du firmware actuel, dessinés par le firmware lui-même sur un PC avec des données de démonstration dans le thème par défaut, sauf la photo de la page principale) et re-vérifié le 30/07/2026 (migration des jeux vers des pages LVGL dédiées, remplacement de « Flip Noir » par « Neon Apron »). L'ancienne version de cette page décrivait une navigation par barre d'onglets à 6 écrans qui n'existe plus (et n'a peut-être jamais été livrée telle quelle) — voir [ADR-0002](decisions/0002-single-page-swipe-navigation.md). Si quelque chose ci-dessous ne correspond plus au firmware réel, c'est le firmware qui a raison — corrigez cette page.
 
 ---
 
@@ -395,7 +403,7 @@ Il y a une **page unique 1280×720** (`page_main`), pas un jeu d'écrans navigu�
 2. **Carte centrale** — une petite zone qui alterne automatiquement entre planning, prévision de pluie, alertes météo et un panneau info (récap calendrier / texte d'alerte).
 3. **Zone de cartes du bas** — soit les 5 cartes prévisions météo (avec, dans leurs épaules, les appareils de la pièce de chaque page), soit, en mode HA, les 5 cartes d'appareil de la pièce courante.
 
-![La page unique sur l'appareil réel (juillet 2026)](images/tab5_photo_home.jpg)
+![La page unique sur la tablette de l'auteur (octobre 2026)](images/tab5_hero_4x3.jpg)
 
 Des fenêtres s'ouvrent par-dessus cette page — lumières, volet, clim, télécommande TV, assistant vocal, calendrier, réveil, plantes, énergie, réglages et console système — et les jeux de l'Arcade sur des pages à eux. Quel toucher ouvre chacune et ce que fait chaque bouton : la [notice d'utilisation](notice/README.md#version-française) ; cette page explique comment marche chaque partie. Les réglages s'ouvrent d'un tap sur le bouton engrenage (`btn_control_console`, en haut à droite) et la console d'un appui long ; la console ne s'ouvre plus par swipe depuis la refonte gestuelle du 14/07/2026.
 
@@ -478,7 +486,7 @@ Les 5 cartes (`switches_card.yaml`) montrent la pièce de la page courante, chac
 
 **Tap sur le nom de la pièce** (le titre de la carte centrale, en mode HA seulement) : le [popup Maison](#popup-maison--toutes-les-pièces-dun-coup).
 
-![Mode HA sur l'appareil réel (3.1, avant les pièces)](images/tab5_photo_domo.jpg)
+![Mode HA : les cinq appareils de la première pièce sous son nom (rendu, données de démonstration)](images/notice/accueil-ha-piece-1-fr.webp)
 
 ---
 
@@ -498,7 +506,7 @@ Deux niveaux de contrôle. La carte compacte pilote l'entité `climate` du bluep
 
 Les contrôles sont estompés (non cachés) quand le clim est éteint, pour garder la mise en page stable.
 
-![Popup clim sur l'appareil réel](images/tab5_photo_climate_popup_v2.jpg)
+![Popup clim (rendu, données de démonstration)](images/notice/climatisation-fr.webp)
 
 ---
 
@@ -528,7 +536,7 @@ Un **appui long sur la ligne des plantes** de la rangée sous l'horloge ouvre un
 
 Les valeurs sont poussées en continu par les capteurs HA `pot*_ec/lux/temp/bat` (`update_pot_metric_ui()`, `tab5_*.cpp`) — le popup n'a besoin d'aucune synchro à l'ouverture. Taper l'overlay sombre ou le bouton × (le bouton de verre partagé 80×44 de `modal_header.yaml`) le ferme. Composants : `pots_popup.yaml` + `pot_detail_card.yaml` (5 instances).
 
-![Popup détails plantes sur l'appareil réel (Pot 5 hors ligne)](images/tab5_photo_plants.jpg)
+![Popup détails plantes, le pot 2 a soif (rendu, données de démonstration)](images/notice/plantes-fr.webp)
 
 ---
 
@@ -545,7 +553,7 @@ Home Assistant enrichit ensuite chaque mois consulté **à la demande** (`script
 
 **Taper un jour** ouvre un sous-popup détail 780×540 (`script.tab5_calendrier_jour`) : titre « Mardi 21 Juillet » et jusqu'à 6 lignes typées avec icônes MDI colorées — nom du férié, libellé des vacances scolaires, horaires de travail, RDV horodatés, anniversaires, fêtes civiles — avec les états « Chargement... », « Rien de prévu ce jour » et « Home Assistant hors ligne ». La fermeture suit la recette popups v2 (croix = boutons de verre partagés 80×44, `scrollable: false` partout). Composants : `calendar_popup.yaml` + `cal_grid_build()` (42 cellules construites en C++) + package HA `HomeAssistant_Config/packages/tab5_calendar.yaml`.
 
-![Popup Calendrier sur l'appareil réel](images/tab5_photo_calendar.jpg)
+![Popup Calendrier (rendu, données de démonstration)](images/notice/calendrier-fr.webp)
 
 ---
 
@@ -587,7 +595,7 @@ Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`sele
 
 **Popup assistant** (appui long sur le micro, `btn_assist_trigger` ; ses boutons : [notice](notice/voice.md#version-française)). En mode Discussion, une demande vocale l'ouvre seule (`on_stt_end` → `tab5_assist_on_request`) ; en mode Domotique, le bandeau de 8 s de la carte centrale reste le retour rapide. La réponse est rendue depuis du Markdown (tableaux ré-alignés approximativement — police proportionnelle depuis le 26/09/2026 —, gras, code, puces), plus une image téléchargée à la demande (`online_image`, PNG → RGB565, 760×360). Le moteur peut pousser une réponse riche par le service `tab5_assist_reponse` (variables `texte` = Markdown, `image_url` = PNG optionnel).
 
-![Popup Assistant vocal sur l'appareil réel](images/tab5_photo_assistant_popup.jpg)
+![Popup Assistant vocal avec une réponse mise en forme (rendu, données de démonstration)](images/notice/assistant-reponse-fr.webp)
 
 ---
 
@@ -601,7 +609,7 @@ Ouvert par un appui long sur le bouton engrenage (`btn_control_console`, en haut
 
 Ce n'est **pas** un visualiseur de logs (utiliser `tools/tab5_logs.py` pour les payloads et événements). Voir [`docs/debugging.md`](debugging.md) pour plus de détails sur son usage en debug.
 
-![Console Système sur l'appareil réel](images/tab5_photo_console_v2.jpg)
+![Console Système (rendu : la mémoire et la charge CPU restent vides hors de la tablette)](images/notice/console-systeme-fr.webp)
 
 ---
 
@@ -625,7 +633,7 @@ Un appui long sur une tuile lumière — ses épaules météo ou sa carte du mod
 
 Le popup est contextuel : l'appui long l'ouvre sur la lumière appuyée, et le sélecteur passe par `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles.cpp`) qui règle la globale `current_light_slot` sur la clé de la tuile (`tRT`, ou `lumiere_N` en mode héritage) et synchronise titre, sélecteur, icône power et arc — un seul popup pour toutes les lumières de toutes les pièces.
 
-![Popup lumière sur l'appareil réel](images/tab5_photo_light_popup_v2.jpg)
+![Popup lumière (rendu, données de démonstration)](images/notice/lumieres-chambre-fr.webp)
 
 ---
 
@@ -633,7 +641,7 @@ Le popup est contextuel : l'appui long l'ouvre sur la lumière appuyée, et le s
 
 Une télécommande Samsung quasi plein écran (`tv_remote_popup.yaml`, carte 1250×690 — les tokens modaux partagés de l'ADR-0009, 15 px des bords) : touches marche, source et menu, pad de navigation rond avec OK, colonne du volume avec muet, touches Lecture · Pause · Retour · Accueil et une rangée de boutons d'applications (Netflix, Prime, YouTube, CANAL+, PC). Ouverte par appui long sur une tuile multimédia avec l'option TV (`t` ; la carte PC en mode héritage) ou par un appui long sur le bouton manette (`btn_control_tv`, quand la zone TV est présente) ; chaque touche émet un événement `tab5_action` (`emplacement: tv`, [ADR-0025](decisions/0025-events-only.md)) que l'automatisation du blueprint envoie à la télécommande choisie dans « Télécommande de la TV » (`remote.send_command`), les boutons d'applications par `script.tab5_tv_app` (`tab5_tv.yaml`) — le Tab5 n'a aucun matériel IR, c'est l'intégration Samsung de HA qui fait le travail. Taper l'overlay sombre ferme le popup.
 
-![Popup télécommande TV sur l'appareil réel](images/tab5_photo_tv_remote.jpg)
+![Popup télécommande TV (rendu)](images/notice/telecommande-tv-fr.webp)
 
 ---
 
@@ -706,7 +714,7 @@ La couleur est utilisée de façon systématique comme canal d'information prima
 
 Toutes les couleurs de l'interface vivent dans une palette, `struct Palette` de `tab5_tokens.h` (inclus par `tab5_custom.h`) ; `UIColor` est la palette active. Le YAML les prend par les styles de rôle de `tab5-styles.yaml` (`style_text_dim`…), les jeux gardent leurs palettes sombres ([ADR-0029](decisions/0029-themes-palette.md)). Vingt et un thèmes, chacun en sombre et en clair, changent les couleurs, les formes (rayons, bordures, ombres) et les polices de l'heure, de la date et des titres ; une tablette neuve démarre en « Relief doux ».
 
-![Six thèmes de l'écran du Tab5 dessinés par le firmware lui-même : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](images/tab5_themes.jpg)
+![Six thèmes de l'accueil du Tab5 dessinés par le firmware lui-même : Pixel sombre avec une alerte de fuite en cuisine, Bonbon clair avec les appareils du salon, Sorbet sombre avec une vigilance météo, Béton brut clair avec une alerte de pile faible, Zen Sumi sombre avec les appareils du jardin et Capsule clair avec de la pluie dans 10 minutes](images/tab5_themes.jpg)
 
 Le thème, le mode (Sombre, Clair, Auto) et l'interrupteur « Nuit (thème auto) » sont des entités de la tablette, aussi dans le popup Réglages : [réglages de la tablette](installation/settings.md#thème-clair-ou-sombre).
 
@@ -736,7 +744,7 @@ Depuis la 3.2, chaque tuile `vol` est un volet ou une vanne à elle seule (appui
 
 Ouvert par **tap sur le bouton manette** (`btn_control_tv`, en haut à droite) ou **sur la température serre** (`btn_serre_games` dans `climate_card.yaml`). Le sélecteur affiche une grille 4×2 de 8 cartes (298×252 chacune), avec icône MDI, nom du jeu, et description courte.
 
-![Sélecteur Arcade sur l'appareil réel](images/tab5_photo_arcade_selector.jpg)
+![Sélecteur Arcade (rendu)](images/notice/arcade-fr.webp)
 
 Chaque console est sa **propre page LVGL** plein écran 1280×720 (`page_marble`, `page_chess`… déclarées `skip: true` dans `tab5-lvgl.yaml`, pour que le swipe ne puisse pas y naviguer) — pas un overlay posé sur le dashboard. Exception documentée ADR-0009 : pas de chrome modal. Architecture commune : YAML = conteneurs vides, tout le contenu en C++, `lv_timer` créé à l'ouverture / détruit à la fermeture, pool LVGL préalloué (zéro allocation dans le tick), persistance NVS, **zéro dépendance HA ou réseau**.
 
@@ -753,11 +761,11 @@ Chaque console est sa **propre page LVGL** plein écran 1280×720 (`page_marble`
 
 | Roi Noir (échecs) | Arcanoïde (casse-briques) |
 |:-:|:-:|
-| ![Chess](images/tab5_photo_chess.jpg) | ![Arkanoid](images/tab5_photo_arkanoid.jpg) |
+| ![Roi Noir, l'échiquier en début de partie (rendu)](images/galerie/roi-noir-fr.webp) | ![Arcanoïde, le premier niveau (rendu)](images/galerie/arcanoide-fr.webp) |
 
 | Coureur d'Or (Lode Runner) |
 |:-:|
-| ![Lode Runner](images/tab5_photo_lode_runner.jpg) |
+| ![Coureur d'Or, le premier niveau (rendu)](images/galerie/coureur-dor-fr.webp) |
 
 Sortie de chaque jeu : hub → « Quitter » (retour propre à `page_arcade` puis au dashboard : timer arrêté, score sauvegardé en NVS, et pour Neon Apron restauration de la rotation paysage).
 

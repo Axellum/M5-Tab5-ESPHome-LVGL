@@ -23,7 +23,7 @@
 
 **A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, solar energy, TV remote, alarm clock — and 8 offline games, in seven languages. Twenty-one themes, light or dark, chosen from Home Assistant. It is my everyday screen, shared in case it is useful to someone.
 
-![The author's M5Stack Tab5 on a stand, showing a Home Assistant screen with the time, a climate setpoint, work hours and a 5-day weather forecast](docs/images/tab5_hero_4x3.jpg)
+![The author's M5Stack Tab5 held in one hand on its stand, screen in French: the time, two temperatures, a climate setpoint, the work-hours banner and a 5-day forecast with thunderstorm, rain and sun](docs/images/tab5_hero_4x3.jpg)
 
 **[Install from the browser](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Installation guide](docs/installation/README.md)** · **[User manual](docs/notice/README.md)** · **[Try it without Home Assistant](docs/demo_mode.md)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
@@ -110,13 +110,13 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 
 ## See it in action
 
-**[▶ Demo video on YouTube](https://www.youtube.com/watch?v=ygNhgtMffu4)** (voice, touch, TV remote, climate — provisional cut, July 2026), and an animated tour of the screens:
+**[▶ Demo video on YouTube](https://www.youtube.com/watch?v=ygNhgtMffu4)** (voice, touch, TV remote, climate — provisional cut, July 2026), and an animated tour of the screens in the default theme, drawn by the firmware itself on a PC with demo data:
 
-![Animated tour of the M5Stack Tab5 Home Assistant screen: home, devices, plants, climate, lights, TV remote and console](docs/images/tab5_ui_tour_hq.webp)
+![Animated tour of the M5Stack Tab5 Home Assistant screen: home, a room's devices, the whole house, the quick-action wheel, lights, climate, plants, solar energy, calendar, TV remote and console](docs/images/tab5_ui_tour_en.webp)
 
-**Twenty-one themes**, each light or dark: colours, shapes (radius, borders, shadows) and the fonts of the clock, the date and the titles. Six of them, drawn by the firmware itself on a PC, with demo data:
+**Twenty-one themes**, each light or dark: colours, shapes (radius, borders, shadows) and the fonts of the clock, the date and the titles. Six of them on the home screen, drawn by the firmware itself on a PC with demo data: two show a room's devices, the four others a different alert on the central card.
 
-![Six themes of the M5Stack Tab5 screen drawn by the firmware: Relief doux in dark and light, Almanach imprimé, Néon calme, Béton brut and Zen Sumi](docs/images/tab5_themes.jpg)
+![Six themes of the M5Stack Tab5 home screen drawn by the firmware: Pixel dark with a kitchen leak alert, Bonbon light with the living room's devices, Sorbet dark with a weather warning, Béton brut light with a low battery alert, Zen Sumi dark with the garden's devices and Capsule light with rain in 10 minutes](docs/images/tab5_themes_en.jpg)
 
 **Solar energy** (optional): solar, home, grid and home battery right now, and the production of the last 30 days, from the sensors picked in the blueprint ([solar energy](docs/installation/adapt-to-your-home.md#solar-energy-optional)). Render with demo data; not tried with a real solar installation yet.
 
@@ -126,31 +126,43 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 
 ![Tab5 view of the Home Assistant dashboard: brightness, volume and screen of the tablet, alarm clock, appointments and voice assistant](docs/images/ha_tableau_tab5.png)
 
-**On the tablet** — photos of the author's tablet (July 2026, French interface):
+**Every screen, each in a different theme** — drawn by the firmware itself on a PC, with demo data; the games stay dark whatever the theme:
 
-| Device buttons, one tap each | Plant sensors |
+| Home: rain in the next hour (Bento, light) | The whole house (Relief doux, light) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_domo.jpg" width="400" loading="lazy" alt="M5Stack Tab5 Home Assistant screen with buttons for a desk PC, a roller shutter, bedroom and living-room lights and LEDs"> | <img src="docs/images/tab5_photo_plants.jpg" width="400" loading="lazy" alt="M5Stack Tab5 popup with five BLE plant sensors: soil moisture, fertility, light, temperature and battery"> |
+| <img src="docs/images/galerie/accueil-pluie-en.webp" width="400" loading="lazy" alt="M5Stack Tab5 home screen in the Bento light theme: the rain bars of the next hour and Moderate rain in 10 min on the central card, a rainy 5-day forecast"> | <img src="docs/images/galerie/maison-en.webp" width="400" loading="lazy" alt="House popup of the M5Stack Tab5: five rooms in columns, each device with its state, and a Lights off button"> |
 
-| Climate | Lights |
+| Quick-action wheel (Néon calme, dark) | Lights (Bonbon, light) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_climate_popup_v2.jpg" width="400" loading="lazy" alt="M5Stack Tab5 climate popup with modes, a thermostat arc set to 23 °C, presets and airflow options"> | <img src="docs/images/tab5_photo_light_popup_v2.jpg" width="400" loading="lazy" alt="M5Stack Tab5 light popup with a light selector, a brightness arc at 100 % and colour swatches"> |
+| <img src="docs/images/galerie/roue-en.webp" width="400" loading="lazy" alt="Quick-action wheel of the M5Stack Tab5 opened by a long press on a lamp: brightness steps, power and more around the finger"> | <img src="docs/images/galerie/lumieres-en.webp" width="400" loading="lazy" alt="Light popup of the M5Stack Tab5: the room's lights, a brightness arc with shortcuts, 3 whites and 12 colours"> |
 
-| TV remote | Diagnostics console |
+| Climate (Platine et or, dark) | Shutters (Terre cuite, light) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_tv_remote.jpg" width="400" loading="lazy" alt="M5Stack Tab5 showing a Samsung TV remote with power, source, direction pad, volume and playback buttons"> | <img src="docs/images/tab5_photo_console_v2.jpg" width="400" loading="lazy" alt="M5Stack Tab5 diagnostics console with memory, Wi-Fi, uptime, CPU temperature and Home Assistant actions"> |
+| <img src="docs/images/galerie/climatisation-en.webp" width="400" loading="lazy" alt="Climate popup of the M5Stack Tab5: modes, a thermostat arc set to 20 °C, presets, fan speed and airflow"> | <img src="docs/images/galerie/volet-en.webp" width="400" loading="lazy" alt="Shutter popup of the M5Stack Tab5: the shutter drawn at 45 % while it moves, with Open, Stop and Close"> |
 
-| Monthly calendar | Voice assistant |
+| Plant sensors (Sorbet, light) | Solar energy (Ultraviolet, dark) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_calendar.jpg" width="400" loading="lazy" alt="M5Stack Tab5 monthly calendar with work hours, public holidays, school holidays and appointments"> | <img src="docs/images/tab5_photo_assistant_popup.jpg" width="400" loading="lazy" alt="M5Stack Tab5 voice assistant popup showing the spoken request and a formatted reply"> |
+| <img src="docs/images/galerie/plantes-en.webp" width="400" loading="lazy" alt="Plants popup of the M5Stack Tab5: five pots with soil moisture, fertility, light, temperature and battery, one of them needs water"> | <img src="docs/images/galerie/energie-en.webp" width="400" loading="lazy" alt="Energy popup of the M5Stack Tab5: solar, home, grid and battery cards, and the solar production of the last 30 days as bars"> |
 
-| Arcade: the game menu | Roi Noir: chess with an engine on the tablet |
+| Temperature history (Almanach imprimé, light) | Monthly calendar (Zen Sumi, dark) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_arcade_selector.jpg" width="400" loading="lazy" alt="M5Stack Tab5 arcade menu with eight offline games drawn with LVGL"> | <img src="docs/images/tab5_photo_chess.jpg" width="400" loading="lazy" alt="Chess game Roi Noir running on the M5Stack Tab5 ESP32-P4 with its embedded engine"> |
+| <img src="docs/images/galerie/temperature-en.webp" width="400" loading="lazy" alt="Temperature popup of the M5Stack Tab5: now, minimum, maximum and outdoor forecast, and the greenhouse curve over 7 days with the forecast"> | <img src="docs/images/galerie/calendrier-en.webp" width="400" loading="lazy" alt="Monthly calendar of the M5Stack Tab5 with work hours, a public holiday, school holidays, appointments and birthdays"> |
+
+| Alarm clock (Graphite, dark) | Voice assistant (Obsidienne, dark) |
+|:-:|:-:|
+| <img src="docs/images/galerie/reveil-en.webp" width="400" loading="lazy" alt="Alarm clock popup of the M5Stack Tab5: a fixed time, the days, the mode, the ringtone and its volume, snooze and the next appointment"> | <img src="docs/images/galerie/assistant-en.webp" width="400" loading="lazy" alt="Voice assistant popup of the M5Stack Tab5: its settings, the request and a formatted reply with a list and a table"> |
+
+| TV remote (Signalisation, light) | Settings (Capsule, light) |
+|:-:|:-:|
+| <img src="docs/images/galerie/telecommande-tv-en.webp" width="400" loading="lazy" alt="TV remote of the M5Stack Tab5: power, source, menu, a direction pad, volume, playback and app shortcuts"> | <img src="docs/images/galerie/reglages-en.webp" width="400" loading="lazy" alt="Settings popup of the M5Stack Tab5: brightness, auto screen off, wake options, theme, light or dark, night mode and language"> |
+
+| Arcade: the game menu (Pixel, dark) | Roi Noir: chess with an engine on the tablet |
+|:-:|:-:|
+| <img src="docs/images/galerie/arcade-en.webp" width="400" loading="lazy" alt="Arcade menu of the M5Stack Tab5 with eight offline games drawn with LVGL"> | <img src="docs/images/galerie/roi-noir-en.webp" width="400" loading="lazy" alt="Chess game Roi Noir on the M5Stack Tab5 ESP32-P4, with its embedded engine"> |
 
 | Coureur d'Or: Lode Runner style | Arcanoïde: a breakout played by tilting |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_lode_runner.jpg" width="400" loading="lazy" alt="Coureur d'Or, a Lode Runner style platform game, running on the M5Stack Tab5"> | <img src="docs/images/tab5_photo_arkanoid.jpg" width="400" loading="lazy" alt="Arcanoïde, a breakout game on the M5Stack Tab5, played by tilting the tablet"> |
+| <img src="docs/images/galerie/coureur-dor-en.webp" width="400" loading="lazy" alt="Coureur d'Or, a Lode Runner style platform game, on the M5Stack Tab5"> | <img src="docs/images/galerie/arcanoide-en.webp" width="400" loading="lazy" alt="Arcanoïde, a breakout game on the M5Stack Tab5, played by tilting the tablet"> |
 
 The games are experimental, first-pass code written by AI to see what LVGL and C++ can do on an ESP32-P4: they work, they are not polished ([the eight consoles](docs/arcade.md), in French).
 
@@ -197,7 +209,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 
 **Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, énergie solaire, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues. Vingt et un thèmes, clairs ou sombres, au choix depuis Home Assistant. C'est mon écran de tous les jours, partagé au cas où il serve à quelqu'un.
 
-![La M5Stack Tab5 de l'auteur sur son support, avec un écran Home Assistant : l'heure, la consigne de la clim, les horaires de travail et les prévisions à 5 jours](docs/images/tab5_hero_4x3.jpg)
+![La M5Stack Tab5 de l'auteur tenue à la main sur son socle : l'heure, deux températures, la consigne de la clim, le bandeau des horaires de travail et les prévisions à 5 jours avec orage, pluie et soleil](docs/images/tab5_hero_4x3.jpg)
 
 **[Installer depuis le navigateur](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/)** · **[Guide d'installation](docs/installation/README.md#version-française)** · **[Notice d'utilisation](docs/notice/README.md#version-française)** · **[Essayer sans Home Assistant](docs/demo_mode.md#version-française)** · **[Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions)**
 
@@ -284,13 +296,13 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 
 ## En images
 
-**[▶ Vidéo de démo sur YouTube](https://www.youtube.com/watch?v=ygNhgtMffu4)** (voix, tactile, télécommande TV, clim — version provisoire, juillet 2026), et un tour animé des écrans :
+**[▶ Vidéo de démo sur YouTube](https://www.youtube.com/watch?v=ygNhgtMffu4)** (voix, tactile, télécommande TV, clim — version provisoire, juillet 2026), et un tour animé des écrans dans le thème par défaut, dessinés par le firmware lui-même sur un PC, avec des données de démonstration :
 
-![Tour animé de l'écran Home Assistant de la M5Stack Tab5 : accueil, appareils, plantes, clim, lumières, télécommande TV et console](docs/images/tab5_ui_tour_hq.webp)
+![Tour animé de l'écran Home Assistant de la M5Stack Tab5 : accueil, appareils d'une pièce, toute la maison, roue d'actions, lumières, clim, plantes, énergie solaire, calendrier, télécommande TV et console](docs/images/tab5_ui_tour_fr.webp)
 
-**Vingt et un thèmes**, chacun clair ou sombre : couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des titres. Six d'entre eux, dessinés par le firmware lui-même sur un PC, avec des données de démonstration :
+**Vingt et un thèmes**, chacun clair ou sombre : couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des titres. Six d'entre eux sur l'accueil, dessinés par le firmware lui-même sur un PC, avec des données de démonstration : deux montrent les appareils d'une pièce, les quatre autres une alerte différente sur la carte centrale.
 
-![Six thèmes de l'écran de la M5Stack Tab5 dessinés par le firmware : Relief doux en sombre et en clair, Almanach imprimé, Néon calme, Béton brut et Zen Sumi](docs/images/tab5_themes.jpg)
+![Six thèmes de l'accueil de la M5Stack Tab5 dessinés par le firmware : Pixel sombre avec une alerte de fuite en cuisine, Bonbon clair avec les appareils du salon, Sorbet sombre avec une vigilance météo, Béton brut clair avec une alerte de pile faible, Zen Sumi sombre avec les appareils du jardin et Capsule clair avec de la pluie dans 10 minutes](docs/images/tab5_themes.jpg)
 
 **Énergie solaire** (facultatif) : solaire, maison, réseau et batterie de la maison en direct, et la production des 30 derniers jours, d'après les capteurs choisis dans le blueprint ([énergie solaire](docs/installation/adapt-to-your-home.md#énergie-solaire-facultatif)). Rendu avec des données de démonstration ; pas encore essayé avec une vraie installation solaire.
 
@@ -300,31 +312,43 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 
 ![Vue Tab5 du tableau de bord de Home Assistant : luminosité, volume et écran de la tablette, réveil, rendez-vous et assistant vocal](docs/images/ha_tableau_tab5.png)
 
-**Sur la tablette** — photos de la tablette de l'auteur (juillet 2026) :
+**Chaque écran dans un thème différent** — dessinés par le firmware lui-même sur un PC, avec des données de démonstration ; les jeux restent sombres quel que soit le thème :
 
-| Les boutons des appareils, un appui chacun | Capteurs de plantes |
+| Accueil : la pluie dans l'heure (Bento, clair) | Toute la maison (Relief doux, clair) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_domo.jpg" width="400" loading="lazy" alt="Écran Home Assistant de la M5Stack Tab5 avec les boutons d'un PC de bureau, d'un volet roulant, des lumières de la chambre et du salon et de LED"> | <img src="docs/images/tab5_photo_plants.jpg" width="400" loading="lazy" alt="Popup de la M5Stack Tab5 avec cinq capteurs de plantes BLE : humidité du sol, fertilité, lumière, température et batterie"> |
+| <img src="docs/images/galerie/accueil-pluie-fr.webp" width="400" loading="lazy" alt="Accueil de la M5Stack Tab5 dans le thème Bento clair : les barres de pluie de l'heure à venir et « Pluie modérée dans 10 mn » sur la carte centrale, prévisions à 5 jours pluvieuses"> | <img src="docs/images/galerie/maison-fr.webp" width="400" loading="lazy" alt="Popup Maison de la M5Stack Tab5 : cinq pièces en colonnes, chaque appareil avec son état, et un bouton pour tout éteindre"> |
 
-| Clim | Lumières |
+| Roue d'actions (Néon calme, sombre) | Lumières (Bonbon, clair) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_climate_popup_v2.jpg" width="400" loading="lazy" alt="Popup clim de la M5Stack Tab5 : modes, arc de thermostat réglé à 23 °C, préréglages et flux d'air"> | <img src="docs/images/tab5_photo_light_popup_v2.jpg" width="400" loading="lazy" alt="Popup lumières de la M5Stack Tab5 : choix de la lumière, arc de luminosité à 100 % et pastilles de couleur"> |
+| <img src="docs/images/galerie/roue-fr.webp" width="400" loading="lazy" alt="Roue d'actions de la M5Stack Tab5 ouverte par un appui long sur une lampe : paliers de luminosité, marche-arrêt et plus, autour du doigt"> | <img src="docs/images/galerie/lumieres-fr.webp" width="400" loading="lazy" alt="Popup lumières de la M5Stack Tab5 : les lumières de la pièce, un arc de luminosité avec raccourcis, 3 blancs et 12 couleurs"> |
 
-| Télécommande TV | Console de diagnostic |
+| Clim (Platine et or, sombre) | Volets (Terre cuite, clair) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_tv_remote.jpg" width="400" loading="lazy" alt="Télécommande TV Samsung sur la M5Stack Tab5 : marche, source, croix, volume et lecture"> | <img src="docs/images/tab5_photo_console_v2.jpg" width="400" loading="lazy" alt="Console de diagnostic de la M5Stack Tab5 : mémoire, Wi-Fi, temps de marche, température du processeur et actions Home Assistant"> |
+| <img src="docs/images/galerie/climatisation-fr.webp" width="400" loading="lazy" alt="Popup clim de la M5Stack Tab5 : modes, arc de thermostat réglé à 20 °C, préréglages, ventilation et flux d'air"> | <img src="docs/images/galerie/volet-fr.webp" width="400" loading="lazy" alt="Popup volet de la M5Stack Tab5 : le volet dessiné à 45 % pendant qu'il bouge, avec Ouvrir, Stop et Fermer"> |
 
-| Calendrier du mois | Assistant vocal |
+| Capteurs de plantes (Sorbet, clair) | Énergie solaire (Ultraviolet, sombre) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_calendar.jpg" width="400" loading="lazy" alt="Calendrier du mois de la M5Stack Tab5 avec horaires de travail, jours fériés, vacances scolaires et rendez-vous"> | <img src="docs/images/tab5_photo_assistant_popup.jpg" width="400" loading="lazy" alt="Popup de l'assistant vocal de la M5Stack Tab5 : la demande dite à voix haute et une réponse mise en forme"> |
+| <img src="docs/images/galerie/plantes-fr.webp" width="400" loading="lazy" alt="Popup plantes de la M5Stack Tab5 : cinq pots avec humidité du sol, fertilité, lumière, température et batterie, l'un d'eux a soif"> | <img src="docs/images/galerie/energie-fr.webp" width="400" loading="lazy" alt="Popup Énergie de la M5Stack Tab5 : solaire, maison, réseau et batterie en direct, et la production solaire des 30 derniers jours en barres"> |
 
-| Arcade : le menu des jeux | Roi Noir : des échecs avec un moteur sur la tablette |
+| Historique des températures (Almanach imprimé, clair) | Calendrier du mois (Zen Sumi, sombre) |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_arcade_selector.jpg" width="400" loading="lazy" alt="Menu Arcade de la M5Stack Tab5 avec huit jeux hors ligne dessinés avec LVGL"> | <img src="docs/images/tab5_photo_chess.jpg" width="400" loading="lazy" alt="Jeu d'échecs Roi Noir sur la M5Stack Tab5 ESP32-P4, avec son moteur embarqué"> |
+| <img src="docs/images/galerie/temperature-fr.webp" width="400" loading="lazy" alt="Popup Température de la M5Stack Tab5 : maintenant, minimum, maximum et prévision dehors, et la courbe de la serre sur 7 jours avec la prévision"> | <img src="docs/images/galerie/calendrier-fr.webp" width="400" loading="lazy" alt="Calendrier du mois de la M5Stack Tab5 avec horaires de travail, jour férié, vacances scolaires, rendez-vous et anniversaires"> |
+
+| Réveil (Graphite, sombre) | Assistant vocal (Obsidienne, sombre) |
+|:-:|:-:|
+| <img src="docs/images/galerie/reveil-fr.webp" width="400" loading="lazy" alt="Popup réveil de la M5Stack Tab5 : heure fixe, jours, mode, sonnerie et volume, répétition et prochain rendez-vous"> | <img src="docs/images/galerie/assistant-fr.webp" width="400" loading="lazy" alt="Popup de l'assistant vocal de la M5Stack Tab5 : ses réglages, la demande et une réponse mise en forme, avec une liste et un tableau"> |
+
+| Télécommande TV (Signalisation, clair) | Réglages (Capsule, clair) |
+|:-:|:-:|
+| <img src="docs/images/galerie/telecommande-tv-fr.webp" width="400" loading="lazy" alt="Télécommande TV de la M5Stack Tab5 : marche, source, menu, croix, volume, lecture et raccourcis d'applications"> | <img src="docs/images/galerie/reglages-fr.webp" width="400" loading="lazy" alt="Popup Réglages de la M5Stack Tab5 : luminosité, extinction auto, réveil de l'écran, thème, clair ou sombre, nuit et langue"> |
+
+| Arcade : le menu des jeux (Pixel, sombre) | Roi Noir : des échecs avec un moteur sur la tablette |
+|:-:|:-:|
+| <img src="docs/images/galerie/arcade-fr.webp" width="400" loading="lazy" alt="Menu Arcade de la M5Stack Tab5 avec huit jeux hors ligne dessinés avec LVGL"> | <img src="docs/images/galerie/roi-noir-fr.webp" width="400" loading="lazy" alt="Jeu d'échecs Roi Noir sur la M5Stack Tab5 ESP32-P4, avec son moteur embarqué"> |
 
 | Coureur d'Or : façon Lode Runner | Arcanoïde : un casse-briques joué en inclinant la tablette |
 |:-:|:-:|
-| <img src="docs/images/tab5_photo_lode_runner.jpg" width="400" loading="lazy" alt="Coureur d'Or, un jeu de plateformes façon Lode Runner, sur la M5Stack Tab5"> | <img src="docs/images/tab5_photo_arkanoid.jpg" width="400" loading="lazy" alt="Arcanoïde, un casse-briques sur la M5Stack Tab5, joué en inclinant la tablette"> |
+| <img src="docs/images/galerie/coureur-dor-fr.webp" width="400" loading="lazy" alt="Coureur d'Or, un jeu de plateformes façon Lode Runner, sur la M5Stack Tab5"> | <img src="docs/images/galerie/arcanoide-fr.webp" width="400" loading="lazy" alt="Arcanoïde, un casse-briques sur la M5Stack Tab5, joué en inclinant la tablette"> |
 
 Les jeux sont expérimentaux, un premier jet écrit par l'IA pour voir ce que LVGL et le C++ peuvent faire sur un ESP32-P4 : ils marchent, sans être finis ([les huit consoles](docs/arcade.md)).
 
