@@ -11,8 +11,9 @@
         1. sauvegarde puis remplace les fichiers (installation.py) ;
         2. vérifie la configuration (comme « Vérifier la configuration ») et remet tout en
            place si les nouveaux fichiers y ajoutent un message — erreur OU avertissement :
-           pour HA 2026.9, un domaine ou un package invalide n'est qu'un avertissement, et
-           ce domaine ne se charge plus (réparation « configuration_invalide ») ;
+           pour HA 2026.9, un domaine ou un package invalide n'est qu'un avertissement
+           (résultat « valid »), et ce domaine ne se charge plus (réparation
+           « configuration_invalide ») ;
         3. sans la ligne `packages:`, s'arrête là (réparation « packages_absents ») ; sinon
            recharge les modèles, les entrées (input_*), charge les domaines que HA n'avait
            pas encore (rest_command… sur un HA neuf), puis tout le YAML

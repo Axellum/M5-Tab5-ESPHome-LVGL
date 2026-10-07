@@ -84,11 +84,16 @@ VIDES = {"automations.yaml": "[]\n", "scripts.yaml": "", "scenes.yaml": "", "sec
 MODIFIE = "packages/tab5_tv.yaml"            # modifié à la main avant la 9.9.2
 RETIRE = "packages/tab5_micro_absence.yaml"  # plus livré par la 9.9.2
 CASSE = "packages/tab5_casse.yaml"           # livré par la 9.9.3, refusé par check_config
-CONTENU_CASSE = '# Clé qui n\'est pas un slug : check_config refuse input_boolean.\ninput_boolean:\n  "Pas Un Slug": {}\n'
-# Ce que « Vérifier la configuration » dit de quelques casses (journal du scénario).
+# Un `initial` qui n'est pas un booléen : HA 2026.9.4 ne charge plus input_boolean, et
+# « Vérifier la configuration » ne le signale qu'en AVERTISSEMENT (contre-épreuve du
+# 07/10/2026 ci-dessous) — le cas qu'une vérification des seules erreurs laissait passer.
+CONTENU_CASSE = "input_boolean:\n  tab5_casse:\n    initial: peut-etre\n"
+# Ce que « Vérifier la configuration » dit de quelques casses, écrit au journal du scénario.
+# Le 07/10/2026 (HA 2026.9.4) : clé pas un slug = rien (valide) ; initial pas un booléen et
+# domaine pas un dictionnaire = avertissement ; YAML illisible = erreur.
 ESSAIS_CASSES = {
-    "clé pas un slug": CONTENU_CASSE,
-    "initial pas un booléen": "input_boolean:\n  tab5_casse:\n    initial: peut-etre\n",
+    "clé pas un slug": 'input_boolean:\n  "Pas Un Slug": {}\n',
+    "initial pas un booléen": CONTENU_CASSE,
     "domaine pas un dictionnaire": "input_boolean: 42\n",
     "YAML illisible": "input_boolean: [pas fermé\n",
 }
@@ -303,6 +308,10 @@ async def scenario(args, rapport: Rapport) -> None:
                 rapport.info(f"3. contre-épreuve « {nom} » : {verif.get('result')}, "
                              f"erreurs={str(verif.get('errors'))[:160]!r}, "
                              f"avertissements={str(verif.get('warnings'))[:160]!r}")
+                if contenu == CONTENU_CASSE:
+                    rapport.verifier(bool(verif.get("errors") or verif.get("warnings")),
+                                     "3. contre-épreuve : la vérification signale le package de la 9.9.3",
+                                     str(verif)[:200])
             dans_conteneur(f"import os; os.remove('/config/{CASSE}')")
             remplacer_integration(dossier, zips["9.9.3"])
             await redemarrer(ha)
