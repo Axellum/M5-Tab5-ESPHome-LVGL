@@ -4,6 +4,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+Pré-releases tirées de cette section, sur le canal bêta :
+[v3.8.0-rc.1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.1)
+le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
+de la tuile − / + (#379).
+
 ### 2026-10-07 — Tuile − / + : « Son de la tablette »
 
 - **La dernière ligne de la liste de la tuile − / + dit ce qu'elle règle**
