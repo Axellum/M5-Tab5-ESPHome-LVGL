@@ -35,20 +35,31 @@ On a device card, or on the weather icon of a card that holds a device:
 
 | Device | Tap | Long press |
 |---|---|---|
-| Light | on / off | [lights window](lights.md) |
+| Light | on / off | with a dimmer: [quick actions](#quick-actions); otherwise the [lights window](lights.md) |
 | Switch, plug, fan… | on / off | [device window](#device-window) |
-| Shutter, valve | moving: stop; open: close; otherwise: open | [shutter window](shutters.md) |
+| Shutter, valve | moving: stop; open: close; otherwise: open | [quick actions](#quick-actions) |
 | TV, media player | on / off | [TV remote](tv.md), for the TV picked in the blueprint; another player: [device window](#device-window) |
 | Scene, script, button | runs it; the state shows « OK » for a second | [device window](#device-window) |
-| Climate | [climate window](climate.md), for this unit | — |
+| Climate | [climate window](climate.md), for this unit | [quick actions](#quick-actions); before Home Assistant sent its modes, the [climate window](climate.md) |
 | Sensor of the « Énergie · Energy » section | [energy window](energy.md) | [energy window](energy.md) |
 | Other sensor | — (it only shows its value) | — |
 
 **Customised cards** (blueprint section « Personnaliser des tuiles », [step 6](../installation/devices.md)):
 
 - *on only*: a tap turns the device on, never off;
-- *confirm*: the first tap only asks, the state shows « Confirm? » and the icon turns amber; a second tap within 3 s sends. On a shutter, the long press then sends the other way (open or close), confirmed the same way, instead of opening the window. In the device window, the large button asks the same way;
+- *confirm*: the first tap only asks, the state shows « Confirm? » and the icon turns amber; a second tap within 3 s sends. On a light or a shutter, the long press then shows no quick actions; on a shutter it sends the other way (open or close), confirmed the same way, instead of opening the window. In the device window, the large button asks the same way;
 - *read only*: the card shows the state and does nothing, and opens no window.
+
+## Quick actions
+
+A long press on a light with a dimmer, a shutter or a climate shows its main actions in round buttons, on an arc above the card:
+
+- **light**: off, 10 %, 50 %, 100 %;
+- **shutter**: open, stop, close, and 50 % when it reports its position;
+- **climate**: off, then its modes (heat, cool, dry, fan only);
+- then **⋯**, which opens its window ([lights](lights.md), [shutter](shutters.md), [climate](climate.md)).
+
+The button of the current state is tinted with the card's colour. A tap on a button sends it and closes the arc; a tap anywhere else closes it. It also closes by itself after a while.
 
 ## Device window
 
@@ -100,20 +111,31 @@ Sur une carte d'appareil, ou sur l'icône météo d'une carte qui porte un appar
 
 | Appareil | Tap | Appui long |
 |---|---|---|
-| Lumière | allumer / éteindre | [fenêtre des lumières](lights.md#version-française) |
+| Lumière | allumer / éteindre | avec variateur : [actions rapides](#actions-rapides) ; sinon la [fenêtre des lumières](lights.md#version-française) |
 | Interrupteur, prise, ventilateur… | allumer / éteindre | [fenêtre de l'appareil](#fenêtre-de-lappareil) |
-| Volet, vanne | en mouvement : stop ; ouvert : fermer ; sinon : ouvrir | [fenêtre du volet](shutters.md#version-française) |
+| Volet, vanne | en mouvement : stop ; ouvert : fermer ; sinon : ouvrir | [actions rapides](#actions-rapides) |
 | TV, lecteur multimédia | allumer / éteindre | [télécommande TV](tv.md#version-française), pour la TV choisie dans le blueprint ; un autre lecteur : [fenêtre de l'appareil](#fenêtre-de-lappareil) |
 | Scène, script, bouton | le lance ; l'état affiche « OK » une seconde | [fenêtre de l'appareil](#fenêtre-de-lappareil) |
-| Clim | [fenêtre de la clim](climate.md#version-française), pour cet appareil | — |
+| Clim | [fenêtre de la clim](climate.md#version-française), pour cet appareil | [actions rapides](#actions-rapides) ; avant que Home Assistant ait envoyé ses modes, la [fenêtre de la clim](climate.md#version-française) |
 | Capteur de la section « Énergie · Energy » | [fenêtre de l'énergie](energy.md#version-française) | [fenêtre de l'énergie](energy.md#version-française) |
 | Autre capteur | — (il montre seulement sa valeur) | — |
 
 **Cartes personnalisées** (section « Personnaliser des tuiles » du blueprint, [étape 6](../installation/devices.md#version-française)) :
 
 - *allumer seulement* : un tap allume l'appareil, jamais ne l'éteint ;
-- *confirmer* : le premier tap demande seulement, l'état affiche « Confirmer ? » et l'icône passe en ambre ; un second tap dans les 3 s envoie. Sur un volet, l'appui long envoie alors l'autre sens (ouvrir ou fermer), confirmé de la même façon, au lieu d'ouvrir la fenêtre. Dans la fenêtre de l'appareil, le grand bouton demande de la même façon ;
+- *confirmer* : le premier tap demande seulement, l'état affiche « Confirmer ? » et l'icône passe en ambre ; un second tap dans les 3 s envoie. Sur une lumière ou un volet, l'appui long ne montre alors pas d'actions rapides ; sur un volet il envoie l'autre sens (ouvrir ou fermer), confirmé de la même façon, au lieu d'ouvrir la fenêtre. Dans la fenêtre de l'appareil, le grand bouton demande de la même façon ;
 - *lecture seule* : la carte montre l'état, ne fait rien et n'ouvre aucune fenêtre.
+
+## Actions rapides
+
+Un appui long sur une lumière à variateur, un volet ou une clim montre ses actions principales en boutons ronds, sur un arc au-dessus de la carte :
+
+- **lumière** : éteindre, 10 %, 50 %, 100 % ;
+- **volet** : ouvrir, stop, fermer, et 50 % s'il donne sa position ;
+- **clim** : arrêt, puis ses modes (chaud, froid, sec, ventilation) ;
+- puis **⋯**, qui ouvre sa fenêtre ([lumières](lights.md#version-française), [volet](shutters.md#version-française), [clim](climate.md#version-française)).
+
+Le bouton de l'état actuel est teinté de la couleur de la carte. Un tap sur un bouton l'envoie et ferme l'arc ; un tap ailleurs le ferme. Il se ferme aussi tout seul au bout d'un moment.
 
 ## Fenêtre de l'appareil
 

@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a tap on the target temperature of the home screen, or on a climate card ([bottom row](tiles.md)): that card's unit, with its name as title. When the window closes, the home screen goes back to the climate picked in the blueprint.
+**Opens with** a tap on the target temperature of the home screen, or on a climate card ([bottom row](tiles.md); a long press shows its [quick actions](tiles.md#quick-actions), whose **⋯** opens this window): that card's unit, with its name as title. When the window closes, the home screen goes back to the climate picked in the blueprint.
 
 ![The climate window: modes, target 20.0 with the arc, options](../images/notice/climatisation-en.webp)
 
@@ -29,7 +29,7 @@ The window follows your unit: its temperature range and step, and only the butto
 
 ---
 
-**S'ouvre par** un tap sur la consigne de l'écran d'accueil, ou sur une carte de clim ([rangée du bas](tiles.md#version-française)) : l'appareil de cette carte, avec son nom pour titre. À la fermeture de la fenêtre, l'accueil revient à la clim choisie dans le blueprint.
+**S'ouvre par** un tap sur la consigne de l'écran d'accueil, ou sur une carte de clim ([rangée du bas](tiles.md#version-française) ; un appui long montre ses [actions rapides](tiles.md#actions-rapides), dont **⋯** ouvre cette fenêtre) : l'appareil de cette carte, avec son nom pour titre. À la fermeture de la fenêtre, l'accueil revient à la clim choisie dans le blueprint.
 
 ![La fenêtre de la clim : modes, consigne 20.0 avec l'arc, options](../images/notice/climatisation-fr.webp)
 
