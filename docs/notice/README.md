@@ -25,7 +25,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 13 | A card of the bottom row (its large icon) | the command of its device | the window of its device |
 | 14 | A day's temperatures | that day's schedule, for 6 s | — |
 
-The long press of buttons 6 to 8 can open another screen, chosen in the blueprint ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
+The long press of buttons 6 to 8 can open another screen, the [house](house.md) for instance, chosen in the blueprint ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
 **Swipe** left or right on the bottom row: the other forecast pages, or the next room in device mode.
 
@@ -89,7 +89,7 @@ Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt u
 | 13 | Une carte de la rangée du bas (sa grande icône) | la commande de son appareil | la fenêtre de son appareil |
 | 14 | Les températures d'un jour | le planning de ce jour, 6 s | — |
 
-L'appui long des boutons 6 à 8 peut ouvrir un autre écran, choisi dans le blueprint ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
+L'appui long des boutons 6 à 8 peut ouvrir un autre écran, la [maison](house.md#version-française) par exemple, choisi dans le blueprint ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
 **Glisser** vers la gauche ou la droite sur la rangée du bas : les autres pages de prévisions, ou la pièce suivante en mode appareils.
 

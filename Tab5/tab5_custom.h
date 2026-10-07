@@ -894,7 +894,7 @@ enum BoutonHaut : uint8_t {
 enum class Ecran : uint8_t {
     AUCUN,       // « — » : position de repos du select ; « rien » pour un appui long
     ACCUEIL, ASSISTANT, CALENDRIER, REVEIL, CLIM, PLANTES, TV, CONSOLE, ENERGIE, REGLAGES, ALERTES,
-    MAISON,      // popup Maison (ADR-0037) : option du select, pas encore un choix d'appui long
+    MAISON,      // popup Maison (ADR-0037) : option du select et choix d'appui long (code « maison »)
     ARCADE,
     NB
 };

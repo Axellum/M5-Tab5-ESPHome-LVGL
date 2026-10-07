@@ -21,6 +21,40 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-07 — Blueprint « Tab5 — emplacements » plus lisible
+
+Relecture de ce que voit un utilisateur dans l'éditeur de Home Assistant. Aucune clé d'entrée,
+aucune valeur par défaut ni aucun sélecteur ne change : les automatisations existantes gardent
+leurs valeurs (HA les range à plat par nom d'entrée, quelle que soit la section).
+- **Une phrase d'aide sur chaque champ** (français puis anglais) : batterie du téléphone,
+  température de la pièce, pots 1 à 5, vigilances, appuis longs des trois boutons, lumières de
+  l'ancien accueil, cases « Inverser », batterie domestique…
+- **Plus de jargon** : ni nom de fichier, de package ou de script, ni « opening/closing », ni
+  numéro de version précis (« firmware 3.7 ou plus récent » là où la contrainte compte) ; les
+  réglages faits dans HA sont désignés par leur liste « Tab5 · … ». Textes longs raccourcis.
+- **Toutes les sections repliées sauf « Pièce 1 »** (TV, températures, clim, plantes, planning
+  et météo s'ouvraient).
+- **Énergie en trois sections** : « Énergie : solaire », « Énergie : réseau et maison »,
+  « Énergie : batterie » ; les champs « principal » et « autres » (puissance, énergie produite)
+  disent clairement leur rôle.
+- « Tuiles de l'accueil (réglage 3.x) » devient « Ancien accueil (si la pièce 1 est vide) » ;
+  « Automatique : comme aujourd'hui » devient « Automatique (par défaut) ».
+- Docs alignées : étape 6 de l'installation (tableau des sections, avec la ligne « Tuile − / + »
+  qui manquait), « Adapter à sa maison », notice, ADR-0028, tableau de bord HA (7 langues) ;
+  `tests/test_tuiles_blueprint.py` vérifie le repli, les descriptions et les trois sections.
+  La capture de l'éditeur (`docs/images/installation/ha_blueprint_*.png`) montre encore
+  l'ancienne description.
+
+### 2026-10-07 — Boutons du haut : « Maison » parmi les choix de l'appui long
+
+Le popup « Maison » (#368, ADR-0037) s'ouvre aussi par l'appui long de l'un des trois boutons
+du haut : choix « Maison · House » dans la section « Boutons du haut » du blueprint
+« Tab5 — emplacements » (code `maison`, ajouté à la fin de `kCodesEcran` : les choix gardés en
+NVS ne bougent pas). La mini icône du bouton prend la maison de l'en-tête du popup (glyphe
+ajouté à `mdi_font_26`). Mettre le blueprint à jour d'abord : un firmware plus ancien lit
+`maison` comme un code inconnu et garde l'appui long automatique. Pas encore essayé sur la
+tablette.
+
 ### 2026-10-07 — Docs : notes de Jiuhai sur le C6 et l'alimentation (discussion #369)
 
 Merci à Jiuhai (@poonjh), qui construit des appareils sur Tab5 avec ESP-IDF : remerciement dans

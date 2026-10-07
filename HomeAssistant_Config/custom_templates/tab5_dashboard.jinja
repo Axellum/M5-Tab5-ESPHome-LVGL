@@ -657,7 +657,7 @@ views:
           - type: markdown
             text_only: true
             content: |-
-              {{ t("Facultatif. Dans l'automatisation des emplacements, ouvrez la section repliée **« Énergie · Energy »** :", 'Optional. In the screen slots automation, open the collapsed **« Énergie · Energy »** section:') }}
+              {{ t("Facultatif. Dans l'automatisation des emplacements, ouvrez les sections repliées **« Énergie : … »** (solaire, réseau et maison, batterie) :", 'Optional. In the screen slots automation, open the collapsed **« Énergie : … · Energy: … »** sections (solar, grid and home, battery):') }}
               1. **{{ t('Puissance solaire', 'Solar power') }}**{{ t(' : ce que produisent les panneaux en ce moment (W ou kW).', ': what the panels produce right now (W or kW).') }}
               2. **{{ t('Puissance crête des panneaux', 'Panel peak power') }}**{{ t(" (kWc, sur la facture ou l'onduleur) : avec la puissance solaire, une icône du bandeau d'état, en haut à gauche, montre la production par sa couleur (gris la nuit, puis rouge, ambre, bleu, vert). 0 : pas d'icône.", ' (kWp, on the invoice or the inverter): with the solar power, an icon of the status strip, top left, shows the production by its colour (grey at night, then red, amber, blue, green). 0: no icon.') }}
               3. **{{ t('Popup Énergie', 'Energy popup') }}**{{ t(' : énergie produite (le compteur en kWh du tableau Énergie de Home Assistant), réseau, maison, batterie, tous facultatifs.', ': energy produced (the kWh meter of the Home Assistant Energy dashboard), grid, home, battery, all optional.') }}
@@ -670,7 +670,7 @@ views:
               [{{ t('Énergie solaire, pas à pas', 'Solar energy, step by step') }}]({{ doc('installation.md', 'énergie-solaire-facultatif', 'solar-energy-optional') }})
           - type: shortcut
             label: "{{ t('Régler les panneaux', 'Set up the panels') }}"
-            description: "{{ t('Section « Énergie »', 'Energy section') }}"
+            description: "{{ t('Sections « Énergie »', 'Energy sections') }}"
             icon: mdi:solar-panel
             tap_action:
               action: navigate
@@ -1971,12 +1971,12 @@ views:
     'es': 'Energía solar',
     'it': 'Energia solare',
     'tr': 'Güneş enerjisi'},
-  "Facultatif. Dans l'automatisation des emplacements, ouvrez la section repliée **« Énergie · Energy »** :": {
-    'de': 'Optional. In der Automatisierung der Bildschirmplätze den eingeklappten Abschnitt **„Énergie · Energy“** öffnen:',
-    'nl': 'Optioneel. Open in de automatisering van de schermvakken de ingeklapte sectie **“Énergie · Energy”**:',
-    'es': 'Opcional. En la automatización de las ranuras, abre la sección plegada **«Énergie · Energy»**:',
-    'it': 'Facoltativo. Nell’automazione degli slot, apri la sezione chiusa **«Énergie · Energy»**:',
-    'tr': 'İsteğe bağlı. Ekran yuvaları otomasyonunda, katlanmış **“Énergie · Energy”** bölümünü aç:'},
+  "Facultatif. Dans l'automatisation des emplacements, ouvrez les sections repliées **« Énergie : … »** (solaire, réseau et maison, batterie) :": {
+    'de': 'Optional. In der Automatisierung der Bildschirmplätze die eingeklappten Abschnitte **„Énergie : … · Energy: …“** öffnen (Solar, Netz und Haus, Batterie):',
+    'nl': 'Optioneel. Open in de automatisering van de schermvakken de ingeklapte secties **“Énergie : … · Energy: …”** (zon, net en huis, batterij):',
+    'es': 'Opcional. En la automatización de las ranuras, abre las secciones plegadas **«Énergie : … · Energy: …»** (solar, red y casa, batería):',
+    'it': 'Facoltativo. Nell’automazione degli slot, apri le sezioni chiuse **«Énergie : … · Energy: …»** (solare, rete e casa, batteria):',
+    'tr': 'İsteğe bağlı. Ekran yuvaları otomasyonunda, katlanmış **“Énergie : … · Energy: …”** bölümlerini aç (güneş, şebeke ve ev, batarya):'},
   'Puissance solaire': {
     'de': 'Solarleistung',
     'nl': 'Zonnevermogen',
@@ -2031,12 +2031,12 @@ views:
     'es': 'Configurar los paneles',
     'it': 'Imposta i pannelli',
     'tr': 'Panelleri ayarla'},
-  'Section « Énergie »': {
-    'de': 'Abschnitt „Energie“',
-    'nl': 'Sectie “Energie”',
-    'es': 'Sección Energía',
-    'it': 'Sezione «Energia»',
-    'tr': 'Enerji bölümü'},
+  'Sections « Énergie »': {
+    'de': 'Abschnitte „Energie“',
+    'nl': 'Secties “Energie”',
+    'es': 'Secciones Energía',
+    'it': 'Sezioni «Energia»',
+    'tr': 'Enerji bölümleri'},
   'Tableau Énergie': {
     'de': 'Energie-Dashboard',
     'nl': 'Energiedashboard',

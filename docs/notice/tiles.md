@@ -42,7 +42,7 @@ On a device card, or on the weather icon of a card that holds a device:
 | TV, media player | on / off | [TV remote](tv.md), for the TV picked in the blueprint; another player: [device window](#device-window) |
 | Scene, script, button | runs it; the state shows « OK » for a second | [device window](#device-window) |
 | Climate | [climate window](climate.md), for this unit | [quick actions](#quick-actions); before Home Assistant sent its modes, the [climate window](climate.md) |
-| Sensor of the « Énergie · Energy » section | [energy window](energy.md) | [energy window](energy.md) |
+| Sensor of an « Énergie » section | [energy window](energy.md) | [energy window](energy.md) |
 | Other sensor | — (it only shows its value) | — |
 
 **Customised cards** (blueprint section « Personnaliser des tuiles », [step 6](../installation/devices.md)):
@@ -119,7 +119,7 @@ Sur une carte d'appareil, ou sur l'icône météo d'une carte qui porte un appar
 | TV, lecteur multimédia | allumer / éteindre | [télécommande TV](tv.md#version-française), pour la TV choisie dans le blueprint ; un autre lecteur : [fenêtre de l'appareil](#fenêtre-de-lappareil) |
 | Scène, script, bouton | le lance ; l'état affiche « OK » une seconde | [fenêtre de l'appareil](#fenêtre-de-lappareil) |
 | Clim | [fenêtre de la clim](climate.md#version-française), pour cet appareil | [actions rapides](#actions-rapides) ; avant que Home Assistant ait envoyé ses modes, la [fenêtre de la clim](climate.md#version-française) |
-| Capteur de la section « Énergie · Energy » | [fenêtre de l'énergie](energy.md#version-française) | [fenêtre de l'énergie](energy.md#version-française) |
+| Capteur d'une section « Énergie » | [fenêtre de l'énergie](energy.md#version-française) | [fenêtre de l'énergie](energy.md#version-française) |
 | Autre capteur | — (il montre seulement sa valeur) | — |
 
 **Cartes personnalisées** (section « Personnaliser des tuiles » du blueprint, [étape 6](../installation/devices.md#version-française)) :
