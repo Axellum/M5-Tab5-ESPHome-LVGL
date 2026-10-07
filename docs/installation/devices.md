@@ -22,22 +22,27 @@ Your devices — lights, shutters, climate, plants, TV, sensors — are picked i
 
 ## The sections
 
+Every section opens folded except Room 1: click its title to open it. Each field has a help sentence under it.
+
 | Section | What you pick | More |
 |---|---|---|
 | Pièce 1 — accueil · Room 1 — home | a name and up to five devices: the tiles of the home page, left to right | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
-| Pièce 2 to 5 · Room 2 to 5 (folded) | the rooms one or two swipes away | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
-| Personnaliser des tuiles · Customise tiles (folded) | another name, icon or behaviour for a tile (on only, confirm, read only) | [tile icons](../tiles_icons.md) |
+| Pièce 2 to 5 · Room 2 to 5 | the rooms one or two swipes away | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
+| Personnaliser des tuiles · Customise tiles | another name, icon or behaviour for a tile (on only, confirm, read only) | [tile icons](../tiles_icons.md) |
 | TV, téléphone · TV, phone | the TV, its remote, the phone battery | [other zones](adapt-to-your-home.md#other-zones) |
 | Températures · Temperatures | room temperature and humidity, a second temperature (greenhouse) and whether it is outdoors | [temperature history](adapt-to-your-home.md#temperature-history) |
 | Climatisation · Climate | the climate unit of the home card | [climate, any brand](adapt-to-your-home.md#limits) |
+| Tuile − / + · − / + tile | other devices for the − / + buttons of the home page (a volume, a light's brightness, a thermostat, a fan, a shutter, a number…), picked on the tablet with a tap on the room temperature | [user manual, temperatures and climate](../notice/home.md#temperatures-and-climate-9-10) |
 | Plantes · Plants | up to five moisture sensors | |
-| Sous l'horloge · Under the clock (folded) | up to three lines of four sensors under the clock (temperatures, humidity, production, batteries, detectors, switches: shown, not controlled), the place of the plants line, the time per line | [user manual, home screen](../notice/home.md) |
-| Boutons du haut · Top buttons (folded) | the screen a long press opens on each of the three buttons at the top right (house, gear, gamepad): Automatic, Nothing, or a screen, the house window included | [user manual, home screen](../notice/home.md#the-three-buttons-top-right-6-to-8) |
+| Sous l'horloge · Under the clock | up to three lines of four sensors under the clock (temperatures, humidity, production, batteries, detectors, switches: shown, not controlled), the place of the plants line, the time per line | [user manual, home screen](../notice/home.md) |
+| Boutons du haut · Top buttons | the screen a long press opens on each of the three buttons at the top right (house, gear, gamepad): Automatic, Nothing, or a screen, the house window included | [user manual, home screen](../notice/home.md#the-three-buttons-top-right-6-to-8) |
 | Planning de travail · Work schedule | empty: the calendar of the « Tab5 · agenda de travail » list ([step 5](sources.md)) | |
 | Météo · Weather | empty: the weather lists of [step 5](sources.md). Filled, it writes its choice into them and wins over them; with several tablets, fill it in one automation only | [weather providers](weather.md) |
-| Énergie · Energy (folded) | solar, grid, home and battery | [solar energy](adapt-to-your-home.md#solar-energy-optional) |
-| Tuiles de l'accueil (réglage 3.x) · Home tiles (3.x setup) (folded) | used while room 1 is empty, and by a 3.0 or 3.1 firmware | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
-| Avancé · Advanced (folded) | the tablet's name in ESPHome: change it only if you renamed the device | |
+| Énergie : solaire · Energy: solar | solar power and solar energy produced (a main sensor, then the other inverters if you have several), the panels' peak power | [solar energy](adapt-to-your-home.md#solar-energy-optional) |
+| Énergie : réseau et maison · Energy: grid and home | grid power (bought or sold), home consumption | [solar energy](adapt-to-your-home.md#solar-energy-optional) |
+| Énergie : batterie · Energy: battery | level, power and temperature of a home battery | [solar energy](adapt-to-your-home.md#solar-energy-optional) |
+| Ancien accueil (si la pièce 1 est vide) · Former home page (if room 1 is empty) | the five fixed places of the first versions (PC or TV, shutter, three lights): shown while room 1 is empty, and by a firmware too old for rooms | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
+| Avancé · Advanced | the tablet's name in ESPHome: change it only if you renamed the device | |
 
 **What you don't have disappears**, with its buttons: leave its slot empty ([other zones](adapt-to-your-home.md#other-zones)).
 
@@ -69,22 +74,27 @@ Vos appareils — lumières, volets, clim, plantes, TV, capteurs — se choisiss
 
 ## Les sections
 
+Toutes les sections s'ouvrent repliées, sauf la pièce 1 : cliquez sur un titre pour l'ouvrir. Chaque champ a une phrase d'aide dessous.
+
 | Section | Ce que vous choisissez | Plus |
 |---|---|---|
 | Pièce 1 — accueil · Room 1 — home | un nom et jusqu'à cinq appareils : les tuiles de l'accueil, de gauche à droite | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
-| Pièce 2 à 5 · Room 2 to 5 (repliées) | les pièces à un ou deux glissements | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
-| Personnaliser des tuiles · Customise tiles (repliée) | un autre nom, une autre icône ou un comportement pour une tuile (allumer seulement, confirmer, lecture seule) | [icônes des tuiles](../tiles_icons.md#version-française) |
+| Pièce 2 à 5 · Room 2 to 5 | les pièces à un ou deux glissements | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
+| Personnaliser des tuiles · Customise tiles | un autre nom, une autre icône ou un comportement pour une tuile (allumer seulement, confirmer, lecture seule) | [icônes des tuiles](../tiles_icons.md#version-française) |
 | TV, téléphone · TV, phone | la TV, sa télécommande, la batterie du téléphone | [autres zones](adapt-to-your-home.md#autres-zones) |
 | Températures · Temperatures | température et humidité de la pièce, une seconde température (serre) et si elle est dehors | [historique des températures](adapt-to-your-home.md#historique-des-températures) |
 | Climatisation · Climate | la clim de la carte de l'accueil | [clim, toutes marques](adapt-to-your-home.md#limites) |
+| Tuile − / + · − / + tile | d'autres appareils pour les boutons − / + de l'accueil (un volume, la luminosité d'une lampe, un thermostat, un ventilateur, un volet, un nombre…), choisis sur la tablette d'un tap sur la température de la pièce | [notice, températures et clim](../notice/home.md#températures-et-clim-9-10) |
 | Plantes · Plants | jusqu'à cinq capteurs d'humidité | |
-| Sous l'horloge · Under the clock (repliée) | jusqu'à trois lignes de quatre capteurs sous l'horloge (températures, humidités, production, batteries, détecteurs, interrupteurs : montrés, pas commandés), la place de la ligne des plantes, la durée d'une ligne | [notice, écran d'accueil](../notice/home.md#version-française) |
-| Boutons du haut · Top buttons (repliée) | l'écran qu'ouvre l'appui long de chacun des trois boutons en haut à droite (maison, engrenage, manette) : Automatique, Rien, ou un écran, la fenêtre Maison comprise | [notice, écran d'accueil](../notice/home.md#les-trois-boutons-en-haut-à-droite-6-à-8) |
+| Sous l'horloge · Under the clock | jusqu'à trois lignes de quatre capteurs sous l'horloge (températures, humidités, production, batteries, détecteurs, interrupteurs : montrés, pas commandés), la place de la ligne des plantes, la durée d'une ligne | [notice, écran d'accueil](../notice/home.md#version-française) |
+| Boutons du haut · Top buttons | l'écran qu'ouvre l'appui long de chacun des trois boutons en haut à droite (maison, engrenage, manette) : Automatique, Rien, ou un écran, la fenêtre Maison comprise | [notice, écran d'accueil](../notice/home.md#les-trois-boutons-en-haut-à-droite-6-à-8) |
 | Planning de travail · Work schedule | vide : l'agenda de la liste « Tab5 · agenda de travail » ([étape 5](sources.md#version-française)) | |
 | Météo · Weather | vide : les listes météo de l'[étape 5](sources.md#version-française). Remplie, elle écrit son choix dans ces listes et prime sur elles ; avec plusieurs tablettes, remplissez-la dans une seule automatisation | [fournisseurs météo](weather.md#version-française) |
-| Énergie · Energy (repliée) | solaire, réseau, maison et batterie | [énergie solaire](adapt-to-your-home.md#énergie-solaire-facultatif) |
-| Tuiles de l'accueil (réglage 3.x) · Home tiles (3.x setup) (repliée) | sert tant que la pièce 1 est vide, et à un firmware 3.0 ou 3.1 | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
-| Avancé · Advanced (repliée) | le nom de la tablette dans ESPHome : ne le changez que si vous avez renommé l'appareil | |
+| Énergie : solaire · Energy: solar | puissance et énergie solaires produites (un capteur principal, puis les autres onduleurs s'il y en a plusieurs), la puissance crête des panneaux | [énergie solaire](adapt-to-your-home.md#énergie-solaire-facultatif) |
+| Énergie : réseau et maison · Energy: grid and home | puissance du réseau (achat ou vente), consommation de la maison | [énergie solaire](adapt-to-your-home.md#énergie-solaire-facultatif) |
+| Énergie : batterie · Energy: battery | niveau, puissance et température d'une batterie domestique | [énergie solaire](adapt-to-your-home.md#énergie-solaire-facultatif) |
+| Ancien accueil (si la pièce 1 est vide) · Former home page (if room 1 is empty) | les cinq places fixes des premières versions (PC ou TV, volet, trois lumières) : montrées tant que la pièce 1 est vide, et par un firmware trop ancien pour les pièces | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
+| Avancé · Advanced | le nom de la tablette dans ESPHome : ne le changez que si vous avez renommé l'appareil | |
 
 **Ce que vous n'avez pas disparaît**, avec ses boutons : laissez son emplacement vide ([autres zones](adapt-to-your-home.md#autres-zones)).
 

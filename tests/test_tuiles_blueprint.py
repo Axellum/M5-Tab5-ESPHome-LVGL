@@ -431,6 +431,26 @@ def test_entrees_des_pieces_et_sections():
     assert valeurs == ["normal", "allumer_seulement", "confirmer", "lecture_seule"]
 
 
+def test_editeur_lisible():
+    """Relecture du 07/10/2026 : toutes les sections repliées sauf la pièce 1, une phrase
+    d'aide (français puis anglais) sur chaque entrée, l'Énergie en trois sections. Les
+    sections ne changent pas où HA range les valeurs (à plat sous use_blueprint.input,
+    Blueprint.inputs de homeassistant/components/blueprint/models.py)."""
+    sections = _blueprint()["blueprint"]["input"]
+    for nom, s in sections.items():
+        assert s.get("collapsed") is (None if nom == "piece_1" else True), f"section {nom}"
+    for nom, e in _entrees(_blueprint()).items():
+        assert "\n\n" in e.get("description", ""), f"entrée {nom} : description FR puis EN"
+    energie = [n for n in sections if n.startswith("energie")]
+    assert energie == ["energie", "energie_reseau_maison", "energie_stockage"]
+    assert list(sections["energie"]["input"]) == ["energie_solaire", "energie_solaire_autres", "energie_crete",
+                                                  "energie_production", "energie_production_autres"]
+    assert list(sections["energie_reseau_maison"]["input"]) == ["energie_reseau", "energie_reseau_export",
+                                                               "energie_reseau_inverse", "energie_maison"]
+    assert list(sections["energie_stockage"]["input"]) == ["energie_batterie", "energie_batterie_puissance",
+                                                           "energie_batterie_inverse", "energie_batterie_temperature"]
+
+
 def test_entrees_toutes_facultatives_et_noms_3x_conserves():
     entrees = _entrees(_blueprint())
     for nom, e in entrees.items():

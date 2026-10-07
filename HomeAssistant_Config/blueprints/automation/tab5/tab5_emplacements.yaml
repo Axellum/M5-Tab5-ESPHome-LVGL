@@ -32,7 +32,8 @@
 #         qui restent la seule source lue par les capteurs et les poussées ; une liste changée
 #         à la main y revient, avec une notification. Vide : rien n'est écrit, les listes font
 #         foi comme avant (déclencheurs meteo_*, variable meteo_a_ecrire) ;
-#       - section « Énergie » (ADR-0028, 04/10/2026, discussion #278), facultative : les
+#       - sections « Énergie » (ADR-0028, 04/10/2026, discussion #278 ; trois depuis le
+#         07/10/2026 : solaire, réseau et maison, batterie), facultatives : les
 #         capteurs d'une installation solaire. Une tuile cap de l'un d'eux prend l'option e
 #         (elle ouvre le popup Énergie) ; l'événement esphome.tab5_energie (vue) lance
 #         script.tab5_energie (packages/tab5_energie.yaml) avec ces capteurs. Vide : aucune
@@ -86,23 +87,22 @@ blueprint:
   # changent pas (des automatisations existantes les référencent).
   name: "Tab5 — emplacements de l'écran · screen slots"
   description: >-
-    Choisissez les appareils de l'écran du M5Stack Tab5. Firmware 3.2 et plus : jusqu'à
-    cinq pièces de cinq appareils, une par page de la rangée du bas (l'accueil, puis les
-    pages atteintes d'un glissement) ; le nom, l'icône et le type de chaque tuile viennent
-    de Home Assistant. Firmware 3.0 et 3.1 : les réglages 3.x (section repliée) servent
-    toujours. Un emplacement laissé vide disparaît de l'écran, avec ses boutons. Une seule
-    automatisation par tablette. Les états sont poussés à la connexion et au démarrage de
-    Home Assistant, puis à chaque changement visible ; les mesures (températures,
-    humidités, plantes, batterie, capteurs des pièces) sont regroupées toutes les 5 minutes.
+    Choisissez les appareils de l'écran du M5Stack Tab5 : jusqu'à cinq pièces de cinq
+    appareils, une par page de la rangée du bas (l'accueil, puis les pages atteintes d'un
+    glissement). Le nom, l'icône et le type de chaque tuile viennent de Home Assistant.
+    Tout est facultatif : ce qui reste vide disparaît de l'écran, avec ses boutons. Une
+    seule automatisation par tablette. Un changement part tout de suite ; les mesures
+    (températures, plantes, capteurs) sont mises à jour toutes les 5 minutes. Pas à pas :
+    [étape 6 de l'installation](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation/devices.md#version-française).
 
 
-    Pick the devices of the M5Stack Tab5 screen. Firmware 3.2 and later: up to five rooms
-    of five devices, one per page of the bottom row (the home page, then the pages a swipe
-    reaches); each tile's name, icon and kind come from Home Assistant. Firmware 3.0 and
-    3.1: the 3.x settings (folded section) still apply. An empty slot disappears from the
-    screen, with its buttons. One automation per tablet. States are pushed on connection
-    and when Home Assistant starts, then on every visible change; measurements
-    (temperatures, humidity, plants, battery, room sensors) are grouped every 5 minutes.
+    Pick the devices of the M5Stack Tab5 screen: up to five rooms of five devices, one per
+    page of the bottom row (the home page, then the pages a swipe reaches). Each tile's
+    name, icon and kind come from Home Assistant. Everything is optional: what you leave
+    empty disappears from the screen, with its buttons. One automation per tablet. A
+    change is sent at once; measurements (temperatures, plants, sensors) are updated every
+    5 minutes. Step by step:
+    [step 6 of the installation](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation/devices.md).
   domain: automation
   author: Axellum
   source_url: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml
@@ -118,12 +118,12 @@ blueprint:
       name: "Pièce 1 — accueil (aujourd'hui → J+4) · Room 1 — home (today → day 4)"
       icon: mdi:home
       description: >-
-        Les cinq tuiles de l'accueil (firmware 3.2 et plus). Laissée vide, elle reprend
-        les réglages de la section « Tuiles de l'accueil (réglage 3.x) ».
+        Les cinq tuiles de l'accueil. Laissée vide, l'accueil garde les appareils de la
+        section « Ancien accueil », tout en bas.
 
 
-        The five tiles of the home page (firmware 3.2 and later). Left empty, it takes the
-        settings of the « Home tiles (3.x setup) » section.
+        The five tiles of the home page. Left empty, the home page keeps the devices of the
+        « Former home page » section, at the bottom.
       input:
         piece_1_nom:
           name: Nom de la pièce · Room name
@@ -378,6 +378,7 @@ blueprint:
     appareils:
       name: TV, téléphone · TV, phone
       icon: mdi:television
+      collapsed: true
       input:
         tv:
           name: TV
@@ -395,12 +396,13 @@ blueprint:
         tv_telecommande:
           name: Télécommande de la TV · TV remote
           description: >-
-            Pour les touches du popup TV. Les applications passent par le script
-            tab5_tv_app, s'il existe.
+            Pour les touches de la télécommande à l'écran. Les boutons d'applications
+            (Netflix, YouTube…) demandent en plus une TV Samsung, choisie dans la liste
+            « Tab5 · TV Samsung » de Home Assistant.
 
 
-            For the keys of the TV popup. Apps go through the tab5_tv_app script, if it
-            exists.
+            For the keys of the on-screen remote. The app buttons (Netflix, YouTube…) also
+            need a Samsung TV, picked in Home Assistant's « Tab5 · TV Samsung » list.
           default: []
           selector:
             entity:
@@ -408,6 +410,13 @@ blueprint:
                 - domain: remote
         telephone:
           name: Batterie du téléphone · Phone battery
+          description: >-
+            Une icône de téléphone en haut à gauche de l'écran, colorée selon sa batterie.
+            Vide : pas d'icône.
+
+
+            A phone icon at the top left of the screen, coloured by its battery. Empty: no
+            icon.
           default: []
           selector:
             entity:
@@ -417,9 +426,17 @@ blueprint:
     temperatures:
       name: Températures · Temperatures
       icon: mdi:thermometer
+      collapsed: true
       input:
         salon_temperature:
           name: Température de la pièce · Room temperature
+          description: >-
+            La première température en haut de l'accueil. Un appui long montre son
+            historique.
+
+
+            The first temperature at the top of the home page. A long press shows its
+            history.
           default: []
           selector:
             entity:
@@ -442,14 +459,12 @@ blueprint:
         serre_temperature:
           name: Seconde température (serre) · Second temperature (greenhouse)
           description: >-
-            Sans elle, une manette ouvre l'arcade à sa place. Un appui long sur l'une des
-            deux températures montre son historique ; celui de la seconde montre aussi la
-            prévision de la météo (packages/tab5_historique.yaml).
+            Sans elle, une manette ouvre l'arcade à sa place. Un appui long montre son
+            historique, avec la prévision de la météo.
 
 
-            Without it, a gamepad opens the arcade in its place. A long press on either
-            temperature shows its history; the second one's also shows the weather forecast
-            (packages/tab5_historique.yaml).
+            Without it, a gamepad opens the arcade in its place. A long press shows its
+            history, with the weather forecast.
           default: []
           selector:
             entity:
@@ -473,16 +488,17 @@ blueprint:
     climatisation:
       name: Climatisation · Climate
       icon: mdi:air-conditioner
+      collapsed: true
       input:
         clim:
           name: Climatisation · Climate
           description: >-
-            − / consigne / + et le popup. Toute autre clim placée dans une pièce ouvre le
-            popup pour elle-même.
+            La clim des boutons − / consigne / + de l'accueil et de sa fenêtre. Toute autre
+            clim placée dans une pièce ouvre sa propre fenêtre.
 
 
-            − / setpoint / + and the popup. Any other climate placed in a room opens the
-            popup for itself.
+            The climate of the home page's − / setpoint / + buttons and of its window. Any
+            other climate placed in a room opens its own window.
           default: []
           selector:
             entity:
@@ -498,20 +514,17 @@ blueprint:
       icon: mdi:plus-minus-variant
       collapsed: true
       description: >-
-        D'autres appareils à régler avec les boutons − / + de l'accueil (firmware plus
-        récent que 3.6.0). Toucher la température du salon déroule la liste : la clim
-        ci-dessus, ces appareils, puis le volume de la tablette ; le choix reste jusqu'au
-        suivant, même après un redémarrage. Toucher la valeur entre − et + ouvre le popup
-        de l'appareil quand il en a un (lampe ou volet placé dans une pièce, TV avec sa
-        télécommande, clim).
+        D'autres appareils à régler avec les boutons − / + de l'accueil (firmware 3.7 ou
+        plus récent). Toucher la température de la pièce déroule la liste : la clim, ces
+        appareils, puis le volume de la tablette ; le choix reste, même après un
+        redémarrage. Toucher la valeur entre − et + ouvre la fenêtre de l'appareil quand il
+        en a une.
 
 
-        Other devices to adjust with the − / + buttons of the home page (firmware newer
-        than 3.6.0). Touching the living-room temperature unfolds the list: the climate
-        above, these devices, then the tablet's volume; the choice stays until the next
-        one, even after a reboot. Touching the value between − and + opens the device's
-        popup when it has one (a light or a shutter placed in a room, a TV with its
-        remote, a climate).
+        Other devices to adjust with the − / + buttons of the home page (firmware 3.7 or
+        newer). Touching the room temperature unfolds the list: the climate, these
+        devices, then the tablet's volume; the choice stays, even after a restart. Touching
+        the value between − and + opens the device's window when it has one.
       input:
         reglables:
           name: Appareils · Devices
@@ -547,6 +560,7 @@ blueprint:
     plantes:
       name: Plantes · Plants
       icon: mdi:sprout
+      collapsed: true
       description: >-
         Le capteur d'humidité de chaque pot. Conductivité, éclairement, température et
         batterie sont pris sur le même appareil (capteurs Flower Care et semblables).
@@ -557,6 +571,11 @@ blueprint:
       input:
         pot_1:
           name: Pot 1
+          description: >-
+            Le capteur d'humidité de la terre du premier pot. Vide : ce pot n'apparaît pas.
+
+
+            The soil moisture sensor of the first pot. Empty: this pot does not show.
           default: []
           selector:
             entity:
@@ -565,6 +584,11 @@ blueprint:
                   device_class: moisture
         pot_2:
           name: Pot 2
+          description: >-
+            Le capteur d'humidité de la terre du deuxième pot. Vide : ce pot n'apparaît pas.
+
+
+            The soil moisture sensor of the second pot. Empty: this pot does not show.
           default: []
           selector:
             entity:
@@ -573,6 +597,11 @@ blueprint:
                   device_class: moisture
         pot_3:
           name: Pot 3
+          description: >-
+            Le capteur d'humidité de la terre du troisième pot. Vide : ce pot n'apparaît pas.
+
+
+            The soil moisture sensor of the third pot. Empty: this pot does not show.
           default: []
           selector:
             entity:
@@ -581,6 +610,11 @@ blueprint:
                   device_class: moisture
         pot_4:
           name: Pot 4
+          description: >-
+            Le capteur d'humidité de la terre du quatrième pot. Vide : ce pot n'apparaît pas.
+
+
+            The soil moisture sensor of the fourth pot. Empty: this pot does not show.
           default: []
           selector:
             entity:
@@ -589,6 +623,11 @@ blueprint:
                   device_class: moisture
         pot_5:
           name: Pot 5
+          description: >-
+            Le capteur d'humidité de la terre du cinquième pot. Vide : ce pot n'apparaît pas.
+
+
+            The soil moisture sensor of the fifth pot. Empty: this pot does not show.
           default: []
           selector:
             entity:
@@ -605,18 +644,16 @@ blueprint:
       icon: mdi:view-sequential
       collapsed: true
       description: >-
-        La rangée sous l'horloge de l'accueil (firmware plus récent que 3.6.0) : jusqu'à
-        trois lignes de quatre capteurs, plus celle des plantes. Elles tournent avec la
-        carte centrale ; un appui passe à la ligne suivante. Une valeur prend la couleur
-        de sa mesure (température, humidité, batterie, puissance). Affichage seul : un
-        interrupteur ou une lampe montre son état, sans se commander d'ici.
+        La rangée sous l'horloge de l'accueil (firmware 3.7 ou plus récent) : jusqu'à trois
+        lignes de quatre capteurs, plus celle des plantes. Elles tournent avec la carte
+        centrale ; un appui passe à la ligne suivante. Affichage seul : un interrupteur ou
+        une lampe montre son état, sans se commander d'ici.
 
 
-        The row under the clock of the home page (firmware newer than 3.6.0): up to three
-        lines of four sensors, plus the plants line. They rotate with the central card; a
-        tap shows the next line. A value takes the colour of its measurement
-        (temperature, humidity, battery, power). Display only: a switch or a light shows
-        its state, without being controlled from here.
+        The row under the clock of the home page (firmware 3.7 or newer): up to three lines
+        of four sensors, plus the plants line. They rotate with the central card; a tap
+        shows the next line. Display only: a switch or a light shows its state, without
+        being controlled from here.
       input:
         rangee_ligne_1:
           name: Ligne 1 · Line 1
@@ -731,36 +768,37 @@ blueprint:
       icon: mdi:gesture-tap-hold
       collapsed: true
       description: >-
-        L'écran qu'ouvre l'appui long de chacun des trois boutons en haut à droite de
-        l'accueil (firmware plus récent que 3.7.0-rc.4 ; un plus ancien garde ses appuis
-        longs). Le tap ne change pas : appareils, Réglages, Arcade. Automatique : Énergie
-        sur la maison (quand la production solaire s'affiche), console système sur
-        l'engrenage, télécommande sur la manette (quand une TV est choisie). Un écran
-        absent de la maison (clim, plantes, TV, production solaire pour Énergie) ne s'ouvre
-        pas. Une petite icône dans le coin du bouton montre l'écran choisi. Si
-        l'engrenage n'ouvre plus la console, elle reste joignable par l'entité « Aller à
-        l'écran » de la tablette. Le bouton maison est masqué quand aucune pièce n'a
-        d'appareil.
+        L'écran qu'ouvre un appui long sur chacun des trois boutons en haut à droite de
+        l'accueil (firmware 3.7 ou plus récent). Le tap ne change pas. Une petite icône
+        dans le coin du bouton montre l'écran choisi ; un écran absent de la maison (pas de
+        clim, de plantes, de TV, ou pas de production solaire pour Énergie) ne s'ouvre pas.
+        Si l'engrenage n'ouvre plus la console système, l'entité « Aller à l'écran » de la
+        tablette l'ouvre toujours.
 
 
         The screen a long press opens on each of the three buttons at the top right of the
-        home page (firmware newer than 3.7.0-rc.4; an older one keeps its long presses).
-        The tap does not change: devices, Settings, Arcade. Automatic: Energy on the house
-        (when the solar production shows), the system console on the gear, the remote on
-        the gamepad (when a TV is picked). A screen your home lacks (climate, plants, TV,
-        solar production for Energy) does not open. A small icon in the button's corner
-        shows the chosen screen. If the gear no longer opens the console, it stays
-        reachable from the tablet's « Aller à l'écran » entity. The house button is hidden
-        when no room has a device.
+        home page (firmware 3.7 or newer). The tap does not change. A small icon in the
+        button's corner shows the chosen screen; a screen your home lacks (no climate,
+        plants or TV, or no solar production for Energy) does not open. If the gear no
+        longer opens the system console, the tablet's « Aller à l'écran » entity still
+        does.
       input:
         appui_maison:
           name: "Maison : appui long · House: long press"
+          description: >-
+            Le bouton maison, à gauche des trois (son tap montre vos appareils ; masqué
+            quand aucune pièce n'en a). Automatique : la fenêtre Énergie, quand la
+            production solaire s'affiche.
+
+
+            The house button, left of the three (its tap shows your devices; hidden when no
+            room has any). Automatic: the Energy window, when the solar production shows.
           default: auto
           selector:
             select:
               mode: dropdown
               options: &ecrans_appui_long
-                - label: "Automatique : comme aujourd'hui · Automatic: as today"
+                - label: "Automatique (par défaut) · Automatic (default)"
                   value: auto
                 - label: "Rien · Nothing"
                   value: rien
@@ -790,6 +828,13 @@ blueprint:
                   value: maison
         appui_engrenage:
           name: "Engrenage : appui long · Gear: long press"
+          description: >-
+            Le bouton engrenage, au milieu (son tap ouvre les réglages). Automatique : la
+            console système.
+
+
+            The gear button, in the middle (its tap opens the settings). Automatic: the
+            system console.
           default: auto
           selector:
             select:
@@ -797,6 +842,13 @@ blueprint:
               options: *ecrans_appui_long
         appui_manette:
           name: "Manette : appui long · Gamepad: long press"
+          description: >-
+            Le bouton manette, à droite (son tap ouvre l'Arcade). Automatique : la
+            télécommande TV, quand une TV est choisie.
+
+
+            The gamepad button, on the right (its tap opens the Arcade). Automatic: the TV
+            remote, when a TV is picked.
           default: auto
           selector:
             select:
@@ -805,18 +857,19 @@ blueprint:
     planning:
       name: Planning de travail · Work schedule
       icon: mdi:calendar-clock
+      collapsed: true
       input:
         agenda_travail:
           name: Agenda de travail · Work calendar
           description: >-
-            Laissé vide : celui de la liste « Tab5 · agenda de travail » (package
-            tab5_reglages), qui donne aussi les horaires et l'heure du réveil. Sans agenda
-            du tout, le panneau planning sort de la carte centrale.
+            Laissé vide : celui de la liste « Tab5 · agenda de travail » de Home Assistant,
+            qui donne aussi les horaires et l'heure du réveil. Sans agenda du tout, le
+            panneau planning sort de la carte centrale.
 
 
-            Left empty: the one of the « Tab5 · agenda de travail · work calendar » list
-            (tab5_reglages package), which also gives the hours and the alarm time. With no
-            calendar at all, the planning panel leaves the central card.
+            Left empty: the one of Home Assistant's « Tab5 · agenda de travail · work
+            calendar » list, which also gives the hours and the alarm time. With no calendar
+            at all, the planning panel leaves the central card.
           default: []
           selector:
             entity:
@@ -831,20 +884,20 @@ blueprint:
     meteo:
       name: Météo · Weather
       icon: mdi:weather-partly-cloudy
+      collapsed: true
       description: >-
         Facultatif. Laissés vides, ces choix restent ceux des listes « Tab5 · … » de Home
-        Assistant (package tab5_meteo_sources). Remplis, ils sont écrits dans ces listes et y
-        priment : un changement fait à la main dans la liste revient au choix d'ici, avec une
-        notification ; videz le champ pour choisir de nouveau dans la liste. Ces listes valent
-        pour toute la maison : avec plusieurs tablettes, remplissez-les dans une seule
-        automatisation.
+        Assistant. Remplis, ils sont écrits dans ces listes et y priment (un changement fait
+        à la main dans la liste revient au choix d'ici, avec une notification). Ces listes
+        valent pour toute la maison : avec plusieurs tablettes, remplissez-les dans une
+        seule automatisation.
 
 
-        Optional. Left empty, these choices stay those of the « Tab5 · … » lists of Home
-        Assistant (tab5_meteo_sources package). Filled, they are written into these lists and
-        take precedence: a change made by hand in the list goes back to the choice made here,
-        with a notification; empty the field to choose in the list again. These lists apply to
-        the whole home: with several tablets, fill them in one automation only.
+        Optional. Left empty, these choices stay those of Home Assistant's « Tab5 · … »
+        lists. Filled, they are written into these lists and take precedence (a change made
+        by hand in the list goes back to the choice made here, with a notification). These
+        lists apply to the whole home: with several tablets, fill them in one automation
+        only.
       input:
         meteo_previsions:
           name: Météo des prévisions · Forecast weather
@@ -894,6 +947,13 @@ blueprint:
                   value: Aucune
         meteo_vigilance:
           name: Vigilances · Weather warnings
+          description: >-
+            Les alertes météo de l'écran (orages, canicule, crues…) : la couleur de la date
+            et le panneau des vigilances de la carte centrale.
+
+
+            The weather warnings of the screen (storms, heatwave, floods…): the colour of the
+            date and the warnings panel of the central card.
           default: liste
           selector:
             select:
@@ -915,32 +975,38 @@ blueprint:
     # n'apparaît. Remplie, une tuile cap de l'un de ces capteurs ouvre le popup Énergie
     # (option e), dont script.tab5_energie (packages/tab5_energie.yaml) pousse les données.
     # Signe du réseau : + achat, − vente (case « Inverser » sinon, ou deux capteurs).
+    # Trois sections depuis le 07/10/2026 (solaire ; réseau et maison ; batterie) : HA
+    # range les valeurs à plat sous use_blueprint.input, par nom d'entrée (Blueprint.inputs
+    # de homeassistant/components/blueprint/models.py aplatit les sections) ; les clés des
+    # entrées n'ont pas changé, les automatisations existantes gardent leurs valeurs.
     energie:
-      name: Énergie · Energy
+      name: "Énergie : solaire · Energy: solar"
       icon: mdi:solar-power
       collapsed: true
       description: >-
-        Facultatif : une installation solaire, avec ou sans batterie. Laissée vide, l'écran
-        n'a rien de plus. Remplie : placez l'un de ces capteurs dans une pièce (le capteur
-        solaire, par exemple) ; sa tuile montre sa valeur et ouvre au toucher le popup
-        Énergie : solaire, maison, réseau et batterie en direct, et la production en barres
-        par heure, par jour et par mois. Il faut aussi le package tab5_energie. Un champ
-        vide fait disparaître sa carte ou sa ligne.
+        Facultatif : une installation solaire, avec ou sans batterie (sections suivantes).
+        Laissées vides, les trois sections « Énergie » n'ajoutent rien à l'écran. Remplies :
+        placez l'un de leurs capteurs dans une pièce (le solaire, par exemple) ; sa tuile
+        ouvre au toucher la fenêtre Énergie, avec solaire, maison, réseau et batterie en
+        direct, et la production en barres par heure, jour et mois. Un champ vide fait
+        disparaître sa carte ou sa ligne.
 
 
-        Optional: a solar installation, with or without a battery. Left empty, the screen
-        shows nothing more. Filled: put one of these sensors in a room (the solar one, for
-        instance); its tile shows its value and opens the Energy popup on tap: solar, home,
-        grid and battery live, and the production as bars per hour, day and month. The
-        tab5_energie package is needed too. An empty field hides its card or line.
+        Optional: a solar installation, with or without a battery (next sections). Left
+        empty, the three « Énergie · Energy » sections add nothing to the screen. Filled:
+        put one of their sensors in a room (the solar one, for instance); its tile opens
+        the Energy window on tap, with solar, home, grid and battery live, and the
+        production as bars per hour, day and month. An empty field hides its card or line.
       input:
         energie_solaire:
           name: Puissance solaire · Solar power
           description: >-
-            Ce que produisent les panneaux en ce moment (W ou kW).
+            Le capteur principal : ce que produisent les panneaux en ce moment (W ou kW).
+            Plusieurs onduleurs : le premier ici, les autres dans le champ suivant.
 
 
-            What the panels produce right now (W or kW).
+            The main sensor: what the panels produce right now (W or kW). Several
+            inverters: the first one here, the others in the next field.
           default: []
           selector:
             entity:
@@ -956,14 +1022,14 @@ blueprint:
         energie_solaire_autres:
           name: Autres puissances solaires · Other solar power
           description: >-
-            Plusieurs onduleurs ou plusieurs chaînes de panneaux (pv1, pv2…) : mettez ici
-            les autres capteurs, ils sont additionnés à la puissance solaire (un capteur
-            indisponible, la nuit par exemple, est ignoré tant qu'un autre a une valeur).
+            Seulement avec plusieurs onduleurs ou chaînes de panneaux (pv1, pv2…) : les
+            capteurs autres que le principal, ajoutés à lui. Un capteur indisponible (la
+            nuit par exemple) est ignoré tant qu'un autre a une valeur.
 
 
-            Several inverters or several panel strings (pv1, pv2…): put the other sensors
-            here, they are added to the solar power (an unavailable sensor, at night for
-            instance, is skipped as long as another one has a value).
+            Only with several inverters or panel strings (pv1, pv2…): the sensors other
+            than the main one, added to it. An unavailable sensor (at night for instance) is
+            skipped as long as another one has a value.
           default: []
           selector:
             entity:
@@ -974,17 +1040,15 @@ blueprint:
         energie_crete:
           name: Puissance crête des panneaux · Panel peak power
           description: >-
-            En kWc (kilowatts-crête, sur la facture ou l'onduleur). Remplie avec la puissance
-            solaire : une icône du bandeau d'état, en haut à gauche, montre la production en
-            pourcentage de cette crête, par sa couleur (gris la nuit, puis rouge, ambre,
-            bleu, vert). Avec plusieurs sources : la crête de tous les panneaux. 0 : pas
+            En kWc (kilowatts-crête, sur la facture ou l'onduleur), pour tous les panneaux.
+            Avec la puissance solaire, une icône en haut à gauche de l'écran montre la
+            production par sa couleur (gris la nuit, puis rouge, ambre, bleu, vert). 0 : pas
             d'icône.
 
 
-            In kWp (kilowatt-peak, on the invoice or the inverter). Filled together with the
-            solar power: an icon of the status strip, top left, shows the production as a
-            percentage of this peak, by its colour (grey at night, then red, amber, blue,
-            green). With several sources: the peak of all the panels. 0: no icon.
+            In kWp (kilowatt-peak, on the invoice or the inverter), for all the panels. With
+            the solar power, an icon at the top left of the screen shows the production by
+            its colour (grey at night, then red, amber, blue, green). 0: no icon.
           default: 0
           selector:
             number:
@@ -996,13 +1060,14 @@ blueprint:
         energie_production:
           name: Énergie solaire produite · Solar energy produced
           description: >-
-            Compteur en kWh (celui du tableau Énergie de Home Assistant, avec des
-            statistiques) : le total du jour et les barres viennent de son historique. Vide :
-            pas de graphique.
+            Le compteur principal, en kWh (celui du tableau Énergie de Home Assistant) : le
+            total du jour et les barres viennent de son historique. Plusieurs onduleurs : le
+            premier ici, les autres dans le champ suivant. Vide : pas de graphique.
 
 
-            Meter in kWh (the one of the Home Assistant Energy dashboard, with statistics):
-            the day total and the bars come from its history. Empty: no chart.
+            The main meter, in kWh (the one of the Home Assistant Energy dashboard): the day
+            total and the bars come from its history. Several inverters: the first one here,
+            the others in the next field. Empty: no chart.
           default: []
           selector:
             entity:
@@ -1012,14 +1077,13 @@ blueprint:
         energie_production_autres:
           name: Autres énergies solaires produites · Other solar energy produced
           description: >-
-            Un compteur par onduleur : mettez ici les autres (kWh ou Wh, avec des
-            statistiques). Le total du jour et chaque barre sont la somme de tous les
-            compteurs ; un compteur sans donnée sur une période y compte pour 0.
+            Seulement avec un compteur par onduleur : les compteurs autres que le principal
+            (kWh ou Wh), ajoutés à lui. Un compteur sans donnée sur une période y compte
+            pour 0.
 
 
-            One meter per inverter: put the other ones here (kWh or Wh, with statistics).
-            The day total and each bar are the sum of all the meters; a meter without data
-            for a period counts as 0 in it.
+            Only with one meter per inverter: the meters other than the main one (kWh or
+            Wh), added to it. A meter without data for a period counts as 0.
           default: []
           selector:
             entity:
@@ -1027,17 +1091,29 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: energy
+    energie_reseau_maison:
+      name: "Énergie : réseau et maison · Energy: grid and home"
+      icon: mdi:transmission-tower
+      collapsed: true
+      description: >-
+        Facultatif : ce que la maison achète ou vend au réseau, et ce qu'elle consomme, pour
+        la fenêtre Énergie.
+
+
+        Optional: what the home buys from or sells to the grid, and what it uses, for the
+        Energy window.
+      input:
         energie_reseau:
           name: Puissance du réseau · Grid power
           description: >-
-            Positive quand la maison achète (importe), négative quand elle vend (exporte) ;
-            dans l'autre sens, cochez « Inverser ». Compteur qui donne l'achat et la vente à
-            part : l'achat ici, la vente dans le champ suivant.
+            Positive quand la maison achète, négative quand elle vend ; dans l'autre sens,
+            cochez « Inverser » plus bas. Compteur qui donne l'achat et la vente à part :
+            l'achat ici, la vente dans le champ suivant.
 
 
-            Positive when the home buys (imports), negative when it sells (exports); the other
-            way round, tick « Invert ». Meter that gives import and export separately: import
-            here, export in the next field.
+            Positive when the home buys, negative when it sells; the other way round, tick
+            « Invert » below. Meter that gives import and export separately: import here,
+            export in the next field.
           default: []
           selector:
             entity:
@@ -1061,6 +1137,11 @@ blueprint:
                   device_class: power
         energie_reseau_inverse:
           name: Inverser le signe du réseau · Invert the grid sign
+          description: >-
+            À cocher si la puissance du réseau est positive quand la maison vend.
+
+
+            Tick it if the grid power is positive when the home sells.
           default: false
           selector:
             boolean: {}
@@ -1077,8 +1158,25 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: power
+    energie_stockage:
+      name: "Énergie : batterie · Energy: battery"
+      icon: mdi:battery-charging
+      collapsed: true
+      description: >-
+        Facultatif : une batterie domestique, pour la fenêtre Énergie. Ni celle du
+        téléphone, ni celle de la tablette.
+
+
+        Optional: a home battery, for the Energy window. Neither the phone's nor the
+        tablet's.
+      input:
         energie_batterie:
           name: Niveau de la batterie · Battery level
+          description: >-
+            Sa charge, en %.
+
+
+            Its charge, in %.
           default: []
           selector:
             entity:
@@ -1089,11 +1187,11 @@ blueprint:
           name: Puissance de la batterie · Battery power
           description: >-
             Positive en charge, négative en décharge ; dans l'autre sens, cochez
-            « Inverser ».
+            « Inverser » plus bas.
 
 
             Positive when charging, negative when discharging; the other way round, tick
-            « Invert ».
+            « Invert » below.
           default: []
           selector:
             entity:
@@ -1102,11 +1200,21 @@ blueprint:
                   device_class: power
         energie_batterie_inverse:
           name: Inverser le signe de la batterie · Invert the battery sign
+          description: >-
+            À cocher si la puissance de la batterie est positive en décharge.
+
+
+            Tick it if the battery power is positive when discharging.
           default: false
           selector:
             boolean: {}
         energie_batterie_temperature:
           name: Température de la batterie · Battery temperature
+          description: >-
+            Montrée sur la carte de la batterie.
+
+
+            Shown on the battery card.
           default: []
           selector:
             entity:
@@ -1116,35 +1224,51 @@ blueprint:
     # Réglage 3.x (ADR-0019) : les cinq places fixes de l'accueil. Lu par un firmware
     # 3.0/3.1, et par un firmware 3.2 tant que la pièce 1 est vide (ADR-0023).
     accueil_3x:
-      name: Tuiles de l'accueil (réglage 3.x) · Home tiles (3.x setup)
+      name: Ancien accueil (si la pièce 1 est vide) · Former home page (if room 1 is empty)
       icon: mdi:lightbulb-group
       description: >-
-        Les cinq places fixes de l'accueil d'avant la 3.2 : PC ou TV, volet, trois lumières.
-        Un firmware 3.0 ou 3.1 n'affiche que celles-ci ; un firmware 3.2 les montre tant
-        que la pièce 1 est vide (et la tuile PC garde alors son comportement PC + TV).
+        Les cinq places fixes de l'accueil des premières versions, de gauche à droite : PC
+        ou TV, volet, trois lumières. Elles s'affichent tant que la pièce 1 est vide, et sur
+        un firmware trop ancien pour les pièces. Pour une nouvelle installation, remplissez
+        plutôt la pièce 1.
 
 
-        The five fixed places of the home page before 3.2: PC or TV, shutter, three lights.
-        A 3.0 or 3.1 firmware shows only these; a 3.2 firmware shows them while room 1 is
-        empty (and the PC tile then keeps its PC + TV behaviour).
+        The five fixed places of the first versions' home page, left to right: PC or TV,
+        shutter, three lights. They show while room 1 is empty, and on a firmware too old
+        for rooms. For a new installation, fill room 1 instead.
       collapsed: true
       input:
         lumiere_1:
-          name: Lumière 1 (tuile 3) · Light 1 (tile 3)
+          name: Lumière 1 · Light 1
+          description: >-
+            La troisième place de l'ancien accueil.
+
+
+            The third place of the former home page.
           default: []
           selector:
             entity:
               filter:
                 - domain: light
         lumiere_2:
-          name: Lumière 2 (tuile 4) · Light 2 (tile 4)
+          name: Lumière 2 · Light 2
+          description: >-
+            La quatrième place de l'ancien accueil.
+
+
+            The fourth place of the former home page.
           default: []
           selector:
             entity:
               filter:
                 - domain: light
         lumiere_3:
-          name: Lumière 3 (tuile 5) · Light 3 (tile 5)
+          name: Lumière 3 · Light 3
+          description: >-
+            La cinquième place de l'ancien accueil.
+
+
+            The fifth place of the former home page.
           default: []
           selector:
             entity:
@@ -1153,12 +1277,13 @@ blueprint:
         pc:
           name: PC
           description: >-
-            Une prise ou un interrupteur (allumé par la tuile 1), ou un suivi de présence
-            (affichage seul). La tuile 1 éteint la TV allumée, sinon allume PC et TV.
+            La première place : une prise ou un interrupteur, ou un suivi de présence
+            (affichage seul). Un appui éteint la TV si elle est allumée, sinon allume le PC et
+            la TV.
 
 
-            A plug or a switch (turned on by tile 1), or a presence tracker (shown only).
-            Tile 1 turns the TV off when it is on, otherwise turns the PC and the TV on.
+            The first place: a plug or a switch, or a presence tracker (shown only). A tap
+            turns the TV off when it is on, otherwise turns the PC and the TV on.
           default: []
           selector:
             entity:
@@ -1167,18 +1292,16 @@ blueprint:
         volet:
           name: Volet · Shutter
           description: >-
-            Tuile 2. Un volet qui signale sa course (opening/closing) est poussé ici ;
-            avec le package volet_serre_tracking.yaml (volet qui ne la signale pas),
-            c'est le package qui pousse son état. Laissez ici le volet que suit ce package,
-            même s'il est aussi dans une pièce : ses commandes passent alors par le script
-            du package et sa tuile montre l'état que le package tient.
+            La deuxième place. Un volet qui ne dit pas quand il s'ouvre ou se ferme peut être
+            suivi par le réglage facultatif « volet à course simulée » (liste « Tab5 · volet à
+            course simulée ») : laissez alors ici ce même volet, même s'il est aussi dans une
+            pièce ; ses commandes et son état passent par ce réglage.
 
 
-            Tile 2. A shutter that reports its travel (opening/closing) is pushed here; with
-            the volet_serre_tracking.yaml package (a shutter that does not report it), the
-            package pushes its state. Keep here the shutter that package follows, even if it
-            is also in a room: its commands then go through the package's script, and its
-            tile shows the state the package keeps.
+            The second place. A shutter that does not say when it is opening or closing can
+            be followed by the optional « simulated travel » setting (list « Tab5 · volet à
+            course simulée »): then keep that same shutter here, even if it is also in a
+            room; its commands and its state go through that setting.
           default: []
           selector:
             entity:
@@ -1192,12 +1315,12 @@ blueprint:
         tablette:
           name: Nom de la tablette dans ESPHome · Tablet name in ESPHome
           description: >-
-            Préfixe de ses actions (esphome.<nom>_tab5_maj_…). Ne changer que si l'appareil a
-            été renommé.
+            Le nom de la tablette dans ESPHome, les « - » remplacés par des « _ ». À changer
+            seulement si vous avez renommé la tablette.
 
 
-            Prefix of its actions (esphome.<name>_tab5_maj_…). Change it only if the device
-            was renamed.
+            The tablet's name in ESPHome, with « _ » instead of « - ». Change it only if you
+            renamed the tablet.
           default: tab5_ha_hmi
           selector:
             text:
