@@ -873,15 +873,39 @@ enum BandeauIcone : uint8_t {
     BANDEAU_NB
 };
 
+// Boutons du haut à droite de l'accueil, de gauche à droite (06/10/2026 : un tap et un
+// appui long chacun). L'écran qu'ouvre l'appui long se choisit dans le blueprint
+// « Tab5 — emplacements » (07/10/2026, section « Boutons du haut ») : clé
+// « appuis|maison|engrenage|manette » de tab5_maj_emplacements (tab5_zones.cpp).
+enum BoutonHaut : uint8_t {
+    BOUTON_MAISON,     // btn_control_ha (tap : mode HA)
+    BOUTON_ENGRENAGE,  // btn_control_console (tap : Réglages)
+    BOUTON_MANETTE,    // btn_control_tv (tap : Arcade)
+    BOUTON_HAUT_NB
+};
+
+// Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-ha-controls.yaml), routine unique du
+// select « Aller à l'écran » et des appuis longs des boutons du haut. Les valeurs 0 à 11
+// SONT les index des options du select, dans le même ordre (tests/test_appuis.py) ;
+// ARCADE n'est pas une option du select (lancer l'Arcade à distance n'a pas d'usage),
+// seulement un choix d'appui long. Un écran de plus : avant ARCADE ici, à la fin du select
+// (ARCADE et NB se décalent : la NVS garde l'index du code dans kCodesEcran, tab5_zones.cpp,
+// jamais cette valeur), et son code à la fin de kCodesEcran et dans le blueprint.
+enum class Ecran : uint8_t {
+    AUCUN,       // « — » : position de repos du select ; « rien » pour un appui long
+    ACCUEIL, ASSISTANT, CALENDRIER, REVEIL, CLIM, PLANTES, TV, CONSOLE, ENERGIE, REGLAGES, ALERTES,
+    ARCADE,
+    NB
+};
+
 // Widgets que le masquage touche, posés par le script tab5_zones_apply (tab5-zones.yaml).
 struct ZonesUI {
     lv_obj_t* bandeau[BANDEAU_NB] = {};  // bandeau d'état, indexé par BandeauIcone
-    // Mini icônes des boutons du haut (06/10/2026) : l'appui long du bouton a de quoi
-    // ouvrir — panneau solaire sur « HA » (popup Énergie), écran sur la manette
-    // (télécommande TV). Les trois boutons ne bougent plus : la manette ouvre l'Arcade
-    // même sans TV.
-    lv_obj_t* mini_solaire = nullptr;  // icon_ha_solaire (btn_control_ha)
-    lv_obj_t* mini_tv = nullptr;       // icon_jeux_tv (btn_control_tv)
+    // Mini icônes des boutons du haut (06/10/2026), indexées par BoutonHaut
+    // (icon_mini_ha, icon_mini_sys, icon_mini_tv) : l'écran qu'ouvre l'appui long du
+    // bouton, quand il est disponible (boutons_haut_apply_ui, tab5_zones.cpp). Les trois
+    // boutons ne bougent pas : la manette ouvre l'Arcade même sans TV.
+    lv_obj_t* mini[BOUTON_HAUT_NB] = {};
     // Les cartes du calque « HA » et le sélecteur du popup lumière suivent les pièces
     // depuis l'ADR-0023 (g_tuiles_ui, tab5_tuiles.cpp).
     lv_obj_t* icon_salon = nullptr;
@@ -932,8 +956,23 @@ bool batterie_tension_ui(float tension, uint32_t maintenant_ms);
 bool batterie_presente();
 // Vrai quand HA pousse la production solaire (clé solaire de tab5_maj_emplacements :
 // puissance crête choisie dans le blueprint) : l'appui long du bouton « HA » ouvre alors
-// le popup Énergie, et sa mini icône le signale.
+// le popup Énergie (choix « auto »), et sa mini icône le signale.
 bool solaire_present();
+// Écran dont la zone est absente de cette maison (clim, plantes sans aucun pot, TV) : sa
+// fenêtre n'aurait rien à montrer ni à piloter. Lu par tab5_ecran_ouvrir.
+bool ecran_sans_zone(Ecran e);
+// Écran qu'un appui long peut ouvrir : sa zone est là et, pour Énergie, la production
+// solaire est reçue (la condition de l'appui long du bouton « HA » depuis le 06/10/2026).
+// Plus strict que le select, qui ouvre Énergie sans production solaire.
+bool ecran_disponible(Ecran e);
+// Écran qu'ouvre l'appui long du bouton b (valeur d'Ecran, pour
+// id(tab5_ecran_ouvrir).execute()) : le choix du blueprint (« auto » : Énergie, console,
+// télécommande TV, comme avant le 07/10/2026), 0 (Ecran::AUCUN) s'il ne fait rien.
+int bouton_haut_ecran(BoutonHaut b);
+// Mini icônes des trois boutons : glyphe de l'écran choisi s'il est disponible, celles du
+// 06/10/2026 en « auto » (aucune sur l'engrenage), masquées sinon. Appelée par
+// zones_apply_ui(), à la production solaire reçue ou perdue et au choix reçu.
+void boutons_haut_apply_ui();
 // Tuile i (0 à 4) de l'accueil : son appareil est-il absent ?
 bool zone_tuile_absente(int tuile);
 // Nombre de pots présents (0 à 5).

@@ -45,8 +45,10 @@ script:
           u.bandeau[BANDEAU_REVEIL] = id(icon_alarm_status);
           u.bandeau[BANDEAU_SOLAIRE] = id(icon_solaire);
           u.bandeau[BANDEAU_BATTERIE] = id(icon_batterie);
-          u.mini_solaire = id(icon_ha_solaire);
-          u.mini_tv = id(icon_jeux_tv);
+          // Mini icônes des boutons du haut, une ligne par valeur de BoutonHaut.
+          u.mini[BOUTON_MAISON] = id(icon_mini_ha);
+          u.mini[BOUTON_ENGRENAGE] = id(icon_mini_sys);
+          u.mini[BOUTON_MANETTE] = id(icon_mini_tv);
           u.icon_salon = id(icon_salon);
           u.val_salon = id(val_temp_salon);
           u.icon_serre = id(icon_serre);

@@ -22,7 +22,7 @@ lvgl:
       on_gesture:
         then:
           # [AI-CONTEXT] Pagination previsions (swipe gauche/droite, y>=333 carte centrale)
-          # deleguee a handle_swipe_gesture(). Console diag : appui long sur btn_control_console uniquement.
+          # deleguee a handle_swipe_gesture(). Console diag : appui long sur btn_control_console (choix « auto »).
           - lambda: |-
               lv_indev_t * indev = lv_indev_active();
               if (indev) {
@@ -221,8 +221,13 @@ lvgl:
         # Icône seule (05/10/2026). x 855 / 995 / 1135 : bord droit à 1260 comme le
         # bandeau central. Chaque bouton a un tap et un appui long (06/10/2026, demande
         # d'Axel) ; une mini icône (mdi_font_26, le jeu du bandeau d'état en haut à gauche)
-        # en haut à droite de la tuile dit que l'appui long a de quoi ouvrir. Les trois
-        # restent à leur place : sans TV, la manette ouvre toujours l'Arcade.
+        # en haut à droite de la tuile dit ce qu'ouvre l'appui long, quand il ouvre quelque
+        # chose. Les trois restent à leur place : sans TV, la manette ouvre toujours l'Arcade.
+        # Appuis longs au choix (07/10/2026, section « Boutons du haut » du blueprint, clé
+        # appuis) : bouton_haut_ecran() (tab5_zones.cpp) donne l'écran, 0 = rien, et
+        # tab5_ecran_ouvrir (tab5-ha-controls.yaml), la routine du select « Aller à
+        # l'écran », l'ouvre. « auto » : Énergie, console, télécommande TV, comme avant.
+        # Glyphe et visibilité des mini icônes : boutons_haut_apply_ui().
         # pad_all: 0 : la mini icône se pose au pixel près (le thème ajoutait ~21 px de
         # marge intérieure), l'icône centrale ne bouge pas.
         - button:
@@ -242,16 +247,19 @@ lvgl:
               # aucun appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp).
               - lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);'
             on_long_press:
-              # Popup Énergie (ADR-0028), quand HA pousse la production solaire (puissance
-              # crête choisie dans le blueprint) : la mini icône du panneau le signale.
-              - lambda: 'if (solaire_present()) id(tab5_energie_ouvrir).execute();'
+              # « auto » : popup Énergie (ADR-0028), quand HA pousse la production solaire
+              # (puissance crête choisie dans le blueprint).
+              - lambda: |-
+                  const int e = bouton_haut_ecran(BOUTON_MAISON);
+                  if (e != 0) id(tab5_ecran_ouvrir).execute(e);
             widgets:
               - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, text_font: mdi_font_70 }
-              # Montrée par zones_apply_ui() / solaire_recu() (tab5_zones.cpp).
-              - label: { id: icon_ha_solaire, text: "\U000F0D9B", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
+              # Glyphe et visibilité : boutons_haut_apply_ui() (tab5_zones.cpp).
+              - label: { id: icon_mini_ha, text: "\U000F0D9B", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
 
         # Engrenage : tap = Réglages de la tablette (tab5-reglages.yaml), appui long =
-        # console système (avant le 06/10/2026, le flocon l'ouvrait d'un tap).
+        # console système en « auto » (avant le 06/10/2026, le flocon l'ouvrait d'un tap),
+        # sans mini icône en « auto ».
         - button:
             id: btn_control_console
             align: TOP_LEFT
@@ -265,26 +273,15 @@ lvgl:
             on_short_click:
               - script.execute: tab5_reglages_ouvrir
             on_long_press:
+              # La console : script tab5_console_ouvrir (tab5-scripts.yaml), le même que
+              # celui du select « Aller à l'écran ».
               - lambda: |-
-                  lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
-                  lv_obj_move_to_index(id(layer_console_sys), -1);
-                  refresh_console_status_row_ui(id(lbl_sys_uptime_val), id(lbl_sys_rssi_val), id(lbl_sys_temp_val),
-                      id(sys_uptime).has_state(), id(sys_uptime).state,
-                      id(sys_wifi_rssi).has_state(), id(sys_wifi_rssi).state,
-                      id(sys_core_temp).has_state(), id(sys_core_temp).state);
-                  // Batterie tout de suite ; charge du processeur : point de départ, « -- »
-                  // jusqu'au tick 2 s suivant (tab5_console.cpp, 06/10/2026).
-                  update_console_batterie_ui(id(lbl_sys_batterie_icone), id(lbl_sys_batterie_val));
-                  update_console_cpu_ui(id(lbl_sys_cpu_val), true);
-                  // État connexion HA immédiat (sinon "--" jusqu'au prochain tick 2s)
-                  if (id(lbl_sys_ha_val) != nullptr) {
-                    bool ha_ok = id(status_ha).state;
-                    lv_label_set_text(id(lbl_sys_ha_val), tr(ha_ok ? "Connecté" : "Hors ligne"));
-                    lv_obj_set_style_text_color(id(lbl_sys_ha_val),
-                        lv_color_hex(ha_ok ? UIColor.SUCCESS : UIColor.ERROR), LV_PART_MAIN);
-                  }
+                  const int e = bouton_haut_ecran(BOUTON_ENGRENAGE);
+                  if (e != 0) id(tab5_ecran_ouvrir).execute(e);
             widgets:
               - label: { text: "\U000F0493", align: CENTER, text_font: mdi_font_70 }
+              # Glyphe et visibilité : boutons_haut_apply_ui() (tab5_zones.cpp).
+              - label: { id: icon_mini_sys, text: "\U000F018D", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
 
         # Manette : tap = Arcade (comme la seconde température), appui long = télécommande
         # TV quand une TV est choisie dans le blueprint (zone TV) : la mini icône de l'écran
@@ -303,12 +300,15 @@ lvgl:
             on_short_click:
               - script.execute: tab5_arcade_open
             on_long_press:
-              - lambda: 'if (!zone_absente(Zone::TV)) animate_popup_open(id(tv_remote_popup));'
+              # « auto » : la télécommande, quand une TV est choisie (zone TV).
+              - lambda: |-
+                  const int e = bouton_haut_ecran(BOUTON_MANETTE);
+                  if (e != 0) id(tab5_ecran_ouvrir).execute(e);
             widgets:
               - label: { text: "\U000F0297", align: CENTER, text_font: mdi_font_70 }
-              # Montrée par zones_apply_ui() (tab5_zones.cpp) ; même glyphe que la
-              # télécommande (en-tête de tv_remote_popup.yaml).
-              - label: { id: icon_jeux_tv, text: "\U000F07C0", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
+              # Glyphe et visibilité : boutons_haut_apply_ui() (tab5_zones.cpp) ; en
+              # « auto », celui de la télécommande (en-tête de tv_remote_popup.yaml).
+              - label: { id: icon_mini_tv, text: "\U000F07C0", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
 
         # ==================== RANGÉE SOUS L'HORLOGE (ADR-0031) ====================
         # Les plantes et jusqu'à trois lignes de capteurs décrites par HA, qui se

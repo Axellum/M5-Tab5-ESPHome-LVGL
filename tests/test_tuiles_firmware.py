@@ -314,7 +314,7 @@ def test_mode_ha_seule_source_et_swipe_par_piece():
     assert swipe.index("if (ctx.ha_mode)") < swipe.index("apply_forecast_page(")
     assert "!ctx.ha_mode" in _fonction(central, "rotator_owns_card")
     assert "if (g_central_ctx.ha_mode) return;" in _lire("Tab5", "tab5-scripts.yaml")
-    assert "if (i == 1) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-ha-controls.yaml")
+    assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-ha-controls.yaml")
     assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "tab5-lvgl.yaml")
 
 

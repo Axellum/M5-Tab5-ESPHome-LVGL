@@ -343,6 +343,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_zones.cpp", "batterie_glyphe"): ("icon_batterie", "lbl_sys_batterie_icone"),
     # Production solaire dans le bandeau d'état (04/10/2026).
     ("tab5_zones.cpp", "solaire_glyphe"): ("icon_solaire",),
+    # Mini icônes des trois boutons du haut (07/10/2026) : l'écran qu'ouvre leur appui long.
+    ("tab5_zones.cpp", "mini_glyphe"): ("icon_mini_*",),
     # Palette des tuiles de pièce (ADR-0023) : table au niveau du fichier, d'où la fonction vide.
     # Ses glyphes s'affichent sur les cartes du mode HA (icon_sw*, mdi_font_70), dans les
     # épaules des tuiles (icon_card_*, mdi_font_32) et dans le sélecteur du popup lumière
