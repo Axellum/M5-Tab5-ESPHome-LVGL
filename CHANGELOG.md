@@ -55,6 +55,17 @@ ajouté à `mdi_font_26`). Mettre le blueprint à jour d'abord : un firmware plu
 `maison` comme un code inconnu et garde l'appui long automatique. Pas encore essayé sur la
 tablette.
 
+### 2026-10-07 — Docs : notes de Jiuhai sur le C6 et l'alimentation (discussion #369)
+
+Merci à Jiuhai (@poonjh), qui construit des appareils sur Tab5 avec ESP-IDF : remerciement dans
+le `README.md`, et ses notes, lues sur le schéma et le code, pas mesurées, dans
+`docs/hardware.md` : signal de reset du C6 (`RF_C6_RST` → GPIO 15), piège de la broche 54 pour un
+firmware ESP-IDF sans le préréglage Tab5 d'ESP-Hosted (et son reset actif bas, en désaccord
+inexpliqué avec ce firmware), contrôle de version du C6, mises à jour du C6 difficiles ailleurs,
+chemin de l'alimentation (une seule diode idéale de 1 A pour tout le 5 V, entrée HVIN).
+`docs/debugging.md` : les avertissements d'ESP-IDF sont retirés à la compilation, leur absence ne
+prouve rien. Ses mesures seront ajoutées quand elles seront publiées.
+
 ### 2026-10-07 — Docs : l'intégration HACS citée dans les pages d'entrée
 
 La mise à jour par l'intégration « Tab5 » de HACS (ADR-0035) n'était décrite que dans

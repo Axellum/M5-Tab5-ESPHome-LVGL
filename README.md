@@ -169,6 +169,8 @@ In this repository: [`AGENTS.md`](AGENTS.md) for AI coding agents, [`CARTOGRAPHI
 
 **Thanks** to [@husyildiz](https://github.com/husyildiz), whose ideas, tests and reports in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) brought the step-by-step install page, the Turkish screen, the weather outside France, the original battery, the Energy popup for solar panels and the weather picked in the blueprint.
 
+**Thanks** also to Jiuhai ([@poonjh](https://github.com/poonjh)), who builds Tab5 devices on ESP-IDF: the questions and notes on the schematic in [discussion #369](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/369) corrected the pages on the Wi-Fi co-processor and on power, and the notes are summed up in the [hardware reference](docs/hardware.md).
+
 English or French, both are welcome.
 
 ## A short personal note
@@ -340,6 +342,8 @@ Dans ce dépôt : [`AGENTS.md`](AGENTS.md) pour les agents de code IA (en anglai
 - **Contribuer** → [`CONTRIBUTING.md`](CONTRIBUTING.md#version-française) et le [code de conduite](CODE_OF_CONDUCT.md#version-française).
 
 **Merci** à [@husyildiz](https://github.com/husyildiz), dont les idées, les essais et les retours dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) ont amené la page d'installation pas à pas, l'écran en turc, la météo hors de France, la batterie d'origine, le popup Énergie pour les panneaux solaires et la météo choisie dans le blueprint.
+
+**Merci** aussi à Jiuhai ([@poonjh](https://github.com/poonjh)), qui construit des appareils sur Tab5 avec ESP-IDF : ses questions et ses notes sur le schéma dans la [discussion #369](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/369) ont corrigé les pages sur le co-processeur Wi-Fi et sur l'alimentation, et ces notes sont résumées dans la [référence matérielle](docs/hardware.md#version-française).
 
 Anglais ou français, les deux sont bienvenus.
 
