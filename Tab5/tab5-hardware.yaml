@@ -184,9 +184,9 @@ ota:
     # btn_restart` (« fix reboot OTA » du 05/07/2026) ne pouvait donc jamais
     # s'exécuter : l'appareil redémarrait 100 ms après le déclencheur, bien avant la
     # fin du délai. Retiré le 08/09/2026 (audit du 06/09, §4.1 point 13).
-    # L'écran noir après OTA (co-processeur C6 non réinitialisé par un reboot
-    # logiciel, cf. docs/troubleshooting.md) ne se règle par AUCUN redémarrage
-    # logiciel, seulement par un cycle d'alimentation : ne pas remettre de on_end.
+    # L'écran noir après OTA (lien du C6 pas remonté, malgré son reset par reset_pin
+    # à chaque démarrage, cf. docs/troubleshooting.md) ne s'est réglé par AUCUN
+    # redémarrage, seulement par une coupure d'alimentation : ne pas remettre de on_end.
     # Mise à jour en cours (06/10/2026) : l'extinction auto de l'écran
     # (tab5-ha-controls.yaml) attend la fin. Une OTA réussie redémarre (rien à
     # remettre) ; une OTA ratée ou coupée rend la main. Même bloc dans
