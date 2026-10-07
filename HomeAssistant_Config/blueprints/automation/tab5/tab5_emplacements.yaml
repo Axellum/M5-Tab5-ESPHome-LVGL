@@ -2987,11 +2987,16 @@ actions:
                 sequence:
                   - variables:
                       # Pas de filtre `extract` dans le Jinja de HA (c'est un filtre Ansible).
+                      # Mêmes lampes épargnées que « Pièce : tout éteindre » (personnalisation
+                      # de la tuile de la même entité) : voir cette branche.
                       lampes: >-
                         {%- set ns = namespace(l=[]) -%}
                         {%- for c in ['lumiere_1', 'lumiere_2', 'lumiere_3'] -%}
                           {%- set x = sources.get(c, '') -%}
-                          {%- if x and states[x] is not none -%}{%- set ns.l = ns.l + [x] -%}{%- endif -%}
+                          {%- if x and states[x] is not none
+                                and perso.get(x, {}).get('comportement', 'normal') not in ['allumer_seulement', 'confirmer', 'lecture_seule'] -%}
+                            {%- set ns.l = ns.l + [x] -%}
+                          {%- endif -%}
                         {%- endfor -%}
                         {{ ns.l }}
                   - if: "{{ lampes | count > 0 }}"
@@ -3281,11 +3286,15 @@ actions:
                 conditions: "{{ emplacement is match('^p[0-4]$') and commande == 'eteindre' }}"
                 sequence:
                   - variables:
+                      # Épargnées : « allumer seulement » (jamais éteinte depuis l'écran),
+                      # « lecture seule » (aucun appui) et « confirmer » (audit du 07/10/2026,
+                      # UI-2) : une commande confirmée ne passe jamais par un seul toucher
+                      # (ADR-0036), et ce bouton n'en demande qu'un pour toute la pièce.
                       lampes: >-
                         {%- set ns = namespace(l=[]) -%}
                         {%- for t in tuiles | selectattr('r', 'eq', emplacement[1] | int) | selectattr('type', 'eq', 'lum') -%}
                           {%- if states[t.e] is not none and t.e not in ns.l
-                                and perso.get(t.e, {}).get('comportement', 'normal') not in ['allumer_seulement', 'lecture_seule'] -%}
+                                and perso.get(t.e, {}).get('comportement', 'normal') not in ['allumer_seulement', 'confirmer', 'lecture_seule'] -%}
                             {%- set ns.l = ns.l + [t.e] -%}
                           {%- endif -%}
                         {%- endfor -%}
