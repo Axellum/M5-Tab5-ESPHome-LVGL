@@ -68,7 +68,17 @@
 
 automation:
   - alias: "MAJ Ecran Tab5 ESPHome Push"
-    mode: single
+    # queued, plus single (audit du 07/10/2026, HA-1) : un passage dure plusieurs
+    # secondes (calendar.get_events, weather.get_forecasts, attente de la liaison
+    # jusqu'à 10 s). En single, un esphome.tab5_connected arrivé pendant ce temps était
+    # abandonné (« Already running »), alors que la météo actuelle, les probabilités et
+    # le volet ne partent QU'à la (re)connexion : ils restaient ceux d'avant la coupure.
+    # En file, il repart juste après. max 3 : la reconnexion, le passage des 10 min et
+    # un changement d'agenda tiennent ; au-delà, rien de neuf à pousser (chaque passage
+    # relit l'état courant), abandon sans avertissement.
+    mode: queued
+    max: 3
+    max_exceeded: silent
     id: tab5_ha_hmi_updater
     description: >-
       Poussée complète du Tab5. Prévisions jours/heures et pluie à chaque passage ;
