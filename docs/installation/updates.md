@@ -22,7 +22,7 @@ The tablet follows the channel it was installed from (Stable or Beta); to switch
 - reloads the YAML, then says what changed in a notification « Tab5: Home Assistant files X.Y.Z »;
 - if « Then update the tablet » is ticked, installs the firmware of the same version as soon as the tablet's « Firmware » entity offers it.
 
-A problem shows in *Settings → Repairs*: missing `packages:` line, files refused, restart needed. HACS offers full releases only: pre-releases (Beta channel) only if beta versions are switched on for this repository in HACS. To put the files back after a mistake: *Settings → Devices & services → Tab5 → Configure*, « Install the files of this version again now ».
+A problem shows in *Settings → Repairs*: missing `packages:` line, files refused, restart needed ([what to do](../troubleshooting.md#tab5-integration-hacs-a-message-in-repairs)). HACS offers full releases only: pre-releases (Beta channel) only if beta versions are switched on for this repository in HACS. To put the files back after a mistake: *Settings → Devices & services → Tab5 → Configure*, « Install the files of this version again now ».
 
 **By hand, they do not update themselves**: replace them with those of `tab5_home_assistant.zip` from the same release ([step 1](home-assistant-files.md)), then *Developer tools → YAML → All YAML configuration*, and run the action `homeassistant.reload_custom_templates` (or restart Home Assistant). A blueprint imported from its URL rather than unzipped: import it again.
 
@@ -30,9 +30,19 @@ The files of an archive know their version: when the tablet runs a newer major o
 
 Using the [dashboard](dashboard.md)? After an update that adds entities, do its items 2 and 3 again.
 
+### Putting older files back by hand
+
+At each update, the integration keeps the files it replaces or removes in `config/tab5_sauvegardes/`, in a folder named after the date, the time and the version replaced: `20261012-081530_3.7.0` holds 3.7.0 files. Inside, the same folders as in `config/` (`packages/`, `custom_templates/`, `blueprints/`). Only the 5 latest folders are kept. A refused update (*Settings → Repairs*) leaves one too, holding the files still in place.
+
+1. Copy the content of the most recent folder into `config/`, replacing the files there (Samba share, File editor or Studio Code Server). To go back further, copy the folders one after the other, from the most recent to the one you want: each one holds only the files that changed at its update.
+2. A file added by the newer version is in no backup, so it stays. To remove it, compare `config/packages/` with the `tab5_home_assistant.zip` of the version you go back to.
+3. *Developer tools → YAML → Check configuration*, then reload as for files put by hand (above), or restart Home Assistant.
+
+The integration then leaves these files alone: it installs its files once per version, when HACS brings a new one, or when « Install the files of this version again now » is ticked (that puts the newer files back). The next version installed through HACS replaces them, names them as edited by hand, and keeps them in a new backup. While the files are older than the integration, « Then update the tablet » waits: it starts the firmware only once « Tab5 · version des fichiers HA » shows the integration's version.
+
 ## Upgrading from 3.2
 
-Replace the Home Assistant files with those of the new `tab5_home_assistant.zip`, then check three lists ([step 5](sources.md)):
+Replace the Home Assistant files with those of the new `tab5_home_assistant.zip` (or install the update of the [HACS integration](#home-assistant-files)), then check three lists ([step 5](sources.md)):
 
 1. **Work calendar holding other events?** Type your word in « Tab5 · mot des événements de travail » (the author: `Travail`). Up to 3.2, only titles containing « Travail » counted; left empty, every event of the work calendar now counts as work.
 2. **School holidays** no longer come from a table of the French Zone A: pick a calendar in « Tab5 · agenda des vacances scolaires ».
@@ -96,7 +106,7 @@ La tablette suit le canal depuis lequel elle a été installée (Stable ou Bêta
 - recharge le YAML, puis dit ce qui a changé dans une notification « Tab5 : fichiers Home Assistant X.Y.Z » ;
 - si « Mettre ensuite la tablette à jour » est coché, installe le firmware de la même version dès que l'entité « Firmware » de la tablette le propose.
 
-Un problème s'affiche dans *Paramètres → Réparations* : ligne `packages:` absente, fichiers refusés, redémarrage nécessaire. HACS ne propose que les releases complètes : les pré-releases (canal Bêta) seulement si les versions bêta sont activées pour ce dépôt dans HACS. Pour remettre les fichiers après une erreur : *Paramètres → Appareils et services → Tab5 → Configurer*, « Réinstaller maintenant les fichiers de cette version ».
+Un problème s'affiche dans *Paramètres → Réparations* : ligne `packages:` absente, fichiers refusés, redémarrage nécessaire ([que faire](../troubleshooting.md#intégration-tab5-hacs--un-message-dans-réparations)). HACS ne propose que les releases complètes : les pré-releases (canal Bêta) seulement si les versions bêta sont activées pour ce dépôt dans HACS. Pour remettre les fichiers après une erreur : *Paramètres → Appareils et services → Tab5 → Configurer*, « Réinstaller maintenant les fichiers de cette version ».
 
 **À la main, ils ne se mettent pas à jour seuls** : remplacez-les par ceux de `tab5_home_assistant.zip` de la même release ([étape 1](home-assistant-files.md#version-française)), puis *Outils de développement → YAML → Toute la configuration YAML*, et lancez l'action `homeassistant.reload_custom_templates` (ou redémarrez Home Assistant). Un blueprint importé depuis son adresse plutôt que décompressé : importez-le de nouveau.
 
@@ -104,9 +114,19 @@ Les fichiers d'une archive connaissent leur version : quand la tablette tourne u
 
 Vous utilisez le [tableau de bord](dashboard.md#version-française) ? Après une mise à jour qui ajoute des entités, refaites ses points 2 et 3.
 
+### Remettre à la main des fichiers plus anciens
+
+À chaque mise à jour, l'intégration garde les fichiers qu'elle remplace ou retire dans `config/tab5_sauvegardes/`, dans un dossier nommé d'après la date, l'heure et la version remplacée : `20261012-081530_3.7.0` contient des fichiers de la 3.7.0. Dedans, les mêmes dossiers que dans `config/` (`packages/`, `custom_templates/`, `blueprints/`). Seuls les 5 derniers dossiers sont gardés. Une mise à jour refusée (*Paramètres → Réparations*) en laisse un aussi, avec les fichiers restés en place.
+
+1. Copiez le contenu du dossier le plus récent dans `config/`, en remplaçant les fichiers qui y sont (partage Samba, File editor ou Studio Code Server). Pour remonter plus loin, copiez les dossiers l'un après l'autre, du plus récent à celui que vous voulez : chacun ne contient que les fichiers changés à sa mise à jour.
+2. Un fichier ajouté par la version plus récente n'est dans aucune sauvegarde : il reste. Pour le retirer, comparez `config/packages/` avec le `tab5_home_assistant.zip` de la version où vous revenez.
+3. *Outils de développement → YAML → Vérifier la configuration*, puis rechargez comme pour des fichiers posés à la main (plus haut), ou redémarrez Home Assistant.
+
+L'intégration laisse ensuite ces fichiers tranquilles : elle installe ses fichiers une fois par version, quand HACS en apporte une nouvelle, ou quand « Réinstaller maintenant les fichiers de cette version » est coché (cela remet les fichiers plus récents). La version suivante installée par HACS les remplace, les nomme comme modifiés à la main, et les garde dans une nouvelle sauvegarde. Tant que les fichiers sont plus anciens que l'intégration, « Mettre ensuite la tablette à jour » attend : le firmware n'est lancé qu'une fois que « Tab5 · version des fichiers HA » donne la version de l'intégration.
+
 ## Passer d'une 3.2 à la suite
 
-Remplacez les fichiers Home Assistant par ceux du nouveau `tab5_home_assistant.zip`, puis vérifiez trois listes ([étape 5](sources.md#version-française)) :
+Remplacez les fichiers Home Assistant par ceux du nouveau `tab5_home_assistant.zip` (ou installez la mise à jour de l'[intégration de HACS](#fichiers-home-assistant)), puis vérifiez trois listes ([étape 5](sources.md#version-française)) :
 
 1. **Votre agenda de travail contient d'autres événements ?** Tapez votre mot dans « Tab5 · mot des événements de travail » (l'auteur : `Travail`). Jusqu'à la 3.2, seuls les titres contenant « Travail » comptaient ; laissé vide, tout l'agenda de travail compte désormais comme du travail.
 2. **Les vacances scolaires** ne viennent plus d'une table de la zone A : choisissez un agenda dans « Tab5 · agenda des vacances scolaires ».
