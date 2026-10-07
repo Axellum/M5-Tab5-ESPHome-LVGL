@@ -62,6 +62,9 @@ NON_MONTREES = {
     "appareil-scene": "appareil montre la même fenêtre ; la scène est décrite dans tiles.md",
     "console-batterie-en-charge": "console-batterie montre la même ligne ; l'éclair est décrit",
     "console-sans-batterie": "console-batterie montre la même ligne ; « Sur USB » est décrit",
+    "roue-lampe": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
+    "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
+    "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
 }
 
 
