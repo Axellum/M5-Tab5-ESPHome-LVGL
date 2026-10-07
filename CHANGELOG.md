@@ -19,7 +19,12 @@ le 06/10/2026 : rangée sous l'horloge (#344), appui long sur les boutons du hau
 Réglages (#345), le bouton d'alimentation n'est plus un plantage (#347), alertes lues retenues,
 abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet dessiné (#349),
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
-console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
+console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352), puis
+[v3.7.0-rc.5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.5)
+le 07/10/2026 : intégration « Tab5 » pour HACS et `tab5_hacs.zip` (#363, #365, #371), roue
+d'actions rapides (#366), popup « Maison » (#368), écran de l'appui long des boutons du haut au
+choix, « Maison » compris (#364, #373), blueprint plus lisible (#373), table unique des bandeaux
+d'alerte (#360).
 
 ### 2026-10-07 — Blueprint « Tab5 — emplacements » plus lisible
 
