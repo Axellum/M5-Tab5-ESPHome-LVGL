@@ -693,11 +693,27 @@ script:
           # Les quatre premières (déjà rangées : rouge, orange, jaune, puis la plus
           # ancienne). Au-delà, un en-tête « @n:total » : la tablette affiche le rang de
           # chaque bandeau, « 2/6 ». Un jeton sans « | » : un firmware d'avant l'ignore.
+          # Taille bornée (audit du 07/10/2026, DO-6) : la tablette refuse TOUT payload de
+          # plus de 1024 octets (parse_and_update_ha_alerts_bulk, Tab5/tab5_central.cpp),
+          # et les quatre bandeaux restaient alors sur les anciennes alertes. Le libellé
+          # est coupé à 100 caractères (Jinja coupe par caractère, jamais au milieu d'un
+          # caractère UTF-8) et débarrassé des deux séparateurs « | » et « ; » ; puis une
+          # alerte n'est ajoutée que si le tout reste sous 1024 octets, comptés en UTF-8
+          # (longueur du base64, filtre base64_encode de HA). Quatre alertes aux ids et
+          # libellés longs y tiennent (tests/test_alertes_ecran.py) ; seul un cas extrême
+          # (libellés tout en emoji) en laisse une dehors, au lieu de toutes les refuser.
           payload: >-
+            {%- macro octets(x) -%}
+              {%- set b = x | base64_encode -%}{{ (b | length) // 4 * 3 - ((b | length) - (b.rstrip('=') | length)) }}
+            {%- endmacro -%}
             {%- set autres = alertes | rejectattr('s', 'eq', 'vigilance') | list -%}
             {%- set ns = namespace(r=['@n:' ~ (autres | count)] if autres | count > 4 else []) -%}
             {%- for a in autres[:4] -%}
-            {%- set ns.r = ns.r + [a.i ~ '|' ~ ('Rouge' if a.g == 'Rouge' else 'Orange') ~ '|' ~ a.t] -%}
+            {%- set texte = (a.t | string | replace('|', '/') | replace(';', ','))[:100] -%}
+            {%- set jeton = a.i ~ '|' ~ ('Rouge' if a.g == 'Rouge' else 'Orange') ~ '|' ~ texte -%}
+            {%- if octets((ns.r + [jeton]) | join(';')) | int <= 1024 -%}
+            {%- set ns.r = ns.r + [jeton] -%}
+            {%- endif -%}
             {%- endfor -%}
             {{- ns.r | join(';') -}}
 
