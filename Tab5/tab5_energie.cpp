@@ -490,19 +490,26 @@ void energie_historique(const std::string& vue, const std::string& debut, const 
     if (v < 0) return;
     Serie s;
     s.recue = true;
-    // Date illisible : 1er janvier (seuls les libellés de l'axe s'en servent).
-    if (std::sscanf(debut.c_str(), "%d-%d-%d", &s.annee, &s.mois, &s.jour) != 3 || s.mois < 1 || s.mois > 12 ||
-        s.jour < 1 || s.jour > 31) {
+    // Date illisible : 1er janvier (seuls les libellés de l'axe s'en servent). Année bornée
+    // comme dans l'historique (1970..2200, DO-2, audit du 07/10/2026) : libelle_axe fait
+    // `a++`, qui déborderait sur une année proche de INT_MAX.
+    if (std::sscanf(debut.c_str(), "%d-%d-%d", &s.annee, &s.mois, &s.jour) != 3 || s.annee < 1970 ||
+        s.annee > 2200 || s.mois < 1 || s.mois > 12 || s.jour < 1 || s.jour > 31) {
         s.annee = 2000;
         s.mois = 1;
         s.jour = 1;
     }
     const char* p = valeurs.data();
     const char* fin = p + valeurs.size();
-    while (p < fin && s.n < kSlots[v]) {
+    // Un champ vide compte (pas de donnée : heure à venir…), le dernier aussi : « 3.1;; »
+    // donne trois valeurs. Avant (DO-11, audit du 07/10/2026), le champ vide après le
+    // dernier « ; » était perdu : 23 barres au lieu de 24 l'après-midi, espacement changé.
+    bool apres_sep = false;
+    while ((p < fin || apres_sep) && s.n < kSlots[v]) {
         const char* d = nullptr;
         size_t n = 0;
         champ_suivant(p, fin, ';', d, n);
+        apres_sep = p > d + n;   // le champ s'est terminé sur un « ; »
         s.v[s.n++] = lire_nombre(d, n);
     }
     // Une valeur négative (compteur remis à zéro mal compté) n'a pas de barre.
