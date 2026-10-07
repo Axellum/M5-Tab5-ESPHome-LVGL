@@ -21,7 +21,7 @@ What used to be placeholders, picked in HA's UI (*Settings → Devices & service
 - **Mirrors** for the automations' triggers (a `state:` trigger needs an entity ID written in YAML): `binary_sensor.tab5_presence`, `sensor.tab5_telephone_suivi`, `binary_sensor.tab5_connectee`, `sensor.tab5_demarrage`, `sensor.tab5_rendez_vous_annoncer_avant`, `sensor.tab5_agendas`. Unavailable while nothing is chosen: nothing fires.
 
 ### `packages/tab5_push.yaml`
-The push automations, the scripts they share, the scripts the Tab5 calls, the optional-zones answer and the `is_primary_active` guard. They push data to the Tab5 via native ESPHome service calls; blocks sent from more than one automation live once in the `tab5_push_*` scripts. This is the package to start from.
+The push automations, the scripts they share, the scripts the Tab5 calls, and the optional-zones answer. They push data to the Tab5 via native ESPHome service calls; blocks sent from more than one automation live once in the `tab5_push_*` scripts. This is the package to start from.
 
 What it pushes:
 - **Daily forecast (15 days):** every 10 min, on calendar changes and on (re)connection — serializes 15 × (index, day label, condition, min, max, weekend/holiday flags, work hours) into a `|`/`;`-delimited string sent to `tab5_maj_previsions_jours_bulk`
@@ -40,7 +40,7 @@ And **`tab5_theme_jour_nuit`** (« Tab5 — thème jour/nuit », 3.6): it keeps 
 
 Room temperatures, lights, PC, TV, phone and plants do **not** go through this package: since 3.0 the blueprint `tab5_emplacements.yaml` pushes them (`tab5_maj_emplacements`). The tablet no longer subscribes to any entity of your home.
 
-**No periodic re-push of unchanged state (2026-09-26):** current weather, probabilities, climate and shutter used to be re-sent every 10 min on top of their on-change pushes (576 calls a day, each one repainted by the device). The full push now sends them only on (re)connection, when Home Assistant starts (the tablet often reconnects before automations are active, and its `esphome.tab5_connected` is then lost) and when `input_boolean.is_primary_active` comes back `on`.
+**No periodic re-push of unchanged state (2026-09-26):** current weather, probabilities, climate and shutter used to be re-sent every 10 min on top of their on-change pushes (576 calls a day, each one repainted by the device). The full push now sends them only on (re)connection and when Home Assistant starts (the tablet often reconnects before automations are active, and its `esphome.tab5_connected` is then lost).
 
 **No pauses between pushes (2026-10-01):** the automation sends its blocks one after the other. The `delay: 1s` between blocks dated from July, when a push made about twenty calls in loops; their stated reason (not overwhelming the device's TCP socket alongside the audio stream) was never measured, and with 8 bulk calls they only delayed the screen by 6 s after each reboot. Bulk payloads stay split in blocks: the device rejects one larger than 2048 bytes.
 
@@ -54,7 +54,7 @@ Also the **push scripts** `tab5_push_alertes` (sections 1, 7 and 7b: Météo-Fra
 
 **Optional zones (lot 5, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)).** Since 3.0 the blueprint answers the tablet's zones request: an empty slot, or an entity that doesn't exist, disappears from the screen. The pushes of this package follow the same rule: `tab5_push_volet` sends nothing without a shutter. See [Adapt to your home](../docs/installation/adapt-to-your-home.md).
 
-**Guard `input_boolean.is_primary_active`.** Every push is conditioned on it; `force_primary_active_on_boot` turns it back on when HA starts, and `packages/tab5_health.yaml` warns if it stays off for 5 min. It is a leftover of a former two-instance setup ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)): on a single Home Assistant it simply stays on.
+**No more `input_boolean.is_primary_active` guard (3.8).** Every push used to be conditioned on this leftover of a former two-instance setup ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)); stuck `off`, it froze the screen without any error. It is gone, with `force_primary_active_on_boot` and its health guard: nothing gates the pushes any more.
 
 The assistant-reply example (engine → assistant popup) moved to `snippets/tab5_assist_reponse_exemple.yaml`: inside a package it would have been active for everyone.
 
@@ -89,7 +89,7 @@ Since [ADR-0025](../docs/decisions/0025-events-only.md) the firmware never calls
 | `tab5_alerte_lue` (`alert_id`) | `script.tab5_dismiss_alert` (below) |
 | `tab5_voix_stop` | `media_player.media_stop` on the tablet's player |
 | `tab5_mode_assistant` (`option`) | `select.select_option` on the tablet's pipeline select, only if the option exists |
-| `tab5_maj_ecran` | « MAJ Écran »: `input_boolean.is_primary_active` on, then `automation.trigger` of the full push (found by its id, `tab5_ha_hmi_updater`) |
+| `tab5_maj_ecran` | « MAJ Écran »: `automation.trigger` of the full push (found by its id, `tab5_ha_hmi_updater`) |
 | `tab5_recharger_automatisations` | `automation.reload` |
 | `tab5_redemarrage_ha_confirme` | `homeassistant.restart` — sent only by « Confirmer » on the tablet's confirmation screen |
 
@@ -105,10 +105,9 @@ Weather adapters (lot 4c-2, 2026-09-27). Two selects pick the source **in Home A
 OpenWeatherMap (forecasts and rain) was tried on the author's installation on 2026-09-27; the MeteoAlarm branch and the twice-daily/hourly grouping were tested with simulated data in Home Assistant's template engine only. DWD was added to the author's installation on 2026-09-29 (a day without warnings); its warnings and CAP Alerts were tested with simulated data (template engine, fresh-install CI). Setup: [weather providers](../docs/installation/weather.md).
 
 ### `packages/tab5_health.yaml`
-Health-monitoring package: six guard automations that alert when the push pipeline silently degrades. Because the Tab5 is push-only (see `docs/decisions/0001-push-only-zero-polling.md`), a stale screen raises no error on its own — these automations are the HA-side safety net.
+Health-monitoring package: five guard automations that alert when the push pipeline silently degrades. Because the Tab5 is push-only (see `docs/decisions/0001-push-only-zero-polling.md`), a stale screen raises no error on its own — these automations are the HA-side safety net.
 
 What it watches:
-- **`input_boolean.is_primary_active` OFF for more than 5 min** — this boolean gates every push automation; stuck OFF means the screen silently freezes (a real incident, see `docs/troubleshooting.md`)
 - **A new boot time on `Tab5 Uptime`** (a timestamp, published once per boot since 26/09/2026) — unexpected device reboot (brownout, firmware crash, power cut); a plain Wi-Fi drop without reboot comes back with the same boot time and does *not* trigger it
 - **`HA API Status` off/unavailable for more than 2 min** — device unreachable, every push fails during the outage
 - **A Tab5 automation logs « Error rendering »** — a push action failed to render its template and `continue_on_error` skipped it silently (real incident, 18/09/2026: Météo-France dropped `templow` from the 15th day). Requires `system_log: fire_event: true` in `configuration.yaml` (restart needed) — without it the guard loads but never fires. Exclude `system_log_event` from the recorder. At most one notification per hour while the error repeats
@@ -278,7 +277,7 @@ Ce qui était des placeholders, choisi dans l'interface de HA (*Paramètres → 
 - **Miroirs** pour les déclencheurs des automatisations (un déclencheur `state:` veut un entity_id écrit dans le YAML) : `binary_sensor.tab5_presence`, `sensor.tab5_telephone_suivi`, `binary_sensor.tab5_connectee`, `sensor.tab5_demarrage`, `sensor.tab5_rendez_vous_annoncer_avant`, `sensor.tab5_agendas`. Indisponibles tant que rien n'est choisi : rien ne se déclenche.
 
 ### `packages/tab5_push.yaml`
-Les automatisations de poussée, les scripts qu'elles partagent, les scripts appelés par le Tab5, la réponse des zones optionnelles et le garde-fou `is_primary_active`. Elles poussent les données vers le Tab5 via des appels de service ESPHome natifs ; les blocs envoyés par plusieurs automatisations n'existent qu'une fois, dans les scripts `tab5_push_*`. C'est le package par lequel commencer.
+Les automatisations de poussée, les scripts qu'elles partagent, les scripts appelés par le Tab5, et la réponse des zones optionnelles. Elles poussent les données vers le Tab5 via des appels de service ESPHome natifs ; les blocs envoyés par plusieurs automatisations n'existent qu'une fois, dans les scripts `tab5_push_*`. C'est le package par lequel commencer.
 
 Ce qu'elle pousse :
 - **Prévisions journalières (15 jours) :** toutes les 10 min, au changement du calendrier et à la (re)connexion — sérialise 15 × (index, libellé jour, condition, min, max, drapeaux week-end/férié, heures de travail) en chaîne délimitée `|`/`;` vers `tab5_maj_previsions_jours_bulk`
@@ -297,7 +296,7 @@ Et **`tab5_theme_jour_nuit`** (« Tab5 — thème jour/nuit », 3.6) : elle tien
 
 Les températures, les lumières, le PC, la TV, le téléphone et les plantes ne passent **pas** par ce package : depuis la 3.0, le blueprint `tab5_emplacements.yaml` les pousse (`tab5_maj_emplacements`). La tablette ne s'abonne plus à aucune entité de votre maison.
 
-**Plus de renvoi périodique d'un état inchangé (26/09/2026) :** météo actuelle, probabilités, clim et volet repartaient toutes les 10 min en plus de leurs poussées au changement (576 appels par jour, chacun repeint par l'appareil). La poussée complète ne les envoie plus qu'à la (re)connexion, au démarrage de Home Assistant (la tablette se reconnecte souvent avant que les automatisations soient actives, et son `esphome.tab5_connected` est alors perdu) et au retour à `on` de `input_boolean.is_primary_active`.
+**Plus de renvoi périodique d'un état inchangé (26/09/2026) :** météo actuelle, probabilités, clim et volet repartaient toutes les 10 min en plus de leurs poussées au changement (576 appels par jour, chacun repeint par l'appareil). La poussée complète ne les envoie plus qu'à la (re)connexion et au démarrage de Home Assistant (la tablette se reconnecte souvent avant que les automatisations soient actives, et son `esphome.tab5_connected` est alors perdu).
 
 **Pas de pause entre les envois (01/10/2026) :** l'automatisation envoie ses blocs à la suite. Les `delay: 1s` entre les blocs dataient de juillet, quand une poussée faisait une vingtaine d'appels en boucle ; leur raison (ne pas saturer le socket TCP de la tablette en même temps que le flux audio) n'a jamais été mesurée, et avec 8 envois groupés ils ne faisaient que retarder l'écran de 6 s à chaque redémarrage. Les payloads groupés restent découpés en blocs : la tablette refuse un payload de plus de 2048 octets.
 
@@ -311,7 +310,7 @@ Il contient aussi les **scripts de poussée** `tab5_push_alertes` (sections 1, 7
 
 **Zones optionnelles (lot 5, [ADR-0018](../docs/decisions/0018-optional-zones-confirmed-by-ha.md)).** Depuis la 3.0, c'est le blueprint qui répond à la demande des zones de la tablette : un emplacement vide, ou une entité qui n'existe pas, disparaît de l'écran. Les poussées de ce package suivent la même règle : `tab5_push_volet` n'envoie rien sans volet. Voir [Adapter à sa maison](../docs/installation/adapt-to-your-home.md#version-française).
 
-**Garde-fou `input_boolean.is_primary_active`.** Toutes les poussées en dépendent ; `force_primary_active_on_boot` le remet à `on` au démarrage de HA, et `packages/tab5_health.yaml` prévient s'il reste à `off` 5 min. C'est un reste d'une ancienne installation à deux instances ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)) : avec un seul Home Assistant, il reste simplement à `on`.
+**Plus de garde-fou `input_boolean.is_primary_active` (3.8).** Toutes les poussées dépendaient de ce reste d'une ancienne installation à deux instances ([ADR-0008](../docs/decisions/0008-single-ha-instance.md)) ; resté à `off`, il figeait l'écran sans aucune erreur. Il est retiré, avec `force_primary_active_on_boot` et sa garde de santé : plus rien ne conditionne les poussées.
 
 L'exemple de réponse de l'assistant (moteur → popup Assistant) est passé dans `snippets/tab5_assist_reponse_exemple.yaml` : dans un package, il aurait été actif chez tout le monde.
 
@@ -346,7 +345,7 @@ Depuis l'[ADR-0025](../docs/decisions/0025-events-only.md), le firmware n'appell
 | `tab5_alerte_lue` (`alert_id`) | `script.tab5_dismiss_alert` (plus bas) |
 | `tab5_voix_stop` | `media_player.media_stop` sur le lecteur de la tablette |
 | `tab5_mode_assistant` (`option`) | `select.select_option` sur le select de pipeline de la tablette, seulement si l'option existe |
-| `tab5_maj_ecran` | « MAJ Écran » : `input_boolean.is_primary_active` à on, puis `automation.trigger` de la poussée complète (trouvée par son id, `tab5_ha_hmi_updater`) |
+| `tab5_maj_ecran` | « MAJ Écran » : `automation.trigger` de la poussée complète (trouvée par son id, `tab5_ha_hmi_updater`) |
 | `tab5_recharger_automatisations` | `automation.reload` |
 | `tab5_redemarrage_ha_confirme` | `homeassistant.restart` — envoyé seulement par « Confirmer » de l'écran de confirmation de la tablette |
 
@@ -362,10 +361,9 @@ Adaptateurs météo (lot 4c-2, 27/09/2026). Deux listes choisissent la source **
 OpenWeatherMap (prévisions et pluie) a été essayé sur l'installation de l'auteur le 27/09/2026 ; la branche MeteoAlarm et le regroupement des demi-journées et des heures n'ont été testés qu'avec des données simulées dans le moteur de modèles de Home Assistant. Le DWD a été ajouté à l'installation de l'auteur le 29/09/2026 (un jour sans alerte) ; ses alertes et CAP Alerts ont été testés avec des données simulées (moteur de modèles, CI d'installation à neuf). Installation : [fournisseurs météo](../docs/installation/weather.md#version-française).
 
 ### `packages/tab5_health.yaml`
-Package de surveillance santé : six automations de garde qui alertent quand le pipeline de push se dégrade silencieusement. Le Tab5 étant push-only (voir `docs/decisions/0001-push-only-zero-polling.md`), un écran figé ne lève aucune erreur par lui-même — ces automations sont le filet de sécurité côté HA.
+Package de surveillance santé : cinq automations de garde qui alertent quand le pipeline de push se dégrade silencieusement. Le Tab5 étant push-only (voir `docs/decisions/0001-push-only-zero-polling.md`), un écran figé ne lève aucune erreur par lui-même — ces automations sont le filet de sécurité côté HA.
 
 Ce qui est surveillé :
-- **`input_boolean.is_primary_active` OFF depuis plus de 5 min** — ce booléen conditionne toutes les automations de push ; bloqué sur OFF, l'écran se fige silencieusement (incident réel, voir `docs/troubleshooting.md`)
 - **Une nouvelle heure de démarrage sur `Tab5 Uptime`** (un horodatage, publié une fois par démarrage depuis le 26/09/2026) — reboot inattendu de l'appareil (brownout, crash firmware, coupure d'alimentation) ; une simple coupure Wi-Fi sans reboot revient avec la même heure de démarrage et ne déclenche *pas* ; un redémarrage demandé non plus (depuis le 27/09/2026 : mise à jour, bouton « Redémarrage Système », changement de langue, reset par l'USB, lus dans `Tab5 Raison du redémarrage`), et la notification donne la raison
 - **`HA API Status` off/unavailable depuis plus de 2 min** — appareil injoignable, toutes les poussées échouent pendant la coupure
 - **Une automation Tab5 journalise « Error rendering »** — une action de poussée n'a pas pu rendre son template et `continue_on_error` l'a sautée en silence (incident réel du 18/09/2026 : Météo-France a retiré `templow` du 15ᵉ jour). Exige `system_log: fire_event: true` dans `configuration.yaml` (redémarrage nécessaire) — sans lui la garde est chargée mais ne se déclenche jamais. Exclure `system_log_event` du recorder. Au plus une notification par heure tant que l'erreur se répète

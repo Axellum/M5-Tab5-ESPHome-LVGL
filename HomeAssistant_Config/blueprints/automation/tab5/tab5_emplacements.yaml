@@ -2674,9 +2674,6 @@ conditions:
       {%- else -%}
         {{ true }}
       {%- endif -%}
-  # Garde-fou des packages (ADR-0008) : absent, il laisse passer.
-  - condition: template
-    value_template: "{{ states('input_boolean.is_primary_active') != 'off' }}"
   # Rien de neuf pour l'écran (aucune mesure changée, attribut invisible, tuile d'un
   # firmware qui n'en a pas) : arrêt ici, sans ligne au journal. Météo (meteo_declencheurs) :
   # seulement s'il y a une liste à écrire.

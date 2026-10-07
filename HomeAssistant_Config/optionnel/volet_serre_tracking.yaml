@@ -192,10 +192,6 @@ automation:
       - platform: state
         entity_id: select.tab5_volet_a_course_simulee
         to: ~
-    condition:
-      - condition: state
-        entity_id: input_boolean.is_primary_active
-        state: "on"
     action:
       - action: script.tab5_push_volet
 

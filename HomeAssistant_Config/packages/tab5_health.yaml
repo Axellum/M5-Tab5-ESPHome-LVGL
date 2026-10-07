@@ -2,8 +2,8 @@
 # [AI-CONTEXT]
 # @file packages/tab5_health.yaml
 # @role Package HA de surveillance santé du Tab5 (aucun nom d'entité à adapter
-#       depuis le 28/09/2026 : voir « ENTITÉS DE LA TABLETTE »). Six gardes : instance primaire
-#       bloquée OFF, reboot inattendu (nouvel horodatage de démarrage), API ESPHome
+#       depuis le 28/09/2026 : voir « ENTITÉS DE LA TABLETTE »). Cinq gardes : reboot
+#       inattendu (nouvel horodatage de démarrage), API ESPHome
 #       déconnectée, erreur de rendu d'un template dans une poussée écran,
 #       journal des démarrages et coupures envoyé par le Tab5, fichiers HA plus
 #       anciens que le firmware (f, 29/09/2026).
@@ -50,9 +50,6 @@
 # Reste à adapter si vous réutilisez ce package ailleurs :
 #   - notify.notify → votre service réel (ex : notify.mobile_app_votre_telephone)
 #     (ici `notify.notify` existe bien et route vers les mobiles déclarés)
-#   - input_boolean.is_primary_active est fourni par packages/tab5_push.yaml
-#     (depuis le 26/09/2026), avec l'automatisation qui le remet à `on` au
-#     démarrage de HA : rien à créer à la main.
 
 script:
   # Canal unique des trois gardes : une notification persistante HA (remplacée si
@@ -104,39 +101,9 @@ script:
           message: "{{ message_court | default(message, true) }}"
 
 automation:
-  # ==========================================================================
-  # (a) Instance primaire inactive — is_primary_active OFF depuis plus de 5 min
-  # --------------------------------------------------------------------------
-  # Ce booléen conditionne toutes les automations de poussée vers l'écran.
-  # S'il reste OFF, plus rien n'est envoyé et l'écran se fige sans erreur
-  # (incident réel documenté dans docs/troubleshooting.md).
-  # NB : le compteur `for:` repart de zéro si HA redémarre pendant la fenêtre —
-  # limitation acceptée pour garder l'exemple événementiel (pas de polling).
-  # ==========================================================================
-  - id: tab5_health_primary_off_5min
-    alias: "Tab5 Santé — is_primary_active OFF depuis 5 min"
-    description: >-
-      Alerte si le booléen qui autorise les poussées vers le Tab5 reste OFF
-      plus de 5 minutes : l'écran ne reçoit plus aucune donnée.
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: input_boolean.is_primary_active
-        to: "off"
-        for: "00:05:00"
-    action:
-      - action: script.tab5_health_notify
-        data:
-          notification_id: tab5_health_primary
-          title: "⚠️ Tab5 : instance primaire inactive"
-          message: >-
-            `input_boolean.is_primary_active` est OFF depuis plus de 5 minutes :
-            plus aucune donnée n'est poussée vers l'écran (météo, planning et
-            capteurs figés). Le remettre sur ON, ou vérifier l'automation qui
-            le pilote.
-          message_court: >-
-            is_primary_active OFF depuis plus de 5 min — l'écran Tab5 ne reçoit
-            plus rien.
+  # (a) Retirée en 3.8 (audit du 07/10/2026) avec le garde-fou
+  # input_boolean.is_primary_active qu'elle surveillait (packages/tab5_push.yaml) :
+  # plus aucune poussée n'en dépend. Les lettres des autres gardes restent.
 
   # ==========================================================================
   # (b) Reboot inattendu — nouvel horodatage de démarrage du Tab5

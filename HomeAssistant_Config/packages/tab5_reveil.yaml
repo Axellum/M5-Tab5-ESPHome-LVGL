@@ -266,12 +266,6 @@ automation:
         not_from: [unavailable, unknown]
         not_to: [unavailable, unknown]
     condition:
-      # Même garde-fou que les autres automations d'écran (cf. l'@ai_warning en
-      # tête de packages/tab5_push.yaml : ce booléen s'est déjà retrouvé bloqué à
-      # `off` sans trace, coupant TOUTE poussée sans erreur visible).
-      - condition: state
-        entity_id: input_boolean.is_primary_active
-        state: "on"
       # Garde d'origine (audit sécurité du 30/09/2026) : tab5_connected ne compte que
       # s'il vient d'une tablette, reconnue au modèle de son appareil comme dans
       # tab5_evenements.yaml. Les autres déclencheurs passent. tests/test_garde_origine.py.

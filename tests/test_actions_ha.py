@@ -36,7 +36,6 @@ ACTIONS_AUTORISEES = {
     "automation.reload",
     "automation.trigger",
     "homeassistant.restart",
-    "input_boolean.turn_on",
     "media_player.media_stop",
     "script.turn_on",
     "select.select_option",

@@ -17,8 +17,7 @@
 #       tab5_voix_stop                     → media_player.media_stop, lecteur de la tablette
 #       tab5_mode_assistant (option)       → select.select_option, select de pipeline de la tablette
 #                                            (Discussion : « Tab5 · pipeline de discussion »)
-#       tab5_maj_ecran                     → input_boolean.turn_on (is_primary_active)
-#                                            + automation.trigger (id tab5_ha_hmi_updater)
+#       tab5_maj_ecran                     → automation.trigger (id tab5_ha_hmi_updater)
 #       tab5_recharger_automatisations     → automation.reload
 #       tab5_redemarrage_ha_confirme       → homeassistant.restart (émis seulement par
 #                                            « Confirmer » de la console système)
@@ -257,7 +256,9 @@ automation:
                     data:
                       option: "{{ option }}"
 
-          - alias: "Console système : MAJ Écran (garde-fou + poussée complète)"
+          # Relance la poussée complète, rien d'autre : le garde-fou is_primary_active
+          # qu'elle remettait d'abord à `on` est retiré depuis la 3.8.
+          - alias: "Console système : MAJ Écran (poussée complète)"
             conditions:
               - condition: trigger
                 id: maj_ecran
@@ -269,11 +270,6 @@ automation:
                     {{ states.automation | selectattr('attributes.id', 'defined')
                        | selectattr('attributes.id', 'eq', 'tab5_ha_hmi_updater')
                        | map(attribute='entity_id') | first | default('') }}
-              - if: "{{ states['input_boolean.is_primary_active'] is not none }}"
-                then:
-                  - action: input_boolean.turn_on
-                    target:
-                      entity_id: input_boolean.is_primary_active
               - if: "{{ poussee != '' }}"
                 then:
                   - action: automation.trigger
