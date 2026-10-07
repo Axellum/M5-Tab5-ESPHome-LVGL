@@ -410,7 +410,7 @@ automation:
   # --------------------------------------------------------------------------
   # Le firmware se met à jour depuis HA (entité « Firmware ») ; ces fichiers,
   # eux, se remplacent à la main (archive tab5_home_assistant.zip de la même
-  # release). Une tablette plus récente que ses fichiers (X.Y : une version
+  # release) ou par l'intégration « Tab5 » de HACS (ADR-0035). Une tablette plus récente que ses fichiers (X.Y : une version
   # corrective ne compte pas) peut demander ce qu'ils ne savent pas encore
   # faire, sans aucune erreur visible. Notification
   # persistante seulement (pas de téléphone : rien ne presse), retirée quand
@@ -443,15 +443,17 @@ automation:
                 La tablette est en {{ state_attr('binary_sensor.tab5_fichiers_ha_en_retard', 'tablette') }},
                 ses fichiers Home Assistant en {{ state_attr('binary_sensor.tab5_fichiers_ha_en_retard', 'fichiers') }} :
                 remplacez-les par ceux de l'archive tab5_home_assistant.zip de la release
-                {{ state_attr('binary_sensor.tab5_fichiers_ha_en_retard', 'tablette') }}
-                (docs/installation.md, étape 4).
+                {{ state_attr('binary_sensor.tab5_fichiers_ha_en_retard', 'tablette') }},
+                ou installez la mise à jour « Tab5 — fichiers HA » de HACS (Paramètres →
+                Mises à jour). Guide : docs/installation/updates.md.
 
 
                 The tablet runs {{ state_attr('binary_sensor.tab5_fichiers_ha_en_retard', 'tablette') }},
                 its Home Assistant files {{ state_attr('binary_sensor.tab5_fichiers_ha_en_retard', 'fichiers') }}:
                 replace them with the tab5_home_assistant.zip archive of release
-                {{ state_attr('binary_sensor.tab5_fichiers_ha_en_retard', 'tablette') }}
-                (docs/installation.md, Step 4).
+                {{ state_attr('binary_sensor.tab5_fichiers_ha_en_retard', 'tablette') }},
+                or install the « Tab5 — fichiers HA · HA files » update from HACS
+                (Settings → Updates). Guide: docs/installation/updates.md.
         else:
           - action: persistent_notification.dismiss
             data:

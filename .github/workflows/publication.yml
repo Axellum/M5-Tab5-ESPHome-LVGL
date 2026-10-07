@@ -6,7 +6,8 @@ name: Publication (release, page de flashage)
 #      seulement depuis `main` ou un tag `v*`, après son accord dans Actions) — jamais
 #      une clé jetable comme en PR ;
 #   2. leurs binaires et manifestes sont joints à la release, avec l'archive Home
-#      Assistant tab5_home_assistant.zip (job home-assistant, ADR-0024) ;
+#      Assistant tab5_home_assistant.zip (job home-assistant, ADR-0024) et l'intégration
+#      pour HACS tab5_hacs.zip (même job, ADR-0035) ;
 #   3. le site GitHub Pages est reconstruit par site.yml à partir des fichiers des
 #      releases : `stable/` = dernière release 3.x non « pre-release », `beta/` = la plus
 #      récente. Les firmwares publiés y lisent leur mise à jour (Tab5/publication-*.yaml).
@@ -80,6 +81,9 @@ jobs:
   # docs/installation.md fait décompresser. Indépendante des firmwares : un échec ici ne
   # retient ni les binaires ni le site. Un ancien tag (placeholders, ≤ 3.1) n'en a pas :
   # l'outil le dit (code 3) et rien n'est envoyé.
+  # Puis tab5_hacs.zip (ADR-0035) : l'intégration custom_components/tab5/ du tag et les
+  # mêmes fichiers, l'asset que HACS télécharge (hacs.json, filename). Un tag sans
+  # l'intégration (3.7.0-rc.4 et avant) : code 3, rien n'est envoyé.
   home-assistant:
     needs: preparation
     if: ${{ !inputs.elf_seulement }}
@@ -117,6 +121,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" publie-ha/tab5_home_assistant.zip --clobber --repo "$GITHUB_REPOSITORY"
+      - name: Archive tab5_hacs.zip (intégration pour HACS)
+        id: hacs
+        if: steps.archive.outputs.envoyer == 'true'
+        run: |
+          set +e
+          python outils-workflow/tools/publication/archive_hacs.py --version "${{ needs.preparation.outputs.version }}"             --base tag/HomeAssistant_Config --integration tag/custom_components/tab5 --sortie publie-hacs
+          code=$?
+          set -e
+          if [ "$code" -eq 3 ]; then echo "envoyer=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          [ "$code" -eq 0 ] || exit "$code"
+          echo "envoyer=true" >> "$GITHUB_OUTPUT"
+          echo "Intégration pour HACS : tab5_hacs.zip" >> "$GITHUB_STEP_SUMMARY"
+      - name: Jointe à la release (HACS)
+        if: steps.hacs.outputs.envoyer == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" publie-hacs/tab5_hacs.zip --clobber --repo "$GITHUB_REPOSITORY"
 
   firmware:
     needs: preparation

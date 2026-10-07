@@ -421,5 +421,15 @@ def test_workflow_joint_l_archive_ha():
     assert "--base tag/HomeAssistant_Config" in texte
     assert "gh release upload \"$TAG\" publie-ha/tab5_home_assistant.zip" in texte
     assert "home-assistant" not in str(flux["jobs"]["release"].get("needs"))
+    # tab5_hacs.zip (ADR-0035) : même job, intégration du tag, le nom lu dans hacs.json.
+    etapes = {e.get("id"): e for e in job["steps"] if e.get("id")}
+    hacs = etapes["hacs"]
+    assert hacs["if"] == "steps.archive.outputs.envoyer == 'true'"
+    assert "outils-workflow/tools/publication/archive_hacs.py" in hacs["run"]
+    assert "--base tag/HomeAssistant_Config --integration tag/custom_components/tab5" in hacs["run"]
+    assert '"$code" -eq 3' in hacs["run"], "un tag sans l'intégration : rien n'est envoyé"
+    nom = json.loads((REPO / "hacs.json").read_text(encoding="utf-8"))["filename"]
+    (envoi,) = [e for e in job["steps"] if e.get("if") == "steps.hacs.outputs.envoyer == 'true'"]
+    assert f'gh release upload "$TAG" publie-hacs/{nom} --clobber' in envoi["run"]
     site = (REPO / ".github" / "workflows" / "site.yml").read_text(encoding="utf-8")
     assert "--pattern 'manifest-*.json' --pattern 'tab5-ha-hmi-*.bin'" in site

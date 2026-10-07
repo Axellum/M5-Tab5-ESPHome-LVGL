@@ -36,7 +36,7 @@
 - **Seven languages, down to the details.** French, English, German, Dutch, Spanish, Italian and Turkish, switched from Home Assistant: menus, games, dates, the texts Home Assistant sends and the spoken alarm briefing. Translated by an AI; the author only checked the French ([translations](docs/translations.md)).
 - **Twenty-one themes, light or dark.** Colours, shapes and the fonts of the clock change at once, without a restart, from Home Assistant or the tablet's console; « Auto » turns light at sunrise and dark at sunset ([themes](docs/installation/settings.md#theme-light-or-dark)).
 - **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
-- **Documented and tested like a product.** 34 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
+- **Documented and tested like a product.** 35 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
 - **Runs on the ST7123 and ST7121 revisions, and builds for the original ILI9881C**, while most published Tab5 examples only cover the original one.
 
 ## What it does
@@ -84,7 +84,7 @@ What the screen was first made for: seeing at a glance whether rain is coming be
 
 Without compiling, since 3.0: a Tab5, a USB-C cable that carries data, Chrome or Edge on a computer, and Home Assistant. The [installation guide](docs/installation/README.md) takes you through seven steps:
 
-1. [Home Assistant files](docs/installation/home-assistant-files.md): unzip the archive attached to each release into the `config` folder of Home Assistant, add one line to `configuration.yaml`, restart.
+1. [Home Assistant files](docs/installation/home-assistant-files.md): unzip the archive attached to each release into the `config` folder of Home Assistant, add one line to `configuration.yaml`, restart. Or, from 3.7.0, let [HACS](docs/installation/home-assistant-files.md#with-hacs) install them and update them in one click.
 2. [Install the firmware](docs/installation/flash.md) from the [install page](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/): your display revision, the Stable channel, *Connect and install*.
 3. [Wi-Fi](docs/installation/wifi.md): from the same window, over USB, or with a phone on the open "Tab5 Fallback AP" network.
 4. [Add it to Home Assistant](docs/installation/add-to-home-assistant.md): the ESPHome device is discovered, *Configure*; Home Assistant gives it its key.
@@ -206,7 +206,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 - **Sept langues, jusque dans les détails.** Français, anglais, allemand, néerlandais, espagnol, italien et turc, au choix depuis Home Assistant : menus, jeux, dates, textes envoyés par Home Assistant et briefing parlé du réveil. Traduites par une IA ; l'auteur n'a relu que le français ([traductions](docs/translations.md#version-française)).
 - **Vingt et un thèmes, clairs ou sombres.** Couleurs, formes et polices de l'horloge changent aussitôt, sans redémarrer, depuis Home Assistant ou la console de la tablette ; « Auto » passe en clair au lever du soleil et en sombre à son coucher ([thèmes](docs/installation/settings.md#thème-clair-ou-sombre)).
 - **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
-- **Documenté et testé comme un produit.** 34 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
+- **Documenté et testé comme un produit.** 35 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
 - **Tourne sur les révisions ST7123 et ST7121, et compile pour l'ILI9881C d'origine**, alors que la plupart des exemples Tab5 publiés ne couvrent que celle d'origine.
 
 ## Ce que ça fait
@@ -254,7 +254,7 @@ Ce pour quoi l'écran a d'abord été fait : voir d'un coup d'œil s'il va pleuv
 
 Sans compiler, depuis la 3.0 : une Tab5, un câble USB-C qui transmet les données, Chrome ou Edge sur un ordinateur, et Home Assistant. Le [guide d'installation](docs/installation/README.md#version-française) tient en sept étapes :
 
-1. [Fichiers Home Assistant](docs/installation/home-assistant-files.md#version-française) : décompressez l'archive jointe à chaque release dans le dossier `config` de Home Assistant, ajoutez une ligne à `configuration.yaml`, redémarrez.
+1. [Fichiers Home Assistant](docs/installation/home-assistant-files.md#version-française) : décompressez l'archive jointe à chaque release dans le dossier `config` de Home Assistant, ajoutez une ligne à `configuration.yaml`, redémarrez. Ou, depuis la 3.7.0, laissez [HACS](docs/installation/home-assistant-files.md#avec-hacs) les installer et les mettre à jour en un clic.
 2. [Installer le firmware](docs/installation/flash.md#version-française) depuis la [page d'installation](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/install/) : votre révision d'écran, le canal Stable, *Connecter et installer*.
 3. [Wi-Fi](docs/installation/wifi.md#version-française) : depuis la même fenêtre, par l'USB, ou avec un téléphone sur le réseau ouvert « Tab5 Fallback AP ».
 4. [L'ajouter à Home Assistant](docs/installation/add-to-home-assistant.md#version-française) : l'appareil ESPHome est découvert, *Configurer* ; Home Assistant lui donne sa clé.

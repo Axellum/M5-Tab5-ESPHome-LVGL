@@ -1,0 +1,103 @@
+name: Intégration HACS
+
+# L'intégration « Tab5 » (custom_components/tab5/, hacs.json, ADR-0035) qui installe et met
+# à jour les fichiers Home Assistant en un clic. Trois jobs, non requis :
+#   - hassfest : le validateur des intégrations de Home Assistant (manifest, traductions,
+#     formulaires), image officielle ghcr.io/home-assistant/hassfest (ce que lance
+#     l'action home-assistant/actions/hassfest) ;
+#   - hacs : la validation de HACS sur la branche de la PR (image de hacs/action), comme
+#     HACS le fera pour un utilisateur qui ajoute le dépôt ; « brands » ignoré (pas d'entrée
+#     dans home-assistant/brands pour une intégration personnalisée) ;
+#   - ha : tools/installation_ha/verifier_integration.py dans un Home Assistant NEUF en
+#     conteneur : première installation sans redémarrage, mise à jour comme HACS, retour en
+#     arrière sur une configuration cassée, ligne `packages:` absente.
+# Les images ghcr.io de hassfest et de HACS suivent leur dernière version exprès (comme
+# ESPHome `latest`, ADR-0016) : elles annoncent ce que HA et HACS refuseront demain.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    # Même liste que pull_request, plus bas.
+    paths:
+      - '.github/workflows/integration-hacs.yml'
+      - 'custom_components/**'
+      - 'hacs.json'
+      - 'HomeAssistant_Config/**'
+      - 'tools/publication/archive_ha.py'
+      - 'tools/publication/archive_hacs.py'
+      - 'tools/installation_ha/verifier_integration.py'
+      - 'tools/installation_ha/verifier_installation.py'
+      - '!**/*.md'
+  pull_request:
+    paths:
+      - '.github/workflows/integration-hacs.yml'
+      - 'custom_components/**'
+      - 'hacs.json'
+      - 'HomeAssistant_Config/**'
+      - 'tools/publication/archive_ha.py'
+      - 'tools/publication/archive_hacs.py'
+      - 'tools/installation_ha/verifier_integration.py'
+      - 'tools/installation_ha/verifier_installation.py'
+      - '!**/*.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Même version que le test « HA neuf » (installation-ha.yml), relevée à la main avec lui.
+  HA_IMAGE: ghcr.io/home-assistant/home-assistant:2026.9.4
+
+jobs:
+  hassfest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: hassfest (validateur des intégrations de Home Assistant)
+        run: docker run --rm -v "$GITHUB_WORKSPACE:/github/workspace" ghcr.io/home-assistant/hassfest
+
+  hacs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validation HACS (branche de la PR, lue par l'API de GitHub)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          docker run --rm \
+            -e INPUT_GITHUB_TOKEN="$GH_TOKEN" -e INPUT_CATEGORY=integration -e INPUT_IGNORE=brands \
+            -e INPUT_COMMENT=false -e GITHUB_REPOSITORY -e GITHUB_EVENT_PATH=/github/evenement.json \
+            -v "$GITHUB_EVENT_PATH:/github/evenement.json:ro" \
+            ghcr.io/hacs/action:main
+
+  ha:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Image de Home Assistant (téléchargée pendant l'installation de Python)
+        run: nohup docker pull -q "$HA_IMAGE" > "$RUNNER_TEMP/pull.log" 2>&1 &
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Outils du vérificateur
+        # Réessais : PyPI répond parfois « from versions: none » (tools/ci/pip_reessai.sh).
+        run: bash tools/ci/pip_reessai.sh aiohttp
+      - name: Installer, mettre à jour, revenir en arrière dans un HA neuf
+        run: |
+          docker pull -q "$HA_IMAGE"
+          python tools/installation_ha/verifier_integration.py --dossier "$RUNNER_TEMP/ha" \
+            --image "$HA_IMAGE" --journal captures/home-assistant.log
+      - name: Journal de Home Assistant
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: integration-hacs
+          path: captures/
+          if-no-files-found: warn
+          retention-days: 14

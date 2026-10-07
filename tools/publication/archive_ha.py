@@ -129,32 +129,45 @@ def placeholders(base: Path = HA_DIR) -> list[str]:
             and PLACEHOLDER.search(source.read_text(encoding="utf-8"))]
 
 
-def construire(version: str, sortie: Path, base: Path = HA_DIR) -> Path:
-    """Écrit `sortie/tab5_home_assistant.zip` ; renvoie son chemin."""
+def entrees(version: str, base: Path = HA_DIR) -> list[tuple[str, bytes]]:
+    """(chemin dans l'archive, contenu) de chaque fichier HA, version de la release posée.
+    Source unique de tab5_home_assistant.zip et du dossier fichiers/ de tab5_hacs.zip
+    (archive_hacs.py)."""
     if not re.fullmatch(r"\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?", version):
         raise SystemExit(f"version {version!r} : X.Y.Z[-suffixe] attendu")
     liste = fichiers(base)
     if not any(chemin.startswith("packages/") for _, chemin in liste):
         raise SystemExit(f"{base} : aucun package")
-    sortie.mkdir(parents=True, exist_ok=True)
-    archive = sortie / NOM
-    entrees, marques = [], 0
+    resultat, marques = [], 0
     for source, chemin in liste:
         donnees = source.read_bytes()
         if chemin.startswith("packages/"):
             texte, n = MARQUEUR_VERSION.subn(f'"{version}"', donnees.decode("utf-8"))
             if n:
                 donnees, marques = texte.encode("utf-8"), marques + n
-        entrees.append((chemin, donnees))
+        resultat.append((chemin, donnees))
     if marques > 1:
         raise SystemExit(f"{marques} lignes portent la version des fichiers : une seule attendue")
-    entrees.append((LISEZMOI, TEXTE_LISEZMOI.format(version=version).encode("utf-8")))
+    return resultat
+
+
+def ecrire_zip(archive: Path, contenu: list[tuple[str, bytes]]) -> None:
+    """Zip reproductible : ordre donné, date fixe, droits 644."""
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as z:
-        for chemin, donnees in entrees:
+        for chemin, donnees in contenu:
             info = zipfile.ZipInfo(chemin, date_time=DATE)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o644 << 16
             z.writestr(info, donnees)
+
+
+def construire(version: str, sortie: Path, base: Path = HA_DIR) -> Path:
+    """Écrit `sortie/tab5_home_assistant.zip` ; renvoie son chemin."""
+    contenu = entrees(version, base)
+    contenu.append((LISEZMOI, TEXTE_LISEZMOI.format(version=version).encode("utf-8")))
+    sortie.mkdir(parents=True, exist_ok=True)
+    archive = sortie / NOM
+    ecrire_zip(archive, contenu)
     return archive
 
 
