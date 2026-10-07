@@ -171,9 +171,13 @@ def test_commandes_par_type_egales_au_tableau_de_l_adr():
 
 
 def test_tout_eteindre_de_la_piece():
+    """« Tout éteindre » du popup lumière et « Éteindre les lumières » du popup Maison
+    (ADR-0037) : la même commande pR / eteindre, par la même fonction."""
     assert "pR` + `eteindre`" in _lire(ADR)
-    corps = _fonction(_cpp(), "popup_lumiere_tout_eteindre")
-    assert "{'p', static_cast<char>('0' + s_pl.piece), '\\0'}" in corps and 'envoyer(cle, "eteindre")' in corps
+    cpp = _cpp()
+    corps = _fonction(cpp, "tuiles_piece_eteindre")
+    assert "{'p', static_cast<char>('0' + r), '\\0'}" in corps and 'envoyer(cle, "eteindre")' in corps
+    assert "void popup_lumiere_tout_eteindre() { tuiles_piece_eteindre(s_pl.piece); }" in cpp
     assert "popup_lumiere_tout_eteindre();" in _lire("Tab5", "ui_components", "light_popup.yaml")
 
 
@@ -300,7 +304,10 @@ def test_cartes_du_mode_ha_facon_carte_tile():
         assert f"id: icon_sw{t}," in pastille and "clickable: false" in pastille
         bouton = carte.split(f"id: btn_sw{t}_action\n", 1)[1].split("!include", 1)[0]
         assert f"tuile_appui({t}, false);" in bouton and f"tuile_appui({t}, true);" in bouton
-    assert "ui_fond(u.carte_pastille[t], v.couleur_carte);" in _fonction(_cpp(), "peindre_carte")
+    # Dessin partagé avec les lignes du popup Maison (ADR-0037) : peindre_vue_sur.
+    assert "ui_fond(w.pastille, v.couleur_carte);" in _fonction(_cpp(), "peindre_vue_sur")
+    carte = "peindre_vue_sur(v, {u.carte_pastille[t], u.carte_icone[t], u.carte_nom[t], u.carte_etat[t]},"
+    assert carte in _fonction(_cpp(), "peindre_carte")
     titre = _lire("Tab5", "ui_components", "switch_card_title_tab.yaml")
     assert titre.split("\nobj:", 1)[1].count("widgets:") == 1, "le nom garde son cadre (parent cliquable)"
 

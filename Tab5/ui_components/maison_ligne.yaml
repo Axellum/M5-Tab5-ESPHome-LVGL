@@ -1,0 +1,56 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 25x par maison_popup.yaml :
+# une ligne du popup « Maison » (ADR-0037) = la tuile tRT, dessinée comme sa carte du mode
+# HA couchée (carte « tile » de HA) : pastille ronde de l'icône (couleur de l'état à 20 %,
+# icône pleine), nom, ligne d'état, et « ⋯ » quand la tuile a un appui long.
+# Vars : r (pièce 0 à 4), t (tuile 0 à 4), nombres NON quotés dans les lambdas.
+# @architecture_constraint L'ORDRE des enfants est lu par tab5_maison.cpp (enfant()) :
+#   0 pastille (son enfant 0 : l'icône), 1 nom, 2 état, 3 « ⋯ ». Position, largeur,
+#   textes, couleurs, « ⋯ » montré ou non et ligne pressable ou non : posés par le C++
+#   (disposer, peindre_ligne) ; ce qui est écrit ici n'est que l'état d'avant.
+#   Icône : palette des tuiles en mdi_font_32 (MDI_CODE_TARGETS, motif maison_icone_*).
+# @ai_instruction Gestes = ceux de la tuile (maison_ligne_appui → tuile_appui_maison) :
+#   toucher = toucher de la tuile, appui long ou « ⋯ » = son appui long.
+# ═══════════════════════════════════════════════════════
+button:
+  id: "maison_ligne_${r}${t}"
+  align: TOP_LEFT
+  width: 236
+  height: 104
+  hidden: true
+  scrollable: false
+  styles: style_glass_card
+  on_short_click:
+    - lambda: 'maison_ligne_appui(${r}, ${t}, false);'
+  on_long_press:
+    - lambda: 'maison_ligne_appui(${r}, ${t}, true);'
+  widgets:
+    # 0 — pastille ronde : la couleur de l'état à 20 % (posée par le C++), l'icône pleine.
+    - obj:
+        align: LEFT_MID
+        x: 12
+        width: 56
+        height: 56
+        radius: 28
+        styles: style_bg_dim
+        bg_opa: 20%
+        border_width: 0
+        clickable: false
+        scrollable: false
+        widgets:
+          - label: { id: "maison_icone_${r}${t}", text: "", align: CENTER, text_font: mdi_font_32, styles: style_text_dim }
+    # 1 — nom (coupé avec « … »), 2 — ligne d'état dans sa couleur.
+    - label: { text: "", align: LEFT_MID, x: 80, y: -15, text_font: roboto_22 }
+    - label: { text: "", align: LEFT_MID, x: 80, y: 15, text_font: roboto_22, styles: style_text_dim }
+    # 3 — « ⋯ » : l'appui long de la tuile.
+    - button:
+        align: RIGHT_MID
+        x: -12
+        width: 36
+        height: 36
+        radius: 18
+        styles: style_clim_btn
+        on_short_click:
+          - lambda: 'maison_ligne_appui(${r}, ${t}, true);'
+        widgets:
+          - label: { text: "\U000F01D8", align: CENTER, text_font: mdi_font_26, styles: style_text_soft }

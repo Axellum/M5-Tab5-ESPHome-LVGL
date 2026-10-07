@@ -122,7 +122,9 @@ def test_un_ecran_en_mode_ha_par_piece_de_la_demo():
     obtenues = {}
     for ecran in ECRANS:
         _, page, ha = _jouer(ecran.etapes)
-        if ha:
+        # Le popup Maison (ADR-0037) s'ouvre en mode HA par le titre de la pièce : il couvre
+        # la rangée, ce n'est pas l'écran d'une pièce.
+        if ha and not ecran.nom.startswith("maison-"):
             assert page not in obtenues, (ecran.nom, obtenues.get(page))
             obtenues[page] = ecran.nom
     assert obtenues == attendues

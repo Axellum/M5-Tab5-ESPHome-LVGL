@@ -215,6 +215,10 @@ bool roue_ouvrir(lv_obj_t* ancre, const RoueBouton* b, int n, uint32_t couleur, 
     s_roue.n = n;
     s_roue.choisir = choisir;
     s_roue.rejouer = rejouer;
+    // Au premier plan, comme un popup (animate_popup_open) : le capteur est inclus avant
+    // les popups dans tab5-lvgl.yaml, et une roue ouverte sur une ligne du popup Maison
+    // (ADR-0037) doit le couvrir. Sans popup ouvert, l'ordre ne change rien à l'écran.
+    lv_obj_move_to_index(u.fond, -1);
     ui_hidden(u.fond, false);
     return true;
 }

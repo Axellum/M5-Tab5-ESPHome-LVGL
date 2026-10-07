@@ -25,8 +25,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
-from scenarios import (PAGE_DE_LA_PIECE, PIECES, SCENES, build_alerte_payload, build_historique,  # noqa: E402
-                       code_pluie)
+from scenarios import (PAGE_DE_LA_PIECE, PIECES, RANGEE, REGLABLES, SCENES, build_alerte_payload,  # noqa: E402
+                       build_etats_tuiles, build_historique, build_tuiles_payload, code_pluie)
 
 
 @dataclass(frozen=True)
@@ -421,6 +421,22 @@ TEMPERATURE_VUES = {"jour": (828, 287), "semaine": (988, 287), "mois": (1148, 28
 MOMENT_DES_CAPTURES = _dt.datetime(2026, 6, 16, 7, 45)
 
 
+# Popup Maison (ADR-0037) avec deux pièces seulement : le Salon (cinq appareils) et la
+# chambre au nom coupé (la clim, deux tuiles espacées). Les pièces 1, 3 et 4 retirées
+# repartent grisées (tuiles_definir) : `fermer` repousse les définitions de la démo, puis
+# les états de ces trois pièces (aucune clim parmi elles : rien d'autre n'est oublié).
+DEUX_PIECES = {r: PIECES[r] for r in (0, 2)}
+RETIREES = {r: p for r, p in PIECES.items() if r not in DEUX_PIECES}
+assert not any(t.type == "cli" for p in RETIREES.values() for t in p.tuiles.values())
+MAISON_DEUX_PIECES = Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(DEUX_PIECES, RANGEE, REGLABLES)),))
+# Ligne de la lampe d'ambiance (Salon, 3e ligne) : colonne 0 de 235 px, lignes de 104 px tous
+# les 112 px à partir de y = 120 dans la carte (disposer(), Tab5/tab5_maison.cpp). Le doigt
+# entre la pastille et le nom, loin du « ⋯ ».
+MAISON_LAMPE = (104, 412)
+MAISON_DE_LA_DEMO = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
+                     Service("tab5_maj_emplacements", (("payload", build_etats_tuiles(RETIREES)),)))
+
+
 def _historique(cle: str, vue: str, exterieur: bool = False) -> Service:
     """Ce que pousserait script.tab5_historique (tools/demo/scenarios.py)."""
     return Service("tab5_maj_historique", tuple(build_historique(cle, vue, MOMENT_DES_CAPTURES, exterieur).items()))
@@ -587,6 +603,16 @@ ECRANS: tuple[Ecran, ...] = (
     # pousserait, puis l'appui long sur la carte centrale.
     Ecran("alertes", (Service("tab5_maj_alertes_historique", (("payload", HISTORIQUE_ALERTES),)),
                       Long(*CARTE_CENTRALE))),
+    # Popup Maison (ADR-0037) : les cinq pièces de la démo par « Aller à l'écran », puis par
+    # un tap sur le titre de la pièce en mode HA, puis deux pièces (colonnes plus larges).
+    Ecran("maison", (Aller("Maison"),)),
+    Ecran("maison-par-le-titre", (Toucher(*BOUTON_HA), Toucher(*CARTE_CENTRALE)),
+          (Toucher(*FERMER_POPUP), Toucher(*BOUTON_HA))),
+    Ecran("maison-2-pieces", (MAISON_DEUX_PIECES, Aller("Maison")), MAISON_DE_LA_DEMO),
+    # Roue d'actions rapides (ADR-0036) ouverte par l'appui long d'une ligne, devant le popup
+    # Maison qui reste derrière : la lampe d'ambiance du Salon (variateur), ancrée sur la
+    # pastille de sa ligne. Toucher ailleurs ne ferme que la roue.
+    Ecran("maison-roue", (Aller("Maison"), Long(*MAISON_LAMPE)), (ROUE_FERMER,)),
     Ecran("plantes", (Long(*SOUS_HORLOGE),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis
     # les vues Jours et Mois par « Aller à l'écran ». Données : la scène (demo_pusher,

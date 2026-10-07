@@ -41,6 +41,7 @@ OPTIONS = {
     "AUCUN": "—", "ACCUEIL": "Accueil", "ASSISTANT": "Assistant vocal", "CALENDRIER": "Calendrier",
     "REVEIL": "Réveil", "CLIM": "Climatisation", "PLANTES": "Plantes", "TV": "Télécommande TV",
     "CONSOLE": "Console système", "ENERGIE": "Énergie", "REGLAGES": "Réglages", "ALERTES": "Alertes",
+    "MAISON": "Maison",
 }
 # Code du blueprint → valeur d'Ecran.
 CODES = {

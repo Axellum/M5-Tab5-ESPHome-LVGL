@@ -894,6 +894,7 @@ enum BoutonHaut : uint8_t {
 enum class Ecran : uint8_t {
     AUCUN,       // « — » : position de repos du select ; « rien » pour un appui long
     ACCUEIL, ASSISTANT, CALENDRIER, REVEIL, CLIM, PLANTES, TV, CONSOLE, ENERGIE, REGLAGES, ALERTES,
+    MAISON,      // popup Maison (ADR-0037) : option du select, pas encore un choix d'appui long
     ARCADE,
     NB
 };
@@ -1453,6 +1454,37 @@ void popup_lumiere_choisir(int idx);
 // « Tout éteindre » : pR / eteindre (toutes les lumières de la pièce), lumieres /
 // eteindre en mode héritage.
 void popup_lumiere_tout_eteindre();
+
+// =============================================================================
+// Popup « Maison » (ADR-0037, 07/10/2026, discussion #278) — tab5_maison.cpp
+// =============================================================================
+// Toute la maison dans un popup plein écran, comme un tableau de bord HA : une colonne
+// par pièce qui a des appareils (ordre du blueprint, Pièce 1 → 5), une ligne par tuile
+// (pastille de l'icône, nom, état, « ⋯ » pour l'appui long). Rien de nouveau : les
+// définitions et états des tuiles (tab5_maj_tuiles, tab5_maj_emplacements), leurs gestes
+// et leurs commandes. Ouvert par « Aller à l'écran → Maison » ou, en mode HA, par un tap
+// sur le titre de la pièce dans la carte centrale.
+//
+// Widgets posés par le script tab5_maison_ouvrir (tab5-maison.yaml) : id() n'existe que
+// dans une lambda YAML. Les widgets d'une ligne sont lus dans l'ordre de ses enfants
+// (maison_ligne.yaml : pastille [icône], nom, état, « ⋯ »).
+struct MaisonUI {
+    lv_obj_t* popup = nullptr;      // maison_popup
+    lv_obj_t* vide = nullptr;       // maison_vide : « Aucun appareil »
+    lv_obj_t* eteindre = nullptr;   // btn_maison_eteindre : « Éteindre les lumières »
+    lv_obj_t* entete[5] = {};       // maison_entete_R : nom de la pièce R
+    lv_obj_t* ligne[5][5] = {};     // maison_ligne_RT : la tuile tRT (bouton)
+};
+extern MaisonUI g_maison_ui;
+
+// Ouvre le popup (disposé et peint à chaque ouverture : il suit les définitions même fermé).
+void maison_ouvrir();
+// Tap sur le titre de la pièce (carte centrale) : vrai en mode HA, hors d'un glissement.
+bool maison_titre_appui_valide();
+// Toucher (long_appui faux), appui long ou « ⋯ » (vrai) de la ligne de la tuile tRT.
+void maison_ligne_appui(int r, int t, bool long_appui);
+// « Éteindre les lumières » : « Pièce : tout éteindre » de chaque pièce qui a des lumières.
+void maison_eteindre_lumieres();
 
 // =============================================================================
 // Thèmes de l'écran (tab5_theme.cpp, ADR-0029 lot 2 ; entités : tab5-themes.yaml)

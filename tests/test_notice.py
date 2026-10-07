@@ -37,6 +37,7 @@ APPUIS_LONGS = {
     "btn_control_tv": "home.md",
     "btn_rangee": "plants.md",
     "climate_card.yaml": "temperature.md",
+    "maison_ligne.yaml": "house.md",
     # Carte centrale : chaque panneau de l'accueil ouvre l'historique des alertes.
     "btn_alerts_mf_tap": "home.md",
     "btn_info_tap": "home.md",
@@ -65,6 +66,10 @@ NON_MONTREES = {
     "roue-lampe": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
+    "maison": "image à tirer du rendu de la PR du popup Maison, puis citer dans house.md",
+    "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
+    "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
+    "maison-roue": "roue d'actions rapides (ADR-0036) devant le popup Maison, décrite dans house.md",
 }
 
 

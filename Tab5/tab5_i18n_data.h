@@ -8,9 +8,11 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1034;
+static const uint16_t kI18nKeyCount = 1036;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
     "",
     "",
     "",
@@ -1577,6 +1579,7 @@ static const char* const kI18nKeys[] = {
     "Main d'Ariane",
     "Maintenant",
     "Maintiens ici pour armer,\nrelâche pour tirer",
+    "Maison",
     "Mar",
     "Marchand",
     "Marche / Arrêt",
@@ -2045,6 +2048,7 @@ static const char* const kI18nKeys[] = {
     "Équipe : %s",
     "Équipement",
     "Éteindre",
+    "Éteindre les lumières",
     "Éteint",
     "Évaluation au HUD",
     "à vous",
@@ -2615,6 +2619,7 @@ static const char* const kI18n_en[] = {
     "Ariadne's Hand",  // "Main d'Ariane"
     "Now",  // "Maintenant"
     "Hold here to charge,\nrelease to launch",  // "Maintiens ici pour armer,\nrelâche pour tirer"
+    "Home",  // "Maison"
     "Tue",  // "Mar"
     "Merchant",  // "Marchand"
     "Power",  // "Marche / Arrêt"
@@ -3083,6 +3088,7 @@ static const char* const kI18n_en[] = {
     "Team: %s",  // "Équipe : %s"
     "Equipment",  // "Équipement"
     "Turn off",  // "Éteindre"
+    "Lights off",  // "Éteindre les lumières"
     "Off",  // "Éteint"
     "HUD evaluation",  // "Évaluation au HUD"
     "you",  // "à vous"
@@ -3653,6 +3659,7 @@ static const char* const kI18n_de[] = {
     "Ariadnes Hand",  // "Main d'Ariane"
     "Jetzt",  // "Maintenant"
     "Hier halten zum Spannen,\nloslassen zum Abschießen",  // "Maintiens ici pour armer,\nrelâche pour tirer"
+    "Zuhause",  // "Maison"
     "Di",  // "Mar"
     "Händler",  // "Marchand"
     "Ein / Aus",  // "Marche / Arrêt"
@@ -4121,6 +4128,7 @@ static const char* const kI18n_de[] = {
     "Team: %s",  // "Équipe : %s"
     "Ausrüstung",  // "Équipement"
     "Ausschalten",  // "Éteindre"
+    "Lichter aus",  // "Éteindre les lumières"
     "Aus",  // "Éteint"
     "Bewertung im HUD",  // "Évaluation au HUD"
     "du",  // "à vous"
@@ -4691,6 +4699,7 @@ static const char* const kI18n_nl[] = {
     "Ariadnes hand",  // "Main d'Ariane"
     "Nu",  // "Maintenant"
     "Hier vasthouden: spannen,\nloslaten: schieten",  // "Maintiens ici pour armer,\nrelâche pour tirer"
+    "Thuis",  // "Maison"
     "Di",  // "Mar"
     "Koopman",  // "Marchand"
     "Aan / uit",  // "Marche / Arrêt"
@@ -5159,6 +5168,7 @@ static const char* const kI18n_nl[] = {
     "Team: %s",  // "Équipe : %s"
     "Uitrusting",  // "Équipement"
     "Uitzetten",  // "Éteindre"
+    "Lichten uit",  // "Éteindre les lumières"
     "Uit",  // "Éteint"
     "Evaluatie in HUD",  // "Évaluation au HUD"
     "jij",  // "à vous"
@@ -5729,6 +5739,7 @@ static const char* const kI18n_es[] = {
     "Mano de Ariadna",  // "Main d'Ariane"
     "Ahora",  // "Maintenant"
     "Mantén aquí para cargar,\nsuelta para lanzar",  // "Maintiens ici pour armer,\nrelâche pour tirer"
+    "Casa",  // "Maison"
     "Mar",  // "Mar"
     "Mercader",  // "Marchand"
     "Encender / Apagar",  // "Marche / Arrêt"
@@ -6197,6 +6208,7 @@ static const char* const kI18n_es[] = {
     "Equipo: %s",  // "Équipe : %s"
     "Equipo",  // "Équipement"
     "Apagar",  // "Éteindre"
+    "Apagar las luces",  // "Éteindre les lumières"
     "OFF",  // "Éteint"
     "Evaluación en el HUD",  // "Évaluation au HUD"
     "tuyo",  // "à vous"
@@ -6767,6 +6779,7 @@ static const char* const kI18n_it[] = {
     "Mano di Arianna",  // "Main d'Ariane"
     "Ora",  // "Maintenant"
     "Tieni premuto per caricare,\nrilascia per lanciare",  // "Maintiens ici pour armer,\nrelâche pour tirer"
+    "Casa",  // "Maison"
     "Mar",  // "Mar"
     "Mercante",  // "Marchand"
     "On / Off",  // "Marche / Arrêt"
@@ -7235,6 +7248,7 @@ static const char* const kI18n_it[] = {
     "Squadra: %s",  // "Équipe : %s"
     "Equipaggiamento",  // "Équipement"
     "Spegni",  // "Éteindre"
+    "Spegni le luci",  // "Éteindre les lumières"
     "Spento",  // "Éteint"
     "Valutazione HUD",  // "Évaluation au HUD"
     "tuo",  // "à vous"
@@ -7805,6 +7819,7 @@ static const char* const kI18n_tr[] = {
     "Ariadne'nin Eli",  // "Main d'Ariane"
     "Şimdi",  // "Maintenant"
     "Kurmak için basılı tut,\nfırlatmak için bırak",  // "Maintiens ici pour armer,\nrelâche pour tirer"
+    "Ev",  // "Maison"
     "Sal",  // "Mar"
     "Tüccar",  // "Marchand"
     "Güç",  // "Marche / Arrêt"
@@ -8273,6 +8288,7 @@ static const char* const kI18n_tr[] = {
     "Takım: %s",  // "Équipe : %s"
     "Teçhizat",  // "Équipement"
     "Kapat",  // "Éteindre"
+    "Işıkları kapat",  // "Éteindre les lumières"
     "Kapalı",  // "Éteint"
     "Ekranda değerlendirme",  // "Évaluation au HUD"
     "sende",  // "à vous"

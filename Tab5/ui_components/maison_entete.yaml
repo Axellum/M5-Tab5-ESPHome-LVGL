@@ -1,0 +1,11 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par maison_popup.yaml :
+# l'en-tête de la colonne de la pièce R du popup « Maison » (ADR-0037), son nom (« Pièce n »
+# sans nom), coupé avec « … » à la largeur de la colonne. Position et texte posés par
+# tab5_maison.cpp (disposer) ; masqué tant que la pièce n'a pas d'appareil.
+# Var : r (pièce 0 à 4).
+label:
+  id: "maison_entete_${r}"
+  text: ""
+  align: TOP_LEFT
+  hidden: true
+  text_font: roboto_22

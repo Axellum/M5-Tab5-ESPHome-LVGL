@@ -25,6 +25,11 @@
  *           (« hLI|type|icône|options|complément|nom|classe », « hp|place des plantes »)
  *           et les mêmes états (clés hLI). Modèle et NVS ici (clé à part, magie « RAN1 »),
  *           dessin et rotation dans tab5_rangee.cpp (rangee_element, plus bas).
+ *         - Popup Maison (ADR-0037, 07/10/2026) : toutes les pièces à la fois, une ligne
+ *           par tuile. Disposé et peint par tab5_maison.cpp, qui ne lit le modèle que par
+ *           les fonctions de la fin de ce fichier (tuile_gestes, tuile_peindre_ligne :
+ *           même dessin que les cartes du mode HA, peindre_vue_sur ; tuile_appui_maison :
+ *           le geste de la tuile). peindre_tuile et tuiles_appliquer_ui le préviennent.
  * @architecture_constraint Pièce R ↔ page du bas dans l'ordre où un swipe les atteint depuis
  *       l'accueil : R0 = page 2 (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0. Tuile T = position
  *       visuelle, 0 = gauche (sur les pages horaires, l'objet h(4−T)).
@@ -889,20 +894,27 @@ void ui_fond(lv_obj_t* obj, uint32_t hex) {
 // côté (façon carte « tile » de HA depuis le 06/10/2026 : plus d'onglets de 200 px).
 constexpr int32_t kLargeurCarteTexte = 206;
 
-// Une carte du mode HA, façon carte « tile » de HA (06/10/2026, discussion #278) :
-// l'icône en couleur pleine dans une pastille ronde de la même couleur à 20 % (opacité
-// posée par switches_card.yaml), le nom, l'état dans sa couleur.
+// Une tuile façon carte « tile » de HA (06/10/2026, discussion #278) : l'icône en couleur
+// pleine dans une pastille ronde de la même couleur à 20 % (opacité posée par le YAML), le
+// nom, l'état dans sa couleur, textes coupés à `largeur` px. Les cartes du mode HA et les
+// lignes du popup Maison (ADR-0037, tuile_peindre_ligne) passent par ici : mêmes mots,
+// mêmes couleurs.
+void peindre_vue_sur(const Vue& v, const TuileWidgets& w, int32_t largeur) {
+    if (v.icone_carte != nullptr) ui_text(w.icone, v.icone_carte);
+    ui_text_color(w.icone, v.couleur_carte);
+    ui_fond(w.pastille, v.couleur_carte);
+    ui_texte_coupe(w.nom, v.nom, largeur);
+    ui_texte_coupe(w.etat, v.ligne, largeur);
+    ui_text_color(w.etat, v.couleur_ligne);
+}
+
+// Une carte du mode HA.
 void peindre_carte(int r, int t) {
     const TuilesUI& u = g_tuiles_ui;
     if (u.carte_icone[t] == nullptr) return;
     Vue v;
     vue(r, t, v);
-    if (v.icone_carte != nullptr) ui_text(u.carte_icone[t], v.icone_carte);
-    ui_text_color(u.carte_icone[t], v.couleur_carte);
-    ui_fond(u.carte_pastille[t], v.couleur_carte);
-    ui_texte_coupe(u.carte_nom[t], v.nom, kLargeurCarteTexte);
-    ui_texte_coupe(u.carte_etat[t], v.ligne, kLargeurCarteTexte);
-    ui_text_color(u.carte_etat[t], v.couleur_ligne);
+    peindre_vue_sur(v, {u.carte_pastille[t], u.carte_icone[t], u.carte_nom[t], u.carte_etat[t]}, kLargeurCarteTexte);
 }
 
 // Cartes du mode HA : la pièce de la page courante, cartes vides masquées et les autres
@@ -983,6 +995,7 @@ void peindre_tuile(int r, int t) {
     popup_volet_etat(r, t);
     popup_appareil_etat(r, t);
     roue_tuile_etat(r, t);
+    maison_tuile_changee(r, t);  // popup Maison (ADR-0037) : sa ligne, s'il est affiché
     if (r != piece_courante()) return;
     if (g_central_ctx.ha_mode) {
         if (tuile_presente(r, t)) peindre_carte(r, t);
@@ -1785,6 +1798,9 @@ void tuiles_appliquer_ui() {
     charger();
     CentralPanelCtx& ctx = g_central_ctx;
     const TuilesUI& u = g_tuiles_ui;
+    // Popup Maison (ADR-0037) : définitions, zones ou thème changés, il se redispose s'il
+    // est affiché (sinon rien : il se dispose à chaque ouverture).
+    maison_definitions_changees();
     if (ctx.ha_mode) {
         if (aucun_appareil()) {
             tuiles_mode_ha(false);
@@ -2339,15 +2355,21 @@ void tuiles_brancher_popup_volet() {
         lv_obj_add_event_cb(cadre, volet_cadre_rappel, code, nullptr);
 }
 
-void popup_lumiere_tout_eteindre() {
+// « Pièce : tout éteindre » (pR / eteindre : toutes les lumières de la pièce R ; en mode
+// héritage, lumieres / eteindre). Popup lumière (« Tout éteindre ») et popup Maison
+// (« Éteindre les lumières », une fois par pièce qui a des lumières, ADR-0037).
+void tuiles_piece_eteindre(int r) {
     charger();
     if (heritage()) {
         envoyer("lumieres", "eteindre");
         return;
     }
-    const char cle[3] = {'p', static_cast<char>('0' + s_pl.piece), '\0'};
+    if (r < 0 || r >= kPieces) return;
+    const char cle[3] = {'p', static_cast<char>('0' + r), '\0'};
     envoyer(cle, "eteindre");
 }
+
+void popup_lumiere_tout_eteindre() { tuiles_piece_eteindre(s_pl.piece); }
 
 bool tuiles_heritage_volet(const std::string& etat) {
     charger();
@@ -2365,4 +2387,68 @@ void tuiles_heritage_volet_sens() {
     if (sens == nullptr) return;
     *sens = !*sens;
     peindre_heritage(1);
+}
+
+// ─── Popup Maison (ADR-0037, 07/10/2026, discussion #278) ───────────────────────────
+//
+// Toute la maison, pièce par pièce, dans un popup (tab5_maison.cpp le dispose et le
+// peint). Il ne lit rien d'autre que les tuiles : ce qu'il montre et ce qu'il fait passe
+// par les fonctions des cartes du mode HA (vue, peindre_vue_sur) et des tuiles
+// (tuile_appui_piece). Aucune donnée ni commande nouvelle.
+
+bool tuiles_piece_titre(int r, char* out, size_t n) {
+    charger();
+    if (r < 0 || r >= kPieces || out == nullptr || n == 0 || !piece_non_vide(r)) return false;
+    // Comme le titre de la carte centrale en mode HA (tuiles_titre_piece).
+    if (!heritage() && s_m.pieces[r][0] != '\0') snprintf(out, n, "%s", s_m.pieces[r]);
+    else snprintf(out, n, tr("Pièce %d"), r + 1);
+    return true;
+}
+
+bool tuiles_piece_a_lumieres(int r) {
+    charger();
+    for (int t = 0; t < kTuiles; t++)
+        if (est_lumiere(r, t)) return true;
+    return false;
+}
+
+// Une ligne du popup Maison agit-elle au toucher (comme la tuile : type_agit), et a-t-elle
+// un appui long (bouton « ⋯ ») ? lum, int, vol, med, act, et cli quand elle agit ; ni cap
+// (même avec l'option e : son toucher ouvre le popup Énergie), ni bin, ni l'option r.
+// Mode héritage : la 3.1 (tuile 0 : télécommande s'il y a une TV ; 1 : rien ; 2-4 : popup
+// lumière).
+bool tuile_gestes(int r, int t, bool& agit, bool& appui_long) {
+    charger();
+    agit = appui_long = false;
+    if (!tuile_presente(r, t)) return false;
+    if (heritage()) {
+        agit = true;
+        appui_long = t == 0 ? !zone_absente(Zone::TV) : t >= 2;
+        return true;
+    }
+    const Def& d = s_m.tuiles[r][t];
+    const Type type = static_cast<Type>(d.type);
+    agit = type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t));
+    appui_long = agit && type != Type::CAP && type != Type::BIN;
+    return true;
+}
+
+bool tuile_peindre_ligne(int r, int t, const TuileWidgets& w, int32_t largeur) {
+    charger();
+    if (!tuile_presente(r, t)) return false;
+    Vue v;
+    vue(r, t, v);
+    peindre_vue_sur(v, w, largeur);
+    return true;
+}
+
+// Toucher, appui long ou « ⋯ » d'une ligne : le geste de la tuile, par le même chemin
+// (tuile_appui_piece : même commande, même confirmation avec l'option k, même popup).
+// Appui long et « ⋯ » : d'abord la roue d'actions rapides (ADR-0036), ancrée sur la
+// pastille de la ligne (`ancre`) et non sur la carte du mode HA ; sans roue pour cette
+// tuile, le chemin de la tuile (son popup ; une clim sans roue ouvre le sien).
+void tuile_appui_maison(int r, int t, bool long_appui, lv_obj_t* ancre) {
+    charger();
+    if (long_appui && tuile_roue_ouvrir(r, t, ancre)) return;
+    tuile_appui_piece(r, t, long_appui);
 }

@@ -543,6 +543,14 @@ lvgl:
                         width: ${central_w}
                         height: 80
                         styles: style_invisible
+                        # Mode HA : un tap sur le titre de la pièce ouvre le popup Maison
+                        # (ADR-0037). Pages de prévisions : rien, comme avant.
+                        on_short_click:
+                          - if:
+                              condition:
+                                lambda: 'return maison_titre_appui_valide();'
+                              then:
+                                - script.execute: tab5_maison_ouvrir
 
               # Info Wrapper (résumé test — panneau 3, tap météo = dismiss définitif)
               - obj:
@@ -621,6 +629,8 @@ lvgl:
         - !include ui_components/reglages_popup.yaml
         - !include ui_components/historique_popup.yaml
         - !include ui_components/alertes_popup.yaml
+        # Popup Maison (ADR-0037) : passe derrière un popup ouvert depuis une de ses lignes.
+        - !include ui_components/maison_popup.yaml
         - !include ui_components/calendar_popup.yaml
         - !include ui_components/assistant_popup.yaml
         - !include ui_components/alarm_popup.yaml
