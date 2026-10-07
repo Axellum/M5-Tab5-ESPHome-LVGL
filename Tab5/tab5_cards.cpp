@@ -988,3 +988,98 @@ const char* clim_capacites_connues(int r, int t) {
     const ClimTuile* c = tuile_clim(r, t, false);
     return (c != nullptr && c->reglages.recu) ? c->reglages.capacites : nullptr;
 }
+
+namespace {
+
+// Clim que vise la roue : réglages reçus, consigne et bascules de la clim du blueprint
+// (r < 0 : ses globals, comme sa carte) ou de celle de la tuile tRT. Faux si HA n'a pas
+// poussé ses réglages (la roue ne lui offre alors rien de plus que le popup).
+struct ClimRoue {
+    const ClimReglages* reglages = nullptr;
+    float consigne = NAN;
+    const std::string* preset = nullptr;
+    const std::string* ventilation = nullptr;
+    const std::string* oscillation = nullptr;
+};
+
+bool clim_roue(int r, int t, ClimRoue& c) {
+    static const std::string kVide;
+    if (r < 0) {
+        if (!s_clim.recu) return false;
+        const ClimUI& u = g_clim_ui;
+        c.reglages = &s_clim;
+        c.consigne = u.consigne_bp != nullptr ? *u.consigne_bp : NAN;
+        c.preset = u.preset_bp != nullptr ? u.preset_bp : &kVide;
+        c.ventilation = u.ventilation_bp != nullptr ? u.ventilation_bp : &kVide;
+        c.oscillation = u.oscillation_bp != nullptr ? u.oscillation_bp : &kVide;
+        return true;
+    }
+    const ClimTuile* ct = tuile_clim(r, t, false);
+    if (ct == nullptr || !ct->reglages.recu) return false;
+    c.reglages = &ct->reglages;
+    c.consigne = ct->etat.consigne;
+    c.preset = &ct->etat.preset;
+    c.ventilation = &ct->etat.ventilation;
+    c.oscillation = &ct->etat.oscillation;
+    return true;
+}
+
+}  // namespace
+
+int clim_roue_consignes(int r, int t, float valeurs[5], char textes[5][10], int& courant) {
+    courant = -1;
+    ClimRoue c;
+    if (!clim_roue(r, t, c) || !std::isfinite(c.consigne)) return 0;
+    const ClimReglages& g = *c.reglages;
+    int n = 0;
+    for (int k = -2; k <= 2; k++) {
+        const float v = c.consigne + static_cast<float>(k) * g.pas;
+        // Bornes de l'appareil (au millième près : 16 + 4 × 0,5 n'est pas toujours 18 pile).
+        if (v < g.min - 0.001f || v > g.max + 0.001f) continue;
+        char buf[8];
+        clim_format_consigne(g, buf, sizeof(buf), v);
+        valeurs[n] = v;
+        snprintf(textes[n], 10, "%s\xC2\xB0", buf);
+        if (k == 0) courant = n;
+        n++;
+    }
+    return n;
+}
+
+int clim_roue_bascules(int r, int t, ClimBascule out[5]) {
+    ClimRoue c;
+    if (!clim_roue(r, t, c)) return 0;
+    const char* capacites = c.reglages->capacites;
+    auto a = [capacites](char lettre) { return std::strchr(capacites, lettre) != nullptr; };
+    int n = 0;
+    // Les mêmes « actif » et les mêmes valeurs que clim_popup_preset, _silence,
+    // _oscillation et _brise (Éco envoie « away », actif sur eco ou away).
+    if (a('e')) {
+        const bool on = clim_eco_actif(*c.preset);
+        out[n++] = {'e', on, "preset", on ? "none" : "away"};
+    }
+    if (a('b')) {
+        const bool on = clim_preset_actif(*c.preset, "boost");
+        out[n++] = {'b', on, "preset", on ? "none" : "boost"};
+    }
+    if (a('q')) {
+        const bool on = clim_silence_actif(*c.ventilation);
+        out[n++] = {'q', on, "ventilation", on ? "auto" : "quiet"};
+    }
+    if (a('s')) {
+        const bool on = clim_oscillation_actif(*c.oscillation);
+        out[n++] = {'s', on, "oscillation", on ? "stop" : "swing"};
+    }
+    if (a('w')) {
+        const bool on = *c.oscillation == "windnice";
+        out[n++] = {'w', on, "oscillation", on ? "stop" : "windnice"};
+    }
+    return n;
+}
+
+int clim_roue_jauge(int r, int t) {
+    ClimRoue c;
+    if (!clim_roue(r, t, c) || !std::isfinite(c.consigne) || !(c.reglages->max > c.reglages->min)) return -1;
+    const float p = (c.consigne - c.reglages->min) * 100.0f / (c.reglages->max - c.reglages->min);
+    return std::clamp(static_cast<int>(std::lround(p)), 0, 100);
+}

@@ -648,22 +648,37 @@ font:
       - "\U000F06A9"  # robot
       - "\U000F07D0"  # home-assistant
 
-  # 36 px — roue d'actions rapides (ADR-0036, ui_components/roue_bouton.yaml) : icônes
-  # posées par glyphe_roue() (tab5_roue.cpp, MDI_CODE_TARGETS de la règle 7).
+  # 36 px — roue d'actions rapides (ADR-0036, ui_components/roue_bouton.yaml et
+  # roue_choix.yaml) : icônes posées par glyphe_roue() (tab5_roue.cpp, MDI_CODE_TARGETS de
+  # la règle 7). Celles de la clim sont celles de son popup.
   - file: "Tab5/materialdesignicons-webfont.ttf"
     id: mdi_font_36
     size: 36
     bpp: 1
     glyphs:
-      - "\U000F01D8"  # dots-horizontal (« ⋯ » : le popup de la tuile)
+      - "\U000F00DF"  # brightness-6 (Luminosité)
       - "\U000F0210"  # fan
       - "\U000F0238"  # fire
+      - "\U000F02DC"  # home (lien « Maison »)
+      - "\U000F032A"  # leaf (Éco)
+      - "\U000F0393"  # thermostat (Mode)
+      - "\U000F03D8"  # palette (Couleurs)
       - "\U000F0425"  # power
       - "\U000F04DB"  # stop
+      - "\U000F050F"  # thermometer (Consigne)
       - "\U000F058E"  # water-percent
+      - "\U000F059D"  # weather-windy (Brise)
+      - "\U000F05A8"  # white-balance-sunny (Blancs)
+      - "\U000F06E8"  # lightbulb-on (Allumer)
       - "\U000F0717"  # snowflake
       - "\U000F072E"  # arrow-down-bold
       - "\U000F0737"  # arrow-up-bold
+      - "\U000F084F"  # arrow-expand-vertical (Position)
+      - "\U000F0AE2"  # star-four-points (Options)
+      - "\U000F0E79"  # arrow-up-down (Oscillation)
+      - "\U000F146D"  # fan-chevron-down (Silence)
+      - "\U000F14DE"  # rocket-launch (Boost)
+      - "\U000F1542"  # tune-variant (lien « Réglages »)
 
   # Icônes météo des tuiles seulement (120 px, calque 2 réduit à 80 px). Les
   # tailles 270 et 190 px (font_meteo_main / _small) sont retirées le 25/09/2026 :

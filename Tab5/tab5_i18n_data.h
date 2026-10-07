@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1036;
+static const uint16_t kI18nKeyCount = 1037;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -1263,6 +1264,7 @@ static const char* const kI18nKeys[] = {
     "Bloc max",
     "Bonne réponse = victoire",
     "Bonne réponse — vous rejouez.",
+    "Boost",
     "Boss final",
     "Bourse tressée",
     "Boutons",
@@ -2303,6 +2305,7 @@ static const char* const kI18n_en[] = {
     "Max block",  // "Bloc max"
     "Correct answer = victory",  // "Bonne réponse = victoire"
     "Correct answer — roll again.",  // "Bonne réponse — vous rejouez."
+    "Boost",  // "Boost"
     "Final boss",  // "Boss final"
     "Woven Purse",  // "Bourse tressée"
     "Buttons",  // "Boutons"
@@ -3343,6 +3346,7 @@ static const char* const kI18n_de[] = {
     "Max. Block",  // "Bloc max"
     "Richtige Antwort = Sieg",  // "Bonne réponse = victoire"
     "Richtig — nochmal würfeln.",  // "Bonne réponse — vous rejouez."
+    "Boost",  // "Boost"
     "Endboss",  // "Boss final"
     "Flechtbeutel",  // "Bourse tressée"
     "Tasten",  // "Boutons"
@@ -4383,6 +4387,7 @@ static const char* const kI18n_nl[] = {
     "Max. blok",  // "Bloc max"
     "Goed antwoord = winst",  // "Bonne réponse = victoire"
     "Goed antwoord — gooi opnieuw.",  // "Bonne réponse — vous rejouez."
+    "Boost",  // "Boost"
     "Eindbaas",  // "Boss final"
     "Gevlochten buidel",  // "Bourse tressée"
     "Knoppen",  // "Boutons"
@@ -5423,6 +5428,7 @@ static const char* const kI18n_es[] = {
     "Bloq. máx.",  // "Bloc max"
     "Acierto = victoria",  // "Bonne réponse = victoire"
     "Correcto — vuelves a tirar.",  // "Bonne réponse — vous rejouez."
+    "Boost",  // "Boost"
     "Jefe final",  // "Boss final"
     "Bolsa trenzada",  // "Bourse tressée"
     "Botones",  // "Boutons"
@@ -6463,6 +6469,7 @@ static const char* const kI18n_it[] = {
     "Blocco max",  // "Bloc max"
     "Risposta esatta = vittoria",  // "Bonne réponse = victoire"
     "Risposta esatta — tira ancora.",  // "Bonne réponse — vous rejouez."
+    "Boost",  // "Boost"
     "Boss finale",  // "Boss final"
     "Borsa intrecciata",  // "Bourse tressée"
     "Pulsanti",  // "Boutons"
@@ -7503,6 +7510,7 @@ static const char* const kI18n_tr[] = {
     "Maks. blok",  // "Bloc max"
     "Doğru yanıt = zafer",  // "Bonne réponse = victoire"
     "Doğru yanıt — tekrar atıyorsun.",  // "Bonne réponse — vous rejouez."
+    "Boost",  // "Boost"
     "Son boss",  // "Boss final"
     "Örme Kese",  // "Bourse tressée"
     "Düğmeler",  // "Boutons"

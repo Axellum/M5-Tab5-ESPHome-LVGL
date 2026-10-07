@@ -179,32 +179,85 @@ const char* clim_nom();
 uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 
 // --- Roue d'actions rapides (tab5_roue.cpp, ADR-0036) ---
-// Icône d'un bouton (glyphe_roue, mdi_font_36) ; PLUS = « ⋯ ».
-enum class RoueIcone : uint8_t { PLUS, ETEINDRE, OUVRIR, STOP, FERMER, CHAUFFER, REFROIDIR, SECHER, VENTILER };
+// Icône d'un bouton (glyphe_roue, mdi_font_36) ; AUCUNE : un texte ou une pastille.
+enum class RoueIcone : uint8_t {
+    AUCUNE,
+    ETEINDRE, ALLUMER, LUMINOSITE, BLANCS, COULEURS,
+    OUVRIR, STOP, FERMER, POSITION,
+    MODE, CHAUFFER, REFROIDIR, SECHER, VENTILER, CONSIGNE, OPTIONS,
+    ECO, BOOST, SILENCE, OSCILLATION, BRISE,
+    MAISON, REGLAGES,
+};
+// Bouton du premier anneau : une commande, une famille (son toucher déplie le second
+// anneau au-dessus de lui) ou un lien (« Maison », « Réglages » : une fenêtre).
+enum class RoueGenre : uint8_t { ACTION, FAMILLE, LIEN };
 struct RoueBouton {
-    RoueIcone icone;  // sans effet quand pct ≠ 0
-    uint8_t pct;      // 1 à 100 : « NN % » écrit à la place de l'icône ; 0 : l'icône
-    bool courant;     // l'état courant de l'appareil : fond et encre dans la couleur d'état
+    RoueIcone icone = RoueIcone::AUCUNE;
+    RoueGenre genre = RoueGenre::ACTION;
+    bool courant = false;           // action : l'état de l'appareil (verre teinté, halo)
+    const char* legende = nullptr;  // lien : son mot sous le bouton, déjà traduit
+};
+// Bouton du second anneau : une icône, un texte (« 50 % », « 21.5° ») ou une pastille de
+// couleur (celle qu'une lampe prendra), avec un mot dessous s'il le faut (« Chaud »).
+struct RoueChoix {
+    RoueIcone icone = RoueIcone::AUCUNE;
+    char texte[12] = "";
+    bool a_pastille = false;
+    uint32_t pastille = 0;
+    const char* legende = nullptr;  // déjà traduit ; nullptr : aucun
+    bool courant = false;
+};
+// Moyeu, posé sur l'ancre : l'icône et la ligne d'état de la carte de l'appareil, son nom
+// dessous, une jauge en arc (luminosité, position, consigne) dans la couleur d'état.
+struct RoueTete {
+    const char* icone = nullptr;    // glyphe de la palette des tuiles (mdi_font_45)
+    const char* valeur = "";
+    const char* nom = "";
+    int jauge = -1;                 // 0 à 100 ; -1 : pas de jauge
+    uint32_t couleur = 0;           // couleur d'état de l'appareil
+};
+// Ce que fait la roue au toucher, fournie par celui qui l'ouvre (tab5_tuiles.cpp).
+struct RoueRappels {
+    void (*choisir)(int i) = nullptr;                   // action ou lien i, roue fermée
+    int (*famille)(int i, RoueChoix* out) = nullptr;    // choix de la famille i (≤ kRoueChoix)
+    void (*choisir_choix)(int i, int j) = nullptr;      // choix j de la famille i, roue fermée
+    void (*rejouer)() = nullptr;                        // repeindre (thème, état) : rouvre ou ferme
 };
 // Ouvre la roue autour du centre de `ancre` (n boutons de gauche à droite, n ≤
-// kRoueBoutons ; `couleur` : la couleur d'état de l'appareil, bord du halo et bouton
-// courant). `choisir(i)` part au toucher du bouton i, roue déjà fermée ; `rejouer()` la
-// repeint au changement de thème (il rappelle roue_ouvrir, ou ferme la roue). Faux, et
-// rien d'ouvert, sans widgets.
-bool roue_ouvrir(lv_obj_t* ancre, const RoueBouton* b, int n, uint32_t couleur, void (*choisir)(int),
-                 void (*rejouer)());
+// kRoueBoutons). `garder` : un repeint de la même roue (thème, état poussé), la famille
+// dépliée le reste si son bouton est toujours la même famille. Faux, et rien d'ouvert, sans
+// widgets.
+bool roue_ouvrir(lv_obj_t* ancre, const RoueTete& tete, const RoueBouton* b, int n, const RoueRappels& r,
+                 bool garder);
 // theme_rejouer_ui (tab5_theme.cpp) : roue ouverte repeinte dans la nouvelle palette.
 void roue_rejouer_theme();
 // tab5_tuiles.cpp : la roue de la tuile tRT, autour de `ancre` (pastille d'une carte du
-// mode HA, bouton d'une tuile météo, ou tout autre widget : une ligne d'une liste). Faux,
-// et rien d'ouvert, quand la tuile n'en a pas (type sans roue, lampe sans variateur,
-// option k ou r, clim sans capacité connue, moins de trois commandes) : l'appelant ouvre
+// mode HA, bouton d'une tuile météo, ou tout autre widget : une ligne d'une liste ;
+// `depuis_maison` : sans le lien « Maison »). Faux, et rien d'ouvert, quand la tuile n'en
+// a pas (type sans roue, option k ou r, clim sans capacité connue) : l'appelant ouvre
 // alors le popup (tuile_ouvrir_popup).
-bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre);
+bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison = false);
 // tab5_cards.cpp, pour la roue : les lettres de capacité (ADR-0026) de la clim du
 // blueprint (r < 0) ou de celle de la tuile tRT, seulement si HA les a poussées (climr,
 // crRT) ; nullptr sinon.
 const char* clim_capacites_connues(int r, int t);
+// Consignes que la roue propose à cette clim : la sienne et deux pas de chaque côté, dans
+// ses bornes, croissantes, sans doublon (au plus 5) ; `courant` : le rang de la sienne.
+// 0 si sa consigne ou ses réglages sont inconnus. `textes` : comme sur la carte, avec le
+// degré (« 21.5° »).
+int clim_roue_consignes(int r, int t, float valeurs[5], char textes[5][10], int& courant);
+// Bascules du popup que cette clim a (lettres e, b, q, s, w, dans cet ordre) : son état,
+// et la commande et la valeur que le popup enverrait à leur toucher (preset away / boost,
+// ventilation quiet, oscillation swing / windnice, ou leur retour à none, auto, stop).
+struct ClimBascule {
+    char lettre;
+    bool actif;
+    const char* commande;
+    const char* valeur;
+};
+int clim_roue_bascules(int r, int t, ClimBascule out[5]);
+// Consigne de cette clim en 0-100 entre ses bornes (jauge du moyeu) ; -1 si inconnue.
+int clim_roue_jauge(int r, int t);
 // --- Popup Maison (ADR-0037) : dessin dans tab5_maison.cpp, modèle dans tab5_tuiles.cpp ---
 // Widgets d'une tuile dessinée façon carte « tile » de HA : pastille ronde (fond = couleur
 // de l'état, opacité posée par le YAML), son icône, le nom, la ligne d'état.

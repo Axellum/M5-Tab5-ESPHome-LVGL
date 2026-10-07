@@ -64,6 +64,7 @@ NON_MONTREES = {
     "console-batterie-en-charge": "console-batterie montre la même ligne ; l'éclair est décrit",
     "console-sans-batterie": "console-batterie montre la même ligne ; « Sur USB » est décrit",
     "roue-lampe": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
+    "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "maison": "image à tirer du rendu de la PR du popup Maison, puis citer dans house.md",

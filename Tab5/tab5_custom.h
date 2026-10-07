@@ -1175,25 +1175,46 @@ void reglables_volume_tablette();
 
 // =============================================================================
 // Roue d'actions rapides (tab5_roue.cpp, ADR-0036, discussion #278) : l'appui long d'une
-// lampe à variateur, d'un volet ou d'une clim ouvre jusqu'à six boutons ronds sur un arc
-// au-dessus de sa tuile (commandes de la tuile, puis « ⋯ » : le popup d'avant).
+// lampe, d'un volet ou d'une clim ouvre, autour de sa tuile, un moyeu (l'appareil) et deux
+// anneaux de boutons ronds : le premier pour ses commandes, ses familles de réglages et
+// deux liens (« Maison », « Réglages » : le popup d'avant) ; le second, déplié au-dessus
+// d'une famille, pour ses choix (luminosités, couleurs, modes…).
 // =============================================================================
-constexpr int kRoueBoutons = 6;  // « ⋯ » compris : clim = arrêt + 4 modes + « ⋯ »
-// Widgets (ui_components/roue_actions.yaml, roue_bouton.yaml), posés par le script
-// tab5_tuiles_ui (tab5-tuiles.yaml) avant le premier dessin.
+constexpr int kRoueBoutons = 6;  // premier anneau : 4 commandes ou familles + 2 liens
+constexpr int kRoueChoix = 6;    // second anneau : les 6 couleurs d'une lampe au plus
+// Widgets (ui_components/roue_actions.yaml, roue_bouton.yaml, roue_choix.yaml,
+// roue_legende.yaml), posés par le script tab5_tuiles_ui (tab5-tuiles.yaml) avant le
+// premier dessin.
 struct RoueUI {
-    lv_obj_t* fond = nullptr;                    // roue_actions : plein écran, un toucher hors des boutons la ferme
-    lv_obj_t* halo = nullptr;                    // roue_halo : disque de verre autour de l'ancre
+    lv_obj_t* fond = nullptr;                    // roue_actions : voile plein écran, son toucher replie ou ferme
+    lv_obj_t* bande[2] = {};                     // roue_bande_0, roue_bande_1 : arcs de verre sous les anneaux
+    lv_obj_t* jauge = nullptr;                   // roue_jauge : arc autour du moyeu
+    lv_obj_t* moyeu = nullptr;                   // roue_moyeu : l'appareil, sur l'ancre
+    lv_obj_t* moyeu_icone = nullptr;             // roue_moyeu_icone (mdi_font_45)
+    lv_obj_t* moyeu_valeur = nullptr;            // roue_moyeu_valeur (ligne d'état)
+    lv_obj_t* nom = nullptr;                     // roue_nom : nom de l'appareil
+    lv_obj_t* lien_legende[2] = {};              // roue_lien_0 (gauche), roue_lien_1 (droite)
     lv_obj_t* bouton[kRoueBoutons] = {};         // roue_bouton_N
     lv_obj_t* icone[kRoueBoutons] = {};          // roue_bouton_N_icone (mdi_font_36)
-    lv_obj_t* texte[kRoueBoutons] = {};          // roue_bouton_N_texte (« 50 % »)
+    lv_obj_t* point[kRoueBoutons] = {};          // roue_bouton_N_point : marque une famille
+    lv_obj_t* choix[kRoueChoix] = {};            // roue_choix_N
+    lv_obj_t* choix_icone[kRoueChoix] = {};      // roue_choix_N_icone (mdi_font_36)
+    lv_obj_t* choix_texte[kRoueChoix] = {};      // roue_choix_N_texte (« 50 % »)
+    lv_obj_t* choix_legende[kRoueChoix] = {};    // roue_choix_N_legende (« Chaud »)
+    void (*ouvrir_ecran)(int ecran) = nullptr;   // script tab5_ecran_ouvrir (lien « Maison »)
 };
 extern RoueUI g_roue_ui;
-// Une fois, les widgets posés : geste bloqué sur le capteur, effet d'appui des boutons.
+// Une fois, les widgets posés : arcs de dessin seulement, geste bloqué sur le voile, effet
+// d'appui des boutons.
 void roue_brancher();
-// Toucher du bouton N : la roue se ferme, puis sa commande part (ou le popup s'ouvre).
+// Toucher du bouton N du premier anneau : une famille se déplie (ou se replie) ; sinon la
+// roue se ferme, puis sa commande part (ou sa fenêtre s'ouvre).
 void roue_actions_choisir(int n);
-// Toucher hors des boutons, inactivité, popup ouvert, écran éteint : la roue se ferme.
+// Toucher du choix N du second anneau : la roue se ferme, puis sa commande part.
+void roue_choix_toucher(int n);
+// Toucher du moyeu ou du voile : le second anneau se replie ; replié, la roue se ferme.
+void roue_replier_ou_fermer();
+// Inactivité, popup ouvert, écran éteint, page changée : la roue se ferme.
 void roue_actions_fermer();
 bool roue_actions_ouverte();
 

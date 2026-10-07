@@ -359,11 +359,12 @@ def test_commandes_du_popup_du_volet_dans_le_contrat():
     assert 'snprintf(valeur, sizeof(valeur), "%d", std::clamp(s_pv.pos, 0, 100));' in envoi
     garde = "if (!vol_position_connue(s_etats[s_pv.piece][s_pv.tuile])) return false;"
     assert garde in envoi and envoi.index(garde) < envoi.index("u.envoyer(")
-    # « position » ne part que de là et du bouton « 50 % » de la roue d'actions rapides
-    # (ADR-0036), gardé de la même façon ; la fonction n'a qu'un appelant : le relâcher.
+    # « position » ne part que de là et des positions de la roue d'actions rapides
+    # (ADR-0036, 25 / 50 / 75 %), proposées seulement quand la position est connue et
+    # recalculées au toucher ; la fonction n'a qu'un appelant : le relâcher.
     assert cpp.count('"position"') == 2
-    roue = _fonction(cpp, "roue_tuile_choisir")
-    assert 'if (vol_position_connue(s_etats[rt.r][rt.t]) && u.envoyer != nullptr) u.envoyer(cle, "position", valeur);' in roue
+    roue = _fonction(cpp, "roue_choix").split("case RoueAction::POSITION:", 1)[1].split("case RoueAction::MODE:", 1)[0]
+    assert "if (!vol_position_connue(e)) break;" in roue and 'choix("position", nombre, position == p);' in roue
     assert cpp.count("popup_volet_envoyer_position()") == 2, "définition + le relâcher, rien d'autre"
 
 

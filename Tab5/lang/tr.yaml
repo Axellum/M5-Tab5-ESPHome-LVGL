@@ -217,6 +217,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "OPTIONS": "SEÇENEKLER"
 "Presets": "Hazır ayar"
 "Éco": "Eko"
+"Boost": "Boost"
 "Silence": "Sessiz"
 "Flux d'air": "Hava akışı"
 "Oscillation": "Salınım"

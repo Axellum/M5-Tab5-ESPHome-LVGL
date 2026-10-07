@@ -1,0 +1,16 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 8x par roue_actions.yaml :
+# un mot de la roue d'actions rapides (ADR-0036) — sous un lien du premier anneau
+# (« Maison », « Réglages ») ou au-delà d'un choix du second (« Chaud », « Éco »).
+# Var : id (roue_lien_0, roue_lien_1, roue_choix_N_legende).
+# Texte (déjà traduit, coupé avec « … » à 150 px), position et visibilité : tab5_roue.cpp.
+label:
+  id: "${id}"
+  x: 0
+  y: 0
+  width: 150
+  hidden: true
+  text: ""
+  text_align: CENTER
+  long_mode: CLIP
+  text_font: roboto_22
+  styles: style_text_soft

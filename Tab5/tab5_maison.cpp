@@ -31,9 +31,9 @@
  *       du YAML, jamais une couleur écrite ici. Un texte affiché passe par tr().
  *       Appui long et « ⋯ » d'une ligne : la roue d'actions rapides (ADR-0036) autour de
  *       la pastille de la ligne (enfant 0), sinon le popup de la tuile
- *       (tuile_appui_maison). La roue passe devant ce popup (roue_ouvrir la met au
- *       premier plan) ; un toucher hors d'elle ne ferme qu'elle ; son « ⋯ » ouvre le
- *       popup de la tuile devant Maison, qui reste derrière.
+ *       (tuile_appui_maison), sans son lien « Maison ». La roue passe devant ce popup
+ *       (roue_ouvrir la met au premier plan) ; un toucher hors d'elle ne ferme qu'elle ;
+ *       son « Réglages » ouvre le popup de la tuile devant Maison, qui reste derrière.
  */
 #include "tab5_internal.h"
 #include "lvgl.h"
