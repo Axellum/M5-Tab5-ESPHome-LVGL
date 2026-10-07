@@ -216,7 +216,8 @@ class Passe:
 
     def historique(self):
         """(vue, debut, valeurs) poussés par la branche de l'historique, None si aucune."""
-        branche = next(e for e in self.boucle["sequence"] if "if" in e and "then" in e)
+        branche = next(e for e in self.boucle["sequence"] if "if" in e and "then" in e
+                       and "tab5_maj_energie_historique" in str(e["then"]))
         if not _rendre(self.env, branche["if"], self.ctx):
             return None
         interne = branche["then"][0]
@@ -437,6 +438,50 @@ def test_historique_seulement_au_premier_passage_hors_heures():
     assert p.historique() is None
     p = Passe(CAPTEURS, _maison(), vue="heures", cinq=_reponse(_lignes_5min()), index=3)
     assert p.historique()[0] == "heures"
+
+
+def _redemander(**ctx):
+    """La condition qui relance recorder.get_statistics (5 minutes) dans la boucle."""
+    etape = _chercher(_script()["sequence"], lambda d: "if" in d and any(
+        a.get("action") == "recorder.get_statistics" for a in d.get("then", []) if isinstance(a, dict)))
+    assert etape, "get_statistics de 5 minutes hors d'un `if`"
+    minuit = MAINTENANT.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    base = {"stats_t": 0, "stats_minuit": "", "minuit": minuit}
+    return _rendre(_env(_maison()), etape["if"], {**base, **ctx})
+
+
+def test_statistiques_redemandees_au_plus_toutes_les_5_minutes():
+    """Audit du 07/10/2026 (PERF-4) : popup ouvert, la requête au recorder n'est refaite
+    qu'au premier tour, après 5 minutes ou au changement de jour ; entre deux, la réponse
+    précédente sert (le partiel couvre ce qui a été produit depuis)."""
+    minuit = MAINTENANT.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    t = MAINTENANT.timestamp()
+    cinq = _reponse(_lignes_5min())
+    assert _redemander() is True                                   # premier tour : pas de réponse
+    assert _redemander(cinq=cinq, stats_t=t - 5, stats_minuit=minuit) is False
+    assert _redemander(cinq=cinq, stats_t=t - 299, stats_minuit=minuit) is False
+    assert _redemander(cinq=cinq, stats_t=t - 300, stats_minuit=minuit) is True
+    veille = (MAINTENANT - dt.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    assert _redemander(cinq=cinq, stats_t=t - 5, stats_minuit=veille) is True
+    # Variables de départ du script, et leur mise à jour juste après la demande.
+    script = _script()
+    assert script["variables"]["stats_t"] == 0 and script["variables"]["stats_minuit"] == ""
+    etape = _chercher(script["sequence"], lambda d: "if" in d and any(
+        a.get("action") == "recorder.get_statistics" for a in d.get("then", []) if isinstance(a, dict)))
+    assert set(etape["then"][1]["variables"]) == {"stats_t", "stats_minuit"}
+    # L'instantané, lui, reste rendu et poussé à chaque tour, hors de ce `if`.
+    boucle = script["sequence"][0]["repeat"]["sequence"]
+    assert any(e.get("action") == "esphome.{{ tablette }}_tab5_maj_energie" for e in boucle)
+
+
+def test_jour_exact_avec_une_reponse_ancienne():
+    """Réponse vieille de quelques minutes : la production du jour reste la même, le
+    partiel (état actuel − dernier « state » de la réponse) couvrant la suite."""
+    lignes = _lignes_5min()
+    complet = Passe(CAPTEURS, _maison(), cinq=_reponse(lignes))
+    ancien = Passe(CAPTEURS, _maison(), cinq=_reponse(lignes[:-2]))
+    # Arrondi au Wh près (round(3)) de part et d'autre.
+    assert abs(float(ancien["jour"]) - float(complet["jour"])) < 0.002
 
 
 def test_sans_capteur_d_energie_ni_historique_ni_jour():
