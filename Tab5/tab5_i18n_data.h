@@ -1501,7 +1501,7 @@ static const char* const kI18nKeys[] = {
     "Joueur contre joueur",
     "Jour",
     "Jour hors plage",
-    "Journee",
+    "Journée",
     "Jours",
     "Jours (heure fixe uniquement)",
     "Juil",
@@ -1761,7 +1761,7 @@ static const char* const kI18nKeys[] = {
     "Record %lu",
     "Record %u",
     "Record : %s",
-    "Redemarrage...",
+    "Redémarrage...",
     "Redémarrer HA",
     "Redémarrer Home Assistant ?",
     "Redémarrer la tablette ?",
@@ -2542,7 +2542,7 @@ static const char* const kI18n_en[] = {
     "Player vs player",  // "Joueur contre joueur"
     "Day",  // "Jour"
     "Day out of range",  // "Jour hors plage"
-    "Today",  // "Journee"
+    "Today",  // "Journée"
     "Days",  // "Jours"
     "Days (fixed time only)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
@@ -2802,7 +2802,7 @@ static const char* const kI18n_en[] = {
     "Best %lu",  // "Record %lu"
     "Best %u",  // "Record %u"
     "Best: %s",  // "Record : %s"
-    "Restarting...",  // "Redemarrage..."
+    "Restarting...",  // "Redémarrage..."
     "Restart HA",  // "Redémarrer HA"
     "Restart Home Assistant?",  // "Redémarrer Home Assistant ?"
     "Restart the tablet?",  // "Redémarrer la tablette ?"
@@ -3583,7 +3583,7 @@ static const char* const kI18n_de[] = {
     "Spieler gegen Spieler",  // "Joueur contre joueur"
     "Tag",  // "Jour"
     "Tag nicht verfügbar",  // "Jour hors plage"
-    "Heute",  // "Journee"
+    "Heute",  // "Journée"
     "Tage",  // "Jours"
     "Tage (nur bei fester Zeit)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
@@ -3843,7 +3843,7 @@ static const char* const kI18n_de[] = {
     "Rekord %lu",  // "Record %lu"
     "Best %u",  // "Record %u"
     "Rekord: %s",  // "Record : %s"
-    "Neustart...",  // "Redemarrage..."
+    "Neustart...",  // "Redémarrage..."
     "HA neu starten",  // "Redémarrer HA"
     "Home Assistant neu starten?",  // "Redémarrer Home Assistant ?"
     "Tablet neu starten?",  // "Redémarrer la tablette ?"
@@ -4624,7 +4624,7 @@ static const char* const kI18n_nl[] = {
     "Speler tegen speler",  // "Joueur contre joueur"
     "Dag",  // "Jour"
     "Dag buiten bereik",  // "Jour hors plage"
-    "Vandaag",  // "Journee"
+    "Vandaag",  // "Journée"
     "Dagen",  // "Jours"
     "Dagen (alleen vaste tijd)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
@@ -4884,7 +4884,7 @@ static const char* const kI18n_nl[] = {
     "Record %lu",  // "Record %lu"
     "Record %u",  // "Record %u"
     "Record: %s",  // "Record : %s"
-    "Herstarten...",  // "Redemarrage..."
+    "Herstarten...",  // "Redémarrage..."
     "HA herstarten",  // "Redémarrer HA"
     "Home Assistant herstarten?",  // "Redémarrer Home Assistant ?"
     "Tablet herstarten?",  // "Redémarrer la tablette ?"
@@ -5665,7 +5665,7 @@ static const char* const kI18n_es[] = {
     "Jugador contra jugador",  // "Joueur contre joueur"
     "Día",  // "Jour"
     "Día fuera de rango",  // "Jour hors plage"
-    "Hoy",  // "Journee"
+    "Hoy",  // "Journée"
     "Días",  // "Jours"
     "Días (solo hora fija)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
@@ -5925,7 +5925,7 @@ static const char* const kI18n_es[] = {
     "Récord %lu",  // "Record %lu"
     "Récord %u",  // "Record %u"
     "Récord: %s",  // "Record : %s"
-    "Reiniciando...",  // "Redemarrage..."
+    "Reiniciando...",  // "Redémarrage..."
     "Reiniciar HA",  // "Redémarrer HA"
     "¿Reiniciar Home Assistant?",  // "Redémarrer Home Assistant ?"
     "¿Reiniciar la tableta?",  // "Redémarrer la tablette ?"
@@ -6706,7 +6706,7 @@ static const char* const kI18n_it[] = {
     "Giocatore vs giocatore",  // "Joueur contre joueur"
     "Giorno",  // "Jour"
     "Giorno non valido",  // "Jour hors plage"
-    "Oggi",  // "Journee"
+    "Oggi",  // "Journée"
     "Giorni",  // "Jours"
     "Giorni (solo con ora fissa)",  // "Jours (heure fixe uniquement)"
     "Lug",  // "Juil"
@@ -6966,7 +6966,7 @@ static const char* const kI18n_it[] = {
     "Record %lu",  // "Record %lu"
     "Record %u",  // "Record %u"
     "Record: %s",  // "Record : %s"
-    "Riavvio...",  // "Redemarrage..."
+    "Riavvio...",  // "Redémarrage..."
     "Riavvia HA",  // "Redémarrer HA"
     "Riavviare Home Assistant?",  // "Redémarrer Home Assistant ?"
     "Riavviare il tablet?",  // "Redémarrer la tablette ?"
@@ -7747,7 +7747,7 @@ static const char* const kI18n_tr[] = {
     "Oyuncu - Oyuncu",  // "Joueur contre joueur"
     "Gün",  // "Jour"
     "Gün aralık dışı",  // "Jour hors plage"
-    "Bugün",  // "Journee"
+    "Bugün",  // "Journée"
     "Günler",  // "Jours"
     "Günler (yalnız sabit saat)",  // "Jours (heure fixe uniquement)"
     "Tem",  // "Juil"
@@ -8007,7 +8007,7 @@ static const char* const kI18n_tr[] = {
     "Rekor %lu",  // "Record %lu"
     "Rekor %u",  // "Record %u"
     "Rekor: %s",  // "Record : %s"
-    "Yeniden başlıyor...",  // "Redemarrage..."
+    "Yeniden başlıyor...",  // "Redémarrage..."
     "HA'yı yeniden başlat",  // "Redémarrer HA"
     "HA yeniden başlatılsın mı?",  // "Redémarrer Home Assistant ?"
     "Tablet yeniden başlatılsın mı?",  // "Redémarrer la tablette ?"

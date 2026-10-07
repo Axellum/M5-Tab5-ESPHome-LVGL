@@ -73,7 +73,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Syncing..."
-"Journee": "Today"
+"Journée": "Today"
 "Demain": "Tomorrow"
 "2 Jours": "2 Days"
 "3 Jours": "3 Days"
@@ -262,7 +262,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "L'écran redémarre immédiatement.": "The screen restarts immediately."
 "Annuler": "Cancel"
 "Confirmer": "Confirm"
-"Redemarrage...": "Restarting..."
+"Redémarrage...": "Restarting..."
 "Connecté": "Connected"
 
 # --- Alarm clock: popup ---------------------------------------------------------

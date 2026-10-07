@@ -170,7 +170,7 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
 }
 
 // Ligne « HA » de la carte RÉSEAU (interval 2 s de tab5-sensors-diagnostics.yaml,
-// console visible seulement) — reprend aussi la main après le « Redemarrage... »
+// console visible seulement) — reprend aussi la main après le « Redémarrage... »
 // affiché par le bouton Redémarrer HA.
 void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok) {
     if (lbl == nullptr) return;

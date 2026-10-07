@@ -83,7 +83,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Home screen, forecast, central card --------------------------------------
 # « Dem. » : pas de « Dom. » (déjà domenica + « . » dans la même liste) : « Domani ».
 "Synchronisation...": "Sincronizzo..."
-"Journee": "Oggi"
+"Journée": "Oggi"
 "Demain": "Domani"
 "2 Jours": "2 giorni"
 "3 Jours": "3 giorni"
@@ -281,7 +281,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "L'écran redémarre immédiatement.": "Lo schermo si riavvia subito."
 "Annuler": "Annulla"
 "Confirmer": "Conferma"
-"Redemarrage...": "Riavvio..."
+"Redémarrage...": "Riavvio..."
 "Connecté": "Connesso"
 
 # --- Alarm clock: popup ---------------------------------------------------------
