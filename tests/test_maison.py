@@ -77,8 +77,13 @@ def test_option_maison_du_select_a_la_fin():
     bloc = controles.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s*-\s*"([^"]+)"', bloc, re.M)
     assert options[-1] == "Maison", "à la fin : les index des autres options ne bougent pas"
-    i = options.index("Maison")
-    cas = controles.split(f"case {i}:", 1)[1].split("break;", 1)[0]
+    # L'index de l'option est sa valeur d'Ecran (tab5_custom.h, tests/test_appuis.py) ; le
+    # select et les appuis longs passent par la routine unique tab5_ecran_ouvrir.
+    enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", _lire("Tab5", "tab5_custom.h"), re.S).group(1)
+    valeurs = re.findall(r"\b([A-Z]+),", re.sub(r"//[^\n]*", "", enum))
+    assert valeurs.index("MAISON") == options.index("Maison")
+    script = controles.split("- id: tab5_ecran_ouvrir", 1)[1]
+    cas = script.split("case Ecran::MAISON:", 1)[1].split("break;", 1)[0]
     assert "id(tab5_maison_ouvrir).execute();" in cas
 
 
