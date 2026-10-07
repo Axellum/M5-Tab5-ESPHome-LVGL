@@ -1,0 +1,28 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 6x par roue_actions.yaml :
+# un bouton de la roue d'actions rapides (ADR-0036) — une commande de la tuile, ou « ⋯ ».
+# Var : n (0 à 5, rang de gauche à droite, nombre NON quoté : c'est l'argument int de
+# roue_actions_choisir()).
+# Position, icône (mdi_font_36 : MDI_CODE_TARGETS, motif roue_bouton_*_icone, fonction
+# glyphe_roue de tab5_roue.cpp), texte (« 50 % », police UI grasse), couleurs et fond du
+# bouton de l'état courant : posés par tab5_roue.cpp à chaque ouverture, qui masque aussi
+# les boutons en trop.
+# @ai_instruction Le bouton garde le verre partagé des boutons des popups (style_clim_btn,
+#        celui d'Ouvrir / Stop / Fermer du popup du volet), en rond (rayon 38 sur 76 px) :
+#        son effet d'appui vient de tab5_anim.cpp, qui le retient par le drapeau USER_1
+#        posé par roue_brancher() (il ne reconnaît sinon que les boutons de rayon 18).
+#        Les deux labels sont `clickable: false` par nature (labels) : l'appui va au bouton.
+button:
+  id: "roue_bouton_${n}"
+  x: 0
+  y: 0
+  width: 76
+  height: 76
+  hidden: true
+  styles: style_clim_btn
+  radius: 38
+  pad_all: 0
+  on_short_click:
+    - lambda: 'roue_actions_choisir(${n});'
+  widgets:
+    - label: { id: "roue_bouton_${n}_icone", text: "", align: CENTER, text_font: mdi_font_36, styles: style_text_soft }
+    - label: { id: "roue_bouton_${n}_texte", text: "", hidden: true, align: CENTER, text_font: roboto_22, styles: style_text_soft }

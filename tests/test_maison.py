@@ -138,11 +138,15 @@ def test_gestes_d_une_ligne_ceux_de_la_tuile():
     assert "on_short_click:\n    - lambda: 'maison_ligne_appui(${r}, ${t}, false);'" in corps
     assert "on_long_press:\n    - lambda: 'maison_ligne_appui(${r}, ${t}, true);'" in corps
     assert "maison_ligne_appui(${r}, ${t}, true);" in plus and "on_long_press" not in plus
-    assert "tuile_appui_maison(r, t, long_appui);" in _fonction(_maison(), "maison_ligne_appui")
-    # Le répartiteur des tuiles, pas une commande à part (la roue d'actions de l'ADR-0036
-    # passera par lui) ; une clim n'a pas d'appui long : son popup, comme au toucher.
+    # La roue (ADR-0036) s'ancre sur la pastille de la ligne (enfant 0).
+    ligne_appui = _fonction(_maison(), "maison_ligne_appui")
+    assert "tuile_appui_maison(r, t, long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);" in ligne_appui
+    # Appui long (et « ⋯ ») : la roue de la tuile d'abord, sinon le répartiteur des tuiles
+    # (popup de la tuile), jamais une commande à part.
     appui = _fonction(_tuiles(), "tuile_appui_maison")
-    assert "tuile_appui_piece(r, t, long_appui);" in appui and "Type::CLI" in appui
+    assert "if (long_appui && tuile_roue_ouvrir(r, t, ancre)) return;" in appui
+    assert "tuile_appui_piece(r, t, long_appui);" in appui
+    assert appui.index("tuile_roue_ouvrir(") < appui.index("tuile_appui_piece(")
     for interdit in ("envoyer(", "tab5_action", "homeassistant", "popup_lumiere_ouvrir", "animate_popup_open(g_"):
         assert interdit not in _maison(), interdit
 
@@ -229,3 +233,12 @@ def test_textes_traduits():
 
 if __name__ == "__main__":
     sys.exit(subprocess.run([sys.executable, "-m", "pytest", "-q", __file__], check=False).returncode)
+
+
+def test_roue_devant_le_popup_maison():
+    # La roue est montée avant les popups (tab5-lvgl.yaml) : roue_ouvrir la ramène au premier
+    # plan, sinon elle s'ouvrirait derrière le popup Maison.
+    roue = _lire("Tab5", "tab5_roue.cpp")
+    ouvrir = _fonction(roue, "roue_ouvrir")
+    assert "lv_obj_move_to_index(u.fond, -1);" in ouvrir
+    assert ouvrir.index("lv_obj_move_to_index(u.fond, -1);") < ouvrir.index("ui_hidden(u.fond, false);")

@@ -28,9 +28,12 @@
  *       clim, appareil, télécommande, énergie) passe devant (animate_popup_open) et le
  *       laisse ouvert derrière : sa croix y ramène.
  * @ai_instruction Couleurs : celles des tuiles (UIColor par vue_def) et des styles de rôle
- *       du YAML, jamais une couleur écrite ici. Un texte affiché passe par tr(). La roue
- *       d'actions (ADR-0036) remplacera l'appui long de certaines tuiles : les lignes
- *       passent déjà par le répartiteur de l'appui long (tuile_appui_piece).
+ *       du YAML, jamais une couleur écrite ici. Un texte affiché passe par tr().
+ *       Appui long et « ⋯ » d'une ligne : la roue d'actions rapides (ADR-0036) autour de
+ *       la pastille de la ligne (enfant 0), sinon le popup de la tuile
+ *       (tuile_appui_maison). La roue passe devant ce popup (roue_ouvrir la met au
+ *       premier plan) ; un toucher hors d'elle ne ferme qu'elle ; son « ⋯ » ouvre le
+ *       popup de la tuile devant Maison, qui reste derrière.
  */
 #include "tab5_internal.h"
 #include "lvgl.h"
@@ -166,7 +169,8 @@ bool maison_titre_appui_valide() {
 
 void maison_ligne_appui(int r, int t, bool long_appui) {
     if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
-    tuile_appui_maison(r, t, long_appui);
+    lv_obj_t* ligne = g_maison_ui.ligne[r][t];
+    tuile_appui_maison(r, t, long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);
 }
 
 void maison_eteindre_lumieres() {

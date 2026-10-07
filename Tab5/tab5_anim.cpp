@@ -185,6 +185,8 @@ void transition_couper(lv_obj_t* wrap) {
 // le sien, modal_scrim.yaml).
 void animate_popup_open(lv_obj_t* card) {
     if (!card) return;
+    // Un popup qui s'ouvre referme la roue d'actions rapides (ADR-0036, tab5_roue.cpp).
+    roue_actions_fermer();
     lv_anim_delete(card, anim_opa_cb);
     lv_obj_remove_flag(card, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_style_opa(card, LV_OPA_COVER, LV_PART_MAIN);

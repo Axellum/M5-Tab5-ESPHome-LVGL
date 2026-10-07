@@ -2421,6 +2421,8 @@ void theme_rejouer_ui() {
     tuiles_rejouer_theme();
     rangee_rejouer_theme();
     reglables_rejouer_theme();
+    // Roue d'actions rapides ouverte (ADR-0036) : repeinte sur place, pas refermée.
+    roue_rejouer_theme();
     cartes_rejouer_theme();
     energie_rejouer_theme();
     reglages_rejouer_theme();

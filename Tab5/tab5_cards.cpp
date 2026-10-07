@@ -979,3 +979,12 @@ void cartes_rejouer_theme() {
     clim_recolorer();
     moisture_slots_refresh();
 }
+
+// Roue d'actions rapides (ADR-0036, tab5_tuiles.cpp) : les modes qu'elle offre sont ceux que
+// HA a poussés pour cette clim (climr pour celle du blueprint, crRT pour une tuile) ; les
+// capacités par défaut de la 3.2 ne comptent pas (rien reçu : pas de roue, le popup).
+const char* clim_capacites_connues(int r, int t) {
+    if (r < 0) return s_clim.recu ? s_clim.capacites : nullptr;
+    const ClimTuile* c = tuile_clim(r, t, false);
+    return (c != nullptr && c->reglages.recu) ? c->reglages.capacites : nullptr;
+}

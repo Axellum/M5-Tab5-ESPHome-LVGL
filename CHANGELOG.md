@@ -32,11 +32,32 @@ Pas encore essayé sur la tablette.
   état), coupée avec « … » quand la colonne est étroite.
 - **Mêmes gestes que la tuile**, par la même fonction : tap, appui long, et un bouton « ⋯ » sur
   les appareils qui ont un appui long. Le popup ouvert depuis une ligne passe devant, le popup
-  Maison reste derrière. L'appui long d'une clim ouvre son popup, comme son tap.
+  Maison reste derrière. L'appui long et « ⋯ » ouvrent d'abord la roue d'actions rapides
+  (ADR-0036) autour de la pastille de la ligne, devant le popup Maison ; sans roue, le popup
+  de la tuile (écran `maison-roue` du rendu hors tablette).
 - **« Éteindre les lumières »** dans la barre de titre, s'il y a une lumière : le « Tout
   éteindre » du popup lumière, pour chaque pièce qui en a, sans confirmation.
 - **Ouvert** par « Aller à l'écran → Maison » ou, en mode HA, par un tap sur le nom de la pièce
   dans la carte centrale. Notice : `docs/notice/house.md`.
+
+### 2026-10-07 — Roue d'actions rapides à l'appui long d'une lampe, d'un volet ou d'une clim
+
+Demandée dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)
+(le module `sub_button_wheel` de Bubble Card), décidée dans
+[ADR-0036](docs/decisions/0036-quick-action-wheel.md). Pas encore essayée sur la tablette.
+- L'appui long d'une lumière à variateur (`d`), d'un volet ou d'une clim dont HA a envoyé les
+  réglages fait surgir, sur un arc au-dessus de la tuile (tuile météo ou carte du mode HA),
+  des boutons ronds : Éteindre · 10 % · 50 % · 100 % pour une lumière, Ouvrir · Stop ·
+  Fermer · 50 % (s'il donne sa position) pour un volet, Arrêt et ses modes (chaud, froid,
+  sec, ventilation) pour une clim ; puis « ⋯ », qui ouvre le popup d'avant. Le bouton de
+  l'état courant est teinté de la couleur d'état.
+- Un bouton envoie la commande que la tuile ou son popup envoie déjà : rien ne change côté
+  Home Assistant. Toucher ailleurs ferme la roue, comme l'inactivité, un popup, l'écran éteint.
+- Sans roue (moins de trois commandes, option `k`, lumière sans variateur) : le popup, comme
+  avant. Une tuile clim sans roue ouvre désormais son popup à l'appui long (avant : rien).
+- Firmware : `tab5_roue.cpp`, `ui_components/roue_actions.yaml` et `roue_bouton.yaml`, police
+  `mdi_font_36` ; rendu hors tablette : écrans `roue-lampe`, `roue-volet`, `roue-clim`, et
+  « ⋯ » touché sur les écrans des popups ; `tests/test_roue.py`.
 
 ### 2026-10-07 — Docs : co-processeur WiFi et alimentation, faits vérifiés
 

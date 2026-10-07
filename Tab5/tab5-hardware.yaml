@@ -293,6 +293,8 @@ light:
       # Mode économie : un écran rallumé n'est plus « sans toucher », son plafond suit.
       - script.execute: tab5_economie_appliquer
     on_turn_off:
+      # Écran éteint : la roue d'actions rapides se ferme (ADR-0036), comme sous un popup.
+      - lambda: 'roue_actions_fermer();'
       - lvgl.pause:
 
 
