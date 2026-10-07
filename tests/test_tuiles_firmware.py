@@ -181,6 +181,19 @@ def test_tout_eteindre_de_la_piece():
     assert "popup_lumiere_tout_eteindre();" in _lire("Tab5", "ui_components", "light_popup.yaml")
 
 
+def test_popup_lumiere_revalide_aux_nouvelles_definitions():
+    """UI-1 (audit du 07/10/2026) : comme les popups volet et appareil, le popup lumière
+    est revalidé quand HA renvoie les définitions — lignes recalculées sur la même pièce
+    et repeintes, refermé s'il n'y a plus de lumière, oublié s'il est fermé."""
+    cpp = _cpp()
+    assert "popup_lumiere_revalider();" in _fonction(cpp, "tuiles_definir")
+    corps = _fonction(cpp, "popup_lumiere_revalider")
+    assert "s_pl = PopupLumiere{};" in corps and "est_lumiere(r, i)" in corps
+    assert "animate_popup_close(u.lum_popup);" in corps and "popup_lumiere_peindre();" in corps
+    # La clé des commandes suit la lampe choisie (mode héritage → clés tRT).
+    assert "lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);" in corps
+
+
 def test_cles_des_commandes_de_tuile():
     cpp = _cpp()
     assert "{'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\\0'}" in _fonction(cpp, "envoyer_tuile")

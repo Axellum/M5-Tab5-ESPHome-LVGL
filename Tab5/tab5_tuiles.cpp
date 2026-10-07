@@ -19,7 +19,9 @@
  *           (06/10/2026), envoyé au relâcher, Ouvrir / Stop / Fermer) et appareil (appui
  *           long d'une int, d'une act ou d'une med sans l'option t, 06/10/2026 : la
  *           fenêtre « plus d'infos » d'un tableau de bord HA, dont le grand bouton refait
- *           le toucher de la tuile), repeints quand l'état de leur tuile change.
+ *           le toucher de la tuile), repeints quand l'état de leur tuile change. Quand
+ *           les définitions changent, popup ouvert, tous trois sont revalidés (repeints,
+ *           ou refermés si leur tuile a disparu ; tuiles_definir).
  *         - Rangée sous l'horloge (ADR-0031, 06/10/2026) : trois lignes de quatre
  *           éléments au plus, mêmes types que les tuiles, dans la même action
  *           (« hLI|type|icône|options|complément|nom|classe », « hp|place des plantes »)
@@ -1158,6 +1160,34 @@ void popup_lumiere_ouvrir(int r, int t) {
     animate_popup_open(u.lum_popup);
 }
 
+// Nouvelles définitions des tuiles (UI-1, audit du 07/10/2026), comme les popups volet et
+// appareil : ouvert, les lignes de la même pièce sont recalculées — la lampe choisie le
+// reste si elle est encore une lumière, sinon la première — puis le popup est repeint ;
+// plus aucune lumière dans la pièce : refermé. Fermé (y compris par sa croix, que le C++
+// ne voit pas), il est oublié : aucun index ne vise plus une tuile disparue.
+void popup_lumiere_revalider() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (!popup_ouvert()) {
+        s_pl = PopupLumiere{};
+        return;
+    }
+    const int r = s_pl.piece;
+    const int choisie = s_pl.n > 0 ? s_pl.tuiles[s_pl.choix] : -1;
+    s_pl = PopupLumiere{};
+    s_pl.piece = r;
+    for (int i = 0; i < kTuiles; i++)
+        if (est_lumiere(r, i)) {
+            if (i == choisie) s_pl.choix = s_pl.n;
+            s_pl.tuiles[s_pl.n++] = i;
+        }
+    if (s_pl.n == 0) {
+        animate_popup_close(u.lum_popup);
+        return;
+    }
+    if (u.lum_cle != nullptr) lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);
+    popup_lumiere_peindre();
+}
+
 // Un état a changé : la ligne de cette tuile si le popup la montre.
 void popup_lumiere_etat(int r, int t) {
     if (!popup_ouvert() || r != s_pl.piece) return;
@@ -1706,6 +1736,8 @@ bool tuiles_definir(const std::string& payload) {
         if (popup_appareil_valide()) popup_appareil_peindre();
         else animate_popup_close(g_tuiles_ui.app_popup);
     }
+    // Et le popup lumière : ses lignes étaient des index de tuiles de l'ancienne définition.
+    popup_lumiere_revalider();
     tuiles_appliquer_ui();
     return true;
 }
