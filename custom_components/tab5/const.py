@@ -33,3 +33,7 @@ ISSUE_FICHIERS_ABSENTS = "fichiers_absents"
 ISSUE_CONFIGURATION = "configuration_invalide"
 ISSUE_PACKAGES = "packages_absents"
 ISSUE_REDEMARRAGE = "redemarrage_requis"
+
+# Paramètre {signaler} de « configuration_invalide » : hassfest refuse une URL écrite
+# dans les traductions.
+URL_SIGNALER = "https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues"

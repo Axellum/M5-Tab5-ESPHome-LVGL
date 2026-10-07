@@ -67,6 +67,7 @@ from .const import (
     PACKAGE_TEMOIN,
     STOCKAGE_CLE,
     STOCKAGE_VERSION,
+    URL_SIGNALER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -170,7 +171,8 @@ class Gestionnaire:
         except OSError as err:  # appliquer() a déjà tout remis comme avant
             _LOGGER.error("Fichiers Tab5 %s : écriture impossible dans %s (%s), rien n'a changé",
                           self.version, self.config, err)
-            self._probleme(ISSUE_CONFIGURATION, ir.IssueSeverity.ERROR, {"version": self.version})
+            self._probleme(ISSUE_CONFIGURATION, ir.IssueSeverity.ERROR,
+                           {"version": self.version, "signaler": URL_SIGNALER})
             return
         relatif = sauvegarde.relative_to(self.config).as_posix() if sauvegarde else None
 
@@ -182,7 +184,8 @@ class Gestionnaire:
             await executer(installation.nettoyer_sauvegardes, self.config, GARDER_SAUVEGARDES)
             _LOGGER.error("Fichiers Tab5 %s refusés par la vérification de la configuration, "
                           "anciens fichiers remis : %s", self.version, erreurs)
-            self._probleme(ISSUE_CONFIGURATION, ir.IssueSeverity.ERROR, {"version": self.version})
+            self._probleme(ISSUE_CONFIGURATION, ir.IssueSeverity.ERROR,
+                           {"version": self.version, "signaler": URL_SIGNALER})
             return
         ir.async_delete_issue(hass, DOMAIN, ISSUE_CONFIGURATION)
         _LOGGER.info("Fichiers Tab5 %s posés (%d écrits, %d retirés, %d identiques), sauvegarde : %s",

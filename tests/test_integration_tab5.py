@@ -96,11 +96,13 @@ def test_traductions_completes():
     issues = {v for k, v in vars(const).items() if k.startswith("ISSUE_")}
     assert set(en["issues"]) == issues, "une réparation par constante ISSUE_*"
     assert set(en["issues"][const.ISSUE_REDEMARRAGE]["fix_flow"]["error"]) == {const.ISSUE_CONFIGURATION}
+    parametres = {const.ISSUE_PACKAGES: set(), const.ISSUE_CONFIGURATION: {"version", "signaler"}}
     for langue in (en, fr):
+        # hassfest refuse une URL dans une traduction : elle passe par un paramètre.
+        assert not re.search(r"https?://", json.dumps(langue, ensure_ascii=False))
         for cle, issue in langue["issues"].items():
             textes = json.dumps(issue, ensure_ascii=False)
-            attendus = set() if cle == const.ISSUE_PACKAGES else {"version"}
-            assert set(re.findall(r"\{(\w+)\}", textes)) <= attendus, cle
+            assert set(re.findall(r"\{(\w+)\}", textes)) == parametres.get(cle, {"version"}), cle
 
 
 def test_constantes_lues_dans_les_packages():

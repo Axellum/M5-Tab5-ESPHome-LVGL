@@ -38,7 +38,7 @@
     },
     "configuration_invalide": {
       "title": "Tab5: the files {version} were not installed",
-      "description": "The new Tab5 files could not be put in place (the configuration check found an error with them, or writing them failed), so the previous files were put back and nothing changed. The reason is in the log (Settings → System → Logs, « tab5 »). Please report it: https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues"
+      "description": "The new Tab5 files could not be put in place (the configuration check found an error with them, or writing them failed), so the previous files were put back and nothing changed. The reason is in the log (Settings → System → Logs, « tab5 »). Please report it: {signaler}"
     },
     "packages_absents": {
       "title": "Tab5: Home Assistant does not load the packages",
