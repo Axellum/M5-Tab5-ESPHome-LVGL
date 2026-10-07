@@ -153,6 +153,16 @@ Those three lines repeat ~50 times per second. The black screen is a *consequenc
 
 ---
 
+### Adding Tab5 to HACS: « Repository not found », or an empty box (2026-10-07)
+
+**Symptom:** adding the repository to HACS, by the « Open Tab5 in HACS » link or by *Custom repositories*, fails with « Repository not found » (« Dépôt introuvable » in French). Or the box that HACS opens through the link shows a title only (« Confirm? »), with no text.
+
+**Root cause:** HACS checks a repository on its latest full release, even with beta versions switched on, and only the releases from 3.7.0 on carry the integration: before 3.7.0 was published (7 October 2026), HACS refused this repository (tried that day with 3.6.0 as the latest full release). The empty box comes from HACS: on a first load through the link, its texts are not loaded yet (seen with HACS 2.0.5).
+
+**Fix:** « Repository not found »: check on the [releases page](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) that the release marked *Latest* is 3.7.0 or later, and, when adding it by hand, that the type is **Integration**; then try again. Empty box: reload the page, the box comes back with its texts, *Add* on the right. Without HACS, the archive copied by hand works as before ([steps 1 to 3](installation/home-assistant-files.md#1-download-and-unzip)).
+
+---
+
 ### Tab5 integration (HACS): a message in Repairs
 
 **Symptom:** after an update of the « Tab5 — fichiers HA · HA files » integration and a restart, *Settings → Repairs* shows a message whose title starts with « Tab5 ».
@@ -296,6 +306,14 @@ Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *cons
 **Cause racine :** pas un plantage. Le firmware ne gère pas le bouton d'alimentation : c'est le matériel qui réinitialise la puce, et `esp_reset_reason()` lit `ESP_RST_WDT`, une raison que le journal comptait comme un plantage. Pour cette raison, le composant `debug` d'ESPHome affiche la source enregistrée par le dernier redémarrage *demandé* (`components/debug/debug_esp32.cpp`), qu'il n'efface jamais : un texte périmé.
 
 **Correctif (firmware après la 3.7.0-rc.3, et `packages/tab5_health.yaml`) :** un reset du chien de garde sans rapport de plantage est un démarrage normal : « bouton d'alimentation ou chien de garde RTC (rst 0x..) » dans le journal, aucun événement envoyé ; `Power button or RTC watchdog (rst 0x..)` dans l'entité, que la garde « reboot inattendu » laisse passer. Mettre à jour le firmware ET les fichiers HA : avec le nouveau firmware seul, l'ancienne garde alerterait sur le nouveau texte. Un chien de garde avec rapport de plantage alerte toujours. Détail dans [`debugging.md`](debugging.md#version-française).
+
+### Ajout de Tab5 dans HACS : « Dépôt introuvable », ou une boîte vide (07/10/2026)
+
+**Symptôme :** l'ajout du dépôt dans HACS, par le lien « Ouvrir Tab5 dans HACS » ou par *Custom repositories*, échoue avec « Dépôt introuvable » (« Repository not found » en anglais). Ou la boîte que HACS ouvre par le lien n'affiche qu'un titre (« Confirmer ? »), sans texte.
+
+**Cause racine :** HACS vérifie un dépôt sur sa dernière release complète, même avec les versions bêta activées, et seules les releases depuis la 3.7.0 portent l'intégration : avant la publication de la 3.7.0 (7 octobre 2026), HACS refusait ce dépôt (essayé ce jour-là, avec la 3.6.0 comme dernière release complète). La boîte vide vient de HACS : au premier chargement par le lien, ses textes ne sont pas encore chargés (vu avec HACS 2.0.5).
+
+**Correctif :** « Dépôt introuvable » : vérifier sur la [page des releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases) que la release marquée *Latest* est la 3.7.0 ou plus récente et, pour un ajout à la main, que le type est **Integration** ; puis réessayer. Boîte vide : recharger la page, la boîte revient avec ses textes, *Ajouter* à droite. Sans HACS, l'archive copiée à la main marche comme avant ([étapes 1 à 3](installation/home-assistant-files.md#1-télécharger-et-décompresser)).
 
 ### Intégration Tab5 (HACS) : un message dans Réparations
 
