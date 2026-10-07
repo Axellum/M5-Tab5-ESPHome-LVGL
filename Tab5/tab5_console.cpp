@@ -82,9 +82,9 @@ void refresh_console_status_row_ui(lv_obj_t* lbl_uptime, lv_obj_t* lbl_rssi, lv_
 // le sien et un reglage venu de Home Assistant n'en peignait aucun.
 void ui_sync_volume_widgets(lv_obj_t* slider_console, lv_obj_t* lbl_console_pct,
     lv_obj_t* slider_assist, float volume) {
-    if (volume < 0.0f) volume = 0.0f;
-    if (volume > 1.0f) volume = 1.0f;
-    const int pct = (int)(volume * 100.0f + 0.5f);
+    // Arrondi et borné à 0..100 ; NaN (que les deux bornes laissaient passer avant l'audit
+    // du 07/10/2026, DO-5) : 0, sans conversion indéfinie.
+    const int pct = tab5_float_vers_int(volume * 100.0f + 0.5f, 0, 100, 0);
     if (slider_console != nullptr) lv_slider_set_value(slider_console, pct, LV_ANIM_OFF);
     if (slider_assist != nullptr) lv_slider_set_value(slider_assist, pct, LV_ANIM_OFF);
     if (lbl_console_pct != nullptr) {
@@ -128,8 +128,10 @@ void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
         float psram_used = psram_total - psram_free;
         if (psram_used < 0) psram_used = 0;
 
-        int sram_pct = (int)((sram_used / sram_total) * 100.0f);
-        int psram_pct = (int)((psram_used / psram_total) * 100.0f);
+        // Total nul (tablette virtuelle) : 0 %, pas 0/0 = NaN converti en entier (DO-5,
+        // audit du 07/10/2026).
+        const int sram_pct = sram_total > 0.0f ? tab5_float_vers_int(sram_used / sram_total * 100.0f, 0, 100, 0) : 0;
+        const int psram_pct = psram_total > 0.0f ? tab5_float_vers_int(psram_used / psram_total * 100.0f, 0, 100, 0) : 0;
 
         char b_sram[32]; snprintf(b_sram, sizeof(b_sram), "%d%% (%.1f KB)", sram_pct, sram_used);
         ui_text(lbl_sram, b_sram);
