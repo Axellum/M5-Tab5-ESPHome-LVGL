@@ -52,7 +52,7 @@ The PSRAM is critical for this project. LVGL requires a framebuffer sized to the
 
 Handles all radio communication: Wi-Fi 6 (802.11ax) and BLE 5. The main ESP32-P4 communicates with it over an SDIO bus (`esp32_hosted:` component, 20 MHz). From the ESPHome/LVGL code perspective, this is transparent — standard ESPHome Wi-Fi and BLE components work normally.
 
-The C6 has its own RAM (512 KB) and runs Espressif's ESP-Hosted firmware, not ours: our firmware, including the TCP/IP stack (lwIP), runs on the P4. ESPHome builds the P4 side of ESP-Hosted (2.12.12 with ESPHome 2026.9) but does not update the C6, which keeps its factory firmware unless someone reflashes it. The diagnostic sensor **Tab5 C6 Version** reports that version once per boot.
+The C6 has its own RAM (512 KB) and runs Espressif's ESP-Hosted firmware, not ours: our firmware, including the TCP/IP stack (lwIP), runs on the P4. ESPHome builds the P4 side of ESP-Hosted (2.12.12 with ESPHome 2026.9) but does not update the C6, which keeps its factory firmware unless someone reflashes it. The diagnostic sensor **Tab5 C6 Version** reports that version once per boot. The P4 resets the C6 through GPIO 15 on every boot, software reboots included (ESP-Hosted's default setting, `CONFIG_ESP_HOSTED_SLAVE_RESET_ON_EVERY_HOST_BOOTUP`); the one time the C6 did not come back after an OTA: [Troubleshooting](troubleshooting.md#black-screen--device-off-the-network-after-an-ota--the-wi-fi-co-processor-never-came-up).
 
 ### Real-time clock (RX8130CE)
 
@@ -139,7 +139,7 @@ Capture parameters: **16 kHz, 16-bit mono**. This matches the input format expec
 
 ## Power
 
-The Tab5 is USB-C powered. Peak consumption (Wi-Fi active + 100% backlight + audio playing) can exceed 1.5 A at 5V. A charger rated for at least **5V / 2A** is required to avoid brownout resets.
+The Tab5 is USB-C powered. Its consumption has never been measured: the 1.5 A figure given here before had no source. The author's tablet runs without a battery on a PC's USB port; the history kept by Home Assistant (since 2026-09-30) shows a single brownout reset, on 2026-10-06 right after an OTA, cause unknown. A charger of **5 V / 2 A** or more leaves some margin: advice, no longer a requirement. Without a battery, the tablet starts again by itself when USB-C power comes back, after a cable pulled while it runs as after a long-press power-off.
 
 Backlight brightness is software-controlled via PWM (LEDC output on GPIO 22, `light: monochromatic`) and can be dimmed from Home Assistant to reduce power draw. Touching the screen while the backlight is off turns it back on (`touchscreen: on_release`). There is no ambient light sensor in this configuration.
 
@@ -203,7 +203,7 @@ La PSRAM est critique pour ce projet. LVGL nécessite un framebuffer dimensionn�
 
 Gère toute la communication radio : Wi-Fi 6 (802.11ax) et BLE 5. Le ESP32-P4 principal communique avec lui via un bus SDIO (composant `esp32_hosted:`, 20 MHz). Du point de vue du code ESPHome/LVGL, c'est transparent — les composants Wi-Fi et BLE standards d'ESPHome fonctionnent normalement.
 
-Le C6 a sa propre RAM (512 Ko) et fait tourner le logiciel ESP-Hosted d'Espressif, pas le nôtre : notre firmware, pile TCP/IP (lwIP) comprise, tourne sur le P4. ESPHome compile la partie P4 d'ESP-Hosted (2.12.12 avec ESPHome 2026.9) mais ne met pas le C6 à jour : il garde son logiciel d'usine tant que personne ne le reflashe. Le capteur de diagnostic **Tab5 C6 Version** en donne la version, lue une fois par démarrage.
+Le C6 a sa propre RAM (512 Ko) et fait tourner le logiciel ESP-Hosted d'Espressif, pas le nôtre : notre firmware, pile TCP/IP (lwIP) comprise, tourne sur le P4. ESPHome compile la partie P4 d'ESP-Hosted (2.12.12 avec ESPHome 2026.9) mais ne met pas le C6 à jour : il garde son logiciel d'usine tant que personne ne le reflashe. Le capteur de diagnostic **Tab5 C6 Version** en donne la version, lue une fois par démarrage. Le P4 réinitialise le C6 par GPIO 15 à chaque démarrage, redémarrage logiciel compris (réglage par défaut d'ESP-Hosted, `CONFIG_ESP_HOSTED_SLAVE_RESET_ON_EVERY_HOST_BOOTUP`) ; la seule fois où le C6 n'est pas revenu après une OTA : [Incidents connus](troubleshooting.md#écran-noir--appareil-absent-du-réseau-après-une-ota--le-co-processeur-wifi-nest-pas-remonté).
 
 ### Horloge temps réel (RX8130CE)
 
@@ -290,7 +290,7 @@ Paramètres de capture : **16 kHz, 16-bit mono**. Correspond au format d'entrée
 
 ## Alimentation
 
-Le Tab5 est alimenté en USB-C. La consommation en pointe (Wi-Fi actif + rétroéclairage 100% + audio en lecture) peut dépasser 1,5 A à 5V. Un chargeur d'au moins **5V / 2A** est nécessaire pour éviter les resets par sous-tension.
+Le Tab5 est alimenté en USB-C. Sa consommation n'a jamais été mesurée : le chiffre de 1,5 A donné ici avant n'avait pas de source. La tablette de l'auteur tourne sans batterie sur un port USB de PC ; l'historique gardé par Home Assistant (depuis le 30/09/2026) montre un seul reset par sous-tension, le 06/10/2026 juste après une OTA, cause inconnue. Un chargeur de **5 V / 2 A** ou plus laisse de la marge : un conseil, plus une exigence. Sans batterie, la tablette redémarre seule au retour de l'alimentation USB-C, après un câble tiré en marche comme après une extinction par appui long.
 
 La luminosité du rétroéclairage est contrôlée logiciellement via PWM (sortie LEDC sur GPIO 22, `light: monochromatic`) et peut être réduite depuis Home Assistant. Toucher l'écran quand le rétroéclairage est éteint le rallume (`touchscreen: on_release`). Il n'y a pas de capteur de luminosité ambiante dans cette configuration.
 

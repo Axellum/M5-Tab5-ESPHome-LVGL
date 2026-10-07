@@ -21,6 +21,12 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-07 — Docs : co-processeur WiFi et alimentation, faits vérifiés
+
+`docs/troubleshooting.md` et `docs/hardware.md` : le P4 réinitialise le C6 par GPIO 15 à chaque
+démarrage (lu dans le `sdkconfig`), débrancher l'USB-C suffit sans batterie, fréquence de la panne ;
+consommation jamais mesurée (le « 1,5 A » n'avait pas de source), chargeur 5 V / 2 A conseillé.
+
 ### 2026-10-07 — Boutons du haut : l'écran de l'appui long au choix dans le blueprint
 
 Demande d'Axel : choisir dans le blueprint la page qu'ouvre l'appui long de chacun des trois
