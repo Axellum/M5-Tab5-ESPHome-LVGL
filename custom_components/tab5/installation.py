@@ -224,6 +224,19 @@ def domaines(contenus: dict[str, bytes]) -> set[str]:
     return trouves
 
 
+# Ordre du chargement à chaud : les entrées (input_*) et les commandes avant les modèles,
+# scripts et automatisations qui les lisent (sinon « unknown entity » au premier passage).
+ORDRE_DOMAINES = ("input_boolean", "input_button", "input_datetime", "input_number", "input_select",
+                  "input_text", "rest_command", "template", "script", "automation")
+
+
+def ordre_de_chargement(domaines_: set[str]) -> list[str]:
+    """Domaines dans l'ordre où les charger ; un domaine inconnu passe avant `template`."""
+    rang = {d: float(i) for i, d in enumerate(ORDRE_DOMAINES)}
+    defaut = rang["template"] - 0.5
+    return sorted(domaines_, key=lambda d: (rang.get(d, defaut), d))
+
+
 def packages(contenus: dict[str, bytes]) -> set[str]:
     """Noms des packages posés, tels que `!include_dir_named packages` les nomme."""
     return {PurePosixPath(c).stem for c in contenus

@@ -245,6 +245,9 @@ def test_etiquette_et_domaines():
     assert domaines == {"automation", "script", "template", "input_text", "input_select",
                         "input_boolean", "rest_command"}, \
         "nouveau domaine dans un package : vérifier qu'il se charge à chaud (verifier_integration.py)"
+    ordre = installation.ordre_de_chargement(domaines | {"zone"})
+    assert ordre == ["input_boolean", "input_select", "input_text", "rest_command", "zone", "template",
+                     "script", "automation"], "les entrées avant ce qui les lit, les automatisations en dernier"
     assert installation.packages({"packages/tab5_health.yaml": b"", "custom_templates/x.jinja": b""}) \
         == {"tab5_health"}
 

@@ -331,6 +331,11 @@ def journal(rapport: Rapport, chemin: Path | None) -> None:
                if "custom_components.tab5" in l and ("ERROR" in l or "Traceback" in l)
                and "refusés par la vérification de la configuration" not in l]
     autres = [l for l in texte.splitlines() if "Error setting up entry" in l and "tab5" in l.lower()]
+    # Ce qui trahit un chargement dans le désordre (vu dans la CI du 07/10/2026 : une
+    # automatisation lisait tab5_alertes.jinja avant le rechargement des modèles) ou une
+    # exception qui échappe à l'intégration.
+    autres += [l for l in texte.splitlines()
+               if "TemplateNotFound" in l or "Task exception was never retrieved" in l]
     rapport.verifier(not erreurs and not autres, "journal de HA : aucune erreur de l'intégration",
                      " | ".join((erreurs + autres)[:3]))
 

@@ -10,9 +10,14 @@
       embarquée n'est pas celle déjà posée, l'intégration :
         1. sauvegarde puis remplace les fichiers (installation.py) ;
         2. vérifie la configuration (comme « Vérifier la configuration ») et remet tout en
-           place si les nouveaux fichiers la cassent (réparation « configuration_invalide ») ;
-        3. charge les domaines que HA n'avait pas encore (rest_command… sur un HA neuf),
-           puis recharge tout le YAML (homeassistant.reload_all) : pas de 2e redémarrage ;
+           place si les nouveaux fichiers y ajoutent un message — erreur OU avertissement :
+           pour HA 2026.9, un domaine ou un package invalide n'est qu'un avertissement, et
+           ce domaine ne se charge plus (réparation « configuration_invalide ») ;
+        3. sans la ligne `packages:`, s'arrête là (réparation « packages_absents ») ; sinon
+           recharge les modèles, les entrées (input_*), charge les domaines que HA n'avait
+           pas encore (rest_command… sur un HA neuf), puis tout le YAML
+           (homeassistant.reload_all) : pas de 2e redémarrage. Dans cet ordre, sinon une
+           automatisation lit un modèle ou une entrée pas encore là ;
         4. constate l'effet : le capteur « Tab5 · version des fichiers HA »
            (packages/tab5_health.yaml) donne la nouvelle version ; sinon une réparation dit
            quoi faire (ligne `packages:` absente, ou redémarrage) ;
@@ -41,6 +46,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_STATE_CHANGED
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import check_config
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
@@ -140,7 +146,10 @@ class Gestionnaire:
     async def async_installer(self, forcer: bool = False) -> None:
         async with self._verrou:
             if forcer or self.donnees.get("version") != self.version:
-                await self._installer()
+                try:
+                    await self._installer()
+                except Exception:  # noqa: BLE001 — au journal de l'intégration, pas « never retrieved »
+                    _LOGGER.exception("Tab5 : installation des fichiers %s interrompue", self.version)
             elif self._version_active():
                 # Déjà posés : un redémarrage (ligne `packages:` ajoutée, réparation
                 # « redémarrer ») les a rendus actifs, ou une version précédente refusée a
@@ -164,7 +173,7 @@ class Gestionnaire:
         plan = await executer(installation.planifier, self.config, embarques,
                               self.donnees.get("fichiers", {}))
         avant = await executer(installation.version_installee, self.config)
-        erreurs_avant = await conf_util.async_check_ha_config_file(hass)
+        _, messages_avant = await self._verifier_configuration()
         nom = installation.etiquette(dt_util.now(), avant)
         try:
             sauvegarde = await executer(installation.appliquer, self.config, plan, nom)
@@ -176,14 +185,14 @@ class Gestionnaire:
             return
         relatif = sauvegarde.relative_to(self.config).as_posix() if sauvegarde else None
 
-        # 2. La configuration, comme « Vérifier la configuration » : une erreur nouvelle
+        # 2. La configuration, comme « Vérifier la configuration » : un message nouveau
         # vient de ces fichiers, tout est remis comme avant.
-        erreurs = await conf_util.async_check_ha_config_file(hass)
-        if erreurs and erreurs != erreurs_avant:
+        bloquant, messages = await self._verifier_configuration()
+        if nouveaux := sorted(messages - messages_avant):
             await executer(installation.restaurer, self.config, plan, sauvegarde)
             await executer(installation.nettoyer_sauvegardes, self.config, GARDER_SAUVEGARDES)
             _LOGGER.error("Fichiers Tab5 %s refusés par la vérification de la configuration, "
-                          "anciens fichiers remis : %s", self.version, erreurs)
+                          "anciens fichiers remis : %s", self.version, " | ".join(nouveaux))
             self._probleme(ISSUE_CONFIGURATION, ir.IssueSeverity.ERROR,
                            {"version": self.version, "signaler": URL_SIGNALER})
             return
@@ -191,30 +200,19 @@ class Gestionnaire:
         _LOGGER.info("Fichiers Tab5 %s posés (%d écrits, %d retirés, %d identiques), sauvegarde : %s",
                      self.version, len(plan.ecrire), len(plan.retirer), len(plan.identiques), relatif)
 
-        # 3. Domaines absents (HA neuf), puis tout le YAML rechargé.
-        redemarrer = bool(erreurs)  # configuration déjà invalide avant : reload_all refuserait
-        manquants = sorted(installation.domaines(plan.contenus) - hass.config.components)
-        if manquants and not erreurs:
-            config_yaml = await self._config_yaml()
-            for domaine in manquants:
-                if config_yaml is None or not await async_setup_component(hass, domaine, config_yaml):
-                    _LOGGER.warning("Tab5 : %s pas chargé sans redémarrage", domaine)
-                    redemarrer = True
-        if not erreurs:
-            try:
-                await hass.services.async_call("homeassistant", "reload_all", blocking=True)
-            except HomeAssistantError as err:
-                _LOGGER.warning("Tab5 : rechargement du YAML refusé (%s)", err)
-                redemarrer = True
+        # 3. Sans la ligne `packages:`, rien à recharger (et rest_command.reload lève alors
+        # un KeyError, HA 2026.9). Sinon : rendus actifs sans redémarrage.
+        config_yaml = await self._config_yaml()
+        charges = ((config_yaml or {}).get("homeassistant") or {}).get("packages") or {}
+        packages_absents = config_yaml is not None and PACKAGE_TEMOIN not in charges
+        # Configuration déjà invalide avant (erreur bloquante) : reload_all refuserait.
+        redemarrer = bloquant
+        if not packages_absents and not bloquant:
+            redemarrer = await self._recharger(installation.domaines(plan.contenus), config_yaml)
 
         # 4. L'effet : HA lit la nouvelle version des fichiers.
-        actifs = await self._attendre_version()
-        packages_absents = False
-        if not actifs:
-            config_yaml = await self._config_yaml() or {}
-            charges = (config_yaml.get("homeassistant") or {}).get("packages") or {}
-            packages_absents = PACKAGE_TEMOIN not in charges
-            redemarrer = redemarrer or not packages_absents
+        if not packages_absents and not await self._attendre_version():
+            redemarrer = True
         if packages_absents:
             self._probleme(ISSUE_PACKAGES, ir.IssueSeverity.ERROR, {})
         else:
@@ -242,6 +240,37 @@ class Gestionnaire:
             modifies=plan.modifies, redemarrer=redemarrer, packages_absents=packages_absents,
             firmware=firmware)
         persistent_notification.async_create(hass, message, titre, NOTIFICATION)
+
+    async def _verifier_configuration(self) -> tuple[bool, frozenset[str]]:
+        """(erreur bloquante, tous les messages) de « Vérifier la configuration ». HA ne
+        compte comme erreur qu'un fichier illisible : la configuration invalide d'un domaine
+        ou d'un package n'y est qu'un avertissement (helpers/check_config.py, 2026.9), alors
+        que ce domaine ne se charge plus. Les deux comptent ici."""
+        res = await check_config.async_check_ha_config_file(self.hass)
+        return bool(res.errors), frozenset(f"{e.domain or '-'} : {e.message}"
+                                           for e in (*res.errors, *res.warnings))
+
+    async def _recharger(self, domaines: set[str], config_yaml: dict[str, Any] | None) -> bool:
+        """Rend les fichiers posés actifs sans redémarrage ; True s'il en faut un. Dans
+        l'ordre : les modèles (custom_templates, lus par les automatisations), les entrées
+        (input_*), les domaines que HA n'avait pas encore, puis tout le YAML."""
+        hass, redemarrer = self.hass, False
+        try:
+            await hass.services.async_call("homeassistant", "reload_custom_templates", blocking=True)
+            for domaine in installation.ordre_de_chargement(domaines):
+                if domaine not in hass.config.components:
+                    if config_yaml is None or not await async_setup_component(hass, domaine, config_yaml):
+                        _LOGGER.warning("Tab5 : %s pas chargé sans redémarrage", domaine)
+                        redemarrer = True
+                elif domaine.startswith("input_") and hass.services.has_service(domaine, "reload"):
+                    await hass.services.async_call(domaine, "reload", blocking=True)
+            await hass.services.async_call("homeassistant", "reload_all", blocking=True)
+        # Un rechargement de HA peut lever autre chose que HomeAssistantError (KeyError de
+        # rest_command.reload, 2026.9) : les fichiers sont posés, un redémarrage finira.
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.warning("Tab5 : rechargement du YAML interrompu (%r)", err)
+            redemarrer = True
+        return redemarrer
 
     async def _config_yaml(self) -> dict[str, Any] | None:
         """configuration.yaml lu comme au démarrage, packages fusionnés ; None si illisible."""
