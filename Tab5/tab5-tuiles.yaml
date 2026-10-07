@@ -159,3 +159,27 @@ script:
           tuiles_brancher_titres();
           // Volet dessiné du popup : ses lames, glisser, relâcher (une fois aussi).
           tuiles_brancher_popup_volet();
+          // Roue d'actions rapides (ADR-0036, ui_components/roue_actions.yaml), dessinée par
+          // tab5_roue.cpp ; geste bloqué et effet d'appui posés une fois (roue_brancher).
+          RoueUI& roue = g_roue_ui;
+          roue.fond = id(roue_actions);
+          roue.halo = id(roue_halo);
+          roue.bouton[0] = id(roue_bouton_0);
+          roue.icone[0] = id(roue_bouton_0_icone);
+          roue.texte[0] = id(roue_bouton_0_texte);
+          roue.bouton[1] = id(roue_bouton_1);
+          roue.icone[1] = id(roue_bouton_1_icone);
+          roue.texte[1] = id(roue_bouton_1_texte);
+          roue.bouton[2] = id(roue_bouton_2);
+          roue.icone[2] = id(roue_bouton_2_icone);
+          roue.texte[2] = id(roue_bouton_2_texte);
+          roue.bouton[3] = id(roue_bouton_3);
+          roue.icone[3] = id(roue_bouton_3_icone);
+          roue.texte[3] = id(roue_bouton_3_texte);
+          roue.bouton[4] = id(roue_bouton_4);
+          roue.icone[4] = id(roue_bouton_4_icone);
+          roue.texte[4] = id(roue_bouton_4_texte);
+          roue.bouton[5] = id(roue_bouton_5);
+          roue.icone[5] = id(roue_bouton_5_icone);
+          roue.texte[5] = id(roue_bouton_5_texte);
+          roue_brancher();

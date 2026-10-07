@@ -973,6 +973,8 @@ void peindre_meteo() {
 void popup_lumiere_etat(int r, int t);
 void popup_volet_etat(int r, int t);
 void popup_appareil_etat(int r, int t);
+// Roue d'actions rapides ouverte sur cette tuile : repeinte (bouton courant, bord du halo).
+void roue_tuile_etat(int r, int t);
 
 // Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
 void peindre_tuile(int r, int t) {
@@ -980,6 +982,7 @@ void peindre_tuile(int r, int t) {
     popup_lumiere_etat(r, t);
     popup_volet_etat(r, t);
     popup_appareil_etat(r, t);
+    roue_tuile_etat(r, t);
     if (r != piece_courante()) return;
     if (g_central_ctx.ha_mode) {
         if (tuile_presente(r, t)) peindre_carte(r, t);
@@ -1678,6 +1681,8 @@ bool tuiles_definir(const std::string& payload) {
     minuterie_arreter(s_confirmation);
     minuterie_arreter(s_ok);
     minuterie_arreter(s_sens);
+    // Roue d'actions rapides (ADR-0036) : ses boutons étaient ceux de l'ancienne définition.
+    roue_actions_fermer();
     // Popup du volet ouvert sur une tuile qui n'est plus un volet pilotable : refermé.
     if (popup_volet_ouvert()) {
         if (popup_volet_valide()) popup_volet_peindre();
@@ -1934,6 +1939,9 @@ void tuiles_brancher_titres() {
     }
 }
 
+// Roue d'actions rapides de la tuile T de la page courante (ADR-0036, plus bas).
+static bool roue_de_la_tuile(int r, int t);
+
 // Appui sur la tuile T de la pièce R : tuile de la page courante (tuile_appui), ou grand
 // bouton du popup d'un appareil (popup_appareil_appui, appui court). Un seul chemin pour
 // les deux : la même commande, la même confirmation (option k), le même « OK ».
@@ -1952,8 +1960,10 @@ static void tuile_appui_piece(int r, int t, bool long_appui) {
     const char* action = nullptr;
     switch (type) {
         case Type::LUM:
+            // Appui long : la roue d'actions rapides (ADR-0036, lampe à variateur) ; sans
+            // elle, le popup des lumières de la pièce, comme avant.
             if (long_appui) {
-                popup_lumiere_ouvrir(r, t);
+                if (!roue_de_la_tuile(r, t)) popup_lumiere_ouvrir(r, t);
                 return;
             }
             action = (d.options & OPT_O) ? "allumer" : "basculer";
@@ -1970,8 +1980,10 @@ static void tuile_appui_piece(int r, int t, bool long_appui) {
             // Appui long (05/10/2026, discussion #278) : le popup du volet. Avec l'option
             // k, l'ancien appui long (l'autre sens, confirmé) : le popup ne doit jamais
             // contourner la confirmation.
+            // Depuis le 07/10/2026 (ADR-0036), la roue d'actions rapides d'abord, dont
+            // « ⋯ » ouvre ce popup ; l'option k ne l'ouvre jamais non plus.
             if (long_appui && !(d.options & OPT_K)) {
-                popup_volet_ouvrir(r, t);
+                if (!roue_de_la_tuile(r, t)) popup_volet_ouvrir(r, t);
                 return;
             }
             action = long_appui ? vol_appui_long(e) : vol_appui(e);
@@ -1996,7 +2008,9 @@ static void tuile_appui_piece(int r, int t, bool long_appui) {
         case Type::CLI:
             // Option m : la clim du blueprint ; sinon celle de la tuile (ADR-0027), que
             // type_agit sait connue. Le popup revient à la clim du blueprint à sa fermeture.
-            if (long_appui) return;
+            // Appui long (ADR-0036) : la roue d'actions rapides ; sans elle (aucune
+            // capacité reçue, moins de trois commandes), ce popup, comme l'appui court.
+            if (long_appui && roue_de_la_tuile(r, t)) return;
             if (d.options & OPT_M) clim_afficher_blueprint();
             else if (!clim_afficher_tuile(r, t)) return;
             ouvrir_popup(g_tuiles_ui.popup_clim);
@@ -2049,6 +2063,209 @@ bool tuile_ouvrir_popup(int r, int t) {
         default:
             return false;
     }
+}
+
+// ─── Roue d'actions rapides (ADR-0036, 07/10/2026, discussion #278) ─────────────────
+//
+// L'appui long d'une lum à variateur, d'un vol ou d'une cli ouvre la roue (tab5_roue.cpp) :
+// les commandes que la tuile et ses popups envoient déjà, puis « ⋯ », le popup de son
+// appui long d'avant (tuile_ouvrir_popup). Moins de trois commandes : pas de roue, le
+// popup. Aucune commande nouvelle (mêmes événements esphome.tab5_action, mêmes valeurs :
+// ADR-0023, ADR-0026, ADR-0027), aucune mise à jour optimiste nouvelle.
+
+namespace {
+
+enum class RoueAction : uint8_t { PLUS, ETEINDRE, LUMINOSITE, OUVRIR, ARRETER, FERMER, POSITION, CLIM_ARRET, CLIM_MODE };
+
+// Modes d'une clim offerts par la roue, dans cet ordre : lettre de capacité (ADR-0026),
+// mode envoyé (commande « mode », comme les boutons du popup), icône. « auto » et
+// « heat_cool » n'ont ni lettre ni commande (ADR-0026) : la roue ne les offre pas.
+struct RoueModeClim {
+    char lettre;
+    const char* mode;
+    RoueIcone icone;
+};
+constexpr RoueModeClim kRoueModesClim[] = {
+    {'h', "heat", RoueIcone::CHAUFFER},
+    {'c', "cool", RoueIcone::REFROIDIR},
+    {'d', "dry", RoueIcone::SECHER},
+    {'f', "fan_only", RoueIcone::VENTILER},
+};
+constexpr int kRoueNbModesClim = sizeof(kRoueModesClim) / sizeof(kRoueModesClim[0]);
+// Luminosités offertes (commande luminosite_pct, comme les raccourcis du popup lumière).
+constexpr uint8_t kRoueLuminosites[] = {10, 50, 100};
+// Position offerte à un volet qui donne la sienne (commande position, comme le volet
+// dessiné du popup).
+constexpr uint8_t kRouePosition = 50;
+// Commandes (« ⋯ » non compris) en dessous desquelles la roue n'a pas d'intérêt.
+constexpr int kRoueMinActions = 3;
+
+// La roue ouverte : sa tuile, son ancre et ce que fait chaque bouton.
+struct RoueTuile {
+    int r = -1;
+    int t = -1;
+    lv_obj_t* ancre = nullptr;
+    int n = 0;
+    RoueAction action[kRoueBoutons] = {};
+    uint8_t valeur[kRoueBoutons] = {};  // % (luminosité, position) ou rang dans kRoueModesClim
+};
+RoueTuile s_rt;
+
+// Boutons de la roue de la tuile tRT dans `b` (leurs actions dans `rt`), « ⋯ » en dernier.
+// 0 sans roue : type sans roue, lampe sans variateur, option r, option k (une lampe ou un
+// volet à confirmer garde son appui long d'avant), clim sans capacité reçue, moins de
+// kRoueMinActions commandes. Le bouton de l'état courant (lampe éteinte, luminosité,
+// volet ouvert ou fermé, position, mode de la clim) est marqué ; aucun si rien ne
+// correspond.
+int roue_composer(int r, int t, RoueBouton b[kRoueBoutons], RoueTuile& rt) {
+    if (heritage() || !tuile_presente(r, t)) return 0;
+    const Def& d = s_m.tuiles[r][t];
+    const Etat& e = s_etats[r][t];
+    if (d.options & OPT_R) return 0;
+    int n = 0;
+    auto ajouter = [&](RoueAction a, RoueIcone i, uint8_t pct, uint8_t valeur, bool courant) {
+        b[n] = RoueBouton{i, pct, courant};
+        rt.action[n] = a;
+        rt.valeur[n] = valeur;
+        n++;
+    };
+    switch (static_cast<Type>(d.type)) {
+        case Type::LUM: {
+            if (!(d.options & OPT_D) || (d.options & OPT_K)) return 0;
+            // Option o : jamais éteinte depuis l'écran, pas de bouton Éteindre.
+            if (!(d.options & OPT_O)) ajouter(RoueAction::ETEINDRE, RoueIcone::ETEINDRE, 0, 0, est(e.brut, "off"));
+            // Luminosité 0-255 de l'état, en % (128 → 50).
+            const long pct = est(e.brut, "on") && std::isfinite(e.valeur) ? std::lround(e.valeur * 100.0f / 255.0f) : -1;
+            for (uint8_t p : kRoueLuminosites) ajouter(RoueAction::LUMINOSITE, RoueIcone::PLUS, p, p, pct == p);
+            break;
+        }
+        case Type::VOL: {
+            if (d.options & OPT_K) return 0;
+            // « Ouvert » et « Fermé » comme les mots du popup (vol_etat_mots) : ouvert mais
+            // arrêté en route, c'est « Partiel », pas Ouvrir.
+            const bool partiel = e.valeur < 0.0f || (e.valeur > 0.0f && e.valeur < 100.0f);
+            ajouter(RoueAction::OUVRIR, RoueIcone::OUVRIR, 0, 0, est(e.brut, "open") && !partiel);
+            ajouter(RoueAction::ARRETER, RoueIcone::STOP, 0, 0, false);
+            ajouter(RoueAction::FERMER, RoueIcone::FERMER, 0, 0, est(e.brut, "closed"));
+            if (vol_position_connue(e))
+                ajouter(RoueAction::POSITION, RoueIcone::PLUS, kRouePosition, kRouePosition,
+                        std::lround(e.valeur) == kRouePosition);
+            break;
+        }
+        case Type::CLI: {
+            // La clim du blueprint (option m) ou celle de la tuile : les modes que HA a
+            // poussés pour elle, rien d'autre.
+            const bool blueprint = (d.options & OPT_M) != 0;
+            const char* capacites = clim_capacites_connues(blueprint ? -1 : r, blueprint ? -1 : t);
+            if (capacites == nullptr) return 0;
+            ajouter(RoueAction::CLIM_ARRET, RoueIcone::ETEINDRE, 0, 0, est(e.brut, "off"));
+            for (int k = 0; k < kRoueNbModesClim; k++) {
+                const RoueModeClim& m = kRoueModesClim[k];
+                if (std::strchr(capacites, m.lettre) != nullptr)
+                    ajouter(RoueAction::CLIM_MODE, m.icone, 0, static_cast<uint8_t>(k), est(e.brut, m.mode));
+            }
+            break;
+        }
+        default:
+            return 0;
+    }
+    if (n < kRoueMinActions) return 0;
+    ajouter(RoueAction::PLUS, RoueIcone::PLUS, 0, 0, false);
+    return n;
+}
+
+void roue_tuile_rejouer();
+
+// Toucher du bouton i (roue déjà fermée) : la commande, par les chemins de la tuile.
+void roue_tuile_choisir(int i) {
+    charger();
+    const RoueTuile rt = s_rt;
+    if (i < 0 || i >= rt.n || heritage() || !tuile_presente(rt.r, rt.t)) return;
+    const Def& d = s_m.tuiles[rt.r][rt.t];
+    const TuilesUI& u = g_tuiles_ui;
+    const char cle[4] = {'t', static_cast<char>('0' + rt.r), static_cast<char>('0' + rt.t), '\0'};
+    // Une clim : à l'emplacement que vise son popup (« clim » pour celle du blueprint).
+    const char* cle_clim = (d.options & OPT_M) ? "clim" : cle;
+    char valeur[8];
+    snprintf(valeur, sizeof(valeur), "%u", static_cast<unsigned>(rt.valeur[i]));
+    switch (rt.action[i]) {
+        case RoueAction::PLUS:
+            tuile_ouvrir_popup(rt.r, rt.t);
+            return;
+        case RoueAction::ETEINDRE:
+            envoyer_tuile(rt.r, rt.t, "eteindre");
+            return;
+        case RoueAction::LUMINOSITE:
+            if (u.envoyer != nullptr) u.envoyer(cle, "luminosite_pct", valeur);
+            return;
+        case RoueAction::OUVRIR:
+            envoyer_tuile(rt.r, rt.t, "ouvrir");
+            return;
+        case RoueAction::ARRETER:
+            envoyer_tuile(rt.r, rt.t, "arreter");
+            return;
+        case RoueAction::FERMER:
+            envoyer_tuile(rt.r, rt.t, "fermer");
+            return;
+        case RoueAction::POSITION:
+            // Jamais sans position connue (le volet a pu la perdre roue ouverte).
+            if (vol_position_connue(s_etats[rt.r][rt.t]) && u.envoyer != nullptr) u.envoyer(cle, "position", valeur);
+            return;
+        case RoueAction::CLIM_ARRET:
+            if (u.envoyer != nullptr) u.envoyer(cle_clim, "eteindre", "");
+            return;
+        case RoueAction::CLIM_MODE:
+            if (u.envoyer != nullptr && rt.valeur[i] < kRoueNbModesClim)
+                u.envoyer(cle_clim, "mode", kRoueModesClim[rt.valeur[i]].mode);
+            return;
+    }
+}
+
+// Boutons et couleur d'état (celle de la pastille de la carte, peindre_carte) de la tuile
+// de `rt`, puis la roue autour de son ancre. Faux sans roue.
+bool roue_tuile_peindre(RoueTuile& rt) {
+    RoueBouton b[kRoueBoutons];
+    rt.n = roue_composer(rt.r, rt.t, b, rt);
+    if (rt.n == 0) return false;
+    Vue v;
+    vue(rt.r, rt.t, v);
+    s_rt = rt;
+    return roue_ouvrir(rt.ancre, b, rt.n, v.couleur_carte, roue_tuile_choisir, roue_tuile_rejouer);
+}
+
+// Changement de thème, roue ouverte : la même roue dans la nouvelle palette ; si la tuile
+// n'en a plus (état ou définition changés entre-temps), elle se ferme.
+void roue_tuile_rejouer() {
+    charger();
+    RoueTuile rt = s_rt;
+    if (!roue_tuile_peindre(rt)) roue_actions_fermer();
+}
+
+// HA a poussé un état de la tuile tRT (peindre_tuile) : la roue ouverte sur elle suit
+// (bouton de l'état courant, bord du halo) ; elle se ferme si la tuile n'en a plus.
+void roue_tuile_etat(int r, int t) {
+    if (roue_actions_ouverte() && s_rt.r == r && s_rt.t == t) roue_tuile_rejouer();
+}
+
+}  // namespace
+
+bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre) {
+    charger();
+    if (ancre == nullptr || r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return false;
+    RoueTuile rt;
+    rt.r = r;
+    rt.t = t;
+    rt.ancre = ancre;
+    return roue_tuile_peindre(rt);
+}
+
+// Ancre de la tuile T de la page courante : la pastille de sa carte (mode HA), le bouton
+// au centre de sa tuile météo sinon.
+static bool roue_de_la_tuile(int r, int t) {
+    if (g_central_ctx.ha_mode) return tuile_roue_ouvrir(r, t, g_tuiles_ui.carte_pastille[t]);
+    lv_obj_t *g, *d, *b;
+    widgets_meteo(t, g, d, b);
+    return tuile_roue_ouvrir(r, t, b);
 }
 
 void tuile_appui(int t, bool long_appui) {

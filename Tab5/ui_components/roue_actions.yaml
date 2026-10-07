@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file roue_actions.yaml
+# @role Roue d'actions rapides (ADR-0036, 07/10/2026, discussion #278 de husyildiz :
+#       « one click opens a mini popup, like a spring, or a circular popup », d'après le
+#       module sub_button_wheel de Bubble Card). L'appui long d'une lampe à variateur,
+#       d'un volet ou d'une clim (tuile météo ou carte du mode HA) fait surgir, sur un arc
+#       au-dessus de la tuile, ses commandes en boutons ronds, puis « ⋯ » (le popup que
+#       l'appui long ouvrait avant). Toucher un bouton envoie sa commande et ferme la
+#       roue ; toucher ailleurs la ferme.
+# @architecture_constraint Ce n'est pas un popup modal : pas de scrim ni d'en-tête
+#       (ADR-0009 vise les fenêtres modales), comme la liste de la tuile − / +
+#       (reglables_liste.yaml). Le capteur plein écran transparent `roue_actions` porte le
+#       halo et les six boutons ; il est enregistré en SUBWINDOW (tab5_modal_registry_init) :
+#       refermé avec les popups, et par l'intervalle d'inactivité (tab5-scripts.yaml).
+#       Inclus APRÈS les cartes du tableau de bord et AVANT les popups : la roue couvre
+#       les tuiles, un popup ouvert par « ⋯ » la couvre. Ouverture et fermeture sèches.
+# @ai_instruction Positions, couleurs, glyphes et textes : tab5_roue.cpp (roue_ouvrir),
+#       à chaque ouverture ; les valeurs d'ici ne sont que celles d'avant. Halo : disque de
+#       2 × 246 px (rayon de l'arc 200 + demi-bouton 38 + 8), le verre des cartes
+#       (style_glass_card) en rond, sans ombre, bord 2 px à 50 % dans la couleur d'état
+#       (posée en C++). `clickable: false` sur le halo — NE PAS retirer : un toucher sur
+#       lui doit arriver au capteur, qui ferme la roue. Un bouton de plus = kRoueBoutons
+#       (tab5_custom.h), une ligne ici et ses pointeurs dans tab5-tuiles.yaml.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: roue_actions
+  x: 0
+  y: 0
+  width: 1280
+  height: 720
+  hidden: true
+  styles: style_invisible
+  scrollable: false
+  on_short_click:
+    - lambda: 'roue_actions_fermer();'
+  widgets:
+    - obj:
+        id: roue_halo
+        x: 0
+        y: 0
+        width: 492
+        height: 492
+        styles: style_glass_card
+        radius: 246
+        border_opa: 50%
+        shadow_width: 0
+        clickable: false
+        scrollable: false
+    - !include { file: roue_bouton.yaml, vars: { n: 0 } }
+    - !include { file: roue_bouton.yaml, vars: { n: 1 } }
+    - !include { file: roue_bouton.yaml, vars: { n: 2 } }
+    - !include { file: roue_bouton.yaml, vars: { n: 3 } }
+    - !include { file: roue_bouton.yaml, vars: { n: 4 } }
+    - !include { file: roue_bouton.yaml, vars: { n: 5 } }

@@ -21,6 +21,25 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-07 — Roue d'actions rapides à l'appui long d'une lampe, d'un volet ou d'une clim
+
+Demandée dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)
+(le module `sub_button_wheel` de Bubble Card), décidée dans
+[ADR-0036](docs/decisions/0036-quick-action-wheel.md). Pas encore essayée sur la tablette.
+- L'appui long d'une lumière à variateur (`d`), d'un volet ou d'une clim dont HA a envoyé les
+  réglages fait surgir, sur un arc au-dessus de la tuile (tuile météo ou carte du mode HA),
+  des boutons ronds : Éteindre · 10 % · 50 % · 100 % pour une lumière, Ouvrir · Stop ·
+  Fermer · 50 % (s'il donne sa position) pour un volet, Arrêt et ses modes (chaud, froid,
+  sec, ventilation) pour une clim ; puis « ⋯ », qui ouvre le popup d'avant. Le bouton de
+  l'état courant est teinté de la couleur d'état.
+- Un bouton envoie la commande que la tuile ou son popup envoie déjà : rien ne change côté
+  Home Assistant. Toucher ailleurs ferme la roue, comme l'inactivité, un popup, l'écran éteint.
+- Sans roue (moins de trois commandes, option `k`, lumière sans variateur) : le popup, comme
+  avant. Une tuile clim sans roue ouvre désormais son popup à l'appui long (avant : rien).
+- Firmware : `tab5_roue.cpp`, `ui_components/roue_actions.yaml` et `roue_bouton.yaml`, police
+  `mdi_font_36` ; rendu hors tablette : écrans `roue-lampe`, `roue-volet`, `roue-clim`, et
+  « ⋯ » touché sur les écrans des popups ; `tests/test_roue.py`.
+
 ### 2026-10-07 — Docs : co-processeur WiFi et alimentation, faits vérifiés
 
 `docs/troubleshooting.md` et `docs/hardware.md` : le P4 réinitialise le C6 par GPIO 15 à chaque

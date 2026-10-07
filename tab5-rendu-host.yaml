@@ -66,6 +66,7 @@ esphome:
     - Tab5/tab5_tuiles.cpp
     - Tab5/tab5_rangee.cpp
     - Tab5/tab5_reglables.cpp
+    - Tab5/tab5_roue.cpp
     - Tab5/tab5_energie.cpp
     - Tab5/tab5_historique.cpp
     - Tab5/tab5_theme.cpp

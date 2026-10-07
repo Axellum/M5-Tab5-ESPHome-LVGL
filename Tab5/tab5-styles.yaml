@@ -646,6 +646,23 @@ font:
       - "\U000F06A9"  # robot
       - "\U000F07D0"  # home-assistant
 
+  # 36 px — roue d'actions rapides (ADR-0036, ui_components/roue_bouton.yaml) : icônes
+  # posées par glyphe_roue() (tab5_roue.cpp, MDI_CODE_TARGETS de la règle 7).
+  - file: "Tab5/materialdesignicons-webfont.ttf"
+    id: mdi_font_36
+    size: 36
+    bpp: 1
+    glyphs:
+      - "\U000F01D8"  # dots-horizontal (« ⋯ » : le popup de la tuile)
+      - "\U000F0210"  # fan
+      - "\U000F0238"  # fire
+      - "\U000F0425"  # power
+      - "\U000F04DB"  # stop
+      - "\U000F058E"  # water-percent
+      - "\U000F0717"  # snowflake
+      - "\U000F072E"  # arrow-down-bold
+      - "\U000F0737"  # arrow-up-bold
+
   # Icônes météo des tuiles seulement (120 px, calque 2 réduit à 80 px). Les
   # tailles 270 et 190 px (font_meteo_main / _small) sont retirées le 25/09/2026 :
   # la grosse icône centrale n'existe plus, ~196 Ko de flash jamais affichés.

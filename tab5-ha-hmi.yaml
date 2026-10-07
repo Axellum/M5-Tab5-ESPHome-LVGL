@@ -102,6 +102,8 @@ esphome:
     - Tab5/tab5_rangee.cpp
     # Tuile − / + au choix : clim, appareils du blueprint, volume de la tablette (ADR-0033, 06/10/2026).
     - Tab5/tab5_reglables.cpp
+    # Roue d'actions rapides à l'appui long d'une tuile lum, vol, cli (ADR-0036, 07/10/2026).
+    - Tab5/tab5_roue.cpp
     # Popup Énergie : instantané solaire et historique de production (ADR-0028, 04/10/2026).
     - Tab5/tab5_energie.cpp
     # Popup Température : historique des deux températures et prévision (ADR-0032, 06/10/2026).
