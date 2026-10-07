@@ -46,6 +46,7 @@ A single 1280×720 page: windows open with a tap, a long press or a swipe — ea
 - **Weather** — rain in the next hour, hourly and 15-day forecast, weather warnings ([below](#rain-in-the-next-hour-weather-warnings)).
 - **Central card** — every 8 s: work hours, rain graph, warnings, a 3-day calendar recap and up to 4 banners pushed by Home Assistant, the alerts you subscribed to; a tap dismisses a banner, a long press shows the 20 latest alerts ([home screen](docs/notice/home.md), [alerts](docs/notice/alerts.md)).
 - **Rooms** — the bottom row: up to 5 rooms of 5 devices (lights, switches, shutters, media players, scenes, sensors), with their names and icons taken from Home Assistant ([bottom row and rooms](docs/notice/tiles.md)).
+- **House** — the whole house at a glance, one column per room: each device with its state, the same tap and long press as its card, and every light off in one tap ([house](docs/notice/house.md)).
 - **Climate** — modes, a thermostat arc, presets and airflow; the controls are dimmed, not hidden, when the unit is off ([climate](docs/notice/climate.md)).
 - **Lights** — the room's lights (up to 5): brightness arc with shortcuts, 3 whites and 12 colours ([lights](docs/notice/lights.md)).
 - **Shutters** — open, close or a position; while it moves, "Stop" said aloud halts it at once ([shutters](docs/notice/shutters.md)).
@@ -56,6 +57,7 @@ A single 1280×720 page: windows open with a tap, a long press or a swipe — ea
 - **Solar energy** (optional) — solar, home, grid and home battery right now, and the production per hour, day and month ([energy](docs/notice/energy.md)).
 - **Temperature history** — a long press on a temperature: its curve over 24 hours, 7 or 30 days, with the weather forecast for the second one ([temperature](docs/notice/temperature.md)).
 - **Diagnostics console** — memory, Wi-Fi, uptime, volume, theme; reload automations, restart Home Assistant or the tablet behind a confirmation ([system console](docs/notice/console.md)).
+- **Settings** — brightness, auto screen off, theme, light or dark, language, without opening Home Assistant ([settings](docs/notice/settings.md)).
 - **8 offline games** — experimental: chess, draughts, Go, breakout, pinball, Lode Runner, a marble roguelite and a quiz ([Arcade](docs/notice/arcade.md)).
 
 ## Rain in the next hour, weather warnings
@@ -92,7 +94,7 @@ Without compiling, since 3.0: a Tab5, a USB-C cable that carries data, Chrome or
 6. [Your devices](docs/installation/devices.md): the automation made from the blueprint, with the mouse; changing a device needs no flash.
 7. [A dashboard](docs/installation/dashboard.md) (optional): one line in the template tool of Home Assistant writes a dashboard for the tablet, with its settings and its health.
 
-Updates then show up in Home Assistant; over the air, the tablet only accepts a firmware signed with the project key. Every setting — theme, light or dark, language, alarm clock, screen to show: [tablet settings](docs/installation/settings.md). To change the firmware yourself: [build your own](docs/installation/build.md).
+Updates then go through Home Assistant, in this order: the Home Assistant files first (in one click with HACS, otherwise by hand), then the firmware, from its « Firmware » entity ([updates](docs/installation/updates.md)). Over the air, the tablet only accepts a firmware signed with the project key. Every setting — theme, light or dark, language, alarm clock, screen to show: [tablet settings](docs/installation/settings.md). To change the firmware yourself: [build your own](docs/installation/build.md).
 
 Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes demo data to a flashed tablet with a small script: no Home Assistant, nothing left to clean up.
 
@@ -216,6 +218,7 @@ Une seule page de 1280×720 : les fenêtres s'ouvrent d'un appui, d'un appui lon
 - **Météo** — pluie dans l'heure, prévisions horaires et à 15 jours, vigilances ([plus bas](#pluie-dans-lheure-vigilances)).
 - **Carte centrale** — toutes les 8 s : horaires, graphe de pluie, vigilances, récap du calendrier sur 3 jours et jusqu'à 4 bandeaux poussés par Home Assistant, les alertes auxquelles vous êtes abonné ; un appui masque un bandeau, un appui long montre les 20 dernières alertes ([écran d'accueil](docs/notice/home.md#version-française), [alertes](docs/notice/alerts.md#version-française)).
 - **Pièces** — la rangée du bas : jusqu'à 5 pièces de 5 appareils (lumières, interrupteurs, volets, lecteurs multimédia, scènes, capteurs), avec leurs noms et icônes pris dans Home Assistant ([rangée du bas et pièces](docs/notice/tiles.md#version-française)).
+- **Maison** — toute la maison d'un coup d'œil, une colonne par pièce : chaque appareil avec son état, les mêmes appuis que sur sa carte, et toutes les lumières éteintes d'un appui ([maison](docs/notice/house.md#version-française)).
 - **Clim** — modes, arc de thermostat, préréglages et flux d'air ; les commandes sont grisées, pas masquées, quand la clim est éteinte ([clim](docs/notice/climate.md#version-française)).
 - **Lumières** — les lumières de la pièce (5 au plus) : arc de luminosité avec raccourcis, 3 blancs et 12 couleurs ([lumières](docs/notice/lights.md#version-française)).
 - **Volets** — ouvrir, fermer ou une position ; pendant qu'il bouge, « Stop » dit à voix haute l'arrête tout de suite ([volets](docs/notice/shutters.md#version-française)).
@@ -226,6 +229,7 @@ Une seule page de 1280×720 : les fenêtres s'ouvrent d'un appui, d'un appui lon
 - **Énergie solaire** (facultatif) — solaire, maison, réseau et batterie de la maison en direct, et la production par heure, jour et mois ([énergie](docs/notice/energy.md#version-française)).
 - **Historique des températures** — un appui long sur une température : sa courbe sur 24 heures, 7 ou 30 jours, avec la prévision de la météo pour la seconde ([température](docs/notice/temperature.md#version-française)).
 - **Console de diagnostic** — mémoire, Wi-Fi, temps de marche, volume, thème ; recharger les automatisations, redémarrer Home Assistant ou la tablette, après confirmation ([console système](docs/notice/console.md#version-française)).
+- **Réglages** — luminosité, extinction automatique, thème, clair ou sombre, langue, sans ouvrir Home Assistant ([réglages](docs/notice/settings.md#version-française)).
 - **8 jeux hors ligne** — expérimentaux : échecs, dames, go, casse-briques, flipper, Lode Runner, un roguelite de bille et un quiz ([Arcade](docs/notice/arcade.md#version-française)).
 
 ## Pluie dans l'heure, vigilances
@@ -262,7 +266,7 @@ Sans compiler, depuis la 3.0 : une Tab5, un câble USB-C qui transmet les donné
 6. [Vos appareils](docs/installation/devices.md#version-française) : l'automatisation créée depuis le blueprint, à la souris ; changer d'appareil ne demande pas de flash.
 7. [Un tableau de bord](docs/installation/dashboard.md#version-française) (facultatif) : une ligne dans l'outil Modèle de Home Assistant écrit un tableau de bord pour la tablette, avec ses réglages et sa santé.
 
-Les mises à jour arrivent ensuite dans Home Assistant ; par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet. Chaque réglage — thème, clair ou sombre, langue, réveil, écran à afficher : [réglages de la tablette](docs/installation/settings.md#version-française). Pour modifier le firmware vous-même : [compiler le vôtre](docs/installation/build.md#version-française).
+Les mises à jour passent ensuite par Home Assistant, dans cet ordre : les fichiers Home Assistant d'abord (en un clic avec HACS, sinon à la main), puis le firmware, par son entité « Firmware » ([mises à jour](docs/installation/updates.md#version-française)). Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet. Chaque réglage — thème, clair ou sombre, langue, réveil, écran à afficher : [réglages de la tablette](docs/installation/settings.md#version-française). Pour modifier le firmware vous-même : [compiler le vôtre](docs/installation/build.md#version-française).
 
 Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-française) pousse des données de démonstration vers une tablette flashée avec un petit script : sans Home Assistant, rien à nettoyer ensuite.
 
