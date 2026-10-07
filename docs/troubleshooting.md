@@ -113,7 +113,7 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 **Symptom:** an OTA reports `OTA successful`, the device reboots, and then: black screen, no Home Assistant entities, no API (`esphome logs --device <ip>` times out on port 6053). Rebooting it again changes nothing. Confusingly, the IP still answers `ping` — that is a *different* device that picked up the lease, exactly like the 2026-08-01 DHCP mix-up.
 
-**Root cause:** the ESP32-P4 has no radio of its own; Wi-Fi comes from the ESP32-C6 co-processor over SDIO (`esp32_hosted`). That link failed to come up after the OTA's *software* reboot, which resets the P4 but **not** the C6 — so the C6 stays in whatever state it was left in. Serial console (USB, COM port) makes it unambiguous in seconds:
+**Root cause:** the ESP32-P4 has no radio of its own; Wi-Fi comes from the ESP32-C6 co-processor over SDIO (`esp32_hosted`). That link failed to come up after the OTA's *software* reboot. The P4 does reset the C6 through GPIO 15 (`esp32_hosted` · `reset_pin`) on every boot, software reboots included: that is ESP-Hosted's default setting (`CONFIG_ESP_HOSTED_SLAVE_RESET_ON_EVERY_HOST_BOOTUP=y`, read on 2026-10-07 in the `sdkconfig` of an ESPHome 2026.9 build). The build of 2026-08-05 was not checked; if it had the same setting, that reset pulse did not clear the fault and only cutting the power did. The exact cause is unknown. Serial console (USB, COM port) makes it unambiguous in seconds:
 
 ```
 [I][esp-idf:000]: E (93883) H_API: ESP-Hosted link not yet up
@@ -123,7 +123,11 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 Those three lines repeat ~50 times per second. The black screen is a *consequence*, not the fault: that hot retry loop starves the rest of the firmware, LVGL included. Do not go looking at the display stack.
 
-**Fix:** a **full power cycle** — power off (long-press) *and* unplug USB-C for ~15 s. A soft reboot will not do it. Confirmed on 2026-08-05: same binary, black screen after the OTA reboot, then Wi-Fi + API + display all healthy after the power cycle, `safe_mode: Boot seems successful`. The firmware was not at fault (that OTA only changed audio settings).
+**Fix:** a **full power cycle** — unplug USB-C for ~15 s, then plug it back in: without a battery, the tablet starts again by itself. On the author's tablet, which has no battery, unplugging was enough: the long-press was not needed. With a battery fitted, unplugging does not cut the power: also switch the tablet off with a long-press. A soft reboot will not do it. Confirmed on 2026-08-05: same binary, black screen after the OTA reboot, then Wi-Fi + API + display all healthy after the power cycle, `safe_mode: Boot seems successful`. The firmware was not at fault (that OTA only changed audio settings).
+
+**How often:** a single documented occurrence (2026-08-05). Since 2026-09-30, when the history kept by Home Assistant begins, the author's tablet has restarted about fifty times, most of them OTAs, and Wi-Fi came back every time (count of 2026-10-07). The line `ESP-Hosted link not yet up` shows up on every normal boot, around +6 to +12 s, and is harmless; the fault was that line repeated ~50 times per second.
+
+**Not tried:** recovering from the fault in software, by switching `wifi_power` (PI4IOE 0x44, P0) off and back on.
 
 **Diagnostic trap, learned the same day:** opening *and closing* the USB serial port to read logs can reset the chip. An unexplained reboot right at the end of an `esphome logs --device COM<n>` session is the log session itself, not an instability. Once the device is back on Wi-Fi, watch it through its Home Assistant diagnostic entities instead.
 
@@ -242,7 +246,7 @@ Format : **Symptôme → Cause racine → Correctif**.
 
 **Symptôme :** une OTA annonce `OTA successful`, l'appareil redémarre, et ensuite : écran noir, aucune entité côté Home Assistant, pas d'API (`esphome logs --device <ip>` part en timeout sur le port 6053). Le rebooter à nouveau ne change rien. Trompeur : l'IP répond toujours au `ping` — c'est un *autre* appareil qui a récupéré le bail, exactement comme la confusion DHCP du 01/08/2026.
 
-**Cause racine :** l'ESP32-P4 n'a pas de radio à lui ; le WiFi vient du co-processeur ESP32-C6 en SDIO (`esp32_hosted`). Ce lien n'est pas remonté après le reboot *logiciel* de l'OTA, qui réinitialise le P4 mais **pas** le C6 — celui-ci reste dans l'état où il a été laissé. La console série (USB, port COM) tranche en quelques secondes :
+**Cause racine :** l'ESP32-P4 n'a pas de radio à lui ; le WiFi vient du co-processeur ESP32-C6 en SDIO (`esp32_hosted`). Ce lien n'est pas remonté après le reboot *logiciel* de l'OTA. Le P4 réinitialise pourtant le C6 par GPIO 15 (`esp32_hosted` · `reset_pin`) à chaque démarrage, redémarrage logiciel compris : c'est le réglage par défaut d'ESP-Hosted (`CONFIG_ESP_HOSTED_SLAVE_RESET_ON_EVERY_HOST_BOOTUP=y`, lu le 07/10/2026 dans le `sdkconfig` d'un build ESPHome 2026.9). Le build du 05/08/2026 n'a pas été vérifié ; s'il avait le même réglage, cette impulsion de reset n'a pas effacé la panne et seule la coupure d'alimentation l'a fait. La cause exacte est inconnue. La console série (USB, port COM) tranche en quelques secondes :
 
 ```
 [I][esp-idf:000]: E (93883) H_API: ESP-Hosted link not yet up
@@ -252,7 +256,11 @@ Format : **Symptôme → Cause racine → Correctif**.
 
 Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *conséquence*, pas la panne : cette boucle chaude de reconnexion affame le reste du firmware, LVGL compris. Ne pas partir fouiller la pile d'affichage.
 
-**Correctif :** une **vraie coupure d'alimentation** — extinction (appui long) *et* débranchement de l'USB-C pendant ~15 s. Un reboot logiciel ne suffit pas. Confirmé le 05/08/2026 : même binaire, écran noir après le reboot d'OTA, puis WiFi + API + dalle tous sains après la coupure, `safe_mode: Boot seems successful`. Le firmware n'était pas en cause (cette OTA ne changeait que des réglages audio).
+**Correctif :** une **vraie coupure d'alimentation** — débrancher l'USB-C pendant ~15 s, puis le rebrancher : sans batterie, la tablette redémarre seule. Sur la tablette de l'auteur, qui n'a pas de batterie, débrancher a suffi : l'appui long n'était pas nécessaire. Avec une batterie montée, débrancher ne coupe pas l'alimentation : éteindre aussi la tablette par un appui long. Un reboot logiciel ne suffit pas. Confirmé le 05/08/2026 : même binaire, écran noir après le reboot d'OTA, puis WiFi + API + dalle tous sains après la coupure, `safe_mode: Boot seems successful`. Le firmware n'était pas en cause (cette OTA ne changeait que des réglages audio).
+
+**Fréquence :** une seule occurrence documentée (05/08/2026). Depuis le 30/09/2026, début de l'historique gardé par Home Assistant, la tablette de l'auteur a redémarré une cinquantaine de fois, des OTA pour la plupart, et le WiFi est revenu à chaque fois (relevé du 07/10/2026). La ligne `ESP-Hosted link not yet up` apparaît à chaque démarrage normal, vers +6 à +12 s, et est sans conséquence ; la panne, c'était cette ligne répétée ~50 fois par seconde.
+
+**Pas essayé :** rattraper la panne par logiciel, en coupant puis en rallumant `wifi_power` (PI4IOE 0x44, P0).
 
 **Piège de diagnostic, appris le même jour :** ouvrir *et refermer* le port série USB pour lire les logs peut réinitialiser la puce. Un reboot inexpliqué pile à la fin d'une session `esphome logs --device COM<n>`, c'est la session de logs elle-même, pas une instabilité. Une fois l'appareil revenu sur le WiFi, le surveiller via ses entités de diagnostic Home Assistant.
 

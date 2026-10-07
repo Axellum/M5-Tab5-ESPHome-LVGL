@@ -97,8 +97,8 @@ switch:
     restore_mode: ALWAYS_ON
 
   # nCHG_QC_EN (P5, actif bas) : charge rapide ARRÊTÉE, comme la config de référence
-  # ESPHome (M5Unified l'active au démarrage). La tablette reste branchée, le chargeur
-  # USB fournit déjà jusqu'à 1,5 A (docs/hardware.md) et la charge rapide chauffe plus.
+  # ESPHome (M5Unified l'active au démarrage). Tablette branchée : la charge standard demande
+  # moins de courant au chargeur USB (docs/hardware.md, Battery), la rapide chauffe plus.
   # M5Unified appelle les deux modes 500 et 1 000 mA (setChargeCurrent), non mesuré.
   - platform: gpio
     id: quick_charge
