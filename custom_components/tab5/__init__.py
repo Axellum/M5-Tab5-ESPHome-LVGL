@@ -197,8 +197,10 @@ class Gestionnaire:
                            {"version": self.version, "signaler": URL_SIGNALER})
             return
         ir.async_delete_issue(hass, DOMAIN, ISSUE_CONFIGURATION)
-        _LOGGER.info("Fichiers Tab5 %s posés (%d écrits, %d retirés, %d identiques), sauvegarde : %s",
-                     self.version, len(plan.ecrire), len(plan.retirer), len(plan.identiques), relatif)
+        _LOGGER.info("Fichiers Tab5 %s posés (%d écrits, %d retirés, %d identiques), sauvegarde : %s, "
+                     "vérification de la configuration : %d message(s), aucun nouveau",
+                     self.version, len(plan.ecrire), len(plan.retirer), len(plan.identiques), relatif,
+                     len(constats))
 
         # 3. Sans la ligne `packages:`, rien à recharger (et rest_command.reload lève alors
         # un KeyError, HA 2026.9). Sinon : rendus actifs sans redémarrage.

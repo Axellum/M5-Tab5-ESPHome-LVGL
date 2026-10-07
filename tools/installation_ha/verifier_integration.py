@@ -85,6 +85,13 @@ MODIFIE = "packages/tab5_tv.yaml"            # modifié à la main avant la 9.9.
 RETIRE = "packages/tab5_micro_absence.yaml"  # plus livré par la 9.9.2
 CASSE = "packages/tab5_casse.yaml"           # livré par la 9.9.3, refusé par check_config
 CONTENU_CASSE = '# Clé qui n\'est pas un slug : check_config refuse input_boolean.\ninput_boolean:\n  "Pas Un Slug": {}\n'
+# Ce que « Vérifier la configuration » dit de quelques casses (journal du scénario).
+ESSAIS_CASSES = {
+    "clé pas un slug": CONTENU_CASSE,
+    "initial pas un booléen": "input_boolean:\n  tab5_casse:\n    initial: peut-etre\n",
+    "domaine pas un dictionnaire": "input_boolean: 42\n",
+    "YAML illisible": "input_boolean: [pas fermé\n",
+}
 
 
 # ─── Archives et conteneur ───────────────────────────────────────────────────
@@ -288,6 +295,15 @@ async def scenario(args, rapport: Rapport) -> None:
                              texte[:300])
 
             # ── 3. Mise à jour 9.9.3 qui casse la configuration ──
+            # Contre-épreuve : « Vérifier la configuration » (la même fonction que
+            # l'intégration) voit-elle ces contenus ? Sinon l'étape 3 ne prouve rien.
+            for nom, contenu in ESSAIS_CASSES.items():
+                dans_conteneur(f"open('/config/{CASSE}', 'w').write({contenu!r})")
+                verif = await ha.post("/api/config/core/check_config") or {}
+                rapport.info(f"3. contre-épreuve « {nom} » : {verif.get('result')}, "
+                             f"erreurs={str(verif.get('errors'))[:160]!r}, "
+                             f"avertissements={str(verif.get('warnings'))[:160]!r}")
+            dans_conteneur(f"import os; os.remove('/config/{CASSE}')")
             remplacer_integration(dossier, zips["9.9.3"])
             await redemarrer(ha)
             presentes = await attendre_reparations(ha, {"configuration_invalide"}, set(), 120)
