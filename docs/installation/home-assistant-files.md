@@ -10,7 +10,7 @@ Two ways to put them in place: [with HACS](#with-hacs), which then updates them 
 
 ## With HACS
 
-From release 3.7.0, the files also come with a small integration, « Tab5 », that [HACS](https://hacs.xyz) installs ([ADR-0035](../decisions/0035-hacs-integration-ha-files.md)). HACS must already be installed.
+From release 3.7.0, the files also come with a small integration, « Tab5 », that [HACS](https://hacs.xyz) installs ([ADR-0035](../decisions/0035-hacs-integration-ha-files.md)). HACS must already be installed. HACS offers full releases only: pre-releases (Beta channel) only if beta versions are switched on for this repository in HACS.
 
 1. Add the `packages:` line of [step 2](#2-one-line-in-configurationyaml) to `configuration.yaml`, if it is not there yet.
 2. In HACS: *⋮ (top right) → Custom repositories*, repository `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*.
@@ -76,7 +76,7 @@ Deux façons de les mettre en place : [avec HACS](#avec-hacs), qui les met ensui
 
 ## Avec HACS
 
-Depuis la release 3.7.0, les fichiers viennent aussi avec une petite intégration, « Tab5 », que [HACS](https://hacs.xyz) installe ([ADR-0035](../decisions/0035-hacs-integration-ha-files.md)). HACS doit déjà être installé.
+Depuis la release 3.7.0, les fichiers viennent aussi avec une petite intégration, « Tab5 », que [HACS](https://hacs.xyz) installe ([ADR-0035](../decisions/0035-hacs-integration-ha-files.md)). HACS doit déjà être installé. HACS ne propose que les releases complètes : les pré-releases (canal Bêta) seulement si les versions bêta sont activées pour ce dépôt dans HACS.
 
 1. Ajoutez la ligne `packages:` de l'[étape 2](#2-une-ligne-dans-configurationyaml) à `configuration.yaml`, si elle n'y est pas déjà.
 2. Dans HACS : *⋮ (en haut à droite) → Custom repositories* (dépôts personnalisés), dépôt `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*.

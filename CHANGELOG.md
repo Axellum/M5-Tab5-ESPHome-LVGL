@@ -55,6 +55,16 @@ ajouté à `mdi_font_26`). Mettre le blueprint à jour d'abord : un firmware plu
 `maison` comme un code inconnu et garde l'appui long automatique. Pas encore essayé sur la
 tablette.
 
+### 2026-10-07 — Docs : l'intégration HACS citée dans les pages d'entrée
+
+La mise à jour par l'intégration « Tab5 » de HACS (ADR-0035) n'était décrite que dans
+`docs/installation/updates.md` et `home-assistant-files.md`. Le guide d'installation (prérequis,
+étape 1) et la page d'accueil la citent ; la page d'accueil mène aussi à `updates.md` (fichiers HA
+puis firmware) et liste les pages Maison et Réglages de la notice. `updates.md` dit comment
+remettre à la main une sauvegarde de `config/tab5_sauvegardes/` ; `home-assistant-files.md`, que
+HACS ne propose les pré-releases que si les versions bêta sont activées ; `docs/troubleshooting.md`
+a une entrée pour chaque message de l'intégration dans Réparations.
+
 ### 2026-10-07 — Docs : cause de la panne du C6 du 05/08 revue
 
 `docs/troubleshooting.md` : le build du 05/08/2026 (ESPHome 2026.7, esp_hosted 2.12.9)

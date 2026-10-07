@@ -12,14 +12,14 @@ Seven steps, in this order: nothing to compile, the firmware installs from the b
 
 - An **M5Stack Tab5**, and the name of its **display chip**: it is printed on the sticker on the back, above the Espressif logo (ST7123, ST7121 or ILI9881C, see [hardware revisions](../hardware.md#hardware-revisions)).
 - A **computer with Chrome or Edge** (the install page talks to the tablet through Web Serial) and a **USB-C cable that carries data**: with a charge-only cable, no port shows up.
-- **Home Assistant 2026.8 or newer**, any installation method, and a way to copy files into its `config/` folder: Samba share, or the File editor or Studio Code Server add-on.
+- **Home Assistant 2026.8 or newer**, any installation method, and a way to copy files into its `config/` folder: Samba share, or the File editor or Studio Code Server add-on. With [HACS](home-assistant-files.md#with-hacs), this is only for the one line of `configuration.yaml`: the « Tab5 » integration that HACS installs puts the files in place, then updates them in one click at each release.
 - Optional: a weather integration (Met.no comes with Home Assistant), your calendars, a Home Assistant voice assistant (see [the two voice modes](settings.md#voice-assistant-the-two-modes)).
 
 ## The seven steps
 
 | Step | Where | What you do |
 |---|---|---|
-| [1. Home Assistant files](home-assistant-files.md) | Home Assistant | unzip one archive, add one line to `configuration.yaml`, restart |
+| [1. Home Assistant files](home-assistant-files.md) | Home Assistant | unzip one archive (or let HACS do it), add one line to `configuration.yaml`, restart |
 | [2. Install the firmware](flash.md) | the install page, over USB | pick your display chip, *Connect and install* |
 | [3. Wi-Fi](wifi.md) | the same window, or a phone | give the tablet your network |
 | [4. Add the tablet to Home Assistant](add-to-home-assistant.md) | Home Assistant | *Configure* the discovered device, within 30 minutes |
@@ -55,14 +55,14 @@ Sept étapes, dans cet ordre : rien à compiler, le firmware s'installe depuis l
 
 - Un **M5Stack Tab5**, et le nom de sa **puce d'écran** : il est écrit sur l'autocollant au dos, au-dessus du logo Espressif (ST7123, ST7121 ou ILI9881C, voir les [révisions matérielles](../hardware.md#révisions-matérielles)).
 - Un **ordinateur avec Chrome ou Edge** (la page d'installation parle à la tablette par Web Serial) et un **câble USB-C qui transmet les données** : avec un câble de charge seule, aucun port n'apparaît.
-- **Home Assistant 2026.8 ou plus récent**, toute méthode d'installation, et un moyen de copier des fichiers dans son dossier `config/` : partage Samba, ou le module File editor ou Studio Code Server.
+- **Home Assistant 2026.8 ou plus récent**, toute méthode d'installation, et un moyen de copier des fichiers dans son dossier `config/` : partage Samba, ou le module File editor ou Studio Code Server. Avec [HACS](home-assistant-files.md#avec-hacs), seulement pour la ligne de `configuration.yaml` : l'intégration « Tab5 » que HACS installe pose les fichiers, puis les met à jour en un clic à chaque release.
 - Facultatif : une intégration météo (Met.no vient avec Home Assistant), vos agendas, un assistant vocal Home Assistant (voir [les deux modes vocaux](settings.md#assistant-vocal--les-deux-modes)).
 
 ## Les sept étapes
 
 | Étape | Où | Ce que vous faites |
 |---|---|---|
-| [1. Fichiers Home Assistant](home-assistant-files.md#version-française) | Home Assistant | décompresser une archive, ajouter une ligne à `configuration.yaml`, redémarrer |
+| [1. Fichiers Home Assistant](home-assistant-files.md#version-française) | Home Assistant | décompresser une archive (ou laisser HACS le faire), ajouter une ligne à `configuration.yaml`, redémarrer |
 | [2. Installer le firmware](flash.md#version-française) | la page d'installation, par l'USB | choisir sa puce d'écran, *Connecter et installer* |
 | [3. Wi-Fi](wifi.md#version-française) | la même fenêtre, ou un téléphone | donner son réseau à la tablette |
 | [4. Ajouter la tablette à Home Assistant](add-to-home-assistant.md#version-française) | Home Assistant | *Configurer* l'appareil découvert, dans les 30 minutes |
