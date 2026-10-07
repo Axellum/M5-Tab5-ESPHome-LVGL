@@ -87,7 +87,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 
 | Fichier | Emplacement | Rôle |
 |---|---|---|
-| `packages/tab5_push.yaml` | `HomeAssistant_Config/packages/` | Package principal : automatisations de poussée, scripts `tab5_push_*`, scripts appelés par le Tab5, capteur de pluie, garde-fou `is_primary_active`. |
+| `packages/tab5_push.yaml` | `HomeAssistant_Config/packages/` | Package principal : automatisations de poussée, scripts `tab5_push_*`, scripts appelés par le Tab5, capteur de pluie. |
 | `packages/tab5_evenements.yaml` | `HomeAssistant_Config/packages/` | Demandes de la tablette (ADR-0025) : une automatisation traduit les événements `esphome.tab5_*` en une liste blanche d'actions (annonces, calendrier, alertes lues, voix, pipeline, console système), pour un appareil de modèle `tab5-ha-hmi` seulement. Remplace l'option « actions HA ». |
 | `packages/tab5_alerts.yaml` | `HomeAssistant_Config/packages/` | Alertes de la carte centrale : capteur « Tab5 Alertes » (en cours, lues, historique), script `tab5_dismiss_alert`, sauvegarde des alertes lues, `sensor.tab5_unavailable_count`. |
 | `custom_templates/tab5_alertes.jinja` | `HomeAssistant_Config/custom_templates/` | Logique des alertes (06/10/2026) : révisions, fin confirmée, alertes lues, historique (importée par `tab5_alerts.yaml`, règles en tête du fichier). |

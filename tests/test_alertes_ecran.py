@@ -9,6 +9,7 @@ compteur se voit sur l'écran « accueil-alertes-ha-compteur » du rendu hors ta
 """
 from __future__ import annotations
 
+import base64
 import re
 from pathlib import Path
 
@@ -47,6 +48,10 @@ def _modele_payload() -> str:
 
 def payload(alertes) -> str:
     env = ImmutableSandboxedEnvironment()
+    # Filtre de HA (homeassistant/helpers/template/extensions/base64.py, 2026.9.4) : le
+    # texte encodé en UTF-8, puis en base64.
+    env.filters["base64_encode"] = lambda v: base64.b64encode(
+        v.encode("utf-8") if isinstance(v, str) else v).decode("utf-8")
     return env.from_string(_modele_payload()).render(alertes=alertes).strip()
 
 
@@ -97,3 +102,57 @@ def test_le_firmware_lit_l_en_tete_et_affiche_le_rang():
     assert "if (total > slot_idx)" in corps
     yaml_panneau = (RACINE / "Tab5" / "ui_components" / "ha_alert_panel.yaml").read_text(encoding="utf-8")
     assert 'id: "lbl_ha_alert_cpt_${n}"' in yaml_panneau
+
+
+# ─── Taille bornée (audit du 07/10/2026, DO-6) ───────────────────────────────
+# La tablette refuse tout payload de plus de 1024 octets : les quatre bandeaux restaient
+# alors sur les anciennes alertes.
+
+def _octets(texte):
+    return len(texte.encode("utf-8"))
+
+
+def _limite_du_firmware():
+    cpp = (RACINE / "Tab5" / "tab5_central.cpp").read_text(encoding="utf-8")
+    corps = cpp[cpp.index("bool parse_and_update_ha_alerts_bulk("):]
+    m = re.search(r"if \(payload\.length\(\) > (\d+)\)", corps)
+    assert m, "garde de taille introuvable dans parse_and_update_ha_alerts_bulk"
+    return int(m.group(1))
+
+
+def test_libelle_coupe_a_100_caracteres_sans_separateur():
+    long = "Capteur « température » | de la serre; " * 10
+    a = [{"i": "sensor.serre#1", "g": "Rouge", "t": long, "s": "probleme"}]
+    texte = payload(a).split("|", 2)[2]
+    # HA retire les espaces de fin du rendu (le 100e caractère en est un ici).
+    assert texte == long.replace("|", "/").replace(";", ",")[:100].rstrip()
+    assert ";" not in payload(a) and payload(a).count("|") == 2
+
+
+def test_pire_cas_sous_la_limite_du_firmware():
+    """Quatre alertes de plus que les bandeaux (en-tête « @n: » à trois chiffres), ids de
+    64 caractères avec révision, libellés de 100 caractères accentués : tout passe, sous
+    la limite que lit le firmware."""
+    limite = _limite_du_firmware()
+    assert limite == 1024
+    libelle = "Mise à jour disponible : « Système d'exploitation » — é è à ç ô û ï ë ü ÿ œ æ " * 3
+    a = [{"i": "update." + "x" * 57 + str(k) + "#123", "g": "Rouge", "t": "@maj:" + libelle, "s": "maj"}
+         for k in range(4)] + [{"i": f"u{k}#1", "g": "Orange", "t": "x", "s": "maj"} for k in range(200)]
+    p = payload(a)
+    jetons = p.split(";")
+    assert jetons[0] == "@n:204" and len(jetons) == 5
+    assert _octets(p) <= limite, _octets(p)
+
+
+def test_cas_extreme_jamais_refuse_en_bloc():
+    """Libellés tout en emoji (4 octets chacun) et ids de 200 caractères : des alertes
+    restent dehors, mais le payload passe toujours (jamais plus de 1024 octets)."""
+    a = [{"i": "sensor." + "y" * 193 + f"{k}#9", "g": "Rouge", "t": "🔥" * 300, "s": "probleme"}
+         for k in range(6)]
+    p = payload(a)
+    assert _octets(p) <= 1024
+    jetons = p.split(";")
+    assert jetons[0] == "@n:6" and 1 <= len(jetons) - 1 < 4
+    # Le comptage des octets en Jinja (base64) suit bien l'UTF-8 au caractère près.
+    assert all(j.split("|")[2] == "🔥" * 100 for j in jetons[1:])
+

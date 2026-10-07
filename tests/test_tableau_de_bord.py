@@ -150,7 +150,7 @@ def test_entites_et_automatisations_des_packages_existent():
     package ferait disparaître la carte sans bruit."""
     texte = _texte()
     citees = set(re.findall(r"'((?:input_boolean|input_select|input_text|select|sensor|binary_sensor|script)"
-                            r"\.(?:tab5_\w+|is_primary_active))'", texte))
+                            r"\.tab5_\w+)'", texte))
     assert citees, "aucune entité de package citée"
     assert not citees - _entites_des_packages() - HORS_PACKAGES, sorted(citees - _entites_des_packages() - HORS_PACKAGES)
     bloc = re.search(r"set IDS = \[(.*?)\] -%\}", texte, re.S)
@@ -330,7 +330,8 @@ def test_rendu_complet(langue):
     sante = sortie[sortie.index("path: tab5-sante"):]
     assert {"/config/logs", "/config/repairs"} <= set(chemins), chemins
     assert tr("Quand quelque chose cloche", "When something is wrong") in sante
-    assert re.search(r"\['automation\.[^']+'(, 'automation\.[^']+'){5}\] \| select\('is_state', 'off'\)", sante)
+    # Cinq gardes depuis la 3.8 (la garde de is_primary_active est retirée avec lui).
+    assert re.search(r"\['automation\.[^']+'(, 'automation\.[^']+'){4}\] \| select\('is_state', 'off'\)", sante)
     # Chaque tuile ou raccourci écrit sa largeur, sauf une tuile à commande en ligne
     # (12 colonnes au minimum) : sans elle, le frontend lui donne 6 colonnes sur 12.
     sans_largeur = [c.get("entity") or c.get("label") for c in _toutes_les_cartes(tableau)

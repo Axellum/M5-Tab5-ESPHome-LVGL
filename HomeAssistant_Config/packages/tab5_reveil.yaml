@@ -43,7 +43,9 @@
 #       toujours via `.strftime(...)`. Un `calendar.get_events` avec un datetime
 #       brut (microsecondes incluses) a déjà cassé silencieusement toute une
 #       automation le 04/07/2026, sans aucune erreur loggée par HA.
-# @install Nécessite homeassistant.packages: !include_dir_named packages
+# @install Nécessite homeassistant.packages: !include_dir_named packages, et
+#       custom_templates/tab5_calendar.jinja (macros ev_start / ev_end / ev_summary,
+#       depuis le 07/10/2026 au lieu de leur copie ici) déployé et rechargé AVANT.
 # ============================================================================
 
 script:
@@ -101,12 +103,13 @@ script:
         continue_on_error: true
         data:
           payload: >-
+            {% from 'tab5_calendar.jinja' import ev_start, ev_summary %}
             {% set fam = ev[ag_rdv].events if ev is defined and ag_rdv in ev and ag_rdv != ag_travail else [] %}
             {% set boulo = ev[ag_travail].events if ev is defined and ag_travail in ev else [] %}
             {% set ns = namespace(rows=[]) %}
             {% for e in (fam + boulo) %}
-              {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
-              {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
+              {% set st = ev_start(e) %}
+              {% set summ = ev_summary(e) %}
               {# 'T' dans le début = événement horodaté. Une journée entière n'a
                  pas d'heure à annoncer, on la saute. #}
               {% if 'T' in st and not (mots_travail | count == 0 or mots_travail | select('in', summ | lower) | list | count > 0) %}
@@ -170,6 +173,7 @@ script:
         data:
           entity_id: "{{ satellite }}"
           message: >-
+            {% from 'tab5_calendar.jinja' import ev_start, ev_end, ev_summary %}
             {% set langue = states(state_attr('sensor.tab5_tablette', 'langue') or '') %}
             {# Phrases par langue : bonjour + heure, travail (début, fin), repos,
                rendez-vous (titre, heure), température. Une langue inconnue parle
@@ -188,9 +192,9 @@ script:
             {% set fam = ev_jour[ag_rdv].events if ev_jour is defined and ag_rdv in ev_jour and ag_rdv != ag_travail else [] %}
             {% set ns = namespace(debut='', fin='', rdv='', rdv_h='', best_ts=none) %}
             {% for e in boulo %}
-              {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
-              {% set en = e.end | default(e.end_time, true) | default('', true) | string %}
-              {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
+              {% set st = ev_start(e) %}
+              {% set en = ev_end(e) %}
+              {% set summ = ev_summary(e) %}
               {% if ns.debut == '' and (mots_travail | count == 0 or mots_travail | select('in', summ | lower) | list | count > 0) and 'T' in st %}
                 {% set d = st | as_datetime %}
                 {% set f = en | as_datetime %}
@@ -199,8 +203,8 @@ script:
               {% endif %}
             {% endfor %}
             {% for e in (fam + boulo) %}
-              {% set st = e.start | default(e.start_time, true) | default('', true) | string %}
-              {% set summ = e.summary | default(e.message, true) | default('', true) | string %}
+              {% set st = ev_start(e) %}
+              {% set summ = ev_summary(e) %}
               {# Premier = le plus TÔT chronologiquement, pas le premier de la
                  liste calendrier (ordre d'API non garanti). #}
               {% if 'T' in st and not (mots_travail | count == 0 or mots_travail | select('in', summ | lower) | list | count > 0) %}
@@ -234,7 +238,12 @@ automation:
       qu'à découvrir les rendez-vous AJOUTÉS ou DÉPLACÉS. La reconnexion du
       Tab5 est aussi un déclencheur, sinon la liste resterait vide après un
       redémarrage de la tablette jusqu'au tick suivant.
-    mode: single
+    # queued, plus single (audit du 07/10/2026, HA-17) : un passage peut attendre la
+    # liaison jusqu'à 10 s ; en single, un esphome.tab5_connected arrivé pendant ce temps
+    # était abandonné et la liste restait vide jusqu'au tick suivant. max 2 : le passage
+    # en cours et un en attente, qui relira tout ; au-delà, abandon sans avertissement.
+    mode: queued
+    max: 2
     max_exceeded: silent
     trigger:
       - platform: time_pattern
@@ -266,12 +275,6 @@ automation:
         not_from: [unavailable, unknown]
         not_to: [unavailable, unknown]
     condition:
-      # Même garde-fou que les autres automations d'écran (cf. l'@ai_warning en
-      # tête de packages/tab5_push.yaml : ce booléen s'est déjà retrouvé bloqué à
-      # `off` sans trace, coupant TOUTE poussée sans erreur visible).
-      - condition: state
-        entity_id: input_boolean.is_primary_active
-        state: "on"
       # Garde d'origine (audit sécurité du 30/09/2026) : tab5_connected ne compte que
       # s'il vient d'une tablette, reconnue au modèle de son appareil comme dans
       # tab5_evenements.yaml. Les autres déclencheurs passent. tests/test_garde_origine.py.

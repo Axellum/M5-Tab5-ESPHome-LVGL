@@ -28,6 +28,8 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 **Fix:** turn the helper back on, re-enable the guard automation, manually trigger the push automation once. **If your setup pushes conditionally on a shared state flag, make sure the automation that's supposed to re-arm it on boot is actually enabled** — an automation that silently no-ops because its own guard is off is easy to miss for a long time (in this case, ~3 hours before being noticed).
 
+**Since 3.8** the flag (`input_boolean.is_primary_active`), the automation that re-armed it and its health guard are gone: no push depends on a shared flag any more. This incident can no longer happen with the current packages; if the screen still looks frozen, use « MAJ Écran » and check that the push automations are on.
+
 ---
 
 ### STT/TTS broken, dozens of "entity already exists — ignoring" log lines
@@ -214,6 +216,8 @@ Format : **Symptôme → Cause racine → Correctif**.
 **Cause racine :** les automations de push côté HA sont toutes conditionnées par un flag booléen partagé (pertinent uniquement dans un setup à double instance HA). Ce flag était bloqué à `off` ; l'automation de garde-fou censée le reforcer à `on` à chaque boot HA était elle-même désactivée.
 
 **Correctif :** réactiver le flag et l'automation de garde-fou, déclencher manuellement le push une fois. **Si votre setup pousse conditionnellement sur un flag d'état partagé, vérifiez que l'automation censée le réarmer au boot est bien active.**
+
+**Depuis la 3.8**, le flag (`input_boolean.is_primary_active`), l'automatisation qui le réarmait et sa garde de santé sont retirés : plus aucune poussée ne dépend d'un flag partagé. Cet incident ne peut plus arriver avec les packages actuels ; si l'écran paraît encore figé, « MAJ Écran », puis vérifier que les automatisations de poussée sont actives.
 
 ### STT/TTS cassé, dizaines de logs "entity already exists — ignoring"
 

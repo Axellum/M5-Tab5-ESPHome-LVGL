@@ -133,7 +133,7 @@
 {#- ── Automatisations des packages, par leur id (leur nom peut changer) ──────── -#}
 {%- set IDS = ['tab5_ha_hmi_updater', 'tab5_ha_hmi_alerts_push', 'tab5_ha_hmi_meteo_push', 'tab5_rdv_push',
                'tab5_evenements', 'tab5_volet_updater', 'tab5_screen_presence_wifi', 'tab5_micro_absence',
-               'tab5_health_api_off_2min', 'tab5_health_primary_off_5min', 'tab5_health_unexpected_reboot',
+               'tab5_health_api_off_2min', 'tab5_health_unexpected_reboot',
                'tab5_health_template_error', 'tab5_health_fichiers_ha', 'tab5_health_journal'] -%}
 {#- Chaque id a sa clé, vide si l'automatisation manque : pas d'avertissement dans le journal de HA. -#}
 {%- for id in IDS -%}{%- set ns.a = dict(ns.a, **{id: ''}) -%}{%- endfor -%}
@@ -211,18 +211,6 @@ views:
           - condition: state
             entity: {{ T.api }}
             state: "off"
-{%- if 'input_boolean.is_primary_active' in present %}
-      - type: entity
-        entity: input_boolean.is_primary_active
-        name: "{{ t('Push HA coupé', 'HA push off') }}"
-        show_name: true
-        show_state: false
-        color: red
-        visibility:
-          - condition: state
-            entity: input_boolean.is_primary_active
-            state: "off"
-{%- endif %}
 {%- if 'binary_sensor.tab5_fichiers_ha_en_retard' in present %}
       - type: entity
         entity: binary_sensor.tab5_fichiers_ha_en_retard
@@ -1042,7 +1030,7 @@ views:
           - type: markdown
             text_only: true
             content: |-
-              - **{{ t('Écran figé, données anciennes', 'Frozen screen, old data') }}**{{ t(" : « Push HA actif » doit être allumé, sinon Home Assistant n'envoie plus rien à l'écran ; puis « MAJ écran ».", ': « HA push on » must be on, otherwise Home Assistant sends nothing to the screen; then « Refresh screen ».') }} [{{ t('Cas déjà vu', 'Known case') }}]({{ doc('troubleshooting.md', 'météo--planning--clim-absents-alors-que-lappareil-est-en-ligne', 'weather--planning--climate-data-missing-but-the-device-is-online') }})
+              - **{{ t('Écran figé, données anciennes', 'Frozen screen, old data') }}**{{ t(" : « MAJ écran » renvoie tout d'un coup ; si rien ne change, regardez si une automatisation de poussée est coupée.", ': « Refresh screen » sends everything at once; if nothing changes, check whether a push automation is off.') }} [{{ t('Cas déjà vu', 'Known case') }}]({{ doc('troubleshooting.md', 'météo--planning--clim-absents-alors-que-lappareil-est-en-ligne', 'weather--planning--climate-data-missing-but-the-device-is-online') }})
               - **{{ t('Tablette déconnectée', 'Tablet disconnected') }}**{{ t(" : alimentation et Wi-Fi. Écran noir et tablette absente du réseau après une mise à jour : une vraie coupure (USB débranché 15 s, et appui long avec une batterie).", ': power and Wi-Fi. Black screen and tablet off the network after an update: a real power cut (USB unplugged for 15 s, plus a long press with a battery).') }} [{{ t('Détail', 'Details') }}]({{ doc('troubleshooting.md', 'écran-noir--appareil-absent-du-réseau-après-une-ota--le-co-processeur-wifi-nest-pas-remonté', 'black-screen--device-off-the-network-after-an-ota--the-wi-fi-co-processor-never-came-up') }})
               - **{{ t('Redémarrages', 'Restarts') }}**{{ t(' : « Raison du dernier démarrage » ci-dessous ; un redémarrage inattendu et le journal envoyé par la tablette arrivent en notification.', ': « Last start reason » below; an unexpected restart and the log sent by the tablet arrive as notifications.') }}
               - **{{ t('Fichiers HA en retard', 'HA files out of date') }}**{{ t(" : remplacez-les par ceux de l'archive tab5_home_assistant.zip de la même version que la tablette.", ': replace them with those of the tab5_home_assistant.zip archive of the same version as the tablet.') }}
@@ -1091,9 +1079,6 @@ views:
               | {{ t('Point', 'Item') }} | {{ t('État', 'Status') }} |
               |:--|:--|
               | {{ t('Liaison avec HA', 'Link with HA') }} | {{ allume(T.api, t('connectée', 'connected'), t('coupée', 'lost')) }} |
-{%- if 'input_boolean.is_primary_active' in present %}
-              | {{ t('Push HA', 'HA push') }} | {{ allume('input_boolean.is_primary_active', t('actif', 'on'), t('coupé : l’écran ne reçoit plus rien', 'off: the screen gets nothing')) }} |
-{%- endif %}
 {%- if T.uptime %}
               | {{ t('Démarrée le', 'Started on') }} | {% raw %}{% set d = as_timestamp(states('{% endraw %}{{ T.uptime }}{% raw %}'), none) %}{{ d | timestamp_custom('%d/%m %H:%M') if d else '—' }}{% endraw %} |
 {%- endif %}
@@ -1114,7 +1099,7 @@ views:
               | {{ t('Signal Wi-Fi', 'Wi-Fi signal') }} | {% raw %}{% set w = states('{% endraw %}{{ T.wifi }}{% raw %}') %}{{ (w | float | round | int) ~ ' dBm' if is_number(w) else '—' }}{% endraw %} |
 {%- endif %}
 {#- Gardes de santé présentes ; « coupées » = interrupteur sur off (normal pendant une OTA). #}
-{%- set gardes = [A.tab5_health_api_off_2min, A.tab5_health_primary_off_5min, A.tab5_health_unexpected_reboot,
+{%- set gardes = [A.tab5_health_api_off_2min, A.tab5_health_unexpected_reboot,
                   A.tab5_health_template_error, A.tab5_health_fichiers_ha, A.tab5_health_journal] | select | list %}
 {%- if gardes %}
               | {{ t('Alertes de santé', 'Health alerts') }} | {% raw %}{% set n = {% endraw %}{{ gardes }}{% raw %} | select('is_state', 'off') | list | count %}{{ '{% endraw %}{{ t('toutes actives', 'all on') }}{% raw %}' if n == 0 else '<font color="#ff9800">' ~ n ~ ' {% endraw %}{{ t('coupée(s)', 'off') }}{% raw %}</font>' }}{% endraw %} |
@@ -1268,15 +1253,6 @@ views:
             text_only: true
             content: |-
               {{ t("La tablette ne demande rien : Home Assistant lui envoie tout. Une automatisation coupée ici laisse son morceau d'écran figé, sans message d'erreur. « MAJ écran » renvoie tout d'un coup.", 'The tablet asks for nothing: Home Assistant sends it everything. An automation turned off here leaves its part of the screen frozen, with no error message. « Refresh screen » sends everything at once.') }}
-{%- if 'input_boolean.is_primary_active' in present %}
-          - type: tile
-            entity: input_boolean.is_primary_active
-            name: "{{ t('Push HA actif', 'HA push on') }}"
-            icon: mdi:upload-network
-            features_position: inline
-            features:
-              - type: toggle
-{%- endif %}
 {%- if A.tab5_ha_hmi_updater %}
           - type: shortcut
             label: "{{ t('MAJ écran', 'Refresh screen') }}"
@@ -1331,7 +1307,6 @@ views:
             heading: "{{ t('À couper pendant une OTA', 'Turn off during an OTA') }}"
             heading_style: subtitle
 {%- for id, fr_, en_ in [('tab5_health_api_off_2min', 'Tablette déconnectée 2 min', 'Tablet disconnected 2 min'),
-                         ('tab5_health_primary_off_5min', 'Push HA coupé 5 min', 'HA push off 5 min'),
                          ('tab5_health_unexpected_reboot', 'Redémarrage inattendu', 'Unexpected restart'),
                          ('tab5_health_template_error', 'Erreur dans une poussée', 'Error in a push'),
                          ('tab5_health_fichiers_ha', 'Fichiers HA en retard', 'HA files out of date'),
@@ -1377,12 +1352,6 @@ views:
     'es': 'Tableta desconectada',
     'it': 'Tablet disconnesso',
     'tr': 'Tablet bağlantısı kesildi'},
-  'Push HA coupé': {
-    'de': 'HA-Push aus',
-    'nl': 'HA-push uit',
-    'es': 'Push HA apagado',
-    'it': 'Push HA disattivato',
-    'tr': 'HA push kapalı'},
   'Fichiers HA en retard': {
     'de': 'HA-Dateien veraltet',
     'nl': 'HA-bestanden verouderd',
@@ -2409,12 +2378,12 @@ views:
     'es': 'Pantalla congelada, datos antiguos',
     'it': 'Schermo bloccato, dati vecchi',
     'tr': 'Donmuş ekran, eski veriler'},
-  " : « Push HA actif » doit être allumé, sinon Home Assistant n'envoie plus rien à l'écran ; puis « MAJ écran ».": {
-    'de': ': „HA-Push aktiv“ muss an sein, sonst sendet Home Assistant nichts mehr an den Bildschirm; dann „Bild aktualisieren“.',
-    'nl': ': “HA-push aan” moet aan staan, anders stuurt Home Assistant niets meer naar het scherm; daarna “Scherm vernieuwen”.',
-    'es': ': «Push HA activo» debe estar encendido, si no Home Assistant ya no envía nada a la pantalla; después «Refrescar pantalla».',
-    'it': ': «Push HA attivo» deve essere acceso, altrimenti Home Assistant non invia più nulla allo schermo; poi «Aggiorna schermo».',
-    'tr': ': “HA push açık” açık olmalı, yoksa Home Assistant ekrana hiçbir şey göndermez; sonra “Ekranı yenile”.'},
+  " : « MAJ écran » renvoie tout d'un coup ; si rien ne change, regardez si une automatisation de poussée est coupée.": {
+    'de': ': „Bild aktualisieren“ sendet alles auf einmal; ändert sich nichts, prüfen Sie, ob eine Push-Automatisierung ausgeschaltet ist.',
+    'nl': ': “Scherm vernieuwen” stuurt alles in één keer; verandert er niets, kijk dan of een push-automatisering uit staat.',
+    'es': ': «Refrescar pantalla» lo reenvía todo de una vez; si nada cambia, compruebe si una automatización de envío está apagada.',
+    'it': ': «Aggiorna schermo» rinvia tutto in una volta; se non cambia nulla, controllate se un’automazione di invio è disattivata.',
+    'tr': ': “Ekranı yenile” her şeyi bir seferde yeniden gönderir; hiçbir şey değişmezse bir gönderim otomasyonunun kapalı olup olmadığına bakın.'},
   'Cas déjà vu': {
     'de': 'Bekannter Fall',
     'nl': 'Bekend geval',
@@ -2535,24 +2504,6 @@ views:
     'es': 'perdido',
     'it': 'interrotto',
     'tr': 'kopuk'},
-  'Push HA': {
-    'de': 'HA-Push',
-    'nl': 'HA-push',
-    'es': 'Push HA',
-    'it': 'Push HA',
-    'tr': 'HA push'},
-  'actif': {
-    'de': 'aktiv',
-    'nl': 'aan',
-    'es': 'activo',
-    'it': 'attivo',
-    'tr': 'açık'},
-  'coupé : l’écran ne reçoit plus rien': {
-    'de': 'aus: der Bildschirm erhält nichts mehr',
-    'nl': 'uit: het scherm krijgt niets',
-    'es': 'apagado: la pantalla no recibe nada',
-    'it': 'disattivato: lo schermo non riceve più nulla',
-    'tr': 'kapalı: ekran hiçbir şey almıyor'},
   'Démarrée le': {
     'de': 'Gestartet am',
     'nl': 'Gestart op',
@@ -2793,12 +2744,6 @@ views:
     'es': 'La tableta no pide nada: Home Assistant se lo envía todo. Una automatización apagada aquí deja su parte de la pantalla congelada, sin mensaje de error. «Refrescar pantalla» lo reenvía todo de una vez.',
     'it': 'Il tablet non chiede nulla: Home Assistant gli invia tutto. Un’automazione disattivata qui lascia la sua parte di schermo bloccata, senza messaggi di errore. «Aggiorna schermo» rinvia tutto in una volta.',
     'tr': 'Tablet hiçbir şey istemez: Home Assistant ona her şeyi gönderir. Burada kapatılan bir otomasyon, ekranın kendi bölümünü hata mesajı vermeden dondurur. “Ekranı yenile” her şeyi bir seferde yeniden gönderir.'},
-  'Push HA actif': {
-    'de': 'HA-Push aktiv',
-    'nl': 'HA-push aan',
-    'es': 'Push HA activo',
-    'it': 'Push HA attivo',
-    'tr': 'HA push açık'},
   'MAJ écran': {
     'de': 'Bild aktualisieren',
     'nl': 'Scherm vernieuwen',
@@ -2883,12 +2828,6 @@ views:
     'es': 'Tableta desconectada 2 min',
     'it': 'Tablet disconnesso 2 min',
     'tr': 'Tablet 2 dk bağlantısız'},
-  'Push HA coupé 5 min': {
-    'de': 'HA-Push 5 Min. aus',
-    'nl': 'HA-push uit 5 min',
-    'es': 'Push HA apagado 5 min',
-    'it': 'Push HA disattivato 5 min',
-    'tr': 'HA push 5 dk kapalı'},
   'Redémarrage inattendu': {
     'de': 'Unerwarteter Neustart',
     'nl': 'Onverwachte herstart',
