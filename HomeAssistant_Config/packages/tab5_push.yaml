@@ -29,6 +29,10 @@
 #       source des prévisions aussi (« Tab5 · source des prévisions »), et les
 #       entités de la tablette sont trouvées par le modèle de l'appareil
 #       (sensor.tab5_tablette), quel que soit son nom.
+#       Modèles importés : custom_templates/tab5_calendar.jinja (jour travaillé des
+#       prévisions jours, depuis le 07/10/2026) et tab5_alertes.jinja (historique des
+#       alertes), à déployer et recharger AVANT ce package, sinon ces payloads ne se
+#       rendent pas.
 # @architecture_constraint Chaque `action: esphome.tab5_ha_hmi_tab5_maj_*` correspond à
 #       un service `api: services:` déclaré dans Tab5/tab5-api-logic.yaml, et ses clés
 #       `data:` à ses `variables:`, ni plus ni moins. Ne JAMAIS renommer un service ou
@@ -275,6 +279,7 @@ automation:
         continue_on_error: true
         data:
           payload: >
+            {% from 'tab5_calendar.jinja' import couvre, ev_start, ev_end, ev_summary %}
             {% set brut = daily_var.get(meteo, {}).get('forecast', []) if daily_var is defined else [] %}
             {% if type_jours in ['twice_daily', 'hourly'] %}
               {# Regroupement par date locale (lot 4c-3) : max des températures, min des
@@ -329,20 +334,25 @@ automation:
               {% set tmax = fcasts[i].get('temperature') | float(0) if i < fcasts|length else 0 %}
               {% set est_passe = 'false' if i < fcasts|length else 'true' %}
               {% set est_dimanche = target_dt.strftime('%w') == '0' %}
+              {# Jour travaillé : la macro couvre() du calendrier (custom_templates/
+                 tab5_calendar.jinja, audit du 07/10/2026, HA-3), la même que le popup
+                 calendrier : jour du début pour un événement horodaté, [début, fin[ pour une
+                 journée entière (le jour de fin est exclu, comme le rend HA). Avant, un
+                 test de sous-chaîne sur le début OU la fin comptait aussi le lendemain
+                 d'une journée entière et le jour de fin d'un horodaté, et oubliait les
+                 jours du milieu d'un événement de plusieurs jours. Heures : inchangées,
+                 celles du dernier événement de travail qui COMMENCE ce jour-là. #}
               {% set ns_travail = namespace(found=false, heures="") %}
               {% if agenda_events is defined and agenda in agenda_events %}
                 {% for event in agenda_events[agenda].events %}
-                  {% set ev_start = event.start | default(event.start_time, '') | string %}
-                  {% set ev_end = event.end | default(event.end_time, '') | string %}
-                  {% set ev_msg = event.summary | default(event.message, '') | string %}
-                  {% if target_date in ev_start or target_date in ev_end %}
-                    {% if mots_travail | count == 0 or mots_travail | select('in', ev_msg | lower) | list | count > 0 %}
-                      {% set ns_travail.found = true %}
-                      {% if target_date in ev_start %}
-                        {% set start_dt = ev_start | as_datetime %}
-                        {% set end_dt = ev_end | as_datetime %}
-                        {% set ns_travail.heures = start_dt.strftime('%H:%M') ~ "-" ~ end_dt.strftime('%H:%M') %}
-                      {% endif %}
+                  {% set debut_ev = ev_start(event) %}
+                  {% set ev_msg = ev_summary(event) %}
+                  {% if couvre(event, target_date) and (mots_travail | count == 0 or mots_travail | select('in', ev_msg | lower) | list | count > 0) %}
+                    {% set ns_travail.found = true %}
+                    {% if debut_ev[:10] == target_date %}
+                      {% set start_dt = debut_ev | as_datetime %}
+                      {% set end_dt = ev_end(event) | as_datetime %}
+                      {% set ns_travail.heures = start_dt.strftime('%H:%M') ~ "-" ~ end_dt.strftime('%H:%M') %}
                     {% endif %}
                   {% endif %}
                 {% endfor %}
