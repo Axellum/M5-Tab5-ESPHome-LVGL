@@ -250,7 +250,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Voice assistant ------------------------------------------------------------
 "Assistant vocal": "Asistente de voz"
-"Réglages": "Ajustes"
+"Réglages": "Ajustes"
+"Détails": "Detalles"
 "Cerveau / LLM": "Cerebro / LLM"
 "Taille du texte": "Tamaño del texto"
 "VOTRE DEMANDE": "TU PREGUNTA"

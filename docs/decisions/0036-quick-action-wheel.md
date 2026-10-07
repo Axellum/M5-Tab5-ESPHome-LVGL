@@ -1,6 +1,6 @@
 # ADR-0036: A long press on a light, a shutter or a climate opens a wheel of quick actions
 
-**Status:** Accepted (2026-10-07, asked for in a discussion and decided by the author; not yet tried on a tablet). *Updated the same day: two rings, the « Maison » and « Réglages » links, a hub on the tile and a new look, asked for by the author after the first version (see « Update » below).*
+**Status:** Accepted (2026-10-07, asked for in a discussion and decided by the author; not yet tried on a tablet). *Updated the same day: two rings, the « Maison » and « Réglages » links, a hub on the tile and a new look, asked for by the author after the first version (see « Update » below). Renamed on 2026-10-07: the « Réglages » link is now « Détails » (see « Update » below).*
 **Date:** 2026-10-07
 
 ## Context
@@ -18,9 +18,13 @@ Constraints that hold: push-only and events-only ([ADR-0001](0001-push-only-zero
 
 The first version (one arc of four commands and « ⋯ » in front of a glass disc) worked, but the author found it short of choices and plain: the author asked for the most classic choices of each device, a link to the full popup, a link to the House popup ([ADR-0037](0037-house-popup.md)) except when the wheel is opened from it, a refined look (gradients, transparency), and whether a first wheel could open a second one inside the same wheel. Answer, accepted by the author: **two rings in one wheel**. The author also decided that a light without a dimmer gets a wheel (On, Off and the links), and that the wheel closes after each choice. The rule « fewer than three commands: no wheel » goes: one command is enough, the links make the rest.
 
+### Update (2026-10-07, after the audit of the same day)
+
+The link to the tile's full popup was called « Réglages », the name of the tablet's own Settings popup (the gear of the top bar): one word for two windows (UI-13 of the audit). The author renamed it **« Détails »** (en/de/nl « Details », es « Detalles », it « Dettagli », tr « Ayrıntılar »). Only the word changes: same place, same icon, same window. The tablet's « Réglages » keeps its name.
+
 ## Decision
 
-- **First ring, left to right**: « Maison » (the House popup, `Ecran::MAISON` through the single screen routine `tab5_ecran_ouvrir`; absent when the wheel is opened from a row of that popup), the tile's commands and its **families** (a button with a dot: touching it unfolds the second ring), then « Réglages » (the tile's full popup, `tuile_ouvrir_popup`, the former « ⋯ »). The two links are glass outlines with their word under them.
+- **First ring, left to right**: « Maison » (the House popup, `Ecran::MAISON` through the single screen routine `tab5_ecran_ouvrir`; absent when the wheel is opened from a row of that popup), the tile's commands and its **families** (a button with a dot: touching it unfolds the second ring), then « Détails » (the tile's full popup, `tuile_ouvrir_popup`, the former « ⋯ »; « Réglages » until the rename below). The two links are glass outlines with their word under them.
 - **Second ring**: the choices of the touched family, centred on it, 110 px further out. Touching another family swaps them; touching the family again, the hub or the dimmed background folds them; folded, the next touch outside closes the wheel.
 
   | Tile | First ring (between the links) | Families → choices | Commands (`esphome.tab5_action`, key `tRT`) | No wheel |
@@ -47,5 +51,5 @@ The first version (one arc of four commands and « ⋯ » in front of a glass di
 ## Consequences
 
 - One C++ unit (`tab5_roue.cpp`), four UI files, one 36 px MDI font of 23 glyphs, one more window in `ModalRegistry`.
-- The rendering (`tools/rendu/ecrans.py`) redoes the geometry (`roue_centres`, `roue_choix_centres`) to touch « Réglages » on the popup screens and a family on the wheel screens, and captures `roue-lampe` (brightness unfolded), `roue-lampe-couleurs`, `roue-volet` (positions), `roue-clim` (modes) and `maison-roue`; `tests/test_roue.py` compares both sides and holds the buttons, the choices, the commands and the closings.
-- Reaching a popup takes a long press then « Réglages »: one touch more than before, for the less frequent settings (the room's other lights, the drawn shutter, the fan of a climate).
+- The rendering (`tools/rendu/ecrans.py`) redoes the geometry (`roue_centres`, `roue_choix_centres`) to touch « Détails » on the popup screens and a family on the wheel screens, and captures `roue-lampe` (brightness unfolded), `roue-lampe-couleurs`, `roue-volet` (positions), `roue-clim` (modes) and `maison-roue`; `tests/test_roue.py` compares both sides and holds the buttons, the choices, the commands and the closings.
+- Reaching a popup takes a long press then « Détails »: one touch more than before, for the less frequent settings (the room's other lights, the drawn shutter, the fan of a climate).

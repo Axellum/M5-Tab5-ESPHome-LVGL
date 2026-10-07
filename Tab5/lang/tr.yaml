@@ -245,7 +245,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Voice assistant ------------------------------------------------------------
 "Assistant vocal": "Sesli asistan"
-"Réglages": "Ayarlar"
+"Réglages": "Ayarlar"
+"Détails": "Ayrıntılar"
 "Cerveau / LLM": "Beyin / LLM"
 "Taille du texte": "Metin boyutu"
 "VOTRE DEMANDE": "İSTEĞİN"

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """Roue d'actions rapides (ADR-0036, 07/10/2026) : l'appui long d'une lampe, d'un volet ou
 d'une clim pose un moyeu sur la tuile et deux anneaux de boutons au-dessus — le premier
-pour « Maison », les commandes, les familles de réglages et « Réglages » (le popup
+pour « Maison », les commandes, les familles de réglages et « Détails » (le popup
 complet), le second pour les choix de la famille touchée. Aucun compilateur ne vérifie ce
 qui suit ; ce fichier lit le C++ et le YAML, comme les autres tests statiques :
 
 - géométrie : constantes et table des sinus de Tab5/tab5_roue.cpp = celles de
-  tools/rendu/ecrans.py (qui touche « Réglages » et les familles dans le rendu) ; tailles
+  tools/rendu/ecrans.py (qui touche « Détails » et les familles dans le rendu) ; tailles
   des widgets ; boutons des deux anneaux dans l'écran, sans chevauchement, pour toutes les
   tuiles et toutes les familles ;
 - boutons par type (tableau de l'ADR) et commandes = celles du contrat (ADR-0023) et des
-  popups lumière et clim, rien de nouveau ; liens « Maison » et « Réglages » ;
+  popups lumière et clim, rien de nouveau ; liens « Maison » et « Détails » ;
 - sous-fenêtre du registre, fermée par l'inactivité, un popup, l'écran éteint, de
   nouvelles définitions ; repeinte au changement de thème et à un état poussé ;
 - widgets et pointeurs, glyphes de mdi_font_36.
@@ -188,7 +188,7 @@ def test_ancre_haute_roue_en_dessous():
 
 
 def test_le_rendu_touche_reglages_et_les_familles():
-    """Les écrans des popups de tuile ouvrent la roue puis touchent son « Réglages » ; ceux
+    """Les écrans des popups de tuile ouvrent la roue puis touchent son « Détails » ; ceux
     de la roue déplient une famille."""
     par_nom = {e.nom: e for e in ecrans.ECRANS}
 
@@ -239,13 +239,13 @@ def test_types_et_options_de_la_roue():
     assert "if (capacites == nullptr) return 0;" in cli
     for f in ("MODE", "CONSIGNE", "OPTIONS"):
         assert f"famille(RoueAction::{f}, RoueIcone::{f});" in cli
-    # « Maison » d'abord (sauf depuis lui), « Réglages » en dernier, une commande au moins.
+    # « Maison » d'abord (sauf depuis lui), « Détails » en dernier, une commande au moins.
     debut = corps.split("switch (static_cast<Type>(d.type))", 1)[0]
     assert ('if (!depuis_maison) ajouter(RoueAction::MAISON, RoueIcone::MAISON, RoueGenre::LIEN, false, '
             'tr("Maison"));') in debut
     fin = corps.rsplit("if (n == premiere) return 0;", 1)[1]
-    assert 'ajouter(RoueAction::REGLAGES, RoueIcone::REGLAGES, RoueGenre::LIEN, false, tr("Réglages"));' in fin
-    # Au plus : Maison + 4 + Réglages.
+    assert 'ajouter(RoueAction::REGLAGES, RoueIcone::REGLAGES, RoueGenre::LIEN, false, tr("Détails"));' in fin
+    # Au plus : Maison + 4 + Détails.
     assert int(_const(_lire("Tab5", "tab5_custom.h"), "kRoueBoutons")) == 6
 
 
@@ -458,4 +458,4 @@ def test_adr_presente():
     texte = _lire(ADR)
     assert "discussions/278" in texte
     assert "tuile_roue_ouvrir" in texte
-    assert "Réglages" in texte and "Maison" in texte
+    assert "« Détails »" in texte and "Maison" in texte

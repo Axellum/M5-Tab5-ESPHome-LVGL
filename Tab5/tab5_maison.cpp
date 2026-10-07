@@ -33,7 +33,7 @@
  *       la pastille de la ligne (enfant 0), sinon le popup de la tuile
  *       (tuile_appui_maison), sans son lien « Maison ». La roue passe devant ce popup
  *       (roue_ouvrir la met au premier plan) ; un toucher hors d'elle ne ferme qu'elle ;
- *       son « Réglages » ouvre le popup de la tuile devant Maison, qui reste derrière.
+ *       son « Détails » ouvre le popup de la tuile devant Maison, qui reste derrière.
  */
 #include "tab5_internal.h"
 #include "lvgl.h"

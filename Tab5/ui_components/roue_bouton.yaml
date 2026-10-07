@@ -1,6 +1,6 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 6x par roue_actions.yaml :
 # un bouton du premier anneau de la roue d'actions rapides (ADR-0036) — une commande de la
-# tuile, une famille de réglages (son point) ou un lien (« Maison », « Réglages »).
+# tuile, une famille de réglages (son point) ou un lien (« Maison », « Détails »).
 # Var : n (0 à 5, rang de gauche à droite, nombre NON quoté : c'est l'argument int de
 # roue_actions_choisir()).
 # Position, icône (mdi_font_36 : MDI_CODE_TARGETS, motif roue_bouton_*_icone, fonction

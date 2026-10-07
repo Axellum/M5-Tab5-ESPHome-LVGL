@@ -6,7 +6,7 @@
  *       (la pastille d'une carte du mode HA, le centre d'une tuile météo, la pastille d'une
  *       ligne du popup Maison) et deux anneaux de boutons ronds au-dessus, devant un voile.
  *       Premier anneau : les commandes de l'appareil, ses familles de réglages et deux
- *       liens aux bouts (« Maison », « Réglages ») ; toucher une famille déplie, sur le
+ *       liens aux bouts (« Maison », « Détails ») ; toucher une famille déplie, sur le
  *       second anneau et centrés sur elle, ses choix (luminosités, couleurs, modes…) —
  *       la « roue qui en lance une deuxième, dans la même roue » voulue par l'auteur le
  *       07/10/2026. Ce fichier ne sait rien des appareils : il place, peint, ouvre, déplie
@@ -26,7 +26,7 @@
  *       (une donnée, comme dans le popup lumière) ; aucune littérale ici (règle 8).
  * @ai_instruction Géométrie (kRayon, kDiametre, kRayon2, kDiametre2, kPasAngle,
  *       kPasAngle2, kPivot, kMarge, table kSin5) : tools/rendu/ecrans.py la refait
- *       (roue_centres, roue_choix_centres) pour toucher « Réglages » et les choix dans le
+ *       (roue_centres, roue_choix_centres) pour toucher « Détails » et les choix dans le
  *       rendu ; tests/test_roue.py compare les deux. Un glyphe de plus = sa ligne dans
  *       glyphe_roue et dans les glyphes de mdi_font_36 (règle 9 ; MDI_CODE_TARGETS rattache
  *       glyphe_roue aux labels roue_bouton_*_icone et roue_choix_*_icone).

@@ -190,7 +190,7 @@ enum class RoueIcone : uint8_t {
     MAISON, REGLAGES,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
-// anneau au-dessus de lui) ou un lien (« Maison », « Réglages » : une fenêtre).
+// anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
 enum class RoueGenre : uint8_t { ACTION, FAMILLE, LIEN };
 struct RoueBouton {
     RoueIcone icone = RoueIcone::AUCUNE;

@@ -7,7 +7,7 @@
 #       d'une clim (tuile météo, carte du mode HA, ligne du popup Maison) pose un moyeu sur
 #       la tuile (icône, état, jauge) et fait surgir au-dessus deux anneaux de boutons
 #       ronds : le premier porte les commandes, les familles de réglages (un point) et deux
-#       liens aux bouts, « Maison » et « Réglages » (le popup complet) ; toucher une
+#       liens aux bouts, « Maison » et « Détails » (le popup complet) ; toucher une
 #       famille déplie ses choix sur le second. Toucher un choix envoie sa commande et
 #       ferme la roue ; toucher le voile ou le moyeu replie le second anneau, puis ferme.
 # @architecture_constraint Ce n'est pas un popup modal : ni en-tête ni carte (ADR-0009
@@ -17,7 +17,7 @@
 #       enregistré en SUBWINDOW
 #       (tab5_modal_registry_init) : refermé avec les popups, et par l'intervalle
 #       d'inactivité (tab5-scripts.yaml). Inclus APRÈS les cartes du tableau de bord et
-#       AVANT les popups : la roue couvre les tuiles, un popup ouvert par « Réglages » la
+#       AVANT les popups : la roue couvre les tuiles, un popup ouvert par « Détails » la
 #       couvre. Ouverture, dépliage et fermeture secs.
 # @ai_instruction Positions, tailles des bandes, couleurs, glyphes et textes : tab5_roue.cpp
 #       (roue_ouvrir), à chaque ouverture ; les valeurs d'ici ne sont que celles d'avant.

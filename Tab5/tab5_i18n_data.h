@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1037;
+static const uint16_t kI18nKeyCount = 1038;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -1398,6 +1399,7 @@ static const char* const kI18nKeys[] = {
     "Désactivée",
     "Désactivée — la partie continue",
     "Désactivés — l'inclinaison est ignorée",
+    "Détails",
     "Détection BMI270",
     "Détecté",
     "EFFACER LES STATISTIQUES",
@@ -2439,6 +2441,7 @@ static const char* const kI18n_en[] = {
     "Off",  // "Désactivée"
     "Off — the game goes on",  // "Désactivée — la partie continue"
     "Off — tilt is ignored",  // "Désactivés — l'inclinaison est ignorée"
+    "Details",  // "Détails"
     "BMI270 detection",  // "Détection BMI270"
     "Detected",  // "Détecté"
     "CLEAR STATISTICS",  // "EFFACER LES STATISTIQUES"
@@ -3480,6 +3483,7 @@ static const char* const kI18n_de[] = {
     "Aus",  // "Désactivée"
     "Aus — die Partie geht weiter",  // "Désactivée — la partie continue"
     "Aus — Neigung wird ignoriert",  // "Désactivés — l'inclinaison est ignorée"
+    "Details",  // "Détails"
     "BMI270-Erkennung",  // "Détection BMI270"
     "Erkannt",  // "Détecté"
     "STATISTIK LÖSCHEN",  // "EFFACER LES STATISTIQUES"
@@ -4521,6 +4525,7 @@ static const char* const kI18n_nl[] = {
     "Uit",  // "Désactivée"
     "Uit — de partij gaat door",  // "Désactivée — la partie continue"
     "Uit — kantelen wordt genegeerd",  // "Désactivés — l'inclinaison est ignorée"
+    "Details",  // "Détails"
     "BMI270-detectie",  // "Détection BMI270"
     "Gedetecteerd",  // "Détecté"
     "STATISTIEKEN WISSEN",  // "EFFACER LES STATISTIQUES"
@@ -5562,6 +5567,7 @@ static const char* const kI18n_es[] = {
     "Desactivada",  // "Désactivée"
     "Desactivada — la partida sigue",  // "Désactivée — la partie continue"
     "Desactivados — se ignora la inclinación",  // "Désactivés — l'inclinaison est ignorée"
+    "Detalles",  // "Détails"
     "Detección BMI270",  // "Détection BMI270"
     "Detectado",  // "Détecté"
     "BORRAR ESTADÍSTICAS",  // "EFFACER LES STATISTIQUES"
@@ -6603,6 +6609,7 @@ static const char* const kI18n_it[] = {
     "Disattivata",  // "Désactivée"
     "Disattivata — la partita continua",  // "Désactivée — la partie continue"
     "Disattivati — l'inclinazione è ignorata",  // "Désactivés — l'inclinaison est ignorée"
+    "Dettagli",  // "Détails"
     "Rilevamento BMI270",  // "Détection BMI270"
     "Rilevato",  // "Détecté"
     "CANCELLA LE STATISTICHE",  // "EFFACER LES STATISTIQUES"
@@ -7644,6 +7651,7 @@ static const char* const kI18n_tr[] = {
     "Kapalı",  // "Désactivée"
     "Kapalı — oyun sürer",  // "Désactivée — la partie continue"
     "Kapalı — eğim yok sayılır",  // "Désactivés — l'inclinaison est ignorée"
+    "Ayrıntılar",  // "Détails"
     "BMI270 algılama",  // "Détection BMI270"
     "Algılandı",  // "Détecté"
     "İSTATİSTİKLERİ SİL",  // "EFFACER LES STATISTIQUES"

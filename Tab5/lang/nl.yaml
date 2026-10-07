@@ -223,7 +223,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Voice assistant ------------------------------------------------------------
 "Assistant vocal": "Spraakassistent"
-"Réglages": "Opties"
+"Réglages": "Opties"
+"Détails": "Details"
 "Cerveau / LLM": "Brein / LLM"
 "Taille du texte": "Tekstgrootte"
 "VOTRE DEMANDE": "JOUW VRAAG"

@@ -240,7 +240,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # « Réglages » : « Opzioni » (comme Optionen / Opties) plutôt qu'« Impostazioni »,
 # trop large pour les boutons et les titres.
 "Assistant vocal": "Assistente vocale"
-"Réglages": "Opzioni"
+"Réglages": "Opzioni"
+"Détails": "Dettagli"
 "Cerveau / LLM": "Cervello / LLM"
 "Taille du texte": "Dimensione testo"
 "VOTRE DEMANDE": "RICHIESTA"

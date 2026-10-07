@@ -2030,7 +2030,7 @@ static void tuile_appui_piece(int r, int t, bool long_appui) {
             // k, l'ancien appui long (l'autre sens, confirmé) : le popup ne doit jamais
             // contourner la confirmation.
             // Depuis le 07/10/2026 (ADR-0036), la roue d'actions rapides d'abord, dont
-            // « Réglages » ouvre ce popup ; l'option k ne l'ouvre jamais non plus.
+            // « Détails » ouvre ce popup ; l'option k ne l'ouvre jamais non plus.
             if (long_appui && !(d.options & OPT_K)) {
                 if (!roue_de_la_tuile(r, t)) popup_volet_ouvrir(r, t);
                 return;
@@ -2118,7 +2118,7 @@ bool tuile_ouvrir_popup(int r, int t) {
 //
 // L'appui long d'une lum, d'un vol ou d'une cli ouvre la roue (tab5_roue.cpp). Premier
 // anneau : « Maison » (le popup de toutes les pièces, sauf quand la roue s'ouvre depuis
-// lui), les commandes de la tuile et ses familles de réglages, puis « Réglages » (le popup
+// lui), les commandes de la tuile et ses familles de réglages, puis « Détails » (le popup
 // complet de son appui long d'avant, tuile_ouvrir_popup). Toucher une famille déplie ses
 // choix sur le second anneau : luminosités, blancs et couleurs d'une lampe, positions d'un
 // volet, modes, consignes et options d'une clim. Aucune commande nouvelle (mêmes
@@ -2194,7 +2194,7 @@ void roue_clim(const Def& d, int r, int t, int& rc, int& tc) {
 }
 
 // Boutons du premier anneau de la tuile tRT dans `b` (leurs actions dans `rt`) :
-// « Maison » d'abord (sauf depuis lui), « Réglages » en dernier. 0 sans roue : type sans
+// « Maison » d'abord (sauf depuis lui), « Détails » en dernier. 0 sans roue : type sans
 // roue, option r, option k (une lampe ou un volet à confirmer garde son appui long
 // d'avant), clim sans capacité reçue, aucune commande. Le bouton de l'état courant (lampe
 // allumée ou éteinte, volet ouvert ou fermé, clim arrêtée) est marqué.
@@ -2270,7 +2270,9 @@ int roue_composer(int r, int t, bool depuis_maison, RoueBouton b[kRoueBoutons], 
             return 0;
     }
     if (n == premiere) return 0;
-    ajouter(RoueAction::REGLAGES, RoueIcone::REGLAGES, RoueGenre::LIEN, false, tr("Réglages"));
+    // « Détails » (UI-13, décision d'Axel du 07/10/2026) : « Réglages » désignait aussi les
+    // Réglages de la tablette (engrenage).
+    ajouter(RoueAction::REGLAGES, RoueIcone::REGLAGES, RoueGenre::LIEN, false, tr("Détails"));
     return n;
 }
 
