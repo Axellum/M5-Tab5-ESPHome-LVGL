@@ -21,6 +21,15 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-07 — Docs : cause de la panne du C6 du 05/08 revue
+
+`docs/troubleshooting.md` : le build du 05/08/2026 (ESPHome 2026.7, esp_hosted 2.12.9)
+réinitialisait très probablement déjà le C6 à chaque démarrage ; l'impulsion de reset n'a donc
+pas effacé la panne, seule la coupure d'alimentation l'a fait. Moment de la ligne « not yet up »
+au démarrage, piste `wifi_power` notée comme supposition. Même correction dans
+`docs/debugging.md`, un commentaire de `Tab5/tab5-hardware.yaml` et le tableau de bord HA
+(« USB débranché 15 s, et appui long avec une batterie », 7 langues).
+
 ### 2026-10-07 — Popup « Maison » : toute la maison, pièce par pièce, comme un tableau de bord HA
 
 Demandé dans la discussion #278 (voir toute la maison d'un coup). Firmware seul : ni le contrat

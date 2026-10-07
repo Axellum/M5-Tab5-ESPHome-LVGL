@@ -1043,7 +1043,7 @@ views:
             text_only: true
             content: |-
               - **{{ t('Écran figé, données anciennes', 'Frozen screen, old data') }}**{{ t(" : « Push HA actif » doit être allumé, sinon Home Assistant n'envoie plus rien à l'écran ; puis « MAJ écran ».", ': « HA push on » must be on, otherwise Home Assistant sends nothing to the screen; then « Refresh screen ».') }} [{{ t('Cas déjà vu', 'Known case') }}]({{ doc('troubleshooting.md', 'météo--planning--clim-absents-alors-que-lappareil-est-en-ligne', 'weather--planning--climate-data-missing-but-the-device-is-online') }})
-              - **{{ t('Tablette déconnectée', 'Tablet disconnected') }}**{{ t(" : alimentation et Wi-Fi. Écran noir et tablette absente du réseau après une mise à jour : une vraie coupure (appui long, USB débranché 15 s).", ': power and Wi-Fi. Black screen and tablet off the network after an update: a real power cut (long press, USB unplugged for 15 s).') }} [{{ t('Détail', 'Details') }}]({{ doc('troubleshooting.md', 'écran-noir--appareil-absent-du-réseau-après-une-ota--le-co-processeur-wifi-nest-pas-remonté', 'black-screen--device-off-the-network-after-an-ota--the-wi-fi-co-processor-never-came-up') }})
+              - **{{ t('Tablette déconnectée', 'Tablet disconnected') }}**{{ t(" : alimentation et Wi-Fi. Écran noir et tablette absente du réseau après une mise à jour : une vraie coupure (USB débranché 15 s, et appui long avec une batterie).", ': power and Wi-Fi. Black screen and tablet off the network after an update: a real power cut (USB unplugged for 15 s, plus a long press with a battery).') }} [{{ t('Détail', 'Details') }}]({{ doc('troubleshooting.md', 'écran-noir--appareil-absent-du-réseau-après-une-ota--le-co-processeur-wifi-nest-pas-remonté', 'black-screen--device-off-the-network-after-an-ota--the-wi-fi-co-processor-never-came-up') }})
               - **{{ t('Redémarrages', 'Restarts') }}**{{ t(' : « Raison du dernier démarrage » ci-dessous ; un redémarrage inattendu et le journal envoyé par la tablette arrivent en notification.', ': « Last start reason » below; an unexpected restart and the log sent by the tablet arrive as notifications.') }}
               - **{{ t('Fichiers HA en retard', 'HA files out of date') }}**{{ t(" : remplacez-les par ceux de l'archive tab5_home_assistant.zip de la même version que la tablette.", ': replace them with those of the tab5_home_assistant.zip archive of the same version as the tablet.') }}
               - **{{ t("Une zone manque à l'écran", 'A zone is missing on screen') }}**{{ t(' : « Zones masquées », vue Réglages.', ': « Hidden zones », Settings view.') }}
@@ -2421,12 +2421,12 @@ views:
     'es': 'Caso ya visto',
     'it': 'Caso già visto',
     'tr': 'Bilinen durum'},
-  ' : alimentation et Wi-Fi. Écran noir et tablette absente du réseau après une mise à jour : une vraie coupure (appui long, USB débranché 15 s).': {
-    'de': ': Stromversorgung und Wi-Fi. Schwarzer Bildschirm und Tablet nicht im Netz nach einem Update: ein echter Stromausfall (lang drücken, USB 15 s abziehen).',
-    'nl': ': voeding en Wi-Fi. Zwart scherm en tablet niet op het netwerk na een update: een echte stroomonderbreking (lang indrukken, USB 15 s losgekoppeld).',
-    'es': ': alimentación y Wi-Fi. Pantalla negra y tableta fuera de la red tras una actualización: un corte real (pulsación larga, USB desenchufado 15 s).',
-    'it': ': alimentazione e Wi-Fi. Schermo nero e tablet assente dalla rete dopo un aggiornamento: un vero spegnimento (pressione lunga, USB scollegato per 15 s).',
-    'tr': ': güç ve Wi-Fi. Güncellemeden sonra ekran siyah ve tablet ağda yoksa gerçek bir güç kesintisi yap (uzun bas, USB’yi 15 sn çıkar).'},
+  ' : alimentation et Wi-Fi. Écran noir et tablette absente du réseau après une mise à jour : une vraie coupure (USB débranché 15 s, et appui long avec une batterie).': {
+    'de': ': Stromversorgung und Wi-Fi. Schwarzer Bildschirm und Tablet nicht im Netz nach einem Update: ein echter Stromausfall (USB 15 s abziehen, mit Akku zusätzlich lang drücken).',
+    'nl': ': voeding en Wi-Fi. Zwart scherm en tablet niet op het netwerk na een update: een echte stroomonderbreking (USB 15 s losgekoppeld, met een batterij ook lang indrukken).',
+    'es': ': alimentación y Wi-Fi. Pantalla negra y tableta fuera de la red tras una actualización: un corte real (USB desenchufado 15 s y, con batería, también una pulsación larga).',
+    'it': ': alimentazione e Wi-Fi. Schermo nero e tablet assente dalla rete dopo un aggiornamento: un vero spegnimento (USB scollegato per 15 s e, con la batteria, anche una pressione lunga).',
+    'tr': ': güç ve Wi-Fi. Güncellemeden sonra ekran siyah ve tablet ağda yoksa gerçek bir güç kesintisi yap (USB’yi 15 sn çıkar; pil takılıysa ayrıca uzun bas).'},
   'Détail': {
     'de': 'Details',
     'nl': 'Details',
