@@ -6,6 +6,20 @@
 
 The whole Home Assistant side is one archive, **`tab5_home_assistant.zip`**, attached to each [release](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases). **Nothing to fill in**: every value of your home is picked afterwards in Home Assistant, with the mouse ([ADR-0024](../decisions/0024-packages-without-placeholders.md)).
 
+Two ways to put them in place: [with HACS](#with-hacs), which then updates them in one click at each release, or by hand, steps 1 to 3 below.
+
+## With HACS
+
+From release 3.7.0, the files also come with a small integration, « Tab5 », that [HACS](https://hacs.xyz) installs ([ADR-0035](../decisions/0035-hacs-integration-ha-files.md)). HACS must already be installed.
+
+1. Add the `packages:` line of [step 2](#2-one-line-in-configurationyaml) to `configuration.yaml`, if it is not there yet.
+2. In HACS: *⋮ (top right) → Custom repositories*, repository `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*.
+3. Search for **Tab5** in HACS, open it, *Download*.
+4. **Restart** Home Assistant.
+5. *Settings → Devices & services → Add integration → Tab5*. Leave « Then update the tablet » ticked to have the firmware of the same version installed after the files, at each release ([updates](updates.md#home-assistant-files)).
+
+The integration then puts the files in place by itself, without another restart. **It worked if** a notification « Tab5: Home Assistant files 3.x.y » says how many files were added, and the « Tab5 · » entities are there (see [step 3](#3-check-then-restart)). Your own packages, templates and blueprints are never touched, and removing the integration leaves the files in place. Nothing else to do on this page: go to [step 2, install the firmware](flash.md).
+
 ## 1. Download and unzip
 
 Download `tab5_home_assistant.zip` from the latest release (*Assets*, at the bottom of the release) and unzip it into Home Assistant's `config/` folder, the one holding `configuration.yaml`: Samba share, or the File editor or Studio Code Server add-on. It adds three folders:
@@ -40,7 +54,7 @@ If `homeassistant:` already exists, add only the `packages:` line under it, inde
 
 ## A shutter that reports nothing
 
-`tab5_optionnel/volet_serre_tracking.yaml` is only for a shutter that reports neither its position nor its travel (the author's Tuya motor): copy it into `packages/`, reload, and pick the shutter in « Tab5 · volet à course simulée ». It is not installed by default: the shutter picked in that list no longer gets the blueprint's commands but the package's script, which times its travel. Left on « Aucun », the package changes nothing.
+`tab5_optionnel/volet_serre_tracking.yaml` is only for a shutter that reports neither its position nor its travel (the author's Tuya motor): copy it into `packages/`, reload, and pick the shutter in « Tab5 · volet à course simulée ». It is not installed by default: the shutter picked in that list no longer gets the blueprint's commands but the package's script, which times its travel. Left on « Aucun », the package changes nothing. With HACS, copy it from `config/custom_components/tab5/fichiers/tab5_optionnel/`: once it is in `packages/`, the integration updates it with the others.
 
 ## Where these files come from
 
@@ -57,6 +71,20 @@ Already installed and updating? [Updates](updates.md#home-assistant-files).
 ---
 
 Tout le côté Home Assistant tient dans une archive, **`tab5_home_assistant.zip`**, jointe à chaque [release](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases). **Rien à remplir** : chaque valeur de votre maison se choisit ensuite dans Home Assistant, à la souris ([ADR-0024](../decisions/0024-packages-without-placeholders.md)).
+
+Deux façons de les mettre en place : [avec HACS](#avec-hacs), qui les met ensuite à jour en un clic à chaque release, ou à la main, étapes 1 à 3 ci-dessous.
+
+## Avec HACS
+
+Depuis la release 3.7.0, les fichiers viennent aussi avec une petite intégration, « Tab5 », que [HACS](https://hacs.xyz) installe ([ADR-0035](../decisions/0035-hacs-integration-ha-files.md)). HACS doit déjà être installé.
+
+1. Ajoutez la ligne `packages:` de l'[étape 2](#2-une-ligne-dans-configurationyaml) à `configuration.yaml`, si elle n'y est pas déjà.
+2. Dans HACS : *⋮ (en haut à droite) → Custom repositories* (dépôts personnalisés), dépôt `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*.
+3. Cherchez **Tab5** dans HACS, ouvrez-le, *Download* (télécharger).
+4. **Redémarrez** Home Assistant.
+5. *Paramètres → Appareils et services → Ajouter une intégration → Tab5*. Laissez « Mettre ensuite la tablette à jour » coché pour que le firmware de la même version s'installe après les fichiers, à chaque release ([mises à jour](updates.md#fichiers-home-assistant)).
+
+L'intégration pose alors les fichiers toute seule, sans autre redémarrage. **C'est bon si** une notification « Tab5 : fichiers Home Assistant 3.x.y » dit combien de fichiers ont été posés, et que les entités « Tab5 · » sont là (voir l'[étape 3](#3-vérifier-puis-redémarrer)). Vos propres packages, modèles et blueprints ne sont jamais touchés, et retirer l'intégration laisse les fichiers en place. Rien d'autre à faire sur cette page : passez à l'[étape 2, installer le firmware](flash.md#version-française).
 
 ## 1. Télécharger et décompresser
 
@@ -92,7 +120,7 @@ Si `homeassistant:` existe déjà, ajoutez seulement la ligne `packages:` dessou
 
 ## Un volet qui ne signale rien
 
-`tab5_optionnel/volet_serre_tracking.yaml` ne sert qu'à un volet qui ne signale ni sa position ni sa course (le moteur Tuya de l'auteur) : copiez-le dans `packages/`, rechargez, et choisissez le volet dans « Tab5 · volet à course simulée ». Il n'est pas installé par défaut : le volet choisi dans cette liste ne reçoit plus les commandes du blueprint mais celles du script du package, qui chronomètre sa course. Laissée sur « Aucun », la liste ne change rien.
+`tab5_optionnel/volet_serre_tracking.yaml` ne sert qu'à un volet qui ne signale ni sa position ni sa course (le moteur Tuya de l'auteur) : copiez-le dans `packages/`, rechargez, et choisissez le volet dans « Tab5 · volet à course simulée ». Il n'est pas installé par défaut : le volet choisi dans cette liste ne reçoit plus les commandes du blueprint mais celles du script du package, qui chronomètre sa course. Laissée sur « Aucun », la liste ne change rien. Avec HACS, copiez-le depuis `config/custom_components/tab5/fichiers/tab5_optionnel/` : une fois dans `packages/`, l'intégration le met à jour avec les autres.
 
 ## D'où viennent ces fichiers
 
