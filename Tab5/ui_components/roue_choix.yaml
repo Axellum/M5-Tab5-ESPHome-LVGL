@@ -1,0 +1,26 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 6x par roue_actions.yaml :
+# un bouton du second anneau de la roue d'actions rapides (ADR-0036) — un choix de la
+# famille dépliée : une icône (mode, option de la clim), un texte (« 50 % », « 21.5° ») ou
+# une pastille de couleur (blanc, couleur d'une lampe).
+# Var : n (0 à 5, rang de gauche à droite, nombre NON quoté : c'est l'argument int de
+# roue_choix_toucher()).
+# Position, icône (mdi_font_36 : MDI_CODE_TARGETS, motif roue_choix_*_icone, fonction
+# glyphe_roue de tab5_roue.cpp), texte, aspect : posés par tab5_roue.cpp à chaque dépliage.
+# Son mot (« Chaud », « Éco ») est un label à part (roue_legende.yaml), hors du bouton.
+# @ai_instruction Même verre et même effet d'appui que roue_bouton.yaml (USER_1 posé par
+#        roue_brancher()). Enfants dans cet ordre : icône, texte.
+button:
+  id: "roue_choix_${n}"
+  x: 0
+  y: 0
+  width: 72
+  height: 72
+  hidden: true
+  styles: style_clim_btn
+  radius: 36
+  pad_all: 0
+  on_short_click:
+    - lambda: 'roue_choix_toucher(${n});'
+  widgets:
+    - label: { id: "roue_choix_${n}_icone", text: "", align: CENTER, text_font: mdi_font_36, styles: style_text_soft }
+    - label: { id: "roue_choix_${n}_texte", text: "", hidden: true, align: CENTER, text_font: roboto_22, styles: style_text_soft }

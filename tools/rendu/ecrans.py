@@ -214,17 +214,24 @@ VOLET_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t01|opening|45
 # que personne n'applique ici : la capture montre le volet là où le doigt l'a laissé.
 VOLET_TIRE = Glisser(265, 250, 265, 400)
 
-# Roue d'actions rapides (ADR-0036, 07/10/2026) : l'appui long d'une lampe à variateur, d'un
-# volet ou d'une clim ouvre une roue de boutons sur un arc au-dessus de la tuile ; son
-# dernier bouton, « ⋯ », ouvre le popup d'avant. Géométrie de disposer() (Tab5/tab5_roue.cpp)
-# refaite à l'identique, tests/test_roue.py compare les constantes : un écran de popup
-# touche le « ⋯ » calculé ici. Ancre en mode météo : le centre du bouton de la tuile.
+# Roue d'actions rapides (ADR-0036, 07/10/2026) : l'appui long d'une lampe, d'un volet ou
+# d'une clim pose un moyeu sur la tuile et deux anneaux de boutons au-dessus. Premier anneau :
+# « Maison », les commandes et les familles de réglages, « Réglages » (le popup complet) en
+# dernier ; toucher une famille déplie ses choix sur le second, centré sur elle. Géométrie
+# de disposer() (Tab5/tab5_roue.cpp) refaite à l'identique, tests/test_roue.py compare les
+# constantes : un écran de popup touche le « Réglages » calculé ici, un écran de roue une
+# famille. Ancre en mode météo : le centre du bouton de la tuile.
 ROUE_ECRAN = (1280, 720)
-ROUE_RAYON = 200
-ROUE_DIAMETRE = 76
+ROUE_RAYON = 180
+ROUE_DIAMETRE = 72
+ROUE_RAYON2 = 290
+ROUE_DIAMETRE2 = 72
 ROUE_MARGE = 12
 ROUE_PAS_ANGLE = 30
+ROUE_PAS_ANGLE2 = 20
 ROUE_PIVOT = 5
+ROUE_LEGENDE2 = 60
+ROUE_LEGENDE_H = 28
 ROUE_SIN5 = (0, 2856, 5690, 8481, 11207, 13848, 16383, 18794, 21062, 23170,
              25101, 26841, 28377, 29697, 30791, 31650, 32269, 32642, 32767)
 
@@ -246,50 +253,88 @@ def _roue_echelle(r: int, v: int) -> int:
     return (p + 16383) // 32767 if p >= 0 else -((-p + 16383) // 32767)
 
 
-def roue_centres(xa: int, ya: int, n: int) -> list[tuple[int, int]]:
-    """Centres des n boutons de la roue autour de l'ancre (xa, ya), dans le sens horaire
-    (de gauche à droite tant que l'éventail n'a pas pivoté)."""
+def roue_dessous(ya: int) -> bool:
+    """La roue passe sous l'ancre quand le second anneau et ses mots n'y tiennent pas."""
+    return ya - (ROUE_RAYON2 + ROUE_LEGENDE2 + ROUE_LEGENDE_H // 2) < 0
+
+
+def _roue_disposer(xa: int, ya: int, n: int, rayon: int, pas: int, centre: int, r: int,
+                   dessous: bool) -> list[tuple[int, int, int]]:
+    """(x, y, angle) des n boutons, dans le sens horaire (de gauche à droite tant que
+    l'éventail n'a pas pivoté) : disposer() de tab5_roue.cpp."""
     largeur, hauteur = ROUE_ECRAN
-    r = ROUE_DIAMETRE // 2
-    dessous = ya - ROUE_RAYON - r < ROUE_MARGE
     decalage = 0
     for _ in range(180 // ROUE_PIVOT + 1):
         centres = []
         for i in range(n):
-            a = 90 + (n - 1) * ROUE_PAS_ANGLE // 2 - i * ROUE_PAS_ANGLE + decalage
-            dy = _roue_echelle(ROUE_RAYON, _roue_sin5(a))
-            centres.append((xa + _roue_echelle(ROUE_RAYON, _roue_sin5(a + 90)), ya + dy if dessous else ya - dy))
-        gauche = min(x for x, _ in centres)
-        droite = max(x for x, _ in centres)
+            a = centre + (n - 1) * pas // 2 - i * pas + decalage
+            dy = _roue_echelle(rayon, _roue_sin5(a))
+            centres.append((xa + _roue_echelle(rayon, _roue_sin5(a + 90)), ya + dy if dessous else ya - dy, a))
+        gauche = min(x for x, _, _ in centres)
+        droite = max(x for x, _, _ in centres)
+        sens = 0
         if gauche - r < ROUE_MARGE:
-            decalage -= ROUE_PIVOT
+            sens = -ROUE_PIVOT
         elif droite + r > largeur - ROUE_MARGE:
-            decalage += ROUE_PIVOT
-        else:
+            sens = ROUE_PIVOT
+        for _, y, a in centres:
+            if sens == 0 and (y - r < ROUE_MARGE or y + r > hauteur - ROUE_MARGE):
+                sens = ROUE_PIVOT if a < 90 else -ROUE_PIVOT
+        if sens == 0:
             break
+        decalage += sens
     return [(min(max(x, ROUE_MARGE + r), largeur - ROUE_MARGE - r),
-             min(max(y, ROUE_MARGE + r), hauteur - ROUE_MARGE - r)) for x, y in centres]
+             min(max(y, ROUE_MARGE + r), hauteur - ROUE_MARGE - r), a) for x, y, a in centres]
 
 
-def roue_plus(tuile: tuple[int, int], n: int) -> Toucher:
-    """Toucher du « ⋯ » (dernier des n boutons) de la roue de la tuile météo `tuile`."""
+def roue_centres(xa: int, ya: int, n: int) -> list[tuple[int, int]]:
+    """Centres des n boutons du premier anneau autour de l'ancre (xa, ya)."""
+    return [(x, y) for x, y, _ in _roue_disposer(xa, ya, n, ROUE_RAYON, ROUE_PAS_ANGLE, 90,
+                                                  ROUE_DIAMETRE // 2, roue_dessous(ya))]
+
+
+def roue_choix_centres(xa: int, ya: int, n: int, famille: int, m: int) -> list[tuple[int, int]]:
+    """Centres des m choix du second anneau, déplié au-dessus du bouton `famille` des n du
+    premier."""
+    a = _roue_disposer(xa, ya, n, ROUE_RAYON, ROUE_PAS_ANGLE, 90, ROUE_DIAMETRE // 2, roue_dessous(ya))[famille][2]
+    return [(x, y) for x, y, _ in _roue_disposer(xa, ya, m, ROUE_RAYON2, ROUE_PAS_ANGLE2, a,
+                                                  ROUE_DIAMETRE2 // 2, roue_dessous(ya))]
+
+
+def roue_reglages(tuile: tuple[int, int], n: int) -> Toucher:
+    """Toucher de « Réglages » (dernier des n boutons) de la roue de la tuile météo `tuile`."""
     return Toucher(*roue_centres(*tuile, n)[-1])
 
 
-# Popups des tuiles : appui long (la roue), puis « ⋯ ». Lampes T2 et T3 (variateur) :
-# Éteindre, 10, 50, 100 % ; volet T1 : Ouvrir, Stop, Fermer, 50 % s'il donne sa position.
-ROUE_BOUTONS = {"chambre": 5, "salon": 5, "volet": 5, "volet-sans-position": 4}
-# Toucher hors des boutons (coin bas gauche, loin de toute roue) : la roue se ferme.
+def roue_famille(tuile: tuple[int, int], n: int, i: int) -> Toucher:
+    """Toucher du bouton i (une famille) des n de la roue de la tuile météo `tuile`."""
+    return Toucher(*roue_centres(*tuile, n)[i])
+
+
+# Premier anneau des tuiles de la démo, « Maison » et « Réglages » compris. Lampe T2
+# (variateur et couleur, allumée) : Maison, Éteindre, Luminosité, Blancs, Couleurs,
+# Réglages ; lampe T3 (variateur) : Maison, Allumer, Luminosité, Réglages ; volet T1 :
+# Maison, Ouvrir, Stop, Fermer, Position (s'il donne la sienne), Réglages ; clim du
+# blueprint (dernière scène : consigne 20, Silence et Oscillation actifs) : Maison, Arrêt,
+# Mode, Consigne, Options, Réglages.
+ROUE_BOUTONS = {"chambre": 6, "salon": 4, "volet": 6, "volet-sans-position": 5, "clim": 6}
+# Rang des familles touchées par les écrans de roue.
+ROUE_LUMINOSITE = 2
+ROUE_COULEURS = 4
+ROUE_POSITION = 4
+ROUE_MODE = 2
+# Toucher hors des boutons (coin bas gauche, loin de toute roue) : il replie le second
+# anneau, puis ferme la roue.
 ROUE_FERMER = Toucher(60, 700)
-# Roue de la lampe T2 à 50 % (128/255) : le bouton « 50 % » marqué.
+# Roue de la lampe T2 à 50 % (128/255) : le choix « 50 % » marqué.
 LAMPE_A_50 = Service("tab5_maj_emplacements", (("payload", "t02|on|128|FF8C1A;"),))
 LAMPE_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t02|on|180|FF8C1A;"),))
-# Roue du volet T1 arrêté à 50 % : le bouton « 50 % » marqué.
+# Roue du volet T1 arrêté à 50 % : le choix « 50 % » marqué.
 VOLET_A_50 = Service("tab5_maj_emplacements", (("payload", "t01|open|50|;"),))
-# Roue de la clim du blueprint (tuile T2 de la pièce de la page 4, option m, en froid) : ses
-# capacités viennent de « climr » (ADR-0026), que la démo ne pousse pas. Les valeurs par
-# défaut de la tablette (16-30 °C, pas 0,5, toutes les lettres), sans nom : Arrêt, Chaud,
-# Froid, Sec, Ventilation, « ⋯ » ; marqué : le mode de la dernière scène (ventilation).
+# Roue de la clim du blueprint (tuile T2 de la pièce de la page 4, option m, en
+# ventilation) : ses capacités viennent de « climr » (ADR-0026), que la démo ne pousse pas.
+# Les valeurs par défaut de la tablette (16-30 °C, pas 0,5, toutes les lettres), sans nom ;
+# marqué : le mode de la dernière scène (ventilation).
 CLIM_CAPACITES = Service("tab5_maj_emplacements", (("payload", "climr|16|30|0.5|°C|chdfebqsw;"),))
 
 # Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
@@ -582,16 +627,26 @@ ECRANS: tuple[Ecran, ...] = (
           (Service("tab5_assist_reponse", (("texte", REPONSE_ASSISTANT), ("image_url", ""))),)),
     Ecran("calendrier", (Service("tab5_maj_calendrier_mois", _calendrier_juin_2026()), Long(*HORLOGE))),
     Ecran("calendrier-jour", (Long(*HORLOGE), Toucher(*CAL_JOUR_18))),
-    Ecran("lumieres-chambre", (Long(*TUILES["chambre"]), roue_plus(TUILES["chambre"], ROUE_BOUTONS["chambre"]))),
-    Ecran("lumieres-salon", (Long(*TUILES["salon"]), roue_plus(TUILES["salon"], ROUE_BOUTONS["salon"]))),
-    Ecran("volet", (Long(*TUILE_VOLET), roue_plus(TUILE_VOLET, ROUE_BOUTONS["volet"]))),
+    Ecran("lumieres-chambre", (Long(*TUILES["chambre"]), roue_reglages(TUILES["chambre"], ROUE_BOUTONS["chambre"]))),
+    Ecran("lumieres-salon", (Long(*TUILES["salon"]), roue_reglages(TUILES["salon"], ROUE_BOUTONS["salon"]))),
+    Ecran("volet", (Long(*TUILE_VOLET), roue_reglages(TUILE_VOLET, ROUE_BOUTONS["volet"]))),
     Ecran("volet-sans-position", (VOLET_SANS_POSITION, Long(*TUILE_VOLET),
-                                  roue_plus(TUILE_VOLET, ROUE_BOUTONS["volet-sans-position"])), (VOLET_DE_LA_DEMO,)),
-    Ecran("volet-glisse", (Long(*TUILE_VOLET), roue_plus(TUILE_VOLET, ROUE_BOUTONS["volet"]), VOLET_TIRE)),
-    # Roue d'actions rapides (ADR-0036) : celle d'une lampe et celle d'un volet ; celle de
-    # la clim est la dernière capture (ses capacités restent reçues jusqu'au redémarrage).
-    Ecran("roue-lampe", (LAMPE_A_50, Long(*TUILES["chambre"])), (ROUE_FERMER, LAMPE_DE_LA_DEMO)),
-    Ecran("roue-volet", (VOLET_A_50, Long(*TUILE_VOLET)), (ROUE_FERMER, VOLET_DE_LA_DEMO)),
+                                  roue_reglages(TUILE_VOLET, ROUE_BOUTONS["volet-sans-position"])),
+          (VOLET_DE_LA_DEMO,)),
+    Ecran("volet-glisse", (Long(*TUILE_VOLET), roue_reglages(TUILE_VOLET, ROUE_BOUTONS["volet"]), VOLET_TIRE)),
+    # Roue d'actions rapides (ADR-0036) : la lampe, ses luminosités dépliées (50 % marqué)
+    # puis ses couleurs ; le volet, ses positions dépliées (50 % marqué). Fermer : un
+    # toucher replie le second anneau, le suivant ferme la roue. Celle de la clim est la
+    # dernière capture (ses capacités restent reçues jusqu'au redémarrage).
+    Ecran("roue-lampe", (LAMPE_A_50, Long(*TUILES["chambre"]),
+                         roue_famille(TUILES["chambre"], ROUE_BOUTONS["chambre"], ROUE_LUMINOSITE)),
+          (ROUE_FERMER, ROUE_FERMER, LAMPE_DE_LA_DEMO)),
+    Ecran("roue-lampe-couleurs", (Long(*TUILES["chambre"]),
+                                  roue_famille(TUILES["chambre"], ROUE_BOUTONS["chambre"], ROUE_COULEURS)),
+          (ROUE_FERMER, ROUE_FERMER)),
+    Ecran("roue-volet", (VOLET_A_50, Long(*TUILE_VOLET),
+                         roue_famille(TUILE_VOLET, ROUE_BOUTONS["volet"], ROUE_POSITION)),
+          (ROUE_FERMER, ROUE_FERMER, VOLET_DE_LA_DEMO)),
     # Popup d'un appareil : un interrupteur « allumer seulement », une scène, et une
     # scène à confirmer après un appui sur le grand bouton (« Confirmer ? »).
     Ecran("appareil", (VERS_LA_DROITE, Long(*TUILE_ORDINATEUR)), (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
@@ -611,7 +666,7 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("maison-2-pieces", (MAISON_DEUX_PIECES, Aller("Maison")), MAISON_DE_LA_DEMO),
     # Roue d'actions rapides (ADR-0036) ouverte par l'appui long d'une ligne, devant le popup
     # Maison qui reste derrière : la lampe d'ambiance du Salon (variateur), ancrée sur la
-    # pastille de sa ligne. Toucher ailleurs ne ferme que la roue.
+    # pastille de sa ligne, sans le lien « Maison ». Toucher ailleurs ne ferme que la roue.
     Ecran("maison-roue", (Aller("Maison"), Long(*MAISON_LAMPE)), (ROUE_FERMER,)),
     Ecran("plantes", (Long(*SOUS_HORLOGE),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis
@@ -715,10 +770,11 @@ ECRANS: tuple[Ecran, ...] = (
     _jeu("pause", "roi-noir", ROI_PARTIE + ROI_MENU, ROI_ABANDON + ROI_RETOUR),
     _jeu("defaite", "roi-noir", ROI_PARTIE + ROI_MENU + ROI_ABANDON, ROI_RETOUR),
 
-    # Roue de la clim (ADR-0036) en dernier : « climr » reçu ne s'efface pas, aucune
-    # capture d'après ne doit en dépendre.
-    Ecran("roue-clim", (VERS_LA_GAUCHE, VERS_LA_GAUCHE, CLIM_CAPACITES, Long(*TUILES["chambre"])),
-          (ROUE_FERMER, VERS_LA_DROITE, VERS_LA_DROITE)),
+    # Roue de la clim (ADR-0036) en dernier, ses modes dépliés : « climr » reçu ne
+    # s'efface pas, aucune capture d'après ne doit en dépendre.
+    Ecran("roue-clim", (VERS_LA_GAUCHE, VERS_LA_GAUCHE, CLIM_CAPACITES, Long(*TUILES["chambre"]),
+                        roue_famille(TUILES["chambre"], ROUE_BOUTONS["clim"], ROUE_MODE)),
+          (ROUE_FERMER, ROUE_FERMER, VERS_LA_DROITE, VERS_LA_DROITE)),
 )
 
 # Captures en portrait (pas de rotation en PNG).

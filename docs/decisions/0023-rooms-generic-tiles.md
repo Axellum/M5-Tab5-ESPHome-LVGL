@@ -77,9 +77,9 @@ All tiles after the definitions; one tile when its entity changes (state, bright
 |---|---|---|
 | `basculer`, `allumer`, `eteindre` | '' | `lum`, `int`, `med` |
 | `ouvrir`, `fermer`, `arreter` | '' | `vol` |
-| `position` | 0-100 | `vol` (shutter popup: the drawn shutter, on release; quick-action wheel: 50) |
+| `position` | 0-100 | `vol` (shutter popup: the drawn shutter, on release; quick-action wheel: 25, 50, 75) |
 | `lancer` | '' | `act` |
-| `luminosite` / `luminosite_pct` / `couleur` | 0-255 / 10-100 / colour name | `lum` (popup) |
+| `luminosite` / `luminosite_pct` / `couleur` | 0-255 / 10-100 / colour name | `lum` (popup, quick-action wheel) |
 | `pR` + `eteindre` | '' | every `lum` tile of room `R` (popup « Tout éteindre ») |
 
 HA dispatches by the **domain of the tile's entity**, and acts only on entities placed in a tile (the blueprint is the whitelist).

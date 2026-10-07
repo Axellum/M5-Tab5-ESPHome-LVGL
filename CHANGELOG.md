@@ -4,6 +4,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-07 — Roue d'actions rapides à deux anneaux
+
+- **Deux anneaux dans une roue** ([ADR-0036](docs/decisions/0036-quick-action-wheel.md), mis à
+  jour) : l'appui long d'une lumière, d'un volet ou d'une clim pose un moyeu sur la tuile (icône,
+  état, jauge en arc de la luminosité, de la position ou de la consigne, nom) et, au-dessus, un
+  premier anneau : **Maison** (le popup Maison, absent quand la roue s'ouvre depuis lui), les
+  commandes, les familles de réglages marquées d'un point, **Réglages** (le popup complet, ex-« ⋯ »).
+  Toucher une famille déplie ses choix sur un second anneau : luminosité 10 / 25 / 50 / 75 / 100 %,
+  blancs (chaud, crème, froid) et couleurs (rouge, orange, or, vert, bleu, violet) d'une lampe à
+  couleur ; position 25 / 50 / 75 % d'un volet ; modes, consigne (± 2 pas) et options (Éco, Boost,
+  Silence, Oscillation, Brise) d'une clim. Toucher ailleurs ou le moyeu replie, puis ferme ; un choix
+  ferme la roue (décision de l'auteur).
+- **Plus de lampes** : une lampe sans variateur a sa roue (Allumer, Éteindre, les liens) ; la règle
+  « moins de trois commandes : pas de roue » disparaît. Toujours aucune roue avec l'option `k`.
+- **Aspect** : voile des popups à 60 % au lieu du disque de verre, bandes de verre sous les anneaux,
+  boutons ronds de 72 px au verre des popups, état courant en verre teinté avec liseré et halo,
+  pastilles de couleur en dégradé, liens en contour avec leur mot. Ouverture et dépliage secs.
+- **Pas de famille « Ventilation »** : HA ne pousse pas la liste des vitesses ; la bascule Silence du
+  popup est dans les options. Aucune commande nouvelle : celles des tuiles et des popups lumière et
+  clim (`esphome.tab5_action`), rien à changer dans Home Assistant.
+- Rendu : `roue-lampe` (luminosités dépliées), `roue-lampe-couleurs` (nouveau), `roue-volet`
+  (positions), `roue-clim` (modes) ; les popups de tuile s'ouvrent par « Réglages ».
+  `tests/test_roue.py` réécrit (géométrie des deux anneaux pour toutes les tuiles, choix et commandes
+  comparés aux popups). Non essayé sur la tablette.
+
 ### 2026-10-07 — Images du README et du site, HACS dans le dépannage
 
 - **Photo d'en-tête** : la photo de la tablette de l'auteur, prise le 07/10/2026 (sans

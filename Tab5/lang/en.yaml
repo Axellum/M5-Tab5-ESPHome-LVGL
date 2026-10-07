@@ -193,6 +193,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "OPTIONS": "OPTIONS"
 "Presets": "Presets"
 "Éco": "Eco"
+"Boost": "Boost"
 "Silence": "Quiet"
 "Flux d'air": "Airflow"
 "Oscillation": "Swing"

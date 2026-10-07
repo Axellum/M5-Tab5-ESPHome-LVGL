@@ -141,10 +141,10 @@ def test_gestes_d_une_ligne_ceux_de_la_tuile():
     # La roue (ADR-0036) s'ancre sur la pastille de la ligne (enfant 0).
     ligne_appui = _fonction(_maison(), "maison_ligne_appui")
     assert "tuile_appui_maison(r, t, long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);" in ligne_appui
-    # Appui long (et « ⋯ ») : la roue de la tuile d'abord, sinon le répartiteur des tuiles
-    # (popup de la tuile), jamais une commande à part.
+    # Appui long (et « ⋯ ») : la roue de la tuile d'abord (sans son lien « Maison »), sinon
+    # le répartiteur des tuiles (popup de la tuile), jamais une commande à part.
     appui = _fonction(_tuiles(), "tuile_appui_maison")
-    assert "if (long_appui && tuile_roue_ouvrir(r, t, ancre)) return;" in appui
+    assert "if (long_appui && tuile_roue_ouvrir(r, t, ancre, true)) return;" in appui
     assert "tuile_appui_piece(r, t, long_appui);" in appui
     assert appui.index("tuile_roue_ouvrir(") < appui.index("tuile_appui_piece(")
     for interdit in ("envoyer(", "tab5_action", "homeassistant", "popup_lumiere_ouvrir", "animate_popup_open(g_"):
@@ -237,8 +237,10 @@ if __name__ == "__main__":
 
 def test_roue_devant_le_popup_maison():
     # La roue est montée avant les popups (tab5-lvgl.yaml) : roue_ouvrir la ramène au premier
-    # plan, sinon elle s'ouvrirait derrière le popup Maison.
+    # plan, sinon elle s'ouvrirait derrière le popup Maison. Pas à un repeint (état poussé,
+    # thème) : la sonnerie du réveil, au-dessus de tout, resterait dessous.
     roue = _lire("Tab5", "tab5_roue.cpp")
     ouvrir = _fonction(roue, "roue_ouvrir")
-    assert "lv_obj_move_to_index(u.fond, -1);" in ouvrir
+    assert "const bool repeinte = garder && ouverte();" in ouvrir
+    assert "if (!repeinte) lv_obj_move_to_index(u.fond, -1);" in ouvrir
     assert ouvrir.index("lv_obj_move_to_index(u.fond, -1);") < ouvrir.index("ui_hidden(u.fond, false);")
