@@ -149,7 +149,9 @@ automation:
                 id: calendrier_mois
             sequence:
               # script.turn_on : la demande ne l'attend pas, comme l'appel direct du
-              # firmware d'avant ; le script reste en `mode: restart`.
+              # firmware d'avant. Le script est en `mode: queued` depuis le 28/09/2026
+              # (tab5_calendar.yaml) : chaque demande a sa réponse, aucune n'en annule une
+              # autre. Année ou mois invalide : il s'arrête sans erreur.
               - if: "{{ states['script.tab5_calendrier_mois'] is not none }}"
                 then:
                   - action: script.turn_on
