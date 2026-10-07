@@ -79,6 +79,8 @@ script:
   - id: tab5_console_ouvrir
     then:
       - lambda: |-
+          // Pas d'animate_popup_open ici : la roue d'actions rapides (ADR-0036) se ferme à la main.
+          roue_actions_fermer();
           lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
           lv_obj_move_to_index(id(layer_console_sys), -1);
           refresh_console_status_row_ui(id(lbl_sys_uptime_val), id(lbl_sys_rssi_val), id(lbl_sys_temp_val),
@@ -506,6 +508,8 @@ interval:
           if (g_central_ctx.forecast_page == 2) return;  // déjà au panneau principal
           if (g_central_ctx.ha_mode) return;             // mode HA (pièces) affiché à la demande
 
+          // La page change : la roue d'actions rapides (ADR-0036) visait une tuile d'ici.
+          roue_actions_fermer();
           lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
           reset_forecast_to_main_page(
               id(layer_forecast_daily), id(layer_forecast_hourly),

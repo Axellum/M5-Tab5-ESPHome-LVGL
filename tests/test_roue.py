@@ -230,6 +230,18 @@ def test_sous_fenetre_et_fermetures():
     eteint = hardware.split("on_turn_off:", 1)[1].split("lvgl.pause", 1)[0]
     assert "roue_actions_fermer();" in eteint
     assert "roue_rejouer_theme();" in _fonction(_lire("Tab5", "tab5_theme.cpp"), "theme_rejouer_ui")
+    # Console système (sans animate_popup_open) et retour automatique à la page météo.
+    console = scripts.split("- id: tab5_console_ouvrir", 1)[1].split("- id:", 1)[0]
+    assert "roue_actions_fermer();" in console
+    retour = scripts.split("if (idle < UIIdle::FORECAST_MS) return;", 1)[1]
+    assert retour.index("roue_actions_fermer();") < retour.index("reset_forecast_to_main_page(")
+
+
+def test_un_etat_pousse_repeint_la_roue():
+    """Un état de la tuile poussé par HA repeint la roue ouverte sur elle (bouton courant)."""
+    assert "roue_tuile_etat(r, t);" in _fonction(_tuiles(), "peindre_tuile")
+    corps = _fonction(_tuiles(), "roue_tuile_etat")
+    assert "roue_actions_ouverte() && s_rt.r == r && s_rt.t == t" in corps and "roue_tuile_rejouer();" in corps
 
 
 def test_inclus_entre_les_cartes_et_les_popups():

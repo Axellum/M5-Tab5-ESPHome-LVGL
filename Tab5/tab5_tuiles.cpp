@@ -973,6 +973,8 @@ void peindre_meteo() {
 void popup_lumiere_etat(int r, int t);
 void popup_volet_etat(int r, int t);
 void popup_appareil_etat(int r, int t);
+// Roue d'actions rapides ouverte sur cette tuile : repeinte (bouton courant, bord du halo).
+void roue_tuile_etat(int r, int t);
 
 // Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
 void peindre_tuile(int r, int t) {
@@ -980,6 +982,7 @@ void peindre_tuile(int r, int t) {
     popup_lumiere_etat(r, t);
     popup_volet_etat(r, t);
     popup_appareil_etat(r, t);
+    roue_tuile_etat(r, t);
     if (r != piece_courante()) return;
     if (g_central_ctx.ha_mode) {
         if (tuile_presente(r, t)) peindre_carte(r, t);
@@ -2236,6 +2239,12 @@ void roue_tuile_rejouer() {
     charger();
     RoueTuile rt = s_rt;
     if (!roue_tuile_peindre(rt)) roue_actions_fermer();
+}
+
+// HA a poussé un état de la tuile tRT (peindre_tuile) : la roue ouverte sur elle suit
+// (bouton de l'état courant, bord du halo) ; elle se ferme si la tuile n'en a plus.
+void roue_tuile_etat(int r, int t) {
+    if (roue_actions_ouverte() && s_rt.r == r && s_rt.t == t) roue_tuile_rejouer();
 }
 
 }  // namespace
