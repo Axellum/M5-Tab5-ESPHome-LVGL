@@ -41,3 +41,5 @@ What was checked before choosing (2026-10-02 and 2026-10-07, HACS code and docum
 - A new domain in a package must be checked to set up hot (`test_etiquette_et_domaines` lists the current ones).
 - HACS validation ignores « brands »: a custom integration has no entry in `home-assistant/brands`.
 - Removing the integration leaves the files in place: they are the user's configuration from then on.
+- HACS reads the latest full release (pre-releases only when beta versions are switched on for the repository; its code filters `prerelease` unless `show_beta`). The repository can therefore be added once a full release carries `custom_components/tab5/`: 3.7.0. Releases up to 3.7.0-rc.4 have no `tab5_hacs.zip` (`archive_hacs.py` exits with code 3 on those tags).
+- `publication.yml` attaches the asset a few minutes after the release is published (job `home-assistant`). A HACS update clicked in between is expected to fail to download rather than install from the source code (HACS code, not observed yet); it works once the job is done.

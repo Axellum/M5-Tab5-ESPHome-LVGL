@@ -21,6 +21,18 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-07 — Intégration « Tab5 » pour HACS : publication et guide (lot 2)
+
+- Chaque release joint désormais `tab5_hacs.zip`, l'asset que HACS télécharge
+  (`publication.yml`, job `home-assistant`, après `tab5_home_assistant.zip`). Un tag sans
+  l'intégration (3.7.0-rc.4 et avant) n'en a pas.
+- Guide : « Avec HACS » dans [Fichiers Home Assistant](docs/installation/home-assistant-files.md)
+  (dépôt personnalisé, téléchargement, redémarrage, ajout de l'intégration) et dans
+  [Mises à jour](docs/installation/updates.md) ; mention dans le démarrage rapide, la page
+  d'installation et `HomeAssistant_Config/README.md`.
+- La notification « Tab5 : fichiers Home Assistant à mettre à jour » propose aussi la mise à
+  jour de HACS.
+
 ### 2026-10-07 — Intégration « Tab5 » pour HACS : les fichiers Home Assistant en un clic (lot 1)
 
 Demande d'un utilisateur (discussion #278) : mettre à jour les fichiers Home Assistant sans
