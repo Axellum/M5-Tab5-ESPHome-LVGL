@@ -289,7 +289,7 @@ VOLET_A_50 = Service("tab5_maj_emplacements", (("payload", "t01|open|50|;"),))
 # Roue de la clim du blueprint (tuile T2 de la pièce de la page 4, option m, en froid) : ses
 # capacités viennent de « climr » (ADR-0026), que la démo ne pousse pas. Les valeurs par
 # défaut de la tablette (16-30 °C, pas 0,5, toutes les lettres), sans nom : Arrêt, Chaud,
-# Froid (marqué), Sec, Ventilation, « ⋯ ».
+# Froid, Sec, Ventilation, « ⋯ » ; marqué : le mode de la dernière scène (ventilation).
 CLIM_CAPACITES = Service("tab5_maj_emplacements", (("payload", "climr|16|30|0.5|°C|chdfebqsw;"),))
 
 # Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
