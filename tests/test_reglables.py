@@ -68,8 +68,10 @@ def test_icones_par_defaut_dans_la_palette():
     defauts = _tableau("kIconesDefaut")
     assert len(defauts) == len(_tableau("kTypes"))
     assert set(defauts) <= codes, set(defauts) - codes
-    # La tablette : son icône, celle de la dernière ligne de la liste.
-    assert 'tuile_icone("tablette"' in CPP and "tablette" in codes
+    # Le son de la tablette, dernière ligne de la liste : un haut-parleur (barré à 0 % ou
+    # muet) et un nom qui dit ce qu'il règle (discussion #278, 07/10/2026).
+    assert 'tuile_icone("enceinte", !muet && pct > 0.0f' in CPP and "enceinte" in codes
+    assert 'tr("Son de la tablette")' in CPP and 'tr("Tablette")' not in CPP
 
 
 def test_huit_appareils_des_deux_cotes():

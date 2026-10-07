@@ -1150,6 +1150,7 @@ struct ReglablesUI {
     lv_obj_t* ligne_nom[kReglablesLignes] = {};     // reglable_ligne_N_nom
     lv_obj_t* ligne_valeur[kReglablesLignes] = {};  // reglable_ligne_N_valeur
     float* volume = nullptr;                            // &id(system_volume), 0 à 1
+    const bool* muet = nullptr;                         // &id(system_muted) : haut-parleur barré
     void (*volume_regler)(float v) = nullptr;           // script tab5_volume_apply (v, true)
     void (*envoyer)(const char* emplacement, const char* action, const char* valeur) = nullptr;  // tab5_action
     void (*debounce)() = nullptr;                       // script tab5_debounce_reglable

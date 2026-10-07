@@ -48,6 +48,6 @@ Constraints that hold: push-only and events-only (ADR-0001, ADR-0025): the firmw
 
 ## Consequences
 
-- One more package (twenty-three), C++ unit and two UI files. `climate_card.yaml` gains the touch zone `btn_reglables_liste` on the living-room row and `reglable_rangee` between − and +. The tiles' palette gains the `tablette` code (`mdi:tablet`).
+- One more package (twenty-three), C++ unit and two UI files. `climate_card.yaml` gains the touch zone `btn_reglables_liste` on the living-room row and `reglable_rangee` between − and +. The tiles' palette gains the `tablette` code (`mdi:tablet`). *Amended 2026-10-07 (discussion #278):* the tablet's row is named « Son de la tablette » (Tablet volume) and shows the palette's `enceinte` speaker, crossed out at 0 % or when muted; « Tablette » with a tablet icon did not say it was the volume. The `tablette` code stays for Home Assistant tiles with a tablet icon.
 - The touch zone on the living-room temperature is new: before, touching it did nothing.
 - `tests/test_reglables.py` holds the types on both sides, the whitelist, the bounds, the definitions, the states, the triggers, the command per domain, the card and the list; the « Installation dans un HA neuf » job loads the blueprint in a real Home Assistant.

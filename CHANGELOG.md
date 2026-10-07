@@ -4,6 +4,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+### 2026-10-07 — Tuile − / + : « Son de la tablette »
+
+- **La dernière ligne de la liste de la tuile − / + dit ce qu'elle règle**
+  ([ADR-0033](docs/decisions/0033-adjustable-tile.md), [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) :
+  « Tablette » et l'icône d'une tablette ne disaient pas que c'était le volume de la tablette, qu'on
+  réglait de 0 à 100 % sans rien voir changer. Elle s'appelle « Son de la tablette » (Tablet volume)
+  et montre un haut-parleur, barré à 0 % ou quand le son est coupé ; le muet du popup de l'assistant
+  la repeint. Rien ne change dans Home Assistant.
+
 ### 2026-10-07 — Roue d'actions rapides à deux anneaux
 
 - **Deux anneaux dans une roue** ([ADR-0036](docs/decisions/0036-quick-action-wheel.md), mis à

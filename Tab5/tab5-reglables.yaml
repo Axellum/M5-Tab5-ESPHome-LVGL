@@ -67,6 +67,7 @@ script:
           u.ligne_nom[9] = id(reglable_ligne_9_nom);
           u.ligne_valeur[9] = id(reglable_ligne_9_valeur);
           u.volume = &id(system_volume);
+          u.muet = &id(system_muted);
           // Volume de la tablette : le point d'entrée unique (tab5_volume_apply,
           // tab5-scripts.yaml), qui pousse au haut-parleur après son propre débounce.
           u.volume_regler = [](float v) { id(tab5_volume_apply).execute(v, true); };
