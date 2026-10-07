@@ -173,7 +173,7 @@ class Gestionnaire:
         plan = await executer(installation.planifier, self.config, embarques,
                               self.donnees.get("fichiers", {}))
         avant = await executer(installation.version_installee, self.config)
-        _, messages_avant = await self._verifier_configuration()
+        _, constats_avant = await self._verifier_configuration()
         nom = installation.etiquette(dt_util.now(), avant)
         try:
             sauvegarde = await executer(installation.appliquer, self.config, plan, nom)
@@ -187,8 +187,8 @@ class Gestionnaire:
 
         # 2. La configuration, comme « Vérifier la configuration » : un message nouveau
         # vient de ces fichiers, tout est remis comme avant.
-        bloquant, messages = await self._verifier_configuration()
-        if nouveaux := sorted(messages - messages_avant):
+        bloquant, constats = await self._verifier_configuration()
+        if nouveaux := sorted(constats - constats_avant):
             await executer(installation.restaurer, self.config, plan, sauvegarde)
             await executer(installation.nettoyer_sauvegardes, self.config, GARDER_SAUVEGARDES)
             _LOGGER.error("Fichiers Tab5 %s refusés par la vérification de la configuration, "

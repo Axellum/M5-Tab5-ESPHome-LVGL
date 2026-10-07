@@ -122,6 +122,23 @@ def test_modules_purs_sans_home_assistant():
         assert not re.search(r"^\s*(from|import)\s+(homeassistant|\.)", texte, re.M), nom
 
 
+def test_aucun_nom_local_ne_masque_un_import():
+    """Une variable `messages` masquait le module `messages` dans _installer : l'installation
+    s'arrêtait sur un AttributeError (CI du 07/10/2026). Le code qui parle à HA ne tourne
+    que dans le conteneur de la CI : cette lecture de l'AST le voit sans HA."""
+    import ast
+    for fichier in sorted(INTEGRATION.glob("*.py")):
+        arbre = ast.parse(fichier.read_text(encoding="utf-8"))
+        importes = {(a.asname or a.name).split(".")[0] for n in arbre.body
+                    if isinstance(n, (ast.Import, ast.ImportFrom)) for a in n.names}
+        for fonction in ast.walk(arbre):
+            if not isinstance(fonction, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            locaux = {n.id for n in ast.walk(fonction) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store)}
+            locaux |= {a.arg for a in fonction.args.args + fonction.args.kwonlyargs}
+            assert not locaux & importes, f"{fichier.name}:{fonction.lineno} {fonction.name} : {locaux & importes}"
+
+
 # ─── Installation ────────────────────────────────────────────────────────────
 
 def test_premiere_installation(tmp_path):
