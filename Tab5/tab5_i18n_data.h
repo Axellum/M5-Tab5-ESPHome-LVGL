@@ -1767,7 +1767,6 @@ static const char* const kI18nKeys[] = {
     "Redémarrer HA",
     "Redémarrer Home Assistant ?",
     "Redémarrer la tablette ?",
-    "Reflexion...",
     "Rejoins le portail",
     "Rejouer",
     "Rejouer avec les mêmes équipes",
@@ -1813,6 +1812,7 @@ static const char* const kI18nKeys[] = {
     "Règle des 50 coups",
     "Règles du jeu",
     "Réflexion  %d %%",
+    "Réflexion...",
     "Réglages",
     "Réponse",
     "Réponse à l'inclinaison +18 %",
@@ -2809,7 +2809,6 @@ static const char* const kI18n_en[] = {
     "Restart HA",  // "Redémarrer HA"
     "Restart Home Assistant?",  // "Redémarrer Home Assistant ?"
     "Restart the tablet?",  // "Redémarrer la tablette ?"
-    "Thinking...",  // "Reflexion..."
     "Reach the portal",  // "Rejoins le portail"
     "Play again",  // "Rejouer"
     "Play again with the same teams",  // "Rejouer avec les mêmes équipes"
@@ -2855,6 +2854,7 @@ static const char* const kI18n_en[] = {
     "50-move rule",  // "Règle des 50 coups"
     "Game rules",  // "Règles du jeu"
     "Thinking  %d %%",  // "Réflexion  %d %%"
+    "Thinking...",  // "Réflexion..."
     "Settings",  // "Réglages"
     "Answer",  // "Réponse"
     "Tilt response +18%",  // "Réponse à l'inclinaison +18 %"
@@ -3851,7 +3851,6 @@ static const char* const kI18n_de[] = {
     "HA neu starten",  // "Redémarrer HA"
     "Home Assistant neu starten?",  // "Redémarrer Home Assistant ?"
     "Tablet neu starten?",  // "Redémarrer la tablette ?"
-    "Denke nach...",  // "Reflexion..."
     "Erreiche das Portal",  // "Rejoins le portail"
     "Nochmal",  // "Rejouer"
     "Nochmal mit denselben Teams",  // "Rejouer avec les mêmes équipes"
@@ -3897,6 +3896,7 @@ static const char* const kI18n_de[] = {
     "50-Züge-Regel",  // "Règle des 50 coups"
     "Spielregeln",  // "Règles du jeu"
     "Denke  %d %%",  // "Réflexion  %d %%"
+    "Denke nach...",  // "Réflexion..."
     "Optionen",  // "Réglages"
     "Antwort",  // "Réponse"
     "Neigungsreaktion +18 %",  // "Réponse à l'inclinaison +18 %"
@@ -4893,7 +4893,6 @@ static const char* const kI18n_nl[] = {
     "HA herstarten",  // "Redémarrer HA"
     "Home Assistant herstarten?",  // "Redémarrer Home Assistant ?"
     "Tablet herstarten?",  // "Redémarrer la tablette ?"
-    "Denkt na...",  // "Reflexion..."
     "Bereik het portaal",  // "Rejoins le portail"
     "Opnieuw",  // "Rejouer"
     "Opnieuw met dezelfde teams",  // "Rejouer avec les mêmes équipes"
@@ -4939,6 +4938,7 @@ static const char* const kI18n_nl[] = {
     "50-zettenregel",  // "Règle des 50 coups"
     "Spelregels",  // "Règles du jeu"
     "Denkt na  %d %%",  // "Réflexion  %d %%"
+    "Denkt na...",  // "Réflexion..."
     "Opties",  // "Réglages"
     "Antwoord",  // "Réponse"
     "Kantelrespons +18%",  // "Réponse à l'inclinaison +18 %"
@@ -5935,7 +5935,6 @@ static const char* const kI18n_es[] = {
     "Reiniciar HA",  // "Redémarrer HA"
     "¿Reiniciar Home Assistant?",  // "Redémarrer Home Assistant ?"
     "¿Reiniciar la tableta?",  // "Redémarrer la tablette ?"
-    "Pensando...",  // "Reflexion..."
     "Llega al portal",  // "Rejoins le portail"
     "Otra vez",  // "Rejouer"
     "Otra partida, mismos equipos",  // "Rejouer avec les mêmes équipes"
@@ -5981,6 +5980,7 @@ static const char* const kI18n_es[] = {
     "Regla de 50 jugadas",  // "Règle des 50 coups"
     "Reglas del juego",  // "Règles du jeu"
     "Pensando  %d %%",  // "Réflexion  %d %%"
+    "Pensando...",  // "Réflexion..."
     "Ajustes",  // "Réglages"
     "Respuesta",  // "Réponse"
     "Respuesta a la inclinación +18 %",  // "Réponse à l'inclinaison +18 %"
@@ -6977,7 +6977,6 @@ static const char* const kI18n_it[] = {
     "Riavvia HA",  // "Redémarrer HA"
     "Riavviare Home Assistant?",  // "Redémarrer Home Assistant ?"
     "Riavviare il tablet?",  // "Redémarrer la tablette ?"
-    "Elaboro...",  // "Reflexion..."
     "Raggiungi il portale",  // "Rejoins le portail"
     "Rigioca",  // "Rejouer"
     "Rigioca con le stesse squadre",  // "Rejouer avec les mêmes équipes"
@@ -7023,6 +7022,7 @@ static const char* const kI18n_it[] = {
     "Regola 50 mosse",  // "Règle des 50 coups"
     "Regole",  // "Règles du jeu"
     "Calcolo  %d %%",  // "Réflexion  %d %%"
+    "Elaboro...",  // "Réflexion..."
     "Opzioni",  // "Réglages"
     "Risposta",  // "Réponse"
     "Risposta all'inclinazione +18%",  // "Réponse à l'inclinaison +18 %"
@@ -8019,7 +8019,6 @@ static const char* const kI18n_tr[] = {
     "HA'yı yeniden başlat",  // "Redémarrer HA"
     "HA yeniden başlatılsın mı?",  // "Redémarrer Home Assistant ?"
     "Tablet yeniden başlatılsın mı?",  // "Redémarrer la tablette ?"
-    "Düşünüyor...",  // "Reflexion..."
     "Portala ulaş",  // "Rejoins le portail"
     "Tekrar oyna",  // "Rejouer"
     "Aynı takımlarla tekrar oyna",  // "Rejouer avec les mêmes équipes"
@@ -8065,6 +8064,7 @@ static const char* const kI18n_tr[] = {
     "50 hamle kuralı",  // "Règle des 50 coups"
     "Oyun kuralları",  // "Règles du jeu"
     "Düşünme  %d %%",  // "Réflexion  %d %%"
+    "Düşünüyor...",  // "Réflexion..."
     "Ayarlar",  // "Réglages"
     "Yanıt",  // "Réponse"
     "Eğim tepkisi +%18",  // "Réponse à l'inclinaison +18 %"

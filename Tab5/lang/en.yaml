@@ -221,7 +221,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Voice assistant ------------------------------------------------------------
 "Assistant vocal": "Voice assistant"
-"Réglages": "Settings"
+"Réglages": "Settings"
 "Détails": "Details"
 "Cerveau / LLM": "Brain / LLM"
 "Taille du texte": "Text size"
@@ -230,7 +230,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "RÉPONSE": "ANSWER"
 "Prêt": "Ready"
 "Parler": "Speak"
-"Reflexion...": "Thinking..."
+"Réflexion...": "Thinking..."
 "Écoute…": "Listening…"
 "Analyse…": "Thinking…"
 "Réponse": "Answer"

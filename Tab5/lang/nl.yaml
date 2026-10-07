@@ -223,7 +223,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Voice assistant ------------------------------------------------------------
 "Assistant vocal": "Spraakassistent"
-"Réglages": "Opties"
+"Réglages": "Opties"
 "Détails": "Details"
 "Cerveau / LLM": "Brein / LLM"
 "Taille du texte": "Tekstgrootte"
@@ -232,7 +232,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "RÉPONSE": "ANTWOORD"
 "Prêt": "Klaar"
 "Parler": "Spreek"
-"Reflexion...": "Denkt na..."
+"Réflexion...": "Denkt na..."
 "Écoute…": "Luistert…"
 "Analyse…": "Analyse…"
 "Réponse": "Antwoord"
