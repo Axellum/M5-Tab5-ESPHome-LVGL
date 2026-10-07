@@ -1326,7 +1326,11 @@ blueprint:
             text:
 
 mode: queued
-max: 25
+# max 50, plus 25 (audit du 07/10/2026, HA-2) : éteindre une maison depuis le popup
+# Maison change d'un coup l'état de ~30 entités, donc ~30 déclenchements en file ; au-delà
+# de 25, les derniers étaient abandonnés sans trace (max_exceeded: silent) et leur tuile
+# restait fausse jusqu'à la reconnexion. Chaque passage est court (une mesure, un envoi).
+max: 50
 max_exceeded: silent
 # Les capteurs de plantes déclenchent souvent : avec les 5 traces par défaut, celle
 # d'une commande de l'écran disparaît en quelques minutes.
