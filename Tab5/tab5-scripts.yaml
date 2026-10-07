@@ -71,6 +71,7 @@ script:
           ModalRegistry::add(id(overlay_confirm_reboot), nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(reglages_confirmation),  nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(reglables_liste),        nullptr,            ModalRegistry::SUBWINDOW);
+          ModalRegistry::add(id(roue_actions),           nullptr,            ModalRegistry::SUBWINDOW);
 
   # Console système (layer plein cadre, sans animation), seule ouverture : par
   # tab5_ecran_ouvrir (tab5-ha-controls.yaml), que lancent l'appui long de l'engrenage
@@ -491,6 +492,8 @@ interval:
           // Liste de la tuile − / + (ADR-0033) : une sous-fenêtre, pas un popup ; elle
           // se referme après la même inactivité.
           if (idle >= UIIdle::POPUP_MS && reglables_liste_ouverte()) reglables_liste_fermer();
+          // Roue d'actions rapides (ADR-0036) : sous-fenêtre aussi, même inactivité.
+          if (idle >= UIIdle::POPUP_MS && roue_actions_ouverte()) roue_actions_fermer();
 
           if (ModalRegistry::any_popup_visible()) {
               if (idle < UIIdle::POPUP_MS) return;

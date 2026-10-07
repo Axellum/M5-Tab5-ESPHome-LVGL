@@ -178,6 +178,34 @@ bool tuile_ouvrir_popup(int r, int t);
 const char* clim_nom();
 uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 
+// --- Roue d'actions rapides (tab5_roue.cpp, ADR-0036) ---
+// Icône d'un bouton (glyphe_roue, mdi_font_36) ; PLUS = « ⋯ ».
+enum class RoueIcone : uint8_t { PLUS, ETEINDRE, OUVRIR, STOP, FERMER, CHAUFFER, REFROIDIR, SECHER, VENTILER };
+struct RoueBouton {
+    RoueIcone icone;  // sans effet quand pct ≠ 0
+    uint8_t pct;      // 1 à 100 : « NN % » écrit à la place de l'icône ; 0 : l'icône
+    bool courant;     // l'état courant de l'appareil : fond et encre dans la couleur d'état
+};
+// Ouvre la roue autour du centre de `ancre` (n boutons de gauche à droite, n ≤
+// kRoueBoutons ; `couleur` : la couleur d'état de l'appareil, bord du halo et bouton
+// courant). `choisir(i)` part au toucher du bouton i, roue déjà fermée ; `rejouer()` la
+// repeint au changement de thème (il rappelle roue_ouvrir, ou ferme la roue). Faux, et
+// rien d'ouvert, sans widgets.
+bool roue_ouvrir(lv_obj_t* ancre, const RoueBouton* b, int n, uint32_t couleur, void (*choisir)(int),
+                 void (*rejouer)());
+// theme_rejouer_ui (tab5_theme.cpp) : roue ouverte repeinte dans la nouvelle palette.
+void roue_rejouer_theme();
+// tab5_tuiles.cpp : la roue de la tuile tRT, autour de `ancre` (pastille d'une carte du
+// mode HA, bouton d'une tuile météo, ou tout autre widget : une ligne d'une liste). Faux,
+// et rien d'ouvert, quand la tuile n'en a pas (type sans roue, lampe sans variateur,
+// option k ou r, clim sans capacité connue, moins de trois commandes) : l'appelant ouvre
+// alors le popup (tuile_ouvrir_popup).
+bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre);
+// tab5_cards.cpp, pour la roue : les lettres de capacité (ADR-0026) de la clim du
+// blueprint (r < 0) ou de celle de la tuile tRT, seulement si HA les a poussées (climr,
+// crRT) ; nullptr sinon.
+const char* clim_capacites_connues(int r, int t);
+
 // --- Alertes (tab5_central.cpp) ---
 // Libellé codé d'une alerte, composé dans la langue de l'écran : « @maj:<titre> » →
 // « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo », « @vigi:<niveau> » →

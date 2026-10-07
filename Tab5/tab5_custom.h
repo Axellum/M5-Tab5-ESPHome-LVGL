@@ -1173,6 +1173,30 @@ bool reglables_liste_ouverte();
 void reglables_volume_tablette();
 
 // =============================================================================
+// Roue d'actions rapides (tab5_roue.cpp, ADR-0036, discussion #278) : l'appui long d'une
+// lampe à variateur, d'un volet ou d'une clim ouvre jusqu'à six boutons ronds sur un arc
+// au-dessus de sa tuile (commandes de la tuile, puis « ⋯ » : le popup d'avant).
+// =============================================================================
+constexpr int kRoueBoutons = 6;  // « ⋯ » compris : clim = arrêt + 4 modes + « ⋯ »
+// Widgets (ui_components/roue_actions.yaml, roue_bouton.yaml), posés par le script
+// tab5_tuiles_ui (tab5-tuiles.yaml) avant le premier dessin.
+struct RoueUI {
+    lv_obj_t* fond = nullptr;                    // roue_actions : plein écran, un toucher hors des boutons la ferme
+    lv_obj_t* halo = nullptr;                    // roue_halo : disque de verre autour de l'ancre
+    lv_obj_t* bouton[kRoueBoutons] = {};         // roue_bouton_N
+    lv_obj_t* icone[kRoueBoutons] = {};          // roue_bouton_N_icone (mdi_font_36)
+    lv_obj_t* texte[kRoueBoutons] = {};          // roue_bouton_N_texte (« 50 % »)
+};
+extern RoueUI g_roue_ui;
+// Une fois, les widgets posés : geste bloqué sur le capteur, effet d'appui des boutons.
+void roue_brancher();
+// Toucher du bouton N : la roue se ferme, puis sa commande part (ou le popup s'ouvre).
+void roue_actions_choisir(int n);
+// Toucher hors des boutons, inactivité, popup ouvert, écran éteint : la roue se ferme.
+void roue_actions_fermer();
+bool roue_actions_ouverte();
+
+// =============================================================================
 // Énergie (ADR-0028, discussion #278) — tab5_energie.cpp
 // =============================================================================
 // Popup « Énergie » (energie_popup.yaml) : l'instantané d'une installation solaire
