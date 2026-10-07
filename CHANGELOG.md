@@ -25,7 +25,8 @@ de la tuile − / + (#379).
   (1970 à 2200) comme dans l'historique des températures.
 - **Bandeaux d'alerte** : leur texte passe par le même filtre que l'historique des alertes (aucun
   caractère que les polices n'ont pas, plus de carré vide).
-- **Accents** : « Journée » (onglet du jour des prévisions) et « Redémarrage... » (console).
+- **Accents** : « Journée » (onglet du jour des prévisions), « Redémarrage... » (console) et
+  « Réflexion... » (assistant vocal).
 - **Console** : plus de 0/0 converti en entier quand la mémoire totale vaut 0 (tablette virtuelle),
   ni de volume NaN converti en entier.
 - Vérifié sans changement : 10 bandes de prévision mini/maxi suffisent (7 jours au plus, par jour
