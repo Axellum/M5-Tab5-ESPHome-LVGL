@@ -1,0 +1,93 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file maison_popup.yaml
+# @role Popup « Maison » (ADR-0037, 07/10/2026, discussion #278) : toute la maison, pièce
+#       par pièce, comme un tableau de bord HA. Une colonne par pièce qui a des appareils
+#       (en-tête = son nom), une ligne par tuile (pastille de l'icône, nom, état, « ⋯ »),
+#       « Éteindre les lumières » dans la barre de titre. Ouvert par « Aller à l'écran →
+#       Maison » ou, en mode HA, par un tap sur le titre de la pièce (carte centrale).
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Maison » dans
+#       tab5_modal_registry_init). Corps : x 12..1238, y 72..672 — colonnes de
+#       (1226 − 12 × (n − 1)) / n px, en-têtes de 40 px, lignes de 104 px tous les 112.
+#       Position, largeur, textes et couleurs : tab5_maison.cpp (disposer) ; aucune
+#       valeur posée ici que celles d'avant la première ouverture. L'icône de la barre de
+#       titre (home) vient de la palette des tuiles de mdi_font_32. Le bouton est 10 px à
+#       gauche de la croix, comme « Tout marquer comme lu » des alertes (alertes_popup.yaml).
+# @ai_instruction Un widget de plus = son champ dans MaisonUI (tab5_custom.h) et sa ligne
+#       dans le script tab5_maison_ouvrir (tab5-maison.yaml).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: maison_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(maison_popup));" } }
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F02DC", icon_style: "style_text_accent", title: "Maison", title_id: "maison_popup_titre", close_btn_id: "btn_maison_close", close_lambda: "animate_popup_close(id(maison_popup));" } }
+
+          # « Éteindre les lumières » : masqué sans aucune lumière (tab5_maison.cpp).
+          - button:
+              id: btn_maison_eteindre
+              align: TOP_RIGHT
+              x: -100
+              y: 4
+              width: 320
+              height: 44
+              hidden: true
+              styles: style_clim_btn
+              on_short_click:
+                - lambda: 'maison_eteindre_lumieres();'
+              widgets:
+                - label: { text: "Éteindre les lumières", align: CENTER, width: 300, long_mode: DOT, text_align: CENTER, text_font: roboto_22 }
+
+          # Aucune pièce n'a d'appareil (« Aller à l'écran → Maison » sur une tablette vide).
+          - label: { id: maison_vide, text: "Aucun appareil", align: CENTER, y: 36, hidden: true, styles: style_text_dim }
+
+          # ═══ EN-TÊTES : le nom de chaque pièce ═══
+          - !include { file: maison_entete.yaml, vars: { r: "0" } }
+          - !include { file: maison_entete.yaml, vars: { r: "1" } }
+          - !include { file: maison_entete.yaml, vars: { r: "2" } }
+          - !include { file: maison_entete.yaml, vars: { r: "3" } }
+          - !include { file: maison_entete.yaml, vars: { r: "4" } }
+
+          # ═══ LIGNES : la tuile tRT (pièce R, tuile T) ═══
+          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "4" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "4" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "4" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "4" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "4" } }

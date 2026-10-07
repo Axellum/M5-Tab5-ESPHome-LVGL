@@ -178,6 +178,36 @@ bool tuile_ouvrir_popup(int r, int t);
 const char* clim_nom();
 uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 
+// --- Popup Maison (ADR-0037) : dessin dans tab5_maison.cpp, modèle dans tab5_tuiles.cpp ---
+// Widgets d'une tuile dessinée façon carte « tile » de HA : pastille ronde (fond = couleur
+// de l'état, opacité posée par le YAML), son icône, le nom, la ligne d'état.
+struct TuileWidgets {
+    lv_obj_t* pastille;
+    lv_obj_t* icone;
+    lv_obj_t* nom;
+    lv_obj_t* etat;
+};
+// tab5_tuiles.cpp. Titre de la pièce R (son nom, « Pièce n » sans nom) ; faux si elle n'a
+// aucun appareil. A-t-elle une lumière pilotable (tuile lum sans l'option r) ?
+bool tuiles_piece_titre(int r, char* out, size_t n);
+bool tuiles_piece_a_lumieres(int r);
+// « Pièce : tout éteindre » de la pièce R (pR / eteindre ; lumieres / eteindre en mode
+// héritage), comme « Tout éteindre » du popup lumière.
+void tuiles_piece_eteindre(int r);
+// Faux si la tuile tRT est vide. `agit` : un toucher fait quelque chose ; `appui_long` :
+// elle a un appui long (bouton « ⋯ » de sa ligne).
+bool tuile_gestes(int r, int t, bool& agit, bool& appui_long);
+// La tuile tRT sur les widgets `w` (mots et couleurs de sa carte du mode HA), textes coupés
+// à `largeur` px. Faux si elle est vide.
+bool tuile_peindre_ligne(int r, int t, const TuileWidgets& w, int32_t largeur);
+// Geste d'une ligne : celui de la tuile (toucher, ou appui long ; une clim ouvre son popup).
+void tuile_appui_maison(int r, int t, bool long_appui);
+// tab5_maison.cpp, appelées par tab5_tuiles.cpp : l'état ou une minuterie de la tuile tRT a
+// changé (sa ligne, si le popup est affiché) ; les définitions, les zones ou le thème ont
+// changé (tout, s'il est affiché). Ne coûtent qu'un test quand il est fermé.
+void maison_tuile_changee(int r, int t);
+void maison_definitions_changees();
+
 // --- Alertes (tab5_central.cpp) ---
 // Libellé codé d'une alerte, composé dans la langue de l'écran : « @maj:<titre> » →
 // « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo », « @vigi:<niveau> » →

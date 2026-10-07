@@ -611,6 +611,7 @@ font:
       - "\U000F0091"  # battery-unknown (pas de mesure)
       - "\U000F011E"  # cellphone-basic
       - "\U000F018D"  # console (mini icône : Console système)
+      - "\U000F01D8"  # dots-horizontal (« ⋯ » d'une ligne du popup Maison, ADR-0037)
       - "\U000F024A"  # flower (mini icône : Plantes)
       - "\U000F0297"  # gamepad-variant (mini icône : Arcade)
       - "\U000F036C"  # microphone (mini icône : Assistant vocal)

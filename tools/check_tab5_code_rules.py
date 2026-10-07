@@ -325,7 +325,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_energie.cpp", "glyphe_carte"): ("energie_icone_*",),
     # Pièces (ADR-0023) : icônes 3.1 du mode héritage (cartes du mode HA, épaules gauches
     # de l'accueil), ampoule et flèche du volet sur les épaules droites de toutes les tuiles.
-    ("tab5_tuiles.cpp", "heritage_glyphe_carte"): ("icon_sw?",),
+    # Le popup Maison (ADR-0037) montre la carte de chaque tuile, héritage compris (maison_icone_*, mdi_font_32).
+    ("tab5_tuiles.cpp", "heritage_glyphe_carte"): ("icon_sw?", "maison_icone_*"),
     ("tab5_tuiles.cpp", "heritage_glyphe_selecteur"): ("icon_light_sel_*",),
     ("tab5_tuiles.cpp", "heritage_glyphe_epaule"): (
         "icon_card_pc", "icon_card_shutter1", "icon_card_lit_j2", "icon_card_salon_j3", "icon_card_led_j4"),
@@ -355,6 +356,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     # (appareil_icone, mdi_font_70, 06/10/2026) montre l'icône de sa tuile comme les cartes.
     # La tuile − / + (ADR-0033, tab5_reglables.cpp) montre la même palette en mdi_font_45 :
     # reglable_icone sur la carte clim, reglable_ligne_*_icone dans sa liste.
+    # Le popup Maison (ADR-0037) : la même palette en mdi_font_32, maison_icone_* (une ligne par tuile).
     ("tab5_tuiles_icones.h", ""): (
         "icon_sw?",
         "icon_card_*",
@@ -363,6 +365,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
         "appareil_icone",
         "reglable_icone",
         "reglable_ligne_*_icone",
+        "maison_icone_*",
     ),
     ("tab5-sensors-domotique.yaml", "moisture_1"): ("icon_pot_s*",),
 }
