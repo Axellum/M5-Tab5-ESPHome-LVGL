@@ -161,8 +161,18 @@ async def redemarrer(ha: HA) -> None:
     if ha.ws is not None:
         await ha.ws.ws.close()
     docker("restart", "-t", "60", CONTENEUR)
-    await asyncio.sleep(3)
-    await demarrer(ha)
+    # Pas demarrer() : une fois l'onboarding fini, HA ne publie plus /api/onboarding (404,
+    # comme dans verifier_installation.redemarrer_ha). Le jeton reste valable.
+    fin = time.monotonic() + 300
+    while time.monotonic() < fin:
+        try:
+            if (await ha.get("/api/config")).get("state") == "RUNNING":
+                await ha.websocket()
+                return
+        except Exception:  # noqa: BLE001 — HA redémarre : connexion refusée, 502…
+            pass
+        await asyncio.sleep(2)
+    raise Echec("Home Assistant n'est pas revenu (état RUNNING) dans les 300 s après son redémarrage")
 
 
 async def notification(ha: HA, version: str, delai: float = 120.0) -> str:
