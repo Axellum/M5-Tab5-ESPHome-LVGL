@@ -26,6 +26,15 @@ d'actions rapides (#366), popup « Maison » (#368), écran de l'appui long des 
 choix, « Maison » compris (#364, #373), blueprint plus lisible (#373), table unique des bandeaux
 d'alerte (#360).
 
+### 2026-10-07 — Bouton « Ouvrir Tab5 dans HACS »
+
+Plus besoin d'ajouter le dépôt à la main dans les « Custom repositories » de HACS : un bouton
+de la page d'installation (étape 5) et un lien du guide « Fichiers Home Assistant » (section
+« Avec HACS ») ouvrent le dépôt dans HACS par My Home Assistant (`hacs_repository`, catégorie
+`integration`) ; HACS propose alors de l'ajouter, puis « Download ». L'ajout à la main reste
+décrit pour qui n'a pas My Home Assistant. Pas encore essayé sur un vrai Home Assistant :
+HACS ne propose l'intégration qu'à partir de la 3.7.0 stable, ou de la rc.5 avec les bêtas.
+
 ### 2026-10-07 — Blueprint « Tab5 — emplacements » plus lisible
 
 Relecture de ce que voit un utilisateur dans l'éditeur de Home Assistant. Aucune clé d'entrée,

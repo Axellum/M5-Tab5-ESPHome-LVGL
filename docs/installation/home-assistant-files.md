@@ -13,8 +13,8 @@ Two ways to put them in place: [with HACS](#with-hacs), which then updates them 
 From release 3.7.0, the files also come with a small integration, « Tab5 », that [HACS](https://hacs.xyz) installs ([ADR-0035](../decisions/0035-hacs-integration-ha-files.md)). HACS must already be installed. HACS offers full releases only: pre-releases (Beta channel) only if beta versions are switched on for this repository in HACS.
 
 1. Add the `packages:` line of [step 2](#2-one-line-in-configurationyaml) to `configuration.yaml`, if it is not there yet.
-2. In HACS: *⋮ (top right) → Custom repositories*, repository `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*.
-3. Search for **Tab5** in HACS, open it, *Download*.
+2. **[Open Tab5 in HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=Axellum&repository=M5-Tab5-ESPHome-LVGL&category=integration)**: the link goes through My Home Assistant, which asks for your Home Assistant address the first time, then HACS offers to add the repository: *Add*. Without the link: *⋮ (top right) → Custom repositories*, repository `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*, then search for **Tab5** in HACS and open it.
+3. On the Tab5 page of HACS, *Download*.
 4. **Restart** Home Assistant.
 5. *Settings → Devices & services → Add integration → Tab5*. Leave « Then update the tablet » ticked to have the firmware of the same version installed after the files, at each release ([updates](updates.md#home-assistant-files)).
 
@@ -79,8 +79,8 @@ Deux façons de les mettre en place : [avec HACS](#avec-hacs), qui les met ensui
 Depuis la release 3.7.0, les fichiers viennent aussi avec une petite intégration, « Tab5 », que [HACS](https://hacs.xyz) installe ([ADR-0035](../decisions/0035-hacs-integration-ha-files.md)). HACS doit déjà être installé. HACS ne propose que les releases complètes : les pré-releases (canal Bêta) seulement si les versions bêta sont activées pour ce dépôt dans HACS.
 
 1. Ajoutez la ligne `packages:` de l'[étape 2](#2-une-ligne-dans-configurationyaml) à `configuration.yaml`, si elle n'y est pas déjà.
-2. Dans HACS : *⋮ (en haut à droite) → Custom repositories* (dépôts personnalisés), dépôt `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*.
-3. Cherchez **Tab5** dans HACS, ouvrez-le, *Download* (télécharger).
+2. **[Ouvrir Tab5 dans HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=Axellum&repository=M5-Tab5-ESPHome-LVGL&category=integration)** : le lien passe par My Home Assistant, qui demande l'adresse de votre Home Assistant la première fois, puis HACS propose d'ajouter le dépôt : *Add* (ajouter). Sans le lien : *⋮ (en haut à droite) → Custom repositories* (dépôts personnalisés), dépôt `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL`, type **Integration**, *Add*, puis cherchez **Tab5** dans HACS et ouvrez-le.
+3. Sur la page de Tab5 dans HACS, *Download* (télécharger).
 4. **Redémarrez** Home Assistant.
 5. *Paramètres → Appareils et services → Ajouter une intégration → Tab5*. Laissez « Mettre ensuite la tablette à jour » coché pour que le firmware de la même version s'installe après les fichiers, à chaque release ([mises à jour](updates.md#fichiers-home-assistant)).
 
