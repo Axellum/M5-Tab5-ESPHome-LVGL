@@ -129,10 +129,11 @@ obj:
                       pad_all: 6
                     on_value:
                       # Label % en direct ; l'appel HA est débouncé (un seul light.turn_on
-                      # une fois le doigt immobile — cf. tab5_debounce_light_brightness)
+                      # une fois le doigt immobile — cf. tab5_debounce_light_brightness).
+                      # Même % que la carte et la roue (lum_pct, tab5_core) ; 0 : éteinte.
                       - lambda: |-
                           char buf[8];
-                          snprintf(buf, sizeof(buf), "%d %%", (int)(x * 100.0f / 255.0f));
+                          snprintf(buf, sizeof(buf), "%d %%", x > 0 ? lum_pct(x) : 0);
                           lv_label_set_text(id(lbl_light_brightness_val), buf);
                       - script.execute: tab5_debounce_light_brightness
 

@@ -650,9 +650,8 @@ void vue_def(const Def& d, const Etat& e, int r, int t, Vue& v) {
     switch (type) {
         case Type::LUM:
             actif = est(s, "on");
-            if (actif && (d.options & OPT_D) && !std::isnan(e.valeur)) {
-                const int pct = std::max(1, std::min(100, static_cast<int>(std::lround(e.valeur * 100.0f / 255.0f))));
-                snprintf(v.ligne, sizeof(v.ligne), "%d %%", pct);
+            if (actif && (d.options & OPT_D) && lum_pct(e.valeur) >= 0) {
+                snprintf(v.ligne, sizeof(v.ligne), "%d %%", lum_pct(e.valeur));
             } else {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Allumé") : tr("Éteint"));
             }
@@ -1089,17 +1088,19 @@ bool popup_ouvert() {
 }
 
 // Arc et « NN % » de la ligne choisie ; pas pendant un glissement (le retour de HA
-// ferait sauter le curseur sous le doigt). Éteinte : 0.
+// ferait sauter le curseur sous le doigt). Éteinte, ou luminosité inconnue : 0 ; allumée,
+// le % de la carte et de la roue (lum_pct).
 void popup_lumiere_arc() {
     const TuilesUI& u = g_tuiles_ui;
     if (s_pl.n == 0 || u.lum_arc == nullptr || u.lum_pct == nullptr) return;
     if (lv_obj_has_state(u.lum_arc, LV_STATE_PRESSED)) return;
     const int r = s_pl.piece, t = s_pl.tuiles[s_pl.choix];
     const float v = lumiere_luminosite(r, t);
-    const int arcv = lumiere_allumee(r, t) ? tab5_float_vers_int(v, 0, 255, 0) : 0;
+    const bool allumee = lumiere_allumee(r, t);
+    const int arcv = allumee ? tab5_float_vers_int(v, 0, 255, 0) : 0;
     lv_arc_set_value(u.lum_arc, arcv);
     char buf[12];
-    snprintf(buf, sizeof(buf), "%d %%", arcv * 100 / 255);
+    snprintf(buf, sizeof(buf), "%d %%", allumee ? std::max(0, lum_pct(v)) : 0);
     ui_text(u.lum_pct, buf);
 }
 
@@ -2333,8 +2334,8 @@ int roue_choix(const RoueTuile& rt, int i, RoueChoix c[kRoueChoix], RoueEnvoi en
     char nombre[8];
     switch (rt.action[i]) {
         case RoueAction::LUMINOSITE: {
-            // Luminosité 0-255 de l'état, en % (128 → 50).
-            const long pct = est(e.brut, "on") && std::isfinite(e.valeur) ? std::lround(e.valeur * 100.0f / 255.0f) : -1;
+            // Luminosité 0-255 de l'état, en % (128 → 50) ; éteinte ou inconnue : -1.
+            const int pct = est(e.brut, "on") ? lum_pct(e.valeur) : -1;
             for (uint8_t p : kRoueLuminosites) {
                 snprintf(nombre, sizeof(nombre), "%u", static_cast<unsigned>(p));
                 RoueChoix& x = choix("luminosite_pct", nombre, pct == p);
@@ -2410,8 +2411,7 @@ int roue_jauge(int r, int t) {
         case Type::LUM:
             if (!(d.options & OPT_D)) return -1;
             if (!est(e.brut, "on")) return 0;
-            return std::isfinite(e.valeur) ? std::clamp(static_cast<int>(std::lround(e.valeur * 100.0f / 255.0f)), 0, 100)
-                                           : -1;
+            return lum_pct(e.valeur);
         case Type::VOL:
             return vol_position_connue(e) ? std::clamp(static_cast<int>(std::lround(e.valeur)), 0, 100) : -1;
         case Type::CLI: {

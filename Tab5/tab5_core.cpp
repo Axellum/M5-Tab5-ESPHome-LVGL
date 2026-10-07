@@ -194,6 +194,13 @@ int tab5_float_vers_int(float v, int bas, int haut, int defaut) {
     return static_cast<int>(v);
 }
 
+int lum_pct(float v) {
+    if (!std::isfinite(v)) return -1;
+    const float b = v < 0.0f ? 0.0f : (v > 255.0f ? 255.0f : v);
+    const int pct = static_cast<int>(std::lround(b * 100.0f / 255.0f));
+    return pct < 1 ? 1 : (pct > 100 ? 100 : pct);
+}
+
 // ─── Batterie de la tablette montée ou pas (discussion #278, 05/10/2026) ───
 
 PresenceBatterie batterie_lecture(DetectionBatterie& d, float tension, uint32_t maintenant_ms) {
