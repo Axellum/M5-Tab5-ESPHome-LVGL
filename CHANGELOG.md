@@ -4,7 +4,119 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-Pré-releases tirées de cette section, sur le canal bêta :
+## [3.7.0] — 2026-10-07
+
+De `v3.6.0` à aujourd'hui : quarante-neuf pull requests (#326 → #375 ; #369 est une discussion),
+dont quatre de pré-release (#338, #343, #359, #374) et quinze nées des demandes et des essais de
+@husyildiz dans la discussion #278 (#330 à #334, #341, #342, #347 à #350, #361, #363, #366,
+#368) — merci à @husyildiz —, et celle de la release. Merci aussi à Jiuhai (@poonjh) pour ses
+notes sur le co-processeur WiFi et l'alimentation (#372). Même code que la
+[v3.7.0-rc.5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.5)
+(firmware et fichiers HA), hors numéro de version.
+- **Les fichiers Home Assistant en un clic, par HACS** (#363, #365, #371, #375, [ADR-0035](docs/decisions/0035-hacs-integration-ha-files.md)) :
+  nouvelle intégration « Tab5 ». Le dépôt s'ajoute à HACS comme dépôt personnalisé (un bouton de
+  la page d'installation l'ouvre dans HACS). À chaque version, après le redémarrage que demande
+  HACS, elle sauvegarde vos fichiers, pose les nouveaux, vérifie la configuration (retour en
+  arrière si elle casse) et la recharge, puis lance la mise à jour de la tablette (option, cochée
+  par défaut). `tab5_home_assistant.zip` et la mise à jour à la main restent.
+- **Des fenêtres comme dans un tableau de bord Home Assistant** : une roue d'actions rapides à
+  l'appui long d'une lampe, d'un volet ou d'une clim (#366, [ADR-0036](docs/decisions/0036-quick-action-wheel.md)) ;
+  un popup « Maison », toute la maison pièce par pièce (#368, [ADR-0037](docs/decisions/0037-house-popup.md)) ;
+  le popup d'un appareil (interrupteur, prise, scène…) et des cartes du mode HA dessinées comme
+  la carte « tile » (#350) ; un volet dessiné à faire glisser dans le popup du volet (#333,
+  #349) ; un popup Température, historique des deux températures et prévision, lu dans les
+  statistiques de HA (#354, [ADR-0032](docs/decisions/0032-temperature-history-popup.md)) ; un
+  popup Réglages sur la tablette : luminosité, extinction, thème, langue (#345).
+- **Accueil** : sous l'horloge, jusqu'à trois lignes de capteurs en plus des plantes (#344,
+  [ADR-0031](docs/decisions/0031-row-under-the-clock.md)) ; les − / + de la carte clim règlent
+  l'appareil de votre choix (#352, [ADR-0033](docs/decisions/0033-adjustable-tile.md)) ; un
+  appui long sur chacun des trois boutons du haut, son écran au choix dans le blueprint,
+  « Maison » compris (#345, #364, #373) ; les appareils des pièces sur la météo au choix (#331).
+- **Alertes de la carte centrale** (#351, #353, #355, #356, #358, #360, [ADR-0034](docs/decisions/0034-central-card-alerts.md)) :
+  une alerte lue ne revient que si elle change, même après un redémarrage de HA ; six listes pour
+  choisir ce qui s'affiche, dont une étiquette « Tab5 · alerte » et les piles faibles ; rang
+  « 2/6 » et alerte rouge en premier ; l'historique des 20 dernières à l'appui long, et « Tout
+  marquer comme lu ».
+- **Écran et batterie** : extinction automatique au choix et rallumage à « Okay Nabu » (#342) ;
+  un mode économie d'énergie, enclenché tout seul sur batterie (#357) ; une prise à la place de
+  la batterie quand il n'y en a pas (#332) ; batterie et charge des deux cœurs dans la console
+  système (#348).
+- **Énergie** : plusieurs sources solaires additionnées (#330).
+- **Tableau de bord HA de la tablette** : vues Réglages et Santé qui expliquent quoi faire, dans
+  les sept langues de l'écran (#326, #328, #329) ; blueprint « Tab5 — emplacements » plus
+  lisible, une phrase d'aide par champ (#373).
+- **Corrigé** : avec le package du volet à course simulée, un volet qu'il ne suivait pas ne
+  répondait plus (#341) ; un appui sur le bouton d'alimentation passait pour un plantage (#347).
+- **Documentation** (#327, #334 à #337, #339, #340, #346, #361, #362, #367, #370, #372) : un site
+  avec menu et recherche, construit depuis `docs/`, dont l'accueil est le README
+  ([ADR-0030](docs/decisions/0030-documentation-site.md)) ; le guide d'installation en pages,
+  avec des captures de Home Assistant prises par la CI ; une notice d'utilisation, chaque tap et
+  appui long ; les deux modes vocaux ; la ST7121 tourne chez un utilisateur ; pourquoi les
+  entités restent en français ; le co-processeur WiFi et l'alimentation.
+
+**Ordre de mise à jour** (lu dans le code, pas essayé en entier) : un firmware 3.7.0 avec les
+fichiers HA de la 3.6.0 marche, mais le popup Température et l'historique des alertes restent
+vides, les nouvelles sections du blueprint manquent, et un appui sur le bouton d'alimentation
+déclenche l'alerte « reboot inattendu » ; un firmware 3.6.0 avec les fichiers de la 3.7.0 ignore
+les nouvelles clés (rangée, tuile − / +, boutons du haut, rang des alertes).
+
+### À faire en mettant à jour depuis 3.6.0
+
+1. **Home Assistant d'abord**, au choix :
+   - **par HACS** (nouveau) : le guide [Fichiers Home Assistant](docs/installation/home-assistant-files.md),
+     section « Avec HACS » (ajouter le dépôt par le bouton « Ouvrir Tab5 dans HACS »,
+     *Download*, redémarrer Home Assistant, ajouter l'intégration « Tab5 ») ; les versions
+     suivantes se font ensuite en un clic ;
+   - **à la main**, comme avant : remplacer les fichiers par ceux de `tab5_home_assistant.zip`
+     (dont les nouveaux `packages/tab5_historique.yaml` et `custom_templates/tab5_alertes.jinja`,
+     et le blueprint), puis recharger toute la configuration YAML et les modèles Jinja
+     personnalisés. Un blueprint importé par son URL : le réimporter.
+2. **Firmware** : entité « Firmware » dans Home Assistant (avec l'intégration, son option la
+   lance toute seule).
+3. **Quand vous voulez** : les nouvelles sections repliées du blueprint (« Sous l'horloge »,
+   « Tuile − / + », « Boutons du haut », l'énergie en trois sections) et sa case « La seconde
+   température est dehors » ; les listes « Tab5 · alertes : … » ; les réglages de l'appareil
+   « Extinction auto de l'écran », « Rallumer l'écran à Okay Nabu » et « Économie d'énergie » ;
+   le tableau de bord à refaire (étape 7 du guide), pour les nouvelles entités.
+
+### Mesures de la version
+
+- Image du firmware : +196 608 o par rapport à la 3.6.0 (binaires OTA publiés, `st7123` :
+  4 591 616 o pour la rc.5, même code, contre 4 395 008 o). RAM statique : 192 602 o (43,2 %)
+  contre 180 720 o (40,6 %), lue dans le journal de la publication de la rc.5.
+- Sur la tablette de l'auteur : les builds de `main` y ont tourné au fil des merges, les 06 et
+  07/10 ; la rc.5 publiée y est installée depuis le 07/10 à 13 h 33 (OTA, version lue par
+  l'API), écran rallumé seul. L'auteur a essayé à l'écran la roue, le popup « Maison » et les
+  appuis longs des boutons du haut.
+- Rendu hors tablette (CI) : les nouveaux écrans (roue, Maison, appareil, volet, Température,
+  Alertes, Réglages, rangée, console) capturés à chaque PR ; vert sur `main` au dernier
+  changement d'écran (#373).
+- Intégration HACS (CI, `integration-hacs.yml`) : hassfest, validation de HACS, puis
+  installation, mise à jour et retour en arrière dans un Home Assistant neuf.
+- Compilations requises de la CI (dernière ESPHome et version minimale) : vertes sur `main`.
+
+### Problèmes connus
+
+Ceux de la 3.6.0, et :
+- **HACS** ne propose un dépôt qu'à partir de sa dernière release complète : avant cette
+  version, l'ajout échouait (« Dépôt introuvable », essayé le 07/10 avec la 3.6.0). L'ajout et
+  le téléchargement n'ont donc jamais été faits dans un vrai HACS avant la publication. Au premier
+  chargement, la boîte « Ajouter un référentiel personnalisé » de HACS peut s'afficher vide :
+  recharger la page ;
+- jamais essayés faute de matériel chez l'auteur : une batterie montée (le sens du courant lu
+  par M5Unified, dont dépendent « Sur batterie » et le mode économie d'énergie) et plusieurs
+  onduleurs solaires ;
+- le popup Température lit les statistiques longue durée : un capteur sans `state_class` n'y a
+  pas d'historique ;
+- la capture de l'éditeur du blueprint, dans le guide, montre encore l'ancienne description ;
+- les nouveaux textes en allemand, néerlandais, espagnol, italien et turc (écran et tableau de
+  bord) sont traduits par une IA, pas encore relus ;
+- les noms des entités de la tablette restent en français (choix expliqué dans
+  `docs/translations.md`).
+
+### Pré-releases
+
+Tirées de cette version, sur le canal bêta :
 [v3.7.0-rc.1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.7.0-rc.1)
 le 05/10/2026 sur `52a0dba` (batterie ou USB, plusieurs sources solaires, appareils sur la
 météo au choix, tableau de bord), puis
@@ -32,8 +144,10 @@ Plus besoin d'ajouter le dépôt à la main dans les « Custom repositories » d
 de la page d'installation (étape 5) et un lien du guide « Fichiers Home Assistant » (section
 « Avec HACS ») ouvrent le dépôt dans HACS par My Home Assistant (`hacs_repository`, catégorie
 `integration`) ; HACS propose alors de l'ajouter, puis « Download ». L'ajout à la main reste
-décrit pour qui n'a pas My Home Assistant. Pas encore essayé sur un vrai Home Assistant :
-HACS ne propose l'intégration qu'à partir de la 3.7.0 stable, ou de la rc.5 avec les bêtas.
+décrit pour qui n'a pas My Home Assistant. Essayé le 07/10 sur un vrai Home Assistant, avec la
+3.6.0 comme dernière release complète : le bouton ouvre bien la confirmation de HACS, mais l'ajout
+échoue (« Dépôt introuvable »). HACS vérifie le dépôt sur sa dernière release complète, même avec
+les bêtas : rien avant la 3.7.0 stable.
 
 ### 2026-10-07 — Blueprint « Tab5 — emplacements » plus lisible
 
