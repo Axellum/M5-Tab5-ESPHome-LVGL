@@ -48,6 +48,8 @@ CODES = {
     "rien": "AUCUN", "assistant": "ASSISTANT", "calendrier": "CALENDRIER", "reveil": "REVEIL",
     "clim": "CLIM", "plantes": "PLANTES", "tv": "TV", "console": "CONSOLE", "energie": "ENERGIE",
     "reglages": "REGLAGES", "alertes": "ALERTES", "arcade": "ARCADE",
+    # Ajouté à la fin (07/10/2026) : la NVS garde l'index du code dans kCodesEcran.
+    "maison": "MAISON",
 }
 # Bouton (ordre de BoutonHaut) → (widget, mini icône).
 BOUTONS = (("BOUTON_MAISON", "btn_control_ha", "icon_mini_ha"),
@@ -58,6 +60,7 @@ EN_TETES = {
     "ASSISTANT": "assistant_popup.yaml", "CALENDRIER": "calendar_popup.yaml", "REVEIL": "alarm_popup.yaml",
     "CLIM": "climate_popup.yaml", "PLANTES": "pots_popup.yaml", "TV": "tv_remote_popup.yaml",
     "ENERGIE": "energie_popup.yaml", "REGLAGES": "reglages_popup.yaml", "ALERTES": "alertes_popup.yaml",
+    "MAISON": "maison_popup.yaml",
 }
 
 
@@ -107,6 +110,8 @@ def test_cle_appuis_des_deux_cotes():
 
 def test_memes_codes_firmware_et_blueprint():
     assert _codes_firmware() == CODES
+    # Même ORDRE : la NVS garde l'index du code, un code de plus va à la fin.
+    assert list(_codes_firmware()) == list(CODES)
     bp = yaml.load(_lire(BLUEPRINT).replace("!input", "!!str"), Loader=yaml.SafeLoader)
     section = bp["blueprint"]["input"]["boutons_haut"]
     assert section.get("collapsed") is True

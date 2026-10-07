@@ -32,7 +32,7 @@ Your devices — lights, shutters, climate, plants, TV, sensors — are picked i
 | Climatisation · Climate | the climate unit of the home card | [climate, any brand](adapt-to-your-home.md#limits) |
 | Plantes · Plants | up to five moisture sensors | |
 | Sous l'horloge · Under the clock (folded) | up to three lines of four sensors under the clock (temperatures, humidity, production, batteries, detectors, switches: shown, not controlled), the place of the plants line, the time per line | [user manual, home screen](../notice/home.md) |
-| Boutons du haut · Top buttons (folded) | the screen a long press opens on each of the three buttons at the top right (house, gear, gamepad): Automatic, Nothing, or a screen | [user manual, home screen](../notice/home.md#the-three-buttons-top-right-6-to-8) |
+| Boutons du haut · Top buttons (folded) | the screen a long press opens on each of the three buttons at the top right (house, gear, gamepad): Automatic, Nothing, or a screen, the house window included | [user manual, home screen](../notice/home.md#the-three-buttons-top-right-6-to-8) |
 | Planning de travail · Work schedule | empty: the calendar of the « Tab5 · agenda de travail » list ([step 5](sources.md)) | |
 | Météo · Weather | empty: the weather lists of [step 5](sources.md). Filled, it writes its choice into them and wins over them; with several tablets, fill it in one automation only | [weather providers](weather.md) |
 | Énergie · Energy (folded) | solar, grid, home and battery | [solar energy](adapt-to-your-home.md#solar-energy-optional) |
@@ -79,7 +79,7 @@ Vos appareils — lumières, volets, clim, plantes, TV, capteurs — se choisiss
 | Climatisation · Climate | la clim de la carte de l'accueil | [clim, toutes marques](adapt-to-your-home.md#limites) |
 | Plantes · Plants | jusqu'à cinq capteurs d'humidité | |
 | Sous l'horloge · Under the clock (repliée) | jusqu'à trois lignes de quatre capteurs sous l'horloge (températures, humidités, production, batteries, détecteurs, interrupteurs : montrés, pas commandés), la place de la ligne des plantes, la durée d'une ligne | [notice, écran d'accueil](../notice/home.md#version-française) |
-| Boutons du haut · Top buttons (repliée) | l'écran qu'ouvre l'appui long de chacun des trois boutons en haut à droite (maison, engrenage, manette) : Automatique, Rien, ou un écran | [notice, écran d'accueil](../notice/home.md#les-trois-boutons-en-haut-à-droite-6-à-8) |
+| Boutons du haut · Top buttons (repliée) | l'écran qu'ouvre l'appui long de chacun des trois boutons en haut à droite (maison, engrenage, manette) : Automatique, Rien, ou un écran, la fenêtre Maison comprise | [notice, écran d'accueil](../notice/home.md#les-trois-boutons-en-haut-à-droite-6-à-8) |
 | Planning de travail · Work schedule | vide : l'agenda de la liste « Tab5 · agenda de travail » ([étape 5](sources.md#version-française)) | |
 | Météo · Weather | vide : les listes météo de l'[étape 5](sources.md#version-française). Remplie, elle écrit son choix dans ces listes et prime sur elles ; avec plusieurs tablettes, remplissez-la dans une seule automatisation | [fournisseurs météo](weather.md#version-française) |
 | Énergie · Energy (repliée) | solaire, réseau, maison et batterie | [énergie solaire](adapt-to-your-home.md#énergie-solaire-facultatif) |

@@ -786,6 +786,8 @@ blueprint:
                   value: alertes
                 - label: "Arcade"
                   value: arcade
+                - label: "Maison · House"
+                  value: maison
         appui_engrenage:
           name: "Engrenage : appui long · Gear: long press"
           default: auto
@@ -2156,7 +2158,7 @@ variables:
     - !input appui_manette
   appuis: >-
     {%- set codes = ['auto', 'rien', 'assistant', 'calendrier', 'reveil', 'clim', 'plantes', 'tv',
-                     'console', 'energie', 'reglages', 'alertes', 'arcade'] -%}
+                     'console', 'energie', 'reglages', 'alertes', 'arcade', 'maison'] -%}
     {%- set ns = namespace(l=[]) -%}
     {%- for c in appuis_choix -%}
       {%- set ns.l = ns.l + [c if c is string and c in codes else 'auto'] -%}

@@ -21,6 +21,16 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-07 — Boutons du haut : « Maison » parmi les choix de l'appui long
+
+Le popup « Maison » (#368, ADR-0037) s'ouvre aussi par l'appui long de l'un des trois boutons
+du haut : choix « Maison · House » dans la section « Boutons du haut » du blueprint
+« Tab5 — emplacements » (code `maison`, ajouté à la fin de `kCodesEcran` : les choix gardés en
+NVS ne bougent pas). La mini icône du bouton prend la maison de l'en-tête du popup (glyphe
+ajouté à `mdi_font_26`). Mettre le blueprint à jour d'abord : un firmware plus ancien lit
+`maison` comme un code inconnu et garde l'appui long automatique. Pas encore essayé sur la
+tablette.
+
 ### 2026-10-07 — Docs : cause de la panne du C6 du 05/08 revue
 
 `docs/troubleshooting.md` : le build du 05/08/2026 (ESPHome 2026.7, esp_hosted 2.12.9)

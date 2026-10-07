@@ -69,6 +69,7 @@ constexpr CodeEcran kCodesEcran[] = {
     {"reveil", Ecran::REVEIL},       {"clim", Ecran::CLIM},           {"plantes", Ecran::PLANTES},
     {"tv", Ecran::TV},               {"console", Ecran::CONSOLE},     {"energie", Ecran::ENERGIE},
     {"reglages", Ecran::REGLAGES},   {"alertes", Ecran::ALERTES},     {"arcade", Ecran::ARCADE},
+    {"maison", Ecran::MAISON},  // popup Maison (ADR-0037), 07/10/2026 : ajouté à la fin (NVS)
 };
 // « auto » : l'appui long d'avant le choix (06/10/2026), par bouton (ordre de BoutonHaut).
 constexpr int8_t kAuto = -1;
@@ -318,6 +319,7 @@ const char* mini_glyphe(BoutonHaut b, int8_t choix) {
         case Ecran::ENERGIE: return "\U000F0A72";     // solar-power
         case Ecran::REGLAGES: return "\U000F0493";    // cog
         case Ecran::ALERTES: return "\U000F0E81";     // bell-alert-outline
+        case Ecran::MAISON: return "\U000F02DC";      // home
         case Ecran::ARCADE: return "\U000F0297";      // gamepad-variant
         default: return nullptr;
     }
