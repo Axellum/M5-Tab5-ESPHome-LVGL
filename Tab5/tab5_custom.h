@@ -1178,7 +1178,7 @@ void reglables_volume_tablette();
 // Roue d'actions rapides (tab5_roue.cpp, ADR-0036, discussion #278) : l'appui long d'une
 // lampe, d'un volet ou d'une clim ouvre, autour de sa tuile, un moyeu (l'appareil) et deux
 // anneaux de boutons ronds : le premier pour ses commandes, ses familles de réglages et
-// deux liens (« Maison », « Réglages » : le popup d'avant) ; le second, déplié au-dessus
+// deux liens (« Maison », « Détails » : le popup d'avant) ; le second, déplié au-dessus
 // d'une famille, pour ses choix (luminosités, couleurs, modes…).
 // =============================================================================
 constexpr int kRoueBoutons = 6;  // premier anneau : 4 commandes ou familles + 2 liens

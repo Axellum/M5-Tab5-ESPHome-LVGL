@@ -216,10 +216,10 @@ VOLET_TIRE = Glisser(265, 250, 265, 400)
 
 # Roue d'actions rapides (ADR-0036, 07/10/2026) : l'appui long d'une lampe, d'un volet ou
 # d'une clim pose un moyeu sur la tuile et deux anneaux de boutons au-dessus. Premier anneau :
-# « Maison », les commandes et les familles de réglages, « Réglages » (le popup complet) en
+# « Maison », les commandes et les familles de réglages, « Détails » (le popup complet) en
 # dernier ; toucher une famille déplie ses choix sur le second, centré sur elle. Géométrie
 # de disposer() (Tab5/tab5_roue.cpp) refaite à l'identique, tests/test_roue.py compare les
-# constantes : un écran de popup touche le « Réglages » calculé ici, un écran de roue une
+# constantes : un écran de popup touche le « Détails » calculé ici, un écran de roue une
 # famille. Ancre en mode météo : le centre du bouton de la tuile.
 ROUE_ECRAN = (1280, 720)
 ROUE_RAYON = 180
@@ -302,7 +302,7 @@ def roue_choix_centres(xa: int, ya: int, n: int, famille: int, m: int) -> list[t
 
 
 def roue_reglages(tuile: tuple[int, int], n: int) -> Toucher:
-    """Toucher de « Réglages » (dernier des n boutons) de la roue de la tuile météo `tuile`."""
+    """Toucher de « Détails » (dernier des n boutons) de la roue de la tuile météo `tuile`."""
     return Toucher(*roue_centres(*tuile, n)[-1])
 
 
@@ -311,12 +311,12 @@ def roue_famille(tuile: tuple[int, int], n: int, i: int) -> Toucher:
     return Toucher(*roue_centres(*tuile, n)[i])
 
 
-# Premier anneau des tuiles de la démo, « Maison » et « Réglages » compris. Lampe T2
+# Premier anneau des tuiles de la démo, « Maison » et « Détails » compris. Lampe T2
 # (variateur et couleur, allumée) : Maison, Éteindre, Luminosité, Blancs, Couleurs,
-# Réglages ; lampe T3 (variateur) : Maison, Allumer, Luminosité, Réglages ; volet T1 :
-# Maison, Ouvrir, Stop, Fermer, Position (s'il donne la sienne), Réglages ; clim du
+# Détails ; lampe T3 (variateur) : Maison, Allumer, Luminosité, Détails ; volet T1 :
+# Maison, Ouvrir, Stop, Fermer, Position (s'il donne la sienne), Détails ; clim du
 # blueprint (dernière scène : consigne 20, Silence et Oscillation actifs) : Maison, Arrêt,
-# Mode, Consigne, Options, Réglages.
+# Mode, Consigne, Options, Détails.
 ROUE_BOUTONS = {"chambre": 6, "salon": 4, "volet": 6, "volet-sans-position": 5, "clim": 6}
 # Rang des familles touchées par les écrans de roue.
 ROUE_LUMINOSITE = 2

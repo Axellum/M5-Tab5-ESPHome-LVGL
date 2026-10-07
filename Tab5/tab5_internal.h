@@ -123,8 +123,9 @@ bool tuiles_titre_piece(std::string& chapeau, std::string& titre);
 // qui a des appareils, dans l'ordre des pages météo ; une seule pièce : rien.
 void tuiles_swipe_ha(bool gauche);
 // Texte venu de HA, mêmes règles que les noms des tuiles (tab5_cards.cpp : titre du popup
-// clim, ADR-0026). texte_ha_copier : UTF-8 valide, sans les caractères que les polices
-// n'ont pas, coupé sur une frontière de caractère (`cap` octets, zéro final compris).
+// clim, ADR-0026 ; libellés des alertes, bandeaux et historique). texte_ha_copier : UTF-8
+// valide, sans les caractères que les polices n'ont pas, coupé sur une frontière de
+// caractère (`cap` octets, zéro final compris).
 // texte_ha_coupe : une ligne, coupée avec « … » au-delà de `largeur` px (60 octets au plus).
 void texte_ha_copier(char* dst, size_t cap, const char* src, size_t n);
 void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
@@ -189,7 +190,7 @@ enum class RoueIcone : uint8_t {
     MAISON, REGLAGES,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
-// anneau au-dessus de lui) ou un lien (« Maison », « Réglages » : une fenêtre).
+// anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
 enum class RoueGenre : uint8_t { ACTION, FAMILLE, LIEN };
 struct RoueBouton {
     RoueIcone icone = RoueIcone::AUCUNE;

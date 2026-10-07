@@ -134,6 +134,10 @@ float tab5_fini_ou_nan(float v);
 // Partie entière de `v` (troncature, comme un cast) bornée à [bas, haut] ; `defaut`
 // si `v` n'est pas fini. Toute valeur de HA convertie en entier passe par ici.
 int tab5_float_vers_int(float v, int bas, int haut, int defaut);
+// Luminosité 0-255 d'une lampe allumée, en % (CPP-3, audit du 07/10/2026) : la seule
+// formule de la carte, du popup lumière (arc compris) et de la roue — arrondie (127 → 50),
+// bornée à 1..100 : une lampe allumée n'affiche jamais 0 %. Inconnue (NaN, infini) : -1.
+int lum_pct(float v);
 
 // ─── Batterie de la tablette : montée ou pas ? (discussion #278, 05/10/2026) ───
 // Le chargeur dit « en charge » avec ou sans batterie : seule la tension de l'INA226

@@ -85,7 +85,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Sincronizando..."
-"Journee": "Hoy"
+"Journée": "Hoy"
 "Demain": "Mañana"
 "2 Jours": "2 días"
 "3 Jours": "3 días"
@@ -251,6 +251,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Voice assistant ------------------------------------------------------------
 "Assistant vocal": "Asistente de voz"
 "Réglages": "Ajustes"
+"Détails": "Detalles"
 "Cerveau / LLM": "Cerebro / LLM"
 "Taille du texte": "Tamaño del texto"
 "VOTRE DEMANDE": "TU PREGUNTA"
@@ -258,7 +259,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "RÉPONSE": "RESPUESTA"
 "Prêt": "Listo"
 "Parler": "Hablar"
-"Reflexion...": "Pensando..."
+"Réflexion...": "Pensando..."
 "Écoute…": "Escuchando…"
 "Analyse…": "Analizando…"
 "Réponse": "Respuesta"
@@ -293,7 +294,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "L'écran redémarre immédiatement.": "La pantalla se reinicia de inmediato."
 "Annuler": "Cancelar"
 "Confirmer": "Confirmar"
-"Redemarrage...": "Reiniciando..."
+"Redémarrage...": "Reiniciando..."
 "Connecté": "Conectado"
 
 # --- Alarm clock: popup ---------------------------------------------------------

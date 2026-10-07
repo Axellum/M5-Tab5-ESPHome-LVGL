@@ -338,7 +338,8 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
 // « @maj:<titre> » → « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo »,
 // « @vigi:<niveau> » → « Vigilance Rouge » (historique des alertes, lot 4 du
 // 06/10/2026). Tout autre libellé (nom d'un capteur en erreur, ancien package HA)
-// s'affiche tel quel.
+// s'affiche tel quel. Bandeaux comme historique passent d'abord le libellé brut par
+// texte_ha_copier (glyphes des polices).
 std::string ha_alerte_texte(const char* brut) {
     char tmp[200];
     if (strncmp(brut, "@maj:", 5) == 0) {
@@ -417,7 +418,13 @@ bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
                 continue;
             }
             *slots[slot_idx].id_store = aid;
-            std::string texte = ha_alerte_texte(parts[2]);
+            // Libellé filtré comme dans l'historique des alertes (DO-6, audit du
+            // 07/10/2026) : UTF-8 valide, sans les caractères que les polices n'ont pas
+            // (texte_ha_copier), coupé sur une frontière de caractère. 512 octets : plus
+            // que ce que HA envoie pour une alerte (payload de 1 024 octets pour quatre).
+            char brut[512];
+            texte_ha_copier(brut, sizeof(brut), parts[2], strlen(parts[2]));
+            std::string texte = ha_alerte_texte(brut);
             ctx.has_ha[slot_idx] = !texte.empty();
             colorer_niveau(slot_idx, slots[slot_idx].lbl, parts[1]);
             lv_label_set_recolor(slots[slot_idx].lbl, false);

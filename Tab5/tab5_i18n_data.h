@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1037;
+static const uint16_t kI18nKeyCount = 1038;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -1398,6 +1399,7 @@ static const char* const kI18nKeys[] = {
     "Désactivée",
     "Désactivée — la partie continue",
     "Désactivés — l'inclinaison est ignorée",
+    "Détails",
     "Détection BMI270",
     "Détecté",
     "EFFACER LES STATISTIQUES",
@@ -1501,7 +1503,7 @@ static const char* const kI18nKeys[] = {
     "Joueur contre joueur",
     "Jour",
     "Jour hors plage",
-    "Journee",
+    "Journée",
     "Jours",
     "Jours (heure fixe uniquement)",
     "Juil",
@@ -1761,11 +1763,10 @@ static const char* const kI18nKeys[] = {
     "Record %lu",
     "Record %u",
     "Record : %s",
-    "Redemarrage...",
+    "Redémarrage...",
     "Redémarrer HA",
     "Redémarrer Home Assistant ?",
     "Redémarrer la tablette ?",
-    "Reflexion...",
     "Rejoins le portail",
     "Rejouer",
     "Rejouer avec les mêmes équipes",
@@ -1811,6 +1812,7 @@ static const char* const kI18nKeys[] = {
     "Règle des 50 coups",
     "Règles du jeu",
     "Réflexion  %d %%",
+    "Réflexion...",
     "Réglages",
     "Réponse",
     "Réponse à l'inclinaison +18 %",
@@ -2439,6 +2441,7 @@ static const char* const kI18n_en[] = {
     "Off",  // "Désactivée"
     "Off — the game goes on",  // "Désactivée — la partie continue"
     "Off — tilt is ignored",  // "Désactivés — l'inclinaison est ignorée"
+    "Details",  // "Détails"
     "BMI270 detection",  // "Détection BMI270"
     "Detected",  // "Détecté"
     "CLEAR STATISTICS",  // "EFFACER LES STATISTIQUES"
@@ -2542,7 +2545,7 @@ static const char* const kI18n_en[] = {
     "Player vs player",  // "Joueur contre joueur"
     "Day",  // "Jour"
     "Day out of range",  // "Jour hors plage"
-    "Today",  // "Journee"
+    "Today",  // "Journée"
     "Days",  // "Jours"
     "Days (fixed time only)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
@@ -2802,11 +2805,10 @@ static const char* const kI18n_en[] = {
     "Best %lu",  // "Record %lu"
     "Best %u",  // "Record %u"
     "Best: %s",  // "Record : %s"
-    "Restarting...",  // "Redemarrage..."
+    "Restarting...",  // "Redémarrage..."
     "Restart HA",  // "Redémarrer HA"
     "Restart Home Assistant?",  // "Redémarrer Home Assistant ?"
     "Restart the tablet?",  // "Redémarrer la tablette ?"
-    "Thinking...",  // "Reflexion..."
     "Reach the portal",  // "Rejoins le portail"
     "Play again",  // "Rejouer"
     "Play again with the same teams",  // "Rejouer avec les mêmes équipes"
@@ -2852,6 +2854,7 @@ static const char* const kI18n_en[] = {
     "50-move rule",  // "Règle des 50 coups"
     "Game rules",  // "Règles du jeu"
     "Thinking  %d %%",  // "Réflexion  %d %%"
+    "Thinking...",  // "Réflexion..."
     "Settings",  // "Réglages"
     "Answer",  // "Réponse"
     "Tilt response +18%",  // "Réponse à l'inclinaison +18 %"
@@ -3480,6 +3483,7 @@ static const char* const kI18n_de[] = {
     "Aus",  // "Désactivée"
     "Aus — die Partie geht weiter",  // "Désactivée — la partie continue"
     "Aus — Neigung wird ignoriert",  // "Désactivés — l'inclinaison est ignorée"
+    "Details",  // "Détails"
     "BMI270-Erkennung",  // "Détection BMI270"
     "Erkannt",  // "Détecté"
     "STATISTIK LÖSCHEN",  // "EFFACER LES STATISTIQUES"
@@ -3583,7 +3587,7 @@ static const char* const kI18n_de[] = {
     "Spieler gegen Spieler",  // "Joueur contre joueur"
     "Tag",  // "Jour"
     "Tag nicht verfügbar",  // "Jour hors plage"
-    "Heute",  // "Journee"
+    "Heute",  // "Journée"
     "Tage",  // "Jours"
     "Tage (nur bei fester Zeit)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
@@ -3843,11 +3847,10 @@ static const char* const kI18n_de[] = {
     "Rekord %lu",  // "Record %lu"
     "Best %u",  // "Record %u"
     "Rekord: %s",  // "Record : %s"
-    "Neustart...",  // "Redemarrage..."
+    "Neustart...",  // "Redémarrage..."
     "HA neu starten",  // "Redémarrer HA"
     "Home Assistant neu starten?",  // "Redémarrer Home Assistant ?"
     "Tablet neu starten?",  // "Redémarrer la tablette ?"
-    "Denke nach...",  // "Reflexion..."
     "Erreiche das Portal",  // "Rejoins le portail"
     "Nochmal",  // "Rejouer"
     "Nochmal mit denselben Teams",  // "Rejouer avec les mêmes équipes"
@@ -3893,6 +3896,7 @@ static const char* const kI18n_de[] = {
     "50-Züge-Regel",  // "Règle des 50 coups"
     "Spielregeln",  // "Règles du jeu"
     "Denke  %d %%",  // "Réflexion  %d %%"
+    "Denke nach...",  // "Réflexion..."
     "Optionen",  // "Réglages"
     "Antwort",  // "Réponse"
     "Neigungsreaktion +18 %",  // "Réponse à l'inclinaison +18 %"
@@ -4521,6 +4525,7 @@ static const char* const kI18n_nl[] = {
     "Uit",  // "Désactivée"
     "Uit — de partij gaat door",  // "Désactivée — la partie continue"
     "Uit — kantelen wordt genegeerd",  // "Désactivés — l'inclinaison est ignorée"
+    "Details",  // "Détails"
     "BMI270-detectie",  // "Détection BMI270"
     "Gedetecteerd",  // "Détecté"
     "STATISTIEKEN WISSEN",  // "EFFACER LES STATISTIQUES"
@@ -4624,7 +4629,7 @@ static const char* const kI18n_nl[] = {
     "Speler tegen speler",  // "Joueur contre joueur"
     "Dag",  // "Jour"
     "Dag buiten bereik",  // "Jour hors plage"
-    "Vandaag",  // "Journee"
+    "Vandaag",  // "Journée"
     "Dagen",  // "Jours"
     "Dagen (alleen vaste tijd)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
@@ -4884,11 +4889,10 @@ static const char* const kI18n_nl[] = {
     "Record %lu",  // "Record %lu"
     "Record %u",  // "Record %u"
     "Record: %s",  // "Record : %s"
-    "Herstarten...",  // "Redemarrage..."
+    "Herstarten...",  // "Redémarrage..."
     "HA herstarten",  // "Redémarrer HA"
     "Home Assistant herstarten?",  // "Redémarrer Home Assistant ?"
     "Tablet herstarten?",  // "Redémarrer la tablette ?"
-    "Denkt na...",  // "Reflexion..."
     "Bereik het portaal",  // "Rejoins le portail"
     "Opnieuw",  // "Rejouer"
     "Opnieuw met dezelfde teams",  // "Rejouer avec les mêmes équipes"
@@ -4934,6 +4938,7 @@ static const char* const kI18n_nl[] = {
     "50-zettenregel",  // "Règle des 50 coups"
     "Spelregels",  // "Règles du jeu"
     "Denkt na  %d %%",  // "Réflexion  %d %%"
+    "Denkt na...",  // "Réflexion..."
     "Opties",  // "Réglages"
     "Antwoord",  // "Réponse"
     "Kantelrespons +18%",  // "Réponse à l'inclinaison +18 %"
@@ -5562,6 +5567,7 @@ static const char* const kI18n_es[] = {
     "Desactivada",  // "Désactivée"
     "Desactivada — la partida sigue",  // "Désactivée — la partie continue"
     "Desactivados — se ignora la inclinación",  // "Désactivés — l'inclinaison est ignorée"
+    "Detalles",  // "Détails"
     "Detección BMI270",  // "Détection BMI270"
     "Detectado",  // "Détecté"
     "BORRAR ESTADÍSTICAS",  // "EFFACER LES STATISTIQUES"
@@ -5665,7 +5671,7 @@ static const char* const kI18n_es[] = {
     "Jugador contra jugador",  // "Joueur contre joueur"
     "Día",  // "Jour"
     "Día fuera de rango",  // "Jour hors plage"
-    "Hoy",  // "Journee"
+    "Hoy",  // "Journée"
     "Días",  // "Jours"
     "Días (solo hora fija)",  // "Jours (heure fixe uniquement)"
     "Jul",  // "Juil"
@@ -5925,11 +5931,10 @@ static const char* const kI18n_es[] = {
     "Récord %lu",  // "Record %lu"
     "Récord %u",  // "Record %u"
     "Récord: %s",  // "Record : %s"
-    "Reiniciando...",  // "Redemarrage..."
+    "Reiniciando...",  // "Redémarrage..."
     "Reiniciar HA",  // "Redémarrer HA"
     "¿Reiniciar Home Assistant?",  // "Redémarrer Home Assistant ?"
     "¿Reiniciar la tableta?",  // "Redémarrer la tablette ?"
-    "Pensando...",  // "Reflexion..."
     "Llega al portal",  // "Rejoins le portail"
     "Otra vez",  // "Rejouer"
     "Otra partida, mismos equipos",  // "Rejouer avec les mêmes équipes"
@@ -5975,6 +5980,7 @@ static const char* const kI18n_es[] = {
     "Regla de 50 jugadas",  // "Règle des 50 coups"
     "Reglas del juego",  // "Règles du jeu"
     "Pensando  %d %%",  // "Réflexion  %d %%"
+    "Pensando...",  // "Réflexion..."
     "Ajustes",  // "Réglages"
     "Respuesta",  // "Réponse"
     "Respuesta a la inclinación +18 %",  // "Réponse à l'inclinaison +18 %"
@@ -6603,6 +6609,7 @@ static const char* const kI18n_it[] = {
     "Disattivata",  // "Désactivée"
     "Disattivata — la partita continua",  // "Désactivée — la partie continue"
     "Disattivati — l'inclinazione è ignorata",  // "Désactivés — l'inclinaison est ignorée"
+    "Dettagli",  // "Détails"
     "Rilevamento BMI270",  // "Détection BMI270"
     "Rilevato",  // "Détecté"
     "CANCELLA LE STATISTICHE",  // "EFFACER LES STATISTIQUES"
@@ -6706,7 +6713,7 @@ static const char* const kI18n_it[] = {
     "Giocatore vs giocatore",  // "Joueur contre joueur"
     "Giorno",  // "Jour"
     "Giorno non valido",  // "Jour hors plage"
-    "Oggi",  // "Journee"
+    "Oggi",  // "Journée"
     "Giorni",  // "Jours"
     "Giorni (solo con ora fissa)",  // "Jours (heure fixe uniquement)"
     "Lug",  // "Juil"
@@ -6966,11 +6973,10 @@ static const char* const kI18n_it[] = {
     "Record %lu",  // "Record %lu"
     "Record %u",  // "Record %u"
     "Record: %s",  // "Record : %s"
-    "Riavvio...",  // "Redemarrage..."
+    "Riavvio...",  // "Redémarrage..."
     "Riavvia HA",  // "Redémarrer HA"
     "Riavviare Home Assistant?",  // "Redémarrer Home Assistant ?"
     "Riavviare il tablet?",  // "Redémarrer la tablette ?"
-    "Elaboro...",  // "Reflexion..."
     "Raggiungi il portale",  // "Rejoins le portail"
     "Rigioca",  // "Rejouer"
     "Rigioca con le stesse squadre",  // "Rejouer avec les mêmes équipes"
@@ -7016,6 +7022,7 @@ static const char* const kI18n_it[] = {
     "Regola 50 mosse",  // "Règle des 50 coups"
     "Regole",  // "Règles du jeu"
     "Calcolo  %d %%",  // "Réflexion  %d %%"
+    "Elaboro...",  // "Réflexion..."
     "Opzioni",  // "Réglages"
     "Risposta",  // "Réponse"
     "Risposta all'inclinazione +18%",  // "Réponse à l'inclinaison +18 %"
@@ -7644,6 +7651,7 @@ static const char* const kI18n_tr[] = {
     "Kapalı",  // "Désactivée"
     "Kapalı — oyun sürer",  // "Désactivée — la partie continue"
     "Kapalı — eğim yok sayılır",  // "Désactivés — l'inclinaison est ignorée"
+    "Ayrıntılar",  // "Détails"
     "BMI270 algılama",  // "Détection BMI270"
     "Algılandı",  // "Détecté"
     "İSTATİSTİKLERİ SİL",  // "EFFACER LES STATISTIQUES"
@@ -7747,7 +7755,7 @@ static const char* const kI18n_tr[] = {
     "Oyuncu - Oyuncu",  // "Joueur contre joueur"
     "Gün",  // "Jour"
     "Gün aralık dışı",  // "Jour hors plage"
-    "Bugün",  // "Journee"
+    "Bugün",  // "Journée"
     "Günler",  // "Jours"
     "Günler (yalnız sabit saat)",  // "Jours (heure fixe uniquement)"
     "Tem",  // "Juil"
@@ -8007,11 +8015,10 @@ static const char* const kI18n_tr[] = {
     "Rekor %lu",  // "Record %lu"
     "Rekor %u",  // "Record %u"
     "Rekor: %s",  // "Record : %s"
-    "Yeniden başlıyor...",  // "Redemarrage..."
+    "Yeniden başlıyor...",  // "Redémarrage..."
     "HA'yı yeniden başlat",  // "Redémarrer HA"
     "HA yeniden başlatılsın mı?",  // "Redémarrer Home Assistant ?"
     "Tablet yeniden başlatılsın mı?",  // "Redémarrer la tablette ?"
-    "Düşünüyor...",  // "Reflexion..."
     "Portala ulaş",  // "Rejoins le portail"
     "Tekrar oyna",  // "Rejouer"
     "Aynı takımlarla tekrar oyna",  // "Rejouer avec les mêmes équipes"
@@ -8057,6 +8064,7 @@ static const char* const kI18n_tr[] = {
     "50 hamle kuralı",  // "Règle des 50 coups"
     "Oyun kuralları",  // "Règles du jeu"
     "Düşünme  %d %%",  // "Réflexion  %d %%"
+    "Düşünüyor...",  // "Réflexion..."
     "Ayarlar",  // "Réglages"
     "Yanıt",  // "Réponse"
     "Eğim tepkisi +%18",  // "Réponse à l'inclinaison +18 %"

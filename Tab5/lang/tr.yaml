@@ -93,7 +93,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Eşitleniyor..."
-"Journee": "Bugün"
+"Journée": "Bugün"
 "Demain": "Yarın"
 "2 Jours": "2 Gün"
 "3 Jours": "3 Gün"
@@ -246,6 +246,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Voice assistant ------------------------------------------------------------
 "Assistant vocal": "Sesli asistan"
 "Réglages": "Ayarlar"
+"Détails": "Ayrıntılar"
 "Cerveau / LLM": "Beyin / LLM"
 "Taille du texte": "Metin boyutu"
 "VOTRE DEMANDE": "İSTEĞİN"
@@ -253,7 +254,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "RÉPONSE": "YANIT"
 "Prêt": "Hazır"
 "Parler": "Konuş"
-"Reflexion...": "Düşünüyor..."
+"Réflexion...": "Düşünüyor..."
 "Écoute…": "Dinliyor…"
 "Analyse…": "Analiz…"
 "Réponse": "Yanıt"
@@ -288,7 +289,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "L'écran redémarre immédiatement.": "Ekran hemen yeniden başlar."
 "Annuler": "İptal"
 "Confirmer": "Onayla"
-"Redemarrage...": "Yeniden başlıyor..."
+"Redémarrage...": "Yeniden başlıyor..."
 "Connecté": "Bağlı"
 
 # --- Alarm clock: popup ---------------------------------------------------------

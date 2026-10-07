@@ -548,7 +548,7 @@ interval:
                  id(sys_wifi_ip).has_state(), id(sys_wifi_ip).state.c_str(), id(lbl_sys_ip_val),
                  id(sys_wifi_ssid).has_state(), id(sys_wifi_ssid).state.c_str(), id(lbl_sys_ssid_val));
              // État connexion HA (carte RÉSEAU de la console) — reprend aussi la main
-             // apres le "Redemarrage..." affiche par le bouton Redemarrer HA.
+             // apres le "Redémarrage..." affiché par le bouton Redemarrer HA.
              update_console_ha_status_ui(id(lbl_sys_ha_val), id(status_ha).state);
              // Carte SYSTÈME (discussion #278, 06/10/2026) : charge de chaque cœur sur les
              // 2 s écoulées, batterie d'après le dernier état gardé par le C++.

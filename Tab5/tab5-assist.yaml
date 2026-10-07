@@ -399,7 +399,7 @@ script:
     mode: restart
     then:
       - lambda: |-
-          assist_set_response(id(lbl_assist_response), std::string(tr("Reflexion...")),
+          assist_set_response(id(lbl_assist_response), std::string(tr("Réflexion...")),
               assist_font(id(assist_text_size), id(roboto_32_b)));
           assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::NONE);
       - if:

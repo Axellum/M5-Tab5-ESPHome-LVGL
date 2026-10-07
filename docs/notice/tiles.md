@@ -57,7 +57,7 @@ A long press on a light, a shutter or a climate opens a wheel on the card. In th
 
 - **Home**, on the left: the [house window](house.md), with every room (not there when the wheel is opened from that window);
 - the device's main commands, and its families of settings, marked with a dot: a tap on a family unfolds its choices on a second ring, above it;
-- **Settings**, on the right: the device's full window ([lights](lights.md), [shutter](shutters.md), [climate](climate.md)).
+- **Details**, on the right: the device's full window ([lights](lights.md), [shutter](shutters.md), [climate](climate.md)).
 
 | Device | First ring | Families (second ring) |
 |---|---|---|
@@ -140,7 +140,7 @@ Un appui long sur une lumière, un volet ou une clim ouvre une roue sur la carte
 
 - **Maison**, à gauche : la [fenêtre Maison](house.md#version-française), avec toutes les pièces (absent quand la roue est ouverte depuis cette fenêtre) ;
 - les commandes principales de l'appareil, et ses familles de réglages, marquées d'un point : un tap sur une famille déplie ses choix sur un second anneau, au-dessus d'elle ;
-- **Réglages**, à droite : la fenêtre complète de l'appareil ([lumières](lights.md#version-française), [volet](shutters.md#version-française), [clim](climate.md#version-française)).
+- **Détails**, à droite : la fenêtre complète de l'appareil ([lumières](lights.md#version-française), [volet](shutters.md#version-française), [clim](climate.md#version-française)).
 
 | Appareil | Premier anneau | Familles (second anneau) |
 |---|---|---|

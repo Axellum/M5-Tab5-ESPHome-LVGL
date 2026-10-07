@@ -86,6 +86,37 @@ def test_creneaux_des_vues():
     assert "for h in range(24)" in ha and "nb = 30 if jours else 12" in ha
 
 
+def _champs_comme_le_firmware(valeurs, maxi):
+    """Miroir de la boucle d'energie_historique() (champ_suivant + apres_sep)."""
+    p, fin, n, apres_sep, lus = 0, len(valeurs), 0, False, []
+    while (p < fin or apres_sep) and n < maxi:
+        d = p
+        while p < fin and valeurs[p] != ";":
+            p += 1
+        champ = valeurs[d:p]
+        if p < fin:
+            p += 1
+        apres_sep = p > d + len(champ)
+        lus.append(champ)
+        n += 1
+    return lus
+
+
+def test_champs_vides_comptes_jusqu_au_dernier():
+    """DO-11 (audit du 07/10/2026) : un champ vide après le dernier « ; » (heure à venir)
+    compte comme une barre absente, sans décaler les autres ; DO-2 : année bornée comme
+    dans l'historique."""
+    corps = _lire(ENERGIE_CPP).split("void energie_historique(", 1)[1].split("\n}\n", 1)[0]
+    assert "while ((p < fin || apres_sep) && s.n < kSlots[v])" in corps
+    assert "apres_sep = p > d + n;" in corps
+    assert "s.annee < 1970 ||" in corps and "s.annee > 2200" in corps
+    for valeurs in ("1;2;3", "1;;3", "3.1;;", "", ";", "1;2;3;"):
+        attendu = valeurs.split(";") if valeurs else []
+        assert _champs_comme_le_firmware(valeurs, 30) == attendu, valeurs
+    heures = ";".join(["0.1"] * 15 + [""] * 9)   # 14:37 : les heures 15 à 23 à venir
+    assert len(_champs_comme_le_firmware(heures, 24)) == 24
+
+
 def test_demo_dans_le_format():
     aujourd_hui = dt.date(2026, 6, 16)
     for vue, n in scenarios.ENERGIE_VUES.items():

@@ -78,6 +78,13 @@ def test_vues_cles_et_limites_du_firmware():
     for vue, (_, nb) in scenarios.HISTORIQUE_VUES.items():
         assert nb + 1 <= mesures_max, f"{vue} : {nb + 1} créneaux pour {mesures_max} places"
     assert f"ns.l | count < {prev_max}" in _lire(PACKAGE)
+    # Bandes mini/maxi : seulement par jour (type daily, templow), un point par jour sur
+    # jours_prev jours au plus — 7 pour 30 jours. La demi-journée n'en a pas (DO-8, audit
+    # du 07/10/2026 : 10 bandes suffisent).
+    package = _lire(PACKAGE)
+    jours_prev = max(int(n) for n in re.findall(r"'\w+': (\d+)", re.search(r'jours_prev: "([^"]*)"', package).group(1)))
+    assert "if type_prev == 'daily' and f.get('templow') is number" in package
+    assert jours_prev <= int(re.search(r"kBandesPrevMax = (\d+);", cpp).group(1))
 
 
 def test_bornes_de_lecture_du_firmware():

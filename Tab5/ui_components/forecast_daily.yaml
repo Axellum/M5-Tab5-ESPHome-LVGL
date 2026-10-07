@@ -63,7 +63,7 @@ obj:
                       - lambda: 'tuile_appui(0, true);'
 
           # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
-          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "0", day_label: "Journee" } }
+          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "0", day_label: "Journée" } }
           - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "0", toggle_width: "140" } }
           # Icônes latérales (épaules) ; la droite n'existait pas avant les pièces (ADR-0023)
           - label: { id: icon_card_pc, text: "\U000F07C0", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }

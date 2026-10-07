@@ -75,7 +75,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Synchroniseren..."
-"Journee": "Vandaag"
+"Journée": "Vandaag"
 "Demain": "Morgen"
 "2 Jours": "2 dagen"
 "3 Jours": "3 dagen"
@@ -224,6 +224,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Voice assistant ------------------------------------------------------------
 "Assistant vocal": "Spraakassistent"
 "Réglages": "Opties"
+"Détails": "Details"
 "Cerveau / LLM": "Brein / LLM"
 "Taille du texte": "Tekstgrootte"
 "VOTRE DEMANDE": "JOUW VRAAG"
@@ -231,7 +232,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "RÉPONSE": "ANTWOORD"
 "Prêt": "Klaar"
 "Parler": "Spreek"
-"Reflexion...": "Denkt na..."
+"Réflexion...": "Denkt na..."
 "Écoute…": "Luistert…"
 "Analyse…": "Analyse…"
 "Réponse": "Antwoord"
@@ -264,7 +265,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "L'écran redémarre immédiatement.": "Het scherm herstart meteen."
 "Annuler": "Annuleren"
 "Confirmer": "Bevestigen"
-"Redemarrage...": "Herstarten..."
+"Redémarrage...": "Herstarten..."
 "Connecté": "Verbonden"
 
 # --- Alarm clock: popup ---------------------------------------------------------

@@ -181,6 +181,45 @@ def test_tout_eteindre_de_la_piece():
     assert "popup_lumiere_tout_eteindre();" in _lire("Tab5", "ui_components", "light_popup.yaml")
 
 
+def test_popup_lumiere_revalide_aux_nouvelles_definitions():
+    """UI-1 (audit du 07/10/2026) : comme les popups volet et appareil, le popup lumière
+    est revalidé quand HA renvoie les définitions — lignes recalculées sur la même pièce
+    et repeintes, refermé s'il n'y a plus de lumière, oublié s'il est fermé."""
+    cpp = _cpp()
+    assert "popup_lumiere_revalider();" in _fonction(cpp, "tuiles_definir")
+    corps = _fonction(cpp, "popup_lumiere_revalider")
+    assert "s_pl = PopupLumiere{};" in corps and "est_lumiere(r, i)" in corps
+    assert "animate_popup_close(u.lum_popup);" in corps and "popup_lumiere_peindre();" in corps
+    # La clé des commandes suit la lampe choisie (mode héritage → clés tRT).
+    assert "lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);" in corps
+
+
+def _lum_pct(v):
+    """Miroir de lum_pct (Tab5/tab5_core.cpp) : 0-255 → %, arrondi, borné à 1..100."""
+    if v != v or v in (float("inf"), float("-inf")):
+        return -1
+    b = min(max(v, 0.0), 255.0)
+    x = b * 100.0 / 255.0
+    return min(max(int(x + 0.5), 1), 100)  # std::lround : demi vers le haut (x ≥ 0)
+
+
+def test_luminosite_en_pourcent_une_seule_formule():
+    """CPP-3 (audit du 07/10/2026) : carte, popup lumière (arc compris) et roue donnent le
+    même % pour la même lampe — une seule fonction, lum_pct, arrondie ; une lampe allumée
+    n'affiche jamais 0 %. Avant : 127 → 50 % sur la carte, 49 % dans le popup."""
+    core = _lire("Tab5", "tab5_core.cpp")
+    corps = _fonction(core, "lum_pct")
+    assert "std::lround(b * 100.0f / 255.0f)" in corps and "pct < 1 ? 1" in corps and "std::isfinite(v)" in corps
+    assert "int lum_pct(float v);" in _lire("Tab5", "tab5_core.h")
+    cpp = _cpp()
+    assert "100.0f / 255.0f" not in cpp and "* 100 / 255" not in cpp, "une autre formule que lum_pct"
+    assert cpp.count("lum_pct(") >= 4  # carte, popup, choix et jauge de la roue
+    popup = _lire("Tab5", "ui_components", "light_popup.yaml")
+    assert "255.0f" not in popup and "x > 0 ? lum_pct(x) : 0" in popup
+    assert [_lum_pct(v) for v in (0.0, 1.0, 127.0, 128.0, 254.0, 255.0, 300.0, -5.0)] == [1, 1, 50, 50, 100, 100, 100, 1]
+    assert _lum_pct(float("nan")) == -1
+
+
 def test_cles_des_commandes_de_tuile():
     cpp = _cpp()
     assert "{'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\\0'}" in _fonction(cpp, "envoyer_tuile")

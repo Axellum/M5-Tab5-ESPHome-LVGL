@@ -47,6 +47,29 @@ de la tuile − / + (#379).
   Paramètres → Entités. Refaire le tableau de bord (étape 7 du guide). Rien à changer sur la
   tablette. Non essayé sur un vrai Home Assistant.
 
+### 2026-10-07 — Correctifs de l'audit du 07/10 (firmware)
+
+- **La roue d'actions rapides dit « Détails »** au lieu de « Réglages » pour ouvrir la fenêtre
+  complète de l'appareil (décision de l'auteur) : « Réglages » restait le nom de la fenêtre de
+  l'engrenage. « Details » en anglais, allemand et néerlandais, « Detalles », « Dettagli » et
+  « Ayrıntılar » en espagnol, italien et turc. [ADR-0036](docs/decisions/0036-quick-action-wheel.md) et notice à jour.
+- **La même lampe affiche le même pourcentage partout** : à 127/255, la carte disait 50 % et le
+  popup lumière 49 %. Carte, popup (arc compris) et roue arrondissent de la même façon, et une lampe
+  allumée n'affiche jamais 0 %.
+- **Popup lumière ouvert quand Home Assistant renvoie les tuiles** : ses lignes suivent les nouvelles
+  définitions, comme les popups volet et appareil ; il se ferme si la pièce n'a plus de lumière.
+- **Énergie** : l'après-midi, la vue « heures » montrait 23 barres au lieu de 24 (la dernière heure à
+  venir était perdue) et leur espacement changeait ; corrigé. L'année de début est bornée
+  (1970 à 2200) comme dans l'historique des températures.
+- **Bandeaux d'alerte** : leur texte passe par le même filtre que l'historique des alertes (aucun
+  caractère que les polices n'ont pas, plus de carré vide).
+- **Accents** : « Journée » (onglet du jour des prévisions), « Redémarrage... » (console) et
+  « Réflexion... » (assistant vocal).
+- **Console** : plus de 0/0 converti en entier quand la mémoire totale vaut 0 (tablette virtuelle),
+  ni de volume NaN converti en entier.
+- Vérifié sans changement : 10 bandes de prévision mini/maxi suffisent (7 jours au plus, par jour
+  seulement) ; un test le garde.
+
 ### 2026-10-07 — Tuile − / + : « Son de la tablette »
 
 - **La dernière ligne de la liste de la tuile − / + dit ce qu'elle règle**

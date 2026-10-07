@@ -19,7 +19,9 @@
  *           (06/10/2026), envoyé au relâcher, Ouvrir / Stop / Fermer) et appareil (appui
  *           long d'une int, d'une act ou d'une med sans l'option t, 06/10/2026 : la
  *           fenêtre « plus d'infos » d'un tableau de bord HA, dont le grand bouton refait
- *           le toucher de la tuile), repeints quand l'état de leur tuile change.
+ *           le toucher de la tuile), repeints quand l'état de leur tuile change. Quand
+ *           les définitions changent, popup ouvert, tous trois sont revalidés (repeints,
+ *           ou refermés si leur tuile a disparu ; tuiles_definir).
  *         - Rangée sous l'horloge (ADR-0031, 06/10/2026) : trois lignes de quatre
  *           éléments au plus, mêmes types que les tuiles, dans la même action
  *           (« hLI|type|icône|options|complément|nom|classe », « hp|place des plantes »)
@@ -648,9 +650,8 @@ void vue_def(const Def& d, const Etat& e, int r, int t, Vue& v) {
     switch (type) {
         case Type::LUM:
             actif = est(s, "on");
-            if (actif && (d.options & OPT_D) && !std::isnan(e.valeur)) {
-                const int pct = std::max(1, std::min(100, static_cast<int>(std::lround(e.valeur * 100.0f / 255.0f))));
-                snprintf(v.ligne, sizeof(v.ligne), "%d %%", pct);
+            if (actif && (d.options & OPT_D) && lum_pct(e.valeur) >= 0) {
+                snprintf(v.ligne, sizeof(v.ligne), "%d %%", lum_pct(e.valeur));
             } else {
                 snprintf(v.ligne, sizeof(v.ligne), "%s", actif ? tr("Allumé") : tr("Éteint"));
             }
@@ -1087,17 +1088,19 @@ bool popup_ouvert() {
 }
 
 // Arc et « NN % » de la ligne choisie ; pas pendant un glissement (le retour de HA
-// ferait sauter le curseur sous le doigt). Éteinte : 0.
+// ferait sauter le curseur sous le doigt). Éteinte, ou luminosité inconnue : 0 ; allumée,
+// le % de la carte et de la roue (lum_pct).
 void popup_lumiere_arc() {
     const TuilesUI& u = g_tuiles_ui;
     if (s_pl.n == 0 || u.lum_arc == nullptr || u.lum_pct == nullptr) return;
     if (lv_obj_has_state(u.lum_arc, LV_STATE_PRESSED)) return;
     const int r = s_pl.piece, t = s_pl.tuiles[s_pl.choix];
     const float v = lumiere_luminosite(r, t);
-    const int arcv = lumiere_allumee(r, t) ? tab5_float_vers_int(v, 0, 255, 0) : 0;
+    const bool allumee = lumiere_allumee(r, t);
+    const int arcv = allumee ? tab5_float_vers_int(v, 0, 255, 0) : 0;
     lv_arc_set_value(u.lum_arc, arcv);
     char buf[12];
-    snprintf(buf, sizeof(buf), "%d %%", arcv * 100 / 255);
+    snprintf(buf, sizeof(buf), "%d %%", allumee ? std::max(0, lum_pct(v)) : 0);
     ui_text(u.lum_pct, buf);
 }
 
@@ -1156,6 +1159,34 @@ void popup_lumiere_ouvrir(int r, int t) {
     if (u.lum_cle != nullptr) lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);
     popup_lumiere_peindre();
     animate_popup_open(u.lum_popup);
+}
+
+// Nouvelles définitions des tuiles (UI-1, audit du 07/10/2026), comme les popups volet et
+// appareil : ouvert, les lignes de la même pièce sont recalculées — la lampe choisie le
+// reste si elle est encore une lumière, sinon la première — puis le popup est repeint ;
+// plus aucune lumière dans la pièce : refermé. Fermé (y compris par sa croix, que le C++
+// ne voit pas), il est oublié : aucun index ne vise plus une tuile disparue.
+void popup_lumiere_revalider() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (!popup_ouvert()) {
+        s_pl = PopupLumiere{};
+        return;
+    }
+    const int r = s_pl.piece;
+    const int choisie = s_pl.n > 0 ? s_pl.tuiles[s_pl.choix] : -1;
+    s_pl = PopupLumiere{};
+    s_pl.piece = r;
+    for (int i = 0; i < kTuiles; i++)
+        if (est_lumiere(r, i)) {
+            if (i == choisie) s_pl.choix = s_pl.n;
+            s_pl.tuiles[s_pl.n++] = i;
+        }
+    if (s_pl.n == 0) {
+        animate_popup_close(u.lum_popup);
+        return;
+    }
+    if (u.lum_cle != nullptr) lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);
+    popup_lumiere_peindre();
 }
 
 // Un état a changé : la ligne de cette tuile si le popup la montre.
@@ -1706,6 +1737,8 @@ bool tuiles_definir(const std::string& payload) {
         if (popup_appareil_valide()) popup_appareil_peindre();
         else animate_popup_close(g_tuiles_ui.app_popup);
     }
+    // Et le popup lumière : ses lignes étaient des index de tuiles de l'ancienne définition.
+    popup_lumiere_revalider();
     tuiles_appliquer_ui();
     return true;
 }
@@ -1997,7 +2030,7 @@ static void tuile_appui_piece(int r, int t, bool long_appui) {
             // k, l'ancien appui long (l'autre sens, confirmé) : le popup ne doit jamais
             // contourner la confirmation.
             // Depuis le 07/10/2026 (ADR-0036), la roue d'actions rapides d'abord, dont
-            // « Réglages » ouvre ce popup ; l'option k ne l'ouvre jamais non plus.
+            // « Détails » ouvre ce popup ; l'option k ne l'ouvre jamais non plus.
             if (long_appui && !(d.options & OPT_K)) {
                 if (!roue_de_la_tuile(r, t)) popup_volet_ouvrir(r, t);
                 return;
@@ -2085,7 +2118,7 @@ bool tuile_ouvrir_popup(int r, int t) {
 //
 // L'appui long d'une lum, d'un vol ou d'une cli ouvre la roue (tab5_roue.cpp). Premier
 // anneau : « Maison » (le popup de toutes les pièces, sauf quand la roue s'ouvre depuis
-// lui), les commandes de la tuile et ses familles de réglages, puis « Réglages » (le popup
+// lui), les commandes de la tuile et ses familles de réglages, puis « Détails » (le popup
 // complet de son appui long d'avant, tuile_ouvrir_popup). Toucher une famille déplie ses
 // choix sur le second anneau : luminosités, blancs et couleurs d'une lampe, positions d'un
 // volet, modes, consignes et options d'une clim. Aucune commande nouvelle (mêmes
@@ -2161,7 +2194,7 @@ void roue_clim(const Def& d, int r, int t, int& rc, int& tc) {
 }
 
 // Boutons du premier anneau de la tuile tRT dans `b` (leurs actions dans `rt`) :
-// « Maison » d'abord (sauf depuis lui), « Réglages » en dernier. 0 sans roue : type sans
+// « Maison » d'abord (sauf depuis lui), « Détails » en dernier. 0 sans roue : type sans
 // roue, option r, option k (une lampe ou un volet à confirmer garde son appui long
 // d'avant), clim sans capacité reçue, aucune commande. Le bouton de l'état courant (lampe
 // allumée ou éteinte, volet ouvert ou fermé, clim arrêtée) est marqué.
@@ -2237,7 +2270,9 @@ int roue_composer(int r, int t, bool depuis_maison, RoueBouton b[kRoueBoutons], 
             return 0;
     }
     if (n == premiere) return 0;
-    ajouter(RoueAction::REGLAGES, RoueIcone::REGLAGES, RoueGenre::LIEN, false, tr("Réglages"));
+    // « Détails » (UI-13, décision d'Axel du 07/10/2026) : « Réglages » désignait aussi les
+    // Réglages de la tablette (engrenage).
+    ajouter(RoueAction::REGLAGES, RoueIcone::REGLAGES, RoueGenre::LIEN, false, tr("Détails"));
     return n;
 }
 
@@ -2301,8 +2336,8 @@ int roue_choix(const RoueTuile& rt, int i, RoueChoix c[kRoueChoix], RoueEnvoi en
     char nombre[8];
     switch (rt.action[i]) {
         case RoueAction::LUMINOSITE: {
-            // Luminosité 0-255 de l'état, en % (128 → 50).
-            const long pct = est(e.brut, "on") && std::isfinite(e.valeur) ? std::lround(e.valeur * 100.0f / 255.0f) : -1;
+            // Luminosité 0-255 de l'état, en % (128 → 50) ; éteinte ou inconnue : -1.
+            const int pct = est(e.brut, "on") ? lum_pct(e.valeur) : -1;
             for (uint8_t p : kRoueLuminosites) {
                 snprintf(nombre, sizeof(nombre), "%u", static_cast<unsigned>(p));
                 RoueChoix& x = choix("luminosite_pct", nombre, pct == p);
@@ -2378,8 +2413,7 @@ int roue_jauge(int r, int t) {
         case Type::LUM:
             if (!(d.options & OPT_D)) return -1;
             if (!est(e.brut, "on")) return 0;
-            return std::isfinite(e.valeur) ? std::clamp(static_cast<int>(std::lround(e.valeur * 100.0f / 255.0f)), 0, 100)
-                                           : -1;
+            return lum_pct(e.valeur);
         case Type::VOL:
             return vol_position_connue(e) ? std::clamp(static_cast<int>(std::lround(e.valeur)), 0, 100) : -1;
         case Type::CLI: {

@@ -678,7 +678,7 @@ font:
       - "\U000F0E79"  # arrow-up-down (Oscillation)
       - "\U000F146D"  # fan-chevron-down (Silence)
       - "\U000F14DE"  # rocket-launch (Boost)
-      - "\U000F1542"  # tune-variant (lien « Réglages »)
+      - "\U000F1542"  # tune-variant (lien « Détails » de la roue)
 
   # Icônes météo des tuiles seulement (120 px, calque 2 réduit à 80 px). Les
   # tailles 270 et 190 px (font_meteo_main / _small) sont retirées le 25/09/2026 :

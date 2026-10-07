@@ -104,6 +104,20 @@ def test_le_firmware_lit_l_en_tete_et_affiche_le_rang():
     assert 'id: "lbl_ha_alert_cpt_${n}"' in yaml_panneau
 
 
+def test_le_libelle_des_bandeaux_passe_par_le_filtre_des_glyphes():
+    """DO-6 (audit du 07/10/2026) : comme l'historique des alertes, le libellé libre d'un
+    bandeau passe par texte_ha_copier (UTF-8 valide, glyphes des polices) avant
+    ha_alerte_texte ; le rejet d'un payload de plus de 1 024 octets reste."""
+    cpp = (RACINE / "Tab5" / "tab5_central.cpp").read_text(encoding="utf-8")
+    corps = cpp[cpp.index("bool parse_and_update_ha_alerts_bulk("):]
+    corps = corps[:corps.index("\n}\n")]
+    assert "texte_ha_copier(brut, sizeof(brut), parts[2], strlen(parts[2]));" in corps
+    assert "ha_alerte_texte(brut)" in corps and "ha_alerte_texte(parts[2])" not in corps
+    assert "if (payload.length() > 1024)" in corps
+    historique = (RACINE / "Tab5" / "tab5_alertes.cpp").read_text(encoding="utf-8")
+    assert "texte_ha_copier(brut, sizeof(brut), champ[4], taille[4]);" in historique
+
+
 # ─── Taille bornée (audit du 07/10/2026, DO-6) ───────────────────────────────
 # La tablette refuse tout payload de plus de 1024 octets : les quatre bandeaux restaient
 # alors sur les anciennes alertes.

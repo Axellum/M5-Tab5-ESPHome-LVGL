@@ -77,7 +77,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Home screen, forecast, central card --------------------------------------
 "Synchronisation...": "Synchronisiere..."
-"Journee": "Heute"
+"Journée": "Heute"
 "Demain": "Morgen"
 "2 Jours": "2 Tage"
 "3 Jours": "3 Tage"
@@ -230,6 +230,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 # --- Voice assistant ------------------------------------------------------------
 "Assistant vocal": "Sprachassistent"
 "Réglages": "Optionen"
+"Détails": "Details"
 "Cerveau / LLM": "Gehirn / LLM"
 "Taille du texte": "Textgröße"
 "VOTRE DEMANDE": "DEINE FRAGE"
@@ -237,7 +238,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "RÉPONSE": "ANTWORT"
 "Prêt": "Bereit"
 "Parler": "Reden"
-"Reflexion...": "Denke nach..."
+"Réflexion...": "Denke nach..."
 "Écoute…": "Höre zu…"
 "Analyse…": "Analyse…"
 "Réponse": "Antwort"
@@ -270,7 +271,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "L'écran redémarre immédiatement.": "Der Bildschirm startet sofort neu."
 "Annuler": "Abbrechen"
 "Confirmer": "Bestätigen"
-"Redemarrage...": "Neustart..."
+"Redémarrage...": "Neustart..."
 "Connecté": "Verbunden"
 
 # --- Alarm clock: popup ---------------------------------------------------------
