@@ -238,7 +238,12 @@ automation:
       qu'à découvrir les rendez-vous AJOUTÉS ou DÉPLACÉS. La reconnexion du
       Tab5 est aussi un déclencheur, sinon la liste resterait vide après un
       redémarrage de la tablette jusqu'au tick suivant.
-    mode: single
+    # queued, plus single (audit du 07/10/2026, HA-17) : un passage peut attendre la
+    # liaison jusqu'à 10 s ; en single, un esphome.tab5_connected arrivé pendant ce temps
+    # était abandonné et la liste restait vide jusqu'au tick suivant. max 2 : le passage
+    # en cours et un en attente, qui relira tout ; au-delà, abandon sans avertissement.
+    mode: queued
+    max: 2
     max_exceeded: silent
     trigger:
       - platform: time_pattern
