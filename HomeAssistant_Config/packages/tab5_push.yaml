@@ -96,13 +96,14 @@ automation:
       # toujours pendant l'exécution du premier et était abandonné
       # (« Already running » ×249 en 5 jours). La carte météo a son automatisation au
       # changement (`tab5_ha_hmi_meteo_push`, plus bas), la clim et le volet aussi.
-      # Piège à retenir : un trigger `state:` nu se déclenche AUSSI sur les
-      # changements d'attributs. `to: ~` (25/09/2026) : état seulement — sans lui, ce
-      # déclencheur partait à CHAQUE rafraîchissement Météo-France (toutes les
-      # 5 min, attribut `1_hour_forecast`) et relançait toute la chaîne pour rien.
-      - platform: state
-        entity_id: sensor.tab5_pluie_dans_l_heure
-        to: ~
+      # Plus de déclencheur sur sensor.tab5_pluie_dans_l_heure (audit du 07/10/2026,
+      # PERF-3) : un changement du code de pluie relançait toute la chaîne (calendrier
+      # 15 j, prévisions, ~8 envois) pour les seules 9 barres. La poussée légère
+      # (tab5_ha_hmi_alerts_push, plus bas), qui l'écoutait déjà, pousse maintenant le
+      # code ET les barres ; ici, les barres partent encore à chaque passage (10 min,
+      # (re)connexion, démarrage de HA). Piège à retenir : un trigger `state:` nu se
+      # déclenche AUSSI sur les changements d'attributs (`to: ~` = état seulement,
+      # 25/09/2026 : sans lui, chaque rafraîchissement Météo-France relançait tout).
       # Toutes les 10 min : prévisions (l'heure et le jour avancent), pluie, alertes HA
       # (les capteurs « problem » et le compte d'indisponibles n'ont pas d'autre déclencheur).
       - platform: time_pattern
@@ -134,8 +135,8 @@ automation:
       - platform: state
         entity_id: sensor.tab5_meteo
         attribute: entite
-      # NB : les déclencheurs "légers" (rebours minute phrase pluie, vigilance météo,
-      # MAJ HA, dismiss) sont gérés par l'automation dédiée `tab5_ha_hmi_alerts_push`
+      # NB : les déclencheurs "légers" (code et barres de pluie, vigilance météo,
+      # alertes à lire) sont gérés par l'automation dédiée `tab5_ha_hmi_alerts_push`
       # ci-dessous — ils ne relancent PAS la chaîne prévisions/calendrier complète.
 
     condition:
@@ -217,14 +218,10 @@ automation:
             continue_on_error: true
 
       # ====== 4b. METEO PLUIE 1H (9 barres en UN appel : 0,5,10,15,20,25 puis 35,45,55) ======
-      # Payload « idx|intensité;… » (ADR-0003), construit par le capteur normalisé
-      # (attribut `barres`, packages/tab5_meteo_sources.yaml) selon la source choisie.
-      # Sans capteur : 9 barres vides, pour ne pas laisser les anciennes à l'écran.
-      - action: esphome.tab5_ha_hmi_tab5_maj_pluie_1h_bulk
+      # Script partagé avec la poussée légère, qui l'appelle au changement du code ou
+      # des barres de pluie (section `script:`).
+      - action: script.tab5_push_pluie
         continue_on_error: true
-        data:
-          payload: >
-            {{ state_attr('sensor.tab5_pluie_dans_l_heure', 'barres') or '0|0;1|0;2|0;3|0;4|0;5|0;6|0;7|0;8|0;' }}
 
       # ====== 5. PREVISIONS JOURS (BULK - 1 seul appel au lieu de 15) ======
       # Source des prévisions (lot 4c-3) : l'entité weather.* choisie dans HA, lue sur
@@ -465,8 +462,10 @@ automation:
   # prévisions/calendrier de `tab5_ha_hmi_updater` : ce chemin ne pousse QUE les
   # sections 1 (alerte MF), 7 (bandeau info) et 7b (rotateur d'alertes HA), via le
   # même script que la poussée complète — aucun delay, aucun appel API. Un changement
-  # du code de pluie ne fait QUE la section 1 (`vigilance_seule`). Depuis le lot 4c, le
-  # décompte « dans N mn » se fait sur la tablette : plus de poussée à chaque minute.
+  # du code ou des barres de pluie fait la section 1 (`vigilance_seule`) PUIS les
+  # barres (section 4b, script.tab5_push_pluie), depuis le 07/10/2026 (PERF-3) : la
+  # poussée complète ne se déclenche plus sur la pluie. Depuis le lot 4c, le décompte
+  # « dans N mn » se fait sur la tablette : plus de poussée à chaque minute.
   # mode: queued pour ne pas perdre un dismiss derrière le tick minute.
   # ============================================================================
   - id: tab5_ha_hmi_alerts_push
@@ -474,18 +473,37 @@ automation:
     mode: queued
     max: 5
     trigger:
+      # État nu : un seul déclenchement par mise à jour du capteur ; la condition plus
+      # bas ne laisse passer que celles qui changent le code (état) ou les barres
+      # (attribut). Avant le 07/10/2026 (HA-16), toute mise à jour d'attribut repartait.
       - platform: state
         entity_id: sensor.tab5_pluie_dans_l_heure
+        id: pluie
       - platform: state
         entity_id: sensor.tab5_vigilance
       # Alertes à lire (packages/tab5_alerts.yaml) : nouvelle, changée, lue, terminée.
       - platform: state
         entity_id: sensor.tab5_alertes
         attribute: affichees
+    condition:
+      - alias: "Pluie : seulement si le code ou les barres changent"
+        condition: template
+        value_template: >-
+          {%- if trigger.id == 'pluie' and trigger.from_state is not none and trigger.to_state is not none -%}
+            {{ trigger.from_state.state != trigger.to_state.state
+               or trigger.from_state.attributes.get('barres') != trigger.to_state.attributes.get('barres') }}
+          {%- else -%}
+            {{ true }}
+          {%- endif -%}
     action:
       - action: script.tab5_push_alertes
         data:
-          vigilance_seule: "{{ trigger.entity_id == 'sensor.tab5_pluie_dans_l_heure' }}"
+          vigilance_seule: "{{ trigger.id == 'pluie' }}"
+      - if:
+          - condition: trigger
+            id: pluie
+        then:
+          - action: script.tab5_push_pluie
 
   # Historique des alertes (lot 4) : il change (alerte nouvelle, lue, terminée) pendant
   # que le popup « Alertes » d'une tablette est ouvert (« Écran courant », mis à jour
@@ -760,6 +778,28 @@ script:
         data:
           payload: >-
             {% from 'tab5_alertes.jinja' import tab5_alertes_historique %}{{ tab5_alertes_historique('payload') }}
+
+  tab5_push_pluie:
+    alias: "Tab5 — pousser les barres de pluie dans l'heure"
+    description: >-
+      Les 9 barres du graphe de pluie (section 4b). Appelé par la poussée complète à
+      chaque passage et par la poussée légère au changement du code ou des barres de
+      pluie (tab5_ha_hmi_alerts_push, 07/10/2026).
+    mode: queued
+    max: 10
+    sequence:
+      # Tablette absente ou hors ligne : rien à pousser, pas d'erreur (voir la poussée
+      # complète, section 0).
+      - condition: template
+        value_template: *tab5_connectee
+      # Payload « idx|intensité;… » (ADR-0003), construit par le capteur normalisé
+      # (attribut `barres`, packages/tab5_meteo_sources.yaml) selon la source choisie.
+      # Sans capteur : 9 barres vides, pour ne pas laisser les anciennes à l'écran.
+      - action: esphome.tab5_ha_hmi_tab5_maj_pluie_1h_bulk
+        continue_on_error: true
+        data:
+          payload: >
+            {{ state_attr('sensor.tab5_pluie_dans_l_heure', 'barres') or '0|0;1|0;2|0;3|0;4|0;5|0;6|0;7|0;8|0;' }}
 
   tab5_push_meteo:
     alias: "Tab5 — pousser la météo actuelle et les probabilités"
