@@ -21,6 +21,23 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-07 — Popup « Maison » : toute la maison, pièce par pièce, comme un tableau de bord HA
+
+Demandé dans la discussion #278 (voir toute la maison d'un coup). Firmware seul : ni le contrat
+avec Home Assistant ni le blueprint ne changent ([ADR-0037](docs/decisions/0037-house-popup.md)).
+Pas encore essayé sur la tablette.
+- **Nouveau popup « Maison »** (chrome partagé, inscrit au registre) : une colonne par pièce du
+  blueprint qui a des appareils, de la pièce 1 à la 5, le nom de la pièce en tête ; une ligne par
+  appareil, dessinée comme la carte du mode HA (pastille de la couleur de son état, icône, nom,
+  état), coupée avec « … » quand la colonne est étroite.
+- **Mêmes gestes que la tuile**, par la même fonction : tap, appui long, et un bouton « ⋯ » sur
+  les appareils qui ont un appui long. Le popup ouvert depuis une ligne passe devant, le popup
+  Maison reste derrière. L'appui long d'une clim ouvre son popup, comme son tap.
+- **« Éteindre les lumières »** dans la barre de titre, s'il y a une lumière : le « Tout
+  éteindre » du popup lumière, pour chaque pièce qui en a, sans confirmation.
+- **Ouvert** par « Aller à l'écran → Maison » ou, en mode HA, par un tap sur le nom de la pièce
+  dans la carte centrale. Notice : `docs/notice/house.md`.
+
 ### 2026-10-07 — Docs : co-processeur WiFi et alimentation, faits vérifiés
 
 `docs/troubleshooting.md` et `docs/hardware.md` : le P4 réinitialise le C6 par GPIO 15 à chaque
