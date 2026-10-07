@@ -21,6 +21,29 @@ abonnements, rang « 2/6 » et historique (#351, #353, #355, #356, #358), volet 
 popup d'un appareil et cartes du mode HA (#350), batterie et charge du processeur dans la
 console (#348), mode économie d'énergie (#357), popup Température (#354), tuile − / + (#352).
 
+### 2026-10-07 — Intégration « Tab5 » pour HACS : les fichiers Home Assistant en un clic (lot 1)
+
+Demande d'un utilisateur (discussion #278) : mettre à jour les fichiers Home Assistant sans
+télécharger, décompresser et copier l'archive à la main ([ADR-0035](docs/decisions/0035-hacs-integration-ha-files.md)).
+- Nouvelle intégration `custom_components/tab5/` et `hacs.json` : le dépôt s'ajoute à HACS
+  comme dépôt personnalisé. Chaque release joindra `tab5_hacs.zip`
+  (`tools/publication/archive_hacs.py`), qui porte l'intégration et les mêmes fichiers que
+  `tab5_home_assistant.zip` (lot 2 : publication et guide).
+- Au démarrage, une fois par version : sauvegarde dans `config/tab5_sauvegardes/` (5 gardées),
+  fichiers posés (un package optionnel seulement s'il est déjà là, le blueprint aussi sur une
+  copie importée par son URL, un fichier que la release ne livre plus retiré), configuration
+  vérifiée avec retour en arrière si elle casse, domaines manquants chargés, tout le YAML
+  rechargé sans redémarrage, version constatée sur le capteur « Tab5 · version des fichiers
+  HA », notification en français ou en anglais. Réparations : ligne `packages:` absente,
+  redémarrage (avec un bouton), configuration refusée.
+- Option, cochée par défaut : lancer ensuite la mise à jour de la tablette, dès que son entité
+  « Firmware » propose la même version.
+- `tab5_home_assistant.zip` et la mise à jour à la main ne changent pas ; `archive_ha.py`
+  produit la même archive à l'octet près.
+- Tests : `tests/test_integration_tab5.py` (sans HA) ; CI non requise `integration-hacs.yml`
+  (hassfest, validation HACS, et un Home Assistant neuf en conteneur : installation sans
+  redémarrage, mise à jour, retour en arrière, ligne `packages:` absente).
+
 ### 2026-10-06 — Bandeaux d'alerte HA : une seule table pour leurs widgets
 
 Refactor : rien ne doit changer à l'écran ni pour Home Assistant. Les widgets des 4 bandeaux

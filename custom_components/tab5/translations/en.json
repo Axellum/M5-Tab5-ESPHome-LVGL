@@ -1,0 +1,62 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tab5 — Home Assistant files",
+        "description": "This integration installs the Home Assistant files of the M5Stack Tab5 project (packages, templates, blueprint) and replaces them at each update made through HACS. The old files are kept in `tab5_sauvegardes/`. Your own packages, templates and blueprints are never touched.\n\nNeeded once in `configuration.yaml`, if it is not there yet:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```",
+        "data": {
+          "mettre_a_jour_tablette": "Then update the tablet"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Once the files are in place, install the firmware of the same version as soon as the tablet's « Firmware » entity offers it."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "The Tab5 integration is already added."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tab5 — Home Assistant files",
+        "data": {
+          "mettre_a_jour_tablette": "Then update the tablet",
+          "reinstaller": "Install the files of this version again now"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Once the files are in place, install the firmware of the same version as soon as the tablet's « Firmware » entity offers it.",
+          "reinstaller": "For a Tab5 file deleted or edited by mistake. The current ones are saved first."
+        }
+      }
+    }
+  },
+  "issues": {
+    "fichiers_absents": {
+      "title": "Tab5: no Home Assistant files in the integration",
+      "description": "The Tab5 integration {version} carries no files: it was copied from the repository instead of being installed from a release. Install it through HACS (custom repository), which downloads `tab5_hacs.zip` from the release."
+    },
+    "configuration_invalide": {
+      "title": "Tab5: the files {version} were not installed",
+      "description": "The new Tab5 files could not be put in place (the configuration check found an error with them, or writing them failed), so the previous files were put back and nothing changed. The reason is in the log (Settings → System → Logs, « tab5 »). Please report it: {signaler}"
+    },
+    "packages_absents": {
+      "title": "Tab5: Home Assistant does not load the packages",
+      "description": "The Tab5 files are in `config/packages/`, but Home Assistant does not read that folder. Add these two lines to `configuration.yaml` (the `homeassistant:` line only once), check the configuration, then restart:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```"
+    },
+    "redemarrage_requis": {
+      "title": "Tab5: restart Home Assistant to finish",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Restart Home Assistant",
+            "description": "The Tab5 files {version} are in place, but some of them only take effect after a restart. Submit to restart Home Assistant now."
+          }
+        },
+        "error": {
+          "configuration_invalide": "The configuration has an error: fix it first (Developer tools → YAML → Check configuration)."
+        }
+      }
+    }
+  }
+}
