@@ -81,7 +81,7 @@ enum Kind : uint8_t {
                 // (sonnerie du réveil)
 };
 
-constexpr int MAX = 24;  // 22 inscrites au 08/10/2026 (liste de la tuile − / +, roue d'actions rapides, Maison) : de la marge
+constexpr int MAX = 24;  // 21 inscrites au 08/10/2026 (liste de la tuile − / +, roue d'actions rapides, Maison ; la console est devenue une page des Réglages) : de la marge
 
 // true dès que tab5_modal_registry_init a rempli la table.
 bool ready();

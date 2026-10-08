@@ -98,7 +98,7 @@ def test_regle_9_lvgl_dans_le_yaml(tmp_path):
     problems = check_tab5_code_rules.lvgl_yaml(tab5, entry)
     assert any(p.startswith("alarm_popup.yaml:") and "lv_obj_set_width() ×1 (toléré ×0)" in p for p in problems), problems
     assert not any("lv_color_hex" in p for p in problems), problems
-    assert any("console_sys.yaml:" in p and "lv_obj_add_flag() ×11 (toléré ×10)" in p for p in problems), problems
+    assert any("console_sys.yaml:" in p and "lv_obj_add_flag() ×7 (toléré ×6)" in p for p in problems), problems
     assert any("tab5-calendar.yaml n'a plus que 3 lv_obj_add_flag()" in p for p in problems), problems
 
 

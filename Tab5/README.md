@@ -282,7 +282,7 @@ Historique de vérification : écrit contre le code réel le 05/07/2026, re-vér
 ## Sous-répertoires
 
 ### `ui_components/`
-Les 70 composants et templates LVGL décrits plus haut. Seul sous-répertoire versionné. (`my_components/st7123/` n'existe plus : `st7123` est une plateforme officielle depuis ESPHome 2026.7.0.)
+Les 71 composants et templates LVGL décrits plus haut. Seul sous-répertoire versionné. (`my_components/st7123/` n'existe plus : `st7123` est une plateforme officielle depuis ESPHome 2026.7.0.)
 
 ### `themes/`
 Un fichier par thème de l'écran (ADR-0029) : `nom`, `ordre` (la tablette garde l'index du thème : un nouveau s'ajoute à la fin), un mode `sombre:` et un mode `clair:` avec tous les rôles de `struct Palette` (`herite:` part d'un autre thème ; le verre pré-mélangé est calculé s'il manque ; un rôle peut renvoyer à un autre du même mode, `CONSOLE_VALUE: TEXT_PRIMARY`, résolu après l'héritage). `python tools/gen_themes.py` en écrit `THEMES[]` (`tab5_tokens.h`), les options du select « Thème » et la repeinture des styles (`tab5-themes.yaml`) ; `tests/test_themes.py` vérifie qu'ils sont à jour et que chaque mode reste lisible (contrastes WCAG). Lot 3 : `formes:` (rayon, bordure, dégradé, ombre de neuf styles partagés), `zones_sombres:` (bandeau central et horloge sombres en mode clair) et `polices:` (heure, date, titres, `Famille@graisse` de Google Fonts). Une police citée se mesure une fois par `python tools/police_theme.py` (écrit `themes/_polices.yaml`, à commiter) ; `tests/test_polices_themes.py` et `tests/test_formes_themes.py` tiennent le reste. Vingt et un thèmes (Ardoise et les vingt de la galerie du 04/10/2026) ; une tablette neuve démarre en Relief doux (`initial_option` du select, `tab5-themes.yaml`).

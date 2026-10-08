@@ -1,7 +1,8 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_console.cpp
- * @role Console système : ligne status (uptime / Wi-Fi / temp CPU), synchro volume et
+ * @role Console système (page « Système » du popup Réglages depuis le 08/10/2026,
+ *       console_sys.yaml) : ligne status (uptime / Wi-Fi / temp CPU), synchro volume et
  *       icônes mute, diagnostics mémoire/réseau, charge de chaque cœur du processeur
  *       (update_console_cpu_ui, 06/10/2026 ; la ligne « Batterie » est dans
  *       tab5_zones.cpp, avec l'état de la batterie).
@@ -35,12 +36,10 @@
 #include <map>
 
 // =============================================================================
-// Console diagnostic — ligne status (uptime / Wi-Fi / temp CPU), garde #T222
+// Console diagnostic — ligne status (uptime / Wi-Fi / temp CPU), garde #T222 : les
+// appelants ne remplissent la console que si elle est affichée, page « Système » des
+// Réglages depuis le 08/10/2026 (reglages_page_visible, tab5_reglages.cpp).
 // =============================================================================
-
-bool is_console_layer_visible(lv_obj_t* layer_console) {
-    return layer_console != nullptr && !lv_obj_has_flag(layer_console, LV_OBJ_FLAG_HIDDEN);
-}
 
 void update_console_uptime_label(lv_obj_t* label, float uptime_s) {
     if (label == nullptr) return;
@@ -107,7 +106,7 @@ void ui_sync_mute_icon(lv_obj_t* icon_assist, bool muted) {
 
 // Met a jour les widgets de la console diagnostic (SRAM/PSRAM/frag/loop/IP/SSID).
 // Factorise depuis l'interval 2s de tab5-sensors-diagnostics.yaml (Phase 3, #T164). Le garde
-// "console visible ?" reste dans le YAML (evite de passer layer_console_sys ici).
+// "console visible ?" reste dans le YAML (reglages_page_visible(REGLAGES_PAGE_SYSTEME)).
 void update_console_diagnostics_ui(lv_obj_t* lbl_sram, lv_obj_t* bar_sram,
     lv_obj_t* lbl_psram, lv_obj_t* bar_psram, lv_obj_t* lbl_frag, lv_obj_t* lbl_flash,
     bool loop_time_has_state, float loop_time, lv_obj_t* lbl_loop,

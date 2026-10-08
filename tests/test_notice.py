@@ -71,6 +71,12 @@ NON_MONTREES = {
     "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
     "maison-roue": "roue d'actions rapides (ADR-0036) devant le popup Maison, décrite dans house.md",
+    # Réglages en quatre pages (08/10/2026) : images à tirer du rendu de la PR, puis citées.
+    "reglages-apparence": "page Apparence des Réglages, décrite dans settings.md ; image à tirer du rendu",
+    "reglages-batterie-en-charge": "page Batterie des Réglages, décrite dans settings.md ; image à tirer du rendu",
+    "reglages-sans-batterie": "reglages-batterie-en-charge montre la même page ; « Pas de batterie détectée » "
+                              "est décrit dans settings.md",
+    "reglages-curseur": "reglages montre la même page ; le curseur qui ne change pas de page est décrit",
 }
 
 

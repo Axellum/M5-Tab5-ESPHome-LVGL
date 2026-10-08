@@ -42,8 +42,11 @@ script:
   # ne touche l'écran, c'est exactement la situation qu'il traite. Seuls
   # tab5_alarm_stop / _snooze_now / la durée maximale le referment. La fenêtre
   # de RÉGLAGES du réveil (alarm_popup), elle, est une modale ordinaire.
-  # Les SUBWINDOW (détail d'un jour du calendrier, confirmations de la console)
-  # n'ont pas de fondu propre : masquage sec, avec la carte qui les porte.
+  # Les SUBWINDOW (détail d'un jour du calendrier, confirmations de la page Système
+  # des Réglages) n'ont pas de fondu propre : masquage sec, avec la carte qui les porte.
+  # « Console système » n'est plus une fenêtre depuis le 08/10/2026 : c'est la page
+  # Système des Réglages (select « Aller à l'écran » : tab5_ecran_ouvrir, et
+  # tools/check_tab5_registry.py qui l'accepte comme alias de « Réglages »).
   # Toute nouvelle fenêtre modale DOIT être ajoutée ici — le garde-fou
   # tools/check_tab5_registry.py le vérifie pour chaque carte `style_modal_card`.
   - id: tab5_modal_registry_init
@@ -61,7 +64,6 @@ script:
           ModalRegistry::add(id(clim_options_popup),     "Climatisation",    ModalRegistry::POPUP);
           ModalRegistry::add(id(pots_detail_popup),      "Plantes",          ModalRegistry::POPUP);
           ModalRegistry::add(id(tv_remote_popup),        "Télécommande TV",  ModalRegistry::POPUP);
-          ModalRegistry::add(id(layer_console_sys),      "Console système",  ModalRegistry::POPUP);
           ModalRegistry::add(id(energie_popup),          "Énergie",          ModalRegistry::POPUP);
           ModalRegistry::add(id(reglages_popup),         "Réglages",         ModalRegistry::POPUP);
           ModalRegistry::add(id(historique_popup),       "Température",      ModalRegistry::POPUP);
@@ -74,25 +76,6 @@ script:
           ModalRegistry::add(id(reglages_confirmation),  nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(reglables_liste),        nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(roue_actions),           nullptr,            ModalRegistry::SUBWINDOW);
-
-  # Console système (layer plein cadre, sans animation), seule ouverture : par
-  # tab5_ecran_ouvrir (tab5-ha-controls.yaml), que lancent l'appui long de l'engrenage
-  # et le select « Aller à l'écran » (07/10/2026 : celui-ci laissait « -- » au tick 2 s).
-  - id: tab5_console_ouvrir
-    then:
-      - lambda: |-
-          // Pas d'animate_popup_open ici : la roue d'actions rapides (ADR-0036) se ferme à la main.
-          roue_actions_fermer();
-          lv_obj_remove_flag(id(layer_console_sys), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_move_to_index(id(layer_console_sys), -1);
-          refresh_console_status_row_ui(id(lbl_sys_uptime_val), id(lbl_sys_rssi_val), id(lbl_sys_temp_val),
-              id(sys_uptime).has_state(), id(sys_uptime).state, id(sys_wifi_rssi).has_state(),
-              id(sys_wifi_rssi).state, id(sys_core_temp).has_state(), id(sys_core_temp).state);
-          // Batterie et état de HA tout de suite ; charge du processeur repartie de zéro
-          // (« -- » jusqu'au tick 2 s, tab5_console.cpp).
-          update_console_batterie_ui(id(lbl_sys_batterie_icone), id(lbl_sys_batterie_val));
-          update_console_cpu_ui(id(lbl_sys_cpu_val), true);
-          update_console_ha_status_ui(id(lbl_sys_ha_val), id(status_ha).state);
 
   # Commande d'un emplacement de la maison (lot 6a, ADR-0019) : la tablette ne
   # connaît plus aucune entité de la maison. Événement esphome.tab5_action, traité

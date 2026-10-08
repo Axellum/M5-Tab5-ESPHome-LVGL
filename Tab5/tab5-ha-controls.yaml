@@ -226,6 +226,8 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     on_state:
       - lambda: 'batterie_montee_ui(x);'
+      # Page Batterie des Réglages (tab5-reglages.yaml) : repeinte s'il a déjà été ouvert.
+      - script.execute: tab5_reglages_sync_ui
 
   # Appareils des pièces sur les prévisions (05/10/2026, discussion #278 : un
   # utilisateur préfère des cartes météo seules). Éteint, le mode météo ne montre plus
@@ -425,13 +427,18 @@ script:
           // être identiques — tools/check_tab5_registry.py le vérifie. Un écart
           // serait sinon un no-op muet sur les cas clim, plantes, TV : on
           // le journalise à WARN, le projet tourne à INFO.
+          // « Console système » est la page Système des Réglages depuis le 08/10/2026 :
+          // sa fenêtre est celle des Réglages (alias de check_tab5_registry.py).
           id(tab5_modal_registry_init).execute();
-          lv_obj_t* target = e != Ecran::ARCADE ? ModalRegistry::find(nom) : nullptr;
+          lv_obj_t* target = e == Ecran::ARCADE ? nullptr
+                           : ModalRegistry::find(e == Ecran::CONSOLE ? "Réglages" : nom);
           if (e != Ecran::ACCUEIL && e != Ecran::ARCADE && target == nullptr) {
             ESP_LOGW("TAB5", "Aller a l'ecran : option '%s' sans fenetre enregistree", nom);
           }
           if (target != nullptr && !lv_obj_has_flag(target, LV_OBJ_FLAG_HIDDEN)) {
-            // Re-demander l'écran déjà affiché sert à prolonger son affichage.
+            // Re-demander l'écran déjà affiché sert à prolonger son affichage. Réglages
+            // ouvert et « Console système » demandée : sa page Système, sans le refermer.
+            if (e == Ecran::CONSOLE) reglages_afficher_page(REGLAGES_PAGE_SYSTEME);
             ui_mark_activity();
             return;
           }
@@ -462,16 +469,17 @@ script:
               clim_afficher_blueprint();
               if (target != nullptr) animate_popup_open(target);
               break;
-            case Ecran::CONSOLE:  // Layer plein cadre, ligne d'état et état de HA tout de
-                                  // suite : son script (tab5-scripts.yaml).
-              id(tab5_console_ouvrir).execute();
+            case Ecran::CONSOLE:  // Page Système des Réglages (l'ancienne console) : ligne
+                                  // d'état et état de HA tout de suite (tab5_reglages_page).
+              id(tab5_reglages_ouvrir).execute(REGLAGES_PAGE_SYSTEME);
               break;
             case Ecran::ENERGIE:  // Énergie (ADR-0028) : son script pose les widgets à la
                                   // première ouverture et demande ses données à HA.
               id(tab5_energie_ouvrir).execute();
               break;
-            case Ecran::REGLAGES:  // Réglages : son script pose les widgets et peint avant d'ouvrir.
-              id(tab5_reglages_ouvrir).execute();
+            case Ecran::REGLAGES:  // Réglages : son script pose les widgets et peint avant
+                                   // d'ouvrir, sur la page Écran.
+              id(tab5_reglages_ouvrir).execute(REGLAGES_PAGE_ECRAN);
               break;
             case Ecran::ALERTES:  // Alertes : son script pose les widgets et demande l'historique à HA.
               id(tab5_alertes_ouvrir).execute();

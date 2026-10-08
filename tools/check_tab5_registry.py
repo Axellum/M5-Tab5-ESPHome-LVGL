@@ -18,7 +18,10 @@ oubliée :
      `style_modal_card`, id racine = premier `id:`) est enregistré ;
   6. chaque option du select « Aller à l'écran » (hors « — » et « Accueil »)
      correspond exactement au libellé d'une fenêtre enregistrée — `find()` la
-     retrouve par ce nom, un écart serait un no-op silencieux.
+     retrouve par ce nom, un écart serait un no-op silencieux. Seule exception,
+     SELECT_ALIAS : une option qui ouvre une page d'une autre fenêtre (« Console
+     système » = page Système des Réglages depuis le 08/10/2026), à condition que
+     tab5_ecran_ouvrir fasse bien la traduction.
 
 Usage : python tools/check_tab5_registry.py   (aussi lancé par `pytest`, tests/test_guards.py)
 Sortie : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
@@ -41,6 +44,12 @@ RE_NAMESPACE = re.compile(r"^namespace (\w+) \{", re.M)
 RE_ADD = re.compile(r'ModalRegistry::add\(\s*id\((\w+)\)\s*,\s*(nullptr|"([^"]*)")\s*,')
 LEGACY_TABLES = ("kPopups", "kScreens", "kTargetOf")
 SELECT_SKIP = {"—", "Accueil"}
+# Option du select → (fenêtre enregistrée qui l'affiche, traduction attendue dans
+# tab5_ecran_ouvrir, tab5-ha-controls.yaml). Le nom de l'option ne change pas : HA,
+# le blueprint et les automatisations de l'utilisateur l'écrivent.
+SELECT_ALIAS = {
+    "Console système": ("Réglages", 'ModalRegistry::find(e == Ecran::CONSOLE ? "Réglages" : nom)'),
+}
 
 
 def strip_comments(text: str) -> str:
@@ -151,7 +160,19 @@ def scan(tab5: Path = TAB5) -> list[str]:
 
     # 6. options du select ↔ libellés enregistrés
     names = {n for n in registered.values() if n}
+    ha_controls_text = strip_comments(ha_controls_yaml.read_text(encoding="utf-8"))
+    ha_controls_flat = re.sub(r"\s+", " ", ha_controls_text)
     for opt in select_options(ha_controls_yaml):
+        if opt in SELECT_ALIAS:
+            cible, traduction = SELECT_ALIAS[opt]
+            if cible not in names:
+                problems.append(f"option « {opt} » : alias vers « {cible} », fenêtre non enregistrée")
+            if traduction not in ha_controls_flat:
+                problems.append(
+                    f"{ha_controls_yaml.name} : option « {opt} » sans sa traduction vers « {cible} » "
+                    f"dans tab5_ecran_ouvrir ({traduction})"
+                )
+            continue
         if opt not in names:
             problems.append(
                 f"{ha_controls_yaml.name} : option « {opt} » du select tab5_goto_screen sans fenêtre "

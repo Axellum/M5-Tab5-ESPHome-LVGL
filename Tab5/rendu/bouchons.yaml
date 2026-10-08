@@ -144,6 +144,20 @@ button:
     id: btn_restart
     internal: true
 
+# « Tab5 Limite de charge » vit dans tab5-sensors-diagnostics.yaml (chargeur, absent du
+# rendu) : la page Batterie des Réglages la lit et l'écrit (08/10/2026). Mêmes options,
+# dans le même ordre (LimiteCharge, tab5_batterie.h).
+select:
+  - platform: template
+    id: tab5_limite_charge
+    optimistic: true
+    options:
+      - "100 %"
+      - "80 %"
+    initial_option: "100 %"
+    on_value:
+      - script.execute: tab5_reglages_sync_ui
+
 # Capture de l'écran, appelée par tools/rendu/capturer.py après chaque scène. S'ajoute
 # aux actions de tab5-api-logic.yaml (les listes `services:` des packages se suivent).
 api:
@@ -221,6 +235,9 @@ api:
             batterie_tension_ui(tension, millis());
             batterie_niveau_ui(niveau);
             batterie_charge_ui(en_charge);
+            // Page Batterie des Réglages, si elle est affichée (sur la tablette :
+            // l'interval 2 s de tab5-sensors-diagnostics.yaml).
+            reglages_batterie_peindre();
         - if:
             condition:
               lambda: 'return montee;'

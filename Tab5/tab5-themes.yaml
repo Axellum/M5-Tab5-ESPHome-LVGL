@@ -49,7 +49,7 @@ font:
     id: police_anton_400_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Anton@400
     id: police_anton_400_45
     size: 45
@@ -64,7 +64,7 @@ font:
     id: police_barlow_semi_condensed_700_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Barlow Semi Condensed@700
     id: police_barlow_semi_condensed_700_45
     size: 45
@@ -84,7 +84,7 @@ font:
     id: police_familjen_grotesk_700_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Familjen Grotesk@700
     id: police_familjen_grotesk_700_45
     size: 45
@@ -94,7 +94,7 @@ font:
     id: police_figtree_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Fraunces@700
     id: police_fraunces_700_116
     size: 116
@@ -129,7 +129,7 @@ font:
     id: police_gloock_400_30
     size: 30
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Gloock@400
     id: police_gloock_400_45
     size: 45
@@ -144,7 +144,7 @@ font:
     id: police_ibm_plex_serif_700_29
     size: 29
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://IBM Plex Serif@700
     id: police_ibm_plex_serif_700_45
     size: 45
@@ -159,7 +159,7 @@ font:
     id: police_jersey_10_400_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Jersey 10@400
     id: police_jersey_10_400_45
     size: 45
@@ -169,7 +169,7 @@ font:
     id: police_manrope_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Manrope@700
     id: police_manrope_700_45
     size: 45
@@ -184,7 +184,7 @@ font:
     id: police_murecho_400_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Murecho@400
     id: police_murecho_400_45
     size: 45
@@ -199,7 +199,7 @@ font:
     id: police_nunito_800_29
     size: 29
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Nunito@800
     id: police_nunito_800_45
     size: 45
@@ -209,7 +209,7 @@ font:
     id: police_overpass_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Overpass@700
     id: police_overpass_700_45
     size: 45
@@ -229,7 +229,7 @@ font:
     id: police_oxanium_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Oxanium@700
     id: police_oxanium_700_45
     size: 45
@@ -244,7 +244,7 @@ font:
     id: police_pacifico_400_26
     size: 26
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Pacifico@400
     id: police_pacifico_400_45
     size: 45
@@ -259,7 +259,7 @@ font:
     id: police_quicksand_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: gfonts://Quicksand@700
     id: police_quicksand_700_45
     size: 45
@@ -485,7 +485,7 @@ script:
           if (id(hum_salon).has_state() && !std::isnan(id(hum_salon).state))
             set_icon_color_ui(id(icon_salon), get_humidity_color(id(hum_salon).state));
           set_icon_active_ui(id(icon_ha), id(status_ha).state, UIColor.INFO, UIColor.INACTIVE);
-          if (is_console_layer_visible(id(layer_console_sys)))
+          if (reglages_page_visible(REGLAGES_PAGE_SYSTEME))
             update_console_ha_status_ui(id(lbl_sys_ha_val), id(status_ha).state);
           // Boutons Domo / Discussion de l'accueil (tab5_set_assist_mode, sans son
           // événement vers HA).

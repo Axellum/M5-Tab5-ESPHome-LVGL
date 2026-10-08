@@ -22,7 +22,7 @@ lvgl:
       on_gesture:
         then:
           # [AI-CONTEXT] Pagination previsions (swipe gauche/droite, y>=333 carte centrale)
-          # deleguee a handle_swipe_gesture(). Console diag : appui long sur btn_control_console (choix « auto »).
+          # deleguee a handle_swipe_gesture(). Console diag (page Système des Réglages) : appui long sur btn_control_console (choix « auto »).
           - lambda: |-
               lv_indev_t * indev = lv_indev_active();
               if (indev) {
@@ -257,9 +257,9 @@ lvgl:
               # Glyphe et visibilité : boutons_haut_apply_ui() (tab5_zones.cpp).
               - label: { id: icon_mini_ha, text: "\U000F0D9B", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
 
-        # Engrenage : tap = Réglages de la tablette (tab5-reglages.yaml), appui long =
-        # console système en « auto » (avant le 06/10/2026, le flocon l'ouvrait d'un tap),
-        # sans mini icône en « auto ».
+        # Engrenage : tap = Réglages de la tablette sur leur page Écran (tab5-reglages.yaml),
+        # appui long = leur page Système (l'ancienne console système) en « auto » (avant le
+        # 06/10/2026, le flocon ouvrait la console d'un tap), sans mini icône en « auto ».
         - button:
             id: btn_control_console
             align: TOP_LEFT
@@ -271,10 +271,13 @@ lvgl:
             pad_all: 0
             styles: style_clim_btn_page
             on_short_click:
-              - script.execute: tab5_reglages_ouvrir
+              - script.execute:
+                  id: tab5_reglages_ouvrir
+                  page: 0   # REGLAGES_PAGE_ECRAN (tab5_custom.h)
             on_long_press:
-              # La console : script tab5_console_ouvrir (tab5-scripts.yaml), le même que
-              # celui du select « Aller à l'écran ».
+              # « auto » : la page Système des Réglages, par tab5_ecran_ouvrir
+              # (tab5-ha-controls.yaml), comme l'option « Console système » du select
+              # « Aller à l'écran ».
               - lambda: |-
                   const int e = bouton_haut_ecran(BOUTON_ENGRENAGE);
                   if (e != 0) id(tab5_ecran_ouvrir).execute(e);
@@ -618,7 +621,6 @@ lvgl:
         - !include ui_components/reglables_liste.yaml
         # Roue d'actions rapides (ADR-0036) : au-dessus des cartes, sous les popups (« Détails »).
         - !include ui_components/roue_actions.yaml
-        - !include ui_components/console_sys.yaml
         - !include ui_components/climate_popup.yaml
         - !include ui_components/light_popup.yaml
         - !include ui_components/volet_popup.yaml

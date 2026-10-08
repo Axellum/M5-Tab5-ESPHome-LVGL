@@ -13,7 +13,10 @@ la mauvaise entité ou reste sans surbrillance. Ce test relit :
   REGLAGES_NB_* (et, pour les langues, que de fichiers dans Tab5/lang/) ;
 - Oui vaut 1 et Non 0 ; les flèches du thème valent −1 et +1 ;
 - tab5_reglages_ouvrir pose chaque bouton à son index (Oui en 0, Non en 1) ;
-- les fenêtres inscrites au registre (tab5-scripts.yaml) tiennent dans ModalRegistry::MAX."""
+- les fenêtres inscrites au registre (tab5-scripts.yaml) tiennent dans ModalRegistry::MAX ;
+- quatre pages (08/10/2026) : un nom en haut et un conteneur par ReglagesPage, rangés à
+  leur index, et le geste de changement de page qui ne sort pas du popup, n'est pas pris
+  à un curseur et rend le lever du doigt muet."""
 import pathlib
 import re
 
@@ -30,8 +33,14 @@ FLECHE = re.compile(r"file: alarm_step_script_btn\.yaml, .*call: \{ id: tab5_reg
                     r"reglage: (\d+), valeur: (-?\d+) \}")
 # Champ de ReglagesUI de chaque réglage à boutons (le thème a ses flèches et son nom).
 CHAMPS = {"REGLAGE_EXTINCTION": "extinction", "REGLAGE_OKAY_NABU": "okay_nabu", "REGLAGE_TAPE": "tape",
-          "REGLAGE_MODE": "mode", "REGLAGE_NUIT": "nuit", "REGLAGE_LANGUE": "langue"}
-OUI_NON = ("REGLAGE_OKAY_NABU", "REGLAGE_TAPE", "REGLAGE_NUIT")
+          "REGLAGE_MODE": "mode", "REGLAGE_NUIT": "nuit", "REGLAGE_LANGUE": "langue",
+          "REGLAGE_LIMITE_CHARGE": "limite", "REGLAGE_ECONOMIE": "economie",
+          "REGLAGE_BATTERIE_MONTEE": "montee"}
+OUI_NON = ("REGLAGE_OKAY_NABU", "REGLAGE_TAPE", "REGLAGE_NUIT", "REGLAGE_BATTERIE_MONTEE")
+ONGLET = re.compile(r"file: reglages_onglet\.yaml, vars: \{ id: (\w+), x: \d+, page: (\d+), label_text: \"([^\"]*)\" \}")
+# Conteneur de chaque page (reglages_popup.yaml ; la page Système est console_sys.yaml).
+PAGES = {"REGLAGES_PAGE_ECRAN": "reglages_page_ecran", "REGLAGES_PAGE_APPARENCE": "reglages_page_apparence",
+         "REGLAGES_PAGE_BATTERIE": "reglages_page_batterie", "REGLAGES_PAGE_SYSTEME": "reglages_page_systeme"}
 
 
 class _Chargeur(yaml.SafeLoader):
@@ -96,7 +105,10 @@ def test_une_pastille_par_option_dans_l_ordre_du_select():
     boutons = _boutons()
     for nom, fichier, select, nb in (
             ("REGLAGE_EXTINCTION", "tab5-ha-controls.yaml", "tab5_extinction_auto", "REGLAGES_NB_EXTINCTION"),
-            ("REGLAGE_MODE", "tab5-themes.yaml", "tab5_theme_mode", "REGLAGES_NB_MODES")):
+            ("REGLAGE_MODE", "tab5-themes.yaml", "tab5_theme_mode", "REGLAGES_NB_MODES"),
+            ("REGLAGE_LIMITE_CHARGE", "tab5-sensors-diagnostics.yaml", "tab5_limite_charge",
+             "REGLAGES_NB_LIMITES"),
+            ("REGLAGE_ECONOMIE", "tab5-economie.yaml", "tab5_economie", "REGLAGES_NB_ECONOMIE")):
         options = _options(fichier, select)
         assert [libelle for _, _, libelle in boutons[nom]] == options, f"{nom} : libellés ≠ options de {select}"
         assert [valeur for _, valeur, _ in boutons[nom]] == list(range(len(options))), nom
@@ -139,3 +151,73 @@ def test_registre_des_fenetres_assez_grand():
     m = re.search(r"constexpr int MAX = (\d+);", _lire(TAB5 / "tab5_registry.h"))
     assert m and inscrites > 10, "les motifs ne reconnaissent plus le registre"
     assert inscrites <= int(m.group(1)), f"{inscrites} fenêtres pour ModalRegistry::MAX = {m.group(1)}"
+
+
+
+def _pages():
+    """{nom: numéro} de l'enum ReglagesPage (sans REGLAGES_NB_PAGES)."""
+    texte = _entete()
+    bloc = texte[texte.index("enum ReglagesPage"):]
+    bloc = bloc[:bloc.index("};")]
+    return {nom: int(n) for nom, n in re.findall(r"(REGLAGES_PAGE_\w+) = (\d+)", bloc)}
+
+
+def _corps(texte, signature):
+    """Corps d'une fonction C++ jusqu'à l'accolade fermante en début de ligne."""
+    debut = texte.index(signature)
+    return texte[debut:texte.index("\n}\n", debut)]
+
+
+def test_un_nom_et_un_conteneur_par_page():
+    pages = _pages()
+    nb = re.search(r"REGLAGES_NB_PAGES = (\d+),", _entete())
+    assert nb and len(pages) == int(nb.group(1)) == 4, pages
+    popup = _lire(POPUP)
+    onglets = ONGLET.findall(popup)
+    assert [int(p) for _, p, _ in onglets] == sorted(pages.values()), "un nom par page, dans l'ordre"
+    script = _lire(SCRIPTS)
+    systeme = _lire(TAB5 / "ui_components" / "console_sys.yaml")
+    for (ident, page, _), (nom, n) in zip(onglets, sorted(pages.items(), key=lambda kv: kv[1])):
+        assert int(page) == n
+        assert script.count(f"u.onglet[{nom}] = id({ident});") == 1, ident
+        conteneur = PAGES[nom]
+        assert f"id: {conteneur}" in popup + systeme, conteneur
+        assert script.count(f"u.page[{nom}] = id({conteneur});") == 1, conteneur
+    # La page Système (l'ancienne console) est dans le popup, plus à part.
+    assert "!include console_sys.yaml" in popup
+    assert "console_sys.yaml" not in _lire(TAB5 / "tab5-lvgl.yaml")
+    # Engrenage : un tap ouvre la page Écran (son appui long passe par tab5_ecran_ouvrir).
+    lvgl = _lire(TAB5 / "tab5-lvgl.yaml").replace("\r\n", "\n")
+    assert "id: tab5_reglages_ouvrir\n                  page: 0" in lvgl
+
+
+def test_geste_de_page_reste_dans_le_popup():
+    cpp = _lire(TAB5 / "tab5_reglages.cpp").replace("\r\n", "\n")
+    preparer = _corps(cpp, "void reglages_preparer()")
+    # Le geste s'arrête au popup : page_main ne change ni les prévisions ni la pièce.
+    assert "lv_obj_remove_flag(u.popup, LV_OBJ_FLAG_GESTURE_BUBBLE);" in preparer
+    assert "lv_obj_add_event_cb(u.popup, geste_rappel, LV_EVENT_GESTURE, nullptr);" in preparer
+    geste = _corps(cpp, "void geste_rappel(")
+    assert "dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT" in geste
+    # Un curseur glissé (luminosité, volume) n'est pas un changement de page ; le lever du
+    # doigt qui suit le geste ne déclenche rien (ni tap, ni appui long). Dans cet ordre.
+    assert "lv_obj_check_type(o, &lv_slider_class)" in geste
+    assert (geste.index("lv_slider_class") < geste.index("lv_indev_wait_release(indev);")
+            < geste.index("reglages_afficher_page("))
+
+
+def test_gardes_de_la_console_par_la_page_systeme():
+    """La console et la page Batterie ne coûtent rien tant qu'elles ne sont pas affichées
+    (garde #T222)."""
+    diag = _lire(TAB5 / "tab5-sensors-diagnostics.yaml")
+    assert diag.count("if (!reglages_page_visible(REGLAGES_PAGE_SYSTEME)) return;") == 3
+    assert "if (reglages_page_visible(REGLAGES_PAGE_SYSTEME)) {" in diag
+    assert "reglages_batterie_peindre();" in diag
+    assert "if (reglages_page_visible(REGLAGES_PAGE_SYSTEME))" in _lire(TAB5 / "tab5-themes.yaml")
+    cpp = _lire(TAB5 / "tab5_reglages.cpp").replace("\r\n", "\n")
+    assert "reglages_page_visible(REGLAGES_PAGE_BATTERIE)" in _corps(cpp, "void reglages_batterie_peindre()")
+
+
+def test_bouchon_du_rendu_comme_le_vrai_select():
+    vrai = _options("tab5-sensors-diagnostics.yaml", "tab5_limite_charge")
+    assert _options("rendu/bouchons.yaml", "tab5_limite_charge") == vrai

@@ -360,6 +360,11 @@ void rangee_rejouer_theme();
 void cartes_rejouer_theme();
 void energie_rejouer_theme();
 void reglages_rejouer_theme();
+// Batterie de la tablette (tab5_zones.cpp), lue par la page Batterie des Réglages
+// (tab5_reglages.cpp, 08/10/2026) : dernier niveau publié (%, NAN inconnu) et dernier
+// état de CHG_STAT, ceux de l'icône du bandeau.
+float batterie_niveau_lu();
+bool batterie_en_charge_lue();
 void historique_rejouer_theme();
 void alertes_rejouer_theme();
 void zones_rejouer_theme();

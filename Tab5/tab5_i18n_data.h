@@ -8,9 +8,23 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1038;
+static const uint16_t kI18nKeyCount = 1052;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1157,6 +1171,7 @@ static const char* const kI18nKeys[] = {
     "8 consoles — une seule à la fois",
     "8 niveaux, 3 vies, power-ups",
     "8,0 cases/s",
+    "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée.",
     "9 min",
     "ACTIF",
     "AMPOULE",
@@ -1207,6 +1222,7 @@ static const char* const kI18nKeys[] = {
     "Aperçu du territoire : ACTIVÉ",
     "Aperçu du territoire : DÉSACTIVÉ",
     "Appareil",
+    "Apparence",
     "Appuyer sur un emplacement le fait passer à l'objet suivant.",
     "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement.",
     "Appuyez sur le micro puis parlez…",
@@ -1251,6 +1267,7 @@ static const char* const kI18nKeys[] = {
     "BILLE BONUS",
     "BILLE PERDUE",
     "Batterie",
+    "Batterie montée",
     "Bientôt sec",
     "Bilan contre le Tab (par variante et niveau)",
     "Bilan face au Tab",
@@ -1278,7 +1295,6 @@ static const char* const kI18nKeys[] = {
     "COMMANDES",
     "COMMENCER LA PARTIE",
     "CONFIRMER",
-    "CONSOLE SYSTÈME",
     "COULEURS",
     "COUPS",
     "CREUSER",
@@ -1413,6 +1429,7 @@ static const char* const kI18nKeys[] = {
     "Emplacement %d : %s",
     "Emplacement %d : vide",
     "En attente de Home Assistant",
+    "En charge",
     "En cours",
     "En mouvement",
     "Erreur",
@@ -1568,6 +1585,7 @@ static const char* const kI18nKeys[] = {
     "Les âmes sont conservées",
     "Les âmes sont déjà mises de côté.",
     "Lettres A..T et chiffres autour du goban",
+    "Limite de charge",
     "Lode Runner 1983\nCreuse · grimpe · fuis",
     "Luminosité",
     "Lumière",
@@ -1596,6 +1614,7 @@ static const char* const kI18nKeys[] = {
     "Menu principal",
     "Mer",
     "Mes Plantes",
+    "Mesure en cours",
     "Mesuré",
     "Minimum",
     "Minimum et maximum",
@@ -1619,6 +1638,7 @@ static const char* const kI18nKeys[] = {
     "NOUVEAU RECORD !",
     "NOUVELLE PARTIE",
     "Niv %d/8",
+    "Niveau",
     "Niveau %d - %s",
     "Niveau %d — %s\nScore : %d",
     "Niveau %d/%d  %s",
@@ -1687,6 +1707,7 @@ static const char* const kI18nKeys[] = {
     "Partiel",
     "Pas après",
     "Pas avant",
+    "Pas de batterie détectée",
     "Pas de données",
     "Pas de velours",
     "Passe",
@@ -1888,7 +1909,9 @@ static const char* const kI18nKeys[] = {
     "Statistiques",
     "Stop",
     "Sur USB",
+    "Sur batterie",
     "Synchronisation...",
+    "Système",
     "TEMPS DE RÉPONSE",
     "TEMPÉRATURE",
     "TOUS LES NIVEAUX !",
@@ -1909,6 +1932,7 @@ static const char* const kI18nKeys[] = {
     "Temps écoulé — la réponse était : %s",
     "Temps écoulé — matériel insuffisant pour mater",
     "Température",
+    "Tension",
     "Tester",
     "Thème",
     "Top 10 local",
@@ -1924,6 +1948,7 @@ static const char* const kI18nKeys[] = {
     "Touchez un nom pour le changer, la pastille pour la couleur",
     "Touchez une ligne pour changer sa valeur.",
     "Touchez à nouveau %s pour valider",
+    "Toujours",
     "Tour %u",
     "Tour %u · au tour de %s",
     "Tournez la tablette à la verticale",
@@ -2046,11 +2071,14 @@ static const char* const kI18nKeys[] = {
     "Échecs FIDE complets\n5 niveaux d'IA embarquée",
     "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local",
     "Éco",
+    "Économie d'énergie",
     "Écoute…",
+    "Écran",
     "Élan",
     "Énergie",
     "Équipe : %s",
     "Équipement",
+    "État",
     "Éteindre",
     "Éteindre les lumières",
     "Éteint",
@@ -2199,6 +2227,7 @@ static const char* const kI18n_en[] = {
     "8 consoles — one at a time",  // "8 consoles — une seule à la fois"
     "8 levels, 3 lives, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8.0 tiles/s",  // "8,0 cases/s"
+    "80 %: charging stops at 80 % and resumes at 70 %, for a tablet that is always plugged in.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "ON",  // "ACTIF"
     "BULB",  // "AMPOULE"
@@ -2249,6 +2278,7 @@ static const char* const kI18n_en[] = {
     "Territory preview: ON",  // "Aperçu du territoire : ACTIVÉ"
     "Territory preview: OFF",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Device",  // "Appareil"
+    "Appearance",  // "Apparence"
     "Tapping a slot switches it to the next item.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tapping an owned item sells it back for half its price. A sold item is also unequipped.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tap the mic, then speak…",  // "Appuyez sur le micro puis parlez…"
@@ -2293,6 +2323,7 @@ static const char* const kI18n_en[] = {
     "EXTRA BALL",  // "BILLE BONUS"
     "BALL LOST",  // "BILLE PERDUE"
     "Battery",  // "Batterie"
+    "Battery fitted",  // "Batterie montée"
     "Drying soon",  // "Bientôt sec"
     "Record vs Tab (by variant / level)",  // "Bilan contre le Tab (par variante et niveau)"
     "Record against the Tab",  // "Bilan face au Tab"
@@ -2320,7 +2351,6 @@ static const char* const kI18n_en[] = {
     "CONTROLS",  // "COMMANDES"
     "START THE GAME",  // "COMMENCER LA PARTIE"
     "CONFIRM",  // "CONFIRMER"
-    "SYSTEM CONSOLE",  // "CONSOLE SYSTÈME"
     "COLORS",  // "COULEURS"
     "MOVES",  // "COUPS"
     "DIG",  // "CREUSER"
@@ -2455,6 +2485,7 @@ static const char* const kI18n_en[] = {
     "Slot %d: %s",  // "Emplacement %d : %s"
     "Slot %d: empty",  // "Emplacement %d : vide"
     "Waiting for Home Assistant",  // "En attente de Home Assistant"
+    "Charging",  // "En charge"
     "Running",  // "En cours"
     "Moving",  // "En mouvement"
     "Error",  // "Erreur"
@@ -2610,6 +2641,7 @@ static const char* const kI18n_en[] = {
     "Your souls are kept",  // "Les âmes sont conservées"
     "Your souls are already set aside.",  // "Les âmes sont déjà mises de côté."
     "Letters A..T and numbers around the board",  // "Lettres A..T et chiffres autour du goban"
+    "Charge limit",  // "Limite de charge"
     "Lode Runner 1983\nDig · climb · run",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Brightness",  // "Luminosité"
     "Light",  // "Lumière"
@@ -2638,6 +2670,7 @@ static const char* const kI18n_en[] = {
     "Main menu",  // "Menu principal"
     "Wed",  // "Mer"
     "My plants",  // "Mes Plantes"
+    "Measuring",  // "Mesure en cours"
     "Measured",  // "Mesuré"
     "Minimum",  // "Minimum"
     "Minimum and maximum",  // "Minimum et maximum"
@@ -2661,6 +2694,7 @@ static const char* const kI18n_en[] = {
     "NEW HIGH SCORE!",  // "NOUVEAU RECORD !"
     "NEW GAME",  // "NOUVELLE PARTIE"
     "Lvl %d/8",  // "Niv %d/8"
+    "Level",  // "Niveau"
     "Level %d - %s",  // "Niveau %d - %s"
     "Level %d — %s\nScore: %d",  // "Niveau %d — %s\nScore : %d"
     "Level %d/%d  %s",  // "Niveau %d/%d  %s"
@@ -2729,6 +2763,7 @@ static const char* const kI18n_en[] = {
     "Partly open",  // "Partiel"
     "Not after",  // "Pas après"
     "Not before",  // "Pas avant"
+    "No battery detected",  // "Pas de batterie détectée"
     "No data",  // "Pas de données"
     "Velvet Step",  // "Pas de velours"
     "Pass",  // "Passe"
@@ -2930,7 +2965,9 @@ static const char* const kI18n_en[] = {
     "Statistics",  // "Statistiques"
     "Stop",  // "Stop"
     "On USB",  // "Sur USB"
+    "On battery",  // "Sur batterie"
     "Syncing...",  // "Synchronisation..."
+    "System",  // "Système"
     "ANSWER TIME",  // "TEMPS DE RÉPONSE"
     "TEMPERATURE",  // "TEMPÉRATURE"
     "ALL LEVELS CLEARED!",  // "TOUS LES NIVEAUX !"
@@ -2951,6 +2988,7 @@ static const char* const kI18n_en[] = {
     "Time's up — the answer was: %s",  // "Temps écoulé — la réponse était : %s"
     "Time out — insufficient material to mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperature",  // "Température"
+    "Voltage",  // "Tension"
     "Test",  // "Tester"
     "Theme",  // "Thème"
     "Local top 10",  // "Top 10 local"
@@ -2966,6 +3004,7 @@ static const char* const kI18n_en[] = {
     "Tap a name to change it, the dot to change the color",  // "Touchez un nom pour le changer, la pastille pour la couleur"
     "Tap a row to change its value.",  // "Touchez une ligne pour changer sa valeur."
     "Tap %s again to confirm",  // "Touchez à nouveau %s pour valider"
+    "Always",  // "Toujours"
     "Round %u",  // "Tour %u"
     "Round %u · %s to play",  // "Tour %u · au tour de %s"
     "Turn the tablet upright",  // "Tournez la tablette à la verticale"
@@ -3088,11 +3127,14 @@ static const char* const kI18n_en[] = {
     "Full FIDE chess\n5 on-device AI levels",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Tab's chessboard — FIDE rules, built-in AI, 100% local",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
     "Eco",  // "Éco"
+    "Power saving",  // "Économie d'énergie"
     "Listening…",  // "Écoute…"
+    "Screen",  // "Écran"
     "Momentum",  // "Élan"
     "Energy",  // "Énergie"
     "Team: %s",  // "Équipe : %s"
     "Equipment",  // "Équipement"
+    "State",  // "État"
     "Turn off",  // "Éteindre"
     "Lights off",  // "Éteindre les lumières"
     "Off",  // "Éteint"
@@ -3241,6 +3283,7 @@ static const char* const kI18n_de[] = {
     "8 Konsolen — immer nur eine",  // "8 consoles — une seule à la fois"
     "8 Level, 3 Leben, Power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 Felder/s",  // "8,0 cases/s"
+    "80 %: Laden stoppt bei 80 % und setzt bei 70 % wieder ein, für ein dauerhaft angeschlossenes Tablet.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "AN",  // "ACTIF"
     "LAMPE",  // "AMPOULE"
@@ -3291,6 +3334,7 @@ static const char* const kI18n_de[] = {
     "Gebietsvorschau: AN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebietsvorschau: AUS",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Gerät",  // "Appareil"
+    "Aussehen",  // "Apparence"
     "Tippen auf einen Platz wechselt zum nächsten Gegenstand.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Ein Gegenstand im Besitz wird per Tippen zum halben Preis verkauft. Verkauftes wird auch abgelegt.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Mikrofon antippen, dann sprechen…",  // "Appuyez sur le micro puis parlez…"
@@ -3335,6 +3379,7 @@ static const char* const kI18n_de[] = {
     "EXTRABALL",  // "BILLE BONUS"
     "BALL VERLOREN",  // "BILLE PERDUE"
     "Batterie",  // "Batterie"
+    "Akku eingebaut",  // "Batterie montée"
     "Bald trocken",  // "Bientôt sec"
     "Bilanz vs Tab (nach Variante / Stufe)",  // "Bilan contre le Tab (par variante et niveau)"
     "Bilanz gegen den Tab",  // "Bilan face au Tab"
@@ -3362,7 +3407,6 @@ static const char* const kI18n_de[] = {
     "STEUERUNG",  // "COMMANDES"
     "SPIEL STARTEN",  // "COMMENCER LA PARTIE"
     "BESTÄTIGEN",  // "CONFIRMER"
-    "SYSTEMKONSOLE",  // "CONSOLE SYSTÈME"
     "FARBEN",  // "COULEURS"
     "ZÜGE",  // "COUPS"
     "GRABEN",  // "CREUSER"
@@ -3497,6 +3541,7 @@ static const char* const kI18n_de[] = {
     "Platz %d: %s",  // "Emplacement %d : %s"
     "Platz %d: leer",  // "Emplacement %d : vide"
     "Warte auf Home Assistant",  // "En attente de Home Assistant"
+    "Lädt",  // "En charge"
     "Läuft",  // "En cours"
     "In Bewegung",  // "En mouvement"
     "Fehler",  // "Erreur"
@@ -3652,6 +3697,7 @@ static const char* const kI18n_de[] = {
     "Die Seelen bleiben erhalten",  // "Les âmes sont conservées"
     "Die Seelen sind schon gesichert.",  // "Les âmes sont déjà mises de côté."
     "Buchstaben A..T und Zahlen am Brettrand",  // "Lettres A..T et chiffres autour du goban"
+    "Ladegrenze",  // "Limite de charge"
     "Lode Runner 1983\nGraben · klettern · fliehen",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Helligkeit",  // "Luminosité"
     "Licht",  // "Lumière"
@@ -3680,6 +3726,7 @@ static const char* const kI18n_de[] = {
     "Hauptmenü",  // "Menu principal"
     "Mi",  // "Mer"
     "Pflanzen",  // "Mes Plantes"
+    "Wird gemessen",  // "Mesure en cours"
     "Gemessen",  // "Mesuré"
     "Minimum",  // "Minimum"
     "Minimum und Maximum",  // "Minimum et maximum"
@@ -3703,6 +3750,7 @@ static const char* const kI18n_de[] = {
     "NEUER REKORD!",  // "NOUVEAU RECORD !"
     "NEUES SPIEL",  // "NOUVELLE PARTIE"
     "Lvl %d/8",  // "Niv %d/8"
+    "Ladestand",  // "Niveau"
     "Level %d - %s",  // "Niveau %d - %s"
     "Level %d — %s\nScore: %d",  // "Niveau %d — %s\nScore : %d"
     "Level %d/%d  %s",  // "Niveau %d/%d  %s"
@@ -3771,6 +3819,7 @@ static const char* const kI18n_de[] = {
     "Teilweise",  // "Partiel"
     "Nicht nach",  // "Pas après"
     "Nicht vor",  // "Pas avant"
+    "Kein Akku erkannt",  // "Pas de batterie détectée"
     "Keine Daten",  // "Pas de données"
     "Samtschritt",  // "Pas de velours"
     "Passen",  // "Passe"
@@ -3972,7 +4021,9 @@ static const char* const kI18n_de[] = {
     "Statistik",  // "Statistiques"
     "Stopp",  // "Stop"
     "USB-Betrieb",  // "Sur USB"
+    "Akkubetrieb",  // "Sur batterie"
     "Synchronisiere...",  // "Synchronisation..."
+    "System",  // "Système"
     "ANTWORTZEIT",  // "TEMPS DE RÉPONSE"
     "TEMPERATUR",  // "TEMPÉRATURE"
     "ALLE LEVEL GESCHAFFT!",  // "TOUS LES NIVEAUX !"
@@ -3993,6 +4044,7 @@ static const char* const kI18n_de[] = {
     "Zeit um — die Antwort war: %s",  // "Temps écoulé — la réponse était : %s"
     "Zeit ist um — zu wenig Material zum Mattsetzen",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatur",  // "Température"
+    "Spannung",  // "Tension"
     "Testen",  // "Tester"
     "Design",  // "Thème"
     "Lokale Top 10",  // "Top 10 local"
@@ -4008,6 +4060,7 @@ static const char* const kI18n_de[] = {
     "Name antippen zum Ändern, Punkt für die Farbe",  // "Touchez un nom pour le changer, la pastille pour la couleur"
     "Zeile antippen, um den Wert zu ändern.",  // "Touchez une ligne pour changer sa valeur."
     "%s erneut antippen zum Bestätigen",  // "Touchez à nouveau %s pour valider"
+    "Immer",  // "Toujours"
     "Runde %u",  // "Tour %u"
     "Runde %u · %s ist dran",  // "Tour %u · au tour de %s"
     "Tablet hochkant drehen",  // "Tournez la tablette à la verticale"
@@ -4130,11 +4183,14 @@ static const char* const kI18n_de[] = {
     "Schach nach FIDE-Regeln\n5 KI-Stufen im Gerät",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Schachbrett des Tab — FIDE-Regeln, KI an Bord, 100 % lokal",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
     "Eco",  // "Éco"
+    "Energiesparen",  // "Économie d'énergie"
     "Höre zu…",  // "Écoute…"
+    "Bildschirm",  // "Écran"
     "Schwung",  // "Élan"
     "Energie",  // "Énergie"
     "Team: %s",  // "Équipe : %s"
     "Ausrüstung",  // "Équipement"
+    "Zustand",  // "État"
     "Ausschalten",  // "Éteindre"
     "Lichter aus",  // "Éteindre les lumières"
     "Aus",  // "Éteint"
@@ -4283,6 +4339,7 @@ static const char* const kI18n_nl[] = {
     "8 consoles — één tegelijk",  // "8 consoles — une seule à la fois"
     "8 levels, 3 levens, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 vakjes/s",  // "8,0 cases/s"
+    "80 %: laden stopt bij 80 % en hervat bij 70 %, voor een tablet die altijd aan de lader hangt.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "AAN",  // "ACTIF"
     "LAMP",  // "AMPOULE"
@@ -4333,6 +4390,7 @@ static const char* const kI18n_nl[] = {
     "Gebiedsweergave: AAN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebiedsweergave: UIT",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Apparaat",  // "Appareil"
+    "Weergave",  // "Apparence"
     "Tik op een vak om naar het volgende voorwerp te wisselen.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tik op een voorwerp in je bezit om het voor de halve prijs te verkopen. Een verkocht voorwerp gaat ook uit je uitrusting.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tik op de microfoon en spreek…",  // "Appuyez sur le micro puis parlez…"
@@ -4377,6 +4435,7 @@ static const char* const kI18n_nl[] = {
     "EXTRA BAL",  // "BILLE BONUS"
     "BAL KWIJT",  // "BILLE PERDUE"
     "Batterij",  // "Batterie"
+    "Batterij geplaatst",  // "Batterie montée"
     "Bijna droog",  // "Bientôt sec"
     "Resultaten vs Tab (per variant / niveau)",  // "Bilan contre le Tab (par variante et niveau)"
     "Resultaten tegen Tab",  // "Bilan face au Tab"
@@ -4404,7 +4463,6 @@ static const char* const kI18n_nl[] = {
     "BEDIENING",  // "COMMANDES"
     "SPEL STARTEN",  // "COMMENCER LA PARTIE"
     "BEVESTIGEN",  // "CONFIRMER"
-    "SYSTEEMCONSOLE",  // "CONSOLE SYSTÈME"
     "KLEUREN",  // "COULEURS"
     "ZETTEN",  // "COUPS"
     "GRAAF",  // "CREUSER"
@@ -4539,6 +4597,7 @@ static const char* const kI18n_nl[] = {
     "Vak %d: %s",  // "Emplacement %d : %s"
     "Vak %d: leeg",  // "Emplacement %d : vide"
     "Wachten op Home Assistant",  // "En attente de Home Assistant"
+    "Laden",  // "En charge"
     "Bezig",  // "En cours"
     "In beweging",  // "En mouvement"
     "Fout",  // "Erreur"
@@ -4694,6 +4753,7 @@ static const char* const kI18n_nl[] = {
     "Je zielen blijven bewaard",  // "Les âmes sont conservées"
     "Je zielen zijn al veiliggesteld.",  // "Les âmes sont déjà mises de côté."
     "Letters A..T en cijfers rond de goban",  // "Lettres A..T et chiffres autour du goban"
+    "Laadlimiet",  // "Limite de charge"
     "Lode Runner 1983\nGraaf · klim · vlucht",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Helderheid",  // "Luminosité"
     "Licht",  // "Lumière"
@@ -4722,6 +4782,7 @@ static const char* const kI18n_nl[] = {
     "Hoofdmenu",  // "Menu principal"
     "Wo",  // "Mer"
     "Mijn planten",  // "Mes Plantes"
+    "Bezig met meten",  // "Mesure en cours"
     "Gemeten",  // "Mesuré"
     "Minimum",  // "Minimum"
     "Minimum en maximum",  // "Minimum et maximum"
@@ -4745,6 +4806,7 @@ static const char* const kI18n_nl[] = {
     "NIEUW RECORD!",  // "NOUVEAU RECORD !"
     "NIEUW SPEL",  // "NOUVELLE PARTIE"
     "Lvl %d/8",  // "Niv %d/8"
+    "Niveau",  // "Niveau"
     "Level %d - %s",  // "Niveau %d - %s"
     "Level %d — %s\nScore: %d",  // "Niveau %d — %s\nScore : %d"
     "Level %d/%d  %s",  // "Niveau %d/%d  %s"
@@ -4813,6 +4875,7 @@ static const char* const kI18n_nl[] = {
     "Half open",  // "Partiel"
     "Niet na",  // "Pas après"
     "Niet vóór",  // "Pas avant"
+    "Geen batterij gevonden",  // "Pas de batterie détectée"
     "Geen gegevens",  // "Pas de données"
     "Fluwelen tred",  // "Pas de velours"
     "Pas",  // "Passe"
@@ -5014,7 +5077,9 @@ static const char* const kI18n_nl[] = {
     "Statistieken",  // "Statistiques"
     "Stop",  // "Stop"
     "Via USB",  // "Sur USB"
+    "Op batterij",  // "Sur batterie"
     "Synchroniseren...",  // "Synchronisation..."
+    "Systeem",  // "Système"
     "ANTWOORDTIJD",  // "TEMPS DE RÉPONSE"
     "TEMPERATUUR",  // "TEMPÉRATURE"
     "ALLE LEVELS GEHAALD!",  // "TOUS LES NIVEAUX !"
@@ -5035,6 +5100,7 @@ static const char* const kI18n_nl[] = {
     "Tijd om — het antwoord was: %s",  // "Temps écoulé — la réponse était : %s"
     "Tijd om — te weinig materiaal voor mat",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatuur",  // "Température"
+    "Spanning",  // "Tension"
     "Testen",  // "Tester"
     "Thema",  // "Thème"
     "Lokale top 10",  // "Top 10 local"
@@ -5050,6 +5116,7 @@ static const char* const kI18n_nl[] = {
     "Tik op een naam om hem te wijzigen, op de stip voor de kleur",  // "Touchez un nom pour le changer, la pastille pour la couleur"
     "Tik op een regel om de waarde te wijzigen.",  // "Touchez une ligne pour changer sa valeur."
     "Tik nogmaals op %s om te bevestigen",  // "Touchez à nouveau %s pour valider"
+    "Altijd",  // "Toujours"
     "Ronde %u",  // "Tour %u"
     "Ronde %u · beurt aan %s",  // "Tour %u · au tour de %s"
     "Houd de tablet rechtop",  // "Tournez la tablette à la verticale"
@@ -5172,11 +5239,14 @@ static const char* const kI18n_nl[] = {
     "Volledig FIDE-schaak\n5 niveaus ingebouwde AI",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Schaakbord van de Tab — FIDE-regels, ingebouwde AI, 100% lokaal",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
     "Eco",  // "Éco"
+    "Energiebesparing",  // "Économie d'énergie"
     "Luistert…",  // "Écoute…"
+    "Scherm",  // "Écran"
     "Vaart",  // "Élan"
     "Energie",  // "Énergie"
     "Team: %s",  // "Équipe : %s"
     "Uitrusting",  // "Équipement"
+    "Status",  // "État"
     "Uitzetten",  // "Éteindre"
     "Lichten uit",  // "Éteindre les lumières"
     "Uit",  // "Éteint"
@@ -5325,6 +5395,7 @@ static const char* const kI18n_es[] = {
     "8 consolas — una a la vez",  // "8 consoles — une seule à la fois"
     "8 niveles, 3 vidas, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 casillas/s",  // "8,0 cases/s"
+    "80 %: la carga se detiene al 80 % y se reanuda al 70 %, para una tableta siempre enchufada.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "ACTIVO",  // "ACTIF"
     "LÁMPARA",  // "AMPOULE"
@@ -5375,6 +5446,7 @@ static const char* const kI18n_es[] = {
     "Vista del territorio: SÍ",  // "Aperçu du territoire : ACTIVÉ"
     "Vista del territorio: NO",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
+    "Aspecto",  // "Apparence"
     "Tocar una ranura la cambia al objeto siguiente.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocar un objeto que ya tienes lo vende a mitad de precio. Un objeto vendido también se quita del equipo.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Toca el micro y habla…",  // "Appuyez sur le micro puis parlez…"
@@ -5419,6 +5491,7 @@ static const char* const kI18n_es[] = {
     "BOLA EXTRA",  // "BILLE BONUS"
     "BOLA PERDIDA",  // "BILLE PERDUE"
     "Batería",  // "Batterie"
+    "Batería instalada",  // "Batterie montée"
     "Casi seca",  // "Bientôt sec"
     "Balance vs Tab (por variante y nivel)",  // "Bilan contre le Tab (par variante et niveau)"
     "Balance contra el Tab",  // "Bilan face au Tab"
@@ -5446,7 +5519,6 @@ static const char* const kI18n_es[] = {
     "CONTROLES",  // "COMMANDES"
     "EMPEZAR LA PARTIDA",  // "COMMENCER LA PARTIE"
     "CONFIRMAR",  // "CONFIRMER"
-    "CONSOLA DEL SISTEMA",  // "CONSOLE SYSTÈME"
     "COLORES",  // "COULEURS"
     "JUG.",  // "COUPS"
     "CAVAR",  // "CREUSER"
@@ -5581,6 +5653,7 @@ static const char* const kI18n_es[] = {
     "Ranura %d: %s",  // "Emplacement %d : %s"
     "Ranura %d: vacía",  // "Emplacement %d : vide"
     "Esperando a Home Assistant",  // "En attente de Home Assistant"
+    "Cargando",  // "En charge"
     "En curso",  // "En cours"
     "En movimiento",  // "En mouvement"
     "Error",  // "Erreur"
@@ -5736,6 +5809,7 @@ static const char* const kI18n_es[] = {
     "Conservas las almas",  // "Les âmes sont conservées"
     "Las almas ya están a salvo.",  // "Les âmes sont déjà mises de côté."
     "Letras A..T y números alrededor del goban",  // "Lettres A..T et chiffres autour du goban"
+    "Límite de carga",  // "Limite de charge"
     "Lode Runner 1983\nCava · trepa · huye",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Brillo",  // "Luminosité"
     "Luz",  // "Lumière"
@@ -5764,6 +5838,7 @@ static const char* const kI18n_es[] = {
     "Menú principal",  // "Menu principal"
     "Mié",  // "Mer"
     "Mis plantas",  // "Mes Plantes"
+    "Midiendo",  // "Mesure en cours"
     "Medida",  // "Mesuré"
     "Mínima",  // "Minimum"
     "Mínima y máxima",  // "Minimum et maximum"
@@ -5787,6 +5862,7 @@ static const char* const kI18n_es[] = {
     "¡NUEVO RÉCORD!",  // "NOUVEAU RECORD !"
     "NUEVA PARTIDA",  // "NOUVELLE PARTIE"
     "Niv %d/8",  // "Niv %d/8"
+    "Nivel",  // "Niveau"
     "Nivel %d - %s",  // "Niveau %d - %s"
     "Nivel %d — %s\nPuntos: %d",  // "Niveau %d — %s\nScore : %d"
     "Nivel %d/%d  %s",  // "Niveau %d/%d  %s"
@@ -5855,6 +5931,7 @@ static const char* const kI18n_es[] = {
     "Entreabierta",  // "Partiel"
     "No después",  // "Pas après"
     "No antes",  // "Pas avant"
+    "No se detecta batería",  // "Pas de batterie détectée"
     "Sin datos",  // "Pas de données"
     "Paso de seda",  // "Pas de velours"
     "Pasa",  // "Passe"
@@ -6056,7 +6133,9 @@ static const char* const kI18n_es[] = {
     "Estadísticas",  // "Statistiques"
     "Parar",  // "Stop"
     "Por USB",  // "Sur USB"
+    "Con batería",  // "Sur batterie"
     "Sincronizando...",  // "Synchronisation..."
+    "Sistema",  // "Système"
     "TIEMPO DE RESPUESTA",  // "TEMPS DE RÉPONSE"
     "TEMPERATURA",  // "TEMPÉRATURE"
     "¡TODOS LOS NIVELES!",  // "TOUS LES NIVEAUX !"
@@ -6077,6 +6156,7 @@ static const char* const kI18n_es[] = {
     "Tiempo agotado — la respuesta era: %s",  // "Temps écoulé — la réponse était : %s"
     "Tiempo agotado — material insuficiente para dar mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
+    "Tensión",  // "Tension"
     "Probar",  // "Tester"
     "Tema",  // "Thème"
     "Top 10 local",  // "Top 10 local"
@@ -6092,6 +6172,7 @@ static const char* const kI18n_es[] = {
     "Toca un nombre para cambiarlo, el punto para el color",  // "Touchez un nom pour le changer, la pastille pour la couleur"
     "Toca una fila para cambiar su valor.",  // "Touchez une ligne pour changer sa valeur."
     "Toca %s otra vez para confirmar",  // "Touchez à nouveau %s pour valider"
+    "Siempre",  // "Toujours"
     "Ronda %u",  // "Tour %u"
     "Ronda %u · turno de %s",  // "Tour %u · au tour de %s"
     "Gira la tableta en vertical",  // "Tournez la tablette à la verticale"
@@ -6214,11 +6295,14 @@ static const char* const kI18n_es[] = {
     "Ajedrez FIDE completo\n5 niveles de IA integrada",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Tablero del Tab — reglas FIDE, IA integrada, 100 % local",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
     "Eco",  // "Éco"
+    "Ahorro de energía",  // "Économie d'énergie"
     "Escuchando…",  // "Écoute…"
+    "Pantalla",  // "Écran"
     "Impulso",  // "Élan"
     "Energía",  // "Énergie"
     "Equipo: %s",  // "Équipe : %s"
     "Equipo",  // "Équipement"
+    "Estado",  // "État"
     "Apagar",  // "Éteindre"
     "Apagar las luces",  // "Éteindre les lumières"
     "OFF",  // "Éteint"
@@ -6367,6 +6451,7 @@ static const char* const kI18n_it[] = {
     "8 console — una alla volta",  // "8 consoles — une seule à la fois"
     "8 livelli, 3 vite, power-up",  // "8 niveaux, 3 vies, power-ups"
     "8,0 caselle/s",  // "8,0 cases/s"
+    "80 %: la carica si ferma all'80 % e riprende al 70 %, per un tablet sempre collegato.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "ATTIVA",  // "ACTIF"
     "LUCI",  // "AMPOULE"
@@ -6417,6 +6502,7 @@ static const char* const kI18n_it[] = {
     "Anteprima territorio: ATTIVA",  // "Aperçu du territoire : ACTIVÉ"
     "Anteprima territorio: DISATTIVATA",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
+    "Aspetto",  // "Apparence"
     "Tocca uno slot per passare all'oggetto successivo.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocca un oggetto posseduto per rivenderlo a metà prezzo. Un oggetto rivenduto viene anche tolto dall'equipaggiamento.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tocca il microfono, poi parla…",  // "Appuyez sur le micro puis parlez…"
@@ -6461,6 +6547,7 @@ static const char* const kI18n_it[] = {
     "PALLA EXTRA",  // "BILLE BONUS"
     "PALLA PERSA",  // "BILLE PERDUE"
     "Batteria",  // "Batterie"
+    "Batteria montata",  // "Batterie montée"
     "Quasi secco",  // "Bientôt sec"
     "Bilancio vs Tab (per variante e livello)",  // "Bilan contre le Tab (par variante et niveau)"
     "Bilancio contro il Tab",  // "Bilan face au Tab"
@@ -6488,7 +6575,6 @@ static const char* const kI18n_it[] = {
     "COMANDI",  // "COMMANDES"
     "INIZIA LA PARTITA",  // "COMMENCER LA PARTIE"
     "CONFERMA",  // "CONFIRMER"
-    "CONSOLE SISTEMA",  // "CONSOLE SYSTÈME"
     "COLORI",  // "COULEURS"
     "MOSSE",  // "COUPS"
     "SCAVA",  // "CREUSER"
@@ -6623,6 +6709,7 @@ static const char* const kI18n_it[] = {
     "Slot %d: %s",  // "Emplacement %d : %s"
     "Slot %d: vuoto",  // "Emplacement %d : vide"
     "In attesa di Home Assistant",  // "En attente de Home Assistant"
+    "In carica",  // "En charge"
     "In corso",  // "En cours"
     "In movimento",  // "En mouvement"
     "Errore",  // "Erreur"
@@ -6778,6 +6865,7 @@ static const char* const kI18n_it[] = {
     "Le anime restano tue",  // "Les âmes sont conservées"
     "Le anime sono già al sicuro.",  // "Les âmes sont déjà mises de côté."
     "Lettere A..T e numeri attorno al goban",  // "Lettres A..T et chiffres autour du goban"
+    "Limite di carica",  // "Limite de charge"
     "Lode Runner 1983\nScava · sali · fuggi",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Luminosità",  // "Luminosité"
     "Luce",  // "Lumière"
@@ -6806,6 +6894,7 @@ static const char* const kI18n_it[] = {
     "Menu principale",  // "Menu principal"
     "Mer",  // "Mer"
     "Piante",  // "Mes Plantes"
+    "Misura in corso",  // "Mesure en cours"
     "Misurata",  // "Mesuré"
     "Minima",  // "Minimum"
     "Minima e massima",  // "Minimum et maximum"
@@ -6829,6 +6918,7 @@ static const char* const kI18n_it[] = {
     "NUOVO RECORD!",  // "NOUVEAU RECORD !"
     "NUOVA PARTITA",  // "NOUVELLE PARTIE"
     "Liv %d/8",  // "Niv %d/8"
+    "Livello",  // "Niveau"
     "Livello %d - %s",  // "Niveau %d - %s"
     "Livello %d — %s\nPunti: %d",  // "Niveau %d — %s\nScore : %d"
     "Livello %d/%d  %s",  // "Niveau %d/%d  %s"
@@ -6897,6 +6987,7 @@ static const char* const kI18n_it[] = {
     "Socchiusa",  // "Partiel"
     "Non dopo",  // "Pas après"
     "Non prima",  // "Pas avant"
+    "Nessuna batteria rilevata",  // "Pas de batterie détectée"
     "Nessun dato",  // "Pas de données"
     "Passo di velluto",  // "Pas de velours"
     "Passo",  // "Passe"
@@ -7098,7 +7189,9 @@ static const char* const kI18n_it[] = {
     "Statistiche",  // "Statistiques"
     "Stop",  // "Stop"
     "Via USB",  // "Sur USB"
+    "A batteria",  // "Sur batterie"
     "Sincronizzo...",  // "Synchronisation..."
+    "Sistema",  // "Système"
     "TEMPO DI RISPOSTA",  // "TEMPS DE RÉPONSE"
     "TEMPERATURA",  // "TEMPÉRATURE"
     "TUTTI I LIVELLI!",  // "TOUS LES NIVEAUX !"
@@ -7119,6 +7212,7 @@ static const char* const kI18n_it[] = {
     "Tempo scaduto — la risposta era: %s",  // "Temps écoulé — la réponse était : %s"
     "Tempo scaduto — materiale insufficiente",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
+    "Tensione",  // "Tension"
     "Prova",  // "Tester"
     "Tema",  // "Thème"
     "Top 10 locale",  // "Top 10 local"
@@ -7134,6 +7228,7 @@ static const char* const kI18n_it[] = {
     "Tocca un nome per cambiarlo, il pallino per il colore",  // "Touchez un nom pour le changer, la pastille pour la couleur"
     "Tocca una riga per cambiarne il valore.",  // "Touchez une ligne pour changer sa valeur."
     "Tocca di nuovo %s per confermare",  // "Touchez à nouveau %s pour valider"
+    "Sempre",  // "Toujours"
     "Turno %u",  // "Tour %u"
     "Turno %u · tocca a %s",  // "Tour %u · au tour de %s"
     "Ruota il tablet in verticale",  // "Tournez la tablette à la verticale"
@@ -7256,11 +7351,14 @@ static const char* const kI18n_it[] = {
     "Scacchi FIDE completi\n5 livelli di IA integrata",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "La scacchiera del Tab — regole FIDE, IA integrata, 100% locale",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
     "Eco",  // "Éco"
+    "Risparmio energetico",  // "Économie d'énergie"
     "Ascolto…",  // "Écoute…"
+    "Schermo",  // "Écran"
     "Slancio",  // "Élan"
     "Energia",  // "Énergie"
     "Squadra: %s",  // "Équipe : %s"
     "Equipaggiamento",  // "Équipement"
+    "Stato",  // "État"
     "Spegni",  // "Éteindre"
     "Spegni le luci",  // "Éteindre les lumières"
     "Spento",  // "Éteint"
@@ -7409,6 +7507,7 @@ static const char* const kI18n_tr[] = {
     "8 konsol — aynı anda yalnız biri",  // "8 consoles — une seule à la fois"
     "8 seviye, 3 can, güçlendirme",  // "8 niveaux, 3 vies, power-ups"
     "8,0 kare/sn",  // "8,0 cases/s"
+    "%80: şarj %80'de durur ve %70'te yeniden başlar; sürekli prize takılı bir tablet için.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 dk",  // "9 min"
     "AÇIK",  // "ACTIF"
     "AMPUL",  // "AMPOULE"
@@ -7459,6 +7558,7 @@ static const char* const kI18n_tr[] = {
     "Alan önizlemesi: AÇIK",  // "Aperçu du territoire : ACTIVÉ"
     "Alan önizlemesi: KAPALI",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Cihaz",  // "Appareil"
+    "Görünüm",  // "Apparence"
     "Bir yuvaya dokunmak onu sonraki eşyaya geçirir.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Sahip olunan bir eşyaya dokunmak onu fiyatının yarısına geri satar. Satılan eşya teçhizattan da çıkarılır.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Mikrofona dokun, sonra konuş…",  // "Appuyez sur le micro puis parlez…"
@@ -7503,6 +7603,7 @@ static const char* const kI18n_tr[] = {
     "EKSTRA BİLYE",  // "BILLE BONUS"
     "BİLYE KAYBOLDU",  // "BILLE PERDUE"
     "Pil",  // "Batterie"
+    "Pil takılı",  // "Batterie montée"
     "Kurumak üzere",  // "Bientôt sec"
     "Tab'a karşı sonuçlar (varyant ve seviyeye göre)",  // "Bilan contre le Tab (par variante et niveau)"
     "Tab karşısında sonuçlar",  // "Bilan face au Tab"
@@ -7530,7 +7631,6 @@ static const char* const kI18n_tr[] = {
     "KOMUTLAR",  // "COMMANDES"
     "OYUNA BAŞLA",  // "COMMENCER LA PARTIE"
     "ONAYLA",  // "CONFIRMER"
-    "SİSTEM KONSOLU",  // "CONSOLE SYSTÈME"
     "RENKLER",  // "COULEURS"
     "HAMLE",  // "COUPS"
     "KAZ",  // "CREUSER"
@@ -7665,6 +7765,7 @@ static const char* const kI18n_tr[] = {
     "Yuva %d: %s",  // "Emplacement %d : %s"
     "Yuva %d: boş",  // "Emplacement %d : vide"
     "Home Assistant bekleniyor",  // "En attente de Home Assistant"
+    "Şarj oluyor",  // "En charge"
     "Çalışıyor",  // "En cours"
     "Hareket ediyor",  // "En mouvement"
     "Hata",  // "Erreur"
@@ -7820,6 +7921,7 @@ static const char* const kI18n_tr[] = {
     "Ruhlar korunur",  // "Les âmes sont conservées"
     "Ruhlar zaten kenara ayrıldı.",  // "Les âmes sont déjà mises de côté."
     "Tahtanın çevresinde A..T harfleri ve rakamlar",  // "Lettres A..T et chiffres autour du goban"
+    "Şarj sınırı",  // "Limite de charge"
     "Lode Runner 1983\nKaz · tırman · kaç",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Parlaklık",  // "Luminosité"
     "Işık",  // "Lumière"
@@ -7848,6 +7950,7 @@ static const char* const kI18n_tr[] = {
     "Ana menü",  // "Menu principal"
     "Çar",  // "Mer"
     "Bitkilerim",  // "Mes Plantes"
+    "Ölçülüyor",  // "Mesure en cours"
     "Ölçülen",  // "Mesuré"
     "En düşük",  // "Minimum"
     "En düşük ve en yüksek",  // "Minimum et maximum"
@@ -7871,6 +7974,7 @@ static const char* const kI18n_tr[] = {
     "YENİ REKOR!",  // "NOUVEAU RECORD !"
     "YENİ OYUN",  // "NOUVELLE PARTIE"
     "Sev %d/8",  // "Niv %d/8"
+    "Seviye",  // "Niveau"
     "Seviye %d - %s",  // "Niveau %d - %s"
     "Seviye %d — %s\nSkor: %d",  // "Niveau %d — %s\nScore : %d"
     "Seviye %d/%d  %s",  // "Niveau %d/%d  %s"
@@ -7939,6 +8043,7 @@ static const char* const kI18n_tr[] = {
     "Kısmen açık",  // "Partiel"
     "En geç",  // "Pas après"
     "En erken",  // "Pas avant"
+    "Pil algılanmadı",  // "Pas de batterie détectée"
     "Veri yok",  // "Pas de données"
     "Kadife Adım",  // "Pas de velours"
     "Pas",  // "Passe"
@@ -8140,7 +8245,9 @@ static const char* const kI18n_tr[] = {
     "İstatistikler",  // "Statistiques"
     "Dur",  // "Stop"
     "USB ile",  // "Sur USB"
+    "Pilde",  // "Sur batterie"
     "Eşitleniyor...",  // "Synchronisation..."
+    "Sistem",  // "Système"
     "YANIT SÜRESİ",  // "TEMPS DE RÉPONSE"
     "SICAKLIK",  // "TEMPÉRATURE"
     "TÜM SEVİYELER!",  // "TOUS LES NIVEAUX !"
@@ -8161,6 +8268,7 @@ static const char* const kI18n_tr[] = {
     "Süre doldu — yanıt: %s",  // "Temps écoulé — la réponse était : %s"
     "Süre doldu — mat için yetersiz materyal",  // "Temps écoulé — matériel insuffisant pour mater"
     "Sıcaklık",  // "Température"
+    "Gerilim",  // "Tension"
     "Dene",  // "Tester"
     "Tema",  // "Thème"
     "Yerel ilk 10",  // "Top 10 local"
@@ -8176,6 +8284,7 @@ static const char* const kI18n_tr[] = {
     "Adı değiştirmek için ada, rengi için noktaya dokun",  // "Touchez un nom pour le changer, la pastille pour la couleur"
     "Değerini değiştirmek için bir satıra dokun.",  // "Touchez une ligne pour changer sa valeur."
     "Onaylamak için tekrar dokun: %s",  // "Touchez à nouveau %s pour valider"
+    "Her zaman",  // "Toujours"
     "Tur %u",  // "Tour %u"
     "Tur %u · sıra: %s",  // "Tour %u · au tour de %s"
     "Tableti dik çevir",  // "Tournez la tablette à la verticale"
@@ -8298,11 +8407,14 @@ static const char* const kI18n_tr[] = {
     "Tam FIDE satranç\n5 seviye yerleşik YZ",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Tab'ın satranç tahtası — FIDE kuralları, yerleşik YZ, %100 yerel",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
     "Eko",  // "Éco"
+    "Güç tasarrufu",  // "Économie d'énergie"
     "Dinliyor…",  // "Écoute…"
+    "Ekran",  // "Écran"
     "Atılım",  // "Élan"
     "Enerji",  // "Énergie"
     "Takım: %s",  // "Équipe : %s"
     "Teçhizat",  // "Équipement"
+    "Durum",  // "État"
     "Kapat",  // "Éteindre"
     "Işıkları kapat",  // "Éteindre les lumières"
     "Kapalı",  // "Éteint"

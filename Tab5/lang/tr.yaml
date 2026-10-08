@@ -263,7 +263,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Image indisponible": "Görsel yok"
 
 # --- System console -------------------------------------------------------------
-"CONSOLE SYSTÈME": "SİSTEM KONSOLU"
 "MÉMOIRE": "BELLEK"
 "Bloc max": "Maks. blok"
 "RÉSEAU": "AĞ"
@@ -1276,6 +1275,22 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Langue": "Dil"
 "Changer de langue ?": "Dil değiştirilsin mi?"
 "La tablette redémarre en {langue}.": "Tablet {langue} diliyle yeniden başlar."
+# Réglages en quatre pages (08/10/2026) : noms des pages, page Batterie
+"Écran": "Ekran"
+"Apparence": "Görünüm"
+"Système": "Sistem"
+"Limite de charge": "Şarj sınırı"
+"Économie d'énergie": "Güç tasarrufu"
+"Batterie montée": "Pil takılı"
+"Sur batterie": "Pilde"
+"Toujours": "Her zaman"
+"État": "Durum"
+"Niveau": "Seviye"
+"Tension": "Gerilim"
+"En charge": "Şarj oluyor"
+"Pas de batterie détectée": "Pil algılanmadı"
+"Mesure en cours": "Ölçülüyor"
+"80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée.": "%80: şarj %80'de durur ve %70'te yeniden başlar; sürekli prize takılı bir tablet için."
 # Historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026)
 "Alertes": "Uyarılar"
 "Tout marquer comme lu": "Tümünü okundu işaretle"

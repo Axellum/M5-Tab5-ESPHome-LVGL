@@ -170,15 +170,25 @@ def test_select_par_la_routine_unique():
     on_value = texte.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[1].split("\n  # Langue", 1)[0]
     assert "id: tab5_ecran_ouvrir" in on_value and "switch" not in on_value
     script = texte.split("- id: tab5_ecran_ouvrir", 1)[1]
-    assert "ecran: int" in script and "Ecran::ARCADE" in script and "tab5_console_ouvrir" in script
-    # Une seule ouverture de la console dans tout le firmware : tab5_console_ouvrir.
-    ouvertures = []
+    assert "ecran: int" in script and "Ecran::ARCADE" in script
+    # « Console système » est la page Système des Réglages depuis le 08/10/2026 : la même
+    # fenêtre, ouverte sur cette page, ou cette page montrée si elle est déjà ouverte.
+    assert 'ModalRegistry::find(e == Ecran::CONSOLE ? "Réglages" : nom)' in script
+    assert "id(tab5_reglages_ouvrir).execute(REGLAGES_PAGE_SYSTEME);" in script
+    assert "if (e == Ecran::CONSOLE) reglages_afficher_page(REGLAGES_PAGE_SYSTEME);" in script
+    # Une seule ouverture des Réglages dans tout le firmware : tab5_reglages_ouvrir ; plus
+    # aucune console à part.
+    ouvertures, console = [], []
     for racine, _, fichiers in os.walk(TAB5):
         for f in fichiers:
             if f.endswith((".yaml", ".cpp", ".h")) and "rendu" not in racine:
-                if "lv_obj_remove_flag(id(layer_console_sys)" in _lire(os.path.join(racine, f)):
+                texte_f = _lire(os.path.join(racine, f))
+                if "animate_popup_open(id(reglages_popup))" in texte_f:
                     ouvertures.append(f)
-    assert ouvertures == ["tab5-scripts.yaml"], ouvertures
+                if "layer_console_sys" in texte_f:
+                    console.append(f)
+    assert ouvertures == ["tab5-reglages.yaml"], ouvertures
+    assert console == [], console
 
 
 def test_mini_glyphes_des_en_tetes():
@@ -189,8 +199,9 @@ def test_mini_glyphes_des_en_tetes():
         en_tete = re.search(r'modal_header\.yaml, vars: \{ icon: "\\U(000F[0-9A-F]{4})"',
                             _lire(os.path.join(TAB5, "ui_components", fichier))).group(1)
         assert glyphes[ecran] == en_tete, f"{ecran} : pas le glyphe de l'en-tête de {fichier}"
-    # Exceptions écrites dans mini_glyphe : la console (son en-tête garde le flocon de la clim)
-    # et l'Arcade (sans en-tête : la manette du bouton).
+    # Exceptions écrites dans mini_glyphe : la console (page Système des Réglages depuis le
+    # 08/10/2026, sans en-tête à elle ; avant, le sien gardait le flocon de la clim) et
+    # l'Arcade (sans en-tête : la manette du bouton).
     assert glyphes["CONSOLE"] != glyphes["CLIM"]
     assert f'"\\U{glyphes["ARCADE"]}", align: CENTER' in _bloc_bouton("btn_control_tv")
     police = re.search(r"id: mdi_font_26\n(.*?)\n  - ", _lire(STYLES), re.S).group(1)
