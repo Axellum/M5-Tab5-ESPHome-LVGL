@@ -8,6 +8,12 @@ Pré-releases tirées de cette section, sur le canal bêta :
 [v3.8.0-rc.1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.1)
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
+[v3.8.0-rc.2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.2)
+le 08/10/2026 : plus de souffle sans batterie, limite de charge et consommation (#387), changer de
+thème ne fige plus l'écran (#383), Réglages en quatre pages (#400), repli météo et mention
+« prévisions périmées » (#393, #395), correctifs et lots de l'audit du 07/10 (#381, #382, #384 à
+#386, #388 à #394), rangement de `Tab5/` (#401, #402). Fichiers Home Assistant à recopier avant le
+firmware.
 
 ### 2026-10-08 — Normes de style et CHANGELOG archivé
 
