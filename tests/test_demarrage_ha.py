@@ -48,11 +48,11 @@ def _parcourir(noeud):
 
 def test_la_poussee_complete_part_au_demarrage_de_ha():
     auto = _poussee_complete()
-    assert {"platform": "homeassistant", "event": "start", "id": "demarrage_ha"} in auto["trigger"]
+    assert {"trigger": "homeassistant", "event": "start", "id": "demarrage_ha"} in auto["triggers"]
     # Partout où la reconnexion pousse ce qui ne part qu'à elle (météo actuelle et
     # probabilités, volet), le démarrage aussi. L'attente de la liaison (étape 0) reste
     # propre à tab5_connected : au démarrage, la tablette est déjà là ou pas encore.
-    listes = [c["id"] for c in _parcourir(auto["action"])
+    listes = [c["id"] for c in _parcourir(auto["actions"])
               if c.get("condition") == "trigger" and isinstance(c.get("id"), list)]
     avec_reconnexion = [l for l in listes if "tab5_connected" in l]
     assert len(avec_reconnexion) == 2, listes
@@ -60,7 +60,7 @@ def test_la_poussee_complete_part_au_demarrage_de_ha():
 
 
 def _garde_des_3_minutes(auto):
-    gardes = [c["value_template"] for c in auto["condition"]
+    gardes = [c["value_template"] for c in auto["conditions"]
               if c.get("condition") == "template" and "180" in c.get("value_template", "")]
     assert len(gardes) == 1, gardes
     return gardes[0]

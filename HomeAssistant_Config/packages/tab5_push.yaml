@@ -71,7 +71,7 @@
 # garde (a) de tab5_health.yaml. Ne pas le remettre : tests/test_sans_secret.py.
 
 automation:
-  - alias: "MAJ Ecran Tab5 ESPHome Push"
+  - alias: "Tab5 — poussée complète de l'écran"
     # queued, plus single (audit du 07/10/2026, HA-1) : un passage dure plusieurs
     # secondes (calendar.get_events, weather.get_forecasts, attente de la liaison
     # jusqu'à 10 s). En single, un esphome.tab5_connected arrivé pendant ce temps était
@@ -89,7 +89,7 @@ automation:
       météo actuelle, probabilités et volet seulement à la (re)connexion et au
       démarrage de HA (ils ont leurs automatisations au changement, plus bas ; la clim
       est dans le blueprint « Tab5 — emplacements »).
-    trigger:
+    triggers:
       # PAS de déclencheur `state:` sur l'entité weather.* ici (retiré le 26/08/2026) :
       # `weather.*` et `sensor.*_next_rain` viennent du même coordinateur
       # Météo-France et se déclenchent à ~0,8 s d'intervalle — le second tombait
@@ -106,10 +106,10 @@ automation:
       # 25/09/2026 : sans lui, chaque rafraîchissement Météo-France relançait tout).
       # Toutes les 10 min : prévisions (l'heure et le jour avancent), pluie, alertes HA
       # (les capteurs « problem » et le compte d'indisponibles n'ont pas d'autre déclencheur).
-      - platform: time_pattern
+      - trigger: time_pattern
         minutes: "/10"
       # Émis par le firmware à chaque (re)connexion du client API HA (on_client_connected).
-      - platform: event
+      - trigger: event
         event_type: esphome.tab5_connected
         id: tab5_connected
       # Démarrage de HA : la tablette, restée allumée, se reconnecte souvent AVANT que
@@ -121,25 +121,25 @@ automation:
       # deviennent actives et suit le chemin de la reconnexion. Tablette pas encore
       # reconnectée : la garde « tablette connectée » arrête, et son tab5_connected,
       # émis plus tard, sera entendu.
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
         id: demarrage_ha
       # Agenda de travail choisi (« Tab5 · agenda de travail ») : un événement commence,
       # finit, ou le suivant change. Miroir sensor.tab5_agendas (tab5_reglages.yaml) :
       # un déclencheur `state:` ne prend pas d'entity_id calculé.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_agendas
         attribute: travail
       # Autre source des prévisions choisie (« Tab5 · source des prévisions ») : les
       # tuiles jours et heures suivent tout de suite, pas au passage des 10 min.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_meteo
         attribute: entite
       # NB : les déclencheurs "légers" (code et barres de pluie, vigilance météo,
       # alertes à lire) sont gérés par l'automation dédiée `tab5_ha_hmi_alerts_push`
       # ci-dessous — ils ne relancent PAS la chaîne prévisions/calendrier complète.
 
-    condition:
+    conditions:
       # Garde d'origine (audit sécurité du 30/09/2026) : tab5_connected ne compte que
       # s'il vient d'une tablette, reconnue au modèle de son appareil comme dans
       # tab5_evenements.yaml ; un autre appareil ESPHome ne relance pas la chaîne. Les
@@ -173,7 +173,7 @@ automation:
           {{ trigger.id != 'tab5_connected' or ns.depuis is none
              or (now() - ns.depuis).total_seconds() < 180 }}
 
-    action:
+    actions:
       # ====== 0. RECONNEXION : attendre que la liaison API soit prête ======
       # Le firmware émet `esphome.tab5_connected` dès qu'un client API se connecte,
       # parfois avant que l'intégration HA ait fini d'authentifier sa connexion :
@@ -469,23 +469,23 @@ automation:
   # mode: queued pour ne pas perdre un dismiss derrière le tick minute.
   # ============================================================================
   - id: tab5_ha_hmi_alerts_push
-    alias: "MAJ Ecran Tab5 Alertes/Santé (push léger)"
+    alias: "Tab5 — poussée légère (alertes, vigilance, pluie)"
     mode: queued
     max: 5
-    trigger:
+    triggers:
       # État nu : un seul déclenchement par mise à jour du capteur ; la condition plus
       # bas ne laisse passer que celles qui changent le code (état) ou les barres
       # (attribut). Avant le 07/10/2026 (HA-16), toute mise à jour d'attribut repartait.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_pluie_dans_l_heure
         id: pluie
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_vigilance
       # Alertes à lire (packages/tab5_alerts.yaml) : nouvelle, changée, lue, terminée.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_alertes
         attribute: affichees
-    condition:
+    conditions:
       - alias: "Pluie : seulement si le code ou les barres changent"
         condition: template
         value_template: >-
@@ -495,7 +495,7 @@ automation:
           {%- else -%}
             {{ true }}
           {%- endif -%}
-    action:
+    actions:
       - action: script.tab5_push_alertes
         data:
           vigilance_seule: "{{ trigger.id == 'pluie' }}"
@@ -509,21 +509,21 @@ automation:
   # que le popup « Alertes » d'une tablette est ouvert (« Écran courant », mis à jour
   # toutes les 5 s) : on le repousse. Popup fermé : rien, il est demandé à l'ouverture.
   - id: tab5_ha_hmi_alertes_historique_push
-    alias: "MAJ Ecran Tab5 Historique des alertes (popup ouvert)"
+    alias: "Tab5 — historique des alertes (popup ouvert)"
     mode: queued
     max: 3
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.tab5_alertes
         attribute: historique
-    condition:
+    conditions:
       - condition: template
         value_template: >-
           {{ integration_entities('esphome') | select('match', 'sensor[.].*_ecran_courant$')
              | select('is_state', 'Alertes') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
              | list | count > 0 }}
-    action:
+    actions:
       - action: script.tab5_push_alertes_historique
 
   # ============================================================================
@@ -534,23 +534,23 @@ automation:
   # part quand même ; le reste est ignoré sans avertissement (max_exceeded: silent).
   # ============================================================================
   - id: tab5_ha_hmi_meteo_push
-    alias: "MAJ Ecran Tab5 Météo actuelle (au changement)"
+    alias: "Tab5 — météo actuelle (au changement)"
     mode: queued
     max: 2
     max_exceeded: silent
-    trigger:
+    triggers:
       # Capteur normalisé (lot 4c-3) : condition en état, température, humidité et
       # probabilités en attributs, depuis la source choisie. État nu (sans `to:`) :
       # UN déclenchement par mise à jour, quel que soit l'attribut qui a changé (des
       # déclencheurs par attribut en donnaient un par attribut — 3 passages en 6 ms
       # relevés le 26/09/2026).
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_meteo
-    action:
+    actions:
       - action: script.tab5_push_meteo
 
   - id: tab5_screen_presence_wifi
-    alias: "Allumage/Extinction Ecran Tab5 selon WiFi Portable"
+    alias: "Tab5 — écran selon la présence et le téléphone"
     # Allume l'écran à la détection d'une présence (ou au retour du téléphone) s'il
     # est éteint ; l'éteint après 15 min sans présence dans la pièce (ou au départ du
     # téléphone) s'il est allumé et que le réveil ne sonne pas. Écran éteint, le
@@ -564,33 +564,33 @@ automation:
     description: "Allume l'écran à la détection d'une présence ou au retour du téléphone ; l'éteint après 15 min sans présence ou au départ du téléphone, sauf réveil en cours"
     mode: queued
     max: 5
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.tab5_presence
         to: 'on'
         id: "allumer"
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_telephone_suivi
         to: 'home'
         id: "allumer"
       # Capteur radar : il repasse off quelques secondes à chaque sortie de la
       # pièce, d'où les 15 min avant d'éteindre.
-      - platform: state
+      - trigger: state
         entity_id: binary_sensor.tab5_presence
         to: 'off'
         for: "00:15:00"
         id: "eteindre"
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_telephone_suivi
         to: 'not_home'
         id: "eteindre"
     variables:
       ecran: "{{ state_attr('sensor.tab5_tablette', 'ecran') or '' }}"
       reveil: "{{ state_attr('sensor.tab5_tablette', 'reveil_en_cours') or '' }}"
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ ecran != '' }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -627,23 +627,23 @@ automation:
     mode: queued
     max: 3
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sun.sun
         to: ["above_horizon", "below_horizon"]
-      - platform: event
+      - trigger: event
         event_type: esphome.tab5_connected
         id: tab5_connected
       # Tablette ajoutée à HA (ou remplacée) : l'interrupteur vient d'être détecté.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_tablette
         attribute: theme_nuit
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
     variables:
       nuit: "{{ state_attr('sensor.tab5_tablette', 'theme_nuit') or '' }}"
-    condition:
-      # Garde d'origine (comme « MAJ Ecran Tab5 ESPHome Push ») : tab5_connected ne
+    conditions:
+      # Garde d'origine (comme la poussée complète) : tab5_connected ne
       # compte que venant d'une tablette. tests/test_garde_origine.py.
       - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
         condition: template
@@ -656,7 +656,7 @@ automation:
           {%- endif -%}
       - condition: template
         value_template: "{{ nuit != '' and states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
-    action:
+    actions:
       - action: "switch.turn_{{ 'on' if is_state('sun.sun', 'below_horizon') else 'off' }}"
         target:
           entity_id: "{{ nuit }}"

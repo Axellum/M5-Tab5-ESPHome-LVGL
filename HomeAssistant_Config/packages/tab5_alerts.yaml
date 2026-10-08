@@ -160,14 +160,14 @@ template:
   # ==========================================================================
   # Compte des entités "unavailable" (tableau de bord du Tab5, carte Santé). Les
   # alertes ont leur propre liste : seulement les entités indisponibles depuis 10 min.
-  # `trigger:` (et non `state:`) est OBLIGATOIRE : un capteur `state:` qui itère
+  # `triggers:` (et non `state:`) est OBLIGATOIRE : un capteur `state:` qui itère
   # `states` se réévaluerait à chaque changement d'état HA. Ici : toutes les 2 min et
   # au démarrage de HA.
   # ==========================================================================
-  - trigger:
-      - platform: homeassistant
+  - triggers:
+      - trigger: homeassistant
         event: start
-      - platform: time_pattern
+      - trigger: time_pattern
         minutes: "/2"
     sensor:
       - name: "Tab5 Unavailable Count"

@@ -683,8 +683,8 @@ def test_l_historique_part_a_la_demande_de_la_tablette():
     assert "esphome.tab5_ha_hmi_tab5_maj_alertes_historique" in script
     assert "tab5_alertes_historique('payload')" in script
     auto = next(a for a in push["automation"] if a["id"] == "tab5_ha_hmi_alertes_historique_push")
-    assert {"entity_id": "sensor.tab5_alertes", "attribute": "historique"}.items() <= auto["trigger"][0].items()
-    assert "is_state', 'Alertes')" in json.dumps(auto["condition"], ensure_ascii=False)
+    assert {"entity_id": "sensor.tab5_alertes", "attribute": "historique"}.items() <= auto["triggers"][0].items()
+    assert "is_state', 'Alertes')" in json.dumps(auto["conditions"], ensure_ascii=False)
     # « Alertes » : le nom du popup dans le registre (« Écran courant ») et l'option du
     # select « Aller à l'écran ».
     assert '"Alertes",          ModalRegistry::POPUP' in (TAB5 / "tab5-scripts.yaml").read_text(encoding="utf-8")

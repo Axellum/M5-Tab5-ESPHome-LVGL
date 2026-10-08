@@ -86,7 +86,7 @@ input_text:
 
 script:
   tab5_volet_action:
-    alias: "Action Volet Serre depuis Tab5"
+    alias: "Tab5 — volet : commande depuis la tablette"
     # restart : un nouvel appui pendant la course annule le chrono precedent.
     mode: restart
     fields:
@@ -180,19 +180,19 @@ automation:
   # Pousse l'etat du volet vers l'ecran a chaque changement des helpers
   # (script `tab5_push_volet`, packages/tab5_push.yaml).
   - id: tab5_volet_updater
-    alias: "Sync Tab5 Volet Serre"
+    alias: "Tab5 — volet : état vers l'écran"
     mode: queued
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: input_text.volet_serre_etat
-      - platform: state
+      - trigger: state
         entity_id: input_boolean.volet_serre_mouvement
       # Volet choisi dans la liste : l'écran prend tout de suite l'état tenu ici (le
       # blueprint ne confie ce volet au package qu'une fois nommé dans la liste).
-      - platform: state
+      - trigger: state
         entity_id: select.tab5_volet_a_course_simulee
         to: ~
-    action:
+    actions:
       - action: script.tab5_push_volet
 
   # Commandes `cover.*` venues d'ailleurs (interface HA, autre integration,
@@ -200,7 +200,7 @@ automation:
   # `tab5_volet_action`, pour que l'ecran suive. Ignore ses propres appels
   # (script `tab5_volet_action` en cours).
   - id: volet_serre_track_direct_cover
-    alias: "Volet serre — suivi écran si cover direct"
+    alias: "Tab5 — volet : suivi des commandes directes"
     description: "Appels cover.open/close/stop hors script Tab5 (UI HA, intégrations) → helpers + sync Tab5"
     mode: restart
     triggers:

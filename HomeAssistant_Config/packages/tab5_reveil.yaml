@@ -245,16 +245,16 @@ automation:
     mode: queued
     max: 2
     max_exceeded: silent
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/5"
       # Agendas des rendez-vous et de travail choisis dans HA : un événement commence,
       # finit, ou le suivant change. Miroir sensor.tab5_agendas (tab5_reglages.yaml) :
       # un déclencheur `state:` ne prend pas d'entity_id calculé.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_agendas
         attribute: rendez_vous
-      - platform: event
+      - trigger: event
         event_type: esphome.tab5_connected
         id: tab5_connected
       # Le délai d'annonce vient de changer : la liste, elle, n'a pas bougé —
@@ -270,11 +270,11 @@ automation:
       # chaque déconnexion de la tablette, puis revient à sa valeur ; ces passages
       # appelaient la tablette hors ligne (ERREUR « Not connected », test « HA
       # neuf », 28/09/2026). La reconnexion a son propre déclencheur.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_rendez_vous_annoncer_avant
         not_from: [unavailable, unknown]
         not_to: [unavailable, unknown]
-    condition:
+    conditions:
       # Garde d'origine (audit sécurité du 30/09/2026) : tab5_connected ne compte que
       # s'il vient d'une tablette, reconnue au modèle de son appareil comme dans
       # tab5_evenements.yaml. Les autres déclencheurs passent. tests/test_garde_origine.py.
@@ -287,7 +287,7 @@ automation:
           {%- else -%}
             {{ true }}
           {%- endif -%}
-    action:
+    actions:
       # Tab5 hors ligne (redémarrage, OTA) ou liaison pas encore authentifiée juste
       # après esphome.tab5_connected : l'appel partait en erreur (« Not connected »,
       # « Authenticated connection not ready yet » — 66 fois les 25-26/09/2026).

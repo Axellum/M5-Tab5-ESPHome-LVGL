@@ -428,3 +428,39 @@ def test_calendrier_chaque_demande_a_sa_reponse():
         corps = paquet["script"][script]
         assert corps["mode"] == "queued", f"{script} : mode {corps['mode']}"
         assert corps.get("max", 10) >= 3, f"{script} : max {corps.get('max')}"
+
+
+def _noeuds(noeud):
+    """Tous les dict de l'arbre."""
+    if isinstance(noeud, dict):
+        yield noeud
+        for v in noeud.values():
+            yield from _noeuds(v)
+    elif isinstance(noeud, list):
+        for v in noeud:
+            yield from _noeuds(v)
+
+
+def test_syntaxe_actuelle_des_automatisations():
+    """Audit du 07/10/2026, HA-14 : la syntaxe de HA 2024.10 et plus partout (`triggers:`,
+    `conditions:`, `actions:`, `- trigger: <type>`), plus de `trigger:` / `condition:` /
+    `action:` portant une liste ni de `- platform:` dans un déclencheur. Le plancher du projet
+    est HA 2026.8 (hacs.json, `min_version` du blueprint). Les `id:` ne changent jamais : ce
+    sont les entity_id des automatisations déjà installées."""
+    racine = os.path.join(REPO, "HomeAssistant_Config")
+    fautes = []
+    for dossier in ("packages", "optionnel", "snippets", "blueprints"):
+        for base, _, noms in os.walk(os.path.join(racine, dossier)):
+            for nom in sorted(n for n in noms if n.endswith(".yaml")):
+                chemin = os.path.join(base, nom)
+                with open(chemin, encoding="utf-8") as f:
+                    doc = yaml.load(f.read(), Loader=_Chargeur)
+                rel = os.path.relpath(chemin, racine).replace(os.sep, "/")
+                for d in _noeuds(doc):
+                    for cle in ("trigger", "condition", "action"):
+                        if isinstance(d.get(cle), list):
+                            fautes.append(f"{rel} : `{cle}:` à l'ancienne (→ `{cle}s:`)")
+                    for t in d.get("triggers") or []:
+                        if isinstance(t, dict) and "platform" in t:
+                            fautes.append(f"{rel} : `- platform: {t['platform']}` (→ `- trigger:`)")
+    assert not fautes, fautes
