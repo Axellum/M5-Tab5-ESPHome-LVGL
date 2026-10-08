@@ -45,7 +45,9 @@
 #       automation le 04/07/2026, sans aucune erreur loggée par HA.
 # @install Nécessite homeassistant.packages: !include_dir_named packages, et
 #       custom_templates/tab5_calendar.jinja (macros ev_start / ev_end / ev_summary,
-#       depuis le 07/10/2026 au lieu de leur copie ici) déployé et rechargé AVANT.
+#       depuis le 07/10/2026 au lieu de leur copie ici) et custom_templates/
+#       tab5_tablette.jinja (« tablette connectée », garde d'origine, 08/10/2026)
+#       déployés et rechargés AVANT.
 # ============================================================================
 
 script:
@@ -65,9 +67,8 @@ script:
       # 28/09/2026). Tablette trouvée par le modèle de l'appareil, pas par son nom.
       - condition: template
         value_template: &tab5_connectee >-
-          {{ integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
-             | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
-             | list | count > 0 }}
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' }}
       - variables:
           debut: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
           fin: "{{ (now() + timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S') }}"
@@ -281,12 +282,8 @@ automation:
       - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
         condition: template
         value_template: >-
-          {%- if trigger.id == 'tab5_connected' -%}
-            {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-            {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
-          {%- else -%}
-            {{ true }}
-          {%- endif -%}
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
     actions:
       # Tab5 hors ligne (redémarrage, OTA) ou liaison pas encore authentifiée juste
       # après esphome.tab5_connected : l'appel partait en erreur (« Not connected »,

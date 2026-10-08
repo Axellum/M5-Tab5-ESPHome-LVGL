@@ -76,7 +76,7 @@ def test_un_seul_endroit_pour_les_barres():
         "'0|0;1|0;2|0;3|0;4|0;5|0;6|0;7|0;8|0;' }}")
     # Tablette absente ou hors ligne : rien (garde des autres scripts de poussée).
     assert script["sequence"][0]["condition"] == "template"
-    assert "tab5-ha-hmi" in script["sequence"][0]["value_template"]
+    assert "tab5_connectee() == 'oui'" in script["sequence"][0]["value_template"]
 
 
 def test_la_poussee_legere_pousse_le_code_puis_les_barres():

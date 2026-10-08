@@ -400,7 +400,7 @@ def test_chaque_poussee_attend_la_tablette():
     """Défauts 2, 3 et 5 du 28/09/2026 : chaque script qui appelle une action de la
     tablette commence par la garde « tablette connectée » (trouvée par son modèle), et
     le blueprint pousse aussi au rechargement des automatisations (défaut 4)."""
-    garde = "select('eq', 'tab5-ha-hmi')"
+    garde = "tab5_connectee() == 'oui'"  # custom_templates/tab5_tablette.jinja (HA-7)
     for nom in ("tab5_push", "tab5_calendar", "tab5_reveil"):
         paquet = yaml.load(_lire("HomeAssistant_Config", "packages", f"{nom}.yaml"), Loader=_Chargeur)
         for script, corps in (paquet.get("script") or {}).items():
@@ -409,6 +409,7 @@ def test_chaque_poussee_attend_la_tablette():
             premiere = corps["sequence"][0]
             assert premiere.get("condition") == "template" and garde in premiere["value_template"], \
                 f"{nom}.yaml, script {script} : la garde « tablette connectée » doit ouvrir la séquence"
+    assert "select('eq', 'tab5-ha-hmi')" in _lire("HomeAssistant_Config", "custom_templates", "tab5_tablette.jinja")
     push = _lire("HomeAssistant_Config", "packages", "tab5_push.yaml")
     assert "entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status" not in push
     reveil = _lire("HomeAssistant_Config", "packages", "tab5_reveil.yaml")

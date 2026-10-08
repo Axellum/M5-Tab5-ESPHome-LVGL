@@ -72,7 +72,10 @@ def _rendre(modele, declencheur, liaison_depuis):
     maintenant = dt.datetime(2026, 9, 28, 21, 11, 16, tzinfo=dt.timezone.utc)
     capteur = "binary_sensor.tab5_ha_api_status"
     etat = SimpleNamespace(state="on", last_changed=maintenant - dt.timedelta(seconds=liaison_depuis))
-    env = ImmutableSandboxedEnvironment(undefined=jinja2.StrictUndefined)
+    env = ImmutableSandboxedEnvironment(
+        undefined=jinja2.StrictUndefined,
+        # Macros importées (custom_templates/tab5_tablette.jinja, HA-7).
+        loader=jinja2.FileSystemLoader(os.path.join(REPO, "HomeAssistant_Config", "custom_templates")))
     env.globals.update(
         integration_entities=lambda domaine: [capteur] if domaine == "esphome" else [],
         device_attr=lambda e, nom: "tab5-ha-hmi" if nom == "model" else None,

@@ -38,7 +38,9 @@
 #       par cet entity_id. Une liste nouvelle en a un aussi. Les miroirs (section 3)
 #       n'en ont pas : renommer un miroir change son entity_id.
 # @install Avec les autres packages (`homeassistant: packages: !include_dir_named
-#       packages`). Rien à renseigner dans ce fichier.
+#       packages`). Rien à renseigner dans ce fichier. La tablette est cherchée par
+#       custom_templates/tab5_tablette.jinja (macro tab5_api, 08/10/2026) : à déployer
+#       et recharger AVANT ce package.
 # ============================================================================
 
 input_text:
@@ -303,13 +305,8 @@ template:
         event_type: esphome.tab5_connected
     variables:
       api: >-
-        {%- set ns = namespace(api='') -%}
-        {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
-          {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
-            {%- set ns.api = e -%}
-          {%- endif -%}
-        {%- endfor -%}
-        {{ ns.api }}
+        {%- from 'tab5_tablette.jinja' import tab5_api -%}
+        {{ tab5_api() }}
       entites: "{{ device_entities(device_id(api)) if api else [] }}"
     sensor:
       - name: "Tab5 · tablette"

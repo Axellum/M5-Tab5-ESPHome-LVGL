@@ -157,7 +157,9 @@ def _est_un_nombre(valeur):
 
 
 def _environnement(etats, tablettes):
-    env = ImmutableSandboxedEnvironment(extensions=["jinja2.ext.loopcontrols"], undefined=jinja2.StrictUndefined)
+    env = ImmutableSandboxedEnvironment(extensions=["jinja2.ext.loopcontrols"], undefined=jinja2.StrictUndefined,
+                                        # Macros importées (custom_templates/tab5_tablette.jinja, HA-7).
+                                        loader=jinja2.FileSystemLoader(os.path.join(REPO, "HomeAssistant_Config", "custom_templates")))
 
     def device_attr(entity_id, nom):
         return tablettes.get(entity_id, {}).get(nom)
@@ -263,8 +265,17 @@ def _declencheur(id_, avant=None, apres=None, entite=None):
     return t
 
 
+_TYPES_EVENEMENTS = {}
+
+
 def _evenement(id_, **donnees):
-    return {"id": id_, "platform": "event", "event": {"data": donnees}}
+    # event_type comme dans HA : la garde d'origine (custom_templates/tab5_tablette.jinja)
+    # le lit pour reconnaître un événement de la tablette.
+    if not _TYPES_EVENEMENTS:
+        _TYPES_EVENEMENTS.update({t["id"]: t["event_type"] for t in _blueprint()["triggers"]
+                                  if t.get("trigger") == "event"})
+    return {"id": id_, "platform": "event",
+            "event": {"event_type": _TYPES_EVENEMENTS.get(id_, ""), "data": donnees}}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1099,7 +1110,8 @@ def test_position_derriere_la_garde_d_origine():
     déclenche (trigger action, garde du modèle tab5-ha-hmi)."""
     bp = _blueprint()
     garde = bp["conditions"][0]["value_template"]
-    assert "'action'" in garde and "device_attr(d, 'model') == 'tab5-ha-hmi'" in garde
+    assert "tab5_origine(trigger) == 'oui'" in garde  # custom_templates/tab5_tablette.jinja
+    assert {"trigger": "event", "event_type": "esphome.tab5_action", "id": "action"} in bp["triggers"]
     commande = _chercher(bp["actions"], lambda d: d.get("alias") == "Commande d'un bouton de l'écran")
     assert commande and "trigger.id == 'action'" in commande["conditions"]
     assert _chercher(commande, lambda d: (d.get("alias") or "").startswith("Tuile : position"))

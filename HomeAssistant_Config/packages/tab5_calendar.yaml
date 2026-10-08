@@ -18,6 +18,8 @@
 #       doit être déployé dans config/custom_templates/ et rechargé
 #       (homeassistant.reload_custom_templates) AVANT ce package, sinon les
 #       deux scripts échouent à la ligne d'import. Ne pas recopier ces lignes ici.
+#       Même chose pour custom_templates/tab5_tablette.jinja (garde « tablette
+#       connectée », 08/10/2026).
 # @data_sources Cinq agendas choisis dans HA (listes « Tab5 · agenda … »,
 #       packages/tab5_reglages.yaml, ADR-0024) : travail, jours fériés, rendez-vous,
 #       anniversaires, vacances scolaires. Un agenda non choisi est simplement absent.
@@ -77,9 +79,8 @@ script:
       # 28/09/2026). Tablette trouvée par le modèle de l'appareil, pas par son nom.
       - condition: template
         value_template: &tab5_connectee >-
-          {{ integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
-             | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
-             | list | count > 0 }}
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' }}
       # int(0), plus `| int` nu (audit du 07/10/2026, HA-15) : une année ou un mois qui
       # n'est pas un nombre (événement tiré à la main, champ vide) levait une erreur de
       # rendu dans le journal. Hors bornes : arrêt sans erreur, juste après.

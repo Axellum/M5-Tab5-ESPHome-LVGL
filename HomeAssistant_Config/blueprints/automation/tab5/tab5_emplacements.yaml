@@ -72,7 +72,10 @@
 #       Les événements esphome.* n'exigent pas l'option « autoriser l'appareil à effectuer
 #       des actions HA » (manager.py de l'intégration ESPHome) : n'importe quel appareil
 #       ESPHome peut donc les émettre. Première condition = garde d'origine (modèle
-#       tab5-ha-hmi de l'appareil émetteur) ; tests/test_garde_origine.py.
+#       tab5-ha-hmi de l'appareil émetteur) ; tests/test_garde_origine.py. Cette garde
+#       et « tablette connectée » sont des macros de custom_templates/tab5_tablette.jinja
+#       (08/10/2026, audit du 07/10, HA-7) : ce fichier doit être dans config/custom_templates/
+#       (archive, HACS) et rechargé AVANT le blueprint, sinon ses conditions échouent.
 #       Protocole (ADR-0023, Compatibilité) : la version du projet se lit dans le
 #       sw_version de l'appareil (« 3.1.0 (ESPHome 2026.9.0) ») ; 3.2.0 ou plus =
 #       tuiles ; en dessous, illisible ou aucune tablette = jamais tab5_maj_tuiles (une
@@ -2672,12 +2675,8 @@ conditions:
   # tests/test_garde_origine.py vérifie cette garde sur chaque automatisation.
   - condition: template
     value_template: >-
-      {%- if trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique'] -%}
-        {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-        {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
-      {%- else -%}
-        {{ true }}
-      {%- endif -%}
+      {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+      {{ tab5_origine(trigger) == 'oui' }}
   # Rien de neuf pour l'écran (aucune mesure changée, attribut invisible, tuile d'un
   # firmware qui n'en a pas) : arrêt ici, sans ligne au journal. Météo (meteo_declencheurs) :
   # seulement s'il y a une liste à écrire.
@@ -2697,10 +2696,9 @@ conditions:
   # prouvent d'eux-mêmes qu'elle est là. La météo (meteo_declencheurs) n'écrit que dans HA.
   - condition: template
     value_template: >-
+      {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
       {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique'] + meteo_declencheurs
-         or integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
-            | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
-            | list | count > 0 }}
+         or tab5_connectee() == 'oui' }}
 
 actions:
   - variables:

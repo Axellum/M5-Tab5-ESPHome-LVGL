@@ -334,8 +334,8 @@ automation:
     conditions:
       - condition: template
         value_template: >-
-          {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-          {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
     variables:
       raison: "{{ trigger.event.data.raison | default('inconnue') }}"
       demarrages: "{{ trigger.event.data.demarrages | default('?') }}"

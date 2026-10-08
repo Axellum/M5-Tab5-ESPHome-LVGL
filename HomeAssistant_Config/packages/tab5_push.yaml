@@ -32,7 +32,9 @@
 #       Modèles importés : custom_templates/tab5_calendar.jinja (jour travaillé des
 #       prévisions jours, depuis le 07/10/2026) et tab5_alertes.jinja (historique des
 #       alertes), à déployer et recharger AVANT ce package, sinon ces payloads ne se
-#       rendent pas.
+#       rendent pas. Depuis le 08/10/2026 (audit du 07/10, HA-7), aussi
+#       tab5_tablette.jinja (« tablette connectée », garde d'origine) : sans lui, les
+#       gardes échouent à l'import et rien ne part.
 # @architecture_constraint Chaque `action: esphome.tab5_ha_hmi_tab5_maj_*` correspond à
 #       un service `api: services:` déclaré dans Tab5/tab5-api-logic.yaml, et ses clés
 #       `data:` à ses `variables:`, ni plus ni moins. Ne JAMAIS renommer un service ou
@@ -147,12 +149,8 @@ automation:
       - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
         condition: template
         value_template: >-
-          {%- if trigger.id == 'tab5_connected' -%}
-            {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-            {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
-          {%- else -%}
-            {{ true }}
-          {%- endif -%}
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
       # Seul un vrai (re)démarrage de la liaison compte : liaison `on` depuis moins de
       # 3 min. Le firmware n'émet l'événement qu'à la connexion depuis le 25/09/2026 ;
       # la garde reste contre un événement réémis. Le capteur « HA API Status » est
@@ -164,14 +162,11 @@ automation:
       - alias: "tab5_connected : seulement si la liaison API vient de (re)demarrer (garde contre un evenement reemis)"
         condition: template
         value_template: >-
-          {%- set ns = namespace(depuis=none) -%}
-          {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
-            {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and is_state(e, 'on') -%}
-              {%- set ns.depuis = states[e].last_changed -%}
-            {%- endif -%}
-          {%- endfor -%}
-          {{ trigger.id != 'tab5_connected' or ns.depuis is none
-             or (now() - ns.depuis).total_seconds() < 180 }}
+          {%- from 'tab5_tablette.jinja' import tab5_api -%}
+          {%- set api = tab5_api() -%}
+          {%- set depuis = states[api].last_changed if api and is_state(api, 'on') else none -%}
+          {{ trigger.id != 'tab5_connected' or depuis is none
+             or (now() - depuis).total_seconds() < 180 }}
 
     actions:
       # ====== 0. RECONNEXION : attendre que la liaison API soit prête ======
@@ -185,9 +180,8 @@ automation:
             id: tab5_connected
         then:
           - wait_template: &tab5_connectee >-
-              {{ integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
-                 | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
-                 | list | count > 0 }}
+              {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+              {{ tab5_connectee() == 'oui' }}
             timeout: "00:00:10"
             continue_on_timeout: true
       # Tablette absente (pas encore ajoutée dans HA, packages installés d'abord comme
@@ -648,12 +642,8 @@ automation:
       - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
         condition: template
         value_template: >-
-          {%- if trigger.id == 'tab5_connected' -%}
-            {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-            {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
-          {%- else -%}
-            {{ true }}
-          {%- endif -%}
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
       - condition: template
         value_template: "{{ nuit != '' and states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
     actions:

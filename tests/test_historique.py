@@ -626,7 +626,9 @@ def test_blueprint_cle_inconnue_ou_sans_le_package():
 def test_blueprint_ecoute_l_evenement():
     texte = _lire(BLUEPRINT)
     assert re.search(r"event_type: esphome\.tab5_historique\n\s+id: historique\n", texte)
-    assert texte.count("'energie', 'historique'") == 3
+    # Conditions « rien de neuf » et « tablette connectée » ; la garde d'origine, elle, suit
+    # le type de l'événement (custom_templates/tab5_tablette.jinja, HA-7).
+    assert texte.count("'energie', 'historique'") == 2
     assert "serre_exterieure: !input serre_exterieure" in texte
 
 
