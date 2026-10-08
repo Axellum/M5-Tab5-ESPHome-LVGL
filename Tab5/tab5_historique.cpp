@@ -362,86 +362,119 @@ void poser(lv_obj_t* o, int32_t x, int32_t y, int32_t w, int32_t h) {
     ui_hidden(o, false);
 }
 
-void peindre_graphique() {
-    HistoriqueUI& u = g_historique_ui;
-    for (int v = 0; v < NB_VUES; v++) highlight_button_border(u.vue_btn[v], v == s_vue, UIColor.ACCENT);
-    if (s_courbe == nullptr || s_mem == nullptr) return;
-    const Serie& s = s_mem->series[s_vue];
+// --- Graphique : une fonction par étape (lot L10 de l'audit du 07/10, ex-peindre_graphique
+// d'un seul bloc de 200 lignes ; mêmes calculs, dans le même ordre) ---------------------
 
-    // Titre : « nom · période ». Sans nom poussé : celui de l'emplacement. Un nom long est
-    // coupé (« … »), jamais la période : le nom seul, à la largeur que la période laisse.
-    static const char* const kPeriodes[NB_VUES] = {tr_noop("24 dernières heures"), tr_noop("7 derniers jours"),
-                                                   tr_noop("30 derniers jours")};
+constexpr const char* kPeriodes[NB_VUES] = {tr_noop("24 dernières heures"), tr_noop("7 derniers jours"),
+                                           tr_noop("30 derniers jours")};
+
+// Dernier titre posé et ce dont il dépend (DO-10) : texte_ha_coupe() pose le nom seul,
+// puis la période s'y ajoute, soit deux écritures du label à chaque repeint. Même nom,
+// même période, même police, même largeur, et le label porte encore ce titre : rien
+// n'est écrit. Un nom plus long que `nom` ne se mémorise pas (il est réécrit à chaque
+// fois, comme avant).
+struct TitrePose {
+    char nom[64] = {};
+    char suffixe[64] = {};
+    const lv_font_t* police = nullptr;
+    int32_t espace = 0;
+    int32_t largeur = -1;
+    char titre[128] = {};
+};
+TitrePose s_titre;
+
+// Titre : « nom · période ». Sans nom poussé : celui de l'emplacement. Un nom long est
+// coupé (« … »), jamais la période : le nom seul, à la largeur que la période laisse.
+void peindre_titre(const Serie& s) {
+    HistoriqueUI& u = g_historique_ui;
+    if (u.titre == nullptr) return;
     const char* nom = s.nom;
     if (!s.recue || nom[0] == '\0') nom = s_cle == SERRE ? (s.exterieur ? tr("Extérieur") : tr("Serre")) : tr("Intérieur");
     char suffixe[64];
     snprintf(suffixe, sizeof(suffixe), " \xC2\xB7 %s", tr(kPeriodes[s_vue]));
     int32_t largeur_nom = kTitreW;
     const lv_font_t* police = lv_obj_get_style_text_font(u.titre, LV_PART_MAIN);
+    const int32_t espace = lv_obj_get_style_text_letter_space(u.titre, LV_PART_MAIN);
     if (police != nullptr) {
         lv_point_t taille;
-        lv_text_get_size(&taille, suffixe, police, lv_obj_get_style_text_letter_space(u.titre, LV_PART_MAIN), 0,
-                         LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+        lv_text_get_size(&taille, suffixe, police, espace, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
         largeur_nom -= taille.x;
+    }
+    TitrePose& t = s_titre;
+    const char* actuel = lv_label_get_text(u.titre);
+    if (t.largeur == largeur_nom && t.police == police && t.espace == espace && strcmp(t.nom, nom) == 0 &&
+        strcmp(t.suffixe, suffixe) == 0 && actuel != nullptr && strcmp(actuel, t.titre) == 0) {
+        return;
     }
     texte_ha_coupe(u.titre, nom, largeur_nom);
     char titre[128];
     snprintf(titre, sizeof(titre), "%s%s", lv_label_get_text(u.titre), suffixe);
     ui_text(u.titre, titre);
+    snprintf(t.nom, sizeof(t.nom), "%s", nom);
+    snprintf(t.suffixe, sizeof(t.suffixe), "%s", suffixe);
+    t.police = police;
+    t.espace = espace;
+    t.largeur = largeur_nom;
+    snprintf(t.titre, sizeof(t.titre), "%s", lv_label_get_text(u.titre));
+}
 
-    // Étendue des valeurs : créneaux, valeur actuelle, prévision.
-    float lo = NAN, hi = NAN;
-    auto etendre = [&lo, &hi](float v) {
-        if (std::isnan(v)) return;
-        if (std::isnan(lo) || v < lo) lo = v;
-        if (std::isnan(hi) || v > hi) hi = v;
-    };
+// Étendue des valeurs des créneaux et de la prévision (NAN, NAN s'il n'y en a pas).
+void etendre(float v, float& lo, float& hi) {
+    if (std::isnan(v)) return;
+    if (std::isnan(lo) || v < lo) lo = v;
+    if (std::isnan(hi) || v > hi) hi = v;
+}
+
+void etendue(const Serie& s, float& lo, float& hi) {
+    lo = NAN;
+    hi = NAN;
     for (int k = 0; k < s.n; k++) {
-        etendre(s.m[k].moy);
-        etendre(s.m[k].mn);
-        etendre(s.m[k].mx);
+        etendre(s.m[k].moy, lo, hi);
+        etendre(s.m[k].mn, lo, hi);
+        etendre(s.m[k].mx, lo, hi);
     }
     for (int k = 0; k < s.np; k++) {
-        etendre(s.p[k].moy);
-        etendre(s.p[k].mn);
-        etendre(s.p[k].mx);
+        etendre(s.p[k].moy, lo, hi);
+        etendre(s.p[k].mn, lo, hi);
+        etendre(s.p[k].mx, lo, hi);
     }
-    // Sans créneau ni prévision (capteur sans statistiques) : « Aucun historique », même
-    // si la valeur actuelle est connue (la carte « Maintenant » la montre).
-    const bool vide = !s.recue || std::isnan(lo);
-    etendre(s.actuel);
-    ui_hidden(s_vide, !vide);
-    if (vide) {
-        ui_text(s_vide, s.recue ? tr("Aucun historique") : tr("En attente de Home Assistant"));
-        cacher_trace();
-        return;
-    }
+}
 
-    // Axe des temps : du début du premier créneau à la fin du dernier, ou au dernier
-    // point de prévision (une prévision par jour : jusqu'à la fin de son jour).
+// Repère du tracé : minutes depuis le début du premier créneau → x, degrés → y.
+struct Repere {
+    int32_t fin = 1;   // minutes couvertes par l'axe des temps
+    Echelle e;
+    int32_t x(double minutes) const {
+        return kTraceX0 + static_cast<int32_t>(std::lround(minutes / fin * (kTraceX1 - kTraceX0)));
+    }
+    int32_t y(float t) const {
+        return kTraceY1 - static_cast<int32_t>(std::lround((t - e.bas) / (e.haut - e.bas) * (kTraceY1 - kTraceY0)));
+    }
+};
+
+// Axe des temps : du début du premier créneau à la fin du dernier, ou au dernier point
+// de prévision (une prévision par jour : jusqu'à la fin de son jour).
+Repere repere(const Serie& s, float lo, float hi) {
     const bool par_jour = s.pas >= 1440;
-    int32_t fin = s.n * s.pas;
-    if (s.maintenant > fin) fin = s.maintenant;
+    Repere r;
+    r.fin = s.n * s.pas;
+    if (s.maintenant > r.fin) r.fin = s.maintenant;
     for (int k = 0; k < s.np; k++) {
         const int32_t f = s.p[k].minute + (par_jour ? s.pas / 2 : 0);
-        if (f > fin) fin = f;
+        if (f > r.fin) r.fin = f;
     }
-    if (fin <= 0) fin = 1;
-    const int32_t largeur_trace = kTraceX1 - kTraceX0;
-    auto x_de = [fin, largeur_trace](double minutes) {
-        return kTraceX0 + static_cast<int32_t>(std::lround(minutes / fin * largeur_trace));
-    };
-    const Echelle e = echelle(lo, hi);
-    auto y_de = [&e](float t) {
-        return kTraceY1 - static_cast<int32_t>(std::lround((t - e.bas) / (e.haut - e.bas) * (kTraceY1 - kTraceY0)));
-    };
+    if (r.fin <= 0) r.fin = 1;
+    r.e = echelle(lo, hi);
+    return r;
+}
 
-    // Graduations : une ligne et son libellé par pas.
+// Graduations : une ligne et son libellé par pas.
+void peindre_graduations(const Repere& r) {
     char buf[32];
     int g = 0;
-    for (float t = e.bas; t <= e.haut + 0.01f && g < kGrilleMax; t += e.pas, g++) {
-        const int32_t y = y_de(t);
-        poser(s_grille[g], kTraceX0, y, largeur_trace, 1);
+    for (float t = r.e.bas; t <= r.e.haut + 0.01f && g < kGrilleMax; t += r.e.pas, g++) {
+        const int32_t y = r.y(t);
+        poser(s_grille[g], kTraceX0, y, kTraceX1 - kTraceX0, 1);
         snprintf(buf, sizeof(buf), "%.0f\xC2\xB0", t);
         ui_text(s_degres[g], buf);
         ui_y(s_degres[g], y - 13);
@@ -451,10 +484,10 @@ void peindre_graphique() {
         ui_hidden(s_grille[g], true);
         ui_hidden(s_degres[g], true);
     }
+}
 
-    // Partie prévue : teinte et trait de « Maintenant ».
-    const int32_t x_maintenant = x_de(s.maintenant);
-    const bool prevue = s.np > 0;
+// Partie prévue : teinte et trait de « Maintenant ».
+void peindre_partie_prevue(bool prevue, int32_t x_maintenant) {
     if (prevue) {
         poser(s_fond_prev, x_maintenant, kTraceY0, kTraceX1 - x_maintenant, kTraceY1 - kTraceY0);
         poser(s_trait_maintenant, x_maintenant - 1, kTraceY0 - 4, 2, kTraceY1 - kTraceY0 + 4);
@@ -464,16 +497,19 @@ void peindre_graphique() {
         ui_hidden(s_trait_maintenant, true);
         ui_hidden(s_maintenant, true);
     }
+}
 
-    // Milieu du créneau k, jamais après « Maintenant » : le créneau en cours n'est pas fini
-    // (30 jours à 7 h 45 : son milieu, midi, serait déjà dans la partie prévue).
-    auto milieu = [&s](int k) {
-        const double m = (k + 0.5) * s.pas;
-        return s.maintenant >= k * s.pas && s.maintenant < m ? static_cast<double>(s.maintenant) : m;
-    };
+// Milieu du créneau k, jamais après « Maintenant » : le créneau en cours n'est pas fini
+// (30 jours à 7 h 45 : son milieu, midi, serait déjà dans la partie prévue).
+double milieu(const Serie& s, int k) {
+    const double m = (k + 0.5) * s.pas;
+    return s.maintenant >= k * s.pas && s.maintenant < m ? static_cast<double>(s.maintenant) : m;
+}
 
-    // Barres du minimum au maximum de chaque créneau, 70 % de sa largeur.
-    const double px_creneau = static_cast<double>(s.pas) / fin * largeur_trace;
+// Barres du minimum au maximum de chaque créneau, 70 % de sa largeur. Renvoie cette
+// largeur (les barres de la prévision la reprennent).
+int32_t peindre_barres(const Serie& s, const Repere& r) {
+    const double px_creneau = static_cast<double>(s.pas) / r.fin * (kTraceX1 - kTraceX0);
     int32_t larg_barre = static_cast<int32_t>(px_creneau * 0.7);
     if (larg_barre < 3) larg_barre = 3;
     for (int k = 0; k < kMesuresMax; k++) {
@@ -482,22 +518,26 @@ void peindre_graphique() {
             ui_hidden(s_bandes[k], true);
             continue;
         }
-        const int32_t xc = x_de(milieu(k));
-        const int32_t y1 = y_de(s.m[k].mx);
-        int32_t h = y_de(s.m[k].mn) - y1;
+        const int32_t xc = r.x(milieu(s, k));
+        const int32_t y1 = r.y(s.m[k].mx);
+        int32_t h = r.y(s.m[k].mn) - y1;
         if (h < 3) h = 3;
         poser(s_bandes[k], xc - larg_barre / 2, y1, larg_barre, h);
     }
+    return larg_barre;
+}
 
-    // Courbe des moyennes (au milieu de chaque créneau), finie par la valeur actuelle.
+// Courbe des moyennes (au milieu de chaque créneau), finie par la valeur actuelle, et la
+// pastille de la valeur actuelle.
+void peindre_courbe(const Serie& s, const Repere& r, int32_t x_maintenant) {
     lv_point_precise_t* pts = s_mem->courbe;
     int np = 0;
     double dernier = -1;
     for (int k = 0; k < s.n && np < kMesuresMax; k++) {
         if (std::isnan(s.m[k].moy)) continue;
-        dernier = milieu(k);
-        pts[np].x = static_cast<lv_value_precise_t>(x_de(dernier));
-        pts[np].y = static_cast<lv_value_precise_t>(y_de(s.m[k].moy));
+        dernier = milieu(s, k);
+        pts[np].x = static_cast<lv_value_precise_t>(r.x(dernier));
+        pts[np].y = static_cast<lv_value_precise_t>(r.y(s.m[k].moy));
         np++;
     }
     const bool actuel = !std::isnan(s.actuel);
@@ -505,33 +545,36 @@ void peindre_graphique() {
         // Créneau en cours posé sur le trait : la valeur actuelle prend sa place.
         if (np > 0 && dernier == s.maintenant) np--;
         pts[np].x = static_cast<lv_value_precise_t>(x_maintenant);
-        pts[np].y = static_cast<lv_value_precise_t>(y_de(s.actuel));
+        pts[np].y = static_cast<lv_value_precise_t>(r.y(s.actuel));
         np++;
     }
     ui_hidden(s_courbe, np < 2);
     if (np >= 2) lv_line_set_points(s_courbe, pts, static_cast<uint32_t>(np));
-    if (actuel) poser(s_point, x_maintenant - kPoint / 2, y_de(s.actuel) - kPoint / 2, kPoint, kPoint);
+    if (actuel) poser(s_point, x_maintenant - kPoint / 2, r.y(s.actuel) - kPoint / 2, kPoint, kPoint);
     else ui_hidden(s_point, true);
+}
 
-    // Prévision : ses points dans l'ordre ; dehors, elle part de la valeur actuelle.
+// Prévision : ses points dans l'ordre ; dehors, elle part de la valeur actuelle. Une
+// prévision par jour porte aussi sa barre du minimum au maximum.
+void peindre_prevision(const Serie& s, const Repere& r, bool prevue, int32_t x_maintenant, int32_t larg_barre) {
     lv_point_precise_t* pp = s_mem->prev;
     int npp = 0;
-    if (prevue && s.exterieur && actuel) {
+    if (prevue && s.exterieur && !std::isnan(s.actuel)) {
         pp[npp].x = static_cast<lv_value_precise_t>(x_maintenant);
-        pp[npp].y = static_cast<lv_value_precise_t>(y_de(s.actuel));
+        pp[npp].y = static_cast<lv_value_precise_t>(r.y(s.actuel));
         npp++;
     }
     int b = 0;
     for (int k = 0; k < s.np && npp <= kPrevMax; k++) {
         const Prev& p = s.p[k];
         if (std::isnan(p.moy)) continue;
-        const int32_t x = x_de(p.minute);
+        const int32_t x = r.x(p.minute);
         pp[npp].x = static_cast<lv_value_precise_t>(x);
-        pp[npp].y = static_cast<lv_value_precise_t>(y_de(p.moy));
+        pp[npp].y = static_cast<lv_value_precise_t>(r.y(p.moy));
         npp++;
         if (b < kBandesPrevMax && !std::isnan(p.mn) && !std::isnan(p.mx)) {
-            const int32_t y1 = y_de(p.mx);
-            int32_t h = y_de(p.mn) - y1;
+            const int32_t y1 = r.y(p.mx);
+            int32_t h = r.y(p.mn) - y1;
             if (h < 3) h = 3;
             poser(s_bandes_prev[b++], x - larg_barre / 2, y1, larg_barre, h);
         }
@@ -539,29 +582,67 @@ void peindre_graphique() {
     for (; b < kBandesPrevMax; b++) ui_hidden(s_bandes_prev[b], true);
     ui_hidden(s_prevision, npp < 2);
     if (npp >= 2) lv_line_set_points(s_prevision, pp, static_cast<uint32_t>(npp));
+}
 
-    // Axe des temps : un libellé toutes les 3 h, 6 h, 12 h, un jour, deux… (10 au plus),
-    // calé sur l'heure ronde ou sur minuit.
+// Axe des temps : un libellé toutes les 3 h, 6 h, 12 h, un jour, deux… (10 au plus),
+// calé sur l'heure ronde ou sur minuit.
+void peindre_axe(const Serie& s, const Repere& r) {
     static constexpr int32_t kIntervalles[] = {180, 360, 720, 1440, 2880, 4320, 7200, 10080};
     int32_t iv = kIntervalles[0];
     for (int32_t c : kIntervalles) {
         iv = c;
-        if (fin / c <= 10) break;
+        if (r.fin / c <= 10) break;
     }
     const bool jour_seul = iv >= 1440;
     const int32_t cale = jour_seul ? 1440 : iv;
     int32_t m = (cale - (s.debut_min % cale)) % cale;
+    char buf[32];
     int a = 0;
-    for (; m <= fin && a < kAxeMax; m += iv) {
+    for (; m <= r.fin && a < kAxeMax; m += iv) {
         libelle_moment(s, m, jour_seul, false, buf, sizeof(buf));
-        peindre_libelle_centre(s_axe[a++], buf, x_de(m));
+        peindre_libelle_centre(s_axe[a++], buf, r.x(m));
     }
     for (; a < kAxeMax; a++) ui_hidden(s_axe[a], true);
+}
 
-    // Légende : « Prévu » (dehors) ou « Dehors, prévu » (une serre), si une prévision.
+// Légende : « Prévu » (dehors) ou « Dehors, prévu » (une serre), si une prévision.
+void peindre_legende(const Serie& s, bool prevue) {
     ui_hidden(s_legende, false);
     ui_hidden(s_leg_prev, !prevue);
     if (prevue) ui_text(s_leg_txt[2], s.exterieur ? tr("Prévu") : tr("Dehors, prévu"));
+}
+
+void peindre_graphique() {
+    HistoriqueUI& u = g_historique_ui;
+    for (int v = 0; v < NB_VUES; v++) highlight_button_border(u.vue_btn[v], v == s_vue, UIColor.ACCENT);
+    if (s_courbe == nullptr || s_mem == nullptr) return;
+    const Serie& s = s_mem->series[s_vue];
+    peindre_titre(s);
+
+    // Étendue des valeurs : créneaux, valeur actuelle, prévision. Sans créneau ni
+    // prévision (capteur sans statistiques) : « Aucun historique », même si la valeur
+    // actuelle est connue (la carte « Maintenant » la montre).
+    float lo, hi;
+    etendue(s, lo, hi);
+    const bool vide = !s.recue || std::isnan(lo);
+    etendre(s.actuel, lo, hi);
+    ui_hidden(s_vide, !vide);
+    if (vide) {
+        ui_text(s_vide, s.recue ? tr("Aucun historique") : tr("En attente de Home Assistant"));
+        cacher_trace();
+        return;
+    }
+
+    const Repere r = repere(s, lo, hi);
+    peindre_graduations(r);
+    const int32_t x_maintenant = r.x(s.maintenant);
+    const bool prevue = s.np > 0;
+    peindre_partie_prevue(prevue, x_maintenant);
+    const int32_t larg_barre = peindre_barres(s, r);
+    peindre_courbe(s, r, x_maintenant);
+    peindre_prevision(s, r, prevue, x_maintenant, larg_barre);
+    peindre_axe(s, r);
+    peindre_legende(s, prevue);
 }
 
 void peindre() {
