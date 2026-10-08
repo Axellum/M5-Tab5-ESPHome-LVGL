@@ -7,7 +7,9 @@
 - règles de code (ADR-0006) : snprintf partout, aucun lv_* dans le contrat API
   ni dans le fichier matériel, aucun global orphelin, … et la règle 7 (icônes
   MDI), falsifiée sur une copie mutée du firmware (glyphe manquant, glyphe
-  mort, icône C++ non rattachée) ;
+  mort, icône C++ non rattachée), comme les règles 9 à 14 du lot L6 (LVGL et
+  `static` dans le YAML, copies de chaîne, fonctions publiques sans appelant,
+  `nullptr` et tags de journal, accents des textes de l'écran) ;
 - les 6 salles de « Fil d'Or » sont traversables et tout le loot atteignable ;
 - les 10 niveaux de « Coureur d'Or » sont jouables jusqu'à la sortie ;
 - les 8 niveaux d'« Arcanoïde » sont complets et finissables (aucune brique
@@ -58,9 +60,123 @@ def _firmware_copy(tmp_path):
             shutil.copy2(path, dst / path.name)
     for path in (src / "ui_components").glob("*.yaml"):
         shutil.copy2(path, dst / "ui_components" / path.name)
+    # Tablette virtuelle : ses lambdas appellent aussi des fonctions publiques (règle 12).
+    (dst / "rendu").mkdir()
+    for path in (src / "rendu").glob("*.yaml"):
+        shutil.copy2(path, dst / "rendu" / path.name)
+    shutil.copy2(src.parent / "tab5-rendu-host.yaml", tmp_path / "tab5-rendu-host.yaml")
     entry = tmp_path / check_tab5_code_rules.ENTRY.name
     shutil.copy2(check_tab5_code_rules.ENTRY, entry)
     return dst, entry
+
+
+def _ajouter(path, texte):
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(texte)
+
+
+def _remplacer(path, ancien, nouveau):
+    texte = path.read_text(encoding="utf-8")
+    assert ancien in texte, f"{ancien!r} absent de {path.name}"
+    path.write_text(texte.replace(ancien, nouveau, 1), encoding="utf-8")
+
+
+# ─── Règles 9 à 14 (lot L6 de l'audit du 07/10/2026) : chacune échoue sur un cas témoin ───
+
+def test_regle_9_lvgl_dans_le_yaml(tmp_path):
+    """Un nouvel appel lv_* dans une lambda YAML, un de plus dans un fichier toléré, un de
+    moins (plafond à abaisser) ; lv_color_hex() reste libre."""
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.lvgl_yaml(tab5, entry) == []
+    _ajouter(tab5 / "ui_components" / "alarm_popup.yaml",
+             "\nessai:\n  - lambda: |-\n      lv_obj_set_width(id(x), 10);\n"
+             "      auto c = lv_color_hex(UIColor.TEXT_DIM);\n")
+    _ajouter(tab5 / "ui_components" / "console_sys.yaml",
+             "\nessai:\n  - lambda: 'lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);'\n")
+    _remplacer(tab5 / "tab5-calendar.yaml", "lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);",
+               "cal_fermer();")
+    problems = check_tab5_code_rules.lvgl_yaml(tab5, entry)
+    assert any(p.startswith("alarm_popup.yaml:") and "lv_obj_set_width() ×1 (toléré ×0)" in p for p in problems), problems
+    assert not any("lv_color_hex" in p for p in problems), problems
+    assert any("console_sys.yaml:" in p and "lv_obj_add_flag() ×11 (toléré ×10)" in p for p in problems), problems
+    assert any("tab5-calendar.yaml n'a plus que 3 lv_obj_add_flag()" in p for p in problems), problems
+
+
+def test_regle_10_static_dans_une_lambda(tmp_path):
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.static_lambdas(tab5, entry) == []
+    _ajouter(tab5 / "tab5-scripts.yaml",
+             "\nessai:\n  - lambda: |-\n      static bool arme = false;\n"
+             "      static const int kMax = 3;\n      static constexpr float kPas = 0.5f;\n")
+    problems = check_tab5_code_rules.static_lambdas(tab5, entry)
+    assert len(problems) == 1 and problems[0].startswith("tab5-scripts.yaml:"), problems
+    assert ": arme ×1 (toléré ×0) — `static` modifiable dans une lambda" in problems[0], problems
+
+
+def test_regle_11_copie_de_chaine_dans_un_chemin_chaud(tmp_path):
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.chemins_chauds(tab5, entry) == []
+    _ajouter(tab5 / "tab5-imu.yaml",
+             "\nessai:\n  - platform: template\n    on_value:\n      - lambda: |-\n"
+             "          const std::string &ok = x;\n          std::string copie = x;\n"
+             "          auto t = to_string(x);\n  - id: suivant\n    lambda: 'std::string libre = x;'\n")
+    _ajouter(tab5 / "tab5_internal.h", "\nvoid essai_copie(int a, std::string nom);\n")
+    problems = check_tab5_code_rules.chemins_chauds(tab5, entry)
+    assert sum("tab5-imu.yaml:" in p and "`on_value:`" in p for p in problems) == 2, problems
+    assert any(p.startswith("tab5_internal.h:") and "par valeur" in p for p in problems), problems
+    assert len(problems) == 3, problems
+
+
+def test_regle_12_fonction_publique_sans_appelant(tmp_path):
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.appelants_publics(tab5, entry) == []
+    _ajouter(tab5 / "tab5_custom.h", "\nvoid essai_orpheline(int n);\nvoid essai_appelee();\n")
+    _ajouter(tab5 / "tab5_cards.cpp", "\nvoid essai_orpheline(int n) { (void) n; }\n"
+                                      "void essai_appelee() { essai_orpheline(1); }\n")
+    _ajouter(tab5 / "tab5-scripts.yaml", "\nessai:\n  - lambda: 'essai_appelee(); clim_recolorer();'\n")
+    problems = check_tab5_code_rules.appelants_publics(tab5, entry)
+    assert any("`essai_orpheline()` (tab5_cards.cpp) n'est appelée ni par un YAML" in p for p in problems), problems
+    assert not any("essai_appelee" in p for p in problems), problems
+    assert any("`clim_recolorer()` a maintenant un appelant" in p for p in problems), problems
+    # Appel par gabarit : `${prefixe}_choisir_vue` vaut energie_ et historique_choisir_vue.
+    _remplacer(tab5 / "ui_components" / "historique_popup.yaml", "prefixe: historique", "prefixe: autre")
+    _remplacer(tab5 / "ui_components" / "historique_popup.yaml", "prefixe: historique", "prefixe: autre")
+    _remplacer(tab5 / "ui_components" / "historique_popup.yaml", "prefixe: historique", "prefixe: autre")
+    problems = check_tab5_code_rules.appelants_publics(tab5, entry)
+    assert any("`historique_choisir_vue()`" in p for p in problems), problems
+    assert not any("`energie_choisir_vue()`" in p for p in problems), problems
+
+
+def test_regle_13_nullptr_et_tags_de_journal(tmp_path):
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.conventions_cpp(tab5, entry) == []
+    _ajouter(tab5 / "tab5_anim.cpp", '\nstatic void essai() {\n    lv_obj_t* o = NULL;\n'
+                                     '    ESP_LOGI("TAB5", "essai %p", o);\n    ESP_LOGI("tab5.anim", "ok");\n}\n')
+    _ajouter(tab5 / "chess_game.cpp", '\nstatic void essai() { ESP_LOGI("chess", "un jeu garde son nom"); }\n')
+    _ajouter(tab5 / "tab5_zones.cpp", '\nstatic void essai() { ESP_LOGI("TAB5", "un de plus"); }\n')
+    problems = check_tab5_code_rules.conventions_cpp(tab5, entry)
+    assert any(p.startswith("tab5_anim.cpp:") and "`NULL`" in p for p in problems), problems
+    assert sum(p.startswith("tab5_anim.cpp:") and "tag de journal" in p for p in problems) == 1, problems
+    assert not any("chess_game.cpp" in p for p in problems), problems
+    assert sum(p.startswith("tab5_zones.cpp:") for p in problems) == 6, problems
+
+
+def test_regle_14_accents_des_textes_de_l_ecran(tmp_path):
+    regle = check_tab5_code_rules
+    assert regle.accents_ecran({"Température": ["a"], "Annule le dernier coup": ["b"],
+                                "energie|Énergie": ["c"], "Mise à jour": ["d"]}) == []
+    fautes = regle.accents_ecran({"Ecran eteint": ["x.cpp:1"], "Etat de la piece": ["y.yaml:2"],
+                                  "Mise a jour": ["z.cpp:3"]})
+    assert [f.split(" : ")[0] for f in fautes] == ["x.cpp:1", "y.yaml:2", "y.yaml:2", "z.cpp:3"], fautes
+    # Sur une copie du firmware : un tr() et un texte YAML d'écran fautifs.
+    tab5, entry = _firmware_copy(tmp_path)
+    assert regle.accents_ecran(regle.textes_ecran(tab5, entry)) == []
+    _ajouter(tab5 / "tab5_anim.cpp", '\nstatic const char* essai() { return tr("Temperature du salon"); }\n')
+    _ajouter(tab5 / "ui_components" / "alarm_popup.yaml", '\n          - label: { text: "Deja vu" }\n')
+    problems = regle.accents_ecran(regle.textes_ecran(tab5, entry))
+    assert any(p.startswith("Tab5/tab5_anim.cpp:") and "« Temperature »" in p for p in problems), problems
+    assert any(p.startswith("Tab5/ui_components/alarm_popup.yaml:") and "« Deja »" in p for p in problems), problems
+    assert len(problems) == 2, problems
 
 
 def _edit_font(styles, font_id, old, new):

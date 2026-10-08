@@ -16,7 +16,7 @@
 #   le wait_until : sans lui, un module repeindrait avant d'avoir ses widgets.
 # - En marche, un changement passe par le même chemin. Preuve : le rendu hors tablette
 #   compare la bascule à chaud au démarrage à froid dans le même thème, au pixel près
-#   (tools/rendu/, .github/workflows/rendu-host.yml, job « thèmes »).
+#   (tools/rendu/, .github/workflows/rendu-host.yml, tâches « clair » et « galerie »).
 # - Le select « Thème » garde l'INDEX (restore_value) : un nouveau thème s'ajoute à la
 #   fin (`ordre:`). Home Assistant lit les options : jamais traduites (le nom d'un
 #   thème est un nom propre, les modes sont des valeurs que HA écrit).
@@ -28,6 +28,14 @@
 #   l'horloge en mode clair (UIBandeau, UIHorloge) et changer trois polices
 #   d'affichage (heure, date, titres : theme_polices). Les polices des thèmes sont
 #   déclarées ci-dessous, générées elles aussi (tailles : tools/police_theme.py).
+# - [AI-WARNING] Bascule rapide (08/10/2026) : les couleurs sont reposées avec le
+#   rafraîchissement des styles COUPÉ (lv_obj_enable_style_refresh), puis l'écran entier
+#   est redessiné une fois ; theme_formes ne rafraîchit que les porteurs de ses styles
+#   (restent 3 lv_obj_report_style_change pour les polices, 5 pour le calendrier).
+#   Avant : un par style, 3,2 s de boucle bloquée à chaque changement de thème ou de
+#   mode (mesuré le 07/10/2026 ; prototype : ~0,2 s). Le bloc des couleurs ne doit donc
+#   changer que des couleurs : une propriété de taille, de place ou de zone de dessin y
+#   resterait sans effet jusqu'au prochain rafraîchissement. tests/test_themes.py le vérifie.
 # ═══════════════════════════════════════════════════════════════════════════
 
 # >>> polices (généré par tools/gen_themes.py depuis Tab5/themes/ et _polices.yaml, ne pas éditer)
@@ -352,140 +360,94 @@ script:
       - lambda: 'boutons_verre_marquer(id(page_main)->obj);'
       # >>> styles (généré par tools/gen_themes.py depuis tab5-styles.yaml, ne pas éditer)
       - lambda: |-
+          // Couleurs seules, sans rafraîchir les objets un style après l'autre : voir
+          // rendre_styles() dans tools/gen_themes.py. Rien ici ne doit changer la géométrie.
+          lv_obj_enable_style_refresh(false);
           lv_style_set_bg_color(id(style_meteo_card), lv_color_hex(UIColor.GLASS_HI));
           lv_style_set_bg_grad_color(id(style_meteo_card), lv_color_hex(UIColor.GLASS_LO));
           lv_style_set_border_color(id(style_meteo_card), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_meteo_card));
           lv_style_set_bg_color(id(style_meteo_card_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
           lv_style_set_bg_grad_color(id(style_meteo_card_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
           lv_style_set_border_color(id(style_meteo_card_page), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_meteo_card_page));
           lv_style_set_bg_color(id(style_horloge_page), lv_color_hex(UIHorloge.GLASS_HI_PAGE));
           lv_style_set_bg_grad_color(id(style_horloge_page), lv_color_hex(UIHorloge.GLASS_LO_PAGE));
           lv_style_set_border_color(id(style_horloge_page), lv_color_hex(UIHorloge.GLASS_RIM));
-          lv_obj_report_style_change(id(style_horloge_page));
           lv_style_set_bg_color(id(style_bandeau_page), lv_color_hex(UIBandeau.GLASS_HI_PAGE));
           lv_style_set_bg_grad_color(id(style_bandeau_page), lv_color_hex(UIBandeau.GLASS_LO_PAGE));
           lv_style_set_border_color(id(style_bandeau_page), lv_color_hex(UIBandeau.GLASS_RIM));
-          lv_obj_report_style_change(id(style_bandeau_page));
           lv_style_set_bg_color(id(style_clim_carte_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
           lv_style_set_bg_grad_color(id(style_clim_carte_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
           lv_style_set_border_color(id(style_clim_carte_page), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_clim_carte_page));
           lv_style_set_bg_color(id(style_onglet_jour_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
           lv_style_set_bg_grad_color(id(style_onglet_jour_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
           lv_style_set_border_color(id(style_onglet_jour_page), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_onglet_jour_page));
           lv_style_set_bg_color(id(style_onglet_temp_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
           lv_style_set_bg_grad_color(id(style_onglet_temp_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
           lv_style_set_border_color(id(style_onglet_temp_page), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_onglet_temp_page));
           lv_style_set_bg_color(id(style_clim_btn_page), lv_color_hex(UIColor.GLASS_HI_PAGE));
           lv_style_set_bg_grad_color(id(style_clim_btn_page), lv_color_hex(UIColor.GLASS_LO_PAGE));
           lv_style_set_border_color(id(style_clim_btn_page), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_clim_btn_page));
           lv_style_set_bg_color(id(style_clim_btn), lv_color_hex(UIColor.GLASS_HI));
           lv_style_set_bg_grad_color(id(style_clim_btn), lv_color_hex(UIColor.GLASS_LO));
           lv_style_set_border_color(id(style_clim_btn), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_clim_btn));
           lv_style_set_bg_color(id(style_modal_card), lv_color_hex(UIColor.GLASS_HI_MODAL));
           lv_style_set_bg_grad_color(id(style_modal_card), lv_color_hex(UIColor.GLASS_LO_MODAL));
           lv_style_set_border_color(id(style_modal_card), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_modal_card));
           lv_style_set_bg_color(id(style_modal_card_verre), lv_color_hex(UIColor.GLASS_HI));
           lv_style_set_bg_grad_color(id(style_modal_card_verre), lv_color_hex(UIColor.GLASS_LO));
           lv_style_set_border_color(id(style_modal_card_verre), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_modal_card_verre));
           lv_style_set_bg_color(id(style_glass_card), lv_color_hex(UIColor.GLASS_HI));
           lv_style_set_bg_grad_color(id(style_glass_card), lv_color_hex(UIColor.GLASS_LO));
           lv_style_set_border_color(id(style_glass_card), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_glass_card));
           lv_style_set_bg_color(id(style_pill_accent), lv_color_hex(UIColor.ACCENT));
           lv_style_set_border_color(id(style_pill_accent), lv_color_hex(UIColor.ACCENT));
-          lv_obj_report_style_change(id(style_pill_accent));
           lv_style_set_text_color(id(style_text_dim), lv_color_hex(UIColor.TEXT_DIM));
-          lv_obj_report_style_change(id(style_text_dim));
           lv_style_set_text_color(id(style_text_soft), lv_color_hex(UIColor.TEXT_SOFT));
-          lv_obj_report_style_change(id(style_text_soft));
           lv_style_set_text_color(id(style_text_accent), lv_color_hex(UIColor.ACCENT));
-          lv_obj_report_style_change(id(style_text_accent));
           lv_style_set_text_color(id(style_text_accent_alt), lv_color_hex(UIColor.ACCENT_ALT));
-          lv_obj_report_style_change(id(style_text_accent_alt));
           lv_style_set_text_color(id(style_text_on_accent), lv_color_hex(UIColor.TEXT_ON_ACCENT));
-          lv_obj_report_style_change(id(style_text_on_accent));
           lv_style_set_text_color(id(style_text_console_label), lv_color_hex(UIColor.CONSOLE_LABEL));
-          lv_obj_report_style_change(id(style_text_console_label));
           lv_style_set_text_color(id(style_text_console_value), lv_color_hex(UIColor.CONSOLE_VALUE));
-          lv_obj_report_style_change(id(style_text_console_value));
           lv_style_set_text_color(id(style_text_error), lv_color_hex(UIColor.ERROR));
-          lv_obj_report_style_change(id(style_text_error));
           lv_style_set_text_color(id(style_text_gold), lv_color_hex(UIColor.GOLD));
-          lv_obj_report_style_change(id(style_text_gold));
           lv_style_set_text_color(id(style_text_inactive), lv_color_hex(UIColor.INACTIVE));
-          lv_obj_report_style_change(id(style_text_inactive));
           lv_style_set_text_color(id(style_text_info), lv_color_hex(UIColor.INFO));
-          lv_obj_report_style_change(id(style_text_info));
           lv_style_set_text_color(id(style_text_rain_value), lv_color_hex(UIColor.RAIN_VALUE));
-          lv_obj_report_style_change(id(style_text_rain_value));
           lv_style_set_text_color(id(style_text_success), lv_color_hex(UIColor.SUCCESS));
-          lv_obj_report_style_change(id(style_text_success));
           lv_style_set_text_color(id(style_text_temp_max), lv_color_hex(UIColor.TEMP_MAX));
-          lv_obj_report_style_change(id(style_text_temp_max));
           lv_style_set_text_color(id(style_text_temp_min), lv_color_hex(UIColor.TEMP_MIN));
-          lv_obj_report_style_change(id(style_text_temp_min));
           lv_style_set_text_color(id(style_text_warning), lv_color_hex(UIColor.WARNING));
-          lv_obj_report_style_change(id(style_text_warning));
           lv_style_set_bg_color(id(style_bg_accent), lv_color_hex(UIColor.ACCENT));
-          lv_obj_report_style_change(id(style_bg_accent));
           lv_style_set_bg_color(id(style_bg_accent_alt), lv_color_hex(UIColor.ACCENT_ALT));
-          lv_obj_report_style_change(id(style_bg_accent_alt));
           lv_style_set_bg_color(id(style_bg_arc_track), lv_color_hex(UIColor.ARC_TRACK));
-          lv_obj_report_style_change(id(style_bg_arc_track));
           lv_style_set_bg_color(id(style_bg_bar_inactive), lv_color_hex(UIColor.BAR_INACTIVE));
-          lv_obj_report_style_change(id(style_bg_bar_inactive));
           lv_style_set_bg_color(id(style_bg_console_bg), lv_color_hex(UIColor.CONSOLE_BG));
-          lv_obj_report_style_change(id(style_bg_console_bg));
           lv_style_set_bg_color(id(style_bg_dim), lv_color_hex(UIColor.TEXT_DIM));
-          lv_obj_report_style_change(id(style_bg_dim));
           lv_style_set_bg_color(id(style_bg_gold), lv_color_hex(UIColor.GOLD));
-          lv_obj_report_style_change(id(style_bg_gold));
           lv_style_set_bg_color(id(style_bg_modal_scrim), lv_color_hex(UIColor.MODAL_SCRIM));
-          lv_obj_report_style_change(id(style_bg_modal_scrim));
           lv_style_set_bg_color(id(style_bg_soft), lv_color_hex(UIColor.TEXT_SOFT));
-          lv_obj_report_style_change(id(style_bg_soft));
           lv_style_set_bg_color(id(style_bg_success), lv_color_hex(UIColor.SUCCESS));
-          lv_obj_report_style_change(id(style_bg_success));
           lv_style_set_bg_color(id(style_bg_warm_pink), lv_color_hex(UIColor.WARM_PINK));
-          lv_obj_report_style_change(id(style_bg_warm_pink));
           lv_style_set_border_color(id(style_border_accent), lv_color_hex(UIColor.ACCENT));
-          lv_obj_report_style_change(id(style_border_accent));
           lv_style_set_border_color(id(style_border_error), lv_color_hex(UIColor.ERROR));
-          lv_obj_report_style_change(id(style_border_error));
           lv_style_set_border_color(id(style_border_glass_rim), lv_color_hex(UIColor.GLASS_RIM));
-          lv_obj_report_style_change(id(style_border_glass_rim));
           lv_style_set_border_color(id(style_border_soft), lv_color_hex(UIColor.TEXT_SOFT));
-          lv_obj_report_style_change(id(style_border_soft));
           lv_style_set_arc_color(id(style_arc_arc_track), lv_color_hex(UIColor.ARC_TRACK));
-          lv_obj_report_style_change(id(style_arc_arc_track));
           lv_style_set_arc_color(id(style_arc_info), lv_color_hex(UIColor.INFO));
-          lv_obj_report_style_change(id(style_arc_info));
           lv_style_set_arc_color(id(style_arc_warning), lv_color_hex(UIColor.WARNING));
-          lv_obj_report_style_change(id(style_arc_warning));
           lv_style_set_text_color(id(style_bandeau_text_soft), lv_color_hex(UIBandeau.TEXT_SOFT));
-          lv_obj_report_style_change(id(style_bandeau_text_soft));
           lv_style_set_text_color(id(style_bandeau_text_dim), lv_color_hex(UIBandeau.TEXT_DIM));
-          lv_obj_report_style_change(id(style_bandeau_text_dim));
           lv_style_set_text_color(id(style_bandeau_text_rain_value), lv_color_hex(UIBandeau.RAIN_VALUE));
-          lv_obj_report_style_change(id(style_bandeau_text_rain_value));
           lv_style_set_text_color(id(style_bandeau_text_temp_min), lv_color_hex(UIBandeau.TEMP_MIN));
-          lv_obj_report_style_change(id(style_bandeau_text_temp_min));
           lv_style_set_bg_color(id(style_bandeau_bg_bar_inactive), lv_color_hex(UIBandeau.BAR_INACTIVE));
-          lv_obj_report_style_change(id(style_bandeau_bg_bar_inactive));
           lv_style_set_text_color(id(style_horloge_text_soft), lv_color_hex(UIHorloge.TEXT_SOFT));
-          lv_obj_report_style_change(id(style_horloge_text_soft));
       - lvgl.theme.update:
           label:
             text_color: !lambda 'return lv_color_hex(UIColor.TEXT_SOFT);'
+      - lambda: |-
+          lv_obj_enable_style_refresh(true);
+          // Un seul redessin, de tout l'écran : il couvre aussi les calques du dessus.
+          lv_obj_invalidate(lv_screen_active());
       - lambda: |-
           // Formes du thème (`formes:` de Tab5/themes/<thème>.yaml), par-dessus ses couleurs.
           lv_style_t* const styles[] = {id(style_meteo_card_page), id(style_horloge_page), id(style_bandeau_page), id(style_clim_carte_page), id(style_onglet_jour_page), id(style_onglet_temp_page), id(style_meteo_card), id(style_clim_btn), id(style_clim_btn_page), id(style_modal_card), id(style_modal_card_verre), id(style_glass_card)};

@@ -20,12 +20,13 @@
  *       dans tab5_theme_repeindre. Dans le bandeau central, lire UIBandeau ; dans
  *       l'horloge, UIHorloge (un thème clair peut les garder sombres). Preuve : le rendu
  *       hors tablette compare la bascule à chaud au démarrage à froid dans le même thème
- *       (tools/rendu/, job « thèmes »).
+ *       (tools/rendu/, tâches « clair » et « galerie » de rendu-host.yml).
  *       Les tables entre `// >>> formes` et `// <<< formes` sont écrites par
  *       tools/gen_themes.py (`--check` échoue en CI si elles sont périmées).
  */
 #include "tab5_internal.h"
 #include "esphome/core/application.h"
+#include "lvgl_private.h"  // lv_obj_t::styles / style_cnt (theme_formes : porteurs d'un style)
 
 // Thème et mode actifs. L'écran naît dans l'état compilé de tab5-styles.yaml : le
 // premier thème, en sombre (le générateur refuse formes et polices sur ce thème).
@@ -2353,6 +2354,44 @@ static void poser_forme(lv_style_t* const styles[], const Forme& f) {
     lv_style_set_prop(st, f.prop, v);
 }
 
+// [AI-WARNING] Bascule rapide (08/10/2026) : ne pas revenir à un
+// lv_obj_report_style_change par style. Chacun parcourt les ~1 600 objets de l'écran et,
+// sur chaque porteur, rafraîchit TOUTES les propriétés : STYLE_CHANGED à tous ses
+// descendants, et les labels refont la mise en page de leur texte. Les 12 appels coûtaient
+// 1,04 s de boucle bloquée à chaque changement de thème (mesuré le 07/10/2026). Un seul
+// parcours suffit, et sur chaque porteur deux rafraîchissements ciblés :
+// - BORDER_WIDTH (drapeau LAYOUT_UPDATE) : le porteur et son parent sont remis en page.
+//   Couvre aussi BORDER_SIDE, qui change le contenu (space_*) mais n'a aucun drapeau ;
+// - SHADOW_WIDTH (drapeau EXT_DRAW_UPDATE) : la zone de dessin hors cadre est recalculée
+//   en entier (ombre et contour : largeurs, décalages, étalement, opacités).
+// Aucune propriété de forme n'est héritée : pas de cascade vers les enfants. Rayon,
+// couleurs et dégradés sont lus au dessin (LV_OBJ_STYLE_CACHE à 0, garde
+// ci-dessous) ; l'écran entier est redessiné par tab5_theme_repeindre. Preuve : même
+// géométrie qu'avec les 12 appels sur 5 thèmes (empreinte des coordonnées, 07/10/2026),
+// et les tâches « clair » et « galerie » du rendu hors tablette (rendu-host.yml) comparent
+// la bascule à chaud au démarrage à froid, au pixel près.
+#if LV_OBJ_STYLE_CACHE
+#error "theme_formes et tab5_theme_repeindre supposent LV_OBJ_STYLE_CACHE à 0 (couleurs lues au dessin)"
+#endif
+
+struct PorteursFormes {
+    lv_style_t* const* styles;
+    int n;
+};
+
+static lv_obj_tree_walk_res_t rafraichir_porteur(lv_obj_t* o, void* donnees) {
+    const auto* p = static_cast<const PorteursFormes*>(donnees);
+    for (uint32_t i = 0; i < o->style_cnt; i++) {
+        for (int k = 0; k < p->n; k++) {
+            if (o->styles[i].style != p->styles[k]) continue;
+            lv_obj_refresh_style(o, LV_PART_ANY, LV_STYLE_BORDER_WIDTH);
+            lv_obj_refresh_style(o, LV_PART_ANY, LV_STYLE_SHADOW_WIDTH);
+            return LV_OBJ_TREE_WALK_NEXT;
+        }
+    }
+    return LV_OBJ_TREE_WALK_NEXT;
+}
+
 void theme_formes(lv_style_t* const styles[], int n) {
     if (n != kStylesFormes) {
         ESP_LOGE("tab5.theme", "theme_formes : %d styles reçus, %d attendus (tables périmées)", n, kStylesFormes);
@@ -2363,7 +2402,10 @@ void theme_formes(lv_style_t* const styles[], int n) {
     for (int i = 0; i < kNbFormesDefaut; i++) poser_forme(styles, kFormesDefaut[i]);
     const int rangee = s_theme * 2 + (s_clair ? 1 : 0);
     for (int i = kFormesDebut[rangee]; i < kFormesDebut[rangee + 1]; i++) poser_forme(styles, kFormes[i]);
-    for (int i = 0; i < n; i++) lv_obj_report_style_change(styles[i]);
+    // nullptr : tous les écrans, comme lv_obj_report_style_change (pages des jeux et
+    // calques du dessus, popups compris).
+    PorteursFormes porteurs{styles, n};
+    lv_obj_tree_walk(nullptr, rafraichir_porteur, &porteurs);
 }
 
 // --- Polices d'affichage ------------------------------------------------------

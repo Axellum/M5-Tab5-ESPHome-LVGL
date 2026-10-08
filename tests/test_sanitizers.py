@@ -110,3 +110,51 @@ def test_le_workflow_garde_le_temoin_et_lit_le_journal():
     assert "log_path=" not in wf  # UBSan l'ignorerait : tout passe par le journal
     for script in ("fuzz_services.py", "cibles_ub.py", "variante.py"):
         assert f"tools/sanitizers/{script}" in wf
+
+
+def _ecarts_graines(graines, contrat):
+    """Ce qui sépare les graines du fuzz des services déclarés ; [] si tout va."""
+    import demo_pusher
+
+    ecarts = [f"{s} : service déclaré sans graine (jamais fuzzé)" for s in sorted(set(contrat) - set(graines))]
+    ecarts += [f"{s} : graine d'un service disparu" for s in sorted(set(graines) - set(contrat))]
+    for s in sorted(set(graines) & set(contrat)):
+        if ecart := demo_pusher.ecart_de_contrat(contrat[s], graines[s]):
+            ecarts.append(f"{s} : {ecart}")
+    return ecarts
+
+
+def test_graines_du_fuzz_egales_au_contrat():
+    """OUT-1 (audit du 07/10/2026) : le fuzz n'appelait ni tab5_maj_energie ni
+    tab5_maj_energie_historique, sans rien dire (un service sans graine est sauté). Chaque
+    service déclaré a sa graine, avec exactement ses variables ; aucune graine orpheline."""
+    sys.path[:0] = [str(REPO / "tools" / "demo")]
+    import demo_pusher
+    import fuzz_services
+
+    contrat = demo_pusher.lire_contrat()
+    assert len(contrat) >= 23, "le contrat n'est plus lu"
+    assert _ecarts_graines(fuzz_services.GRAINES, contrat) == []
+    # Falsifiabilité : une graine retirée, une en trop, une variable en moins se voient.
+    sans = {k: v for k, v in fuzz_services.GRAINES.items() if k != "tab5_maj_energie"}
+    assert _ecarts_graines(sans, contrat) == ["tab5_maj_energie : service déclaré sans graine (jamais fuzzé)"]
+    assert _ecarts_graines({**fuzz_services.GRAINES, "tab5_maj_disparu": {}}, contrat) == [
+        "tab5_maj_disparu : graine d'un service disparu"]
+    moins = {**fuzz_services.GRAINES, "tab5_maj_energie_historique": {"vue": "jours", "debut": ""}}
+    assert _ecarts_graines(moins, contrat) == ["tab5_maj_energie_historique : argument(s) manquant(s) ['valeurs']"]
+
+
+def test_graines_des_tuiles_et_emplacements_couvrent_leurs_cles():
+    """Les lecteurs de la rangée sous l'horloge (hp, hd, hLI) et de la tuile − / + (rN)
+    découpent leurs propres champs : ils sont dans les graines, définitions et états."""
+    import re
+
+    import fuzz_services
+
+    cles = lambda payload: {e.split("|", 1)[0] for e in payload.split(";") if e}  # noqa: E731
+    tuiles = cles(fuzz_services.GRAINES["tab5_maj_tuiles"]["payload"])
+    etats = cles(fuzz_services.GRAINES["tab5_maj_emplacements"]["payload"])
+    assert {"hp", "hd"} <= tuiles
+    for ensemble in (tuiles, etats):
+        assert any(re.fullmatch(r"h[0-2][0-3]", c) for c in ensemble), ensemble
+        assert any(re.fullmatch(r"r[0-7]", c) for c in ensemble), ensemble

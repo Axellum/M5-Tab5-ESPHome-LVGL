@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Règles de code du firmware Tab5, jouées à chaque `pytest` (audit du 06/09/2026,
-§4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006). Huit règles, toutes
-falsifiables sur le dépôt réel :
+§4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006 ; lot L6 de l'audit du 07/10/2026
+pour les règles 9 à 14). Quatorze règles, toutes falsifiables sur le dépôt réel
+(numérotation propre à ce script, distincte des règles d'AGENTS.md) :
 
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
      `*.yaml` ni `tab5-ha-hmi.yaml`. Un futur `%s` sur un buffer de 16 octets ne
@@ -55,6 +56,25 @@ falsifiables sur le dépôt réel :
      ils restent sombres (`PALETTE_SOMBRE.X`). Hors jeux, ni `PALETTE_SOMBRE` (sauf
      tab5_tokens.h qui la définit) ni couleur littérale (`lv_color_hex(0x…)`,
      `lv_color_make(…)`) dans le code : ce serait contourner le thème.
+  9. **Pas de logique LVGL dans un YAML** (YML-8) : la règle 2 étendue à tous les YAML
+     du firmware. Les appels `lv_*` du 08/10/2026 sont listés fichier par fichier
+     (`LV_YAML_PLAFONDS`, plafonds exacts) : aucun nouveau. `lv_color_hex()` reste
+     libre ; `tab5-themes.yaml` (généré, pose les styles) est hors règle.
+ 10. **Pas de `static` modifiable dans une lambda YAML** (règle 3 d'AGENTS.md) : un état
+     partagé entre handlers va dans un `globals:`. Les cas d'un seul handler sont
+     listés (`STATIC_LAMBDA_PERMIS`).
+ 11. **Pas de copie de chaîne dans un chemin chaud** (règle 4 d'AGENTS.md, partie sûre) :
+     ni `std::string` par valeur ni `to_string()` dans un `on_value:` / `on_change:`,
+     aucun paramètre `std::string` par valeur dans un en-tête de Tab5/.
+ 12. **Chaque fonction de `tab5_custom.h` a un appelant hors de son fichier** (CPP-4) :
+     une lambda YAML (firmware ou tablette virtuelle) ou une autre unité C++.
+     Exceptions du 08/10/2026 : `PUBLIQUES_SANS_APPELANT`.
+ 13. **Conventions du nouveau code** (Tab5/README.md) : `nullptr` jamais `NULL` ; hors
+     jeux, tag de journal `tab5.<module>` (exceptions datées : `TAGS_TAB5_TEMPORAIRES`).
+ 14. **Accents des textes de l'écran** : aucun mot de `MOTS_SANS_ACCENT` (« Ecran »,
+     « Temperature », « Etat »…) dans un texte de `tr()` ou du YAML des écrans.
+  La règle 5 d'AGENTS.md (widget répété 3 fois → builder ou gabarit) n'est pas
+  vérifiée : « le même widget » ne se reconnaît pas sûrement dans le YAML.
 
 Usage : python tools/check_tab5_code_rules.py   (aussi lancé par `pytest`, tests/test_guards.py)
 Sortie : 0 si tout est conforme, 1 sinon (liste des écarts sur stdout).
@@ -610,6 +630,386 @@ def palette_colors(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
+# ─── Règles 9 à 14 : garde-fous du lot L6 (audit du 07/10/2026, §4.2 et §4.4) ─────────
+# Chacune empêche les NOUVEAUX écarts sans forcer à déplacer le code existant : les cas
+# légitimes ou hérités sont listés ici, un par un, avec leur raison. Une liste sert de
+# plafond exact : un appel de plus échoue (« nouvel écart »), un appel de moins aussi
+# (« abaisser le plafond »), pour que la liste ne garde jamais un cas disparu.
+
+
+def _plafonds(compte: dict[str, int], plafonds: dict[str, int], ou: str, liste: str,
+              trop: str, lignes: dict[str, int] | None = None) -> list[str]:
+    """Écarts entre un décompte et ses plafonds (exacts) ; `lignes` : première ligne de chaque clé."""
+    problems = []
+    for cle, n in sorted(compte.items()):
+        p = plafonds.get(cle, 0)
+        if n > p:
+            ligne = f":{lignes[cle]}" if lignes and cle in lignes else ""
+            problems.append(f"{ou}{ligne} : {cle} ×{n} (toléré ×{p}) — {trop}")
+    for cle, p in sorted(plafonds.items()):
+        n = compte.get(cle, 0)
+        if n < p:
+            problems.append(f"{liste} : {ou} n'a plus que {n} {cle} (plafond {p}) — abaisser le plafond")
+    return problems
+
+
+# Règle 9 (YML-8) : pas de logique LVGL dans une lambda YAML. La règle 2 ne visait que le
+# contrat API, le matériel et les deux fichiers sensors ; celle-ci couvre tous les YAML
+# du firmware. Le YAML pose les widgets ; ce qui calcule ou modifie l'écran passe par une
+# fonction C++ nommée (tab5_custom.h), plus facile à tester, à partager et à relire.
+# Toléré partout : lv_color_hex(), conversion d'une couleur de la palette dans une
+# propriété `!lambda` (la couleur littérale, elle, est refusée par la règle 8).
+LV_YAML_PURS = {"lv_color_hex"}
+# Fichiers hors règle 9 : leur rôle est de poser des styles LVGL.
+LV_YAML_EXEMPTS = {
+    # Généré par tools/gen_themes.py (bloc `# >>> styles`) : repeint les styles partagés
+    # au changement de thème (ADR-0029). tests/test_themes.py le tient.
+    "tab5-themes.yaml",
+}
+# Appels existants le 08/10/2026, par fichier : plafonds exacts. Ne pas en ajouter :
+# écrire une fonction C++ et l'appeler depuis la lambda.
+LV_YAML_PLAFONDS: dict[str, dict[str, int]] = {
+    # Popup Assistant : libellé « Ok Nabu : ON/OFF » et sa couleur, au basculement.
+    "tab5-assist.yaml": {"lv_label_set_text": 1, "lv_obj_set_style_text_color": 1},
+    # Calendrier : fermeture du détail du jour (4 gestes).
+    "tab5-calendar.yaml": {"lv_obj_add_flag": 4},
+    # Ouverture d'un écran depuis HA : popup déjà affiché ? (lecture seule).
+    "tab5-ha-controls.yaml": {"lv_obj_has_flag": 1},
+    # Geste de balayage de la page : point et direction lus sur l'entrée LVGL
+    # (le traitement est dans handle_swipe_gesture(), tab5_central.cpp).
+    "tab5-lvgl.yaml": {"lv_indev_active": 1, "lv_indev_get_point": 1, "lv_indev_get_gesture_dir": 1},
+    # Console système au premier plan ; valeur de l'arc de luminosité lue pour l'envoi.
+    "tab5-scripts.yaml": {"lv_obj_remove_flag": 1, "lv_obj_move_to_index": 1, "lv_arc_get_value": 1},
+    # Console système : les deux écrans de confirmation (afficher, masquer, premier plan)
+    # et l'état « Redémarrage... » de HA. Candidat à un `console_confirmer()` en C++.
+    "console_sys.yaml": {"lv_obj_add_flag": 10, "lv_obj_remove_flag": 2, "lv_obj_move_to_index": 2,
+                         "lv_label_set_text": 1, "lv_obj_set_style_text_color": 1},
+    # Popup lumière : boutons de niveau (arc + libellé) et libellé du pourcentage.
+    "light_level_btn.yaml": {"lv_arc_set_value": 1, "lv_label_set_text": 1},
+    "light_popup.yaml": {"lv_label_set_text": 1},
+    # on_boot du point d'entrée (intouchable sans accord d'Axel) : l'écran actif est
+    # passé à apply_pressed_scale_to_tree().
+    "tab5-ha-hmi.yaml": {"lv_screen_active": 1},
+}
+
+
+def lvgl_yaml(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
+    """Règle 9 : aucun nouvel appel lv_* dans les lambdas YAML du firmware."""
+    problems: list[str] = []
+    vus = set()
+    for path in firmware_sources(tab5, entry):
+        if path.suffix != ".yaml" or path.name in LV_ALLOWED or path.name in LV_YAML_EXEMPTS:
+            continue
+        vus.add(path.name)
+        compte: dict[str, int] = {}
+        premiere: dict[str, int] = {}
+        for lineno, line in enumerate(_yaml_lines(path), 1):
+            for m in RE_LV_CALL.finditer(line):
+                fn = m.group(1)
+                if fn in LV_YAML_PURS:
+                    continue
+                compte[f"{fn}()"] = compte.get(f"{fn}()", 0) + 1
+                premiere.setdefault(f"{fn}()", lineno)
+        plafonds = {f"{k}()": v for k, v in LV_YAML_PLAFONDS.get(path.name, {}).items()}
+        problems += _plafonds(compte, plafonds, path.name, "LV_YAML_PLAFONDS",
+                              "logique LVGL dans le YAML : la mettre dans une fonction C++ "
+                              "déclarée dans tab5_custom.h et l'appeler (ADR-0006)", premiere)
+    problems += [f"LV_YAML_PLAFONDS : `{nom}` n'est plus un YAML du firmware — retirer l'entrée"
+                 for nom in sorted(set(LV_YAML_PLAFONDS) - vus)]
+    return problems
+
+
+# Règle 10 (règle 3 d'AGENTS.md) : pas de `static` modifiable dans une lambda YAML. Une
+# variable `static` d'une lambda n'est visible que d'elle : partager un état entre deux
+# handlers (bug `reboot_armed` du 05/07/2026) demande un `globals:`. Les cas ci-dessous
+# gardent un état propre à UN seul handler (vérifié le 08/10/2026) : plafonds exacts.
+# Les constantes (`static const`, `static constexpr`) restent libres.
+RE_STATIC_MUTABLE = re.compile(r"\bstatic\s+(?!const\b|constexpr\b)[\w:]+(?:<[^<>]*>)?[\s*&]+(\w+)\s*[=;({\[]")
+STATIC_LAMBDA_PERMIS: dict[str, dict[str, int]] = {
+    # « Prochain réveil » et « Prochain rendez-vous » : dernière valeur publiée (pas de
+    # republication identique à HA), une par text_sensor.
+    "tab5-alarm.yaml": {"last": 2},
+    # « Écran courant » : dernière valeur publiée.
+    "tab5-ha-controls.yaml": {"last": 1},
+    # IMU : anti-rebond du tap-to-wake (on_value du même capteur), cadence de poll en cours
+    # (interval de 1 s).
+    "tab5-imu.yaml": {"last_tap_ms": 1, "cur": 1},
+    # Version du C6 : nombre d'essais de lecture (3 au plus).
+    "tab5-sensors-diagnostics.yaml": {"essais": 1},
+}
+
+
+def static_lambdas(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
+    """Règle 10 : aucun nouveau `static` modifiable dans une lambda YAML."""
+    problems: list[str] = []
+    vus = set()
+    for path in firmware_sources(tab5, entry):
+        if path.suffix != ".yaml":
+            continue
+        vus.add(path.name)
+        compte: dict[str, int] = {}
+        premiere: dict[str, int] = {}
+        for lineno, line in enumerate(_yaml_lines(path), 1):
+            for m in RE_STATIC_MUTABLE.finditer(line.split("//", 1)[0]):
+                compte[m.group(1)] = compte.get(m.group(1), 0) + 1
+                premiere.setdefault(m.group(1), lineno)
+        problems += _plafonds(compte, STATIC_LAMBDA_PERMIS.get(path.name, {}), path.name,
+                              "STATIC_LAMBDA_PERMIS",
+                              "`static` modifiable dans une lambda : un état partagé entre "
+                              "handlers va dans un `globals:` (règle 3 d'AGENTS.md)", premiere)
+    problems += [f"STATIC_LAMBDA_PERMIS : `{nom}` n'est plus un YAML du firmware — retirer l'entrée"
+                 for nom in sorted(set(STATIC_LAMBDA_PERMIS) - vus)]
+    return problems
+
+
+# Règle 11 (règle 4 d'AGENTS.md, partie vérifiable) : pas de copie de chaîne dans un
+# chemin chaud. Deux formes sûres à détecter :
+#  - dans un `on_value:` / `on_change:` YAML (capteur, curseur : appelé à chaque valeur),
+#    ni `std::string` par valeur ni `to_string()` ; `const std::string &` reste permis ;
+#  - aucune fonction déclarée dans un en-tête de Tab5/ ne prend un `std::string` par
+#    valeur (copie à chaque appel) : `const std::string&`, ou `const char*` + longueur.
+# Non vérifié : un appel fréquent hors de ces blocs (script appelé par un interval…),
+# laissé à la relecture.
+RE_HOT_KEY = re.compile(r"^(\s*)(?:-\s+)?(on_value|on_change):")
+RE_STRING_COPIE = re.compile(r"\bto_string\s*\(|(?<!const )\bstd::string\b(?!\s*&)")
+RE_PARAM_STRING_VALEUR = re.compile(r"[(,]\s*(?:const\s+)?std::string\s+\w+\s*[,)=]")
+
+
+def chemins_chauds(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
+    """Règle 11 : ni copie de std::string dans un on_value/on_change, ni paramètre par valeur."""
+    problems: list[str] = []
+    for path in firmware_sources(tab5, entry):
+        if path.suffix == ".h":
+            for lineno, line in enumerate(_cpp_lines(path), 1):
+                if RE_PARAM_STRING_VALEUR.search(line):
+                    problems.append(f"{path.name}:{lineno} : `std::string` par valeur en paramètre — "
+                                    f"`const std::string&` (règle 4 d'AGENTS.md)")
+            continue
+        if path.suffix != ".yaml":
+            continue
+        lines = _yaml_lines(path)
+        for i, line in enumerate(lines):
+            m = RE_HOT_KEY.match(line)
+            if m is None:
+                continue
+            indent = len(m.group(1))
+            for j in range(i + 1, len(lines)):
+                s = lines[j]
+                if s.strip() and len(s) - len(s.lstrip()) <= indent:
+                    break
+                if RE_STRING_COPIE.search(s.split("//", 1)[0]):
+                    problems.append(f"{path.name}:{j + 1} : copie de chaîne dans un `{m.group(2)}:` "
+                                    f"(appelé à chaque valeur) — `const std::string&` ou buffer "
+                                    f"snprintf (règle 4 d'AGENTS.md)")
+    return problems
+
+
+# Règle 12 (CPP-4 / YML-11) : chaque fonction déclarée dans tab5_custom.h a un appelant
+# hors de son fichier : une lambda YAML (firmware, ou tablette virtuelle du rendu hors
+# tablette : tab5-rendu-host.yaml, Tab5/rendu/), ou une autre unité C++. Une fonction
+# appelée par son seul fichier n'a rien à faire dans l'en-tête public : `static` (ou
+# namespace anonyme) dans son unité, ou tab5_internal.h si une autre unité la veut.
+# Un gabarit `!include` qui appelle `${var}_suite(` (vue_btn.yaml : `${prefixe}_choisir_vue`)
+# compte pour chaque valeur passée à `var:` par ses includes (energie, historique).
+# Exceptions du 08/10/2026 : sans appelant hors de leur fichier. Ne pas en ajouter ; les
+# sortir de l'en-tête quand un lot touche déjà leur fichier (aucun déplacement forcé).
+# (Six autres, appelées seulement par une autre unité C++, passent la règle mais iraient
+# mieux dans tab5_internal.h : animate_crossfade_layers, update_central_forecast_page_ui,
+# moisture_slots_refresh, zone_tuile_absente, zones_pots_presents, central_planning_set_off.)
+PUBLIQUES_SANS_APPELANT = {
+    "update_meteo_icon",        # tab5_forecast.cpp : dessin d'une tuile météo
+    "clim_eco_actif",           # tab5_cards.cpp : état des boutons de la clim (lus aussi par tests/test_clim.py)
+    "clim_silence_actif",
+    "clim_oscillation_actif",
+    "clim_preset_actif",
+    "clim_recolorer",           # tab5_cards.cpp : couleurs de la clim après un changement
+    "solaire_present",          # tab5_zones.cpp : production solaire connue
+    "ecran_disponible",         # tab5_zones.cpp : écran disponible pour un appui long
+    "boutons_haut_apply_ui",    # tab5_zones.cpp : mini icônes des trois boutons du haut
+    "tuile_titre_appui",        # tab5_tuiles.cpp : appui sur le titre de la carte centrale
+}
+RE_CPP_DEF = re.compile(r"^[A-Za-z_][\w:<>,\s*&]*?[\s*&](\w+)\s*\([^;{}]*\)\s*(?:const\s*)?\{", re.M)
+RE_CPP_PROTO = re.compile(r"^[A-Za-z_][\w:<>,\s*&]*?[\s*&](\w+)\s*\([^;{}]*\)\s*(?:const\s*)?;", re.M)
+RE_GABARIT_APPEL = re.compile(r"\$\{(\w+)\}(\w*)\s*\(")
+
+
+def fonctions_publiques(header: Path) -> list[str]:
+    """Fonctions déclarées dans `header` hors struct/enum (espaces de noms compris)."""
+    text = strip_cpp_comments(header.read_text(encoding="utf-8"))
+    text = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
+    text = "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("#"))
+    noms: list[str] = []
+    pile: list[bool] = []  # True = espace de noms
+    stmt = ""
+    for ch in text:
+        if ch == "{":
+            pile.append(bool(re.search(r"\bnamespace\s+\w*\s*$", " ".join(stmt.split()))))
+            stmt = ""
+        elif ch == "}":
+            if pile:
+                pile.pop()
+            stmt = ""
+        elif ch == ";":
+            s = " ".join(stmt.split())
+            if all(pile) and not s.startswith(("using", "typedef", "extern ")):
+                m = re.match(r"^(?:inline\s+|static\s+|constexpr\s+)*[A-Za-z_][\w:<>,\s*&]*?[\s*&](\w+)\s*\(.*\)\s*(?:const)?$", s)
+                if m:
+                    noms.append(m.group(1))
+            stmt = ""
+        else:
+            stmt += ch
+    return noms
+
+
+def appelants_publics(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
+    """Règle 12 : chaque fonction de tab5_custom.h a un appelant hors de son fichier."""
+    header = tab5 / "tab5_custom.h"
+    if not header.is_file():
+        return [f"règle 12 : fichier introuvable : {header}"]
+    noms = fonctions_publiques(header)
+    if len(noms) < 100:
+        return [f"règle 12 : {len(noms)} fonctions lues dans tab5_custom.h, le motif ne les reconnaît plus"]
+    sources = firmware_sources(tab5, entry)
+    yamls = [p for p in sources if p.suffix == ".yaml"]
+    yamls += sorted((tab5 / "rendu").glob("*.yaml")) + [p for p in [tab5.parent / "tab5-rendu-host.yaml"] if p.is_file()]
+    texte_yaml = "\n".join(strip_yaml_comments(p.read_text(encoding="utf-8")) for p in yamls)
+    # Appels par gabarit : `${var}_suite(` → valeur_suite( pour chaque `var: valeur` passée.
+    for var, suite in set(RE_GABARIT_APPEL.findall(texte_yaml)):
+        for valeur in set(re.findall(rf"\b{var}:\s*[\"']?(\w+)", texte_yaml)):
+            texte_yaml += f"\n{valeur}{suite}("
+    cpp: dict[str, str] = {}
+    definis: dict[str, set[str]] = {}
+    for p in sources:
+        if p.suffix not in (".cpp", ".h") or p == header:
+            continue
+        t = strip_cpp_comments(p.read_text(encoding="utf-8"))
+        definis[p.name] = set(RE_CPP_DEF.findall(t))
+        # Les têtes de définition et les déclarations ne sont pas des appels.
+        cpp[p.name] = RE_CPP_PROTO.sub("", RE_CPP_DEF.sub("{", t))
+    problems: list[str] = []
+    for nom in sorted(set(noms)):
+        appel = re.compile(rf"(?<![\w.>]){re.escape(nom)}\s*\(")
+        if appel.search(texte_yaml):
+            appele = True
+        else:
+            appele = any(appel.search(t) for f, t in cpp.items() if nom not in definis[f])
+        if not appele and nom not in PUBLIQUES_SANS_APPELANT:
+            ou = ", ".join(sorted(f for f, d in definis.items() if nom in d)) or "?"
+            problems.append(f"tab5_custom.h : `{nom}()` ({ou}) n'est appelée ni par un YAML ni par une "
+                            f"autre unité — `static` dans son fichier, ou tab5_internal.h (CPP-4)")
+        elif appele and nom in PUBLIQUES_SANS_APPELANT:
+            problems.append(f"PUBLIQUES_SANS_APPELANT : `{nom}()` a maintenant un appelant — retirer l'exception")
+    problems += [f"PUBLIQUES_SANS_APPELANT : `{nom}()` n'est plus déclarée dans tab5_custom.h — retirer l'exception"
+                 for nom in sorted(PUBLIQUES_SANS_APPELANT - set(noms))]
+    return problems
+
+
+# Règle 13 (conventions du nouveau code, Tab5/README.md) : dans le C++ de Tab5/, `nullptr`
+# et jamais `NULL` ; hors jeux, un journal porte le tag `tab5.<module>` (`ESP_LOGW("tab5.clim",
+# …)`) et non « TAB5 », pour filtrer un module dans les journaux. Les jeux (et leurs moteurs)
+# gardent leur nom court (« chess », « lode »…), comme leurs pages.
+RE_NULL = re.compile(r"\bNULL\b")
+RE_ESP_LOG = re.compile(r"\bESP_LOG[EWIDVC]+\s*\(\s*(\"[^\"]*\"|\w+)")
+RE_TAG_CONST = re.compile(r"\b(?:const|constexpr)\s+char\s*(?:\*\s*(?:const\s+)?)?(\w+)\s*(?:\[\])?\s*=\s*\"([^\"]*)\"")
+RE_TAG_TAB5 = re.compile(r"^tab5\.[a-z0-9_]+$")
+RE_JEU_CPP = re.compile(r"(_game|_ai|_engine|^game_common|^trivia_questions)\.(cpp|h)$")
+# TODO après L5 (exception temporaire du 08/10/2026) : ces unités sont refaites par le lot
+# L5 en parallèle ; leurs tags « TAB5 » passeront à tab5.central / tab5.zones ensuite.
+TAGS_TAB5_TEMPORAIRES: dict[str, int] = {
+    "tab5_central.cpp": 2,
+    "tab5_zones.cpp": 5,
+}
+
+
+def conventions_cpp(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
+    """Règle 13 : `nullptr` partout, tag de journal `tab5.<module>` hors jeux."""
+    problems: list[str] = []
+    vus = set()
+    for path in firmware_sources(tab5, entry):
+        if path.suffix not in (".cpp", ".h"):
+            continue
+        lines = _cpp_lines(path)
+        texte = "\n".join(lines)
+        for lineno, line in enumerate(lines, 1):
+            if RE_NULL.search(re.sub(r'"(?:[^"\\]|\\.)*"', '""', line)):
+                problems.append(f"{path.name}:{lineno} : `NULL` — écrire `nullptr` (conventions, Tab5/README.md)")
+        if RE_JEU_CPP.search(path.name):
+            continue
+        vus.add(path.name)
+        tags = dict(RE_TAG_CONST.findall(texte))
+        hors: list[int] = []
+        for lineno, line in enumerate(lines, 1):
+            for m in RE_ESP_LOG.finditer(line):
+                arg = m.group(1)
+                tag = arg[1:-1] if arg.startswith('"') else tags.get(arg)
+                if tag is None or not RE_TAG_TAB5.match(tag):
+                    hors.append(lineno)
+        permis = TAGS_TAB5_TEMPORAIRES.get(path.name, 0)
+        if len(hors) > permis:
+            problems += [f"{path.name}:{n} : tag de journal hors `tab5.<module>` — "
+                         f"`ESP_LOGW(\"tab5.{path.stem.removeprefix('tab5_')}\", …)` (conventions, Tab5/README.md)"
+                         for n in hors]
+        elif len(hors) < permis:
+            problems.append(f"TAGS_TAB5_TEMPORAIRES : {path.name} n'a plus que {len(hors)} tag(s) hors "
+                            f"convention (plafond {permis}) — abaisser ou retirer l'entrée")
+    problems += [f"TAGS_TAB5_TEMPORAIRES : `{nom}` n'est plus une unité du firmware — retirer l'entrée"
+                 for nom in sorted(set(TAGS_TAB5_TEMPORAIRES) - vus)]
+    return problems
+
+
+# Règle 14 : accents des textes de l'écran (« French accents always », AGENTS.md). Les
+# textes vus sont ceux de tools/i18n_keys.py : littéraux de tr() / tr_ctx() / tr_fill() /
+# tr_noop() (C++ et lambdas, jeux compris) et textes posés par le YAML des écrans. Pas les
+# identifiants, les noms d'entités, les options lues par HA ni les clés de payload : ils ne
+# passent pas par tr(). Pour tr_ctx(), seul le texte compte (le contexte est un code).
+# Liste FERMÉE de mots courants, sans accent = toujours une faute en français (vérifiée
+# sans faux positif sur les 977 textes du 08/10/2026). Exclu exprès : « annule » (« Annule
+# le dernier coup » est juste), « a » seul (verbe avoir), « connecte » / « active »
+# (formes verbales justes). Un mot ajouté doit rester faux dans tous ses emplois.
+MOTS_SANS_ACCENT = (
+    "journees?", "redemarrages?", "redemarrer", "redemarree?s?", "reflexions?", "temperatures?",
+    "etes?", "previsions?", "precipitations?", "reglages?", "regler", "parametres?", "securite",
+    "electricite", "energies?", "deja", "equipements?", "ecrans?", "etats?", "arretee?s?",
+    "annulees?", "annules", "recue?s?", "fenetres?", "pieces?", "telecommandes?", "meteo",
+    "themes?", "systemes?", "categories?", "dernieres?", "premieres?", "deconnectee?s?",
+    "desactivee?s?", "cree", "creee?s?", "delais?", "durees?", "generale?s?", "numeros?",
+    "periodes?", "bientot", "controles?", "frequences?", "debut", "evenements?", "ecoute",
+    "reponses?", "precedente?s?", "details?", "mise a jour",
+)
+RE_SANS_ACCENT = re.compile(r"(?<!\w)(" + "|".join(MOTS_SANS_ACCENT) + r")(?!\w)", re.I)
+
+
+def _i18n_keys():
+    outils = str(REPO / "tools")
+    if outils not in sys.path:
+        sys.path.insert(0, outils)
+    import i18n_keys
+    return i18n_keys
+
+
+def textes_ecran(tab5: Path = TAB5, entry: Path = ENTRY) -> dict[str, list[str]]:
+    """Texte affiché → emplacements (tr*() et textes YAML des écrans)."""
+    k = _i18n_keys()
+    fichiers = [p for p in firmware_sources(tab5, entry)
+                if p.name not in ("tab5_i18n_data.h", "tab5_i18n.cpp", "tab5_i18n.h")]
+    textes: dict[str, list[str]] = {}
+    for source in (k.cles_tr(fichiers, tab5.parent), k.textes_yaml(fichiers, tab5.parent)):
+        for t, ou in source.items():
+            textes.setdefault(t, []).extend(ou)
+    return textes
+
+
+def accents_ecran(textes: dict[str, list[str]]) -> list[str]:
+    """Règle 14 : aucun mot courant écrit sans son accent dans un texte de l'écran."""
+    problems = []
+    for cle, ou in sorted(textes.items()):
+        texte = cle.split("|", 1)[1] if "|" in cle else cle
+        for m in RE_SANS_ACCENT.finditer(texte):
+            problems.append(f"{ou[0]} : « {m.group(1)} » sans accent dans {texte[:60]!r} "
+                            f"(accents toujours, AGENTS.md ; MOTS_SANS_ACCENT)")
+    return problems
+
+
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
     api_logic = tab5 / "tab5-api-logic.yaml"
@@ -703,6 +1103,14 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     # 8. couleurs de l'interface par la palette (thèmes)
     problems += palette_colors(tab5, entry)
 
+    # 9 à 14. garde-fous du lot L6 (audit du 07/10/2026)
+    problems += lvgl_yaml(tab5, entry)
+    problems += static_lambdas(tab5, entry)
+    problems += chemins_chauds(tab5, entry)
+    problems += appelants_publics(tab5, entry)
+    problems += conventions_cpp(tab5, entry)
+    problems += accents_ecran(textes_ecran(tab5, entry))
+
     return problems
 
 
@@ -718,6 +1126,10 @@ def main() -> int:
         "aucun global orphelin, aucune entité HA en dur, actions API décrites, "
         "glyphes de la date couverts, icônes MDI couvertes sans glyphe mort, "
         "couleurs de l'interface par la palette"
+        ", aucun nouvel appel LVGL ni `static` dans le YAML, pas de copie de chaîne dans un chemin chaud"
+        ", fonctions publiques appelées"
+        ", nullptr et tags tab5.<module>"
+        ", accents des textes de l'écran"
     )
     return 0
 
