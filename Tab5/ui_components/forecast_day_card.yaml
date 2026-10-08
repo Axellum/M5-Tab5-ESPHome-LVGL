@@ -1,0 +1,27 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4x par forecast_daily.yaml
+# (tuiles 0, 2, 3, 4 ; la tuile 1 garde son cadre écrit, pour le bouton du sens du volet).
+# Sorti le 08/10/2026 (audit, YML-3).
+# Vars : n (0-4), x (position), btn_w (bouton du corps, forecast_day_body.yaml),
+#        day_label et temp_w (onglets, forecast_day_title_tab.yaml / _temp_tab.yaml),
+#        gauche_id / gauche, droite_id / droite (ids et glyphes MDI des épaules),
+#        droite_masquee (épaule droite cachée au démarrage).
+# Les ids des épaules restent passés en clair (`icon_card_*`) : l'on_boot de
+# tab5-ha-hmi.yaml les range dans g_day_slots, et la règle 7 de
+# tools/check_tab5_code_rules.py les retrouve par ces vars (palette des tuiles).
+obj:
+  x: ${x}
+  y: ${meteo_cell_y}
+  width: ${meteo_cell_width}
+  height: ${meteo_cell_height}
+  styles: style_transparent
+  scrollbar_mode: "OFF"
+  overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
+  widgets:
+    # Corps sombre (recouvre les onglets)
+    - !include { file: forecast_day_body.yaml, vars: { n: "${n}", btn_w: "${btn_w}" } }
+    # Icônes latérales (épaules), de part et d'autre de l'onglet titre
+    - label: { id: "${gauche_id}", text: "${gauche}", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
+    - label: { id: "${droite_id}", text: "${droite}", hidden: "${droite_masquee}", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
+    # Onglet Titre + Onglet Température (#T164)
+    - !include { file: forecast_day_title_tab.yaml, vars: { idx: "${n}", day_label: "${day_label}" } }
+    - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "${n}", toggle_width: "${temp_w}" } }

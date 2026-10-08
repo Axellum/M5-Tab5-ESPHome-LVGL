@@ -18,8 +18,11 @@
 # vars : icon (glyphe MDI, présent dans mdi_font_32), icon_style (style de rôle
 #        style_text_*, tab5-styles.yaml : la couleur suit le thème),
 #        title, title_id (id LVGL du label titre — obligatoire même si jamais
-#        mis à jour, contrainte ESPHome), close_btn_id, close_lambda (corps C++
-#        une ligne, sans guillemets simples — substitué dans lambda: '...').
+#        mis à jour, contrainte ESPHome), close_btn_id, et pour fermer :
+#        popup_id (id du popup : animate_popup_close(id(popup_id)), le cas courant,
+#        08/10/2026, audit YML-15) OU close_lambda (corps C++ une ligne, sans
+#        guillemets simples — substitué dans lambda: '...'), quand la fermeture fait
+#        plus (sous-fenêtre, script, clim). close_lambda l'emporte s'il est donné.
 # NOTE : labels en style bloc (pas flow) car ${icon_style} non quotable en flow.
 # ═══════════════════════════════════════════════════════
 obj:
@@ -50,6 +53,6 @@ obj:
         height: 44
         styles: style_clim_btn
         on_short_click:
-          - lambda: '${close_lambda}'
+          - lambda: '${ close_lambda | default("animate_popup_close(id(" ~ (popup_id | default("")) ~ "));") }'
         widgets:
           - label: { text: "\U000F0156", align: CENTER, text_font: mdi_font_32 }

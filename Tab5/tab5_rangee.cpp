@@ -303,3 +303,24 @@ void rangee_recaler() {
 void rangee_rejouer_theme() {
     if (s_pret) repeindre();
 }
+
+// Ligne des plantes : une mise à jour d'un des 5 capteurs d'humidité (script
+// tab5_pots_maj, tab5-sensors-domotique.yaml). Le tri et le dessin restent dans
+// tab5_cards.cpp ; ici, ce que la lambda recopiée 5 fois faisait avant le 08/10/2026.
+bool pots_humidite_maj(const bool publies[5], const float vals[5], MoistureSlotUI slots[4],
+                       PotDetailUI cards[5]) {
+    // Zones (lot 5) : un capteur qui a publié quoi que ce soit (NaN compris,
+    // « unavailable ») existe dans HA — son pot reste ou revient à l'écran.
+    bool zones_changees = false;
+    for (int i = 0; i < 5; i++)
+        if (publies[i]) zones_changees |= zone_vue(static_cast<Zone>(static_cast<int>(Zone::POT_1) + i));
+    // Icône de chaque pot (capteur N), dans mdi_font_70 (moisture_sensors.yaml) ; les cartes
+    // du popup ont les mêmes (pots_popup.yaml).
+    const char* icones[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
+    float tri[5];
+    std::copy(vals, vals + 5, tri);
+    sort_and_update_moisture_slots(tri, icones, slots);
+    // Popup « Mes Plantes » : humidité + statut des 5 cartes FIXES (carte N = capteur N).
+    update_pots_popup_moisture_ui(vals, cards);
+    return zones_changees;
+}

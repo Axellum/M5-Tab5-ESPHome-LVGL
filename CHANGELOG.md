@@ -27,6 +27,23 @@ sujet.
   la roue sort de `tab5-tuiles.yaml` dans `tab5-roue.yaml` (script `tab5_roue_ui`, lancé par
   `tab5_tuiles_ui` au même moment qu'avant). Code déplacé tel quel ; tests repointés.
 
+### 2026-10-08 — YAML du firmware rangé (lot L8 de l'audit du 07/10)
+
+Rien ne doit changer à l'écran ni pour Home Assistant (mêmes entités, mêmes options, mêmes
+codes gardés en mémoire) : la configuration résolue ne diffère que par l'endroit où le code
+est écrit, deux identifiants ajoutés et l'ordre de deux widgets qui ne se chevauchent pas.
+- **Gabarits au lieu de copies** : tuiles journalières (`forecast_day_card.yaml`,
+  `forecast_day_body.yaml`), cartes du mode HA (`switch_card.yaml`), boutons du haut
+  (`bouton_haut.yaml`), boutons des panneaux centraux (`central_bouton.yaml`) ; un seul bouton à
+  pas pour le réveil et les Réglages (`bouton_pas.yaml`, à la place de deux) ; le chrome des
+  popups se ferme par `popup_id` au lieu d'une lambda écrite deux fois.
+- **Navigation à part** : `Tab5/tab5-navigation.yaml` réunit le registre des fenêtres,
+  `tab5_ecran_ouvrir`, « Aller à l'écran » et « Écran courant ». Le registre donne aussi
+  l'ouverture de chaque écran : le `switch` qui recopiait la liste des écrans disparaît.
+- **Logique en C++** : humidité des plantes (`pots_humidite_maj()`, un script au lieu de cinq
+  copies), tap-to-wake et cadence de l'IMU (plus de `static` dans une lambda), retour
+  automatique à l'accueil (`retour_auto_tick()`).
+
 ### 2026-10-08 — Tests et CI de l'audit du 07/10 (lot L9)
 
 - **Les vrais moteurs d'échecs et de dames sont testés en CI**, sous ASan + UBSan, par le job

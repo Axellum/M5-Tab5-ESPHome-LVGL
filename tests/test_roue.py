@@ -386,9 +386,12 @@ def test_toucher_deplie_replie_ferme():
 
 def test_sous_fenetre_et_fermetures():
     scripts = _lire("Tab5", "tab5-scripts.yaml")
-    ligne = re.search(r"ModalRegistry::add\(id\(roue_actions\),\s*nullptr,\s*ModalRegistry::SUBWINDOW\);", scripts)
+    ligne = re.search(r"ModalRegistry::add\(id\(roue_actions\),\s*nullptr,\s*ModalRegistry::SUBWINDOW\);",
+                      _lire("Tab5", "tab5-navigation.yaml"))
     assert ligne, "la roue est une sous-fenêtre du registre (ADR-0013)"
-    assert "if (idle >= UIIdle::POPUP_MS && roue_actions_ouverte()) roue_actions_fermer();" in scripts
+    assert "if (idle >= UIIdle::POPUP_MS && roue_actions_ouverte()) roue_actions_fermer();" in _fonction(
+        _lire("Tab5", "tab5_anim.cpp"), "retour_auto_tick")
+    assert "retour_auto_tick(" in scripts
     assert "roue_actions_fermer();" in _fonction(_lire("Tab5", "tab5_anim.cpp"), "animate_popup_open")
     assert "roue_actions_fermer();" in _fonction(_tuiles(), "tuiles_definir")
     hardware = _lire("Tab5", "tab5-hardware.yaml")
@@ -398,8 +401,12 @@ def test_sous_fenetre_et_fermetures():
     # Console système (sans animate_popup_open) et retour automatique à la page météo.
     console = scripts.split("- id: tab5_console_ouvrir", 1)[1].split("- id:", 1)[0]
     assert "roue_actions_fermer();" in console
-    retour = scripts.split("if (idle < UIIdle::FORECAST_MS) return;", 1)[1]
-    assert retour.index("roue_actions_fermer();") < retour.index("reset_forecast_to_main_page(")
+    # retour_auto_tick() (tab5_anim.cpp) ferme la roue avant de rendre PREVISIONS, que
+    # l'interval de tab5-scripts.yaml traduit en reset_forecast_to_main_page().
+    retour = _fonction(_lire("Tab5", "tab5_anim.cpp"), "retour_auto_tick")
+    retour = retour.split("if (idle < UIIdle::FORECAST_MS) return RetourAuto::RIEN;", 1)[1]
+    assert retour.index("roue_actions_fermer();") < retour.index("return RetourAuto::PREVISIONS;")
+    assert "reset_forecast_to_main_page(" in scripts.split("case RetourAuto::PREVISIONS:", 1)[1]
 
 
 def test_un_etat_pousse_repeint_la_roue():

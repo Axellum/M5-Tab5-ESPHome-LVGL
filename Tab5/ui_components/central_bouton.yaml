@@ -1,0 +1,18 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x : le bouton invisible d'un
+# panneau de la carte centrale (alertes Météo-France, pluie, planning, info ; et les 4
+# alertes HA par ha_alert_panel.yaml). Sorti le 08/10/2026 (audit, YML-4).
+# Vars : id (id du bouton), appui (actions du tap, liste d'actions ESPHome passée telle
+#        quelle : panneau suivant, acquittement…).
+# [AI-WARNING] Le bouton n'est pas décoratif : posé EN DERNIER dans le wrapper SIZE_CONTENT
+# de son panneau, ${central_w} × 80, c'est lui qui reçoit l'appui, et c'est cette structure
+# qui laisse le swipe paginer (voir l'avertissement de page_title_wrapper, tab5-lvgl.yaml).
+# Appui long : l'historique des alertes (popup « Alertes », lot 4 du plan des alertes).
+button:
+  id: "${id}"
+  align: CENTER
+  width: ${central_w}
+  height: 80
+  styles: style_invisible
+  on_short_click: ${appui}
+  on_long_press:
+    - script.execute: tab5_alertes_ouvrir

@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29**, liste des tests et des workflows complétée le 2026-10-08 (70 composants UI dont 35 inclus par `tab5-lvgl.yaml`, 23 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29**, liste des tests et des workflows complétée le 2026-10-08 (74 composants UI dont 37 inclus par `tab5-lvgl.yaml`, 23 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 
@@ -31,13 +31,14 @@
 | `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (23 services ; `tab5_maj_pluie_1h_bulk` a remplacé `tab5_maj_pluie_1h` le 08/09/2026). |
 | `tab5-styles.yaml` | `Tab5/` | Styles de verre partagés par les thèmes : couleurs des jeux (`color:`), déclarations `font:`, `lvgl: style_definitions:` (lisent la palette `UIColor`, ADR-0029). |
 | `tab5-globals.yaml` | `Tab5/` | État partagé (`globals:`) + rotateur carte centrale (interval 8s). |
-| `tab5-scripts.yaml` | `Tab5/` | Scripts transverses : registre des modales, volume, debounces, rotateur, volet, popup lumière, retour à l'accueil. |
+| `tab5-scripts.yaml` | `Tab5/` | Scripts transverses : console système, volume, debounces, rotateur, volet, popup lumière, retour à l'accueil. |
 | `tab5-arcade.yaml` | `Tab5/` | Scripts des jeux : fermeture globale, ouverture des 8 consoles, page arcade (lot 8c). |
 | `tab5-calendar.yaml` | `Tab5/` | Scripts du popup calendrier (lot 8c). |
 | `tab5-assist.yaml` | `Tab5/` | Assistant vocal : mots de réveil, pipeline, image de la réponse, scripts vocaux et popup Assistant (lot 8c). |
 | `tab5-lvgl.yaml` | `Tab5/` | Layout complet : page unique 1280×720, swipe prévisions, console, popups. |
 | `tab5-imu.yaml` | `Tab5/` | BMI270 IMU : `motion:`, poll adaptatif 10/30Hz, tap-to-wake. |
-| `tab5-ha-controls.yaml` | `Tab5/` | Number volume, text_sensor écran courant, select aller-à, button recharger calendrier. |
+| `tab5-navigation.yaml` | `Tab5/` | Navigation : registre des modales, `tab5_ecran_ouvrir`, select aller-à, text_sensor écran courant (08/10/2026). |
+| `tab5-ha-controls.yaml` | `Tab5/` | Number volume, select langue, interrupteurs et extinction auto des Réglages, button recharger calendrier. |
 | `tab5-alarm.yaml` | `Tab5/` | Réveil : rtttl, ~20 entités HA, machine d'état sonnerie, tick 1s. |
 | `publication-*.yaml` | `Tab5/` | Publication (lot 6c, ADR-0022), choisie par `tab5_publication` : `locale` (défaut, vide), `stable` / `beta` (CI de publication) → `publication-commune.yaml` : OTA `http_request` + entité de mise à jour « Firmware » sur le manifeste de GitHub Pages. |
 
@@ -49,9 +50,9 @@
 |---|---|---|
 | `climate_card.yaml` | `Tab5/ui_components/` | Carte clim compacte. |
 | `climate_popup.yaml` | `Tab5/ui_components/` | Popup clim plein écran. |
-| `forecast_daily.yaml` | `Tab5/ui_components/` | 5 cartes prévisions journalières. |
+| `forecast_daily.yaml` | `Tab5/ui_components/` | 5 cartes prévisions journalières (gabarits `forecast_day_card.yaml`, `forecast_day_body.yaml`). |
 | `forecast_hourly.yaml` | `Tab5/ui_components/` | 5 cartes prévisions horaires. |
-| `switches_card.yaml` | `Tab5/ui_components/` | Cartes switches (PC, volet, lumières). |
+| `switches_card.yaml` | `Tab5/ui_components/` | Les 5 cartes du mode HA (gabarit `switch_card.yaml`). |
 | `console_sys.yaml` | `Tab5/ui_components/` | Console Système en 4 cartes. |
 | `reglages_popup.yaml` | `Tab5/ui_components/` | Popup Réglages : écran et apparence. |
 | `light_popup.yaml` | `Tab5/ui_components/` | Popup contrôle lumière. |

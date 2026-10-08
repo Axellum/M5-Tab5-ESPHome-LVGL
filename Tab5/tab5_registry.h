@@ -14,11 +14,13 @@
  *     Ajouter une 9ᵉ console = UNE ligne dans `kGames`.
  *   - MODALES : les `lv_obj_t*` ne sont accessibles que par `id()` dans une
  *     lambda YAML. La liste est donc remplie UNE fois par le script
- *     `tab5_modal_registry_init` (tab5-scripts.yaml), idempotent, que chaque
+ *     `tab5_modal_registry_init` (tab5-navigation.yaml), idempotent, que chaque
  *     consommateur appelle avant de lire le registre. Ajouter un 10ᵉ popup =
  *     UNE ligne `ModalRegistry::add(...)` dans ce script (+ son option dans le
  *     select « Aller à l'écran » si on veut l'ouvrir depuis HA : `find()` la
- *     retrouve par son nom, donc les deux libellés doivent être identiques).
+ *     retrouve par son nom, donc les deux libellés doivent être identiques ;
+ *     et son script d'ouverture en 4e argument s'il en a un, que `ouvrir()`
+ *     lance pour tab5_ecran_ouvrir).
  *   - L'écran de SONNERIE (`alarm_ring_layer`) est enregistré en `LAYER` : il
  *     est NOMMÉ (HA doit savoir que la tablette sonne) mais JAMAIS refermé par
  *     `close_all()` — seuls tab5_alarm_stop / _snooze_now le referment.
@@ -86,9 +88,19 @@ constexpr int MAX = 24;  // 22 inscrites au 08/10/2026 (liste de la tuile − / 
 // true dès que tab5_modal_registry_init a rempli la table.
 bool ready();
 
+// Ouverture d'un écran quand elle est plus qu'animate_popup_open() de la fenêtre :
+// son script d'ouverture (une lambda sans capture du registre suffit).
+using Ouvreur = void (*)();
+
 // Enregistre une fenêtre. L'ORDRE d'appel est l'ordre de priorité de
-// visible_name() : enregistrer d'abord ce qui recouvre le reste.
-void add(lv_obj_t* obj, const char* name, Kind kind);
+// visible_name() : enregistrer d'abord ce qui recouvre le reste. `ouvreur`
+// (08/10/2026) : ce que lance ouvrir() pour cette fenêtre, nullptr par défaut.
+void add(lv_obj_t* obj, const char* name, Kind kind, Ouvreur ouvreur = nullptr);
+
+// Lance l'ouvreur enregistré pour cette fenêtre (tab5_ecran_ouvrir,
+// tab5-navigation.yaml). false si elle n'en a pas : à l'appelant de l'ouvrir
+// par animate_popup_open().
+bool ouvrir(lv_obj_t* obj);
 
 // Libellé de la première fenêtre nommée visible (POPUP ou LAYER), nullptr si
 // rien ne couvre le dashboard.
