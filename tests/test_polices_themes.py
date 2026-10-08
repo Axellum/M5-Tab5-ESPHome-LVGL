@@ -229,6 +229,8 @@ def test_empreinte_des_polices_figees():
 
 
 def test_chaque_police_figee_sert_et_garde_sa_licence():
+    from urllib.parse import urlparse
+
     from fontTools.ttLib import TTFont
     utilises = {Path(f).name for f in _fichiers_police()}
     licence = (FONTS / "OFL.txt").read_text(encoding="utf-8")
@@ -236,6 +238,7 @@ def test_chaque_police_figee_sert_et_garde_sa_licence():
     for ttf in sorted(FONTS.glob("*.ttf")):
         assert ttf.name in utilises, f"{ttf.name} : compilé nulle part (poids mort dans le dépôt)"
         nom = TTFont(ttf)["name"]
-        url = nom.getDebugName(14) or ""
-        assert "scripts.sil.org/OFL" in url or "openfontlicense.org" in url, f"{ttf.name} : licence {url!r}"
+        url = urlparse(nom.getDebugName(14) or "")
+        assert (url.hostname, url.path.rstrip("/")) in {("scripts.sil.org", "/OFL"), ("openfontlicense.org", "")}, \
+            f"{ttf.name} : licence {url.geturl()!r} (SIL OFL attendue)"
         assert nom.getDebugName(0).strip() in licence, f"{ttf.name} : copyright absent de Tab5/fonts/OFL.txt"
