@@ -47,6 +47,10 @@ PAUSE = 0.01         # secondes entre deux appels (la boucle ESPHome doit suivre
 TAILLE_MAX = 6000    # au-delà, l'API coupe la connexion : ce n'est plus la lecture qu'on teste
 
 # Graines valides : exemples du contrat (Tab5/tab5-api-logic.yaml) et de tools/demo/.
+# Une par service déclaré, ni plus ni moins (tests/test_sanitizers.py le vérifie : un
+# service sans graine ne serait jamais fuzzé, sans erreur). Tuiles et emplacements
+# portent aussi la rangée sous l'horloge (hp, hd, hLI, ADR-0031) et la tuile − / +
+# (rN, ADR-0033), dont les lecteurs ont leur propre découpage.
 GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_previsions_heures_bulk": {"payload": "0|14:00|sunny|21.4|0;1|15:00|cloudy|20.8|0.2;2|16:00|rainy|19.1|1.5;"},
     "tab5_maj_previsions_jours_bulk": {"payload": "0|Auj 17|sunny|12.1|24.3|0|0|0|;1|Ven 18|rainy|11.0|19.8|1|0|0|08:00-16:00;"},
@@ -70,8 +74,14 @@ GRAINES: dict[str, dict[str, str]] = {
     },
     "tab5_maj_calendrier_jour": {"date": "2026-09-17", "payload": "travail|08:00-16:00;rdv|Dentiste 14:30"},
     "tab5_maj_zones": {"absentes": "clim,pot_4,pot_5"},
-    "tab5_maj_emplacements": {"payload": "lumiere_1|on|180;salon|21.4|21.4;t02|on|128|FFB347;t01|open|45|;climr|16|30|0.5|°C|7|Salon;appuis|auto|rien|arcade;"},
-    "tab5_maj_tuiles": {"payload": "p0|Salon;t00|lum|lampadaire|d||Lampadaire;t01|vol||||Volet;t02|cap|thermometre||°C|Température;"},
+    "tab5_maj_emplacements": {"payload": "lumiere_1|on|180;salon|21.4|21.4;t02|on|128|FFB347;t01|open|45|;climr|16|30|0.5|°C|7|Salon;appuis|auto|rien|arcade;"
+                                         "h00|21.4|21.4|;h01|on|180|FFB347;r0|on|35;r1|on|128;"},
+    "tab5_maj_tuiles": {"payload": "p0|Salon;t00|lum|lampadaire|d||Lampadaire;t01|vol||||Volet;t02|cap|thermometre||°C|Température;"
+                                   "hp|0;hd|32;h00|cap|thermometre||°C|Salon|temperature;h01|lum|lampadaire|d||Lampadaire|;"
+                                   "r0|son||||0|100|5|%|Volume;r1|lum|lampadaire|d|t00|0|255|25||Lampadaire;"},
+    "tab5_maj_energie": {"payload": "3450|1180|-2270|78|0|24.5|°C|12.4"},
+    "tab5_maj_energie_historique": {"vue": "heures", "debut": "2026-06-16",
+                                    "valeurs": "0;0;0;0;0;0;0.05;0.4;1.1;1.9;2.6;3;3.1;;;;;;;;;;;"},
     "tab5_maj_historique": {"cle": "serre", "vue": "jour", "entete": "Serre|2026-06-15T07:00|60|1485|18.2|0",
                             "mesures": "17.1,16.8,17.5;16.9,16.6,17.2;;16.5,16.2,16.8",
                             "previsions": "1500,19.4;1560,20.8;1620,22.1"},
