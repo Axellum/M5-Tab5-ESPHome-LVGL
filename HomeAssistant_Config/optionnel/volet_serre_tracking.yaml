@@ -17,8 +17,11 @@
 #
 # @architecture_constraint Le moteur ne renvoie NI position NI fin de course. On
 #       maintient donc l'etat cote HA : un input_boolean « en mouvement » arme
-#       pendant la duree de course mesuree (26 s ici — a chronometrer chez vous),
-#       et un input_text qui porte le libelle affiche sur l'ecran.
+#       pendant la duree de course mesuree (reglage « Tab5 · course du volet »,
+#       26 s par defaut — a chronometrer chez vous), et un input_text qui porte le
+#       libelle affiche sur l'ecran. Un seul script tient ce chrono,
+#       `tab5_volet_course` (audit du 07/10/2026, HA-4 : il etait recopie dans le
+#       script de la tablette et dans le suivi des commandes directes).
 #       C'est cet input_text que l'automation push envoie au firmware via
 #       `esphome.<device>_tab5_maj_volet_etat` (variable `etat_physique`), ce qui
 #       arme aussi le wake word local « Stop » cote Tab5.
@@ -31,8 +34,9 @@
 #
 # @ai_instruction Le volet se choisit dans HA (liste « Tab5 · volet a course
 #       simulee », rien a ecrire ici). Sans choix, le script ne commande rien. La
-#       duree 26 s (`delay`) est la course complete mesuree : trop courte, l'ecran
-#       repasse a l'arret avant la fin ; trop longue, il reste bloque sur
+#       duree de course se regle dans HA aussi (« Tab5 · course du volet », en
+#       secondes, 26 par defaut) : c'est la course complete mesuree. Trop courte,
+#       l'ecran repasse a l'arret avant la fin ; trop longue, il reste bloque sur
 #       « Mouvement ».
 # ============================================================================
 
@@ -48,6 +52,18 @@ template:
         event_type: entity_registry_updated
       - trigger: state
         entity_id: input_text.tab5_choix_volet
+    # Audit du 07/10/2026, HA-18 : pas pour une mise à jour du registre qui ne touche que
+    # capabilities / supported_features / options / suggested_object_id (419 des 485
+    # entity_registry_updated chez l'auteur du 01 au 08/10/2026), que la liste ne lit
+    # pas. Une création, une suppression, un renommage, un nom ou une classe passent.
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ trigger.platform != 'event' or trigger.event.event_type != 'entity_registry_updated'
+             or trigger.event.data.action != 'update'
+             or (trigger.event.data.changes | default({}, true)).keys()
+                | reject('in', ['capabilities', 'supported_features', 'options', 'suggested_object_id'])
+                | list | count > 0 }}
     variables:
       volets: "{{ states.cover | map(attribute='entity_id') | list }}"
     select:
@@ -67,6 +83,26 @@ template:
               entity_id: input_text.tab5_choix_volet
             data:
               value: "{{ option }}"
+  # Réglage « Tab5 · course du volet » (audit du 07/10/2026, HA-4) : la durée de la
+  # course complète, en secondes, lue par script.tab5_volet_course. Gardée dans
+  # input_text.tab5_memoire_course_volet ; vide (première installation) = 26 s, la
+  # valeur écrite en dur jusque-là.
+  - number:
+      - name: "Tab5 · course du volet · shutter travel time"
+        unique_id: tab5_course_du_volet
+        default_entity_id: number.tab5_course_du_volet
+        icon: mdi:timer-outline
+        unit_of_measurement: s
+        min: 5
+        max: 300
+        step: 1
+        state: "{{ states('input_text.tab5_memoire_course_volet') | int(26) }}"
+        set_value:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_memoire_course_volet
+            data:
+              value: "{{ value | int }}"
 
 input_boolean:
   volet_serre_mouvement:
@@ -83,10 +119,16 @@ input_text:
     name: "Tab5 · mémoire · volet à course simulée"
     icon: mdi:content-save-outline
     max: 255
+  # Mémoire du réglage « Tab5 · course du volet » : écrite par le réglage. Sans
+  # `initial` (il écraserait le réglage à chaque démarrage).
+  tab5_memoire_course_volet:
+    name: "Tab5 · mémoire · course du volet"
+    icon: mdi:content-save-outline
+    max: 8
 
 script:
   tab5_volet_action:
-    alias: "Action Volet Serre depuis Tab5"
+    alias: "Tab5 — volet : commande depuis la tablette"
     # restart : un nouvel appui pendant la course annule le chrono precedent.
     mode: restart
     fields:
@@ -104,15 +146,37 @@ script:
       # Aucun volet choisi : rien à commander (une cible vide lèverait une erreur).
       - condition: template
         value_template: "{{ volet != '' }}"
+      - condition: template
+        value_template: "{{ action in ['open', 'close', 'stop'] }}"
+      - action: "cover.{{ action }}_cover"
+        target:
+          entity_id: "{{ volet }}"
+      # Appel bloquant : ce script reste « on » pendant la course, ce qui fait ignorer
+      # sa propre commande à volet_serre_track_direct_cover (condition plus bas).
+      - action: script.tab5_volet_course
+        data:
+          action: "{{ action }}"
+
+  # Course simulée : les deux helpers, pour la tablette comme pour une commande venue
+  # d'ailleurs (un seul chrono : restart, une commande pendant la course annule le
+  # précédent). Ne commande pas le volet.
+  tab5_volet_course:
+    alias: "Tab5 — volet : course simulée"
+    mode: restart
+    fields:
+      action:
+        description: "open | close | stop"
+        example: "open"
+        selector:
+          select:
+            options: ["open", "close", "stop"]
+    sequence:
       - choose:
           # ---- STOP : arret immediat, position intermediaire inconnue ----
           - conditions:
               - condition: template
                 value_template: "{{ action == 'stop' }}"
             sequence:
-              - action: cover.stop_cover
-                target:
-                  entity_id: "{{ volet }}"
               - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.volet_serre_mouvement
@@ -121,14 +185,11 @@ script:
                   entity_id: input_text.volet_serre_etat
                 data:
                   value: "Partiel"
-          # ---- OPEN : on arme le chrono de course ----
+          # ---- OPEN / CLOSE : on arme le chrono de course ----
           - conditions:
               - condition: template
-                value_template: "{{ action == 'open' }}"
+                value_template: "{{ action in ['open', 'close'] }}"
             sequence:
-              - action: cover.open_cover
-                target:
-                  entity_id: "{{ volet }}"
               - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.volet_serre_mouvement
@@ -137,9 +198,9 @@ script:
                   entity_id: input_text.volet_serre_etat
                 data:
                   value: "En_mouvement"
-              # Course complete mesuree (26 s) — a adapter a votre volet.
+              # Course complète mesurée : réglage « Tab5 · course du volet » (26 s par défaut).
               - delay:
-                  seconds: 26
+                  seconds: "{{ states('number.tab5_course_du_volet') | int(26) }}"
               - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.volet_serre_mouvement
@@ -147,52 +208,25 @@ script:
                 target:
                   entity_id: input_text.volet_serre_etat
                 data:
-                  value: "Ouvert"
-          # ---- CLOSE : idem ----
-          - conditions:
-              - condition: template
-                value_template: "{{ action == 'close' }}"
-            sequence:
-              - action: cover.close_cover
-                target:
-                  entity_id: "{{ volet }}"
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.volet_serre_mouvement
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.volet_serre_etat
-                data:
-                  value: "En_mouvement"
-              # Course complete mesuree (26 s) — a adapter a votre volet.
-              - delay:
-                  seconds: 26
-              - action: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.volet_serre_mouvement
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.volet_serre_etat
-                data:
-                  value: "Ferme"
+                  value: "{{ 'Ouvert' if action == 'open' else 'Ferme' }}"
 
 automation:
   # Pousse l'etat du volet vers l'ecran a chaque changement des helpers
   # (script `tab5_push_volet`, packages/tab5_push.yaml).
   - id: tab5_volet_updater
-    alias: "Sync Tab5 Volet Serre"
+    alias: "Tab5 — volet : état vers l'écran"
     mode: queued
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: input_text.volet_serre_etat
-      - platform: state
+      - trigger: state
         entity_id: input_boolean.volet_serre_mouvement
       # Volet choisi dans la liste : l'écran prend tout de suite l'état tenu ici (le
       # blueprint ne confie ce volet au package qu'une fois nommé dans la liste).
-      - platform: state
+      - trigger: state
         entity_id: select.tab5_volet_a_course_simulee
         to: ~
-    action:
+    actions:
       - action: script.tab5_push_volet
 
   # Commandes `cover.*` venues d'ailleurs (interface HA, autre integration,
@@ -200,7 +234,7 @@ automation:
   # `tab5_volet_action`, pour que l'ecran suive. Ignore ses propres appels
   # (script `tab5_volet_action` en cours).
   - id: volet_serre_track_direct_cover
-    alias: "Volet serre — suivi écran si cover direct"
+    alias: "Tab5 — volet : suivi des commandes directes"
     description: "Appels cover.open/close/stop hors script Tab5 (UI HA, intégrations) → helpers + sync Tab5"
     mode: restart
     triggers:
@@ -221,69 +255,11 @@ automation:
         entity_id: script.tab5_volet_action
         state: "off"
     actions:
-      - choose:
-          # ---- stop_cover ----
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.service == 'stop_cover' }}"
-            sequence:
-              - action: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.volet_serre_mouvement
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.volet_serre_etat
-                data:
-                  value: "Partiel"
-          # ---- open_cover ----
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.service == 'open_cover' }}"
-            sequence:
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.volet_serre_mouvement
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.volet_serre_etat
-                data:
-                  value: "En_mouvement"
-              # Course complete mesuree (26 s) — a adapter a votre volet.
-              - delay:
-                  seconds: 26
-              - action: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.volet_serre_mouvement
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.volet_serre_etat
-                data:
-                  value: "Ouvert"
-          # ---- close_cover ----
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.service == 'close_cover' }}"
-            sequence:
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.volet_serre_mouvement
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.volet_serre_etat
-                data:
-                  value: "En_mouvement"
-              # Course complete mesuree (26 s) — a adapter a votre volet.
-              - delay:
-                  seconds: 26
-              - action: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.volet_serre_mouvement
-              - action: input_text.set_value
-                target:
-                  entity_id: input_text.volet_serre_etat
-                data:
-                  value: "Ferme"
+      - action: script.tab5_volet_course
+        data:
+          action: "{{ trigger.event.data.service | replace('_cover', '') }}"
 
 # Vos automatisations lever/coucher de soleil peuvent appeler `cover.*`
-# directement : l'automation ci-dessus met l'ecran a jour. Passer par
-# `script.tab5_volet_action` reste preferable (un seul chrono de course).
+# directement : l'automation ci-dessus met l'ecran a jour (meme chrono,
+# `script.tab5_volet_course`). Passer par `script.tab5_volet_action` reste
+# preferable.

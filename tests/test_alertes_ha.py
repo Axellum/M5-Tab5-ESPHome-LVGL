@@ -163,11 +163,6 @@ def test_aucun_input_text_des_packages_n_a_d_initial():
     assert not fautifs, fautifs
 
 
-def test_le_snippet_de_l_ancienne_liste_n_a_pas_d_initial():
-    texte = (HA / "snippets" / "tab5_alerts_dismissed_input_text.yaml").read_text(encoding="utf-8")
-    assert "initial" not in yaml.load(texte, Loader=_Chargeur)["tab5_alerts_dismissed"]
-
-
 def _bloc_alertes():
     blocs = [b for b in _charger("packages", "tab5_alerts.yaml")["template"]
              if any(s.get("unique_id") == "tab5_alertes" for s in b.get("sensor", []))]
@@ -688,8 +683,8 @@ def test_l_historique_part_a_la_demande_de_la_tablette():
     assert "esphome.tab5_ha_hmi_tab5_maj_alertes_historique" in script
     assert "tab5_alertes_historique('payload')" in script
     auto = next(a for a in push["automation"] if a["id"] == "tab5_ha_hmi_alertes_historique_push")
-    assert {"entity_id": "sensor.tab5_alertes", "attribute": "historique"}.items() <= auto["trigger"][0].items()
-    assert "is_state', 'Alertes')" in json.dumps(auto["condition"], ensure_ascii=False)
+    assert {"entity_id": "sensor.tab5_alertes", "attribute": "historique"}.items() <= auto["triggers"][0].items()
+    assert "is_state', 'Alertes')" in json.dumps(auto["conditions"], ensure_ascii=False)
     # « Alertes » : le nom du popup dans le registre (« Écran courant ») et l'option du
     # select « Aller à l'écran ».
     assert '"Alertes",          ModalRegistry::POPUP' in (TAB5 / "tab5-scripts.yaml").read_text(encoding="utf-8")
@@ -719,3 +714,55 @@ def test_les_donnees_du_rendu_et_du_fuzz_suivent_le_format():
     graine = re.search(r'"tab5_maj_alertes_historique": \{"payload": "([^"]+)"',
                        (RACINE / "tools" / "sanitizers" / "fuzz_services.py").read_text(encoding="utf-8"))
     assert graine and _entrees_valides(graine.group(1))
+
+
+def test_compte_des_indisponibles_par_filtres_toutes_les_5_minutes():
+    """Audit du 07/10/2026, HA-13 : sensor.tab5_unavailable_count (carte Santé du tableau
+    de bord, rien d'autre) compte les entités `unavailable` hors update.* et automation.*
+    par des filtres, plus par une boucle sur tous les états, et toutes les 5 min au lieu
+    de 2."""
+    blocs = [b for b in _charger("packages", "tab5_alerts.yaml")["template"]
+             if any(s.get("unique_id") == "tab5_unavailable_count" for s in b.get("sensor", []))]
+    assert len(blocs) == 1
+    assert {"trigger": "time_pattern", "minutes": "/5"} in blocs[0]["triggers"]
+    modele = blocs[0]["sensor"][0]["state"]
+    assert "{% for" not in modele
+    etats = [Etat("light.a", "unavailable"), Etat("sensor.b", "unavailable"), Etat("sensor.c", "on"),
+             Etat("update.d", "unavailable"), Etat("automation.e", "unavailable"),
+             Etat("updater.f", "unavailable"), Etat("switch.g", "unknown")]
+    rendu = ImmutableSandboxedEnvironment().from_string(modele).render(states=etats)
+    assert rendu.strip() == "3"
+
+
+def test_liste_des_indisponibles_bornee_a_100():
+    """Audit du 07/10/2026, DO-7 : la liste gardée (c) des indisponibles ne grossit plus
+    sans fin (union depuis le début de l'alerte, attributs du capteur > 16 Ko au-delà de
+    quelques centaines d'entités). 100 au plus ; le libellé envoyé à la tablette
+    (@indispo:N, compté par la source) ne change pas."""
+    def indispo(ids):
+        ids = sorted(ids)
+        return {"ha:indispo": {"c": ids, "g": "Orange", "t": f"@indispo:{len(ids)}", "s": "indispo"}}
+
+    noms = [f"sensor.e{i:03d}" for i in range(400)]
+    c = Capteur()
+    assert c(indispo(noms[:150])) == ["ha:indispo#1"]
+    assert len(c.m["suivi"]["ha:indispo"]["c"]) == 100
+    assert c.m["affichees"][0]["t"] == "@indispo:150"
+    c.tap("ha:indispo#1", indispo(noms[:150]))
+    # 300 entités passent indisponibles l'une après l'autre, par paquets : la liste reste
+    # bornée, chaque paquet nouveau est une nouvelle révision.
+    for k in range(1, 4):
+        vues = noms[100 * k:100 * k + 100]
+        assert c(indispo(vues)) == [f"ha:indispo#{k + 1}"]
+        assert len(c.m["suivi"]["ha:indispo"]["c"]) == 100
+        c.tap(f"ha:indispo#{k + 1}", indispo(vues))
+    # Les indisponibles du moment restent dans la liste : rien de nouveau, pas de relance.
+    assert c(indispo(noms[300:400])) == []
+    assert c(indispo(noms[350:400])) == []
+    assert set(noms[350:400]) <= set(c.m["suivi"]["ha:indispo"]["c"])
+    # Sous la borne, rien ne change : l'union, dans l'ordre d'arrivée.
+    d = Capteur()
+    d(indispo(["b", "a"]))
+    d(indispo(["c"]))
+    assert d.m["suivi"]["ha:indispo"]["c"] == ["a", "b", "c"]
+

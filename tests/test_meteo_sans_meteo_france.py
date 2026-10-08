@@ -89,6 +89,9 @@ class Etat:
         self.entity_id = entity_id
         self.state = state
         self.attributes = attributes
+        # Dernière relève (custom_templates/tab5_meteo.jinja : une source sans relève
+        # depuis 2 h est périmée) : récente par défaut.
+        self.last_reported = MAINTENANT - dt.timedelta(minutes=5)
 
 
 class Etats:
@@ -215,7 +218,7 @@ def _maison(choix="", uv_index=0.0, maintenant=MAINTENANT):
 def _poussee(etats, env):
     """Variables de la poussée complète, puis réponses de weather.get_forecasts."""
     auto = next(a for a in _paquet("tab5_push.yaml")["automation"] if a.get("id") == "tab5_ha_hmi_updater")
-    modeles = next(n["variables"] for n in _parcourir(auto["action"])
+    modeles = next(n["variables"] for n in _parcourir(auto["actions"])
                    if isinstance(n.get("variables"), dict) and "type_jours" in n["variables"])
     contexte = {}
     for nom, modele in modeles.items():
@@ -261,10 +264,10 @@ def test_tab5_meteo_dit_ce_que_met_no_sait_fournir():
 def test_seuls_des_types_geres_sont_demandes():
     etats, env = _maison()[:2]
     auto, contexte = _poussee(etats, env)
-    demandes = [_rendre(env, n["data"]["type"], contexte) for n in _parcourir(auto["action"])
+    demandes = [_rendre(env, n["data"]["type"], contexte) for n in _parcourir(auto["actions"])
                 if n.get("action") == "weather.get_forecasts"]
     assert demandes == ["daily", "hourly"]
-    for n in _parcourir(auto["action"]):
+    for n in _parcourir(auto["actions"]):
         if n.get("action") == "weather.get_forecasts":
             assert _rendre(env, n["target"]["entity_id"], contexte) == MET_NO
 
@@ -274,7 +277,7 @@ def test_six_jours_de_met_no_puis_des_jours_vides():
     marqués passés (« -- » estompé sur la tablette, tab5_forecast.cpp)."""
     etats, env = _maison()[:2]
     auto, contexte = _poussee(etats, env)
-    payload = _rendre(env, _action(auto["action"], "esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk")["data"]["payload"], contexte)
+    payload = _rendre(env, _action(auto["actions"], "esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk")["data"]["payload"], contexte)
     entrees = _entrees(payload)
     assert len(entrees) == 15
     noms = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
@@ -295,7 +298,7 @@ def test_six_jours_de_met_no_puis_des_jours_vides():
 def test_dix_heures_de_met_no_a_l_heure_locale():
     etats, env = _maison()[:2]
     auto, contexte = _poussee(etats, env)
-    action = _action(auto["action"], "esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk")
+    action = _action(auto["actions"], "esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk")
     entrees = []
     for index in (1, 2):
         entrees += _entrees(_rendre(env, action["data"]["payload"], dict(contexte, repeat={"index": index})))

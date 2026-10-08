@@ -260,7 +260,7 @@ def test_climr_vide_sans_clim():
 def test_climr_part_avant_l_etat_de_la_clim():
     actions = _blueprint()["actions"]
     # Poussée complète : dans le même bloc que tab5_maj_clim, juste avant.
-    bloc = _chercher(actions, lambda d: "'demarrage_ha'] and clim != ''" in str(d.get("if", "")))
+    bloc = _chercher(actions, lambda d: "tout_pousser and clim != ''" in str(d.get("if", "")))
     etapes = [str(e.get("action", "")) for e in bloc["then"]]
     i_clim = next(i for i, a in enumerate(etapes) if a.endswith("_tab5_maj_clim"))
     assert etapes[i_clim - 1].endswith("_tab5_maj_emplacements")

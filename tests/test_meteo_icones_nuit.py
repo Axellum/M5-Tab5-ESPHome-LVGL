@@ -64,7 +64,7 @@ def _payload_heures(maintenant, creneaux, soleil=True):
         etats.ajouter(_sun(maintenant))
     auto, contexte = _poussee(etats, env)
     contexte["hourly_var_tab5"] = {contexte["meteo"]: {"forecast": creneaux}}
-    action = _action(auto["action"], ACTION_HEURES)
+    action = _action(auto["actions"], ACTION_HEURES)
     entrees = []
     for index in (1, 2):
         entrees += _entrees(_rendre(env, action["data"]["payload"], dict(contexte, repeat={"index": index})))
@@ -183,7 +183,7 @@ def test_nuit_ou_jour_polaire(etat, attendu):
     auto, contexte = _poussee(etats, env)
     creneaux = [dict(c, condition="partlycloudy") for c in _creneaux(maintenant)]
     contexte["hourly_var_tab5"] = {contexte["meteo"]: {"forecast": creneaux}}
-    action = _action(auto["action"], ACTION_HEURES)
+    action = _action(auto["actions"], ACTION_HEURES)
     payload = _rendre(env, action["data"]["payload"], dict(contexte, repeat={"index": 1}))
     assert [e[2] for e in _entrees(payload)] == [attendu] * 5
 
@@ -197,6 +197,6 @@ def test_les_previsions_par_jour_ne_changent_pas():
         if soleil:
             etats.ajouter(_sun(maintenant))
         auto, contexte = _poussee(etats, env)
-        rendus.append(_rendre(env, _action(auto["action"], ACTION_JOURS)["data"]["payload"], contexte))
+        rendus.append(_rendre(env, _action(auto["actions"], ACTION_JOURS)["data"]["payload"], contexte))
     assert rendus[0] == rendus[1]
     assert "night" not in rendus[1]
