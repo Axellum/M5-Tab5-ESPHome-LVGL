@@ -9,6 +9,33 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Batterie : plus de souffle sans batterie, limite de charge, consommation
+
+- **Un léger souffle continu sortait d'une tablette sans batterie** (entendu par l'auteur le
+  08/10, micro coupé ou pas) : depuis la 3.6.0 (#303), le chargeur était allumé à chaque
+  démarrage et chargeait dans le vide. Le couper l'a fait taire (essai sur la tablette, firmware
+  de test). Le chargeur est maintenant commandé chaque seconde (`Tab5/tab5_batterie.h`) : allumé
+  30 s au démarrage (pour réveiller une batterie dont la protection a coupé), puis coupé quelques
+  secondes pour lire la tension. Sans batterie, l'INA226 lit alors 1,83 à 1,94 V (mesuré) ; sous
+  3,0 V, pas de batterie, le chargeur reste coupé. Une batterie glissée tablette allumée est vue
+  à la lecture suivante (60 s). Avec une batterie, une lecture chargeur coupé toutes les 10 min,
+  et tout de suite si la tension tombe sous 6 V (batterie retirée). « Tab5 Batterie détectée »
+  remplace son ancienne règle (une lecture sous 6 V dans les 10 dernières minutes, chargeur
+  allumé).
+- **« Tab5 Limite de charge »** (100 % par défaut, ou 80 %) : pour une tablette branchée en
+  permanence, la charge s'arrête à 80 % et reprend à 70 %. Pas encore essayé avec une batterie :
+  chargeur arrêté et USB branché, on ne sait pas encore si la tablette tourne sur l'USB ou sur sa
+  batterie.
+- **« Tab5 Consommation »** (W) : tension × courant de la batterie quand la tablette tourne sur
+  elle ; aussi sur la ligne « Batterie » de la console système (« 78% · 3.1 W »), à la place de
+  la tension.
+- **Batterie faible sur le téléphone** : sur batterie, sous 20 % puis sous 10 %, la tablette
+  émet `esphome.tab5_batterie_faible` (niveau, seuil), une fois par seuil ; la garde
+  « batterie faible » de `packages/tab5_health.yaml` en fait une notification persistante et une
+  notification sur le téléphone.
+- `tools/test_alarm_clock.cpp` (chargeur, limite, alerte, console), `tests/test_batterie.py`
+  (câblage YAML) ; `docs/troubleshooting.md`, `docs/hardware.md`.
+
 ### 2026-10-08 — Garde-fous de l'audit du 07/10 (lot L6)
 
 - **Six règles de plus** dans `tools/check_tab5_code_rules.py` (jouées par `pytest`), chacune

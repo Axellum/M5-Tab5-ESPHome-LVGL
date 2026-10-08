@@ -10,8 +10,8 @@
  *       Et le bandeau d'état du haut gauche (bandeau_apply_ui : une table d'icônes,
  *       BandeauIcone dans tab5_custom.h), dont l'icône de la batterie de la tablette
  *       (04/10/2026), qui ne dépend pas de HA mais de l'interrupteur « Tab5 Batterie
- *       montée » ; une prise quand la tension dit qu'il n'y a pas de batterie
- *       (batterie_tension_ui, discussion #278, 05/10/2026). Le même état peint la ligne
+ *       montée » ; une prise quand il n'y a pas de batterie (présence décidée chargeur coupé
+ *       par tab5_batterie.h, 08/10/2026 ; discussion #278). Le même état peint la ligne
  *       « Batterie » de la console système (update_console_batterie_ui, 06/10/2026).
  * @architecture_constraint Rien ne disparaît sans réponse de HA : la tablette seule ne
  *       sait pas distinguer une entité absente d'une entité pas encore transmise. Une
@@ -111,12 +111,11 @@ Zone zone_pot(int i) { return static_cast<Zone>(static_cast<int>(Zone::POT_1) + 
 Zone zone_lumiere(int i) { return static_cast<Zone>(static_cast<int>(Zone::LUMIERE_1) + i); }
 
 // Batterie de la tablette : dernier état reçu (tab5_custom.h, batterie_*_ui).
+// Présence, tension et consommation : tab5_batterie.cpp (batterie_presence()…).
 struct EtatBatterie {
     bool montee = false;  // interrupteur « Tab5 Batterie montée »
     float niveau = NAN;
     bool en_charge = false;
-    float tension = NAN;  // dernière lecture de l'INA226 (V), ligne « Batterie » de la console
-    DetectionBatterie detection;  // d'après la tension (batterie_lecture, tab5_core.h)
 };
 EtatBatterie s_batterie;
 
@@ -171,8 +170,8 @@ const char* batterie_glyphe(PresenceBatterie presence, float niveau, bool en_cha
 // n'est ni une alerte ni un niveau : couleur du texte du thème. Relue dans la palette
 // active à chaque peinture (zones_rejouer_theme, ADR-0029).
 uint32_t batterie_couleur() {
-    return s_batterie.detection.presence == PresenceBatterie::ABSENTE ? UIColor.TEXT_SOFT
-                                                                       : get_battery_color(s_batterie.niveau);
+    return batterie_presence() == PresenceBatterie::ABSENTE ? UIColor.TEXT_SOFT
+                                                             : get_battery_color(s_batterie.niveau);
 }
 
 // Icône de la ligne « Batterie » de la console système, retenue par
@@ -184,7 +183,7 @@ lv_obj_t* s_console_batterie_icone = nullptr;
 void batterie_peindre() {
     lv_obj_t* const icone = g_zones_ui.bandeau[BANDEAU_BATTERIE];
     if (icone == nullptr) return;
-    const PresenceBatterie presence = s_batterie.detection.presence;
+    const PresenceBatterie presence = batterie_presence();
     ui_text(icone, batterie_glyphe(presence, s_batterie.niveau, s_batterie.en_charge));
     ui_text_color(icone, batterie_couleur());
 }
@@ -502,17 +501,11 @@ void batterie_charge_ui(bool en_charge) {
 }
 
 bool batterie_tension_ui(float tension, uint32_t maintenant_ms) {
-    s_batterie.tension = tension;  // NAN si l'INA226 ne répond pas : la console n'affiche pas une vieille tension
-    const PresenceBatterie avant = s_batterie.detection.presence;
-    const PresenceBatterie apres = batterie_lecture(s_batterie.detection, tension, maintenant_ms);
-    if (apres == avant) return false;
-    ESP_LOGI("TAB5", "Batterie detectee : %s (%.2f V)",
-             apres == PresenceBatterie::PRESENTE ? "oui" : "non", tension);
+    if (!chargeur_tension(tension, maintenant_ms)) return false;
+    ESP_LOGI("TAB5", "Batterie detectee : %s (%.2f V)", batterie_presente() ? "oui" : "non", tension);
     batterie_peindre();
     return true;
 }
-
-bool batterie_presente() { return s_batterie.detection.presence == PresenceBatterie::PRESENTE; }
 
 // Console système, ligne « Batterie » (discussion #278, 06/10/2026) : le texte vient de
 // batterie_texte_console() (tab5_core.cpp), l'icône est celle du bandeau (même glyphe,
@@ -520,10 +513,10 @@ bool batterie_presente() { return s_batterie.detection.presence == PresenceBatte
 // du texte est mesurée avec la police du label, sans attendre la mise en page.
 void update_console_batterie_ui(lv_obj_t* icone, lv_obj_t* valeur) {
     if (valeur == nullptr) return;
-    const PresenceBatterie presence = s_batterie.detection.presence;
+    const PresenceBatterie presence = batterie_presence();
     char buf[48];
     batterie_texte_console(buf, sizeof(buf), s_batterie.montee, presence, s_batterie.niveau,
-                           s_batterie.tension);
+                           batterie_derniere_tension(), batterie_derniere_consommation());
     ui_text(valeur, buf);
     if (icone == nullptr) return;
     s_console_batterie_icone = icone;
