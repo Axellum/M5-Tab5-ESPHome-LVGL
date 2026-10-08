@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Règles de code du firmware Tab5, jouées à chaque `pytest` (audit du 06/09/2026,
 §4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006 ; lot L6 de l'audit du 07/10/2026
-pour les règles 9 à 11). Onze règles, toutes falsifiables sur le dépôt réel
+pour les règles 9 à 12). Douze règles, toutes falsifiables sur le dépôt réel
 (numérotation propre à ce script, distincte des règles d'AGENTS.md) :
 
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
@@ -66,6 +66,9 @@ pour les règles 9 à 11). Onze règles, toutes falsifiables sur le dépôt rée
  11. **Pas de copie de chaîne dans un chemin chaud** (règle 4 d'AGENTS.md, partie sûre) :
      ni `std::string` par valeur ni `to_string()` dans un `on_value:` / `on_change:`,
      aucun paramètre `std::string` par valeur dans un en-tête de Tab5/.
+ 12. **Chaque fonction de `tab5_custom.h` a un appelant hors de son fichier** (CPP-4) :
+     une lambda YAML (firmware ou tablette virtuelle) ou une autre unité C++.
+     Exceptions du 08/10/2026 : `PUBLIQUES_SANS_APPELANT`.
   La règle 5 d'AGENTS.md (widget répété 3 fois → builder ou gabarit) n'est pas
   vérifiée : « le même widget » ne se reconnaît pas sûrement dans le YAML.
 
@@ -623,7 +626,7 @@ def palette_colors(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
-# ─── Règles 9 à 11 : garde-fous du lot L6 (audit du 07/10/2026, §4.2 et §4.4) ─────────
+# ─── Règles 9 à 12 : garde-fous du lot L6 (audit du 07/10/2026, §4.2 et §4.4) ─────────
 # Chacune empêche les NOUVEAUX écarts sans forcer à déplacer le code existant : les cas
 # légitimes ou hérités sont listés ici, un par un, avec leur raison. Une liste sert de
 # plafond exact : un appel de plus échoue (« nouvel écart »), un appel de moins aussi
@@ -797,6 +800,106 @@ def chemins_chauds(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
+# Règle 12 (CPP-4 / YML-11) : chaque fonction déclarée dans tab5_custom.h a un appelant
+# hors de son fichier : une lambda YAML (firmware, ou tablette virtuelle du rendu hors
+# tablette : tab5-rendu-host.yaml, Tab5/rendu/), ou une autre unité C++. Une fonction
+# appelée par son seul fichier n'a rien à faire dans l'en-tête public : `static` (ou
+# namespace anonyme) dans son unité, ou tab5_internal.h si une autre unité la veut.
+# Un gabarit `!include` qui appelle `${var}_suite(` (vue_btn.yaml : `${prefixe}_choisir_vue`)
+# compte pour chaque valeur passée à `var:` par ses includes (energie, historique).
+# Exceptions du 08/10/2026 : sans appelant hors de leur fichier. Ne pas en ajouter ; les
+# sortir de l'en-tête quand un lot touche déjà leur fichier (aucun déplacement forcé).
+# (Six autres, appelées seulement par une autre unité C++, passent la règle mais iraient
+# mieux dans tab5_internal.h : animate_crossfade_layers, update_central_forecast_page_ui,
+# moisture_slots_refresh, zone_tuile_absente, zones_pots_presents, central_planning_set_off.)
+PUBLIQUES_SANS_APPELANT = {
+    "update_meteo_icon",        # tab5_forecast.cpp : dessin d'une tuile météo
+    "clim_eco_actif",           # tab5_cards.cpp : état des boutons de la clim (lus aussi par tests/test_clim.py)
+    "clim_silence_actif",
+    "clim_oscillation_actif",
+    "clim_preset_actif",
+    "clim_recolorer",           # tab5_cards.cpp : couleurs de la clim après un changement
+    "solaire_present",          # tab5_zones.cpp : production solaire connue
+    "ecran_disponible",         # tab5_zones.cpp : écran disponible pour un appui long
+    "boutons_haut_apply_ui",    # tab5_zones.cpp : mini icônes des trois boutons du haut
+    "tuile_titre_appui",        # tab5_tuiles.cpp : appui sur le titre de la carte centrale
+}
+RE_CPP_DEF = re.compile(r"^[A-Za-z_][\w:<>,\s*&]*?[\s*&](\w+)\s*\([^;{}]*\)\s*(?:const\s*)?\{", re.M)
+RE_CPP_PROTO = re.compile(r"^[A-Za-z_][\w:<>,\s*&]*?[\s*&](\w+)\s*\([^;{}]*\)\s*(?:const\s*)?;", re.M)
+RE_GABARIT_APPEL = re.compile(r"\$\{(\w+)\}(\w*)\s*\(")
+
+
+def fonctions_publiques(header: Path) -> list[str]:
+    """Fonctions déclarées dans `header` hors struct/enum (espaces de noms compris)."""
+    text = strip_cpp_comments(header.read_text(encoding="utf-8"))
+    text = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
+    text = "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("#"))
+    noms: list[str] = []
+    pile: list[bool] = []  # True = espace de noms
+    stmt = ""
+    for ch in text:
+        if ch == "{":
+            pile.append(bool(re.search(r"\bnamespace\s+\w*\s*$", " ".join(stmt.split()))))
+            stmt = ""
+        elif ch == "}":
+            if pile:
+                pile.pop()
+            stmt = ""
+        elif ch == ";":
+            s = " ".join(stmt.split())
+            if all(pile) and not s.startswith(("using", "typedef", "extern ")):
+                m = re.match(r"^(?:inline\s+|static\s+|constexpr\s+)*[A-Za-z_][\w:<>,\s*&]*?[\s*&](\w+)\s*\(.*\)\s*(?:const)?$", s)
+                if m:
+                    noms.append(m.group(1))
+            stmt = ""
+        else:
+            stmt += ch
+    return noms
+
+
+def appelants_publics(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
+    """Règle 12 : chaque fonction de tab5_custom.h a un appelant hors de son fichier."""
+    header = tab5 / "tab5_custom.h"
+    if not header.is_file():
+        return [f"règle 12 : fichier introuvable : {header}"]
+    noms = fonctions_publiques(header)
+    if len(noms) < 100:
+        return [f"règle 12 : {len(noms)} fonctions lues dans tab5_custom.h, le motif ne les reconnaît plus"]
+    sources = firmware_sources(tab5, entry)
+    yamls = [p for p in sources if p.suffix == ".yaml"]
+    yamls += sorted((tab5 / "rendu").glob("*.yaml")) + [p for p in [tab5.parent / "tab5-rendu-host.yaml"] if p.is_file()]
+    texte_yaml = "\n".join(strip_yaml_comments(p.read_text(encoding="utf-8")) for p in yamls)
+    # Appels par gabarit : `${var}_suite(` → valeur_suite( pour chaque `var: valeur` passée.
+    for var, suite in set(RE_GABARIT_APPEL.findall(texte_yaml)):
+        for valeur in set(re.findall(rf"\b{var}:\s*[\"']?(\w+)", texte_yaml)):
+            texte_yaml += f"\n{valeur}{suite}("
+    cpp: dict[str, str] = {}
+    definis: dict[str, set[str]] = {}
+    for p in sources:
+        if p.suffix not in (".cpp", ".h") or p == header:
+            continue
+        t = strip_cpp_comments(p.read_text(encoding="utf-8"))
+        definis[p.name] = set(RE_CPP_DEF.findall(t))
+        # Les têtes de définition et les déclarations ne sont pas des appels.
+        cpp[p.name] = RE_CPP_PROTO.sub("", RE_CPP_DEF.sub("{", t))
+    problems: list[str] = []
+    for nom in sorted(set(noms)):
+        appel = re.compile(rf"(?<![\w.>]){re.escape(nom)}\s*\(")
+        if appel.search(texte_yaml):
+            appele = True
+        else:
+            appele = any(appel.search(t) for f, t in cpp.items() if nom not in definis[f])
+        if not appele and nom not in PUBLIQUES_SANS_APPELANT:
+            ou = ", ".join(sorted(f for f, d in definis.items() if nom in d)) or "?"
+            problems.append(f"tab5_custom.h : `{nom}()` ({ou}) n'est appelée ni par un YAML ni par une "
+                            f"autre unité — `static` dans son fichier, ou tab5_internal.h (CPP-4)")
+        elif appele and nom in PUBLIQUES_SANS_APPELANT:
+            problems.append(f"PUBLIQUES_SANS_APPELANT : `{nom}()` a maintenant un appelant — retirer l'exception")
+    problems += [f"PUBLIQUES_SANS_APPELANT : `{nom}()` n'est plus déclarée dans tab5_custom.h — retirer l'exception"
+                 for nom in sorted(PUBLIQUES_SANS_APPELANT - set(noms))]
+    return problems
+
+
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
     api_logic = tab5 / "tab5-api-logic.yaml"
@@ -890,10 +993,11 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     # 8. couleurs de l'interface par la palette (thèmes)
     problems += palette_colors(tab5, entry)
 
-    # 9 à 11. garde-fous du lot L6 (audit du 07/10/2026)
+    # 9 à 12. garde-fous du lot L6 (audit du 07/10/2026)
     problems += lvgl_yaml(tab5, entry)
     problems += static_lambdas(tab5, entry)
     problems += chemins_chauds(tab5, entry)
+    problems += appelants_publics(tab5, entry)
 
     return problems
 
@@ -911,6 +1015,7 @@ def main() -> int:
         "glyphes de la date couverts, icônes MDI couvertes sans glyphe mort, "
         "couleurs de l'interface par la palette"
         ", aucun nouvel appel LVGL ni `static` dans le YAML, pas de copie de chaîne dans un chemin chaud"
+        ", fonctions publiques appelées"
     )
     return 0
 

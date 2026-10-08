@@ -58,6 +58,11 @@ def _firmware_copy(tmp_path):
             shutil.copy2(path, dst / path.name)
     for path in (src / "ui_components").glob("*.yaml"):
         shutil.copy2(path, dst / "ui_components" / path.name)
+    # Tablette virtuelle : ses lambdas appellent aussi des fonctions publiques (règle 12).
+    (dst / "rendu").mkdir()
+    for path in (src / "rendu").glob("*.yaml"):
+        shutil.copy2(path, dst / "rendu" / path.name)
+    shutil.copy2(src.parent / "tab5-rendu-host.yaml", tmp_path / "tab5-rendu-host.yaml")
     entry = tmp_path / check_tab5_code_rules.ENTRY.name
     shutil.copy2(check_tab5_code_rules.ENTRY, entry)
     return dst, entry
@@ -74,7 +79,7 @@ def _remplacer(path, ancien, nouveau):
     path.write_text(texte.replace(ancien, nouveau, 1), encoding="utf-8")
 
 
-# ─── Règles 9 à 11 (lot L6 de l'audit du 07/10/2026) : chacune échoue sur un cas témoin ───
+# ─── Règles 9 à 12 (lot L6 de l'audit du 07/10/2026) : chacune échoue sur un cas témoin ───
 
 def test_regle_9_lvgl_dans_le_yaml(tmp_path):
     """Un nouvel appel lv_* dans une lambda YAML, un de plus dans un fichier toléré, un de
@@ -118,6 +123,26 @@ def test_regle_11_copie_de_chaine_dans_un_chemin_chaud(tmp_path):
     assert sum("tab5-imu.yaml:" in p and "`on_value:`" in p for p in problems) == 2, problems
     assert any(p.startswith("tab5_internal.h:") and "par valeur" in p for p in problems), problems
     assert len(problems) == 3, problems
+
+
+def test_regle_12_fonction_publique_sans_appelant(tmp_path):
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.appelants_publics(tab5, entry) == []
+    _ajouter(tab5 / "tab5_custom.h", "\nvoid essai_orpheline(int n);\nvoid essai_appelee();\n")
+    _ajouter(tab5 / "tab5_cards.cpp", "\nvoid essai_orpheline(int n) { (void) n; }\n"
+                                      "void essai_appelee() { essai_orpheline(1); }\n")
+    _ajouter(tab5 / "tab5-scripts.yaml", "\nessai:\n  - lambda: 'essai_appelee(); clim_recolorer();'\n")
+    problems = check_tab5_code_rules.appelants_publics(tab5, entry)
+    assert any("`essai_orpheline()` (tab5_cards.cpp) n'est appelée ni par un YAML" in p for p in problems), problems
+    assert not any("essai_appelee" in p for p in problems), problems
+    assert any("`clim_recolorer()` a maintenant un appelant" in p for p in problems), problems
+    # Appel par gabarit : `${prefixe}_choisir_vue` vaut energie_ et historique_choisir_vue.
+    _remplacer(tab5 / "ui_components" / "historique_popup.yaml", "prefixe: historique", "prefixe: autre")
+    _remplacer(tab5 / "ui_components" / "historique_popup.yaml", "prefixe: historique", "prefixe: autre")
+    _remplacer(tab5 / "ui_components" / "historique_popup.yaml", "prefixe: historique", "prefixe: autre")
+    problems = check_tab5_code_rules.appelants_publics(tab5, entry)
+    assert any("`historique_choisir_vue()`" in p for p in problems), problems
+    assert not any("`energie_choisir_vue()`" in p for p in problems), problems
 
 
 def _edit_font(styles, font_id, old, new):
