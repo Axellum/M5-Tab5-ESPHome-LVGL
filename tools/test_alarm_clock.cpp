@@ -520,7 +520,7 @@ static void test_chargeur() {
         expect(chargeur_en_sonde(c, 40 * S) && !chargeur_en_sonde(c, 41 * S),
                "courant ignoré 2 s encore après la fin de la sonde");
         coupe = true;
-        tic_jusqua(c, 0, false, 40 * S, 3 * 60 * MIN, &coupe, nullptr, nullptr);
+        tic_jusqua(c, 0, false, 40 * S, 3 * 60 * MIN, nullptr, &coupe, nullptr);
         expect(coupe, "sans batterie : chargeur coupé pendant 3 h (plus de souffle)");
         expect(!chargeur_lecture(c, 1.83f, 3 * 60 * MIN) && c.presence == P::ABSENTE, "lecture suivante : toujours absente");
         // Batterie glissée tablette allumée : vue à la lecture suivante, chargeur rallumé.
@@ -536,7 +536,8 @@ static void test_chargeur() {
         expect(std::fabs(c.niveau - 53.8f) < 0.1f, "niveau d'après la tension (7,2 V ≈ 54 %)");
         expect(!chargeur_en_sonde(c, 38 * S + 2 * S), "fin de sonde + 2 s : le courant compte de nouveau");
         bool allume = true;
-        tic_jusqua(c, 0, false, 39 * S, 39 * S + 10 * MIN - S, &allume, nullptr, nullptr);
+        // Fin de la sonde à 38 s : la suivante tombe à 38 s + 10 min.
+        tic_jusqua(c, 0, false, 39 * S, 38 * S + 10 * MIN - S, &allume, nullptr, nullptr);
         expect(allume, "batterie, limite 100 % : chargeur allumé jusqu'à la sonde suivante");
         expect(!chargeur_tick(c, 0, false, 38 * S + 10 * MIN).allumer && c.sonde, "sonde toutes les 10 min");
         chargeur_tick(c, 0, false, 38 * S + 10 * MIN + 8 * S);
