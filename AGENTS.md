@@ -11,7 +11,7 @@ A Home Assistant dashboard running natively as ESP32-P4 firmware (ESPHome + LVGL
 In order, before editing code or answering questions about architecture:
 
 1. [`CARTOGRAPHIE_TAB5.md`](CARTOGRAPHIE_TAB5.md) — full dependency graph, file-by-file inventory, and a verified list of known technical debt / dead code. Read this first instead of reverse-engineering the YAML tree from scratch.
-2. [`Tab5/README.md`](Tab5/README.md) — file-by-file description of the ESPHome packages, the HA service contract table, the globals table, and **8 mandatory code rules**. The eight game consoles are documented separately in [`docs/arcade.md`](docs/arcade.md) — read it only when touching a game.
+2. [`Tab5/README.md`](Tab5/README.md) — file-by-file description of the ESPHome packages, the HA service contract table, the globals table, and **9 mandatory code rules**. The eight game consoles are documented separately in [`docs/arcade.md`](docs/arcade.md) — read it only when touching a game.
 3. [`docs/decisions/`](docs/decisions/README.md) — why non-obvious architectural choices were made (push-only, single-page UI, no hardcoded colors, etc.). Check here before "fixing" something that looks wrong.
 4. [`docs/troubleshooting.md`](docs/troubleshooting.md) — incidents already diagnosed on this exact device. Check here before re-diagnosing a symptom that looks familiar (black screen after reboot, missing weather/planning data, mic pipeline stuck, etc.).
 5. The target file itself, including its `[AI-CONTEXT]` header (see below).
@@ -104,4 +104,4 @@ Not enforced by a test, but every change is judged against them on the real scre
 
 ## Full documentation map
 
-See [`docs/README.md`](docs/README.md) for the complete list of `docs/*.md` files (installation, user manual, architecture, hardware, UI design, voice assistant, screens). The same pages, with a menu and a search, are the website ([ADR-0030](docs/decisions/0030-documentation-site.md)); its home page is the root `README.md`.
+See [`docs/README.md`](docs/README.md) for the documentation by task (installation, user manual, screens, voice assistant, troubleshooting, architecture, hardware, decisions): it is an index, not a complete list. Every published page is in the website's menu, [`tools/site/menu.yml`](tools/site/menu.yml) (the only list of pages; [ADR-0030](docs/decisions/0030-documentation-site.md)), with a search; its home page is the root `README.md`. The pages kept off the site on purpose are listed in `HORS_SITE` (`tests/test_site_doc.py`).
