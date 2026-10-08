@@ -30,7 +30,6 @@ sombre:
   TEXT_DIM: 0x94A3B8           # slate-400
   CONSOLE_LABEL: 0x8595AD
   CONSOLE_VALUE: 0xFFFFFF
-  ICON_MUTED: 0x555555
   TEXT_ON_ACCENT: 0xF1F5F9     # le texte courant, comme avant ce rôle
   # --- Sémantiques ---
   SUCCESS: 0x34D399            # emerald-400
@@ -109,7 +108,6 @@ clair:
   # blanc de la console sombre, illisibles sur le verre clair (retour d'Axel).
   CONSOLE_LABEL: TEXT_DIM
   CONSOLE_VALUE: TEXT_PRIMARY
-  ICON_MUTED: 0x98A1AD
   TEXT_ON_ACCENT: 0xFFFFFF
   # --- Sémantiques : mêmes teintes, assombries pour se lire sur du blanc ---
   SUCCESS: 0x12785A

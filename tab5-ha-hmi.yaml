@@ -66,6 +66,9 @@ esphome:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
     # les deux jeux qui en ont besoin (25/09/2026, audit lot 8a).
     - Tab5/tab5_tokens.h
+    # Catalogue des thèmes (THEMES[]), écrit par tools/gen_themes.py : inclus par
+    # tab5_theme.cpp et tab5_reglages.cpp seulement (audit du 07/10/2026, DO-3).
+    - Tab5/tab5_themes_data.h
     # Palette des icônes des tuiles de pièce (ADR-0023), écrite par tools/gen_tuiles_icones.py.
     - Tab5/tab5_tuiles_icones.h
     # Langue de l'écran (lot 4, 27/09/2026) : tr() pur, compilé aussi sur PC par les

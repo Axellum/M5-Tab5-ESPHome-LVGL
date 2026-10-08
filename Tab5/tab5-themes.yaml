@@ -40,227 +40,227 @@
 
 # >>> polices (généré par tools/gen_themes.py depuis Tab5/themes/ et _polices.yaml, ne pas éditer)
 font:
-  - file: gfonts://Anton@400
+  - file: "Tab5/fonts/anton_400.ttf"
     id: police_anton_400_112
     size: 112
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Anton@400
+  - file: "Tab5/fonts/anton_400.ttf"
     id: police_anton_400_32
     size: 32
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Anton@400
+  - file: "Tab5/fonts/anton_400.ttf"
     id: police_anton_400_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Barlow Condensed@800
+  - file: "Tab5/fonts/barlow_condensed_800.ttf"
     id: police_barlow_condensed_800_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Barlow Semi Condensed@700
+  - file: "Tab5/fonts/barlow_semi_condensed_700.ttf"
     id: police_barlow_semi_condensed_700_32
     size: 32
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Barlow Semi Condensed@700
+  - file: "Tab5/fonts/barlow_semi_condensed_700.ttf"
     id: police_barlow_semi_condensed_700_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Bodoni Moda@700
+  - file: "Tab5/fonts/bodoni_moda_700.ttf"
     id: police_bodoni_moda_700_120
     size: 120
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Familjen Grotesk@700
+  - file: "Tab5/fonts/familjen_grotesk_700.ttf"
     id: police_familjen_grotesk_700_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Familjen Grotesk@700
+  - file: "Tab5/fonts/familjen_grotesk_700.ttf"
     id: police_familjen_grotesk_700_32
     size: 32
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Familjen Grotesk@700
+  - file: "Tab5/fonts/familjen_grotesk_700.ttf"
     id: police_familjen_grotesk_700_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Figtree@700
+  - file: "Tab5/fonts/figtree_700.ttf"
     id: police_figtree_700_31
     size: 31
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Fraunces@700
+  - file: "Tab5/fonts/fraunces_700.ttf"
     id: police_fraunces_700_116
     size: 116
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Fraunces@700
+  - file: "Tab5/fonts/fraunces_700.ttf"
     id: police_fraunces_700_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Fredoka@700
+  - file: "Tab5/fonts/fredoka_700.ttf"
     id: police_fredoka_700_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Fredoka@700
+  - file: "Tab5/fonts/fredoka_700.ttf"
     id: police_fredoka_700_32
     size: 32
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
-  - file: gfonts://Fredoka@700
+  - file: "Tab5/fonts/fredoka_700.ttf"
     id: police_fredoka_700_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüıŒœ–—“”„…'
-  - file: gfonts://Gloock@400
+  - file: "Tab5/fonts/gloock_400.ttf"
     id: police_gloock_400_125
     size: 125
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Gloock@400
+  - file: "Tab5/fonts/gloock_400.ttf"
     id: police_gloock_400_30
     size: 30
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Gloock@400
+  - file: "Tab5/fonts/gloock_400.ttf"
     id: police_gloock_400_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://IBM Plex Serif@700
+  - file: "Tab5/fonts/ibm_plex_serif_700.ttf"
     id: police_ibm_plex_serif_700_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://IBM Plex Serif@700
+  - file: "Tab5/fonts/ibm_plex_serif_700.ttf"
     id: police_ibm_plex_serif_700_29
     size: 29
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://IBM Plex Serif@700
+  - file: "Tab5/fonts/ibm_plex_serif_700.ttf"
     id: police_ibm_plex_serif_700_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Jersey 10@400
+  - file: "Tab5/fonts/jersey_10_400.ttf"
     id: police_jersey_10_400_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Jersey 10@400
+  - file: "Tab5/fonts/jersey_10_400.ttf"
     id: police_jersey_10_400_32
     size: 32
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Jersey 10@400
+  - file: "Tab5/fonts/jersey_10_400.ttf"
     id: police_jersey_10_400_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Manrope@700
+  - file: "Tab5/fonts/manrope_700.ttf"
     id: police_manrope_700_31
     size: 31
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Manrope@700
+  - file: "Tab5/fonts/manrope_700.ttf"
     id: police_manrope_700_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Murecho@300
+  - file: "Tab5/fonts/murecho_300.ttf"
     id: police_murecho_300_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Murecho@400
+  - file: "Tab5/fonts/murecho_400.ttf"
     id: police_murecho_400_32
     size: 32
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Murecho@400
+  - file: "Tab5/fonts/murecho_400.ttf"
     id: police_murecho_400_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Nunito@800
+  - file: "Tab5/fonts/nunito_800.ttf"
     id: police_nunito_800_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Nunito@800
+  - file: "Tab5/fonts/nunito_800.ttf"
     id: police_nunito_800_29
     size: 29
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Nunito@800
+  - file: "Tab5/fonts/nunito_800.ttf"
     id: police_nunito_800_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Overpass@700
+  - file: "Tab5/fonts/overpass_700.ttf"
     id: police_overpass_700_31
     size: 31
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Overpass@700
+  - file: "Tab5/fonts/overpass_700.ttf"
     id: police_overpass_700_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Overpass@800
+  - file: "Tab5/fonts/overpass_800.ttf"
     id: police_overpass_800_119
     size: 119
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Oxanium@700
+  - file: "Tab5/fonts/oxanium_700.ttf"
     id: police_oxanium_700_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Oxanium@700
+  - file: "Tab5/fonts/oxanium_700.ttf"
     id: police_oxanium_700_31
     size: 31
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Oxanium@700
+  - file: "Tab5/fonts/oxanium_700.ttf"
     id: police_oxanium_700_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Pacifico@400
+  - file: "Tab5/fonts/pacifico_400.ttf"
     id: police_pacifico_400_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Pacifico@400
+  - file: "Tab5/fonts/pacifico_400.ttf"
     id: police_pacifico_400_26
     size: 26
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Pacifico@400
+  - file: "Tab5/fonts/pacifico_400.ttf"
     id: police_pacifico_400_45
     size: 45
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
-  - file: gfonts://Quicksand@700
+  - file: "Tab5/fonts/quicksand_700.ttf"
     id: police_quicksand_700_130
     size: 130
     bpp: 2
     glyphs: '0123456789:'
-  - file: gfonts://Quicksand@700
+  - file: "Tab5/fonts/quicksand_700.ttf"
     id: police_quicksand_700_31
     size: 31
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
-  - file: gfonts://Quicksand@700
+  - file: "Tab5/fonts/quicksand_700.ttf"
     id: police_quicksand_700_45
     size: 45
     bpp: 2
