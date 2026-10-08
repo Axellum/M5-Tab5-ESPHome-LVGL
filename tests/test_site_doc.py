@@ -24,6 +24,8 @@ HORS_SITE = {
     "docs/INVENTAIRE_CONFIGS_TESTS.md": "inventaire interne des configurations de test",
     "docs/installation.md": "renvoi des anciens titres vers docs/installation/ (liens déjà publiés)",
     "docs/changelog/CHANGELOG-1.x.md": "historique des versions 1.x",
+    "docs/changelog/CHANGELOG-2.x.md": "historique des versions 2.x",
+    "docs/changelog/CHANGELOG-3.0-3.6.x.md": "historique des versions 3.0.0 à 3.6.0",
     "docs/press/forum_ha_en.md": "brouillon de message de forum",
     "docs/press/hackster.md": "brouillon d'article",
     "docs/press/hackster_paste_en.md": "brouillon d'article",
