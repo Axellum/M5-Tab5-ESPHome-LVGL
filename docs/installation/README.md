@@ -13,6 +13,8 @@ Seven steps, in this order: nothing to compile, the firmware installs from the b
 - An **M5Stack Tab5**, and the name of its **display chip**: it is printed on the sticker on the back, above the Espressif logo (ST7123, ST7121 or ILI9881C, see [hardware revisions](../hardware.md#hardware-revisions)).
 - A **computer with Chrome or Edge** (the install page talks to the tablet through Web Serial) and a **USB-C cable that carries data**: with a charge-only cable, no port shows up.
 - **Home Assistant 2026.8 or newer**, any installation method, and a way to copy files into its `config/` folder: Samba share, or the File editor or Studio Code Server add-on. With [HACS](home-assistant-files.md#with-hacs), this is only for the one line of `configuration.yaml`: the « Tab5 » integration that HACS installs puts the files in place, then updates them in one click at each release.
+- A **2.4 GHz Wi-Fi network**: the tablet's Wi-Fi 6 chip is listed for 2.4 GHz only ([M5Stack Tab5 page](https://docs.m5stack.com/en/core/Tab5)). A router that merges both bands under one name needs nothing; with separate names, pick the 2.4 GHz one.
+- A **USB-C power source**. M5Stack gives no input rating; a 5 V / 2 A charger is advice, not a requirement, and the author's tablet runs from a PC's USB port ([power](../hardware.md#power)).
 - Optional: a weather integration (Met.no comes with Home Assistant), your calendars, a Home Assistant voice assistant (see [the two voice modes](settings.md#voice-assistant-the-two-modes)).
 
 ## The seven steps
@@ -65,6 +67,8 @@ Sept étapes, dans cet ordre : rien à compiler, le firmware s'installe depuis l
 - Un **M5Stack Tab5**, et le nom de sa **puce d'écran** : il est écrit sur l'autocollant au dos, au-dessus du logo Espressif (ST7123, ST7121 ou ILI9881C, voir les [révisions matérielles](../hardware.md#révisions-matérielles)).
 - Un **ordinateur avec Chrome ou Edge** (la page d'installation parle à la tablette par Web Serial) et un **câble USB-C qui transmet les données** : avec un câble de charge seule, aucun port n'apparaît.
 - **Home Assistant 2026.8 ou plus récent**, toute méthode d'installation, et un moyen de copier des fichiers dans son dossier `config/` : partage Samba, ou le module File editor ou Studio Code Server. Avec [HACS](home-assistant-files.md#avec-hacs), seulement pour la ligne de `configuration.yaml` : l'intégration « Tab5 » que HACS installe pose les fichiers, puis les met à jour en un clic à chaque release.
+- Un **réseau Wi-Fi en 2,4 GHz** : la puce Wi-Fi 6 de la tablette est donnée pour le 2,4 GHz seul ([fiche M5Stack du Tab5](https://docs.m5stack.com/en/core/Tab5)). Une box qui réunit les deux bandes sous un même nom n'exige rien ; avec deux noms distincts, choisissez celui du 2,4 GHz.
+- Une **source d'alimentation USB-C**. M5Stack ne donne aucune valeur d'entrée ; un chargeur 5 V / 2 A est un conseil, pas une exigence, et la tablette de l'auteur tourne sur un port USB de PC ([alimentation](../hardware.md#alimentation)).
 - Facultatif : une intégration météo (Met.no vient avec Home Assistant), vos agendas, un assistant vocal Home Assistant (voir [les deux modes vocaux](settings.md#assistant-vocal--les-deux-modes)).
 
 ## Les sept étapes

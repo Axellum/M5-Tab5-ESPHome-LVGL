@@ -24,7 +24,7 @@ A unit labelled « ST7123 » may carry an ST7121: if you are unsure, try one, th
 
 ## 3. Pick the channel
 
-**Stable** unless you want to try the next version before everyone (**Beta**, which moves on to the next stable one). The tablet then follows the channel you installed: its updates show up in Home Assistant ([updates](updates.md)). To switch channels later, install again from the page, without erasing.
+**Stable** unless you want to try the next version before everyone (**Beta**, which moves on to the next stable one). The tablet then follows the channel you installed: its updates show up in Home Assistant ([updates](updates.md)). To switch channels later, install again from the page, without erasing. On Beta, also take `tab5_home_assistant.zip` from that pre-release (*Assets* on its [releases page](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases)), or let the HACS integration do it with beta versions switched on: the files of the stable release do not have what the pre-release adds on the Home Assistant side.
 
 ## 4. Connect and install
 
@@ -75,7 +75,7 @@ Une tablette étiquetée « ST7123 » peut porter une ST7121 : dans le doute, es
 
 ## 3. Choisir le canal
 
-**Stable**, sauf si vous voulez essayer la prochaine version avant tout le monde (**Bêta**, qui passe à la stable suivante). La tablette suit ensuite le canal installé : ses mises à jour arrivent dans Home Assistant ([mises à jour](updates.md#version-française)). Pour changer de canal plus tard, réinstallez depuis la page, sans effacer.
+**Stable**, sauf si vous voulez essayer la prochaine version avant tout le monde (**Bêta**, qui passe à la stable suivante). La tablette suit ensuite le canal installé : ses mises à jour arrivent dans Home Assistant ([mises à jour](updates.md#version-française)). Pour changer de canal plus tard, réinstallez depuis la page, sans effacer. En Bêta, prenez aussi `tab5_home_assistant.zip` de cette pré-release (*Assets* sur la [page des releases](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases)), ou laissez l'intégration HACS le faire avec les versions bêta activées : les fichiers de la stable n'ont pas ce que la pré-release ajoute côté Home Assistant.
 
 ## 4. Connecter et installer
 
