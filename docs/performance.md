@@ -4,9 +4,102 @@
 
 ---
 
-Measured on the author's tablet (Tab5, ST7123 screen, ESP32-P4 revision v1.3 at 360 MHz), firmware **3.2.0** built exactly like the published one (ESPHome 2026.9.0), on **2026-09-28** between 20:35 and 22:52. Screen brightness 36/255, home page, weather mode, rooms defined, microphone off at the start (nobody home).
+Measured on the author's tablet (Tab5, ST7123 screen, ESP32-P4 revision v1.3 at 360 MHz). Newest campaign first; the older numbers are kept, dated, for comparison.
 
-## Results
+## Campaign of 2026-10-07 (3.8.0-rc.1)
+
+Measured on **2026-10-07** between 22:30 and 00:05, on the published **3.8.0-rc.1** and on measuring builds of the same code (commit `45a0c34`) that were never committed: they log every frame of 2 ms or more (duration, pixels, areas), and one of them also times each step of a theme switch and logs the free internal RAM and PSRAM every 60 s. Driven through the native API (`aioesphomeapi`), never in a minute where the blueprint pushes its 5-minute measurements; whole screen = backlight off then on; popups through the « Aller à l'écran » select; the number kept is the longest frame, median of the runs. Alerts were showing, so the rotating panel of the centre card was turning: idle numbers only compare at equal content, full frames do not depend on it.
+
+### Whole screen, per theme (dark mode, 5 runs)
+
+| Theme | Whole screen (ms) | Climate popup (ms) |
+|---|---|---|
+| Relief plat | 167.8 | 195.6 |
+| Relief doux | 160.8 | 169.3 |
+| Bonbon | 149.4 | 170.8 |
+| Sorbet | 138.1 | 165.2 |
+| Capsule | 135.8 | 154.7 |
+| Ardoise | 135.6 | 162.3 |
+| Ardoise douce | 134.9 | 163.5 |
+| Bento | 134.8 | 160.3 |
+| Craie et ardoise | 134.0 | 163.7 |
+| Platine et or | 133.9 | 161.8 |
+| Almanach | 133.7 | 163.3 |
+| Obsidienne | 133.4 | 160.1 |
+| Graphite | 133.1 | 158.7 |
+| Ultraviolet | 132.6 | 162.5 |
+| Terre cuite | 131.6 | 152.9 |
+| Béton brut | 131.6 | 155.8 |
+| Almanach imprimé | 131.4 | 158.7 |
+| Signalisation | 130.7 | 160.1 |
+| Néon calme | 130.1 | 161.4 |
+| Pixel | 127.4 | 157.6 |
+| Zen Sumi | 125.7 | 153.4 |
+
+- 18 themes of 21 redraw the whole screen in **126 to 138 ms**. The three slower ones are the **shadows**: Relief plat and Relief doux are the only themes with real shadows (`shadow_width` in their `formes:`; 50 px around the popup window in Relief plat, hence its 196 ms climate popup), Bonbon has a 1 px shadow and the largest radii. Gradients alone cost almost nothing (Capsule, Sorbet: 0 to +3 ms from Ardoise).
+- A whole screen is **~59 ms of sending** (fixed, see « Where the time goes » below) plus **~75 ms of drawing** in Ardoise; the shadows add +32 ms (Relief plat), +25 ms (Relief doux) and +14 ms (Bonbon) to the drawing.
+- **Light mode** (3 runs): Ardoise 137.6, Relief doux 162.2, Relief plat 172.8, Bonbon 147.4, Capsule 139.1 ms — the same order as dark, within 0-5 ms.
+- **Idle**, no theme is slower: the longest frame stays at 15-19 ms (the rotating panel). Shadows only cost when a large area is redrawn (screen turned back on, popup opened or closed).
+- **LVGL's shadow cache** (`LV_DRAW_SW_SHADOW_CACHE_SIZE` at 80, 6.4 kB of internal RAM), A/B the same evening: Relief plat 169.4 ms against 167.8, Relief doux 159.5 against 160.8 — noise, **no gain**. The cache holds one entry, each card has a different shadow size and the screen is drawn in bands. Not adopted.
+
+### Popups (theme Zen Sumi, dark, 4 runs)
+
+| Popup | Opening (ms) |
+|---|---|
+| Alarm clock | 156.9 |
+| Climate | 154.0 |
+| Settings | 151.6 |
+| Plants | 144.8 |
+| System console | 143.1 |
+| TV remote | 141.9 |
+| Calendar | 141.3 |
+| House | 137.1 |
+| Voice assistant | 136.6 |
+| Alerts | 127.8 |
+| Energy | 106.8 |
+
+Zen Sumi is the fastest theme: add ~10 ms for Ardoise and ~40 ms for Relief plat. Closing a popup redraws the whole screen: 126-130 ms. The « Tab5 Loop Time » sensor reaches 190-210 ms in the minute a popup opens: a full frame blocks the loop while it is drawn (software drawing on one core). Against 3.2.0 (below, single palette): climate popup 190 → 154-163 ms, console 167 → 143 ms, alarm clock 197 → 157 ms, TV remote 171 → 142 ms, calendar 126 → 141 ms (the only one up).
+
+### Theme switch
+
+Changing the theme or the light/dark mode, including the day/night switch of the Auto mode, **blocks the main loop 3.17 to 3.20 s, whatever the theme**; the new theme shows **3.7 to 3.9 s** after the request. Steps (identical within ±3 % at every switch):
+
+| Step | Time |
+|---|---|
+| Colours of the 53 shared styles (53 × `lv_obj_report_style_change`) | 1.22 s |
+| `lvgl.theme.update` (text colour of the labels) | 0.60 s |
+| Shapes (12 styles: radii, borders, shadows, gradients) | 1.04 s |
+| Display fonts (3 styles) | 0.12 s |
+| Colours set by the C++ modules | 0.16 s |
+| Alarm clock, assistant | 0.02 s |
+
+The screen holds **1,593 LVGL objects**, and every `lv_obj_report_style_change()` walks them all and refreshes the whole subtree of each object that carries the style. It is the repaint code, not the theme. **An improvement is being studied** (not part of 3.8.0-rc.1).
+
+### Boot
+
+Restart from the « Redémarrage Système » button, 3 runs per theme. In Ardoise (the compiled palette, nothing to repaint) the first « Loop Time » published after the restart is 10,450 ms and the API is reachable again after 17.2-17.4 s; in another theme (Capsule, repainted at boot) 13,401 ms and 18.9-19.1 s. **Any theme other than Ardoise adds ~2.95 s of blocked loop at boot**, and the API comes back 1.7 s later — the same repaint as the theme switch. These times do not compare with the boot table of 2026-10-01 below (another time zero, another method).
+
+### Resources
+
+| Resource | Used | Free |
+|---|---|---|
+| Internal RAM (heap) | — | **262 kB** (lowest since boot 217 kB, largest block 172 kB); 249-290 kB over 7 days |
+| Static RAM | 193 kB of 445 kB (43.4 %) | — |
+| PSRAM | ~6.1 MB | **23.0 MB of 29.1 MB** (lowest 22.95 MB) |
+| Flash (firmware slot, 7.75 MB) | 4,558,142 bytes (56.1 %), of which 1.08 MB of font and icon images, 452 kB of screen-building code (`setup()`) | **3.57 MB** |
+| Main loop stack | — | **10.2 kB at the lowest** (7 days, unchanged since 3.2.0) |
+| LVGL objects | 1,593 | — |
+
+Since 3.2.0: free internal RAM 286.7 → 262 kB (−25 kB); firmware image 3.36 → 4.56 MB (+1.2 MB, mostly the display fonts of the themes). Nothing is tight.
+
+### Hardware over 7 days (2026-09-30 → 10-07)
+
+- ESP32-P4 temperature: 32.4 / 36.6 / 39.4 °C (min / mean / max, 976 readings).
+- 3 brownout restarts; the tablet runs without a battery, on a computer's USB port. Cause not verified.
+
+## Results of 2026-09-28 (3.2.0)
+
+Firmware **3.2.0** built exactly like the published one (ESPHome 2026.9.0), on **2026-09-28** between 20:35 and 22:52. Screen brightness 36/255, home page, weather mode, rooms defined, microphone off at the start (nobody home). A single palette: the themes came in 3.6.0.
 
 | What | Measured | Runs |
 |---|---|---|
@@ -86,7 +179,7 @@ What is left: `setup()` (5 s, including the 1 s wait the screen needs after a so
 
 ## Limits
 
-- One tablet, one screen revision, one evening.
+- One tablet, one screen revision, one evening per campaign.
 - Not measured: touch latency, voice latency (wake word to answer), power draw.
 - Most of the time of a full-screen redraw is software rendering on one core; ESPHome 2026.9 draws with a single buffer and waits for each transfer, and uses the P4's 2D accelerator for rotation only.
 
@@ -94,9 +187,102 @@ What is left: `setup()` (5 s, including the 1 s wait the screen needs after a so
 
 ## Version française
 
-Mesuré sur la tablette de l'auteur (Tab5, écran ST7123, ESP32-P4 révision v1.3 à 360 MHz), firmware **3.2.0** compilé exactement comme le publié (ESPHome 2026.9.0), le **28/09/2026** entre 20 h 35 et 22 h 52. Luminosité 36/255, page d'accueil, mode météo, pièces définies, micro coupé au départ (personne à la maison).
+Mesuré sur la tablette de l'auteur (Tab5, écran ST7123, ESP32-P4 révision v1.3 à 360 MHz). La campagne la plus récente d'abord ; les anciens chiffres restent, datés, pour comparer.
 
-## Résultats
+## Campagne du 07/10/2026 (3.8.0-rc.1)
+
+Mesuré le **07/10/2026** entre 22 h 30 et 0 h 05, sur la **3.8.0-rc.1** publiée et sur des builds de mesure du même code (commit `45a0c34`), jamais commités : ils écrivent au journal chaque image de 2 ms ou plus (durée, pixels, zones), et l'un d'eux chronomètre aussi chaque étape d'une bascule de thème et relève la RAM interne et la PSRAM libres toutes les 60 s. Pilotage par l'API native (`aioesphomeapi`), jamais dans une minute où le blueprint pousse ses mesures de 5 minutes ; écran entier = rétroéclairage éteint puis rallumé ; popups par le select « Aller à l'écran » ; chiffre retenu = image la plus longue, en médiane des passes. Des alertes étaient affichées, donc le panneau tournant de la carte centrale tournait : les chiffres au repos ne se comparent qu'à contenu égal, les images pleines n'en dépendent pas.
+
+### Écran entier, par thème (mode sombre, 5 passes)
+
+| Thème | Écran entier (ms) | Popup clim (ms) |
+|---|---|---|
+| Relief plat | 167,8 | 195,6 |
+| Relief doux | 160,8 | 169,3 |
+| Bonbon | 149,4 | 170,8 |
+| Sorbet | 138,1 | 165,2 |
+| Capsule | 135,8 | 154,7 |
+| Ardoise | 135,6 | 162,3 |
+| Ardoise douce | 134,9 | 163,5 |
+| Bento | 134,8 | 160,3 |
+| Craie et ardoise | 134,0 | 163,7 |
+| Platine et or | 133,9 | 161,8 |
+| Almanach | 133,7 | 163,3 |
+| Obsidienne | 133,4 | 160,1 |
+| Graphite | 133,1 | 158,7 |
+| Ultraviolet | 132,6 | 162,5 |
+| Terre cuite | 131,6 | 152,9 |
+| Béton brut | 131,6 | 155,8 |
+| Almanach imprimé | 131,4 | 158,7 |
+| Signalisation | 130,7 | 160,1 |
+| Néon calme | 130,1 | 161,4 |
+| Pixel | 127,4 | 157,6 |
+| Zen Sumi | 125,7 | 153,4 |
+
+- 18 thèmes sur 21 redessinent l'écran entier en **126 à 138 ms**. Les trois plus lents, ce sont les **ombres** : Relief plat et Relief doux sont les seuls thèmes à vraies ombres (`shadow_width` dans leurs `formes:` ; 50 px autour de la fenêtre des popups dans Relief plat, d'où son popup clim à 196 ms), Bonbon a une ombre de 1 px et les plus grands rayons. Les dégradés seuls ne coûtent presque rien (Capsule, Sorbet : 0 à +3 ms d'Ardoise).
+- Un écran entier = **~59 ms d'envoi** (fixes, voir « Où part le temps » plus bas) + **~75 ms de dessin** en Ardoise ; les ombres ajoutent +32 ms (Relief plat), +25 ms (Relief doux) et +14 ms (Bonbon) au dessin.
+- **Mode clair** (3 passes) : Ardoise 137,6 ; Relief doux 162,2 ; Relief plat 172,8 ; Bonbon 147,4 ; Capsule 139,1 ms — le même classement qu'en sombre, à 0-5 ms près.
+- **Au repos**, aucun thème ne ralentit : l'image la plus longue reste de 15 à 19 ms (panneau tournant). Les ombres ne coûtent que lorsqu'une grande surface est redessinée (écran rallumé, popup ouvert ou fermé).
+- **Cache d'ombres de LVGL** (`LV_DRAW_SW_SHADOW_CACHE_SIZE` à 80, 6,4 Ko de RAM interne), A/B le même soir : Relief plat 169,4 ms contre 167,8, Relief doux 159,5 contre 160,8 — du bruit, **aucun gain**. Le cache n'a qu'une entrée, chaque carte a une taille d'ombre différente et l'écran est dessiné par bandes. Pas retenu.
+
+### Popups (thème Zen Sumi, sombre, 4 passes)
+
+| Popup | Ouverture (ms) |
+|---|---|
+| Réveil | 156,9 |
+| Climatisation | 154,0 |
+| Réglages | 151,6 |
+| Plantes | 144,8 |
+| Console système | 143,1 |
+| Télécommande TV | 141,9 |
+| Calendrier | 141,3 |
+| Maison | 137,1 |
+| Assistant vocal | 136,6 |
+| Alertes | 127,8 |
+| Énergie | 106,8 |
+
+Zen Sumi est le thème le plus rapide : ajouter ~10 ms pour Ardoise et ~40 ms pour Relief plat. Fermer un popup redessine l'écran entier : 126-130 ms. Le capteur « Tab5 Loop Time » atteint 190 à 210 ms dans la minute où un popup s'ouvre : une image pleine bloque la boucle le temps de la dessiner (dessin logiciel sur un cœur). Par rapport à la 3.2.0 (plus bas, palette unique) : clim 190 → 154-163 ms, console 167 → 143 ms, réveil 197 → 157 ms, télécommande 171 → 142 ms, calendrier 126 → 141 ms (le seul en hausse).
+
+### Bascule de thème
+
+Changer de thème ou de mode clair/sombre, y compris la bascule jour/nuit du mode Auto, **bloque la boucle principale 3,17 à 3,20 s, quel que soit le thème** ; le nouveau thème apparaît **3,7 à 3,9 s** après la demande. Étapes (identiques à ±3 % à chaque bascule) :
+
+| Étape | Durée |
+|---|---|
+| Couleurs des 53 styles partagés (53 × `lv_obj_report_style_change`) | 1,22 s |
+| `lvgl.theme.update` (couleur du texte des labels) | 0,60 s |
+| Formes (12 styles : rayons, bordures, ombres, dégradés) | 1,04 s |
+| Polices d'affichage (3 styles) | 0,12 s |
+| Couleurs posées par les modules C++ | 0,16 s |
+| Réveil, assistant | 0,02 s |
+
+L'écran compte **1 593 objets LVGL**, et chaque `lv_obj_report_style_change()` les parcourt tous et rafraîchit tout le sous-arbre de chaque objet qui porte le style. C'est le code de la repeinture, pas le thème. **Une amélioration est à l'étude** (hors 3.8.0-rc.1).
+
+### Démarrage
+
+Redémarrage par le bouton « Redémarrage Système », 3 passes par thème. En Ardoise (la palette compilée, rien à repeindre), la première « Loop Time » publiée après le redémarrage vaut 10 450 ms et l'API est de nouveau joignable après 17,2 à 17,4 s ; dans un autre thème (Capsule, repeint au démarrage), 13 401 ms et 18,9 à 19,1 s. **Tout thème autre qu'Ardoise ajoute ~2,95 s de boucle bloquée au démarrage**, et l'API revient 1,7 s plus tard — la même repeinture que la bascule. Ces durées ne se comparent pas au tableau du démarrage du 01/10/2026 plus bas (autre origine, autre méthode).
+
+### Ressources
+
+| Ressource | Pris | Libre |
+|---|---|---|
+| RAM interne (tas) | — | **262 Ko** (au plus bas depuis le démarrage 217 Ko, plus grand bloc 172 Ko) ; 249 à 290 Ko sur 7 jours |
+| RAM statique | 193 Ko sur 445 Ko (43,4 %) | — |
+| PSRAM | ~6,1 Mo | **23,0 Mo sur 29,1 Mo** (au plus bas 22,95 Mo) |
+| Flash (emplacement du firmware, 7,75 Mo) | 4 558 142 octets (56,1 %), dont 1,08 Mo d'images de polices et d'icônes, 452 Ko de code de construction de l'écran (`setup()`) | **3,57 Mo** |
+| Pile de la boucle principale | — | **10,2 Ko au plus bas** (7 jours, inchangé depuis la 3.2.0) |
+| Objets LVGL | 1 593 | — |
+
+Depuis la 3.2.0 : RAM interne libre 286,7 → 262 Ko (−25 Ko) ; image du firmware 3,36 → 4,56 Mo (+1,2 Mo, surtout les polices d'affichage des thèmes). Rien n'est tendu.
+
+### Matériel sur 7 jours (30/09 → 07/10/2026)
+
+- Température de l'ESP32-P4 : 32,4 / 36,6 / 39,4 °C (min / moyenne / max, 976 valeurs).
+- 3 redémarrages par baisse de tension (brownout) ; la tablette tourne sans batterie, sur un port USB d'ordinateur. Cause non vérifiée.
+
+## Résultats du 28/09/2026 (3.2.0)
+
+Firmware **3.2.0** compilé exactement comme le publié (ESPHome 2026.9.0), le **28/09/2026** entre 20 h 35 et 22 h 52. Luminosité 36/255, page d'accueil, mode météo, pièces définies, micro coupé au départ (personne à la maison). Une seule palette : les thèmes sont arrivés avec la 3.6.0.
 
 | Quoi | Mesuré | Essais |
 |---|---|---|
@@ -176,6 +362,6 @@ Ce qui reste : `setup()` (5 s, dont l'attente de 1 s dont l'écran a besoin apr�
 
 ## Limites
 
-- Une tablette, une révision d'écran, une soirée.
+- Une tablette, une révision d'écran, une soirée par campagne.
 - Pas mesurés : latence tactile, latence vocale (du mot d'activation à la réponse), consommation.
 - L'essentiel du temps d'un redessin complet est du rendu logiciel sur un seul cœur ; ESPHome 2026.9 dessine avec un seul tampon, attend chaque envoi, et n'utilise l'accélérateur 2D du P4 que pour la rotation.
