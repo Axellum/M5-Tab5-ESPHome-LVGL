@@ -24,6 +24,7 @@
  *       energie_icone_* par MDI_CODE_TARGETS (règle 9).
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include <cmath>
 #include <cstdio>
@@ -41,17 +42,14 @@ constexpr int kSlots[NB_VUES] = {24, 30, 12};
 constexpr int kSlotsMax = 30;
 constexpr int kAxeMax = 12;
 
-// Géométrie (energie_popup.yaml) : corps du popup x 24..1226, y 72..670.
-constexpr int32_t kCorpsX = 24;
-constexpr int32_t kCorpsW = 1202;
-constexpr int32_t kEcart = 16;
+// Géométrie (energie_popup.yaml) : corps du popup x 24..1226, y 72..670 (kCorpsX, kCorpsW,
+// kCartesEcart : tab5_geometrie.h).
 constexpr int32_t kCartesY = 72;            // avec le graphique
 constexpr int32_t kCartesSeulesY = 266;     // sans : centrées dans le corps (598 − 210) / 2
 constexpr int32_t kMargeTexte = 44;         // 22 px de chaque côté
-// Zone des barres (energie_zone, 1166 × 286) : maximum en haut, repère, barres, axe.
-constexpr int32_t kZoneW = 1166;
+// Zone des barres (energie_zone, kGraphiqueL × 286) : maximum en haut, repère, barres, axe ;
+// libellés de l'axe de kAxeLibelleL px, texte centré (tab5_geometrie.h).
 constexpr int32_t kBordX = 20;              // marge : le premier libellé de l'axe tient entier
-constexpr int32_t kAxeW = 120;              // largeur d'un libellé de l'axe, texte centré
 constexpr int32_t kBarresHaut = 34;
 constexpr int32_t kBarresBas = 252;
 constexpr int32_t kAxeY = 258;
@@ -87,30 +85,12 @@ lv_obj_t* s_vide = nullptr;                 // « Aucun historique » au milieu 
 
 // --- Lecture des payloads ---------------------------------------------------------------
 
-// Champ suivant de [p, fin) jusqu'à `sep` : [*d, *d + *n). Avance p après le séparateur.
-void champ_suivant(const char*& p, const char* fin, char sep, const char*& d, size_t& n) {
-    d = p;
-    while (p < fin && *p != sep) p++;
-    n = static_cast<size_t>(p - d);
-    if (p < fin) p++;
-}
-
-// Nombre d'un champ : NAN s'il ne se lit pas (« nan », « unknown », vide).
-float lire_nombre(const char* d, size_t n) {
-    char buf[24];
-    if (n == 0 || n >= sizeof(buf)) return NAN;
-    std::memcpy(buf, d, n);
-    buf[n] = '\0';
-    char* fin = nullptr;
-    const float v = std::strtof(buf, &fin);
-    if (fin == buf || !std::isfinite(v)) return NAN;
-    return v;
-}
-
-Mesure lire_mesure(const char* d, size_t n) {
+// Champs et nombres : champ_suivant() et champ_nombre() (tab5_champs.h ; NAN s'il ne se
+// lit pas : « nan », « unknown », vide).
+Mesure lire_mesure(const Champ& c) {
     Mesure m;
-    m.choisi = n > 0;
-    m.v = lire_nombre(d, n);
+    m.choisi = c.n > 0;
+    m.v = champ_nombre(c, NAN);
     return m;
 }
 
@@ -120,14 +100,7 @@ int vue_de(const std::string& nom) {
     return -1;
 }
 
-// --- Dates (axe des jours) ---------------------------------------------------------------
-
-bool bissextile(int a) { return (a % 4 == 0 && a % 100 != 0) || a % 400 == 0; }
-int jours_du_mois(int a, int m) {
-    static constexpr int kJours[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    if (m < 1 || m > 12) return 31;
-    return (m == 2 && bissextile(a)) ? 29 : kJours[m - 1];
-}
+// Dates de l'axe des jours : jours_du_mois() (tab5_core.h).
 
 // --- Dessin ------------------------------------------------------------------------------
 
@@ -190,14 +163,14 @@ void peindre_instant() {
         return;
     }
     // Cartes visibles réparties sur toute la largeur du corps, dans l'ordre.
-    const int32_t largeur = (kCorpsW - (n - 1) * kEcart) / n;
+    const int32_t largeur = (kCorpsW - (n - 1) * kCartesEcart) / n;
     const int32_t y = graphique ? kCartesY : kCartesSeulesY;
     int k = 0;
     for (int c = 0; c < NB_CARTES; c++) {
         ui_hidden(u.carte[c], !montre[c]);
         if (!montre[c] || u.carte[c] == nullptr) continue;
         if (lv_obj_get_style_width(u.carte[c], LV_PART_MAIN) != largeur) lv_obj_set_width(u.carte[c], largeur);
-        ui_x(u.carte[c], kCorpsX + k * (largeur + kEcart));
+        ui_x(u.carte[c], kCorpsX + k * (largeur + kCartesEcart));
         ui_y(u.carte[c], y);
         k++;
     }
@@ -342,7 +315,7 @@ void peindre_graphique() {
         ui_text(s_maximum, buf);
     }
     const int nb = s.n > 0 ? s.n : kSlots[s_vue];
-    const int32_t pas = (kZoneW - 2 * kBordX) / nb;
+    const int32_t pas = (kGraphiqueL - 2 * kBordX) / nb;
     const int32_t largeur = pas * 7 / 10;
     const int32_t hauteur_max = kBarresBas - kBarresHaut;
     int axe = 0;
@@ -367,8 +340,8 @@ void peindre_graphique() {
             lv_obj_t* l = s_axe[axe++];
             ui_text(l, buf);
             ui_hidden(l, false);
-            // Centré sous sa barre (largeur fixe kAxeW, texte centré dedans).
-            ui_x(l, kBordX + k * pas + pas / 2 - kAxeW / 2);
+            // Centré sous sa barre (largeur fixe kAxeLibelleL, texte centré dedans).
+            ui_x(l, kBordX + k * pas + pas / 2 - kAxeLibelleL / 2);
         }
     }
     for (; axe < kAxeMax; axe++) ui_hidden(s_axe[axe], true);
@@ -392,7 +365,7 @@ void construire() {
     s_repere = lv_obj_create(u.zone);
     lv_obj_remove_style_all(s_repere);
     lv_obj_set_pos(s_repere, kBordX, kBarresHaut);
-    lv_obj_set_size(s_repere, kZoneW - 2 * kBordX, 1);
+    lv_obj_set_size(s_repere, kGraphiqueL - 2 * kBordX, 1);
     lv_obj_set_style_bg_color(s_repere, lv_color_hex(UIColor.GLASS_RIM), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(s_repere, LV_OPA_40, LV_PART_MAIN);
     lv_obj_remove_flag(s_repere, LV_OBJ_FLAG_CLICKABLE);
@@ -420,12 +393,12 @@ void construire() {
         lv_obj_add_flag(b, LV_OBJ_FLAG_HIDDEN);
         s_barres[k] = b;
     }
-    // Libellés de l'axe, texte centré dans kAxeW : un tous les trois pas en heures (138 px),
+    // Libellés de l'axe, texte centré dans kAxeLibelleL : un tous les trois pas en heures (138 px),
     // cinq en jours (187 px) ; en mois un pas fait 93 px et le nom court (« Janv ») tient.
     for (int k = 0; k < kAxeMax; k++) {
         lv_obj_t* l = libelle(u.zone);
         lv_obj_set_y(l, kAxeY);
-        lv_obj_set_width(l, kAxeW);
+        lv_obj_set_width(l, kAxeLibelleL);
         lv_obj_set_style_text_align(l, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         s_axe[k] = l;
     }
@@ -465,29 +438,28 @@ bool energie_formater(char* out, size_t n, float v, const char* unite) {
 }
 
 void energie_instantane(const std::string& payload) {
+    if (payload_trop_long("tab5.energie", payload.size())) return;
     const char* p = payload.data();
     const char* fin = p + payload.size();
-    const char* d = nullptr;
-    size_t n = 0;
     Instant i;
     i.recu = true;
     Mesure* champs[] = {&i.solaire, &i.maison, &i.reseau, &i.batterie, &i.batterie_puissance,
                         &i.batterie_temperature};
-    for (Mesure* m : champs) {
-        champ_suivant(p, fin, '|', d, n);
-        *m = lire_mesure(d, n);
-    }
-    champ_suivant(p, fin, '|', d, n);
-    texte_ha_copier(i.unite_temperature, sizeof(i.unite_temperature), d, n);
-    champ_suivant(p, fin, '|', d, n);
-    i.jour = lire_mesure(d, n);
+    for (Mesure* m : champs) *m = lire_mesure(champ_suivant(p, fin, '|'));
+    const Champ unite = champ_suivant(p, fin, '|');
+    texte_ha_copier(i.unite_temperature, sizeof(i.unite_temperature), unite.p, unite.n);
+    i.jour = lire_mesure(champ_suivant(p, fin, '|'));
     s_i = i;
     peindre();
 }
 
 void energie_historique(const std::string& vue, const std::string& debut, const std::string& valeurs) {
     const int v = vue_de(vue);
-    if (v < 0) return;
+    if (v < 0) {
+        payload_refuse("tab5.energie", "historique : vue inconnue", vue.size());
+        return;
+    }
+    if (payload_trop_long("tab5.energie", valeurs.size())) return;
     Serie s;
     s.recue = true;
     // Date illisible : 1er janvier (seuls les libellés de l'axe s'en servent). Année bornée
@@ -506,11 +478,9 @@ void energie_historique(const std::string& vue, const std::string& debut, const 
     // dernier « ; » était perdu : 23 barres au lieu de 24 l'après-midi, espacement changé.
     bool apres_sep = false;
     while ((p < fin || apres_sep) && s.n < kSlots[v]) {
-        const char* d = nullptr;
-        size_t n = 0;
-        champ_suivant(p, fin, ';', d, n);
-        apres_sep = p > d + n;   // le champ s'est terminé sur un « ; »
-        s.v[s.n++] = lire_nombre(d, n);
+        const Champ c = champ_suivant(p, fin, ';');
+        apres_sep = p > c.p + c.n;   // le champ s'est terminé sur un « ; »
+        s.v[s.n++] = champ_nombre(c, NAN);
     }
     // Une valeur négative (compteur remis à zéro mal compté) n'a pas de barre.
     for (int k = 0; k < s.n; k++)

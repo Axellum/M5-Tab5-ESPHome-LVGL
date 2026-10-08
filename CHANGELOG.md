@@ -157,6 +157,15 @@ de la tuile − / + (#379).
   dépôt par le bouton essayé le 07/10 avec la 3.7.0 stable : HACS propose la v3.7.0 ;
   téléchargement et ajout de l'intégration pas encore essayés par l'auteur.
 
+### 2026-10-08 — Firmware : socle C++ commun (lot L5 de l'audit du 07/10)
+
+- **Une seule copie** de la lecture bornée d'un payload (`Tab5/tab5_champs.h`, six variantes
+  retirées), des dates et des heures « HH:MM » (`tab5_core`), de la géométrie des popups
+  (`Tab5/tab5_geometrie.h`) et de ce que partagent les tuiles de pièce et la tuile − / +
+  (`Tab5/tab5_modele_ha.h`). Testées sur PC par `tools/test_tab5_socle.cpp` (g++ en CI).
+- **Un payload refusé laisse une ligne dans le journal** (`tab5.<module>`, raison et taille, jamais
+  le contenu), avec un plafond de taille commun de 16 Ko. Rien d'autre ne change à l'écran.
+
 ## [3.7.0] — 2026-10-07
 
 De `v3.6.0` à aujourd'hui : quarante-neuf pull requests (#326 → #375 ; #369 est une discussion),

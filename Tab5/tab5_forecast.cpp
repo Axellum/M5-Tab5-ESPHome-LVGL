@@ -161,10 +161,7 @@ uint32_t get_temperature_color(float t) {
 // Remplacement de split_token par un parsing in-place avec strtok_r pour éviter la fragmentation de la SRAM.
 static void parse_and_update_heures_bulk(const std::string& payload) {
     if (payload.empty()) return;
-    if (payload.length() > 2048) {
-        ESP_LOGE("tab5.forecast", "Payload heures trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
-        return;
-    }
+    if (payload_trop_long("tab5.forecast", payload.size(), 2048)) return;  // tampon de pile
     ESP_LOGD("tab5.forecast", "Received heures bulk payload length: %d", payload.length());
     // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
     // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
@@ -193,7 +190,10 @@ static void parse_and_update_heures_bulk(const std::string& payload) {
 
 bool accept_heures_bulk(const std::string& payload, int forecast_page) {
     const int premier = std::atoi(payload.c_str());  // idx du 1er créneau du bloc
-    if (premier < 0 || premier >= 15) return false;
+    if (premier < 0 || premier >= 15) {
+        payload_refuse("tab5.forecast", "heures : premier créneau hors de 0 à 14", payload.size());
+        return false;
+    }
     const int bloc = premier / 5;
     const auto canal = static_cast<PushChannel>(static_cast<int>(PushChannel::HEURES_0) + bloc);
     if (push_unchanged(canal, payload)) return false;
@@ -205,10 +205,7 @@ bool accept_heures_bulk(const std::string& payload, int forecast_page) {
 
 void parse_and_update_jours_bulk(const std::string& payload) {
     if (payload.empty()) return;
-    if (payload.length() > 2048) {
-        ESP_LOGE("tab5.forecast", "Payload jours trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
-        return;
-    }
+    if (payload_trop_long("tab5.forecast", payload.size(), 2048)) return;  // tampon de pile
     ESP_LOGD("tab5.forecast", "Received jours bulk payload length: %d", payload.length());
     // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
     // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.

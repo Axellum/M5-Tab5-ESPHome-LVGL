@@ -32,6 +32,7 @@
  */
 #include "tab5_internal.h"
 #include "tab5_tuiles_icones.h"
+#include "tab5_modele_ha.h"
 #include "lvgl.h"
 #include <esp_attr.h>
 #include <algorithm>
@@ -41,6 +42,10 @@
 #include <cstring>
 
 ReglablesUI g_reglables_ui;
+
+// kNom, kIcone, kEtat, est(), etat_indisponible(), copier_icone() : communs avec les
+// tuiles de pièce (tab5_modele_ha.h, lot L5).
+using namespace modele_ha;
 
 namespace {
 
@@ -56,10 +61,7 @@ constexpr const char* kIconesDefaut[kNbTypes] = {"etat",           "enceinte",  
                                                   "clim",           "chauffe_eau", "humidificateur",
                                                   "ventilateur",    "volet",       "mesure"};
 
-constexpr size_t kNom = 25;     // nom affiché : 24 octets au plus, comme une tuile
-constexpr size_t kIcone = 16;   // code de palette [a-z0-9_]{1,15}
-constexpr size_t kUnite = 8;    // unité : 7 octets au plus
-constexpr size_t kEtat = 16;    // état HA tel quel
+constexpr size_t kUnite = 8;    // unité : 7 octets au plus (kNom, kIcone, kEtat : tab5_modele_ha.h)
 
 // Définition d'un appareil. Pas d'initialiseur de membre : les structures sont remises
 // à zéro par memset (octets de bourrage compris), pour que memcmp ne voie jamais une
@@ -147,9 +149,7 @@ void charger() {
     if (s_pref_choix.load(&c) && c.magic == kMagicChoix && c.id != 0) s_choix = c.id;
 }
 
-bool est(const char* s, const char* mot) { return std::strcmp(s, mot) == 0; }
-
-bool hors_ligne(const Etat& e) { return !e.recu || est(e.brut, "unavailable") || est(e.brut, "unknown"); }
+bool hors_ligne(const Etat& e) { return !e.recu || etat_indisponible(e.brut); }
 
 int nb_ha() {
     int n = 0;
@@ -426,33 +426,9 @@ bool cle_reglable(const char* cle, size_t n, int& i) {
     return true;
 }
 
-struct Champ {
-    const char* p;
-    size_t n;
-};
-
-// Champs séparés par '|', au plus `max` (le dernier prend le reste).
-int decouper(const char* s, size_t n, Champ* out, int max) {
-    int k = 0;
-    size_t debut = 0;
-    for (size_t i = 0; i <= n && k < max; i++) {
-        if (i == n || (s[i] == '|' && k < max - 1)) {
-            out[k++] = {s + debut, i - debut};
-            debut = i + 1;
-        }
-    }
-    return k;
-}
-
-float nombre(const Champ& c, float defaut) {
-    char tmp[24];
-    if (c.n == 0 || c.n >= sizeof(tmp)) return defaut;
-    std::memcpy(tmp, c.p, c.n);
-    tmp[c.n] = '\0';
-    char* bout = nullptr;
-    const float v = strtof(tmp, &bout);
-    return (bout == tmp || !std::isfinite(v)) ? defaut : v;
-}
+// Champs séparés par '|', au plus `max` (le dernier prend le reste) : Champ et
+// champs_decouper_reste() de tab5_champs.h ; un nombre : champ_nombre().
+int decouper(const char* s, size_t n, Champ* out, int max) { return champs_decouper_reste(s, n, '|', out, max); }
 
 // « type|icône|options|lien|min|max|pas|unité|nom » (après « rN| ») dans `d`.
 void lire_def(const char* s, size_t n, Def& d) {
@@ -464,20 +440,16 @@ void lire_def(const char* s, size_t n, Def& d) {
     for (int t = 1; t < kNbTypes; t++)
         if (f[0].n == std::strlen(kTypes[t]) && std::strncmp(f[0].p, kTypes[t], f[0].n) == 0) d.type = t;
     if (d.type == 0) return;
-    size_t j = 0;
-    for (size_t i = 0; i < f[1].n && j < kIcone - 1; i++) {
-        const char c = f[1].p[i];
-        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') d.icone[j++] = c;
-    }
+    copier_icone(d.icone, f[1].p, f[1].n);
     d.tv = std::memchr(f[2].p, 't', f[2].n) != nullptr ? 1 : 0;
     if (f[3].n == 3 && f[3].p[0] == 't' && f[3].p[1] >= '0' && f[3].p[1] <= '4' && f[3].p[2] >= '0' &&
         f[3].p[2] <= '4') {
         d.lien_r = static_cast<int8_t>(f[3].p[1] - '0');
         d.lien_t = static_cast<int8_t>(f[3].p[2] - '0');
     }
-    d.min = nombre(f[4], 0.0f);
-    d.max = nombre(f[5], 100.0f);
-    d.pas = nombre(f[6], 1.0f);
+    d.min = champ_nombre(f[4], 0.0f);
+    d.max = champ_nombre(f[5], 100.0f);
+    d.pas = champ_nombre(f[6], 1.0f);
     if (!(d.max > d.min)) d.max = d.min + 1.0f;
     if (!(d.pas > 0.0f)) d.pas = 1.0f;
     texte_ha_copier(d.unite, kUnite, f[7].p, f[7].n);
@@ -534,7 +506,7 @@ bool reglables_etat_recu(const char* cle, size_t n_cle, const char* reste, size_
     Etat& e = s_etats[i];
     std::memset(e.brut, 0, sizeof(e.brut));
     if (k > 0) std::memcpy(e.brut, f[0].p, std::min(f[0].n, kEtat - 1));
-    e.valeur = k > 1 ? nombre(f[1], NAN) : NAN;
+    e.valeur = k > 1 ? champ_nombre(f[1], NAN) : NAN;
     // Un geste en cours sur cet appareil : la valeur affichée reste la sienne (l'état qui
     // arrive est celui d'avant le geste), comme la consigne de la clim.
     if (s_attente.cle[0] == 'r' && s_attente.cle[1] == '0' + i) e.valeur = s_attente.valeur;

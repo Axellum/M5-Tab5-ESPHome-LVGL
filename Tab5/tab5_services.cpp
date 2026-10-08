@@ -18,6 +18,7 @@
 #include "tab5_internal.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <algorithm>
 #include <cmath>
 #include <ctime>
 #include <cstring>
@@ -102,6 +103,8 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
     char buf[1024];
     strncpy(buf, payload.c_str(), sizeof(buf) - 1);
     buf[sizeof(buf) - 1] = '\0';
+    // Plus long que le tampon : coupé (les derniers champs manquent, #T165), donc dit.
+    if (payload.size() >= sizeof(buf)) payload_refuse("tab5.vigilance", "coupé à 1023 octets", payload.size());
 
     // strtok_r saute les champs vides consécutifs ("||"), comme l'ancien lambda :
     // un champ vide décalerait les suivants. Contrat HA inchangé — HA envoie
@@ -259,11 +262,7 @@ void rain_bars_rejouer() {
 // restent en l'état. Retourne has_rain (au moins une barre non vide).
 bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9]) {
     char buf[256];
-    if (payload.size() >= sizeof(buf)) {
-        ESP_LOGW("tab5.rain", "payload pluie 1h trop long (%u octets, max %u) : ignore",
-                 (unsigned) payload.size(), (unsigned) (sizeof(buf) - 1));
-        return rain_any_bar();
-    }
+    if (payload_trop_long("tab5.rain", payload.size(), sizeof(buf) - 1)) return rain_any_bar();
     strncpy(buf, payload.c_str(), sizeof(buf));
     buf[sizeof(buf) - 1] = '\0';
     char* save = nullptr;
@@ -354,7 +353,7 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
     out_l1.clear();
     out_l2.clear();
 
-    time_t now_raw = time(nullptr);
+    time_t now_raw = tab5_time_source(nullptr);
     if (now_raw <= 0) {
         out_l1 = planning_vide();
         return;
@@ -377,12 +376,11 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
         const std::string& h = d.heures_ouverture;
         if (h.size() < 11 || d.est_repos) continue;  // "HH:MM-HH:MM"
 
-        const int start_h = atoi(h.substr(0, 2).c_str());
-        const int start_m = atoi(h.substr(3, 2).c_str());
         // Aujourd'hui : ignorer le créneau s'il a déjà commencé (même règle que l'ancien Jinja HA)
+        // Un début illisible compte comme 00:00 (déjà commencé), comme avant.
         if (jour == 0) {
             const int now_min = now_tm.tm_hour * 60 + now_tm.tm_min;
-            if (now_min >= start_h * 60 + start_m) continue;
+            if (now_min >= std::max(0, hhmm_minutes(h))) continue;
         }
 
         std::string j_name;

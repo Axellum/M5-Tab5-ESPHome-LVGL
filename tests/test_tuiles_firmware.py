@@ -103,8 +103,11 @@ def test_piece_de_chaque_page_selon_l_adr():
 
 
 def test_champs_gardes_selon_l_adr():
-    assert _constexpr("kNom") == "25", "nom : 24 octets au plus, zéro final compris"
-    assert _constexpr("kIcone") == "16", "code de palette : [a-z0-9_]{1,15}"
+    # kNom et kIcone : communs avec la tuile - / + (Tab5/tab5_modele_ha.h, lot L5).
+    modele = Path(REPO, "Tab5", "tab5_modele_ha.h").read_text(encoding="utf-8")
+    assert '#include "tab5_modele_ha.h"' in _cpp() and "using namespace modele_ha;" in _cpp()
+    assert re.search(r"constexpr size_t kNom = 25;", modele), "nom : 24 octets au plus, zéro final compris"
+    assert re.search(r"constexpr size_t kIcone = 16;", modele), "code de palette : [a-z0-9_]{1,15}"
     assert int(_constexpr("kComplement")) >= 8, "unité d'un cap : 7 octets au plus"
     # Coupé sur une frontière de caractère : on n'ajoute un caractère que s'il tient entier.
     assert "if (k + w >= cap) break;" in _fonction(_cpp(), "copier_texte")

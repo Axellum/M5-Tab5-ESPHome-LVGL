@@ -181,9 +181,12 @@ def test_colonnes_dans_l_ordre_des_pieces_et_geometrie():
     assert "kPieceDePage" not in cpp
     assert "s_colonne = n > 0 ? (kCarteL - 2 * kMarge - (n - 1) * kEcart) / n : 0;" in disposer
     assert "ui_hidden(u.vide, n > 0);" in disposer
-    assert int(_constexpr(cpp, "kCarteL")) == _jeton("modal_card_w")
-    assert int(_constexpr(cpp, "kCarteH")) == _jeton("modal_card_h")
-    assert int(_constexpr(cpp, "kCorpsY")) == _jeton("modal_body_y")
+    # Carte et corps : tab5_geometrie.h, partagé (lot L5 ; tests/test_geometrie_partagee.py).
+    assert '#include "tab5_geometrie.h"' in cpp and "constexpr int32_t kCarteL" not in cpp
+    geometrie = _lire("Tab5", "tab5_geometrie.h")
+    assert int(_constexpr(geometrie, "kCarteL")) == _jeton("modal_card_w")
+    assert int(_constexpr(geometrie, "kCarteH")) == _jeton("modal_card_h")
+    assert int(_constexpr(geometrie, "kCorpsY")) == _jeton("modal_body_y")
     ligne = _lire("Tab5", "ui_components", "maison_ligne.yaml")
     assert f"height: {_constexpr(cpp, 'kLigneH')}" in ligne.split("widgets:", 1)[0]
     assert re.search(rf"x: {_constexpr(cpp, 'kTexteX')}, y: -15", ligne)

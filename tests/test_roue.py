@@ -66,7 +66,8 @@ def _k(nom):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_constantes_du_rendu_egales_au_cpp():
-    assert (_k("kEcranL"), _k("kEcranH")) == ecrans.ROUE_ECRAN
+    geometrie = _lire("Tab5", "tab5_geometrie.h")   # écran partagé (lot L5, 07/10/2026)
+    assert (int(_const(geometrie, "kEcranL")), int(_const(geometrie, "kEcranH"))) == ecrans.ROUE_ECRAN
     for cpp, rendu in (("kRayon", ecrans.ROUE_RAYON), ("kDiametre", ecrans.ROUE_DIAMETRE),
                        ("kRayon2", ecrans.ROUE_RAYON2), ("kDiametre2", ecrans.ROUE_DIAMETRE2),
                        ("kMarge", ecrans.ROUE_MARGE), ("kPasAngle", ecrans.ROUE_PAS_ANGLE),
