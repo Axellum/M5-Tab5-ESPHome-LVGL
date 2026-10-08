@@ -26,6 +26,31 @@ est écrit, deux identifiants ajoutés et l'ordre de deux widgets qui ne se chev
   copies), tap-to-wake et cadence de l'IMU (plus de `static` dans une lambda), retour
   automatique à l'accueil (`retour_auto_tick()`).
 
+### 2026-10-08 — Données générées des thèmes et polices figées (lot L12)
+
+Rien ne change à l'écran : mêmes couleurs, mêmes formes, mêmes fichiers de police.
+
+- **Retoucher un thème ne recompile plus tout le firmware.** Le catalogue des 21 thèmes
+  (`THEMES[]`, ~2 800 lignes générées) quitte `Tab5/tab5_tokens.h`, inclus par 26 unités C++ dont
+  deux jeux, pour `Tab5/tab5_themes_data.h`, inclus par `tab5_theme.cpp` et `tab5_reglages.cpp`
+  seulement. `tab5_tokens.h` passe de 3 125 à 273 lignes et ne garde que `PALETTE_SOMBRE`, que
+  `THEMES[0]` reprend. `tools/gen_themes.py` écrit le nouveau fichier ; `tests/test_themes.py`
+  vérifie qu'il est à jour et que personne d'autre ne l'inclut.
+- **Tables des thèmes liées à leur nombre** : des `static_assert` générés lient `kPolices`,
+  `kFormesDebut` et leurs sentinelles à `THEME_COUNT` ; une table périmée ne compile plus.
+- **Rôle de couleur `ICON_MUTED` retiré** : rien ne le lisait (66 rôles). Un test échoue
+  désormais sur un rôle que rien ne lit.
+- **Polices figées dans le dépôt** : Roboto 700 et les 20 polices des thèmes étaient des
+  `gfonts://`, redemandées à Google Fonts chaque jour par ESPHome ; une nouvelle version chez
+  Google changeait le firmware sans un mot. Les fichiers (`Tab5/fonts/`, 3,6 Mo, SIL OFL 1.1,
+  copyrights dans `Tab5/fonts/OFL.txt`) sont ceux que Google servait, octet pour octet ;
+  `tests/test_polices_themes.py` vérifie leur empreinte et qu'aucune police n'est plus
+  téléchargée à la compilation.
+- Polices des thèmes en mémoire (PERF-2 de l'audit) : aucun glyphe retiré, et toutes restent
+  compilées. La police de la date dessine aussi les textes libres de 45 px (réponse vocale,
+  alertes, planning, carte centrale) dans les 7 langues, et ESPHome ne sait pas charger une police
+  à la demande (raisons dans l'ADR-0029).
+
 ### 2026-10-08 — Écritures gardées et petites optimisations (lot L10)
 
 Aucun changement visible : les mêmes valeurs, écrites seulement quand elles changent (en LVGL
