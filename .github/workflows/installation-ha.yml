@@ -19,7 +19,7 @@ name: Installation dans un HA neuf
 #     « MAJ Écran », redémarrage forgé ignoré, aucune action refusée), journal de HA
 #     sans erreur Tab5. En dernier, les captures de l'interface de HA du guide, en
 #     anglais et en français (tools/installation_ha/captures_ha.py, Chromium par
-#     Playwright) : artefact « installation-ha », dossier interface/, copiées à la main
+#     Playwright) : artefact « installation-ha-<version de HA> », dossier interface/, copiées à la main
 #     dans docs/images/installation/.
 # Ne teste PAS : l'interface de HA cliquée par un humain (elle est seulement ouverte et
 # photographiée), la page de flashage, le vrai matériel (Wi-Fi, écran, audio). Check non
@@ -88,13 +88,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-env:
-  # Version de Home Assistant du test : figée, relevée à la main (même logique que
-  # ESPHOME_PUBLICATION dans publication.yml).
-  HA_IMAGE: ghcr.io/home-assistant/home-assistant:2026.9.4
-
 jobs:
   installation:
+    # Versions de Home Assistant du test, relevées à la main (même logique que ESPHOME_PUBLICATION
+    # dans publication.yml) : la dernière, et le plancher annoncé (hacs.json, docs). 2026.8.3 = dernier
+    # tag 2026.8.x publié le 09/10/2026.
+    strategy:
+      fail-fast: false
+      matrix:
+        ha: ["2026.9.4", "2026.8.3"]
+    env:
+      HA_IMAGE: ghcr.io/home-assistant/home-assistant:${{ matrix.ha }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -155,7 +159,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: installation-ha
+          name: installation-ha-${{ matrix.ha }}
           path: |
             captures/
             !captures/*.bmp

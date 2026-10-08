@@ -48,10 +48,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-env:
-  # Même version que le test « HA neuf » (installation-ha.yml), relevée à la main avec lui.
-  HA_IMAGE: ghcr.io/home-assistant/home-assistant:2026.9.4
-
 jobs:
   hassfest:
     runs-on: ubuntu-latest
@@ -76,6 +72,15 @@ jobs:
             ghcr.io/hacs/action:main
 
   ha:
+    # Versions de Home Assistant du test, relevées à la main (même logique que ESPHOME_PUBLICATION
+    # dans publication.yml) : la dernière, et le plancher annoncé (hacs.json, docs). 2026.8.3 = dernier
+    # tag 2026.8.x publié le 09/10/2026.
+    strategy:
+      fail-fast: false
+      matrix:
+        ha: ["2026.9.4", "2026.8.3"]
+    env:
+      HA_IMAGE: ghcr.io/home-assistant/home-assistant:${{ matrix.ha }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -97,7 +102,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: integration-hacs
+          name: integration-hacs-${{ matrix.ha }}
           path: captures/
           if-no-files-found: warn
           retention-days: 14

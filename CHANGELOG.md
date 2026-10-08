@@ -19,6 +19,11 @@ le 08/10/2026 : test de consommation dans Home Assistant et lecture de la batter
 pendant le test (#405), `tools/mesure_conso.py` (#404). Fichiers Home Assistant à recopier avant le
 firmware.
 
+### 2026-10-09 — Première installation, suite : prérequis, bêta, Home Assistant 2026.8 testé (doc, CI)
+
+- **`installation/README.md`** : « Ce qu'il faut » ajoute le Wi-Fi 2,4 GHz (fiche M5Stack du Tab5) et la source USB-C (conseil 5 V / 2 A, pas une exigence). **`flash.md`** : en bêta, prendre aussi `tab5_home_assistant.zip` de la pré-release. **`updates.md`, `troubleshooting.md`** : le menu est « Paramètres → Système → Réparations ».
+- **CI** : `installation-ha.yml` et `integration-hacs.yml` tournent sur Home Assistant 2026.9.4 **et** 2026.8.3 (le plancher annoncé par `hacs.json` et la doc), artefacts suffixés par la version.
+
 ### 2026-10-09 — Première installation : ordre, dépannage et repères de version (doc)
 
 - **Page `/install/`** : une note dit de mettre les fichiers Home Assistant en place avant d'installer (la fenêtre d'ajout dure 30 min après le démarrage) ; le renvoi « guide, étape 4 » devient « étape 1 » ; le texte de l'écran ST7121 dit qu'elle tourne chez un autre utilisateur, comme `flash.md`.

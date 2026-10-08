@@ -167,7 +167,7 @@ Those three lines repeat ~50 times per second. The black screen is a *consequenc
 
 ### Tab5 integration (HACS): a message in Repairs
 
-**Symptom:** after an update of the « Tab5 — fichiers HA · HA files » integration and a restart, *Settings → Repairs* shows a message whose title starts with « Tab5 ».
+**Symptom:** after an update of the « Tab5 — fichiers HA · HA files » integration and a restart, *Settings → System → Repairs* shows a message whose title starts with « Tab5 ».
 
 **Root cause:** at start, the integration puts the files of its version in place, checks the configuration, reloads the YAML, then checks that the sensor « Tab5 · version des fichiers HA » shows the new version ([updates](installation/updates.md#home-assistant-files)). When a step does not end as expected, it says so in Repairs.
 
@@ -341,7 +341,7 @@ Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *cons
 
 ### Intégration Tab5 (HACS) : un message dans Réparations
 
-**Symptôme :** après une mise à jour de l'intégration « Tab5 — fichiers HA · HA files » et un redémarrage, *Paramètres → Réparations* montre un message dont le titre commence par « Tab5 ».
+**Symptôme :** après une mise à jour de l'intégration « Tab5 — fichiers HA · HA files » et un redémarrage, *Paramètres → Système → Réparations* montre un message dont le titre commence par « Tab5 ».
 
 **Cause racine :** au démarrage, l'intégration pose les fichiers de sa version, vérifie la configuration, recharge le YAML, puis vérifie que le capteur « Tab5 · version des fichiers HA » donne la nouvelle version ([mises à jour](installation/updates.md#fichiers-home-assistant)). Quand une étape ne finit pas comme prévu, elle le dit dans Réparations.
 
