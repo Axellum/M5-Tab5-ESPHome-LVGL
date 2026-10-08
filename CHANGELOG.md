@@ -15,6 +15,21 @@ thème ne fige plus l'écran (#383), Réglages en quatre pages (#400), repli mé
 #386, #388 à #394), rangement de `Tab5/` (#401, #402). Fichiers Home Assistant à recopier avant le
 firmware.
 
+### 2026-10-08 — Test de consommation dans Home Assistant, lecture toutes les 2 s
+
+- **Script « Tab5 — consumption test »** (`packages/tab5_mesure_conso.yaml`, nouveau) : sur une
+  tablette qui tourne sur sa batterie, 11 cas de 5 min (écran 100 / 50 / 10 % et éteint, « Okay
+  Nabu » coupé, haut-parleur coupé, thème Obsidienne sombre puis clair, économie d'énergie
+  « Toujours », tout coupé, référence rejouée), « Tab5 Consommation » lue toutes les 5 s ; à la fin,
+  réglages remis et notification avec un tableau en anglais à copier (moyenne, min, max, écart à la
+  référence, niveau, tension, température, énergie, autonomie approximative). Rien à installer ni
+  jeton : lisible dans l'interface de HA. S'arrête si la tablette est branchée. *Essai à blanc* :
+  1 min par cas, sans batterie. Bouton « Test de consommation » dans le tableau de bord du Tab5.
+- **Firmware** : interrupteur « Tab5 Mesure de consommation » (coupé par défaut et au démarrage) :
+  l'INA226 est lu toutes les 2 s au lieu de 60 s, coupé seul au bout de 2 h.
+- *À faire en mettant à jour* : recopier `packages/tab5_mesure_conso.yaml` et
+  `custom_templates/tab5_dashboard.jinja`, recharger les scripts (et les modèles Jinja).
+
 ### 2026-10-08 — Outil : consommation sur batterie, scénario par scénario
 
 - **`tools/mesure_conso.py`** : sur une tablette qui tourne sur sa batterie (USB débranché), pilote

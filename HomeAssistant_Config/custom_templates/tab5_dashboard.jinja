@@ -85,6 +85,7 @@
   ('economie', 'select', 'tab5_economie_d_energie'), ('sur_batterie', 'binary_sensor', 'tab5_sur_batterie'),
   ('courant', 'sensor', 'tab5_courant_batterie'),
   ('limite_charge', 'select', 'tab5_limite_de_charge'), ('consommation', 'sensor', 'tab5_consommation'),
+  ('mesure_conso', 'switch', 'tab5_mesure_de_consommation'),
   ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
   ('zones', 'sensor', 'zones_masquees'),
   ('reveil_en_cours', 'binary_sensor', 'reveil_en_cours'), ('prochain_reveil', 'sensor', 'prochain_reveil'),
@@ -1250,7 +1251,8 @@ views:
     quand « Batterie montée » est allumé. #}
 {%- for ent, fr_, en_ in [(T.batterie, 'Batterie', 'Battery'), (T.tension, 'Tension', 'Voltage'), (T.en_charge, 'En charge', 'Charging'),
                           (T.sur_batterie, 'Sur batterie', 'On battery'), (T.courant, 'Courant', 'Current'),
-                          (T.consommation, 'Consommation', 'Power draw')] %}
+                          (T.consommation, 'Consommation', 'Power draw'),
+                          (T.mesure_conso, 'Mesure de consommation', 'Power measurement')] %}
 {%- if ent %}
           - type: tile
             entity: {{ ent }}
@@ -1265,6 +1267,27 @@ views:
 {%- endif %}
 {%- endif %}
 {%- endfor %}
+{#- Test de consommation sur batterie (packages/tab5_mesure_conso.yaml, 08/10/2026) : ~1 h,
+    confirmation avant de le lancer. #}
+{%- if 'script.tab5_mesure_consommation' in present %}
+          - type: shortcut
+            label: "{{ t('Test de consommation', 'Consumption test') }}"
+            description: "{{ t('Sur batterie, environ 1 h ; résultat en notification', 'On battery, about 1 h; result in a notification') }}"
+            icon: mdi:battery-clock
+            tap_action:
+              action: perform-action
+              perform_action: script.tab5_mesure_consommation
+              confirmation:
+                text: "{{ t('Débrancher l’USB et ne plus toucher la tablette pendant environ 1 h. Lancer le test ?', 'Unplug the USB cable and leave the tablet alone for about 1 h. Start the test?') }}"
+            grid_options:
+              columns: 12
+{%- if T.batterie_montee %}
+            visibility:
+              - condition: state
+                entity: {{ T.batterie_montee }}
+                state: "on"
+{%- endif %}
+{%- endif %}
       - type: grid
         cards:
           - type: heading
@@ -2784,6 +2807,30 @@ views:
     'es': 'Consumo',
     'it': 'Consumo',
     'tr': 'Tüketim'},
+  'Mesure de consommation': {
+    'de': 'Verbrauchsmessung',
+    'nl': 'Verbruiksmeting',
+    'es': 'Medición del consumo',
+    'it': 'Misura dei consumi',
+    'tr': 'Tüketim ölçümü'},
+  'Test de consommation': {
+    'de': 'Verbrauchstest',
+    'nl': 'Verbruikstest',
+    'es': 'Prueba de consumo',
+    'it': 'Test dei consumi',
+    'tr': 'Tüketim testi'},
+  'Sur batterie, environ 1 h ; résultat en notification': {
+    'de': 'Im Akkubetrieb, etwa 1 h; Ergebnis als Benachrichtigung',
+    'nl': 'Op de accu, ongeveer 1 u; resultaat als melding',
+    'es': 'Con batería, aprox. 1 h; resultado en una notificación',
+    'it': 'A batteria, circa 1 h; risultato in una notifica',
+    'tr': 'Pilde, yaklaşık 1 sa; sonuç bildirimde'},
+  'Débrancher l’USB et ne plus toucher la tablette pendant environ 1 h. Lancer le test ?': {
+    'de': 'USB-Kabel abziehen und das Tablet etwa 1 h nicht berühren. Test starten?',
+    'nl': 'Haal de USB-kabel los en raak de tablet ongeveer 1 u niet aan. Test starten?',
+    'es': 'Desconecta el cable USB y no toques la tableta durante 1 h aprox. ¿Iniciar la prueba?',
+    'it': 'Scollega il cavo USB e non toccare il tablet per circa 1 h. Avviare il test?',
+    'tr': 'USB kablosunu çıkarın ve tablete yaklaşık 1 sa dokunmayın. Test başlasın mı?'},
   'Poussées HA → tablette': {
     'de': 'HA → Tablet-Pushes',
     'nl': 'Pushes HA → tablet',
