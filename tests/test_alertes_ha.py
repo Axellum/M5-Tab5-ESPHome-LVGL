@@ -733,3 +733,36 @@ def test_compte_des_indisponibles_par_filtres_toutes_les_5_minutes():
     rendu = ImmutableSandboxedEnvironment().from_string(modele).render(states=etats)
     assert rendu.strip() == "3"
 
+
+def test_liste_des_indisponibles_bornee_a_100():
+    """Audit du 07/10/2026, DO-7 : la liste gardée (c) des indisponibles ne grossit plus
+    sans fin (union depuis le début de l'alerte, attributs du capteur > 16 Ko au-delà de
+    quelques centaines d'entités). 100 au plus ; le libellé envoyé à la tablette
+    (@indispo:N, compté par la source) ne change pas."""
+    def indispo(ids):
+        ids = sorted(ids)
+        return {"ha:indispo": {"c": ids, "g": "Orange", "t": f"@indispo:{len(ids)}", "s": "indispo"}}
+
+    noms = [f"sensor.e{i:03d}" for i in range(400)]
+    c = Capteur()
+    assert c(indispo(noms[:150])) == ["ha:indispo#1"]
+    assert len(c.m["suivi"]["ha:indispo"]["c"]) == 100
+    assert c.m["affichees"][0]["t"] == "@indispo:150"
+    c.tap("ha:indispo#1", indispo(noms[:150]))
+    # 300 entités passent indisponibles l'une après l'autre, par paquets : la liste reste
+    # bornée, chaque paquet nouveau est une nouvelle révision.
+    for k in range(1, 4):
+        vues = noms[100 * k:100 * k + 100]
+        assert c(indispo(vues)) == [f"ha:indispo#{k + 1}"]
+        assert len(c.m["suivi"]["ha:indispo"]["c"]) == 100
+        c.tap(f"ha:indispo#{k + 1}", indispo(vues))
+    # Les indisponibles du moment restent dans la liste : rien de nouveau, pas de relance.
+    assert c(indispo(noms[300:400])) == []
+    assert c(indispo(noms[350:400])) == []
+    assert set(noms[350:400]) <= set(c.m["suivi"]["ha:indispo"]["c"])
+    # Sous la borne, rien ne change : l'union, dans l'ordre d'arrivée.
+    d = Capteur()
+    d(indispo(["b", "a"]))
+    d(indispo(["c"]))
+    assert d.m["suivi"]["ha:indispo"]["c"] == ["a", "b", "c"]
+

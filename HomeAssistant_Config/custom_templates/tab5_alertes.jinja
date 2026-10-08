@@ -24,7 +24,8 @@
     pile       capteurs « battery » sous le seuil, (aucune : revient après une recharge
                binaires « battery » à « on »        au-dessus du seuil + 10 %)
     indispo    entités indisponibles depuis 10 min UNE NOUVELLE entité (la liste gardée
-                                                    est l'union depuis le début)
+                                                    est l'union depuis le début, 100
+                                                    entités au plus : voir plus bas)
     vigilance  sensor.tab5_vigilance Jaune+        niveau ET phénomènes
 
   Abonnements : listes « Tab5 · alertes … » de packages/tab5_alerts.yaml. Une source à
@@ -74,6 +75,10 @@
   {%- set incertains = src.get('incertains') or [] -%}
   {%- set absents = src.get('absents') or [] -%}
   {%- set hist0 = m.get('historique') -%}
+  {#- Audit du 07/10/2026, DO-7 : la liste gardée des indisponibles (c) a 100 entités au
+      plus, sinon elle grossirait sans fin tant qu'une entité reste indisponible et les
+      attributs du capteur dépasseraient les 16 Ko que l'historique de HA accepte. -#}
+  {%- set max_indispo = 100 -%}
   {%- set ns = namespace(
         suivi={},
         lues=(m.get('lues') if m.get('lues') is mapping else {}),
@@ -94,15 +99,28 @@
   {%- for id, a in actives.items() -%}
     {%- set p = prev.get(id) if prev.get(id) is mapping else none -%}
     {%- if p is none -%}
-      {%- set c = a.c -%}
+      {%- set c = a.c[:max_indispo] if a.s == 'indispo' else a.c -%}
       {%- set r = 1 -%}
       {%- set d = maintenant -%}
       {%- set nouvelle = true -%}
     {%- else -%}
       {%- if a.s == 'indispo' -%}
         {%- set anciens = p.c if p.c is sequence and p.c is not string else [] -%}
-        {%- set ajouts = a.c | reject('in', anciens) | list -%}
-        {%- set c = anciens + ajouts -%}
+        {%- set vus = a.c[:max_indispo] -%}
+        {%- set ajouts = vus | reject('in', anciens) | list -%}
+        {%- set union = anciens + ajouts -%}
+        {%- if union | count <= max_indispo -%}
+          {%- set c = union -%}
+        {%- else -%}
+          {#- Au-delà : celles indisponibles en ce moment d'abord, puis les dernières vues
+              parmi les autres. Une entité sortie de la liste qui redevient indisponible
+              compte comme nouvelle (seulement au-delà de 100). Le libellé (@indispo:N)
+              vient de la source : il compte toujours toutes les entités. -#}
+          {%- set dedans = union | select('in', vus) | list -%}
+          {%- set autres = union | reject('in', vus) | list -%}
+          {%- set place = max_indispo - dedans | count -%}
+          {%- set c = (autres[autres | count - place:] if place > 0 else []) + dedans -%}
+        {%- endif -%}
         {%- set change = ajouts | count > 0 -%}
       {%- else -%}
         {%- set c = a.c -%}
