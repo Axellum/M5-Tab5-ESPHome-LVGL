@@ -4,7 +4,8 @@
  * @role Globals partagés de la couche C++ et carte de ses unités. Depuis le 08/09/2026
  *       (lot (e) de l'audit du 06/09), la logique vit dans une unité par responsabilité,
  *       toutes déclarées dans tab5_custom.h (unique en-tête public, inchangé) :
- *         tab5_text.cpp      UTF-8 / mojibake, store des alertes rejetées, libellés de jours
+ *         tab5_text.cpp      UTF-8 / mojibake, store des alertes rejetées, libellés de jours,
+ *                            journal d'un payload refusé (payload_refuse, lot L5)
  *         tab5_forecast.cpp  icônes et couleurs météo, parsing bulk jours/heures, tuiles
  *         tab5_central.cpp   carte centrale, alertes HA, pagination au swipe, planning tap
  *         tab5_services.cpp  logique des services HA (volet, vigilance, pluie, clim, planning)

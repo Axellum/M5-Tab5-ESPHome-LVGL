@@ -7,6 +7,9 @@ ESPHome) : ce test la tient égale des deux côtés (audit des conteneurs du 01/
 - Colonnes du calendrier : les en-têtes « Lun »…« Dim » de calendar_popup.yaml et les
   cases construites par cal_grid_build() (kCalColX0, kCalColPas, kCalColW dans
   Tab5/tab5_calendar.cpp). Un écart décale les noms des jours de leurs cases.
+- Géométrie partagée du C++ (Tab5/tab5_geometrie.h, lot L5 de l'audit du 07/10/2026) :
+  carte modale égale aux jetons, corps des popups Énergie et Température égal à leur
+  YAML, et aucune copie locale de ces constantes ni des littéraux 1280 / 1250.
 """
 import os
 import re
@@ -37,6 +40,22 @@ def _constante(fichier, nom):
     m = re.search(r"constexpr\s+int32_t\s+%s\s*=\s*(-?\d+)\s*;" % nom, _lire("Tab5", fichier))
     assert m, f"{nom} introuvable dans Tab5/{fichier}"
     return int(m.group(1))
+
+
+# Tab5/tab5_geometrie.h : constantes entières, éventuellement calculées des précédentes.
+GEOMETRIE = "tab5_geometrie.h"
+GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorpsX", "kCorpsW",
+                  "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kPieces", "kTuiles")
+# Fichiers qui s'en servent : aucun ne doit les redéfinir.
+GEOMETRIE_UTILISATEURS = ("tab5_energie.cpp", "tab5_historique.cpp", "tab5_maison.cpp", "tab5_zones.cpp",
+                          "tab5_tuiles.cpp", "tab5_roue.cpp", "tab5_cards.cpp")
+
+
+def _geometrie():
+    valeurs = {}
+    for nom, expr in re.findall(r"constexpr\s+int(?:32_t)?\s+(\w+)\s*=\s*([^;]+);", _lire("Tab5", GEOMETRIE)):
+        valeurs[nom] = int(eval(expr, {}, dict(valeurs)))   # expressions du fichier, déjà vérifiées
+    return valeurs
 
 
 def _widgets(liste):
@@ -82,3 +101,36 @@ def test_grille_du_calendrier_centree_dans_la_carte():
     assert pas > w, "les cases se chevauchent"
     droite = carte - (x0 + 6 * pas + w)
     assert droite == x0, f"grille décentrée : {x0} px à gauche, {droite} px à droite"
+
+
+# ─── Géométrie partagée du C++ (lot L5) ──────────────────────────────────────
+
+def test_geometrie_partagee_egale_aux_jetons_et_aux_popups():
+    g = _geometrie()
+    assert set(GEOMETRIE_NOMS) <= set(g), set(GEOMETRIE_NOMS) - set(g)
+    j = _jetons()
+    assert (g["kCarteL"], g["kCarteH"], g["kCorpsY"]) == (
+        int(j["modal_card_w"]), int(j["modal_card_h"]), int(j["modal_body_y"]))
+    # La carte est centrée dans l'écran : 15 px de chaque côté (commentaire des jetons).
+    assert (g["kEcranL"] - g["kCarteL"]) // 2 == (g["kEcranH"] - g["kCarteH"]) // 2 == 15
+    # Corps des popups à cartes et zone de leur graphique, comme leur YAML.
+    for popup, zone in (("energie_popup.yaml", "energie_zone"), ("historique_popup.yaml", "historique_zone")):
+        widgets = list(_widgets([yaml.load(_lire("Tab5", "ui_components", popup), Loader=_Chargeur)]))
+        corps = [p for _t, p in widgets if p.get("x") == g["kCorpsX"] and p.get("width") == g["kCorpsW"]]
+        assert corps, f"{popup} : pas de corps x {g['kCorpsX']}, largeur {g['kCorpsW']}"
+        zones = [p for _t, p in widgets if p.get("id") == zone]
+        assert len(zones) == 1 and zones[0].get("width") == g["kGraphiqueL"], f"{popup} : {zone}"
+    # Pièces et tuiles : cinq de chaque, comme le blueprint (ADR-0023).
+    assert g["kPieces"] == g["kTuiles"] == 5
+
+
+def test_aucune_copie_locale_de_la_geometrie():
+    for fichier in GEOMETRIE_UTILISATEURS:
+        cpp = _lire("Tab5", fichier)
+        assert '#include "tab5_geometrie.h"' in cpp, fichier
+        for nom in GEOMETRIE_NOMS:
+            assert not re.search(r"constexpr\s+\w+\s+%s\s*=" % nom, cpp), f"{nom} redéfini dans Tab5/{fichier}"
+        sans_blocs = re.sub(r"/\*.*?\*/", "", cpp, flags=re.S)
+        code = "\n".join(l.split("//", 1)[0] for l in sans_blocs.splitlines())
+        for litteral in ("1280", "1250", "1202", "1166"):
+            assert not re.search(r"\b%s\b" % litteral, code), f"{litteral} en dur dans Tab5/{fichier}"

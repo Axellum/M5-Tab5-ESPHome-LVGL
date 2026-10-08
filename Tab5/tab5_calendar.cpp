@@ -74,7 +74,11 @@ void cal_store_month_data(const std::string& annee, const std::string& mois,
     const std::string& codes, const std::string& heures, const std::string& details) {
     const int y = atoi(annee.c_str());
     const int m = atoi(mois.c_str());
-    if (y < 2000 || y > 2100 || m < 1 || m > 12) return;
+    if (y < 2000 || y > 2100 || m < 1 || m > 12) {
+        payload_refuse("tab5.calendrier", "mois : année ou mois hors bornes", annee.size() + mois.size());
+        return;
+    }
+    if (payload_trop_long("tab5.calendrier", codes.size() + heures.size() + details.size())) return;
     CalMonthData data;
     data.codes = codes;
     data.heures = heures;
@@ -109,14 +113,6 @@ bool cal_day_has_embedded_detail(int year, int month, int day) {
     // Champ ~ vide ≠ « rien de prévu confirmé » : avec get_events borné à aujourd'hui,
     // les jours passés n'ont souvent pas de détail embarqué → fallback script _jour.
     return !cal_cached_day_detail(year, month, day).empty();
-}
-
-static int cal_days_in_month(int y, int m) {
-    static const int dm[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    if (m < 1 || m > 12) return 30;
-    int d = dm[m - 1];
-    if (m == 2 && ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0)) d = 29;
-    return d;
 }
 
 // Jour de la semaine (0 = lundi ... 6 = dimanche), algorithme de Sakamoto —
@@ -351,7 +347,7 @@ void cal_render_month(lv_obj_t* lbl_month,
     lv_label_set_text(lbl_month, buf);
 
     const int first_col = cal_weekday_mon0(view_year, view_month, 1);
-    const int ndays = cal_days_in_month(view_year, view_month);
+    const int ndays = jours_du_mois(view_year, view_month);
 
     const CalMonthData* data = nullptr;
     const auto it = s_cal_month_cache.find(cal_cache_key(view_year, view_month));
@@ -459,7 +455,7 @@ void cal_render_month(lv_obj_t* lbl_month,
 std::string cal_date_for_cell(int view_year, int view_month, int cell_idx) {
     if (view_month < 1 || view_month > 12 || cell_idx < 0 || cell_idx >= 42) return "";
     const int day = cell_idx - cal_weekday_mon0(view_year, view_month, 1) + 1;
-    if (day < 1 || day > cal_days_in_month(view_year, view_month)) return "";
+    if (day < 1 || day > jours_du_mois(view_year, view_month)) return "";
     char buf[16];
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d", view_year, view_month, day);
     return std::string(buf);
@@ -527,6 +523,7 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
     char buf[1024];
     strncpy(buf, payload.c_str(), sizeof(buf) - 1);
     buf[sizeof(buf) - 1] = '\0';
+    if (payload.size() >= sizeof(buf)) payload_refuse("tab5.calendrier", "jour : coupé à 1023 octets", payload.size());
 
     int line_count = 0;
     char* saveptr;

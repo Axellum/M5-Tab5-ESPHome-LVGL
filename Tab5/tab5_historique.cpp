@@ -33,6 +33,7 @@
  *       tests/test_historique.py les lit tous. Un texte affiché passe par tr().
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "esp_heap_caps.h"
 #include "lvgl.h"
 #include <cmath>
@@ -60,25 +61,21 @@ constexpr int kBandesPrevMax = 10;
 constexpr int kGrilleMax = 6;               // 5 intervalles au plus
 constexpr int kAxeMax = 12;
 
-// Géométrie (historique_popup.yaml) : corps du popup x 24..1226, y 72..670 ; cartes de
-// 150 px en haut (y 72), carte du graphique de 432 px en dessous (y 238).
-constexpr int32_t kCorpsX = 24;
-constexpr int32_t kCorpsW = 1202;
-constexpr int32_t kEcart = 16;
+// Géométrie (historique_popup.yaml) : corps du popup x 24..1226, y 72..670 (kCorpsX,
+// kCorpsW, kCartesEcart : tab5_geometrie.h) ; cartes de 150 px en haut (y 72), carte du
+// graphique de 432 px en dessous (y 238).
 constexpr int32_t kMargeTexte = 44;         // 22 px de chaque côté
 // Carte du graphique : titre à gauche jusqu'aux boutons de vue (3 × 150 + 2 × 10, à 18 px
 // du bord droit).
-constexpr int32_t kTitreW = 1202 - 22 - 488 - 24;
-// Zone du tracé (historique_zone, 1166 × 344) : graduations à gauche, tracé, axe des
-// temps, légende.
-constexpr int32_t kZoneW = 1166;
+constexpr int32_t kTitreW = kCorpsW - 22 - 488 - 24;
+// Zone du tracé (historique_zone, kGraphiqueL × 344) : graduations à gauche, tracé, axe des
+// temps (libellés de kAxeLibelleL px, texte centré), légende.
 constexpr int32_t kGradW = 52;              // libellés des degrés, alignés à droite
 constexpr int32_t kTraceX0 = 64;
 constexpr int32_t kTraceX1 = 1146;
 constexpr int32_t kTraceY0 = 30;
 constexpr int32_t kTraceY1 = 266;
 constexpr int32_t kAxeY = 276;
-constexpr int32_t kAxeW = 120;              // largeur d'un libellé de l'axe, texte centré
 constexpr int32_t kLegendeY = 312;
 constexpr int32_t kPoint = 14;              // pastille de la valeur actuelle
 
@@ -139,25 +136,8 @@ lv_obj_t* s_vide = nullptr;
 
 // --- Lecture des payloads ---------------------------------------------------------------
 
-// Champ suivant de [p, fin) jusqu'à `sep` : [*d, *d + *n). Avance p après le séparateur.
-void champ_suivant(const char*& p, const char* fin, char sep, const char*& d, size_t& n) {
-    d = p;
-    while (p < fin && *p != sep) p++;
-    n = static_cast<size_t>(p - d);
-    if (p < fin) p++;
-}
-
-// Nombre d'un champ : NAN s'il ne se lit pas (« nan », « unknown », vide).
-float lire_nombre(const char* d, size_t n) {
-    char buf[24];
-    if (n == 0 || n >= sizeof(buf)) return NAN;
-    std::memcpy(buf, d, n);
-    buf[n] = '\0';
-    char* fin = nullptr;
-    const float v = std::strtof(buf, &fin);
-    if (fin == buf || !std::isfinite(v)) return NAN;
-    return v;
-}
+// Champs et nombres : champ_suivant() et champ_nombre() (tab5_champs.h ; NAN s'il ne se
+// lit pas : « nan », « unknown », vide).
 
 // Bornes de lecture : au-delà, c'est un payload faux, pas une mesure. Elles gardent aussi
 // les conversions en entier et les calculs de minutes sans débordement (le fuzz des
@@ -167,14 +147,14 @@ constexpr float kPasMax = 1440.0f;   // un créneau d'un jour au plus
 constexpr float kTempMax = 1000.0f;
 
 // Température : NAN si illisible ou hors de ±kTempMax.
-float lire_temperature(const char* d, size_t n) {
-    const float v = lire_nombre(d, n);
+float lire_temperature(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
     return std::fabs(v) <= kTempMax ? v : NAN;   // fabs(NAN) <= x est faux
 }
 
 // Minutes depuis le premier créneau : NAN si illisible, négatif ou au-delà de kMinutesMax.
-float lire_minutes(const char* d, size_t n) {
-    const float v = lire_nombre(d, n);
+float lire_minutes(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
     return v >= 0.0f && v <= kMinutesMax ? v : NAN;
 }
 
@@ -185,15 +165,7 @@ int index_de(const std::string& nom, const char* const* noms, int nb) {
 }
 
 // --- Dates (axe des temps) : calendrier civil, sans fuseau (heure locale de HA) ---------
-
-int64_t jours_depuis_civil(int a, int m, int j) {
-    a -= m <= 2 ? 1 : 0;
-    const int64_t ere = (a >= 0 ? a : a - 399) / 400;
-    const int64_t ae = a - ere * 400;
-    const int64_t jda = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + j - 1;
-    const int64_t jde = ae * 365 + ae / 4 - ae / 100 + jda;
-    return ere * 146097 + jde - 719468;
-}
+// Date → jour : jour_civil() (tab5_core.h) ; jour → date : moment() ci-dessous.
 
 struct Moment {
     int annee = 2000, mois = 1, jour = 1, heure = 0, minute = 0, wday = 0;
@@ -294,13 +266,13 @@ void peindre_cartes(const Serie& s) {
     HistoriqueUI& u = g_historique_ui;
     const bool prevu = s_cle == SERRE;
     const int n = prevu ? NB_CARTES : NB_CARTES - 1;
-    const int32_t largeur = (kCorpsW - (n - 1) * kEcart) / n;
+    const int32_t largeur = (kCorpsW - (n - 1) * kCartesEcart) / n;
     for (int c = 0; c < NB_CARTES; c++) {
         const bool montre = c < n;
         ui_hidden(u.carte[c], !montre);
         if (!montre || u.carte[c] == nullptr) continue;
         if (lv_obj_get_style_width(u.carte[c], LV_PART_MAIN) != largeur) lv_obj_set_width(u.carte[c], largeur);
-        ui_x(u.carte[c], kCorpsX + c * (largeur + kEcart));
+        ui_x(u.carte[c], kCorpsX + c * (largeur + kCartesEcart));
     }
     const Bilan b = s.recue ? bilan(s) : Bilan();
     char d[64], x[24];
@@ -359,9 +331,9 @@ Echelle echelle(float lo, float hi) {
 
 void peindre_libelle_centre(lv_obj_t* l, const char* txt, int32_t x) {
     ui_text(l, txt);
-    int32_t g = x - kAxeW / 2;
+    int32_t g = x - kAxeLibelleL / 2;
     if (g < 0) g = 0;
-    if (g > kZoneW - kAxeW) g = kZoneW - kAxeW;
+    if (g > kGraphiqueL - kAxeLibelleL) g = kGraphiqueL - kAxeLibelleL;
     ui_x(l, g);
     ui_hidden(l, false);
 }
@@ -692,12 +664,12 @@ void construire() {
     lv_obj_set_style_border_opa(s_point, LV_OPA_COVER, LV_PART_MAIN);
     s_maintenant = libelle(u.zone);
     lv_obj_set_y(s_maintenant, 0);
-    lv_obj_set_width(s_maintenant, kAxeW);
+    lv_obj_set_width(s_maintenant, kAxeLibelleL);
     lv_obj_set_style_text_align(s_maintenant, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     for (int k = 0; k < kAxeMax; k++) {
         lv_obj_t* l = libelle(u.zone);
         lv_obj_set_y(l, kAxeY);
-        lv_obj_set_width(l, kAxeW);
+        lv_obj_set_width(l, kAxeLibelleL);
         lv_obj_set_style_text_align(l, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         s_axe[k] = l;
     }
@@ -737,21 +709,24 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
                      const std::string& mesures, const std::string& previsions) {
     const int c = index_de(cle, kCles, NB_CLES);
     const int v = index_de(vue, kVues, NB_VUES);
+    if (c < 0 || v < 0) {
+        payload_refuse("tab5.historique", "clé ou vue inconnue", cle.size() + vue.size());
+        return;
+    }
+    if (payload_trop_long("tab5.historique", entete.size() + mesures.size() + previsions.size())) return;
     // Réponse pour l'autre température (le popup a changé de clé entre-temps) : ignorée.
-    if (c < 0 || v < 0 || c != s_cle || s_mem == nullptr) return;
+    if (c != s_cle || s_mem == nullptr) return;
     Serie& s = *new (&s_mem->series[v]) Serie();
     s.recue = true;
 
     // En-tête « nom|debut|pas|maintenant|actuel|exterieur ».
     const char* p = entete.data();
     const char* fin = p + entete.size();
-    const char* d = nullptr;
-    size_t n = 0;
-    champ_suivant(p, fin, '|', d, n);
-    texte_ha_copier(s.nom, sizeof(s.nom), d, n);
-    champ_suivant(p, fin, '|', d, n);
+    const Champ nom = champ_suivant(p, fin, '|');
+    texte_ha_copier(s.nom, sizeof(s.nom), nom.p, nom.n);
+    const Champ debut = champ_suivant(p, fin, '|');
     char date[24] = {};
-    std::memcpy(date, d, n < sizeof(date) - 1 ? n : sizeof(date) - 1);
+    std::memcpy(date, debut.p, debut.n < sizeof(date) - 1 ? debut.n : sizeof(date) - 1);
     int an = 2000, mo = 1, jo = 1, he = 0, mi = 0;
     if (std::sscanf(date, "%d-%d-%d%*c%d:%d", &an, &mo, &jo, &he, &mi) != 5 || an < 1970 || an > 2200 || mo < 1 ||
         mo > 12 || jo < 1 || jo > 31 || he < 0 || he > 23 || mi < 0 || mi > 59) {
@@ -759,56 +734,41 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
         mo = jo = 1;
         he = mi = 0;
     }
-    s.debut_jour = jours_depuis_civil(an, mo, jo);
+    s.debut_jour = jour_civil(an, mo, jo);   // année bornée à 1970..2200 : tient en 32 bits
     s.debut_min = he * 60 + mi;
-    champ_suivant(p, fin, '|', d, n);
-    const float pas = lire_minutes(d, n);
+    const float pas = lire_minutes(champ_suivant(p, fin, '|'));
     s.pas = std::isnan(pas) || pas < 1.0f || pas > kPasMax ? 60 : static_cast<int32_t>(pas);
-    champ_suivant(p, fin, '|', d, n);
-    const float maintenant = lire_minutes(d, n);
+    const float maintenant = lire_minutes(champ_suivant(p, fin, '|'));
     s.maintenant = std::isnan(maintenant) ? 0 : static_cast<int32_t>(maintenant);
-    champ_suivant(p, fin, '|', d, n);
-    s.actuel = lire_temperature(d, n);
-    champ_suivant(p, fin, '|', d, n);
-    s.exterieur = n == 1 && *d == '1';
+    s.actuel = lire_temperature(champ_suivant(p, fin, '|'));
+    s.exterieur = champ_est(champ_suivant(p, fin, '|'), "1");
 
     // Créneaux « moy,min,max » séparés par « ; » (vide = pas de donnée).
     p = mesures.data();
     fin = p + mesures.size();
     while (p < fin && s.n < kMesuresMax) {
-        champ_suivant(p, fin, ';', d, n);
-        const char* q = d;
-        const char* qf = d + n;
-        const char* e = nullptr;
-        size_t ne = 0;
+        const Champ c = champ_suivant(p, fin, ';');
+        const char* q = c.p;
+        const char* qf = c.p + c.n;
         Point& pt = s.m[s.n++];
-        champ_suivant(q, qf, ',', e, ne);
-        pt.moy = lire_temperature(e, ne);
-        champ_suivant(q, qf, ',', e, ne);
-        pt.mn = lire_temperature(e, ne);
-        champ_suivant(q, qf, ',', e, ne);
-        pt.mx = lire_temperature(e, ne);
+        pt.moy = lire_temperature(champ_suivant(q, qf, ','));
+        pt.mn = lire_temperature(champ_suivant(q, qf, ','));
+        pt.mx = lire_temperature(champ_suivant(q, qf, ','));
     }
     // Points de prévision « minute,moy[,min,max] », dans l'ordre du temps.
     p = previsions.data();
     fin = p + previsions.size();
     while (p < fin && s.np < kPrevMax) {
-        champ_suivant(p, fin, ';', d, n);
-        const char* q = d;
-        const char* qf = d + n;
-        const char* e = nullptr;
-        size_t ne = 0;
-        champ_suivant(q, qf, ',', e, ne);
-        const float minute = lire_minutes(e, ne);
+        const Champ c = champ_suivant(p, fin, ';');
+        const char* q = c.p;
+        const char* qf = c.p + c.n;
+        const float minute = lire_minutes(champ_suivant(q, qf, ','));
         if (std::isnan(minute)) continue;
         Prev& pv = s.p[s.np];
         pv.minute = static_cast<int32_t>(minute);
-        champ_suivant(q, qf, ',', e, ne);
-        pv.moy = lire_temperature(e, ne);
-        champ_suivant(q, qf, ',', e, ne);
-        pv.mn = lire_temperature(e, ne);
-        champ_suivant(q, qf, ',', e, ne);
-        pv.mx = lire_temperature(e, ne);
+        pv.moy = lire_temperature(champ_suivant(q, qf, ','));
+        pv.mn = lire_temperature(champ_suivant(q, qf, ','));
+        pv.mx = lire_temperature(champ_suivant(q, qf, ','));
         if (s.np > 0 && pv.minute <= s.p[s.np - 1].minute) continue;   // hors de l'ordre : ignoré
         s.np++;
     }

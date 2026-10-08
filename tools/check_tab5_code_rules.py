@@ -70,7 +70,8 @@ pour les règles 9 à 14). Quatorze règles, toutes falsifiables sur le dépôt 
      une lambda YAML (firmware ou tablette virtuelle) ou une autre unité C++.
      Exceptions du 08/10/2026 : `PUBLIQUES_SANS_APPELANT`.
  13. **Conventions du nouveau code** (Tab5/README.md) : `nullptr` jamais `NULL` ; hors
-     jeux, tag de journal `tab5.<module>` (exceptions datées : `TAGS_TAB5_TEMPORAIRES`).
+     jeux, tag de journal `tab5.<module>`, y compris celui donné à `payload_refuse()` /
+     `payload_trop_long()` (seuls relais d'un tag reçu : `TAGS_RELAYES`).
  14. **Accents des textes de l'écran** : aucun mot de `MOTS_SANS_ACCENT` (« Ecran »,
      « Temperature », « Etat »…) dans un texte de `tr()` ou du YAML des écrans.
   La règle 5 d'AGENTS.md (widget répété 3 fois → builder ou gabarit) n'est pas
@@ -914,12 +915,13 @@ RE_ESP_LOG = re.compile(r"\bESP_LOG[EWIDVC]+\s*\(\s*(\"[^\"]*\"|\w+)")
 RE_TAG_CONST = re.compile(r"\b(?:const|constexpr)\s+char\s*(?:\*\s*(?:const\s+)?)?(\w+)\s*(?:\[\])?\s*=\s*\"([^\"]*)\"")
 RE_TAG_TAB5 = re.compile(r"^tab5\.[a-z0-9_]+$")
 RE_JEU_CPP = re.compile(r"(_game|_ai|_engine|^game_common|^trivia_questions)\.(cpp|h)$")
-# TODO après L5 (exception temporaire du 08/10/2026) : ces unités sont refaites par le lot
-# L5 en parallèle ; leurs tags « TAB5 » passeront à tab5.central / tab5.zones ensuite.
-TAGS_TAB5_TEMPORAIRES: dict[str, int] = {
-    "tab5_central.cpp": 2,
-    "tab5_zones.cpp": 5,
-}
+# Exceptions datées (vide depuis la fin du lot L5, 08/10/2026 : tab5_central.cpp et
+# tab5_zones.cpp sont passés à tab5.central / tab5.zones). Nombre exact de tags permis.
+TAGS_TAB5_TEMPORAIRES: dict[str, int] = {}
+# Journal d'un payload refusé (lot L5) : ces fonctions écrivent sous le tag que l'appelant
+# leur donne (paramètre `tag`) ; chaque appel doit alors passer un « tab5.<module> » littéral.
+TAGS_RELAYES: dict[str, int] = {"tab5_text.cpp": 2}
+RE_TAG_RELAYE = re.compile(r"\bpayload_(?:refuse|trop_long)\s*\(\s*(\"[^\"]*\"|[^,\s)]+)")
 
 
 def conventions_cpp(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
@@ -939,12 +941,26 @@ def conventions_cpp(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
         vus.add(path.name)
         tags = dict(RE_TAG_CONST.findall(texte))
         hors: list[int] = []
+        relayes = 0
         for lineno, line in enumerate(lines, 1):
             for m in RE_ESP_LOG.finditer(line):
                 arg = m.group(1)
+                if arg == "tag" and path.name in TAGS_RELAYES:
+                    relayes += 1
+                    continue
                 tag = arg[1:-1] if arg.startswith('"') else tags.get(arg)
                 if tag is None or not RE_TAG_TAB5.match(tag):
                     hors.append(lineno)
+            for m in RE_TAG_RELAYE.finditer(line):
+                arg = m.group(1)
+                if line.lstrip().startswith(("bool ", "void ")):
+                    continue  # déclaration ou définition, pas un appel
+                tag = arg[1:-1] if arg.startswith('"') else tags.get(arg)
+                if tag is None or not RE_TAG_TAB5.match(tag):
+                    hors.append(lineno)
+        if relayes != TAGS_RELAYES.get(path.name, 0):
+            problems.append(f"TAGS_RELAYES : {path.name} relaie {relayes} tag(s) reçu(s) "
+                            f"(attendu {TAGS_RELAYES.get(path.name, 0)}) — mettre la table à jour")
         permis = TAGS_TAB5_TEMPORAIRES.get(path.name, 0)
         if len(hors) > permis:
             problems += [f"{path.name}:{n} : tag de journal hors `tab5.<module>` — "
