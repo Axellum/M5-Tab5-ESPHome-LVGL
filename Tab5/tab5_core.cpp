@@ -18,8 +18,40 @@ time_t (*tab5_time_source)(time_t*) = time;
 
 bool cal_is_early_shift(const std::string& heures_hhmm_hhmm) {
     // Convention unique : embauche "tôt" si heure de début < 9 (09:00 n'est PAS tôt).
-    if (heures_hhmm_hhmm.size() < 2) return false;
-    return atoi(heures_hhmm_hhmm.substr(0, 2).c_str()) < 9;
+    const int debut = hhmm_minutes(heures_hhmm_hhmm);
+    return debut >= 0 && debut < 9 * 60;
+}
+
+// ─── Dates et heures (lot L5 de l'audit du 07/10/2026) ───
+
+bool tab5_heure_valide(time_t t) { return t >= kHeureValideMin; }
+
+// Algorithme days_from_civil de H. Hinnant.
+int32_t jour_civil(int annee, int mois, int jour) {
+    annee -= (mois <= 2) ? 1 : 0;
+    const int era = (annee >= 0 ? annee : annee - 399) / 400;
+    const int yoe = annee - era * 400;                                          // [0, 399]
+    const int doy = (153 * (mois > 2 ? mois - 3 : mois + 9) + 2) / 5 + jour - 1;  // [0, 365]
+    const int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;                      // [0, 146096]
+    return era * 146097 + doe - 719468;
+}
+
+bool annee_bissextile(int annee) { return (annee % 4 == 0 && annee % 100 != 0) || annee % 400 == 0; }
+
+int jours_du_mois(int annee, int mois) {
+    static constexpr int kJours[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (mois < 1 || mois > 12) return 31;
+    return (mois == 2 && annee_bissextile(annee)) ? 29 : kJours[mois - 1];
+}
+
+int hhmm_minutes(const char* s) {
+    // Évaluation dans l'ordre : on ne lit jamais au-delà du zéro final d'un texte court.
+    auto chiffre = [](char c) { return c >= '0' && c <= '9'; };
+    if (s == nullptr || !chiffre(s[0]) || !chiffre(s[1]) || s[2] != ':' || !chiffre(s[3]) || !chiffre(s[4]))
+        return -1;
+    const int h = (s[0] - '0') * 10 + (s[1] - '0');
+    const int m = (s[3] - '0') * 10 + (s[4] - '0');
+    return (h > 23 || m > 59) ? -1 : h * 60 + m;
 }
 
 // Date locale a J+jour_offset via l'heure systeme SNTP (timezone Europe/Paris
@@ -38,26 +70,14 @@ bool local_day_from_offset(int jour_offset, struct tm& out) {
     return mktime(&out) != static_cast<time_t>(-1);
 }
 
-// Jours depuis le 01/01/1970 pour une date civile (algorithme days_from_civil de
-// H. Hinnant) : arithmétique entière sur (année, mois, jour), aucune dépendance au
-// fuseau ni aux jours de 23 h/25 h — contrairement à epoch / 86400.
-static int32_t days_from_civil(int y, int m, int d) {
-    y -= (m <= 2) ? 1 : 0;
-    const int era = (y >= 0 ? y : y - 399) / 400;
-    const int yoe = y - era * 400;                                    // [0, 399]
-    const int doy = (153 * (m > 2 ? m - 3 : m + 9) + 2) / 5 + d - 1;  // [0, 365]
-    const int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;            // [0, 146096]
-    return era * 146097 + doe - 719468;
-}
-
+// Numéro du jour civil (jour_civil) de la date LOCALE : aucune dépendance aux jours de
+// 23 h/25 h — contrairement à epoch / 86400.
 int32_t local_day_number_today() {
     const time_t raw = tab5_time_source(nullptr);
     struct tm t;
-    if (raw <= 0 || localtime_r(&raw, &t) == nullptr) return -1;
-    // Avant la synchro SNTP l'horloge part de 1970 : une date antérieure à 2020 ne
-    // peut pas être la vraie (même seuil qu'ESPTime::is_valid, année ≥ 2019).
-    if (t.tm_year + 1900 < 2020) return -1;
-    return days_from_civil(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
+    // Avant la synchro SNTP l'horloge part de 1970 : pas encore la vraie date.
+    if (!tab5_heure_valide(raw) || localtime_r(&raw, &t) == nullptr) return -1;
+    return jour_civil(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
 }
 
 // Case de cal_jours_data[] qui correspond à J+offset (offset compté depuis

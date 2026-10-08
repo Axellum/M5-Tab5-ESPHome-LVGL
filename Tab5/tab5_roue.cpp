@@ -32,6 +32,7 @@
  *       glyphe_roue aux labels roue_bouton_*_icone et roue_choix_*_icone).
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include <algorithm>
 #include <cstdio>
@@ -40,12 +41,11 @@ RoueUI g_roue_ui;
 
 namespace {
 
-// Écran (paysage) et géométrie de la roue (ADR-0036) : premier anneau de boutons de 72 px,
+// Écran (paysage, kEcranL × kEcranH : tab5_geometrie.h) et géométrie de la roue (ADR-0036) :
+// premier anneau de boutons de 72 px,
 // centres à 180 px de l'ancre, 30° entre deux ; second anneau de boutons de 72 px à 290 px,
 // 20° entre deux, centré sur la famille touchée ; 12 px de marge aux bords ; un éventail
 // qui déborde pivote par pas de 5°. Moyeu de 120 px sur l'ancre, jauge de 148 px autour.
-constexpr int32_t kEcranL = 1280;
-constexpr int32_t kEcranH = 720;
 constexpr int32_t kRayon = 180;
 constexpr int32_t kDiametre = 72;
 constexpr int32_t kRayon2 = 290;

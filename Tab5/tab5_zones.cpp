@@ -24,6 +24,7 @@
  *       sans le package. tests/test_zones.py vérifie qu'elles concordent.
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -286,7 +287,7 @@ void appuis_recu(const char* valeur, size_t n) {
         }
     }
     s_pref_appuis.save(&a);
-    ESP_LOGI("TAB5", "Appuis longs : maison %s, engrenage %s, manette %s", appui_nom(s_appuis[BOUTON_MAISON]),
+    ESP_LOGI("tab5.zones", "Appuis longs : maison %s, engrenage %s, manette %s", appui_nom(s_appuis[BOUTON_MAISON]),
              appui_nom(s_appuis[BOUTON_ENGRENAGE]), appui_nom(s_appuis[BOUTON_MANETTE]));
     boutons_haut_apply_ui();
 }
@@ -343,12 +344,13 @@ bool zone_vue(Zone z) {
     if ((s_absentes & b) == 0) return false;
     s_absentes &= ~b;
     sauver();
-    ESP_LOGI("TAB5", "Zone %s de retour (donnee recue)", kCles[static_cast<int>(z)]);
+    ESP_LOGI("tab5.zones", "Zone %s de retour (donnee recue)", kCles[static_cast<int>(z)]);
     return true;
 }
 
 bool zones_reponse_ha(const std::string& absentes) {
     charger();
+    if (payload_trop_long("tab5.zones", absentes.size())) return false;
     uint32_t nouv = 0;
     size_t debut = 0;
     while (debut <= absentes.size()) {
@@ -371,7 +373,7 @@ bool zones_reponse_ha(const std::string& absentes) {
     if (nouv == s_absentes) return false;
     s_absentes = nouv;
     sauver();
-    ESP_LOGI("TAB5", "Zones masquees : %s", zones_texte_masquees().c_str());
+    ESP_LOGI("tab5.zones", "Zones masquees : %s", zones_texte_masquees().c_str());
     return true;
 }
 
@@ -404,6 +406,7 @@ std::string zones_texte_masquees() {
 
 
 int emplacements_appliquer(const std::string& payload, const EmplacementCible* cibles, size_t n) {
+    if (payload_trop_long("tab5.zones", payload.size())) return 0;
     int appliquees = 0;
     size_t debut = 0;
     while (debut < payload.size()) {
@@ -485,7 +488,7 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
 void batterie_montee_ui(bool montee) {
     if (montee == s_batterie.montee) return;
     s_batterie.montee = montee;
-    ESP_LOGI("TAB5", "Batterie montee : %s (icone du bandeau)", montee ? "oui" : "non");
+    ESP_LOGI("tab5.zones", "Batterie montee : %s (icone du bandeau)", montee ? "oui" : "non");
     batterie_peindre();
     bandeau_apply_ui();
 }
@@ -502,7 +505,7 @@ void batterie_charge_ui(bool en_charge) {
 
 bool batterie_tension_ui(float tension, uint32_t maintenant_ms) {
     if (!chargeur_tension(tension, maintenant_ms)) return false;
-    ESP_LOGI("TAB5", "Batterie detectee : %s (%.2f V)", batterie_presente() ? "oui" : "non", tension);
+    ESP_LOGI("tab5.zones", "Batterie detectee : %s (%.2f V)", batterie_presente() ? "oui" : "non", tension);
     batterie_peindre();
     return true;
 }
@@ -629,7 +632,7 @@ void zones_apply_ui() {
     moisture_slots_refresh();
     rangee_appliquer_ui();
     {
-        int32_t largeur = 1250;  // modal_card_w (tab5-ui-tokens.yaml)
+        int32_t largeur = kCarteL;  // modal_card_w (tab5_geometrie.h)
         for (lv_obj_t* c : u.pot_card) {
             if (c == nullptr) continue;
             const int32_t w = lv_obj_get_style_width(lv_obj_get_parent(c), LV_PART_MAIN);

@@ -45,6 +45,8 @@
  */
 #include "tab5_internal.h"
 #include "tab5_tuiles_icones.h"
+#include "tab5_geometrie.h"
+#include "tab5_modele_ha.h"
 #include "lvgl.h"
 #include <esp_attr.h>
 #include <algorithm>
@@ -53,11 +55,13 @@
 #include <cstring>
 #include <memory>
 
+// kNom, kIcone, kEtat, est(), etat_indisponible(), copier_icone() : communs avec la tuile
+// − / + (tab5_modele_ha.h, lot L5).
+using namespace modele_ha;
+
 namespace {
 
-constexpr int kPieces = 5;
-constexpr int kTuiles = 5;
-// Pièce de chaque page du bas (index = g_central_ctx.forecast_page) : R0 = page 2 (accueil),
+// kPieces et kTuiles : tab5_geometrie.h. Pièce de chaque page du bas (index = g_central_ctx.forecast_page) : R0 = page 2 (accueil),
 // R1 = 3, R2 = 4, R3 = 1, R4 = 0 — l'ordre où un swipe les atteint depuis l'accueil.
 constexpr int kPieceDePage[kPieces] = {4, 3, 0, 1, 2};
 
@@ -75,11 +79,9 @@ constexpr int kNbTypes = sizeof(kTypes) / sizeof(kTypes[0]);
 constexpr char kLettresOptions[] = "dcokrtme";
 enum : uint8_t { OPT_D = 1, OPT_C = 2, OPT_O = 4, OPT_K = 8, OPT_R = 16, OPT_T = 32, OPT_M = 64, OPT_E = 128 };
 
-// Taille des champs gardés (octets, zéro final compris).
-constexpr size_t kNom = 25;          // nom affiché : 24 octets au plus
-constexpr size_t kIcone = 16;        // code de palette [a-z0-9_]{1,15}
+// Taille des champs gardés (octets, zéro final compris) ; kNom, kIcone et kEtat :
+// tab5_modele_ha.h.
 constexpr size_t kComplement = 16;   // unité (cap) ou classe d'appareil (bin)
-constexpr size_t kEtat = 16;         // état HA tel quel
 
 struct Def {
     uint8_t type;       // Type
@@ -123,6 +125,7 @@ constexpr uint32_t kPrefKey = 0x7475696C;  // « tuil »
 constexpr int kLignes = 3;
 constexpr int kElements = 4;
 constexpr size_t kClasse = 16;  // classe d'appareil (device_class) : [a-z0-9_]{1,15}
+static_assert(kClasse == kIcone, "copier_icone sert aussi aux classes d'appareil");
 
 struct DefRangee {
     Def d;
@@ -271,18 +274,6 @@ void copier_texte(char* dst, size_t cap, const char* src, size_t n) {
     }
 }
 
-// Code de palette, ou classe d'appareil : [a-z0-9_]{1,15}, sinon vide (défaut du type).
-void copier_icone(char* dst, const char* src, size_t n) {
-    static_assert(kClasse == kIcone, "copier_icone sert aussi aux classes d'appareil");
-    std::memset(dst, 0, kIcone);
-    if (n == 0 || n >= kIcone) return;
-    for (size_t i = 0; i < n; i++) {
-        const char c = src[i];
-        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) return;
-    }
-    std::memcpy(dst, src, n);
-}
-
 uint8_t lire_options(const char* s, size_t n) {
     uint8_t o = 0;
     for (size_t i = 0; i < n; i++) {
@@ -304,22 +295,9 @@ bool chiffre_0_4(char c, int& v) {
     return true;
 }
 
-// Champs d'une entrée séparés par '|' (au plus `max`) : début et longueur de chacun.
-struct Champ {
-    const char* p;
-    size_t n;
-};
-int decouper(const char* s, size_t n, Champ* out, int max) {
-    int k = 0;
-    size_t debut = 0;
-    for (size_t i = 0; i <= n && k < max; i++) {
-        if (i == n || s[i] == '|') {
-            out[k++] = {s + debut, i - debut};
-            debut = i + 1;
-        }
-    }
-    return k;
-}
+// Champs d'une entrée séparés par '|' (au plus `max`, le reste ignoré) : Champ et
+// champs_decouper() de tab5_champs.h.
+int decouper(const char* s, size_t n, Champ* out, int max) { return champs_decouper(s, n, '|', out, max); }
 
 // « type|icône|options|complément|nom » (champs 1 à 5 d'une entrée tRT ou hLI) dans `d`.
 void lire_def(const Champ* f, int nf, Def& d) {
@@ -393,8 +371,6 @@ Heritage s_h;
 constexpr const char* kHeritageLumieres[3] = {"lumiere_1", "lumiere_2", "lumiere_3"};
 
 bool heritage() { return s_m.recues == 0; }
-
-bool est(const char* a, const char* b) { return std::strcmp(a, b) == 0; }
 
 // Tuile présente : un appareil défini — en mode héritage, un emplacement 3.x que HA n'a
 // pas déclaré absent (zones, ADR-0018), dans la pièce 0 seulement.
@@ -927,7 +903,7 @@ void peindre_cartes() {
     int n = 0;
     for (int t = 0; t < kTuiles; t++)
         if (u.carte[t] != nullptr && tuile_presente(r, t)) n++;
-    int32_t x = (1280 - (n * 250 - 20)) / 2;
+    int32_t x = (kEcranL - (n * 250 - 20)) / 2;
     for (int t = 0; t < kTuiles; t++) {
         const bool presente = tuile_presente(r, t);
         ui_hidden(u.carte[t], !presente);
@@ -1286,7 +1262,7 @@ bool popup_volet_valide() {
 // Position 0-100 connue : un état en ligne et une valeur dans les bornes. NaN : le volet
 // n'en donne pas ; -1 : « Partiel » du volet à course simulée (arrêté en route).
 bool vol_position_connue(const Etat& e) {
-    if (!e.recu || est(e.brut, "unavailable") || est(e.brut, "unknown")) return false;
+    if (!e.recu || etat_indisponible(e.brut)) return false;
     return !std::isnan(e.valeur) && e.valeur >= 0.0f && e.valeur <= 100.0f;
 }
 
@@ -1307,7 +1283,7 @@ int vol_position_dessin(const Etat& e, bool& estompe) {
 const char* vol_etat_mots(const Etat& e, uint32_t& couleur) {
     couleur = UIColor.INACTIVE;
     if (!e.recu) return "--";
-    if (est(e.brut, "unavailable") || est(e.brut, "unknown")) return tr("Hors ligne");
+    if (etat_indisponible(e.brut)) return tr("Hors ligne");
     if (vol_mouvement(e.brut)) {
         couleur = UIColor.INFO;
         return tr("En mouvement");
@@ -1648,15 +1624,8 @@ void etat_lire(Etat& e, const char* reste, size_t n_reste) {
     const size_t n = nf > 0 ? std::min(f[0].n, kEtat - 1) : 0;
     std::memset(e.brut, 0, sizeof(e.brut));
     if (n > 0) std::memcpy(e.brut, f[0].p, n);
-    e.valeur = NAN;
-    if (nf > 1 && f[1].n > 0 && f[1].n < 24) {
-        char tmp[24];
-        std::memcpy(tmp, f[1].p, f[1].n);
-        tmp[f[1].n] = '\0';
-        char* bout = nullptr;
-        const float v = strtof(tmp, &bout);
-        if (bout != tmp) e.valeur = v;  // « nan » donne NaN aussi
-    }
+    // Inconnue (NaN) si vide, illisible ou non finie (« nan », « inf »).
+    e.valeur = nf > 1 ? champ_nombre(f[1], NAN) : NAN;
     e.a_couleur = false;
     if (nf > 2 && f[2].n == 6) {
         char tmp[7];
@@ -1683,6 +1652,8 @@ void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) { ui_texte_
 
 bool tuiles_definir(const std::string& payload) {
     charger();
+    // Payload faux : les définitions d'avant restent (NVS comprise).
+    if (payload_trop_long("tab5.tuiles", payload.size())) return false;
     // Tuile − / + au choix (ADR-0033) : ses clés rN sont dans le même instantané.
     const bool reglables_changes = reglables_definir(payload);
     // Instantané complet : ce qui n'est pas listé est vide. Construit à part (tas, le temps
@@ -1807,7 +1778,7 @@ bool rangee_element(int l, int i, RangeeElement& out) {
     snprintf(out.texte, sizeof(out.texte), "%s", v.ligne);
     out.couleur_texte = v.couleur_ligne;
     // Pas encore reçu, hors ligne, ou pas un nombre : le texte de la tuile.
-    if (type != Type::CAP || !e.recu || std::isnan(e.valeur) || est(e.brut, "unavailable") || est(e.brut, "unknown"))
+    if (type != Type::CAP || !e.recu || std::isnan(e.valeur) || etat_indisponible(e.brut))
         return true;
     const char* unite = g.d.complement;
     const bool degres = std::strncmp(unite, "\xC2\xB0", 2) == 0 || est(g.classe, "temperature");

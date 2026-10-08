@@ -147,6 +147,13 @@ jobs:
           g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o "$RUNNER_TEMP/test_alarm_clock" \
             tools/test_alarm_clock.cpp Tab5/alarm_clock.cpp Tab5/tab5_core.cpp Tab5/tab5_i18n.cpp
           "$RUNNER_TEMP/test_alarm_clock"
+      - name: Socle C++ commun (tab5_champs.cpp + tab5_core.cpp, géométrie, modèle des tuiles)
+        # Lecture bornée des payloads, dates et heures « HH:MM », ce que les tuiles
+        # partagent (audit du 07/10/2026, lot L5) : pur, testé ici comme le réveil.
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o "$RUNNER_TEMP/test_tab5_socle" \
+            tools/test_tab5_socle.cpp Tab5/tab5_champs.cpp Tab5/tab5_core.cpp Tab5/tab5_i18n.cpp
+          "$RUNNER_TEMP/test_tab5_socle"
       - name: Payloads du mode démo conformes au contrat firmware
         run: python tools/demo/demo_pusher.py --dry-run
 

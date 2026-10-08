@@ -11,7 +11,8 @@
  * minimum), calendrier daté par son jour d'ancrage (bug §2.2 de l'audit),
  * changements d'heure, rendez-vous. Aussi les conversions des nombres reçus de HA
  * (tab5_float_vers_int : « inf » ou « 1e30 » → entier borné, lot A de l'audit du 30/09),
- * et la décision « batterie de la tablette montée ou pas » (batterie_lecture, 05/10),
+ * et le chargeur de la batterie (tab5_batterie.h, header seul, 08/10 : présence lue
+ * chargeur coupé, sondes, limite 80 %, consommation, alerte de batterie faible),
  * puis les lignes « Batterie » et « Charge CPU » de la console système (06/10),
  * et les règles du mode économie d'énergie (tab5_economie.h, header seul, 06/10) :
  * sur batterie au courant de l'INA226, batterie basse, plafond de luminosité.

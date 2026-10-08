@@ -376,7 +376,7 @@ bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     // que le YAML recopiait les anciens has_ha = true — le rotateur montrait des
     // panneaux vides et le tap d'acquittement n'avait plus d'id (audit 25/09, §2.4).
     if (payload.length() > 1024) {
-        ESP_LOGE("TAB5", "Payload alertes HA trop long (%d octets).", (int) payload.length());
+        payload_trop_long("tab5.alertes_ha", payload.length(), 1024);
         return false;
     }
 
@@ -762,8 +762,8 @@ static void rain_phrase_render() {
         const char* label = rain_level_label(s.niveau);
         // Minutes entières, arrondies vers zéro comme le `| int` de l'ancien modèle.
         // Heure pas encore valide (avant NTP et RX8130) : pas de décompte.
-        const time_t now = time(nullptr);
-        const long minutes = (s.debut > 0 && now > 1600000000) ? (long) ((s.debut - (int64_t) now) / 60) : 0;
+        const time_t now = tab5_time_source(nullptr);
+        const long minutes = (s.debut > 0 && tab5_heure_valide(now)) ? (long) ((s.debut - (int64_t) now) / 60) : 0;
         if (minutes <= 0) snprintf(buf, sizeof(buf), "%s", label);
         else snprintf(buf, sizeof(buf), tr("%s dans %ld mn"), label, minutes);
     }
@@ -915,7 +915,7 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
     // panneau titre dans tab5-lvgl.yaml), pas dans cette fonction.
     // Le logger du projet tourne en `level: INFO` (tab5-hardware.yaml) : passer
     // temporairement a DEBUG pour voir cette trace, elle est muette autrement.
-    ESP_LOGD("TAB5", "swipe: dir=%d y=%d page=%d", (int) dir, (int) pt_y, ctx.forecast_page);
+    ESP_LOGD("tab5.central", "swipe: dir=%d y=%d page=%d", (int) dir, (int) pt_y, ctx.forecast_page);
 
     if (pt_y < FORECAST_SWIPE_Y_MIN) return;
     if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;

@@ -14,6 +14,9 @@
  * @ai_instruction L'heure courante passe par `tab5_time_source` (par défaut
  *       `time`), jamais par `time(nullptr)` directement : c'est le seul moyen pour
  *       un test de simuler « aujourd'hui », un changement d'heure ou une nuit sans HA.
+ *       « L'heure est-elle réglée ? » : tab5_heure_valide(), un seul seuil. Dates
+ *       civiles (jour_civil, jours_du_mois) et heures « HH:MM » (hhmm_minutes) : ici,
+ *       jamais une copie locale (audit du 07/10/2026, lot L5).
  */
 #pragma once
 #include <cstddef>
@@ -54,7 +57,28 @@ extern HourForecastData cal_heures_data[15];
 extern int32_t cal_jours_anchor_day;
 
 // Embauche "tôt" = heure de début < 9h (même seuil partout : tuiles, popup, bandeau).
+// Faux si le début n'est pas une heure « HH:MM » lisible.
 bool cal_is_early_shift(const std::string& heures_hhmm_hhmm);
+
+// ─── Dates et heures : les seules copies du projet (audit du 07/10/2026, lot L5) ───
+// Avant la synchro SNTP (et sans l'horloge RX8130), l'heure part de 1970 : une heure
+// antérieure au 01/01/2020 00:00 UTC n'est pas la vraie. Le seul seuil du projet
+// (il y en avait trois : année 2020, 1577836800, 1600000000).
+constexpr time_t kHeureValideMin = 1577836800;
+bool tab5_heure_valide(time_t t);
+// Jours depuis le 01/01/1970 d'une date civile (algorithme days_from_civil de
+// H. Hinnant) : arithmétique entière, sans fuseau ni jours de 23 h/25 h.
+int32_t jour_civil(int annee, int mois, int jour);
+bool annee_bissextile(int annee);
+// Jours du mois (1-12) de l'année ; 31 pour un mois hors bornes (le maximum : une boucle
+// bornée par lui ne coupe aucun jour réel).
+int jours_du_mois(int annee, int mois);
+// Minutes depuis minuit d'une heure « HH:MM » (00:00 à 23:59) lue à `s` ; -1 si ce n'en
+// est pas une (chiffre manquant, pas de « : », heure ou minute hors bornes, texte court).
+int hhmm_minutes(const char* s);
+inline int hhmm_minutes(const std::string& s, size_t pos = 0) {
+    return pos < s.size() ? hhmm_minutes(s.c_str() + pos) : -1;
+}
 
 // Date locale à J+jour_offset (0-14) via l'heure système SNTP, normalisée à midi
 // par mktime() : immunisé contre les bascules heure d'été/hiver (une journée de
