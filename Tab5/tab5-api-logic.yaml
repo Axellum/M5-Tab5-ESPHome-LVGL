@@ -413,7 +413,7 @@ api:
     # Conservé pour compat (anciennes automations) — le bandeau est désormais dérivé
     # localement après tab5_maj_previsions_jours_bulk via build_planning_lines_from_jours().
     - service: tab5_maj_planning
-      description: "Bandeau planning. Conservé pour compatibilité : depuis le 08/09/2026 le firmware le dérive lui-même des prévisions journalières."
+      description: "Obsolète depuis le 08/09/2026 : la tablette dérive le bandeau planning des prévisions journalières. Gardé pour compatibilité, il sera retiré dans une future version majeure."
       variables:
         ligne1:
           type: string

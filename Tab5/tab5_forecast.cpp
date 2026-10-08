@@ -162,10 +162,10 @@ uint32_t get_temperature_color(float t) {
 static void parse_and_update_heures_bulk(const std::string& payload) {
     if (payload.empty()) return;
     if (payload.length() > 2048) {
-        ESP_LOGE("TAB5", "Payload heures trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
+        ESP_LOGE("tab5.forecast", "Payload heures trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
         return;
     }
-    ESP_LOGD("TAB5", "Received heures bulk payload length: %d", payload.length());
+    ESP_LOGD("tab5.forecast", "Received heures bulk payload length: %d", payload.length());
     // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
     // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
     char buf[2049];
@@ -206,10 +206,10 @@ bool accept_heures_bulk(const std::string& payload, int forecast_page) {
 void parse_and_update_jours_bulk(const std::string& payload) {
     if (payload.empty()) return;
     if (payload.length() > 2048) {
-        ESP_LOGE("TAB5", "Payload jours trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
+        ESP_LOGE("tab5.forecast", "Payload jours trop long (%d octets). Rejeté pour éviter OOM.", payload.length());
         return;
     }
-    ESP_LOGD("TAB5", "Received jours bulk payload length: %d", payload.length());
+    ESP_LOGD("tab5.forecast", "Received jours bulk payload length: %d", payload.length());
     // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
     // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
     char buf[2049];

@@ -210,11 +210,11 @@ void animate_popup_close(lv_obj_t* card) {
 // =============================================================================
 
 uint32_t ui_idle_ms() {
-    return lv_display_get_inactive_time(NULL);  // NULL = display par defaut
+    return lv_display_get_inactive_time(nullptr);  // nullptr = display par defaut
 }
 
 void ui_mark_activity() {
-    lv_display_trigger_activity(NULL);
+    lv_display_trigger_activity(nullptr);
 }
 
 bool close_popup_if_open(lv_obj_t* card) {
