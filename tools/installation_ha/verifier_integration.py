@@ -9,15 +9,19 @@ Assistant neuf : installation, mises à jour, retour en arrière (ADR-0035).
       un redémarrage ; ici le zip est construit par tools/publication/archive_hacs.py et
       décompressé de la même façon. Scénario, sur UN Home Assistant neuf en conteneur :
         1. config/ d'une installation neuve + la ligne `packages:` du guide, zip 9.9.1,
-           compte (onboarding), intégration ajoutée par son formulaire → fichiers posés
-           sans redémarrage : capteur « Tab5 · version des fichiers HA » à 9.9.1,
-           rest_command chargé à chaud (absent d'un HA neuf), aucune réparation ;
+           un blueprint du Tab5 copié à la main (ancien, différent), compte (onboarding),
+           intégration ajoutée par son formulaire → fichiers posés sans redémarrage :
+           capteur « Tab5 · version des fichiers HA » à 9.9.1, rest_command chargé à chaud
+           (absent d'un HA neuf), le blueprint remplacé et dit (réparation persistante
+           « fichiers_remplaces », copie dans la sauvegarde), validée comme l'interface ;
         2. mise à jour 9.9.2 comme HACS (dossier remplacé, redémarrage), avec un package
            modifié à la main et un package que la release ne livre plus → capteur 9.9.2,
            sauvegarde des deux, le retiré absent, la notification nomme le modifié ;
         3. mise à jour 9.9.3 dont un package casse la configuration → fichiers 9.9.2
            remis à l'octet près, capteur toujours 9.9.2, réparation
-           « configuration_invalide » ;
+           « configuration_invalide » ; redémarrage avec la même 9.9.3 → pas de nouvel
+           essai (réparation recréée, aucune sauvegarde de plus) ; « Réinstaller » des
+           options → nouvel essai, refusé, sans sauvegarde identique de plus ;
         4. retour au zip 9.9.2 (réparation retirée), ligne `packages:` enlevée puis
            « Réinstaller » des options → réparation « packages_absents » ; ligne remise,
            redémarrage → capteur 9.9.2, réparation retirée ;
@@ -84,6 +88,9 @@ VIDES = {"automations.yaml": "[]\n", "scripts.yaml": "", "scenes.yaml": "", "sec
 MODIFIE = "packages/tab5_tv.yaml"            # modifié à la main avant la 9.9.2
 RETIRE = "packages/tab5_micro_absence.yaml"  # plus livré par la 9.9.2
 CASSE = "packages/tab5_casse.yaml"           # livré par la 9.9.3, refusé par check_config
+# Copié à la main avant la première installation, différent de celui de la release (HA-10).
+COPIE_MAIN = "blueprints/automation/tab5/tab5_emplacements.yaml"
+MARQUE_MAIN = b"\n# copie a la main\n"
 # Un `initial` qui n'est pas un booléen : HA 2026.9.4 ne charge plus input_boolean, et
 # « Vérifier la configuration » ne le signale qu'en AVERTISSEMENT (contre-épreuve du
 # 07/10/2026 ci-dessous) — le cas qu'une vérification des seules erreurs laissait passer.
@@ -159,6 +166,9 @@ def preparer(dossier: Path, zip_: Path) -> None:
     (dossier / "themes").mkdir()
     with zipfile.ZipFile(zip_) as z:
         z.extractall(dossier / "custom_components" / "tab5")
+        copie = dossier / COPIE_MAIN
+        copie.parent.mkdir(parents=True)
+        copie.write_bytes(z.read(f"fichiers/{COPIE_MAIN}") + MARQUE_MAIN)
 
 
 # ─── Lectures dans HA ────────────────────────────────────────────────────────
@@ -226,6 +236,13 @@ async def attendre_reparations(ha: HA, presentes: set[str], absentes: set[str], 
         await asyncio.sleep(2)
 
 
+def essais_refuses() -> int:
+    """Refus de la 9.9.3 écrits au journal de HA depuis la création du conteneur."""
+    r = subprocess.run(["docker", "logs", CONTENEUR], capture_output=True, text=True)
+    return sum("Fichiers Tab5 9.9.3 refusés par la vérification" in l
+               for l in (r.stdout + r.stderr).splitlines())
+
+
 def comparer(rapport: Rapport, dossier: Path, fichiers: dict[str, bytes], quoi: str) -> None:
     differents = [c for c, d in fichiers.items()
                   if not (dossier / c).is_file() or (dossier / c).read_bytes() != d]
@@ -271,7 +288,27 @@ async def scenario(args, rapport: Rapport) -> None:
             services = {(s["domain"], n) for s in await ha.get("/api/services") for n in s["services"]}
             rapport.verifier(("rest_command", "tab5_pluie") in services,
                              "1. rest_command.tab5_pluie chargé à chaud")
-            rapport.verifier(not await reparations(ha), "1. aucune réparation")
+            presentes = await attendre_reparations(ha, {"fichiers_remplaces"}, set())
+            rapport.verifier(presentes == {"fichiers_remplaces"},
+                             "1. une seule réparation : « fichiers_remplaces » (blueprint copié à la main)",
+                             str(presentes))
+            rapport.verifier("tab5_emplacements.yaml" in texte, "1. la notification nomme le blueprint remplacé",
+                             texte[:300])
+            premieres = sorted((dossier / "tab5_sauvegardes").glob("*"))
+            rapport.verifier(len(premieres) == 1 and (premieres[0] / COPIE_MAIN).is_file()
+                             and (premieres[0] / COPIE_MAIN).read_bytes().endswith(MARQUE_MAIN),
+                             "1. la copie à la main gardée dans la sauvegarde", str([p.name for p in premieres]))
+            # Validée comme dans Paramètres → Réparations : le formulaire cite la sauvegarde.
+            etape = await ha.post("/api/repairs/issues/fix", {"handler": "tab5", "issue_id": "fichiers_remplaces"})
+            cites = json.dumps(etape.get("description_placeholders") or {}, ensure_ascii=False)
+            rapport.verifier(etape.get("type") == "form" and bool(premieres) and premieres[0].name in cites
+                             and COPIE_MAIN in cites, "1. la réparation cite le fichier et la sauvegarde",
+                             str(etape)[:300])
+            if etape.get("flow_id"):
+                fin = await ha.post(f"/api/repairs/issues/fix/{etape['flow_id']}", {})
+                rapport.verifier(fin.get("type") == "create_entry", "1. réparation validée", str(fin)[:200])
+            restes = await attendre_reparations(ha, set(), {"fichiers_remplaces"})
+            rapport.verifier(not restes, "1. plus aucune réparation", str(restes))
             manifeste = await ha.ws.commande("manifest/get", integration="tab5")
             rapport.verifier(manifeste.get("version") == "9.9.1", "1. version de l'intégration = 9.9.1",
                              str(manifeste.get("version")))
@@ -321,6 +358,34 @@ async def scenario(args, rapport: Rapport) -> None:
             rapport.verifier(await etat(ha, CAPTEUR) == "9.9.2", "3. capteur toujours à 9.9.2")
             comparer(rapport, dossier, v2, "3. config/ remis comme avant")
             rapport.verifier(not (dossier / CASSE).exists(), f"3. {CASSE} retiré par le retour en arrière")
+            memoire = ((await ha.storage("tab5.fichiers") or {}).get("data") or {})
+            rapport.verifier((memoire.get("refusee") or {}).get("version") == "9.9.3",
+                             "3. refus de la 9.9.3 gardé (.storage/tab5.fichiers)", str(memoire.get("refusee")))
+            sauvegardes = sorted(p.name for p in (dossier / "tab5_sauvegardes").iterdir())
+            # Même 9.9.3 au redémarrage : plus de nouvel essai (HA-9). La réparation, non
+            # persistante, n'est revenue que si l'intégration l'a recréée.
+            await redemarrer(ha)
+            presentes = await attendre_reparations(ha, {"configuration_invalide"}, set(), 120)
+            rapport.verifier("configuration_invalide" in presentes,
+                             "3. redémarrage, même 9.9.3 : réparation recréée", str(presentes))
+            rapport.verifier(essais_refuses() == 1, "3. redémarrage, même 9.9.3 : pas de nouvel essai",
+                             f"{essais_refuses()} refus au journal")
+            rapport.verifier(sorted(p.name for p in (dossier / "tab5_sauvegardes").iterdir()) == sauvegardes,
+                             "3. redémarrage, même 9.9.3 : aucune sauvegarde de plus", str(sauvegardes))
+            comparer(rapport, dossier, v2, "3. config/ toujours en 9.9.2")
+            # « Réinstaller » : l'action explicite réessaie ; même refus, même sauvegarde.
+            options = await ha.flux("/api/config/config_entries/options/flow", entree,
+                                    {"mettre_a_jour_tablette": True, "reinstaller": True})
+            rapport.verifier(options.get("type") == "create_entry", "3. options : « Réinstaller » validé",
+                             str(options)[:200])
+            fin = time.monotonic() + 120
+            while essais_refuses() < 2 and time.monotonic() < fin:
+                await asyncio.sleep(2)
+            rapport.verifier(essais_refuses() == 2, "3. « Réinstaller » : nouvel essai, refusé de nouveau",
+                             f"{essais_refuses()} refus au journal")
+            rapport.verifier(sorted(p.name for p in (dossier / "tab5_sauvegardes").iterdir()) == sauvegardes,
+                             "3. nouvel essai : pas de sauvegarde identique de plus", str(sauvegardes))
+            comparer(rapport, dossier, v2, "3. config/ remis comme avant (2e essai)")
 
             # ── 4. Retour à 9.9.2, puis packages absents ──
             remplacer_integration(dossier, zips["9.9.2"])
