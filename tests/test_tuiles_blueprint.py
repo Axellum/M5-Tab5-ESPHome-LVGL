@@ -738,7 +738,10 @@ def test_demarrage_de_ha_rejoue_la_connexion_perdue():
         {"trigger": "homeassistant", "event": "start", "id": "demarrage_ha"}]
     gardes = _gardes_du_declencheur(bp["actions"])
     assert len(gardes) >= 8, gardes
-    for g in gardes + [bp["variables"]["cles"], bp["variables"]["tuiles_a_pousser"]]:
+    # La liste n'existe qu'une fois (variable tout_pousser, HA-8) : les gardes la lisent.
+    assert "'connexion'" in bp["variables"]["tout_pousser"]
+    assert "tout_pousser" in bp["variables"]["cles"] and "tout_pousser" in bp["variables"]["tuiles_a_pousser"]
+    for g in gardes + [bp["variables"][v] for v in ("tout_pousser", "cles", "tuiles_a_pousser")]:
         if "'connexion'" in g:
             assert "'demarrage_ha'" in g, f"le démarrage de HA manque dans : {g}"
     # Si la tablette demandait ses zones à la connexion, la demande serait perdue elle

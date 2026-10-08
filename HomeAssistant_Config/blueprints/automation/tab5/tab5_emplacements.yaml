@@ -2058,9 +2058,15 @@ variables:
     - act
     - bin
     - cli
+  # Déclenchements qui poussent tout : la connexion de la tablette, le rechargement des
+  # automatisations (dont l'enregistrement de celle-ci), « MAJ Écran » et le démarrage de
+  # HA (la connexion d'une tablette plus rapide que HA est perdue, 28/09/2026). Une seule
+  # liste, lue par cles, tuiles_a_pousser, solaire_a_pousser et les actions (audit du
+  # 07/10/2026, HA-8 : elle était recopiée 9 fois).
+  tout_pousser: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] }}"
   # Emplacements à pousser pour ce déclenchement.
   cles: >-
-    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] -%}
+    {%- if tout_pousser -%}
       {%- set ns = namespace(l=[]) -%}
       {%- for c in cles_emplacements -%}
         {%- set ns.l = ns.l + [c] + ([c ~ '_ec', c ~ '_lux', c ~ '_temp', c ~ '_bat'] if c.startswith('pot_') else []) -%}
@@ -2108,7 +2114,7 @@ variables:
   # les types_mesures avec les mesures lentes. Calculées quel que soit le protocole (la
   # trace montre ce qui partirait), poussées seulement au protocole 2.
   tuiles_a_pousser: >-
-    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha', 'zones'] or redefinir -%}
+    {%- if tout_pousser or trigger.id == 'zones' or redefinir -%}
       {{ (tuiles + rangee) | map(attribute='cle') | list }}
     {%- elif trigger.id == 'mesures' -%}
       {%- set ns = namespace(l=[]) -%}
@@ -2152,7 +2158,7 @@ variables:
   # l'attribut de sa valeur). Poussés seulement au protocole 2 (un firmware qui ne les
   # connaît pas ignore la clé).
   reglables_a_pousser: >-
-    {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha', 'zones'] or redefinir -%}
+    {%- if tout_pousser or trigger.id == 'zones' or redefinir -%}
       {{ reglables | map(attribute='cle') | list }}
     {%- elif trigger.from_state is defined and trigger.id.startswith('reglable') -%}
       {{ reglables | selectattr('e', 'eq', trigger.entity_id) | map(attribute='cle') | list }}
@@ -2276,7 +2282,7 @@ variables:
           and (now() - states[x].last_changed).total_seconds() < fenetre_mesures -%}
       {%- set ns.change = true -%}
     {%- endfor -%}
-    {{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha']
+    {{ tout_pousser
        or (trigger.id == 'mesures' and energie_crete | float(0) > 0 and ns.change) }}
   # Appuis longs des boutons du haut (section « Boutons du haut ») : « appuis|maison|
   # engrenage|manette; », poussé avec tous les états (connexion, rechargement — dont
@@ -2349,6 +2355,7 @@ triggers:
   #                    5 minutes).
   # « on » et « off » entre guillemets : sans eux, YAML 1.1 lit des booléens, que le
   # schéma du déclencheur refuse.
+  # >>> déclencheurs des pièces (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)
   - trigger: state
     entity_id: !input piece_1_tuiles
     to: &etats_visibles ["on", "off", open, closed, opening, closing, playing, paused, idle, standby, buffering, home, not_home, locked, unlocked, locking, unlocking, jammed, heat, cool, heat_cool, auto, dry, fan_only, unavailable, unknown]
@@ -2514,8 +2521,10 @@ triggers:
     not_from: [null]
     not_to: [null]
     id: piece_5_consigne
+  # <<< déclencheurs des pièces
   # Rangée sous l'horloge (ADR-0031) : l'état seulement, comme piece_n et piece_n_sortie
   # (une mesure part avec les mesures lentes) ; elle ne montre ni luminosité ni position.
+  # >>> déclencheurs de la rangée (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)
   - trigger: state
     entity_id: !input rangee_ligne_1
     to: *etats_visibles
@@ -2543,6 +2552,7 @@ triggers:
     from: *etats_visibles
     not_to: *etats_visibles
     id: rangee_3_sortie
+  # <<< déclencheurs de la rangée
   # Tuile − / + au choix (ADR-0033) : l'état (`to: ~`, sans les attributs), puis
   # l'attribut qui porte la valeur réglée tant que l'appareil reste allumé ou en place
   # (not_from / not_to [null] : l'allumage et l'extinction sont vus par « reglable »).
@@ -2721,7 +2731,7 @@ actions:
         {%- endfor -%}
         {#- Appuis longs des boutons du haut (variable appuis), avec tous les états. Un
             firmware sans ce choix ignore la clé (clé inconnue). -#}
-        {%- if trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] -%}
+        {%- if tout_pousser -%}
           {%- set ns.r = ns.r ~ appuis -%}
         {%- endif -%}
         {#- Icône solaire du bandeau : « solaire|pourcentage; » (voir solaire_a_pousser). Un
@@ -3403,7 +3413,11 @@ actions:
                 data:
                   payload: "{{ clim_reglages }}"
                 continue_on_error: true
-          - action: "esphome.{{ tablette }}_tab5_maj_clim"
+          # Ancre &maj_clim : la même action part dans la poussée complète (default, plus
+          # bas, *maj_clim). Un champ ajouté ici part donc dans les deux (audit du
+          # 07/10/2026, HA-8 : le bloc était recopié).
+          - &maj_clim
+            action: "esphome.{{ tablette }}_tab5_maj_clim"
             data:
               target: "{{ state_attr(clim, 'temperature') | float(20) }}"
               current: "{{ state_attr(clim, 'current_temperature') | float(20) }}"
@@ -3434,7 +3448,7 @@ actions:
             data:
               payload: "{{ payload }}"
             continue_on_error: true
-      - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] and clim != '' }}"
+      - if: "{{ tout_pousser and clim != '' }}"
         then:
           # Réglages de la clim (clé climr, ADR-0026) avant son état : bornes, pas et
           # unité sont en place quand la consigne arrive.
@@ -3442,16 +3456,8 @@ actions:
             data:
               payload: "{{ clim_reglages }}"
             continue_on_error: true
-          - action: "esphome.{{ tablette }}_tab5_maj_clim"
-            data:
-              target: "{{ state_attr(clim, 'temperature') | float(20) }}"
-              current: "{{ state_attr(clim, 'current_temperature') | float(20) }}"
-              mode: "{{ states(clim) }}"
-              preset: "{{ state_attr(clim, 'preset_mode') | default('none', true) }}"
-              fan: "{{ state_attr(clim, 'fan_mode') | default('auto', true) }}"
-              swing: "{{ state_attr(clim, 'swing_mode') | default('stop', true) }}"
-            continue_on_error: true
-      - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha'] and volet != '' and not volet_par_package }}"
+          - *maj_clim
+      - if: "{{ tout_pousser and volet != '' and not volet_par_package }}"
         then:
           - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
             data:
@@ -3472,7 +3478,7 @@ actions:
   # Définitions : un instantané complet (ce qui n'y est pas est vide), avant les états.
   # Calculées à chaque connexion quel que soit le protocole (la trace montre ce qui
   # partirait), envoyées seulement à une tablette 3.2 ou plus.
-  - if: "{{ trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha', 'zones'] or redefinir }}"
+  - if: "{{ tout_pousser or trigger.id == 'zones' or redefinir }}"
     then:
       - variables:
           # Nom de chaque pièce : saisi, sinon l'aire de ses appareils quand ceux qui en
@@ -3646,7 +3652,7 @@ actions:
           # quand HA n'en a pas), à chaque poussée de la tuile. Un firmware sans les clims
           # des tuiles ignore ces clés.
           reglages_tuiles: >-
-            {%- set tout = trigger.id in ['connexion', 'rechargement', 'maj_ecran', 'demarrage_ha', 'zones'] or redefinir -%}
+            {%- set tout = tout_pousser or trigger.id == 'zones' or redefinir -%}
             {%- set ns = namespace(r='') -%}
             {%- for t in tuiles_clim if t.cle in tuiles_a_pousser and t.e in reglages_clims -%}
               {%- if tout or (reglages_changes and trigger.entity_id == t.e) -%}

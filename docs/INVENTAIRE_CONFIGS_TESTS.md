@@ -169,6 +169,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_themes.py` | `tests/` | Contenu | Palettes, catalogue des thèmes et styles de rôle (ADR-0029) : chaque palette donne tous les rôles, chaque style lit la palette. |
 | `test_tuiles_blueprint.py` | `tests/` | Contenu + rendu | Pièces et tuiles (ADR-0023), côté HA : types, options et commandes du blueprint = tableaux de l'ADR, états poussés. |
 | `test_tuiles_firmware.py` | `tests/` | Contenu | Pièces et tuiles (ADR-0023), côté firmware : grammaire des clés, types, options, commandes de `tab5_tuiles.cpp`. |
+| `test_blueprint_genere.py` | `tests/` | Contenu | Blueprint `tab5_emplacements.yaml` : déclencheurs des pièces et de la rangée à jour de `tools/gen_blueprint_emplacements.py`, une seule liste « tout pousser », une seule action `tab5_maj_clim` (HA-8). |
 | `test_tuiles_icones.py` | `tests/` | Contenu | Palette des icônes des tuiles : parties générées par `tools/gen_tuiles_icones.py` à jour (C++, glyphes MDI, blueprint). |
 | `test_zones.py` | `tests/` | Contenu | Zones optionnelles : enum `Zone`, `kCles`, demande `esphome.tab5_zones` et HA d'accord, dans l'ordre. |
 | `test_guards.py` | `tests/` | Contenu | Joue les 8 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, niveaux d'Arcanoïde, questions de Trial Poursuite, comptes de la cartographie). |
