@@ -175,21 +175,13 @@ int panneau_affiche() {
     return -1;
 }
 
-// Pastilles sous la rangée, comme celles de la carte centrale (pagination_afficher) :
-// une par ligne, la courante large et opaque ; aucune sous deux lignes.
+// Pastilles sous la rangée, celles de la carte centrale (pagination_afficher, la même
+// recette) : une par ligne, la courante large et opaque ; aucune sous deux lignes.
 void pastilles() {
     const RangeeUI& u = g_rangee_ui;
     ui_hidden(u.pastilles_cadre, s_n < 2);
-    for (int i = 0; i < kPlaces; i++) {
-        lv_obj_t* b = u.pastilles[i];
-        if (b == nullptr) continue;
-        ui_hidden(b, i >= s_n);
-        const bool active = i == s_courante;
-        const int32_t w = active ? 30 : 16;
-        const lv_opa_t opa = active ? 255 : 100;
-        if (lv_obj_get_style_width(b, LV_PART_MAIN) != w) lv_obj_set_width(b, w);
-        if (lv_obj_get_style_bg_opa(b, LV_PART_MAIN) != opa) lv_obj_set_style_bg_opa(b, opa, LV_PART_MAIN);
-    }
+    for (int i = 0; i < kPlaces; i++) ui_hidden(u.pastilles[i], i >= s_n);
+    pagination_afficher(u.pastilles, kPlaces, s_courante);
 }
 
 // Ligne j de l'ordre à l'écran, avec la transition de la carte centrale ou d'un coup.

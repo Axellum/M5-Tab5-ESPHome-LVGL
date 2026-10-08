@@ -76,7 +76,8 @@ python tools/cartographie_counts.py        # comptes de lignes de la cartographi
 
 Parallel sessions kept rewriting helpers that already existed (audit of 2026-10-07: six ways to read a number from a payload, four brightness formulas, one of them visibly wrong). Before writing a helper, look here and `grep` the name; when you add a shared helper, add its line here. Naming and style of new code: « Conventions du nouveau code » in [`Tab5/README.md`](Tab5/README.md).
 
-- **LVGL writes that compare first** (no repaint for an unchanged value): `ui_text()`, `ui_text_color()`, `ui_hidden()`, `ui_x()` / `ui_y()`, `ui_police()` — `Tab5/tab5_internal.h`.
+- **LVGL writes that compare first** (no repaint for an unchanged value): `ui_text()`, `ui_text_color()`, `ui_style_num()` / `ui_style_couleur()` (any local style property of the main part), `ui_hidden()`, `ui_x()` / `ui_y()`, `ui_police()` — `Tab5/tab5_internal.h`. LVGL 9.5.0 already compares in `lv_obj_add_flag()` / `lv_obj_remove_flag()` and `lv_obj_set_x/y/width/height()`, never in `lv_label_set_text()` or `lv_obj_set_style_*()`.
+- **A tap or long press at the end of a swipe** (it must open nothing): `ui_appui_glisse()` — `Tab5/tab5_internal.h`.
 - **A number from Home Assistant to an int**: `tab5_float_vers_int(v, bas, haut, defaut)` (bounded, non-finite → default; a raw cast is undefined behaviour), `tab5_fini_ou_nan()` — `Tab5/tab5_core.h`.
 - **Brightness 0-255 → %**: `lum_pct()` — `Tab5/tab5_core.h` (the only formula of the card, the light popup and the wheel).
 - **Reading a payload from Home Assistant without copying it**: `Champ` {p, n}, `champ_suivant()`, `champs_decouper()` (the rest ignored past `max`) / `champs_decouper_reste()` (the last field takes the rest), `champ_est()`, `champ_nombre()` (empty, unreadable, non-finite or longer than 31 characters → default), `champ_entier()`, the common size cap `kPayloadMax` — `Tab5/tab5_champs.h`.

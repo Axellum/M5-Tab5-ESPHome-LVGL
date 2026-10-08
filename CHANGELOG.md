@@ -27,6 +27,24 @@ sujet.
   la roue sort de `tab5-tuiles.yaml` dans `tab5-roue.yaml` (script `tab5_roue_ui`, lancé par
   `tab5_tuiles_ui` au même moment qu'avant). Code déplacé tel quel ; tests repointés.
 
+### 2026-10-08 — Écritures gardées et petites optimisations (lot L10)
+
+Aucun changement visible : les mêmes valeurs, écrites seulement quand elles changent (en LVGL
+9.5.0, `lv_label_set_text()` et `lv_obj_set_style_*()` invalident même à valeur égale). Gain non
+mesuré sur la tablette.
+- **Popup Température** : le titre n'est plus écrit deux fois à chaque repeint ;
+  `peindre_graphique()` (≈ 200 lignes) découpé en onze étapes nommées, mêmes calculs.
+- **Repeints sans réécriture égale** : lignes du popup Alertes, bordures des boutons
+  (`highlight_button_border()` : vues Température et Énergie, bascules du réveil, assistant),
+  popup et sonnerie du réveil, grille du calendrier, titres de page, bandeau info et pluie,
+  pastilles des pages ; `set_label_text_utf8()` ne copie plus son texte.
+- **Tick de 1 s** : il ne relance plus le script du registre des fenêtres une fois la liste
+  remplie. Écran éteint, il referme toujours les popups après l'inactivité, pour se rallumer
+  sur l'accueil.
+- **Une seule recette** : les pastilles sous l'horloge passent par `pagination_afficher()` ; la
+  garde « appui au bout d'un glissement » devient `ui_appui_glisse()` ; `ui_style_num()` et
+  `ui_style_couleur()` rejoignent la boîte à outils d'`AGENTS.md`.
+
 ### 2026-10-08 — Intégration HACS : trois défauts de l'audit du 07/10 (lot L11)
 
 - **Fichiers refusés plus réessayés à chaque démarrage** : quand la vérification de la
