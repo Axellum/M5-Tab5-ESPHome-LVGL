@@ -75,6 +75,16 @@ bool push_unchanged(PushChannel ch, const std::string& payload);
 // (page 0 = créneaux 5-9, page 1 = 0-4 ; le bloc 10-14 n'est jamais affiché).
 bool accept_heures_bulk(const std::string& payload, int forecast_page);
 
+// Prévisions périmées (08/10/2026, tab5_forecast.cpp). `zone` = previsions_perimees
+// (icône + texte, tab5-lvgl.yaml), `lbl` = lbl_previsions_perimees.
+// previsions_recues() : à CHAQUE poussée des jours ou des heures, avant toute garde
+// (une poussée identique dit aussi « HA pousse toujours ») ; `il_y_a_min` ne sert
+// qu'au rendu hors tablette (scène des prévisions périmées), 0 sinon.
+// previsions_fraicheur_tick() : chaque seconde (tab5-scripts.yaml) et au basculement
+// du mode HA ; ne repeint que si la mention change (ui_text / ui_hidden).
+void previsions_recues(lv_obj_t* zone, lv_obj_t* lbl, int il_y_a_min = 0);
+void previsions_fraicheur_tick(lv_obj_t* zone, lv_obj_t* lbl);
+
 // Tableaux globaux des slots meteo (initialises au boot, fixes car ids LVGL constants).
 // Evite la reconstruction identique dans chaque lambda YAML (D2).
 extern WeatherDaySlot g_day_slots[5];

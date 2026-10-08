@@ -245,7 +245,10 @@ lvgl:
               # plus proche qui a des appareils), fondu croisé avec la météo, titre de la
               # pièce dans la carte centrale, bouton en couleur d'accent. Masqué sans
               # aucun appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp).
-              - lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);'
+              - lambda: |-
+                  tuiles_mode_ha(!g_central_ctx.ha_mode);
+                  // Mention « prévisions périmées » : masquée en mode HA, tout de suite.
+                  previsions_fraicheur_tick(id(previsions_perimees), id(lbl_previsions_perimees));
             on_long_press:
               # « auto » : popup Énergie (ADR-0028), quand HA pousse la production solaire
               # (puissance crête choisie dans le blueprint).
@@ -606,6 +609,33 @@ lvgl:
               - obj: { id: pbar_2, width: 30, height: 4, radius: 2, styles: style_bg_soft, bg_opa: 100%, border_width: 0 }
               - obj: { id: pbar_3, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
               - obj: { id: pbar_4, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+
+        # ==================== PRÉVISIONS PÉRIMÉES ====================
+        # Mention au-dessus des tuiles, à droite (08/10/2026) : masquée tant que les
+        # prévisions arrivent ; sinon « Prévisions de 11 h 42 », posé et montré par
+        # previsions_fraicheur_tick() (tab5_forecast.cpp). Bande libre de 25 px entre la
+        # carte centrale (bas à 416) et les onglets des tuiles (haut à 442), à droite des
+        # points de pagination (x 480-790). Non cliquable : un geste qui part là reste
+        # un swipe des prévisions.
+        - obj:
+            id: previsions_perimees
+            x: 800
+            y: 416
+            width: 455
+            height: 26
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+            clickable: false
+            hidden: true
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: END
+              flex_align_cross: CENTER
+              pad_column: 6
+            widgets:
+              - label: { id: icon_previsions_perimees, text: "\U000F05CE", text_font: mdi_font_26, styles: style_text_warning }
+              - label: { id: lbl_previsions_perimees, text: "", styles: style_text_dim }
 
         # ==================== BOTTOM CARDS (FORECAST) ====================
 

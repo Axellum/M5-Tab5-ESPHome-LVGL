@@ -477,6 +477,10 @@ interval:
   - interval: 1s
     then:
       - lambda: |-
+          // Prévisions périmées (08/10/2026) : une comparaison d'heures par seconde,
+          // repeinte seulement si la mention change (tab5_forecast.cpp).
+          previsions_fraicheur_tick(id(previsions_perimees), id(lbl_previsions_perimees));
+
           if (GameRegistry::any_open()) return;
 
           // Liste des fenêtres : ModalRegistry (tab5_registry.h), remplie une
