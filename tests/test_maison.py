@@ -17,7 +17,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from tests.commun import lire as _lire
+from tests.commun import contrat, lire as _lire, source
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -42,22 +42,22 @@ def _constexpr(source, nom):
 
 
 def _jeton(nom):
-    m = re.search(rf'^\s*{nom}: "(\d+)"', _lire("Tab5", "tab5-ui-tokens.yaml"), re.M)
+    m = re.search(rf'^\s*{nom}: "(\d+)"', _lire("Tab5", "paquets", "tab5-ui-tokens.yaml"), re.M)
     assert m, nom
     return int(m.group(1))
 
 
 def _maison():
-    return _lire("Tab5", "tab5_maison.cpp")
+    return _lire("Tab5", "ecran", "tab5_maison.cpp")
 
 
 def _tuiles():
     # Tuiles, popups, roue d'une tuile et leur en-tête commun (lot L7, 08/10/2026).
-    return "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
+    return "\n".join(_lire(source(f)) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
 
 
 def test_popup_du_registre_dernier_des_popup():
-    scripts = _lire("Tab5", "tab5-navigation.yaml")
+    scripts = _lire("Tab5", "paquets", "tab5-navigation.yaml")
     ajouts = re.findall(r'ModalRegistry::add\(id\((\w+)\),\s+(?:"[^"]*"|nullptr),\s+ModalRegistry::(\w+)[,)]', scripts)
     popups = [obj for obj, genre in ajouts if genre == "POPUP"]
     assert popups[-1] == "maison_popup", "« Maison » à la fin du bloc des POPUP"
@@ -67,17 +67,17 @@ def test_popup_du_registre_dernier_des_popup():
     for avant in ("light_options_popup", "volet_popup", "appareil_popup", "clim_options_popup",
                   "tv_remote_popup", "energie_popup"):
         assert popups.index(avant) < popups.index("maison_popup"), avant
-    assert "- !include ui_components/maison_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
+    assert "- !include ../ui_components/maison_popup.yaml" in _lire("Tab5", "paquets", "tab5-lvgl.yaml")
 
 
 def test_option_maison_du_select_a_la_fin():
-    controles = _lire("Tab5", "tab5-navigation.yaml")
+    controles = _lire("Tab5", "paquets", "tab5-navigation.yaml")
     bloc = controles.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s*-\s*"([^"]+)"', bloc, re.M)
     assert options[-1] == "Maison", "à la fin : les index des autres options ne bougent pas"
-    # L'index de l'option est sa valeur d'Ecran (tab5_custom.h, tests/test_appuis.py) ; le
+    # L'index de l'option est sa valeur d'Ecran (tab5_zones.h, tests/test_appuis.py) ; le
     # select et les appuis longs passent par la routine unique tab5_ecran_ouvrir.
-    enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", _lire("Tab5", "tab5_custom.h"), re.S).group(1)
+    enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", contrat(), re.S).group(1)
     valeurs = re.findall(r"\b([A-Z]+),", re.sub(r"//[^\n]*", "", enum))
     assert valeurs.index("MAISON") == options.index("Maison")
     script = controles.split("- id: tab5_ecran_ouvrir", 1)[1].split("\ntext_sensor:", 1)[0]
@@ -98,7 +98,7 @@ def test_chrome_partage():
 
 
 def test_widgets_poses_par_le_script():
-    script = _lire("Tab5", "tab5-maison.yaml")
+    script = _lire("Tab5", "paquets", "tab5-maison.yaml")
     popup = _lire("Tab5", "ui_components", "maison_popup.yaml")
     for r in range(5):
         assert f"u.entete[{r}] = id(maison_entete_{r});" in script
@@ -109,8 +109,8 @@ def test_widgets_poses_par_le_script():
     assert script.index("u.popup = id(maison_popup);") > script.index("u.ligne[4][4]"), "popup en dernier"
     for paquet in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
         texte = _lire(paquet)
-        assert "tab5_maison: !include Tab5/tab5-maison.yaml" in texte, paquet
-        assert "- Tab5/tab5_maison.cpp" in texte, paquet
+        assert "tab5_maison: !include Tab5/paquets/tab5-maison.yaml" in texte, paquet
+        assert "- Tab5/ecran/tab5_maison.cpp" in texte, paquet
     on_boot = _lire("tab5-ha-hmi.yaml").split("  on_boot:", 1)[1].split("\npackages:", 1)[0]
     assert "maison" not in on_boot
 
@@ -182,7 +182,7 @@ def test_colonnes_dans_l_ordre_des_pieces_et_geometrie():
     assert "ui_hidden(u.vide, n > 0);" in disposer
     # Carte et corps : tab5_geometrie.h, partagé (lot L5 ; tests/test_geometrie_partagee.py).
     assert '#include "tab5_geometrie.h"' in cpp and "constexpr int32_t kCarteL" not in cpp
-    geometrie = _lire("Tab5", "tab5_geometrie.h")
+    geometrie = _lire("Tab5", "socle", "tab5_geometrie.h")
     assert int(_constexpr(geometrie, "kCarteL")) == _jeton("modal_card_w")
     assert int(_constexpr(geometrie, "kCarteH")) == _jeton("modal_card_h")
     assert int(_constexpr(geometrie, "kCorpsY")) == _jeton("modal_body_y")
@@ -205,7 +205,7 @@ def test_repeint_seulement_affiche():
 
 
 def test_tap_du_titre_de_la_piece_en_mode_ha():
-    lvgl = _lire("Tab5", "tab5-lvgl.yaml")
+    lvgl = _lire("Tab5", "paquets", "tab5-lvgl.yaml")
     bouton = lvgl.split("id: btn_page_title_tap", 1)[1].split("# Info Wrapper", 1)[0]
     assert "lambda: 'return maison_titre_appui_valide();'" in bouton
     assert "script.execute: tab5_maison_ouvrir" in bouton
@@ -214,12 +214,12 @@ def test_tap_du_titre_de_la_piece_en_mode_ha():
     assert "if (!g_central_ctx.ha_mode) return false;" in valide
     # Garde commune « appui au bout d'un glissement » (lot L10) : tab5_internal.h.
     assert "return !ui_appui_glisse();" in valide
-    garde = _lire("Tab5", "tab5_internal.h").split("inline bool ui_appui_glisse()", 1)[1].split("\n}", 1)[0]
+    garde = _lire("Tab5", "ecran", "tab5_internal.h").split("inline bool ui_appui_glisse()", 1)[1].split("\n}", 1)[0]
     assert "lv_indev_get_press_moved" in garde and "lv_indev_get_gesture_dir" in garde
 
 
 def test_glyphes_dans_les_polices():
-    polices = font_glyphs(TAB5 / "tab5-styles.yaml")
+    polices = font_glyphs(TAB5 / "paquets" / "tab5-styles.yaml")
     assert chr(0xF01D8) in polices["mdi_font_26"], "« ⋯ » (dots-horizontal)"
     assert chr(0xF02DC) in polices["mdi_font_32"], "home, icône de la barre de titre"
     ligne = _lire("Tab5", "ui_components", "maison_ligne.yaml")
@@ -244,7 +244,7 @@ def test_roue_devant_le_popup_maison():
     # La roue est montée avant les popups (tab5-lvgl.yaml) : roue_ouvrir la ramène au premier
     # plan, sinon elle s'ouvrirait derrière le popup Maison. Pas à un repeint (état poussé,
     # thème) : la sonnerie du réveil, au-dessus de tout, resterait dessous.
-    roue = _lire("Tab5", "tab5_roue.cpp")
+    roue = _lire("Tab5", "ecran", "tab5_roue.cpp")
     ouvrir = _fonction(roue, "roue_ouvrir")
     assert "const bool repeinte = garder && ouverte();" in ouvrir
     assert "if (!repeinte) lv_obj_move_to_index(u.fond, -1);" in ouvrir

@@ -14,7 +14,7 @@ The project history already shows the failure mode: before `tab5_games_close_all
 
 ## Decision
 
-1. **`Tab5/tab5_registry.h` / `.cpp`** is the single owner of both lists.
+1. **`Tab5/ecran/tab5_registry.h` / `.cpp`** is the single owner of both lists.
    - `GameRegistry::kGames[]` is a `constexpr`-style table `{name, is_open, close, on_imu, imu_fast}`. The game namespaces are plain C++, so the table lives entirely in C++. `any_open()`, `open_name()`, `close_all()`, `any_imu_fast_open()` and `dispatch_imu()` replace the four hand-written enumerations. "Neon Apron" stays **last**: its `close()` restores `rotation: 270` and must have the last word (ADR-0012).
    - `ModalRegistry` is a fixed array (16 slots, no heap) of `{lv_obj_t*, name, kind}` with three kinds: `POPUP` (named, faded out by `close_popup_if_open`, auto-closed after `UIIdle::POPUP_MS`), `SUBWINDOW` (never named, hidden flat together with the popups: calendar day detail, console confirmations), `LAYER` (named but **never** closed by the registry: the alarm ring screen). `visible_name()`, `any_popup_visible()`, `find(name)` and `close_all()` replace `kScreens`, both `kPopups` and `kTargetOf`.
 2. LVGL widgets are only reachable through `id()` inside a YAML lambda, so the modal list is written **once**, in the `tab5_modal_registry_init` script of `tab5-scripts.yaml` (moved to `tab5-navigation.yaml` on 2026-10-08, with the opening script of each screen). The script is idempotent and every reader executes it before reading; whichever runs first after boot fills the table, the others find it ready. This avoids touching the protected `on_boot` sequence of `tab5-ha-hmi.yaml`.

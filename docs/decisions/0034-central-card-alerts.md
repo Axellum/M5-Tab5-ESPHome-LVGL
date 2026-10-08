@@ -77,5 +77,5 @@ The constraints still hold:
   - the off-device render shows the screens « accueil-alertes-ha-compteur » and « alertes »;
   - the sanitizers fuzz the new action.
 - **Left open:**
-  - the four central banners are named in two places of the firmware YAML (2026-10-08): the whole table in `Tab5/tab5-alertes.yaml` (script `tab5_ha_alert_slots_init`), and their frames in the `on_boot` of `tab5-ha-hmi.yaml`, copied in `tab5-rendu-host.yaml` — a sequence not touched without the author's agreement;
+  - the four central banners are named in two places of the firmware YAML (2026-10-08): the whole table in `Tab5/paquets/tab5-alertes.yaml` (script `tab5_ha_alert_slots_init`), and their frames in the `on_boot` of `tab5-ha-hmi.yaml`, copied in `tab5-rendu-host.yaml` — a sequence not touched without the author's agreement;
   - the long press of the forecast tiles can still follow a swipe (the alerts popup refuses it, through LVGL's `press_moved` / `gesture_dir`).

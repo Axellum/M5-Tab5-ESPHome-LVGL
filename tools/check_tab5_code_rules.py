@@ -4,7 +4,7 @@
 pour les règles 9 à 14). Quatorze règles, toutes falsifiables sur le dépôt réel
 (numérotation propre à ce script, distincte des règles d'AGENTS.md) :
 
-  1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
+  1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/{socle,ecran,jeux}/*.cpp`, `*.h`,
      `*.yaml` ni `tab5-ha-hmi.yaml`. Un futur `%s` sur un buffer de 16 octets ne
      doit pas pouvoir déborder en silence.
   2. **Aucune logique LVGL dans `tab5-api-logic.yaml`, `tab5-hardware.yaml` ni la
@@ -67,6 +67,7 @@ pour les règles 9 à 14). Quatorze règles, toutes falsifiables sur le dépôt 
      ni `std::string` par valeur ni `to_string()` dans un `on_value:` / `on_change:`,
      aucun paramètre `std::string` par valeur dans un en-tête de Tab5/.
  12. **Chaque fonction de `tab5_custom.h` a un appelant hors de son fichier** (CPP-4) :
+     tab5_custom.h et l'en-tête de chaque module qu'il inclut (08/10/2026) ;
      une lambda YAML (firmware ou tablette virtuelle) ou une autre unité C++.
      Exceptions du 08/10/2026 : `PUBLIQUES_SANS_APPELANT`.
  13. **Conventions du nouveau code** (Tab5/README.md) : `nullptr` jamais `NULL` ; hors
@@ -88,12 +89,15 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tab5_sources  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 ENTRY = REPO / "tab5-ha-hmi.yaml"
-API_LOGIC = TAB5 / "tab5-api-logic.yaml"
-HARDWARE = TAB5 / "tab5-hardware.yaml"
-GLOBALS_YAML = TAB5 / "tab5-globals.yaml"
+API_LOGIC = TAB5 / "paquets" / "tab5-api-logic.yaml"
+HARDWARE = TAB5 / "paquets" / "tab5-hardware.yaml"
+GLOBALS_YAML = TAB5 / "paquets" / "tab5-globals.yaml"
 
 RE_SPRINTF = re.compile(r"(?<![A-Za-z_])sprintf\s*\(")
 RE_LV_CALL = re.compile(r"\b(lv_[a-z0-9_]+)\s*\(")
@@ -136,8 +140,9 @@ def strip_cpp_comments(text: str) -> str:
 
 
 def firmware_sources(tab5: Path = TAB5, entry: Path = ENTRY) -> list[Path]:
-    files = sorted(tab5.glob("*.cpp")) + sorted(tab5.glob("*.h"))
-    files += sorted(tab5.glob("*.yaml")) + sorted((tab5 / "ui_components").glob("*.yaml"))
+    # Tab5/socle|ecran|jeux|paquets et la racine de Tab5/ (tools/tab5_sources.py).
+    files = tab5_sources.fichiers("*.cpp", "*.h", "*.yaml", tab5=tab5)
+    files += sorted((tab5 / "ui_components").glob("*.yaml"))
     if entry.is_file():
         files.append(entry)
     return files
@@ -284,9 +289,9 @@ def font_glyphs(styles: Path) -> dict[str, set[str]]:
 
 
 def date_glyph_coverage(tab5: Path = TAB5) -> list[str]:
-    core = tab5 / "tab5_core.cpp"      # fr_day_short_utf8 + clock_month_short_utf8 (lot 8d)
-    styles = tab5 / "tab5-styles.yaml"
-    lvgl = tab5 / "tab5-lvgl.yaml"
+    core = tab5 / "socle" / "tab5_core.cpp"      # fr_day_short_utf8 + clock_month_short_utf8 (lot 8d)
+    styles = tab5 / "paquets" / "tab5-styles.yaml"
+    lvgl = tab5 / "paquets" / "tab5-lvgl.yaml"
     for required in (core, styles, lvgl):
         if not required.is_file():
             return [f"règle 6 : fichier introuvable : {required}"]
@@ -513,7 +518,7 @@ def _cpp_lines(path: Path) -> list[str]:
 def mdi_glyph_coverage(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     """Règle 7 : chaque icône MDI affichée est dans la police de son widget, et
     chaque glyphe d'une police `mdi_*` est affiché quelque part."""
-    styles = tab5 / "tab5-styles.yaml"
+    styles = tab5 / "paquets" / "tab5-styles.yaml"
     if not styles.is_file():
         return [f"règle 7 : fichier introuvable : {styles}"]
     fonts = font_glyphs(styles)
@@ -614,7 +619,7 @@ def mdi_glyph_coverage(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
 def palette_colors(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     """Règle 8 : les couleurs de l'interface passent par la palette (`Palette`, tab5_tokens.h)."""
     problems: list[str] = []
-    declared = set(RE_YAML_COLOR_DECL.findall((tab5 / "tab5-styles.yaml").read_text(encoding="utf-8")))
+    declared = set(RE_YAML_COLOR_DECL.findall((tab5 / "paquets" / "tab5-styles.yaml").read_text(encoding="utf-8")))
     for path in firmware_sources(tab5, entry):
         game = bool(RE_GAME_SOURCE.search(path.name))
         text = path.read_text(encoding="utf-8")
@@ -831,7 +836,8 @@ def chemins_chauds(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
-# Règle 12 (CPP-4 / YML-11) : chaque fonction déclarée dans tab5_custom.h a un appelant
+# Règle 12 (CPP-4 / YML-11) : chaque fonction déclarée dans tab5_custom.h (ou dans l'en-tête
+# d'un module qu'il inclut, un par module depuis le 08/10/2026) a un appelant
 # hors de son fichier : une lambda YAML (firmware, ou tablette virtuelle du rendu hors
 # tablette : tab5-rendu-host.yaml, Tab5/rendu/), ou une autre unité C++. Une fonction
 # appelée par son seul fichier n'a rien à faire dans l'en-tête public : `static` (ou
@@ -888,11 +894,14 @@ def fonctions_publiques(header: Path) -> list[str]:
 
 
 def appelants_publics(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
-    """Règle 12 : chaque fonction de tab5_custom.h a un appelant hors de son fichier."""
-    header = tab5 / "tab5_custom.h"
+    """Règle 12 : chaque fonction de tab5_custom.h (et des en-têtes de modules qu'il inclut
+    depuis le 08/10/2026) a un appelant hors de son fichier."""
+    header = tab5 / "ecran" / "tab5_custom.h"
     if not header.is_file():
         return [f"règle 12 : fichier introuvable : {header}"]
-    noms = fonctions_publiques(header)
+    entetes = tab5_sources.contrat_entetes(tab5)
+    declare = {n: h.name for h in entetes for n in fonctions_publiques(h)}
+    noms = list(declare)
     if len(noms) < 100:
         return [f"règle 12 : {len(noms)} fonctions lues dans tab5_custom.h, le motif ne les reconnaît plus"]
     sources = firmware_sources(tab5, entry)
@@ -906,7 +915,7 @@ def appelants_publics(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     cpp: dict[str, str] = {}
     definis: dict[str, set[str]] = {}
     for p in sources:
-        if p.suffix not in (".cpp", ".h") or p == header:
+        if p.suffix not in (".cpp", ".h") or p in entetes:
             continue
         t = strip_cpp_comments(p.read_text(encoding="utf-8"))
         definis[p.name] = set(RE_CPP_DEF.findall(t))
@@ -921,11 +930,11 @@ def appelants_publics(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
             appele = any(appel.search(t) for f, t in cpp.items() if nom not in definis[f])
         if not appele and nom not in PUBLIQUES_SANS_APPELANT:
             ou = ", ".join(sorted(f for f, d in definis.items() if nom in d)) or "?"
-            problems.append(f"tab5_custom.h : `{nom}()` ({ou}) n'est appelée ni par un YAML ni par une "
+            problems.append(f"{declare[nom]} : `{nom}()` ({ou}) n'est appelée ni par un YAML ni par une "
                             f"autre unité — `static` dans son fichier, ou tab5_internal.h (CPP-4)")
         elif appele and nom in PUBLIQUES_SANS_APPELANT:
             problems.append(f"PUBLIQUES_SANS_APPELANT : `{nom}()` a maintenant un appelant — retirer l'exception")
-    problems += [f"PUBLIQUES_SANS_APPELANT : `{nom}()` n'est plus déclarée dans tab5_custom.h — retirer l'exception"
+    problems += [f"PUBLIQUES_SANS_APPELANT : `{nom}()` n'est plus déclarée dans tab5_custom.h ni ses en-têtes — retirer l'exception"
                  for nom in sorted(PUBLIQUES_SANS_APPELANT - set(noms))]
     return problems
 
@@ -1053,10 +1062,10 @@ def accents_ecran(textes: dict[str, list[str]]) -> list[str]:
 
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
-    api_logic = tab5 / "tab5-api-logic.yaml"
-    hardware = tab5 / "tab5-hardware.yaml"
-    sensors = (tab5 / "tab5-sensors-diagnostics.yaml", tab5 / "tab5-sensors-domotique.yaml")
-    globals_yaml = tab5 / "tab5-globals.yaml"
+    api_logic = tab5 / "paquets" / "tab5-api-logic.yaml"
+    hardware = tab5 / "paquets" / "tab5-hardware.yaml"
+    sensors = (tab5 / "paquets" / "tab5-sensors-diagnostics.yaml", tab5 / "paquets" / "tab5-sensors-domotique.yaml")
+    globals_yaml = tab5 / "paquets" / "tab5-globals.yaml"
     for required in (api_logic, hardware, *sensors, globals_yaml):
         if not required.is_file():
             return [f"fichier introuvable : {required}"]
@@ -1088,7 +1097,7 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     # (micro_wake_word, voice_assistant, image de la réponse) passe par
     # assist_set_pipeline_state() / assist_image_state_ui(), jamais par lv_*.
     # Les scripts du popup Assistant, eux, ont le droit de toucher leurs widgets.
-    assist = tab5 / "tab5-assist.yaml"
+    assist = tab5 / "paquets" / "tab5-assist.yaml"
     if assist.is_file():
         text = strip_yaml_comments(assist.read_text(encoding="utf-8"))
         pile = text.split("\nscript:", 1)[0]

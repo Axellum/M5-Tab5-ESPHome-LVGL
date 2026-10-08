@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Garde-fou du registre unique des consoles et des fenêtres modales (ADR-0013).
 
-Depuis le 08/09/2026, la liste des 8 consoles vit dans `Tab5/tab5_registry.cpp`
+Depuis le 08/09/2026, la liste des 8 consoles vit dans `Tab5/ecran/tab5_registry.cpp`
 (`GameRegistry::kGames`) et la liste des fenêtres modales dans le script
-`tab5_modal_registry_init` de `Tab5/tab5-navigation.yaml` (de `tab5-scripts.yaml`
+`tab5_modal_registry_init` de `Tab5/paquets/tab5-navigation.yaml` (de `tab5-scripts.yaml`
 jusqu'au 08/10/2026), avec le select « Aller à l'écran ». Ce script vérifie que
 personne ne recopie une liste ailleurs et qu'aucune console ni popup n'est
 oubliée :
 
-  1. chaque `Tab5/*_game.h` (namespace avec `bool is_open();`) figure dans
+  1. chaque `Tab5/jeux/*_game.h` (namespace avec `bool is_open();`) figure dans
      `kGames`, et réciproquement ;
   2. aucun YAML de `Tab5/` n'interroge un jeu directement (`X::is_open()`),
      n'appelle `X::close()` hors du script d'ouverture du jeu, ni ne dispatche
@@ -31,12 +31,15 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tab5_sources  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 UI = TAB5 / "ui_components"
-REGISTRY_CPP = TAB5 / "tab5_registry.cpp"
+REGISTRY_CPP = TAB5 / "ecran" / "tab5_registry.cpp"
 # Registre des fenêtres et select « Aller à l'écran » (même fichier depuis le 08/10/2026).
-NAVIGATION_YAML = TAB5 / "tab5-navigation.yaml"
+NAVIGATION_YAML = TAB5 / "paquets" / "tab5-navigation.yaml"
 
 RE_NAMESPACE = re.compile(r"^namespace (\w+) \{", re.M)
 RE_ADD = re.compile(r'ModalRegistry::add\(\s*id\((\w+)\)\s*,\s*(nullptr|"([^"]*)")\s*,')
@@ -59,7 +62,7 @@ def strip_cpp_comments(text: str) -> str:
 def games_from_headers(tab5: Path = TAB5) -> dict[str, str]:
     """{namespace: fichier} pour chaque en-tête de console (namespace + is_open)."""
     games: dict[str, str] = {}
-    for h in sorted(tab5.glob("*_game.h")):
+    for h in tab5_sources.fichiers("*_game.h", tab5=tab5):
         text = strip_cpp_comments(h.read_text(encoding="utf-8"))
         if "bool is_open();" not in text:
             continue
@@ -108,8 +111,8 @@ def select_options(navigation: Path = NAVIGATION_YAML) -> list[str]:
 def scan(tab5: Path = TAB5) -> list[str]:
     problems: list[str] = []
     ui_dir = tab5 / "ui_components"
-    registry_cpp = tab5 / "tab5_registry.cpp"
-    navigation_yaml = tab5 / "tab5-navigation.yaml"
+    registry_cpp = tab5 / "ecran" / "tab5_registry.cpp"
+    navigation_yaml = tab5 / "paquets" / "tab5-navigation.yaml"
 
     for required in (registry_cpp, navigation_yaml):
         if not required.is_file():
@@ -128,7 +131,7 @@ def scan(tab5: Path = TAB5) -> list[str]:
     re_is_open = re.compile(rf"\b({game_names})::is_open\(")
     re_close = re.compile(rf"\b({game_names})::close\(")
     re_on_imu = re.compile(rf"\b({game_names})::on_imu\(")
-    yaml_files = sorted(tab5.glob("*.yaml")) + sorted(ui_dir.glob("*.yaml"))
+    yaml_files = tab5_sources.fichiers("*.yaml", tab5=tab5) + sorted(ui_dir.glob("*.yaml"))
     for path in yaml_files:
         text = strip_comments(path.read_text(encoding="utf-8"))
         for m in re_is_open.finditer(text):

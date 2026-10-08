@@ -186,7 +186,7 @@ script:
   # mode off), et il borne la consigne aux limites de l'appareil (ADR-0026). Valeur en
   # texte court (« 21.5 », pas « 21.500000 ») : le blueprint la relit en nombre, pareil.
   # Lancé par la carte (climate_card.yaml) et, pour le popup, par clim_popup_consigne()
-  # / clim_popup_pas() (tab5_cards.cpp, pointeur posé par tab5_clim_ui).
+  # / clim_popup_pas() (ecran/tab5_clim.cpp, pointeur posé par tab5_clim_ui).
   - id: tab5_debounce_clim_temp
     mode: restart
     then:
@@ -199,7 +199,7 @@ script:
 
   # Debounce de la cible d'une clim de tuile (popup ouvert par une tuile cli sans
   # l'option m, ADR-0027) : même délai, mais l'emplacement (« tRT ») et la valeur sont
-  # pris au geste (tab5_cards.cpp), pour que la consigne parte à sa clim même si le popup
+  # pris au geste (ecran/tab5_clim.cpp), pour que la consigne parte à sa clim même si le popup
   # a été refermé entre-temps. Le blueprint la traduit comme celle de la clim du
   # blueprint, sur l'entité de la tuile. Clé vide : la tuile a changé d'appareil entre
   # le geste et l'envoi (clim_tuile_oublier), rien ne part.

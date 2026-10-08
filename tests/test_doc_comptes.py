@@ -4,14 +4,14 @@
 Constatés faux le 29/09/2026 (pendant la PR #259) : « douze packages » dans
 docs/architecture.md (l'entrée en importe dix-neuf, et la liste recopiée en
 oubliait quatre), « 18 services » dans la cartographie (19 dans
-Tab5/tab5-api-logic.yaml), « 25 décisions d'architecture » sur le site et dans le
+Tab5/paquets/tab5-api-logic.yaml), « 25 décisions d'architecture » sur le site et dans le
 README (26 dans docs/decisions/). Là où un nombre reste écrit, ce test vérifie :
 
 - les packages de `tab5-ha-hmi.yaml` : la liste recopiée dans docs/architecture.md
   (mêmes clés, mêmes fichiers, même ordre), leur nombre en toutes lettres dans ses
   « Key design decisions » (EN et FR ; dans le README jusqu'au 05/10/2026) et en
   chiffres dans la cartographie ;
-- les actions (`- service:`) de `Tab5/tab5-api-logic.yaml` : leur nombre dans la
+- les actions (`- service:`) de `Tab5/paquets/tab5-api-logic.yaml` : leur nombre dans la
   cartographie, et la table de Tab5/README.md, qui les liste chacune une fois ;
 - les ADR de docs/decisions/ : leur nombre dans le README et la cartographie.
 
@@ -43,11 +43,11 @@ import pathlib
 import re
 
 import pytest
-from tests.commun import lire as _lire
+from tests.commun import lire as _lire, sources as _sources
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 ENTREE = REPO / "tab5-ha-hmi.yaml"
-API = REPO / "Tab5" / "tab5-api-logic.yaml"
+API = REPO / "Tab5" / "paquets" / "tab5-api-logic.yaml"
 DECISIONS = REPO / "docs" / "decisions"
 ARCHITECTURE = REPO / "docs" / "architecture.md"
 CARTOGRAPHIE = REPO / "CARTOGRAPHIE_TAB5.md"
@@ -55,7 +55,7 @@ README = REPO / "README.md"
 README_TAB5 = REPO / "Tab5" / "README.md"
 INVENTAIRE = REPO / "docs" / "INVENTAIRE_CONFIGS_TESTS.md"
 SITE = REPO / "web" / "index.html"
-LVGL = REPO / "Tab5" / "tab5-lvgl.yaml"
+LVGL = REPO / "Tab5" / "paquets" / "tab5-lvgl.yaml"
 UI = REPO / "Tab5" / "ui_components"
 GROS = 500   # « Most stay under 500 lines » (docs/architecture.md)
 
@@ -91,7 +91,7 @@ def _packages(texte):
 
 
 def _nom(fichier):
-    """Nom d'un package dans la doc : `Tab5/ecran-${ tab5_ecran | … }.yaml` → `ecran-*.yaml`."""
+    """Nom d'un package dans la doc : `Tab5/paquets/ecran-${ tab5_ecran | … }.yaml` → `ecran-*.yaml`."""
     return re.sub(r"\$\{[^}]*\}", "*", fichier.rsplit("/", 1)[-1])
 
 
@@ -340,7 +340,7 @@ def test_nombre_de_themes(chemin, motif):
 
 AGENTS = REPO / "AGENTS.md"
 DEMO_MODE = REPO / "docs" / "demo_mode.md"
-SERVICES_CPP = REPO / "Tab5" / "tab5_services.cpp"
+SERVICES_CPP = REPO / "Tab5" / "ecran" / "tab5_services.cpp"
 
 import demo_pusher  # noqa: E402
 import scenarios  # noqa: E402
@@ -512,8 +512,7 @@ def test_boite_a_outils_noms_reels():
     une liste qui nomme un helper disparu enverrait un agent le chercher en vain."""
     section = _boite_a_outils()
     sources = "\n".join(p.read_text(encoding="utf-8", errors="replace")
-                        for p in sorted((REPO / "Tab5").glob("*"))
-                        if p.suffix in {".h", ".cpp", ".yaml"})
+                        for p in _sources("*.h", "*.cpp", "*.yaml"))
     fonctions = re.findall(r"`([A-Za-z_][\w:]*)\(", section)
     assert len(fonctions) > 40, "la boîte à outils ne liste plus de fonctions `nom()`, adapter le motif"
     absentes = [f for f in fonctions if not re.search(rf"\b{re.escape(f)}\s*\(", sources)]

@@ -2,7 +2,7 @@
 # [AI-CONTEXT]
 # @file lang/es.yaml — Spanish translation of the Tab5 screen.
 # @role Flat mapping « French text as written in the code » → « Spanish ».
-#       tools/gen_i18n.py turns it into Tab5/tab5_i18n_data.h (see its header for
+#       tools/gen_i18n.py turns it into Tab5/socle/tab5_i18n_data.h (see its header for
 #       adding a language: copy en.yaml, change _langue/_code/_index, translate).
 #       Same keys, same order and same section comments as en.yaml.
 # @ai_instruction
@@ -573,7 +573,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Coffre : %d âmes": "Cofre: %d almas"
 
 # --- Arcanoïde — brick breaker (arkanoid_game.cpp) -----------------------------
-# Lot 4b — Arcanoïde (Tab5/arkanoid_game.cpp) : français du code → espagnol.
+# Lot 4b — Arcanoïde (Tab5/jeux/arkanoid_game.cpp) : français du code → espagnol.
 # « ARCANOIDE » (nom de la console) n'est pas traduit. « Retour » et « Pause »
 # reprennent la traduction commune (Volver / Pausa).
 # Espagnol : score = puntuación (mot compris partout ; « puntaje » est latino-américain),
@@ -707,7 +707,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Nouvelle partie, 3 billes": "Nueva partida, 3 bolas"
 
 # --- Coureur d'Or — Lode Runner (lode_game.cpp) --------------------------------
-# Coureur d'Or (Tab5/lode_game.cpp) — lot 4b, FR → ES.
+# Coureur d'Or (Tab5/jeux/lode_game.cpp) — lot 4b, FR → ES.
 # « COUREUR D'OR » (nom de la console) n'est pas traduit.
 # Espagnol : creuser = cavar, case = casilla, D-pad / croix = cruceta.
 # --- Vitesses (Reglages > Vitesse, pause) ---
@@ -947,8 +947,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Menu principal": "Menú principal"
 
 # --- Trial Poursuite — quiz interface; the questions stay French (trivia_game.cpp) ---
-# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/trivia_game.cpp).
-# Les questions et réponses (Tab5/trivia_questions.h) restent en français.
+# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/jeux/trivia_game.cpp).
+# Les questions et réponses (Tab5/jeux/trivia_questions.h) restent en français.
 # Déjà plus haut, non répétées ici : Réglages, Retour, Confirmer, Annuler.
 # Espagnol : part de camembert = quesito (vocabulaire du Trivial Pursuit espagnol),
 # case = casilla, dé = dado, équipe = equipo, case « Rejouer » = « Otra tirada ».

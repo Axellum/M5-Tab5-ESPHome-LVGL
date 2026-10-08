@@ -14,7 +14,7 @@
 #                          (climate_hvac_mode_btn.yaml ×4, climate_preset_toggle_btn.yaml ×2).
 #                          Ne pas renommer arc_temp_popup / clim_target_popup / val_temp_int_popup
 #                          / popup_icon_clim_* : posés dans g_clim_ui (script tab5_clim_ui) et
-#                          peints par tab5_cards.cpp.
+#                          peints par ecran/tab5_clim.cpp.
 #                          CLIM AFFICHÉE (ADR-0027) : le popup montre la clim du blueprint, ou
 #                          celle d'une tuile cli sans l'option m. Ses gestes (clim_popup_*) et
 #                          ses commandes (emplacement clim_affichee_cle() : « clim » ou « tRT »)
@@ -22,13 +22,13 @@
 #                          la fermeture (croix, voile), le popup revient à la clim du blueprint.
 # @ai_instruction Cadre modal v3 (ADR-0008) : scrim / marque / croix via modal_*.yaml
 #       (en-tête y=6, côtés 10 px). `scrollable: false` partout — NE PAS retirer.
-#       Cible optimiste via clim_popup_consigne() / clim_popup_pas() (tab5_cards.cpp),
+#       Cible optimiste via clim_popup_consigne() / clim_popup_pas() (ecran/tab5_clim.cpp),
 #       qui lancent le débounce de la clim affichée (tab5_debounce_clim_temp ou _tuile).
 #       Boutons Mode/Preset/… : geste clim_popup_* (état optimiste + couleurs,
 #       clim_recolorer) AVANT l'envoi de la commande.
 #       Appui : aucun `pressed:` ici, apply_pressed_scale_to_tree() (tab5_anim.cpp) le pose
 #       sur tout bouton cliquable de rayon 18 (D6, audit des conteneurs du 01/10/2026).
-#       Réglages de l'appareil (clé climr, ADR-0026, tab5_cards.cpp) : bornes de l'arc,
+#       Réglages de l'appareil (clé climr, ADR-0026, ecran/tab5_clim.cpp) : bornes de l'arc,
 #       pas des ±, unité, titre = nom de la clim, boutons que l'appareil n'a pas masqués
 #       et sections de la carte OPTIONS ré-empilées (leurs y ci-dessous sont ceux de
 #       « tout affiché », repris par les constantes kOptions* : changer les deux ensemble).
@@ -203,7 +203,7 @@ obj:
 
                 # ── Presets (toggle : re-taper = retour à "none") ──
                 # ids des titres et de la rangée : ré-empilés par clim_options_empiler()
-                # (tab5_cards.cpp) quand une section n'a pas de bouton sur l'appareil.
+                # (ecran/tab5_clim.cpp) quand une section n'a pas de bouton sur l'appareil.
                 - label: { id: clim_titre_presets, text: "Presets", align: TOP_LEFT, x: 22, y: 50, styles: style_text_dim }
                 - obj:
                     id: clim_rangee_presets

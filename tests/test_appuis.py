@@ -10,7 +10,7 @@ tab5_ecran_ouvrir, partagée avec le select « Aller à l'écran » (règle 5).
 
 On vérifie :
 - les mêmes codes des deux côtés (firmware, sélecteurs du blueprint, liste du modèle) ;
-- l'enum Ecran (tab5_custom.h) = les options du select, dans l'ordre, puis l'Arcade ;
+- l'enum Ecran (tab5_zones.h, inclus par tab5_custom.h) = les options du select, dans l'ordre, puis l'Arcade ;
 - les trois boutons : leur appui long passe par bouton_haut_ecran() et la routine
   unique, leur mini icône existe (même géométrie) et est branchée ; le select aussi passe
   par la routine, la console n'a qu'une ouverture ;
@@ -24,18 +24,17 @@ import pytest
 import yaml
 
 from tests.test_tuiles_blueprint import Passage, _evenement
-from tests.commun import lire as _lire
+from tests.commun import contrat, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TAB5 = os.path.join(REPO, "Tab5")
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
-ZONES_CPP = os.path.join(TAB5, "tab5_zones.cpp")
-CUSTOM_H = os.path.join(TAB5, "tab5_custom.h")
-LVGL = os.path.join(TAB5, "tab5-lvgl.yaml")
-ZONES_YAML = os.path.join(TAB5, "tab5-zones.yaml")
+ZONES_CPP = os.path.join(TAB5, "ecran", "tab5_zones.cpp")
+LVGL = os.path.join(TAB5, "paquets", "tab5-lvgl.yaml")
+ZONES_YAML = os.path.join(TAB5, "paquets", "tab5-zones.yaml")
 # Select « Aller à l'écran », tab5_ecran_ouvrir et registre des fenêtres (08/10/2026, YML-2).
-NAVIGATION = os.path.join(TAB5, "tab5-navigation.yaml")
-STYLES = os.path.join(TAB5, "tab5-styles.yaml")
+NAVIGATION = os.path.join(TAB5, "paquets", "tab5-navigation.yaml")
+STYLES = os.path.join(TAB5, "paquets", "tab5-styles.yaml")
 REGLES = os.path.join(REPO, "tools", "check_tab5_code_rules.py")
 
 # Option du select « Aller à l'écran » de chaque valeur d'Ecran, dans l'ordre de l'enum.
@@ -79,7 +78,7 @@ def _fonction(texte, signature):
 
 
 def _enum(nom):
-    corps = re.search(rf"enum (?:class )?{nom}\b[^{{]*\{{(.*?)\}};", _lire(CUSTOM_H), re.S).group(1)
+    corps = re.search(rf"enum (?:class )?{nom}\b[^{{]*\{{(.*?)\}};", contrat(), re.S).group(1)
     corps = re.sub(r"//[^\n]*", "", corps)
     return re.findall(r"\b([A-Z][A-Z_0-9]*)\b", corps)
 
@@ -92,7 +91,7 @@ def _codes_firmware():
 def _bloc_bouton(ident):
     """Le bouton du haut `ident` : ui_components/bouton_haut.yaml (08/10/2026, audit YML-4)
     déplié avec les vars de son inclusion dans tab5-lvgl.yaml, valeurs écrites comme là-bas."""
-    ligne = re.search(rf"^.*file: ui_components/bouton_haut\.yaml, vars: \{{ id: {ident},.*$", _lire(LVGL), re.M)
+    ligne = re.search(rf"^.*file: \.\./ui_components/bouton_haut\.yaml, vars: \{{ id: {ident},.*$", _lire(LVGL), re.M)
     assert ligne, f"{ident} : pas inclus par bouton_haut.yaml"
     valeurs = re.findall(r"(\w+):\s*(\"(?:[^\"\\]|\\.)*\"|'[^']*'|\[[^\]]*\]|[\w.-]+)",
                          ligne.group(0).split("vars:", 1)[1])

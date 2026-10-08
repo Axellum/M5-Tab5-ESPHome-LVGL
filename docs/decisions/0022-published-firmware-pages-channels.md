@@ -22,9 +22,9 @@ Checked on 2026-09-27 (ESPHome 2026.9.0 installed on the dev PC, `esphome/build-
   - attaches `tab5-ha-hmi-<revision>.factory.bin`, `.ota.bin` and `manifest-<revision>.json` to the release (`tools/publication/preparer.py`);
   - rebuilds the whole GitHub Pages site from the **files of the releases** (`tools/publication/pages.py`), never from one run: `stable/<revision>/` holds the latest 3.x release that is not a pre-release, `beta/<revision>/` the most recent 3.x release. The page comes from `web/` on the default branch.
 - **Channels**: a pre-release is built for the beta channel, any other release for the stable one. A beta tablet therefore moves on to the stable that follows its beta; a stable tablet never sees a pre-release.
-- **The update entity exists only in published firmware**: `tab5_publication` (`locale` by default, `stable` or `beta` in the workflow) selects `Tab5/publication-<value>.yaml`; the local one is empty. Someone who compiles with their own key would otherwise be offered updates their tablet refuses.
+- **The update entity exists only in published firmware**: `tab5_publication` (`locale` by default, `stable` or `beta` in the workflow) selects `Tab5/paquets/publication-<value>.yaml`; the local one is empty. Someone who compiles with their own key would otherwise be offered updates their tablet refuses.
 - **Version**: `project: version` is `${ tab5_version | default('3.0.0-dev') }`; the workflow passes the tag without its `v`, which the update entity compares with the manifest.
-- `ota:` in `Tab5/tab5-hardware.yaml` becomes a list, so a published build keeps `esphome` and adds `http_request`.
+- `ota:` in `Tab5/paquets/tab5-hardware.yaml` becomes a list, so a published build keeps `esphome` and adds `http_request`.
 - The three entity IDs the firmware still called with placeholders get defaults that exist everywhere (lot 6c-1): nothing is left to set for a published binary.
 
 ## Alternatives rejected

@@ -5,7 +5,7 @@
 #       Assistant, sonnerie, machine d'état, et pont vers les deux fenêtres LVGL
 #       (ui_components/alarm_popup.yaml et alarm_ring_overlay.yaml).
 # @architecture_constraint AUCUNE logique de calcul ici : les dates, le choix du
-#       jour, les bornes et les libellés vivent dans Tab5/alarm_clock.cpp, qui ne
+#       jour, les bornes et les libellés vivent dans Tab5/socle/alarm_clock.cpp, qui ne
 #       dépend ni de HA ni du réseau. Ce fichier ne fait que (a) recopier les
 #       entités dans `g_alarm_cfg`, (b) déclencher la sonnerie, (c) rendre l'UI.
 # @architecture_constraint Le réveil DOIT sonner sans Home Assistant : l'heure

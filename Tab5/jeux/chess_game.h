@@ -113,7 +113,7 @@ struct UI {
     const esphome::font::Font* f_mid   = nullptr;  // roboto_32_b
     const esphome::font::Font* f_big   = nullptr;  // roboto_45_b
     // Pieces d'echecs : chess_pieces_80 (sous-ensemble Unicode U+2654-265F,
-    // Tab5/ChessPieces.ttf). Voir PC_* dans chess_game.cpp pour la technique de
+    // Tab5/fonts/ChessPieces.ttf). Voir PC_* dans chess_game.cpp pour la technique de
     // rendu en deux calques (corps plein + contour superpose).
     const esphome::font::Font* f_piece = nullptr;
 };

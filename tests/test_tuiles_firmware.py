@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Pièces et tuiles génériques (ADR-0023), côté firmware : Tab5/tab5_tuiles.cpp lit les
+"""Pièces et tuiles génériques (ADR-0023), côté firmware : Tab5/ecran/tab5_tuiles.cpp lit les
 définitions (action tab5_maj_tuiles) et les états (clés tRT de tab5_maj_emplacements), et
 envoie les commandes (événement esphome.tab5_action). Aucun compilateur ne compare ces
 chaînes au contrat ; ce fichier lit le C++ et le YAML, comme les autres tests statiques :
@@ -16,7 +16,7 @@ chaînes au contrat ; ce fichier lit le C++ et le YAML, comme les autres tests s
 import os
 import re
 from pathlib import Path
-from tests.commun import lire as _lire
+from tests.commun import lire as _lire, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -29,7 +29,7 @@ BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation
 def _cpp():
     # Le code des tuiles : depuis le lot L7 (08/10/2026), tab5_tuiles.cpp, ses popups, sa roue
     # et l'en-tête que les trois partagent.
-    return "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
+    return "\n".join(_lire(source(f)) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
 
 
 def _fonction(source, nom):
@@ -106,8 +106,8 @@ def test_piece_de_chaque_page_selon_l_adr():
 
 
 def test_champs_gardes_selon_l_adr():
-    # kNom et kIcone : communs avec la tuile - / + (Tab5/tab5_modele_ha.h, lot L5).
-    modele = Path(REPO, "Tab5", "tab5_modele_ha.h").read_text(encoding="utf-8")
+    # kNom et kIcone : communs avec la tuile - / + (Tab5/socle/tab5_modele_ha.h, lot L5).
+    modele = Path(REPO, "Tab5", "socle", "tab5_modele_ha.h").read_text(encoding="utf-8")
     assert '#include "tab5_modele_ha.h"' in _cpp() and "using namespace modele_ha;" in _cpp()
     assert re.search(r"constexpr size_t kNom = 25;", modele), "nom : 24 octets au plus, zéro final compris"
     assert re.search(r"constexpr size_t kIcone = 16;", modele), "code de palette : [a-z0-9_]{1,15}"
@@ -123,7 +123,7 @@ def test_noms_filtres_aux_glyphes_des_polices():
     garde = set(range(0x20, 0x7F)) | (set(range(0xA1, 0x100)) - {0xAD}) | set(table)
     corps = _fonction(_cpp(), "glyphe_disponible")
     assert "cp >= 0x20 && cp <= 0x7E" in corps and "cp >= 0xA1 && cp <= 0xFF" in corps and "0xAD" in corps
-    polices = font_glyphs(Path(REPO, "Tab5", "tab5-styles.yaml"))
+    polices = font_glyphs(Path(REPO, "Tab5", "paquets", "tab5-styles.yaml"))
     assert {ord(c) for c in polices["roboto_32_b"]} == garde
 
 
@@ -133,7 +133,7 @@ def test_magie_nvs_des_definitions():
     # Écrites seulement si elles changent, comparées octet par octet.
     assert definir.index("memcmp") < definir.index("s_pref.save")
     # Chargées là où les zones le sont (zones_apply_ui → tuiles_appliquer_ui → charger).
-    assert "tuiles_appliquer_ui();" in _fonction(_lire("Tab5", "tab5_zones.cpp"), "zones_apply_ui")
+    assert "tuiles_appliquer_ui();" in _fonction(_lire("Tab5", "ecran", "tab5_zones.cpp"), "zones_apply_ui")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -195,7 +195,7 @@ def test_tout_eteindre_de_la_piece():
     corps = _fonction(cpp, "tuiles_piece_eteindre")
     assert 'envoyer(piece_cle(r).s, "eteindre");' in corps
     # Clés « pR » et « tRT » : une seule écriture, tab5_modele_ha.h (lot L7).
-    modele = _lire("Tab5", "tab5_modele_ha.h")
+    modele = _lire("Tab5", "socle", "tab5_modele_ha.h")
     assert "c.s[0] = 'p';" in _fonction(modele, "piece_cle") and "c.s[1] = static_cast<char>('0' + r);" in _fonction(
         modele, "piece_cle")
     assert "void popup_lumiere_tout_eteindre() { tuiles_piece_eteindre(s_pl.piece); }" in cpp
@@ -249,7 +249,7 @@ def test_les_trois_popups_d_une_tuile_partagent_popup_tuile():
 
 
 def _lum_pct(v):
-    """Miroir de lum_pct (Tab5/tab5_core.cpp) : 0-255 → %, arrondi, borné à 1..100."""
+    """Miroir de lum_pct (Tab5/socle/tab5_core.cpp) : 0-255 → %, arrondi, borné à 1..100."""
     if v != v or v in (float("inf"), float("-inf")):
         return -1
     b = min(max(v, 0.0), 255.0)
@@ -261,10 +261,10 @@ def test_luminosite_en_pourcent_une_seule_formule():
     """CPP-3 (audit du 07/10/2026) : carte, popup lumière (arc compris) et roue donnent le
     même % pour la même lampe — une seule fonction, lum_pct, arrondie ; une lampe allumée
     n'affiche jamais 0 %. Avant : 127 → 50 % sur la carte, 49 % dans le popup."""
-    core = _lire("Tab5", "tab5_core.cpp")
+    core = _lire("Tab5", "socle", "tab5_core.cpp")
     corps = _fonction(core, "lum_pct")
     assert "std::lround(b * 100.0f / 255.0f)" in corps and "pct < 1 ? 1" in corps and "std::isfinite(v)" in corps
-    assert "int lum_pct(float v);" in _lire("Tab5", "tab5_core.h")
+    assert "int lum_pct(float v);" in _lire("Tab5", "socle", "tab5_core.h")
     cpp = _cpp()
     assert "100.0f / 255.0f" not in cpp and "* 100 / 255" not in cpp, "une autre formule que lum_pct"
     assert cpp.count("lum_pct(") >= 4  # carte, popup, choix et jauge de la roue
@@ -277,16 +277,16 @@ def test_luminosite_en_pourcent_une_seule_formule():
 def test_cles_des_commandes_de_tuile():
     cpp = _cpp()
     assert "envoyer(tuile_cle(r, t).s, action);" in _fonction(cpp, "envoyer_tuile")
-    cle = _fonction(_lire("Tab5", "tab5_modele_ha.h"), "tuile_cle")
+    cle = _fonction(_lire("Tab5", "socle", "tab5_modele_ha.h"), "tuile_cle")
     assert ("c.s[0] = 't';\n    c.s[1] = static_cast<char>('0' + r);\n    c.s[2] = static_cast<char>('0' + t);"
             in cle.replace("\r\n", "\n"))
     # Écrite une seule fois : plus de clé « tRT » montée à la main dans le C++ des tuiles et des clims.
     for fichier in ("tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp", "tab5_clim.cpp"):
-        assert "static_cast<char>('0' + " not in _lire("Tab5", fichier), fichier
+        assert "static_cast<char>('0' + " not in _lire(source(fichier)), fichier
     # L'événement esphome.tab5_action du script tab5_action, emplacement / action / valeur.
-    tuiles_yaml = _lire("Tab5", "tab5-tuiles.yaml")
+    tuiles_yaml = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
     assert "id(tab5_action).execute(std::string(e), std::string(a), std::string(v));" in tuiles_yaml
-    scripts = _lire("Tab5", "tab5-scripts.yaml").split("- id: tab5_action", 1)[1].split("- id:", 1)[0]
+    scripts = _lire("Tab5", "paquets", "tab5-scripts.yaml").split("- id: tab5_action", 1)[1].split("- id:", 1)[0]
     assert re.findall(r"^\s+(\w+): string$", scripts, re.M) == ["emplacement", "commande", "valeur"]
 
 
@@ -304,7 +304,7 @@ def test_commandes_du_mode_heritage_connues_du_blueprint():
         assert f"emplacement == '{emp}'" in bp or (
             emp.startswith("lumiere_") and "emplacement.startswith('lumiere_')" in bp), emp
     # Le volet 3.x garde son script (volet / arreter, ouvrir, fermer, tab5-scripts.yaml).
-    assert "u.volet_tap = []() { id(tab5_volet_tap).execute(); };" in _lire("Tab5", "tab5-tuiles.yaml")
+    assert "u.volet_tap = []() { id(tab5_volet_tap).execute(); };" in _lire("Tab5", "paquets", "tab5-tuiles.yaml")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -312,7 +312,7 @@ def test_commandes_du_mode_heritage_connues_du_blueprint():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _action(nom):
-    api = _lire("Tab5", "tab5-api-logic.yaml")
+    api = _lire("Tab5", "paquets", "tab5-api-logic.yaml")
     return api.split(f"- service: {nom}\n", 1)[1].split("\n    - service:", 1)[0].split("\nprovisioning:", 1)[0]
 
 
@@ -337,7 +337,7 @@ def test_action_tab5_maj_tuiles_et_son_exemple():
 
 
 def test_etats_routes_avant_les_emplacements_3x():
-    corps = _fonction(_lire("Tab5", "tab5_zones.cpp"), "emplacements_appliquer")
+    corps = _fonction(_lire("Tab5", "ecran", "tab5_zones.cpp"), "emplacements_appliquer")
     assert corps.index("tuiles_etat_recu(") < corps.index("for (size_t i = 0; i < n; i++)")
     recu = _fonction(_cpp(), "tuiles_etat_recu")
     # « tRT » (ou « hLI », rangée sous l'horloge, ADR-0031) : trois caractères, R et T de
@@ -385,24 +385,24 @@ def test_boutons_des_tuiles_a_leur_position_visuelle():
 
 
 def test_widgets_poses_sans_toucher_a_l_on_boot():
-    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
     for t in range(5):
         assert f"u.heure_g[{t}] = id(icon_card_h{4 - t}_g);" in tuiles
         assert f"u.heure_bouton[{t}] = id(btn_h{4 - t}_action);" in tuiles
         assert f"u.carte_nom[{t}] = id(lbl_sw{t}_title);" in tuiles
         assert f"u.lum_sel[{t}] = id(btn_light_sel_{t});" in tuiles
-    zones = _lire("Tab5", "tab5-zones.yaml").split("- id: tab5_zones_apply", 1)[1]
+    zones = _lire("Tab5", "paquets", "tab5-zones.yaml").split("- id: tab5_zones_apply", 1)[1]
     assert zones.index("script.execute: tab5_tuiles_ui") < zones.index("zones_apply_ui();")
     on_boot = _lire("tab5-ha-hmi.yaml").split("  on_boot:", 1)[1].split("\npackages:", 1)[0]
     assert "tuile" not in on_boot and "ha_mode" not in on_boot
-    assert "tab5_tuiles: !include Tab5/tab5-tuiles.yaml" in _lire("tab5-ha-hmi.yaml")
+    assert "tab5_tuiles: !include Tab5/paquets/tab5-tuiles.yaml" in _lire("tab5-ha-hmi.yaml")
 
 
 def test_cartes_du_mode_ha_facon_carte_tile():
     """Carte « tile » de HA (06/10/2026, discussion #278) : l'icône dans une pastille
     ronde de la couleur de l'état, le bouton sur la pastille, le nom dans un cadre
     cliquable (sens d'un volet), sans onglet."""
-    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
     # Une carte = switch_card.yaml, incluse pour n = 0 à 4 (08/10/2026, audit YML-3).
     carte = _lire("Tab5", "ui_components", "switch_card.yaml")
     for t in range(5):
@@ -420,16 +420,16 @@ def test_cartes_du_mode_ha_facon_carte_tile():
 
 
 def test_mode_ha_seule_source_et_swipe_par_piece():
-    assert "show_switches" not in _lire("Tab5", "tab5-globals.yaml").split("globals:", 1)[1].split("#", 1)[0]
-    central = _lire("Tab5", "tab5_central.cpp")
+    assert "show_switches" not in _lire("Tab5", "paquets", "tab5-globals.yaml").split("globals:", 1)[1].split("#", 1)[0]
+    central = _lire("Tab5", "ecran", "tab5_central.cpp")
     swipe = _fonction(central, "handle_swipe_gesture")
     # En mode HA, le swipe change de pièce et ne passe jamais par apply_forecast_page
     # (qui réaffichait le calque météo sous les cartes).
     assert swipe.index("if (ctx.ha_mode)") < swipe.index("apply_forecast_page(")
     assert "!ctx.ha_mode" in _fonction(central, "rotator_owns_card")
-    assert "if (g_central_ctx.ha_mode) return RetourAuto::RIEN;" in _lire("Tab5", "tab5_anim.cpp")
-    assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-navigation.yaml")
-    assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "tab5-lvgl.yaml")
+    assert "if (g_central_ctx.ha_mode) return RetourAuto::RIEN;" in _lire("Tab5", "ecran", "tab5_anim.cpp")
+    assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "paquets", "tab5-navigation.yaml")
+    assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "paquets", "tab5-lvgl.yaml")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -566,10 +566,10 @@ def test_geometrie_du_volet_dessine():
 
 
 def test_popup_du_volet_inscrit_et_branche():
-    scripts = _lire("Tab5", "tab5-navigation.yaml")
+    scripts = _lire("Tab5", "paquets", "tab5-navigation.yaml")
     assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volet",\s+ModalRegistry::POPUP\);', scripts)
-    assert "- !include ui_components/volet_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
-    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    assert "- !include ../ui_components/volet_popup.yaml" in _lire("Tab5", "paquets", "tab5-lvgl.yaml")
+    tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
     for champ, widget in (("vol_popup", "volet_popup"), ("vol_titre", "volet_popup_titre"),
                           ("vol_position", "volet_position"), ("vol_nombre", "volet_nombre"),
                           ("vol_etat", "volet_etat"), ("vol_cadre", "volet_cadre"),
@@ -641,10 +641,10 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
 
 
 def test_popup_d_un_appareil_inscrit_et_branche():
-    scripts = _lire("Tab5", "tab5-navigation.yaml")
+    scripts = _lire("Tab5", "paquets", "tab5-navigation.yaml")
     assert re.search(r'ModalRegistry::add\(id\(appareil_popup\),\s+"Appareil",\s+ModalRegistry::POPUP\);', scripts)
-    assert "- !include ui_components/appareil_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
-    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    assert "- !include ../ui_components/appareil_popup.yaml" in _lire("Tab5", "paquets", "tab5-lvgl.yaml")
+    tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
     popup = _lire("Tab5", "ui_components", "appareil_popup.yaml")
     for champ, widget in (("app_popup", "appareil_popup"), ("app_titre", "appareil_popup_titre"),
                           ("app_pastille", "appareil_pastille"), ("app_icone", "appareil_icone"),

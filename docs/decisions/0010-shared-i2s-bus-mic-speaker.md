@@ -1,7 +1,7 @@
 # ADR-0010: Microphone and speaker share one I2S bus — every local sound relays the mic itself
 
 **Status:** Accepted (confirmed on the device, 2026-08-05)
-**Date:** 2026-09-06 (written retroactively from the incident and the `[I2S-BUS]` comments in `Tab5/tab5-alarm.yaml` / `tab5-hardware.yaml`)
+**Date:** 2026-09-06 (written retroactively from the incident and the `[I2S-BUS]` comments in `Tab5/paquets/tab5-alarm.yaml` / `tab5-hardware.yaml`)
 
 ## Context
 

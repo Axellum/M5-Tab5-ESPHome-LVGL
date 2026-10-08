@@ -4,7 +4,7 @@
  * @role Moteur du réveil matin + annonce des rendez-vous. Logique PURE (dates,
  *       calendrier, machine d'état) : aucun `id()` ESPHome, aucun appel réseau.
  *       Les entités exposées à Home Assistant et les scripts vivent dans
- *       Tab5/tab5-alarm.yaml ; le rendu LVGL des deux fenêtres dans
+ *       Tab5/paquets/tab5-alarm.yaml ; le rendu LVGL des deux fenêtres dans
  *       ui_components/alarm_popup.yaml et alarm_ring_overlay.yaml, peints par
  *       alarm_render.h/.cpp. Aucun include ESPHome ni LVGL ici : le moteur se
  *       compile sur PC (tools/test_alarm_clock.cpp, g++ en CI — lot 8b).

@@ -1,7 +1,7 @@
 // [AI-CONTEXT] Le strict minimum d'« esphome.h » pour compiler sur PC, hors ESPHome,
 // les moteurs de jeu PURS testés par la CI (job `python` d'esphome-tab5.yml) :
-//   - tools/test_chess_engine.cpp    : Tab5/chess_ai.cpp (millis, ESP_LOG*) ;
-//   - tools/test_draughts_engine.cpp : le bloc Engine de Tab5/draughts_game.cpp, dont
+//   - tools/test_chess_engine.cpp    : Tab5/jeux/chess_ai.cpp (millis, ESP_LOG*) ;
+//   - tools/test_draughts_engine.cpp : le bloc Engine de Tab5/jeux/draughts_game.cpp, dont
 //     l'en-tête nomme lv_obj_t et LvglComponent sans s'en servir (déclarés ici, vides).
 // Repris de tools/audit/hote/esphome.h (branche audit/relances, audit du 30/09/2026).
 // Si un moteur a besoin de plus que ça, c'est qu'il n'est plus pur : le constat compte

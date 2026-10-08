@@ -89,7 +89,7 @@ def test_l_en_tete_reste_ignore_par_un_firmware_d_avant():
 def test_le_firmware_lit_l_en_tete_et_affiche_le_rang():
     """Garde-fou de lecture du C++ : l'en-tête est reconnu avant le découpage en champs,
     et le compteur n'apparaît que si des alertes attendent derrière les bandeaux."""
-    cpp = (RACINE / "Tab5" / "tab5_central.cpp").read_text(encoding="utf-8")
+    cpp = (RACINE / "Tab5" / "ecran" / "tab5_central.cpp").read_text(encoding="utf-8")
     corps = cpp[cpp.index("bool parse_and_update_ha_alerts_bulk("):]
     corps = corps[:corps.index("\n}\n")]
     assert corps.index('strncmp(token, "@n:", 3)') < corps.index("split_fields(token")
@@ -102,13 +102,13 @@ def test_le_libelle_des_bandeaux_passe_par_le_filtre_des_glyphes():
     """DO-6 (audit du 07/10/2026) : comme l'historique des alertes, le libellé libre d'un
     bandeau passe par texte_ha_copier (UTF-8 valide, glyphes des polices) avant
     ha_alerte_texte ; le rejet d'un payload de plus de 1 024 octets reste."""
-    cpp = (RACINE / "Tab5" / "tab5_central.cpp").read_text(encoding="utf-8")
+    cpp = (RACINE / "Tab5" / "ecran" / "tab5_central.cpp").read_text(encoding="utf-8")
     corps = cpp[cpp.index("bool parse_and_update_ha_alerts_bulk("):]
     corps = corps[:corps.index("\n}\n")]
     assert "texte_ha_copier(brut, sizeof(brut), parts[2], strlen(parts[2]));" in corps
     assert "ha_alerte_texte(brut)" in corps and "ha_alerte_texte(parts[2])" not in corps
     assert "if (payload.length() > 1024)" in corps
-    historique = (RACINE / "Tab5" / "tab5_alertes.cpp").read_text(encoding="utf-8")
+    historique = (RACINE / "Tab5" / "ecran" / "tab5_alertes.cpp").read_text(encoding="utf-8")
     assert "texte_ha_copier(brut, sizeof(brut), f[4].p, f[4].n);" in historique
 
 
@@ -121,7 +121,7 @@ def _octets(texte):
 
 
 def _limite_du_firmware():
-    cpp = (RACINE / "Tab5" / "tab5_central.cpp").read_text(encoding="utf-8")
+    cpp = (RACINE / "Tab5" / "ecran" / "tab5_central.cpp").read_text(encoding="utf-8")
     corps = cpp[cpp.index("bool parse_and_update_ha_alerts_bulk("):]
     m = re.search(r"if \(payload\.length\(\) > (\d+)\)", corps)
     assert m, "garde de taille introuvable dans parse_and_update_ha_alerts_bulk"

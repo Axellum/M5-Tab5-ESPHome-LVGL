@@ -46,7 +46,7 @@ PING = 10            # appels entre deux vérifications de vie
 PAUSE = 0.01         # secondes entre deux appels (la boucle ESPHome doit suivre)
 TAILLE_MAX = 6000    # au-delà, l'API coupe la connexion : ce n'est plus la lecture qu'on teste
 
-# Graines valides : exemples du contrat (Tab5/tab5-api-logic.yaml) et de tools/demo/.
+# Graines valides : exemples du contrat (Tab5/paquets/tab5-api-logic.yaml) et de tools/demo/.
 # Une par service déclaré, ni plus ni moins (tests/test_sanitizers.py le vérifie : un
 # service sans graine ne serait jamais fuzzé, sans erreur). Tuiles et emplacements
 # portent aussi la rangée sous l'horloge (hp, hd, hLI, ADR-0031) et la tuile − / +

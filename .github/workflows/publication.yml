@@ -10,7 +10,7 @@ name: Publication (release, page de flashage)
 #      pour HACS tab5_hacs.zip (même job, ADR-0035) ;
 #   3. le site GitHub Pages est reconstruit par site.yml à partir des fichiers des
 #      releases : `stable/` = dernière release 3.x non « pre-release », `beta/` = la plus
-#      récente. Les firmwares publiés y lisent leur mise à jour (Tab5/publication-*.yaml).
+#      récente. Les firmwares publiés y lisent leur mise à jour (Tab5/paquets/publication-*.yaml).
 # Une pre-release compile en canal `beta` (son entité de mise à jour lit `beta/`).
 # L'ELF de chaque révision est gardé 90 jours (artefact `elf-<révision>`) : c'est lui qui
 # décode la pile d'appels d'un plantage de ce firmware (tools/capture_serie.py --elf).

@@ -4,30 +4,30 @@
 [AI-CONTEXT] Source unique : Tab5/themes/<thème>.yaml (un fichier par thème : `nom`,
 `ordre`, un mode `sombre` et un mode `clair`, chacun avec tous les rôles de
 `struct Palette` ; en option `zones_sombres:`, `formes:` et `polices:`), plus les rôles
-eux-mêmes (`struct Palette`, Tab5/tab5_tokens.h), les styles partagés
-(Tab5/tab5-styles.yaml) et les polices mesurées (Tab5/themes/_polices.yaml, écrit par
+eux-mêmes (`struct Palette`, Tab5/socle/tab5_tokens.h), les styles partagés
+(Tab5/paquets/tab5-styles.yaml) et les polices mesurées (Tab5/themes/_polices.yaml, écrit par
 tools/police_theme.py). Écrit :
 
-  (a) Tab5/tab5_themes_data.h, en entier — THEMES[] (nom, zones sombres, palette
-      sombre, palette claire), THEME_COUNT et son static_assert ; Tab5/tab5_tokens.h —
+  (a) Tab5/socle/tab5_themes_data.h, en entier — THEMES[] (nom, zones sombres, palette
+      sombre, palette claire), THEME_COUNT et son static_assert ; Tab5/socle/tab5_tokens.h —
       PALETTE_SOMBRE (palette sombre du premier thème, celle des jeux, que THEMES[0]
       reprend), entre `// >>> palette sombre` et `// <<< palette sombre`. Le catalogue
       vit à part depuis le 08/10/2026 (audit du 07/10, DO-3) : tab5_tokens.h est inclus
       par presque toutes les unités, jeux compris, tab5_themes_data.h par tab5_theme.cpp
       et tab5_reglages.cpp seulement ;
-  (b) Tab5/tab5-themes.yaml — les options du select « Thème », entre `# >>> themes` et
+  (b) Tab5/paquets/tab5-themes.yaml — les options du select « Thème », entre `# >>> themes` et
       `# <<< themes`, dans l'ordre des `ordre:` (la tablette garde l'INDEX : un thème
       s'ajoute à la fin) ;
-  (c) Tab5/tab5-themes.yaml — la repeinture des styles partagés après un changement
+  (c) Tab5/paquets/tab5-themes.yaml — la repeinture des styles partagés après un changement
       de thème, entre `# >>> styles` et `# <<< styles` : chaque couleur de
       `style_definitions:` et du `theme:` (une lambda qui lit `UIColor.X`, ou
       `UIBandeau.X` / `UIHorloge.X` dans le bandeau central et l'horloge) y est reposée
       depuis la palette active, rafraîchissement des styles coupé, puis l'écran est
       redessiné une fois (rendre_styles) ; suivent l'appel des formes (theme_formes) et
       des polices (theme_polices), qui rafraîchissent leurs objets ;
-  (d) Tab5/tab5-themes.yaml — les polices des thèmes (bloc `font:`), entre
+  (d) Tab5/paquets/tab5-themes.yaml — les polices des thèmes (bloc `font:`), entre
       `# >>> polices` et `# <<< polices` ;
-  (e) Tab5/tab5_theme.cpp — les tables des formes et des polices, entre `// >>> formes`
+  (e) Tab5/ecran/tab5_theme.cpp — les tables des formes et des polices, entre `// >>> formes`
       et `// <<< formes`, suivies de static_assert qui les lient à THEME_COUNT (DO-13) :
       une table qui ne suivrait plus THEMES[] ne compile plus.
 
@@ -73,11 +73,11 @@ import yaml
 
 REPO = Path(__file__).resolve().parent.parent
 THEMES_DIR = REPO / "Tab5" / "themes"
-TOKENS = REPO / "Tab5" / "tab5_tokens.h"
-THEMES_DATA = REPO / "Tab5" / "tab5_themes_data.h"
-STYLES = REPO / "Tab5" / "tab5-styles.yaml"
-FIRMWARE = REPO / "Tab5" / "tab5-themes.yaml"
-THEME_CPP = REPO / "Tab5" / "tab5_theme.cpp"
+TOKENS = REPO / "Tab5" / "socle" / "tab5_tokens.h"
+THEMES_DATA = REPO / "Tab5" / "socle" / "tab5_themes_data.h"
+STYLES = REPO / "Tab5" / "paquets" / "tab5-styles.yaml"
+FIRMWARE = REPO / "Tab5" / "paquets" / "tab5-themes.yaml"
+THEME_CPP = REPO / "Tab5" / "ecran" / "tab5_theme.cpp"
 POLICES = THEMES_DIR / "_polices.yaml"
 
 MARQUES_CPP = ("// >>> palette sombre", "// <<< palette sombre")
@@ -99,7 +99,7 @@ MODES = ("sombre", "clair")
 PROPS_COULEUR = ("bg_color", "bg_grad_color", "border_color", "outline_color", "shadow_color",
                  "text_color", "arc_color", "line_color", "image_recolor")
 # Palettes qu'une couleur de style peut lire : l'interface, et les deux zones qu'un
-# thème clair peut garder sombres (Tab5/tab5_tokens.h).
+# thème clair peut garder sombres (Tab5/socle/tab5_tokens.h).
 PALETTES = ("UIColor", "UIBandeau", "UIHorloge")
 ZONES = {"bandeau": "UIBandeau", "horloge": "UIHorloge"}
 RE_LAMBDA = re.compile(r"^return lv_color_hex\((UIColor|UIBandeau|UIHorloge)\.([A-Z0-9_]+)\);$")
@@ -380,7 +380,7 @@ ENTETE_DONNEES = """// GÉNÉRÉ par tools/gen_themes.py depuis Tab5/themes/*.ya
 
 
 def rendre_donnees(themes: list[Theme]) -> str:
-    """Tab5/tab5_themes_data.h en entier (texte normalisé en LF)."""
+    """Tab5/socle/tab5_themes_data.h en entier (texte normalisé en LF)."""
     lignes = ["", "inline constexpr Theme THEMES[] = {"]
     for i, t in enumerate(themes):
         drapeaux = ", ".join("true" if z in t.zones else "false" for z in ZONES)

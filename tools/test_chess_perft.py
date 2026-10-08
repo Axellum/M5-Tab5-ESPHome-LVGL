@@ -2,7 +2,7 @@
 """
 [AI-CONTEXT]
 @file tools/test_chess_perft.py
-@role Miroir Python du generateur de coups de Tab5/chess_ai.cpp (jeu « Roi Noir »),
+@role Miroir Python du generateur de coups de Tab5/jeux/chess_ai.cpp (jeu « Roi Noir »),
       execute contre la suite perft standard.
 
 @architecture_constraint Ce script est une TRANSLITTERATION LIGNE A LIGNE du C++ :

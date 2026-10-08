@@ -1,6 +1,6 @@
 """Plateforme `image: online_image` du rendu hors tablette (lot 7) : un pixel noir.
 
-L'image de réponse de l'assistant (Tab5/tab5-assist.yaml) est téléchargée à la demande
+L'image de réponse de l'assistant (Tab5/paquets/tab5-assist.yaml) est téléchargée à la demande
 sur la tablette. Ici, l'id reste une vraie image::Image, pour que le widget LVGL qui la
 montre compile ; elle n'est jamais remplacée.
 """

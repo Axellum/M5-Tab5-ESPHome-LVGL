@@ -3,7 +3,7 @@ ChessPieces.ttf — notice de licence
 
 Ce fichier est un SOUS-ENSEMBLE de la police DejaVu Sans, reduit aux 12 glyphes
 du bloc Unicode « Chess Symbols » (U+2654 a U+265F) utilises par le jeu
-« Roi Noir » (Tab5/chess_game.cpp). Aucun contour n'a ete modifie : seuls les
+« Roi Noir » (Tab5/jeux/chess_game.cpp). Aucun contour n'a ete modifie : seuls les
 glyphes non utilises ont ete retires, et la famille a ete renommee.
 
 Renommage : la licence Bitstream Vera reserve les noms « Bitstream », « Vera »

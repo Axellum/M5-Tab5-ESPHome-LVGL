@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Garde-fou de la banque de questions de « Trial Poursuite » (Tab5/trivia_questions.h).
+"""Garde-fou de la banque de questions de « Trial Poursuite » (Tab5/jeux/trivia_questions.h).
 
 Le `static_assert` du fichier ne vérifie que la somme des `#define` : une ligne
 supprimée dans un tableau `QUESTIONS_xxx[TRIVIA_Q_xxx]` compile quand même, le C++
@@ -29,7 +29,7 @@ from collections import Counter
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-BANK = REPO / "Tab5" / "trivia_questions.h"
+BANK = REPO / "Tab5" / "jeux" / "trivia_questions.h"
 
 MAX_Q = 140
 MAX_A = 48

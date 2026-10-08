@@ -106,7 +106,7 @@ The definitions (rooms, types, icons, options, names) are kept in NVS when they 
 
 ### Icons: one palette, generated
 
-`Tab5/tuiles_icones.yaml` lists the palette (code, glyph when off / on, the `mdi:` names it stands for, default for which domain / device class). `tools/gen_tuiles_icones.py` writes the C++ table `Tab5/tab5_tuiles_icones.h` (`tuile_icone(code, active, type)`), the glyph lists of the fonts the tiles use (between `# >>> tuiles` / `# <<< tuiles` markers in `Tab5/tab5-styles.yaml`) and the two maps of the blueprint (`icones_mdi`: `mdi:` name → code; `icones_defaut`: domain / device class → code), between markers; `--check` fails when a generated part is stale. The blueprint picks: the icon chosen in the blueprint's customisation, else the entity's `icon` attribute, else its device class, else its domain; a `mdi:` name outside the palette falls back to the default of its domain.
+`Tab5/tuiles_icones.yaml` lists the palette (code, glyph when off / on, the `mdi:` names it stands for, default for which domain / device class). `tools/gen_tuiles_icones.py` writes the C++ table `Tab5/socle/tab5_tuiles_icones.h` (`tuile_icone(code, active, type)`), the glyph lists of the fonts the tiles use (between `# >>> tuiles` / `# <<< tuiles` markers in `Tab5/paquets/tab5-styles.yaml`) and the two maps of the blueprint (`icones_mdi`: `mdi:` name → code; `icones_defaut`: domain / device class → code), between markers; `--check` fails when a generated part is stale. The blueprint picks: the icon chosen in the blueprint's customisation, else the entity's `icon` attribute, else its device class, else its domain; a `mdi:` name outside the palette falls back to the default of its domain.
 
 ### Blueprint inputs
 

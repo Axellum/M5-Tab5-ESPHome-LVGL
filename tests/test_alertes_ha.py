@@ -628,7 +628,7 @@ def test_une_nouvelle_entree_garde_sa_source():
 
 def test_payload_de_l_historique():
     """« apparue|lue|terminée|gravité|libellé » séparés par « ; », 20 au plus, la plus
-    récente d'abord : ce que lit alertes_historique_recu() (Tab5/tab5_alertes.cpp)."""
+    récente d'abord : ce que lit alertes_historique_recu() (Tab5/ecran/tab5_alertes.cpp)."""
     h = [_entree(f"binary_sensor.p{i}", "etiquette", a=T0 - i, lue=T0 if i % 2 else 0, f=T0 + 5 if i % 3 == 0 else 0)
          for i in range(25)]
     h[1]["t"] = "A|B;C"
@@ -686,12 +686,12 @@ def test_l_historique_part_a_la_demande_de_la_tablette():
     assert "is_state', 'Alertes')" in json.dumps(auto["conditions"], ensure_ascii=False)
     # « Alertes » : le nom du popup dans le registre (« Écran courant ») et l'option du
     # select « Aller à l'écran ».
-    navigation = (TAB5 / "tab5-navigation.yaml").read_text(encoding="utf-8")
+    navigation = (TAB5 / "paquets" / "tab5-navigation.yaml").read_text(encoding="utf-8")
     assert '"Alertes",          ModalRegistry::POPUP' in navigation
     assert '      - "Alertes"\n' in navigation
     evenements = json.dumps(_charger("packages", "tab5_evenements.yaml"), ensure_ascii=False)
     assert "esphome.tab5_alertes_historique" in evenements and "script.tab5_push_alertes_historique" in evenements
-    firmware = (TAB5 / "tab5-alertes.yaml").read_text(encoding="utf-8")
+    firmware = (TAB5 / "paquets" / "tab5-alertes.yaml").read_text(encoding="utf-8")
     assert "event: esphome.tab5_alertes_historique" in firmware
     assert 'alert_id: "*"' in firmware   # « Tout marquer comme lu »
 

@@ -17,7 +17,7 @@ remplace donc jamais la version stable.
         manifest.json                 lu par ESP Web Tools ET par l'entité de mise à jour
         tab5-ha-hmi-<écran>.factory.bin, .ota.bin
 
-Les firmwares publiés lisent `<canal>/<écran>/manifest.json` (Tab5/publication-*.yaml) :
+Les firmwares publiés lisent `<canal>/<écran>/manifest.json` (Tab5/paquets/publication-*.yaml) :
 une tablette du canal bêta passe ainsi à la stable qui suit sa bêta. Les releases
 d'avant la 3.0 n'ont pas de binaires : ignorées.
 

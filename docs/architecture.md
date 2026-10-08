@@ -10,7 +10,7 @@ The ESPHome configuration is split into YAML packages imported by a single entry
 
 ### Data flow: HA pushes, the tablet sends events
 
-The Tab5 never polls Home Assistant's state ([ADR-0001](decisions/0001-push-only-zero-polling.md)). The "screen slots" blueprint and the `tab5_*` packages detect changes and call the firmware's ESPHome actions (`tab5_maj_*`, declared in `Tab5/tab5-api-logic.yaml`); the firmware parses the payload and updates LVGL in one pass. In the other direction the tablet calls no Home Assistant action: a tapped tile, a request (calendar month, announcement, console button) or its (re)connection becomes an `esphome.tab5_*` event, which the blueprint or `packages/tab5_evenements.yaml` turns into an action from a fixed whitelist ([ADR-0025](decisions/0025-events-only.md)).
+The Tab5 never polls Home Assistant's state ([ADR-0001](decisions/0001-push-only-zero-polling.md)). The "screen slots" blueprint and the `tab5_*` packages detect changes and call the firmware's ESPHome actions (`tab5_maj_*`, declared in `Tab5/paquets/tab5-api-logic.yaml`); the firmware parses the payload and updates LVGL in one pass. In the other direction the tablet calls no Home Assistant action: a tapped tile, a request (calendar month, announcement, console button) or its (re)connection becomes an `esphome.tab5_*` event, which the blueprint or `packages/tab5_evenements.yaml` turns into an action from a fixed whitelist ([ADR-0025](decisions/0025-events-only.md)).
 
 ![How Home Assistant and the Tab5 talk: HA pushes data with the tab5_maj_* actions, the tablet answers with esphome.tab5_* events](images/flux_ha_tab5_en.svg)
 
@@ -38,36 +38,36 @@ The root file does three things:
 
 ```yaml
 packages:
-  tab5_ui_tokens:  !include Tab5/tab5-ui-tokens.yaml
-  tab5_hardware:   !include Tab5/tab5-hardware.yaml
-  tab5_ecran:      !include Tab5/ecran-${ tab5_ecran | default('st7123') | lower }.yaml  # screen revision
-  tab5_publication: !include Tab5/publication-${ tab5_publication | default('locale') }.yaml  # release channel (ADR-0022)
-  tab5_sensors_diagnostics: !include Tab5/tab5-sensors-diagnostics.yaml
-  tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
-  tab5_api_logic:  !include Tab5/tab5-api-logic.yaml
-  tab5_styles:     !include Tab5/tab5-styles.yaml
-  tab5_globals:    !include Tab5/tab5-globals.yaml
-  tab5_scripts:    !include Tab5/tab5-scripts.yaml
-  tab5_lvgl:       !include Tab5/tab5-lvgl.yaml
-  tab5_arcade:     !include Tab5/tab5-arcade.yaml         # one package per feature (lot 8c),
-  tab5_calendar:   !include Tab5/tab5-calendar.yaml       # after tab5_lvgl: their scripts
-  tab5_assist:     !include Tab5/tab5-assist.yaml         # reference LVGL widget ids
-  tab5_imu:        !include Tab5/tab5-imu.yaml
-  tab5_navigation: !include Tab5/tab5-navigation.yaml     # after tab5_lvgl: references LVGL widget ids
-  tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
-  tab5_alarm:      !include Tab5/tab5-alarm.yaml          # after tab5_lvgl too
-  tab5_tuiles:     !include Tab5/tab5-tuiles.yaml         # rooms and tiles (ADR-0023), after tab5_lvgl
-  tab5_roue:       !include Tab5/tab5-roue.yaml           # quick-action wheel (ADR-0036), run by tab5_tuiles_ui
-  tab5_rangee:     !include Tab5/tab5-rangee.yaml         # row under the clock (ADR-0031), after tab5_lvgl
-  tab5_reglables:  !include Tab5/tab5-reglables.yaml      # − / + tile of the climate card (ADR-0033), after tab5_lvgl
-  tab5_energie:    !include Tab5/tab5-energie.yaml        # Energy popup (ADR-0028), after tab5_lvgl
-  tab5_historique: !include Tab5/tab5-historique.yaml     # Temperature popup (ADR-0032), after tab5_lvgl
-  tab5_alertes:    !include Tab5/tab5-alertes.yaml        # Alerts history popup, after tab5_lvgl
-  tab5_maison:     !include Tab5/tab5-maison.yaml         # House popup (ADR-0037), after tab5_lvgl
-  tab5_zones:      !include Tab5/tab5-zones.yaml          # optional zones (ADR-0018), after tab5_lvgl
-  tab5_reglages:   !include Tab5/tab5-reglages.yaml       # Settings popup, after tab5_lvgl
-  tab5_economie:   !include Tab5/tab5-economie.yaml       # energy saving: backlight cap, animations, LVGL rate
-  tab5_themes:     !include Tab5/tab5-themes.yaml         # themes (ADR-0029), LAST: repaints the packages above
+  tab5_ui_tokens:  !include Tab5/paquets/tab5-ui-tokens.yaml
+  tab5_hardware:   !include Tab5/paquets/tab5-hardware.yaml
+  tab5_ecran:      !include Tab5/paquets/ecran-${ tab5_ecran | default('st7123') | lower }.yaml  # screen revision
+  tab5_publication: !include Tab5/paquets/publication-${ tab5_publication | default('locale') }.yaml  # release channel (ADR-0022)
+  tab5_sensors_diagnostics: !include Tab5/paquets/tab5-sensors-diagnostics.yaml
+  tab5_sensors_domotique: !include Tab5/paquets/tab5-sensors-domotique.yaml
+  tab5_api_logic:  !include Tab5/paquets/tab5-api-logic.yaml
+  tab5_styles:     !include Tab5/paquets/tab5-styles.yaml
+  tab5_globals:    !include Tab5/paquets/tab5-globals.yaml
+  tab5_scripts:    !include Tab5/paquets/tab5-scripts.yaml
+  tab5_lvgl:       !include Tab5/paquets/tab5-lvgl.yaml
+  tab5_arcade:     !include Tab5/paquets/tab5-arcade.yaml         # one package per feature (lot 8c),
+  tab5_calendar:   !include Tab5/paquets/tab5-calendar.yaml       # after tab5_lvgl: their scripts
+  tab5_assist:     !include Tab5/paquets/tab5-assist.yaml         # reference LVGL widget ids
+  tab5_imu:        !include Tab5/paquets/tab5-imu.yaml
+  tab5_navigation: !include Tab5/paquets/tab5-navigation.yaml     # after tab5_lvgl: references LVGL widget ids
+  tab5_ha_controls: !include Tab5/paquets/tab5-ha-controls.yaml
+  tab5_alarm:      !include Tab5/paquets/tab5-alarm.yaml          # after tab5_lvgl too
+  tab5_tuiles:     !include Tab5/paquets/tab5-tuiles.yaml         # rooms and tiles (ADR-0023), after tab5_lvgl
+  tab5_roue:       !include Tab5/paquets/tab5-roue.yaml           # quick-action wheel (ADR-0036), run by tab5_tuiles_ui
+  tab5_rangee:     !include Tab5/paquets/tab5-rangee.yaml         # row under the clock (ADR-0031), after tab5_lvgl
+  tab5_reglables:  !include Tab5/paquets/tab5-reglables.yaml      # − / + tile of the climate card (ADR-0033), after tab5_lvgl
+  tab5_energie:    !include Tab5/paquets/tab5-energie.yaml        # Energy popup (ADR-0028), after tab5_lvgl
+  tab5_historique: !include Tab5/paquets/tab5-historique.yaml     # Temperature popup (ADR-0032), after tab5_lvgl
+  tab5_alertes:    !include Tab5/paquets/tab5-alertes.yaml        # Alerts history popup, after tab5_lvgl
+  tab5_maison:     !include Tab5/paquets/tab5-maison.yaml         # House popup (ADR-0037), after tab5_lvgl
+  tab5_zones:      !include Tab5/paquets/tab5-zones.yaml          # optional zones (ADR-0018), after tab5_lvgl
+  tab5_reglages:   !include Tab5/paquets/tab5-reglages.yaml       # Settings popup, after tab5_lvgl
+  tab5_economie:   !include Tab5/paquets/tab5-economie.yaml       # energy saving: backlight cap, animations, LVGL rate
+  tab5_themes:     !include Tab5/paquets/tab5-themes.yaml         # themes (ADR-0029), LAST: repaints the packages above
 ```
 
 ---
@@ -81,7 +81,7 @@ Shared dimensional tokens, loaded first so every other package can reference the
 
 ### `tab5-hardware.yaml`
 Low-level hardware configuration:
-- Display and touch settings shared by the three Tab5 revisions (MIPI-DSI, pins, calibration); the display model and the touch platform come from `Tab5/ecran-<revision>.yaml` (default: `M5STACK-TAB5-ST7123` and the official `st7123` I2C platform, since ESPHome 2026.7.0; the old `external_components` shim is gone) — see [`docs/hardware.md`](hardware.md#hardware-revisions)
+- Display and touch settings shared by the three Tab5 revisions (MIPI-DSI, pins, calibration); the display model and the touch platform come from `Tab5/paquets/ecran-<revision>.yaml` (default: `M5STACK-TAB5-ST7123` and the official `st7123` I2C platform, since ESPHome 2026.7.0; the old `external_components` shim is gone) — see [`docs/hardware.md`](hardware.md#hardware-revisions)
 - I2C bus, PI4IOE5V6408 GPIO expanders (display/touch reset lines)
 - ES8388 DAC (`audio_dac:` platform) and ES7210 microphone ADC (`audio_adc:`)
 - `esp32_hosted` — ESP32-C6 Wi-Fi co-processor over SDIO
@@ -204,7 +204,7 @@ Navigation is by touch (opening/closing the climate/light popups and the console
 - swipe left/right on the lower band of the screen (`y ≥ 333`) → cycle through the 5 forecast pages (2 hourly windows + 3 daily windows, with the deliberate wrap documented in `forecast_page_suivante()`) in weather mode; in HA mode, the same gesture goes to the next / previous **room** that has a device, in the same page order, and never shows the weather layers again under the cards
 - since the 14/07/2026 rework there is **no** up/down swipe anymore — the console opens by a long press on the gear button only
 
-Since 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) each forecast page is also a room of up to five devices described by Home Assistant (`tab5_tuiles.cpp`). The HA mode flag is `g_central_ctx.ha_mode` (the former `show_switches` global is gone); `tuiles_mode_ha()` crossfades the weather layer and `layer_switches` (hidden via `LV_OBJ_FLAG_HIDDEN`, never removed), paints the five cards of the current room, puts the room title in the central card and highlights the « HA » button (`tab5-lvgl.yaml`, `btn_control_ha`). See the `[AI-CONTEXT]` headers of `Tab5/tab5_tuiles.cpp` and `ui_components/switches_card.yaml` for the source-level notes.
+Since 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)) each forecast page is also a room of up to five devices described by Home Assistant (`tab5_tuiles.cpp`). The HA mode flag is `g_central_ctx.ha_mode` (the former `show_switches` global is gone); `tuiles_mode_ha()` crossfades the weather layer and `layer_switches` (hidden via `LV_OBJ_FLAG_HIDDEN`, never removed), paints the five cards of the current room, puts the room title in the central card and highlights the « HA » button (`tab5-lvgl.yaml`, `btn_control_ha`). See the `[AI-CONTEXT]` headers of `Tab5/ecran/tab5_tuiles.cpp` and `ui_components/switches_card.yaml` for the source-level notes.
 
 All style references point to IDs defined in `tab5-styles.yaml`. No inline style properties.
 
@@ -298,7 +298,7 @@ Themes ([ADR-0029](decisions/0029-themes-palette.md)): the « Thème » select (
 
 ## 3. C++ layer: `tab5_custom.h` + the `tab5_*.cpp` units
 
-Since 2026-09-08 the former single `tab5_custom.cpp` (3 169 lines) is split into nine units, one per responsibility — `tab5_text.cpp`, `tab5_forecast.cpp`, `tab5_central.cpp`, `tab5_services.cpp`, `tab5_assist.cpp`, `tab5_cards.cpp`, `tab5_console.cpp`, `tab5_anim.cpp`, `tab5_calendar.cpp` — with `tab5_custom.h` unchanged as the single public header and `tab5_internal.h` for the few helpers shared between units. `tab5_custom.cpp` only keeps the shared globals.
+Since 2026-09-08 the former single `tab5_custom.cpp` (3 169 lines) is split into nine units, one per responsibility — `tab5_text.cpp`, `tab5_forecast.cpp`, `tab5_central.cpp`, `tab5_services.cpp`, `tab5_assist.cpp`, `tab5_cards.cpp`, `tab5_console.cpp`, `tab5_anim.cpp`, `tab5_calendar.cpp` — with `tab5_custom.h` unchanged as the single public header and `tab5_internal.h` for the few helpers shared between units. `tab5_custom.cpp` only keeps the shared globals. Other units have been split off since (the climate left `tab5_cards.cpp` for `tab5_clim.cpp` on 2026-10-08, lot L7); `CARTOGRAPHIE_TAB5.md` lists them all. Since 2026-10-08 these files live in `Tab5/ecran/`, the pure C++ they call (`tab5_core`, `tab5_champs`, `tab5_tokens.h`…) in `Tab5/socle/`; each unit also has its own header (`tab5_forecast.h`…), and `tab5_custom.h` is the umbrella that includes them all, so the lambdas still include only it.
 
 The `.h` file declares all functions used from YAML lambdas. The `.cpp` file implements them.
 
@@ -357,7 +357,7 @@ The 8 game consoles are **isolated sub-modules** that share no state with the HM
 - **Zero HA/network dependency** — games work fully offline
 - **Adaptive IMU polling** — `tab5-imu.yaml` switches from 100 ms (10 Hz) at rest to 33 ms (30 Hz) when a tilt-controlled game is open
 
-Navigation goes through `lvgl.page.show:` (YAML) or `lv_scr_load()` (C++); the selector page `page_arcade` is the single entry point, opened by tapping the greenhouse temperature. The C++ files are included via `esphome: includes:` in the entry point (not as packages). Each game lives in its own namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) with a uniform API: `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`. Those entry points are listed **once**, in `Tab5/tab5_registry.cpp` (`GameRegistry::kGames`, with an `imu_fast` flag per console): the global close, the adaptive IMU poll, the IMU dispatch and the HA "current screen" sensor all read that table instead of naming the games (ADR-0013). The same file hosts `ModalRegistry`, the single list of modal windows, filled once by the `tab5_modal_registry_init` script.
+Navigation goes through `lvgl.page.show:` (YAML) or `lv_scr_load()` (C++); the selector page `page_arcade` is the single entry point, opened by tapping the greenhouse temperature. The C++ files are included via `esphome: includes:` in the entry point (not as packages). Each game lives in its own namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) with a uniform API: `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`. Those entry points are listed **once**, in `Tab5/ecran/tab5_registry.cpp` (`GameRegistry::kGames`, with an `imu_fast` flag per console): the global close, the adaptive IMU poll, the IMU dispatch and the HA "current screen" sensor all read that table instead of naming the games (ADR-0013). The same file hosts `ModalRegistry`, the single list of modal windows, filled once by the `tab5_modal_registry_init` script.
 
 > **Status: early prototypes.** These are first-pass AI-generated games to test embedded code generation capabilities — functional but not visually polished.
 
@@ -375,7 +375,7 @@ La configuration ESPHome est découpée en packages YAML importés par un fichie
 
 ### Flux de données : HA pousse, la tablette émet des événements
 
-Le Tab5 n'interroge jamais l'état de Home Assistant ([ADR-0001](decisions/0001-push-only-zero-polling.md)). Le blueprint « emplacements » et les packages `tab5_*` détectent les changements et appellent les actions ESPHome du firmware (`tab5_maj_*`, déclarées dans `Tab5/tab5-api-logic.yaml`) ; le firmware parse le payload et met à jour LVGL en une passe. Dans l'autre sens, la tablette n'appelle aucune action de Home Assistant : une tuile touchée, une demande (mois du calendrier, annonce, bouton de la console) ou sa (re)connexion devient un événement `esphome.tab5_*`, que le blueprint ou `packages/tab5_evenements.yaml` traduit en une action d'une liste blanche fixe ([ADR-0025](decisions/0025-events-only.md)).
+Le Tab5 n'interroge jamais l'état de Home Assistant ([ADR-0001](decisions/0001-push-only-zero-polling.md)). Le blueprint « emplacements » et les packages `tab5_*` détectent les changements et appellent les actions ESPHome du firmware (`tab5_maj_*`, déclarées dans `Tab5/paquets/tab5-api-logic.yaml`) ; le firmware parse le payload et met à jour LVGL en une passe. Dans l'autre sens, la tablette n'appelle aucune action de Home Assistant : une tuile touchée, une demande (mois du calendrier, annonce, bouton de la console) ou sa (re)connexion devient un événement `esphome.tab5_*`, que le blueprint ou `packages/tab5_evenements.yaml` traduit en une action d'une liste blanche fixe ([ADR-0025](decisions/0025-events-only.md)).
 
 ![Comment Home Assistant et la Tab5 se parlent : HA pousse les données par les actions tab5_maj_*, la tablette répond par des événements esphome.tab5_*](images/flux_ha_tab5.svg)
 
@@ -412,7 +412,7 @@ Tokens dimensionnels partagés, chargés en premier pour que tous les autres pac
 
 ### `tab5-hardware.yaml`
 Configuration matérielle bas niveau :
-- Réglages écran et tactile communs aux trois révisions du Tab5 (MIPI-DSI, broches, calibration) ; le modèle d'écran et la plateforme tactile viennent de `Tab5/ecran-<révision>.yaml` (par défaut : `M5STACK-TAB5-ST7123` et la plateforme I2C officielle `st7123`, depuis ESPHome 2026.7.0 ; l'ancien shim `external_components` a disparu) — voir [`docs/hardware.md`](hardware.md#révisions-matérielles)
+- Réglages écran et tactile communs aux trois révisions du Tab5 (MIPI-DSI, broches, calibration) ; le modèle d'écran et la plateforme tactile viennent de `Tab5/paquets/ecran-<révision>.yaml` (par défaut : `M5STACK-TAB5-ST7123` et la plateforme I2C officielle `st7123`, depuis ESPHome 2026.7.0 ; l'ancien shim `external_components` a disparu) — voir [`docs/hardware.md`](hardware.md#révisions-matérielles)
 - Bus I2C, expanders GPIO PI4IOE5V6408 (lignes de reset écran/tactile)
 - DAC ES8388 (plateforme `audio_dac:`) et ADC micro ES7210 (`audio_adc:`)
 - `esp32_hosted` — co-processeur Wi-Fi ESP32-C6 via SDIO
@@ -520,7 +520,7 @@ La navigation se fait au tactile (ouverture/fermeture des popups clim/lumière e
 - swipe gauche/droite sur la bande basse de l'écran (`y ≥ 333`) → cycle les 5 pages de prévisions (2 fenêtres horaires + 3 fenêtres journalières, avec le bouclage volontaire documenté dans `forecast_page_suivante()`) en mode météo ; en mode HA, le même geste va à la **pièce** suivante / précédente qui a un appareil, dans le même ordre de pages, sans jamais réafficher les calques météo sous les cartes
 - depuis la refonte du 14/07/2026 il n'y a **plus** de swipe haut/bas — la console s'ouvre uniquement par un appui long sur le bouton engrenage
 
-Depuis la 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)), chaque page de prévisions est aussi une pièce de cinq appareils au plus, décrite par Home Assistant (`tab5_tuiles.cpp`). Le drapeau du mode HA est `g_central_ctx.ha_mode` (l'ancien global `show_switches` a disparu) ; `tuiles_mode_ha()` fait le fondu entre le calque météo et `layer_switches` (cachés via `LV_OBJ_FLAG_HIDDEN`, jamais retirés), peint les cinq cartes de la pièce courante, met le titre de la pièce dans la carte centrale et met en valeur le bouton « HA » (`tab5-lvgl.yaml`, `btn_control_ha`) — voir les blocs `[AI-CONTEXT]` de `Tab5/tab5_tuiles.cpp` et de `ui_components/switches_card.yaml`.
+Depuis la 3.2 ([ADR-0023](decisions/0023-rooms-generic-tiles.md)), chaque page de prévisions est aussi une pièce de cinq appareils au plus, décrite par Home Assistant (`tab5_tuiles.cpp`). Le drapeau du mode HA est `g_central_ctx.ha_mode` (l'ancien global `show_switches` a disparu) ; `tuiles_mode_ha()` fait le fondu entre le calque météo et `layer_switches` (cachés via `LV_OBJ_FLAG_HIDDEN`, jamais retirés), peint les cinq cartes de la pièce courante, met le titre de la pièce dans la carte centrale et met en valeur le bouton « HA » (`tab5-lvgl.yaml`, `btn_control_ha`) — voir les blocs `[AI-CONTEXT]` de `Tab5/ecran/tab5_tuiles.cpp` et de `ui_components/switches_card.yaml`.
 
 Toutes les références de style pointent vers des IDs définis dans `tab5-styles.yaml`. Aucune propriété de style inline.
 
@@ -612,7 +612,7 @@ Thèmes ([ADR-0029](decisions/0029-themes-palette.md)) : le select « Thème » 
 
 ## 3. Couche C++ : `tab5_custom.h` + les unités `tab5_*.cpp`
 
-Depuis le 08/09/2026, l'ancien `tab5_custom.cpp` unique (3 169 lignes) est scindé en neuf unités, une par responsabilité — `tab5_text.cpp`, `tab5_forecast.cpp`, `tab5_central.cpp`, `tab5_services.cpp`, `tab5_assist.cpp`, `tab5_cards.cpp`, `tab5_console.cpp`, `tab5_anim.cpp`, `tab5_calendar.cpp` — `tab5_custom.h` restant l'unique en-tête public et `tab5_internal.h` déclarant les rares helpers partagés entre unités. `tab5_custom.cpp` ne garde que les globals partagés.
+Depuis le 08/09/2026, l'ancien `tab5_custom.cpp` unique (3 169 lignes) est scindé en neuf unités, une par responsabilité — `tab5_text.cpp`, `tab5_forecast.cpp`, `tab5_central.cpp`, `tab5_services.cpp`, `tab5_assist.cpp`, `tab5_cards.cpp`, `tab5_console.cpp`, `tab5_anim.cpp`, `tab5_calendar.cpp` — `tab5_custom.h` restant l'unique en-tête public et `tab5_internal.h` déclarant les rares helpers partagés entre unités. `tab5_custom.cpp` ne garde que les globals partagés. D'autres unités en sont sorties depuis (la clim a quitté `tab5_cards.cpp` pour `tab5_clim.cpp` le 08/10/2026, lot L7) ; `CARTOGRAPHIE_TAB5.md` les liste toutes. Depuis le 08/10/2026, ces fichiers sont dans `Tab5/ecran/`, le C++ pur qu'ils appellent (`tab5_core`, `tab5_champs`, `tab5_tokens.h`…) dans `Tab5/socle/` ; chaque unité a aussi son en-tête (`tab5_forecast.h`…), et `tab5_custom.h` est l'en-tête parapluie qui les inclut tous : les lambdas n'incluent toujours que lui.
 
 Le `.h` déclare toutes les fonctions utilisées depuis les lambdas YAML. Le `.cpp` les implémente.
 
@@ -671,7 +671,7 @@ Les 8 consoles sont des **sous-modules isolés** qui ne partagent aucun état av
 - **Zéro dépendance HA / réseau** — les jeux fonctionnent entièrement hors ligne
 - **Polling IMU adaptatif** — `tab5-imu.yaml` passe de 100 ms (10 Hz) au repos à 33 ms (30 Hz) quand un jeu à l'inclinaison est ouvert
 
-La navigation passe par `lvgl.page.show:` (YAML) ou `lv_scr_load()` (C++) ; la page sélecteur `page_arcade` est le point d'entrée unique, ouverte par un tap sur la température de la serre. Les fichiers C++ sont inclus via `esphome: includes:` dans le point d'entrée (pas en tant que packages). Chaque jeu vit dans son propre namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) avec une API uniforme : `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`. Ces points d'entrée sont listés **une seule fois**, dans `Tab5/tab5_registry.cpp` (`GameRegistry::kGames`, avec un drapeau `imu_fast` par console) : la fermeture globale, le poll IMU adaptatif, le dispatch IMU et le capteur HA « Écran courant » lisent cette table au lieu de nommer les jeux (ADR-0013). Le même fichier porte `ModalRegistry`, la liste unique des fenêtres modales, remplie une fois par le script `tab5_modal_registry_init`.
+La navigation passe par `lvgl.page.show:` (YAML) ou `lv_scr_load()` (C++) ; la page sélecteur `page_arcade` est le point d'entrée unique, ouverte par un tap sur la température de la serre. Les fichiers C++ sont inclus via `esphome: includes:` dans le point d'entrée (pas en tant que packages). Chaque jeu vit dans son propre namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) avec une API uniforme : `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`. Ces points d'entrée sont listés **une seule fois**, dans `Tab5/ecran/tab5_registry.cpp` (`GameRegistry::kGames`, avec un drapeau `imu_fast` par console) : la fermeture globale, le poll IMU adaptatif, le dispatch IMU et le capteur HA « Écran courant » lisent cette table au lieu de nommer les jeux (ADR-0013). Le même fichier porte `ModalRegistry`, la liste unique des fenêtres modales, remplie une fois par le script `tab5_modal_registry_init`.
 
 **Une exception à l'orientation** : `Pinball::open()` bascule LVGL en portrait 720×1280 et `Pinball::close()` restaure `rotation: 270`. C'est la seule console qui touche à l'orientation — voir le bloc `[AI-CONTEXT]` « ORIENTATION » en tête de `pinball_game.cpp`.
 

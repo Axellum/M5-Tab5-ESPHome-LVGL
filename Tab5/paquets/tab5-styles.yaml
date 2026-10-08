@@ -3,7 +3,7 @@
 # @role Styles LVGL partagés (verre, styles de rôle, thème des widgets), polices, et
 #       couleurs des jeux.
 # @ai_instruction Aucune couleur de l'interface dans ce fichier : elles vivent dans la
-#       palette C++ (`Palette`, Tab5/tab5_tokens.h ; thèmes : ADR-0029). Un style lit la
+#       palette C++ (`Palette`, Tab5/socle/tab5_tokens.h ; thèmes : ADR-0029). Un style lit la
 #       palette active par une lambda (`!lambda 'return lv_color_hex(UIColor.X);'`), et un
 #       widget de l'interface prend sa couleur par un style de rôle
 #       (`styles: style_text_dim`), jamais par une couleur posée sur lui
@@ -175,7 +175,7 @@ font:
   # date du thème (A+, roboto_45_b en Roboto), le Go et le flipper roboto_22. Les tableaux Markdown des réponses ne sont
   # plus alignés qu'approximativement (format_assist_markdown, tab5_assist.cpp).
 
-  # --- Icônes Material Design (Tab5/materialdesignicons-webfont.ttf) ----------
+  # --- Icônes Material Design (Tab5/fonts/materialdesignicons-webfont.ttf) ----------
   # Une icône par ligne, nom relevé dans le TTF. bpp 1 : aplats nets, 4× moins
   # lourds qu'en bpp 4. Ajouter une icône à l'écran = l'ajouter à la police de son
   # widget ; la retirer de l'écran = la retirer d'ici (règle 7, sinon pytest échoue).
@@ -184,7 +184,7 @@ font:
   # (alarm_ring_overlay.yaml) et, depuis le 05/10/2026, boutons de l'accueil (Domo,
   # Discu, HA, Réglages, Arcade : icône seule, encre de 58 px dans 90 px de haut) et rangée des
   # pots, à la même taille. S'appelait mdi_font_80 (l'id mentait), renommé le 08/09/2026.
-  - file: "Tab5/materialdesignicons-webfont.ttf"
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_70
     size: 70
     bpp: 1
@@ -286,7 +286,7 @@ font:
 
   # 60 px — vigilances Météo-France (alerte_slot_*, parse_and_update_vigilance) et
   # goutte / flocon de la prévision de pluie (icon_rain_predict).
-  - file: "Tab5/materialdesignicons-webfont.ttf"
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_alert
     size: 60
     bpp: 1
@@ -308,7 +308,7 @@ font:
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
   # réveil, en-tête de la sélection des consoles, cartes du popup Énergie ; températures
   # de l'accueil (salon, serre).
-  - file: "Tab5/materialdesignicons-webfont.ttf"
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_45
     size: 45
     bpp: 1
@@ -432,7 +432,7 @@ font:
       # <<< tuiles
 
   # 56 px — cartes du popup plantes, boutons -/+/marche de la clim, tuiles des consoles.
-  - file: "Tab5/materialdesignicons-webfont.ttf"
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_56
     size: 56
     bpp: 1
@@ -456,7 +456,7 @@ font:
 
   # 32 px — barre de titre des modales (ADR-0009), tuiles du dashboard, détail du jour
   # du calendrier, chevrons du réveil, Console système.
-  - file: "Tab5/materialdesignicons-webfont.ttf"
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_32
     size: 32
     bpp: 1
@@ -591,7 +591,7 @@ font:
       # <<< tuiles
 
   # 120 px — grand micro de l'assistant.
-  - file: "Tab5/materialdesignicons-webfont.ttf"
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_120
     size: 120
     bpp: 1
@@ -602,7 +602,7 @@ font:
   # tablette, ou une prise sans batterie), pluie des cartes horaires, et mini icônes des
   # trois boutons du haut : l'écran qu'ouvre leur appui long (mini_glyphe, tab5_zones.cpp,
   # 07/10/2026 : le glyphe de l'en-tête de chaque popup).
-  - file: "Tab5/materialdesignicons-webfont.ttf"
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_26
     size: 26
     bpp: 1
@@ -636,7 +636,7 @@ font:
       - "\U000F12A2"  # battery-medium (41 à 80 %)
 
   # 36 px — popup Assistant vocal (assistant_popup.yaml).
-  - file: "Tab5/materialdesignicons-webfont.ttf"
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_assist_36
     size: 36
     bpp: 1
@@ -656,7 +656,7 @@ font:
   # 36 px — roue d'actions rapides (ADR-0036, ui_components/roue_bouton.yaml et
   # roue_choix.yaml) : icônes posées par glyphe_roue() (tab5_roue.cpp, MDI_CODE_TARGETS de
   # la règle 7). Celles de la clim sont celles de son popup.
-  - file: "Tab5/materialdesignicons-webfont.ttf"
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_36
     size: 36
     bpp: 1
@@ -690,7 +690,7 @@ font:
   # la grosse icône centrale n'existe plus, ~196 Ko de flash jamais affichés.
   # Les 10 glyphes = les 10 constantes de MeteoIcon (tab5_custom.h) ; F003 et F004,
   # présents dans le TTF mais jamais affichés, sont retirés le 25/09/2026.
-  - file: "Tab5/IconeMeteo.ttf"
+  - file: "Tab5/fonts/IconeMeteo.ttf"
     id: font_meteo_card
     size: 120
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
@@ -698,7 +698,7 @@ font:
     glyphs: "\U0000F000\U0000F001\U0000F002\U0000F005\U0000F006\U0000F007\U0000F00B\U0000F00E\U0000F00F\U0000F015"
 
   # Calque 2 réduit (lune / soleil derrière le nuage de « partlycloudy »).
-  - file: "Tab5/IconeMeteo.ttf"
+  - file: "Tab5/fonts/IconeMeteo.ttf"
     id: font_meteo_card_small
     size: 80
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
@@ -713,7 +713,7 @@ font:
   # pièce blanche (corps ivoire + contour sombre) — d'où les 12 glyphes et pas 6.
   # size 80 : encre 72×60 px dans une case de 84 (calibré, aucun débordement).
   # bpp 4 obligatoire : en bpp 1 les contours fins (couronne, crinière) crénellent.
-  - file: "Tab5/ChessPieces.ttf"
+  - file: "Tab5/fonts/ChessPieces.ttf"
     id: chess_pieces_80
     size: 80
     bpp: 4
@@ -987,7 +987,7 @@ lvgl:
     # Une couleur de la palette sur une propriété, et rien d'autre. Un widget de
     # l'interface les prend par `styles:` au lieu de poser `text_color:` sur lui :
     # LVGL ne garde qu'UN style partagé par rôle, qu'un thème peut repeindre d'un
-    # coup (tab5_theme_repeindre, Tab5/tab5-themes.yaml). Nommage : style_<propriété>_<rôle>, avec
+    # coup (tab5_theme_repeindre, Tab5/paquets/tab5-themes.yaml). Nommage : style_<propriété>_<rôle>, avec
     # dim = TEXT_DIM et soft = TEXT_SOFT ; le reste = le champ de `Palette`.
     # Dans une liste `styles:`, un style de rôle vient en DERNIER : il l'emporte sur
     # les styles posés avant lui, comme la couleur locale qu'il remplace.
@@ -1064,7 +1064,7 @@ lvgl:
 
     # --- Zones qu'un thème clair peut garder sombres (thèmes, lot 3) -------------
     # Le bandeau central et l'horloge : leurs textes lisent UIBandeau / UIHorloge
-    # (Tab5/tab5_tokens.h), égales à UIColor sauf en mode clair d'un thème à
+    # (Tab5/socle/tab5_tokens.h), égales à UIColor sauf en mode clair d'un thème à
     # `zones_sombres:`. Même rôle que style_text_* / style_bg_*, dans la zone.
     - id: style_bandeau_text_soft
       text_color: !lambda 'return lv_color_hex(UIBandeau.TEXT_SOFT);'

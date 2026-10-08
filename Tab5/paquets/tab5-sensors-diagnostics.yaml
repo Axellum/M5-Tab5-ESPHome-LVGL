@@ -203,11 +203,11 @@ text_sensor:
   # Raison du dernier démarrage (esp_reset_reason), publiée une fois par démarrage :
   # « Software Reset », « Exception », « Task Watchdog », « Brownout », « Power On »…
   # L'historique HA dit si un redémarrage était un plantage (26/09/2026, journal des
-  # démarrages, voir Tab5/tab5_journal.cpp).
+  # démarrages, voir Tab5/ecran/tab5_journal.cpp).
   # Premier démarrage après une installation par l'USB, flash effacée (28/09/2026) : le
   # flash finit par un reset du chien de garde RTC, « other watchdogs » devient « First
   # boot after install (other watchdogs) », que la garde « reboot inattendu » de
-  # packages/tab5_health.yaml ne signale pas (voir Tab5/tab5_journal.cpp).
+  # packages/tab5_health.yaml ne signale pas (voir Tab5/ecran/tab5_journal.cpp).
   # Appui sur le bouton d'alimentation (06/10/2026, discussion #278) : chien de garde
   # sans rapport de plantage. ESPHome y affichait la source du dernier redémarrage
   # DEMANDÉ (« Reboot request from esphome.ota », jamais effacée) : le filtre publie
@@ -565,7 +565,7 @@ interval:
             ESP_LOGW("tab5.rtc", "Horloge RX8130 illisible ou pas encore réglée : attente de NTP");
           }
 
-  # Journal des démarrages et des coupures (Tab5/tab5_journal.cpp) : quand le Wi-Fi
+  # Journal des démarrages et des coupures (Tab5/ecran/tab5_journal.cpp) : quand le Wi-Fi
   # manque depuis 90 s, une copie en NVS pour survivre à une coupure de courant (au plus
   # une toutes les 15 min, seulement s'il y a du nouveau). Rien à faire Wi-Fi présent.
   - interval: 30s
@@ -623,7 +623,7 @@ interval:
              update_console_batterie_ui(id(lbl_sys_batterie_icone), id(lbl_sys_batterie_val));
           }
 
-# Envoi du journal des démarrages et des coupures (Tab5/tab5_journal.cpp), lancé à
+# Envoi du journal des démarrages et des coupures (Tab5/ecran/tab5_journal.cpp), lancé à
 # chaque connexion de Home Assistant (on_client_connected, tab5-api-logic.yaml).
 # 10 s : laisser HA finir ses abonnements (états, services, logs). Événement seulement
 # si quelque chose le justifie (journal_has_report(), bits `anomalie` de

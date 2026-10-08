@@ -41,13 +41,13 @@ def _barre_du_bas():
 
 
 def _constante():
-    m = re.search(r"constexpr int32_t kLargeurRdvSuivant = (\d+);", _lire("Tab5", "alarm_render.cpp"))
+    m = re.search(r"constexpr int32_t kLargeurRdvSuivant = (\d+);", _lire("Tab5", "ecran", "alarm_render.cpp"))
     assert m, "kLargeurRdvSuivant introuvable dans alarm_render.cpp"
     return int(m.group(1))
 
 
 def test_prochain_rdv_coupe_en_cpp():
-    src = _lire("Tab5", "alarm_render.cpp")
+    src = _lire("Tab5", "ecran", "alarm_render.cpp")
     assert re.search(r"texte_ha_coupe\(ui\.lbl_rdv_next,", src), \
         "lbl_rdv_next doit passer par texte_ha_coupe() (une ligne, « … »)"
 

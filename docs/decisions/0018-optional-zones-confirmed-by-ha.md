@@ -16,7 +16,7 @@ Hiding a zone because its entity stayed silent was also rejected. Checked in HA'
 - **HA decides, the device asks.** Once per connection, on the first forecast push (proof that HA automations run, which they don't during HA startup), the device fires `esphome.tab5_zones` with `key=entity` pairs for the entities it tracks. The `tab5_zones_reponse` automation (`packages/tab5_push.yaml`) answers `tab5_maj_zones` with the keys whose entity does not exist (`states[e] is none`: an `unavailable` entity exists). It adds the zones only HA knows about: `clim`, `volet` (entity or package missing), `planning` (no work calendar).
 - **Data always wins.** Any state received makes its zone reappear (`zone_vue()`), whatever HA said.
 - **No answer, no change.** Without the package, nothing is ever hidden: the pre-lot-5 behaviour.
-- **Removing a zone = commenting its line** in `Tab5/user_entities.yaml`. `Tab5/tab5-zones.yaml` gives every `entity_…` a default that exists in no HA (`*.tab5_zone_absente`); package substitutions are overridden by the user file (checked on ESPHome 2026.9.0).
+- **Removing a zone = commenting its line** in `Tab5/user_entities.yaml`. `Tab5/paquets/tab5-zones.yaml` gives every `entity_…` a default that exists in no HA (`*.tab5_zone_absente`); package substitutions are overridden by the user file (checked on ESPHome 2026.9.0).
 - The hidden set is kept in NVS and applied in `on_boot` (-100) before the first frame, so a small home does not flash the missing zones at every boot.
 
 ## Consequences
