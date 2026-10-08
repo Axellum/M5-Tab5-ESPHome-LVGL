@@ -2011,7 +2011,7 @@ variables:
   # noms de la Daikin de l'auteur (away pour Éco, quiet / auto, swing / stop, windnice) ;
   # les branches « Clim : … » envoient le premier de ces modes que l'appareil connaît, et
   # la clé climr dit à l'écran quels boutons montrer. Les mêmes listes que les fonctions
-  # clim_*_actif() du firmware (tab5_cards.cpp ; tests/test_clim.py compare). « on » et
+  # clim_*_actif() du firmware (Tab5/ecran/tab5_clim.cpp ; tests/test_clim.py compare). « on » et
   # « off » entre guillemets : sans eux, YAML 1.1 lit des booléens.
   clim_modes_consigne: [cool, heat, heat_cool, auto]
   clim_eco: [eco, away]

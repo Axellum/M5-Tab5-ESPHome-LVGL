@@ -144,7 +144,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_bouton_alim.py` | `tests/` | Contenu | Bouton d'alimentation : un redémarrage `ESP_RST_WDT` sans rapport de plantage n'est pas classé « plantage » (`tab5_journal.cpp`). |
 | `test_ci_pip.py` | `tests/` | Contenu | Chaque `pip install` d'un workflow passe par `tools/ci/pip_reessai.sh` (réessais quand PyPI répond « from versions: none »). |
 | `test_ci_securite.py` | `tests/` | Contenu | Chaîne d'approvisionnement de la CI : actions figées par SHA complet, permissions déclarées par workflow (PR en lecture seule), esptool figé avec empreintes. |
-| `test_clim.py` | `tests/` | Contenu + rendu | Clim de toute marque (ADR-0026) et clim par tuile (ADR-0027) : clé `climr`, lettres de capacités, blueprint ↔ `tab5_cards.cpp`. |
+| `test_clim.py` | `tests/` | Contenu + rendu | Clim de toute marque (ADR-0026) et clim par tuile (ADR-0027) : clé `climr`, lettres de capacités, blueprint ↔ `Tab5/ecran/tab5_clim.cpp`. |
 | `test_demarrage_ha.py` | `tests/` | Contenu | Démarrage de HA : la poussée complète suit aussi le chemin de la reconnexion (événement `tab5_connected` perdu avant les automatisations). |
 | `test_demo.py` | `tests/` | Contenu | Mode démo : emplacements et clés de zones poussés = ceux de la tablette (`tab5_maj_emplacements`, `kCles`). |
 | `test_demo_pieces.py` | `tests/` | Contenu | Pièces du mode démo contre la grammaire de l'ADR-0023 (types, options, icônes, échappement des champs). |
