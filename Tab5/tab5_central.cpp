@@ -915,7 +915,7 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
     // panneau titre dans tab5-lvgl.yaml), pas dans cette fonction.
     // Le logger du projet tourne en `level: INFO` (tab5-hardware.yaml) : passer
     // temporairement a DEBUG pour voir cette trace, elle est muette autrement.
-    ESP_LOGD("TAB5", "swipe: dir=%d y=%d page=%d", (int) dir, (int) pt_y, ctx.forecast_page);
+    ESP_LOGD("tab5.central", "swipe: dir=%d y=%d page=%d", (int) dir, (int) pt_y, ctx.forecast_page);
 
     if (pt_y < FORECAST_SWIPE_Y_MIN) return;
     if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;

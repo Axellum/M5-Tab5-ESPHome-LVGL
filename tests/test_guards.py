@@ -154,11 +154,16 @@ def test_regle_13_nullptr_et_tags_de_journal(tmp_path):
                                      '    ESP_LOGI("TAB5", "essai %p", o);\n    ESP_LOGI("tab5.anim", "ok");\n}\n')
     _ajouter(tab5 / "chess_game.cpp", '\nstatic void essai() { ESP_LOGI("chess", "un jeu garde son nom"); }\n')
     _ajouter(tab5 / "tab5_zones.cpp", '\nstatic void essai() { ESP_LOGI("TAB5", "un de plus"); }\n')
+    _ajouter(tab5 / "tab5_alertes.cpp", '\nstatic void essai() { payload_refuse("TAB5", "x", 1); '
+                                        'payload_trop_long("tab5.alertes", 1); }\n')
     problems = check_tab5_code_rules.conventions_cpp(tab5, entry)
     assert any(p.startswith("tab5_anim.cpp:") and "`NULL`" in p for p in problems), problems
     assert sum(p.startswith("tab5_anim.cpp:") and "tag de journal" in p for p in problems) == 1, problems
     assert not any("chess_game.cpp" in p for p in problems), problems
-    assert sum(p.startswith("tab5_zones.cpp:") for p in problems) == 6, problems
+    assert sum(p.startswith("tab5_zones.cpp:") for p in problems) == 1, problems
+    # Tag relayé à payload_refuse() / payload_trop_long() : un « TAB5 » refusé, un tab5.<module> accepté.
+    assert sum(p.startswith("tab5_alertes.cpp:") for p in problems) == 1, problems
+    assert not any("TAGS_RELAYES" in p for p in problems), problems
 
 
 def test_regle_14_accents_des_textes_de_l_ecran(tmp_path):
