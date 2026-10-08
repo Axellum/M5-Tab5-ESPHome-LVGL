@@ -39,6 +39,15 @@ The screenshots of Home Assistant's own pages (device page, entity table, automa
 - [Updates](updates.md): firmware from Home Assistant, Home Assistant files, coming from an older version.
 - [Build your own firmware](build.md), instead of step 2.
 
+## First installation: nothing shows up?
+
+| What you see | What to check |
+|---|---|
+| No « Tab5 · » entity in Home Assistant | The three folders went straight into config/ (not into a 	ab5_home_assistant/ folder), the packages: line is in configuration.yaml, and Home Assistant was restarted: [step 1](home-assistant-files.md#a-download-and-unzip). |
+| Home Assistant does not find the tablet | The tablet has its Wi-Fi ([step 3](wifi.md)), and it started less than 30 minutes ago: restart it to open the window again ([step 4](add-to-home-assistant.md)). |
+| The screen is in French | That is the default. Change « Langue » in the [tablet settings](settings.md); the tablet restarts to apply it. |
+| The clock shows, but no weather, rooms or tiles | Normal until steps 5 and 6 are done: the « Tab5 · source des prévisions » list ([step 5](sources.md), [weather providers](weather.md)) and the blueprint ([step 6](devices.md)). |
+
 Something went wrong? [Known incidents](../troubleshooting.md).
 
 ---
@@ -81,5 +90,14 @@ Les captures des pages de Home Assistant lui-même (page de l'appareil, table de
 - [Fournisseurs météo](weather.md#version-française) : hors de France, ou une autre source de pluie ou de vigilances.
 - [Mises à jour](updates.md#version-française) : le firmware depuis Home Assistant, les fichiers Home Assistant, depuis une ancienne version.
 - [Compiler son propre firmware](build.md#version-française), à la place de l'étape 2.
+
+## Première installation : rien n'apparaît ?
+
+| Ce que vous voyez | Ce qu'il faut vérifier |
+|---|---|
+| Aucune entité « Tab5 · » dans Home Assistant | Les trois dossiers sont directement dans config/ (pas dans un dossier 	ab5_home_assistant/), la ligne packages: est dans configuration.yaml, et Home Assistant a redémarré : [étape 1](home-assistant-files.md#a-télécharger-et-décompresser). |
+| Home Assistant ne trouve pas la tablette | La tablette a son Wi-Fi ([étape 3](wifi.md#version-française)) et elle a démarré il y a moins de 30 minutes : redémarrez-la pour rouvrir la fenêtre ([étape 4](add-to-home-assistant.md#version-française)). |
+| L'écran est en français | C'est le réglage par défaut. Changez « Langue » dans les [réglages de la tablette](settings.md#version-française) ; la tablette redémarre pour l'appliquer. |
+| L'horloge s'affiche, mais ni météo, ni pièces, ni tuiles | Normal tant que les étapes 5 et 6 ne sont pas faites : la liste « Tab5 · source des prévisions » ([étape 5](sources.md#version-française), [fournisseurs météo](weather.md#version-française)) et le blueprint ([étape 6](devices.md#version-française)). |
 
 Un souci ? [Incidents connus](../troubleshooting.md#version-française).

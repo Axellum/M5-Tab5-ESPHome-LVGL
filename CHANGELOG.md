@@ -19,6 +19,12 @@ le 08/10/2026 : test de consommation dans Home Assistant et lecture de la batter
 pendant le test (#405), `tools/mesure_conso.py` (#404). Fichiers Home Assistant à recopier avant le
 firmware.
 
+### 2026-10-09 — Première installation : ordre, dépannage et repères de version (doc)
+
+- **Page `/install/`** : une note dit de mettre les fichiers Home Assistant en place avant d'installer (la fenêtre d'ajout dure 30 min après le démarrage) ; le renvoi « guide, étape 4 » devient « étape 1 » ; le texte de l'écran ST7121 dit qu'elle tourne chez un autre utilisateur, comme `flash.md`.
+- **`home-assistant-files.md`** : les parties internes passent de 1-2-3 à A-B-C (elles se confondaient avec les étapes 1 à 7), avec leurs renvois dans `troubleshooting.md` ; les nouveautés 3.8 (alerte d'erreur de rendu, course du volet) sont marquées.
+- **`wifi.md`** : le point d'accès « Tab5 Fallback AP » se coupe aussi 30 min après le démarrage d'une tablette sans clé ; un redémarrage le rouvre.
+- **`installation/README.md`** : tableau « première installation : rien n'apparaît ? ». `updates.md` et `weather.md` : nouveaux essais du firmware et repli météo marqués « depuis la 3.8 ». Lien « documentation » de l'intégration HACS vers le guide des fichiers HA.
 ### 2026-10-08 — Test de consommation dans Home Assistant, lecture toutes les 2 s
 
 - **Script « Tab5 — consumption test »** (`packages/tab5_mesure_conso.yaml`, nouveau) : sur une

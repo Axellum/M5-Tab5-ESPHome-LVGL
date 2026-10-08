@@ -3,7 +3,7 @@
   "name": "Tab5 — fichiers HA · HA files",
   "codeowners": ["@Axellum"],
   "config_flow": true,
-  "documentation": "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/en/installation/updates/",
+  "documentation": "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/en/installation/home-assistant-files/",
   "integration_type": "service",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues",
