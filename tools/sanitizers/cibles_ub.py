@@ -9,8 +9,8 @@ fenêtre qui affiche la valeur (mêmes gestes que tools/rendu/ecrans.py), la cha
 repoussée fenêtre ouverte (chemin « depuis HA »), et les rapports des sanitizers apparus
 pendant ce cas, lus dans le journal de la tablette (tools/sanitizers/rapports.py).
 
-  R2  consigne de clim « inf » / « 1e30 » / « -inf »   (tab5_cards.cpp, corrigé au lot A)
-  R2c bornes de clim « -1e30 » (climr)                  (tab5_cards.cpp puis lv_map de LVGL)
+  R2  consigne de clim « inf » / « 1e30 » / « -inf »   (tab5_clim.cpp, corrigé au lot A)
+  R2c bornes de clim « -1e30 » (climr)                  (tab5_clim.cpp puis lv_map de LVGL)
   R1  luminosité « inf » dans les emplacements          (tab5_tuiles.cpp)
   R2b humidité « inf » / « 1e30 »                        (tab5_forecast.cpp)
   R3  historique « 1e30 » : pas, minutes, températures   (tab5_historique.cpp)

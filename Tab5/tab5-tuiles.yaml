@@ -2,10 +2,12 @@
 # [AI-CONTEXT]
 # @file tab5-tuiles.yaml
 # @role Pièces et tuiles génériques (ADR-0023, 28/09/2026) : pose les widgets que
-#       tab5_tuiles.cpp dessine (g_tuiles_ui, popups lumière, volet et appareil compris) et ses
-#       deux commandes (événement esphome.tab5_action, tap du volet 3.x). Le modèle, la NVS et le dessin vivent
-#       dans tab5_tuiles.cpp ; les définitions arrivent par l'action tab5_maj_tuiles et
-#       les états par tab5_maj_emplacements (clés tRT), tab5-api-logic.yaml.
+#       tab5_tuiles.cpp dessine (g_tuiles_ui ; popups lumière, volet et appareil compris, que
+#       dessine tab5_tuiles_popups.cpp) et ses deux commandes (événement esphome.tab5_action,
+#       tap du volet 3.x), puis lance tab5_roue_ui (tab5-roue.yaml : la roue d'actions
+#       rapides). Le modèle, la NVS et le dessin vivent dans tab5_tuiles.cpp ; les
+#       définitions arrivent par l'action tab5_maj_tuiles et les états par
+#       tab5_maj_emplacements (clés tRT), tab5-api-logic.yaml.
 # @architecture_constraint id() n'existe que dans une lambda YAML et l'on_boot de
 #       tab5-ha-hmi.yaml n'est pas à nous : tab5_zones_apply (tab5-zones.yaml), lancé à
 #       la fin du setup AVANT la première image, exécute ce script en premier. Chargé
@@ -159,61 +161,6 @@ script:
           tuiles_brancher_titres();
           // Volet dessiné du popup : ses lames, glisser, relâcher (une fois aussi).
           tuiles_brancher_popup_volet();
-          // Roue d'actions rapides (ADR-0036, ui_components/roue_actions.yaml), dessinée par
-          // tab5_roue.cpp ; arcs, geste bloqué et effet d'appui posés une fois (roue_brancher).
-          RoueUI& roue = g_roue_ui;
-          roue.fond = id(roue_actions);
-          roue.bande[0] = id(roue_bande_0);
-          roue.bande[1] = id(roue_bande_1);
-          roue.jauge = id(roue_jauge);
-          roue.moyeu = id(roue_moyeu);
-          roue.moyeu_icone = id(roue_moyeu_icone);
-          roue.moyeu_valeur = id(roue_moyeu_valeur);
-          roue.nom = id(roue_nom);
-          roue.lien_legende[0] = id(roue_lien_0);
-          roue.lien_legende[1] = id(roue_lien_1);
-          roue.bouton[0] = id(roue_bouton_0);
-          roue.icone[0] = id(roue_bouton_0_icone);
-          roue.point[0] = id(roue_bouton_0_point);
-          roue.bouton[1] = id(roue_bouton_1);
-          roue.icone[1] = id(roue_bouton_1_icone);
-          roue.point[1] = id(roue_bouton_1_point);
-          roue.bouton[2] = id(roue_bouton_2);
-          roue.icone[2] = id(roue_bouton_2_icone);
-          roue.point[2] = id(roue_bouton_2_point);
-          roue.bouton[3] = id(roue_bouton_3);
-          roue.icone[3] = id(roue_bouton_3_icone);
-          roue.point[3] = id(roue_bouton_3_point);
-          roue.bouton[4] = id(roue_bouton_4);
-          roue.icone[4] = id(roue_bouton_4_icone);
-          roue.point[4] = id(roue_bouton_4_point);
-          roue.bouton[5] = id(roue_bouton_5);
-          roue.icone[5] = id(roue_bouton_5_icone);
-          roue.point[5] = id(roue_bouton_5_point);
-          roue.choix[0] = id(roue_choix_0);
-          roue.choix_icone[0] = id(roue_choix_0_icone);
-          roue.choix_texte[0] = id(roue_choix_0_texte);
-          roue.choix_legende[0] = id(roue_choix_0_legende);
-          roue.choix[1] = id(roue_choix_1);
-          roue.choix_icone[1] = id(roue_choix_1_icone);
-          roue.choix_texte[1] = id(roue_choix_1_texte);
-          roue.choix_legende[1] = id(roue_choix_1_legende);
-          roue.choix[2] = id(roue_choix_2);
-          roue.choix_icone[2] = id(roue_choix_2_icone);
-          roue.choix_texte[2] = id(roue_choix_2_texte);
-          roue.choix_legende[2] = id(roue_choix_2_legende);
-          roue.choix[3] = id(roue_choix_3);
-          roue.choix_icone[3] = id(roue_choix_3_icone);
-          roue.choix_texte[3] = id(roue_choix_3_texte);
-          roue.choix_legende[3] = id(roue_choix_3_legende);
-          roue.choix[4] = id(roue_choix_4);
-          roue.choix_icone[4] = id(roue_choix_4_icone);
-          roue.choix_texte[4] = id(roue_choix_4_texte);
-          roue.choix_legende[4] = id(roue_choix_4_legende);
-          roue.choix[5] = id(roue_choix_5);
-          roue.choix_icone[5] = id(roue_choix_5_icone);
-          roue.choix_texte[5] = id(roue_choix_5_texte);
-          roue.choix_legende[5] = id(roue_choix_5_legende);
-          // Lien « Maison » : la routine unique d'ouverture d'un écran (tab5-ha-controls.yaml).
-          roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };
-          roue_brancher();
+      # Roue d'actions rapides (ADR-0036) : ses widgets dans g_roue_ui, juste après ceux des
+      # tuiles, comme quand ils étaient ici (tab5-roue.yaml, lot L7 du 08/10/2026).
+      - script.execute: tab5_roue_ui

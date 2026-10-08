@@ -130,11 +130,11 @@ def test_regle_12_fonction_publique_sans_appelant(tmp_path):
     _ajouter(tab5 / "tab5_custom.h", "\nvoid essai_orpheline(int n);\nvoid essai_appelee();\n")
     _ajouter(tab5 / "tab5_cards.cpp", "\nvoid essai_orpheline(int n) { (void) n; }\n"
                                       "void essai_appelee() { essai_orpheline(1); }\n")
-    _ajouter(tab5 / "tab5-scripts.yaml", "\nessai:\n  - lambda: 'essai_appelee(); clim_recolorer();'\n")
+    _ajouter(tab5 / "tab5-scripts.yaml", "\nessai:\n  - lambda: 'essai_appelee(); clim_eco_actif(preset);'\n")
     problems = check_tab5_code_rules.appelants_publics(tab5, entry)
     assert any("`essai_orpheline()` (tab5_cards.cpp) n'est appelée ni par un YAML" in p for p in problems), problems
     assert not any("essai_appelee" in p for p in problems), problems
-    assert any("`clim_recolorer()` a maintenant un appelant" in p for p in problems), problems
+    assert any("`clim_eco_actif()` a maintenant un appelant" in p for p in problems), problems
     # Appel par gabarit : `${prefixe}_choisir_vue` vaut energie_ et historique_choisir_vue.
     _remplacer(tab5 / "ui_components" / "historique_popup.yaml", "prefixe: historique", "prefixe: autre")
     _remplacer(tab5 / "ui_components" / "historique_popup.yaml", "prefixe: historique", "prefixe: autre")

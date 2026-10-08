@@ -37,7 +37,8 @@ GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorps
                   "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kPieces", "kTuiles")
 # Fichiers qui s'en servent : aucun ne doit les redéfinir.
 GEOMETRIE_UTILISATEURS = ("tab5_energie.cpp", "tab5_historique.cpp", "tab5_maison.cpp", "tab5_zones.cpp",
-                          "tab5_tuiles.cpp", "tab5_roue.cpp", "tab5_cards.cpp")
+                          "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp",
+                          "tab5_tuiles_priv.h", "tab5_roue.cpp", "tab5_clim.cpp")
 
 
 def _geometrie():

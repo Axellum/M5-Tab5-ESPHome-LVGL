@@ -9,6 +9,24 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Code des tuiles regroupé et découpé (lot L7)
+
+Aucun changement visible voulu ; le code des tuiles se lit et se modifie en un seul endroit par
+sujet.
+
+- **Une seule source** pour : la clé d'une tuile ou d'une pièce (`tuile_cle()`, `piece_cle()`,
+  `tab5_modele_ha.h`) ; ce que fait chaque type de tuile au toucher, à l'appui long et dans la
+  roue (table `kGestes[]`, une ligne par type) ; l'ouverture et la mise à jour des trois popups
+  d'une tuile (`PopupTuile`) ; les teintes des préréglages de lampe, lues par le popup lumière
+  et par la roue (`lampe_teinte()`).
+- **La roue ne repeint plus un bouton dont l'aspect n'a pas changé** : chaque bouton garde le
+  dernier aspect posé.
+- **Fichiers découpés** : `tab5_tuiles.cpp` (2 742 lignes) devient `tab5_tuiles.cpp` (modèle,
+  NVS, dessin, gestes), `tab5_tuiles_popups.cpp`, `tab5_tuiles_roue.cpp` et l'en-tête privé
+  `tab5_tuiles_priv.h` ; la clim sort de `tab5_cards.cpp` dans `tab5_clim.cpp` ; le câblage de
+  la roue sort de `tab5-tuiles.yaml` dans `tab5-roue.yaml` (script `tab5_roue_ui`, lancé par
+  `tab5_tuiles_ui` au même moment qu'avant). Code déplacé tel quel ; tests repointés.
+
 ### 2026-10-08 — Batterie : plus de souffle sans batterie, limite de charge, consommation
 
 - **Un léger souffle continu sortait d'une tablette sans batterie** (entendu par l'auteur le

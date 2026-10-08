@@ -199,6 +199,9 @@ static void test_modele_ha() {
                !modele_ha::etat_indisponible("on") && !modele_ha::etat_indisponible(""),
            "état indisponible : unavailable, unknown");
     expect(modele_ha::kNom == 25 && modele_ha::kEtat == 16, "tailles gardées");
+    expect(std::strcmp(modele_ha::tuile_cle(0, 4).s, "t04") == 0 && std::strcmp(modele_ha::tuile_cle(4, 0).s, "t40") == 0,
+           "clé de tuile : tRT");
+    expect(std::strcmp(modele_ha::piece_cle(3).s, "p3") == 0, "clé de pièce : pR");
 }
 
 int main() {
