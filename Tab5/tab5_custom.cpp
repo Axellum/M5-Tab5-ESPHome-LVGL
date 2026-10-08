@@ -17,7 +17,8 @@
  * @regle_absolue Aucune autre partie du code (YAML ou autre) ne doit appeler lv_obj_set_*
  *                directement : tout widget LVGL est mis à jour via un helper de ces unités,
  *                déclaré dans tab5_custom.h (ADR-0006, garde-fou tools/check_tab5_code_rules.py).
- * @memory_constraint Éviter std::string dans les boucles de parsing. char* + strtok_r ;
+ * @memory_constraint Pas de std::string dans une boucle de parsing : découper un char* en place
+ *       (`split_fields()` de tab5_core.h garde les champs vides, `strtok_r` les fusionne) ;
  *                    la SRAM est critique (768KB), privilégier le stack (char buf[32]).
  * @ai_instruction Un nouveau capteur = une fonction `update_mon_capteur_ui(lv_obj_t*, float)`
  *                 dans l'unité de sa responsabilité + sa déclaration dans tab5_custom.h,

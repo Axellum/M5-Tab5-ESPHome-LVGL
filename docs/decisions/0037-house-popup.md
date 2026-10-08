@@ -1,6 +1,6 @@
 # ADR-0037: A House popup — every room of the blueprint at once, one column per room, rows drawn and touched like the tiles
 
-**Status:** Proposed (2026-10-07, asked for in discussion #278; not tried on a tablet yet)
+**Status:** Accepted (2026-10-07, asked for in discussion #278; not tried on a tablet when written). Applied by the firmware since release 3.7.0 (2026-10-07).
 **Date:** 2026-10-07
 
 ## Context

@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29** (70 composants UI dont 35 inclus par `tab5-lvgl.yaml`, 23 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29**, liste des tests et des workflows complétée le 2026-10-08 (70 composants UI dont 35 inclus par `tab5-lvgl.yaml`, 23 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 
@@ -134,6 +134,43 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_installation_ha.py` | `tests/` | Unitaire + contenu | Job « installation dans un HA neuf » sans conteneur : `preparer_config.py` écrit une installation complète (ligne des packages, tous les packages, blueprint identique), ni placeholder ni `!secret` installés, optionnels seulement sur demande, chaque entité `…tab5_…` lue par un package définie par un package, entrées du blueprint et « Zones masquées » attendues, tablette virtuelle au nom de la vraie, mêmes chemins sur `main` et en PR ; fonctions pures de `verifier_installation.py` (clé, traces, journal de HA). |
 | `test_site_doc.py` | `tests/` | Contenu + construction | Site de documentation (ADR-0030) : chaque fichier de `docs/` est dans `tools/site/menu.yml` ou écarté exprès (`HORS_SITE`), chaque page dans les deux langues, liens vers le dépôt et ancres de l'autre langue réécrits, puis le site `en/` et `fr/` est construit en mode strict (`tools/site/construire.py`) ; l'accueil est le README (titre, JSON-LD), la racine `web/index.html` renvoie vers `en/` ou `fr/`. |
 | `test_notice.py` | `tests/` | Contenu | Notice d'utilisation (`docs/notice/`) : chaque appui long du YAML et le seul glissement décrits dans les deux langues, chaque fenêtre du rendu (`tools/rendu/ecrans.py`) montrée ou écartée avec sa raison, mêmes images dans les deux moitiés, aucune image citée absente ni orpheline, légende de l'accueil annoté = repères de `tools/site/images_notice.py`. |
+| `test_actions_ha.py` | `tests/` | Contenu | Événements seulement (ADR-0025) : aucun `homeassistant.service` / `homeassistant.action` ni `${entity_…}` dans le firmware. |
+| `test_alertes_ecran.py` | `tests/` | Contenu + rendu | Bandeaux d'alertes de la carte centrale (lot 3 du 06/10/2026) : payload `tab5_maj_alertes_ha_bulk` rendu depuis le vrai modèle de `packages/tab5_push.yaml`, en-tête `@n:total`. |
+| `test_appuis.py` | `tests/` | Contenu | Appuis longs des trois boutons du haut au choix (07/10/2026) : clé `appuis` de `tab5_maj_emplacements`, blueprint ↔ firmware. |
+| `test_bouton_alim.py` | `tests/` | Contenu | Bouton d'alimentation : un redémarrage `ESP_RST_WDT` sans rapport de plantage n'est pas classé « plantage » (`tab5_journal.cpp`). |
+| `test_ci_pip.py` | `tests/` | Contenu | Chaque `pip install` d'un workflow passe par `tools/ci/pip_reessai.sh` (réessais quand PyPI répond « from versions: none »). |
+| `test_ci_securite.py` | `tests/` | Contenu | Chaîne d'approvisionnement de la CI : actions figées par SHA complet, permissions déclarées par workflow (PR en lecture seule), esptool figé avec empreintes. |
+| `test_clim.py` | `tests/` | Contenu + rendu | Clim de toute marque (ADR-0026) et clim par tuile (ADR-0027) : clé `climr`, lettres de capacités, blueprint ↔ `tab5_cards.cpp`. |
+| `test_demarrage_ha.py` | `tests/` | Contenu | Démarrage de HA : la poussée complète suit aussi le chemin de la reconnexion (événement `tab5_connected` perdu avant les automatisations). |
+| `test_demo.py` | `tests/` | Contenu | Mode démo : emplacements et clés de zones poussés = ceux de la tablette (`tab5_maj_emplacements`, `kCles`). |
+| `test_demo_pieces.py` | `tests/` | Contenu | Pièces du mode démo contre la grammaire de l'ADR-0023 (types, options, icônes, échappement des champs). |
+| `test_economie.py` | `tests/` | Contenu | Mode économie d'énergie : options du select dans l'ordre de `ChoixEconomie`, câblage YAML de `tab5-economie.yaml`. |
+| `test_emplacements.py` | `tests/` | Contenu | Emplacements (ADR-0019) : clés poussées par le blueprint = table de `tab5_maj_emplacements`. |
+| `test_energie.py` | `tests/` | Contenu + rendu | Popup Énergie (ADR-0028) : contrat des deux actions, champs de l'instantané, créneaux des vues, package, démo, firmware. |
+| `test_extinction_auto.py` | `tests/` | Contenu | Extinction automatique de l'écran : défaut « Jamais », délais dans l'ordre des options, exclusions (OTA en cours, voix…). |
+| `test_formes_themes.py` | `tests/` | Unitaire | Formes et zones sombres des thèmes (ADR-0029, lot 3) : `tools/gen_themes.py` sur un thème d'essai, dans un dossier temporaire. |
+| `test_garde_origine.py` | `tests/` | Contenu | Garde d'origine des événements `esphome.tab5_*` : seul l'appareil Tab5 est écouté (blueprint, `tab5_evenements.yaml`). |
+| `test_historique.py` | `tests/` | Contenu + rendu | Popup Température (ADR-0032) : action `tab5_maj_historique`, vues, limites du firmware face au package et à la démo. |
+| `test_i18n.py` | `tests/` | Contenu | Traduction de l'écran : chaque `tr()` a sa clé dans `Tab5/lang/*.yaml`, `%d` à leur place, glyphes présents dans les polices, fichier généré à jour. |
+| `test_jour_travaille.py` | `tests/` | Rendu | Jour travaillé des tuiles météo et du réveil (HA-3, 07/10/2026) : mêmes macros de `tab5_calendar.jinja` que le popup calendrier. |
+| `test_maison.py` | `tests/` | Contenu | Popup Maison (ADR-0037) : registre, select « Aller à l'écran », chrome partagé, rien de nouveau avec HA. |
+| `test_meteo_blueprint.py` | `tests/` | Contenu + rendu | Météo choisie dans le blueprint (section « Météo ») : elle écrit les listes « Tab5 · … » de `tab5_meteo_sources.yaml`. |
+| `test_meteo_icones_nuit.py` | `tests/` | Rendu | Icônes de nuit des prévisions heure par heure (Met.no : `partlycloudy` de nuit) : modèle de HA (`is_daytime`, `sun.sun`) contre un calcul indépendant. |
+| `test_meteo_sans_meteo_france.py` | `tests/` | Rendu | Chaîne météo rendue sans Météo-France (Met.no seul), avec les vrais modèles des packages. |
+| `test_pluie_sans_meteo_france.py` | `tests/` | Rendu | Pluie dans l'heure sans Météo-France : la source effective devient Open-Meteo. |
+| `test_polices_themes.py` | `tests/` | Contenu | Polices d'affichage des thèmes : géométrie de l'horloge recalculée depuis les métriques de `Tab5/themes/_polices.yaml`. |
+| `test_poussee_pluie.py` | `tests/` | Contenu | Pluie dans l'heure par la poussée légère, plus par la chaîne complète (PERF-3, HA-16 du 07/10/2026). |
+| `test_premier_demarrage.py` | `tests/` | Contenu | Premier démarrage après une installation par l'USB : « First boot after install » n'est pas un redémarrage inattendu. |
+| `test_rangee.py` | `tests/` | Contenu | Rangée sous l'horloge (ADR-0031) : calage sur le rotateur (7,8 s + 0,2 s), blueprint ↔ firmware. |
+| `test_reglables.py` | `tests/` | Contenu | Tuile − / + (ADR-0033) : types, domaines, icônes, bornes par type, liste blanche des commandes, blueprint ↔ `tab5_reglables.cpp`. |
+| `test_reglages.py` | `tests/` | Contenu | Popup Réglages : contrat numérique `ReglageId` / index d'option entre `reglages_popup.yaml` et le C++. |
+| `test_roue.py` | `tests/` | Contenu | Roue d'actions rapides (ADR-0036) : géométrie, anneaux, liens « Maison » et « Détails », commandes, lue dans le C++ et le YAML. |
+| `test_solaire.py` | `tests/` | Contenu + rendu | Icône solaire du bandeau d'état : clé `solaire` de `tab5_maj_emplacements`, blueprint ↔ firmware. |
+| `test_themes.py` | `tests/` | Contenu | Palettes, catalogue des thèmes et styles de rôle (ADR-0029) : chaque palette donne tous les rôles, chaque style lit la palette. |
+| `test_tuiles_blueprint.py` | `tests/` | Contenu + rendu | Pièces et tuiles (ADR-0023), côté HA : types, options et commandes du blueprint = tableaux de l'ADR, états poussés. |
+| `test_tuiles_firmware.py` | `tests/` | Contenu | Pièces et tuiles (ADR-0023), côté firmware : grammaire des clés, types, options, commandes de `tab5_tuiles.cpp`. |
+| `test_tuiles_icones.py` | `tests/` | Contenu | Palette des icônes des tuiles : parties générées par `tools/gen_tuiles_icones.py` à jour (C++, glyphes MDI, blueprint). |
+| `test_zones.py` | `tests/` | Contenu | Zones optionnelles : enum `Zone`, `kCles`, demande `esphome.tab5_zones` et HA d'accord, dans l'ordre. |
 | `test_guards.py` | `tests/` | Contenu | Joue les 8 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, niveaux d'Arcanoïde, questions de Trial Poursuite, comptes de la cartographie). |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
 
@@ -177,7 +214,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 # Tous les tests (tests/ + moteurs de jeux sous tools/ — cf. pyproject.toml)
 python -m pytest
 
-# Tests moteurs de jeux (miroirs Python)
+# Tests moteurs de jeux (miroirs Python ; le vrai C++ ne se compile qu'en CI, g++)
 python tools/test_go_engine.py
 python tools/test_chess_perft.py
 python tools/test_draughts_engine.py
@@ -198,16 +235,13 @@ python tools/demo/demo_pusher.py --dry-run
 00ProjetTab/
 ├── tests/
 │   ├── __init__.py
-│   ├── test_guards.py
-│   ├── test_notice.py
-│   ├── test_render_ha_config.py
-│   ├── test_site_doc.py
-│   └── test_verifier_secrets_config.py
+│   └── test_*.py   (62 fichiers au 08/10/2026, un par ligne du § 3.1)
 ├── tools/
 │   ├── demo/
 │   │   ├── demo_pusher.py
 │   │   ├── requirements.txt
 │   │   └── scenarios.py
+│   ├── ci/pip_reessai.sh   (pip install avec réessais, tous les workflows)
 │   ├── installation_ha/   (job « installation dans un HA neuf »)
 │   │   ├── captures_ha.py
 │   │   ├── configuration.yaml
@@ -215,6 +249,10 @@ python tools/demo/demo_pusher.py --dry-run
 │   │   ├── preparer_config.py
 │   │   ├── verifier_installation.py
 │   │   └── verifier_integration.py
+│   ├── publication/   (archives et site d'une release)
+│   ├── rendu/   (captures du rendu hors tablette)
+│   ├── sanitizers/   (fuzz et cas ciblés sous ASan + UBSan)
+│   ├── site/   (construction du site de documentation)
 │   ├── test_go_engine.py
 │   ├── test_go_engine.cpp
 │   ├── test_alarm_clock.cpp
@@ -232,10 +270,13 @@ python tools/demo/demo_pusher.py --dry-run
 │   ├── render_ha_config.py
 │   └── verifier_secrets_config.py
 └── .github/workflows/
-    ├── esphome-tab5.yml   (CI : jobs python + build + build-min, voir § 5)
+    ├── esphome-tab5.yml   (CI : changes, python, build, build-min, build-revisions ; voir § 5)
     ├── installation-ha.yml   (installation dans un HA neuf, voir § 5)
     ├── integration-hacs.yml   (intégration « Tab5 » pour HACS, voir § 5)
-    └── sanitizers.yml   (tablette virtuelle sous ASan + UBSan, voir § 5)
+    ├── publication.yml   (binaires signés d'une release, voir § 5)
+    ├── rendu-host.yml   (rendu hors tablette, voir § 5)
+    ├── sanitizers.yml   (tablette virtuelle sous ASan + UBSan, voir § 5)
+    └── site.yml   (site GitHub Pages, voir § 5)
 ```
 
 ---
@@ -244,8 +285,11 @@ python tools/demo/demo_pusher.py --dry-run
 
 - **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs, dames) disposent de tests exécutables sur PC.
 - **Les tests Go/échecs/dames sont des miroirs Python** du C++ : toute modification du C++ doit être reflétée dans le miroir Python, sinon le test ne prouve plus rien. Exception : `test_go_engine.cpp` compile le vrai moteur Go (g++, en CI).
-- **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`, PR + push sur `main`) : job `python` (pre-commit, `pytest`, moteur Go C++, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.1.0`, image `latest` = canari amont voulu, ADR-0016, ccache conservé entre runs) seulement si `tab5-ha-hmi.yaml`, `Tab5/` (hors `.md`) ou le workflow changent ; job `build-min`, même compilation avec la version plancher lue dans `min_version:` (26/09/2026). `python`, `build` et `build-min` sont des checks requis de `main` ; `build` reste présent et passe en « skipped » sinon. Artefact `tab5-firmware` publié sur `main`.
+- **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`, PR + push sur `main`) : job `changes` (filtre des chemins) ; job `python` (pre-commit, `pytest`, moteur Go C++, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.1.0`, image `latest` = canari amont voulu, ADR-0016, ccache conservé entre runs) seulement si `tab5-ha-hmi.yaml`, `Tab5/` (hors `.md`) ou le workflow changent ; job `build-min`, même compilation avec la version plancher lue dans `min_version:` (26/09/2026). `python`, `build` et `build-min` sont des checks requis de `main` ; `build` reste présent et passe en « skipped » sinon. Job `build-revisions` (non requis) : les révisions d'écran ST7121 et ILI9881C compilées en parallèle. Artefact `tab5-firmware` publié sur `main`. Durées sur `main` le 07/10/2026 : `python` 3 à 6 min, `build` ~5 min, `build-min` ~6 min, `build-revisions` 5 à 8 min.
 - **Installation dans un HA neuf** (`.github/workflows/installation-ha.yml`, 28/09/2026, ~3 min, non requis) : Home Assistant figé en conteneur (`HA_IMAGE`) + la tablette virtuelle (`tab5-rendu-host.yaml` compilé sous le nom `tab5-ha-hmi`), installés comme par un nouvel utilisateur (`tools/installation_ha/`) : tous les packages rendus et `check_config`, puis l'ordre « Sans compiler » du guide (onboarding, ajout ESPHome sans l'option « actions HA », automatisation du blueprint) et un redémarrage de la tablette, puis deux demandes de la tablette de bout en bout (calendrier par le select « Aller à l'écran », « MAJ Écran » par le doigt virtuel) et un redémarrage de HA forgé par un autre appareil, qui doit être ignoré. Échoue si la clé API n'est pas donnée et gardée par HA, si la clé nulle ou le clair passent encore, si `esphome.tab5_connected` n'arrive pas après la clé, si une trace du blueprint ou de la poussée complète n'aboutit pas, si « Zones masquées » diffère, si la capture demandée par HA manque, si la clé ne survit pas au redémarrage, si une demande de la tablette n'aboutit pas, si HA a refusé une action de l'appareil (réparation « service_calls_not_allowed »), ou si le journal de HA a une erreur Tab5 après la connexion (hors « Not connected » pendant une déconnexion voulue, rapportée). Artefact `installation-ha` : deux captures (juste après l'automatisation du blueprint, puis après le redémarrage), journaux de HA et de la tablette. Sur les PR et `main` qui touchent HA, l'API ou la tablette virtuelle, et à la main. Ne teste pas l'interface de HA cliquée par un humain, la page de flashage ni le vrai matériel.
 - **Intégration HACS** (`.github/workflows/integration-hacs.yml`, 07/10/2026, non requis, ADR-0035) : `hassfest` et la validation HACS par leurs images ghcr.io, puis `tools/installation_ha/verifier_integration.py` dans un Home Assistant neuf (même `HA_IMAGE` que le test ci-dessus) : première installation des fichiers sans redémarrage (`rest_command` chargé à chaud), mise à jour comme HACS (sauvegarde, fichier modifié à la main nommé, fichier retiré), configuration cassée remise comme avant avec la réparation « configuration_invalide », ligne `packages:` absente (réparation) puis remise. Le firmware enchaîné n'y est pas exercé (pas de tablette). Artefact `integration-hacs` : journal de HA.
 - **Sanitizers** (`.github/workflows/sanitizers.yml`, 01/10/2026, ~20 min, non requis) : la tablette virtuelle compilée avec AddressSanitizer et UndefinedBehaviorSanitizer (`tools/sanitizers/`), après un témoin positif ; fuzzing des 20 services, cas de conversions hors bornes fenêtre ouverte, tous les écrans. Échoue au premier rapport lu dans le journal de la tablette (UBSan écrit sur la sortie d'erreur et ignore `log_path`), si la tablette s'arrête ou si le programme a été compilé sans sanitizers. Artefact `sanitizers` : journaux, `fuzz.md`, `cibles.md`, reproducteurs.
+- **Rendu hors tablette** (`.github/workflows/rendu-host.yml`, ADR-0021, non requis) : `tab5-rendu-host.yaml` compilé pour la plateforme `host`, scènes du mode démo puis chaque fenêtre, sous-fenêtre et écran de jeu dans les sept langues (`tools/rendu/`) ; comparaison informative au dernier run de `main`. Seule comparaison bloquante : la tâche des thèmes, bascule à chaud = démarrage à froid au pixel près.
+- **Site** (`.github/workflows/site.yml`, ADR-0022 et ADR-0030) : racine, page de flashage, manifestes des releases (`tools/publication/pages.py`) et documentation en/fr construite par MkDocs (`tools/site/construire.py`) ; lancé par `publication.yml`, par un push sur `main` qui touche le site, ou à la main.
+- **Publication** (`.github/workflows/publication.yml`, ADR-0022) : à une release, les trois révisions d'écran compilées et signées (environnement protégé `publication`), binaires, archives `tab5_home_assistant.zip` et `tab5_hacs.zip`, ELF gardés 90 jours, puis `site.yml`.
 - **Fichiers gitignorés** : `secrets.yaml` (2.x), `*.pem` / `*.key` (clé de signature), `tools/demo/cle_demo.txt`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/placeholders.yaml`, `HomeAssistant_Config/rendered/`, les anciennes copies privées `automations_tab5.yaml` / `scripts_tab5.yaml` / `template_sensors_meteo_tab5.yaml` (obsolètes, gardées ignorées), `Tab5/tts_library*/`, `archives/`.

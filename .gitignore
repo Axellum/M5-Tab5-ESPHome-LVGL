@@ -63,3 +63,10 @@ HomeAssistant_Config/rendered/
 # le ramassait dans le diff de ses tâches autonomes : la porte d'arborescence
 # refusait le livrable (9 tâches sur 14 abandonnées le 24/08).
 .qoder/
+
+# Dossiers de travail locaux de Claude Code (audit du 07/10/2026, OUT-10) : les
+# worktrees des sessions parallèles et les brouillons non publiés (mesures, notes).
+# Rien d'autre sous .claude/ n'est suivi ; settings.local.json est déjà ignoré par
+# la config git globale.
+/.claude/worktrees/
+/.claude/brouillons/

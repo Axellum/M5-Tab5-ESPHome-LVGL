@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """tools/cartographie_counts.py — comptes de lignes de CARTOGRAPHIE_TAB5.md.
 
-[AI-CONTEXT] La cartographie donne la taille de chaque fichier (`| `fichier` | N |`)
-pour qu'un agent sache où il met les pieds. Relevés à la main, ces comptes
+[AI-CONTEXT] La cartographie donne la taille de chaque fichier (`| `fichier` | N |`,
+ou `| `fichier` (NL) |` dans un tableau sans colonne « Lignes ») pour qu'un agent
+sache où il met les pieds. Relevés à la main, ces comptes
 dérivaient : audit du 25/09/2026, 22 sur 49 faux, dont `tab5-api-logic.yaml`
 annoncé à 332 lignes pour 508. Ce script est la seule façon de les tenir à jour.
 
@@ -24,6 +25,16 @@ REPO = Path(__file__).resolve().parent.parent
 CARTO = REPO / "CARTOGRAPHIE_TAB5.md"
 TOLERANCE = 0.20          # au-delà, le compte ment sur l'ordre de grandeur
 ROW = re.compile(r"^(\|\s*`([^`]+)`\s*\|\s*)([\d   ]+?)(\s*\|)")
+# `| `tab5-ha-hmi.yaml` (400L) | …` (tableau sans colonne « Lignes », §3.1) : format
+# vérifié depuis le 08/10/2026 (audit du 07/10 : 211 lignes annoncées pour 400). Un
+# compte entre parenthèses hors d'une cellule de tableau (historique, fichier scindé)
+# reste daté et n'est pas vérifié.
+ROW_L = re.compile(r"^(\|\s*`([^`]+)`\s*\()(\d+)(L\))")
+
+
+def match_row(line: str):
+    """Ligne de tableau qui annonce un compte, dans l'un des deux formats."""
+    return ROW.match(line) or ROW_L.match(line)
 
 
 def tracked() -> list[str]:
@@ -55,7 +66,7 @@ def scan(text: str, files: list[str]):
     """(n° de ligne, nom, compte annoncé, compte réel) pour chaque ligne de tableau."""
     rows = []
     for n, line in enumerate(text.splitlines(), 1):
-        m = ROW.match(line)
+        m = match_row(line)
         if not m:
             continue
         announced = int(re.sub(r"\D", "", m.group(3)))
@@ -71,7 +82,7 @@ def drifts(rows, tolerance: float = TOLERANCE):
 def write(text: str, files: list[str]) -> str:
     out = []
     for line in text.splitlines(keepends=True):
-        m = ROW.match(line)
+        m = match_row(line)
         if m:
             real = sum(line_count(p) for p in resolve(m.group(2), files))
             line = f"{m.group(1)}{real}{m.group(4)}{line[m.end():]}"

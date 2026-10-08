@@ -173,3 +173,16 @@ def test_cartographie_drift_is_detected():
     """Falsifiabilité : un compte faux de 50 % doit être signalé."""
     assert cartographie_counts.drifts([(1, "x.cpp", 150, 100)]) != []
     assert cartographie_counts.drifts([(1, "x.cpp", 110, 100)]) == []
+
+
+def test_cartographie_format_entre_parentheses():
+    """`| `fichier` (NL) |` (tableau sans colonne « Lignes ») est vérifié aussi depuis le
+    08/10/2026 : `tab5-ha-hmi.yaml (211L)` pour 400 lignes était passé inaperçu."""
+    fichiers = cartographie_counts.tracked()
+    rows = cartographie_counts.scan(cartographie_counts.CARTO.read_text(encoding="utf-8"), fichiers)
+    assert any(r[1] == "tab5-ha-hmi.yaml" for r in rows), "le format (NL) n'est plus reconnu"
+    faux = "| `tab5-ha-hmi.yaml` (211L) | point d'entrée |\n"
+    assert cartographie_counts.drifts(cartographie_counts.scan(faux, fichiers)) != []
+    reecrit = cartographie_counts.write(faux, fichiers)
+    assert cartographie_counts.drifts(cartographie_counts.scan(reecrit, fichiers)) == []
+    assert reecrit.endswith(") | point d'entrée |\n")
