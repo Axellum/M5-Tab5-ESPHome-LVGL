@@ -494,3 +494,51 @@ def test_volet_simule_un_seul_chrono_regle_dans_ha():
     assert reglage["min"] <= 26 <= reglage["max"]
     # Sans initial : il remettrait la valeur à chaque démarrage de HA.
     assert "initial" not in paquet["input_text"]["tab5_memoire_course_volet"]
+
+
+def _evenement_registre(action, changes=None):
+    data = {"action": action, "entity_id": "light.x"}
+    if changes is not None:
+        data["changes"] = changes
+    return {"platform": "event", "event": {"event_type": "entity_registry_updated", "data": data}}
+
+
+def test_listes_ignorent_le_bruit_du_registre():
+    """Audit du 07/10/2026, HA-18 : les listes « Tab5 · … » à déclencheurs se
+    recalculaient à chaque entity_registry_updated, dont 419 sur 485 chez l'auteur (du 01
+    au 08/10/2026) ne changeaient que capabilities / supported_features / options /
+    suggested_object_id. Une création, une suppression, un renommage ou un nom changé
+    les recalcule toujours. Le bloc de la tablette (tab5_reglages.yaml, qui écoute
+    esphome.tab5_connected) n'est pas filtré : il ne lit pas `trigger` (garde d'origine)."""
+    from jinja2.sandbox import ImmutableSandboxedEnvironment
+    env = ImmutableSandboxedEnvironment()
+    fichiers = sorted((preparer.HA_DIR / "packages").glob("*.yaml")) + sorted((preparer.HA_DIR / "optionnel").glob("*.yaml"))
+    filtres, conditions = [], set()
+    for fichier in fichiers:
+        paquet = yaml.load(fichier.read_text(encoding="utf-8"), Loader=_Chargeur) or {}
+        for bloc in paquet.get("template") or []:
+            types = [d.get("event_type") for d in bloc.get("triggers") or []]
+            if "entity_registry_updated" not in types or "esphome.tab5_connected" in types:
+                continue
+            assert len(bloc.get("conditions") or []) == 1, fichier.name
+            filtres.append(fichier.name)
+            conditions.add(bloc["conditions"][0]["value_template"])
+    assert sorted(filtres) == ["tab5_meteo_sources.yaml", "tab5_reglages.yaml", "tab5_tv.yaml",
+                               "volet_serre_tracking.yaml"]
+    assert len(conditions) == 1, "la même condition partout"
+    modele = env.from_string(conditions.pop())
+
+    def passe(trigger):
+        return modele.render(trigger=trigger).strip() == "True"
+
+    assert passe({"platform": "homeassistant", "event": "start"})
+    assert passe({"platform": "state", "entity_id": "input_text.tab5_choix_tv"})
+    assert passe({"platform": "event", "event": {"event_type": "event_template_reloaded", "data": {}}})
+    assert passe(_evenement_registre("create")) and passe(_evenement_registre("remove"))
+    for cles in (["entity_id"], ["name"], ["original_name"], ["capabilities", "original_name"],
+                 ["device_class"], ["disabled_by"], ["entity_category"]):
+        assert passe(_evenement_registre("update", dict.fromkeys(cles))), cles
+    for cles in (["supported_features"], ["capabilities"], ["options"], ["suggested_object_id"],
+                 ["capabilities", "supported_features"], ["capabilities", "suggested_object_id"]):
+        assert not passe(_evenement_registre("update", dict.fromkeys(cles))), cles
+

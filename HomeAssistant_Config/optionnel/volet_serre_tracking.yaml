@@ -52,6 +52,18 @@ template:
         event_type: entity_registry_updated
       - trigger: state
         entity_id: input_text.tab5_choix_volet
+    # Audit du 07/10/2026, HA-18 : pas pour une mise à jour du registre qui ne touche que
+    # capabilities / supported_features / options / suggested_object_id (419 des 485
+    # entity_registry_updated chez l'auteur du 01 au 08/10/2026), que la liste ne lit
+    # pas. Une création, une suppression, un renommage, un nom ou une classe passent.
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ trigger.platform != 'event' or trigger.event.event_type != 'entity_registry_updated'
+             or trigger.event.data.action != 'update'
+             or (trigger.event.data.changes | default({}, true)).keys()
+                | reject('in', ['capabilities', 'supported_features', 'options', 'suggested_object_id'])
+                | list | count > 0 }}
     variables:
       volets: "{{ states.cover | map(attribute='entity_id') | list }}"
     select:
