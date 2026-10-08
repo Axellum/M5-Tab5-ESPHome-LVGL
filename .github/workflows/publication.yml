@@ -247,12 +247,29 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Attestation de provenance (lot J de l'audit du 30/09/2026) : GitHub signe, avec l'identité
+      # de ce workflow, que ces fichiers sortent de ce dépôt, de ce commit et de ce run.
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: publie-*
           path: publie
           merge-multiple: true
+      - name: Sommes de contrôle (SHA256SUMS)
+        run: |
+          cd publie
+          sha256sum -- * > ../SHA256SUMS
+          mv ../SHA256SUMS SHA256SUMS
+          cat SHA256SUMS
+      - name: Attestation de provenance des fichiers de la release
+        # Ne bloque jamais la publication : une panne du service d'attestation ne doit pas
+        # laisser une release sans binaires ni le site sans déploiement (pages dépend de ce job).
+        continue-on-error: true
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: publie/*
       - name: Fichiers joints à la release
         env:
           GH_TOKEN: ${{ github.token }}

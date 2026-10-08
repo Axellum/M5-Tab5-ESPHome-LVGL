@@ -19,7 +19,12 @@
 <meta property="og:image" content="https://axellum.github.io/M5-Tab5-ESPHome-LVGL/images/m5stack-tab5-home-assistant-screen-card.jpg">
 <meta property="og:image:alt" content="M5Stack Tab5 showing a Home Assistant screen: clock, climate, work hours and 5-day forecast">
 <meta name="twitter:card" content="summary_large_image">
-<script type="module" src="https://cdn.jsdelivr.net/npm/esp-web-tools@10.4.0/dist/web/install-button.js"></script>
+<!-- Sécurité (lot J de l'audit du 30/09) : seuls le script de la page (empreinte) et ESP Web Tools 10.4.0, chargé
+     depuis son dossier précis de jsDelivr, peuvent s'exécuter. L'empreinte est vérifiée par tests/test_csp_installation.py :
+     la modifier avec le script, pas à la main. Le script d'entrée porte aussi une empreinte SRI ; ses modules, chargés à
+     l'ouverture de la fenêtre, sont limités au même dossier par la CSP (un import dynamique n'a pas de SRI). -->
+<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-vPdVkFcL5JOhW3XdH0BehuSi3TNBrOh82PqKc43XaTw=' https://cdn.jsdelivr.net/npm/esp-web-tools@10.4.0/; object-src 'none'; base-uri 'none'; form-action 'none'">
+<script type="module" src="https://cdn.jsdelivr.net/npm/esp-web-tools@10.4.0/dist/web/install-button.js" integrity="sha384-9XfyvAabgkISlB/Xb3OpshGKpZx0TOt5Mmu78SeiNU3so/p4o2s9m66vy6Utdnom" crossorigin="anonymous"></script>
 <style>
   :root {
     --fond: #f6f7f9; --carte: #ffffff; --texte: #1d2330; --doux: #5b6475;
