@@ -213,10 +213,41 @@ def test_popup_lumiere_revalide_aux_nouvelles_definitions():
     cpp = _cpp()
     assert "popup_lumiere_revalider();" in _fonction(cpp, "tuiles_definir")
     corps = _fonction(cpp, "popup_lumiere_revalider")
-    assert "s_pl = PopupLumiere{};" in corps and "est_lumiere(r, i)" in corps
-    assert "animate_popup_close(u.lum_popup);" in corps and "popup_lumiere_peindre();" in corps
+    assert "s_pl = PopupLumiere{};" in corps
+    # Mêmes lignes qu'à l'ouverture (popup_lumiere_lignes) ; refermé sans lumière, repeint
+    # sinon (popup_tuile_revalider, commun aux trois popups, lot L7).
+    assert ("popup_tuile_revalider(s_pl, popup_lumiere_lignes(s_pl.piece, choisie), popup_lumiere_peindre);"
+            in corps)
+    assert "popup_lumiere_lignes(r, t)" in _fonction(cpp, "popup_lumiere_ouvrir")
+    lignes = _fonction(cpp, "popup_lumiere_lignes")
+    assert "s_pl = PopupLumiere{};" in lignes and "est_lumiere(r, i)" in lignes
     # La clé des commandes suit la lampe choisie (mode héritage → clés tRT).
-    assert "lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);" in corps
+    assert "s_pl.tuile = s_pl.tuiles[s_pl.choix];" in lignes
+    assert "lumiere_cle(r, s_pl.tuile, *u.lum_cle);" in lignes
+    revalider = _fonction(cpp, "popup_tuile_revalider")
+    assert "if (!P::ouvert()) return;" in revalider
+    assert "if (valide) peindre();\n    else animate_popup_close(P::conteneur());" in revalider
+
+
+def test_les_trois_popups_d_une_tuile_partagent_popup_tuile():
+    """UI-4 (audit du 07/10/2026, lot L7) : pièce, tuile, « ouvert ? », ouverture et
+    revalidation des popups lumière, volet et appareil écrits une fois (PopupTuile)."""
+    cpp = _cpp()
+    for struct, conteneur in (("PopupLumiere", "lum_popup"), ("PopupVolet", "vol_popup"),
+                              ("PopupAppareil", "app_popup")):
+        assert f"struct {struct} : PopupTuile<&TuilesUI::{conteneur}>" in cpp, struct
+    # Plus de « ouvert ? » ni de bornes écrits à la main, popup par popup.
+    for ancien in ("bool popup_ouvert()", "bool popup_volet_ouvert()", "bool popup_appareil_ouvert()",
+                   "r >= kPieces || t < 0 || t >= kTuiles || heritage()"):
+        assert ancien not in cpp, ancien
+    assert cpp.count("!lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN)") == 1
+    assert "void popup_volet_ouvrir(int r, int t) { popup_tuile_ouvrir(s_pv, r, t, popup_volet_peindre); }" in cpp
+    assert ("void popup_appareil_ouvrir(int r, int t) { popup_tuile_ouvrir(s_pa, r, t, popup_appareil_peindre); }"
+            in cpp)
+    ouvrir = _fonction(cpp, "popup_tuile_ouvrir")
+    assert ouvrir.index("p = P{};") < ouvrir.index("peindre();") < ouvrir.index("animate_popup_open(P::conteneur());")
+    assert "if (s_pv.montre(r, t)) popup_volet_peindre();" in _fonction(cpp, "popup_volet_etat")
+    assert "if (s_pa.montre(r, t)) popup_appareil_peindre();" in _fonction(cpp, "popup_appareil_etat")
 
 
 def _lum_pct(v):
@@ -566,7 +597,8 @@ def test_appui_long_d_un_appareil_ouvre_son_popup():
     # Les appuis courts d'aujourd'hui : basculer (allumer avec o), lancer.
     assert (table["int"][1], table["med"][1], table["act"][1]) == ("basculer", "basculer", "lancer")
     assert appui.index("if (!g.agit) return;") < appui.index("if (long_appui) {")
-    assert "return gestes(s_m.tuiles[r][t], false).fenetre == Fenetre::APPAREIL;" in _fonction(cpp, "popup_appareil_valide")
+    assert ("return s_pa.en_grille() && gestes(s_m.tuiles[s_pa.piece][s_pa.tuile], false).fenetre == "
+            "Fenetre::APPAREIL;") in _fonction(cpp, "popup_appareil_valide")
     # Le tableau de l'ADR le dit aussi.
     types = _types_de_l_adr()
     for t in ("int", "act", "med"):
@@ -586,12 +618,14 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
     assert "popup_appareil_appui();" in _lire("Tab5", "ui_components", "appareil_popup.yaml")
     # Ni lecture seule, ni mode héritage, ni type sans popup (définitions changées popup ouvert).
     valide = _fonction(cpp, "popup_appareil_valide")
-    assert "heritage()" in valide and "gestes(s_m.tuiles[r][t], false).fenetre == Fenetre::APPAREIL" in valide
+    assert "s_pa.en_grille() && gestes(" in valide
+    assert "tuile >= 0 && tuile < kTuiles && !heritage(); }" in cpp
     assert "(d.options & OPT_R)) return g;" in _fonction(cpp, "gestes")
     # Popup refermé quand sa tuile ne l'a plus, repeint sinon (et au changement de thème).
     definir = _fonction(cpp, "tuiles_definir")
-    assert "else animate_popup_close(g_tuiles_ui.app_popup);" in definir
-    assert "if (popup_appareil_ouvert()) popup_appareil_peindre();" in _fonction(cpp, "tuiles_rejouer_theme")
+    assert "popup_tuile_revalider(s_pa, popup_appareil_valide(), popup_appareil_peindre);" in definir
+    assert "popup_tuile_revalider(s_pv, popup_volet_valide(), popup_volet_peindre);" in definir
+    assert "if (s_pa.ouvert()) popup_appareil_peindre();" in _fonction(cpp, "tuiles_rejouer_theme")
     # Le popup dit l'option k et l'option o, et ce que fera l'appui.
     peindre = _fonction(cpp, "popup_appareil_peindre")
     assert "minuterie_sur(s_confirmation, r, t)" in peindre and "OPT_K" in peindre and "OPT_O" in peindre
