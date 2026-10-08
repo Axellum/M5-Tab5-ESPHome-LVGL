@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Horloge à rouleau : sa géométrie est écrite dans Tab5/tab5-lvgl.yaml seulement
+"""Horloge à rouleau : sa géométrie est écrite dans Tab5/paquets/tab5-lvgl.yaml seulement
 (01/10/2026). Avant, layout_clock_roller() la recalculait en C++ 2 s après le boot, et
 les cadres provisoires du YAML (105 px) coupaient le bas des chiffres pendant ~1,5 s.
 
@@ -57,10 +57,10 @@ def _charger(*chemin):
 
 def _deplier(entree):
     """Un `!include { file, vars }` de tab5-lvgl.yaml, déplié comme ESPHome : le gabarit
-    (chemin relatif à Tab5/) avec chaque ${var} remplacé."""
+    (chemin relatif à Tab5/paquets/) avec chaque ${var} remplacé."""
     if not isinstance(entree, _Inclusion):
         return entree
-    with open(os.path.join(REPO, "Tab5", entree["file"]), encoding="utf-8") as f:
+    with open(os.path.join(REPO, "Tab5", "paquets", entree["file"]), encoding="utf-8") as f:
         texte = f.read()
     for nom, valeur in (entree.get("vars") or {}).items():
         texte = texte.replace("${%s}" % nom, str(valeur))
@@ -80,7 +80,7 @@ def _widgets(liste):
 
 
 def _tuile():
-    page = _charger("Tab5", "tab5-lvgl.yaml")["lvgl"]["pages"][0]
+    page = _charger("Tab5", "paquets", "tab5-lvgl.yaml")["lvgl"]["pages"][0]
     for _, props in _widgets(page["widgets"]):
         if props.get("id") == "clock_tile":
             return props
@@ -88,7 +88,7 @@ def _tuile():
 
 
 def _styles():
-    lvgl = _charger("Tab5", "tab5-styles.yaml")
+    lvgl = _charger("Tab5", "paquets", "tab5-styles.yaml")
     polices = {p["id"]: p for p in lvgl["font"]}
     styles = {s["id"]: s for s in lvgl["lvgl"]["style_definitions"]}
     return polices, styles
@@ -125,7 +125,7 @@ def _enfants(tuile):
 def test_un_gabarit_pour_les_quatre_rouleaux():
     # Règle 5 : les 4 rouleaux viennent de clock_roller.yaml, pas de 4 copies.
     inclusions = [e for e in _tuile()["widgets"] if isinstance(e, _Inclusion)]
-    assert [e["file"] for e in inclusions] == ["ui_components/clock_roller.yaml"] * 4
+    assert [e["file"] for e in inclusions] == ["../ui_components/clock_roller.yaml"] * 4
     assert [e["vars"]["d"] for e in inclusions] == ["h10", "h1", "m10", "m1"]
 
 

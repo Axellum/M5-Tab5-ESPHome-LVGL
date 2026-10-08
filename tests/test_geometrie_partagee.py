@@ -2,12 +2,12 @@
 """Géométrie écrite deux fois, en YAML et en C++ (le C++ ne lit pas les substitutions
 ESPHome) : ce test la tient égale des deux côtés (audit des conteneurs du 01/10/2026).
 
-- Largeur des panneaux de la carte centrale : ${central_w} (Tab5/tab5-ui-tokens.yaml)
-  et kLargeurPanneauCentral (Tab5/tab5_central.cpp, réponse vocale longue).
+- Largeur des panneaux de la carte centrale : ${central_w} (Tab5/paquets/tab5-ui-tokens.yaml)
+  et kLargeurPanneauCentral (Tab5/ecran/tab5_central.cpp, réponse vocale longue).
 - Colonnes du calendrier : les en-têtes « Lun »…« Dim » de calendar_popup.yaml et les
   cases construites par cal_grid_build() (kCalColX0, kCalColPas, kCalColW dans
-  Tab5/tab5_calendar.cpp). Un écart décale les noms des jours de leurs cases.
-- Géométrie partagée du C++ (Tab5/tab5_geometrie.h, lot L5 de l'audit du 07/10/2026) :
+  Tab5/ecran/tab5_calendar.cpp). Un écart décale les noms des jours de leurs cases.
+- Géométrie partagée du C++ (Tab5/socle/tab5_geometrie.h, lot L5 de l'audit du 07/10/2026) :
   carte modale égale aux jetons, corps des popups Énergie et Température égal à leur
   YAML, et aucune copie locale de ces constantes ni des littéraux 1280 / 1250.
 """
@@ -15,23 +15,23 @@ import os
 import re
 
 import yaml
-from tests.commun import ChargeurSansBalises as _Chargeur, lire as _lire
+from tests.commun import ChargeurSansBalises as _Chargeur, lire as _lire, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 
 
 def _jetons():
-    return yaml.load(_lire("Tab5", "tab5-ui-tokens.yaml"), Loader=_Chargeur)["substitutions"]
+    return yaml.load(_lire("Tab5", "paquets", "tab5-ui-tokens.yaml"), Loader=_Chargeur)["substitutions"]
 
 
 def _constante(fichier, nom):
-    m = re.search(r"constexpr\s+int32_t\s+%s\s*=\s*(-?\d+)\s*;" % nom, _lire("Tab5", fichier))
-    assert m, f"{nom} introuvable dans Tab5/{fichier}"
+    m = re.search(r"constexpr\s+int32_t\s+%s\s*=\s*(-?\d+)\s*;" % nom, _lire(source(fichier)))
+    assert m, f"{nom} introuvable dans {fichier}"
     return int(m.group(1))
 
 
-# Tab5/tab5_geometrie.h : constantes entières, éventuellement calculées des précédentes.
+# Tab5/socle/tab5_geometrie.h : constantes entières, éventuellement calculées des précédentes.
 GEOMETRIE = "tab5_geometrie.h"
 GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorpsX", "kCorpsW",
                   "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kPieces", "kTuiles")
@@ -43,7 +43,7 @@ GEOMETRIE_UTILISATEURS = ("tab5_energie.cpp", "tab5_historique.cpp", "tab5_maiso
 
 def _geometrie():
     valeurs = {}
-    for nom, expr in re.findall(r"constexpr\s+int(?:32_t)?\s+(\w+)\s*=\s*([^;]+);", _lire("Tab5", GEOMETRIE)):
+    for nom, expr in re.findall(r"constexpr\s+int(?:32_t)?\s+(\w+)\s*=\s*([^;]+);", _lire(source(GEOMETRIE))):
         valeurs[nom] = int(eval(expr, {}, dict(valeurs)))   # expressions du fichier, déjà vérifiées
     return valeurs
 
@@ -63,7 +63,7 @@ def test_largeur_des_panneaux_centraux():
     assert largeur == _constante("tab5_central.cpp", "kLargeurPanneauCentral")
     # Plus de 1180 écrit en clair dans le YAML : tout passe par le jeton.
     # Bouton des panneaux : central_bouton.yaml depuis le 08/10/2026 (audit YML-4).
-    for chemin in (("Tab5", "tab5-lvgl.yaml"), ("Tab5", "ui_components", "central_bouton.yaml")):
+    for chemin in (("Tab5", "paquets", "tab5-lvgl.yaml"), ("Tab5", "ui_components", "central_bouton.yaml")):
         texte = _lire(*chemin)
         assert "${central_w}" in texte, "/".join(chemin)
         assert not re.search(r"^\s*width: %d\s*$" % largeur, texte, re.M), "/".join(chemin)
@@ -117,11 +117,11 @@ def test_geometrie_partagee_egale_aux_jetons_et_aux_popups():
 
 def test_aucune_copie_locale_de_la_geometrie():
     for fichier in GEOMETRIE_UTILISATEURS:
-        cpp = _lire("Tab5", fichier)
+        cpp = _lire(source(fichier))
         assert '#include "tab5_geometrie.h"' in cpp, fichier
         for nom in GEOMETRIE_NOMS:
-            assert not re.search(r"constexpr\s+\w+\s+%s\s*=" % nom, cpp), f"{nom} redéfini dans Tab5/{fichier}"
+            assert not re.search(r"constexpr\s+\w+\s+%s\s*=" % nom, cpp), f"{nom} redéfini dans {fichier}"
         sans_blocs = re.sub(r"/\*.*?\*/", "", cpp, flags=re.S)
         code = "\n".join(l.split("//", 1)[0] for l in sans_blocs.splitlines())
         for litteral in ("1280", "1250", "1202", "1166"):
-            assert not re.search(r"\b%s\b" % litteral, code), f"{litteral} en dur dans Tab5/{fichier}"
+            assert not re.search(r"\b%s\b" % litteral, code), f"{litteral} en dur dans {fichier}"

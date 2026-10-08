@@ -162,7 +162,7 @@ def test_entrees_du_blueprint_et_zones_attendues():
     # verifier_installation.py doit alors finir par « discussion ».
     if "select.tab5_pipeline_de_discussion" not in _definies():
         presentes.add("discussion")
-    kcles = re.search(r"kCles\[kNbZones\] = \{(.*?)\};", _lire("Tab5", "tab5_zones.cpp"), re.S).group(1)
+    kcles = re.search(r"kCles\[kNbZones\] = \{(.*?)\};", _lire("Tab5", "ecran", "tab5_zones.cpp"), re.S).group(1)
     ordre = re.findall(r'"(\w+)"', kcles)
     assert ordre == blueprint["variables"]["cles_zones"]
     assert verifier.ZONES_ABSENTES == ", ".join(z for z in ordre if z not in presentes)
@@ -307,14 +307,14 @@ def test_plus_d_option_actions_ha():
     # Les événements écoutés par le vérificateur sont bien émis par le firmware.
     for evt in (verifier.EVT_MOIS, verifier.EVT_MAJ_ECRAN, verifier.EVT_REDEMARRAGE):
         assert f"event: {evt}" in "".join(_lire(*c) for c in (
-            ("Tab5", "tab5-calendar.yaml"), ("Tab5", "ui_components", "console_sys.yaml")))
+            ("Tab5", "paquets", "tab5-calendar.yaml"), ("Tab5", "ui_components", "console_sys.yaml")))
     assert f"id: {verifier.ID_EVENEMENTS}" in _lire("HomeAssistant_Config", "packages", "tab5_evenements.yaml")
     assert verifier.SELECT_ECRAN.endswith("_aller_a_l_ecran")
-    assert "name: \"Aller à l'écran\"" in _lire("Tab5", "tab5-navigation.yaml")
+    assert "name: \"Aller à l'écran\"" in _lire("Tab5", "paquets", "tab5-navigation.yaml")
     chemins = yaml.safe_load(_lire(".github", "workflows", "installation-ha.yml"))
     chemins = (chemins.get("on") or chemins[True])["pull_request"]["paths"]
-    for fichier in ("Tab5/tab5-alarm.yaml", "Tab5/tab5-assist.yaml", "Tab5/tab5-calendar.yaml",
-                    "Tab5/tab5-navigation.yaml", "Tab5/ui_components/console_sys.yaml"):
+    for fichier in ("Tab5/paquets/tab5-alarm.yaml", "Tab5/paquets/tab5-assist.yaml", "Tab5/paquets/tab5-calendar.yaml",
+                    "Tab5/paquets/tab5-navigation.yaml", "Tab5/ui_components/console_sys.yaml"):
         assert fichier in chemins, fichier
 
 
@@ -408,10 +408,10 @@ def test_chaque_poussee_attend_la_tablette():
 
 def test_calendrier_chaque_demande_a_sa_reponse():
     """La tablette demande d'affilée le mois affiché et ses voisins (pré-chargement
-    M-1 / M+1, Tab5/tab5-calendar.yaml) : en `mode: restart`, une seule des trois
+    M-1 / M+1, Tab5/paquets/tab5-calendar.yaml) : en `mode: restart`, une seule des trois
     demandes aboutissait (job « HA neuf », 28/09/2026). Les deux scripts appelés par
     le popup calendrier sont en file, assez longue pour ces trois demandes."""
-    assert "M-1, M+1" in _lire("Tab5", "tab5-calendar.yaml"), "pré-chargement des mois voisins disparu ?"
+    assert "M-1, M+1" in _lire("Tab5", "paquets", "tab5-calendar.yaml"), "pré-chargement des mois voisins disparu ?"
     paquet = yaml.load(_lire("HomeAssistant_Config", "packages", "tab5_calendar.yaml"), Loader=_Chargeur)
     for script in ("tab5_calendrier_mois", "tab5_calendrier_jour"):
         corps = paquet["script"][script]

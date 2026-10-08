@@ -19,7 +19,7 @@ v3 introduced three `!include` templates but adoption was partial — the assist
    - The modal card (`style_modal_card`) is **pre-mixed** on the scrim color, so it looks the same but is opaque. `cal_day_popup` keeps a translucent card (`style_modal_card_verre`) over its 60 % scrim.
    - Measured, opening: climate 365 → 216 ms, calendar 320 → 223 ms, console 328 → 191 ms.
    - Visible change: the dashboard no longer shows faintly through the scrim.
-4. **Geometry tokens.** `Tab5/tab5-ui-tokens.yaml` (an ESPHome package merging its `substitutions:`) owns `modal_card_w/h` (1250×690 for every popup) and `modal_body_y`. Window size is now a single knob. Note: `${...}` must be quoted inside YAML *flow* mappings (`y: "${modal_body_y}"`) — substitutions are applied after parsing, and a bare `{` breaks the flow parser.
+4. **Geometry tokens.** `Tab5/paquets/tab5-ui-tokens.yaml` (an ESPHome package merging its `substitutions:`) owns `modal_card_w/h` (1250×690 for every popup) and `modal_body_y`. Window size is now a single knob. Note: `${...}` must be quoted inside YAML *flow* mappings (`y: "${modal_body_y}"`) — substitutions are applied after parsing, and a bare `{` breaks the flow parser.
 5. **Header options stay siblings.** ESPHome vars are string substitutions — a widget subtree cannot be injected — so the calendar's month navigation and "Aujourd'hui" button remain siblings of the include, pinned to `y: 4, height: 44` (4 + 44/2 = 26 = 52/2, i.e. the bar's own axis).
 6. **No subtitles.** The TV model line and the assistant's capability line are gone: one bar variant, no exceptions.
 

@@ -20,7 +20,7 @@
 |---|---|---|
 | `tab5-ha-hmi.yaml` | Racine du dépôt | Point d'entrée ESPHome : `substitutions:`, `packages:`, `esphome: includes:`, séquence `on_boot:`. |
 
-### 1.2 Packages ESPHome (`Tab5/*.yaml`)
+### 1.2 Packages ESPHome (`Tab5/paquets/*.yaml`)
 
 | Fichier | Emplacement | Rôle |
 |---|---|---|
@@ -113,14 +113,16 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | Fichier | Emplacement | Type | Cible |
 |---|---|---|---|
 | `test_verifier_secrets_config.py` | `tests/` | Unitaire | Détection de secrets en clair dans les fichiers suivis (`tools/verifier_secrets_config.py`) : valeurs factices, pragma, `git ls-files`, `secrets.yaml` suivi. |
+| `test_rangement.py` | `tests/` | Garde-fou | Rangement de `Tab5/` (08/10/2026) : racine sans fichier du firmware, noms uniques (ESPHome copie les `includes:` à plat), `includes:` existants, `socle/` pur (ni ESPHome ni LVGL), paquets qui incluent `../ui_components/`. |
+| `test_batterie.py` | `tests/` | Contenu | Batterie et chargeur : select « Tab5 Limite de charge » dans l'ordre de `LimiteCharge`, CHG_EN commandé par un seul interval, lectures de l'INA226, consommation et événement de batterie faible. |
 | `test_rendu_ecrans.py` | `tests/` | Contenu | Plan des écrans du rendu (`tools/rendu/ecrans.py`) : noms uniques, appuis dans l'écran, options du select « Aller à l'écran » et actions de l'API qui existent. |
 | `test_rendu_host.py` | `tests/` | Contenu | Rendu hors tablette (ADR-0021) : lambdas de l'`on_boot` copiées telles quelles de `tab5-ha-hmi.yaml`, mêmes sources C++, chaque package repris ou déclaré matériel, bouchons absents du firmware. |
-| `test_horloge.py` | `tests/` | Contenu | Géométrie de l'horloge à rouleau, posée dans `Tab5/tab5-lvgl.yaml` seulement : recalculée depuis les métriques de Roboto 700 (taille lue dans `tab5-styles.yaml`), chaque cadre contient toute l'encre des chiffres, a la largeur d'un chiffre, HH:MM centré dans la tuile, « : » à la hauteur des chiffres, cadres au-dessus de la date ; les 4 rouleaux viennent du gabarit `ui_components/clock_roller.yaml` (déplié comme ESPHome). |
+| `test_horloge.py` | `tests/` | Contenu | Géométrie de l'horloge à rouleau, posée dans `Tab5/paquets/tab5-lvgl.yaml` seulement : recalculée depuis les métriques de Roboto 700 (taille lue dans `tab5-styles.yaml`), chaque cadre contient toute l'encre des chiffres, a la largeur d'un chiffre, HH:MM centré dans la tuile, « : » à la hauteur des chiffres, cadres au-dessus de la date ; les 4 rouleaux viennent du gabarit `ui_components/clock_roller.yaml` (déplié comme ESPHome). |
 | `test_sanitizers.py` | `tests/` | Unitaire + contenu | Job sanitizers (lot B de l'audit du 30/09/2026) : lecture des rapports ASan/UBSan dans le journal de la tablette (extraits réels, doublons, lecture au fur et à mesure, codes de sortie et témoin), variante de compilation, cas ciblés conformes au contrat du firmware (sinon la démo les ignorerait sans bruit), et le workflow garde son témoin positif sans `log_path`. |
 | `test_sans_secret.py` | `tests/` | Contenu + unitaire | Firmware sans secret (ADR-0020) : aucun `!secret`, clé API fournie par HA, fenêtre d'appairage, OTA signée, Wi-Fi sans identifiants, fuseau de HA, CI sans secrets factices ; clé trouvée dans HA par `tools/tab5_cle_api.py`, ancienne clé lue par `tools/migrer_vers_3.py`. |
 | `test_doc_broches.py` | `tests/` | Contenu | Tableau des broches de `docs/hardware.md` (anglais et français) contre le YAML du firmware : chaque ligne donne la broche du YAML (GPIO ou broche d'expandeur PI4IOE5V6408 avec son adresse), et aucune broche du YAML ne manque. Remplace l'image `gpio_pinout_table.png`, fausse. |
-| `test_doc_comptes.py` | `tests/` | Contenu | Comptes écrits dans la doc contre le code : liste des packages de `docs/architecture.md` (celle de `tab5-ha-hmi.yaml`, dans l'ordre), leur nombre dans ses « Key design decisions » (en toutes lettres, anglais et français) et la cartographie ; nombre d'actions de `Tab5/tab5-api-logic.yaml` dans la cartographie et table complète de `Tab5/README.md` ; nombre d'ADR de `docs/decisions/` dans le README et la cartographie ; un nœud et une arête `packages:` par package dans le schéma Mermaid de la cartographie, une section par package (EN et FR) dans `docs/architecture.md`, les fichiers de plus de 500 lignes nommés par `docs/architecture.md`, le nombre de `ui_components/*.yaml` et de ceux inclus directement par `tab5-lvgl.yaml`. |
-| `test_contrat.py` | `tests/` | Contenu | Contrat HA ↔ tablette (lot D, 30/09/2026) : clés de chaque appel d'une action de la tablette (packages, blueprint, snippets, rendu hors tablette) égales aux `variables:` de `Tab5/tab5-api-logic.yaml` ; chaque champ `trigger.event.data.*` lu pour un événement `esphome.tab5_*` émis par le firmware pour cet événement, et chaque champ émis lu (sauf liste blanche) ; lecture du contrat par `demo_pusher.py --dry-run` égale à celle de PyYAML. |
+| `test_doc_comptes.py` | `tests/` | Contenu | Comptes écrits dans la doc contre le code : liste des packages de `docs/architecture.md` (celle de `tab5-ha-hmi.yaml`, dans l'ordre), leur nombre dans ses « Key design decisions » (en toutes lettres, anglais et français) et la cartographie ; nombre d'actions de `Tab5/paquets/tab5-api-logic.yaml` dans la cartographie et table complète de `Tab5/README.md` ; nombre d'ADR de `docs/decisions/` dans le README et la cartographie ; un nœud et une arête `packages:` par package dans le schéma Mermaid de la cartographie, une section par package (EN et FR) dans `docs/architecture.md`, les fichiers de plus de 500 lignes nommés par `docs/architecture.md`, le nombre de `ui_components/*.yaml` et de ceux inclus directement par `tab5-lvgl.yaml`. |
+| `test_contrat.py` | `tests/` | Contenu | Contrat HA ↔ tablette (lot D, 30/09/2026) : clés de chaque appel d'une action de la tablette (packages, blueprint, snippets, rendu hors tablette) égales aux `variables:` de `Tab5/paquets/tab5-api-logic.yaml` ; chaque champ `trigger.event.data.*` lu pour un événement `esphome.tab5_*` émis par le firmware pour cet événement, et chaque champ émis lu (sauf liste blanche) ; lecture du contrat par `demo_pusher.py --dry-run` égale à celle de PyYAML. |
 | `test_calendrier_prefetch.py` | `tests/` | Contenu | Pré-fetch du calendrier (01/10/2026) : `tab5_cal_prefetch_boot` sans paramètre (appelé par `on_boot` et `status_ha`) délègue à `tab5_cal_prefetch` (`queued`, paramètre `force`), dont chaque demande de mois est sautée si le mois a été reçu il y a moins de `CAL_PREFETCH_FRESH_MS` ; le bouton « Recharger le calendrier » force ; fraîcheur entre 10 s et les 10 min du rendu. |
 | `test_version.py` | `tests/` | Contenu | Version par défaut du firmware (`tab5-ha-hmi.yaml`) = dernière version publiée du CHANGELOG + « -dev » ; modèle Jinja de `binary_sensor.tab5_fichiers_ha_en_retard` rendu sur 13 cas (X.Y seulement), ses attributs et sa notification. |
 | `test_publication.py` | `tests/` | Unitaire + contenu | Publication (ADR-0022) : `tools/publication/preparer.py` (binaires renommés par révision, manifeste contrôlé et réécrit, refus d'un manifeste ou d'un binaire inattendu), `pages.py` (canaux stable/bêta parmi les releases 3.x, site reconstruit depuis leurs fichiers) ; mêmes révisions partout (fichiers, matrice, page), clé du projet et jamais de clé jetable, ESPHome figé ≥ plancher, mise à jour seulement dans les firmwares publiés. |
@@ -142,7 +144,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_bouton_alim.py` | `tests/` | Contenu | Bouton d'alimentation : un redémarrage `ESP_RST_WDT` sans rapport de plantage n'est pas classé « plantage » (`tab5_journal.cpp`). |
 | `test_ci_pip.py` | `tests/` | Contenu | Chaque `pip install` d'un workflow passe par `tools/ci/pip_reessai.sh` (réessais quand PyPI répond « from versions: none »). |
 | `test_ci_securite.py` | `tests/` | Contenu | Chaîne d'approvisionnement de la CI : actions figées par SHA complet, permissions déclarées par workflow (PR en lecture seule), esptool figé avec empreintes. |
-| `test_clim.py` | `tests/` | Contenu + rendu | Clim de toute marque (ADR-0026) et clim par tuile (ADR-0027) : clé `climr`, lettres de capacités, blueprint ↔ `tab5_cards.cpp`. |
+| `test_clim.py` | `tests/` | Contenu + rendu | Clim de toute marque (ADR-0026) et clim par tuile (ADR-0027) : clé `climr`, lettres de capacités, blueprint ↔ `Tab5/ecran/tab5_clim.cpp`. |
 | `test_demarrage_ha.py` | `tests/` | Contenu | Démarrage de HA : la poussée complète suit aussi le chemin de la reconnexion (événement `tab5_connected` perdu avant les automatisations). |
 | `test_demo.py` | `tests/` | Contenu | Mode démo : emplacements et clés de zones poussés = ceux de la tablette (`tab5_maj_emplacements`, `kCles`). |
 | `test_demo_pieces.py` | `tests/` | Contenu | Pièces du mode démo contre la grammaire de l'ADR-0023 (types, options, icônes, échappement des champs). |
@@ -213,6 +215,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `tools/check_trivia_questions.py` | `tools/` | Garde-fou | La banque de « Trial Poursuite » (`trivia_questions.h`) : autant d'entrées que chaque `#define`, catégorie et difficulté valides, ni texte vide, ni leurre égal à la réponse, ni question en double. |
 | `tools/check_tab5_registry.py` | `tools/` | Garde-fou | ADR-0013 : chaque `*_game.h` figure dans `GameRegistry::kGames`, aucune liste de jeux recopiée dans un YAML. |
 | `tools/check_tab5_code_rules.py` | `tools/` | Garde-fou | Règles de code : `snprintf` partout, aucun `lv_*` dans le contrat API, aucun global orphelin, aucune entité HA en dur, glyphes de la date (`roboto_45`), icônes MDI couvertes par la police de leur widget sans glyphe mort (règle 7). |
+| `tools/tab5_sources.py` | `tools/` | Bibliothèque | Où sont rangées les sources du firmware (`Tab5/socle|ecran|jeux|paquets`) : `fichiers(motif…)` et `source(nom)`, pour les outils et les tests (`tests/commun.py`) ; `contrat()` : `tab5_custom.h` et les en-têtes de modules qu'il inclut. |
 | `tools/cartographie_counts.py` | `tools/` | Garde-fou | Comptes de lignes de `CARTOGRAPHIE_TAB5.md` à 20 % près ; `--write` les recalcule. |
 | `.pre-commit-config.yaml` | Racine | Config | yamllint (dont `*.yaml.example`), BOM, secrets, fuite d'identifiants HA — rejoué par la CI. |
 | `pyproject.toml` | Racine | Config | `testpaths = tests, tools` : `pytest` nu ne ramasse plus `archives/`. |
@@ -246,7 +249,7 @@ python tools/demo/demo_pusher.py --dry-run
 │   ├── __init__.py
 │   ├── conftest.py   (sys.path des outils)
 │   ├── commun.py   (utilitaires communs)
-│   └── test_*.py   (63 fichiers au 08/10/2026, un par ligne du § 3.1)
+│   └── test_*.py   (67 fichiers au 08/10/2026, un par ligne du § 3.1)
 ├── tools/
 │   ├── demo/
 │   │   ├── demo_pusher.py

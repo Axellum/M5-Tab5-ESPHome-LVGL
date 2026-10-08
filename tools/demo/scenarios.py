@@ -5,7 +5,7 @@ Module pur (stdlib uniquement, aucune dépendance externe) pour rester
 vérifiable sans matériel ni `aioesphomeapi` installé (cf. `demo_pusher.py --dry-run`).
 
 Le contrat exact (nombre de champs, délimiteurs, valeurs acceptées) vient de la
-lecture directe de Tab5/tab5-api-logic.yaml et Tab5/tab5_custom.cpp — voir
+lecture directe de Tab5/paquets/tab5-api-logic.yaml et Tab5/ecran/tab5_custom.cpp — voir
 docs/demo_mode.md pour le détail et les sources. Ne pas modifier ces règles ici
 sans revérifier contre le firmware réel.
 """
@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 # Emplacements de la maison (lot 6a, ADR-0019) : la tablette ne connaît plus
 # d'entité ; HA (le blueprint « Tab5 — emplacements ») lui pousse chaque
 # emplacement par tab5_maj_emplacements, « clé|état|valeur;… ». La démo fait de
-# même. Clés = table de tab5_maj_emplacements (Tab5/tab5-api-logic.yaml),
+# même. Clés = table de tab5_maj_emplacements (Tab5/paquets/tab5-api-logic.yaml),
 # vérifiées par tests/test_demo.py. Valeurs statiques pour la session : la
 # variation vient des scènes météo qui tournent.
 # ---------------------------------------------------------------------------
@@ -78,9 +78,9 @@ def build_emplacements_payload(absentes: frozenset = frozenset(), pieces: dict |
 
 
 # ---------------------------------------------------------------------------
-# Zones optionnelles (lot 5, Tab5/tab5-zones.yaml, ADR-0018) : la tablette envoie
+# Zones optionnelles (lot 5, Tab5/paquets/tab5-zones.yaml, ADR-0018) : la tablette envoie
 # esphome.tab5_zones, HA répond tab5_maj_zones avec les clés des zones absentes.
-# Clés = kCles de Tab5/tab5_zones.cpp (tests/test_demo.py vérifie la concordance).
+# Clés = kCles de Tab5/ecran/tab5_zones.cpp (tests/test_demo.py vérifie la concordance).
 # ---------------------------------------------------------------------------
 
 # Zones suivies par la tablette, dans l'ordre de l'enum Zone.
@@ -143,7 +143,7 @@ class Tuile:
     """Un appareil d'une pièce : sa définition (tab5_maj_tuiles) et son état (clé tRT)."""
     type: str              # TYPES_TUILE
     nom: str               # texte affiché : le firmware en garde NOM_OCTETS_GARDES octets
-    icone: str = ""        # code de la palette (Tab5/tab5_tuiles_icones.h), '' = défaut du type
+    icone: str = ""        # code de la palette (Tab5/socle/tab5_tuiles_icones.h), '' = défaut du type
     options: str = ""      # lettres parmi OPTIONS_TUILE
     complement: str = ""   # cap : unité ; bin : classe d'appareil ; sinon ''
     etat: str = "off"      # état HA tel quel
@@ -697,8 +697,8 @@ def build_historique(cle: str, vue: str, maintenant: _dt.datetime, exterieur: bo
 
 # ---------------------------------------------------------------------------
 # Vigilance météo (tab5_maj_alerte_meteo_france ; format : variable `payload` dans
-# Tab5/tab5-api-logic.yaml, découpage : parse_and_update_vigilance() dans
-# Tab5/tab5_services.cpp). Le firmware lit 11 à 13 champs '|' : la démo envoie les
+# Tab5/paquets/tab5-api-logic.yaml, découpage : parse_and_update_vigilance() dans
+# Tab5/ecran/tab5_services.cpp). Le firmware lit 11 à 13 champs '|' : la démo envoie les
 # 11 de Météo-France ; brouillard et feux de forêt (MeteoAlarm, lot 4c) sont
 # facultatifs en fin de payload. strtok_r fusionne les délimiteurs consécutifs, donc
 # un champ vide au milieu décale tous les suivants (silencieux). On ne laisse

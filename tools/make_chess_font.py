@@ -2,10 +2,10 @@
 """
 [AI-CONTEXT]
 @file tools/make_chess_font.py
-@role Regenere Tab5/ChessPieces.ttf : le sous-ensemble de 12 glyphes utilise par
+@role Regenere Tab5/fonts/ChessPieces.ttf : le sous-ensemble de 12 glyphes utilise par
       le jeu « Roi Noir » pour dessiner les figurines d'echecs.
 
-@architecture_constraint Meme demarche que Tab5/IconeMeteo.ttf : on n'embarque
+@architecture_constraint Meme demarche que Tab5/fonts/IconeMeteo.ttf : on n'embarque
       dans le firmware que les glyphes reellement affiches. La police source
       (DejaVu Sans) fait 757 Ko ; le sous-ensemble en fait ~17.
 
@@ -18,7 +18,7 @@
 @ai_instruction La licence Bitstream Vera reserve les noms « Bitstream »,
       « Vera » et « DejaVu » : un derive DOIT etre renomme. D'ou NEW_FAMILY.
       Ne pas retirer les name IDs 0/13/14 (copyright et licence) du sous-ensemble.
-      Voir Tab5/ChessPieces.LICENSE.txt.
+      Voir Tab5/fonts/ChessPieces.LICENSE.txt.
 
 Usage (depuis 00ProjetTab/) :
     python tools/make_chess_font.py [chemin/vers/DejaVuSans.ttf]
@@ -31,7 +31,7 @@ from fontTools import subset
 from fontTools.ttLib import TTFont
 
 DEFAULT_SRC = r"C:\Windows\Fonts\DejaVuSans.ttf"
-DST = os.path.join("Tab5", "ChessPieces.ttf")
+DST = os.path.join("Tab5", "fonts", "ChessPieces.ttf")
 CODEPOINTS = list(range(0x2654, 0x2660))
 NEW_FAMILY = "RoiNoir Chess"
 NEW_PS = "RoiNoirChess"

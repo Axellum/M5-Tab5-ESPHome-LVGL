@@ -259,6 +259,15 @@ api:
               - switch.turn_on: tab5_appareils_meteo
             else:
               - switch.turn_off: tab5_appareils_meteo
+    # Prévisions périmées (08/10/2026) : l'heure du rendu est figée, aucune poussée ne
+    # vieillit. Cette action date la dernière poussée des prévisions de `minutes` plus
+    # tôt, comme si HA s'était tu depuis ; 0 la remet à maintenant (mention masquée).
+    - service: rendu_previsions_recues
+      description: "Rendu hors tablette : dernière poussée des prévisions il y a `minutes` minutes."
+      variables:
+        minutes: int
+      then:
+        - lambda: 'previsions_recues(id(previsions_perimees), id(lbl_previsions_perimees), minutes);'
     # Thèmes (ADR-0029) : la tablette écrit ses préférences toutes les minutes, le rendu
     # arrêté par `kill` jamais. tools/rendu/capturer.py (--puis-mode-theme) enregistre
     # ainsi le mode choisi avant l'arrêt : le lancement suivant démarre dans ce mode.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Verifie que toutes les salles de « Fil d'Or » sont jouables de bout en bout.
 
-Lit les specs DIRECTEMENT dans Tab5/marble_game.cpp (pas de duplication : si le
+Lit les specs DIRECTEMENT dans Tab5/jeux/marble_game.cpp (pas de duplication : si le
 contenu change, le test suit). Pour chaque salle :
 
   1. la position de depart laisse-t-elle tenir la bille (rayon 11) ?
@@ -28,7 +28,7 @@ from pathlib import Path
 
 import numpy as np
 
-CPP = Path(__file__).resolve().parent.parent / "Tab5" / "marble_game.cpp"
+CPP = Path(__file__).resolve().parent.parent / "Tab5" / "jeux" / "marble_game.cpp"
 
 FW, FH, BALL_R = 1280, 672, 11
 STEP = 2  # resolution de la grille (px)

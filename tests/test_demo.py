@@ -3,9 +3,9 @@
 ne se voit qu'une fois flashé est vérifié ici :
 
 - les emplacements poussés par la démo sont exactement ceux de la table de
-  `tab5_maj_emplacements` (Tab5/tab5-api-logic.yaml, lot 6a) : une clé inconnue serait
+  `tab5_maj_emplacements` (Tab5/paquets/tab5-api-logic.yaml, lot 6a) : une clé inconnue serait
   ignorée en silence par la tablette ;
-- les clés de zones (lot 5) sont celles de la tablette (kCles, Tab5/tab5_zones.cpp) ;
+- les clés de zones (lot 5) sont celles de la tablette (kCles, Tab5/ecran/tab5_zones.cpp) ;
 - la « maison minimale » ne pousse rien pour ses zones retirées ;
 - les deux modes, complet et « maison minimale », passent à blanc ;
 - les codes du lot 4c (pluie « @niveau,début », bandeau « @ha|… ») et le format des
@@ -14,7 +14,7 @@ ne se voit qu'une fois flashé est vérifié ici :
   définitions avant les états, et les commandes des tuiles sont journalisées par leur
   nom (grammaire des payloads : tests/test_demo_pieces.py) ;
 - chaque appel a exactement les variables déclarées par le firmware : les fausses
-  actions portent les vraies variables de Tab5/tab5-api-logic.yaml, donc la garde de
+  actions portent les vraies variables de Tab5/paquets/tab5-api-logic.yaml, donc la garde de
   `_appeler` joue enfin ici (audit du 30/09/2026 : sans variables, elle ne se
   déclenchait jamais), et --dry-run échoue sur une variable renommée."""
 import asyncio
@@ -33,13 +33,13 @@ import scenarios  # noqa: E402
 
 
 def test_emplacements_de_la_demo_egaux_a_la_table_du_firmware():
-    bloc = _lire("Tab5", "tab5-api-logic.yaml").split("- service: tab5_maj_emplacements", 1)[1]
+    bloc = _lire("Tab5", "paquets", "tab5-api-logic.yaml").split("- service: tab5_maj_emplacements", 1)[1]
     cles_firmware = re.findall(r'\{"(\w+)", ', bloc.split("emplacements_appliquer", 1)[0])
     assert sorted(scenarios.EMPLACEMENTS) == sorted(cles_firmware)
 
 
 def test_cles_de_zones_de_la_tablette():
-    m = re.search(r"kCles\[kNbZones\] = \{(.*?)\};", _lire("Tab5", "tab5_zones.cpp"), re.S)
+    m = re.search(r"kCles\[kNbZones\] = \{(.*?)\};", _lire("Tab5", "ecran", "tab5_zones.cpp"), re.S)
     kcles = re.findall(r'"([a-z0-9_]+)"', m.group(1))
     assert list(scenarios.ZONES_SUIVIES) + list(scenarios.ZONES_HA) == kcles
     for cle in scenarios.EMPLACEMENTS:
@@ -78,7 +78,7 @@ class _Tablette:
 
 def _pousser(monkeypatch, avec_tuiles, absentes=frozenset(), scene=None):
     """Une scène poussée à une tablette dont les actions ont les VRAIES variables du
-    firmware (Tab5/tab5-api-logic.yaml) : la garde de contrat de `_appeler` joue."""
+    firmware (Tab5/paquets/tab5-api-logic.yaml) : la garde de contrat de `_appeler` joue."""
     async def instant(*_args, **_kwargs):
         return None
 
@@ -127,8 +127,8 @@ def test_la_garde_refuse_un_argument_manquant_ou_en_trop(caplog):
 
 def test_dry_run_echoue_sur_un_contrat_change(monkeypatch, tmp_path):
     """--dry-run lit le contrat du firmware : une variable renommée dans
-    Tab5/tab5-api-logic.yaml le fait échouer (étape de la CI)."""
-    texte = _lire("Tab5", "tab5-api-logic.yaml")
+    Tab5/paquets/tab5-api-logic.yaml le fait échouer (étape de la CI)."""
+    texte = _lire("Tab5", "paquets", "tab5-api-logic.yaml")
     assert texte.count("        meteo_id:\n") == 1
     faux = tmp_path / "tab5-api-logic.yaml"
     faux.write_text(texte.replace("        meteo_id:\n", "        meteo_ref:\n"), encoding="utf-8")

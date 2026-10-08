@@ -2,7 +2,7 @@
  * Tests host du moteur Go (sans ESPHome / LVGL).
  *
  * Build & run (PowerShell, si un g++ natif est disponible) :
- *   g++ -std=c++17 -O2 -I../Tab5 -o test_go_engine.exe test_go_engine.cpp ../Tab5/go_engine.cpp
+ *   g++ -std=c++17 -O2 -I../Tab5/jeux -o test_go_engine.exe test_go_engine.cpp ../Tab5/jeux/go_engine.cpp
  *   .\test_go_engine.exe
  *
  * La CI (job `python`, step « Moteur Go C++ ») le compile avec g++ et
@@ -11,7 +11,7 @@
  * du 07/10/2026) après le report ici de ses cas qui manquaient (œil de coin,
  * handicaps 9/13/19, carte des territoires, parties aléatoires). Le poste de dev
  * n'a qu'un cross-compilateur RISC-V ; vérif de compilation locale :
- *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -I Tab5 tools/test_go_engine.cpp Tab5/go_engine.cpp
+ *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -I Tab5/jeux tools/test_go_engine.cpp Tab5/jeux/go_engine.cpp
  *
  * Le brouillon du moteur (≈ 4 Ko) n'existe qu'entre scratch_acquire() et
  * scratch_release() — sur la tablette, Go::open() et Go::close() (audit du

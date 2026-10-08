@@ -20,15 +20,14 @@ import re
 import pytest
 
 from tests.test_tuiles_blueprint import Etat, Passage, _evenement
-from tests.commun import lire as _lire
+from tests.commun import contrat, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
-ZONES_CPP = os.path.join(REPO, "Tab5", "tab5_zones.cpp")
-CUSTOM_H = os.path.join(REPO, "Tab5", "tab5_custom.h")
-LVGL = os.path.join(REPO, "Tab5", "tab5-lvgl.yaml")
-ZONES_YAML = os.path.join(REPO, "Tab5", "tab5-zones.yaml")
-STYLES = os.path.join(REPO, "Tab5", "tab5-styles.yaml")
+ZONES_CPP = os.path.join(REPO, "Tab5", "ecran", "tab5_zones.cpp")
+LVGL = os.path.join(REPO, "Tab5", "paquets", "tab5-lvgl.yaml")
+ZONES_YAML = os.path.join(REPO, "Tab5", "paquets", "tab5-zones.yaml")
+STYLES = os.path.join(REPO, "Tab5", "paquets", "tab5-styles.yaml")
 REGLES = os.path.join(REPO, "tools", "check_tab5_code_rules.py")
 
 CAPTEUR = "sensor.solaire_puissance"
@@ -55,7 +54,7 @@ def test_meme_cle_des_deux_cotes():
 
 
 def test_icone_du_bandeau_branchee():
-    enum = re.search(r"enum BandeauIcone[^{]*\{(.*?)\};", _lire(CUSTOM_H), re.S).group(1)
+    enum = re.search(r"enum BandeauIcone[^{]*\{(.*?)\};", contrat(), re.S).group(1)
     noms = re.findall(r"\b(BANDEAU_\w+)", enum)
     assert "BANDEAU_SOLAIRE" in noms and noms[-1] == "BANDEAU_NB"
     assert "u.bandeau[BANDEAU_SOLAIRE] = id(icon_solaire);" in _lire(ZONES_YAML)

@@ -4,15 +4,15 @@
 # @role SOURCE UNIQUE de la palette des icônes des tuiles de pièce (ADR-0023, section
 #       « Icons: one palette, generated »). Ce n'est PAS un package ESPHome : rien ne
 #       l'inclut ; tools/gen_tuiles_icones.py le lit et écrit trois choses :
-#       - Tab5/tab5_tuiles_icones.h : la table C++ `tuile_icone(code, actif, type)` ;
-#       - Tab5/tab5-styles.yaml : les glyphes de la palette dans mdi_font_70, mdi_font_45
+#       - Tab5/socle/tab5_tuiles_icones.h : la table C++ `tuile_icone(code, actif, type)` ;
+#       - Tab5/paquets/tab5-styles.yaml : les glyphes de la palette dans mdi_font_70, mdi_font_45
 #         et mdi_font_32 (entre `# >>> tuiles` et `# <<< tuiles`) ;
 #       - le blueprint tab5_emplacements.yaml : `icones_mdi` (nom « mdi:… » → code) et
 #         `icones_defaut` (domaine ou « domaine.classe » → code), entre ses marqueurs.
 #       `python tools/gen_tuiles_icones.py --check` échoue si l'un d'eux est périmé
 #       (tests/test_tuiles_icones.py le joue).
 # @architecture_constraint
-#       - Police : Tab5/materialdesignicons-webfont.ttf = Material Design Icons 7.4.47
+#       - Police : Tab5/fonts/materialdesignicons-webfont.ttf = Material Design Icons 7.4.47
 #         (7 447 glyphes, mêmes points de code que meta.json de @mdi/svg@7.4.47).
 #         Chaque glyphe ci-dessous est écrit « FXXXX nom » ; le couple a été VÉRIFIÉ le
 #         28/09/2026 contre ce meta.json ET le cmap du TTF (fontTools), jamais deviné.

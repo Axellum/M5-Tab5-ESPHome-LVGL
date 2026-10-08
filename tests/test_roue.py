@@ -5,7 +5,7 @@ pour « Maison », les commandes, les familles de réglages et « Détails » (l
 complet), le second pour les choix de la famille touchée. Aucun compilateur ne vérifie ce
 qui suit ; ce fichier lit le C++ et le YAML, comme les autres tests statiques :
 
-- géométrie : constantes et table des sinus de Tab5/tab5_roue.cpp = celles de
+- géométrie : constantes et table des sinus de Tab5/ecran/tab5_roue.cpp = celles de
   tools/rendu/ecrans.py (qui touche « Détails » et les familles dans le rendu) ; tailles
   des widgets ; boutons des deux anneaux dans l'écran, sans chevauchement, pour toutes les
   tuiles et toutes les familles ;
@@ -18,7 +18,7 @@ qui suit ; ce fichier lit le C++ et le YAML, comme les autres tests statiques :
 import math
 import os
 import re
-from tests.commun import lire as _lire
+from tests.commun import contrat, lire as _lire, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -32,12 +32,12 @@ ADR = os.path.join(REPO, "docs", "decisions", "0036-quick-action-wheel.md")
 
 
 def _roue():
-    return _lire("Tab5", "tab5_roue.cpp")
+    return _lire("Tab5", "ecran", "tab5_roue.cpp")
 
 
 def _tuiles():
     # Tuiles, popups, roue d'une tuile et leur en-tête commun (lot L7, 08/10/2026).
-    return "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
+    return "\n".join(_lire(source(f)) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
 
 
 def _yaml(nom):
@@ -59,7 +59,7 @@ def _k(nom):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_constantes_du_rendu_egales_au_cpp():
-    geometrie = _lire("Tab5", "tab5_geometrie.h")   # écran partagé (lot L5, 07/10/2026)
+    geometrie = _lire("Tab5", "socle", "tab5_geometrie.h")   # écran partagé (lot L5, 07/10/2026)
     assert (int(_const(geometrie, "kEcranL")), int(_const(geometrie, "kEcranH"))) == ecrans.ROUE_ECRAN
     for cpp, rendu in (("kRayon", ecrans.ROUE_RAYON), ("kDiametre", ecrans.ROUE_DIAMETRE),
                        ("kRayon2", ecrans.ROUE_RAYON2), ("kDiametre2", ecrans.ROUE_DIAMETRE2),
@@ -240,7 +240,7 @@ def test_types_et_options_de_la_roue():
     fin = corps.rsplit("if (n == premiere) return 0;", 1)[1]
     assert 'ajouter(RoueAction::REGLAGES, RoueIcone::REGLAGES, RoueGenre::LIEN, false, tr("Détails"));' in fin
     # Au plus : Maison + 4 + Détails.
-    assert int(_const(_lire("Tab5", "tab5_custom.h"), "kRoueBoutons")) == 6
+    assert int(_const(contrat(), "kRoueBoutons")) == 6
 
 
 def test_choix_des_familles():
@@ -270,7 +270,7 @@ def test_choix_des_familles():
                 in _yaml(gabarit)), gabarit
         assert "icon_color" not in _yaml(gabarit).split("button:", 1)[1], gabarit
     assert set(n for n, _ in blancs) | set(couleurs) <= set(teintes)
-    assert int(_const(_lire("Tab5", "tab5_custom.h"), "kRoueChoix")) >= len(couleurs)
+    assert int(_const(contrat(), "kRoueChoix")) >= len(couleurs)
 
 
 def test_modes_de_la_clim_ceux_du_popup():
@@ -291,14 +291,14 @@ def test_commandes_envoyees_du_contrat():
     envoyees = set(re.findall(r'envoyer_tuile\(rt\.r, rt\.t, "(\w+)"\)', choisir))
     envoyees |= set(re.findall(r'u\.envoyer\([\w.()]+, "(\w+)"', choisir))
     envoyees |= set(re.findall(r'choix\("(\w+)",', _fonction(t, "roue_choix")))
-    bascules = _fonction(_lire("Tab5", "tab5_clim.cpp"), "clim_roue_bascules")
+    bascules = _fonction(_lire("Tab5", "ecran", "tab5_clim.cpp"), "clim_roue_bascules")
     envoyees |= set(re.findall(r"\{'\w', on, \"(\w+)\",", bascules))
     assert envoyees == {"allumer", "eteindre", "ouvrir", "arreter", "fermer", "luminosite_pct", "couleur",
                         "position", "mode", "consigne", "preset", "ventilation", "oscillation"}
     # Lampes et volets : le tableau de l'ADR-0023 ; clim : les commandes de son popup.
     assert envoyees - {"mode", "consigne", "preset", "ventilation", "oscillation"} <= _commandes_de_l_adr()
     popup = _yaml("climate_popup.yaml") + _yaml("climate_hvac_mode_btn.yaml") + _yaml(
-        "climate_preset_toggle_btn.yaml") + _lire("Tab5", "tab5-scripts.yaml")
+        "climate_preset_toggle_btn.yaml") + _lire("Tab5", "paquets", "tab5-scripts.yaml")
     for c in ("mode", "eteindre", "consigne", "preset", "ventilation", "oscillation"):
         assert f"commande: {c}" in popup, c
     # Clim du blueprint (option m) : l'emplacement « clim », comme clim_affichee_cle().
@@ -312,13 +312,13 @@ def test_commandes_envoyees_du_contrat():
     assert "tuile_ouvrir_popup(rt.r, rt.t);" in reglages
     maison = choisir.split("case RoueAction::MAISON:", 1)[1].split("return;", 1)[0]
     assert "g_roue_ui.ouvrir_ecran(static_cast<int>(Ecran::MAISON));" in maison
-    assert "roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };" in _lire("Tab5", "tab5-roue.yaml")
+    assert "roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };" in _lire("Tab5", "paquets", "tab5-roue.yaml")
 
 
 def test_bascules_et_consignes_comme_le_popup():
     """Options de la clim : mêmes « actif » et mêmes valeurs que les bascules du popup ;
     consignes : deux pas de chaque côté, dans les bornes, envoyées comme le popup."""
-    cards = _lire("Tab5", "tab5_clim.cpp")
+    cards = _lire("Tab5", "ecran", "tab5_clim.cpp")
     bascules = _fonction(cards, "clim_roue_bascules")
     for attendu in ("{'e', on, \"preset\", on ? \"none\" : \"away\"}",
                     "{'b', on, \"preset\", on ? \"none\" : \"boost\"}",
@@ -356,7 +356,7 @@ def test_ouverture_avec_ancre_pour_d_autres_vues():
     roue d'une tuile autour de son propre widget ; faux = pas de roue, l'appelant ouvre le
     popup."""
     assert "bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison = false);" in _lire(
-        "Tab5", "tab5_internal.h")
+        "Tab5", "ecran", "tab5_internal.h")
     corps = _fonction(_tuiles(), "roue_de_la_tuile")
     assert "g_tuiles_ui.carte_pastille[t]" in corps and "widgets_meteo(t, g, d, b);" in corps
 
@@ -385,28 +385,28 @@ def test_toucher_deplie_replie_ferme():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_sous_fenetre_et_fermetures():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "paquets", "tab5-scripts.yaml")
     ligne = re.search(r"ModalRegistry::add\(id\(roue_actions\),\s*nullptr,\s*ModalRegistry::SUBWINDOW\);",
-                      _lire("Tab5", "tab5-navigation.yaml"))
+                      _lire("Tab5", "paquets", "tab5-navigation.yaml"))
     assert ligne, "la roue est une sous-fenêtre du registre (ADR-0013)"
     assert "if (idle >= UIIdle::POPUP_MS && roue_actions_ouverte()) roue_actions_fermer();" in _fonction(
-        _lire("Tab5", "tab5_anim.cpp"), "retour_auto_tick")
+        _lire("Tab5", "ecran", "tab5_anim.cpp"), "retour_auto_tick")
     assert "retour_auto_tick(" in scripts
-    assert "roue_actions_fermer();" in _fonction(_lire("Tab5", "tab5_anim.cpp"), "animate_popup_open")
+    assert "roue_actions_fermer();" in _fonction(_lire("Tab5", "ecran", "tab5_anim.cpp"), "animate_popup_open")
     assert "roue_actions_fermer();" in _fonction(_tuiles(), "tuiles_definir")
-    hardware = _lire("Tab5", "tab5-hardware.yaml")
+    hardware = _lire("Tab5", "paquets", "tab5-hardware.yaml")
     eteint = hardware.split("on_turn_off:", 1)[1].split("lvgl.pause", 1)[0]
     assert "roue_actions_fermer();" in eteint
-    assert "roue_rejouer_theme();" in _fonction(_lire("Tab5", "tab5_theme.cpp"), "theme_rejouer_ui")
+    assert "roue_rejouer_theme();" in _fonction(_lire("Tab5", "ecran", "tab5_theme.cpp"), "theme_rejouer_ui")
     # Console système : page Système des Réglages depuis le 08/10/2026, ouverte par
     # animate_popup_open (qui ferme la roue, vérifié plus haut) ; retour automatique à la
     # page météo (plus bas).
     assert "tab5_console_ouvrir" not in scripts
-    reglages = _lire("Tab5", "tab5-reglages.yaml").split("- id: tab5_reglages_ouvrir", 1)[1].split("\n  - id:", 1)[0]
+    reglages = _lire("Tab5", "paquets", "tab5-reglages.yaml").split("- id: tab5_reglages_ouvrir", 1)[1].split("\n  - id:", 1)[0]
     assert "animate_popup_open(id(reglages_popup));" in reglages
     # retour_auto_tick() (tab5_anim.cpp) ferme la roue avant de rendre PREVISIONS, que
     # l'interval de tab5-scripts.yaml traduit en reset_forecast_to_main_page().
-    retour = _fonction(_lire("Tab5", "tab5_anim.cpp"), "retour_auto_tick")
+    retour = _fonction(_lire("Tab5", "ecran", "tab5_anim.cpp"), "retour_auto_tick")
     retour = retour.split("if (idle < UIIdle::FORECAST_MS) return RetourAuto::RIEN;", 1)[1]
     assert retour.index("roue_actions_fermer();") < retour.index("return RetourAuto::PREVISIONS;")
     assert "reset_forecast_to_main_page(" in scripts.split("case RetourAuto::PREVISIONS:", 1)[1]
@@ -444,7 +444,7 @@ def test_un_bouton_n_est_repeint_que_si_son_aspect_change():
 
 
 def test_inclus_entre_les_cartes_et_les_popups():
-    lvgl = _lire("Tab5", "tab5-lvgl.yaml")
+    lvgl = _lire("Tab5", "paquets", "tab5-lvgl.yaml")
     i = lvgl.index("ui_components/roue_actions.yaml")
     assert lvgl.index("ui_components/switches_card.yaml") < i < lvgl.index("ui_components/climate_popup.yaml")
 
@@ -454,7 +454,7 @@ def test_inclus_entre_les_cartes_et_les_popups():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_widgets_et_leurs_pointeurs():
-    custom = _lire("Tab5", "tab5_custom.h")
+    custom = contrat()
     n = int(_const(custom, "kRoueBoutons"))
     m = int(_const(custom, "kRoueChoix"))
     yaml = _yaml("roue_actions.yaml")
@@ -464,7 +464,7 @@ def test_widgets_et_leurs_pointeurs():
     assert legendes == [f"roue_choix_{j}_legende" for j in range(m)] + ["roue_lien_0", "roue_lien_1"]
     # Les pointeurs sont posés par tab5-roue.yaml (sorti de tab5-tuiles.yaml, lot L7) ;
     # boutons et choix par deux aides, une ligne par N, dans l'ordre des champs.
-    pose = _lire("Tab5", "tab5-roue.yaml")
+    pose = _lire("Tab5", "paquets", "tab5-roue.yaml")
     attendus = [("fond", "roue_actions"), ("bande[0]", "roue_bande_0"), ("bande[1]", "roue_bande_1"),
                 ("jauge", "roue_jauge"), ("moyeu", "roue_moyeu"), ("moyeu_icone", "roue_moyeu_icone"),
                 ("moyeu_valeur", "roue_moyeu_valeur"), ("nom", "roue_nom"),
@@ -487,11 +487,11 @@ def test_widgets_et_leurs_pointeurs():
     assert len(re.findall(r"^\s+choix\(\d", pose, re.M)) == m
     assert pose.rstrip().endswith("roue_brancher();")
     # Lancé par tab5_tuiles_ui juste après les widgets des tuiles, chargé avec lui.
-    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
     assert "RoueUI" not in tuiles and "roue_brancher" not in tuiles and "id(roue_" not in tuiles
     assert tuiles.rstrip().endswith("- script.execute: tab5_roue_ui")
     for entree in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
-        assert "tab5_roue: !include Tab5/tab5-roue.yaml" in _lire(entree), entree
+        assert "tab5_roue: !include Tab5/paquets/tab5-roue.yaml" in _lire(entree), entree
     # Le voile est celui des popups (ADR-0009), à 60 % : les tuiles restent visibles
     # dessous ; premier enfant, sous tout le reste.
     premier = yaml.split("widgets:", 1)[1].split("\n    - ", 2)[1]
@@ -500,12 +500,12 @@ def test_widgets_et_leurs_pointeurs():
 
 def test_glyphes_de_mdi_font_36():
     glyphes = set(re.findall(r'return "\\U000(F[0-9A-F]{4})";', _fonction(_roue(), "glyphe_roue")))
-    police = font_glyphs(Path(REPO) / "Tab5" / "tab5-styles.yaml")["mdi_font_36"]
+    police = font_glyphs(Path(REPO) / "Tab5" / "paquets" / "tab5-styles.yaml")["mdi_font_36"]
     assert {f"{ord(c):05X}" for c in police} == glyphes
     for fichier in ("roue_bouton.yaml", "roue_choix.yaml"):
         assert "text_font: mdi_font_36" in _yaml(fichier)
     # Une icône par valeur de RoueIcone (AUCUNE exceptée).
-    enum = re.search(r"enum class RoueIcone : uint8_t \{([^}]*)\}", _lire("Tab5", "tab5_internal.h")).group(1)
+    enum = re.search(r"enum class RoueIcone : uint8_t \{([^}]*)\}", _lire("Tab5", "ecran", "tab5_internal.h")).group(1)
     valeurs = [v.strip() for v in enum.split(",") if v.strip()]
     assert valeurs[0] == "AUCUNE"
     for v in valeurs[1:]:

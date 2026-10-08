@@ -22,6 +22,8 @@ que relire son verdict. Ils lisent le C++/YAML réel du dépôt : une salle ou u
 map cassée fait échouer la suite avant tout flash."""
 import shutil
 
+from tests.commun import sources
+
 
 from tools import (  # noqa: E402
     cartographie_counts,
@@ -52,9 +54,11 @@ def _firmware_copy(tmp_path):
     src = check_tab5_code_rules.TAB5
     dst = tmp_path / "Tab5"
     (dst / "ui_components").mkdir(parents=True)
-    for pattern in ("*.yaml", "*.cpp", "*.h"):
-        for path in src.glob(pattern):
-            shutil.copy2(path, dst / path.name)
+    # Même rangement que Tab5/ : socle/, ecran/, jeux/, paquets/ et la racine.
+    for path in sources("*.yaml", "*.cpp", "*.h", tab5=src):
+        cible = dst / path.relative_to(src)
+        cible.parent.mkdir(exist_ok=True)
+        shutil.copy2(path, cible)
     for path in (src / "ui_components").glob("*.yaml"):
         shutil.copy2(path, dst / "ui_components" / path.name)
     # Tablette virtuelle : ses lambdas appellent aussi des fonctions publiques (règle 12).
@@ -90,7 +94,7 @@ def test_regle_9_lvgl_dans_le_yaml(tmp_path):
              "      auto c = lv_color_hex(UIColor.TEXT_DIM);\n")
     _ajouter(tab5 / "ui_components" / "console_sys.yaml",
              "\nessai:\n  - lambda: 'lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);'\n")
-    _remplacer(tab5 / "tab5-calendar.yaml", "lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);",
+    _remplacer(tab5 / "paquets" / "tab5-calendar.yaml", "lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);",
                "cal_fermer();")
     problems = check_tab5_code_rules.lvgl_yaml(tab5, entry)
     assert any(p.startswith("alarm_popup.yaml:") and "lv_obj_set_width() ×1 (toléré ×0)" in p for p in problems), problems
@@ -102,7 +106,7 @@ def test_regle_9_lvgl_dans_le_yaml(tmp_path):
 def test_regle_10_static_dans_une_lambda(tmp_path):
     tab5, entry = _firmware_copy(tmp_path)
     assert check_tab5_code_rules.static_lambdas(tab5, entry) == []
-    _ajouter(tab5 / "tab5-scripts.yaml",
+    _ajouter(tab5 / "paquets" / "tab5-scripts.yaml",
              "\nessai:\n  - lambda: |-\n      static bool arme = false;\n"
              "      static const int kMax = 3;\n      static constexpr float kPas = 0.5f;\n")
     problems = check_tab5_code_rules.static_lambdas(tab5, entry)
@@ -113,11 +117,11 @@ def test_regle_10_static_dans_une_lambda(tmp_path):
 def test_regle_11_copie_de_chaine_dans_un_chemin_chaud(tmp_path):
     tab5, entry = _firmware_copy(tmp_path)
     assert check_tab5_code_rules.chemins_chauds(tab5, entry) == []
-    _ajouter(tab5 / "tab5-imu.yaml",
+    _ajouter(tab5 / "paquets" / "tab5-imu.yaml",
              "\nessai:\n  - platform: template\n    on_value:\n      - lambda: |-\n"
              "          const std::string &ok = x;\n          std::string copie = x;\n"
              "          auto t = to_string(x);\n  - id: suivant\n    lambda: 'std::string libre = x;'\n")
-    _ajouter(tab5 / "tab5_internal.h", "\nvoid essai_copie(int a, std::string nom);\n")
+    _ajouter(tab5 / "ecran" / "tab5_internal.h", "\nvoid essai_copie(int a, std::string nom);\n")
     problems = check_tab5_code_rules.chemins_chauds(tab5, entry)
     assert sum("tab5-imu.yaml:" in p and "`on_value:`" in p for p in problems) == 2, problems
     assert any(p.startswith("tab5_internal.h:") and "par valeur" in p for p in problems), problems
@@ -127,10 +131,10 @@ def test_regle_11_copie_de_chaine_dans_un_chemin_chaud(tmp_path):
 def test_regle_12_fonction_publique_sans_appelant(tmp_path):
     tab5, entry = _firmware_copy(tmp_path)
     assert check_tab5_code_rules.appelants_publics(tab5, entry) == []
-    _ajouter(tab5 / "tab5_custom.h", "\nvoid essai_orpheline(int n);\nvoid essai_appelee();\n")
-    _ajouter(tab5 / "tab5_cards.cpp", "\nvoid essai_orpheline(int n) { (void) n; }\n"
+    _ajouter(tab5 / "ecran" / "tab5_custom.h", "\nvoid essai_orpheline(int n);\nvoid essai_appelee();\n")
+    _ajouter(tab5 / "ecran" / "tab5_cards.cpp", "\nvoid essai_orpheline(int n) { (void) n; }\n"
                                       "void essai_appelee() { essai_orpheline(1); }\n")
-    _ajouter(tab5 / "tab5-scripts.yaml", "\nessai:\n  - lambda: 'essai_appelee(); clim_eco_actif(preset);'\n")
+    _ajouter(tab5 / "paquets" / "tab5-scripts.yaml", "\nessai:\n  - lambda: 'essai_appelee(); clim_eco_actif(preset);'\n")
     problems = check_tab5_code_rules.appelants_publics(tab5, entry)
     assert any("`essai_orpheline()` (tab5_cards.cpp) n'est appelée ni par un YAML" in p for p in problems), problems
     assert not any("essai_appelee" in p for p in problems), problems
@@ -147,11 +151,11 @@ def test_regle_12_fonction_publique_sans_appelant(tmp_path):
 def test_regle_13_nullptr_et_tags_de_journal(tmp_path):
     tab5, entry = _firmware_copy(tmp_path)
     assert check_tab5_code_rules.conventions_cpp(tab5, entry) == []
-    _ajouter(tab5 / "tab5_anim.cpp", '\nstatic void essai() {\n    lv_obj_t* o = NULL;\n'
+    _ajouter(tab5 / "ecran" / "tab5_anim.cpp", '\nstatic void essai() {\n    lv_obj_t* o = NULL;\n'
                                      '    ESP_LOGI("TAB5", "essai %p", o);\n    ESP_LOGI("tab5.anim", "ok");\n}\n')
-    _ajouter(tab5 / "chess_game.cpp", '\nstatic void essai() { ESP_LOGI("chess", "un jeu garde son nom"); }\n')
-    _ajouter(tab5 / "tab5_zones.cpp", '\nstatic void essai() { ESP_LOGI("TAB5", "un de plus"); }\n')
-    _ajouter(tab5 / "tab5_alertes.cpp", '\nstatic void essai() { payload_refuse("TAB5", "x", 1); '
+    _ajouter(tab5 / "jeux" / "chess_game.cpp", '\nstatic void essai() { ESP_LOGI("chess", "un jeu garde son nom"); }\n')
+    _ajouter(tab5 / "ecran" / "tab5_zones.cpp", '\nstatic void essai() { ESP_LOGI("TAB5", "un de plus"); }\n')
+    _ajouter(tab5 / "ecran" / "tab5_alertes.cpp", '\nstatic void essai() { payload_refuse("TAB5", "x", 1); '
                                         'payload_trop_long("tab5.alertes", 1); }\n')
     problems = check_tab5_code_rules.conventions_cpp(tab5, entry)
     assert any(p.startswith("tab5_anim.cpp:") and "`NULL`" in p for p in problems), problems
@@ -173,10 +177,10 @@ def test_regle_14_accents_des_textes_de_l_ecran(tmp_path):
     # Sur une copie du firmware : un tr() et un texte YAML d'écran fautifs.
     tab5, entry = _firmware_copy(tmp_path)
     assert regle.accents_ecran(regle.textes_ecran(tab5, entry)) == []
-    _ajouter(tab5 / "tab5_anim.cpp", '\nstatic const char* essai() { return tr("Temperature du salon"); }\n')
+    _ajouter(tab5 / "ecran" / "tab5_anim.cpp", '\nstatic const char* essai() { return tr("Temperature du salon"); }\n')
     _ajouter(tab5 / "ui_components" / "alarm_popup.yaml", '\n          - label: { text: "Deja vu" }\n')
     problems = regle.accents_ecran(regle.textes_ecran(tab5, entry))
-    assert any(p.startswith("Tab5/tab5_anim.cpp:") and "« Temperature »" in p for p in problems), problems
+    assert any(p.startswith("Tab5/ecran/tab5_anim.cpp:") and "« Temperature »" in p for p in problems), problems
     assert any(p.startswith("Tab5/ui_components/alarm_popup.yaml:") and "« Deja »" in p for p in problems), problems
     assert len(problems) == 2, problems
 
@@ -195,14 +199,14 @@ def test_mdi_rule_7_catches_missing_glyph(tmp_path):
     """Le bug réel du 25/09/2026 : la cloche barrée absente de mdi_font_45."""
     tab5, entry = _firmware_copy(tmp_path)
     assert check_tab5_code_rules.mdi_glyph_coverage(tab5, entry) == []
-    _edit_font(tab5 / "tab5-styles.yaml", "mdi_font_45", '      - "\\U000F0023"  # alarm-off\n', "")
+    _edit_font(tab5 / "paquets" / "tab5-styles.yaml", "mdi_font_45", '      - "\\U000F0023"  # alarm-off\n', "")
     problems = check_tab5_code_rules.mdi_glyph_coverage(tab5, entry)
     assert any("U+F0023 absente de `mdi_font_45`" in p for p in problems), problems
 
 
 def test_mdi_rule_7_catches_dead_glyph(tmp_path):
     tab5, entry = _firmware_copy(tmp_path)
-    _edit_font(tab5 / "tab5-styles.yaml", "mdi_font_70", "    glyphs:\n", '    glyphs:\n      - "\\U000F0026"\n')
+    _edit_font(tab5 / "paquets" / "tab5-styles.yaml", "mdi_font_70", "    glyphs:\n", '    glyphs:\n      - "\\U000F0026"\n')
     problems = check_tab5_code_rules.mdi_glyph_coverage(tab5, entry)
     assert any("`mdi_font_70` embarque 1 glyphe(s) jamais affiché(s) : U+F0026" in p for p in problems), problems
 
@@ -210,7 +214,7 @@ def test_mdi_rule_7_catches_dead_glyph(tmp_path):
 def test_mdi_rule_7_catches_untracked_cpp_icon(tmp_path):
     """Une icône posée depuis une fonction C++ inconnue ne passe pas en silence."""
     tab5, entry = _firmware_copy(tmp_path)
-    with open(tab5 / "tab5_cards.cpp", "a", encoding="utf-8") as f:
+    with open(tab5 / "ecran" / "tab5_cards.cpp", "a", encoding="utf-8") as f:
         f.write('\nvoid nouvelle_icone(lv_obj_t* o) {\n    lv_label_set_text(o, "\\U000F0020");\n}\n')
     problems = check_tab5_code_rules.mdi_glyph_coverage(tab5, entry)
     assert any("nouvelle_icone" in p and "MDI_CODE_TARGETS" in p for p in problems), problems
@@ -228,9 +232,9 @@ def test_palette_rule_8_catches_frozen_colors(tmp_path):
     popup.write_text(text.replace("styles: style_text_dim }", "text_color: white }", 1), encoding="utf-8")
     with open(tab5 / "ui_components" / "climate_card.yaml", "a", encoding="utf-8") as f:
         f.write("\nessai:\n  - obj: { bg_color: color_marble_void }\n")
-    with open(tab5 / "marble_game.cpp", "a", encoding="utf-8") as f:
+    with open(tab5 / "jeux" / "marble_game.cpp", "a", encoding="utf-8") as f:
         f.write("\nstatic uint32_t teinte() { return UIColor.TEXT_DIM; }\n")
-    with open(tab5 / "tab5_cards.cpp", "a", encoding="utf-8") as f:
+    with open(tab5 / "ecran" / "tab5_cards.cpp", "a", encoding="utf-8") as f:
         f.write("\nstatic lv_color_t a() { return lv_color_hex(PALETTE_SOMBRE.TEXT_DIM); }\n"
                 "static lv_color_t b() { return lv_color_hex(0x94A3B8); }\n")
     problems = check_tab5_code_rules.palette_colors(tab5, entry)

@@ -168,7 +168,7 @@ script:
   # mode off), et il borne la consigne aux limites de l'appareil (ADR-0026). Valeur en
   # texte court (« 21.5 », pas « 21.500000 ») : le blueprint la relit en nombre, pareil.
   # Lancé par la carte (climate_card.yaml) et, pour le popup, par clim_popup_consigne()
-  # / clim_popup_pas() (tab5_cards.cpp, pointeur posé par tab5_clim_ui).
+  # / clim_popup_pas() (ecran/tab5_clim.cpp, pointeur posé par tab5_clim_ui).
   - id: tab5_debounce_clim_temp
     mode: restart
     then:
@@ -181,7 +181,7 @@ script:
 
   # Debounce de la cible d'une clim de tuile (popup ouvert par une tuile cli sans
   # l'option m, ADR-0027) : même délai, mais l'emplacement (« tRT ») et la valeur sont
-  # pris au geste (tab5_cards.cpp), pour que la consigne parte à sa clim même si le popup
+  # pris au geste (ecran/tab5_clim.cpp), pour que la consigne parte à sa clim même si le popup
   # a été refermé entre-temps. Le blueprint la traduit comme celle de la clim du
   # blueprint, sur l'entité de la tuile. Clé vide : la tuile a changé d'appareil entre
   # le geste et l'envoi (clim_tuile_oublier), rien ne part.
@@ -411,6 +411,10 @@ interval:
   - interval: 1s
     then:
       - lambda: |-
+          // Prévisions périmées (08/10/2026) : une comparaison d'heures par seconde,
+          // repeinte seulement si la mention change (tab5_forecast.cpp).
+          previsions_fraicheur_tick(id(previsions_perimees), id(lbl_previsions_perimees));
+
           // Liste des fenêtres : ModalRegistry (tab5_registry.h), remplie une
           // fois par tab5_modal_registry_init (tab5-navigation.yaml). La
           // sonnerie du réveil y est un LAYER : jamais refermée ici. Le script

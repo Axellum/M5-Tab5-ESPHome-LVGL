@@ -7,7 +7,7 @@ firmware avec un schéma voluptuous : une variable déclarée est obligatoire, u
 trop est refusée (pas d'`extra`), et l'appel échoue (« Action … not found » pour un nom
 inconnu). L'erreur ne se voit que dans le journal de HA, et elle arrête le script : les
 poussées suivantes ne partent pas. Ce fichier vérifie que chaque appel d'une action de
-la tablette passe exactement les variables déclarées dans Tab5/tab5-api-logic.yaml :
+la tablette passe exactement les variables déclarées dans Tab5/paquets/tab5-api-logic.yaml :
 - packages, `optionnel/`, blueprint et snippets de HomeAssistant_Config/ ;
 - le plan du rendu hors tablette (tools/rendu/ecrans.py ; actions `rendu_*` :
   Tab5/rendu/bouchons.yaml).
@@ -34,7 +34,7 @@ from tests.commun import fichiers_du_depot
 
 REPO = Path(__file__).resolve().parent.parent
 HA = REPO / "HomeAssistant_Config"
-API_LOGIC = REPO / "Tab5" / "tab5-api-logic.yaml"
+API_LOGIC = REPO / "Tab5" / "paquets" / "tab5-api-logic.yaml"
 BOUCHONS = REPO / "Tab5" / "rendu" / "bouchons.yaml"
 
 import demo_pusher  # noqa: E402

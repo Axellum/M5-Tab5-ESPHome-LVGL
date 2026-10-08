@@ -13,6 +13,8 @@ import math
 import re
 from pathlib import Path
 
+from tests.commun import sources as _sources
+
 REPO = Path(__file__).resolve().parent.parent
 
 import gen_themes  # noqa: E402
@@ -30,7 +32,7 @@ def _metriques(m: dict) -> dict:
 def test_roboto_redonne_la_geometrie_du_yaml():
     m = _mesures()[police_theme.REFERENCE]
     rouleau = (REPO / "Tab5" / "ui_components" / "clock_roller.yaml").read_text(encoding="utf-8")
-    lvgl = (REPO / "Tab5" / "tab5-lvgl.yaml").read_text(encoding="utf-8")
+    lvgl = (REPO / "Tab5" / "paquets" / "tab5-lvgl.yaml").read_text(encoding="utf-8")
     ys = {int(y) for y in re.findall(r"^\s+y: (-?\d+)\n\s+styles: \[style_police_horloge", rouleau, re.M)}
     dp = re.search(r"id: lbl_time_colon, text: \":\", align: TOP_LEFT, x: (\d+), y: (-?\d+)", lvgl)
     date = re.search(r"id: lbl_date, text: \"\", align: TOP_MID, y: (\d+)", lvgl)
@@ -44,7 +46,7 @@ def test_roboto_redonne_la_geometrie_du_yaml():
                    "x_deux_points": int(dp.group(1)), "y_deux_points": int(dp.group(2))}
     assert (m["date"]["taille"], m["date"]["y"]) == (45, int(date.group(1))) and m["titre"]["taille"] == 32
     # kCadreX de tab5_theme.cpp (généré depuis X_CADRES) repose ces x : ce sont ceux du YAML.
-    xs = tuple(int(x) for x in re.findall(r"file: ui_components/clock_roller\.yaml, vars: \{ d: \w+, x: (\d+) \}", lvgl))
+    xs = tuple(int(x) for x in re.findall(r"file: \.\./ui_components/clock_roller\.yaml, vars: \{ d: \w+, x: (\d+) \}", lvgl))
     assert xs == police_theme.X_CADRES, f"X_CADRES {police_theme.X_CADRES} ≠ x des rouleaux de tab5-lvgl.yaml {xs}"
 
 
@@ -100,7 +102,7 @@ def test_horloge_a_la_marge_des_jambages_de_la_date_dans_chaque_theme():
     tuile ; la date ne bouge pas, l'horloge monte d'autant. Lu dans la table générée
     (tab5_theme.cpp), avec la police d'heure et la police de date de chaque thème, qui ne
     sont pas toujours les mêmes."""
-    cpp = (REPO / "Tab5" / "tab5_theme.cpp").read_text(encoding="utf-8")
+    cpp = (REPO / "Tab5" / "ecran" / "tab5_theme.cpp").read_text(encoding="utf-8")
     rangees = re.findall(r"^    \{(-?\d+(?:, -?\d+){8})\},  // (\w+)$", cpp, re.M)
     themes = {t.fichier: t for t in gen_themes.charger()}
     assert [f for _, f in rangees] == list(themes), "table kPolices pas dans l'ordre des thèmes"
@@ -195,12 +197,20 @@ def test_polices_generees_sans_glyphe_absent():
 # firmware en silence. Les fichiers vivent maintenant dans Tab5/fonts/.
 
 FONTS = REPO / "Tab5" / "fonts"
+# Polices d'icônes rangées dans Tab5/fonts/ le 08/10/2026 (avant : racine de Tab5/) : elles
+# ne viennent pas de Google Fonts et leur licence n'est pas l'OFL de OFL.txt. Valeur : le
+# fichier de licence posé à côté, ou None (aucun fichier de licence dans le dépôt).
+POLICES_HORS_OFL = {
+    "ChessPieces.ttf": "ChessPieces.LICENSE.txt",
+    "IconeMeteo.ttf": None,
+    "materialdesignicons-webfont.ttf": None,
+}
 RE_FILE = re.compile(r"^\s*-?\s*file:\s*\"?([^\"\s#]+)\"?", re.M)
 
 
 def _fichiers_police() -> list[str]:
     """Chaque `file:` de police des YAML du firmware et du rendu hors tablette."""
-    sources = list((REPO / "Tab5").glob("*.yaml")) + list((REPO / "Tab5" / "ui_components").glob("*.yaml"))
+    sources = _sources("*.yaml") + list((REPO / "Tab5" / "ui_components").glob("*.yaml"))
     sources += [REPO / "tab5-ha-hmi.yaml", REPO / "tab5-rendu-host.yaml"]
     return [m.group(1) for p in sources for m in RE_FILE.finditer(p.read_text(encoding="utf-8"))
             if m.group(1).lower().endswith((".ttf", ".otf")) or "://" in m.group(1)]
@@ -235,6 +245,10 @@ def test_chaque_police_figee_sert_et_garde_sa_licence():
     assert "SIL OPEN FONT LICENSE Version 1.1" in licence
     for ttf in sorted(FONTS.glob("*.ttf")):
         assert ttf.name in utilises, f"{ttf.name} : compilé nulle part (poids mort dans le dépôt)"
+        if ttf.name in POLICES_HORS_OFL:
+            avis = POLICES_HORS_OFL[ttf.name]
+            assert avis is None or (FONTS / avis).is_file(), f"{ttf.name} : {avis} absent"
+            continue
         nom = TTFont(ttf)["name"]
         url = urlparse(nom.getDebugName(14) or "")
         assert (url.hostname, url.path.rstrip("/")) in {("scripts.sil.org", "/OFL"), ("openfontlicense.org", "")}, \

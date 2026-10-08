@@ -2,7 +2,7 @@
 """Popup « Réglages » (06/10/2026) : le contrat numérique entre le YAML et le C++.
 
 Les boutons de Tab5/ui_components/reglages_popup.yaml passent `reglage` (un ReglageId de
-Tab5/tab5_custom.h) et `valeur` (l'index d'une option) au script tab5_reglages_choisir ;
+Tab5/ecran/tab5_reglages.h, inclus par tab5_custom.h) et `valeur` (l'index d'une option) au script tab5_reglages_choisir ;
 tab5_reglages_ouvrir range ces boutons dans les tableaux de ReglagesUI, dimensionnés par
 REGLAGES_NB_*. Rien ne compile ce contrat : une option de plus dans un select, une langue
 de plus, un bouton oublié ou un numéro faux passent la compilation, et le bouton écrit
@@ -21,12 +21,12 @@ import pathlib
 import re
 
 import yaml
-from tests.commun import ChargeurBalisesBrutes as _Chargeur, lire as _lire
+from tests.commun import ChargeurBalisesBrutes as _Chargeur, contrat, lire as _lire, source
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 POPUP = TAB5 / "ui_components" / "reglages_popup.yaml"
-SCRIPTS = TAB5 / "tab5-reglages.yaml"
+SCRIPTS = TAB5 / "paquets" / "tab5-reglages.yaml"
 
 BOUTON = re.compile(r"file: reglages_choix_btn\.yaml, vars: \{ id: (\w+), x: \d+, y: \d+, w: \d+, "
                     r"reglage: (\d+), valeur: (-?\d+), label_text: \"([^\"]*)\" \}")
@@ -45,7 +45,7 @@ PAGES = {"REGLAGES_PAGE_ECRAN": "reglages_page_ecran", "REGLAGES_PAGE_APPARENCE"
 
 
 def _entete():
-    return _lire(TAB5 / "tab5_custom.h")
+    return contrat()
 
 
 def _reglages():
@@ -60,7 +60,7 @@ def _reglages():
 
 def _nb(nom):
     m = re.search(rf"constexpr int {nom} = (\d+);", _entete())
-    assert m, f"{nom} introuvable dans tab5_custom.h"
+    assert m, f"{nom} introuvable dans tab5_custom.h et ses en-têtes"
     return int(m.group(1))
 
 
@@ -75,7 +75,7 @@ def _boutons():
 
 
 def _options(fichier, ident):
-    selects = yaml.load(_lire(TAB5 / fichier), Loader=_Chargeur)["select"]
+    selects = yaml.load(_lire(source(fichier)), Loader=_Chargeur)["select"]
     return next(s for s in selects if s.get("id") == ident)["options"]
 
 
@@ -135,8 +135,8 @@ def test_ouvrir_pose_chaque_bouton_a_son_index():
 
 
 def test_registre_des_fenetres_assez_grand():
-    inscrites = _lire(TAB5 / "tab5-navigation.yaml").count("ModalRegistry::add(")
-    m = re.search(r"constexpr int MAX = (\d+);", _lire(TAB5 / "tab5_registry.h"))
+    inscrites = _lire(TAB5 / "paquets" / "tab5-navigation.yaml").count("ModalRegistry::add(")
+    m = re.search(r"constexpr int MAX = (\d+);", _lire(TAB5 / "ecran" / "tab5_registry.h"))
     assert m and inscrites > 10, "les motifs ne reconnaissent plus le registre"
     assert inscrites <= int(m.group(1)), f"{inscrites} fenêtres pour ModalRegistry::MAX = {m.group(1)}"
 
@@ -173,14 +173,14 @@ def test_un_nom_et_un_conteneur_par_page():
         assert script.count(f"u.page[{nom}] = id({conteneur});") == 1, conteneur
     # La page Système (l'ancienne console) est dans le popup, plus à part.
     assert "!include console_sys.yaml" in popup
-    assert "console_sys.yaml" not in _lire(TAB5 / "tab5-lvgl.yaml")
+    assert "console_sys.yaml" not in _lire(TAB5 / "paquets" / "tab5-lvgl.yaml")
     # Engrenage : un tap ouvre la page Écran (son appui long passe par tab5_ecran_ouvrir).
-    lvgl = _lire(TAB5 / "tab5-lvgl.yaml").replace("\r\n", "\n")
+    lvgl = _lire(TAB5 / "paquets" / "tab5-lvgl.yaml").replace("\r\n", "\n")
     assert "appui: [ script.execute: { id: tab5_reglages_ouvrir, page: 0 } ]" in lvgl
 
 
 def test_geste_de_page_reste_dans_le_popup():
-    cpp = _lire(TAB5 / "tab5_reglages.cpp").replace("\r\n", "\n")
+    cpp = _lire(TAB5 / "ecran" / "tab5_reglages.cpp").replace("\r\n", "\n")
     preparer = _corps(cpp, "void reglages_preparer()")
     # Le geste s'arrête au popup : page_main ne change ni les prévisions ni la pièce.
     assert "lv_obj_remove_flag(u.popup, LV_OBJ_FLAG_GESTURE_BUBBLE);" in preparer
@@ -197,12 +197,12 @@ def test_geste_de_page_reste_dans_le_popup():
 def test_gardes_de_la_console_par_la_page_systeme():
     """La console et la page Batterie ne coûtent rien tant qu'elles ne sont pas affichées
     (garde #T222)."""
-    diag = _lire(TAB5 / "tab5-sensors-diagnostics.yaml")
+    diag = _lire(TAB5 / "paquets" / "tab5-sensors-diagnostics.yaml")
     assert diag.count("if (!reglages_page_visible(REGLAGES_PAGE_SYSTEME)) return;") == 3
     assert "if (reglages_page_visible(REGLAGES_PAGE_SYSTEME)) {" in diag
     assert "reglages_batterie_peindre();" in diag
-    assert "if (reglages_page_visible(REGLAGES_PAGE_SYSTEME))" in _lire(TAB5 / "tab5-themes.yaml")
-    cpp = _lire(TAB5 / "tab5_reglages.cpp").replace("\r\n", "\n")
+    assert "if (reglages_page_visible(REGLAGES_PAGE_SYSTEME))" in _lire(TAB5 / "paquets" / "tab5-themes.yaml")
+    cpp = _lire(TAB5 / "ecran" / "tab5_reglages.cpp").replace("\r\n", "\n")
     assert "reglages_page_visible(REGLAGES_PAGE_BATTERIE)" in _corps(cpp, "void reglages_batterie_peindre()")
 
 

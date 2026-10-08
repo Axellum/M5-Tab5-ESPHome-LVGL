@@ -55,7 +55,7 @@ script:
       pousse le tout vers le Tab5. mode queued : chaque demande a sa réponse.
     # queued, pas restart (28/09/2026) : la tablette demande d'affilée le mois
     # affiché ET ses voisins (pré-chargement M-1 / M+1, tab5_cal_render de
-    # Tab5/tab5-calendar.yaml). En restart, chaque demande annulait la précédente :
+    # Tab5/paquets/tab5-calendar.yaml). En restart, chaque demande annulait la précédente :
     # une seule des trois aboutissait (job « HA neuf »), les deux autres mois
     # restaient sans travail ni fériés. Chaque réponse porte son année et son mois,
     # la tablette range chacune dans son cache. max 10 : une navigation rapide
@@ -281,7 +281,7 @@ script:
       pousse vers le sous-popup du Tab5.
     # queued, comme tab5_calendrier_mois : aucune demande n'en annule une autre. La
     # tablette ignore une réponse dont la date n'est plus celle du détail affiché
-    # (tab5_maj_calendrier_jour, Tab5/tab5-api-logic.yaml) : taper vite plusieurs
+    # (tab5_maj_calendrier_jour, Tab5/paquets/tab5-api-logic.yaml) : taper vite plusieurs
     # jours n'affiche que le dernier.
     mode: queued
     max: 10

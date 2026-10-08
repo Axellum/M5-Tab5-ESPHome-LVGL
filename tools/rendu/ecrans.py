@@ -10,7 +10,7 @@ fenêtres, sous-fenêtres et jeu en cours. Ce retour ne remet ni la page des pr�
 ni, avant la 3.2, le mode HA : un écran qui les change les rétablit dans `fermer`
 (page 2, mode météo ; tests/test_rendu_ecrans.py le vérifie).
 
-Les coordonnées viennent des captures et des positions déclarées dans Tab5/*.yaml,
+Les coordonnées viennent des captures et des positions déclarées dans Tab5/paquets/*.yaml,
 Tab5/ui_components/*.yaml et les *_game.cpp (inventaire du 27/09/2026). Si la mise en
 page change, capturer.py signale une capture identique à une autre : l'appui est tombé
 à côté.
@@ -62,7 +62,7 @@ class Glisser:
 
 @dataclass(frozen=True)
 class Aller:
-    """Option du select HA « Aller à l'écran » (Tab5/tab5-ha-controls.yaml)."""
+    """Option du select HA « Aller à l'écran » (Tab5/paquets/tab5-ha-controls.yaml)."""
     option: str
     apres: float = 0.8
 
@@ -187,7 +187,7 @@ DOMO, DISCU = (72, 150), (340, 150)
 # Énergie), engrenage (court : Réglages, long : Console système), manette (court :
 # Arcade, long : télécommande TV). Le rendu pousse une maison complète (capturer.py,
 # aucune zone absente) : la mini icône de la TV est sur la manette.
-# tests/test_rendu_ecrans.py les compare aux boutons de Tab5/tab5-lvgl.yaml.
+# tests/test_rendu_ecrans.py les compare aux boutons de Tab5/paquets/tab5-lvgl.yaml.
 BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 # Rangée sous l'horloge (ADR-0031, zone btn_rangee) : court, ligne suivante ; long sur la
 # ligne des plantes, Plantes.
@@ -220,7 +220,7 @@ VOLET_TIRE = Glisser(265, 250, 265, 400)
 # d'une clim pose un moyeu sur la tuile et deux anneaux de boutons au-dessus. Premier anneau :
 # « Maison », les commandes et les familles de réglages, « Détails » (le popup complet) en
 # dernier ; toucher une famille déplie ses choix sur le second, centré sur elle. Géométrie
-# de disposer() (Tab5/tab5_roue.cpp) refaite à l'identique, tests/test_roue.py compare les
+# de disposer() (Tab5/ecran/tab5_roue.cpp) refaite à l'identique, tests/test_roue.py compare les
 # constantes : un écran de popup touche le « Détails » calculé ici, un écran de roue une
 # famille. Ancre en mode météo : le centre du bouton de la tuile.
 ROUE_ECRAN = (1280, 720)
@@ -402,6 +402,20 @@ def _appareils_meteo(montres: bool) -> Service:
 AVEC_APPAREILS = (_appareils_meteo(True),)
 
 
+def _previsions_recues(il_y_a_min: int) -> Service:
+    """rendu_previsions_recues (Tab5/rendu/bouchons.yaml) : dernière poussée des
+    prévisions `il_y_a_min` minutes avant l'heure figée (mention « prévisions
+    périmées » au-delà de 30 min, tab5_forecast.cpp ; 0 = maintenant, masquée)."""
+    return Service("rendu_previsions_recues", (("minutes", il_y_a_min),))
+
+
+# Incident du 07-08/10/2026 : dernières prévisions de la veille à 21:04, 10 h 41 avant
+# l'heure figée (07:45) → « Prévisions d'hier 21 h 04 ».
+PREVISIONS_DE_LA_VEILLE = (_previsions_recues(10 * 60 + 41),)
+# Retour à des prévisions fraîches : les autres écrans restent sans la mention.
+PREVISIONS_FRAICHES = (_previsions_recues(0),)
+
+
 def ecrans_des_pieces(pieces: dict) -> tuple:
     """Le mode HA sur chaque pièce de la démo (ADR-0023) : « HA » depuis l'accueil (pièce
     0, page 2), puis un geste par pièce occupée jusqu'à la bonne (le mode HA saute les
@@ -491,7 +505,7 @@ RETIREES = {r: p for r, p in PIECES.items() if r not in DEUX_PIECES}
 assert not any(t.type == "cli" for p in RETIREES.values() for t in p.tuiles.values())
 MAISON_DEUX_PIECES = Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(DEUX_PIECES, RANGEE, REGLABLES)),))
 # Ligne de la lampe d'ambiance (Salon, 3e ligne) : colonne 0 de 235 px, lignes de 104 px tous
-# les 112 px à partir de y = 120 dans la carte (disposer(), Tab5/tab5_maison.cpp). Le doigt
+# les 112 px à partir de y = 120 dans la carte (disposer(), Tab5/ecran/tab5_maison.cpp). Le doigt
 # entre la pastille et le nom, loin du « ⋯ ».
 MAISON_LAMPE = (104, 412)
 MAISON_DE_LA_DEMO = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
@@ -582,6 +596,9 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-sans-appareils", (_appareils_meteo(False),), AVEC_APPAREILS),
     Ecran("accueil-sans-appareils-heures-1", (_appareils_meteo(False), VERS_LA_DROITE),
           AVEC_APPAREILS + (VERS_LA_GAUCHE,)),
+    # Prévisions périmées (08/10/2026) : HA muet depuis la veille à 21:04, mention
+    # « Prévisions d'hier 21 h 04 » au-dessus des tuiles, à droite.
+    Ecran("accueil-previsions-perimees", PREVISIONS_DE_LA_VEILLE, PREVISIONS_FRAICHES),
     # Mode HA : les cartes de chaque pièce (remplace « accueil-interrupteurs », les cinq
     # cartes fixes d'avant la 3.2, devenu « accueil-ha-piece-1 »).
     *ecrans_des_pieces(PIECES),

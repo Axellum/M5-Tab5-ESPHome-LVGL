@@ -7,7 +7,7 @@
 #         2. `script.tab5_reveil_annonce` prononce le briefing du matin ;
 #         3. une automation entretient (1).
 # @architecture_constraint Le réveil lui-même ne dépend PAS de ce fichier. Le
-#       firmware (Tab5/alarm_clock.cpp) calcule son heure à partir de l'horloge
+#       firmware (Tab5/socle/alarm_clock.cpp) calcule son heure à partir de l'horloge
 #       SNTP et des horaires de travail déjà en cache, et sonne une mélodie
 #       synthétisée localement. Si Home Assistant est arrêté, le réveil sonne
 #       quand même — seuls le briefing parlé et les rappels de rendez-vous
@@ -19,7 +19,7 @@
 # @payload_contract tab5_maj_rdv_prochains : "epoch|titre~epoch|titre~…",
 #       8 entrées maximum, epoch UTC du DÉBUT (zéro-padding sans importance,
 #       lu en base 10), titres débarrassés de `|`, `~` et `;`. Contrat côté
-#       firmware : `rdv_store()` dans Tab5/alarm_clock.cpp.
+#       firmware : `rdv_store()` dans Tab5/socle/alarm_clock.cpp.
 # @data_sources Les agendas choisis dans HA (ADR-0024, packages/tab5_reglages.yaml) :
 #       « Tab5 · agenda des rendez-vous » + « Tab5 · agenda de travail », dont on
 #       EXCLUT les événements de travail (titre contenant un des mots de « Tab5 · mot

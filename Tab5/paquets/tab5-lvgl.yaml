@@ -168,11 +168,11 @@ lvgl:
               # la taille de police ou une valeur ici sans les autres le fait échouer.
               # Ne pas remettre un label unique `lbl_time` : le C++ pilote ces
               # 8 labels via g_clock_roller.
-              - !include { file: ui_components/clock_roller.yaml, vars: { d: h10, x: 27 } }
-              - !include { file: ui_components/clock_roller.yaml, vars: { d: h1, x: 102 } }
+              - !include { file: ../ui_components/clock_roller.yaml, vars: { d: h10, x: 27 } }
+              - !include { file: ../ui_components/clock_roller.yaml, vars: { d: h1, x: 102 } }
               - label: { id: lbl_time_colon, text: ":", align: TOP_LEFT, x: 181, y: -6, styles: [style_police_horloge, style_horloge_text_soft] }
-              - !include { file: ui_components/clock_roller.yaml, vars: { d: m10, x: 222 } }
-              - !include { file: ui_components/clock_roller.yaml, vars: { d: m1, x: 297 } }
+              - !include { file: ../ui_components/clock_roller.yaml, vars: { d: m10, x: 222 } }
+              - !include { file: ../ui_components/clock_roller.yaml, vars: { d: m1, x: 297 } }
               - label: { id: lbl_date, text: "", align: TOP_MID, y: 135, styles: [style_police_date, style_horloge_text_soft] }
 
         # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
@@ -232,22 +232,24 @@ lvgl:
         # pièce dans la carte centrale, bouton en couleur d'accent. Masqué sans aucun
         # appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp). Appui long « auto » :
         # popup Énergie (ADR-0028), quand HA pousse la production solaire.
-        - !include { file: ui_components/bouton_haut.yaml, vars: { id: btn_control_ha, x: "855", bouton: BOUTON_MAISON, appui: [ lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);' ], icone_id: icon_ha, icone: "\U000F07D0", mini_id: icon_mini_ha, mini: "\U000F0D9B" } }
+        # Après le tap, la mention « prévisions périmées » suit tout de suite (masquée
+        # en mode HA, previsions_fraicheur_tick(), tab5_forecast.cpp).
+        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_ha, x: "855", bouton: BOUTON_MAISON, appui: [ lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);', lambda: 'previsions_fraicheur_tick(id(previsions_perimees), id(lbl_previsions_perimees));' ], icone_id: icon_ha, icone: "\U000F07D0", mini_id: icon_mini_ha, mini: "\U000F0D9B" } }
         # Engrenage : tap = Réglages de la tablette sur leur page Écran (tab5-reglages.yaml ;
         # `page: 0` = REGLAGES_PAGE_ECRAN), appui long = leur page Système (l'ancienne console
         # système) en « auto » (avant le 06/10/2026, le flocon ouvrait la console d'un tap),
         # sans mini icône en « auto ».
-        - !include { file: ui_components/bouton_haut.yaml, vars: { id: btn_control_console, x: "995", bouton: BOUTON_ENGRENAGE, appui: [ script.execute: { id: tab5_reglages_ouvrir, page: 0 } ], icone_id: icon_engrenage, icone: "\U000F0493", mini_id: icon_mini_sys, mini: "\U000F018D" } }
+        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_console, x: "995", bouton: BOUTON_ENGRENAGE, appui: [ script.execute: { id: tab5_reglages_ouvrir, page: 0 } ], icone_id: icon_engrenage, icone: "\U000F0493", mini_id: icon_mini_sys, mini: "\U000F018D" } }
         # Manette : tap = Arcade (comme la seconde température), appui long « auto » =
         # télécommande TV quand une TV est choisie dans le blueprint (zone TV) : la mini
         # icône de l'écran le signale (glyphe de l'en-tête de tv_remote_popup.yaml). Avant le
         # 06/10/2026, ce bouton était la télécommande et disparaissait sans TV.
-        - !include { file: ui_components/bouton_haut.yaml, vars: { id: btn_control_tv, x: "1135", bouton: BOUTON_MANETTE, appui: [ script.execute: tab5_arcade_open ], icone_id: icon_manette, icone: "\U000F0297", mini_id: icon_mini_tv, mini: "\U000F07C0" } }
+        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_tv, x: "1135", bouton: BOUTON_MANETTE, appui: [ script.execute: tab5_arcade_open ], icone_id: icon_manette, icone: "\U000F0297", mini_id: icon_mini_tv, mini: "\U000F07C0" } }
 
         # ==================== RANGÉE SOUS L'HORLOGE (ADR-0031) ====================
         # Les plantes et jusqu'à trois lignes de capteurs décrites par HA, qui se
         # relaient calées sur la carte centrale (tab5_rangee.cpp).
-        - !include ui_components/rangee.yaml
+        - !include ../ui_components/rangee.yaml
 
         # Zone tactile invisible par-dessus la rangée (même géométrie que rangee_capteurs) :
         # toucher -> ligne suivante ; appui long sur la ligne des plantes -> popup détails
@@ -291,7 +293,7 @@ lvgl:
 
         # ==================== CLIMATE CONTROL (MIDDLE RIGHT) ====================
 
-        - !include ui_components/climate_card.yaml
+        - !include ../ui_components/climate_card.yaml
         # ==================== CENTRAL CARD (Alertes, Pluie, Planning) ====================
         # Appui long sur un panneau de l'accueil (planning, pluie, vigilance, info, alertes HA) :
         # historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026).
@@ -331,7 +333,7 @@ lvgl:
                           - label: { id: alerte_slot_1, text: "", text_font: mdi_font_alert, hidden: true }
                           - label: { id: alerte_slot_2, text: "", text_font: mdi_font_alert, hidden: true }
                           - label: { id: alerte_slot_3, text: "", text_font: mdi_font_alert, hidden: true }
-                    - !include { file: ui_components/central_bouton.yaml, vars: { id: btn_alerts_mf_tap, appui: [ script.execute: tab5_central_panel_next ] } }
+                    - !include { file: ../ui_components/central_bouton.yaml, vars: { id: btn_alerts_mf_tap, appui: [ script.execute: tab5_central_panel_next ] } }
 
               # Pluie Wrapper
               - obj:
@@ -367,15 +369,15 @@ lvgl:
                                 flex_align_main: CENTER
                                 flex_align_cross: END
                               widgets:
-                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 0, w: 25 } }
-                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 1, w: 25 } }
-                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 2, w: 25 } }
-                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 3, w: 25 } }
-                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 4, w: 25 } }
-                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 5, w: 25 } }
-                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 6, w: 55 } }
-                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 7, w: 55 } }
-                                - !include { file: ui_components/rain_bar.yaml, vars: { n: 8, w: 55 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 0, w: 25 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 1, w: 25 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 2, w: 25 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 3, w: 25 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 4, w: 25 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 5, w: 25 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 6, w: 55 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 7, w: 55 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 8, w: 55 } }
                           - obj:
                               width: SIZE_CONTENT
                               height: 100%
@@ -390,7 +392,7 @@ lvgl:
                                 - label: { id: lbl_proc_pluie, text: "Synchronisation...", styles: [style_police_date, style_bandeau_text_soft], pad_bottom: 15 }
                                 - label: { id: lbl_pluie_val, text: "", styles: [style_police_date, style_bandeau_text_rain_value], pad_bottom: 10 }
                                 - label: { id: lbl_pluie_unit, text: "", styles: [style_police_date, style_bandeau_text_soft], pad_bottom: 15 }
-                    - !include { file: ui_components/central_bouton.yaml, vars: { id: btn_rain_tap, appui: [ script.execute: tab5_central_panel_next ] } }
+                    - !include { file: ../ui_components/central_bouton.yaml, vars: { id: btn_rain_tap, appui: [ script.execute: tab5_central_panel_next ] } }
 
               # Réponse vocale IA (remplace le rotateur 8s le temps de l'affichage)
               - obj:
@@ -419,7 +421,7 @@ lvgl:
                   scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   widgets:
                     - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, styles: [style_police_date, style_bandeau_text_soft] }
-                    - !include { file: ui_components/central_bouton.yaml, vars: { id: btn_planning_tap, appui: [ script.execute: tab5_central_panel_next ] } }
+                    - !include { file: ../ui_components/central_bouton.yaml, vars: { id: btn_planning_tap, appui: [ script.execute: tab5_central_panel_next ] } }
 
               # Titre de page previsions (pages horaires / journalieres, masque sur accueil),
               # rempli par update_central_forecast_page_ui() (tab5_central.cpp) : une ligne,
@@ -470,16 +472,16 @@ lvgl:
                   hidden: true
                   widgets:
                     - label: { id: lbl_info_text, text: "", align: CENTER, styles: [style_police_date, style_bandeau_text_soft] }
-                    - !include { file: ui_components/central_bouton.yaml, vars: { id: btn_info_tap, appui: [ script.execute: tab5_dismiss_info_tap ] } }
+                    - !include { file: ../ui_components/central_bouton.yaml, vars: { id: btn_info_tap, appui: [ script.execute: tab5_dismiss_info_tap ] } }
 
               # Alertes HA individuelles (panneaux 4-7, tap = lu définitif + ligne suivante)
-              - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 0 } }
+              - !include { file: ../ui_components/ha_alert_panel.yaml, vars: { n: 0 } }
 
-              - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 1 } }
+              - !include { file: ../ui_components/ha_alert_panel.yaml, vars: { n: 1 } }
 
-              - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 2 } }
+              - !include { file: ../ui_components/ha_alert_panel.yaml, vars: { n: 2 } }
 
-              - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 3 } }
+              - !include { file: ../ui_components/ha_alert_panel.yaml, vars: { n: 3 } }
 
         # ==================== PAGINATION BARS ====================
         # Zone de pagination (points de navigation des pages forecast).
@@ -505,37 +507,64 @@ lvgl:
               - obj: { id: pbar_3, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
               - obj: { id: pbar_4, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
 
+        # ==================== PRÉVISIONS PÉRIMÉES ====================
+        # Mention au-dessus des tuiles, à droite (08/10/2026) : masquée tant que les
+        # prévisions arrivent ; sinon « Prévisions de 11 h 42 », posé et montré par
+        # previsions_fraicheur_tick() (tab5_forecast.cpp). Bande libre de 25 px entre la
+        # carte centrale (bas à 416) et les onglets des tuiles (haut à 442), à droite des
+        # points de pagination (x 480-790). Non cliquable : un geste qui part là reste
+        # un swipe des prévisions.
+        - obj:
+            id: previsions_perimees
+            x: 800
+            y: 416
+            width: 455
+            height: 26
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+            clickable: false
+            hidden: true
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: END
+              flex_align_cross: CENTER
+              pad_column: 6
+            widgets:
+              - label: { id: icon_previsions_perimees, text: "\U000F05CE", text_font: mdi_font_26, styles: style_text_warning }
+              - label: { id: lbl_previsions_perimees, text: "", styles: style_text_dim }
+
         # ==================== BOTTOM CARDS (FORECAST) ====================
 
         # --- °CK 1: J0 to J4 ---
 
-        - !include ui_components/forecast_daily.yaml
-        - !include ui_components/forecast_hourly.yaml
-        - !include ui_components/switches_card.yaml
+        - !include ../ui_components/forecast_daily.yaml
+        - !include ../ui_components/forecast_hourly.yaml
+        - !include ../ui_components/switches_card.yaml
         # Liste de la tuile − / + (ADR-0033) : au-dessus des cartes, sous les popups.
-        - !include ui_components/reglables_liste.yaml
+        - !include ../ui_components/reglables_liste.yaml
         # Roue d'actions rapides (ADR-0036) : au-dessus des cartes, sous les popups (« Détails »).
-        - !include ui_components/roue_actions.yaml
-        - !include ui_components/climate_popup.yaml
-        - !include ui_components/light_popup.yaml
-        - !include ui_components/volet_popup.yaml
-        - !include ui_components/appareil_popup.yaml
-        - !include ui_components/tv_remote_popup.yaml
-        - !include ui_components/pots_popup.yaml
-        - !include ui_components/energie_popup.yaml
-        - !include ui_components/reglages_popup.yaml
-        - !include ui_components/historique_popup.yaml
-        - !include ui_components/alertes_popup.yaml
+        - !include ../ui_components/roue_actions.yaml
+        - !include ../ui_components/climate_popup.yaml
+        - !include ../ui_components/light_popup.yaml
+        - !include ../ui_components/volet_popup.yaml
+        - !include ../ui_components/appareil_popup.yaml
+        - !include ../ui_components/tv_remote_popup.yaml
+        - !include ../ui_components/pots_popup.yaml
+        - !include ../ui_components/energie_popup.yaml
+        - !include ../ui_components/reglages_popup.yaml
+        - !include ../ui_components/historique_popup.yaml
+        - !include ../ui_components/alertes_popup.yaml
         # Popup Maison (ADR-0037) : passe derrière un popup ouvert depuis une de ses lignes.
-        - !include ui_components/maison_popup.yaml
-        - !include ui_components/calendar_popup.yaml
-        - !include ui_components/assistant_popup.yaml
-        - !include ui_components/alarm_popup.yaml
+        - !include ../ui_components/maison_popup.yaml
+        - !include ../ui_components/calendar_popup.yaml
+        - !include ../ui_components/assistant_popup.yaml
+        - !include ../ui_components/alarm_popup.yaml
         # EN DERNIER, volontairement : l'ordre de déclaration est l'ordre de
         # dessin LVGL, et l'écran de sonnerie doit couvrir toutes les fenêtres
         # ci-dessus. `lv_obj_move_to_index(…, -1)` le confirme à chaque affichage,
         # mais partir déjà au bon rang évite un cadre de clignotement.
-        - !include ui_components/alarm_ring_overlay.yaml
+        - !include ../ui_components/alarm_ring_overlay.yaml
         # ═══ Les 8 jeux + le sélecteur arcade vivent désormais dans leurs
         # propres pages LVGL (page_arcade, page_marble, … page_pinball).
         # Voir ci-dessous. ═══
@@ -551,60 +580,60 @@ lvgl:
       skip: true
       scrollbar_mode: "OFF"
       widgets:
-        - !include ui_components/game_selector.yaml
+        - !include ../ui_components/game_selector.yaml
 
     # ─── Fil d'Or (marble) ───
     - id: page_marble
       skip: true
       scrollbar_mode: "OFF"
       widgets:
-        - !include ui_components/marble_game.yaml
+        - !include ../ui_components/marble_game.yaml
 
     # ─── Arcanoïde (arkanoid) ───
     - id: page_arkanoid
       skip: true
       scrollbar_mode: "OFF"
       widgets:
-        - !include ui_components/arkanoid_game.yaml
+        - !include ../ui_components/arkanoid_game.yaml
 
     # ─── Neon Apron (pinball — PORTRAIT 720×1280) ───
     - id: page_pinball
       skip: true
       scrollbar_mode: "OFF"
       widgets:
-        - !include ui_components/pinball_game.yaml
+        - !include ../ui_components/pinball_game.yaml
 
     # ─── Coureur d'Or (lode) ───
     - id: page_lode
       skip: true
       scrollbar_mode: "OFF"
       widgets:
-        - !include ui_components/lode_game.yaml
+        - !include ../ui_components/lode_game.yaml
 
     # ─── Go Tab ───
     - id: page_go
       skip: true
       scrollbar_mode: "OFF"
       widgets:
-        - !include ui_components/go_game.yaml
+        - !include ../ui_components/go_game.yaml
 
     # ─── Trial Poursuite (trivia) ───
     - id: page_trivia
       skip: true
       scrollbar_mode: "OFF"
       widgets:
-        - !include ui_components/trivia_game.yaml
+        - !include ../ui_components/trivia_game.yaml
 
     # ─── Roi Noir (chess) ───
     - id: page_chess
       skip: true
       scrollbar_mode: "OFF"
       widgets:
-        - !include ui_components/chess_game.yaml
+        - !include ../ui_components/chess_game.yaml
 
     # ─── Dames Tab (draughts) ───
     - id: page_draughts
       skip: true
       scrollbar_mode: "OFF"
       widgets:
-        - !include ui_components/draughts_game.yaml
+        - !include ../ui_components/draughts_game.yaml

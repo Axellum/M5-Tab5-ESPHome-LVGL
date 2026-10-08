@@ -19,7 +19,7 @@ UBSAN = """\x1b[0;32m[I][app:100]: Running through setup()...\x1b[0m
 src/tab5_cards.cpp:347:50: runtime error: 2.56256e+32 is outside the range of representable values of type 'int'
     #0 0x5581 in popup_consigne_ui src/tab5_cards.cpp:347
     #1 0x5582 in clim_blueprint_recu(float, float) src/tab5_cards.cpp:645
-    #2 0x5583 in operator() Tab5/tab5-api-logic.yaml:206
+    #2 0x5583 in operator() Tab5/paquets/tab5-api-logic.yaml:206
 \x1b[0;33m[W][api:436]: Home Assistant event 'esphome.tab5_zones' dropped\x1b[0m
 .piolibdeps/tab5-rendu/lvgl/src/misc/lv_math.c:431:13: runtime error: signed integer overflow: 30 - -2147483648 cannot be represented in type 'int'
     #0 0x5591 in lv_map .piolibdeps/tab5-rendu/lvgl/src/misc/lv_math.c:431
@@ -38,7 +38,7 @@ def test_rapports_ubsan_et_leur_pile():
     blocs = rapports.extraire(UBSAN)
     assert len(blocs) == 2
     assert blocs[0].startswith("src/tab5_cards.cpp:347:50: runtime error")
-    assert "#2 0x5583 in operator() Tab5/tab5-api-logic.yaml:206" in blocs[0]
+    assert "#2 0x5583 in operator() Tab5/paquets/tab5-api-logic.yaml:206" in blocs[0]
     assert "[W][api" not in blocs[0]  # la pile s'arrête à la première ligne de journal
     assert "lv_map" in blocs[1] and "value_update" in blocs[1]
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""tools/gen_i18n.py — génère Tab5/tab5_i18n_data.h depuis Tab5/lang/*.yaml.
+"""tools/gen_i18n.py — génère Tab5/socle/tab5_i18n_data.h depuis Tab5/lang/*.yaml.
 
 [AI-CONTEXT] Traduction de l'écran façon gettext : le texte FRANÇAIS du code est la
 clé. `tr("Calendrier")` renvoie « Calendar » en anglais, et le texte d'origine si la
@@ -7,11 +7,11 @@ langue est le français ou si la traduction manque. Ajouter une langue = copier
 Tab5/lang/en.yaml, changer `_langue`, `_code` et `_index` (le suivant, jamais un
 index déjà pris : la tablette mémorise l'index du sélecteur), traduire, puis :
 
-    python tools/gen_i18n.py           # réécrit Tab5/tab5_i18n_data.h
+    python tools/gen_i18n.py           # réécrit Tab5/socle/tab5_i18n_data.h
     python tools/gen_i18n.py --check   # exit 1 si le fichier généré n'est plus à jour
 
 et ajouter le nom de la langue aux `options:` du select « Langue »
-(Tab5/tab5-ha-controls.yaml), dans l'ordre des index. tests/test_i18n.py vérifie
+(Tab5/paquets/tab5-ha-controls.yaml), dans l'ordre des index. tests/test_i18n.py vérifie
 le reste (clés utilisées, formats printf, glyphes des polices).
 
 Format d'un fichier de langue : un mapping YAML plat `"texte français": "traduction"`.
@@ -34,7 +34,7 @@ import yaml
 
 REPO = Path(__file__).resolve().parent.parent
 LANG_DIR = REPO / "Tab5" / "lang"
-OUT = REPO / "Tab5" / "tab5_i18n_data.h"
+OUT = REPO / "Tab5" / "socle" / "tab5_i18n_data.h"
 SEP = "|"
 REPLI = "en"   # langue de repli des langues partielles (doit rester complète)
 
@@ -136,7 +136,7 @@ def main(argv: list[str]) -> int:
     if "--check" in argv:
         actual = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
         if actual.replace("\r\n", "\n") != text:
-            print("❌ Tab5/tab5_i18n_data.h n'est pas à jour : python tools/gen_i18n.py")
+            print("❌ Tab5/socle/tab5_i18n_data.h n'est pas à jour : python tools/gen_i18n.py")
             return 1
         print(f"✅ tab5_i18n_data.h à jour ({len(langs)} langues)")
         return 0

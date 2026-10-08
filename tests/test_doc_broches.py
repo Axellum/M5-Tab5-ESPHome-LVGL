@@ -15,13 +15,13 @@ import re
 
 import pytest
 import yaml
-from tests.commun import ChargeurSansBalises as _Chargeur
+from tests.commun import ChargeurSansBalises as _Chargeur, sources
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 DOC = REPO / "docs" / "hardware.md"
 # Toutes les broches du firmware sont dans ces fichiers : le point d'entrée et ses
-# packages (Tab5/*.yaml). Les ecran-*.yaml n'en ont pas (le modèle d'écran s'en charge).
-FICHIERS = [REPO / "tab5-ha-hmi.yaml", *sorted((REPO / "Tab5").glob("*.yaml"))]
+# packages (Tab5/paquets/*.yaml). Les ecran-*.yaml n'en ont pas (le modèle d'écran s'en charge).
+FICHIERS = [REPO / "tab5-ha-hmi.yaml", *sources("*.yaml")]
 
 # En-tête exact de chaque tableau : un seul par langue dans hardware.md.
 ENTETES = {

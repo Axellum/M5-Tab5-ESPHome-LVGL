@@ -2,7 +2,7 @@
  * [AI-CONTEXT]
  * @file tab5_economie.h
  * @role Mode économie d'énergie (06/10/2026, demande d'Axel) : la logique PURE. Le select
- *       « Tab5 Économie d'énergie » (Tab5/tab5-economie.yaml) choisit Jamais / Sur
+ *       « Tab5 Économie d'énergie » (Tab5/paquets/tab5-economie.yaml) choisit Jamais / Sur
  *       batterie (défaut) / Toujours. Actif, le mode :
  *         - plafonne la luminosité à kEcoPlafond, et la baisse au plus bas
  *           (kEcoPlancher, le minimum du curseur des Réglages) après kEcoAssombrirMs

@@ -32,8 +32,8 @@ def _constante(source, nom):
     return int(m.group(1).strip(), 0)
 
 
-TUILES_CPP = _lire("Tab5", "tab5_tuiles.cpp")
-RANGEE_CPP = _lire("Tab5", "tab5_rangee.cpp")
+TUILES_CPP = _lire("Tab5", "ecran", "tab5_tuiles.cpp")
+RANGEE_CPP = _lire("Tab5", "ecran", "tab5_rangee.cpp")
 TOUR = _constante(TUILES_CPP, "kTourCentralS")
 
 
@@ -46,7 +46,7 @@ def _entrees():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_la_rangee_tourne_juste_avant_la_carte_centrale():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "paquets", "tab5-scripts.yaml")
     rotateur = scripts.split("  - id: tab5_central_rotator_auto\n", 1)[1].split("\n  - id:", 1)[0]
     etapes = re.findall(r"- delay: (\d+)ms|rangee_tour\(\);|advance_central_panel_rotator\(", rotateur)
     # [7800, rangee_tour, 200, advance] : findall rend '' pour les deux appels.
@@ -268,7 +268,7 @@ def test_le_rendu_capture_les_lignes_et_revient_a_la_premiere():
         appuis = [e for e in ecran.etapes + ecran.fermer if e == ecrans.Toucher(*ecrans.SOUS_HORLOGE)]
         assert len(ecran.etapes) == n - 1 and len(appuis) == lignes, ecran
     # La zone touchée est celle de btn_rangee (tab5-lvgl.yaml : TOP_MID, y 244, 401 × 70).
-    lvgl = _lire("Tab5", "tab5-lvgl.yaml")
+    lvgl = _lire("Tab5", "paquets", "tab5-lvgl.yaml")
     bloc = lvgl.split("id: btn_rangee", 1)[1].split("\n          - ", 1)[0]
     y, largeur, hauteur = (int(re.search(rf"{c}: (\d+)", bloc).group(1)) for c in ("y", "width", "height"))
     x0 = 640 - largeur // 2

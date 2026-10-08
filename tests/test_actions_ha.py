@@ -22,7 +22,7 @@ import re
 from pathlib import Path
 
 import yaml
-from tests.commun import ChargeurSansBalises as _Chargeur
+from tests.commun import ChargeurSansBalises as _Chargeur, sources
 
 REPO = Path(__file__).resolve().parent.parent
 PACKAGES = REPO / "HomeAssistant_Config" / "packages"
@@ -60,7 +60,7 @@ EMISSION = re.compile(r"homeassistant\.event:\s*\n\s*event:\s*['\"]?(esphome\.[a
 def _fichiers_firmware():
     tab5 = REPO / "Tab5"
     return ([REPO / "tab5-ha-hmi.yaml", REPO / "tab5-rendu-host.yaml"]
-            + sorted(tab5.glob("*.yaml")) + sorted((tab5 / "ui_components").glob("*.yaml"))
+            + sources("*.yaml") + sorted((tab5 / "ui_components").glob("*.yaml"))
             + sorted((tab5 / "rendu").glob("*.yaml")))
 
 
@@ -127,7 +127,7 @@ def test_plus_aucune_entite_ha_nommee_par_le_firmware():
     fautifs = [chemin.relative_to(REPO).as_posix() for chemin in _fichiers_firmware()
                if "${entity_" in _sans_commentaires(chemin.read_text(encoding="utf-8"))]
     assert not fautifs, fautifs
-    substitutions = (_charger(REPO / "Tab5" / "tab5-scripts.yaml").get("substitutions") or {})
+    substitutions = (_charger(REPO / "Tab5" / "paquets" / "tab5-scripts.yaml").get("substitutions") or {})
     assert not [k for k in substitutions if k.startswith("entity_")]
 
 

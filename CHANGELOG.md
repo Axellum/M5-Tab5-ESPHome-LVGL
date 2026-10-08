@@ -36,6 +36,49 @@ de la tuile − / + (#379).
   `tools/rendu/ecrans.py` (une capture par page). Notice, `docs/screens.md`,
   `docs/installation/settings.md`, `docs/architecture.md`. Pas encore essayé sur la tablette.
 
+### 2026-10-08 — Rangement de `Tab5/` en sous-dossiers
+
+Aucun changement visible ni de comportement : le firmware généré est le même, seuls les
+chemins changent.
+
+- **Les 116 fichiers de la racine de `Tab5/` rangés en quatre dossiers** (`git mv`,
+  historique gardé) : `socle/` (le C++ pur, compilé et testé sur PC sans ESPHome ni LVGL),
+  `ecran/` (la couche LVGL, dont `tab5_custom.h`), `jeux/` (les huit consoles et
+  `game_common.h`), `paquets/` (les paquets ESPHome : `tab5-*.yaml`, `ecran-*.yaml`,
+  `publication-*.yaml`). Les trois polices d'icônes et la licence de ChessPieces rejoignent
+  `fonts/`. Restent à la racine : `README.md`, `user_entities*.yaml`, `tuiles_icones.yaml`.
+  La table de correspondance est dans `CARTOGRAPHIE_TAB5.md` (§ 1) et dans `Tab5/README.md`.
+- **Aucun `#include` ne change** : ESPHome copie à plat chaque fichier de `includes:`, d'où
+  des noms uniques entre dossiers. Un paquet inclut ses composants par `../ui_components/`.
+- **Outils et tests** : `tools/tab5_sources.py` trouve une source où qu'elle soit rangée
+  (les globs sur la racine de `Tab5/` ne trouveraient plus rien) ; `tests/test_rangement.py`
+  garde le rangement (racine vide, noms uniques, `includes:` existants, `socle/` pur). Les
+  compilations g++ de la CI prennent `-I Tab5/socle` et `-I Tab5/jeux`.
+- **Un en-tête par module** : `tab5_custom.h` (1 583 lignes) devient l'en-tête parapluie qui
+  inclut 22 en-têtes de `Tab5/ecran/`, un par module (`tab5_forecast.h`, `tab5_clim.h`,
+  `tab5_zones.h`… à côté de leur `.cpp`). Les déclarations sont recopiées telles quelles (mêmes
+  lignes, même ordre dans chaque module) ; les lambdas et les unités n'incluent toujours que
+  `tab5_custom.h`. Les deux configurations listent les nouveaux en-têtes sous `includes:`.
+  Les tests qui y cherchaient une déclaration lisent `contrat()` (`tools/tab5_sources.py`),
+  la règle 12 des règles de code aussi (mêmes 210 fonctions publiques).
+- **`AGENTS.md`** : l'état vrai de `tab5_maj_planning` (obsolète, aucun appelant ni dans le
+  dépôt ni dans le Home Assistant de l'auteur, gardé jusqu'à une future version majeure).
+
+Les anciens chemins restent tels quels dans les entrées plus anciennes de ce fichier.
+
+### 2026-10-08 — Météo : mention « prévisions périmées » au-dessus des tuiles
+
+- **Prévisions qui n'arrivent plus, dites à l'écran** : après l'incident du 07-08/10
+  (Météo-France figée de 21 h 04 à 11 h 34, puis indisponible), la tablette retient
+  l'heure de chaque poussée des prévisions (jours ou heures). Sans poussée depuis plus de
+  30 min (Home Assistant en pousse toutes les 10 min), une ligne discrète s'affiche
+  au-dessus des tuiles, à droite, avec une horloge : « Prévisions de 11 h 42 »,
+  « Prévisions d'hier 21 h 04 » ou « Prévisions vieilles de 3 jours ». En temps normal,
+  rien ne change ; rien non plus avant la première poussée, heure non réglée, ni en mode
+  appareils. Contrat inchangé (aucune variable ajoutée). Limite : une source figée que
+  Home Assistant continue de pousser n'est pas vue par la tablette, c'est à HA de cesser
+  de la pousser. Nouvelle scène du rendu hors tablette, `accueil-previsions-perimees`.
+
 ### 2026-10-08 — Code des tuiles regroupé et découpé (lot L7)
 
 Aucun changement visible voulu ; le code des tuiles se lit et se modifie en un seul endroit par

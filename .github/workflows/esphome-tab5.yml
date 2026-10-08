@@ -86,8 +86,8 @@ jobs:
               - '!**/*.md'
             ecrans:
               - 'tab5-ha-hmi.yaml'
-              - 'Tab5/tab5-hardware.yaml'
-              - 'Tab5/ecran-*.yaml'
+              - 'Tab5/paquets/tab5-hardware.yaml'
+              - 'Tab5/paquets/ecran-*.yaml'
               - '.github/workflows/esphome-tab5.yml'
 
   python:
@@ -137,8 +137,8 @@ jobs:
         # tourne qu'ici. Seul test du moteur Go depuis le 08/10/2026 (son miroir
         # Python, en double, est retiré : OUT-2 de l'audit du 07/10/2026).
         run: |
-          g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o "$RUNNER_TEMP/test_go_engine" \
-            tools/test_go_engine.cpp Tab5/go_engine.cpp
+          g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/jeux -o "$RUNNER_TEMP/test_go_engine" \
+            tools/test_go_engine.cpp Tab5/jeux/go_engine.cpp
           "$RUNNER_TEMP/test_go_engine"
       # Échecs et dames : les vrais moteurs contre les perft de référence, sous ASan + UBSan
       # (OUT-2 de l'audit du 07/10/2026 : chess_ai.cpp avait changé de +255/−145 lignes
@@ -149,8 +149,8 @@ jobs:
       - name: Moteur d'échecs C++ (le vrai chess_ai.cpp contre la suite perft)
         run: |
           g++ -std=c++17 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
-            -Wall -Wextra -I tools/hote -I Tab5/rendu/hote -I Tab5 -o "$RUNNER_TEMP/test_chess_engine" \
-            tools/test_chess_engine.cpp Tab5/chess_ai.cpp Tab5/tab5_i18n.cpp
+            -Wall -Wextra -I tools/hote -I Tab5/rendu/hote -I Tab5/socle -I Tab5/jeux -o "$RUNNER_TEMP/test_chess_engine" \
+            tools/test_chess_engine.cpp Tab5/jeux/chess_ai.cpp Tab5/socle/tab5_i18n.cpp
           "$RUNNER_TEMP/test_chess_engine"
       - name: Moteur de dames C++ (le Draughts::Engine de draughts_game.cpp contre les perft)
         # Le moteur partage son fichier avec l'interface LVGL du jeu : son bloc pur en est
@@ -158,22 +158,22 @@ jobs:
         run: |
           python tools/hote/extraire_moteur_dames.py "$RUNNER_TEMP/hote/draughts_moteur_extrait.inc"
           g++ -std=c++17 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
-            -Wall -Wextra -I tools/hote -I "$RUNNER_TEMP/hote" -I Tab5 -o "$RUNNER_TEMP/test_draughts_engine" \
+            -Wall -Wextra -I tools/hote -I "$RUNNER_TEMP/hote" -I Tab5/socle -I Tab5/jeux -o "$RUNNER_TEMP/test_draughts_engine" \
             tools/test_draughts_engine.cpp
           "$RUNNER_TEMP/test_draughts_engine"
       - name: Moteur du réveil C++ (alarm_clock.cpp + tab5_core.cpp + tab5_i18n.cpp, horloge simulée)
         # Le réveil doit sonner sans Home Assistant : son moteur est pur (lot 8b)
         # et se teste ici, fuseau Europe/Paris, changements d'heure compris.
         run: |
-          g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o "$RUNNER_TEMP/test_alarm_clock" \
-            tools/test_alarm_clock.cpp Tab5/alarm_clock.cpp Tab5/tab5_core.cpp Tab5/tab5_i18n.cpp
+          g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o "$RUNNER_TEMP/test_alarm_clock" \
+            tools/test_alarm_clock.cpp Tab5/socle/alarm_clock.cpp Tab5/socle/tab5_core.cpp Tab5/socle/tab5_i18n.cpp
           "$RUNNER_TEMP/test_alarm_clock"
       - name: Socle C++ commun (tab5_champs.cpp + tab5_core.cpp, géométrie, modèle des tuiles)
         # Lecture bornée des payloads, dates et heures « HH:MM », ce que les tuiles
         # partagent (audit du 07/10/2026, lot L5) : pur, testé ici comme le réveil.
         run: |
-          g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o "$RUNNER_TEMP/test_tab5_socle" \
-            tools/test_tab5_socle.cpp Tab5/tab5_champs.cpp Tab5/tab5_core.cpp Tab5/tab5_i18n.cpp
+          g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o "$RUNNER_TEMP/test_tab5_socle" \
+            tools/test_tab5_socle.cpp Tab5/socle/tab5_champs.cpp Tab5/socle/tab5_core.cpp Tab5/socle/tab5_i18n.cpp
           "$RUNNER_TEMP/test_tab5_socle"
       - name: Payloads du mode démo conformes au contrat firmware
         run: python tools/demo/demo_pusher.py --dry-run
@@ -295,7 +295,7 @@ jobs:
           version: ${{ steps.plancher.outputs.version }}
 
   # Révisions du Tab5 absentes de la tablette d'Axel (docs/hardware.md) : on vérifie
-  # seulement que leurs fichiers Tab5/ecran-*.yaml compilent encore. Même compilation
+  # seulement que leurs fichiers Tab5/paquets/ecran-*.yaml compilent encore. Même compilation
   # que `build` (image `latest`), la révision ajoutée au user_entities.yaml factice.
   # Cache de `build` restauré mais jamais sauvegardé : les objets sont presque tous
   # communs, et trois jobs n'écrasent pas le même cache. Pas d'artefact : un binaire

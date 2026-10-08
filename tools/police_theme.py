@@ -171,7 +171,7 @@ def langues() -> list[dict]:
 def dates() -> list[str]:
     """Toutes les dates possibles sous l'horloge, en français et dans chaque langue."""
     regles = _check_rules()
-    src = regles.strip_cpp_comments((TAB5 / "tab5_core.cpp").read_text(encoding="utf-8"))
+    src = regles.strip_cpp_comments((TAB5 / "socle" / "tab5_core.cpp").read_text(encoding="utf-8"))
     jours = regles._c_literals(re.search(r"fr_day_short_utf8\(int wday\)\s*\{.*?days\[\] = \{(.*?)\};",
                                          src, re.S).group(1))
     mois = re.search(r"clock_month_short_utf8\(int month\)\s*\{.*?months\[\] = \{(.*?)\};", src, re.S).group(1)

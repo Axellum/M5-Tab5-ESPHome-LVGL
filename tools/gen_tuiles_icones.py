@@ -4,8 +4,8 @@
 [AI-CONTEXT] Source unique : Tab5/tuiles_icones.yaml (code de palette, glyphe éteint /
 allumé, noms `mdi:` représentés, défauts par type de tuile et par domaine HA). Écrit :
 
-  (a) Tab5/tab5_tuiles_icones.h — la table C++ et `tuile_icone(code, actif, type)` ;
-  (b) Tab5/tab5-styles.yaml — les glyphes de la palette dans mdi_font_70, mdi_font_45 et
+  (a) Tab5/socle/tab5_tuiles_icones.h — la table C++ et `tuile_icone(code, actif, type)` ;
+  (b) Tab5/paquets/tab5-styles.yaml — les glyphes de la palette dans mdi_font_70, mdi_font_45 et
       mdi_font_32, entre `# >>> tuiles` et `# <<< tuiles` (sans ceux que la police liste
       déjà à la main au-dessus : ESPHome refuse un glyphe en double) ;
   (c) le blueprint tab5_emplacements.yaml — `icones_mdi` (« mdi:nom » → code) et
@@ -36,11 +36,11 @@ import yaml
 
 REPO = Path(__file__).resolve().parent.parent
 SOURCE = REPO / "Tab5" / "tuiles_icones.yaml"
-ENTETE = REPO / "Tab5" / "tab5_tuiles_icones.h"
-STYLES = REPO / "Tab5" / "tab5-styles.yaml"
+ENTETE = REPO / "Tab5" / "socle" / "tab5_tuiles_icones.h"
+STYLES = REPO / "Tab5" / "paquets" / "tab5-styles.yaml"
 BLUEPRINT = REPO / "HomeAssistant_Config" / "blueprints" / "automation" / "tab5" / "tab5_emplacements.yaml"
 DOC = REPO / "docs" / "tiles_icons.md"
-TTF = REPO / "Tab5" / "materialdesignicons-webfont.ttf"
+TTF = REPO / "Tab5" / "fonts" / "materialdesignicons-webfont.ttf"
 
 # Polices des widgets qui affichent la palette : cartes du mode HA (icon_sw*, 70 px),
 # sélecteur du popup lumière (icon_light_sel_*, 45 px), épaules des tuiles (icon_card_*, 32 px).

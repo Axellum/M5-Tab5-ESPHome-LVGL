@@ -8,9 +8,12 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1052;
+static const uint16_t kI18nKeyCount = 1055;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1752,6 +1755,9 @@ static const char* const kI18nKeys[] = {
     "Progressif",
     "Proposer nulle",
     "Présent",
+    "Prévisions d'hier %d h %02d",
+    "Prévisions de %d h %02d",
+    "Prévisions vieilles de %d jours",
     "Prévu",
     "Prêt",
     "Purement cosmétique",
@@ -2808,6 +2814,9 @@ static const char* const kI18n_en[] = {
     "Gradual",  // "Progressif"
     "Offer a draw",  // "Proposer nulle"
     "Home",  // "Présent"
+    "Forecast from yesterday %d:%02d",  // "Prévisions d'hier %d h %02d"
+    "Forecast from %d:%02d",  // "Prévisions de %d h %02d"
+    "Forecast %d days old",  // "Prévisions vieilles de %d jours"
     "Forecast",  // "Prévu"
     "Ready",  // "Prêt"
     "Purely cosmetic",  // "Purement cosmétique"
@@ -3864,6 +3873,9 @@ static const char* const kI18n_de[] = {
     "Ansteigend",  // "Progressif"
     "Remis anbieten",  // "Proposer nulle"
     "Anwesend",  // "Présent"
+    "Vorhersage von gestern %d:%02d",  // "Prévisions d'hier %d h %02d"
+    "Vorhersage von %d:%02d",  // "Prévisions de %d h %02d"
+    "Vorhersage %d Tage alt",  // "Prévisions vieilles de %d jours"
     "Prognose",  // "Prévu"
     "Bereit",  // "Prêt"
     "Rein kosmetisch",  // "Purement cosmétique"
@@ -4920,6 +4932,9 @@ static const char* const kI18n_nl[] = {
     "Oplopend",  // "Progressif"
     "Remise aanbieden",  // "Proposer nulle"
     "Aanwezig",  // "Présent"
+    "Verwachting van gisteren %d:%02d",  // "Prévisions d'hier %d h %02d"
+    "Verwachting van %d:%02d",  // "Prévisions de %d h %02d"
+    "Verwachting %d dagen oud",  // "Prévisions vieilles de %d jours"
     "Verwacht",  // "Prévu"
     "Klaar",  // "Prêt"
     "Puur cosmetisch",  // "Purement cosmétique"
@@ -5976,6 +5991,9 @@ static const char* const kI18n_es[] = {
     "Progresivo",  // "Progressif"
     "Ofrecer tablas",  // "Proposer nulle"
     "Presente",  // "Présent"
+    "Previsión de ayer %d:%02d",  // "Prévisions d'hier %d h %02d"
+    "Previsión de las %d:%02d",  // "Prévisions de %d h %02d"
+    "Previsión de hace %d días",  // "Prévisions vieilles de %d jours"
     "Prevista",  // "Prévu"
     "Listo",  // "Prêt"
     "Puramente estético",  // "Purement cosmétique"
@@ -7032,6 +7050,9 @@ static const char* const kI18n_it[] = {
     "Progressivo",  // "Progressif"
     "Proponi patta",  // "Proposer nulle"
     "Presente",  // "Présent"
+    "Previsioni di ieri %d:%02d",  // "Prévisions d'hier %d h %02d"
+    "Previsioni delle %d:%02d",  // "Prévisions de %d h %02d"
+    "Previsioni di %d giorni fa",  // "Prévisions vieilles de %d jours"
     "Prevista",  // "Prévu"
     "Pronto",  // "Prêt"
     "Puramente estetico",  // "Purement cosmétique"
@@ -8088,6 +8109,9 @@ static const char* const kI18n_tr[] = {
     "Kademeli",  // "Progressif"
     "Beraberlik öner",  // "Proposer nulle"
     "Evde",  // "Présent"
+    "Dünkü %d:%02d tahmini",  // "Prévisions d'hier %d h %02d"
+    "%d:%02d tahmini",  // "Prévisions de %d h %02d"
+    "%d gün önceki tahmin",  // "Prévisions vieilles de %d jours"
     "Tahmin",  // "Prévu"
     "Hazır",  // "Prêt"
     "Tamamen kozmetik",  // "Purement cosmétique"

@@ -40,7 +40,7 @@ from tests.test_tuiles_blueprint import (
     _rendre,
     _tablette,
 )
-from tests.commun import lire as _lire
+from tests.commun import contrat, lire as _lire, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ADR = os.path.join(REPO, "docs", "decisions", "0026-climate-from-device.md")
@@ -65,11 +65,11 @@ def _corps_fonction(source, nom):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_cle_climr_identique_des_deux_cotes():
-    m = re.search(r'kCleClimReglages\[\] = "(\w+)";', _lire("Tab5", "tab5_zones.cpp"))
+    m = re.search(r'kCleClimReglages\[\] = "(\w+)";', _lire("Tab5", "ecran", "tab5_zones.cpp"))
     assert m and m.group(1) == "climr"
     assert "'climr|'" in _variables_actions()["clim_reglages"]
     # Routée avant la table des emplacements 3.x, vers clim_reglages_recu().
-    zones = _lire("Tab5", "tab5_zones.cpp")
+    zones = _lire("Tab5", "ecran", "tab5_zones.cpp")
     assert zones.index("kCleClimReglages) == 0") < zones.index("for (size_t i = 0; i < n; i++)")
     assert "clim_reglages_recu(payload.data() + p1 + 1" in zones
 
@@ -85,7 +85,7 @@ def _lettres_adr():
 
 
 def test_lettres_des_capacites_identiques_partout():
-    cartes = _lire("Tab5", "tab5_clim.cpp")
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     firmware = re.findall(r"clim_capacite\('([a-z])'\)", cartes)
     blueprint = _lettres_blueprint()
     assert blueprint == list("chdfebqsw"), "une fois chacune, dans l'ordre de l'ADR"
@@ -102,14 +102,14 @@ def test_lettres_des_capacites_identiques_partout():
     ("clim_oscillation_actif", "clim_oscillation"),
 ])
 def test_modes_actifs_identiques_au_blueprint(fonction, liste):
-    corps = _corps_fonction(_lire("Tab5", "tab5_clim.cpp"), fonction)
+    corps = _corps_fonction(_lire("Tab5", "ecran", "tab5_clim.cpp"), fonction)
     assert set(re.findall(r'== "(\w+)"', corps)) == set(_blueprint()["variables"][liste])
 
 
 def test_bascules_et_coloration_par_les_memes_fonctions():
     # Les bascules du popup sont dans le C++ depuis l'ADR-0027 (elles portent sur la clim
     # affichée) : le YAML les appelle, puis envoie ce qu'elles ont posé.
-    cartes = _lire("Tab5", "tab5_clim.cpp")
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     assert 'f = clim_silence_actif(f) ? std::string("auto") : std::string("quiet");' in \
         _corps_fonction(cartes, "clim_popup_silence")
     assert 's = clim_oscillation_actif(s) ? std::string("stop") : std::string("swing");' in \
@@ -128,7 +128,7 @@ def test_bascules_et_coloration_par_les_memes_fonctions():
     recolor = _corps_fonction(cartes, "clim_recolorer")
     for f in ("clim_eco_actif(preset)", "clim_silence_actif(fan)", "clim_oscillation_actif(swing)"):
         assert f in recolor, f
-    assert "- id: tab5_clim_recolor" not in _lire("Tab5", "tab5-scripts.yaml")
+    assert "- id: tab5_clim_recolor" not in _lire("Tab5", "paquets", "tab5-scripts.yaml")
 
 
 def _sans_commentaires(*chemin):
@@ -147,9 +147,9 @@ def test_plus_de_pas_ni_de_bornes_en_dur_dans_les_boutons():
     popup = _sans_commentaires("Tab5", "ui_components", "climate_popup.yaml")
     assert popup.count("clim_popup_pas(-1)") == 1 and popup.count("clim_popup_pas(+1)") == 1
     assert "clim_target_temp" not in popup and "consigne_suivante(vue_reglages(), base, sens)" in \
-        _corps_fonction(_lire("Tab5", "tab5_clim.cpp"), "clim_popup_pas")
+        _corps_fonction(_lire("Tab5", "ecran", "tab5_clim.cpp"), "clim_popup_pas")
     # Sans climr : 16-30 et 0,5, comme l'arc du YAML.
-    cartes = _lire("Tab5", "tab5_clim.cpp")
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     for defaut in ("float min = 16.0f;", "float max = 30.0f;", "float pas = 0.5f;"):
         assert defaut in cartes, defaut
     popup = _lire("Tab5", "ui_components", "climate_popup.yaml")
@@ -165,7 +165,7 @@ def _y_yaml(texte, ident):
 
 
 def test_positions_des_options_egales_aux_constantes_du_cpp():
-    cartes = _lire("Tab5", "tab5_clim.cpp")
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     k = {n: int(v) for n, v in re.findall(r"constexpr int32_t (kOptions\w+) = (\d+);", cartes)}
     popup = _lire("Tab5", "ui_components", "climate_popup.yaml")
     y = k["kOptionsY0"]
@@ -182,10 +182,10 @@ def test_positions_des_options_egales_aux_constantes_du_cpp():
 
 
 def test_widgets_de_la_clim_poses_avant_toute_poussee():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "paquets", "tab5-scripts.yaml")
     bloc = scripts.split("- id: tab5_clim_ui", 1)[1].split("\n  - id: ", 1)[0]
     champs = re.findall(r"u\.(\w+) = id\(", bloc)
-    struct = re.search(r"struct ClimUI \{(.*?)\};", _lire("Tab5", "tab5_custom.h"), re.S).group(1)
+    struct = re.search(r"struct ClimUI \{(.*?)\};", contrat(), re.S).group(1)
     assert sorted(champs) == sorted(re.findall(r"lv_obj_t\* (\w+) = nullptr;", struct))
     # L'état de la clim du blueprint (ses globals) et les deux débounces (ADR-0027).
     pointeurs = dict(re.findall(r"u\.(\w+_bp) = &id\((\w+)\);", bloc))
@@ -196,7 +196,7 @@ def test_widgets_de_la_clim_poses_avant_toute_poussee():
     assert "u.debounce_blueprint = []() { id(tab5_debounce_clim_temp).execute(); };" in bloc
     assert "u.debounce_tuile = []() { id(tab5_debounce_clim_tuile).execute(); };" in bloc
     # Lancé par tab5_zones_apply (fin du setup, avant la première image).
-    assert "- script.execute: tab5_clim_ui" in _lire("Tab5", "tab5-zones.yaml")
+    assert "- script.execute: tab5_clim_ui" in _lire("Tab5", "paquets", "tab5-zones.yaml")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -412,7 +412,7 @@ def _bloc_etats():
 
 
 def test_cles_cr_et_ce_identiques_des_deux_cotes():
-    cartes = _lire("Tab5", "tab5_clim.cpp")
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     assert 'constexpr char kCleReglagesTuile[] = "cr";' in cartes
     assert 'constexpr char kCleEtatTuile[] = "ce";' in cartes
     etats = _bloc_etats()
@@ -421,17 +421,17 @@ def test_cles_cr_et_ce_identiques_des_deux_cotes():
     # Une seule traduction des réglages : climr et crRT sortent de reglages_clims.
     assert "reglages_clims[clim]" in _variables_actions()["clim_reglages"]
     # Routées avant la table des emplacements 3.x, après les tuiles et climr.
-    corps = _lire("Tab5", "tab5_zones.cpp").split("int emplacements_appliquer(", 1)[1]
+    corps = _lire("Tab5", "ecran", "tab5_zones.cpp").split("int emplacements_appliquer(", 1)[1]
     assert corps.index("tuiles_etat_recu(") < corps.index("clim_reglages_recu(") \
         < corps.index("clim_tuile_recu(") < corps.index("for (size_t i = 0; i < n; i++)")
     # Décrites dans le contrat de l'action.
-    api = _lire("Tab5", "tab5-api-logic.yaml").split("- service: tab5_maj_emplacements", 1)[1].split("- service:", 1)[0]
+    api = _lire("Tab5", "paquets", "tab5-api-logic.yaml").split("- service: tab5_maj_emplacements", 1)[1].split("- service:", 1)[0]
     assert "« crRT|min|max|pas|unité|capacités|nom »" in api
     assert "« ceRT|consigne|pièce|mode|préréglage|ventilation|oscillation »" in api
 
 
 def test_champs_de_ce_dans_l_ordre_de_tab5_maj_clim():
-    api = _lire("Tab5", "tab5-api-logic.yaml").split("- service: tab5_maj_clim", 1)[1].split("\n    - service:", 1)[0]
+    api = _lire("Tab5", "paquets", "tab5-api-logic.yaml").split("- service: tab5_maj_clim", 1)[1].split("\n    - service:", 1)[0]
     assert re.findall(r"^        (\w+):\n          type: string", api, re.M) == \
         ["target", "current", "mode", "preset", "fan", "swing"]
     # Ce que le blueprint envoie à tab5_maj_clim, champ par champ…
@@ -450,7 +450,7 @@ def test_champs_de_ce_dans_l_ordre_de_tab5_maj_clim():
     assert vu == attendu
     assert modele.count("| float('nan')") == 2
     # Le firmware les lit dans cet ordre (consigne, pièce, puis les quatre modes).
-    lire = _corps_fonction(_lire("Tab5", "tab5_clim.cpp"), "lire_etat")
+    lire = _corps_fonction(_lire("Tab5", "ecran", "tab5_clim.cpp"), "lire_etat")
     assert "e.consigne = k > 0 ?" in lire and "e.piece = k > 1 ?" in lire
     assert "std::string* modes[4] = {&e.mode, &e.preset, &e.ventilation, &e.oscillation};" in lire
 
@@ -464,14 +464,14 @@ def test_popup_commande_la_clim_affichee():
     # La carte de l'accueil : la clim du blueprint, par son débounce (emplacement clim).
     carte = _sans_commentaires("Tab5", "ui_components", "climate_card.yaml")
     assert carte.count("- script.execute: tab5_debounce_clim_temp") == 2 and "clim_popup" not in carte
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "paquets", "tab5-scripts.yaml")
     bp = scripts.split("- id: tab5_debounce_clim_temp", 1)[1].split("\n  - id: ", 1)[0]
     assert "emplacement: clim\n" in bp and "clim_consigne_texte(id(clim_target_temp))" in bp
     tuile = scripts.split("- id: tab5_debounce_clim_tuile", 1)[1].split("\n  - id: ", 1)[0]
     assert "emplacement: !lambda 'return clim_tuile_attente_cle();'" in tuile
     assert "valeur: !lambda 'return clim_tuile_attente_texte();'" in tuile
     assert "delay: 250ms" in bp and "delay: 250ms" in tuile and "mode: restart" in tuile
-    cartes = _lire("Tab5", "tab5_clim.cpp")
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     assert 'return vue_tuile() ? s_vue_cle : "clim";' in _corps_fonction(cartes, "clim_affichee_cle")
     # La consigne d'une tuile : clé et valeur prises au geste (popup refermé avant l'envoi).
     geste = _corps_fonction(cartes, "consigne_geste")
@@ -480,12 +480,12 @@ def test_popup_commande_la_clim_affichee():
 
 
 def test_carte_de_l_accueil_reste_la_clim_du_blueprint():
-    cartes = _lire("Tab5", "tab5_clim.cpp")
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     recolor = _corps_fonction(cartes, "clim_recolorer")
     assert "ui_text_color(u.consigne_carte, couleur_consigne(u.mode_bp != nullptr ? *u.mode_bp : kSansMode));" in recolor
     recu = _corps_fonction(cartes, "clim_blueprint_recu")
     assert "carte_consigne_ui(consigne);" in recu and "if (!vue_tuile()) {" in recu
-    api = _lire("Tab5", "tab5-api-logic.yaml").split("- service: tab5_maj_clim", 1)[1].split("\n    - service:", 1)[0]
+    api = _lire("Tab5", "paquets", "tab5-api-logic.yaml").split("- service: tab5_maj_clim", 1)[1].split("\n    - service:", 1)[0]
     assert "clim_blueprint_recu(id(clim_target_temp), tab5_fini_ou_nan(atof(current.c_str())));" in api
     # « inf » reçu = consigne inconnue, jamais convertie en entier (lot A, audit du 30/09/2026).
     assert "id(clim_target_temp) = tab5_fini_ou_nan(atof(target.c_str()));" in api
@@ -497,7 +497,7 @@ def test_carte_de_l_accueil_reste_la_clim_du_blueprint():
 
 
 def test_ouverture_et_fermeture_du_popup():
-    tuiles = "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
+    tuiles = "\n".join(_lire(source(f)) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
     # Le corps de l'appui d'une tuile (tuile_appui le passe à la pièce courante, le popup
     # d'un appareil à la sienne, 06/10/2026).
     appui = tuiles.split("void tuiles::tuile_appui_piece(int r, int t, bool long_appui) {", 1)[1].split("\n}\n", 1)[0]
@@ -509,7 +509,7 @@ def test_ouverture_et_fermeture_du_popup():
     assert "if (d.options & OPT_M) return c;" in tuiles.split("ClimCible clim_cible(const Def& d, int r, int t) {", 1)[1]
     # Une tuile redéfinie oublie sa clim ; ses réglages reçus repeignent la tuile (bouton).
     assert "clim_tuile_oublier(r, t);" in tuiles.split("bool tuiles_definir(", 1)[1].split("\n}\n", 1)[0]
-    cartes = _lire("Tab5", "tab5_clim.cpp")
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     assert "tuiles_repeindre(r, t);" in _corps_fonction(cartes, "clim_tuile_recu")
     assert "if (!clim_tuile_connue(r, t)) return false;" in _corps_fonction(cartes, "clim_afficher_tuile")
     # Retour à la clim du blueprint : croix et voile, carte de l'accueil, « Aller à l'écran ».
@@ -518,7 +518,7 @@ def test_ouverture_et_fermeture_du_popup():
     carte = _lire("Tab5", "ui_components", "climate_card.yaml")
     assert "clim_afficher_blueprint();\n                    animate_popup_open(id(clim_options_popup));" in carte
     assert re.search(r'"Climatisation",\s+ModalRegistry::POPUP,\s+\[\] \{ clim_afficher_blueprint\(\);',
-                     _lire("Tab5", "tab5-navigation.yaml"))
+                     _lire("Tab5", "paquets", "tab5-navigation.yaml"))
     # Popup refermé par close_all() (inactivité) : la clim affichée revient au premier
     # retour de HA, avant qu'il ne soit rangé.
     for f in ("clim_blueprint_recu", "clim_reglages_recu", "clim_tuile_recu"):
@@ -527,7 +527,7 @@ def test_ouverture_et_fermeture_du_popup():
 
 
 def test_table_des_clims_de_tuile_en_psram_a_la_demande():
-    cartes = _lire("Tab5", "tab5_clim.cpp")
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     assert "ClimTuile* s_ct = nullptr;" in cartes
     table = _corps_fonction(cartes, "tuile_clim")
     assert "if (!creer) return nullptr;" in table
@@ -742,11 +742,11 @@ def test_le_pipeline_change_renvoie_les_zones():
 
 
 def test_discussion_masque_les_quatre_boutons():
-    zones = _lire("Tab5", "tab5_zones.cpp")
+    zones = _lire("Tab5", "ecran", "tab5_zones.cpp")
     assert "zone_absente(Zone::DISCUSSION)" in zones
     for champ in ("btn_domo", "btn_discu", "assist_domo", "assist_discu", "assist_cerveau"):
         assert f"u.{champ}" in zones, champ
-    yaml_zones = _lire("Tab5", "tab5-zones.yaml")
+    yaml_zones = _lire("Tab5", "paquets", "tab5-zones.yaml")
     for widget in ("btn_mode_domo", "btn_mode_discu", "btn_assist_pipe_domo", "btn_assist_pipe_discu",
                    "lbl_assist_cerveau"):
         assert f"= id({widget});" in yaml_zones, widget
@@ -755,7 +755,7 @@ def test_discussion_masque_les_quatre_boutons():
 
 
 def test_travail_traduit_dans_le_detail_du_jour():
-    calendrier = _lire("Tab5", "tab5_calendar.cpp")
+    calendrier = _lire("Tab5", "ecran", "tab5_calendar.cpp")
     corps = calendrier.split("void cal_render_day_detail(", 1)[1]
     assert 'strcmp(tok, "travail") == 0' in corps and 'txt.replace(0, 7, tr("Travail"))' in corps
     # C'est bien ce qu'envoie HA (packages/tab5_calendar.yaml).

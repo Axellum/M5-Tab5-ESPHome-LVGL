@@ -2,7 +2,7 @@
 # [AI-CONTEXT]
 # @file lang/tr.yaml — Turkish translation of the Tab5 screen.
 # @role Flat mapping « French text as written in the code » → « Turkish ».
-#       tools/gen_i18n.py turns it into Tab5/tab5_i18n_data.h (see its header for
+#       tools/gen_i18n.py turns it into Tab5/socle/tab5_i18n_data.h (see its header for
 #       adding a language: copy en.yaml, change _langue/_code/_index, translate).
 #       Same keys, same order and same section comments as en.yaml.
 # @ai_instruction
@@ -553,7 +553,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Coffre : %d âmes": "Sandık: %d ruh"
 
 # --- Arcanoïde — brick breaker (arkanoid_game.cpp) -----------------------------
-# Lot 4b — Arcanoïde (Tab5/arkanoid_game.cpp) : français du code → turc.
+# Lot 4b — Arcanoïde (Tab5/jeux/arkanoid_game.cpp) : français du code → turc.
 # « ARCANOIDE » (nom de la console) n'est pas traduit. « Retour » et « Pause »
 # reprennent la traduction commune (Geri / Duraklat).
 # --- Noms des niveaux (LEVEL_NAMES, tr_noop) ---
@@ -682,7 +682,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Nouvelle partie, 3 billes": "Yeni oyun, 3 bilye"
 
 # --- Coureur d'Or — Lode Runner (lode_game.cpp) --------------------------------
-# Coureur d'Or (Tab5/lode_game.cpp) — lot 4b, FR → TR.
+# Coureur d'Or (Tab5/jeux/lode_game.cpp) — lot 4b, FR → TR.
 # « COUREUR D'OR » (nom de la console) n'est pas traduit.
 # --- Vitesses (Reglages > Vitesse, pause) ---
 # Échelle turque : Normal < Canlı < Hızlı < Çok hızlı < Şimşek, choisie pour que les
@@ -918,8 +918,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Menu principal": "Ana menü"
 
 # --- Trial Poursuite — quiz interface; the questions stay French (trivia_game.cpp) ---
-# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/trivia_game.cpp).
-# Les questions et réponses (Tab5/trivia_questions.h) restent en français.
+# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/jeux/trivia_game.cpp).
+# Les questions et réponses (Tab5/jeux/trivia_questions.h) restent en français.
 # Déjà plus haut, non répétées ici : Réglages, Retour, Confirmer, Annuler.
 # Turc : part de camembert = dilim (le « pasta dilimi » du Trivial Pursuit), case =
 # kare, dé = zar, équipe = takım. Le quiz et ses questions restent en français.
@@ -1301,3 +1301,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "%d h %02d": "%d:%02d"
 "Vigilance Rouge": "Kırmızı uyarı"
 "Vigilance Orange": "Turuncu uyarı"
+# Prévisions périmées (mention au-dessus des tuiles, tab5_forecast.cpp, 08/10/2026)
+"Prévisions de %d h %02d": "%d:%02d tahmini"
+"Prévisions d'hier %d h %02d": "Dünkü %d:%02d tahmini"
+"Prévisions vieilles de %d jours": "%d gün önceki tahmin"

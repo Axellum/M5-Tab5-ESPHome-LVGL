@@ -2,7 +2,7 @@
 
 Garde l'id (`va`), lu par les lambdas de l'interface (is_running, is_continuous), et
 déclare ses actions et conditions sans effet. Le reste de la configuration de
-Tab5/tab5-assist.yaml est accepté puis ignoré (ses automatismes ne se déclenchent jamais).
+Tab5/paquets/tab5-assist.yaml est accepté puis ignoré (ses automatismes ne se déclenchent jamais).
 """
 
 import esphome.codegen as cg

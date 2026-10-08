@@ -1,7 +1,7 @@
 """Palette des icônes des tuiles de pièce (ADR-0023, « Icons: one palette, generated »).
 
 Tab5/tuiles_icones.yaml est la source unique ; tools/gen_tuiles_icones.py en tire la table
-C++ (Tab5/tab5_tuiles_icones.h), les glyphes de trois polices MDI (Tab5/tab5-styles.yaml)
+C++ (Tab5/socle/tab5_tuiles_icones.h), les glyphes de trois polices MDI (Tab5/paquets/tab5-styles.yaml)
 et les deux tables du blueprint. Ce qu'aucun compilateur ne voit :
 - une partie générée périmée (la tablette montrerait une icône vide, HA un autre code) ;
 - un glyphe absent d'une des trois polices (carré vide) ou du TTF, un point de code

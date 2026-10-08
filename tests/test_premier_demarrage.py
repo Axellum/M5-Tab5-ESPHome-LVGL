@@ -3,15 +3,15 @@
 
 Le flash par la page d'installation (mode téléchargement, flash effacée) finit par un
 reset du chien de garde RTC : « other watchdogs ». Le firmware le reconnaît (marque NVS
-absente, Tab5/tab5_journal.cpp) et le capteur « Tab5 Raison du redémarrage » publie
+absente, Tab5/ecran/tab5_journal.cpp) et le capteur « Tab5 Raison du redémarrage » publie
 alors « First boot after install (…) », que la garde « reboot inattendu » de
 packages/tab5_health.yaml laisse passer. Ce test tient les deux moitiés du contrat."""
 import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-JOURNAL = REPO / "Tab5" / "tab5_journal.cpp"
-DIAGNOSTICS = REPO / "Tab5" / "tab5-sensors-diagnostics.yaml"
+JOURNAL = REPO / "Tab5" / "ecran" / "tab5_journal.cpp"
+DIAGNOSTICS = REPO / "Tab5" / "paquets" / "tab5-sensors-diagnostics.yaml"
 SANTE = REPO / "HomeAssistant_Config" / "packages" / "tab5_health.yaml"
 
 

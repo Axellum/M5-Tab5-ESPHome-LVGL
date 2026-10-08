@@ -1,5 +1,5 @@
 /**
- * Tests hôte du moteur de réveil (Tab5/alarm_clock.cpp + Tab5/tab5_core.cpp),
+ * Tests hôte du moteur de réveil (Tab5/socle/alarm_clock.cpp + Tab5/socle/tab5_core.cpp),
  * sans ESPHome ni LVGL — audit du 25/09/2026, lot 8b.
  *
  * Le réveil est la seule fonction du Tab5 qui doit marcher sans Home Assistant,
@@ -19,11 +19,11 @@
  * sur batterie au courant de l'INA226, batterie basse, plafond de luminosité.
  *
  * Build & run (CI, job `python`) :
- *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o test_alarm_clock \
- *       tools/test_alarm_clock.cpp Tab5/alarm_clock.cpp Tab5/tab5_core.cpp
+ *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o test_alarm_clock \
+ *       tools/test_alarm_clock.cpp Tab5/socle/alarm_clock.cpp Tab5/socle/tab5_core.cpp
  *   ./test_alarm_clock
  * Le poste de dev n'a qu'un cross-compilateur RISC-V ; vérif locale possible :
- *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -I Tab5 tools/test_alarm_clock.cpp
+ *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -I Tab5/socle tools/test_alarm_clock.cpp
  */
 #include "alarm_clock.h"
 #include "tab5_core.h"

@@ -1,5 +1,5 @@
 /**
- * [AI-CONTEXT] Le VRAI générateur d'échecs (Tab5/chess_ai.cpp, jeu « Roi Noir ») contre la
+ * [AI-CONTEXT] Le VRAI générateur d'échecs (Tab5/jeux/chess_ai.cpp, jeu « Roi Noir ») contre la
  * suite perft standard, puis quelques recherches qui exercent la table de transposition,
  * le découpage en tranches et la libération de la mémoire.
  *
@@ -11,8 +11,8 @@
  * La CI (job `python` d'esphome-tab5.yml) le compile avec g++ sous ASan + UBSan et
  * l'exécute à chaque PR :
  *   g++ -std=c++17 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all \
- *       -Wall -Wextra -I tools/hote -I Tab5/rendu/hote -I Tab5 \
- *       tools/test_chess_engine.cpp Tab5/chess_ai.cpp Tab5/tab5_i18n.cpp -o test_chess_engine
+ *       -Wall -Wextra -I tools/hote -I Tab5/rendu/hote -I Tab5/socle -I Tab5/jeux \
+ *       tools/test_chess_engine.cpp Tab5/jeux/chess_ai.cpp Tab5/socle/tab5_i18n.cpp -o test_chess_engine
  * tools/hote/esphome.h remplace l'en-tête d'ESPHome, Tab5/rendu/hote/esp_heap_caps.h
  * celui d'ESP-IDF. tests/test_moteurs_hote.py tient SUITE égale à celle du miroir Python.
  *
@@ -44,7 +44,7 @@ const Cas SUITE[] = {
 }  // namespace
 
 int main() {
-    std::printf("=== test_chess_engine (Tab5/chess_ai.cpp) ===\n");
+    std::printf("=== test_chess_engine (Tab5/jeux/chess_ai.cpp) ===\n");
     int echecs = 0;
     int positions = 0;
     for (const Cas& c : SUITE) {

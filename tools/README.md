@@ -8,13 +8,13 @@ Ces outils écrivent dans le dépôt **sans option** : à lancer exprès, puis r
 
 | Outil | Réécrit | Quand |
 |---|---|---|
-| `gen_i18n.py` | `Tab5/tab5_i18n_data.h`, depuis `Tab5/lang/*.yaml` | après un nouveau `tr("…")` ou une traduction (`--check` : à jour ?) |
-| `gen_themes.py` | `Tab5/tab5_themes_data.h` et les parties générées de `Tab5/tab5_tokens.h`, `Tab5/tab5-themes.yaml` et `Tab5/tab5_theme.cpp`, depuis `Tab5/themes/*.yaml` | après un thème ou un rôle de couleur (`--check`) |
-| `gen_tuiles_icones.py` | `Tab5/tab5_tuiles_icones.h`, les glyphes de trois polices MDI de `Tab5/tab5-styles.yaml`, deux tables du blueprint | après `Tab5/tuiles_icones.yaml` (`--check`) |
+| `gen_i18n.py` | `Tab5/socle/tab5_i18n_data.h`, depuis `Tab5/lang/*.yaml` | après un nouveau `tr("…")` ou une traduction (`--check` : à jour ?) |
+| `gen_themes.py` | `Tab5/socle/tab5_themes_data.h` et les parties générées de `Tab5/socle/tab5_tokens.h`, `Tab5/paquets/tab5-themes.yaml` et `Tab5/ecran/tab5_theme.cpp`, depuis `Tab5/themes/*.yaml` | après un thème ou un rôle de couleur (`--check`) |
+| `gen_tuiles_icones.py` | `Tab5/socle/tab5_tuiles_icones.h`, les glyphes de trois polices MDI de `Tab5/paquets/tab5-styles.yaml`, deux tables du blueprint | après `Tab5/tuiles_icones.yaml` (`--check`) |
 | `police_theme.py` | `Tab5/themes/_polices.yaml` (télécharge et mesure les polices Google Fonts des thèmes) | après une police de thème, avant `gen_themes.py` |
 | `cartographie_counts.py --write` | les comptes de lignes de `CARTOGRAPHIE_TAB5.md` | quand `pytest` le demande (sans `--write` : vérifie seulement) |
 | `render_ha_config.py` | `HomeAssistant_Config/rendered/` (gitignoré) | copie déployable ; `--check` = garde-fou de fuite, n'écrit rien |
-| `make_chess_font.py` | `Tab5/ChessPieces.ttf` (12 glyphes) | seulement si les pièces d'échecs changent |
+| `make_chess_font.py` | `Tab5/fonts/ChessPieces.ttf` (12 glyphes) | seulement si les pièces d'échecs changent |
 | `rendu/maj_references.py` | les PNG de `docs/images/rendu/` (télécharge les captures d'un run) | quand un changement d'écran voulu doit devenir la référence |
 | `site/images_notice.py` | les images WebP de la notice (`docs/images/notice/`), depuis les captures d'un run du rendu | après un changement d'écran montré par la notice |
 

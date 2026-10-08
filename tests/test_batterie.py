@@ -3,7 +3,7 @@
 
 Le chargeur était allumé à chaque démarrage depuis la 3.6.0 : sans batterie, il
 chargeait dans le vide et faisait un léger souffle continu. Les règles sont dans
-Tab5/tab5_batterie.h (testées sur PC par tools/test_alarm_clock.cpp) ; rien ne compile
+Tab5/socle/tab5_batterie.h (testées sur PC par tools/test_alarm_clock.cpp) ; rien ne compile
 le câblage YAML hors tablette : ce fichier le relit.
 
 - CHG_EN n'est commandé que par l'interval de 1 s (chargeur_pas), qui demande aussi la
@@ -18,6 +18,7 @@ import pathlib
 import re
 
 import yaml
+from tests.commun import source, sources
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
@@ -34,7 +35,7 @@ _Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: chargeur.c
 
 
 def _yaml(nom):
-    return yaml.load((TAB5 / nom).read_text(encoding="utf-8"), Loader=_Chargeur)
+    return yaml.load(source(nom).read_text(encoding="utf-8"), Loader=_Chargeur)
 
 
 def _texte(obj):
@@ -42,7 +43,7 @@ def _texte(obj):
 
 
 def _entete():
-    return (TAB5 / "tab5_batterie.h").read_text(encoding="utf-8")
+    return (TAB5 / "socle" / "tab5_batterie.h").read_text(encoding="utf-8")
 
 
 def _sans_commentaires(code):
@@ -77,7 +78,7 @@ def test_chg_en_commande_par_le_seul_interval_du_chargeur():
                   "id(charge_enable).turn_on()", "id(charge_enable).turn_off()", "id(ina226_batterie).update()"):
         assert motif in code, motif
     # Personne d'autre n'allume ni ne coupe le chargeur (le souffle revenait avec lui).
-    for chemin in sorted(TAB5.glob("*.yaml")) + sorted((TAB5 / "ui_components").glob("*.yaml")):
+    for chemin in sources("*.yaml") + sorted((TAB5 / "ui_components").glob("*.yaml")):
         texte = chemin.read_text(encoding="utf-8")
         appels = len(re.findall(r"id\(charge_enable\)\.turn_(?:on|off)\(\)", texte))
         appels += len(re.findall(r"switch\.turn_(?:on|off):\s*charge_enable\b", texte))

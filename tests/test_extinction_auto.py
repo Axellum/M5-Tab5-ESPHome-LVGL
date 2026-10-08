@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Extinction automatique de l'écran (06/10/2026, discussion #278).
 
-Le select « Tab5 Extinction auto de l'écran » (Tab5/tab5-ha-controls.yaml) choisit un
+Le select « Tab5 Extinction auto de l'écran » (Tab5/paquets/tab5-ha-controls.yaml) choisit un
 délai sans toucher ; un interval l'applique en éteignant le rétroéclairage comme HA.
 Rien ne compile ces règles hors tablette : ce fichier relit le YAML.
 
@@ -17,7 +17,7 @@ import pathlib
 import re
 
 import yaml
-from tests.commun import ChargeurBalisesBrutes as _Chargeur
+from tests.commun import ChargeurBalisesBrutes as _Chargeur, source
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
@@ -25,7 +25,7 @@ OPTIONS = ["Jamais", "1 min", "2 min", "5 min", "10 min", "30 min"]
 
 
 def _yaml(nom):
-    return yaml.load((TAB5 / nom).read_text(encoding="utf-8"), Loader=_Chargeur)
+    return yaml.load(source(nom).read_text(encoding="utf-8"), Loader=_Chargeur)
 
 
 def _select():

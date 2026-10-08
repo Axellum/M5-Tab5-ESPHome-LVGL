@@ -14,7 +14,7 @@ The firmware is **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.
 
 ## What it does *not* touch
 
-Nothing in `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, or `HomeAssistant_Config/` is modified by demo mode. It is a standalone script that talks to the same API surface real automations use — purely additive.
+Nothing in `Tab5/paquets/*.yaml`, the C++ of `Tab5/socle|ecran|jeux/`, `Tab5/user_entities.yaml`, or `HomeAssistant_Config/` is modified by demo mode. It is a standalone script that talks to the same API surface real automations use — purely additive.
 
 ## Steps
 
@@ -29,7 +29,7 @@ Nothing in `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml`, or `HomeAs
 4. **Watch the screen.** Every ~20 seconds it cycles between three scenes (sunny day, rainy day with a weather alert, a rest day with a plant that needs watering), driving nine dashboard push services, the optional-zones answer (`tab5_maj_zones`) and the home's slots (`tab5_maj_emplacements`: lights, temperatures, PC, TV, phone, plants), as the Home Assistant blueprint would (lot 6a) — and, on a 3.2 firmware, the rooms of the bottom tiles (`tab5_maj_tuiles`, see [Rooms](#rooms-32-firmware)), and the solar installation of the Energy popup (`tab5_maj_energie` and `tab5_maj_energie_historique`, [ADR-0028](decisions/0028-solar-energy-popup.md)). The remaining services are out of scope by design — they belong to features a demo can't fake (`tab5_maj_reponse_vocale` / `tab5_assist_reponse` need a voice pipeline, `tab5_maj_calendrier_mois` / `_jour` and `tab5_maj_rdv_prochains` need a real calendar, `tab5_maj_alertes_ha_bulk` needs live HA entities, `tab5_maj_alertes_historique` the alerts memory of Home Assistant), and `tab5_maj_planning` is obsolete since 2026-09-08 (the tablet derives the planning banner from the daily forecast; kept for compatibility, it will be removed in a future major version).
 5. **Stop with `Ctrl+C`.** Nothing persists outside the device, except `tools/demo/cle_demo.txt` for a tablet the demo gave its key to.
 
-Want to check, without any hardware or dependency at all, that every call has exactly the variables the firmware declares (read in `Tab5/tab5-api-logic.yaml`) and every payload its format (it prints them, and fails on a mismatch):
+Want to check, without any hardware or dependency at all, that every call has exactly the variables the firmware declares (read in `Tab5/paquets/tab5-api-logic.yaml`) and every payload its format (it prints them, and fails on a mismatch):
 ```bash
 python tools/demo/demo_pusher.py --dry-run
 ```
@@ -78,7 +78,7 @@ By default, the script also logs when you tap a light, climate, or shutter contr
 | `tab5_maj_energie`, `_energie_historique` (ADR-0028) | A solar installation: 1.45 kW produced, 620 W for the home, 430 W sold, battery at 64 % and charging; production per hour (today), per day (30 days) and per month (12 months), pushed at every scene and on every request of the tablet (`esphome.tab5_energie`). Only when the tablet has these actions |
 | `tab5_maj_historique` (ADR-0032) | The Temperature popup: the curve of the room (around 21 °C) or of the greenhouse (up to 28 °C in the afternoon) over 24 h, 7 days or 30 days, ending on the home-screen value, and, for the greenhouse, the outdoor forecast. Only on a request of the tablet (`esphome.tab5_historique`, a long press on a temperature): the popup ignores an answer it did not ask for. Only when the tablet has this action |
 
-Source of the exact payload contract: `Tab5/tab5-api-logic.yaml` and `Tab5/tab5_services.cpp` / `tab5_forecast.cpp` (parsing rules, field counts, buffer limits) — see comments in `tools/demo/scenarios.py` for the specifics.
+Source of the exact payload contract: `Tab5/paquets/tab5-api-logic.yaml` and `Tab5/ecran/tab5_services.cpp` / `tab5_forecast.cpp` (parsing rules, field counts, buffer limits) — see comments in `tools/demo/scenarios.py` for the specifics.
 
 ---
 
@@ -98,7 +98,7 @@ Le firmware est **push-only** ([ADR-0001](decisions/0001-push-only-zero-polling.
 
 ## Ce que ça ne touche pas
 
-Rien dans `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml` ou `HomeAssistant_Config/` n'est modifié par le mode démo. C'est un script autonome qui parle la même API que les vraies automations — purement additif.
+Rien dans `Tab5/paquets/*.yaml`, le C++ de `Tab5/socle|ecran|jeux/`, `Tab5/user_entities.yaml` ou `HomeAssistant_Config/` n'est modifié par le mode démo. C'est un script autonome qui parle la même API que les vraies automations — purement additif.
 
 ## Étapes
 
@@ -113,7 +113,7 @@ Rien dans `Tab5/*.yaml`, `Tab5/*.cpp/.h`, `Tab5/user_entities.yaml` ou `HomeAssi
 4. **Regardez l'écran.** Toutes les ~20 secondes, il alterne entre trois scènes (journée ensoleillée, jour de pluie avec alerte météo, jour de repos avec une plante à arroser), qui pilotent neuf services de push du dashboard, la réponse des zones optionnelles (`tab5_maj_zones`) et les emplacements de la maison (`tab5_maj_emplacements` : lumières, températures, PC, TV, téléphone, plantes), comme le ferait le blueprint Home Assistant (lot 6a) — et, avec un firmware 3.2, les pièces des tuiles du bas (`tab5_maj_tuiles`, voir [Pièces](#pièces-firmware-32)), et l'installation solaire du popup Énergie (`tab5_maj_energie` et `tab5_maj_energie_historique`, [ADR-0028](decisions/0028-solar-energy-popup.md)). Les services restants sont hors périmètre par choix : ils relèvent de fonctions qu'une démo ne peut pas simuler (`tab5_maj_reponse_vocale` / `tab5_assist_reponse` demandent un pipeline vocal, `tab5_maj_calendrier_mois` / `_jour` et `tab5_maj_rdv_prochains` un vrai calendrier, `tab5_maj_alertes_ha_bulk` des entités HA vivantes, `tab5_maj_alertes_historique` la mémoire des alertes de Home Assistant), et `tab5_maj_planning` est obsolète depuis le 08/09/2026 (la tablette dérive le bandeau planning des prévisions journalières ; gardé pour compatibilité, il sera retiré dans une future version majeure).
 5. **Arrêtez avec `Ctrl+C`.** Rien ne persiste en dehors de l'appareil, sauf `tools/demo/cle_demo.txt` pour une tablette à qui la démo a donné sa clé.
 
-Pour vérifier, sans matériel ni dépendance du tout, que chaque appel a exactement les variables déclarées par le firmware (lues dans `Tab5/tab5-api-logic.yaml`) et chaque payload son format (il les affiche, et échoue sur un écart) :
+Pour vérifier, sans matériel ni dépendance du tout, que chaque appel a exactement les variables déclarées par le firmware (lues dans `Tab5/paquets/tab5-api-logic.yaml`) et chaque payload son format (il les affiche, et échoue sur un écart) :
 ```bash
 python tools/demo/demo_pusher.py --dry-run
 ```
@@ -167,4 +167,4 @@ Par défaut, le script loggue aussi quand vous appuyez sur un contrôle lumière
 | `tab5_maj_energie`, `_energie_historique` (ADR-0028) | Une installation solaire : 1,45 kW produits, 620 W pour la maison, 430 W vendus, batterie à 64 % qui charge ; production par heure (aujourd'hui), par jour (30 jours) et par mois (12 mois), poussée à chaque scène et à chaque demande de la tablette (`esphome.tab5_energie`). Seulement si la tablette a ces actions |
 | `tab5_maj_historique` (ADR-0032) | Le popup Température : la courbe de la pièce (autour de 21 °C) ou de la serre (jusqu'à 28 °C l'après-midi) sur 24 h, 7 jours ou 30 jours, finie sur la valeur de l'accueil, et, pour la serre, la prévision de dehors. Seulement à la demande de la tablette (`esphome.tab5_historique`, un appui long sur une température) : le popup ignore une réponse qu'il n'a pas demandée. Seulement si la tablette a cette action |
 
-Source du contrat exact des payloads : `Tab5/tab5-api-logic.yaml` et `Tab5/tab5_services.cpp` / `tab5_forecast.cpp` (règles de parsing, nombre de champs, limites de buffer) — voir les commentaires de `tools/demo/scenarios.py` pour le détail.
+Source du contrat exact des payloads : `Tab5/paquets/tab5-api-logic.yaml` et `Tab5/ecran/tab5_services.cpp` / `tab5_forecast.cpp` (règles de parsing, nombre de champs, limites de buffer) — voir les commentaires de `tools/demo/scenarios.py` pour le détail.

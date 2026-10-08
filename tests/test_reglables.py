@@ -19,13 +19,13 @@ import pytest
 import yaml
 
 from tests import test_tuiles_blueprint as bp  # noqa: E402
-from tests.commun import lire as _lire
+from tests.commun import contrat, lire as _lire, sources
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
-CPP = _lire("Tab5", "tab5_reglables.cpp")
-CUSTOM_H = _lire("Tab5", "tab5_custom.h")
+CPP = _lire("Tab5", "ecran", "tab5_reglables.cpp")
+CUSTOM_H = contrat()
 
 
 def _tableau(nom):
@@ -77,7 +77,7 @@ def test_huit_appareils_des_deux_cotes():
     assert lignes == 8 + 2
     liste = _lire("Tab5", "ui_components", "reglables_liste.yaml")
     assert re.findall(r"vars: \{ n: (\d+) \}", liste) == [str(n) for n in range(lignes)]
-    paquet = _lire("Tab5", "tab5-reglables.yaml")
+    paquet = _lire("Tab5", "paquets", "tab5-reglables.yaml")
     for champ in ("ligne", "ligne_icone", "ligne_nom", "ligne_valeur"):
         assert len(re.findall(rf"u\.{champ}\[\d\] = ", paquet)) == lignes, champ
 
@@ -86,10 +86,9 @@ def test_cles_nvs_propres_au_module():
     """Deux enregistrements : le modèle (« regl ») et le choix (« rgch »). Une clé déjà
     prise par un autre module mélangerait leurs octets."""
     cles = {}
-    for nom in os.listdir(os.path.join(REPO, "Tab5")):
-        if nom.endswith(".cpp"):
-            for k in re.findall(r"constexpr uint32_t kPrefKey\w* = (0x[0-9A-Fa-f]+);", _lire("Tab5", nom)):
-                cles.setdefault(int(k, 16), []).append(nom)
+    for chemin in sources("*.cpp"):
+        for k in re.findall(r"constexpr uint32_t kPrefKey\w* = (0x[0-9A-Fa-f]+);", _lire(chemin)):
+            cles.setdefault(int(k, 16), []).append(chemin.name)
     for k in (0x7265676C, 0x72676368):
         assert cles.get(k) == ["tab5_reglables.cpp"], (hex(k), cles.get(k))
 
@@ -397,12 +396,12 @@ def test_zone_du_salon_sans_toucher_celle_de_la_serre():
 
 
 def test_liste_refermee_avec_les_popups_et_seule():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
-    navigation = _lire("Tab5", "tab5-navigation.yaml")
+    scripts = _lire("Tab5", "paquets", "tab5-scripts.yaml")
+    navigation = _lire("Tab5", "paquets", "tab5-navigation.yaml")
     assert "ModalRegistry::add(id(reglables_liste)," in navigation and "ModalRegistry::SUBWINDOW);" in navigation
     # Retour automatique : retour_auto_tick() (tab5_anim.cpp), lancé par l'interval de tab5-scripts.yaml.
     assert "if (idle >= UIIdle::POPUP_MS && reglables_liste_ouverte()) reglables_liste_fermer();" in _lire(
-        "Tab5", "tab5_anim.cpp")
+        "Tab5", "ecran", "tab5_anim.cpp")
     assert "retour_auto_tick(" in scripts
     # Le volume de la tablette repeint la tuile, quelle que soit sa source.
     volume = scripts.split("  - id: tab5_volume_apply\n", 1)[1].split("\n  - id:", 1)[0]

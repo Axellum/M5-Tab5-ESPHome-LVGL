@@ -38,7 +38,7 @@ from tests.commun import lire as _lire
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PACKAGE = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_historique.yaml")
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
-CPP = os.path.join(REPO, "Tab5", "tab5_historique.cpp")
+CPP = os.path.join(REPO, "Tab5", "ecran", "tab5_historique.cpp")
 CLIMAT = os.path.join(REPO, "Tab5", "ui_components", "climate_card.yaml")
 
 import demo_pusher  # noqa: E402
@@ -636,7 +636,7 @@ def test_appuis_longs_et_registre():
     serre = climat.split("id: btn_serre_games", 1)[1].split("- obj:", 1)[0]
     assert "script.execute: tab5_arcade_open" in serre and "on_long_press:" in serre, \
         "l'appui court sur la serre garde l'arcade"
-    navigation = _lire(os.path.join(REPO, "Tab5", "tab5-navigation.yaml"))
+    navigation = _lire(os.path.join(REPO, "Tab5", "paquets", "tab5-navigation.yaml"))
     assert re.search(r'ModalRegistry::add\(id\(historique_popup\),\s+"Température",\s+ModalRegistry::POPUP\);', navigation)
-    yaml_hist = _lire(os.path.join(REPO, "Tab5", "tab5-historique.yaml"))
+    yaml_hist = _lire(os.path.join(REPO, "Tab5", "paquets", "tab5-historique.yaml"))
     assert "esphome.tab5_historique" in yaml_hist and "cle: !lambda" in yaml_hist and "vue: !lambda" in yaml_hist

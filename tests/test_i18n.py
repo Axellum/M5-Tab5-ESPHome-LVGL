@@ -10,6 +10,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from tests.commun import sources
+
 REPO = Path(__file__).resolve().parent.parent
 
 import gen_i18n  # noqa: E402
@@ -27,7 +29,7 @@ def test_table_generee_a_jour():
 
 
 def test_select_langue_dans_l_ordre_des_index():
-    yaml_ctrl = (REPO / "Tab5" / "tab5-ha-controls.yaml").read_text(encoding="utf-8")
+    yaml_ctrl = (REPO / "Tab5" / "paquets" / "tab5-ha-controls.yaml").read_text(encoding="utf-8")
     bloc = yaml_ctrl.split("id: tab5_langue", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s+- "([^"]+)"\s*$', bloc.split("options:", 1)[1], re.M)
     assert options == [l["name"] for l in LANGS], (
@@ -118,7 +120,7 @@ def test_traductions_couvertes_par_les_polices():
     """Toutes les polices de texte portent le jeu `&latin1` (tab5-styles.yaml) : une
     traduction hors Latin-1 s'afficherait en carrés vides. Une langue qui en a besoin
     (polonais, tchèque…) doit d'abord étendre ce jeu de glyphes."""
-    glyphes = font_glyphs(REPO / "Tab5" / "tab5-styles.yaml")
+    glyphes = font_glyphs(REPO / "Tab5" / "paquets" / "tab5-styles.yaml")
     latin1 = glyphes.get("roboto_32_b")
     assert latin1, "jeu de glyphes de roboto_32_b introuvable"
     for l in LANGS[1:]:
@@ -131,7 +133,7 @@ def test_textes_francais_couverts_par_les_polices():
     """Même garde côté français : un texte de l'écran (clé tr() ou texte YAML) dont un
     caractère manque aux polices ne peut pas s'afficher. Trouvé au lot 4b : le « → » du
     pied de page de l'arcade, absent du jeu &latin1."""
-    latin1 = font_glyphs(REPO / "Tab5" / "tab5-styles.yaml").get("roboto_32_b")
+    latin1 = font_glyphs(REPO / "Tab5" / "paquets" / "tab5-styles.yaml").get("roboto_32_b")
     fichiers = i18n_keys.fichiers_source()
     cles = set(i18n_keys.cles_tr(fichiers)) | set(i18n_keys.textes_yaml(fichiers))
     fautifs = {k: "".join(sorted(set(gen_i18n.split_key(k)[1]) - latin1 - {"\n"})) for k in cles}
@@ -144,10 +146,10 @@ def test_litteraux_du_code_couverts_par_les_polices():
     Trial Poursuite, noms propres) s'affichent aussi dans les polices &latin1. Trouvé par
     le rendu hors tablette (27/09/2026) : le signe moins U+2212 de Trial Poursuite, un
     rectangle vide à l'écran, et İ ō ř dans trois questions."""
-    latin1 = font_glyphs(REPO / "Tab5" / "tab5-styles.yaml").get("roboto_32_b")
+    latin1 = font_glyphs(REPO / "Tab5" / "paquets" / "tab5-styles.yaml").get("roboto_32_b")
     litteral = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
     fautifs = {}
-    for f in sorted((REPO / "Tab5").glob("*.cpp")) + sorted((REPO / "Tab5").glob("*.h")):
+    for f in sources("*.cpp", "*.h"):
         if f.name == "tab5_i18n_data.h":   # tables générées, vérifiées par les tests ci-dessus
             continue
         for n, ligne in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):

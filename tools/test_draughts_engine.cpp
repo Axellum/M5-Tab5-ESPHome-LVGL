@@ -1,6 +1,6 @@
 /**
  * [AI-CONTEXT] Le VRAI générateur de coups des dames (Draughts::Engine de
- * Tab5/draughts_game.cpp, jeu « Dames Tab ») contre les perft de référence des dames
+ * Tab5/jeux/draughts_game.cpp, jeu « Dames Tab ») contre les perft de référence des dames
  * internationales 10×10 et anglaises 8×8, plus les règles que teste son miroir Python.
  *
  * C'est la RÉFÉRENCE : tools/test_draughts_engine.py n'en est qu'un miroir Python, gardé
@@ -11,7 +11,7 @@
  * bloc pur (tools/hote/extraire_moteur_dames.py), puis le compile sous ASan + UBSan :
  *   python tools/hote/extraire_moteur_dames.py "$RUNNER_TEMP/hote/draughts_moteur_extrait.inc"
  *   g++ -std=c++17 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all \
- *       -Wall -Wextra -I tools/hote -I "$RUNNER_TEMP/hote" -I Tab5 \
+ *       -Wall -Wextra -I tools/hote -I "$RUNNER_TEMP/hote" -I Tab5/socle -I Tab5/jeux \
  *       tools/test_draughts_engine.cpp -o test_draughts_engine
  * tests/test_moteurs_hote.py tient les valeurs perft égales à celles du miroir Python.
  *
@@ -299,7 +299,7 @@ void test_fins_de_partie_reduites_decompte() {
 }  // namespace
 
 int main() {
-    std::printf("=== test_draughts_engine (Draughts::Engine de Tab5/draughts_game.cpp) ===\n");
+    std::printf("=== test_draughts_engine (Draughts::Engine de Tab5/jeux/draughts_game.cpp) ===\n");
     perft_suite("internationales 10x10", VAR_INTL10, PERFT_INTL, sizeof(PERFT_INTL) / sizeof(PERFT_INTL[0]));
     perft_suite("anglaises 8x8", VAR_ENG8, PERFT_ENG, sizeof(PERFT_ENG) / sizeof(PERFT_ENG[0]));
     std::printf("max coups légaux vus : %d (borne MAX_MOVES = %d)\n", g_max_coups, MAX_MOVES);

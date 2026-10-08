@@ -243,6 +243,63 @@ void parse_and_update_jours_bulk(const std::string& payload) {
     }
 }
 
+// =============================================================================
+// Prévisions périmées (08/10/2026, demande d'Axel après l'incident du 07-08/10 :
+// Météo-France figée de 21 h 04 à 11 h 34, puis indisponible, et la tablette
+// montrait les prévisions sans rien dire). Le contrat ne change pas : la tablette
+// note l'heure de chaque poussée des prévisions (jours ou heures) et, passé
+// kPrevisionsPerimeesMin sans poussée, l'écrit au-dessus des tuiles (« Prévisions
+// de 11 h 42 », « Prévisions d'hier 21 h 04 »). En temps normal, rien ne s'affiche.
+// Ce que ça voit : HA qui ne pousse plus (HA arrêté, automatisation coupée, liaison
+// perdue). Ce que ça ne voit PAS : une source figée que HA continue de pousser
+// (Météo-France retire les créneaux passés, le payload change donc chaque heure
+// même figé) ; c'est à HA de ne plus pousser une source périmée.
+// =============================================================================
+namespace {
+// HA pousse les prévisions toutes les 10 min (time_pattern /10 de la poussée
+// complète, HomeAssistant_Config/packages/tab5_push.yaml) et à chaque reconnexion.
+// 30 min = trois poussées manquées de suite : un passage abandonné ou un
+// redémarrage de HA (quelques minutes, repoussé au démarrage) ne l'affichent pas.
+// Pas 60 : sans aucun client API, la tablette redémarre au bout de 60 min
+// (api: reboot_timeout) et perd ses prévisions — à 60, la mention n'apparaîtrait
+// presque jamais pendant une panne de HA.
+constexpr int kPrevisionsPerimeesMin = 30;
+
+// Dernière poussée des jours ou des heures, l'heure étant valide ; 0 = aucune.
+time_t g_previsions_recues = 0;
+}  // namespace
+
+void previsions_recues(lv_obj_t* zone, lv_obj_t* lbl, int il_y_a_min) {
+    const time_t now = tab5_time_source(nullptr);
+    // Heure pas encore réglée (avant SNTP et RX8130) : pas de date à retenir.
+    if (tab5_heure_valide(now)) g_previsions_recues = now - (time_t) il_y_a_min * 60;
+    previsions_fraicheur_tick(zone, lbl);
+}
+
+void previsions_fraicheur_tick(lv_obj_t* zone, lv_obj_t* lbl) {
+    if (zone == nullptr || lbl == nullptr) return;
+    const time_t recues = g_previsions_recues;
+    const time_t now = tab5_time_source(nullptr);
+    // Rien jamais reçu, heure invalide ou horloge revenue en arrière : rien à dire
+    // (le cas « pas encore de données » a déjà son affichage). Mode HA : les tuiles
+    // montrent les appareils, pas les prévisions.
+    const bool perimees = recues != 0 && tab5_heure_valide(now) && !g_central_ctx.ha_mode &&
+                          now - recues > (time_t) kPrevisionsPerimeesMin * 60;
+    if (perimees) {
+        struct tm r {}, n {};
+        localtime_r(&recues, &r);
+        localtime_r(&now, &n);
+        const int32_t jours = jour_civil(n.tm_year + 1900, n.tm_mon + 1, n.tm_mday) -
+                              jour_civil(r.tm_year + 1900, r.tm_mon + 1, r.tm_mday);
+        char buf[80];
+        if (jours <= 0) snprintf(buf, sizeof(buf), tr("Prévisions de %d h %02d"), r.tm_hour, r.tm_min);
+        else if (jours == 1) snprintf(buf, sizeof(buf), tr("Prévisions d'hier %d h %02d"), r.tm_hour, r.tm_min);
+        else snprintf(buf, sizeof(buf), tr("Prévisions vieilles de %d jours"), (int) jours);
+        ui_text(lbl, buf);  // le texte d'abord : jamais une image avec l'ancien texte
+    }
+    ui_hidden(zone, !perimees);
+}
+
 // Condition meteo actuellement peinte par tuile (5 jours + 5 heures). Sert a
 // ne declencher le rouleau que quand l'icone change vraiment : les payloads HA
 // retombent souvent sur la meme condition, et repeindre une icone identique

@@ -28,25 +28,25 @@ It works like gettext: **the French text written in the code is the key.**
 - Word order that changes with the language goes through a template: `tr_fill("{jour} {quantieme} {mois}", …)` → `{jour}, {mois} {quantieme}` in English.
 - A text kept in a table (`static const char* const kModes[] = {…}`) is marked `tr_noop("Joueur contre Tab")` and translated where it is shown, `tr(kModes[i])`. `tr_noop()` translates nothing; it only tells `tools/i18n_keys.py` that the text is a key.
 
-Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text": "translation"`. `tools/gen_i18n.py` turns them into `Tab5/tab5_i18n_data.h` (generated, committed).
+Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text": "translation"`. `tools/gen_i18n.py` turns them into `Tab5/socle/tab5_i18n_data.h` (generated, committed).
 
 ## Adding a language
 
 1. Copy `Tab5/lang/en.yaml` to `Tab5/lang/<code>.yaml` (for example `pt.yaml`).
 2. Change `_langue` (the native name, as shown in the select: `Português`), `_code` (`pt`) and `_index` (**the next free number**: the tablet stores the index, so existing languages never move). Remove `_statut: complet` until the translation is complete: missing texts then show in English, so a partial language is usable (English stays complete for that reason).
 3. Translate the right-hand side of each line. Keep the `%d`/`%s` in the same order and the `{names}` as they are.
-4. Add the native name at the **end** of the `options:` of the select « Langue » (`Tab5/tab5-ha-controls.yaml`).
+4. Add the native name at the **end** of the `options:` of the select « Langue » (`Tab5/paquets/tab5-ha-controls.yaml`).
 5. Run:
 
    ```bash
-   python tools/gen_i18n.py        # regenerates Tab5/tab5_i18n_data.h
+   python tools/gen_i18n.py        # regenerates Tab5/socle/tab5_i18n_data.h
    python tools/i18n_keys.py       # lists the texts still missing, per language
    python -m pytest tests/test_i18n.py
    ```
 
 6. The Home Assistant dashboard (`HomeAssistant_Config/custom_templates/tab5_dashboard.jinja`) has its own table: add the language to `code` (top of the macro) and its translation to each entry of `TRADUCTIONS` (end of the file); `tests/test_tableau_de_bord.py` lists what is missing.
 
-**Characters:** the screen fonts carry Latin-1, the Windows-1252 punctuation and the Turkish letters Ğ ğ İ ı Ş ş (`&latin1` in `Tab5/tab5-styles.yaml`). That covers English, German, Spanish, Italian, Portuguese, Dutch, Turkish and the Nordic languages. Polish, Czech, Cyrillic or Greek need that glyph set extended first: it costs flash on every text font (the five Turkish letters added 2,464 bytes to the firmware); the names Home Assistant sends for the tiles are filtered to the same set (`kHorsLatin1` in `Tab5/tab5_tuiles.cpp`, kept equal by `tests/test_tuiles_firmware.py`); `tests/test_i18n.py` refuses a translation whose characters the fonts don't have — they would show as empty boxes.
+**Characters:** the screen fonts carry Latin-1, the Windows-1252 punctuation and the Turkish letters Ğ ğ İ ı Ş ş (`&latin1` in `Tab5/paquets/tab5-styles.yaml`). That covers English, German, Spanish, Italian, Portuguese, Dutch, Turkish and the Nordic languages. Polish, Czech, Cyrillic or Greek need that glyph set extended first: it costs flash on every text font (the five Turkish letters added 2,464 bytes to the firmware); the names Home Assistant sends for the tiles are filtered to the same set (`kHorsLatin1` in `Tab5/ecran/tab5_tuiles.cpp`, kept equal by `tests/test_tuiles_firmware.py`); `tests/test_i18n.py` refuses a translation whose characters the fonts don't have — they would show as empty boxes.
 
 ## Rules for contributors
 
@@ -83,25 +83,25 @@ Comme gettext : **le texte français écrit dans le code est la clé.**
 - Un ordre des mots qui change avec la langue passe par un modèle : `tr_fill("{jour} {quantieme} {mois}", …)` → `{jour}, {mois} {quantieme}` en anglais.
 - Un texte rangé dans une table (`static const char* const kModes[] = {…}`) est marqué `tr_noop("Joueur contre Tab")` et traduit là où il s'affiche, `tr(kModes[i])`. `tr_noop()` ne traduit rien : il signale seulement à `tools/i18n_keys.py` que le texte est une clé.
 
-Chaque langue est un fichier, `Tab5/lang/<code>.yaml` : un mapping plat `"texte français": "traduction"`. `tools/gen_i18n.py` en fait `Tab5/tab5_i18n_data.h` (généré, versionné).
+Chaque langue est un fichier, `Tab5/lang/<code>.yaml` : un mapping plat `"texte français": "traduction"`. `tools/gen_i18n.py` en fait `Tab5/socle/tab5_i18n_data.h` (généré, versionné).
 
 ## Ajouter une langue
 
 1. Copiez `Tab5/lang/en.yaml` en `Tab5/lang/<code>.yaml` (par exemple `pt.yaml`).
 2. Changez `_langue` (le nom dans la langue elle-même, tel qu'affiché dans le select : `Português`), `_code` (`pt`) et `_index` (**le numéro suivant** : la tablette mémorise l'index, les langues existantes ne bougent donc jamais). Retirez `_statut: complet` tant que la traduction n'est pas finie : les textes manquants s'affichent alors en anglais, donc une langue partielle est utilisable (c'est pourquoi l'anglais doit rester complet).
 3. Traduisez la partie droite de chaque ligne. Gardez les `%d`/`%s` dans le même ordre et les `{noms}` tels quels.
-4. Ajoutez le nom natif à la **fin** des `options:` du select « Langue » (`Tab5/tab5-ha-controls.yaml`).
+4. Ajoutez le nom natif à la **fin** des `options:` du select « Langue » (`Tab5/paquets/tab5-ha-controls.yaml`).
 5. Lancez :
 
    ```bash
-   python tools/gen_i18n.py        # régénère Tab5/tab5_i18n_data.h
+   python tools/gen_i18n.py        # régénère Tab5/socle/tab5_i18n_data.h
    python tools/i18n_keys.py       # liste les textes qui manquent encore, par langue
    python -m pytest tests/test_i18n.py
    ```
 
 6. Le tableau de bord Home Assistant (`HomeAssistant_Config/custom_templates/tab5_dashboard.jinja`) a sa propre table : ajoutez la langue à `code` (haut de la macro) et sa traduction à chaque entrée de `TRADUCTIONS` (fin du fichier) ; `tests/test_tableau_de_bord.py` liste ce qui manque.
 
-**Caractères :** les polices de l'écran portent le Latin-1, la ponctuation Windows-1252 et les lettres turques Ğ ğ İ ı Ş ş (`&latin1` dans `Tab5/tab5-styles.yaml`). Ça couvre l'anglais, l'allemand, l'espagnol, l'italien, le portugais, le néerlandais, le turc et les langues nordiques. Le polonais, le tchèque, le cyrillique ou le grec demandent d'abord d'étendre ce jeu de glyphes : ça coûte de la flash sur chaque police de texte (les cinq lettres turques ont ajouté 2 464 octets au firmware) ; les noms que Home Assistant envoie pour les tuiles sont filtrés au même jeu (`kHorsLatin1` dans `Tab5/tab5_tuiles.cpp`, tenu égal par `tests/test_tuiles_firmware.py`) ; `tests/test_i18n.py` refuse une traduction dont les polices n'ont pas les caractères — ils s'afficheraient en carrés vides.
+**Caractères :** les polices de l'écran portent le Latin-1, la ponctuation Windows-1252 et les lettres turques Ğ ğ İ ı Ş ş (`&latin1` dans `Tab5/paquets/tab5-styles.yaml`). Ça couvre l'anglais, l'allemand, l'espagnol, l'italien, le portugais, le néerlandais, le turc et les langues nordiques. Le polonais, le tchèque, le cyrillique ou le grec demandent d'abord d'étendre ce jeu de glyphes : ça coûte de la flash sur chaque police de texte (les cinq lettres turques ont ajouté 2 464 octets au firmware) ; les noms que Home Assistant envoie pour les tuiles sont filtrés au même jeu (`kHorsLatin1` dans `Tab5/ecran/tab5_tuiles.cpp`, tenu égal par `tests/test_tuiles_firmware.py`) ; `tests/test_i18n.py` refuse une traduction dont les polices n'ont pas les caractères — ils s'afficheraient en carrés vides.
 
 ## Règles pour contribuer
 

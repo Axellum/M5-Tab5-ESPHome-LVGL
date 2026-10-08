@@ -74,7 +74,7 @@ api:
               then:
                 - homeassistant.event:
                     event: esphome.tab5_connected
-    # Journal des démarrages et des coupures (Tab5/tab5_journal.cpp) : à chaque
+    # Journal des démarrages et des coupures (Tab5/ecran/tab5_journal.cpp) : à chaque
     # connexion de HA, boot compris (d'où l'absence de boot_complete ici).
     - if:
         condition:
@@ -97,6 +97,9 @@ api:
       then:
         - lambda: |-
             if (id(h4_time) == nullptr) return;
+            // Prévisions périmées (08/10/2026) : toute poussée compte, identique ou
+            // non affichée comprise — avant les gardes ci-dessous.
+            previsions_recues(id(previsions_perimees), id(lbl_previsions_perimees));
             // Bloc identique au précédent, ou pas à l'écran (calque journalier
             // affiché, autre page horaire) : rien à repeindre (audit 25/09, lot 3).
             const int fp = g_central_ctx.forecast_page;
@@ -120,6 +123,8 @@ api:
             // ci-dessous. Cette poussée vient d'une automatisation de HA : elles
             // tournent, donc la réponse (tab5_maj_zones) aussi.
             if (zones_demande_a_envoyer()) id(tab5_zones_demande).execute();
+            // Prévisions périmées (08/10/2026) : toute poussée compte, identique comprise.
+            previsions_recues(id(previsions_perimees), id(lbl_previsions_perimees));
             // Quinze jours identiques au push précédent : ni analyse ni rendu. Sûr
             // pour le réveil — le contenu change au moins une fois par jour (libellés
             // des jours décalés), donc la date d'ancrage suit (audit 25/09, lot 3).

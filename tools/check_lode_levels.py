@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Garde-fou des niveaux de « Coureur d'Or » (clone Lode Runner du Tab5).
 
-Les 10 maps vivent dans Tab5/lode_game.cpp sous forme de tableaux
+Les 10 maps vivent dans Tab5/jeux/lode_game.cpp sous forme de tableaux
 `static const char* const MAPn[GRID_H]`. Ce script les relit LA (source unique de
 verite, aucune duplication) et rejoue le MEME modele de deplacement que le C++ :
 
@@ -38,7 +38,7 @@ from collections import deque
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SRC = REPO / "Tab5" / "lode_game.cpp"
+SRC = REPO / "Tab5" / "jeux" / "lode_game.cpp"
 
 W, H = 30, 16
 MAX_TILEOBJ, MAX_GOLD, MAX_GUARDS = 340, 40, 4

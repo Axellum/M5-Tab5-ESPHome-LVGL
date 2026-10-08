@@ -9,7 +9,7 @@ compilateur, ce qui les rend probants :
   jamais branché ne prouverait rien) ;
 - les valeurs perft du test C++ sont celles du miroir Python (échecs et dames), qui reste
   pour le poste de dev ;
-- le bloc pur du moteur des dames s'extrait encore de Tab5/draughts_game.cpp
+- le bloc pur du moteur des dames s'extrait encore de Tab5/jeux/draughts_game.cpp
   (tools/hote/extraire_moteur_dames.py), sans rien de LVGL ni des préférences.
 """
 import re
@@ -57,7 +57,7 @@ def test_perft_des_dames_egaux_au_miroir_python(nom, attendu):
 
 
 def test_moteur_des_dames_extractible_et_pur():
-    bloc = dames.extraire(lire("Tab5", "draughts_game.cpp"))
+    bloc = dames.extraire(lire("Tab5", "jeux", "draughts_game.cpp"))
     assert bloc.startswith('#line ') and bloc.rstrip().endswith("}  // namespace Draughts")
     for fonction in ("void pos_init(", "int gen_moves(", "void apply_move(", "void refresh_endgame("):
         assert fonction in bloc, f"{fonction} hors du bloc extrait"

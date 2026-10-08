@@ -41,7 +41,8 @@ def _yaml(*chemin):
 
 def _fichiers_firmware():
     fichiers = [os.path.join(REPO, "tab5-ha-hmi.yaml")]
-    for dossier in (os.path.join(REPO, "Tab5"), os.path.join(REPO, "Tab5", "ui_components")):
+    for dossier in (os.path.join(REPO, "Tab5"), os.path.join(REPO, "Tab5", "paquets"),
+                    os.path.join(REPO, "Tab5", "ui_components")):
         fichiers += [os.path.join(dossier, n) for n in sorted(os.listdir(dossier))
                      if n.endswith(".yaml") and n != "user_entities.yaml"]
     return fichiers
@@ -59,15 +60,15 @@ def test_aucun_secret_dans_le_firmware():
 
 
 def test_cle_api_fournie_par_ha_et_fenetre_bornee():
-    api = _yaml("Tab5", "tab5-api-logic.yaml")
+    api = _yaml("Tab5", "paquets", "tab5-api-logic.yaml")
     assert api["api"]["encryption"] == {}, "une clé compilée rendrait le binaire personnel"
     assert re.fullmatch(r"\d+min", api["provisioning"]["timeout"])
 
 
 def test_ota_signee_sans_chiffrement_ni_mot_de_passe():
-    materiel = _yaml("Tab5", "tab5-hardware.yaml")
+    materiel = _yaml("Tab5", "paquets", "tab5-hardware.yaml")
     # Liste (lot 6c) : un firmware publié y ajoute `http_request` (publication-commune).
-    otas = materiel["ota"] + _yaml("Tab5", "publication-commune.yaml")["ota"]
+    otas = materiel["ota"] + _yaml("Tab5", "paquets", "publication-commune.yaml")["ota"]
     assert [o["platform"] for o in otas] == ["esphome", "http_request"]
     for ota in otas:
         assert "encryption" not in ota and "password" not in ota
@@ -80,7 +81,7 @@ def test_ota_signee_sans_chiffrement_ni_mot_de_passe():
 
 
 def test_wifi_sans_identifiants_improv_et_ap_ouvert():
-    diag = _yaml("Tab5", "tab5-sensors-diagnostics.yaml")
+    diag = _yaml("Tab5", "paquets", "tab5-sensors-diagnostics.yaml")
     wifi = diag["wifi"]
     assert not {"ssid", "password", "networks"} & wifi.keys()
     assert "password" not in wifi["ap"]
@@ -89,14 +90,14 @@ def test_wifi_sans_identifiants_improv_et_ap_ouvert():
 
 
 def test_fuseau_de_ha_garde_pour_le_demarrage():
-    diag = _yaml("Tab5", "tab5-sensors-diagnostics.yaml")
+    diag = _yaml("Tab5", "paquets", "tab5-sensors-diagnostics.yaml")
     horloges = {h["platform"]: h for h in diag["time"]}
     ha = horloges["homeassistant"]
     assert "timezone" not in ha, "un fuseau fixé empêcherait celui de HA"
     assert "fuseau_recu_de_ha" in str(ha["on_time_sync"])
     for plateforme in ("sntp", "rx8130"):
         assert "timezone" not in horloges[plateforme]
-    texte = _lire("Tab5", "tab5-sensors-diagnostics.yaml")
+    texte = _lire("Tab5", "paquets", "tab5-sensors-diagnostics.yaml")
     assert "fuseau_restaurer();" in texte and "fuseau_memoriser();" in texte
 
 
@@ -115,7 +116,7 @@ def test_aucune_entite_a_regler_pour_un_binaire_publie():
     émet l'événement, et le garde-fou et l'automatisation de poussée du bouton « MAJ
     Écran » par leurs noms dans le package public tab5_push.yaml (celui-ci doit donc
     toujours les définir)."""
-    assert not [k for k in (_yaml("Tab5", "tab5-scripts.yaml").get("substitutions") or {})
+    assert not [k for k in (_yaml("Tab5", "paquets", "tab5-scripts.yaml").get("substitutions") or {})
                 if k.startswith("entity_")]
     modele = _yaml("Tab5", "user_entities.example.yaml")
     actives = sorted(k for k in modele if k.startswith("entity_"))
