@@ -87,7 +87,7 @@ def test_creneaux_des_vues():
 
 
 def _champs_comme_le_firmware(valeurs, maxi):
-    """Miroir de la boucle d'energie_historique() (champ_suivant + apres_sep)."""
+    """Miroir de la boucle d'energie_historique() (champ_suivant de tab5_champs.h + apres_sep)."""
     p, fin, n, apres_sep, lus = 0, len(valeurs), 0, False, []
     while (p < fin or apres_sep) and n < maxi:
         d = p
@@ -108,7 +108,7 @@ def test_champs_vides_comptes_jusqu_au_dernier():
     dans l'historique."""
     corps = _lire(ENERGIE_CPP).split("void energie_historique(", 1)[1].split("\n}\n", 1)[0]
     assert "while ((p < fin || apres_sep) && s.n < kSlots[v])" in corps
-    assert "apres_sep = p > d + n;" in corps
+    assert "apres_sep = p > c.p + c.n;" in corps
     assert "s.annee < 1970 ||" in corps and "s.annee > 2200" in corps
     for valeurs in ("1;2;3", "1;;3", "3.1;;", "", ";", "1;2;3;"):
         attendu = valeurs.split(";") if valeurs else []

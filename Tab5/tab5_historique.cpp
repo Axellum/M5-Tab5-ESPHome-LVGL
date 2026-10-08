@@ -139,25 +139,8 @@ lv_obj_t* s_vide = nullptr;
 
 // --- Lecture des payloads ---------------------------------------------------------------
 
-// Champ suivant de [p, fin) jusqu'à `sep` : [*d, *d + *n). Avance p après le séparateur.
-void champ_suivant(const char*& p, const char* fin, char sep, const char*& d, size_t& n) {
-    d = p;
-    while (p < fin && *p != sep) p++;
-    n = static_cast<size_t>(p - d);
-    if (p < fin) p++;
-}
-
-// Nombre d'un champ : NAN s'il ne se lit pas (« nan », « unknown », vide).
-float lire_nombre(const char* d, size_t n) {
-    char buf[24];
-    if (n == 0 || n >= sizeof(buf)) return NAN;
-    std::memcpy(buf, d, n);
-    buf[n] = '\0';
-    char* fin = nullptr;
-    const float v = std::strtof(buf, &fin);
-    if (fin == buf || !std::isfinite(v)) return NAN;
-    return v;
-}
+// Champs et nombres : champ_suivant() et champ_nombre() (tab5_champs.h ; NAN s'il ne se
+// lit pas : « nan », « unknown », vide).
 
 // Bornes de lecture : au-delà, c'est un payload faux, pas une mesure. Elles gardent aussi
 // les conversions en entier et les calculs de minutes sans débordement (le fuzz des
@@ -167,14 +150,14 @@ constexpr float kPasMax = 1440.0f;   // un créneau d'un jour au plus
 constexpr float kTempMax = 1000.0f;
 
 // Température : NAN si illisible ou hors de ±kTempMax.
-float lire_temperature(const char* d, size_t n) {
-    const float v = lire_nombre(d, n);
+float lire_temperature(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
     return std::fabs(v) <= kTempMax ? v : NAN;   // fabs(NAN) <= x est faux
 }
 
 // Minutes depuis le premier créneau : NAN si illisible, négatif ou au-delà de kMinutesMax.
-float lire_minutes(const char* d, size_t n) {
-    const float v = lire_nombre(d, n);
+float lire_minutes(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
     return v >= 0.0f && v <= kMinutesMax ? v : NAN;
 }
 
@@ -745,13 +728,11 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
     // En-tête « nom|debut|pas|maintenant|actuel|exterieur ».
     const char* p = entete.data();
     const char* fin = p + entete.size();
-    const char* d = nullptr;
-    size_t n = 0;
-    champ_suivant(p, fin, '|', d, n);
-    texte_ha_copier(s.nom, sizeof(s.nom), d, n);
-    champ_suivant(p, fin, '|', d, n);
+    const Champ nom = champ_suivant(p, fin, '|');
+    texte_ha_copier(s.nom, sizeof(s.nom), nom.p, nom.n);
+    const Champ debut = champ_suivant(p, fin, '|');
     char date[24] = {};
-    std::memcpy(date, d, n < sizeof(date) - 1 ? n : sizeof(date) - 1);
+    std::memcpy(date, debut.p, debut.n < sizeof(date) - 1 ? debut.n : sizeof(date) - 1);
     int an = 2000, mo = 1, jo = 1, he = 0, mi = 0;
     if (std::sscanf(date, "%d-%d-%d%*c%d:%d", &an, &mo, &jo, &he, &mi) != 5 || an < 1970 || an > 2200 || mo < 1 ||
         mo > 12 || jo < 1 || jo > 31 || he < 0 || he > 23 || mi < 0 || mi > 59) {
@@ -761,54 +742,39 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
     }
     s.debut_jour = jours_depuis_civil(an, mo, jo);
     s.debut_min = he * 60 + mi;
-    champ_suivant(p, fin, '|', d, n);
-    const float pas = lire_minutes(d, n);
+    const float pas = lire_minutes(champ_suivant(p, fin, '|'));
     s.pas = std::isnan(pas) || pas < 1.0f || pas > kPasMax ? 60 : static_cast<int32_t>(pas);
-    champ_suivant(p, fin, '|', d, n);
-    const float maintenant = lire_minutes(d, n);
+    const float maintenant = lire_minutes(champ_suivant(p, fin, '|'));
     s.maintenant = std::isnan(maintenant) ? 0 : static_cast<int32_t>(maintenant);
-    champ_suivant(p, fin, '|', d, n);
-    s.actuel = lire_temperature(d, n);
-    champ_suivant(p, fin, '|', d, n);
-    s.exterieur = n == 1 && *d == '1';
+    s.actuel = lire_temperature(champ_suivant(p, fin, '|'));
+    s.exterieur = champ_est(champ_suivant(p, fin, '|'), "1");
 
     // Créneaux « moy,min,max » séparés par « ; » (vide = pas de donnée).
     p = mesures.data();
     fin = p + mesures.size();
     while (p < fin && s.n < kMesuresMax) {
-        champ_suivant(p, fin, ';', d, n);
-        const char* q = d;
-        const char* qf = d + n;
-        const char* e = nullptr;
-        size_t ne = 0;
+        const Champ c = champ_suivant(p, fin, ';');
+        const char* q = c.p;
+        const char* qf = c.p + c.n;
         Point& pt = s.m[s.n++];
-        champ_suivant(q, qf, ',', e, ne);
-        pt.moy = lire_temperature(e, ne);
-        champ_suivant(q, qf, ',', e, ne);
-        pt.mn = lire_temperature(e, ne);
-        champ_suivant(q, qf, ',', e, ne);
-        pt.mx = lire_temperature(e, ne);
+        pt.moy = lire_temperature(champ_suivant(q, qf, ','));
+        pt.mn = lire_temperature(champ_suivant(q, qf, ','));
+        pt.mx = lire_temperature(champ_suivant(q, qf, ','));
     }
     // Points de prévision « minute,moy[,min,max] », dans l'ordre du temps.
     p = previsions.data();
     fin = p + previsions.size();
     while (p < fin && s.np < kPrevMax) {
-        champ_suivant(p, fin, ';', d, n);
-        const char* q = d;
-        const char* qf = d + n;
-        const char* e = nullptr;
-        size_t ne = 0;
-        champ_suivant(q, qf, ',', e, ne);
-        const float minute = lire_minutes(e, ne);
+        const Champ c = champ_suivant(p, fin, ';');
+        const char* q = c.p;
+        const char* qf = c.p + c.n;
+        const float minute = lire_minutes(champ_suivant(q, qf, ','));
         if (std::isnan(minute)) continue;
         Prev& pv = s.p[s.np];
         pv.minute = static_cast<int32_t>(minute);
-        champ_suivant(q, qf, ',', e, ne);
-        pv.moy = lire_temperature(e, ne);
-        champ_suivant(q, qf, ',', e, ne);
-        pv.mn = lire_temperature(e, ne);
-        champ_suivant(q, qf, ',', e, ne);
-        pv.mx = lire_temperature(e, ne);
+        pv.moy = lire_temperature(champ_suivant(q, qf, ','));
+        pv.mn = lire_temperature(champ_suivant(q, qf, ','));
+        pv.mx = lire_temperature(champ_suivant(q, qf, ','));
         if (s.np > 0 && pv.minute <= s.p[s.np - 1].minute) continue;   // hors de l'ordre : ignoré
         s.np++;
     }

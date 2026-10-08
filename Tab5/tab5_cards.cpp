@@ -145,24 +145,24 @@ const ClimReglages& vue_reglages() { return vue_tuile() ? s_ct[s_vue].reglages :
 
 // Champs de l'état de la clim affichée : ceux du blueprint sont ses globals (pointeurs
 // posés par tab5_clim_ui), ceux d'une tuile sa case de la table.
-enum class Champ : uint8_t { MODE, PRESET, VENTILATION, OSCILLATION };
+enum class ChampClim : uint8_t { MODE, PRESET, VENTILATION, OSCILLATION };
 
-std::string& champ_vue(Champ c) {
+std::string& champ_vue(ChampClim c) {
     if (vue_tuile()) {
         ClimEtat& e = s_ct[s_vue].etat;
         switch (c) {
-            case Champ::MODE: return e.mode;
-            case Champ::PRESET: return e.preset;
-            case Champ::VENTILATION: return e.ventilation;
+            case ChampClim::MODE: return e.mode;
+            case ChampClim::PRESET: return e.preset;
+            case ChampClim::VENTILATION: return e.ventilation;
             default: return e.oscillation;
         }
     }
     const ClimUI& u = g_clim_ui;
     std::string* p = nullptr;
     switch (c) {
-        case Champ::MODE: p = u.mode_bp; break;
-        case Champ::PRESET: p = u.preset_bp; break;
-        case Champ::VENTILATION: p = u.ventilation_bp; break;
+        case ChampClim::MODE: p = u.mode_bp; break;
+        case ChampClim::PRESET: p = u.preset_bp; break;
+        case ChampClim::VENTILATION: p = u.ventilation_bp; break;
         default: p = u.oscillation_bp; break;
     }
     // Pointeurs posés à la fin du setup, avant tout geste et toute poussée de HA.
@@ -224,58 +224,34 @@ float consigne_suivante(const ClimReglages& r, float t, int sens) {
     return v;
 }
 
-// Nombre d'un champ (point décimal) ; `defaut` s'il est vide ou illisible.
-float lire_nombre(const char* p, size_t n, float defaut) {
-    char tmp[16];
-    if (n == 0 || n >= sizeof(tmp)) return defaut;
-    std::memcpy(tmp, p, n);
-    tmp[n] = '\0';
-    char* bout = nullptr;
-    const float v = strtof(tmp, &bout);
-    return (bout == tmp || std::isnan(v) || std::isinf(v)) ? defaut : v;
-}
-
-// Champs séparés par '|' (au plus `max`, le dernier prend tout le reste : le blueprint y a
-// remplacé « | » par « / ») : début et longueur de chacun. Renvoie leur nombre.
-int decouper(const char* s, size_t n, const char* champ[], size_t taille[], int max) {
-    int k = 0;
-    size_t debut = 0;
-    for (size_t i = 0; i <= n && k < max; i++) {
-        if (i == n || (s[i] == '|' && k < max - 1)) {
-            champ[k] = s + debut;
-            taille[k] = i - debut;
-            k++;
-            debut = i + 1;
-        }
-    }
-    return k;
-}
+// Nombre d'un champ : champ_nombre() (tab5_champs.h ; `defaut` s'il est vide, illisible
+// ou non fini). Champs séparés par '|' (au plus `max`, le dernier prend tout le reste : le
+// blueprint y a remplacé « | » par « / ») : champs_decouper_reste().
 
 // Réglages « min|max|pas|unité|capacités|nom » (climr ou crRT, sans la clé) dans `r`,
 // dont les valeurs servent de défaut à un nombre illisible. Renvoie le nombre de champs :
 // moins de 5, rien n'est changé.
 int lire_reglages(const char* reste, size_t n, ClimReglages& r) {
-    const char* champ[6] = {};
-    size_t taille[6] = {};
-    const int k = decouper(reste, n, champ, taille, 6);
+    Champ f[6] = {};
+    const int k = champs_decouper_reste(reste, n, '|', f, 6);
     if (k < 5) return k;
-    const float mn = lire_nombre(champ[0], taille[0], r.min);
-    const float mx = lire_nombre(champ[1], taille[1], r.max);
+    const float mn = champ_nombre(f[0], r.min);
+    const float mx = champ_nombre(f[1], r.max);
     // Bornes hors de toute clim réelle (« -1e30 ») ignorées : elles deviendraient celles
     // de l'arc (lot A de l'audit du 30/09/2026).
     if (mn < mx && mn >= kClimBorneBasse && mx <= kClimBorneHaute) {
         r.min = mn;
         r.max = mx;
     }
-    const float pas = lire_nombre(champ[2], taille[2], r.pas);
+    const float pas = champ_nombre(f[2], r.pas);
     if (pas > 0.0f && pas <= 10.0f) r.pas = pas;
     // « °F » ou « °C » (UTF-8) : la dernière lettre suffit.
-    r.fahrenheit = taille[3] > 0 && champ[3][taille[3] - 1] == 'F';
+    r.fahrenheit = f[3].n > 0 && f[3].p[f[3].n - 1] == 'F';
     size_t j = 0;
-    for (size_t i = 0; i < taille[4] && j + 1 < sizeof(r.capacites); i++)
-        if (champ[4][i] >= 'a' && champ[4][i] <= 'z') r.capacites[j++] = champ[4][i];
+    for (size_t i = 0; i < f[4].n && j + 1 < sizeof(r.capacites); i++)
+        if (f[4].p[i] >= 'a' && f[4].p[i] <= 'z') r.capacites[j++] = f[4].p[i];
     r.capacites[j] = '\0';
-    if (k == 6) texte_ha_copier(r.nom, sizeof(r.nom), champ[5], taille[5]);
+    if (k == 6) texte_ha_copier(r.nom, sizeof(r.nom), f[5].p, f[5].n);
     else r.nom[0] = '\0';
     r.recu = true;
     return k;
@@ -284,14 +260,13 @@ int lire_reglages(const char* reste, size_t n, ClimReglages& r) {
 // État « consigne|pièce|mode|préréglage|ventilation|oscillation » (ceRT, sans la clé) :
 // les nombres « nan » ou illisibles sont inconnus, les modes gardés tels quels (bornés).
 void lire_etat(const char* reste, size_t n, ClimEtat& e) {
-    const char* champ[6] = {};
-    size_t taille[6] = {};
-    const int k = decouper(reste, n, champ, taille, 6);
-    e.consigne = k > 0 ? lire_nombre(champ[0], taille[0], NAN) : NAN;
-    e.piece = k > 1 ? lire_nombre(champ[1], taille[1], NAN) : NAN;
+    Champ f[6] = {};
+    const int k = champs_decouper_reste(reste, n, '|', f, 6);
+    e.consigne = k > 0 ? champ_nombre(f[0], NAN) : NAN;
+    e.piece = k > 1 ? champ_nombre(f[1], NAN) : NAN;
     std::string* modes[4] = {&e.mode, &e.preset, &e.ventilation, &e.oscillation};
     for (int i = 0; i < 4; i++) {
-        if (k > 2 + i) modes[i]->assign(champ[2 + i], std::min(taille[2 + i], kModeMax));
+        if (k > 2 + i) modes[i]->assign(f[2 + i].p, std::min(f[2 + i].n, kModeMax));
         else modes[i]->clear();
     }
 }
@@ -559,39 +534,39 @@ void clim_popup_pas(int sens) {
 }
 
 void clim_popup_mode(const char* mode) {
-    champ_vue(Champ::MODE) = mode;
+    champ_vue(ChampClim::MODE) = mode;
     clim_recolorer();
 }
 
 // Bascules : actif sous tous ses noms (clim_*_actif) → retour à none / auto / stop ; sinon
 // le nom de la Daikin (away, boost, quiet, swing, windnice), que le blueprint traduit.
 void clim_popup_preset(const char* bouton) {
-    std::string& p = champ_vue(Champ::PRESET);
+    std::string& p = champ_vue(ChampClim::PRESET);
     p = clim_preset_actif(p, bouton) ? std::string("none") : std::string(bouton);
     clim_recolorer();
 }
 
 void clim_popup_silence() {
-    std::string& f = champ_vue(Champ::VENTILATION);
+    std::string& f = champ_vue(ChampClim::VENTILATION);
     f = clim_silence_actif(f) ? std::string("auto") : std::string("quiet");
     clim_recolorer();
 }
 
 void clim_popup_oscillation() {
-    std::string& s = champ_vue(Champ::OSCILLATION);
+    std::string& s = champ_vue(ChampClim::OSCILLATION);
     s = clim_oscillation_actif(s) ? std::string("stop") : std::string("swing");
     clim_recolorer();
 }
 
 void clim_popup_brise() {
-    std::string& s = champ_vue(Champ::OSCILLATION);
+    std::string& s = champ_vue(ChampClim::OSCILLATION);
     s = (s == "windnice") ? std::string("stop") : std::string("windnice");
     clim_recolorer();
 }
 
-const std::string& clim_affichee_preset() { return champ_vue(Champ::PRESET); }
-const std::string& clim_affichee_ventilation() { return champ_vue(Champ::VENTILATION); }
-const std::string& clim_affichee_oscillation() { return champ_vue(Champ::OSCILLATION); }
+const std::string& clim_affichee_preset() { return champ_vue(ChampClim::PRESET); }
+const std::string& clim_affichee_ventilation() { return champ_vue(ChampClim::VENTILATION); }
+const std::string& clim_affichee_oscillation() { return champ_vue(ChampClim::OSCILLATION); }
 
 const char* clim_tuile_attente_cle() { return s_attente.cle; }
 
@@ -685,10 +660,10 @@ void clim_recolorer() {
     ui_text_color(u.consigne_carte, couleur_consigne(u.mode_bp != nullptr ? *u.mode_bp : kSansMode));
 
     // Popup : la clim affichée.
-    const std::string& mode = champ_vue(Champ::MODE);
-    const std::string& preset = champ_vue(Champ::PRESET);
-    const std::string& fan = champ_vue(Champ::VENTILATION);
-    const std::string& swing = champ_vue(Champ::OSCILLATION);
+    const std::string& mode = champ_vue(ChampClim::MODE);
+    const std::string& preset = champ_vue(ChampClim::PRESET);
+    const std::string& fan = champ_vue(ChampClim::VENTILATION);
+    const std::string& swing = champ_vue(ChampClim::OSCILLATION);
     ui_text_color(u.consigne_popup, couleur_consigne(mode));
 
     // Mode (Cool/Heat/Dry/Fan/Off). Autre mode (heat_cool, auto… : pas de bouton,

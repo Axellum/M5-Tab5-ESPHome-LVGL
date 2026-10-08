@@ -304,22 +304,9 @@ bool chiffre_0_4(char c, int& v) {
     return true;
 }
 
-// Champs d'une entrée séparés par '|' (au plus `max`) : début et longueur de chacun.
-struct Champ {
-    const char* p;
-    size_t n;
-};
-int decouper(const char* s, size_t n, Champ* out, int max) {
-    int k = 0;
-    size_t debut = 0;
-    for (size_t i = 0; i <= n && k < max; i++) {
-        if (i == n || s[i] == '|') {
-            out[k++] = {s + debut, i - debut};
-            debut = i + 1;
-        }
-    }
-    return k;
-}
+// Champs d'une entrée séparés par '|' (au plus `max`, le reste ignoré) : Champ et
+// champs_decouper() de tab5_champs.h.
+int decouper(const char* s, size_t n, Champ* out, int max) { return champs_decouper(s, n, '|', out, max); }
 
 // « type|icône|options|complément|nom » (champs 1 à 5 d'une entrée tRT ou hLI) dans `d`.
 void lire_def(const Champ* f, int nf, Def& d) {
@@ -1648,15 +1635,8 @@ void etat_lire(Etat& e, const char* reste, size_t n_reste) {
     const size_t n = nf > 0 ? std::min(f[0].n, kEtat - 1) : 0;
     std::memset(e.brut, 0, sizeof(e.brut));
     if (n > 0) std::memcpy(e.brut, f[0].p, n);
-    e.valeur = NAN;
-    if (nf > 1 && f[1].n > 0 && f[1].n < 24) {
-        char tmp[24];
-        std::memcpy(tmp, f[1].p, f[1].n);
-        tmp[f[1].n] = '\0';
-        char* bout = nullptr;
-        const float v = strtof(tmp, &bout);
-        if (bout != tmp) e.valeur = v;  // « nan » donne NaN aussi
-    }
+    // Inconnue (NaN) si vide, illisible ou non finie (« nan », « inf »).
+    e.valeur = nf > 1 ? champ_nombre(f[1], NAN) : NAN;
     e.a_couleur = false;
     if (nf > 2 && f[2].n == 6) {
         char tmp[7];

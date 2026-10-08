@@ -426,33 +426,9 @@ bool cle_reglable(const char* cle, size_t n, int& i) {
     return true;
 }
 
-struct Champ {
-    const char* p;
-    size_t n;
-};
-
-// Champs séparés par '|', au plus `max` (le dernier prend le reste).
-int decouper(const char* s, size_t n, Champ* out, int max) {
-    int k = 0;
-    size_t debut = 0;
-    for (size_t i = 0; i <= n && k < max; i++) {
-        if (i == n || (s[i] == '|' && k < max - 1)) {
-            out[k++] = {s + debut, i - debut};
-            debut = i + 1;
-        }
-    }
-    return k;
-}
-
-float nombre(const Champ& c, float defaut) {
-    char tmp[24];
-    if (c.n == 0 || c.n >= sizeof(tmp)) return defaut;
-    std::memcpy(tmp, c.p, c.n);
-    tmp[c.n] = '\0';
-    char* bout = nullptr;
-    const float v = strtof(tmp, &bout);
-    return (bout == tmp || !std::isfinite(v)) ? defaut : v;
-}
+// Champs séparés par '|', au plus `max` (le dernier prend le reste) : Champ et
+// champs_decouper_reste() de tab5_champs.h ; un nombre : champ_nombre().
+int decouper(const char* s, size_t n, Champ* out, int max) { return champs_decouper_reste(s, n, '|', out, max); }
 
 // « type|icône|options|lien|min|max|pas|unité|nom » (après « rN| ») dans `d`.
 void lire_def(const char* s, size_t n, Def& d) {
@@ -475,9 +451,9 @@ void lire_def(const char* s, size_t n, Def& d) {
         d.lien_r = static_cast<int8_t>(f[3].p[1] - '0');
         d.lien_t = static_cast<int8_t>(f[3].p[2] - '0');
     }
-    d.min = nombre(f[4], 0.0f);
-    d.max = nombre(f[5], 100.0f);
-    d.pas = nombre(f[6], 1.0f);
+    d.min = champ_nombre(f[4], 0.0f);
+    d.max = champ_nombre(f[5], 100.0f);
+    d.pas = champ_nombre(f[6], 1.0f);
     if (!(d.max > d.min)) d.max = d.min + 1.0f;
     if (!(d.pas > 0.0f)) d.pas = 1.0f;
     texte_ha_copier(d.unite, kUnite, f[7].p, f[7].n);
@@ -534,7 +510,7 @@ bool reglables_etat_recu(const char* cle, size_t n_cle, const char* reste, size_
     Etat& e = s_etats[i];
     std::memset(e.brut, 0, sizeof(e.brut));
     if (k > 0) std::memcpy(e.brut, f[0].p, std::min(f[0].n, kEtat - 1));
-    e.valeur = k > 1 ? nombre(f[1], NAN) : NAN;
+    e.valeur = k > 1 ? champ_nombre(f[1], NAN) : NAN;
     // Un geste en cours sur cet appareil : la valeur affichée reste la sienne (l'état qui
     // arrive est celui d'avant le geste), comme la consigne de la clim.
     if (s_attente.cle[0] == 'r' && s_attente.cle[1] == '0' + i) e.valeur = s_attente.valeur;

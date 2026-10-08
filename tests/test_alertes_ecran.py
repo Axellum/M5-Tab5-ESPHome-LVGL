@@ -115,7 +115,7 @@ def test_le_libelle_des_bandeaux_passe_par_le_filtre_des_glyphes():
     assert "ha_alerte_texte(brut)" in corps and "ha_alerte_texte(parts[2])" not in corps
     assert "if (payload.length() > 1024)" in corps
     historique = (RACINE / "Tab5" / "tab5_alertes.cpp").read_text(encoding="utf-8")
-    assert "texte_ha_copier(brut, sizeof(brut), champ[4], taille[4]);" in historique
+    assert "texte_ha_copier(brut, sizeof(brut), f[4].p, f[4].n);" in historique
 
 
 # ─── Taille bornée (audit du 07/10/2026, DO-6) ───────────────────────────────

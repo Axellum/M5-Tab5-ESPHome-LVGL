@@ -63,14 +63,8 @@ struct LigneUI {
 };
 LigneUI s_ui[kLignesMax];
 
-uint32_t lire_epoch(const char* d, size_t n) {
-    char tmp[16];
-    if (n == 0 || n >= sizeof(tmp)) return 0;
-    memcpy(tmp, d, n);
-    tmp[n] = '\0';
-    const unsigned long v = strtoul(tmp, nullptr, 10);
-    return v > kEpochMax ? 0 : static_cast<uint32_t>(v);
-}
+// Epoch d'un champ ; 0 (absente) s'il est vide, illisible ou au-delà de kEpochMax.
+uint32_t lire_epoch(const Champ& c) { return champ_entier(c, kEpochMax, 0); }
 
 // « 14 h 02 » aujourd'hui, « Lun 5 14 h 02 » un autre jour (heure locale de la tablette).
 void heure_txt(char* out, size_t n, uint32_t epoch) {
@@ -207,27 +201,16 @@ void alertes_historique_recu(const std::string& payload) {
         const size_t n = fin ? static_cast<size_t>(fin - p) : strlen(p);
         // « apparue|lue|terminée|gravité|libellé » : le libellé est le reste (il ne contient
         // ni « | » ni « ; », HA les remplace) ; une entrée sans ses cinq champs est ignorée.
-        const char* champ[5] = {};
-        size_t taille[5] = {};
-        int nb = 0;
-        const char* d = p;
-        for (const char* c = p; c <= p + n && nb < 5; c++) {
-            if (c == p + n || (*c == '|' && nb < 4)) {
-                champ[nb] = d;
-                taille[nb] = static_cast<size_t>(c - d);
-                nb++;
-                d = c + 1;
-            }
-        }
-        if (nb == 5) {
+        Champ f[5] = {};
+        if (champs_decouper_reste(p, n, '|', f, 5) == 5) {
             Ligne& e = s_lignes[s_nb];
-            e.apparue = lire_epoch(champ[0], taille[0]);
-            e.lue = lire_epoch(champ[1], taille[1]);
-            e.terminee = lire_epoch(champ[2], taille[2]);
-            e.gravite = taille[3] > 0 ? champ[3][0] : 'O';
+            e.apparue = lire_epoch(f[0]);
+            e.lue = lire_epoch(f[1]);
+            e.terminee = lire_epoch(f[2]);
+            e.gravite = f[3].n > 0 ? f[3].p[0] : 'O';
             if (e.gravite != 'R' && e.gravite != 'J') e.gravite = 'O';
             char brut[kTexteMax];
-            texte_ha_copier(brut, sizeof(brut), champ[4], taille[4]);
+            texte_ha_copier(brut, sizeof(brut), f[4].p, f[4].n);
             e.texte = ha_alerte_texte(brut);
             if (e.apparue != 0) s_nb++;
         }

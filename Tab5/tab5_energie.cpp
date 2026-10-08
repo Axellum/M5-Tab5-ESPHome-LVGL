@@ -87,30 +87,12 @@ lv_obj_t* s_vide = nullptr;                 // « Aucun historique » au milieu 
 
 // --- Lecture des payloads ---------------------------------------------------------------
 
-// Champ suivant de [p, fin) jusqu'à `sep` : [*d, *d + *n). Avance p après le séparateur.
-void champ_suivant(const char*& p, const char* fin, char sep, const char*& d, size_t& n) {
-    d = p;
-    while (p < fin && *p != sep) p++;
-    n = static_cast<size_t>(p - d);
-    if (p < fin) p++;
-}
-
-// Nombre d'un champ : NAN s'il ne se lit pas (« nan », « unknown », vide).
-float lire_nombre(const char* d, size_t n) {
-    char buf[24];
-    if (n == 0 || n >= sizeof(buf)) return NAN;
-    std::memcpy(buf, d, n);
-    buf[n] = '\0';
-    char* fin = nullptr;
-    const float v = std::strtof(buf, &fin);
-    if (fin == buf || !std::isfinite(v)) return NAN;
-    return v;
-}
-
-Mesure lire_mesure(const char* d, size_t n) {
+// Champs et nombres : champ_suivant() et champ_nombre() (tab5_champs.h ; NAN s'il ne se
+// lit pas : « nan », « unknown », vide).
+Mesure lire_mesure(const Champ& c) {
     Mesure m;
-    m.choisi = n > 0;
-    m.v = lire_nombre(d, n);
+    m.choisi = c.n > 0;
+    m.v = champ_nombre(c, NAN);
     return m;
 }
 
@@ -467,20 +449,14 @@ bool energie_formater(char* out, size_t n, float v, const char* unite) {
 void energie_instantane(const std::string& payload) {
     const char* p = payload.data();
     const char* fin = p + payload.size();
-    const char* d = nullptr;
-    size_t n = 0;
     Instant i;
     i.recu = true;
     Mesure* champs[] = {&i.solaire, &i.maison, &i.reseau, &i.batterie, &i.batterie_puissance,
                         &i.batterie_temperature};
-    for (Mesure* m : champs) {
-        champ_suivant(p, fin, '|', d, n);
-        *m = lire_mesure(d, n);
-    }
-    champ_suivant(p, fin, '|', d, n);
-    texte_ha_copier(i.unite_temperature, sizeof(i.unite_temperature), d, n);
-    champ_suivant(p, fin, '|', d, n);
-    i.jour = lire_mesure(d, n);
+    for (Mesure* m : champs) *m = lire_mesure(champ_suivant(p, fin, '|'));
+    const Champ unite = champ_suivant(p, fin, '|');
+    texte_ha_copier(i.unite_temperature, sizeof(i.unite_temperature), unite.p, unite.n);
+    i.jour = lire_mesure(champ_suivant(p, fin, '|'));
     s_i = i;
     peindre();
 }
@@ -506,11 +482,9 @@ void energie_historique(const std::string& vue, const std::string& debut, const 
     // dernier « ; » était perdu : 23 barres au lieu de 24 l'après-midi, espacement changé.
     bool apres_sep = false;
     while ((p < fin || apres_sep) && s.n < kSlots[v]) {
-        const char* d = nullptr;
-        size_t n = 0;
-        champ_suivant(p, fin, ';', d, n);
-        apres_sep = p > d + n;   // le champ s'est terminé sur un « ; »
-        s.v[s.n++] = lire_nombre(d, n);
+        const Champ c = champ_suivant(p, fin, ';');
+        apres_sep = p > c.p + c.n;   // le champ s'est terminé sur un « ; »
+        s.v[s.n++] = champ_nombre(c, NAN);
     }
     // Une valeur négative (compteur remis à zéro mal compté) n'a pas de barre.
     for (int k = 0; k < s.n; k++)
