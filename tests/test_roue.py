@@ -296,8 +296,8 @@ def test_commandes_envoyees_du_contrat():
     for c in ("mode", "eteindre", "consigne", "preset", "ventilation", "oscillation"):
         assert f"commande: {c}" in popup, c
     # Clim du blueprint (option m) : l'emplacement « clim », comme clim_affichee_cle().
-    assert 'const char* cle_clim = (d.options & OPT_M) ? "clim" : cle;' in choisir
-    assert 'u.envoyer(clim ? cle_clim : cle, env[j].commande, env[j].valeur);' in _fonction(
+    assert 'const char* cle_clim = (d.options & OPT_M) ? "clim" : cle.s;' in choisir
+    assert 'u.envoyer(clim ? cle_clim : cle.s, env[j].commande, env[j].valeur);' in _fonction(
         t, "roue_tuile_choisir_choix")
     # Liens : le popup de la tuile ; le popup Maison par la routine unique des écrans.
     reglages = choisir.split("case RoueAction::REGLAGES:", 1)[1].split("return;", 1)[0]

@@ -179,7 +179,11 @@ def test_tout_eteindre_de_la_piece():
     assert "pR` + `eteindre`" in _lire(ADR)
     cpp = _cpp()
     corps = _fonction(cpp, "tuiles_piece_eteindre")
-    assert "{'p', static_cast<char>('0' + r), '\\0'}" in corps and 'envoyer(cle, "eteindre")' in corps
+    assert 'envoyer(piece_cle(r).s, "eteindre");' in corps
+    # Clés « pR » et « tRT » : une seule écriture, tab5_modele_ha.h (lot L7).
+    modele = _lire("Tab5", "tab5_modele_ha.h")
+    assert "c.s[0] = 'p';" in _fonction(modele, "piece_cle") and "c.s[1] = static_cast<char>('0' + r);" in _fonction(
+        modele, "piece_cle")
     assert "void popup_lumiere_tout_eteindre() { tuiles_piece_eteindre(s_pl.piece); }" in cpp
     assert "popup_lumiere_tout_eteindre();" in _lire("Tab5", "ui_components", "light_popup.yaml")
 
@@ -225,7 +229,13 @@ def test_luminosite_en_pourcent_une_seule_formule():
 
 def test_cles_des_commandes_de_tuile():
     cpp = _cpp()
-    assert "{'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\\0'}" in _fonction(cpp, "envoyer_tuile")
+    assert "envoyer(tuile_cle(r, t).s, action);" in _fonction(cpp, "envoyer_tuile")
+    cle = _fonction(_lire("Tab5", "tab5_modele_ha.h"), "tuile_cle")
+    assert ("c.s[0] = 't';\n    c.s[1] = static_cast<char>('0' + r);\n    c.s[2] = static_cast<char>('0' + t);"
+            in cle.replace("\r\n", "\n"))
+    # Écrite une seule fois : plus de clé « tRT » montée à la main dans le C++ des tuiles et des clims.
+    for fichier in ("tab5_tuiles.cpp", "tab5_cards.cpp"):
+        assert "static_cast<char>('0' + " not in _lire("Tab5", fichier), fichier
     # L'événement esphome.tab5_action du script tab5_action, emplacement / action / valeur.
     tuiles_yaml = _lire("Tab5", "tab5-tuiles.yaml")
     assert "id(tab5_action).execute(std::string(e), std::string(a), std::string(v));" in tuiles_yaml
@@ -397,7 +407,7 @@ def test_commandes_du_popup_du_volet_dans_le_contrat():
     # Volet dessiné : « position » (dans le tableau de l'ADR), 0-100, à la tuile du popup,
     # et jamais sans position connue (même si elle s'est perdue pendant le geste).
     envoi = _fonction(cpp, "popup_volet_envoyer_position")
-    assert 'u.envoyer(cle, "position", valeur);' in envoi and "position" in adr
+    assert 'u.envoyer(tuile_cle(s_pv.piece, s_pv.tuile).s, "position", valeur);' in envoi and "position" in adr
     assert 'snprintf(valeur, sizeof(valeur), "%d", std::clamp(s_pv.pos, 0, 100));' in envoi
     garde = "if (!vol_position_connue(s_etats[s_pv.piece][s_pv.tuile])) return false;"
     assert garde in envoi and envoi.index(garde) < envoi.index("u.envoyer(")
@@ -451,7 +461,7 @@ def test_le_volet_dessine_suit_la_position_de_ha():
     assert "if (!s_pv.saisi && !s_pv.cible) s_pv.pos = vol_position_dessin(e, s_pv.estompe);" in peindre
     assert "popup_volet_dessiner(s_pv.pos, s_pv.estompe);" in peindre
     envoi = _fonction(cpp, "popup_volet_envoyer_position")
-    assert envoi.index('u.envoyer(cle, "position", valeur);') < envoi.index("s_pv.cible = true;")
+    assert envoi.index('"position", valeur);') < envoi.index("s_pv.cible = true;")
     recu = _fonction(cpp, "tuiles_etat_recu")
     assert recu.index("if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;") < recu.index("peindre_tuile(r, t);")
     assert cpp.count("s_pv.cible = true;") == 1 and cpp.count("s_pv.cible = false;") == 1

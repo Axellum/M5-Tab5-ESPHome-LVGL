@@ -56,7 +56,7 @@
 #include <memory>
 
 // kNom, kIcone, kEtat, est(), etat_indisponible(), copier_icone() : communs avec la tuile
-// − / + (tab5_modele_ha.h, lot L5).
+// − / + (tab5_modele_ha.h, lot L5) ; tuile_cle(), piece_cle() : les clés « tRT » et « pR ».
 using namespace modele_ha;
 
 namespace {
@@ -1054,8 +1054,7 @@ void lumiere_cle(int r, int t, std::string& out) {
         out = kHeritageLumieres[t - 2];
         return;
     }
-    const char cle[4] = {'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\0'};
-    out = cle;
+    out = tuile_cle(r, t).s;
 }
 
 bool popup_ouvert() {
@@ -1186,8 +1185,7 @@ void envoyer(const char* emplacement, const char* action) {
 }
 
 void envoyer_tuile(int r, int t, const char* action) {
-    const char cle[4] = {'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\0'};
-    envoyer(cle, action);
+    envoyer(tuile_cle(r, t).s, action);
 }
 
 void ouvrir_popup(lv_obj_t* popup) {
@@ -1398,8 +1396,7 @@ bool popup_volet_envoyer_position() {
     if (!vol_position_connue(s_etats[s_pv.piece][s_pv.tuile])) return false;
     char valeur[8];
     snprintf(valeur, sizeof(valeur), "%d", std::clamp(s_pv.pos, 0, 100));
-    const char cle[4] = {'t', static_cast<char>('0' + s_pv.piece), static_cast<char>('0' + s_pv.tuile), '\0'};
-    u.envoyer(cle, "position", valeur);
+    u.envoyer(tuile_cle(s_pv.piece, s_pv.tuile).s, "position", valeur);
     s_pv.cible = true;
     return true;
 }
@@ -2407,9 +2404,9 @@ void roue_tuile_choisir(int i) {
     if (i < 0 || i >= rt.n || heritage() || !tuile_presente(rt.r, rt.t)) return;
     const Def& d = s_m.tuiles[rt.r][rt.t];
     const TuilesUI& u = g_tuiles_ui;
-    const char cle[4] = {'t', static_cast<char>('0' + rt.r), static_cast<char>('0' + rt.t), '\0'};
+    const CleTuile cle = tuile_cle(rt.r, rt.t);
     // Une clim : à l'emplacement que vise son popup (« clim » pour celle du blueprint).
-    const char* cle_clim = (d.options & OPT_M) ? "clim" : cle;
+    const char* cle_clim = (d.options & OPT_M) ? "clim" : cle.s;
     switch (rt.action[i]) {
         case RoueAction::MAISON:
             if (g_roue_ui.ouvrir_ecran != nullptr) g_roue_ui.ouvrir_ecran(static_cast<int>(Ecran::MAISON));
@@ -2459,10 +2456,10 @@ void roue_tuile_choisir_choix(int i, int j) {
     const TuilesUI& u = g_tuiles_ui;
     if (j < 0 || j >= m || env[j].commande == nullptr || u.envoyer == nullptr) return;
     const Def& d = s_m.tuiles[rt.r][rt.t];
-    const char cle[4] = {'t', static_cast<char>('0' + rt.r), static_cast<char>('0' + rt.t), '\0'};
+    const CleTuile cle = tuile_cle(rt.r, rt.t);
     const bool clim = static_cast<Type>(d.type) == Type::CLI;
-    const char* cle_clim = (d.options & OPT_M) ? "clim" : cle;
-    u.envoyer(clim ? cle_clim : cle, env[j].commande, env[j].valeur);
+    const char* cle_clim = (d.options & OPT_M) ? "clim" : cle.s;
+    u.envoyer(clim ? cle_clim : cle.s, env[j].commande, env[j].valeur);
 }
 
 // Boutons, moyeu (icône, ligne d'état, nom, jauge) et couleur d'état (celle de la pastille
@@ -2606,8 +2603,7 @@ void tuiles_piece_eteindre(int r) {
         return;
     }
     if (r < 0 || r >= kPieces) return;
-    const char cle[3] = {'p', static_cast<char>('0' + r), '\0'};
-    envoyer(cle, "eteindre");
+    envoyer(piece_cle(r).s, "eteindre");
 }
 
 void popup_lumiere_tout_eteindre() { tuiles_piece_eteindre(s_pl.piece); }

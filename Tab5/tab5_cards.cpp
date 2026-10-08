@@ -27,6 +27,7 @@
 #include "tab5_custom.h"
 #include "tab5_internal.h"
 #include "tab5_geometrie.h"
+#include "tab5_modele_ha.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <esp_heap_caps.h>
@@ -493,10 +494,7 @@ bool clim_tuile_connue(int r, int t) {
 bool clim_afficher_tuile(int r, int t) {
     if (!clim_tuile_connue(r, t)) return false;
     s_vue = r * kTuiles + t;
-    s_vue_cle[0] = 't';
-    s_vue_cle[1] = static_cast<char>('0' + r);
-    s_vue_cle[2] = static_cast<char>('0' + t);
-    s_vue_cle[3] = '\0';
+    std::memcpy(s_vue_cle, modele_ha::tuile_cle(r, t).s, sizeof(s_vue_cle));
     popup_peindre();
     return true;
 }
@@ -511,9 +509,8 @@ void clim_tuile_oublier(int r, int t) {
     ClimTuile* c = tuile_clim(r, t, false);
     if (c == nullptr) return;
     *c = ClimTuile();
-    const char cle[4] = {'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\0'};
     // Une consigne en attente irait à l'appareil qui a pris sa place : elle ne part pas.
-    if (std::strcmp(s_attente.cle, cle) == 0) s_attente = Attente{};
+    if (std::strcmp(s_attente.cle, modele_ha::tuile_cle(r, t).s) == 0) s_attente = Attente{};
     if (s_vue != r * kTuiles + t) return;
     if (popup_visible()) animate_popup_close(g_clim_ui.popup);
     s_vue = -1;
