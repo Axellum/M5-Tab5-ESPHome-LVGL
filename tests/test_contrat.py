@@ -30,6 +30,7 @@ from pathlib import Path
 import yaml
 
 from tests.test_actions_ha import _Chargeur, _fichiers_firmware, _parcourir
+from tests.commun import fichiers_du_depot
 
 REPO = Path(__file__).resolve().parent.parent
 HA = REPO / "HomeAssistant_Config"
@@ -102,7 +103,8 @@ def test_lecture_de_la_demo_egale_a_celle_de_pyyaml():
 # ─── Les appels de HA ────────────────────────────────────────────────────────
 
 def _fichiers_ha():
-    return sorted(p for p in HA.rglob("*.yaml") if p.name != "placeholders.example.yaml")
+    # Sans les fichiers ignorés par git (rendered/, placeholders.yaml) : en local comme en CI.
+    return [p for p in fichiers_du_depot(HA, "*.yaml") if p.name != "placeholders.example.yaml"]
 
 
 def appels_ha():

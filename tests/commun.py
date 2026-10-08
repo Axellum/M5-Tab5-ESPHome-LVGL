@@ -10,6 +10,8 @@ Tout est ici, une fois :
   `HomeAssistant_Config/`. Le `sys.path` des outils (`tools/`, `tools/demo/`…) est posé
   une fois par `tests/conftest.py`.
 - `lire(*chemin)` : texte UTF-8 d'un fichier, chemin relatif à la racine ou absolu.
+- `fichiers_du_depot(dossier, motif)` : comme `rglob`, sans les fichiers que .gitignore
+  écarte (le même jeu en local qu'en CI).
 - Chargeurs YAML, tous sur le chargeur C de PyYAML (libyaml, ~10 fois plus rapide, mêmes
   objets que le chargeur Python sur les 169 YAML du dépôt, vérifié le 08/10/2026) :
   * `ChargeurSansBalises` : une balise (`!lambda`, `!include`, `!secret`, `!input`…) vaut None ;
@@ -29,6 +31,7 @@ blueprint de test_tuiles_blueprint.py, qui garde les `!input` comme objets `_Ent
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 import jinja2
@@ -68,6 +71,20 @@ class ChargeurEntrees(BaseChargeur):
 
 
 ChargeurEntrees.add_constructor("!input", lambda chargeur, noeud: {"!input": chargeur.construct_scalar(noeud)})
+
+
+def fichiers_du_depot(dossier: Path, motif: str = "*") -> list[Path]:
+    """Fichiers de `dossier` qui correspondent à `motif`, SANS ceux que .gitignore écarte
+    (HomeAssistant_Config/rendered/, placeholders.yaml…) : en local, le même jeu qu'en CI,
+    où ils n'existent pas (constat HA-12 de l'audit du 07/10/2026). Un fichier neuf pas
+    encore ajouté à git compte. Sans git : tout le dossier (rglob)."""
+    try:
+        sortie = subprocess.run(["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", str(dossier)],
+                                cwd=REPO, capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return sorted(dossier.rglob(motif))
+    chemins = {REPO / p for p in sortie.decode("utf-8").split("\0") if p}
+    return sorted(p for p in chemins if p.match(motif) and p.is_file())
 
 
 def charger(*chemin, chargeur=ChargeurSansBalises):
