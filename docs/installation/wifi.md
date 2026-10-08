@@ -21,7 +21,7 @@ The window is already closed? Open the [install page](https://axellum.github.io/
 ## Good to know
 
 - The network is kept across updates.
-- The « Tab5 Fallback AP » network comes back whenever the tablet loses its Wi-Fi for a minute, to give it another one.
+- The « Tab5 Fallback AP » network comes back whenever the tablet loses its Wi-Fi for a minute, to give it another one. A tablet that has no Home Assistant key yet stops offering it 30 minutes after its start: restart the tablet, and the network comes back.
 - Note the tablet's IP address if you can (your router, or the page of « Tab5 Fallback AP » right after you picked the network): it helps at step 4 if Home Assistant does not find the tablet by itself, and for the [demo mode](../demo_mode.md).
 
 **Next: [step 4, add the tablet to Home Assistant](add-to-home-assistant.md)**, within 30 minutes of its start.
@@ -49,7 +49,7 @@ La fenêtre est déjà fermée ? Rouvrez la [page d'installation](https://axellu
 ## Bon à savoir
 
 - Le réseau est gardé d'une mise à jour à l'autre.
-- Le réseau « Tab5 Fallback AP » revient dès que la tablette perd son Wi-Fi une minute, pour lui en donner un autre.
+- Le réseau « Tab5 Fallback AP » revient dès que la tablette perd son Wi-Fi une minute, pour lui en donner un autre. Une tablette qui n'a pas encore de clé Home Assistant cesse de le proposer 30 minutes après son démarrage : redémarrez-la, le réseau revient.
 - Notez l'adresse IP de la tablette si vous le pouvez (votre box, ou la page de « Tab5 Fallback AP » juste après le choix du réseau) : elle sert à l'étape 4 si Home Assistant ne trouve pas la tablette seul, et pour le [mode démo](../demo_mode.md#version-française).
 
 **Ensuite : [étape 4, ajouter la tablette à Home Assistant](add-to-home-assistant.md#version-française)**, dans les 30 minutes qui suivent son démarrage.

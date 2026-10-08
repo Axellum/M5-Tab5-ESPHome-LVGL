@@ -20,7 +20,7 @@ The tablet follows the channel it was installed from (Stable or Beta); to switch
 - puts the new ones in place: a Tab5 file you edited by hand is replaced too, and the notification names it (its copy stays in the backup); a Tab5 file that was already there without coming from the integration (copied by hand) and differs is also named in *Settings → Repairs*, with its backup folder;
 - checks the configuration, and puts the previous files back if the new ones break it (those files are then not tried again at each start: see Repairs);
 - reloads the YAML, then says what changed in a notification « Tab5: Home Assistant files X.Y.Z »;
-- if « Then update the tablet » is ticked, installs the firmware of the same version as soon as the tablet's « Firmware » entity offers it; if the tablet still runs the old version 15 minutes later, it tries again, 3 times in all, then says so in *Settings → Repairs*.
+- if « Then update the tablet » is ticked, installs the firmware of the same version as soon as the tablet's « Firmware » entity offers it; if the tablet still runs the old version 15 minutes later, it tries again, 3 times in all, then says so in *Settings → Repairs* (the retries come with 3.8).
 
 A problem shows in *Settings → Repairs*: missing `packages:` line, files refused, restart needed ([what to do](../troubleshooting.md#tab5-integration-hacs-a-message-in-repairs)). HACS offers full releases only: pre-releases (Beta channel) only if beta versions are switched on for this repository in HACS. To put the files back after a mistake: *Settings → Devices & services → Tab5 → Configure*, « Install the files of this version again now ».
 
@@ -104,7 +104,7 @@ La tablette suit le canal depuis lequel elle a été installée (Stable ou Bêta
 - pose les nouveaux : un fichier du Tab5 modifié à la main est remplacé lui aussi, et la notification le nomme (sa copie reste dans la sauvegarde) ; un fichier du Tab5 déjà là sans venir de l'intégration (copié à la main) et différent est aussi nommé dans *Paramètres → Réparations*, avec son dossier de sauvegarde ;
 - vérifie la configuration, et remet les anciens fichiers si les nouveaux la cassent (ces fichiers ne sont alors plus réessayés à chaque démarrage : voir Réparations) ;
 - recharge le YAML, puis dit ce qui a changé dans une notification « Tab5 : fichiers Home Assistant X.Y.Z » ;
-- si « Mettre ensuite la tablette à jour » est coché, installe le firmware de la même version dès que l'entité « Firmware » de la tablette le propose ; si la tablette tourne toujours l'ancienne version 15 minutes plus tard, réessaie, 3 fois en tout, puis le dit dans *Paramètres → Réparations*.
+- si « Mettre ensuite la tablette à jour » est coché, installe le firmware de la même version dès que l'entité « Firmware » de la tablette le propose ; si la tablette tourne toujours l'ancienne version 15 minutes plus tard, réessaie, 3 fois en tout, puis le dit dans *Paramètres → Réparations* (les nouveaux essais arrivent avec la 3.8).
 
 Un problème s'affiche dans *Paramètres → Réparations* : ligne `packages:` absente, fichiers refusés, redémarrage nécessaire ([que faire](../troubleshooting.md#intégration-tab5-hacs--un-message-dans-réparations)). HACS ne propose que les releases complètes : les pré-releases (canal Bêta) seulement si les versions bêta sont activées pour ce dépôt dans HACS. Pour remettre les fichiers après une erreur : *Paramètres → Appareils et services → Tab5 → Configurer*, « Réinstaller maintenant les fichiers de cette version ».
 
