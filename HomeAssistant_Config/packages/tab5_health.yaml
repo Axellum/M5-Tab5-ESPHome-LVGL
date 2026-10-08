@@ -440,28 +440,28 @@ automation:
   # entité ni code : il est lu tel quel sur le téléphone.
   # ==========================================================================
   - id: tab5_health_batterie_faible
-    alias: "Tab5 Santé — batterie faible"
+    alias: "Tab5 — santé : batterie faible"
     description: >-
       Prévient quand la tablette tourne sur sa batterie et passe sous 20 %, puis
       sous 10 % : il est temps de la brancher.
     mode: queued
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: esphome.tab5_batterie_faible
     # Garde d'origine, comme la garde (e) : seulement l'événement d'une tablette,
     # reconnue au modèle de son appareil. tests/test_garde_origine.py.
-    condition:
+    conditions:
       - condition: template
         value_template: >-
-          {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-          {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
     variables:
       niveau: "{{ trigger.event.data.niveau | default('?', true) }}"
       titre: >-
         {{ '⚠️ Tab5 : batterie presque vide'
            if (trigger.event.data.seuil | default('', true) | string) == '10'
            else '⚠️ Tab5 : batterie faible' }}
-    action:
+    actions:
       - action: script.tab5_health_notify
         data:
           notification_id: tab5_health_batterie
