@@ -344,7 +344,7 @@ void cal_render_month(lv_obj_t* lbl_month,
 
     char buf[48];
     snprintf(buf, sizeof(buf), "%s %d", cal_month_name_utf8(view_month).c_str(), view_year);
-    lv_label_set_text(lbl_month, buf);
+    ui_text(lbl_month, buf);
 
     const int first_col = cal_weekday_mon0(view_year, view_month, 1);
     const int ndays = jours_du_mois(view_year, view_month);
@@ -361,6 +361,10 @@ void cal_render_month(lv_obj_t* lbl_month,
     const int32_t row_h = (s_cal_grid_h - (rows - 1) * gap) / rows;
     const int32_t rows_y = s_cal_grid_y + (s_cal_grid_h - (rows * row_h + (rows - 1) * gap)) / 2;
 
+    // Écritures comparées d'abord (lot L10, 08/10/2026) : la grille est repeinte à chaque
+    // ouverture et à chaque mois poussé par HA pendant qu'elle est affichée, souvent à
+    // l'identique ; en LVGL 9.5.0, lv_label_set_text() et lv_obj_set_style_*() invalident
+    // même à valeur égale (les drapeaux HIDDEN, LVGL les compare lui-même).
     const bool has_today = (today_year > 0);
     for (int i = 0; i < 42; i++) {
         const CalCellUI& c = s_cal_cells[i];
@@ -372,19 +376,19 @@ void cal_render_month(lv_obj_t* lbl_month,
             continue;
         }
         lv_obj_remove_flag(c.cell, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_set_style_y(c.cell, rows_y + row * (row_h + gap), LV_PART_MAIN);
-        lv_obj_set_style_height(c.cell, row_h, LV_PART_MAIN);
+        ui_style_num(c.cell, LV_STYLE_Y, rows_y + row * (row_h + gap));
+        ui_style_num(c.cell, LV_STYLE_HEIGHT, row_h);
 
         const int day = i - first_col + 1;
         if (day < 1 || day > ndays) {
             // Cellule hors mois : tout éteint (le tap est neutralisé par
             // cal_date_for_cell qui renvoie "").
-            lv_label_set_text(c.num, "");
-            lv_label_set_text(c.sub, "");
+            ui_text(c.num, "");
+            ui_text(c.sub, "");
             lv_obj_add_flag(c.dot, LV_OBJ_FLAG_HIDDEN);
             lv_obj_add_flag(c.dot2, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_set_style_bg_opa(c.cell, LV_OPA_TRANSP, LV_PART_MAIN);
-            lv_obj_set_style_border_opa(c.cell, LV_OPA_TRANSP, LV_PART_MAIN);
+            ui_style_num(c.cell, LV_STYLE_BG_OPA, LV_OPA_TRANSP);
+            ui_style_num(c.cell, LV_STYLE_BORDER_OPA, LV_OPA_TRANSP);
             continue;
         }
 
@@ -399,7 +403,7 @@ void cal_render_month(lv_obj_t* lbl_month,
         }
 
         snprintf(buf, sizeof(buf), "%d", day);
-        lv_label_set_text(c.num, buf);
+        ui_text(c.num, buf);
 
         const bool is_today = has_today && view_year == today_year
             && view_month == today_month && day == today_day;
@@ -416,34 +420,32 @@ void cal_render_month(lv_obj_t* lbl_month,
         // était en ardoise sur le bleu, illisible. Le fond plus pâle suffit à l'estomper.
         if (is_past) num_color = UIColor.TEXT_DIM;
         if (is_today) num_color = UIColor.ACCENT;
-        lv_obj_set_style_text_color(c.num, lv_color_hex(num_color), LV_PART_MAIN);
+        ui_text_color(c.num, num_color);
 
         // Heures de travail dans la case (orange si embauche < 9h — même
         // convention que les tuiles / bandeau, estompé si jour passé)
         if (!heures.empty()) {
-            lv_label_set_text(c.sub, heures.c_str());
+            ui_text(c.sub, heures.c_str());
             uint32_t h_color = UIColor.TEXT_SOFT;
             if (cal_is_early_shift(heures)) {
                 h_color = UIColor.EARLY;
             }
             if (is_past) h_color = UIColor.TEXT_DIM;
-            lv_obj_set_style_text_color(c.sub, lv_color_hex(h_color), LV_PART_MAIN);
+            ui_text_color(c.sub, h_color);
         } else {
-            lv_label_set_text(c.sub, "");
+            ui_text(c.sub, "");
         }
 
         // Fond : violet doux = vacances scolaires, sinon verre (plus pâle si passé) pour
         // que chaque jour se lise comme une case ; bordure cyan = aujourd'hui. Opaque,
         // pré-mélangé sur la carte (cal_fond_case).
         const bool vacances = (code & CAL_BIT_VACANCES) != 0;
-        lv_obj_set_style_bg_color(c.cell,
+        ui_style_couleur(c.cell, LV_STYLE_BG_COLOR,
             cal_fond_case(lv_obj_get_parent(c.cell), rows_y + row * (row_h + gap) + row_h / 2,
                           vacances ? UIColor.ACCENT_ALT : UIColor.GLASS_RIM,
-                          vacances ? LV_OPA_30 : (is_past ? LV_OPA_10 : LV_OPA_20)),
-            LV_PART_MAIN);
-        lv_obj_set_style_bg_opa(c.cell, LV_OPA_COVER, LV_PART_MAIN);
-        lv_obj_set_style_border_opa(c.cell,
-            is_today ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
+                          vacances ? LV_OPA_30 : (is_past ? LV_OPA_10 : LV_OPA_20)));
+        ui_style_num(c.cell, LV_STYLE_BG_OPA, LV_OPA_COVER);
+        ui_style_num(c.cell, LV_STYLE_BORDER_OPA, is_today ? LV_OPA_COVER : LV_OPA_TRANSP);
 
         if (code & CAL_BIT_RDV) lv_obj_remove_flag(c.dot, LV_OBJ_FLAG_HIDDEN);
         else lv_obj_add_flag(c.dot, LV_OBJ_FLAG_HIDDEN);
