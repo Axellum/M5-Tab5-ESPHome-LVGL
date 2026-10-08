@@ -35,6 +35,17 @@ A unit labelled « ST7123 » may carry an ST7121: if you are unsure, try one, th
 
 Closing the window restarts the tablet once: that is normal.
 
+## Check a download (optional)
+
+From the release after 3.8.0-rc.3, each release carries a `SHA256SUMS` file and a signed attestation of where its files were built (the GitHub account, the repository, the commit). To check a file you downloaded by hand, from the folder holding it:
+
+```bash
+sha256sum -c SHA256SUMS --ignore-missing
+gh attestation verify tab5-ha-hmi-st7123.ota.bin --repo Axellum/M5-Tab5-ESPHome-LVGL
+```
+
+The install page and the tablet do not need this: the tablet only accepts a firmware signed with the project key ([ADR-0020](../decisions/0020-no-secret-firmware-signed-ota.md)), and the page checks the SHA-256 of the manifest.
+
 ## If it does not work
 
 | What you see | What to do |
@@ -85,6 +96,17 @@ Une tablette étiquetée « ST7123 » peut porter une ST7121 : dans le doute, es
 3. Attendez la fin de l'installation. La même fenêtre propose ensuite de régler le Wi-Fi : c'est l'[étape 3](wifi.md#version-française).
 
 Fermer la fenêtre redémarre la tablette une fois : c'est normal.
+
+## Vérifier un téléchargement (facultatif)
+
+À partir de la release qui suit la 3.8.0-rc.3, chaque release porte un fichier `SHA256SUMS` et une attestation signée de l'endroit où ses fichiers ont été construits (le compte GitHub, le dépôt, le commit). Pour vérifier un fichier téléchargé à la main, depuis le dossier qui le contient :
+
+```bash
+sha256sum -c SHA256SUMS --ignore-missing
+gh attestation verify tab5-ha-hmi-st7123.ota.bin --repo Axellum/M5-Tab5-ESPHome-LVGL
+```
+
+La page d'installation et la tablette n'en ont pas besoin : la tablette n'accepte qu'un firmware signé par la clé du projet ([ADR-0020](../decisions/0020-no-secret-firmware-signed-ota.md)), et la page contrôle le SHA-256 du manifeste.
 
 ## Si ça ne marche pas
 

@@ -19,6 +19,11 @@ le 08/10/2026 : test de consommation dans Home Assistant et lecture de la batter
 pendant le test (#405), `tools/mesure_conso.py` (#404). Fichiers Home Assistant à recopier avant le
 firmware.
 
+### 2026-10-09 — Lot J de l'audit du 30/09 (sécurité) : page d'installation et publication
+
+- **Page `/install/`** : politique de sécurité du contenu (CSP) qui n'autorise que le script de la page (par son empreinte) et ESP Web Tools 10.4.0 depuis son dossier de jsDelivr ; empreinte SRI sur le script d'entrée. Essayé dans un navigateur : la page marche, un script d'un autre dossier ou injecté est bloqué ; non essayé : l'ouverture de la fenêtre d'installation avec une vraie tablette. `tests/test_csp_installation.py` vérifie l'empreinte et la version.
+- **Publication** (`publication.yml`) : fichier `SHA256SUMS` joint à la release et attestation de provenance (`actions/attest-build-provenance`, figée par SHA, sans bloquer la publication si elle échoue). **Non essayé avant la prochaine release.** Comment vérifier : `docs/installation/flash.md`.
+
 ### 2026-10-09 — Première installation, suite : prérequis, bêta, Home Assistant 2026.8 testé (doc, CI)
 
 - **`installation/README.md`** : « Ce qu'il faut » ajoute le Wi-Fi 2,4 GHz (fiche M5Stack du Tab5) et la source USB-C (conseil 5 V / 2 A, pas une exigence). **`flash.md`** : en bêta, prendre aussi `tab5_home_assistant.zip` de la pré-release. **`updates.md`, `troubleshooting.md`** : le menu est « Paramètres → Système → Réparations ».
