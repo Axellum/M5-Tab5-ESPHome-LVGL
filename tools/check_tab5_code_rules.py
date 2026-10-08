@@ -702,7 +702,7 @@ LV_YAML_PLAFONDS: dict[str, dict[str, int]] = {
     # Calendrier : fermeture du détail du jour (4 gestes).
     "tab5-calendar.yaml": {"lv_obj_add_flag": 4},
     # Ouverture d'un écran depuis HA : popup déjà affiché ? (lecture seule).
-    "tab5-ha-controls.yaml": {"lv_obj_has_flag": 1},
+    "tab5-navigation.yaml": {"lv_obj_has_flag": 1},
     # Geste de balayage de la page : point et direction lus sur l'entrée LVGL
     # (le traitement est dans handle_swipe_gesture(), tab5_central.cpp).
     "tab5-lvgl.yaml": {"lv_indev_active": 1, "lv_indev_get_point": 1, "lv_indev_get_gesture_dir": 1},
@@ -758,7 +758,7 @@ STATIC_LAMBDA_PERMIS: dict[str, dict[str, int]] = {
     # republication identique à HA), une par text_sensor.
     "tab5-alarm.yaml": {"last": 2},
     # « Écran courant » : dernière valeur publiée.
-    "tab5-ha-controls.yaml": {"last": 1},
+    "tab5-navigation.yaml": {"last": 1},
     # IMU : anti-rebond du tap-to-wake (on_value du même capteur), cadence de poll en cours
     # (interval de 1 s).
     "tab5-imu.yaml": {"last_tap_ms": 1, "cur": 1},

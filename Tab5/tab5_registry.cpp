@@ -85,6 +85,7 @@ struct Slot {
     lv_obj_t* obj;
     const char* name;
     Kind kind;
+    Ouvreur ouvreur;
 };
 
 static Slot g_slots[MAX];
@@ -92,7 +93,7 @@ static int g_nb = 0;
 
 bool ready() { return g_nb > 0; }
 
-void add(lv_obj_t* obj, const char* name, Kind kind) {
+void add(lv_obj_t* obj, const char* name, Kind kind, Ouvreur ouvreur) {
     if (g_nb >= MAX) {
         ESP_LOGE(TAG, "ModalRegistry plein (%d) : '%s' ignore", MAX, name ? name : "?");
         return;
@@ -103,7 +104,19 @@ void add(lv_obj_t* obj, const char* name, Kind kind) {
         // testent le pointeur.
         ESP_LOGW(TAG, "ModalRegistry : '%s' enregistre sans widget", name ? name : "?");
     }
-    g_slots[g_nb++] = Slot{obj, name, kind};
+    g_slots[g_nb++] = Slot{obj, name, kind, ouvreur};
+}
+
+bool ouvrir(lv_obj_t* obj) {
+    if (obj == nullptr) return false;
+    for (int i = 0; i < g_nb; i++) {
+        const Slot& s = g_slots[i];
+        if (s.obj != obj) continue;
+        if (s.ouvreur == nullptr) return false;
+        s.ouvreur();
+        return true;
+    }
+    return false;
 }
 
 static inline bool visible(const Slot& s) {

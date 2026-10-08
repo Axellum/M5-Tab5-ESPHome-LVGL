@@ -31,13 +31,14 @@
 | `tab5-api-logic.yaml` | `Tab5/` | Contrat API HA↔Tab5 : bloc `api: services:` (23 services ; `tab5_maj_pluie_1h_bulk` a remplacé `tab5_maj_pluie_1h` le 08/09/2026). |
 | `tab5-styles.yaml` | `Tab5/` | Styles de verre partagés par les thèmes : couleurs des jeux (`color:`), déclarations `font:`, `lvgl: style_definitions:` (lisent la palette `UIColor`, ADR-0029). |
 | `tab5-globals.yaml` | `Tab5/` | État partagé (`globals:`) + rotateur carte centrale (interval 8s). |
-| `tab5-scripts.yaml` | `Tab5/` | Scripts transverses : registre des modales, volume, debounces, rotateur, volet, popup lumière, retour à l'accueil. |
+| `tab5-scripts.yaml` | `Tab5/` | Scripts transverses : console système, volume, debounces, rotateur, volet, popup lumière, retour à l'accueil. |
 | `tab5-arcade.yaml` | `Tab5/` | Scripts des jeux : fermeture globale, ouverture des 8 consoles, page arcade (lot 8c). |
 | `tab5-calendar.yaml` | `Tab5/` | Scripts du popup calendrier (lot 8c). |
 | `tab5-assist.yaml` | `Tab5/` | Assistant vocal : mots de réveil, pipeline, image de la réponse, scripts vocaux et popup Assistant (lot 8c). |
 | `tab5-lvgl.yaml` | `Tab5/` | Layout complet : page unique 1280×720, swipe prévisions, console, popups. |
 | `tab5-imu.yaml` | `Tab5/` | BMI270 IMU : `motion:`, poll adaptatif 10/30Hz, tap-to-wake. |
-| `tab5-ha-controls.yaml` | `Tab5/` | Number volume, text_sensor écran courant, select aller-à, button recharger calendrier. |
+| `tab5-navigation.yaml` | `Tab5/` | Navigation : registre des modales, `tab5_ecran_ouvrir`, select aller-à, text_sensor écran courant (08/10/2026). |
+| `tab5-ha-controls.yaml` | `Tab5/` | Number volume, select langue, interrupteurs et extinction auto des Réglages, button recharger calendrier. |
 | `tab5-alarm.yaml` | `Tab5/` | Réveil : rtttl, ~20 entités HA, machine d'état sonnerie, tick 1s. |
 | `publication-*.yaml` | `Tab5/` | Publication (lot 6c, ADR-0022), choisie par `tab5_publication` : `locale` (défaut, vide), `stable` / `beta` (CI de publication) → `publication-commune.yaml` : OTA `http_request` + entité de mise à jour « Firmware » sur le manifeste de GitHub Pages. |
 

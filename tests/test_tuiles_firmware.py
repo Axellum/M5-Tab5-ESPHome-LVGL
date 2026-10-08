@@ -371,7 +371,7 @@ def test_mode_ha_seule_source_et_swipe_par_piece():
     assert swipe.index("if (ctx.ha_mode)") < swipe.index("apply_forecast_page(")
     assert "!ctx.ha_mode" in _fonction(central, "rotator_owns_card")
     assert "if (g_central_ctx.ha_mode) return;" in _lire("Tab5", "tab5-scripts.yaml")
-    assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-ha-controls.yaml")
+    assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-navigation.yaml")
     assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "tab5-lvgl.yaml")
 
 
@@ -501,7 +501,7 @@ def test_geometrie_du_volet_dessine():
 
 
 def test_popup_du_volet_inscrit_et_branche():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "tab5-navigation.yaml")
     assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volet",\s+ModalRegistry::POPUP\);', scripts)
     assert "- !include ui_components/volet_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "tab5-tuiles.yaml")
@@ -571,7 +571,7 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
 
 
 def test_popup_d_un_appareil_inscrit_et_branche():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "tab5-navigation.yaml")
     assert re.search(r'ModalRegistry::add\(id\(appareil_popup\),\s+"Appareil",\s+ModalRegistry::POPUP\);', scripts)
     assert "- !include ui_components/appareil_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "tab5-tuiles.yaml")

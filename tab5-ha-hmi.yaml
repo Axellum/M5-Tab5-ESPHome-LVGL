@@ -369,8 +369,10 @@ packages:
   tab5_calendar: !include Tab5/tab5-calendar.yaml
   tab5_assist: !include Tab5/tab5-assist.yaml
   tab5_imu: !include Tab5/tab5-imu.yaml
-  # Entites exposees a HA pour piloter/observer l'ecran depuis un dashboard HA.
-  # Charge APRES tab5_lvgl : ses lambdas referencent des ids de widgets LVGL.
+  # Navigation (08/10/2026) : registre des fenetres, « Aller a l'ecran », « Ecran courant »,
+  # tab5_ecran_ouvrir. APRES tab5_lvgl : ses lambdas referencent des ids de widgets LVGL.
+  tab5_navigation: !include Tab5/tab5-navigation.yaml
+  # Entites exposees a HA pour regler l'ecran depuis un dashboard HA.
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
   # Reveil matin + annonce des rendez-vous. Comme ci-dessus : APRES tab5_lvgl
   # (ses scripts referencent les ids de alarm_popup.yaml / alarm_ring_overlay.yaml).

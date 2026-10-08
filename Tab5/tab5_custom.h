@@ -884,13 +884,14 @@ enum BoutonHaut : uint8_t {
     BOUTON_HAUT_NB
 };
 
-// Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-ha-controls.yaml), routine unique du
+// Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-navigation.yaml), routine unique du
 // select « Aller à l'écran » et des appuis longs des boutons du haut. Les valeurs 0 à 11
 // SONT les index des options du select, dans le même ordre (tests/test_appuis.py) ;
 // ARCADE n'est pas une option du select (lancer l'Arcade à distance n'a pas d'usage),
 // seulement un choix d'appui long. Un écran de plus : avant ARCADE ici, à la fin du select
 // (ARCADE et NB se décalent : la NVS garde l'index du code dans kCodesEcran, tab5_zones.cpp,
-// jamais cette valeur), et son code à la fin de kCodesEcran et dans le blueprint.
+// jamais cette valeur), et son code à la fin de kCodesEcran et dans le blueprint ; sa
+// fenêtre et son ouverture : une ligne de tab5_modal_registry_init (tab5-navigation.yaml).
 enum class Ecran : uint8_t {
     AUCUN,       // « — » : position de repos du select ; « rien » pour un appui long
     ACCUEIL, ASSISTANT, CALENDRIER, REVEIL, CLIM, PLANTES, TV, CONSOLE, ENERGIE, REGLAGES, ALERTES,

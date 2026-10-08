@@ -322,11 +322,11 @@ def test_plus_d_option_actions_ha():
             ("Tab5", "tab5-calendar.yaml"), ("Tab5", "ui_components", "console_sys.yaml")))
     assert f"id: {verifier.ID_EVENEMENTS}" in _lire("HomeAssistant_Config", "packages", "tab5_evenements.yaml")
     assert verifier.SELECT_ECRAN.endswith("_aller_a_l_ecran")
-    assert "name: \"Aller à l'écran\"" in _lire("Tab5", "tab5-ha-controls.yaml")
+    assert "name: \"Aller à l'écran\"" in _lire("Tab5", "tab5-navigation.yaml")
     chemins = yaml.safe_load(_lire(".github", "workflows", "installation-ha.yml"))
     chemins = (chemins.get("on") or chemins[True])["pull_request"]["paths"]
     for fichier in ("Tab5/tab5-alarm.yaml", "Tab5/tab5-assist.yaml", "Tab5/tab5-calendar.yaml",
-                    "Tab5/tab5-ha-controls.yaml", "Tab5/ui_components/console_sys.yaml"):
+                    "Tab5/tab5-navigation.yaml", "Tab5/ui_components/console_sys.yaml"):
         assert fichier in chemins, fichier
 
 

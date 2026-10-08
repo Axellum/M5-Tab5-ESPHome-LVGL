@@ -32,7 +32,8 @@ ZONES_CPP = os.path.join(TAB5, "tab5_zones.cpp")
 CUSTOM_H = os.path.join(TAB5, "tab5_custom.h")
 LVGL = os.path.join(TAB5, "tab5-lvgl.yaml")
 ZONES_YAML = os.path.join(TAB5, "tab5-zones.yaml")
-CONTROLES = os.path.join(TAB5, "tab5-ha-controls.yaml")
+# Select « Aller à l'écran », tab5_ecran_ouvrir et registre des fenêtres (08/10/2026, YML-2).
+NAVIGATION = os.path.join(TAB5, "tab5-navigation.yaml")
 STYLES = os.path.join(TAB5, "tab5-styles.yaml")
 REGLES = os.path.join(REPO, "tools", "check_tab5_code_rules.py")
 
@@ -135,7 +136,7 @@ def test_ecran_suit_les_options_du_select():
     noms = _enum("Ecran")
     assert noms[-2:] == ["ARCADE", "NB"]
     assert noms[:-2] == list(OPTIONS)
-    bloc = _lire(CONTROLES).split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
+    bloc = _lire(NAVIGATION).split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s+- "([^"]+)"', bloc, re.M)
     assert options == list(OPTIONS.values()), "l'index d'une option du select doit rester sa valeur d'Ecran"
 
@@ -171,11 +172,16 @@ def test_trois_boutons_par_la_routine_unique():
 
 
 def test_select_par_la_routine_unique():
-    texte = _lire(CONTROLES)
-    on_value = texte.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[1].split("\n  # Langue", 1)[0]
+    texte = _lire(NAVIGATION)
+    on_value = texte.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[1]
     assert "id: tab5_ecran_ouvrir" in on_value and "switch" not in on_value
-    script = texte.split("- id: tab5_ecran_ouvrir", 1)[1]
-    assert "ecran: int" in script and "Ecran::ARCADE" in script and "tab5_console_ouvrir" in script
+    script = texte.split("- id: tab5_ecran_ouvrir", 1)[1].split("\ntext_sensor:", 1)[0]
+    assert "ecran: int" in script and "Ecran::ARCADE" in script
+    # Pas de switch qui recopierait la liste des écrans : l'ouverture d'un écran est
+    # celle que lui donne le registre (ModalRegistry::ouvrir), sinon animate_popup_open.
+    assert "switch" not in script and "ModalRegistry::ouvrir(target)" in script
+    assert re.search(r'"Console système",\s+ModalRegistry::POPUP,\s+\[\] \{ id\(tab5_console_ouvrir\)\.execute\(\); \}\);',
+                     texte)
     # Une seule ouverture de la console dans tout le firmware : tab5_console_ouvrir.
     ouvertures = []
     for racine, _, fichiers in os.walk(TAB5):

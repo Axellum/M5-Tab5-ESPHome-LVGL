@@ -375,7 +375,8 @@ def test_toucher_deplie_replie_ferme():
 
 def test_sous_fenetre_et_fermetures():
     scripts = _lire("Tab5", "tab5-scripts.yaml")
-    ligne = re.search(r"ModalRegistry::add\(id\(roue_actions\),\s*nullptr,\s*ModalRegistry::SUBWINDOW\);", scripts)
+    ligne = re.search(r"ModalRegistry::add\(id\(roue_actions\),\s*nullptr,\s*ModalRegistry::SUBWINDOW\);",
+                      _lire("Tab5", "tab5-navigation.yaml"))
     assert ligne, "la roue est une sous-fenêtre du registre (ADR-0013)"
     assert "if (idle >= UIIdle::POPUP_MS && roue_actions_ouverte()) roue_actions_fermer();" in scripts
     assert "roue_actions_fermer();" in _fonction(_lire("Tab5", "tab5_anim.cpp"), "animate_popup_open")

@@ -60,11 +60,12 @@ def _tuiles():
 
 
 def test_popup_du_registre_dernier_des_popup():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
-    ajouts = re.findall(r'ModalRegistry::add\(id\((\w+)\),\s+(?:"[^"]*"|nullptr),\s+ModalRegistry::(\w+)\);', scripts)
+    scripts = _lire("Tab5", "tab5-navigation.yaml")
+    ajouts = re.findall(r'ModalRegistry::add\(id\((\w+)\),\s+(?:"[^"]*"|nullptr),\s+ModalRegistry::(\w+)[,)]', scripts)
     popups = [obj for obj, genre in ajouts if genre == "POPUP"]
     assert popups[-1] == "maison_popup", "« Maison » à la fin du bloc des POPUP"
-    assert re.search(r'ModalRegistry::add\(id\(maison_popup\),\s+"Maison",\s+ModalRegistry::POPUP\);', scripts)
+    assert re.search(r'ModalRegistry::add\(id\(maison_popup\),\s+"Maison",\s+ModalRegistry::POPUP,'
+                     r'\s+\[\] \{ id\(tab5_maison_ouvrir\)\.execute\(\); \}\);', scripts)
     # Ceux qu'une ligne ouvre sont inscrits avant lui : visibles devant lui, ils sont nommés.
     for avant in ("light_options_popup", "volet_popup", "appareil_popup", "clim_options_popup",
                   "tv_remote_popup", "energie_popup"):
@@ -73,7 +74,7 @@ def test_popup_du_registre_dernier_des_popup():
 
 
 def test_option_maison_du_select_a_la_fin():
-    controles = _lire("Tab5", "tab5-ha-controls.yaml")
+    controles = _lire("Tab5", "tab5-navigation.yaml")
     bloc = controles.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s*-\s*"([^"]+)"', bloc, re.M)
     assert options[-1] == "Maison", "à la fin : les index des autres options ne bougent pas"
@@ -82,9 +83,9 @@ def test_option_maison_du_select_a_la_fin():
     enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", _lire("Tab5", "tab5_custom.h"), re.S).group(1)
     valeurs = re.findall(r"\b([A-Z]+),", re.sub(r"//[^\n]*", "", enum))
     assert valeurs.index("MAISON") == options.index("Maison")
-    script = controles.split("- id: tab5_ecran_ouvrir", 1)[1]
-    cas = script.split("case Ecran::MAISON:", 1)[1].split("break;", 1)[0]
-    assert "id(tab5_maison_ouvrir).execute();" in cas
+    script = controles.split("- id: tab5_ecran_ouvrir", 1)[1].split("\ntext_sensor:", 1)[0]
+    # Ouverture : celle que le registre donne à « Maison » (test plus haut).
+    assert "ModalRegistry::ouvrir(target)" in script
 
 
 def test_chrome_partage():

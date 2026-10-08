@@ -13,7 +13,7 @@ la mauvaise entité ou reste sans surbrillance. Ce test relit :
   REGLAGES_NB_* (et, pour les langues, que de fichiers dans Tab5/lang/) ;
 - Oui vaut 1 et Non 0 ; les flèches du thème valent −1 et +1 ;
 - tab5_reglages_ouvrir pose chaque bouton à son index (Oui en 0, Non en 1) ;
-- les fenêtres inscrites au registre (tab5-scripts.yaml) tiennent dans ModalRegistry::MAX."""
+- les fenêtres inscrites au registre (tab5-navigation.yaml) tiennent dans ModalRegistry::MAX."""
 import pathlib
 import re
 
@@ -135,7 +135,7 @@ def test_ouvrir_pose_chaque_bouton_a_son_index():
 
 
 def test_registre_des_fenetres_assez_grand():
-    inscrites = _lire(TAB5 / "tab5-scripts.yaml").count("ModalRegistry::add(")
+    inscrites = _lire(TAB5 / "tab5-navigation.yaml").count("ModalRegistry::add(")
     m = re.search(r"constexpr int MAX = (\d+);", _lire(TAB5 / "tab5_registry.h"))
     assert m and inscrites > 10, "les motifs ne reconnaissent plus le registre"
     assert inscrites <= int(m.group(1)), f"{inscrites} fenêtres pour ModalRegistry::MAX = {m.group(1)}"
