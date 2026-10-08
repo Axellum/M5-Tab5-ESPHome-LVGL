@@ -10,12 +10,12 @@
  *       second anneau et centrés sur elle, ses choix (luminosités, couleurs, modes…) —
  *       la « roue qui en lance une deuxième, dans la même roue » voulue par l'auteur le
  *       07/10/2026. Ce fichier ne sait rien des appareils : il place, peint, ouvre, déplie
- *       et ferme. Celui qui l'ouvre (tuile_roue_ouvrir, tab5_tuiles.cpp) donne le moyeu, les
+ *       et ferme. Celui qui l'ouvre (tuile_roue_ouvrir, tab5_tuiles_roue.cpp) donne le moyeu, les
  *       boutons, la couleur d'état et les rappels (RoueRappels) : ce que fait un toucher,
  *       les choix d'une famille, le repeint au changement de thème ou d'état.
  * @architecture_constraint Widgets : ui_components/roue_actions.yaml (voile plein écran,
  *       bandes, jauge, moyeu, mots) et ses roue_bouton.yaml, roue_choix.yaml,
- *       roue_legende.yaml, posés dans g_roue_ui par tab5-tuiles.yaml. Sous-fenêtre
+ *       roue_legende.yaml, posés dans g_roue_ui par tab5-roue.yaml. Sous-fenêtre
  *       (SUBWINDOW du registre, comme la liste de la tuile − / +) : refermée avec les
  *       popups, par l'inactivité, à l'ouverture d'un popup (animate_popup_open), à
  *       l'extinction de l'écran et quand les définitions des tuiles changent ; repeinte, pas
@@ -213,15 +213,52 @@ constexpr lv_style_prop_t kProprietes[] = {
     LV_STYLE_SHADOW_COLOR, LV_STYLE_SHADOW_OPA,    LV_STYLE_SHADOW_SPREAD,
 };
 
-enum class Aspect : uint8_t { VERRE, COURANT, DEPLIE, LIEN };
+enum class Aspect : uint8_t { VERRE, COURANT, DEPLIE, LIEN, PASTILLE, PASTILLE_COURANTE };
+
+// Dernier aspect posé sur un bouton (UI-7, audit du 07/10/2026). La roue se repeint à
+// chaque état poussé par HA, à chaque dépliage et au changement de thème ; reposer les
+// mêmes propriétés locales invaliderait le bouton, et son halo de 24 px, pour rien. Un
+// bouton n'est repeint que si son aspect, sa couleur ou une couleur de la palette qu'il
+// lit (thème) a changé. Seule la roue pose ces propriétés (kProprietes) ; un thème ne
+// touche que les styles partagés.
+struct Pose {
+    Aspect aspect = Aspect::VERRE;
+    bool posee = false;    // rien posé encore : le premier repeint pose toujours
+    uint32_t couleur = 0;  // couleur d'état ou de la pastille
+    uint32_t haut = 0;     // couleurs de la palette lues (GLASS_HI / GLASS_LO, liseré)
+    uint32_t bas = 0;
+    bool operator==(const Pose& o) const {
+        return aspect == o.aspect && posee == o.posee && couleur == o.couleur && haut == o.haut && bas == o.bas;
+    }
+};
+Pose s_pose_bouton[kRoueBoutons];
+Pose s_pose_choix[kRoueChoix];
+
+// Vrai si `pose` diffère de ce qui est posé : `posee` devient `pose`, propriétés de la roue
+// retirées (le bouton retrouve son verre partagé, style_clim_btn, et ce qu'un thème en
+// fait) ; faux : le bouton a déjà cet aspect, rien à faire.
+bool reposer(lv_obj_t* b, Pose& posee, Pose pose) {
+    pose.posee = true;
+    if (pose == posee) return false;
+    posee = pose;
+    for (lv_style_prop_t p : kProprietes) lv_obj_remove_local_style_prop(b, p, LV_PART_MAIN);
+    return true;
+}
 
 // Aspect d'un bouton rond : le verre des boutons des popups ; l'état courant de l'appareil
 // en verre teinté de sa couleur, liseré plein et halo (la seule ombre de la roue : une
 // ombre coûte à chaque repeint, docs/performance.md) ; une famille dépliée en verre
 // légèrement teinté et liseré ; un lien en verre transparent (contour seul).
-void aspect(lv_obj_t* b, Aspect a, uint32_t couleur) {
+void aspect(lv_obj_t* b, Pose& posee, Aspect a, uint32_t couleur) {
     if (b == nullptr) return;
-    for (lv_style_prop_t p : kProprietes) lv_obj_remove_local_style_prop(b, p, LV_PART_MAIN);
+    Pose pose;
+    pose.aspect = a;
+    if (a == Aspect::COURANT || a == Aspect::DEPLIE) {
+        pose.couleur = couleur;
+        pose.haut = UIColor.GLASS_HI;
+        pose.bas = UIColor.GLASS_LO;
+    }
+    if (!reposer(b, posee, pose)) return;
     switch (a) {
         case Aspect::COURANT:
             lv_obj_set_style_bg_color(b, melange(couleur, UIColor.GLASS_HI, 140), LV_PART_MAIN);
@@ -257,9 +294,13 @@ void aspect(lv_obj_t* b, Aspect a, uint32_t couleur) {
 
 // Pastille de couleur d'une lampe : la couleur, plus claire en haut et plus sombre en bas
 // (une bille), liseré de verre ; celle de l'état courant cerclée et auréolée.
-void aspect_pastille(lv_obj_t* b, uint32_t c, bool courant) {
+void aspect_pastille(lv_obj_t* b, Pose& posee, uint32_t c, bool courant) {
     if (b == nullptr) return;
-    for (lv_style_prop_t p : kProprietes) lv_obj_remove_local_style_prop(b, p, LV_PART_MAIN);
+    Pose pose;
+    pose.aspect = courant ? Aspect::PASTILLE_COURANTE : Aspect::PASTILLE;
+    pose.couleur = c;
+    pose.haut = courant ? UIColor.TEXT_PRIMARY : UIColor.GLASS_RIM;
+    if (!reposer(b, posee, pose)) return;
     const lv_color_t couleur = lv_color_hex(c);
     lv_obj_set_style_bg_color(b, lv_color_lighten(couleur, 85), LV_PART_MAIN);
     lv_obj_set_style_bg_grad_color(b, lv_color_darken(couleur, 40), LV_PART_MAIN);
@@ -353,7 +394,7 @@ void peindre_premier_anneau() {
         } else if (b.courant) {
             a = Aspect::COURANT;
         }
-        aspect(u.bouton[i], a, s.couleur);
+        aspect(u.bouton[i], s_pose_bouton[i], a, s.couleur);
         ui_text(u.icone[i], glyphe_roue(b.icone));
         ui_text_color(u.icone[i], encre);
         if (b.genre == RoueGenre::FAMILLE) point(u.point[i], s.angle[i], s.famille == i, s.couleur);
@@ -388,8 +429,8 @@ void peindre_second_anneau() {
         const RoueChoix& k = c[j];
         ui_x(u.choix[j], cx[j] - kDiametre2 / 2);
         ui_y(u.choix[j], cy[j] - kDiametre2 / 2);
-        if (k.a_pastille) aspect_pastille(u.choix[j], k.pastille, k.courant);
-        else aspect(u.choix[j], k.courant ? Aspect::COURANT : Aspect::VERRE, s.couleur);
+        if (k.a_pastille) aspect_pastille(u.choix[j], s_pose_choix[j], k.pastille, k.courant);
+        else aspect(u.choix[j], s_pose_choix[j], k.courant ? Aspect::COURANT : Aspect::VERRE, s.couleur);
         const bool icone = k.icone != RoueIcone::AUCUNE;
         ui_hidden(u.choix_icone[j], !icone);
         ui_hidden(u.choix_texte[j], icone || k.texte[0] == '\0');

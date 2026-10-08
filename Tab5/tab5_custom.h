@@ -366,7 +366,7 @@ void central_set_vigilance(bool actif);
 void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite);
 
 // Clim, retour de HA : clim_blueprint_recu() (service tab5_maj_clim), plus bas avec
-// les réglages de la clim et le popup (ADR-0026, ADR-0027, tab5_cards.cpp).
+// les réglages de la clim et le popup (ADR-0026, ADR-0027, tab5_clim.cpp).
 
 void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
     std::string& plan_ligne_1, std::string& plan_ligne_2);
@@ -516,7 +516,7 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric);
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
 
 // =============================================================================
-// Réglages de la clim venus de l'appareil (tab5_cards.cpp, ADR-0026) : clé « climr »
+// Réglages de la clim venus de l'appareil (tab5_clim.cpp, ADR-0026) : clé « climr »
 // de tab5_maj_emplacements, « climr|min|max|pas|unité|capacités|nom », que le
 // blueprint pousse avant tab5_maj_clim. Bornes et pas des boutons − / + et de l'arc,
 // °C ou °F, boutons que l'appareil gère, nom de la clim en titre du popup. Tant que
@@ -1211,8 +1211,8 @@ void reglables_volume_tablette();
 constexpr int kRoueBoutons = 6;  // premier anneau : 4 commandes ou familles + 2 liens
 constexpr int kRoueChoix = 6;    // second anneau : les 6 couleurs d'une lampe au plus
 // Widgets (ui_components/roue_actions.yaml, roue_bouton.yaml, roue_choix.yaml,
-// roue_legende.yaml), posés par le script tab5_tuiles_ui (tab5-tuiles.yaml) avant le
-// premier dessin.
+// roue_legende.yaml), posés par le script tab5_roue_ui (tab5-roue.yaml), que tab5_tuiles_ui
+// lance avant le premier dessin.
 struct RoueUI {
     lv_obj_t* fond = nullptr;                    // roue_actions : voile plein écran, son toucher replie ou ferme
     lv_obj_t* bande[2] = {};                     // roue_bande_0, roue_bande_1 : arcs de verre sous les anneaux
@@ -1503,6 +1503,10 @@ void popup_lumiere_choisir(int idx);
 // « Tout éteindre » : pR / eteindre (toutes les lumières de la pièce), lumieres /
 // eteindre en mode héritage.
 void popup_lumiere_tout_eteindre();
+// Couleur montrée d'une teinte de lampe (color_name : « warmwhite », « gold »…) : la
+// seule liste, pour les pastilles du popup lumière (light_white_btn.yaml,
+// light_color_preset_btn.yaml) et de la roue (UI-8). Nom inconnu : UIColor.TEXT_DIM.
+uint32_t lampe_teinte(const char* nom);
 
 // =============================================================================
 // Popup « Maison » (ADR-0037, 07/10/2026, discussion #278) — tab5_maison.cpp

@@ -331,7 +331,7 @@ void vue(const Entree& en, Vue& v) {
             v.couleur_icone = couleur_icone(d, e);
             formater(v.valeur, sizeof(v.valeur), hors_ligne(e) ? NAN : e.valeur, d.pas, d.unite);
             // Une clim : sa consigne en bleu en froid, en rouge en chaud, comme celle du
-            // blueprint (couleur_consigne, tab5_cards.cpp).
+            // blueprint (couleur_consigne, tab5_clim.cpp).
             if (hors_ligne(e)) v.couleur_valeur = UIColor.INACTIVE;
             else if (type_de(d) == Type::CLI && (est(e.brut, "cool") || est(e.brut, "heat")))
                 v.couleur_valeur = v.couleur_icone;
