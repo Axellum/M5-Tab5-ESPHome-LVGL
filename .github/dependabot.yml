@@ -9,3 +9,21 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+  # Les dossiers d'outils qui ont leur propre fichier de dépendances (OUT-13 de l'audit
+  # du 07/10/2026 : seul « / » était surveillé). Fichiers figés avec empreintes SHA-256
+  # (site, publication) : Dependabot met la version ET les empreintes à jour.
+  # tools/site : requirements-dev.txt reprend les mêmes versions de MkDocs et Material, et
+  # tests/test_site_doc.py échoue tant que les deux diffèrent (à aligner dans la PR).
+  - package-ecosystem: "pip"
+    directory: "/tools/site"
+    schedule:
+      interval: "monthly"
+  - package-ecosystem: "pip"
+    directory: "/tools/demo"
+    schedule:
+      interval: "monthly"
+  # requirements-esptool.txt et requirements-esptool-build.txt (espsecure de publication.yml).
+  - package-ecosystem: "pip"
+    directory: "/tools/publication"
+    schedule:
+      interval: "monthly"

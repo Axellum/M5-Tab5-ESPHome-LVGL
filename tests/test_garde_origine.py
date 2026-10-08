@@ -25,6 +25,7 @@ import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import ChargeurSansBalises as _Chargeur
 
 REPO = Path(__file__).resolve().parent.parent
 HA = REPO / "HomeAssistant_Config"
@@ -53,14 +54,6 @@ REFUSES = (
     {"device_id": "sensor.tab5_uptime"},
     {"device_id": "inconnu"},
 )
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-# !input, !secret… : sans objet ici (ni déclencheur ni garde n'en dépendent).
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
 def _fichiers():

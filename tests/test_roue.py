@@ -18,25 +18,17 @@ qui suit ; ce fichier lit le C++ et le YAML, comme les autres tests statiques :
 import math
 import os
 import re
-import sys
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools"))
-sys.path.insert(0, os.path.join(REPO, "tools", "rendu"))
-sys.path.insert(0, os.path.join(REPO, "tests"))
 
 from pathlib import Path  # noqa: E402
 
 import ecrans  # noqa: E402
 from check_tab5_code_rules import font_glyphs  # noqa: E402
-from test_tuiles_firmware import _commandes_de_l_adr, _fonction  # noqa: E402
+from tests.test_tuiles_firmware import _commandes_de_l_adr, _fonction  # noqa: E402
 
 ADR = os.path.join(REPO, "docs", "decisions", "0036-quick-action-wheel.md")
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _roue():

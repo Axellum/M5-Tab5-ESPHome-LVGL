@@ -18,6 +18,7 @@ import pathlib
 import re
 
 import yaml
+from tests.commun import ChargeurBalisesBrutes as _Chargeur, lire as _lire
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
@@ -32,19 +33,6 @@ FLECHE = re.compile(r"file: alarm_step_script_btn\.yaml, .*call: \{ id: tab5_reg
 CHAMPS = {"REGLAGE_EXTINCTION": "extinction", "REGLAGE_OKAY_NABU": "okay_nabu", "REGLAGE_TAPE": "tape",
           "REGLAGE_MODE": "mode", "REGLAGE_NUIT": "nuit", "REGLAGE_LANGUE": "langue"}
 OUI_NON = ("REGLAGE_OKAY_NABU", "REGLAGE_TAPE", "REGLAGE_NUIT")
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-# Balises ESPHome (!lambda, !include…) : leur valeur brute suffit ici.
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: chargeur.construct_scalar(noeud)
-                                if isinstance(noeud, yaml.ScalarNode) else None)
-
-
-def _lire(chemin):
-    return chemin.read_text(encoding="utf-8")
 
 
 def _entete():

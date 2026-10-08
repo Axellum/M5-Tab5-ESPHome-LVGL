@@ -22,7 +22,6 @@ import ast
 import datetime as dt
 import os
 import re
-import sys
 from zoneinfo import ZoneInfo
 
 import jinja2
@@ -31,6 +30,7 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 from tests.test_tuiles_blueprint import Etat, Passage, _chercher, _defs, _evenement
+from tests.commun import BaseChargeur, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PACKAGE = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_energie.yaml")
@@ -39,7 +39,6 @@ ENERGIE_CPP = os.path.join(REPO, "Tab5", "tab5_energie.cpp")
 TUILES_CPP = os.path.join(REPO, "Tab5", "tab5_tuiles.cpp")
 API = os.path.join(REPO, "Tab5", "tab5-api-logic.yaml")
 
-sys.path.insert(0, os.path.join(REPO, "tools", "demo"))
 import demo_pusher  # noqa: E402
 import scenarios  # noqa: E402
 
@@ -47,11 +46,6 @@ PARIS = ZoneInfo("Europe/Paris")
 # Un après-midi de juin, 14:37 à Paris (12:37 UTC) : les 5 minutes de 14:30 sont la
 # dernière ligne compilée, celles de 14:35 pas encore.
 MAINTENANT = dt.datetime(2026, 6, 16, 14, 37, 20, tzinfo=PARIS)
-
-
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
 
 
 # ─── Contrat ─────────────────────────────────────────────────────────────────
@@ -133,7 +127,7 @@ def test_demo_dans_le_format():
 
 # ─── Package : imitation de ce que ses modèles appellent dans HA ─────────────
 
-class _Chargeur(yaml.SafeLoader):
+class _Chargeur(BaseChargeur):
     pass
 
 

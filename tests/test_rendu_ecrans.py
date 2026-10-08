@@ -8,19 +8,13 @@ CI, sous la forme d'une capture identique à une autre. De même pour les pièce
 décalerait tous les suivants, et un geste parti d'un bouton le déclencherait."""
 import os
 import re
-import sys
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools", "rendu"))
 
 import ecrans  # noqa: E402
 from ecrans import BOUTON_HA, ECRANS, Aller, Glisser, Service, Toucher  # noqa: E402
 from scenarios import PAGE_DE_LA_PIECE, PIECES  # noqa: E402  (tools/demo, chemin ajouté par ecrans)
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _etapes(ecran):

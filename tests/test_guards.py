@@ -20,11 +20,8 @@
 Chaque script reste lançable seul (`python tools/check_*.py`) ; ici on ne fait
 que relire son verdict. Ils lisent le C++/YAML réel du dépôt : une salle ou une
 map cassée fait échouer la suite avant tout flash."""
-import os
 import shutil
-import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tools import (  # noqa: E402
     cartographie_counts,

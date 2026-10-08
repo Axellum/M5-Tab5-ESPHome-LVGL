@@ -6,12 +6,9 @@ lecture au milieu du journal de la tablette, et déroulé d'un réglage face à 
 liaison série qui répond comme improv_serial d'ESPHome : succès, échec de connexion,
 tablette muette. Le 27/09/2026, `improv_serie.py --port COM6` a lu l'état et l'identité
 de la vraie tablette (firmware 3.0.0-rc.1)."""
-import sys
-from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 import improv_serie as imp  # noqa: E402
 from migrer_vers_3 import lire_secret  # noqa: E402
