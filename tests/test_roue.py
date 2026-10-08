@@ -419,6 +419,27 @@ def test_un_etat_pousse_repeint_la_roue():
     assert "b[s.famille].icone == s.bouton[s.famille].icone" in _fonction(_roue(), "roue_ouvrir")
 
 
+def test_un_bouton_n_est_repeint_que_si_son_aspect_change():
+    """UI-7 (audit du 07/10/2026, lot L7) : chaque bouton garde le dernier aspect posé
+    (Pose) ; aspect() et aspect_pastille() ne reposent leurs propriétés que s'il change —
+    aspect, couleur, ou couleur de la palette lue (thème)."""
+    roue = _roue()
+    reposer = _fonction(roue, "reposer")
+    assert reposer.index("if (pose == posee) return false;") < reposer.index("lv_obj_remove_local_style_prop(")
+    # Les propriétés ne sont retirées qu'à cet endroit.
+    assert roue.count("lv_obj_remove_local_style_prop(") == 1
+    aspect = _fonction(roue, "aspect")
+    assert "pose.haut = UIColor.GLASS_HI;" in aspect and "pose.bas = UIColor.GLASS_LO;" in aspect
+    assert aspect.index("if (!reposer(b, posee, pose)) return;") < aspect.index("lv_obj_set_style_")
+    pastille = _fonction(roue, "aspect_pastille")
+    assert "pose.haut = courant ? UIColor.TEXT_PRIMARY : UIColor.GLASS_RIM;" in pastille
+    assert pastille.index("if (!reposer(b, posee, pose)) return;") < pastille.index("lv_obj_set_style_")
+    # Un Pose par bouton du premier anneau et par choix du second.
+    assert "aspect(u.bouton[i], s_pose_bouton[i], a, s.couleur);" in roue
+    assert "aspect_pastille(u.choix[j], s_pose_choix[j], k.pastille, k.courant);" in roue
+    assert "aspect(u.choix[j], s_pose_choix[j], " in roue
+
+
 def test_inclus_entre_les_cartes_et_les_popups():
     lvgl = _lire("Tab5", "tab5-lvgl.yaml")
     i = lvgl.index("ui_components/roue_actions.yaml")
