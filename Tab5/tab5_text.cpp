@@ -22,6 +22,18 @@
 #include <vector>
 #include <map>
 
+// --- Payload refusé (lot L5, tab5_internal.h) ---
+void payload_refuse(const char* tag, const char* raison, size_t taille) {
+    ESP_LOGW(tag, "Payload refusé (%s) : %u octets", raison, static_cast<unsigned>(taille));
+}
+
+bool payload_trop_long(const char* tag, size_t taille, size_t max) {
+    if (taille <= max) return false;
+    ESP_LOGW(tag, "Payload refusé (trop long) : %u octets, plafond %u", static_cast<unsigned>(taille),
+             static_cast<unsigned>(max));
+    return true;
+}
+
 // =============================================================================
 // UTF-8 : normalisation des textes HA (Latin-1 / mojibake) avant affichage LVGL
 // =============================================================================

@@ -709,8 +709,13 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
                      const std::string& mesures, const std::string& previsions) {
     const int c = index_de(cle, kCles, NB_CLES);
     const int v = index_de(vue, kVues, NB_VUES);
+    if (c < 0 || v < 0) {
+        payload_refuse("tab5.historique", "clé ou vue inconnue", cle.size() + vue.size());
+        return;
+    }
+    if (payload_trop_long("tab5.historique", entete.size() + mesures.size() + previsions.size())) return;
     // Réponse pour l'autre température (le popup a changé de clé entre-temps) : ignorée.
-    if (c < 0 || v < 0 || c != s_cle || s_mem == nullptr) return;
+    if (c != s_cle || s_mem == nullptr) return;
     Serie& s = *new (&s_mem->series[v]) Serie();
     s.recue = true;
 

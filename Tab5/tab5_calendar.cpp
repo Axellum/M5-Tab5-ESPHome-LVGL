@@ -74,7 +74,11 @@ void cal_store_month_data(const std::string& annee, const std::string& mois,
     const std::string& codes, const std::string& heures, const std::string& details) {
     const int y = atoi(annee.c_str());
     const int m = atoi(mois.c_str());
-    if (y < 2000 || y > 2100 || m < 1 || m > 12) return;
+    if (y < 2000 || y > 2100 || m < 1 || m > 12) {
+        payload_refuse("tab5.calendrier", "mois : année ou mois hors bornes", annee.size() + mois.size());
+        return;
+    }
+    if (payload_trop_long("tab5.calendrier", codes.size() + heures.size() + details.size())) return;
     CalMonthData data;
     data.codes = codes;
     data.heures = heures;
@@ -519,6 +523,7 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
     char buf[1024];
     strncpy(buf, payload.c_str(), sizeof(buf) - 1);
     buf[sizeof(buf) - 1] = '\0';
+    if (payload.size() >= sizeof(buf)) payload_refuse("tab5.calendrier", "jour : coupé à 1023 octets", payload.size());
 
     int line_count = 0;
     char* saveptr;

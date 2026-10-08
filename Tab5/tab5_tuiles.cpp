@@ -1652,6 +1652,8 @@ void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) { ui_texte_
 
 bool tuiles_definir(const std::string& payload) {
     charger();
+    // Payload faux : les définitions d'avant restent (NVS comprise).
+    if (payload_trop_long("tab5.tuiles", payload.size())) return false;
     // Tuile − / + au choix (ADR-0033) : ses clés rN sont dans le même instantané.
     const bool reglables_changes = reglables_definir(payload);
     // Instantané complet : ce qui n'est pas listé est vide. Construit à part (tas, le temps

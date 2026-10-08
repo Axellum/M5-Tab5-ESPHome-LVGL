@@ -131,6 +131,15 @@ void tuiles_swipe_ha(bool gauche);
 void texte_ha_copier(char* dst, size_t cap, const char* src, size_t n);
 void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
 
+// --- Payload refusé (audit du 07/10/2026, lot L5) ---
+// Tout récepteur de service qui refuse un payload, ou une partie, le dit : une ligne
+// ESP_LOGW sous le tag de son module (« tab5.energie »…), la raison et la taille, jamais
+// le contenu (long, et il peut nommer la maison). tab5_text.cpp.
+void payload_refuse(const char* tag, const char* raison, size_t taille);
+// Vrai, et journalisé, si `taille` dépasse `max` (par défaut kPayloadMax, tab5_champs.h) :
+// le récepteur s'arrête là, l'écran garde l'état d'avant.
+bool payload_trop_long(const char* tag, size_t taille, size_t max = kPayloadMax);
+
 // --- Rangée sous l'horloge (ADR-0031) : modèle dans tab5_tuiles.cpp, dessin dans
 // tab5_rangee.cpp ---
 // Un élément tel qu'il s'affiche : icône de la palette et sa couleur ; un capteur ou une

@@ -438,6 +438,7 @@ bool energie_formater(char* out, size_t n, float v, const char* unite) {
 }
 
 void energie_instantane(const std::string& payload) {
+    if (payload_trop_long("tab5.energie", payload.size())) return;
     const char* p = payload.data();
     const char* fin = p + payload.size();
     Instant i;
@@ -454,7 +455,11 @@ void energie_instantane(const std::string& payload) {
 
 void energie_historique(const std::string& vue, const std::string& debut, const std::string& valeurs) {
     const int v = vue_de(vue);
-    if (v < 0) return;
+    if (v < 0) {
+        payload_refuse("tab5.energie", "historique : vue inconnue", vue.size());
+        return;
+    }
+    if (payload_trop_long("tab5.energie", valeurs.size())) return;
     Serie s;
     s.recue = true;
     // Date illisible : 1er janvier (seuls les libellés de l'axe s'en servent). Année bornée

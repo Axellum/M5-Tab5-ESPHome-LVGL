@@ -192,8 +192,10 @@ void peindre() {
 }  // namespace
 
 void alertes_historique_recu(const std::string& payload) {
+    if (payload_trop_long("tab5.alertes", payload.size())) return;  // la liste d'avant reste
     s_nb = 0;
     s_recu = true;
+    int illisibles = 0;
     const char* p = payload.c_str();
     while (*p != '\0' && s_nb < kLignesMax) {
         const char* fin = strchr(p, ';');
@@ -212,10 +214,14 @@ void alertes_historique_recu(const std::string& payload) {
             texte_ha_copier(brut, sizeof(brut), f[4].p, f[4].n);
             e.texte = ha_alerte_texte(brut);
             if (e.apparue != 0) s_nb++;
+            else illisibles++;
+        } else {
+            illisibles++;
         }
         if (fin == nullptr) break;
         p = fin + 1;
     }
+    if (illisibles > 0) payload_refuse("tab5.alertes", "entrée(s) illisible(s) ignorée(s)", payload.size());
     peindre();
 }
 

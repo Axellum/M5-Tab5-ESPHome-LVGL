@@ -103,6 +103,8 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
     char buf[1024];
     strncpy(buf, payload.c_str(), sizeof(buf) - 1);
     buf[sizeof(buf) - 1] = '\0';
+    // Plus long que le tampon : coupé (les derniers champs manquent, #T165), donc dit.
+    if (payload.size() >= sizeof(buf)) payload_refuse("tab5.vigilance", "coupé à 1023 octets", payload.size());
 
     // strtok_r saute les champs vides consécutifs ("||"), comme l'ancien lambda :
     // un champ vide décalerait les suivants. Contrat HA inchangé — HA envoie
@@ -260,11 +262,7 @@ void rain_bars_rejouer() {
 // restent en l'état. Retourne has_rain (au moins une barre non vide).
 bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9]) {
     char buf[256];
-    if (payload.size() >= sizeof(buf)) {
-        ESP_LOGW("tab5.rain", "payload pluie 1h trop long (%u octets, max %u) : ignore",
-                 (unsigned) payload.size(), (unsigned) (sizeof(buf) - 1));
-        return rain_any_bar();
-    }
+    if (payload_trop_long("tab5.rain", payload.size(), sizeof(buf) - 1)) return rain_any_bar();
     strncpy(buf, payload.c_str(), sizeof(buf));
     buf[sizeof(buf) - 1] = '\0';
     char* save = nullptr;

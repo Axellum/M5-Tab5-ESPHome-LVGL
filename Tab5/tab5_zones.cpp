@@ -351,6 +351,7 @@ bool zone_vue(Zone z) {
 
 bool zones_reponse_ha(const std::string& absentes) {
     charger();
+    if (payload_trop_long("tab5.zones", absentes.size())) return false;
     uint32_t nouv = 0;
     size_t debut = 0;
     while (debut <= absentes.size()) {
@@ -406,6 +407,7 @@ std::string zones_texte_masquees() {
 
 
 int emplacements_appliquer(const std::string& payload, const EmplacementCible* cibles, size_t n) {
+    if (payload_trop_long("tab5.zones", payload.size())) return 0;
     int appliquees = 0;
     size_t debut = 0;
     while (debut < payload.size()) {

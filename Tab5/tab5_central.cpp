@@ -376,7 +376,7 @@ bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     // que le YAML recopiait les anciens has_ha = true — le rotateur montrait des
     // panneaux vides et le tap d'acquittement n'avait plus d'id (audit 25/09, §2.4).
     if (payload.length() > 1024) {
-        ESP_LOGE("TAB5", "Payload alertes HA trop long (%d octets).", (int) payload.length());
+        payload_trop_long("tab5.alertes_ha", payload.length(), 1024);
         return false;
     }
 
