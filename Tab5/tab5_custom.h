@@ -13,6 +13,7 @@
 #include "esphome.h"
 #include "tab5_tokens.h"
 #include "tab5_core.h"
+#include "tab5_batterie.h"  // batterie et chargeur (08/10/2026) : présence, niveau, consommation
 #include "tab5_i18n.h"
 #include <initializer_list>
 #include <string>
@@ -427,8 +428,9 @@ void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok);
 // `ouverture` (ou un appel précédent de plus de 5 s) : point de départ seulement, « -- ».
 // « -- » aussi sans les statistiques de FreeRTOS (rendu hors tablette).
 void update_console_cpu_ui(lv_obj_t* lbl, bool ouverture);
-// « Batterie » : niveau et tension, « Sur USB » sans batterie détectée, « Non montée »
-// interrupteur « Tab5 Batterie montée » éteint (batterie_texte_console, tab5_core.h) ;
+// « Batterie » : niveau et tension (sur batterie : niveau et consommation), « Sur USB »
+// sans batterie détectée, « Non montée » interrupteur « Tab5 Batterie montée » éteint
+// (batterie_texte_console, tab5_core.h) ;
 // l'icône du bandeau à gauche de la valeur, masquée interrupteur éteint (tab5_zones.cpp).
 void update_console_batterie_ui(lv_obj_t* icone, lv_obj_t* valeur);
 
@@ -965,8 +967,8 @@ void zones_apply_ui();
 // Batterie de la tablette, icône du bandeau d'état (tab5_zones.cpp). L'icône n'est
 // visible que si l'interrupteur « Tab5 Batterie montée » est allumé
 // (tab5-ha-controls.yaml, éteint par défaut). Allumé : une prise (couleur du texte du
-// thème) quand la tension dit qu'il n'y a pas de batterie (batterie_lecture,
-// tab5_core.h : une lecture sous 6,0 V dans les 10 dernières minutes, 05/10/2026) ;
+// thème) quand il n'y a pas de batterie (batterie_presence(), tab5_batterie.h : tension
+// lue chargeur coupé, 08/10/2026) ;
 // sinon le glyphe suit le niveau (et « en charge »), couleur de get_battery_color(),
 // la même échelle que le téléphone ; « ? » avant la première lecture. Chaque appel
 // garde sa valeur : appelés avant le premier zones_apply_ui() (restauration de
@@ -976,12 +978,10 @@ void batterie_montee_ui(bool montee);   // on_state de l'interrupteur
 void batterie_niveau_ui(float niveau);  // % de batterie_niveau, NAN = inconnu
 void batterie_charge_ui(bool en_charge);  // batterie_en_charge (CHG_STAT)
 // Chaque lecture de l'INA226 (on_raw_value de batterie_tension, V) à l'instant
-// `maintenant_ms` (millis()). Vrai si la décision « batterie détectée » vient de changer :
-// le YAML publie alors « Tab5 Batterie détectée » et recalcule « Tab5 Batterie ».
+// `maintenant_ms` (millis()), passée à chargeur_tension() (tab5_batterie.h). Vrai si la
+// décision « batterie détectée » vient de changer : le YAML publie alors « Tab5 Batterie
+// détectée » et recalcule « Tab5 Batterie ».
 bool batterie_tension_ui(float tension, uint32_t maintenant_ms);
-// Vrai si une batterie est détectée (faux tant qu'aucune lecture n'a décidé) : le
-// niveau « Tab5 Batterie » vaut inconnu sans elle.
-bool batterie_presente();
 // Vrai quand HA pousse la production solaire (clé solaire de tab5_maj_emplacements :
 // puissance crête choisie dans le blueprint) : l'appui long du bouton « HA » ouvre alors
 // le popup Énergie (choix « auto »), et sa mini icône le signale.
