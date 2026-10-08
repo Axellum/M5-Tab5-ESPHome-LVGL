@@ -8,7 +8,7 @@
 > d'extension du projet. Les chemins sont relatifs à la racine du dépôt
 > `H:\AuxFilsDesIdees\00ProjetTab`.
 
-`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29**, liste des tests et des workflows complétée le 2026-10-08 (70 composants UI dont 35 inclus par `tab5-lvgl.yaml`, 23 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
+`Généré le 2026-08-01`, **chiffres revérifiés sur `main` le 2026-09-29**, liste des tests et des workflows complétée le 2026-10-08 (74 composants UI dont 37 inclus par `tab5-lvgl.yaml`, 23 services ; tenus par `tests/test_doc_comptes.py`) · Sources vérifiées directement dans l'arborescence du dépôt.
 
 ---
 
@@ -50,9 +50,9 @@
 |---|---|---|
 | `climate_card.yaml` | `Tab5/ui_components/` | Carte clim compacte. |
 | `climate_popup.yaml` | `Tab5/ui_components/` | Popup clim plein écran. |
-| `forecast_daily.yaml` | `Tab5/ui_components/` | 5 cartes prévisions journalières. |
+| `forecast_daily.yaml` | `Tab5/ui_components/` | 5 cartes prévisions journalières (gabarits `forecast_day_card.yaml`, `forecast_day_body.yaml`). |
 | `forecast_hourly.yaml` | `Tab5/ui_components/` | 5 cartes prévisions horaires. |
-| `switches_card.yaml` | `Tab5/ui_components/` | Cartes switches (PC, volet, lumières). |
+| `switches_card.yaml` | `Tab5/ui_components/` | Les 5 cartes du mode HA (gabarit `switch_card.yaml`). |
 | `console_sys.yaml` | `Tab5/ui_components/` | Console Système en 4 cartes. |
 | `reglages_popup.yaml` | `Tab5/ui_components/` | Popup Réglages : écran et apparence. |
 | `light_popup.yaml` | `Tab5/ui_components/` | Popup contrôle lumière. |
