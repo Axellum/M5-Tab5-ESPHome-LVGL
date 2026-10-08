@@ -63,12 +63,16 @@ esphome:
     - Tab5/tab5_services.cpp
     - Tab5/tab5_assist.cpp
     - Tab5/tab5_cards.cpp
+    - Tab5/tab5_clim.cpp
     - Tab5/tab5_console.cpp
     - Tab5/tab5_anim.cpp
     - Tab5/tab5_calendar.cpp
     - Tab5/tab5_journal.cpp
     - Tab5/tab5_zones.cpp
+    - Tab5/tab5_tuiles_priv.h
     - Tab5/tab5_tuiles.cpp
+    - Tab5/tab5_tuiles_popups.cpp
+    - Tab5/tab5_tuiles_roue.cpp
     - Tab5/tab5_rangee.cpp
     - Tab5/tab5_reglables.cpp
     - Tab5/tab5_roue.cpp
@@ -208,6 +212,7 @@ packages:
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
   tab5_alarm: !include Tab5/tab5-alarm.yaml
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml
+  tab5_roue: !include Tab5/tab5-roue.yaml
   tab5_rangee: !include Tab5/tab5-rangee.yaml
   tab5_reglables: !include Tab5/tab5-reglables.yaml
   tab5_energie: !include Tab5/tab5-energie.yaml

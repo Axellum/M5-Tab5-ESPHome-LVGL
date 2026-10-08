@@ -14,14 +14,14 @@
  *         - Mode héritage : tant qu'aucune définition n'est arrivée (drapeau en NVS), la
  *           pièce 0 est construite depuis les emplacements 3.x (PC/TV, volet, trois
  *           lumières), avec leurs noms, icônes, comportements et commandes 3.x.
- *         - Popups des tuiles : lumière (appui long d'une lum), volet (appui long d'une
- *           vol sans l'option k, 05/10/2026 : position, volet dessiné qu'on fait glisser
- *           (06/10/2026), envoyé au relâcher, Ouvrir / Stop / Fermer) et appareil (appui
- *           long d'une int, d'une act ou d'une med sans l'option t, 06/10/2026 : la
- *           fenêtre « plus d'infos » d'un tableau de bord HA, dont le grand bouton refait
- *           le toucher de la tuile), repeints quand l'état de leur tuile change. Quand
- *           les définitions changent, popup ouvert, tous trois sont revalidés (repeints,
- *           ou refermés si leur tuile a disparu ; tuiles_definir).
+ *         - Gestes : ce que fait un appui, court ou long, sur chaque type (table kGestes,
+ *           gestes(), ouvrir_fenetre(), tuile_appui_piece).
+ *         - Popups des tuiles (lumière, volet, appareil) : tab5_tuiles_popups.cpp ; roue
+ *           d'actions rapides d'une tuile : tab5_tuiles_roue.cpp (découpe du 08/10/2026,
+ *           lot L7). Ce que les trois fichiers partagent (types du modèle, état, fonctions) :
+ *           tab5_tuiles_priv.h, namespace `tuiles`. Ce fichier les prévient : un état
+ *           (peindre_tuile → popup_*_etat, roue_tuile_etat), de nouvelles définitions
+ *           (tuiles_definir → popups_revalider), un thème (popups_rejouer_theme).
  *         - Rangée sous l'horloge (ADR-0031, 06/10/2026) : trois lignes de quatre
  *           éléments au plus, mêmes types que les tuiles, dans la même action
  *           (« hLI|type|icône|options|complément|nom|classe », « hp|place des plantes »)
@@ -43,10 +43,10 @@
  *       affiché passe par tr() ; un nom venu de HA s'affiche tel quel, filtré aux glyphes
  *       des polices (Latin-1 + cp1252 + lettres turques, table kHorsLatin1).
  */
-#include "tab5_internal.h"
-#include "tab5_tuiles_icones.h"
+#include "tab5_tuiles_priv.h"
 #include "tab5_geometrie.h"
 #include "tab5_modele_ha.h"
+#include "tab5_tuiles_icones.h"
 #include "lvgl.h"
 #include <esp_attr.h>
 #include <algorithm>
@@ -56,58 +56,21 @@
 #include <memory>
 
 // kNom, kIcone, kEtat, est(), etat_indisponible(), copier_icone() : communs avec la tuile
-// − / + (tab5_modele_ha.h, lot L5).
+// − / + (tab5_modele_ha.h, lot L5) ; tuile_cle(), piece_cle() : les clés « tRT » et « pR ».
 using namespace modele_ha;
+using namespace tuiles;
 
-namespace {
+namespace tuiles {
 
 // kPieces et kTuiles : tab5_geometrie.h. Pièce de chaque page du bas (index = g_central_ctx.forecast_page) : R0 = page 2 (accueil),
 // R1 = 3, R2 = 4, R3 = 1, R4 = 0 — l'ordre où un swipe les atteint depuis l'accueil.
 constexpr int kPieceDePage[kPieces] = {4, 3, 0, 1, 2};
 
-// Types de tuile (ADR-0023), dans l'ordre de kTypes.
-enum class Type : uint8_t { VIDE, LUM, INT, VOL, MED, ACT, CAP, BIN, CLI };
+// Types de tuile (ADR-0023) : Type, les options OPT_*, Def, Modele, Etat, Heritage, Vue,
+// Minuterie, Gestes et ClimCible sont dans tab5_tuiles_priv.h (partagés avec les popups et
+// la roue). Noms des types, dans l'ordre de Type :
 constexpr const char* kTypes[] = {"", "lum", "int", "vol", "med", "act", "cap", "bin", "cli"};
 constexpr int kNbTypes = sizeof(kTypes) / sizeof(kTypes[0]);
-
-// Options : une lettre chacune, bit i = lettre i de kLettresOptions.
-//   d graduable, c couleur, o allumer seulement, k confirmer, r lecture seule,
-//   t télécommande TV du blueprint, m climatisation du blueprint (sans m, une tuile cli a
-//   sa propre clim dans le popup dès que HA en a envoyé les réglages, ADR-0027),
-//   e capteur de la section « Énergie » du blueprint (un cap qui ouvre le popup Énergie,
-//   ADR-0028). Un firmware plus ancien ignore une lettre qu'il ne connaît pas.
-constexpr char kLettresOptions[] = "dcokrtme";
-enum : uint8_t { OPT_D = 1, OPT_C = 2, OPT_O = 4, OPT_K = 8, OPT_R = 16, OPT_T = 32, OPT_M = 64, OPT_E = 128 };
-
-// Taille des champs gardés (octets, zéro final compris) ; kNom, kIcone et kEtat :
-// tab5_modele_ha.h.
-constexpr size_t kComplement = 16;   // unité (cap) ou classe d'appareil (bin)
-
-struct Def {
-    uint8_t type;       // Type
-    uint8_t options;    // OPT_*
-    char icone[kIcone];
-    char complement[kComplement];
-    char nom[kNom];
-};
-
-// Exactement ce qui part en NVS : tout en octets, sans bourrage (memcmp fiable).
-struct Modele {
-    uint32_t magic;
-    uint8_t recues;       // 1 dès la première tab5_maj_tuiles : fin du mode héritage
-    uint8_t reserve[3];
-    char pieces[kPieces][kNom];
-    Def tuiles[kPieces][kTuiles];
-};
-
-struct Etat {
-    char brut[kEtat];     // état HA ("" tant que rien n'est reçu)
-    float valeur;         // luminosité, position, mesure, température ; NaN sinon
-    uint32_t couleur;     // couleur propre d'une lumière (rgb_color)
-    bool a_couleur;
-    bool recu;
-    uint8_t sens;         // volet : SENS_INCONNU, SENS_OUVRIR, SENS_FERMER (toucher du titre)
-};
 
 // Sens d'un volet à l'arrêt (28/09/2026, retour de la 3.1 demandé par Axel) : un toucher
 // sur le titre de la tuile le bascule, la flèche le montre, l'appui suivant le suit.
@@ -355,20 +318,7 @@ void lire_entree(const char* s, size_t n, Modele& m, ModeleRangee& g) {
 
 // ─── Mode héritage : les emplacements 3.x forment la pièce 0 ─────────────────────────
 
-struct Heritage {
-    bool pc = false;
-    bool pc_recu = false;
-    bool tv = false;
-    bool lum[3] = {};
-    bool lum_recu[3] = {};
-    float lum_val[3] = {NAN, NAN, NAN};  // luminosité 0-255 (arc du popup)
-    char volet[kEtat] = "";      // dernier etat_physique (En_mouvement, Ouvert, Ferme…)
-    int8_t volet_ouvert = -1;    // dernier état connu hors mouvement : 1 ouvert, 0 fermé
-};
 Heritage s_h;
-
-// Commandes 3.x des trois lumières (tuiles 2 à 4), comme les boutons de la 3.1.
-constexpr const char* kHeritageLumieres[3] = {"lumiere_1", "lumiere_2", "lumiere_3"};
 
 bool heritage() { return s_m.recues == 0; }
 
@@ -460,26 +410,7 @@ const char* heritage_glyphe_carte(int t) {
 
 // ─── Ce qu'une tuile montre, selon son type et son état (ADR-0023) ────────────────────
 
-struct Vue {
-    const char* icone = nullptr;        // épaule gauche (32 px) ; nullptr : inchangée
-    uint32_t couleur = UIColor.INACTIVE;
-    const char* icone_carte = nullptr;  // carte du mode HA (70 px) ; nullptr : inchangée
-    uint32_t couleur_carte = UIColor.INACTIVE;
-    const char* droite = nullptr;       // épaule droite ; nullptr : masquée
-    uint32_t couleur_droite = UIColor.TEXT_DIM;
-    const char* nom = "";
-    char ligne[40] = "";                // ligne d'état de la carte
-    uint32_t couleur_ligne = UIColor.INACTIVE;
-    bool agit = false;                  // un appui fait quelque chose
-    bool actif = false;                 // allumé, ouvert, en lecture… (icône « on »)
-};
-
-// Minuteries d'une tuile : confirmation (option k, 3 s) et « OK » après « lancer » (1 s).
-struct Minuterie {
-    int r = -1;
-    int t = -1;
-    lv_timer_t* timer = nullptr;
-};
+// Minuteries d'une tuile : confirmation (option k, 3 s), « OK » après « lancer » (1 s).
 Minuterie s_confirmation;
 Minuterie s_ok;
 Minuterie s_sens;  // sens d'un volet basculé : « Ouvrir » / « Fermer » sur la ligne d'état
@@ -588,18 +519,75 @@ const char* vol_appui_long(const Etat& e) {
     return vol_sens(e) == SENS_FERMER ? "ouvrir" : "fermer";
 }
 
-// Un appui fait-il quelque chose ? (sinon le bouton de la tuile météo est masqué). Option
-// r : aucun appui du tout. Une clim : celle du blueprint (option m), ou la sienne quand la
-// tablette en a les réglages (clé crRT, ADR-0027 ; `clim_connue`). Un capteur : seulement
-// celui de la section « Énergie » (option e, ADR-0028), qui ouvre son popup.
-bool type_agit(Type type, uint8_t options, bool clim_connue) {
-    if (options & OPT_R) return false;
-    switch (type) {
-        case Type::LUM: case Type::INT: case Type::VOL: case Type::MED: case Type::ACT: return true;
-        case Type::CLI: return (options & OPT_M) != 0 || clim_connue;
-        case Type::CAP: return (options & OPT_E) != 0;
-        default: return false;
-    }
+// ─── Gestes d'une tuile : une ligne par type (ADR-0023 ; appui long : ADR-0036) ─────
+//
+// Audit du 07/10/2026 (lot L7, UI-3) : « que fait l'appui long de ce type » était écrit
+// dans cinq switch (toucher, popup ouvert d'ailleurs, popup Maison, popup d'un appareil,
+// boutons visibles), le bloc de la clim deux fois. La table kGestes le dit une fois ;
+// gestes() y applique les options ; ouvrir_fenetre() ouvre la fenêtre choisie.
+
+// Gestes d'un type, avant ses options. `agit` : un appui fait quelque chose (sinon le
+// bouton de la tuile météo est masqué) ; un capteur et une clim n'agissent qu'avec leurs
+// options (gestes()). `commande` : celle de l'appui court ; nullptr : un volet suit son
+// sens (vol_appui), une clim et un capteur ouvrent leur fenêtre. `roue` : l'appui long
+// ouvre d'abord la roue d'actions rapides (ADR-0036 ; tuile_roue_ouvrir dit si la tuile en
+// a une). `fenetre` : l'appui long sans roue, l'appui court d'une clim ou d'un capteur.
+struct GesteType {
+    bool agit;
+    const char* commande;
+    bool roue;
+    Fenetre fenetre;
+};
+constexpr GesteType kGestes[] = {
+    {false, nullptr, false, Fenetre::AUCUNE},     // vide
+    {true, "basculer", true, Fenetre::LUMIERE},   // lum : popup des lumières de la pièce
+    {true, "basculer", false, Fenetre::APPAREIL}, // int : popup de l'appareil (06/10/2026)
+    {true, nullptr, true, Fenetre::VOLET},        // vol : popup du volet (05/10/2026)
+    {true, "basculer", false, Fenetre::APPAREIL}, // med : option t, la télécommande de la TV
+    {true, "lancer", false, Fenetre::APPAREIL},   // act : « OK » 1 s après
+    {false, nullptr, false, Fenetre::ENERGIE},    // cap : popup Énergie (option e, ADR-0028)
+    {false, nullptr, false, Fenetre::AUCUNE},     // bin : lecture seule
+    {false, nullptr, true, Fenetre::CLIM},        // cli : popup de la clim (ADR-0026, ADR-0027)
+};
+static_assert(sizeof(kGestes) / sizeof(kGestes[0]) == kNbTypes, "un geste par type de kTypes");
+
+// Options (lettres de l'ADR-0023) :
+//   r  lecture seule : aucun geste ;
+//   o  « allumer » au lieu de « basculer » (jamais éteinte depuis l'écran) ;
+//   k  commande confirmée par un second appui (s_confirmation) : pas de roue, dont les
+//      boutons passeraient outre ; un volet garde son ancien appui long (l'autre sens,
+//      confirmé), sans popup. Sans effet sur une clim ;
+//   t  med : la télécommande de la TV du blueprint au lieu du popup de l'appareil ;
+//   m  cli : la clim du blueprint ; sans m, celle de la tuile quand la tablette en a les
+//      réglages (clé crRT, ADR-0027 : `clim_connue`) ;
+//   e  cap : un capteur de la section « Énergie » du blueprint, qui ouvre son popup.
+Gestes gestes(const Def& d, bool clim_connue) {
+    Gestes g;
+    if (d.type >= kNbTypes || (d.options & OPT_R)) return g;
+    const Type type = static_cast<Type>(d.type);
+    const GesteType& l = kGestes[d.type];
+    g.agit = l.agit || (type == Type::CAP && (d.options & OPT_E)) ||
+             (type == Type::CLI && ((d.options & OPT_M) || clim_connue));
+    g.commande = (l.commande != nullptr && type != Type::ACT && (d.options & OPT_O)) ? "allumer" : l.commande;
+    const bool confirme = (d.options & OPT_K) && type != Type::CLI;
+    g.roue = l.roue && !confirme;
+    g.fenetre = l.fenetre;
+    if (type == Type::MED && (d.options & OPT_T)) g.fenetre = Fenetre::TELECOMMANDE;
+    if (type == Type::VOL && confirme) g.fenetre = Fenetre::AUCUNE;
+    return g;
+}
+
+// La clim d'une tuile cli : celle du blueprint avec l'option m (r = t = -1 pour
+// tab5_clim.cpp, emplacement « clim »), sinon la sienne (tRT, ADR-0027). Lue par la
+// fenêtre CLIM et par la roue (capacités, consignes, bascules, jauge, commandes).
+
+ClimCible clim_cible(const Def& d, int r, int t) {
+    ClimCible c;
+    if (d.options & OPT_M) return c;
+    c.r = r;
+    c.t = t;
+    c.cle = tuile_cle(r, t);
+    return c;
 }
 
 // Épaule droite d'un volet : la flèche de ce qu'un appui ferait (pause en mouvement,
@@ -622,7 +610,7 @@ void vue_def(const Def& d, const Etat& e, int r, int t, Vue& v) {
     bool actif = false;
     uint32_t c = UIColor.TEXT_DIM;
     v.nom = d.nom;
-    v.agit = type_agit(type, d.options, type == Type::CLI && r >= 0 && clim_tuile_connue(r, t));
+    v.agit = gestes(d, type == Type::CLI && r >= 0 && clim_tuile_connue(r, t)).agit;
     switch (type) {
         case Type::LUM:
             actif = est(s, "on");
@@ -959,12 +947,6 @@ void peindre_meteo() {
     ui_hidden(g_tuiles_ui.jour_sens, !(s_appareils_meteo && heritage() && r == 0 && tuile_presente(0, 1)));
 }
 
-void popup_lumiere_etat(int r, int t);
-void popup_volet_etat(int r, int t);
-void popup_appareil_etat(int r, int t);
-// Roue d'actions rapides ouverte sur cette tuile : repeinte (boutons courants, moyeu, jauge).
-void roue_tuile_etat(int r, int t);
-
 // Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
 void peindre_tuile(int r, int t) {
     if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
@@ -1016,169 +998,6 @@ void aller_page(int page) {
     pagination_afficher(u.pastilles, page);
 }
 
-// ─── Popup lumière : les lumières de la pièce (ADR-0023) ─────────────────────────────
-
-struct PopupLumiere {
-    int piece = 0;
-    int n = 0;                 // lignes du sélecteur
-    int tuiles[kTuiles] = {};  // tuile de chaque ligne, dans l'ordre des tuiles
-    int choix = 0;             // ligne pilotée (current_light_slot)
-};
-PopupLumiere s_pl;
-
-// Une lumière pilotable de la pièce : tuile lum sans option r ; en mode héritage,
-// lumiere_1..3 (tuiles 2 à 4) que HA n'a pas déclarées absentes.
-bool est_lumiere(int r, int t) {
-    if (!tuile_presente(r, t)) return false;
-    if (heritage()) return r == 0 && t >= 2;
-    const Def& d = s_m.tuiles[r][t];
-    return d.type == static_cast<uint8_t>(Type::LUM) && !(d.options & OPT_R);
-}
-
-bool lumiere_allumee(int r, int t) {
-    return heritage() ? s_h.lum[t - 2] : est(s_etats[r][t].brut, "on");
-}
-
-float lumiere_luminosite(int r, int t) {
-    return heritage() ? s_h.lum_val[t - 2] : s_etats[r][t].valeur;
-}
-
-const char* lumiere_nom(int r, int t) {
-    if (!heritage()) return s_m.tuiles[r][t].nom;
-    return t == 2 ? tr("Chambre") : (t == 3 ? tr("Salon") : "LEDs");
-}
-
-// Clé des commandes du popup : tRT, ou lumiere_N en mode héritage (commandes 3.x).
-void lumiere_cle(int r, int t, std::string& out) {
-    if (heritage()) {
-        out = kHeritageLumieres[t - 2];
-        return;
-    }
-    const char cle[4] = {'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\0'};
-    out = cle;
-}
-
-bool popup_ouvert() {
-    const lv_obj_t* p = g_tuiles_ui.lum_popup;
-    return p != nullptr && !lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN);
-}
-
-// Arc et « NN % » de la ligne choisie ; pas pendant un glissement (le retour de HA
-// ferait sauter le curseur sous le doigt). Éteinte, ou luminosité inconnue : 0 ; allumée,
-// le % de la carte et de la roue (lum_pct).
-void popup_lumiere_arc() {
-    const TuilesUI& u = g_tuiles_ui;
-    if (s_pl.n == 0 || u.lum_arc == nullptr || u.lum_pct == nullptr) return;
-    if (lv_obj_has_state(u.lum_arc, LV_STATE_PRESSED)) return;
-    const int r = s_pl.piece, t = s_pl.tuiles[s_pl.choix];
-    const float v = lumiere_luminosite(r, t);
-    const bool allumee = lumiere_allumee(r, t);
-    const int arcv = allumee ? tab5_float_vers_int(v, 0, 255, 0) : 0;
-    lv_arc_set_value(u.lum_arc, arcv);
-    char buf[12];
-    snprintf(buf, sizeof(buf), "%d %%", allumee ? std::max(0, lum_pct(v)) : 0);
-    ui_text(u.lum_pct, buf);
-}
-
-// Une ligne du sélecteur : icône (palette ou 3.1) dorée si allumée, nom coupé.
-void popup_lumiere_ligne(int i) {
-    const TuilesUI& u = g_tuiles_ui;
-    const int r = s_pl.piece, t = s_pl.tuiles[i];
-    const bool on = lumiere_allumee(r, t);
-    const char* icone = heritage() ? heritage_glyphe_selecteur(t) : tuile_icone(s_m.tuiles[r][t].icone, on, "lum");
-    ui_text(u.lum_sel_icone[i], icone);
-    ui_text_color(u.lum_sel_icone[i], on ? UIColor.INFO : UIColor.TEXT_DIM);
-    ui_texte_coupe(u.lum_sel_nom[i], lumiere_nom(r, t), 244);  // 342 − 88 − marge
-}
-
-// Tout le popup : lignes (serrées au-delà de trois), surbrillance, titre, bouton
-// marche/arrêt et arc de la ligne choisie.
-void popup_lumiere_peindre() {
-    const TuilesUI& u = g_tuiles_ui;
-    if (u.lum_popup == nullptr) return;
-    const bool serre = s_pl.n > 3;
-    const int32_t hauteur = serre ? 54 : 86, pas = serre ? 60 : 96;
-    for (int i = 0; i < kTuiles; i++) {
-        lv_obj_t* b = u.lum_sel[i];
-        const bool visible = i < s_pl.n;
-        ui_hidden(b, !visible);
-        if (!visible || b == nullptr) continue;
-        ui_y(b, 50 + i * pas);
-        if (lv_obj_get_style_height(b, LV_PART_MAIN) != hauteur) lv_obj_set_height(b, hauteur);
-        highlight_button_border(b, i == s_pl.choix, UIColor.ACCENT, 3);
-        popup_lumiere_ligne(i);
-    }
-    if (s_pl.n == 0) return;
-    const int r = s_pl.piece, t = s_pl.tuiles[s_pl.choix];
-    if (heritage()) {
-        const char* titre = t == 2 ? tr("Ampoule Chambre") : (t == 3 ? tr("Ampoule Salon") : tr("Ampoule LEDs"));
-        ui_text(u.lum_titre, titre);
-    } else {
-        ui_text(u.lum_titre, lumiere_nom(r, t));
-    }
-    ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor.INFO : UIColor.TEXT_DIM);
-    popup_lumiere_arc();
-}
-
-// Lumières de la pièce `r`, ligne choisie = celle de la tuile `t` (appui long).
-void popup_lumiere_ouvrir(int r, int t) {
-    const TuilesUI& u = g_tuiles_ui;
-    if (u.lum_popup == nullptr) return;
-    s_pl = PopupLumiere{};
-    s_pl.piece = r;
-    for (int i = 0; i < kTuiles; i++)
-        if (est_lumiere(r, i)) {
-            if (i == t) s_pl.choix = s_pl.n;
-            s_pl.tuiles[s_pl.n++] = i;
-        }
-    if (s_pl.n == 0) return;
-    if (u.lum_cle != nullptr) lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);
-    popup_lumiere_peindre();
-    animate_popup_open(u.lum_popup);
-}
-
-// Nouvelles définitions des tuiles (UI-1, audit du 07/10/2026), comme les popups volet et
-// appareil : ouvert, les lignes de la même pièce sont recalculées — la lampe choisie le
-// reste si elle est encore une lumière, sinon la première — puis le popup est repeint ;
-// plus aucune lumière dans la pièce : refermé. Fermé (y compris par sa croix, que le C++
-// ne voit pas), il est oublié : aucun index ne vise plus une tuile disparue.
-void popup_lumiere_revalider() {
-    const TuilesUI& u = g_tuiles_ui;
-    if (!popup_ouvert()) {
-        s_pl = PopupLumiere{};
-        return;
-    }
-    const int r = s_pl.piece;
-    const int choisie = s_pl.n > 0 ? s_pl.tuiles[s_pl.choix] : -1;
-    s_pl = PopupLumiere{};
-    s_pl.piece = r;
-    for (int i = 0; i < kTuiles; i++)
-        if (est_lumiere(r, i)) {
-            if (i == choisie) s_pl.choix = s_pl.n;
-            s_pl.tuiles[s_pl.n++] = i;
-        }
-    if (s_pl.n == 0) {
-        animate_popup_close(u.lum_popup);
-        return;
-    }
-    if (u.lum_cle != nullptr) lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);
-    popup_lumiere_peindre();
-}
-
-// Un état a changé : la ligne de cette tuile si le popup la montre.
-void popup_lumiere_etat(int r, int t) {
-    if (!popup_ouvert() || r != s_pl.piece) return;
-    const TuilesUI& u = g_tuiles_ui;
-    for (int i = 0; i < s_pl.n; i++) {
-        if (s_pl.tuiles[i] != t) continue;
-        popup_lumiere_ligne(i);
-        if (i == s_pl.choix) {
-            ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor.INFO : UIColor.TEXT_DIM);
-            popup_lumiere_arc();
-        }
-    }
-}
-
 // ─── Commandes ──────────────────────────────────────────────────────────────────────
 
 void envoyer(const char* emplacement, const char* action) {
@@ -1186,398 +1005,11 @@ void envoyer(const char* emplacement, const char* action) {
 }
 
 void envoyer_tuile(int r, int t, const char* action) {
-    const char cle[4] = {'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\0'};
-    envoyer(cle, action);
+    envoyer(tuile_cle(r, t).s, action);
 }
 
 void ouvrir_popup(lv_obj_t* popup) {
     if (popup != nullptr) animate_popup_open(popup);
-}
-
-// ─── Popup du volet (05/10/2026, discussion #278) ───────────────────────────────────
-//
-// Appui long d'une tuile vol sans l'option k : un volet dessiné (06/10/2026, même
-// discussion : « like ha animation, not a basic slider ») qu'on fait glisser du doigt
-// (position connue seulement, envoyée au relâcher : action « position »), la position en
-// grand, l'état en mots et Ouvrir / Stop / Fermer (les commandes de la tuile). Tant qu'il
-// est ouvert, il suit l'état de SA tuile (peindre_tuile → popup_volet_etat) : chaque
-// position poussée par HA redessine le tablier directement, sans interpolation ni fondu
-// (préférence d'Axel : transitions instantanées) — le volet dessiné descend quand le vrai
-// descend, au rythme des poussées.
-
-struct PopupVolet {
-    int piece = -1;
-    int tuile = -1;
-    bool saisi = false;   // un doigt tient le volet (position connue à l'appui)
-    bool glisse = false;  // il a glissé au-delà du seuil : son relâcher envoie la position
-    bool cible = false;   // position envoyée : dessinée jusqu'au prochain état de HA
-    bool estompe = false; // position dessinée = un repère (position inconnue)
-    int32_t y_appui = 0;  // ordonnée du doigt à l'appui (écran)
-    int pos_appui = 0;    // position dessinée à l'appui
-    int pos = 0;          // position dessinée : 0 fermé, 100 ouvert
-};
-PopupVolet s_pv;
-
-// Géométrie (volet_popup.yaml) : l'état sous la position, ou seul au milieu de la carte
-// (598 px de haut, 53 px de texte) ; titre : la barre d'en-tête moins l'icône et la croix.
-constexpr int32_t kVoletEtatSous = 360;
-constexpr int32_t kVoletEtatSeul = 272;
-constexpr int32_t kVoletTitreLargeur = 1000;
-// Volet dessiné : hauteur de la fenêtre et du tablier (volet_fenetre, volet_tablier de
-// volet_popup.yaml, tests/test_tuiles_firmware.py compare), lames de 38 px.
-constexpr int32_t kVoletFenetreH = 456;
-constexpr int32_t kVoletLameH = 38;
-constexpr int kVoletLames = kVoletFenetreH / kVoletLameH;
-static_assert(kVoletLames * kVoletLameH == kVoletFenetreH, "les lames couvrent la fenêtre");
-// Un doigt qui bouge de moins que ça n'a pas glissé : un toucher n'envoie rien (pas
-// d'ordre de plus à un volet en route).
-constexpr int32_t kVoletSeuilGlisse = 12;
-// Position inconnue, ni ouvert ni fermé (partiel, en mouvement, hors ligne) : le tablier
-// à mi-hauteur, lames estompées — un repère, pas une mesure.
-constexpr int kVoletMilieu = 50;
-
-// Style partagé des lames, créé avec elles (lames_construire). Ses couleurs viennent de
-// la palette active et sont reposées par popup_volet_dessiner quand elles changent
-// (thème, volet estompé) : un seul lv_obj_report_style_change, pas un par lame.
-lv_style_t s_lame;
-bool s_lame_pret = false;
-uint32_t s_lame_fond = 0;
-uint32_t s_lame_joint = 0;
-lv_opa_t s_lame_opa = LV_OPA_COVER;
-
-bool popup_volet_ouvert() {
-    const lv_obj_t* p = g_tuiles_ui.vol_popup;
-    return p != nullptr && !lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN);
-}
-
-// La tuile du popup est-elle toujours un volet pilotable ? (les définitions peuvent
-// changer popup ouvert ; le mode héritage n'ouvre jamais ce popup.)
-bool popup_volet_valide() {
-    const int r = s_pv.piece, t = s_pv.tuile;
-    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles || heritage()) return false;
-    const Def& d = s_m.tuiles[r][t];
-    return d.type == static_cast<uint8_t>(Type::VOL) && !(d.options & OPT_R);
-}
-
-// Position 0-100 connue : un état en ligne et une valeur dans les bornes. NaN : le volet
-// n'en donne pas ; -1 : « Partiel » du volet à course simulée (arrêté en route).
-bool vol_position_connue(const Etat& e) {
-    if (!e.recu || etat_indisponible(e.brut)) return false;
-    return !std::isnan(e.valeur) && e.valeur >= 0.0f && e.valeur <= 100.0f;
-}
-
-// Position à dessiner : la vraie si elle est connue ; sinon l'état — fermé en bas, ouvert
-// en haut, le reste (partiel, en mouvement, hors ligne, rien reçu) à mi-hauteur, estompé.
-int vol_position_dessin(const Etat& e, bool& estompe) {
-    estompe = false;
-    if (vol_position_connue(e)) return tab5_float_vers_int(e.valeur, 0, 100, 0);
-    if (e.recu && est(e.brut, "closed")) return 0;
-    // « open » sans position (NaN) : ouvert ; avec -1 (volet à course simulée) : partiel.
-    if (e.recu && est(e.brut, "open") && !(e.valeur < 0.0f)) return 100;
-    estompe = true;
-    return kVoletMilieu;
-}
-
-// L'état en mots, dans les couleurs de la tuile. Ouvert mais arrêté en route (-1 du
-// volet à course simulée, ou une position entre les deux bouts) : « Partiel ».
-const char* vol_etat_mots(const Etat& e, uint32_t& couleur) {
-    couleur = UIColor.INACTIVE;
-    if (!e.recu) return "--";
-    if (etat_indisponible(e.brut)) return tr("Hors ligne");
-    if (vol_mouvement(e.brut)) {
-        couleur = UIColor.INFO;
-        return tr("En mouvement");
-    }
-    if (est(e.brut, "closed")) {
-        couleur = UIColor.TEXT_DIM;
-        return tr("Fermé");
-    }
-    couleur = UIColor.SUCCESS;
-    if (e.valeur < 0.0f || (e.valeur > 0.0f && e.valeur < 100.0f)) return tr("Partiel");
-    return tr("Ouvert");
-}
-
-void popup_volet_nombre(int pos) {
-    char buf[8];
-    snprintf(buf, sizeof(buf), "%d", pos);
-    ui_text(g_tuiles_ui.vol_nombre, buf);
-}
-
-// Builder des lames (règle 5) : 12 lames de 38 px empilées dans le tablier, chacune un
-// aplat d'accent et un joint de 4 px en bas, toutes sur le style partagé s_lame. La
-// dernière (en bas) fait le bord du tablier. Non cliquables : le toucher va au cadre.
-void lames_construire(lv_obj_t* tablier) {
-    lv_style_init(&s_lame);
-    lv_style_set_radius(&s_lame, 0);
-    lv_style_set_pad_all(&s_lame, 0);
-    lv_style_set_bg_opa(&s_lame, LV_OPA_COVER);
-    lv_style_set_border_side(&s_lame, LV_BORDER_SIDE_BOTTOM);
-    lv_style_set_border_width(&s_lame, 4);
-    lv_style_set_border_opa(&s_lame, LV_OPA_60);
-    s_lame_fond = UIColor.ACCENT;
-    s_lame_joint = UIColor.GLASS_LO;
-    s_lame_opa = LV_OPA_COVER;
-    lv_style_set_bg_color(&s_lame, lv_color_hex(s_lame_fond));
-    lv_style_set_border_color(&s_lame, lv_color_hex(s_lame_joint));
-    s_lame_pret = true;
-    for (int i = 0; i < kVoletLames; i++) {
-        lv_obj_t* lame = lv_obj_create(tablier);
-        lv_obj_remove_style_all(lame);
-        lv_obj_add_style(lame, &s_lame, LV_PART_MAIN);
-        lv_obj_remove_flag(lame, LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_remove_flag(lame, LV_OBJ_FLAG_SCROLLABLE);
-        lv_obj_set_pos(lame, 0, i * kVoletLameH);
-        lv_obj_set_size(lame, lv_pct(100), kVoletLameH);
-    }
-}
-
-// Le volet dessiné à `pos` (0 fermé, 100 ouvert) : le tablier remonte de pos % de la
-// fenêtre, qui le rogne (à 100 % il est rentré dans le coffre). Lames pleines, ou
-// estompées quand la position n'est qu'un repère.
-void popup_volet_dessiner(int pos, bool estompe) {
-    ui_y(g_tuiles_ui.vol_tablier, -(std::clamp(pos, 0, 100) * kVoletFenetreH) / 100);
-    if (!s_lame_pret) return;
-    const uint32_t fond = UIColor.ACCENT;
-    const uint32_t joint = UIColor.GLASS_LO;
-    const lv_opa_t opa = estompe ? LV_OPA_40 : LV_OPA_COVER;
-    if (fond == s_lame_fond && joint == s_lame_joint && opa == s_lame_opa) return;
-    s_lame_fond = fond;
-    s_lame_joint = joint;
-    s_lame_opa = opa;
-    lv_style_set_bg_color(&s_lame, lv_color_hex(fond));
-    lv_style_set_border_color(&s_lame, lv_color_hex(joint));
-    lv_style_set_bg_opa(&s_lame, opa);
-    lv_obj_report_style_change(&s_lame);
-}
-
-// Titre, volet dessiné, position (rangée « 45 % », ou rien), état en mots.
-void popup_volet_peindre() {
-    const TuilesUI& u = g_tuiles_ui;
-    if (u.vol_popup == nullptr || !popup_volet_valide()) return;
-    const int r = s_pv.piece, t = s_pv.tuile;
-    const Etat& e = s_etats[r][t];
-    ui_texte_coupe(u.vol_titre, s_m.tuiles[r][t].nom, kVoletTitreLargeur);
-    const bool connue = vol_position_connue(e);
-    ui_hidden(u.vol_position, !connue);
-    // Pas pendant un glissement : le retour de HA ferait sauter le volet sous le doigt
-    // (le dessin et le nombre suivent alors le doigt, volet_cadre_rappel). Ni après le
-    // relâcher, tant que HA n'a pas poussé d'état (tuiles_etat_recu) : un repeint de
-    // thème ou de définitions garde la position envoyée, comme un démarrage à froid.
-    if (!s_pv.saisi && !s_pv.cible) s_pv.pos = vol_position_dessin(e, s_pv.estompe);
-    // Toujours redessiné : les couleurs des lames suivent la palette (thème).
-    popup_volet_dessiner(s_pv.pos, s_pv.estompe);
-    if (connue) popup_volet_nombre(s_pv.pos);
-    uint32_t couleur = UIColor.INACTIVE;
-    ui_text(u.vol_etat, vol_etat_mots(e, couleur));
-    ui_text_color(u.vol_etat, couleur);
-    ui_y(u.vol_etat, connue ? kVoletEtatSous : kVoletEtatSeul);
-}
-
-void popup_volet_ouvrir(int r, int t) {
-    const TuilesUI& u = g_tuiles_ui;
-    if (u.vol_popup == nullptr) return;
-    s_pv = PopupVolet{};
-    s_pv.piece = r;
-    s_pv.tuile = t;
-    popup_volet_peindre();
-    animate_popup_open(u.vol_popup);
-}
-
-// Un état a changé : le popup, s'il montre cette tuile.
-void popup_volet_etat(int r, int t) {
-    if (popup_volet_ouvert() && r == s_pv.piece && t == s_pv.tuile) popup_volet_peindre();
-}
-
-// Relâcher après un glissement : « position » + 0-100 à la tuile du popup (événement
-// esphome.tab5_action ; le blueprint la passe à cover / valve.set_…_position de l'entité
-// de CETTE tuile, quand elle sait le faire). Rien sans position connue au relâcher (le
-// volet a pu passer hors ligne pendant le geste) : vrai si la position est partie.
-bool popup_volet_envoyer_position() {
-    const TuilesUI& u = g_tuiles_ui;
-    if (!popup_volet_valide() || u.envoyer == nullptr) return false;
-    if (!vol_position_connue(s_etats[s_pv.piece][s_pv.tuile])) return false;
-    char valeur[8];
-    snprintf(valeur, sizeof(valeur), "%d", std::clamp(s_pv.pos, 0, 100));
-    const char cle[4] = {'t', static_cast<char>('0' + s_pv.piece), static_cast<char>('0' + s_pv.tuile), '\0'};
-    u.envoyer(cle, "position", valeur);
-    s_pv.cible = true;
-    return true;
-}
-
-// Cadre du volet dessiné : on attrape le tablier n'importe où et on le tire. Son bord suit
-// le doigt (vers le bas, il descend : la position baisse) ; seul le relâcher envoie (un
-// seul set_position par geste), et seulement après un vrai glissement (kVoletSeuilGlisse) :
-// un toucher n'envoie rien. Position inconnue à l'appui : rien ne glisse. PRESS_LOST
-// aussi : un doigt perdu en route relâche ailleurs. Après un toucher, ou un relâcher qui
-// n'envoie rien, le dessin reprend l'état de HA (popup_volet_peindre).
-void volet_cadre_rappel(lv_event_t* ev) {
-    lv_point_t p = {0, 0};
-    lv_indev_t* indev = lv_indev_active();
-    if (indev != nullptr) lv_indev_get_point(indev, &p);
-    switch (lv_event_get_code(ev)) {
-        case LV_EVENT_PRESSED:
-            s_pv.glisse = false;
-            s_pv.saisi = popup_volet_valide() && vol_position_connue(s_etats[s_pv.piece][s_pv.tuile]);
-            s_pv.y_appui = p.y;
-            s_pv.pos_appui = s_pv.pos;
-            if (s_pv.saisi) s_pv.estompe = false;
-            break;
-        case LV_EVENT_PRESSING: {
-            if (!s_pv.saisi) break;
-            const int32_t dy = p.y - s_pv.y_appui;
-            if (!s_pv.glisse && std::abs(dy) < kVoletSeuilGlisse) break;
-            s_pv.glisse = true;
-            const int pos = std::clamp(s_pv.pos_appui - static_cast<int>(dy * 100 / kVoletFenetreH), 0, 100);
-            if (pos == s_pv.pos) break;
-            s_pv.pos = pos;
-            popup_volet_dessiner(pos, false);
-            popup_volet_nombre(pos);
-            break;
-        }
-        case LV_EVENT_RELEASED:
-        case LV_EVENT_PRESS_LOST: {
-            const bool envoyer = s_pv.saisi && s_pv.glisse;
-            s_pv.saisi = false;
-            s_pv.glisse = false;
-            if (envoyer && popup_volet_envoyer_position()) break;
-            popup_volet_peindre();
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-// ─── Popup d'un appareil (06/10/2026, discussion #278) ──────────────────────────────
-//
-// « Buttons can have pop up screen like ha dashboard » : l'appui long d'une tuile qui
-// n'avait pas de popup (int, act, med sans l'option t) ouvre, pour cette tuile, la
-// fenêtre « plus d'infos » d'un tableau de bord HA : son icône dans une pastille ronde
-// de la couleur de son état, l'état en mots, sa pièce, ses options, et un grand bouton
-// qui fait EXACTEMENT ce que fait le toucher de la tuile (tuile_appui_piece) : même
-// commande, même confirmation (option k : la minuterie de la tuile, la tuile ET le popup
-// demandent « Confirmer ? »), même « OK » après « lancer ». Il ne montre que ce que HA
-// pousse déjà pour les tuiles (définition, état) : rien d'inventé. Tant qu'il est
-// ouvert, il suit l'état de SA tuile (peindre_tuile → popup_appareil_etat).
-
-struct PopupAppareil {
-    int piece = -1;
-    int tuile = -1;
-};
-PopupAppareil s_pa;
-
-// Géométrie (appareil_popup.yaml) : titre = la barre d'en-tête moins l'icône et la
-// croix ; textes de la carte ÉTAT (800 px) et de la carte COMMANDE (386 px) ; grand
-// bouton de 380 px, rempli à moitié (allumé : en haut ; éteint : en bas) ou en entier
-// (scène, script, bouton).
-constexpr int32_t kAppareilTitreLargeur = 1000;
-constexpr int32_t kAppareilTexteLargeur = 740;
-constexpr int32_t kAppareilActionLargeur = 350;
-constexpr int32_t kAppareilBoutonHauteur = 380;
-
-// Les types qui ont ce popup : int, act, et med sans l'option t (avec t, la télécommande).
-bool a_popup_appareil(Type type, uint8_t options) {
-    switch (type) {
-        case Type::INT: case Type::ACT: return true;
-        case Type::MED: return (options & OPT_T) == 0;
-        default: return false;
-    }
-}
-
-bool popup_appareil_ouvert() {
-    const lv_obj_t* p = g_tuiles_ui.app_popup;
-    return p != nullptr && !lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN);
-}
-
-// La tuile du popup a-t-elle toujours ce popup ? (les définitions peuvent changer popup
-// ouvert ; option r : jamais ; le mode héritage n'ouvre jamais ce popup.)
-bool popup_appareil_valide() {
-    const int r = s_pa.piece, t = s_pa.tuile;
-    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles || heritage()) return false;
-    const Def& d = s_m.tuiles[r][t];
-    return !(d.options & OPT_R) && a_popup_appareil(static_cast<Type>(d.type), d.options);
-}
-
-// Glyphe du grand bouton (mdi_font_45, règle 9) : lecture pour une scène, un script, un
-// bouton ; marche / arrêt sinon.
-const char* glyphe_commande(bool lancer) {
-    return lancer ? "\U000F040A" : "\U000F0425";
-}
-
-// Tout le popup, depuis la définition et l'état de sa tuile (vue_def : les mêmes mots,
-// icône et couleurs que la carte du mode HA).
-void popup_appareil_peindre() {
-    const TuilesUI& u = g_tuiles_ui;
-    if (u.app_popup == nullptr || !popup_appareil_valide()) return;
-    const int r = s_pa.piece, t = s_pa.tuile;
-    const Def& d = s_m.tuiles[r][t];
-    const Etat& e = s_etats[r][t];
-    const Type type = static_cast<Type>(d.type);
-    Vue v;
-    vue_def(d, e, r, t, v);
-    const bool lancer = type == Type::ACT;
-    const bool confirmer = minuterie_sur(s_confirmation, r, t);
-    const bool ok = minuterie_sur(s_ok, r, t);
-    ui_texte_coupe(u.app_titre, d.nom, kAppareilTitreLargeur);
-    // Pastille : l'icône de la tuile en couleur pleine sur sa couleur à 20 % (le YAML).
-    if (v.icone_carte != nullptr) ui_text(u.app_icone, v.icone_carte);
-    ui_text_color(u.app_icone, v.couleur_carte);
-    ui_fond(u.app_pastille, v.couleur_carte);
-    // État en mots : la ligne d'état de la carte, sauf « Lancer » (une action, pas un
-    // état) : un script en route (« on ») dit « En cours », le reste « Prêt ».
-    const char* etat = v.ligne;
-    if (lancer && std::strcmp(v.ligne, tr("Lancer")) == 0) etat = est(e.brut, "on") ? tr("En cours") : tr("Prêt");
-    ui_texte_coupe(u.app_etat, etat, kAppareilTexteLargeur);
-    ui_text_color(u.app_etat, v.couleur_ligne);
-    // La pièce : son nom, ou « Pièce n » quand HA n'en donne pas.
-    char buf[64];
-    if (s_m.pieces[r][0] != '\0') snprintf(buf, sizeof(buf), tr("Pièce : %s"), s_m.pieces[r]);
-    else snprintf(buf, sizeof(buf), tr("Pièce %d"), r + 1);
-    ui_texte_coupe(u.app_piece, buf, kAppareilTexteLargeur);
-    // Options de la tuile (blueprint, « Personnaliser des tuiles »), une par ligne.
-    char options[96] = "";
-    if ((d.options & OPT_O) && !lancer) snprintf(options, sizeof(options), "%s", tr("Allumer seulement"));
-    if (d.options & OPT_K) {
-        const size_t n = std::strlen(options);
-        snprintf(options + n, sizeof(options) - n, "%s%s", n > 0 ? "\n" : "", tr("Confirmer chaque commande"));
-    }
-    ui_text(u.app_options, options);
-    ui_hidden(u.app_options, options[0] == '\0');
-    // Grand bouton : rempli en haut quand l'appareil est allumé, en bas sinon, en entier
-    // pour une scène ; dans la couleur de la carte (ambre pendant une confirmation).
-    lv_obj_t* f = u.app_remplissage;
-    const int32_t h = lancer ? kAppareilBoutonHauteur : kAppareilBoutonHauteur / 2;
-    if (f != nullptr && lv_obj_get_style_height(f, LV_PART_MAIN) != h) lv_obj_set_height(f, h);
-    ui_y(f, (lancer || v.actif) ? 0 : kAppareilBoutonHauteur - h);
-    ui_fond(f, v.couleur_carte);
-    ui_text(u.app_commande_icone, glyphe_commande(lancer));
-    ui_text_color(u.app_commande_icone, v.couleur_carte);
-    // Ce que fera l'appui : la commande de la tuile (basculer, allumer avec l'option o,
-    // lancer), dite en mots ; ambre quand elle attend sa confirmation.
-    const char* action = tr("Éteindre");
-    if (lancer) action = ok ? "OK" : tr("Lancer");
-    else if ((d.options & OPT_O) || !v.actif) action = tr("Allumer");
-    uint32_t c_action = UIColor.ACCENT;
-    if (confirmer) c_action = UIColor.WARNING;
-    else if (ok) c_action = UIColor.SUCCESS;
-    else if (!lancer && (d.options & OPT_O) && v.actif) c_action = UIColor.TEXT_DIM;  // déjà allumé
-    ui_texte_coupe(u.app_action, action, kAppareilActionLargeur);
-    ui_text_color(u.app_action, c_action);
-}
-
-void popup_appareil_ouvrir(int r, int t) {
-    const TuilesUI& u = g_tuiles_ui;
-    if (u.app_popup == nullptr) return;
-    s_pa = PopupAppareil{};
-    s_pa.piece = r;
-    s_pa.tuile = t;
-    popup_appareil_peindre();
-    animate_popup_open(u.app_popup);
-}
-
-// Un état ou une minuterie a changé : le popup, s'il montre cette tuile.
-void popup_appareil_etat(int r, int t) {
-    if (popup_appareil_ouvert() && r == s_pa.piece && t == s_pa.tuile) popup_appareil_peindre();
 }
 
 // Mode héritage : les gestes de la 3.1 (tuile 0 PC + télécommande, 1 volet, 2-4 lumières).
@@ -1641,7 +1073,7 @@ void etat_lire(Etat& e, const char* reste, size_t n_reste) {
     e.recu = true;
 }
 
-}  // namespace
+}  // namespace tuiles
 
 TuilesUI g_tuiles_ui;
 
@@ -1698,18 +1130,8 @@ bool tuiles_definir(const std::string& payload) {
     minuterie_arreter(s_sens);
     // Roue d'actions rapides (ADR-0036) : ses boutons étaient ceux de l'ancienne définition.
     roue_actions_fermer();
-    // Popup du volet ouvert sur une tuile qui n'est plus un volet pilotable : refermé.
-    if (popup_volet_ouvert()) {
-        if (popup_volet_valide()) popup_volet_peindre();
-        else animate_popup_close(g_tuiles_ui.vol_popup);
-    }
-    // Même chose pour le popup d'un appareil (tuile devenue lecture seule, autre type…).
-    if (popup_appareil_ouvert()) {
-        if (popup_appareil_valide()) popup_appareil_peindre();
-        else animate_popup_close(g_tuiles_ui.app_popup);
-    }
-    // Et le popup lumière : ses lignes étaient des index de tuiles de l'ancienne définition.
-    popup_lumiere_revalider();
+    // Popups lumière, volet et appareil : revalidés (tab5_tuiles_popups.cpp).
+    popups_revalider();
     tuiles_appliquer_ui();
     return true;
 }
@@ -1731,7 +1153,7 @@ bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n
     etat_lire(e, reste, n_reste);
     if (s_m.tuiles[r][t].type == static_cast<uint8_t>(Type::VOL)) vol_sens_suivre(e);
     // Popup du volet : un état poussé remplace la position envoyée au relâcher.
-    if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;
+    popup_volet_etat_pousse(r, t);
     if (!heritage()) peindre_tuile(r, t);
     return true;
 }
@@ -1832,9 +1254,7 @@ void tuiles_rejouer_theme() {
     if (!s_charge) return;
     s_bouton_actif = !g_central_ctx.ha_mode;
     tuiles_appliquer_ui();
-    if (s_pl.n > 0) popup_lumiere_peindre();
-    if (popup_volet_ouvert()) popup_volet_peindre();
-    if (popup_appareil_ouvert()) popup_appareil_peindre();
+    popups_rejouer_theme();
 }
 
 void tuiles_repeindre(int r, int t) {
@@ -1959,13 +1379,44 @@ void tuiles_brancher_titres() {
     }
 }
 
-// Roue d'actions rapides de la tuile T de la page courante (ADR-0036, plus bas).
-static bool roue_de_la_tuile(int r, int t);
+// La fenêtre `f` de la tuile tRT (définition `d`). Faux si rien ne s'ouvre : aucune
+// fenêtre, ou une clim de tuile dont la tablette n'a pas les réglages.
+static bool ouvrir_fenetre(Fenetre f, const Def& d, int r, int t) {
+    switch (f) {
+        case Fenetre::LUMIERE:
+            popup_lumiere_ouvrir(r, t);
+            return true;
+        case Fenetre::VOLET:
+            popup_volet_ouvrir(r, t);
+            return true;
+        case Fenetre::APPAREIL:
+            popup_appareil_ouvrir(r, t);
+            return true;
+        case Fenetre::TELECOMMANDE:
+            ouvrir_popup(g_tuiles_ui.popup_tv);
+            return true;
+        case Fenetre::CLIM: {
+            // La clim du blueprint (option m) ou celle de la tuile (ADR-0027). Le popup
+            // revient à la clim du blueprint à sa fermeture.
+            const ClimCible c = clim_cible(d, r, t);
+            if (c.r < 0) clim_afficher_blueprint();
+            else if (!clim_afficher_tuile(c.r, c.t)) return false;
+            ouvrir_popup(g_tuiles_ui.popup_clim);
+            return true;
+        }
+        case Fenetre::ENERGIE:
+            if (g_tuiles_ui.energie_ouvrir != nullptr) g_tuiles_ui.energie_ouvrir();
+            return true;
+        default:
+            return false;
+    }
+}
 
 // Appui sur la tuile T de la pièce R : tuile de la page courante (tuile_appui), ou grand
-// bouton du popup d'un appareil (popup_appareil_appui, appui court). Un seul chemin pour
-// les deux : la même commande, la même confirmation (option k), le même « OK ».
-static void tuile_appui_piece(int r, int t, bool long_appui) {
+// bouton du popup d'un appareil (popup_appareil_appui, tab5_tuiles_popups.cpp, appui
+// court). Un seul chemin pour les deux : la même commande, la même confirmation (option
+// k), le même « OK ». Ce que fait chaque type : kGestes et gestes(), plus haut.
+void tuiles::tuile_appui_piece(int r, int t, bool long_appui) {
     if (!tuile_presente(r, t)) return;
     if (heritage()) {
         appui_heritage(t, long_appui);
@@ -1975,72 +1426,22 @@ static void tuile_appui_piece(int r, int t, bool long_appui) {
     const Etat& e = s_etats[r][t];
     const Type type = static_cast<Type>(d.type);
     // cap sans e, bin, option r, cli sans m dont la tablette n'a pas les réglages
-    if (!type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t))) return;
-    // Tableau de l'ADR-0023 : appui court, puis appui long.
-    const char* action = nullptr;
-    switch (type) {
-        case Type::LUM:
-            // Appui long : la roue d'actions rapides (ADR-0036) ; sans elle (option k), le
-            // popup des lumières de la pièce, comme avant.
-            if (long_appui) {
-                if (!roue_de_la_tuile(r, t)) popup_lumiere_ouvrir(r, t);
-                return;
-            }
-            action = (d.options & OPT_O) ? "allumer" : "basculer";
-            break;
-        case Type::INT:
-            // Appui long (06/10/2026, discussion #278) : le popup de l'appareil.
-            if (long_appui) {
-                popup_appareil_ouvrir(r, t);
-                return;
-            }
-            action = (d.options & OPT_O) ? "allumer" : "basculer";
-            break;
-        case Type::VOL:
-            // Appui long (05/10/2026, discussion #278) : le popup du volet. Avec l'option
-            // k, l'ancien appui long (l'autre sens, confirmé) : le popup ne doit jamais
-            // contourner la confirmation.
-            // Depuis le 07/10/2026 (ADR-0036), la roue d'actions rapides d'abord, dont
-            // « Détails » ouvre ce popup ; l'option k ne l'ouvre jamais non plus.
-            if (long_appui && !(d.options & OPT_K)) {
-                if (!roue_de_la_tuile(r, t)) popup_volet_ouvrir(r, t);
-                return;
-            }
-            action = long_appui ? vol_appui_long(e) : vol_appui(e);
-            break;
-        case Type::MED:
-            // Appui long : la télécommande de la TV du blueprint (option t), sinon le popup
-            // de l'appareil (06/10/2026).
-            if (long_appui) {
-                if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);
-                else popup_appareil_ouvrir(r, t);
-                return;
-            }
-            action = (d.options & OPT_O) ? "allumer" : "basculer";
-            break;
-        case Type::ACT:
-            if (long_appui) {
-                popup_appareil_ouvrir(r, t);
-                return;
-            }
-            action = "lancer";
-            break;
-        case Type::CLI:
-            // Option m : la clim du blueprint ; sinon celle de la tuile (ADR-0027), que
-            // type_agit sait connue. Le popup revient à la clim du blueprint à sa fermeture.
-            // Appui long (ADR-0036) : la roue d'actions rapides ; sans elle (aucune
-            // capacité reçue), ce popup, comme l'appui court.
-            if (long_appui && roue_de_la_tuile(r, t)) return;
-            if (d.options & OPT_M) clim_afficher_blueprint();
-            else if (!clim_afficher_tuile(r, t)) return;
-            ouvrir_popup(g_tuiles_ui.popup_clim);
+    const Gestes g = gestes(d, type == Type::CLI && clim_tuile_connue(r, t));
+    if (!g.agit) return;
+    // Appui long : la roue d'actions rapides (ADR-0036), sinon la fenêtre du type ; un
+    // volet à confirmer (option k) n'en a aucune : l'autre sens, confirmé.
+    if (long_appui) {
+        if (g.roue && roue_de_la_tuile(r, t)) return;
+        if (g.fenetre != Fenetre::AUCUNE) {
+            ouvrir_fenetre(g.fenetre, d, r, t);
             return;
-        case Type::CAP:
-            // Option e (type_agit) : le popup Énergie, au toucher comme à l'appui long.
-            if (g_tuiles_ui.energie_ouvrir != nullptr) g_tuiles_ui.energie_ouvrir();
-            return;
-        default:
-            return;
+        }
+    }
+    // Appui court (tableau de l'ADR-0023) : la commande ; une clim, un capteur : sa fenêtre.
+    const char* action = type == Type::VOL ? (long_appui ? vol_appui_long(e) : vol_appui(e)) : g.commande;
+    if (action == nullptr) {
+        ouvrir_fenetre(g.fenetre, d, r, t);
+        return;
     }
     // Option k : un second appui dans les 3 s envoie ; la ligne d'état le demande.
     if (d.options & OPT_K) {
@@ -2058,471 +1459,15 @@ static void tuile_appui_piece(int r, int t, bool long_appui) {
 // dans une pièce ouvre le popup de sa tuile, quelle que soit la page affichée — celui de
 // son appui long (lumière, volet sans l'option k, télécommande de la TV), ou de son appui
 // pour une clim. Option r (lecture seule) : rien, comme sur la tuile.
+// Le popup propre à l'appareil seulement (kGestes) : ni celui d'un appareil générique
+// (int, act, med sans t), ni le popup Énergie d'un capteur.
 bool tuile_ouvrir_popup(int r, int t) {
     charger();
     if (heritage() || !tuile_presente(r, t)) return false;
     const Def& d = s_m.tuiles[r][t];
-    if (d.options & OPT_R) return false;
-    switch (static_cast<Type>(d.type)) {
-        case Type::LUM:
-            popup_lumiere_ouvrir(r, t);
-            return true;
-        case Type::VOL:
-            if (d.options & OPT_K) return false;
-            popup_volet_ouvrir(r, t);
-            return true;
-        case Type::MED:
-            if (!(d.options & OPT_T)) return false;
-            ouvrir_popup(g_tuiles_ui.popup_tv);
-            return true;
-        case Type::CLI:
-            if (d.options & OPT_M) clim_afficher_blueprint();
-            else if (!clim_afficher_tuile(r, t)) return false;
-            ouvrir_popup(g_tuiles_ui.popup_clim);
-            return true;
-        default:
-            return false;
-    }
-}
-
-// ─── Roue d'actions rapides (ADR-0036, 07/10/2026, discussion #278) ─────────────────
-//
-// L'appui long d'une lum, d'un vol ou d'une cli ouvre la roue (tab5_roue.cpp). Premier
-// anneau : « Maison » (le popup de toutes les pièces, sauf quand la roue s'ouvre depuis
-// lui), les commandes de la tuile et ses familles de réglages, puis « Détails » (le popup
-// complet de son appui long d'avant, tuile_ouvrir_popup). Toucher une famille déplie ses
-// choix sur le second anneau : luminosités, blancs et couleurs d'une lampe, positions d'un
-// volet, modes, consignes et options d'une clim. Aucune commande nouvelle (mêmes
-// événements esphome.tab5_action, mêmes valeurs que la tuile et ses popups : ADR-0023,
-// ADR-0026, ADR-0027), aucune mise à jour optimiste nouvelle. Un choix ferme la roue.
-
-namespace {
-
-enum class RoueAction : uint8_t {
-    MAISON, REGLAGES, ALLUMER, ETEINDRE, OUVRIR, ARRETER, FERMER, CLIM_ARRET,
-    LUMINOSITE, BLANCS, COULEURS, POSITION, MODE, CONSIGNE, OPTIONS,
-};
-
-// Modes d'une clim offerts par la roue, dans cet ordre : lettre de capacité (ADR-0026),
-// mode envoyé (commande « mode », comme les boutons du popup), icône. « auto » et
-// « heat_cool » n'ont ni lettre ni commande (ADR-0026) : la roue ne les offre pas.
-struct RoueModeClim {
-    char lettre;
-    const char* mode;
-    RoueIcone icone;
-};
-constexpr RoueModeClim kRoueModesClim[] = {
-    {'h', "heat", RoueIcone::CHAUFFER},
-    {'c', "cool", RoueIcone::REFROIDIR},
-    {'d', "dry", RoueIcone::SECHER},
-    {'f', "fan_only", RoueIcone::VENTILER},
-};
-// Luminosités offertes (commande luminosite_pct, comme les raccourcis du popup lumière).
-constexpr uint8_t kRoueLuminosites[] = {10, 25, 50, 75, 100};
-// Positions offertes à un volet qui donne la sienne (commande position, comme le volet
-// dessiné du popup).
-constexpr uint8_t kRouePositions[] = {25, 50, 75};
-// Pastilles d'une lampe à couleur (option c, commande couleur) : le nom envoyé à HA
-// (color_name), la couleur montrée (celles du popup lumière) et, pour un blanc, son mot.
-struct RouePastille {
-    const char* nom;
-    uint32_t couleur;
-    const char* legende;
-};
-constexpr RouePastille kRoueBlancs[] = {
-    {"warmwhite", 0xFFC864, tr_noop("Chaud")},
-    {"navajowhite", 0xFFDEAD, tr_noop("Crème")},
-    {"white", 0xFFFFFF, tr_noop("Froid")},
-};
-constexpr RouePastille kRoueCouleurs[] = {
-    {"red", 0xFF2020, nullptr},  {"orange", 0xFFA500, nullptr}, {"gold", 0xFFD700, nullptr},
-    {"green", 0x22C55E, nullptr}, {"blue", 0x3B82F6, nullptr},  {"purple", 0xA855F7, nullptr},
-};
-
-// La roue ouverte : sa tuile, son ancre, sa vue d'origine et ce que fait chaque bouton.
-struct RoueTuile {
-    int r = -1;
-    int t = -1;
-    lv_obj_t* ancre = nullptr;
-    bool depuis_maison = false;
-    int n = 0;
-    RoueAction action[kRoueBoutons] = {};
-};
-RoueTuile s_rt;
-
-// Ce qu'envoie un choix du second anneau (à l'emplacement de la tuile, « clim » pour la
-// clim du blueprint).
-struct RoueEnvoi {
-    const char* commande = nullptr;
-    char valeur[16] = "";
-};
-
-// Clim de la tuile tRT pour tab5_cards.cpp : -1, -1 pour celle du blueprint (option m).
-void roue_clim(const Def& d, int r, int t, int& rc, int& tc) {
-    const bool blueprint = (d.options & OPT_M) != 0;
-    rc = blueprint ? -1 : r;
-    tc = blueprint ? -1 : t;
-}
-
-// Boutons du premier anneau de la tuile tRT dans `b` (leurs actions dans `rt`) :
-// « Maison » d'abord (sauf depuis lui), « Détails » en dernier. 0 sans roue : type sans
-// roue, option r, option k (une lampe ou un volet à confirmer garde son appui long
-// d'avant), clim sans capacité reçue, aucune commande. Le bouton de l'état courant (lampe
-// allumée ou éteinte, volet ouvert ou fermé, clim arrêtée) est marqué.
-int roue_composer(int r, int t, bool depuis_maison, RoueBouton b[kRoueBoutons], RoueTuile& rt) {
-    if (heritage() || !tuile_presente(r, t)) return 0;
-    const Def& d = s_m.tuiles[r][t];
-    const Etat& e = s_etats[r][t];
-    if (d.options & OPT_R) return 0;
-    int n = 0;
-    auto ajouter = [&](RoueAction a, RoueIcone i, RoueGenre g, bool courant, const char* legende) {
-        if (n >= kRoueBoutons) return;
-        b[n] = RoueBouton{i, g, courant, legende};
-        rt.action[n] = a;
-        n++;
-    };
-    auto commande = [&](RoueAction a, RoueIcone i, bool courant) {
-        ajouter(a, i, RoueGenre::ACTION, courant, nullptr);
-    };
-    auto famille = [&](RoueAction a, RoueIcone i) { ajouter(a, i, RoueGenre::FAMILLE, false, nullptr); };
-    if (!depuis_maison) ajouter(RoueAction::MAISON, RoueIcone::MAISON, RoueGenre::LIEN, false, tr("Maison"));
-    const int premiere = n;
-    switch (static_cast<Type>(d.type)) {
-        case Type::LUM: {
-            if (d.options & OPT_K) return 0;
-            const bool allumee = est(e.brut, "on");
-            // Option o : jamais éteinte depuis l'écran, pas d'Éteindre.
-            if (d.options & OPT_D) {
-                // Variateur : la commande qui change l'état, puis les luminosités.
-                if (allumee && !(d.options & OPT_O)) commande(RoueAction::ETEINDRE, RoueIcone::ETEINDRE, false);
-                else commande(RoueAction::ALLUMER, RoueIcone::ALLUMER, allumee);
-                famille(RoueAction::LUMINOSITE, RoueIcone::LUMINOSITE);
-            } else {
-                commande(RoueAction::ALLUMER, RoueIcone::ALLUMER, allumee);
-                if (!(d.options & OPT_O)) commande(RoueAction::ETEINDRE, RoueIcone::ETEINDRE, est(e.brut, "off"));
-            }
-            if (d.options & OPT_C) {
-                famille(RoueAction::BLANCS, RoueIcone::BLANCS);
-                famille(RoueAction::COULEURS, RoueIcone::COULEURS);
-            }
-            break;
-        }
-        case Type::VOL: {
-            if (d.options & OPT_K) return 0;
-            // « Ouvert » et « Fermé » comme les mots du popup (vol_etat_mots) : ouvert mais
-            // arrêté en route, c'est « Partiel », pas Ouvrir.
-            const bool partiel = e.valeur < 0.0f || (e.valeur > 0.0f && e.valeur < 100.0f);
-            commande(RoueAction::OUVRIR, RoueIcone::OUVRIR, est(e.brut, "open") && !partiel);
-            commande(RoueAction::ARRETER, RoueIcone::STOP, false);
-            commande(RoueAction::FERMER, RoueIcone::FERMER, est(e.brut, "closed"));
-            if (vol_position_connue(e)) famille(RoueAction::POSITION, RoueIcone::POSITION);
-            break;
-        }
-        case Type::CLI: {
-            // La clim du blueprint (option m) ou celle de la tuile : ce que HA a poussé pour
-            // elle, rien d'autre.
-            int rc, tc;
-            roue_clim(d, r, t, rc, tc);
-            const char* capacites = clim_capacites_connues(rc, tc);
-            if (capacites == nullptr) return 0;
-            commande(RoueAction::CLIM_ARRET, RoueIcone::ETEINDRE, est(e.brut, "off"));
-            bool modes = false;
-            for (const RoueModeClim& m : kRoueModesClim) modes = modes || std::strchr(capacites, m.lettre) != nullptr;
-            if (modes) famille(RoueAction::MODE, RoueIcone::MODE);
-            float valeurs[5];
-            char textes[5][10];
-            int courant = -1;
-            if (clim_roue_consignes(rc, tc, valeurs, textes, courant) > 0) famille(RoueAction::CONSIGNE, RoueIcone::CONSIGNE);
-            ClimBascule bascules[5];
-            if (clim_roue_bascules(rc, tc, bascules) > 0) famille(RoueAction::OPTIONS, RoueIcone::OPTIONS);
-            break;
-        }
-        default:
-            return 0;
-    }
-    if (n == premiere) return 0;
-    // « Détails » (UI-13, décision d'Axel du 07/10/2026) : « Réglages » désignait aussi les
-    // Réglages de la tablette (engrenage).
-    ajouter(RoueAction::REGLAGES, RoueIcone::REGLAGES, RoueGenre::LIEN, false, tr("Détails"));
-    return n;
-}
-
-const char* roue_legende_mode(char lettre) {
-    switch (lettre) {
-        case 'h': return tr_ctx("clim", "Chaud");
-        case 'c': return tr("Froid");
-        case 'd': return tr("Sec");
-        default: return tr("Ventilation");
-    }
-}
-
-RoueIcone roue_icone_bascule(char lettre) {
-    switch (lettre) {
-        case 'e': return RoueIcone::ECO;
-        case 'b': return RoueIcone::BOOST;
-        case 'q': return RoueIcone::SILENCE;
-        case 's': return RoueIcone::OSCILLATION;
-        default: return RoueIcone::BRISE;
-    }
-}
-
-const char* roue_legende_bascule(char lettre) {
-    switch (lettre) {
-        case 'e': return tr("Éco");
-        case 'b': return tr("Boost");
-        case 'q': return tr("Silence");
-        case 's': return tr("Oscillation");
-        default: return tr("Brise");
-    }
-}
-
-// Choix du second anneau de la famille i de `rt` dans `c`, ce qu'ils envoient dans `env` ;
-// renvoie leur nombre (0 : rien à déplier). Le choix de l'état courant (luminosité,
-// position, mode, consigne, option active) est marqué ; une couleur ne l'est jamais (l'état
-// poussé n'en dit que la teinte affichée).
-int roue_choix(const RoueTuile& rt, int i, RoueChoix c[kRoueChoix], RoueEnvoi env[kRoueChoix]) {
-    if (i < 0 || i >= rt.n || heritage() || !tuile_presente(rt.r, rt.t)) return 0;
-    const Def& d = s_m.tuiles[rt.r][rt.t];
-    const Etat& e = s_etats[rt.r][rt.t];
-    int rc, tc;
-    roue_clim(d, rt.r, rt.t, rc, tc);
-    int m = 0;
-    RoueChoix rebut;
-    auto choix = [&](const char* commande, const char* valeur, bool courant) -> RoueChoix& {
-        if (m >= kRoueChoix) return rebut;
-        c[m] = RoueChoix{};
-        c[m].courant = courant;
-        env[m].commande = commande;
-        snprintf(env[m].valeur, sizeof(env[m].valeur), "%s", valeur);
-        return c[m++];
-    };
-    auto pastilles = [&](const RouePastille* p, size_t nb) {
-        for (size_t k = 0; k < nb; k++) {
-            RoueChoix& x = choix("couleur", p[k].nom, false);
-            x.a_pastille = true;
-            x.pastille = p[k].couleur;
-            if (p[k].legende != nullptr) x.legende = tr(p[k].legende);
-        }
-    };
-    char nombre[8];
-    switch (rt.action[i]) {
-        case RoueAction::LUMINOSITE: {
-            // Luminosité 0-255 de l'état, en % (128 → 50) ; éteinte ou inconnue : -1.
-            const int pct = est(e.brut, "on") ? lum_pct(e.valeur) : -1;
-            for (uint8_t p : kRoueLuminosites) {
-                snprintf(nombre, sizeof(nombre), "%u", static_cast<unsigned>(p));
-                RoueChoix& x = choix("luminosite_pct", nombre, pct == p);
-                snprintf(x.texte, sizeof(x.texte), "%u %%", static_cast<unsigned>(p));
-            }
-            break;
-        }
-        case RoueAction::BLANCS:
-            pastilles(kRoueBlancs, sizeof(kRoueBlancs) / sizeof(kRoueBlancs[0]));
-            break;
-        case RoueAction::COULEURS:
-            pastilles(kRoueCouleurs, sizeof(kRoueCouleurs) / sizeof(kRoueCouleurs[0]));
-            break;
-        case RoueAction::POSITION: {
-            // Jamais sans position connue (le volet a pu la perdre roue ouverte).
-            if (!vol_position_connue(e)) break;
-            const long position = std::lround(e.valeur);
-            for (uint8_t p : kRouePositions) {
-                snprintf(nombre, sizeof(nombre), "%u", static_cast<unsigned>(p));
-                RoueChoix& x = choix("position", nombre, position == p);
-                snprintf(x.texte, sizeof(x.texte), "%u %%", static_cast<unsigned>(p));
-            }
-            break;
-        }
-        case RoueAction::MODE: {
-            const char* capacites = clim_capacites_connues(rc, tc);
-            if (capacites == nullptr) break;
-            for (const RoueModeClim& md : kRoueModesClim) {
-                if (std::strchr(capacites, md.lettre) == nullptr) continue;
-                RoueChoix& x = choix("mode", md.mode, est(e.brut, md.mode));
-                x.icone = md.icone;
-                x.legende = roue_legende_mode(md.lettre);
-            }
-            break;
-        }
-        case RoueAction::CONSIGNE: {
-            // La consigne et deux pas de chaque côté, dans les bornes de la clim ; envoyée
-            // comme celle du popup (clim_consigne_texte : « 21.5 »).
-            float valeurs[5];
-            char textes[5][10];
-            int courant = -1;
-            const int nb = clim_roue_consignes(rc, tc, valeurs, textes, courant);
-            for (int k = 0; k < nb; k++) {
-                RoueChoix& x = choix("consigne", clim_consigne_texte(valeurs[k]).c_str(), k == courant);
-                snprintf(x.texte, sizeof(x.texte), "%.9s", textes[k]);  // une ligne de textes[5][10]
-            }
-            break;
-        }
-        case RoueAction::OPTIONS: {
-            // Bascules du popup (Éco, Boost, Silence, Oscillation, Brise) : même commande,
-            // même valeur que leur bouton (clim_popup_preset, _silence, _oscillation, _brise).
-            ClimBascule bascules[5];
-            const int nb = clim_roue_bascules(rc, tc, bascules);
-            for (int k = 0; k < nb; k++) {
-                RoueChoix& x = choix(bascules[k].commande, bascules[k].valeur, bascules[k].actif);
-                x.icone = roue_icone_bascule(bascules[k].lettre);
-                x.legende = roue_legende_bascule(bascules[k].lettre);
-            }
-            break;
-        }
-        default:
-            break;
-    }
-    return m;
-}
-
-// Jauge du moyeu : luminosité (0 éteinte), position du volet, consigne de la clim dans ses
-// bornes ; -1 sans valeur (lampe sans variateur, position ou consigne inconnue).
-int roue_jauge(int r, int t) {
-    const Def& d = s_m.tuiles[r][t];
-    const Etat& e = s_etats[r][t];
-    switch (static_cast<Type>(d.type)) {
-        case Type::LUM:
-            if (!(d.options & OPT_D)) return -1;
-            if (!est(e.brut, "on")) return 0;
-            return lum_pct(e.valeur);
-        case Type::VOL:
-            return vol_position_connue(e) ? std::clamp(static_cast<int>(std::lround(e.valeur)), 0, 100) : -1;
-        case Type::CLI: {
-            int rc, tc;
-            roue_clim(d, r, t, rc, tc);
-            return clim_roue_jauge(rc, tc);
-        }
-        default:
-            return -1;
-    }
-}
-
-void roue_tuile_rejouer();
-
-// Toucher du bouton i du premier anneau (roue déjà fermée ; une famille, tab5_roue.cpp la
-// déplie sans passer par ici) : la commande, par les chemins de la tuile, ou un lien.
-void roue_tuile_choisir(int i) {
-    charger();
-    const RoueTuile rt = s_rt;
-    if (i < 0 || i >= rt.n || heritage() || !tuile_presente(rt.r, rt.t)) return;
-    const Def& d = s_m.tuiles[rt.r][rt.t];
-    const TuilesUI& u = g_tuiles_ui;
-    const char cle[4] = {'t', static_cast<char>('0' + rt.r), static_cast<char>('0' + rt.t), '\0'};
-    // Une clim : à l'emplacement que vise son popup (« clim » pour celle du blueprint).
-    const char* cle_clim = (d.options & OPT_M) ? "clim" : cle;
-    switch (rt.action[i]) {
-        case RoueAction::MAISON:
-            if (g_roue_ui.ouvrir_ecran != nullptr) g_roue_ui.ouvrir_ecran(static_cast<int>(Ecran::MAISON));
-            return;
-        case RoueAction::REGLAGES:
-            tuile_ouvrir_popup(rt.r, rt.t);
-            return;
-        case RoueAction::ALLUMER:
-            envoyer_tuile(rt.r, rt.t, "allumer");
-            return;
-        case RoueAction::ETEINDRE:
-            envoyer_tuile(rt.r, rt.t, "eteindre");
-            return;
-        case RoueAction::OUVRIR:
-            envoyer_tuile(rt.r, rt.t, "ouvrir");
-            return;
-        case RoueAction::ARRETER:
-            envoyer_tuile(rt.r, rt.t, "arreter");
-            return;
-        case RoueAction::FERMER:
-            envoyer_tuile(rt.r, rt.t, "fermer");
-            return;
-        case RoueAction::CLIM_ARRET:
-            if (u.envoyer != nullptr) u.envoyer(cle_clim, "eteindre", "");
-            return;
-        default:
-            return;
-    }
-}
-
-// Choix de la famille dépliée (rappel `famille` de tab5_roue.cpp), recalculés à chaque
-// dépliage et à chaque repeint : ils suivent l'état poussé.
-int roue_tuile_famille(int i, RoueChoix* c) {
-    charger();
-    RoueEnvoi env[kRoueChoix];
-    return roue_choix(s_rt, i, c, env);
-}
-
-// Toucher du choix j de la famille i (roue déjà fermée) : sa commande, recalculée sur
-// l'état d'aujourd'hui.
-void roue_tuile_choisir_choix(int i, int j) {
-    charger();
-    const RoueTuile rt = s_rt;
-    RoueChoix c[kRoueChoix];
-    RoueEnvoi env[kRoueChoix];
-    const int m = roue_choix(rt, i, c, env);
-    const TuilesUI& u = g_tuiles_ui;
-    if (j < 0 || j >= m || env[j].commande == nullptr || u.envoyer == nullptr) return;
-    const Def& d = s_m.tuiles[rt.r][rt.t];
-    const char cle[4] = {'t', static_cast<char>('0' + rt.r), static_cast<char>('0' + rt.t), '\0'};
-    const bool clim = static_cast<Type>(d.type) == Type::CLI;
-    const char* cle_clim = (d.options & OPT_M) ? "clim" : cle;
-    u.envoyer(clim ? cle_clim : cle, env[j].commande, env[j].valeur);
-}
-
-// Boutons, moyeu (icône, ligne d'état, nom, jauge) et couleur d'état (celle de la pastille
-// de la carte, peindre_carte) de la tuile de `rt`, puis la roue autour de son ancre.
-// `garder` : un repeint (thème, état poussé) garde la famille dépliée. Faux sans roue.
-bool roue_tuile_peindre(RoueTuile& rt, bool garder) {
-    RoueBouton b[kRoueBoutons];
-    rt.n = roue_composer(rt.r, rt.t, rt.depuis_maison, b, rt);
-    if (rt.n == 0) return false;
-    Vue v;
-    vue(rt.r, rt.t, v);
-    RoueTete tete;
-    tete.icone = v.icone_carte != nullptr ? v.icone_carte : "";
-    tete.valeur = v.ligne;
-    tete.nom = v.nom;
-    tete.couleur = v.couleur_carte;
-    tete.jauge = roue_jauge(rt.r, rt.t);
-    RoueRappels rappels;
-    rappels.choisir = roue_tuile_choisir;
-    rappels.famille = roue_tuile_famille;
-    rappels.choisir_choix = roue_tuile_choisir_choix;
-    rappels.rejouer = roue_tuile_rejouer;
-    s_rt = rt;
-    return roue_ouvrir(rt.ancre, tete, b, rt.n, rappels, garder);
-}
-
-// Changement de thème, roue ouverte : la même roue dans la nouvelle palette ; si la tuile
-// n'en a plus (état ou définition changés entre-temps), elle se ferme.
-void roue_tuile_rejouer() {
-    charger();
-    RoueTuile rt = s_rt;
-    if (!roue_tuile_peindre(rt, true)) roue_actions_fermer();
-}
-
-// HA a poussé un état de la tuile tRT (peindre_tuile) : la roue ouverte sur elle suit
-// (bouton et choix de l'état courant, moyeu, jauge) ; elle se ferme si la tuile n'en a plus.
-void roue_tuile_etat(int r, int t) {
-    if (roue_actions_ouverte() && s_rt.r == r && s_rt.t == t) roue_tuile_rejouer();
-}
-
-}  // namespace
-
-bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison) {
-    charger();
-    if (ancre == nullptr || r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return false;
-    RoueTuile rt;
-    rt.r = r;
-    rt.t = t;
-    rt.ancre = ancre;
-    rt.depuis_maison = depuis_maison;
-    return roue_tuile_peindre(rt, false);
-}
-
-// Ancre de la tuile T de la page courante : la pastille de sa carte (mode HA), le bouton
-// au centre de sa tuile météo sinon.
-static bool roue_de_la_tuile(int r, int t) {
-    if (g_central_ctx.ha_mode) return tuile_roue_ouvrir(r, t, g_tuiles_ui.carte_pastille[t]);
-    lv_obj_t *g, *d, *b;
-    widgets_meteo(t, g, d, b);
-    return tuile_roue_ouvrir(r, t, b);
+    const Fenetre f = gestes(d, false).fenetre;
+    if (f == Fenetre::APPAREIL || f == Fenetre::ENERGIE) return false;
+    return ouvrir_fenetre(f, d, r, t);
 }
 
 void tuile_appui(int t, bool long_appui) {
@@ -2560,42 +1505,6 @@ void tuiles_heritage_luminosite(int i, float luminosite) {
     if (heritage()) popup_lumiere_etat(0, 2 + i);
 }
 
-void popup_lumiere_choisir(int idx) {
-    charger();
-    const TuilesUI& u = g_tuiles_ui;
-    if (idx < 0 || idx >= s_pl.n || u.lum_popup == nullptr) return;
-    s_pl.choix = idx;
-    if (u.lum_cle != nullptr) lumiere_cle(s_pl.piece, s_pl.tuiles[idx], *u.lum_cle);
-    popup_lumiere_peindre();
-    if (!popup_ouvert()) animate_popup_open(u.lum_popup);
-}
-
-void popup_volet_commande(const char* action) {
-    charger();
-    if (action == nullptr || !popup_volet_valide()) return;
-    envoyer_tuile(s_pv.piece, s_pv.tuile, action);
-}
-
-// Grand bouton du popup d'un appareil : le toucher de SA tuile, par le même chemin.
-void popup_appareil_appui() {
-    charger();
-    if (!popup_appareil_valide()) return;
-    tuile_appui_piece(s_pa.piece, s_pa.tuile, false);
-}
-
-void tuiles_brancher_popup_volet() {
-    static bool fait = false;
-    lv_obj_t* cadre = g_tuiles_ui.vol_cadre;
-    if (fait || cadre == nullptr || g_tuiles_ui.vol_tablier == nullptr) return;
-    fait = true;
-    lames_construire(g_tuiles_ui.vol_tablier);
-    // Un glissement sur le volet ne remonte pas en geste jusqu'à la page (le swipe des
-    // prévisions, sous le popup).
-    lv_obj_remove_flag(cadre, LV_OBJ_FLAG_GESTURE_BUBBLE);
-    for (lv_event_code_t code : {LV_EVENT_PRESSED, LV_EVENT_PRESSING, LV_EVENT_RELEASED, LV_EVENT_PRESS_LOST})
-        lv_obj_add_event_cb(cadre, volet_cadre_rappel, code, nullptr);
-}
-
 // « Pièce : tout éteindre » (pR / eteindre : toutes les lumières de la pièce R ; en mode
 // héritage, lumieres / eteindre). Popup lumière (« Tout éteindre ») et popup Maison
 // (« Éteindre les lumières », une fois par pièce qui a des lumières, ADR-0037).
@@ -2606,11 +1515,8 @@ void tuiles_piece_eteindre(int r) {
         return;
     }
     if (r < 0 || r >= kPieces) return;
-    const char cle[3] = {'p', static_cast<char>('0' + r), '\0'};
-    envoyer(cle, "eteindre");
+    envoyer(piece_cle(r).s, "eteindre");
 }
-
-void popup_lumiere_tout_eteindre() { tuiles_piece_eteindre(s_pl.piece); }
 
 bool tuiles_heritage_volet(const std::string& etat) {
     charger();
@@ -2653,7 +1559,7 @@ bool tuiles_piece_a_lumieres(int r) {
     return false;
 }
 
-// Une ligne du popup Maison agit-elle au toucher (comme la tuile : type_agit), et a-t-elle
+// Une ligne du popup Maison agit-elle au toucher (comme la tuile : gestes), et a-t-elle
 // un appui long (bouton « ⋯ ») ? lum, int, vol, med, act, et cli quand elle agit ; ni cap
 // (même avec l'option e : son toucher ouvre le popup Énergie), ni bin, ni l'option r.
 // Mode héritage : la 3.1 (tuile 0 : télécommande s'il y a une TV ; 1 : rien ; 2-4 : popup
@@ -2669,7 +1575,7 @@ bool tuile_gestes(int r, int t, bool& agit, bool& appui_long) {
     }
     const Def& d = s_m.tuiles[r][t];
     const Type type = static_cast<Type>(d.type);
-    agit = type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t));
+    agit = gestes(d, type == Type::CLI && clim_tuile_connue(r, t)).agit;
     appui_long = agit && type != Type::CAP && type != Type::BIN;
     return true;
 }

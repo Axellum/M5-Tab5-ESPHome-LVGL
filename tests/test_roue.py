@@ -36,7 +36,8 @@ def _roue():
 
 
 def _tuiles():
-    return _lire("Tab5", "tab5_tuiles.cpp")
+    # Tuiles, popups, roue d'une tuile et leur en-tête commun (lot L7, 08/10/2026).
+    return "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
 
 
 def _yaml(nom):
@@ -246,16 +247,29 @@ def test_choix_des_familles():
     t = _tuiles()
     assert re.findall(r"\d+", _const(t, "kRoueLuminosites")) == ["10", "25", "50", "75", "100"]
     assert re.findall(r"\d+", _const(t, "kRouePositions")) == ["25", "50", "75"]
-    # Blancs et couleurs : ceux du popup lumière (même nom, même teinte).
+    blancs = re.findall(r'\{"(\w+)", tr_noop\("([^"]+)"\)\}', _const(t, "kRoueBlancs"))
+    assert blancs == [("warmwhite", "Chaud"), ("navajowhite", "Crème"), ("white", "Froid")]
+    couleurs = re.findall(r'\{"(\w+)", nullptr\}', _const(t, "kRoueCouleurs"))
+    assert couleurs == ["red", "orange", "gold", "green", "blue", "purple"]
+    # Une seule liste de teintes (UI-8, lot L7) : lampe_teinte(), pour le popup lumière et
+    # la roue — et les mêmes valeurs qu'avant, une à une (aucun changement à l'écran).
+    teintes = {n: int(h, 16) for n, h in re.findall(r'\{"(\w+)", 0x([0-9A-F]{6})\}', _const(t, "kLampeTeintes"))}
+    assert teintes == {
+        "warmwhite": 0xFFC864, "navajowhite": 0xFFDEAD, "white": 0xFFFFFF, "gold": 0xFFD700,
+        "orange": 0xFFA500, "orangered": 0xFF4500, "red": 0xFF2020, "deeppink": 0xFF1493,
+        "magenta": 0xFF00FF, "blueviolet": 0x8A2BE2, "purple": 0xA855F7, "blue": 0x3B82F6,
+        "cyan": 0x00E5FF, "springgreen": 0x00FF7F, "green": 0x22C55E}
+    assert "x.pastille = lampe_teinte(p[k].nom);" in t
+    # Le popup lumière : chaque pastille par son nom seul, dans l'ordre de la table.
     popup = _yaml("light_popup.yaml")
-    du_popup = {nom: int(h, 16) for nom, h in
-                re.findall(r'color_name: "(\w+)", icon_color: "?0x([0-9A-F]{6})"?', popup)}
-    blancs = re.findall(r'\{"(\w+)", 0x([0-9A-F]{6}), tr_noop\("([^"]+)"\)\}', _const(t, "kRoueBlancs"))
-    assert [(n, l) for n, _, l in blancs] == [("warmwhite", "Chaud"), ("navajowhite", "Crème"), ("white", "Froid")]
-    couleurs = re.findall(r'\{"(\w+)", 0x([0-9A-F]{6}), nullptr\}', _const(t, "kRoueCouleurs"))
-    assert len(couleurs) == 6
-    for nom, h, *_ in blancs + couleurs:
-        assert du_popup.get(nom) == int(h, 16), nom
+    assert "icon_color" not in popup and re.search(r"0x[0-9A-Fa-f]{6}", popup.split("COULEURS", 1)[1]) is None
+    assert re.findall(r'color_name: "(\w+)"', popup) == list(teintes)
+    assert re.findall(r'color_name: "(\w+)", name: "([^"]+)"', popup) == blancs
+    for gabarit, propriete in (("light_color_preset_btn.yaml", "bg_color"), ("light_white_btn.yaml", "text_color")):
+        assert (f"{propriete}: !lambda 'return lv_color_hex(lampe_teinte(\"${{color_name}}\"));'"
+                in _yaml(gabarit)), gabarit
+        assert "icon_color" not in _yaml(gabarit).split("button:", 1)[1], gabarit
+    assert set(n for n, _ in blancs) | set(couleurs) <= set(teintes)
     assert int(_const(_lire("Tab5", "tab5_custom.h"), "kRoueChoix")) >= len(couleurs)
 
 
@@ -275,9 +289,9 @@ def test_commandes_envoyees_du_contrat():
     t = _tuiles()
     choisir = _fonction(t, "roue_tuile_choisir")
     envoyees = set(re.findall(r'envoyer_tuile\(rt\.r, rt\.t, "(\w+)"\)', choisir))
-    envoyees |= set(re.findall(r'u\.envoyer\(\w+, "(\w+)"', choisir))
+    envoyees |= set(re.findall(r'u\.envoyer\([\w.()]+, "(\w+)"', choisir))
     envoyees |= set(re.findall(r'choix\("(\w+)",', _fonction(t, "roue_choix")))
-    bascules = _fonction(_lire("Tab5", "tab5_cards.cpp"), "clim_roue_bascules")
+    bascules = _fonction(_lire("Tab5", "tab5_clim.cpp"), "clim_roue_bascules")
     envoyees |= set(re.findall(r"\{'\w', on, \"(\w+)\",", bascules))
     assert envoyees == {"allumer", "eteindre", "ouvrir", "arreter", "fermer", "luminosite_pct", "couleur",
                         "position", "mode", "consigne", "preset", "ventilation", "oscillation"}
@@ -288,21 +302,23 @@ def test_commandes_envoyees_du_contrat():
     for c in ("mode", "eteindre", "consigne", "preset", "ventilation", "oscillation"):
         assert f"commande: {c}" in popup, c
     # Clim du blueprint (option m) : l'emplacement « clim », comme clim_affichee_cle().
-    assert 'const char* cle_clim = (d.options & OPT_M) ? "clim" : cle;' in choisir
-    assert 'u.envoyer(clim ? cle_clim : cle, env[j].commande, env[j].valeur);' in _fonction(
+    assert 'u.envoyer(clim.emplacement(), "eteindre", "");' in choisir
+    assert 'u.envoyer(est_clim ? clim.emplacement() : cle.s, env[j].commande, env[j].valeur);' in _fonction(
         t, "roue_tuile_choisir_choix")
+    assert "if (d.options & OPT_M) return c;" in _fonction(t, "clim_cible")
+    assert 'const char* emplacement() const { return r < 0 ? "clim" : cle.s; }' in t
     # Liens : le popup de la tuile ; le popup Maison par la routine unique des écrans.
     reglages = choisir.split("case RoueAction::REGLAGES:", 1)[1].split("return;", 1)[0]
     assert "tuile_ouvrir_popup(rt.r, rt.t);" in reglages
     maison = choisir.split("case RoueAction::MAISON:", 1)[1].split("return;", 1)[0]
     assert "g_roue_ui.ouvrir_ecran(static_cast<int>(Ecran::MAISON));" in maison
-    assert "roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };" in _lire("Tab5", "tab5-tuiles.yaml")
+    assert "roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };" in _lire("Tab5", "tab5-roue.yaml")
 
 
 def test_bascules_et_consignes_comme_le_popup():
     """Options de la clim : mêmes « actif » et mêmes valeurs que les bascules du popup ;
     consignes : deux pas de chaque côté, dans les bornes, envoyées comme le popup."""
-    cards = _lire("Tab5", "tab5_cards.cpp")
+    cards = _lire("Tab5", "tab5_clim.cpp")
     bascules = _fonction(cards, "clim_roue_bascules")
     for attendu in ("{'e', on, \"preset\", on ? \"none\" : \"away\"}",
                     "{'b', on, \"preset\", on ? \"none\" : \"boost\"}",
@@ -322,11 +338,14 @@ def test_bascules_et_consignes_comme_le_popup():
 
 def test_appui_long_ouvre_la_roue_puis_le_popup():
     appui = _fonction(_tuiles(), "tuile_appui_piece")
-    assert "if (!roue_de_la_tuile(r, t)) popup_lumiere_ouvrir(r, t);" in appui
-    assert "if (!roue_de_la_tuile(r, t)) popup_volet_ouvrir(r, t);" in appui
-    assert "if (long_appui && roue_de_la_tuile(r, t)) return;" in appui
+    # La roue d'abord, sinon la fenêtre du type (table kGestes, lot L7) : lum, vol, cli.
+    table = re.search(r"constexpr GesteType kGestes\[\] = \{(.*?)\n\};", _tuiles(), re.S).group(1)
+    assert re.findall(r"\{\w+, [^,]+, true, Fenetre::(\w+)\},\s*// (\w+)", table) == [
+        ("LUMIERE", "lum"), ("VOLET", "vol"), ("CLIM", "cli")]
+    long_ = appui.split("if (long_appui) {", 1)[1].split("\n    }\n", 1)[0]
+    assert long_.index("if (g.roue && roue_de_la_tuile(r, t)) return;") < long_.index("ouvrir_fenetre(g.fenetre, d, r, t);")
     # Le toucher court ne passe jamais par la roue.
-    assert appui.count("roue_de_la_tuile(") == 3
+    assert appui.count("roue_de_la_tuile(") == 1
     # Depuis le popup Maison : sans le lien « Maison ».
     assert "if (long_appui && tuile_roue_ouvrir(r, t, ancre, true)) return;" in _fonction(
         _tuiles(), "tuile_appui_maison")
@@ -403,6 +422,27 @@ def test_un_etat_pousse_repeint_la_roue():
     assert "b[s.famille].icone == s.bouton[s.famille].icone" in _fonction(_roue(), "roue_ouvrir")
 
 
+def test_un_bouton_n_est_repeint_que_si_son_aspect_change():
+    """UI-7 (audit du 07/10/2026, lot L7) : chaque bouton garde le dernier aspect posé
+    (Pose) ; aspect() et aspect_pastille() ne reposent leurs propriétés que s'il change —
+    aspect, couleur, ou couleur de la palette lue (thème)."""
+    roue = _roue()
+    reposer = _fonction(roue, "reposer")
+    assert reposer.index("if (pose == posee) return false;") < reposer.index("lv_obj_remove_local_style_prop(")
+    # Les propriétés ne sont retirées qu'à cet endroit.
+    assert roue.count("lv_obj_remove_local_style_prop(") == 1
+    aspect = _fonction(roue, "aspect")
+    assert "pose.haut = UIColor.GLASS_HI;" in aspect and "pose.bas = UIColor.GLASS_LO;" in aspect
+    assert aspect.index("if (!reposer(b, posee, pose)) return;") < aspect.index("lv_obj_set_style_")
+    pastille = _fonction(roue, "aspect_pastille")
+    assert "pose.haut = courant ? UIColor.TEXT_PRIMARY : UIColor.GLASS_RIM;" in pastille
+    assert pastille.index("if (!reposer(b, posee, pose)) return;") < pastille.index("lv_obj_set_style_")
+    # Un Pose par bouton du premier anneau et par choix du second.
+    assert "aspect(u.bouton[i], s_pose_bouton[i], a, s.couleur);" in roue
+    assert "aspect_pastille(u.choix[j], s_pose_choix[j], k.pastille, k.courant);" in roue
+    assert "aspect(u.choix[j], s_pose_choix[j], " in roue
+
+
 def test_inclus_entre_les_cartes_et_les_popups():
     lvgl = _lire("Tab5", "tab5-lvgl.yaml")
     i = lvgl.index("ui_components/roue_actions.yaml")
@@ -422,21 +462,36 @@ def test_widgets_et_leurs_pointeurs():
     assert re.findall(r"file: roue_choix\.yaml, vars: \{ n: (\d) \}", yaml) == [str(j) for j in range(m)]
     legendes = re.findall(r"file: roue_legende\.yaml, vars: \{ id: (\w+) \}", yaml)
     assert legendes == [f"roue_choix_{j}_legende" for j in range(m)] + ["roue_lien_0", "roue_lien_1"]
-    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    # Les pointeurs sont posés par tab5-roue.yaml (sorti de tab5-tuiles.yaml, lot L7) ;
+    # boutons et choix par deux aides, une ligne par N, dans l'ordre des champs.
+    pose = _lire("Tab5", "tab5-roue.yaml")
     attendus = [("fond", "roue_actions"), ("bande[0]", "roue_bande_0"), ("bande[1]", "roue_bande_1"),
                 ("jauge", "roue_jauge"), ("moyeu", "roue_moyeu"), ("moyeu_icone", "roue_moyeu_icone"),
                 ("moyeu_valeur", "roue_moyeu_valeur"), ("nom", "roue_nom"),
                 ("lien_legende[0]", "roue_lien_0"), ("lien_legende[1]", "roue_lien_1")]
-    for i in range(n):
-        attendus += [(f"bouton[{i}]", f"roue_bouton_{i}"), (f"icone[{i}]", f"roue_bouton_{i}_icone"),
-                     (f"point[{i}]", f"roue_bouton_{i}_point")]
-    for j in range(m):
-        attendus += [(f"choix[{j}]", f"roue_choix_{j}"), (f"choix_icone[{j}]", f"roue_choix_{j}_icone"),
-                     (f"choix_texte[{j}]", f"roue_choix_{j}_texte"),
-                     (f"choix_legende[{j}]", f"roue_choix_{j}_legende")]
     for champ, wid in attendus:
-        assert f"roue.{champ} = id({wid});" in tuiles, champ
-    assert "roue_brancher();" in tuiles
+        assert f"roue.{champ} = id({wid});" in pose, champ
+    aide_bouton = pose.split("const auto bouton = [&roue](int n, auto* b, auto* icone, auto* point) {", 1)[1]
+    assert re.findall(r"roue\.(\w+)\[n\] = (\w+);", aide_bouton.split("};", 1)[0]) == [
+        ("bouton", "b"), ("icone", "icone"), ("point", "point")]
+    aide_choix = pose.split("const auto choix = [&roue](int n, auto* c, auto* icone, auto* texte, auto* legende) {", 1)[1]
+    assert re.findall(r"roue\.(\w+)\[n\] = (\w+);", aide_choix.split("};", 1)[0]) == [
+        ("choix", "c"), ("choix_icone", "icone"), ("choix_texte", "texte"), ("choix_legende", "legende")]
+    for i in range(n):
+        assert (f"bouton({i}, id(roue_bouton_{i}), id(roue_bouton_{i}_icone), "
+                f"id(roue_bouton_{i}_point));") in pose, i
+    for j in range(m):
+        assert (f"choix({j}, id(roue_choix_{j}), id(roue_choix_{j}_icone), id(roue_choix_{j}_texte), "
+                f"id(roue_choix_{j}_legende));") in pose, j
+    assert len(re.findall(r"^\s+bouton\(\d", pose, re.M)) == n
+    assert len(re.findall(r"^\s+choix\(\d", pose, re.M)) == m
+    assert pose.rstrip().endswith("roue_brancher();")
+    # Lancé par tab5_tuiles_ui juste après les widgets des tuiles, chargé avec lui.
+    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    assert "RoueUI" not in tuiles and "roue_brancher" not in tuiles and "id(roue_" not in tuiles
+    assert tuiles.rstrip().endswith("- script.execute: tab5_roue_ui")
+    for entree in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
+        assert "tab5_roue: !include Tab5/tab5-roue.yaml" in _lire(entree), entree
     # Le voile est celui des popups (ADR-0009), à 60 % : les tuiles restent visibles
     # dessous ; premier enfant, sous tout le reste.
     premier = yaml.split("widgets:", 1)[1].split("\n    - ", 2)[1]

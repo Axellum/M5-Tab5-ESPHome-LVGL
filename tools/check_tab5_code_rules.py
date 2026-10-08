@@ -356,7 +356,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_tuiles.cpp", "glyphe_fleche"): (
         "icon_card_droite_j0", "icon_card_shutter_arrow", "icon_card_light_j*", "icon_card_h*_d"),
     # Popup d'un appareil (06/10/2026) : icône du grand bouton (marche / arrêt, lecture).
-    ("tab5_tuiles.cpp", "glyphe_commande"): ("appareil_commande_icone",),
+    ("tab5_tuiles_popups.cpp", "glyphe_commande"): ("appareil_commande_icone",),
     # Roue d'actions rapides (ADR-0036) : icônes de ses deux anneaux (roue_bouton.yaml,
     # roue_choix.yaml, mdi_font_36).
     ("tab5_roue.cpp", "glyphe_roue"): ("roue_bouton_*_icone", "roue_choix_*_icone"),
@@ -847,11 +847,10 @@ def chemins_chauds(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
 # moisture_slots_refresh, zone_tuile_absente, zones_pots_presents, central_planning_set_off.)
 PUBLIQUES_SANS_APPELANT = {
     "update_meteo_icon",        # tab5_forecast.cpp : dessin d'une tuile météo
-    "clim_eco_actif",           # tab5_cards.cpp : état des boutons de la clim (lus aussi par tests/test_clim.py)
+    "clim_eco_actif",           # tab5_clim.cpp : état des boutons de la clim (lus aussi par tests/test_clim.py)
     "clim_silence_actif",
     "clim_oscillation_actif",
     "clim_preset_actif",
-    "clim_recolorer",           # tab5_cards.cpp : couleurs de la clim après un changement
     "solaire_present",          # tab5_zones.cpp : production solaire connue
     "ecran_disponible",         # tab5_zones.cpp : écran disponible pour un appui long
     "boutons_haut_apply_ui",    # tab5_zones.cpp : mini icônes des trois boutons du haut

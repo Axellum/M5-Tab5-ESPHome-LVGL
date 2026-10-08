@@ -884,10 +884,13 @@ def test_blueprint_ecoute_l_evenement():
 # ─── Firmware ────────────────────────────────────────────────────────────────
 
 def test_option_e_du_firmware():
-    cpp = _lire(TUILES_CPP)
+    # Les options et leurs lettres : l'en-tête des tuiles (lot L7, 08/10/2026).
+    cpp = _lire(TUILES_CPP) + _lire(os.path.join(REPO, "Tab5", "tab5_tuiles_priv.h"))
     lettres = re.search(r'kLettresOptions\[\] = "(\w+)"', cpp).group(1)
     assert lettres.index("e") == 7 and re.search(r"\bOPT_E = 128\b", cpp)
-    assert "case Type::CAP: return (options & OPT_E) != 0;" in cpp
+    # Un capteur n'agit qu'avec l'option e (gestes(), table kGestes) : le popup Énergie.
+    assert "(type == Type::CAP && (d.options & OPT_E))" in cpp
+    assert "{false, nullptr, false, Fenetre::ENERGIE},    // cap" in cpp
     assert re.search(r"d\.options & OPT_E\) && energie_formater\(", cpp)
     assert "g_tuiles_ui.energie_ouvrir()" in cpp
     assert lettres == scenarios.OPTIONS_TUILE

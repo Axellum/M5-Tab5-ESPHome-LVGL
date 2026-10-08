@@ -211,7 +211,7 @@ TUILE_VOLET = (390, 572)
 VOLET_SANS_POSITION = Service("tab5_maj_emplacements", (("payload", "t01|closing|nan|;"),))
 VOLET_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t01|opening|45|;"),))
 # Le volet dessiné du popup (06/10/2026), tiré du doigt vers le bas : 150 px de la fenêtre
-# de 456 px, de 45 % à 13 % (volet_cadre_rappel, tab5_tuiles.cpp). Vertical, au-dessus
+# de 456 px, de 45 % à 13 % (volet_cadre_rappel, tab5_tuiles_popups.cpp). Vertical, au-dessus
 # des tuiles : ni swipe de page ni bouton sous le doigt. Le relâcher envoie « position »,
 # que personne n'applique ici : la capture montre le volet là où le doigt l'a laissé.
 VOLET_TIRE = Glisser(265, 250, 265, 400)
