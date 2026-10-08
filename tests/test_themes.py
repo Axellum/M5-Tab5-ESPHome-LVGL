@@ -156,6 +156,24 @@ def test_chaque_style_de_role_sert():
             assert re.search(rf"\b{style['id']}\b", corpus), f"{style['id']} n'est posé par aucun widget"
 
 
+def test_chaque_role_de_la_palette_est_lu():
+    """DO-12 (audit du 07/10/2026) : un rôle que rien ne lit coûte une valeur dans chaque
+    mode de chaque thème sans rien changer à l'écran (ICON_MUTED, retiré le 08/10/2026).
+    Lecteurs : le C++ (`UIColor.X`, `&Palette::X`, `PALETTE_SOMBRE.X`…), les lambdas et
+    styles YAML, les formes d'un thème (`formes:`, couleur par nom de rôle) et le verre
+    calculé (gen_themes.DERIVES)."""
+    sources = [p for p in list(TAB5.glob("*.cpp")) + list(TAB5.glob("*.h"))
+               if p.name not in ("tab5_tokens.h", "tab5_themes_data.h")]
+    sources += list(TAB5.glob("*.yaml")) + list((TAB5 / "ui_components").glob("*.yaml"))
+    corpus = "\n".join(p.read_text(encoding="utf-8") for p in sources)
+    formes = "\n".join(yaml.safe_dump(yaml.safe_load(p.read_text(encoding="utf-8")).get("formes") or {})
+                       for p in (TAB5 / "themes").glob("*.yaml") if not p.name.startswith("_"))
+    derives = {r for v in gen_themes.DERIVES.values() for r in v[:2]}
+    morts = [r for r in _champs()
+             if r not in derives and not re.search(rf"[.:]\s*{r}\b", corpus) and not re.search(rf"\b{r}\b", formes)]
+    assert not morts, f"rôle(s) de struct Palette lus nulle part : {morts}"
+
+
 def test_catalogue_a_jour():
     """THEMES[], les options du select « Thème » et la repeinture des styles suivent
     Tab5/themes/ et tab5-styles.yaml (`python tools/gen_themes.py`)."""

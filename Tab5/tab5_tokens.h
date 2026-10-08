@@ -97,7 +97,6 @@ struct Palette {
     uint32_t TEXT_DIM;         // texte secondaire / repos
     uint32_t CONSOLE_LABEL;    // libellés de la console système
     uint32_t CONSOLE_VALUE;    // valeurs numériques de la console
-    uint32_t ICON_MUTED;       // icône désactivée / placeholder
     uint32_t TEXT_ON_ACCENT;   // texte et icône posés sur l'accent plein (« Tester », « Parler », « OK »)
     // --- Sémantiques ---
     uint32_t SUCCESS;          // actif, OK
@@ -196,7 +195,6 @@ inline constexpr Palette PALETTE_SOMBRE = {
     .TEXT_DIM            = 0x94A3B8,
     .CONSOLE_LABEL       = 0x8595AD,
     .CONSOLE_VALUE       = 0xFFFFFF,
-    .ICON_MUTED          = 0x555555,
     .TEXT_ON_ACCENT      = 0xF1F5F9,
     .SUCCESS             = 0x34D399,
     .WARNING             = 0xFBBF24,
