@@ -94,6 +94,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `packages/tab5_calendar.yaml` | `HomeAssistant_Config/packages/` | Package calendrier HA. |
 | `custom_templates/tab5_calendar.jinja` | `HomeAssistant_Config/custom_templates/` | Macros Jinja du calendrier (importées par `tab5_calendar.yaml`). |
 | `custom_templates/tab5_tablette.jinja` | `HomeAssistant_Config/custom_templates/` | Macros « la tablette » (08/10/2026, HA-7) : tablette connectée, garde d'origine, capteur API ; importées par les packages et le blueprint. |
+| `custom_templates/tab5_meteo.jinja` | `HomeAssistant_Config/custom_templates/` | Macros de la météo effective (08/10/2026) : la source choisie, ou un repli tant qu'elle ne répond pas ; importées par « Tab5 Météo » (`tab5_meteo_sources.yaml`). |
 | `custom_templates/tab5_dashboard.jinja` | `HomeAssistant_Config/custom_templates/` | Macro `tab5_dashboard()` (04/10/2026) : écrit le tableau de bord HA de la tablette (vues Tab5, Réglages, Santé) avec les entités de la maison, trouvées par le modèle de l'appareil ; rendue dans Outils de développement → Modèle (`docs/installation.md`, étape 7). |
 | `packages/tab5_health.yaml` | `HomeAssistant_Config/packages/` | Package santé HA. |
 | `packages/tab5_reveil.yaml` | `HomeAssistant_Config/packages/` | Package réveil HA. |
@@ -156,6 +157,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_maison.py` | `tests/` | Contenu | Popup Maison (ADR-0037) : registre, select « Aller à l'écran », chrome partagé, rien de nouveau avec HA. |
 | `test_meteo_blueprint.py` | `tests/` | Contenu + rendu | Météo choisie dans le blueprint (section « Météo ») : elle écrit les listes « Tab5 · … » de `tab5_meteo_sources.yaml`. |
 | `test_meteo_icones_nuit.py` | `tests/` | Rendu | Icônes de nuit des prévisions heure par heure (Met.no : `partlycloudy` de nuit) : modèle de HA (`is_daytime`, `sun.sun`) contre un calcul indépendant. |
+| `test_meteo_repli.py` | `tests/` | Rendu | Repli de la météo (08/10/2026) : source choisie indisponible, une autre prend le relais (connue, puis n'importe laquelle), retour tout seul, rien ne part sans aucune météo ; vrais modèles des packages et de `tab5_meteo.jinja`. |
 | `test_meteo_sans_meteo_france.py` | `tests/` | Rendu | Chaîne météo rendue sans Météo-France (Met.no seul), avec les vrais modèles des packages. |
 | `test_pluie_sans_meteo_france.py` | `tests/` | Rendu | Pluie dans l'heure sans Météo-France : la source effective devient Open-Meteo. |
 | `test_polices_themes.py` | `tests/` | Contenu | Polices d'affichage des thèmes : géométrie de l'horloge recalculée depuis les métriques de `Tab5/themes/_polices.yaml`. |

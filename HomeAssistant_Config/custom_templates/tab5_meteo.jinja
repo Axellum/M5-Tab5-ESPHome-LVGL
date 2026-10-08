@@ -1,0 +1,60 @@
+{#-
+  Météo effective du Tab5 : la source choisie, ou un repli tant qu'elle ne répond pas
+  (08/10/2026). Ce matin-là, l'entité Météo-France de l'auteur est passée
+  `unavailable` (« Connection reset by peer ») : la tablette a reçu « unavailable » à
+  0 °C et les prévisions n'ont plus été demandées, alors qu'OpenWeatherMap marchait.
+  Importées par packages/tab5_meteo_sources.yaml (capteur « Tab5 Météo ») et
+  custom_templates/tab5_alertes.jinja :
+    {%- from 'tab5_meteo.jinja' import tab5_meteo_etat, tab5_meteo_effective, tab5_meteo_nom -%}
+
+  tab5_meteo_etat(e)
+      'ok', 'indisponible' (état unavailable ou unknown) ou 'absente' (pas d'entité).
+  tab5_meteo_effective()
+      La source choisie (attribut `meteo` de sensor.tab5_sources_meteo, qui suit la liste
+      « Tab5 · source des prévisions ») si elle est 'ok' ; sinon la première 'ok' parmi
+      les sources connues (OpenWeatherMap, Météo-France), puis parmi toutes les entités
+      weather.* (Met.no de l'onboarding…) ; sinon '' : les poussées météo sont sautées, la tablette garde
+      son dernier affichage. Le choix de la liste ne change jamais : dès que la source
+      choisie redevient 'ok', elle reprend la main toute seule.
+  tab5_meteo_nom(e)
+      Nom court d'une source pour l'écran : Météo-France, OpenWeatherMap, Met.no, sinon
+      le nom de l'entité (40 caractères au plus).
+
+  Déploiement : ce fichier va dans config/custom_templates/, puis
+  homeassistant.reload_custom_templates — AVANT de recharger les packages qui
+  l'importent (comme tab5_tablette.jinja).
+-#}
+{%- macro tab5_meteo_etat(e) -%}
+  {%- set e = e | default('', true) | string -%}
+  {%- if '.' not in e or states[e] is none -%}absente
+  {%- elif states(e) in ['unavailable', 'unknown'] -%}indisponible
+  {%- else -%}ok
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_meteo_effective() -%}
+  {%- set choisie = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' -%}
+  {%- set etat = tab5_meteo_etat(choisie) -%}
+  {%- if etat == 'ok' -%}
+    {{- choisie -}}
+  {%- else -%}
+    {%- set connues = [state_attr('sensor.tab5_sources_meteo', 'owm') or '',
+                       state_attr('sensor.tab5_sources_meteo', 'meteo_france') or ''] -%}
+    {%- set ns = namespace(e='') -%}
+    {%- for x in connues + (states.weather | map(attribute='entity_id') | sort | list)
+          if ns.e == '' and x and x != choisie -%}
+      {%- if tab5_meteo_etat(x) == 'ok' -%}{%- set ns.e = x -%}{%- endif -%}
+    {%- endfor -%}
+    {{- ns.e -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_meteo_nom(e) -%}
+  {%- set e = e | default('', true) | string -%}
+  {%- if '.' not in e -%}
+    {{- '' -}}
+  {%- elif e in integration_entities('meteo_france') -%}Météo-France
+  {%- elif e in integration_entities('openweathermap') -%}OpenWeatherMap
+  {%- elif e in integration_entities('met') -%}Met.no
+  {%- else -%}
+    {{- (state_attr(e, 'friendly_name') or e.split('.', 1)[1]) | string | replace('|', '/') | replace(';', ',') | trim | truncate(40, true, '…') -}}
+  {%- endif -%}
+{%- endmacro -%}

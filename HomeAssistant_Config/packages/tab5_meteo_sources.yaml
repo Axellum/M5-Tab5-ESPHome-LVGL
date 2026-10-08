@@ -59,7 +59,9 @@
 #       restent toutes vertes, comme « Aucune ». La liste garde le choix de
 #       l'utilisateur : Météo-France ajouté plus tard reprend la main tout seul.
 # @install `homeassistant: packages: !include_dir_named packages`, puis ce fichier
-#       dans config/packages/. Rien à renseigner.
+#       dans config/packages/. Rien à renseigner. « Tab5 Météo » importe
+#       custom_templates/tab5_meteo.jinja (repli, 08/10/2026) : le déployer et
+#       recharger les modèles Jinja personnalisés AVANT ce fichier.
 # @ai_warning Les options des input_select sont lues par les modèles ci-dessous :
 #       les renommer demande de changer les comparaisons (`source == '…'`).
 # ============================================================================
@@ -558,35 +560,54 @@ template:
       - name: "Tab5 Météo"
         unique_id: tab5_meteo
         icon: mdi:weather-partly-cloudy
-        # État = condition du moment de l'entité choisie (codes HA standard : sunny,
+        # État = condition du moment de l'entité EFFECTIVE (codes HA standard : sunny,
         # rainy… — ce que lit la tablette). Attributs : ce que lisent les poussées.
-        # L'entité est relue dans CHAQUE modèle (même ligne en tête) : `this`
-        # porterait l'état précédent. Elle vient de sensor.tab5_sources_meteo
-        # (attribut `meteo`), recalculé dès que le choix change.
-        state: >
-          {% set e = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' %}
-          {{ states(e) }}
+        # Entité effective (custom_templates/tab5_meteo.jinja, 08/10/2026) : la source
+        # choisie (attribut `meteo` de sensor.tab5_sources_meteo), ou, tant qu'elle est
+        # indisponible, une autre entité météo disponible (OpenWeatherMap, Météo-France,
+        # puis n'importe laquelle) ; '' s'il n'y en a aucune (les poussées météo sont
+        # alors sautées). Relue dans CHAQUE modèle : `this` porterait l'état précédent.
+        state: >-
+          {%- from 'tab5_meteo.jinja' import tab5_meteo_effective -%}
+          {%- set e = tab5_meteo_effective() -%}
+          {{ states(e if e else (state_attr('sensor.tab5_sources_meteo', 'meteo') or '')) }}
         attributes:
+          # La source choisie (le select « Tab5 · source des prévisions » l'affiche) ;
+          # entite_effective : celle qui sert vraiment (poussées, diagnostic).
           entite: "{{ state_attr('sensor.tab5_sources_meteo', 'meteo') or '' }}"
-          temperature: "{{ state_attr(state_attr('sensor.tab5_sources_meteo', 'meteo') or '', 'temperature') }}"
-          humidite: "{{ state_attr(state_attr('sensor.tab5_sources_meteo', 'meteo') or '', 'humidity') }}"
+          entite_effective: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_effective -%}
+            {{ tab5_meteo_effective() }}
+          nom_effectif: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_effective, tab5_meteo_nom -%}
+            {{ tab5_meteo_nom(tab5_meteo_effective()) }}
+          temperature: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_effective -%}
+            {{ state_attr(tab5_meteo_effective(), 'temperature') }}
+          humidite: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_effective -%}
+            {{ state_attr(tab5_meteo_effective(), 'humidity') }}
           # Ce que l'entité sait fournir (WeatherEntityFeature : 1 jours, 2 heures,
           # 4 demi-journées, vérifié dans le code de HA 2026.9.3). Les poussées ne
           # demandent jamais un type non géré.
-          type_jours: >
-            {% set f = state_attr(state_attr('sensor.tab5_sources_meteo', 'meteo') or '', 'supported_features') | int(0) %}
+          type_jours: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_effective -%}
+            {% set f = state_attr(tab5_meteo_effective(), 'supported_features') | int(0) %}
             {{ 'daily' if f | bitwise_and(1) else 'twice_daily' if f | bitwise_and(4) else 'hourly' if f | bitwise_and(2) else '' }}
-          heures_ok: >
-            {{ (state_attr(state_attr('sensor.tab5_sources_meteo', 'meteo') or '', 'supported_features') | int(0)) | bitwise_and(2) > 0 }}
+          heures_ok: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_effective -%}
+            {{ (state_attr(tab5_meteo_effective(), 'supported_features') | int(0)) | bitwise_and(2) > 0 }}
           # Probabilités : capteurs Météo-France s'ils existent (même ville), sinon ce
-          # que donne l'entité choisie. La neige ne sert qu'à l'icône flocon (≥ 5) :
+          # que donne l'entité effective. La neige ne sert qu'à l'icône flocon (≥ 5) :
           # sans capteur, 100 si la condition du moment est neigeuse.
-          uv: >
-            {% set e = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' %}
+          uv: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_effective -%}
+            {% set e = tab5_meteo_effective() %}
             {% set u = state_attr('sensor.tab5_sources_meteo', 'mf_uv') or '' %}
             {{ states(u) | int(0) if has_value(u) else state_attr(e, 'uv_index') | int(0) }}
           gel: "{{ states(state_attr('sensor.tab5_sources_meteo', 'mf_gel') or '') | int(0) }}"
-          neige: >
-            {% set e = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' %}
+          neige: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_effective -%}
+            {% set e = tab5_meteo_effective() %}
             {% set n = state_attr('sensor.tab5_sources_meteo', 'mf_neige') or '' %}
             {{ states(n) | int(0) if has_value(n) else (100 if states(e) in ['snowy', 'snowy-rainy'] else 0) }}

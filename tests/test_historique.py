@@ -250,7 +250,8 @@ def _maison(valeur="18.46", heures_ok=True, type_jours="daily", meteo=METEO, air
     return [
         EtatHA(CAPTEUR, valeur, aire=aire, appareil="thermo_1", friendly_name="Thermomètre serre Température"),
         EtatHA("sensor.salon_temperature", "21.04", appareil="thermo_2", friendly_name="Salon Température"),
-        EtatHA("sensor.tab5_meteo", "sunny", entite=meteo, heures_ok=heures_ok, type_jours=type_jours),
+        EtatHA("sensor.tab5_meteo", "sunny", entite=meteo, entite_effective=meteo, heures_ok=heures_ok,
+               type_jours=type_jours),
         EtatHA(METEO, "sunny"),
     ]
 
