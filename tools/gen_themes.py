@@ -8,8 +8,13 @@ eux-mêmes (`struct Palette`, Tab5/tab5_tokens.h), les styles partagés
 (Tab5/tab5-styles.yaml) et les polices mesurées (Tab5/themes/_polices.yaml, écrit par
 tools/police_theme.py). Écrit :
 
-  (a) Tab5/tab5_tokens.h — THEMES[] (nom, zones sombres, palette sombre, palette
-      claire) et THEME_COUNT, entre `// >>> themes` et `// <<< themes` ;
+  (a) Tab5/tab5_themes_data.h, en entier — THEMES[] (nom, zones sombres, palette
+      sombre, palette claire), THEME_COUNT et son static_assert ; Tab5/tab5_tokens.h —
+      PALETTE_SOMBRE (palette sombre du premier thème, celle des jeux, que THEMES[0]
+      reprend), entre `// >>> palette sombre` et `// <<< palette sombre`. Le catalogue
+      vit à part depuis le 08/10/2026 (audit du 07/10, DO-3) : tab5_tokens.h est inclus
+      par presque toutes les unités, jeux compris, tab5_themes_data.h par tab5_theme.cpp
+      et tab5_reglages.cpp seulement ;
   (b) Tab5/tab5-themes.yaml — les options du select « Thème », entre `# >>> themes` et
       `# <<< themes`, dans l'ordre des `ordre:` (la tablette garde l'INDEX : un thème
       s'ajoute à la fin) ;
@@ -67,12 +72,13 @@ import yaml
 REPO = Path(__file__).resolve().parent.parent
 THEMES_DIR = REPO / "Tab5" / "themes"
 TOKENS = REPO / "Tab5" / "tab5_tokens.h"
+THEMES_DATA = REPO / "Tab5" / "tab5_themes_data.h"
 STYLES = REPO / "Tab5" / "tab5-styles.yaml"
 FIRMWARE = REPO / "Tab5" / "tab5-themes.yaml"
 THEME_CPP = REPO / "Tab5" / "tab5_theme.cpp"
 POLICES = THEMES_DIR / "_polices.yaml"
 
-MARQUES_CPP = ("// >>> themes", "// <<< themes")
+MARQUES_CPP = ("// >>> palette sombre", "// <<< palette sombre")
 MARQUES_OPTIONS = ("# >>> themes", "# <<< themes")
 MARQUES_STYLES = ("# >>> styles", "# <<< styles")
 MARQUES_POLICES = ("# >>> polices", "# <<< polices")
@@ -345,20 +351,53 @@ def charger(dossier: Path = THEMES_DIR, tokens: Path = TOKENS) -> list[Theme]:
     return themes
 
 
-def rendre_cpp(themes: list[Theme]) -> list[str]:
-    largeur = max(len(r) for r in themes[0].modes["sombre"])
-    lignes = ["inline constexpr Theme THEMES[] = {"]
-    for t in themes:
+def _valeurs_palette(valeurs: dict[str, int], indent: str) -> list[str]:
+    largeur = max(len(r) for r in valeurs)
+    return [f"{indent}.{role:<{largeur}} = 0x{v:06X}," for role, v in valeurs.items()]
+
+
+def rendre_palette_sombre(themes: list[Theme]) -> list[str]:
+    """PALETTE_SOMBRE (tab5_tokens.h) : la palette sombre du premier thème."""
+    return (["inline constexpr Palette PALETTE_SOMBRE = {"]
+            + _valeurs_palette(themes[0].modes["sombre"], "    ") + ["};"])
+
+
+ENTETE_DONNEES = """// GÉNÉRÉ par tools/gen_themes.py depuis Tab5/themes/*.yaml — NE PAS MODIFIER À LA MAIN
+// (`python tools/gen_themes.py --check` échoue en CI si ce fichier est périmé).
+//
+// [AI-CONTEXT] Catalogue des thèmes de l'écran (ADR-0029) : nom, zones sombres, palette
+// sombre et palette claire de chaque thème, dans l'ordre des `ordre:` (la tablette garde
+// l'INDEX du thème choisi). Inclus par tab5_theme.cpp et tab5_reglages.cpp seulement
+// (main.cpp l'inclut aussi, comme chaque en-tête de `includes:`) : retoucher un thème ne
+// recompile plus les unités qui incluent tab5_tokens.h, jeux compris (audit du 07/10/2026,
+// DO-3). La palette sombre du premier thème est PALETTE_SOMBRE (tab5_tokens.h), celle des
+// jeux : THEMES[0] la reprend au lieu d'en recopier les valeurs.
+#pragma once
+#include "tab5_tokens.h"
+"""
+
+
+def rendre_donnees(themes: list[Theme]) -> str:
+    """Tab5/tab5_themes_data.h en entier (texte normalisé en LF)."""
+    lignes = ["", "inline constexpr Theme THEMES[] = {"]
+    for i, t in enumerate(themes):
         drapeaux = ", ".join("true" if z in t.zones else "false" for z in ZONES)
         lignes.append(f'    {{"{t.nom}", {drapeaux},  // Tab5/themes/{t.fichier}.yaml')
         for mode in MODES:
+            if i == 0 and mode == "sombre":
+                lignes.append("     PALETTE_SOMBRE,  // sombre : tab5_tokens.h (palette des jeux)")
+                continue
             lignes.append(f"     {{  // {mode}")
-            for role, valeur in t.modes[mode].items():
-                lignes.append(f"      .{role:<{largeur}} = 0x{valeur:06X},")
+            lignes += _valeurs_palette(t.modes[mode], "      ")
             lignes.append("     }," if mode == "sombre" else "     }},")
-    lignes.append("};")
-    lignes.append("inline constexpr int THEME_COUNT = static_cast<int>(sizeof(THEMES) / sizeof(THEMES[0]));")
-    return lignes
+    lignes += [
+        "};",
+        "inline constexpr int THEME_COUNT = static_cast<int>(sizeof(THEMES) / sizeof(THEMES[0]));",
+        "// Autant de thèmes que d'options du select « Thème » (tab5-themes.yaml) et de rangées",
+        "// de kPolices et de kFormesDebut (tab5_theme.cpp, static_assert), écrites ensemble.",
+        f'static_assert(THEME_COUNT == {len(themes)}, "THEMES[] périmé : lancer python tools/gen_themes.py");',
+    ]
+    return ENTETE_DONNEES + "\n".join(lignes) + "\n"
 
 
 def _styles_yaml(styles: Path = STYLES) -> dict:
@@ -690,6 +729,8 @@ def _remplacer(texte: str, marques: tuple[str, str], contenu: list[str], ou: str
 
 
 def _lire_texte(chemin: Path) -> tuple[str, str]:
+    if not chemin.exists():
+        return "", "\n"
     brut = chemin.read_bytes().decode("utf-8")
     return brut.replace("\r\n", "\n"), ("\r\n" if "\r\n" in brut else "\n")
 
@@ -699,7 +740,8 @@ def cibles(themes: list[Theme]) -> list[tuple[Path, str, str]]:
     formes_cpp, formes_yaml = rendre_formes(themes)
     font_yaml, polices_yaml, polices_cpp = rendre_polices(themes)
     tokens, _ = _lire_texte(TOKENS)
-    attendu_tokens = _remplacer(tokens, MARQUES_CPP, rendre_cpp(themes), "tab5_tokens.h")
+    attendu_tokens = _remplacer(tokens, MARQUES_CPP, rendre_palette_sombre(themes), "tab5_tokens.h")
+    donnees, _ = _lire_texte(THEMES_DATA)
     firmware, _ = _lire_texte(FIRMWARE)
     attendu_fw = _remplacer(firmware, MARQUES_OPTIONS, [f'- "{t.nom}"' for t in themes], "tab5-themes.yaml")
     attendu_fw = _remplacer(attendu_fw, MARQUES_STYLES,
@@ -707,7 +749,8 @@ def cibles(themes: list[Theme]) -> list[tuple[Path, str, str]]:
     attendu_fw = _remplacer(attendu_fw, MARQUES_POLICES, font_yaml, "tab5-themes.yaml")
     cpp, _ = _lire_texte(THEME_CPP)
     attendu_cpp = _remplacer(cpp, MARQUES_FORMES, formes_cpp + polices_cpp, "tab5_theme.cpp")
-    return [(TOKENS, tokens, attendu_tokens), (FIRMWARE, firmware, attendu_fw), (THEME_CPP, cpp, attendu_cpp)]
+    return [(TOKENS, tokens, attendu_tokens), (THEMES_DATA, donnees, rendre_donnees(themes)),
+            (FIRMWARE, firmware, attendu_fw), (THEME_CPP, cpp, attendu_cpp)]
 
 
 def main(argv: list[str]) -> int:

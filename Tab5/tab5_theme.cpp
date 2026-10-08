@@ -25,6 +25,7 @@
  *       tools/gen_themes.py (`--check` échoue en CI si elles sont périmées).
  */
 #include "tab5_internal.h"
+#include "tab5_themes_data.h"  // THEMES[], THEME_COUNT (générés, tools/gen_themes.py)
 #include "esphome/core/application.h"
 #include "lvgl_private.h"  // lv_obj_t::styles / style_cnt (theme_formes : porteurs d'un style)
 

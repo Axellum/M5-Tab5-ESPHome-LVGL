@@ -591,7 +591,8 @@ def palette_colors(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
         text = path.read_text(encoding="utf-8")
         if not game:
             code = strip_cpp_comments(strip_yaml_comments(text) if path.suffix == ".yaml" else text)
-            if path.name != "tab5_tokens.h" and "PALETTE_SOMBRE" in code:
+            # tab5_themes_data.h (généré) : THEMES[0].sombre reprend PALETTE_SOMBRE.
+            if path.name not in ("tab5_tokens.h", "tab5_themes_data.h") and "PALETTE_SOMBRE" in code:
                 problems.append(
                     f"{path.name} : `PALETTE_SOMBRE` hors jeux — l'interface lit la palette active "
                     f"(`UIColor.X`), sinon le thème ne la change pas (ADR-0029)"
