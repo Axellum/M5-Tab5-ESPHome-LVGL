@@ -14,30 +14,50 @@
 #include <string>
 
 // --- Écritures conditionnelles (audit du 26/09/2026, lot 3) ---
-// En LVGL 9.5, lv_label_set_text() libère et réalloue le texte puis invalide le label
-// même à texte identique (lv_label.c), et tout lv_obj_set_style_*() invalide l'objet
+// En LVGL 9.5.0, lv_label_set_text() libère et réalloue le texte puis invalide le label
+// même à texte identique (set_text_internal, lv_label.c), et tout lv_obj_set_style_*()
+// passe par lv_obj_set_local_style_prop(), qui ne compare pas et rafraîchit le style
 // (lv_obj_style.c) : un repaint pour rien à chaque capteur, interval ou push inchangé.
-// Ces deux helpers comparent d'abord (mêmes gardes nulles que les appels remplacés).
+// Ces helpers comparent d'abord (mêmes gardes nulles que les appels remplacés).
 inline void ui_text(lv_obj_t* label, const char* txt) {
     if (label == nullptr || txt == nullptr) return;
     const char* cur = lv_label_get_text(label);
     if (cur != nullptr && strcmp(cur, txt) == 0) return;
     lv_label_set_text(label, txt);
 }
+// Propriété de style locale de la partie principale, état par défaut (le sélecteur
+// LV_PART_MAIN des lv_obj_set_style_*(o, …, LV_PART_MAIN) qu'elles remplacent), écrite
+// seulement si elle change (lot L10, 08/10/2026). ui_style_num : une propriété entière
+// (opacité, largeur de bordure…) ; ui_style_couleur : une couleur.
+inline void ui_style_num(lv_obj_t* obj, lv_style_prop_t prop, int32_t v) {
+    if (obj == nullptr) return;
+    lv_style_value_t cur;
+    if (lv_obj_get_local_style_prop(obj, prop, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND && cur.num == v) return;
+    lv_style_value_t val;
+    val.num = v;
+    lv_obj_set_local_style_prop(obj, prop, val, LV_PART_MAIN);
+}
+inline void ui_style_couleur(lv_obj_t* obj, lv_style_prop_t prop, lv_color_t c) {
+    if (obj == nullptr) return;
+    lv_style_value_t cur;
+    if (lv_obj_get_local_style_prop(obj, prop, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND && lv_color_eq(cur.color, c))
+        return;
+    lv_style_value_t val;
+    val.color = c;
+    lv_obj_set_local_style_prop(obj, prop, val, LV_PART_MAIN);
+}
+inline void ui_style_couleur(lv_obj_t* obj, lv_style_prop_t prop, uint32_t hex) {
+    ui_style_couleur(obj, prop, lv_color_hex(hex));
+}
 // Couleur de texte locale (partie principale, état par défaut, comme les
 // lv_obj_set_style_text_color(o, …, LV_PART_MAIN) qu'il remplace).
-inline void ui_text_color(lv_obj_t* obj, uint32_t hex) {
-    if (obj == nullptr) return;
-    const lv_color_t want = lv_color_hex(hex);
-    lv_style_value_t cur;
-    if (lv_obj_get_local_style_prop(obj, LV_STYLE_TEXT_COLOR, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND &&
-        lv_color_eq(cur.color, want)) {
-        return;
-    }
-    lv_obj_set_style_text_color(obj, want, LV_PART_MAIN);
-}
-// Masquage et position (zones optionnelles, lot 5) : lv_obj_add_flag(HIDDEN) invalide
-// l'objet même déjà masqué, lv_obj_set_x/y réécrivent le style même à valeur égale.
+inline void ui_text_color(lv_obj_t* obj, uint32_t hex) { ui_style_couleur(obj, LV_STYLE_TEXT_COLOR, hex); }
+// Masquage et position (zones optionnelles, lot 5). LVGL 9.5.0 compare déjà lui-même
+// (lv_obj_add_flag / lv_obj_remove_flag : retour immédiat si le drapeau est déjà dans
+// l'état voulu, lv_obj.c ; lv_obj_set_x/y/width/height : retour si le style local a déjà
+// la valeur, lv_obj_pos.c) : ces helpers n'évitent rien de plus, ils gardent la garde
+// nulle et une écriture sur une ligne. Un lv_obj_add_flag(HIDDEN) brut n'est donc pas
+// une écriture « non gardée » (vérifié dans la source de LVGL 9.5.0 le 08/10/2026).
 inline void ui_hidden(lv_obj_t* obj, bool hidden) {
     if (obj == nullptr || lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN) == hidden) return;
     lv_obj_set_flag(obj, LV_OBJ_FLAG_HIDDEN, hidden);
