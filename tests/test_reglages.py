@@ -26,8 +26,8 @@ SCRIPTS = TAB5 / "tab5-reglages.yaml"
 
 BOUTON = re.compile(r"file: reglages_choix_btn\.yaml, vars: \{ id: (\w+), x: \d+, y: \d+, w: \d+, "
                     r"reglage: (\d+), valeur: (-?\d+), label_text: \"([^\"]*)\" \}")
-FLECHE = re.compile(r"file: alarm_step_script_btn\.yaml, .*call: \{ id: tab5_reglages_choisir, "
-                    r"reglage: (\d+), valeur: (-?\d+) \}")
+FLECHE = re.compile(r"file: bouton_pas\.yaml, .*appui: \[ script\.execute: \{ id: tab5_reglages_choisir, "
+                    r"reglage: (\d+), valeur: (-?\d+) \} \]")
 # Champ de ReglagesUI de chaque réglage à boutons (le thème a ses flèches et son nom).
 CHAMPS = {"REGLAGE_EXTINCTION": "extinction", "REGLAGE_OKAY_NABU": "okay_nabu", "REGLAGE_TAPE": "tape",
           "REGLAGE_MODE": "mode", "REGLAGE_NUIT": "nuit", "REGLAGE_LANGUE": "langue"}
