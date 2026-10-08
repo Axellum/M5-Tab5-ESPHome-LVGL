@@ -9,6 +9,19 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Garde-fous de l'audit du 07/10 (lot L6)
+
+- **Six règles de plus** dans `tools/check_tab5_code_rules.py` (jouées par `pytest`), chacune
+  falsifiée sur une copie du firmware : aucun nouvel appel `lv_*` ni `static` modifiable dans une
+  lambda YAML (les existants sont listés, plafonds exacts) ; pas de copie de chaîne dans un
+  `on_value:` ; chaque fonction de `tab5_custom.h` appelée hors de son fichier (10 exceptions
+  listées) ; `nullptr` et tag de journal `tab5.<module>` (corrigés dans trois unités) ; aucun mot
+  courant sans accent dans un texte de l'écran.
+- **Fuzz des sanitizers** : une graine par service déclaré (Énergie et historique d'énergie
+  ajoutés, rangée `hp`/`hd`/`hLI` et tuile − / + `rN`), tenue par `tests/test_sanitizers.py`.
+- **`tab5_maj_planning` obsolète** (décision de l'auteur) : gardé pour compatibilité, retiré dans
+  une future version majeure ; ses variables ne changent pas.
+
 ### 2026-10-07 — Home Assistant : correctifs de l'audit du 07/10, plus de `is_primary_active`
 
 - **Plus de garde-fou `input_boolean.is_primary_active`** (décision de l'auteur) : ce reste de
