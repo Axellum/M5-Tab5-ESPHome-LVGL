@@ -8,11 +8,9 @@ un caractère absent des polices (il s'afficherait en carré vide).
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "tools"))
 
 import gen_i18n  # noqa: E402
 import i18n_keys  # noqa: E402

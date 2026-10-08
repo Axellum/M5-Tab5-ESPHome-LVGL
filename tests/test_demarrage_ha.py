@@ -17,16 +17,10 @@ from types import SimpleNamespace
 import jinja2
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import ChargeurSansBalises as _Chargeur
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PUSH = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_push.yaml")
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
 def _poussee_complete():

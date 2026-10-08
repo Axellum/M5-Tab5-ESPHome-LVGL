@@ -21,6 +21,7 @@ import re
 import jinja2
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import ChargeurSansBalises as _Chargeur
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PAQUETS = os.path.join(REPO, "HomeAssistant_Config", "packages")
@@ -51,13 +52,6 @@ HEURES = [
     {"datetime": "2026-10-03T02:00:00+00:00", "condition": "partlycloudy", "temperature": 15.4, "precipitation": 0.0},
     {"datetime": "2026-10-03T03:00:00+00:00", "condition": "rainy", "temperature": 15.5, "precipitation": 0.2},
 ]
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
 def _paquet(nom):

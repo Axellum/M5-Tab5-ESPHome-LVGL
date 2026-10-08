@@ -26,17 +26,13 @@ import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import BaseChargeur, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
 ADR = os.path.join(REPO, "docs", "decisions", "0023-rooms-generic-tiles.md")
 
 MAINTENANT = dt.datetime(2026, 9, 28, 12, 0, 0, tzinfo=dt.timezone.utc)
-
-
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -48,7 +44,7 @@ class _Entree:
         self.nom = nom
 
 
-class _Chargeur(yaml.SafeLoader):
+class _Chargeur(BaseChargeur):
     pass
 
 

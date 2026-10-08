@@ -16,16 +16,15 @@ puis son résultat collé dans un tableau de bord : aucune compilation ne la rel
   rend aussi dans un vrai HA, avec la tablette virtuelle."""
 import pathlib
 import re
-import sys
 import unicodedata
 
 import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import ChargeurSansBalises as _Chargeur
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "tools" / "installation_ha"))
 
 import verifier_installation as verifier  # noqa: E402  (entites_du_tableau : même lecture que le job « HA neuf »)
 MODELE = REPO / "HomeAssistant_Config" / "custom_templates" / "tab5_dashboard.jinja"
@@ -42,13 +41,6 @@ APPAREIL = "m5stack_tab5_home_assistant_hmi"
 # Langues de l'écran (option du select « Langue ») traduites par la table TRADUCTIONS du modèle.
 LANGUES = {"Deutsch": "de", "Nederlands": "nl", "Español": "es", "Italiano": "it", "Türkçe": "tr"}
 DEFINITION_DE_T = "{%- macro t(francais, anglais) -%}"
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
 def _slug(nom: str) -> str:

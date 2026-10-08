@@ -20,6 +20,7 @@ import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import ChargeurSansBalises as _Chargeur
 
 RACINE = Path(__file__).resolve().parents[1]
 HA = RACINE / "HomeAssistant_Config"
@@ -27,13 +28,6 @@ MACROS = HA / "custom_templates"
 
 T0 = 1_790_000_000  # une heure quelconque (epoch), loin de tout démarrage
 TOUT = {"maj": "toutes", "probleme": True, "indispo": True, "vigilance": "Jaune"}
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda *_: None)
 
 
 def _charger(*chemin: str):

@@ -18,21 +18,10 @@ import os
 import re
 
 import yaml
+from tests.commun import ChargeurEntrees as _Chargeur, bloc_service, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
-
-
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_constructor("!input", lambda chargeur, noeud: {"!input": chargeur.construct_scalar(noeud)})
 
 
 def _blueprint():
@@ -40,8 +29,7 @@ def _blueprint():
 
 
 def _cles_firmware():
-    api = _lire(os.path.join(REPO, "Tab5", "tab5-api-logic.yaml"))
-    bloc = api.split("- service: tab5_maj_emplacements", 1)[1].split("emplacements_appliquer", 1)[0]
+    bloc = bloc_service("tab5_maj_emplacements").split("emplacements_appliquer", 1)[0]
     return re.findall(r'\{"(\w+)", ', bloc)
 
 

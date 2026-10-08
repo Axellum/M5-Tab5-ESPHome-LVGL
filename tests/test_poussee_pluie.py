@@ -20,18 +20,12 @@ import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import ChargeurSansBalises as _Chargeur
 
 RACINE = Path(__file__).resolve().parents[1]
 PUSH = RACINE / "HomeAssistant_Config" / "packages" / "tab5_push.yaml"
 CAPTEUR = "sensor.tab5_pluie_dans_l_heure"
 SERVICE = "esphome.tab5_ha_hmi_tab5_maj_pluie_1h_bulk"
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda *_: None)
 
 
 def _paquet():

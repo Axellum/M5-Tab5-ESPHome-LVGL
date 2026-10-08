@@ -8,22 +8,16 @@ texte (« | » → « / », « ; » → « , »), la cohérence des états avec 
 couverture du contrat par la maison de la démo, et la palette d'icônes."""
 import os
 import re
-import sys
 
 import pytest
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools", "demo"))
 
 import scenarios  # noqa: E402
 from scenarios import (  # noqa: E402
     PIECES, PIECES_MINIMALES, Piece, Tuile, build_etats_tuiles, build_tuiles_payload, echapper,
 )
-
-
-def _lire(*parts):
-    with open(os.path.join(REPO, *parts), encoding="utf-8") as f:
-        return f.read()
 
 
 ADR = _lire("docs", "decisions", "0023-rooms-generic-tiles.md")

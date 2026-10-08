@@ -22,7 +22,6 @@ import yaml
 
 REPO = Path(__file__).resolve().parent.parent
 INTEGRATION = REPO / "custom_components" / "tab5"
-sys.path.insert(0, str(REPO / "tools" / "publication"))
 
 import archive_ha  # noqa: E402
 import archive_hacs  # noqa: E402

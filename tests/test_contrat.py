@@ -25,7 +25,6 @@ nulle part doit figurer dans CHAMPS_NON_LUS, avec sa raison.
 Les noms des événements eux-mêmes (émis ↔ écoutés) : tests/test_actions_ha.py. Les
 comptes et tables de la documentation : tests/test_doc_comptes.py."""
 import re
-import sys
 from pathlib import Path
 
 import yaml
@@ -36,8 +35,6 @@ REPO = Path(__file__).resolve().parent.parent
 HA = REPO / "HomeAssistant_Config"
 API_LOGIC = REPO / "Tab5" / "tab5-api-logic.yaml"
 BOUCHONS = REPO / "Tab5" / "rendu" / "bouchons.yaml"
-sys.path.insert(0, str(REPO / "tools" / "demo"))
-sys.path.insert(0, str(REPO / "tools" / "rendu"))
 
 import demo_pusher  # noqa: E402
 import ecrans  # noqa: E402

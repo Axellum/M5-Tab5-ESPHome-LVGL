@@ -9,15 +9,12 @@ from __future__ import annotations
 
 import posixpath
 import re
-import sys
 from pathlib import Path
 
 import pytest
 import yaml
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "tools" / "site"))
-sys.path.insert(0, str(REPO / "tools" / "publication"))
 
 import construire  # noqa: E402
 import pages  # noqa: E402

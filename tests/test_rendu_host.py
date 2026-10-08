@@ -9,13 +9,9 @@ import os
 import re
 
 import yaml
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _on_boot(texte):
