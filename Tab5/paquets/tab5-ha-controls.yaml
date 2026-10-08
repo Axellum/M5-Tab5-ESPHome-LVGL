@@ -128,6 +128,8 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     on_state:
       - lambda: 'batterie_montee_ui(x);'
+      # Page Batterie des Réglages (tab5-reglages.yaml) : repeinte s'il a déjà été ouvert.
+      - script.execute: tab5_reglages_sync_ui
 
   # Appareils des pièces sur les prévisions (05/10/2026, discussion #278 : un
   # utilisateur préfère des cartes météo seules). Éteint, le mode météo ne montre plus

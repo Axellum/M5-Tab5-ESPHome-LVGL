@@ -268,7 +268,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Image indisponible": "Imagen no disponible"
 
 # --- System console -------------------------------------------------------------
-"CONSOLE SYSTÈME": "CONSOLA DEL SISTEMA"
 "MÉMOIRE": "MEMORIA"
 # « Bloc max » : 123 px avant la valeur (console_sys.yaml, x 22 → 145, roboto_22) ;
 # « Bloque máx. » (121 px) la touchait.
@@ -1312,6 +1311,22 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Langue": "Idioma"
 "Changer de langue ?": "¿Cambiar de idioma?"
 "La tablette redémarre en {langue}.": "La tableta se reinicia en {langue}."
+# Réglages en quatre pages (08/10/2026) : noms des pages, page Batterie
+"Écran": "Pantalla"
+"Apparence": "Aspecto"
+"Système": "Sistema"
+"Limite de charge": "Límite de carga"
+"Économie d'énergie": "Ahorro de energía"
+"Batterie montée": "Batería instalada"
+"Sur batterie": "Con batería"
+"Toujours": "Siempre"
+"État": "Estado"
+"Niveau": "Nivel"
+"Tension": "Tensión"
+"En charge": "Cargando"
+"Pas de batterie détectée": "No se detecta batería"
+"Mesure en cours": "Midiendo"
+"80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée.": "80 %: la carga se detiene al 80 % y se reanuda al 70 %, para una tableta siempre enchufada."
 # Historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026)
 "Alertes": "Alertas"
 "Tout marquer comme lu": "Marcar todo como leído"

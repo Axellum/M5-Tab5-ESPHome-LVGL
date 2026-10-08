@@ -43,6 +43,8 @@ select:
     initial_option: "Sur batterie"
     on_value:
       - script.execute: tab5_economie_appliquer
+      # Page Batterie des Réglages (tab5-reglages.yaml) : repeinte s'il a déjà été ouvert.
+      - script.execute: tab5_reglages_sync_ui
 
 binary_sensor:
   # La tablette tourne-t-elle sur sa batterie ? Décidé à chaque lecture du courant de

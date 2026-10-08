@@ -22,7 +22,7 @@ lvgl:
       on_gesture:
         then:
           # [AI-CONTEXT] Pagination previsions (swipe gauche/droite, y>=333 carte centrale)
-          # deleguee a handle_swipe_gesture(). Console diag : appui long sur btn_control_console (choix « auto »).
+          # deleguee a handle_swipe_gesture(). Console diag (page Système des Réglages) : appui long sur btn_control_console (choix « auto »).
           - lambda: |-
               lv_indev_t * indev = lv_indev_active();
               if (indev) {
@@ -235,10 +235,11 @@ lvgl:
         # Après le tap, la mention « prévisions périmées » suit tout de suite (masquée
         # en mode HA, previsions_fraicheur_tick(), tab5_forecast.cpp).
         - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_ha, x: "855", bouton: BOUTON_MAISON, appui: [ lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);', lambda: 'previsions_fraicheur_tick(id(previsions_perimees), id(lbl_previsions_perimees));' ], icone_id: icon_ha, icone: "\U000F07D0", mini_id: icon_mini_ha, mini: "\U000F0D9B" } }
-        # Engrenage : tap = Réglages de la tablette (tab5-reglages.yaml), appui long =
-        # console système en « auto » (script tab5_console_ouvrir, tab5-scripts.yaml ; avant
-        # le 06/10/2026, le flocon l'ouvrait d'un tap), sans mini icône en « auto ».
-        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_console, x: "995", bouton: BOUTON_ENGRENAGE, appui: [ script.execute: tab5_reglages_ouvrir ], icone_id: icon_engrenage, icone: "\U000F0493", mini_id: icon_mini_sys, mini: "\U000F018D" } }
+        # Engrenage : tap = Réglages de la tablette sur leur page Écran (tab5-reglages.yaml ;
+        # `page: 0` = REGLAGES_PAGE_ECRAN), appui long = leur page Système (l'ancienne console
+        # système) en « auto » (avant le 06/10/2026, le flocon ouvrait la console d'un tap),
+        # sans mini icône en « auto ».
+        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_console, x: "995", bouton: BOUTON_ENGRENAGE, appui: [ script.execute: { id: tab5_reglages_ouvrir, page: 0 } ], icone_id: icon_engrenage, icone: "\U000F0493", mini_id: icon_mini_sys, mini: "\U000F018D" } }
         # Manette : tap = Arcade (comme la seconde température), appui long « auto » =
         # télécommande TV quand une TV est choisie dans le blueprint (zone TV) : la mini
         # icône de l'écran le signale (glyphe de l'en-tête de tv_remote_popup.yaml). Avant le
@@ -544,7 +545,6 @@ lvgl:
         - !include ../ui_components/reglables_liste.yaml
         # Roue d'actions rapides (ADR-0036) : au-dessus des cartes, sous les popups (« Détails »).
         - !include ../ui_components/roue_actions.yaml
-        - !include ../ui_components/console_sys.yaml
         - !include ../ui_components/climate_popup.yaml
         - !include ../ui_components/light_popup.yaml
         - !include ../ui_components/volet_popup.yaml

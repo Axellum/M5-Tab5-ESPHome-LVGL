@@ -241,7 +241,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Image indisponible": "Geen afbeelding"
 
 # --- System console -------------------------------------------------------------
-"CONSOLE SYSTÈME": "SYSTEEMCONSOLE"
 "MÉMOIRE": "GEHEUGEN"
 "Bloc max": "Max. blok"
 "RÉSEAU": "NETWERK"
@@ -1228,6 +1227,22 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Langue": "Taal"
 "Changer de langue ?": "Taal wijzigen?"
 "La tablette redémarre en {langue}.": "De tablet herstart in het {langue}."
+# Réglages en quatre pages (08/10/2026) : noms des pages, page Batterie
+"Écran": "Scherm"
+"Apparence": "Weergave"
+"Système": "Systeem"
+"Limite de charge": "Laadlimiet"
+"Économie d'énergie": "Energiebesparing"
+"Batterie montée": "Batterij geplaatst"
+"Sur batterie": "Op batterij"
+"Toujours": "Altijd"
+"État": "Status"
+"Niveau": "Niveau"
+"Tension": "Spanning"
+"En charge": "Laden"
+"Pas de batterie détectée": "Geen batterij gevonden"
+"Mesure en cours": "Bezig met meten"
+"80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée.": "80 %: laden stopt bij 80 % en hervat bij 70 %, voor een tablet die altijd aan de lader hangt."
 # Historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026)
 "Alertes": "Meldingen"
 "Tout marquer comme lu": "Alles als gelezen markeren"

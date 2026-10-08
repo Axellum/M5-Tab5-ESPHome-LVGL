@@ -1,0 +1,25 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Nom d'une page du popup « Réglages » (reglages_popup.yaml, 08/10/2026),
+# réutilisé 4 fois (Écran, Apparence, Batterie, Système) : un tap montre sa page
+# (reglages_afficher_page, tab5_reglages.cpp), qui met le nom de la page affichée en
+# couleur d'accent comme l'option active d'une rangée (premier enfant = le texte).
+# Options d'en-tête : frères de la barre de titre (modal_header.yaml), alignés sur sa
+# ligne (y=4, hauteur 44) ; le popup les pose après l'include de la barre.
+# vars : id, x, page (ReglagesPage de tab5_custom.h, en nombre NON quoté),
+#        label_text (traduit au démarrage).
+# ═══════════════════════════════════════════════════════
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: ${x}
+  y: 4
+  width: 200
+  height: 44
+  radius: 14
+  pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) reglages_afficher_page(${page});'
+  widgets:
+    - label: { text: "${label_text}", align: CENTER, width: 190, text_align: CENTER, long_mode: DOT }

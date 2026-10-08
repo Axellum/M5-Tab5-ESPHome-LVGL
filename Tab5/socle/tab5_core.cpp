@@ -250,6 +250,38 @@ void batterie_texte_console(char* buf, size_t n, bool montee, PresenceBatterie p
     }
 }
 
+// ─── Réglages en quatre pages (08/10/2026) ───
+
+int reglages_page_voisine(int page, int nb, bool gauche) {
+    if (nb <= 0) return 0;
+    if (page < 0 || page >= nb) return 0;
+    return gauche ? (page + 1) % nb : (page + nb - 1) % nb;
+}
+
+const char* batterie_etat_texte(PresenceBatterie presence, bool en_charge, bool sur_batterie) {
+    switch (presence) {
+        case PresenceBatterie::INCONNUE: return tr("Mesure en cours");
+        case PresenceBatterie::ABSENTE: return tr("Pas de batterie détectée");
+        default: break;
+    }
+    if (sur_batterie) return tr("Sur batterie");
+    if (en_charge) return tr("En charge");
+    return tr("Sur USB");
+}
+
+void batterie_valeur_texte(char* buf, size_t n, PresenceBatterie presence, float valeur, MesureBatterie mesure) {
+    if (buf == nullptr || n == 0) return;
+    if (presence != PresenceBatterie::PRESENTE || !std::isfinite(valeur)) {
+        snprintf(buf, n, "--");
+        return;
+    }
+    switch (mesure) {
+        case MesureBatterie::NIVEAU: snprintf(buf, n, "%.0f %%", valeur); break;
+        case MesureBatterie::TENSION: snprintf(buf, n, "%.2f V", valeur); break;
+        default: snprintf(buf, n, "%.1f W", valeur); break;
+    }
+}
+
 int cpu_charge_pct(uint32_t inactif_avant, uint32_t inactif_apres, uint32_t duree_us) {
     if (duree_us == 0) return -1;
     const uint32_t inactif = inactif_apres - inactif_avant;  // non signé : rebouclage compris

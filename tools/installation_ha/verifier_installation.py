@@ -268,12 +268,13 @@ ATTENTE_APRES_CREATION = 20.0
 
 # Demandes de la tablette par événements (ADR-0025) : l'automatisation qui les traduit
 # en actions (packages/tab5_evenements.yaml), le select qui ouvre une fenêtre depuis HA
-# (tab5-ha-controls.yaml), et le bouton « MAJ Écran » de la console système, touché par
-# le doigt virtuel : carte GESTION, juste au-dessus de « Redémarrer HA » (801, 588) de
-# tools/rendu/ecrans.py (console_sys.yaml : y 46 et 146, hauteur 86).
+# (tab5-ha-controls.yaml), et le bouton « MAJ Écran » de la console système (page Système
+# des Réglages depuis le 08/10/2026, ouverte par l'option « Console système »), touché par
+# le doigt virtuel : carte GESTION à (652, 395) à l'écran, bouton de 266 × 107 à (22, 46)
+# dans la carte, juste au-dessus de « Redémarrer HA » de tools/rendu/ecrans.py.
 ID_EVENEMENTS = "tab5_evenements"
 SELECT_ECRAN = f"select.{PREFIXE_ENTITES}_aller_a_l_ecran"
-MAJ_ECRAN = (801, 488)
+MAJ_ECRAN = (807, 494)
 EVT_MOIS = "esphome.tab5_calendrier_mois"
 EVT_MAJ_ECRAN = "esphome.tab5_maj_ecran"
 EVT_REDEMARRAGE = "esphome.tab5_redemarrage_ha_confirme"

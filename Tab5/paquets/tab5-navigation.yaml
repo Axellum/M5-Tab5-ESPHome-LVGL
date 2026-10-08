@@ -40,8 +40,11 @@ script:
   # ne touche l'écran, c'est exactement la situation qu'il traite. Seuls
   # tab5_alarm_stop / _snooze_now / la durée maximale le referment. La fenêtre
   # de RÉGLAGES du réveil (alarm_popup), elle, est une modale ordinaire.
-  # Les SUBWINDOW (détail d'un jour du calendrier, confirmations de la console)
-  # n'ont pas de fondu propre : masquage sec, avec la carte qui les porte.
+  # Les SUBWINDOW (détail d'un jour du calendrier, confirmations de la page Système
+  # des Réglages) n'ont pas de fondu propre : masquage sec, avec la carte qui les porte.
+  # « Console système » n'est plus une fenêtre depuis le 08/10/2026 : c'est la page
+  # Système des Réglages (tab5_ecran_ouvrir ci-dessous la traduit, et
+  # tools/check_tab5_registry.py l'accepte comme alias de « Réglages »).
   # Ouverture (4e argument, 08/10/2026) : ce que tab5_ecran_ouvrir lance pour ouvrir cet
   # écran, quand c'est plus qu'animate_popup_open() de la fenêtre (le défaut) — son
   # script d'ouverture, qui pose ses widgets, demande ses données à HA ou recalcule son
@@ -73,15 +76,13 @@ script:
                              [] { clim_afficher_blueprint(); animate_popup_open(id(clim_options_popup)); });
           ModalRegistry::add(id(pots_detail_popup),      "Plantes",          ModalRegistry::POPUP);
           ModalRegistry::add(id(tv_remote_popup),        "Télécommande TV",  ModalRegistry::POPUP);
-          // Layer plein cadre, ligne d'état et état de HA tout de suite (tab5-scripts.yaml).
-          ModalRegistry::add(id(layer_console_sys),      "Console système",  ModalRegistry::POPUP,
-                             [] { id(tab5_console_ouvrir).execute(); });
           // Énergie (ADR-0028) : pose les widgets à la première ouverture, demande ses données.
           ModalRegistry::add(id(energie_popup),          "Énergie",          ModalRegistry::POPUP,
                              [] { id(tab5_energie_ouvrir).execute(); });
-          // Réglages : pose les widgets et peint avant d'ouvrir.
+          // Réglages : pose les widgets et peint avant d'ouvrir, sur la page Écran
+          // (« Console système » : la page Système, tab5_ecran_ouvrir).
           ModalRegistry::add(id(reglages_popup),         "Réglages",         ModalRegistry::POPUP,
-                             [] { id(tab5_reglages_ouvrir).execute(); });
+                             [] { id(tab5_reglages_ouvrir).execute(REGLAGES_PAGE_ECRAN); });
           ModalRegistry::add(id(historique_popup),       "Température",      ModalRegistry::POPUP);
           // Alertes : pose les widgets et demande l'historique à HA.
           ModalRegistry::add(id(alertes_popup),          "Alertes",          ModalRegistry::POPUP,
@@ -171,13 +172,18 @@ script:
           // être identiques — tools/check_tab5_registry.py le vérifie. Un écart
           // serait sinon un no-op muet sur les cas clim, plantes, TV : on
           // le journalise à WARN, le projet tourne à INFO.
+          // « Console système » est la page Système des Réglages depuis le 08/10/2026 :
+          // sa fenêtre est celle des Réglages (alias de check_tab5_registry.py).
           id(tab5_modal_registry_init).execute();
-          lv_obj_t* target = e != Ecran::ARCADE ? ModalRegistry::find(nom) : nullptr;
+          lv_obj_t* target = e == Ecran::ARCADE ? nullptr
+                           : ModalRegistry::find(e == Ecran::CONSOLE ? "Réglages" : nom);
           if (e != Ecran::ACCUEIL && e != Ecran::ARCADE && target == nullptr) {
             ESP_LOGW("TAB5", "Aller a l'ecran : option '%s' sans fenetre enregistree", nom);
           }
           if (target != nullptr && !lv_obj_has_flag(target, LV_OBJ_FLAG_HIDDEN)) {
-            // Re-demander l'écran déjà affiché sert à prolonger son affichage.
+            // Re-demander l'écran déjà affiché sert à prolonger son affichage. Réglages
+            // ouvert et « Console système » demandée : sa page Système, sans le refermer.
+            if (e == Ecran::CONSOLE) reglages_afficher_page(REGLAGES_PAGE_SYSTEME);
             ui_mark_activity();
             return;
           }
@@ -193,8 +199,12 @@ script:
           // Ouverture : celle que le registre donne à la fenêtre (son script), sinon
           // animate_popup_open(). L'Arcade est une autre page LVGL, pas une fenêtre.
           // « Accueil » n'a pas de fenêtre : tout est déjà fermé.
+          // « Console système » : les Réglages ouverts sur leur page Système (ligne d'état
+          // et état de HA tout de suite, tab5_reglages_page).
           if (e == Ecran::ARCADE) {
             id(tab5_arcade_open).execute();
+          } else if (e == Ecran::CONSOLE) {
+            id(tab5_reglages_ouvrir).execute(REGLAGES_PAGE_SYSTEME);
           } else if (target != nullptr && !ModalRegistry::ouvrir(target)) {
             animate_popup_open(target);
           }

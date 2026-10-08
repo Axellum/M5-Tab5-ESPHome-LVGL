@@ -2,29 +2,43 @@
 # [AI-CONTEXT]
 # @file reglages_popup.yaml
 # @role Popup « Réglages » de la tablette (06/10/2026, demande d'Axel) : ce qu'on veut
-#       changer sur l'écran sans passer par Home Assistant. Ouvert par un tap sur le
-#       bouton central du haut (engrenage, btn_control_console ; son appui long ouvre la
-#       console système) ou par « Aller à l'écran → Réglages ».
-#       Carte gauche « ÉCRAN » : luminosité (curseur), extinction auto (6 choix),
-#       rallumer l'écran à « Okay Nabu », rallumer l'écran d'une tape (Oui / Non).
-#       Carte droite « APPARENCE » : thème (précédent / suivant), clair ou sombre (3),
-#       nuit du mode Auto (Oui / Non), langue (une pastille par langue).
+#       changer sur l'écran sans passer par Home Assistant. Quatre pages depuis le
+#       08/10/2026, changées au doigt (glisser à gauche ou à droite, en boucle) ou par
+#       leur nom en haut, à côté du titre (celle affichée en couleur d'accent) :
+#         - « Écran » : luminosité (curseur), extinction auto (6 choix), rallumer l'écran
+#           à « Okay Nabu », rallumer l'écran d'une tape (Oui / Non) ;
+#         - « Apparence » : thème (précédent / suivant), clair ou sombre (3), nuit du
+#           mode Auto (Oui / Non), langue (une pastille par langue) ;
+#         - « Batterie » : limite de charge, économie d'énergie, batterie montée ; à
+#           droite, état, niveau, tension et consommation lus (rafraîchis seulement page
+#           affichée : reglages_batterie_peindre, tab5-sensors-diagnostics.yaml) ;
+#         - « Système » : l'ancienne console système (console_sys.yaml).
+#       Ouvert par un tap sur le bouton central du haut (engrenage, btn_control_console :
+#       page Écran), son appui long (page Système) ou par « Aller à l'écran → Réglages /
+#       Console système ».
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
-#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Réglages » et sa
-#       confirmation dans tab5_modal_registry_init). Ce fichier ne LIT aucun état : les
+#       corps à y = ${modal_body_y} ; les noms des pages sont des options d'en-tête,
+#       reglages_onglet.yaml), registre unique (ADR-0013 : « Réglages » et ses
+#       confirmations dans tab5_modal_registry_init). Ce fichier ne LIT aucun état : les
 #       gestes écrivent les entités (tab5_reglages_choisir, reglages_choix_btn.yaml), et
 #       reglages_peindre() (tab5_reglages.cpp) repeint depuis elles. Positions ABSOLUES :
-#       l'option active ne change que la bordure et la couleur du texte.
+#       l'option active ne change que la bordure et la couleur du texte. Changement de
+#       page instantané (conteneurs masqués / montrés, reglages_afficher_page) ; le
+#       geste s'arrête au popup ([AI-WARNING] de tab5_reglages.cpp).
 #       Changer de langue redémarre la tablette : une pastille ouvre la confirmation
 #       (reglages_confirmation, par-dessus la carte APPARENCE), jamais le redémarrage direct.
-# @geometry Corps x 24..1226, y 72..670 : deux cartes de 589 × 598 (x 24 et 637), 20 px du
-#       bas. Dans une carte : titre à y 14, rangées à partir de y 60 (titre de rangée
+# @geometry Une page = un conteneur sans fond à y ${modal_body_y}, 598 px de haut (20 px
+#       du bas). Écran et Apparence : une carte de 1202 × 598 à x 24, boutons de 17 à
+#       1185 (1168 px utiles). Batterie (et Système) : deux cartes de 589 de large (x 24
+#       et 637). Dans une carte : titre à y 14, rangées à partir de y 60 (titre de rangée
 #       reglages_rangee.yaml : icône 32 px + libellé sur 40 px ; commande 40 px plus bas,
-#       56 px de haut). ÉCRAN : 4 rangées au pas de 141 (dernière
-#       commande 523..579). APPARENCE : 3 rangées au pas de 119, puis les langues sur deux
-#       lignes (457..513, 523..579). Boutons de 17 à 572 (555 px utiles).
+#       56 px de haut). ÉCRAN et BATTERIE : rangées au pas de 141 (dernière commande
+#       523..579 sur ÉCRAN). APPARENCE : 3 rangées au pas de 119, puis les langues sur
+#       deux lignes (457..513, 523..579). ÉTAT : 4 rangées au pas de 141, valeur à la
+#       hauteur des boutons de la carte voisine. Noms des pages : 200 × 44 à x 318, 528,
+#       738 et 948 (titre jusqu'à x ~290 en allemand, croix à x 1160).
 # @ai_instruction Une icône de plus = son glyphe dans mdi_font_32 (tab5-styles.yaml). Un
-#       réglage de plus : voir l'en-tête de tab5_reglages.cpp.
+#       réglage ou une page de plus : voir l'en-tête de tab5_reglages.cpp.
 # ═══════════════════════════════════════════════════════════════════════════
 obj:
   id: reglages_popup
@@ -35,7 +49,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "reglages_confirmation_fermer(); animate_popup_close(id(reglages_popup));" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "reglages_fermer();" } }
 
     - obj:
         align: CENTER
@@ -47,156 +61,262 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0493", icon_style: "style_text_accent", title: "Réglages", title_id: "reglages_titre", close_btn_id: "btn_reglages_close", close_lambda: "reglages_confirmation_fermer(); animate_popup_close(id(reglages_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0493", icon_style: "style_text_accent", title: "Réglages", title_id: "reglages_titre", close_btn_id: "btn_reglages_close", close_lambda: "reglages_fermer();" } }
+
+          # Noms des pages (options d'en-tête, reglages_onglet.yaml) : `page` = ReglagesPage.
+          - !include { file: reglages_onglet.yaml, vars: { id: reglages_onglet_ecran, x: 318, page: 0, label_text: "Écran" } }
+          - !include { file: reglages_onglet.yaml, vars: { id: reglages_onglet_apparence, x: 528, page: 1, label_text: "Apparence" } }
+          - !include { file: reglages_onglet.yaml, vars: { id: reglages_onglet_batterie, x: 738, page: 2, label_text: "Batterie" } }
+          - !include { file: reglages_onglet.yaml, vars: { id: reglages_onglet_systeme, x: 948, page: 3, label_text: "Système" } }
 
           # ═══════════════════════════════════════════════════════════════════
-          # ÉCRAN (gauche)
-          # ═══════════════════════════════════════════════════════════════════
-          - obj:
-              align: TOP_LEFT
-              x: 24
-              y: ${modal_body_y}
-              width: 589
-              height: 598
-              styles: style_glass_card
-              scrollable: false
-              widgets:
-                - label: { text: "ÉCRAN", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
-
-                # Luminosité du rétroéclairage (lumière « Display Backlight »). 10 % au
-                # moins : à 0, la lumière s'éteindrait (et LVGL avec elle).
-                - !include { file: reglages_rangee.yaml, vars: { y: 60, icon: "\U000F00DF", label_text: "Luminosité" } }
-                - label: { id: reglages_lum_valeur, text: "100 %", align: TOP_RIGHT, x: -22, y: 58, text_font: roboto_32_b }
-                - slider:
-                    id: reglages_lum_slider
-                    align: TOP_LEFT
-                    x: 30
-                    y: 118
-                    width: 529
-                    height: 20
-                    min_value: 10
-                    max_value: 100
-                    value: 100
-                    # Mêmes styles que le curseur du volume (console_sys.yaml) : couleurs du thème.
-                    styles: style_bg_arc_track
-                    radius: 10
-                    indicator:
-                      styles: style_bg_accent
-                      radius: 10
-                    knob:
-                      styles: style_bg_soft
-                    # Le nombre suit le doigt ; le rétroéclairage part une fois le doigt
-                    # immobile (tab5_reglages_luminosite, 150 ms) : un light.turn_on par
-                    # pas aurait publié chaque pas vers HA (API et recorder).
-                    on_value:
-                      - lambda: 'reglages_luminosite_ui((int) x);'
-                      - script.execute:
-                          id: tab5_reglages_luminosite
-                          pourcent: !lambda 'return (int) x;'
-
-                # Extinction auto : options du select « Tab5 Extinction auto de l'écran »,
-                # dans son ordre (tab5-ha-controls.yaml).
-                - !include { file: reglages_rangee.yaml, vars: { y: 201, icon: "\U000F0D90", label_text: "Extinction auto" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_0, x: 17, y: 241, w: 85, reglage: 0, valeur: 0, label_text: "Jamais" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_1, x: 111, y: 241, w: 85, reglage: 0, valeur: 1, label_text: "1 min" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_2, x: 205, y: 241, w: 85, reglage: 0, valeur: 2, label_text: "2 min" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_3, x: 299, y: 241, w: 85, reglage: 0, valeur: 3, label_text: "5 min" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_4, x: 393, y: 241, w: 85, reglage: 0, valeur: 4, label_text: "10 min" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_5, x: 487, y: 241, w: 85, reglage: 0, valeur: 5, label_text: "30 min" } }
-
-                # « Okay Nabu » rallume l'écran (« Tab5 Rallumer l'écran à Okay Nabu »).
-                - !include { file: reglages_rangee.yaml, vars: { y: 342, icon: "\U000F05CB", label_text: "Rallumer l'écran à « Okay Nabu »" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_okay_nabu_oui, x: 17, y: 382, w: 272, reglage: 1, valeur: 1, label_text: "Oui" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_okay_nabu_non, x: 300, y: 382, w: 272, reglage: 1, valeur: 0, label_text: "Non" } }
-
-                # Une tape sur la tablette rallume l'écran (« Tab5 Tap-to-Wake », tab5-imu.yaml).
-                - !include { file: reglages_rangee.yaml, vars: { y: 483, icon: "\U000F0741", label_text: "Rallumer l'écran d'une tape" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_tape_oui, x: 17, y: 523, w: 272, reglage: 2, valeur: 1, label_text: "Oui" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_tape_non, x: 300, y: 523, w: 272, reglage: 2, valeur: 0, label_text: "Non" } }
-
-          # ═══════════════════════════════════════════════════════════════════
-          # APPARENCE (droite)
+          # PAGE ÉCRAN
           # ═══════════════════════════════════════════════════════════════════
           - obj:
+              id: reglages_page_ecran
               align: TOP_LEFT
-              x: 637
+              x: 0
               y: ${modal_body_y}
-              width: 589
+              width: 100%
               height: 598
-              styles: style_glass_card
               scrollable: false
+              styles: style_invisible
               widgets:
-                - label: { text: "APPARENCE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
-
-                # Thème : précédent / suivant, en boucle (select « Thème »). Le nom est un
-                # nom propre, écrit par reglages_peindre() comme dans HA.
-                - !include { file: reglages_rangee.yaml, vars: { y: 60, icon: "\U000F03D8", label_text: "Thème" } }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_prec", x: "17", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0141", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: -1 } ] } }
-                - label: { id: reglages_theme_nom, text: "--", align: TOP_LEFT, x: 97, y: 109, width: 395, text_align: CENTER, long_mode: DOT, text_font: roboto_32_b }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_suiv", x: "500", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: 1 } ] } }
-
-                # Clair ou sombre : options du select « Clair ou sombre », dans son ordre.
-                - !include { file: reglages_rangee.yaml, vars: { y: 179, icon: "\U000F050E", label_text: "Clair ou sombre" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_0, x: 17, y: 219, w: 178, reglage: 4, valeur: 0, label_text: "Sombre" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_1, x: 205, y: 219, w: 178, reglage: 4, valeur: 1, label_text: "Clair" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_2, x: 394, y: 219, w: 178, reglage: 4, valeur: 2, label_text: "Auto" } }
-
-                # Nuit du mode Auto (« Nuit (thème auto) ») : HA la règle d'après le soleil
-                # (packages/tab5_push.yaml), au coucher, au lever et à chaque connexion de la
-                # tablette ; la changer ici vaut jusque-là. Sans effet hors du mode Auto.
-                - !include { file: reglages_rangee.yaml, vars: { y: 298, icon: "\U000F0594", label_text: "Nuit (mode Auto)" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_oui, x: 17, y: 338, w: 272, reglage: 5, valeur: 1, label_text: "Oui" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_non, x: 300, y: 338, w: 272, reglage: 5, valeur: 0, label_text: "Non" } }
-
-                # Langue : une pastille par langue de Tab5/lang/, dans l'ordre du select
-                # « Langue » (noms natifs écrits par reglages_preparer()).
-                - !include { file: reglages_rangee.yaml, vars: { y: 417, icon: "\U000F05CA", label_text: "Langue" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_0, x: 17, y: 457, w: 131, reglage: 6, valeur: 0, label_text: "" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_1, x: 158, y: 457, w: 131, reglage: 6, valeur: 1, label_text: "" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_2, x: 299, y: 457, w: 131, reglage: 6, valeur: 2, label_text: "" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_3, x: 440, y: 457, w: 131, reglage: 6, valeur: 3, label_text: "" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_4, x: 17, y: 523, w: 131, reglage: 6, valeur: 4, label_text: "" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_5, x: 158, y: 523, w: 131, reglage: 6, valeur: 5, label_text: "" } }
-                - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_6, x: 299, y: 523, w: 131, reglage: 6, valeur: 6, label_text: "" } }
-
-                # ── Confirmation : changer de langue redémarre la tablette ──
                 - obj:
-                    id: reglages_confirmation
                     align: TOP_LEFT
-                    x: 0
+                    x: 24
+                    y: 0
+                    width: 1202
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - label: { text: "ÉCRAN", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+
+                      # Luminosité du rétroéclairage (lumière « Display Backlight »). 10 % au
+                      # moins : à 0, la lumière s'éteindrait (et LVGL avec elle).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 1168, icon: "\U000F00DF", label_text: "Luminosité" } }
+                      - label: { id: reglages_lum_valeur, text: "100 %", align: TOP_RIGHT, x: -22, y: 58, text_font: roboto_32_b }
+                      - slider:
+                          id: reglages_lum_slider
+                          align: TOP_LEFT
+                          x: 30
+                          y: 118
+                          width: 1142
+                          height: 20
+                          min_value: 10
+                          max_value: 100
+                          value: 100
+                          # Mêmes styles que le curseur du volume (console_sys.yaml) : couleurs du thème.
+                          styles: style_bg_arc_track
+                          radius: 10
+                          indicator:
+                            styles: style_bg_accent
+                            radius: 10
+                          knob:
+                            styles: style_bg_soft
+                          # Le nombre suit le doigt ; le rétroéclairage part une fois le doigt
+                          # immobile (tab5_reglages_luminosite, 150 ms) : un light.turn_on par
+                          # pas aurait publié chaque pas vers HA (API et recorder). Le glisser
+                          # de côté n'y change pas de page (geste_rappel, tab5_reglages.cpp).
+                          on_value:
+                            - lambda: 'reglages_luminosite_ui((int) x);'
+                            - script.execute:
+                                id: tab5_reglages_luminosite
+                                pourcent: !lambda 'return (int) x;'
+
+                      # Extinction auto : options du select « Tab5 Extinction auto de l'écran »,
+                      # dans son ordre (tab5-ha-controls.yaml).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 201, w: 1168, icon: "\U000F0D90", label_text: "Extinction auto" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_0, x: 17, y: 241, w: 188, reglage: 0, valeur: 0, label_text: "Jamais" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_1, x: 213, y: 241, w: 188, reglage: 0, valeur: 1, label_text: "1 min" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_2, x: 409, y: 241, w: 188, reglage: 0, valeur: 2, label_text: "2 min" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_3, x: 605, y: 241, w: 188, reglage: 0, valeur: 3, label_text: "5 min" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_4, x: 801, y: 241, w: 188, reglage: 0, valeur: 4, label_text: "10 min" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_5, x: 997, y: 241, w: 188, reglage: 0, valeur: 5, label_text: "30 min" } }
+
+                      # « Okay Nabu » rallume l'écran (« Tab5 Rallumer l'écran à Okay Nabu »).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 342, w: 1168, icon: "\U000F05CB", label_text: "Rallumer l'écran à « Okay Nabu »" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_okay_nabu_oui, x: 17, y: 382, w: 579, reglage: 1, valeur: 1, label_text: "Oui" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_okay_nabu_non, x: 606, y: 382, w: 579, reglage: 1, valeur: 0, label_text: "Non" } }
+
+                      # Une tape sur la tablette rallume l'écran (« Tab5 Tap-to-Wake », tab5-imu.yaml).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 483, w: 1168, icon: "\U000F0741", label_text: "Rallumer l'écran d'une tape" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_tape_oui, x: 17, y: 523, w: 579, reglage: 2, valeur: 1, label_text: "Oui" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_tape_non, x: 606, y: 523, w: 579, reglage: 2, valeur: 0, label_text: "Non" } }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE APPARENCE
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: reglages_page_apparence
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              hidden: true
+              scrollable: false
+              styles: style_invisible
+              widgets:
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 0
+                    width: 1202
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - label: { text: "APPARENCE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+
+                      # Thème : précédent / suivant, en boucle (select « Thème »). Le nom est un
+                      # nom propre, écrit par reglages_peindre() comme dans HA.
+                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 1168, icon: "\U000F03D8", label_text: "Thème" } }
+                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_prec", x: "17", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0141", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: -1 } ] } }
+                      - label: { id: reglages_theme_nom, text: "--", align: TOP_LEFT, x: 97, y: 109, width: 1008, text_align: CENTER, long_mode: DOT, text_font: roboto_32_b }
+                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_suiv", x: "1113", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: 1 } ] } }
+
+                      # Clair ou sombre : options du select « Clair ou sombre », dans son ordre.
+                      - !include { file: reglages_rangee.yaml, vars: { y: 179, w: 1168, icon: "\U000F050E", label_text: "Clair ou sombre" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_0, x: 17, y: 219, w: 384, reglage: 4, valeur: 0, label_text: "Sombre" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_1, x: 409, y: 219, w: 384, reglage: 4, valeur: 1, label_text: "Clair" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_2, x: 801, y: 219, w: 384, reglage: 4, valeur: 2, label_text: "Auto" } }
+
+                      # Nuit du mode Auto (« Nuit (thème auto) ») : HA la règle d'après le soleil
+                      # (packages/tab5_push.yaml), au coucher, au lever et à chaque connexion de la
+                      # tablette ; la changer ici vaut jusque-là. Sans effet hors du mode Auto.
+                      - !include { file: reglages_rangee.yaml, vars: { y: 298, w: 1168, icon: "\U000F0594", label_text: "Nuit (mode Auto)" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_oui, x: 17, y: 338, w: 579, reglage: 5, valeur: 1, label_text: "Oui" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_non, x: 606, y: 338, w: 579, reglage: 5, valeur: 0, label_text: "Non" } }
+
+                      # Langue : une pastille par langue de Tab5/lang/, dans l'ordre du select
+                      # « Langue » (noms natifs écrits par reglages_preparer()).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 417, w: 1168, icon: "\U000F05CA", label_text: "Langue" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_0, x: 17, y: 457, w: 286, reglage: 6, valeur: 0, label_text: "" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_1, x: 311, y: 457, w: 286, reglage: 6, valeur: 1, label_text: "" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_2, x: 605, y: 457, w: 286, reglage: 6, valeur: 2, label_text: "" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_3, x: 899, y: 457, w: 286, reglage: 6, valeur: 3, label_text: "" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_4, x: 17, y: 523, w: 286, reglage: 6, valeur: 4, label_text: "" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_5, x: 311, y: 523, w: 286, reglage: 6, valeur: 5, label_text: "" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_6, x: 605, y: 523, w: 286, reglage: 6, valeur: 6, label_text: "" } }
+
+                      # ── Confirmation : changer de langue redémarre la tablette ──
+                      - obj:
+                          id: reglages_confirmation
+                          align: TOP_LEFT
+                          x: 0
+                          y: 0
+                          width: 1202
+                          height: 598
+                          hidden: true
+                          scrollable: false
+                          styles: [style_bg_console_bg, style_border_accent]
+                          bg_opa: 100%
+                          radius: 20
+                          border_width: 2
+                          border_opa: 60%
+                          widgets:
+                            - label: { text: "Changer de langue ?", align: CENTER, y: -90, text_font: roboto_32_b }
+                            - label: { id: reglages_confirmation_texte, text: "", align: CENTER, y: -40, width: 1100, text_align: CENTER, long_mode: WRAP, styles: style_text_dim }
+                            - button:
+                                align: CENTER
+                                x: -130
+                                y: 60
+                                width: 230
+                                height: 80
+                                styles: style_clim_btn
+                                on_short_click:
+                                  - lambda: 'reglages_confirmation_fermer();'
+                                widgets:
+                                  - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
+                            - button:
+                                align: CENTER
+                                x: 130
+                                y: 60
+                                width: 230
+                                height: 80
+                                styles: [style_clim_btn, style_border_accent]
+                                border_opa: 60%
+                                on_short_click:
+                                  - script.execute: tab5_reglages_langue_confirmer
+                                widgets:
+                                  - label: { text: "Confirmer", align: CENTER, text_font: roboto_32_b, styles: style_text_accent }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE BATTERIE
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: reglages_page_batterie
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              hidden: true
+              scrollable: false
+              styles: style_invisible
+              widgets:
+                # ── Réglages de la batterie (gauche) ──
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
                     y: 0
                     width: 589
                     height: 598
-                    hidden: true
+                    styles: style_glass_card
                     scrollable: false
-                    styles: [style_bg_console_bg, style_border_accent]
-                    bg_opa: 100%
-                    radius: 20
-                    border_width: 2
-                    border_opa: 60%
                     widgets:
-                      - label: { text: "Changer de langue ?", align: CENTER, y: -90, text_font: roboto_32_b }
-                      - label: { id: reglages_confirmation_texte, text: "", align: CENTER, y: -40, width: 540, text_align: CENTER, long_mode: WRAP, styles: style_text_dim }
-                      - button:
-                          align: CENTER
-                          x: -130
-                          y: 60
-                          width: 230
-                          height: 80
-                          styles: style_clim_btn
-                          on_short_click:
-                            - lambda: 'reglages_confirmation_fermer();'
-                          widgets:
-                            - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
-                      - button:
-                          align: CENTER
-                          x: 130
-                          y: 60
-                          width: 230
-                          height: 80
-                          styles: [style_clim_btn, style_border_accent]
-                          border_opa: 60%
-                          on_short_click:
-                            - script.execute: tab5_reglages_langue_confirmer
-                          widgets:
-                            - label: { text: "Confirmer", align: CENTER, text_font: roboto_32_b, styles: style_text_accent }
+                      - label: { text: "BATTERIE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+
+                      # Limite de charge : options du select « Tab5 Limite de charge »
+                      # (tab5-sensors-diagnostics.yaml), dans son ordre (LimiteCharge, tab5_batterie.h).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 555, icon: "\U000F0084", label_text: "Limite de charge" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_limite_0, x: 17, y: 100, w: 272, reglage: 7, valeur: 0, label_text: "100 %" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_limite_1, x: 300, y: 100, w: 272, reglage: 7, valeur: 1, label_text: "80 %" } }
+
+                      # Économie d'énergie : options du select « Tab5 Économie d'énergie »
+                      # (tab5-economie.yaml), dans son ordre (ChoixEconomie, tab5_economie.h).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 201, w: 555, icon: "\U000F032A", label_text: "Économie d'énergie" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_economie_0, x: 17, y: 241, w: 178, reglage: 8, valeur: 0, label_text: "Jamais" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_economie_1, x: 205, y: 241, w: 178, reglage: 8, valeur: 1, label_text: "Sur batterie" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_economie_2, x: 394, y: 241, w: 178, reglage: 8, valeur: 2, label_text: "Toujours" } }
+
+                      # Batterie montée (« Tab5 Batterie montée », tab5-ha-controls.yaml) : Oui
+                      # montre l'icône de la batterie dans le bandeau d'état (une prise quand la
+                      # tension dit qu'il n'y en a pas).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 342, w: 555, icon: "\U000F0079", label_text: "Batterie montée" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_montee_oui, x: 17, y: 382, w: 272, reglage: 9, valeur: 1, label_text: "Oui" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_montee_non, x: 300, y: 382, w: 272, reglage: 9, valeur: 0, label_text: "Non" } }
+
+                      # Ce que fait « 80 % » (tab5_batterie.h : arrêt à 80 %, reprise à 70 %).
+                      - label: { text: "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée.", align: TOP_LEFT, x: 22, y: 470, width: 545, long_mode: WRAP, styles: style_text_dim }
+
+                # ── État lu (droite) : écrit par reglages_batterie_peindre() ──
+                - obj:
+                    align: TOP_LEFT
+                    x: 637
+                    y: 0
+                    width: 589
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - label: { text: "ÉTAT", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+
+                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 555, icon: "\U000F06A5", label_text: "État" } }
+                      - label: { id: reglages_batt_etat, text: "--", align: TOP_LEFT, x: 57, y: 109, width: 515, long_mode: DOT, text_font: roboto_32_b, styles: style_text_console_value }
+
+                      - !include { file: reglages_rangee.yaml, vars: { y: 201, w: 555, icon: "\U000F12A2", label_text: "Niveau" } }
+                      - label: { id: reglages_batt_niveau, text: "--", align: TOP_LEFT, x: 57, y: 250, text_font: roboto_32_b, styles: style_text_console_value }
+
+                      - !include { file: reglages_rangee.yaml, vars: { y: 342, w: 555, icon: "\U000F0241", label_text: "Tension" } }
+                      - label: { id: reglages_batt_tension, text: "--", align: TOP_LEFT, x: 57, y: 391, text_font: roboto_32_b, styles: style_text_console_value }
+
+                      - !include { file: reglages_rangee.yaml, vars: { y: 483, w: 555, icon: "\U000F029A", label_text: "Consommation" } }
+                      - label: { id: reglages_batt_conso, text: "--", align: TOP_LEFT, x: 57, y: 532, text_font: roboto_32_b, styles: style_text_console_value }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE SYSTÈME (l'ancienne console système)
+          # ═══════════════════════════════════════════════════════════════════
+          - !include console_sys.yaml

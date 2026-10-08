@@ -14,8 +14,8 @@
 #pragma once
 #include "esphome.h"
 
-// Garde #T222 : ne touche LVGL que si l'overlay console est affiche.
-bool is_console_layer_visible(lv_obj_t* layer_console);
+// Garde #T222 : la console (page « Système » des Réglages depuis le 08/10/2026) ne touche
+// LVGL que si elle est affichée : reglages_page_visible(REGLAGES_PAGE_SYSTEME).
 
 // Ligne 1 console (uptime / RSSI / temp CPU) — capteurs 60s, refresh a l'ouverture.
 void update_console_uptime_label(lv_obj_t* label, float uptime_s);

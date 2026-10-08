@@ -258,7 +258,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Image indisponible": "Nessuna immagine"
 
 # --- System console -------------------------------------------------------------
-"CONSOLE SYSTÈME": "CONSOLE SISTEMA"
 "MÉMOIRE": "MEMORIA"
 "Bloc max": "Blocco max"
 "RÉSEAU": "RETE"
@@ -1282,6 +1281,22 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Langue": "Lingua"
 "Changer de langue ?": "Cambiare lingua?"
 "La tablette redémarre en {langue}.": "Il tablet si riavvia in {langue}."
+# Réglages en quatre pages (08/10/2026) : noms des pages, page Batterie
+"Écran": "Schermo"
+"Apparence": "Aspetto"
+"Système": "Sistema"
+"Limite de charge": "Limite di carica"
+"Économie d'énergie": "Risparmio energetico"
+"Batterie montée": "Batteria montata"
+"Sur batterie": "A batteria"
+"Toujours": "Sempre"
+"État": "Stato"
+"Niveau": "Livello"
+"Tension": "Tensione"
+"En charge": "In carica"
+"Pas de batterie détectée": "Nessuna batteria rilevata"
+"Mesure en cours": "Misura in corso"
+"80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée.": "80 %: la carica si ferma all'80 % e riprende al 70 %, per un tablet sempre collegato."
 # Historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026)
 "Alertes": "Avvisi"
 "Tout marquer comme lu": "Segna tutto come letto"

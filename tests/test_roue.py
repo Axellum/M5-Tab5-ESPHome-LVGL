@@ -398,9 +398,12 @@ def test_sous_fenetre_et_fermetures():
     eteint = hardware.split("on_turn_off:", 1)[1].split("lvgl.pause", 1)[0]
     assert "roue_actions_fermer();" in eteint
     assert "roue_rejouer_theme();" in _fonction(_lire("Tab5", "ecran", "tab5_theme.cpp"), "theme_rejouer_ui")
-    # Console système (sans animate_popup_open) et retour automatique à la page météo.
-    console = scripts.split("- id: tab5_console_ouvrir", 1)[1].split("- id:", 1)[0]
-    assert "roue_actions_fermer();" in console
+    # Console système : page Système des Réglages depuis le 08/10/2026, ouverte par
+    # animate_popup_open (qui ferme la roue, vérifié plus haut) ; retour automatique à la
+    # page météo (plus bas).
+    assert "tab5_console_ouvrir" not in scripts
+    reglages = _lire("Tab5", "paquets", "tab5-reglages.yaml").split("- id: tab5_reglages_ouvrir", 1)[1].split("\n  - id:", 1)[0]
+    assert "animate_popup_open(id(reglages_popup));" in reglages
     # retour_auto_tick() (tab5_anim.cpp) ferme la roue avant de rendre PREVISIONS, que
     # l'interval de tab5-scripts.yaml traduit en reset_forecast_to_main_page().
     retour = _fonction(_lire("Tab5", "ecran", "tab5_anim.cpp"), "retour_auto_tick")
