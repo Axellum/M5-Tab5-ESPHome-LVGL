@@ -153,12 +153,13 @@ def test_gestes_d_une_ligne_ceux_de_la_tuile():
 
 def test_plus_reserve_aux_tuiles_a_appui_long():
     gestes = _fonction(_tuiles(), "tuile_gestes")
-    # type_agit écarte l'option r (aucun appui) et les cap / bin sans action.
-    assert "agit = type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t));" in gestes
+    # gestes() (table kGestes, lot L7) écarte l'option r (aucun appui) et les cap / bin sans action.
+    assert "agit = gestes(d, type == Type::CLI && clim_tuile_connue(r, t)).agit;" in gestes
     assert "appui_long = agit && type != Type::CAP && type != Type::BIN;" in gestes
-    agit = _fonction(_tuiles(), "type_agit")
-    assert "if (options & OPT_R) return false;" in agit
-    assert "case Type::LUM: case Type::INT: case Type::VOL: case Type::MED: case Type::ACT: return true;" in agit
+    assert "if (d.type >= kNbTypes || (d.options & OPT_R)) return g;" in _fonction(_tuiles(), "gestes")
+    table = re.search(r"constexpr GesteType kGestes\[\] = \{(.*?)\n\};", _tuiles(), re.S).group(1)
+    agissent = re.findall(r"\{true, [^}]*\},\s*// (\w+)", table)
+    assert agissent == ["lum", "int", "vol", "med", "act"], agissent
     # La ligne n'est pressable que si son toucher fait quelque chose.
     assert "cliquable(ligne, agit);" in _fonction(_maison(), "dessiner_ligne")
     # Gestes lus une fois par ligne : disposer() les passe au dessin.

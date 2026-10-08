@@ -506,8 +506,11 @@ def test_ouverture_et_fermeture_du_popup():
     # d'un appareil à la sienne, 06/10/2026).
     appui = tuiles.split("static void tuile_appui_piece(int r, int t, bool long_appui) {", 1)[1].split("\n}\n", 1)[0]
     assert "type == Type::CLI && clim_tuile_connue(r, t)" in appui
-    assert "if (d.options & OPT_M) clim_afficher_blueprint();" in appui
-    assert "else if (!clim_afficher_tuile(r, t)) return;" in appui
+    # La fenêtre CLIM (table des gestes, lot L7) : la clim du blueprint avec l'option m.
+    fenetre = tuiles.split("static bool ouvrir_fenetre(Fenetre f, const Def& d, int r, int t) {", 1)[1].split("\n}\n", 1)[0]
+    assert "if (c.r < 0) clim_afficher_blueprint();" in fenetre
+    assert "else if (!clim_afficher_tuile(c.r, c.t)) return false;" in fenetre
+    assert "if (d.options & OPT_M) return c;" in tuiles.split("ClimCible clim_cible(const Def& d, int r, int t) {", 1)[1]
     # Une tuile redéfinie oublie sa clim ; ses réglages reçus repeignent la tuile (bouton).
     assert "clim_tuile_oublier(r, t);" in tuiles.split("bool tuiles_definir(", 1)[1].split("\n}\n", 1)[0]
     cartes = _lire("Tab5", "tab5_cards.cpp")

@@ -283,7 +283,7 @@ def test_commandes_envoyees_du_contrat():
     t = _tuiles()
     choisir = _fonction(t, "roue_tuile_choisir")
     envoyees = set(re.findall(r'envoyer_tuile\(rt\.r, rt\.t, "(\w+)"\)', choisir))
-    envoyees |= set(re.findall(r'u\.envoyer\(\w+, "(\w+)"', choisir))
+    envoyees |= set(re.findall(r'u\.envoyer\([\w.()]+, "(\w+)"', choisir))
     envoyees |= set(re.findall(r'choix\("(\w+)",', _fonction(t, "roue_choix")))
     bascules = _fonction(_lire("Tab5", "tab5_cards.cpp"), "clim_roue_bascules")
     envoyees |= set(re.findall(r"\{'\w', on, \"(\w+)\",", bascules))
@@ -296,9 +296,11 @@ def test_commandes_envoyees_du_contrat():
     for c in ("mode", "eteindre", "consigne", "preset", "ventilation", "oscillation"):
         assert f"commande: {c}" in popup, c
     # Clim du blueprint (option m) : l'emplacement « clim », comme clim_affichee_cle().
-    assert 'const char* cle_clim = (d.options & OPT_M) ? "clim" : cle.s;' in choisir
-    assert 'u.envoyer(clim ? cle_clim : cle.s, env[j].commande, env[j].valeur);' in _fonction(
+    assert 'u.envoyer(clim.emplacement(), "eteindre", "");' in choisir
+    assert 'u.envoyer(est_clim ? clim.emplacement() : cle.s, env[j].commande, env[j].valeur);' in _fonction(
         t, "roue_tuile_choisir_choix")
+    assert "if (d.options & OPT_M) return c;" in _fonction(t, "clim_cible")
+    assert 'const char* emplacement() const { return r < 0 ? "clim" : cle.s; }' in t
     # Liens : le popup de la tuile ; le popup Maison par la routine unique des écrans.
     reglages = choisir.split("case RoueAction::REGLAGES:", 1)[1].split("return;", 1)[0]
     assert "tuile_ouvrir_popup(rt.r, rt.t);" in reglages
@@ -330,11 +332,14 @@ def test_bascules_et_consignes_comme_le_popup():
 
 def test_appui_long_ouvre_la_roue_puis_le_popup():
     appui = _fonction(_tuiles(), "tuile_appui_piece")
-    assert "if (!roue_de_la_tuile(r, t)) popup_lumiere_ouvrir(r, t);" in appui
-    assert "if (!roue_de_la_tuile(r, t)) popup_volet_ouvrir(r, t);" in appui
-    assert "if (long_appui && roue_de_la_tuile(r, t)) return;" in appui
+    # La roue d'abord, sinon la fenêtre du type (table kGestes, lot L7) : lum, vol, cli.
+    table = re.search(r"constexpr GesteType kGestes\[\] = \{(.*?)\n\};", _tuiles(), re.S).group(1)
+    assert re.findall(r"\{\w+, [^,]+, true, Fenetre::(\w+)\},\s*// (\w+)", table) == [
+        ("LUMIERE", "lum"), ("VOLET", "vol"), ("CLIM", "cli")]
+    long_ = appui.split("if (long_appui) {", 1)[1].split("\n    }\n", 1)[0]
+    assert long_.index("if (g.roue && roue_de_la_tuile(r, t)) return;") < long_.index("ouvrir_fenetre(g.fenetre, d, r, t);")
     # Le toucher court ne passe jamais par la roue.
-    assert appui.count("roue_de_la_tuile(") == 3
+    assert appui.count("roue_de_la_tuile(") == 1
     # Depuis le popup Maison : sans le lien « Maison ».
     assert "if (long_appui && tuile_roue_ouvrir(r, t, ancre, true)) return;" in _fonction(
         _tuiles(), "tuile_appui_maison")

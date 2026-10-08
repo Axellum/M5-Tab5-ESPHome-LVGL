@@ -50,6 +50,13 @@ def _constexpr(nom):
     return m.group(1).strip()
 
 
+def _gestes_par_type():
+    """Lignes de kGestes (lot L7) : {type: (agit, commande, roue, fenêtre)}, dans l'ordre de kTypes."""
+    lignes = re.findall(r'\{(true|false), (nullptr|"\w+"), (true|false), Fenetre::(\w+)\},\s*// (\w+)',
+                        _constexpr("kGestes"))
+    return {t: (a == "true", c.strip('"') if c != "nullptr" else None, r == "true", f) for a, c, r, f, t in lignes}
+
+
 def _types_de_l_adr():
     """Types du tableau « Type | HA domains | Tap | Long press » : {type: (tap, long)}."""
     texte = _lire(ADR).split("| Type | HA domains |", 1)[1].split("\n\n", 1)[0]
@@ -142,16 +149,25 @@ def test_commandes_par_type_egales_au_tableau_de_l_adr():
     adr = _commandes_de_l_adr()
     types = _types_de_l_adr()
     appui = _fonction(cpp, "tuile_appui_piece")
+    gestes = _fonction(cpp, "gestes")
+    table = _gestes_par_type()
+    # Une ligne par type de kTypes, dans le même ordre (lot L7 : une seule table).
+    assert list(table) == ["vide"] + re.findall(r'"(\w+)"', _constexpr("kTypes")), list(table)
     # Toute commande de tuile émise est dans le tableau « What the tablet sends ».
-    emises = set(re.findall(r'action = [^;]*?"(\w+)"', appui)) | set(re.findall(r'\? "(\w+)" : "(\w+)"', appui)[0])
+    emises = {c for _, c, _, _ in table.values() if c} | set(re.findall(r'\? "(\w+)" :', gestes))
     emises |= set(re.findall(r'return "(\w+)"', _fonction(cpp, "vol_appui")))
     emises |= set(re.findall(r'"(ouvrir|fermer|arreter)"', _fonction(cpp, "vol_appui_long")))
     assert emises and emises <= adr, emises - adr
     # lum / int / med : basculer, allumer avec l'option o ; act : lancer.
     for t in ("lum", "int", "med"):
-        assert "`basculer`" in types[t][0]
-    assert '(d.options & OPT_O) ? "allumer" : "basculer"' in appui
-    assert "`lancer`" in types["act"][0] and 'action = "lancer";' in appui
+        assert "`basculer`" in types[t][0] and table[t][1] == "basculer", t
+    assert '(d.options & OPT_O)) ? "allumer" : l.commande;' in gestes
+    assert "`lancer`" in types["act"][0] and table["act"][1] == "lancer"
+    # La commande de la table part ; sans commande, la fenêtre (clim, capteur) ; un volet :
+    # son sens.
+    assert ("const char* action = type == Type::VOL ? (long_appui ? vol_appui_long(e) : vol_appui(e)) : "
+            "g.commande;") in appui
+    assert appui.index("if (action == nullptr) {") < appui.index("envoyer_tuile(r, t, action);")
     # vol : en mouvement arrêter (pause), sinon le sens choisi par le titre (au départ,
     # ouvert → fermer) ; long : l'autre (mise à jour du 28/09, retour de la 3.1).
     assert all(f"`{c}`" in types["vol"][0] for c in ("arreter", "fermer", "ouvrir"))
@@ -165,10 +181,12 @@ def test_commandes_par_type_egales_au_tableau_de_l_adr():
     assert "u.jour_titre[t], u.heure_titre[t], u.carte_nom[t]" in titres and "LV_EVENT_SHORT_CLICKED" in titres
     # cap / bin : lecture seule (aucun bouton) ; cli : popup avec m, ou sur sa propre clim
     # quand la tablette en a les réglages (ADR-0027) ; med : télécommande avec t.
-    agit = _fonction(cpp, "type_agit")
-    assert "case Type::CLI: return (options & OPT_M) != 0 || clim_connue;" in agit
-    assert "default: return false;" in agit and "OPT_R" in agit
-    assert "if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);" in appui
+    assert "(type == Type::CLI && ((d.options & OPT_M) || clim_connue))" in gestes
+    assert "(type == Type::CAP && (d.options & OPT_E))" in gestes
+    assert not table["cap"][0] and not table["bin"][0] and not table["cli"][0] and not table["vide"][0]
+    assert "if (d.type >= kNbTypes || (d.options & OPT_R)) return g;" in gestes
+    assert "if (type == Type::MED && (d.options & OPT_T)) g.fenetre = Fenetre::TELECOMMANDE;" in gestes
+    assert "case Fenetre::TELECOMMANDE:\n            ouvrir_popup(g_tuiles_ui.popup_tv);" in _fonction(cpp, "ouvrir_fenetre")
     # Option k : un second appui dans les 3 s.
     assert "kConfirmationMs = 3000" in cpp and "OPT_K" in appui
 
@@ -384,13 +402,20 @@ def test_mode_ha_seule_source_et_swipe_par_piece():
 def test_appui_long_d_un_volet_ouvre_son_popup_sauf_avec_k():
     """L'appui long d'une tuile vol ouvre le popup du volet ; avec l'option k, l'ancien
     appui long (l'autre sens, confirmé) : le popup ne contourne jamais la confirmation.
-    L'option r n'arrive pas jusque-là (type_agit), le mode héritage non plus."""
-    appui = _fonction(_cpp(), "tuile_appui_piece")
-    vol = appui.split("case Type::VOL:", 1)[1].split("case Type::MED:", 1)[0]
-    assert "if (long_appui && !(d.options & OPT_K)) {" in vol and "popup_volet_ouvrir(r, t);" in vol
-    assert vol.index("popup_volet_ouvrir(r, t);") < vol.index("action = long_appui ? vol_appui_long(e) : vol_appui(e);")
-    assert appui.index("appui_heritage(t, long_appui);") < appui.index("case Type::VOL:")
-    assert appui.index("if (!type_agit(") < appui.index("case Type::VOL:")
+    L'option r n'arrive pas jusque-là (gestes), le mode héritage non plus."""
+    cpp = _cpp()
+    appui = _fonction(cpp, "tuile_appui_piece")
+    gestes = _fonction(cpp, "gestes")
+    assert _gestes_par_type()["vol"] == (True, None, True, "VOLET")
+    # Option k : ni roue ni popup ; l'appui long garde l'autre sens, confirmé.
+    assert "const bool confirme = (d.options & OPT_K) && type != Type::CLI;" in gestes
+    assert "g.roue = l.roue && !confirme;" in gestes
+    assert "if (type == Type::VOL && confirme) g.fenetre = Fenetre::AUCUNE;" in gestes
+    assert (appui.index("if (g.roue && roue_de_la_tuile(r, t)) return;")
+            < appui.index("ouvrir_fenetre(g.fenetre, d, r, t);") < appui.index("vol_appui_long(e)"))
+    assert "case Fenetre::VOLET:\n            popup_volet_ouvrir(r, t);" in _fonction(cpp, "ouvrir_fenetre")
+    assert appui.index("appui_heritage(t, long_appui);") < appui.index("gestes(d,")
+    assert appui.index("if (!g.agit) return;") < appui.index("if (long_appui) {")
     long_adr = _types_de_l_adr()["vol"][1]
     assert "shutter popup" in long_adr and "with `k`" in long_adr
 
@@ -529,20 +554,19 @@ def _cas(appui, type_, suivant):
 def test_appui_long_d_un_appareil_ouvre_son_popup():
     """L'appui long d'une tuile int, act, ou med sans l'option t (avec t : la télécommande)
     ouvre le popup de l'appareil ; l'appui court ne change pas. Lecture seule (option r) :
-    type_agit coupe avant, comme le mode météo sans appareils."""
-    appui = _fonction(_cpp(), "tuile_appui_piece")
-    for type_, suivant in (("INT", "VOL"), ("ACT", "CLI")):
-        bloc = _cas(appui, type_, suivant)
-        assert "if (long_appui) {\n                popup_appareil_ouvrir(r, t);\n                return;" in bloc, type_
-        assert bloc.index("popup_appareil_ouvrir(r, t);") < bloc.index("action = "), type_
-    med = _cas(appui, "MED", "ACT")
-    assert "if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);\n                else popup_appareil_ouvrir(r, t);" in med
+    gestes coupe avant, comme le mode météo sans appareils."""
+    cpp = _cpp()
+    appui = _fonction(cpp, "tuile_appui_piece")
+    table = _gestes_par_type()
+    for t in ("int", "act", "med"):
+        assert table[t][2:] == (False, "APPAREIL"), t
+    assert "case Fenetre::APPAREIL:\n            popup_appareil_ouvrir(r, t);" in _fonction(cpp, "ouvrir_fenetre")
+    # med avec l'option t : la télécommande à la place.
+    assert "if (type == Type::MED && (d.options & OPT_T)) g.fenetre = Fenetre::TELECOMMANDE;" in _fonction(cpp, "gestes")
     # Les appuis courts d'aujourd'hui : basculer (allumer avec o), lancer.
-    assert 'action = (d.options & OPT_O) ? "allumer" : "basculer";' in _cas(appui, "INT", "VOL")
-    assert 'action = "lancer";' in _cas(appui, "ACT", "CLI")
-    assert appui.index("if (!type_agit(") < appui.index("case Type::INT:")
-    assert "case Type::INT: case Type::ACT: return true;" in _fonction(_cpp(), "a_popup_appareil")
-    assert "return (options & OPT_T) == 0;" in _fonction(_cpp(), "a_popup_appareil")
+    assert (table["int"][1], table["med"][1], table["act"][1]) == ("basculer", "basculer", "lancer")
+    assert appui.index("if (!g.agit) return;") < appui.index("if (long_appui) {")
+    assert "return gestes(s_m.tuiles[r][t], false).fenetre == Fenetre::APPAREIL;" in _fonction(cpp, "popup_appareil_valide")
     # Le tableau de l'ADR le dit aussi.
     types = _types_de_l_adr()
     for t in ("int", "act", "med"):
@@ -562,7 +586,8 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
     assert "popup_appareil_appui();" in _lire("Tab5", "ui_components", "appareil_popup.yaml")
     # Ni lecture seule, ni mode héritage, ni type sans popup (définitions changées popup ouvert).
     valide = _fonction(cpp, "popup_appareil_valide")
-    assert "heritage()" in valide and "!(d.options & OPT_R)" in valide and "a_popup_appareil(" in valide
+    assert "heritage()" in valide and "gestes(s_m.tuiles[r][t], false).fenetre == Fenetre::APPAREIL" in valide
+    assert "(d.options & OPT_R)) return g;" in _fonction(cpp, "gestes")
     # Popup refermé quand sa tuile ne l'a plus, repeint sinon (et au changement de thème).
     definir = _fonction(cpp, "tuiles_definir")
     assert "else animate_popup_close(g_tuiles_ui.app_popup);" in definir
