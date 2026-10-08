@@ -1,0 +1,51 @@
+# Style C++ du firmware (Tab5/**/*.cpp, *.h) — clang-format 23 (roue PyPI clang-format==23.1.3).
+#
+# Ce fichier DÉCRIT le style déjà en place ; il ne sert pas à reformater le dépôt.
+# Ne jamais lancer `clang-format -i` sur un fichier entier : seules les lignes qu'on
+# modifie sont contrôlées, par le hook `clang-format-lignes-modifiees` de
+# .pre-commit-config.yaml (`git-clang-format --diff --staged`).
+#
+# Relevé le 08/10/2026 sur les 111 fichiers C++ écrits à la main (44 032 lignes) : les
+# options ont été choisies une à une pour que clang-format réécrive le moins de lignes
+# possible. Il en reste 4 119 : 732 dans Tab5/jeux/trivia_questions.h (table de
+# questions écrite serrée, hors du hook) et 3 387 (7,7 %) qui sont de vraies
+# différences entre fichiers, pas un réglage manqué :
+# - les jeux (Tab5/jeux/) alignent souvent les `=` et les déclarations consécutives,
+#   l'écran presque jamais : aligner partout réécrirait plus de lignes encore ;
+# - Tab5/socle/alarm_clock.cpp est indenté de 2 espaces, tout le reste de 4.
+# Une ligne modifiée dans un bloc aligné est donc signalée : la désaligner, ou passer
+# le hook pour ce commit (SKIP=clang-format-lignes-modifiees git commit …).
+#
+# Ce qui ressort du relevé (comptes sur les 114 fichiers C++ suivis, 55 478 lignes) :
+# 4 espaces, aucune tabulation ; accolade sur la ligne de la fonction (1 386 contre 14) ;
+# `T* p` (2 150 contre 24) ; `if (x) return;` court sur une ligne (1 855) ; `case`
+# indentés (437) ; lignes de longueur libre (90 % sous 88 colonnes, 475 au-delà de 120),
+# d'où ColumnLimit 0 : clang-format garde les retours à la ligne de l'auteur.
+BasedOnStyle: Google
+IndentWidth: 4
+AccessModifierOffset: -4
+ColumnLimit: 0
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# Formes courtes gardées sur une ligne : `if (x) a; else b;`, `{ return x; }`, `case 1: …`.
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortFunctionsOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: true
+
+# Commentaires de fin de ligne laissés où l'auteur les a mis (alignés ou non).
+AlignTrailingComments:
+  Kind: Leave
+ReflowComments: false
+
+# Ordre des #include significatif (tab5_custom.h, esphome.h…) : ne pas trier.
+SortIncludes: Never
+IncludeBlocks: Preserve
+
+FixNamespaceComments: false
+MaxEmptyLinesToKeep: 3
+KeepEmptyLines:
+  AtStartOfBlock: true
+SpaceAfterCStyleCast: true

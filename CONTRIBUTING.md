@@ -31,10 +31,14 @@ Thanks for looking at this project. It is a personal firmware repo, but issues a
 4. Install the pre-commit hooks once (`pre-commit install`, `pre-commit` comes with
    `requirements-dev.txt`): yamllint, BOM check, secrets check and HA-placeholder check
    run before each commit. `pre-commit run --all-files` checks the whole tree — the CI
-   runs the same hooks.
+   runs the same hooks. A last hook checks the C++ style ([`.clang-format`](.clang-format))
+   on the **staged lines only** (`git-clang-format --diff --staged`): existing code is not
+   reformatted, never run `clang-format -i` on a whole file. [`.editorconfig`](.editorconfig)
+   gives your editor the same indentation and encoding.
 5. If you changed a `!include`d file: `esphome clean` before the next `run`.
 6. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) checklist.
-7. Add a line to [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes.
+7. Add a line to [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes (older versions
+   are archived in [`docs/changelog/`](docs/changelog/)).
 8. Never commit a key (`*.pem`, `*.key`), `Tab5/user_entities.yaml`, or production HA files.
 
 ### Branching
@@ -75,10 +79,15 @@ Merci de vous intéresser à ce projet. C'est un firmware personnel, mais issues
 4. Installer les hooks pre-commit une fois (`pre-commit install`, `pre-commit` vient avec
    `requirements-dev.txt`) : yamllint, détection de BOM, vérificateur de secrets et de
    placeholders HA tournent avant chaque commit. `pre-commit run --all-files` vérifie tout
-   le dépôt — la CI rejoue les mêmes hooks.
+   le dépôt — la CI rejoue les mêmes hooks. Un dernier hook contrôle le style C++
+   ([`.clang-format`](.clang-format)) sur les **seules lignes indexées**
+   (`git-clang-format --diff --staged`) : le code existant n'est pas reformaté, ne jamais
+   lancer `clang-format -i` sur un fichier entier. [`.editorconfig`](.editorconfig) donne à
+   l'éditeur la même indentation et le même encodage.
 5. Si vous modifiez un fichier `!include` : `esphome clean` avant le prochain `run`.
 6. Utiliser la checklist du [modèle de PR](.github/PULL_REQUEST_TEMPLATE.md).
-7. Ajouter une entrée dans [`CHANGELOG.md`](CHANGELOG.md) pour les changements visibles.
+7. Ajouter une entrée dans [`CHANGELOG.md`](CHANGELOG.md) pour les changements visibles
+   (les versions plus anciennes sont archivées dans [`docs/changelog/`](docs/changelog/)).
 8. Ne jamais committer une clé (`*.pem`, `*.key`), `Tab5/user_entities.yaml`, ni les fichiers HA de prod.
 
 ### Branches
