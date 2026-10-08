@@ -97,6 +97,13 @@ jobs:
         env:
           ESPHOME_VERSION: ${{ steps.version.outputs.esphome }}
         run: bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
+      # Plateforme `native` et outils de PlatformIO, par version d'ESPHome : sur la PR #391,
+      # leur téléchargement a pris 3,5 min (délais du registre de PlatformIO) pour ~1 min de
+      # compilation.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.platformio
+          key: pio-host-${{ steps.version.outputs.esphome }}
       - name: Compiler le rendu (plateforme host)
         # Le fuseau d'une horloge `host` est celui de la compilation (le runner est en UTC).
         env:

@@ -83,6 +83,12 @@ jobs:
           g++ -O1 $SAN_CC tools/sanitizers/temoin.cpp $SAN_LD -o "$RUNNER_TEMP/temoin"
           "$RUNNER_TEMP/temoin" > "$RUNNER_TEMP/temoin.log" 2>&1
           python tools/sanitizers/rapports.py --temoin "$RUNNER_TEMP/temoin.log"
+      # Plateforme `native` et outils de PlatformIO (même clé que la tâche « compiler » de
+      # rendu-host.yml) : leur téléchargement prend parfois plusieurs minutes.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.platformio
+          key: pio-host-${{ steps.version.outputs.esphome }}
       - name: Compiler la tablette virtuelle avec ASan + UBSan
         env:
           TZ: Europe/Paris
