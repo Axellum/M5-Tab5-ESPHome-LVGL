@@ -7,7 +7,7 @@
  *       Avant, chaque fichier recopiait ses valeurs en littéral (1280, 1250, 690…).
  * @architecture_constraint En-tête seul, sans dépendance (ni ESPHome ni LVGL). Le C++ ne
  *       lit pas les substitutions ESPHome : ces valeurs sont aussi écrites dans
- *       Tab5/tab5-ui-tokens.yaml et les popups YAML ; tests/test_geometrie_partagee.py
+ *       Tab5/paquets/tab5-ui-tokens.yaml et les popups YAML ; tests/test_geometrie_partagee.py
  *       tient les deux côtés égaux et vérifie qu'aucun fichier ne les redéfinit.
  * @ai_instruction Inclus seulement par les .cpp qui s'en servent (pas par
  *       tab5_internal.h) ; listé dans les `includes:` des deux configurations pour être

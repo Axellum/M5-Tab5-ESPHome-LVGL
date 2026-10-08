@@ -23,6 +23,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tab5_sources  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 
@@ -75,7 +78,7 @@ def c_decode(lit: str) -> str:
 
 
 def fichiers_source(inclure_jeux: bool = False) -> list[Path]:
-    fs = sorted(TAB5.glob("*.cpp")) + sorted(TAB5.glob("*.h")) + sorted(TAB5.glob("*.yaml"))
+    fs = tab5_sources.fichiers("*.cpp", "*.h", "*.yaml", tab5=TAB5)
     fs += sorted((TAB5 / "ui_components").glob("*.yaml")) + [REPO / "tab5-ha-hmi.yaml"]
     if not inclure_jeux:
         fs = [f for f in fs if not any(j in f.name for j in JEUX_NON_TRADUITS)]

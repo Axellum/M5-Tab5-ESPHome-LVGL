@@ -142,7 +142,7 @@ script:
           ui.f_small = id(roboto_22);
           ui.f_mid   = id(roboto_32_b);
           ui.f_big   = id(roboto_45_b);
-          // Figurines d'échecs : police dédiée (Tab5/ChessPieces.ttf, 12 glyphes).
+          // Figurines d'échecs : police dédiée (Tab5/fonts/ChessPieces.ttf, 12 glyphes).
           ui.f_piece = id(chess_pieces_80);
           Chess::open(ui);
 

@@ -191,7 +191,7 @@ def test_noms_dans_les_polices_de_la_tablette():
 
 def test_icones_de_la_palette():
     """Un code hors palette prendrait en silence l'icône par défaut du type."""
-    entete = _lire("Tab5", "tab5_tuiles_icones.h")
+    entete = _lire("Tab5", "socle", "tab5_tuiles_icones.h")
     palette = set(re.findall(r'\{\s*"([a-z0-9_]{1,15})"\s*,', entete.split("kPalette", 1)[1]))
     assert palette
     for pieces in MAISONS.values():

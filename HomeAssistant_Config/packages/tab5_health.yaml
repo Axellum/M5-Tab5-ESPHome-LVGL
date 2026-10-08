@@ -141,7 +141,7 @@ automation:
   # (« other watchdogs », fausse alerte à l'installation à neuf du 28/09/2026 ; le
   # firmware ne l'excuse que si sa mémoire vient d'être effacée). Depuis le 06/10/2026
   # (discussion #278) : « Power button or RTC watchdog (…) », un appui sur le bouton
-  # d'alimentation (chien de garde sans rapport de plantage, voir Tab5/tab5_journal.cpp) ;
+  # d'alimentation (chien de garde sans rapport de plantage, voir Tab5/ecran/tab5_journal.cpp) ;
   # un chien de garde AVEC rapport (« Crash, other watchdogs ») notifie toujours. Sans
   # raison fraîche (délai dépassé), on notifie : mieux vaut une alerte de trop qu'un
   # plantage muet.
@@ -300,7 +300,7 @@ automation:
   # ==========================================================================
   # (e) Journal des démarrages et des coupures, envoyé par le Tab5
   # --------------------------------------------------------------------------
-  # Le firmware (Tab5/tab5_journal.cpp, 26/09/2026) garde ses erreurs, et ses
+  # Le firmware (Tab5/ecran/tab5_journal.cpp, 26/09/2026) garde ses erreurs, et ses
   # avertissements tant que HA n'est pas connecté, dans une mémoire qui survit
   # aux redémarrages logiciels et aux plantages, avec une copie NVS quand le
   # Wi-Fi manque 90 s (pour survivre à une coupure de courant). À la connexion

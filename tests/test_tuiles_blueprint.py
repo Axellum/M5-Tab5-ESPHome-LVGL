@@ -756,7 +756,7 @@ def test_demarrage_de_ha_rejoue_la_connexion_perdue():
             assert "'demarrage_ha'" in g, f"le démarrage de HA manque dans : {g}"
     # Si la tablette demandait ses zones à la connexion, la demande serait perdue elle
     # aussi, et le démarrage devrait y répondre comme un rechargement.
-    api = _lire(os.path.join(REPO, "Tab5", "tab5-api-logic.yaml"))
+    api = _lire(os.path.join(REPO, "Tab5", "paquets", "tab5-api-logic.yaml"))
     jours = api.split("- service: tab5_maj_previsions_jours_bulk", 1)[1].split("- service:", 1)[0]
     assert "id(tab5_zones_demande).execute()" in jours
     demarrage, connexion = _passage(DEMARRAGE_HA), _passage(_evenement("connexion"))

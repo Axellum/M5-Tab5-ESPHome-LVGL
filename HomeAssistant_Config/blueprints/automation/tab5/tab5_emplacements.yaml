@@ -764,7 +764,7 @@ blueprint:
     # Boutons du haut (07/10/2026, demande d'Axel) : l'écran qu'ouvre l'appui long de chacun
     # des trois boutons en haut à droite de l'accueil. Les taps ne changent pas. Clé
     # « appuis » de tab5_maj_emplacements (variable appuis) ; un firmware plus ancien
-    # l'ignore. Codes = kCodesEcran de Tab5/tab5_zones.cpp, plus « auto »
+    # l'ignore. Codes = kCodesEcran de Tab5/ecran/tab5_zones.cpp, plus « auto »
     # (tests/test_appuis.py) : ni traduits ni renommés sans le firmware.
     boutons_haut:
       name: Boutons du haut · Top buttons
@@ -1895,7 +1895,7 @@ variables:
   # L'entrée Volet (3.x) passe par le package seulement si c'est ce volet-là.
   volet_par_package: "{{ volet_suivi != '' and volet_suivi == sources.volet }}"
   # Tuile − / + au choix (ADR-0033) : type par domaine, le tableau de l'ADR (kTypes de
-  # Tab5/tab5_reglables.cpp ; tests/test_reglables.py compare). Un autre domaine n'y
+  # Tab5/ecran/tab5_reglables.cpp ; tests/test_reglables.py compare). Un autre domaine n'y
   # entre pas.
   types_reglables:
     media_player: son
@@ -1986,7 +1986,7 @@ variables:
     - pot_3
     - pot_4
     - pot_5
-  # Clés des zones de l'écran (kCles de Tab5/tab5_zones.cpp). « discussion » n'est pas une
+  # Clés des zones de l'écran (kCles de Tab5/ecran/tab5_zones.cpp). « discussion » n'est pas une
   # entrée : absente quand la liste « Tab5 · pipeline de discussion » vaut « Aucun »
   # (variable absentes, plus bas).
   cles_zones:

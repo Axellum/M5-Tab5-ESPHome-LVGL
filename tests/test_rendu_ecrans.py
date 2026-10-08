@@ -45,7 +45,7 @@ def test_appuis_dans_l_ecran():
 
 
 def test_options_du_select_aller_a_l_ecran():
-    bloc = _lire("Tab5", "tab5-navigation.yaml").split('name: "Aller à l\'écran"', 1)[1]
+    bloc = _lire("Tab5", "paquets", "tab5-navigation.yaml").split('name: "Aller à l\'écran"', 1)[1]
     options = set(re.findall(r'^\s+- "([^"]+)"', bloc.split("on_value:", 1)[0], re.M))
     assert "Accueil" in options
     for ecran in ECRANS:
@@ -55,7 +55,7 @@ def test_options_du_select_aller_a_l_ecran():
 
 
 def test_actions_connues_de_l_api():
-    textes = _lire("Tab5", "tab5-api-logic.yaml") + _lire("Tab5", "rendu", "bouchons.yaml")
+    textes = _lire("Tab5", "paquets", "tab5-api-logic.yaml") + _lire("Tab5", "rendu", "bouchons.yaml")
     actions = set(re.findall(r"- service: (\w+)", textes))
     assert {"rendu_capture", "rendu_toucher", "rendu_glisser"} <= actions
     for ecran in ECRANS:
@@ -78,7 +78,7 @@ def test_portraits():
 # ---------------------------------------------------------------------------
 
 PAGES_OCCUPEES = sorted(PAGE_DE_LA_PIECE[r] for r, p in PIECES.items() if p.tuiles)
-Y_MIN_GESTE = int(re.search(r"FORECAST_SWIPE_Y_MIN = (\d+);", _lire("Tab5", "tab5_central.cpp")).group(1))
+Y_MIN_GESTE = int(re.search(r"FORECAST_SWIPE_Y_MIN = (\d+);", _lire("Tab5", "ecran", "tab5_central.cpp")).group(1))
 
 
 def _jouer(etapes, page=2, ha=False):
@@ -127,7 +127,7 @@ def test_un_ecran_en_mode_ha_par_piece_de_la_demo():
 
 def _cartes(nombre):
     """Cartes du calque HA (x de début, x de fin) : centrées, pas de 250 px, 230 de large
-    (switches_card.yaml ; formule de zones_apply_ui, Tab5/tab5_zones.cpp)."""
+    (switches_card.yaml ; formule de zones_apply_ui, Tab5/ecran/tab5_zones.cpp)."""
     x0 = (1280 - (nombre * 250 - 20)) // 2
     return [(x0 + 250 * i, x0 + 250 * i + 230) for i in range(nombre)]
 
@@ -157,9 +157,9 @@ def test_gestes_partent_hors_des_tuiles_et_des_cartes():
 
 def _bouton(ident):
     """(x, y, largeur, hauteur) d'un bouton du haut : x de son inclusion dans
-    Tab5/tab5-lvgl.yaml, le reste du gabarit bouton_haut.yaml (08/10/2026, audit YML-4)."""
-    x = re.search(rf'file: ui_components/bouton_haut\.yaml, vars: \{{ id: {ident}, x: "(\d+)"',
-                  _lire("Tab5", "tab5-lvgl.yaml"))
+    Tab5/paquets/tab5-lvgl.yaml, le reste du gabarit bouton_haut.yaml (08/10/2026, audit YML-4)."""
+    x = re.search(rf'file: \.\./ui_components/bouton_haut\.yaml, vars: \{{ id: {ident}, x: "(\d+)"',
+                  _lire("Tab5", "paquets", "tab5-lvgl.yaml"))
     assert x, ident
     m = re.search(r"align: TOP_LEFT\s+x: \$\{x\}\s+y: (\d+)\s+width: (\d+)\s+height: (\d+)",
                   _lire("Tab5", "ui_components", "bouton_haut.yaml"))

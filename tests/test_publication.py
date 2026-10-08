@@ -172,8 +172,8 @@ def test_site_assemble_depuis_les_fichiers_des_releases(tmp_path):
 
 
 def test_memes_revisions_partout():
-    """Révisions d'écran : fichiers Tab5/ecran-*.yaml = outils = matrice = page."""
-    fichiers = sorted(p.stem.removeprefix("ecran-") for p in (REPO / "Tab5").glob("ecran-*.yaml"))
+    """Révisions d'écran : fichiers Tab5/paquets/ecran-*.yaml = outils = matrice = page."""
+    fichiers = sorted(p.stem.removeprefix("ecran-") for p in (REPO / "Tab5" / "paquets").glob("ecran-*.yaml"))
     assert sorted(preparer.ECRANS) == fichiers == sorted(pages.ECRANS)
     flux = _yaml(".github", "workflows", "publication.yml")
     assert sorted(flux["jobs"]["firmware"]["strategy"]["matrix"]["ecran"]) == fichiers
@@ -222,16 +222,16 @@ def test_esphome_des_releases_pas_sous_le_plancher():
 
 
 def test_mise_a_jour_seulement_dans_les_firmwares_publies():
-    assert _yaml("Tab5", "publication-locale.yaml") == {}
+    assert _yaml("Tab5", "paquets", "publication-locale.yaml") == {}
     for canal in ("stable", "beta"):
-        inclus = _yaml("Tab5", f"publication-{canal}.yaml")["packages"]["maj"]
+        inclus = _yaml("Tab5", "paquets", f"publication-{canal}.yaml")["packages"]["maj"]
         assert inclus["file"] == "publication-commune.yaml" and inclus["vars"] == {"canal": canal}
-    commune = _yaml("Tab5", "publication-commune.yaml")
+    commune = _yaml("Tab5", "paquets", "publication-commune.yaml")
     source = commune["update"][0]["source"]
     assert source.startswith("https://axellum.github.io/M5-Tab5-ESPHome-LVGL/${canal}/")
     assert source.endswith("/manifest.json") and "tab5_ecran" in source
     point = (REPO / "tab5-ha-hmi.yaml").read_text(encoding="utf-8")
-    assert "!include Tab5/publication-${ tab5_publication | default('locale') }.yaml" in point
+    assert "!include Tab5/paquets/publication-${ tab5_publication | default('locale') }.yaml" in point
 
 
 def test_page_suit_le_manifeste_du_site():
@@ -253,7 +253,7 @@ def _url_de_page(page: Path) -> str:
 
 
 def test_site_meme_adresse_que_les_firmwares():
-    source = _yaml("Tab5", "publication-commune.yaml")["update"][0]["source"]
+    source = _yaml("Tab5", "paquets", "publication-commune.yaml")["update"][0]["source"]
     assert source.startswith(pages.SITE)
 
 

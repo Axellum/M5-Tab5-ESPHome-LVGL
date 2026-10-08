@@ -2,7 +2,7 @@
 """
 [AI-CONTEXT]
 @file tools/test_draughts_engine.py
-@role Miroir Python du générateur de coups de Tab5/draughts_game.cpp (jeu « Dames
+@role Miroir Python du générateur de coups de Tab5/jeux/draughts_game.cpp (jeu « Dames
       Tab », namespace Draughts::Engine), exécuté contre les valeurs perft de
       référence des dames internationales 10×10 et des dames anglaises 8×8.
 

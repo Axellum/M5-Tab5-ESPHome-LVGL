@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Garde-fou des niveaux d'« Arcanoïde » (Tab5/arkanoid_game.cpp).
+"""Garde-fou des niveaux d'« Arcanoïde » (Tab5/jeux/arkanoid_game.cpp).
 
 Les 8 niveaux sont des tableaux `static const uint8_t LVLn[BRICK_ROWS][BRICK_COLS]`.
 Une rangée ou une valeur oubliée compile quand même (le C++ complète avec des 0) :
@@ -30,7 +30,7 @@ from collections import deque
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-GAME = REPO / "Tab5" / "arkanoid_game.cpp"
+GAME = REPO / "Tab5" / "jeux" / "arkanoid_game.cpp"
 
 EMPTY, INDESTRUCT = 0, 3
 TYPES = {0, 1, 2, 3, 4}

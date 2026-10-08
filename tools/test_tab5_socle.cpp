@@ -1,18 +1,18 @@
 /**
  * Tests hôte du socle C++ commun (audit du 07/10/2026, lot L5), sans ESPHome ni LVGL :
- *   - lecture bornée des payloads (Tab5/tab5_champs.h/.cpp) : découpe, champs vides,
+ *   - lecture bornée des payloads (Tab5/socle/tab5_champs.h/.cpp) : découpe, champs vides,
  *     nombres (longueur, illisible, non fini), entiers non signés, plafond commun ;
- *   - dates et heures (Tab5/tab5_core.h/.cpp) : jour civil, jours du mois, heure
+ *   - dates et heures (Tab5/socle/tab5_core.h/.cpp) : jour civil, jours du mois, heure
  *     valide, « HH:MM » strict, embauche tôt ;
- *   - ce que les deux modèles de tuiles partagent (Tab5/tab5_modele_ha.h) ;
- *   - la géométrie partagée (Tab5/tab5_geometrie.h), par des static_assert.
+ *   - ce que les deux modèles de tuiles partagent (Tab5/socle/tab5_modele_ha.h) ;
+ *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert.
  *
  * Build & run (CI, job `python` de .github/workflows/esphome-tab5.yml) :
- *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5 -o test_tab5_socle \
- *       tools/test_tab5_socle.cpp Tab5/tab5_champs.cpp Tab5/tab5_core.cpp Tab5/tab5_i18n.cpp
+ *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o test_tab5_socle \
+ *       tools/test_tab5_socle.cpp Tab5/socle/tab5_champs.cpp Tab5/socle/tab5_core.cpp Tab5/socle/tab5_i18n.cpp
  *   ./test_tab5_socle
  * Le poste de dev n'a qu'un cross-compilateur RISC-V ; vérif locale possible :
- *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -Wall -Wextra -I Tab5 tools/test_tab5_socle.cpp
+ *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -Wall -Wextra -I Tab5/socle tools/test_tab5_socle.cpp
  */
 #include "tab5_champs.h"
 #include "tab5_core.h"

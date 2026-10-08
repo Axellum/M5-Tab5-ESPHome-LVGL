@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Mode économie d'énergie (06/10/2026, demande d'Axel).
 
-Le select « Tab5 Économie d'énergie » (Tab5/tab5-economie.yaml) choisit Jamais / Sur
-batterie / Toujours ; les règles sont dans Tab5/tab5_economie.h (testées sur PC par
+Le select « Tab5 Économie d'énergie » (Tab5/paquets/tab5-economie.yaml) choisit Jamais / Sur
+batterie / Toujours ; les règles sont dans Tab5/socle/tab5_economie.h (testées sur PC par
 tools/test_alarm_clock.cpp). Rien ne compile le câblage YAML hors tablette : ce fichier
 le relit.
 
@@ -20,7 +20,7 @@ import pathlib
 import re
 
 import yaml
-from tests.commun import ChargeurBalisesBrutes as _Chargeur
+from tests.commun import ChargeurBalisesBrutes as _Chargeur, source
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
@@ -29,7 +29,7 @@ SCRIPT = "tab5_economie_appliquer"
 
 
 def _yaml(nom):
-    return yaml.load((TAB5 / nom).read_text(encoding="utf-8"), Loader=_Chargeur)
+    return yaml.load(source(nom).read_text(encoding="utf-8"), Loader=_Chargeur)
 
 
 def _texte(obj):
@@ -37,7 +37,7 @@ def _texte(obj):
 
 
 def _entete():
-    return (TAB5 / "tab5_economie.h").read_text(encoding="utf-8")
+    return (TAB5 / "socle" / "tab5_economie.h").read_text(encoding="utf-8")
 
 
 def _sans_commentaires(code):
@@ -70,7 +70,7 @@ def test_la_lumiere_passe_par_la_sortie_plafonnee():
     assert {"script.execute": SCRIPT} in lumiere["on_turn_on"], "un écran rallumé reprend sa luminosité"
     # Seuls la sortie plafonnée et le script écrivent le PWM.
     for nom in ("tab5-economie.yaml", "tab5-hardware.yaml"):
-        texte = (TAB5 / nom).read_text(encoding="utf-8")
+        texte = source(nom).read_text(encoding="utf-8")
         for appel in re.findall(r"id\(backlight_pwm\)\.set_level\(([^;]*)\);", texte):
             assert appel in ("economie_sortie_retro(state)", "economie_sortie_actuelle()"), (nom, appel)
 

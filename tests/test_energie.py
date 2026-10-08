@@ -35,9 +35,9 @@ from tests.commun import BaseChargeur, lire as _lire
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PACKAGE = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_energie.yaml")
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
-ENERGIE_CPP = os.path.join(REPO, "Tab5", "tab5_energie.cpp")
-TUILES_CPP = os.path.join(REPO, "Tab5", "tab5_tuiles.cpp")
-API = os.path.join(REPO, "Tab5", "tab5-api-logic.yaml")
+ENERGIE_CPP = os.path.join(REPO, "Tab5", "ecran", "tab5_energie.cpp")
+TUILES_CPP = os.path.join(REPO, "Tab5", "ecran", "tab5_tuiles.cpp")
+API = os.path.join(REPO, "Tab5", "paquets", "tab5-api-logic.yaml")
 
 import demo_pusher  # noqa: E402
 import scenarios  # noqa: E402
@@ -885,7 +885,7 @@ def test_blueprint_ecoute_l_evenement():
 
 def test_option_e_du_firmware():
     # Les options et leurs lettres : l'en-tête des tuiles (lot L7, 08/10/2026).
-    cpp = _lire(TUILES_CPP) + _lire(os.path.join(REPO, "Tab5", "tab5_tuiles_priv.h"))
+    cpp = _lire(TUILES_CPP) + _lire(os.path.join(REPO, "Tab5", "ecran", "tab5_tuiles_priv.h"))
     lettres = re.search(r'kLettresOptions\[\] = "(\w+)"', cpp).group(1)
     assert lettres.index("e") == 7 and re.search(r"\bOPT_E = 128\b", cpp)
     # Un capteur n'agit qu'avec l'option e (gestes(), table kGestes) : le popup Énergie.
@@ -897,7 +897,7 @@ def test_option_e_du_firmware():
 
 
 def test_popup_au_registre_et_au_select():
-    navigation = _lire(os.path.join(REPO, "Tab5", "tab5-navigation.yaml"))
+    navigation = _lire(os.path.join(REPO, "Tab5", "paquets", "tab5-navigation.yaml"))
     assert re.search(r'ModalRegistry::add\(id\(energie_popup\),\s+"Énergie",\s+ModalRegistry::POPUP,'
                      r'\s+\[\] \{ id\(tab5_energie_ouvrir\)\.execute\(\); \}\);', navigation)
     assert '- "Énergie"' in navigation

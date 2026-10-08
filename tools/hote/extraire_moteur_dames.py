@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""[AI-CONTEXT] Extrait le moteur des dames de Tab5/draughts_game.cpp pour le compiler sur PC.
+"""[AI-CONTEXT] Extrait le moteur des dames de Tab5/jeux/draughts_game.cpp pour le compiler sur PC.
 
 Le générateur de coups des dames (namespace Draughts::Engine : pos_init, gen_moves,
 apply_move, refresh_endgame…) est pur, mais il vit dans le même fichier que l'interface
 LVGL et la sauvegarde NVS du jeu. Pour tester le VRAI C++ sans toucher au firmware, ce
 script recopie tel quel le début du fichier, de « namespace Draughts { » jusqu'à
 « }  // namespace Engine », ferme le namespace, et pose une directive #line : une erreur
-de compilation pointe la vraie ligne de Tab5/draughts_game.cpp.
+de compilation pointe la vraie ligne de Tab5/jeux/draughts_game.cpp.
 
 tools/test_draughts_engine.cpp l'inclut (job `python` de la CI, esphome-tab5.yml) :
     python tools/hote/extraire_moteur_dames.py "$RUNNER_TEMP/hote/draughts_moteur_extrait.inc"
@@ -23,12 +23,12 @@ import sys
 from pathlib import Path
 
 RACINE = Path(__file__).resolve().parents[2]
-SOURCE = RACINE / "Tab5" / "draughts_game.cpp"
+SOURCE = RACINE / "Tab5" / "jeux" / "draughts_game.cpp"
 DEBUT = "namespace Draughts {"
 FIN = "}  // namespace Engine"
 
 
-def extraire(source: str, nom: str = "Tab5/draughts_game.cpp") -> str:
+def extraire(source: str, nom: str = "Tab5/jeux/draughts_game.cpp") -> str:
     """Le bloc pur du moteur, prêt à inclure ; ValueError si une borne manque ou se répète."""
     lignes = source.splitlines()
     for borne in (DEBUT, FIN):

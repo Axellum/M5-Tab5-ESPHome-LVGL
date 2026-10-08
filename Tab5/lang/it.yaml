@@ -2,7 +2,7 @@
 # [AI-CONTEXT]
 # @file lang/it.yaml — Italian translation of the Tab5 screen.
 # @role Flat mapping « French text as written in the code » → « Italian ».
-#       tools/gen_i18n.py turns it into Tab5/tab5_i18n_data.h (see its header for
+#       tools/gen_i18n.py turns it into Tab5/socle/tab5_i18n_data.h (see its header for
 #       adding a language: copy en.yaml, change _langue/_code/_index, translate).
 #       Same keys, same order and same section comments as en.yaml.
 # @ai_instruction
@@ -553,7 +553,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Coffre : %d âmes": "Scrigno: %d anime"
 
 # --- Arcanoïde — brick breaker (arkanoid_game.cpp) -----------------------------
-# Lot 4b — Arcanoïde (Tab5/arkanoid_game.cpp) : français du code → italien.
+# Lot 4b — Arcanoïde (Tab5/jeux/arkanoid_game.cpp) : français du code → italien.
 # « ARCANOIDE » (nom de la console) n'est pas traduit. « Retour » et « Pause »
 # reprennent la traduction commune (Indietro / Pausa).
 # --- Noms des niveaux (LEVEL_NAMES, tr_noop) ---
@@ -683,7 +683,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Nouvelle partie, 3 billes": "Nuova partita, 3 palle"
 
 # --- Coureur d'Or — Lode Runner (lode_game.cpp) --------------------------------
-# Coureur d'Or (Tab5/lode_game.cpp) — lot 4b, FR → IT.
+# Coureur d'Or (Tab5/jeux/lode_game.cpp) — lot 4b, FR → IT.
 # « COUREUR D'OR » (nom de la console) n'est pas traduit.
 # --- Vitesses (Reglages > Vitesse, pause) ---
 # Accordées avec « velocità » (féminin) : Normale < Svelta < Rapida < Rapidissima
@@ -920,8 +920,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Menu principal": "Menu principale"
 
 # --- Trial Poursuite — quiz interface; the questions stay French (trivia_game.cpp) ---
-# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/trivia_game.cpp).
-# Les questions et réponses (Tab5/trivia_questions.h) restent en français.
+# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/jeux/trivia_game.cpp).
+# Les questions et réponses (Tab5/jeux/trivia_questions.h) restent en français.
 # Déjà plus haut, non répétées ici : Réglages, Retour, Confirmer, Annuler.
 # Italien : part de camembert = spicchio (vocabulaire du Trivial Pursuit italien,
 # plutôt que « triangolino », familier), case = casella, dé = dado, équipe = squadra.

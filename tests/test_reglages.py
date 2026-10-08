@@ -2,7 +2,7 @@
 """Popup « Réglages » (06/10/2026) : le contrat numérique entre le YAML et le C++.
 
 Les boutons de Tab5/ui_components/reglages_popup.yaml passent `reglage` (un ReglageId de
-Tab5/tab5_custom.h) et `valeur` (l'index d'une option) au script tab5_reglages_choisir ;
+Tab5/ecran/tab5_custom.h) et `valeur` (l'index d'une option) au script tab5_reglages_choisir ;
 tab5_reglages_ouvrir range ces boutons dans les tableaux de ReglagesUI, dimensionnés par
 REGLAGES_NB_*. Rien ne compile ce contrat : une option de plus dans un select, une langue
 de plus, un bouton oublié ou un numéro faux passent la compilation, et le bouton écrit
@@ -18,12 +18,12 @@ import pathlib
 import re
 
 import yaml
-from tests.commun import ChargeurBalisesBrutes as _Chargeur, lire as _lire
+from tests.commun import ChargeurBalisesBrutes as _Chargeur, lire as _lire, source
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 POPUP = TAB5 / "ui_components" / "reglages_popup.yaml"
-SCRIPTS = TAB5 / "tab5-reglages.yaml"
+SCRIPTS = TAB5 / "paquets" / "tab5-reglages.yaml"
 
 BOUTON = re.compile(r"file: reglages_choix_btn\.yaml, vars: \{ id: (\w+), x: \d+, y: \d+, w: \d+, "
                     r"reglage: (\d+), valeur: (-?\d+), label_text: \"([^\"]*)\" \}")
@@ -36,7 +36,7 @@ OUI_NON = ("REGLAGE_OKAY_NABU", "REGLAGE_TAPE", "REGLAGE_NUIT")
 
 
 def _entete():
-    return _lire(TAB5 / "tab5_custom.h")
+    return _lire(TAB5 / "ecran" / "tab5_custom.h")
 
 
 def _reglages():
@@ -66,7 +66,7 @@ def _boutons():
 
 
 def _options(fichier, ident):
-    selects = yaml.load(_lire(TAB5 / fichier), Loader=_Chargeur)["select"]
+    selects = yaml.load(_lire(source(fichier)), Loader=_Chargeur)["select"]
     return next(s for s in selects if s.get("id") == ident)["options"]
 
 
@@ -123,7 +123,7 @@ def test_ouvrir_pose_chaque_bouton_a_son_index():
 
 
 def test_registre_des_fenetres_assez_grand():
-    inscrites = _lire(TAB5 / "tab5-navigation.yaml").count("ModalRegistry::add(")
-    m = re.search(r"constexpr int MAX = (\d+);", _lire(TAB5 / "tab5_registry.h"))
+    inscrites = _lire(TAB5 / "paquets" / "tab5-navigation.yaml").count("ModalRegistry::add(")
+    m = re.search(r"constexpr int MAX = (\d+);", _lire(TAB5 / "ecran" / "tab5_registry.h"))
     assert m and inscrites > 10, "les motifs ne reconnaissent plus le registre"
     assert inscrites <= int(m.group(1)), f"{inscrites} fenêtres pour ModalRegistry::MAX = {m.group(1)}"

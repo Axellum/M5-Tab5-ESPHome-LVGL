@@ -9,6 +9,8 @@ Tout est ici, une fois :
 - `REPO`, `TAB5`, `HA` : chemins (`pathlib.Path`) de la racine du dépôt, de `Tab5/` et de
   `HomeAssistant_Config/`. Le `sys.path` des outils (`tools/`, `tools/demo/`…) est posé
   une fois par `tests/conftest.py`.
+- `source(nom)`, `sources(*motifs)` : un fichier du firmware par son nom seul, et les
+  fichiers d'un motif, dans `Tab5/socle|ecran|jeux|paquets` (tools/tab5_sources.py).
 - `lire(*chemin)` : texte UTF-8 d'un fichier, chemin relatif à la racine ou absolu.
 - `fichiers_du_depot(dossier, motif)` : comme `rglob`, sans les fichiers que .gitignore
   écarte (le même jeu en local qu'en CI).
@@ -17,7 +19,7 @@ Tout est ici, une fois :
   * `ChargeurSansBalises` : une balise (`!lambda`, `!include`, `!secret`, `!input`…) vaut None ;
   * `ChargeurBalisesBrutes` : une balise sur un scalaire vaut ce scalaire brut, sinon None ;
   * `ChargeurEntrees` : un `!input x` de blueprint vaut `{"!input": "x"}`.
-- `bloc_service(nom)` : le texte d'un service de `Tab5/tab5-api-logic.yaml`, de sa ligne
+- `bloc_service(nom)` : le texte d'un service de `Tab5/paquets/tab5-api-logic.yaml`, de sa ligne
   `- service: nom` à la suivante (ou à la fin du bloc `api:`).
 - `CacheJinja` : cache en mémoire du code compilé des modèles Jinja (`bytecode_cache=` d'un
   environnement, pour les modèles lus par un loader ; `.depuis_texte(env, texte)` pour un
@@ -40,7 +42,13 @@ import yaml
 REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 HA = REPO / "HomeAssistant_Config"
-API = TAB5 / "tab5-api-logic.yaml"
+API = TAB5 / "paquets" / "tab5-api-logic.yaml"
+
+# Sources du firmware rangées dans Tab5/socle|ecran|jeux|paquets (08/10/2026) :
+# `source("x.cpp")` trouve un fichier par son nom seul, `sources("*.cpp", …)` remplace
+# un glob sur la racine de Tab5/ (qui ne trouverait plus rien). Voir tools/tab5_sources.py
+# (tools/ est dans le sys.path posé par tests/conftest.py).
+from tab5_sources import fichiers as sources, source  # noqa: E402,F401
 
 # Chargeur C de PyYAML s'il est compilé (roues officielles), sinon le chargeur Python.
 BaseChargeur = getattr(yaml, "CSafeLoader", yaml.SafeLoader)

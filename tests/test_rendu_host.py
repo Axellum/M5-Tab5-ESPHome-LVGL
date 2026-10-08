@@ -57,8 +57,8 @@ def test_rendu_sans_materiel_de_la_tablette():
 # Packages de la tablette que le rendu ne charge pas : du matériel, remplacé par
 # Tab5/rendu/bouchons.yaml, ou la publication (OTA et mise à jour, sans écran, lot 6c).
 # Tout autre package doit être repris.
-MATERIEL = ("Tab5/tab5-hardware.yaml", "Tab5/ecran-", "Tab5/tab5-sensors-diagnostics.yaml", "Tab5/tab5-imu.yaml",
-            "Tab5/publication-")
+MATERIEL = ("Tab5/paquets/tab5-hardware.yaml", "Tab5/paquets/ecran-", "Tab5/paquets/tab5-sensors-diagnostics.yaml", "Tab5/paquets/tab5-imu.yaml",
+            "Tab5/paquets/publication-")
 
 
 def _includes(texte):

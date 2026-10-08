@@ -3,7 +3,7 @@
 
 Un appui court sur le bouton d'alimentation redémarre la tablette avec la raison
 ESP_RST_WDT, sans rapport de plantage `esp32.crash`. Le journal des démarrages
-(Tab5/tab5_journal.cpp) le classait « plantage (chien de garde) » et HA envoyait une
+(Tab5/ecran/tab5_journal.cpp) le classait « plantage (chien de garde) » et HA envoyait une
 alerte sur le téléphone ; le capteur « Tab5 Raison du redémarrage » affichait la source
 du dernier redémarrage DEMANDÉ (« Reboot request from esphome.ota »), périmée.
 
@@ -24,7 +24,7 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 REPO = Path(__file__).resolve().parent.parent
-JOURNAL = REPO / "Tab5" / "tab5_journal.cpp"
+JOURNAL = REPO / "Tab5" / "ecran" / "tab5_journal.cpp"
 SANTE = REPO / "HomeAssistant_Config" / "packages" / "tab5_health.yaml"
 
 # Raisons d'esp_reset_reason() qui doivent alerter à elles seules.

@@ -1,13 +1,13 @@
 """Palettes, catalogue des thèmes et styles de rôle (thèmes, ADR-0029).
 
-La palette (`struct Palette`, Tab5/tab5_tokens.h) est la seule source des couleurs de
+La palette (`struct Palette`, Tab5/socle/tab5_tokens.h) est la seule source des couleurs de
 l'interface. Trois listes doivent rester d'accord, et le compilateur n'en surveille
 aucune : un champ omis dans une palette vaut 0x000000 sans un mot (initialiseurs
 désignés), et un style de rôle qui lirait le mauvais champ compilerait aussi.
 
 Lot 2 : les palettes viennent de Tab5/themes/<thème>.yaml, écrites dans THEMES[] par
 tools/gen_themes.py (avec les options du select « Thème » et la repeinture des styles,
-Tab5/tab5-themes.yaml) ; chaque mode doit rester lisible (contrastes minimaux).
+Tab5/paquets/tab5-themes.yaml) ; chaque mode doit rester lisible (contrastes minimaux).
 """
 from __future__ import annotations
 
@@ -16,13 +16,14 @@ import sys
 from pathlib import Path
 
 import yaml
+from tests.commun import sources as _sources
 
 REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
-TOKENS = TAB5 / "tab5_tokens.h"
-THEMES_DATA = TAB5 / "tab5_themes_data.h"
-STYLES = TAB5 / "tab5-styles.yaml"
-THEMES_YAML = TAB5 / "tab5-themes.yaml"
+TOKENS = TAB5 / "socle" / "tab5_tokens.h"
+THEMES_DATA = TAB5 / "socle" / "tab5_themes_data.h"
+STYLES = TAB5 / "paquets" / "tab5-styles.yaml"
+THEMES_YAML = TAB5 / "paquets" / "tab5-themes.yaml"
 sys.path.insert(0, str(REPO / "tools"))
 
 import gen_themes  # noqa: E402
@@ -146,7 +147,7 @@ def test_styles_de_zone_lisent_la_palette_de_leur_zone():
 
 def test_chaque_style_de_role_sert():
     """Pas de style mort : chaque style de rôle est posé par au moins un widget."""
-    sources = [p for p in list(TAB5.glob("*.yaml")) + list((TAB5 / "ui_components").glob("*.yaml"))
+    sources = [p for p in _sources("*.yaml") + list((TAB5 / "ui_components").glob("*.yaml"))
                if p.name != "tab5-styles.yaml"]
     # Sans les commentaires : un style cité seulement dans un commentaire n'est posé nulle part.
     corpus = "\n".join(l for p in sources for l in p.read_text(encoding="utf-8").splitlines()
@@ -162,9 +163,9 @@ def test_chaque_role_de_la_palette_est_lu():
     Lecteurs : le C++ (`UIColor.X`, `&Palette::X`, `PALETTE_SOMBRE.X`…), les lambdas et
     styles YAML, les formes d'un thème (`formes:`, couleur par nom de rôle) et le verre
     calculé (gen_themes.DERIVES)."""
-    sources = [p for p in list(TAB5.glob("*.cpp")) + list(TAB5.glob("*.h"))
+    sources = [p for p in _sources("*.cpp", "*.h")
                if p.name not in ("tab5_tokens.h", "tab5_themes_data.h")]
-    sources += list(TAB5.glob("*.yaml")) + list((TAB5 / "ui_components").glob("*.yaml"))
+    sources += _sources("*.yaml") + list((TAB5 / "ui_components").glob("*.yaml"))
     corpus = "\n".join(p.read_text(encoding="utf-8") for p in sources)
     formes = "\n".join(yaml.safe_dump(yaml.safe_load(p.read_text(encoding="utf-8")).get("formes") or {})
                        for p in (TAB5 / "themes").glob("*.yaml") if not p.name.startswith("_"))
@@ -239,19 +240,19 @@ def test_catalogue_hors_des_jetons():
     jetons = TOKENS.read_text(encoding="utf-8")
     assert "THEMES[]" not in re.sub(r"//[^\n]*", "", jetons), "THEMES[] est revenu dans tab5_tokens.h"
     assert len(jetons.splitlines()) < 400, "tab5_tokens.h regrossit : les tables vont dans tab5_themes_data.h"
-    inclus = sorted(p.name for p in list(TAB5.glob("*.cpp")) + list(TAB5.glob("*.h"))
+    inclus = sorted(p.name for p in _sources("*.cpp", "*.h")
                     if '#include "tab5_themes_data.h"' in p.read_text(encoding="utf-8"))
     assert inclus == ["tab5_reglages.cpp", "tab5_theme.cpp"], inclus
     for config in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
         texte = (REPO / config).read_text(encoding="utf-8")
-        assert re.search(r"^\s+- Tab5/tab5_themes_data\.h\s*$", texte, re.M), f"{config} : includes:"
+        assert re.search(r"^\s+- Tab5/socle/tab5_themes_data\.h\s*$", texte, re.M), f"{config} : includes:"
 
 
 def test_tables_du_theme_liees_a_theme_count():
     """DO-13 (audit du 07/10/2026) : les tables de tab5_theme.cpp lues par index de thème
     sont liées à THEME_COUNT par des static_assert générés ; une table périmée ne compile
     plus au lieu d'être lue hors de ses bornes au premier changement de thème."""
-    texte = (TAB5 / "tab5_theme.cpp").read_text(encoding="utf-8")
+    texte = (TAB5 / "ecran" / "tab5_theme.cpp").read_text(encoding="utf-8")
     bloc = re.search(r"// >>> formes[^\n]*\n(.*?)// <<< formes", texte, re.S).group(1)
     assert "static_assert(sizeof(kPolices) / sizeof(kPolices[0]) == THEME_COUNT" in bloc
     assert "static_assert(sizeof(kFormesDebut) / sizeof(kFormesDebut[0]) == 2 * THEME_COUNT + 1" in bloc
@@ -270,7 +271,7 @@ def test_options_du_select_dans_l_ordre_des_themes():
 def test_theme_par_defaut_existe():
     """initial_option du select « Thème » : une option du catalogue (sinon ESPHome refuse
     la configuration, et on ne le verrait qu'à la compilation)."""
-    texte = (REPO / "Tab5" / "tab5-themes.yaml").read_text(encoding="utf-8")
+    texte = (REPO / "Tab5" / "paquets" / "tab5-themes.yaml").read_text(encoding="utf-8")
     bloc = re.split(r"id: tab5_theme\r?\n", texte, maxsplit=1)[1].split("on_value:", 1)[0]
     m = re.search(r'initial_option: "([^"]+)"', bloc)
     assert m and m.group(1) in [t.nom for t in gen_themes.charger()]

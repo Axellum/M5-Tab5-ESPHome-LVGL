@@ -2,7 +2,7 @@
 # [AI-CONTEXT]
 # @file lang/de.yaml — German translation of the Tab5 screen.
 # @role Flat mapping « French text as written in the code » → « German ».
-#       tools/gen_i18n.py turns it into Tab5/tab5_i18n_data.h (see its header for
+#       tools/gen_i18n.py turns it into Tab5/socle/tab5_i18n_data.h (see its header for
 #       adding a language: copy en.yaml, change _langue/_code/_index, translate).
 # @ai_instruction
 #   - The KEY must be byte-for-byte the French text of the code (accents, spaces,
@@ -536,7 +536,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Coffre : %d âmes": "Truhe: %d Seelen"
 
 # --- Arcanoïde — brick breaker (arkanoid_game.cpp) -----------------------------
-# Lot 4b — Arcanoïde (Tab5/arkanoid_game.cpp) : français du code → allemand.
+# Lot 4b — Arcanoïde (Tab5/jeux/arkanoid_game.cpp) : français du code → allemand.
 # « ARCANOIDE » (nom de la console) n'est pas traduit. « Retour » et « Pause »
 # reprennent la traduction commune (Zurück / Pause).
 # --- Noms des niveaux (LEVEL_NAMES, tr_noop) ---
@@ -663,7 +663,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Nouvelle partie, 3 billes": "Neues Spiel, 3 Bälle"
 
 # --- Coureur d'Or — Lode Runner (lode_game.cpp) --------------------------------
-# Coureur d'Or (Tab5/lode_game.cpp) — lot 4b, FR → DE.
+# Coureur d'Or (Tab5/jeux/lode_game.cpp) — lot 4b, FR → DE.
 # « COUREUR D'OR » (nom de la console) n'est pas traduit.
 # --- Vitesses (Reglages > Vitesse, pause) ---
 # Échelle allemande : Normal < Flott < Schnell < Rasant < Blitzschnell, choisie pour
@@ -893,8 +893,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Menu principal": "Hauptmenü"
 
 # --- Trial Poursuite — quiz interface; the questions stay French (trivia_game.cpp) ---
-# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/trivia_game.cpp).
-# Les questions et réponses (Tab5/trivia_questions.h) restent en français.
+# Lot 4b — interface du quiz « Trial Poursuite » (Tab5/jeux/trivia_game.cpp).
+# Les questions et réponses (Tab5/jeux/trivia_questions.h) restent en français.
 # Déjà plus haut, non répétées ici : Réglages, Retour, Confirmer, Annuler.
 # Allemand : part de camembert = Wissensecke / Ecke (vocabulaire du Trivial Pursuit
 # allemand), case = Feld, dé = Würfel, équipe = Team.

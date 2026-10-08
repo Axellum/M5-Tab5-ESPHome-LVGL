@@ -6,7 +6,7 @@ Les pages de la notice citent leurs images sous la forme
 reproduit depuis les captures d'un run du rendu, sans liste à tenir ailleurs : la page est
 la seule source. En plus, l'accueil annoté (`accueil-annote-<langue>.webp`) : des numéros
 posés aux points que le doigt virtuel du rendu touche (tools/rendu/ecrans.py) ou au centre
-d'un widget de Tab5/tab5-lvgl.yaml, ceux de la légende de docs/notice/README.md.
+d'un widget de Tab5/paquets/tab5-lvgl.yaml, ceux de la légende de docs/notice/README.md.
 
 Usage :
     gh run download <id> --name rendu-captures-fr --dir <dossier>/fr
@@ -29,7 +29,7 @@ from PIL import Image, ImageDraw, ImageFont
 RACINE = Path(__file__).resolve().parents[2]
 NOTICE = RACINE / "docs" / "notice"
 IMAGES = RACINE / "docs" / "images" / "notice"
-LVGL = RACINE / "Tab5" / "tab5-lvgl.yaml"
+LVGL = RACINE / "Tab5" / "paquets" / "tab5-lvgl.yaml"
 CITATION = re.compile(r"images/notice/([a-z0-9-]+)-(fr|en)\.webp")
 ANNOTE = "accueil-annote"
 # Capture de l'accueil sous les numéros : la première scène de la démo.

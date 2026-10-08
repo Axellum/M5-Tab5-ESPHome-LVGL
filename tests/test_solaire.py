@@ -24,11 +24,11 @@ from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
-ZONES_CPP = os.path.join(REPO, "Tab5", "tab5_zones.cpp")
-CUSTOM_H = os.path.join(REPO, "Tab5", "tab5_custom.h")
-LVGL = os.path.join(REPO, "Tab5", "tab5-lvgl.yaml")
-ZONES_YAML = os.path.join(REPO, "Tab5", "tab5-zones.yaml")
-STYLES = os.path.join(REPO, "Tab5", "tab5-styles.yaml")
+ZONES_CPP = os.path.join(REPO, "Tab5", "ecran", "tab5_zones.cpp")
+CUSTOM_H = os.path.join(REPO, "Tab5", "ecran", "tab5_custom.h")
+LVGL = os.path.join(REPO, "Tab5", "paquets", "tab5-lvgl.yaml")
+ZONES_YAML = os.path.join(REPO, "Tab5", "paquets", "tab5-zones.yaml")
+STYLES = os.path.join(REPO, "Tab5", "paquets", "tab5-styles.yaml")
 REGLES = os.path.join(REPO, "tools", "check_tab5_code_rules.py")
 
 CAPTEUR = "sensor.solaire_puissance"

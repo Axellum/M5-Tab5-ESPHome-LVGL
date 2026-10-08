@@ -36,7 +36,7 @@
 #       tab5_tablette.jinja (« tablette connectée », garde d'origine) : sans lui, les
 #       gardes échouent à l'import et rien ne part.
 # @architecture_constraint Chaque `action: esphome.tab5_ha_hmi_tab5_maj_*` correspond à
-#       un service `api: services:` déclaré dans Tab5/tab5-api-logic.yaml, et ses clés
+#       un service `api: services:` déclaré dans Tab5/paquets/tab5-api-logic.yaml, et ses clés
 #       `data:` à ses `variables:`, ni plus ni moins. Ne JAMAIS renommer un service ou
 #       une variable ici sans le pendant firmware (et vice-versa) : HA refuse l'appel
 #       (« Action … not found », argument manquant ou en trop), l'erreur n'est que
@@ -44,7 +44,7 @@
 #       pas) : les poussées suivantes ne partent pas. tests/test_contrat.py compare.
 # @payload_contract Les payloads bulk (jours/heures/pluie 1h/alerte météo) sont des
 #       chaînes délimitées par `;`/`|` — le format doit matcher EXACTEMENT ce que
-#       parse_and_update_*_bulk() (Tab5/tab5_*.cpp) attend en nombre de champs.
+#       parse_and_update_*_bulk() (Tab5/ecran/tab5_*.cpp) attend en nombre de champs.
 #       HA retire les espaces en tête et en fin du rendu d'un template (vérifié le
 #       26/09/2026) : les retours à la ligne entre les `{% set %}` ne partent pas.
 # @ai_instruction Pas de `delay:` entre les envois (retirés le 01/10/2026). Les six
@@ -738,7 +738,7 @@ script:
           # ancienne). Au-delà, un en-tête « @n:total » : la tablette affiche le rang de
           # chaque bandeau, « 2/6 ». Un jeton sans « | » : un firmware d'avant l'ignore.
           # Taille bornée (audit du 07/10/2026, DO-6) : la tablette refuse TOUT payload de
-          # plus de 1024 octets (parse_and_update_ha_alerts_bulk, Tab5/tab5_central.cpp),
+          # plus de 1024 octets (parse_and_update_ha_alerts_bulk, Tab5/ecran/tab5_central.cpp),
           # et les quatre bandeaux restaient alors sur les anciennes alertes. Le libellé
           # est coupé à 100 caractères (Jinja coupe par caractère, jamais au milieu d'un
           # caractère UTF-8) et débarrassé des deux séparateurs « | » et « ; » ; puis une

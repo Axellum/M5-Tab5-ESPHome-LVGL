@@ -150,7 +150,7 @@ logger:
   baud_rate: 115200
   hardware_uart: USB_SERIAL_JTAG
   tx_buffer_size: 2048
-  # Journal des démarrages et des coupures (Tab5/tab5_journal.cpp, 26/09/2026) : erreurs
+  # Journal des démarrages et des coupures (Tab5/ecran/tab5_journal.cpp, 26/09/2026) : erreurs
   # toujours, avertissements tant que HA n'est pas connecté, pour analyser après coup un
   # plantage ou une panne du lien Wi-Fi (C6). `level: INFO` parce que les erreurs
   # d'ESP-IDF (pilote ESP-Hosted compris) arrivent au niveau du logger, étiquette
@@ -219,7 +219,7 @@ esp_ldo:
     channel: 3
 
 # Écran et tactile : la partie commune aux trois révisions du Tab5. La plateforme,
-# le modèle d'écran et la puce tactile viennent de Tab5/ecran-<révision>.yaml, choisi
+# le modèle d'écran et la puce tactile viennent de Tab5/paquets/ecran-<révision>.yaml, choisi
 # par la substitution `tab5_ecran` (tab5-ha-hmi.yaml, st7123 par défaut) : le fichier
 # de révision étend les deux entrées ci-dessous par `!extend tab5_display` /
 # `!extend touch` — ne pas renommer ces id. Les broches sont les mêmes sur les trois
@@ -419,7 +419,7 @@ media_player:
             - micro_wake_word.start:
 
 # Pile vocale (micro_wake_word, voice_assistant) et image de la réponse de
-# l'assistant (http_request, online_image) : Tab5/tab5-assist.yaml (lot 8c).
+# l'assistant (http_request, online_image) : Tab5/paquets/tab5-assist.yaml (lot 8c).
 
 button:
   - platform: restart

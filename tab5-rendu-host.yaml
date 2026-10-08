@@ -42,82 +42,82 @@ esphome:
     - Tab5/rendu/hote/esp_hosted.h
     - Tab5/rendu/hote/esp_hosted_host_fw_ver.h
     - Tab5/rendu/freertos
-    - Tab5/tab5_tokens.h
-    - Tab5/tab5_themes_data.h
-    - Tab5/tab5_tuiles_icones.h
-    - Tab5/tab5_i18n_data.h
-    - Tab5/tab5_i18n.h
-    - Tab5/tab5_i18n.cpp
-    - Tab5/tab5_core.h
-    - Tab5/tab5_core.cpp
-    - Tab5/tab5_champs.h
-    - Tab5/tab5_champs.cpp
-    - Tab5/tab5_geometrie.h
-    - Tab5/tab5_modele_ha.h
-    - Tab5/tab5_custom.h
-    - Tab5/tab5_custom.cpp
-    - Tab5/tab5_internal.h
-    - Tab5/tab5_text.cpp
-    - Tab5/tab5_forecast.cpp
-    - Tab5/tab5_central.cpp
-    - Tab5/tab5_services.cpp
-    - Tab5/tab5_assist.cpp
-    - Tab5/tab5_cards.cpp
-    - Tab5/tab5_clim.cpp
-    - Tab5/tab5_console.cpp
-    - Tab5/tab5_anim.cpp
-    - Tab5/tab5_calendar.cpp
-    - Tab5/tab5_journal.cpp
-    - Tab5/tab5_zones.cpp
-    - Tab5/tab5_tuiles_priv.h
-    - Tab5/tab5_tuiles.cpp
-    - Tab5/tab5_tuiles_popups.cpp
-    - Tab5/tab5_tuiles_roue.cpp
-    - Tab5/tab5_rangee.cpp
-    - Tab5/tab5_reglables.cpp
-    - Tab5/tab5_roue.cpp
-    - Tab5/tab5_energie.cpp
-    - Tab5/tab5_historique.cpp
-    - Tab5/tab5_theme.cpp
-    - Tab5/tab5_reglages.cpp
-    - Tab5/tab5_economie.h
-    - Tab5/tab5_economie.cpp
-    - Tab5/tab5_batterie.h
-    - Tab5/tab5_batterie.cpp
-    - Tab5/tab5_alertes.cpp
-    - Tab5/tab5_maison.cpp
-    - Tab5/game_common.h
-    - Tab5/marble_game.h
-    - Tab5/marble_game.cpp
-    - Tab5/arkanoid_game.h
-    - Tab5/arkanoid_game.cpp
-    - Tab5/lode_game.h
-    - Tab5/lode_game.cpp
-    - Tab5/chess_ai.h
-    - Tab5/chess_ai.cpp
-    - Tab5/chess_game.h
-    - Tab5/chess_game.cpp
-    - Tab5/go_engine.h
-    - Tab5/go_engine.cpp
-    - Tab5/go_ai.h
-    - Tab5/go_ai.cpp
-    - Tab5/go_game.h
-    - Tab5/go_game.cpp
-    - Tab5/trivia_game.h
-    - Tab5/trivia_questions.h
-    - Tab5/trivia_game.cpp
-    - Tab5/draughts_ai.h
-    - Tab5/draughts_ai.cpp
-    - Tab5/draughts_game.h
-    - Tab5/draughts_game.cpp
-    - Tab5/pinball_game.h
-    - Tab5/pinball_game.cpp
-    - Tab5/tab5_registry.h
-    - Tab5/tab5_registry.cpp
-    - Tab5/alarm_clock.h
-    - Tab5/alarm_clock.cpp
-    - Tab5/alarm_render.h
-    - Tab5/alarm_render.cpp
+    - Tab5/socle/tab5_tokens.h
+    - Tab5/socle/tab5_themes_data.h
+    - Tab5/socle/tab5_tuiles_icones.h
+    - Tab5/socle/tab5_i18n_data.h
+    - Tab5/socle/tab5_i18n.h
+    - Tab5/socle/tab5_i18n.cpp
+    - Tab5/socle/tab5_core.h
+    - Tab5/socle/tab5_core.cpp
+    - Tab5/socle/tab5_champs.h
+    - Tab5/socle/tab5_champs.cpp
+    - Tab5/socle/tab5_geometrie.h
+    - Tab5/socle/tab5_modele_ha.h
+    - Tab5/ecran/tab5_custom.h
+    - Tab5/ecran/tab5_custom.cpp
+    - Tab5/ecran/tab5_internal.h
+    - Tab5/ecran/tab5_text.cpp
+    - Tab5/ecran/tab5_forecast.cpp
+    - Tab5/ecran/tab5_central.cpp
+    - Tab5/ecran/tab5_services.cpp
+    - Tab5/ecran/tab5_assist.cpp
+    - Tab5/ecran/tab5_cards.cpp
+    - Tab5/ecran/tab5_clim.cpp
+    - Tab5/ecran/tab5_console.cpp
+    - Tab5/ecran/tab5_anim.cpp
+    - Tab5/ecran/tab5_calendar.cpp
+    - Tab5/ecran/tab5_journal.cpp
+    - Tab5/ecran/tab5_zones.cpp
+    - Tab5/ecran/tab5_tuiles_priv.h
+    - Tab5/ecran/tab5_tuiles.cpp
+    - Tab5/ecran/tab5_tuiles_popups.cpp
+    - Tab5/ecran/tab5_tuiles_roue.cpp
+    - Tab5/ecran/tab5_rangee.cpp
+    - Tab5/ecran/tab5_reglables.cpp
+    - Tab5/ecran/tab5_roue.cpp
+    - Tab5/ecran/tab5_energie.cpp
+    - Tab5/ecran/tab5_historique.cpp
+    - Tab5/ecran/tab5_theme.cpp
+    - Tab5/ecran/tab5_reglages.cpp
+    - Tab5/socle/tab5_economie.h
+    - Tab5/socle/tab5_economie.cpp
+    - Tab5/socle/tab5_batterie.h
+    - Tab5/ecran/tab5_batterie.cpp
+    - Tab5/ecran/tab5_alertes.cpp
+    - Tab5/ecran/tab5_maison.cpp
+    - Tab5/jeux/game_common.h
+    - Tab5/jeux/marble_game.h
+    - Tab5/jeux/marble_game.cpp
+    - Tab5/jeux/arkanoid_game.h
+    - Tab5/jeux/arkanoid_game.cpp
+    - Tab5/jeux/lode_game.h
+    - Tab5/jeux/lode_game.cpp
+    - Tab5/jeux/chess_ai.h
+    - Tab5/jeux/chess_ai.cpp
+    - Tab5/jeux/chess_game.h
+    - Tab5/jeux/chess_game.cpp
+    - Tab5/jeux/go_engine.h
+    - Tab5/jeux/go_engine.cpp
+    - Tab5/jeux/go_ai.h
+    - Tab5/jeux/go_ai.cpp
+    - Tab5/jeux/go_game.h
+    - Tab5/jeux/go_game.cpp
+    - Tab5/jeux/trivia_game.h
+    - Tab5/jeux/trivia_questions.h
+    - Tab5/jeux/trivia_game.cpp
+    - Tab5/jeux/draughts_ai.h
+    - Tab5/jeux/draughts_ai.cpp
+    - Tab5/jeux/draughts_game.h
+    - Tab5/jeux/draughts_game.cpp
+    - Tab5/jeux/pinball_game.h
+    - Tab5/jeux/pinball_game.cpp
+    - Tab5/ecran/tab5_registry.h
+    - Tab5/ecran/tab5_registry.cpp
+    - Tab5/socle/alarm_clock.h
+    - Tab5/socle/alarm_clock.cpp
+    - Tab5/ecran/alarm_render.h
+    - Tab5/ecran/alarm_render.cpp
     # Doigt virtuel des captures (actions rendu_toucher / rendu_glisser des bouchons).
     - Tab5/rendu/rendu_doigt.h
 
@@ -197,29 +197,29 @@ external_components:
       path: Tab5/rendu/composants
 
 packages:
-  tab5_ui_tokens: !include Tab5/tab5-ui-tokens.yaml
+  tab5_ui_tokens: !include Tab5/paquets/tab5-ui-tokens.yaml
   tab5_bouchons: !include Tab5/rendu/bouchons.yaml
-  tab5_assist: !include Tab5/tab5-assist.yaml
-  tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
-  tab5_api_logic: !include Tab5/tab5-api-logic.yaml
-  tab5_styles: !include Tab5/tab5-styles.yaml
-  tab5_globals: !include Tab5/tab5-globals.yaml
-  tab5_scripts: !include Tab5/tab5-scripts.yaml
-  tab5_lvgl: !include Tab5/tab5-lvgl.yaml
-  tab5_arcade: !include Tab5/tab5-arcade.yaml
-  tab5_calendar: !include Tab5/tab5-calendar.yaml
-  tab5_navigation: !include Tab5/tab5-navigation.yaml
-  tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
-  tab5_alarm: !include Tab5/tab5-alarm.yaml
-  tab5_tuiles: !include Tab5/tab5-tuiles.yaml
-  tab5_roue: !include Tab5/tab5-roue.yaml
-  tab5_rangee: !include Tab5/tab5-rangee.yaml
-  tab5_reglables: !include Tab5/tab5-reglables.yaml
-  tab5_energie: !include Tab5/tab5-energie.yaml
-  tab5_historique: !include Tab5/tab5-historique.yaml
-  tab5_alertes: !include Tab5/tab5-alertes.yaml
-  tab5_maison: !include Tab5/tab5-maison.yaml
-  tab5_zones: !include Tab5/tab5-zones.yaml
-  tab5_reglages: !include Tab5/tab5-reglages.yaml
-  tab5_economie: !include Tab5/tab5-economie.yaml
-  tab5_themes: !include Tab5/tab5-themes.yaml
+  tab5_assist: !include Tab5/paquets/tab5-assist.yaml
+  tab5_sensors_domotique: !include Tab5/paquets/tab5-sensors-domotique.yaml
+  tab5_api_logic: !include Tab5/paquets/tab5-api-logic.yaml
+  tab5_styles: !include Tab5/paquets/tab5-styles.yaml
+  tab5_globals: !include Tab5/paquets/tab5-globals.yaml
+  tab5_scripts: !include Tab5/paquets/tab5-scripts.yaml
+  tab5_lvgl: !include Tab5/paquets/tab5-lvgl.yaml
+  tab5_arcade: !include Tab5/paquets/tab5-arcade.yaml
+  tab5_calendar: !include Tab5/paquets/tab5-calendar.yaml
+  tab5_navigation: !include Tab5/paquets/tab5-navigation.yaml
+  tab5_ha_controls: !include Tab5/paquets/tab5-ha-controls.yaml
+  tab5_alarm: !include Tab5/paquets/tab5-alarm.yaml
+  tab5_tuiles: !include Tab5/paquets/tab5-tuiles.yaml
+  tab5_roue: !include Tab5/paquets/tab5-roue.yaml
+  tab5_rangee: !include Tab5/paquets/tab5-rangee.yaml
+  tab5_reglables: !include Tab5/paquets/tab5-reglables.yaml
+  tab5_energie: !include Tab5/paquets/tab5-energie.yaml
+  tab5_historique: !include Tab5/paquets/tab5-historique.yaml
+  tab5_alertes: !include Tab5/paquets/tab5-alertes.yaml
+  tab5_maison: !include Tab5/paquets/tab5-maison.yaml
+  tab5_zones: !include Tab5/paquets/tab5-zones.yaml
+  tab5_reglages: !include Tab5/paquets/tab5-reglages.yaml
+  tab5_economie: !include Tab5/paquets/tab5-economie.yaml
+  tab5_themes: !include Tab5/paquets/tab5-themes.yaml

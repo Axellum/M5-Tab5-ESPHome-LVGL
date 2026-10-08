@@ -738,12 +738,12 @@ même méthode que `IconeMeteo.ttf` — on n'embarque que ce qu'on affiche :
 
 | | |
 |---|---|
-| Fichier | `Tab5/ChessPieces.ttf` — **16,8 Ko** (source DejaVu Sans : 757 Ko) |
+| Fichier | `Tab5/fonts/ChessPieces.ttf` — **16,8 Ko** (source DejaVu Sans : 757 Ko) |
 | Glyphes | 12 : `U+2654–2659` (creux) + `U+265A–265F` (pleins) |
 | Déclaration | `chess_pieces_80`, `size: 80`, `bpp: 4` |
 | Coût flash | ~26 Ko rastérisés (12 × 72 × 60 px à 4 bpp) |
 | Régénération | `python tools/make_chess_font.py` |
-| Licence | Bitstream Vera — voir `Tab5/ChessPieces.LICENSE.txt` |
+| Licence | Bitstream Vera — voir `Tab5/fonts/ChessPieces.LICENSE.txt` |
 
 **Rendu en deux calques** (technique lichess / chess.com) :
 

@@ -5,7 +5,7 @@ compilateur ne compare :
 
 - les clés poussées par le blueprint (`cles_emplacements`, plus les 4 détails de chaque
   pot) doivent être exactement celles de la table de `tab5_maj_emplacements`
-  (Tab5/tab5-api-logic.yaml) : une clé inconnue est ignorée en silence ;
+  (Tab5/paquets/tab5-api-logic.yaml) : une clé inconnue est ignorée en silence ;
 - chaque commande que l'écran envoie (`script.execute: tab5_action`, avec son
   emplacement et sa commande) doit avoir une branche dans le blueprint, sinon le
   bouton ne fait rien ;
@@ -18,7 +18,7 @@ import os
 import re
 
 import yaml
-from tests.commun import ChargeurEntrees as _Chargeur, bloc_service, lire as _lire
+from tests.commun import ChargeurEntrees as _Chargeur, bloc_service, lire as _lire, source, sources
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
@@ -37,8 +37,9 @@ def _commandes_firmware():
     """(emplacement, commande) de chaque script.execute tab5_action du firmware."""
     paires = set()
     fichiers = []
-    for dossier in (os.path.join(REPO, "Tab5"), os.path.join(REPO, "Tab5", "ui_components")):
-        fichiers += [os.path.join(dossier, n) for n in os.listdir(dossier) if n.endswith(".yaml")]
+    fichiers += [str(p) for p in sources("*.yaml")]
+    dossier = os.path.join(REPO, "Tab5", "ui_components")
+    fichiers += [os.path.join(dossier, n) for n in os.listdir(dossier) if n.endswith(".yaml")]
     for chemin in fichiers:
         texte = _lire(chemin)
         # Forme en ligne : { id: tab5_action, emplacement: X, commande: Y, … }
@@ -117,7 +118,7 @@ def test_chaque_commande_de_l_ecran_a_sa_branche():
 
 def test_plus_aucun_abonnement_a_une_entite_de_la_maison():
     for nom in ("tab5-sensors-domotique.yaml", "pot_sensors.yaml"):
-        assert "platform: homeassistant\n" not in _lire(os.path.join(REPO, "Tab5", nom)), nom
+        assert "platform: homeassistant\n" not in _lire(source(nom)), nom
 
 
 def test_chaque_emplacement_a_un_seul_chemin_de_poussee():

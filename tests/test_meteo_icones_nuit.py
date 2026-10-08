@@ -7,7 +7,7 @@ Met.no range « beau » et « peu nuageux » de nuit (fair_night, partlycloudy_n
 clearsky_night devient `clear-night`, et ses prévisions horaires n'ont pas d'is_daytime
 (met/weather.py, FORECAST_MAP). La poussée (packages/tab5_push.yaml) envoie donc, pour
 un créneau de nuit, la variante que la tablette sait déjà dessiner (kMeteoIcons,
-Tab5/tab5_forecast.cpp) : `partlycloudy-night` (nuage + lune), `clear-night` (lune).
+Tab5/ecran/tab5_forecast.cpp) : `partlycloudy-night` (nuage + lune), `clear-night` (lune).
 
 Le modèle réel est rendu avec les fausses entités de test_meteo_sans_meteo_france.py,
 puis comparé à un calcul indépendant : au lieu de reporter les prochains lever et

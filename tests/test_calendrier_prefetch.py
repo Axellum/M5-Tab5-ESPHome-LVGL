@@ -19,7 +19,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def _scripts():
-    arbre = yaml.load(_lire("Tab5", "tab5-calendar.yaml"), Loader=_Chargeur)
+    arbre = yaml.load(_lire("Tab5", "paquets", "tab5-calendar.yaml"), Loader=_Chargeur)
     return {s["id"]: s for s in arbre["script"]}
 
 
@@ -59,14 +59,14 @@ def test_chaque_demande_sautee_si_le_mois_est_frais():
 def test_appelants():
     # Démarrage et reconnexion : le script sans paramètre. Bouton : le corps, forcé.
     assert "script.execute: tab5_cal_prefetch_boot" in _lire("tab5-ha-hmi.yaml")
-    assert "script.execute: tab5_cal_prefetch_boot" in _lire("Tab5", "tab5-sensors-diagnostics.yaml")
-    controles = yaml.load(_lire("Tab5", "tab5-ha-controls.yaml"), Loader=_Chargeur)
+    assert "script.execute: tab5_cal_prefetch_boot" in _lire("Tab5", "paquets", "tab5-sensors-diagnostics.yaml")
+    controles = yaml.load(_lire("Tab5", "paquets", "tab5-ha-controls.yaml"), Loader=_Chargeur)
     bouton = next(b for b in controles["button"] if b.get("id") == "tab5_reload_calendar")
     assert bouton["on_press"] == [{"script.execute": {"id": "tab5_cal_prefetch", "force": True}}]
 
 
 def test_fraicheur():
-    m = re.search(r"constexpr uint32_t CAL_PREFETCH_FRESH_MS = (\d+);", _lire("Tab5", "tab5_custom.h"))
+    m = re.search(r"constexpr uint32_t CAL_PREFETCH_FRESH_MS = (\d+);", _lire("Tab5", "ecran", "tab5_custom.h"))
     assert m, "CAL_PREFETCH_FRESH_MS introuvable dans tab5_custom.h"
     ms = int(m.group(1))
     # Au moins 10 s : les deux appels du démarrage sont à ~3 s d'écart, plus 2 s entre M

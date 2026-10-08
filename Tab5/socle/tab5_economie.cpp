@@ -4,7 +4,7 @@
  * @role Mode économie d'énergie (06/10/2026) : l'état vivant de la tablette et les
  *       appels du YAML. Les règles sont dans tab5_economie.h (pures, testées sur PC) ;
  *       la décision est prise par le script tab5_economie_appliquer
- *       (Tab5/tab5-economie.yaml), lancé chaque seconde et à chaque événement utile.
+ *       (Tab5/paquets/tab5-economie.yaml), lancé chaque seconde et à chaque événement utile.
  * @architecture_constraint Ni ESPHome ni LVGL ici : le YAML lit les entités, applique
  *       le PWM et la période de LVGL ; les animations sont coupées dans tab5_anim.cpp
  *       (animations_reduites).

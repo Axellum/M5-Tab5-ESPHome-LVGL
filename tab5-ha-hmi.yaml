@@ -65,141 +65,141 @@ esphome:
   includes:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
     # les deux jeux qui en ont besoin (25/09/2026, audit lot 8a).
-    - Tab5/tab5_tokens.h
+    - Tab5/socle/tab5_tokens.h
     # Catalogue des thèmes (THEMES[]), écrit par tools/gen_themes.py : inclus par
     # tab5_theme.cpp et tab5_reglages.cpp seulement (audit du 07/10/2026, DO-3).
-    - Tab5/tab5_themes_data.h
+    - Tab5/socle/tab5_themes_data.h
     # Palette des icônes des tuiles de pièce (ADR-0023), écrite par tools/gen_tuiles_icones.py.
-    - Tab5/tab5_tuiles_icones.h
+    - Tab5/socle/tab5_tuiles_icones.h
     # Langue de l'écran (lot 4, 27/09/2026) : tr() pur, compilé aussi sur PC par les
     # tests du réveil, et ses tables générées par tools/gen_i18n.py depuis
     # Tab5/lang/*.yaml. Avant tab5_core, qui s'en sert pour les dates.
-    - Tab5/tab5_i18n_data.h
-    - Tab5/tab5_i18n.h
-    - Tab5/tab5_i18n.cpp
+    - Tab5/socle/tab5_i18n_data.h
+    - Tab5/socle/tab5_i18n.h
+    - Tab5/socle/tab5_i18n.cpp
     # Logique pure (dates, données calendrier) : compilée aussi sur PC par les tests
     # du réveil (tools/test_alarm_clock.cpp, lot 8b).
-    - Tab5/tab5_core.h
-    - Tab5/tab5_core.cpp
+    - Tab5/socle/tab5_core.h
+    - Tab5/socle/tab5_core.cpp
     # Lecture bornée des payloads de HA (champs, nombres) : pure, testée sur PC par
     # tools/test_tab5_socle.cpp (audit du 07/10/2026, lot L5).
-    - Tab5/tab5_champs.h
-    - Tab5/tab5_champs.cpp
+    - Tab5/socle/tab5_champs.h
+    - Tab5/socle/tab5_champs.cpp
     # Géométrie partagée des popups construits en C++ (écran, carte modale, pièces) :
     # en-tête seul, inclus par les .cpp qui s'en servent (lot L5).
-    - Tab5/tab5_geometrie.h
+    - Tab5/socle/tab5_geometrie.h
     # Ce que les tuiles de pièce et la tuile - / + ont en commun (tailles, état hors
     # ligne, code d'icône) : en-tête seul et pur (lot L5).
-    - Tab5/tab5_modele_ha.h
-    - Tab5/tab5_custom.h
-    - Tab5/tab5_custom.cpp
+    - Tab5/socle/tab5_modele_ha.h
+    - Tab5/ecran/tab5_custom.h
+    - Tab5/ecran/tab5_custom.cpp
     # Couche C++ scindée en unités (lot (e), 08/09/2026) : tab5_custom.h reste l'unique
     # en-tête public, tab5_internal.h déclare les helpers partagés entre unités.
-    - Tab5/tab5_internal.h
-    - Tab5/tab5_text.cpp
-    - Tab5/tab5_forecast.cpp
-    - Tab5/tab5_central.cpp
-    - Tab5/tab5_services.cpp
-    - Tab5/tab5_assist.cpp
-    - Tab5/tab5_cards.cpp
+    - Tab5/ecran/tab5_internal.h
+    - Tab5/ecran/tab5_text.cpp
+    - Tab5/ecran/tab5_forecast.cpp
+    - Tab5/ecran/tab5_central.cpp
+    - Tab5/ecran/tab5_services.cpp
+    - Tab5/ecran/tab5_assist.cpp
+    - Tab5/ecran/tab5_cards.cpp
     # Clim (ADR-0026, ADR-0027) : sortie de tab5_cards.cpp le 08/10/2026 (lot L7).
-    - Tab5/tab5_clim.cpp
-    - Tab5/tab5_console.cpp
-    - Tab5/tab5_anim.cpp
-    - Tab5/tab5_calendar.cpp
+    - Tab5/ecran/tab5_clim.cpp
+    - Tab5/ecran/tab5_console.cpp
+    - Tab5/ecran/tab5_anim.cpp
+    - Tab5/ecran/tab5_calendar.cpp
     # Journal des démarrages et des coupures (plantages, lien Wi-Fi / C6), 26/09/2026.
-    - Tab5/tab5_journal.cpp
+    - Tab5/ecran/tab5_journal.cpp
     # Zones optionnelles : ce qui disparaît quand l'entité manque dans HA (lot 5, 27/09/2026).
-    - Tab5/tab5_zones.cpp
+    - Tab5/ecran/tab5_zones.cpp
     # Pièces et tuiles génériques décrites par HA (ADR-0023, 28/09/2026) ; leurs popups et
     # leur roue d'actions rapides, l'en-tête que les trois partagent (lot L7, 08/10/2026).
-    - Tab5/tab5_tuiles_priv.h
-    - Tab5/tab5_tuiles.cpp
-    - Tab5/tab5_tuiles_popups.cpp
-    - Tab5/tab5_tuiles_roue.cpp
+    - Tab5/ecran/tab5_tuiles_priv.h
+    - Tab5/ecran/tab5_tuiles.cpp
+    - Tab5/ecran/tab5_tuiles_popups.cpp
+    - Tab5/ecran/tab5_tuiles_roue.cpp
     # Rangée sous l'horloge : plantes et lignes de capteurs qui se relaient (ADR-0031, 06/10/2026).
-    - Tab5/tab5_rangee.cpp
+    - Tab5/ecran/tab5_rangee.cpp
     # Tuile − / + au choix : clim, appareils du blueprint, volume de la tablette (ADR-0033, 06/10/2026).
-    - Tab5/tab5_reglables.cpp
+    - Tab5/ecran/tab5_reglables.cpp
     # Roue d'actions rapides à l'appui long d'une tuile lum, vol, cli (ADR-0036, 07/10/2026).
-    - Tab5/tab5_roue.cpp
+    - Tab5/ecran/tab5_roue.cpp
     # Popup Énergie : instantané solaire et historique de production (ADR-0028, 04/10/2026).
-    - Tab5/tab5_energie.cpp
+    - Tab5/ecran/tab5_energie.cpp
     # Popup Température : historique des deux températures et prévision (ADR-0032, 06/10/2026).
-    - Tab5/tab5_historique.cpp
+    - Tab5/ecran/tab5_historique.cpp
     # Thèmes de l'écran : palette active et repeinture des modules (ADR-0029, lot 2).
-    - Tab5/tab5_theme.cpp
+    - Tab5/ecran/tab5_theme.cpp
     # Popup Réglages de la tablette : peinture des choix (06/10/2026).
-    - Tab5/tab5_reglages.cpp
+    - Tab5/ecran/tab5_reglages.cpp
     # Mode économie d'énergie (06/10/2026) : règles pures (compilées aussi sur PC par
     # tools/test_alarm_clock.cpp) et état de la tablette.
-    - Tab5/tab5_economie.h
-    - Tab5/tab5_economie.cpp
+    - Tab5/socle/tab5_economie.h
+    - Tab5/socle/tab5_economie.cpp
     # Batterie et chargeur (08/10/2026) : présence lue chargeur coupé, limite de charge,
     # consommation, alerte de batterie faible. Règles pures (testées sur PC), état ici.
-    - Tab5/tab5_batterie.h
-    - Tab5/tab5_batterie.cpp
+    - Tab5/socle/tab5_batterie.h
+    - Tab5/ecran/tab5_batterie.cpp
     # Popup Alertes : historique des alertes (lot 4 du plan des alertes, 06/10/2026).
-    - Tab5/tab5_alertes.cpp
+    - Tab5/ecran/tab5_alertes.cpp
     # Popup Maison : toute la maison, pièce par pièce (ADR-0037, 07/10/2026).
-    - Tab5/tab5_maison.cpp
+    - Tab5/ecran/tab5_maison.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
-    - Tab5/game_common.h
+    - Tab5/jeux/game_common.h
     # Jeu « Fil d'Or » (overlay plein écran) — sous-module isolé du HMI.
-    - Tab5/marble_game.h
-    - Tab5/marble_game.cpp
+    - Tab5/jeux/marble_game.h
+    - Tab5/jeux/marble_game.cpp
     # Jeu « Arcanoïde » (casse-briques rétro) — sous-module isolé du HMI.
-    - Tab5/arkanoid_game.h
-    - Tab5/arkanoid_game.cpp
+    - Tab5/jeux/arkanoid_game.h
+    - Tab5/jeux/arkanoid_game.cpp
     # Jeu « Coureur d'Or » (Lode Runner) — sous-module isolé du HMI.
-    - Tab5/lode_game.h
-    - Tab5/lode_game.cpp
+    - Tab5/jeux/lode_game.h
+    - Tab5/jeux/lode_game.cpp
     # Jeu « Roi Noir » (échiquier FIDE + IA embarquée) — sous-module isolé du HMI.
     # chess_ai.* = moteur pur (aucun LVGL) ; chess_game.* = UI et machine à états.
-    - Tab5/chess_ai.h
-    - Tab5/chess_ai.cpp
-    - Tab5/chess_game.h
-    - Tab5/chess_game.cpp
+    - Tab5/jeux/chess_ai.h
+    - Tab5/jeux/chess_ai.cpp
+    - Tab5/jeux/chess_game.h
+    - Tab5/jeux/chess_game.cpp
     # Jeu « Go Tab » — sous-module isolé (moteur + IA + UI).
-    - Tab5/go_engine.h
-    - Tab5/go_engine.cpp
-    - Tab5/go_ai.h
-    - Tab5/go_ai.cpp
-    - Tab5/go_game.h
-    - Tab5/go_game.cpp
+    - Tab5/jeux/go_engine.h
+    - Tab5/jeux/go_engine.cpp
+    - Tab5/jeux/go_ai.h
+    - Tab5/jeux/go_ai.cpp
+    - Tab5/jeux/go_game.h
+    - Tab5/jeux/go_game.cpp
     # Jeu « Trial Poursuite » (Trivial Pursuit rétro-salon) — sous-module isolé.
     # trivia_questions.h est inclus par trivia_game.cpp : il DOIT figurer ici,
     # sinon ESPHome ne le copie pas dans le dossier de build et la compilation
     # échoue sur un « No such file or directory ».
-    - Tab5/trivia_game.h
-    - Tab5/trivia_questions.h
-    - Tab5/trivia_game.cpp
+    - Tab5/jeux/trivia_game.h
+    - Tab5/jeux/trivia_questions.h
+    - Tab5/jeux/trivia_game.cpp
     # Jeu « Dames » (dames internationales / anglaises) — sous-module isolé.
     # draughts_ai.* = moteur + IA ; draughts_game.* = UI et machine à états.
-    - Tab5/draughts_ai.h
-    - Tab5/draughts_ai.cpp
-    - Tab5/draughts_game.h
-    - Tab5/draughts_game.cpp
+    - Tab5/jeux/draughts_ai.h
+    - Tab5/jeux/draughts_ai.cpp
+    - Tab5/jeux/draughts_game.h
+    - Tab5/jeux/draughts_game.cpp
     # Jeu « Neon Apron » (flipper PORTRAIT) — sous-module isolé du HMI.
     # Seule console qui bascule l'écran : elle passe LVGL en 720×1280 le temps
     # d'une partie puis restaure `rotation: 270`. Voir le bloc [AI-CONTEXT]
     # ORIENTATION en tête de pinball_game.cpp avant d'y toucher.
-    - Tab5/pinball_game.h
-    - Tab5/pinball_game.cpp
+    - Tab5/jeux/pinball_game.h
+    - Tab5/jeux/pinball_game.cpp
     # Registre unique des consoles (GameRegistry::kGames) et des fenêtres
     # modales (ModalRegistry) — ADR-0013. Le .cpp inclut lui-même les 8
     # *_game.h : garder ces deux lignes APRÈS les consoles.
-    - Tab5/tab5_registry.h
-    - Tab5/tab5_registry.cpp
+    - Tab5/ecran/tab5_registry.h
+    - Tab5/ecran/tab5_registry.cpp
     # Réveil matin + annonce des rendez-vous — moteur PUR (dates, calendrier,
     # machine d'état), aucune dépendance HA, réseau, ESPHome ni LVGL : il lit
     # `cal_jours_data[]` de tab5_core.h et se teste sur PC. Son rendu LVGL est à
     # part (alarm_render.*, lot 8b). Garder cet ordre d'inclusion.
-    - Tab5/alarm_clock.h
-    - Tab5/alarm_clock.cpp
-    - Tab5/alarm_render.h
-    - Tab5/alarm_render.cpp
+    - Tab5/socle/alarm_clock.h
+    - Tab5/socle/alarm_clock.cpp
+    - Tab5/ecran/alarm_render.h
+    - Tab5/ecran/alarm_render.cpp
 
   on_boot:
     - priority: 700
@@ -357,71 +357,71 @@ esphome:
 # Plus d'images! image: !include supprimé au profit des polices C++ vectorielles LVGL
 
 packages:
-  tab5_ui_tokens: !include Tab5/tab5-ui-tokens.yaml
-  tab5_hardware: !include Tab5/tab5-hardware.yaml
+  tab5_ui_tokens: !include Tab5/paquets/tab5-ui-tokens.yaml
+  tab5_hardware: !include Tab5/paquets/tab5-hardware.yaml
   # Écran et tactile selon la révision du Tab5 (docs/hardware.md, « Hardware revisions ») :
   # `tab5_ecran:` dans Tab5/user_entities.yaml = st7123 (défaut, testée), st7121 (tourne
   # chez un utilisateur depuis octobre 2026) ou ili9881c (compilée par la CI, jamais testée). Le défaut Jinja évite d'imposer la
   # clé aux user_entities.yaml existants ; `lower` tolère « ST7121 » (vérifié sur
   # ESPHome 2026.9.0, le plancher).
-  tab5_ecran: !include Tab5/ecran-${ tab5_ecran | default('st7123') | lower }.yaml
+  tab5_ecran: !include Tab5/paquets/ecran-${ tab5_ecran | default('st7123') | lower }.yaml
   # Publication (lot 6c, ADR-0022) : `locale` (défaut, compilation sur son PC) n'ajoute
   # rien ; `stable` / `beta`, donnés par la CI de publication (`-s tab5_publication …`),
   # ajoutent l'entité de mise à jour qui lit le manifeste de la page de flashage.
-  tab5_publication: !include Tab5/publication-${ tab5_publication | default('locale') }.yaml
-  tab5_sensors_diagnostics: !include Tab5/tab5-sensors-diagnostics.yaml
-  tab5_sensors_domotique: !include Tab5/tab5-sensors-domotique.yaml
-  tab5_api_logic: !include Tab5/tab5-api-logic.yaml
-  tab5_styles: !include Tab5/tab5-styles.yaml
-  tab5_globals: !include Tab5/tab5-globals.yaml
-  tab5_scripts: !include Tab5/tab5-scripts.yaml
-  tab5_lvgl: !include Tab5/tab5-lvgl.yaml
+  tab5_publication: !include Tab5/paquets/publication-${ tab5_publication | default('locale') }.yaml
+  tab5_sensors_diagnostics: !include Tab5/paquets/tab5-sensors-diagnostics.yaml
+  tab5_sensors_domotique: !include Tab5/paquets/tab5-sensors-domotique.yaml
+  tab5_api_logic: !include Tab5/paquets/tab5-api-logic.yaml
+  tab5_styles: !include Tab5/paquets/tab5-styles.yaml
+  tab5_globals: !include Tab5/paquets/tab5-globals.yaml
+  tab5_scripts: !include Tab5/paquets/tab5-scripts.yaml
+  tab5_lvgl: !include Tab5/paquets/tab5-lvgl.yaml
   # Un package par fonctionnalité (audit du 25/09/2026, lot 8c), APRÈS tab5_lvgl
   # comme tab5_alarm : leurs scripts référencent des pages et des widgets LVGL.
-  tab5_arcade: !include Tab5/tab5-arcade.yaml
-  tab5_calendar: !include Tab5/tab5-calendar.yaml
-  tab5_assist: !include Tab5/tab5-assist.yaml
-  tab5_imu: !include Tab5/tab5-imu.yaml
+  tab5_arcade: !include Tab5/paquets/tab5-arcade.yaml
+  tab5_calendar: !include Tab5/paquets/tab5-calendar.yaml
+  tab5_assist: !include Tab5/paquets/tab5-assist.yaml
+  tab5_imu: !include Tab5/paquets/tab5-imu.yaml
   # Navigation (08/10/2026) : registre des fenetres, « Aller a l'ecran », « Ecran courant »,
   # tab5_ecran_ouvrir. APRES tab5_lvgl : ses lambdas referencent des ids de widgets LVGL.
-  tab5_navigation: !include Tab5/tab5-navigation.yaml
+  tab5_navigation: !include Tab5/paquets/tab5-navigation.yaml
   # Entites exposees a HA pour regler l'ecran depuis un dashboard HA.
-  tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
+  tab5_ha_controls: !include Tab5/paquets/tab5-ha-controls.yaml
   # Reveil matin + annonce des rendez-vous. Comme ci-dessus : APRES tab5_lvgl
   # (ses scripts referencent les ids de alarm_popup.yaml / alarm_ring_overlay.yaml).
-  tab5_alarm: !include Tab5/tab5-alarm.yaml
+  tab5_alarm: !include Tab5/paquets/tab5-alarm.yaml
   # Pièces et tuiles (ADR-0023) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
-  tab5_tuiles: !include Tab5/tab5-tuiles.yaml
+  tab5_tuiles: !include Tab5/paquets/tab5-tuiles.yaml
   # Roue d'actions rapides (ADR-0036) : APRES tab5_lvgl (widgets), script lancé par tab5_tuiles_ui.
-  tab5_roue: !include Tab5/tab5-roue.yaml
+  tab5_roue: !include Tab5/paquets/tab5-roue.yaml
   # Rangée sous l'horloge (ADR-0031) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
-  tab5_rangee: !include Tab5/tab5-rangee.yaml
+  tab5_rangee: !include Tab5/paquets/tab5-rangee.yaml
   # Tuile − / + (ADR-0033) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
-  tab5_reglables: !include Tab5/tab5-reglables.yaml
+  tab5_reglables: !include Tab5/paquets/tab5-reglables.yaml
   # Popup Énergie (ADR-0028) : APRES tab5_lvgl (widgets), ouvert par une tuile ou par HA.
-  tab5_energie: !include Tab5/tab5-energie.yaml
+  tab5_energie: !include Tab5/paquets/tab5-energie.yaml
   # Popup Température (ADR-0032) : APRES tab5_lvgl (widgets), ouvert par un appui long.
-  tab5_historique: !include Tab5/tab5-historique.yaml
+  tab5_historique: !include Tab5/paquets/tab5-historique.yaml
   # Popup Alertes (lot 4 du plan des alertes) : APRES tab5_lvgl (widgets), ouvert par un
   # appui long sur la carte centrale ou par HA.
-  tab5_alertes: !include Tab5/tab5-alertes.yaml
+  tab5_alertes: !include Tab5/paquets/tab5-alertes.yaml
   # Popup Maison (ADR-0037) : APRES tab5_lvgl (widgets), ouvert par HA ou par le titre de la pièce.
-  tab5_maison: !include Tab5/tab5-maison.yaml
+  tab5_maison: !include Tab5/paquets/tab5-maison.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les
   # valeurs par défaut des entity_… : une clé de Tab5/user_entities.yaml l'emporte.
-  tab5_zones: !include Tab5/tab5-zones.yaml
+  tab5_zones: !include Tab5/paquets/tab5-zones.yaml
   # Popup Réglages (06/10/2026) : APRES tab5_lvgl (widgets), ouvert par l'engrenage ou par HA.
-  tab5_reglages: !include Tab5/tab5-reglages.yaml
+  tab5_reglages: !include Tab5/paquets/tab5-reglages.yaml
   # Mode économie d'énergie (06/10/2026) : plafond du rétroéclairage, animations, cadence
   # de LVGL. Ses entrées viennent du matériel (INA226, toucher), qui lance son script.
-  tab5_economie: !include Tab5/tab5-economie.yaml
+  tab5_economie: !include Tab5/paquets/tab5-economie.yaml
   # Thèmes (ADR-0029) : EN DERNIER, sa repeinture lit les widgets, les capteurs et les
   # scripts des packages ci-dessus.
-  tab5_themes: !include Tab5/tab5-themes.yaml
+  tab5_themes: !include Tab5/paquets/tab5-themes.yaml
 
 # Portail captif, conservé à dessein (audit du 06/09/2026, §4.1 point 16) : il
 # n'est actif que quand l'AP de secours l'est (`wifi: ap:` dans
-# Tab5/tab5-sensors-diagnostics.yaml), c'est-à-dire après l'échec de la connexion
+# Tab5/paquets/tab5-sensors-diagnostics.yaml), c'est-à-dire après l'échec de la connexion
 # Wi-Fi — la seule voie de récupération sans câble USB. Coût en fonctionnement
 # normal : le code du serveur web dans le binaire et ses objets en RAM.
 captive_portal:

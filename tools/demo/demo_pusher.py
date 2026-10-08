@@ -4,7 +4,7 @@ sans Home Assistant, pour tester le projet en quelques minutes.
 
 Le firmware Tab5 est *push-only* (docs/decisions/0001-push-only-zero-polling.md) :
 il ne fait que réagir aux appels de service ESPHome natifs (`tab5_maj_*`, cf.
-Tab5/tab5-api-logic.yaml). Depuis le lot 6a (ADR-0019), les appareils de la maison
+Tab5/paquets/tab5-api-logic.yaml). Depuis le lot 6a (ADR-0019), les appareils de la maison
 arrivent eux aussi par une poussée, `tab5_maj_emplacements`, que le blueprint HA
 envoie normalement. Ce script se fait passer pour HA via `aioesphomeapi` (la même
 librairie que l'intégration ESPHome de HA) — sans jamais installer ni configurer
@@ -12,8 +12,8 @@ de vrai Home Assistant. Depuis la 3.2 (ADR-0023), les tuiles du bas sont des pi�
 décrites par HA : la démo pousse les siennes (`tab5_maj_tuiles`, puis leurs états)
 quand la tablette a cette action, et rien de plus à un firmware 3.x.
 
-Ne modifie aucun fichier du firmware (Tab5/*.yaml, tab5_custom.cpp/.h ; --dry-run
-lit Tab5/tab5-api-logic.yaml) et ne lit pas Tab5/user_entities.yaml : flashez avec
+Ne modifie aucun fichier du firmware (Tab5/paquets/*.yaml, tab5_custom.cpp/.h ; --dry-run
+lit Tab5/paquets/tab5-api-logic.yaml) et ne lit pas Tab5/user_entities.yaml : flashez avec
 Tab5/user_entities.example.yaml tel quel (voir docs/demo_mode.md).
 
 Clé API (lot 6b, ADR-0020) : aucune n'est compilée depuis la 3.0. Sur une tablette
@@ -28,7 +28,7 @@ Usage :
     python tools/demo/demo_pusher.py --host 192.168.1.42 --config-ha \\\\192.168.1.10\\config
     python tools/demo/demo_pusher.py --host 192.168.1.42 --maison-minimale   # zones optionnelles (lot 5)
     python tools/demo/demo_pusher.py --dry-run   # sans matériel ni dépendance : clés de chaque appel
-                                                 # = variables de Tab5/tab5-api-logic.yaml, format des payloads
+                                                 # = variables de Tab5/paquets/tab5-api-logic.yaml, format des payloads
 
 Arrêt : Ctrl+C. Rien à nettoyer ailleurs (pas de HA, pas de compte ; seule la clé
 donnée à une tablette neuve est gardée, dans tools/demo/cle_demo.txt).
@@ -76,7 +76,7 @@ logger = logging.getLogger("demo_pusher")
 FICHIER_CLE_DEMO = Path(__file__).resolve().parent / "cle_demo.txt"
 
 # Le contrat du firmware : ses actions et leurs variables (lues par --dry-run).
-API_LOGIC = Path(__file__).resolve().parents[2] / "Tab5" / "tab5-api-logic.yaml"
+API_LOGIC = Path(__file__).resolve().parents[2] / "Tab5" / "paquets" / "tab5-api-logic.yaml"
 
 # Pauses entre les envois d'une scène de la démo. La poussée de HA n'en a plus depuis le
 # 01/10/2026 (packages/tab5_push.yaml) ; celles-ci restent telles quelles : le
@@ -223,7 +223,7 @@ async def _donner_une_cle(host: str) -> str:
 def _dry_run(absentes: frozenset) -> None:
     """Joue chaque scène contre le contrat du firmware, sans appareil ni dépendance.
 
-    Les actions et leurs variables sont lues dans Tab5/tab5-api-logic.yaml
+    Les actions et leurs variables sont lues dans Tab5/paquets/tab5-api-logic.yaml
     (lire_contrat) : chaque appel de la démo passe par la même garde que sur une vraie
     tablette (_appeler), qui refuse une variable manquante ou en trop, et par les
     assertions de scenarios.py (format des payloads). Deux passes : firmware récent

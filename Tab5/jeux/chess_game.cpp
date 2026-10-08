@@ -15,7 +15,7 @@
  *      Couleurs : uniquement Chess::Pal::* (jamais d'hex en dur ici).
  *
  *      PIECES : vraies figurines Unicode via la police dediee chess_pieces_80
- *      (Tab5/ChessPieces.ttf, sous-ensemble de 12 glyphes). Rendu en DEUX
+ *      (Tab5/fonts/ChessPieces.ttf, sous-ensemble de 12 glyphes). Rendu en DEUX
  *      CALQUES superposes, comme lichess ou chess.com :
  *        - calque « corps »   = glyphe PLEIN   U+265A..265F, ivoire ou anthracite
  *        - calque « contour » = glyphe CREUX   U+2654..2659, anthracite

@@ -1,7 +1,7 @@
 # ADR-0012: Landscape dashboard via `rotation: 270`, one console flips to portrait at runtime
 
 **Status:** Accepted (2026-07-28, "Neon Apron")
-**Date:** 2026-09-06 (written retroactively from the `[AI-CONTEXT]`/`[AI-WARNING]` blocks in `Tab5/tab5-styles.yaml`, `Tab5/pinball_game.h` and `Tab5/tab5-scripts.yaml`)
+**Date:** 2026-09-06 (written retroactively from the `[AI-CONTEXT]`/`[AI-WARNING]` blocks in `Tab5/paquets/tab5-styles.yaml`, `Tab5/jeux/pinball_game.h` and `Tab5/paquets/tab5-scripts.yaml`)
 
 ## Context
 

@@ -3,8 +3,8 @@
 la tablette et Home Assistant tient en des clés écrites à quatre endroits, qu'aucun
 compilateur ne compare :
 
-- l'enum `Zone` (Tab5/tab5_custom.h) et le tableau `kCles` (Tab5/tab5_zones.cpp) ;
-- la demande `esphome.tab5_zones` (Tab5/tab5-zones.yaml), les clés des zones que la
+- l'enum `Zone` (Tab5/ecran/tab5_custom.h) et le tableau `kCles` (Tab5/ecran/tab5_zones.cpp) ;
+- la demande `esphome.tab5_zones` (Tab5/paquets/tab5-zones.yaml), les clés des zones que la
   tablette suit, dans l'ordre de l'enum ;
 - la réponse de HA : depuis le lot 6a (ADR-0019), le blueprint « Tab5 — emplacements »
   (liste `cles_zones`), qui ajoute les zones qu'il est seul à connaître (clim, volet,
@@ -20,7 +20,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def _enum_zone():
-    m = re.search(r"enum class Zone : uint8_t \{(.*?)\};", _lire("Tab5", "tab5_custom.h"), re.S)
+    m = re.search(r"enum class Zone : uint8_t \{(.*?)\};", _lire("Tab5", "ecran", "tab5_custom.h"), re.S)
     assert m, "enum Zone introuvable dans tab5_custom.h"
     corps = "\n".join(l.split("//", 1)[0] for l in m.group(1).splitlines())
     noms = [n.strip() for n in corps.replace("\n", " ").split(",") if n.strip()]
@@ -29,13 +29,13 @@ def _enum_zone():
 
 
 def _kcles():
-    m = re.search(r"kCles\[kNbZones\] = \{(.*?)\};", _lire("Tab5", "tab5_zones.cpp"), re.S)
+    m = re.search(r"kCles\[kNbZones\] = \{(.*?)\};", _lire("Tab5", "ecran", "tab5_zones.cpp"), re.S)
     assert m, "kCles introuvable dans tab5_zones.cpp"
     return re.findall(r'"([a-z0-9_]+)"', m.group(1))
 
 
 def _demande():
-    m = re.search(r'^\s+zones: "([^"]+)"', _lire("Tab5", "tab5-zones.yaml"), re.M)
+    m = re.search(r'^\s+zones: "([^"]+)"', _lire("Tab5", "paquets", "tab5-zones.yaml"), re.M)
     assert m, "chaîne zones: introuvable dans tab5-zones.yaml"
     return m.group(1).split(",")
 
@@ -86,11 +86,11 @@ def test_plus_de_reponse_des_zones_dans_le_package():
 
 
 def test_chaque_capteur_de_zone_signale_ses_donnees():
-    sensors = _lire("Tab5", "tab5-sensors-domotique.yaml")
+    sensors = _lire("Tab5", "paquets", "tab5-sensors-domotique.yaml")
     premiere_ha = _enum_zone().index("CLIM")
     for nom in _enum_zone()[:premiere_ha]:
         if nom.startswith("POT_"):
             continue  # boucle sur Zone::POT_1 + i (pots_humidite_maj, tab5_rangee.cpp)
         assert f"zone_vue(Zone::{nom})" in sensors, f"aucun zone_vue(Zone::{nom})"
-    assert "zone_vue(static_cast<Zone>(static_cast<int>(Zone::POT_1) + i))" in _lire("Tab5", "tab5_rangee.cpp")
+    assert "zone_vue(static_cast<Zone>(static_cast<int>(Zone::POT_1) + i))" in _lire("Tab5", "ecran", "tab5_rangee.cpp")
     assert sensors.count("- script.execute: tab5_pots_maj") == 5

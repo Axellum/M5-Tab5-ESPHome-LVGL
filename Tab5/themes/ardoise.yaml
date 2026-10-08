@@ -4,7 +4,7 @@
 # du 04/10/2026, Claude Opus 5.5, audit_tab5/themes_2026-10-04 hors dépôt).
 #
 # Un thème = ce fichier (ADR-0029, lot 2). tools/gen_themes.py le traduit en C++
-# (THEMES[], Tab5/tab5_tokens.h) et l'ajoute au select « Thème » ; `--check` échoue en CI si le
+# (THEMES[], Tab5/socle/tab5_tokens.h) et l'ajoute au select « Thème » ; `--check` échoue en CI si le
 # C++ est périmé. Couleurs en 0xRRGGBB (sans guillemets : YAML les lit comme des
 # entiers). Chaque mode donne TOUS les rôles de `struct Palette` (tab5_tokens.h),
 # sauf le verre pré-mélangé (GLASS_HI_PAGE / LO_PAGE sur BG à 58 %, GLASS_HI_MODAL /

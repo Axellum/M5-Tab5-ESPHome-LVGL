@@ -1,7 +1,7 @@
 # ADR-0011: `api: reboot_timeout: 60min` — keep the anti-zombie net, stop cycling on HA outages
 
 **Status:** Accepted (2026-08-01)
-**Date:** 2026-09-06 (written retroactively from the comment block in `Tab5/tab5-api-logic.yaml` and the incident in `docs/troubleshooting.md`)
+**Date:** 2026-09-06 (written retroactively from the comment block in `Tab5/paquets/tab5-api-logic.yaml` and the incident in `docs/troubleshooting.md`)
 
 ## Context
 
