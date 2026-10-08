@@ -136,6 +136,30 @@ packages:
   pot_sensors_4: !include { file: pot_sensors.yaml, vars: { n: 4 } }
   pot_sensors_5: !include { file: pot_sensors.yaml, vars: { n: 5 } }
 
+script:
+  # Une mise à jour d'un des 5 capteurs d'humidité (08/10/2026, audit YML-7 : avant, une
+  # lambda recopiée sur les 5 capteurs par une ancre YAML, #T164). Les widgets ne sont
+  # joignables que par id() : la lambda les passe à pots_humidite_maj() (tab5_rangee.cpp),
+  # qui fait le reste. `queued` : une mise à jour arrivée pendant qu'il tourne n'est pas
+  # perdue (il ne contient aucune attente, il tourne d'un trait).
+  - id: tab5_pots_maj
+    mode: queued
+    then:
+      - lambda: |-
+          const bool publies[5] = {id(moisture_1).has_state(), id(moisture_2).has_state(),
+              id(moisture_3).has_state(), id(moisture_4).has_state(), id(moisture_5).has_state()};
+          const float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state,
+              id(moisture_4).state, id(moisture_5).state};
+          MoistureSlotUI slots[4] = {{id(icon_pot_s0)}, {id(icon_pot_s1)}, {id(icon_pot_s2)}, {id(icon_pot_s3)}};
+          PotDetailUI cards[5] = {
+              {id(icon_pot_d1), id(lbl_pot_d1_moist), id(lbl_pot_d1_status)},
+              {id(icon_pot_d2), id(lbl_pot_d2_moist), id(lbl_pot_d2_status)},
+              {id(icon_pot_d3), id(lbl_pot_d3_moist), id(lbl_pot_d3_status)},
+              {id(icon_pot_d4), id(lbl_pot_d4_moist), id(lbl_pot_d4_status)},
+              {id(icon_pot_d5), id(lbl_pot_d5_moist), id(lbl_pot_d5_status)}
+          };
+          if (pots_humidite_maj(publies, vals, slots, cards)) id(tab5_zones_apply).execute();
+
 sensor:
   # Luminosité (attribut brightness 0-255) des 3 lumières 3.x — l'arc du popup lumière
   # quand il la montre (inerte popup fermé ou pendant un glissement, tab5_tuiles.cpp).
@@ -189,55 +213,34 @@ sensor:
       - lambda: |-
           if (!std::isnan(x)) set_icon_color_ui(id(icon_salon), get_humidity_color(x));
 
+  # Humidité des 5 pots : chaque mise à jour relance le script tab5_pots_maj (plus bas),
+  # qui trie les 4 emplacements de la ligne des plantes et peint le popup « Mes Plantes ».
   - platform: template
     id: moisture_1
     update_interval: never
-    on_value: &moisture_on_value
-      # Tri dynamique des 4 slots plantes a chaque mise a jour (bloc partage via ancre YAML, cf. #T164)
-      - lambda: |-
-          // Zones (lot 5) : un capteur qui a publié quoi que ce soit (NaN compris,
-          // « unavailable ») existe dans HA — son pot reste ou revient à l'écran.
-          const bool publies[5] = {id(moisture_1).has_state(), id(moisture_2).has_state(),
-              id(moisture_3).has_state(), id(moisture_4).has_state(), id(moisture_5).has_state()};
-          bool zones_changees = false;
-          for (int i = 0; i < 5; i++)
-            if (publies[i]) zones_changees |= zone_vue(static_cast<Zone>(static_cast<int>(Zone::POT_1) + i));
-          float vals[5] = {id(moisture_1).state, id(moisture_2).state, id(moisture_3).state, id(moisture_4).state, id(moisture_5).state};
-          const char* icons[5] = {"\U000F0E66", "\U000F09F1", "\U000F0D08", "\U000F024A", "\U000F02E5"};
-          MoistureSlotUI slots[4] = {
-              {id(icon_pot_s0)},
-              {id(icon_pot_s1)},
-              {id(icon_pot_s2)},
-              {id(icon_pot_s3)}
-          };
-          sort_and_update_moisture_slots(vals, icons, slots);
-          // Popup details pots : humidite + statut des 5 cartes FIXES (carte N = capteur N)
-          PotDetailUI cards[5] = {
-              {id(icon_pot_d1), id(lbl_pot_d1_moist), id(lbl_pot_d1_status)},
-              {id(icon_pot_d2), id(lbl_pot_d2_moist), id(lbl_pot_d2_status)},
-              {id(icon_pot_d3), id(lbl_pot_d3_moist), id(lbl_pot_d3_status)},
-              {id(icon_pot_d4), id(lbl_pot_d4_moist), id(lbl_pot_d4_status)},
-              {id(icon_pot_d5), id(lbl_pot_d5_moist), id(lbl_pot_d5_status)}
-          };
-          update_pots_popup_moisture_ui(vals, cards);
-          if (zones_changees) id(tab5_zones_apply).execute();
+    on_value:
+      - script.execute: tab5_pots_maj
 
   - platform: template
     id: moisture_2
     update_interval: never
-    on_value: *moisture_on_value
+    on_value:
+      - script.execute: tab5_pots_maj
 
   - platform: template
     id: moisture_3
     update_interval: never
-    on_value: *moisture_on_value
+    on_value:
+      - script.execute: tab5_pots_maj
 
   - platform: template
     id: moisture_4
     update_interval: never
-    on_value: *moisture_on_value
+    on_value:
+      - script.execute: tab5_pots_maj
 
   - platform: template
     id: moisture_5
     update_interval: never
-    on_value: *moisture_on_value
+    on_value:
+      - script.execute: tab5_pots_maj

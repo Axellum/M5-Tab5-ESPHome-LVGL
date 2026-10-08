@@ -11,6 +11,7 @@
 #include "tab5_custom.h"   // close_popup_if_open()
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <cmath>
 #include <cstring>
 
 #include "marble_game.h"
@@ -75,6 +76,42 @@ void dispatch_imu(float ax, float ay, float az) {
 }
 
 }  // namespace GameRegistry
+
+// =============================================================================
+// IMU hors jeux (tab5-imu.yaml ; 08/10/2026, audit YML-7 : avant, deux `static` de
+// lambda YAML)
+// =============================================================================
+namespace {
+uint32_t s_derniere_tape_ms = 0;  // anti-rebond du tap-to-wake
+uint32_t s_cadence_imu_ms = 100;  // update_interval du composant (tab5-imu.yaml)
+}  // namespace
+
+bool imu_tape_franche(float ax, float ay, float az, uint32_t maintenant_ms) {
+    // Au repos la norme vaut ~1 g ; une tape franche sur la dalle produit un pic
+    // > 2,5 g. Anti-rebond de 500 ms.
+    const float norme = sqrtf(ax * ax + ay * ay + az * az);
+    if (norme <= 2.5f || (maintenant_ms - s_derniere_tape_ms) <= 500) return false;
+    s_derniere_tape_ms = maintenant_ms;
+    return true;
+}
+
+int32_t imu_cadence_a_changer(bool ecoute_tape) {
+    // Quelles consoles justifient 30 Hz : le drapeau `imu_fast` de kGames (plus haut).
+    // « Roi Noir », « Dames » et « Go Tab » l'ont à false : ils n'utilisent l'IMU que
+    // pour une secousse franche (demande d'indice), fiable à 10 Hz — inutile de payer
+    // 30 Hz pendant une partie qui peut durer une demi-heure. « Neon Apron » l'a à
+    // true : un nudge est une secousse de ~150 ms, à 10 Hz on n'en verrait qu'un
+    // échantillon sur deux et le passe-haut raterait la moitié des coups de hanche.
+    // Écran éteint : on écoute le tap-to-wake (s'il est activé). Un jeu ouvert
+    // (« Dames », « Go », « Trial Poursuite ») lit une secousse à 10 Hz.
+    uint32_t voulue = 0;  // 0 = pas de lecture (écran allumé, aucun jeu)
+    if (GameRegistry::any_imu_fast_open()) voulue = 33;
+    else if (GameRegistry::any_open()) voulue = 100;
+    else if (ecoute_tape) voulue = 100;
+    if (voulue == s_cadence_imu_ms) return -1;
+    s_cadence_imu_ms = voulue;
+    return static_cast<int32_t>(voulue);
+}
 
 // =============================================================================
 // Fenêtres modales

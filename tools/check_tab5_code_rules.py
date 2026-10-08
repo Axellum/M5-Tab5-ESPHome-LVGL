@@ -393,7 +393,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
         "maison_icone_*",
         "roue_moyeu_icone",
     ),
-    ("tab5-sensors-domotique.yaml", "moisture_1"): ("icon_pot_s*",),
+    # Icônes des pots sur la ligne des plantes (script tab5_pots_maj, 08/10/2026).
+    ("tab5_rangee.cpp", "pots_humidite_maj"): ("icon_pot_s*",),
 }
 
 
@@ -759,9 +760,6 @@ STATIC_LAMBDA_PERMIS: dict[str, dict[str, int]] = {
     "tab5-alarm.yaml": {"last": 2},
     # « Écran courant » : dernière valeur publiée.
     "tab5-navigation.yaml": {"last": 1},
-    # IMU : anti-rebond du tap-to-wake (on_value du même capteur), cadence de poll en cours
-    # (interval de 1 s).
-    "tab5-imu.yaml": {"last_tap_ms": 1, "cur": 1},
     # Version du C6 : nombre d'essais de lecture (3 au plus).
     "tab5-sensors-diagnostics.yaml": {"essais": 1},
 }

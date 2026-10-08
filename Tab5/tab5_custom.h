@@ -97,6 +97,23 @@ uint32_t ui_idle_ms();
 // (événements du pipeline vocal, ouverture programmée d'un popup).
 void ui_mark_activity();
 
+// Retour automatique à l'accueil, un tick (interval 1 s de tab5-scripts.yaml ;
+// 08/10/2026, audit YML-7). Ferme ce qui doit l'être (sous-fenêtres, popups) et dit au
+// YAML ce qu'il lui reste à faire avec ses id() : QUITTER_ARCADE (revenir à page_main),
+// POPUPS_FERMES (oublier l'état du popup Assistant), PREVISIONS (remettre la page
+// principale des prévisions). Dans tab5_anim.cpp.
+enum class RetourAuto : uint8_t { RIEN, QUITTER_ARCADE, POPUPS_FERMES, PREVISIONS };
+RetourAuto retour_auto_tick(bool sur_page_arcade);
+
+// IMU hors jeux (tab5-imu.yaml ; 08/10/2026, audit YML-7 : avant, deux `static` de
+// lambda), dans tab5_registry.cpp. imu_tape_franche : (ax, ay, az) est une tape franche
+// (> 2,5 g) au moins 500 ms après la dernière retenue (tap-to-wake). imu_cadence_a_changer :
+// cadence de lecture voulue — 33 ms pour un jeu `imu_fast`, 100 ms pour un autre jeu ou
+// pour écouter la tape (ecoute_tape : écran éteint et tap-to-wake activé), 0 sinon (plus
+// de lecture) — ou -1 si elle n'a pas changé depuis l'appel précédent.
+bool imu_tape_franche(float ax, float ay, float az, uint32_t maintenant_ms);
+int32_t imu_cadence_a_changer(bool ecoute_tape);
+
 // Ouverture d'un popup : affichage instantané (pas de fondu) ET passage au
 // premier plan de son parent — ne pas le refaire après l'appel.
 void animate_popup_open(lv_obj_t* card);
@@ -473,9 +490,18 @@ struct PotDetailUI {
     lv_obj_t* status_lbl;  // OK / Bientôt sec / À arroser / Hors ligne
 };
 
-// Humidité + statut des 5 cartes — appelé par l'ancre &moisture_on_value
-// (tab5-sensors-domotique.yaml) à chaque mise à jour d'un des 5 capteurs.
+// Humidité + statut des 5 cartes — appelé par pots_humidite_maj() à chaque mise à
+// jour d'un des 5 capteurs.
 void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]);
+
+// Mise à jour d'un des 5 capteurs d'humidité (script tab5_pots_maj,
+// tab5-sensors-domotique.yaml ; 08/10/2026, avant une lambda recopiée 5 fois par une
+// ancre YAML) : zone de chaque pot dont le capteur a publié (publies[i], NaN compris :
+// il existe dans HA), les 4 emplacements triés de la ligne des plantes avec l'icône de
+// chaque pot, les 5 cartes du popup « Mes Plantes ». true si une zone de pot vient
+// d'apparaître : l'appelant relance tab5_zones_apply. Dans tab5_rangee.cpp.
+bool pots_humidite_maj(const bool publies[5], const float vals[5], MoistureSlotUI slots[4],
+                       PotDetailUI cards[5]);
 
 // Une métrique secondaire d'une carte pot (texte + couleur). L'humidité passe par
 // update_pots_popup_moisture_ui, pas par cet enum.
