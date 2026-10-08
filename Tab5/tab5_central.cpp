@@ -252,7 +252,7 @@ static void couper_animation(lv_obj_t* wrap) {
     if (!wrap) return;
     lv_anim_delete(wrap, nullptr);
     lv_obj_set_pos(wrap, 0, 0);
-    lv_obj_set_style_opa(wrap, LV_OPA_COVER, LV_PART_MAIN);
+    ui_style_num(wrap, LV_STYLE_OPA, LV_OPA_COVER);  // comparée d'abord : déjà opaque le plus souvent
     transition_couper(wrap);  // la transition du rotateur anime le contenu du panneau
 }
 
@@ -325,13 +325,13 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
     if (slot.id_store) slot.id_store->clear();
     if (slot.lbl) {
         lv_label_set_recolor(slot.lbl, false);
-        lv_label_set_text(slot.lbl, "");
+        ui_text(slot.lbl, "");  // un emplacement resté vide d'un envoi à l'autre : rien
     }
     if (slot.cpt) lv_obj_add_flag(slot.cpt, LV_OBJ_FLAG_HIDDEN);
     if (slot.wrap) {
         lv_obj_add_flag(slot.wrap, LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_x(slot.wrap, 0);  // Reset X (animate_alert_enter peut avoir laisse un offset)
-        lv_obj_set_style_opa(slot.wrap, LV_OPA_COVER, LV_PART_MAIN);
+        ui_style_num(slot.wrap, LV_STYLE_OPA, LV_OPA_COVER);
     }
 }
 
@@ -542,10 +542,10 @@ static bool set_forecast_page_title_text(int forecast_page, lv_obj_t* lbl_page_t
     const bool deux_lignes = !chapeau.empty() && !plage.empty();
     if (ctx.page_title_sub) {
         lv_label_set_recolor(ctx.page_title_sub, false);
-        lv_label_set_text(ctx.page_title_sub, deux_lignes ? chapeau.c_str() : "");
+        ui_text(ctx.page_title_sub, deux_lignes ? chapeau.c_str() : "");
     }
     lv_label_set_recolor(lbl_page_title, false);
-    lv_label_set_text(lbl_page_title, plage.empty() ? chapeau.c_str() : plage.c_str());
+    ui_text(lbl_page_title, plage.empty() ? chapeau.c_str() : plage.c_str());
     lv_obj_align(lbl_page_title, LV_ALIGN_CENTER, 0, deux_lignes ? 13 : 0);
     return true;
 }
@@ -662,7 +662,7 @@ bool update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
             if (t.empty()) {
                 ctx.has_info = false;
                 lv_label_set_recolor(lbl_info, false);
-                lv_label_set_text(lbl_info, "");
+                ui_text(lbl_info, "");
                 return false;
             }
             t = normalize_text_utf8(t);
@@ -675,7 +675,7 @@ bool update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
 
     ctx.has_info = !t.empty();
     if (t.empty()) {
-        lv_label_set_text(lbl_info, "");
+        ui_text(lbl_info, "");
         if (ctx.current_panel == kInfoPanel && info_wrap && planning_wrap) {
             if (ctx.planning_off) {
                 // Pas de planning (lot 5) : le panneau actif suivant, ou une carte vide.
@@ -700,7 +700,7 @@ bool update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     colorer_niveau(kHaAlertSlotCount, lbl_info, couleur);
 
     lv_label_set_recolor(lbl_info, has_recolor_markup);
-    lv_label_set_text(lbl_info, t.c_str());
+    ui_text(lbl_info, t.c_str());
 
     // Vigilance rouge nouvelle (son identifiant change avec le niveau ou les phénomènes) :
     // elle passe en premier, comme un bandeau d'alerte rouge.
@@ -792,7 +792,7 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
     }
     s.code = false;
     std::string t = normalize_text_utf8(phrase);
-    lv_label_set_text(lbl, t.c_str());
+    ui_text(lbl, t.c_str());
 }
 
 // Changer de page ou de mode (météo ↔ HA) met fin aux overlays de la carte centrale
