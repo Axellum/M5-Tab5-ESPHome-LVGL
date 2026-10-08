@@ -20,7 +20,7 @@ import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
-from tests.commun import ChargeurSansBalises as _Chargeur
+from tests.commun import CacheJinja, ChargeurSansBalises as _Chargeur
 
 RACINE = Path(__file__).resolve().parents[1]
 HA = RACINE / "HomeAssistant_Config"
@@ -80,8 +80,13 @@ class States:
         return _Domaine(self._etats.values(), domaine)
 
 
+# Code compilé des macros, partagé par les environnements de _env() (OUT-5, audit du
+# 07/10/2026 : tab5_alertes.jinja était recompilé ~265 fois par run).
+_JINJA = CacheJinja()
+
+
 def _env(etats=(), maintenant=T0):
-    env = ImmutableSandboxedEnvironment(loader=jinja2.FileSystemLoader(str(MACROS)),
+    env = ImmutableSandboxedEnvironment(loader=jinja2.FileSystemLoader(str(MACROS)), bytecode_cache=_JINJA,
                                         extensions=["jinja2.ext.loopcontrols"],
                                         undefined=jinja2.StrictUndefined)
     liste = list(etats)

@@ -17,6 +17,11 @@ Tout est ici, une fois :
   * `ChargeurEntrees` : un `!input x` de blueprint vaut `{"!input": "x"}`.
 - `bloc_service(nom)` : le texte d'un service de `Tab5/tab5-api-logic.yaml`, de sa ligne
   `- service: nom` à la suivante (ou à la fin du bloc `api:`).
+- `CacheJinja` : cache en mémoire du code compilé des modèles Jinja (`bytecode_cache=` d'un
+  environnement, pour les modèles lus par un loader ; `.depuis_texte(env, texte)` pour un
+  `env.from_string(texte)`). Une instance par configuration d'environnement (mêmes
+  extensions, filtres et tests) : le code compilé n'est partagé qu'entre environnements
+  bâtis par la même fonction.
 
 Un test garde ses propres outils quand ils font autre chose (par exemple le `_Chargeur` du
 blueprint de test_tuiles_blueprint.py, qui garde les `!input` comme objets `_Entree`).
@@ -26,6 +31,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import jinja2
 import yaml
 
 REPO = Path(__file__).resolve().parent.parent
@@ -84,3 +90,25 @@ def bloc_service(nom: str, texte: str | None = None) -> str:
     fins += [m.start() for m in re.finditer(r"^[^\s#]", suite, re.M)]
     return texte[debut.start():debut.end() + min(fins, default=len(suite))]
 
+
+class CacheJinja(jinja2.BytecodeCache):
+    """Code compilé des modèles, en mémoire, partagé par les environnements d'une même
+    configuration. Clé : nom du modèle ET somme du source (un source modifié se recompile)."""
+
+    def __init__(self):
+        self._codes = {}
+
+    def load_bytecode(self, bucket):
+        code = self._codes.get((bucket.key, bucket.checksum))
+        if code is not None:
+            bucket.code = code
+
+    def dump_bytecode(self, bucket):
+        self._codes[(bucket.key, bucket.checksum)] = bucket.code
+
+    def depuis_texte(self, env, texte: str):
+        """Comme `env.from_string(texte)`, sans recompiler un texte déjà vu."""
+        code = self._codes.get(("texte", texte))
+        if code is None:
+            code = self._codes[("texte", texte)] = env.compile(texte)
+        return env.template_class.from_code(env, code, env.make_globals(None))
