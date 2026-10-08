@@ -28,7 +28,10 @@
            (packages/tab5_health.yaml) donne la nouvelle version ; sinon une réparation dit
            quoi faire (ligne `packages:` absente, ou redémarrage) ;
         5. prévient (notification), puis, si l'option est cochée, lance la mise à jour de la
-           tablette dès que son entité « Firmware » propose CETTE version (même release).
+           tablette dès que son entité « Firmware » propose CETTE version (même release) ;
+           `firmware_attendu` n'est oublié qu'une fois cette version lue sur la tablette, un
+           essai sans effet est refait (firmware.py), puis la réparation « firmware_echec »
+           le dit.
 @contraintes L'ordre fichiers puis firmware est le contrat du projet
       (docs/installation/updates.md) : le firmware n'est jamais lancé avant que l'étape 4 ait
       constaté la nouvelle version. Rien ici n'écrit hors de config/packages,
@@ -43,6 +46,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -56,13 +60,14 @@ from homeassistant.helpers import check_config
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 
-from . import installation, messages
+from . import firmware, installation, messages
 from .const import (
     ATTENTE_CAPTEUR_S,
     CAPTEUR_VERSION,
@@ -72,6 +77,7 @@ from .const import (
     GARDER_SAUVEGARDES,
     ISSUE_CONFIGURATION,
     ISSUE_FICHIERS_ABSENTS,
+    ISSUE_FIRMWARE,
     ISSUE_PACKAGES,
     ISSUE_REDEMARRAGE,
     ISSUE_REMPLACES,
@@ -96,6 +102,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: Tab5ConfigEntry) -> bool
     entry.async_on_unload(hass.bus.async_listen(
         EVENT_STATE_CHANGED, gestionnaire.sur_changement, event_filter=_est_une_mise_a_jour))
     entry.async_on_unload(entry.add_update_listener(_options_changees))
+    entry.async_on_unload(gestionnaire.arreter)
 
     async def _au_demarrage(_hass: HomeAssistant) -> None:
         await gestionnaire.async_installer()
@@ -113,7 +120,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     mémoire part, et une nouvelle installation repartira comme la première fois."""
     await Store(hass, STOCKAGE_VERSION, STOCKAGE_CLE).async_remove()
     for cle in (ISSUE_FICHIERS_ABSENTS, ISSUE_CONFIGURATION, ISSUE_PACKAGES, ISSUE_REDEMARRAGE,
-                ISSUE_REMPLACES):
+                ISSUE_REMPLACES, ISSUE_FIRMWARE):
         ir.async_delete_issue(hass, DOMAIN, cle)
 
 
@@ -138,6 +145,7 @@ class Gestionnaire:
         self._store: Store[dict[str, Any]] = Store(hass, STOCKAGE_VERSION, STOCKAGE_CLE)
         self.donnees: dict[str, Any] = {}
         self._verrou = asyncio.Lock()
+        self._minuterie: Callable[[], None] | None = None
 
     async def async_charger(self) -> None:
         self.donnees = await self._store.async_load() or {}
@@ -263,15 +271,16 @@ class Gestionnaire:
             # qu'une fois le capteur à cette version (async_verifier_firmware), par exemple
             # après le redémarrage demandé par une réparation.
             self.donnees["firmware_attendu"] = self.version
+            self.donnees.pop("firmware_essais", None)  # nouvelle version : compteurs à zéro
         await self._sauver()
         await executer(installation.nettoyer_sauvegardes, self.config, GARDER_SAUVEGARDES)
 
-        firmware = "non" if packages_absents else ("auto" if self.firmware_auto else "manuel")
+        suite_firmware = "non" if packages_absents else ("auto" if self.firmware_auto else "manuel")
         titre, message = messages.installation(
             hass.config.language, avant=avant, version=self.version, ecrits=len(plan.ecrire),
             retires=len(plan.retirer), identiques=len(plan.identiques), sauvegarde=relatif,
             modifies=plan.modifies, differents=plan.differents, redemarrer=redemarrer, packages_absents=packages_absents,
-            firmware=firmware)
+            firmware=suite_firmware)
         persistent_notification.async_create(hass, message, titre, NOTIFICATION)
 
     async def _verifier_configuration(self) -> tuple[bool, frozenset[str]]:
@@ -351,32 +360,85 @@ class Gestionnaire:
 
     async def async_verifier_firmware(self, rafraichir: bool = False) -> None:
         """Lance la mise à jour de la tablette quand son entité propose la version des
-        fichiers, et seulement une fois ces fichiers actifs. Sinon attend (sur_changement)."""
+        fichiers, et seulement une fois ces fichiers actifs ; la réessaie si elle reste sans
+        effet (firmware.py). Sinon attend (sur_changement, minuterie)."""
         attendu = self.donnees.get("firmware_attendu")
+        if not self.firmware_auto:
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_FIRMWARE)
         if not attendu or not self.firmware_auto or attendu != self.version or not self._version_active():
             return
         entites = self._entites_firmware()
+        tablettes = {}
         for entite in entites:
-            etat = self.hass.states.get(entite)
-            if etat is None:
+            if (etat := self.hass.states.get(entite)) is not None:
+                tablettes[entite] = firmware.Tablette(
+                    installee=etat.attributes.get("installed_version"),
+                    proposee=etat.attributes.get("latest_version"), disponible=etat.state == "on",
+                    en_cours=bool(etat.attributes.get("in_progress")))
+        essais: dict[str, dict] = self.donnees.setdefault("firmware_essais", {})
+        maintenant = dt_util.utcnow()
+        decision = firmware.decider(attendu, tablettes, essais, maintenant)
+
+        if decision.fini:
+            # Succès constaté (version installée lue sur l'entité) : seulement maintenant.
+            _LOGGER.info("Tab5 : tablette en %s, mise à jour enchaînée terminée", attendu)
+            self.donnees.pop("firmware_attendu", None)
+            self.donnees.pop("firmware_essais", None)
+            await self._sauver()
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_FIRMWARE)
+            self._programmer(None)
+            return
+
+        # Les essais sont comptés avant tout await : un autre appel (sur_changement) voit
+        # l'essai en cours et ne relance pas la même tablette.
+        numeros = {entite: firmware.noter_essai(essais, entite, maintenant) for entite in decision.lancer}
+        if numeros:
+            await self._sauver()
+        for entite, numero in numeros.items():
+            _LOGGER.info("Tab5 : fichiers %s actifs, mise à jour de %s lancée (essai %d/%d)",
+                         attendu, entite, numero, firmware.ESSAIS_MAX)
+            try:
+                # ESPHome ne fait qu'envoyer la commande : l'appel rend la main tout de suite,
+                # et ne lève que si la tablette ne la reçoit pas (déconnectée…).
+                async with asyncio.timeout(60):
+                    await self.hass.services.async_call("update", "install", {"entity_id": entite},
+                                                        blocking=True)
+            except Exception as err:  # noqa: BLE001 — l'essai compte, la minuterie réessaiera
+                _LOGGER.warning("Tab5 : mise à jour de %s pas lancée (%r), nouvel essai dans %d min",
+                                entite, err, firmware.DELAI_ESSAI_S // 60)
                 continue
-            installee = etat.attributes.get("installed_version")
-            derniere = etat.attributes.get("latest_version")
-            if installee == attendu:
-                self.donnees.pop("firmware_attendu", None)
-                await self._sauver()
-                return
-            if derniere == attendu and etat.state == "on" and not etat.attributes.get("in_progress"):
-                self.donnees.pop("firmware_attendu", None)  # avant tout await : une seule fois
-                await self._sauver()
-                _LOGGER.info("Tab5 : fichiers %s actifs, mise à jour de %s lancée", attendu, entite)
-                await self.hass.services.async_call("update", "install", {"entity_id": entite},
-                                                    blocking=False)
-                titre, message = messages.firmware_lance(self.hass.config.language, attendu)
-                persistent_notification.async_create(self.hass, message, titre, f"{NOTIFICATION}_firmware")
-                return
+            titre, message = messages.firmware_lance(self.hass.config.language, attendu)
+            persistent_notification.async_create(self.hass, message, titre, f"{NOTIFICATION}_firmware")
+
+        if decision.echecs:
+            _LOGGER.warning("Tab5 : %s toujours pas en %s après %d essais, à installer à la main",
+                            ", ".join(decision.echecs), attendu, firmware.ESSAIS_MAX)
+            self._probleme(ISSUE_FIRMWARE, ir.IssueSeverity.WARNING,
+                           {"version": attendu, "essais": str(firmware.ESSAIS_MAX)})
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_FIRMWARE)
+        # Revenir voir après un essai, ou à la fin du délai d'un essai en cours.
+        self._programmer(firmware.DELAI_ESSAI_S if numeros else decision.attente_s)
+
         if rafraichir and entites:
             # Le manifeste n'est relu que toutes les 6 h : demander une vérification tout de
             # suite (ESPHome : commande CHECK) ; la réponse arrive par sur_changement.
             await self.hass.services.async_call("homeassistant", "update_entity",
                                                 {"entity_id": entites}, blocking=False)
+
+    def _programmer(self, delai_s: float | None) -> None:
+        """Une seule minuterie : la prochaine vérification du firmware (None : aucune)."""
+        if self._minuterie is not None:
+            self._minuterie()
+            self._minuterie = None
+        if delai_s is not None:
+            self._minuterie = async_call_later(self.hass, delai_s + 5, self._a_l_heure)
+
+    @callback
+    def _a_l_heure(self, _maintenant: Any) -> None:
+        self._minuterie = None
+        self.hass.async_create_task(self.async_verifier_firmware())
+
+    @callback
+    def arreter(self) -> None:
+        self._programmer(None)

@@ -40,6 +40,7 @@ def _module(nom: str):
 installation = _module("installation")
 messages = _module("messages")
 const = _module("const")
+firmware = _module("firmware")
 
 
 def _embarques(version="9.9.9", base=archive_ha.HA_DIR) -> dict[str, bytes]:
@@ -97,7 +98,8 @@ def test_traductions_completes():
     assert set(en["issues"]) == issues, "une réparation par constante ISSUE_*"
     assert set(en["issues"][const.ISSUE_REDEMARRAGE]["fix_flow"]["error"]) == {const.ISSUE_CONFIGURATION}
     parametres = {const.ISSUE_PACKAGES: set(), const.ISSUE_CONFIGURATION: {"version", "signaler"},
-                  const.ISSUE_REMPLACES: {"fichiers", "sauvegarde"}}
+                  const.ISSUE_REMPLACES: {"fichiers", "sauvegarde"},
+                  const.ISSUE_FIRMWARE: {"version", "essais"}}
     for langue in (en, fr):
         # hassfest refuse une URL dans une traduction : elle passe par un paramètre.
         assert not re.search(r"https?://", json.dumps(langue, ensure_ascii=False))
@@ -118,7 +120,7 @@ def test_constantes_lues_dans_les_packages():
 
 
 def test_modules_purs_sans_home_assistant():
-    for nom in ("installation", "messages", "const"):
+    for nom in ("installation", "messages", "const", "firmware"):
         texte = (INTEGRATION / f"{nom}.py").read_text(encoding="utf-8")
         assert not re.search(r"^\s*(from|import)\s+(homeassistant|\.)", texte, re.M), nom
 
@@ -342,6 +344,68 @@ def test_etiquette_et_domaines():
                      "script", "automation"], "les entrées avant ce qui les lit, les automatisations en dernier"
     assert installation.packages({"packages/tab5_health.yaml": b"", "custom_templates/x.jinja": b""}) \
         == {"tab5_health"}
+
+
+# ─── Firmware enchaîné ───────────────────────────────────────────────────────
+
+def test_firmware_garde_l_attente_et_reessaie():
+    """HA-11 (audit du 07/10/2026) : `firmware_attendu` était oublié AVANT update.install,
+    et rien ne réessayait si l'OTA n'aboutissait pas. Ici, une tablette dont l'OTA rate :
+    l'attente reste jusqu'à la version constatée, chaque essai est refait après le délai,
+    ESSAIS_MAX fois, puis l'échec est dit."""
+    import datetime as dt
+    t0 = dt.datetime(2026, 10, 8, 12, 0, tzinfo=dt.timezone.utc)
+    minute = dt.timedelta(minutes=1)
+    ent = "update.tab5_firmware"
+    proposee = firmware.Tablette(installee="3.7.0", proposee="3.8.0", disponible=True, en_cours=False)
+    essais: dict = {}
+
+    d = firmware.decider("3.8.0", {ent: proposee}, essais, t0)
+    assert d.lancer == [ent] and not d.fini and not d.echecs
+    instant = t0
+    for essai in range(1, firmware.ESSAIS_MAX + 1):
+        assert firmware.noter_essai(essais, ent, instant) == essai
+        en_cours = firmware.Tablette("3.7.0", "3.8.0", True, True)
+        d = firmware.decider("3.8.0", {ent: en_cours}, essais, instant + minute)
+        assert not d.fini and not d.lancer and d.attente_s, "OTA en cours : attendre, sans oublier"
+        # L'OTA retombe sans effet (version installée inchangée).
+        d = firmware.decider("3.8.0", {ent: proposee}, essais, instant + 5 * minute)
+        assert not d.fini, "lancée mais pas constatée : firmware_attendu reste"
+        assert not d.lancer and 0 < d.attente_s <= firmware.DELAI_ESSAI_S, "trop tôt pour réessayer"
+        instant += dt.timedelta(seconds=firmware.DELAI_ESSAI_S + 1)
+        d = firmware.decider("3.8.0", {ent: proposee}, essais, instant)
+        if essai < firmware.ESSAIS_MAX:
+            assert d.lancer == [ent], f"essai {essai} sans effet : nouvel essai"
+        else:
+            assert not d.lancer and d.echecs == [ent] and not d.fini, "plus d'essai : échec dit"
+    assert json.loads(json.dumps(essais)) == essais, "gardé par le Store de HA (JSON)"
+
+    # Installée à la main ensuite : constatée, fini.
+    faite = firmware.Tablette("3.8.0", "3.8.0", False, False)
+    d = firmware.decider("3.8.0", {ent: faite}, essais, instant + minute)
+    assert d.fini and not d.echecs and not d.lancer
+
+
+def test_firmware_succes_constate_seulement():
+    import datetime as dt
+    t0 = dt.datetime(2026, 10, 8, 12, 0, tzinfo=dt.timezone.utc)
+    ent, tableau = "update.tab5_firmware", "update.tab5_firmware_esphome"
+    # L'entité du tableau de bord ESPHome suit la version d'ESPHome : jamais lancée,
+    # n'empêche pas de conclure.
+    autre = firmware.Tablette("2026.9.1", "2026.9.2", True, False)
+    essais: dict = {}
+    d = firmware.decider("3.8.0", {ent: firmware.Tablette("3.7.0", "3.8.0", True, False), tableau: autre},
+                         essais, t0)
+    assert d.lancer == [ent]
+    firmware.noter_essai(essais, ent, t0)
+    d = firmware.decider("3.8.0", {ent: firmware.Tablette("3.8.0", "3.8.0", False, False), tableau: autre},
+                         essais, t0 + dt.timedelta(minutes=4))
+    assert d.fini and not d.lancer, "version lue sur la tablette : succès constaté"
+    # Pas encore proposée (manifeste pas relu) : on attend, sans minuterie ni échec.
+    d = firmware.decider("3.8.0", {ent: firmware.Tablette("3.7.0", "3.7.0", False, False)}, {}, t0)
+    assert not d.fini and not d.lancer and not d.echecs and d.attente_s is None
+    # Aucune tablette trouvée : rien de fini.
+    assert not firmware.decider("3.8.0", {}, {}, t0).fini
 
 
 # ─── Archive HACS ────────────────────────────────────────────────────────────

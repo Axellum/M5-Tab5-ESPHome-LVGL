@@ -68,6 +68,10 @@
           }
         }
       }
+    },
+    "firmware_echec": {
+      "title": "Tab5 : la tablette n'est pas passée en {version}",
+      "description": "Les fichiers du Tab5 {version} sont en place, mais la tablette tourne toujours une autre version après {essais} essais de sa mise à jour. Installez-la à la main : Paramètres → Mises à jour (ou l'entité « Firmware » de la tablette) → Installer, tablette allumée et connectée. La raison de chaque essai est dans le journal (Paramètres → Système → Journaux, « tab5 »). Ce message disparaît dès que la tablette tourne en {version}."
     }
   }
 }

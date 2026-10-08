@@ -68,6 +68,10 @@
           }
         }
       }
+    },
+    "firmware_echec": {
+      "title": "Tab5: the tablet did not update to {version}",
+      "description": "The Tab5 files {version} are in place, but the tablet still runs another version after {essais} tries of its update. Install it by hand: Settings → Updates (or the tablet's « Firmware » entity) → Install, with the tablet on and connected. The reason of each try is in the log (Settings → System → Logs, « tab5 »). This message goes away once the tablet runs {version}."
     }
   }
 }
