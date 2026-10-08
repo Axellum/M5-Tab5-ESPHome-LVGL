@@ -9,9 +9,11 @@ Assistant neuf : installation, mises à jour, retour en arrière (ADR-0035).
       un redémarrage ; ici le zip est construit par tools/publication/archive_hacs.py et
       décompressé de la même façon. Scénario, sur UN Home Assistant neuf en conteneur :
         1. config/ d'une installation neuve + la ligne `packages:` du guide, zip 9.9.1,
-           compte (onboarding), intégration ajoutée par son formulaire → fichiers posés
-           sans redémarrage : capteur « Tab5 · version des fichiers HA » à 9.9.1,
-           rest_command chargé à chaud (absent d'un HA neuf), aucune réparation ;
+           un blueprint du Tab5 copié à la main (ancien, différent), compte (onboarding),
+           intégration ajoutée par son formulaire → fichiers posés sans redémarrage :
+           capteur « Tab5 · version des fichiers HA » à 9.9.1, rest_command chargé à chaud
+           (absent d'un HA neuf), le blueprint remplacé et dit (réparation persistante
+           « fichiers_remplaces », copie dans la sauvegarde), validée comme l'interface ;
         2. mise à jour 9.9.2 comme HACS (dossier remplacé, redémarrage), avec un package
            modifié à la main et un package que la release ne livre plus → capteur 9.9.2,
            sauvegarde des deux, le retiré absent, la notification nomme le modifié ;
@@ -84,6 +86,9 @@ VIDES = {"automations.yaml": "[]\n", "scripts.yaml": "", "scenes.yaml": "", "sec
 MODIFIE = "packages/tab5_tv.yaml"            # modifié à la main avant la 9.9.2
 RETIRE = "packages/tab5_micro_absence.yaml"  # plus livré par la 9.9.2
 CASSE = "packages/tab5_casse.yaml"           # livré par la 9.9.3, refusé par check_config
+# Copié à la main avant la première installation, différent de celui de la release (HA-10).
+COPIE_MAIN = "blueprints/automation/tab5/tab5_emplacements.yaml"
+MARQUE_MAIN = b"\n# copie a la main\n"
 # Un `initial` qui n'est pas un booléen : HA 2026.9.4 ne charge plus input_boolean, et
 # « Vérifier la configuration » ne le signale qu'en AVERTISSEMENT (contre-épreuve du
 # 07/10/2026 ci-dessous) — le cas qu'une vérification des seules erreurs laissait passer.
@@ -159,6 +164,9 @@ def preparer(dossier: Path, zip_: Path) -> None:
     (dossier / "themes").mkdir()
     with zipfile.ZipFile(zip_) as z:
         z.extractall(dossier / "custom_components" / "tab5")
+        copie = dossier / COPIE_MAIN
+        copie.parent.mkdir(parents=True)
+        copie.write_bytes(z.read(f"fichiers/{COPIE_MAIN}") + MARQUE_MAIN)
 
 
 # ─── Lectures dans HA ────────────────────────────────────────────────────────
@@ -271,7 +279,27 @@ async def scenario(args, rapport: Rapport) -> None:
             services = {(s["domain"], n) for s in await ha.get("/api/services") for n in s["services"]}
             rapport.verifier(("rest_command", "tab5_pluie") in services,
                              "1. rest_command.tab5_pluie chargé à chaud")
-            rapport.verifier(not await reparations(ha), "1. aucune réparation")
+            presentes = await attendre_reparations(ha, {"fichiers_remplaces"}, set())
+            rapport.verifier(presentes == {"fichiers_remplaces"},
+                             "1. une seule réparation : « fichiers_remplaces » (blueprint copié à la main)",
+                             str(presentes))
+            rapport.verifier("tab5_emplacements.yaml" in texte, "1. la notification nomme le blueprint remplacé",
+                             texte[:300])
+            premieres = sorted((dossier / "tab5_sauvegardes").glob("*"))
+            rapport.verifier(len(premieres) == 1 and (premieres[0] / COPIE_MAIN).is_file()
+                             and (premieres[0] / COPIE_MAIN).read_bytes().endswith(MARQUE_MAIN),
+                             "1. la copie à la main gardée dans la sauvegarde", str([p.name for p in premieres]))
+            # Validée comme dans Paramètres → Réparations : le formulaire cite la sauvegarde.
+            etape = await ha.post("/api/repairs/issues/fix", {"handler": "tab5", "issue_id": "fichiers_remplaces"})
+            cites = json.dumps(etape.get("description_placeholders") or {}, ensure_ascii=False)
+            rapport.verifier(etape.get("type") == "form" and bool(premieres) and premieres[0].name in cites
+                             and COPIE_MAIN in cites, "1. la réparation cite le fichier et la sauvegarde",
+                             str(etape)[:300])
+            if etape.get("flow_id"):
+                fin = await ha.post(f"/api/repairs/issues/fix/{etape['flow_id']}", {})
+                rapport.verifier(fin.get("type") == "create_entry", "1. réparation validée", str(fin)[:200])
+            restes = await attendre_reparations(ha, set(), {"fichiers_remplaces"})
+            rapport.verifier(not restes, "1. plus aucune réparation", str(restes))
             manifeste = await ha.ws.commande("manifest/get", integration="tab5")
             rapport.verifier(manifeste.get("version") == "9.9.1", "1. version de l'intégration = 9.9.1",
                              str(manifeste.get("version")))

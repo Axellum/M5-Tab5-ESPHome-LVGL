@@ -102,6 +102,10 @@ class Plan:
     identiques: list[str] = field(default_factory=list)
     retirer: list[str] = field(default_factory=list)          # posées avant, plus livrées
     modifies: list[str] = field(default_factory=list)         # changées à la main depuis
+    # Déjà dans config/ sans que l'intégration les y ait mis (copiés à la main, souvent
+    # avant sa première installation), et différents de ceux de la release : remplacés
+    # quand même, avec une copie dans la sauvegarde ; __init__.py le dit (réparation).
+    differents: list[str] = field(default_factory=list)
     installes: dict[str, str] = field(default_factory=dict)   # cible → empreinte
 
     @property
@@ -129,6 +133,8 @@ def planifier(config: Path, embarques: dict[str, bytes], precedents: dict[str, s
         actuel = local.read_bytes() if local.is_file() else None
         if actuel is not None and cible in precedents and empreinte(actuel) != precedents[cible]:
             plan.modifies.append(cible)
+        elif actuel is not None and cible not in precedents and actuel != donnees:
+            plan.differents.append(cible)
         (plan.identiques if actuel == donnees else plan.ecrire).append(cible)
         plan.installes[cible] = empreinte(donnees)
 

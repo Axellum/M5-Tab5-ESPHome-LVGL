@@ -96,7 +96,8 @@ def test_traductions_completes():
     issues = {v for k, v in vars(const).items() if k.startswith("ISSUE_")}
     assert set(en["issues"]) == issues, "une réparation par constante ISSUE_*"
     assert set(en["issues"][const.ISSUE_REDEMARRAGE]["fix_flow"]["error"]) == {const.ISSUE_CONFIGURATION}
-    parametres = {const.ISSUE_PACKAGES: set(), const.ISSUE_CONFIGURATION: {"version", "signaler"}}
+    parametres = {const.ISSUE_PACKAGES: set(), const.ISSUE_CONFIGURATION: {"version", "signaler"},
+                  const.ISSUE_REMPLACES: {"fichiers", "sauvegarde"}}
     for langue in (en, fr):
         # hassfest refuse une URL dans une traduction : elle passe par un paramètre.
         assert not re.search(r"https?://", json.dumps(langue, ensure_ascii=False))
@@ -196,6 +197,33 @@ def test_mise_a_jour_modifie_retire_puis_restaure(tmp_path):
     apres = {c: d for c, d in _instantane(tmp_path).items()
              if not c.startswith(installation.SAUVEGARDES + "/")}
     assert apres == avant, "restaurer() remet config/ à l'octet près"
+
+
+def test_premiere_installation_signale_les_fichiers_copies_a_la_main(tmp_path):
+    """HA-10 (audit du 07/10/2026) : une première installation remplaçait sans rien dire des
+    fichiers du Tab5 copiés à la main (archive d'une version plus ancienne, retouches)."""
+    v1 = _embarques("9.9.9")
+    paquets = tmp_path / "packages"
+    paquets.mkdir()
+    (paquets / "tab5_tv.yaml").write_bytes(v1["packages/tab5_tv.yaml"] + b"\n# retouche\n")
+    (paquets / "tab5_reveil.yaml").write_bytes(v1["packages/tab5_reveil.yaml"])  # identique
+    (paquets / "perso.yaml").write_bytes(b"input_boolean:\n  a: {}\n")
+    plan, sauvegarde = _installer(tmp_path, v1)
+    assert plan.differents == ["packages/tab5_tv.yaml"], \
+        "déjà là, différent, pas posé par l'intégration : à signaler"
+    assert not plan.modifies, "rien n'a été posé avant : pas « modifié depuis la dernière installation »"
+    assert (sauvegarde / "packages" / "tab5_tv.yaml").read_bytes().endswith(b"# retouche\n")
+    titre, texte = messages.installation(
+        "fr", avant=None, version="9.9.9", ecrits=len(plan.ecrire), retires=0, identiques=1,
+        sauvegarde="tab5_sauvegardes/x", modifies=[], differents=plan.differents, redemarrer=False,
+        packages_absents=False, firmware="auto")
+    assert "packages/tab5_tv.yaml" in texte and "Déjà là" in texte
+
+    # Installation suivante : un fichier posé par l'intégration puis retouché est « modifié »,
+    # pas « différent » (déjà dit autrement dans la notification).
+    (paquets / "tab5_tv.yaml").write_bytes(v1["packages/tab5_tv.yaml"] + b"\n# encore\n")
+    plan2 = installation.planifier(tmp_path, _embarques("9.9.10"), plan.installes)
+    assert plan2.modifies == ["packages/tab5_tv.yaml"] and not plan2.differents
 
 
 def test_ecriture_impossible_rien_a_moitie(tmp_path):
@@ -311,8 +339,9 @@ def test_messages(langue, mot):
     titre, texte = messages.installation(
         langue, avant="3.7.0", version="3.8.0", ecrits=12, retires=1, identiques=2,
         sauvegarde="tab5_sauvegardes/x", modifies=["packages/tab5_tv.yaml"], redemarrer=True,
-        packages_absents=False, firmware="auto")
+        packages_absents=False, firmware="auto", differents=["packages/tab5_reveil.yaml"])
     assert "3.8.0" in titre and mot in texte and "tab5_sauvegardes/x" in texte and "tab5_tv" in texte
+    assert "tab5_reveil" in texte
     titre, texte = messages.firmware_lance(langue, "3.8.0")
     assert "3.8.0" in texte
 

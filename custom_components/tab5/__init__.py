@@ -8,7 +8,9 @@
       de tab5_home_assistant.zip de la MÊME release. Une mise à jour = HACS remplace
       custom_components/tab5/, puis Home Assistant redémarre ; au démarrage, si la version
       embarquée n'est pas celle déjà posée, l'intégration :
-        1. sauvegarde puis remplace les fichiers (installation.py) ;
+        1. sauvegarde puis remplace les fichiers (installation.py) ; un fichier du Tab5 déjà
+           là sans venir d'elle (copié à la main) et différent est remplacé lui aussi, et dit
+           (réparation persistante « fichiers_remplaces » : lesquels, quelle sauvegarde) ;
         2. vérifie la configuration (comme « Vérifier la configuration ») et remet tout en
            place si les nouveaux fichiers y ajoutent un message — erreur OU avertissement :
            pour HA 2026.9, un domaine ou un package invalide n'est qu'un avertissement
@@ -69,6 +71,7 @@ from .const import (
     ISSUE_FICHIERS_ABSENTS,
     ISSUE_PACKAGES,
     ISSUE_REDEMARRAGE,
+    ISSUE_REMPLACES,
     MODELE_TABLETTE,
     NOTIFICATION,
     PACKAGE_TEMOIN,
@@ -106,7 +109,8 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Intégration retirée : les fichiers restent (la configuration de l'utilisateur), sa
     mémoire part, et une nouvelle installation repartira comme la première fois."""
     await Store(hass, STOCKAGE_VERSION, STOCKAGE_CLE).async_remove()
-    for cle in (ISSUE_FICHIERS_ABSENTS, ISSUE_CONFIGURATION, ISSUE_PACKAGES, ISSUE_REDEMARRAGE):
+    for cle in (ISSUE_FICHIERS_ABSENTS, ISSUE_CONFIGURATION, ISSUE_PACKAGES, ISSUE_REDEMARRAGE,
+                ISSUE_REMPLACES):
         ir.async_delete_issue(hass, DOMAIN, cle)
 
 
@@ -202,6 +206,16 @@ class Gestionnaire:
                      "vérification de la configuration : %d message(s), aucun nouveau",
                      self.version, len(plan.ecrire), len(plan.retirer), len(plan.identiques), relatif,
                      len(constats))
+        if plan.differents:
+            # Des fichiers du Tab5 copiés à la main (avant la première installation, le plus
+            # souvent) étaient différents : remplacés, copie dans la sauvegarde. Persistante :
+            # la notification, elle, ne survit pas à un redémarrage.
+            _LOGGER.warning("Fichiers Tab5 déjà présents et différents, remplacés (copie dans %s) : %s",
+                            relatif, ", ".join(plan.differents))
+            self._probleme(ISSUE_REMPLACES, ir.IssueSeverity.WARNING,
+                           {"fichiers": ", ".join(f"`{c}`" for c in plan.differents),
+                            "sauvegarde": f"`{relatif}`"},
+                           reparable=True, persistant=True)
 
         # 3. Sans la ligne `packages:`, rien à recharger (et rest_command.reload lève alors
         # un KeyError, HA 2026.9). Sinon : rendus actifs sans redémarrage.
@@ -240,7 +254,7 @@ class Gestionnaire:
         titre, message = messages.installation(
             hass.config.language, avant=avant, version=self.version, ecrits=len(plan.ecrire),
             retires=len(plan.retirer), identiques=len(plan.identiques), sauvegarde=relatif,
-            modifies=plan.modifies, redemarrer=redemarrer, packages_absents=packages_absents,
+            modifies=plan.modifies, differents=plan.differents, redemarrer=redemarrer, packages_absents=packages_absents,
             firmware=firmware)
         persistent_notification.async_create(hass, message, titre, NOTIFICATION)
 
@@ -296,9 +310,9 @@ class Gestionnaire:
         return False
 
     def _probleme(self, cle: str, gravite: ir.IssueSeverity, valeurs: dict[str, str],
-                  reparable: bool = False) -> None:
-        ir.async_create_issue(self.hass, DOMAIN, cle, is_fixable=reparable, severity=gravite,
-                              translation_key=cle, translation_placeholders=valeurs)
+                  reparable: bool = False, persistant: bool = False) -> None:
+        ir.async_create_issue(self.hass, DOMAIN, cle, is_fixable=reparable, is_persistent=persistant,
+                              severity=gravite, translation_key=cle, translation_placeholders=valeurs)
 
     # ── Firmware ────────────────────────────────────────────────────────────
 

@@ -57,6 +57,17 @@
           "configuration_invalide": "The configuration has an error: fix it first (Developer tools → YAML → Check configuration)."
         }
       }
+    },
+    "fichiers_remplaces": {
+      "title": "Tab5: files already there were replaced",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Tab5 files already there were replaced",
+            "description": "These Tab5 files were already in `config/` (copied by hand, most likely) and differed from those of the release: {fichiers}. They were replaced anyway, and the old ones are kept in {sauvegarde}. If you had changed one of them on purpose, copy your change back from there.\n\nSubmit to close this message."
+          }
+        }
+      }
     }
   }
 }
