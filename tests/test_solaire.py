@@ -20,6 +20,7 @@ import re
 import pytest
 
 from tests.test_tuiles_blueprint import Etat, Passage, _evenement
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
@@ -32,11 +33,6 @@ REGLES = os.path.join(REPO, "tools", "check_tab5_code_rules.py")
 
 CAPTEUR = "sensor.solaire_puissance"
 MESURES = {"id": "mesures", "platform": "time_pattern"}
-
-
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
 
 
 def _fonction(texte, signature):

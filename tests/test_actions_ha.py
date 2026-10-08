@@ -22,6 +22,7 @@ import re
 from pathlib import Path
 
 import yaml
+from tests.commun import ChargeurSansBalises as _Chargeur
 
 REPO = Path(__file__).resolve().parent.parent
 PACKAGES = REPO / "HomeAssistant_Config" / "packages"
@@ -54,13 +55,6 @@ REDEMARRAGE = "esphome.tab5_redemarrage_ha_confirme"
 
 APPEL_ACTION = re.compile(r"homeassistant\.(?:service|action)\s*:")
 EMISSION = re.compile(r"homeassistant\.event:\s*\n\s*event:\s*['\"]?(esphome\.[a-z_0-9]+)")
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
 def _fichiers_firmware():

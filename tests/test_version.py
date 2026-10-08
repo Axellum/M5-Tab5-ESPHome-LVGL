@@ -19,6 +19,7 @@ import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import ChargeurSansBalises as _Chargeur, lire as _lire
 
 REPO = Path(__file__).resolve().parent.parent
 ENTREE = REPO / "tab5-ha-hmi.yaml"
@@ -28,10 +29,6 @@ HEALTH = REPO / "HomeAssistant_Config" / "packages" / "tab5_health.yaml"
 CAPTEUR = "binary_sensor.tab5_fichiers_ha_en_retard"
 VERSION_FICHIERS = "sensor.tab5_version_des_fichiers_ha"
 TABLETTE = "sensor.tab5_tablette"
-
-
-def _lire(chemin):
-    return chemin.read_text(encoding="utf-8")
 
 
 # ─── Version par défaut du firmware ──────────────────────────────────────────
@@ -62,13 +59,6 @@ def test_version_par_defaut_egale_a_la_derniere_publiee():
 
 
 # ─── L'alerte « fichiers HA en retard » ─────────────────────────────────────
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
-
 
 def _health():
     return yaml.load(_lire(HEALTH), Loader=_Chargeur)

@@ -40,14 +40,10 @@ from tests.test_tuiles_blueprint import (
     _rendre,
     _tablette,
 )
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ADR = os.path.join(REPO, "docs", "decisions", "0026-climate-from-device.md")
-
-
-def _lire(*parts):
-    with open(os.path.join(REPO, *parts), encoding="utf-8") as f:
-        return f.read()
 
 
 def _variables_actions():

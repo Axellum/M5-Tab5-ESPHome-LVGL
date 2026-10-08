@@ -15,21 +15,10 @@ import os
 import re
 
 import yaml
+from tests.commun import ChargeurSansBalises as _Chargeur, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _jetons():

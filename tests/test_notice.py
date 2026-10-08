@@ -11,14 +11,12 @@ présente, et aucune image ne reste sans page.
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 NOTICE = REPO / "docs" / "notice"
 IMAGES = REPO / "docs" / "images" / "notice"
 TAB5 = REPO / "Tab5"
-sys.path.insert(0, str(REPO / "tools" / "rendu"))
 
 from ecrans import ECRANS  # noqa: E402
 from scenarios import SCENES  # noqa: E402  (tools/demo, chemin ajouté par ecrans)

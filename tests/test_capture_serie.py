@@ -4,13 +4,10 @@
 La sortie de panique d'ESP-IDF (RISC-V, ESP32-P4) est repérée et découpée jusqu'au
 redémarrage, ses adresses relevées pour addr2line, les redémarrages comptés ; le port de
 la tablette n'est jamais deviné entre deux appareils Espressif."""
-import sys
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 import capture_serie as cs  # noqa: E402
 

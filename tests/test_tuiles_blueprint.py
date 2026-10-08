@@ -17,7 +17,9 @@ contrat ; ce fichier le fait de deux façons :
   (outil ha_eval_template, 28/09/2026) et le job « Installation dans un HA neuf » les
   exécute dans un HA en conteneur."""
 import ast
+import copy
 import datetime as dt
+import functools
 import math
 import os
 import re
@@ -26,17 +28,13 @@ import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import BaseChargeur, CacheJinja, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
 ADR = os.path.join(REPO, "docs", "decisions", "0023-rooms-generic-tiles.md")
 
 MAINTENANT = dt.datetime(2026, 9, 28, 12, 0, 0, tzinfo=dt.timezone.utc)
-
-
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -48,15 +46,22 @@ class _Entree:
         self.nom = nom
 
 
-class _Chargeur(yaml.SafeLoader):
+class _Chargeur(BaseChargeur):
     pass
 
 
 _Chargeur.add_constructor("!input", lambda chargeur, noeud: _Entree(chargeur.construct_scalar(noeud)))
 
 
+@functools.lru_cache(maxsize=2)
+def _blueprint_lu(texte):
+    return yaml.load(texte, Loader=_Chargeur)
+
+
 def _blueprint():
-    return yaml.load(_lire(BLUEPRINT), Loader=_Chargeur)
+    # Lu une fois par session (~180 lectures avant l'audit du 07/10/2026, OUT-5) ; chaque
+    # appelant reçoit sa copie, qu'il peut modifier sans toucher celle des autres.
+    return copy.deepcopy(_blueprint_lu(_lire(BLUEPRINT)))
 
 
 def _entrees(bp):
@@ -156,6 +161,11 @@ def _est_un_nombre(valeur):
     return math.isfinite(x)
 
 
+# Code compilé des modèles, partagé par tous les environnements de _environnement() :
+# chaque Passage en bâtit un, et recompilait les mêmes modèles du blueprint.
+_JINJA = CacheJinja()
+
+
 def _environnement(etats, tablettes):
     env = ImmutableSandboxedEnvironment(extensions=["jinja2.ext.loopcontrols"], undefined=jinja2.StrictUndefined,
                                         # Macros importées (custom_templates/tab5_tablette.jinja, HA-7).
@@ -184,7 +194,7 @@ def _environnement(etats, tablettes):
 def _rendre(env, valeur, contexte):
     if isinstance(valeur, str):
         if "{{" in valeur or "{%" in valeur:
-            return _analyser(env.from_string(valeur).render(contexte))
+            return _analyser(_JINJA.depuis_texte(env, valeur).render(contexte))
         return valeur
     if isinstance(valeur, list):
         return [_rendre(env, v, contexte) for v in valeur]
@@ -219,7 +229,7 @@ class Passage:
         return self.ctx[nom]
 
     def modele(self, texte):
-        return _analyser(self.env.from_string(texte).render(self.ctx))
+        return _analyser(_JINJA.depuis_texte(self.env, texte).render(self.ctx))
 
     def conditions(self):
         return all(self.modele(c["value_template"]) for c in self.corps["conditions"])

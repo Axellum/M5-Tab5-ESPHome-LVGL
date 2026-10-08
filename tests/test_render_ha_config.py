@@ -2,10 +2,7 @@
 """Tests de tools/render_ha_config.py : copie des fichiers publics, et vérification
 qu'aucune valeur réelle ni aucun placeholder ne traîne dans un fichier public
 (ADR-0017, puis ADR-0024 : plus de placeholder, tout se choisit dans Home Assistant)."""
-import os
-import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tools.render_ha_config import check, load_map, main, placeholders, public_files, render  # noqa: E402
 
