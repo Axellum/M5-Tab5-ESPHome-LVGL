@@ -163,11 +163,6 @@ def test_aucun_input_text_des_packages_n_a_d_initial():
     assert not fautifs, fautifs
 
 
-def test_le_snippet_de_l_ancienne_liste_n_a_pas_d_initial():
-    texte = (HA / "snippets" / "tab5_alerts_dismissed_input_text.yaml").read_text(encoding="utf-8")
-    assert "initial" not in yaml.load(texte, Loader=_Chargeur)["tab5_alerts_dismissed"]
-
-
 def _bloc_alertes():
     blocs = [b for b in _charger("packages", "tab5_alerts.yaml")["template"]
              if any(s.get("unique_id") == "tab5_alertes" for s in b.get("sensor", []))]
