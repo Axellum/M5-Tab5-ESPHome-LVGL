@@ -221,24 +221,10 @@ int lum_pct(float v) {
     return pct < 1 ? 1 : (pct > 100 ? 100 : pct);
 }
 
-// ─── Batterie de la tablette montée ou pas (discussion #278, 05/10/2026) ───
-
-PresenceBatterie batterie_lecture(DetectionBatterie& d, float tension, uint32_t maintenant_ms) {
-    if (!std::isfinite(tension)) return d.presence;
-    if (tension < kBatterieTensionMin) {
-        d.basse_vue = true;
-        d.basse_ms = maintenant_ms;
-    } else if (d.basse_vue && maintenant_ms - d.basse_ms >= kBatterieFenetreMs) {
-        d.basse_vue = false;  // différence non signée : juste après le rebouclage de millis()
-    }
-    d.presence = d.basse_vue ? PresenceBatterie::ABSENTE : PresenceBatterie::PRESENTE;
-    return d.presence;
-}
-
 // ─── Console système : « Batterie » et « Charge CPU » (discussion #278, 06/10/2026) ───
 
 void batterie_texte_console(char* buf, size_t n, bool montee, PresenceBatterie presence,
-                            float niveau, float tension) {
+                            float niveau, float tension, float puissance_w) {
     if (buf == nullptr || n == 0) return;
     if (!montee) {
         snprintf(buf, n, "%s", tr("Non montée"));
@@ -250,7 +236,10 @@ void batterie_texte_console(char* buf, size_t n, bool montee, PresenceBatterie p
     }
     const bool a_niveau = presence == PresenceBatterie::PRESENTE && std::isfinite(niveau);
     const bool a_tension = presence == PresenceBatterie::PRESENTE && std::isfinite(tension);
-    if (!a_niveau && !a_tension) {
+    if (presence == PresenceBatterie::PRESENTE && std::isfinite(puissance_w)) {
+        if (a_niveau) snprintf(buf, n, "%.0f%% \xC2\xB7 %.1f W", niveau, puissance_w);
+        else snprintf(buf, n, "-- \xC2\xB7 %.1f W", puissance_w);
+    } else if (!a_niveau && !a_tension) {
         snprintf(buf, n, "--");
     } else if (!a_tension) {
         snprintf(buf, n, "%.0f%%", niveau);

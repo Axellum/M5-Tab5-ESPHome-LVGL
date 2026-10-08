@@ -13,6 +13,7 @@
 #include "esphome.h"
 #include "tab5_tokens.h"
 #include "tab5_core.h"
+#include "tab5_batterie.h"  // batterie et chargeur (08/10/2026) : présence, niveau, consommation
 #include "tab5_i18n.h"
 #include <initializer_list>
 #include <string>
@@ -96,6 +97,23 @@ uint32_t ui_idle_ms();
 // À appeler sur toute activité « invisible » qui doit garder l'écran en place
 // (événements du pipeline vocal, ouverture programmée d'un popup).
 void ui_mark_activity();
+
+// Retour automatique à l'accueil, un tick (interval 1 s de tab5-scripts.yaml ;
+// 08/10/2026, audit YML-7). Ferme ce qui doit l'être (sous-fenêtres, popups) et dit au
+// YAML ce qu'il lui reste à faire avec ses id() : QUITTER_ARCADE (revenir à page_main),
+// POPUPS_FERMES (oublier l'état du popup Assistant), PREVISIONS (remettre la page
+// principale des prévisions). Dans tab5_anim.cpp.
+enum class RetourAuto : uint8_t { RIEN, QUITTER_ARCADE, POPUPS_FERMES, PREVISIONS };
+RetourAuto retour_auto_tick(bool sur_page_arcade);
+
+// IMU hors jeux (tab5-imu.yaml ; 08/10/2026, audit YML-7 : avant, deux `static` de
+// lambda), dans tab5_registry.cpp. imu_tape_franche : (ax, ay, az) est une tape franche
+// (> 2,5 g) au moins 500 ms après la dernière retenue (tap-to-wake). imu_cadence_a_changer :
+// cadence de lecture voulue — 33 ms pour un jeu `imu_fast`, 100 ms pour un autre jeu ou
+// pour écouter la tape (ecoute_tape : écran éteint et tap-to-wake activé), 0 sinon (plus
+// de lecture) — ou -1 si elle n'a pas changé depuis l'appel précédent.
+bool imu_tape_franche(float ax, float ay, float az, uint32_t maintenant_ms);
+int32_t imu_cadence_a_changer(bool ecoute_tape);
 
 // Ouverture d'un popup : affichage instantané (pas de fondu) ET passage au
 // premier plan de son parent — ne pas le refaire après l'appel.
@@ -348,7 +366,7 @@ void central_set_vigilance(bool actif);
 void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite);
 
 // Clim, retour de HA : clim_blueprint_recu() (service tab5_maj_clim), plus bas avec
-// les réglages de la clim et le popup (ADR-0026, ADR-0027, tab5_cards.cpp).
+// les réglages de la clim et le popup (ADR-0026, ADR-0027, tab5_clim.cpp).
 
 void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
     std::string& plan_ligne_1, std::string& plan_ligne_2);
@@ -410,8 +428,9 @@ void update_console_ha_status_ui(lv_obj_t* lbl, bool ha_ok);
 // `ouverture` (ou un appel précédent de plus de 5 s) : point de départ seulement, « -- ».
 // « -- » aussi sans les statistiques de FreeRTOS (rendu hors tablette).
 void update_console_cpu_ui(lv_obj_t* lbl, bool ouverture);
-// « Batterie » : niveau et tension, « Sur USB » sans batterie détectée, « Non montée »
-// interrupteur « Tab5 Batterie montée » éteint (batterie_texte_console, tab5_core.h) ;
+// « Batterie » : niveau et tension (sur batterie : niveau et consommation), « Sur USB »
+// sans batterie détectée, « Non montée » interrupteur « Tab5 Batterie montée » éteint
+// (batterie_texte_console, tab5_core.h) ;
 // l'icône du bandeau à gauche de la valeur, masquée interrupteur éteint (tab5_zones.cpp).
 void update_console_batterie_ui(lv_obj_t* icone, lv_obj_t* valeur);
 
@@ -473,9 +492,18 @@ struct PotDetailUI {
     lv_obj_t* status_lbl;  // OK / Bientôt sec / À arroser / Hors ligne
 };
 
-// Humidité + statut des 5 cartes — appelé par l'ancre &moisture_on_value
-// (tab5-sensors-domotique.yaml) à chaque mise à jour d'un des 5 capteurs.
+// Humidité + statut des 5 cartes — appelé par pots_humidite_maj() à chaque mise à
+// jour d'un des 5 capteurs.
 void update_pots_popup_moisture_ui(const float values[5], PotDetailUI cards[5]);
+
+// Mise à jour d'un des 5 capteurs d'humidité (script tab5_pots_maj,
+// tab5-sensors-domotique.yaml ; 08/10/2026, avant une lambda recopiée 5 fois par une
+// ancre YAML) : zone de chaque pot dont le capteur a publié (publies[i], NaN compris :
+// il existe dans HA), les 4 emplacements triés de la ligne des plantes avec l'icône de
+// chaque pot, les 5 cartes du popup « Mes Plantes ». true si une zone de pot vient
+// d'apparaître : l'appelant relance tab5_zones_apply. Dans tab5_rangee.cpp.
+bool pots_humidite_maj(const bool publies[5], const float vals[5], MoistureSlotUI slots[4],
+                       PotDetailUI cards[5]);
 
 // Une métrique secondaire d'une carte pot (texte + couleur). L'humidité passe par
 // update_pots_popup_moisture_ui, pas par cet enum.
@@ -488,7 +516,7 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric);
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
 
 // =============================================================================
-// Réglages de la clim venus de l'appareil (tab5_cards.cpp, ADR-0026) : clé « climr »
+// Réglages de la clim venus de l'appareil (tab5_clim.cpp, ADR-0026) : clé « climr »
 // de tab5_maj_emplacements, « climr|min|max|pas|unité|capacités|nom », que le
 // blueprint pousse avant tab5_maj_clim. Bornes et pas des boutons − / + et de l'arc,
 // °C ou °F, boutons que l'appareil gère, nom de la clim en titre du popup. Tant que
@@ -884,13 +912,14 @@ enum BoutonHaut : uint8_t {
     BOUTON_HAUT_NB
 };
 
-// Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-ha-controls.yaml), routine unique du
+// Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-navigation.yaml), routine unique du
 // select « Aller à l'écran » et des appuis longs des boutons du haut. Les valeurs 0 à 11
 // SONT les index des options du select, dans le même ordre (tests/test_appuis.py) ;
 // ARCADE n'est pas une option du select (lancer l'Arcade à distance n'a pas d'usage),
 // seulement un choix d'appui long. Un écran de plus : avant ARCADE ici, à la fin du select
 // (ARCADE et NB se décalent : la NVS garde l'index du code dans kCodesEcran, tab5_zones.cpp,
-// jamais cette valeur), et son code à la fin de kCodesEcran et dans le blueprint.
+// jamais cette valeur), et son code à la fin de kCodesEcran et dans le blueprint ; sa
+// fenêtre et son ouverture : une ligne de tab5_modal_registry_init (tab5-navigation.yaml).
 enum class Ecran : uint8_t {
     AUCUN,       // « — » : position de repos du select ; « rien » pour un appui long
     ACCUEIL, ASSISTANT, CALENDRIER, REVEIL, CLIM, PLANTES, TV, CONSOLE, ENERGIE, REGLAGES, ALERTES,
@@ -938,8 +967,8 @@ void zones_apply_ui();
 // Batterie de la tablette, icône du bandeau d'état (tab5_zones.cpp). L'icône n'est
 // visible que si l'interrupteur « Tab5 Batterie montée » est allumé
 // (tab5-ha-controls.yaml, éteint par défaut). Allumé : une prise (couleur du texte du
-// thème) quand la tension dit qu'il n'y a pas de batterie (batterie_lecture,
-// tab5_core.h : une lecture sous 6,0 V dans les 10 dernières minutes, 05/10/2026) ;
+// thème) quand il n'y a pas de batterie (batterie_presence(), tab5_batterie.h : tension
+// lue chargeur coupé, 08/10/2026) ;
 // sinon le glyphe suit le niveau (et « en charge »), couleur de get_battery_color(),
 // la même échelle que le téléphone ; « ? » avant la première lecture. Chaque appel
 // garde sa valeur : appelés avant le premier zones_apply_ui() (restauration de
@@ -949,12 +978,10 @@ void batterie_montee_ui(bool montee);   // on_state de l'interrupteur
 void batterie_niveau_ui(float niveau);  // % de batterie_niveau, NAN = inconnu
 void batterie_charge_ui(bool en_charge);  // batterie_en_charge (CHG_STAT)
 // Chaque lecture de l'INA226 (on_raw_value de batterie_tension, V) à l'instant
-// `maintenant_ms` (millis()). Vrai si la décision « batterie détectée » vient de changer :
-// le YAML publie alors « Tab5 Batterie détectée » et recalcule « Tab5 Batterie ».
+// `maintenant_ms` (millis()), passée à chargeur_tension() (tab5_batterie.h). Vrai si la
+// décision « batterie détectée » vient de changer : le YAML publie alors « Tab5 Batterie
+// détectée » et recalcule « Tab5 Batterie ».
 bool batterie_tension_ui(float tension, uint32_t maintenant_ms);
-// Vrai si une batterie est détectée (faux tant qu'aucune lecture n'a décidé) : le
-// niveau « Tab5 Batterie » vaut inconnu sans elle.
-bool batterie_presente();
 // Vrai quand HA pousse la production solaire (clé solaire de tab5_maj_emplacements :
 // puissance crête choisie dans le blueprint) : l'appui long du bouton « HA » ouvre alors
 // le popup Énergie (choix « auto »), et sa mini icône le signale.
@@ -1184,8 +1211,8 @@ void reglables_volume_tablette();
 constexpr int kRoueBoutons = 6;  // premier anneau : 4 commandes ou familles + 2 liens
 constexpr int kRoueChoix = 6;    // second anneau : les 6 couleurs d'une lampe au plus
 // Widgets (ui_components/roue_actions.yaml, roue_bouton.yaml, roue_choix.yaml,
-// roue_legende.yaml), posés par le script tab5_tuiles_ui (tab5-tuiles.yaml) avant le
-// premier dessin.
+// roue_legende.yaml), posés par le script tab5_roue_ui (tab5-roue.yaml), que tab5_tuiles_ui
+// lance avant le premier dessin.
 struct RoueUI {
     lv_obj_t* fond = nullptr;                    // roue_actions : voile plein écran, son toucher replie ou ferme
     lv_obj_t* bande[2] = {};                     // roue_bande_0, roue_bande_1 : arcs de verre sous les anneaux
@@ -1476,6 +1503,10 @@ void popup_lumiere_choisir(int idx);
 // « Tout éteindre » : pR / eteindre (toutes les lumières de la pièce), lumieres /
 // eteindre en mode héritage.
 void popup_lumiere_tout_eteindre();
+// Couleur montrée d'une teinte de lampe (color_name : « warmwhite », « gold »…) : la
+// seule liste, pour les pastilles du popup lumière (light_white_btn.yaml,
+// light_color_preset_btn.yaml) et de la roue (UI-8). Nom inconnu : UIColor.TEXT_DIM.
+uint32_t lampe_teinte(const char* nom);
 
 // =============================================================================
 // Popup « Maison » (ADR-0037, 07/10/2026, discussion #278) — tab5_maison.cpp

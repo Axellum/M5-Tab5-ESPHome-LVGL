@@ -209,7 +209,7 @@ TUILE_VOLET = (390, 572)
 VOLET_SANS_POSITION = Service("tab5_maj_emplacements", (("payload", "t01|closing|nan|;"),))
 VOLET_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t01|opening|45|;"),))
 # Le volet dessiné du popup (06/10/2026), tiré du doigt vers le bas : 150 px de la fenêtre
-# de 456 px, de 45 % à 13 % (volet_cadre_rappel, tab5_tuiles.cpp). Vertical, au-dessus
+# de 456 px, de 45 % à 13 % (volet_cadre_rappel, tab5_tuiles_popups.cpp). Vertical, au-dessus
 # des tuiles : ni swipe de page ni bouton sous le doigt. Le relâcher envoie « position »,
 # que personne n'applique ici : la capture montre le volet là où le doigt l'a laissé.
 VOLET_TIRE = Glisser(265, 250, 265, 400)
@@ -349,10 +349,11 @@ HA_VERS_LA_GAUCHE = Glisser(1265, 520, 15, 520)   # pièce suivante (page + 1)
 HA_VERS_LA_DROITE = Glisser(15, 520, 1265, 520)   # pièce précédente (page − 1)
 
 
-# Tensions lues par l'INA226 : une batterie 2S (détectée) et la tablette sans batterie,
-# sur l'USB (5,71 V relevé chez l'auteur le 04/10/2026 ; sous 6,0 V = pas de batterie).
+# Tensions lues par l'INA226 chargeur coupé : une batterie 2S (détectée) et la tablette
+# sans batterie, sur l'USB (1,9 V relevé chez l'auteur le 08/10/2026 ; sous 3,0 V = pas
+# de batterie, tab5_batterie.h).
 TENSION_BATTERIE = 7.6
-TENSION_SANS_BATTERIE = 5.71
+TENSION_SANS_BATTERIE = 1.9
 
 
 def _batterie(montee: bool, niveau: float = float("nan"), en_charge: bool = False,
@@ -591,8 +592,8 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-batterie-faible", (_batterie(True, 12.0),), SANS_BATTERIE),
     Ecran("accueil-batterie-en-charge", (_batterie(True, 60.0, True),), SANS_BATTERIE),
     # Sans batterie, sur l'USB (discussion #278, 05/10/2026) : une prise, niveau inconnu
-    # (« Tab5 Batterie » ne vaut rien sans batterie) et le chargeur qui dit « en charge ».
-    Ecran("accueil-batterie-prise", (_batterie(True, en_charge=True, tension=TENSION_SANS_BATTERIE),),
+    # (« Tab5 Batterie » ne vaut rien sans batterie), chargeur coupé (08/10/2026).
+    Ecran("accueil-batterie-prise", (_batterie(True, tension=TENSION_SANS_BATTERIE),),
           SANS_BATTERIE),
     # Production solaire (clé solaire, % de la crête) : icône avant la batterie, couleur
     # du barème des batteries, panneau gris à 0 % (la nuit). Un écran par palier, puis
@@ -696,7 +697,7 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("console-batterie", (_batterie(True, 78.0), Long(*BOUTON_SYS)), SANS_BATTERIE),
     Ecran("console-batterie-en-charge", (_batterie(True, 60.0, True), Long(*BOUTON_SYS)), SANS_BATTERIE),
     Ecran("console-sans-batterie",
-          (_batterie(True, en_charge=True, tension=TENSION_SANS_BATTERIE), Long(*BOUTON_SYS)), SANS_BATTERIE),
+          (_batterie(True, tension=TENSION_SANS_BATTERIE), Long(*BOUTON_SYS)), SANS_BATTERIE),
     Ecran("console-confirmer-redemarrage-ha", (Long(*BOUTON_SYS), Toucher(*CONSOLE_REDEMARRER_HA)),
           (Toucher(*CONFIRMATION_ANNULER),)),
     Ecran("console-confirmer-reboot", (Long(*BOUTON_SYS), Toucher(*CONSOLE_REBOOT)),

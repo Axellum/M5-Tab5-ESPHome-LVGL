@@ -356,7 +356,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_tuiles.cpp", "glyphe_fleche"): (
         "icon_card_droite_j0", "icon_card_shutter_arrow", "icon_card_light_j*", "icon_card_h*_d"),
     # Popup d'un appareil (06/10/2026) : icône du grand bouton (marche / arrêt, lecture).
-    ("tab5_tuiles.cpp", "glyphe_commande"): ("appareil_commande_icone",),
+    ("tab5_tuiles_popups.cpp", "glyphe_commande"): ("appareil_commande_icone",),
     # Roue d'actions rapides (ADR-0036) : icônes de ses deux anneaux (roue_bouton.yaml,
     # roue_choix.yaml, mdi_font_36).
     ("tab5_roue.cpp", "glyphe_roue"): ("roue_bouton_*_icone", "roue_choix_*_icone"),
@@ -393,7 +393,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
         "maison_icone_*",
         "roue_moyeu_icone",
     ),
-    ("tab5-sensors-domotique.yaml", "moisture_1"): ("icon_pot_s*",),
+    # Icônes des pots sur la ligne des plantes (script tab5_pots_maj, 08/10/2026).
+    ("tab5_rangee.cpp", "pots_humidite_maj"): ("icon_pot_s*",),
 }
 
 
@@ -439,24 +440,51 @@ def _yaml_lines(path: Path) -> list[str]:
     return ["" if l.lstrip().startswith("#") else l for l in path.read_text(encoding="utf-8").splitlines()]
 
 
+def _widget_fonts(lines: list[str]) -> list[tuple[str, str]]:
+    """(id brut, text_font) des labels d'un YAML, en ligne (`{ id: x, …, text_font: f }`) ou en bloc."""
+    out: list[tuple[str, str]] = []
+    for i, line in enumerate(lines):
+        m = re.search(r"\bid:\s*[\"']?([\w${}]+)", line)
+        if m is None:
+            continue
+        font = RE_TEXT_FONT.search(line)
+        if font is None and "{" not in line:
+            sib = _mapping_siblings(lines, i)
+            if sib.get("id", "").strip("\"'") == m.group(1) and "text_font" in sib:
+                font = RE_TEXT_FONT.search(f"text_font: {sib['text_font']}")
+        if font is not None:
+            out.append((m.group(1), font.group(1)))
+    return out
+
+
+RE_VAR_SIMPLE = re.compile(r"(\w+):\s*(\"[^\"]*\"|'[^']*'|[\w.-]+)")
+
+
 def widget_font_map(sources: list[Path]) -> dict[str, str]:
-    """id de widget → text_font, label en ligne (`{ id: x, …, text_font: f }`) ou en bloc."""
+    """id de widget → text_font. Un gabarit `!include { file, vars }` est aussi déplié avec
+    les vars de chaque inclusion (`id: "icon_sw${n}"` + `n: "0"` → `icon_sw0`), pour que
+    MDI_CODE_TARGETS nomme les ids réels (08/10/2026, cartes du mode HA et tuiles météo)."""
     out: dict[str, str] = {}
     for path in sources:
         if path.suffix != ".yaml":
             continue
         lines = _yaml_lines(path)
-        for i, line in enumerate(lines):
-            m = re.search(r"\bid:\s*[\"']?([\w${}]+)", line)
-            if m is None:
+        for wid, font in _widget_fonts(lines):
+            out[wid] = font
+        for line in lines:
+            inc = RE_INCLUDE_VARS.search(line)
+            if inc is None:
                 continue
-            font = RE_TEXT_FONT.search(line)
-            if font is None and "{" not in line:
-                sib = _mapping_siblings(lines, i)
-                if sib.get("id", "").strip("\"'") == m.group(1) and "text_font" in sib:
-                    font = RE_TEXT_FONT.search(f"text_font: {sib['text_font']}")
-            if font is not None:
-                out[m.group(1)] = font.group(1)
+            template = path.parent / inc.group(1)
+            if not template.is_file():
+                continue
+            valeurs = {k: v.strip("\"'") for k, v in RE_VAR_SIMPLE.findall(inc.group(2))}
+            for wid, font in _widget_fonts(_yaml_lines(template)):
+                if "${" not in wid:
+                    continue
+                reel = re.sub(r"\$\{(\w+)\}", lambda m: valeurs.get(m.group(1), m.group(0)), wid)
+                if "${" not in reel:
+                    out[reel] = font
     return out
 
 
@@ -676,7 +704,7 @@ LV_YAML_PLAFONDS: dict[str, dict[str, int]] = {
     # Calendrier : fermeture du détail du jour (4 gestes).
     "tab5-calendar.yaml": {"lv_obj_add_flag": 4},
     # Ouverture d'un écran depuis HA : popup déjà affiché ? (lecture seule).
-    "tab5-ha-controls.yaml": {"lv_obj_has_flag": 1},
+    "tab5-navigation.yaml": {"lv_obj_has_flag": 1},
     # Geste de balayage de la page : point et direction lus sur l'entrée LVGL
     # (le traitement est dans handle_swipe_gesture(), tab5_central.cpp).
     "tab5-lvgl.yaml": {"lv_indev_active": 1, "lv_indev_get_point": 1, "lv_indev_get_gesture_dir": 1},
@@ -732,10 +760,7 @@ STATIC_LAMBDA_PERMIS: dict[str, dict[str, int]] = {
     # republication identique à HA), une par text_sensor.
     "tab5-alarm.yaml": {"last": 2},
     # « Écran courant » : dernière valeur publiée.
-    "tab5-ha-controls.yaml": {"last": 1},
-    # IMU : anti-rebond du tap-to-wake (on_value du même capteur), cadence de poll en cours
-    # (interval de 1 s).
-    "tab5-imu.yaml": {"last_tap_ms": 1, "cur": 1},
+    "tab5-navigation.yaml": {"last": 1},
     # Version du C6 : nombre d'essais de lecture (3 au plus).
     "tab5-sensors-diagnostics.yaml": {"essais": 1},
 }
@@ -820,11 +845,10 @@ def chemins_chauds(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
 # moisture_slots_refresh, zone_tuile_absente, zones_pots_presents, central_planning_set_off.)
 PUBLIQUES_SANS_APPELANT = {
     "update_meteo_icon",        # tab5_forecast.cpp : dessin d'une tuile météo
-    "clim_eco_actif",           # tab5_cards.cpp : état des boutons de la clim (lus aussi par tests/test_clim.py)
+    "clim_eco_actif",           # tab5_clim.cpp : état des boutons de la clim (lus aussi par tests/test_clim.py)
     "clim_silence_actif",
     "clim_oscillation_actif",
     "clim_preset_actif",
-    "clim_recolorer",           # tab5_cards.cpp : couleurs de la clim après un changement
     "solaire_present",          # tab5_zones.cpp : production solaire connue
     "ecran_disponible",         # tab5_zones.cpp : écran disponible pour un appui long
     "boutons_haut_apply_ui",    # tab5_zones.cpp : mini icônes des trois boutons du haut

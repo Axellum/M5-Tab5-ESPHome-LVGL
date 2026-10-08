@@ -9,8 +9,8 @@
 # @architecture_constraint Les 4 slots (`icon_pot_sN`) sont remplis par
 #                          `sort_and_update_moisture_slots()` (tab5_cards.cpp), appelée à
 #                          chaque mise à jour de n'importe lequel des 5 capteurs
-#                          (`moisture_1`..`moisture_5`, ancre YAML `&moisture_on_value` dans
-#                          tab5-sensors-domotique.yaml). Ne jamais assigner icône/couleur ici :
+#                          (`moisture_1`..`moisture_5`, script `tab5_pots_maj` de
+#                          tab5-sensors-domotique.yaml, pots_humidite_maj()). Ne jamais assigner icône/couleur ici :
 #                          quel capteur physique tombe dans quel slot change à chaque update.
 # @architecture_constraint Grille du haut (tab5-lvgl.yaml) : la rangée a la largeur de
 #                          l'horloge (401 px) et le pied de l'encre des icônes à y 308, la

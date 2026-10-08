@@ -37,7 +37,8 @@ GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorps
                   "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kPieces", "kTuiles")
 # Fichiers qui s'en servent : aucun ne doit les redéfinir.
 GEOMETRIE_UTILISATEURS = ("tab5_energie.cpp", "tab5_historique.cpp", "tab5_maison.cpp", "tab5_zones.cpp",
-                          "tab5_tuiles.cpp", "tab5_roue.cpp", "tab5_cards.cpp")
+                          "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp",
+                          "tab5_tuiles_priv.h", "tab5_roue.cpp", "tab5_clim.cpp")
 
 
 def _geometrie():
@@ -61,7 +62,8 @@ def test_largeur_des_panneaux_centraux():
     largeur = int(_jetons()["central_w"])
     assert largeur == _constante("tab5_central.cpp", "kLargeurPanneauCentral")
     # Plus de 1180 écrit en clair dans le YAML : tout passe par le jeton.
-    for chemin in (("Tab5", "tab5-lvgl.yaml"), ("Tab5", "ui_components", "ha_alert_panel.yaml")):
+    # Bouton des panneaux : central_bouton.yaml depuis le 08/10/2026 (audit YML-4).
+    for chemin in (("Tab5", "tab5-lvgl.yaml"), ("Tab5", "ui_components", "central_bouton.yaml")):
         texte = _lire(*chemin)
         assert "${central_w}" in texte, "/".join(chemin)
         assert not re.search(r"^\s*width: %d\s*$" % largeur, texte, re.M), "/".join(chemin)

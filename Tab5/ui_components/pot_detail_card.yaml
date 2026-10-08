@@ -2,7 +2,7 @@
 # [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par pots_popup.yaml.
 # vars : pot_idx (1-5 — suffixe des ids icon_pot_d*/lbl_pot_d*_*), x_pos (X de la carte
 #        dans la modale), pot_nom (titre affiché), icon (glyphe MDI du pot — MÊME icône
-#        que le dashboard, tableau icons[] de l'ancre &moisture_on_value).
+#        que le dashboard, tableau icones[] de pots_humidite_maj(), tab5_rangee.cpp).
 # Ne rien assigner ici : icône/valeurs/couleurs sont poussées en continu par
 # update_pots_popup_moisture_ui et update_pot_metric_ui (tab5_custom.cpp) via les
 # capteurs de tab5-sensors-domotique.yaml.

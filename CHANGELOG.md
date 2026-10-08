@@ -9,6 +9,68 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Code des tuiles regroupé et découpé (lot L7)
+
+Aucun changement visible voulu ; le code des tuiles se lit et se modifie en un seul endroit par
+sujet.
+
+- **Une seule source** pour : la clé d'une tuile ou d'une pièce (`tuile_cle()`, `piece_cle()`,
+  `tab5_modele_ha.h`) ; ce que fait chaque type de tuile au toucher, à l'appui long et dans la
+  roue (table `kGestes[]`, une ligne par type) ; l'ouverture et la mise à jour des trois popups
+  d'une tuile (`PopupTuile`) ; les teintes des préréglages de lampe, lues par le popup lumière
+  et par la roue (`lampe_teinte()`).
+- **La roue ne repeint plus un bouton dont l'aspect n'a pas changé** : chaque bouton garde le
+  dernier aspect posé.
+- **Fichiers découpés** : `tab5_tuiles.cpp` (2 742 lignes) devient `tab5_tuiles.cpp` (modèle,
+  NVS, dessin, gestes), `tab5_tuiles_popups.cpp`, `tab5_tuiles_roue.cpp` et l'en-tête privé
+  `tab5_tuiles_priv.h` ; la clim sort de `tab5_cards.cpp` dans `tab5_clim.cpp` ; le câblage de
+  la roue sort de `tab5-tuiles.yaml` dans `tab5-roue.yaml` (script `tab5_roue_ui`, lancé par
+  `tab5_tuiles_ui` au même moment qu'avant). Code déplacé tel quel ; tests repointés.
+
+### 2026-10-08 — Batterie : plus de souffle sans batterie, limite de charge, consommation
+
+- **Un léger souffle continu sortait d'une tablette sans batterie** (entendu par l'auteur le
+  08/10, micro coupé ou pas) : depuis la 3.6.0 (#303), le chargeur était allumé à chaque
+  démarrage et chargeait dans le vide. Le couper l'a fait taire (essai sur la tablette, firmware
+  de test). Le chargeur est maintenant commandé chaque seconde (`Tab5/tab5_batterie.h`) : allumé
+  30 s au démarrage (pour réveiller une batterie dont la protection a coupé), puis coupé quelques
+  secondes pour lire la tension. Sans batterie, l'INA226 lit alors 1,83 à 1,94 V (mesuré) ; sous
+  3,0 V, pas de batterie, le chargeur reste coupé. Une batterie glissée tablette allumée est vue
+  à la lecture suivante (60 s). Avec une batterie, une lecture chargeur coupé toutes les 10 min,
+  et tout de suite si la tension tombe sous 6 V (batterie retirée). « Tab5 Batterie détectée »
+  remplace son ancienne règle (une lecture sous 6 V dans les 10 dernières minutes, chargeur
+  allumé).
+- **« Tab5 Limite de charge »** (100 % par défaut, ou 80 %) : pour une tablette branchée en
+  permanence, la charge s'arrête à 80 % et reprend à 70 %. Pas encore essayé avec une batterie :
+  chargeur arrêté et USB branché, on ne sait pas encore si la tablette tourne sur l'USB ou sur sa
+  batterie.
+- **« Tab5 Consommation »** (W) : tension × courant de la batterie quand la tablette tourne sur
+  elle ; aussi sur la ligne « Batterie » de la console système (« 78% · 3.1 W »), à la place de
+  la tension.
+- **Batterie faible sur le téléphone** : sur batterie, sous 20 % puis sous 10 %, la tablette
+  émet `esphome.tab5_batterie_faible` (niveau, seuil), une fois par seuil ; la garde
+  « batterie faible » de `packages/tab5_health.yaml` en fait une notification persistante et une
+  notification sur le téléphone.
+- `tools/test_alarm_clock.cpp` (chargeur, limite, alerte, console), `tests/test_batterie.py`
+  (câblage YAML) ; `docs/troubleshooting.md`, `docs/hardware.md`.
+
+### 2026-10-08 — YAML du firmware rangé (lot L8 de l'audit du 07/10)
+
+Rien ne doit changer à l'écran ni pour Home Assistant (mêmes entités, mêmes options, mêmes
+codes gardés en mémoire) : la configuration résolue ne diffère que par l'endroit où le code
+est écrit, deux identifiants ajoutés et l'ordre de deux widgets qui ne se chevauchent pas.
+- **Gabarits au lieu de copies** : tuiles journalières (`forecast_day_card.yaml`,
+  `forecast_day_body.yaml`), cartes du mode HA (`switch_card.yaml`), boutons du haut
+  (`bouton_haut.yaml`), boutons des panneaux centraux (`central_bouton.yaml`) ; un seul bouton à
+  pas pour le réveil et les Réglages (`bouton_pas.yaml`, à la place de deux) ; le chrome des
+  popups se ferme par `popup_id` au lieu d'une lambda écrite deux fois.
+- **Navigation à part** : `Tab5/tab5-navigation.yaml` réunit le registre des fenêtres,
+  `tab5_ecran_ouvrir`, « Aller à l'écran » et « Écran courant ». Le registre donne aussi
+  l'ouverture de chaque écran : le `switch` qui recopiait la liste des écrans disparaît.
+- **Logique en C++** : humidité des plantes (`pots_humidite_maj()`, un script au lieu de cinq
+  copies), tap-to-wake et cadence de l'IMU (plus de `static` dans une lambda), retour
+  automatique à l'accueil (`retour_auto_tick()`).
+
 ### 2026-10-08 — Tests et CI de l'audit du 07/10 (lot L9)
 
 - **Les vrais moteurs d'échecs et de dames sont testés en CI**, sous ASan + UBSan, par le job

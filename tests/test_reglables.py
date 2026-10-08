@@ -398,8 +398,12 @@ def test_zone_du_salon_sans_toucher_celle_de_la_serre():
 
 def test_liste_refermee_avec_les_popups_et_seule():
     scripts = _lire("Tab5", "tab5-scripts.yaml")
-    assert "ModalRegistry::add(id(reglables_liste)," in scripts and "ModalRegistry::SUBWINDOW);" in scripts
-    assert "if (idle >= UIIdle::POPUP_MS && reglables_liste_ouverte()) reglables_liste_fermer();" in scripts
+    navigation = _lire("Tab5", "tab5-navigation.yaml")
+    assert "ModalRegistry::add(id(reglables_liste)," in navigation and "ModalRegistry::SUBWINDOW);" in navigation
+    # Retour automatique : retour_auto_tick() (tab5_anim.cpp), lancé par l'interval de tab5-scripts.yaml.
+    assert "if (idle >= UIIdle::POPUP_MS && reglables_liste_ouverte()) reglables_liste_fermer();" in _lire(
+        "Tab5", "tab5_anim.cpp")
+    assert "retour_auto_tick(" in scripts
     # Le volume de la tablette repeint la tuile, quelle que soit sa source.
     volume = scripts.split("  - id: tab5_volume_apply\n", 1)[1].split("\n  - id:", 1)[0]
     assert "reglables_volume_tablette();" in volume
