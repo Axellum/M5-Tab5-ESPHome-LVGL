@@ -78,6 +78,8 @@ esphome:
     - Tab5/tab5_reglages.cpp
     - Tab5/tab5_economie.h
     - Tab5/tab5_economie.cpp
+    - Tab5/tab5_batterie.h
+    - Tab5/tab5_batterie.cpp
     - Tab5/tab5_alertes.cpp
     - Tab5/tab5_maison.cpp
     - Tab5/game_common.h

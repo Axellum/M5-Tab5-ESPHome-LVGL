@@ -205,9 +205,9 @@ api:
     # chargé ici, l'action passe au C++ ce que lui passeraient l'INA226 et CHG_STAT, et
     # actionne le vrai interrupteur « Tab5 Batterie montée » (tab5-ha-controls.yaml).
     # La tension (05/10/2026) passe par la vraie décision « batterie détectée »
-    # (batterie_tension_ui) : chaque appel compte comme une lecture 20 min après la
-    # précédente (rendu_batterie_ms), pour qu'une tension basse d'un écran ne garde pas
-    # la prise sur les écrans suivants (fenêtre de 10 min, tab5_core.h).
+    # (batterie_tension_ui) : chaque appel compte comme une lecture chargeur coupé depuis
+    # longtemps (chargeur_rendu_coupe, tab5_batterie.h, 08/10/2026), la présence suit la
+    # tension de chaque écran (sous 3,0 V : pas de batterie).
     - service: rendu_batterie
       description: "Rendu hors tablette : icône de la batterie du bandeau (montée, niveau en %, en charge, tension en V)."
       variables:
@@ -217,8 +217,8 @@ api:
         tension: float
       then:
         - lambda: |-
-            id(rendu_batterie_ms) += 2 * kBatterieFenetreMs;
-            batterie_tension_ui(tension, id(rendu_batterie_ms));
+            chargeur_rendu_coupe(millis());
+            batterie_tension_ui(tension, millis());
             batterie_niveau_ui(niveau);
             batterie_charge_ui(en_charge);
         - if:
@@ -274,12 +274,6 @@ api:
                                     y1 + (y2 - y1) * (int32_t) iteration / 10);
               - delay: 30ms
         - lambda: 'rendu_doigt_lever();'
-
-globals:
-  # Horloge simulée des lectures de tension de rendu_batterie (05/10/2026), en ms.
-  - id: rendu_batterie_ms
-    type: uint32_t
-    initial_value: '0'
 
 script:
   # Journal des démarrages (tab5_journal.cpp) : rien à envoyer depuis le rendu.
