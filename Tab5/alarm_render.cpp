@@ -5,10 +5,14 @@
  *       la barre d'état. Sorti d'alarm_clock.cpp le 25/09/2026 (audit, lot 8b) pour
  *       que le moteur reste compilable et testable sur PC. Ne lit l'état du moteur
  *       que par son API publique (alarm_clock.h).
+ * @architecture_constraint Écritures comparées d'abord (ui_text, ui_text_color ; lot L10,
+ *       08/10/2026) : tab5_alarm_sync_ui repeint tout le popup à chaque réglage du réveil
+ *       (même popup fermé), et la sonnerie repeint son calque à chaque cycle. Ce rendu
+ *       reste hors d'alarm_clock.cpp, que tools/test_alarm_clock.cpp compile sans LVGL.
  */
 #include "alarm_render.h"
 #include "tab5_custom.h"
-#include "tab5_internal.h"   // texte_ha_coupe()
+#include "tab5_internal.h"   // ui_text(), ui_text_color(), texte_ha_coupe()
 
 #include <cstdio>
 
@@ -29,8 +33,8 @@ static void set_toggle(lv_obj_t* btn, lv_obj_t* lbl, bool on, const char* on_txt
                        uint32_t on_color) {
   if (btn != nullptr) highlight_button_border(btn, on, on_color);
   if (lbl != nullptr) {
-    lv_label_set_text(lbl, tr(on ? on_txt : off_txt));
-    lv_obj_set_style_text_color(lbl, lv_color_hex(on ? on_color : UIColor.TEXT_DIM), LV_PART_MAIN);
+    ui_text(lbl, tr(on ? on_txt : off_txt));
+    ui_text_color(lbl, on ? on_color : UIColor.TEXT_DIM);
   }
 }
 
@@ -43,14 +47,13 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
              UIColor.SUCCESS);
   if (ui.icon_enable != nullptr) {
     // F0020 = alarm, F0023 = alarm-off (codepoints vérifiés dans le TTF du projet).
-    lv_label_set_text(ui.icon_enable, c.enabled ? "\U000F0020" : "\U000F0023");
-    lv_obj_set_style_text_color(ui.icon_enable,
-                                lv_color_hex(c.enabled ? UIColor.SUCCESS : UIColor.TEXT_DIM), LV_PART_MAIN);
+    ui_text(ui.icon_enable, c.enabled ? "\U000F0020" : "\U000F0023");
+    ui_text_color(ui.icon_enable, c.enabled ? UIColor.SUCCESS : UIColor.TEXT_DIM);
   }
 
   if (ui.lbl_time != nullptr) {
     alarm_hhmm(c.fixed_min, buf, sizeof(buf));
-    lv_label_set_text(ui.lbl_time, buf);
+    ui_text(ui.lbl_time, buf);
   }
 
   // Chips des jours. Le sélecteur ne gouverne QUE l'heure fixe : on l'estompe
@@ -66,11 +69,9 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
     const bool on = (c.days_mask >> i) & 1;
     if (ui.day_btn[i] != nullptr) highlight_button_border(ui.day_btn[i], on, UIColor.ACCENT);
     if (ui.day_lbl[i] != nullptr) {
-      lv_label_set_text(ui.day_lbl[i], tr_ctx(kDayCtx[i], kDays[i]));
-      lv_obj_set_style_text_color(ui.day_lbl[i],
-                                  lv_color_hex(on ? (days_govern_all ? UIColor.TEXT_SOFT : UIColor.ACCENT)
-                                                  : UIColor.TEXT_DIM),
-                                  LV_PART_MAIN);
+      ui_text(ui.day_lbl[i], tr_ctx(kDayCtx[i], kDays[i]));
+      ui_text_color(ui.day_lbl[i],
+                    on ? (days_govern_all ? UIColor.TEXT_SOFT : UIColor.ACCENT) : UIColor.TEXT_DIM);
     }
   }
 
@@ -90,40 +91,40 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
         hint = "Sonne avant l'ouverture lue dans le calendrier.";
         break;
     }
-    lv_label_set_text(ui.lbl_mode_hint, tr(hint));
+    ui_text(ui.lbl_mode_hint, tr(hint));
   }
 
   if (ui.lbl_lead != nullptr) {
     // « 1h30 » et non « 90 min » : le champ fait 59 px entre ses flèches, et même
     // « 45 min » (68 px en roboto_22) passait sur deux lignes (rendu hors tablette).
     snprintf(buf, sizeof(buf), tr("%dh%02d"), c.lead_min / 60, c.lead_min % 60);
-    lv_label_set_text(ui.lbl_lead, buf);
+    ui_text(ui.lbl_lead, buf);
   }
   if (ui.lbl_early != nullptr) {
     alarm_hhmm(c.earliest_min, buf, sizeof(buf));
-    lv_label_set_text(ui.lbl_early, buf);
+    ui_text(ui.lbl_early, buf);
   }
   if (ui.lbl_late != nullptr) {
     alarm_hhmm(c.latest_min, buf, sizeof(buf));
-    lv_label_set_text(ui.lbl_late, buf);
+    ui_text(ui.lbl_late, buf);
   }
   if (ui.lbl_rest != nullptr) {
     if (c.rest_hours <= 0) {
-      lv_label_set_text(ui.lbl_rest, "\xE2\x80\x94");
+      ui_text(ui.lbl_rest, "\xE2\x80\x94");
     } else {
       snprintf(buf, sizeof(buf), "%d h", c.rest_hours);
-      lv_label_set_text(ui.lbl_rest, buf);
+      ui_text(ui.lbl_rest, buf);
     }
   }
 
   set_toggle(ui.btn_repos, ui.lbl_repos, c.rest_mode == AlarmRepos::FIXE, "Repos : heure fixe",
              "Repos : silence", UIColor.WARNING);
 
-  if (ui.lbl_next != nullptr) lv_label_set_text(ui.lbl_next, alarm_next_label(now).c_str());
-  if (ui.lbl_next_sub != nullptr) lv_label_set_text(ui.lbl_next_sub, alarm_next_detail(now).c_str());
+  if (ui.lbl_next != nullptr) ui_text(ui.lbl_next, alarm_next_label(now).c_str());
+  if (ui.lbl_next_sub != nullptr) ui_text(ui.lbl_next_sub, alarm_next_detail(now).c_str());
 
   // Le nom de la mélodie est aussi une option du select HA : traduit à l'affichage seulement.
-  if (ui.lbl_melody != nullptr) lv_label_set_text(ui.lbl_melody, tr(alarm_melody_name(c.melody)));
+  if (ui.lbl_melody != nullptr) ui_text(ui.lbl_melody, tr(alarm_melody_name(c.melody)));
   if (ui.slider_vol != nullptr) {
     const int pct = static_cast<int>(c.volume * 100.0f + 0.5f);
     // lv_slider_set_value ne déclenche pas LV_EVENT_VALUE_CHANGED : pas de
@@ -131,18 +132,18 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
     lv_slider_set_value(ui.slider_vol, pct, LV_ANIM_OFF);
     if (ui.lbl_vol != nullptr) {
       snprintf(buf, sizeof(buf), "%d %%", pct);
-      lv_label_set_text(ui.lbl_vol, buf);
+      ui_text(ui.lbl_vol, buf);
     }
   }
   set_toggle(ui.btn_cresc, ui.lbl_cresc, crescendo, "Progressif", "Volume constant", UIColor.ACCENT);
 
   if (ui.lbl_snooze != nullptr) {
     snprintf(buf, sizeof(buf), tr("%d min"), c.snooze_min);
-    lv_label_set_text(ui.lbl_snooze, buf);
+    ui_text(ui.lbl_snooze, buf);
   }
   if (ui.lbl_maxring != nullptr) {
     snprintf(buf, sizeof(buf), tr("%d min"), c.max_ring_min);
-    lv_label_set_text(ui.lbl_maxring, buf);
+    ui_text(ui.lbl_maxring, buf);
   }
 
   set_toggle(ui.btn_tts, ui.lbl_tts, tts_on, "Annonce parl\xC3\xA9""e", "Sonnerie seule", UIColor.INFO);
@@ -151,7 +152,7 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
     // « avant » est déjà dans le titre du champ (« RDV avant ») : « 15 min avant »
     // passait sur deux lignes.
     snprintf(buf, sizeof(buf), tr("%d min"), c.rdv_lead_min);
-    lv_label_set_text(ui.lbl_rdv_lead, buf);
+    ui_text(ui.lbl_rdv_lead, buf);
   }
   if (ui.lbl_rdv_next != nullptr) {
     const std::string n = rdv_next_label(now);
@@ -160,9 +161,7 @@ void alarm_render_settings(const AlarmSettingsUI& ui, time_t now, bool crescendo
     // translucide (audit des conteneurs du 01/10/2026).
     texte_ha_coupe(ui.lbl_rdv_next, n.empty() ? tr("Aucun rendez-vous \xC3\xA0 venir") : n.c_str(),
                    kLargeurRdvSuivant);
-    lv_obj_set_style_text_color(ui.lbl_rdv_next,
-                                lv_color_hex(n.empty() ? UIColor.TEXT_DIM : UIColor.TEXT_SOFT),
-                                LV_PART_MAIN);
+    ui_text_color(ui.lbl_rdv_next, n.empty() ? UIColor.TEXT_DIM : UIColor.TEXT_SOFT);
   }
 }
 
@@ -172,14 +171,14 @@ static void ring_paint_clock(const AlarmRingUI& ui, time_t now) {
   if (localtime_r(&now, &t) == nullptr) return;
   char buf[8];
   snprintf(buf, sizeof(buf), "%02d:%02d", t.tm_hour, t.tm_min);
-  lv_label_set_text(ui.lbl_time, buf);
+  ui_text(ui.lbl_time, buf);
 }
 
 void alarm_ring_show(const AlarmRingUI& ui, time_t now, const std::string& sub) {
   if (ui.root == nullptr) return;
   ring_paint_clock(ui, now);
-  if (ui.lbl_sub != nullptr) lv_label_set_text(ui.lbl_sub, sub.c_str());
-  if (ui.icon != nullptr) lv_label_set_text(ui.icon, "\U000F0020");
+  if (ui.lbl_sub != nullptr) ui_text(ui.lbl_sub, sub.c_str());
+  if (ui.icon != nullptr) ui_text(ui.icon, "\U000F0020");
   alarm_ring_refresh(ui, now, g_alarm_cfg.snooze_min, alarm_snooze_count());
   lv_obj_remove_flag(ui.root, LV_OBJ_FLAG_HIDDEN);
   lv_obj_move_to_index(ui.root, -1);
@@ -194,11 +193,11 @@ void alarm_ring_refresh(const AlarmRingUI& ui, time_t now, int snooze_min, int s
     } else {
       snprintf(buf, sizeof(buf), "%s", tr("R\xC3\xA9veil"));
     }
-    lv_label_set_text(ui.lbl_title, buf);
+    ui_text(ui.lbl_title, buf);
   }
   if (ui.lbl_snooze != nullptr) {
     snprintf(buf, sizeof(buf), tr("R\xC3\xA9p\xC3\xA9ter \xC2\xB7 %d min"), snooze_min);
-    lv_label_set_text(ui.lbl_snooze, buf);
+    ui_text(ui.lbl_snooze, buf);
   }
 }
 
@@ -209,14 +208,14 @@ void alarm_ring_hide(const AlarmRingUI& ui) {
 void alarm_render_status_icon(lv_obj_t* icon, time_t now) {
   if (icon == nullptr) return;
   if (!g_alarm_cfg.enabled) {
-    lv_label_set_text(icon, "\U000F0023");  // alarm-off
-    lv_obj_set_style_text_color(icon, lv_color_hex(UIColor.INACTIVE), LV_PART_MAIN);
+    ui_text(icon, "\U000F0023");  // alarm-off
+    ui_text_color(icon, UIColor.INACTIVE);
     return;
   }
-  lv_label_set_text(icon, "\U000F0020");  // alarm
+  ui_text(icon, "\U000F0020");  // alarm
   // Vert quand la prochaine sonnerie est réellement calculée, ambre quand le
   // réveil est armé mais qu'aucun jour n'est retenu (piège classique : mode
   // « jours travaillés » + semaine de congés, ou tous les jours décochés).
   const bool armed = alarm_next_ring(now) != 0;
-  lv_obj_set_style_text_color(icon, lv_color_hex(armed ? UIColor.SUCCESS : UIColor.WARNING), LV_PART_MAIN);
+  ui_text_color(icon, armed ? UIColor.SUCCESS : UIColor.WARNING);
 }
