@@ -46,6 +46,8 @@ homeassistant:
 
 If `homeassistant:` already exists, add only the `packages:` line under it, indented like the lines already there.
 
+Optional: the alert raised when a push to the tablet fails to render (`packages/tab5_health.yaml`) also needs `system_log: fire_event: true` in `configuration.yaml`, then a restart. HACS cannot add it for you; without it, that one alert stays silent and everything else works.
+
 ## 3. Check, then restart
 
 *Developer tools → YAML → Check configuration*, then **restart** Home Assistant (*Settings → ⋮ → Restart Home Assistant*).
@@ -111,6 +113,8 @@ homeassistant:
 ```
 
 Si `homeassistant:` existe déjà, ajoutez seulement la ligne `packages:` dessous, en retrait comme les lignes déjà là.
+
+Facultatif : l'alerte levée quand une poussée vers la tablette ne se rend pas (`packages/tab5_health.yaml`) demande aussi `system_log: fire_event: true` dans `configuration.yaml`, puis un redémarrage. HACS ne peut pas l'ajouter pour vous ; sans elle, cette seule alerte reste muette, tout le reste marche.
 
 ## 3. Vérifier, puis redémarrer
 
