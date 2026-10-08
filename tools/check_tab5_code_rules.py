@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Règles de code du firmware Tab5, jouées à chaque `pytest` (audit du 06/09/2026,
 §4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006 ; lot L6 de l'audit du 07/10/2026
-pour les règles 9 à 13). Treize règles, toutes falsifiables sur le dépôt réel
+pour les règles 9 à 14). Quatorze règles, toutes falsifiables sur le dépôt réel
 (numérotation propre à ce script, distincte des règles d'AGENTS.md) :
 
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
@@ -71,6 +71,8 @@ pour les règles 9 à 13). Treize règles, toutes falsifiables sur le dépôt r�
      Exceptions du 08/10/2026 : `PUBLIQUES_SANS_APPELANT`.
  13. **Conventions du nouveau code** (Tab5/README.md) : `nullptr` jamais `NULL` ; hors
      jeux, tag de journal `tab5.<module>` (exceptions datées : `TAGS_TAB5_TEMPORAIRES`).
+ 14. **Accents des textes de l'écran** : aucun mot de `MOTS_SANS_ACCENT` (« Ecran »,
+     « Temperature », « Etat »…) dans un texte de `tr()` ou du YAML des écrans.
   La règle 5 d'AGENTS.md (widget répété 3 fois → builder ou gabarit) n'est pas
   vérifiée : « le même widget » ne se reconnaît pas sûrement dans le YAML.
 
@@ -628,7 +630,7 @@ def palette_colors(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
-# ─── Règles 9 à 13 : garde-fous du lot L6 (audit du 07/10/2026, §4.2 et §4.4) ─────────
+# ─── Règles 9 à 14 : garde-fous du lot L6 (audit du 07/10/2026, §4.2 et §4.4) ─────────
 # Chacune empêche les NOUVEAUX écarts sans forcer à déplacer le code existant : les cas
 # légitimes ou hérités sont listés ici, un par un, avec leur raison. Une liste sert de
 # plafond exact : un appel de plus échoue (« nouvel écart »), un appel de moins aussi
@@ -955,6 +957,59 @@ def conventions_cpp(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
+# Règle 14 : accents des textes de l'écran (« French accents always », AGENTS.md). Les
+# textes vus sont ceux de tools/i18n_keys.py : littéraux de tr() / tr_ctx() / tr_fill() /
+# tr_noop() (C++ et lambdas, jeux compris) et textes posés par le YAML des écrans. Pas les
+# identifiants, les noms d'entités, les options lues par HA ni les clés de payload : ils ne
+# passent pas par tr(). Pour tr_ctx(), seul le texte compte (le contexte est un code).
+# Liste FERMÉE de mots courants, sans accent = toujours une faute en français (vérifiée
+# sans faux positif sur les 977 textes du 08/10/2026). Exclu exprès : « annule » (« Annule
+# le dernier coup » est juste), « a » seul (verbe avoir), « connecte » / « active »
+# (formes verbales justes). Un mot ajouté doit rester faux dans tous ses emplois.
+MOTS_SANS_ACCENT = (
+    "journees?", "redemarrages?", "redemarrer", "redemarree?s?", "reflexions?", "temperatures?",
+    "etes?", "previsions?", "precipitations?", "reglages?", "regler", "parametres?", "securite",
+    "electricite", "energies?", "deja", "equipements?", "ecrans?", "etats?", "arretee?s?",
+    "annulees?", "annules", "recue?s?", "fenetres?", "pieces?", "telecommandes?", "meteo",
+    "themes?", "systemes?", "categories?", "dernieres?", "premieres?", "deconnectee?s?",
+    "desactivee?s?", "cree", "creee?s?", "delais?", "durees?", "generale?s?", "numeros?",
+    "periodes?", "bientot", "controles?", "frequences?", "debut", "evenements?", "ecoute",
+    "reponses?", "precedente?s?", "details?", "mise a jour",
+)
+RE_SANS_ACCENT = re.compile(r"(?<!\w)(" + "|".join(MOTS_SANS_ACCENT) + r")(?!\w)", re.I)
+
+
+def _i18n_keys():
+    outils = str(REPO / "tools")
+    if outils not in sys.path:
+        sys.path.insert(0, outils)
+    import i18n_keys
+    return i18n_keys
+
+
+def textes_ecran(tab5: Path = TAB5, entry: Path = ENTRY) -> dict[str, list[str]]:
+    """Texte affiché → emplacements (tr*() et textes YAML des écrans)."""
+    k = _i18n_keys()
+    fichiers = [p for p in firmware_sources(tab5, entry)
+                if p.name not in ("tab5_i18n_data.h", "tab5_i18n.cpp", "tab5_i18n.h")]
+    textes: dict[str, list[str]] = {}
+    for source in (k.cles_tr(fichiers, tab5.parent), k.textes_yaml(fichiers, tab5.parent)):
+        for t, ou in source.items():
+            textes.setdefault(t, []).extend(ou)
+    return textes
+
+
+def accents_ecran(textes: dict[str, list[str]]) -> list[str]:
+    """Règle 14 : aucun mot courant écrit sans son accent dans un texte de l'écran."""
+    problems = []
+    for cle, ou in sorted(textes.items()):
+        texte = cle.split("|", 1)[1] if "|" in cle else cle
+        for m in RE_SANS_ACCENT.finditer(texte):
+            problems.append(f"{ou[0]} : « {m.group(1)} » sans accent dans {texte[:60]!r} "
+                            f"(accents toujours, AGENTS.md ; MOTS_SANS_ACCENT)")
+    return problems
+
+
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
     api_logic = tab5 / "tab5-api-logic.yaml"
@@ -1048,12 +1103,13 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     # 8. couleurs de l'interface par la palette (thèmes)
     problems += palette_colors(tab5, entry)
 
-    # 9 à 13. garde-fous du lot L6 (audit du 07/10/2026)
+    # 9 à 14. garde-fous du lot L6 (audit du 07/10/2026)
     problems += lvgl_yaml(tab5, entry)
     problems += static_lambdas(tab5, entry)
     problems += chemins_chauds(tab5, entry)
     problems += appelants_publics(tab5, entry)
     problems += conventions_cpp(tab5, entry)
+    problems += accents_ecran(textes_ecran(tab5, entry))
 
     return problems
 
@@ -1073,6 +1129,7 @@ def main() -> int:
         ", aucun nouvel appel LVGL ni `static` dans le YAML, pas de copie de chaîne dans un chemin chaud"
         ", fonctions publiques appelées"
         ", nullptr et tags tab5.<module>"
+        ", accents des textes de l'écran"
     )
     return 0
 

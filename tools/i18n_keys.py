@@ -102,8 +102,8 @@ def _args_appel(ligne: str, debut: int) -> str:
     return ligne[debut:]
 
 
-def cles_tr(fichiers: list[Path] | None = None) -> dict[str, list[str]]:
-    """Clé → emplacements, pour chaque littéral passé à tr()/tr_ctx()/tr_fill()."""
+def cles_tr(fichiers: list[Path] | None = None, racine: Path = REPO) -> dict[str, list[str]]:
+    """Clé → emplacements (relatifs à `racine`), pour chaque littéral passé à tr()/tr_ctx()/tr_fill()."""
     res: dict[str, list[str]] = {}
     for f in fichiers or fichiers_source():
         for n, ligne in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
@@ -122,7 +122,7 @@ def cles_tr(fichiers: list[Path] | None = None) -> dict[str, list[str]]:
                 if ctx and len(lits) >= 2:
                     lits = [f"{lits[0]}|{lits[1]}"]
                 for lit in lits:
-                    res.setdefault(lit, []).append(f"{f.relative_to(REPO).as_posix()}:{n}")
+                    res.setdefault(lit, []).append(f"{f.relative_to(racine).as_posix()}:{n}")
     return res
 
 
@@ -142,8 +142,8 @@ def _recoller(args: str, lits: list[str]) -> list[str]:
     return out
 
 
-def textes_yaml(fichiers: list[Path] | None = None) -> dict[str, list[str]]:
-    """Textes posés par le YAML des écrans (traduits au démarrage)."""
+def textes_yaml(fichiers: list[Path] | None = None, racine: Path = REPO) -> dict[str, list[str]]:
+    """Textes posés par le YAML des écrans (traduits au démarrage), emplacements relatifs à `racine`."""
     res: dict[str, list[str]] = {}
     for f in fichiers or fichiers_source():
         if f.suffix != ".yaml" or not (f.parent.name == "ui_components" or f.name in FICHIERS_UI):
@@ -159,7 +159,7 @@ def textes_yaml(fichiers: list[Path] | None = None) -> dict[str, list[str]]:
                     continue
                 if t in NON_TRADUITS:
                     continue
-                res.setdefault(t, []).append(f"{f.relative_to(REPO).as_posix()}:{n}")
+                res.setdefault(t, []).append(f"{f.relative_to(racine).as_posix()}:{n}")
     return res
 
 

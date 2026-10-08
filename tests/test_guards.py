@@ -7,7 +7,9 @@
 - règles de code (ADR-0006) : snprintf partout, aucun lv_* dans le contrat API
   ni dans le fichier matériel, aucun global orphelin, … et la règle 7 (icônes
   MDI), falsifiée sur une copie mutée du firmware (glyphe manquant, glyphe
-  mort, icône C++ non rattachée) ;
+  mort, icône C++ non rattachée), comme les règles 9 à 14 du lot L6 (LVGL et
+  `static` dans le YAML, copies de chaîne, fonctions publiques sans appelant,
+  `nullptr` et tags de journal, accents des textes de l'écran) ;
 - les 6 salles de « Fil d'Or » sont traversables et tout le loot atteignable ;
 - les 10 niveaux de « Coureur d'Or » sont jouables jusqu'à la sortie ;
 - les 8 niveaux d'« Arcanoïde » sont complets et finissables (aucune brique
@@ -79,7 +81,7 @@ def _remplacer(path, ancien, nouveau):
     path.write_text(texte.replace(ancien, nouveau, 1), encoding="utf-8")
 
 
-# ─── Règles 9 à 13 (lot L6 de l'audit du 07/10/2026) : chacune échoue sur un cas témoin ───
+# ─── Règles 9 à 14 (lot L6 de l'audit du 07/10/2026) : chacune échoue sur un cas témoin ───
 
 def test_regle_9_lvgl_dans_le_yaml(tmp_path):
     """Un nouvel appel lv_* dans une lambda YAML, un de plus dans un fichier toléré, un de
@@ -157,6 +159,24 @@ def test_regle_13_nullptr_et_tags_de_journal(tmp_path):
     assert sum(p.startswith("tab5_anim.cpp:") and "tag de journal" in p for p in problems) == 1, problems
     assert not any("chess_game.cpp" in p for p in problems), problems
     assert sum(p.startswith("tab5_zones.cpp:") for p in problems) == 6, problems
+
+
+def test_regle_14_accents_des_textes_de_l_ecran(tmp_path):
+    regle = check_tab5_code_rules
+    assert regle.accents_ecran({"Température": ["a"], "Annule le dernier coup": ["b"],
+                                "energie|Énergie": ["c"], "Mise à jour": ["d"]}) == []
+    fautes = regle.accents_ecran({"Ecran eteint": ["x.cpp:1"], "Etat de la piece": ["y.yaml:2"],
+                                  "Mise a jour": ["z.cpp:3"]})
+    assert [f.split(" : ")[0] for f in fautes] == ["x.cpp:1", "y.yaml:2", "y.yaml:2", "z.cpp:3"], fautes
+    # Sur une copie du firmware : un tr() et un texte YAML d'écran fautifs.
+    tab5, entry = _firmware_copy(tmp_path)
+    assert regle.accents_ecran(regle.textes_ecran(tab5, entry)) == []
+    _ajouter(tab5 / "tab5_anim.cpp", '\nstatic const char* essai() { return tr("Temperature du salon"); }\n')
+    _ajouter(tab5 / "ui_components" / "alarm_popup.yaml", '\n          - label: { text: "Deja vu" }\n')
+    problems = regle.accents_ecran(regle.textes_ecran(tab5, entry))
+    assert any(p.startswith("Tab5/tab5_anim.cpp:") and "« Temperature »" in p for p in problems), problems
+    assert any(p.startswith("Tab5/ui_components/alarm_popup.yaml:") and "« Deja »" in p for p in problems), problems
+    assert len(problems) == 2, problems
 
 
 def _edit_font(styles, font_id, old, new):

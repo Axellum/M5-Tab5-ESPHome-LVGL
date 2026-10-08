@@ -247,7 +247,7 @@ Le code existant mélange plusieurs styles (verbes français et anglais, `static
 - ids YAML : `<fonction>_<rôle>` en français (`roue_bouton_N_icone`, `maison_ligne_RT`) ;
 - avant d'écrire un utilitaire : la « boîte à outils » d'[`AGENTS.md`](../AGENTS.md) (section « Toolbox ») liste ceux qui existent. Les variables des services HA ne se renomment pas (contrat public).
 
-Deux de ces conventions sont **vérifiées** depuis le 08/10/2026 (règle 13 de `tools/check_tab5_code_rules.py`) : `nullptr` partout dans le C++ de `Tab5/`, et le tag `tab5.<module>` hors jeux (`tab5_central.cpp` et `tab5_zones.cpp` gardent leurs « TAB5 » jusqu'à la fin du lot L5, exception datée `TAGS_TAB5_TEMPORAIRES`).
+Deux de ces conventions sont **vérifiées** depuis le 08/10/2026 (règle 13 de `tools/check_tab5_code_rules.py`) : `nullptr` partout dans le C++ de `Tab5/`, et le tag `tab5.<module>` hors jeux (`tab5_central.cpp` et `tab5_zones.cpp` gardent leurs « TAB5 » jusqu'à la fin du lot L5, exception datée `TAGS_TAB5_TEMPORAIRES`). La règle 14 refuse aussi un mot courant écrit sans accent (« Ecran », « Temperature », « Etat »… liste fermée `MOTS_SANS_ACCENT`) dans un texte de `tr()` ou du YAML des écrans.
 
 ---
 
