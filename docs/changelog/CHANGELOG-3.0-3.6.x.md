@@ -2,16 +2,15 @@
 
 Archivé le 08/10/2026, après la 3.7.0 : ces sections faisaient près de la moitié du
 [`CHANGELOG.md`](../../CHANGELOG.md), qui garde `[Unreleased]` et la 3.7.x. Les dates sont
-celles du merge dans `main`. Le texte des sections est **recopié à l'octet près** : les
-liens relatifs (`docs/…`) y restent écrits depuis la racine du dépôt, comme dans le
-`CHANGELOG.md` de chaque tag `v3.x.y`, où ils fonctionnent.
+celles du merge dans `main`. Le texte des sections est inchangé, sauf les 15 liens
+relatifs recalés pour ce dossier (`docs/…` → `../../docs/…`).
 
 ## [3.6.0] — 2026-10-05
 
 De `v3.5.0` à aujourd'hui : vingt-huit pull requests (#296 → #319, #321 → #325), dont sept nées
 des idées et des retours de @husyildiz (discussion #278 : #302 à #305, #308 à #310) — merci
 à @husyildiz —, et celle de la release (#320).
-- **Vingt et un thèmes, chacun clair ou sombre** (#312, #314 à #318, #324, #325, [ADR-0029](docs/decisions/0029-themes-palette.md)) :
+- **Vingt et un thèmes, chacun clair ou sombre** (#312, #314 à #318, #324, #325, [ADR-0029](../../docs/decisions/0029-themes-palette.md)) :
   couleurs, formes (rayons, bordures, ombres) et polices de l'heure, de la date et des
   titres. Choisis dans Home Assistant (« Thème », « Clair ou sombre ») ou depuis la
   console ; l'écran se repeint sans redémarrer. « Auto » passe en clair le jour et en
@@ -28,7 +27,7 @@ des idées et des retours de @husyildiz (discussion #278 : #302 à #305, #308 à
 - **Tableau de bord Home Assistant de la tablette** (#313) : la macro
   `custom_templates/tab5_dashboard.jinja` écrit trois vues (Tab5, Réglages, Santé) avec
   vos entités.
-- **Énergie solaire** (#308, #310, [ADR-0028](docs/decisions/0028-solar-energy-popup.md)) : popup Énergie (installation en direct,
+- **Énergie solaire** (#308, #310, [ADR-0028](../../docs/decisions/0028-solar-energy-popup.md)) : popup Énergie (installation en direct,
   production par heure, jour et mois) et icône de la production dans le bandeau d'état,
   depuis une section facultative du blueprint.
 - **Batterie d'origine** (#303, #309) : la charge est activée au démarrage ; trois entités
@@ -261,7 +260,7 @@ hors tablette.
 Demande d'Axel : « mets tous les thèmes qu'on a faits ce soir », Relief doux par défaut.
 Les dix-sept esquisses du 04/10 deviennent des thèmes de l'écran, chacun avec son mode
 sombre et son mode clair, ses formes et, pour treize d'entre eux, ses polices
-d'affichage ([ADR-0029](docs/decisions/0029-themes-palette.md), « lot 3 »).
+d'affichage ([ADR-0029](../../docs/decisions/0029-themes-palette.md), « lot 3 »).
 - **Dix-huit thèmes** dans le select « Thème » : Ardoise, Relief doux, Relief plat,
   Graphite, Almanach imprimé, Ardoise douce, Terre cuite, Craie et ardoise, Almanach,
   Béton brut, Néon calme, Zen Sumi, Bento, Obsidienne, Platine et or, Signalisation,
@@ -293,7 +292,7 @@ d'affichage ([ADR-0029](docs/decisions/0029-themes-palette.md), « lot 3 »).
 Suite de la galerie de seize esquisses du 04/10 : un thème change plus que ses couleurs
 (ombres douces sans bordure, horloge en police à empattements, bandeau sombre sur un
 écran clair). Ce lot pose les mécanismes avec Ardoise seul, **rendu inchangé** ; les
-seize thèmes arrivent dans la PR suivante ([ADR-0029](docs/decisions/0029-themes-palette.md), section « lot 3 »).
+seize thèmes arrivent dans la PR suivante ([ADR-0029](../../docs/decisions/0029-themes-palette.md), section « lot 3 »).
 - **Formes** (`formes:` d'un fichier de thème) : rayon, bordure, dégradé, ombre et
   contour de neuf styles partagés (cartes de la page, boutons verre, cartes des popups).
   Cinq styles de la page de plus, copies exactes des cartes météo : horloge, bandeau
@@ -315,7 +314,7 @@ Suite de la demande d'Axel (« un mode clair et sombre pour chacun », une douza
 thèmes au choix, bascule sans redémarrage, mode Auto jour/nuit). Ce lot pose le
 mécanisme avec un premier thème, **Ardoise** (le sombre d'aujourd'hui et un clair) ;
 les douze thèmes viennent au lot 4, les polices propres à quelques thèmes au lot 3
-([ADR-0029](docs/decisions/0029-themes-palette.md), section « lot 2 »).
+([ADR-0029](../../docs/decisions/0029-themes-palette.md), section « lot 2 »).
 - **Trois entités** (`Tab5/tab5-themes.yaml`) : select « Thème », select « Clair ou
   sombre » (Sombre, Clair, Auto) et interrupteur « Nuit (thème auto) ». En Auto, l'écran
   est clair le jour et sombre la nuit : Home Assistant allume l'interrupteur au coucher
@@ -352,7 +351,7 @@ les douze thèmes viennent au lot 4, les polices propres à quelques thèmes au 
 ### 2026-10-04 — Thèmes, lot 1 : une seule palette pour toutes les couleurs de l'interface
 
 Demande d'Axel : des thèmes, avec un mode sombre et un mode clair. Ce premier lot ne
-change **rien à l'écran** : il rend les couleurs changeables ([ADR-0029](docs/decisions/0029-themes-palette.md)).
+change **rien à l'écran** : il rend les couleurs changeables ([ADR-0029](../../docs/decisions/0029-themes-palette.md)).
 - **Pourquoi c'était impossible** : ESPHome écrit une couleur YAML en dur dans le C++
   généré (`lv_color_make(148, 163, 184)`), et 483 couleurs étaient posées widget par
   widget. Les jetons C++ (`UIColor::X`) étaient des constantes, recopiées à la main du
@@ -438,7 +437,7 @@ production des panneaux solaires en pourcentage de leur maximum, en couleur.
   plus 12 poussées par heure de soleil, aucune la nuit. Une clé plutôt qu'une nouvelle
   action : un firmware plus ancien ignore une clé inconnue, alors qu'une action absente
   arrête le script de HA (même raison que `climr` et `crRT`/`ceRT`). Amendement de
-  l'[ADR-0028](docs/decisions/0028-solar-energy-popup.md).
+  l'[ADR-0028](../../docs/decisions/0028-solar-energy-popup.md).
 - Deux glyphes ajoutés à `mdi_font_26`. `tests/test_solaire.py` : la clé des deux côtés,
   le chemin firmware, le pourcentage du blueprint contre un calcul Python indépendant, et
   quand il part. Rendu hors tablette : six captures (`accueil-solaire-nuit`, `-faible`,
@@ -474,7 +473,7 @@ Wi-Fi et réveil, aux couleurs de la batterie du téléphone.
 ### 2026-10-04 — Popup Énergie pour une installation solaire
 
 - **Popup Énergie** (idée d'un utilisateur, discussion #278,
-  [ADR-0028](docs/decisions/0028-solar-energy-popup.md)) : en haut, l'installation en
+  [ADR-0028](../../docs/decisions/0028-solar-energy-popup.md)) : en haut, l'installation en
   direct, en quatre cartes (solaire et production du jour, maison, réseau acheté ou vendu,
   batterie avec niveau, charge ou décharge et température) ; en bas, la production en
   barres par heure (aujourd'hui), par jour (30 jours) et par mois (12 mois), avec le total
@@ -1061,7 +1060,7 @@ Ceux de la 3.3.1.
 
 De `v3.3.0` à aujourd'hui : une pull request de fonction (#263) et trois de documentation
 (#259 → #261), plus celle de la release.
-- **Toutes les clims ont leur popup** (#263, [ADR-0027](docs/decisions/0027-climate-per-tile.md)) :
+- **Toutes les clims ont leur popup** (#263, [ADR-0027](../../docs/decisions/0027-climate-per-tile.md)) :
   une tuile de clim placée dans une pièce ouvre le popup pour sa propre clim (réglages,
   état, commandes), et plus seulement la clim du blueprint. La carte de l'accueil reste
   celle du blueprint. La clim du blueprint reçoit les mêmes commandes qu'en 3.3.0.
@@ -1113,7 +1112,7 @@ dans le popup au plus tard 5 minutes après.
 
 ### 2026-09-29 — Toutes les clims ont leur popup
 
-- **Chaque tuile de clim ouvre le popup pour SA clim** ([ADR-0027](docs/decisions/0027-climate-per-tile.md)).
+- **Chaque tuile de clim ouvre le popup pour SA clim** ([ADR-0027](../../docs/decisions/0027-climate-per-tile.md)).
   Jusqu'ici, seule la clim du blueprint (option `m`) ouvrait le popup ; une autre clim
   placée dans une pièce ne montrait que sa température. Le blueprint pousse désormais,
   avec les tuiles, les réglages de chaque clim de tuile (clé `crRT`, les champs de
@@ -1139,7 +1138,7 @@ dans le popup au plus tard 5 minutes après.
 
 De `v3.2.2` à aujourd'hui : six pull requests (#252 → #257), plus celle de la release.
 L'écran et Home Assistant s'adaptent à d'autres maisons que celle de l'auteur.
-- **Clim de toutes marques** (#257, [ADR-0026](docs/decisions/0026-climate-from-device.md)) :
+- **Clim de toutes marques** (#257, [ADR-0026](../../docs/decisions/0026-climate-from-device.md)) :
   bornes, pas, °C ou °F, boutons et nom viennent de l'appareil ; les commandes sont
   traduites vers ses vrais modes. La Daikin de l'auteur reçoit les mêmes commandes qu'avant.
 - **Home Assistant** (#256) : mot des événements de travail, vacances scolaires prises
@@ -1192,7 +1191,7 @@ Ceux de la 3.2.2, et :
 
 ### 2026-09-29 — Clim de toutes marques, mode Discussion sans pipeline masqué
 
-- **Le popup clim suit l'appareil** ([ADR-0026](docs/decisions/0026-climate-from-device.md)).
+- **Le popup clim suit l'appareil** ([ADR-0026](../../docs/decisions/0026-climate-from-device.md)).
   Le blueprint envoie ses réglages dans `tab5_maj_emplacements` (nouvelle clé `climr`,
   avant `tab5_maj_clim`) : bornes, pas, °C ou °F (l'unité de l'entité météo de HA), modes
   gérés et nom. L'arc et les boutons − / + suivent les bornes et le pas, le titre devient
@@ -1787,7 +1786,7 @@ Ceux de la 3.1.0. En plus :
 
 ### 2026-09-28 — Home Assistant sans placeholder : une archive, une ligne de YAML, des choix dans l'interface
 
-Installer le côté Home Assistant ne demande plus ni dépôt ni Python ([ADR-0024](docs/decisions/0024-packages-without-placeholders.md)).
+Installer le côté Home Assistant ne demande plus ni dépôt ni Python ([ADR-0024](../../docs/decisions/0024-packages-without-placeholders.md)).
 - **Archive `tab5_home_assistant.zip` jointe aux releases** (`tools/publication/archive_ha.py`,
   job `home-assistant` de `publication.yml`) : `packages/`, `custom_templates/`, le blueprint
   et `tab5_optionnel/`, dans l'arborescence de `config/`, avec un LISEZMOI. À décompresser
@@ -2154,7 +2153,7 @@ OTA en clair. Le passage se fait une fois, sur place.
 
 ### À faire en mettant à jour depuis 2.2.0
 
-Le guide pas à pas : [« Passer à la 3.0 »](docs/installation.md#passer-à-la-30).
+Le guide pas à pas : [« Passer à la 3.0 »](../../docs/installation.md#passer-à-la-30).
 - **Home Assistant 2026.8 ou plus récent** : c'est lui qui donne sa clé à la tablette.
 - **HA d'abord** : reprendre `tab5_push.yaml`, `tab5_health.yaml` et
   `tab5_meteo_sources.yaml`, importer le blueprint `tab5_emplacements` et créer
@@ -2197,7 +2196,7 @@ Le guide pas à pas : [« Passer à la 3.0 »](docs/installation.md#passer-à-la
   3.0.
 - **Fin de mise à jour depuis HA** : un plantage vu une fois (rc.1 → rc.2), pas
   reproduit sous capture (rc.2 → rc.3). `tools/capture_serie.py` le capture
-  ([débogage](docs/debugging.md)).
+  ([débogage](../../docs/debugging.md)).
 - **ST7121** : signalée fonctionnelle par un tiers avec la configuration d'ESPHome, notre
   firmware jamais essayé dessus. **ILI9881C** : jamais essayée.
 - **Allemand et néerlandais** : traduits par une IA, pas encore relus par une personne

@@ -2,9 +2,8 @@
 
 Archivé le 08/10/2026, après la 3.7.0 : ces sections faisaient près d'un tiers du
 [`CHANGELOG.md`](../../CHANGELOG.md), qui garde `[Unreleased]` et la 3.7.x. Les dates sont
-celles du merge dans `main`. Le texte des sections est **recopié à l'octet près** : les
-liens relatifs (`docs/…`) y restent écrits depuis la racine du dépôt, comme dans le
-`CHANGELOG.md` de chaque tag `v3.x.y`, où ils fonctionnent.
+celles du merge dans `main`. Le texte des sections est inchangé, sauf les 3 liens
+relatifs recalés pour ce dossier (`docs/…` → `../../docs/…`).
 
 ## [2.2.0] — 2026-09-27
 
@@ -322,7 +321,7 @@ produits par HA et le fuseau horaire aussi (lot 4c).
   qui change passe par un modèle : `{jour}, {mois} {quantieme}`.
 - **Une langue = un fichier** `Tab5/lang/<code>.yaml`. `tools/gen_i18n.py` génère
   `Tab5/tab5_i18n_data.h`. Ajouter une langue : copier `en.yaml`, traduire, index
-  suivant (voir [`docs/translations.md`](docs/translations.md)).
+  suivant (voir [`docs/translations.md`](../../docs/translations.md)).
 - **`Tab5/tab5_i18n.h/.cpp`**, pur (compilé aussi sur PC par les tests du réveil).
 - **Textes posés par le YAML** : gardés en français, et traduits une fois en fin de
   setup par `i18n_apply_boot()`. C'est une ligne en tête du bloc `on_boot` -100,
@@ -370,7 +369,7 @@ en mettant à jour.
   et automatisations.
 - **« Tab5 Uptime » devient l'heure du dernier démarrage** (#172) : même nom, même entité.
   Rechargez l'intégration ESPHome après la mise à jour, sinon l'entité reste `unavailable`
-  ([troubleshooting](docs/troubleshooting.md)). Une automatisation qui lisait des secondes
+  ([troubleshooting](../../docs/troubleshooting.md)). Une automatisation qui lisait des secondes
   est à revoir ; la garde (b) de `packages/tab5_health.yaml` est déjà réécrite.
 - **Redéployer `packages/tab5_health.yaml`** : garde (b) réécrite (#172, #174), garde (e)
   nouvelle, qui reçoit le journal des démarrages (#175, #177).
@@ -1509,7 +1508,7 @@ changements sont cassants pour qui met à jour depuis 1.x.
 ### ⚠️ Changements cassants — à lire avant de mettre à jour
 
 - **ESPHome 2026.9.0 minimum, OTA chiffrée par la clé API, envoi en clair refusé** (#124,
-  [ADR-0015](docs/decisions/0015-ota-encrypted-with-api-key.md)). Le poste qui flashe doit avoir
+  [ADR-0015](../../docs/decisions/0015-ota-encrypted-with-api-key.md)). Le poste qui flashe doit avoir
   `api_encryption_key` dans `secrets.yaml` ; `ota_password` n'est plus lu. **Depuis un
   firmware 1.x**, qui n'accepte que l'OTA à mot de passe, passer par une OTA intermédiaire :
   compiler avec ESPHome 2026.9.0 en retirant `encryption:` du bloc `ota:`
