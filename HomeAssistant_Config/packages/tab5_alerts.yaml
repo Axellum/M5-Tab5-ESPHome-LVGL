@@ -161,28 +161,22 @@ template:
   # Compte des entités "unavailable" (tableau de bord du Tab5, carte Santé). Les
   # alertes ont leur propre liste : seulement les entités indisponibles depuis 10 min.
   # `triggers:` (et non `state:`) est OBLIGATOIRE : un capteur `state:` qui itère
-  # `states` se réévaluerait à chaque changement d'état HA. Ici : toutes les 2 min et
-  # au démarrage de HA.
+  # `states` se réévaluerait à chaque changement d'état HA. Ici : toutes les 5 min et
+  # au démarrage de HA (audit du 07/10/2026, HA-13 : toutes les 2 min et une boucle
+  # avant ; même compte, par des filtres, pour la seule carte Santé du tableau de bord).
   # ==========================================================================
   - triggers:
       - trigger: homeassistant
         event: start
       - trigger: time_pattern
-        minutes: "/2"
+        minutes: "/5"
     sensor:
       - name: "Tab5 Unavailable Count"
         unique_id: tab5_unavailable_count
         icon: mdi:help-network-outline
-        state: >
-          {% set ns = namespace(n=0) %}
-          {% for s in states %}
-            {% if s.state == 'unavailable'
-                and not s.entity_id.startswith('update.')
-                and not s.entity_id.startswith('automation.') %}
-              {% set ns.n = ns.n + 1 %}
-            {% endif %}
-          {% endfor %}
-          {{ ns.n }}
+        state: >-
+          {{ states | selectattr('state', 'eq', 'unavailable')
+             | rejectattr('domain', 'in', ['update', 'automation']) | list | count }}
 
 automation:
   # Une alerte lue est écrite sur le disque tout de suite : après un plantage de HA,

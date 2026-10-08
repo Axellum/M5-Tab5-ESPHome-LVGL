@@ -714,3 +714,22 @@ def test_les_donnees_du_rendu_et_du_fuzz_suivent_le_format():
     graine = re.search(r'"tab5_maj_alertes_historique": \{"payload": "([^"]+)"',
                        (RACINE / "tools" / "sanitizers" / "fuzz_services.py").read_text(encoding="utf-8"))
     assert graine and _entrees_valides(graine.group(1))
+
+
+def test_compte_des_indisponibles_par_filtres_toutes_les_5_minutes():
+    """Audit du 07/10/2026, HA-13 : sensor.tab5_unavailable_count (carte Santé du tableau
+    de bord, rien d'autre) compte les entités `unavailable` hors update.* et automation.*
+    par des filtres, plus par une boucle sur tous les états, et toutes les 5 min au lieu
+    de 2."""
+    blocs = [b for b in _charger("packages", "tab5_alerts.yaml")["template"]
+             if any(s.get("unique_id") == "tab5_unavailable_count" for s in b.get("sensor", []))]
+    assert len(blocs) == 1
+    assert {"trigger": "time_pattern", "minutes": "/5"} in blocs[0]["triggers"]
+    modele = blocs[0]["sensor"][0]["state"]
+    assert "{% for" not in modele
+    etats = [Etat("light.a", "unavailable"), Etat("sensor.b", "unavailable"), Etat("sensor.c", "on"),
+             Etat("update.d", "unavailable"), Etat("automation.e", "unavailable"),
+             Etat("updater.f", "unavailable"), Etat("switch.g", "unknown")]
+    rendu = ImmutableSandboxedEnvironment().from_string(modele).render(states=etats)
+    assert rendu.strip() == "3"
+
