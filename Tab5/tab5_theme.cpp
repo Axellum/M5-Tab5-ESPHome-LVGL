@@ -2336,6 +2336,18 @@ static constexpr PolicesTheme kPolices[] = {
     {42, 43, 44, -32, 182, -15, 132, 17, 0},  // sorbet
     {45, 46, 47, -32, 185, -9, 124, 23, -1},  // ultraviolet
 };
+// Tables liées à THEMES[] (tab5_themes_data.h) : une rangée de polices par thème, deux
+// tranches de formes (sombre, clair) par thème, chaque table close par sa sentinelle.
+static_assert(sizeof(kPolices) / sizeof(kPolices[0]) == THEME_COUNT, "kPolices : une rangée par thème");
+static_assert(sizeof(kFormesDebut) / sizeof(kFormesDebut[0]) == 2 * THEME_COUNT + 1,
+              "kFormesDebut : deux modes par thème");
+static_assert(kFormesDebut[2 * THEME_COUNT] + 1 == sizeof(kFormes) / sizeof(kFormes[0]),
+              "kFormes : la dernière tranche finit sur la sentinelle");
+static_assert(kNbFormesDefaut + 1 == sizeof(kFormesDefaut) / sizeof(kFormesDefaut[0]),
+              "kFormesDefaut : kNbFormesDefaut et la sentinelle");
+static_assert(sizeof(kCadreX) / sizeof(kCadreX[0]) == 4, "kCadreX : les quatre rouleaux");
+static_assert(sizeof(kPaletteStyle) / sizeof(kPaletteStyle[0]) == kStylesFormes,
+              "kPaletteStyle : une palette par style redessiné");
 // <<< formes
 
 static void poser_forme(lv_style_t* const styles[], const Forme& f) {

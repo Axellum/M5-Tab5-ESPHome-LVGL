@@ -229,6 +229,18 @@ def test_catalogue_hors_des_jetons():
         assert re.search(r"^\s+- Tab5/tab5_themes_data\.h\s*$", texte, re.M), f"{config} : includes:"
 
 
+def test_tables_du_theme_liees_a_theme_count():
+    """DO-13 (audit du 07/10/2026) : les tables de tab5_theme.cpp lues par index de thème
+    sont liées à THEME_COUNT par des static_assert générés ; une table périmée ne compile
+    plus au lieu d'être lue hors de ses bornes au premier changement de thème."""
+    texte = (TAB5 / "tab5_theme.cpp").read_text(encoding="utf-8")
+    bloc = re.search(r"// >>> formes[^\n]*\n(.*?)// <<< formes", texte, re.S).group(1)
+    assert "static_assert(sizeof(kPolices) / sizeof(kPolices[0]) == THEME_COUNT" in bloc
+    assert "static_assert(sizeof(kFormesDebut) / sizeof(kFormesDebut[0]) == 2 * THEME_COUNT + 1" in bloc
+    assert "static_assert(kFormesDebut[2 * THEME_COUNT] + 1 == sizeof(kFormes) / sizeof(kFormes[0])" in bloc
+    assert f"static_assert(THEME_COUNT == {len(gen_themes.charger())}," in THEMES_DATA.read_text(encoding="utf-8")
+
+
 def test_options_du_select_dans_l_ordre_des_themes():
     """La tablette garde l'INDEX du thème choisi : l'ordre des options ne bouge jamais."""
     texte = THEMES_YAML.read_text(encoding="utf-8")

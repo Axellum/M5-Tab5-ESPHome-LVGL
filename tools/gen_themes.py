@@ -28,7 +28,8 @@ tools/police_theme.py). Écrit :
   (d) Tab5/tab5-themes.yaml — les polices des thèmes (bloc `font:`), entre
       `# >>> polices` et `# <<< polices` ;
   (e) Tab5/tab5_theme.cpp — les tables des formes et des polices, entre `// >>> formes`
-      et `// <<< formes`.
+      et `// <<< formes`, suivies de static_assert qui les lient à THEME_COUNT (DO-13) :
+      une table qui ne suivrait plus THEMES[] ne compile plus.
 
     python tools/gen_themes.py          # réécrit les parties générées
     python tools/gen_themes.py --check  # exit 1 si l'une est périmée (n'écrit rien)
@@ -400,6 +401,26 @@ def rendre_donnees(themes: list[Theme]) -> str:
     return ENTETE_DONNEES + "\n".join(lignes) + "\n"
 
 
+def rendre_controles(themes: list[Theme], formes_cpp: list[str]) -> list[str]:
+    """static_assert qui lient les tables de tab5_theme.cpp à THEME_COUNT (audit du
+    07/10/2026, DO-13) : une table qui ne suivrait plus THEMES[] serait lue hors de ses
+    bornes au premier changement de thème ; elle ne compile plus."""
+    c = ["// Tables liées à THEMES[] (tab5_themes_data.h) : une rangée de polices par thème, deux",
+         "// tranches de formes (sombre, clair) par thème, chaque table close par sa sentinelle.",
+         'static_assert(sizeof(kPolices) / sizeof(kPolices[0]) == THEME_COUNT, "kPolices : une rangée par thème");',
+         "static_assert(sizeof(kFormesDebut) / sizeof(kFormesDebut[0]) == 2 * THEME_COUNT + 1,",
+         '              "kFormesDebut : deux modes par thème");',
+         "static_assert(kFormesDebut[2 * THEME_COUNT] + 1 == sizeof(kFormes) / sizeof(kFormes[0]),",
+         '              "kFormes : la dernière tranche finit sur la sentinelle");',
+         "static_assert(kNbFormesDefaut + 1 == sizeof(kFormesDefaut) / sizeof(kFormesDefaut[0]),",
+         '              "kFormesDefaut : kNbFormesDefaut et la sentinelle");',
+         'static_assert(sizeof(kCadreX) / sizeof(kCadreX[0]) == 4, "kCadreX : les quatre rouleaux");']
+    if any(l.startswith("static constexpr int kStylesFormes = ") and not l.endswith("= 0;") for l in formes_cpp):
+        c += ["static_assert(sizeof(kPaletteStyle) / sizeof(kPaletteStyle[0]) == kStylesFormes,",
+              '              "kPaletteStyle : une palette par style redessiné");']
+    return c
+
+
 def _styles_yaml(styles: Path = STYLES) -> dict:
     class Chargeur(yaml.SafeLoader):
         pass
@@ -748,7 +769,8 @@ def cibles(themes: list[Theme]) -> list[tuple[Path, str, str]]:
                             rendre_styles(STYLES, set(roles())) + formes_yaml + polices_yaml, "tab5-themes.yaml")
     attendu_fw = _remplacer(attendu_fw, MARQUES_POLICES, font_yaml, "tab5-themes.yaml")
     cpp, _ = _lire_texte(THEME_CPP)
-    attendu_cpp = _remplacer(cpp, MARQUES_FORMES, formes_cpp + polices_cpp, "tab5_theme.cpp")
+    attendu_cpp = _remplacer(cpp, MARQUES_FORMES, formes_cpp + polices_cpp + rendre_controles(themes, formes_cpp),
+                             "tab5_theme.cpp")
     return [(TOKENS, tokens, attendu_tokens), (THEMES_DATA, donnees, rendre_donnees(themes)),
             (FIRMWARE, firmware, attendu_fw), (THEME_CPP, cpp, attendu_cpp)]
 
