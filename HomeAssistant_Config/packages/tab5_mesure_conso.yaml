@@ -1,0 +1,396 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_mesure_conso.yaml
+# @role Test de consommation d'une tablette SUR BATTERIE (08/10/2026, demande
+#       d'Axel, pour husyildiz, discussion #278) : un script lancé à la main
+#       (Paramètres → Automatisations et scènes → Scripts → « Tab5 — consumption
+#       test », Exécuter) passe par 11 cas de N minutes (écran 100 / 50 / 10 % et
+#       éteint, « Okay Nabu » coupé, haut-parleur coupé, thème très sombre puis
+#       clair, mode économie « Toujours », tout coupé, référence rejouée à la fin),
+#       relève « Tab5 Consommation » toutes les 5 s et donne à la fin, dans une
+#       notification, un tableau EN ANGLAIS à copier dans GitHub.
+#       Pourquoi un script de HA plutôt que tools/mesure_conso.py : rien à installer,
+#       pas de jeton, lisible dans l'interface de HA avant de le lancer, et rien ne
+#       sort de chez l'utilisateur (il choisit ce qu'il partage).
+# @architecture_constraint Aucun entity_id de la tablette écrit ici (ADR-0024) :
+#       ses entités sont retrouvées par la fin de leur entity_id parmi celles de
+#       l'appareil détecté par tab5_api() (custom_templates/tab5_tablette.jinja),
+#       comme sensor.tab5_tablette (packages/tab5_reglages.yaml). Une entité
+#       désactivée n'est pas dans device_entities() : « Tab5 Batterie », « Tab5
+#       Tension batterie » (désactivées par défaut) manquent alors au tableau, sans
+#       bloquer le test.
+# @ai_instruction « Tab5 Consommation » n'est publiée que sur batterie : le test
+#       s'arrête (et remet les réglages) si la tablette est branchée. Le firmware
+#       3.8.0-rc.3 et suivants ont l'interrupteur « Tab5 Mesure de consommation »
+#       (INA226 lu toutes les 2 s, 2 h au plus) ; avant, une lecture par minute :
+#       le tableau le dit (colonne « readings »).
+# @ai_instruction Les variables mises à jour dans les boucles (n, somme, resultats…)
+#       s'accumulent d'un tour à l'autre : vérifié sur HA 2026.9.4 le 08/10/2026
+#       (un `variables:` en cours de séquence met à jour la variable de la portée
+#       qui l'a définie).
+# @ai_warning Pas de « finally » dans un script de HA : arrêté en route, il ne remet
+#       pas les réglages. La notification du début les écrit pour les remettre à la
+#       main ; l'interrupteur de mesure se coupe seul au bout de 2 h.
+# @install Comme les autres packages (homeassistant: packages: !include_dir_named
+#       packages), puis recharger les scripts.
+# ============================================================================
+
+script:
+  tab5_mesure_consommation:
+    alias: "Tab5 — consumption test · test de consommation"
+    icon: mdi:battery-clock
+    description: >-
+      Measures the power drawn by the Tab5 on its battery in 11 cases (screen
+      100 / 50 / 10 % and off, « Okay Nabu » off, speaker off, a very dark and a
+      light theme, energy saving « Always », everything off, the first case
+      again). Unplug the USB cable first and leave the tablet alone. At the end
+      your settings are put back and a notification shows a table to copy.
+      Mesure la consommation du Tab5 sur batterie dans 11 cas ; débrancher l'USB
+      avant, ne pas toucher la tablette ; les réglages sont remis à la fin.
+    mode: single
+    fields:
+      minutes:
+        name: "Minutes per case · minutes par cas"
+        description: "5 recommended (about 55 min in all). The first 45 s of each case are not counted."
+        default: 5
+        selector:
+          number:
+            min: 2
+            max: 15
+            step: 1
+            unit_of_measurement: min
+      essai:
+        name: "Dry run · essai à blanc"
+        description: "Goes through the cases, 1 min each, without a battery and without measuring anything: to check that the tablet follows. Normally off."
+        default: false
+        selector:
+          boolean:
+    sequence:
+      # ── Tablette et entités ──
+      - variables:
+          api: >-
+            {%- from 'tab5_tablette.jinja' import tab5_api -%}
+            {{ tab5_api() }}
+          ent: "{{ device_entities(device_id(api)) if api else [] }}"
+          e_conso: "{{ ent | select('match', 'sensor[.].*_tab5_consommation$') | first | default('') }}"
+          e_sur_batterie: "{{ ent | select('match', 'binary_sensor[.].*_tab5_sur_batterie$') | first | default('') }}"
+          e_mesure: "{{ ent | select('match', 'switch[.].*_tab5_mesure_de_consommation$') | first | default('') }}"
+          e_ecran: "{{ ent | select('match', 'light[.].*_display_backlight$') | first | default('') }}"
+          e_micro: "{{ ent | select('match', 'switch[.].*_wake_word_active$') | first | default('') }}"
+          e_hp: "{{ ent | select('match', 'switch[.].*_speaker_enable$') | first | default('') }}"
+          e_eco: "{{ ent | select('match', 'select[.].*_tab5_economie_d_energie$') | first | default('') }}"
+          e_extinction: "{{ ent | select('match', 'select[.].*_tab5_extinction_auto_de_l_ecran$') | first | default('') }}"
+          e_theme: "{{ ent | select('match', 'select[.].*_theme$') | first | default('') }}"
+          e_mode: "{{ ent | select('match', 'select[.].*_clair_ou_sombre$') | first | default('') }}"
+          e_niveau: "{{ ent | select('match', 'sensor[.].*_tab5_batterie$') | first | default('') }}"
+          e_tension: "{{ ent | select('match', 'sensor[.].*_tab5_tension_batterie$') | first | default('') }}"
+          e_temp: "{{ ent | select('match', 'sensor[.].*_tab5_core_temp$') | first | default('') }}"
+          version: "{{ ((device_attr(api, 'sw_version') or '?') | string).split(' ') | first if api else '?' }}"
+          essai: "{{ essai | default(false) | bool }}"
+          duree: "{{ 60 if essai else ([2, [15, minutes | default(5) | int(5)] | min] | max) * 60 }}"
+          stabilisation: "{{ 15 if essai else 45 }}"
+          manquantes: >-
+            {%- set ns = namespace(l=[]) -%}
+            {%- for nom, e in [('Tab5 Consommation', e_conso), ('Tab5 Sur batterie', e_sur_batterie),
+                               ('Display Backlight', e_ecran), ('Tab5 Wake Word Active', e_micro),
+                               ('Speaker Enable', e_hp), ('Tab5 Économie d’énergie', e_eco),
+                               ('Tab5 Extinction auto de l’écran', e_extinction), ('Thème', e_theme),
+                               ('Clair ou sombre', e_mode)] -%}
+              {%- if not e -%}{%- set ns.l = ns.l + [nom] -%}{%- endif -%}
+            {%- endfor -%}
+            {{ ns.l }}
+      - if:
+          - condition: template
+            value_template: "{{ not api or manquantes | count > 0 }}"
+        then:
+          - action: persistent_notification.create
+            data:
+              notification_id: tab5_mesure_conso
+              title: "Tab5 consumption test: not started"
+              message: >-
+                {{ 'No Tab5 tablet found in Home Assistant.' if not api else
+                   'Entities not found on the tablet (disabled, or a firmware too old): ' ~ (manquantes | join(', ')) ~ '.' }}
+          - stop: "Tablette ou entités introuvables"
+      - if:
+          - condition: template
+            value_template: "{{ not essai and not is_state(e_sur_batterie, 'on') }}"
+        then:
+          - action: persistent_notification.create
+            data:
+              notification_id: tab5_mesure_conso
+              title: "Tab5 consumption test: not started"
+              message: >-
+                The tablet is not running on its battery (« Tab5 Sur batterie » is
+                {{ states(e_sur_batterie) }}). Unplug the USB cable, wait one minute, then run
+                the test again.
+          - stop: "Pas sur batterie"
+
+      # ── Réglages de départ, remis à la fin ──
+      - variables:
+          avant:
+            ecran: "{{ states(e_ecran) }}"
+            luminosite: "{{ state_attr(e_ecran, 'brightness') | int(255) }}"
+            micro: "{{ states(e_micro) }}"
+            hp: "{{ states(e_hp) }}"
+            eco: "{{ states(e_eco) }}"
+            extinction: "{{ states(e_extinction) }}"
+            theme: "{{ states(e_theme) }}"
+            mode: "{{ states(e_mode) }}"
+          # Cas : luminosité (0 = éteint), micro, haut-parleur, économie, thème et
+          # mode ('' = ceux de l'utilisateur).
+          cas:
+            - {nom: "reference", texte: "Reference: screen 100 %, Okay Nabu on, speaker on, your theme", ecran: 100, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
+            - {nom: "okay_nabu_off", texte: "Okay Nabu (microphone) off", ecran: 100, micro: false, hp: true, eco: "Jamais", theme: "", mode: ""}
+            - {nom: "speaker_off", texte: "Speaker amplifier off", ecran: 100, micro: true, hp: false, eco: "Jamais", theme: "", mode: ""}
+            - {nom: "screen_50", texte: "Screen 50 %", ecran: 50, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
+            - {nom: "screen_10", texte: "Screen 10 %", ecran: 10, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
+            - {nom: "energy_saving", texte: "Energy saving « Always » (screen 10 %, no animation, 30 fps): compare with screen_10", ecran: 100, micro: true, hp: true, eco: "Toujours", theme: "", mode: ""}
+            - {nom: "screen_off", texte: "Screen off", ecran: 0, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
+            - {nom: "theme_dark", texte: "Very dark theme (Obsidienne, dark mode), screen 100 %", ecran: 100, micro: true, hp: true, eco: "Jamais", theme: "Obsidienne", mode: "Sombre"}
+            - {nom: "theme_light", texte: "Same theme in light mode, screen 100 %", ecran: 100, micro: true, hp: true, eco: "Jamais", theme: "Obsidienne", mode: "Clair"}
+            - {nom: "all_off", texte: "Screen, Okay Nabu and speaker off", ecran: 0, micro: false, hp: false, eco: "Jamais", theme: "", mode: ""}
+            - {nom: "reference_end", texte: "Reference again (drift with temperature and battery level)", ecran: 100, micro: true, hp: true, eco: "Jamais", theme: "", mode: ""}
+          resultats: []
+          debranche: false
+          debut: "{{ now().strftime('%Y-%m-%d %H:%M') }}"
+      - action: persistent_notification.create
+        data:
+          notification_id: tab5_mesure_conso
+          title: "Tab5 consumption test: running"
+          message: >-
+            Started {{ debut }}, about {{ ((cas | count) * duree / 60) | round(0) | int }} min
+            ({{ cas | count }} cases of {{ (duree / 60) | int }} min). Leave the tablet alone and on
+            its battery. Your settings will be put back at the end. If you stop the script before,
+            put them back by hand: screen {{ avant.ecran }} (brightness {{ (avant.luminosite * 100 / 255) | round(0) | int }} %),
+            Okay Nabu {{ avant.micro }}, speaker {{ avant.hp }}, energy saving « {{ avant.eco }} »,
+            auto screen off « {{ avant.extinction }} », theme « {{ avant.theme }} » « {{ avant.mode }} ».
+      # Mesure fine (firmware 3.8.0-rc.3 et suivants), écran ni éteint ni assombri
+      # par les automatismes de la tablette pendant le test.
+      - if:
+          - condition: template
+            value_template: "{{ e_mesure != '' }}"
+        then:
+          - action: switch.turn_on
+            target:
+              entity_id: "{{ e_mesure }}"
+      - action: select.select_option
+        target:
+          entity_id: "{{ e_extinction }}"
+        data:
+          option: "Jamais"
+
+      # ── Les cas ──
+      - repeat:
+          for_each: "{{ cas }}"
+          sequence:
+            - if:
+                - condition: template
+                  value_template: "{{ not debranche }}"
+              then:
+                - variables:
+                    c: "{{ repeat.item }}"
+                    theme_voulu: "{{ repeat.item.theme or avant.theme }}"
+                    mode_voulu: "{{ repeat.item.mode or avant.mode }}"
+                - action: select.select_option
+                  target:
+                    entity_id: "{{ e_eco }}"
+                  data:
+                    option: "{{ c.eco }}"
+                - if:
+                    - condition: template
+                      value_template: "{{ states(e_theme) != theme_voulu }}"
+                  then:
+                    - action: select.select_option
+                      target:
+                        entity_id: "{{ e_theme }}"
+                      data:
+                        option: "{{ theme_voulu }}"
+                - if:
+                    - condition: template
+                      value_template: "{{ states(e_mode) != mode_voulu }}"
+                  then:
+                    - action: select.select_option
+                      target:
+                        entity_id: "{{ e_mode }}"
+                      data:
+                        option: "{{ mode_voulu }}"
+                - action: "switch.turn_{{ 'on' if c.micro else 'off' }}"
+                  target:
+                    entity_id: "{{ e_micro }}"
+                - action: "switch.turn_{{ 'on' if c.hp else 'off' }}"
+                  target:
+                    entity_id: "{{ e_hp }}"
+                - if:
+                    - condition: template
+                      value_template: "{{ c.ecran > 0 }}"
+                  then:
+                    - action: light.turn_on
+                      target:
+                        entity_id: "{{ e_ecran }}"
+                      data:
+                        brightness_pct: "{{ c.ecran }}"
+                  else:
+                    - action: light.turn_off
+                      target:
+                        entity_id: "{{ e_ecran }}"
+                # Les 45 premières secondes ne comptent pas (écran, thème et micro
+                # qui changent, assombrissement du mode économie après 30 s).
+                - delay: "{{ stabilisation }}"
+                - variables:
+                    t0: "{{ as_timestamp(now()) }}"
+                    n: 0
+                    somme: 0
+                    mini: 1000
+                    maxi: 0
+                    n_temp: 0
+                    somme_temp: 0
+                    niveau0: "{{ (states(e_niveau) | float | round(0) | int) if e_niveau and is_number(states(e_niveau)) else '—' }}"
+                    tension0: "{{ (states(e_tension) | float | round(2)) if e_tension and is_number(states(e_tension)) else '—' }}"
+                    lectures0: "{{ (states[e_conso].last_reported | as_timestamp(0)) if states[e_conso] else 0 }}"
+                    lectures: 0
+                    dernier: "{{ (states[e_conso].last_reported | as_timestamp(0)) if states[e_conso] else 0 }}"
+                - repeat:
+                    while:
+                      - condition: template
+                        value_template: "{{ not debranche and as_timestamp(now()) - t0 < duree - stabilisation }}"
+                    sequence:
+                      - delay: 5
+                      - variables:
+                          w: "{{ states(e_conso) | float(-1) }}"
+                          temp: "{{ states(e_temp) | float(-1) if e_temp else -1 }}"
+                          vu: "{{ (states[e_conso].last_reported | as_timestamp(0)) if states[e_conso] else 0 }}"
+                      - variables:
+                          debranche: "{{ not essai and not is_state(e_sur_batterie, 'on') }}"
+                          n: "{{ n + 1 if w >= 0 else n }}"
+                          somme: "{{ somme + w if w >= 0 else somme }}"
+                          mini: "{{ [mini, w] | min if w >= 0 else mini }}"
+                          maxi: "{{ [maxi, w] | max if w >= 0 else maxi }}"
+                          n_temp: "{{ n_temp + 1 if temp >= 0 else n_temp }}"
+                          somme_temp: "{{ somme_temp + temp if temp >= 0 else somme_temp }}"
+                          lectures: "{{ lectures + 1 if vu != dernier else lectures }}"
+                          dernier: "{{ vu }}"
+                - variables:
+                    resultats: >-
+                      {{ resultats + [{
+                           'nom': c.nom, 'texte': c.texte,
+                           'moyenne': (somme / n) | round(2) if n > 0 else none,
+                           'mini': mini | round(2) if n > 0 else none,
+                           'maxi': maxi | round(2) if n > 0 else none,
+                           'lectures': lectures,
+                           'secondes': (as_timestamp(now()) - t0) | round(0) | int,
+                           'niveau0': niveau0,
+                           'niveau1': (states(e_niveau) | float | round(0) | int) if e_niveau and is_number(states(e_niveau)) else '—',
+                           'tension0': tension0,
+                           'tension1': (states(e_tension) | float | round(2)) if e_tension and is_number(states(e_tension)) else '—',
+                           'temp': (somme_temp / n_temp) | round(1) if n_temp > 0 else none,
+                           'complet': not debranche }] }}
+
+      # ── Réglages remis ──
+      - if:
+          - condition: template
+            value_template: "{{ avant.ecran == 'on' }}"
+        then:
+          - action: light.turn_on
+            target:
+              entity_id: "{{ e_ecran }}"
+            data:
+              brightness: "{{ avant.luminosite }}"
+        else:
+          - action: light.turn_off
+            target:
+              entity_id: "{{ e_ecran }}"
+      - action: "switch.turn_{{ 'on' if avant.micro == 'on' else 'off' }}"
+        target:
+          entity_id: "{{ e_micro }}"
+      - action: "switch.turn_{{ 'on' if avant.hp == 'on' else 'off' }}"
+        target:
+          entity_id: "{{ e_hp }}"
+      - if:
+          - condition: template
+            value_template: "{{ states(e_theme) != avant.theme }}"
+        then:
+          - action: select.select_option
+            target:
+              entity_id: "{{ e_theme }}"
+            data:
+              option: "{{ avant.theme }}"
+      - if:
+          - condition: template
+            value_template: "{{ states(e_mode) != avant.mode }}"
+        then:
+          - action: select.select_option
+            target:
+              entity_id: "{{ e_mode }}"
+            data:
+              option: "{{ avant.mode }}"
+      - action: select.select_option
+        target:
+          entity_id: "{{ e_eco }}"
+        data:
+          option: "{{ avant.eco }}"
+      - action: select.select_option
+        target:
+          entity_id: "{{ e_extinction }}"
+        data:
+          option: "{{ avant.extinction }}"
+      - if:
+          - condition: template
+            value_template: "{{ e_mesure != '' }}"
+        then:
+          - action: switch.turn_off
+            target:
+              entity_id: "{{ e_mesure }}"
+
+      # ── Tableau (en anglais, pour le partager tel quel) ──
+      - variables:
+          ref: "{{ (resultats | selectattr('nom', 'eq', 'reference') | map(attribute='moyenne') | first) if resultats else none }}"
+          # Énergie de la batterie d'après la baisse du niveau (« Tab5 Batterie »,
+          # tension sous charge : approximatif), seulement si elle a baissé d'au
+          # moins 5 points.
+          wh: >-
+            {%- set ns = namespace(wh=0) -%}
+            {%- for r in resultats if r.moyenne is not none -%}
+              {%- set ns.wh = ns.wh + r.moyenne * r.secondes / 3600 -%}
+            {%- endfor -%}
+            {{ ns.wh | round(2) }}
+          baisse: >-
+            {%- set a = resultats[0].niveau0 | float(-1) if resultats else -1 -%}
+            {%- set b = resultats[-1].niveau1 | float(-1) if resultats else -1 -%}
+            {{ (a - b) | round(1) if a >= 0 and b >= 0 else -1 }}
+          capacite: "{{ (wh * 100 / baisse) | round(1) if baisse >= 5 else none }}"
+          tableau: |-
+            Tab5 consumption test{{ ' (DRY RUN: nothing measured)' if essai else '' }} · firmware {{ version }} · started {{ debut }} · {{ (duree / 60) | int }} min per case (first {{ stabilisation }} s of each case not counted)
+
+            | Case | Average W | Min W | Max W | vs reference | Readings | Battery % | Battery V | Core °C |
+            |---|---|---|---|---|---|---|---|---|
+            {%- for r in resultats %}
+            | {{ r.nom }}{{ '' if r.complet else ' (stopped: USB plugged)' }} | {{ r.moyenne if r.moyenne is not none else '—' }} | {{ r.mini if r.mini is not none else '—' }} | {{ r.maxi if r.maxi is not none else '—' }} | {{ ('%+.2f' | format(r.moyenne - ref)) if r.moyenne is not none and ref is not none and r.nom != 'reference' else '' }} | {{ r.lectures }} | {{ r.niveau0 }} → {{ r.niveau1 }} | {{ r.tension0 }} → {{ r.tension1 }} | {{ r.temp if r.temp is not none else '—' }} |
+            {%- endfor %}
+
+            Energy used: {{ wh }} Wh. Battery level: {{ ('down ' ~ baisse ~ ' points') if baisse >= 0 else ('unknown' if e_niveau else 'unknown (enable the « Tab5 Batterie » entity)') }}.
+            {%- if capacite is not none %}
+            Rough usable capacity: {{ capacite }} Wh. A full battery would last about:
+            {%- for r in resultats if r.moyenne is not none and r.moyenne > 0 %} {{ r.nom }} {{ (capacite / r.moyenne) | round(1) }} h{{ ',' if not loop.last else '.' }}{% endfor %}
+            {%- else %}
+            Battery life: not estimated (the level must drop by at least 5 points).
+            {%- endif %}
+
+            Cases:
+            {%- for r in resultats %}
+            - {{ r.nom }}: {{ r.texte }}
+            {%- endfor %}
+          reponse:
+            tableau: "{{ tableau }}"
+            resultats: "{{ resultats }}"
+      - action: persistent_notification.create
+        data:
+          notification_id: tab5_mesure_conso
+          title: "Tab5 consumption test: {{ 'stopped (USB plugged)' if debranche else 'done' }}"
+          message: |-
+            Your settings are back. Copy everything in the grey box below and paste it in the GitHub discussion (it shows as a table there).
+
+            ```
+            {{ tableau }}
+            ```
+      - stop: "Fin du test"
+        response_variable: reponse

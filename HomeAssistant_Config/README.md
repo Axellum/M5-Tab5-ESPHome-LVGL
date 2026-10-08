@@ -201,6 +201,16 @@ Turns the Tab5 wake word (« Ok Nabu ») **off when nobody is home** and back on
 
 After deploying: reload **Input booleans** and **Automations**.
 
+### `packages/tab5_mesure_conso.yaml` — consumption test
+A script you run by hand, for a tablet **with its battery**: *Settings → Automations & scenes → Scripts → « Tab5 — consumption test »* (or the « Consumption test » button of the tablet's dashboard). Unplug the USB cable first and leave the tablet alone for about 1 h. It goes through 11 cases of 5 minutes (screen 100 / 50 / 10 % and off, « Okay Nabu » off, speaker off, a very dark theme and the same theme in light mode, energy saving « Always », everything off, the first case again), reads « Tab5 Consommation » every 5 s, leaving out the first 45 s of each case, then puts your settings back and shows a notification with a table to copy: average, minimum and maximum power per case, difference with the first case, battery level and voltage, core temperature, energy used, and, if the level dropped by at least 5 points, a rough battery life per case.
+
+- The tablet and its entities are found by its device, like the other packages: nothing to choose. « Tab5 Batterie » and « Tab5 Tension batterie » are disabled by default in Home Assistant: enable them to get the level and voltage columns.
+- From firmware 3.8.0-rc.3 the script switches on « Tab5 Mesure de consommation », which reads the battery every 2 s instead of every minute (back to normal at the end, after 2 h at most, or at a reboot). With an older firmware, one reading a minute: the « Readings » column shows it.
+- It stops, and puts the settings back, as soon as the tablet is plugged in. A script stopped by hand does not: the notification shown at the start lists your settings.
+- *Dry run*: the same cases, 1 min each, without a battery and without measuring anything, to check that the tablet follows.
+
+After deploying: reload **Scripts**.
+
 ### `custom_templates/tab5_dashboard.jinja` — the tablet's dashboard (optional)
 Not a package: a Jinja macro that **writes** a Home Assistant dashboard for the tablet, with the entity ids of your home (they change from one home to another: room, device name, entity name). The tablet is found by its device model, each entity by the end of its id, the selects Home Assistant adds (Assist pipeline, wake words, end of speech) by their options, since their ids follow Home Assistant's language. Three views: **Tab5** (brightness, volume, screen shown, alarm, appointments, voice assistant; alert badges only when something is wrong), **Settings** (an « At a glance » table of what is chosen, then every setting and every « Tab5 · … » list) and **Health** (connection, performance graphs, network, pushes, health alerts). A card only appears when its entity exists.
 
@@ -458,6 +468,16 @@ Coupe le mot d'activation du Tab5 (« Ok Nabu ») **quand personne n'est à la m
 - Le réveil arme quand même son « Stop » vocal pendant la sonnerie, micro coupé ou non (côté firmware, rien à faire).
 
 Après le déploiement : recharger **Entrées booléennes** et **Automatisations**.
+
+### `packages/tab5_mesure_conso.yaml` — test de consommation
+Un script lancé à la main, pour une tablette **avec sa batterie** : *Paramètres → Automatisations et scènes → Scripts → « Tab5 — consumption test »* (ou le bouton « Test de consommation » du tableau de bord de la tablette). Débrancher l'USB avant, et ne plus toucher la tablette pendant environ 1 h. Il passe par 11 cas de 5 minutes (écran 100 / 50 / 10 % et éteint, « Okay Nabu » coupé, haut-parleur coupé, un thème très sombre et le même thème en mode clair, économie d'énergie « Toujours », tout coupé, le premier cas rejoué), lit « Tab5 Consommation » toutes les 5 s sans compter les 45 premières secondes de chaque cas, puis remet vos réglages et affiche une notification avec un tableau à copier, en anglais : puissance moyenne, minimale et maximale par cas, écart au premier cas, niveau et tension de la batterie, température du cœur, énergie consommée et, si le niveau a baissé d'au moins 5 points, une autonomie approximative par cas.
+
+- La tablette et ses entités sont trouvées par son appareil, comme pour les autres packages : rien à choisir. « Tab5 Batterie » et « Tab5 Tension batterie » sont désactivées par défaut dans Home Assistant : les activer pour avoir les colonnes du niveau et de la tension.
+- Depuis le firmware 3.8.0-rc.3, le script allume « Tab5 Mesure de consommation », qui lit la batterie toutes les 2 s au lieu d'une fois par minute (retour à la normale à la fin, au bout de 2 h au plus, ou au redémarrage). Avec un firmware plus ancien, une lecture par minute : la colonne « Readings » le montre.
+- Il s'arrête, et remet les réglages, dès que la tablette est branchée. Un script arrêté à la main ne les remet pas : la notification du début les écrit.
+- *Essai à blanc* : les mêmes cas, 1 min chacun, sans batterie et sans rien mesurer, pour vérifier que la tablette suit.
+
+Après le déploiement : recharger **Scripts**.
 
 ### `custom_templates/tab5_dashboard.jinja` — le tableau de bord de la tablette (facultatif)
 Pas un package : une macro Jinja qui **écrit** un tableau de bord Home Assistant pour la tablette, avec les entity_id de votre maison (ils changent d'une maison à l'autre : pièce, nom de l'appareil, nom de l'entité). La tablette est trouvée par le modèle de son appareil, chaque entité par la fin de son identifiant, les selects qu'ajoute Home Assistant (pipeline Assist, mots d'activation, fin de la parole) par leurs options, car leur identifiant suit la langue de Home Assistant. Trois vues : **Tab5** (luminosité, volume, écran affiché, réveil, rendez-vous, assistant vocal ; des pastilles d'alerte seulement quand quelque chose cloche), **Réglages** (un tableau « En bref » de ce qui est choisi, puis chaque réglage et chaque liste « Tab5 · … ») et **Santé** (liaison, courbes de performances, réseau, poussées, alertes de santé). Une carte n'apparaît que si son entité existe.

@@ -19,6 +19,8 @@
 #           (on_raw_value). Publiée par « Tab5 Batterie détectée » (activée par défaut) ;
 #           « Tab5 Batterie » vaut inconnu sans elle. Sur batterie : « Tab5
 #           Consommation » (W) et l'événement esphome.tab5_batterie_faible à 20 et 10 %.
+#           « Tab5 Mesure de consommation » (interrupteur, coupé par défaut) : INA226 lu
+#           toutes les 2 s pendant le test de packages/tab5_mesure_conso.yaml, 2 h au plus.
 #           Icône du bandeau d'état (04/10/2026) : niveau, charge et tension passés au C++
 #           (batterie_niveau_ui, batterie_charge_ui, batterie_tension_ui), affichée
 #           seulement si l'interrupteur « Tab5 Batterie montée » (tab5-ha-controls.yaml)
@@ -132,6 +134,22 @@ switch:
       pi4ioe5v6408: pi4ioe1
       number: 2
     restore_mode: ALWAYS_ON
+
+  # Mesure de consommation (08/10/2026, test de packages/tab5_mesure_conso.yaml) :
+  # allumé, l'INA226 est lu toutes les 2 s au lieu de 60 s (interval plus bas), et
+  # « Tab5 Consommation » suit à chaque lecture. Coupé au démarrage et au bout de 2 h
+  # (script tab5_mesure_conso_fin) : un test arrêté en route ne le laisse pas allumé.
+  - platform: template
+    id: tab5_mesure_conso
+    name: "Tab5 Mesure de consommation"
+    icon: mdi:chart-bell-curve
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - script.execute: tab5_mesure_conso_fin
+    on_turn_off:
+      - script.stop: tab5_mesure_conso_fin
 
 binary_sensor:
   # CHG_STAT (P6), 1 = en charge (M5Unified isCharging, config de référence ESPHome,
@@ -428,7 +446,8 @@ sensor:
           if (seuil > 0) id(tab5_batterie_faible).execute(tab5_float_vers_int(x, 0, 100, 0), seuil);
 
   # Consommation de la tablette sur batterie (08/10/2026, demande d'Axel) : tension ×
-  # courant de l'INA226, à chaque lecture du courant (60 s). Inconnue sur secteur : le
+  # courant de l'INA226, à chaque lecture du courant (60 s, 2 s pendant une mesure de
+  # consommation). Inconnue sur secteur : le
   # courant de l'USB n'est pas mesuré. Activée par défaut : sans batterie, elle reste
   # inconnue et ne coûte rien.
   - platform: template
@@ -589,6 +608,16 @@ interval:
           }
           if (a.lire) id(ina226_batterie).update();
 
+  # Mesure de consommation (interrupteur « Tab5 Mesure de consommation » plus haut) :
+  # une lecture de l'INA226 toutes les 2 s en plus de celle de la minute.
+  - interval: 2s
+    then:
+      - if:
+          condition:
+            switch.is_on: tab5_mesure_conso
+          then:
+            - component.update: ina226_batterie
+
   # État de charge : sans interruption sur pi4ioe2, ESPHome relirait l'expandeur en I²C
   # à chaque tour de boucle. Comme la prise casque (tab5-sensors-domotique.yaml).
   - interval: 10s
@@ -635,6 +664,14 @@ interval:
 # tab5_journal.cpp) : jamais pour un démarrage normal. Côté HA, la garde (e) de
 # packages/tab5_health.yaml en fait une notification. Journal vidé une fois HA joint.
 script:
+  # Fin de la mesure de consommation : 2 h après l'allumage de l'interrupteur (un test
+  # complet dure environ 1 h). Arrêté quand on le coupe ; restart s'il est rallumé.
+  - id: tab5_mesure_conso_fin
+    mode: restart
+    then:
+      - delay: 2h
+      - switch.turn_off: tab5_mesure_conso
+
   # Batterie faible (08/10/2026) : événement (ADR-0025), niveau en % et seuil franchi
   # (« 20 » ou « 10 »). Côté HA, la garde « batterie faible » de packages/tab5_health.yaml
   # en fait une notification persistante et une notification sur le téléphone.
