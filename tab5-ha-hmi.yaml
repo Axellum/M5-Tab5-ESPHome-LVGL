@@ -383,6 +383,8 @@ packages:
   tab5_alarm: !include Tab5/tab5-alarm.yaml
   # Pièces et tuiles (ADR-0023) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml
+  # Roue d'actions rapides (ADR-0036) : APRES tab5_lvgl (widgets), script lancé par tab5_tuiles_ui.
+  tab5_roue: !include Tab5/tab5-roue.yaml
   # Rangée sous l'horloge (ADR-0031) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
   tab5_rangee: !include Tab5/tab5-rangee.yaml
   # Tuile − / + (ADR-0033) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.

@@ -1184,8 +1184,8 @@ void reglables_volume_tablette();
 constexpr int kRoueBoutons = 6;  // premier anneau : 4 commandes ou familles + 2 liens
 constexpr int kRoueChoix = 6;    // second anneau : les 6 couleurs d'une lampe au plus
 // Widgets (ui_components/roue_actions.yaml, roue_bouton.yaml, roue_choix.yaml,
-// roue_legende.yaml), posés par le script tab5_tuiles_ui (tab5-tuiles.yaml) avant le
-// premier dessin.
+// roue_legende.yaml), posés par le script tab5_roue_ui (tab5-roue.yaml), que tab5_tuiles_ui
+// lance avant le premier dessin.
 struct RoueUI {
     lv_obj_t* fond = nullptr;                    // roue_actions : voile plein écran, son toucher replie ou ferme
     lv_obj_t* bande[2] = {};                     // roue_bande_0, roue_bande_1 : arcs de verre sous les anneaux

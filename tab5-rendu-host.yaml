@@ -208,6 +208,7 @@ packages:
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
   tab5_alarm: !include Tab5/tab5-alarm.yaml
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml
+  tab5_roue: !include Tab5/tab5-roue.yaml
   tab5_rangee: !include Tab5/tab5-rangee.yaml
   tab5_reglables: !include Tab5/tab5-reglables.yaml
   tab5_energie: !include Tab5/tab5-energie.yaml

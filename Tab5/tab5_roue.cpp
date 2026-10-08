@@ -15,7 +15,7 @@
  *       les choix d'une famille, le repeint au changement de thème ou d'état.
  * @architecture_constraint Widgets : ui_components/roue_actions.yaml (voile plein écran,
  *       bandes, jauge, moyeu, mots) et ses roue_bouton.yaml, roue_choix.yaml,
- *       roue_legende.yaml, posés dans g_roue_ui par tab5-tuiles.yaml. Sous-fenêtre
+ *       roue_legende.yaml, posés dans g_roue_ui par tab5-roue.yaml. Sous-fenêtre
  *       (SUBWINDOW du registre, comme la liste de la tuile − / +) : refermée avec les
  *       popups, par l'inactivité, à l'ouverture d'un popup (animate_popup_open), à
  *       l'extinction de l'écran et quand les définitions des tuiles changent ; repeinte, pas

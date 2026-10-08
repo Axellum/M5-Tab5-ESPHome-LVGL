@@ -320,7 +320,7 @@ def test_commandes_envoyees_du_contrat():
     assert "tuile_ouvrir_popup(rt.r, rt.t);" in reglages
     maison = choisir.split("case RoueAction::MAISON:", 1)[1].split("return;", 1)[0]
     assert "g_roue_ui.ouvrir_ecran(static_cast<int>(Ecran::MAISON));" in maison
-    assert "roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };" in _lire("Tab5", "tab5-tuiles.yaml")
+    assert "roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };" in _lire("Tab5", "tab5-roue.yaml")
 
 
 def test_bascules_et_consignes_comme_le_popup():
@@ -460,21 +460,36 @@ def test_widgets_et_leurs_pointeurs():
     assert re.findall(r"file: roue_choix\.yaml, vars: \{ n: (\d) \}", yaml) == [str(j) for j in range(m)]
     legendes = re.findall(r"file: roue_legende\.yaml, vars: \{ id: (\w+) \}", yaml)
     assert legendes == [f"roue_choix_{j}_legende" for j in range(m)] + ["roue_lien_0", "roue_lien_1"]
-    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    # Les pointeurs sont posés par tab5-roue.yaml (sorti de tab5-tuiles.yaml, lot L7) ;
+    # boutons et choix par deux aides, une ligne par N, dans l'ordre des champs.
+    pose = _lire("Tab5", "tab5-roue.yaml")
     attendus = [("fond", "roue_actions"), ("bande[0]", "roue_bande_0"), ("bande[1]", "roue_bande_1"),
                 ("jauge", "roue_jauge"), ("moyeu", "roue_moyeu"), ("moyeu_icone", "roue_moyeu_icone"),
                 ("moyeu_valeur", "roue_moyeu_valeur"), ("nom", "roue_nom"),
                 ("lien_legende[0]", "roue_lien_0"), ("lien_legende[1]", "roue_lien_1")]
-    for i in range(n):
-        attendus += [(f"bouton[{i}]", f"roue_bouton_{i}"), (f"icone[{i}]", f"roue_bouton_{i}_icone"),
-                     (f"point[{i}]", f"roue_bouton_{i}_point")]
-    for j in range(m):
-        attendus += [(f"choix[{j}]", f"roue_choix_{j}"), (f"choix_icone[{j}]", f"roue_choix_{j}_icone"),
-                     (f"choix_texte[{j}]", f"roue_choix_{j}_texte"),
-                     (f"choix_legende[{j}]", f"roue_choix_{j}_legende")]
     for champ, wid in attendus:
-        assert f"roue.{champ} = id({wid});" in tuiles, champ
-    assert "roue_brancher();" in tuiles
+        assert f"roue.{champ} = id({wid});" in pose, champ
+    aide_bouton = pose.split("const auto bouton = [&roue](int n, auto* b, auto* icone, auto* point) {", 1)[1]
+    assert re.findall(r"roue\.(\w+)\[n\] = (\w+);", aide_bouton.split("};", 1)[0]) == [
+        ("bouton", "b"), ("icone", "icone"), ("point", "point")]
+    aide_choix = pose.split("const auto choix = [&roue](int n, auto* c, auto* icone, auto* texte, auto* legende) {", 1)[1]
+    assert re.findall(r"roue\.(\w+)\[n\] = (\w+);", aide_choix.split("};", 1)[0]) == [
+        ("choix", "c"), ("choix_icone", "icone"), ("choix_texte", "texte"), ("choix_legende", "legende")]
+    for i in range(n):
+        assert (f"bouton({i}, id(roue_bouton_{i}), id(roue_bouton_{i}_icone), "
+                f"id(roue_bouton_{i}_point));") in pose, i
+    for j in range(m):
+        assert (f"choix({j}, id(roue_choix_{j}), id(roue_choix_{j}_icone), id(roue_choix_{j}_texte), "
+                f"id(roue_choix_{j}_legende));") in pose, j
+    assert len(re.findall(r"^\s+bouton\(\d", pose, re.M)) == n
+    assert len(re.findall(r"^\s+choix\(\d", pose, re.M)) == m
+    assert pose.rstrip().endswith("roue_brancher();")
+    # Lancé par tab5_tuiles_ui juste après les widgets des tuiles, chargé avec lui.
+    tuiles = _lire("Tab5", "tab5-tuiles.yaml")
+    assert "RoueUI" not in tuiles and "roue_brancher" not in tuiles and "id(roue_" not in tuiles
+    assert tuiles.rstrip().endswith("- script.execute: tab5_roue_ui")
+    for entree in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
+        assert "tab5_roue: !include Tab5/tab5-roue.yaml" in _lire(entree), entree
     # Le voile est celui des popups (ADR-0009), à 60 % : les tuiles restent visibles
     # dessous ; premier enfant, sous tout le reste.
     premier = yaml.split("widgets:", 1)[1].split("\n    - ", 2)[1]
