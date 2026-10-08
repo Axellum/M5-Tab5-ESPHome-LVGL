@@ -33,6 +33,10 @@ DOSSIERS = ("packages", "optionnel", "snippets", "blueprints")
 
 PREFIXE = "esphome.tab5_"
 MODELE = "device_attr(d, 'model') == 'tab5-ha-hmi'"
+# Depuis l'audit du 07/10/2026 (HA-7), la garde est une macro partagée : la condition
+# l'importe et l'appelle, le test la rend avec le vrai fichier.
+MACROS = HA / "custom_templates"
+MACRO = "tab5_origine(trigger) == 'oui'"
 
 # Appareils imités : device_attr(x, 'model'). Une entité de la tablette (« sensor.… »)
 # a le modèle de son appareil dans HA : la garde doit la refuser quand même.
@@ -110,13 +114,14 @@ def _gardes(bloc):
     conditions = _en_liste(bloc.get("conditions", bloc.get("condition")))
     return [c["value_template"] for c in conditions
             if isinstance(c, dict) and c.get("condition") == "template"
-            and MODELE in str(c.get("value_template", ""))]
+            and (MODELE in str(c.get("value_template", "")) or MACRO in str(c.get("value_template", "")))]
 
 
 def _rendre(garde, trigger):
     """La garde rendue comme HA : bac à sable, variable non définie = erreur (un
     déclencheur d'état n'a pas de `trigger.event`), résultat lu comme un booléen."""
-    env = ImmutableSandboxedEnvironment(undefined=jinja2.StrictUndefined)
+    env = ImmutableSandboxedEnvironment(undefined=jinja2.StrictUndefined,
+                                        loader=jinja2.FileSystemLoader(str(MACROS)))
     env.globals["device_attr"] = lambda d, nom: APPAREILS.get(d) if nom == "model" else None
     texte = env.from_string(garde).render(trigger=trigger).strip().lower()
     return texte in ("true", "yes", "on", "enable", "1")
@@ -156,6 +161,9 @@ def test_une_garde_d_origine(bloc):
     assert len(gardes) == 1, ("automatisation déclenchée par un événement esphome.tab5_* sans "
                               f"garde d'origine (condition « {MODELE} », comme tab5_evenements.yaml)")
     garde = gardes[0]
+    if MACRO in garde:
+        assert "import tab5_origine" in garde, garde
+        garde = (MACROS / "tab5_tablette.jinja").read_text(encoding="utf-8")
     assert "trigger.event.data.device_id" in garde and "'.' not in d" in garde, garde
 
 

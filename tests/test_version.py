@@ -122,8 +122,8 @@ def test_attributs_du_capteur():
 
 def test_notification_suit_le_capteur():
     (auto,) = [a for a in _health()["automation"] if a.get("id") == "tab5_health_fichiers_ha"]
-    assert any(t.get("entity_id") == CAPTEUR for t in auto["trigger"]), "déclencheur sur le capteur"
-    (branche,) = auto["action"]
+    assert any(t.get("entity_id") == CAPTEUR for t in auto["triggers"]), "déclencheur sur le capteur"
+    (branche,) = auto["actions"]
     assert branche["if"] == [{"condition": "state", "entity_id": CAPTEUR, "state": "on"}]
     (creer,) = branche["then"]
     (retirer,) = branche["else"]

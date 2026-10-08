@@ -162,6 +162,10 @@ def test_le_package_n_ecoute_que_la_tablette():
     conditions = _automatisation()["conditions"]
     assert len(conditions) == 1 and conditions[0]["condition"] == "template"
     modele = conditions[0]["value_template"]
+    # La garde est la macro partagée (custom_templates/tab5_tablette.jinja, audit du
+    # 07/10/2026, HA-7) ; tests/test_garde_origine.py la rend avec de vrais déclencheurs.
+    assert "tab5_origine(trigger) == 'oui'" in modele
+    modele = (REPO / "HomeAssistant_Config" / "custom_templates" / "tab5_tablette.jinja").read_text(encoding="utf-8")
     assert "device_attr(d, 'model') == 'tab5-ha-hmi'" in modele
     assert "trigger.event.data.device_id" in modele and "'.' not in d" in modele
 

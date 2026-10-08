@@ -876,8 +876,9 @@ def test_blueprint_chaine_liste_ou_vide(entrees, solaires, principal):
 def test_blueprint_ecoute_l_evenement():
     texte = _lire(BLUEPRINT)
     assert re.search(r"event_type: esphome\.tab5_energie\n\s+id: energie\n", texte)
-    # Garde d'origine, « rien de neuf » et « tablette connectée » laissent passer « energie ».
-    assert texte.count("'maj_ecran', 'energie'") == 2 and "'pipeline_discussion', 'energie'" in texte
+    # « Rien de neuf » et « tablette connectée » laissent passer « energie » ; la garde
+    # d'origine suit le type de l'événement (custom_templates/tab5_tablette.jinja, HA-7).
+    assert texte.count("'maj_ecran', 'energie'") == 1 and "'pipeline_discussion', 'energie'" in texte
 
 
 # ─── Firmware ────────────────────────────────────────────────────────────────

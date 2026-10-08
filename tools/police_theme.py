@@ -9,9 +9,9 @@ centrale et titres des prévisions) et à quelques valeurs des popups : son jeu 
 couvre l'ASCII et les caractères des 7 langues (jeu_texte()). Le reste du texte reste en
 Roboto : les libellés ont été calés en Roboto dans 7 langues.
 
-Ce script lit les familles citées par `Tab5/themes/*.yaml` (bloc `polices:`), télécharge
-chaque fichier comme ESPHome (API CSS2 de Google Fonts, format truetype), relève ses
-métriques avec fontTools et calcule, pour chaque rôle, la taille et la position :
+Ce script lit les familles citées par `Tab5/themes/*.yaml` (bloc `polices:`), ouvre
+chaque fichier de Tab5/fonts/ (téléchargé une fois de Google Fonts comme ESPHome le
+faisait, API CSS2, format truetype ; voir plus bas), relève ses métriques avec fontTools et calcule, pour chaque rôle, la taille et la position :
 
   - horloge : la plus grande taille (≤ 130 px, celle de Roboto) dont chaque chiffre tient
     dans le cadre de 75 × 104 du rouleau, centré, avec 2 px d'air en haut et en bas, et
@@ -55,15 +55,20 @@ valeurs doivent redonner la géométrie actuelle (130 px, y -23, cadres à y 26 
 jambage de la date, « : » à 181 ; date 45 à y 135 ; titres 32). tools/gen_themes.py lit ce fichier. À relancer après l'ajout d'une police à
 un thème (pytest le signale) ou d'un titre de popup nettement plus long.
 
-    python tools/police_theme.py   # réseau : télécharge les polices absentes du cache
+    python tools/police_theme.py   # réseau seulement pour une police absente de Tab5/fonts/
 
-Cache : $ESPHOME_DATA_DIR/tab5_polices (ou ~/.cache/tab5_polices).
+Fichiers figés (08/10/2026, audit du 07/10, DO-15) : chaque police vit dans
+Tab5/fonts/<famille>_<graisse>.ttf (fichier(), licence et copyrights dans
+Tab5/fonts/OFL.txt), et le firmware compile ce fichier-là, pas `gfonts://` : avant,
+ESPHome redemandait la police à Google Fonts chaque jour, et une nouvelle version
+changeait le firmware sans un mot. Le `sha256` de _polices.yaml est celui du fichier
+mesuré ; tests/test_polices_themes.py vérifie que c'est celui du dépôt. Une police
+neuve est téléchargée une fois (telecharger()) dans Tab5/fonts/, à commiter.
 """
 from __future__ import annotations
 
 import hashlib
 import math
-import os
 import re
 import sys
 import urllib.parse
@@ -77,6 +82,7 @@ TAB5 = REPO / "Tab5"
 THEMES_DIR = TAB5 / "themes"
 SORTIE = THEMES_DIR / "_polices.yaml"
 LANG_DIR = TAB5 / "lang"
+FONTS = TAB5 / "fonts"
 REFERENCE = "Roboto@700"
 
 # Géométrie de la tuile horloge (tab5-lvgl.yaml, clock_roller.yaml ; tests/test_horloge.py).
@@ -109,11 +115,10 @@ TITRE_BASE = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !'
               "àâäçéèêëîïôöùûüÿœæÀÂÄÇÉÈÊËÎÏÔÖÙÛÜŸŒÆ")
 
 
-def cache_dir() -> Path:
-    base = os.environ.get("ESPHOME_DATA_DIR")
-    d = Path(base) / "tab5_polices" if base else Path.home() / ".cache" / "tab5_polices"
-    d.mkdir(parents=True, exist_ok=True)
-    return d
+def fichier(famille: str, graisse: int | str) -> Path:
+    """Le fichier TTF d'une police dans le dépôt (Tab5/fonts/), celui que le firmware
+    compile (`file:` de tools/gen_themes.py et de tab5-styles.yaml)."""
+    return FONTS / f"{re.sub(r'[^a-z0-9]+', '_', famille.lower()).strip('_')}_{graisse}.ttf"
 
 
 def _lire_url(url: str, timeout: int) -> bytes:
@@ -129,8 +134,10 @@ def _lire_url(url: str, timeout: int) -> bytes:
 
 
 def telecharger(famille: str, graisse: int) -> Path:
-    """Le fichier TTF de Google Fonts, comme ESPHome (_gfonts_css_url, format truetype)."""
-    chemin = cache_dir() / f"{famille.replace(' ', '+')}@{graisse}.ttf"
+    """Le fichier TTF de la police, dans Tab5/fonts/. Absent (police neuve) : téléchargé
+    une fois de Google Fonts comme ESPHome le faisait (_gfonts_css_url, format truetype),
+    à commiter avec son avis de copyright dans Tab5/fonts/OFL.txt."""
+    chemin = fichier(famille, graisse)
     if chemin.exists():
         return chemin
     url = (f"https://fonts.googleapis.com/css2?family={urllib.parse.quote(famille)}"

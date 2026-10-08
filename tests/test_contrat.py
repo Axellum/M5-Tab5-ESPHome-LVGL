@@ -130,6 +130,12 @@ def test_les_appels_de_ha_sont_trouves():
     lignes = sum(len(re.findall(r"^\s*(?:- )?(?:action|service):\s*[\"']?esphome\.",
                                 chemin.read_text(encoding="utf-8"), re.M))
                  for chemin in _fichiers_ha())
+    # Un appel posé sous une ancre (`- &maj_clim` du blueprint, HA-8) puis repris par
+    # son alias (`- *maj_clim`) compte une fois de plus.
+    for chemin in _fichiers_ha():
+        texte = chemin.read_text(encoding="utf-8")
+        ancres = set(re.findall(r"^\s*- &(\w+)\s*\n\s*(?:action|service):\s*[\"']?esphome\.", texte, re.M))
+        lignes += sum(1 for a in re.findall(r"^\s*- \*(\w+)\s*$", texte, re.M) if a in ancres)
     assert len(appels) == lignes and len(appels) > 20, (len(appels), lignes)
     assert {"HomeAssistant_Config/packages/tab5_push.yaml",
             "HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml",
