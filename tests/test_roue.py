@@ -254,16 +254,29 @@ def test_choix_des_familles():
     t = _tuiles()
     assert re.findall(r"\d+", _const(t, "kRoueLuminosites")) == ["10", "25", "50", "75", "100"]
     assert re.findall(r"\d+", _const(t, "kRouePositions")) == ["25", "50", "75"]
-    # Blancs et couleurs : ceux du popup lumière (même nom, même teinte).
+    blancs = re.findall(r'\{"(\w+)", tr_noop\("([^"]+)"\)\}', _const(t, "kRoueBlancs"))
+    assert blancs == [("warmwhite", "Chaud"), ("navajowhite", "Crème"), ("white", "Froid")]
+    couleurs = re.findall(r'\{"(\w+)", nullptr\}', _const(t, "kRoueCouleurs"))
+    assert couleurs == ["red", "orange", "gold", "green", "blue", "purple"]
+    # Une seule liste de teintes (UI-8, lot L7) : lampe_teinte(), pour le popup lumière et
+    # la roue — et les mêmes valeurs qu'avant, une à une (aucun changement à l'écran).
+    teintes = {n: int(h, 16) for n, h in re.findall(r'\{"(\w+)", 0x([0-9A-F]{6})\}', _const(t, "kLampeTeintes"))}
+    assert teintes == {
+        "warmwhite": 0xFFC864, "navajowhite": 0xFFDEAD, "white": 0xFFFFFF, "gold": 0xFFD700,
+        "orange": 0xFFA500, "orangered": 0xFF4500, "red": 0xFF2020, "deeppink": 0xFF1493,
+        "magenta": 0xFF00FF, "blueviolet": 0x8A2BE2, "purple": 0xA855F7, "blue": 0x3B82F6,
+        "cyan": 0x00E5FF, "springgreen": 0x00FF7F, "green": 0x22C55E}
+    assert "x.pastille = lampe_teinte(p[k].nom);" in t
+    # Le popup lumière : chaque pastille par son nom seul, dans l'ordre de la table.
     popup = _yaml("light_popup.yaml")
-    du_popup = {nom: int(h, 16) for nom, h in
-                re.findall(r'color_name: "(\w+)", icon_color: "?0x([0-9A-F]{6})"?', popup)}
-    blancs = re.findall(r'\{"(\w+)", 0x([0-9A-F]{6}), tr_noop\("([^"]+)"\)\}', _const(t, "kRoueBlancs"))
-    assert [(n, l) for n, _, l in blancs] == [("warmwhite", "Chaud"), ("navajowhite", "Crème"), ("white", "Froid")]
-    couleurs = re.findall(r'\{"(\w+)", 0x([0-9A-F]{6}), nullptr\}', _const(t, "kRoueCouleurs"))
-    assert len(couleurs) == 6
-    for nom, h, *_ in blancs + couleurs:
-        assert du_popup.get(nom) == int(h, 16), nom
+    assert "icon_color" not in popup and re.search(r"0x[0-9A-Fa-f]{6}", popup.split("COULEURS", 1)[1]) is None
+    assert re.findall(r'color_name: "(\w+)"', popup) == list(teintes)
+    assert re.findall(r'color_name: "(\w+)", name: "([^"]+)"', popup) == blancs
+    for gabarit, propriete in (("light_color_preset_btn.yaml", "bg_color"), ("light_white_btn.yaml", "text_color")):
+        assert (f"{propriete}: !lambda 'return lv_color_hex(lampe_teinte(\"${{color_name}}\"));'"
+                in _yaml(gabarit)), gabarit
+        assert "icon_color" not in _yaml(gabarit).split("button:", 1)[1], gabarit
+    assert set(n for n, _ in blancs) | set(couleurs) <= set(teintes)
     assert int(_const(_lire("Tab5", "tab5_custom.h"), "kRoueChoix")) >= len(couleurs)
 
 

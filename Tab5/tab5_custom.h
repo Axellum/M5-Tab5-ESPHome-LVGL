@@ -1476,6 +1476,10 @@ void popup_lumiere_choisir(int idx);
 // « Tout éteindre » : pR / eteindre (toutes les lumières de la pièce), lumieres /
 // eteindre en mode héritage.
 void popup_lumiere_tout_eteindre();
+// Couleur montrée d'une teinte de lampe (color_name : « warmwhite », « gold »…) : la
+// seule liste, pour les pastilles du popup lumière (light_white_btn.yaml,
+// light_color_preset_btn.yaml) et de la roue (UI-8). Nom inconnu : UIColor.TEXT_DIM.
+uint32_t lampe_teinte(const char* nom);
 
 // =============================================================================
 // Popup « Maison » (ADR-0037, 07/10/2026, discussion #278) — tab5_maison.cpp

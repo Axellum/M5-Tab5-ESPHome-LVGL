@@ -163,10 +163,11 @@ obj:
               widgets:
                 - label: { text: "COULEURS", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-                # Blancs nommés (température de blanc via color_name) — gabarit light_white_btn.yaml
-                - !include { file: light_white_btn.yaml, vars: { x: 22, color_name: "warmwhite", icon_color: 0xFFC864, name: "Chaud" } }
-                - !include { file: light_white_btn.yaml, vars: { x: 140, color_name: "navajowhite", icon_color: 0xFFDEAD, name: "Crème" } }
-                - !include { file: light_white_btn.yaml, vars: { x: 258, color_name: "white", icon_color: 0xFFFFFF, name: "Froid" } }
+                # Blancs nommés (température de blanc via color_name) — gabarit light_white_btn.yaml ;
+                # teintes : lampe_teinte() (tab5_tuiles.cpp, la même liste que la roue, UI-8)
+                - !include { file: light_white_btn.yaml, vars: { x: 22, color_name: "warmwhite", name: "Chaud" } }
+                - !include { file: light_white_btn.yaml, vars: { x: 140, color_name: "navajowhite", name: "Crème" } }
+                - !include { file: light_white_btn.yaml, vars: { x: 258, color_name: "white", name: "Froid" } }
 
                 # Grille 4×3 de pastilles couleur (factorisées #T164, chaudes → froides)
                 - obj:
@@ -184,15 +185,15 @@ obj:
                       flex_align_cross: CENTER
                       flex_align_track: SPACE_EVENLY
                     widgets:
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "gold", icon_color: "0xFFD700" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "orange", icon_color: "0xFFA500" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "orangered", icon_color: "0xFF4500" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "red", icon_color: "0xFF2020" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "deeppink", icon_color: "0xFF1493" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "magenta", icon_color: "0xFF00FF" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "blueviolet", icon_color: "0x8A2BE2" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "purple", icon_color: "0xA855F7" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "blue", icon_color: "0x3B82F6" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "cyan", icon_color: "0x00E5FF" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "springgreen", icon_color: "0x00FF7F" } }
-                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "green", icon_color: "0x22C55E" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "gold" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "orange" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "orangered" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "red" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "deeppink" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "magenta" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "blueviolet" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "purple" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "blue" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "cyan" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "springgreen" } }
+                      - !include { file: light_color_preset_btn.yaml, vars: { color_name: "green" } }

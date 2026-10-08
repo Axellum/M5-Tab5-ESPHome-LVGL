@@ -2111,6 +2111,37 @@ bool tuile_ouvrir_popup(int r, int t) {
     return ouvrir_fenetre(f, d, r, t);
 }
 
+// ─── Teintes des lampes à couleur (UI-8, audit du 07/10/2026) ───────────────────────
+//
+// Le nom envoyé à HA (commande couleur, color_name) et la couleur montrée : pastilles du
+// popup lumière (light_white_btn.yaml, light_color_preset_btn.yaml) et de la roue. Une
+// seule liste : avant le 08/10/2026, la roue recopiait les teintes du popup. Une teinte
+// peut s'écarter du CSS de HA pour rester lisible sur fond sombre (purple → 0xA855F7).
+// Couleurs fixes de l'objet montré (une lampe rouge reste rouge), hors thème (ADR-0029).
+
+namespace {
+struct LampeTeinte {
+    const char* nom;
+    uint32_t couleur;
+};
+constexpr LampeTeinte kLampeTeintes[] = {
+    // Blancs nommés
+    {"warmwhite", 0xFFC864},  {"navajowhite", 0xFFDEAD}, {"white", 0xFFFFFF},
+    // Couleurs, des chaudes aux froides
+    {"gold", 0xFFD700},       {"orange", 0xFFA500},      {"orangered", 0xFF4500},
+    {"red", 0xFF2020},        {"deeppink", 0xFF1493},    {"magenta", 0xFF00FF},
+    {"blueviolet", 0x8A2BE2}, {"purple", 0xA855F7},      {"blue", 0x3B82F6},
+    {"cyan", 0x00E5FF},       {"springgreen", 0x00FF7F}, {"green", 0x22C55E},
+};
+}  // namespace
+
+uint32_t lampe_teinte(const char* nom) {
+    if (nom != nullptr)
+        for (const LampeTeinte& l : kLampeTeintes)
+            if (std::strcmp(l.nom, nom) == 0) return l.couleur;
+    return UIColor.TEXT_DIM;  // nom inconnu (aucun : tests/test_roue.py)
+}
+
 // ─── Roue d'actions rapides (ADR-0036, 07/10/2026, discussion #278) ─────────────────
 //
 // L'appui long d'une lum, d'un vol ou d'une cli ouvre la roue (tab5_roue.cpp). Premier
@@ -2149,20 +2180,20 @@ constexpr uint8_t kRoueLuminosites[] = {10, 25, 50, 75, 100};
 // dessiné du popup).
 constexpr uint8_t kRouePositions[] = {25, 50, 75};
 // Pastilles d'une lampe à couleur (option c, commande couleur) : le nom envoyé à HA
-// (color_name), la couleur montrée (celles du popup lumière) et, pour un blanc, son mot.
+// (color_name) et, pour un blanc, son mot. Leur couleur : lampe_teinte(), la même que
+// les pastilles du popup lumière (UI-8).
 struct RouePastille {
     const char* nom;
-    uint32_t couleur;
     const char* legende;
 };
 constexpr RouePastille kRoueBlancs[] = {
-    {"warmwhite", 0xFFC864, tr_noop("Chaud")},
-    {"navajowhite", 0xFFDEAD, tr_noop("Crème")},
-    {"white", 0xFFFFFF, tr_noop("Froid")},
+    {"warmwhite", tr_noop("Chaud")},
+    {"navajowhite", tr_noop("Crème")},
+    {"white", tr_noop("Froid")},
 };
 constexpr RouePastille kRoueCouleurs[] = {
-    {"red", 0xFF2020, nullptr},  {"orange", 0xFFA500, nullptr}, {"gold", 0xFFD700, nullptr},
-    {"green", 0x22C55E, nullptr}, {"blue", 0x3B82F6, nullptr},  {"purple", 0xA855F7, nullptr},
+    {"red", nullptr},   {"orange", nullptr}, {"gold", nullptr},
+    {"green", nullptr}, {"blue", nullptr},   {"purple", nullptr},
 };
 
 // La roue ouverte : sa tuile, son ancre, sa vue d'origine et ce que fait chaque bouton.
@@ -2317,7 +2348,7 @@ int roue_choix(const RoueTuile& rt, int i, RoueChoix c[kRoueChoix], RoueEnvoi en
         for (size_t k = 0; k < nb; k++) {
             RoueChoix& x = choix("couleur", p[k].nom, false);
             x.a_pastille = true;
-            x.pastille = p[k].couleur;
+            x.pastille = lampe_teinte(p[k].nom);
             if (p[k].legende != nullptr) x.legende = tr(p[k].legende);
         }
     };
