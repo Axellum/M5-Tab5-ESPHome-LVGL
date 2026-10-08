@@ -38,7 +38,7 @@
     },
     "configuration_invalide": {
       "title": "Tab5 : les fichiers {version} n'ont pas été installés",
-      "description": "Les nouveaux fichiers du Tab5 n'ont pas pu être posés (la vérification de la configuration a trouvé une erreur avec eux, ou leur écriture a échoué) : les fichiers précédents ont été remis, rien n'a changé. La raison est dans le journal (Paramètres → Système → Journaux, « tab5 »). Merci de la signaler : {signaler}"
+      "description": "Les nouveaux fichiers du Tab5 n'ont pas pu être posés (la vérification de la configuration a trouvé une erreur avec eux, ou leur écriture a échoué) : les fichiers précédents ont été remis, rien n'a changé. La raison est dans le journal (Paramètres → Système → Journaux, « tab5 »). Après une erreur de configuration, ces fichiers ne sont pas réessayés à chaque redémarrage : une fois la cause corrigée, passez par Paramètres → Appareils et services → Tab5 → Configurer, « Réinstaller maintenant les fichiers de cette version ». Si la cause n'est pas dans vos propres fichiers, merci de la signaler : {signaler}"
     },
     "packages_absents": {
       "title": "Tab5 : Home Assistant ne charge pas les packages",

@@ -15,7 +15,10 @@
            place si les nouveaux fichiers y ajoutent un message — erreur OU avertissement :
            pour HA 2026.9, un domaine ou un package invalide n'est qu'un avertissement
            (résultat « valid »), et ce domaine ne se charge plus (réparation
-           « configuration_invalide ») ;
+           « configuration_invalide ») ; ces fichiers-là (version + empreinte) ne sont plus
+           réessayés aux démarrages suivants, seulement par « Réinstaller » des options ou
+           quand HACS en apporte d'autres ; un essai de plus ne refait pas une sauvegarde
+           identique à la précédente (installation.appliquer) ;
         3. sans la ligne `packages:`, s'arrête là (réparation « packages_absents ») ; sinon
            recharge les modèles, les entrées (input_*), charge les domaines que HA n'avait
            pas encore (rest_command… sur un HA neuf), puis tout le YAML
@@ -152,7 +155,7 @@ class Gestionnaire:
         async with self._verrou:
             if forcer or self.donnees.get("version") != self.version:
                 try:
-                    await self._installer()
+                    await self._installer(forcer)
                 except Exception:  # noqa: BLE001 — au journal de l'intégration, pas « never retrieved »
                     _LOGGER.exception("Tab5 : installation des fichiers %s interrompue", self.version)
             elif self._version_active():
@@ -167,13 +170,23 @@ class Gestionnaire:
         etat = self.hass.states.get(CAPTEUR_VERSION)
         return etat is not None and etat.state == self.version
 
-    async def _installer(self) -> None:
+    async def _installer(self, forcer: bool = False) -> None:
         hass, executer = self.hass, self.hass.async_add_executor_job
         embarques = await executer(installation.lire_embarques, self.dossier)
         if not embarques:
             self._probleme(ISSUE_FICHIERS_ABSENTS, ir.IssueSeverity.ERROR, {"version": self.version})
             return
         ir.async_delete_issue(hass, DOMAIN, ISSUE_FICHIERS_ABSENTS)
+        empreinte = await executer(installation.empreinte_des_fichiers, embarques)
+        if not forcer and installation.deja_refusee(self.donnees, self.version, empreinte):
+            # Déjà refusés tels quels : un nouvel essai à chaque démarrage referait la même
+            # vérification, le même retour en arrière et une sauvegarde de plus (HA-9). La
+            # réparation, non persistante, est recréée ; « Réinstaller » réessaie.
+            _LOGGER.warning("Fichiers Tab5 %s déjà refusés par la vérification de la configuration : "
+                            "pas de nouvel essai (options de l'intégration : « Réinstaller »)", self.version)
+            self._probleme(ISSUE_CONFIGURATION, ir.IssueSeverity.ERROR,
+                           {"version": self.version, "signaler": URL_SIGNALER})
+            return
 
         plan = await executer(installation.planifier, self.config, embarques,
                               self.donnees.get("fichiers", {}))
@@ -198,9 +211,12 @@ class Gestionnaire:
             await executer(installation.nettoyer_sauvegardes, self.config, GARDER_SAUVEGARDES)
             _LOGGER.error("Fichiers Tab5 %s refusés par la vérification de la configuration, "
                           "anciens fichiers remis : %s", self.version, " | ".join(nouveaux))
+            self.donnees["refusee"] = installation.refus(self.version, empreinte)
+            await self._sauver()
             self._probleme(ISSUE_CONFIGURATION, ir.IssueSeverity.ERROR,
                            {"version": self.version, "signaler": URL_SIGNALER})
             return
+        self.donnees.pop("refusee", None)
         ir.async_delete_issue(hass, DOMAIN, ISSUE_CONFIGURATION)
         _LOGGER.info("Fichiers Tab5 %s posés (%d écrits, %d retirés, %d identiques), sauvegarde : %s, "
                      "vérification de la configuration : %d message(s), aucun nouveau",

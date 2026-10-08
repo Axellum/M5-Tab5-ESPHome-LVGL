@@ -146,6 +146,28 @@ def planifier(config: Path, embarques: dict[str, bytes], precedents: dict[str, s
     return plan
 
 
+def empreinte_des_fichiers(embarques: dict[str, bytes]) -> str:
+    """Une empreinte de tous les fichiers embarqués (chemins et contenus) : deux releases de
+    même version mais aux fichiers différents ne se confondent pas."""
+    h = hashlib.sha256()
+    for chemin in sorted(embarques):
+        h.update(f"{chemin}\0{empreinte(embarques[chemin])}\n".encode())
+    return h.hexdigest()
+
+
+def refus(version: str, empreinte_fichiers: str) -> dict[str, str]:
+    """Ce que __init__.py garde d'une installation refusée par la vérification de la
+    configuration (clé « refusee » de sa mémoire)."""
+    return {"version": version, "empreinte": empreinte_fichiers}
+
+
+def deja_refusee(memoire: dict, version: str, empreinte_fichiers: str) -> bool:
+    """Ces fichiers-là ont-ils déjà été refusés ? Alors pas de nouvel essai à chaque
+    démarrage de HA (HA-9 de l'audit du 07/10/2026) : seulement quand la version ou les
+    fichiers changent, ou sur demande (« Réinstaller » des options)."""
+    return memoire.get("refusee") == refus(version, empreinte_fichiers)
+
+
 def etiquette(maintenant: dt.datetime, version_avant: str | None) -> str:
     """Nom du dossier de sauvegarde : date, puis la version remplacée."""
     version = re.sub(r"[^0-9A-Za-z.-]", "_", version_avant or "inconnue")
@@ -154,10 +176,16 @@ def etiquette(maintenant: dt.datetime, version_avant: str | None) -> str:
 
 def appliquer(config: Path, plan: Plan, nom: str) -> Path | None:
     """Sauvegarde ce qui va changer dans config/tab5_sauvegardes/<nom>/, puis écrit et
-    retire. Renvoie le dossier de sauvegarde (None si rien n'existait avant)."""
+    retire. Renvoie le dossier de sauvegarde (None si rien n'existait avant). Si la
+    sauvegarde la plus récente contient déjà exactement ces fichiers, à l'octet près (un
+    nouvel essai après un refus, une réinstallation), elle sert de nouveau : pas de copie
+    identique, qui pousserait une sauvegarde utile hors des GARDER_SAUVEGARDES."""
     a_sauver = [c for c in plan.ecrire + plan.retirer if (config / c).is_file()]
     sauvegarde = None
-    if a_sauver:
+    precedente = derniere_sauvegarde(config)
+    if a_sauver and precedente is not None and meme_contenu(config, precedente, a_sauver):
+        sauvegarde = precedente
+    elif a_sauver:
         sauvegarde = config / SAUVEGARDES / nom
         n = 1
         while sauvegarde.exists():
@@ -197,6 +225,20 @@ def restaurer(config: Path, plan: Plan, sauvegarde: Path | None) -> None:
         if sauvegarde is None:
             raise RuntimeError("fichier retiré sans sauvegarde")
         shutil.copy2(sauvegarde / c, config / c)
+
+
+def derniere_sauvegarde(config: Path) -> Path | None:
+    """La sauvegarde la plus récente (même ordre que nettoyer_sauvegardes)."""
+    racine = config / SAUVEGARDES
+    dossiers = sorted(d for d in racine.iterdir() if d.is_dir()) if racine.is_dir() else []
+    return dossiers[-1] if dossiers else None
+
+
+def meme_contenu(config: Path, sauvegarde: Path, fichiers: list[str]) -> bool:
+    """La sauvegarde contient-elle exactement `fichiers`, tels qu'ils sont dans config/ ?"""
+    dedans = {f.relative_to(sauvegarde).as_posix() for f in sauvegarde.rglob("*") if f.is_file()}
+    return dedans == set(fichiers) and all(
+        (sauvegarde / c).read_bytes() == (config / c).read_bytes() for c in fichiers)
 
 
 def nettoyer_sauvegardes(config: Path, garder: int) -> list[str]:

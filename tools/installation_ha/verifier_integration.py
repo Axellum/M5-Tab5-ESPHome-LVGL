@@ -19,7 +19,9 @@ Assistant neuf : installation, mises à jour, retour en arrière (ADR-0035).
            sauvegarde des deux, le retiré absent, la notification nomme le modifié ;
         3. mise à jour 9.9.3 dont un package casse la configuration → fichiers 9.9.2
            remis à l'octet près, capteur toujours 9.9.2, réparation
-           « configuration_invalide » ;
+           « configuration_invalide » ; redémarrage avec la même 9.9.3 → pas de nouvel
+           essai (réparation recréée, aucune sauvegarde de plus) ; « Réinstaller » des
+           options → nouvel essai, refusé, sans sauvegarde identique de plus ;
         4. retour au zip 9.9.2 (réparation retirée), ligne `packages:` enlevée puis
            « Réinstaller » des options → réparation « packages_absents » ; ligne remise,
            redémarrage → capteur 9.9.2, réparation retirée ;
@@ -234,6 +236,13 @@ async def attendre_reparations(ha: HA, presentes: set[str], absentes: set[str], 
         await asyncio.sleep(2)
 
 
+def essais_refuses() -> int:
+    """Refus de la 9.9.3 écrits au journal de HA depuis la création du conteneur."""
+    r = subprocess.run(["docker", "logs", CONTENEUR], capture_output=True, text=True)
+    return sum("Fichiers Tab5 9.9.3 refusés par la vérification" in l
+               for l in (r.stdout + r.stderr).splitlines())
+
+
 def comparer(rapport: Rapport, dossier: Path, fichiers: dict[str, bytes], quoi: str) -> None:
     differents = [c for c, d in fichiers.items()
                   if not (dossier / c).is_file() or (dossier / c).read_bytes() != d]
@@ -349,6 +358,34 @@ async def scenario(args, rapport: Rapport) -> None:
             rapport.verifier(await etat(ha, CAPTEUR) == "9.9.2", "3. capteur toujours à 9.9.2")
             comparer(rapport, dossier, v2, "3. config/ remis comme avant")
             rapport.verifier(not (dossier / CASSE).exists(), f"3. {CASSE} retiré par le retour en arrière")
+            memoire = ((await ha.storage("tab5.fichiers") or {}).get("data") or {})
+            rapport.verifier((memoire.get("refusee") or {}).get("version") == "9.9.3",
+                             "3. refus de la 9.9.3 gardé (.storage/tab5.fichiers)", str(memoire.get("refusee")))
+            sauvegardes = sorted(p.name for p in (dossier / "tab5_sauvegardes").iterdir())
+            # Même 9.9.3 au redémarrage : plus de nouvel essai (HA-9). La réparation, non
+            # persistante, n'est revenue que si l'intégration l'a recréée.
+            await redemarrer(ha)
+            presentes = await attendre_reparations(ha, {"configuration_invalide"}, set(), 120)
+            rapport.verifier("configuration_invalide" in presentes,
+                             "3. redémarrage, même 9.9.3 : réparation recréée", str(presentes))
+            rapport.verifier(essais_refuses() == 1, "3. redémarrage, même 9.9.3 : pas de nouvel essai",
+                             f"{essais_refuses()} refus au journal")
+            rapport.verifier(sorted(p.name for p in (dossier / "tab5_sauvegardes").iterdir()) == sauvegardes,
+                             "3. redémarrage, même 9.9.3 : aucune sauvegarde de plus", str(sauvegardes))
+            comparer(rapport, dossier, v2, "3. config/ toujours en 9.9.2")
+            # « Réinstaller » : l'action explicite réessaie ; même refus, même sauvegarde.
+            options = await ha.flux("/api/config/config_entries/options/flow", entree,
+                                    {"mettre_a_jour_tablette": True, "reinstaller": True})
+            rapport.verifier(options.get("type") == "create_entry", "3. options : « Réinstaller » validé",
+                             str(options)[:200])
+            fin = time.monotonic() + 120
+            while essais_refuses() < 2 and time.monotonic() < fin:
+                await asyncio.sleep(2)
+            rapport.verifier(essais_refuses() == 2, "3. « Réinstaller » : nouvel essai, refusé de nouveau",
+                             f"{essais_refuses()} refus au journal")
+            rapport.verifier(sorted(p.name for p in (dossier / "tab5_sauvegardes").iterdir()) == sauvegardes,
+                             "3. nouvel essai : pas de sauvegarde identique de plus", str(sauvegardes))
+            comparer(rapport, dossier, v2, "3. config/ remis comme avant (2e essai)")
 
             # ── 4. Retour à 9.9.2, puis packages absents ──
             remplacer_integration(dossier, zips["9.9.2"])

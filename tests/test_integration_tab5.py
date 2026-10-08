@@ -123,6 +123,14 @@ def test_modules_purs_sans_home_assistant():
         assert not re.search(r"^\s*(from|import)\s+(homeassistant|\.)", texte, re.M), nom
 
 
+def test_verificateur_de_la_ci_compilable():
+    """tools/installation_ha/verifier_integration.py ne tourne que dans la CI (job « ha »,
+    non requis, seulement si ses chemins changent) : une faute de syntaxe ne s'y verrait
+    qu'après un poussé. Ici, sans Docker ni HA."""
+    chemin = REPO / "tools" / "installation_ha" / "verifier_integration.py"
+    compile(chemin.read_text(encoding="utf-8"), str(chemin), "exec")
+
+
 def test_aucun_nom_local_ne_masque_un_import():
     """Une variable `messages` masquait le module `messages` dans _installer : l'installation
     s'arrêtait sur un AttributeError (CI du 07/10/2026). Le code qui parle à HA ne tourne
@@ -241,6 +249,45 @@ def test_ecriture_impossible_rien_a_moitie(tmp_path):
              if not c.startswith(installation.SAUVEGARDES + "/")}
     assert apres == avant, "échec au milieu : les fichiers déjà écrits sont remis"
     assert installation.version_installee(tmp_path) == "9.9.9"
+
+
+def test_nouvel_essai_sans_sauvegarde_identique(tmp_path):
+    """HA-9 (audit du 07/10/2026) : chaque essai d'une version refusée laissait une
+    sauvegarde de plus, identique, qui poussait les utiles hors des 5 gardées."""
+    v1 = _embarques("9.9.9")
+    plan1, _ = _installer(tmp_path, v1)
+    v2 = _embarques("9.9.10")
+    racine = tmp_path / installation.SAUVEGARDES
+    plan2, s1 = _installer(tmp_path, v2, plan1.installes, "20261008-090000_9.9.9")
+    installation.restaurer(tmp_path, plan2, s1)  # refusée : tout remis comme avant
+    avant = _instantane(tmp_path)
+    for nom in ("20261008-100000_9.9.9", "20261008-110000_9.9.9"):  # deux essais de plus
+        plan, s = _installer(tmp_path, v2, plan1.installes, nom)
+        assert s == s1, "mêmes fichiers à sauver, à l'octet près : la sauvegarde précédente resert"
+        installation.restaurer(tmp_path, plan, s)
+    assert [d.name for d in racine.iterdir()] == ["20261008-090000_9.9.9"]
+    assert _instantane(tmp_path) == avant, "restaurer() depuis la sauvegarde réutilisée : à l'octet près"
+    # Un fichier changé entre-temps : la sauvegarde ne serait plus la même, une nouvelle est faite.
+    tv = tmp_path / "packages" / "tab5_tv.yaml"
+    tv.write_bytes(tv.read_bytes() + b"\n# ajout\n")
+    _, s3 = _installer(tmp_path, v2, plan1.installes, "20261008-120000_9.9.9")
+    assert s3 != s1 and (s3 / "packages" / "tab5_tv.yaml").read_bytes().endswith(b"# ajout\n")
+
+
+def test_version_refusee_pas_reessayee():
+    """HA-9 : une version refusée par la vérification de la configuration n'est plus
+    réessayée à chaque démarrage, tant que ni la version ni les fichiers ne changent."""
+    v3 = _embarques("9.9.3")
+    e3 = installation.empreinte_des_fichiers(v3)
+    assert e3 == installation.empreinte_des_fichiers(dict(reversed(list(v3.items())))), "ordre sans effet"
+    memoire = {"version": "9.9.2", "refusee": installation.refus("9.9.3", e3)}
+    assert installation.deja_refusee(memoire, "9.9.3", e3)
+    autres = dict(v3, **{"packages/tab5_tv.yaml": v3["packages/tab5_tv.yaml"] + b"\n# corrige\n"})
+    assert not installation.deja_refusee(memoire, "9.9.3", installation.empreinte_des_fichiers(autres)), \
+        "mêmes version, autres fichiers : nouvel essai"
+    assert not installation.deja_refusee(memoire, "9.9.4", installation.empreinte_des_fichiers(_embarques("9.9.4")))
+    assert not installation.deja_refusee({"version": "9.9.2"}, "9.9.3", e3), "jamais refusée"
+    assert json.loads(json.dumps(memoire)) == memoire, "gardé tel quel par le Store de HA (JSON)"
 
 
 def test_meme_version_rien_a_ecrire(tmp_path):
