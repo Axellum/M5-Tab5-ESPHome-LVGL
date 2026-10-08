@@ -330,8 +330,9 @@ def test_rendu_complet(langue):
     sante = sortie[sortie.index("path: tab5-sante"):]
     assert {"/config/logs", "/config/repairs"} <= set(chemins), chemins
     assert tr("Quand quelque chose cloche", "When something is wrong") in sante
-    # Cinq gardes depuis la 3.8 (la garde de is_primary_active est retirée avec lui).
-    assert re.search(r"\['automation\.[^']+'(, 'automation\.[^']+'){4}\] \| select\('is_state', 'off'\)", sante)
+    # Six gardes : cinq depuis la 3.8 (la garde de is_primary_active est retirée avec lui),
+    # plus la batterie faible (08/10/2026).
+    assert re.search(r"\['automation\.[^']+'(, 'automation\.[^']+'){5}\] \| select\('is_state', 'off'\)", sante)
     # Chaque tuile ou raccourci écrit sa largeur, sauf une tuile à commande en ligne
     # (12 colonnes au minimum) : sans elle, le frontend lui donne 6 colonnes sur 12.
     sans_largeur = [c.get("entity") or c.get("label") for c in _toutes_les_cartes(tableau)

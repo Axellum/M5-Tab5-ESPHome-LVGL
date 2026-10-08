@@ -84,6 +84,7 @@
   ('extinction', 'select', 'tab5_extinction_auto_de_l_ecran'),
   ('economie', 'select', 'tab5_economie_d_energie'), ('sur_batterie', 'binary_sensor', 'tab5_sur_batterie'),
   ('courant', 'sensor', 'tab5_courant_batterie'),
+  ('limite_charge', 'select', 'tab5_limite_de_charge'), ('consommation', 'sensor', 'tab5_consommation'),
   ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
   ('zones', 'sensor', 'zones_masquees'),
   ('reveil_en_cours', 'binary_sensor', 'reveil_en_cours'), ('prochain_reveil', 'sensor', 'prochain_reveil'),
@@ -134,7 +135,8 @@
 {%- set IDS = ['tab5_ha_hmi_updater', 'tab5_ha_hmi_alerts_push', 'tab5_ha_hmi_meteo_push', 'tab5_rdv_push',
                'tab5_evenements', 'tab5_volet_updater', 'tab5_screen_presence_wifi', 'tab5_micro_absence',
                'tab5_health_api_off_2min', 'tab5_health_unexpected_reboot',
-               'tab5_health_template_error', 'tab5_health_fichiers_ha', 'tab5_health_journal'] -%}
+               'tab5_health_template_error', 'tab5_health_fichiers_ha', 'tab5_health_journal',
+               'tab5_health_batterie_faible'] -%}
 {#- Chaque id a sa clé, vide si l'automatisation manque : pas d'avertissement dans le journal de HA. -#}
 {%- for id in IDS -%}{%- set ns.a = dict(ns.a, **{id: ''}) -%}{%- endfor -%}
 {%- for a in states.automation -%}
@@ -738,6 +740,20 @@ views:
             heading: "{{ t('Luminosité plafonnée à 50 %, au plus bas après 30 s sans toucher ou sous 35 % de batterie ; sans animation', 'Brightness capped at 50%, lowest after 30 s without a touch or below 35% battery; no animation') }}"
             heading_style: subtitle
 {%- endif %}
+{#- Limite de charge (firmware du 08/10/2026) : « 100 % » ou « 80 % », pour une tablette toujours branchée. #}
+{%- if T.limite_charge %}
+          - type: tile
+            entity: {{ T.limite_charge }}
+            name: "{{ t('Limite de charge', 'Charge limit') }}"
+            icon: mdi:battery-charging-80
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+          - type: heading
+            heading: "{{ t('80 % : la charge s’arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée', '80%: charging stops at 80% and resumes at 70%, for a tablet that stays plugged in') }}"
+            heading_style: subtitle
+{%- endif %}
 {%- if T.theme_nuit %}
           - type: tile
             entity: {{ T.theme_nuit }}
@@ -1100,7 +1116,8 @@ views:
 {%- endif %}
 {#- Gardes de santé présentes ; « coupées » = interrupteur sur off (normal pendant une OTA). #}
 {%- set gardes = [A.tab5_health_api_off_2min, A.tab5_health_unexpected_reboot,
-                  A.tab5_health_template_error, A.tab5_health_fichiers_ha, A.tab5_health_journal] | select | list %}
+                  A.tab5_health_template_error, A.tab5_health_fichiers_ha, A.tab5_health_journal,
+                  A.tab5_health_batterie_faible] | select | list %}
 {%- if gardes %}
               | {{ t('Alertes de santé', 'Health alerts') }} | {% raw %}{% set n = {% endraw %}{{ gardes }}{% raw %} | select('is_state', 'off') | list | count %}{{ '{% endraw %}{{ t('toutes actives', 'all on') }}{% raw %}' if n == 0 else '<font color="#ff9800">' ~ n ~ ' {% endraw %}{{ t('coupée(s)', 'off') }}{% raw %}</font>' }}{% endraw %} |
 {%- endif %}
@@ -1229,7 +1246,8 @@ views:
 {#- Batterie: entités désactivées par défaut dans HA (à activer), cartes visibles seulement
     quand « Batterie montée » est allumé. #}
 {%- for ent, fr_, en_ in [(T.batterie, 'Batterie', 'Battery'), (T.tension, 'Tension', 'Voltage'), (T.en_charge, 'En charge', 'Charging'),
-                          (T.sur_batterie, 'Sur batterie', 'On battery'), (T.courant, 'Courant', 'Current')] %}
+                          (T.sur_batterie, 'Sur batterie', 'On battery'), (T.courant, 'Courant', 'Current'),
+                          (T.consommation, 'Consommation', 'Power draw')] %}
 {%- if ent %}
           - type: tile
             entity: {{ ent }}
@@ -1310,7 +1328,8 @@ views:
                          ('tab5_health_unexpected_reboot', 'Redémarrage inattendu', 'Unexpected restart'),
                          ('tab5_health_template_error', 'Erreur dans une poussée', 'Error in a push'),
                          ('tab5_health_fichiers_ha', 'Fichiers HA en retard', 'HA files out of date'),
-                         ('tab5_health_journal', 'Journal des démarrages', 'Start log')] %}
+                         ('tab5_health_journal', 'Journal des démarrages', 'Start log'),
+                         ('tab5_health_batterie_faible', 'Batterie faible', 'Low battery')] %}
 {%- if A[id] %}
           - type: tile
             entity: {{ A[id] }}
@@ -2090,6 +2109,18 @@ views:
     'es': 'Brillo limitado al 50 %, al mínimo tras 30 s sin tocar o por debajo del 35 % de batería; sin animación',
     'it': 'Luminosità limitata al 50 %, al minimo dopo 30 s senza tocco o sotto il 35 % di batteria; senza animazioni',
     'tr': 'Parlaklık %50 ile sınırlı; 30 sn dokunulmazsa veya pil %35 altına inerse en düşükte; animasyon yok'},
+  'Limite de charge': {
+    'de': 'Ladegrenze',
+    'nl': 'Laadlimiet',
+    'es': 'Límite de carga',
+    'it': 'Limite di carica',
+    'tr': 'Şarj sınırı'},
+  '80 % : la charge s’arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée': {
+    'de': '80 %: Das Laden stoppt bei 80 % und setzt bei 70 % wieder ein, für ein dauerhaft eingestecktes Tablet',
+    'nl': '80 %: het laden stopt bij 80 % en hervat bij 70 %, voor een tablet die altijd aan de stroom hangt',
+    'es': '80 %: la carga se detiene al 80 % y se reanuda al 70 %, para una tableta siempre enchufada',
+    'it': '80 %: la carica si ferma all’80 % e riprende al 70 %, per un tablet sempre collegato',
+    'tr': '%80: şarj %80’de durur ve %70’te yeniden başlar; sürekli takılı bir tablet için'},
   'Nuit (thème auto)': {
     'de': 'Nacht (Auto-Design)',
     'nl': 'Nacht (auto-thema)',
@@ -2732,6 +2763,12 @@ views:
     'es': 'Corriente',
     'it': 'Corrente',
     'tr': 'Akım'},
+  'Consommation': {
+    'de': 'Verbrauch',
+    'nl': 'Verbruik',
+    'es': 'Consumo',
+    'it': 'Consumo',
+    'tr': 'Tüketim'},
   'Poussées HA → tablette': {
     'de': 'HA → Tablet-Pushes',
     'nl': 'Pushes HA → tablet',
@@ -2846,6 +2883,12 @@ views:
     'es': 'Registro de arranques',
     'it': 'Log degli avvii',
     'tr': 'Başlatma günlüğü'},
+  'Batterie faible': {
+    'de': 'Batterie schwach',
+    'nl': 'Batterij bijna leeg',
+    'es': 'Batería baja',
+    'it': 'Batteria scarica',
+    'tr': 'Pil zayıf'},
   "Alertes à lire sur l'écran": {
     'de': 'Ungelesene Warnungen am Bildschirm',
     'nl': 'Ongelezen meldingen op het scherm',

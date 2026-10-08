@@ -2,11 +2,12 @@
 # [AI-CONTEXT]
 # @file packages/tab5_health.yaml
 # @role Package HA de surveillance santé du Tab5 (aucun nom d'entité à adapter
-#       depuis le 28/09/2026 : voir « ENTITÉS DE LA TABLETTE »). Cinq gardes : reboot
-#       inattendu (nouvel horodatage de démarrage), API ESPHome
-#       déconnectée, erreur de rendu d'un template dans une poussée écran,
-#       journal des démarrages et coupures envoyé par le Tab5, fichiers HA plus
-#       anciens que le firmware (f, 29/09/2026).
+#       depuis le 28/09/2026 : voir « ENTITÉS DE LA TABLETTE »). Six gardes : reboot
+#       inattendu (b, nouvel horodatage de démarrage), API ESPHome
+#       déconnectée (c), erreur de rendu d'un template dans une poussée écran (d),
+#       journal des démarrages et coupures envoyé par le Tab5 (e), fichiers HA plus
+#       anciens que le firmware (f, 29/09/2026), batterie faible quand la tablette
+#       tourne sur sa batterie (g, 08/10/2026).
 # @architecture_constraint L'écran est push-only (cf. docs/decisions/0001) : si
 #       les poussées s'arrêtent, l'écran se fige SILENCIEUSEMENT, sans erreur HA
 #       visible. Ces automations sont le filet de sécurité côté HA — il n'y a
@@ -425,6 +426,47 @@ automation:
           - action: persistent_notification.dismiss
             data:
               notification_id: tab5_fichiers_ha
+
+  # ==========================================================================
+  # (g) Batterie faible, envoyée par le Tab5 (08/10/2026)
+  # --------------------------------------------------------------------------
+  # Le firmware émet `esphome.tab5_batterie_faible` quand la tablette tourne sur
+  # sa batterie (seul le courant de la batterie est mesuré, par l'INA226) et que
+  # le niveau passe sous 20 %, puis sous 10 % : une fois par seuil, ré-armé à
+  # 30 % ou quand la charge reprend. Sans batterie, ou branchée, rien n'est émis.
+  # Données : niveau (en %, entier, ex. « 18 ») et seuil (« 20 » ou « 10 »).
+  # Une seule notification persistante (même id) : celle du seuil de 10 %
+  # remplace celle de 20 % ; téléphone à chaque seuil. Message court, sans
+  # entité ni code : il est lu tel quel sur le téléphone.
+  # ==========================================================================
+  - id: tab5_health_batterie_faible
+    alias: "Tab5 Santé — batterie faible"
+    description: >-
+      Prévient quand la tablette tourne sur sa batterie et passe sous 20 %, puis
+      sous 10 % : il est temps de la brancher.
+    mode: queued
+    trigger:
+      - platform: event
+        event_type: esphome.tab5_batterie_faible
+    # Garde d'origine, comme la garde (e) : seulement l'événement d'une tablette,
+    # reconnue au modèle de son appareil. tests/test_garde_origine.py.
+    condition:
+      - condition: template
+        value_template: >-
+          {%- set d = trigger.event.data.device_id | default('', true) | string -%}
+          {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
+    variables:
+      niveau: "{{ trigger.event.data.niveau | default('?', true) }}"
+      titre: >-
+        {{ '⚠️ Tab5 : batterie presque vide'
+           if (trigger.event.data.seuil | default('', true) | string) == '10'
+           else '⚠️ Tab5 : batterie faible' }}
+    action:
+      - action: script.tab5_health_notify
+        data:
+          notification_id: tab5_health_batterie
+          title: "{{ titre }}"
+          message: "La tablette tourne sur sa batterie : {{ niveau }} %. Branchez-la."
 
 template:
   # Version de ces fichiers : « dépôt » dans le dépôt, remplacée par la version de la
