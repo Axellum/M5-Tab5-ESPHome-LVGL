@@ -453,3 +453,77 @@ def test_table_des_evenements_du_readme_tab5():
         for fichier in consommateurs.get(evt, []):
             nom = "blueprint" if "/blueprints/" in fichier else f"`{fichier.rsplit('/', 1)[1]}`"
             assert nom in qui, f"{evt} : {nom} l'écoute, absent de la colonne « Consommateur » ({qui})"
+
+
+# ─── Les règles de code et la boîte à outils (audit du 07/10/2026, lot L4) ───────
+# AGENTS.md annonçait « 8 mandatory code rules » pour 9 règles numérotées (la 9ᵉ,
+# glyphes MDI, ajoutée le 25/09/2026), et la cartographie « 8 règles de code ». Les
+# règles sont numérotées deux fois : AGENTS.md (résumé) et Tab5/README.md (détail).
+AGENTS_REGLES = "## Code rules (full detail in `Tab5/README.md`)"
+README_REGLES = "## Règles de code à respecter"
+
+
+def _numeros(texte, titre):
+    """Numéros des items « N. » de la section `titre`, jusqu'au titre suivant."""
+    debut = texte.index(titre)
+    fin = re.compile(r"^#{1,3} ", re.M).search(texte, debut + len(titre))
+    bloc = texte[debut:fin.start() if fin else len(texte)]
+    return [int(n) for n in re.findall(r"^(\d+)\. ", bloc, re.M)]
+
+
+def _ecarts_regles(agents, readme, carto):
+    """Ce qui ne va pas entre les règles numérotées et leur nombre annoncé ; [] si tout va."""
+    ecarts = []
+    regles = _numeros(readme, README_REGLES)
+    n = len(regles)
+    if regles != list(range(1, n + 1)):
+        ecarts.append(f"Tab5/README.md : règles numérotées {regles}")
+    if _numeros(agents, AGENTS_REGLES) != regles:
+        ecarts.append(f"AGENTS.md : règles {_numeros(agents, AGENTS_REGLES)}, Tab5/README.md : {regles}")
+    for nom, texte, motif in (("AGENTS.md", agents, r"\*\*(\d+) mandatory code rules\*\*"),
+                              ("CARTOGRAPHIE_TAB5.md", carto, r"\+ (\d+) règles de code")):
+        annonces = [int(x) for x in re.findall(motif, texte)]
+        if not annonces:
+            ecarts.append(f"{nom} : plus rien ne correspond à {motif!r}, adapter le motif")
+        ecarts += [f"{nom} annonce {a} règles, il y en a {n}" for a in annonces if a != n]
+    return ecarts
+
+
+def test_nombre_de_regles_de_code():
+    assert len(_numeros(_lire(README_TAB5), README_REGLES)) >= 9
+    assert _ecarts_regles(_lire(AGENTS), _lire(README_TAB5), _lire(CARTOGRAPHIE)) == []
+
+
+def test_nombre_de_regles_faux_detecte():
+    """Falsifiabilité : un nombre faux, une règle en plus ou un motif disparu se voient."""
+    agents, readme, carto = _lire(AGENTS), _lire(README_TAB5), _lire(CARTOGRAPHIE)
+    n = len(_numeros(readme, README_REGLES))
+    assert _ecarts_regles(agents.replace(f"**{n} mandatory", f"**{n - 1} mandatory"), readme, carto)
+    assert _ecarts_regles(agents, readme, carto.replace(f"+ {n} règles de code", f"+ {n + 1} règles de code"))
+    debut = readme.index(README_REGLES)
+    plus = readme[:debut] + readme[debut:].replace(f"\n{n}. ", f"\n{n}. x\n{n + 1}. ", 1)
+    assert _ecarts_regles(agents, plus, carto)
+    assert _ecarts_regles(agents.replace("mandatory code rules", "code rules"), readme, carto)
+
+
+def _boite_a_outils():
+    texte = _lire(AGENTS)
+    debut = texte.index("## Toolbox")
+    return texte[debut:texte.index("\n## ", debut + 1)]
+
+
+def test_boite_a_outils_noms_reels():
+    """Chaque fonction et chaque fichier cités par la boîte à outils d'AGENTS.md existent :
+    une liste qui nomme un helper disparu enverrait un agent le chercher en vain."""
+    section = _boite_a_outils()
+    sources = "\n".join(p.read_text(encoding="utf-8", errors="replace")
+                        for p in sorted((REPO / "Tab5").glob("*"))
+                        if p.suffix in {".h", ".cpp", ".yaml"})
+    fonctions = re.findall(r"`([A-Za-z_][\w:]*)\(", section)
+    assert len(fonctions) > 40, "la boîte à outils ne liste plus de fonctions `nom()`, adapter le motif"
+    absentes = [f for f in fonctions if not re.search(rf"\b{re.escape(f)}\s*\(", sources)]
+    assert absentes == [], f"absentes de Tab5/ : {absentes}"
+    autres = re.findall(r"`(tab5_time_source|tab5_ecran_ouvrir|tab5_modal_registry_init|NvsSlot|SlotMenu|SlotGeom|UIColor)\b", section)
+    assert len(set(autres)) == 7 and all(re.search(rf"\b{a}\b", sources) for a in autres), autres
+    fichiers = re.findall(r"`((?:Tab5|tools)/[\w./*-]+)`", section)
+    assert fichiers and [f for f in fichiers if not list(REPO.glob(f))] == [], fichiers

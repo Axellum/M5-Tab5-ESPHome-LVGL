@@ -1,11 +1,15 @@
 name: ESPHome Tab5 Compilation
 
-# Quatre jobs :
-#   - python : hooks pre-commit (yamllint, BOM, secrets, placeholders HA),
-#     tests hôte (pytest = outils + miroirs Python des moteurs + garde-fous
-#     Marble/Lode/chrome modal), vrai moteur Go C++ compilé par g++, dry-run du
-#     demo pusher. Toujours exécuté, ~1 min.
-#   - build  : compilation ESPHome complète (~9 min sur ESP32-P4). Check REQUIS
+# Cinq jobs (durées lues sur les runs de main du 07/10/2026) :
+#   - changes : dorny/paths-filter dit si le firmware (`firmware`) ou les écrans des
+#     autres révisions (`ecrans`) changent ; les jobs de compilation en dépendent.
+#     Quelques secondes.
+#   - python : hooks pre-commit (yamllint, BOM, secrets, placeholders HA), esptool
+#     figé (mêmes commandes que publication.yml), tests hôte (pytest = tests/ +
+#     outils + miroirs Python des moteurs + garde-fous de contenu), vrais moteurs
+#     Go et réveil compilés par g++, dry-run du demo pusher. Toujours exécuté,
+#     3 à 6 min. Check REQUIS.
+#   - build  : compilation ESPHome complète (~5 min avec le ccache). Check REQUIS
 #     par la protection de `main`, donc le job existe toujours ; il est SAUTÉ
 #     (statut « skipped » = succès pour la protection) quand le push/la PR ne
 #     touche ni tab5-ha-hmi.yaml, ni Tab5/, ni ce workflow — une typo Markdown
@@ -21,6 +25,10 @@ name: ESPHome Tab5 Compilation
 #     `tab5_ecran:` dans user_entities.yaml (26/09/2026). Elles ne sont testées sur
 #     aucun appareil : la CI garantit seulement qu'elles compilent encore. Lancé
 #     quand l'écran, le matériel, l'entrée ou ce workflow changent ; check NON requis.
+#     Les deux révisions en parallèle, 5 à 8 min. `build-min` : ~6 min.
+#
+# Les autres workflows (rendu hors tablette, sanitizers, installation dans un HA neuf,
+# intégration HACS, site, publication) ne sont pas requis : docs/INVENTAIRE_CONFIGS_TESTS.md.
 #
 # `esphome/build-action` sans `version:` tire l'image `latest` : c'est VOULU pour
 # `build`. La CI sert de banc d'essai gratuit de la dernière ESPHome (le 25/08/2026

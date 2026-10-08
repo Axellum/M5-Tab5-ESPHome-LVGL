@@ -9,7 +9,8 @@
  * @regle_absolue Seul point de contact avec l'API LVGL, comme avant : les YAML
  *                n'appellent que des helpers déclarés dans tab5_custom.h. Les
  *                helpers partagés entre unités sont déclarés dans tab5_internal.h.
- * @memory_constraint Éviter std::string dans les boucles de parsing ; char* + strtok_r.
+ * @memory_constraint Pas de std::string dans une boucle de parsing : découper un char* en place.
+ *       `split_fields()` (tab5_core.h) garde les champs vides ; `strtok_r` les fusionne.
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"

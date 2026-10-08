@@ -236,6 +236,17 @@ L'autre moitié du contrat. **Le firmware n'appelle aucune action de HA** (plus 
 8. **Aucune entité Home Assistant en dur** dans un YAML du firmware — toujours une substitution de `user_entities.yaml` (`${entity_…}`) ou un `!lambda`. Depuis l'[ADR-0025](../docs/decisions/0025-events-only.md), le firmware n'en nomme plus du tout : il n'appelle aucune action de HA, il émet des événements `esphome.tab5_*`, et HA retrouve les entités de la tablette (satellite, lecteur, select de pipeline) par l'appareil qui les émet (`packages/tab5_evenements.yaml`). **Vérifié** : `tools/check_tab5_code_rules.py` échoue sur toute valeur `entity_id:` littérale, `tests/test_actions_ha.py` sur tout `homeassistant.service` / `homeassistant.action` et sur tout `${entity_…}`.
 9. **Toute icône MDI affichée est dans la liste `glyphs:` de la police `mdi_*` de son widget** (`tab5-styles.yaml`), et tout glyphe listé y est affiché quelque part : un glyphe absent s'affiche vide, sans erreur de compilation. Une icône posée en C++ sur un widget reçu en paramètre exige sa fonction dans `MDI_CODE_TARGETS` (règle 7 de `tools/check_tab5_code_rules.py`, jouée par `pytest`).
 
+### Conventions du nouveau code (audit du 07/10/2026)
+
+Le code existant mélange plusieurs styles (verbes français et anglais, `static` et namespace anonyme, tags de log). **On ne renomme pas en masse** : les ids sont lus par les tests et `MDI_CODE_TARGETS`, et plusieurs sessions travaillent en parallèle. On écrit le nouveau code ainsi, et **on harmonise un fichier seulement quand un lot le touche déjà** :
+
+- fonction publique : `<module>_<verbe français>` (`energie_instantane()`, `maison_definitions_changees()`) ; repeinte au changement de thème : `<module>_rejouer_theme()` ;
+- portée fichier : namespace anonyme plutôt que `static` ; constantes en `kCamel` ; `static_cast` et `nullptr` ;
+- journal : tag `tab5.<module>` (`ESP_LOGW("tab5.clim", …)`), surtout pour un payload refusé ;
+- écriture d'un label ou d'un drapeau : `ui_text()` / `ui_hidden()` (`tab5_internal.h`), pas `lv_label_set_text` ni `LV_OBJ_FLAG_HIDDEN` bruts ;
+- ids YAML : `<fonction>_<rôle>` en français (`roue_bouton_N_icone`, `maison_ligne_RT`) ;
+- avant d'écrire un utilitaire : la « boîte à outils » d'[`AGENTS.md`](../AGENTS.md) (section « Toolbox ») liste ceux qui existent. Les variables des services HA ne se renomment pas (contrat public).
+
 ---
 
 ## Arcade — les 8 consoles

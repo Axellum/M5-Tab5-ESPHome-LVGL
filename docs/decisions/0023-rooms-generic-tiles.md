@@ -1,6 +1,6 @@
 # ADR-0023: Rooms — each page of the five bottom tiles is a room of up to five devices, described by Home Assistant
 
-**Status:** Proposed (2026-09-28, contract for the « pièces » lots; not tried on a tablet yet)
+**Status:** Accepted — proposed on 2026-09-28 as the contract for the « pièces » lots (not tried on a tablet when written), applied by the firmware and the blueprint since release 3.2.0 (2026-09-28); updates below.
 **Date:** 2026-09-28
 
 ## Context
@@ -47,14 +47,14 @@ In every text field `|` becomes `/` and `;` becomes `,` (as today).
 
 | Type | HA domains | Tap | Long press |
 |---|---|---|---|
-| `lum` | `light` | `basculer` | with `d` (not `k`): quick-action wheel, whose « ⋯ » opens the light popup (update 2026-10-07, below); else the light popup (the room's `lum` tiles) |
+| `lum` | `light` | `basculer` | quick-action wheel, whose « Détails » link opens the light popup ([ADR-0036](0036-quick-action-wheel.md), updates 2026-10-07, below); with `k`, the light popup (the room's `lum` tiles) |
 | `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | device popup (update 2026-10-06, below) |
-| `vol` | `cover`, `valve` | moving → `arreter` (pause); else the chosen direction (`ouvrir` / `fermer`, see below) | quick-action wheel, whose « ⋯ » opens the shutter popup (updates 2026-10-05 and 2026-10-07, below); with `k`, the other one of `ouvrir`/`fermer` |
+| `vol` | `cover`, `valve` | moving → `arreter` (pause); else the chosen direction (`ouvrir` / `fermer`, see below) | quick-action wheel, whose « Détails » link opens the shutter popup (updates 2026-10-05 and 2026-10-07, below); with `k`, the other one of `ouvrir`/`fermer` |
 | `med` | `media_player` | `basculer` | TV remote, with `t`; else the device popup (update 2026-10-06) |
 | `act` | `scene`, `script`, `button`, `input_button` | `lancer` | device popup (update 2026-10-06) |
 | `cap` | `sensor`, `number`, `input_number` | — (read only) | — |
 | `bin` | `binary_sensor`, `device_tracker`, `person`, `lock` | — (read only) | — |
-| `cli` | `climate` | climate popup: the blueprint's with `m`, else its own once HA sent its settings ([ADR-0027](0027-climate-per-tile.md)) | quick-action wheel once HA sent its settings, whose « ⋯ » opens the climate popup; else the climate popup, as the tap (update 2026-10-07) |
+| `cli` | `climate` | climate popup: the blueprint's with `m`, else its own once HA sent its settings ([ADR-0027](0027-climate-per-tile.md)) | quick-action wheel once HA sent its settings, whose « Détails » link opens the climate popup; else the climate popup, as the tap (update 2026-10-07) |
 
 Options: `d` dimmable (brightness), `c` colour, `o` on only (never switched off from the screen), `k` confirm (a second tap within 3 s sends; the state line asks for it), `r` read only (no tap at all), `t` this media player is the blueprint's TV (remote), `m` this climate is the blueprint's climate (popup; without `m`, the tile's own climate, [ADR-0027](0027-climate-per-tile.md)), `e` this sensor is one of the blueprint's « Énergie » section (a `cap` whose tap opens the Energy popup, [ADR-0028](0028-solar-energy-popup.md); an older firmware ignores the letter and keeps a read-only tile).
 
@@ -164,6 +164,8 @@ Same discussion (« buttons can be like ha dashboard buttons »). The five HA-mo
 ## Update — 2026-10-07: the quick-action wheel (long press)
 
 Asked in [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (Bubble Card's `sub_button_wheel`), decided in [ADR-0036](0036-quick-action-wheel.md). The long press of a `lum` tile with `d`, of a `vol` tile and of a `cli` tile whose settings HA sent now opens a **wheel of round buttons** on an arc above the tile: off, 10 / 50 / 100 % for a light; open, stop, close and 50 % (with a known position) for a shutter; off and the unit's modes for a climate; then « ⋯ », which opens the popup the long press opened before. The commands are those of this table and of the climate popup: nothing new for Home Assistant. Fewer than three commands, option `k` (lights and shutters) or a light without `d`: the popup, as before. A `cli` tile without a wheel (the blueprint's climate before its settings `climr`, fewer than three commands) now opens its popup on a long press, as its tap does (before: nothing). The tap does not change, nor do `int`, `act`, `med` and the legacy mode.
+
+The same day, the wheel became two rings ([ADR-0036](0036-quick-action-wheel.md), « Update »): a light without `d` gets one too, the « fewer than three commands » rule went, and « ⋯ » became the « Détails » link, next to a « Maison » link. The table above says what the firmware does now.
 
 ## Update — 2026-10-07: the House popup
 
