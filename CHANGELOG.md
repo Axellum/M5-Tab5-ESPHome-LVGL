@@ -15,6 +15,17 @@ thème ne fige plus l'écran (#383), Réglages en quatre pages (#400), repli mé
 #386, #388 à #394), rangement de `Tab5/` (#401, #402). Fichiers Home Assistant à recopier avant le
 firmware.
 
+### 2026-10-08 — Outil : consommation sur batterie, scénario par scénario
+
+- **`tools/mesure_conso.py`** : sur une tablette qui tourne sur sa batterie (USB débranché), pilote
+  l'écran (100 / 50 / 10 %, éteint), le micro (« Okay Nabu ») et le haut-parleur par l'API REST de
+  Home Assistant (jeton longue durée, jamais écrit ni affiché), lit « Tab5 Consommation » et écrit un
+  CSV à partager ; 8 scénarios de 5 min (≈ 40 min), la référence rejouée à la fin ; remet les
+  réglages trouvés au départ, même après Ctrl+C ; bibliothèque standard de Python seulement. Une
+  lecture par minute (INA226 à 60 s) : de quoi classer les gros postes, pas les petits écarts.
+  Essayé en `--essai` sur la tablette de l'auteur (sans batterie : pilotage et remise des réglages
+  vérifiés, aucune valeur lue) ; pas encore lancé sur une tablette avec batterie.
+
 ### 2026-10-08 — Normes de style et CHANGELOG archivé
 
 Aucun fichier de code reformaté, aucun changement du firmware.
