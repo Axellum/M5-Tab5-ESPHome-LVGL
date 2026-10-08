@@ -38,7 +38,7 @@
     },
     "configuration_invalide": {
       "title": "Tab5: the files {version} were not installed",
-      "description": "The new Tab5 files could not be put in place (the configuration check found an error with them, or writing them failed), so the previous files were put back and nothing changed. The reason is in the log (Settings → System → Logs, « tab5 »). Please report it: {signaler}"
+      "description": "The new Tab5 files could not be put in place (the configuration check found an error with them, or writing them failed), so the previous files were put back and nothing changed. The reason is in the log (Settings → System → Logs, « tab5 »). After a configuration error, these files are not tried again at each restart: once the cause is fixed, use Settings → Devices & services → Tab5 → Configure, « Install the files of this version again now ». If the cause is not in your own files, please report it: {signaler}"
     },
     "packages_absents": {
       "title": "Tab5: Home Assistant does not load the packages",
@@ -57,6 +57,21 @@
           "configuration_invalide": "The configuration has an error: fix it first (Developer tools → YAML → Check configuration)."
         }
       }
+    },
+    "fichiers_remplaces": {
+      "title": "Tab5: files already there were replaced",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Tab5 files already there were replaced",
+            "description": "These Tab5 files were already in `config/` (copied by hand, most likely) and differed from those of the release: {fichiers}. They were replaced anyway, and the old ones are kept in {sauvegarde}. If you had changed one of them on purpose, copy your change back from there.\n\nSubmit to close this message."
+          }
+        }
+      }
+    },
+    "firmware_echec": {
+      "title": "Tab5: the tablet did not update to {version}",
+      "description": "The Tab5 files {version} are in place, but the tablet still runs another version after {essais} tries of its update. Install it by hand: Settings → Updates (or the tablet's « Firmware » entity) → Install, with the tablet on and connected. The reason of each try is in the log (Settings → System → Logs, « tab5 »). This message goes away once the tablet runs {version}."
     }
   }
 }

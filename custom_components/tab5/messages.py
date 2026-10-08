@@ -18,7 +18,8 @@ def _fr(langue: str | None) -> bool:
 
 def installation(langue: str | None, *, avant: str | None, version: str, ecrits: int,
                  retires: int, identiques: int, sauvegarde: str | None, modifies: list[str],
-                 redemarrer: bool, packages_absents: bool, firmware: str) -> tuple[str, str]:
+                 redemarrer: bool, packages_absents: bool, firmware: str,
+                 differents: list[str] | None = None) -> tuple[str, str]:
     """(titre, message) après une installation. `firmware` : « auto » (lancée dès que
     proposée), « manuel » (option décochée) ou « non » (fichiers pas actifs : rien)."""
     fr = _fr(langue)
@@ -35,6 +36,9 @@ def installation(langue: str | None, *, avant: str | None, version: str, ecrits:
         if modifies:
             lignes.append("Modifiés à la main depuis la dernière installation, remplacés quand même "
                           f"(copie dans la sauvegarde) : {', '.join(modifies)}.")
+        if differents:
+            lignes.append("Déjà là et différents (copiés à la main ?), remplacés quand même "
+                          f"(copie dans la sauvegarde) : {', '.join(differents)}.")
         if packages_absents:
             lignes.append("Home Assistant ne charge pas encore les packages : voir Paramètres → Réparations.")
         elif redemarrer:
@@ -58,6 +62,9 @@ def installation(langue: str | None, *, avant: str | None, version: str, ecrits:
         if modifies:
             lignes.append("Edited by hand since the last installation, replaced anyway "
                           f"(a copy is in the backup): {', '.join(modifies)}.")
+        if differents:
+            lignes.append("Already there and different (copied by hand?), replaced anyway "
+                          f"(a copy is in the backup): {', '.join(differents)}.")
         if packages_absents:
             lignes.append("Home Assistant does not load the packages yet: see Settings → Repairs.")
         elif redemarrer:
