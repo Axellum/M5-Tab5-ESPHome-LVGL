@@ -371,8 +371,10 @@ void tuiles_repeindre(int r, int t);
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de
 // handle_swipe_gesture) : gauche 0→1→2→3→4→2, droite 4→3→2→1→0→2.
 int forecast_page_suivante(int page, bool gauche);
-// Pastilles de pagination : la page courante large et opaque.
-void pagination_afficher(lv_obj_t* const pbars[5], int page);
+// Pastilles de pagination : la page courante large et opaque, les autres étroites et
+// pâles ; n pastilles (5 pour les pages, 3 pour la rangée sous l'horloge).
+void pagination_afficher(lv_obj_t* const* pbars, int n, int page);
+inline void pagination_afficher(lv_obj_t* const pbars[5], int page) { pagination_afficher(pbars, 5, page); }
 // Carte centrale au changement de mode HA (ctx.ha_mode déjà posé) : fin du planning
 // temporaire et de la réponse vocale, puis titre de la pièce ou panneaux habituels.
 void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx);

@@ -869,16 +869,16 @@ static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
         update_central_forecast_page_ui(page, page_title_wrap, lbl_page_title, ctx);
 }
 
-void pagination_afficher(lv_obj_t* const pbars[5], int page) {
-    for (int i = 0; i < 5; i++) {
-        if (pbars[i] == nullptr) continue;
-        if (i == page) {
-            lv_obj_set_width(pbars[i], 30);
-            lv_obj_set_style_bg_opa(pbars[i], 255, LV_PART_MAIN);
-        } else {
-            lv_obj_set_width(pbars[i], 16);
-            lv_obj_set_style_bg_opa(pbars[i], 100, LV_PART_MAIN);
-        }
+// Une seule recette pour les pastilles des pages, de la carte des pièces et de la rangée
+// sous l'horloge (UI-10, lot L10). Opacité comparée d'abord (ui_style_num) ; la largeur,
+// LVGL 9.5.0 la compare lui-même (lv_obj_set_width, lv_obj_pos.c).
+void pagination_afficher(lv_obj_t* const* pbars, int n, int page) {
+    for (int i = 0; i < n; i++) {
+        lv_obj_t* b = pbars[i];
+        if (b == nullptr) continue;
+        const bool active = i == page;
+        lv_obj_set_width(b, active ? 30 : 16);
+        ui_style_num(b, LV_STYLE_BG_OPA, active ? 255 : 100);
     }
 }
 
