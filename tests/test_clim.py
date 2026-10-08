@@ -501,10 +501,10 @@ def test_carte_de_l_accueil_reste_la_clim_du_blueprint():
 
 
 def test_ouverture_et_fermeture_du_popup():
-    tuiles = _lire("Tab5", "tab5_tuiles.cpp")
+    tuiles = "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
     # Le corps de l'appui d'une tuile (tuile_appui le passe à la pièce courante, le popup
     # d'un appareil à la sienne, 06/10/2026).
-    appui = tuiles.split("static void tuile_appui_piece(int r, int t, bool long_appui) {", 1)[1].split("\n}\n", 1)[0]
+    appui = tuiles.split("void tuiles::tuile_appui_piece(int r, int t, bool long_appui) {", 1)[1].split("\n}\n", 1)[0]
     assert "type == Type::CLI && clim_tuile_connue(r, t)" in appui
     # La fenêtre CLIM (table des gestes, lot L7) : la clim du blueprint avec l'option m.
     fenetre = tuiles.split("static bool ouvrir_fenetre(Fenetre f, const Def& d, int r, int t) {", 1)[1].split("\n}\n", 1)[0]

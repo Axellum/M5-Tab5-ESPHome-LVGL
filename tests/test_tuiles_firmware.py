@@ -33,7 +33,9 @@ def _lire(*chemin):
 
 
 def _cpp():
-    return _lire("Tab5", "tab5_tuiles.cpp")
+    # Le code des tuiles : depuis le lot L7 (08/10/2026), tab5_tuiles.cpp, ses popups, sa roue
+    # et l'en-tête que les trois partagent.
+    return "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
 
 
 def _fonction(source, nom):
@@ -211,7 +213,9 @@ def test_popup_lumiere_revalide_aux_nouvelles_definitions():
     est revalidé quand HA renvoie les définitions — lignes recalculées sur la même pièce
     et repeintes, refermé s'il n'y a plus de lumière, oublié s'il est fermé."""
     cpp = _cpp()
-    assert "popup_lumiere_revalider();" in _fonction(cpp, "tuiles_definir")
+    # tuiles_definir → popups_revalider (tab5_tuiles_popups.cpp, lot L7) : volet, appareil, lumière.
+    assert "popups_revalider();" in _fonction(cpp, "tuiles_definir")
+    assert "popup_lumiere_revalider();" in _fonction(cpp, "popups_revalider")
     corps = _fonction(cpp, "popup_lumiere_revalider")
     assert "s_pl = PopupLumiere{};" in corps
     # Mêmes lignes qu'à l'ouverture (popup_lumiere_lignes) ; refermé sans lumière, repeint
@@ -283,7 +287,7 @@ def test_cles_des_commandes_de_tuile():
     assert ("c.s[0] = 't';\n    c.s[1] = static_cast<char>('0' + r);\n    c.s[2] = static_cast<char>('0' + t);"
             in cle.replace("\r\n", "\n"))
     # Écrite une seule fois : plus de clé « tRT » montée à la main dans le C++ des tuiles et des clims.
-    for fichier in ("tab5_tuiles.cpp", "tab5_cards.cpp"):
+    for fichier in ("tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp", "tab5_cards.cpp"):
         assert "static_cast<char>('0' + " not in _lire("Tab5", fichier), fichier
     # L'événement esphome.tab5_action du script tab5_action, emplacement / action / valeur.
     tuiles_yaml = _lire("Tab5", "tab5-tuiles.yaml")
@@ -519,7 +523,8 @@ def test_le_volet_dessine_suit_la_position_de_ha():
     envoi = _fonction(cpp, "popup_volet_envoyer_position")
     assert envoi.index('"position", valeur);') < envoi.index("s_pv.cible = true;")
     recu = _fonction(cpp, "tuiles_etat_recu")
-    assert recu.index("if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;") < recu.index("peindre_tuile(r, t);")
+    assert recu.index("popup_volet_etat_pousse(r, t);") < recu.index("peindre_tuile(r, t);")
+    assert "if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;" in _fonction(cpp, "popup_volet_etat_pousse")
     assert cpp.count("s_pv.cible = true;") == 1 and cpp.count("s_pv.cible = false;") == 1
     assert "ui_hidden(u.vol_position, !connue);" in peindre
     dessiner = _fonction(cpp, "popup_volet_dessiner")
@@ -622,10 +627,12 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
     assert "tuile >= 0 && tuile < kTuiles && !heritage(); }" in cpp
     assert "(d.options & OPT_R)) return g;" in _fonction(cpp, "gestes")
     # Popup refermé quand sa tuile ne l'a plus, repeint sinon (et au changement de thème).
-    definir = _fonction(cpp, "tuiles_definir")
-    assert "popup_tuile_revalider(s_pa, popup_appareil_valide(), popup_appareil_peindre);" in definir
-    assert "popup_tuile_revalider(s_pv, popup_volet_valide(), popup_volet_peindre);" in definir
-    assert "if (s_pa.ouvert()) popup_appareil_peindre();" in _fonction(cpp, "tuiles_rejouer_theme")
+    assert "popups_revalider();" in _fonction(cpp, "tuiles_definir")
+    revalider = _fonction(cpp, "popups_revalider")
+    assert "popup_tuile_revalider(s_pa, popup_appareil_valide(), popup_appareil_peindre);" in revalider
+    assert "popup_tuile_revalider(s_pv, popup_volet_valide(), popup_volet_peindre);" in revalider
+    assert "popups_rejouer_theme();" in _fonction(cpp, "tuiles_rejouer_theme")
+    assert "if (s_pa.ouvert()) popup_appareil_peindre();" in _fonction(cpp, "popups_rejouer_theme")
     # Le popup dit l'option k et l'option o, et ce que fera l'appui.
     peindre = _fonction(cpp, "popup_appareil_peindre")
     assert "minuterie_sur(s_confirmation, r, t)" in peindre and "OPT_K" in peindre and "OPT_O" in peindre

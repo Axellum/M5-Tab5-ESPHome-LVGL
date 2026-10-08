@@ -356,7 +356,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_tuiles.cpp", "glyphe_fleche"): (
         "icon_card_droite_j0", "icon_card_shutter_arrow", "icon_card_light_j*", "icon_card_h*_d"),
     # Popup d'un appareil (06/10/2026) : icône du grand bouton (marche / arrêt, lecture).
-    ("tab5_tuiles.cpp", "glyphe_commande"): ("appareil_commande_icone",),
+    ("tab5_tuiles_popups.cpp", "glyphe_commande"): ("appareil_commande_icone",),
     # Roue d'actions rapides (ADR-0036) : icônes de ses deux anneaux (roue_bouton.yaml,
     # roue_choix.yaml, mdi_font_36).
     ("tab5_roue.cpp", "glyphe_roue"): ("roue_bouton_*_icone", "roue_choix_*_icone"),

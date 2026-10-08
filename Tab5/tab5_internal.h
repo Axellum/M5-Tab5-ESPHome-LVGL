@@ -227,7 +227,7 @@ struct RoueTete {
     int jauge = -1;                 // 0 à 100 ; -1 : pas de jauge
     uint32_t couleur = 0;           // couleur d'état de l'appareil
 };
-// Ce que fait la roue au toucher, fournie par celui qui l'ouvre (tab5_tuiles.cpp).
+// Ce que fait la roue au toucher, fournie par celui qui l'ouvre (tab5_tuiles_roue.cpp).
 struct RoueRappels {
     void (*choisir)(int i) = nullptr;                   // action ou lien i, roue fermée
     int (*famille)(int i, RoueChoix* out) = nullptr;    // choix de la famille i (≤ kRoueChoix)
@@ -242,7 +242,7 @@ bool roue_ouvrir(lv_obj_t* ancre, const RoueTete& tete, const RoueBouton* b, int
                  bool garder);
 // theme_rejouer_ui (tab5_theme.cpp) : roue ouverte repeinte dans la nouvelle palette.
 void roue_rejouer_theme();
-// tab5_tuiles.cpp : la roue de la tuile tRT, autour de `ancre` (pastille d'une carte du
+// tab5_tuiles_roue.cpp : la roue de la tuile tRT, autour de `ancre` (pastille d'une carte du
 // mode HA, bouton d'une tuile météo, ou tout autre widget : une ligne d'une liste ;
 // `depuis_maison` : sans le lien « Maison »). Faux, et rien d'ouvert, quand la tuile n'en
 // a pas (type sans roue, option k ou r, clim sans capacité connue) : l'appelant ouvre

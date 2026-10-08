@@ -67,7 +67,10 @@ esphome:
     - Tab5/tab5_calendar.cpp
     - Tab5/tab5_journal.cpp
     - Tab5/tab5_zones.cpp
+    - Tab5/tab5_tuiles_priv.h
     - Tab5/tab5_tuiles.cpp
+    - Tab5/tab5_tuiles_popups.cpp
+    - Tab5/tab5_tuiles_roue.cpp
     - Tab5/tab5_rangee.cpp
     - Tab5/tab5_reglables.cpp
     - Tab5/tab5_roue.cpp

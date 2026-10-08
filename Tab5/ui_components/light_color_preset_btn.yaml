@@ -1,7 +1,7 @@
 # [AI-CONTEXT] Pastille couleur ronde (78 px), template paramétré (!include+vars),
 # réutilisé 12x par la grille COULEURS de light_popup.yaml (#T164).
 # Vars: color_name (payload HA color_name:) ; la teinte de la pastille : lampe_teinte()
-# (tab5_tuiles.cpp, la même liste que la roue, UI-8 — peut différer du CSS exact pour
+# (tab5_tuiles_roue.cpp, la même liste que la roue, UI-8 — peut différer du CSS exact pour
 # rester lisible sur fond sombre, ex. purple → 0xA855F7).
 # Cible id(current_light_slot) (global partagé, pas une entité en dur).
 button:

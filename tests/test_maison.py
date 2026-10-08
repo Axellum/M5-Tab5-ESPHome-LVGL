@@ -56,7 +56,8 @@ def _maison():
 
 
 def _tuiles():
-    return _lire("Tab5", "tab5_tuiles.cpp")
+    # Tuiles, popups, roue d'une tuile et leur en-tête commun (lot L7, 08/10/2026).
+    return "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
 
 
 def test_popup_du_registre_dernier_des_popup():

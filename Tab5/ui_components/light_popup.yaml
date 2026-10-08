@@ -164,7 +164,7 @@ obj:
                 - label: { text: "COULEURS", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
                 # Blancs nommés (température de blanc via color_name) — gabarit light_white_btn.yaml ;
-                # teintes : lampe_teinte() (tab5_tuiles.cpp, la même liste que la roue, UI-8)
+                # teintes : lampe_teinte() (tab5_tuiles_roue.cpp, la même liste que la roue, UI-8)
                 - !include { file: light_white_btn.yaml, vars: { x: 22, color_name: "warmwhite", name: "Chaud" } }
                 - !include { file: light_white_btn.yaml, vars: { x: 140, color_name: "navajowhite", name: "Crème" } }
                 - !include { file: light_white_btn.yaml, vars: { x: 258, color_name: "white", name: "Froid" } }

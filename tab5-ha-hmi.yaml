@@ -106,8 +106,12 @@ esphome:
     - Tab5/tab5_journal.cpp
     # Zones optionnelles : ce qui disparaît quand l'entité manque dans HA (lot 5, 27/09/2026).
     - Tab5/tab5_zones.cpp
-    # Pièces et tuiles génériques décrites par HA (ADR-0023, 28/09/2026).
+    # Pièces et tuiles génériques décrites par HA (ADR-0023, 28/09/2026) ; leurs popups et
+    # leur roue d'actions rapides, l'en-tête que les trois partagent (lot L7, 08/10/2026).
+    - Tab5/tab5_tuiles_priv.h
     - Tab5/tab5_tuiles.cpp
+    - Tab5/tab5_tuiles_popups.cpp
+    - Tab5/tab5_tuiles_roue.cpp
     # Rangée sous l'horloge : plantes et lignes de capteurs qui se relaient (ADR-0031, 06/10/2026).
     - Tab5/tab5_rangee.cpp
     # Tuile − / + au choix : clim, appareils du blueprint, volume de la tablette (ADR-0033, 06/10/2026).

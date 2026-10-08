@@ -10,7 +10,7 @@
  *       second anneau et centrés sur elle, ses choix (luminosités, couleurs, modes…) —
  *       la « roue qui en lance une deuxième, dans la même roue » voulue par l'auteur le
  *       07/10/2026. Ce fichier ne sait rien des appareils : il place, peint, ouvre, déplie
- *       et ferme. Celui qui l'ouvre (tuile_roue_ouvrir, tab5_tuiles.cpp) donne le moyeu, les
+ *       et ferme. Celui qui l'ouvre (tuile_roue_ouvrir, tab5_tuiles_roue.cpp) donne le moyeu, les
  *       boutons, la couleur d'état et les rappels (RoueRappels) : ce que fait un toucher,
  *       les choix d'une famille, le repeint au changement de thème ou d'état.
  * @architecture_constraint Widgets : ui_components/roue_actions.yaml (voile plein écran,
