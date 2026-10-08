@@ -9,9 +9,14 @@ qu'OpenWeatherMap répondait. Les vrais modèles (packages/tab5_meteo_sources.ya
 custom_templates/tab5_meteo.jinja, packages/tab5_push.yaml) sont rendus ici avec de
 fausses entités, comme dans test_meteo_sans_meteo_france.py."""
 import datetime as dt
+import json
 
 import jinja2
 import pytest
+
+from tests.test_alertes_ha import Etat as EtatAlerte
+from tests.test_alertes_ha import _env as _env_alertes
+from tests.test_alertes_ha import logique
 
 from tests.test_meteo_sans_meteo_france import (
     MAINTENANT, Etat, Etats, _environnement, _paquet, _parcourir, _rendre,
@@ -23,10 +28,11 @@ MET = "weather.forecast_home"
 INTEGRATIONS = {"meteo_france": [MF], "openweathermap": [OWM], "met": [MET]}
 
 
-def _maison(mf="rainy", owm="cloudy", met=None, choix=MF, releve_mf=5, releve_owm=5):
+def _maison(mf="rainy", owm="cloudy", met=None, choix=MF, releve_mf=5, releve_owm=5, panne_mf=26):
     """Météo-France choisie ; OpenWeatherMap (et Met.no si `met`) à côté. Un état None =
     entité absente ; « unavailable » = entité sans attributs, comme dans HA. releve_* :
-    minutes depuis la dernière relève (last_reported)."""
+    minutes depuis la dernière relève (last_reported) ; panne_mf : minutes depuis le
+    dernier changement d'état de Météo-France (last_changed)."""
     def meteo(entite, etat, nom, releve=5, **attributs):
         if etat is None:
             return []
@@ -35,6 +41,7 @@ def _maison(mf="rainy", owm="cloudy", met=None, choix=MF, releve_mf=5, releve_ow
         else:
             e = Etat(entite, etat, supported_features=3, friendly_name=nom, **attributs)
         e.last_reported = MAINTENANT - dt.timedelta(minutes=releve)
+        e.last_changed = MAINTENANT - dt.timedelta(minutes=panne_mf if entite == MF else 60)
         return [e]
 
     etats = Etats(
@@ -194,4 +201,60 @@ def test_seuil_en_constante_nommee():
              / "custom_templates" / "tab5_meteo.jinja").read_text(encoding="utf-8")
     assert "{%- set TAB5_METEO_PERIMEE_S = 7200 -%}" in texte
     assert texte.count("7200") == 1
+
+
+# ── Alerte « Météo : … » sur la carte centrale (canal des alertes HA) ───────────────
+
+def _alerte(etats):
+    """La source « meteo » de tab5_alertes_sources, rendue avec les attributs du vrai
+    capteur « Tab5 Météo »."""
+    m = etats["sensor.tab5_meteo"]
+    env = _env_alertes([EtatAlerte("sensor.tab5_meteo", m.state, dict(m.attributes))], MAINTENANT.timestamp())
+    rendu = env.from_string("{% from 'tab5_alertes.jinja' import tab5_alertes_sources %}"
+                            "{{ tab5_alertes_sources({}, [], 20) }}").render()
+    return json.loads(rendu)["actives"].get("ha:meteo_repli")
+
+
+def test_alerte_source_indisponible():
+    a = _alerte(_maison(mf="unavailable", panne_mf=26)[0])
+    assert a == {"c": "indisponible|OpenWeatherMap", "g": "Jaune", "s": "meteo",
+                 "t": "Météo : OpenWeatherMap utilisé, Météo-France indisponible depuis 20 h 04"}
+
+
+def test_alerte_source_figee():
+    a = _alerte(_maison(releve_mf=180)[0])
+    assert a["t"] == "Météo : OpenWeatherMap utilisé, Météo-France ne se met plus à jour depuis 17 h 30"
+    a = _alerte(_maison(releve_mf=60 * 24 + 1)[0])
+    assert a["t"].endswith("ne se met plus à jour depuis le 01/10 à 20 h 29")
+
+
+def test_alerte_sans_source_de_repli():
+    a = _alerte(_maison(mf="unavailable", owm="unavailable")[0])
+    assert a["t"] == "Météo : Météo-France indisponible depuis 20 h 04"
+    a = _alerte(_maison(releve_mf=300, releve_owm=300)[0])
+    assert a["t"] == "Météo : Météo-France ne se met plus à jour depuis 15 h 30"
+
+
+def test_pas_d_alerte_pendant_les_5_premieres_minutes_ni_au_retour():
+    assert _alerte(_maison(mf="unavailable", panne_mf=4)[0]) is None
+    assert _alerte(_maison(mf="unavailable", panne_mf=5)[0]) is not None
+    assert _alerte(_maison()[0]) is None
+
+
+def test_l_alerte_s_affiche_puis_disparait_d_elle_meme():
+    t = int(MAINTENANT.timestamp())
+    ab = {"maj": "toutes", "probleme": True, "indispo": True, "vigilance": "Jaune"}
+    panne = {"ha:meteo_repli": _alerte(_maison(mf="unavailable")[0])}
+    m = logique({}, {"actives": panne}, "tick", t, ab)
+    assert [a["i"] for a in m["affichees"]] == ["ha:meteo_repli#1"]
+    assert m["affichees"][0]["t"].startswith("Météo : OpenWeatherMap utilisé")
+    m = logique(m, {"actives": {}}, "tick", t + 60, ab)
+    assert m["affichees"] == []
+
+
+def test_texte_de_l_alerte_tient_dans_100_caracteres():
+    etats = _maison(releve_mf=60 * 24 + 1)[0]
+    etats["sensor.tab5_meteo"].attributes["nom_effectif"] = "x" * 40
+    etats["sensor.tab5_meteo"].attributes["nom_choisi"] = "y" * 40
+    assert len(_alerte(etats)["t"]) <= 100
 

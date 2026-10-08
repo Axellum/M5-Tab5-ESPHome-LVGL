@@ -23,6 +23,8 @@
                bloquées ou déclenchées              (aucune : revient après une vraie fin)
     pile       capteurs « battery » sous le seuil, (aucune : revient après une recharge
                binaires « battery » à « on »        au-dessus du seuil + 10 %)
+    meteo      source météo choisie en panne       la raison ou la source de repli
+               (sensor.tab5_meteo, attribut repli)
     indispo    entités indisponibles depuis 10 min UNE NOUVELLE entité (la liste gardée
                                                     est l'union depuis le début, 100
                                                     entités au plus : voir plus bas)
@@ -322,6 +324,20 @@
   {%- if indispo -%}
     {%- set ns.a = dict(ns.a, **{'ha:indispo': {'c': indispo, 'g': 'Orange',
                                                't': '@indispo:' ~ indispo | count, 's': 'indispo'}}) -%}
+  {%- endif -%}
+  {#- Météo de repli (custom_templates/tab5_meteo.jinja, 08/10/2026) : la source choisie
+      ne répond plus depuis 5 min au moins (pas d'alerte pendant le démarrage de HA, où
+      elle est indisponible quelques instants). Disparaît au retour de la source. -#}
+  {%- set mr = state_attr('sensor.tab5_meteo', 'repli') or '' -%}
+  {%- if mr in ['indisponible', 'perimee']
+        and now().timestamp() - (state_attr('sensor.tab5_meteo', 'repli_depuis') | float(0)) >= 300 -%}
+    {%- set choisi = (state_attr('sensor.tab5_meteo', 'nom_choisi') or '') | string -%}
+    {%- set eff = (state_attr('sensor.tab5_meteo', 'nom_effectif') or '') | string -%}
+    {%- set texte = 'Météo : ' ~ ((eff ~ ' utilisé, ') if eff and eff != choisi else '') ~ choisi ~ ' '
+                    ~ ('indisponible' if mr == 'indisponible' else 'ne se met plus à jour')
+                    ~ ' depuis ' ~ (state_attr('sensor.tab5_meteo', 'repli_heure') or '') -%}
+    {%- set ns.a = dict(ns.a, **{'ha:meteo_repli': {'c': mr ~ '|' ~ eff, 'g': 'Jaune',
+                                                    't': _propre(texte)[:100], 's': 'meteo'}}) -%}
   {%- endif -%}
   {%- set v = states('sensor.tab5_vigilance') -%}
   {%- if v in ['Jaune', 'Orange', 'Rouge'] -%}

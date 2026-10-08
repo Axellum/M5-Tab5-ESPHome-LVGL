@@ -3,9 +3,9 @@
   (08/10/2026). Ce matin-là, l'entité Météo-France de l'auteur est passée
   `unavailable` (« Connection reset by peer ») : la tablette a reçu « unavailable » à
   0 °C et les prévisions n'ont plus été demandées, alors qu'OpenWeatherMap marchait.
-  Importées par packages/tab5_meteo_sources.yaml (capteur « Tab5 Météo ») et
-  custom_templates/tab5_alertes.jinja :
-    {%- from 'tab5_meteo.jinja' import tab5_meteo_etat, tab5_meteo_effective, tab5_meteo_nom -%}
+  Importées par packages/tab5_meteo_sources.yaml (capteur « Tab5 Météo », dont les
+  attributs servent aux poussées, à l'alerte et au tableau de bord) :
+    {%- from 'tab5_meteo.jinja' import tab5_meteo_effective, tab5_meteo_nom, tab5_meteo_repli -%}
 
   tab5_meteo_etat(e)
       'ok', 'indisponible' (état unavailable ou unknown), 'perimee' (plus de relève depuis
@@ -22,6 +22,12 @@
   tab5_meteo_nom(e)
       Nom court d'une source pour l'écran : Météo-France, OpenWeatherMap, Met.no, sinon
       le nom de l'entité (40 caractères au plus).
+  tab5_meteo_repli(champ)
+      La source choisie ne répond pas : champ 'raison' = 'indisponible' ou 'perimee',
+      'depuis' = depuis quand (secondes epoch : passage à indisponible, ou dernière
+      relève), 'heure' = la même à l'heure locale, pour un texte (« 11 h 34 », « le 07/10
+      à 21 h 04 » un autre jour). '' quand elle répond. Lu par l'alerte de la carte
+      centrale (tab5_alertes.jinja) et la vue Santé du tableau de bord.
 
   TAB5_METEO_PERIMEE_S (2 h) : relevé chez l'auteur du 25/09 au 08/10/2026 (base de HA),
   une mise à jour au plus toutes les 60 min pour Météo-France (last_reported toutes les
@@ -60,6 +66,22 @@
       {%- if tab5_meteo_etat(x) == 'ok' -%}{%- set ns.e = x -%}{%- endif -%}
     {%- endfor -%}
     {{- ns.e if ns.e else (choisie if etat == 'perimee' else '') -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_meteo_repli(champ) -%}
+  {%- set choisie = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' -%}
+  {%- set etat = tab5_meteo_etat(choisie) -%}
+  {%- if etat in ['indisponible', 'perimee'] -%}
+    {%- set d = states[choisie].last_changed if etat == 'indisponible' else states[choisie].last_reported -%}
+    {%- if champ == 'raison' -%}
+      {{- etat -}}
+    {%- elif champ == 'depuis' -%}
+      {{- d.timestamp() | int -}}
+    {%- else -%}
+      {%- set l = d | as_local -%}
+      {{- ('' if l.date() == (now() | as_local).date() else 'le ' ~ l.strftime('%d/%m') ~ ' à ')
+          ~ l.hour ~ ' h ' ~ '%02d' | format(l.minute) -}}
+    {%- endif -%}
   {%- endif -%}
 {%- endmacro -%}
 {%- macro tab5_meteo_nom(e) -%}

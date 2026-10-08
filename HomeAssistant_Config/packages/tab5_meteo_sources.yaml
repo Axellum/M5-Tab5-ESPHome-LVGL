@@ -581,6 +581,22 @@ template:
           nom_effectif: >-
             {%- from 'tab5_meteo.jinja' import tab5_meteo_effective, tab5_meteo_nom -%}
             {{ tab5_meteo_nom(tab5_meteo_effective()) }}
+          # Repli en cours (la source choisie ne répond pas) : raison ('indisponible',
+          # 'perimee', '' sinon), depuis quand (epoch, heure locale en texte) et son nom.
+          # Lus par l'alerte « Météo : … » de la carte centrale (tab5_alertes.jinja) et la
+          # vue Santé du tableau de bord.
+          repli: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_repli -%}
+            {{ tab5_meteo_repli('raison') }}
+          repli_depuis: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_repli -%}
+            {{ tab5_meteo_repli('depuis') }}
+          repli_heure: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_repli -%}
+            {{ tab5_meteo_repli('heure') }}
+          nom_choisi: >-
+            {%- from 'tab5_meteo.jinja' import tab5_meteo_nom -%}
+            {{ tab5_meteo_nom(state_attr('sensor.tab5_sources_meteo', 'meteo') or '') }}
           temperature: >-
             {%- from 'tab5_meteo.jinja' import tab5_meteo_effective -%}
             {{ state_attr(tab5_meteo_effective(), 'temperature') }}
