@@ -1,0 +1,48 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x par switches_card.yaml : une
+# carte du mode HA, façon carte « tile » d'un tableau de bord HA (06/10/2026, discussion
+# #278). Sorti le 08/10/2026 (audit, YML-3) : cinq copies de 38 lignes.
+# Vars : n (0-4 : ids sw_card_N, sw_pastille_N, icon_swN, btn_swN_action, numéro de tuile
+#        passé à tuile_appui()), x (position), icone (glyphe MDI d'avant la première image),
+#        title et state_text (textes d'avant la première image).
+# Ids lus par tab5-tuiles.yaml (sw_card_N, sw_pastille_N, lbl_swN_title…) ; `icon_swN`
+# garde le motif `icon_sw?` de la règle 7 (tools/check_tab5_code_rules.py le déplie par
+# les vars). Pastille, icône, nom et état sont repeints par tab5_tuiles.cpp (peindre_carte).
+# Le bouton invisible ne couvre que la pastille (130 × 130) : un geste parti ailleurs sur
+# la carte reste un swipe. La pastille et le nom ne prennent pas l'appui du bouton.
+obj:
+  id: "sw_card_${n}"
+  x: ${x}
+  y: ${meteo_cell_y}
+  width: ${meteo_cell_width}
+  height: ${meteo_cell_height}
+  styles: style_meteo_card_page
+  scrollbar_mode: "OFF"
+  widgets:
+    # Pastille ronde : la couleur de l'état à 20 % (posée par le C++), l'icône pleine.
+    - obj:
+        id: "sw_pastille_${n}"
+        align: TOP_MID
+        y: 26
+        width: 130
+        height: 130
+        radius: 65
+        styles: style_bg_dim
+        bg_opa: 20%
+        border_width: 0
+        clickable: false
+        scrollable: false
+        widgets:
+          - label: { id: "icon_sw${n}", text: "${icone}", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
+    - button:
+        id: "btn_sw${n}_action"
+        align: TOP_MID
+        y: 26
+        width: 130
+        height: 130
+        styles: style_invisible
+        on_short_click:
+          - lambda: 'tuile_appui(${n}, false);'
+        on_long_press:
+          - lambda: 'tuile_appui(${n}, true);'
+    - !include { file: switch_card_title_tab.yaml, vars: { idx: "${n}", title: "${title}" } }
+    - !include { file: switch_card_state_tab.yaml, vars: { idx: "${n}", state_text: "${state_text}" } }

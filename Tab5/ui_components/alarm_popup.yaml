@@ -78,12 +78,12 @@ obj:
                 # Réglage ± heures / ± minutes. Le pas de 5 min est volontaire :
                 # on règle un réveil, pas un chronomètre.
                 - label: { text: "H", align: TOP_LEFT, x: 416, y: 8, width: 76, text_align: CENTER, styles: style_text_dim }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_h_up", x: "416", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", call: { id: tab5_alarm_shift, cible: 0, delta: 60 } } }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_h_dn", x: "416", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", call: { id: tab5_alarm_shift, cible: 0, delta: -60 } } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_h_up", x: "416", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", appui: [ script.execute: { id: tab5_alarm_shift, cible: 0, delta: 60 } ] } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_h_dn", x: "416", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", appui: [ script.execute: { id: tab5_alarm_shift, cible: 0, delta: -60 } ] } }
 
                 - label: { text: "MIN", align: TOP_LEFT, x: 500, y: 8, width: 76, text_align: CENTER, styles: style_text_dim }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_m_up", x: "500", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", call: { id: tab5_alarm_shift, cible: 0, delta: 5 } } }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_m_dn", x: "500", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", call: { id: tab5_alarm_shift, cible: 0, delta: -5 } } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_m_up", x: "500", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", appui: [ script.execute: { id: tab5_alarm_shift, cible: 0, delta: 5 } ] } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_m_dn", x: "500", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", appui: [ script.execute: { id: tab5_alarm_shift, cible: 0, delta: -5 } ] } }
 
           # ═══════════════════════════════════════════════════════════════════
           # B — JOURS DE LA SEMAINE                           (gauche, 234..330)
@@ -192,24 +192,24 @@ obj:
               scrollable: false
               widgets:
                 - label: { text: "Délai", align: TOP_LEFT, x: 12, y: 8, width: 131, text_align: CENTER, styles: style_text_dim }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_lead_dn", x: "12", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", op: "decrement", number: "tab5_alarm_lead" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_lead_dn", x: "12", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_alarm_lead, cycle: false } ] } }
                 - label: { id: lbl_alarm_lead, text: "1h30", align: TOP_LEFT, x: 48, y: 52, width: 59, text_align: CENTER }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_lead_up", x: "107", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", op: "increment", number: "tab5_alarm_lead" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_lead_up", x: "107", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_alarm_lead, cycle: false } ] } }
 
                 - label: { text: "Pas avant", align: TOP_LEFT, x: 155, y: 8, width: 131, text_align: CENTER, styles: style_text_dim }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_early_dn", x: "155", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", call: { id: tab5_alarm_shift, cible: 1, delta: -15 } } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_early_dn", x: "155", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", appui: [ script.execute: { id: tab5_alarm_shift, cible: 1, delta: -15 } ] } }
                 - label: { id: lbl_alarm_early, text: "05:00", align: TOP_LEFT, x: 191, y: 52, width: 59, text_align: CENTER }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_early_up", x: "250", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", call: { id: tab5_alarm_shift, cible: 1, delta: 15 } } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_early_up", x: "250", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", appui: [ script.execute: { id: tab5_alarm_shift, cible: 1, delta: 15 } ] } }
 
                 - label: { text: "Pas après", align: TOP_LEFT, x: 298, y: 8, width: 131, text_align: CENTER, styles: style_text_dim }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_late_dn", x: "298", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", call: { id: tab5_alarm_shift, cible: 2, delta: -15 } } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_late_dn", x: "298", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", appui: [ script.execute: { id: tab5_alarm_shift, cible: 2, delta: -15 } ] } }
                 - label: { id: lbl_alarm_late, text: "09:00", align: TOP_LEFT, x: 334, y: 52, width: 59, text_align: CENTER }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_late_up", x: "393", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", call: { id: tab5_alarm_shift, cible: 2, delta: 15 } } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_late_up", x: "393", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", appui: [ script.execute: { id: tab5_alarm_shift, cible: 2, delta: 15 } ] } }
 
                 - label: { text: "Repos mini", align: TOP_LEFT, x: 441, y: 8, width: 131, text_align: CENTER, styles: style_text_dim }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_rest_dn", x: "441", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", op: "decrement", number: "tab5_alarm_rest_hours" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_rest_dn", x: "441", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_alarm_rest_hours, cycle: false } ] } }
                 - label: { id: lbl_alarm_rest, text: "—", align: TOP_LEFT, x: 477, y: 52, width: 59, text_align: CENTER }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_rest_up", x: "536", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", op: "increment", number: "tab5_alarm_rest_hours" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_rest_up", x: "536", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_alarm_rest_hours, cycle: false } ] } }
 
           # ═══════════════════════════════════════════════════════════════════
           # D — PROCHAINE SONNERIE                            (droite, 72..222)
@@ -264,9 +264,9 @@ obj:
 
                 # Changer de mélodie la joue aussitôt (tab5_alarm_cycle_melody) :
                 # choisir une sonnerie sans l'entendre n'a aucun intérêt.
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_mel_prev", x: "44", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0141", call: { id: tab5_alarm_cycle_melody, delta: -1 } } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_mel_prev", x: "44", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0141", appui: [ script.execute: { id: tab5_alarm_cycle_melody, delta: -1 } ] } }
                 - label: { id: lbl_alarm_melody, text: "Classique", align: TOP_LEFT, x: 104, y: 51, width: 380, text_align: CENTER, text_font: roboto_32_b }
-                - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_alarm_mel_next", x: "492", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0142", call: { id: tab5_alarm_cycle_melody, delta: 1 } } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_mel_next", x: "492", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_alarm_cycle_melody, delta: 1 } ] } }
 
                 - label: { text: "\U000F057E", align: TOP_LEFT, x: 16, y: 98, text_font: mdi_font_32, styles: style_text_dim }
                 - slider:
@@ -316,19 +316,19 @@ obj:
               scrollable: false
               widgets:
                 - label: { text: "Répétition", align: TOP_LEFT, x: 16, y: 6, width: 180, text_align: CENTER, styles: style_text_dim }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_snooze_dn", x: "16", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", op: "decrement", number: "tab5_alarm_snooze_min" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_snooze_dn", x: "16", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_alarm_snooze_min, cycle: false } ] } }
                 - label: { id: lbl_alarm_snooze, text: "9 min", align: TOP_LEFT, x: 64, y: 48, width: 84, text_align: CENTER }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_snooze_up", x: "148", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", op: "increment", number: "tab5_alarm_snooze_min" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_snooze_up", x: "148", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_alarm_snooze_min, cycle: false } ] } }
 
                 - label: { text: "Durée max", align: TOP_LEFT, x: 206, y: 6, width: 180, text_align: CENTER, styles: style_text_dim }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_maxring_dn", x: "206", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", op: "decrement", number: "tab5_alarm_max_ring" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_maxring_dn", x: "206", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_alarm_max_ring, cycle: false } ] } }
                 - label: { id: lbl_alarm_maxring, text: "15 min", align: TOP_LEFT, x: 254, y: 48, width: 84, text_align: CENTER }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_maxring_up", x: "338", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", op: "increment", number: "tab5_alarm_max_ring" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_maxring_up", x: "338", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_alarm_max_ring, cycle: false } ] } }
 
                 - label: { text: "RDV avant", align: TOP_LEFT, x: 396, y: 6, width: 180, text_align: CENTER, styles: style_text_dim }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_rdvlead_dn", x: "396", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", op: "decrement", number: "tab5_rdv_lead" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_rdvlead_dn", x: "396", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_rdv_lead, cycle: false } ] } }
                 - label: { id: lbl_alarm_rdv_lead, text: "15 min", align: TOP_LEFT, x: 444, y: 48, width: 84, text_align: CENTER }
-                - !include { file: alarm_step_number_btn.yaml, vars: { id: "btn_alarm_rdvlead_up", x: "528", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", op: "increment", number: "tab5_rdv_lead" } }
+                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_rdvlead_up", x: "528", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_rdv_lead, cycle: false } ] } }
 
                 - button:
                     id: btn_alarm_tts

@@ -305,10 +305,17 @@ def test_boutons_des_tuiles_a_leur_position_visuelle():
     assert len(inclus) == 5 and all(int(t) == 4 - int(i) for i, t in inclus), "tuile T = objet h(4−T)"
     carte = _lire("Tab5", "ui_components", "forecast_hour_card.yaml")
     assert "tuile_appui(${tuile}, false);" in carte and "tuile_appui(${tuile}, true);" in carte
-    for fichier in ("forecast_daily.yaml", "switches_card.yaml"):
-        texte = _lire("Tab5", "ui_components", fichier)
-        assert re.findall(r"tuile_appui\((\d), false\)", texte) == list("01234"), fichier
-        assert re.findall(r"tuile_appui\((\d), true\)", texte) == list("01234"), fichier
+    # Tuiles journalières et cartes du mode HA (08/10/2026, audit YML-3) : un gabarit dont le
+    # bouton envoie sa propre tuile (n), inclus dans l'ordre des tuiles 0 à 4.
+    for gabarit in ("forecast_day_body.yaml", "switch_card.yaml"):
+        texte = _lire("Tab5", "ui_components", gabarit)
+        assert "tuile_appui(${n}, false);" in texte and "tuile_appui(${n}, true);" in texte, gabarit
+    jours = re.findall(r'file: forecast_day_(?:card|body)\.yaml, vars: \{ n: "(\d)"',
+                       _lire("Tab5", "ui_components", "forecast_daily.yaml"))
+    assert jours == list("01234"), jours
+    cartes = re.findall(r'file: switch_card\.yaml, vars: \{ n: "(\d)"',
+                        _lire("Tab5", "ui_components", "switches_card.yaml"))
+    assert cartes == list("01234"), cartes
     # Plus aucune commande 3.x écrite en dur sur une tuile : tout passe par tuile_appui().
     assert "id: tab5_action" not in _lire("Tab5", "ui_components", "forecast_daily.yaml")
     assert "id: tab5_action" not in _lire("Tab5", "ui_components", "switches_card.yaml")
@@ -333,13 +340,14 @@ def test_cartes_du_mode_ha_facon_carte_tile():
     ronde de la couleur de l'état, le bouton sur la pastille, le nom dans un cadre
     cliquable (sens d'un volet), sans onglet."""
     tuiles = _lire("Tab5", "tab5-tuiles.yaml")
-    carte = _lire("Tab5", "ui_components", "switches_card.yaml")
+    # Une carte = switch_card.yaml, incluse pour n = 0 à 4 (08/10/2026, audit YML-3).
+    carte = _lire("Tab5", "ui_components", "switch_card.yaml")
     for t in range(5):
         assert f"u.carte_pastille[{t}] = id(sw_pastille_{t});" in tuiles
-        pastille = carte.split(f"id: sw_pastille_{t}\n", 1)[1].split("- button:", 1)[0]
-        assert f"id: icon_sw{t}," in pastille and "clickable: false" in pastille
-        bouton = carte.split(f"id: btn_sw{t}_action\n", 1)[1].split("!include", 1)[0]
-        assert f"tuile_appui({t}, false);" in bouton and f"tuile_appui({t}, true);" in bouton
+    pastille = carte.split('id: "sw_pastille_${n}"\n', 1)[1].split("- button:", 1)[0]
+    assert 'id: "icon_sw${n}",' in pastille and "clickable: false" in pastille
+    bouton = carte.split('id: "btn_sw${n}_action"\n', 1)[1].split("!include", 1)[0]
+    assert "tuile_appui(${n}, false);" in bouton and "tuile_appui(${n}, true);" in bouton
     # Dessin partagé avec les lignes du popup Maison (ADR-0037) : peindre_vue_sur.
     assert "ui_fond(w.pastille, v.couleur_carte);" in _fonction(_cpp(), "peindre_vue_sur")
     carte = "peindre_vue_sur(v, {u.carte_pastille[t], u.carte_icone[t], u.carte_nom[t], u.carte_etat[t]},"
@@ -356,8 +364,8 @@ def test_mode_ha_seule_source_et_swipe_par_piece():
     # (qui réaffichait le calque météo sous les cartes).
     assert swipe.index("if (ctx.ha_mode)") < swipe.index("apply_forecast_page(")
     assert "!ctx.ha_mode" in _fonction(central, "rotator_owns_card")
-    assert "if (g_central_ctx.ha_mode) return;" in _lire("Tab5", "tab5-scripts.yaml")
-    assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-ha-controls.yaml")
+    assert "if (g_central_ctx.ha_mode) return RetourAuto::RIEN;" in _lire("Tab5", "tab5_anim.cpp")
+    assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-navigation.yaml")
     assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "tab5-lvgl.yaml")
 
 
@@ -487,7 +495,7 @@ def test_geometrie_du_volet_dessine():
 
 
 def test_popup_du_volet_inscrit_et_branche():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "tab5-navigation.yaml")
     assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volet",\s+ModalRegistry::POPUP\);', scripts)
     assert "- !include ui_components/volet_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "tab5-tuiles.yaml")
@@ -557,7 +565,7 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
 
 
 def test_popup_d_un_appareil_inscrit_et_branche():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "tab5-navigation.yaml")
     assert re.search(r'ModalRegistry::add\(id\(appareil_popup\),\s+"Appareil",\s+ModalRegistry::POPUP\);', scripts)
     assert "- !include ui_components/appareil_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "tab5-tuiles.yaml")

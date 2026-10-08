@@ -1,6 +1,6 @@
 # [AI-CONTEXT]
 # @file tab5-scripts.yaml
-# @role Scripts ESPHome transverses : registre des fenêtres modales, volet (dont le
+# @role Scripts ESPHome transverses : volet (dont le
 #       tap de sa carte), volume, debounces (lumière, clim du blueprint, clim d'une
 #       tuile), widgets de la clim (tab5_clim_ui, ADR-0026 et ADR-0027),
 #       rotateur de la carte centrale, popup lumière, touches de la télécommande TV,
@@ -8,8 +8,9 @@
 # @architecture_constraint Depuis le 25/09/2026 (audit, lot 8c), les familles qui
 #       ont leur fonctionnalité propre vivent dans leur package : tab5-arcade.yaml
 #       (jeux), tab5-calendar.yaml (popup calendrier), tab5-assist.yaml (voix et
-#       popup Assistant), tab5-alarm.yaml (réveil). Un script de ces familles va
-#       là-bas, pas ici.
+#       popup Assistant), tab5-alarm.yaml (réveil), tab5-navigation.yaml (registre
+#       des fenêtres modales, ouverture d'un écran ; 08/10/2026). Un script de ces
+#       familles va là-bas, pas ici.
 # @ai_instruction Garder les scripts simples. La logique d'affichage pure doit aller dans le C++.
 # ============================================================================
 # tab5-scripts.yaml — Scripts ESPHome reutilisables (sequences temporisees,
@@ -26,57 +27,8 @@
 # user_entities.yaml est simplement ignorée. tests/test_actions_ha.py le vérifie.
 
 script:
-  # Remplit le registre des fenêtres modales (ModalRegistry, tab5_registry.h).
-  # [AI-CONTEXT] SEUL endroit où la liste des popups est écrite : `id()` n'est
-  # utilisable que dans une lambda YAML, d'où ce script plutôt qu'une table C++.
-  # Idempotent (rien après le premier remplissage) : chaque lecteur du registre
-  # (retour automatique en bas de ce fichier, text_sensor « Écran courant » et
-  # select « Aller à l'écran » de tab5-ha-controls.yaml) l'appelle avant de
-  # lire, donc peu importe lequel tourne en premier après le boot. Les pointeurs
-  # LVGL sont constants une fois les widgets construits.
-  # L'ORDRE est l'ordre de priorité du libellé HA : l'écran de SONNERIE du
-  # réveil est en tête, c'est le seul calque qui couvre aussi les fenêtres
-  # modales, et savoir à distance que la tablette sonne prime sur le reste.
-  # Il est enregistré en LAYER : nommé, mais JAMAIS refermé par close_all() —
-  # ce calque plein cadre ne doit surtout pas se refermer parce que personne
-  # ne touche l'écran, c'est exactement la situation qu'il traite. Seuls
-  # tab5_alarm_stop / _snooze_now / la durée maximale le referment. La fenêtre
-  # de RÉGLAGES du réveil (alarm_popup), elle, est une modale ordinaire.
-  # Les SUBWINDOW (détail d'un jour du calendrier, confirmations de la console)
-  # n'ont pas de fondu propre : masquage sec, avec la carte qui les porte.
-  # Toute nouvelle fenêtre modale DOIT être ajoutée ici — le garde-fou
-  # tools/check_tab5_registry.py le vérifie pour chaque carte `style_modal_card`.
-  - id: tab5_modal_registry_init
-    mode: single
-    then:
-      - lambda: |-
-          if (ModalRegistry::ready()) return;
-          ModalRegistry::add(id(alarm_ring_layer),       "Réveil qui sonne", ModalRegistry::LAYER);
-          ModalRegistry::add(id(alarm_popup),            "Réveil",           ModalRegistry::POPUP);
-          ModalRegistry::add(id(assistant_popup),        "Assistant vocal",  ModalRegistry::POPUP);
-          ModalRegistry::add(id(calendar_popup),         "Calendrier",       ModalRegistry::POPUP);
-          ModalRegistry::add(id(light_options_popup),    "Lumières",         ModalRegistry::POPUP);
-          ModalRegistry::add(id(volet_popup),            "Volet",            ModalRegistry::POPUP);
-          ModalRegistry::add(id(appareil_popup),         "Appareil",         ModalRegistry::POPUP);
-          ModalRegistry::add(id(clim_options_popup),     "Climatisation",    ModalRegistry::POPUP);
-          ModalRegistry::add(id(pots_detail_popup),      "Plantes",          ModalRegistry::POPUP);
-          ModalRegistry::add(id(tv_remote_popup),        "Télécommande TV",  ModalRegistry::POPUP);
-          ModalRegistry::add(id(layer_console_sys),      "Console système",  ModalRegistry::POPUP);
-          ModalRegistry::add(id(energie_popup),          "Énergie",          ModalRegistry::POPUP);
-          ModalRegistry::add(id(reglages_popup),         "Réglages",         ModalRegistry::POPUP);
-          ModalRegistry::add(id(historique_popup),       "Température",      ModalRegistry::POPUP);
-          ModalRegistry::add(id(alertes_popup),          "Alertes",          ModalRegistry::POPUP);
-          // Après les popups qu'une de ses lignes ouvre : ouverts devant lui, ils sont nommés.
-          ModalRegistry::add(id(maison_popup),           "Maison",           ModalRegistry::POPUP);
-          ModalRegistry::add(id(cal_day_popup),          nullptr,            ModalRegistry::SUBWINDOW);
-          ModalRegistry::add(id(overlay_confirm_ha),     nullptr,            ModalRegistry::SUBWINDOW);
-          ModalRegistry::add(id(overlay_confirm_reboot), nullptr,            ModalRegistry::SUBWINDOW);
-          ModalRegistry::add(id(reglages_confirmation),  nullptr,            ModalRegistry::SUBWINDOW);
-          ModalRegistry::add(id(reglables_liste),        nullptr,            ModalRegistry::SUBWINDOW);
-          ModalRegistry::add(id(roue_actions),           nullptr,            ModalRegistry::SUBWINDOW);
-
   # Console système (layer plein cadre, sans animation), seule ouverture : par
-  # tab5_ecran_ouvrir (tab5-ha-controls.yaml), que lancent l'appui long de l'engrenage
+  # tab5_ecran_ouvrir (tab5-navigation.yaml), que lancent l'appui long de l'engrenage
   # et le select « Aller à l'écran » (07/10/2026 : celui-ci laissait « -- » au tick 2 s).
   - id: tab5_console_ouvrir
     then:
@@ -477,10 +429,8 @@ interval:
   - interval: 1s
     then:
       - lambda: |-
-          if (GameRegistry::any_open()) return;
-
           // Liste des fenêtres : ModalRegistry (tab5_registry.h), remplie une
-          // fois par tab5_modal_registry_init (en tête de ce fichier). La
+          // fois par tab5_modal_registry_init (tab5-navigation.yaml). La
           // sonnerie du réveil y est un LAYER : jamais refermée ici. Le script
           // n'est lancé que tant que la liste est vide (PERF-5, lot L10) : ensuite
           // il ne faisait que revenir, une fois par seconde, écran éteint compris.
@@ -489,39 +439,27 @@ interval:
           // se rallume (HA, tape, réveil, toucher) sur l'accueil, comme avant.
           if (!ModalRegistry::ready()) id(tab5_modal_registry_init).execute();
 
-          const uint32_t idle = ui_idle_ms();
-
-          // Sélecteur arcade (page_arcade) : si aucun jeu n'est ouvert et
-          // inactivité > seuil popup, retour au dashboard.
-          if (id(tab5_lvgl)->get_current_page() == id(page_arcade)->index) {
-              if (idle >= UIIdle::POPUP_MS) id(tab5_lvgl)->show_page(0, LV_SCREEN_LOAD_ANIM_NONE, 0);
-              return;
-          }
-
-          // Liste de la tuile − / + (ADR-0033) : une sous-fenêtre, pas un popup ; elle
-          // se referme après la même inactivité.
-          if (idle >= UIIdle::POPUP_MS && reglables_liste_ouverte()) reglables_liste_fermer();
-          // Roue d'actions rapides (ADR-0036) : sous-fenêtre aussi, même inactivité.
-          if (idle >= UIIdle::POPUP_MS && roue_actions_ouverte()) roue_actions_fermer();
-
-          if (ModalRegistry::any_popup_visible()) {
-              if (idle < UIIdle::POPUP_MS) return;
-              ModalRegistry::close_all();   // sous-fenêtres masquées, popups en fondu
+          // Ce qui se ferme et quand : retour_auto_tick() (tab5_anim.cpp). Ici, ce qui
+          // demande un id() : la page LVGL et les widgets des prévisions.
+          const bool arcade = id(tab5_lvgl)->get_current_page() == id(page_arcade)->index;
+          switch (retour_auto_tick(arcade)) {
+            case RetourAuto::QUITTER_ARCADE:
+              id(tab5_lvgl)->show_page(0, LV_SCREEN_LOAD_ANIM_NONE, 0);
+              break;
+            case RetourAuto::POPUPS_FERMES:
               id(assist_popup_open) = false;
-              return;
+              break;
+            case RetourAuto::PREVISIONS: {
+              lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
+              reset_forecast_to_main_page(
+                  id(layer_forecast_daily), id(layer_forecast_hourly),
+                  g_day_slots, g_hour_slots,
+                  id(font_meteo_card), id(font_meteo_card_small),
+                  pbars,
+                  id(page_title_wrapper), id(lbl_page_title),
+                  g_central_ctx);
+              break;
+            }
+            case RetourAuto::RIEN:
+              break;
           }
-
-          if (idle < UIIdle::FORECAST_MS) return;
-          if (g_central_ctx.forecast_page == 2) return;  // déjà au panneau principal
-          if (g_central_ctx.ha_mode) return;             // mode HA (pièces) affiché à la demande
-
-          // La page change : la roue d'actions rapides (ADR-0036) visait une tuile d'ici.
-          roue_actions_fermer();
-          lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
-          reset_forecast_to_main_page(
-              id(layer_forecast_daily), id(layer_forecast_hourly),
-              g_day_slots, g_hour_slots,
-              id(font_meteo_card), id(font_meteo_card_small),
-              pbars,
-              id(page_title_wrapper), id(lbl_page_title),
-              g_central_ctx);
