@@ -32,6 +32,7 @@
  */
 #include "tab5_internal.h"
 #include "tab5_tuiles_icones.h"
+#include "tab5_modele_ha.h"
 #include "lvgl.h"
 #include <esp_attr.h>
 #include <algorithm>
@@ -41,6 +42,10 @@
 #include <cstring>
 
 ReglablesUI g_reglables_ui;
+
+// kNom, kIcone, kEtat, est(), etat_indisponible(), copier_icone() : communs avec les
+// tuiles de pièce (tab5_modele_ha.h, lot L5).
+using namespace modele_ha;
 
 namespace {
 
@@ -56,10 +61,7 @@ constexpr const char* kIconesDefaut[kNbTypes] = {"etat",           "enceinte",  
                                                   "clim",           "chauffe_eau", "humidificateur",
                                                   "ventilateur",    "volet",       "mesure"};
 
-constexpr size_t kNom = 25;     // nom affiché : 24 octets au plus, comme une tuile
-constexpr size_t kIcone = 16;   // code de palette [a-z0-9_]{1,15}
-constexpr size_t kUnite = 8;    // unité : 7 octets au plus
-constexpr size_t kEtat = 16;    // état HA tel quel
+constexpr size_t kUnite = 8;    // unité : 7 octets au plus (kNom, kIcone, kEtat : tab5_modele_ha.h)
 
 // Définition d'un appareil. Pas d'initialiseur de membre : les structures sont remises
 // à zéro par memset (octets de bourrage compris), pour que memcmp ne voie jamais une
@@ -147,9 +149,7 @@ void charger() {
     if (s_pref_choix.load(&c) && c.magic == kMagicChoix && c.id != 0) s_choix = c.id;
 }
 
-bool est(const char* s, const char* mot) { return std::strcmp(s, mot) == 0; }
-
-bool hors_ligne(const Etat& e) { return !e.recu || est(e.brut, "unavailable") || est(e.brut, "unknown"); }
+bool hors_ligne(const Etat& e) { return !e.recu || etat_indisponible(e.brut); }
 
 int nb_ha() {
     int n = 0;
@@ -440,11 +440,7 @@ void lire_def(const char* s, size_t n, Def& d) {
     for (int t = 1; t < kNbTypes; t++)
         if (f[0].n == std::strlen(kTypes[t]) && std::strncmp(f[0].p, kTypes[t], f[0].n) == 0) d.type = t;
     if (d.type == 0) return;
-    size_t j = 0;
-    for (size_t i = 0; i < f[1].n && j < kIcone - 1; i++) {
-        const char c = f[1].p[i];
-        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') d.icone[j++] = c;
-    }
+    copier_icone(d.icone, f[1].p, f[1].n);
     d.tv = std::memchr(f[2].p, 't', f[2].n) != nullptr ? 1 : 0;
     if (f[3].n == 3 && f[3].p[0] == 't' && f[3].p[1] >= '0' && f[3].p[1] <= '4' && f[3].p[2] >= '0' &&
         f[3].p[2] <= '4') {

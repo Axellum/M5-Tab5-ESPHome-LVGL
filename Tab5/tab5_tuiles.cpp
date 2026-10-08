@@ -46,6 +46,7 @@
 #include "tab5_internal.h"
 #include "tab5_tuiles_icones.h"
 #include "tab5_geometrie.h"
+#include "tab5_modele_ha.h"
 #include "lvgl.h"
 #include <esp_attr.h>
 #include <algorithm>
@@ -53,6 +54,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+
+// kNom, kIcone, kEtat, est(), etat_indisponible(), copier_icone() : communs avec la tuile
+// − / + (tab5_modele_ha.h, lot L5).
+using namespace modele_ha;
 
 namespace {
 
@@ -74,11 +79,9 @@ constexpr int kNbTypes = sizeof(kTypes) / sizeof(kTypes[0]);
 constexpr char kLettresOptions[] = "dcokrtme";
 enum : uint8_t { OPT_D = 1, OPT_C = 2, OPT_O = 4, OPT_K = 8, OPT_R = 16, OPT_T = 32, OPT_M = 64, OPT_E = 128 };
 
-// Taille des champs gardés (octets, zéro final compris).
-constexpr size_t kNom = 25;          // nom affiché : 24 octets au plus
-constexpr size_t kIcone = 16;        // code de palette [a-z0-9_]{1,15}
+// Taille des champs gardés (octets, zéro final compris) ; kNom, kIcone et kEtat :
+// tab5_modele_ha.h.
 constexpr size_t kComplement = 16;   // unité (cap) ou classe d'appareil (bin)
-constexpr size_t kEtat = 16;         // état HA tel quel
 
 struct Def {
     uint8_t type;       // Type
@@ -122,6 +125,7 @@ constexpr uint32_t kPrefKey = 0x7475696C;  // « tuil »
 constexpr int kLignes = 3;
 constexpr int kElements = 4;
 constexpr size_t kClasse = 16;  // classe d'appareil (device_class) : [a-z0-9_]{1,15}
+static_assert(kClasse == kIcone, "copier_icone sert aussi aux classes d'appareil");
 
 struct DefRangee {
     Def d;
@@ -270,18 +274,6 @@ void copier_texte(char* dst, size_t cap, const char* src, size_t n) {
     }
 }
 
-// Code de palette, ou classe d'appareil : [a-z0-9_]{1,15}, sinon vide (défaut du type).
-void copier_icone(char* dst, const char* src, size_t n) {
-    static_assert(kClasse == kIcone, "copier_icone sert aussi aux classes d'appareil");
-    std::memset(dst, 0, kIcone);
-    if (n == 0 || n >= kIcone) return;
-    for (size_t i = 0; i < n; i++) {
-        const char c = src[i];
-        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) return;
-    }
-    std::memcpy(dst, src, n);
-}
-
 uint8_t lire_options(const char* s, size_t n) {
     uint8_t o = 0;
     for (size_t i = 0; i < n; i++) {
@@ -379,8 +371,6 @@ Heritage s_h;
 constexpr const char* kHeritageLumieres[3] = {"lumiere_1", "lumiere_2", "lumiere_3"};
 
 bool heritage() { return s_m.recues == 0; }
-
-bool est(const char* a, const char* b) { return std::strcmp(a, b) == 0; }
 
 // Tuile présente : un appareil défini — en mode héritage, un emplacement 3.x que HA n'a
 // pas déclaré absent (zones, ADR-0018), dans la pièce 0 seulement.
@@ -1272,7 +1262,7 @@ bool popup_volet_valide() {
 // Position 0-100 connue : un état en ligne et une valeur dans les bornes. NaN : le volet
 // n'en donne pas ; -1 : « Partiel » du volet à course simulée (arrêté en route).
 bool vol_position_connue(const Etat& e) {
-    if (!e.recu || est(e.brut, "unavailable") || est(e.brut, "unknown")) return false;
+    if (!e.recu || etat_indisponible(e.brut)) return false;
     return !std::isnan(e.valeur) && e.valeur >= 0.0f && e.valeur <= 100.0f;
 }
 
@@ -1293,7 +1283,7 @@ int vol_position_dessin(const Etat& e, bool& estompe) {
 const char* vol_etat_mots(const Etat& e, uint32_t& couleur) {
     couleur = UIColor.INACTIVE;
     if (!e.recu) return "--";
-    if (est(e.brut, "unavailable") || est(e.brut, "unknown")) return tr("Hors ligne");
+    if (etat_indisponible(e.brut)) return tr("Hors ligne");
     if (vol_mouvement(e.brut)) {
         couleur = UIColor.INFO;
         return tr("En mouvement");
@@ -1786,7 +1776,7 @@ bool rangee_element(int l, int i, RangeeElement& out) {
     snprintf(out.texte, sizeof(out.texte), "%s", v.ligne);
     out.couleur_texte = v.couleur_ligne;
     // Pas encore reçu, hors ligne, ou pas un nombre : le texte de la tuile.
-    if (type != Type::CAP || !e.recu || std::isnan(e.valeur) || est(e.brut, "unavailable") || est(e.brut, "unknown"))
+    if (type != Type::CAP || !e.recu || std::isnan(e.valeur) || etat_indisponible(e.brut))
         return true;
     const char* unite = g.d.complement;
     const bool degres = std::strncmp(unite, "\xC2\xB0", 2) == 0 || est(g.classe, "temperature");

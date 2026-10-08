@@ -85,6 +85,9 @@ esphome:
     # Géométrie partagée des popups construits en C++ (écran, carte modale, pièces) :
     # en-tête seul, inclus par les .cpp qui s'en servent (lot L5).
     - Tab5/tab5_geometrie.h
+    # Ce que les tuiles de pièce et la tuile - / + ont en commun (tailles, état hors
+    # ligne, code d'icône) : en-tête seul et pur (lot L5).
+    - Tab5/tab5_modele_ha.h
     - Tab5/tab5_custom.h
     - Tab5/tab5_custom.cpp
     # Couche C++ scindée en unités (lot (e), 08/09/2026) : tab5_custom.h reste l'unique
