@@ -182,6 +182,24 @@ To go back to older files by hand: [putting older files back](installation/updat
 
 ---
 
+### Faint continuous hiss, on a tablet without a battery (2026-10-08)
+
+**Symptom:** a very faint, continuous hiss from the tablet. Muting the microphone or turning the volume down changes nothing. Heard on the author's tablet, which has no battery and runs on a PC's USB port.
+
+**What it is not** (tried one after the other from Home Assistant, on 2026-10-08):
+
+- the speaker amplifier: « Speaker Enable » off, hiss unchanged;
+- the backlight: brightness at 100 %, where its 1 kHz PWM no longer chops, hiss unchanged (that change coincided with a brownout reboot at 09:42, on a PC's USB port; cause not proven);
+- the microphone: muted, hiss unchanged.
+
+**Root cause:** the battery charger. Since 3.6.0 (PR #303, 2026-10-04), the firmware sets CHG_EN (PI4IOE 0x44 P7) to 1 at every boot. Without a battery, the charger charges into nothing: the voltage read by the INA226 swings between 4.2 and 8.39 V, or stays around 5.70–5.76 V, and « Tab5 Batterie en charge » says yes. With a trial firmware that exposed CHG_EN, switching the charger off made the hiss go away; the INA226 then read 1.83 to 1.94 V (four readings, 09:55 to 09:58) and the charging status went to « not charging ». One more observation, a single one: during the 2 minutes when the voltage read 8.39 V, the hiss could not be heard; it came back with 5.70 V.
+
+**Fix (next version):** the firmware looks for a battery with the charger switched off, and leaves the charger off when there is none: no more hiss, no more false « charging ». How it decides: [battery](hardware.md#power).
+
+**Workaround from 3.6.0 to the latest published version:** none simple, sorry. These versions have no entity to switch the charger off, and the speaker, the microphone and the volume have nothing to do with it. A fitted battery gives the charger something to charge (whether a tablet with a battery hisses too has not been checked). Otherwise, wait for the next version.
+
+---
+
 ### False positives worth knowing about (don't "fix" these again)
 
 - **Forecast pagination "wrap-around"**: the 5 forecast pages (indices 0–4) intentionally do **not** wrap from 4 back to 0 on a further right-swipe. This was already "corrected" once by an LLM audit that assumed non-wrapping was a bug, then reverted. See [`docs/decisions/`](decisions/README.md).
@@ -333,6 +351,22 @@ Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *cons
 - **« Tab5 : les fichiers X n'ont pas été installés »** : la vérification de la configuration a trouvé une nouvelle erreur ou un nouvel avertissement avec les nouveaux fichiers, ou leur écriture a échoué. Les fichiers précédents ont été remis : rien n'a changé, et le firmware de cette version n'est pas lancé. La raison est dans le journal (*Paramètres → Système → Journaux*, cherchez « tab5 »). Si elle est dans un de vos propres fichiers, corrigez-le ; sinon, merci de la signaler ([issues](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/issues)). L'intégration réessaie à chaque démarrage de Home Assistant.
 
 Pour revenir à la main à des fichiers plus anciens : [remettre des fichiers plus anciens](installation/updates.md#remettre-à-la-main-des-fichiers-plus-anciens).
+
+### Léger souffle continu, sur une tablette sans batterie (08/10/2026)
+
+**Symptôme :** un très léger souffle, continu, sort de la tablette. Couper le micro ou baisser le volume n'y change rien. Entendu sur la tablette de l'auteur, qui n'a pas de batterie et tourne sur un port USB de PC.
+
+**Ce que ce n'est pas** (essayé l'un après l'autre depuis Home Assistant, le 08/10/2026) :
+
+- l'ampli du haut-parleur : « Speaker Enable » coupé, souffle inchangé ;
+- le rétroéclairage : luminosité à 100 %, où sa PWM à 1 kHz ne hache plus, souffle inchangé (ce changement a coïncidé avec un redémarrage par sous-tension à 09:42, sur un port USB de PC ; cause non prouvée) ;
+- le micro : coupé, souffle inchangé.
+
+**Cause racine :** le chargeur de la batterie. Depuis la 3.6.0 (PR #303, 04/10/2026), le firmware met CHG_EN (PI4IOE 0x44 P7) à 1 à chaque démarrage. Sans batterie, le chargeur charge dans le vide : la tension lue par l'INA226 oscille entre 4,2 et 8,39 V, ou reste vers 5,70-5,76 V, et « Tab5 Batterie en charge » dit oui. Avec un firmware d'essai qui exposait CHG_EN, couper le chargeur a fait disparaître le souffle ; l'INA226 lisait alors 1,83 à 1,94 V (quatre lectures, de 09:55 à 09:58) et l'état de charge est passé à « pas en charge ». Une observation de plus, une seule : pendant les 2 minutes où la tension lue était à 8,39 V, on n'entendait plus le souffle ; il est revenu avec les 5,70 V.
+
+**Correctif (prochaine version) :** le firmware cherche la batterie chargeur coupé, et laisse le chargeur coupé quand il n'y en a pas : plus de souffle, plus de faux « en charge ». Comment il décide : [batterie](hardware.md#alimentation).
+
+**Contournement de la 3.6.0 à la dernière version publiée :** aucun de simple, désolé. Ces versions n'ont pas d'entité pour couper le chargeur, et le haut-parleur, le micro ou le volume n'y sont pour rien. Une batterie montée donne au chargeur quelque chose à charger (on n'a pas vérifié si une tablette avec batterie souffle aussi). Sinon, attendre la prochaine version.
 
 ### Faux positifs à connaître (ne pas re-"corriger")
 
