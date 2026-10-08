@@ -232,7 +232,9 @@ lvgl:
         # pièce dans la carte centrale, bouton en couleur d'accent. Masqué sans aucun
         # appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp). Appui long « auto » :
         # popup Énergie (ADR-0028), quand HA pousse la production solaire.
-        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_ha, x: "855", bouton: BOUTON_MAISON, appui: [ lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);' ], icone_id: icon_ha, icone: "\U000F07D0", mini_id: icon_mini_ha, mini: "\U000F0D9B" } }
+        # Après le tap, la mention « prévisions périmées » suit tout de suite (masquée
+        # en mode HA, previsions_fraicheur_tick(), tab5_forecast.cpp).
+        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_ha, x: "855", bouton: BOUTON_MAISON, appui: [ lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);', lambda: 'previsions_fraicheur_tick(id(previsions_perimees), id(lbl_previsions_perimees));' ], icone_id: icon_ha, icone: "\U000F07D0", mini_id: icon_mini_ha, mini: "\U000F0D9B" } }
         # Engrenage : tap = Réglages de la tablette (tab5-reglages.yaml), appui long =
         # console système en « auto » (script tab5_console_ouvrir, tab5-scripts.yaml ; avant
         # le 06/10/2026, le flocon l'ouvrait d'un tap), sans mini icône en « auto ».
@@ -503,6 +505,33 @@ lvgl:
               - obj: { id: pbar_2, width: 30, height: 4, radius: 2, styles: style_bg_soft, bg_opa: 100%, border_width: 0 }
               - obj: { id: pbar_3, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
               - obj: { id: pbar_4, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+
+        # ==================== PRÉVISIONS PÉRIMÉES ====================
+        # Mention au-dessus des tuiles, à droite (08/10/2026) : masquée tant que les
+        # prévisions arrivent ; sinon « Prévisions de 11 h 42 », posé et montré par
+        # previsions_fraicheur_tick() (tab5_forecast.cpp). Bande libre de 25 px entre la
+        # carte centrale (bas à 416) et les onglets des tuiles (haut à 442), à droite des
+        # points de pagination (x 480-790). Non cliquable : un geste qui part là reste
+        # un swipe des prévisions.
+        - obj:
+            id: previsions_perimees
+            x: 800
+            y: 416
+            width: 455
+            height: 26
+            styles: style_transparent
+            scrollbar_mode: "OFF"
+            clickable: false
+            hidden: true
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: END
+              flex_align_cross: CENTER
+              pad_column: 6
+            widgets:
+              - label: { id: icon_previsions_perimees, text: "\U000F05CE", text_font: mdi_font_26, styles: style_text_warning }
+              - label: { id: lbl_previsions_perimees, text: "", styles: style_text_dim }
 
         # ==================== BOTTOM CARDS (FORECAST) ====================
 

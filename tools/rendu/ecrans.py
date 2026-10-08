@@ -400,6 +400,20 @@ def _appareils_meteo(montres: bool) -> Service:
 AVEC_APPAREILS = (_appareils_meteo(True),)
 
 
+def _previsions_recues(il_y_a_min: int) -> Service:
+    """rendu_previsions_recues (Tab5/rendu/bouchons.yaml) : dernière poussée des
+    prévisions `il_y_a_min` minutes avant l'heure figée (mention « prévisions
+    périmées » au-delà de 30 min, tab5_forecast.cpp ; 0 = maintenant, masquée)."""
+    return Service("rendu_previsions_recues", (("minutes", il_y_a_min),))
+
+
+# Incident du 07-08/10/2026 : dernières prévisions de la veille à 21:04, 10 h 41 avant
+# l'heure figée (07:45) → « Prévisions d'hier 21 h 04 ».
+PREVISIONS_DE_LA_VEILLE = (_previsions_recues(10 * 60 + 41),)
+# Retour à des prévisions fraîches : les autres écrans restent sans la mention.
+PREVISIONS_FRAICHES = (_previsions_recues(0),)
+
+
 def ecrans_des_pieces(pieces: dict) -> tuple:
     """Le mode HA sur chaque pièce de la démo (ADR-0023) : « HA » depuis l'accueil (pièce
     0, page 2), puis un geste par pièce occupée jusqu'à la bonne (le mode HA saute les
@@ -567,6 +581,9 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-sans-appareils", (_appareils_meteo(False),), AVEC_APPAREILS),
     Ecran("accueil-sans-appareils-heures-1", (_appareils_meteo(False), VERS_LA_DROITE),
           AVEC_APPAREILS + (VERS_LA_GAUCHE,)),
+    # Prévisions périmées (08/10/2026) : HA muet depuis la veille à 21:04, mention
+    # « Prévisions d'hier 21 h 04 » au-dessus des tuiles, à droite.
+    Ecran("accueil-previsions-perimees", PREVISIONS_DE_LA_VEILLE, PREVISIONS_FRAICHES),
     # Mode HA : les cartes de chaque pièce (remplace « accueil-interrupteurs », les cinq
     # cartes fixes d'avant la 3.2, devenu « accueil-ha-piece-1 »).
     *ecrans_des_pieces(PIECES),

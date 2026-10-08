@@ -1238,3 +1238,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "%d h %02d": "%d:%02d"
 "Vigilance Rouge": "Code rood"
 "Vigilance Orange": "Code oranje"
+# Prévisions périmées (mention au-dessus des tuiles, tab5_forecast.cpp, 08/10/2026)
+"Prévisions de %d h %02d": "Verwachting van %d:%02d"
+"Prévisions d'hier %d h %02d": "Verwachting van gisteren %d:%02d"
+"Prévisions vieilles de %d jours": "Verwachting %d dagen oud"

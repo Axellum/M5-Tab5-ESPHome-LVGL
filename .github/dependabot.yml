@@ -27,3 +27,9 @@ updates:
     directory: "/tools/publication"
     schedule:
       interval: "monthly"
+    ignore:
+      # tibs n'est là que pour bitstring, et bitstring 4.4.0 (la dernière, PyPI le
+      # 08/10/2026) exige tibs<0.6,>=0.5.6 : tibs 2.x casserait l'installation figée
+      # d'esptool (PR Dependabot #398 fermée). À retirer quand bitstring accepte tibs 2.
+      - dependency-name: "tibs"
+        versions: [">=0.6"]

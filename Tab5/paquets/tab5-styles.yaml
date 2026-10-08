@@ -624,6 +624,7 @@ font:
       - "\U000F0493"  # cog (mini icône : Réglages)
       - "\U000F0596"  # weather-pouring
       - "\U000F05A9"  # wifi
+      - "\U000F05CE"  # clock-alert-outline (prévisions périmées, au-dessus des tuiles)
       - "\U000F06A5"  # power-plug (tablette sans batterie détectée)
       - "\U000F0717"  # snowflake (mini icône : Climatisation)
       - "\U000F07C0"  # desktop-classic (mini icône de la manette : télécommande TV, 06/10/2026)
