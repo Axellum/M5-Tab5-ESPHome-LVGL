@@ -9,8 +9,14 @@
       memes tables d'offsets 0x88, meme CASTLE_MASK, meme calcul de la case de
       prise en passant, meme filtre de legalite dans make(). Il valide donc
       l'ALGORITHME et les TABLES — c'est la ou vivent les bugs d'un generateur.
-      Il ne valide PAS le binaire compile : pour ca, appeler `Chess::perft_log(3)`
-      sur la cible (voir docs/arcade.md, section « Roi Noir »).
+      Il ne valide PAS le C++ compile.
+
+@reference La REFERENCE est tools/test_chess_engine.cpp : le VRAI chess_ai.cpp,
+      compile par g++ sous ASan + UBSan contre la meme suite, dans le job `python`
+      de la CI (depuis le 08/10/2026 ; constat OUT-2 de l'audit du 07/10/2026 : le
+      C++ avait change de +255/-145 lignes sans ce miroir). Si les deux divergent,
+      le test C++ fait foi. Ce miroir reste pour le poste de dev, qui n'a pas de g++.
+      tests/test_moteurs_hote.py tient SUITE egale a celle du test C++.
 
 @ai_instruction Toute modification de gen_impl() / make() / attacked() dans
       chess_ai.cpp doit etre repercutee ici, et ce script re-execute.

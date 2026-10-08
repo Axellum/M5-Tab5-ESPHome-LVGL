@@ -14,13 +14,9 @@ Une clé qui diverge ferait masquer la mauvaise zone, ou jamais la bonne, sans a
 erreur. On vérifie aussi que chaque capteur de zone signale ses données (zone_vue)."""
 import os
 import re
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-
-def _lire(*parts):
-    with open(os.path.join(REPO, *parts), encoding="utf-8") as f:
-        return f.read()
 
 
 def _enum_zone():

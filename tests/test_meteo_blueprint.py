@@ -123,7 +123,7 @@ def _chaine(etats_bp):
     vigilance = next(c for c in bloc_de("tab5_vigilance")["sensor"] if c.get("unique_id") == "tab5_vigilance")
     vigilance = _rendre_paquet(env, vigilance["attributes"]["source"])
     auto, contexte = _poussee(etats, env)
-    cibles = [_rendre_paquet(env, n["target"]["entity_id"], contexte) for n in _parcourir(auto["action"])
+    cibles = [_rendre_paquet(env, n["target"]["entity_id"], contexte) for n in _parcourir(auto["actions"])
               if n.get("action") == "weather.get_forecasts"]
     actuelle = next(n for n in _parcourir(_paquet("tab5_push.yaml"))
                     if n.get("action") == "esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle")

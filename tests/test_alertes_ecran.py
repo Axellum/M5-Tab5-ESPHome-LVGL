@@ -15,17 +15,11 @@ from pathlib import Path
 
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import ChargeurSansBalises as _Chargeur
 
 RACINE = Path(__file__).resolve().parents[1]
 PUSH = RACINE / "HomeAssistant_Config" / "packages" / "tab5_push.yaml"
 SERVICE = "esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk"
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda *_: None)
 
 
 def _etapes(sequence):

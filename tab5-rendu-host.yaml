@@ -43,6 +43,7 @@ esphome:
     - Tab5/rendu/hote/esp_hosted_host_fw_ver.h
     - Tab5/rendu/freertos
     - Tab5/tab5_tokens.h
+    - Tab5/tab5_themes_data.h
     - Tab5/tab5_tuiles_icones.h
     - Tab5/tab5_i18n_data.h
     - Tab5/tab5_i18n.h

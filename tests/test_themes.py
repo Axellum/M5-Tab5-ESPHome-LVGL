@@ -20,6 +20,7 @@ import yaml
 REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 TOKENS = TAB5 / "tab5_tokens.h"
+THEMES_DATA = TAB5 / "tab5_themes_data.h"
 STYLES = TAB5 / "tab5-styles.yaml"
 THEMES_YAML = TAB5 / "tab5-themes.yaml"
 sys.path.insert(0, str(REPO / "tools"))
@@ -48,14 +49,23 @@ def _champs() -> list[str]:
     return re.findall(r"^\s*uint32_t (\w+);", corps, re.M)
 
 
+def _valeurs(texte: str) -> list[tuple[str, str]]:
+    return re.findall(r"^\s*\.(\w+)\s*=\s*(0x[0-9A-Fa-f]{6}),", texte, re.M)
+
+
 def _palettes() -> dict[str, list[tuple[str, str]]]:
-    """Chaque palette écrite dans THEMES[] (tab5_tokens.h), « Thème (mode) » → rôles."""
-    texte = TOKENS.read_text(encoding="utf-8")
+    """Chaque palette écrite dans THEMES[] (tab5_themes_data.h), « Thème (mode) » → rôles.
+    Le premier thème reprend PALETTE_SOMBRE (tab5_tokens.h) pour son mode sombre."""
+    sombre = re.search(r"inline constexpr Palette PALETTE_SOMBRE = \{\n(.*?)\n\};",
+                       TOKENS.read_text(encoding="utf-8").replace("\r\n", "\n"), re.S).group(1)
+    texte = THEMES_DATA.read_text(encoding="utf-8").replace("\r\n", "\n")
     bloc = re.search(r"inline constexpr Theme THEMES\[\] = \{(.*?)\n\};", texte, re.S).group(1)
     palettes = {}
     for nom, corps in re.findall(r'\{"([^"]+)",[^\n]*\n(.*?)\n     \}\},', bloc, re.S):
+        if re.match(r"\s*PALETTE_SOMBRE,", corps):
+            palettes[f"{nom} (sombre)"] = _valeurs(sombre)
         for mode, valeurs in re.findall(r"\{  // (sombre|clair)\n(.*?)(?:\n     \}|\Z)", corps, re.S):
-            palettes[f"{nom} ({mode})"] = re.findall(r"^\s*\.(\w+)\s*=\s*(0x[0-9A-Fa-f]{6}),", valeurs, re.M)
+            palettes[f"{nom} ({mode})"] = _valeurs(valeurs)
     return palettes
 
 
@@ -146,6 +156,24 @@ def test_chaque_style_de_role_sert():
             assert re.search(rf"\b{style['id']}\b", corpus), f"{style['id']} n'est posé par aucun widget"
 
 
+def test_chaque_role_de_la_palette_est_lu():
+    """DO-12 (audit du 07/10/2026) : un rôle que rien ne lit coûte une valeur dans chaque
+    mode de chaque thème sans rien changer à l'écran (ICON_MUTED, retiré le 08/10/2026).
+    Lecteurs : le C++ (`UIColor.X`, `&Palette::X`, `PALETTE_SOMBRE.X`…), les lambdas et
+    styles YAML, les formes d'un thème (`formes:`, couleur par nom de rôle) et le verre
+    calculé (gen_themes.DERIVES)."""
+    sources = [p for p in list(TAB5.glob("*.cpp")) + list(TAB5.glob("*.h"))
+               if p.name not in ("tab5_tokens.h", "tab5_themes_data.h")]
+    sources += list(TAB5.glob("*.yaml")) + list((TAB5 / "ui_components").glob("*.yaml"))
+    corpus = "\n".join(p.read_text(encoding="utf-8") for p in sources)
+    formes = "\n".join(yaml.safe_dump(yaml.safe_load(p.read_text(encoding="utf-8")).get("formes") or {})
+                       for p in (TAB5 / "themes").glob("*.yaml") if not p.name.startswith("_"))
+    derives = {r for v in gen_themes.DERIVES.values() for r in v[:2]}
+    morts = [r for r in _champs()
+             if r not in derives and not re.search(rf"[.:]\s*{r}\b", corpus) and not re.search(rf"\b{r}\b", formes)]
+    assert not morts, f"rôle(s) de struct Palette lus nulle part : {morts}"
+
+
 def test_catalogue_a_jour():
     """THEMES[], les options du select « Thème » et la repeinture des styles suivent
     Tab5/themes/ et tab5-styles.yaml (`python tools/gen_themes.py`)."""
@@ -194,8 +222,41 @@ def test_bascule_rapide_ne_coupe_le_rafraichissement_que_pour_des_couleurs():
 
 def test_premier_theme_sombre_est_la_palette_des_jeux():
     texte = TOKENS.read_text(encoding="utf-8")
-    assert "inline constexpr Palette PALETTE_SOMBRE = THEMES[0].sombre;" in texte
+    assert "inline constexpr Palette PALETTE_SOMBRE = {" in texte
     assert "inline Palette UIColor = PALETTE_SOMBRE;" in texte, "l'écran naît dans la palette sombre"
+    premier = re.search(r"inline constexpr Theme THEMES\[\] = \{\r?\n[^\n]*\n([^\n]*)",
+                        THEMES_DATA.read_text(encoding="utf-8")).group(1)
+    assert premier.strip().startswith("PALETTE_SOMBRE,"), "THEMES[0].sombre doit reprendre PALETTE_SOMBRE"
+    assert dict(_palettes()["Ardoise (sombre)"]) == {
+        r: f"0x{v:06X}" for r, v in gen_themes.charger()[0].modes["sombre"].items()}
+
+
+def test_catalogue_hors_des_jetons():
+    """Les ~2 900 lignes du catalogue vivent dans tab5_themes_data.h (audit du 07/10/2026,
+    DO-3) : tab5_tokens.h, inclus par presque toutes les unités et par les jeux, n'en garde
+    rien ; seuls tab5_theme.cpp et tab5_reglages.cpp l'incluent, et les deux configurations
+    (tablette, rendu hors tablette) le copient dans le build (`includes:`)."""
+    jetons = TOKENS.read_text(encoding="utf-8")
+    assert "THEMES[]" not in re.sub(r"//[^\n]*", "", jetons), "THEMES[] est revenu dans tab5_tokens.h"
+    assert len(jetons.splitlines()) < 400, "tab5_tokens.h regrossit : les tables vont dans tab5_themes_data.h"
+    inclus = sorted(p.name for p in list(TAB5.glob("*.cpp")) + list(TAB5.glob("*.h"))
+                    if '#include "tab5_themes_data.h"' in p.read_text(encoding="utf-8"))
+    assert inclus == ["tab5_reglages.cpp", "tab5_theme.cpp"], inclus
+    for config in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
+        texte = (REPO / config).read_text(encoding="utf-8")
+        assert re.search(r"^\s+- Tab5/tab5_themes_data\.h\s*$", texte, re.M), f"{config} : includes:"
+
+
+def test_tables_du_theme_liees_a_theme_count():
+    """DO-13 (audit du 07/10/2026) : les tables de tab5_theme.cpp lues par index de thème
+    sont liées à THEME_COUNT par des static_assert générés ; une table périmée ne compile
+    plus au lieu d'être lue hors de ses bornes au premier changement de thème."""
+    texte = (TAB5 / "tab5_theme.cpp").read_text(encoding="utf-8")
+    bloc = re.search(r"// >>> formes[^\n]*\n(.*?)// <<< formes", texte, re.S).group(1)
+    assert "static_assert(sizeof(kPolices) / sizeof(kPolices[0]) == THEME_COUNT" in bloc
+    assert "static_assert(sizeof(kFormesDebut) / sizeof(kFormesDebut[0]) == 2 * THEME_COUNT + 1" in bloc
+    assert "static_assert(kFormesDebut[2 * THEME_COUNT] + 1 == sizeof(kFormes) / sizeof(kFormes[0])" in bloc
+    assert f"static_assert(THEME_COUNT == {len(gen_themes.charger())}," in THEMES_DATA.read_text(encoding="utf-8")
 
 
 def test_options_du_select_dans_l_ordre_des_themes():

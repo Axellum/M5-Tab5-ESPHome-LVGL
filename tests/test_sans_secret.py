@@ -11,17 +11,16 @@ le monde : rien de personnel ne doit revenir dans le YAML du firmware.
 import json
 import os
 import re
-import sys
 
 import yaml
+from tests.commun import BaseChargeur, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools"))
 
 from tab5_cle_api import cle_depuis_config_ha, trouver_cle  # noqa: E402
 
 
-class _Chargeur(yaml.SafeLoader):
+class _Chargeur(BaseChargeur):
     """Lit les YAML ESPHome sans résoudre leurs balises (!include, !lambda, !secret…)."""
 
 
@@ -34,11 +33,6 @@ def _balise(chargeur, suffixe, noeud):
 
 
 _Chargeur.add_multi_constructor("!", _balise)
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _yaml(*chemin):

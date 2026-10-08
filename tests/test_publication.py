@@ -11,26 +11,24 @@
   (tab5_home_assistant.zip, ADR-0024), jointe par le workflow."""
 import hashlib
 import json
-import os
 import re
 import sys
 from pathlib import Path
 
 import pytest
 import yaml
+from tests.commun import BaseChargeur
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "tools" / "publication"))
 
 import preparer  # noqa: E402
 import pages  # noqa: E402
 import archive_ha  # noqa: E402
 
-sys.path.insert(0, str(REPO / "tools" / "installation_ha"))
 import verifier_installation as verifier  # noqa: E402  (APPEL_TABLEAU : la ligne du tableau de bord)
 
 
-class _Chargeur(yaml.SafeLoader):
+class _Chargeur(BaseChargeur):
     """YAML ESPHome sans résoudre ses balises (!include, !lambda…)."""
 
 

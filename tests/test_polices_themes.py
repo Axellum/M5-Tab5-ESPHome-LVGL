@@ -11,11 +11,9 @@ from __future__ import annotations
 
 import math
 import re
-import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "tools"))
 
 import gen_themes  # noqa: E402
 import police_theme  # noqa: E402
@@ -189,3 +187,56 @@ def test_polices_generees_sans_glyphe_absent():
     assert cpp[-3].startswith("    {0, 1, 2, -23, 181, -6, 135, 17, 0},")
     assert cpp[-2].startswith("    {3, 1, 4, -20, 182, 4, 135, 16, 1},")
     assert "static constexpr int16_t kCadreX[] = {27, 102, 222, 297};" in cpp
+
+
+# --- Polices figées dans le dépôt (audit du 07/10/2026, DO-15) -----------------------
+# Avant le 08/10/2026, le firmware compilait `gfonts://Famille@graisse` : ESPHome
+# redemandait la police à Google Fonts chaque jour, et une nouvelle version changeait le
+# firmware en silence. Les fichiers vivent maintenant dans Tab5/fonts/.
+
+FONTS = REPO / "Tab5" / "fonts"
+RE_FILE = re.compile(r"^\s*-?\s*file:\s*\"?([^\"\s#]+)\"?", re.M)
+
+
+def _fichiers_police() -> list[str]:
+    """Chaque `file:` de police des YAML du firmware et du rendu hors tablette."""
+    sources = list((REPO / "Tab5").glob("*.yaml")) + list((REPO / "Tab5" / "ui_components").glob("*.yaml"))
+    sources += [REPO / "tab5-ha-hmi.yaml", REPO / "tab5-rendu-host.yaml"]
+    return [m.group(1) for p in sources for m in RE_FILE.finditer(p.read_text(encoding="utf-8"))
+            if m.group(1).lower().endswith((".ttf", ".otf")) or "://" in m.group(1)]
+
+
+def test_aucune_police_telechargee_a_la_compilation():
+    fichiers = _fichiers_police()
+    assert len(fichiers) > 40, "le motif ne lit plus les `file:` des polices"
+    distantes = sorted({f for f in fichiers if "://" in f})
+    assert not distantes, f"police téléchargée à chaque compilation (la figer dans Tab5/fonts/) : {distantes}"
+    absentes = sorted({f for f in fichiers if not (REPO / f).is_file()})
+    assert not absentes, absentes
+
+
+def test_empreinte_des_polices_figees():
+    """Le fichier compilé est celui que tools/police_theme.py a mesuré (sha256 de
+    _polices.yaml) : une police remplacée sans nouvelle mesure échoue ici."""
+    import hashlib
+    for cle, m in _mesures().items():
+        chemin = police_theme.fichier(*cle.rsplit("@", 1))
+        assert chemin.is_file(), f"{cle} : {chemin.relative_to(REPO)} absent"
+        assert hashlib.sha256(chemin.read_bytes()).hexdigest()[:16] == m["sha256"], \
+            f"{cle} : {chemin.name} n'est plus le fichier mesuré (relancer tools/police_theme.py)"
+
+
+def test_chaque_police_figee_sert_et_garde_sa_licence():
+    from urllib.parse import urlparse
+
+    from fontTools.ttLib import TTFont
+    utilises = {Path(f).name for f in _fichiers_police()}
+    licence = (FONTS / "OFL.txt").read_text(encoding="utf-8")
+    assert "SIL OPEN FONT LICENSE Version 1.1" in licence
+    for ttf in sorted(FONTS.glob("*.ttf")):
+        assert ttf.name in utilises, f"{ttf.name} : compilé nulle part (poids mort dans le dépôt)"
+        nom = TTFont(ttf)["name"]
+        url = urlparse(nom.getDebugName(14) or "")
+        assert (url.hostname, url.path.rstrip("/")) in {("scripts.sil.org", "/OFL"), ("openfontlicense.org", "")}, \
+            f"{ttf.name} : licence {url.geturl()!r} (SIL OFL attendue)"
+        assert nom.getDebugName(0).strip() in licence, f"{ttf.name} : copyright absent de Tab5/fonts/OFL.txt"

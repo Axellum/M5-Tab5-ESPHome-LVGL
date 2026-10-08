@@ -18,11 +18,11 @@
 # ============================================================================
 - alias: "Tab5 — Pousser la réponse assistant (exemple)"
   mode: queued
-  trigger:
+  triggers:
     # À adapter : le moteur émet cet événement avec la réponse formatée.
-    - platform: event
+    - trigger: event
       event_type: tab5_assistant_reponse_prete
-  action:
+  actions:
     - action: esphome.tab5_ha_hmi_tab5_assist_reponse
       continue_on_error: true
       data:

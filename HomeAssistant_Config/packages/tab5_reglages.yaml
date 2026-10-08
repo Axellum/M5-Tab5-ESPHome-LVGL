@@ -38,7 +38,9 @@
 #       par cet entity_id. Une liste nouvelle en a un aussi. Les miroirs (section 3)
 #       n'en ont pas : renommer un miroir change son entity_id.
 # @install Avec les autres packages (`homeassistant: packages: !include_dir_named
-#       packages`). Rien à renseigner dans ce fichier.
+#       packages`). Rien à renseigner dans ce fichier. La tablette est cherchée par
+#       custom_templates/tab5_tablette.jinja (macro tab5_api, 08/10/2026) : à déployer
+#       et recharger AVANT ce package.
 # ============================================================================
 
 input_text:
@@ -106,6 +108,18 @@ template:
           - input_text.tab5_choix_agenda_vacances
           - input_text.tab5_choix_telephone
           - input_text.tab5_choix_presence
+    # Audit du 07/10/2026, HA-18 : pas pour une mise à jour du registre qui ne touche que
+    # capabilities / supported_features / options / suggested_object_id (419 des 485
+    # entity_registry_updated chez l'auteur du 01 au 08/10/2026), que la liste ne lit
+    # pas. Une création, une suppression, un renommage, un nom ou une classe passent.
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ trigger.platform != 'event' or trigger.event.event_type != 'entity_registry_updated'
+             or trigger.event.data.action != 'update'
+             or (trigger.event.data.changes | default({}, true)).keys()
+                | reject('in', ['capabilities', 'supported_features', 'options', 'suggested_object_id'])
+                | list | count > 0 }}
     variables:
       agendas: "{{ states.calendar | map(attribute='entity_id') | list }}"
       # Suivi du téléphone : device_tracker ou personne (états home / not_home).
@@ -303,13 +317,8 @@ template:
         event_type: esphome.tab5_connected
     variables:
       api: >-
-        {%- set ns = namespace(api='') -%}
-        {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
-          {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
-            {%- set ns.api = e -%}
-          {%- endif -%}
-        {%- endfor -%}
-        {{ ns.api }}
+        {%- from 'tab5_tablette.jinja' import tab5_api -%}
+        {{ tab5_api() }}
       entites: "{{ device_entities(device_id(api)) if api else [] }}"
     sensor:
       - name: "Tab5 · tablette"

@@ -1,10 +1,4 @@
 import pytest
-import os
-import sys
-from pathlib import Path
-
-# Ajout du dossier racine au PYTHONPATH pour permettre l'import de 'tools'
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from tools.verifier_secrets_config import check_file
 

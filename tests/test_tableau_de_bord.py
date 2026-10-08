@@ -14,18 +14,19 @@ puis son résultat collé dans un tableau de bord : aucune compilation ne la rel
   doit être du YAML de tableau de bord dont chaque entité existe. Seules les fonctions de
   modèle que le fichier appelle sont imitées. Le job « Installation dans un HA neuf » le
   rend aussi dans un vrai HA, avec la tablette virtuelle."""
+import copy
+import functools
 import pathlib
 import re
-import sys
 import unicodedata
 
 import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import CacheJinja, ChargeurSansBalises as _Chargeur
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "tools" / "installation_ha"))
 
 import verifier_installation as verifier  # noqa: E402  (entites_du_tableau : même lecture que le job « HA neuf »)
 MODELE = REPO / "HomeAssistant_Config" / "custom_templates" / "tab5_dashboard.jinja"
@@ -42,13 +43,6 @@ APPAREIL = "m5stack_tab5_home_assistant_hmi"
 # Langues de l'écran (option du select « Langue ») traduites par la table TRADUCTIONS du modèle.
 LANGUES = {"Deutsch": "de", "Nederlands": "nl", "Español": "es", "Italiano": "it", "Türkçe": "tr"}
 DEFINITION_DE_T = "{%- macro t(francais, anglais) -%}"
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
 def _slug(nom: str) -> str:
@@ -79,7 +73,17 @@ _DOMAINES = {"sensor": "sensor", "binary_sensor": "binary_sensor", "text_sensor"
              "update": "update", "media_player": "media_player", "datetime": None}
 
 
+# Lues une fois par session (OUT-5, audit du 07/10/2026) : ~25 lectures de tout le YAML
+# du firmware et des packages par run. Chaque appelant reçoit sa copie.
+_JINJA = CacheJinja()   # code compilé du modèle, partagé par les environnements de _rendre()
+
+
 def _entites_du_firmware():
+    return dict(_entites_du_firmware_lues())
+
+
+@functools.lru_cache(maxsize=1)
+def _entites_du_firmware_lues():
     """{(domaine HA, slug du nom) : fichier} des entités publiées par le firmware, sous-capteurs
     nommés compris (debug, wifi_info). Ni la tablette virtuelle (Tab5/rendu/), ni les langues,
     ni user_entities*.yaml (identifiants réels de l'auteur, jamais lus)."""
@@ -104,6 +108,11 @@ def _entites_du_firmware():
 
 
 def _packages():
+    return copy.deepcopy(_packages_lus())
+
+
+@functools.lru_cache(maxsize=1)
+def _packages_lus():
     fichiers = sorted((HA_DIR / "packages").glob("*.yaml")) + sorted((HA_DIR / "optionnel").glob("*.yaml"))
     return [yaml.load(f.read_text(encoding="utf-8"), Loader=_Chargeur) or {} for f in fichiers]
 
@@ -254,7 +263,7 @@ def _rendre(maison, noter=None, **variables):
         texte = texte.replace(DEFINITION_DE_T, DEFINITION_DE_T + "{{ noter(francais, anglais) }}")
     # custom_templates/ de HA : la macro s'importe par son nom de fichier.
     env = ImmutableSandboxedEnvironment(extensions=["jinja2.ext.loopcontrols", "jinja2.ext.do"],
-                                        undefined=jinja2.StrictUndefined,
+                                        undefined=jinja2.StrictUndefined, bytecode_cache=_JINJA,
                                         loader=jinja2.FunctionLoader(lambda nom: texte if nom == MODELE.name else None))
     env.globals["noter"] = noter or (lambda *_: "")
     env.globals.update(

@@ -57,7 +57,7 @@ script:
   # le même notification_id existe déjà) + un push mobile via notify.notify.
   # mode parallel : deux gardes peuvent tomber en même temps (reboot + API).
   tab5_health_notify:
-    alias: "Tab5 Santé — notifier (persistante + mobile)"
+    alias: "Tab5 — santé : notifier (persistante + mobile)"
     mode: parallel
     max: 3
     fields:
@@ -146,18 +146,18 @@ automation:
   # raison fraîche (délai dépassé), on notifie : mieux vaut une alerte de trop qu'un
   # plantage muet.
   - id: tab5_health_unexpected_reboot
-    alias: "Tab5 Santé — reboot inattendu (nouveau démarrage)"
+    alias: "Tab5 — santé : reboot inattendu (nouveau démarrage)"
     description: >-
       Alerte quand l'heure de démarrage du Tab5 change sans que le redémarrage ait
       été demandé : brownout, crash firmware, coupure d'alimentation. Une mise à
       jour, un redémarrage demandé ou un changement de langue ne notifient pas.
     mode: single
-    trigger:
+    triggers:
       # Miroir de « Tab5 Uptime » (tab5_reglages.yaml) : mêmes états, même
       # indisponibilité, au même instant.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_demarrage
-    condition:
+    conditions:
       # Précédent état sans attribut `source` : le miroir n'avait pas encore de
       # tablette (HA neuf, tablette ajoutée à l'instant). Comme la création de
       # l'entité d'origine (from_state absent), ce n'est pas un redémarrage.
@@ -173,7 +173,7 @@ automation:
           {% elif from_ts is not none %}{{ to_ts > from_ts + 60 }}
           {% else %}{{ to_ts >= as_timestamp(trigger.from_state.last_changed) - 300 }}
           {% endif %}
-    action:
+    actions:
       # « Raison du redémarrage » de la tablette détectée (sensor.tab5_tablette).
       - wait_template: >-
           {% set r = expand(state_attr('sensor.tab5_tablette', 'raison') or '') | first | default(none) %}
@@ -221,17 +221,17 @@ automation:
   # d'alerte sur un HA où la tablette n'est pas encore ajoutée.
   # ==========================================================================
   - id: tab5_health_api_off_2min
-    alias: "Tab5 Santé — API ESPHome déconnectée depuis 2 min"
+    alias: "Tab5 — santé : API ESPHome déconnectée depuis 2 min"
     description: >-
       Alerte si le Tab5 est déconnecté de l'API native Home Assistant depuis
       plus de 2 minutes : toutes les poussées échouent pendant ce temps.
     mode: single
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.tab5_connectee
         to: "off"
         for: "00:02:00"
-    action:
+    actions:
       - action: script.tab5_health_notify
         data:
           notification_id: tab5_health_api
@@ -262,25 +262,25 @@ automation:
   # /10 min la reproduit à chaque cycle).
   # ==========================================================================
   - id: tab5_health_template_error
-    alias: "Tab5 Santé — erreur de rendu dans une poussée écran"
+    alias: "Tab5 — santé : erreur de rendu dans une poussée écran"
     description: >-
       Alerte quand une automation ou un script Tab5 journalise « Error
       rendering » : une action de poussée a été sautée en silence par
       continue_on_error, l'écran garde des données périmées.
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: system_log_event
         event_data:
           level: ERROR
-    condition:
+    conditions:
       - condition: template
         value_template: >-
           {% set m = trigger.event.data.message %}
           {% set msg = ((m | join(' ')) if m is not string else m) | lower %}
           {{ 'tab5' in msg and 'error rendering' in msg }}
-    action:
+    actions:
       - action: script.tab5_health_notify
         data:
           notification_id: tab5_health_template
@@ -319,24 +319,24 @@ automation:
   # reset anormal, plantage, ou Wi-Fi absent 90 s ou plus.
   # ==========================================================================
   - id: tab5_health_journal
-    alias: "Tab5 Santé — journal des démarrages et coupures"
+    alias: "Tab5 — santé : journal des démarrages et coupures"
     description: >-
       Notifie le journal envoyé par le Tab5 à sa reconnexion : plantage, erreurs
       du lien Wi-Fi (co-processeur C6), avertissements pendant une absence de HA.
     mode: queued
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: esphome.tab5_journal
     # Garde d'origine (audit sécurité du 30/09/2026) : seulement le journal d'une
     # tablette, reconnue au modèle de son appareil comme dans tab5_evenements.yaml.
     # Sans elle, un autre appareil ESPHome pouvait créer une notification par
     # événement, et une alerte téléphone au titre choisi (`grave: oui`).
     # tests/test_garde_origine.py.
-    condition:
+    conditions:
       - condition: template
         value_template: >-
-          {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-          {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
     variables:
       raison: "{{ trigger.event.data.raison | default('inconnue') }}"
       demarrages: "{{ trigger.event.data.demarrages | default('?') }}"
@@ -352,7 +352,7 @@ automation:
         ```
         {{ lignes }}
         ```
-    action:
+    actions:
       - if:
           - condition: template
             value_template: "{{ trigger.event.data.grave == 'oui' }}"
@@ -385,19 +385,19 @@ automation:
   # les versions se rejoignent.
   # ==========================================================================
   - id: tab5_health_fichiers_ha
-    alias: "Tab5 Santé — fichiers HA plus anciens que le firmware"
+    alias: "Tab5 — santé : fichiers HA plus anciens que le firmware"
     description: >-
       Prévient quand la tablette tourne une version plus récente que les fichiers
       Tab5 de Home Assistant (packages, modèles, blueprint).
     mode: restart
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.tab5_fichiers_ha_en_retard
         to: ["on", "off"]
         for: "00:01:00"
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
-    action:
+    actions:
       - if:
           - condition: state
             entity_id: binary_sensor.tab5_fichiers_ha_en_retard

@@ -38,7 +38,7 @@
     },
     "configuration_invalide": {
       "title": "Tab5 : les fichiers {version} n'ont pas été installés",
-      "description": "Les nouveaux fichiers du Tab5 n'ont pas pu être posés (la vérification de la configuration a trouvé une erreur avec eux, ou leur écriture a échoué) : les fichiers précédents ont été remis, rien n'a changé. La raison est dans le journal (Paramètres → Système → Journaux, « tab5 »). Merci de la signaler : {signaler}"
+      "description": "Les nouveaux fichiers du Tab5 n'ont pas pu être posés (la vérification de la configuration a trouvé une erreur avec eux, ou leur écriture a échoué) : les fichiers précédents ont été remis, rien n'a changé. La raison est dans le journal (Paramètres → Système → Journaux, « tab5 »). Après une erreur de configuration, ces fichiers ne sont pas réessayés à chaque redémarrage : une fois la cause corrigée, passez par Paramètres → Appareils et services → Tab5 → Configurer, « Réinstaller maintenant les fichiers de cette version ». Si la cause n'est pas dans vos propres fichiers, merci de la signaler : {signaler}"
     },
     "packages_absents": {
       "title": "Tab5 : Home Assistant ne charge pas les packages",
@@ -57,6 +57,21 @@
           "configuration_invalide": "La configuration a une erreur : corrigez-la d'abord (Outils de développement → YAML → Vérifier la configuration)."
         }
       }
+    },
+    "fichiers_remplaces": {
+      "title": "Tab5 : des fichiers déjà là ont été remplacés",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Fichiers du Tab5 déjà là, remplacés",
+            "description": "Ces fichiers du Tab5 étaient déjà dans `config/` (copiés à la main, sans doute) et différaient de ceux de la release : {fichiers}. Ils ont été remplacés quand même, et les anciens sont gardés dans {sauvegarde}. Si vous en aviez modifié un exprès, recopiez votre changement depuis là.\n\nValidez pour fermer ce message."
+          }
+        }
+      }
+    },
+    "firmware_echec": {
+      "title": "Tab5 : la tablette n'est pas passée en {version}",
+      "description": "Les fichiers du Tab5 {version} sont en place, mais la tablette tourne toujours une autre version après {essais} essais de sa mise à jour. Installez-la à la main : Paramètres → Mises à jour (ou l'entité « Firmware » de la tablette) → Installer, tablette allumée et connectée. La raison de chaque essai est dans le journal (Paramètres → Système → Journaux, « tab5 »). Ce message disparaît dès que la tablette tourne en {version}."
     }
   }
 }

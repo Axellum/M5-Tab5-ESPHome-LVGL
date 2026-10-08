@@ -40,14 +40,10 @@ from tests.test_tuiles_blueprint import (
     _rendre,
     _tablette,
 )
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ADR = os.path.join(REPO, "docs", "decisions", "0026-climate-from-device.md")
-
-
-def _lire(*parts):
-    with open(os.path.join(REPO, *parts), encoding="utf-8") as f:
-        return f.read()
 
 
 def _variables_actions():
@@ -260,7 +256,7 @@ def test_climr_vide_sans_clim():
 def test_climr_part_avant_l_etat_de_la_clim():
     actions = _blueprint()["actions"]
     # Poussée complète : dans le même bloc que tab5_maj_clim, juste avant.
-    bloc = _chercher(actions, lambda d: "'demarrage_ha'] and clim != ''" in str(d.get("if", "")))
+    bloc = _chercher(actions, lambda d: "tout_pousser and clim != ''" in str(d.get("if", "")))
     etapes = [str(e.get("action", "")) for e in bloc["then"]]
     i_clim = next(i for i, a in enumerate(etapes) if a.endswith("_tab5_maj_clim"))
     assert etapes[i_clim - 1].endswith("_tab5_maj_emplacements")

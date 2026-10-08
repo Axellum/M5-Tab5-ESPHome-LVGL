@@ -45,7 +45,9 @@
 #       automation le 04/07/2026, sans aucune erreur loggée par HA.
 # @install Nécessite homeassistant.packages: !include_dir_named packages, et
 #       custom_templates/tab5_calendar.jinja (macros ev_start / ev_end / ev_summary,
-#       depuis le 07/10/2026 au lieu de leur copie ici) déployé et rechargé AVANT.
+#       depuis le 07/10/2026 au lieu de leur copie ici) et custom_templates/
+#       tab5_tablette.jinja (« tablette connectée », garde d'origine, 08/10/2026)
+#       déployés et rechargés AVANT.
 # ============================================================================
 
 script:
@@ -65,9 +67,8 @@ script:
       # 28/09/2026). Tablette trouvée par le modèle de l'appareil, pas par son nom.
       - condition: template
         value_template: &tab5_connectee >-
-          {{ integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
-             | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
-             | list | count > 0 }}
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' }}
       - variables:
           debut: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
           fin: "{{ (now() + timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S') }}"
@@ -245,16 +246,16 @@ automation:
     mode: queued
     max: 2
     max_exceeded: silent
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/5"
       # Agendas des rendez-vous et de travail choisis dans HA : un événement commence,
       # finit, ou le suivant change. Miroir sensor.tab5_agendas (tab5_reglages.yaml) :
       # un déclencheur `state:` ne prend pas d'entity_id calculé.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_agendas
         attribute: rendez_vous
-      - platform: event
+      - trigger: event
         event_type: esphome.tab5_connected
         id: tab5_connected
       # Le délai d'annonce vient de changer : la liste, elle, n'a pas bougé —
@@ -270,24 +271,20 @@ automation:
       # chaque déconnexion de la tablette, puis revient à sa valeur ; ces passages
       # appelaient la tablette hors ligne (ERREUR « Not connected », test « HA
       # neuf », 28/09/2026). La reconnexion a son propre déclencheur.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_rendez_vous_annoncer_avant
         not_from: [unavailable, unknown]
         not_to: [unavailable, unknown]
-    condition:
+    conditions:
       # Garde d'origine (audit sécurité du 30/09/2026) : tab5_connected ne compte que
       # s'il vient d'une tablette, reconnue au modèle de son appareil comme dans
       # tab5_evenements.yaml. Les autres déclencheurs passent. tests/test_garde_origine.py.
       - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
         condition: template
         value_template: >-
-          {%- if trigger.id == 'tab5_connected' -%}
-            {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-            {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
-          {%- else -%}
-            {{ true }}
-          {%- endif -%}
-    action:
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
+    actions:
       # Tab5 hors ligne (redémarrage, OTA) ou liaison pas encore authentifiée juste
       # après esphome.tab5_connected : l'appel partait en erreur (« Not connected »,
       # « Authenticated connection not ready yet » — 66 fois les 25-26/09/2026).
