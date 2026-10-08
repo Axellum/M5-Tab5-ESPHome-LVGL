@@ -91,7 +91,7 @@ Parallel sessions kept rewriting helpers that already existed (audit of 2026-10-
 - **Page dots and the action wheel**: `pagination_afficher()`, `tuile_roue_ouvrir()` / `roue_ouvrir()` (any anchor) — `Tab5/tab5_internal.h`.
 - **Colours**: `UIColor.X` (`Tab5/tab5_tokens.h`) and the role styles of `Tab5/tab5-styles.yaml` (rule 1).
 - **Games**: `Tab5/game_common.h` (ADR-0014) — `clampf()`, `xorshift32_next()`, `mk_rect()` / `mk_label()`, `show()`, `set_bg()`, `set_border()`, `set_text_if()`, `set_text_color_if()`, `set_pressed_bg()`, `show_front()`, `hud_num()`, `NvsSlot<T>`, `timer_period_sync()`, `topn_insert()`, `tilt_calibrate()` / `tilt_smooth()`, `accel_delta_norm()` / `shake_fire()`, `game_mem_new()` / `game_mem_free()`, `ui_destroy()`, `SlotMenu<N>` / `SlotGeom`.
-- **Pure logic tested on a PC**: new logic without LVGL goes next to `Tab5/tab5_core.*`, `Tab5/tab5_champs.*`, `Tab5/alarm_clock.*` or `Tab5/tab5_economie.h`, tested by `tools/test_alarm_clock.cpp` or `tools/test_tab5_socle.cpp` (g++ in CI).
+- **Pure logic tested on a PC**: new logic without LVGL goes next to `Tab5/tab5_core.*`, `Tab5/tab5_champs.*`, `Tab5/alarm_clock.*`, `Tab5/tab5_economie.h` or `Tab5/tab5_batterie.h`, tested by `tools/test_alarm_clock.cpp` or `tools/test_tab5_socle.cpp` (g++ in CI).
 
 ## Product preferences (the author's taste — keep them)
 

@@ -11,7 +11,8 @@
  * minimum), calendrier daté par son jour d'ancrage (bug §2.2 de l'audit),
  * changements d'heure, rendez-vous. Aussi les conversions des nombres reçus de HA
  * (tab5_float_vers_int : « inf » ou « 1e30 » → entier borné, lot A de l'audit du 30/09),
- * et la décision « batterie de la tablette montée ou pas » (batterie_lecture, 05/10),
+ * et le chargeur de la batterie (tab5_batterie.h, header seul, 08/10 : présence lue
+ * chargeur coupé, sondes, limite 80 %, consommation, alerte de batterie faible),
  * puis les lignes « Batterie » et « Charge CPU » de la console système (06/10),
  * et les règles du mode économie d'énergie (tab5_economie.h, header seul, 06/10) :
  * sur batterie au courant de l'INA226, batterie basse, plafond de luminosité.
@@ -25,6 +26,7 @@
  */
 #include "alarm_clock.h"
 #include "tab5_core.h"
+#include "tab5_batterie.h"
 #include "tab5_economie.h"
 #include "tab5_i18n.h"
 
@@ -476,79 +478,220 @@ static void test_nombres_de_ha() {
     expect(tab5_float_vers_int(0.0f, 0, 255, 9) == 0, "borne basse atteinte (pas le défaut)");
 }
 
-// Batterie de la tablette montée ou pas (discussion #278, 05/10/2026) : une lecture sous
-// 6 V marque la batterie absente pendant 10 min. Cas mesurés : batterie ~7,2 V, sans
-// batterie 4,2 V, 5,71 V stable ou 4,2 ↔ 8,39 V toutes les 1 à 3 min.
-static void test_batterie_presence() {
-    constexpr uint32_t MIN = 60u * 1000u;
+// Batterie et chargeur (tab5_batterie.h, 08/10/2026) : la présence se lit chargeur
+// COUPÉ (sans batterie 1,9 V mesurés ; chargeur allumé il lisait 4,2 ↔ 8,39 V ou 5,71 V et
+// soufflait). Chaque seconde, chargeur_tick() dit l'état de CHG_EN et s'il faut lire.
+static uint32_t tic_jusqua(EtatChargeur& c, uint8_t limite, bool montee, uint32_t de, uint32_t a,
+                           bool* toujours_allume, bool* toujours_coupe, int* lectures) {
+    for (uint32_t ms = de; ms <= a; ms += 1000) {
+        const ActionChargeur act = chargeur_tick(c, limite, montee, ms);
+        if (toujours_allume != nullptr && !act.allumer) *toujours_allume = false;
+        if (toujours_coupe != nullptr && act.allumer) *toujours_coupe = false;
+        if (lectures != nullptr && act.lire) (*lectures)++;
+    }
+    return a;
+}
+
+static void test_chargeur() {
+    constexpr uint32_t S = 1000u;
+    constexpr uint32_t MIN = 60u * S;
     using P = PresenceBatterie;
     {
-        DetectionBatterie d;
-        expect(d.presence == P::INCONNUE, "batterie : inconnue avant la première lecture");
-        expect(batterie_lecture(d, NAN, 0) == P::INCONNUE, "batterie : lecture ratée, toujours inconnue");
-        expect(batterie_lecture(d, 7.2f, MIN) == P::PRESENTE, "batterie montée (7,2 V) : présente dès la 1re lecture");
-        expect(batterie_lecture(d, 6.0f, 2 * MIN) == P::PRESENTE, "6,0 V pile : encore une batterie (0 %)");
-        expect(batterie_lecture(d, NAN, 3 * MIN) == P::PRESENTE, "lecture ratée : décision gardée");
+        // Démarrage sans batterie (la tablette de l'auteur).
+        EtatChargeur c;
+        bool allume = true;
+        tic_jusqua(c, 0, false, 0, 29 * S, &allume, nullptr, nullptr);
+        expect(allume && c.presence == P::INCONNUE, "démarrage : chargeur allumé 30 s (réveil d'une batterie)");
+        expect(!chargeur_lecture(c, 5.71f, 20 * S) && c.presence == P::INCONNUE,
+               "lecture chargeur allumé : rien de décidé (5,71 V du chargeur)");
+        expect(!chargeur_tick(c, 0, false, 30 * S).allumer && c.sonde, "30 s : sonde, chargeur coupé");
+        int lectures = 0;
+        bool coupe = true;
+        tic_jusqua(c, 0, false, 31 * S, 37 * S, nullptr, &coupe, &lectures);
+        expect(coupe && lectures == 0, "repos de la sonde : coupé, pas encore de lecture");
+        expect(!chargeur_lecture(c, 4.0f, 35 * S) && c.presence == P::INCONNUE,
+               "lecture 5 s après la coupure : trop tôt pour décider");
+        const ActionChargeur a = chargeur_tick(c, 0, false, 38 * S);
+        expect(!a.allumer && a.lire, "8 s après la coupure : une lecture demandée");
+        expect(!chargeur_tick(c, 0, false, 39 * S).lire, "une seule lecture demandée par sonde");
+        expect(chargeur_en_sonde(c, 39 * S), "sonde en cours : le courant lu est ignoré");
+        expect(chargeur_lecture(c, 1.9f, 39 * S) && c.presence == P::ABSENTE, "1,9 V chargeur coupé : pas de batterie");
+        expect(std::isnan(c.niveau), "sans batterie : niveau inconnu");
+        expect(chargeur_en_sonde(c, 40 * S) && !chargeur_en_sonde(c, 41 * S),
+               "courant ignoré 2 s encore après la fin de la sonde");
+        coupe = true;
+        tic_jusqua(c, 0, false, 40 * S, 3 * 60 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "sans batterie : chargeur coupé pendant 3 h (plus de souffle)");
+        expect(!chargeur_lecture(c, 1.83f, 3 * 60 * MIN) && c.presence == P::ABSENTE, "lecture suivante : toujours absente");
+        // Batterie glissée tablette allumée : vue à la lecture suivante, chargeur rallumé.
+        expect(chargeur_lecture(c, 7.4f, 3 * 60 * MIN + MIN) && c.presence == P::PRESENTE,
+               "batterie glissée : présente à la lecture suivante");
+        expect(chargeur_tick(c, 0, false, 3 * 60 * MIN + MIN + S).allumer, "batterie : chargeur rallumé");
     }
     {
-        DetectionBatterie d;
-        expect(batterie_lecture(d, 5.71f, 0) == P::ABSENTE, "5,71 V stable : absente");
-        for (uint32_t m = 1; m <= 30; m++)
-            batterie_lecture(d, 5.71f, m * MIN);
-        expect(d.presence == P::ABSENTE, "5,71 V pendant 30 min : toujours absente");
-        expect(batterie_lecture(d, 4.2f, 31 * MIN) == P::ABSENTE, "4,2 V (USB) : absente");
+        // Démarrage avec une batterie, puis retirée pendant la charge.
+        EtatChargeur c;
+        tic_jusqua(c, 0, false, 0, 38 * S, nullptr, nullptr, nullptr);
+        expect(chargeur_lecture(c, 7.2f, 38 * S) && c.presence == P::PRESENTE, "7,2 V chargeur coupé : batterie");
+        expect(std::fabs(c.niveau - 53.8f) < 0.1f, "niveau d'après la tension (7,2 V ≈ 54 %)");
+        expect(!chargeur_en_sonde(c, 38 * S + 2 * S), "fin de sonde + 2 s : le courant compte de nouveau");
+        bool allume = true;
+        // Fin de la sonde à 38 s : la suivante tombe à 38 s + 10 min.
+        tic_jusqua(c, 0, false, 39 * S, 38 * S + 10 * MIN - S, &allume, nullptr, nullptr);
+        expect(allume, "batterie, limite 100 % : chargeur allumé jusqu'à la sonde suivante");
+        expect(!chargeur_tick(c, 0, false, 38 * S + 10 * MIN).allumer && c.sonde, "sonde toutes les 10 min");
+        chargeur_tick(c, 0, false, 38 * S + 10 * MIN + 8 * S);
+        expect(!chargeur_lecture(c, 7.3f, 38 * S + 10 * MIN + 8 * S) && c.presence == P::PRESENTE, "sonde : toujours là");
+        expect(chargeur_tick(c, 0, false, 38 * S + 10 * MIN + 9 * S).allumer, "après la sonde : rallumé");
+        // Retirée : le chargeur lit le vide (5,71 V), sous 6 V : sonde sans attendre.
+        const uint32_t t0 = 20 * MIN;
+        expect(!chargeur_lecture(c, 5.71f, t0), "lecture basse chargeur allumé : rien de décidé encore");
+        expect(!chargeur_tick(c, 0, false, t0 + S).allumer && c.sonde, "lecture basse : sonde tout de suite");
+        chargeur_tick(c, 0, false, t0 + 9 * S);
+        expect(chargeur_lecture(c, 1.9f, t0 + 9 * S) && c.presence == P::ABSENTE, "batterie retirée : absente");
+        bool coupe = true;
+        tic_jusqua(c, 0, false, t0 + 10 * S, t0 + 30 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "batterie retirée : chargeur coupé");
     }
     {
-        // Oscillation 4,2 ↔ 8,39 V : les lectures hautes ne suffisent pas à la faire revenir.
-        DetectionBatterie d;
-        const float lectures[] = {8.39f, 4.2f, 8.39f, 8.39f, 4.2f, 8.39f, 8.39f, 8.39f, 4.2f, 8.39f};
-        expect(batterie_lecture(d, lectures[0], 0) == P::PRESENTE, "oscillation : 8,39 V d'abord, rien de bas vu");
-        for (uint32_t m = 1; m < 10; m++)
-            batterie_lecture(d, lectures[m], m * MIN);
-        expect(d.presence == P::ABSENTE, "oscillation 4,2 ↔ 8,39 V : absente");
-        expect(batterie_lecture(d, 8.39f, (8 + 9) * MIN) == P::ABSENTE, "9 min après la dernière basse : absente");
-        expect(batterie_lecture(d, 8.39f, (8 + 10) * MIN) == P::PRESENTE, "10 min sans lecture basse : présente");
-        expect(batterie_lecture(d, 5.9f, 19 * MIN) == P::ABSENTE, "une seule lecture basse suffit");
+        // Sonde sans lecture (INA226 muet) : abandonnée après 30 s, chargeur rallumé.
+        EtatChargeur c;
+        tic_jusqua(c, 0, false, 0, 59 * S, nullptr, nullptr, nullptr);
+        expect(c.sonde, "sonde sans lecture : en cours jusqu'à 30 s");
+        expect(chargeur_tick(c, 0, false, 60 * S).allumer, "présence inconnue : chargeur rallumé");
+        expect(!c.sonde && c.presence == P::INCONNUE, "sonde sans lecture : abandonnée après 30 s");
+        expect(!chargeur_tick(c, 0, false, 60 * S + 10 * MIN).allumer && c.sonde, "nouvelle sonde 10 min après");
+        expect(!chargeur_lecture(c, NAN, 60 * S + 10 * MIN + 9 * S) && c.sonde, "lecture ratée : sonde toujours en cours");
     }
     {
-        // millis() reboucle après 49 jours : la fenêtre se compte quand même.
-        DetectionBatterie d;
-        const uint32_t avant = 0xFFFFFFFFu - 2 * MIN;
-        batterie_lecture(d, 4.2f, avant);
-        expect(batterie_lecture(d, 7.5f, avant + 5 * MIN) == P::ABSENTE, "rebouclage : 5 min après, absente");
-        expect(batterie_lecture(d, 7.5f, avant + 10 * MIN) == P::PRESENTE, "rebouclage : 10 min après, présente");
+        // Batterie montée mais pas vue (protection coupée) : un réveil par heure.
+        EtatChargeur c;
+        tic_jusqua(c, 0, true, 0, 38 * S, nullptr, nullptr, nullptr);
+        chargeur_lecture(c, 0.4f, 38 * S);
+        bool coupe = true;
+        tic_jusqua(c, 0, true, 39 * S, 30 * S + 60 * MIN - S, nullptr, &coupe, nullptr);
+        expect(coupe && c.presence == P::ABSENTE, "absente : coupé pendant une heure");
+        expect(chargeur_tick(c, 0, true, 30 * S + 60 * MIN).allumer && c.reveil, "« montée » : réveil au bout d'une heure");
+        bool allume = true;
+        tic_jusqua(c, 0, true, 31 * S + 60 * MIN, 59 * S + 60 * MIN, &allume, nullptr, nullptr);
+        expect(allume, "réveil : allumé 30 s");
+        expect(!chargeur_tick(c, 0, true, 60 * S + 60 * MIN).allumer && c.sonde, "puis une sonde");
+        chargeur_tick(c, 0, true, 68 * S + 60 * MIN);
+        expect(chargeur_lecture(c, 6.3f, 68 * S + 60 * MIN) && c.presence == P::PRESENTE, "batterie réveillée : présente");
+        EtatChargeur d;
+        tic_jusqua(d, 0, false, 0, 38 * S, nullptr, nullptr, nullptr);
+        chargeur_lecture(d, 1.9f, 38 * S);
+        coupe = true;
+        tic_jusqua(d, 0, false, 39 * S, 5 * 60 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "interrupteur « montée » éteint : jamais de réveil (pas de souffle)");
     }
-    expect(kBatterieTensionMin == 6.0f && kBatterieFenetreMs == 10u * MIN, "seuil 6,0 V, fenêtre 10 min");
+    {
+        // Limite 80 % : arrêt à 80 %, reprise à 70 % après au moins 10 min d'arrêt.
+        constexpr uint8_t L80 = static_cast<uint8_t>(LimiteCharge::QUATRE_VINGTS);
+        EtatChargeur c;
+        tic_jusqua(c, L80, false, 0, 38 * S, nullptr, nullptr, nullptr);
+        chargeur_lecture(c, 7.9f, 38 * S);  // ≈ 85 %
+        bool coupe = true;
+        tic_jusqua(c, L80, false, 39 * S, 4 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "80 % : batterie à 85 % au démarrage, chargeur coupé");
+        chargeur_lecture(c, 7.45f, 5 * MIN);  // ≈ 65 %, chargeur coupé depuis 30 s
+        expect(c.presence == P::PRESENTE && std::fabs(c.niveau - 65.0f) < 0.1f, "chargeur coupé : niveau relu");
+        expect(!chargeur_tick(c, L80, false, 5 * MIN + S).allumer, "65 % après 5 min d'arrêt : pas encore (10 min)");
+        expect(chargeur_tick(c, L80, false, 11 * MIN).allumer, "65 % après 10 min d'arrêt : reprise");
+        // La règle seule (sans les sondes périodiques du chargeur allumé).
+        EtatChargeur r;
+        r.reveil = false;
+        r.presence = P::PRESENTE;
+        r.allume = true;
+        r.niveau = batterie_niveau_pct(7.70f);  // ≈ 76 %
+        expect(chargeur_voulu(r, L80, 15 * MIN), "76 % en charge : continue");
+        r.niveau = batterie_niveau_pct(7.79f);  // ≈ 80,3 %
+        expect(!chargeur_voulu(r, L80, 20 * MIN), "80 % atteint : arrêt");
+        r.allume = false;
+        r.change_ms = 20 * MIN;
+        r.niveau = batterie_niveau_pct(7.65f);  // ≈ 74 %
+        expect(!chargeur_voulu(r, L80, 40 * MIN), "74 % : reste à l'arrêt (reprise à 70 %)");
+        r.niveau = NAN;
+        expect(!chargeur_voulu(r, L80, 40 * MIN), "niveau inconnu : décision gardée");
+        expect(chargeur_voulu(r, 0, 40 * MIN), "limite à 100 % : charge tout de suite");
+        expect(chargeur_voulu(r, 9, 40 * MIN), "index inconnu : 100 %");
+    }
+    {
+        // millis() reboucle après 49 jours : les durées se comptent quand même.
+        EtatChargeur c;
+        c.reveil = false;
+        c.presence = P::PRESENTE;
+        const uint32_t base = 0xFFFFFFFFu - 3 * S;
+        c.sonde_fin_ms = base - 10 * MIN;
+        expect(!chargeur_tick(c, 0, false, base).allumer && c.sonde, "rebouclage : sonde à l'heure");
+        expect(chargeur_tick(c, 0, false, base + 8 * S).lire, "rebouclage : lecture 8 s après");
+        expect(!chargeur_lecture(c, 7.4f, base + 8 * S) && !c.sonde, "rebouclage : sonde terminée");
+    }
+    expect(kBatterieSeuilV == 3.0f && kBatterieBasseV == 6.0f && kChargeurReposMs == 8u * S,
+           "seuils : 3,0 V chargeur coupé, 6,0 V chargeur allumé, 8 s de repos");
+
+    // Niveau, consommation.
+    expect(batterie_niveau_pct(6.0f) == 0.0f && batterie_niveau_pct(8.23f) == 100.0f, "niveau : 6,0 V = 0 %, 8,23 V = 100 %");
+    expect(batterie_niveau_pct(5.0f) == 0.0f && batterie_niveau_pct(8.4f) == 100.0f, "niveau borné à 0..100");
+    expect(std::isnan(batterie_niveau_pct(NAN)), "niveau : tension inconnue");
+    expect(std::fabs(batterie_puissance_w(7.4f, 0.4f, true) - 2.96f) < 0.001f, "consommation : 7,4 V × 0,4 A = 2,96 W");
+    expect(std::isnan(batterie_puissance_w(7.4f, 0.4f, false)), "consommation : inconnue sur secteur");
+    expect(std::isnan(batterie_puissance_w(7.4f, 0.01f, true)), "consommation : sous 20 mA, rien");
+    expect(std::isnan(batterie_puissance_w(7.4f, -0.3f, true)), "consommation : batterie qui charge, rien");
+    expect(std::isnan(batterie_puissance_w(NAN, 0.4f, true)), "consommation : tension inconnue");
+
+    // Alerte de batterie faible : une fois par seuil, réarmée sur secteur ou à 30 %.
+    EtatAlerteBatterie al;
+    expect(batterie_alerte_lue(al, 25.0f, true) == 0, "alerte : 25 %, rien");
+    expect(batterie_alerte_lue(al, 19.0f, true) == 20, "alerte : sous 20 %");
+    expect(batterie_alerte_lue(al, 18.0f, true) == 0, "alerte : une seule fois");
+    expect(batterie_alerte_lue(al, NAN, true) == 0, "alerte : niveau inconnu, rien");
+    expect(batterie_alerte_lue(al, 10.0f, true) == 10, "alerte : 10 %, presque vide");
+    expect(batterie_alerte_lue(al, 5.0f, true) == 0, "alerte : 10 % une seule fois");
+    expect(batterie_alerte_lue(al, 22.0f, true) == 0, "alerte : remontée à 22 %, pas réarmée");
+    expect(batterie_alerte_lue(al, 19.0f, true) == 0, "alerte : sous 20 % de nouveau, déjà envoyée");
+    expect(batterie_alerte_lue(al, 19.0f, false) == 0, "alerte : sur secteur, rien et réarmée");
+    expect(batterie_alerte_lue(al, 19.0f, true) == 20, "alerte : débranchée à 19 %, de nouveau");
+    expect(batterie_alerte_lue(al, 31.0f, true) == 0 && batterie_alerte_lue(al, 20.0f, true) == 20,
+           "alerte : réarmée à 30 %");
+    EtatAlerteBatterie al2;
+    expect(batterie_alerte_lue(al2, 8.0f, true) == 10 && batterie_alerte_lue(al2, 7.0f, true) == 0,
+           "alerte : 8 % d'emblée, seulement « presque vide »");
 }
 
 // Console système, lignes « Batterie » et « Charge CPU » (discussion #278, 06/10/2026).
 // La règle qui compte : jamais de pourcentage sans batterie détectée (le 8,39 V du
-// chargeur ferait 100 %, le 5,71 V de l'USB 0 %), quel que soit le niveau reçu.
+// chargeur ferait 100 %), quel que soit le niveau reçu. Sur batterie, la consommation
+// remplace la tension (08/10/2026).
 static void test_console_batterie_et_cpu() {
     using P = PresenceBatterie;
     char b[48];
-    batterie_texte_console(b, sizeof(b), false, P::PRESENTE, 78.0f, 7.62f);
+    batterie_texte_console(b, sizeof(b), false, P::PRESENTE, 78.0f, 7.62f, NAN);
     expect_str(b, "Non mont\xC3\xA9" "e", "interrupteur éteint : « Non montée », même batterie détectée");
-    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, NAN, 5.71f);
-    expect_str(b, "Sur USB", "sans batterie (5,71 V) : « Sur USB »");
-    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, 100.0f, 8.39f);
+    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, NAN, 1.9f, NAN);
+    expect_str(b, "Sur USB", "sans batterie (1,9 V chargeur coupé) : « Sur USB »");
+    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, 100.0f, 8.39f, NAN);
     expect_str(b, "Sur USB", "sans batterie, niveau 100 % reçu quand même : pas de pourcentage");
-    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, 0.0f, 4.2f);
-    expect_str(b, "Sur USB", "sans batterie, niveau 0 % reçu quand même : pas de pourcentage");
-    batterie_texte_console(b, sizeof(b), true, P::INCONNUE, 50.0f, 7.4f);
+    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, 0.0f, 4.2f, 3.0f);
+    expect_str(b, "Sur USB", "sans batterie, niveau et puissance reçus quand même : rien");
+    batterie_texte_console(b, sizeof(b), true, P::INCONNUE, 50.0f, 7.4f, 2.5f);
     expect_str(b, "--", "avant la première décision : « -- », ni niveau ni tension");
-    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, 78.4f, 7.623f);
-    expect_str(b, "78% \xC2\xB7 7.62 V", "batterie : niveau puis tension");
-    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, NAN, 7.2f);
+    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, 78.4f, 7.623f, NAN);
+    expect_str(b, "78% \xC2\xB7 7.62 V", "batterie sur secteur : niveau puis tension");
+    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, 78.4f, 7.623f, 3.14f);
+    expect_str(b, "78% \xC2\xB7 3.1 W", "sur batterie : niveau puis consommation");
+    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, NAN, 7.4f, 2.96f);
+    expect_str(b, "-- \xC2\xB7 3.0 W", "sur batterie, niveau pas encore publié : la consommation seule");
+    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, NAN, 7.2f, NAN);
     expect_str(b, "-- \xC2\xB7 7.20 V", "batterie, niveau pas encore publié : la tension seule");
-    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, 100.0f, NAN);
+    batterie_texte_console(b, sizeof(b), true, P::PRESENTE, 100.0f, NAN, NAN);
     expect_str(b, "100%", "batterie, tension inconnue : le niveau seul");
-    batterie_texte_console(b, 4, true, P::PRESENTE, 78.0f, 7.62f);
+    batterie_texte_console(b, 4, true, P::PRESENTE, 78.0f, 7.62f, NAN);
     expect(std::strlen(b) == 3, "tampon court : texte coupé, terminé");
     i18n_set_language(1);
-    batterie_texte_console(b, sizeof(b), false, P::INCONNUE, NAN, NAN);
+    batterie_texte_console(b, sizeof(b), false, P::INCONNUE, NAN, NAN, NAN);
     expect_str(b, "Not fitted", "« Non montée » traduit en anglais");
-    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, NAN, NAN);
+    batterie_texte_console(b, sizeof(b), true, P::ABSENTE, NAN, NAN, NAN);
     expect_str(b, "On USB", "« Sur USB » traduit en anglais");
     i18n_set_language(0);
 
@@ -667,7 +810,7 @@ int main() {
     test_prereglages_et_volume();
     test_langue();
     test_nombres_de_ha();
-    test_batterie_presence();
+    test_chargeur();
     test_console_batterie_et_cpu();
     test_economie();
 
