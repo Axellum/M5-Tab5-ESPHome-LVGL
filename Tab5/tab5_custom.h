@@ -348,7 +348,7 @@ void central_set_vigilance(bool actif);
 void update_rain_predict_icon_ui(lv_obj_t* icon, int neige, float humidite);
 
 // Clim, retour de HA : clim_blueprint_recu() (service tab5_maj_clim), plus bas avec
-// les réglages de la clim et le popup (ADR-0026, ADR-0027, tab5_cards.cpp).
+// les réglages de la clim et le popup (ADR-0026, ADR-0027, tab5_clim.cpp).
 
 void update_planning_text_ui(lv_obj_t* lbl, const std::string& l1, const std::string& l2,
     std::string& plan_ligne_1, std::string& plan_ligne_2);
@@ -488,7 +488,7 @@ void update_pot_metric_ui(lv_obj_t* value_lbl, float x, PotMetric metric);
 void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
 
 // =============================================================================
-// Réglages de la clim venus de l'appareil (tab5_cards.cpp, ADR-0026) : clé « climr »
+// Réglages de la clim venus de l'appareil (tab5_clim.cpp, ADR-0026) : clé « climr »
 // de tab5_maj_emplacements, « climr|min|max|pas|unité|capacités|nom », que le
 // blueprint pousse avant tab5_maj_clim. Bornes et pas des boutons − / + et de l'arc,
 // °C ou °F, boutons que l'appareil gère, nom de la clim en titre du popup. Tant que

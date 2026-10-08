@@ -299,7 +299,7 @@ def test_commandes_envoyees_du_contrat():
     envoyees = set(re.findall(r'envoyer_tuile\(rt\.r, rt\.t, "(\w+)"\)', choisir))
     envoyees |= set(re.findall(r'u\.envoyer\([\w.()]+, "(\w+)"', choisir))
     envoyees |= set(re.findall(r'choix\("(\w+)",', _fonction(t, "roue_choix")))
-    bascules = _fonction(_lire("Tab5", "tab5_cards.cpp"), "clim_roue_bascules")
+    bascules = _fonction(_lire("Tab5", "tab5_clim.cpp"), "clim_roue_bascules")
     envoyees |= set(re.findall(r"\{'\w', on, \"(\w+)\",", bascules))
     assert envoyees == {"allumer", "eteindre", "ouvrir", "arreter", "fermer", "luminosite_pct", "couleur",
                         "position", "mode", "consigne", "preset", "ventilation", "oscillation"}
@@ -326,7 +326,7 @@ def test_commandes_envoyees_du_contrat():
 def test_bascules_et_consignes_comme_le_popup():
     """Options de la clim : mêmes « actif » et mêmes valeurs que les bascules du popup ;
     consignes : deux pas de chaque côté, dans les bornes, envoyées comme le popup."""
-    cards = _lire("Tab5", "tab5_cards.cpp")
+    cards = _lire("Tab5", "tab5_clim.cpp")
     bascules = _fonction(cards, "clim_roue_bascules")
     for attendu in ("{'e', on, \"preset\", on ? \"none\" : \"away\"}",
                     "{'b', on, \"preset\", on ? \"none\" : \"boost\"}",

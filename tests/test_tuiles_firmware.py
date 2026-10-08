@@ -287,7 +287,7 @@ def test_cles_des_commandes_de_tuile():
     assert ("c.s[0] = 't';\n    c.s[1] = static_cast<char>('0' + r);\n    c.s[2] = static_cast<char>('0' + t);"
             in cle.replace("\r\n", "\n"))
     # Écrite une seule fois : plus de clé « tRT » montée à la main dans le C++ des tuiles et des clims.
-    for fichier in ("tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp", "tab5_cards.cpp"):
+    for fichier in ("tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp", "tab5_clim.cpp"):
         assert "static_cast<char>('0' + " not in _lire("Tab5", fichier), fichier
     # L'événement esphome.tab5_action du script tab5_action, emplacement / action / valeur.
     tuiles_yaml = _lire("Tab5", "tab5-tuiles.yaml")

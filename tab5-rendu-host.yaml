@@ -62,6 +62,7 @@ esphome:
     - Tab5/tab5_services.cpp
     - Tab5/tab5_assist.cpp
     - Tab5/tab5_cards.cpp
+    - Tab5/tab5_clim.cpp
     - Tab5/tab5_console.cpp
     - Tab5/tab5_anim.cpp
     - Tab5/tab5_calendar.cpp

@@ -99,6 +99,8 @@ esphome:
     - Tab5/tab5_services.cpp
     - Tab5/tab5_assist.cpp
     - Tab5/tab5_cards.cpp
+    # Clim (ADR-0026, ADR-0027) : sortie de tab5_cards.cpp le 08/10/2026 (lot L7).
+    - Tab5/tab5_clim.cpp
     - Tab5/tab5_console.cpp
     - Tab5/tab5_anim.cpp
     - Tab5/tab5_calendar.cpp

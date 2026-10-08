@@ -5,7 +5,7 @@
  *       lot L5) : découpe en champs sans copie ni écriture, nombre d'un champ, entier
  *       non signé d'un champ, et le plafond commun de taille d'un payload. Remplace les
  *       six variantes recopiées dans tab5_energie, tab5_historique, tab5_tuiles,
- *       tab5_reglables, tab5_cards et tab5_alertes.
+ *       tab5_reglables, tab5_clim (alors dans tab5_cards) et tab5_alertes.
  * @architecture_constraint Logique PURE, comme tab5_core : ni ESPHome ni LVGL. Compilée
  *       aussi sur PC par tools/test_tab5_socle.cpp (g++ en CI, job `python`). La
  *       journalisation d'un rejet (ESP_LOGW) vit hors d'ici : payload_refuse() et

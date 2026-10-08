@@ -446,7 +446,7 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
             debut = fin + 1;
             continue;
         }
-        // Clims des tuiles (ADR-0027) : « crRT|réglages » et « ceRT|état » (tab5_cards.cpp).
+        // Clims des tuiles (ADR-0027) : « crRT|réglages » et « ceRT|état » (tab5_clim.cpp).
         if (p1 != std::string::npos && p1 < fin &&
             clim_tuile_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
             appliquees++;

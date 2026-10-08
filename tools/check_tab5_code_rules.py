@@ -819,11 +819,10 @@ def chemins_chauds(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
 # moisture_slots_refresh, zone_tuile_absente, zones_pots_presents, central_planning_set_off.)
 PUBLIQUES_SANS_APPELANT = {
     "update_meteo_icon",        # tab5_forecast.cpp : dessin d'une tuile météo
-    "clim_eco_actif",           # tab5_cards.cpp : état des boutons de la clim (lus aussi par tests/test_clim.py)
+    "clim_eco_actif",           # tab5_clim.cpp : état des boutons de la clim (lus aussi par tests/test_clim.py)
     "clim_silence_actif",
     "clim_oscillation_actif",
     "clim_preset_actif",
-    "clim_recolorer",           # tab5_cards.cpp : couleurs de la clim après un changement
     "solaire_present",          # tab5_zones.cpp : production solaire connue
     "ecran_disponible",         # tab5_zones.cpp : écran disponible pour un appui long
     "boutons_haut_apply_ui",    # tab5_zones.cpp : mini icônes des trois boutons du haut

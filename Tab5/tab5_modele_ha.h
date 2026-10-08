@@ -5,7 +5,7 @@
  *       07/10/2026, lot L5) : les tuiles de pièce (tab5_tuiles.cpp, ADR-0023) et la tuile
  *       − / + (tab5_reglables.cpp, ADR-0033). Tailles des textes gardés, comparaison d'un
  *       état, état « hors ligne », code d'icône de la palette ; et la clé d'emplacement
- *       d'une tuile (tuile_cle, lot L7), lue aussi par les clims des tuiles (tab5_cards.cpp).
+ *       d'une tuile (tuile_cle, lot L7), lue aussi par les clims des tuiles (tab5_clim.cpp).
  * @architecture_constraint En-tête seul, pur (ni ESPHome ni LVGL), dans le namespace
  *       `modele_ha` : il est aussi inclus dans main.cpp (includes: des deux
  *       configurations), des noms courts comme `est` ou `kNom` n'y entrent pas. Testé

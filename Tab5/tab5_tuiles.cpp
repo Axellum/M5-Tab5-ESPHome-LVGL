@@ -578,7 +578,7 @@ Gestes gestes(const Def& d, bool clim_connue) {
 }
 
 // La clim d'une tuile cli : celle du blueprint avec l'option m (r = t = -1 pour
-// tab5_cards.cpp, emplacement « clim »), sinon la sienne (tRT, ADR-0027). Lue par la
+// tab5_clim.cpp, emplacement « clim »), sinon la sienne (tRT, ADR-0027). Lue par la
 // fenêtre CLIM et par la roue (capacités, consignes, bascules, jauge, commandes).
 
 ClimCible clim_cible(const Def& d, int r, int t) {

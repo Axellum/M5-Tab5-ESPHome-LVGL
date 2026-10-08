@@ -5,7 +5,7 @@ et toute tuile de clim ouvre le popup pour SA clim (ADR-0027, même jour).
 Le contrat tient en des chaînes qu'aucun compilateur ne compare :
 
 - la clé « climr » de tab5_maj_emplacements, écrite par le blueprint et reconnue par le
-  firmware (tab5_zones.cpp), et ses lettres de capacités (blueprint ↔ tab5_cards.cpp ↔
+  firmware (tab5_zones.cpp), et ses lettres de capacités (blueprint ↔ tab5_clim.cpp ↔
   tableau de l'ADR) ;
 - les clés des clims de tuile « crRT » (mêmes réglages que climr, même modèle Jinja) et
   « ceRT » (champs de tab5_maj_clim, dans le même ordre) ;
@@ -89,7 +89,7 @@ def _lettres_adr():
 
 
 def test_lettres_des_capacites_identiques_partout():
-    cartes = _lire("Tab5", "tab5_cards.cpp")
+    cartes = _lire("Tab5", "tab5_clim.cpp")
     firmware = re.findall(r"clim_capacite\('([a-z])'\)", cartes)
     blueprint = _lettres_blueprint()
     assert blueprint == list("chdfebqsw"), "une fois chacune, dans l'ordre de l'ADR"
@@ -106,14 +106,14 @@ def test_lettres_des_capacites_identiques_partout():
     ("clim_oscillation_actif", "clim_oscillation"),
 ])
 def test_modes_actifs_identiques_au_blueprint(fonction, liste):
-    corps = _corps_fonction(_lire("Tab5", "tab5_cards.cpp"), fonction)
+    corps = _corps_fonction(_lire("Tab5", "tab5_clim.cpp"), fonction)
     assert set(re.findall(r'== "(\w+)"', corps)) == set(_blueprint()["variables"][liste])
 
 
 def test_bascules_et_coloration_par_les_memes_fonctions():
     # Les bascules du popup sont dans le C++ depuis l'ADR-0027 (elles portent sur la clim
     # affichée) : le YAML les appelle, puis envoie ce qu'elles ont posé.
-    cartes = _lire("Tab5", "tab5_cards.cpp")
+    cartes = _lire("Tab5", "tab5_clim.cpp")
     assert 'f = clim_silence_actif(f) ? std::string("auto") : std::string("quiet");' in \
         _corps_fonction(cartes, "clim_popup_silence")
     assert 's = clim_oscillation_actif(s) ? std::string("stop") : std::string("swing");' in \
@@ -151,9 +151,9 @@ def test_plus_de_pas_ni_de_bornes_en_dur_dans_les_boutons():
     popup = _sans_commentaires("Tab5", "ui_components", "climate_popup.yaml")
     assert popup.count("clim_popup_pas(-1)") == 1 and popup.count("clim_popup_pas(+1)") == 1
     assert "clim_target_temp" not in popup and "consigne_suivante(vue_reglages(), base, sens)" in \
-        _corps_fonction(_lire("Tab5", "tab5_cards.cpp"), "clim_popup_pas")
+        _corps_fonction(_lire("Tab5", "tab5_clim.cpp"), "clim_popup_pas")
     # Sans climr : 16-30 et 0,5, comme l'arc du YAML.
-    cartes = _lire("Tab5", "tab5_cards.cpp")
+    cartes = _lire("Tab5", "tab5_clim.cpp")
     for defaut in ("float min = 16.0f;", "float max = 30.0f;", "float pas = 0.5f;"):
         assert defaut in cartes, defaut
     popup = _lire("Tab5", "ui_components", "climate_popup.yaml")
@@ -169,7 +169,7 @@ def _y_yaml(texte, ident):
 
 
 def test_positions_des_options_egales_aux_constantes_du_cpp():
-    cartes = _lire("Tab5", "tab5_cards.cpp")
+    cartes = _lire("Tab5", "tab5_clim.cpp")
     k = {n: int(v) for n, v in re.findall(r"constexpr int32_t (kOptions\w+) = (\d+);", cartes)}
     popup = _lire("Tab5", "ui_components", "climate_popup.yaml")
     y = k["kOptionsY0"]
@@ -416,7 +416,7 @@ def _bloc_etats():
 
 
 def test_cles_cr_et_ce_identiques_des_deux_cotes():
-    cartes = _lire("Tab5", "tab5_cards.cpp")
+    cartes = _lire("Tab5", "tab5_clim.cpp")
     assert 'constexpr char kCleReglagesTuile[] = "cr";' in cartes
     assert 'constexpr char kCleEtatTuile[] = "ce";' in cartes
     etats = _bloc_etats()
@@ -454,7 +454,7 @@ def test_champs_de_ce_dans_l_ordre_de_tab5_maj_clim():
     assert vu == attendu
     assert modele.count("| float('nan')") == 2
     # Le firmware les lit dans cet ordre (consigne, pièce, puis les quatre modes).
-    lire = _corps_fonction(_lire("Tab5", "tab5_cards.cpp"), "lire_etat")
+    lire = _corps_fonction(_lire("Tab5", "tab5_clim.cpp"), "lire_etat")
     assert "e.consigne = k > 0 ?" in lire and "e.piece = k > 1 ?" in lire
     assert "std::string* modes[4] = {&e.mode, &e.preset, &e.ventilation, &e.oscillation};" in lire
 
@@ -475,7 +475,7 @@ def test_popup_commande_la_clim_affichee():
     assert "emplacement: !lambda 'return clim_tuile_attente_cle();'" in tuile
     assert "valeur: !lambda 'return clim_tuile_attente_texte();'" in tuile
     assert "delay: 250ms" in bp and "delay: 250ms" in tuile and "mode: restart" in tuile
-    cartes = _lire("Tab5", "tab5_cards.cpp")
+    cartes = _lire("Tab5", "tab5_clim.cpp")
     assert 'return vue_tuile() ? s_vue_cle : "clim";' in _corps_fonction(cartes, "clim_affichee_cle")
     # La consigne d'une tuile : clé et valeur prises au geste (popup refermé avant l'envoi).
     geste = _corps_fonction(cartes, "consigne_geste")
@@ -484,7 +484,7 @@ def test_popup_commande_la_clim_affichee():
 
 
 def test_carte_de_l_accueil_reste_la_clim_du_blueprint():
-    cartes = _lire("Tab5", "tab5_cards.cpp")
+    cartes = _lire("Tab5", "tab5_clim.cpp")
     recolor = _corps_fonction(cartes, "clim_recolorer")
     assert "ui_text_color(u.consigne_carte, couleur_consigne(u.mode_bp != nullptr ? *u.mode_bp : kSansMode));" in recolor
     recu = _corps_fonction(cartes, "clim_blueprint_recu")
@@ -513,7 +513,7 @@ def test_ouverture_et_fermeture_du_popup():
     assert "if (d.options & OPT_M) return c;" in tuiles.split("ClimCible clim_cible(const Def& d, int r, int t) {", 1)[1]
     # Une tuile redéfinie oublie sa clim ; ses réglages reçus repeignent la tuile (bouton).
     assert "clim_tuile_oublier(r, t);" in tuiles.split("bool tuiles_definir(", 1)[1].split("\n}\n", 1)[0]
-    cartes = _lire("Tab5", "tab5_cards.cpp")
+    cartes = _lire("Tab5", "tab5_clim.cpp")
     assert "tuiles_repeindre(r, t);" in _corps_fonction(cartes, "clim_tuile_recu")
     assert "if (!clim_tuile_connue(r, t)) return false;" in _corps_fonction(cartes, "clim_afficher_tuile")
     # Retour à la clim du blueprint : croix et voile, carte de l'accueil, « Aller à l'écran ».
@@ -531,7 +531,7 @@ def test_ouverture_et_fermeture_du_popup():
 
 
 def test_table_des_clims_de_tuile_en_psram_a_la_demande():
-    cartes = _lire("Tab5", "tab5_cards.cpp")
+    cartes = _lire("Tab5", "tab5_clim.cpp")
     assert "ClimTuile* s_ct = nullptr;" in cartes
     table = _corps_fonction(cartes, "tuile_clim")
     assert "if (!creer) return nullptr;" in table
