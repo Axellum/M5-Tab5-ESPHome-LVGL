@@ -9,7 +9,7 @@ Ces outils écrivent dans le dépôt **sans option** : à lancer exprès, puis r
 | Outil | Réécrit | Quand |
 |---|---|---|
 | `gen_i18n.py` | `Tab5/tab5_i18n_data.h`, depuis `Tab5/lang/*.yaml` | après un nouveau `tr("…")` ou une traduction (`--check` : à jour ?) |
-| `gen_themes.py` | les parties générées de `Tab5/tab5_tokens.h`, `Tab5/tab5-themes.yaml` et `Tab5/tab5_theme.cpp`, depuis `Tab5/themes/*.yaml` | après un thème ou un rôle de couleur (`--check`) |
+| `gen_themes.py` | `Tab5/tab5_themes_data.h` et les parties générées de `Tab5/tab5_tokens.h`, `Tab5/tab5-themes.yaml` et `Tab5/tab5_theme.cpp`, depuis `Tab5/themes/*.yaml` | après un thème ou un rôle de couleur (`--check`) |
 | `gen_tuiles_icones.py` | `Tab5/tab5_tuiles_icones.h`, les glyphes de trois polices MDI de `Tab5/tab5-styles.yaml`, deux tables du blueprint | après `Tab5/tuiles_icones.yaml` (`--check`) |
 | `police_theme.py` | `Tab5/themes/_polices.yaml` (télécharge et mesure les polices Google Fonts des thèmes) | après une police de thème, avant `gen_themes.py` |
 | `cartographie_counts.py --write` | les comptes de lignes de `CARTOGRAPHIE_TAB5.md` | quand `pytest` le demande (sans `--write` : vérifie seulement) |
