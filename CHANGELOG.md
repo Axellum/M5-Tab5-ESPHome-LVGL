@@ -9,6 +9,23 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Changer de thème ne fige plus l'écran
+
+- **Changer de thème, de mode clair ou sombre, ou passer à la nuit en mode Auto bloquait la
+  tablette 3,2 s**, quel que soit le thème (mesuré le 07/10 sur la tablette ; le nouveau thème
+  apparaissait 3,7 à 3,9 s après la demande). Ce n'étaient ni les ombres ni les dégradés, qui ne
+  coûtent que 25 à 32 ms de plus par image sur les deux « Relief » : chacun des 69 styles
+  repeints reparcourait les ~1 600 objets de l'écran et remettait en page tous les textes posés
+  sous ses objets. Les couleurs sont maintenant reposées d'un coup puis l'écran est redessiné
+  une fois ; seuls les objets qui portent l'un des 12 styles de forme (319 comptés sur la
+  tablette) sont remis en page, une seule fois. Les polices (3 styles) et les cases du calendrier
+  (5) gardent leur rafraîchissement par style. Prototype mesuré sur la tablette : 0,18-0,19 s,
+  nouveau thème affiché en 0,44-0,51 s,
+  même géométrie qu'avant sur 5 thèmes. Le démarrage dans un thème autre qu'Ardoise, qui coûtait
+  ~2,95 s de plus, passe par le même chemin (gain non mesuré).
+- `tools/gen_themes.py`, `theme_formes()` (`Tab5/tab5_theme.cpp`) ; `tests/test_themes.py`
+  vérifie que rien d'autre qu'une couleur n'est posé pendant que le rafraîchissement est coupé.
+
 ### 2026-10-07 — Home Assistant : correctifs de l'audit du 07/10, plus de `is_primary_active`
 
 - **Plus de garde-fou `input_boolean.is_primary_active`** (décision de l'auteur) : ce reste de
