@@ -69,14 +69,10 @@ sensor:
             //    portrait démontré dans pinball_game.cpp.
             GameRegistry::dispatch_imu(ax, ay, az);
 
-            // 2) Tap-to-wake : au repos la norme vaut ~1 g ; une tape franche
-            // sur la dalle produit un pic > 2,5 g. Debounce 500 ms.
+            // 2) Tap-to-wake : une tape franche sur la dalle (> 2,5 g, anti-rebond de
+            // 500 ms : imu_tape_franche(), tab5_registry.cpp) rallume l'écran.
             if (!id(tab5_tap_to_wake).state) return;
-            float mag = sqrtf(ax*ax + ay*ay + az*az);
-            static uint32_t last_tap_ms = 0;
-            uint32_t now = millis();
-            if (mag > 2.5f && (now - last_tap_ms) > 500) {
-                last_tap_ms = now;
+            if (imu_tape_franche(ax, ay, az, millis())) {
                 auto call = id(backlight).turn_on();
                 call.perform();
             }
@@ -111,24 +107,12 @@ interval:
   - interval: 1s
     then:
       - lambda: |-
-          static uint32_t cur = 100;   // update_interval du composant, plus haut
-          // Quelles consoles justifient 30 Hz : c'est le drapeau `imu_fast` de
-          // GameRegistry::kGames (tab5_registry.cpp). « Roi Noir », « Dames » et
-          // « Go Tab » l'ont à false : ils n'utilisent l'IMU que pour détecter
-          // une secousse franche (demande d'indice), fiable à 10 Hz — inutile
-          // de payer 30 Hz pendant une partie qui peut durer une demi-heure.
-          // « Neon Apron » l'a à true : un nudge est une secousse de ~150 ms, à
-          // 10 Hz on n'en verrait qu'un échantillon sur deux et le passe-haut
-          // raterait la moitié des coups de hanche.
-          // Écran éteint : on écoute le tap-to-wake (s'il est activé). Un jeu
-          // ouvert (« Dames », « Go », « Trial Poursuite ») lit une secousse à 10 Hz.
-          uint32_t want = 0;   // 0 = pas de lecture (écran allumé, aucun jeu)
-          if (GameRegistry::any_imu_fast_open()) want = 33;
-          else if (GameRegistry::any_open()) want = 100;
-          else if (!id(backlight).current_values.is_on() && id(tab5_tap_to_wake).state) want = 100;
-          if (want == cur) return;
-          cur = want;
+          // Cadence voulue (33 ms, 100 ms ou 0 = plus de lecture) et ses raisons :
+          // imu_cadence_a_changer(), tab5_registry.cpp ; -1 = inchangée.
+          const int32_t cadence = imu_cadence_a_changer(
+              !id(backlight).current_values.is_on() && id(tab5_tap_to_wake).state);
+          if (cadence < 0) return;
           id(tab5_imu).stop_poller();
-          if (want == 0) return;
-          id(tab5_imu).set_update_interval(want);
+          if (cadence == 0) return;
+          id(tab5_imu).set_update_interval(cadence);
           id(tab5_imu).start_poller();

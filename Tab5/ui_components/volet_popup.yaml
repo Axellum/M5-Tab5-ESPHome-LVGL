@@ -48,7 +48,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(volet_popup));" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: volet_popup } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -61,7 +61,7 @@ obj:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           # Titre : le nom de la tuile, posé par popup_volet_peindre().
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F111E", icon_style: "style_text_accent", title: "Volet", title_id: "volet_popup_titre", close_btn_id: "btn_volet_close", close_lambda: "animate_popup_close(id(volet_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F111E", icon_style: "style_text_accent", title: "Volet", title_id: "volet_popup_titre", close_btn_id: "btn_volet_close", popup_id: volet_popup } }
 
           # ═══ CARTE POSITION (gauche) : le volet dessiné, la position, l'état ═══
           - obj:

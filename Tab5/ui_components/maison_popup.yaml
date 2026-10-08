@@ -26,7 +26,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(maison_popup));" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: maison_popup } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -38,7 +38,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F02DC", icon_style: "style_text_accent", title: "Maison", title_id: "maison_popup_titre", close_btn_id: "btn_maison_close", close_lambda: "animate_popup_close(id(maison_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F02DC", icon_style: "style_text_accent", title: "Maison", title_id: "maison_popup_titre", close_btn_id: "btn_maison_close", popup_id: maison_popup } }
 
           # « Éteindre les lumières » : masqué sans aucune lumière (tab5_maison.cpp).
           - button:

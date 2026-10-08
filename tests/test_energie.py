@@ -894,9 +894,9 @@ def test_option_e_du_firmware():
 
 
 def test_popup_au_registre_et_au_select():
-    scripts = _lire(os.path.join(REPO, "Tab5", "tab5-scripts.yaml"))
-    assert re.search(r'ModalRegistry::add\(id\(energie_popup\),\s+"Énergie",\s+ModalRegistry::POPUP\);', scripts)
-    controles = _lire(os.path.join(REPO, "Tab5", "tab5-ha-controls.yaml"))
-    assert '- "Énergie"' in controles and "id(tab5_energie_ouvrir).execute();" in controles
+    navigation = _lire(os.path.join(REPO, "Tab5", "tab5-navigation.yaml"))
+    assert re.search(r'ModalRegistry::add\(id\(energie_popup\),\s+"Énergie",\s+ModalRegistry::POPUP,'
+                     r'\s+\[\] \{ id\(tab5_energie_ouvrir\)\.execute\(\); \}\);', navigation)
+    assert '- "Énergie"' in navigation
     # Le package attend exactement ce nom d'écran.
     assert "states(ecran) != 'Énergie'" in _lire(PACKAGE)
