@@ -439,24 +439,51 @@ def _yaml_lines(path: Path) -> list[str]:
     return ["" if l.lstrip().startswith("#") else l for l in path.read_text(encoding="utf-8").splitlines()]
 
 
+def _widget_fonts(lines: list[str]) -> list[tuple[str, str]]:
+    """(id brut, text_font) des labels d'un YAML, en ligne (`{ id: x, …, text_font: f }`) ou en bloc."""
+    out: list[tuple[str, str]] = []
+    for i, line in enumerate(lines):
+        m = re.search(r"\bid:\s*[\"']?([\w${}]+)", line)
+        if m is None:
+            continue
+        font = RE_TEXT_FONT.search(line)
+        if font is None and "{" not in line:
+            sib = _mapping_siblings(lines, i)
+            if sib.get("id", "").strip("\"'") == m.group(1) and "text_font" in sib:
+                font = RE_TEXT_FONT.search(f"text_font: {sib['text_font']}")
+        if font is not None:
+            out.append((m.group(1), font.group(1)))
+    return out
+
+
+RE_VAR_SIMPLE = re.compile(r"(\w+):\s*(\"[^\"]*\"|'[^']*'|[\w.-]+)")
+
+
 def widget_font_map(sources: list[Path]) -> dict[str, str]:
-    """id de widget → text_font, label en ligne (`{ id: x, …, text_font: f }`) ou en bloc."""
+    """id de widget → text_font. Un gabarit `!include { file, vars }` est aussi déplié avec
+    les vars de chaque inclusion (`id: "icon_sw${n}"` + `n: "0"` → `icon_sw0`), pour que
+    MDI_CODE_TARGETS nomme les ids réels (08/10/2026, cartes du mode HA et tuiles météo)."""
     out: dict[str, str] = {}
     for path in sources:
         if path.suffix != ".yaml":
             continue
         lines = _yaml_lines(path)
-        for i, line in enumerate(lines):
-            m = re.search(r"\bid:\s*[\"']?([\w${}]+)", line)
-            if m is None:
+        for wid, font in _widget_fonts(lines):
+            out[wid] = font
+        for line in lines:
+            inc = RE_INCLUDE_VARS.search(line)
+            if inc is None:
                 continue
-            font = RE_TEXT_FONT.search(line)
-            if font is None and "{" not in line:
-                sib = _mapping_siblings(lines, i)
-                if sib.get("id", "").strip("\"'") == m.group(1) and "text_font" in sib:
-                    font = RE_TEXT_FONT.search(f"text_font: {sib['text_font']}")
-            if font is not None:
-                out[m.group(1)] = font.group(1)
+            template = path.parent / inc.group(1)
+            if not template.is_file():
+                continue
+            valeurs = {k: v.strip("\"'") for k, v in RE_VAR_SIMPLE.findall(inc.group(2))}
+            for wid, font in _widget_fonts(_yaml_lines(template)):
+                if "${" not in wid:
+                    continue
+                reel = re.sub(r"\$\{(\w+)\}", lambda m: valeurs.get(m.group(1), m.group(0)), wid)
+                if "${" not in reel:
+                    out[reel] = font
     return out
 
 

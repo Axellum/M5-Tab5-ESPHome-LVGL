@@ -44,9 +44,9 @@ APPUIS_LONGS = {
     "btn_planning_tap": "home.md",
     "btn_rain_tap": "home.md",
     "ha_alert_panel.yaml": "home.md",
-    "forecast_daily.yaml": "tiles.md",
+    "forecast_day_body.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
-    "switches_card.yaml": "tiles.md",
+    "switch_card.yaml": "tiles.md",
 }
 
 # Fenêtres du rendu que la notice ne montre pas, exprès.

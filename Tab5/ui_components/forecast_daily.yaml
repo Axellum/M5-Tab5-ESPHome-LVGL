@@ -4,17 +4,19 @@
 # @role 5 cartes prévisions journalières (fenêtre glissante sur 15 jours, cf.
 #       `cal_jours_data[15]`/`refresh_daily_forecast()` dans tab5_custom.cpp). Visible quand
 #       `g_central_ctx.forecast_page` est >= 2, piloté par `handle_swipe_gesture()`.
-# @architecture_constraint Onglet Titre (`forecast_day_title_tab.yaml`) et Onglet Température
-#                          (`forecast_day_temp_tab.yaml`) sont factorisés (#T164, même motif x5).
+# @architecture_constraint Une tuile = forecast_day_card.yaml (+ vars), sauf la tuile 1, dont
+#                          le cadre reste écrit ici pour son bouton du sens du volet
+#                          (`btn_j1_dir`, mode héritage seulement) ; son corps et ses onglets
+#                          passent par les mêmes sous-gabarits (forecast_day_body.yaml,
+#                          forecast_day_title_tab.yaml, forecast_day_temp_tab.yaml).
 #                          Pièces (ADR-0023) : sur les pages 2 à 4, ces mêmes objets montrent
 #                          les appareils de la pièce de la page — épaules (icône à gauche,
 #                          ampoule ou flèche à droite) et bouton invisible, posés par
-#                          tab5_tuiles.cpp ; tap / appui long → tuile_appui(T, …). Le corps
-#                          reste écrit cinq fois : les ids des épaules et des boutons sont
-#                          posés dans g_day_slots par l'on_boot de tab5-ha-hmi.yaml, qu'on ne
-#                          modifie pas sans Axel, et les épaules doivent garder des ids
-#                          `icon_card_*` (motif de la règle 7 pour la palette des tuiles).
-#                          `btn_j1_dir` (sens du volet 3.x) ne sert qu'au mode héritage.
+#                          tab5_tuiles.cpp ; tap / appui long → tuile_appui(T, …). Les ids
+#                          des épaules et des boutons restent ceux d'avant : l'on_boot de
+#                          tab5-ha-hmi.yaml (qu'on ne modifie pas sans Axel) les range dans
+#                          g_day_slots, et les épaules gardent des ids `icon_card_*` (motif
+#                          de la règle 7 pour la palette des tuiles), passés par les vars.
 # @ai_instruction Les icônes météo (`jN_icon_layer1/2`) sont mises à jour par
 #                 `update_meteo_icon()`/`refresh_daily_forecast()` (tab5_custom.cpp) — ne jamais
 #                 leur assigner de texte/couleur directement ici.
@@ -30,45 +32,11 @@ obj:
   hidden: false
 
   widgets:
-    # Card 0
-    - obj:
-        x: 25
-        y: ${meteo_cell_y}
-        width: ${meteo_cell_width}
-        height: ${meteo_cell_height}
-        styles: style_transparent
-        scrollbar_mode: "OFF"
-        overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
-        widgets:
-          # Corps Sombre (recouvre les onglets)
-          - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j0_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - label: { id: j0_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - button:
-                    id: btn_j0_action
-                    align: CENTER
-                    y: 0
-                    width: 140
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(0, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(0, true);'
-
-          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
-          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "0", day_label: "Journée" } }
-          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "0", toggle_width: "140" } }
-          # Icônes latérales (épaules) ; la droite n'existait pas avant les pièces (ADR-0023)
-          - label: { id: icon_card_pc, text: "\U000F07C0", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-          - label: { id: icon_card_droite_j0, text: "\U000F0335", hidden: true, align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-    # Card 1
+    # Tuiles 0, 2, 3, 4 : forecast_day_card.yaml (sorti le 08/10/2026, audit YML-3 : le corps
+    # était écrit cinq fois). L'épaule droite de la tuile 0 n'existait pas avant les pièces
+    # (ADR-0023) : cachée au démarrage.
+    - !include { file: forecast_day_card.yaml, vars: { n: "0", x: "25", btn_w: "140", day_label: "Journée", temp_w: "140", gauche_id: icon_card_pc, gauche: "\U000F07C0", droite_id: icon_card_droite_j0, droite: "\U000F0335", droite_masquee: true } }
+    # Tuile 1 : le cadre reste écrit pour le bouton du sens du volet, posé en dernier.
     - obj:
         x: 275
         y: ${meteo_cell_y}
@@ -78,32 +46,10 @@ obj:
         scrollbar_mode: "OFF"
         overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
         widgets:
-          # Corps Sombre
-          - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j1_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - label: { id: j1_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - button:
-                    id: btn_j1_action
-                    align: CENTER
-                    y: 0
-                    width: 140
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(1, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(1, true);'
-
+          - !include { file: forecast_day_body.yaml, vars: { n: "1", btn_w: "140" } }
           # Icônes latérales (épaules)
           - label: { id: icon_card_shutter1, text: "\U000F111E", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
           - label: { id: icon_card_shutter_arrow, text: "\U000F005D", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
           - !include { file: forecast_day_title_tab.yaml, vars: { idx: "1", day_label: "Demain" } }
           - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "1", toggle_width: "130" } }
           - button:
@@ -119,116 +65,6 @@ obj:
               # masqué, la flèche suit l'état du volet de la tuile).
               on_short_click:
                 - lambda: 'tuiles_heritage_volet_sens();'
-    # Card 2
-    - obj:
-        x: 525
-        y: ${meteo_cell_y}
-        width: ${meteo_cell_width}
-        height: ${meteo_cell_height}
-        styles: style_transparent
-        scrollbar_mode: "OFF"
-        overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
-        widgets:
-          # Corps Sombre
-          - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j2_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - label: { id: j2_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - button:
-                    id: btn_j2_action
-                    align: CENTER
-                    y: 0
-                    width: 140
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(2, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(2, true);'
-
-          # Icônes latérales (épaules)
-          - label: { id: icon_card_lit_j2, text: "\U000F02E3", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-          - label: { id: icon_card_light_j2, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
-          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "2", day_label: "2 Jours" } }
-          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "2", toggle_width: "130" } }
-    # Card 3
-    - obj:
-        x: 775
-        y: ${meteo_cell_y}
-        width: ${meteo_cell_width}
-        height: ${meteo_cell_height}
-        styles: style_transparent
-        scrollbar_mode: "OFF"
-        overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
-        widgets:
-          # Corps Sombre
-          - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j3_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - label: { id: j3_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - button:
-                    id: btn_j3_action
-                    align: CENTER
-                    y: 0
-                    width: 140
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(3, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(3, true);'
-
-          # Icônes latérales (épaules)
-          - label: { id: icon_card_salon_j3, text: "\U000F04B9", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-          - label: { id: icon_card_light_j3, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
-          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "3", day_label: "3 Jours" } }
-          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "3", toggle_width: "130" } }
-    # Card 4
-    - obj:
-        x: 1025
-        y: ${meteo_cell_y}
-        width: ${meteo_cell_width}
-        height: ${meteo_cell_height}
-        styles: style_transparent
-        scrollbar_mode: "OFF"
-        overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
-        widgets:
-          # Corps Sombre
-          - obj:
-              y: 35
-              width: 230
-              height: 205
-              styles: style_meteo_card_page
-              scrollbar_mode: "OFF"
-              widgets:
-                - label: { id: j4_icon_layer1, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - label: { id: j4_icon_layer2, text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
-                - button:
-                    id: btn_j4_action
-                    align: CENTER
-                    y: 0
-                    width: 130
-                    height: 130
-                    styles: style_invisible
-                    on_short_click:
-                      - lambda: 'tuile_appui(4, false);'
-                    on_long_press:
-                      - lambda: 'tuile_appui(4, true);'
-          # Icônes latérales (épaules)
-          - label: { id: icon_card_led_j4, text: "\U000F1051", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-          - label: { id: icon_card_light_j4, text: "\U000F0335", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-          # Onglet Titre + Onglet Température : factorises (#T164), meme motif sur les 5 cartes
-          - !include { file: forecast_day_title_tab.yaml, vars: { idx: "4", day_label: "4 Jours" } }
-          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "4", toggle_width: "130" } }
+    - !include { file: forecast_day_card.yaml, vars: { n: "2", x: "525", btn_w: "140", day_label: "2 Jours", temp_w: "130", gauche_id: icon_card_lit_j2, gauche: "\U000F02E3", droite_id: icon_card_light_j2, droite: "\U000F0335", droite_masquee: false } }
+    - !include { file: forecast_day_card.yaml, vars: { n: "3", x: "775", btn_w: "140", day_label: "3 Jours", temp_w: "130", gauche_id: icon_card_salon_j3, gauche: "\U000F04B9", droite_id: icon_card_light_j3, droite: "\U000F0335", droite_masquee: false } }
+    - !include { file: forecast_day_card.yaml, vars: { n: "4", x: "1025", btn_w: "130", day_label: "4 Jours", temp_w: "130", gauche_id: icon_card_led_j4, gauche: "\U000F1051", droite_id: icon_card_light_j4, droite: "\U000F0335", droite_masquee: false } }
