@@ -152,6 +152,46 @@ def test_catalogue_a_jour():
     assert gen_themes.main(["--check"]) == 0
 
 
+# Propriétés de couleur sans drapeau de mise en page, de zone de dessin ni de calque dans
+# LVGL 9.5 (table des drapeaux de src/misc/lv_style.c : 0, ou INHERITABLE pour text_color).
+# Les opacités d'ombre et de contour n'y sont pas : elles changent la zone de dessin.
+COULEURS_SANS_GEOMETRIE = {"bg_color", "bg_grad_color", "border_color", "outline_color", "shadow_color",
+                           "text_color", "arc_color", "line_color", "image_recolor"}
+
+
+def test_bascule_rapide_ne_coupe_le_rafraichissement_que_pour_des_couleurs():
+    """tab5_theme_repeindre repose les couleurs rafraîchissement des styles coupé, puis
+    redessine l'écran une fois (3,2 s → ~0,2 s, mesuré le 07/10/2026). Une propriété de
+    taille, de place ou de zone de dessin posée pendant la coupure resterait sans effet :
+    le bloc généré ne doit y changer que des couleurs, et rallumer puis redessiner."""
+    assert set(gen_themes.PROPS_COULEUR) <= COULEURS_SANS_GEOMETRIE
+    texte = THEMES_YAML.read_text(encoding="utf-8")
+    bloc = re.search(r"# >>> styles[^\n]*\n(.*?)# <<< styles", texte, re.S).group(1)
+    assert bloc.count("lv_obj_enable_style_refresh(false);") == 1
+    assert bloc.count("lv_obj_enable_style_refresh(true);") == 1
+    coupe, apres = bloc.split("lv_obj_enable_style_refresh(false);", 1)[1].split(
+        "lv_obj_enable_style_refresh(true);", 1)
+    assert "lv_obj_invalidate(lv_screen_active());" in apres.split("- lambda:", 1)[0], \
+        "l'écran doit être redessiné juste après la coupure"
+    poses = re.findall(r"lv_style_set_(\w+)\(", coupe)
+    assert poses, "aucune couleur reposée"
+    assert set(poses) <= COULEURS_SANS_GEOMETRIE, sorted(set(poses) - COULEURS_SANS_GEOMETRIE)
+    # Rien d'autre que des couleurs, et rien d'asynchrone (un delay ou un wait_until
+    # laisserait LVGL dessiner, rafraîchissement coupé) : seules actions admises, une lambda
+    # (lv_style_set_* seulement) et lvgl.theme.update (couleurs seulement).
+    for ligne in coupe.splitlines():
+        ligne = ligne.strip()
+        if not ligne or ligne.startswith("//") or ligne.startswith("lv_style_set_"):
+            continue
+        if ligne.startswith("- "):
+            assert ligne in ("- lambda: |-", "- lvgl.theme.update:"), f"pendant la coupure : {ligne}"
+            continue
+        if re.fullmatch(r"\w+:", ligne):  # widget de lvgl.theme.update
+            continue
+        prop = re.match(r"(\w+): !lambda 'return lv_color_hex\(\w+\.\w+\);'$", ligne)
+        assert prop and prop.group(1) in COULEURS_SANS_GEOMETRIE, f"pendant la coupure : {ligne}"
+
+
 def test_premier_theme_sombre_est_la_palette_des_jeux():
     texte = TOKENS.read_text(encoding="utf-8")
     assert "inline constexpr Palette PALETTE_SOMBRE = THEMES[0].sombre;" in texte

@@ -17,9 +17,9 @@ tools/police_theme.py). Écrit :
       de thème, entre `# >>> styles` et `# <<< styles` : chaque couleur de
       `style_definitions:` et du `theme:` (une lambda qui lit `UIColor.X`, ou
       `UIBandeau.X` / `UIHorloge.X` dans le bandeau central et l'horloge) y est reposée
-      depuis la palette active, puis les objets de ce style sont rafraîchis
-      (lv_obj_report_style_change, comme l'action lvgl.style.update) ; suivent l'appel
-      des formes (theme_formes) et des polices (theme_polices) ;
+      depuis la palette active, rafraîchissement des styles coupé, puis l'écran est
+      redessiné une fois (rendre_styles) ; suivent l'appel des formes (theme_formes) et
+      des polices (theme_polices), qui rafraîchissent leurs objets ;
   (d) Tab5/tab5-themes.yaml — les polices des thèmes (bloc `font:`), entre
       `# >>> polices` et `# <<< polices` ;
   (e) Tab5/tab5_theme.cpp — les tables des formes et des polices, entre `// >>> formes`
@@ -389,22 +389,28 @@ def _role_de(valeur, ou: str) -> str:
 
 
 def rendre_styles(styles: Path = STYLES, connus: set[str] | None = None) -> list[str]:
-    """Actions ESPHome qui reposent chaque couleur des styles partagés et du thème."""
+    """Actions ESPHome qui reposent chaque couleur des styles partagés et du thème.
+
+    Rafraîchissement des styles coupé pendant ce temps (lv_obj_enable_style_refresh) :
+    un lv_obj_report_style_change parcourt les ~1 600 objets de l'écran, et chacun
+    recalculait la mise en page de tous les descendants de ses porteurs (3,2 s de boucle
+    bloquée pour 69 appels, mesuré le 07/10/2026). Une couleur ne change ni la taille ni
+    la zone de dessin, et LVGL la lit au dessin (LV_OBJ_STYLE_CACHE à 0) : un seul
+    redessin de l'écran suffit. Les formes (theme_formes) et les polices (theme_polices),
+    qui changent la géométrie, rafraîchissent ensuite leurs objets elles-mêmes."""
     lvgl = _styles_yaml(styles)["lvgl"]
     appels = []
     for style in lvgl.get("style_definitions", []):
-        poses = 0
         for prop in PROPS_COULEUR:
             if prop in style:
                 palette, role = _palette_role(style[prop], f"style {style['id']}.{prop}")
                 if connus is not None and role not in connus:
                     raise ErreurTheme(f"style {style['id']}.{prop} : rôle inconnu {palette}.{role}")
                 appels.append(f"lv_style_set_{prop}(id({style['id']}), lv_color_hex({palette}.{role}));")
-                poses += 1
-        if poses:
-            # Comme l'action lvgl.style.update : seuls les objets de ce style sont rafraîchis.
-            appels.append(f"lv_obj_report_style_change(id({style['id']}));")
-    lignes = ["- lambda: |-"] + [f"    {a}" for a in appels]
+    lignes = ["- lambda: |-",
+              "    // Couleurs seules, sans rafraîchir les objets un style après l'autre : voir",
+              "    // rendre_styles() dans tools/gen_themes.py. Rien ici ne doit changer la géométrie.",
+              "    lv_obj_enable_style_refresh(false);"] + [f"    {a}" for a in appels]
     theme = []
     for widget, props in (lvgl.get("theme") or {}).items():
         couleurs = [(p, _palette_role(props[p], f"theme.{widget}.{p}")) for p in PROPS_COULEUR if p in props]
@@ -412,7 +418,12 @@ def rendre_styles(styles: Path = STYLES, connus: set[str] | None = None) -> list
             theme.append(f"    {widget}:")
             theme += [f"      {p}: !lambda 'return lv_color_hex({pal}.{r});'" for p, (pal, r) in couleurs]
     if theme:
+        # ESPHome y appelle lv_obj_report_style_change : sans effet tant que c'est coupé.
         lignes += ["- lvgl.theme.update:"] + theme
+    lignes += ["- lambda: |-",
+               "    lv_obj_enable_style_refresh(true);",
+               "    // Un seul redessin, de tout l'écran : il couvre aussi les calques du dessus.",
+               "    lv_obj_invalidate(lv_screen_active());"]
     return lignes
 
 
