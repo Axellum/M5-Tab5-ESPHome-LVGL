@@ -20,20 +20,12 @@ import pathlib
 import re
 
 import yaml
+from tests.commun import ChargeurBalisesBrutes as _Chargeur
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 OPTIONS = ["Jamais", "Sur batterie", "Toujours"]
 SCRIPT = "tab5_economie_appliquer"
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-# Balises ESPHome (!lambda, !extend, !include…) : leur valeur brute suffit ici.
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: chargeur.construct_scalar(noeud)
-                                if isinstance(noeud, yaml.ScalarNode) else None)
 
 
 def _yaml(nom):

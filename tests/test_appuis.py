@@ -24,6 +24,7 @@ import pytest
 import yaml
 
 from tests.test_tuiles_blueprint import Passage, _evenement
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TAB5 = os.path.join(REPO, "Tab5")
@@ -32,7 +33,8 @@ ZONES_CPP = os.path.join(TAB5, "tab5_zones.cpp")
 CUSTOM_H = os.path.join(TAB5, "tab5_custom.h")
 LVGL = os.path.join(TAB5, "tab5-lvgl.yaml")
 ZONES_YAML = os.path.join(TAB5, "tab5-zones.yaml")
-CONTROLES = os.path.join(TAB5, "tab5-ha-controls.yaml")
+# Select « Aller à l'écran », tab5_ecran_ouvrir et registre des fenêtres (08/10/2026, YML-2).
+NAVIGATION = os.path.join(TAB5, "tab5-navigation.yaml")
 STYLES = os.path.join(TAB5, "tab5-styles.yaml")
 REGLES = os.path.join(REPO, "tools", "check_tab5_code_rules.py")
 
@@ -64,11 +66,6 @@ EN_TETES = {
 }
 
 
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
-
-
 def _fonction(texte, signature):
     """Corps d'une fonction C++ (accolades équilibrées) à partir de sa signature."""
     debut = texte.index(signature)
@@ -93,11 +90,16 @@ def _codes_firmware():
 
 
 def _bloc_bouton(ident):
-    texte = _lire(LVGL)
-    debut = texte.index(f"id: {ident}\n")
-    fin = texte.find("        - button:", debut)
-    fin = texte.find("        # ====", debut) if fin < 0 else fin
-    return texte[debut:fin]
+    """Le bouton du haut `ident` : ui_components/bouton_haut.yaml (08/10/2026, audit YML-4)
+    déplié avec les vars de son inclusion dans tab5-lvgl.yaml, valeurs écrites comme là-bas."""
+    ligne = re.search(rf"^.*file: ui_components/bouton_haut\.yaml, vars: \{{ id: {ident},.*$", _lire(LVGL), re.M)
+    assert ligne, f"{ident} : pas inclus par bouton_haut.yaml"
+    valeurs = re.findall(r"(\w+):\s*(\"(?:[^\"\\]|\\.)*\"|'[^']*'|\[[^\]]*\]|[\w.-]+)",
+                         ligne.group(0).split("vars:", 1)[1])
+    texte = _lire(os.path.join(TAB5, "ui_components", "bouton_haut.yaml"))
+    for cle, brut in valeurs:
+        texte = texte.replace(f'"${{{cle}}}"', brut).replace(f"${{{cle}}}", brut.strip("\"'"))
+    return texte
 
 
 # ─── Contrat : codes et écrans ────────────────────────────────────────────────
@@ -130,7 +132,7 @@ def test_ecran_suit_les_options_du_select():
     noms = _enum("Ecran")
     assert noms[-2:] == ["ARCADE", "NB"]
     assert noms[:-2] == list(OPTIONS)
-    bloc = _lire(CONTROLES).split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
+    bloc = _lire(NAVIGATION).split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s+- "([^"]+)"', bloc, re.M)
     assert options == list(OPTIONS.values()), "l'index d'une option du select doit rester sa valeur d'Ecran"
 
@@ -166,11 +168,16 @@ def test_trois_boutons_par_la_routine_unique():
 
 
 def test_select_par_la_routine_unique():
-    texte = _lire(CONTROLES)
-    on_value = texte.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[1].split("\n  # Langue", 1)[0]
+    texte = _lire(NAVIGATION)
+    on_value = texte.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[1]
     assert "id: tab5_ecran_ouvrir" in on_value and "switch" not in on_value
-    script = texte.split("- id: tab5_ecran_ouvrir", 1)[1]
-    assert "ecran: int" in script and "Ecran::ARCADE" in script and "tab5_console_ouvrir" in script
+    script = texte.split("- id: tab5_ecran_ouvrir", 1)[1].split("\ntext_sensor:", 1)[0]
+    assert "ecran: int" in script and "Ecran::ARCADE" in script
+    # Pas de switch qui recopierait la liste des écrans : l'ouverture d'un écran est
+    # celle que lui donne le registre (ModalRegistry::ouvrir), sinon animate_popup_open.
+    assert "switch" not in script and "ModalRegistry::ouvrir(target)" in script
+    assert re.search(r'"Console système",\s+ModalRegistry::POPUP,\s+\[\] \{ id\(tab5_console_ouvrir\)\.execute\(\); \}\);',
+                     texte)
     # Une seule ouverture de la console dans tout le firmware : tab5_console_ouvrir.
     ouvertures = []
     for racine, _, fichiers in os.walk(TAB5):

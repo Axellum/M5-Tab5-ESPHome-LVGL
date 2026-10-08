@@ -15,6 +15,7 @@ import re
 
 import pytest
 import yaml
+from tests.commun import ChargeurSansBalises as _Chargeur
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 DOC = REPO / "docs" / "hardware.md"
@@ -27,13 +28,6 @@ ENTETES = {
     "en": "| Function | Pin | In the YAML |",
     "fr": "| Fonction | Broche | Dans le YAML |",
 }
-
-
-class _Chargeur(yaml.SafeLoader):
-    """Lit les YAML ESPHome sans résoudre leurs balises (!include, !lambda, !extend…)."""
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
 def _yaml(chemin):

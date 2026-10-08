@@ -15,21 +15,10 @@ import os
 import re
 
 import yaml
+from tests.commun import ChargeurSansBalises as _Chargeur, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _jetons():
@@ -72,7 +61,8 @@ def test_largeur_des_panneaux_centraux():
     largeur = int(_jetons()["central_w"])
     assert largeur == _constante("tab5_central.cpp", "kLargeurPanneauCentral")
     # Plus de 1180 écrit en clair dans le YAML : tout passe par le jeton.
-    for chemin in (("Tab5", "tab5-lvgl.yaml"), ("Tab5", "ui_components", "ha_alert_panel.yaml")):
+    # Bouton des panneaux : central_bouton.yaml depuis le 08/10/2026 (audit YML-4).
+    for chemin in (("Tab5", "tab5-lvgl.yaml"), ("Tab5", "ui_components", "central_bouton.yaml")):
         texte = _lire(*chemin)
         assert "${central_w}" in texte, "/".join(chemin)
         assert not re.search(r"^\s*width: %d\s*$" % largeur, texte, re.M), "/".join(chemin)

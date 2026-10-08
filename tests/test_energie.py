@@ -22,7 +22,6 @@ import ast
 import datetime as dt
 import os
 import re
-import sys
 from zoneinfo import ZoneInfo
 
 import jinja2
@@ -31,6 +30,7 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 from tests.test_tuiles_blueprint import Etat, Passage, _chercher, _defs, _evenement
+from tests.commun import BaseChargeur, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PACKAGE = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_energie.yaml")
@@ -39,7 +39,6 @@ ENERGIE_CPP = os.path.join(REPO, "Tab5", "tab5_energie.cpp")
 TUILES_CPP = os.path.join(REPO, "Tab5", "tab5_tuiles.cpp")
 API = os.path.join(REPO, "Tab5", "tab5-api-logic.yaml")
 
-sys.path.insert(0, os.path.join(REPO, "tools", "demo"))
 import demo_pusher  # noqa: E402
 import scenarios  # noqa: E402
 
@@ -47,11 +46,6 @@ PARIS = ZoneInfo("Europe/Paris")
 # Un après-midi de juin, 14:37 à Paris (12:37 UTC) : les 5 minutes de 14:30 sont la
 # dernière ligne compilée, celles de 14:35 pas encore.
 MAINTENANT = dt.datetime(2026, 6, 16, 14, 37, 20, tzinfo=PARIS)
-
-
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
 
 
 # ─── Contrat ─────────────────────────────────────────────────────────────────
@@ -133,7 +127,7 @@ def test_demo_dans_le_format():
 
 # ─── Package : imitation de ce que ses modèles appellent dans HA ─────────────
 
-class _Chargeur(yaml.SafeLoader):
+class _Chargeur(BaseChargeur):
     pass
 
 
@@ -882,8 +876,9 @@ def test_blueprint_chaine_liste_ou_vide(entrees, solaires, principal):
 def test_blueprint_ecoute_l_evenement():
     texte = _lire(BLUEPRINT)
     assert re.search(r"event_type: esphome\.tab5_energie\n\s+id: energie\n", texte)
-    # Garde d'origine, « rien de neuf » et « tablette connectée » laissent passer « energie ».
-    assert texte.count("'maj_ecran', 'energie'") == 2 and "'pipeline_discussion', 'energie'" in texte
+    # « Rien de neuf » et « tablette connectée » laissent passer « energie » ; la garde
+    # d'origine suit le type de l'événement (custom_templates/tab5_tablette.jinja, HA-7).
+    assert texte.count("'maj_ecran', 'energie'") == 1 and "'pipeline_discussion', 'energie'" in texte
 
 
 # ─── Firmware ────────────────────────────────────────────────────────────────
@@ -899,9 +894,9 @@ def test_option_e_du_firmware():
 
 
 def test_popup_au_registre_et_au_select():
-    scripts = _lire(os.path.join(REPO, "Tab5", "tab5-scripts.yaml"))
-    assert re.search(r'ModalRegistry::add\(id\(energie_popup\),\s+"Énergie",\s+ModalRegistry::POPUP\);', scripts)
-    controles = _lire(os.path.join(REPO, "Tab5", "tab5-ha-controls.yaml"))
-    assert '- "Énergie"' in controles and "id(tab5_energie_ouvrir).execute();" in controles
+    navigation = _lire(os.path.join(REPO, "Tab5", "tab5-navigation.yaml"))
+    assert re.search(r'ModalRegistry::add\(id\(energie_popup\),\s+"Énergie",\s+ModalRegistry::POPUP,'
+                     r'\s+\[\] \{ id\(tab5_energie_ouvrir\)\.execute\(\); \}\);', navigation)
+    assert '- "Énergie"' in navigation
     # Le package attend exactement ce nom d'écran.
     assert "states(ecran) != 'Énergie'" in _lire(PACKAGE)

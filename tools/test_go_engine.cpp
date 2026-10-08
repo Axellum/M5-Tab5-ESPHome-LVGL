@@ -6,9 +6,11 @@
  *   .\test_go_engine.exe
  *
  * La CI (job `python`, step « Moteur Go C++ ») le compile avec g++ et
- * l'exécute à chaque PR. Le poste de dev n'a qu'un cross-compilateur RISC-V :
- * en local, le miroir Python tools/test_go_engine.py couvre les MÊMES règles
- * sans toolchain. Garder les deux en phase. Vérif de compilation locale :
+ * l'exécute à chaque PR. C'est le SEUL test du moteur Go : son miroir Python
+ * (tools/test_go_engine.py) a été retiré le 08/10/2026 (constat OUT-2 de l'audit
+ * du 07/10/2026) après le report ici de ses cas qui manquaient (œil de coin,
+ * handicaps 9/13/19, carte des territoires, parties aléatoires). Le poste de dev
+ * n'a qu'un cross-compilateur RISC-V ; vérif de compilation locale :
  *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -I Tab5 tools/test_go_engine.cpp Tab5/go_engine.cpp
  *
  * Le brouillon du moteur (≈ 4 Ko) n'existe qu'entre scratch_acquire() et
@@ -123,6 +125,9 @@ static void test_pass_hors_domaine_19() {
     expect(is_legal(p, sq255), "intersection 255 jouable");
     expect(play(p, sq255), "poser en 255");
     expect(p.sq[sq255] == BLACK && p.passes == 0, "pose reelle, pas une passe");
+    expect(p.side == WHITE, "trait a Blanc apres la pose en 255");
+    expect(!is_legal(p, sq255), "255 occupee : placement illegal");
+    expect(is_legal(p, PASS), "PASS reste toujours legal");
 }
 
 static void test_ko_haut_indice_19() {
@@ -143,6 +148,11 @@ static void test_ko_haut_indice_19() {
     expect(play(p, play_sq), "Noir capture ko bas-plateau");
     expect(p.ko == (int16_t) cap_sq, "ko non tronque");
     expect(!is_legal(p, cap_sq), "reprise ko interdite");
+    // Troncature en uint8_t : 312 & 0xFF = 56, une case sans rapport, doit rester jouable.
+    const int fantome = cap_sq & 0xFF;
+    if (p.sq[fantome] == EMPTY) expect(is_legal(p, fantome), "case fantome du ko jouable");
+    expect(play(p, PASS), "Blanc passe");
+    expect(p.ko == (int16_t) PASS, "ko leve apres un autre coup");
 }
 
 static void test_eye() {
@@ -156,6 +166,24 @@ static void test_eye() {
     p.sq[idx(3, 3, 9)] = WHITE;
     p.sq[idx(3, 5, 9)] = WHITE;
     expect(!is_eye(p, idx(4, 4, 9), BLACK), "2 diagonales adverses : plus un oeil");
+    p.sq[idx(3, 3, 9)] = BLACK;
+    p.sq[idx(3, 5, 9)] = BLACK;
+    p.sq[idx(5, 3, 9)] = BLACK;
+    p.sq[idx(5, 5, 9)] = BLACK;
+    expect(is_eye(p, idx(4, 4, 9), BLACK), "oeil complet reconnu");
+    p.sq[idx(3, 3, 9)] = WHITE;
+    expect(is_eye(p, idx(4, 4, 9), BLACK), "1 diagonale adverse toleree au centre");
+    p.sq[idx(3, 5, 9)] = WHITE;
+    expect(!is_eye(p, idx(4, 4, 9), BLACK), "2 diagonales adverses (oeil plein) : plus un oeil");
+    // Dans un coin, aucune diagonale adverse n'est toleree.
+    Pos q;
+    pos_init(q, 9);
+    q.sq[idx(0, 1, 9)] = BLACK;
+    q.sq[idx(1, 0, 9)] = BLACK;
+    q.sq[idx(1, 1, 9)] = BLACK;
+    expect(is_eye(q, idx(0, 0, 9), BLACK), "oeil de coin reconnu");
+    q.sq[idx(1, 1, 9)] = WHITE;
+    expect(!is_eye(q, idx(0, 0, 9), BLACK), "diagonale adverse interdite au coin");
 }
 
 static void test_score_et_morts() {
@@ -197,6 +225,67 @@ static void test_handicap() {
     pos_init(q, 9);
     expect(place_handicap(q, 0) == 0, "handicap 0 = aucune pierre");
     expect(q.side == BLACK, "sans handicap, Noir commence");
+    const int cas[3][2] = {{9, 2}, {13, 5}, {19, 9}};
+    for (const auto& c : cas) {
+        Pos h;
+        pos_init(h, c[0]);
+        const bool pose = place_handicap(h, c[1]) == c[1];
+        int noires = 0;
+        for (int i = 0; i < c[0] * c[0]; i++) noires += h.sq[i] == BLACK ? 1 : 0;
+        expect(pose && noires == c[1] && h.side == WHITE, "handicap pose, toutes noires, Blanc commence (9/13/19)");
+    }
+    Pos h5;
+    pos_init(h5, 9);
+    place_handicap(h5, 5);
+    expect(h5.sq[idx(4, 4, 9)] == BLACK, "handicap 5 inclut le tengen");
+    Pos h6;
+    pos_init(h6, 19);
+    place_handicap(h6, 6);
+    expect(h6.sq[idx(9, 9, 19)] == EMPTY, "handicap 6 n'inclut PAS le tengen");
+}
+
+static void test_territory_map() {
+    Pos p;
+    pos_init(p, 9);
+    for (int c = 0; c < 9; c++) p.sq[idx(4, c, 9)] = BLACK;
+    uint8_t t[MAX_SQ];
+    territory_map(p, nullptr, t);
+    expect(t[idx(0, 0, 9)] == T_BLACK, "le haut est territoire noir");
+    expect(t[idx(8, 0, 9)] == T_BLACK, "le bas aussi (aucun blanc sur le goban)");
+    expect(t[idx(4, 0, 9)] == T_NONE, "une intersection occupee n'est pas du territoire");
+}
+
+// Parties aleatoires (graine fixe) : aucun coup legal refuse, aucune chaine sans liberte
+// laissee sur le goban, sur les trois tailles.
+static void test_parties_aleatoires() {
+    uint32_t graine = 7;
+    auto aleatoire = [&graine](int n) {
+        graine = graine * 1664525u + 1013904223u;
+        return (int) ((graine >> 8) % (uint32_t) n);
+    };
+    bool ok = true;
+    for (int n : {9, 13, 19}) {
+        const int N = n * n;
+        const int parties = n == 9 ? 8 : (n == 13 ? 4 : 2);
+        const int coups_max = n == 9 ? 120 : (n == 13 ? 80 : 60);
+        for (int g = 0; g < parties && ok; g++) {
+            Pos p;
+            pos_init(p, n);
+            for (int k = 0; k < coups_max && ok; k++) {
+                int legaux[MAX_SQ];
+                const int nb = gen_moves(p, legaux, MAX_SQ);
+                if (nb == 0) {
+                    play(p, PASS);
+                    continue;
+                }
+                if (!play(p, legaux[aleatoire(nb)])) ok = false;
+                for (int i = 0; i < N && ok; i++)
+                    if (p.sq[i] != EMPTY && count_liberties(p, i) == 0) ok = false;
+                if (is_over(p)) break;
+            }
+        }
+    }
+    expect(ok, "parties aleatoires 9/13/19 : coups legaux acceptes, aucune chaine sans liberte");
 }
 
 // Jeu fermé, le brouillon n'existe pas : le moteur ne doit rien jouer ni lire
@@ -255,6 +344,8 @@ int main() {
     test_eye();
     test_score_et_morts();
     test_handicap();
+    test_territory_map();
+    test_parties_aleatoires();
     test_brouillon_neuf();
     scratch_release();
     std::printf("=== %s (%d fails) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_fail);

@@ -13,11 +13,12 @@ la mauvaise entité ou reste sans surbrillance. Ce test relit :
   REGLAGES_NB_* (et, pour les langues, que de fichiers dans Tab5/lang/) ;
 - Oui vaut 1 et Non 0 ; les flèches du thème valent −1 et +1 ;
 - tab5_reglages_ouvrir pose chaque bouton à son index (Oui en 0, Non en 1) ;
-- les fenêtres inscrites au registre (tab5-scripts.yaml) tiennent dans ModalRegistry::MAX."""
+- les fenêtres inscrites au registre (tab5-navigation.yaml) tiennent dans ModalRegistry::MAX."""
 import pathlib
 import re
 
 import yaml
+from tests.commun import ChargeurBalisesBrutes as _Chargeur, lire as _lire
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
@@ -26,25 +27,12 @@ SCRIPTS = TAB5 / "tab5-reglages.yaml"
 
 BOUTON = re.compile(r"file: reglages_choix_btn\.yaml, vars: \{ id: (\w+), x: \d+, y: \d+, w: \d+, "
                     r"reglage: (\d+), valeur: (-?\d+), label_text: \"([^\"]*)\" \}")
-FLECHE = re.compile(r"file: alarm_step_script_btn\.yaml, .*call: \{ id: tab5_reglages_choisir, "
-                    r"reglage: (\d+), valeur: (-?\d+) \}")
+FLECHE = re.compile(r"file: bouton_pas\.yaml, .*appui: \[ script\.execute: \{ id: tab5_reglages_choisir, "
+                    r"reglage: (\d+), valeur: (-?\d+) \} \]")
 # Champ de ReglagesUI de chaque réglage à boutons (le thème a ses flèches et son nom).
 CHAMPS = {"REGLAGE_EXTINCTION": "extinction", "REGLAGE_OKAY_NABU": "okay_nabu", "REGLAGE_TAPE": "tape",
           "REGLAGE_MODE": "mode", "REGLAGE_NUIT": "nuit", "REGLAGE_LANGUE": "langue"}
 OUI_NON = ("REGLAGE_OKAY_NABU", "REGLAGE_TAPE", "REGLAGE_NUIT")
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-# Balises ESPHome (!lambda, !include…) : leur valeur brute suffit ici.
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: chargeur.construct_scalar(noeud)
-                                if isinstance(noeud, yaml.ScalarNode) else None)
-
-
-def _lire(chemin):
-    return chemin.read_text(encoding="utf-8")
 
 
 def _entete():
@@ -135,7 +123,7 @@ def test_ouvrir_pose_chaque_bouton_a_son_index():
 
 
 def test_registre_des_fenetres_assez_grand():
-    inscrites = _lire(TAB5 / "tab5-scripts.yaml").count("ModalRegistry::add(")
+    inscrites = _lire(TAB5 / "tab5-navigation.yaml").count("ModalRegistry::add(")
     m = re.search(r"constexpr int MAX = (\d+);", _lire(TAB5 / "tab5_registry.h"))
     assert m and inscrites > 10, "les motifs ne reconnaissent plus le registre"
     assert inscrites <= int(m.group(1)), f"{inscrites} fenêtres pour ModalRegistry::MAX = {m.group(1)}"

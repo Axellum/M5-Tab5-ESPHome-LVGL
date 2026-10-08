@@ -25,19 +25,17 @@ nulle part doit figurer dans CHAMPS_NON_LUS, avec sa raison.
 Les noms des événements eux-mêmes (émis ↔ écoutés) : tests/test_actions_ha.py. Les
 comptes et tables de la documentation : tests/test_doc_comptes.py."""
 import re
-import sys
 from pathlib import Path
 
 import yaml
 
 from tests.test_actions_ha import _Chargeur, _fichiers_firmware, _parcourir
+from tests.commun import fichiers_du_depot
 
 REPO = Path(__file__).resolve().parent.parent
 HA = REPO / "HomeAssistant_Config"
 API_LOGIC = REPO / "Tab5" / "tab5-api-logic.yaml"
 BOUCHONS = REPO / "Tab5" / "rendu" / "bouchons.yaml"
-sys.path.insert(0, str(REPO / "tools" / "demo"))
-sys.path.insert(0, str(REPO / "tools" / "rendu"))
 
 import demo_pusher  # noqa: E402
 import ecrans  # noqa: E402
@@ -105,7 +103,8 @@ def test_lecture_de_la_demo_egale_a_celle_de_pyyaml():
 # ─── Les appels de HA ────────────────────────────────────────────────────────
 
 def _fichiers_ha():
-    return sorted(p for p in HA.rglob("*.yaml") if p.name != "placeholders.example.yaml")
+    # Sans les fichiers ignorés par git (rendered/, placeholders.yaml) : en local comme en CI.
+    return [p for p in fichiers_du_depot(HA, "*.yaml") if p.name != "placeholders.example.yaml"]
 
 
 def appels_ha():
@@ -131,6 +130,12 @@ def test_les_appels_de_ha_sont_trouves():
     lignes = sum(len(re.findall(r"^\s*(?:- )?(?:action|service):\s*[\"']?esphome\.",
                                 chemin.read_text(encoding="utf-8"), re.M))
                  for chemin in _fichiers_ha())
+    # Un appel posé sous une ancre (`- &maj_clim` du blueprint, HA-8) puis repris par
+    # son alias (`- *maj_clim`) compte une fois de plus.
+    for chemin in _fichiers_ha():
+        texte = chemin.read_text(encoding="utf-8")
+        ancres = set(re.findall(r"^\s*- &(\w+)\s*\n\s*(?:action|service):\s*[\"']?esphome\.", texte, re.M))
+        lignes += sum(1 for a in re.findall(r"^\s*- \*(\w+)\s*$", texte, re.M) if a in ancres)
     assert len(appels) == lignes and len(appels) > 20, (len(appels), lignes)
     assert {"HomeAssistant_Config/packages/tab5_push.yaml",
             "HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml",

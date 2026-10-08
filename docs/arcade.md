@@ -89,7 +89,9 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
    pour un classement, `tilt_calibrate`/`tilt_smooth` pour l'inclinaison,
    `accel_delta_norm`/`shake_fire` pour une secousse — le jeu garde ses seuils) au lieu de les recopier, et garde sa **palette locale** `<Jeu>::Pal`
    dans son `.h` — `tab5_custom.h` n'est jamais touché pour un jeu (ADR-0014). Un
-   moteur de règles (échecs, Go, dames) a son **miroir Python** dans `tools/`.
+   moteur de règles (échecs, Go, dames) a son test hôte C++ dans `tools/` (`test_*.cpp`,
+   compilé par g++ dans le job `python` de la CI, qui fait foi) ; échecs et dames gardent
+   aussi un miroir Python, pour le poste de dev qui n'a pas de g++.
 7. **Langue** (lot 4b, 27/09/2026) : chaque texte affiché passe par `tr("…")`
    (`tr_noop("…")` dans une table, puis `tr(table[i])` à l'affichage), avec sa ligne
    dans `Tab5/lang/en.yaml` ; la page du jeu s'ajoute à la liste d'`i18n_apply_boot()`
@@ -473,10 +475,9 @@ position grâce à une table des chaînes construite une seule fois par nœud
   contexte LVGL mono-thread et ne doit rien mettre de gros sur la pile.
 - `go_ai.h/.cpp` — IA time-slicée
 - `go_game.h/.cpp` + `ui_components/go_game.yaml` — UI / NVS
-- Tests : `tools/test_go_engine.py` (**miroir Python exécutable sans toolchain**,
-  c'est le test de référence en local) ; `tools/test_go_engine.cpp`, la même suite
-  contre le vrai C++, compilée par g++ et exécutée en CI (job `python`). Toute
-  modification des règles doit être répercutée dans les deux.
+- Tests : `tools/test_go_engine.cpp`, contre le vrai C++, compilé par g++ et exécuté
+  en CI (job `python`). Son miroir Python, qui faisait double emploi, est retiré depuis
+  le 08/10/2026 (audit du 07/10/2026, OUT-2) : une règle modifiée se teste dans ce fichier.
 
 ### NVS
 
@@ -497,8 +498,9 @@ prend celui du moteur lui-même.
 $env:ESPHOME_ESP_IDF_PREFIX = "C:\espidf"
 esphome clean tab5-ha-hmi.yaml
 esphome run tab5-ha-hmi.yaml --device 192.168.x.x
-python tools/test_go_engine.py
 ```
+
+Le test du moteur (`tools/test_go_engine.cpp`) tourne en CI : le poste de dev n'a pas de g++.
 
 ---
 
@@ -549,9 +551,12 @@ YAML ne déclare que 4 conteneurs vides.
 
 **Plein écran 1280×720** sur `page_draughts`, IA embarquée time-slicée, 100 % local.
 Moteur et IA dans `draughts_ai.*`, UI et machine à états dans `draughts_game.*`.
-Tests : `tools/test_draughts_engine.py` — miroir Python du générateur de coups
-(`Draughts::Engine`), perft de référence des deux variantes (10×10 : 9, 81, 658,
-4 265, 27 117… ; 8×8 : 7, 49, 302, 1 469…) et tests de règles, joué par `pytest`.
+Tests : `tools/test_draughts_engine.cpp` — le vrai générateur de coups (`Draughts::Engine`,
+extrait de `draughts_game.cpp` par `tools/hote/extraire_moteur_dames.py`), compilé par g++
+sous ASan + UBSan dans le job `python` de la CI : perft de référence des deux variantes
+(10×10 : 9, 81, 658, 4 265, 27 117… jusqu'à 1 049 442 ; 8×8 : 7, 49, 302, 1 469… jusqu'à
+845 931) et tests de règles. Il fait foi ; `tools/test_draughts_engine.py`, son miroir Python,
+rejoue les mêmes cas sans g++ (`pytest`).
 
 ### Lancer / quitter
 
@@ -789,7 +794,9 @@ exemple depuis un `on_boot` de priorité basse :
   créé en C++ comme enfant de `chess_root`.
 - `ChessPieces.ttf` + `ChessPieces.LICENSE.txt` — figurines (12 glyphes).
 - `tools/make_chess_font.py` — régénère le sous-ensemble de police.
-- `tools/test_chess_perft.py` — miroir Python du générateur, suite perft.
+- `tools/test_chess_engine.cpp` — le vrai générateur contre la suite perft, sous ASan +
+  UBSan, en CI (job `python`) : il fait foi. `tools/test_chess_perft.py`, son miroir Python,
+  rejoue la même suite sans g++ (`pytest`).
 - Palette locale `Chess::Pal` : `tab5_custom.h` n'est pas modifié. Seul ajout à
   `tab5-styles.yaml` : la police `chess_pieces_80` (aucun token de couleur).
 

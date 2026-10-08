@@ -43,7 +43,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(appareil_popup));" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: appareil_popup } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -56,7 +56,7 @@ obj:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           # Titre : le nom de la tuile, posé par popup_appareil_peindre().
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F07D0", icon_style: "style_text_accent", title: "Appareil", title_id: "appareil_popup_titre", close_btn_id: "btn_appareil_close", close_lambda: "animate_popup_close(id(appareil_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F07D0", icon_style: "style_text_accent", title: "Appareil", title_id: "appareil_popup_titre", close_btn_id: "btn_appareil_close", popup_id: appareil_popup } }
 
           # ═══ CARTE ÉTAT (gauche) : pastille, état en mots, pièce, options ═══
           - obj:

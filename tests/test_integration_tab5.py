@@ -22,7 +22,6 @@ import yaml
 
 REPO = Path(__file__).resolve().parent.parent
 INTEGRATION = REPO / "custom_components" / "tab5"
-sys.path.insert(0, str(REPO / "tools" / "publication"))
 
 import archive_ha  # noqa: E402
 import archive_hacs  # noqa: E402
@@ -110,7 +109,9 @@ def test_traductions_completes():
 
 def test_constantes_lues_dans_les_packages():
     ha = REPO / "HomeAssistant_Config" / "packages"
-    assert f"'{const.MODELE_TABLETTE}'" in (ha / "tab5_evenements.yaml").read_text(encoding="utf-8")
+    # Le modèle de la tablette : dans la macro partagée par les packages (HA-7).
+    macros = REPO / "HomeAssistant_Config" / "custom_templates" / "tab5_tablette.jinja"
+    assert f"'{const.MODELE_TABLETTE}'" in macros.read_text(encoding="utf-8")
     sante = (ha / f"{const.PACKAGE_TEMOIN}.yaml").read_text(encoding="utf-8")
     assert f"default_entity_id: {const.CAPTEUR_VERSION}" in sante
     assert installation.PACKAGE_VERSION == f"packages/{const.PACKAGE_TEMOIN}.yaml"

@@ -24,7 +24,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(historique_popup));" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: historique_popup } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -36,7 +36,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F050F", icon_style: "style_text_info", title: "Température", title_id: "historique_popup_titre", close_btn_id: "btn_historique_close", close_lambda: "animate_popup_close(id(historique_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F050F", icon_style: "style_text_info", title: "Température", title_id: "historique_popup_titre", close_btn_id: "btn_historique_close", popup_id: historique_popup } }
 
           # ═══ CHIFFRES : maintenant, minimum, maximum (+ prévu pour la seconde) ═══
           - !include { file: historique_carte.yaml, vars: { n: "0" } }
