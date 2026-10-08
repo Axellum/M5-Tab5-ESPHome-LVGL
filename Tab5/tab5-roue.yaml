@@ -58,6 +58,6 @@ script:
           choix(3, id(roue_choix_3), id(roue_choix_3_icone), id(roue_choix_3_texte), id(roue_choix_3_legende));
           choix(4, id(roue_choix_4), id(roue_choix_4_icone), id(roue_choix_4_texte), id(roue_choix_4_legende));
           choix(5, id(roue_choix_5), id(roue_choix_5_icone), id(roue_choix_5_texte), id(roue_choix_5_legende));
-          // Lien « Maison » : la routine unique d'ouverture d'un écran (tab5-ha-controls.yaml).
+          // Lien « Maison » : la routine unique d'ouverture d'un écran (tab5-navigation.yaml).
           roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };
           roue_brancher();
