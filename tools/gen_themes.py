@@ -53,7 +53,8 @@ qui le distingue de lui dans tab5-styles.yaml (ex. les onglets restent sans bord
 Le premier thème (`ordre: 1`) est l'état compilé de tab5-styles.yaml : ni formes, ni
 polices, ni zones.
 
-Polices. `polices: {horloge: "Famille@graisse", date: …, titre: …}` (Google Fonts) :
+Polices. `polices: {horloge: "Famille@graisse", date: …, titre: …}` (Google Fonts, fichier figé
+dans Tab5/fonts/ par tools/police_theme.py) :
 l'heure (rouleaux et sonnerie), la date sous l'horloge, les titres (en-têtes des
 popups, titre de la carte centrale). Taille et position viennent de _polices.yaml ;
 les glyphes absents du fichier sont dessinés par la Roboto du même rôle (repli).
@@ -706,7 +707,10 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
         font_yaml = ["font:"]
         for f in sorted(fontes.values(), key=lambda x: x["id"]):
             glyphes = "".join(sorted(f["glyphes"])).replace("'", "''")
-            font_yaml += [f"  - file: gfonts://{f['famille']}@{f['graisse']}",
+            # Fichier figé du dépôt (Tab5/fonts/, police_theme.fichier()), pas gfonts:// :
+            # Google Fonts ne change plus le firmware en silence (audit du 07/10/2026, DO-15).
+            ttf = _police_theme().fichier(f["famille"], f["graisse"]).relative_to(REPO).as_posix()
+            font_yaml += [f'  - file: "{ttf}"',
                           f"    id: {f['id']}",
                           f"    size: {f['taille']}",
                           "    bpp: 2",
