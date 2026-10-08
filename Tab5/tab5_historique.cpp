@@ -168,15 +168,7 @@ int index_de(const std::string& nom, const char* const* noms, int nb) {
 }
 
 // --- Dates (axe des temps) : calendrier civil, sans fuseau (heure locale de HA) ---------
-
-int64_t jours_depuis_civil(int a, int m, int j) {
-    a -= m <= 2 ? 1 : 0;
-    const int64_t ere = (a >= 0 ? a : a - 399) / 400;
-    const int64_t ae = a - ere * 400;
-    const int64_t jda = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + j - 1;
-    const int64_t jde = ae * 365 + ae / 4 - ae / 100 + jda;
-    return ere * 146097 + jde - 719468;
-}
+// Date → jour : jour_civil() (tab5_core.h) ; jour → date : moment() ci-dessous.
 
 struct Moment {
     int annee = 2000, mois = 1, jour = 1, heure = 0, minute = 0, wday = 0;
@@ -740,7 +732,7 @@ void historique_recu(const std::string& cle, const std::string& vue, const std::
         mo = jo = 1;
         he = mi = 0;
     }
-    s.debut_jour = jours_depuis_civil(an, mo, jo);
+    s.debut_jour = jour_civil(an, mo, jo);   // année bornée à 1970..2200 : tient en 32 bits
     s.debut_min = he * 60 + mi;
     const float pas = lire_minutes(champ_suivant(p, fin, '|'));
     s.pas = std::isnan(pas) || pas < 1.0f || pas > kPasMax ? 60 : static_cast<int32_t>(pas);

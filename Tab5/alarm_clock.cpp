@@ -29,21 +29,12 @@ static int clamp_i(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : 
 // quand la journée est du repos, mais AUSSI quand le service commence la veille
 // (le gabarit HA ne remplit les heures que si `target_date in ev_start`) — d'où
 // le -1 distinct de « pas de travail », que l'appelant traite différemment.
-static int parse_shift_start(const std::string& h) {
-  if (h.size() < 5 || h[2] != ':') return -1;
-  const int hh = atoi(h.substr(0, 2).c_str());
-  const int mm = atoi(h.substr(3, 2).c_str());
-  if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return -1;
-  return hh * 60 + mm;
-}
+static int parse_shift_start(const std::string& h) { return hhmm_minutes(h, 0); }
 
 // "HH:MM-HH:MM" -> minutes depuis minuit de la FIN (la « fermeture »), -1 sinon.
 static int parse_shift_end(const std::string& h) {
-  if (h.size() < 11 || h[5] != '-' || h[8] != ':') return -1;
-  const int hh = atoi(h.substr(6, 2).c_str());
-  const int mm = atoi(h.substr(9, 2).c_str());
-  if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return -1;
-  return hh * 60 + mm;
+  if (h.size() < 11 || h[5] != '-') return -1;
+  return hhmm_minutes(h, 6);
 }
 
 // Epoch local d'une heure murale précise à J+offset. On construit le tm complet
@@ -516,8 +507,9 @@ bool rdv_due(time_t now, int lead_min, std::string& out_screen, std::string& out
     // français lisent mal le deux-points), et une phrase complète ponctuée pour
     // que la prosodie ne parte pas en liste.
     char spk[224];
-    const int hh = atoi(std::string(h).substr(0, 2).c_str());
-    const int mm = atoi(std::string(h).substr(3, 2).c_str());
+    const int hhmm = hhmm_minutes(h);  // écrit par rdv_hhmm : toujours lisible
+    const int hh = hhmm < 0 ? 0 : hhmm / 60;
+    const int mm = hhmm < 0 ? 0 : hhmm % 60;
     char heure_parlee[24];
     if (mm == 0) {
       snprintf(heure_parlee, sizeof(heure_parlee), tr("%d heures"), hh);

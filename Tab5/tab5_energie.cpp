@@ -102,14 +102,7 @@ int vue_de(const std::string& nom) {
     return -1;
 }
 
-// --- Dates (axe des jours) ---------------------------------------------------------------
-
-bool bissextile(int a) { return (a % 4 == 0 && a % 100 != 0) || a % 400 == 0; }
-int jours_du_mois(int a, int m) {
-    static constexpr int kJours[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    if (m < 1 || m > 12) return 31;
-    return (m == 2 && bissextile(a)) ? 29 : kJours[m - 1];
-}
+// Dates de l'axe des jours : jours_du_mois() (tab5_core.h).
 
 // --- Dessin ------------------------------------------------------------------------------
 

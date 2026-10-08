@@ -40,8 +40,6 @@ constexpr int32_t kLigneH = 56;
 constexpr size_t kTexteMax = 96;
 // Au-delà de 2100, une heure lue est fausse (« -1 » donne 4294967295) : comme absente.
 constexpr uint32_t kEpochMax = 4102444800u;
-// Avant 2020, l'heure de la tablette n'est pas encore réglée : pas de « aujourd'hui ».
-constexpr time_t kHeureValide = 1577836800;
 
 struct Ligne {
     uint32_t apparue = 0;
@@ -76,7 +74,8 @@ void heure_txt(char* out, size_t n, uint32_t epoch) {
     const time_t maintenant = tab5_time_source(nullptr);
     struct tm auj = {};
     localtime_r(&maintenant, &auj);
-    if (maintenant < kHeureValide || (lt.tm_year == auj.tm_year && lt.tm_yday == auj.tm_yday)) {
+    // Heure de la tablette pas encore réglée (tab5_heure_valide) : pas de « aujourd'hui ».
+    if (!tab5_heure_valide(maintenant) || (lt.tm_year == auj.tm_year && lt.tm_yday == auj.tm_yday)) {
         snprintf(out, n, "%s", hm);
         return;
     }

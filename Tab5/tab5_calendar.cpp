@@ -111,14 +111,6 @@ bool cal_day_has_embedded_detail(int year, int month, int day) {
     return !cal_cached_day_detail(year, month, day).empty();
 }
 
-static int cal_days_in_month(int y, int m) {
-    static const int dm[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    if (m < 1 || m > 12) return 30;
-    int d = dm[m - 1];
-    if (m == 2 && ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0)) d = 29;
-    return d;
-}
-
 // Jour de la semaine (0 = lundi ... 6 = dimanche), algorithme de Sakamoto —
 // aucune dépendance à mktime/timezone, valable pour tout le calendrier grégorien.
 static int cal_weekday_mon0(int y, int m, int d) {
@@ -351,7 +343,7 @@ void cal_render_month(lv_obj_t* lbl_month,
     lv_label_set_text(lbl_month, buf);
 
     const int first_col = cal_weekday_mon0(view_year, view_month, 1);
-    const int ndays = cal_days_in_month(view_year, view_month);
+    const int ndays = jours_du_mois(view_year, view_month);
 
     const CalMonthData* data = nullptr;
     const auto it = s_cal_month_cache.find(cal_cache_key(view_year, view_month));
@@ -459,7 +451,7 @@ void cal_render_month(lv_obj_t* lbl_month,
 std::string cal_date_for_cell(int view_year, int view_month, int cell_idx) {
     if (view_month < 1 || view_month > 12 || cell_idx < 0 || cell_idx >= 42) return "";
     const int day = cell_idx - cal_weekday_mon0(view_year, view_month, 1) + 1;
-    if (day < 1 || day > cal_days_in_month(view_year, view_month)) return "";
+    if (day < 1 || day > jours_du_mois(view_year, view_month)) return "";
     char buf[16];
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d", view_year, view_month, day);
     return std::string(buf);

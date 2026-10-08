@@ -18,6 +18,7 @@
 #include "tab5_internal.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <algorithm>
 #include <cmath>
 #include <ctime>
 #include <cstring>
@@ -354,7 +355,7 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
     out_l1.clear();
     out_l2.clear();
 
-    time_t now_raw = time(nullptr);
+    time_t now_raw = tab5_time_source(nullptr);
     if (now_raw <= 0) {
         out_l1 = planning_vide();
         return;
@@ -377,12 +378,11 @@ void build_planning_lines_from_jours(std::string& out_l1, std::string& out_l2) {
         const std::string& h = d.heures_ouverture;
         if (h.size() < 11 || d.est_repos) continue;  // "HH:MM-HH:MM"
 
-        const int start_h = atoi(h.substr(0, 2).c_str());
-        const int start_m = atoi(h.substr(3, 2).c_str());
         // Aujourd'hui : ignorer le créneau s'il a déjà commencé (même règle que l'ancien Jinja HA)
+        // Un début illisible compte comme 00:00 (déjà commencé), comme avant.
         if (jour == 0) {
             const int now_min = now_tm.tm_hour * 60 + now_tm.tm_min;
-            if (now_min >= start_h * 60 + start_m) continue;
+            if (now_min >= std::max(0, hhmm_minutes(h))) continue;
         }
 
         std::string j_name;

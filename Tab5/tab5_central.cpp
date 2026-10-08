@@ -762,8 +762,8 @@ static void rain_phrase_render() {
         const char* label = rain_level_label(s.niveau);
         // Minutes entières, arrondies vers zéro comme le `| int` de l'ancien modèle.
         // Heure pas encore valide (avant NTP et RX8130) : pas de décompte.
-        const time_t now = time(nullptr);
-        const long minutes = (s.debut > 0 && now > 1600000000) ? (long) ((s.debut - (int64_t) now) / 60) : 0;
+        const time_t now = tab5_time_source(nullptr);
+        const long minutes = (s.debut > 0 && tab5_heure_valide(now)) ? (long) ((s.debut - (int64_t) now) / 60) : 0;
         if (minutes <= 0) snprintf(buf, sizeof(buf), "%s", label);
         else snprintf(buf, sizeof(buf), tr("%s dans %ld mn"), label, minutes);
     }
