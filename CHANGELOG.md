@@ -9,6 +9,23 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Intégration HACS : trois défauts de l'audit du 07/10 (lot L11)
+
+- **Fichiers refusés plus réessayés à chaque démarrage** : quand la vérification de la
+  configuration refusait les fichiers d'une version, l'intégration refaisait le même essai à
+  chaque redémarrage de Home Assistant, avec une sauvegarde de plus, identique, qui poussait
+  les utiles hors des 5 gardées. Ces fichiers-là ne sont plus réessayés que sur demande
+  (*Configurer* → « Réinstaller maintenant les fichiers de cette version ») ou quand HACS en
+  apporte d'autres, et une sauvegarde identique à la précédente n'est plus refaite.
+- **Fichiers copiés à la main signalés** : une première installation remplaçait sans le dire
+  des fichiers du Tab5 déjà copiés à la main. Nouvelle réparation « Tab5 : des fichiers déjà
+  là ont été remplacés », qui les liste et nomme la sauvegarde ; la notification les nomme
+  aussi.
+- **Mise à jour de la tablette réessayée** : l'attente du firmware était oubliée avant même
+  de lancer la mise à jour, et rien ne réessayait un OTA raté. Elle reste jusqu'à ce que la
+  tablette donne la nouvelle version ; sinon nouvel essai toutes les 15 minutes, 3 en tout,
+  puis la réparation « Tab5 : la tablette n'est pas passée en X » dit de l'installer à la main.
+
 ### 2026-10-08 — Garde-fous de l'audit du 07/10 (lot L6)
 
 - **Six règles de plus** dans `tools/check_tab5_code_rules.py` (jouées par `pytest`), chacune
