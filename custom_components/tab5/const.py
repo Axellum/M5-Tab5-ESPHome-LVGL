@@ -33,6 +33,11 @@ ISSUE_FICHIERS_ABSENTS = "fichiers_absents"
 ISSUE_CONFIGURATION = "configuration_invalide"
 ISSUE_PACKAGES = "packages_absents"
 ISSUE_REDEMARRAGE = "redemarrage_requis"
+# Fichiers du Tab5 déjà là (copiés à la main) et différents, remplacés : persistante, elle
+# reste après un redémarrage jusqu'à ce que l'utilisateur la valide.
+ISSUE_REMPLACES = "fichiers_remplaces"
+# La tablette n'a toujours pas la version après firmware.ESSAIS_MAX essais (firmware.py).
+ISSUE_FIRMWARE = "firmware_echec"
 
 # Paramètre {signaler} de « configuration_invalide » : hassfest refuse une URL écrite
 # dans les traductions.
