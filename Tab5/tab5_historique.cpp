@@ -33,6 +33,7 @@
  *       tests/test_historique.py les lit tous. Un texte affiché passe par tr().
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "esp_heap_caps.h"
 #include "lvgl.h"
 #include <cmath>
@@ -60,25 +61,21 @@ constexpr int kBandesPrevMax = 10;
 constexpr int kGrilleMax = 6;               // 5 intervalles au plus
 constexpr int kAxeMax = 12;
 
-// Géométrie (historique_popup.yaml) : corps du popup x 24..1226, y 72..670 ; cartes de
-// 150 px en haut (y 72), carte du graphique de 432 px en dessous (y 238).
-constexpr int32_t kCorpsX = 24;
-constexpr int32_t kCorpsW = 1202;
-constexpr int32_t kEcart = 16;
+// Géométrie (historique_popup.yaml) : corps du popup x 24..1226, y 72..670 (kCorpsX,
+// kCorpsW, kCartesEcart : tab5_geometrie.h) ; cartes de 150 px en haut (y 72), carte du
+// graphique de 432 px en dessous (y 238).
 constexpr int32_t kMargeTexte = 44;         // 22 px de chaque côté
 // Carte du graphique : titre à gauche jusqu'aux boutons de vue (3 × 150 + 2 × 10, à 18 px
 // du bord droit).
-constexpr int32_t kTitreW = 1202 - 22 - 488 - 24;
-// Zone du tracé (historique_zone, 1166 × 344) : graduations à gauche, tracé, axe des
-// temps, légende.
-constexpr int32_t kZoneW = 1166;
+constexpr int32_t kTitreW = kCorpsW - 22 - 488 - 24;
+// Zone du tracé (historique_zone, kGraphiqueL × 344) : graduations à gauche, tracé, axe des
+// temps (libellés de kAxeLibelleL px, texte centré), légende.
 constexpr int32_t kGradW = 52;              // libellés des degrés, alignés à droite
 constexpr int32_t kTraceX0 = 64;
 constexpr int32_t kTraceX1 = 1146;
 constexpr int32_t kTraceY0 = 30;
 constexpr int32_t kTraceY1 = 266;
 constexpr int32_t kAxeY = 276;
-constexpr int32_t kAxeW = 120;              // largeur d'un libellé de l'axe, texte centré
 constexpr int32_t kLegendeY = 312;
 constexpr int32_t kPoint = 14;              // pastille de la valeur actuelle
 
@@ -269,13 +266,13 @@ void peindre_cartes(const Serie& s) {
     HistoriqueUI& u = g_historique_ui;
     const bool prevu = s_cle == SERRE;
     const int n = prevu ? NB_CARTES : NB_CARTES - 1;
-    const int32_t largeur = (kCorpsW - (n - 1) * kEcart) / n;
+    const int32_t largeur = (kCorpsW - (n - 1) * kCartesEcart) / n;
     for (int c = 0; c < NB_CARTES; c++) {
         const bool montre = c < n;
         ui_hidden(u.carte[c], !montre);
         if (!montre || u.carte[c] == nullptr) continue;
         if (lv_obj_get_style_width(u.carte[c], LV_PART_MAIN) != largeur) lv_obj_set_width(u.carte[c], largeur);
-        ui_x(u.carte[c], kCorpsX + c * (largeur + kEcart));
+        ui_x(u.carte[c], kCorpsX + c * (largeur + kCartesEcart));
     }
     const Bilan b = s.recue ? bilan(s) : Bilan();
     char d[64], x[24];
@@ -334,9 +331,9 @@ Echelle echelle(float lo, float hi) {
 
 void peindre_libelle_centre(lv_obj_t* l, const char* txt, int32_t x) {
     ui_text(l, txt);
-    int32_t g = x - kAxeW / 2;
+    int32_t g = x - kAxeLibelleL / 2;
     if (g < 0) g = 0;
-    if (g > kZoneW - kAxeW) g = kZoneW - kAxeW;
+    if (g > kGraphiqueL - kAxeLibelleL) g = kGraphiqueL - kAxeLibelleL;
     ui_x(l, g);
     ui_hidden(l, false);
 }
@@ -667,12 +664,12 @@ void construire() {
     lv_obj_set_style_border_opa(s_point, LV_OPA_COVER, LV_PART_MAIN);
     s_maintenant = libelle(u.zone);
     lv_obj_set_y(s_maintenant, 0);
-    lv_obj_set_width(s_maintenant, kAxeW);
+    lv_obj_set_width(s_maintenant, kAxeLibelleL);
     lv_obj_set_style_text_align(s_maintenant, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     for (int k = 0; k < kAxeMax; k++) {
         lv_obj_t* l = libelle(u.zone);
         lv_obj_set_y(l, kAxeY);
-        lv_obj_set_width(l, kAxeW);
+        lv_obj_set_width(l, kAxeLibelleL);
         lv_obj_set_style_text_align(l, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         s_axe[k] = l;
     }

@@ -24,6 +24,7 @@
  *       sans le package. tests/test_zones.py vérifie qu'elles concordent.
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -636,7 +637,7 @@ void zones_apply_ui() {
     moisture_slots_refresh();
     rangee_appliquer_ui();
     {
-        int32_t largeur = 1250;  // modal_card_w (tab5-ui-tokens.yaml)
+        int32_t largeur = kCarteL;  // modal_card_w (tab5_geometrie.h)
         for (lv_obj_t* c : u.pot_card) {
             if (c == nullptr) continue;
             const int32_t w = lv_obj_get_style_width(lv_obj_get_parent(c), LV_PART_MAIN);

@@ -24,6 +24,7 @@
  *       energie_icone_* par MDI_CODE_TARGETS (règle 9).
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include <cmath>
 #include <cstdio>
@@ -41,17 +42,14 @@ constexpr int kSlots[NB_VUES] = {24, 30, 12};
 constexpr int kSlotsMax = 30;
 constexpr int kAxeMax = 12;
 
-// Géométrie (energie_popup.yaml) : corps du popup x 24..1226, y 72..670.
-constexpr int32_t kCorpsX = 24;
-constexpr int32_t kCorpsW = 1202;
-constexpr int32_t kEcart = 16;
+// Géométrie (energie_popup.yaml) : corps du popup x 24..1226, y 72..670 (kCorpsX, kCorpsW,
+// kCartesEcart : tab5_geometrie.h).
 constexpr int32_t kCartesY = 72;            // avec le graphique
 constexpr int32_t kCartesSeulesY = 266;     // sans : centrées dans le corps (598 − 210) / 2
 constexpr int32_t kMargeTexte = 44;         // 22 px de chaque côté
-// Zone des barres (energie_zone, 1166 × 286) : maximum en haut, repère, barres, axe.
-constexpr int32_t kZoneW = 1166;
+// Zone des barres (energie_zone, kGraphiqueL × 286) : maximum en haut, repère, barres, axe ;
+// libellés de l'axe de kAxeLibelleL px, texte centré (tab5_geometrie.h).
 constexpr int32_t kBordX = 20;              // marge : le premier libellé de l'axe tient entier
-constexpr int32_t kAxeW = 120;              // largeur d'un libellé de l'axe, texte centré
 constexpr int32_t kBarresHaut = 34;
 constexpr int32_t kBarresBas = 252;
 constexpr int32_t kAxeY = 258;
@@ -165,14 +163,14 @@ void peindre_instant() {
         return;
     }
     // Cartes visibles réparties sur toute la largeur du corps, dans l'ordre.
-    const int32_t largeur = (kCorpsW - (n - 1) * kEcart) / n;
+    const int32_t largeur = (kCorpsW - (n - 1) * kCartesEcart) / n;
     const int32_t y = graphique ? kCartesY : kCartesSeulesY;
     int k = 0;
     for (int c = 0; c < NB_CARTES; c++) {
         ui_hidden(u.carte[c], !montre[c]);
         if (!montre[c] || u.carte[c] == nullptr) continue;
         if (lv_obj_get_style_width(u.carte[c], LV_PART_MAIN) != largeur) lv_obj_set_width(u.carte[c], largeur);
-        ui_x(u.carte[c], kCorpsX + k * (largeur + kEcart));
+        ui_x(u.carte[c], kCorpsX + k * (largeur + kCartesEcart));
         ui_y(u.carte[c], y);
         k++;
     }
@@ -317,7 +315,7 @@ void peindre_graphique() {
         ui_text(s_maximum, buf);
     }
     const int nb = s.n > 0 ? s.n : kSlots[s_vue];
-    const int32_t pas = (kZoneW - 2 * kBordX) / nb;
+    const int32_t pas = (kGraphiqueL - 2 * kBordX) / nb;
     const int32_t largeur = pas * 7 / 10;
     const int32_t hauteur_max = kBarresBas - kBarresHaut;
     int axe = 0;
@@ -342,8 +340,8 @@ void peindre_graphique() {
             lv_obj_t* l = s_axe[axe++];
             ui_text(l, buf);
             ui_hidden(l, false);
-            // Centré sous sa barre (largeur fixe kAxeW, texte centré dedans).
-            ui_x(l, kBordX + k * pas + pas / 2 - kAxeW / 2);
+            // Centré sous sa barre (largeur fixe kAxeLibelleL, texte centré dedans).
+            ui_x(l, kBordX + k * pas + pas / 2 - kAxeLibelleL / 2);
         }
     }
     for (; axe < kAxeMax; axe++) ui_hidden(s_axe[axe], true);
@@ -367,7 +365,7 @@ void construire() {
     s_repere = lv_obj_create(u.zone);
     lv_obj_remove_style_all(s_repere);
     lv_obj_set_pos(s_repere, kBordX, kBarresHaut);
-    lv_obj_set_size(s_repere, kZoneW - 2 * kBordX, 1);
+    lv_obj_set_size(s_repere, kGraphiqueL - 2 * kBordX, 1);
     lv_obj_set_style_bg_color(s_repere, lv_color_hex(UIColor.GLASS_RIM), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(s_repere, LV_OPA_40, LV_PART_MAIN);
     lv_obj_remove_flag(s_repere, LV_OBJ_FLAG_CLICKABLE);
@@ -395,12 +393,12 @@ void construire() {
         lv_obj_add_flag(b, LV_OBJ_FLAG_HIDDEN);
         s_barres[k] = b;
     }
-    // Libellés de l'axe, texte centré dans kAxeW : un tous les trois pas en heures (138 px),
+    // Libellés de l'axe, texte centré dans kAxeLibelleL : un tous les trois pas en heures (138 px),
     // cinq en jours (187 px) ; en mois un pas fait 93 px et le nom court (« Janv ») tient.
     for (int k = 0; k < kAxeMax; k++) {
         lv_obj_t* l = libelle(u.zone);
         lv_obj_set_y(l, kAxeY);
-        lv_obj_set_width(l, kAxeW);
+        lv_obj_set_width(l, kAxeLibelleL);
         lv_obj_set_style_text_align(l, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         s_axe[k] = l;
     }

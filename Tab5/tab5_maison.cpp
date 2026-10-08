@@ -36,6 +36,7 @@
  *       son « Détails » ouvre le popup de la tuile devant Maison, qui reste derrière.
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include <cstdio>
 
@@ -43,15 +44,11 @@ MaisonUI g_maison_ui;
 
 namespace {
 
-constexpr int kPieces = 5;
-constexpr int kTuiles = 5;
-
-// Géométrie (maison_popup.yaml, tab5-ui-tokens.yaml) : carte modale de 1250 px, corps à
-// y = 72 sous la barre de titre (ADR-0009), marges et écarts de 12 px entre colonnes.
-constexpr int32_t kCarteL = 1250;
+// Géométrie (maison_popup.yaml, tab5-ui-tokens.yaml) : carte modale de kCarteL px, corps à
+// y = kCorpsY sous la barre de titre (ADR-0009 ; kPieces, kTuiles, kCarteL, kCarteH,
+// kCorpsY : tab5_geometrie.h), marges et écarts de 12 px entre colonnes.
 constexpr int32_t kMarge = 12;
 constexpr int32_t kEcart = 12;
-constexpr int32_t kCorpsY = 72;
 // En-tête de colonne (40 px), puis les lignes (104 px, 8 px d'écart).
 constexpr int32_t kEnteteH = 40;
 constexpr int32_t kEnteteX = 6;       // le nom, un peu en retrait du bord de la colonne
@@ -63,8 +60,7 @@ constexpr int32_t kLignesY = kCorpsY + kEnteteH + kLigneEcart;
 constexpr int32_t kTexteX = 80;
 constexpr int32_t kTexteFin = 12;
 constexpr int32_t kPlusPlace = 36 + 12 + 8;
-// Hauteur de la carte (tab5-ui-tokens.yaml, modal_card_h) : la dernière ligne y tient.
-constexpr int32_t kCarteH = 690;
+// Hauteur de la carte (kCarteH) : la dernière ligne y tient.
 static_assert(kLignesY + kTuiles * kLigneH + (kTuiles - 1) * kLigneEcart <= kCarteH - kMarge,
               "les cinq lignes d'une pièce tiennent dans la carte");
 

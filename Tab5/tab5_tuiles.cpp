@@ -45,6 +45,7 @@
  */
 #include "tab5_internal.h"
 #include "tab5_tuiles_icones.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include <esp_attr.h>
 #include <algorithm>
@@ -55,9 +56,7 @@
 
 namespace {
 
-constexpr int kPieces = 5;
-constexpr int kTuiles = 5;
-// Pièce de chaque page du bas (index = g_central_ctx.forecast_page) : R0 = page 2 (accueil),
+// kPieces et kTuiles : tab5_geometrie.h. Pièce de chaque page du bas (index = g_central_ctx.forecast_page) : R0 = page 2 (accueil),
 // R1 = 3, R2 = 4, R3 = 1, R4 = 0 — l'ordre où un swipe les atteint depuis l'accueil.
 constexpr int kPieceDePage[kPieces] = {4, 3, 0, 1, 2};
 
@@ -914,7 +913,7 @@ void peindre_cartes() {
     int n = 0;
     for (int t = 0; t < kTuiles; t++)
         if (u.carte[t] != nullptr && tuile_presente(r, t)) n++;
-    int32_t x = (1280 - (n * 250 - 20)) / 2;
+    int32_t x = (kEcranL - (n * 250 - 20)) / 2;
     for (int t = 0; t < kTuiles; t++) {
         const bool presente = tuile_presente(r, t);
         ui_hidden(u.carte[t], !presente);

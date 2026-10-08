@@ -26,6 +26,7 @@
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <esp_heap_caps.h>
@@ -86,8 +87,7 @@ float s_clim_piece = NAN;
 // ne pas les renommer sans lui (tests/test_clim.py).
 constexpr char kCleReglagesTuile[] = "cr";
 constexpr char kCleEtatTuile[] = "ce";
-constexpr int kPieces = 5;
-constexpr int kTuiles = 5;
+// kPieces et kTuiles : tab5_geometrie.h.
 // Modes gardés sur 15 octets au plus : la chaîne reste dans son std::string (petite
 // chaîne, sans allocation). Aucun mode de HA n'est plus long.
 constexpr size_t kModeMax = 15;
