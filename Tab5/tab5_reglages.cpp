@@ -37,6 +37,7 @@
  */
 #include "tab5_internal.h"
 #include "tab5_economie.h"  // economie_sur_batterie() : ligne « État » de la page Batterie
+#include "tab5_themes_data.h"  // THEMES[] : nom du thème choisi
 
 #include <cstdio>
 #include <string>

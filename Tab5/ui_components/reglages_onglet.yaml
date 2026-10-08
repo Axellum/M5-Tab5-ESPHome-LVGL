@@ -20,6 +20,6 @@ button:
   styles: style_clim_btn
   pressed: { bg_opa: 30% }
   on_short_click:
-    - lambda: 'reglages_afficher_page(${page});'
+    - lambda: 'if (!ui_appui_glisse()) reglages_afficher_page(${page});'
   widgets:
     - label: { text: "${label_text}", align: CENTER, width: 190, text_align: CENTER, long_mode: DOT }

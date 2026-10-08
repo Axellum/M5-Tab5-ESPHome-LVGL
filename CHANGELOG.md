@@ -36,6 +36,163 @@ de la tuile − / + (#379).
 - `tools/test_alarm_clock.cpp` (chargeur, limite, alerte, console), `tests/test_batterie.py`
   (câblage YAML) ; `docs/troubleshooting.md`, `docs/hardware.md`.
 
+### 2026-10-08 — YAML du firmware rangé (lot L8 de l'audit du 07/10)
+
+Rien ne doit changer à l'écran ni pour Home Assistant (mêmes entités, mêmes options, mêmes
+codes gardés en mémoire) : la configuration résolue ne diffère que par l'endroit où le code
+est écrit, deux identifiants ajoutés et l'ordre de deux widgets qui ne se chevauchent pas.
+- **Gabarits au lieu de copies** : tuiles journalières (`forecast_day_card.yaml`,
+  `forecast_day_body.yaml`), cartes du mode HA (`switch_card.yaml`), boutons du haut
+  (`bouton_haut.yaml`), boutons des panneaux centraux (`central_bouton.yaml`) ; un seul bouton à
+  pas pour le réveil et les Réglages (`bouton_pas.yaml`, à la place de deux) ; le chrome des
+  popups se ferme par `popup_id` au lieu d'une lambda écrite deux fois.
+- **Navigation à part** : `Tab5/tab5-navigation.yaml` réunit le registre des fenêtres,
+  `tab5_ecran_ouvrir`, « Aller à l'écran » et « Écran courant ». Le registre donne aussi
+  l'ouverture de chaque écran : le `switch` qui recopiait la liste des écrans disparaît.
+- **Logique en C++** : humidité des plantes (`pots_humidite_maj()`, un script au lieu de cinq
+  copies), tap-to-wake et cadence de l'IMU (plus de `static` dans une lambda), retour
+  automatique à l'accueil (`retour_auto_tick()`).
+
+### 2026-10-08 — Tests et CI de l'audit du 07/10 (lot L9)
+
+- **Les vrais moteurs d'échecs et de dames sont testés en CI**, sous ASan + UBSan, par le job
+  `python` : `tools/test_chess_engine.cpp` (`chess_ai.cpp` contre la suite perft) et
+  `tools/test_draughts_engine.cpp` (le moteur de `draughts_game.cpp` contre les perft 10×10 et
+  8×8 et les règles). Ils font foi ; les miroirs Python restent pour un poste sans g++, tenus égaux
+  par `tests/test_moteurs_hote.py`. Le miroir Python du Go, en double, est retiré : ses cas
+  manquants sont passés dans `tools/test_go_engine.cpp`.
+- **`pytest` en 47 s au lieu de 175 s** sur le poste de dev : blueprint et tableau de bord lus
+  une fois par session, gabarits Jinja compilés une fois, YAML lu par libyaml. `tests/commun.py`
+  et `tests/conftest.py` remplacent les chargeurs, lectures et `sys.path.insert` recopiés dans
+  53 fichiers. `pyserial` est installé : `tests/test_capture_serie.py` ne saute plus en CI.
+- `tests/test_contrat.py` ne lit plus `HomeAssistant_Config/rendered/` (ignoré par git) : en local,
+  les mêmes fichiers qu'en CI.
+- **Rendu hors tablette compilé une fois** (tâche `compiler`, programme passé aux neuf tâches
+  `rendu`) ; paquets pip en cache dans le rendu et les sanitizers. Dependabot suit aussi
+  `tools/site`, `tools/demo` et `tools/publication`.
+
+### 2026-10-08 — Home Assistant : factorisation des packages et du blueprint (lot L11)
+
+- **Une macro « la tablette »**, `custom_templates/tab5_tablette.jinja` : « une tablette est
+  connectée » (recopié 7 fois), la garde d'origine des événements `esphome.tab5_*` (6 fois) et le
+  capteur « HA API Status » de la tablette n'existent plus qu'ici, importés par les packages et
+  le blueprint.
+- **Blueprint « Tab5 — emplacements »** : les déclencheurs des 5 pièces et des 3 lignes de la
+  rangée sont écrits par `tools/gen_blueprint_emplacements.py` (`--check`, tenu par
+  `tests/test_blueprint_genere.py`) ; la liste des déclenchements qui poussent tout (recopiée
+  9 fois) devient la variable `tout_pousser`, l'action de la clim (2 fois) une ancre YAML. Mêmes
+  entrées, mêmes déclencheurs.
+- **Volet à course simulée** (optionnel) : un seul script chronomètre la course,
+  `script.tab5_volet_course`, appelé par la tablette et par le suivi des commandes directes ; sa
+  durée est le nouveau réglage « Tab5 · course du volet » (`number.tab5_course_du_volet`, mémoire
+  `input_text.tab5_memoire_course_volet`), **26 s par défaut, comme avant**. Une commande de la
+  tablette pendant une course lancée d'ailleurs annule maintenant ce premier chrono.
+- **Syntaxe actuelle de HA** (`triggers:`, `conditions:`, `actions:`, `- trigger:`) dans tous les
+  packages, l'optionnel et le snippet, et des noms « Tab5 — … » pour les automatisations et
+  scripts (« Tab5 — poussée complète de l'écran », « Tab5 — santé : … », « Tab5 — volet : … »).
+  Les `id:` ne changent pas : les entity_id des automatisations restent les mêmes.
+- **Moins de calculs** : le compte des entités indisponibles de la carte Santé
+  (`sensor.tab5_unavailable_count`) se fait par filtres et toutes les 5 min au lieu de 2 ; les
+  listes « Tab5 · … » (agendas, téléphone, présence, sources météo, TV, volet) ne se recalculent
+  plus sur une mise à jour du registre qui ne touche que capabilities, supported_features, options
+  ou suggested_object_id (419 des 485 événements du registre chez l'auteur en une semaine).
+- **Alerte « entités indisponibles »** : la liste gardée en mémoire est bornée à 100 entités
+  (elle grossissait sans fin) ; le nombre affiché par la tablette compte toujours toutes les
+  entités.
+- **Repli de la météo** (`custom_templates/tab5_meteo.jinja`, nouveau) : tant que l'entité
+  choisie dans « Tab5 · source des prévisions » est indisponible, ou sans relève depuis 2 h
+  (`last_reported`), la météo actuelle et les prévisions viennent d'une autre entité météo qui
+  répond (OpenWeatherMap, Météo-France, puis n'importe laquelle), et reviennent toutes seules à
+  la source choisie ; la liste garde le choix. Sans aucune entité qui répond, les poussées météo
+  sont sautées : l'écran garde ses dernières prévisions au lieu de « indisponible » à 0 °C (le
+  08/10, Météo-France indisponible de 11 h 34 à 11 h 42 chez l'auteur, OpenWeatherMap marchait).
+  Après 5 min de repli, la carte centrale affiche une alerte « Météo : OpenWeatherMap utilisé,
+  Météo-France indisponible depuis 11 h 34 », retirée au retour de la source ; la vue Santé du
+  tableau de bord montre la source utilisée. Nouveaux attributs de `sensor.tab5_meteo` :
+  `entite_effective`, `nom_effectif`, `nom_choisi`, `repli`, `repli_depuis`, `repli_heure`.
+  Pluie et vigilances inchangées.
+- Retiré : le snippet obsolète `snippets/tab5_alerts_dismissed_input_text.yaml`. Documenté (EN et
+  FR) : l'alerte « erreur de rendu » demande `system_log: fire_event: true` dans
+  `configuration.yaml`.
+
+**À faire en mettant à jour** (fichiers Home Assistant seulement, pas de firmware) :
+
+1. Copier **d'abord** `custom_templates/tab5_tablette.jinja` et `custom_templates/tab5_meteo.jinja`
+   (nouveaux), `custom_templates/tab5_alertes.jinja` et `custom_templates/tab5_dashboard.jinja`,
+   puis **Outils de développement → YAML → Modèles Jinja
+   personnalisés** (`homeassistant.reload_custom_templates`). Avant ce rechargement, les packages
+   et le blueprint qui importent la macro échouent à leur condition (la poussée s'arrête).
+   L'intégration HACS recharge les modèles en premier.
+2. Puis les packages (`tab5_push`, `tab5_health`, `tab5_reveil`, `tab5_alerts`, `tab5_calendar`,
+   `tab5_reglages`, `tab5_evenements`, `tab5_meteo_sources`, `tab5_historique`, `tab5_tv`), le blueprint
+   `tab5_emplacements.yaml` (réimporter un blueprint importé par son URL) et, s'il est installé,
+   `optionnel/volet_serre_tracking.yaml`.
+3. Recharger **Entrées de texte**, **Entités de modèle**, **Scripts** et **Automatisations** (ou
+   redémarrer HA). Nouvelles entités, seulement avec le volet optionnel :
+   `number.tab5_course_du_volet`, `input_text.tab5_memoire_course_volet`,
+   `script.tab5_volet_course`. Aucune entité retirée.
+4. Pour voir la ligne « Source météo » de la vue Santé : régénérer le tableau de bord du Tab5.
+
+### 2026-10-08 — Données générées des thèmes et polices figées (lot L12)
+
+Rien ne change à l'écran : mêmes couleurs, mêmes formes, mêmes fichiers de police.
+
+- **Retoucher un thème ne recompile plus tout le firmware.** Le catalogue des 21 thèmes
+  (`THEMES[]`, ~2 800 lignes générées) quitte `Tab5/tab5_tokens.h`, inclus par 26 unités C++ dont
+  deux jeux, pour `Tab5/tab5_themes_data.h`, inclus par `tab5_theme.cpp` et `tab5_reglages.cpp`
+  seulement. `tab5_tokens.h` passe de 3 125 à 273 lignes et ne garde que `PALETTE_SOMBRE`, que
+  `THEMES[0]` reprend. `tools/gen_themes.py` écrit le nouveau fichier ; `tests/test_themes.py`
+  vérifie qu'il est à jour et que personne d'autre ne l'inclut.
+- **Tables des thèmes liées à leur nombre** : des `static_assert` générés lient `kPolices`,
+  `kFormesDebut` et leurs sentinelles à `THEME_COUNT` ; une table périmée ne compile plus.
+- **Rôle de couleur `ICON_MUTED` retiré** : rien ne le lisait (66 rôles). Un test échoue
+  désormais sur un rôle que rien ne lit.
+- **Polices figées dans le dépôt** : Roboto 700 et les 20 polices des thèmes étaient des
+  `gfonts://`, redemandées à Google Fonts chaque jour par ESPHome ; une nouvelle version chez
+  Google changeait le firmware sans un mot. Les fichiers (`Tab5/fonts/`, 3,6 Mo, SIL OFL 1.1,
+  copyrights dans `Tab5/fonts/OFL.txt`) sont ceux que Google servait, octet pour octet ;
+  `tests/test_polices_themes.py` vérifie leur empreinte et qu'aucune police n'est plus
+  téléchargée à la compilation.
+- Polices des thèmes en mémoire (PERF-2 de l'audit) : aucun glyphe retiré, et toutes restent
+  compilées. La police de la date dessine aussi les textes libres de 45 px (réponse vocale,
+  alertes, planning, carte centrale) dans les 7 langues, et ESPHome ne sait pas charger une police
+  à la demande (raisons dans l'ADR-0029).
+
+### 2026-10-08 — Écritures gardées et petites optimisations (lot L10)
+
+Aucun changement visible : les mêmes valeurs, écrites seulement quand elles changent (en LVGL
+9.5.0, `lv_label_set_text()` et `lv_obj_set_style_*()` invalident même à valeur égale). Gain non
+mesuré sur la tablette.
+- **Popup Température** : le titre n'est plus écrit deux fois à chaque repeint ;
+  `peindre_graphique()` (≈ 200 lignes) découpé en onze étapes nommées, mêmes calculs.
+- **Repeints sans réécriture égale** : lignes du popup Alertes, bordures des boutons
+  (`highlight_button_border()` : vues Température et Énergie, bascules du réveil, assistant),
+  popup et sonnerie du réveil, grille du calendrier, titres de page, bandeau info et pluie,
+  pastilles des pages ; `set_label_text_utf8()` ne copie plus son texte.
+- **Tick de 1 s** : il ne relance plus le script du registre des fenêtres une fois la liste
+  remplie. Écran éteint, il referme toujours les popups après l'inactivité, pour se rallumer
+  sur l'accueil.
+- **Une seule recette** : les pastilles sous l'horloge passent par `pagination_afficher()` ; la
+  garde « appui au bout d'un glissement » devient `ui_appui_glisse()` ; `ui_style_num()` et
+  `ui_style_couleur()` rejoignent la boîte à outils d'`AGENTS.md`.
+
+### 2026-10-08 — Intégration HACS : trois défauts de l'audit du 07/10 (lot L11)
+
+- **Fichiers refusés plus réessayés à chaque démarrage** : quand la vérification de la
+  configuration refusait les fichiers d'une version, l'intégration refaisait le même essai à
+  chaque redémarrage de Home Assistant, avec une sauvegarde de plus, identique, qui poussait
+  les utiles hors des 5 gardées. Ces fichiers-là ne sont plus réessayés que sur demande
+  (*Configurer* → « Réinstaller maintenant les fichiers de cette version ») ou quand HACS en
+  apporte d'autres, et une sauvegarde identique à la précédente n'est plus refaite.
+- **Fichiers copiés à la main signalés** : une première installation remplaçait sans le dire
+  des fichiers du Tab5 déjà copiés à la main. Nouvelle réparation « Tab5 : des fichiers déjà
+  là ont été remplacés », qui les liste et nomme la sauvegarde ; la notification les nomme
+  aussi.
+- **Mise à jour de la tablette réessayée** : l'attente du firmware était oubliée avant même
+  de lancer la mise à jour, et rien ne réessayait un OTA raté. Elle reste jusqu'à ce que la
+  tablette donne la nouvelle version ; sinon nouvel essai toutes les 15 minutes, 3 en tout,
+  puis la réparation « Tab5 : la tablette n'est pas passée en X » dit de l'installer à la main.
+
 ### 2026-10-08 — Garde-fous de l'audit du 07/10 (lot L6)
 
 - **Six règles de plus** dans `tools/check_tab5_code_rules.py` (jouées par `pytest`), chacune

@@ -1,0 +1,34 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 3x par tab5-lvgl.yaml : un des
+# trois boutons du haut à droite de l'accueil (habillage verre de Domo/Discu). Sorti le
+# 08/10/2026 (audit, YML-4) : géométrie, appui long et mini icône étaient écrits trois fois.
+# Vars : id (btn_control_ha / _console / _tv, lus par tab5-tuiles.yaml et les tests),
+#        x (855 / 995 / 1135 : bord droit à 1260, comme le bandeau central),
+#        bouton (valeur de BoutonHaut, tab5_custom.h),
+#        appui (actions du tap, liste d'actions ESPHome passée telle quelle),
+#        icone_id / icone (icône centrale, mdi_font_70),
+#        mini_id / mini (mini icône en haut à droite, mdi_font_26 : l'écran qu'ouvre
+#        l'appui long ; glyphe et visibilité posés par boutons_haut_apply_ui(),
+#        tab5_zones.cpp ; ce glyphe-ci n'est que celui d'avant la première image).
+# Appui long : l'écran choisi dans le blueprint (section « Boutons du haut », clé appuis ;
+# « auto » : Énergie, console, télécommande TV), donné par bouton_haut_ecran()
+# (tab5_zones.cpp), 0 = rien, et ouvert par tab5_ecran_ouvrir (tab5-navigation.yaml).
+# pad_all: 0 : la mini icône se pose au pixel près (le thème ajoutait ~21 px de marge
+# intérieure), l'icône centrale ne bouge pas.
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: ${x}
+  y: 20
+  width: 125
+  height: 90
+  radius: 18
+  pad_all: 0
+  styles: style_clim_btn_page
+  on_short_click: ${appui}
+  on_long_press:
+    - lambda: |-
+        const int e = bouton_haut_ecran(${bouton});
+        if (e != 0) id(tab5_ecran_ouvrir).execute(e);
+  widgets:
+    - label: { id: "${icone_id}", text: "${icone}", align: CENTER, text_font: mdi_font_70 }
+    - label: { id: "${mini_id}", text: "${mini}", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }

@@ -262,7 +262,7 @@ select:
       # avec la même valeur, et tab5_alarm_refresh republie ce select à chaque
       # passage : un `return` en lambda ne sort que de la lambda, PAS de la
       # séquence d'actions (piège déjà payé sur le select « Aller à l'écran »,
-      # cf. tab5-ha-controls.yaml), donc `script.execute` serait quand même
+      # cf. tab5-navigation.yaml), donc `script.execute` serait quand même
       # atteint et la paire refresh↔on_value tournerait sans fin.
       # Avec la condition, la republication du même préréglage est un no-op et
       # la récursion s'arrête au premier tour.
@@ -622,7 +622,7 @@ script:
       - light.turn_on: backlight
       # Un jeu ouvert vit sur sa propre page LVGL : l'overlay de sonnerie est un
       # enfant de page_main et jouerait hors écran. Même chemin que le select
-      # « Aller à l'écran » de tab5-ha-controls.yaml.
+      # « Aller à l'écran » de tab5-navigation.yaml.
       - script.execute: tab5_games_close_all
       - if:
           condition:

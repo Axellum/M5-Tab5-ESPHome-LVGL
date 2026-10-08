@@ -19,6 +19,7 @@ import math
 import os
 
 import yaml
+from tests.commun import BaseChargeur
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -31,7 +32,7 @@ ENCRE_BAS = -20            # yMin le plus bas des chiffres (0, 3, 5, 6, 8)
 MARGE_MIN = 2              # px d'air exigés entre l'encre et le bord du cadre
 
 
-class _Chargeur(yaml.SafeLoader):
+class _Chargeur(BaseChargeur):
     pass
 
 

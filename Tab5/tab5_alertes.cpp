@@ -153,10 +153,11 @@ void peindre() {
         const bool en_cours = e.terminee == 0;
         const bool non_lue = en_cours && e.lue == 0;
         a_lire = a_lire || non_lue;
-        lv_obj_set_style_border_color(r.ligne, lv_color_hex(UIColor.GLASS_RIM), LV_PART_MAIN);
-        lv_obj_set_style_bg_color(r.pastille, lv_color_hex(couleur_gravite(e.gravite)), LV_PART_MAIN);
-        lv_obj_set_style_bg_opa(r.pastille, non_lue ? LV_OPA_COVER : (en_cours ? LV_OPA_60 : LV_OPA_30),
-                                LV_PART_MAIN);
+        // Comparées d'abord (DO-10, lot L10) : 20 lignes, trois propriétés chacune, reposées
+        // à chaque liste reçue alors qu'elles changent rarement.
+        ui_style_couleur(r.ligne, LV_STYLE_BORDER_COLOR, UIColor.GLASS_RIM);
+        ui_style_couleur(r.pastille, LV_STYLE_BG_COLOR, couleur_gravite(e.gravite));
+        ui_style_num(r.pastille, LV_STYLE_BG_OPA, non_lue ? LV_OPA_COVER : (en_cours ? LV_OPA_60 : LV_OPA_30));
         ui_text(r.libelle, e.texte.c_str());
         ui_text_color(r.libelle, en_cours ? UIColor.TEXT_SOFT : UIColor.TEXT_DIM);
 
@@ -229,11 +230,7 @@ void alertes_ouvrir() {
     AlertesUI& u = g_alertes_ui;
     if (u.popup == nullptr) return;
     // Appui long au bout d'un glissement (swipe des prévisions, doigt gardé 400 ms) : rien.
-    // LVGL remet ces deux marques à zéro à chaque appui ; hors appui (« Aller à l'écran »),
-    // aucun périphérique n'est actif.
-    lv_indev_t* indev = lv_indev_active();
-    if (indev != nullptr && (lv_indev_get_press_moved(indev) || lv_indev_get_gesture_dir(indev) != LV_DIR_NONE))
-        return;
+    if (ui_appui_glisse()) return;
     construire();
     if (u.liste != nullptr) lv_obj_scroll_to_y(u.liste, 0, LV_ANIM_OFF);
     animate_popup_open(u.popup);

@@ -43,6 +43,7 @@ esphome:
     - Tab5/rendu/hote/esp_hosted_host_fw_ver.h
     - Tab5/rendu/freertos
     - Tab5/tab5_tokens.h
+    - Tab5/tab5_themes_data.h
     - Tab5/tab5_tuiles_icones.h
     - Tab5/tab5_i18n_data.h
     - Tab5/tab5_i18n.h
@@ -203,6 +204,7 @@ packages:
   tab5_lvgl: !include Tab5/tab5-lvgl.yaml
   tab5_arcade: !include Tab5/tab5-arcade.yaml
   tab5_calendar: !include Tab5/tab5-calendar.yaml
+  tab5_navigation: !include Tab5/tab5-navigation.yaml
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
   tab5_alarm: !include Tab5/tab5-alarm.yaml
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml

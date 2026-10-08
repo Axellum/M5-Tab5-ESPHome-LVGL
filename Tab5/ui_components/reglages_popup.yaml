@@ -173,9 +173,9 @@ obj:
                       # Thème : précédent / suivant, en boucle (select « Thème »). Le nom est un
                       # nom propre, écrit par reglages_peindre() comme dans HA.
                       - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 1168, icon: "\U000F03D8", label_text: "Thème" } }
-                      - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_reglages_theme_prec", x: "17", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0141", call: { id: tab5_reglages_choisir, reglage: 3, valeur: -1 } } }
+                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_prec", x: "17", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0141", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: -1 } ] } }
                       - label: { id: reglages_theme_nom, text: "--", align: TOP_LEFT, x: 97, y: 109, width: 1008, text_align: CENTER, long_mode: DOT, text_font: roboto_32_b }
-                      - !include { file: alarm_step_script_btn.yaml, vars: { id: "btn_reglages_theme_suiv", x: "1113", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0142", call: { id: tab5_reglages_choisir, reglage: 3, valeur: 1 } } }
+                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_suiv", x: "1113", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: 1 } ] } }
 
                       # Clair ou sombre : options du select « Clair ou sombre », dans son ordre.
                       - !include { file: reglages_rangee.yaml, vars: { y: 179, w: 1168, icon: "\U000F050E", label_text: "Clair ou sombre" } }

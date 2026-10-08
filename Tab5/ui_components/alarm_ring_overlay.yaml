@@ -14,7 +14,7 @@
 #       cadre dont le tap déclenche un `close_lambda`, et que « toucher l'écran
 #       pour arrêter » est exactement ça.
 # @architecture_constraint Enregistré en `LAYER` dans le ModalRegistry
-#       (script tab5_modal_registry_init, tab5-scripts.yaml) : NOMMÉ pour HA
+#       (script tab5_modal_registry_init, tab5-navigation.yaml) : NOMMÉ pour HA
 #       (« Réveil qui sonne », en tête de priorité) mais JAMAIS refermé par
 #       `ModalRegistry::close_all()`, donc ni par le retour automatique à
 #       l'inactivité ni par le select « Aller à l'écran » : une sonnerie ne se

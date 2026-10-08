@@ -17,7 +17,9 @@ contrat ; ce fichier le fait de deux façons :
   (outil ha_eval_template, 28/09/2026) et le job « Installation dans un HA neuf » les
   exécute dans un HA en conteneur."""
 import ast
+import copy
 import datetime as dt
+import functools
 import math
 import os
 import re
@@ -26,17 +28,13 @@ import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
+from tests.commun import BaseChargeur, CacheJinja, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
 ADR = os.path.join(REPO, "docs", "decisions", "0023-rooms-generic-tiles.md")
 
 MAINTENANT = dt.datetime(2026, 9, 28, 12, 0, 0, tzinfo=dt.timezone.utc)
-
-
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -48,15 +46,22 @@ class _Entree:
         self.nom = nom
 
 
-class _Chargeur(yaml.SafeLoader):
+class _Chargeur(BaseChargeur):
     pass
 
 
 _Chargeur.add_constructor("!input", lambda chargeur, noeud: _Entree(chargeur.construct_scalar(noeud)))
 
 
+@functools.lru_cache(maxsize=2)
+def _blueprint_lu(texte):
+    return yaml.load(texte, Loader=_Chargeur)
+
+
 def _blueprint():
-    return yaml.load(_lire(BLUEPRINT), Loader=_Chargeur)
+    # Lu une fois par session (~180 lectures avant l'audit du 07/10/2026, OUT-5) ; chaque
+    # appelant reçoit sa copie, qu'il peut modifier sans toucher celle des autres.
+    return copy.deepcopy(_blueprint_lu(_lire(BLUEPRINT)))
 
 
 def _entrees(bp):
@@ -156,8 +161,15 @@ def _est_un_nombre(valeur):
     return math.isfinite(x)
 
 
+# Code compilé des modèles, partagé par tous les environnements de _environnement() :
+# chaque Passage en bâtit un, et recompilait les mêmes modèles du blueprint.
+_JINJA = CacheJinja()
+
+
 def _environnement(etats, tablettes):
-    env = ImmutableSandboxedEnvironment(extensions=["jinja2.ext.loopcontrols"], undefined=jinja2.StrictUndefined)
+    env = ImmutableSandboxedEnvironment(extensions=["jinja2.ext.loopcontrols"], undefined=jinja2.StrictUndefined,
+                                        # Macros importées (custom_templates/tab5_tablette.jinja, HA-7).
+                                        loader=jinja2.FileSystemLoader(os.path.join(REPO, "HomeAssistant_Config", "custom_templates")))
 
     def device_attr(entity_id, nom):
         return tablettes.get(entity_id, {}).get(nom)
@@ -182,7 +194,7 @@ def _environnement(etats, tablettes):
 def _rendre(env, valeur, contexte):
     if isinstance(valeur, str):
         if "{{" in valeur or "{%" in valeur:
-            return _analyser(env.from_string(valeur).render(contexte))
+            return _analyser(_JINJA.depuis_texte(env, valeur).render(contexte))
         return valeur
     if isinstance(valeur, list):
         return [_rendre(env, v, contexte) for v in valeur]
@@ -217,7 +229,7 @@ class Passage:
         return self.ctx[nom]
 
     def modele(self, texte):
-        return _analyser(self.env.from_string(texte).render(self.ctx))
+        return _analyser(_JINJA.depuis_texte(self.env, texte).render(self.ctx))
 
     def conditions(self):
         return all(self.modele(c["value_template"]) for c in self.corps["conditions"])
@@ -263,8 +275,17 @@ def _declencheur(id_, avant=None, apres=None, entite=None):
     return t
 
 
+_TYPES_EVENEMENTS = {}
+
+
 def _evenement(id_, **donnees):
-    return {"id": id_, "platform": "event", "event": {"data": donnees}}
+    # event_type comme dans HA : la garde d'origine (custom_templates/tab5_tablette.jinja)
+    # le lit pour reconnaître un événement de la tablette.
+    if not _TYPES_EVENEMENTS:
+        _TYPES_EVENEMENTS.update({t["id"]: t["event_type"] for t in _blueprint()["triggers"]
+                                  if t.get("trigger") == "event"})
+    return {"id": id_, "platform": "event",
+            "event": {"event_type": _TYPES_EVENEMENTS.get(id_, ""), "data": donnees}}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -727,7 +748,10 @@ def test_demarrage_de_ha_rejoue_la_connexion_perdue():
         {"trigger": "homeassistant", "event": "start", "id": "demarrage_ha"}]
     gardes = _gardes_du_declencheur(bp["actions"])
     assert len(gardes) >= 8, gardes
-    for g in gardes + [bp["variables"]["cles"], bp["variables"]["tuiles_a_pousser"]]:
+    # La liste n'existe qu'une fois (variable tout_pousser, HA-8) : les gardes la lisent.
+    assert "'connexion'" in bp["variables"]["tout_pousser"]
+    assert "tout_pousser" in bp["variables"]["cles"] and "tout_pousser" in bp["variables"]["tuiles_a_pousser"]
+    for g in gardes + [bp["variables"][v] for v in ("tout_pousser", "cles", "tuiles_a_pousser")]:
         if "'connexion'" in g:
             assert "'demarrage_ha'" in g, f"le démarrage de HA manque dans : {g}"
     # Si la tablette demandait ses zones à la connexion, la demande serait perdue elle
@@ -1099,7 +1123,8 @@ def test_position_derriere_la_garde_d_origine():
     déclenche (trigger action, garde du modèle tab5-ha-hmi)."""
     bp = _blueprint()
     garde = bp["conditions"][0]["value_template"]
-    assert "'action'" in garde and "device_attr(d, 'model') == 'tab5-ha-hmi'" in garde
+    assert "tab5_origine(trigger) == 'oui'" in garde  # custom_templates/tab5_tablette.jinja
+    assert {"trigger": "event", "event_type": "esphome.tab5_action", "id": "action"} in bp["triggers"]
     commande = _chercher(bp["actions"], lambda d: d.get("alias") == "Commande d'un bouton de l'écran")
     assert commande and "trigger.id == 'action'" in commande["conditions"]
     assert _chercher(commande, lambda d: (d.get("alias") or "").startswith("Tuile : position"))

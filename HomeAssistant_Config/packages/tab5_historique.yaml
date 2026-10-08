@@ -108,7 +108,9 @@ script:
         {%- endif -%}
       actuel: "{{ (states(entite) | float | round(1)) if entite and states(entite) | is_number else 'nan' }}"
       # Prévision : la seconde température seulement, sur l'entité météo des poussées.
-      meteo: "{{ (state_attr('sensor.tab5_meteo', 'entite') or '') if cle_demandee == 'serre' else '' }}"
+      # Entité effective : la choisie, ou son repli pendant qu'elle est indisponible
+      # (custom_templates/tab5_meteo.jinja) ; '' si aucune ne répond (pas de prévision).
+      meteo: "{{ (state_attr('sensor.tab5_meteo', 'entite_effective') or '') if cle_demandee == 'serre' else '' }}"
       # Heure par heure (24 h, 7 jours) si l'entité le sait ; sinon, et pour 30 jours, par
       # jour (ou par demi-journée) ; heure par heure aussi pour 30 jours si l'entité ne
       # fait que ça (type_jours de sensor.tab5_meteo = le meilleur type « jours » géré).

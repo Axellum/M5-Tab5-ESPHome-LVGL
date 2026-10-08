@@ -16,6 +16,7 @@
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"
+#include "tab5_registry.h"   // retour automatique : jeux ouverts, fenêtres modales
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <ctime>
@@ -215,6 +216,41 @@ uint32_t ui_idle_ms() {
 
 void ui_mark_activity() {
     lv_display_trigger_activity(nullptr);
+}
+
+// Un tick (1 s) du retour automatique : interval de tab5-scripts.yaml, dont l'en-tête
+// donne les délais et leurs raisons (08/10/2026, audit YML-7 : cette logique était dans
+// sa lambda). Ce qui demande un id() (page LVGL, widgets des prévisions) reste au YAML,
+// que la valeur rendue guide.
+RetourAuto retour_auto_tick(bool sur_page_arcade) {
+    // Un jeu ouvert ne se ferme jamais seul (une partie en pause : zéro toucher).
+    if (GameRegistry::any_open()) return RetourAuto::RIEN;
+    const uint32_t idle = ui_idle_ms();
+
+    // Sélecteur arcade (page_arcade) : aucun jeu ouvert, retour au dashboard après le
+    // délai des popups.
+    if (sur_page_arcade) return idle >= UIIdle::POPUP_MS ? RetourAuto::QUITTER_ARCADE : RetourAuto::RIEN;
+
+    // Liste de la tuile − / + (ADR-0033) : une sous-fenêtre, pas un popup ; elle se
+    // referme après la même inactivité.
+    if (idle >= UIIdle::POPUP_MS && reglables_liste_ouverte()) reglables_liste_fermer();
+    // Roue d'actions rapides (ADR-0036) : sous-fenêtre aussi, même inactivité.
+    if (idle >= UIIdle::POPUP_MS && roue_actions_ouverte()) roue_actions_fermer();
+
+    // La sonnerie du réveil est un LAYER du registre : jamais refermée ici.
+    if (ModalRegistry::any_popup_visible()) {
+        if (idle < UIIdle::POPUP_MS) return RetourAuto::RIEN;
+        ModalRegistry::close_all();  // sous-fenêtres masquées, popups en fondu
+        return RetourAuto::POPUPS_FERMES;
+    }
+
+    if (idle < UIIdle::FORECAST_MS) return RetourAuto::RIEN;
+    if (g_central_ctx.forecast_page == 2) return RetourAuto::RIEN;  // déjà au panneau principal
+    if (g_central_ctx.ha_mode) return RetourAuto::RIEN;             // mode HA (pièces) affiché à la demande
+
+    // La page change : la roue d'actions rapides (ADR-0036) visait une tuile d'ici.
+    roue_actions_fermer();
+    return RetourAuto::PREVISIONS;
 }
 
 bool close_popup_if_open(lv_obj_t* card) {
@@ -584,9 +620,12 @@ void apply_pressed_scale_to_tree(lv_obj_t* root) {
 // Le jeu de bille a ete extrait dans marble_game.cpp (namespace Marble) :
 // roguelite plein ecran, trop volumineux pour cohabiter ici.
 
+// Écritures comparées d'abord (lot L10, 08/10/2026) : chaque repeint des boutons de vue
+// (Température, Énergie), des 15 bascules du réveil ou du mode de l'assistant reposait
+// les trois propriétés, et LVGL 9.5.0 invalide le bouton même à valeur égale.
 void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color, int32_t active_width) {
     if (!btn) return;
-    lv_obj_set_style_border_color(btn, lv_color_hex(active ? color : UIColor.GLASS_RIM), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(btn, active ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
-    lv_obj_set_style_border_width(btn, active ? active_width : 1, LV_PART_MAIN);
+    ui_style_couleur(btn, LV_STYLE_BORDER_COLOR, active ? color : UIColor.GLASS_RIM);
+    ui_style_num(btn, LV_STYLE_BORDER_OPA, active ? LV_OPA_COVER : LV_OPA_40);
+    ui_style_num(btn, LV_STYLE_BORDER_WIDTH, active ? active_width : 1);
 }

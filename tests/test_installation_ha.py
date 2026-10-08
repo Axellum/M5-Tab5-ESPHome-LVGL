@@ -17,24 +17,12 @@ import re
 import sys
 
 import yaml
+from tests.commun import ChargeurSansBalises as _Chargeur, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools", "installation_ha"))
 
 import preparer_config as preparer  # noqa: E402
 import verifier_installation as verifier  # noqa: E402
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
 def test_preparer_ecrit_une_installation_complete(tmp_path):
@@ -106,7 +94,7 @@ def _definies() -> set[str]:
         for domaine in ("input_text", "input_select", "input_boolean", "script", "rest_command"):
             definies |= {f"{domaine}.{cle}" for cle in (paquet.get(domaine) or {})}
         for bloc in paquet.get("template") or []:
-            for domaine in ("sensor", "binary_sensor", "select", "weather"):
+            for domaine in ("sensor", "binary_sensor", "select", "weather", "number"):
                 for entite in bloc.get(domaine) or []:
                     # default_entity_id fixe l'entity_id (noms bilingues, 29/09/2026) ;
                     # sans lui, HA le tire du nom.
@@ -322,11 +310,11 @@ def test_plus_d_option_actions_ha():
             ("Tab5", "tab5-calendar.yaml"), ("Tab5", "ui_components", "console_sys.yaml")))
     assert f"id: {verifier.ID_EVENEMENTS}" in _lire("HomeAssistant_Config", "packages", "tab5_evenements.yaml")
     assert verifier.SELECT_ECRAN.endswith("_aller_a_l_ecran")
-    assert "name: \"Aller à l'écran\"" in _lire("Tab5", "tab5-ha-controls.yaml")
+    assert "name: \"Aller à l'écran\"" in _lire("Tab5", "tab5-navigation.yaml")
     chemins = yaml.safe_load(_lire(".github", "workflows", "installation-ha.yml"))
     chemins = (chemins.get("on") or chemins[True])["pull_request"]["paths"]
     for fichier in ("Tab5/tab5-alarm.yaml", "Tab5/tab5-assist.yaml", "Tab5/tab5-calendar.yaml",
-                    "Tab5/tab5-ha-controls.yaml", "Tab5/ui_components/console_sys.yaml"):
+                    "Tab5/tab5-navigation.yaml", "Tab5/ui_components/console_sys.yaml"):
         assert fichier in chemins, fichier
 
 
@@ -400,7 +388,7 @@ def test_chaque_poussee_attend_la_tablette():
     """Défauts 2, 3 et 5 du 28/09/2026 : chaque script qui appelle une action de la
     tablette commence par la garde « tablette connectée » (trouvée par son modèle), et
     le blueprint pousse aussi au rechargement des automatisations (défaut 4)."""
-    garde = "select('eq', 'tab5-ha-hmi')"
+    garde = "tab5_connectee() == 'oui'"  # custom_templates/tab5_tablette.jinja (HA-7)
     for nom in ("tab5_push", "tab5_calendar", "tab5_reveil"):
         paquet = yaml.load(_lire("HomeAssistant_Config", "packages", f"{nom}.yaml"), Loader=_Chargeur)
         for script, corps in (paquet.get("script") or {}).items():
@@ -409,6 +397,7 @@ def test_chaque_poussee_attend_la_tablette():
             premiere = corps["sequence"][0]
             assert premiere.get("condition") == "template" and garde in premiere["value_template"], \
                 f"{nom}.yaml, script {script} : la garde « tablette connectée » doit ouvrir la séquence"
+    assert "select('eq', 'tab5-ha-hmi')" in _lire("HomeAssistant_Config", "custom_templates", "tab5_tablette.jinja")
     push = _lire("HomeAssistant_Config", "packages", "tab5_push.yaml")
     assert "entity_id: binary_sensor.m5stack_tab5_home_assistant_hmi_ha_api_status" not in push
     reveil = _lire("HomeAssistant_Config", "packages", "tab5_reveil.yaml")
@@ -428,3 +417,116 @@ def test_calendrier_chaque_demande_a_sa_reponse():
         corps = paquet["script"][script]
         assert corps["mode"] == "queued", f"{script} : mode {corps['mode']}"
         assert corps.get("max", 10) >= 3, f"{script} : max {corps.get('max')}"
+
+
+def _noeuds(noeud):
+    """Tous les dict de l'arbre."""
+    if isinstance(noeud, dict):
+        yield noeud
+        for v in noeud.values():
+            yield from _noeuds(v)
+    elif isinstance(noeud, list):
+        for v in noeud:
+            yield from _noeuds(v)
+
+
+def test_syntaxe_actuelle_des_automatisations():
+    """Audit du 07/10/2026, HA-14 : la syntaxe de HA 2024.10 et plus partout (`triggers:`,
+    `conditions:`, `actions:`, `- trigger: <type>`), plus de `trigger:` / `condition:` /
+    `action:` portant une liste ni de `- platform:` dans un déclencheur. Le plancher du projet
+    est HA 2026.8 (hacs.json, `min_version` du blueprint). Les `id:` ne changent jamais : ce
+    sont les entity_id des automatisations déjà installées."""
+    racine = os.path.join(REPO, "HomeAssistant_Config")
+    fautes = []
+    for dossier in ("packages", "optionnel", "snippets", "blueprints"):
+        for base, _, noms in os.walk(os.path.join(racine, dossier)):
+            for nom in sorted(n for n in noms if n.endswith(".yaml")):
+                chemin = os.path.join(base, nom)
+                with open(chemin, encoding="utf-8") as f:
+                    doc = yaml.load(f.read(), Loader=_Chargeur)
+                rel = os.path.relpath(chemin, racine).replace(os.sep, "/")
+                for d in _noeuds(doc):
+                    for cle in ("trigger", "condition", "action"):
+                        if isinstance(d.get(cle), list):
+                            fautes.append(f"{rel} : `{cle}:` à l'ancienne (→ `{cle}s:`)")
+                    for t in d.get("triggers") or []:
+                        if isinstance(t, dict) and "platform" in t:
+                            fautes.append(f"{rel} : `- platform: {t['platform']}` (→ `- trigger:`)")
+    assert not fautes, fautes
+
+
+def test_volet_simule_un_seul_chrono_regle_dans_ha():
+    """Audit du 07/10/2026, HA-4 (optionnel/volet_serre_tracking.yaml) : la course du volet
+    simulé n'est chronométrée qu'à un endroit (script.tab5_volet_course), appelé par le
+    script de la tablette et par le suivi des commandes directes ; sa durée est le réglage
+    « Tab5 · course du volet », 26 s tant que personne ne l'a changé (la valeur d'avant)."""
+    with open(os.path.join(REPO, "HomeAssistant_Config", "optionnel", "volet_serre_tracking.yaml"),
+              encoding="utf-8") as f:
+        paquet = yaml.load(f.read(), Loader=_Chargeur)
+    delais = [d["delay"] for d in _noeuds(paquet) if "delay" in d]
+    assert delais == [{"seconds": "{{ states('number.tab5_course_du_volet') | int(26) }}"}]
+    course = paquet["script"]["tab5_volet_course"]
+    assert course["mode"] == "restart"
+    assert not any(str(d.get("action", "")).startswith("cover.") for d in _noeuds(course)),         "la course ne commande pas le volet"
+    tablette = paquet["script"]["tab5_volet_action"]
+    directe = next(a for a in paquet["automation"] if a["id"] == "volet_serre_track_direct_cover")
+    for appelant in (tablette, directe):
+        appels = [d for d in _noeuds(appelant) if d.get("action") == "script.tab5_volet_course"]
+        assert len(appels) == 1 and "action" in appels[0]["data"]
+    # Le suivi direct ignore les commandes du script de la tablette, qui reste « on »
+    # pendant la course (appel bloquant, pas script.turn_on).
+    assert {"condition": "state", "entity_id": "script.tab5_volet_action", "state": "off"} in directe["conditions"]
+    reglage = next(e for b in paquet["template"] for e in b.get("number") or []
+                   if e["default_entity_id"] == "number.tab5_course_du_volet")
+    assert reglage["state"] == "{{ states('input_text.tab5_memoire_course_volet') | int(26) }}"
+    assert reglage["min"] <= 26 <= reglage["max"]
+    # Sans initial : il remettrait la valeur à chaque démarrage de HA.
+    assert "initial" not in paquet["input_text"]["tab5_memoire_course_volet"]
+
+
+def _evenement_registre(action, changes=None):
+    data = {"action": action, "entity_id": "light.x"}
+    if changes is not None:
+        data["changes"] = changes
+    return {"platform": "event", "event": {"event_type": "entity_registry_updated", "data": data}}
+
+
+def test_listes_ignorent_le_bruit_du_registre():
+    """Audit du 07/10/2026, HA-18 : les listes « Tab5 · … » à déclencheurs se
+    recalculaient à chaque entity_registry_updated, dont 419 sur 485 chez l'auteur (du 01
+    au 08/10/2026) ne changeaient que capabilities / supported_features / options /
+    suggested_object_id. Une création, une suppression, un renommage ou un nom changé
+    les recalcule toujours. Le bloc de la tablette (tab5_reglages.yaml, qui écoute
+    esphome.tab5_connected) n'est pas filtré : il ne lit pas `trigger` (garde d'origine)."""
+    from jinja2.sandbox import ImmutableSandboxedEnvironment
+    env = ImmutableSandboxedEnvironment()
+    fichiers = sorted((preparer.HA_DIR / "packages").glob("*.yaml")) + sorted((preparer.HA_DIR / "optionnel").glob("*.yaml"))
+    filtres, conditions = [], set()
+    for fichier in fichiers:
+        paquet = yaml.load(fichier.read_text(encoding="utf-8"), Loader=_Chargeur) or {}
+        for bloc in paquet.get("template") or []:
+            types = [d.get("event_type") for d in bloc.get("triggers") or []]
+            if "entity_registry_updated" not in types or "esphome.tab5_connected" in types:
+                continue
+            assert len(bloc.get("conditions") or []) == 1, fichier.name
+            filtres.append(fichier.name)
+            conditions.add(bloc["conditions"][0]["value_template"])
+    assert sorted(filtres) == ["tab5_meteo_sources.yaml", "tab5_reglages.yaml", "tab5_tv.yaml",
+                               "volet_serre_tracking.yaml"]
+    assert len(conditions) == 1, "la même condition partout"
+    modele = env.from_string(conditions.pop())
+
+    def passe(trigger):
+        return modele.render(trigger=trigger).strip() == "True"
+
+    assert passe({"platform": "homeassistant", "event": "start"})
+    assert passe({"platform": "state", "entity_id": "input_text.tab5_choix_tv"})
+    assert passe({"platform": "event", "event": {"event_type": "event_template_reloaded", "data": {}}})
+    assert passe(_evenement_registre("create")) and passe(_evenement_registre("remove"))
+    for cles in (["entity_id"], ["name"], ["original_name"], ["capabilities", "original_name"],
+                 ["device_class"], ["disabled_by"], ["entity_category"]):
+        assert passe(_evenement_registre("update", dict.fromkeys(cles))), cles
+    for cles in (["supported_features"], ["capabilities"], ["options"], ["suggested_object_id"],
+                 ["capabilities", "supported_features"], ["capabilities", "suggested_object_id"]):
+        assert not passe(_evenement_registre("update", dict.fromkeys(cles))), cles
+

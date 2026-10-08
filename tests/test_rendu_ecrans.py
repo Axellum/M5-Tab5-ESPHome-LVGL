@@ -8,19 +8,13 @@ CI, sous la forme d'une capture identique à une autre. De même pour les pièce
 décalerait tous les suivants, et un geste parti d'un bouton le déclencherait."""
 import os
 import re
-import sys
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools", "rendu"))
 
 import ecrans  # noqa: E402
 from ecrans import BOUTON_HA, ECRANS, Aller, Glisser, Service, Toucher  # noqa: E402
 from scenarios import PAGE_DE_LA_PIECE, PIECES  # noqa: E402  (tools/demo, chemin ajouté par ecrans)
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _etapes(ecran):
@@ -51,7 +45,7 @@ def test_appuis_dans_l_ecran():
 
 
 def test_options_du_select_aller_a_l_ecran():
-    bloc = _lire("Tab5", "tab5-ha-controls.yaml").split('name: "Aller à l\'écran"', 1)[1]
+    bloc = _lire("Tab5", "tab5-navigation.yaml").split('name: "Aller à l\'écran"', 1)[1]
     options = set(re.findall(r'^\s+- "([^"]+)"', bloc.split("on_value:", 1)[0], re.M))
     assert "Accueil" in options
     for ecran in ECRANS:
@@ -165,11 +159,15 @@ def test_gestes_partent_hors_des_tuiles_et_des_cartes():
 
 
 def _bouton(ident):
-    """(x, y, largeur, hauteur) d'un bouton du haut de Tab5/tab5-lvgl.yaml."""
-    m = re.search(rf"id: {ident}\s+align: TOP_LEFT\s+x: (\d+)\s+y: (\d+)\s+width: (\d+)\s+height: (\d+)",
+    """(x, y, largeur, hauteur) d'un bouton du haut : x de son inclusion dans
+    Tab5/tab5-lvgl.yaml, le reste du gabarit bouton_haut.yaml (08/10/2026, audit YML-4)."""
+    x = re.search(rf'file: ui_components/bouton_haut\.yaml, vars: \{{ id: {ident}, x: "(\d+)"',
                   _lire("Tab5", "tab5-lvgl.yaml"))
-    assert m, ident
-    return tuple(int(v) for v in m.groups())
+    assert x, ident
+    m = re.search(r"align: TOP_LEFT\s+x: \$\{x\}\s+y: (\d+)\s+width: (\d+)\s+height: (\d+)",
+                  _lire("Tab5", "ui_components", "bouton_haut.yaml"))
+    assert m, "bouton_haut.yaml"
+    return (int(x.group(1)),) + tuple(int(v) for v in m.groups())
 
 
 def test_boutons_du_haut():

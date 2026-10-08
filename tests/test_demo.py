@@ -23,19 +23,13 @@ import io
 import logging
 import os
 import re
-import sys
 from types import SimpleNamespace
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools", "demo"))
 
 import demo_pusher  # noqa: E402
 import scenarios  # noqa: E402
-
-
-def _lire(*parts):
-    with open(os.path.join(REPO, *parts), encoding="utf-8") as f:
-        return f.read()
 
 
 def test_emplacements_de_la_demo_egaux_a_la_table_du_firmware():

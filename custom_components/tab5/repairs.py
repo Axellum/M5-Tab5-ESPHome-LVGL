@@ -6,7 +6,8 @@
       impossible à charger à chaud, configuration déjà invalide avant), __init__.py ouvre la
       réparation « redemarrage_requis ». Sa validation vérifie la configuration (sinon
       homeassistant.restart refuserait en silence, l'appel n'attend pas l'arrêt) puis
-      redémarre.
+      redémarre. Les autres réparations réparables (« fichiers_remplaces ») ne font que
+      confirmer : ConfirmRepairFlow, qui reprend les paramètres de la réparation.
 """
 from __future__ import annotations
 

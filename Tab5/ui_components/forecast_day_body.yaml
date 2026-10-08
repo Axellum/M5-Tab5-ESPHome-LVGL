@@ -1,0 +1,29 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5x : le corps sombre d'une
+# tuile journalière (forecast_day_card.yaml pour les tuiles 0, 2, 3, 4 ; forecast_daily.yaml
+# pour la tuile 1, qui porte en plus le bouton du sens du volet). Sorti le 08/10/2026
+# (audit, YML-3) : cinq copies de 16 lignes.
+# Vars : n (0-4, suffixe des ids jN_icon_layer1/2 et btn_jN_action, numéro de tuile passé
+#        à tuile_appui()), btn_w (largeur du bouton invisible : 140, 130 pour la tuile 4).
+# Icônes météo : update_meteo_icon()/refresh_daily_forecast() (tab5_forecast.cpp). Le
+# bouton (ids lus par l'on_boot de tab5-ha-hmi.yaml, g_day_slots) : tap / appui long →
+# tuile_appui(n, …), l'appareil de la tuile de la pièce de la page (ADR-0023).
+obj:
+  y: 35
+  width: 230
+  height: 205
+  styles: style_meteo_card_page
+  scrollbar_mode: "OFF"
+  widgets:
+    - label: { id: "j${n}_icon_layer1", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
+    - label: { id: "j${n}_icon_layer2", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
+    - button:
+        id: "btn_j${n}_action"
+        align: CENTER
+        y: 0
+        width: ${btn_w}
+        height: 130
+        styles: style_invisible
+        on_short_click:
+          - lambda: 'tuile_appui(${n}, false);'
+        on_long_press:
+          - lambda: 'tuile_appui(${n}, true);'

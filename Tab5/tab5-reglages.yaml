@@ -140,6 +140,10 @@ script:
       valeur: int
     then:
       - lambda: |-
+          // Un tap au bout d'un glissement ne change rien (ui_appui_glisse, comme les
+          // alertes et la Maison) ; un glisser qui change de page, lui, ne relâche même
+          // pas le bouton (lv_indev_wait_release, tab5_reglages.cpp).
+          if (ui_appui_glisse()) return;
           switch (reglage) {
             case REGLAGE_EXTINCTION: {
               auto call = id(tab5_extinction_auto).make_call();

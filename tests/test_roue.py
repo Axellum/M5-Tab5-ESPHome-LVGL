@@ -18,25 +18,17 @@ qui suit ; ce fichier lit le C++ et le YAML, comme les autres tests statiques :
 import math
 import os
 import re
-import sys
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools"))
-sys.path.insert(0, os.path.join(REPO, "tools", "rendu"))
-sys.path.insert(0, os.path.join(REPO, "tests"))
 
 from pathlib import Path  # noqa: E402
 
 import ecrans  # noqa: E402
 from check_tab5_code_rules import font_glyphs  # noqa: E402
-from test_tuiles_firmware import _commandes_de_l_adr, _fonction  # noqa: E402
+from tests.test_tuiles_firmware import _commandes_de_l_adr, _fonction  # noqa: E402
 
 ADR = os.path.join(REPO, "docs", "decisions", "0036-quick-action-wheel.md")
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _roue():
@@ -375,9 +367,12 @@ def test_toucher_deplie_replie_ferme():
 
 def test_sous_fenetre_et_fermetures():
     scripts = _lire("Tab5", "tab5-scripts.yaml")
-    ligne = re.search(r"ModalRegistry::add\(id\(roue_actions\),\s*nullptr,\s*ModalRegistry::SUBWINDOW\);", scripts)
+    ligne = re.search(r"ModalRegistry::add\(id\(roue_actions\),\s*nullptr,\s*ModalRegistry::SUBWINDOW\);",
+                      _lire("Tab5", "tab5-navigation.yaml"))
     assert ligne, "la roue est une sous-fenêtre du registre (ADR-0013)"
-    assert "if (idle >= UIIdle::POPUP_MS && roue_actions_ouverte()) roue_actions_fermer();" in scripts
+    assert "if (idle >= UIIdle::POPUP_MS && roue_actions_ouverte()) roue_actions_fermer();" in _fonction(
+        _lire("Tab5", "tab5_anim.cpp"), "retour_auto_tick")
+    assert "retour_auto_tick(" in scripts
     assert "roue_actions_fermer();" in _fonction(_lire("Tab5", "tab5_anim.cpp"), "animate_popup_open")
     assert "roue_actions_fermer();" in _fonction(_tuiles(), "tuiles_definir")
     hardware = _lire("Tab5", "tab5-hardware.yaml")
@@ -386,12 +381,16 @@ def test_sous_fenetre_et_fermetures():
     assert "roue_rejouer_theme();" in _fonction(_lire("Tab5", "tab5_theme.cpp"), "theme_rejouer_ui")
     # Console système : page Système des Réglages depuis le 08/10/2026, ouverte par
     # animate_popup_open (qui ferme la roue, vérifié plus haut) ; retour automatique à la
-    # page météo.
+    # page météo (plus bas).
     assert "tab5_console_ouvrir" not in scripts
     reglages = _lire("Tab5", "tab5-reglages.yaml").split("- id: tab5_reglages_ouvrir", 1)[1].split("\n  - id:", 1)[0]
     assert "animate_popup_open(id(reglages_popup));" in reglages
-    retour = scripts.split("if (idle < UIIdle::FORECAST_MS) return;", 1)[1]
-    assert retour.index("roue_actions_fermer();") < retour.index("reset_forecast_to_main_page(")
+    # retour_auto_tick() (tab5_anim.cpp) ferme la roue avant de rendre PREVISIONS, que
+    # l'interval de tab5-scripts.yaml traduit en reset_forecast_to_main_page().
+    retour = _fonction(_lire("Tab5", "tab5_anim.cpp"), "retour_auto_tick")
+    retour = retour.split("if (idle < UIIdle::FORECAST_MS) return RetourAuto::RIEN;", 1)[1]
+    assert retour.index("roue_actions_fermer();") < retour.index("return RetourAuto::PREVISIONS;")
+    assert "reset_forecast_to_main_page(" in scripts.split("case RetourAuto::PREVISIONS:", 1)[1]
 
 
 def test_un_etat_pousse_repeint_la_roue():

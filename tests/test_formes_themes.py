@@ -9,13 +9,11 @@ refus (style non prévu, premier thème).
 from __future__ import annotations
 
 import shutil
-import sys
 from pathlib import Path
 
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "tools"))
 
 import gen_themes  # noqa: E402
 
@@ -119,6 +117,6 @@ def test_zone_inconnue_refusee(dossier: Path):
 
 
 def test_drapeaux_des_zones_dans_themes(dossier: Path):
-    lignes = gen_themes.rendre_cpp(gen_themes.charger(dossier))
+    lignes = gen_themes.rendre_donnees(gen_themes.charger(dossier)).splitlines()
     assert '    {"Ardoise", false, false,  // Tab5/themes/ardoise.yaml' in lignes
     assert '    {"Essai", true, false,  // Tab5/themes/essai.yaml' in lignes
