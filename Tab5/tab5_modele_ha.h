@@ -4,7 +4,8 @@
  * @role Ce que les deux modèles d'appareils de HA ont vraiment en commun (audit du
  *       07/10/2026, lot L5) : les tuiles de pièce (tab5_tuiles.cpp, ADR-0023) et la tuile
  *       − / + (tab5_reglables.cpp, ADR-0033). Tailles des textes gardés, comparaison d'un
- *       état, état « hors ligne », code d'icône de la palette.
+ *       état, état « hors ligne », code d'icône de la palette ; et la clé d'emplacement
+ *       d'une tuile (tuile_cle, lot L7), lue aussi par les clims des tuiles (tab5_clim.cpp).
  * @architecture_constraint En-tête seul, pur (ni ESPHome ni LVGL), dans le namespace
  *       `modele_ha` : il est aussi inclus dans main.cpp (includes: des deux
  *       configurations), des noms courts comme `est` ou `kNom` n'y entrent pas. Testé
@@ -45,6 +46,30 @@ inline void copier_icone(char* dst, const char* src, size_t n) {
         if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) return;
     }
     std::memcpy(dst, src, n);
+}
+
+// Clé d'emplacement d'une tuile de pièce, « tRT » (R pièce, T tuile, de 0 à 4), ou d'une
+// pièce entière, « pR » (« Tout éteindre ») : l'emplacement que reçoit l'événement
+// esphome.tab5_action (ADR-0023) ; les clims des tuiles gardent la même (ADR-0027). Rendue
+// par valeur, le texte dans `s` : `envoyer(tuile_cle(r, t).s, action)`. Audit du
+// 07/10/2026 (lot L7) : elle était écrite à la main six fois.
+struct CleTuile {
+    char s[4] = "";
+};
+
+inline CleTuile tuile_cle(int r, int t) {
+    CleTuile c;
+    c.s[0] = 't';
+    c.s[1] = static_cast<char>('0' + r);
+    c.s[2] = static_cast<char>('0' + t);
+    return c;
+}
+
+inline CleTuile piece_cle(int r) {
+    CleTuile c;
+    c.s[0] = 'p';
+    c.s[1] = static_cast<char>('0' + r);
+    return c;
 }
 
 }  // namespace modele_ha

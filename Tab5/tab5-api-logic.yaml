@@ -204,7 +204,7 @@ api:
       then:
         # La clim du blueprint : ses globals, puis la carte de l'accueil, le popup s'il la
         # montre (pas quand il montre la clim d'une tuile, ADR-0027) et les couleurs
-        # (clim_blueprint_recu, tab5_cards.cpp : même code que les gestes optimistes).
+        # (clim_blueprint_recu, tab5_clim.cpp : même code que les gestes optimistes).
         - lambda: |-
             // « inf »/« -inf » → NAN (« -- ») : jamais converti en entier (lot A, audit du 30/09).
             id(clim_target_temp) = tab5_fini_ou_nan(atof(target.c_str()));

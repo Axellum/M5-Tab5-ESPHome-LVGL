@@ -153,7 +153,7 @@ bool tuiles_titre_piece(std::string& chapeau, std::string& titre);
 // tab5_central.cpp (handle_swipe_gesture en mode HA) : pièce suivante ou précédente
 // qui a des appareils, dans l'ordre des pages météo ; une seule pièce : rien.
 void tuiles_swipe_ha(bool gauche);
-// Texte venu de HA, mêmes règles que les noms des tuiles (tab5_cards.cpp : titre du popup
+// Texte venu de HA, mêmes règles que les noms des tuiles (tab5_clim.cpp : titre du popup
 // clim, ADR-0026 ; libellés des alertes, bandeaux et historique). texte_ha_copier : UTF-8
 // valide, sans les caractères que les polices n'ont pas, coupé sur une frontière de
 // caractère (`cap` octets, zéro final compris).
@@ -206,14 +206,14 @@ bool reglables_definir(const std::string& payload);
 bool reglables_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n_reste);
 // zones_apply_ui : la tuile − / + (masquée sans clim ni appareil) et ce qu'elle montre.
 void reglables_appliquer_ui();
-// tab5_cards.cpp, la clim du blueprint a changé (consigne, mode) : sa ligne de la liste.
+// tab5_clim.cpp, la clim du blueprint a changé (consigne, mode) : sa ligne de la liste.
 void reglables_clim_changee();
 // theme_rejouer_ui (tab5_theme.cpp).
 void reglables_rejouer_theme();
 // tab5_tuiles.cpp : ouvre le popup de la tuile tRT (lumière, volet, télécommande, clim :
 // ce que fait son appui long, ou son appui pour une clim). Faux si elle n'en a pas.
 bool tuile_ouvrir_popup(int r, int t);
-// tab5_cards.cpp, pour la liste de la tuile − / + : nom de la clim du blueprint (vide
+// tab5_clim.cpp, pour la liste de la tuile − / + : nom de la clim du blueprint (vide
 // tant que HA ne l'a pas donné) ; sa consigne écrite comme sur la carte (« 21.5 »,
 // « -- ») et sa couleur (bleu en froid, rouge en chaud), et la couleur de son icône.
 const char* clim_nom();
@@ -257,7 +257,7 @@ struct RoueTete {
     int jauge = -1;                 // 0 à 100 ; -1 : pas de jauge
     uint32_t couleur = 0;           // couleur d'état de l'appareil
 };
-// Ce que fait la roue au toucher, fournie par celui qui l'ouvre (tab5_tuiles.cpp).
+// Ce que fait la roue au toucher, fournie par celui qui l'ouvre (tab5_tuiles_roue.cpp).
 struct RoueRappels {
     void (*choisir)(int i) = nullptr;                   // action ou lien i, roue fermée
     int (*famille)(int i, RoueChoix* out) = nullptr;    // choix de la famille i (≤ kRoueChoix)
@@ -272,13 +272,13 @@ bool roue_ouvrir(lv_obj_t* ancre, const RoueTete& tete, const RoueBouton* b, int
                  bool garder);
 // theme_rejouer_ui (tab5_theme.cpp) : roue ouverte repeinte dans la nouvelle palette.
 void roue_rejouer_theme();
-// tab5_tuiles.cpp : la roue de la tuile tRT, autour de `ancre` (pastille d'une carte du
+// tab5_tuiles_roue.cpp : la roue de la tuile tRT, autour de `ancre` (pastille d'une carte du
 // mode HA, bouton d'une tuile météo, ou tout autre widget : une ligne d'une liste ;
 // `depuis_maison` : sans le lien « Maison »). Faux, et rien d'ouvert, quand la tuile n'en
 // a pas (type sans roue, option k ou r, clim sans capacité connue) : l'appelant ouvre
 // alors le popup (tuile_ouvrir_popup).
 bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison = false);
-// tab5_cards.cpp, pour la roue : les lettres de capacité (ADR-0026) de la clim du
+// tab5_clim.cpp, pour la roue : les lettres de capacité (ADR-0026) de la clim du
 // blueprint (r < 0) ou de celle de la tuile tRT, seulement si HA les a poussées (climr,
 // crRT) ; nullptr sinon.
 const char* clim_capacites_connues(int r, int t);
@@ -343,7 +343,7 @@ std::string ha_alerte_texte(const char* brut);
 // une autre unité. Aussi la valeur d'une tuile cap à l'option e (tab5_tuiles.cpp).
 bool energie_formater(char* out, size_t n, float v, const char* unite);
 
-// --- Clim (tab5_cards.cpp, ADR-0026, ADR-0027) ---
+// --- Clim (tab5_clim.cpp, ADR-0026, ADR-0027) ---
 // emplacements_appliquer (tab5_zones.cpp) : entrée « climr|min|max|pas|unité|capacités|nom »
 // (`reste` = ce qui suit « climr| »). Range les réglages et les applique aux widgets de
 // g_clim_ui.
@@ -363,7 +363,7 @@ bool clim_afficher_tuile(int r, int t);
 // état sont oubliés (le blueprint les renvoie juste après) ; si le popup la montrait, il
 // se ferme et revient à la clim du blueprint.
 void clim_tuile_oublier(int r, int t);
-// tab5_cards.cpp, réglages d'une clim de tuile reçus : repeindre la tuile (son bouton
+// tab5_clim.cpp, réglages d'une clim de tuile reçus : repeindre la tuile (son bouton
 // apparaît, ADR-0027).
 void tuiles_repeindre(int r, int t);
 

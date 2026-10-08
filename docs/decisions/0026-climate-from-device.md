@@ -30,7 +30,7 @@ The climate popup was built for the author's Daikin Onecta, in °C: target bound
 | `s` | Oscillation | one of `swing`, `on`, `both`, `vertical`, `3d`, `horizontal` **and** one of `stop`, `off` in `swing_modes` |
 | `w` | Brise | `windnice` in `swing_modes` |
 
-- **The firmware adapts** (`tab5_cards.cpp`, no NVS): arc range `floor(min)`..`ceil(max)` then the target again, ± buttons by `step` within the bounds, target shown `%.1f` for a fractional step and `%.0f` otherwise, unit under the target and after the room temperature, the name as popup title (cut with « … »; « Climatisation », translated, without a name), missing buttons hidden (« Éteint » always stays), and the OPTIONS sections re-stacked: a section without a visible button disappears with its title, the others move up.
+- **The firmware adapts** (`tab5_clim.cpp`, no NVS): arc range `floor(min)`..`ceil(max)` then the target again, ± buttons by `step` within the bounds, target shown `%.1f` for a fractional step and `%.0f` otherwise, unit under the target and after the room temperature, the name as popup title (cut with « … »; « Climatisation », translated, without a name), missing buttons hidden (« Éteint » always stays), and the OPTIONS sections re-stacked: a section without a visible button disappears with its title, the others move up.
 - **The screen keeps speaking « Daikin », the blueprint translates** to the first equivalent the unit knows, or sends nothing:
 
 | Screen sends | Blueprint sends |
