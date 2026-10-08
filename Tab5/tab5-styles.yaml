@@ -122,19 +122,23 @@ color:
 # règle 7 pour les icônes MDI (chaque icône affichée est dans la police de son
 # widget, et chaque glyphe déclaré est affiché quelque part — pas de poids mort).
 font:
+  # Roboto 700 : fichier figé du dépôt (Tab5/fonts/, licence dans Tab5/fonts/OFL.txt),
+  # celui que Google Fonts servait à ESPHome par gfonts://Roboto@700 jusqu'au 08/10/2026
+  # (audit du 07/10, DO-15 : une nouvelle version chez Google changeait le firmware sans
+  # un mot). Empreinte vérifiée par tests/test_polices_themes.py.
   # Texte libre (poussé par HA, réponses de l'assistant) : tout Latin-1 plus les
   # ajouts de Windows-1252 (€ … ’ « » œ Œ — –), İ ō ř des questions de Trial
   # Poursuite (İnönü, Jōmon Sugi, Dvořák ; 27/09/2026) et Ğ ğ ı Ş ş du turc (avec İ et
   # le Latin-1 : ç ö ü â î û ; 02/10/2026), 224 glyphes. Déclarée une fois
   # ici (ancre &latin1), reprise par *latin1 dans roboto_45_b et roboto_22.
-  - file: gfonts://Roboto@700
+  - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_32_b
     size: 32
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
              # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: &latin1 ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿİōřĞğıŞş'
   # Chiffres de l'horloge et de l'écran de sonnerie : rien d'autre.
-  - file: gfonts://Roboto@700
+  - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_130_b
     size: 130
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
@@ -144,12 +148,12 @@ font:
   # tiret sert au « -- » de la consigne quand elle est inconnue (au boot, jusqu'au
   # 1er push de HA, ou consigne absente) : sans lui, le label restait vide. La
   # consigne de l'accueil est dans la police de la date depuis le 05/10/2026.
-  - file: gfonts://Roboto@700
+  - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_55_b
     size: 55
     bpp: 4
     glyphs: '-0123456789: °C.%'
-  - file: gfonts://Roboto@700
+  - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_45_b
     size: 45
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
@@ -160,7 +164,7 @@ font:
   # (−12,4 Ko). La règle 6 de tools/check_tab5_code_rules.py vérifie toujours que
   # la police de lbl_date couvre ses jours, mois et chiffres.
 
-  - file: gfonts://Roboto@700
+  - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_22
     size: 22
     bpp: 4
