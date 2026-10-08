@@ -56,7 +56,7 @@ Optional: the alert raised when a push to the tablet fails to render (`packages/
 
 ## A shutter that reports nothing
 
-`tab5_optionnel/volet_serre_tracking.yaml` is only for a shutter that reports neither its position nor its travel (the author's Tuya motor): copy it into `packages/`, reload, and pick the shutter in « Tab5 · volet à course simulée ». It is not installed by default: the shutter picked in that list no longer gets the blueprint's commands but the package's script, which times its travel. Left on « Aucun », the package changes nothing. With HACS, copy it from `config/custom_components/tab5/fichiers/tab5_optionnel/`: once it is in `packages/`, the integration updates it with the others.
+`tab5_optionnel/volet_serre_tracking.yaml` is only for a shutter that reports neither its position nor its travel (the author's Tuya motor): copy it into `packages/`, reload, and pick the shutter in « Tab5 · volet à course simulée ». It is not installed by default: the shutter picked in that list no longer gets the blueprint's commands but the package's script, which times its travel. Set that time in « Tab5 · course du volet » (seconds, 26 by default). Left on « Aucun », the package changes nothing. With HACS, copy it from `config/custom_components/tab5/fichiers/tab5_optionnel/`: once it is in `packages/`, the integration updates it with the others.
 
 ## Where these files come from
 
@@ -124,7 +124,7 @@ Facultatif : l'alerte levée quand une poussée vers la tablette ne se rend pas 
 
 ## Un volet qui ne signale rien
 
-`tab5_optionnel/volet_serre_tracking.yaml` ne sert qu'à un volet qui ne signale ni sa position ni sa course (le moteur Tuya de l'auteur) : copiez-le dans `packages/`, rechargez, et choisissez le volet dans « Tab5 · volet à course simulée ». Il n'est pas installé par défaut : le volet choisi dans cette liste ne reçoit plus les commandes du blueprint mais celles du script du package, qui chronomètre sa course. Laissée sur « Aucun », la liste ne change rien. Avec HACS, copiez-le depuis `config/custom_components/tab5/fichiers/tab5_optionnel/` : une fois dans `packages/`, l'intégration le met à jour avec les autres.
+`tab5_optionnel/volet_serre_tracking.yaml` ne sert qu'à un volet qui ne signale ni sa position ni sa course (le moteur Tuya de l'auteur) : copiez-le dans `packages/`, rechargez, et choisissez le volet dans « Tab5 · volet à course simulée ». Il n'est pas installé par défaut : le volet choisi dans cette liste ne reçoit plus les commandes du blueprint mais celles du script du package, qui chronomètre sa course. Réglez cette durée dans « Tab5 · course du volet » (en secondes, 26 par défaut). Laissée sur « Aucun », la liste ne change rien. Avec HACS, copiez-le depuis `config/custom_components/tab5/fichiers/tab5_optionnel/` : une fois dans `packages/`, l'intégration le met à jour avec les autres.
 
 ## D'où viennent ces fichiers
 

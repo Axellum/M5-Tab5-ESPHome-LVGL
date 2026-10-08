@@ -187,7 +187,7 @@ The light push automation (`tab5_ha_hmi_alerts_push` in `packages/tab5_push.yaml
 
 Everything for a roller shutter whose motor reports **no position and no end-stop** (typical cheap Tuya module): the two helpers (an `input_boolean` armed for the measured travel time, an `input_text` carrying the label shown on screen), the central script `tab5_volet_action` called by the Tab5, `tab5_volet_updater`, which pushes the label to `tab5_maj_volet_etat`, and `volet_serre_track_direct_cover`, which updates the helpers when the shutter is commanded some other way (HA UI, sunrise/sunset automation, another integration) so the screen follows.
 
-Adapt the `26 s` travel delay to your own shutter (it appears in the script and in the direct-cover automation).
+Set the travel time of your own shutter in « Tab5 · course du volet » (seconds, 26 by default): one script, `tab5_volet_course`, times the travel for the Tab5 and for the direct-cover automation.
 
 ### `packages/tab5_micro_absence.yaml`
 Turns the Tab5 wake word (« Ok Nabu ») **off when nobody is home** and back on when someone returns. It listens 24/7 otherwise (10 ms frames, model + voice activity detection: an estimated 5-15 % of a core plus the I2S bus and the microphone ADC), for nothing when the flat is empty.
@@ -223,6 +223,7 @@ Not a package: a Jinja macro that **writes** a Home Assistant dashboard for the 
 | Tab5 · TV Samsung, Tab5 · adresse de la TV | `tab5_tv` | the TV popup's app buttons (Tizen REST API on port 8001) |
 | Tab5 · alertes : mises à jour / vigilance à partir de / capteurs « problème » / entités indisponibles / étiquette « Tab5 · alerte » / piles sous | `tab5_alerts` | what shows as an alert on the central card (all of it by default, batteries below 20 %) |
 | Tab5 · volet à course simulée | `optionnel/volet_serre_tracking` | the shutter whose travel is simulated |
+| Tab5 · course du volet (number) | `optionnel/volet_serre_tracking` | its full travel time, in seconds (26 by default) |
 
 The action names (`esphome.tab5_ha_hmi_…`) still follow the ESPHome device name `tab5-ha-hmi` set by the firmware.
 
@@ -443,7 +444,7 @@ L'automation « push léger » (`tab5_ha_hmi_alerts_push` dans `packages/tab5_pu
 
 Tout ce qu'il faut pour un volet dont le moteur ne renvoie **ni position ni fin de course** (module Tuya bas de gamme typique) : les deux helpers (un `input_boolean` armé pendant la durée de course mesurée, un `input_text` qui porte le libellé affiché à l'écran), le script central `tab5_volet_action` appelé par le Tab5, `tab5_volet_updater`, qui pousse le libellé vers `tab5_maj_volet_etat`, et `volet_serre_track_direct_cover`, qui met les helpers à jour quand le volet est commandé autrement (interface HA, automatisation lever/coucher, autre intégration) pour que l'écran suive.
 
-Adaptez le délai de course de `26 s` à votre volet (il figure dans le script et dans l'automatisation de suivi direct).
+Réglez la durée de course de votre volet dans « Tab5 · course du volet » (en secondes, 26 par défaut) : un seul script, `tab5_volet_course`, chronomètre la course pour le Tab5 comme pour l'automatisation de suivi direct.
 
 ### `packages/tab5_micro_absence.yaml`
 Coupe le mot d'activation du Tab5 (« Ok Nabu ») **quand personne n'est à la maison**, et le rallume au retour. Sinon il écoute 24 h/24 (trames de 10 ms, modèle + détection de voix : 5 à 15 % d'un cœur plus le bus I2S et l'ADC du micro, estimation), pour rien quand l'appartement est vide.
@@ -479,6 +480,7 @@ Pas un package : une macro Jinja qui **écrit** un tableau de bord Home Assistan
 | Tab5 · TV Samsung, Tab5 · adresse de la TV | `tab5_tv` | boutons d'applications du popup TV (API REST Tizen, port 8001) |
 | Tab5 · alertes : mises à jour / vigilance à partir de / capteurs « problème » / entités indisponibles / étiquette « Tab5 · alerte » / piles sous | `tab5_alerts` | ce qui s'affiche en alerte sur la carte centrale (tout par défaut, piles sous 20 %) |
 | Tab5 · volet à course simulée | `optionnel/volet_serre_tracking` | le volet dont la course est simulée |
+| Tab5 · course du volet (nombre) | `optionnel/volet_serre_tracking` | la durée de sa course complète, en secondes (26 par défaut) |
 
 Les noms d'actions (`esphome.tab5_ha_hmi_…`) suivent toujours le nom d'appareil ESPHome `tab5-ha-hmi` donné par le firmware.
 

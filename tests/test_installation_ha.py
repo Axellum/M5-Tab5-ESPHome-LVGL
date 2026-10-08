@@ -106,7 +106,7 @@ def _definies() -> set[str]:
         for domaine in ("input_text", "input_select", "input_boolean", "script", "rest_command"):
             definies |= {f"{domaine}.{cle}" for cle in (paquet.get(domaine) or {})}
         for bloc in paquet.get("template") or []:
-            for domaine in ("sensor", "binary_sensor", "select", "weather"):
+            for domaine in ("sensor", "binary_sensor", "select", "weather", "number"):
                 for entite in bloc.get(domaine) or []:
                     # default_entity_id fixe l'entity_id (noms bilingues, 29/09/2026) ;
                     # sans lui, HA le tire du nom.
@@ -465,3 +465,32 @@ def test_syntaxe_actuelle_des_automatisations():
                         if isinstance(t, dict) and "platform" in t:
                             fautes.append(f"{rel} : `- platform: {t['platform']}` (→ `- trigger:`)")
     assert not fautes, fautes
+
+
+def test_volet_simule_un_seul_chrono_regle_dans_ha():
+    """Audit du 07/10/2026, HA-4 (optionnel/volet_serre_tracking.yaml) : la course du volet
+    simulé n'est chronométrée qu'à un endroit (script.tab5_volet_course), appelé par le
+    script de la tablette et par le suivi des commandes directes ; sa durée est le réglage
+    « Tab5 · course du volet », 26 s tant que personne ne l'a changé (la valeur d'avant)."""
+    with open(os.path.join(REPO, "HomeAssistant_Config", "optionnel", "volet_serre_tracking.yaml"),
+              encoding="utf-8") as f:
+        paquet = yaml.load(f.read(), Loader=_Chargeur)
+    delais = [d["delay"] for d in _noeuds(paquet) if "delay" in d]
+    assert delais == [{"seconds": "{{ states('number.tab5_course_du_volet') | int(26) }}"}]
+    course = paquet["script"]["tab5_volet_course"]
+    assert course["mode"] == "restart"
+    assert not any(str(d.get("action", "")).startswith("cover.") for d in _noeuds(course)),         "la course ne commande pas le volet"
+    tablette = paquet["script"]["tab5_volet_action"]
+    directe = next(a for a in paquet["automation"] if a["id"] == "volet_serre_track_direct_cover")
+    for appelant in (tablette, directe):
+        appels = [d for d in _noeuds(appelant) if d.get("action") == "script.tab5_volet_course"]
+        assert len(appels) == 1 and "action" in appels[0]["data"]
+    # Le suivi direct ignore les commandes du script de la tablette, qui reste « on »
+    # pendant la course (appel bloquant, pas script.turn_on).
+    assert {"condition": "state", "entity_id": "script.tab5_volet_action", "state": "off"} in directe["conditions"]
+    reglage = next(e for b in paquet["template"] for e in b.get("number") or []
+                   if e["default_entity_id"] == "number.tab5_course_du_volet")
+    assert reglage["state"] == "{{ states('input_text.tab5_memoire_course_volet') | int(26) }}"
+    assert reglage["min"] <= 26 <= reglage["max"]
+    # Sans initial : il remettrait la valeur à chaque démarrage de HA.
+    assert "initial" not in paquet["input_text"]["tab5_memoire_course_volet"]
