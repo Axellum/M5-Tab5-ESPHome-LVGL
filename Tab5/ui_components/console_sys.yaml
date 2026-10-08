@@ -1,37 +1,42 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file console_sys.yaml
-# @role Popup "Console Système" (carte modale standard 1250x690, cadre v4)
-#       organisée en 4 cartes de verre 550x290 (corps à y=72, rangée basse à
-#       y=380, 20 px de marge basse) :
+# @role Page « Système » du popup Réglages (reglages_popup.yaml) depuis le 08/10/2026 ;
+#       avant, popup « Console système » à part (son propre voile et sa barre de titre).
+#       Inclus dans la carte du popup, sous la barre de titre : conteneur
+#       reglages_page_systeme à y = ${modal_body_y}, 4 cartes de verre 589x290 (x 24 et
+#       637 comme les autres pages, y 0 et 308 : les 598 px utiles) :
 #       MÉMOIRE (SRAM/PSRAM/bloc max/flash), RÉSEAU (Wi-Fi/IP/signal/état HA),
 #       SYSTÈME (uptime/temp CPU/charge CPU/temps de boucle/batterie + volume, six
 #       lignes au pas de 39 px depuis le 06/10/2026), GESTION (MAJ écran,
 #       recharge automations ; redémarrage HA, reboot tablette : 2 rangées de
-#       2 boutons 247x107, pas de 117 px ; le thème est passé dans le popup
+#       2 boutons 266x107, pas de 117 px ; le thème est passé dans le popup
 #       Réglages le 06/10/2026).
 # @data_contract Les ids `lbl_sys_*` / `bar_sys_*` sont remplis par
-#       tab5-sensors-diagnostics.yaml (interval 2s + capteurs 60s, garde #T222)
-#       et rafraîchis à l'ouverture par tab5-lvgl.yaml (appui long sur
-#       btn_control_console, l'engrenage ; son tap ouvre les Réglages) —
-#       y compris `lbl_sys_ha_val` (état connexion HA, vert/rouge). NE PAS les
-#       renommer. Ce fichier ne fait QUE déclarer les widgets et leurs actions —
-#       aucun calcul de diagnostic ici.
-# @ai_instruction `scrollable: false` est posé sur la carte modale et toutes
-#       les sous-cartes : un appui légèrement glissé (ex: sur la croix de
-#       fermeture) faisait défiler la carte et laissait le contenu décalé.
+#       tab5-sensors-diagnostics.yaml (interval 2s + capteurs 60s, garde #T222 :
+#       reglages_page_visible(REGLAGES_PAGE_SYSTEME), rien tant que la page n'est pas
+#       affichée) et rafraîchis quand la page s'affiche (script tab5_reglages_page,
+#       tab5-reglages.yaml) — y compris `lbl_sys_ha_val` (état connexion HA,
+#       vert/rouge). NE PAS les renommer. Ce fichier ne fait QUE déclarer les widgets
+#       et leurs actions — aucun calcul de diagnostic ici.
+# @ai_instruction `scrollable: false` est posé sur la page et toutes les sous-cartes :
+#       un appui légèrement glissé faisait défiler la carte et laissait le contenu
+#       décalé, et une page qui défile prendrait le geste de changement de page.
 #       NE PAS retirer ces flags. Les confirmations destructives (reboot
 #       tablette / restart HA) passent par des overlays dédiés
-#       (`overlay_confirm_*`) : l'état "armé" = visibilité du widget, une seule
-#       source de vérité — remplace l'ancien double-tap `reboot_armed`
-#       (global retiré le 16/07/2026 avec la Console v2, PR #44).
+#       (`overlay_confirm_*`, SUBWINDOW du registre) : l'état "armé" = visibilité du
+#       widget, une seule source de vérité — remplace l'ancien double-tap
+#       `reboot_armed` (global retiré le 16/07/2026 avec la Console v2, PR #44).
+#       Changer de page ou fermer le popup les referme (reglages_afficher_page,
+#       reglages_fermer : tab5_reglages.cpp).
 # @architecture_constraint `slider_volume` passe par
 #       `script.tab5_volume_apply` (tab5-scripts.yaml), point d'entrée unique
 #       partagé avec le slider du popup assistant et avec `number.tab5_volume`
 #       exposé à Home Assistant — ne pas écrire `system_volume` ni appeler
 #       `media_player.volume_set` directement dans `on_value` : le premier fait
 #       diverger les trois affichages, le second sature l'I2S à chaque tick de
-#       glissement (le debounce est dans le script). Les boutons GESTION émettent
+#       glissement (le debounce est dans le script). Le glisser de côté n'y change
+#       pas de page (geste_rappel, tab5_reglages.cpp). Les boutons GESTION émettent
 #       des événements `esphome.tab5_*` (ADR-0025, 28/09/2026), que
 #       packages/tab5_evenements.yaml traduit en actions : plus d'option « actions
 #       HA » à cocher. Le redémarrage de HA part seulement de « Confirmer »
@@ -39,354 +44,340 @@
 #       homeassistant.restart.
 # ============================================================================
 obj:
-  id: layer_console_sys
-  align: CENTER
+  id: reglages_page_systeme
+  align: TOP_LEFT
+  x: 0
+  y: ${modal_body_y}
   width: 100%
-  height: 100%
+  height: 598
   hidden: true
   scrollable: false
   styles: style_invisible
   widgets:
-    # Voile sombre (tap = fermer + refermer les overlays de confirmation)
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys));" } }
-
-    # Carte modale principale
+    # ═══ CARTE MÉMOIRE (haut gauche) ═══
     - obj:
-        align: CENTER
-        width: ${modal_card_w}
-        height: ${modal_card_h}
-        styles: style_modal_card
+        align: TOP_LEFT
+        x: 24
+        y: 0
+        width: 589
+        height: 290
+        styles: style_glass_card
         scrollable: false
-        scrollbar_mode: "OFF"
         widgets:
+          - label: { text: "MÉMOIRE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0717", icon_style: "style_text_accent", title: "CONSOLE SYSTÈME", title_id: "popup_console_title", close_btn_id: "btn_console_close", close_lambda: "lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN); animate_popup_close(id(layer_console_sys));" } }
-
-          # ═══ CARTE MÉMOIRE (haut gauche) ═══
-          - obj:
+          - label: { text: "SRAM", align: TOP_LEFT, x: 22, y: 46, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_sram_val, text: "--", align: TOP_RIGHT, x: -22, y: 54, styles: style_text_console_value }
+          - bar:
+              id: bar_sys_sram
               align: TOP_LEFT
-              x: 63
-              y: ${modal_body_y}
-              width: 550
-              height: 290
-              styles: style_glass_card
-              scrollable: false
-              widgets:
-                - label: { text: "MÉMOIRE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+              x: 22
+              y: 90
+              width: 545
+              height: 16
+              min_value: 0
+              max_value: 100
+              value: 0
+              styles: style_bg_arc_track
+              radius: 8
+              indicator:
+                styles: style_bg_success
+                radius: 8
 
-                - label: { text: "SRAM", align: TOP_LEFT, x: 22, y: 46, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_sram_val, text: "--", align: TOP_RIGHT, x: -22, y: 54, styles: style_text_console_value }
-                - bar:
-                    id: bar_sys_sram
-                    align: TOP_LEFT
-                    x: 22
-                    y: 90
-                    width: 506
-                    height: 16
-                    min_value: 0
-                    max_value: 100
-                    value: 0
-                    styles: style_bg_arc_track
-                    radius: 8
-                    indicator:
-                      styles: style_bg_success
-                      radius: 8
-
-                - label: { text: "PSRAM", align: TOP_LEFT, x: 22, y: 120, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_psram_val, text: "--", align: TOP_RIGHT, x: -22, y: 128, styles: style_text_console_value }
-                - bar:
-                    id: bar_sys_psram
-                    align: TOP_LEFT
-                    x: 22
-                    y: 164
-                    width: 506
-                    height: 16
-                    min_value: 0
-                    max_value: 100
-                    value: 0
-                    styles: style_bg_arc_track
-                    radius: 8
-                    indicator:
-                      styles: style_bg_success
-                      radius: 8
-
-                - label: { text: "Bloc max", align: TOP_LEFT, x: 22, y: 216, styles: style_text_console_label }
-                # x 145 : « Max. Block » (allemand, 108 px depuis x 22) collait la valeur à x 130.
-                - label: { id: lbl_sys_frag_val, text: "--", align: TOP_LEFT, x: 145, y: 216, styles: style_text_console_value }
-                - label: { text: "Flash", align: TOP_LEFT, x: 330, y: 216, styles: style_text_console_label }
-                - label: { id: lbl_sys_flash_val, text: "--", align: TOP_LEFT, x: 400, y: 216, styles: style_text_console_value }
-
-          # ═══ CARTE RÉSEAU (haut droite) ═══
-          - obj:
+          - label: { text: "PSRAM", align: TOP_LEFT, x: 22, y: 120, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_psram_val, text: "--", align: TOP_RIGHT, x: -22, y: 128, styles: style_text_console_value }
+          - bar:
+              id: bar_sys_psram
               align: TOP_LEFT
-              x: 637
-              y: ${modal_body_y}
-              width: 550
-              height: 290
-              styles: style_glass_card
-              scrollable: false
-              widgets:
-                - label: { text: "RÉSEAU", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+              x: 22
+              y: 164
+              width: 545
+              height: 16
+              min_value: 0
+              max_value: 100
+              value: 0
+              styles: style_bg_arc_track
+              radius: 8
+              indicator:
+                styles: style_bg_success
+                radius: 8
 
-                - label: { text: "Wi-Fi", align: TOP_LEFT, x: 22, y: 50, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_ssid_val, text: "--", align: TOP_RIGHT, x: -22, y: 50, text_font: roboto_32_b, styles: style_text_console_value }
+          - label: { text: "Bloc max", align: TOP_LEFT, x: 22, y: 216, styles: style_text_console_label }
+          # x 145 : « Max. Block » (allemand, 108 px depuis x 22) collait la valeur à x 130.
+          - label: { id: lbl_sys_frag_val, text: "--", align: TOP_LEFT, x: 145, y: 216, styles: style_text_console_value }
+          - label: { text: "Flash", align: TOP_LEFT, x: 369, y: 216, styles: style_text_console_label }
+          - label: { id: lbl_sys_flash_val, text: "--", align: TOP_LEFT, x: 439, y: 216, styles: style_text_console_value }
 
-                - label: { text: "Adresse IP", align: TOP_LEFT, x: 22, y: 102, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_ip_val, text: "--", align: TOP_RIGHT, x: -22, y: 102, text_font: roboto_32_b, styles: style_text_console_value }
+    # ═══ CARTE RÉSEAU (haut droite) ═══
+    - obj:
+        align: TOP_LEFT
+        x: 637
+        y: 0
+        width: 589
+        height: 290
+        styles: style_glass_card
+        scrollable: false
+        widgets:
+          - label: { text: "RÉSEAU", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-                - label: { text: "Signal", align: TOP_LEFT, x: 22, y: 154, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_rssi_val, text: "--", align: TOP_RIGHT, x: -22, y: 154, text_font: roboto_32_b, styles: style_text_console_value }
+          - label: { text: "Wi-Fi", align: TOP_LEFT, x: 22, y: 50, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_ssid_val, text: "--", align: TOP_RIGHT, x: -22, y: 50, text_font: roboto_32_b, styles: style_text_console_value }
 
-                # État connexion HA — mis à jour par l'interval 2 s de tab5-sensors-diagnostics.yaml
-                # et à l'ouverture de la console (btn_control_console, tab5-lvgl.yaml)
-                - label: { text: "Home Assistant", align: TOP_LEFT, x: 22, y: 206, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_ha_val, text: "--", align: TOP_RIGHT, x: -22, y: 206, text_font: roboto_32_b, styles: style_text_dim }
+          - label: { text: "Adresse IP", align: TOP_LEFT, x: 22, y: 102, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_ip_val, text: "--", align: TOP_RIGHT, x: -22, y: 102, text_font: roboto_32_b, styles: style_text_console_value }
 
-          # ═══ CARTE SYSTÈME (bas gauche) ═══
-          - obj:
+          - label: { text: "Signal", align: TOP_LEFT, x: 22, y: 154, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_rssi_val, text: "--", align: TOP_RIGHT, x: -22, y: 154, text_font: roboto_32_b, styles: style_text_console_value }
+
+          # État connexion HA — mis à jour par l'interval 2 s de tab5-sensors-diagnostics.yaml
+          # et à l'ouverture de la console (btn_control_console, tab5-lvgl.yaml)
+          - label: { text: "Home Assistant", align: TOP_LEFT, x: 22, y: 206, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_ha_val, text: "--", align: TOP_RIGHT, x: -22, y: 206, text_font: roboto_32_b, styles: style_text_dim }
+
+    # ═══ CARTE SYSTÈME (bas gauche) ═══
+    - obj:
+        align: TOP_LEFT
+        x: 24
+        y: 308
+        width: 589
+        height: 290
+        styles: style_glass_card
+        scrollable: false
+        widgets:
+          - label: { text: "SYSTÈME", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+
+          # Six lignes au pas de 39 px depuis y 42 (avant le 06/10/2026 : quatre
+          # lignes au pas de 52 depuis y 50) : la charge du processeur et la batterie
+          # y sont entrées sans toucher aux autres cartes. Le bouton du curseur de
+          # volume dépasse de 10 px sous la barre : il finit 14 px au-dessus du bas
+          # de la carte, autant que le titre sous le haut (mesuré sur le rendu).
+          - label: { text: "Temps actif", align: TOP_LEFT, x: 22, y: 42, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_uptime_val, text: "--", align: TOP_RIGHT, x: -22, y: 42, text_font: roboto_32_b, styles: style_text_console_value }
+
+          - label: { text: "Temp. CPU", align: TOP_LEFT, x: 22, y: 81, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_temp_val, text: "--", align: TOP_RIGHT, x: -22, y: 81, text_font: roboto_32_b, styles: style_text_console_value }
+
+          # Charge de chaque cœur, « cœur 0 · cœur 1 » (discussion #278, 06/10/2026) :
+          # update_console_cpu_ui (tab5_console.cpp), interval 2 s console ouverte.
+          - label: { text: "Charge CPU", align: TOP_LEFT, x: 22, y: 120, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_cpu_val, text: "--", align: TOP_RIGHT, x: -22, y: 120, text_font: roboto_32_b, styles: style_text_console_value }
+
+          - label: { text: "Temps de boucle", align: TOP_LEFT, x: 22, y: 159, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_loop_val, text: "--", align: TOP_RIGHT, x: -22, y: 159, text_font: roboto_32_b, styles: style_text_console_value }
+
+          # Batterie de la tablette (discussion #278, 06/10/2026) : niveau et tension, ou
+          # « Sur USB » / « Non montée » (update_console_batterie_ui, tab5_zones.cpp).
+          # L'icône est celle du bandeau ; le C++ la pose à gauche de la valeur.
+          - label: { text: "Batterie", align: TOP_LEFT, x: 22, y: 198, text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_batterie_icone, text: "\U000F0091", align: TOP_RIGHT, x: -160, y: 201, text_font: mdi_font_32, styles: style_text_console_label, hidden: true }
+          - label: { id: lbl_sys_batterie_val, text: "--", align: TOP_RIGHT, x: -22, y: 198, text_font: roboto_32_b, styles: style_text_console_value }
+
+          # Volume (le label % est mis à jour par le slider lui-même)
+          - label: { text: "\U000F0581", align: TOP_LEFT, x: 22, y: 236, text_font: mdi_font_32, styles: style_text_console_label }
+          - label: { id: lbl_sys_vol_val, text: "100%", align: TOP_RIGHT, x: -22, y: 240, styles: style_text_console_value }
+          - slider:
+              id: slider_volume
               align: TOP_LEFT
-              x: 63
-              y: 380
-              width: 550
-              height: 290
-              styles: style_glass_card
-              scrollable: false
-              widgets:
-                - label: { text: "SYSTÈME", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+              x: 70
+              y: 242
+              width: 369
+              height: 24
+              min_value: 0
+              max_value: 100
+              value: 100
+              styles: style_bg_arc_track
+              radius: 12
+              indicator:
+                styles: style_bg_accent
+                radius: 12
+              knob:
+                styles: style_bg_soft
+              on_value:
+                # Point d'entrée unique (tab5-scripts.yaml) : écrit le
+                # global, repeint les DEUX sliders + le label %, publie
+                # sur number.tab5_volume (HA) puis debounce le volume_set.
+                - script.execute:
+                    id: tab5_volume_apply
+                    vol: !lambda 'return x / 100.0f;'
+                    push_device: true
+          - label: { text: "\U000F057E", align: TOP_LEFT, x: 455, y: 236, text_font: mdi_font_32, styles: style_text_console_label }
 
-                # Six lignes au pas de 39 px depuis y 42 (avant le 06/10/2026 : quatre
-                # lignes au pas de 52 depuis y 50) : la charge du processeur et la batterie
-                # y sont entrées sans toucher aux autres cartes. Le bouton du curseur de
-                # volume dépasse de 10 px sous la barre : il finit 14 px au-dessus du bas
-                # de la carte, autant que le titre sous le haut (mesuré sur le rendu).
-                - label: { text: "Temps actif", align: TOP_LEFT, x: 22, y: 42, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_uptime_val, text: "--", align: TOP_RIGHT, x: -22, y: 42, text_font: roboto_32_b, styles: style_text_console_value }
+    # ═══ CARTE GESTION (bas droite) ═══
+    - obj:
+        align: TOP_LEFT
+        x: 637
+        y: 308
+        width: 589
+        height: 290
+        styles: style_glass_card
+        scrollable: false
+        widgets:
+          - label: { text: "GESTION", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-                - label: { text: "Temp. CPU", align: TOP_LEFT, x: 22, y: 81, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_temp_val, text: "--", align: TOP_RIGHT, x: -22, y: 81, text_font: roboto_32_b, styles: style_text_console_value }
-
-                # Charge de chaque cœur, « cœur 0 · cœur 1 » (discussion #278, 06/10/2026) :
-                # update_console_cpu_ui (tab5_console.cpp), interval 2 s console ouverte.
-                - label: { text: "Charge CPU", align: TOP_LEFT, x: 22, y: 120, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_cpu_val, text: "--", align: TOP_RIGHT, x: -22, y: 120, text_font: roboto_32_b, styles: style_text_console_value }
-
-                - label: { text: "Temps de boucle", align: TOP_LEFT, x: 22, y: 159, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_loop_val, text: "--", align: TOP_RIGHT, x: -22, y: 159, text_font: roboto_32_b, styles: style_text_console_value }
-
-                # Batterie de la tablette (discussion #278, 06/10/2026) : niveau et tension, ou
-                # « Sur USB » / « Non montée » (update_console_batterie_ui, tab5_zones.cpp).
-                # L'icône est celle du bandeau ; le C++ la pose à gauche de la valeur.
-                - label: { text: "Batterie", align: TOP_LEFT, x: 22, y: 198, text_font: roboto_32_b, styles: style_text_console_label }
-                - label: { id: lbl_sys_batterie_icone, text: "\U000F0091", align: TOP_RIGHT, x: -160, y: 201, text_font: mdi_font_32, styles: style_text_console_label, hidden: true }
-                - label: { id: lbl_sys_batterie_val, text: "--", align: TOP_RIGHT, x: -22, y: 198, text_font: roboto_32_b, styles: style_text_console_value }
-
-                # Volume (le label % est mis à jour par le slider lui-même)
-                - label: { text: "\U000F0581", align: TOP_LEFT, x: 22, y: 236, text_font: mdi_font_32, styles: style_text_console_label }
-                - label: { id: lbl_sys_vol_val, text: "100%", align: TOP_RIGHT, x: -22, y: 240, styles: style_text_console_value }
-                - slider:
-                    id: slider_volume
-                    align: TOP_LEFT
-                    x: 70
-                    y: 242
-                    width: 330
-                    height: 24
-                    min_value: 0
-                    max_value: 100
-                    value: 100
-                    styles: style_bg_arc_track
-                    radius: 12
-                    indicator:
-                      styles: style_bg_accent
-                      radius: 12
-                    knob:
-                      styles: style_bg_soft
-                    on_value:
-                      # Point d'entrée unique (tab5-scripts.yaml) : écrit le
-                      # global, repeint les DEUX sliders + le label %, publie
-                      # sur number.tab5_volume (HA) puis debounce le volume_set.
-                      - script.execute:
-                          id: tab5_volume_apply
-                          vol: !lambda 'return x / 100.0f;'
-                          push_device: true
-                - label: { text: "\U000F057E", align: TOP_LEFT, x: 416, y: 236, text_font: mdi_font_32, styles: style_text_console_label }
-
-          # ═══ CARTE GESTION (bas droite) ═══
-          - obj:
+          # MAJ Écran — remet le flag de push à on (cause récurrente d'écran
+          # figé, cf. bug is_primary_active du 04/07) puis force un push complet.
+          # Les deux actions sont faites par HA sur l'événement tab5_maj_ecran
+          # (packages/tab5_evenements.yaml), qui trouve l'automatisation de
+          # poussée par son id (tab5_ha_hmi_updater), pas par son nom.
+          - button:
+              id: btn_sync_screen
               align: TOP_LEFT
-              x: 637
-              y: 380
-              width: 550
-              height: 290
-              styles: style_glass_card
-              scrollable: false
+              x: 22
+              y: 46
+              width: 266
+              height: 107
+              styles: style_clim_btn
+              on_short_click:
+                - homeassistant.event:
+                    event: esphome.tab5_maj_ecran
               widgets:
-                - label: { text: "GESTION", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+                - label: { text: "\U000F0379", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_info }
+                - label: { text: "MAJ Écran", align: CENTER, y: 16 }
 
-                # MAJ Écran — remet le flag de push à on (cause récurrente d'écran
-                # figé, cf. bug is_primary_active du 04/07) puis force un push complet.
-                # Les deux actions sont faites par HA sur l'événement tab5_maj_ecran
-                # (packages/tab5_evenements.yaml), qui trouve l'automatisation de
-                # poussée par son id (tab5_ha_hmi_updater), pas par son nom.
+          # Recharge les automations HA (après édition YAML côté Freebox)
+          - button:
+              id: btn_reload_autos
+              align: TOP_LEFT
+              x: 300
+              y: 46
+              width: 266
+              height: 107
+              styles: style_clim_btn
+              on_short_click:
+                - homeassistant.event:
+                    event: esphome.tab5_recharger_automatisations
+              widgets:
+                - label: { text: "\U000F0450", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_info }
+                - label: { text: "Recharger autos", align: CENTER, y: 16 }
+
+          # Redémarre le serveur HA — confirmation via overlay dédié
+          - button:
+              id: btn_restart_ha
+              align: TOP_LEFT
+              x: 22
+              y: 163
+              width: 266
+              height: 107
+              styles: [style_clim_btn, style_border_error]
+              border_opa: 45%
+              on_short_click:
+                - lambda: |-
+                    lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_remove_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_move_to_index(id(overlay_confirm_ha), -1);
+              widgets:
+                - label: { text: "\U000F07D0", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_error }
+                - label: { text: "Redémarrer HA", align: CENTER, y: 16 }
+
+          # Reboot de la tablette — confirmation via overlay dédié
+          - button:
+              id: btn_reboot_sys
+              align: TOP_LEFT
+              x: 300
+              y: 163
+              width: 266
+              height: 107
+              styles: [style_clim_btn, style_border_error]
+              border_opa: 45%
+              on_short_click:
+                - lambda: |-
+                    lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_remove_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_move_to_index(id(overlay_confirm_reboot), -1);
+              widgets:
+                - label: { text: "\U000F0425", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_error }
+                - label: { text: "Reboot tablette", align: CENTER, y: 16 }
+
+          # ── Overlay confirmation : redémarrage Home Assistant ──
+          - obj:
+              id: overlay_confirm_ha
+              align: TOP_LEFT
+              x: 0
+              y: 0
+              width: 589
+              height: 290
+              hidden: true
+              scrollable: false
+              styles: [style_bg_console_bg, style_border_error]
+              bg_opa: 100%
+              radius: 20
+              border_width: 2
+              border_opa: 45%
+              widgets:
+                - label: { text: "Redémarrer Home Assistant ?", align: CENTER, y: -64, text_font: roboto_32_b }
+                - label: { text: "Le serveur sera indisponible ~1 minute.", align: CENTER, y: -24, styles: style_text_dim }
                 - button:
-                    id: btn_sync_screen
-                    align: TOP_LEFT
-                    x: 22
-                    y: 46
-                    width: 247
-                    height: 107
+                    align: CENTER
+                    x: -118
+                    y: 52
+                    width: 212
+                    height: 72
                     styles: style_clim_btn
                     on_short_click:
-                      - homeassistant.event:
-                          event: esphome.tab5_maj_ecran
+                      - lambda: 'lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);'
                     widgets:
-                      - label: { text: "\U000F0379", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_info }
-                      - label: { text: "MAJ Écran", align: CENTER, y: 16 }
-
-                # Recharge les automations HA (après édition YAML côté Freebox)
+                      - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
                 - button:
-                    id: btn_reload_autos
-                    align: TOP_LEFT
-                    x: 281
-                    y: 46
-                    width: 247
-                    height: 107
-                    styles: style_clim_btn
-                    on_short_click:
-                      - homeassistant.event:
-                          event: esphome.tab5_recharger_automatisations
-                    widgets:
-                      - label: { text: "\U000F0450", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_info }
-                      - label: { text: "Recharger autos", align: CENTER, y: 16 }
-
-                # Redémarre le serveur HA — confirmation via overlay dédié
-                - button:
-                    id: btn_restart_ha
-                    align: TOP_LEFT
-                    x: 22
-                    y: 163
-                    width: 247
-                    height: 107
+                    align: CENTER
+                    x: 118
+                    y: 52
+                    width: 212
+                    height: 72
                     styles: [style_clim_btn, style_border_error]
-                    border_opa: 45%
-                    on_short_click:
-                      - lambda: |-
-                          lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_remove_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_move_to_index(id(overlay_confirm_ha), -1);
-                    widgets:
-                      - label: { text: "\U000F07D0", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_error }
-                      - label: { text: "Redémarrer HA", align: CENTER, y: 16 }
-
-                # Reboot de la tablette — confirmation via overlay dédié
-                - button:
-                    id: btn_reboot_sys
-                    align: TOP_LEFT
-                    x: 281
-                    y: 163
-                    width: 247
-                    height: 107
-                    styles: [style_clim_btn, style_border_error]
-                    border_opa: 45%
+                    border_opa: 60%
                     on_short_click:
                       - lambda: |-
                           lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_remove_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
-                          lv_obj_move_to_index(id(overlay_confirm_reboot), -1);
+                          if (id(lbl_sys_ha_val) != nullptr) {
+                            lv_label_set_text(id(lbl_sys_ha_val), tr("Redémarrage..."));
+                            lv_obj_set_style_text_color(id(lbl_sys_ha_val), lv_color_hex(UIColor.WARNING), LV_PART_MAIN);
+                          }
+                      # Seul chemin vers homeassistant.restart : HA ne redémarre
+                      # que sur cet événement, émis après « Confirmer » (ADR-0025).
+                      - homeassistant.event:
+                          event: esphome.tab5_redemarrage_ha_confirme
                     widgets:
-                      - label: { text: "\U000F0425", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_error }
-                      - label: { text: "Reboot tablette", align: CENTER, y: 16 }
+                      - label: { text: "Confirmer", align: CENTER, text_font: roboto_32_b, styles: style_text_error }
 
-                # ── Overlay confirmation : redémarrage Home Assistant ──
-                - obj:
-                    id: overlay_confirm_ha
-                    align: TOP_LEFT
-                    x: 0
-                    y: 0
-                    width: 550
-                    height: 290
-                    hidden: true
-                    scrollable: false
-                    styles: [style_bg_console_bg, style_border_error]
-                    bg_opa: 100%
-                    radius: 20
-                    border_width: 2
-                    border_opa: 45%
+          # ── Overlay confirmation : reboot de la tablette ──
+          - obj:
+              id: overlay_confirm_reboot
+              align: TOP_LEFT
+              x: 0
+              y: 0
+              width: 589
+              height: 290
+              hidden: true
+              scrollable: false
+              styles: [style_bg_console_bg, style_border_error]
+              bg_opa: 100%
+              radius: 20
+              border_width: 2
+              border_opa: 45%
+              widgets:
+                - label: { text: "Redémarrer la tablette ?", align: CENTER, y: -64, text_font: roboto_32_b }
+                - label: { text: "L'écran redémarre immédiatement.", align: CENTER, y: -24, styles: style_text_dim }
+                - button:
+                    align: CENTER
+                    x: -118
+                    y: 52
+                    width: 212
+                    height: 72
+                    styles: style_clim_btn
+                    on_short_click:
+                      - lambda: 'lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);'
                     widgets:
-                      - label: { text: "Redémarrer Home Assistant ?", align: CENTER, y: -64, text_font: roboto_32_b }
-                      - label: { text: "Le serveur sera indisponible ~1 minute.", align: CENTER, y: -24, styles: style_text_dim }
-                      - button:
-                          align: CENTER
-                          x: -118
-                          y: 52
-                          width: 212
-                          height: 72
-                          styles: style_clim_btn
-                          on_short_click:
-                            - lambda: 'lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);'
-                          widgets:
-                            - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
-                      - button:
-                          align: CENTER
-                          x: 118
-                          y: 52
-                          width: 212
-                          height: 72
-                          styles: [style_clim_btn, style_border_error]
-                          border_opa: 60%
-                          on_short_click:
-                            - lambda: |-
-                                lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
-                                if (id(lbl_sys_ha_val) != nullptr) {
-                                  lv_label_set_text(id(lbl_sys_ha_val), tr("Redémarrage..."));
-                                  lv_obj_set_style_text_color(id(lbl_sys_ha_val), lv_color_hex(UIColor.WARNING), LV_PART_MAIN);
-                                }
-                            # Seul chemin vers homeassistant.restart : HA ne redémarre
-                            # que sur cet événement, émis après « Confirmer » (ADR-0025).
-                            - homeassistant.event:
-                                event: esphome.tab5_redemarrage_ha_confirme
-                          widgets:
-                            - label: { text: "Confirmer", align: CENTER, text_font: roboto_32_b, styles: style_text_error }
-
-                # ── Overlay confirmation : reboot de la tablette ──
-                - obj:
-                    id: overlay_confirm_reboot
-                    align: TOP_LEFT
-                    x: 0
-                    y: 0
-                    width: 550
-                    height: 290
-                    hidden: true
-                    scrollable: false
-                    styles: [style_bg_console_bg, style_border_error]
-                    bg_opa: 100%
-                    radius: 20
-                    border_width: 2
-                    border_opa: 45%
+                      - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
+                - button:
+                    align: CENTER
+                    x: 118
+                    y: 52
+                    width: 212
+                    height: 72
+                    styles: [style_clim_btn, style_border_error]
+                    border_opa: 60%
+                    on_short_click:
+                      - lambda: 'lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);'
+                      - button.press: btn_restart
                     widgets:
-                      - label: { text: "Redémarrer la tablette ?", align: CENTER, y: -64, text_font: roboto_32_b }
-                      - label: { text: "L'écran redémarre immédiatement.", align: CENTER, y: -24, styles: style_text_dim }
-                      - button:
-                          align: CENTER
-                          x: -118
-                          y: 52
-                          width: 212
-                          height: 72
-                          styles: style_clim_btn
-                          on_short_click:
-                            - lambda: 'lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);'
-                          widgets:
-                            - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
-                      - button:
-                          align: CENTER
-                          x: 118
-                          y: 52
-                          width: 212
-                          height: 72
-                          styles: [style_clim_btn, style_border_error]
-                          border_opa: 60%
-                          on_short_click:
-                            - lambda: 'lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);'
-                            - button.press: btn_restart
-                          widgets:
-                            - label: { text: "Confirmer", align: CENTER, text_font: roboto_32_b, styles: style_text_error }
+                      - label: { text: "Confirmer", align: CENTER, text_font: roboto_32_b, styles: style_text_error }

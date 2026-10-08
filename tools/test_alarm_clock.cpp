@@ -13,7 +13,8 @@
  * (tab5_float_vers_int : « inf » ou « 1e30 » → entier borné, lot A de l'audit du 30/09),
  * et le chargeur de la batterie (tab5_batterie.h, header seul, 08/10 : présence lue
  * chargeur coupé, sondes, limite 80 %, consommation, alerte de batterie faible),
- * puis les lignes « Batterie » et « Charge CPU » de la console système (06/10),
+ * puis les lignes « Batterie » et « Charge CPU » de la console système (06/10), les pages
+ * des Réglages et les textes de leur page Batterie (08/10),
  * et les règles du mode économie d'énergie (tab5_economie.h, header seul, 06/10) :
  * sur batterie au courant de l'INA226, batterie basse, plafond de luminosité.
  *
@@ -705,6 +706,44 @@ static void test_console_batterie_et_cpu() {
     expect(cpu_charge_pct(0, 0, 0) == -1, "durée nulle : pas de mesure");
 }
 
+// Réglages en quatre pages (08/10/2026) : le geste boucle aux deux bouts ; page Batterie,
+// jamais de valeur ni d'état « batterie » sans batterie détectée.
+static void test_reglages_pages_et_batterie() {
+    expect(reglages_page_voisine(0, 4, true) == 1, "Écran, geste vers la gauche : Apparence");
+    expect(reglages_page_voisine(2, 4, true) == 3, "Batterie, vers la gauche : Système");
+    expect(reglages_page_voisine(3, 4, true) == 0, "Système, vers la gauche : retour à Écran (boucle)");
+    expect(reglages_page_voisine(0, 4, false) == 3, "Écran, vers la droite : Système (boucle)");
+    expect(reglages_page_voisine(3, 4, false) == 2, "Système, vers la droite : Batterie");
+    expect(reglages_page_voisine(7, 4, true) == 0 && reglages_page_voisine(-1, 4, false) == 0,
+           "page hors bornes : la première");
+    expect(reglages_page_voisine(0, 0, true) == 0, "aucune page : 0");
+
+    using P = PresenceBatterie;
+    expect_str(batterie_etat_texte(P::INCONNUE, true, true), "Mesure en cours", "avant la première décision");
+    expect_str(batterie_etat_texte(P::ABSENTE, true, false), "Pas de batterie d\xC3\xA9tect\xC3\xA9" "e",
+               "sans batterie, CHG_STAT dit « en charge » : ignoré");
+    expect_str(batterie_etat_texte(P::PRESENTE, true, true), "Sur batterie", "courant de décharge : sur batterie");
+    expect_str(batterie_etat_texte(P::PRESENTE, true, false), "En charge", "batterie et CHG_STAT : en charge");
+    expect_str(batterie_etat_texte(P::PRESENTE, false, false), "Sur USB", "batterie pleine ou en pause : sur USB");
+
+    char b[16];
+    batterie_valeur_texte(b, sizeof(b), P::PRESENTE, 78.4f, MesureBatterie::NIVEAU);
+    expect_str(b, "78 %", "niveau arrondi, espace avant %");
+    batterie_valeur_texte(b, sizeof(b), P::PRESENTE, 7.623f, MesureBatterie::TENSION);
+    expect_str(b, "7.62 V", "tension, comme la console");
+    batterie_valeur_texte(b, sizeof(b), P::PRESENTE, 3.14f, MesureBatterie::CONSOMMATION);
+    expect_str(b, "3.1 W", "consommation, comme la console");
+    batterie_valeur_texte(b, sizeof(b), P::ABSENTE, 8.39f, MesureBatterie::TENSION);
+    expect_str(b, "--", "sans batterie : la tension du chargeur n'est pas montrée");
+    batterie_valeur_texte(b, sizeof(b), P::INCONNUE, 100.0f, MesureBatterie::NIVEAU);
+    expect_str(b, "--", "avant la première décision : pas de niveau");
+    batterie_valeur_texte(b, sizeof(b), P::PRESENTE, NAN, MesureBatterie::CONSOMMATION);
+    expect_str(b, "--", "consommation inconnue (sur secteur) : « -- »");
+    i18n_set_language(1);
+    expect_str(batterie_etat_texte(P::ABSENTE, false, false), "No battery detected", "traduit en anglais");
+    i18n_set_language(0);
+}
+
 // Mode économie d'énergie (06/10/2026) : sur batterie d'après le courant de l'INA226
 // (+ = décharge), batterie basse à 35 % (retour à 40 %), et la décision appliquée.
 static void test_economie() {
@@ -812,6 +851,7 @@ int main() {
     test_nombres_de_ha();
     test_chargeur();
     test_console_batterie_et_cpu();
+    test_reglages_pages_et_batterie();
     test_economie();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

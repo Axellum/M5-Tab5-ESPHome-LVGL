@@ -50,12 +50,14 @@ def Long(x: int, y: int, apres: float = 0.8) -> Toucher:  # noqa: N802 — se li
 
 @dataclass(frozen=True)
 class Glisser:
-    """Geste du doigt de (x1, y1) à (x2, y2), 300 ms."""
+    """Geste du doigt de (x1, y1) à (x2, y2), 300 ms. `dans_popup` : le geste reste dans
+    un popup ouvert (pages des Réglages), il ne change ni les prévisions ni la pièce."""
     x1: int
     y1: int
     x2: int
     y2: int
     apres: float = 0.8
+    dans_popup: bool = False
 
 
 @dataclass(frozen=True)
@@ -442,9 +444,10 @@ def ecrans_des_pieces(pieces: dict) -> tuple:
 REVEIL_TESTER = (550, 641)
 SONNERIE_ARRETER = (440, 540)
 CAL_JOUR_18 = (642, 342)      # cellule du jeudi 18 (rangée 2, colonne 3)
-# Carte GESTION de la console : deux rangées de deux boutons de 247 × 107 (06/10/2026).
-CONSOLE_REDEMARRER_HA, CONSOLE_REBOOT = (801, 611), (1060, 611)
-CONFIRMATION_ANNULER = (813, 596)   # jamais « Confirmer » (1049, 596)
+# Carte GESTION de la console (page Système des Réglages depuis le 08/10/2026 : carte de
+# 589 × 290 à (652, 395) à l'écran) : deux rangées de deux boutons de 266 × 107.
+CONSOLE_REDEMARRER_HA, CONSOLE_REBOOT = (807, 611), (1085, 611)
+CONFIRMATION_ANNULER = (829, 592)   # jamais « Confirmer » (1065, 592)
 # Popup Énergie (ADR-0028, energie_popup.yaml) : la tuile du capteur solaire de la démo
 # (pièce « Bureau », page 1 des heures, T1 : deuxième tuile, x 275-505), la croix de
 # l'en-tête (ADR-0009, commune à tous les popups) et les boutons de vue (carte du
@@ -463,12 +466,24 @@ TUILE_SCENE = (1140, 572)
 TUILE_JE_PARS = (890, 572)
 BOUTON_APPAREIL = (1048, 341)
 ENERGIE_VUES = {"heures": (828, 347), "jours": (988, 347), "mois": (1148, 347)}
-# Popup Réglages (reglages_popup.yaml) : carte APPARENCE à (652, 87) à l'écran ; pastilles
-# « English » et « Français » (x 158 et 17, y 457, 131 × 56 dans la carte) ; « Annuler » de
-# la confirmation (centre de la carte − 130, + 60). Jamais « Confirmer » : la tablette
-# redémarrerait. La langue de l'écran n'ouvre pas la confirmation : « Français » en anglais.
-REGLAGES_LANGUE_EN, REGLAGES_LANGUE_FR = (875, 572), (734, 572)
-REGLAGES_ANNULER = (816, 446)
+# Popup Réglages (reglages_popup.yaml), quatre pages depuis le 08/10/2026. Noms des pages
+# en haut : 200 × 44 à x 318 + 210 × i de la carte modale (posée à 15 px des bords), sur
+# la ligne du titre. Cartes des pages Écran et Apparence à (39, 87) à l'écran, 1202 de
+# large ; pastilles « English » et « Français » (x 311 et 17, y 457, 286 × 56 dans la
+# carte) ; « Annuler » de la confirmation (centre de la carte − 130, + 60). Jamais
+# « Confirmer » : la tablette redémarrerait. La langue de l'écran n'ouvre pas la
+# confirmation : « Français » en anglais.
+REGLAGES_PAGES = {"ecran": (433, 41), "apparence": (643, 41), "batterie": (853, 41), "systeme": (1063, 41)}
+REGLAGES_LANGUE_EN, REGLAGES_LANGUE_FR = (493, 572), (199, 572)
+REGLAGES_ANNULER = (510, 446)
+# Gestes dans le popup : vers la gauche = page suivante, en boucle. Le premier part du
+# bouton « Non » de « Rallumer l'écran d'une tape » (x 606-1185, y 523-579 de la carte) :
+# la page change et le bouton ne se déclenche pas au relâché (« reglages », capturé
+# ensuite, montre toujours « Oui »). Le second glisse le curseur de luminosité (y 205-225
+# à l'écran) : son réglage, pas une page ; le dernier le remet à 100 %.
+REGLAGES_GLISSER_DEPUIS_UN_BOUTON = Glisser(1100, 638, 500, 638, dans_popup=True)
+REGLAGES_GLISSER_CURSEUR = Glisser(900, 215, 400, 215, dans_popup=True)
+REGLAGES_CURSEUR_A_100 = Glisser(400, 215, 1270, 215, dans_popup=True)
 
 # Popup Température (ADR-0032, historique_popup.yaml) : appui long sur la température de
 # la pièce (btn_reglables_liste, aussi la liste de la tuile − / + au toucher court ; x 859-1051
@@ -703,10 +718,24 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("temperature-serre-mois", (Long(*SERRE), Toucher(*TEMPERATURE_VUES["mois"]), _historique("serre", "mois"))),
     Ecran("temperature-dehors", (Long(*SERRE), _historique("serre", "jour", exterieur=True))),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
+    # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
+    # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.
+    Ecran("reglages-apparence", (Toucher(*BOUTON_SYS), REGLAGES_GLISSER_DEPUIS_UN_BOUTON)),
     Ecran("reglages", (Toucher(*BOUTON_SYS),)),
-    Ecran("reglages-langue", (Toucher(*BOUTON_SYS),
+    Ecran("reglages-curseur", (Toucher(*BOUTON_SYS), REGLAGES_GLISSER_CURSEUR),
+          (REGLAGES_CURSEUR_A_100,)),
+    Ecran("reglages-langue", (Toucher(*BOUTON_SYS), Toucher(*REGLAGES_PAGES["apparence"]),
                               Toucher(*REGLAGES_LANGUE_EN, selon_langue=(("en", *REGLAGES_LANGUE_FR),))),
           (Toucher(*REGLAGES_ANNULER),)),
+    # Page Batterie, par son nom en haut : en charge, puis sans batterie (tension sous 3 V).
+    Ecran("reglages-batterie-en-charge",
+          (_batterie(True, 60.0, True), Toucher(*BOUTON_SYS), Toucher(*REGLAGES_PAGES["batterie"])),
+          SANS_BATTERIE),
+    Ecran("reglages-sans-batterie",
+          (_batterie(True, tension=TENSION_SANS_BATTERIE), Toucher(*BOUTON_SYS),
+           Toucher(*REGLAGES_PAGES["batterie"])),
+          SANS_BATTERIE),
+    # Page Système (l'ancienne console système) : appui long sur l'engrenage.
     Ecran("console-systeme", (Long(*BOUTON_SYS),)),
     # Ligne « Batterie » de la carte SYSTÈME (discussion #278, 06/10/2026) : batterie
     # détectée (niveau, tension, icône du bandeau), en charge, puis sans batterie (« Sur

@@ -49,7 +49,7 @@ font:
     id: police_anton_400_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/anton_400.ttf"
     id: police_anton_400_45
     size: 45
@@ -64,7 +64,7 @@ font:
     id: police_barlow_semi_condensed_700_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/barlow_semi_condensed_700.ttf"
     id: police_barlow_semi_condensed_700_45
     size: 45
@@ -84,7 +84,7 @@ font:
     id: police_familjen_grotesk_700_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/familjen_grotesk_700.ttf"
     id: police_familjen_grotesk_700_45
     size: 45
@@ -94,7 +94,7 @@ font:
     id: police_figtree_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/fraunces_700.ttf"
     id: police_fraunces_700_116
     size: 116
@@ -129,7 +129,7 @@ font:
     id: police_gloock_400_30
     size: 30
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/gloock_400.ttf"
     id: police_gloock_400_45
     size: 45
@@ -144,7 +144,7 @@ font:
     id: police_ibm_plex_serif_700_29
     size: 29
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/ibm_plex_serif_700.ttf"
     id: police_ibm_plex_serif_700_45
     size: 45
@@ -159,7 +159,7 @@ font:
     id: police_jersey_10_400_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/jersey_10_400.ttf"
     id: police_jersey_10_400_45
     size: 45
@@ -169,7 +169,7 @@ font:
     id: police_manrope_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/manrope_700.ttf"
     id: police_manrope_700_45
     size: 45
@@ -184,7 +184,7 @@ font:
     id: police_murecho_400_32
     size: 32
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/murecho_400.ttf"
     id: police_murecho_400_45
     size: 45
@@ -199,7 +199,7 @@ font:
     id: police_nunito_800_29
     size: 29
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/nunito_800.ttf"
     id: police_nunito_800_45
     size: 45
@@ -209,7 +209,7 @@ font:
     id: police_overpass_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/overpass_700.ttf"
     id: police_overpass_700_45
     size: 45
@@ -229,7 +229,7 @@ font:
     id: police_oxanium_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/oxanium_700.ttf"
     id: police_oxanium_700_45
     size: 45
@@ -244,7 +244,7 @@ font:
     id: police_pacifico_400_26
     size: 26
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/pacifico_400.ttf"
     id: police_pacifico_400_45
     size: 45
@@ -259,7 +259,7 @@ font:
     id: police_quicksand_700_31
     size: 31
     bpp: 2
-    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿİıŒœŸ–—’…'
+    glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/quicksand_700.ttf"
     id: police_quicksand_700_45
     size: 45
@@ -485,7 +485,7 @@ script:
           if (id(hum_salon).has_state() && !std::isnan(id(hum_salon).state))
             set_icon_color_ui(id(icon_salon), get_humidity_color(id(hum_salon).state));
           set_icon_active_ui(id(icon_ha), id(status_ha).state, UIColor.INFO, UIColor.INACTIVE);
-          if (is_console_layer_visible(id(layer_console_sys)))
+          if (reglages_page_visible(REGLAGES_PAGE_SYSTEME))
             update_console_ha_status_ui(id(lbl_sys_ha_val), id(status_ha).state);
           // Boutons Domo / Discussion de l'accueil (tab5_set_assist_mode, sans son
           // événement vers HA).

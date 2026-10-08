@@ -183,6 +183,27 @@ enum class PresenceBatterie : uint8_t {
 void batterie_texte_console(char* buf, size_t n, bool montee, PresenceBatterie presence,
                             float niveau, float tension, float puissance_w);
 
+// ─── Réglages en quatre pages (08/10/2026, demande d'Axel) ───
+// Page affichée après un geste dans le popup Réglages (`nb` pages) : vers la gauche la
+// suivante, vers la droite la précédente, en boucle aux deux bouts comme les prévisions
+// (qui bouclent aussi, forecast_page_suivante dans tab5_central.cpp). Page hors de
+// 0..nb-1 : la première. Pure, testée par tools/test_alarm_clock.cpp.
+int reglages_page_voisine(int page, int nb, bool gauche);
+
+// Page Batterie des Réglages, ligne « État » : « Mesure en cours » avant la première
+// décision (30 premières secondes), « Pas de batterie détectée », « Sur batterie » (la
+// tablette tourne sur elle : courant de décharge lu, tab5_economie.h), « En charge »
+// (CHG_STAT), sinon « Sur USB » (batterie pleine, ou en pause par la limite de 80 %).
+// Texte traduit. Pure, testée par tools/test_alarm_clock.cpp.
+const char* batterie_etat_texte(PresenceBatterie presence, bool en_charge, bool sur_batterie);
+
+// Page Batterie : une valeur mesurée, « 78 % », « 7.62 V » ou « 3.1 W » (même écriture que
+// la console), ou « -- » si elle est inconnue ou sans batterie détectée (le chargeur seul
+// lit 4,2 à 8,4 V : jamais de niveau, de tension ni de consommation sans elle). Pure,
+// testée par tools/test_alarm_clock.cpp.
+enum class MesureBatterie : uint8_t { NIVEAU, TENSION, CONSOMMATION };
+void batterie_valeur_texte(char* buf, size_t n, PresenceBatterie presence, float valeur, MesureBatterie mesure);
+
 // Charge d'un cœur, en % entier (0 à 100), sur une fenêtre de `duree_us` µs, d'après le
 // compteur de temps de sa tâche inactive (FreeRTOS, en µs) lu au début et à la fin.
 // Compteur de 32 bits qui reboucle en 71 min : seule la différence compte. -1 si la

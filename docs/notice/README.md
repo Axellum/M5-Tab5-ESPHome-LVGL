@@ -55,7 +55,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Alerts | long press on the central card | [Alerts](alerts.md) |
 | House | in device mode, tap on the room's name in the central card | [House](house.md) |
 | Settings | the gear button | [Settings](settings.md) |
-| System console | long press on the gear button | [System console](console.md) |
+| System console (System page of the settings) | long press on the gear button | [System console](console.md) |
 | Arcade | the gamepad button, or the greenhouse temperature | [Arcade](arcade.md) |
 
 Home Assistant can also open a window with the tablet's « Aller à l'écran » list (go to screen).
@@ -119,7 +119,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Alertes | appui long sur la carte centrale | [Alertes](alerts.md#version-française) |
 | Maison | en mode appareils, tap sur le nom de la pièce dans la carte centrale | [Maison](house.md#version-française) |
 | Réglages | le bouton engrenage | [Réglages](settings.md#version-française) |
-| Console système | appui long sur le bouton engrenage | [Console système](console.md#version-française) |
+| Console système (page Système des réglages) | appui long sur le bouton engrenage | [Console système](console.md#version-française) |
 | Arcade | le bouton manette, ou la température de la serre | [Arcade](arcade.md#version-française) |
 
 Home Assistant peut aussi ouvrir une fenêtre par la liste « Aller à l'écran » de la tablette.

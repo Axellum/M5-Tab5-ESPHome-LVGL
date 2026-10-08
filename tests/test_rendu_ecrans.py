@@ -90,7 +90,8 @@ def _jouer(etapes, page=2, ha=False):
             ha = not ha
         elif isinstance(etape, Aller) and etape.option == "Accueil":
             ha = False
-        elif isinstance(etape, Glisser) and etape.y2 >= Y_MIN_GESTE and etape.x1 != etape.x2:
+        elif (isinstance(etape, Glisser) and not etape.dans_popup and etape.y2 >= Y_MIN_GESTE
+              and etape.x1 != etape.x2):
             gauche = etape.x2 < etape.x1
             if ha:
                 autres = [p for p in PAGES_OCCUPEES if (p > page if gauche else p < page)]
@@ -144,7 +145,9 @@ def test_gestes_partent_hors_des_tuiles_et_des_cartes():
     for ecran in ECRANS:
         trace, _, _ = _jouer(_etapes(ecran))
         for etape, _, ha in trace:
-            if not isinstance(etape, Glisser):
+            # Un geste dans un popup (pages des Réglages) ne touche ni tuile ni carte : le
+            # popup les couvre et garde le geste (tab5_reglages.cpp).
+            if not isinstance(etape, Glisser) or etape.dans_popup:
                 continue
             dispositions = [_cartes(n) for n in range(1, 6)] if ha else [_cartes(5)]
             for x, y in ((etape.x1, etape.y1), (etape.x2, etape.y2)):
@@ -175,3 +178,16 @@ def test_boutons_du_haut():
                           (ecrans.BOUTON_TV, "btn_control_tv")):
         bx, by, largeur, hauteur = _bouton(ident)
         assert bx < x < bx + largeur and by < y < by + hauteur, (ident, x, y)
+
+
+def test_pages_des_reglages():
+    """Les appuis sur les noms des pages des Réglages tombent au milieu de leur bouton
+    (reglages_onglet.yaml : 200 × 44 à y 4 de la carte modale, posée à 15 px des bords),
+    dans l'ordre des pages, et les gestes du popup y sont marqués comme tels."""
+    popup = _lire("Tab5", "ui_components", "reglages_popup.yaml")
+    xs = [int(x) for x in re.findall(r"file: reglages_onglet\.yaml, vars: \{ id: \w+, x: (\d+), page: \d+,", popup)]
+    noms = ("ecran", "apparence", "batterie", "systeme")
+    assert [ecrans.REGLAGES_PAGES[n] for n in noms] == [(15 + x + 100, 15 + 4 + 22) for x in xs]
+    for geste in (ecrans.REGLAGES_GLISSER_DEPUIS_UN_BOUTON, ecrans.REGLAGES_GLISSER_CURSEUR,
+                  ecrans.REGLAGES_CURSEUR_A_100):
+        assert geste.dans_popup and geste.y1 == geste.y2, geste

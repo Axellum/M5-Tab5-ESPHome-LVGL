@@ -3,9 +3,13 @@
 # @file tab5-reglages.yaml
 # @role Popup « Réglages » de la tablette (06/10/2026, demande d'Axel) : pose les widgets
 #       que tab5_reglages.cpp peint (g_reglages_ui) et écrit les entités.
-#         - tab5_reglages_ouvrir : bouton central du haut (tap ; l'appui long reste la
-#           console système) ou « Aller à l'écran → Réglages ». Pose les widgets à la
-#           première ouverture, peint, ouvre.
+#         - tab5_reglages_ouvrir (page : ReglagesPage) : bouton central du haut (tap :
+#           page Écran ; appui long : page Système) ou « Aller à l'écran → Réglages /
+#           Console système ». Pose les widgets à la première ouverture, peint, montre la
+#           page, ouvre.
+#         - tab5_reglages_page : une page vient de s'afficher (g_reglages_ui.page_montree,
+#           appelé par reglages_afficher_page) ; la page Système (l'ancienne console)
+#           s'y remplit tout de suite, ses valeurs viennent d'entités lisibles ici.
 #         - tab5_reglages_sync_ui : lit les entités et repeint. Lancé par chaque entité
 #           réglable ici quand elle change (son on_value / on_state), que le changement
 #           vienne du popup ou de Home Assistant.
@@ -23,6 +27,8 @@
 
 script:
   - id: tab5_reglages_ouvrir
+    parameters:
+      page: int
     then:
       - lambda: |-
           ReglagesUI& u = g_reglages_ui;
@@ -55,14 +61,56 @@ script:
             u.langue[6] = id(reglages_langue_6);
             u.confirmation = id(reglages_confirmation);
             u.confirmation_texte = id(reglages_confirmation_texte);
+            u.page[REGLAGES_PAGE_ECRAN] = id(reglages_page_ecran);
+            u.page[REGLAGES_PAGE_APPARENCE] = id(reglages_page_apparence);
+            u.page[REGLAGES_PAGE_BATTERIE] = id(reglages_page_batterie);
+            u.page[REGLAGES_PAGE_SYSTEME] = id(reglages_page_systeme);
+            u.onglet[REGLAGES_PAGE_ECRAN] = id(reglages_onglet_ecran);
+            u.onglet[REGLAGES_PAGE_APPARENCE] = id(reglages_onglet_apparence);
+            u.onglet[REGLAGES_PAGE_BATTERIE] = id(reglages_onglet_batterie);
+            u.onglet[REGLAGES_PAGE_SYSTEME] = id(reglages_onglet_systeme);
+            u.limite[0] = id(reglages_limite_0);
+            u.limite[1] = id(reglages_limite_1);
+            u.economie[0] = id(reglages_economie_0);
+            u.economie[1] = id(reglages_economie_1);
+            u.economie[2] = id(reglages_economie_2);
+            u.montee[0] = id(reglages_montee_oui);
+            u.montee[1] = id(reglages_montee_non);
+            u.batt_etat = id(reglages_batt_etat);
+            u.batt_niveau = id(reglages_batt_niveau);
+            u.batt_tension = id(reglages_batt_tension);
+            u.batt_conso = id(reglages_batt_conso);
+            u.confirm_ha = id(overlay_confirm_ha);
+            u.confirm_reboot = id(overlay_confirm_reboot);
+            u.page_montree = [](int p) { id(tab5_reglages_page).execute(p); };
             // En dernier : reglages_peindre() ne fait rien tant que popup est nul.
             u.popup = id(reglages_popup);
             reglages_preparer();
           }
-          reglages_confirmation_fermer();
       # Peint avant d'ouvrir : aucune image avec l'état d'une ouverture précédente.
       - script.execute: tab5_reglages_sync_ui
-      - lambda: 'animate_popup_open(id(reglages_popup));'
+      # La page demandée (confirmations refermées), puis le popup.
+      - lambda: |-
+          reglages_afficher_page(page);
+          animate_popup_open(id(reglages_popup));
+
+  # Une page vient de s'afficher. Page Système : la console se remplit tout de suite
+  # (avant le 08/10/2026, script tab5_console_ouvrir) ; ensuite l'interval 2 s et les
+  # capteurs de tab5-sensors-diagnostics.yaml, tant qu'elle reste affichée.
+  - id: tab5_reglages_page
+    parameters:
+      page: int
+    then:
+      - lambda: |-
+          if (page != REGLAGES_PAGE_SYSTEME) return;
+          refresh_console_status_row_ui(id(lbl_sys_uptime_val), id(lbl_sys_rssi_val), id(lbl_sys_temp_val),
+              id(sys_uptime).has_state(), id(sys_uptime).state, id(sys_wifi_rssi).has_state(),
+              id(sys_wifi_rssi).state, id(sys_core_temp).has_state(), id(sys_core_temp).state);
+          // Batterie et état de HA tout de suite ; charge du processeur repartie de zéro
+          // (« -- » jusqu'au tick 2 s, tab5_console.cpp).
+          update_console_batterie_ui(id(lbl_sys_batterie_icone), id(lbl_sys_batterie_val));
+          update_console_cpu_ui(id(lbl_sys_cpu_val), true);
+          update_console_ha_status_ui(id(lbl_sys_ha_val), id(status_ha).state);
 
   - id: tab5_reglages_sync_ui
     then:
@@ -77,6 +125,9 @@ script:
           e.mode = (int) id(tab5_theme_mode).active_index().value_or(0);
           e.nuit = id(tab5_theme_nuit).state;
           e.langue = (int) id(tab5_langue).active_index().value_or(0);
+          e.limite = (int) id(tab5_limite_charge).active_index().value_or(0);
+          e.economie = (int) id(tab5_economie).active_index().value_or(1);
+          e.montee = id(tab5_batterie_montee).state;
           reglages_peindre(e);
 
   # `reglage` : ReglageId (tab5_custom.h) ; `valeur` : index de l'option, 1 / 0 pour
@@ -89,6 +140,10 @@ script:
       valeur: int
     then:
       - lambda: |-
+          // Un tap au bout d'un glissement ne change rien (ui_appui_glisse, comme les
+          // alertes et la Maison) ; un glisser qui change de page, lui, ne relâche même
+          // pas le bouton (lv_indev_wait_release, tab5_reglages.cpp).
+          if (ui_appui_glisse()) return;
           switch (reglage) {
             case REGLAGE_EXTINCTION: {
               auto call = id(tab5_extinction_auto).make_call();
@@ -119,6 +174,21 @@ script:
               break;
             case REGLAGE_LANGUE:
               reglages_langue_demander(valeur);
+              break;
+            case REGLAGE_LIMITE_CHARGE: {
+              auto call = id(tab5_limite_charge).make_call();
+              call.set_index(valeur);
+              call.perform();
+              break;
+            }
+            case REGLAGE_ECONOMIE: {
+              auto call = id(tab5_economie).make_call();
+              call.set_index(valeur);
+              call.perform();
+              break;
+            }
+            case REGLAGE_BATTERIE_MONTEE:
+              if (valeur != 0) id(tab5_batterie_montee).turn_on(); else id(tab5_batterie_montee).turn_off();
               break;
             default:
               break;

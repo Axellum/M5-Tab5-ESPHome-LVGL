@@ -503,6 +503,10 @@ void batterie_charge_ui(bool en_charge) {
     batterie_peindre();
 }
 
+float batterie_niveau_lu() { return s_batterie.niveau; }
+
+bool batterie_en_charge_lue() { return s_batterie.en_charge; }
+
 bool batterie_tension_ui(float tension, uint32_t maintenant_ms) {
     if (!chargeur_tension(tension, maintenant_ms)) return false;
     ESP_LOGI("tab5.zones", "Batterie detectee : %s (%.2f V)", batterie_presente() ? "oui" : "non", tension);

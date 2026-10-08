@@ -25,8 +25,36 @@ Aucun fichier de code reformaté, aucun changement du firmware.
   JSON, Jinja, HTML, SVG), fins de ligne laissées à git (`*.sh` en LF).
 - **`CHANGELOG.md` allégé** (6 252 → environ 1 500 lignes) : les versions 3.0.0 à 3.6.0 vont
   dans `docs/changelog/CHANGELOG-3.0-3.6.x.md`, les 2.x dans `docs/changelog/CHANGELOG-2.x.md`,
-  recopiées à l'octet près ; des renvois en bas de ce fichier. `tests/test_version.py` lit
-  toujours la première entrée `## [X.Y.Z]` d'ici.
+  recopiées telles quelles (seuls 18 liens relatifs recalés pour ce dossier) ; des renvois
+  en bas de ce fichier. `tests/test_version.py` lit toujours la première entrée `## [X.Y.Z]`
+  d'ici.
+
+### 2026-10-08 — Réglages en quatre pages, la console devient la page Système
+
+- **Le popup « Réglages » a quatre pages** : **Écran** et **Apparence** (les deux cartes
+  d'avant, chacune sur toute la largeur), **Batterie** (nouvelle) et **Système** (l'ancienne
+  console système, `console_sys.yaml`, qui n'est plus un popup à part). Les noms des pages sont
+  en haut, à côté du titre, la page montrée allumée (`reglages_onglet.yaml`, ×4). Une tape sur
+  un nom montre sa page ; glisser à gauche ou à droite dans le popup montre la suivante ou la
+  précédente, en boucle, sans transition. Le popup garde le geste (il ne remonte pas à
+  `page_main`, l'accueil ne change pas de page derrière), un glissement parti d'un curseur ne
+  bouge que le curseur, et la tape au bout d'un glissement ne choisit rien
+  (`ui_appui_glisse()`). Changer de page ou fermer le popup annule une confirmation ouverte.
+- **Page Batterie** : la limite de charge (100 % / 80 %), l'économie d'énergie (Jamais, Sur
+  batterie, Toujours) et « Batterie montée » (Oui / Non) ; en lecture seule, l'état (Sur
+  batterie, En charge, Sur USB, Pas de batterie détectée), le niveau, la tension et la
+  consommation, repeints seulement pendant que la page est montrée
+  (`reglages_batterie_peindre()`).
+- **Ouverture** : un tap sur l'engrenage ouvre la page Écran, son appui long la page Système.
+  Côté Home Assistant rien ne change de nom : l'option « Console système » de « Aller à
+  l'écran » et les clés du blueprint ouvrent la page Système (`tab5_ecran_ouvrir`,
+  `check_tab5_registry.py` : alias de l'option vers la fenêtre « Réglages »). Les
+  rafraîchissements de la console ne tournent que Réglages ouverts sur la page Système
+  (`reglages_page_visible(REGLAGES_PAGE_SYSTEME)`).
+- Textes nouveaux dans les sept langues ; `tools/test_alarm_clock.cpp` (page voisine, textes
+  de la page Batterie), `tests/test_reglages.py` (pages, geste, gardes de la console),
+  `tools/rendu/ecrans.py` (une capture par page). Notice, `docs/screens.md`,
+  `docs/installation/settings.md`, `docs/architecture.md`. Pas encore essayé sur la tablette.
 
 ### 2026-10-08 — Rangement de `Tab5/` en sous-dossiers
 

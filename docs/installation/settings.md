@@ -8,7 +8,7 @@ Every setting of the tablet is an entity of its device in Home Assistant, and th
 
 - the **Settings** view of the [tablet's dashboard](dashboard.md), left below: its « Tablette » column;
 - the device page, right below: *Settings → Devices & services → ESPHome →* your tablet, cards **Controls** and **Configuration**;
-- on the tablet itself, the **Settings** window (a tap on the gear button, top right): brightness, auto screen off, both ways to wake the screen, theme, light or dark, night switch and language ([user manual](../notice/settings.md)).
+- on the tablet itself, the **Settings** window (a tap on the gear button, top right), four pages since 2026-10-08: brightness, auto screen off and both ways to wake the screen (Screen page); theme, light or dark, night switch and language (Appearance page); charge limit, power saving and battery fitted, with the battery's state, level, voltage and consumption (Battery page); and the System page, the former system console ([user manual](../notice/settings.md)).
 
 **The device page shows the entities under their French names, whatever the screen language.** Home Assistant identifies an ESPHome entity by its name: translating these names would create new entities on every tablet already installed, and the dashboard and the automations would lose track of them. For labels in your language, use the dashboard: it follows the screen language, or write it with `tab5_dashboard(langue='English')` ([step 7](dashboard.md)). The « Tab5 · » lists of the Home Assistant files are named in French and English.
 
@@ -37,13 +37,13 @@ The theme names stay as they are in every language: they are names. Six of them:
 | Tab5 Limite de charge (Limite de charge) | 100 %, 80 %; 100 % by default | with a battery: at « 80 % », charging stops at 80 % and starts again at 70 %, after at least 10 minutes stopped, for a tablet that stays plugged in. The level is estimated from the voltage, which reads higher while charging: charging stops a little before a real 80 %. Since the next version ([battery](../hardware.md#power)) |
 | Tab5 Tap-to-Wake (Rallumer l'écran d'une tape) | on / off, on by default | a tap on the tablet lights the screen up again when it is off |
 | Tab5 Rallumer l'écran à Okay Nabu (Rallumer l'écran à Okay Nabu) | on / off, on by default | « Okay Nabu » lights the screen up again when it is off, as the assistant starts listening (not « Stop »). Off, the screen stays dark and the answer is only spoken |
-| Volume | 0 to 100 % | speaker volume; also in the console and the assistant popup |
+| Volume | 0 to 100 % | speaker volume; also on the System page of the settings and in the assistant popup |
 | Speaker Enable (Haut-parleur) | on / off | turns the speaker on or off (a line of the IO expander) |
 | Tab5 DAC Output (Sortie audio) | LINE1, LINE2, BOTH | output of the ES8388 audio chip; the author's tablet uses LINE1 |
 | WiFi Antenna (Antenne Wi-Fi) | Internal, External | the internal antenna, or one on the external connector |
 | Tab5 Batterie montée (Batterie montée) | on / off, off by default | shows the battery icon in the status strip: a plug while « Tab5 Batterie détectée » says no battery (up to the latest published version: a reading below 6 V in the last 10 minutes, the charger saying « charging » even without one; since the next version: below 3.0 V read with the charger switched off), else the battery's level |
 | Tab5 Appareils sur la météo (Appareils sur la météo) | on / off, on by default | shows the rooms' devices on the forecast cards (icons and touch actions). Off, the forecast cards show the weather only; the « HA » button still shows the rooms and their devices |
-| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie, Réglages, Alertes, Maison | opens that screen or popup, from the dashboard or an automation, then goes back to « — ». A game in progress is closed first |
+| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie, Réglages, Alertes, Maison | opens that screen or popup, from the dashboard or an automation, then goes back to « — ». A game in progress is closed first. « Console système » opens the settings on their System page, « Réglages » on their Screen page |
 | Recharger le calendrier | button | asks Home Assistant again for this month and the next, when a new appointment is not on screen yet |
 
 ## Alarm clock, appointments, voice
@@ -87,7 +87,7 @@ Chaque réglage de la tablette est une entité de son appareil dans Home Assista
 
 - la vue **Réglages** du [tableau de bord de la tablette](dashboard.md#version-française), à gauche ci-dessous : sa colonne « Tablette » ;
 - la page de l'appareil, à droite ci-dessous : *Paramètres → Appareils et services → ESPHome →* votre tablette, cartes **Contrôles** et **Configuration** ;
-- sur la tablette elle-même, la fenêtre **Réglages** (un tap sur le bouton engrenage, en haut à droite) : luminosité, extinction auto, les deux façons de rallumer l'écran, thème, clair ou sombre, nuit et langue ([notice](../notice/settings.md#version-française)).
+- sur la tablette elle-même, la fenêtre **Réglages** (un tap sur le bouton engrenage, en haut à droite), en quatre pages depuis le 08/10/2026 : luminosité, extinction auto et les deux façons de rallumer l'écran (page Écran) ; thème, clair ou sombre, nuit et langue (page Apparence) ; limite de charge, économie d'énergie et batterie montée, avec l'état, le niveau, la tension et la consommation de la batterie (page Batterie) ; et la page Système, l'ancienne console système ([notice](../notice/settings.md#version-française)).
 
 **La page de l'appareil montre les entités sous leur nom français, quelle que soit la langue de l'écran.** Home Assistant reconnaît une entité ESPHome à son nom : traduire ces noms créerait de nouvelles entités sur chaque tablette déjà installée, et le tableau de bord comme les automatisations perdraient leur trace. Pour des libellés dans votre langue, passez par le tableau de bord : il suit la langue de l'écran, ou écrivez-le avec `tab5_dashboard(langue='English')` ([étape 7](dashboard.md#version-française)). Les listes « Tab5 · » des fichiers Home Assistant sont nommées en français et en anglais.
 
@@ -116,13 +116,13 @@ Les noms des thèmes restent les mêmes dans toutes les langues : ce sont des no
 | Tab5 Limite de charge (Limite de charge) | 100 %, 80 % ; 100 % par défaut | avec une batterie : à « 80 % », la charge s'arrête à 80 % et reprend à 70 %, après au moins 10 minutes d'arrêt, pour une tablette toujours branchée. Le niveau est estimé d'après la tension, qui lit plus haut pendant la charge : la charge s'arrête un peu avant 80 % réels. Depuis la prochaine version ([batterie](../hardware.md#alimentation)) |
 | Tab5 Tap-to-Wake (Rallumer l'écran d'une tape) | allumé / éteint, allumé par défaut | une tape sur la tablette rallume l'écran éteint |
 | Tab5 Rallumer l'écran à Okay Nabu (Rallumer l'écran à Okay Nabu) | allumé / éteint, allumé par défaut | « Okay Nabu » rallume l'écran éteint, quand l'assistant se met à écouter (pas « Stop »). Éteint, l'écran reste noir et la réponse est seulement parlée |
-| Volume | 0 à 100 % | volume du haut-parleur ; aussi dans la console et le popup de l'assistant |
+| Volume | 0 à 100 % | volume du haut-parleur ; aussi sur la page Système des réglages et dans le popup de l'assistant |
 | Speaker Enable (Haut-parleur) | allumé / éteint | allume ou coupe le haut-parleur (une ligne de l'expandeur d'E/S) |
 | Tab5 DAC Output (Sortie audio) | LINE1, LINE2, BOTH | sortie de la puce audio ES8388 ; la tablette de l'auteur est sur LINE1 |
 | WiFi Antenna (Antenne Wi-Fi) | Internal, External | l'antenne interne, ou une antenne sur le connecteur externe |
 | Tab5 Batterie montée (Batterie montée) | allumé / éteint, éteint par défaut | montre l'icône de batterie dans le bandeau d'état : une prise tant que « Tab5 Batterie détectée » dit qu'il n'y a pas de batterie (jusqu'à la dernière version publiée : une lecture sous 6 V dans les 10 dernières minutes, le chargeur disant « en charge » même sans batterie ; depuis la prochaine version : moins de 3,0 V lus chargeur coupé), sinon le niveau de la batterie |
 | Tab5 Appareils sur la météo (Appareils sur la météo) | allumé / éteint, allumé par défaut | montre les appareils des pièces sur les cartes de prévisions (icônes et appuis). Éteint, les cartes de prévisions montrent la météo seule ; le bouton « HA » montre toujours les pièces et leurs appareils |
-| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie, Réglages, Alertes, Maison | ouvre cet écran ou ce popup, depuis le tableau de bord ou une automatisation, puis revient à « — ». Un jeu en cours est d'abord fermé |
+| Aller à l'écran (Afficher) | —, Accueil, Assistant vocal, Calendrier, Réveil, Climatisation, Plantes, Télécommande TV, Console système, Énergie, Réglages, Alertes, Maison | ouvre cet écran ou ce popup, depuis le tableau de bord ou une automatisation, puis revient à « — ». Un jeu en cours est d'abord fermé. « Console système » ouvre les réglages sur leur page Système, « Réglages » sur leur page Écran |
 | Recharger le calendrier | bouton | redemande à Home Assistant le mois en cours et le suivant, quand un nouveau rendez-vous n'est pas encore à l'écran |
 
 ## Réveil, rendez-vous, voix
