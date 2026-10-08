@@ -22,7 +22,7 @@
 #include "chess_game.h"
 #include "pinball_game.h"
 
-static const char* const TAG = "TAB5";
+static const char* const TAG = "tab5.registry";
 
 // =============================================================================
 // Consoles arcade
