@@ -89,6 +89,9 @@ class Etat:
         self.entity_id = entity_id
         self.state = state
         self.attributes = attributes
+        # Dernière relève (custom_templates/tab5_meteo.jinja : une source sans relève
+        # depuis 2 h est périmée) : récente par défaut.
+        self.last_reported = MAINTENANT - dt.timedelta(minutes=5)
 
 
 class Etats:

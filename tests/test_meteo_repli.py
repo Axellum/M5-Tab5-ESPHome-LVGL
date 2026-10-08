@@ -8,11 +8,13 @@ poussée complète ont échoué (« did not match any entities »), alors
 qu'OpenWeatherMap répondait. Les vrais modèles (packages/tab5_meteo_sources.yaml,
 custom_templates/tab5_meteo.jinja, packages/tab5_push.yaml) sont rendus ici avec de
 fausses entités, comme dans test_meteo_sans_meteo_france.py."""
+import datetime as dt
+
 import jinja2
 import pytest
 
 from tests.test_meteo_sans_meteo_france import (
-    Etat, Etats, _environnement, _paquet, _parcourir, _rendre,
+    MAINTENANT, Etat, Etats, _environnement, _paquet, _parcourir, _rendre,
 )
 
 MF = "weather.saint_vincent_de_tyrosse"
@@ -21,19 +23,24 @@ MET = "weather.forecast_home"
 INTEGRATIONS = {"meteo_france": [MF], "openweathermap": [OWM], "met": [MET]}
 
 
-def _maison(mf="rainy", owm="cloudy", met=None, choix=MF):
+def _maison(mf="rainy", owm="cloudy", met=None, choix=MF, releve_mf=5, releve_owm=5):
     """Météo-France choisie ; OpenWeatherMap (et Met.no si `met`) à côté. Un état None =
-    entité absente ; « unavailable » = entité sans attributs, comme dans HA."""
-    def meteo(entite, etat, nom, **attributs):
+    entité absente ; « unavailable » = entité sans attributs, comme dans HA. releve_* :
+    minutes depuis la dernière relève (last_reported)."""
+    def meteo(entite, etat, nom, releve=5, **attributs):
         if etat is None:
             return []
         if etat in ("unavailable", "unknown"):
-            return [Etat(entite, etat, friendly_name=nom)]
-        return [Etat(entite, etat, supported_features=3, friendly_name=nom, **attributs)]
+            e = Etat(entite, etat, friendly_name=nom)
+        else:
+            e = Etat(entite, etat, supported_features=3, friendly_name=nom, **attributs)
+        e.last_reported = MAINTENANT - dt.timedelta(minutes=releve)
+        return [e]
 
     etats = Etats(
-        meteo(MF, mf, "Météo-France forecast for city Saint-Vincent-de-Tyrosse", temperature=16.1, humidity=85)
-        + meteo(OWM, owm, "OpenWeatherMap", temperature=17.0, humidity=70, uv_index=2.0)
+        meteo(MF, mf, "Météo-France forecast for city Saint-Vincent-de-Tyrosse", releve_mf,
+              temperature=16.1, humidity=85)
+        + meteo(OWM, owm, "OpenWeatherMap", releve_owm, temperature=17.0, humidity=70, uv_index=2.0)
         + meteo(MET, met, "Forecast Home", temperature=15.0, humidity=90)
         + [Etat("input_text.tab5_meteo_previsions", choix),
            Etat("input_select.tab5_source_pluie", "Météo-France"),
@@ -149,3 +156,42 @@ def test_macro_importable_sans_ha():
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         str(__import__("pathlib").Path(__file__).resolve().parents[1] / "HomeAssistant_Config" / "custom_templates")))
     env.get_template("tab5_meteo.jinja")
+
+
+# ── Source périmée : disponible, mais plus de relève depuis 2 h ─────────────────────
+
+def test_source_figee_depuis_plus_de_2_h_repli():
+    etats, env, liste = _maison(releve_mf=121)
+    a = etats["sensor.tab5_meteo"].attributes
+    assert a["entite"] == MF and a["entite_effective"] == OWM and _rendre(env, liste["state"]) == MF
+    assert _poussee(env)[1]["meteo"] == OWM
+
+
+def test_relevee_il_y_a_moins_de_2_h_pas_de_repli():
+    etats, _, _ = _maison(releve_mf=119)
+    assert etats["sensor.tab5_meteo"].attributes["entite_effective"] == MF
+
+
+def test_un_repli_perime_n_est_pas_pris():
+    """OpenWeatherMap figée elle aussi, Met.no fraîche : Met.no."""
+    etats, _, _ = _maison(mf="unavailable", releve_owm=300, met="sunny")
+    assert etats["sensor.tab5_meteo"].attributes["entite_effective"] == MET
+
+
+def test_tout_perime_la_choisie_reste_mieux_que_rien():
+    etats, env, _ = _maison(releve_mf=300, releve_owm=300)
+    assert etats["sensor.tab5_meteo"].attributes["entite_effective"] == MF
+    assert _poussee(env)[1]["meteo_en_panne"] is False
+
+
+def test_retour_quand_la_source_choisie_releve_de_nouveau():
+    assert _maison(releve_mf=180)[0]["sensor.tab5_meteo"].attributes["entite_effective"] == OWM
+    assert _maison(releve_mf=1)[0]["sensor.tab5_meteo"].attributes["entite_effective"] == MF
+
+
+def test_seuil_en_constante_nommee():
+    texte = (__import__("pathlib").Path(__file__).resolve().parents[1] / "HomeAssistant_Config"
+             / "custom_templates" / "tab5_meteo.jinja").read_text(encoding="utf-8")
+    assert "{%- set TAB5_METEO_PERIMEE_S = 7200 -%}" in texte
+    assert texte.count("7200") == 1
+

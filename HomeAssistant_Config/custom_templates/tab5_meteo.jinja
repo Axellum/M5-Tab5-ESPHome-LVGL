@@ -8,26 +8,41 @@
     {%- from 'tab5_meteo.jinja' import tab5_meteo_etat, tab5_meteo_effective, tab5_meteo_nom -%}
 
   tab5_meteo_etat(e)
-      'ok', 'indisponible' (état unavailable ou unknown) ou 'absente' (pas d'entité).
+      'ok', 'indisponible' (état unavailable ou unknown), 'perimee' (plus de relève depuis
+      TAB5_METEO_PERIMEE_S : `last_reported`, que l'intégration met à jour à chaque
+      relève même sans changement) ou 'absente' (pas d'entité).
   tab5_meteo_effective()
       La source choisie (attribut `meteo` de sensor.tab5_sources_meteo, qui suit la liste
       « Tab5 · source des prévisions ») si elle est 'ok' ; sinon la première 'ok' parmi
       les sources connues (OpenWeatherMap, Météo-France), puis parmi toutes les entités
-      weather.* (Met.no de l'onboarding…) ; sinon '' : les poussées météo sont sautées, la tablette garde
+      weather.* (Met.no de l'onboarding…) ; sinon la choisie si elle n'est que périmée
+      (mieux que rien) ; sinon '' : les poussées météo sont sautées, la tablette garde
       son dernier affichage. Le choix de la liste ne change jamais : dès que la source
       choisie redevient 'ok', elle reprend la main toute seule.
   tab5_meteo_nom(e)
       Nom court d'une source pour l'écran : Météo-France, OpenWeatherMap, Met.no, sinon
       le nom de l'entité (40 caractères au plus).
 
+  TAB5_METEO_PERIMEE_S (2 h) : relevé chez l'auteur du 25/09 au 08/10/2026 (base de HA),
+  une mise à jour au plus toutes les 60 min pour Météo-France (last_reported toutes les
+  15 min environ), 50 min pour OpenWeatherMap ; Met.no relève toutes les 55 à 65 min.
+  2 h laisse une relève manquée de marge. Une entité météo de modèle qui ne s'écrit
+  qu'à ses changements peut passer pour périmée : un repli, et une alerte, sans plus.
+  NB : le 08/10, Météo-France n'était PAS figée avant sa panne (mise à jour toutes les
+  heures jusqu'à 11 h 04) ; seule sa condition n'avait pas changé depuis 21 h 04
+  (last_changed). Ce critère vise une intégration qui cesse de relever sans passer
+  indisponible.
+
   Déploiement : ce fichier va dans config/custom_templates/, puis
   homeassistant.reload_custom_templates — AVANT de recharger les packages qui
   l'importent (comme tab5_tablette.jinja).
 -#}
+{%- set TAB5_METEO_PERIMEE_S = 7200 -%}
 {%- macro tab5_meteo_etat(e) -%}
   {%- set e = e | default('', true) | string -%}
   {%- if '.' not in e or states[e] is none -%}absente
   {%- elif states(e) in ['unavailable', 'unknown'] -%}indisponible
+  {%- elif (now() - states[e].last_reported).total_seconds() > TAB5_METEO_PERIMEE_S -%}perimee
   {%- else -%}ok
   {%- endif -%}
 {%- endmacro -%}
@@ -44,7 +59,7 @@
           if ns.e == '' and x and x != choisie -%}
       {%- if tab5_meteo_etat(x) == 'ok' -%}{%- set ns.e = x -%}{%- endif -%}
     {%- endfor -%}
-    {{- ns.e -}}
+    {{- ns.e if ns.e else (choisie if etat == 'perimee' else '') -}}
   {%- endif -%}
 {%- endmacro -%}
 {%- macro tab5_meteo_nom(e) -%}

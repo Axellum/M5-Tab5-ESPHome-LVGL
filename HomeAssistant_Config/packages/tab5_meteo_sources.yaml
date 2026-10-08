@@ -564,7 +564,7 @@ template:
         # rainy… — ce que lit la tablette). Attributs : ce que lisent les poussées.
         # Entité effective (custom_templates/tab5_meteo.jinja, 08/10/2026) : la source
         # choisie (attribut `meteo` de sensor.tab5_sources_meteo), ou, tant qu'elle est
-        # indisponible, une autre entité météo disponible (OpenWeatherMap, Météo-France,
+        # indisponible ou sans relève depuis 2 h, une autre entité météo qui répond (OpenWeatherMap, Météo-France,
         # puis n'importe laquelle) ; '' s'il n'y en a aucune (les poussées météo sont
         # alors sautées). Relue dans CHAQUE modèle : `this` porterait l'état précédent.
         state: >-
