@@ -9,6 +9,25 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Normes de style et CHANGELOG archivé
+
+Aucun fichier de code reformaté, aucun changement du firmware.
+
+- **`.clang-format`** décrit le style C++ déjà en place (clang-format 23.1.3, options choisies
+  pour réécrire le moins de lignes possible) : 4 espaces, `T* p`, retours à la ligne de
+  l'auteur gardés, formes courtes sur une ligne, `#include` non triés. Son en-tête dit ce qui
+  diffère encore d'un fichier à l'autre (alignements des jeux, `alarm_clock.cpp` en 2 espaces).
+- **Hook pre-commit `clang-format-lignes-modifiees`** : `git-clang-format --diff --staged` ne
+  contrôle que les lignes indexées et ne réécrit rien ; il échoue avec le diff à appliquer.
+  Fichiers générés, `tab5_tokens.h` et la table de questions de Trial Poursuite exclus ; en CI,
+  rien n'est indexé, il ne contrôle donc rien.
+- **`.editorconfig`** : UTF-8 sans BOM, saut de ligne final, 4 espaces (C++, Python), 2 (YAML,
+  JSON, Jinja, HTML, SVG), fins de ligne laissées à git (`*.sh` en LF).
+- **`CHANGELOG.md` allégé** (6 252 → environ 1 500 lignes) : les versions 3.0.0 à 3.6.0 vont
+  dans `docs/changelog/CHANGELOG-3.0-3.6.x.md`, les 2.x dans `docs/changelog/CHANGELOG-2.x.md`,
+  recopiées à l'octet près ; des renvois en bas de ce fichier. `tests/test_version.py` lit
+  toujours la première entrée `## [X.Y.Z]` d'ici.
+
 ### 2026-10-08 — Rangement de `Tab5/` en sous-dossiers
 
 Aucun changement visible ni de comportement : le firmware généré est le même, seuls les

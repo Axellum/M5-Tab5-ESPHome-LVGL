@@ -217,7 +217,9 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `tools/check_tab5_code_rules.py` | `tools/` | Garde-fou | Règles de code : `snprintf` partout, aucun `lv_*` dans le contrat API, aucun global orphelin, aucune entité HA en dur, glyphes de la date (`roboto_45`), icônes MDI couvertes par la police de leur widget sans glyphe mort (règle 7). |
 | `tools/tab5_sources.py` | `tools/` | Bibliothèque | Où sont rangées les sources du firmware (`Tab5/socle|ecran|jeux|paquets`) : `fichiers(motif…)` et `source(nom)`, pour les outils et les tests (`tests/commun.py`) ; `contrat()` : `tab5_custom.h` et les en-têtes de modules qu'il inclut. |
 | `tools/cartographie_counts.py` | `tools/` | Garde-fou | Comptes de lignes de `CARTOGRAPHIE_TAB5.md` à 20 % près ; `--write` les recalcule. |
-| `.pre-commit-config.yaml` | Racine | Config | yamllint (dont `*.yaml.example`), BOM, secrets, fuite d'identifiants HA — rejoué par la CI. |
+| `.pre-commit-config.yaml` | Racine | Config | yamllint (dont `*.yaml.example`), BOM, secrets, fuite d'identifiants HA — rejoué par la CI ; style C++ des seules lignes indexées (`git-clang-format --diff --staged`, sans effet en CI où rien n'est indexé). |
+| `.clang-format` | Racine | Config | Style C++ relevé sur le code existant (clang-format 23.1.3) ; appliqué aux seules lignes modifiées par le hook pre-commit, jamais à un fichier entier. |
+| `.editorconfig` | Racine | Config | Encodage, saut de ligne final et indentation par type de fichier, relevés sur les fichiers suivis. |
 | `pyproject.toml` | Racine | Config | `testpaths = tests, tools` : `pytest` nu ne ramasse plus `archives/`. |
 | `requirements-dev.txt` | Racine | Config | Dépendances des outils (pytest, numpy, aioesphomeapi, fonttools, pyserial, pre-commit, yamllint) — pas le firmware. |
 
