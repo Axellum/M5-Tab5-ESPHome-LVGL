@@ -162,11 +162,15 @@ def test_gestes_partent_hors_des_tuiles_et_des_cartes():
 
 
 def _bouton(ident):
-    """(x, y, largeur, hauteur) d'un bouton du haut de Tab5/tab5-lvgl.yaml."""
-    m = re.search(rf"id: {ident}\s+align: TOP_LEFT\s+x: (\d+)\s+y: (\d+)\s+width: (\d+)\s+height: (\d+)",
+    """(x, y, largeur, hauteur) d'un bouton du haut : x de son inclusion dans
+    Tab5/tab5-lvgl.yaml, le reste du gabarit bouton_haut.yaml (08/10/2026, audit YML-4)."""
+    x = re.search(rf'file: ui_components/bouton_haut\.yaml, vars: \{{ id: {ident}, x: "(\d+)"',
                   _lire("Tab5", "tab5-lvgl.yaml"))
-    assert m, ident
-    return tuple(int(v) for v in m.groups())
+    assert x, ident
+    m = re.search(r"align: TOP_LEFT\s+x: \$\{x\}\s+y: (\d+)\s+width: (\d+)\s+height: (\d+)",
+                  _lire("Tab5", "ui_components", "bouton_haut.yaml"))
+    assert m, "bouton_haut.yaml"
+    return (int(x.group(1)),) + tuple(int(v) for v in m.groups())
 
 
 def test_boutons_du_haut():

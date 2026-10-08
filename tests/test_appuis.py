@@ -93,11 +93,16 @@ def _codes_firmware():
 
 
 def _bloc_bouton(ident):
-    texte = _lire(LVGL)
-    debut = texte.index(f"id: {ident}\n")
-    fin = texte.find("        - button:", debut)
-    fin = texte.find("        # ====", debut) if fin < 0 else fin
-    return texte[debut:fin]
+    """Le bouton du haut `ident` : ui_components/bouton_haut.yaml (08/10/2026, audit YML-4)
+    déplié avec les vars de son inclusion dans tab5-lvgl.yaml, valeurs écrites comme là-bas."""
+    ligne = re.search(rf"^.*file: ui_components/bouton_haut\.yaml, vars: \{{ id: {ident},.*$", _lire(LVGL), re.M)
+    assert ligne, f"{ident} : pas inclus par bouton_haut.yaml"
+    valeurs = re.findall(r"(\w+):\s*(\"(?:[^\"\\]|\\.)*\"|'[^']*'|\[[^\]]*\]|[\w.-]+)",
+                         ligne.group(0).split("vars:", 1)[1])
+    texte = _lire(os.path.join(TAB5, "ui_components", "bouton_haut.yaml"))
+    for cle, brut in valeurs:
+        texte = texte.replace(f'"${{{cle}}}"', brut).replace(f"${{{cle}}}", brut.strip("\"'"))
+    return texte
 
 
 # ─── Contrat : codes et écrans ────────────────────────────────────────────────
