@@ -43,6 +43,7 @@ Ces outils écrivent dans le dépôt **sans option** : à lancer exprès, puis r
 | `test_chess_perft.py` | miroir Python de `test_chess_engine.cpp`, pour un poste sans g++ |
 | `test_draughts_engine.py` | miroir Python de `test_draughts_engine.cpp`, pour un poste sans g++ |
 | `test_alarm_clock.cpp` | le vrai moteur du réveil, `tab5_core` et `tab5_economie.h`, horloge simulée (g++, job `python` de la CI) |
+| `test_tab5_socle.cpp` | le socle commun `tab5_champs` + `tab5_core` (payloads, dates, heures, géométrie, tuiles) (g++, job `python` de la CI) |
 
 Le test C++ fait foi. Un miroir Python ne prouve le C++ que s'il est tenu à jour à chaque changement du C++ ; `tests/test_moteurs_hote.py` tient ses perft égaux à ceux du test C++ et vérifie que la CI compile et lance chaque `test_*.cpp`.
 

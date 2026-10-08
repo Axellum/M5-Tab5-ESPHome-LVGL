@@ -7,8 +7,8 @@ name: ESPHome Tab5 Compilation
 #   - python : hooks pre-commit (yamllint, BOM, secrets, placeholders HA), esptool
 #     figé (mêmes commandes que publication.yml), tests hôte (pytest = tests/ +
 #     outils + miroirs Python des échecs et des dames + garde-fous de contenu), vrais
-#     moteurs Go, échecs, dames et réveil compilés par g++ (échecs et dames sous
-#     ASan + UBSan), dry-run du demo pusher. Toujours exécuté. Check REQUIS.
+#     moteurs Go, échecs, dames et réveil et socle commun compilés par g++ (échecs
+#     et dames sous ASan + UBSan), dry-run du demo pusher. Toujours exécuté. Check REQUIS.
 #   - build  : compilation ESPHome complète (~5 min avec le ccache). Check REQUIS
 #     par la protection de `main`, donc le job existe toujours ; il est SAUTÉ
 #     (statut « skipped » = succès pour la protection) quand le push/la PR ne

@@ -188,6 +188,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_draughts_engine.py` | `tools/` | Unitaire (miroir Python) | Générateur de dames (10×10 et 8×8) contre les perft de référence + règles (prise majoritaire, dame volante, promotion) ; miroir de `test_draughts_engine.cpp`, gardé pour un poste sans g++. |
 | `hote/` | `tools/` | Support | `esphome.h` minimal (journal, `millis()`) pour compiler un moteur hors ESPHome, et `extraire_moteur_dames.py`. |
 | `test_alarm_clock.cpp` | `tools/` | Unitaire (C++ hôte) | Moteur du réveil réel (`alarm_clock.cpp` + `tab5_core.cpp`) : 13 scénarios, horloge simulée, fuseau Europe/Paris et changements d'heure — g++ en CI (job `python`). |
+| `test_tab5_socle.cpp` | `tools/` | Unitaire (C++ hôte) | Socle commun (`tab5_champs.cpp` + `tab5_core.cpp`, lot L5) : lecture bornée des payloads, dates, heures « HH:MM », géométrie et modèle des tuiles — g++ en CI (job `python`). |
 
 ### 3.3 Outils de validation (intégration)
 
@@ -264,6 +265,7 @@ python tools/demo/demo_pusher.py --dry-run
 │   ├── test_chess_engine.cpp
 │   ├── test_draughts_engine.cpp
 │   ├── test_alarm_clock.cpp
+│   ├── test_tab5_socle.cpp
 │   ├── test_chess_perft.py
 │   ├── test_draughts_engine.py
 │   ├── check_arkanoid_levels.py
@@ -291,7 +293,7 @@ python tools/demo/demo_pusher.py --dry-run
 
 ## 5. Notes importantes
 
-- **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs, dames) et le réveil disposent de tests C++ hôte.
+- **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs, dames), le réveil et le socle commun (`tab5_champs`, `tab5_core`) disposent de tests C++ hôte.
 - **Les tests C++ des moteurs font foi** (08/10/2026, OUT-2) : `test_go_engine.cpp`, `test_chess_engine.cpp` et `test_draughts_engine.cpp` compilent le vrai moteur (g++, en CI ; échecs et dames sous ASan + UBSan). Les miroirs Python des échecs et des dames restent pour le poste de dev sans g++ : toute modification du C++ doit y être reflétée, et `tests/test_moteurs_hote.py` tient leurs perft égaux à ceux du C++.
 - **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`, PR + push sur `main`) : job `changes` (filtre des chemins) ; job `python` (pre-commit, `pytest`, moteurs Go, échecs, dames et réveil en C++, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.1.0`, image `latest` = canari amont voulu, ADR-0016, ccache conservé entre runs) seulement si `tab5-ha-hmi.yaml`, `Tab5/` (hors `.md`) ou le workflow changent ; job `build-min`, même compilation avec la version plancher lue dans `min_version:` (26/09/2026). `python`, `build` et `build-min` sont des checks requis de `main` ; `build` reste présent et passe en « skipped » sinon. Job `build-revisions` (non requis) : les révisions d'écran ST7121 et ILI9881C compilées en parallèle. Artefact `tab5-firmware` publié sur `main`. Durées sur `main` le 07/10/2026 : `python` 3 à 6 min, `build` ~5 min, `build-min` ~6 min, `build-revisions` 5 à 8 min.
 - **Installation dans un HA neuf** (`.github/workflows/installation-ha.yml`, 28/09/2026, ~3 min, non requis) : Home Assistant figé en conteneur (`HA_IMAGE`) + la tablette virtuelle (`tab5-rendu-host.yaml` compilé sous le nom `tab5-ha-hmi`), installés comme par un nouvel utilisateur (`tools/installation_ha/`) : tous les packages rendus et `check_config`, puis l'ordre « Sans compiler » du guide (onboarding, ajout ESPHome sans l'option « actions HA », automatisation du blueprint) et un redémarrage de la tablette, puis deux demandes de la tablette de bout en bout (calendrier par le select « Aller à l'écran », « MAJ Écran » par le doigt virtuel) et un redémarrage de HA forgé par un autre appareil, qui doit être ignoré. Échoue si la clé API n'est pas donnée et gardée par HA, si la clé nulle ou le clair passent encore, si `esphome.tab5_connected` n'arrive pas après la clé, si une trace du blueprint ou de la poussée complète n'aboutit pas, si « Zones masquées » diffère, si la capture demandée par HA manque, si la clé ne survit pas au redémarrage, si une demande de la tablette n'aboutit pas, si HA a refusé une action de l'appareil (réparation « service_calls_not_allowed »), ou si le journal de HA a une erreur Tab5 après la connexion (hors « Not connected » pendant une déconnexion voulue, rapportée). Artefact `installation-ha` : deux captures (juste après l'automatisation du blueprint, puis après le redémarrage), journaux de HA et de la tablette. Sur les PR et `main` qui touchent HA, l'API ou la tablette virtuelle, et à la main. Ne teste pas l'interface de HA cliquée par un humain, la page de flashage ni le vrai matériel.
