@@ -255,6 +255,8 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 
 ### 3.3 C++ core
 
+Avant d'écrire un utilitaire : la « boîte à outils » d'[`AGENTS.md`](AGENTS.md) (section « Toolbox ») liste ceux qui existent (fichier de chacun) ; conventions du nouveau code dans [`Tab5/README.md`](Tab5/README.md).
+
 | Fichier | Lignes | Rôle exact | Fonctions clés |
 |---|---|---|---|
 | `tab5_custom.h` | 1541 | Déclarations, structs (`CentralPanelCtx` [8 wrappers + le label chapeau du titre de page + 7 flags + current_panel + forecast_page + réponse vocale + mode HA], `DayForecastData`, `HourForecastData`, `WeatherHourSlot`, `WeatherDaySlot`, `MoistureSlotUI`, `PotDetailUI`, `HaAlertSlotUI`, `CalCellUI`, `CalDetailLineUI`), enum `PotMetric`, bits `CAL_BIT_*`, namespace `MeteoIcon::` (codes UTF-8 police météo). Inclut `tab5_tokens.h` | — |

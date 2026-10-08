@@ -72,6 +72,24 @@ python tools/cartographie_counts.py        # comptes de lignes de la cartographi
 8. No hardcoded Home Assistant entity ID in firmware YAML — always a `user_entities.yaml` substitution (`${entity_…}`) or a `!lambda`. Since [ADR-0025](docs/decisions/0025-events-only.md) the firmware names none at all and **never calls a Home Assistant action** (no `homeassistant.service` / `homeassistant.action`): it emits `esphome.tab5_*` events, and `HomeAssistant_Config/packages/tab5_evenements.yaml` maps them to a whitelist of actions on the tablet's own entities (found by its device). A new request = an event + a branch there. Enforced by `tools/check_tab5_code_rules.py` and `tests/test_actions_ha.py`.
 9. Every MDI icon shown on screen must be in the `glyphs:` list of its widget's `mdi_*` font (`Tab5/tab5-styles.yaml`), and every glyph listed there must be shown somewhere — a missing glyph renders blank with no build error. An icon set from C++ on a widget passed as a parameter needs its function in `MDI_CODE_TARGETS` (`tools/check_tab5_code_rules.py`, rule 7, run by `pytest`).
 
+## Toolbox (« boîte à outils »): reuse before writing
+
+Parallel sessions kept rewriting helpers that already existed (audit of 2026-10-07: six ways to read a number from a payload, four brightness formulas, one of them visibly wrong). Before writing a helper, look here and `grep` the name; when you add a shared helper, add its line here. Naming and style of new code: « Conventions du nouveau code » in [`Tab5/README.md`](Tab5/README.md).
+
+- **LVGL writes that compare first** (no repaint for an unchanged value): `ui_text()`, `ui_text_color()`, `ui_hidden()`, `ui_x()` / `ui_y()`, `ui_police()` — `Tab5/tab5_internal.h`.
+- **A number from Home Assistant to an int**: `tab5_float_vers_int(v, bas, haut, defaut)` (bounded, non-finite → default; a raw cast is undefined behaviour), `tab5_fini_ou_nan()` — `Tab5/tab5_core.h`.
+- **Brightness 0-255 → %**: `lum_pct()` — `Tab5/tab5_core.h` (the only formula of the card, the light popup and the wheel).
+- **Splitting a payload in place**: `split_fields()` (keeps empty fields, unlike `strtok_r`), `trim_ws()` — `Tab5/tab5_core.h`.
+- **Text from Home Assistant**: `texte_ha_copier()` (valid UTF-8, only the glyphs the fonts have, cut on a character boundary), `texte_ha_coupe()` (one line, « … » past a width), `ha_alerte_texte()` (coded alert text), `normalize_text_utf8()`, `set_label_text_utf8()` — `Tab5/tab5_internal.h`.
+- **Clock and dates**: `tab5_time_source` (never `time(nullptr)` directly), `local_day_from_offset()`, `local_day_number_today()`, `cal_index_for_offset()`, `day_long_utf8()` / `month_long_utf8()` / `day_short_utf8()` / `month_short_utf8()`, `format_short_day_label()` / `format_long_day_label()`, `ha_day_name()` — `Tab5/tab5_core.h`.
+- **Screen language**: `tr()`, `tr_ctx()`, `tr_fill()`, `tr_noop()` — `Tab5/tab5_i18n.h`.
+- **Popups and screens**: `animate_popup_open()` / `animate_popup_close()` (`Tab5/tab5_custom.h`), `close_popup_if_open()` (`Tab5/tab5_internal.h`), the script `tab5_ecran_ouvrir` (`Tab5/tab5-ha-controls.yaml`, the only way to open a screen), one `ModalRegistry::add(...)` line in `tab5_modal_registry_init` (`Tab5/tab5-scripts.yaml`, ADR-0013), the chrome `modal_scrim.yaml` + `modal_header.yaml` and the tokens `${modal_card_w}` / `${modal_card_h}` / `${modal_body_y}` (`Tab5/tab5-ui-tokens.yaml`, ADR-0009).
+- **Page dots and the action wheel**: `pagination_afficher()`, `tuile_roue_ouvrir()` / `roue_ouvrir()` (any anchor) — `Tab5/tab5_internal.h`.
+- **Colours**: `UIColor.X` (`Tab5/tab5_tokens.h`) and the role styles of `Tab5/tab5-styles.yaml` (rule 1).
+- **Games**: `Tab5/game_common.h` (ADR-0014) — `clampf()`, `xorshift32_next()`, `mk_rect()` / `mk_label()`, `show()`, `set_bg()`, `set_border()`, `set_text_if()`, `set_text_color_if()`, `set_pressed_bg()`, `show_front()`, `hud_num()`, `NvsSlot<T>`, `timer_period_sync()`, `topn_insert()`, `tilt_calibrate()` / `tilt_smooth()`, `accel_delta_norm()` / `shake_fire()`, `game_mem_new()` / `game_mem_free()`, `ui_destroy()`, `SlotMenu<N>` / `SlotGeom`.
+- **Pure logic tested on a PC**: new logic without LVGL goes next to `Tab5/tab5_core.*`, `Tab5/alarm_clock.*` or `Tab5/tab5_economie.h`, tested by `tools/test_alarm_clock.cpp` (g++ in CI).
+- **Not shared yet** (audit of 2026-10-07, lot L5): a bounded field reader, popup geometry, the tile model. Need one? Create it once in a pure file tested like `tab5_core`, rather than copying a neighbour's.
+
 ## Product preferences (the author's taste — keep them)
 
 Not enforced by a test, but every change is judged against them on the real screen:
