@@ -584,9 +584,12 @@ void apply_pressed_scale_to_tree(lv_obj_t* root) {
 // Le jeu de bille a ete extrait dans marble_game.cpp (namespace Marble) :
 // roguelite plein ecran, trop volumineux pour cohabiter ici.
 
+// Écritures comparées d'abord (lot L10, 08/10/2026) : chaque repeint des boutons de vue
+// (Température, Énergie), des 15 bascules du réveil ou du mode de l'assistant reposait
+// les trois propriétés, et LVGL 9.5.0 invalide le bouton même à valeur égale.
 void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color, int32_t active_width) {
     if (!btn) return;
-    lv_obj_set_style_border_color(btn, lv_color_hex(active ? color : UIColor.GLASS_RIM), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(btn, active ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
-    lv_obj_set_style_border_width(btn, active ? active_width : 1, LV_PART_MAIN);
+    ui_style_couleur(btn, LV_STYLE_BORDER_COLOR, active ? color : UIColor.GLASS_RIM);
+    ui_style_num(btn, LV_STYLE_BORDER_OPA, active ? LV_OPA_COVER : LV_OPA_40);
+    ui_style_num(btn, LV_STYLE_BORDER_WIDTH, active ? active_width : 1);
 }

@@ -14,30 +14,50 @@
 #include <string>
 
 // --- Écritures conditionnelles (audit du 26/09/2026, lot 3) ---
-// En LVGL 9.5, lv_label_set_text() libère et réalloue le texte puis invalide le label
-// même à texte identique (lv_label.c), et tout lv_obj_set_style_*() invalide l'objet
+// En LVGL 9.5.0, lv_label_set_text() libère et réalloue le texte puis invalide le label
+// même à texte identique (set_text_internal, lv_label.c), et tout lv_obj_set_style_*()
+// passe par lv_obj_set_local_style_prop(), qui ne compare pas et rafraîchit le style
 // (lv_obj_style.c) : un repaint pour rien à chaque capteur, interval ou push inchangé.
-// Ces deux helpers comparent d'abord (mêmes gardes nulles que les appels remplacés).
+// Ces helpers comparent d'abord (mêmes gardes nulles que les appels remplacés).
 inline void ui_text(lv_obj_t* label, const char* txt) {
     if (label == nullptr || txt == nullptr) return;
     const char* cur = lv_label_get_text(label);
     if (cur != nullptr && strcmp(cur, txt) == 0) return;
     lv_label_set_text(label, txt);
 }
+// Propriété de style locale de la partie principale, état par défaut (le sélecteur
+// LV_PART_MAIN des lv_obj_set_style_*(o, …, LV_PART_MAIN) qu'elles remplacent), écrite
+// seulement si elle change (lot L10, 08/10/2026). ui_style_num : une propriété entière
+// (opacité, largeur de bordure…) ; ui_style_couleur : une couleur.
+inline void ui_style_num(lv_obj_t* obj, lv_style_prop_t prop, int32_t v) {
+    if (obj == nullptr) return;
+    lv_style_value_t cur;
+    if (lv_obj_get_local_style_prop(obj, prop, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND && cur.num == v) return;
+    lv_style_value_t val;
+    val.num = v;
+    lv_obj_set_local_style_prop(obj, prop, val, LV_PART_MAIN);
+}
+inline void ui_style_couleur(lv_obj_t* obj, lv_style_prop_t prop, lv_color_t c) {
+    if (obj == nullptr) return;
+    lv_style_value_t cur;
+    if (lv_obj_get_local_style_prop(obj, prop, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND && lv_color_eq(cur.color, c))
+        return;
+    lv_style_value_t val;
+    val.color = c;
+    lv_obj_set_local_style_prop(obj, prop, val, LV_PART_MAIN);
+}
+inline void ui_style_couleur(lv_obj_t* obj, lv_style_prop_t prop, uint32_t hex) {
+    ui_style_couleur(obj, prop, lv_color_hex(hex));
+}
 // Couleur de texte locale (partie principale, état par défaut, comme les
 // lv_obj_set_style_text_color(o, …, LV_PART_MAIN) qu'il remplace).
-inline void ui_text_color(lv_obj_t* obj, uint32_t hex) {
-    if (obj == nullptr) return;
-    const lv_color_t want = lv_color_hex(hex);
-    lv_style_value_t cur;
-    if (lv_obj_get_local_style_prop(obj, LV_STYLE_TEXT_COLOR, &cur, LV_PART_MAIN) == LV_STYLE_RES_FOUND &&
-        lv_color_eq(cur.color, want)) {
-        return;
-    }
-    lv_obj_set_style_text_color(obj, want, LV_PART_MAIN);
-}
-// Masquage et position (zones optionnelles, lot 5) : lv_obj_add_flag(HIDDEN) invalide
-// l'objet même déjà masqué, lv_obj_set_x/y réécrivent le style même à valeur égale.
+inline void ui_text_color(lv_obj_t* obj, uint32_t hex) { ui_style_couleur(obj, LV_STYLE_TEXT_COLOR, hex); }
+// Masquage et position (zones optionnelles, lot 5). LVGL 9.5.0 compare déjà lui-même
+// (lv_obj_add_flag / lv_obj_remove_flag : retour immédiat si le drapeau est déjà dans
+// l'état voulu, lv_obj.c ; lv_obj_set_x/y/width/height : retour si le style local a déjà
+// la valeur, lv_obj_pos.c) : ces helpers n'évitent rien de plus, ils gardent la garde
+// nulle et une écriture sur une ligne. Un lv_obj_add_flag(HIDDEN) brut n'est donc pas
+// une écriture « non gardée » (vérifié dans la source de LVGL 9.5.0 le 08/10/2026).
 inline void ui_hidden(lv_obj_t* obj, bool hidden) {
     if (obj == nullptr || lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN) == hidden) return;
     lv_obj_set_flag(obj, LV_OBJ_FLAG_HIDDEN, hidden);
@@ -52,6 +72,15 @@ inline void ui_y(lv_obj_t* obj, int32_t y) {
 // label (style_police_date : la police de la date du thème, qui suit un changement de
 // thème ; ADR-0029). Défini dans tab5_central.cpp.
 void ui_police(lv_obj_t* obj, esphome::font::Font* f);
+// Vrai si l'appui en cours (ou qui vient de finir) a glissé : le doigt a bougé, ou LVGL y
+// a vu un geste (swipe des prévisions ou des pièces). Un tap ou un appui long au bout
+// d'un glissement ne doit rien ouvrir. LVGL remet ces deux marques à zéro à chaque
+// appui ; hors appui (« Aller à l'écran », un script), aucun périphérique n'est actif :
+// faux. Une seule garde pour tous les appuis (alertes_ouvrir, titre de la pièce).
+inline bool ui_appui_glisse() {
+    lv_indev_t* indev = lv_indev_active();
+    return indev != nullptr && (lv_indev_get_press_moved(indev) || lv_indev_get_gesture_dir(indev) != LV_DIR_NONE);
+}
 
 // --- tab5_text.cpp ---
 // Normalise un texte venu de HA (Latin-1 / mojibake) en UTF-8 valide pour LVGL.
@@ -61,8 +90,9 @@ const char* vigilance_alert_banner_utf8(const std::string& couleur);
 // Libellés de jour relatifs à aujourd'hui (offset en jours) : « Mer 09 » / « mercredi 9 septembre ».
 // format_short_day_label / format_long_day_label : tab5_core.h (logique pure).
 // Vrai seulement si le texte contient un markup recolor LVGL #RRGGBB (évite les faux positifs sur un '#' isolé).
-bool has_lvgl_recolor_markup(const std::string& t);
-// Pose un texte sur un label en activant le recolor LVGL seulement s'il contient du #RRGGBB.
+bool has_lvgl_recolor_markup(const char* t);
+// Pose un texte sur un label en activant le recolor LVGL seulement s'il contient du #RRGGBB
+// (écrit seulement s'il change, comme ui_text).
 void set_label_text_utf8(lv_obj_t* label, const char* text);
 // clock_month_short_utf8() : tab5_core.h.
 
@@ -341,8 +371,10 @@ void tuiles_repeindre(int r, int t);
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de
 // handle_swipe_gesture) : gauche 0→1→2→3→4→2, droite 4→3→2→1→0→2.
 int forecast_page_suivante(int page, bool gauche);
-// Pastilles de pagination : la page courante large et opaque.
-void pagination_afficher(lv_obj_t* const pbars[5], int page);
+// Pastilles de pagination : la page courante large et opaque, les autres étroites et
+// pâles ; n pastilles (5 pour les pages, 3 pour la rangée sous l'horloge).
+void pagination_afficher(lv_obj_t* const* pbars, int n, int page);
+inline void pagination_afficher(lv_obj_t* const pbars[5], int page) { pagination_afficher(pbars, 5, page); }
 // Carte centrale au changement de mode HA (ctx.ha_mode déjà posé) : fin du planning
 // temporaire et de la réponse vocale, puis titre de la pièce ou panneaux habituels.
 void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx);

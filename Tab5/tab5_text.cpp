@@ -161,27 +161,30 @@ void tab5_dismiss_local_prune(std::string& store, const std::vector<std::string>
 // jours/mois en toutes lettres et titres de jour : tab5_core.cpp (logique pure).
 
 // Recolor LVGL : vrai seulement si markup #RRGGBB (évite faux positifs sur '#' isolé).
-bool has_lvgl_recolor_markup(const std::string& t) {
-    for (size_t i = 0; i + 7 < t.size(); ++i) {
-        if (t[i] != '#') continue;
+// Comme avant (lot L10, 08/10/2026) : le '#' suivi de six chiffres hexadécimaux et d'au
+// moins un caractère encore ; lu en place, sans copie.
+bool has_lvgl_recolor_markup(const char* t) {
+    if (t == nullptr) return false;
+    for (const char* p = strchr(t, '#'); p != nullptr; p = strchr(p + 1, '#')) {
         bool hex6 = true;
         for (int j = 1; j <= 6; ++j) {
-            char c = t[i + static_cast<size_t>(j)];
+            const char c = p[j];  // le zéro final arrête la boucle avant de dépasser
             if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
                 hex6 = false;
                 break;
             }
         }
-        if (hex6) return true;
+        if (hex6 && p[7] != '\0') return true;
     }
     return false;
 }
 
+// PERF-6 (audit du 07/10/2026) : ni copie en std::string, ni écriture à texte égal.
+// lv_label_set_recolor() revient déjà tout seul si le drapeau ne change pas (lv_label.c).
 void set_label_text_utf8(lv_obj_t* label, const char* text) {
     if (!label || !text) return;
-    std::string t(text);
-    lv_label_set_recolor(label, has_lvgl_recolor_markup(t));
-    lv_label_set_text(label, text);
+    lv_label_set_recolor(label, has_lvgl_recolor_markup(text));
+    ui_text(label, text);
 }
 
 // clock_month_short_utf8() : tab5_core.cpp, avec tous les autres noms de jours et
