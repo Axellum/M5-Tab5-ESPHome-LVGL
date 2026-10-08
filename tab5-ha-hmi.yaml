@@ -102,6 +102,8 @@ esphome:
     - Tab5/tab5_services.cpp
     - Tab5/tab5_assist.cpp
     - Tab5/tab5_cards.cpp
+    # Clim (ADR-0026, ADR-0027) : sortie de tab5_cards.cpp le 08/10/2026 (lot L7).
+    - Tab5/tab5_clim.cpp
     - Tab5/tab5_console.cpp
     - Tab5/tab5_anim.cpp
     - Tab5/tab5_calendar.cpp
@@ -109,8 +111,12 @@ esphome:
     - Tab5/tab5_journal.cpp
     # Zones optionnelles : ce qui disparaît quand l'entité manque dans HA (lot 5, 27/09/2026).
     - Tab5/tab5_zones.cpp
-    # Pièces et tuiles génériques décrites par HA (ADR-0023, 28/09/2026).
+    # Pièces et tuiles génériques décrites par HA (ADR-0023, 28/09/2026) ; leurs popups et
+    # leur roue d'actions rapides, l'en-tête que les trois partagent (lot L7, 08/10/2026).
+    - Tab5/tab5_tuiles_priv.h
     - Tab5/tab5_tuiles.cpp
+    - Tab5/tab5_tuiles_popups.cpp
+    - Tab5/tab5_tuiles_roue.cpp
     # Rangée sous l'horloge : plantes et lignes de capteurs qui se relaient (ADR-0031, 06/10/2026).
     - Tab5/tab5_rangee.cpp
     # Tuile − / + au choix : clim, appareils du blueprint, volume de la tablette (ADR-0033, 06/10/2026).
@@ -129,6 +135,10 @@ esphome:
     # tools/test_alarm_clock.cpp) et état de la tablette.
     - Tab5/tab5_economie.h
     - Tab5/tab5_economie.cpp
+    # Batterie et chargeur (08/10/2026) : présence lue chargeur coupé, limite de charge,
+    # consommation, alerte de batterie faible. Règles pures (testées sur PC), état ici.
+    - Tab5/tab5_batterie.h
+    - Tab5/tab5_batterie.cpp
     # Popup Alertes : historique des alertes (lot 4 du plan des alertes, 06/10/2026).
     - Tab5/tab5_alertes.cpp
     # Popup Maison : toute la maison, pièce par pièce (ADR-0037, 07/10/2026).
@@ -372,14 +382,18 @@ packages:
   tab5_calendar: !include Tab5/tab5-calendar.yaml
   tab5_assist: !include Tab5/tab5-assist.yaml
   tab5_imu: !include Tab5/tab5-imu.yaml
-  # Entites exposees a HA pour piloter/observer l'ecran depuis un dashboard HA.
-  # Charge APRES tab5_lvgl : ses lambdas referencent des ids de widgets LVGL.
+  # Navigation (08/10/2026) : registre des fenetres, « Aller a l'ecran », « Ecran courant »,
+  # tab5_ecran_ouvrir. APRES tab5_lvgl : ses lambdas referencent des ids de widgets LVGL.
+  tab5_navigation: !include Tab5/tab5-navigation.yaml
+  # Entites exposees a HA pour regler l'ecran depuis un dashboard HA.
   tab5_ha_controls: !include Tab5/tab5-ha-controls.yaml
   # Reveil matin + annonce des rendez-vous. Comme ci-dessus : APRES tab5_lvgl
   # (ses scripts referencent les ids de alarm_popup.yaml / alarm_ring_overlay.yaml).
   tab5_alarm: !include Tab5/tab5-alarm.yaml
   # Pièces et tuiles (ADR-0023) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
   tab5_tuiles: !include Tab5/tab5-tuiles.yaml
+  # Roue d'actions rapides (ADR-0036) : APRES tab5_lvgl (widgets), script lancé par tab5_tuiles_ui.
+  tab5_roue: !include Tab5/tab5-roue.yaml
   # Rangée sous l'horloge (ADR-0031) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.
   tab5_rangee: !include Tab5/tab5-rangee.yaml
   # Tuile − / + (ADR-0033) : APRES tab5_lvgl (widgets), script lancé par tab5_zones_apply.

@@ -9,8 +9,8 @@
 #       tactile de la rangée sous l'horloge, ADR-0031) quand la ligne des plantes est affichée.
 # @architecture_constraint Contrairement aux 4 slots du dashboard (tri dynamique
 #       sort_and_update_moisture_slots), les 5 cartes sont FIXES. Les valeurs arrivent en
-#       continu : humidité+statut via update_pots_popup_moisture_ui (ancre
-#       &moisture_on_value), autres métriques via update_pot_metric_ui (capteurs
+#       continu : humidité+statut via update_pots_popup_moisture_ui (script
+#       tab5_pots_maj), autres métriques via update_pot_metric_ui (capteurs
 #       pot*_ec/lux/temp/bat, tab5-sensors-domotique.yaml) — aucune synchro à l'ouverture.
 # @ai_instruction Cadre modal v3 (ADR-0008). Cartes via pot_detail_card.yaml.
 # ═══════════════════════════════════════════════════════
@@ -23,7 +23,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(pots_detail_popup));" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: pots_detail_popup } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -35,7 +35,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F024A", icon_style: "style_text_success", title: "Mes Plantes", title_id: "popup_pots_title", close_btn_id: "btn_pots_close", close_lambda: "animate_popup_close(id(pots_detail_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F024A", icon_style: "style_text_success", title: "Mes Plantes", title_id: "popup_pots_title", close_btn_id: "btn_pots_close", popup_id: pots_detail_popup } }
 
           # ═══ 5 CARTES POTS (ordre = plante_1..plante_5, icônes du dashboard) ═══
           - !include { file: pot_detail_card.yaml, vars: { pot_idx: "1", x_pos: "24", pot_nom: "Pot 1", icon: "\U000F0E66" } }

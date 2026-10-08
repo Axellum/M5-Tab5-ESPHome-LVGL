@@ -686,8 +686,9 @@ def test_l_historique_part_a_la_demande_de_la_tablette():
     assert "is_state', 'Alertes')" in json.dumps(auto["conditions"], ensure_ascii=False)
     # « Alertes » : le nom du popup dans le registre (« Écran courant ») et l'option du
     # select « Aller à l'écran ».
-    assert '"Alertes",          ModalRegistry::POPUP' in (TAB5 / "tab5-scripts.yaml").read_text(encoding="utf-8")
-    assert '      - "Alertes"\n' in (TAB5 / "tab5-ha-controls.yaml").read_text(encoding="utf-8")
+    navigation = (TAB5 / "tab5-navigation.yaml").read_text(encoding="utf-8")
+    assert '"Alertes",          ModalRegistry::POPUP' in navigation
+    assert '      - "Alertes"\n' in navigation
     evenements = json.dumps(_charger("packages", "tab5_evenements.yaml"), ensure_ascii=False)
     assert "esphome.tab5_alertes_historique" in evenements and "script.tab5_push_alertes_historique" in evenements
     firmware = (TAB5 / "tab5-alertes.yaml").read_text(encoding="utf-8")

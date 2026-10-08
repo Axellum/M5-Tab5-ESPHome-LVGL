@@ -27,7 +27,9 @@ BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation
 
 
 def _cpp():
-    return _lire("Tab5", "tab5_tuiles.cpp")
+    # Le code des tuiles : depuis le lot L7 (08/10/2026), tab5_tuiles.cpp, ses popups, sa roue
+    # et l'en-tête que les trois partagent.
+    return "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
 
 
 def _fonction(source, nom):
@@ -42,6 +44,13 @@ def _constexpr(nom):
     m = re.search(rf"constexpr [^=;]*?\b{re.escape(nom)}\b\s*(?:\[[^\]]*\])?\s*= ([^;]+);", _cpp())
     assert m, f"constexpr {nom} introuvable"
     return m.group(1).strip()
+
+
+def _gestes_par_type():
+    """Lignes de kGestes (lot L7) : {type: (agit, commande, roue, fenêtre)}, dans l'ordre de kTypes."""
+    lignes = re.findall(r'\{(true|false), (nullptr|"\w+"), (true|false), Fenetre::(\w+)\},\s*// (\w+)',
+                        _constexpr("kGestes"))
+    return {t: (a == "true", c.strip('"') if c != "nullptr" else None, r == "true", f) for a, c, r, f, t in lignes}
 
 
 def _types_de_l_adr():
@@ -136,16 +145,25 @@ def test_commandes_par_type_egales_au_tableau_de_l_adr():
     adr = _commandes_de_l_adr()
     types = _types_de_l_adr()
     appui = _fonction(cpp, "tuile_appui_piece")
+    gestes = _fonction(cpp, "gestes")
+    table = _gestes_par_type()
+    # Une ligne par type de kTypes, dans le même ordre (lot L7 : une seule table).
+    assert list(table) == ["vide"] + re.findall(r'"(\w+)"', _constexpr("kTypes")), list(table)
     # Toute commande de tuile émise est dans le tableau « What the tablet sends ».
-    emises = set(re.findall(r'action = [^;]*?"(\w+)"', appui)) | set(re.findall(r'\? "(\w+)" : "(\w+)"', appui)[0])
+    emises = {c for _, c, _, _ in table.values() if c} | set(re.findall(r'\? "(\w+)" :', gestes))
     emises |= set(re.findall(r'return "(\w+)"', _fonction(cpp, "vol_appui")))
     emises |= set(re.findall(r'"(ouvrir|fermer|arreter)"', _fonction(cpp, "vol_appui_long")))
     assert emises and emises <= adr, emises - adr
     # lum / int / med : basculer, allumer avec l'option o ; act : lancer.
     for t in ("lum", "int", "med"):
-        assert "`basculer`" in types[t][0]
-    assert '(d.options & OPT_O) ? "allumer" : "basculer"' in appui
-    assert "`lancer`" in types["act"][0] and 'action = "lancer";' in appui
+        assert "`basculer`" in types[t][0] and table[t][1] == "basculer", t
+    assert '(d.options & OPT_O)) ? "allumer" : l.commande;' in gestes
+    assert "`lancer`" in types["act"][0] and table["act"][1] == "lancer"
+    # La commande de la table part ; sans commande, la fenêtre (clim, capteur) ; un volet :
+    # son sens.
+    assert ("const char* action = type == Type::VOL ? (long_appui ? vol_appui_long(e) : vol_appui(e)) : "
+            "g.commande;") in appui
+    assert appui.index("if (action == nullptr) {") < appui.index("envoyer_tuile(r, t, action);")
     # vol : en mouvement arrêter (pause), sinon le sens choisi par le titre (au départ,
     # ouvert → fermer) ; long : l'autre (mise à jour du 28/09, retour de la 3.1).
     assert all(f"`{c}`" in types["vol"][0] for c in ("arreter", "fermer", "ouvrir"))
@@ -159,10 +177,12 @@ def test_commandes_par_type_egales_au_tableau_de_l_adr():
     assert "u.jour_titre[t], u.heure_titre[t], u.carte_nom[t]" in titres and "LV_EVENT_SHORT_CLICKED" in titres
     # cap / bin : lecture seule (aucun bouton) ; cli : popup avec m, ou sur sa propre clim
     # quand la tablette en a les réglages (ADR-0027) ; med : télécommande avec t.
-    agit = _fonction(cpp, "type_agit")
-    assert "case Type::CLI: return (options & OPT_M) != 0 || clim_connue;" in agit
-    assert "default: return false;" in agit and "OPT_R" in agit
-    assert "if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);" in appui
+    assert "(type == Type::CLI && ((d.options & OPT_M) || clim_connue))" in gestes
+    assert "(type == Type::CAP && (d.options & OPT_E))" in gestes
+    assert not table["cap"][0] and not table["bin"][0] and not table["cli"][0] and not table["vide"][0]
+    assert "if (d.type >= kNbTypes || (d.options & OPT_R)) return g;" in gestes
+    assert "if (type == Type::MED && (d.options & OPT_T)) g.fenetre = Fenetre::TELECOMMANDE;" in gestes
+    assert "case Fenetre::TELECOMMANDE:\n            ouvrir_popup(g_tuiles_ui.popup_tv);" in _fonction(cpp, "ouvrir_fenetre")
     # Option k : un second appui dans les 3 s.
     assert "kConfirmationMs = 3000" in cpp and "OPT_K" in appui
 
@@ -173,7 +193,11 @@ def test_tout_eteindre_de_la_piece():
     assert "pR` + `eteindre`" in _lire(ADR)
     cpp = _cpp()
     corps = _fonction(cpp, "tuiles_piece_eteindre")
-    assert "{'p', static_cast<char>('0' + r), '\\0'}" in corps and 'envoyer(cle, "eteindre")' in corps
+    assert 'envoyer(piece_cle(r).s, "eteindre");' in corps
+    # Clés « pR » et « tRT » : une seule écriture, tab5_modele_ha.h (lot L7).
+    modele = _lire("Tab5", "tab5_modele_ha.h")
+    assert "c.s[0] = 'p';" in _fonction(modele, "piece_cle") and "c.s[1] = static_cast<char>('0' + r);" in _fonction(
+        modele, "piece_cle")
     assert "void popup_lumiere_tout_eteindre() { tuiles_piece_eteindre(s_pl.piece); }" in cpp
     assert "popup_lumiere_tout_eteindre();" in _lire("Tab5", "ui_components", "light_popup.yaml")
 
@@ -183,12 +207,45 @@ def test_popup_lumiere_revalide_aux_nouvelles_definitions():
     est revalidé quand HA renvoie les définitions — lignes recalculées sur la même pièce
     et repeintes, refermé s'il n'y a plus de lumière, oublié s'il est fermé."""
     cpp = _cpp()
-    assert "popup_lumiere_revalider();" in _fonction(cpp, "tuiles_definir")
+    # tuiles_definir → popups_revalider (tab5_tuiles_popups.cpp, lot L7) : volet, appareil, lumière.
+    assert "popups_revalider();" in _fonction(cpp, "tuiles_definir")
+    assert "popup_lumiere_revalider();" in _fonction(cpp, "popups_revalider")
     corps = _fonction(cpp, "popup_lumiere_revalider")
-    assert "s_pl = PopupLumiere{};" in corps and "est_lumiere(r, i)" in corps
-    assert "animate_popup_close(u.lum_popup);" in corps and "popup_lumiere_peindre();" in corps
+    assert "s_pl = PopupLumiere{};" in corps
+    # Mêmes lignes qu'à l'ouverture (popup_lumiere_lignes) ; refermé sans lumière, repeint
+    # sinon (popup_tuile_revalider, commun aux trois popups, lot L7).
+    assert ("popup_tuile_revalider(s_pl, popup_lumiere_lignes(s_pl.piece, choisie), popup_lumiere_peindre);"
+            in corps)
+    assert "popup_lumiere_lignes(r, t)" in _fonction(cpp, "popup_lumiere_ouvrir")
+    lignes = _fonction(cpp, "popup_lumiere_lignes")
+    assert "s_pl = PopupLumiere{};" in lignes and "est_lumiere(r, i)" in lignes
     # La clé des commandes suit la lampe choisie (mode héritage → clés tRT).
-    assert "lumiere_cle(r, s_pl.tuiles[s_pl.choix], *u.lum_cle);" in corps
+    assert "s_pl.tuile = s_pl.tuiles[s_pl.choix];" in lignes
+    assert "lumiere_cle(r, s_pl.tuile, *u.lum_cle);" in lignes
+    revalider = _fonction(cpp, "popup_tuile_revalider")
+    assert "if (!P::ouvert()) return;" in revalider
+    assert "if (valide) peindre();\n    else animate_popup_close(P::conteneur());" in revalider
+
+
+def test_les_trois_popups_d_une_tuile_partagent_popup_tuile():
+    """UI-4 (audit du 07/10/2026, lot L7) : pièce, tuile, « ouvert ? », ouverture et
+    revalidation des popups lumière, volet et appareil écrits une fois (PopupTuile)."""
+    cpp = _cpp()
+    for struct, conteneur in (("PopupLumiere", "lum_popup"), ("PopupVolet", "vol_popup"),
+                              ("PopupAppareil", "app_popup")):
+        assert f"struct {struct} : PopupTuile<&TuilesUI::{conteneur}>" in cpp, struct
+    # Plus de « ouvert ? » ni de bornes écrits à la main, popup par popup.
+    for ancien in ("bool popup_ouvert()", "bool popup_volet_ouvert()", "bool popup_appareil_ouvert()",
+                   "r >= kPieces || t < 0 || t >= kTuiles || heritage()"):
+        assert ancien not in cpp, ancien
+    assert cpp.count("!lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN)") == 1
+    assert "void popup_volet_ouvrir(int r, int t) { popup_tuile_ouvrir(s_pv, r, t, popup_volet_peindre); }" in cpp
+    assert ("void popup_appareil_ouvrir(int r, int t) { popup_tuile_ouvrir(s_pa, r, t, popup_appareil_peindre); }"
+            in cpp)
+    ouvrir = _fonction(cpp, "popup_tuile_ouvrir")
+    assert ouvrir.index("p = P{};") < ouvrir.index("peindre();") < ouvrir.index("animate_popup_open(P::conteneur());")
+    assert "if (s_pv.montre(r, t)) popup_volet_peindre();" in _fonction(cpp, "popup_volet_etat")
+    assert "if (s_pa.montre(r, t)) popup_appareil_peindre();" in _fonction(cpp, "popup_appareil_etat")
 
 
 def _lum_pct(v):
@@ -219,7 +276,13 @@ def test_luminosite_en_pourcent_une_seule_formule():
 
 def test_cles_des_commandes_de_tuile():
     cpp = _cpp()
-    assert "{'t', static_cast<char>('0' + r), static_cast<char>('0' + t), '\\0'}" in _fonction(cpp, "envoyer_tuile")
+    assert "envoyer(tuile_cle(r, t).s, action);" in _fonction(cpp, "envoyer_tuile")
+    cle = _fonction(_lire("Tab5", "tab5_modele_ha.h"), "tuile_cle")
+    assert ("c.s[0] = 't';\n    c.s[1] = static_cast<char>('0' + r);\n    c.s[2] = static_cast<char>('0' + t);"
+            in cle.replace("\r\n", "\n"))
+    # Écrite une seule fois : plus de clé « tRT » montée à la main dans le C++ des tuiles et des clims.
+    for fichier in ("tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp", "tab5_clim.cpp"):
+        assert "static_cast<char>('0' + " not in _lire("Tab5", fichier), fichier
     # L'événement esphome.tab5_action du script tab5_action, emplacement / action / valeur.
     tuiles_yaml = _lire("Tab5", "tab5-tuiles.yaml")
     assert "id(tab5_action).execute(std::string(e), std::string(a), std::string(v));" in tuiles_yaml
@@ -305,10 +368,17 @@ def test_boutons_des_tuiles_a_leur_position_visuelle():
     assert len(inclus) == 5 and all(int(t) == 4 - int(i) for i, t in inclus), "tuile T = objet h(4−T)"
     carte = _lire("Tab5", "ui_components", "forecast_hour_card.yaml")
     assert "tuile_appui(${tuile}, false);" in carte and "tuile_appui(${tuile}, true);" in carte
-    for fichier in ("forecast_daily.yaml", "switches_card.yaml"):
-        texte = _lire("Tab5", "ui_components", fichier)
-        assert re.findall(r"tuile_appui\((\d), false\)", texte) == list("01234"), fichier
-        assert re.findall(r"tuile_appui\((\d), true\)", texte) == list("01234"), fichier
+    # Tuiles journalières et cartes du mode HA (08/10/2026, audit YML-3) : un gabarit dont le
+    # bouton envoie sa propre tuile (n), inclus dans l'ordre des tuiles 0 à 4.
+    for gabarit in ("forecast_day_body.yaml", "switch_card.yaml"):
+        texte = _lire("Tab5", "ui_components", gabarit)
+        assert "tuile_appui(${n}, false);" in texte and "tuile_appui(${n}, true);" in texte, gabarit
+    jours = re.findall(r'file: forecast_day_(?:card|body)\.yaml, vars: \{ n: "(\d)"',
+                       _lire("Tab5", "ui_components", "forecast_daily.yaml"))
+    assert jours == list("01234"), jours
+    cartes = re.findall(r'file: switch_card\.yaml, vars: \{ n: "(\d)"',
+                        _lire("Tab5", "ui_components", "switches_card.yaml"))
+    assert cartes == list("01234"), cartes
     # Plus aucune commande 3.x écrite en dur sur une tuile : tout passe par tuile_appui().
     assert "id: tab5_action" not in _lire("Tab5", "ui_components", "forecast_daily.yaml")
     assert "id: tab5_action" not in _lire("Tab5", "ui_components", "switches_card.yaml")
@@ -333,13 +403,14 @@ def test_cartes_du_mode_ha_facon_carte_tile():
     ronde de la couleur de l'état, le bouton sur la pastille, le nom dans un cadre
     cliquable (sens d'un volet), sans onglet."""
     tuiles = _lire("Tab5", "tab5-tuiles.yaml")
-    carte = _lire("Tab5", "ui_components", "switches_card.yaml")
+    # Une carte = switch_card.yaml, incluse pour n = 0 à 4 (08/10/2026, audit YML-3).
+    carte = _lire("Tab5", "ui_components", "switch_card.yaml")
     for t in range(5):
         assert f"u.carte_pastille[{t}] = id(sw_pastille_{t});" in tuiles
-        pastille = carte.split(f"id: sw_pastille_{t}\n", 1)[1].split("- button:", 1)[0]
-        assert f"id: icon_sw{t}," in pastille and "clickable: false" in pastille
-        bouton = carte.split(f"id: btn_sw{t}_action\n", 1)[1].split("!include", 1)[0]
-        assert f"tuile_appui({t}, false);" in bouton and f"tuile_appui({t}, true);" in bouton
+    pastille = carte.split('id: "sw_pastille_${n}"\n', 1)[1].split("- button:", 1)[0]
+    assert 'id: "icon_sw${n}",' in pastille and "clickable: false" in pastille
+    bouton = carte.split('id: "btn_sw${n}_action"\n', 1)[1].split("!include", 1)[0]
+    assert "tuile_appui(${n}, false);" in bouton and "tuile_appui(${n}, true);" in bouton
     # Dessin partagé avec les lignes du popup Maison (ADR-0037) : peindre_vue_sur.
     assert "ui_fond(w.pastille, v.couleur_carte);" in _fonction(_cpp(), "peindre_vue_sur")
     carte = "peindre_vue_sur(v, {u.carte_pastille[t], u.carte_icone[t], u.carte_nom[t], u.carte_etat[t]},"
@@ -356,8 +427,8 @@ def test_mode_ha_seule_source_et_swipe_par_piece():
     # (qui réaffichait le calque météo sous les cartes).
     assert swipe.index("if (ctx.ha_mode)") < swipe.index("apply_forecast_page(")
     assert "!ctx.ha_mode" in _fonction(central, "rotator_owns_card")
-    assert "if (g_central_ctx.ha_mode) return;" in _lire("Tab5", "tab5-scripts.yaml")
-    assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-ha-controls.yaml")
+    assert "if (g_central_ctx.ha_mode) return RetourAuto::RIEN;" in _lire("Tab5", "tab5_anim.cpp")
+    assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "tab5-navigation.yaml")
     assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "tab5-lvgl.yaml")
 
 
@@ -368,13 +439,20 @@ def test_mode_ha_seule_source_et_swipe_par_piece():
 def test_appui_long_d_un_volet_ouvre_son_popup_sauf_avec_k():
     """L'appui long d'une tuile vol ouvre le popup du volet ; avec l'option k, l'ancien
     appui long (l'autre sens, confirmé) : le popup ne contourne jamais la confirmation.
-    L'option r n'arrive pas jusque-là (type_agit), le mode héritage non plus."""
-    appui = _fonction(_cpp(), "tuile_appui_piece")
-    vol = appui.split("case Type::VOL:", 1)[1].split("case Type::MED:", 1)[0]
-    assert "if (long_appui && !(d.options & OPT_K)) {" in vol and "popup_volet_ouvrir(r, t);" in vol
-    assert vol.index("popup_volet_ouvrir(r, t);") < vol.index("action = long_appui ? vol_appui_long(e) : vol_appui(e);")
-    assert appui.index("appui_heritage(t, long_appui);") < appui.index("case Type::VOL:")
-    assert appui.index("if (!type_agit(") < appui.index("case Type::VOL:")
+    L'option r n'arrive pas jusque-là (gestes), le mode héritage non plus."""
+    cpp = _cpp()
+    appui = _fonction(cpp, "tuile_appui_piece")
+    gestes = _fonction(cpp, "gestes")
+    assert _gestes_par_type()["vol"] == (True, None, True, "VOLET")
+    # Option k : ni roue ni popup ; l'appui long garde l'autre sens, confirmé.
+    assert "const bool confirme = (d.options & OPT_K) && type != Type::CLI;" in gestes
+    assert "g.roue = l.roue && !confirme;" in gestes
+    assert "if (type == Type::VOL && confirme) g.fenetre = Fenetre::AUCUNE;" in gestes
+    assert (appui.index("if (g.roue && roue_de_la_tuile(r, t)) return;")
+            < appui.index("ouvrir_fenetre(g.fenetre, d, r, t);") < appui.index("vol_appui_long(e)"))
+    assert "case Fenetre::VOLET:\n            popup_volet_ouvrir(r, t);" in _fonction(cpp, "ouvrir_fenetre")
+    assert appui.index("appui_heritage(t, long_appui);") < appui.index("gestes(d,")
+    assert appui.index("if (!g.agit) return;") < appui.index("if (long_appui) {")
     long_adr = _types_de_l_adr()["vol"][1]
     assert "shutter popup" in long_adr and "with `k`" in long_adr
 
@@ -391,7 +469,7 @@ def test_commandes_du_popup_du_volet_dans_le_contrat():
     # Volet dessiné : « position » (dans le tableau de l'ADR), 0-100, à la tuile du popup,
     # et jamais sans position connue (même si elle s'est perdue pendant le geste).
     envoi = _fonction(cpp, "popup_volet_envoyer_position")
-    assert 'u.envoyer(cle, "position", valeur);' in envoi and "position" in adr
+    assert 'u.envoyer(tuile_cle(s_pv.piece, s_pv.tuile).s, "position", valeur);' in envoi and "position" in adr
     assert 'snprintf(valeur, sizeof(valeur), "%d", std::clamp(s_pv.pos, 0, 100));' in envoi
     garde = "if (!vol_position_connue(s_etats[s_pv.piece][s_pv.tuile])) return false;"
     assert garde in envoi and envoi.index(garde) < envoi.index("u.envoyer(")
@@ -445,9 +523,10 @@ def test_le_volet_dessine_suit_la_position_de_ha():
     assert "if (!s_pv.saisi && !s_pv.cible) s_pv.pos = vol_position_dessin(e, s_pv.estompe);" in peindre
     assert "popup_volet_dessiner(s_pv.pos, s_pv.estompe);" in peindre
     envoi = _fonction(cpp, "popup_volet_envoyer_position")
-    assert envoi.index('u.envoyer(cle, "position", valeur);') < envoi.index("s_pv.cible = true;")
+    assert envoi.index('"position", valeur);') < envoi.index("s_pv.cible = true;")
     recu = _fonction(cpp, "tuiles_etat_recu")
-    assert recu.index("if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;") < recu.index("peindre_tuile(r, t);")
+    assert recu.index("popup_volet_etat_pousse(r, t);") < recu.index("peindre_tuile(r, t);")
+    assert "if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;" in _fonction(cpp, "popup_volet_etat_pousse")
     assert cpp.count("s_pv.cible = true;") == 1 and cpp.count("s_pv.cible = false;") == 1
     assert "ui_hidden(u.vol_position, !connue);" in peindre
     dessiner = _fonction(cpp, "popup_volet_dessiner")
@@ -487,7 +566,7 @@ def test_geometrie_du_volet_dessine():
 
 
 def test_popup_du_volet_inscrit_et_branche():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "tab5-navigation.yaml")
     assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volet",\s+ModalRegistry::POPUP\);', scripts)
     assert "- !include ui_components/volet_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "tab5-tuiles.yaml")
@@ -513,20 +592,20 @@ def _cas(appui, type_, suivant):
 def test_appui_long_d_un_appareil_ouvre_son_popup():
     """L'appui long d'une tuile int, act, ou med sans l'option t (avec t : la télécommande)
     ouvre le popup de l'appareil ; l'appui court ne change pas. Lecture seule (option r) :
-    type_agit coupe avant, comme le mode météo sans appareils."""
-    appui = _fonction(_cpp(), "tuile_appui_piece")
-    for type_, suivant in (("INT", "VOL"), ("ACT", "CLI")):
-        bloc = _cas(appui, type_, suivant)
-        assert "if (long_appui) {\n                popup_appareil_ouvrir(r, t);\n                return;" in bloc, type_
-        assert bloc.index("popup_appareil_ouvrir(r, t);") < bloc.index("action = "), type_
-    med = _cas(appui, "MED", "ACT")
-    assert "if (d.options & OPT_T) ouvrir_popup(g_tuiles_ui.popup_tv);\n                else popup_appareil_ouvrir(r, t);" in med
+    gestes coupe avant, comme le mode météo sans appareils."""
+    cpp = _cpp()
+    appui = _fonction(cpp, "tuile_appui_piece")
+    table = _gestes_par_type()
+    for t in ("int", "act", "med"):
+        assert table[t][2:] == (False, "APPAREIL"), t
+    assert "case Fenetre::APPAREIL:\n            popup_appareil_ouvrir(r, t);" in _fonction(cpp, "ouvrir_fenetre")
+    # med avec l'option t : la télécommande à la place.
+    assert "if (type == Type::MED && (d.options & OPT_T)) g.fenetre = Fenetre::TELECOMMANDE;" in _fonction(cpp, "gestes")
     # Les appuis courts d'aujourd'hui : basculer (allumer avec o), lancer.
-    assert 'action = (d.options & OPT_O) ? "allumer" : "basculer";' in _cas(appui, "INT", "VOL")
-    assert 'action = "lancer";' in _cas(appui, "ACT", "CLI")
-    assert appui.index("if (!type_agit(") < appui.index("case Type::INT:")
-    assert "case Type::INT: case Type::ACT: return true;" in _fonction(_cpp(), "a_popup_appareil")
-    assert "return (options & OPT_T) == 0;" in _fonction(_cpp(), "a_popup_appareil")
+    assert (table["int"][1], table["med"][1], table["act"][1]) == ("basculer", "basculer", "lancer")
+    assert appui.index("if (!g.agit) return;") < appui.index("if (long_appui) {")
+    assert ("return s_pa.en_grille() && gestes(s_m.tuiles[s_pa.piece][s_pa.tuile], false).fenetre == "
+            "Fenetre::APPAREIL;") in _fonction(cpp, "popup_appareil_valide")
     # Le tableau de l'ADR le dit aussi.
     types = _types_de_l_adr()
     for t in ("int", "act", "med"):
@@ -546,18 +625,23 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
     assert "popup_appareil_appui();" in _lire("Tab5", "ui_components", "appareil_popup.yaml")
     # Ni lecture seule, ni mode héritage, ni type sans popup (définitions changées popup ouvert).
     valide = _fonction(cpp, "popup_appareil_valide")
-    assert "heritage()" in valide and "!(d.options & OPT_R)" in valide and "a_popup_appareil(" in valide
+    assert "s_pa.en_grille() && gestes(" in valide
+    assert "tuile >= 0 && tuile < kTuiles && !heritage(); }" in cpp
+    assert "(d.options & OPT_R)) return g;" in _fonction(cpp, "gestes")
     # Popup refermé quand sa tuile ne l'a plus, repeint sinon (et au changement de thème).
-    definir = _fonction(cpp, "tuiles_definir")
-    assert "else animate_popup_close(g_tuiles_ui.app_popup);" in definir
-    assert "if (popup_appareil_ouvert()) popup_appareil_peindre();" in _fonction(cpp, "tuiles_rejouer_theme")
+    assert "popups_revalider();" in _fonction(cpp, "tuiles_definir")
+    revalider = _fonction(cpp, "popups_revalider")
+    assert "popup_tuile_revalider(s_pa, popup_appareil_valide(), popup_appareil_peindre);" in revalider
+    assert "popup_tuile_revalider(s_pv, popup_volet_valide(), popup_volet_peindre);" in revalider
+    assert "popups_rejouer_theme();" in _fonction(cpp, "tuiles_rejouer_theme")
+    assert "if (s_pa.ouvert()) popup_appareil_peindre();" in _fonction(cpp, "popups_rejouer_theme")
     # Le popup dit l'option k et l'option o, et ce que fera l'appui.
     peindre = _fonction(cpp, "popup_appareil_peindre")
     assert "minuterie_sur(s_confirmation, r, t)" in peindre and "OPT_K" in peindre and "OPT_O" in peindre
 
 
 def test_popup_d_un_appareil_inscrit_et_branche():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
+    scripts = _lire("Tab5", "tab5-navigation.yaml")
     assert re.search(r'ModalRegistry::add\(id\(appareil_popup\),\s+"Appareil",\s+ModalRegistry::POPUP\);', scripts)
     assert "- !include ui_components/appareil_popup.yaml" in _lire("Tab5", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "tab5-tuiles.yaml")

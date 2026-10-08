@@ -3,7 +3,8 @@
 
 Depuis le 08/09/2026, la liste des 8 consoles vit dans `Tab5/tab5_registry.cpp`
 (`GameRegistry::kGames`) et la liste des fenêtres modales dans le script
-`tab5_modal_registry_init` de `Tab5/tab5-scripts.yaml`. Ce script vérifie que
+`tab5_modal_registry_init` de `Tab5/tab5-navigation.yaml` (de `tab5-scripts.yaml`
+jusqu'au 08/10/2026), avec le select « Aller à l'écran ». Ce script vérifie que
 personne ne recopie une liste ailleurs et qu'aucune console ni popup n'est
 oubliée :
 
@@ -13,7 +14,7 @@ oubliée :
      n'appelle `X::close()` hors du script d'ouverture du jeu, ni ne dispatche
      l'IMU jeu par jeu (`X::on_imu(`) : tout passe par `GameRegistry` ;
   3. les anciennes tables `kPopups` / `kScreens` / `kTargetOf` n'existent plus ;
-  4. `ModalRegistry::add(` n'apparaît que dans `tab5-scripts.yaml` ;
+  4. `ModalRegistry::add(` n'apparaît que dans `tab5-navigation.yaml` ;
   5. chaque popup à carte modale de `ui_components/` (fichier contenant
      `style_modal_card`, id racine = premier `id:`) est enregistré ;
   6. chaque option du select « Aller à l'écran » (hors « — » et « Accueil »)
@@ -34,8 +35,8 @@ REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 UI = TAB5 / "ui_components"
 REGISTRY_CPP = TAB5 / "tab5_registry.cpp"
-SCRIPTS_YAML = TAB5 / "tab5-scripts.yaml"
-HA_CONTROLS_YAML = TAB5 / "tab5-ha-controls.yaml"
+# Registre des fenêtres et select « Aller à l'écran » (même fichier depuis le 08/10/2026).
+NAVIGATION_YAML = TAB5 / "tab5-navigation.yaml"
 
 RE_NAMESPACE = re.compile(r"^namespace (\w+) \{", re.M)
 RE_ADD = re.compile(r'ModalRegistry::add\(\s*id\((\w+)\)\s*,\s*(nullptr|"([^"]*)")\s*,')
@@ -77,9 +78,9 @@ def games_from_registry(cpp: Path = REGISTRY_CPP) -> set[str]:
     return set(re.findall(r"(\w+)::is_open\b", text))
 
 
-def registered_modals(scripts: Path = SCRIPTS_YAML) -> dict[str, str | None]:
+def registered_modals(navigation: Path = NAVIGATION_YAML) -> dict[str, str | None]:
     """{id_lvgl: libellé ou None} des fenêtres enregistrées par le script d'init."""
-    text = strip_comments(scripts.read_text(encoding="utf-8"))
+    text = strip_comments(navigation.read_text(encoding="utf-8"))
     return {m.group(1): m.group(3) for m in RE_ADD.finditer(text)}
 
 
@@ -96,8 +97,8 @@ def modal_root_ids(ui_dir: Path = UI) -> dict[str, str]:
     return roots
 
 
-def select_options(ha_controls: Path = HA_CONTROLS_YAML) -> list[str]:
-    text = strip_comments(ha_controls.read_text(encoding="utf-8"))
+def select_options(navigation: Path = NAVIGATION_YAML) -> list[str]:
+    text = strip_comments(navigation.read_text(encoding="utf-8"))
     m = re.search(r"id: tab5_goto_screen\n(.*?)\n\s*on_value:", text, re.S)
     if not m:
         return []
@@ -108,10 +109,9 @@ def scan(tab5: Path = TAB5) -> list[str]:
     problems: list[str] = []
     ui_dir = tab5 / "ui_components"
     registry_cpp = tab5 / "tab5_registry.cpp"
-    scripts_yaml = tab5 / "tab5-scripts.yaml"
-    ha_controls_yaml = tab5 / "tab5-ha-controls.yaml"
+    navigation_yaml = tab5 / "tab5-navigation.yaml"
 
-    for required in (registry_cpp, scripts_yaml, ha_controls_yaml):
+    for required in (registry_cpp, navigation_yaml):
         if not required.is_file():
             return [f"fichier introuvable : {required}"]
 
@@ -140,21 +140,21 @@ def scan(tab5: Path = TAB5) -> list[str]:
         for table in LEGACY_TABLES:
             if re.search(rf"\b{table}\b", text):
                 problems.append(f"{path.name} : table {table} — remplacée par ModalRegistry")
-        if "ModalRegistry::add(" in text and path.name != scripts_yaml.name:
-            problems.append(f"{path.name} : ModalRegistry::add() hors de {scripts_yaml.name}")
+        if "ModalRegistry::add(" in text and path.name != navigation_yaml.name:
+            problems.append(f"{path.name} : ModalRegistry::add() hors de {navigation_yaml.name}")
 
     # 5. chaque popup à carte modale est enregistré
-    registered = registered_modals(scripts_yaml)
+    registered = registered_modals(navigation_yaml)
     for root, fname in sorted(modal_root_ids(ui_dir).items()):
         if root not in registered:
-            problems.append(f"{fname} : id(`{root}`) absent de tab5_modal_registry_init ({scripts_yaml.name})")
+            problems.append(f"{fname} : id(`{root}`) absent de tab5_modal_registry_init ({navigation_yaml.name})")
 
     # 6. options du select ↔ libellés enregistrés
     names = {n for n in registered.values() if n}
-    for opt in select_options(ha_controls_yaml):
+    for opt in select_options(navigation_yaml):
         if opt not in names:
             problems.append(
-                f"{ha_controls_yaml.name} : option « {opt} » du select tab5_goto_screen sans fenêtre "
+                f"{navigation_yaml.name} : option « {opt} » du select tab5_goto_screen sans fenêtre "
                 f"enregistrée sous ce libellé (ModalRegistry::find() rendrait nullptr)"
             )
 

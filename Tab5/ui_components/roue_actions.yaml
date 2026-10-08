@@ -25,7 +25,7 @@
 #       anneau et ses mots, premier anneau et les mots des liens, jauge, moyeu, nom. Les
 #       arcs ne prennent pas le toucher (roue_brancher leur retire CLICKABLE et le bouton) :
 #       un toucher sur une bande arrive au voile. Un bouton de plus = kRoueBoutons ou
-#       kRoueChoix (tab5_custom.h), une ligne ici et ses pointeurs dans tab5-tuiles.yaml.
+#       kRoueChoix (tab5_custom.h), une ligne ici et ses pointeurs dans tab5-roue.yaml.
 # ═══════════════════════════════════════════════════════
 obj:
   id: roue_actions

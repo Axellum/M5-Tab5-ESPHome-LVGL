@@ -218,97 +218,30 @@ lvgl:
         - label: { id: icon_batterie, text: "\U000F0091", align: TOP_LEFT, x: 185, y: 10, text_font: mdi_font_26, styles: style_text_inactive, hidden: true }
 
         # --- Top Right Buttons (même habillage verre que Domo/Discu) ---
-        # Icône seule (05/10/2026). x 855 / 995 / 1135 : bord droit à 1260 comme le
-        # bandeau central. Chaque bouton a un tap et un appui long (06/10/2026, demande
-        # d'Axel) ; une mini icône (mdi_font_26, le jeu du bandeau d'état en haut à gauche)
-        # en haut à droite de la tuile dit ce qu'ouvre l'appui long, quand il ouvre quelque
-        # chose. Les trois restent à leur place : sans TV, la manette ouvre toujours l'Arcade.
-        # Appuis longs au choix (07/10/2026, section « Boutons du haut » du blueprint, clé
-        # appuis) : bouton_haut_ecran() (tab5_zones.cpp) donne l'écran, 0 = rien, et
-        # tab5_ecran_ouvrir (tab5-ha-controls.yaml), la routine du select « Aller à
-        # l'écran », l'ouvre. « auto » : Énergie, console, télécommande TV, comme avant.
-        # Glyphe et visibilité des mini icônes : boutons_haut_apply_ui().
-        # pad_all: 0 : la mini icône se pose au pixel près (le thème ajoutait ~21 px de
-        # marge intérieure), l'icône centrale ne bouge pas.
-        - button:
-            id: btn_control_ha
-            align: TOP_LEFT
-            x: 855
-            y: 20
-            width: 125
-            height: 90
-            radius: 18
-            pad_all: 0
-            styles: style_clim_btn_page
-            on_short_click:
-              # Mode HA (ADR-0023) : les cartes de la pièce de la page courante (ou de la
-              # plus proche qui a des appareils), fondu croisé avec la météo, titre de la
-              # pièce dans la carte centrale, bouton en couleur d'accent. Masqué sans
-              # aucun appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp).
-              - lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);'
-            on_long_press:
-              # « auto » : popup Énergie (ADR-0028), quand HA pousse la production solaire
-              # (puissance crête choisie dans le blueprint).
-              - lambda: |-
-                  const int e = bouton_haut_ecran(BOUTON_MAISON);
-                  if (e != 0) id(tab5_ecran_ouvrir).execute(e);
-            widgets:
-              - label: { id: icon_ha, text: "\U000F07D0", align: CENTER, text_font: mdi_font_70 }
-              # Glyphe et visibilité : boutons_haut_apply_ui() (tab5_zones.cpp).
-              - label: { id: icon_mini_ha, text: "\U000F0D9B", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
-
+        # Icône seule (05/10/2026). Chaque bouton a un tap et un appui long (06/10/2026,
+        # demande d'Axel) ; une mini icône (mdi_font_26, le jeu du bandeau d'état en haut à
+        # gauche) en haut à droite de la tuile dit ce qu'ouvre l'appui long, quand il ouvre
+        # quelque chose. Les trois restent à leur place : sans TV, la manette ouvre toujours
+        # l'Arcade. Appuis longs au choix (07/10/2026, section « Boutons du haut » du
+        # blueprint) : bouton_haut_ecran() (tab5_zones.cpp) donne l'écran, tab5_ecran_ouvrir
+        # (tab5-navigation.yaml) l'ouvre. Un bouton = ui_components/bouton_haut.yaml
+        # (08/10/2026, audit YML-4 : géométrie, appui long et mini icône écrits une fois).
+        #
+        # Maison : tap = mode HA (ADR-0023) : les cartes de la pièce de la page courante (ou
+        # de la plus proche qui a des appareils), fondu croisé avec la météo, titre de la
+        # pièce dans la carte centrale, bouton en couleur d'accent. Masqué sans aucun
+        # appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp). Appui long « auto » :
+        # popup Énergie (ADR-0028), quand HA pousse la production solaire.
+        - !include { file: ui_components/bouton_haut.yaml, vars: { id: btn_control_ha, x: "855", bouton: BOUTON_MAISON, appui: [ lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);' ], icone_id: icon_ha, icone: "\U000F07D0", mini_id: icon_mini_ha, mini: "\U000F0D9B" } }
         # Engrenage : tap = Réglages de la tablette (tab5-reglages.yaml), appui long =
-        # console système en « auto » (avant le 06/10/2026, le flocon l'ouvrait d'un tap),
-        # sans mini icône en « auto ».
-        - button:
-            id: btn_control_console
-            align: TOP_LEFT
-            x: 995
-            y: 20
-            width: 125
-            height: 90
-            radius: 18
-            pad_all: 0
-            styles: style_clim_btn_page
-            on_short_click:
-              - script.execute: tab5_reglages_ouvrir
-            on_long_press:
-              # La console : script tab5_console_ouvrir (tab5-scripts.yaml), le même que
-              # celui du select « Aller à l'écran ».
-              - lambda: |-
-                  const int e = bouton_haut_ecran(BOUTON_ENGRENAGE);
-                  if (e != 0) id(tab5_ecran_ouvrir).execute(e);
-            widgets:
-              - label: { text: "\U000F0493", align: CENTER, text_font: mdi_font_70 }
-              # Glyphe et visibilité : boutons_haut_apply_ui() (tab5_zones.cpp).
-              - label: { id: icon_mini_sys, text: "\U000F018D", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
-
-        # Manette : tap = Arcade (comme la seconde température), appui long = télécommande
-        # TV quand une TV est choisie dans le blueprint (zone TV) : la mini icône de l'écran
-        # le signale. Avant le 06/10/2026, ce bouton était la télécommande et disparaissait
-        # sans TV.
-        - button:
-            id: btn_control_tv
-            align: TOP_LEFT
-            x: 1135
-            y: 20
-            width: 125
-            height: 90
-            radius: 18
-            pad_all: 0
-            styles: style_clim_btn_page
-            on_short_click:
-              - script.execute: tab5_arcade_open
-            on_long_press:
-              # « auto » : la télécommande, quand une TV est choisie (zone TV).
-              - lambda: |-
-                  const int e = bouton_haut_ecran(BOUTON_MANETTE);
-                  if (e != 0) id(tab5_ecran_ouvrir).execute(e);
-            widgets:
-              - label: { text: "\U000F0297", align: CENTER, text_font: mdi_font_70 }
-              # Glyphe et visibilité : boutons_haut_apply_ui() (tab5_zones.cpp) ; en
-              # « auto », celui de la télécommande (en-tête de tv_remote_popup.yaml).
-              - label: { id: icon_mini_tv, text: "\U000F07C0", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }
+        # console système en « auto » (script tab5_console_ouvrir, tab5-scripts.yaml ; avant
+        # le 06/10/2026, le flocon l'ouvrait d'un tap), sans mini icône en « auto ».
+        - !include { file: ui_components/bouton_haut.yaml, vars: { id: btn_control_console, x: "995", bouton: BOUTON_ENGRENAGE, appui: [ script.execute: tab5_reglages_ouvrir ], icone_id: icon_engrenage, icone: "\U000F0493", mini_id: icon_mini_sys, mini: "\U000F018D" } }
+        # Manette : tap = Arcade (comme la seconde température), appui long « auto » =
+        # télécommande TV quand une TV est choisie dans le blueprint (zone TV) : la mini
+        # icône de l'écran le signale (glyphe de l'en-tête de tv_remote_popup.yaml). Avant le
+        # 06/10/2026, ce bouton était la télécommande et disparaissait sans TV.
+        - !include { file: ui_components/bouton_haut.yaml, vars: { id: btn_control_tv, x: "1135", bouton: BOUTON_MANETTE, appui: [ script.execute: tab5_arcade_open ], icone_id: icon_manette, icone: "\U000F0297", mini_id: icon_mini_tv, mini: "\U000F07C0" } }
 
         # ==================== RANGÉE SOUS L'HORLOGE (ADR-0031) ====================
         # Les plantes et jusqu'à trois lignes de capteurs décrites par HA, qui se
@@ -397,16 +330,7 @@ lvgl:
                           - label: { id: alerte_slot_1, text: "", text_font: mdi_font_alert, hidden: true }
                           - label: { id: alerte_slot_2, text: "", text_font: mdi_font_alert, hidden: true }
                           - label: { id: alerte_slot_3, text: "", text_font: mdi_font_alert, hidden: true }
-                    - button:
-                        id: btn_alerts_mf_tap
-                        align: CENTER
-                        width: ${central_w}
-                        height: 80
-                        styles: style_invisible
-                        on_short_click:
-                          - script.execute: tab5_central_panel_next
-                        on_long_press:
-                          - script.execute: tab5_alertes_ouvrir
+                    - !include { file: ui_components/central_bouton.yaml, vars: { id: btn_alerts_mf_tap, appui: [ script.execute: tab5_central_panel_next ] } }
 
               # Pluie Wrapper
               - obj:
@@ -465,16 +389,7 @@ lvgl:
                                 - label: { id: lbl_proc_pluie, text: "Synchronisation...", styles: [style_police_date, style_bandeau_text_soft], pad_bottom: 15 }
                                 - label: { id: lbl_pluie_val, text: "", styles: [style_police_date, style_bandeau_text_rain_value], pad_bottom: 10 }
                                 - label: { id: lbl_pluie_unit, text: "", styles: [style_police_date, style_bandeau_text_soft], pad_bottom: 15 }
-                    - button:
-                        id: btn_rain_tap
-                        align: CENTER
-                        width: ${central_w}
-                        height: 80
-                        styles: style_invisible
-                        on_short_click:
-                          - script.execute: tab5_central_panel_next
-                        on_long_press:
-                          - script.execute: tab5_alertes_ouvrir
+                    - !include { file: ui_components/central_bouton.yaml, vars: { id: btn_rain_tap, appui: [ script.execute: tab5_central_panel_next ] } }
 
               # Réponse vocale IA (remplace le rotateur 8s le temps de l'affichage)
               - obj:
@@ -503,16 +418,7 @@ lvgl:
                   scrollbar_mode: "OFF"  # le texte déborde en glissant (transition_widgets)
                   widgets:
                     - label: { id: lbl_planning_text, text: "", align: CENTER, y: 0, styles: [style_police_date, style_bandeau_text_soft] }
-                    - button:
-                        id: btn_planning_tap
-                        align: CENTER
-                        width: ${central_w}
-                        height: 80
-                        styles: style_invisible
-                        on_short_click:
-                          - script.execute: tab5_central_panel_next
-                        on_long_press:
-                          - script.execute: tab5_alertes_ouvrir
+                    - !include { file: ui_components/central_bouton.yaml, vars: { id: btn_planning_tap, appui: [ script.execute: tab5_central_panel_next ] } }
 
               # Titre de page previsions (pages horaires / journalieres, masque sur accueil),
               # rempli par update_central_forecast_page_ui() (tab5_central.cpp) : une ligne,
@@ -563,16 +469,7 @@ lvgl:
                   hidden: true
                   widgets:
                     - label: { id: lbl_info_text, text: "", align: CENTER, styles: [style_police_date, style_bandeau_text_soft] }
-                    - button:
-                        id: btn_info_tap
-                        align: CENTER
-                        width: ${central_w}
-                        height: 80
-                        styles: style_invisible
-                        on_short_click:
-                          - script.execute: tab5_dismiss_info_tap
-                        on_long_press:
-                          - script.execute: tab5_alertes_ouvrir
+                    - !include { file: ui_components/central_bouton.yaml, vars: { id: btn_info_tap, appui: [ script.execute: tab5_dismiss_info_tap ] } }
 
               # Alertes HA individuelles (panneaux 4-7, tap = lu définitif + ligne suivante)
               - !include { file: ui_components/ha_alert_panel.yaml, vars: { n: 0 } }

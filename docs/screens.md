@@ -217,7 +217,7 @@ The mode is saved across reboots via the HA `select` entity (`select.m5stack_tab
 Opened by a long press on the gear button (`btn_control_console`, top right of the home area; a tap opens the settings). A 1180×680 modal card organized in **four glass cards**:
 - **MÉMOIRE** — SRAM/PSRAM usage bars, max free block, flash size
 - **RÉSEAU** — Wi-Fi SSID, IP, signal strength, and HA connection status (`lbl_sys_ha_val`, green/red)
-- **SYSTÈME** — uptime, CPU temperature, CPU load of each core (core 0 · core 1, measured every 2 s while the console is open), loop time, the tablet's battery (level and voltage with the status-bar icon, "On USB" when no battery is detected, "Not fitted" while the « Tab5 Batterie montée » switch is off; 2026-10-06, discussion #278), plus the volume slider with a live % readout
+- **SYSTÈME** — uptime, CPU temperature, CPU load of each core (core 0 · core 1, measured every 2 s while the console is open), loop time, the tablet's battery (level and voltage with the status-bar icon, level and power drawn while on battery since the next version, "On USB" when no battery is detected, "Not fitted" while the « Tab5 Batterie montée » switch is off; 2026-10-06, discussion #278), plus the volume slider with a live % readout
 - **GESTION** — HA management buttons: « MAJ Écran » (re-arms the push flag and re-triggers the screen-push automation — the direct remedy for the recurring frozen-screen incident), « Recharger autos » (`automation.reload`), « Redémarrer HA » and « Reboot tablette » — the last two behind Annuler/Confirmer overlays (no more invisible double-tap arming) — in a 2 × 2 grid since the theme row moved to the settings popup (2026-10-06)
 
 It is **not** a log viewer (use `tools/tab5_logs.py` for payloads and events). See [`docs/debugging.md`](debugging.md) for more on using it to diagnose issues.
@@ -244,7 +244,7 @@ Long-pressing a light tile — its weather shoulders or its HA-mode card — (in
 - **COULEURS** (right): 3 named whites (Chaud/Crème/Froid) and a 4×3 grid of **12 round color swatches** (each sends `light.turn_on` with the matching `color_name`, factorized via `light_color_preset_btn.yaml`)
 - Tapping the dark overlay or the × button (the shared 80×44 glass button of `modal_header.yaml`) closes the modal
 
-The popup is context-aware: the long press opens it on the pressed light, and the selector goes through `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles.cpp`), which sets the `current_light_slot` global to the tile's key (`tRT`, or `lumiere_N` in legacy mode) and syncs the title, selector, power icon and arc — one popup for every light of every room.
+The popup is context-aware: the long press opens it on the pressed light, and the selector goes through `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles_popups.cpp`), which sets the `current_light_slot` global to the tile's key (`tRT`, or `lumiere_N` in legacy mode) and syncs the title, selector, power icon and arc — one popup for every light of every room.
 
 ![Light popup (render, demo data)](images/notice/lumieres-chambre-en.webp)
 
@@ -604,7 +604,7 @@ Le mode est sauvegardé entre les redémarrages via l'entité HA `select` (`sele
 Ouvert par un appui long sur le bouton engrenage (`btn_control_console`, en haut à droite de la zone d'accueil ; un tap ouvre les réglages). Une carte modale 1180×680 organisée en **quatre cartes de verre** :
 - **MÉMOIRE** — barres SRAM/PSRAM, bloc max, taille flash
 - **RÉSEAU** — SSID Wi-Fi, IP, signal, et état de la connexion HA (`lbl_sys_ha_val`, vert/rouge)
-- **SYSTÈME** — uptime, température CPU, charge CPU de chaque cœur (cœur 0 · cœur 1, mesurée toutes les 2 s console ouverte), temps de boucle, batterie de la tablette (niveau et tension avec l'icône du bandeau, « Sur USB » sans batterie détectée, « Non montée » interrupteur « Tab5 Batterie montée » éteint ; 06/10/2026, discussion #278), plus le slider volume avec % affiché en direct
+- **SYSTÈME** — uptime, température CPU, charge CPU de chaque cœur (cœur 0 · cœur 1, mesurée toutes les 2 s console ouverte), temps de boucle, batterie de la tablette (niveau et tension avec l'icône du bandeau, niveau et puissance consommée sur batterie depuis la prochaine version, « Sur USB » sans batterie détectée, « Non montée » interrupteur « Tab5 Batterie montée » éteint ; 06/10/2026, discussion #278), plus le slider volume avec % affiché en direct
 - **GESTION** — boutons de gestion HA : « MAJ Écran » (réarme le flag de push et redéclenche l'automation de push écran — le remède direct à l'incident récurrent d'écran figé), « Recharger autos » (`automation.reload`), « Redémarrer HA » et « Reboot tablette » — les deux derniers derrière des overlays Annuler/Confirmer (fini l'armement invisible par double-tap)  — en grille 2 × 2 depuis que la rangée du thème est passée dans le popup Réglages (06/10/2026)
 
 Ce n'est **pas** un visualiseur de logs (utiliser `tools/tab5_logs.py` pour les payloads et événements). Voir [`docs/debugging.md`](debugging.md) pour plus de détails sur son usage en debug.
@@ -631,7 +631,7 @@ Un appui long sur une tuile lumière — ses épaules météo ou sa carte du mod
 - **COULEURS** (droite) : 3 blancs nommés (Chaud/Crème/Froid) et une grille 4×3 de **12 pastilles rondes** (chaque pastille envoie `light.turn_on` avec le `color_name` correspondant, factorisées via `light_color_preset_btn.yaml`)
 - Taper l'overlay sombre ou le bouton × (le bouton de verre partagé 80×44 de `modal_header.yaml`) ferme le modal
 
-Le popup est contextuel : l'appui long l'ouvre sur la lumière appuyée, et le sélecteur passe par `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles.cpp`) qui règle la globale `current_light_slot` sur la clé de la tuile (`tRT`, ou `lumiere_N` en mode héritage) et synchronise titre, sélecteur, icône power et arc — un seul popup pour toutes les lumières de toutes les pièces.
+Le popup est contextuel : l'appui long l'ouvre sur la lumière appuyée, et le sélecteur passe par `script.tab5_light_popup_show(light_idx)` (`popup_lumiere_choisir()`, `tab5_tuiles_popups.cpp`) qui règle la globale `current_light_slot` sur la clé de la tuile (`tRT`, ou `lumiere_N` en mode héritage) et synchronise titre, sélecteur, icône power et arc — un seul popup pour toutes les lumières de toutes les pièces.
 
 ![Popup lumière (rendu, données de démonstration)](images/notice/lumieres-chambre-fr.webp)
 

@@ -30,21 +30,17 @@ ANNOTE = "accueil-annote"
 APPUIS_LONGS = {
     "btn_assist_trigger": "voice.md",
     "btn_clock_calendar_zone": "calendar.md",
-    "btn_control_console": "home.md",
-    "btn_control_ha": "home.md",
-    "btn_control_tv": "home.md",
+    # Les trois boutons du haut : un gabarit (08/10/2026, audit YML-4).
+    "bouton_haut.yaml": "home.md",
     "btn_rangee": "plants.md",
     "climate_card.yaml": "temperature.md",
     "maison_ligne.yaml": "house.md",
     # Carte centrale : chaque panneau de l'accueil ouvre l'historique des alertes.
-    "btn_alerts_mf_tap": "home.md",
-    "btn_info_tap": "home.md",
-    "btn_planning_tap": "home.md",
-    "btn_rain_tap": "home.md",
-    "ha_alert_panel.yaml": "home.md",
-    "forecast_daily.yaml": "tiles.md",
+    # (alertes, pluie, planning, info, alertes HA : un gabarit depuis le 08/10/2026, YML-4).
+    "central_bouton.yaml": "home.md",
+    "forecast_day_body.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
-    "switches_card.yaml": "tiles.md",
+    "switch_card.yaml": "tiles.md",
 }
 
 # Fenêtres du rendu que la notice ne montre pas, exprès.

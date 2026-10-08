@@ -3,7 +3,7 @@
  * @file tab5_services.cpp
  * @role Services HA (tab5-api-logic.yaml) : volet, vigilance Météo-France, pluie 1 h,
  *       icône neige/pluie, texte du planning. Logique sortie des lambdas le 08/09/2026
- *       (lot (a)), à l'identique. La cible clim depuis HA est dans tab5_cards.cpp
+ *       (lot (a)), à l'identique. La cible clim depuis HA est dans tab5_clim.cpp
  *       depuis le 29/09/2026 (ADR-0026).
  *       Unité de compilation issue de la scission de tab5_custom.cpp (lot (e) de
  *       l'audit du 06/09/2026, faite le 08/09/2026) : mêmes fonctions, même ordre,
@@ -298,7 +298,7 @@ void rain_predict_rejouer() {
     if (s_predict_icon != nullptr) update_rain_predict_icon_ui(s_predict_icon, s_predict_neige, s_predict_humidite);
 }
 
-// update_clim_from_ha_ui() : tab5_cards.cpp depuis le 29/09/2026 (ADR-0026), avec les
+// update_clim_from_ha_ui() : tab5_clim.cpp (tab5_cards.cpp du 29/09 au 08/10/2026) (ADR-0026), avec les
 // réglages de la clim qui fixent le format de la cible et l'unité ; devenue
 // clim_blueprint_recu() le même jour (clims des tuiles, ADR-0027).
 

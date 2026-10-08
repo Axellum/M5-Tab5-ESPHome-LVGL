@@ -10,7 +10,8 @@
  *         tab5_central.cpp   carte centrale, alertes HA, pagination au swipe, planning tap
  *         tab5_services.cpp  logique des services HA (volet, vigilance, pluie, clim, planning)
  *         tab5_assist.cpp    popup Assistant (Markdown, états), décision du mot de réveil
- *         tab5_cards.cpp     cartes lumière/clim/plantes/pots, température colorée
+ *         tab5_cards.cpp     cartes plantes/pots, température colorée (la clim : tab5_clim.cpp
+ *                            depuis le 08/10/2026 ; la lumière : les tuiles, ADR-0023)
  *         tab5_console.cpp   console système (status, volume, diagnostics)
  *         tab5_anim.cpp      animations, inactivité, rouleaux (icône météo, horloge), boutons
  *         tab5_calendar.cpp  popup calendrier mensuel

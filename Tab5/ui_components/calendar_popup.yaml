@@ -159,7 +159,7 @@ obj:
         styles: style_invisible
         widgets:
           # Voile local, moins opaque : il s'empile sur le voile du calendrier
-          - !include { file: modal_scrim.yaml, vars: { scrim_opa: "60", close_lambda: "animate_popup_close(id(cal_day_popup));" } }
+          - !include { file: modal_scrim.yaml, vars: { scrim_opa: "60", popup_id: cal_day_popup } }
           # Sous-popup imbriqué : garde sa taille 780×540 (pas une fenêtre de
           # premier niveau), mais la MÊME barre de titre que les autres.
           - obj:
@@ -169,7 +169,7 @@ obj:
               styles: style_modal_card_verre
               scrollable: false
               widgets:
-                - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_style: "style_text_accent", title: "", title_id: "lbl_cal_day_title", close_btn_id: "btn_cal_day_close", close_lambda: "animate_popup_close(id(cal_day_popup));" } }
+                - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_style: "style_text_accent", title: "", title_id: "lbl_cal_day_title", close_btn_id: "btn_cal_day_close", popup_id: cal_day_popup } }
 
                 # Statut central (Chargement… / Rien de prévu / HA hors ligne)
                 - label: { id: lbl_cal_day_status, text: "", align: CENTER, y: 0, text_font: roboto_32_b, styles: style_text_dim }

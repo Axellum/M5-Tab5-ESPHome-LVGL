@@ -52,15 +52,17 @@ def _maison():
 
 
 def _tuiles():
-    return _lire("Tab5", "tab5_tuiles.cpp")
+    # Tuiles, popups, roue d'une tuile et leur en-tête commun (lot L7, 08/10/2026).
+    return "\n".join(_lire("Tab5", f) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
 
 
 def test_popup_du_registre_dernier_des_popup():
-    scripts = _lire("Tab5", "tab5-scripts.yaml")
-    ajouts = re.findall(r'ModalRegistry::add\(id\((\w+)\),\s+(?:"[^"]*"|nullptr),\s+ModalRegistry::(\w+)\);', scripts)
+    scripts = _lire("Tab5", "tab5-navigation.yaml")
+    ajouts = re.findall(r'ModalRegistry::add\(id\((\w+)\),\s+(?:"[^"]*"|nullptr),\s+ModalRegistry::(\w+)[,)]', scripts)
     popups = [obj for obj, genre in ajouts if genre == "POPUP"]
     assert popups[-1] == "maison_popup", "« Maison » à la fin du bloc des POPUP"
-    assert re.search(r'ModalRegistry::add\(id\(maison_popup\),\s+"Maison",\s+ModalRegistry::POPUP\);', scripts)
+    assert re.search(r'ModalRegistry::add\(id\(maison_popup\),\s+"Maison",\s+ModalRegistry::POPUP,'
+                     r'\s+\[\] \{ id\(tab5_maison_ouvrir\)\.execute\(\); \}\);', scripts)
     # Ceux qu'une ligne ouvre sont inscrits avant lui : visibles devant lui, ils sont nommés.
     for avant in ("light_options_popup", "volet_popup", "appareil_popup", "clim_options_popup",
                   "tv_remote_popup", "energie_popup"):
@@ -69,7 +71,7 @@ def test_popup_du_registre_dernier_des_popup():
 
 
 def test_option_maison_du_select_a_la_fin():
-    controles = _lire("Tab5", "tab5-ha-controls.yaml")
+    controles = _lire("Tab5", "tab5-navigation.yaml")
     bloc = controles.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s*-\s*"([^"]+)"', bloc, re.M)
     assert options[-1] == "Maison", "à la fin : les index des autres options ne bougent pas"
@@ -78,9 +80,9 @@ def test_option_maison_du_select_a_la_fin():
     enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", _lire("Tab5", "tab5_custom.h"), re.S).group(1)
     valeurs = re.findall(r"\b([A-Z]+),", re.sub(r"//[^\n]*", "", enum))
     assert valeurs.index("MAISON") == options.index("Maison")
-    script = controles.split("- id: tab5_ecran_ouvrir", 1)[1]
-    cas = script.split("case Ecran::MAISON:", 1)[1].split("break;", 1)[0]
-    assert "id(tab5_maison_ouvrir).execute();" in cas
+    script = controles.split("- id: tab5_ecran_ouvrir", 1)[1].split("\ntext_sensor:", 1)[0]
+    # Ouverture : celle que le registre donne à « Maison » (test plus haut).
+    assert "ModalRegistry::ouvrir(target)" in script
 
 
 def test_chrome_partage():
@@ -149,12 +151,13 @@ def test_gestes_d_une_ligne_ceux_de_la_tuile():
 
 def test_plus_reserve_aux_tuiles_a_appui_long():
     gestes = _fonction(_tuiles(), "tuile_gestes")
-    # type_agit écarte l'option r (aucun appui) et les cap / bin sans action.
-    assert "agit = type_agit(type, d.options, type == Type::CLI && clim_tuile_connue(r, t));" in gestes
+    # gestes() (table kGestes, lot L7) écarte l'option r (aucun appui) et les cap / bin sans action.
+    assert "agit = gestes(d, type == Type::CLI && clim_tuile_connue(r, t)).agit;" in gestes
     assert "appui_long = agit && type != Type::CAP && type != Type::BIN;" in gestes
-    agit = _fonction(_tuiles(), "type_agit")
-    assert "if (options & OPT_R) return false;" in agit
-    assert "case Type::LUM: case Type::INT: case Type::VOL: case Type::MED: case Type::ACT: return true;" in agit
+    assert "if (d.type >= kNbTypes || (d.options & OPT_R)) return g;" in _fonction(_tuiles(), "gestes")
+    table = re.search(r"constexpr GesteType kGestes\[\] = \{(.*?)\n\};", _tuiles(), re.S).group(1)
+    agissent = re.findall(r"\{true, [^}]*\},\s*// (\w+)", table)
+    assert agissent == ["lum", "int", "vol", "med", "act"], agissent
     # La ligne n'est pressable que si son toucher fait quelque chose.
     assert "cliquable(ligne, agit);" in _fonction(_maison(), "dessiner_ligne")
     # Gestes lus une fois par ligne : disposer() les passe au dessin.

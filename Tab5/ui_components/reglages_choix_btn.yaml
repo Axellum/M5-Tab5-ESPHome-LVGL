@@ -7,7 +7,7 @@
 # vars : id, x, y, w (hauteur fixe 56 px), reglage (ReglageId de tab5_custom.h, en nombre),
 #        valeur (index de l'option ; Oui = 1, Non = 0), label_text (traduit au démarrage ;
 #        vide pour les langues, dont reglages_preparer() écrit le nom natif).
-# Piège ESPHome (comme alarm_step_script_btn.yaml) : `reglage` et `valeur` doivent rester
+# Piège ESPHome (comme bouton_pas.yaml) : `reglage` et `valeur` doivent rester
 # des nombres NON quotés dans les vars, sinon ils partent en chaîne.
 # ═══════════════════════════════════════════════════════
 button:

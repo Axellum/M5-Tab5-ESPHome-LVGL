@@ -24,7 +24,7 @@ obj:
   scrollable: false
   styles: style_invisible
   widgets:
-    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", close_lambda: "animate_popup_close(id(energie_popup));" } }
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: energie_popup } }
 
     # Carte modale — 15 px des bords écran (1280×720)
     - obj:
@@ -36,7 +36,7 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0A72", icon_style: "style_text_gold", title: "Énergie", title_id: "energie_popup_titre", close_btn_id: "btn_energie_close", close_lambda: "animate_popup_close(id(energie_popup));" } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0A72", icon_style: "style_text_gold", title: "Énergie", title_id: "energie_popup_titre", close_btn_id: "btn_energie_close", popup_id: energie_popup } }
 
           # ═══ INSTANTANÉ : 4 cartes, celles d'un capteur choisi seulement ═══
           #     (0 solaire, 1 maison, 2 réseau, 3 batterie ; noms écrits par tab5_energie.cpp)
