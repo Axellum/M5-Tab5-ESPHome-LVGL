@@ -90,8 +90,9 @@ const char* vigilance_alert_banner_utf8(const std::string& couleur);
 // Libellés de jour relatifs à aujourd'hui (offset en jours) : « Mer 09 » / « mercredi 9 septembre ».
 // format_short_day_label / format_long_day_label : tab5_core.h (logique pure).
 // Vrai seulement si le texte contient un markup recolor LVGL #RRGGBB (évite les faux positifs sur un '#' isolé).
-bool has_lvgl_recolor_markup(const std::string& t);
-// Pose un texte sur un label en activant le recolor LVGL seulement s'il contient du #RRGGBB.
+bool has_lvgl_recolor_markup(const char* t);
+// Pose un texte sur un label en activant le recolor LVGL seulement s'il contient du #RRGGBB
+// (écrit seulement s'il change, comme ui_text).
 void set_label_text_utf8(lv_obj_t* label, const char* text);
 // clock_month_short_utf8() : tab5_core.h.
 

@@ -691,7 +691,7 @@ bool update_info_text_ui(lv_obj_t* lbl_info, lv_obj_t* info_wrap, lv_obj_t* plan
     }
 
     bool multi_ligne = t.find('\n') != std::string::npos;
-    bool has_recolor_markup = has_lvgl_recolor_markup(t);
+    bool has_recolor_markup = has_lvgl_recolor_markup(t.c_str());
     // Une ligne : la police de la date du thème (style_police_date du label) ; deux
     // lignes ne tiennent qu'en 32 px.
     ui_police(lbl_info, multi_ligne ? font_small : nullptr);
