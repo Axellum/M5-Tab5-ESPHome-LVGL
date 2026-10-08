@@ -14,6 +14,10 @@ thème ne fige plus l'écran (#383), Réglages en quatre pages (#400), repli mé
 « prévisions périmées » (#393, #395), correctifs et lots de l'audit du 07/10 (#381, #382, #384 à
 #386, #388 à #394), rangement de `Tab5/` (#401, #402). Fichiers Home Assistant à recopier avant le
 firmware.
+[v3.8.0-rc.3](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.3)
+le 08/10/2026 : test de consommation dans Home Assistant et lecture de la batterie toutes les 2 s
+pendant le test (#405), `tools/mesure_conso.py` (#404). Fichiers Home Assistant à recopier avant le
+firmware.
 
 ### 2026-10-08 — Test de consommation dans Home Assistant, lecture toutes les 2 s
 
