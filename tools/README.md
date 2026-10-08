@@ -56,6 +56,7 @@ Le test C++ fait foi. Un miroir Python ne prouve le C++ que s'il est tenu à jou
 | `capture_serie.py` | écoute le port série USB sans réinitialiser la puce, repère un plantage et décode la pile avec l'ELF (`--elf`) |
 | `improv_serie.py` | règle le Wi-Fi d'une tablette par Improv sur l'USB |
 | `migrer_vers_3.py` | passe une tablette 2.x à la 3.0 par le réseau (seul outil qui lit encore un ancien `secrets.yaml`) |
+| `mesure_conso.py` | consommation sur batterie, scénario par scénario (écran 100 / 50 / 10 % ou éteint, micro, haut-parleur), par l'API REST de Home Assistant et un jeton longue durée ; écrit un CSV et remet les réglages à la fin ; une lecture par minute |
 
 ## Sous-dossiers
 
