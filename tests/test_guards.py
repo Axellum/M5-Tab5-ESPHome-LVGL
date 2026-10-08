@@ -79,7 +79,7 @@ def _remplacer(path, ancien, nouveau):
     path.write_text(texte.replace(ancien, nouveau, 1), encoding="utf-8")
 
 
-# ─── Règles 9 à 12 (lot L6 de l'audit du 07/10/2026) : chacune échoue sur un cas témoin ───
+# ─── Règles 9 à 13 (lot L6 de l'audit du 07/10/2026) : chacune échoue sur un cas témoin ───
 
 def test_regle_9_lvgl_dans_le_yaml(tmp_path):
     """Un nouvel appel lv_* dans une lambda YAML, un de plus dans un fichier toléré, un de
@@ -143,6 +143,20 @@ def test_regle_12_fonction_publique_sans_appelant(tmp_path):
     problems = check_tab5_code_rules.appelants_publics(tab5, entry)
     assert any("`historique_choisir_vue()`" in p for p in problems), problems
     assert not any("`energie_choisir_vue()`" in p for p in problems), problems
+
+
+def test_regle_13_nullptr_et_tags_de_journal(tmp_path):
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.conventions_cpp(tab5, entry) == []
+    _ajouter(tab5 / "tab5_anim.cpp", '\nstatic void essai() {\n    lv_obj_t* o = NULL;\n'
+                                     '    ESP_LOGI("TAB5", "essai %p", o);\n    ESP_LOGI("tab5.anim", "ok");\n}\n')
+    _ajouter(tab5 / "chess_game.cpp", '\nstatic void essai() { ESP_LOGI("chess", "un jeu garde son nom"); }\n')
+    _ajouter(tab5 / "tab5_zones.cpp", '\nstatic void essai() { ESP_LOGI("TAB5", "un de plus"); }\n')
+    problems = check_tab5_code_rules.conventions_cpp(tab5, entry)
+    assert any(p.startswith("tab5_anim.cpp:") and "`NULL`" in p for p in problems), problems
+    assert sum(p.startswith("tab5_anim.cpp:") and "tag de journal" in p for p in problems) == 1, problems
+    assert not any("chess_game.cpp" in p for p in problems), problems
+    assert sum(p.startswith("tab5_zones.cpp:") for p in problems) == 6, problems
 
 
 def _edit_font(styles, font_id, old, new):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Règles de code du firmware Tab5, jouées à chaque `pytest` (audit du 06/09/2026,
 §4.1 points 1, 4, 15 et §4.2 point 17 ; ADR-0006 ; lot L6 de l'audit du 07/10/2026
-pour les règles 9 à 12). Douze règles, toutes falsifiables sur le dépôt réel
+pour les règles 9 à 13). Treize règles, toutes falsifiables sur le dépôt réel
 (numérotation propre à ce script, distincte des règles d'AGENTS.md) :
 
   1. **`snprintf` partout** : aucun `sprintf(` brut dans `Tab5/*.cpp`, `*.h`,
@@ -69,6 +69,8 @@ pour les règles 9 à 12). Douze règles, toutes falsifiables sur le dépôt ré
  12. **Chaque fonction de `tab5_custom.h` a un appelant hors de son fichier** (CPP-4) :
      une lambda YAML (firmware ou tablette virtuelle) ou une autre unité C++.
      Exceptions du 08/10/2026 : `PUBLIQUES_SANS_APPELANT`.
+ 13. **Conventions du nouveau code** (Tab5/README.md) : `nullptr` jamais `NULL` ; hors
+     jeux, tag de journal `tab5.<module>` (exceptions datées : `TAGS_TAB5_TEMPORAIRES`).
   La règle 5 d'AGENTS.md (widget répété 3 fois → builder ou gabarit) n'est pas
   vérifiée : « le même widget » ne se reconnaît pas sûrement dans le YAML.
 
@@ -626,7 +628,7 @@ def palette_colors(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
-# ─── Règles 9 à 12 : garde-fous du lot L6 (audit du 07/10/2026, §4.2 et §4.4) ─────────
+# ─── Règles 9 à 13 : garde-fous du lot L6 (audit du 07/10/2026, §4.2 et §4.4) ─────────
 # Chacune empêche les NOUVEAUX écarts sans forcer à déplacer le code existant : les cas
 # légitimes ou hérités sont listés ici, un par un, avec leur raison. Une liste sert de
 # plafond exact : un appel de plus échoue (« nouvel écart »), un appel de moins aussi
@@ -900,6 +902,59 @@ def appelants_publics(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
+# Règle 13 (conventions du nouveau code, Tab5/README.md) : dans le C++ de Tab5/, `nullptr`
+# et jamais `NULL` ; hors jeux, un journal porte le tag `tab5.<module>` (`ESP_LOGW("tab5.clim",
+# …)`) et non « TAB5 », pour filtrer un module dans les journaux. Les jeux (et leurs moteurs)
+# gardent leur nom court (« chess », « lode »…), comme leurs pages.
+RE_NULL = re.compile(r"\bNULL\b")
+RE_ESP_LOG = re.compile(r"\bESP_LOG[EWIDVC]+\s*\(\s*(\"[^\"]*\"|\w+)")
+RE_TAG_CONST = re.compile(r"\b(?:const|constexpr)\s+char\s*(?:\*\s*(?:const\s+)?)?(\w+)\s*(?:\[\])?\s*=\s*\"([^\"]*)\"")
+RE_TAG_TAB5 = re.compile(r"^tab5\.[a-z0-9_]+$")
+RE_JEU_CPP = re.compile(r"(_game|_ai|_engine|^game_common|^trivia_questions)\.(cpp|h)$")
+# TODO après L5 (exception temporaire du 08/10/2026) : ces unités sont refaites par le lot
+# L5 en parallèle ; leurs tags « TAB5 » passeront à tab5.central / tab5.zones ensuite.
+TAGS_TAB5_TEMPORAIRES: dict[str, int] = {
+    "tab5_central.cpp": 2,
+    "tab5_zones.cpp": 5,
+}
+
+
+def conventions_cpp(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
+    """Règle 13 : `nullptr` partout, tag de journal `tab5.<module>` hors jeux."""
+    problems: list[str] = []
+    vus = set()
+    for path in firmware_sources(tab5, entry):
+        if path.suffix not in (".cpp", ".h"):
+            continue
+        lines = _cpp_lines(path)
+        texte = "\n".join(lines)
+        for lineno, line in enumerate(lines, 1):
+            if RE_NULL.search(re.sub(r'"(?:[^"\\]|\\.)*"', '""', line)):
+                problems.append(f"{path.name}:{lineno} : `NULL` — écrire `nullptr` (conventions, Tab5/README.md)")
+        if RE_JEU_CPP.search(path.name):
+            continue
+        vus.add(path.name)
+        tags = dict(RE_TAG_CONST.findall(texte))
+        hors: list[int] = []
+        for lineno, line in enumerate(lines, 1):
+            for m in RE_ESP_LOG.finditer(line):
+                arg = m.group(1)
+                tag = arg[1:-1] if arg.startswith('"') else tags.get(arg)
+                if tag is None or not RE_TAG_TAB5.match(tag):
+                    hors.append(lineno)
+        permis = TAGS_TAB5_TEMPORAIRES.get(path.name, 0)
+        if len(hors) > permis:
+            problems += [f"{path.name}:{n} : tag de journal hors `tab5.<module>` — "
+                         f"`ESP_LOGW(\"tab5.{path.stem.removeprefix('tab5_')}\", …)` (conventions, Tab5/README.md)"
+                         for n in hors]
+        elif len(hors) < permis:
+            problems.append(f"TAGS_TAB5_TEMPORAIRES : {path.name} n'a plus que {len(hors)} tag(s) hors "
+                            f"convention (plafond {permis}) — abaisser ou retirer l'entrée")
+    problems += [f"TAGS_TAB5_TEMPORAIRES : `{nom}` n'est plus une unité du firmware — retirer l'entrée"
+                 for nom in sorted(set(TAGS_TAB5_TEMPORAIRES) - vus)]
+    return problems
+
+
 def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     problems: list[str] = []
     api_logic = tab5 / "tab5-api-logic.yaml"
@@ -993,11 +1048,12 @@ def scan(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     # 8. couleurs de l'interface par la palette (thèmes)
     problems += palette_colors(tab5, entry)
 
-    # 9 à 12. garde-fous du lot L6 (audit du 07/10/2026)
+    # 9 à 13. garde-fous du lot L6 (audit du 07/10/2026)
     problems += lvgl_yaml(tab5, entry)
     problems += static_lambdas(tab5, entry)
     problems += chemins_chauds(tab5, entry)
     problems += appelants_publics(tab5, entry)
+    problems += conventions_cpp(tab5, entry)
 
     return problems
 
@@ -1016,6 +1072,7 @@ def main() -> int:
         "couleurs de l'interface par la palette"
         ", aucun nouvel appel LVGL ni `static` dans le YAML, pas de copie de chaîne dans un chemin chaud"
         ", fonctions publiques appelées"
+        ", nullptr et tags tab5.<module>"
     )
     return 0
 
