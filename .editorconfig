@@ -1,0 +1,36 @@
+# EditorConfig — https://editorconfig.org
+#
+# Décrit le style déjà en place dans le dépôt (relevé le 08/10/2026 sur les fichiers
+# suivis), pour que l'éditeur de chacun écrive pareil. Il ne reformate rien : un éditeur
+# ne l'applique qu'aux lignes qu'on tape (et, selon l'éditeur, en enregistrant).
+#
+# - Aucun fichier suivi ne commence par un BOM (le hook check-byte-order-marker le refuse).
+# - Fins de ligne non imposées : Windows extrait en CRLF (core.autocrlf), git garde du LF
+#   dans l'index ; seuls les scripts shell restent en LF partout (.gitattributes).
+# - C++ : 4 espaces, jamais de tabulation ; le reste du style C++ est dans .clang-format.
+# - YAML (ESPHome, Home Assistant, workflows), JSON, Jinja, HTML, SVG : 2 espaces.
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.{cpp,h,py,toml}]
+indent_size = 4
+
+[*.{yaml,yml,yamllint,json,jinja,html,svg,sh}]
+indent_size = 2
+
+[*.sh]
+end_of_line = lf
+
+# Deux espaces en fin de ligne font un saut de ligne en Markdown : ne pas les retirer.
+[*.md]
+trim_trailing_whitespace = false
+
+# Fichiers générés : réécrits par leur outil, pas à la main.
+[{Tab5/socle/tab5_i18n_data.h,Tab5/socle/tab5_themes_data.h,Tab5/socle/tab5_tuiles_icones.h}]
+trim_trailing_whitespace = unset
+insert_final_newline = unset
