@@ -481,8 +481,13 @@ interval:
 
           // Liste des fenêtres : ModalRegistry (tab5_registry.h), remplie une
           // fois par tab5_modal_registry_init (en tête de ce fichier). La
-          // sonnerie du réveil y est un LAYER : jamais refermée ici.
-          id(tab5_modal_registry_init).execute();
+          // sonnerie du réveil y est un LAYER : jamais refermée ici. Le script
+          // n'est lancé que tant que la liste est vide (PERF-5, lot L10) : ensuite
+          // il ne faisait que revenir, une fois par seconde, écran éteint compris.
+          // Écran éteint, le reste de ce tick tourne encore, exprès : il referme
+          // les popups et ramène l'accueil après l'inactivité, pour que l'écran
+          // se rallume (HA, tape, réveil, toucher) sur l'accueil, comme avant.
+          if (!ModalRegistry::ready()) id(tab5_modal_registry_init).execute();
 
           const uint32_t idle = ui_idle_ms();
 

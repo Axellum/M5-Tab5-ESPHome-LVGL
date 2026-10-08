@@ -158,9 +158,8 @@ void maison_ouvrir() {
 bool maison_titre_appui_valide() {
     if (!g_central_ctx.ha_mode) return false;
     // Un tap au bout d'un glissement (swipe des pièces) : rien, comme l'appui long qui
-    // ouvre les alertes (alertes_ouvrir). LVGL remet ces marques à zéro à chaque appui.
-    lv_indev_t* indev = lv_indev_active();
-    return indev == nullptr || (!lv_indev_get_press_moved(indev) && lv_indev_get_gesture_dir(indev) == LV_DIR_NONE);
+    // ouvre les alertes (alertes_ouvrir).
+    return !ui_appui_glisse();
 }
 
 void maison_ligne_appui(int r, int t, bool long_appui) {

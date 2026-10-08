@@ -213,7 +213,10 @@ def test_tap_du_titre_de_la_piece_en_mode_ha():
     assert "on_long_press" not in bouton
     valide = _fonction(_maison(), "maison_titre_appui_valide")
     assert "if (!g_central_ctx.ha_mode) return false;" in valide
-    assert "lv_indev_get_press_moved" in valide
+    # Garde commune « appui au bout d'un glissement » (lot L10) : tab5_internal.h.
+    assert "return !ui_appui_glisse();" in valide
+    garde = _lire("Tab5", "tab5_internal.h").split("inline bool ui_appui_glisse()", 1)[1].split("\n}", 1)[0]
+    assert "lv_indev_get_press_moved" in garde and "lv_indev_get_gesture_dir" in garde
 
 
 def test_glyphes_dans_les_polices():

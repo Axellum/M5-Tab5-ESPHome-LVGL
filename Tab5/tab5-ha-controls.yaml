@@ -84,7 +84,7 @@ text_sensor:
         // nomme donc le premier visible. C'est l'ordre d'enregistrement de
         // tab5_modal_registry_init (tab5-scripts.yaml), sonnerie du réveil en
         // tête : c'est le seul calque qui couvre aussi les fenêtres modales.
-        id(tab5_modal_registry_init).execute();
+        if (!ModalRegistry::ready()) id(tab5_modal_registry_init).execute();  // une fois (PERF-5)
         const char* modal = ModalRegistry::visible_name();
         name = (modal != nullptr) ? std::string(modal) : std::string("Accueil");
       }
