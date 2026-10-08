@@ -6,9 +6,9 @@
 
 Measured on the author's tablet (Tab5, ST7123 screen, ESP32-P4 revision v1.3 at 360 MHz). Newest campaign first; the older numbers are kept, dated, for comparison.
 
-## Campaign of 2026-10-07 (3.8.0-rc.1)
+## Results
 
-Measured on **2026-10-07** between 22:30 and 00:05, on the published **3.8.0-rc.1** and on measuring builds of the same code (commit `45a0c34`) that were never committed: they log every frame of 2 ms or more (duration, pixels, areas), and one of them also times each step of a theme switch and logs the free internal RAM and PSRAM every 60 s. Driven through the native API (`aioesphomeapi`), never in a minute where the blueprint pushes its 5-minute measurements; whole screen = backlight off then on; popups through the « Aller à l'écran » select; the number kept is the longest frame, median of the runs. Alerts were showing, so the rotating panel of the centre card was turning: idle numbers only compare at equal content, full frames do not depend on it.
+Latest campaign: measured on **2026-10-07** between 22:30 and 00:05, on the published **3.8.0-rc.1** and on measuring builds of the same code (commit `45a0c34`) that were never committed: they log every frame of 2 ms or more (duration, pixels, areas), and one of them also times each step of a theme switch and logs the free internal RAM and PSRAM every 60 s. Driven through the native API (`aioesphomeapi`), never in a minute where the blueprint pushes its 5-minute measurements; whole screen = backlight off then on; popups through the « Aller à l'écran » select; the number kept is the longest frame, median of the runs. Alerts were showing, so the rotating panel of the centre card was turning: idle numbers only compare at equal content, full frames do not depend on it.
 
 ### Whole screen, per theme (dark mode, 5 runs)
 
@@ -97,7 +97,7 @@ Since 3.2.0: free internal RAM 286.7 → 262 kB (−25 kB); firmware image 3.36 
 - ESP32-P4 temperature: 32.4 / 36.6 / 39.4 °C (min / mean / max, 976 readings).
 - 3 brownout restarts; the tablet runs without a battery, on a computer's USB port. Cause not verified.
 
-## Results of 2026-09-28 (3.2.0)
+## Earlier results: 2026-09-28 (3.2.0)
 
 Firmware **3.2.0** built exactly like the published one (ESPHome 2026.9.0), on **2026-09-28** between 20:35 and 22:52. Screen brightness 36/255, home page, weather mode, rooms defined, microphone off at the start (nobody home). A single palette: the themes came in 3.6.0.
 
@@ -189,9 +189,9 @@ What is left: `setup()` (5 s, including the 1 s wait the screen needs after a so
 
 Mesuré sur la tablette de l'auteur (Tab5, écran ST7123, ESP32-P4 révision v1.3 à 360 MHz). La campagne la plus récente d'abord ; les anciens chiffres restent, datés, pour comparer.
 
-## Campagne du 07/10/2026 (3.8.0-rc.1)
+## Résultats
 
-Mesuré le **07/10/2026** entre 22 h 30 et 0 h 05, sur la **3.8.0-rc.1** publiée et sur des builds de mesure du même code (commit `45a0c34`), jamais commités : ils écrivent au journal chaque image de 2 ms ou plus (durée, pixels, zones), et l'un d'eux chronomètre aussi chaque étape d'une bascule de thème et relève la RAM interne et la PSRAM libres toutes les 60 s. Pilotage par l'API native (`aioesphomeapi`), jamais dans une minute où le blueprint pousse ses mesures de 5 minutes ; écran entier = rétroéclairage éteint puis rallumé ; popups par le select « Aller à l'écran » ; chiffre retenu = image la plus longue, en médiane des passes. Des alertes étaient affichées, donc le panneau tournant de la carte centrale tournait : les chiffres au repos ne se comparent qu'à contenu égal, les images pleines n'en dépendent pas.
+Dernière campagne : mesurée le **07/10/2026** entre 22 h 30 et 0 h 05, sur la **3.8.0-rc.1** publiée et sur des builds de mesure du même code (commit `45a0c34`), jamais commités : ils écrivent au journal chaque image de 2 ms ou plus (durée, pixels, zones), et l'un d'eux chronomètre aussi chaque étape d'une bascule de thème et relève la RAM interne et la PSRAM libres toutes les 60 s. Pilotage par l'API native (`aioesphomeapi`), jamais dans une minute où le blueprint pousse ses mesures de 5 minutes ; écran entier = rétroéclairage éteint puis rallumé ; popups par le select « Aller à l'écran » ; chiffre retenu = image la plus longue, en médiane des passes. Des alertes étaient affichées, donc le panneau tournant de la carte centrale tournait : les chiffres au repos ne se comparent qu'à contenu égal, les images pleines n'en dépendent pas.
 
 ### Écran entier, par thème (mode sombre, 5 passes)
 
@@ -280,7 +280,7 @@ Depuis la 3.2.0 : RAM interne libre 286,7 → 262 Ko (−25 Ko) ; image du firmw
 - Température de l'ESP32-P4 : 32,4 / 36,6 / 39,4 °C (min / moyenne / max, 976 valeurs).
 - 3 redémarrages par baisse de tension (brownout) ; la tablette tourne sans batterie, sur un port USB d'ordinateur. Cause non vérifiée.
 
-## Résultats du 28/09/2026 (3.2.0)
+## Résultats précédents : 28/09/2026 (3.2.0)
 
 Firmware **3.2.0** compilé exactement comme le publié (ESPHome 2026.9.0), le **28/09/2026** entre 20 h 35 et 22 h 52. Luminosité 36/255, page d'accueil, mode météo, pièces définies, micro coupé au départ (personne à la maison). Une seule palette : les thèmes sont arrivés avec la 3.6.0.
 
