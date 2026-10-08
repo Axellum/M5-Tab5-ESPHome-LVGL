@@ -1095,6 +1095,9 @@ views:
 {%- if 'sensor.tab5_unavailable_count' in present %}
               | {{ t('Entités HA indisponibles', 'Unavailable HA entities') }} | {% raw %}{{ states('sensor.tab5_unavailable_count') }}{% endraw %} |
 {%- endif %}
+{%- if 'sensor.tab5_meteo' in present %}
+              | {{ t('Source météo', 'Weather source') }} | {% raw %}{{ state_attr('sensor.tab5_meteo', 'nom_effectif') or '—' }}{{ (' · <font color="#ff9800">{% endraw %}{{ t('choisie :', 'selected:') }}{% raw %} ' ~ state_attr('sensor.tab5_meteo', 'nom_choisi') ~ '</font>') if state_attr('sensor.tab5_meteo', 'repli') else '' }}{% endraw %} |
+{%- endif %}
 {%- if T.wifi %}
               | {{ t('Signal Wi-Fi', 'Wi-Fi signal') }} | {% raw %}{% set w = states('{% endraw %}{{ T.wifi }}{% raw %}') %}{{ (w | float | round | int) ~ ' dBm' if is_number(w) else '—' }}{% endraw %} |
 {%- endif %}
@@ -2540,6 +2543,18 @@ views:
     'es': 'Entidades HA no disponibles',
     'it': 'Entità HA non disponibili',
     'tr': 'Erişilemez HA varlıkları'},
+  'Source météo': {
+    'de': 'Wetterquelle',
+    'nl': 'Weerbron',
+    'es': 'Fuente meteorológica',
+    'it': 'Fonte meteo',
+    'tr': 'Hava durumu kaynağı'},
+  'choisie :': {
+    'de': 'gewählt:',
+    'nl': 'gekozen:',
+    'es': 'elegida:',
+    'it': 'scelta:',
+    'tr': 'seçilen:'},
   'Signal Wi-Fi': {
     'de': 'Wi-Fi-Signal',
     'nl': 'Wi-Fi-signaal',

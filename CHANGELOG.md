@@ -9,6 +9,68 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Home Assistant : factorisation des packages et du blueprint (lot L11)
+
+- **Une macro « la tablette »**, `custom_templates/tab5_tablette.jinja` : « une tablette est
+  connectée » (recopié 7 fois), la garde d'origine des événements `esphome.tab5_*` (6 fois) et le
+  capteur « HA API Status » de la tablette n'existent plus qu'ici, importés par les packages et
+  le blueprint.
+- **Blueprint « Tab5 — emplacements »** : les déclencheurs des 5 pièces et des 3 lignes de la
+  rangée sont écrits par `tools/gen_blueprint_emplacements.py` (`--check`, tenu par
+  `tests/test_blueprint_genere.py`) ; la liste des déclenchements qui poussent tout (recopiée
+  9 fois) devient la variable `tout_pousser`, l'action de la clim (2 fois) une ancre YAML. Mêmes
+  entrées, mêmes déclencheurs.
+- **Volet à course simulée** (optionnel) : un seul script chronomètre la course,
+  `script.tab5_volet_course`, appelé par la tablette et par le suivi des commandes directes ; sa
+  durée est le nouveau réglage « Tab5 · course du volet » (`number.tab5_course_du_volet`, mémoire
+  `input_text.tab5_memoire_course_volet`), **26 s par défaut, comme avant**. Une commande de la
+  tablette pendant une course lancée d'ailleurs annule maintenant ce premier chrono.
+- **Syntaxe actuelle de HA** (`triggers:`, `conditions:`, `actions:`, `- trigger:`) dans tous les
+  packages, l'optionnel et le snippet, et des noms « Tab5 — … » pour les automatisations et
+  scripts (« Tab5 — poussée complète de l'écran », « Tab5 — santé : … », « Tab5 — volet : … »).
+  Les `id:` ne changent pas : les entity_id des automatisations restent les mêmes.
+- **Moins de calculs** : le compte des entités indisponibles de la carte Santé
+  (`sensor.tab5_unavailable_count`) se fait par filtres et toutes les 5 min au lieu de 2 ; les
+  listes « Tab5 · … » (agendas, téléphone, présence, sources météo, TV, volet) ne se recalculent
+  plus sur une mise à jour du registre qui ne touche que capabilities, supported_features, options
+  ou suggested_object_id (419 des 485 événements du registre chez l'auteur en une semaine).
+- **Alerte « entités indisponibles »** : la liste gardée en mémoire est bornée à 100 entités
+  (elle grossissait sans fin) ; le nombre affiché par la tablette compte toujours toutes les
+  entités.
+- **Repli de la météo** (`custom_templates/tab5_meteo.jinja`, nouveau) : tant que l'entité
+  choisie dans « Tab5 · source des prévisions » est indisponible, ou sans relève depuis 2 h
+  (`last_reported`), la météo actuelle et les prévisions viennent d'une autre entité météo qui
+  répond (OpenWeatherMap, Météo-France, puis n'importe laquelle), et reviennent toutes seules à
+  la source choisie ; la liste garde le choix. Sans aucune entité qui répond, les poussées météo
+  sont sautées : l'écran garde ses dernières prévisions au lieu de « indisponible » à 0 °C (le
+  08/10, Météo-France indisponible de 11 h 34 à 11 h 42 chez l'auteur, OpenWeatherMap marchait).
+  Après 5 min de repli, la carte centrale affiche une alerte « Météo : OpenWeatherMap utilisé,
+  Météo-France indisponible depuis 11 h 34 », retirée au retour de la source ; la vue Santé du
+  tableau de bord montre la source utilisée. Nouveaux attributs de `sensor.tab5_meteo` :
+  `entite_effective`, `nom_effectif`, `nom_choisi`, `repli`, `repli_depuis`, `repli_heure`.
+  Pluie et vigilances inchangées.
+- Retiré : le snippet obsolète `snippets/tab5_alerts_dismissed_input_text.yaml`. Documenté (EN et
+  FR) : l'alerte « erreur de rendu » demande `system_log: fire_event: true` dans
+  `configuration.yaml`.
+
+**À faire en mettant à jour** (fichiers Home Assistant seulement, pas de firmware) :
+
+1. Copier **d'abord** `custom_templates/tab5_tablette.jinja` et `custom_templates/tab5_meteo.jinja`
+   (nouveaux), `custom_templates/tab5_alertes.jinja` et `custom_templates/tab5_dashboard.jinja`,
+   puis **Outils de développement → YAML → Modèles Jinja
+   personnalisés** (`homeassistant.reload_custom_templates`). Avant ce rechargement, les packages
+   et le blueprint qui importent la macro échouent à leur condition (la poussée s'arrête).
+   L'intégration HACS recharge les modèles en premier.
+2. Puis les packages (`tab5_push`, `tab5_health`, `tab5_reveil`, `tab5_alerts`, `tab5_calendar`,
+   `tab5_reglages`, `tab5_evenements`, `tab5_meteo_sources`, `tab5_historique`, `tab5_tv`), le blueprint
+   `tab5_emplacements.yaml` (réimporter un blueprint importé par son URL) et, s'il est installé,
+   `optionnel/volet_serre_tracking.yaml`.
+3. Recharger **Entrées de texte**, **Entités de modèle**, **Scripts** et **Automatisations** (ou
+   redémarrer HA). Nouvelles entités, seulement avec le volet optionnel :
+   `number.tab5_course_du_volet`, `input_text.tab5_memoire_course_volet`,
+   `script.tab5_volet_course`. Aucune entité retirée.
+4. Pour voir la ligne « Source météo » de la vue Santé : régénérer le tableau de bord du Tab5.
+
 ### 2026-10-08 — Données générées des thèmes et polices figées (lot L12)
 
 Rien ne change à l'écran : mêmes couleurs, mêmes formes, mêmes fichiers de police.

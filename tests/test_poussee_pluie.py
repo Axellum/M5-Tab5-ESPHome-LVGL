@@ -59,9 +59,9 @@ def _actions(noeud):
 def test_la_poussee_complete_n_ecoute_plus_la_pluie():
     paquet = _paquet()
     complete = _auto(paquet, "tab5_ha_hmi_updater")
-    assert not [t for t in complete["trigger"] if t.get("entity_id") == CAPTEUR]
+    assert not [t for t in complete["triggers"] if t.get("entity_id") == CAPTEUR]
     # Les barres partent encore à chaque passage, par le script partagé, hors de tout `if`.
-    assert {"action": "script.tab5_push_pluie", "continue_on_error": True} in complete["action"]
+    assert {"action": "script.tab5_push_pluie", "continue_on_error": True} in complete["actions"]
 
 
 def test_un_seul_endroit_pour_les_barres():
@@ -76,17 +76,17 @@ def test_un_seul_endroit_pour_les_barres():
         "'0|0;1|0;2|0;3|0;4|0;5|0;6|0;7|0;8|0;' }}")
     # Tablette absente ou hors ligne : rien (garde des autres scripts de poussée).
     assert script["sequence"][0]["condition"] == "template"
-    assert "tab5-ha-hmi" in script["sequence"][0]["value_template"]
+    assert "tab5_connectee() == 'oui'" in script["sequence"][0]["value_template"]
 
 
 def test_la_poussee_legere_pousse_le_code_puis_les_barres():
     legere = _auto(_paquet(), "tab5_ha_hmi_alerts_push")
-    pluie = [t for t in legere["trigger"] if t.get("entity_id") == CAPTEUR]
+    pluie = [t for t in legere["triggers"] if t.get("entity_id") == CAPTEUR]
     # Un seul déclencheur, état nu (pas de `to:` ni d'`attribute:`) : la condition trie.
-    assert pluie == [{"platform": "state", "entity_id": CAPTEUR, "id": "pluie"}]
-    assert _actions(legere["action"]) == ["script.tab5_push_alertes", "script.tab5_push_pluie"]
-    assert legere["action"][0]["data"]["vigilance_seule"] == "{{ trigger.id == 'pluie' }}"
-    assert legere["action"][1]["if"] == [{"condition": "trigger", "id": "pluie"}]
+    assert pluie == [{"trigger": "state", "entity_id": CAPTEUR, "id": "pluie"}]
+    assert _actions(legere["actions"]) == ["script.tab5_push_alertes", "script.tab5_push_pluie"]
+    assert legere["actions"][0]["data"]["vigilance_seule"] == "{{ trigger.id == 'pluie' }}"
+    assert legere["actions"][1]["if"] == [{"condition": "trigger", "id": "pluie"}]
 
 
 class _Etat:
@@ -97,7 +97,7 @@ class _Etat:
 
 def _passe(trigger):
     legere = _auto(_paquet(), "tab5_ha_hmi_alerts_push")
-    modele = next(c for c in legere["condition"] if c.get("alias", "").startswith("Pluie"))["value_template"]
+    modele = next(c for c in legere["conditions"] if c.get("alias", "").startswith("Pluie"))["value_template"]
     env = ImmutableSandboxedEnvironment(undefined=jinja2.StrictUndefined)
     return env.from_string(modele).render(trigger=trigger).strip() == "True"
 

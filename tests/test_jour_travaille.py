@@ -50,7 +50,7 @@ def _payload_jours(evenements, mots=("travail",)):
     auto, contexte = _poussee(etats, env)
     contexte.update(agenda=AGENDA, mots_travail=list(mots),
                     agenda_events={AGENDA: {"events": evenements}})
-    return _entrees(_rendre(env, _action(auto["action"], JOURS)["data"]["payload"], contexte))
+    return _entrees(_rendre(env, _action(auto["actions"], JOURS)["data"]["payload"], contexte))
 
 
 def test_jour_de_fin_d_une_journee_entiere_exclu():

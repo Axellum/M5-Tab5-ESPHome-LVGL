@@ -250,7 +250,8 @@ def _maison(valeur="18.46", heures_ok=True, type_jours="daily", meteo=METEO, air
     return [
         EtatHA(CAPTEUR, valeur, aire=aire, appareil="thermo_1", friendly_name="Thermomètre serre Température"),
         EtatHA("sensor.salon_temperature", "21.04", appareil="thermo_2", friendly_name="Salon Température"),
-        EtatHA("sensor.tab5_meteo", "sunny", entite=meteo, heures_ok=heures_ok, type_jours=type_jours),
+        EtatHA("sensor.tab5_meteo", "sunny", entite=meteo, entite_effective=meteo, heures_ok=heures_ok,
+               type_jours=type_jours),
         EtatHA(METEO, "sunny"),
     ]
 
@@ -626,7 +627,9 @@ def test_blueprint_cle_inconnue_ou_sans_le_package():
 def test_blueprint_ecoute_l_evenement():
     texte = _lire(BLUEPRINT)
     assert re.search(r"event_type: esphome\.tab5_historique\n\s+id: historique\n", texte)
-    assert texte.count("'energie', 'historique'") == 3
+    # Conditions « rien de neuf » et « tablette connectée » ; la garde d'origine, elle, suit
+    # le type de l'événement (custom_templates/tab5_tablette.jinja, HA-7).
+    assert texte.count("'energie', 'historique'") == 2
     assert "serre_exterieure: !input serre_exterieure" in texte
 
 

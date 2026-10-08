@@ -142,7 +142,7 @@ def _demande(raison):
     """Rend la variable `demande` de la garde « reboot inattendu » comme HA."""
     sante = yaml.safe_load(SANTE.read_text(encoding="utf-8"))
     auto = next(a for a in sante["automation"] if a["id"] == "tab5_health_unexpected_reboot")
-    variables = next(e["variables"] for e in auto["action"] if "variables" in e)
+    variables = next(e["variables"] for e in auto["actions"] if "variables" in e)
     env = ImmutableSandboxedEnvironment()
     env.tests["match"] = lambda valeur, motif: re.match(motif, str(valeur)) is not None
     rendu = env.from_string(variables["demande"]).render(

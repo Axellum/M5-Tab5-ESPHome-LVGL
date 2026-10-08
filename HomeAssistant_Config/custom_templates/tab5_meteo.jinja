@@ -1,0 +1,97 @@
+{#-
+  Météo effective du Tab5 : la source choisie, ou un repli tant qu'elle ne répond pas
+  (08/10/2026). Ce matin-là, l'entité Météo-France de l'auteur est passée
+  `unavailable` (« Connection reset by peer ») : la tablette a reçu « unavailable » à
+  0 °C et les prévisions n'ont plus été demandées, alors qu'OpenWeatherMap marchait.
+  Importées par packages/tab5_meteo_sources.yaml (capteur « Tab5 Météo », dont les
+  attributs servent aux poussées, à l'alerte et au tableau de bord) :
+    {%- from 'tab5_meteo.jinja' import tab5_meteo_effective, tab5_meteo_nom, tab5_meteo_repli -%}
+
+  tab5_meteo_etat(e)
+      'ok', 'indisponible' (état unavailable ou unknown), 'perimee' (plus de relève depuis
+      TAB5_METEO_PERIMEE_S : `last_reported`, que l'intégration met à jour à chaque
+      relève même sans changement) ou 'absente' (pas d'entité).
+  tab5_meteo_effective()
+      La source choisie (attribut `meteo` de sensor.tab5_sources_meteo, qui suit la liste
+      « Tab5 · source des prévisions ») si elle est 'ok' ; sinon la première 'ok' parmi
+      les sources connues (OpenWeatherMap, Météo-France), puis parmi toutes les entités
+      weather.* (Met.no de l'onboarding…) ; sinon la choisie si elle n'est que périmée
+      (mieux que rien) ; sinon '' : les poussées météo sont sautées, la tablette garde
+      son dernier affichage. Le choix de la liste ne change jamais : dès que la source
+      choisie redevient 'ok', elle reprend la main toute seule.
+  tab5_meteo_nom(e)
+      Nom court d'une source pour l'écran : Météo-France, OpenWeatherMap, Met.no, sinon
+      le nom de l'entité (40 caractères au plus).
+  tab5_meteo_repli(champ)
+      La source choisie ne répond pas : champ 'raison' = 'indisponible' ou 'perimee',
+      'depuis' = depuis quand (secondes epoch : passage à indisponible, ou dernière
+      relève), 'heure' = la même à l'heure locale, pour un texte (« 11 h 34 », « le 07/10
+      à 21 h 04 » un autre jour). '' quand elle répond. Lu par l'alerte de la carte
+      centrale (tab5_alertes.jinja) et la vue Santé du tableau de bord.
+
+  TAB5_METEO_PERIMEE_S (2 h) : relevé chez l'auteur du 25/09 au 08/10/2026 (base de HA),
+  une mise à jour au plus toutes les 60 min pour Météo-France (last_reported toutes les
+  15 min environ), 50 min pour OpenWeatherMap ; Met.no relève toutes les 55 à 65 min.
+  2 h laisse une relève manquée de marge. Une entité météo de modèle qui ne s'écrit
+  qu'à ses changements peut passer pour périmée : un repli, et une alerte, sans plus.
+  NB : le 08/10, Météo-France n'était PAS figée avant sa panne (mise à jour toutes les
+  heures jusqu'à 11 h 04) ; seule sa condition n'avait pas changé depuis 21 h 04
+  (last_changed). Ce critère vise une intégration qui cesse de relever sans passer
+  indisponible.
+
+  Déploiement : ce fichier va dans config/custom_templates/, puis
+  homeassistant.reload_custom_templates — AVANT de recharger les packages qui
+  l'importent (comme tab5_tablette.jinja).
+-#}
+{%- set TAB5_METEO_PERIMEE_S = 7200 -%}
+{%- macro tab5_meteo_etat(e) -%}
+  {%- set e = e | default('', true) | string -%}
+  {%- if '.' not in e or states[e] is none -%}absente
+  {%- elif states(e) in ['unavailable', 'unknown'] -%}indisponible
+  {%- elif (now() - states[e].last_reported).total_seconds() > TAB5_METEO_PERIMEE_S -%}perimee
+  {%- else -%}ok
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_meteo_effective() -%}
+  {%- set choisie = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' -%}
+  {%- set etat = tab5_meteo_etat(choisie) -%}
+  {%- if etat == 'ok' -%}
+    {{- choisie -}}
+  {%- else -%}
+    {%- set connues = [state_attr('sensor.tab5_sources_meteo', 'owm') or '',
+                       state_attr('sensor.tab5_sources_meteo', 'meteo_france') or ''] -%}
+    {%- set ns = namespace(e='') -%}
+    {%- for x in connues + (states.weather | map(attribute='entity_id') | sort | list)
+          if ns.e == '' and x and x != choisie -%}
+      {%- if tab5_meteo_etat(x) == 'ok' -%}{%- set ns.e = x -%}{%- endif -%}
+    {%- endfor -%}
+    {{- ns.e if ns.e else (choisie if etat == 'perimee' else '') -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_meteo_repli(champ) -%}
+  {%- set choisie = state_attr('sensor.tab5_sources_meteo', 'meteo') or '' -%}
+  {%- set etat = tab5_meteo_etat(choisie) -%}
+  {%- if etat in ['indisponible', 'perimee'] -%}
+    {%- set d = states[choisie].last_changed if etat == 'indisponible' else states[choisie].last_reported -%}
+    {%- if champ == 'raison' -%}
+      {{- etat -}}
+    {%- elif champ == 'depuis' -%}
+      {{- d.timestamp() | int -}}
+    {%- else -%}
+      {%- set l = d | as_local -%}
+      {{- ('' if l.date() == (now() | as_local).date() else 'le ' ~ l.strftime('%d/%m') ~ ' à ')
+          ~ l.hour ~ ' h ' ~ '%02d' | format(l.minute) -}}
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_meteo_nom(e) -%}
+  {%- set e = e | default('', true) | string -%}
+  {%- if '.' not in e -%}
+    {{- '' -}}
+  {%- elif e in integration_entities('meteo_france') -%}Météo-France
+  {%- elif e in integration_entities('openweathermap') -%}OpenWeatherMap
+  {%- elif e in integration_entities('met') -%}Met.no
+  {%- else -%}
+    {{- (state_attr(e, 'friendly_name') or e.split('.', 1)[1]) | string | replace('|', '/') | replace(';', ',') | trim | truncate(40, true, '…') -}}
+  {%- endif -%}
+{%- endmacro -%}

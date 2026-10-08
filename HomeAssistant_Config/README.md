@@ -76,7 +76,7 @@ The automation:
 - answers the Energy popup (`esphome.tab5_energie`, the view shown): starts `script.tab5_energie` with the sensors of its « Energy » section, or answers « no sensor chosen » when the section is empty.
 - answers the Temperature popup (`esphome.tab5_historique`, the temperature and the view shown, [ADR-0032](../docs/decisions/0032-temperature-history-popup.md)): starts `script.tab5_historique` with the sensor of that slot and the box « La seconde température est dehors · The second temperature is outdoors ».
 
-No placeholder: the file is generic. Changing a device (or the weather) is an edit of the automation in HA's UI — no flash, no restart. The block between `# >>> icones` and `# <<< icones` (the icon palette) is written by `tools/gen_tuiles_icones.py`.
+No placeholder: the file is generic. Changing a device (or the weather) is an edit of the automation in HA's UI — no flash, no restart. The block between `# >>> icones` and `# <<< icones` (the icon palette) is written by `tools/gen_tuiles_icones.py`; the room and row triggers (`# >>> déclencheurs des pièces`, `# >>> déclencheurs de la rangée`) by `tools/gen_blueprint_emplacements.py`.
 
 ### `packages/tab5_evenements.yaml` — the tablet's requests (events only)
 Since [ADR-0025](../docs/decisions/0025-events-only.md) the firmware never calls a Home Assistant action: the « Allow the device to perform Home Assistant actions » option is no longer needed. The tablet sends `esphome.tab5_*` events, and this package's single automation (`tab5_evenements`, `mode: parallel`) turns each one into a **fixed** action, for a device of model `tab5-ha-hmi` only, on that tablet's own entities (found with `device_entities`, no entity to configure):
@@ -178,7 +178,7 @@ An alert is a source plus a **revision**: HA sends « id#revision » and the tab
 
 **Subscriptions** (« Tab5 · alertes : … » lists, Settings page of the tablet's dashboard): updates (all / Home Assistant only / none), weather warnings from yellow, orange or red (or none), `problem` sensors, unavailable entities, entities with the « Tab5 · alerte » label (on, open, unlocked, jammed or triggered: a door, a leak, a lock — create the label in Home Assistant and put it on the entity), batteries below 10 to 30 % (`battery` sensors; a battery stays an alert until it is 10 % above the threshold; phones of the mobile app are left out). A list rather than a switch: without `initial`, a list starts on its first option, then Home Assistant restores your choice. Unsubscribing hides the alerts of that source at once; they are still followed, so subscribing again does not bring back what was already read.
 
-The light push automation (`tab5_ha_hmi_alerts_push` in `packages/tab5_push.yaml`) re-pushes sections 1, 7 and 7b whenever the alerts to read change. Also here: `sensor.tab5_unavailable_count` (Health view of the dashboard). `input_text.tab5_alerts_dismissed` is the former list of dismissed ids: read once, when the sensor starts with no memory, then never written again (`snippets/tab5_alerts_dismissed_input_text.yaml` declares it on its own, for a configuration that already has it in its `input_text:` block). The nightly cleanup of stale ids is gone: an ended alert is forgotten by the sensor itself.
+The light push automation (`tab5_ha_hmi_alerts_push` in `packages/tab5_push.yaml`) re-pushes sections 1, 7 and 7b whenever the alerts to read change. Also here: `sensor.tab5_unavailable_count` (Health view of the dashboard, counted every 5 min). `input_text.tab5_alerts_dismissed` is the former list of dismissed ids: read once, when the sensor starts with no memory, then never written again. The nightly cleanup of stale ids is gone: an ended alert is forgotten by the sensor itself.
 
 ---
 
@@ -187,7 +187,7 @@ The light push automation (`tab5_ha_hmi_alerts_push` in `packages/tab5_push.yaml
 
 Everything for a roller shutter whose motor reports **no position and no end-stop** (typical cheap Tuya module): the two helpers (an `input_boolean` armed for the measured travel time, an `input_text` carrying the label shown on screen), the central script `tab5_volet_action` called by the Tab5, `tab5_volet_updater`, which pushes the label to `tab5_maj_volet_etat`, and `volet_serre_track_direct_cover`, which updates the helpers when the shutter is commanded some other way (HA UI, sunrise/sunset automation, another integration) so the screen follows.
 
-Adapt the `26 s` travel delay to your own shutter (it appears in the script and in the direct-cover automation).
+Set the travel time of your own shutter in « Tab5 · course du volet » (seconds, 26 by default): one script, `tab5_volet_course`, times the travel for the Tab5 and for the direct-cover automation.
 
 ### `packages/tab5_micro_absence.yaml`
 Turns the Tab5 wake word (« Ok Nabu ») **off when nobody is home** and back on when someone returns. It listens 24/7 otherwise (10 ms frames, model + voice activity detection: an estimated 5-15 % of a core plus the I2S bus and the microphone ADC), for nothing when the flat is empty.
@@ -223,6 +223,7 @@ Not a package: a Jinja macro that **writes** a Home Assistant dashboard for the 
 | Tab5 · TV Samsung, Tab5 · adresse de la TV | `tab5_tv` | the TV popup's app buttons (Tizen REST API on port 8001) |
 | Tab5 · alertes : mises à jour / vigilance à partir de / capteurs « problème » / entités indisponibles / étiquette « Tab5 · alerte » / piles sous | `tab5_alerts` | what shows as an alert on the central card (all of it by default, batteries below 20 %) |
 | Tab5 · volet à course simulée | `optionnel/volet_serre_tracking` | the shutter whose travel is simulated |
+| Tab5 · course du volet (number) | `optionnel/volet_serre_tracking` | its full travel time, in seconds (26 by default) |
 
 The action names (`esphome.tab5_ha_hmi_…`) still follow the ESPHome device name `tab5-ha-hmi` set by the firmware.
 
@@ -332,7 +333,7 @@ L'automatisation :
 - répond au popup Énergie (`esphome.tab5_energie`, la vue montrée) : lance `script.tab5_energie` avec les capteurs de sa section « Énergie », ou répond « aucun capteur choisi » si elle est vide.
 - répond au popup Température (`esphome.tab5_historique`, la température et la vue montrées, [ADR-0032](../docs/decisions/0032-temperature-history-popup.md)) : lance `script.tab5_historique` avec le capteur de cet emplacement et la case « La seconde température est dehors · The second temperature is outdoors ».
 
-Aucun placeholder : le fichier est générique. Changer d'appareil (ou de météo) = modifier l'automatisation dans l'interface de HA, ni flash ni redémarrage. Le bloc entre `# >>> icones` et `# <<< icones` (la palette des icônes) est écrit par `tools/gen_tuiles_icones.py`.
+Aucun placeholder : le fichier est générique. Changer d'appareil (ou de météo) = modifier l'automatisation dans l'interface de HA, ni flash ni redémarrage. Le bloc entre `# >>> icones` et `# <<< icones` (la palette des icônes) est écrit par `tools/gen_tuiles_icones.py` ; les déclencheurs des pièces et de la rangée (`# >>> déclencheurs des pièces`, `# >>> déclencheurs de la rangée`), par `tools/gen_blueprint_emplacements.py`.
 
 ### `packages/tab5_evenements.yaml` — les demandes de la tablette (événements seulement)
 Depuis l'[ADR-0025](../docs/decisions/0025-events-only.md), le firmware n'appelle plus aucune action de Home Assistant : l'option « Autoriser l'appareil à effectuer des actions Home Assistant » n'est plus nécessaire. La tablette envoie des événements `esphome.tab5_*`, et l'unique automatisation de ce package (`tab5_evenements`, `mode: parallel`) traduit chacun en une action **fixe**, pour un appareil de modèle `tab5-ha-hmi` seulement, sur les entités de cette tablette (trouvées par `device_entities`, aucune entité à régler) :
@@ -434,7 +435,7 @@ Une alerte = une source + une **révision** : HA envoie « id#révision » et la
 
 **Abonnements** (listes « Tab5 · alertes : … », page Réglages du tableau de bord de la tablette) : mises à jour (toutes / Home Assistant seulement / aucune), vigilance à partir du jaune, de l'orange ou du rouge (ou aucune), capteurs `problem`, entités indisponibles, entités à l'étiquette « Tab5 · alerte » (allumées, ouvertes, déverrouillées, bloquées ou déclenchées : une porte, une fuite, une serrure — créez l'étiquette dans Home Assistant et posez-la sur l'entité), piles sous 10 à 30 % (capteurs `battery` ; une pile reste en alerte jusqu'à 10 % au-dessus du seuil ; les téléphones de l'application mobile ne comptent pas). Une liste plutôt qu'un interrupteur : sans `initial`, une liste démarre sur sa première option, puis Home Assistant restaure votre choix. Se désabonner masque tout de suite les alertes de cette source ; elles restent suivies, donc se réabonner ne fait pas revenir ce qui était déjà lu.
 
-L'automation « push léger » (`tab5_ha_hmi_alerts_push` dans `packages/tab5_push.yaml`) repousse les sections 1, 7 et 7b dès que les alertes à lire changent. Aussi ici : `sensor.tab5_unavailable_count` (vue Santé du tableau de bord). `input_text.tab5_alerts_dismissed` est l'ancienne liste des ids masqués : lue une fois, quand le capteur démarre sans mémoire, puis plus jamais écrite (`snippets/tab5_alerts_dismissed_input_text.yaml` la déclare seule, pour une configuration qui l'a déjà dans son bloc `input_text:`). La purge nocturne des ids périmés a disparu : le capteur oublie lui-même une alerte terminée.
+L'automation « push léger » (`tab5_ha_hmi_alerts_push` dans `packages/tab5_push.yaml`) repousse les sections 1, 7 et 7b dès que les alertes à lire changent. Aussi ici : `sensor.tab5_unavailable_count` (vue Santé du tableau de bord, compté toutes les 5 min). `input_text.tab5_alerts_dismissed` est l'ancienne liste des ids masqués : lue une fois, quand le capteur démarre sans mémoire, puis plus jamais écrite. La purge nocturne des ids périmés a disparu : le capteur oublie lui-même une alerte terminée.
 
 ---
 
@@ -443,7 +444,7 @@ L'automation « push léger » (`tab5_ha_hmi_alerts_push` dans `packages/tab5_pu
 
 Tout ce qu'il faut pour un volet dont le moteur ne renvoie **ni position ni fin de course** (module Tuya bas de gamme typique) : les deux helpers (un `input_boolean` armé pendant la durée de course mesurée, un `input_text` qui porte le libellé affiché à l'écran), le script central `tab5_volet_action` appelé par le Tab5, `tab5_volet_updater`, qui pousse le libellé vers `tab5_maj_volet_etat`, et `volet_serre_track_direct_cover`, qui met les helpers à jour quand le volet est commandé autrement (interface HA, automatisation lever/coucher, autre intégration) pour que l'écran suive.
 
-Adaptez le délai de course de `26 s` à votre volet (il figure dans le script et dans l'automatisation de suivi direct).
+Réglez la durée de course de votre volet dans « Tab5 · course du volet » (en secondes, 26 par défaut) : un seul script, `tab5_volet_course`, chronomètre la course pour le Tab5 comme pour l'automatisation de suivi direct.
 
 ### `packages/tab5_micro_absence.yaml`
 Coupe le mot d'activation du Tab5 (« Ok Nabu ») **quand personne n'est à la maison**, et le rallume au retour. Sinon il écoute 24 h/24 (trames de 10 ms, modèle + détection de voix : 5 à 15 % d'un cœur plus le bus I2S et l'ADC du micro, estimation), pour rien quand l'appartement est vide.
@@ -479,6 +480,7 @@ Pas un package : une macro Jinja qui **écrit** un tableau de bord Home Assistan
 | Tab5 · TV Samsung, Tab5 · adresse de la TV | `tab5_tv` | boutons d'applications du popup TV (API REST Tizen, port 8001) |
 | Tab5 · alertes : mises à jour / vigilance à partir de / capteurs « problème » / entités indisponibles / étiquette « Tab5 · alerte » / piles sous | `tab5_alerts` | ce qui s'affiche en alerte sur la carte centrale (tout par défaut, piles sous 20 %) |
 | Tab5 · volet à course simulée | `optionnel/volet_serre_tracking` | le volet dont la course est simulée |
+| Tab5 · course du volet (nombre) | `optionnel/volet_serre_tracking` | la durée de sa course complète, en secondes (26 par défaut) |
 
 Les noms d'actions (`esphome.tab5_ha_hmi_…`) suivent toujours le nom d'appareil ESPHome `tab5-ha-hmi` donné par le firmware.
 

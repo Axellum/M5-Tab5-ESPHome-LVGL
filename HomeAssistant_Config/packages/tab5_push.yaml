@@ -32,7 +32,9 @@
 #       Modèles importés : custom_templates/tab5_calendar.jinja (jour travaillé des
 #       prévisions jours, depuis le 07/10/2026) et tab5_alertes.jinja (historique des
 #       alertes), à déployer et recharger AVANT ce package, sinon ces payloads ne se
-#       rendent pas.
+#       rendent pas. Depuis le 08/10/2026 (audit du 07/10, HA-7), aussi
+#       tab5_tablette.jinja (« tablette connectée », garde d'origine) : sans lui, les
+#       gardes échouent à l'import et rien ne part.
 # @architecture_constraint Chaque `action: esphome.tab5_ha_hmi_tab5_maj_*` correspond à
 #       un service `api: services:` déclaré dans Tab5/tab5-api-logic.yaml, et ses clés
 #       `data:` à ses `variables:`, ni plus ni moins. Ne JAMAIS renommer un service ou
@@ -71,7 +73,7 @@
 # garde (a) de tab5_health.yaml. Ne pas le remettre : tests/test_sans_secret.py.
 
 automation:
-  - alias: "MAJ Ecran Tab5 ESPHome Push"
+  - alias: "Tab5 — poussée complète de l'écran"
     # queued, plus single (audit du 07/10/2026, HA-1) : un passage dure plusieurs
     # secondes (calendar.get_events, weather.get_forecasts, attente de la liaison
     # jusqu'à 10 s). En single, un esphome.tab5_connected arrivé pendant ce temps était
@@ -89,7 +91,7 @@ automation:
       météo actuelle, probabilités et volet seulement à la (re)connexion et au
       démarrage de HA (ils ont leurs automatisations au changement, plus bas ; la clim
       est dans le blueprint « Tab5 — emplacements »).
-    trigger:
+    triggers:
       # PAS de déclencheur `state:` sur l'entité weather.* ici (retiré le 26/08/2026) :
       # `weather.*` et `sensor.*_next_rain` viennent du même coordinateur
       # Météo-France et se déclenchent à ~0,8 s d'intervalle — le second tombait
@@ -106,10 +108,10 @@ automation:
       # 25/09/2026 : sans lui, chaque rafraîchissement Météo-France relançait tout).
       # Toutes les 10 min : prévisions (l'heure et le jour avancent), pluie, alertes HA
       # (les capteurs « problem » et le compte d'indisponibles n'ont pas d'autre déclencheur).
-      - platform: time_pattern
+      - trigger: time_pattern
         minutes: "/10"
       # Émis par le firmware à chaque (re)connexion du client API HA (on_client_connected).
-      - platform: event
+      - trigger: event
         event_type: esphome.tab5_connected
         id: tab5_connected
       # Démarrage de HA : la tablette, restée allumée, se reconnecte souvent AVANT que
@@ -121,25 +123,26 @@ automation:
       # deviennent actives et suit le chemin de la reconnexion. Tablette pas encore
       # reconnectée : la garde « tablette connectée » arrête, et son tab5_connected,
       # émis plus tard, sera entendu.
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
         id: demarrage_ha
       # Agenda de travail choisi (« Tab5 · agenda de travail ») : un événement commence,
       # finit, ou le suivant change. Miroir sensor.tab5_agendas (tab5_reglages.yaml) :
       # un déclencheur `state:` ne prend pas d'entity_id calculé.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_agendas
         attribute: travail
-      # Autre source des prévisions choisie (« Tab5 · source des prévisions ») : les
+      # Autre source des prévisions choisie (« Tab5 · source des prévisions »), ou repli
+      # sur une autre source pendant que la choisie est indisponible, et retour : les
       # tuiles jours et heures suivent tout de suite, pas au passage des 10 min.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_meteo
-        attribute: entite
+        attribute: entite_effective
       # NB : les déclencheurs "légers" (code et barres de pluie, vigilance météo,
       # alertes à lire) sont gérés par l'automation dédiée `tab5_ha_hmi_alerts_push`
       # ci-dessous — ils ne relancent PAS la chaîne prévisions/calendrier complète.
 
-    condition:
+    conditions:
       # Garde d'origine (audit sécurité du 30/09/2026) : tab5_connected ne compte que
       # s'il vient d'une tablette, reconnue au modèle de son appareil comme dans
       # tab5_evenements.yaml ; un autre appareil ESPHome ne relance pas la chaîne. Les
@@ -147,12 +150,8 @@ automation:
       - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
         condition: template
         value_template: >-
-          {%- if trigger.id == 'tab5_connected' -%}
-            {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-            {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
-          {%- else -%}
-            {{ true }}
-          {%- endif -%}
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
       # Seul un vrai (re)démarrage de la liaison compte : liaison `on` depuis moins de
       # 3 min. Le firmware n'émet l'événement qu'à la connexion depuis le 25/09/2026 ;
       # la garde reste contre un événement réémis. Le capteur « HA API Status » est
@@ -164,16 +163,13 @@ automation:
       - alias: "tab5_connected : seulement si la liaison API vient de (re)demarrer (garde contre un evenement reemis)"
         condition: template
         value_template: >-
-          {%- set ns = namespace(depuis=none) -%}
-          {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
-            {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and is_state(e, 'on') -%}
-              {%- set ns.depuis = states[e].last_changed -%}
-            {%- endif -%}
-          {%- endfor -%}
-          {{ trigger.id != 'tab5_connected' or ns.depuis is none
-             or (now() - ns.depuis).total_seconds() < 180 }}
+          {%- from 'tab5_tablette.jinja' import tab5_api -%}
+          {%- set api = tab5_api() -%}
+          {%- set depuis = states[api].last_changed if api and is_state(api, 'on') else none -%}
+          {{ trigger.id != 'tab5_connected' or depuis is none
+             or (now() - depuis).total_seconds() < 180 }}
 
-    action:
+    actions:
       # ====== 0. RECONNEXION : attendre que la liaison API soit prête ======
       # Le firmware émet `esphome.tab5_connected` dès qu'un client API se connecte,
       # parfois avant que l'intégration HA ait fini d'authentifier sa connexion :
@@ -185,9 +181,8 @@ automation:
             id: tab5_connected
         then:
           - wait_template: &tab5_connectee >-
-              {{ integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
-                 | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
-                 | list | count > 0 }}
+              {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+              {{ tab5_connectee() == 'oui' }}
             timeout: "00:00:10"
             continue_on_timeout: true
       # Tablette absente (pas encore ajoutée dans HA, packages installés d'abord comme
@@ -237,8 +232,15 @@ automation:
       # continue_on_error ne rattrape pas (script.py de HA : NoEntitySpecifiedError).
       # La réponse d'un appel dans un `if` reste lisible après : une variable nouvelle
       # est créée au niveau de la séquence (ScriptRunVariables._assign, HA 2026.9).
+      # meteo : l'entité EFFECTIVE (la choisie, ou son repli tant qu'elle est
+      # indisponible, custom_templates/tab5_meteo.jinja). meteo_en_panne : une source
+      # existe mais aucune ne répond ; les prévisions ne partent pas (la tablette garde
+      # les dernières) au lieu de jours vides. Sans aucune entité météo, comme avant.
       - variables:
-          meteo: "{{ state_attr('sensor.tab5_meteo', 'entite') or '' }}"
+          meteo: "{{ state_attr('sensor.tab5_meteo', 'entite_effective') or '' }}"
+          meteo_en_panne: >-
+            {{ (state_attr('sensor.tab5_meteo', 'entite_effective') or '') == ''
+               and (state_attr('sensor.tab5_meteo', 'entite') or '') != '' }}
           type_jours: "{{ state_attr('sensor.tab5_meteo', 'type_jours') or '' }}"
           heures_ok: "{{ state_attr('sensor.tab5_meteo', 'heures_ok') | default(false, true) }}"
           agenda: >-
@@ -272,92 +274,96 @@ automation:
             target:
               entity_id: "{{ meteo }}"
             response_variable: daily_var
-      - action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk
-        continue_on_error: true
-        data:
-          payload: >
-            {% from 'tab5_calendar.jinja' import couvre, ev_start, ev_end, ev_summary %}
-            {% set brut = daily_var.get(meteo, {}).get('forecast', []) if daily_var is defined else [] %}
-            {% if type_jours in ['twice_daily', 'hourly'] %}
-              {# Regroupement par date locale (lot 4c-3) : max des températures, min des
-                 minimales (ou des températures, la nuit NWS n'a que `temperature`),
-                 condition de la période de jour (is_daytime, NWS), sinon d'un créneau de 12 h à 18 h,
-                 sinon du premier du jour.
-                 On s'arrête au premier jour sans données : la suite reste « passée ». #}
-              {% set agg = namespace(l=[], fini=false) %}
-              {% for j in range(15) %}
-                {% set d = (now() + timedelta(days=j)).strftime('%Y-%m-%d') %}
-                {% set jn = namespace(tmax=none, tmin=none, cond=none, cond_pm=none, cond_jour=none) %}
-                {% for e in brut %}
-                  {% set dt = e.get('datetime') | as_datetime %}
-                  {% if dt is not none and (dt | as_local).strftime('%Y-%m-%d') == d %}
-                    {% set tt = e.get('temperature') %}
-                    {% set tl = e.get('templow') if e.get('templow') is not none else tt %}
-                    {% if tt is not none and (jn.tmax is none or tt > jn.tmax) %}{% set jn.tmax = tt %}{% endif %}
-                    {% if tl is not none and (jn.tmin is none or tl < jn.tmin) %}{% set jn.tmin = tl %}{% endif %}
-                    {% if jn.cond is none %}{% set jn.cond = e.get('condition') %}{% endif %}
-                    {% if jn.cond_pm is none and 12 <= (dt | as_local).hour < 18 %}{% set jn.cond_pm = e.get('condition') %}{% endif %}
-                    {% if jn.cond_jour is none and e.get('is_daytime') == true %}{% set jn.cond_jour = e.get('condition') %}{% endif %}
-                  {% endif %}
-                {% endfor %}
-                {% if jn.tmax is none %}{% set agg.fini = true %}{% endif %}
-                {% if not agg.fini %}
-                  {% set agg.l = agg.l + [{'condition': jn.cond_jour or jn.cond_pm or jn.cond, 'temperature': jn.tmax, 'templow': jn.tmin}] %}
-                {% endif %}
-              {% endfor %}
-              {% set fcasts = agg.l %}
-            {% else %}
-              {% set fcasts = brut %}
-            {% endif %}
-            {% set days_names = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] %}
-            {% set ns = namespace(result="") %}
-            {% for i in range(15) %}
-              {% set target_dt = now() + timedelta(days=i) %}
-              {% set target_date = target_dt.strftime('%Y-%m-%d') %}
-              {# Jour seul, SANS date : la page d'accueil (aujourd'hui + 4 jours) l'affiche
-                 tel quel ; les deux pages suivantes (jours 5 à 14) calculent elles-mêmes
-                 « Lun 05 » via SNTP (tab5_forecast.cpp, format_short_day_label). #}
-              {% if i == 0 %}
-                {% set nom_jour = "Auj" %}
-              {% else %}
-                {% set nom_jour = days_names[target_dt.strftime('%w') | int] %}
-              {% endif %}
-              {# .get() et jamais fcasts[i].cle : Météo-France omet des clés en fin de
-                 plage (templow absent du 15e jour le 18/09/2026) et un accès direct lève
-                 UndefinedError AVANT le | float(0) — payload jamais rendu, action sautée
-                 en silence par continue_on_error, icônes figées. #}
-              {% set condition = fcasts[i].get('condition') | default('unknown', true) if i < fcasts|length else 'unknown' %}
-              {% set tmin = fcasts[i].get('templow') | float(0) if i < fcasts|length else 0 %}
-              {% set tmax = fcasts[i].get('temperature') | float(0) if i < fcasts|length else 0 %}
-              {% set est_passe = 'false' if i < fcasts|length else 'true' %}
-              {% set est_dimanche = target_dt.strftime('%w') == '0' %}
-              {# Jour travaillé : la macro couvre() du calendrier (custom_templates/
-                 tab5_calendar.jinja, audit du 07/10/2026, HA-3), la même que le popup
-                 calendrier : jour du début pour un événement horodaté, [début, fin[ pour une
-                 journée entière (le jour de fin est exclu, comme le rend HA). Avant, un
-                 test de sous-chaîne sur le début OU la fin comptait aussi le lendemain
-                 d'une journée entière et le jour de fin d'un horodaté, et oubliait les
-                 jours du milieu d'un événement de plusieurs jours. Heures : inchangées,
-                 celles du dernier événement de travail qui COMMENCE ce jour-là. #}
-              {% set ns_travail = namespace(found=false, heures="") %}
-              {% if agenda_events is defined and agenda in agenda_events %}
-                {% for event in agenda_events[agenda].events %}
-                  {% set debut_ev = ev_start(event) %}
-                  {% set ev_msg = ev_summary(event) %}
-                  {% if couvre(event, target_date) and (mots_travail | count == 0 or mots_travail | select('in', ev_msg | lower) | list | count > 0) %}
-                    {% set ns_travail.found = true %}
-                    {% if debut_ev[:10] == target_date %}
-                      {% set start_dt = debut_ev | as_datetime %}
-                      {% set end_dt = ev_end(event) | as_datetime %}
-                      {% set ns_travail.heures = start_dt.strftime('%H:%M') ~ "-" ~ end_dt.strftime('%H:%M') %}
+      - if:
+          - condition: template
+            value_template: "{{ not meteo_en_panne }}"
+        then:
+          - action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk
+            continue_on_error: true
+            data:
+              payload: >
+                {% from 'tab5_calendar.jinja' import couvre, ev_start, ev_end, ev_summary %}
+                {% set brut = daily_var.get(meteo, {}).get('forecast', []) if daily_var is defined else [] %}
+                {% if type_jours in ['twice_daily', 'hourly'] %}
+                  {# Regroupement par date locale (lot 4c-3) : max des températures, min des
+                     minimales (ou des températures, la nuit NWS n'a que `temperature`),
+                     condition de la période de jour (is_daytime, NWS), sinon d'un créneau de 12 h à 18 h,
+                     sinon du premier du jour.
+                     On s'arrête au premier jour sans données : la suite reste « passée ». #}
+                  {% set agg = namespace(l=[], fini=false) %}
+                  {% for j in range(15) %}
+                    {% set d = (now() + timedelta(days=j)).strftime('%Y-%m-%d') %}
+                    {% set jn = namespace(tmax=none, tmin=none, cond=none, cond_pm=none, cond_jour=none) %}
+                    {% for e in brut %}
+                      {% set dt = e.get('datetime') | as_datetime %}
+                      {% if dt is not none and (dt | as_local).strftime('%Y-%m-%d') == d %}
+                        {% set tt = e.get('temperature') %}
+                        {% set tl = e.get('templow') if e.get('templow') is not none else tt %}
+                        {% if tt is not none and (jn.tmax is none or tt > jn.tmax) %}{% set jn.tmax = tt %}{% endif %}
+                        {% if tl is not none and (jn.tmin is none or tl < jn.tmin) %}{% set jn.tmin = tl %}{% endif %}
+                        {% if jn.cond is none %}{% set jn.cond = e.get('condition') %}{% endif %}
+                        {% if jn.cond_pm is none and 12 <= (dt | as_local).hour < 18 %}{% set jn.cond_pm = e.get('condition') %}{% endif %}
+                        {% if jn.cond_jour is none and e.get('is_daytime') == true %}{% set jn.cond_jour = e.get('condition') %}{% endif %}
+                      {% endif %}
+                    {% endfor %}
+                    {% if jn.tmax is none %}{% set agg.fini = true %}{% endif %}
+                    {% if not agg.fini %}
+                      {% set agg.l = agg.l + [{'condition': jn.cond_jour or jn.cond_pm or jn.cond, 'temperature': jn.tmax, 'templow': jn.tmin}] %}
                     {% endif %}
+                  {% endfor %}
+                  {% set fcasts = agg.l %}
+                {% else %}
+                  {% set fcasts = brut %}
+                {% endif %}
+                {% set days_names = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] %}
+                {% set ns = namespace(result="") %}
+                {% for i in range(15) %}
+                  {% set target_dt = now() + timedelta(days=i) %}
+                  {% set target_date = target_dt.strftime('%Y-%m-%d') %}
+                  {# Jour seul, SANS date : la page d'accueil (aujourd'hui + 4 jours) l'affiche
+                     tel quel ; les deux pages suivantes (jours 5 à 14) calculent elles-mêmes
+                     « Lun 05 » via SNTP (tab5_forecast.cpp, format_short_day_label). #}
+                  {% if i == 0 %}
+                    {% set nom_jour = "Auj" %}
+                  {% else %}
+                    {% set nom_jour = days_names[target_dt.strftime('%w') | int] %}
                   {% endif %}
+                  {# .get() et jamais fcasts[i].cle : Météo-France omet des clés en fin de
+                     plage (templow absent du 15e jour le 18/09/2026) et un accès direct lève
+                     UndefinedError AVANT le | float(0) — payload jamais rendu, action sautée
+                     en silence par continue_on_error, icônes figées. #}
+                  {% set condition = fcasts[i].get('condition') | default('unknown', true) if i < fcasts|length else 'unknown' %}
+                  {% set tmin = fcasts[i].get('templow') | float(0) if i < fcasts|length else 0 %}
+                  {% set tmax = fcasts[i].get('temperature') | float(0) if i < fcasts|length else 0 %}
+                  {% set est_passe = 'false' if i < fcasts|length else 'true' %}
+                  {% set est_dimanche = target_dt.strftime('%w') == '0' %}
+                  {# Jour travaillé : la macro couvre() du calendrier (custom_templates/
+                     tab5_calendar.jinja, audit du 07/10/2026, HA-3), la même que le popup
+                     calendrier : jour du début pour un événement horodaté, [début, fin[ pour une
+                     journée entière (le jour de fin est exclu, comme le rend HA). Avant, un
+                     test de sous-chaîne sur le début OU la fin comptait aussi le lendemain
+                     d'une journée entière et le jour de fin d'un horodaté, et oubliait les
+                     jours du milieu d'un événement de plusieurs jours. Heures : inchangées,
+                     celles du dernier événement de travail qui COMMENCE ce jour-là. #}
+                  {% set ns_travail = namespace(found=false, heures="") %}
+                  {% if agenda_events is defined and agenda in agenda_events %}
+                    {% for event in agenda_events[agenda].events %}
+                      {% set debut_ev = ev_start(event) %}
+                      {% set ev_msg = ev_summary(event) %}
+                      {% if couvre(event, target_date) and (mots_travail | count == 0 or mots_travail | select('in', ev_msg | lower) | list | count > 0) %}
+                        {% set ns_travail.found = true %}
+                        {% if debut_ev[:10] == target_date %}
+                          {% set start_dt = debut_ev | as_datetime %}
+                          {% set end_dt = ev_end(event) | as_datetime %}
+                          {% set ns_travail.heures = start_dt.strftime('%H:%M') ~ "-" ~ end_dt.strftime('%H:%M') %}
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                  {% set est_repos = not ns_travail.found %}
+                  {% set ns.result = ns.result ~ i ~ "|" ~ nom_jour ~ "|" ~ condition ~ "|" ~ tmin ~ "|" ~ tmax ~ "|" ~ ("1" if est_repos else "0") ~ "|" ~ ("1" if est_dimanche else "0") ~ "|" ~ ("1" if est_passe == 'true' else "0") ~ "|" ~ ns_travail.heures ~ ";" %}
                 {% endfor %}
-              {% endif %}
-              {% set est_repos = not ns_travail.found %}
-              {% set ns.result = ns.result ~ i ~ "|" ~ nom_jour ~ "|" ~ condition ~ "|" ~ tmin ~ "|" ~ tmax ~ "|" ~ ("1" if est_repos else "0") ~ "|" ~ ("1" if est_dimanche else "0") ~ "|" ~ ("1" if est_passe == 'true' else "0") ~ "|" ~ ns_travail.heures ~ ";" %}
-            {% endfor %}
-            {{ ns.result }}
+                {{ ns.result }}
       # ====== 6 + X. VOLET : seulement à la (re)connexion (ou au démarrage de HA) ======
       # Au changement : tab5_volet_updater (volet_serre_tracking.yaml). La clim et
       # les appareils de la maison sont poussés par le blueprint « Tab5 —
@@ -391,69 +397,73 @@ automation:
       # différait que par les bornes range() (#3). base = (repeat.index-1)*5.
       # 2 et non plus 3 (25/09/2026) : l'écran n'a que deux pages horaires (créneaux
       # 0-9) ; le bloc 10-14 était analysé à chaque cycle mais jamais affiché.
-      - repeat:
-          count: 2
-          sequence:
-            - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
-              continue_on_error: true
-              data:
-                payload: >
-                  {% set base = (repeat.index - 1) * 5 %}
-                  {% set fcasts = hourly_var_tab5.get(meteo, {}).get('forecast', []) if hourly_var_tab5 is defined and heures_ok else [] %}
-                  {# Icônes de nuit (discussion #278, 03/10/2026) : Met.no range « beau » et
-                     « peu nuageux » de nuit sous partlycloudy (met/const.py de HA), les
-                     états de HA n'ont pas de « peu nuageux de nuit » : la tuile de 2 h
-                     montrait un soleil. Un créneau de nuit reçoit la variante que la
-                     tablette sait déjà dessiner (kMeteoIcons, tab5_forecast.cpp).
-                     Jour ou nuit, par créneau : is_daytime s'il est fourni ; sinon sun.sun,
-                     d'après le dernier événement avant le début du créneau (lever = jour,
-                     coucher = nuit), les prochains lever et coucher reportés de 24 h en
-                     24 h (quelques minutes d'écart par jour) — vrai après minuit et le
-                     lendemain. Lever ou coucher à plus de 26 h (nuit ou jour polaire) :
-                     l'état de sun.sun vaut pour tous les créneaux. Sans sun.sun : condition
-                     brute. Calcul indépendant : tests/test_meteo_icones_nuit.py. #}
-                  {% set variante_nuit = {'partlycloudy': 'partlycloudy-night', 'sunny': 'clear-night', 'Clear': 'clear-night'} %}
-                  {% set soleil = states('sun.sun') %}
-                  {% set lever = as_timestamp(state_attr('sun.sun', 'next_rising'), none) %}
-                  {% set coucher = as_timestamp(state_attr('sun.sun', 'next_setting'), none) %}
-                  {% set instant = as_timestamp(now()) %}
-                  {% set cycle_ok = lever is not none and coucher is not none and lever - instant < 93600 and coucher - instant < 93600 %}
-                  {% set ns = namespace(result="") %}
-                  {% for i in range(base, base + 5) %}
-                    {% if i < fcasts|length %}
-                      {# as_local : Météo-France date ses créneaux en UTC ; sans conversion,
-                         la tuile affichait l'heure UTC (2 h de retard l'été, vu le
-                         27/09/2026 : « 09:00 » pour le créneau de 11:00). #}
-                      {% set dt = fcasts[i].datetime | as_datetime %}
-                      {% set heure_texte = (dt | as_local).strftime('%H:00') if dt else '00:00' %}
-                      {# .get() : au-delà de ~48 h Météo-France n'envoie plus
-                         `precipitation` (constaté le 25/09/2026) — cf. prévisions jours. #}
-                      {% set condition = fcasts[i].get('condition') | default('unknown', true) %}
-                      {% set temp = fcasts[i].get('temperature') | float(0) %}
-                      {% set pluvio = fcasts[i].get('precipitation') | float(0) %}
-                      {% set de_jour = fcasts[i].get('is_daytime') %}
-                      {% if de_jour is not boolean %}
-                        {% set debut = as_timestamp(fcasts[i].get('datetime'), none) %}
-                        {% if debut is none or soleil not in ['above_horizon', 'below_horizon'] %}
-                          {% set de_jour = none %}
-                        {% elif cycle_ok %}
-                          {% set de_jour = (debut - lever) % 86400 < (debut - coucher) % 86400 %}
+      - if:
+          - condition: template
+            value_template: "{{ not meteo_en_panne }}"
+        then:
+          - repeat:
+              count: 2
+              sequence:
+                - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
+                  continue_on_error: true
+                  data:
+                    payload: >
+                      {% set base = (repeat.index - 1) * 5 %}
+                      {% set fcasts = hourly_var_tab5.get(meteo, {}).get('forecast', []) if hourly_var_tab5 is defined and heures_ok else [] %}
+                      {# Icônes de nuit (discussion #278, 03/10/2026) : Met.no range « beau » et
+                         « peu nuageux » de nuit sous partlycloudy (met/const.py de HA), les
+                         états de HA n'ont pas de « peu nuageux de nuit » : la tuile de 2 h
+                         montrait un soleil. Un créneau de nuit reçoit la variante que la
+                         tablette sait déjà dessiner (kMeteoIcons, tab5_forecast.cpp).
+                         Jour ou nuit, par créneau : is_daytime s'il est fourni ; sinon sun.sun,
+                         d'après le dernier événement avant le début du créneau (lever = jour,
+                         coucher = nuit), les prochains lever et coucher reportés de 24 h en
+                         24 h (quelques minutes d'écart par jour) — vrai après minuit et le
+                         lendemain. Lever ou coucher à plus de 26 h (nuit ou jour polaire) :
+                         l'état de sun.sun vaut pour tous les créneaux. Sans sun.sun : condition
+                         brute. Calcul indépendant : tests/test_meteo_icones_nuit.py. #}
+                      {% set variante_nuit = {'partlycloudy': 'partlycloudy-night', 'sunny': 'clear-night', 'Clear': 'clear-night'} %}
+                      {% set soleil = states('sun.sun') %}
+                      {% set lever = as_timestamp(state_attr('sun.sun', 'next_rising'), none) %}
+                      {% set coucher = as_timestamp(state_attr('sun.sun', 'next_setting'), none) %}
+                      {% set instant = as_timestamp(now()) %}
+                      {% set cycle_ok = lever is not none and coucher is not none and lever - instant < 93600 and coucher - instant < 93600 %}
+                      {% set ns = namespace(result="") %}
+                      {% for i in range(base, base + 5) %}
+                        {% if i < fcasts|length %}
+                          {# as_local : Météo-France date ses créneaux en UTC ; sans conversion,
+                             la tuile affichait l'heure UTC (2 h de retard l'été, vu le
+                             27/09/2026 : « 09:00 » pour le créneau de 11:00). #}
+                          {% set dt = fcasts[i].datetime | as_datetime %}
+                          {% set heure_texte = (dt | as_local).strftime('%H:00') if dt else '00:00' %}
+                          {# .get() : au-delà de ~48 h Météo-France n'envoie plus
+                             `precipitation` (constaté le 25/09/2026) — cf. prévisions jours. #}
+                          {% set condition = fcasts[i].get('condition') | default('unknown', true) %}
+                          {% set temp = fcasts[i].get('temperature') | float(0) %}
+                          {% set pluvio = fcasts[i].get('precipitation') | float(0) %}
+                          {% set de_jour = fcasts[i].get('is_daytime') %}
+                          {% if de_jour is not boolean %}
+                            {% set debut = as_timestamp(fcasts[i].get('datetime'), none) %}
+                            {% if debut is none or soleil not in ['above_horizon', 'below_horizon'] %}
+                              {% set de_jour = none %}
+                            {% elif cycle_ok %}
+                              {% set de_jour = (debut - lever) % 86400 < (debut - coucher) % 86400 %}
+                            {% else %}
+                              {% set de_jour = soleil == 'above_horizon' %}
+                            {% endif %}
+                          {% endif %}
+                          {% if de_jour == false %}
+                            {% set condition = variante_nuit.get(condition, condition) %}
+                          {% endif %}
                         {% else %}
-                          {% set de_jour = soleil == 'above_horizon' %}
+                          {% set heure_texte = '00:00' %}
+                          {% set condition = 'unknown' %}
+                          {% set temp = 0 %}
+                          {% set pluvio = 0 %}
                         {% endif %}
-                      {% endif %}
-                      {% if de_jour == false %}
-                        {% set condition = variante_nuit.get(condition, condition) %}
-                      {% endif %}
-                    {% else %}
-                      {% set heure_texte = '00:00' %}
-                      {% set condition = 'unknown' %}
-                      {% set temp = 0 %}
-                      {% set pluvio = 0 %}
-                    {% endif %}
-                    {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
-                  {% endfor %}
-                  {{ ns.result }}
+                        {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
+                      {% endfor %}
+                      {{ ns.result }}
 
 
   # ============================================================================
@@ -469,23 +479,23 @@ automation:
   # mode: queued pour ne pas perdre un dismiss derrière le tick minute.
   # ============================================================================
   - id: tab5_ha_hmi_alerts_push
-    alias: "MAJ Ecran Tab5 Alertes/Santé (push léger)"
+    alias: "Tab5 — poussée légère (alertes, vigilance, pluie)"
     mode: queued
     max: 5
-    trigger:
+    triggers:
       # État nu : un seul déclenchement par mise à jour du capteur ; la condition plus
       # bas ne laisse passer que celles qui changent le code (état) ou les barres
       # (attribut). Avant le 07/10/2026 (HA-16), toute mise à jour d'attribut repartait.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_pluie_dans_l_heure
         id: pluie
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_vigilance
       # Alertes à lire (packages/tab5_alerts.yaml) : nouvelle, changée, lue, terminée.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_alertes
         attribute: affichees
-    condition:
+    conditions:
       - alias: "Pluie : seulement si le code ou les barres changent"
         condition: template
         value_template: >-
@@ -495,7 +505,7 @@ automation:
           {%- else -%}
             {{ true }}
           {%- endif -%}
-    action:
+    actions:
       - action: script.tab5_push_alertes
         data:
           vigilance_seule: "{{ trigger.id == 'pluie' }}"
@@ -509,21 +519,21 @@ automation:
   # que le popup « Alertes » d'une tablette est ouvert (« Écran courant », mis à jour
   # toutes les 5 s) : on le repousse. Popup fermé : rien, il est demandé à l'ouverture.
   - id: tab5_ha_hmi_alertes_historique_push
-    alias: "MAJ Ecran Tab5 Historique des alertes (popup ouvert)"
+    alias: "Tab5 — historique des alertes (popup ouvert)"
     mode: queued
     max: 3
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.tab5_alertes
         attribute: historique
-    condition:
+    conditions:
       - condition: template
         value_template: >-
           {{ integration_entities('esphome') | select('match', 'sensor[.].*_ecran_courant$')
              | select('is_state', 'Alertes') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
              | list | count > 0 }}
-    action:
+    actions:
       - action: script.tab5_push_alertes_historique
 
   # ============================================================================
@@ -534,23 +544,23 @@ automation:
   # part quand même ; le reste est ignoré sans avertissement (max_exceeded: silent).
   # ============================================================================
   - id: tab5_ha_hmi_meteo_push
-    alias: "MAJ Ecran Tab5 Météo actuelle (au changement)"
+    alias: "Tab5 — météo actuelle (au changement)"
     mode: queued
     max: 2
     max_exceeded: silent
-    trigger:
+    triggers:
       # Capteur normalisé (lot 4c-3) : condition en état, température, humidité et
       # probabilités en attributs, depuis la source choisie. État nu (sans `to:`) :
       # UN déclenchement par mise à jour, quel que soit l'attribut qui a changé (des
       # déclencheurs par attribut en donnaient un par attribut — 3 passages en 6 ms
       # relevés le 26/09/2026).
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_meteo
-    action:
+    actions:
       - action: script.tab5_push_meteo
 
   - id: tab5_screen_presence_wifi
-    alias: "Allumage/Extinction Ecran Tab5 selon WiFi Portable"
+    alias: "Tab5 — écran selon la présence et le téléphone"
     # Allume l'écran à la détection d'une présence (ou au retour du téléphone) s'il
     # est éteint ; l'éteint après 15 min sans présence dans la pièce (ou au départ du
     # téléphone) s'il est allumé et que le réveil ne sonne pas. Écran éteint, le
@@ -564,33 +574,33 @@ automation:
     description: "Allume l'écran à la détection d'une présence ou au retour du téléphone ; l'éteint après 15 min sans présence ou au départ du téléphone, sauf réveil en cours"
     mode: queued
     max: 5
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.tab5_presence
         to: 'on'
         id: "allumer"
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_telephone_suivi
         to: 'home'
         id: "allumer"
       # Capteur radar : il repasse off quelques secondes à chaque sortie de la
       # pièce, d'où les 15 min avant d'éteindre.
-      - platform: state
+      - trigger: state
         entity_id: binary_sensor.tab5_presence
         to: 'off'
         for: "00:15:00"
         id: "eteindre"
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_telephone_suivi
         to: 'not_home'
         id: "eteindre"
     variables:
       ecran: "{{ state_attr('sensor.tab5_tablette', 'ecran') or '' }}"
       reveil: "{{ state_attr('sensor.tab5_tablette', 'reveil_en_cours') or '' }}"
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ ecran != '' }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -627,36 +637,32 @@ automation:
     mode: queued
     max: 3
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sun.sun
         to: ["above_horizon", "below_horizon"]
-      - platform: event
+      - trigger: event
         event_type: esphome.tab5_connected
         id: tab5_connected
       # Tablette ajoutée à HA (ou remplacée) : l'interrupteur vient d'être détecté.
-      - platform: state
+      - trigger: state
         entity_id: sensor.tab5_tablette
         attribute: theme_nuit
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
     variables:
       nuit: "{{ state_attr('sensor.tab5_tablette', 'theme_nuit') or '' }}"
-    condition:
-      # Garde d'origine (comme « MAJ Ecran Tab5 ESPHome Push ») : tab5_connected ne
+    conditions:
+      # Garde d'origine (comme la poussée complète) : tab5_connected ne
       # compte que venant d'une tablette. tests/test_garde_origine.py.
       - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
         condition: template
         value_template: >-
-          {%- if trigger.id == 'tab5_connected' -%}
-            {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-            {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
-          {%- else -%}
-            {{ true }}
-          {%- endif -%}
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
       - condition: template
         value_template: "{{ nuit != '' and states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
-    action:
+    actions:
       - action: "switch.turn_{{ 'on' if is_state('sun.sun', 'below_horizon') else 'off' }}"
         target:
           entity_id: "{{ nuit }}"
@@ -814,6 +820,13 @@ script:
       # complète, section 0).
       - condition: template
         value_template: *tab5_connectee
+      # Une source météo existe mais aucune ne répond (choisie indisponible, pas de
+      # repli) : rien ne part, la tablette garde le dernier affichage (08/10/2026 :
+      # elle recevait « unavailable » à 0 °C).
+      - condition: template
+        value_template: >-
+          {{ (state_attr('sensor.tab5_meteo', 'entite_effective') or '') != ''
+             or (state_attr('sensor.tab5_meteo', 'entite') or '') == '' }}
       - action: esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle
         continue_on_error: true
         data:

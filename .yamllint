@@ -15,9 +15,6 @@ rules:
   commas: disable             # alignement volontaire des mappings en ligne (forecast_*.yaml)
 
 ignore: |
-  # Fragment à coller sous `input_text:` de configuration.yaml : indenté par
-  # construction, ce n'est pas un document YAML autonome.
-  HomeAssistant_Config/snippets/tab5_alerts_dismissed_input_text.yaml
   # Rendu local gitignoré (copie déployable), archives hors dépôt.
   HomeAssistant_Config/rendered/
   archives/
