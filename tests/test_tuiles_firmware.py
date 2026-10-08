@@ -15,21 +15,15 @@ chaînes au contrat ; ce fichier lit le C++ et le YAML, comme les autres tests s
 - version annoncée (sw_version) ≥ 3.2.0 : le blueprint parle alors le protocole des pièces."""
 import os
 import re
-import sys
 from pathlib import Path
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools"))
 
 from check_tab5_code_rules import font_glyphs  # noqa: E402
 
 ADR = os.path.join(REPO, "docs", "decisions", "0023-rooms-generic-tiles.md")
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _cpp():

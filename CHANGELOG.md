@@ -26,6 +26,24 @@ est écrit, deux identifiants ajoutés et l'ordre de deux widgets qui ne se chev
   copies), tap-to-wake et cadence de l'IMU (plus de `static` dans une lambda), retour
   automatique à l'accueil (`retour_auto_tick()`).
 
+### 2026-10-08 — Tests et CI de l'audit du 07/10 (lot L9)
+
+- **Les vrais moteurs d'échecs et de dames sont testés en CI**, sous ASan + UBSan, par le job
+  `python` : `tools/test_chess_engine.cpp` (`chess_ai.cpp` contre la suite perft) et
+  `tools/test_draughts_engine.cpp` (le moteur de `draughts_game.cpp` contre les perft 10×10 et
+  8×8 et les règles). Ils font foi ; les miroirs Python restent pour un poste sans g++, tenus égaux
+  par `tests/test_moteurs_hote.py`. Le miroir Python du Go, en double, est retiré : ses cas
+  manquants sont passés dans `tools/test_go_engine.cpp`.
+- **`pytest` en 47 s au lieu de 175 s** sur le poste de dev : blueprint et tableau de bord lus
+  une fois par session, gabarits Jinja compilés une fois, YAML lu par libyaml. `tests/commun.py`
+  et `tests/conftest.py` remplacent les chargeurs, lectures et `sys.path.insert` recopiés dans
+  53 fichiers. `pyserial` est installé : `tests/test_capture_serie.py` ne saute plus en CI.
+- `tests/test_contrat.py` ne lit plus `HomeAssistant_Config/rendered/` (ignoré par git) : en local,
+  les mêmes fichiers qu'en CI.
+- **Rendu hors tablette compilé une fois** (tâche `compiler`, programme passé aux neuf tâches
+  `rendu`) ; paquets pip en cache dans le rendu et les sanitizers. Dependabot suit aussi
+  `tools/site`, `tools/demo` et `tools/publication`.
+
 ### 2026-10-08 — Home Assistant : factorisation des packages et du blueprint (lot L11)
 
 - **Une macro « la tablette »**, `custom_templates/tab5_tablette.jinja` : « une tablette est

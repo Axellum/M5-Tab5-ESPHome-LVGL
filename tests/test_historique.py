@@ -25,7 +25,6 @@ import datetime as dt
 import math
 import os
 import re
-import sys
 from zoneinfo import ZoneInfo
 
 import jinja2
@@ -34,6 +33,7 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 from tests.test_tuiles_blueprint import Etat, Passage, _chercher, _evenement
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PACKAGE = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_historique.yaml")
@@ -41,7 +41,6 @@ BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation
 CPP = os.path.join(REPO, "Tab5", "tab5_historique.cpp")
 CLIMAT = os.path.join(REPO, "Tab5", "ui_components", "climate_card.yaml")
 
-sys.path.insert(0, os.path.join(REPO, "tools", "demo"))
 import demo_pusher  # noqa: E402
 import scenarios  # noqa: E402
 
@@ -51,11 +50,6 @@ UTC = dt.timezone.utc
 MAINTENANT = dt.datetime(2026, 6, 16, 14, 37, 20, tzinfo=PARIS)
 CAPTEUR = "sensor.serre_temperature"
 METEO = "weather.maison"
-
-
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
 
 
 # ─── Contrat ─────────────────────────────────────────────────────────────────

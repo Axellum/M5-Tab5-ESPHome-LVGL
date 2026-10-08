@@ -176,17 +176,23 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_tuiles_icones.py` | `tests/` | Contenu | Palette des icônes des tuiles : parties générées par `tools/gen_tuiles_icones.py` à jour (C++, glyphes MDI, blueprint). |
 | `test_zones.py` | `tests/` | Contenu | Zones optionnelles : enum `Zone`, `kCles`, demande `esphome.tab5_zones` et HA d'accord, dans l'ordre. |
 | `test_guards.py` | `tests/` | Contenu | Joue les 8 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, niveaux d'Arcanoïde, questions de Trial Poursuite, comptes de la cartographie). |
+| `test_moteurs_hote.py` | `tests/` | Contenu | Tests C++ des moteurs (audit du 07/10/2026, OUT-2) : chaque `tools/test_*.cpp` compilé et lancé par le job `python`, perft des tests C++ d'échecs et de dames égaux à leurs miroirs Python, bloc du moteur des dames extractible de `draughts_game.cpp` sans LVGL ni préférences. |
+| `conftest.py` | `tests/` | — | Pose une fois le `sys.path` des outils importés par les tests (`tools/`, `tools/demo/`, `tools/rendu/`…). |
+| `commun.py` | `tests/` | — | Utilitaires communs (OUT-3) : chemins, `lire()`, chargeurs YAML (libyaml quand elle est là), `fichiers_du_depot()` (fichiers suivis ou non ignorés), `bloc_service()`, cache Jinja de session. |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
 
 ### 3.2 Tests moteurs de jeux (`tools/`)
 
 | Fichier | Emplacement | Type | Cible |
 |---|---|---|---|
-| `test_go_engine.py` | `tools/` | Unitaire (miroir Python) | Règles Go : capture, suicide, ko, territoire, score. |
-| `test_chess_perft.py` | `tools/` | Unitaire (miroir Python) | Générateur d'échecs contre la suite perft standard. |
-| `test_draughts_engine.py` | `tools/` | Unitaire (miroir Python) | Générateur de dames (10×10 et 8×8) contre les perft de référence + règles (prise majoritaire, dame volante, promotion). |
-| `test_go_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Même suite compilée contre le vrai `go_engine.cpp` — g++ en CI (job `python`). |
+| `test_go_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Règles du Go contre le vrai `go_engine.cpp` : capture, suicide, ko, œil, handicap, territoire, score, parties aléatoires — g++ en CI (job `python`). Seul test du Go : son miroir Python, doublon, est retiré le 08/10/2026. |
+| `test_chess_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Le vrai `chess_ai.cpp` contre la suite perft (5 positions, 17 profondeurs) et une recherche courte, sous ASan + UBSan — g++ en CI (job `python`). Fait foi. |
+| `test_draughts_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Le `Draughts::Engine` de `draughts_game.cpp` (extrait au build par `tools/hote/extraire_moteur_dames.py`) contre les perft 10×10 et 8×8 et les règles, sous ASan + UBSan — g++ en CI (job `python`). Fait foi. |
+| `test_chess_perft.py` | `tools/` | Unitaire (miroir Python) | Générateur d'échecs contre la suite perft standard ; miroir de `test_chess_engine.cpp`, gardé pour un poste sans g++. |
+| `test_draughts_engine.py` | `tools/` | Unitaire (miroir Python) | Générateur de dames (10×10 et 8×8) contre les perft de référence + règles (prise majoritaire, dame volante, promotion) ; miroir de `test_draughts_engine.cpp`, gardé pour un poste sans g++. |
+| `hote/` | `tools/` | Support | `esphome.h` minimal (journal, `millis()`) pour compiler un moteur hors ESPHome, et `extraire_moteur_dames.py`. |
 | `test_alarm_clock.cpp` | `tools/` | Unitaire (C++ hôte) | Moteur du réveil réel (`alarm_clock.cpp` + `tab5_core.cpp`) : 13 scénarios, horloge simulée, fuseau Europe/Paris et changements d'heure — g++ en CI (job `python`). |
+| `test_tab5_socle.cpp` | `tools/` | Unitaire (C++ hôte) | Socle commun (`tab5_champs.cpp` + `tab5_core.cpp`, lot L5) : lecture bornée des payloads, dates, heures « HH:MM », géométrie et modèle des tuiles — g++ en CI (job `python`). |
 
 ### 3.3 Outils de validation (intégration)
 
@@ -210,7 +216,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `tools/cartographie_counts.py` | `tools/` | Garde-fou | Comptes de lignes de `CARTOGRAPHIE_TAB5.md` à 20 % près ; `--write` les recalcule. |
 | `.pre-commit-config.yaml` | Racine | Config | yamllint (dont `*.yaml.example`), BOM, secrets, fuite d'identifiants HA — rejoué par la CI. |
 | `pyproject.toml` | Racine | Config | `testpaths = tests, tools` : `pytest` nu ne ramasse plus `archives/`. |
-| `requirements-dev.txt` | Racine | Config | Dépendances des outils (pytest, numpy, aioesphomeapi, fonttools, pre-commit, yamllint) — pas le firmware. |
+| `requirements-dev.txt` | Racine | Config | Dépendances des outils (pytest, numpy, aioesphomeapi, fonttools, pyserial, pre-commit, yamllint) — pas le firmware. |
 
 ### 3.4 Commandes de lancement
 
@@ -218,8 +224,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 # Tous les tests (tests/ + moteurs de jeux sous tools/ — cf. pyproject.toml)
 python -m pytest
 
-# Tests moteurs de jeux (miroirs Python ; le vrai C++ ne se compile qu'en CI, g++)
-python tools/test_go_engine.py
+# Tests moteurs de jeux (miroirs Python ; le vrai C++, qui fait foi, ne se compile qu'en CI, g++)
 python tools/test_chess_perft.py
 python tools/test_draughts_engine.py
 
@@ -239,7 +244,9 @@ python tools/demo/demo_pusher.py --dry-run
 00ProjetTab/
 ├── tests/
 │   ├── __init__.py
-│   └── test_*.py   (62 fichiers au 08/10/2026, un par ligne du § 3.1)
+│   ├── conftest.py   (sys.path des outils)
+│   ├── commun.py   (utilitaires communs)
+│   └── test_*.py   (63 fichiers au 08/10/2026, un par ligne du § 3.1)
 ├── tools/
 │   ├── demo/
 │   │   ├── demo_pusher.py
@@ -257,9 +264,12 @@ python tools/demo/demo_pusher.py --dry-run
 │   ├── rendu/   (captures du rendu hors tablette)
 │   ├── sanitizers/   (fuzz et cas ciblés sous ASan + UBSan)
 │   ├── site/   (construction du site de documentation)
-│   ├── test_go_engine.py
+│   ├── hote/   (esphome.h minimal, extraction du moteur des dames)
 │   ├── test_go_engine.cpp
+│   ├── test_chess_engine.cpp
+│   ├── test_draughts_engine.cpp
 │   ├── test_alarm_clock.cpp
+│   ├── test_tab5_socle.cpp
 │   ├── test_chess_perft.py
 │   ├── test_draughts_engine.py
 │   ├── check_arkanoid_levels.py
@@ -287,13 +297,13 @@ python tools/demo/demo_pusher.py --dry-run
 
 ## 5. Notes importantes
 
-- **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs, dames) disposent de tests exécutables sur PC.
-- **Les tests Go/échecs/dames sont des miroirs Python** du C++ : toute modification du C++ doit être reflétée dans le miroir Python, sinon le test ne prouve plus rien. Exception : `test_go_engine.cpp` compile le vrai moteur Go (g++, en CI).
-- **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`, PR + push sur `main`) : job `changes` (filtre des chemins) ; job `python` (pre-commit, `pytest`, moteur Go C++, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.1.0`, image `latest` = canari amont voulu, ADR-0016, ccache conservé entre runs) seulement si `tab5-ha-hmi.yaml`, `Tab5/` (hors `.md`) ou le workflow changent ; job `build-min`, même compilation avec la version plancher lue dans `min_version:` (26/09/2026). `python`, `build` et `build-min` sont des checks requis de `main` ; `build` reste présent et passe en « skipped » sinon. Job `build-revisions` (non requis) : les révisions d'écran ST7121 et ILI9881C compilées en parallèle. Artefact `tab5-firmware` publié sur `main`. Durées sur `main` le 07/10/2026 : `python` 3 à 6 min, `build` ~5 min, `build-min` ~6 min, `build-revisions` 5 à 8 min.
+- **Pas de suite de tests unitaires pour la HMI** : la logique LVGL (`tab5_*.cpp`) n'a pas de tests hôte. Seuls les moteurs de jeux (Go, échecs, dames), le réveil et le socle commun (`tab5_champs`, `tab5_core`) disposent de tests C++ hôte.
+- **Les tests C++ des moteurs font foi** (08/10/2026, OUT-2) : `test_go_engine.cpp`, `test_chess_engine.cpp` et `test_draughts_engine.cpp` compilent le vrai moteur (g++, en CI ; échecs et dames sous ASan + UBSan). Les miroirs Python des échecs et des dames restent pour le poste de dev sans g++ : toute modification du C++ doit y être reflétée, et `tests/test_moteurs_hote.py` tient leurs perft égaux à ceux du C++.
+- **CI GitHub Actions** (`.github/workflows/esphome-tab5.yml`, PR + push sur `main`) : job `changes` (filtre des chemins) ; job `python` (pre-commit, `pytest`, moteurs Go, échecs, dames et réveil en C++, dry-run démo) ; job `build` (secrets factices + `esphome/build-action@v8.1.0`, image `latest` = canari amont voulu, ADR-0016, ccache conservé entre runs) seulement si `tab5-ha-hmi.yaml`, `Tab5/` (hors `.md`) ou le workflow changent ; job `build-min`, même compilation avec la version plancher lue dans `min_version:` (26/09/2026). `python`, `build` et `build-min` sont des checks requis de `main` ; `build` reste présent et passe en « skipped » sinon. Job `build-revisions` (non requis) : les révisions d'écran ST7121 et ILI9881C compilées en parallèle. Artefact `tab5-firmware` publié sur `main`. Durées sur `main` le 07/10/2026 : `python` 3 à 6 min, `build` ~5 min, `build-min` ~6 min, `build-revisions` 5 à 8 min.
 - **Installation dans un HA neuf** (`.github/workflows/installation-ha.yml`, 28/09/2026, ~3 min, non requis) : Home Assistant figé en conteneur (`HA_IMAGE`) + la tablette virtuelle (`tab5-rendu-host.yaml` compilé sous le nom `tab5-ha-hmi`), installés comme par un nouvel utilisateur (`tools/installation_ha/`) : tous les packages rendus et `check_config`, puis l'ordre « Sans compiler » du guide (onboarding, ajout ESPHome sans l'option « actions HA », automatisation du blueprint) et un redémarrage de la tablette, puis deux demandes de la tablette de bout en bout (calendrier par le select « Aller à l'écran », « MAJ Écran » par le doigt virtuel) et un redémarrage de HA forgé par un autre appareil, qui doit être ignoré. Échoue si la clé API n'est pas donnée et gardée par HA, si la clé nulle ou le clair passent encore, si `esphome.tab5_connected` n'arrive pas après la clé, si une trace du blueprint ou de la poussée complète n'aboutit pas, si « Zones masquées » diffère, si la capture demandée par HA manque, si la clé ne survit pas au redémarrage, si une demande de la tablette n'aboutit pas, si HA a refusé une action de l'appareil (réparation « service_calls_not_allowed »), ou si le journal de HA a une erreur Tab5 après la connexion (hors « Not connected » pendant une déconnexion voulue, rapportée). Artefact `installation-ha` : deux captures (juste après l'automatisation du blueprint, puis après le redémarrage), journaux de HA et de la tablette. Sur les PR et `main` qui touchent HA, l'API ou la tablette virtuelle, et à la main. Ne teste pas l'interface de HA cliquée par un humain, la page de flashage ni le vrai matériel.
 - **Intégration HACS** (`.github/workflows/integration-hacs.yml`, 07/10/2026, non requis, ADR-0035) : `hassfest` et la validation HACS par leurs images ghcr.io, puis `tools/installation_ha/verifier_integration.py` dans un Home Assistant neuf (même `HA_IMAGE` que le test ci-dessus) : première installation des fichiers sans redémarrage (`rest_command` chargé à chaud), mise à jour comme HACS (sauvegarde, fichier modifié à la main nommé, fichier retiré), configuration cassée remise comme avant avec la réparation « configuration_invalide », ligne `packages:` absente (réparation) puis remise. Le firmware enchaîné n'y est pas exercé (pas de tablette). Artefact `integration-hacs` : journal de HA.
-- **Sanitizers** (`.github/workflows/sanitizers.yml`, 01/10/2026, ~20 min, non requis) : la tablette virtuelle compilée avec AddressSanitizer et UndefinedBehaviorSanitizer (`tools/sanitizers/`), après un témoin positif ; fuzzing de tous les services du contrat, cas de conversions hors bornes fenêtre ouverte, tous les écrans. Échoue au premier rapport lu dans le journal de la tablette (UBSan écrit sur la sortie d'erreur et ignore `log_path`), si la tablette s'arrête ou si le programme a été compilé sans sanitizers. Artefact `sanitizers` : journaux, `fuzz.md`, `cibles.md`, reproducteurs.
-- **Rendu hors tablette** (`.github/workflows/rendu-host.yml`, ADR-0021, non requis) : `tab5-rendu-host.yaml` compilé pour la plateforme `host`, scènes du mode démo puis chaque fenêtre, sous-fenêtre et écran de jeu dans les sept langues (`tools/rendu/`) ; comparaison informative au dernier run de `main`. Seule comparaison bloquante : la tâche des thèmes, bascule à chaud = démarrage à froid au pixel près.
+- **Sanitizers** (`.github/workflows/sanitizers.yml`, 01/10/2026, ~25 min, non requis, paquets pip en cache par version d'ESPHome) : la tablette virtuelle compilée avec AddressSanitizer et UndefinedBehaviorSanitizer (`tools/sanitizers/`), après un témoin positif ; fuzzing de tous les services du contrat, cas de conversions hors bornes fenêtre ouverte, tous les écrans. Échoue au premier rapport lu dans le journal de la tablette (UBSan écrit sur la sortie d'erreur et ignore `log_path`), si la tablette s'arrête ou si le programme a été compilé sans sanitizers. Artefact `sanitizers` : journaux, `fuzz.md`, `cibles.md`, reproducteurs.
+- **Rendu hors tablette** (`.github/workflows/rendu-host.yml`, ADR-0021, non requis) : `tab5-rendu-host.yaml` compilé une fois pour la plateforme `host` (tâche `compiler`, programme passé en artefact aux tâches `rendu`, 08/10/2026), scènes du mode démo puis chaque fenêtre, sous-fenêtre et écran de jeu dans les sept langues (`tools/rendu/`) ; comparaison informative au dernier run de `main`. Seule comparaison bloquante : la tâche des thèmes, bascule à chaud = démarrage à froid au pixel près.
 - **Site** (`.github/workflows/site.yml`, ADR-0022 et ADR-0030) : racine, page de flashage, manifestes des releases (`tools/publication/pages.py`) et documentation en/fr construite par MkDocs (`tools/site/construire.py`) ; lancé par `publication.yml`, par un push sur `main` qui touche le site, ou à la main.
 - **Publication** (`.github/workflows/publication.yml`, ADR-0022) : à une release, les trois révisions d'écran compilées et signées (environnement protégé `publication`), binaires, archives `tab5_home_assistant.zip` et `tab5_hacs.zip`, ELF gardés 90 jours, puis `site.yml`.
 - **Fichiers gitignorés** : `secrets.yaml` (2.x), `*.pem` / `*.key` (clé de signature), `tools/demo/cle_demo.txt`, `Tab5/user_entities.yaml`, `HomeAssistant_Config/placeholders.yaml`, `HomeAssistant_Config/rendered/`, les anciennes copies privées `automations_tab5.yaml` / `scripts_tab5.yaml` / `template_sensors_meteo_tab5.yaml` (obsolètes, gardées ignorées), `Tab5/tts_library*/`, `archives/`.

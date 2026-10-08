@@ -17,24 +17,12 @@ import re
 import sys
 
 import yaml
+from tests.commun import ChargeurSansBalises as _Chargeur, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools", "installation_ha"))
 
 import preparer_config as preparer  # noqa: E402
 import verifier_installation as verifier  # noqa: E402
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
 def test_preparer_ecrit_une_installation_complete(tmp_path):

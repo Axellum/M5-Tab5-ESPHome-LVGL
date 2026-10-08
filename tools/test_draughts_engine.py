@@ -16,6 +16,15 @@
       justes ; s'ils divergent, le bug est dans l'un des deux (ou les deux).
       Il ne valide PAS le binaire compilé.
 
+@reference La RÉFÉRENCE est tools/test_draughts_engine.cpp : le VRAI moteur
+      (bloc Draughts::Engine de draughts_game.cpp, extrait par
+      tools/hote/extraire_moteur_dames.py), compilé par g++ sous ASan + UBSan
+      contre les mêmes perft (jusqu'à 7 en 10×10 et 8 en 8×8) et les mêmes règles,
+      dans le job `python` de la CI (depuis le 08/10/2026 ; constat OUT-2 de
+      l'audit du 07/10/2026). Si les deux divergent, le test C++ fait foi. Ce
+      miroir reste pour le poste de dev, qui n'a pas de g++.
+      tests/test_moteurs_hote.py tient les valeurs perft égales des deux côtés.
+
 @ai_instruction Toute modification de gen_moves() / search_*_caps() /
       apply_move() dans draughts_game.cpp doit être répercutée ici, et ce
       script re-exécuté (`pytest` le joue aussi, donc la CI).

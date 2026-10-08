@@ -15,14 +15,13 @@ import fnmatch
 import re
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 import yaml
+from tests.commun import ChargeurEntrees as _Chargeur
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "tools"))
 
 import check_tab5_code_rules  # noqa: E402
 import gen_tuiles_icones as gen  # noqa: E402
@@ -41,13 +40,6 @@ DOMAINES_ADR = {
     "bin": ["binary_sensor", "device_tracker", "person", "lock"],
     "cli": ["climate"],
 }
-
-
-class _Chargeur(yaml.SafeLoader):
-    pass
-
-
-_Chargeur.add_constructor("!input", lambda chargeur, noeud: {"!input": chargeur.construct_scalar(noeud)})
 
 
 def test_check_propre(capsys):

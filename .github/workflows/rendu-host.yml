@@ -17,6 +17,9 @@ name: Rendu hors tablette
 # thème dans ses deux modes, choisis à chaud l'un après l'autre, puis chacun après un
 # démarrage à froid ; les deux séries doivent être identiques au pixel près (un écart =
 # une forme, une police ou une couleur qu'un thème laisse au suivant).
+# Tâche « compiler » (OUT-6 de l'audit du 07/10/2026) : le rendu est compilé UNE fois et
+# passé en artefact aux neuf tâches « rendu », qui le recompilaient chacune (~2 min de
+# runner par tâche) ; les paquets pip d'ESPHome sont gardés en cache par version.
 
 on:
   workflow_dispatch:
@@ -66,7 +69,60 @@ permissions:
   actions: read   # captures du dernier run de main (références des écrans)
 
 jobs:
+  compiler:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      esphome: ${{ steps.version.outputs.esphome }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Version plancher d'ESPHome (min_version de tab5-ha-hmi.yaml)
+        id: version
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          echo "ESPHome $v" >> "$GITHUB_STEP_SUMMARY"
+          echo "esphome=$v" >> "$GITHUB_OUTPUT"
+      # Paquets pip téléchargés, par version d'ESPHome (même clé, lue seulement, dans les
+      # tâches « rendu »).
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/pip
+          key: pip-esphome-${{ steps.version.outputs.esphome }}-py3.13
+      - name: ESPHome à la version plancher
+        # Réessais : PyPI répond parfois « from versions: none » (tools/ci/pip_reessai.sh).
+        # Pillow aussi, pour que le cache le garde pour les tâches « rendu ».
+        env:
+          ESPHOME_VERSION: ${{ steps.version.outputs.esphome }}
+        run: bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
+      # Plateforme `native` et outils de PlatformIO, par version d'ESPHome : sur la PR #391,
+      # leur téléchargement a pris 3,5 min (délais du registre de PlatformIO) pour ~1 min de
+      # compilation.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.platformio
+          key: pio-host-${{ steps.version.outputs.esphome }}
+      - name: Compiler le rendu (plateforme host)
+        # Le fuseau d'une horloge `host` est celui de la compilation (le runner est en UTC).
+        env:
+          TZ: Europe/Paris
+        run: |
+          esphome compile tab5-rendu-host.yaml
+          prog=$(find .esphome/build/tab5-rendu -name program -type f | head -n 1)
+          echo "Programme : $prog ($(du -h "$prog" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p rendu-programme
+          cp "$prog" rendu-programme/program
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: rendu-programme
+          path: rendu-programme/program
+          if-no-files-found: error
+          retention-days: 1
+
   rendu:
+    needs: compiler
     runs-on: ubuntu-latest
     # La galerie démarre le rendu une fois par thème et par mode (36 démarrages à froid).
     timeout-minutes: ${{ matrix.langue == 'galerie' && 45 || 30 }}
@@ -79,18 +135,22 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
-      - name: ESPHome à la version plancher (min_version de tab5-ha-hmi.yaml), Pillow, faketime
-        run: |
-          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
-          echo "ESPHome $v" >> "$GITHUB_STEP_SUMMARY"
-          # Réessais : PyPI répond parfois « from versions: none » (tools/ci/pip_reessai.sh).
-          bash tools/ci/pip_reessai.sh "esphome==$v" pillow
-          sudo apt-get install -y --no-install-recommends faketime
-      - name: Compiler le rendu (plateforme host)
-        # Le fuseau d'une horloge `host` est celui de la compilation (le runner est en UTC).
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/pip
+          key: pip-esphome-${{ needs.compiler.outputs.esphome }}-py3.13
+      - name: ESPHome à la version plancher (son aioesphomeapi sert à capturer.py), Pillow, faketime
         env:
-          TZ: Europe/Paris
-        run: esphome compile tab5-rendu-host.yaml
+          ESPHOME_VERSION: ${{ needs.compiler.outputs.esphome }}
+        run: |
+          # Réessais : PyPI répond parfois « from versions: none » (tools/ci/pip_reessai.sh).
+          bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
+          sudo apt-get install -y --no-install-recommends faketime
+      - name: Rendu compilé par la tâche « compiler »
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: rendu-programme
+          path: rendu-programme
       - name: Lancer le rendu et capturer scènes et écrans (${{ matrix.langue }})
         # Date et heure FIGÉES (faketime sans « @ » : l'horloge ne tourne pas), pour le rendu
         # ET le script : l'heure affichée et le « dans N mn » de la pluie ne changent pas
@@ -110,7 +170,9 @@ jobs:
           LANGUE: ${{ matrix.langue }}
           SEULEMENT: ${{ inputs.seulement }}
         run: |
-          prog=$(find .esphome/build/tab5-rendu -name program -type f | head -n 1)
+          # Un artefact ne garde pas le bit d'exécution.
+          prog="$PWD/rendu-programme/program"
+          chmod +x "$prog"
           echo "Programme : $prog"
           mkdir -p captures
           export ESPHOME_SNAPSHOT_DIR="$PWD/captures"

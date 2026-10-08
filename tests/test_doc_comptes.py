@@ -41,9 +41,9 @@ ne se périme plus. Un motif qui ne trouve plus rien fait échouer le test : le 
 changé, il faut adapter le motif, pas le laisser vérifier le vide."""
 import pathlib
 import re
-import sys
 
 import pytest
+from tests.commun import lire as _lire
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 ENTREE = REPO / "tab5-ha-hmi.yaml"
@@ -65,10 +65,6 @@ _UNITES_FR = ("zéro un deux trois quatre cinq six sept huit neuf dix onze douze
               "quatorze quinze seize dix-sept dix-huit dix-neuf").split()
 _DIZAINES_EN = "twenty thirty forty fifty".split()
 _DIZAINES_FR = "vingt trente quarante cinquante".split()
-
-
-def _lire(chemin):
-    return chemin.read_text(encoding="utf-8")
 
 
 def _en_lettres(n):
@@ -345,7 +341,6 @@ def test_nombre_de_themes(chemin, motif):
 AGENTS = REPO / "AGENTS.md"
 DEMO_MODE = REPO / "docs" / "demo_mode.md"
 SERVICES_CPP = REPO / "Tab5" / "tab5_services.cpp"
-sys.path.insert(0, str(REPO / "tools" / "demo"))
 
 import demo_pusher  # noqa: E402
 import scenarios  # noqa: E402

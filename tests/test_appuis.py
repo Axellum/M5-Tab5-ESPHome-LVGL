@@ -24,6 +24,7 @@ import pytest
 import yaml
 
 from tests.test_tuiles_blueprint import Passage, _evenement
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TAB5 = os.path.join(REPO, "Tab5")
@@ -63,11 +64,6 @@ EN_TETES = {
     "ENERGIE": "energie_popup.yaml", "REGLAGES": "reglages_popup.yaml", "ALERTES": "alertes_popup.yaml",
     "MAISON": "maison_popup.yaml",
 }
-
-
-def _lire(chemin):
-    with open(chemin, encoding="utf-8") as f:
-        return f.read()
 
 
 def _fonction(texte, signature):

@@ -5,12 +5,9 @@ Une recompilation d'une version publiée ne diffère que par l'heure de compilat
 empreintes et la signature SBv2 (dernier secteur de 4 096 octets, magie 0xE7) : son ELF
 décode alors les plantages de l'image publiée. Au-delà, ce n'est pas le même code."""
 import os
-import sys
-from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools" / "publication"))
 
 import meme_code as mc  # noqa: E402
 

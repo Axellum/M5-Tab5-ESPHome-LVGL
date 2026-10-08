@@ -15,23 +15,15 @@ Aucun compilateur ne relie les trois côtés ; ce fichier le fait :
 - le rendu hors tablette capture les lignes 2 et 3 de la démo, et revient à la première."""
 import os
 import re
-import sys
 
 import pytest
 
-sys.path.insert(0, os.path.dirname(__file__))
-import test_tuiles_blueprint as bp  # noqa: E402
+from tests import test_tuiles_blueprint as bp  # noqa: E402
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(REPO, "tools", "demo"))
-sys.path.insert(0, os.path.join(REPO, "tools", "rendu"))
 import ecrans  # noqa: E402
 import scenarios  # noqa: E402
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 def _constante(source, nom):

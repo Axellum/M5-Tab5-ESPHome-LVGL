@@ -4,6 +4,7 @@ pytest>=9.1.1          # tests/ + tools/test_*.py (config : pyproject.toml)
 numpy>=2.5.3        # tools/check_marble_rooms.py (grille d'occupation de la bille)
 aioesphomeapi      # tools/demo/demo_pusher.py (mode démo sans Home Assistant)
 fonttools>=4.66.0    # tools/make_chess_font.py (sous-ensemble ChessPieces.ttf)
+pyserial>=3.5        # tools/capture_serie.py, tools/improv_serie.py (port USB) ; sans lui, tests/test_capture_serie.py sautait en CI
 pre-commit>=4.6.2    # hooks locaux (.pre-commit-config.yaml) : yamllint, BOM, secrets, placeholders HA
 yamllint>=1.38     # lint YAML (.yamllint) — lancé par pre-commit et par la CI
 pyyaml             # tools/gen_i18n.py, tests/test_emplacements.py (lecture du blueprint) ; aussi tiré par yamllint

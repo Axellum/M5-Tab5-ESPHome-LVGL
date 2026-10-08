@@ -14,20 +14,14 @@ Aucun compilateur ne relie le blueprint et le firmware ; ce fichier le fait :
 - la carte : zone tactile du salon, − / + et valeur qui passent par le module."""
 import os
 import re
-import sys
 
 import pytest
 import yaml
 
-sys.path.insert(0, os.path.dirname(__file__))
-import test_tuiles_blueprint as bp  # noqa: E402
+from tests import test_tuiles_blueprint as bp  # noqa: E402
+from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-
-def _lire(*chemin):
-    with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return f.read()
 
 
 CPP = _lire("Tab5", "tab5_reglables.cpp")
@@ -419,8 +413,6 @@ def test_liste_refermee_avec_les_popups_et_seule():
 # La démo et le rendu hors tablette
 # ─────────────────────────────────────────────────────────────────────────────
 
-sys.path.insert(0, os.path.join(REPO, "tools", "demo"))
-sys.path.insert(0, os.path.join(REPO, "tools", "rendu"))
 import ecrans  # noqa: E402
 import scenarios  # noqa: E402
 

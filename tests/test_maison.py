@@ -17,19 +17,15 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from tests.commun import lire as _lire
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "tools"))
 
 from check_tab5_code_rules import MDI_CODE_TARGETS, font_glyphs  # noqa: E402
 import check_tab5_modal_chrome  # noqa: E402
 
 TAB5 = REPO / "Tab5"
 UI = TAB5 / "ui_components"
-
-
-def _lire(*chemin):
-    return REPO.joinpath(*chemin).read_text(encoding="utf-8")
 
 
 def _fonction(source, nom):
