@@ -9,6 +9,29 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Rangement de `Tab5/` en sous-dossiers
+
+Aucun changement visible ni de comportement : le firmware généré est le même, seuls les
+chemins changent.
+
+- **Les 116 fichiers de la racine de `Tab5/` rangés en quatre dossiers** (`git mv`,
+  historique gardé) : `socle/` (le C++ pur, compilé et testé sur PC sans ESPHome ni LVGL),
+  `ecran/` (la couche LVGL, dont `tab5_custom.h`), `jeux/` (les huit consoles et
+  `game_common.h`), `paquets/` (les paquets ESPHome : `tab5-*.yaml`, `ecran-*.yaml`,
+  `publication-*.yaml`). Les trois polices d'icônes et la licence de ChessPieces rejoignent
+  `fonts/`. Restent à la racine : `README.md`, `user_entities*.yaml`, `tuiles_icones.yaml`.
+  La table de correspondance est dans `CARTOGRAPHIE_TAB5.md` (§ 1) et dans `Tab5/README.md`.
+- **Aucun `#include` ne change** : ESPHome copie à plat chaque fichier de `includes:`, d'où
+  des noms uniques entre dossiers. Un paquet inclut ses composants par `../ui_components/`.
+- **Outils et tests** : `tools/tab5_sources.py` trouve une source où qu'elle soit rangée
+  (les globs sur la racine de `Tab5/` ne trouveraient plus rien) ; `tests/test_rangement.py`
+  garde le rangement (racine vide, noms uniques, `includes:` existants, `socle/` pur). Les
+  compilations g++ de la CI prennent `-I Tab5/socle` et `-I Tab5/jeux`.
+- **`AGENTS.md`** : l'état vrai de `tab5_maj_planning` (obsolète, aucun appelant ni dans le
+  dépôt ni dans le Home Assistant de l'auteur, gardé jusqu'à une future version majeure).
+
+Les anciens chemins restent tels quels dans les entrées plus anciennes de ce fichier.
+
 ### 2026-10-08 — Météo : mention « prévisions périmées » au-dessus des tuiles
 
 - **Prévisions qui n'arrivent plus, dites à l'écran** : après l'incident du 07-08/10

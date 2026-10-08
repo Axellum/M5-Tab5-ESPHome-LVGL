@@ -14,6 +14,19 @@ Repo Git distinct : `Axellum/M5-Tab5-ESPHome-LVGL` (dossier local `00ProjetTab/`
 
 Un tableau de bord domotique natif (LVGL, redessin des seules zones qui changent) + satellite vocal local + **8 consoles de jeu arcade** (prototypes expérimentaux) tournant **entièrement en firmware C++/LVGL** sur un M5Stack Tab5 V2 (ESP32-P4), architecture **YAML modulaire par domaine** (30 packages + `ui_components/`), **push-only** depuis Home Assistant (zéro polling), avec la logique HMI centralisée dans `tab5_custom.h/.cpp` et chaque jeu dans son propre namespace C++ isolé.
 
+**Rangement de `Tab5/` (08/10/2026)** — les tableaux ci-dessous nomment les fichiers sans leur dossier :
+
+| Dossier | Contenu | Critère |
+|---|---|---|
+| `Tab5/socle/` (17) | `tab5_core`, `tab5_champs`, `tab5_i18n` (+ `tab5_i18n_data.h`), `alarm_clock`, `tab5_economie`, `tab5_batterie.h`, `tab5_geometrie.h`, `tab5_modele_ha.h`, `tab5_tokens.h`, `tab5_themes_data.h`, `tab5_tuiles_icones.h` | compile et se teste sur PC sans ESPHome ni LVGL (n'inclut que la bibliothèque standard et le socle, `tests/test_rangement.py`) |
+| `Tab5/ecran/` (33) | `tab5_custom.h/.cpp`, `tab5_internal.h`, `tab5_tuiles_priv.h`, les `tab5_*.cpp` LVGL, `tab5_registry`, `alarm_render`, **`tab5_batterie.cpp`** | la couche LVGL / ESPHome. `tab5_batterie.cpp` journalise par `ESP_LOGI` (ESPHome) : il reste ici, son en-tête pur `tab5_batterie.h` est dans `socle/` (lu par `tools/test_alarm_clock.cpp`) |
+| `Tab5/jeux/` (26) | les huit consoles (`*_game`, `chess_ai`, `go_engine`, `go_ai`, `draughts_ai`, `trivia_questions.h`) et `game_common.h` | les jeux, même purs (`go_engine`, `chess_ai`) |
+| `Tab5/paquets/` (36) | `tab5-*.yaml`, `ecran-*.yaml`, `publication-*.yaml`, `pot_sensors.yaml` | les paquets ESPHome ; ils incluent `../ui_components/` (chemin relatif au paquet) |
+| `Tab5/fonts/` | + `materialdesignicons-webfont.ttf`, `IconeMeteo.ttf`, `ChessPieces.ttf` et sa licence | toutes les polices |
+| `Tab5/` (racine) | `user_entities.yaml` (+ `.example`), `tuiles_icones.yaml` (source de `tools/gen_tuiles_icones.py`), `README.md` | — |
+
+ESPHome copie à plat dans son `src/` chaque fichier de `includes:` (`esphome/core/config.py`, `add_includes`) : les `#include` ne portent pas de sous-dossier et deux fichiers ne peuvent pas porter le même nom. Outils et tests trouvent un fichier par son nom avec `tools/tab5_sources.py`.
+
 ---
 
 ## 2. Diagramme Mermaid — arbre des dépendances
@@ -264,7 +277,7 @@ Point notable vérifié dans le code : le délai bloquant `on_boot:priority:700:
 
 ### 3.3 C++ core
 
-Avant d'écrire un utilitaire : la « boîte à outils » d'[`AGENTS.md`](AGENTS.md) (section « Toolbox ») liste ceux qui existent (fichier de chacun) ; conventions du nouveau code dans [`Tab5/README.md`](Tab5/README.md).
+Fichiers de `Tab5/socle/`, `Tab5/ecran/` et `Tab5/jeux/` (table du § 1). Avant d'écrire un utilitaire : la « boîte à outils » d'[`AGENTS.md`](AGENTS.md) (section « Toolbox ») liste ceux qui existent (fichier de chacun) ; conventions du nouveau code dans [`Tab5/README.md`](Tab5/README.md).
 
 | Fichier | Lignes | Rôle exact | Fonctions clés |
 |---|---|---|---|

@@ -113,6 +113,8 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | Fichier | Emplacement | Type | Cible |
 |---|---|---|---|
 | `test_verifier_secrets_config.py` | `tests/` | Unitaire | Détection de secrets en clair dans les fichiers suivis (`tools/verifier_secrets_config.py`) : valeurs factices, pragma, `git ls-files`, `secrets.yaml` suivi. |
+| `test_rangement.py` | `tests/` | Garde-fou | Rangement de `Tab5/` (08/10/2026) : racine sans fichier du firmware, noms uniques (ESPHome copie les `includes:` à plat), `includes:` existants, `socle/` pur (ni ESPHome ni LVGL), paquets qui incluent `../ui_components/`. |
+| `test_batterie.py` | `tests/` | Contenu | Batterie et chargeur : select « Tab5 Limite de charge » dans l'ordre de `LimiteCharge`, CHG_EN commandé par un seul interval, lectures de l'INA226, consommation et événement de batterie faible. |
 | `test_rendu_ecrans.py` | `tests/` | Contenu | Plan des écrans du rendu (`tools/rendu/ecrans.py`) : noms uniques, appuis dans l'écran, options du select « Aller à l'écran » et actions de l'API qui existent. |
 | `test_rendu_host.py` | `tests/` | Contenu | Rendu hors tablette (ADR-0021) : lambdas de l'`on_boot` copiées telles quelles de `tab5-ha-hmi.yaml`, mêmes sources C++, chaque package repris ou déclaré matériel, bouchons absents du firmware. |
 | `test_horloge.py` | `tests/` | Contenu | Géométrie de l'horloge à rouleau, posée dans `Tab5/paquets/tab5-lvgl.yaml` seulement : recalculée depuis les métriques de Roboto 700 (taille lue dans `tab5-styles.yaml`), chaque cadre contient toute l'encre des chiffres, a la largeur d'un chiffre, HH:MM centré dans la tuile, « : » à la hauteur des chiffres, cadres au-dessus de la date ; les 4 rouleaux viennent du gabarit `ui_components/clock_roller.yaml` (déplié comme ESPHome). |
@@ -213,6 +215,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `tools/check_trivia_questions.py` | `tools/` | Garde-fou | La banque de « Trial Poursuite » (`trivia_questions.h`) : autant d'entrées que chaque `#define`, catégorie et difficulté valides, ni texte vide, ni leurre égal à la réponse, ni question en double. |
 | `tools/check_tab5_registry.py` | `tools/` | Garde-fou | ADR-0013 : chaque `*_game.h` figure dans `GameRegistry::kGames`, aucune liste de jeux recopiée dans un YAML. |
 | `tools/check_tab5_code_rules.py` | `tools/` | Garde-fou | Règles de code : `snprintf` partout, aucun `lv_*` dans le contrat API, aucun global orphelin, aucune entité HA en dur, glyphes de la date (`roboto_45`), icônes MDI couvertes par la police de leur widget sans glyphe mort (règle 7). |
+| `tools/tab5_sources.py` | `tools/` | Bibliothèque | Où sont rangées les sources du firmware (`Tab5/socle|ecran|jeux|paquets`) : `fichiers(motif…)` et `source(nom)`, pour les outils et les tests (`tests/commun.py`). |
 | `tools/cartographie_counts.py` | `tools/` | Garde-fou | Comptes de lignes de `CARTOGRAPHIE_TAB5.md` à 20 % près ; `--write` les recalcule. |
 | `.pre-commit-config.yaml` | Racine | Config | yamllint (dont `*.yaml.example`), BOM, secrets, fuite d'identifiants HA — rejoué par la CI. |
 | `pyproject.toml` | Racine | Config | `testpaths = tests, tools` : `pytest` nu ne ramasse plus `archives/`. |
@@ -246,7 +249,7 @@ python tools/demo/demo_pusher.py --dry-run
 │   ├── __init__.py
 │   ├── conftest.py   (sys.path des outils)
 │   ├── commun.py   (utilitaires communs)
-│   └── test_*.py   (63 fichiers au 08/10/2026, un par ligne du § 3.1)
+│   └── test_*.py   (67 fichiers au 08/10/2026, un par ligne du § 3.1)
 ├── tools/
 │   ├── demo/
 │   │   ├── demo_pusher.py

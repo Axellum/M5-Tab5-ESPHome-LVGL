@@ -14,6 +14,19 @@ The entry point is `../tab5-ha-hmi.yaml` at the repository root. It loads `subst
 
 The only other LVGL pages are the **9 gaming ones** (`page_arcade` + one per console), all declared `skip: true` so swipe navigation can never reach them — see the Arcade section below.
 
+**Folder layout (since 2026-10-08):**
+
+| Folder | What lives there |
+|---|---|
+| `socle/` | Pure C++ that compiles and is tested on a PC without ESPHome or LVGL (`tab5_core`, `tab5_champs`, `tab5_i18n`, `alarm_clock`, `tab5_economie`, `tab5_batterie.h`, `tab5_geometrie.h`, `tab5_modele_ha.h`, `tab5_tokens.h`, generated headers). It only includes the standard library and itself (`tests/test_rangement.py`). |
+| `ecran/` | The LVGL layer: `tab5_custom.h` (umbrella header for the YAML lambdas), `tab5_internal.h`, the `tab5_*.cpp` units, `tab5_registry`, `alarm_render`, `tab5_batterie.cpp`. |
+| `jeux/` | The eight consoles and `game_common.h`. |
+| `paquets/` | The ESPHome packages: `tab5-*.yaml`, `ecran-*.yaml`, `publication-*.yaml`, `pot_sensors.yaml`. A package includes a component as `../ui_components/x.yaml` (relative to the package). |
+| `ui_components/`, `lang/`, `themes/`, `fonts/`, `rendu/` | Unchanged: LVGL templates, screen languages, themes, fonts (icon fonts included), off-device render. |
+| *(root)* | `user_entities.yaml` (yours, gitignored) and its `.example`, `tuiles_icones.yaml` (the source read by `tools/gen_tuiles_icones.py`, not a package), this README. |
+
+ESPHome copies every file listed under `esphome: includes:` **flat** into its `src/` folder, so `#include "tab5_core.h"` works from any folder and two files must never share a name. Host builds (CI `g++`) pass the folders with `-I Tab5/socle -I Tab5/jeux`. Tools and tests find a file by its name through `tools/tab5_sources.py`.
+
 ---
 
 ## `[AI-CONTEXT]` / `[AI-WARNING]` / `[AI-DEBUG]` convention (read this before editing)
@@ -274,6 +287,8 @@ Huit consoles 100 % locales (ni Home Assistant ni réseau) : Fil d'Or, Arcanoïd
 
 Ce dossier contient les packages de configuration ESPHome et les fichiers source C++ du firmware Tab5. Point d'entrée : `../tab5-ha-hmi.yaml`.
 
+**Rangement (08/10/2026)** : `socle/` (le C++ pur, compilé et testé sur PC sans ESPHome ni LVGL), `ecran/` (la couche LVGL, dont `tab5_custom.h`), `jeux/` (les huit consoles), `paquets/` (les paquets ESPHome, qui incluent `../ui_components/`). Restent à la racine `user_entities.yaml` (+ `.example`), `tuiles_icones.yaml` (source de `tools/gen_tuiles_icones.py`, pas un paquet) et ce README. ESPHome copie à plat chaque fichier de `includes:` : un `#include` ne porte jamais de sous-dossier, et deux fichiers ne portent jamais le même nom (`tests/test_rangement.py`). Table détaillée ci-dessus (« Folder layout »).
+
 **Ce fichier est volontairement bilingue par section, pas dupliqué** (contrairement au `README.md` racine et aux `docs/*.md`) : la description fichier par fichier, la table des services HA et la table des globals sont en **anglais** ci-dessus ; les règles de code sont en **français** (les sections des 8 consoles, en français aussi, vivent dans [`docs/arcade.md`](../docs/arcade.md) depuis le 25/09/2026). Le doubler intégralement coûterait plus qu'il ne rapporte — et une traduction qui dérive est pire qu'une section unique à jour.
 
 Historique de vérification : écrit contre le code réel le 05/07/2026, re-vérifié ligne à ligne le 14/07/2026, puis le 17/07/2026, complété le 19/07/2026 (15 services dont `tab5_maj_calendrier_mois`/`_jour`, popups v2 + calendrier, télécommande TV, wake word « Stop », scripts par familles), et re-vérifié le 30/07/2026 (migration des jeux en pages LVGL dédiées, ajout des sections Coureur d'Or / Trial Poursuite / Dames Tab, `st7123` officiel).
@@ -281,6 +296,8 @@ Historique de vérification : écrit contre le code réel le 05/07/2026, re-vér
 ---
 
 ## Fichiers de polices
+
+Tous dans `fonts/` depuis le 08/10/2026 (les trois polices d'icônes et la licence de ChessPieces étaient à la racine de `Tab5/`).
 
 | Fichier | Contenu |
 |---------|---------|
@@ -291,8 +308,11 @@ Historique de vérification : écrit contre le code réel le 05/07/2026, re-vér
 
 ## Sous-répertoires
 
+### `socle/`, `ecran/`, `jeux/`, `paquets/`
+Les sources du firmware depuis le rangement du 08/10/2026 (voir « Rangement » plus haut et `tools/tab5_sources.py`).
+
 ### `ui_components/`
-Les 74 composants et templates LVGL décrits plus haut. Seul sous-répertoire versionné. (`my_components/st7123/` n'existe plus : `st7123` est une plateforme officielle depuis ESPHome 2026.7.0.)
+Les 74 composants et templates LVGL décrits plus haut. (`my_components/st7123/` n'existe plus : `st7123` est une plateforme officielle depuis ESPHome 2026.7.0.)
 
 ### `themes/`
 Un fichier par thème de l'écran (ADR-0029) : `nom`, `ordre` (la tablette garde l'index du thème : un nouveau s'ajoute à la fin), un mode `sombre:` et un mode `clair:` avec tous les rôles de `struct Palette` (`herite:` part d'un autre thème ; le verre pré-mélangé est calculé s'il manque ; un rôle peut renvoyer à un autre du même mode, `CONSOLE_VALUE: TEXT_PRIMARY`, résolu après l'héritage). `python tools/gen_themes.py` en écrit `THEMES[]` (`tab5_themes_data.h`, inclus par `tab5_theme.cpp` et `tab5_reglages.cpp` seulement), `PALETTE_SOMBRE` (`tab5_tokens.h`), les options du select « Thème » et la repeinture des styles (`tab5-themes.yaml`) ; `tests/test_themes.py` vérifie qu'ils sont à jour et que chaque mode reste lisible (contrastes WCAG). Lot 3 : `formes:` (rayon, bordure, dégradé, ombre de neuf styles partagés), `zones_sombres:` (bandeau central et horloge sombres en mode clair) et `polices:` (heure, date, titres, `Famille@graisse` de Google Fonts). Une police citée se mesure une fois par `python tools/police_theme.py` (écrit `themes/_polices.yaml` ; une police neuve est téléchargée une fois dans `fonts/` : l'ajouter, avec son copyright dans `fonts/OFL.txt`, et commiter les deux) ; `tests/test_polices_themes.py` et `tests/test_formes_themes.py` tiennent le reste. Vingt et un thèmes (Ardoise et les vingt de la galerie du 04/10/2026) ; une tablette neuve démarre en Relief doux (`initial_option` du select, `tab5-themes.yaml`).
