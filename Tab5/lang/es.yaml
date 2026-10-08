@@ -1322,3 +1322,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "%d h %02d": "%d:%02d"
 "Vigilance Rouge": "Alerta roja"
 "Vigilance Orange": "Alerta naranja"
+# Prévisions périmées (mention au-dessus des tuiles, tab5_forecast.cpp, 08/10/2026)
+"Prévisions de %d h %02d": "Previsión de las %d:%02d"
+"Prévisions d'hier %d h %02d": "Previsión de ayer %d:%02d"
+"Prévisions vieilles de %d jours": "Previsión de hace %d días"

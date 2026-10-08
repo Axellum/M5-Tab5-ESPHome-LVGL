@@ -9,6 +9,19 @@ Pré-releases tirées de cette section, sur le canal bêta :
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
 
+### 2026-10-08 — Météo : mention « prévisions périmées » au-dessus des tuiles
+
+- **Prévisions qui n'arrivent plus, dites à l'écran** : après l'incident du 07-08/10
+  (Météo-France figée de 21 h 04 à 11 h 34, puis indisponible), la tablette retient
+  l'heure de chaque poussée des prévisions (jours ou heures). Sans poussée depuis plus de
+  30 min (Home Assistant en pousse toutes les 10 min), une ligne discrète s'affiche
+  au-dessus des tuiles, à droite, avec une horloge : « Prévisions de 11 h 42 »,
+  « Prévisions d'hier 21 h 04 » ou « Prévisions vieilles de 3 jours ». En temps normal,
+  rien ne change ; rien non plus avant la première poussée, heure non réglée, ni en mode
+  appareils. Contrat inchangé (aucune variable ajoutée). Limite : une source figée que
+  Home Assistant continue de pousser n'est pas vue par la tablette, c'est à HA de cesser
+  de la pousser. Nouvelle scène du rendu hors tablette, `accueil-previsions-perimees`.
+
 ### 2026-10-08 — Code des tuiles regroupé et découpé (lot L7)
 
 Aucun changement visible voulu ; le code des tuiles se lit et se modifie en un seul endroit par
