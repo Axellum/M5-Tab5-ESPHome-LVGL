@@ -2,7 +2,7 @@
 """Popup « Réglages » (06/10/2026) : le contrat numérique entre le YAML et le C++.
 
 Les boutons de Tab5/ui_components/reglages_popup.yaml passent `reglage` (un ReglageId de
-Tab5/ecran/tab5_custom.h) et `valeur` (l'index d'une option) au script tab5_reglages_choisir ;
+Tab5/ecran/tab5_reglages.h, inclus par tab5_custom.h) et `valeur` (l'index d'une option) au script tab5_reglages_choisir ;
 tab5_reglages_ouvrir range ces boutons dans les tableaux de ReglagesUI, dimensionnés par
 REGLAGES_NB_*. Rien ne compile ce contrat : une option de plus dans un select, une langue
 de plus, un bouton oublié ou un numéro faux passent la compilation, et le bouton écrit
@@ -18,7 +18,7 @@ import pathlib
 import re
 
 import yaml
-from tests.commun import ChargeurBalisesBrutes as _Chargeur, lire as _lire, source
+from tests.commun import ChargeurBalisesBrutes as _Chargeur, contrat, lire as _lire, source
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
@@ -36,7 +36,7 @@ OUI_NON = ("REGLAGE_OKAY_NABU", "REGLAGE_TAPE", "REGLAGE_NUIT")
 
 
 def _entete():
-    return _lire(TAB5 / "ecran" / "tab5_custom.h")
+    return contrat()
 
 
 def _reglages():
@@ -51,7 +51,7 @@ def _reglages():
 
 def _nb(nom):
     m = re.search(rf"constexpr int {nom} = (\d+);", _entete())
-    assert m, f"{nom} introuvable dans tab5_custom.h"
+    assert m, f"{nom} introuvable dans tab5_custom.h et ses en-têtes"
     return int(m.group(1))
 
 

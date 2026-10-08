@@ -215,7 +215,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `tools/check_trivia_questions.py` | `tools/` | Garde-fou | La banque de « Trial Poursuite » (`trivia_questions.h`) : autant d'entrées que chaque `#define`, catégorie et difficulté valides, ni texte vide, ni leurre égal à la réponse, ni question en double. |
 | `tools/check_tab5_registry.py` | `tools/` | Garde-fou | ADR-0013 : chaque `*_game.h` figure dans `GameRegistry::kGames`, aucune liste de jeux recopiée dans un YAML. |
 | `tools/check_tab5_code_rules.py` | `tools/` | Garde-fou | Règles de code : `snprintf` partout, aucun `lv_*` dans le contrat API, aucun global orphelin, aucune entité HA en dur, glyphes de la date (`roboto_45`), icônes MDI couvertes par la police de leur widget sans glyphe mort (règle 7). |
-| `tools/tab5_sources.py` | `tools/` | Bibliothèque | Où sont rangées les sources du firmware (`Tab5/socle|ecran|jeux|paquets`) : `fichiers(motif…)` et `source(nom)`, pour les outils et les tests (`tests/commun.py`). |
+| `tools/tab5_sources.py` | `tools/` | Bibliothèque | Où sont rangées les sources du firmware (`Tab5/socle|ecran|jeux|paquets`) : `fichiers(motif…)` et `source(nom)`, pour les outils et les tests (`tests/commun.py`) ; `contrat()` : `tab5_custom.h` et les en-têtes de modules qu'il inclut. |
 | `tools/cartographie_counts.py` | `tools/` | Garde-fou | Comptes de lignes de `CARTOGRAPHIE_TAB5.md` à 20 % près ; `--write` les recalcule. |
 | `.pre-commit-config.yaml` | Racine | Config | yamllint (dont `*.yaml.example`), BOM, secrets, fuite d'identifiants HA — rejoué par la CI. |
 | `pyproject.toml` | Racine | Config | `testpaths = tests, tools` : `pytest` nu ne ramasse plus `archives/`. |

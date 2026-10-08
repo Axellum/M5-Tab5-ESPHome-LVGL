@@ -18,9 +18,13 @@
       `fichiers()` ; un fichier connu par son nom seul se trouve par `source()`. Ne pas
       reparcourir la racine de Tab5/ : un glob qui y cherche du C++ ne trouve plus rien et
       un garde-fou passerait alors à vide (tests/test_rangement.py le surveille).
+      Le contrat C++ des lambdas n'est plus le seul tab5_custom.h (08/10/2026) : c'est lui
+      et l'en-tête de chaque module qu'il inclut. Un test qui y cherchait une déclaration
+      (enum Ecran, struct ClimUI…) lit `contrat()` ; `contrat_entetes()` donne les fichiers.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -51,3 +55,16 @@ def source(nom: str, tab5: Path = TAB5) -> Path:
     if len(trouves) > 1:
         raise ValueError(f"{nom} présent deux fois : {trouves}")
     return trouves[0]
+
+
+def contrat_entetes(tab5: Path = TAB5) -> list[Path]:
+    """tab5_custom.h, puis chaque en-tête de Tab5/ecran/ qu'il inclut, dans son ordre
+    (un en-tête par module depuis le 08/10/2026 ; les en-têtes du socle n'en sont pas)."""
+    parapluie = tab5 / "ecran" / "tab5_custom.h"
+    noms = re.findall(r'^#include "(\w+\.h)"', parapluie.read_text(encoding="utf-8"), re.M)
+    return [parapluie] + [tab5 / "ecran" / n for n in noms if (tab5 / "ecran" / n).is_file()]
+
+
+def contrat(tab5: Path = TAB5) -> str:
+    """Texte du contrat C++ des lambdas : tab5_custom.h et les en-têtes de ses modules."""
+    return "\n".join(p.read_text(encoding="utf-8") for p in contrat_entetes(tab5))

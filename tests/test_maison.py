@@ -17,7 +17,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from tests.commun import lire as _lire, source
+from tests.commun import contrat, lire as _lire, source
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -75,9 +75,9 @@ def test_option_maison_du_select_a_la_fin():
     bloc = controles.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s*-\s*"([^"]+)"', bloc, re.M)
     assert options[-1] == "Maison", "à la fin : les index des autres options ne bougent pas"
-    # L'index de l'option est sa valeur d'Ecran (tab5_custom.h, tests/test_appuis.py) ; le
+    # L'index de l'option est sa valeur d'Ecran (tab5_zones.h, tests/test_appuis.py) ; le
     # select et les appuis longs passent par la routine unique tab5_ecran_ouvrir.
-    enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", _lire("Tab5", "ecran", "tab5_custom.h"), re.S).group(1)
+    enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", contrat(), re.S).group(1)
     valeurs = re.findall(r"\b([A-Z]+),", re.sub(r"//[^\n]*", "", enum))
     assert valeurs.index("MAISON") == options.index("Maison")
     script = controles.split("- id: tab5_ecran_ouvrir", 1)[1].split("\ntext_sensor:", 1)[0]

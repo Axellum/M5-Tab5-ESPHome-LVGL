@@ -13,7 +13,7 @@ import os
 import re
 
 import yaml
-from tests.commun import ChargeurSansBalises as _Chargeur, lire as _lire
+from tests.commun import ChargeurSansBalises as _Chargeur, contrat, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -66,8 +66,8 @@ def test_appelants():
 
 
 def test_fraicheur():
-    m = re.search(r"constexpr uint32_t CAL_PREFETCH_FRESH_MS = (\d+);", _lire("Tab5", "ecran", "tab5_custom.h"))
-    assert m, "CAL_PREFETCH_FRESH_MS introuvable dans tab5_custom.h"
+    m = re.search(r"constexpr uint32_t CAL_PREFETCH_FRESH_MS = (\d+);", contrat())
+    assert m, "CAL_PREFETCH_FRESH_MS introuvable dans tab5_custom.h et ses en-têtes"
     ms = int(m.group(1))
     # Au moins 10 s : les deux appels du démarrage sont à ~3 s d'écart, plus 2 s entre M
     # et M+1. Moins que les 10 min du rendu : une reconnexion doit encore rafraîchir.

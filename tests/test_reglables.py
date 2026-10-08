@@ -19,13 +19,13 @@ import pytest
 import yaml
 
 from tests import test_tuiles_blueprint as bp  # noqa: E402
-from tests.commun import lire as _lire, sources
+from tests.commun import contrat, lire as _lire, sources
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 CPP = _lire("Tab5", "ecran", "tab5_reglables.cpp")
-CUSTOM_H = _lire("Tab5", "ecran", "tab5_custom.h")
+CUSTOM_H = contrat()
 
 
 def _tableau(nom):

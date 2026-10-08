@@ -40,7 +40,7 @@ from tests.test_tuiles_blueprint import (
     _rendre,
     _tablette,
 )
-from tests.commun import lire as _lire, source
+from tests.commun import contrat, lire as _lire, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ADR = os.path.join(REPO, "docs", "decisions", "0026-climate-from-device.md")
@@ -185,7 +185,7 @@ def test_widgets_de_la_clim_poses_avant_toute_poussee():
     scripts = _lire("Tab5", "paquets", "tab5-scripts.yaml")
     bloc = scripts.split("- id: tab5_clim_ui", 1)[1].split("\n  - id: ", 1)[0]
     champs = re.findall(r"u\.(\w+) = id\(", bloc)
-    struct = re.search(r"struct ClimUI \{(.*?)\};", _lire("Tab5", "ecran", "tab5_custom.h"), re.S).group(1)
+    struct = re.search(r"struct ClimUI \{(.*?)\};", contrat(), re.S).group(1)
     assert sorted(champs) == sorted(re.findall(r"lv_obj_t\* (\w+) = nullptr;", struct))
     # L'état de la clim du blueprint (ses globals) et les deux débounces (ADR-0027).
     pointeurs = dict(re.findall(r"u\.(\w+_bp) = &id\((\w+)\);", bloc))

@@ -47,8 +47,9 @@ API = TAB5 / "paquets" / "tab5-api-logic.yaml"
 # Sources du firmware rangées dans Tab5/socle|ecran|jeux|paquets (08/10/2026) :
 # `source("x.cpp")` trouve un fichier par son nom seul, `sources("*.cpp", …)` remplace
 # un glob sur la racine de Tab5/ (qui ne trouverait plus rien). Voir tools/tab5_sources.py
-# (tools/ est dans le sys.path posé par tests/conftest.py).
-from tab5_sources import fichiers as sources, source  # noqa: E402,F401
+# (tools/ est dans le sys.path posé par tests/conftest.py). `contrat()` : le texte de
+# tab5_custom.h et des en-têtes de modules qu'il inclut (un par module depuis le 08/10/2026).
+from tab5_sources import contrat, fichiers as sources, source  # noqa: E402,F401
 
 # Chargeur C de PyYAML s'il est compilé (roues officielles), sinon le chargeur Python.
 BaseChargeur = getattr(yaml, "CSafeLoader", yaml.SafeLoader)

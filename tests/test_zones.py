@@ -3,7 +3,7 @@
 la tablette et Home Assistant tient en des clés écrites à quatre endroits, qu'aucun
 compilateur ne compare :
 
-- l'enum `Zone` (Tab5/ecran/tab5_custom.h) et le tableau `kCles` (Tab5/ecran/tab5_zones.cpp) ;
+- l'enum `Zone` (Tab5/ecran/tab5_zones.h) et le tableau `kCles` (Tab5/ecran/tab5_zones.cpp) ;
 - la demande `esphome.tab5_zones` (Tab5/paquets/tab5-zones.yaml), les clés des zones que la
   tablette suit, dans l'ordre de l'enum ;
 - la réponse de HA : depuis le lot 6a (ADR-0019), le blueprint « Tab5 — emplacements »
@@ -14,14 +14,14 @@ Une clé qui diverge ferait masquer la mauvaise zone, ou jamais la bonne, sans a
 erreur. On vérifie aussi que chaque capteur de zone signale ses données (zone_vue)."""
 import os
 import re
-from tests.commun import lire as _lire
+from tests.commun import contrat, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def _enum_zone():
-    m = re.search(r"enum class Zone : uint8_t \{(.*?)\};", _lire("Tab5", "ecran", "tab5_custom.h"), re.S)
-    assert m, "enum Zone introuvable dans tab5_custom.h"
+    m = re.search(r"enum class Zone : uint8_t \{(.*?)\};", contrat(), re.S)
+    assert m, "enum Zone introuvable dans tab5_custom.h et ses en-têtes"
     corps = "\n".join(l.split("//", 1)[0] for l in m.group(1).splitlines())
     noms = [n.strip() for n in corps.replace("\n", " ").split(",") if n.strip()]
     assert noms[-1] == "COUNT"

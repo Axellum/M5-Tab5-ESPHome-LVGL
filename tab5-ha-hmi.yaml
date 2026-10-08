@@ -92,6 +92,30 @@ esphome:
     # ligne, code d'icône) : en-tête seul et pur (lot L5).
     - Tab5/socle/tab5_modele_ha.h
     - Tab5/ecran/tab5_custom.h
+    # Un en-tête par module (08/10/2026), inclus par tab5_custom.h dans l'ordre de leurs
+    # dépendances : listés ici parce qu'ESPHome ne copie dans son build que ces fichiers.
+    - Tab5/ecran/tab5_forecast.h
+    - Tab5/ecran/tab5_services.h
+    - Tab5/ecran/tab5_anim.h
+    - Tab5/ecran/tab5_text.h
+    - Tab5/ecran/tab5_central.h
+    - Tab5/ecran/tab5_cards.h
+    - Tab5/ecran/tab5_console.h
+    - Tab5/ecran/tab5_clim.h
+    - Tab5/ecran/tab5_assist.h
+    - Tab5/ecran/tab5_calendar.h
+    - Tab5/ecran/tab5_journal.h
+    - Tab5/ecran/tab5_zones.h
+    - Tab5/ecran/tab5_tuiles.h
+    - Tab5/ecran/tab5_rangee.h
+    - Tab5/ecran/tab5_reglables.h
+    - Tab5/ecran/tab5_roue.h
+    - Tab5/ecran/tab5_energie.h
+    - Tab5/ecran/tab5_reglages.h
+    - Tab5/ecran/tab5_historique.h
+    - Tab5/ecran/tab5_alertes.h
+    - Tab5/ecran/tab5_maison.h
+    - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_custom.cpp
     # Couche C++ scindée en unités (lot (e), 08/09/2026) : tab5_custom.h reste l'unique
     # en-tête public, tab5_internal.h déclare les helpers partagés entre unités.

@@ -27,6 +27,13 @@ chemins changent.
   (les globs sur la racine de `Tab5/` ne trouveraient plus rien) ; `tests/test_rangement.py`
   garde le rangement (racine vide, noms uniques, `includes:` existants, `socle/` pur). Les
   compilations g++ de la CI prennent `-I Tab5/socle` et `-I Tab5/jeux`.
+- **Un en-tête par module** : `tab5_custom.h` (1 583 lignes) devient l'en-tête parapluie qui
+  inclut 22 en-têtes de `Tab5/ecran/`, un par module (`tab5_forecast.h`, `tab5_clim.h`,
+  `tab5_zones.h`… à côté de leur `.cpp`). Les déclarations sont recopiées telles quelles (mêmes
+  lignes, même ordre dans chaque module) ; les lambdas et les unités n'incluent toujours que
+  `tab5_custom.h`. Les deux configurations listent les nouveaux en-têtes sous `includes:`.
+  Les tests qui y cherchaient une déclaration lisent `contrat()` (`tools/tab5_sources.py`),
+  la règle 12 des règles de code aussi (mêmes 210 fonctions publiques).
 - **`AGENTS.md`** : l'état vrai de `tab5_maj_planning` (obsolète, aucun appelant ni dans le
   dépôt ni dans le Home Assistant de l'auteur, gardé jusqu'à une future version majeure).
 

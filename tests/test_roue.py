@@ -18,7 +18,7 @@ qui suit ; ce fichier lit le C++ et le YAML, comme les autres tests statiques :
 import math
 import os
 import re
-from tests.commun import lire as _lire, source
+from tests.commun import contrat, lire as _lire, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -240,7 +240,7 @@ def test_types_et_options_de_la_roue():
     fin = corps.rsplit("if (n == premiere) return 0;", 1)[1]
     assert 'ajouter(RoueAction::REGLAGES, RoueIcone::REGLAGES, RoueGenre::LIEN, false, tr("Détails"));' in fin
     # Au plus : Maison + 4 + Détails.
-    assert int(_const(_lire("Tab5", "ecran", "tab5_custom.h"), "kRoueBoutons")) == 6
+    assert int(_const(contrat(), "kRoueBoutons")) == 6
 
 
 def test_choix_des_familles():
@@ -270,7 +270,7 @@ def test_choix_des_familles():
                 in _yaml(gabarit)), gabarit
         assert "icon_color" not in _yaml(gabarit).split("button:", 1)[1], gabarit
     assert set(n for n, _ in blancs) | set(couleurs) <= set(teintes)
-    assert int(_const(_lire("Tab5", "ecran", "tab5_custom.h"), "kRoueChoix")) >= len(couleurs)
+    assert int(_const(contrat(), "kRoueChoix")) >= len(couleurs)
 
 
 def test_modes_de_la_clim_ceux_du_popup():
@@ -451,7 +451,7 @@ def test_inclus_entre_les_cartes_et_les_popups():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_widgets_et_leurs_pointeurs():
-    custom = _lire("Tab5", "ecran", "tab5_custom.h")
+    custom = contrat()
     n = int(_const(custom, "kRoueBoutons"))
     m = int(_const(custom, "kRoueChoix"))
     yaml = _yaml("roue_actions.yaml")

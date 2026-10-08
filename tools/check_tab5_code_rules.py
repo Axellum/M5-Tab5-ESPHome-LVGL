@@ -67,6 +67,7 @@ pour les règles 9 à 14). Quatorze règles, toutes falsifiables sur le dépôt 
      ni `std::string` par valeur ni `to_string()` dans un `on_value:` / `on_change:`,
      aucun paramètre `std::string` par valeur dans un en-tête de Tab5/.
  12. **Chaque fonction de `tab5_custom.h` a un appelant hors de son fichier** (CPP-4) :
+     tab5_custom.h et l'en-tête de chaque module qu'il inclut (08/10/2026) ;
      une lambda YAML (firmware ou tablette virtuelle) ou une autre unité C++.
      Exceptions du 08/10/2026 : `PUBLIQUES_SANS_APPELANT`.
  13. **Conventions du nouveau code** (Tab5/README.md) : `nullptr` jamais `NULL` ; hors
@@ -835,7 +836,8 @@ def chemins_chauds(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     return problems
 
 
-# Règle 12 (CPP-4 / YML-11) : chaque fonction déclarée dans tab5_custom.h a un appelant
+# Règle 12 (CPP-4 / YML-11) : chaque fonction déclarée dans tab5_custom.h (ou dans l'en-tête
+# d'un module qu'il inclut, un par module depuis le 08/10/2026) a un appelant
 # hors de son fichier : une lambda YAML (firmware, ou tablette virtuelle du rendu hors
 # tablette : tab5-rendu-host.yaml, Tab5/rendu/), ou une autre unité C++. Une fonction
 # appelée par son seul fichier n'a rien à faire dans l'en-tête public : `static` (ou
@@ -892,11 +894,14 @@ def fonctions_publiques(header: Path) -> list[str]:
 
 
 def appelants_publics(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
-    """Règle 12 : chaque fonction de tab5_custom.h a un appelant hors de son fichier."""
+    """Règle 12 : chaque fonction de tab5_custom.h (et des en-têtes de modules qu'il inclut
+    depuis le 08/10/2026) a un appelant hors de son fichier."""
     header = tab5 / "ecran" / "tab5_custom.h"
     if not header.is_file():
         return [f"règle 12 : fichier introuvable : {header}"]
-    noms = fonctions_publiques(header)
+    entetes = tab5_sources.contrat_entetes(tab5)
+    declare = {n: h.name for h in entetes for n in fonctions_publiques(h)}
+    noms = list(declare)
     if len(noms) < 100:
         return [f"règle 12 : {len(noms)} fonctions lues dans tab5_custom.h, le motif ne les reconnaît plus"]
     sources = firmware_sources(tab5, entry)
@@ -910,7 +915,7 @@ def appelants_publics(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     cpp: dict[str, str] = {}
     definis: dict[str, set[str]] = {}
     for p in sources:
-        if p.suffix not in (".cpp", ".h") or p == header:
+        if p.suffix not in (".cpp", ".h") or p in entetes:
             continue
         t = strip_cpp_comments(p.read_text(encoding="utf-8"))
         definis[p.name] = set(RE_CPP_DEF.findall(t))
@@ -925,11 +930,11 @@ def appelants_publics(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
             appele = any(appel.search(t) for f, t in cpp.items() if nom not in definis[f])
         if not appele and nom not in PUBLIQUES_SANS_APPELANT:
             ou = ", ".join(sorted(f for f, d in definis.items() if nom in d)) or "?"
-            problems.append(f"tab5_custom.h : `{nom}()` ({ou}) n'est appelée ni par un YAML ni par une "
+            problems.append(f"{declare[nom]} : `{nom}()` ({ou}) n'est appelée ni par un YAML ni par une "
                             f"autre unité — `static` dans son fichier, ou tab5_internal.h (CPP-4)")
         elif appele and nom in PUBLIQUES_SANS_APPELANT:
             problems.append(f"PUBLIQUES_SANS_APPELANT : `{nom}()` a maintenant un appelant — retirer l'exception")
-    problems += [f"PUBLIQUES_SANS_APPELANT : `{nom}()` n'est plus déclarée dans tab5_custom.h — retirer l'exception"
+    problems += [f"PUBLIQUES_SANS_APPELANT : `{nom}()` n'est plus déclarée dans tab5_custom.h ni ses en-têtes — retirer l'exception"
                  for nom in sorted(PUBLIQUES_SANS_APPELANT - set(noms))]
     return problems
 
