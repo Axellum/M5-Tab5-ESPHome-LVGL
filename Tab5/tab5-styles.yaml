@@ -982,7 +982,7 @@ lvgl:
     # Une couleur de la palette sur une propriété, et rien d'autre. Un widget de
     # l'interface les prend par `styles:` au lieu de poser `text_color:` sur lui :
     # LVGL ne garde qu'UN style partagé par rôle, qu'un thème peut repeindre d'un
-    # coup (lv_obj_report_style_change). Nommage : style_<propriété>_<rôle>, avec
+    # coup (tab5_theme_repeindre, Tab5/tab5-themes.yaml). Nommage : style_<propriété>_<rôle>, avec
     # dim = TEXT_DIM et soft = TEXT_SOFT ; le reste = le champ de `Palette`.
     # Dans une liste `styles:`, un style de rôle vient en DERNIER : il l'emporte sur
     # les styles posés avant lui, comme la couleur locale qu'il remplace.
