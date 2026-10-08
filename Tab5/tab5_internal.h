@@ -72,6 +72,15 @@ inline void ui_y(lv_obj_t* obj, int32_t y) {
 // label (style_police_date : la police de la date du thème, qui suit un changement de
 // thème ; ADR-0029). Défini dans tab5_central.cpp.
 void ui_police(lv_obj_t* obj, esphome::font::Font* f);
+// Vrai si l'appui en cours (ou qui vient de finir) a glissé : le doigt a bougé, ou LVGL y
+// a vu un geste (swipe des prévisions ou des pièces). Un tap ou un appui long au bout
+// d'un glissement ne doit rien ouvrir. LVGL remet ces deux marques à zéro à chaque
+// appui ; hors appui (« Aller à l'écran », un script), aucun périphérique n'est actif :
+// faux. Une seule garde pour tous les appuis (alertes_ouvrir, titre de la pièce).
+inline bool ui_appui_glisse() {
+    lv_indev_t* indev = lv_indev_active();
+    return indev != nullptr && (lv_indev_get_press_moved(indev) || lv_indev_get_gesture_dir(indev) != LV_DIR_NONE);
+}
 
 // --- tab5_text.cpp ---
 // Normalise un texte venu de HA (Latin-1 / mojibake) en UTF-8 valide pour LVGL.

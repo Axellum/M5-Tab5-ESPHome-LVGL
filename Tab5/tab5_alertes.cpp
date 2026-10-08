@@ -229,11 +229,7 @@ void alertes_ouvrir() {
     AlertesUI& u = g_alertes_ui;
     if (u.popup == nullptr) return;
     // Appui long au bout d'un glissement (swipe des prévisions, doigt gardé 400 ms) : rien.
-    // LVGL remet ces deux marques à zéro à chaque appui ; hors appui (« Aller à l'écran »),
-    // aucun périphérique n'est actif.
-    lv_indev_t* indev = lv_indev_active();
-    if (indev != nullptr && (lv_indev_get_press_moved(indev) || lv_indev_get_gesture_dir(indev) != LV_DIR_NONE))
-        return;
+    if (ui_appui_glisse()) return;
     construire();
     if (u.liste != nullptr) lv_obj_scroll_to_y(u.liste, 0, LV_ANIM_OFF);
     animate_popup_open(u.popup);
