@@ -63,6 +63,63 @@ def _firmware_copy(tmp_path):
     return dst, entry
 
 
+def _ajouter(path, texte):
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(texte)
+
+
+def _remplacer(path, ancien, nouveau):
+    texte = path.read_text(encoding="utf-8")
+    assert ancien in texte, f"{ancien!r} absent de {path.name}"
+    path.write_text(texte.replace(ancien, nouveau, 1), encoding="utf-8")
+
+
+# ─── Règles 9 à 11 (lot L6 de l'audit du 07/10/2026) : chacune échoue sur un cas témoin ───
+
+def test_regle_9_lvgl_dans_le_yaml(tmp_path):
+    """Un nouvel appel lv_* dans une lambda YAML, un de plus dans un fichier toléré, un de
+    moins (plafond à abaisser) ; lv_color_hex() reste libre."""
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.lvgl_yaml(tab5, entry) == []
+    _ajouter(tab5 / "ui_components" / "alarm_popup.yaml",
+             "\nessai:\n  - lambda: |-\n      lv_obj_set_width(id(x), 10);\n"
+             "      auto c = lv_color_hex(UIColor.TEXT_DIM);\n")
+    _ajouter(tab5 / "ui_components" / "console_sys.yaml",
+             "\nessai:\n  - lambda: 'lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);'\n")
+    _remplacer(tab5 / "tab5-calendar.yaml", "lv_obj_add_flag(id(cal_day_popup), LV_OBJ_FLAG_HIDDEN);",
+               "cal_fermer();")
+    problems = check_tab5_code_rules.lvgl_yaml(tab5, entry)
+    assert any(p.startswith("alarm_popup.yaml:") and "lv_obj_set_width() ×1 (toléré ×0)" in p for p in problems), problems
+    assert not any("lv_color_hex" in p for p in problems), problems
+    assert any("console_sys.yaml:" in p and "lv_obj_add_flag() ×11 (toléré ×10)" in p for p in problems), problems
+    assert any("tab5-calendar.yaml n'a plus que 3 lv_obj_add_flag()" in p for p in problems), problems
+
+
+def test_regle_10_static_dans_une_lambda(tmp_path):
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.static_lambdas(tab5, entry) == []
+    _ajouter(tab5 / "tab5-scripts.yaml",
+             "\nessai:\n  - lambda: |-\n      static bool arme = false;\n"
+             "      static const int kMax = 3;\n      static constexpr float kPas = 0.5f;\n")
+    problems = check_tab5_code_rules.static_lambdas(tab5, entry)
+    assert len(problems) == 1 and problems[0].startswith("tab5-scripts.yaml:"), problems
+    assert ": arme ×1 (toléré ×0) — `static` modifiable dans une lambda" in problems[0], problems
+
+
+def test_regle_11_copie_de_chaine_dans_un_chemin_chaud(tmp_path):
+    tab5, entry = _firmware_copy(tmp_path)
+    assert check_tab5_code_rules.chemins_chauds(tab5, entry) == []
+    _ajouter(tab5 / "tab5-imu.yaml",
+             "\nessai:\n  - platform: template\n    on_value:\n      - lambda: |-\n"
+             "          const std::string &ok = x;\n          std::string copie = x;\n"
+             "          auto t = to_string(x);\n  - id: suivant\n    lambda: 'std::string libre = x;'\n")
+    _ajouter(tab5 / "tab5_internal.h", "\nvoid essai_copie(int a, std::string nom);\n")
+    problems = check_tab5_code_rules.chemins_chauds(tab5, entry)
+    assert sum("tab5-imu.yaml:" in p and "`on_value:`" in p for p in problems) == 2, problems
+    assert any(p.startswith("tab5_internal.h:") and "par valeur" in p for p in problems), problems
+    assert len(problems) == 3, problems
+
+
 def _edit_font(styles, font_id, old, new):
     """Remplace `old` par `new` dans l'entrée `font_id` de tab5-styles.yaml seulement."""
     text = styles.read_text(encoding="utf-8")
