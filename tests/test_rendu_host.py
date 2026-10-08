@@ -95,3 +95,19 @@ def test_workflow_seulement_si_l_ecran_change_et_annule_sur_pr():
     assert declencheurs["push"]["paths"] == declencheurs["pull_request"]["paths"]
     assert "Tab5/**" in declencheurs["pull_request"]["paths"]
     assert workflow["concurrency"]["cancel-in-progress"] == "${{ github.event_name == 'pull_request' }}"
+
+
+def test_rendu_compile_une_fois_et_partage_le_programme():
+    """OUT-6 (audit du 07/10/2026) : les neuf tâches « rendu » recompilaient chacune la
+    même tablette virtuelle (~2 min de runner chacune). La tâche « compiler » la compile
+    une fois et passe le programme en artefact ; les noms des tâches lues par la protection
+    de branche et par les références (rendu, comparer) ne changent pas."""
+    jobs = yaml.safe_load(_lire(".github", "workflows", "rendu-host.yml"))["jobs"]
+    assert {"compiler", "rendu", "comparer"} <= set(jobs)
+    assert jobs["rendu"]["needs"] == "compiler"
+    compiler = "\n".join(str(e.get("run", "")) for e in jobs["compiler"]["steps"])
+    rendu = "\n".join(str(e.get("run", "")) for e in jobs["rendu"]["steps"])
+    assert "esphome compile tab5-rendu-host.yaml" in compiler
+    assert "esphome compile" not in rendu
+    assert any(e.get("with", {}).get("name") == "rendu-programme" for e in jobs["rendu"]["steps"])
+    assert 'chmod +x "$prog"' in rendu  # un artefact perd le bit d'exécution
