@@ -1,0 +1,61 @@
+{#-
+  La tablette Tab5 vue de Home Assistant (audit du 07/10/2026, HA-7). Ces trois tests
+  étaient recopiés dans les packages et le blueprint (« tablette connectée » ×7, garde
+  d'origine ×6) ; ils n'existent plus qu'ici. Importés par :
+    {%- from 'tab5_tablette.jinja' import tab5_connectee, tab5_origine, tab5_api -%}
+
+  La tablette est reconnue au MODÈLE de son appareil, `tab5-ha-hmi` (bloc `project:` du
+  firmware), jamais à son nom : il dépend du nom donné à l'appareil dans HA.
+
+  tab5_connectee()
+      'oui' si le capteur « HA API Status » d'une tablette est `on` (liaison API
+      établie), '' sinon : tablette pas encore ajoutée à HA, ou hors ligne. Garde des
+      poussées : sans elle, une action de la tablette lève « Action … not found » ou
+      « Not connected » (test « HA neuf », 28/09/2026).
+  tab5_origine(trigger)
+      Garde d'origine (audit sécurité du 30/09/2026, tests/test_garde_origine.py) : un
+      événement `esphome.tab5_*` ne compte que s'il vient d'une tablette. Les événements
+      `esphome.*` n'exigent aucune option côté HA (ADR-0025) : n'importe quel autre
+      appareil ESPHome de la maison peut les émettre. 'oui' pour un tel événement dont le
+      device_id est un appareil de modèle tab5-ha-hmi ; '' pour un autre appareil, sans
+      device_id (tiré à la main) ou dont le device_id est une entité. Tout autre
+      déclencheur (état, heure, démarrage, rechargement, autre événement) : 'oui'.
+      `| string` : device_attr() refuse autre chose qu'un texte (device_id vaut None
+      pour un appareil pas encore enregistré).
+  tab5_api()
+      entity_id du capteur « HA API Status » d'une tablette : la dernière connectée s'il y
+      en a une, sinon la première trouvée ; '' sans tablette. Ses autres entités se
+      trouvent par device_entities(device_id(…)) (packages/tab5_reglages.yaml).
+
+  Une macro rend toujours du texte : 'oui' ou '' comme couvre() de tab5_calendar.jinja.
+  Une condition compare donc : `{{ tab5_connectee() == 'oui' }}` (un « oui » nu ne vaut
+  pas vrai pour HA, qui n'accepte que « true »).
+
+  Déploiement : ce fichier va dans config/custom_templates/ de Home Assistant, puis
+  homeassistant.reload_custom_templates (ou un redémarrage) — AVANT de recharger les
+  packages et le blueprint qui l'importent : sinon leurs conditions échouent à la ligne
+  d'import (erreur de rendu, la poussée s'arrête). L'archive et l'intégration HACS le
+  posent avec les packages ; l'intégration recharge les modèles en premier (ADR-0035).
+-#}
+{%- macro tab5_api() -%}
+  {%- set ns = namespace(api='') -%}
+  {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
+    {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
+      {%- set ns.api = e -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {{- ns.api -}}
+{%- endmacro -%}
+{%- macro tab5_connectee() -%}
+  {{- 'oui' if integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
+       | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
+       | list | count > 0 else '' -}}
+{%- endmacro -%}
+{%- macro tab5_origine(trigger) -%}
+  {%- if trigger.platform == 'event' and (trigger.event.event_type | default('', true) | string).startswith('esphome.tab5_') -%}
+    {%- set d = trigger.event.data.device_id | default('', true) | string -%}
+    {{- 'oui' if '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' else '' -}}
+  {%- else -%}
+    {{- 'oui' -}}
+  {%- endif -%}
+{%- endmacro -%}

@@ -94,13 +94,14 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `custom_templates/tab5_alertes.jinja` | `HomeAssistant_Config/custom_templates/` | Logique des alertes (06/10/2026) : révisions, fin confirmée, alertes lues, historique (importée par `tab5_alerts.yaml`, règles en tête du fichier). |
 | `packages/tab5_calendar.yaml` | `HomeAssistant_Config/packages/` | Package calendrier HA. |
 | `custom_templates/tab5_calendar.jinja` | `HomeAssistant_Config/custom_templates/` | Macros Jinja du calendrier (importées par `tab5_calendar.yaml`). |
+| `custom_templates/tab5_tablette.jinja` | `HomeAssistant_Config/custom_templates/` | Macros « la tablette » (08/10/2026, HA-7) : tablette connectée, garde d'origine, capteur API ; importées par les packages et le blueprint. |
+| `custom_templates/tab5_meteo.jinja` | `HomeAssistant_Config/custom_templates/` | Macros de la météo effective (08/10/2026) : la source choisie, ou un repli tant qu'elle ne répond pas ; importées par « Tab5 Météo » (`tab5_meteo_sources.yaml`). |
 | `custom_templates/tab5_dashboard.jinja` | `HomeAssistant_Config/custom_templates/` | Macro `tab5_dashboard()` (04/10/2026) : écrit le tableau de bord HA de la tablette (vues Tab5, Réglages, Santé) avec les entités de la maison, trouvées par le modèle de l'appareil ; rendue dans Outils de développement → Modèle (`docs/installation.md`, étape 7). |
 | `packages/tab5_health.yaml` | `HomeAssistant_Config/packages/` | Package santé HA. |
 | `packages/tab5_reveil.yaml` | `HomeAssistant_Config/packages/` | Package réveil HA. |
 | `packages/tab5_tv.yaml` | `HomeAssistant_Config/packages/` | Package TV HA (TV et adresse choisies dans HA, plus de `!secret`). |
 | `packages/tab5_reglages.yaml` | `HomeAssistant_Config/packages/` | Réglages choisis dans HA (listes « Tab5 · … » : agendas, téléphone, présence), tablette détectée par son modèle, miroirs pour les déclencheurs. |
 | `optionnel/volet_serre_tracking.yaml` | `HomeAssistant_Config/optionnel/` | Package volet **optionnel** (pas installé par défaut) : helpers, script, synchro écran, suivi des commandes directes ; volet choisi dans HA. |
-| `snippets/tab5_alerts_dismissed_input_text.yaml` | `HomeAssistant_Config/snippets/` | Snippet de l'ancienne liste des alertes lues (reprise une fois par le capteur « Tab5 Alertes »). |
 | `snippets/tab5_assist_reponse_exemple.yaml` | `HomeAssistant_Config/snippets/` | Exemple (non chargé) : réponse du moteur vers le popup Assistant. |
 
 ---
@@ -157,6 +158,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_maison.py` | `tests/` | Contenu | Popup Maison (ADR-0037) : registre, select « Aller à l'écran », chrome partagé, rien de nouveau avec HA. |
 | `test_meteo_blueprint.py` | `tests/` | Contenu + rendu | Météo choisie dans le blueprint (section « Météo ») : elle écrit les listes « Tab5 · … » de `tab5_meteo_sources.yaml`. |
 | `test_meteo_icones_nuit.py` | `tests/` | Rendu | Icônes de nuit des prévisions heure par heure (Met.no : `partlycloudy` de nuit) : modèle de HA (`is_daytime`, `sun.sun`) contre un calcul indépendant. |
+| `test_meteo_repli.py` | `tests/` | Rendu | Repli de la météo (08/10/2026) : source choisie indisponible, une autre prend le relais (connue, puis n'importe laquelle), retour tout seul, rien ne part sans aucune météo ; vrais modèles des packages et de `tab5_meteo.jinja`. |
 | `test_meteo_sans_meteo_france.py` | `tests/` | Rendu | Chaîne météo rendue sans Météo-France (Met.no seul), avec les vrais modèles des packages. |
 | `test_pluie_sans_meteo_france.py` | `tests/` | Rendu | Pluie dans l'heure sans Météo-France : la source effective devient Open-Meteo. |
 | `test_polices_themes.py` | `tests/` | Contenu | Polices d'affichage des thèmes : géométrie de l'horloge recalculée depuis les métriques de `Tab5/themes/_polices.yaml`. |
@@ -170,6 +172,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_themes.py` | `tests/` | Contenu | Palettes, catalogue des thèmes et styles de rôle (ADR-0029) : chaque palette donne tous les rôles, chaque style lit la palette. |
 | `test_tuiles_blueprint.py` | `tests/` | Contenu + rendu | Pièces et tuiles (ADR-0023), côté HA : types, options et commandes du blueprint = tableaux de l'ADR, états poussés. |
 | `test_tuiles_firmware.py` | `tests/` | Contenu | Pièces et tuiles (ADR-0023), côté firmware : grammaire des clés, types, options, commandes de `tab5_tuiles.cpp`. |
+| `test_blueprint_genere.py` | `tests/` | Contenu | Blueprint `tab5_emplacements.yaml` : déclencheurs des pièces et de la rangée à jour de `tools/gen_blueprint_emplacements.py`, une seule liste « tout pousser », une seule action `tab5_maj_clim` (HA-8). |
 | `test_tuiles_icones.py` | `tests/` | Contenu | Palette des icônes des tuiles : parties générées par `tools/gen_tuiles_icones.py` à jour (C++, glyphes MDI, blueprint). |
 | `test_zones.py` | `tests/` | Contenu | Zones optionnelles : enum `Zone`, `kCles`, demande `esphome.tab5_zones` et HA d'accord, dans l'ordre. |
 | `test_guards.py` | `tests/` | Contenu | Joue les 8 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, niveaux d'Arcanoïde, questions de Trial Poursuite, comptes de la cartographie). |

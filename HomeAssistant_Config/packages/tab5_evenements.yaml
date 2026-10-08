@@ -48,8 +48,9 @@
 #       firmware + un déclencheur (id = nom sans « esphome.tab5_ ») + une branche ici,
 #       avec une action de la liste blanche de tests/test_actions_ha.py. Jamais une
 #       action dont le nom ou l'entité viendrait des données de l'événement.
-# @install Nécessite homeassistant.packages: !include_dir_named packages. Aucun
-#       placeholder : ce fichier est générique.
+# @install Nécessite homeassistant.packages: !include_dir_named packages, et
+#       custom_templates/tab5_tablette.jinja (garde d'origine, 08/10/2026) déployé et
+#       rechargé AVANT. Aucun placeholder : ce fichier est générique.
 # ============================================================================
 
 automation:
@@ -107,8 +108,8 @@ automation:
       # `| string` (device_id vaut None pour un appareil pas encore enregistré).
       - condition: template
         value_template: >-
-          {%- set d = trigger.event.data.device_id | default('', true) | string -%}
-          {{ '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' }}
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
     actions:
       - variables:
           # Entités de LA tablette qui a émis l'événement (plusieurs tablettes : chacune
