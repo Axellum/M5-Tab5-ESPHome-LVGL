@@ -117,7 +117,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Volet arrêté.": "Rolluik gestopt."
 # Shutter popup (long press of a shutter tile, 2026-10-05)
 "POSITION": "POSITIE"
-"COMMANDES": "BEDIENING"
+"VOLETS": "ROLLUIKEN"
+"Tout ouvrir": "Alles open"
+"Tout fermer": "Alles dicht"
 "Stop": "Stop"
 "En mouvement": "In beweging"
 "Partiel": "Half open"
@@ -159,11 +161,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Batterie": "Batterij"
 
 # --- Lights popup ---------------------------------------------------------------
-"Ampoule": "Lamp"
-"AMPOULE": "LAMP"
-"Ampoule Chambre": "Lamp slaapkamer"
-"Ampoule Salon": "Lamp woonkamer"
-"Ampoule LEDs": "Ledstrip"
+# Lights and Shutters popups, one page per room (ADR-0046, 2026-10-09).
+"AMPOULES": "LAMPEN"
 "Tout éteindre": "Alles uit"
 # Popup Maison (ADR-0037) : titre, et le bouton de sa barre de titre.
 "Maison": "Thuis"

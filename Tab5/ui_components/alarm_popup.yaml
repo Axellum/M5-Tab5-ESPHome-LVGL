@@ -5,7 +5,7 @@
 #       « plus claire, plus grande, avec le switch pour passer d'une partie à l'autre comme
 #       les Paramètres, les roues dès que possible »). Pages changées au doigt (glisser à
 #       gauche ou à droite, en boucle) ou par leur nom en haut, à côté du titre (celle
-#       affichée en couleur d'accent), comme les Réglages (tab5_pages.cpp) :
+#       affichée en couleur d'accent), par la brique des popups à pages (pages_brancher et choix_peindre, tab5_pages.cpp, ADR-0046 ; les noms gardent leur place ici) :
 #         - « Heure » : l'heure fixe sur deux rouleaux (heures, minutes de 5 en 5), la
 #           grande bascule marche / arrêt, la prochaine sonnerie, « Tester » et l'arrêt ;
 #         - « Jours » : le mode (Fixe, Travail, Ouverture), les jours de l'heure fixe (7

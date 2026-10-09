@@ -422,16 +422,8 @@ const char* heritage_glyphe_epaule(int t, bool volet_ferme) {
     }
 }
 
-// … dans le sélecteur du popup lumière (45 px, tuiles 2 à 4)…
-const char* heritage_glyphe_selecteur(int t) {
-    switch (t) {
-        case 2: return "\U000F02E3";   // bed
-        case 3: return "\U000F04B9";   // sofa
-        default: return "\U000F1051";  // led-strip-variant
-    }
-}
-
-// … et sur les cartes du mode HA (70 px).
+// … et sur les cartes du mode HA (70 px), les lignes du popup Maison (32 px) et celles du
+// popup Lumières (45 px, ADR-0046 : il dessinait avant ses lignes avec ses propres glyphes).
 const char* heritage_glyphe_carte(int t) {
     switch (t) {
         case 0: return "\U000F0379";   // monitor
@@ -1173,6 +1165,9 @@ bool tuiles_definir(const std::string& payload) {
     // Popups lumière, volet et appareil : revalidés (tab5_tuiles_popups.cpp).
     popups_revalider();
     tuiles_appliquer_ui();
+    // Gestes de l'accueil réglés sur Lumières ou Volets (ADR-0046) : disponibles selon les
+    // tuiles, leurs icônes suivent.
+    boutons_haut_apply_ui();
     return true;
 }
 
@@ -1392,10 +1387,10 @@ bool tuiles_aller_piece(int r) {
 }
 
 // La tuile qu'ouvre l'écran `e` (Lumières, Volet) : la pièce de la page affichée d'abord,
-// puis les pièces dans l'ordre du blueprint. Une lumière : tuile lum sans l'option r (le
-// popup lumière liste toutes celles de sa pièce) ; un volet : une tuile dont l'appui long
-// ouvre le popup volet (vol sans l'option k). Mode héritage : les lumières de la 3.1,
-// aucun popup volet.
+// puis les pièces dans l'ordre du blueprint. Le popup s'ouvre sur la page de cette pièce
+// (une page par pièce, ADR-0046) ; ses critères sont ceux des pages : est_lumiere (lum sans
+// l'option r ; mode héritage : les lumières de la 3.1) et est_volet (vol sans l'option r
+// ni k ; mode héritage : aucun), sinon l'écran s'ouvrirait sur un popup vide.
 static bool tuile_de_ecran(Ecran e, int& r_out, int& t_out) {
     charger();
     const int premiere = piece_courante();
@@ -1403,10 +1398,7 @@ static bool tuile_de_ecran(Ecran e, int& r_out, int& t_out) {
         const int r = i < 0 ? premiere : i;
         if (i == premiere) continue;  // déjà vue
         for (int t = 0; t < kTuiles; t++) {
-            bool ok = false;
-            if (e == Ecran::LUMIERES) ok = est_lumiere(r, t);
-            else if (e == Ecran::VOLET)
-                ok = !heritage() && tuile_presente(r, t) && gestes(s_m.tuiles[r][t], false).fenetre == Fenetre::VOLET;
+            const bool ok = e == Ecran::LUMIERES ? est_lumiere(r, t) : e == Ecran::VOLET && est_volet(r, t);
             if (ok) {
                 r_out = r;
                 t_out = t;

@@ -44,15 +44,17 @@
  *       locale). Et LVGL 9.5 ne trace les pointillés que des lignes horizontales ou
  *       verticales (lv_draw_sw_line.c) : la prévision se distingue par sa couleur et son
  *       fond teinté, pas par des tirets.
- * @ai_warning [AI-WARNING] Le geste de changement de page s'arrête au popup : le drapeau
- *       LV_OBJ_FLAG_GESTURE_BUBBLE est retiré de historique_popup (construire), comme les
- *       Réglages et le carrousel des clims. Sans ça, LVGL le remonte jusqu'à page_main, qui
- *       changerait les prévisions ou la pièce derrière le popup.
+ * @ai_warning [AI-WARNING] Le geste de changement de page s'arrête au popup : la brique
+ *       commune des popups à pages, pages_brancher (tab5_pages.cpp, ADR-0046), branchée par
+ *       construire, comme les Réglages, les Lumières et les Volets. Sans ça, LVGL remonte
+ *       le geste jusqu'à page_main, qui changerait les prévisions ou la pièce derrière le
+ *       popup. Lire son [AI-WARNING] avant d'y toucher.
  * @ai_instruction Le format de tab5_maj_historique est un contrat avec
  *       packages/tab5_historique.yaml, la démo (tools/demo/) et le rendu (tools/rendu/) :
- *       tests/test_historique.py les lit tous. Un texte affiché passe par tr(). Les onglets
- *       et le geste sont écrits ici en attendant la brique commune « popup à pages » (lot
- *       feat/popups-par-piece) : à y brancher quand elle sera publiée.
+ *       tests/test_historique.py les lit tous. Un texte affiché passe par tr(). Le geste et
+ *       la couleur de l'onglet affiché viennent de la brique des popups à pages
+ *       (pages_brancher, choix_peindre) ; la place des onglets reste ici (après le titre,
+ *       jusqu'à sept, 60 px au moins), pages_onglets les pose à partir de x = 318.
  */
 #include "tab5_internal.h"
 #include "tab5_geometrie.h"
@@ -868,18 +870,6 @@ void nom_onglet(int c, char* out, size_t n) {
     nom_par_defaut(c, exterieur, out, n);
 }
 
-// Onglet actif comme l'option active des Réglages (peindre_choix, tab5_reglages.cpp) :
-// bordure et texte en accent ; les autres au style du bouton (style_clim_btn).
-void peindre_onglet(lv_obj_t* b, bool actif) {
-    if (actif) {
-        highlight_button_border(b, true, UIColor.ACCENT, 3);
-    } else {
-        for (lv_style_prop_t p : {LV_STYLE_BORDER_COLOR, LV_STYLE_BORDER_OPA, LV_STYLE_BORDER_WIDTH})
-            lv_obj_remove_local_style_prop(b, p, LV_PART_MAIN);
-    }
-    ui_text_color(lv_obj_get_child(b, 0), actif ? UIColor.ACCENT : UIColor.TEXT_SOFT);
-}
-
 // Fin du titre « Température » : sa police (celle des titres du thème) et son texte.
 int32_t fin_du_titre() {
     lv_obj_t* const t = g_historique_ui.titre_popup;
@@ -893,7 +883,16 @@ int32_t fin_du_titre() {
     return kTitrePopupX + taille.x;
 }
 
-// Une seule page : pas d'onglet (rien à choisir).
+// Rang de la température montrée parmi les onglets (0 si elle n'y est pas).
+int rang_courant() {
+    int rang = 0;
+    for (int i = 0; i < s_nb_onglets; i++)
+        if (s_onglets[i] == s_cle) rang = i;
+    return rang;
+}
+
+// Une seule page : pas d'onglet (rien à choisir). L'onglet affiché en accent comme une
+// page des Réglages (choix_peindre, tab5_pages.cpp).
 void peindre_onglets() {
     const HistoriqueUI& u = g_historique_ui;
     const int n = s_nb_onglets >= 2 ? s_nb_onglets : 0;
@@ -914,8 +913,8 @@ void peindre_onglets() {
         if (l != nullptr && lv_obj_get_style_width(l, LV_PART_MAIN) != w - 10) lv_obj_set_width(l, w - 10);
         nom_onglet(s_onglets[i], nom, sizeof(nom));
         ui_text(l, nom);
-        peindre_onglet(b, s_onglets[i] == s_cle);
     }
+    if (n > 0) choix_peindre(u.onglet, n, rang_courant());
 }
 
 void demander() {
@@ -933,21 +932,13 @@ void montrer_cle(int c) {
     demander();
 }
 
-// LV_EVENT_GESTURE du popup (construire), comme les pages des Réglages : gauche = page
-// suivante, droite = précédente, en boucle (reglages_page_voisine, tab5_core.cpp).
-// lv_indev_wait_release() : le lever du doigt qui suit ne déclenche rien (ni le bouton
-// où le geste est parti, ni un appui long).
-void geste(lv_event_t* /*e*/) {
-    lv_indev_t* const indev = lv_indev_active();
-    if (indev == nullptr || s_nb_onglets < 2) return;
-    const lv_dir_t dir = lv_indev_get_gesture_dir(indev);
-    if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
-    int rang = 0;
-    for (int i = 0; i < s_nb_onglets; i++)
-        if (s_onglets[i] == s_cle) rang = i;
-    lv_indev_wait_release(indev);
-    montrer_cle(s_onglets[reglages_page_voisine(rang, s_nb_onglets, dir == LV_DIR_LEFT)]);
+// Pages du popup pour la brique commune (pages_brancher, tab5_pages.cpp) : gauche = page
+// suivante, droite = précédente, en boucle ; une page = un onglet.
+int nombre_pages() { return s_nb_onglets; }
+void afficher_page(int i) {
+    if (i >= 0 && i < s_nb_onglets) montrer_cle(s_onglets[i]);
 }
+PagesPopup s_pages{nullptr, nombre_pages, rang_courant, afficher_page};
 
 // Couleurs de ce que construire() a créé : à la construction et à chaque thème.
 void couleurs() {
@@ -1085,10 +1076,9 @@ void construire() {
     s_vide = libelle(u.zone);
     lv_obj_align(s_vide, LV_ALIGN_CENTER, 0, 0);
     couleurs();
-    // Geste gauche / droite : arrêté au popup ([AI-WARNING] de l'en-tête), traité ici.
-    lv_obj_remove_flag(u.popup, LV_OBJ_FLAG_GESTURE_BUBBLE);
-    lv_obj_remove_event_cb(u.popup, geste);
-    lv_obj_add_event_cb(u.popup, geste, LV_EVENT_GESTURE, nullptr);
+    // Geste gauche / droite : la brique des popups à pages ([AI-WARNING] de l'en-tête).
+    s_pages.popup = u.popup;
+    pages_brancher(&s_pages);
 }
 
 bool memoire() {

@@ -127,7 +127,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Volet arrêté.": "Tapparella fermata."
 # Shutter popup (long press of a shutter tile, 2026-10-05)
 "POSITION": "POSIZIONE"
-"COMMANDES": "COMANDI"
+"VOLETS": "TAPPARELLE"
+"Tout ouvrir": "Apri tutto"
+"Tout fermer": "Chiudi tutto"
 "Stop": "Stop"
 "En mouvement": "In movimento"
 "Partiel": "Socchiusa"
@@ -169,11 +171,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Batterie": "Batteria"
 
 # --- Lights popup ---------------------------------------------------------------
-"Ampoule": "Lampadina"
-"AMPOULE": "LUCI"
-"Ampoule Chambre": "Lampadina camera"
-"Ampoule Salon": "Lampadina soggiorno"
-"Ampoule LEDs": "Striscia LED"
+# Lights and Shutters popups, one page per room (ADR-0046, 2026-10-09).
+"AMPOULES": "LUCI"
 "Tout éteindre": "Spegni tutto"
 # Popup Maison (ADR-0037) : titre, et le bouton de sa barre de titre.
 "Maison": "Casa"

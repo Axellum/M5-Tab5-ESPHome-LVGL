@@ -136,7 +136,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Volet arrêté.": "Panjur durdu."
 # Shutter popup (long press of a shutter tile, 2026-10-05)
 "POSITION": "KONUM"
-"COMMANDES": "KOMUTLAR"
+"VOLETS": "PANJURLAR"
+"Tout ouvrir": "Tümünü aç"
+"Tout fermer": "Tümünü kapat"
 "Stop": "Dur"
 "En mouvement": "Hareket ediyor"
 "Partiel": "Kısmen açık"
@@ -178,11 +180,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Batterie": "Pil"
 
 # --- Lights popup ---------------------------------------------------------------
-"Ampoule": "Ampul"
-"AMPOULE": "AMPUL"
-"Ampoule Chambre": "Yatak odası ampulü"
-"Ampoule Salon": "Salon ampulü"
-"Ampoule LEDs": "LED şerit"
+# Lights and Shutters popups, one page per room (ADR-0046, 2026-10-09).
+"AMPOULES": "IŞIKLAR"
 "Tout éteindre": "Hepsini kapat"
 # Popup Maison (ADR-0037) : titre, et le bouton de sa barre de titre.
 "Maison": "Ev"

@@ -188,28 +188,17 @@ def test_un_nom_et_un_conteneur_par_page():
 
 
 def test_geste_de_page_reste_dans_le_popup():
-    """Le mécanisme des pages est partagé avec le popup du réveil depuis le 09/10/2026
-    (tab5_pages.cpp) : le popup Réglages le branche, et le geste montre la page voisine
-    par reglages_afficher_page (confirmations refermées, page Batterie peinte)."""
     cpp = _lire(TAB5 / "ecran" / "tab5_reglages.cpp").replace("\r\n", "\n")
     preparer = _corps(cpp, "void reglages_preparer()")
-    assert "s_pages.afficher = reglages_afficher_page;" in preparer
-    assert preparer.index("s_pages.n = REGLAGES_NB_PAGES;") < preparer.index("pages_brancher(s_pages);")
-    afficher = _corps(cpp, "void reglages_afficher_page(")
-    assert afficher.index("fermer_confirmations();") < afficher.index("pages_montrer(s_pages, page);")
-    pages = _lire(TAB5 / "ecran" / "tab5_pages.cpp").replace("\r\n", "\n")
-    brancher = _corps(pages, "void pages_brancher(")
-    # Le geste s'arrête au popup : page_main ne change ni les prévisions ni la pièce.
-    assert "lv_obj_remove_flag(p.popup, LV_OBJ_FLAG_GESTURE_BUBBLE);" in brancher
-    assert "lv_obj_add_event_cb(p.popup, geste_rappel, LV_EVENT_GESTURE, &p);" in brancher
-    geste = _corps(pages, "void geste_rappel(")
-    assert "dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT" in geste
-    # Un curseur ou un rouleau glissé n'est pas un changement de page ; le lever du doigt
-    # qui suit le geste ne déclenche rien (ni tap, ni appui long). Dans cet ordre.
-    assert "lv_obj_check_type(o, &lv_slider_class)" in geste
-    assert "lv_obj_check_type(o, &lv_roller_class)" in geste
-    assert (geste.index("lv_slider_class") < geste.index("lv_roller_class")
-            < geste.index("lv_indev_wait_release(indev);") < geste.index("p->afficher(page);"))
+    # Le geste passe par la brique commune des popups à pages (ADR-0046, tab5_pages.cpp :
+    # arrêté au popup, ignoré sur un curseur, lever du doigt sans effet ; détail dans
+    # tests/test_pages_popup.py) : quatre pages, celle affichée, reglages_afficher_page.
+    assert "s_pages.popup = u.popup;\n    pages_brancher(&s_pages);" in preparer
+    assert "PagesPopup s_pages{nullptr, nombre_pages, page_courante, reglages_afficher_page};" in cpp
+    assert "int nombre_pages() { return REGLAGES_NB_PAGES; }" in cpp
+    assert "int page_courante() { return s_page; }" in cpp
+    # Plus de geste écrit ici : un seul, celui de la brique.
+    assert "LV_EVENT_GESTURE" not in cpp and "lv_indev_wait_release" not in cpp
 
 
 def test_gardes_de_la_console_par_la_page_systeme():

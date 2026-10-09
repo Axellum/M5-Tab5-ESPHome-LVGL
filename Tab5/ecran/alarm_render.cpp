@@ -8,7 +8,8 @@
  *       Popup en cinq pages depuis le 09/10/2026 (demande d'Axel : « plus clair, plus
  *       grand, avec le switch pour passer d'une partie à l'autre comme les Paramètres,
  *       les roues dès que possible ») : noms des pages en haut et geste gauche / droite
- *       partagés avec les Réglages (PopupPages, tab5_pages.cpp) ; chaque valeur à
+ *       par la brique commune des popups à pages (pages_brancher et choix_peindre,
+ *       tab5_pages.cpp, ADR-0046 ; les noms gardent leur place du YAML) ; chaque valeur à
  *       plage (heure, minutes, bornes, délai, repos, répétition, durée max, rendez-vous)
  *       se règle sur un rouleau LVGL (lv_roller, rouleau.yaml), dont les options sont
  *       écrites ici (textes traduits, valeur hors pas venue de HA insérée à sa place).
@@ -26,7 +27,7 @@
  */
 #include "alarm_render.h"
 #include "tab5_custom.h"
-#include "tab5_internal.h"   // ui_text(), ui_text_color(), choix_peindre(), PopupPages
+#include "tab5_internal.h"   // ui_text(), ui_text_color(), choix_peindre(), PagesPopup
 
 #include <cstdio>
 
@@ -34,8 +35,13 @@ ReveilUI g_reveil_ui;
 
 namespace {
 
-// Pages (ReveilPage), noms en haut et geste : tab5_pages.cpp.
-PopupPages s_pages;
+// Page affichée (ReveilPage) : gardée ici, montrée par reveil_afficher_page. Le geste
+// gauche / droite vient de la brique commune (pages_brancher, tab5_pages.cpp) ; les noms
+// des pages gardent leur place du YAML (alarm_popup.yaml), pas celle de pages_onglets.
+int s_page = REVEIL_PAGE_HEURE;
+int nombre_pages() { return REVEIL_NB_PAGES; }
+int page_courante() { return s_page; }
+PagesPopup s_pages{nullptr, nombre_pages, page_courante, reveil_afficher_page};
 
 // ─── Rouleaux ───────────────────────────────────────────────────────────────
 enum class FormatRouleau : uint8_t {
@@ -169,16 +175,18 @@ void reveil_preparer() {
     // Geste gauche / droite : arrêté au popup, ignoré depuis un rouleau ou le curseur du
     // volume ([AI-WARNING] de tab5_pages.cpp).
     s_pages.popup = u.popup;
-    s_pages.page = u.page;
-    s_pages.onglet = u.onglet;
-    s_pages.n = REVEIL_NB_PAGES;
-    s_pages.afficher = reveil_afficher_page;
-    pages_brancher(s_pages);
+    pages_brancher(&s_pages);
 }
 
+// Montre `page` (hors bornes : la page Heure, la première), masque les autres, son nom
+// en couleur d'accent. Instantané : rien ne glisse ni ne fond.
 void reveil_afficher_page(int page) {
-    if (g_reveil_ui.popup == nullptr) return;
-    pages_montrer(s_pages, page);  // hors bornes : la page Heure (la première)
+    const ReveilUI& u = g_reveil_ui;
+    if (u.popup == nullptr) return;
+    if (page < 0 || page >= REVEIL_NB_PAGES) page = REVEIL_PAGE_HEURE;
+    s_page = page;
+    for (int i = 0; i < REVEIL_NB_PAGES; i++) ui_hidden(u.page[i], i != page);
+    choix_peindre(u.onglet, REVEIL_NB_PAGES, page);
 }
 
 int reveil_rouleau_valeur(int quoi, int index) {
@@ -203,7 +211,7 @@ struct DernierReveil {
 // sans cet appel, les noms des pages gardaient les couleurs du thème d'avant.
 void reveil_rejouer_theme() {
     if (g_reveil_ui.popup == nullptr) return;
-    choix_peindre(g_reveil_ui.onglet, REVEIL_NB_PAGES, s_pages.courante);
+    choix_peindre(g_reveil_ui.onglet, REVEIL_NB_PAGES, s_page);
     alarm_render_settings(s_dernier.now, s_dernier.crescendo, s_dernier.tts_on, s_dernier.rdv_on);
 }
 
@@ -244,11 +252,11 @@ void alarm_render_settings(time_t now, bool crescendo, bool tts_on, bool rdv_on)
     for (int i = 0; i < 7; i++) {
         const bool coche = (c.days_mask >> i) & 1;
         if (jours_utiles) {
-            choix_bouton(u.day_btn[i], coche);
+            choix_peindre(&u.day_btn[i], 1, coche ? 0 : -1);
             continue;
         }
-        // Jours inutiles : la bordure de choix_bouton, le texte estompé. Une seule écriture
-        // de couleur (choix_bouton puis TEXT_DIM repeindrait la pastille à chaque réglage).
+        // Jours inutiles : la bordure de choix_peindre, le texte estompé. Une seule écriture
+        // de couleur (choix_peindre puis TEXT_DIM repeindrait la pastille à chaque réglage).
         if (u.day_btn[i] != nullptr) {
             if (coche) {
                 highlight_button_border(u.day_btn[i], true, UIColor.ACCENT, 3);

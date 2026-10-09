@@ -103,9 +103,12 @@ def test_noms_des_pages_entre_le_titre_et_la_croix():
 def test_geste_et_page_a_l_ouverture():
     src = lire("Tab5", "ecran", "alarm_render.cpp")
     preparer = src[src.index("void reveil_preparer()"):src.index("void reveil_afficher_page(")]
-    assert "s_pages.afficher = reveil_afficher_page;" in preparer
-    assert preparer.index("s_pages.n = REVEIL_NB_PAGES;") < preparer.index("pages_brancher(s_pages);")
-    assert "pages_montrer(s_pages, page);" in src[src.index("void reveil_afficher_page("):]
+    # Brique commune des popups à pages (tab5_pages.cpp, tests/test_pages_popup.py).
+    assert "pages_brancher(&s_pages);" in preparer
+    afficher = src[src.index("void reveil_afficher_page("):]
+    afficher = afficher[:afficher.index("\n}\n") if "\n}\n" in afficher else afficher.index("\r\n}\r\n")]
+    assert "page = REVEIL_PAGE_HEURE;" in afficher, "hors bornes : la page Heure"
+    assert "ui_hidden(u.page[i], i != page);" in afficher
     ouvrir = _script("tab5_alarm_open")
     # Pointeurs posés une fois, popup en dernier (alarm_render_settings attend popup non nul).
     assert ouvrir.index("u.lbl_rdv_next = id(lbl_alarm_rdv_next);") < ouvrir.index("u.popup = id(alarm_popup);") \

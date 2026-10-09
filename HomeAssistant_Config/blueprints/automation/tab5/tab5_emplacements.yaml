@@ -1274,7 +1274,7 @@ blueprint:
                   value: nabu_suivant
                 - label: "Lumières de la pièce affichée · Lights of the room shown"
                   value: lumieres
-                - label: "Volet de la pièce affichée · Shutter of the room shown"
+                - label: "Volets de la pièce affichée · Shutters of the room shown"
                   value: volet
                 - label: "Température (historique) · Temperature (history)"
                   value: temperature

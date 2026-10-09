@@ -22,9 +22,7 @@
  *       Changer de langue redémarre la tablette (on_value du select « Langue ») : une
  *       pastille de langue ouvre d'abord une confirmation, jamais le redémarrage direct.
  *       Changement de page INSTANTANÉ (préférence d'Axel, AGENTS.md) : les conteneurs des
- *       pages sont masqués / montrés, sans glissement ni fondu. Le mécanisme des pages
- *       (noms en haut, geste, choix en couleur d'accent) est partagé avec le popup du
- *       réveil depuis le 09/10/2026 : tab5_pages.cpp (PopupPages).
+ *       pages sont masqués / montrés, sans glissement ni fondu.
  * @ai_instruction Un réglage de plus : sa valeur dans ReglageId (tab5_custom.h, à la fin),
  *       son cas dans tab5_reglages_choisir, son champ dans ReglagesEtat et ReglagesUI, sa
  *       ligne dans tab5_reglages_sync_ui et tab5_reglages_ouvrir, et un
@@ -32,13 +30,10 @@
  *       Un texte affiché passe par tr(). Une page de plus : sa valeur dans ReglagesPage
  *       (avant REGLAGES_NB_PAGES), son conteneur et son nom (reglages_onglet.yaml) dans
  *       reglages_popup.yaml, leurs lignes dans tab5_reglages_ouvrir.
- * @ai_warning [AI-WARNING] Le geste de changement de page s'arrête au popup : le drapeau
- *       LV_OBJ_FLAG_GESTURE_BUBBLE est retiré de reglages_popup (reglages_preparer →
- *       pages_brancher, tab5_pages.cpp). Sans ça, LVGL le remonte jusqu'à page_main, dont
- *       le on_gesture change les prévisions ou la pièce derrière le popup
- *       (handle_swipe_gesture, tab5_central.cpp). Un geste parti d'un curseur (luminosité,
- *       volume de la page Système) n'est pas un changement de page : LVGL émet aussi
- *       LV_EVENT_GESTURE pendant qu'on le glisse.
+ * @ai_warning [AI-WARNING] Le geste de changement de page s'arrête au popup et ne part
+ *       pas d'un curseur (luminosité, volume de la page Système) : la brique commune des
+ *       popups à pages, pages_brancher (tab5_pages.cpp, ADR-0046), branchée par
+ *       reglages_preparer. Lire son [AI-WARNING] avant d'y toucher.
  */
 #include "tab5_internal.h"
 #include "tab5_economie.h"  // economie_sur_batterie() : ligne « État » de la page Batterie
@@ -54,20 +49,15 @@ namespace {
 // Langue choisie, en attente de « Confirmer » (−1 : aucune).
 int s_langue_choix = -1;
 
-// Pages (ReglagesPage), noms en haut et geste : tab5_pages.cpp. Page affichée posée par
-// reglages_afficher_page() (pages_montrer), jamais ailleurs.
-PopupPages s_pages;
+// Page affichée (ReglagesPage) : posée par reglages_afficher_page(), jamais ailleurs.
+int s_page = REGLAGES_PAGE_ECRAN;
 
 // Dernier état peint, pour reglages_rejouer_theme() (repeinture d'un changement de thème).
 ReglagesEtat s_etat;
 
-// Une rangée de boutons à choix : celui de l'option active en couleur d'accent (bordure
-// et texte), les autres exactement au style du bouton (style_clim_btn, bordure et
-// formes du thème) : on retire la bordure locale au lieu du gris « inactif » de
-// highlight_button_border, comme le bouton « HA » (tab5_tuiles.cpp). Le texte est le
-// premier enfant du bouton (reglages_choix_btn.yaml, reglages_onglet.yaml). Partagé
-// avec le popup du réveil : choix_peindre (tab5_pages.cpp).
-inline void peindre_choix(lv_obj_t* const* boutons, int n, int actif) { choix_peindre(boutons, n, actif); }
+// Une rangée de boutons à choix : l'option active en accent, les autres au style du bouton
+// (choix_peindre, tab5_pages.cpp : la même recette que les noms des pages en haut).
+constexpr auto peindre_choix = &choix_peindre;
 
 // Oui / Non : 0 = Oui, 1 = Non (ordre des boutons du YAML).
 inline int oui_non(bool v) { return v ? 0 : 1; }
@@ -98,6 +88,11 @@ void fermer_confirmations() {
     ui_hidden(g_reglages_ui.confirm_reboot, true);
 }
 
+// Geste gauche / droite du popup (popup à pages, ADR-0046) : quatre pages, en boucle.
+int nombre_pages() { return REGLAGES_NB_PAGES; }
+int page_courante() { return s_page; }
+PagesPopup s_pages{nullptr, nombre_pages, page_courante, reglages_afficher_page};
+
 }  // namespace
 
 void reglages_preparer() {
@@ -110,16 +105,9 @@ void reglages_preparer() {
         ui_hidden(b, !existe);
         if (existe) ui_text(lv_obj_get_child(b, 0), i18n_language_name(i));
     }
-    // Geste gauche / droite : arrêté au popup ([AI-WARNING] de l'en-tête), page voisine
-    // montrée par reglages_afficher_page (confirmations refermées, page peinte).
-    if (u.popup != nullptr) {
-        s_pages.popup = u.popup;
-        s_pages.page = u.page;
-        s_pages.onglet = u.onglet;
-        s_pages.n = REGLAGES_NB_PAGES;
-        s_pages.afficher = reglages_afficher_page;
-        pages_brancher(s_pages);
-    }
+    // Geste gauche / droite : la brique des popups à pages ([AI-WARNING] de l'en-tête).
+    s_pages.popup = u.popup;
+    pages_brancher(&s_pages);
 }
 
 void reglages_luminosite_ui(int pourcent) {
@@ -168,19 +156,25 @@ void reglages_peindre(const ReglagesEtat& e) {
 // palette active.
 void reglages_rejouer_theme() {
     reglages_peindre(s_etat);
-    if (g_reglages_ui.popup != nullptr) peindre_choix(g_reglages_ui.onglet, REGLAGES_NB_PAGES, s_pages.courante);
+    if (g_reglages_ui.popup != nullptr) peindre_choix(g_reglages_ui.onglet, REGLAGES_NB_PAGES, s_page);
 }
 
 void reglages_afficher_page(int page) {
     const ReglagesUI& u = g_reglages_ui;
     if (u.popup == nullptr) return;
+    if (page < 0 || page >= REGLAGES_NB_PAGES) page = REGLAGES_PAGE_ECRAN;
     fermer_confirmations();
-    pages_montrer(s_pages, page);  // hors bornes : la page Écran (la première)
-    if (s_pages.courante == REGLAGES_PAGE_BATTERIE) peindre_batterie();
-    if (u.page_montree != nullptr) u.page_montree(s_pages.courante);
+    s_page = page;
+    for (int i = 0; i < REGLAGES_NB_PAGES; i++) ui_hidden(u.page[i], i != page);
+    peindre_choix(u.onglet, REGLAGES_NB_PAGES, page);
+    if (page == REGLAGES_PAGE_BATTERIE) peindre_batterie();
+    if (u.page_montree != nullptr) u.page_montree(page);
 }
 
-bool reglages_page_visible(int page) { return pages_visible(s_pages, page); }
+bool reglages_page_visible(int page) {
+    const ReglagesUI& u = g_reglages_ui;
+    return u.popup != nullptr && s_page == page && !lv_obj_has_flag(u.popup, LV_OBJ_FLAG_HIDDEN);
+}
 
 void reglages_batterie_peindre() {
     if (reglages_page_visible(REGLAGES_PAGE_BATTERIE)) peindre_batterie();

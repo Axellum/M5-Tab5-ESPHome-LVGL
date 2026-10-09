@@ -4,7 +4,7 @@
 # vars : n (0 = lundi … 6 = dimanche — suffixe des ids btn_alarm_day_${n} /
 #        lbl_alarm_day_${n}, paramètre `day` de tab5_alarm_toggle_day), x, y.
 # Le nom court du jour (« Lun », traduit) est écrit par reveil_preparer(), l'état coché
-# (bordure et texte en couleur d'accent, choix_bouton : le texte est le PREMIER enfant)
+# (bordure et texte en couleur d'accent, choix_peindre : le texte est le PREMIER enfant)
 # par alarm_render_settings() (alarm_render.cpp) ; ce template ne pose que la géométrie.
 # Sorti de alarm_popup.yaml le 25/09/2026 (audit, lot 8e, règle 5 : un widget répété
 # 3 fois ou plus passe par un template).

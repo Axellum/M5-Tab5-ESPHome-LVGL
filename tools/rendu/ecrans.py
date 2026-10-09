@@ -212,7 +212,9 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 SOUS_HORLOGE = (640, 270)
 SERRE = (1172, 158)           # court : Arcade
 # Température du salon (btn_reglables_liste, climate_card.yaml : carte en 855, 110, zone
-# 4..196 × 22..86) : court, le carrousel des clims (popup Climatisation, ADR-0038).
+# 4..196 × 22..86, centre 955, 164) : court, la roue de la clim (ADR-0048, ancrée plus bas) ;
+# sans réglages reçus pour la clim (celle du blueprint avant « climr »), le carrousel des
+# clims (popup Climatisation, ADR-0038).
 # Tuile − / + (ADR-0033) : long sur la valeur entre − et + (CONSIGNE_CLIM,
 # btn_clim_target_click), la liste ; ses lignes (reglables_liste.yaml : panneau en 740,
 # 110, bord 2 + marge 6, lignes de 52 + 2).
@@ -234,7 +236,22 @@ VOLET_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t01|opening|45
 # de 456 px, de 45 % à 13 % (volet_cadre_rappel, tab5_tuiles_popups.cpp). Vertical, au-dessus
 # des tuiles : ni swipe de page ni bouton sous le doigt. Le relâcher envoie « position »,
 # que personne n'applique ici : la capture montre le volet là où le doigt l'a laissé.
-VOLET_TIRE = Glisser(265, 250, 265, 400)
+# Depuis l'ADR-0046 le volet dessiné est dans la carte de droite (x 426 + 56 dans la carte
+# modale) : écran x 497 à 833.
+VOLET_TIRE = Glisser(665, 250, 665, 400)
+# Popups Lumières et Volets, une page par pièce (ADR-0046, 09/10/2026). La démo a des
+# lumières au Salon, dans la Chambre d'amis et au Jardin (l'Applique de l'Entrée est en
+# lecture seule), des volets au Salon et au Jardin. Le glissement part loin de l'arc et
+# du volet dessiné (ils gardent leur geste) : bas de la carte COULEURS, droite de la carte
+# POSITION.
+LUMIERES_SUIVANTE = Glisser(1150, 660, 450, 660, dans_popup=True)
+VOLETS_SUIVANTE = Glisser(1180, 300, 480, 300, dans_popup=True)
+# Nom de la troisième pièce en haut (trois noms de 200 px collés à la croix : x 948 à 1148
+# dans la carte modale, y 4 à 48 ; pages_onglets, tab5_pages.cpp).
+LUMIERES_ONGLET_3 = (15 + 1048, 15 + 26)
+# Première ligne de la carte AMPOULES (x 24 + 22, y 72 + 50 dans la carte modale, 342 × 84),
+# sur le nom : l'appui long ouvre la roue de la tuile autour de sa pastille.
+LUMIERES_LIGNE_0 = (15 + 24 + 22 + 200, 15 + 72 + 50 + 42)
 
 # Roue d'actions rapides (ADR-0036, 07/10/2026) : l'appui long d'une lampe, d'un volet ou
 # d'une clim pose un moyeu sur la tuile et deux anneaux de boutons au-dessus. Premier anneau :
@@ -370,6 +387,18 @@ VOLET_A_50 = Service("tab5_maj_emplacements", (("payload", "t01|open|50|;"),))
 # Les valeurs par défaut de la tablette (16-30 °C, pas 0,5, toutes les lettres), sans nom ;
 # marqué : le mode de la dernière scène (ventilation).
 CLIM_CAPACITES = Service("tab5_maj_emplacements", (("payload", "climr|16|30|0.5|°C|chdfebqsw;"),))
+# Roue d'une clim (ADR-0048), ouverte par la température de la pièce (SALON) : « Clims ▸ »
+# (au moins deux clims : la démo a celle du blueprint et la clim propre du Bureau),
+# Éteindre, Mode, Consigne, Options, « Détails » (le carrousel sur elle). La clim du Bureau
+# (« chdfq ») et celle du blueprint après « climr » ont les trois familles. La température
+# est trop haute (la roue passerait dessous, serrée) : le moyeu se pose sur un point bas, à
+# la verticale de la zone touchée ramenée dans [480, 800], en y 460 (clim_ancre_basse,
+# tab5_tuiles_roue.cpp) ; l'éventail s'ouvre au-dessus, entier.
+ROUE_CLIM_ANCRE = (min(max(SALON[0], 480), 800), 460)
+ROUE_CLIM_TEMPERATURE = 6
+ROUE_CLIMS = 0
+ROUE_CLIM_DETAILS = Toucher(*roue_centres(*ROUE_CLIM_ANCRE, ROUE_CLIM_TEMPERATURE)[-1])
+ROUE_CLIM_CLIMS = Toucher(*roue_centres(*ROUE_CLIM_ANCRE, ROUE_CLIM_TEMPERATURE)[ROUE_CLIMS])
 
 # Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
 # un bouton (un bouton garde l'appui et se déclencherait au relâché).
@@ -830,6 +859,16 @@ ECRANS: tuple[Ecran, ...] = (
                                   roue_reglages(TUILE_VOLET, ROUE_BOUTONS["volet-sans-position"])),
           (VOLET_DE_LA_DEMO,)),
     Ecran("volet-glisse", (Long(*TUILE_VOLET), roue_reglages(TUILE_VOLET, ROUE_BOUTONS["volet"]), VOLET_TIRE)),
+    # Popups Lumières et Volets en pages (ADR-0046) : par « Aller à l'écran » (la pièce de
+    # l'accueil, ou la première qui en a ; Lumières : « aller-lumieres », plus bas), la page
+    # suivante d'un glissement, une pièce par son nom, la roue d'une ligne ; une seule pièce
+    # de volets (ni noms ni glissement).
+    Ecran("lumieres-page-suivante", (Aller("Lumières"), LUMIERES_SUIVANTE)),
+    Ecran("lumieres-onglet", (Aller("Lumières"), Toucher(*LUMIERES_ONGLET_3))),
+    Ecran("lumieres-roue", (Aller("Lumières"), Long(*LUMIERES_LIGNE_0)), (ROUE_FERMER,)),
+    Ecran("aller-volet", (Aller("Volet"),)),
+    Ecran("volets-page-suivante", (Aller("Volet"), VOLETS_SUIVANTE)),
+    Ecran("volets-une-piece", (MAISON_DEUX_PIECES, Aller("Volet")), MAISON_DE_LA_DEMO),
     # Roue d'actions rapides (ADR-0036) : la lampe, ses luminosités dépliées (50 % marqué)
     # puis ses couleurs ; le volet, ses positions dépliées (50 % marqué). Fermer : un
     # toucher replie le second anneau, le suivant ferme la roue. Celle de la clim est la
@@ -867,9 +906,18 @@ ECRANS: tuple[Ecran, ...] = (
           MAISON_DE_LA_DEMO),
     Ecran("climatisation-carrousel-page-3",
           CLIMS_DE_TUILES + (Toucher(*SALON), CARROUSEL_SUIVANTE, CARROUSEL_SUIVANTE), MAISON_DE_LA_DEMO),
+    # En mode HA, la clim propre du Bureau a ses réglages : le toucher ouvre sa roue
+    # (ADR-0048), son « Détails » le carrousel sur elle.
     Ecran("climatisation-carrousel-mode-ha",
-          CLIMS_DE_TUILES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON)),
+          CLIMS_DE_TUILES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON), ROUE_CLIM_DETAILS),
           (Toucher(*FERMER_POPUP), Toucher(*BOUTON_HA), VERS_LA_GAUCHE) + MAISON_DE_LA_DEMO),
+    # Roue de la clim par la température de la pièce (ADR-0048), en mode HA sur le Bureau :
+    # sa clim propre (« Climatiseur du bureau », en froid) ; puis « Clims ▸ » déplié (la
+    # clim du blueprint et elle, marquée). Un toucher replie, le suivant ferme.
+    Ecran("roue-clim-temperature", ALLER_PIECE_CLIMAT + (Toucher(*SALON),),
+          (ROUE_FERMER,) + RETOUR_PIECE_CLIMAT),
+    Ecran("roue-clim-temperature-clims", ALLER_PIECE_CLIMAT + (Toucher(*SALON), ROUE_CLIM_CLIMS),
+          (ROUE_FERMER, ROUE_FERMER) + RETOUR_PIECE_CLIMAT),
     # Historique des alertes (lot 4 du plan des alertes) : la liste d'abord, comme HA la
     # pousserait, puis l'appui long sur la carte centrale et « Alertes », premier bouton de
     # la roue de navigation (ADR-0042).
@@ -1030,6 +1078,10 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("roue-clim", (VERS_LA_GAUCHE, VERS_LA_GAUCHE, CLIM_CAPACITES, Long(*TUILES["chambre"]),
                         roue_famille(TUILES["chambre"], ROUE_BOUTONS["clim"], ROUE_MODE)),
           (ROUE_FERMER, ROUE_FERMER, VERS_LA_DROITE, VERS_LA_DROITE)),
+    # Roue de la clim par la température de la pièce en mode météo (ADR-0048) : la clim du
+    # blueprint, qui n'en a une qu'après « climr » (avant : le carrousel, écrans
+    # « climatisation-par-la-piece » et « climatisation-carrousel* »).
+    Ecran("roue-clim-temperature-meteo", (CLIM_CAPACITES, Toucher(*SALON)), (ROUE_FERMER,)),
 )
 
 # Captures en portrait (pas de rotation en PNG).
