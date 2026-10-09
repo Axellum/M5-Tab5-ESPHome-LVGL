@@ -25,8 +25,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
-from scenarios import (PAGE_DE_LA_PIECE, PIECES, RANGEE, REGLABLES, SCENES, build_alerte_payload,  # noqa: E402
-                       build_etats_tuiles, build_historique, build_tuiles_payload, code_pluie)
+from scenarios import (PAGE_DE_LA_PIECE, PIECES, RANGEE, REGLABLES, SCENES, Piece, Tuile,  # noqa: E402
+                       build_alerte_payload, build_etats_tuiles, build_historique, build_tuiles_payload,
+                       code_pluie)
 
 
 @dataclass(frozen=True)
@@ -193,12 +194,14 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 # ligne des plantes, Plantes.
 SOUS_HORLOGE = (640, 270)
 SERRE = (1172, 158)           # court : Arcade
-# Tuile − / + (ADR-0033) : court sur la température du salon (btn_reglables_liste,
-# climate_card.yaml : carte en 855, 110, zone 4..196 × 22..86), la liste ; ses lignes
-# (reglables_liste.yaml : panneau en 740, 110, bord 2 + marge 6, lignes de 52 + 2).
+# Température du salon (btn_reglables_liste, climate_card.yaml : carte en 855, 110, zone
+# 4..196 × 22..86) : court, le carrousel des clims (popup Climatisation, ADR-0038).
+# Tuile − / + (ADR-0033) : long sur la valeur entre − et + (CONSIGNE_CLIM,
+# btn_clim_target_click), la liste ; ses lignes (reglables_liste.yaml : panneau en 740,
+# 110, bord 2 + marge 6, lignes de 52 + 2).
 SALON = (955, 164)
 LIGNES_REGLABLES = tuple((1000, 110 + 2 + 6 + 54 * k + 26) for k in range(10))
-CONSIGNE_CLIM = (1061, 251)   # court : Climatisation
+CONSIGNE_CLIM = (1061, 251)   # court : Climatisation · long : la liste de la tuile − / +
 TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
 CARTE_CENTRALE = (640, 375)   # long : historique des alertes (popup « Alertes »)
 # Long : Lumières. Avec les pièces (ADR-0023), les lampes T2 et T3 de la pièce de
@@ -486,7 +489,7 @@ REGLAGES_GLISSER_CURSEUR = Glisser(900, 215, 400, 215, dans_popup=True)
 REGLAGES_CURSEUR_A_100 = Glisser(400, 215, 1270, 215, dans_popup=True)
 
 # Popup Température (ADR-0032, historique_popup.yaml) : appui long sur la température de
-# la pièce (btn_reglables_liste, aussi la liste de la tuile − / + au toucher court ; x 859-1051
+# la pièce (btn_reglables_liste, aussi le carrousel des clims au toucher court ; x 859-1051
 # et y 132-196 à l'écran) ou sur la seconde
 # (SERRE). Boutons de vue : carte du graphique à y 253-685 à l'écran, boutons de 150 × 48
 # à 18, 178 et 338 px de son bord droit (x 1241). Le rendu ne répond à aucun événement :
@@ -510,6 +513,30 @@ MAISON_DEUX_PIECES = Service("tab5_maj_tuiles", (("payload", build_tuiles_payloa
 MAISON_LAMPE = (104, 412)
 MAISON_DE_LA_DEMO = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
                      Service("tab5_maj_emplacements", (("payload", build_etats_tuiles(RETIREES)),)))
+
+# Carrousel des clims (ADR-0038) : la démo n'a que la clim du blueprint (une page, ni
+# pastilles ni glisse). Trois pages : deux clims de tuile sans l'option m au Bureau (pièce
+# 3, page 1), T2 « Clim du bureau » en chauffage (toutes les capacités) et T3, que HA
+# pousse sans nom (le titre est alors celui de la pièce) et qui n'a que Froid,
+# Ventilation et Silence. Réglages et états (clés cr et ce, ADR-0027) après les
+# définitions, comme le blueprint. `fermer` repousse celles de la démo : les deux tuiles
+# redéfinies, la tablette oublie leurs clims (clim_tuile_oublier).
+BUREAU_AVEC_CLIMS = {**PIECES, 3: Piece(PIECES[3].nom, {
+    **PIECES[3].tuiles,
+    2: Tuile("cli", "Clim du bureau", "clim", etat="heat", valeur="19.5"),
+    3: Tuile("cli", "Clim de l'atelier", "clim", etat="off", valeur="17"),
+})}
+CLIMS_DE_TUILES = (
+    Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(BUREAU_AVEC_CLIMS, RANGEE, REGLABLES)),)),
+    Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({3: BUREAU_AVEC_CLIMS[3]})
+                                       + "cr32|16|30|0.5|°C|chdfebqsw|Clim du bureau;"
+                                       + "ce32|20.5|19.5|heat|none|quiet|swing;"
+                                       + "cr33|18|30|1|°C|cfq|;ce33|22|17|off|none|auto|stop;"),)),
+)
+# Geste dans le popup, vers la gauche : la clim suivante. Il part du bas de la carte
+# OPTIONS (verre vide sous ses boutons, x 857-1243 et y 631-687 à l'écran) et finit sur la
+# carte TEMPÉRATURE, sous l'arc et ses boutons.
+CARROUSEL_SUIVANTE = Glisser(1150, 668, 450, 668, dans_popup=True)
 
 
 def _historique(cle: str, vue: str, exterieur: bool = False) -> Service:
@@ -644,12 +671,13 @@ ECRANS: tuple[Ecran, ...] = (
     # l'accueil ne la remet pas, `fermer` finit le tour jusqu'à la première.
     Ecran("accueil-rangee-ligne-2", (Toucher(*SOUS_HORLOGE),), (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE))),
     Ecran("accueil-rangee-ligne-3", (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE)), (Toucher(*SOUS_HORLOGE),)),
-    # Tuile − / + (ADR-0033) : la liste (clim, les quatre appareils de la démo,
-    # scenarios.REGLABLES, la tablette ; le retour à l'accueil la ferme), puis l'enceinte
-    # (ligne 4) choisie à la place de la clim ; le choix reste en NVS : `fermer` remet la clim.
-    Ecran("accueil-tuile-liste", (Toucher(*SALON),)),
-    Ecran("accueil-tuile-enceinte", (Toucher(*SALON), Toucher(*LIGNES_REGLABLES[4])),
-          (Toucher(*SALON), Toucher(*LIGNES_REGLABLES[0]))),
+    # Tuile − / + (ADR-0033) : la liste par l'appui long sur la valeur entre − et +
+    # (ADR-0038 ; clim, les quatre appareils de la démo, scenarios.REGLABLES, la tablette ;
+    # le retour à l'accueil la ferme), puis l'enceinte (ligne 4) choisie à la place de la
+    # clim ; le choix reste en NVS : `fermer` remet la clim.
+    Ecran("accueil-tuile-liste", (Long(*CONSIGNE_CLIM),)),
+    Ecran("accueil-tuile-enceinte", (Long(*CONSIGNE_CLIM), Toucher(*LIGNES_REGLABLES[4])),
+          (Long(*CONSIGNE_CLIM), Toucher(*LIGNES_REGLABLES[0]))),
 
     # --- Fenêtres ---------------------------------------------------------------------
     Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Toucher(*HORLOGE))),
@@ -687,6 +715,22 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("appareil-confirmer", (VERS_LA_GAUCHE, Long(*TUILE_JE_PARS), Toucher(*BOUTON_APPAREIL)),
           (Attendre(3.5), Toucher(*FERMER_POPUP), VERS_LA_DROITE)),
     Ecran("climatisation", (Toucher(*CONSIGNE_CLIM),)),
+    # Carrousel des clims (ADR-0038) par la température de la pièce : la démo n'a que la
+    # clim du blueprint, l'écran est celui du dessus (ni pastilles ni glisse).
+    Ecran("climatisation-par-la-piece", (Toucher(*SALON),)),
+    # Puis trois clims (CLIMS_DE_TUILES) : la clim du blueprint (première page), un geste
+    # vers la gauche, la clim du bureau, un second, la clim sans nom (titre « Bureau »,
+    # trois boutons). En mode HA sur le Bureau, le toucher de la température ouvre sur la
+    # clim de la pièce (deuxième page). `fermer` repousse les définitions de la démo : les
+    # deux clims de tuile sont oubliées, rien ne reste pour les écrans suivants.
+    Ecran("climatisation-carrousel", CLIMS_DE_TUILES + (Toucher(*SALON),), MAISON_DE_LA_DEMO),
+    Ecran("climatisation-carrousel-page-2", CLIMS_DE_TUILES + (Toucher(*SALON), CARROUSEL_SUIVANTE),
+          MAISON_DE_LA_DEMO),
+    Ecran("climatisation-carrousel-page-3",
+          CLIMS_DE_TUILES + (Toucher(*SALON), CARROUSEL_SUIVANTE, CARROUSEL_SUIVANTE), MAISON_DE_LA_DEMO),
+    Ecran("climatisation-carrousel-mode-ha",
+          CLIMS_DE_TUILES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON)),
+          (Toucher(*FERMER_POPUP), Toucher(*BOUTON_HA), VERS_LA_GAUCHE) + MAISON_DE_LA_DEMO),
     # Historique des alertes (lot 4 du plan des alertes) : la liste d'abord, comme HA la
     # pousserait, puis l'appui long sur la carte centrale.
     Ecran("alertes", (Service("tab5_maj_alertes_historique", (("payload", HISTORIQUE_ALERTES),)),
