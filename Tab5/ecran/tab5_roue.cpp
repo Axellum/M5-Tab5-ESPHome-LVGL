@@ -68,12 +68,15 @@ constexpr int32_t kJauge = 148;
 constexpr int32_t kBande = 96;
 constexpr int32_t kBande2 = 96;
 constexpr int32_t kRetrait = 10;
-// Mots : celui d'un choix au-delà de son bouton (centre à kRayon2 + kLegende2), ceux des
-// liens sous leur bouton ; labels de kLegendeL px, texte centré. Nom sous le moyeu.
-// Roue de navigation (ADR-0042, RoueTete::mots) : le mot de chaque bouton du premier
-// anneau au-delà de lui, dans l'axe du bouton, à kMotEcart de son bord (mot_recul). Un mot
-// ne déborde jamais sur son voisin de rangée : il est coupé (« … ») à leur écart moins
-// kEcartMots, kMotMin au moins.
+// Mots : celui d'un choix au-delà de son bouton, dans l'axe du bouton, à kMotEcart de son
+// bord (mot_recul : un mot sur le côté s'écarte de sa demi-largeur, jamais sur son
+// bouton) ; ceux des liens sous leur bouton ; labels de kLegendeL px, texte centré. Nom
+// sous le moyeu. Roue de navigation (ADR-0042, RoueTete::mots) : le mot de chaque bouton du
+// premier anneau aussi, de la même façon. Un mot ne déborde jamais sur son voisin de
+// rangée : il est coupé (« … ») à leur écart moins kEcartMots, kMotMin au moins.
+// kLegende2 : place d'un mot au-dessus de son choix, pour le seuil de la roue sous l'ancre
+// (roue_ouvrir) ; un mot oblique très long peut monter de 2 px de plus : legende() le
+// garde dans l'écran.
 constexpr int32_t kLegende2 = 60;
 constexpr int32_t kLegendeL = 150;
 constexpr int32_t kLegendeH = 28;
@@ -408,11 +411,12 @@ void largeurs_libres(const int32_t x[], const int32_t y[], const char* const mot
     }
 }
 
-// Distance du centre d'un bouton du premier anneau, d'angle `a`, au centre de son mot
-// (navigation) : le mot est une boîte de sa largeur (kLegendeL au plus) sur kLegendeH,
-// posée dans l'axe du bouton à kMotEcart de son bord — l'étendue de la boîte sur cet axe
+// Distance du centre d'un bouton (des deux anneaux : même diamètre), d'angle `a`, au centre
+// de son mot : le mot est une boîte de sa largeur (kLegendeL au plus) sur kLegendeH, posée
+// dans l'axe du bouton à kMotEcart de son bord — l'étendue de la boîte sur cet axe
 // (l/2·|cos a| + h/2·|sin a|) l'en éloigne d'autant : « Assistant », presque à
 // l'horizontale, s'écarte plus que « Agenda », au-dessus de son bouton.
+static_assert(kDiametre == kDiametre2, "mot_recul sert aux deux anneaux");
 int32_t mot_recul(lv_obj_t* lbl, const char* txt, int a) {
     int32_t l = kLegendeL;
     if (lbl != nullptr && txt != nullptr) {
@@ -504,13 +508,14 @@ void peindre_second_anneau() {
     int angle[kRoueChoix];
     if (s.m > 0)
         disposer(s.xa, s.ya, s.m, kRayon2, kPasAngle2, s.angle[s.famille], kDiametre2 / 2, s.dessous, cx, cy, angle);
-    // Mots des choix, au-delà de leur bouton, coupés avant leur voisin de rangée.
+    // Mots des choix, au-delà de leur bouton (mot_recul), coupés avant leur voisin de rangée.
     const char* mot[kRoueChoix] = {};
     int32_t mx[kRoueChoix] = {}, my[kRoueChoix] = {}, largeur[kRoueChoix];
     for (int j = 0; j < s.m; j++) {
         mot[j] = c[j].legende;
-        const int32_t dy = echelle(kRayon2 + kLegende2, sin5(angle[j]));
-        mx[j] = s.xa + echelle(kRayon2 + kLegende2, cos5(angle[j]));
+        const int32_t r = kRayon2 + mot_recul(u.choix_legende[j], c[j].legende, angle[j]);
+        const int32_t dy = echelle(r, sin5(angle[j]));
+        mx[j] = s.xa + echelle(r, cos5(angle[j]));
         my[j] = s.dessous ? s.ya + dy : s.ya - dy;
     }
     largeurs_libres(mx, my, mot, kRoueChoix, largeur);
