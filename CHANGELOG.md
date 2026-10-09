@@ -21,6 +21,13 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — La roue de la clim par la température de la pièce (ADR-0048)
+
+- **Demande d'Axel** (correction du carrousel, ADR-0038) : toucher la température de la pièce ouvre une **roue**, celle des tuiles (ADR-0036), pas une page. La roue de la clim de la pièce affichée en mode HA (sa clim propre d'abord), sinon de celle du blueprint, en éventail entier vers le haut depuis un point bas sous la température (posée sur elle, trop haute, la roue s'ouvrait dessous, serrée) : Éteindre, Mode ▸, Consigne ▸, Options ▸ (ce que l'appareil a), « Détails » = le carrousel des clims ouvert sur elle. Avec plusieurs clims, **« Clims ▸ »** prend la place de « Maison » : ses choix montrent chaque clim (consigne ou icône éteinte, nom dessous) et un toucher passe la roue sur elle. **Non testé sur la tablette.**
+- **Inchangé** : sans réglages reçus pour cette clim (celle du blueprint avant `climr`), le toucher ouvre le carrousel comme avant ; sans aucune clim, la liste de la tuile − / + ; l'appui long ouvre l'historique ; le carrousel, son glisser et ses pastilles ; la roue d'une tuile `cli`. Aucune commande nouvelle, contrat inchangé (emplacements `clim`, `tRT`, `cpR`) : rien à recopier dans Home Assistant.
+- **Un seul code de roue clim** (`Tab5/ecran/tab5_tuiles_roue.cpp`) : `clim_roue_ouvrir(ClimRef, ancre)` est la roue d'une tuile sans tuile ; les boutons d'une clim sont construits par le même code pour une tuile `cli` et pour une clim quelconque (blueprint, tuile, pièce). `tab5_clim.cpp` lit aussi la clim d'une pièce pour la roue ; `clim_carrousel_ouvrir()` devient `clim_ref_choisir()` + `clim_carrousel_ouvrir_sur()`, et la carte appelle `clim_temperature_ouvrir()`. Un réglage ou un état poussé d'une clim repeint la roue ouverte sur une clim (avant : seulement l'état de la tuile). Une icône de plus dans `mdi_font_36` (air-conditioner, « Clims »).
+- Tests : `tests/test_roue_clim.py`, mises à jour de `test_roue.py`, `test_carrousel_clim.py`, `test_piece_climat.py`. Rendu hors tablette : nouveaux écrans `roue-clim-temperature` (mode HA, la clim du Bureau), `roue-clim-temperature-clims` (« Clims ▸ » déplié) et `roue-clim-temperature-meteo` (mode météo, la clim du blueprint) ; `climatisation-carrousel-mode-ha` passe par le « Détails » de la roue (même image attendue).
+
 ### 2026-10-09 — Popup Température : l'humidité avec la température, une page par pièce (ADR-0047)
 
 - **Demande d'Axel** : un graphique des températures et de l'humidité des capteurs de chaque pièce, si présents, et passer d'une pièce à l'autre dans le popup. **Non testé sur la tablette.**
