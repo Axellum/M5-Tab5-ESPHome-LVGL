@@ -482,8 +482,6 @@ script:
           assist_wake_word_indicator_ui(id(lbl_ok_nabu), id(tab5_wake_word_active).state);
           if (id(phone_battery).has_state())
             set_icon_color_ui(id(icon_phone), get_battery_color(id(phone_battery).state));
-          if (id(hum_salon).has_state() && !std::isnan(id(hum_salon).state))
-            set_icon_color_ui(id(icon_salon), get_humidity_color(id(hum_salon).state));
           set_icon_active_ui(id(icon_ha), id(status_ha).state, UIColor.INFO, UIColor.INACTIVE);
           if (reglages_page_visible(REGLAGES_PAGE_SYSTEME))
             update_console_ha_status_ui(id(lbl_sys_ha_val), id(status_ha).state);

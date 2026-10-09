@@ -65,7 +65,7 @@ def test_vues_cles_et_limites_du_firmware():
     vues = re.findall(r'"(\w+)"', re.search(r"kVues\[NB_VUES\] = \{([^}]*)\}", cpp).group(1))
     cles = re.findall(r'"(\w+)"', re.search(r"kCles\[NB_CLES\] = \{([^}]*)\}", cpp).group(1))
     assert tuple(vues) == tuple(scenarios.HISTORIQUE_VUES) == ("jour", "semaine", "mois")
-    assert tuple(cles) == scenarios.HISTORIQUE_CLES == ("salon", "serre")
+    assert tuple(cles) == scenarios.HISTORIQUE_CLES == ("salon", "serre", "p0", "p1", "p2", "p3", "p4")
     mesures_max = int(re.search(r"kMesuresMax = (\d+);", cpp).group(1))
     prev_max = int(re.search(r"kPrevMax = (\d+);", cpp).group(1))
     assert mesures_max == scenarios.HISTORIQUE_MESURES_MAX and prev_max == scenarios.HISTORIQUE_PREV_MAX
@@ -122,8 +122,12 @@ def test_demo_dans_le_format(cle, vue):
     assert set(h) == {"cle", "vue", "entete", "mesures", "previsions"} and (h["cle"], h["vue"]) == (cle, vue)
     lu = _lire_comme_le_firmware(h["entete"], h["mesures"], h["previsions"])
     pas, nb = scenarios.HISTORIQUE_VUES[vue]
+    assert lu["actuel"] == scenarios.historique_actuel(cle), "la courbe finit sur la valeur de l'accueil"
+    if lu["actuel"] == "nan":
+        # Pièce sans température (ADR-0040) : la réponse du package sans capteur.
+        assert cle.startswith("p") and lu["nom"] == "" and lu["creneaux"] == [] and lu["points"] == []
+        return
     assert lu["pas"] == pas and len(lu["creneaux"]) == nb + 1
-    assert lu["actuel"] == scenarios.EMPLACEMENTS[cle][1], "la courbe finit sur la valeur de l'accueil"
     debut = dt.datetime.fromisoformat(lu["debut"])
     assert lu["maintenant"] == (moment - debut).total_seconds() // 60
     assert nb * pas <= lu["maintenant"] < (nb + 1) * pas, "maintenant tombe dans le dernier créneau"
@@ -580,10 +584,17 @@ def _branche(p):
     return branche
 
 
+def _etape_if(p):
+    """Les variables de la branche (h_cle, h_capteur) rendues, puis l'étape « if »."""
+    branche = _branche(p)
+    p.variables_du_bloc("h_capteur")
+    return branche["sequence"][1]
+
+
 def _variables_envoyees(p):
     branche = _branche(p)
     assert p.modele(branche["conditions"]) is True
-    etape = branche["sequence"][0]
+    etape = _etape_if(p)
     p.etats.d["script.tab5_historique"] = Etat("script.tab5_historique", "off")
     assert p.modele(etape["if"]) is True
     turn_on = etape["then"][0]
@@ -613,9 +624,28 @@ def test_blueprint_seconde_temperature(coche):
 def test_blueprint_cle_inconnue_ou_sans_le_package():
     p = Passage(ENTREES, _maison_bp(), _evenement("historique", cle="cuisine", vue="jour"))
     p.etats.d["script.tab5_historique"] = Etat("script.tab5_historique", "off")
-    assert p.modele(_branche(p)["sequence"][0]["if"]) is False
+    assert p.modele(_etape_if(p)["if"]) is False
     p = Passage(ENTREES, _maison_bp(), _evenement("historique", cle="salon", vue="jour"))
-    assert p.modele(_branche(p)["sequence"][0]["if"]) is False
+    assert p.modele(_etape_if(p)["if"]) is False
+
+
+# Température d'une pièce en mode HA (ADR-0040) : clé pR, la sonde de la section
+# « Pièce R + 1 », sans prévision ni case « dehors ».
+@pytest.mark.parametrize("cle, capteur", [("p1", "sensor.bureau_t"), ("p0", ""), ("p4", "")])
+def test_blueprint_temperature_de_la_piece(cle, capteur):
+    etats = _maison_bp() + [Etat("sensor.bureau_t", "22.8", "Bureau", friendly_name="Bureau",
+                                 unit_of_measurement="°C", device_class="temperature")]
+    entrees = dict(ENTREES, serre_exterieure=True, piece_2_temperature="sensor.bureau_t")
+    v = _variables_envoyees(Passage(entrees, etats, _evenement("historique", cle=cle, vue="mois")))
+    assert v["cle"] == cle and v["vue"] == "mois" and v["capteur"] == capteur and v["exterieur"] is False
+
+
+def test_blueprint_temperature_d_une_piece_absente():
+    """Une sonde choisie puis supprimée de HA : pas de capteur (le package répond « aucun
+    historique »), pas d'erreur."""
+    v = _variables_envoyees(Passage(dict(ENTREES, piece_2_temperature="sensor.disparu"), _maison_bp(),
+                                    _evenement("historique", cle="p1")))
+    assert v["capteur"] == ""
 
 
 def test_blueprint_ecoute_l_evenement():
@@ -631,8 +661,16 @@ def test_blueprint_ecoute_l_evenement():
 
 def test_appuis_longs_et_registre():
     climat = _lire(CLIMAT)
-    assert "if (!zone_absente(Zone::SALON)) id(tab5_historique_ouvrir).execute(std::string(\"salon\"));" in climat
-    assert "if (!zone_absente(Zone::SERRE)) id(tab5_historique_ouvrir).execute(std::string(\"serre\"));" in climat
+    # La clé vient de accueil_historique_cle() : salon / serre, ou pR en mode HA sur une
+    # pièce qui a une température (ADR-0040) ; nullptr (zone absente, humidité) : rien.
+    for droite in ("false", "true"):
+        assert (f"const char* cle = accueil_historique_cle({droite});\n"
+                "              if (cle != nullptr) id(tab5_historique_ouvrir).execute(std::string(cle));"
+                in climat.replace("\r\n", "\n")), droite
+    piece = _lire(os.path.join(REPO, "Tab5", "ecran", "tab5_piece_climat.cpp"))
+    assert 'return zone_absente(Zone::SERRE) ? nullptr : "serre";' in piece
+    assert 'return zone_absente(Zone::SALON) ? nullptr : "salon";' in piece
+    assert "return droite ? nullptr : kClesHistorique[r];" in piece
     serre = climat.split("id: btn_serre_games", 1)[1].split("- obj:", 1)[0]
     assert "script.execute: tab5_arcade_open" in serre and "on_long_press:" in serre, \
         "l'appui court sur la serre garde l'arcade"

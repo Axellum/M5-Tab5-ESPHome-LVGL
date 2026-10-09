@@ -1306,6 +1306,10 @@ void tuiles_mode_ha(bool actif) {
     else animate_crossfade_layers(u.calque_ha, meteo);
     central_mode_ha(u.titre_cadre, u.titre, ctx);
     bouton_ha_peindre();
+    // Zone des températures et tuile − / + : la pièce (sa température déclarée, sa clim)
+    // ou, hors du mode HA, le salon et la serre (ADR-0040).
+    accueil_temperatures_ui();
+    reglables_clim_changee();
 }
 
 // Mode HA : la page suivante dans l'ordre de la météo, pièce vide comprise (elle dit
@@ -1316,6 +1320,8 @@ void tuiles_swipe_ha(bool gauche) {
     aller_page(forecast_page_suivante(g_central_ctx.forecast_page, gauche));
     peindre_cartes();
     central_mode_ha(g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, g_central_ctx);
+    accueil_temperatures_ui();  // la nouvelle pièce, ou le salon et la serre (ADR-0040)
+    reglables_clim_changee();
 }
 
 // « Pièce n/5 » (n = numéro de la pièce dans le blueprint), puis son nom, « Pièce n »
