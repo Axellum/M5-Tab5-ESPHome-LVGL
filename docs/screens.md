@@ -311,6 +311,16 @@ Opened by a tap on the room's name in HA mode, or by « Aller à l'écran → Ma
 
 Nothing new with Home Assistant: no event, action or blueprint input. Widgets are YAML templates (`maison_popup.yaml`, 5 headers, 25 rows), laid out and painted at each opening and repainted while shown when a state or the definitions change.
 
+## Weather popup — the forecast in graphs
+
+Opened by « Aller à l'écran → Météo », a home gesture (code `meteo`, [ADR-0039](decisions/0039-gestes-accueil.md)) or a long press on the body of a forecast tile that holds no device ([ADR-0043](decisions/0043-weather-popup.md), `tab5_meteo.cpp`, `ui_components/meteo_popup.yaml`). Shared chrome (ADR-0009), title « Météo »; three pages named next to the title (`reglages_onglet.yaml`, the accent on the page shown), changed by a tap on a name or a left / right swipe in the popup, looping, instant — the Settings' mechanism (`ui_pages_geste()`, `ui_choix_peindre()`).
+
+- **« Aujourd'hui »**: a « Maintenant » card (150 px): the weather icon (120 px font), the temperature in its colour (`roboto_55_b`), the condition in words, « Minimum … · Maximum … » of today, and on the right « Pluie sur N h » with the total in mm (« Aucune » when dry). Below (432 px), up to 15 hours of `cal_heures_data`: hour labels, icons at 40 % (`font_meteo_48` / `_32`), a monotone smoothed curve (`lv_line`, colour of the mean temperature), 12 px points and values coloured by temperature (at least 4 °C of range), rain bars from a common base (scale at least 2 mm, colours of the rain levels) with their mm. The current hour has a 10 % accent column and an accent label; the first hour after midnight reads « Demain » after a thin line.
+- **« 10 jours »**: ten 58 px rows from today (`cal_index_for_offset()`): « Aujourd'hui » (info colour), « Demain », then the short day label; icon; low and high in their colours; a 10 px track with a horizontal gradient bar from low to high on the common scale of the ten days (the current temperature included), and a dot for the temperature now on today's row.
+- **« Détails »**: « Pluie dans l'heure » with the central card's sentence in the colour of its level, the nine bars on a time scale (0-30 min by 5, then 10-min steps), height = level, against four dashed level lines (« Faible » to « Très forte »), axis « Maintenant », 15, 30, 45, 60 min; dry bars are 4 px stubs. Then four 288 × 210 cards: humidity (colour of `get_humidity_color()`, dry / comfortable / humid air), UV index (WHO level: low, moderate, high, very high, extreme, coloured), frost and snow probabilities.
+
+Nothing new with Home Assistant: the hourly and daily forecasts, rain bars and sentence the home page already gets, plus `tab5_maj_meteo_actuelle` and `tab5_maj_probabilites` fields that were reserved. `packages/tab5_push.yaml` sends the third hourly block again (hours 10-14). Plot widgets are created once at the first opening; repainted on opening, page change, each push while shown and theme change.
+
 ---
 
 ## Color coding for readability
@@ -702,6 +712,16 @@ Ouvert par un tap sur le nom de la pièce en mode HA, ou par « Aller à l'écra
 - **« Éteindre les lumières »** dans la barre de titre, visible quand une pièce a une tuile `lum` : le « Tout éteindre » du popup lumière (`pR` / `eteindre`) pour chacune de ces pièces, sans confirmation.
 
 Rien de nouveau avec Home Assistant : ni événement, ni action, ni entrée de blueprint. Les widgets sont des gabarits YAML (`maison_popup.yaml`, 5 en-têtes, 25 lignes), disposés et peints à chaque ouverture et repeints, tant qu'il est affiché, quand un état ou les définitions changent.
+
+## Popup Météo — les prévisions en graphiques
+
+Ouvert par « Aller à l'écran → Météo », un geste de l'accueil (code `meteo`, [ADR-0039](decisions/0039-gestes-accueil.md)) ou un appui long sur le corps d'une tuile de prévision qui ne porte pas d'appareil ([ADR-0043](decisions/0043-weather-popup.md), `tab5_meteo.cpp`, `ui_components/meteo_popup.yaml`). Chrome partagé (ADR-0009), titre « Météo » ; trois pages nommées à côté du titre (`reglages_onglet.yaml`, l'accent sur la page affichée), changées par un tap sur un nom ou un glissé gauche / droite dans le popup, en boucle, sans animation — le mécanisme des Réglages (`ui_pages_geste()`, `ui_choix_peindre()`).
+
+- **« Aujourd'hui »** : une carte « Maintenant » (150 px) : l'icône météo (police de 120 px), la température dans sa couleur (`roboto_55_b`), la condition en mots, « Minimum … · Maximum … » du jour, et à droite « Pluie sur N h » avec le total en mm (« Aucune » s'il fait sec). Dessous (432 px), jusqu'à 15 heures de `cal_heures_data` : heures, icônes à 40 % (`font_meteo_48` / `_32`), courbe lissée monotone (`lv_line`, couleur de la température moyenne), points de 12 px et valeurs à la couleur de la température (4 °C d'écart au moins), barres de pluie sur un pied commun (échelle de 2 mm au moins, couleurs des niveaux de pluie) avec leurs mm. L'heure en cours a une colonne d'accent à 10 % et un libellé d'accent ; la première heure après minuit s'appelle « Demain », après un trait fin.
+- **« 10 jours »** : dix lignes de 58 px à partir d'aujourd'hui (`cal_index_for_offset()`) : « Aujourd'hui » (couleur info), « Demain », puis le libellé court du jour ; icône ; minimum et maximum dans leurs couleurs ; une piste de 10 px avec une barre en dégradé horizontal du minimum au maximum sur l'échelle commune des dix jours (température du moment comprise), et un point pour la température du moment sur la ligne d'aujourd'hui.
+- **« Détails »** : « Pluie dans l'heure » avec la phrase de la carte centrale dans la couleur de son niveau, les neuf barres à l'échelle du temps (0-30 min par 5, puis par 10 min), hauteur = niveau, devant quatre lignes de niveau pointillées (« Faible » à « Très forte »), axe « Maintenant », 15, 30, 45, 60 min ; une barre sèche est un trait de 4 px. Puis quatre cartes de 288 × 210 : humidité (couleur de `get_humidity_color()`, air sec / confortable / humide), indice UV (niveau de l'OMS : faible, modéré, élevé, très élevé, extrême, en couleur), probabilités de gel et de neige.
+
+Rien de nouveau avec Home Assistant : les prévisions horaires et journalières, les barres et la phrase de pluie que reçoit déjà l'accueil, plus des champs de `tab5_maj_meteo_actuelle` et `tab5_maj_probabilites` jusque-là réservés. `packages/tab5_push.yaml` renvoie le troisième bloc horaire (heures 10-14). Les widgets des tracés sont créés une fois, à la première ouverture ; repeints à l'ouverture, au changement de page, à chaque poussée s'il est affiché et au changement de thème.
 
 ---
 

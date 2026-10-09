@@ -22,7 +22,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 10 | Climate: target, − and + | target: climate window (another device chosen: its window); − / +: one step | — |
 | 11 | Row under the clock: plants and sensors | next line | on the plants: plant details |
 | 12 | Central card | next panel, or dismiss a message | Alerts window |
-| 13 | A card of the bottom row (its large icon) | the command of its device | the window of its device |
+| 13 | A card of the bottom row (its large icon) | the command of its device | the window of its device; without a device, the [weather](weather.md) |
 | 14 | A day's temperatures | that day's schedule, for 6 s | — |
 
 The tap and the long press of 5 (hours, minutes, date) and of buttons 6 to 8 can do something else, open the [house](house.md) for instance, chosen in the blueprint ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
