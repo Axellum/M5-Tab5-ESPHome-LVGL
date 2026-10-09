@@ -39,7 +39,7 @@ touche à l'orientation ; voir sa section plus bas avant d'en écrire une autre.
 | 4 | **Coureur d'Or** — Lode Runner | `lode_game` | `tab5_lode_open` | `F15A2` ladder |
 | 5 | **Go Tab** — jeu de Go | `go_engine` + `go_ai` + `go_game` | `tab5_go_open` | `F0B38` circle-multiple |
 | 6 | **Trial Poursuite** — quiz | `trivia_game` | `tab5_trivia_open` | `F134A` head-question |
-| 7 | **Dames Tab** — dames 10×10 | `draughts_ai` + `draughts_game` | `tab5_draughts_open` | `F013A` checkerboard |
+| 7 | **Dames Tab** — dames 10×10 | `draughts_engine` + `draughts_ai` + `draughts_game` | `tab5_draughts_open` | `F013A` checkerboard |
 | 8 | **Roi Noir** — échecs FIDE | `chess_ai` + `chess_game` | `tab5_chess_open` | `F0857` chess-king |
 
 ## Page Arcade (`ui_components/game_selector.yaml`)
@@ -550,9 +550,10 @@ YAML ne déclare que 4 conteneurs vides.
 ## Dames Tab — dames internationales 10×10
 
 **Plein écran 1280×720** sur `page_draughts`, IA embarquée time-slicée, 100 % local.
-Moteur et IA dans `draughts_ai.*`, UI et machine à états dans `draughts_game.*`.
+Moteur pur (règles, génération des coups, nulles) dans `draughts_engine.*`, IA dans
+`draughts_ai.*`, UI et machine à états dans `draughts_game.*`.
 Tests : `tools/test_draughts_engine.cpp` — le vrai générateur de coups (`Draughts::Engine`,
-extrait de `draughts_game.cpp` par `tools/hote/extraire_moteur_dames.py`), compilé par g++
+`draughts_engine.cpp` compilé tel quel, sans LVGL ni ESPHome), compilé par g++
 sous ASan + UBSan dans le job `python` de la CI : perft de référence des deux variantes
 (10×10 : 9, 81, 658, 4 265, 27 117… jusqu'à 1 049 442 ; 8×8 : 7, 49, 302, 1 469… jusqu'à
 845 931) et tests de règles. Il fait foi ; `tools/test_draughts_engine.py`, son miroir Python,
