@@ -10,6 +10,7 @@
 #pragma once
 #include "tab5_custom.h"
 #include "tab5_champs.h"
+#include "tab5_parse.h"
 #include <cstring>
 #include <string>
 

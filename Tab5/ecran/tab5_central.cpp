@@ -341,24 +341,26 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
 // 06/10/2026). Tout autre libellé (nom d'un capteur en erreur, ancien package HA)
 // s'affiche tel quel. Bandeaux comme historique passent d'abord le libellé brut par
 // texte_ha_copier (glyphes des polices).
+// Le code se lit par alerte_texte_lire() (Tab5/socle/tab5_parse.h, lot F).
 std::string ha_alerte_texte(const char* brut) {
     char tmp[200];
-    if (strncmp(brut, "@maj:", 5) == 0) {
-        snprintf(tmp, sizeof(tmp), tr("1 MAJ · %s"), brut + 5);
-        return normalize_text_utf8(tmp);
+    const AlerteTexteLu lu = alerte_texte_lire(brut);
+    switch (lu.code) {
+        case AlerteTexteCode::MAJ:
+            snprintf(tmp, sizeof(tmp), tr("1 MAJ · %s"), lu.reste);
+            return normalize_text_utf8(tmp);
+        case AlerteTexteCode::INDISPO:
+            snprintf(tmp, sizeof(tmp), tr("%d indispo"), lu.nombre);
+            return tmp;
+        case AlerteTexteCode::VIGI:
+            switch (vigilance_niveau(lu.reste)) {
+                case NiveauVigilance::ROUGE: return tr("Vigilance Rouge");
+                case NiveauVigilance::ORANGE: return tr("Vigilance Orange");
+                case NiveauVigilance::JAUNE: return tr("Vigilance Jaune");
+                default: return normalize_text_utf8(lu.reste);
+            }
+        default: return normalize_text_utf8(brut);
     }
-    if (strncmp(brut, "@indispo:", 9) == 0) {
-        snprintf(tmp, sizeof(tmp), tr("%d indispo"), atoi(brut + 9));
-        return tmp;
-    }
-    if (strncmp(brut, "@vigi:", 6) == 0) {
-        const char* niveau = brut + 6;
-        if (strcmp(niveau, "Rouge") == 0) return tr("Vigilance Rouge");
-        if (strcmp(niveau, "Orange") == 0) return tr("Vigilance Orange");
-        if (strcmp(niveau, "Jaune") == 0) return tr("Vigilance Jaune");
-        return normalize_text_utf8(niveau);
-    }
-    return normalize_text_utf8(brut);
 }
 
 bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI slots[4],
@@ -375,8 +377,8 @@ bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
     // Rejet AVANT de vider les slots : vidés puis rejetés, ils restaient vides alors
     // que le YAML recopiait les anciens has_ha = true — le rotateur montrait des
     // panneaux vides et le tap d'acquittement n'avait plus d'id (audit 25/09, §2.4).
-    if (payload.length() > 1024) {
-        payload_trop_long("tab5.alertes_ha", payload.length(), 1024);
+    if (payload.length() > kAlertesHaMax) {
+        payload_trop_long("tab5.alertes_ha", payload.length(), kAlertesHaMax);
         return false;
     }
 
@@ -390,32 +392,27 @@ bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
         return false;
     }
 
-    char buf[1025];
-    strncpy(buf, payload.c_str(), sizeof(buf) - 1);
-    buf[sizeof(buf) - 1] = '\0';
-
     int slot_idx = 0;
     // En-tête « @n:N » (alertes du 06/10/2026, lot 3) : HA a N alertes à lire en tout,
-    // plus que les 4 bandeaux. Un jeton d'un seul champ : l'ancien firmware l'ignore.
+    // plus que les 4 bandeaux. Lecture jeton par jeton : LecteurAlertesHa
+    // (Tab5/socle/tab5_parse.h, lot F).
     int a_lire = 0;
     int masquees_ici = 0;  // tapées sur la dalle, pas encore retirées par HA
     std::vector<std::string> ids_seen;
-    char* saveptr1 = nullptr;
-    char* token = strtok_r(buf, ";", &saveptr1);
-    while (token != nullptr && slot_idx < kHaAlertSlotCount) {
-        if (strncmp(token, "@n:", 3) == 0) {
-            a_lire = atoi(token + 3);
-            token = strtok_r(nullptr, ";", &saveptr1);
+    LecteurAlertesHa lecteur(payload.c_str());
+    for (AlerteHaJeton jeton = lecteur.suivant(); jeton.type != AlerteHaType::FIN && slot_idx < kHaAlertSlotCount;
+         jeton = lecteur.suivant()) {
+        if (jeton.type == AlerteHaType::TOTAL) {
+            a_lire = jeton.total;
             continue;
         }
-        char* parts[3];
-        const int num_parts = split_fields(token, '|', parts, 3);
-        if (num_parts >= 3 && slots[slot_idx].wrap && slots[slot_idx].lbl && slots[slot_idx].id_store) {
+        const char* parts[3] = {jeton.id, jeton.niveau, jeton.texte};
+        if (jeton.type == AlerteHaType::ALERTE && slots[slot_idx].wrap && slots[slot_idx].lbl &&
+            slots[slot_idx].id_store) {
             std::string aid = parts[0];
             ids_seen.push_back(aid);
             if (tab5_dismiss_local_has(dismissed_local, aid)) {
                 masquees_ici++;
-                token = strtok_r(nullptr, ";", &saveptr1);
                 continue;
             }
             *slots[slot_idx].id_store = aid;
@@ -441,7 +438,6 @@ bool parse_and_update_ha_alerts_bulk(const std::string& payload, HaAlertSlotUI s
             }
             slot_idx++;
         }
-        token = strtok_r(nullptr, ";", &saveptr1);
     }
 
     tab5_dismiss_local_prune(dismissed_local, ids_seen);
@@ -597,17 +593,14 @@ void refresh_forecast_page_title_ui(int forecast_page,
 // quand la vigilance était verte. Français identique à l'ancien modèle HA.
 static std::string compose_info_code(const std::string& code, const std::string& meteo_id,
                                      const std::string& dismissed_local) {
-    char buf[256];
-    snprintf(buf, sizeof(buf), "%s", code.c_str() + 4);  // après « @ha| »
-    char* f[6];
-    const int n = split_fields(buf, '|', f, 6);
-    auto champ = [&](int i) -> const char* { return i < n ? f[i] : ""; };
-    const int nb_maj = atoi(champ(0));
-    const char* titre = champ(1);
-    const int nb_err = atoi(champ(2));
-    const int nb_indispo = atoi(champ(3));
-    const bool jaune = atoi(champ(4)) != 0;
-    const char* vigi = champ(5);
+    InfoCodeLu lu;
+    info_code_lire(code.c_str() + 4, lu);  // après « @ha| » ; lecture : tab5_parse.h (lot F)
+    const int nb_maj = lu.nb_maj;
+    const char* titre = lu.titre;
+    const int nb_err = lu.nb_err;
+    const int nb_indispo = lu.nb_indispo;
+    const bool jaune = lu.jaune;
+    const char* vigi = lu.vigi;
     const bool meteo_vue = !meteo_id.empty() && tab5_dismiss_local_has(dismissed_local, meteo_id);
     if (!meteo_vue) {
         if (strcmp(vigi, "rouge") == 0) return vigilance_alert_banner_utf8("Rouge");
@@ -777,16 +770,12 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
     lv_label_set_recolor(lbl, false);
     RainPhrase& s = g_rain_phrase;
     s.lbl = lbl;
-    if (!phrase.empty() && phrase[0] == '@') {
+    // « @niveau,début », « @- » ou texte brut : pluie_phrase_lire() (tab5_parse.h, lot F).
+    const PluiePhrase lue = pluie_phrase_lire(phrase);
+    if (lue.code) {
         s.code = true;
-        if (phrase.size() >= 2 && phrase[1] == '-') {
-            s.niveau = -2;
-            s.debut = 0;
-        } else {
-            s.niveau = atoi(phrase.c_str() + 1);
-            const char* virgule = strchr(phrase.c_str(), ',');
-            s.debut = virgule ? strtoll(virgule + 1, nullptr, 10) : 0;
-        }
+        s.niveau = lue.niveau;
+        s.debut = lue.debut;
         rain_phrase_render();
         return;
     }

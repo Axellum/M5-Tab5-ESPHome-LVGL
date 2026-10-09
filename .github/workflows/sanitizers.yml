@@ -10,6 +10,9 @@ name: Sanitizers (tablette virtuelle)
 # Chaque étape échoue au premier rapport ASan/UBSan, lu dans le journal de la tablette
 # (tools/sanitizers/rapports.py) : UBSan ignore `log_path` et écrit sur la sortie d'erreur.
 # C'est ce chemin qui a trouvé les conversions float → int corrigées au lot A.
+# Une seconde tâche, `fuzz-parseurs` (lot F), fuzze avec libFuzzer (clang) la lecture des
+# payloads sortie de l'écran (Tab5/socle/tab5_parse.cpp), seule, sans la tablette : des
+# millions d'appels en quelques minutes là où la tablette virtuelle en fait 800 par service.
 # NON REQUIS pour merger (≈ 20 min) : un rouge ici se lit avant de merger un lot C++.
 
 on:
@@ -21,6 +24,7 @@ on:
       - 'tab5-rendu-host.yaml'
       - 'Tab5/**'
       - 'tools/sanitizers/**'
+      - 'tools/fuzz/**'
       - 'tools/rendu/**'
       - 'tools/demo/**'
       - '.github/workflows/sanitizers.yml'
@@ -31,6 +35,7 @@ on:
       - 'tab5-rendu-host.yaml'
       - 'Tab5/**'
       - 'tools/sanitizers/**'
+      - 'tools/fuzz/**'
       - 'tools/rendu/**'
       - 'tools/demo/**'
       - '.github/workflows/sanitizers.yml'
@@ -162,4 +167,63 @@ jobs:
           path: |
             resultats/
             build.log
+          retention-days: 14
+
+  # Lot F de l'audit du 30/09/2026 : les parseurs des payloads de HA, sortis de l'écran
+  # (Tab5/socle/tab5_parse.cpp), fuzzés seuls par libFuzzer sous ASan + UBSan. Le premier
+  # octet choisit le parseur ; les graines sont les payloads du fuzz de la tablette
+  # virtuelle (tools/fuzz/graines.py). Le témoin d'abord, comme la tâche ci-dessus.
+  fuzz-parseurs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FUZZ_CC: "-std=c++17 -g -O1 -fsanitize=fuzzer,address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer -I Tab5/socle"
+      FUZZ_SRC: "tools/fuzz/fuzz_parse.cpp Tab5/socle/tab5_parse.cpp Tab5/socle/tab5_champs.cpp Tab5/socle/tab5_core.cpp Tab5/socle/tab5_i18n.cpp"
+      TZ: Europe/Paris
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Dépendances des outils (graines tirées de tools/sanitizers/fuzz_services.py)
+        run: bash tools/ci/pip_reessai.sh -r requirements-dev.txt
+      - name: clang et libFuzzer de l'image
+        run: |
+          clang++ --version | head -n 1 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Témoin positif (mêmes drapeaux, un float hors des bornes de int sur « TEMOIN »)
+        run: |
+          # shellcheck disable=SC2086 # drapeaux et sources séparés par des espaces
+          clang++ $FUZZ_CC -DTAB5_FUZZ_TEMOIN $FUZZ_SRC -o "$RUNNER_TEMP/fuzz_temoin"
+          set +e
+          "$RUNNER_TEMP/fuzz_temoin" tools/fuzz/temoin.txt > "$RUNNER_TEMP/temoin.log" 2>&1
+          code=$?
+          set -e
+          echo "- témoin : code $code" >> "$GITHUB_STEP_SUMMARY"
+          [ "$code" -ne 0 ] || { cat "$RUNNER_TEMP/temoin.log"; echo "::error::le témoin n'a rien signalé"; exit 1; }
+          python tools/sanitizers/rapports.py --temoin "$RUNNER_TEMP/temoin.log"
+      - name: Fuzz des parseurs (3 min)
+        run: |
+          # shellcheck disable=SC2086 # drapeaux et sources séparés par des espaces
+          clang++ $FUZZ_CC $FUZZ_SRC -o "$RUNNER_TEMP/fuzz_parse"
+          python tools/fuzz/graines.py "$RUNNER_TEMP/graines"
+          mkdir -p "$RUNNER_TEMP/corpus" fuzz
+          set +e
+          "$RUNNER_TEMP/fuzz_parse" -max_total_time=180 -timeout=10 -print_final_stats=1 -artifact_prefix=fuzz/ \
+            "$RUNNER_TEMP/corpus" "$RUNNER_TEMP/graines" > fuzz/fuzz.log 2>&1
+          code=$?
+          set -e
+          tail -n 25 fuzz/fuzz.log
+          {
+            echo ""; echo "## Fuzz des parseurs (libFuzzer)"
+            echo "- code $code ; corpus final : $(find "$RUNNER_TEMP/corpus" -type f | wc -l) entrées"
+            echo '```'; grep -E '^(Done |stat::)' fuzz/fuzz.log; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          python tools/sanitizers/rapports.py fuzz/fuzz.log
+          [ "$code" -eq 0 ]
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: failure()
+        with:
+          name: fuzz-parseurs
+          path: fuzz/
           retention-days: 14

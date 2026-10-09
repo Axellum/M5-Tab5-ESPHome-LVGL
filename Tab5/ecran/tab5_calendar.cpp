@@ -72,9 +72,8 @@ void cal_shift_month(int& year, int& month, int delta) {
 
 void cal_store_month_data(const std::string& annee, const std::string& mois,
     const std::string& codes, const std::string& heures, const std::string& details) {
-    const int y = atoi(annee.c_str());
-    const int m = atoi(mois.c_str());
-    if (y < 2000 || y > 2100 || m < 1 || m > 12) {
+    int y = 0, m = 0;
+    if (!calendrier_mois_lire(annee, mois, y, m)) {  // tab5_parse.h (lot F)
         payload_refuse("tab5.calendrier", "mois : année ou mois hors bornes", annee.size() + mois.size());
         return;
     }
@@ -89,24 +88,14 @@ void cal_store_month_data(const std::string& annee, const std::string& mois,
     s_cal_month_cache[cal_cache_key(y, m)] = data;
 }
 
-// n-ième champ d'une chaîne délimitée par un séparateur — champs vides autorisés
-static std::string cal_field_delim(const std::string& s, int idx, char delim) {
-    size_t start = 0;
-    for (int i = 0; i < idx; i++) {
-        const size_t p = s.find(delim, start);
-        if (p == std::string::npos) return "";
-        start = p + 1;
-    }
-    size_t end = s.find(delim, start);
-    if (end == std::string::npos) end = s.size();
-    return s.substr(start, end - start);
-}
+// n-ième champ d'une chaîne délimitée par un séparateur, champs vides autorisés :
+// calendrier_champ() (Tab5/socle/tab5_parse.h, lot F).
 
 std::string cal_cached_day_detail(int year, int month, int day) {
     if (day < 1 || day > 31) return "";
     const auto it = s_cal_month_cache.find(cal_cache_key(year, month));
     if (it == s_cal_month_cache.end() || !it->second.has_details) return "";
-    return cal_field_delim(it->second.details, day - 1, '~');
+    return calendrier_champ(it->second.details, day - 1, '~');
 }
 
 bool cal_day_has_embedded_detail(int year, int month, int day) {
@@ -135,18 +124,8 @@ static std::string cal_weekday_name_utf8(int wd_mon0) {
     return fr_capitalized(day_long_utf8((wd_mon0 + 1) % 7));
 }
 
-// n-ième champ d'une chaîne délimitée par | — champs vides autorisés
-// (strtok_r fusionnerait les séparateurs consécutifs, donc parcours manuel).
-static std::string cal_field(const std::string& s, int idx) {
-    return cal_field_delim(s, idx, '|');
-}
-
-static int cal_hex_val(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    return 0;
-}
+// Heures du jour (champ « | ») et code du jour (deux chiffres hexadécimaux) :
+// calendrier_champ() et calendrier_code_jour(), tab5_parse.h (lot F).
 
 // =============================================================================
 // Grille du mois : 42 cellules construites ici (lot 8 de l'audit du 26/09/2026)
@@ -395,11 +374,8 @@ void cal_render_month(lv_obj_t* lbl_month,
         int code = 0;
         std::string heures;
         if (data) {
-            if ((int)data->codes.size() >= day * 2) {
-                code = cal_hex_val(data->codes[(day - 1) * 2]) * 16
-                     + cal_hex_val(data->codes[(day - 1) * 2 + 1]);
-            }
-            heures = cal_field(data->heures, day - 1);
+            code = calendrier_code_jour(data->codes, day);
+            heures = calendrier_champ(data->heures, day - 1, '|');
         }
 
         snprintf(buf, sizeof(buf), "%d", day);
@@ -479,7 +455,7 @@ void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
     bool ha_online) {
     if (!day_popup || !lbl_title || !lbl_status) return;
     int y = 0, m = 0, d = 0;
-    if (sscanf(date_iso.c_str(), "%d-%d-%d", &y, &m, &d) != 3) return;
+    if (!calendrier_date_lire(date_iso.c_str(), y, m, d)) return;
 
     // Même modèle que les titres de jours (tab5_core.cpp) : « Lundi 5 octobre »,
     // « Monday, October 5 » — ici sans « 1er », comme avant.
@@ -522,19 +498,15 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
 
     // Payload "type|texte;type|texte;..." construit par script.tab5_calendrier_jour
     // (HA) — textes déjà sanitisés (| et ; remplacés) et limités à 6 lignes.
-    char buf[1024];
-    strncpy(buf, payload.c_str(), sizeof(buf) - 1);
-    buf[sizeof(buf) - 1] = '\0';
-    if (payload.size() >= sizeof(buf)) payload_refuse("tab5.calendrier", "jour : coupé à 1023 octets", payload.size());
+    // Lecture ligne par ligne : LecteurJourCalendrier (tab5_parse.h, lot F).
+    LecteurJourCalendrier lecteur(payload.c_str());
+    if (payload.size() >= kCalendrierJourMax) payload_refuse("tab5.calendrier", "jour : coupé à 1023 octets", payload.size());
 
     int line_count = 0;
-    char* saveptr;
-    char* tok = strtok_r(buf, ";", &saveptr);
-    while (tok != nullptr && line_count < 6) {
-        char* sep = strchr(tok, '|');
-        if (sep != nullptr && *(sep + 1) != '\0'
-            && lines[line_count].icon && lines[line_count].txt) {
-            *sep = '\0';
+    for (CalJourLigne ligne = lecteur.suivante(); ligne.type != CalJourType::FIN && line_count < 6;
+         ligne = lecteur.suivante()) {
+        if (ligne.type == CalJourType::LIGNE && lines[line_count].icon && lines[line_count].txt) {
+            const char* tok = ligne.genre;
             const char* icon;
             uint32_t color;
             cal_detail_type_style(tok, &icon, &color);
@@ -542,7 +514,7 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
             lv_obj_set_style_text_color(lines[line_count].icon, lv_color_hex(color), LV_PART_MAIN);
             s_detail_icone[line_count] = lines[line_count].icon;
             snprintf(s_detail_type[line_count], sizeof(s_detail_type[0]), "%s", tok);
-            std::string txt = normalize_text_utf8(std::string(sep + 1));
+            std::string txt = normalize_text_utf8(std::string(ligne.texte));
             // Ligne de travail : HA l'écrit en français, « Travail 08:00 – 16:00 »
             // (packages/tab5_calendar.yaml) ; le mot suit la langue de l'écran.
             if (strcmp(tok, "travail") == 0 && txt.compare(0, 7, "Travail") == 0 &&
@@ -554,7 +526,6 @@ void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
             lv_obj_remove_flag(lines[line_count].txt, LV_OBJ_FLAG_HIDDEN);
             line_count++;
         }
-        tok = strtok_r(nullptr, ";", &saveptr);
     }
 
     for (int i = line_count; i < 6; i++) {

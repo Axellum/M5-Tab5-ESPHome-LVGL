@@ -21,6 +21,8 @@
  * @memory_constraint Pas de std::string dans une boucle de parsing : découper un char* en place.
  *       `split_fields()` (tab5_core.h) garde les champs vides ; `strtok_r` les fusionne.
  *       Les clims des tuiles : 25 cases en PSRAM, allouées à la première clé cr/ce.
+ *       Réglages et état lus par clim_reglages_lire / clim_etat_lire, avec leurs
+ *       structures (Tab5/socle/tab5_parse.h, lot F, testés sur PC).
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"
@@ -53,22 +55,8 @@
 // blueprint plus ancien garde l'écran d'avant.
 namespace {
 
-// Plage plausible des bornes d'une clim, en °C comme en °F : des « min|max » reçus
-// au-delà sont ignorés, et l'arc n'en reçoit jamais d'autres (lot A, audit du 30/09/2026).
-constexpr int kClimBorneBasse = -100;
-constexpr int kClimBorneHaute = 200;
-
-struct ClimReglages {
-    float min = 16.0f;
-    float max = 30.0f;
-    float pas = 0.5f;
-    bool fahrenheit = false;
-    // Lettres des boutons que l'appareil gère (tableau de l'ADR-0026) : c froid, h chaud,
-    // d sec, f ventilation, e Éco, b Boost, q Silence, s Oscillation, w Brise.
-    char capacites[16] = "chdfebqsw";
-    char nom[49] = "";  // friendly_name de la clim, 48 octets au plus
-    bool recu = false;
-};
+// ClimReglages (bornes kClimBorneBasse/Haute, défauts de la 3.2, capacités) et ClimEtat :
+// Tab5/socle/tab5_parse.h, qui les lit (lot F).
 ClimReglages s_clim;
 // Dernières valeurs affichées de la clim du blueprint : reposées quand ses réglages
 // changent (bornes de l'arc, format de la cible, unité de la pièce) et quand le popup
@@ -83,19 +71,7 @@ float s_clim_piece = NAN;
 // ne pas les renommer sans lui (tests/test_clim.py).
 constexpr char kCleReglagesTuile[] = "cr";
 constexpr char kCleEtatTuile[] = "ce";
-// kPieces et kTuiles : tab5_geometrie.h.
-// Modes gardés sur 15 octets au plus : la chaîne reste dans son std::string (petite
-// chaîne, sans allocation). Aucun mode de HA n'est plus long.
-constexpr size_t kModeMax = 15;
-
-struct ClimEtat {
-    float consigne = NAN;  // NaN : inconnue (« -- » ; − / + ne font rien, l'arc la choisit)
-    float piece = NAN;     // température de la pièce
-    std::string mode;
-    std::string preset;
-    std::string ventilation;
-    std::string oscillation;
-};
+// kPieces et kTuiles : tab5_geometrie.h. Modes bornés à kModeMax (tab5_parse.h).
 
 struct ClimTuile {
     ClimReglages reglages;  // reglages.recu : crRT reçue, l'appui de la tuile ouvre le popup
@@ -220,51 +196,14 @@ float consigne_suivante(const ClimReglages& r, float t, int sens) {
     return v;
 }
 
-// Nombre d'un champ : champ_nombre() (tab5_champs.h ; `defaut` s'il est vide, illisible
-// ou non fini). Champs séparés par '|' (au plus `max`, le dernier prend tout le reste : le
-// blueprint y a remplacé « | » par « / ») : champs_decouper_reste().
-
-// Réglages « min|max|pas|unité|capacités|nom » (climr ou crRT, sans la clé) dans `r`,
-// dont les valeurs servent de défaut à un nombre illisible. Renvoie le nombre de champs :
-// moins de 5, rien n'est changé.
+// Réglages « min|max|pas|unité|capacités|nom » (climr ou crRT, sans la clé) : lus par
+// clim_reglages_lire() (Tab5/socle/tab5_parse.cpp, lot F) ; le nom passe ici par
+// texte_ha_copier (glyphes des polices). Moins de 5 champs : rien n'est changé.
 int lire_reglages(const char* reste, size_t n, ClimReglages& r) {
-    Champ f[6] = {};
-    const int k = champs_decouper_reste(reste, n, '|', f, 6);
-    if (k < 5) return k;
-    const float mn = champ_nombre(f[0], r.min);
-    const float mx = champ_nombre(f[1], r.max);
-    // Bornes hors de toute clim réelle (« -1e30 ») ignorées : elles deviendraient celles
-    // de l'arc (lot A de l'audit du 30/09/2026).
-    if (mn < mx && mn >= kClimBorneBasse && mx <= kClimBorneHaute) {
-        r.min = mn;
-        r.max = mx;
-    }
-    const float pas = champ_nombre(f[2], r.pas);
-    if (pas > 0.0f && pas <= 10.0f) r.pas = pas;
-    // « °F » ou « °C » (UTF-8) : la dernière lettre suffit.
-    r.fahrenheit = f[3].n > 0 && f[3].p[f[3].n - 1] == 'F';
-    size_t j = 0;
-    for (size_t i = 0; i < f[4].n && j + 1 < sizeof(r.capacites); i++)
-        if (f[4].p[i] >= 'a' && f[4].p[i] <= 'z') r.capacites[j++] = f[4].p[i];
-    r.capacites[j] = '\0';
-    if (k == 6) texte_ha_copier(r.nom, sizeof(r.nom), f[5].p, f[5].n);
-    else r.nom[0] = '\0';
-    r.recu = true;
+    Champ nom{};
+    const int k = clim_reglages_lire(reste, n, r, nom);
+    if (k == 6) texte_ha_copier(r.nom, sizeof(r.nom), nom.p, nom.n);
     return k;
-}
-
-// État « consigne|pièce|mode|préréglage|ventilation|oscillation » (ceRT, sans la clé) :
-// les nombres « nan » ou illisibles sont inconnus, les modes gardés tels quels (bornés).
-void lire_etat(const char* reste, size_t n, ClimEtat& e) {
-    Champ f[6] = {};
-    const int k = champs_decouper_reste(reste, n, '|', f, 6);
-    e.consigne = k > 0 ? champ_nombre(f[0], NAN) : NAN;
-    e.piece = k > 1 ? champ_nombre(f[1], NAN) : NAN;
-    std::string* modes[4] = {&e.mode, &e.preset, &e.ventilation, &e.oscillation};
-    for (int i = 0; i < 4; i++) {
-        if (k > 2 + i) modes[i]->assign(f[2 + i].p, std::min(f[2 + i].n, kModeMax));
-        else modes[i]->clear();
-    }
 }
 
 // Carte OPTIONS : les sections qui ont un bouton visible s'empilent depuis le haut, une
@@ -472,7 +411,7 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
         if (affichee) popup_peindre();
         return true;
     }
-    lire_etat(reste, n_reste, c->etat);
+    clim_etat_lire(reste, n_reste, c->etat);  // Tab5/socle/tab5_parse.cpp (lot F)
     if (affichee) {
         popup_consigne_ui(c->etat.consigne, true);
         popup_piece_ui(c->etat.piece);

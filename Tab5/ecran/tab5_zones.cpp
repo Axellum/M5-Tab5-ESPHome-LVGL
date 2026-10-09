@@ -5,7 +5,8 @@
  *       de l'écran masquer, et le masquage lui-même. Et, depuis le lot 6a (ADR-0019),
  *       emplacements_appliquer() : les valeurs des emplacements poussées par HA (les tuiles
  *       « tRT », les réglages de la clim « climr », ADR-0026, et les clims des tuiles
- *       « crRT » / « ceRT », ADR-0027, d'abord). Contrat et raisons dans
+ *       « crRT » / « ceRT », ADR-0027, d'abord ; découpage « clé|reste;… » et nombres lus par
+ *       Tab5/socle/tab5_parse.cpp, lot F, testés sur PC). Contrat et raisons dans
  *       tab5_custom.h (« Zones optionnelles ») ; échanges avec HA dans tab5-zones.yaml.
  *       Et le bandeau d'état du haut gauche (bandeau_apply_ui : une table d'icônes,
  *       BandeauIcone dans tab5_custom.h), dont l'icône de la batterie de la tablette
@@ -277,15 +278,7 @@ void solaire_peindre() {
 // « solaire|pourcentage » : borné à 0-100, illisible = aucune valeur. Montrer ou cacher
 // l'icône resserre le bandeau ; sinon, seul son glyphe et sa couleur changent.
 void solaire_recu(const char* valeur, size_t n) {
-    char tampon[16];
-    const size_t l = n < sizeof(tampon) - 1 ? n : sizeof(tampon) - 1;
-    std::memcpy(tampon, valeur, l);
-    tampon[l] = '\0';
-    char* bout = nullptr;
-    float v = std::strtof(tampon, &bout);
-    if (l == 0 || bout == tampon) v = NAN;
-    v = tab5_fini_ou_nan(v);
-    if (!std::isnan(v)) v = v < 0.0f ? 0.0f : (v > 100.0f ? 100.0f : v);
+    const float v = solaire_pourcent(valeur, n);  // Tab5/socle/tab5_parse.cpp (lot F)
     const bool visibilite = std::isnan(v) != std::isnan(s_solaire);
     s_solaire = v;
     solaire_peindre();
@@ -574,86 +567,64 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
     if (payload_trop_long("tab5.zones", payload.size())) return 0;
     int appliquees = 0;
     size_t debut = 0;
-    while (debut < payload.size()) {
-        size_t fin = payload.find(';', debut);
-        if (fin == std::string::npos) fin = payload.size();
-        const size_t p1 = payload.find('|', debut);
+    // Découpage « clé|reste;… » par emplacement_suivant() (Tab5/socle/tab5_parse.cpp, lot F).
+    EmplacementLu e;
+    while (emplacement_suivant(payload, debut, e)) {
+        if (!e.a_cle) continue;
         // Tuiles de pièce (ADR-0023) : « tRT|état|valeur|couleur », quatre champs, avant
         // la table des emplacements 3.x (tab5_tuiles.cpp).
-        if (p1 != std::string::npos && p1 < fin &&
-            tuiles_etat_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
+        if (tuiles_etat_recu(e.cle.p, e.cle.n, e.reste.p, e.reste.n)) {
             appliquees++;
-            debut = fin + 1;
             continue;
         }
         // Réglages de la clim (ADR-0026), eux aussi avant la table 3.x, qui les ignorerait.
-        if (p1 != std::string::npos && p1 < fin && p1 - debut == sizeof(kCleClimReglages) - 1 &&
-            payload.compare(debut, p1 - debut, kCleClimReglages) == 0) {
-            clim_reglages_recu(payload.data() + p1 + 1, fin - p1 - 1);
+        if (champ_est(e.cle, kCleClimReglages)) {
+            clim_reglages_recu(e.reste.p, e.reste.n);
             appliquees++;
-            debut = fin + 1;
             continue;
         }
         // Production solaire du bandeau d'état : « solaire|pourcentage ».
-        if (p1 != std::string::npos && p1 < fin && p1 - debut == sizeof(kCleSolaire) - 1 &&
-            payload.compare(debut, p1 - debut, kCleSolaire) == 0) {
-            solaire_recu(payload.data() + p1 + 1, fin - p1 - 1);
+        if (champ_est(e.cle, kCleSolaire)) {
+            solaire_recu(e.reste.p, e.reste.n);
             appliquees++;
-            debut = fin + 1;
             continue;
         }
         // Appuis longs des boutons du haut : « appuis|maison|engrenage|manette ».
-        if (p1 != std::string::npos && p1 < fin && p1 - debut == sizeof(kCleAppuis) - 1 &&
-            payload.compare(debut, p1 - debut, kCleAppuis) == 0) {
-            appuis_recu(payload.data() + p1 + 1, fin - p1 - 1);
+        if (champ_est(e.cle, kCleAppuis)) {
+            appuis_recu(e.reste.p, e.reste.n);
             appliquees++;
-            debut = fin + 1;
             continue;
         }
         // Gestes de l'horloge et des boutons du haut (lot A) : « gestes|c1|…|c12 ».
-        if (p1 != std::string::npos && p1 < fin && p1 - debut == sizeof(kCleGestes) - 1 &&
-            payload.compare(debut, p1 - debut, kCleGestes) == 0) {
-            gestes_recu(payload.data() + p1 + 1, fin - p1 - 1);
+        if (champ_est(e.cle, kCleGestes)) {
+            gestes_recu(e.reste.p, e.reste.n);
             appliquees++;
-            debut = fin + 1;
             continue;
         }
         // Clims des tuiles (ADR-0027) : « crRT|réglages » et « ceRT|état » (tab5_clim.cpp).
-        if (p1 != std::string::npos && p1 < fin &&
-            clim_tuile_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
+        if (clim_tuile_recu(e.cle.p, e.cle.n, e.reste.p, e.reste.n)) {
             appliquees++;
-            debut = fin + 1;
             continue;
         }
         // Tuile − / + au choix (ADR-0033) : « rN|état|valeur » (tab5_reglables.cpp).
-        if (p1 != std::string::npos && p1 < fin &&
-            reglables_etat_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
+        if (reglables_etat_recu(e.cle.p, e.cle.n, e.reste.p, e.reste.n)) {
             appliquees++;
-            debut = fin + 1;
             continue;
         }
-        if (p1 != std::string::npos && p1 < fin) {
-            const size_t p2 = payload.find('|', p1 + 1);
-            const bool trois = (p2 != std::string::npos && p2 < fin);
-            const std::string cle = payload.substr(debut, p1 - debut);
-            const std::string etat = payload.substr(p1 + 1, (trois ? p2 : fin) - p1 - 1);
-            const std::string valeur = trois ? payload.substr(p2 + 1, fin - p2 - 1) : std::string();
-            for (size_t i = 0; i < n; i++) {
-                if (cle != cibles[i].cle) continue;
-                // Valeur d'abord : le on_value de l'état (lumières) lit la luminosité.
-                if (cibles[i].valeur != nullptr) {
-                    char* bout = nullptr;
-                    float v = strtof(valeur.c_str(), &bout);
-                    if (valeur.empty() || bout == valeur.c_str()) v = NAN;  // « unavailable »…
-                    v = tab5_fini_ou_nan(v);  // « inf » : inconnue aussi (lot A, audit du 30/09)
-                    cibles[i].valeur->publish_state(v);
-                }
-                if (cibles[i].texte != nullptr) cibles[i].texte->publish_state(etat);
-                appliquees++;
-                break;
-            }
+        Champ c_etat, c_valeur;
+        emplacement_etat_valeur(e.reste, c_etat, c_valeur);
+        const std::string cle(e.cle.p, e.cle.n);
+        const std::string etat(c_etat.p, c_etat.n);
+        const std::string valeur(c_valeur.p, c_valeur.n);
+        for (size_t i = 0; i < n; i++) {
+            if (cle != cibles[i].cle) continue;
+            // Valeur d'abord : le on_value de l'état (lumières) lit la luminosité.
+            // « unavailable » ou « inf » : inconnue (NAN, lot A de l'audit du 30/09).
+            if (cibles[i].valeur != nullptr) cibles[i].valeur->publish_state(emplacement_nombre(valeur));
+            if (cibles[i].texte != nullptr) cibles[i].texte->publish_state(etat);
+            appliquees++;
+            break;
         }
-        debut = fin + 1;
     }
     gestes_fin_payload();
     return appliquees;
