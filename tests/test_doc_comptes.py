@@ -341,6 +341,7 @@ def test_nombre_de_themes(chemin, motif):
 AGENTS = REPO / "AGENTS.md"
 DEMO_MODE = REPO / "docs" / "demo_mode.md"
 SERVICES_CPP = REPO / "Tab5" / "ecran" / "tab5_services.cpp"
+PARSE_H = REPO / "Tab5" / "socle" / "tab5_parse.h"
 
 import demo_pusher  # noqa: E402
 import scenarios  # noqa: E402
@@ -349,13 +350,18 @@ from tests.test_contrat import champs_emis  # noqa: E402
 
 
 def _vigilance_min_max():
-    """(champs de la forme Météo-France, champs lus au plus par parse_and_update_vigilance)."""
+    """(champs de la forme Météo-France, champs lus au plus par parse_and_update_vigilance).
+
+    La lecture est dans vigilance_lire() (Tab5/socle/tab5_parse.h, lot F) : kVigilanceChamps
+    champs, dans le tampon de VigilanceLue."""
     corps = _lire(SERVICES_CPP).split("bool parse_and_update_vigilance(", 1)[1].split("\n}\n", 1)[0]
-    lus = re.search(r"const char\* fields\[(\d+)\];", corps)
-    assert lus, "parse_and_update_vigilance : plus de `const char* fields[N]`, adapter le motif"
-    tampon = re.search(r"char buf\[(\d+)\];", corps)
+    assert "vigilance_lire(payload.c_str(), lue);" in corps, "parse_and_update_vigilance ne lit plus par vigilance_lire"
+    entete = _lire(PARSE_H)
+    lus = re.search(r"constexpr int kVigilanceChamps = (\d+);", entete)
+    assert lus, "tab5_parse.h : plus de `constexpr int kVigilanceChamps = N;`, adapter le motif"
+    tampon = re.search(r"struct VigilanceLue \{\s*char buf\[(\d+)\];", entete)
     assert tampon and int(tampon.group(1)) == scenarios.ALERTE_BUF_OCTETS, \
-        "tools/demo/scenarios.py : ALERTE_BUF_OCTETS = le tampon de parse_and_update_vigilance"
+        "tools/demo/scenarios.py : ALERTE_BUF_OCTETS = le tampon de VigilanceLue (tab5_parse.h)"
     return len(scenarios.ALERTE_CHAMPS), int(lus.group(1))
 
 

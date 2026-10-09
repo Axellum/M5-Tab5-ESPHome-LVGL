@@ -8,8 +8,8 @@ name: ESPHome Tab5 Compilation
 #     figé (mêmes commandes que publication.yml), tests hôte (pytest = tests/ +
 #     outils + miroirs Python des échecs et des dames + garde-fous de contenu, dont
 #     le contrat HA ↔ firmware contre les tags publiés, récupérés sans historique), vrais
-#     moteurs Go, échecs, dames et réveil et socle commun compilés par g++ (échecs
-#     et dames sous ASan + UBSan), dry-run du demo pusher. Toujours exécuté. Check REQUIS.
+#     moteurs Go, échecs, dames et réveil, socle commun et lecture des payloads de HA
+#     compilés par g++ (échecs, dames et payloads sous ASan + UBSan), dry-run du demo pusher. Toujours exécuté. Check REQUIS.
 #   - build  : compilation ESPHome complète (~5 min avec le ccache). Check REQUIS
 #     par la protection de `main`, donc le job existe toujours ; il est SAUTÉ
 #     (statut « skipped » = succès pour la protection) quand le push/la PR ne
@@ -179,6 +179,15 @@ jobs:
           g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o "$RUNNER_TEMP/test_tab5_socle" \
             tools/test_tab5_socle.cpp Tab5/socle/tab5_champs.cpp Tab5/socle/tab5_core.cpp Tab5/socle/tab5_i18n.cpp
           "$RUNNER_TEMP/test_tab5_socle"
+      - name: Lecture des payloads de HA (tab5_parse.cpp, sous ASan + UBSan)
+        # Les parseurs des services sortis de l'écran (lot F de l'audit du 30/09/2026) :
+        # cas normaux, champs vides, tronqués, extrêmes, nan/inf ; comportements figés.
+        run: |
+          g++ -std=c++17 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
+            -Wall -Wextra -I Tab5/socle -o "$RUNNER_TEMP/test_parse" \
+            tools/test_parse.cpp Tab5/socle/tab5_parse.cpp Tab5/socle/tab5_champs.cpp \
+            Tab5/socle/tab5_core.cpp Tab5/socle/tab5_i18n.cpp
+          "$RUNNER_TEMP/test_parse"
       - name: Payloads du mode démo conformes au contrat firmware
         run: python tools/demo/demo_pusher.py --dry-run
 

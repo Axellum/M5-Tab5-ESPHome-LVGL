@@ -18,7 +18,7 @@ The only other LVGL pages are the **9 gaming ones** (`page_arcade` + one per con
 
 | Folder | What lives there |
 |---|---|
-| `socle/` | Pure C++ that compiles and is tested on a PC without ESPHome or LVGL (`tab5_core`, `tab5_champs`, `tab5_i18n`, `alarm_clock`, `tab5_economie`, `tab5_batterie.h`, `tab5_geometrie.h`, `tab5_modele_ha.h`, `tab5_tokens.h`, generated headers). It only includes the standard library and itself (`tests/test_rangement.py`). |
+| `socle/` | Pure C++ that compiles and is tested on a PC without ESPHome or LVGL (`tab5_core`, `tab5_champs`, `tab5_parse` — reading of the payloads pushed by HA, lot F —, `tab5_i18n`, `alarm_clock`, `tab5_economie`, `tab5_batterie.h`, `tab5_geometrie.h`, `tab5_modele_ha.h`, `tab5_tokens.h`, generated headers). It only includes the standard library and itself (`tests/test_rangement.py`). |
 | `ecran/` | The LVGL layer: `tab5_custom.h` (umbrella header for the YAML lambdas) and one header per module (`tab5_forecast.h` … `tab5_theme.h`, 22, since 2026-10-08), `tab5_internal.h`, the `tab5_*.cpp` units, `tab5_registry`, `alarm_render`, `tab5_batterie.cpp`. |
 | `jeux/` | The eight consoles and `game_common.h`. |
 | `paquets/` | The ESPHome packages: `tab5-*.yaml`, `ecran-*.yaml`, `publication-*.yaml`, `pot_sensors.yaml`. A package includes a component as `../ui_components/x.yaml` (relative to the package). |

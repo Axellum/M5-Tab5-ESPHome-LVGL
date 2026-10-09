@@ -38,8 +38,8 @@ constexpr int kLignesMax = 20;
 constexpr int32_t kLigneH = 56;
 // Libellé venu de HA : coupé à 96 octets (UTF-8 valide), « … » fait le reste à l'écran.
 constexpr size_t kTexteMax = 96;
-// Au-delà de 2100, une heure lue est fausse (« -1 » donne 4294967295) : comme absente.
-constexpr uint32_t kEpochMax = 4102444800u;
+// Lecture du payload (epochs bornés à 2100, gravité, entrées illisibles) :
+// alertes_historique_lire(), Tab5/socle/tab5_parse.h (lot F).
 
 struct Ligne {
     uint32_t apparue = 0;
@@ -60,9 +60,6 @@ struct LigneUI {
     lv_obj_t* heures = nullptr;
 };
 LigneUI s_ui[kLignesMax];
-
-// Epoch d'un champ ; 0 (absente) s'il est vide, illisible ou au-delà de kEpochMax.
-uint32_t lire_epoch(const Champ& c) { return champ_entier(c, kEpochMax, 0); }
 
 // « 14 h 02 » aujourd'hui, « Lun 5 14 h 02 » un autre jour (heure locale de la tablette).
 void heure_txt(char* out, size_t n, uint32_t epoch) {
@@ -194,33 +191,20 @@ void peindre() {
 
 void alertes_historique_recu(const std::string& payload) {
     if (payload_trop_long("tab5.alertes", payload.size())) return;  // la liste d'avant reste
-    s_nb = 0;
     s_recu = true;
+    // « apparue|lue|terminée|gravité|libellé;… » : alertes_historique_lire() (tab5_parse.h).
+    AlerteHistoriqueLue lues[kLignesMax];
     int illisibles = 0;
-    const char* p = payload.c_str();
-    while (*p != '\0' && s_nb < kLignesMax) {
-        const char* fin = strchr(p, ';');
-        const size_t n = fin ? static_cast<size_t>(fin - p) : strlen(p);
-        // « apparue|lue|terminée|gravité|libellé » : le libellé est le reste (il ne contient
-        // ni « | » ni « ; », HA les remplace) ; une entrée sans ses cinq champs est ignorée.
-        Champ f[5] = {};
-        if (champs_decouper_reste(p, n, '|', f, 5) == 5) {
-            Ligne& e = s_lignes[s_nb];
-            e.apparue = lire_epoch(f[0]);
-            e.lue = lire_epoch(f[1]);
-            e.terminee = lire_epoch(f[2]);
-            e.gravite = f[3].n > 0 ? f[3].p[0] : 'O';
-            if (e.gravite != 'R' && e.gravite != 'J') e.gravite = 'O';
-            char brut[kTexteMax];
-            texte_ha_copier(brut, sizeof(brut), f[4].p, f[4].n);
-            e.texte = ha_alerte_texte(brut);
-            if (e.apparue != 0) s_nb++;
-            else illisibles++;
-        } else {
-            illisibles++;
-        }
-        if (fin == nullptr) break;
-        p = fin + 1;
+    s_nb = alertes_historique_lire(payload.c_str(), lues, kLignesMax, illisibles);
+    for (int k = 0; k < s_nb; k++) {
+        Ligne& e = s_lignes[k];
+        e.apparue = lues[k].apparue;
+        e.lue = lues[k].lue;
+        e.terminee = lues[k].terminee;
+        e.gravite = lues[k].gravite;
+        char brut[kTexteMax];
+        texte_ha_copier(brut, sizeof(brut), lues[k].texte.p, lues[k].texte.n);
+        e.texte = ha_alerte_texte(brut);
     }
     if (illisibles > 0) payload_refuse("tab5.alertes", "entrée(s) illisible(s) ignorée(s)", payload.size());
     peindre();
