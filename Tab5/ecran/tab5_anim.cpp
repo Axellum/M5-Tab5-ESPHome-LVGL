@@ -19,6 +19,7 @@
 #include "tab5_registry.h"   // retour automatique : jeux ouverts, fenêtres modales
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <cmath>
 #include <ctime>
 #include <cstring>
 #include <vector>
@@ -671,4 +672,44 @@ void ui_poser(lv_obj_t* o, int32_t x, int32_t y, int32_t w, int32_t h) {
     ui_x(o, x);
     ui_y(o, y);
     ui_hidden(o, false);
+}
+
+// Courbe lissée et monotone (Fritsch-Carlson) : elle passe par chaque point sans jamais
+// dépasser deux valeurs voisines (pas de creux ni de bosse inventés entre deux points).
+// Venue du popup Météo (09/10/2026), partagée avec la zone à gauche de l'horloge
+// (ADR-0051, 10/10/2026). Au plus kCourbeLissePoints points (au-delà, rien n'est tracé).
+int ui_courbe_lisse(const float* xs, const float* ys, int n, int par_segment, lv_point_precise_t* out) {
+    if (n < 2 || n > kCourbeLissePoints || par_segment < 1) return 0;
+    float d[kCourbeLissePoints], m[kCourbeLissePoints];
+    for (int k = 0; k < n - 1; k++) d[k] = (ys[k + 1] - ys[k]) / (xs[k + 1] - xs[k]);
+    m[0] = d[0];
+    m[n - 1] = d[n - 2];
+    for (int k = 1; k < n - 1; k++) m[k] = (d[k - 1] * d[k] <= 0.0f) ? 0.0f : (d[k - 1] + d[k]) / 2.0f;
+    for (int k = 0; k < n - 1; k++) {
+        if (d[k] == 0.0f) {
+            m[k] = m[k + 1] = 0.0f;
+            continue;
+        }
+        const float a = m[k] / d[k], b = m[k + 1] / d[k], s = a * a + b * b;
+        if (s > 9.0f) {
+            const float t = 3.0f / std::sqrt(s);
+            m[k] = t * a * d[k];
+            m[k + 1] = t * b * d[k];
+        }
+    }
+    int np = 0;
+    for (int k = 0; k < n - 1; k++) {
+        const float hx = xs[k + 1] - xs[k];
+        for (int j = 0; j < par_segment; j++) {
+            const float t = static_cast<float>(j) / par_segment, t2 = t * t, t3 = t2 * t;
+            const float y = (2 * t3 - 3 * t2 + 1) * ys[k] + (t3 - 2 * t2 + t) * hx * m[k] +
+                            (-2 * t3 + 3 * t2) * ys[k + 1] + (t3 - t2) * hx * m[k + 1];
+            out[np].x = static_cast<lv_value_precise_t>(lroundf(xs[k] + t * hx));
+            out[np].y = static_cast<lv_value_precise_t>(lroundf(y));
+            np++;
+        }
+    }
+    out[np].x = static_cast<lv_value_precise_t>(lroundf(xs[n - 1]));
+    out[np].y = static_cast<lv_value_precise_t>(lroundf(ys[n - 1]));
+    return np + 1;
 }

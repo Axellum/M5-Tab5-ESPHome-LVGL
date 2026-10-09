@@ -5,7 +5,8 @@
  *       courbe, son humidité quand la pièce en a une (ADR-0047, 09/10/2026), et, pour la
  *       seconde température (serre ou dehors), la prévision de la météo à sa suite.
  *         - Appui long sur la température de la pièce (clé salon) ou sur la seconde
- *           (clé serre ; l'appui court garde l'arcade) : script tab5_historique_ouvrir.
+ *           (clé serre ; son appui court passe la zone à gauche de l'horloge au contenu
+ *           suivant, ADR-0051) : script tab5_historique_ouvrir.
  *           En mode HA, sur une pièce dont le blueprint a déclaré la température
  *           (ADR-0040), l'appui long de gauche (ou de droite, sur son humidité) montre la
  *           sienne : clé pR (R = 0 à 4).

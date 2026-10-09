@@ -67,8 +67,10 @@ ACTIONS = ["mode_domo", "appareil_suivant", "rangee_suivante", "ecoute", "nabu_s
 ROUE_CODES = {"lumieres": "LUMIERES", "volet": "VOLET", "temperature": "TEMPERATURE", "roue": "AUCUN"}
 # Puis le popup Météo (09/10/2026, ADR-0043), à la fin aussi.
 ECRANS_APRES = {"meteo": "METEO"}
+# Puis le contenu suivant de la zone à gauche de l'horloge (10/10/2026, ADR-0051), une action.
+ACTIONS_APRES = ["zone_gauche_suivante"]
 # Tous les codes, dans l'ordre de kCodesGestes, avec « auto » en tête : le blueprint.
-TOUS = ["auto"] + list(CODES) + ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES)
+TOUS = ["auto"] + list(CODES) + ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES
 # Bouton (ordre de BoutonHaut) → (widget, mini icône).
 BOUTONS = (("BOUTON_MAISON", "btn_control_ha", "icon_mini_ha"),
            ("BOUTON_ENGRENAGE", "btn_control_console", "icon_mini_sys"),
@@ -134,7 +136,8 @@ def test_memes_codes_firmware_et_blueprint():
     # Même ORDRE : la NVS garde l'index du code, un code de plus va à la fin.
     assert list(codes)[:len(CODES)] == list(CODES)
     assert {c: codes[c] for c in CODES} == CODES
-    assert list(codes)[len(CODES):] == ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES)
+    assert list(codes)[len(CODES):] == ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES
+    assert all(codes[c] == "AUCUN" for c in ACTIONS_APRES)
     assert {c: codes[c] for c in ROUE_CODES} == ROUE_CODES
     assert {c: codes[c] for c in ECRANS_APRES} == ECRANS_APRES
     bp = yaml.load(_lire(BLUEPRINT).replace("!input", "!!str"), Loader=yaml.SafeLoader)

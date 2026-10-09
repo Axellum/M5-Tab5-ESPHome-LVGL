@@ -172,6 +172,7 @@ static void parse_and_update_heures_bulk(const std::string& payload) {
     if (previsions_heures_lire(payload.c_str(), cal_heures_data) > 0)
         payload_refuse("tab5.forecast", "heures : créneau(x) illisible(s) ignoré(s)", payload.size());
     meteo_donnees_changees();  // popup Météo affiché : repeint (ADR-0043)
+    zone_gauche_donnees_changees();  // graphique à gauche de l'horloge (ADR-0051)
 }
 
 bool accept_heures_bulk(const std::string& payload, int forecast_page) {
