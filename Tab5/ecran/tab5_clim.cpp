@@ -691,6 +691,10 @@ void clim_carrousel_preparer() {
     // Geste arrêté au popup : sinon LVGL le remonte jusqu'à page_main, qui changerait les
     // prévisions ou la pièce derrière (handle_swipe_gesture, tab5_central.cpp).
     lv_obj_remove_flag(p, LV_OBJ_FLAG_GESTURE_BUBBLE);
+    // [AI-WARNING] tab5_clim_ui est relancé par tab5_zones_apply après chaque réponse de
+    // HA : sans ce retrait, un rappel de plus à chaque fois, et un glissement sautait
+    // autant de pages (vu dans le rendu hors tablette du 09/10/2026, deux pages par geste).
+    lv_obj_remove_event_cb(p, carrousel_geste);
     lv_obj_add_event_cb(p, carrousel_geste, LV_EVENT_GESTURE, nullptr);
     carrousel_pastilles();
 }

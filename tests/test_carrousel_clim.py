@@ -66,6 +66,10 @@ def test_geste_comme_les_pages_des_reglages():
     preparer = _corps(CLIM, "void clim_carrousel_preparer() {")
     assert "lv_obj_remove_flag(p, LV_OBJ_FLAG_GESTURE_BUBBLE);" in preparer
     assert "lv_obj_add_event_cb(p, carrousel_geste, LV_EVENT_GESTURE, nullptr);" in preparer
+    # tab5_clim_ui est relancé par tab5_zones_apply à chaque réponse de HA : un seul rappel
+    # (sinon un geste sautait une page par rappel, vu dans le rendu du 09/10/2026).
+    assert preparer.index("lv_obj_remove_event_cb(p, carrousel_geste);") < preparer.index("lv_obj_add_event_cb(")
+    assert "- script.execute: tab5_clim_ui" in _lire("Tab5", "paquets", "tab5-zones.yaml")
     scripts = _lire("Tab5", "paquets", "tab5-scripts.yaml")
     assert "clim_carrousel_preparer();" in scripts.split("- id: tab5_clim_ui", 1)[1].split("\n  - id: ", 1)[0]
     # Changement de page instantané : aucune animation dans le carrousel.
