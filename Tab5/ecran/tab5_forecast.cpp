@@ -165,13 +165,18 @@ static void parse_and_update_heures_bulk(const std::string& payload) {
     if (payload.empty()) return;
     if (payload_trop_long("tab5.forecast", payload.size(), kPrevisionsMax)) return;  // tampon de pile
     ESP_LOGD("tab5.forecast", "Received heures bulk payload length: %d", payload.length());
-    previsions_heures_lire(payload.c_str(), cal_heures_data);
+    // Créneaux à l'index ou au nombre illisible (« nan », « inf »…) : ignorés, le créneau
+    // garde ce qu'il avait ; une ligne de journal par payload, comme l'historique des alertes.
+    if (previsions_heures_lire(payload.c_str(), cal_heures_data) > 0)
+        payload_refuse("tab5.forecast", "heures : créneau(x) illisible(s) ignoré(s)", payload.size());
 }
 
 bool accept_heures_bulk(const std::string& payload, int forecast_page) {
-    const int premier = previsions_premier_creneau(payload.c_str());  // idx du 1er créneau du bloc
+    // idx du 1er créneau du bloc ; -1 s'il est illisible (avant le correctif du lot F :
+    // 0, et le payload passait pour le bloc 0).
+    const int premier = previsions_premier_creneau(payload.c_str());
     if (premier < 0 || premier >= 15) {
-        payload_refuse("tab5.forecast", "heures : premier créneau hors de 0 à 14", payload.size());
+        payload_refuse("tab5.forecast", "heures : premier créneau illisible ou hors de 0 à 14", payload.size());
         return false;
     }
     const int bloc = premier / 5;
@@ -187,8 +192,10 @@ void parse_and_update_jours_bulk(const std::string& payload) {
     if (payload.empty()) return;
     if (payload_trop_long("tab5.forecast", payload.size(), kPrevisionsMax)) return;  // tampon de pile
     ESP_LOGD("tab5.forecast", "Received jours bulk payload length: %d", payload.length());
-    // Le jour 0 date le lot : cal_jours_anchor_day (tab5_core.h).
-    previsions_jours_lire(payload.c_str(), cal_jours_data, cal_jours_anchor_day);
+    // Le jour 0 date le lot : cal_jours_anchor_day (tab5_core.h). Jours illisibles : ignorés
+    // et journalisés une fois, comme les heures.
+    if (previsions_jours_lire(payload.c_str(), cal_jours_data, cal_jours_anchor_day) > 0)
+        payload_refuse("tab5.forecast", "jours : jour(s) illisible(s) ignoré(s)", payload.size());
 }
 
 // =============================================================================
