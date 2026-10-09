@@ -212,7 +212,9 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 SOUS_HORLOGE = (640, 270)
 SERRE = (1172, 158)           # court : Arcade
 # Température du salon (btn_reglables_liste, climate_card.yaml : carte en 855, 110, zone
-# 4..196 × 22..86) : court, le carrousel des clims (popup Climatisation, ADR-0038).
+# 4..196 × 22..86, centre 955, 164) : court, la roue de la clim posée sur elle (ADR-0047) ;
+# sans réglages reçus pour la clim (celle du blueprint avant « climr »), le carrousel des
+# clims (popup Climatisation, ADR-0038).
 # Tuile − / + (ADR-0033) : long sur la valeur entre − et + (CONSIGNE_CLIM,
 # btn_clim_target_click), la liste ; ses lignes (reglables_liste.yaml : panneau en 740,
 # 110, bord 2 + marge 6, lignes de 52 + 2).
@@ -358,6 +360,15 @@ VOLET_A_50 = Service("tab5_maj_emplacements", (("payload", "t01|open|50|;"),))
 # Les valeurs par défaut de la tablette (16-30 °C, pas 0,5, toutes les lettres), sans nom ;
 # marqué : le mode de la dernière scène (ventilation).
 CLIM_CAPACITES = Service("tab5_maj_emplacements", (("payload", "climr|16|30|0.5|°C|chdfebqsw;"),))
+# Roue d'une clim (ADR-0047), posée sur la température de la pièce (SALON, le centre de
+# btn_reglables_liste) : « Clims ▸ » (au moins deux clims : la démo a celle du blueprint et
+# la clim propre du Bureau), Éteindre, Mode, Consigne, Options, « Détails » (le carrousel
+# sur elle). La clim du Bureau (« chdfq ») et celle du blueprint après « climr » ont les
+# trois familles. Ancre haute : la roue est sous elle.
+ROUE_CLIM_TEMPERATURE = 6
+ROUE_CLIMS = 0
+ROUE_CLIM_DETAILS = Toucher(*roue_centres(955, 164, ROUE_CLIM_TEMPERATURE)[-1])
+ROUE_CLIM_CLIMS = Toucher(*roue_centres(955, 164, ROUE_CLIM_TEMPERATURE)[ROUE_CLIMS])
 
 # Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
 # un bouton (un bouton garde l'appui et se déclencherait au relâché).
@@ -825,9 +836,18 @@ ECRANS: tuple[Ecran, ...] = (
           MAISON_DE_LA_DEMO),
     Ecran("climatisation-carrousel-page-3",
           CLIMS_DE_TUILES + (Toucher(*SALON), CARROUSEL_SUIVANTE, CARROUSEL_SUIVANTE), MAISON_DE_LA_DEMO),
+    # En mode HA, la clim propre du Bureau a ses réglages : le toucher ouvre sa roue
+    # (ADR-0047), son « Détails » le carrousel sur elle.
     Ecran("climatisation-carrousel-mode-ha",
-          CLIMS_DE_TUILES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON)),
+          CLIMS_DE_TUILES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON), ROUE_CLIM_DETAILS),
           (Toucher(*FERMER_POPUP), Toucher(*BOUTON_HA), VERS_LA_GAUCHE) + MAISON_DE_LA_DEMO),
+    # Roue de la clim par la température de la pièce (ADR-0047), en mode HA sur le Bureau :
+    # sa clim propre (« Climatiseur du bureau », en froid) ; puis « Clims ▸ » déplié (la
+    # clim du blueprint et elle, marquée). Un toucher replie, le suivant ferme.
+    Ecran("roue-clim-temperature", ALLER_PIECE_CLIMAT + (Toucher(*SALON),),
+          (ROUE_FERMER,) + RETOUR_PIECE_CLIMAT),
+    Ecran("roue-clim-temperature-clims", ALLER_PIECE_CLIMAT + (Toucher(*SALON), ROUE_CLIM_CLIMS),
+          (ROUE_FERMER, ROUE_FERMER) + RETOUR_PIECE_CLIMAT),
     # Historique des alertes (lot 4 du plan des alertes) : la liste d'abord, comme HA la
     # pousserait, puis l'appui long sur la carte centrale.
     Ecran("alertes", (Service("tab5_maj_alertes_historique", (("payload", HISTORIQUE_ALERTES),)),
@@ -967,6 +987,10 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("roue-clim", (VERS_LA_GAUCHE, VERS_LA_GAUCHE, CLIM_CAPACITES, Long(*TUILES["chambre"]),
                         roue_famille(TUILES["chambre"], ROUE_BOUTONS["clim"], ROUE_MODE)),
           (ROUE_FERMER, ROUE_FERMER, VERS_LA_DROITE, VERS_LA_DROITE)),
+    # Roue de la clim par la température de la pièce en mode météo (ADR-0047) : la clim du
+    # blueprint, qui n'en a une qu'après « climr » (avant : le carrousel, écrans
+    # « climatisation-par-la-piece » et « climatisation-carrousel* »).
+    Ecran("roue-clim-temperature-meteo", (CLIM_CAPACITES, Toucher(*SALON)), (ROUE_FERMER,)),
 )
 
 # Captures en portrait (pas de rotation en PNG).

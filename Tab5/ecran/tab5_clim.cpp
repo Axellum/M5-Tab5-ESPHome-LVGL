@@ -138,6 +138,9 @@ ClimTuile* piece_clim(int r, bool creer) {
     return case_clim(kCasesTuiles + r, creer);
 }
 
+// Clim de tuile ou de pièce désignée comme dans ClimRef (t < 0 : la clim de la pièce r).
+ClimTuile* ref_clim(int r, int t) { return t < 0 ? piece_clim(r, false) : tuile_clim(r, t, false); }
+
 // Emplacement des commandes de la clim de la pièce R : « cpR » (modele_ha::clim_piece_cle).
 void cle_piece(int r, char out[4]) { std::memcpy(out, modele_ha::clim_piece_cle(r).s, 4); }
 
@@ -431,6 +434,7 @@ void clim_reglages_recu(const char* reste, size_t n) {
     ESP_LOGI("tab5.clim", "Reglages de la clim : %.1f-%.1f, pas %.2f, %s, [%s]",
              s_clim.min, s_clim.max, s_clim.pas, s_clim.fahrenheit ? "F" : "C", s_clim.capacites);
     vue_verifier();
+    roue_clim_changee();
     // Carte de l'accueil : format de la cible. Consigne pas encore reçue : les labels
     // gardent leur texte de démarrage (tab5_maj_clim suit juste après).
     if (!std::isnan(s_clim_consigne)) carte_consigne_ui(s_clim_consigne);
@@ -473,6 +477,7 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
         // la régler.
         if (piece) reglables_clim_changee();
         else tuiles_repeindre(r, t);
+        roue_clim_changee();
         if (affichee) popup_peindre();
         else carrousel_pastilles();  // une page de plus (ou un nom changé) dans le carrousel
         return true;
@@ -484,6 +489,7 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
         clim_recolorer();
     }
     if (piece) reglables_clim_changee();  // sa consigne sur la tuile − / +
+    roue_clim_changee();
     return true;
 }
 
@@ -512,6 +518,7 @@ void clim_tuile_oublier(int r, int t) {
     *c = ClimTuile();
     // Une consigne en attente irait à l'appareil qui a pris sa place : elle ne part pas.
     if (std::strcmp(s_attente.cle, modele_ha::tuile_cle(r, t).s) == 0) s_attente = Attente{};
+    roue_clim_changee();
     if (s_vue != r * kTuiles + t) {
         carrousel_pastilles();  // une page de moins dans le carrousel
         return;
@@ -556,6 +563,7 @@ void clim_piece_oublier(int r) {
     cle_piece(r, cle);
     // Une consigne en attente irait à une clim que la pièce n'a plus : elle ne part pas.
     if (std::strcmp(s_attente.cle, cle) == 0) s_attente = Attente{};
+    roue_clim_changee();
     if (s_vue != kCasesTuiles + r) {
         carrousel_pastilles();  // une page de moins dans le carrousel
         return;
@@ -751,8 +759,7 @@ void clim_carrousel_preparer() {
     carrousel_pastilles();
 }
 
-bool clim_carrousel_ouvrir() {
-    if (g_clim_ui.popup == nullptr) return false;
+bool clim_ref_choisir(ClimRef& out) {
     ClimRef l[kClimPastilles];
     const int n = clims_enumerer(l, kClimPastilles);
     if (n == 0) return false;
@@ -769,10 +776,25 @@ bool clim_carrousel_ouvrir() {
             if (l[k].t < 0) break;
         }
     }
-    if (!clim_ref_afficher(l[i])) return false;
+    out = l[i];
+    return true;
+}
+
+bool clim_carrousel_ouvrir_sur(const ClimRef& c) {
+    if (g_clim_ui.popup == nullptr) return false;
+    if (!clim_ref_afficher(c)) return false;
     carrousel_pastilles();
     animate_popup_open(g_clim_ui.popup);
     return true;
+}
+
+bool clim_temperature_ouvrir(lv_obj_t* ancre) {
+    ClimRef c;
+    if (!clim_ref_choisir(c)) return false;  // aucune clim : la liste de la tuile − / +
+    // Sa roue (ADR-0047) ; sans réglages reçus (la clim du blueprint avant climr), le
+    // carrousel sur elle, comme avant.
+    if (clim_roue_ouvrir(c, ancre)) return true;
+    return clim_carrousel_ouvrir_sur(c);
 }
 
 float clim_consigne_suivante(float t, int sens) { return consigne_suivante(s_clim, t, sens); }
@@ -834,6 +856,7 @@ void clim_blueprint_recu(float consigne, float piece) {
     }
     clim_recolorer();
     reglables_clim_changee();  // sa ligne de la liste de la tuile − / + (ADR-0033)
+    roue_clim_changee();
 }
 
 const char* clim_nom() { return s_clim.nom; }
@@ -888,18 +911,57 @@ void clim_recolorer() {
 }
 
 // Roue d'actions rapides (ADR-0036, tab5_tuiles_roue.cpp) : les modes qu'elle offre sont ceux que
-// HA a poussés pour cette clim (climr pour celle du blueprint, crRT pour une tuile) ; les
-// capacités par défaut de la 3.2 ne comptent pas (rien reçu : pas de roue, le popup).
+// HA a poussés pour cette clim (climr pour celle du blueprint, crRT pour une tuile, crpR
+// pour une pièce, ADR-0047) ; les capacités par défaut de la 3.2 ne comptent pas (rien
+// reçu : pas de roue, le popup).
 const char* clim_capacites_connues(int r, int t) {
     if (r < 0) return s_clim.recu ? s_clim.capacites : nullptr;
-    const ClimTuile* c = tuile_clim(r, t, false);
+    const ClimTuile* c = ref_clim(r, t);
     return (c != nullptr && c->reglages.recu) ? c->reglages.capacites : nullptr;
+}
+
+const char* clim_mode_connu(int r, int t) {
+    if (r < 0) return g_clim_ui.mode_bp != nullptr ? g_clim_ui.mode_bp->c_str() : "";
+    const ClimTuile* c = ref_clim(r, t);
+    return c != nullptr ? c->etat.mode.c_str() : "";
+}
+
+void clim_tete(int r, int t, ClimTete& out) {
+    out = ClimTete{};
+    const ClimTuile* c = r < 0 ? nullptr : ref_clim(r, t);
+    const ClimReglages& g = c != nullptr ? c->reglages : s_clim;
+    const char* mode = clim_mode_connu(r, t);
+    const float piece = r < 0 ? s_clim_piece : (c != nullptr ? c->etat.piece : NAN);
+    const float consigne = r < 0 ? (g_clim_ui.consigne_bp != nullptr ? *g_clim_ui.consigne_bp : NAN)
+                                 : (c != nullptr ? c->etat.consigne : NAN);
+    // Nom : comme le titre du popup (popup_reglages_ui).
+    if (g.nom[0] != '\0') snprintf(out.nom, sizeof(out.nom), "%s", g.nom);
+    else if (r < 0 || !tuiles_piece_titre(r, out.nom, sizeof(out.nom)))
+        snprintf(out.nom, sizeof(out.nom), "%s", tr("Climatisation"));
+    // Consigne comme celles de la roue (clim_roue_consignes : « 21.5° »), « -- » inconnue.
+    char buf[8];
+    clim_format_consigne(g, buf, sizeof(buf), consigne);
+    if (std::isnan(consigne)) snprintf(out.consigne, sizeof(out.consigne), "%s", buf);
+    else snprintf(out.consigne, sizeof(out.consigne), "%s\xC2\xB0", buf);
+    // Ligne d'état et couleur comme la carte d'une tuile cli (vue_def, tab5_tuiles.cpp) :
+    // rien reçu « -- », hors ligne grisé, sinon la température de la pièce.
+    const bool vide = mode[0] == '\0';
+    const bool hors_ligne = std::strcmp(mode, "unavailable") == 0 || std::strcmp(mode, "unknown") == 0;
+    out.actif = !vide && !hors_ligne && std::strcmp(mode, "off") != 0;
+    if (vide || hors_ligne) {
+        snprintf(out.ligne, sizeof(out.ligne), "%s", vide ? "--" : tr("Hors ligne"));
+        out.couleur = UIColor.INACTIVE;
+        return;
+    }
+    if (!std::isnan(piece)) snprintf(out.ligne, sizeof(out.ligne), "%.1f \xC2\xB0", piece);
+    else snprintf(out.ligne, sizeof(out.ligne), "%s", out.actif ? "--" : tr("Éteint"));
+    out.couleur = couleur_icone_carte(mode);
 }
 
 namespace {
 
 // Clim que vise la roue : réglages reçus, consigne et bascules de la clim du blueprint
-// (r < 0 : ses globals, comme sa carte) ou de celle de la tuile tRT. Faux si HA n'a pas
+// (r < 0 : ses globals, comme sa carte), de celle de la tuile tRT ou de la pièce r (t < 0). Faux si HA n'a pas
 // poussé ses réglages (la roue ne lui offre alors rien de plus que le popup).
 struct ClimRoue {
     const ClimReglages* reglages = nullptr;
@@ -921,7 +983,7 @@ bool clim_roue(int r, int t, ClimRoue& c) {
         c.oscillation = u.oscillation_bp != nullptr ? u.oscillation_bp : &kVide;
         return true;
     }
-    const ClimTuile* ct = tuile_clim(r, t, false);
+    const ClimTuile* ct = ref_clim(r, t);
     if (ct == nullptr || !ct->reglages.recu) return false;
     c.reglages = &ct->reglages;
     c.consigne = ct->etat.consigne;

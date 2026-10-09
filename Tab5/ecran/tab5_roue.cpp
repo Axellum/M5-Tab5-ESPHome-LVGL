@@ -168,6 +168,7 @@ const char* glyphe_roue(RoueIcone i) {
         case RoueIcone::BRISE: return "\U000F059D";        // weather-windy
         case RoueIcone::MAISON: return "\U000F02DC";       // home
         case RoueIcone::REGLAGES: return "\U000F1542";     // tune-variant
+        case RoueIcone::CLIMS: return "\U000F001B";        // air-conditioner (« Clims ▸ », ADR-0047)
         default: return "";
     }
 }

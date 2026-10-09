@@ -65,6 +65,10 @@ NON_MONTREES = {
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
+    # Roue d'une clim par la température de la pièce (ADR-0047), décrite dans climate.md.
+    "roue-clim-temperature": "roue d'une clim (ADR-0047), décrite dans climate.md ; image à tirer du rendu",
+    "roue-clim-temperature-clims": "roue-clim-temperature montre la même roue ; « Clims » est décrit",
+    "roue-clim-temperature-meteo": "roue-clim-temperature montre la même roue, sur la clim du blueprint",
     "maison": "image à tirer du rendu de la PR du popup Maison, puis citer dans house.md",
     "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",

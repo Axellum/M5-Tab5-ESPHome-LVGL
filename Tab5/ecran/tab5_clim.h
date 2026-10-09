@@ -135,11 +135,13 @@ void clim_afficher_blueprint();
 // clim : ni pastilles ni glisse. Script tab5_clim_ui (fin du setup) : le geste s'arrête au
 // popup et y change de page.
 void clim_carrousel_preparer();
-// Toucher court de la température de la pièce (btn_reglables_liste, climate_card.yaml) :
-// le popup ouvert sur la clim de la pièce affichée en mode HA si elle en a une, sinon sur
-// la première (celle du blueprint). Faux, et rien d'ouvert, si la tablette ne connaît
-// aucune clim (la carte déroule alors la liste de la tuile − / +, comme avant).
-bool clim_carrousel_ouvrir();
+// Toucher court de la température de la pièce (btn_reglables_liste, climate_card.yaml,
+// passé en `ancre`) : la roue de la clim de la pièce affichée en mode HA si elle en a une,
+// sinon de la première (celle du blueprint), posée sur la température (ADR-0047) ; sans
+// réglages reçus pour elle, le carrousel ouvert sur elle (ADR-0038). Faux, et rien
+// d'ouvert, si la tablette ne connaît aucune clim (la carte déroule alors la liste de la
+// tuile − / +, comme avant).
+bool clim_temperature_ouvrir(lv_obj_t* ancre);
 // Emplacement des commandes du popup : « clim » (clim du blueprint) ou « tRT ».
 const char* clim_affichee_cle();
 // Gestes du popup, sur la clim affichée : affichage optimiste et couleurs (l'envoi suit,

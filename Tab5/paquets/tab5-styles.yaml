@@ -680,6 +680,7 @@ font:
     size: 36
     bpp: 1
     glyphs:
+      - "\U000F001B"  # air-conditioner (famille « Clims ▸ » de la roue d'une clim, ADR-0047)
       - "\U000F00DF"  # brightness-6 (Luminosité)
       - "\U000F0210"  # fan
       - "\U000F0238"  # fire

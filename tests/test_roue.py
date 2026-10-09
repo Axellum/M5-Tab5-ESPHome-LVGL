@@ -202,7 +202,10 @@ def test_le_rendu_touche_reglages_et_les_familles():
         # Un toucher replie le second anneau, le suivant ferme la roue.
         assert list(par_nom[nom].fermer[:2]) == [ecrans.ROUE_FERMER] * 2, nom
     assert "maison-roue" in par_nom
-    assert ecrans.ECRANS[-1].nom == "roue-clim", "climr reçu ne s'efface pas : dernière capture"
+    # « climr » reçu ne s'efface pas : les écrans qui le poussent sont les derniers.
+    pousse = [i for i, e in enumerate(ecrans.ECRANS) if ecrans.CLIM_CAPACITES in e.etapes]
+    assert [ecrans.ECRANS[i].nom for i in pousse] == ["roue-clim", "roue-clim-temperature-meteo"]
+    assert pousse == list(range(len(ecrans.ECRANS) - len(pousse), len(ecrans.ECRANS)))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -230,9 +233,15 @@ def test_types_et_options_de_la_roue():
     for action in ("OUVRIR", "ARRETER", "FERMER"):
         assert f"commande(RoueAction::{action}," in vol
     assert "if (vol_position_connue(e)) famille(RoueAction::POSITION" in vol
-    assert "if (capacites == nullptr) return 0;" in cli
+    # Clim : les boutons de composer_clim, le même code pour la tuile cli et pour la roue
+    # d'une clim (ADR-0047) ; sans capacité reçue, pas de roue.
+    assert "if (!composer_clim(rt.clim, e.brut)) return 0;" in cli
+    clim = corps.split("auto composer_clim = ", 1)[1].split("\n    };", 1)[0]
+    assert "if (capacites == nullptr) return false;" in clim
+    assert 'commande(RoueAction::CLIM_ARRET, RoueIcone::ETEINDRE, est(mode, "off"));' in clim
     for f in ("MODE", "CONSIGNE", "OPTIONS"):
-        assert f"famille(RoueAction::{f}, RoueIcone::{f});" in cli
+        assert f"famille(RoueAction::{f}, RoueIcone::{f});" in clim
+    assert corps.count("composer_clim(") == 2, "deux appels : la tuile cli, la roue d'une clim"
     # « Maison » d'abord (sauf depuis lui), « Détails » en dernier, une commande au moins.
     debut = corps.split("switch (static_cast<Type>(d.type))", 1)[0]
     assert ('if (!depuis_maison) ajouter(RoueAction::MAISON, RoueIcone::MAISON, RoueGenre::LIEN, false, '
@@ -302,14 +311,19 @@ def test_commandes_envoyees_du_contrat():
     for c in ("mode", "eteindre", "consigne", "preset", "ventilation", "oscillation"):
         assert f"commande: {c}" in popup, c
     # Clim du blueprint (option m) : l'emplacement « clim », comme clim_affichee_cle().
-    assert 'u.envoyer(clim.emplacement(), "eteindre", "");' in choisir
-    assert 'u.envoyer(est_clim ? clim.emplacement() : cle.s, env[j].commande, env[j].valeur);' in _fonction(
+    assert 'u.envoyer(clim.s, "eteindre", "");' in choisir
+    assert 'u.envoyer(est_clim ? clim.s : cle.s, env[j].commande, env[j].valeur);' in _fonction(
         t, "roue_tuile_choisir_choix")
     assert "if (d.options & OPT_M) return c;" in _fonction(t, "clim_cible")
-    assert 'const char* emplacement() const { return r < 0 ? "clim" : cle.s; }' in t
+    # Emplacement d'une clim : « clim » (blueprint, r < 0), « tRT » (tuile), « cpR » (pièce,
+    # ADR-0040) — ceux de son popup (clim_affichee_cle).
+    emplacement = _fonction(t, "clim_emplacement")
+    assert 'char s[8] = "clim";' in t and "if (c.r >= 0) {" in emplacement
+    assert "c.t < 0 ? clim_piece_cle(c.r) : tuile_cle(c.r, c.t)" in emplacement
     # Liens : le popup de la tuile ; le popup Maison par la routine unique des écrans.
     reglages = choisir.split("case RoueAction::REGLAGES:", 1)[1].split("return;", 1)[0]
     assert "tuile_ouvrir_popup(rt.r, rt.t);" in reglages
+    assert "if (roue_de_clim(rt)) clim_carrousel_ouvrir_sur(rt.clim);" in reglages
     maison = choisir.split("case RoueAction::MAISON:", 1)[1].split("return;", 1)[0]
     assert "g_roue_ui.ouvrir_ecran(static_cast<int>(Ecran::MAISON));" in maison
     assert "roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };" in _lire("Tab5", "paquets", "tab5-roue.yaml")
