@@ -509,7 +509,8 @@ blueprint:
                 - domain: climate
     # Tuile − / + au choix (ADR-0033, 06/10/2026) : d'autres appareils que la clim pour
     # les boutons − / + de l'accueil, choisis sur la tablette dans une liste qui se
-    # déroule au toucher de la température du salon. Clés rN de tab5_maj_tuiles
+    # déroule à l'appui long sur la valeur entre − et + (au toucher de la température du
+    # salon avant le carrousel des clims, ADR-0038). Clés rN de tab5_maj_tuiles
     # (définitions) et de tab5_maj_emplacements (états) ; un firmware plus ancien les
     # ignore (la clim seule, comme avant). Seules ces entités-là reçoivent « regler ».
     tuile_reglage:
@@ -518,16 +519,18 @@ blueprint:
       collapsed: true
       description: >-
         D'autres appareils à régler avec les boutons − / + de l'accueil (firmware 3.7 ou
-        plus récent). Toucher la température de la pièce déroule la liste : la clim, ces
+        plus récent). Un appui long sur la valeur entre − et + déroule la liste (jusqu'au
+        firmware 3.8.0-rc.3 : toucher la température de la pièce) : la clim, ces
         appareils, puis le volume de la tablette ; le choix reste, même après un
         redémarrage. Toucher la valeur entre − et + ouvre la fenêtre de l'appareil quand il
         en a une.
 
 
         Other devices to adjust with the − / + buttons of the home page (firmware 3.7 or
-        newer). Touching the room temperature unfolds the list: the climate, these
-        devices, then the tablet's volume; the choice stays, even after a restart. Touching
-        the value between − and + opens the device's window when it has one.
+        newer). A long press on the value between − and + unfolds the list (up to firmware
+        3.8.0-rc.3: touching the room temperature): the climate, these devices, then the
+        tablet's volume; the choice stays, even after a restart. Touching the value
+        between − and + opens the device's window when it has one.
       input:
         reglables:
           name: Appareils · Devices
