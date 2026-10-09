@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Popup à pages (ADR-0046, 09/10/2026) : la brique commune des popups à plusieurs pages
-(Tab5/ecran/tab5_pages.cpp) — Réglages, Lumières et Volets — lue dans le vrai C++.
+(Tab5/ecran/tab5_pages.cpp) — Réglages, Lumières, Volets et Température — lue dans le vrai C++.
 
 On vérifie :
 - le geste : arrêté au popup (GESTURE_BUBBLE retiré), ignoré quand il part d'un curseur ou
@@ -92,3 +92,13 @@ def test_reglages_par_la_brique():
         if f.name in ("tab5_pages.cpp", "tab5_clim.cpp"):
             continue
         assert not re.search(r"lv_obj_add_event_cb\([^;]*LV_EVENT_GESTURE", lire(f)), f.name
+
+
+def test_temperature_par_la_brique():
+    """Popup Température (ADR-0047) : son geste et la couleur de l'onglet affiché par la
+    brique ; la place de ses onglets (après le titre, jusqu'à sept) reste la sienne."""
+    cpp = lire(TAB5 / "ecran" / "tab5_historique.cpp").replace("\r\n", "\n")
+    assert "pages_brancher(&s_pages);" in cpp
+    assert "PagesPopup s_pages{nullptr, nombre_pages, rang_courant, afficher_page};" in cpp
+    assert "choix_peindre(u.onglet, n, rang_courant());" in cpp
+    assert "void peindre_onglet(" not in cpp, "la couleur de l'onglet : choix_peindre"

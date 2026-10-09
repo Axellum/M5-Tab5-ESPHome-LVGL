@@ -1197,6 +1197,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Dehors, prévu": "Outdoors, forecast"
 "Mesuré": "Measured"
 "Minimum et maximum": "Minimum and maximum"
+# Humidité d'une pièce dans le même popup (ADR-0047)
+"HUMIDITÉ": "HUMIDITY"
+"Humidité": "Humidity"
+"Entre %d et %d %%": "Between %d and %d %%"
 
 # Thèmes (ADR-0029) : mode de la rangée « Thème » de la console système
 "Sombre": "Dark"

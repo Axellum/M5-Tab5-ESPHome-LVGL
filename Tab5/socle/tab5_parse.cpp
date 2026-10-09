@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <new>
 
 // ─── 1. Prévisions ───
 // Avant : parse_and_update_heures_bulk() et parse_and_update_jours_bulk(),
@@ -469,4 +470,96 @@ void clim_etat_lire(const char* reste, size_t n, ClimEtat& e) {
         if (k > 2 + i) modes[i]->assign(f[2 + i].p, std::min(f[2 + i].n, kModeMax));
         else modes[i]->clear();
     }
+}
+
+// ─── 8. Popup Température ───
+// Avant : historique_recu() de Tab5/ecran/tab5_historique.cpp (lecture recopiée telle
+// quelle), puis l'humidité (septième champ de l'en-tête, trois champs de plus par créneau).
+
+namespace {
+
+// Température : NAN si illisible ou hors de ±kHistoriqueTempMax.
+float lire_temperature(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    return std::fabs(v) <= kHistoriqueTempMax ? v : NAN;  // fabs(NAN) <= x est faux
+}
+
+// Minutes depuis le premier créneau : NAN si illisible, négatif ou au-delà de
+// kHistoriqueMinutesMax.
+float lire_minutes(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    return v >= 0.0f && v <= kHistoriqueMinutesMax ? v : NAN;
+}
+
+}  // namespace
+
+uint8_t humidite_lire(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    if (!(v >= 0.0f && v <= 100.0f)) return kHumiditeAucune;  // NAN compris
+    return static_cast<uint8_t>(std::lround(v));
+}
+
+Champ historique_lire(const Champ& entete, const Champ& mesures, const Champ& previsions, HistoriqueSerie& s) {
+    new (&s) HistoriqueSerie();
+    s.recue = true;
+
+    // En-tête « nom|debut|pas|maintenant|actuel|exterieur[|humidité] ».
+    const char* p = entete.p;
+    const char* fin = p + entete.n;
+    const Champ nom = champ_suivant(p, fin, '|');
+    const Champ debut = champ_suivant(p, fin, '|');
+    char date[24] = {};
+    std::memcpy(date, debut.p, debut.n < sizeof(date) - 1 ? debut.n : sizeof(date) - 1);
+    int an = 2000, mo = 1, jo = 1, he = 0, mi = 0;
+    if (std::sscanf(date, "%d-%d-%d%*c%d:%d", &an, &mo, &jo, &he, &mi) != 5 || an < 1970 || an > 2200 || mo < 1 ||
+        mo > 12 || jo < 1 || jo > 31 || he < 0 || he > 23 || mi < 0 || mi > 59) {
+        an = 2000;  // illisible : seuls les libellés de l'axe s'en servent
+        mo = jo = 1;
+        he = mi = 0;
+    }
+    s.debut_jour = jour_civil(an, mo, jo);  // année bornée à 1970..2200 : tient en 32 bits
+    s.debut_min = he * 60 + mi;
+    const float pas = lire_minutes(champ_suivant(p, fin, '|'));
+    s.pas = std::isnan(pas) || pas < 1.0f || pas > kHistoriquePasMax ? 60 : static_cast<int32_t>(pas);
+    const float maintenant = lire_minutes(champ_suivant(p, fin, '|'));
+    s.maintenant = std::isnan(maintenant) ? 0 : static_cast<int32_t>(maintenant);
+    s.actuel = lire_temperature(champ_suivant(p, fin, '|'));
+    s.exterieur = champ_est(champ_suivant(p, fin, '|'), "1");
+    const Champ humidite = champ_suivant(p, fin, '|');
+    s.humidite = humidite.n > 0;
+    s.h_actuelle = humidite_lire(humidite);
+
+    // Créneaux « moy,min,max[,h_moy,h_min,h_max] » séparés par « ; » (vide = pas de donnée).
+    p = mesures.p;
+    fin = p + mesures.n;
+    while (p < fin && s.n < kHistoriqueMesuresMax) {
+        const Champ c = champ_suivant(p, fin, ';');
+        const char* q = c.p;
+        const char* qf = c.p + c.n;
+        HistoriquePoint& pt = s.m[s.n++];
+        pt.moy = lire_temperature(champ_suivant(q, qf, ','));
+        pt.mn = lire_temperature(champ_suivant(q, qf, ','));
+        pt.mx = lire_temperature(champ_suivant(q, qf, ','));
+        pt.h_moy = humidite_lire(champ_suivant(q, qf, ','));
+        pt.h_mn = humidite_lire(champ_suivant(q, qf, ','));
+        pt.h_mx = humidite_lire(champ_suivant(q, qf, ','));
+    }
+    // Points de prévision « minute,moy[,min,max] », dans l'ordre du temps.
+    p = previsions.p;
+    fin = p + previsions.n;
+    while (p < fin && s.np < kHistoriquePrevMax) {
+        const Champ c = champ_suivant(p, fin, ';');
+        const char* q = c.p;
+        const char* qf = c.p + c.n;
+        const float minute = lire_minutes(champ_suivant(q, qf, ','));
+        if (std::isnan(minute)) continue;
+        HistoriquePrev& pv = s.p[s.np];
+        pv.minute = static_cast<int32_t>(minute);
+        pv.moy = lire_temperature(champ_suivant(q, qf, ','));
+        pv.mn = lire_temperature(champ_suivant(q, qf, ','));
+        pv.mx = lire_temperature(champ_suivant(q, qf, ','));
+        if (s.np > 0 && pv.minute <= s.p[s.np - 1].minute) continue;  // hors de l'ordre : ignoré
+        s.np++;
+    }
+    return nom;
 }
