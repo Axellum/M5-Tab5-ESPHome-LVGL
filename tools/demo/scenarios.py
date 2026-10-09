@@ -700,9 +700,10 @@ def build_historique(cle: str, vue: str, maintenant: _dt.datetime, exterieur: bo
 # Tab5/paquets/tab5-api-logic.yaml, découpage : parse_and_update_vigilance() dans
 # Tab5/ecran/tab5_services.cpp). Le firmware lit 11 à 13 champs '|' : la démo envoie les
 # 11 de Météo-France ; brouillard et feux de forêt (MeteoAlarm, lot 4c) sont
-# facultatifs en fin de payload. strtok_r fusionne les délimiteurs consécutifs, donc
-# un champ vide au milieu décale tous les suivants (silencieux). On ne laisse
-# donc jamais un champ vide : "Vert" par défaut pour les 9 niveaux de vigilance.
+# facultatifs en fin de payload. Jusqu'au correctif qui a suivi le lot F, strtok_r
+# fusionnait les délimiteurs consécutifs et un champ vide au milieu décalait tous les
+# suivants (un firmware 3.7.0 le fait encore) : on ne laisse donc jamais un champ
+# vide, "Vert" par défaut pour les 9 niveaux de vigilance, comme HA.
 # Nombres tenus par tests/test_doc_comptes.py.
 # ---------------------------------------------------------------------------
 

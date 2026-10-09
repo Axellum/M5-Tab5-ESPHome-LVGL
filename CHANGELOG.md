@@ -21,6 +21,16 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Corrigé : défauts de lecture des payloads de HA relevés par le lot F
+
+Firmware seul (`Tab5/socle/tab5_parse.cpp`) : aucun fichier Home Assistant à recopier, les payloads de HA (ceux de la v3.7.0 compris) se lisent comme avant. Contrat inchangé (1.0.0).
+
+- **« Pas de données » pour la pluie** : HA envoie `@-1,0` quand il n'a pas de relevé ; la tablette le prenait pour `@-` (aucune source) et laissait la phrase vide. La faute était côté firmware (le contrat de `tab5-api-logic.yaml` dit bien « niveau -1 pas de données ») : `@-` n'est plus « aucune source » que sans chiffre après le « - ».
+- **Vigilance** : un champ vide ne fait plus remonter les suivants d'un cran (`split_fields` au lieu de `strtok_r`). HA envoie toujours « Vert », rien ne change pour lui. Alertes HA, barres de pluie et détail du jour du calendrier gardent `strtok_r` : il n'y saute que des enregistrements vides, et chacun porte sa clé (id, index, genre), donc rien ne s'y décale (tests à l'appui).
+- **Prévisions** : un index illisible (« abc », vide) n'écrase plus le premier créneau, et une température ou une pluie non finie ou hors bornes (« nan », « inf », « 1e99 » ; températures -100 à 150, pluie 0 à 1000 mm) n'est plus affichée : l'enregistrement est ignoré, le créneau garde ce qu'il avait, et le payload est signalé une fois au journal (`payload_refuse`, comme l'historique des alertes). Un premier créneau illisible fait refuser le bloc horaire au lieu de le prendre pour le bloc 0. Un nombre vide ou illisible vaut toujours 0, comme avant (HA envoie 0 pour une valeur absente).
+- **Production solaire** : plus coupée à 15 octets sans le dire ; lue par `champ_nombre()` (au-delà de 31 octets, refusée). HA envoie un entier de 0 à 100 ou `nan`.
+- `tools/test_parse.cpp` : chaque test qui figeait un de ces défauts affirme le bon comportement (« [corrigé] »), et `test_payloads_ha()` vérifie que les payloads tels que HA les envoie donnent les mêmes valeurs qu'avant. Graines du fuzz pour ces cas limites (`tools/fuzz/graines.py`). Non testé sur la tablette.
+
 ### 2026-10-09 — Gestes de l'accueil au choix : l'horloge en trois zones (lot A, ADR-0039)
 
 - **L'horloge en trois zones tactiles** : les heures, les minutes et la date (`ui_components/horloge_zone.yaml`, à la place de `btn_clock_calendar_zone`), qui couvrent toute la tuile sans trou ni recouvrement, coupées dans le « : » et entre les chiffres et la date dans les 21 thèmes (`tests/test_gestes.py`). **Ce qui change d'origine** : le réveil passe du tap sur l'horloge à l'appui long sur l'heure (heures ou minutes) ; le calendrier reste à l'appui long, sur la date ; un tap sur les minutes passe à l'appareil suivant de la tuile − / + (sans dérouler la liste, choix gardé) ; un tap sur la date, à la ligne suivante de la rangée sous l'horloge ; un tap sur les heures ne fait rien.
