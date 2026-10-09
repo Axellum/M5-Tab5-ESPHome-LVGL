@@ -49,7 +49,7 @@ def test_une_seule_liste_des_clims():
     assert "a[0] != '\\0'" in _corps(CLIM, "bool meme_nom(")
     # Ouverture, geste et pastilles lisent cette liste, rien d'autre.
     for f in ("void carrousel_pastilles() {", "void carrousel_geste(lv_event_t* /*e*/) {",
-              "bool clim_carrousel_ouvrir() {"):
+              "bool clim_ref_choisir(ClimRef& out) {"):
         assert "clims_enumerer(l, kClimPastilles);" in _corps(CLIM, f), f
     # Déclarée pour les autres unités (une clim de plus, ailleurs : une ligne ici).
     assert "int clims_enumerer(ClimRef* out, int max);" in _lire("Tab5", "ecran", "tab5_internal.h")
@@ -73,15 +73,24 @@ def test_geste_comme_les_pages_des_reglages():
     scripts = _lire("Tab5", "paquets", "tab5-scripts.yaml")
     assert "clim_carrousel_preparer();" in scripts.split("- id: tab5_clim_ui", 1)[1].split("\n  - id: ", 1)[0]
     # Changement de page instantané : aucune animation dans le carrousel.
-    for f in ("void carrousel_geste(", "void carrousel_pastilles(", "bool clim_carrousel_ouvrir("):
+    for f in ("void carrousel_geste(", "void carrousel_pastilles(", "bool clim_carrousel_ouvrir_sur("):
         assert "lv_anim" not in _corps(CLIM, f), f
 
 
 def test_ouverture_sur_la_piece_affichee():
-    ouvrir = _corps(CLIM, "bool clim_carrousel_ouvrir() {")
-    assert "if (n == 0) return false;" in ouvrir
-    assert "tuiles_piece_mode_ha()" in ouvrir and "l[k].piece == piece" in ouvrir
-    assert ouvrir.index("clim_ref_afficher(l[i])") < ouvrir.index("animate_popup_open(g_clim_ui.popup);")
+    # La clim visée par la température : celle de la pièce affichée en mode HA, sinon la
+    # première ; aucune : faux (la liste de la tuile − / +).
+    choisir = _corps(CLIM, "bool clim_ref_choisir(ClimRef& out) {")
+    assert "if (n == 0) return false;" in choisir
+    assert "tuiles_piece_mode_ha()" in choisir and "l[k].piece == piece" in choisir
+    assert "out = l[i];" in choisir
+    # Le carrousel ouvert sur une clim : sa page, puis le popup.
+    ouvrir = _corps(CLIM, "bool clim_carrousel_ouvrir_sur(const ClimRef& c) {")
+    assert ouvrir.index("clim_ref_afficher(c)") < ouvrir.index("animate_popup_open(g_clim_ui.popup);")
+    # Le toucher de la température (ADR-0048) : la roue, sinon le carrousel sur elle.
+    temperature = _corps(CLIM, "bool clim_temperature_ouvrir(lv_obj_t* ancre) {")
+    assert temperature.index("if (!clim_ref_choisir(c)) return false;") < temperature.index(
+        "if (clim_roue_ouvrir(c, ancre)) return true;") < temperature.index("return clim_carrousel_ouvrir_sur(c);")
     piece = _corps(_lire("Tab5", "ecran", "tab5_tuiles.cpp"), "int tuiles_piece_mode_ha() {")
     assert "if (!g_central_ctx.ha_mode || heritage()) return -1;" in piece
 
@@ -113,7 +122,8 @@ def test_pastilles_du_popup():
 
 def test_gestes_de_la_carte_clim():
     salon = _bloc_yaml(CARTE, "btn_reglables_liste", "\n    - ")
-    assert "on_short_click:\n          - lambda: 'if (!clim_carrousel_ouvrir()) reglables_liste_basculer();'" in salon
+    assert ("on_short_click:\n          - lambda: 'if (!clim_temperature_ouvrir(id(btn_reglables_liste))) "
+            "reglables_liste_basculer();'") in salon
     # L'appui long : l'historique (ADR-0032), du salon ou de la pièce affichée (ADR-0040).
     assert "accueil_historique_cle(false);" in salon
     assert "id(tab5_historique_ouvrir).execute(std::string(cle));" in salon

@@ -277,7 +277,7 @@ def test_le_carrousel_liste_les_clims_des_pieces():
     rang = _fonction(clim, "carrousel_rang")
     assert "vue_piece_index()" in rang and "vue_tuile_index()" in rang
     # En mode HA, la clim propre de la pièce d'abord, sinon la première de ses tuiles.
-    assert "if (l[k].t < 0) break;" in _fonction(clim, "clim_carrousel_ouvrir")
+    assert "if (l[k].t < 0) break;" in _fonction(clim, "clim_ref_choisir")
     # Une page de moins quand la pièce perd sa clim.
     assert "carrousel_pastilles();" in _fonction(clim, "clim_piece_oublier")
     # Une seule pièce « affichée en mode HA » (celle du lot B, sans le mode héritage).
