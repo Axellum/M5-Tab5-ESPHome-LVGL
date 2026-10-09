@@ -114,6 +114,7 @@ esphome:
     - Tab5/ecran/tab5_alertes.cpp
     - Tab5/ecran/tab5_maison.cpp
     - Tab5/ecran/tab5_piece_climat.cpp
+    - Tab5/ecran/tab5_pages.cpp
     - Tab5/jeux/game_common.h
     - Tab5/jeux/marble_game.h
     - Tab5/jeux/marble_game.cpp

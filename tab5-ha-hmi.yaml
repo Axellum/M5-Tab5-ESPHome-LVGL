@@ -175,6 +175,8 @@ esphome:
     # Climat de la pièce en mode HA : sa température, son humidité et sa clim sur la
     # carte clim de l'accueil (ADR-0040, 09/10/2026).
     - Tab5/ecran/tab5_piece_climat.cpp
+    # Popups à pages : glisser de page en page et noms des pages en haut (ADR-0046, 09/10/2026).
+    - Tab5/ecran/tab5_pages.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
     - Tab5/jeux/game_common.h
