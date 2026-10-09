@@ -631,6 +631,23 @@ static void test_chargeur() {
     expect(kBatterieSeuilV == 3.0f && kBatterieBasseV == 6.0f && kChargeurReposMs == 8u * S,
            "seuils : 3,0 V chargeur coupé, 6,0 V chargeur allumé, 8 s de repos");
 
+    // Mode de charge (09/10/2026, ADR-0045) : la charge rapide seulement chargeur allumé.
+    {
+        constexpr uint8_t CLASSIQUE = static_cast<uint8_t>(ModeCharge::CLASSIQUE);
+        constexpr uint8_t RAPIDE = static_cast<uint8_t>(ModeCharge::RAPIDE);
+        expect(!charge_rapide_voulue(CLASSIQUE, true), "mode de charge « Classique » : charge rapide arrêtée");
+        expect(charge_rapide_voulue(RAPIDE, true), "mode de charge « Rapide », chargeur allumé : charge rapide");
+        expect(!charge_rapide_voulue(RAPIDE, false), "« Rapide », chargeur coupé (sans batterie, sonde, 80 %) : arrêtée");
+        expect(!charge_rapide_voulue(5, true), "mode de charge : index inconnu = « Classique »");
+        // Avec le chargeur réel : sans batterie, il se coupe après le réveil, la charge
+        // rapide avec lui.
+        EtatChargeur c;
+        const ActionChargeur reveil = chargeur_tick(c, 0, false, 0);
+        expect(reveil.allumer && charge_rapide_voulue(RAPIDE, reveil.allumer), "réveil du démarrage : rapide si choisie");
+        const ActionChargeur sonde = chargeur_tick(c, 0, false, 30 * S);
+        expect(!sonde.allumer && !charge_rapide_voulue(RAPIDE, sonde.allumer), "sonde : chargeur coupé, rapide coupée");
+    }
+
     // Niveau, consommation.
     expect(batterie_niveau_pct(6.0f) == 0.0f && batterie_niveau_pct(8.23f) == 100.0f, "niveau : 6,0 V = 0 %, 8,23 V = 100 %");
     expect(batterie_niveau_pct(5.0f) == 0.0f && batterie_niveau_pct(8.4f) == 100.0f, "niveau borné à 0..100");
@@ -787,7 +804,8 @@ static void test_economie() {
         in.sur_batterie = true;
         in.batterie_basse = true;
         DecisionEconomie d = economie_decider(in);
-        expect(!d.active && d.plafond == 1.0f && d.periode_ms == kEcoPeriodeNormaleMs && !d.animations_reduites,
+        expect(!d.active && d.plafond == 1.0f && d.periode_ms == kEcoPeriodeNormaleMs &&
+                   d.animations == ChoixAnimations::COMPLETES,
                "éco « Jamais » : rien ne change, même sur batterie basse");
         in.choix = static_cast<uint8_t>(ChoixEconomie::SUR_BATTERIE);
         in.sur_batterie = false;
@@ -796,7 +814,8 @@ static void test_economie() {
         expect(!d.active && d.plafond == 1.0f, "éco « Sur batterie » sur secteur : inactif");
         in.sur_batterie = true;
         d = economie_decider(in);
-        expect(d.active && d.plafond == kEcoPlafond && d.periode_ms == kEcoPeriodeMs && d.animations_reduites,
+        expect(d.active && d.plafond == kEcoPlafond && d.periode_ms == kEcoPeriodeMs &&
+                   d.animations == ChoixAnimations::AUCUNE,
                "éco « Sur batterie » sur batterie : plafond 50 %, 30 images/s, sans animation");
         in.batterie_basse = true;
         d = economie_decider(in);
@@ -820,13 +839,48 @@ static void test_economie() {
         in.ecran_allume = true;
         in.jeu_ouvert = true;
         d = economie_decider(in);
-        expect(d.periode_ms == kEcoPeriodeNormaleMs && d.animations_reduites, "éco : un jeu garde ses 60 images/s");
+        expect(d.periode_ms == kEcoPeriodeNormaleMs && d.animations == ChoixAnimations::AUCUNE,
+               "éco : un jeu garde ses 60 images/s");
         in.choix = 7;
         d = economie_decider(in);
         expect(!d.active, "éco : index inconnu = Jamais");
     }
     expect(kEcoPlancher == 0.10f && kEcoPlafond == 0.50f && kEcoNiveauBas == 35.0f && kEcoAssombrirMs == 30000u,
            "éco : plancher 10 % (minimum du curseur), plafond 50 %, basse à 35 %, 30 s");
+
+    // Animations (09/10/2026, ADR-0045) : un seul point de décision, le mode économie
+    // actif impose « Aucune ».
+    {
+        using A = ChoixAnimations;
+        constexpr uint8_t COMPLETES = 0, ESSENTIELLES = 1, AUCUNE = 2;
+        expect(animations_effectives(COMPLETES, false) == A::COMPLETES, "animations : « Complètes » choisi");
+        expect(animations_effectives(ESSENTIELLES, false) == A::ESSENTIELLES, "animations : « Essentielles » choisi");
+        expect(animations_effectives(AUCUNE, false) == A::AUCUNE, "animations : « Aucune » choisi");
+        expect(animations_effectives(9, false) == A::COMPLETES, "animations : index inconnu = « Complètes »");
+        expect(animations_effectives(COMPLETES, true) == A::AUCUNE && animations_effectives(ESSENTIELLES, true) == A::AUCUNE,
+               "animations : mode économie actif, « Aucune » quel que soit le choix");
+        EntreesEconomie in;
+        in.animations = ESSENTIELLES;
+        in.choix = static_cast<uint8_t>(ChoixEconomie::SUR_BATTERIE);
+        in.sur_batterie = false;
+        expect(economie_decider(in).animations == A::ESSENTIELLES, "animations : éco inactive, le choix passe");
+        in.sur_batterie = true;
+        expect(economie_decider(in).animations == A::AUCUNE, "animations : éco active (sur batterie), « Aucune »");
+        in.choix = static_cast<uint8_t>(ChoixEconomie::JAMAIS);
+        expect(economie_decider(in).animations == A::ESSENTIELLES, "animations : éco « Jamais », le choix passe");
+    }
+
+    // Wi-Fi éco (09/10/2026, ADR-0045) : mêmes options que le mode économie, jamais
+    // pendant un flux (voix, son, OTA).
+    {
+        constexpr uint8_t JAMAIS = 0, SUR_BATTERIE = 1, TOUJOURS = 2;
+        expect(!wifi_eco_voulu(JAMAIS, true, false), "Wi-Fi éco « Jamais » : jamais, même sur batterie");
+        expect(!wifi_eco_voulu(SUR_BATTERIE, false, false), "Wi-Fi éco « Sur batterie » sur secteur : non");
+        expect(wifi_eco_voulu(SUR_BATTERIE, true, false), "Wi-Fi éco « Sur batterie » sur batterie : oui");
+        expect(wifi_eco_voulu(TOUJOURS, false, false), "Wi-Fi éco « Toujours » : oui, sur secteur aussi");
+        expect(!wifi_eco_voulu(TOUJOURS, true, true), "Wi-Fi éco : jamais pendant la voix, un son ou une OTA");
+        expect(!wifi_eco_voulu(7, true, false), "Wi-Fi éco : index inconnu = « Jamais »");
+    }
 }
 
 int main() {

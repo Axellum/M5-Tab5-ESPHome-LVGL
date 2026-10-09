@@ -109,6 +109,7 @@ enum class GesteAction : uint8_t {
     RANGEE_SUIVANTE,   // rangée sous l'horloge : ligne suivante (rangee_toucher)
     ECOUTE,            // bascule du mot de réveil « Ok Nabu » (switch tab5_wake_word_active)
     NABU_SUIVANTE,     // panneau Ok Nabu : ligne suivante (nabu_suivant, lot 3)
+    ROUE,              // roue de navigation (ADR-0042), comme l'appui long de la carte centrale
 };
 struct GesteCible {
     GesteAction action;
@@ -119,8 +120,9 @@ struct GesteCible {
 GesteCible geste_cible(int geste);
 
 // Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-navigation.yaml), routine unique du
-// select « Aller à l'écran » et des gestes de l'accueil (horloge, boutons du haut). Les
-// valeurs 0 à 12 SONT les index des options du select, dans le même ordre
+// select « Aller à l'écran », des gestes de l'accueil (horloge, boutons du haut) et de la
+// roue de navigation (ADR-0042). Les
+// valeurs 0 à 15 SONT les index des options du select, dans le même ordre
 // (tests/test_appuis.py) ; ARCADE n'est pas une option du select (lancer l'Arcade à
 // distance n'a pas d'usage), seulement un choix de geste. Un écran de plus : avant ARCADE
 // ici, à la fin du select (ARCADE et NB se décalent : la NVS garde l'index du code dans
@@ -129,8 +131,24 @@ GesteCible geste_cible(int geste);
 // tab5_modal_registry_init (tab5-navigation.yaml).
 enum class Ecran : uint8_t {
     AUCUN,       // « — » : position de repos du select ; « rien » pour un appui long
-    ACCUEIL, ASSISTANT, CALENDRIER, REVEIL, CLIM, PLANTES, TV, CONSOLE, ENERGIE, REGLAGES, ALERTES,
+    ACCUEIL,
+    ASSISTANT,
+    CALENDRIER,
+    REVEIL,
+    CLIM,
+    PLANTES,
+    TV,
+    CONSOLE,
+    ENERGIE,
+    REGLAGES,
+    ALERTES,
     MAISON,      // popup Maison (ADR-0037) : option du select et choix d'appui long (code « maison »)
+    // Roue de navigation (ADR-0042, 09/10/2026) : les popups d'une tuile ouverts sans tuile
+    // touchée — lumières et volet de la pièce affichée en mode HA, sinon de la première qui
+    // en a (tuiles_ecran_ouvrir) ; température de l'accueil, celle du salon d'abord.
+    LUMIERES,
+    VOLET,
+    TEMPERATURE,
     ARCADE,
     NB
 };

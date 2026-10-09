@@ -85,6 +85,59 @@ def test_chg_en_commande_par_le_seul_interval_du_chargeur():
         assert appels == (2 if chemin.name == DIAG else 0), f"{chemin.name} : {appels} commande(s) de charge_enable"
 
 
+def test_select_mode_de_charge_et_charge_rapide_par_le_seul_interval():
+    """Mode de charge (09/10/2026, ADR-0045) : « Classique » (défaut, charge rapide
+    arrêtée comme avant) ou « Rapide ». La charge rapide (nCHG_QC_EN, P5) ne s'allume
+    qu'avec le chargeur, par l'interval qui commande CHG_EN : jamais sans batterie, ni
+    pendant une sonde, ni en pause à 80 %."""
+    diag = _yaml(DIAG)
+    s = next(s for s in diag["select"] if s.get("id") == "tab5_mode_charge")
+    assert s["name"] == "Tab5 Mode de charge"
+    assert s["options"] == ["Classique", "Rapide"]
+    assert s["initial_option"] == "Classique", "défaut : le comportement d'avant"
+    assert s["restore_value"] is True and s["optimistic"] is True
+    assert s["entity_category"] == "config"
+    enum = re.search(r"enum class ModeCharge[^{]*\{([^}]*)\}", _entete())
+    assert enum, "ModeCharge introuvable dans tab5_batterie.h"
+    valeurs = {nom: int(v) for nom, v in re.findall(r"(\w+)\s*=\s*(\d+)", enum.group(1))}
+    assert valeurs == {"CLASSIQUE": 0, "RAPIDE": 1}, valeurs
+    qc = next(s for s in diag["switch"] if s.get("id") == "quick_charge")
+    assert qc["internal"] is True and qc["restore_mode"] == "ALWAYS_OFF", "charge rapide arrêtée au démarrage"
+    assert qc["pin"]["number"] == 5 and qc["pin"]["inverted"] is True
+    intervals = [i for i in diag["interval"] if "chargeur_pas(" in _texte(i)]
+    code = _sans_commentaires(intervals[0]["then"][0]["lambda"])
+    assert "charge_rapide_voulue(id(tab5_mode_charge).active_index().value_or(0), a.allumer)" in code
+    for chemin in sources("*.yaml") + sorted((TAB5 / "ui_components").glob("*.yaml")):
+        texte = chemin.read_text(encoding="utf-8")
+        appels = len(re.findall(r"id\(quick_charge\)\.turn_(?:on|off)\(\)", texte))
+        appels += len(re.findall(r"switch\.turn_(?:on|off):\s*quick_charge\b", texte))
+        assert appels == (2 if chemin.name == DIAG else 0), f"{chemin.name} : {appels} commande(s) de quick_charge"
+
+
+def test_wifi_eco_select_et_script():
+    """Wi-Fi éco (09/10/2026, ADR-0045) : « Jamais » par défaut (power_save_mode NONE,
+    le comportement d'avant), jamais pendant un flux (voix, son, OTA)."""
+    diag = _yaml(DIAG)
+    s = next(s for s in diag["select"] if s.get("id") == "tab5_wifi_eco")
+    assert s["name"] == "Tab5 Wi-Fi éco"
+    assert s["options"] == ["Jamais", "Sur batterie", "Toujours"], "l'ordre de ChoixEconomie"
+    assert s["initial_option"] == "Jamais"
+    assert s["restore_value"] is True and s["optimistic"] is True
+    assert {"script.execute": "tab5_wifi_eco_appliquer"} in s["on_value"]
+    assert diag["wifi"]["power_save_mode"] == "NONE", "au démarrage : le comportement d'avant"
+    script = next(x for x in diag["script"] if x["id"] == "tab5_wifi_eco_appliquer")
+    code = _sans_commentaires(script["then"][0]["lambda"])
+    for motif in ("wifi_eco_voulu(id(tab5_wifi_eco).active_index().value_or(0)", "economie_sur_batterie()",
+                  "id(va)->is_running()", "id(ota_en_cours)", "MEDIA_PLAYER_STATE_PLAYING"):
+        assert motif in code, motif
+    assert any(i.get("interval") == "1s" and {"script.execute": "tab5_wifi_eco_appliquer"} in i["then"]
+               for i in diag["interval"])
+    # Le seul appel à esp_wifi_set_ps du firmware : wifi_eco_appliquer (tab5_console.cpp).
+    for chemin in sources("*.cpp") + sources("*.yaml"):
+        n = _sans_commentaires(chemin.read_text(encoding="utf-8")).count("esp_wifi_set_ps(")
+        assert n == (1 if chemin.name == "tab5_console.cpp" else 0), (chemin.name, n)
+
+
 def test_lectures_de_l_ina226():
     capteurs = _yaml(DIAG)["sensor"]
     ina = next(c for c in capteurs if c.get("platform") == "ina226")

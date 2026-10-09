@@ -13,6 +13,9 @@
  *       et ferme. Celui qui l'ouvre (tuile_roue_ouvrir, tab5_tuiles_roue.cpp) donne le moyeu, les
  *       boutons, la couleur d'état et les rappels (RoueRappels) : ce que fait un toucher,
  *       les choix d'une famille, le repeint au changement de thème ou d'état.
+ *       La roue de navigation (ADR-0042, tab5_roue_navigation.cpp) est la même roue, ancrée
+ *       sur la carte centrale : ses boutons sont des écrans et des familles d'écrans, chacun
+ *       avec son mot (RoueTete::mots) ; une famille dépliée écrit le sien dans le moyeu.
  * @architecture_constraint Widgets : ui_components/roue_actions.yaml (voile plein écran,
  *       bandes, jauge, moyeu, mots) et ses roue_bouton.yaml, roue_choix.yaml,
  *       roue_legende.yaml, posés dans g_roue_ui par tab5-roue.yaml. Sous-fenêtre
@@ -26,8 +29,9 @@
  *       (une donnée, comme dans le popup lumière) ; aucune littérale ici (règle 8).
  * @ai_instruction Géométrie (kRayon, kDiametre, kRayon2, kDiametre2, kPasAngle,
  *       kPasAngle2, kPivot, kMarge, table kSin5) : tools/rendu/ecrans.py la refait
- *       (roue_centres, roue_choix_centres) pour toucher « Détails » et les choix dans le
- *       rendu ; tests/test_roue.py compare les deux. Un glyphe de plus = sa ligne dans
+ *       (roue_centres, roue_choix_centres) pour toucher les boutons et les choix dans le
+ *       rendu ; tests/test_roue.py compare les deux. Les mots ne se touchent pas : leur
+ *       place (mot_recul, largeurs_libres) n'est calculée qu'ici. Un glyphe de plus = sa ligne dans
  *       glyphe_roue et dans les glyphes de mdi_font_36 (règle 9 ; MDI_CODE_TARGETS rattache
  *       glyphe_roue aux labels roue_bouton_*_icone et roue_choix_*_icone).
  */
@@ -36,6 +40,7 @@
 #include "lvgl.h"
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 
 RoueUI g_roue_ui;
 
@@ -63,12 +68,22 @@ constexpr int32_t kJauge = 148;
 constexpr int32_t kBande = 96;
 constexpr int32_t kBande2 = 96;
 constexpr int32_t kRetrait = 10;
-// Mots : celui d'un choix au-delà de son bouton (centre à kRayon2 + kLegende2), ceux des
-// liens sous leur bouton ; labels de kLegendeL px, texte centré. Nom sous le moyeu.
+// Mots : celui d'un choix au-delà de son bouton, dans l'axe du bouton, à kMotEcart de son
+// bord (mot_recul : un mot sur le côté s'écarte de sa demi-largeur, jamais sur son
+// bouton) ; ceux des liens sous leur bouton ; labels de kLegendeL px, texte centré. Nom
+// sous le moyeu. Roue de navigation (ADR-0042, RoueTete::mots) : le mot de chaque bouton du
+// premier anneau aussi, de la même façon. Un mot ne déborde jamais sur son voisin de
+// rangée : il est coupé (« … ») à leur écart moins kEcartMots, kMotMin au moins.
+// kLegende2 : place d'un mot au-dessus de son choix, pour le seuil de la roue sous l'ancre
+// (roue_ouvrir) ; un mot oblique très long peut monter de 2 px de plus : legende() le
+// garde dans l'écran.
 constexpr int32_t kLegende2 = 60;
 constexpr int32_t kLegendeL = 150;
 constexpr int32_t kLegendeH = 28;
 constexpr int32_t kNomL = 320;
+constexpr int32_t kMotEcart = 4;
+constexpr int32_t kEcartMots = 8;
+constexpr int32_t kMotMin = 40;
 // Point d'une famille : 8 px, à l'intérieur du bouton, vers l'extérieur de la roue.
 constexpr int32_t kPoint = 8;
 
@@ -168,7 +183,25 @@ const char* glyphe_roue(RoueIcone i) {
         case RoueIcone::BRISE: return "\U000F059D";        // weather-windy
         case RoueIcone::MAISON: return "\U000F02DC";       // home
         case RoueIcone::REGLAGES: return "\U000F1542";     // tune-variant
-        case RoueIcone::CLIMS: return "\U000F001B";        // air-conditioner (« Clims ▸ », ADR-0047)
+        // Roue de navigation (ADR-0042) : familles, puis destinations (l'icône de l'en-tête
+        // de leur fenêtre quand elle dit bien la destination).
+        case RoueIcone::ALERTES: return "\U000F0E81";      // bell-alert-outline
+        case RoueIcone::PIECES: return "\U000F0821";       // floor-plan
+        case RoueIcone::APPAREILS: return "\U000F1252";    // home-lightbulb-outline
+        case RoueIcone::AGENDA: return "\U000F00F0";       // calendar-clock
+        case RoueIcone::TABLETTE: return "\U000F04F6";     // tablet
+        case RoueIcone::ASSISTANT: return "\U000F036C";    // microphone
+        case RoueIcone::LUMIERES: return "\U000F1253";     // lightbulb-group
+        case RoueIcone::VOLET: return "\U000F111E";        // window-shutter-open
+        case RoueIcone::CLIMS: return "\U000F001B";        // air-conditioner
+        case RoueIcone::TEMPERATURE: return "\U000F050F";  // thermometer
+        case RoueIcone::ENERGIE: return "\U000F0A72";      // solar-power
+        case RoueIcone::PLANTES: return "\U000F024A";      // flower
+        case RoueIcone::CALENDRIER: return "\U000F0E17";   // calendar-month
+        case RoueIcone::REVEIL: return "\U000F0020";       // alarm
+        case RoueIcone::JEUX: return "\U000F0297";         // gamepad-variant
+        case RoueIcone::ENGRENAGE: return "\U000F0493";    // cog
+        case RoueIcone::SYSTEME: return "\U000F018D";      // console
         default: return "";
     }
 }
@@ -186,6 +219,8 @@ struct Roue {
     int32_t ya = 0;
     bool dessous = false;
     uint32_t couleur = 0;
+    bool mots = false;    // RoueTete::mots : un mot par bouton du premier anneau
+    char valeur[40] = "";  // ligne du moyeu (copiée : celle d'une tuile vit dans une Vue locale)
     RoueRappels rappels;
 };
 Roue s_roue;
@@ -349,15 +384,48 @@ void bande(lv_obj_t* arc, int32_t rayon, int32_t largeur, int a_max, int a_min, 
     ui_hidden(arc, false);
 }
 
-// Un mot (lien, choix) centré sur (x, y), dans l'écran.
-void legende(lv_obj_t* lbl, const char* txt, int32_t x, int32_t y) {
+// Un mot (lien, choix) centré sur (x, y), dans l'écran, coupé à `largeur`.
+void legende(lv_obj_t* lbl, const char* txt, int32_t x, int32_t y, int32_t largeur) {
     if (lbl == nullptr) return;
     const bool montre = txt != nullptr && txt[0] != '\0';
     ui_hidden(lbl, !montre);
     if (!montre) return;
-    texte_ha_coupe(lbl, txt, kLegendeL);
+    texte_ha_coupe(lbl, txt, largeur);
     ui_x(lbl, std::clamp(x - kLegendeL / 2, int32_t{0}, kEcranL - kLegendeL));
     ui_y(lbl, std::clamp(y - kLegendeH / 2, int32_t{0}, kEcranH - kLegendeH));
+}
+
+// Largeur de chacun des n mots centrés en (x[i], y[i]) (nullptr ou vide : aucun) : kLegendeL,
+// ou moins quand un voisin de la même rangée (moins de kLegendeH d'écart en hauteur) est
+// plus près — leur écart moins kEcartMots, kMotMin au moins. Deux mots ne se recouvrent
+// jamais : le plus long est coupé (« … »).
+void largeurs_libres(const int32_t x[], const int32_t y[], const char* const mot[], int n, int32_t largeur[]) {
+    for (int i = 0; i < n; i++) {
+        largeur[i] = kLegendeL;
+        if (mot[i] == nullptr || mot[i][0] == '\0') continue;
+        for (int j = 0; j < n; j++) {
+            if (j == i || mot[j] == nullptr || mot[j][0] == '\0' || std::abs(y[i] - y[j]) >= kLegendeH) continue;
+            largeur[i] = std::min(largeur[i], std::abs(x[i] - x[j]) - kEcartMots);
+        }
+        largeur[i] = std::max(largeur[i], kMotMin);
+    }
+}
+
+// Distance du centre d'un bouton (des deux anneaux : même diamètre), d'angle `a`, au centre
+// de son mot : le mot est une boîte de sa largeur (kLegendeL au plus) sur kLegendeH, posée
+// dans l'axe du bouton à kMotEcart de son bord — l'étendue de la boîte sur cet axe
+// (l/2·|cos a| + h/2·|sin a|) l'en éloigne d'autant : « Assistant », presque à
+// l'horizontale, s'écarte plus que « Agenda », au-dessus de son bouton.
+static_assert(kDiametre == kDiametre2, "mot_recul sert aux deux anneaux");
+int32_t mot_recul(lv_obj_t* lbl, const char* txt, int a) {
+    int32_t l = kLegendeL;
+    if (lbl != nullptr && txt != nullptr) {
+        lv_point_t t;
+        lv_text_get_size(&t, txt, lv_obj_get_style_text_font(lbl, LV_PART_MAIN), 0, 0, LV_COORD_MAX,
+                         LV_TEXT_FLAG_NONE);
+        l = std::min(l, t.x);
+    }
+    return kDiametre / 2 + kMotEcart + echelle(l / 2, std::abs(cos5(a))) + echelle(kLegendeH / 2, std::abs(sin5(a)));
 }
 
 // Point d'une famille, dans son bouton (aligné au centre : x, y en sont les écarts), vers
@@ -372,11 +440,15 @@ void point(lv_obj_t* p, int a, bool deplie, uint32_t couleur) {
     ui_hidden(p, false);
 }
 
-// Premier anneau : aspect des boutons (famille dépliée comprise), icônes, points, mots des liens.
+// Premier anneau : aspect des boutons (famille dépliée comprise), icônes, points, mots —
+// ceux des liens sous leur bouton ; avec `mots` (navigation, ADR-0042), celui de chaque
+// bouton au-delà de lui, cachés quand une famille est dépliée (ses choix ont les leurs, et
+// le moyeu dit laquelle).
 void peindre_premier_anneau() {
     RoueUI& u = g_roue_ui;
     const Roue& s = s_roue;
-    int liens = 0;
+    const char* mot[kRoueBoutons] = {};
+    int32_t mx[kRoueBoutons] = {}, my[kRoueBoutons] = {};
     for (int i = 0; i < kRoueBoutons; i++) {
         const bool montre = i < s.n;
         ui_hidden(u.bouton[i], !montre);
@@ -400,10 +472,26 @@ void peindre_premier_anneau() {
         ui_text_color(u.icone[i], encre);
         if (b.genre == RoueGenre::FAMILLE) point(u.point[i], s.angle[i], s.famille == i, s.couleur);
         else ui_hidden(u.point[i], true);
-        if (b.genre == RoueGenre::LIEN && liens < 2)
-            legende(u.lien_legende[liens++], b.legende, s.cx[i], s.cy[i] + kDiametre / 2 + kLegendeH / 2 + 2);
+        if (s.mots) {
+            if (s.famille >= 0) continue;
+            mot[i] = b.legende;
+            const int32_t r = kRayon + mot_recul(u.legende[i], b.legende, s.angle[i]);
+            const int32_t dy = echelle(r, sin5(s.angle[i]));
+            mx[i] = s.xa + echelle(r, cos5(s.angle[i]));
+            my[i] = s.dessous ? s.ya + dy : s.ya - dy;
+        } else if (b.genre == RoueGenre::LIEN) {
+            mot[i] = b.legende;
+            mx[i] = s.cx[i];
+            my[i] = s.cy[i] + kDiametre / 2 + kLegendeH / 2 + 2;
+        }
     }
-    for (int k = liens; k < 2; k++) ui_hidden(u.lien_legende[k], true);
+    int32_t largeur[kRoueBoutons];
+    largeurs_libres(mx, my, mot, kRoueBoutons, largeur);
+    for (int i = 0; i < kRoueBoutons; i++) legende(u.legende[i], mot[i], mx[i], my[i], largeur[i]);
+    // Moyeu : sa ligne ; en navigation, le mot de la famille dépliée à sa place.
+    const char* valeur = s.valeur;
+    if (s.mots && s.famille >= 0 && s.bouton[s.famille].legende != nullptr) valeur = s.bouton[s.famille].legende;
+    texte_ha_coupe(u.moyeu_valeur, valeur, kMoyeu - 16);
 }
 
 // Second anneau : les choix de la famille dépliée (rappel `famille`), centrés sur elle, et
@@ -420,6 +508,17 @@ void peindre_second_anneau() {
     int angle[kRoueChoix];
     if (s.m > 0)
         disposer(s.xa, s.ya, s.m, kRayon2, kPasAngle2, s.angle[s.famille], kDiametre2 / 2, s.dessous, cx, cy, angle);
+    // Mots des choix, au-delà de leur bouton (mot_recul), coupés avant leur voisin de rangée.
+    const char* mot[kRoueChoix] = {};
+    int32_t mx[kRoueChoix] = {}, my[kRoueChoix] = {}, largeur[kRoueChoix];
+    for (int j = 0; j < s.m; j++) {
+        mot[j] = c[j].legende;
+        const int32_t r = kRayon2 + mot_recul(u.choix_legende[j], c[j].legende, angle[j]);
+        const int32_t dy = echelle(r, sin5(angle[j]));
+        mx[j] = s.xa + echelle(r, cos5(angle[j]));
+        my[j] = s.dessous ? s.ya + dy : s.ya - dy;
+    }
+    largeurs_libres(mx, my, mot, kRoueChoix, largeur);
     for (int j = 0; j < kRoueChoix; j++) {
         const bool montre = j < s.m;
         ui_hidden(u.choix[j], !montre);
@@ -442,9 +541,7 @@ void peindre_second_anneau() {
             ui_text(u.choix_texte[j], k.texte);
             ui_text_color(u.choix_texte[j], UIColor.TEXT_PRIMARY);
         }
-        const int32_t dy = echelle(kRayon2 + kLegende2, sin5(angle[j]));
-        legende(u.choix_legende[j], k.legende, s.xa + echelle(kRayon2 + kLegende2, cos5(angle[j])),
-                s.dessous ? s.ya + dy : s.ya - dy);
+        legende(u.choix_legende[j], mot[j], mx[j], my[j], largeur[j]);
     }
     if (s.m > 0) {
         int a_max = angle[0], a_min = angle[0];
@@ -524,6 +621,8 @@ bool roue_ouvrir(lv_obj_t* ancre, const RoueTete& tete, const RoueBouton* b, int
     for (int i = 0; i < n; i++) s.bouton[i] = b[i];
     s.famille = famille;
     s.couleur = tete.couleur;
+    s.mots = tete.mots;
+    snprintf(s.valeur, sizeof(s.valeur), "%s", tete.valeur != nullptr ? tete.valeur : "");
     s.rappels = r;
     disposer(s.xa, s.ya, n, kRayon, kPasAngle, 90, kDiametre / 2, s.dessous, s.cx, s.cy, s.angle);
 
@@ -532,8 +631,7 @@ bool roue_ouvrir(lv_obj_t* ancre, const RoueTete& tete, const RoueBouton* b, int
     ui_y(u.moyeu, s.ya - kMoyeu / 2);
     if (tete.icone != nullptr) ui_text(u.moyeu_icone, tete.icone);
     ui_text_color(u.moyeu_icone, tete.couleur);
-    texte_ha_coupe(u.moyeu_valeur, tete.valeur, kMoyeu - 16);
-    ui_text_color(u.moyeu_valeur, UIColor.TEXT_PRIMARY);
+    ui_text_color(u.moyeu_valeur, UIColor.TEXT_PRIMARY);  // son texte : peindre_premier_anneau
     lv_obj_set_style_border_color(u.moyeu, lv_color_hex(tete.couleur), LV_PART_MAIN);
     lv_obj_set_style_border_width(u.moyeu, 2, LV_PART_MAIN);
     lv_obj_set_style_border_opa(u.moyeu, LV_OPA_80, LV_PART_MAIN);

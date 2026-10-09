@@ -146,8 +146,9 @@ def test_ecrans_du_rendu():
 
 
 def _roue_entiere(xa: int, ya: int, n: int = 6, m: int = 6) -> bool:
-    """Premier anneau de n boutons et second de m choix pour chaque famille : au-dessus de
-    l'ancre, sans pivot, mots des choix (150 px, centrés à kRayon2 + kLegende2) dans l'écran."""
+    """Premier anneau de n boutons et second de 1 à m choix pour chaque famille : au-dessus
+    de l'ancre, sans pivot, mots des choix (150 px, posés par mot_recul() de tab5_roue.cpp)
+    dans l'écran sans y être ramenés."""
     e = ecrans
     largeur, hauteur = e.ROUE_ECRAN
     if e.roue_dessous(ya):
@@ -155,16 +156,23 @@ def _roue_entiere(xa: int, ya: int, n: int = 6, m: int = 6) -> bool:
     p = e._roue_disposer(xa, ya, n, e.ROUE_RAYON, e.ROUE_PAS_ANGLE, 90, e.ROUE_DIAMETRE // 2, False)
     if p[0][2] != 90 + (n - 1) * e.ROUE_PAS_ANGLE // 2:
         return False
+    roue = _lire(source("tab5_roue.cpp"))
+    ecart = int(re.search(r"constexpr int32_t kMotEcart = (\d+);", roue).group(1))
+    recul = ("return kDiametre / 2 + kMotEcart + echelle(l / 2, std::abs(cos5(a))) + "
+             "echelle(kLegendeH / 2, std::abs(sin5(a)));")
+    assert recul in roue, "mot_recul() a changé : refaire la mesure"
     for _, _, a in p:
-        q = e._roue_disposer(xa, ya, m, e.ROUE_RAYON2, e.ROUE_PAS_ANGLE2, a, e.ROUE_DIAMETRE2 // 2, False)
-        if q[0][2] != a + (m - 1) * e.ROUE_PAS_ANGLE2 // 2:
-            return False
-        for _, _, b in q:
-            d = e.ROUE_RAYON2 + e.ROUE_LEGENDE2
-            lx = xa + e._roue_echelle(d, e._roue_sin5(b + 90))
-            ly = ya - e._roue_echelle(d, e._roue_sin5(b))
-            if not (75 <= lx <= largeur - 75 and e.ROUE_LEGENDE_H // 2 <= ly <= hauteur - e.ROUE_LEGENDE_H // 2):
+        for k in range(1, m + 1):
+            q = e._roue_disposer(xa, ya, k, e.ROUE_RAYON2, e.ROUE_PAS_ANGLE2, a, e.ROUE_DIAMETRE2 // 2, False)
+            if q[0][2] != a + (k - 1) * e.ROUE_PAS_ANGLE2 // 2:
                 return False
+            for _, _, b in q:
+                cos, sin = e._roue_sin5(b + 90), e._roue_sin5(b)
+                d = (e.ROUE_RAYON2 + e.ROUE_DIAMETRE2 // 2 + ecart + abs(e._roue_echelle(75, cos))
+                     + abs(e._roue_echelle(e.ROUE_LEGENDE_H // 2, sin)))
+                lx, ly = xa + e._roue_echelle(d, cos), ya - e._roue_echelle(d, sin)
+                if not (75 <= lx <= largeur - 75 and e.ROUE_LEGENDE_H // 2 <= ly <= hauteur - e.ROUE_LEGENDE_H // 2):
+                    return False
     return True
 
 

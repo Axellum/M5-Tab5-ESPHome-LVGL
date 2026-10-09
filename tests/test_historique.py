@@ -675,6 +675,12 @@ def test_appuis_longs_et_registre():
     assert "script.execute: tab5_arcade_open" in serre and "on_long_press:" in serre, \
         "l'appui court sur la serre garde l'arcade"
     navigation = _lire(os.path.join(REPO, "Tab5", "paquets", "tab5-navigation.yaml"))
-    assert re.search(r'ModalRegistry::add\(id\(historique_popup\),\s+"Température",\s+ModalRegistry::POPUP\);', navigation)
+    # Ouvert aussi sans appui long (« Aller à l'écran », roue de navigation, ADR-0042) : la
+    # même clé que l'appui long de gauche, sinon celle de droite.
+    ligne = re.search(r'ModalRegistry::add\(id\(historique_popup\),\s+"Température",\s+ModalRegistry::POPUP,'
+                      r'\s+\[\] \{(.*?)\}\);', navigation, re.S)
+    assert ligne, "Température : ouverture par le registre"
+    assert re.findall(r"accueil_historique_cle\((\w+)\)", ligne.group(1)) == ["false", "true"]
+    assert "id(tab5_historique_ouvrir).execute(std::string(cle));" in ligne.group(1)
     yaml_hist = _lire(os.path.join(REPO, "Tab5", "paquets", "tab5-historique.yaml"))
     assert "esphome.tab5_historique" in yaml_hist and "cle: !lambda" in yaml_hist and "vue: !lambda" in yaml_hist

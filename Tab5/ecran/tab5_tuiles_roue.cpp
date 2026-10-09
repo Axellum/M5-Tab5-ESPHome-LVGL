@@ -618,13 +618,14 @@ void roue_clim_changee() {
 // n'a pas à être sur la température : il se pose sur un point bas, à la verticale de la zone
 // touchée, ramenée dans [kClimAncreXMin, kClimAncreXMax], où les deux anneaux et leurs mots
 // tiennent au-dessus sans pivot, six familles de six choix comprises (mesuré par
-// disposer() : y de 364 à 504 et x de 424 à 856 ; tests/test_roue_clim.py refait la mesure).
+// disposer() et mot_recul() de tab5_roue.cpp, mots de 150 px : y de 365 à 477 et x de 479
+// à 801 ; tests/test_roue_clim.py refait la mesure).
 // Un objet de 1 px sans style ni toucher, créé une fois sur le calque du haut : roue_ouvrir()
 // garde sa signature (une ancre lv_obj_t*) et sa géométrie.
 namespace {
-constexpr int32_t kClimAncreY = 480;
-constexpr int32_t kClimAncreXMin = 440;
-constexpr int32_t kClimAncreXMax = 840;
+constexpr int32_t kClimAncreY = 460;
+constexpr int32_t kClimAncreXMin = 480;
+constexpr int32_t kClimAncreXMax = 800;
 lv_obj_t* s_clim_ancre = nullptr;
 
 lv_obj_t* clim_ancre_basse(lv_obj_t* zone) {
