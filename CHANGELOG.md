@@ -30,6 +30,10 @@ firmware.
 - **Ordre de mise à jour** : indifférent, `contrat/contrat.yaml` ne change pas (des clés dans les payloads existants). Ce blueprint avec un firmware d'avant : les clés `n` et `defil` ignorées, le bouton reste « Ok Nabu : ON / OFF ». Un blueprint d'avant avec ce firmware : le bouton d'avant et les défilements d'origine.
 - Non essayé sur la tablette au moment de la PR (rendu dans les 21 thèmes, tap au doigt, défilement).
 
+### 2026-10-09 — Corrigé : points de pagination des prévisions 3 px plus bas
+
+- Les points sous la carte centrale (`pagination_container`, `tab5-lvgl.yaml`) passent de y 414 à 417 (demande d'Axel). Les points restent à 430-434, sous la carte (bas à 416) et au-dessus des onglets des tuiles (442) ; rien d'autre ne bouge. Rendu à l'écran non vérifié.
+
 ### 2026-10-09 — Le climat de la pièce en mode HA (ADR-0040, lot C)
 
 - **Demande d'Axel** : en mode HA (Domo), dans une autre pièce, la carte clim montre la température de la pièce (et son humidité en option) et règle la clim de la pièce, à la place des températures du salon et de la serre. **Non testé sur la tablette.**
