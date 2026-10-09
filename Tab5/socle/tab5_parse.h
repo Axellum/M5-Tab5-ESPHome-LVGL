@@ -399,3 +399,120 @@ uint8_t humidite_lire(const Champ& c);
 // créneaux et kHistoriquePrevMax points. Renvoie le nom (premier champ de l'en-tête), que
 // l'écran copie dans s.nom.
 Champ historique_lire(const Champ& entete, const Champ& mesures, const Champ& previsions, HistoriqueSerie& s);
+
+// ─── 9. Lecteur de musique (tab5_maj_lecteur, ADR-0050) ───
+// Deux variables, poussées par packages/tab5_lecteur.yaml :
+//   lecteurs « nom|genre;nom|genre;… » : les lecteurs choisis dans « Tab5 · lecteurs de
+//            musique », dans l'ordre de la liste (kLecteursMax au plus) ; genre = la
+//            device_class de HA (tv, speaker, receiver, ou vide), jamais montrée telle quelle.
+//   etat     « actif|nom|genre|état|titre|artiste|album|app|position|durée|volume|muet|
+//            aléatoire|répétition|fonctions|image » : le lecteur montré. Vide : aucun.
+//            actif = son index dans `lecteurs`, -1 pour un lecteur hors de la liste (celui
+//            d'une tuile med) ; état = celui de HA (playing, paused, idle, on, off,
+//            standby, buffering, unavailable, unknown) ; position et durée en secondes
+//            (position déjà avancée jusqu'à l'envoi par HA) ; volume 0 à 100 ; muet et
+//            aléatoire 1 / 0 ; répétition off / all / one ; un champ inconnu vaut « - » ou
+//            rien. fonctions : une lettre par commande offerte (supported_features lu par
+//            HA, comme les capacités d'une clim, ADR-0026) ; image : l'entity_picture
+//            (chemin relatif à HA) ou une URL complète, en dernier : elle prend le reste.
+// HA retire « | » et « ; » des textes.
+constexpr int kLecteursMax = 6;
+constexpr size_t kLecteurNomMax = 48;     // nom d'un lecteur, copié par l'écran (texte_ha_copier)
+constexpr size_t kLecteurTexteMax = 120;  // titre, artiste, album (une ligne coupée par « … »)
+constexpr size_t kLecteurUrlMax = 512;    // base + entity_picture (jeton et cache compris)
+constexpr float kLecteurDureeMax = 1.0e6f;  // ~11 jours : au-delà, une position fausse
+
+enum class LecteurGenre : uint8_t {
+    AUTRE,     // vide ou inconnu : une note de musique
+    TV,        // « tv »
+    ENCEINTE,  // « speaker »
+    AMPLI,     // « receiver »
+};
+LecteurGenre lecteur_genre_lire(const Champ& c);
+
+struct LecteurListeLu {
+    Champ nom;
+    LecteurGenre genre;
+};
+// Au plus kLecteursMax lecteurs, dans l'ordre. Un enregistrement vide (« ;; ») est sauté ;
+// un nom vide est gardé (l'écran montre alors « Lecteur n »). Renvoie le nombre lu.
+int lecteurs_lire(const Champ& payload, LecteurListeLu out[kLecteursMax]);
+
+enum class LecteurEtat : uint8_t {
+    AUCUN,          // payload vide : aucun lecteur choisi
+    INDISPONIBLE,   // unavailable, unknown, ou un état inconnu
+    ETEINT,         // off
+    VEILLE,         // standby
+    INACTIF,        // idle, on : allumé, rien en lecture
+    LECTURE,        // playing
+    PAUSE,          // paused
+    CHARGEMENT,     // buffering
+};
+LecteurEtat lecteur_etat_code(const Champ& c);
+
+enum class LecteurRepetition : uint8_t {
+    INCONNUE,
+    NON,   // off
+    TOUT,  // all
+    UNE,   // one
+};
+
+// Lettres de `fonctions` → bits. l lecture / pause, s position (seek), v volume, m muet,
+// p précédent, n suivant, a aléatoire, r répétition, o allumer. Une autre lettre est ignorée.
+enum : uint16_t {
+    LECTEUR_F_LECTURE = 1u << 0,
+    LECTEUR_F_POSITION = 1u << 1,
+    LECTEUR_F_VOLUME = 1u << 2,
+    LECTEUR_F_MUET = 1u << 3,
+    LECTEUR_F_PRECEDENT = 1u << 4,
+    LECTEUR_F_SUIVANT = 1u << 5,
+    LECTEUR_F_ALEATOIRE = 1u << 6,
+    LECTEUR_F_REPETITION = 1u << 7,
+    LECTEUR_F_ALLUMER = 1u << 8,
+};
+uint16_t lecteur_fonctions_lire(const Champ& c);
+
+struct LecteurEtatLu {
+    int actif = -1;
+    Champ nom{nullptr, 0};
+    LecteurGenre genre = LecteurGenre::AUTRE;
+    LecteurEtat etat = LecteurEtat::AUCUN;
+    Champ titre{nullptr, 0};
+    Champ artiste{nullptr, 0};
+    Champ album{nullptr, 0};
+    Champ app{nullptr, 0};
+    float position = NAN;  // secondes, NAN : inconnue (0 à kLecteurDureeMax)
+    float duree = NAN;     // secondes, NAN : inconnue ou nulle (un direct)
+    int volume = -1;       // 0 à 100, -1 : inconnu
+    int8_t muet = -1;      // 1, 0, -1 : inconnu
+    int8_t aleatoire = -1;
+    LecteurRepetition repetition = LecteurRepetition::INCONNUE;
+    uint16_t fonctions = 0;
+    Champ image{nullptr, 0};
+};
+// Faux, et `out` remis à neuf (AUCUN), pour un payload vide ou de moins de quatre champs.
+// Un index hors de -1 à kLecteursMax - 1 vaut -1 ; un nombre illisible, non fini ou hors
+// de ses bornes vaut inconnu ; une durée de 0 aussi (un direct n'a pas de durée).
+bool lecteur_etat_lire(const Champ& payload, LecteurEtatLu& out);
+
+// Position à montrer `ecoule` secondes après la réception : avancée en lecture seulement,
+// jamais au-delà de la durée connue ; NAN si la position est inconnue.
+float lecteur_position(const LecteurEtatLu& e, float ecoule);
+
+// « m:ss » sous une heure, « h:mm:ss » au-delà ; « -:-- » pour une valeur inconnue,
+// négative ou au-delà de kLecteurDureeMax. Faux si `out` est trop petit (8 octets suffisent
+// jusqu'à 99 h ; 12 au-delà).
+bool lecteur_temps_texte(float s, char* out, size_t n);
+
+// Base « http://hôte:8123 » tirée de l'adresse du client API de Home Assistant (celle que
+// l'API ESPHome donne à on_client_connected) : IPv4 telle quelle, IPv6 entre crochets.
+// Faux (out vidé) si l'adresse est vide, trop longue ou contient autre chose que des
+// chiffres hexadécimaux, « . » et « : » (une zone IPv6 « %eth0 » comprise).
+bool ha_base_depuis_hote(const char* hote, char* out, size_t n);
+
+// URL d'une image de HA : `image` telle quelle si elle commence par http:// ou https://,
+// sinon `base` (http(s)://…, « / » final retiré) suivie de l'image (« / » ajouté s'il
+// manque). Faux (out vidé) si l'image est vide, si une base est nécessaire et qu'elle
+// manque ou n'est pas en http(s)://, si l'URL contient un espace ou un caractère de
+// contrôle, ou si elle ne tient pas dans `n`.
+bool ha_image_url(const Champ& image, const char* base, char* out, size_t n);

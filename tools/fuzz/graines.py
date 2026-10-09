@@ -33,6 +33,7 @@ FAMILLES = [
     # Après « 9 », le caractère suivant : « : ». Plusieurs variables : jointes par un saut
     # de ligne, que le harnais redécoupe (temperature(), fuzz_parse.cpp).
     (":", "tab5_maj_historique", ("entete", "mesures", "previsions")),
+    (";", "tab5_maj_lecteur", ("lecteurs", "etat")),
 ]
 
 
@@ -67,6 +68,8 @@ LIMITES = [
     ("9", "solaire_long", "solaire|000000000000000099;solaire|" + "9" * 40 + ";"),
     # Humidité (ADR-0047) hors de 0 à 100, déclarée inconnue, champs de trop.
     (":", "humidite_bornes", "x|2026-06-15T07:00|60|1485|18.2|0|150|x\n21,20,22,-5,101,nan,7;,,,48\n"),
+    # Lecteur (ADR-0050) : nombres hors bornes, image absolue avec une espace, liste trouée.
+    (";", "lecteur_bornes", "a|tv;;b\n9|x||playing|||||-1|1e99|inf|2|-|ONE|zz|https://i.example/a b"),
 ]
 
 
