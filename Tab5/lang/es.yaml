@@ -1262,6 +1262,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Dehors, prévu": "Fuera, prevista"
 "Mesuré": "Medida"
 "Minimum et maximum": "Mínima y máxima"
+"HUMIDITÉ": "HUMEDAD"
+"Humidité": "Humedad"
+"Entre %d et %d %%": "Entre %d y %d %%"
 
 # Thèmes (ADR-0029) : mode de la rangée « Thème » de la console système
 "Sombre": "Oscuro"

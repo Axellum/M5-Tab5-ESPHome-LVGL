@@ -8,9 +8,12 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1085;
+static const uint16_t kI18nKeyCount = 1088;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1475,6 +1478,7 @@ static const char* const kI18nKeys[] = {
     "En cours",
     "En mode Fixe, seuls les jours cochés comptent.",
     "En mouvement",
+    "Entre %d et %d %%",
     "Erreur",
     "Escalier",
     "Essentielles",
@@ -1520,6 +1524,7 @@ static const char* const kI18nKeys[] = {
     "Géographie",
     "H.C.",
     "HEURE DU RÉVEIL",
+    "HUMIDITÉ",
     "Handicap : %d pierres",
     "Handicap : aucun",
     "Heure",
@@ -1530,6 +1535,7 @@ static const char* const kI18nKeys[] = {
     "Home Assistant hors ligne",
     "Hors du top %d",
     "Hors ligne",
+    "Humidité",
     "IA : %s",
     "IMU",
     "Illimité",
@@ -2564,6 +2570,7 @@ static const char* const kI18n_en[] = {
     "Running",  // "En cours"
     "In Fixed mode, only the checked days count.",  // "En mode Fixe, seuls les jours cochés comptent."
     "Moving",  // "En mouvement"
+    "Between %d and %d %%",  // "Entre %d et %d %%"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
     "Essential",  // "Essentielles"
@@ -2609,6 +2616,7 @@ static const char* const kI18n_en[] = {
     "Geography",  // "Géographie"
     "N.R.",  // "H.C."
     "ALARM TIME",  // "HEURE DU RÉVEIL"
+    "HUMIDITY",  // "HUMIDITÉ"
     "Handicap: %d stones",  // "Handicap : %d pierres"
     "Handicap: none",  // "Handicap : aucun"
     "Time",  // "Heure"
@@ -2619,6 +2627,7 @@ static const char* const kI18n_en[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Not in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Humidity",  // "Humidité"
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "No limit",  // "Illimité"
@@ -3653,6 +3662,7 @@ static const char* const kI18n_de[] = {
     "Läuft",  // "En cours"
     "Im Modus „Fest“ zählen nur die gewählten Tage.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In Bewegung",  // "En mouvement"
+    "Zwischen %d und %d %%",  // "Entre %d et %d %%"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
     "Wesentliche",  // "Essentielles"
@@ -3698,6 +3708,7 @@ static const char* const kI18n_de[] = {
     "Geografie",  // "Géographie"
     "a.W.",  // "H.C."
     "WECKZEIT",  // "HEURE DU RÉVEIL"
+    "LUFTFEUCHTE",  // "HUMIDITÉ"
     "Vorgabe: %d Steine",  // "Handicap : %d pierres"
     "Vorgabe: keine",  // "Handicap : aucun"
     "Uhrzeit",  // "Heure"
@@ -3708,6 +3719,7 @@ static const char* const kI18n_de[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Nicht in Top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Luftfeuchte",  // "Humidité"
     "KI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Endlos",  // "Illimité"
@@ -4742,6 +4754,7 @@ static const char* const kI18n_nl[] = {
     "Bezig",  // "En cours"
     "In de modus Vast tellen alleen de aangevinkte dagen.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In beweging",  // "En mouvement"
+    "Tussen %d en %d %%",  // "Entre %d et %d %%"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
     "Essentieel",  // "Essentielles"
@@ -4787,6 +4800,7 @@ static const char* const kI18n_nl[] = {
     "Geografie",  // "Géographie"
     "B.M.",  // "H.C."
     "WEKTIJD",  // "HEURE DU RÉVEIL"
+    "VOCHTIGHEID",  // "HUMIDITÉ"
     "Handicap: %d stenen",  // "Handicap : %d pierres"
     "Handicap: geen",  // "Handicap : aucun"
     "Tijd",  // "Heure"
@@ -4797,6 +4811,7 @@ static const char* const kI18n_nl[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Niet in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Vochtigheid",  // "Humidité"
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Onbeperkt",  // "Illimité"
@@ -5831,6 +5846,7 @@ static const char* const kI18n_es[] = {
     "En curso",  // "En cours"
     "En modo Fija, solo cuentan los días marcados.",  // "En mode Fixe, seuls les jours cochés comptent."
     "En movimiento",  // "En mouvement"
+    "Entre %d y %d %%",  // "Entre %d et %d %%"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
     "Esenciales",  // "Essentielles"
@@ -5876,6 +5892,7 @@ static const char* const kI18n_es[] = {
     "Geografía",  // "Géographie"
     "N.C.",  // "H.C."
     "HORA DE LA ALARMA",  // "HEURE DU RÉVEIL"
+    "HUMEDAD",  // "HUMIDITÉ"
     "Hándicap: %d piedras",  // "Handicap : %d pierres"
     "Hándicap: ninguno",  // "Handicap : aucun"
     "Hora",  // "Heure"
@@ -5886,6 +5903,7 @@ static const char* const kI18n_es[] = {
     "Home Assistant sin conexión",  // "Home Assistant hors ligne"
     "Fuera del top %d",  // "Hors du top %d"
     "Sin conexión",  // "Hors ligne"
+    "Humedad",  // "Humidité"
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Ilimitado",  // "Illimité"
@@ -6920,6 +6938,7 @@ static const char* const kI18n_it[] = {
     "In corso",  // "En cours"
     "In modalità Fissa contano solo i giorni selezionati.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In movimento",  // "En mouvement"
+    "Tra %d e %d %%",  // "Entre %d et %d %%"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
     "Essenziali",  // "Essentielles"
@@ -6965,6 +6984,7 @@ static const char* const kI18n_it[] = {
     "Geografia",  // "Géographie"
     "F.C.",  // "H.C."
     "ORA DELLA SVEGLIA",  // "HEURE DU RÉVEIL"
+    "UMIDITÀ",  // "HUMIDITÉ"
     "Handicap: %d pietre",  // "Handicap : %d pierres"
     "Handicap: nessuno",  // "Handicap : aucun"
     "Ora",  // "Heure"
@@ -6975,6 +6995,7 @@ static const char* const kI18n_it[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Non in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Umidità",  // "Humidité"
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Illimitato",  // "Illimité"
@@ -8009,6 +8030,7 @@ static const char* const kI18n_tr[] = {
     "Çalışıyor",  // "En cours"
     "Sabit modda yalnızca işaretli günler geçerlidir.",  // "En mode Fixe, seuls les jours cochés comptent."
     "Hareket ediyor",  // "En mouvement"
+    "%d ile %d %% arası",  // "Entre %d et %d %%"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
     "Temel",  // "Essentielles"
@@ -8054,6 +8076,7 @@ static const char* const kI18n_tr[] = {
     "Coğrafya",  // "Géographie"
     "S.D.",  // "H.C."
     "ALARM SAATİ",  // "HEURE DU RÉVEIL"
+    "NEM",  // "HUMIDITÉ"
     "Handikap: %d taş",  // "Handicap : %d pierres"
     "Handikap: yok",  // "Handicap : aucun"
     "Saat",  // "Heure"
@@ -8064,6 +8087,7 @@ static const char* const kI18n_tr[] = {
     "Home Assistant çevrimdışı",  // "Home Assistant hors ligne"
     "İlk %d dışında",  // "Hors du top %d"
     "Çevrimdışı",  // "Hors ligne"
+    "Nem",  // "Humidité"
     "YZ: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Sınırsız",  // "Illimité"

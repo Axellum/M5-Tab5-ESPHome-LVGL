@@ -30,12 +30,31 @@ FAMILLES = [
     ("7", "tab5_maj_calendrier_mois", "heures"),
     ("8", "tab5_maj_calendrier_jour", "payload"),
     ("9", "tab5_maj_emplacements", "payload"),
+    # Après « 9 », le caractère suivant : « : ». Plusieurs variables : jointes par un saut
+    # de ligne, que le harnais redécoupe (temperature(), fuzz_parse.cpp).
+    (":", "tab5_maj_historique", ("entete", "mesures", "previsions")),
 ]
+
+
+def selecteur(rang: int) -> str:
+    """Premier octet du parseur de rang `rang` : « 0 », « 1 »… puis « : » après « 9 »."""
+    return chr(ord("0") + rang)
+
+
+def contenu(service: str, variable) -> str:
+    """Le payload d'une famille : une variable, ou plusieurs jointes par « \\n »."""
+    noms = (variable,) if isinstance(variable, str) else variable
+    return "\n".join(fuzz_services.GRAINES[service][v] for v in noms)
+
+
+def nom_de_fichier(sel: str, service: str) -> str:
+    """« : » n'est pas permis dans un nom de fichier Windows : son rang à sa place."""
+    return f"{sel if sel.isdigit() else ord(sel) - ord('0')}_{service}"
 
 
 def graines() -> dict[str, bytes]:
     """Nom de fichier → contenu de chaque graine."""
-    return {f"{sel}_{service}": sel.encode() + fuzz_services.GRAINES[service][variable].encode("utf-8")
+    return {nom_de_fichier(sel, service): sel.encode() + contenu(service, variable).encode("utf-8")
             for sel, service, variable in FAMILLES}
 
 
@@ -46,12 +65,14 @@ LIMITES = [
     ("1", "jours_illisibles", "x|Auj|rainy|inf|nan|0|0|0|;0|Auj|a|1|1e99|0|0|0|08:00-16:00;"),
     ("2", "vigilance_champs_vides", "@-1,0|Jaune||Orange||||Rouge|||||"),
     ("9", "solaire_long", "solaire|000000000000000099;solaire|" + "9" * 40 + ";"),
+    # Humidité (ADR-0047) hors de 0 à 100, déclarée inconnue, champs de trop.
+    (":", "humidite_bornes", "x|2026-06-15T07:00|60|1485|18.2|0|150|x\n21,20,22,-5,101,nan,7;,,,48\n"),
 ]
 
 
 def graines_limites() -> dict[str, bytes]:
     """Nom de fichier → contenu de chaque graine de cas limite."""
-    return {f"{sel}_limite_{nom}": (sel + payload).encode("utf-8") for sel, nom, payload in LIMITES}
+    return {nom_de_fichier(sel, "limite_" + nom): (sel + payload).encode("utf-8") for sel, nom, payload in LIMITES}
 
 
 def main() -> int:

@@ -122,7 +122,8 @@ obj:
           - script.execute: tab5_arcade_open
         on_long_press:
           # « serre », rien sans serre ; en mode HA sur une pièce à température déclarée
-          # (ADR-0040), la droite montre son humidité : rien non plus.
+          # (ADR-0040), la droite montre son humidité : « pR » si elle est déclarée (le
+          # popup la trace avec la température, ADR-0047), rien sinon.
           - lambda: |-
               const char* cle = accueil_historique_cle(true);
               if (cle != nullptr) id(tab5_historique_ouvrir).execute(std::string(cle));

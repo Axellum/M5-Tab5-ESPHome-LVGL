@@ -570,6 +570,13 @@ REGLAGES_CURSEUR_A_100 = Glisser(400, 215, 1270, 215, dans_popup=True)
 SALON_TEMP = (954, 158)
 TEMPERATURE_VUES = {"jour": (828, 287), "semaine": (988, 287), "mois": (1148, 287)}
 MOMENT_DES_CAPTURES = _dt.datetime(2026, 6, 16, 7, 45)
+# Onglets du popup (ADR-0047) : une page par température connue — le salon, les pièces de
+# la démo qui ont une température (Entrée p1, Bureau p3), la serre —, 200 × 44 calés à
+# droite jusqu'à x 1148 de la carte modale, soit les places des pages des Réglages.
+# Un glissement vers la gauche dans le graphique : la page suivante (salon → Entrée).
+TEMPERATURE_ONGLETS = {"salon": (433, 41), "p1": (643, 41), "p3": (853, 41), "serre": (1063, 41)}
+TEMPERATURE_SUIVANTE = Glisser(1100, 520, 450, 520, dans_popup=True)
+assert PIECES[1].climat is not None and not PIECES[1].climat.humidite, "l'Entrée : sa température seule"
 
 
 # Popup Maison (ADR-0037) avec deux pièces seulement : le Salon (cinq appareils) et la
@@ -906,10 +913,18 @@ ECRANS: tuple[Ecran, ...] = (
           (Long(*SERRE), Toucher(*TEMPERATURE_VUES["semaine"]), _historique("serre", "semaine"))),
     Ecran("temperature-serre-mois", (Long(*SERRE), Toucher(*TEMPERATURE_VUES["mois"]), _historique("serre", "mois"))),
     Ecran("temperature-dehors", (Long(*SERRE), _historique("serre", "jour", exterieur=True))),
-    # Température d'une pièce en mode HA (ADR-0040) : sans prévision.
+    # Température d'une pièce en mode HA (ADR-0040) : sans prévision ; le Bureau a aussi son
+    # humidité (ADR-0047), tracée avec la température.
     Ecran("temperature-piece",
           ALLER_PIECE_CLIMAT + (Long(*SALON_TEMP), _historique(f"p{PIECE_CLIMAT}", "jour")),
           (Toucher(*FERMER_POPUP),) + RETOUR_PIECE_CLIMAT),
+    # Pages du popup (ADR-0047) : du salon, un glissement montre l'Entrée (sa température
+    # seule : le rendu d'avant l'humidité) ; l'onglet du Bureau, sa semaine.
+    Ecran("temperature-glisser",
+          (Long(*SALON_TEMP), _historique("salon", "jour"), TEMPERATURE_SUIVANTE, _historique("p1", "jour"))),
+    Ecran("temperature-onglet",
+          (Long(*SALON_TEMP), _historique("salon", "jour"), Toucher(*TEMPERATURE_VUES["semaine"]),
+           _historique("salon", "semaine"), Toucher(*TEMPERATURE_ONGLETS["p3"]), _historique("p3", "semaine"))),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
     # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.

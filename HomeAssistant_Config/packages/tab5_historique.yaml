@@ -17,9 +17,14 @@
 #       debut = AAAA-MM-JJTHH:MM local du premier créneau, pas = minutes par créneau,
 #       maintenant = minutes de debut à maintenant (à l'heure de l'horloge locale),
 #       actuel = état du capteur (nan sans), exterieur = 1 si la seconde température est
-#       dehors (case du blueprint), 0 sinon ;
+#       dehors (case du blueprint), 0 sinon ; puis, seulement avec un capteur d'humidité
+#       (ADR-0047, 09/10/2026), « |humidite » = son état en % entier (nan sans) ;
 #       mesures = « moy,min,max » de chaque créneau depuis debut, séparés par « ; », nb + 1
-#       créneaux (le dernier contient maintenant), un créneau sans ligne laissé vide ;
+#       créneaux (le dernier contient maintenant), un créneau sans ligne laissé vide ; avec
+#       un capteur d'humidité, « ,h_moy,h_min,h_max » (% entiers) s'ajoute aux créneaux qui
+#       en ont (« ,,,h_moy,h_min,h_max » sans température). Un firmware d'avant l'ADR-0047
+#       lit les six premiers champs de l'en-tête et les trois premiers de chaque créneau :
+#       il ignore l'humidité, sans changement de contrat ;
 #       mesures vide = aucune ligne du recorder (le popup dit « Aucun historique ») ;
 #       previsions = « minute,moy » (heure par heure, demi-journée) ou « minute,moy,min,max »
 #       (par jour : moyenne de la mini et de la maxi, placée à midi), minutes depuis debut,
@@ -38,8 +43,8 @@
 # @limits Heure locale « à l'horloge » : un créneau qui traverse un changement d'heure
 #       compte une heure de plus ou de moins, sans décaler les suivants. mode parallel :
 #       deux demandes rapprochées (deux vues, deux tablettes) reçoivent chacune leur réponse
-#       (tablette = préfixe de ses actions ; le popup range chaque réponse sous sa vue et
-#       ignore celle d'une autre température).
+#       (tablette = préfixe de ses actions ; le popup range chaque réponse sous sa
+#       température et sa vue, pour ses onglets).
 # @ai_warning Ne JAMAIS passer now() brut à une action : les bornes sont des datetimes
 #       locaux remis à la minute (replace(second=0, microsecond=0)), envoyés en ISO avec
 #       leur décalage horaire (piège de packages/tab5_push.yaml).
@@ -73,10 +78,13 @@ script:
       exterieur:
         description: "La seconde température est dehors (case serre_exterieure du blueprint)"
         example: false
+      humidite:
+        description: "Capteur d'humidité de l'emplacement (vide : aucun ; ADR-0047)"
+        example: sensor.bureau_humidite
     variables:
       vue_demandee: "{{ vue if vue in ['jour', 'semaine', 'mois'] else 'jour' }}"
       # p0 à p4 : la température d'une pièce en mode HA (ADR-0040), comme salon (sans
-      # prévision). La réponse porte la clé demandée : le popup ignore celle d'une autre.
+      # prévision). La réponse porte la clé demandée : le popup la range sous son onglet.
       cle_demandee: "{{ cle if cle in ['salon', 'serre', 'p0', 'p1', 'p2', 'p3', 'p4'] else 'salon' }}"
       # states[''] lève une erreur (domaine invalide) : le « . » d'abord.
       entite: "{{ capteur if capteur is string and '.' in capteur and states[capteur] is not none else '' }}"
@@ -110,6 +118,13 @@ script:
           {{ '' }}
         {%- endif -%}
       actuel: "{{ (states(entite) | float | round(1)) if entite and states(entite) | is_number else 'nan' }}"
+      # Capteur d'humidité de l'emplacement (ADR-0047) : celui du salon ou de la pièce,
+      # déclaré dans le blueprint ; '' sans (champ absent d'un blueprint plus ancien
+      # compris). Humidité actuelle en % entier, nan si l'état ne se lit pas.
+      entite_h: >-
+        {{ humidite if humidite is defined and humidite is string and '.' in humidite
+           and states[humidite] is not none else '' }}
+      humidite_actuelle: "{{ (states(entite_h) | float | round(0) | int) if entite_h and states(entite_h) | is_number else 'nan' }}"
       # Prévision : la seconde température seulement, sur l'entité météo des poussées.
       # Entité effective : la choisie, ou son repli pendant qu'elle est indisponible
       # (custom_templates/tab5_meteo.jinja) ; '' si aucune ne répond (pas de prévision).
@@ -135,7 +150,7 @@ script:
       - action: recorder.get_statistics
         data:
           start_time: "{{ debut }}"
-          statistic_ids: "{{ [entite] if entite else [] }}"
+          statistic_ids: "{{ ([entite] if entite else []) + ([entite_h] if entite_h else []) }}"
           period: "{{ 'day' if vue_demandee == 'mois' else 'hour' }}"
           types:
             - mean
@@ -144,34 +159,48 @@ script:
         response_variable: stats
         continue_on_error: true
       - variables:
-          # Lignes du recorder rangées par créneau, à l'horloge locale : « moy,min,max ».
+          # Lignes du recorder rangées par créneau, à l'horloge locale : « moy,min,max »,
+          # et, avec un capteur d'humidité, « ,h_moy,h_min,h_max » en % entiers (ADR-0047 ;
+          # « ,, » à la place des températures si seule l'humidité a des lignes). Clés du
+          # rangement : « t » + créneau pour la température, « h » + créneau pour l'humidité.
           mesures: >-
-            {%- set lignes = stats.statistics.get(entite, []) if entite and stats is defined and stats is mapping
-                  and stats.statistics is defined else [] -%}
+            {%- set brut = stats.statistics if stats is defined and stats is mapping
+                  and stats.statistics is defined and stats.statistics is mapping else {} -%}
+            {%- set sources = ([[entite, 't']] if entite else []) + ([[entite_h, 'h']] if entite_h else []) -%}
             {%- set d0 = as_datetime(debut) -%}
             {%- set ns = namespace(d={}) -%}
-            {%- for r in lignes if r.get('mean') is number -%}
-              {%- set l = as_local(as_datetime(r.start)) -%}
-              {%- set m = ((l - d0).total_seconds() + (l.utcoffset() - d0.utcoffset()).total_seconds()) / 60 -%}
-              {%- set i = (m // pas) | int -%}
-              {%- if 0 <= i <= nb -%}
-                {%- set k = i | string -%}
-                {%- set a = ns.d.get(k, [0, 0, none, none]) -%}
-                {%- set mn = r.get('min') if r.get('min') is number else r.mean -%}
-                {%- set mx = r.get('max') if r.get('max') is number else r.mean -%}
-                {%- set ns.d = dict(ns.d, **{k: [a[0] + r.mean, a[1] + 1,
-                      mn if a[2] is none or mn < a[2] else a[2], mx if a[3] is none or mx > a[3] else a[3]]}) -%}
-              {%- endif -%}
+            {%- for src in sources -%}
+              {%- for r in brut.get(src[0], []) if r.get('mean') is number -%}
+                {%- set l = as_local(as_datetime(r.start)) -%}
+                {%- set m = ((l - d0).total_seconds() + (l.utcoffset() - d0.utcoffset()).total_seconds()) / 60 -%}
+                {%- set i = (m // pas) | int -%}
+                {%- if 0 <= i <= nb -%}
+                  {%- set k = src[1] ~ i -%}
+                  {%- set a = ns.d.get(k, [0, 0, none, none]) -%}
+                  {%- set mn = r.get('min') if r.get('min') is number else r.mean -%}
+                  {%- set mx = r.get('max') if r.get('max') is number else r.mean -%}
+                  {%- set ns.d = dict(ns.d, **{k: [a[0] + r.mean, a[1] + 1,
+                        mn if a[2] is none or mn < a[2] else a[2], mx if a[3] is none or mx > a[3] else a[3]]}) -%}
+                {%- endif -%}
+              {%- endfor -%}
             {%- endfor -%}
             {%- set ns2 = namespace(l=[]) -%}
             {%- for i in range(nb + 1) -%}
-              {%- set a = ns.d.get(i | string) -%}
-              {%- set ns2.l = ns2.l + [([(a[0] / a[1]) | round(1), a[2] | round(1), a[3] | round(1)] | join(',')) if a else ''] -%}
+              {%- set a = ns.d.get('t' ~ i) -%}
+              {%- set b = ns.d.get('h' ~ i) -%}
+              {%- set t = [(a[0] / a[1]) | round(1), a[2] | round(1), a[3] | round(1)] | join(',') if a
+                    else (',,' if b else '') -%}
+              {%- set h = ',' ~ ([(b[0] / b[1]) | round(0) | int, b[2] | round(0) | int, b[3] | round(0) | int]
+                    | join(',')) if b else '' -%}
+              {%- set ns2.l = ns2.l + [t ~ h] -%}
             {%- endfor -%}
             {{ ns2.l | join(';') if ns.d else '' }}
+          # Septième champ, l'humidité actuelle, seulement avec un capteur d'humidité : sans,
+          # l'en-tête reste celui d'avant l'ADR-0047 (six champs).
           entete: >-
-            {{ [nom, as_datetime(debut).strftime('%Y-%m-%dT%H:%M'), pas, maintenant, actuel,
-                1 if cle_demandee == 'serre' and exterieur | bool(false) else 0] | join('|') }}
+            {{ ([nom, as_datetime(debut).strftime('%Y-%m-%dT%H:%M'), pas, maintenant, actuel,
+                1 if cle_demandee == 'serre' and exterieur | bool(false) else 0]
+                + ([humidite_actuelle] if entite_h else [])) | join('|') }}
       # La prévision, puis la poussée, dans chaque branche : une variable ou une réponse
       # posée dans un if n'en sort pas.
       - if: "{{ type_prev != '' }}"

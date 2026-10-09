@@ -337,3 +337,65 @@ int clim_reglages_lire(const char* reste, size_t n, ClimReglages& r, Champ& nom)
 // État « consigne|pièce|mode|préréglage|ventilation|oscillation » (ceRT, sans la clé) :
 // les nombres « nan » ou illisibles sont inconnus, les modes gardés tels quels (bornés).
 void clim_etat_lire(const char* reste, size_t n, ClimEtat& e);
+
+// ─── 8. Popup Température (tab5_maj_historique, ADR-0032 ; humidité : ADR-0047) ───
+// Venu de historique_recu() (Tab5/ecran/tab5_historique.cpp) le 09/10/2026, boucle
+// recopiée telle quelle, puis l'humidité ajoutée (lot « climat des pièces en graphique ») :
+//   entete     « nom|debut|pas|maintenant|actuel|exterieur[|humidité] »
+//   mesures    « moy,min,max[,h_moy,h_min,h_max] » par créneau, séparés par « ; »
+//   previsions « minute,moy[,min,max] » séparés par « ; », dans l'ordre du temps
+// Le septième champ de l'en-tête dit qu'une sonde d'humidité est déclarée (vide ou absent :
+// aucune, l'écran d'avant ; « nan » : déclarée, valeur inconnue) ; les trois champs
+// d'humidité d'un créneau suivent ceux de la température (un firmware plus ancien lit les
+// trois premiers et ignore le reste : aucun changement de contrat).
+constexpr int kHistoriqueMesuresMax = 64;   // 24 + 1, 56 + 1, 30 + 1 créneaux
+constexpr int kHistoriquePrevMax = 48;      // 72 h d'heures au plus, ou 7 jours
+// Bornes de lecture : au-delà, c'est un payload faux, pas une mesure. Elles gardent aussi
+// les conversions en entier et les calculs de minutes sans débordement (le fuzz des
+// sanitizers envoie 1e30). La vue 30 jours et ses 7 jours de prévision vont jusqu'à
+// 54 000 minutes.
+constexpr float kHistoriqueMinutesMax = 1.0e6f;
+constexpr float kHistoriquePasMax = 1440.0f;  // un créneau d'un jour au plus
+constexpr float kHistoriqueTempMax = 1000.0f;
+// Humidité en % entier (HA l'arrondit) ; 0xFF : pas de mesure.
+constexpr uint8_t kHumiditeAucune = 0xFF;
+
+struct HistoriquePoint {
+    float moy = NAN, mn = NAN, mx = NAN;
+    uint8_t h_moy = kHumiditeAucune, h_mn = kHumiditeAucune, h_mx = kHumiditeAucune;
+};
+
+struct HistoriquePrev {
+    int32_t minute = 0;  // depuis le début du premier créneau
+    float moy = NAN, mn = NAN, mx = NAN;
+};
+
+struct HistoriqueSerie {
+    bool recue = false;
+    bool exterieur = false;
+    bool humidite = false;            // une sonde d'humidité est déclarée (7e champ non vide)
+    char nom[48] = {};                // copié par l'écran (texte_ha_copier), pas par historique_lire
+    int64_t debut_jour = 0;           // jours depuis le 1970-01-01 (date locale)
+    int32_t debut_min = 0;            // minute du jour du premier créneau
+    int32_t pas = 60;                 // minutes par créneau
+    int32_t maintenant = 0;           // minutes depuis le début
+    float actuel = NAN;
+    uint8_t h_actuelle = kHumiditeAucune;
+    int n = 0;
+    HistoriquePoint m[kHistoriqueMesuresMax];
+    int np = 0;
+    HistoriquePrev p[kHistoriquePrevMax];
+};
+
+// Humidité d'un champ : % arrondi, kHumiditeAucune si vide, illisible, non finie ou hors
+// de 0 à 100.
+uint8_t humidite_lire(const Champ& c);
+
+// Remet `s` à neuf et la remplit (recue = vrai). Une date illisible vaut le 2000-01-01
+// 00:00 (seuls les libellés de l'axe s'en servent), un pas illisible ou hors de 1 à
+// kHistoriquePasMax 60, une minute illisible ou hors de 0 à kHistoriqueMinutesMax 0 (en-tête)
+// ou un point de prévision sauté, une température hors de ±kHistoriqueTempMax NAN ; un
+// point de prévision hors de l'ordre du temps est sauté. Au plus kHistoriqueMesuresMax
+// créneaux et kHistoriquePrevMax points. Renvoie le nom (premier champ de l'en-tête), que
+// l'écran copie dans s.nom.
+Champ historique_lire(const Champ& entete, const Champ& mesures, const Champ& previsions, HistoriqueSerie& s);

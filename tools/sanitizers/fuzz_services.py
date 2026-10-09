@@ -86,8 +86,10 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_energie": {"payload": "3450|1180|-2270|78|0|24.5|°C|12.4"},
     "tab5_maj_energie_historique": {"vue": "heures", "debut": "2026-06-16",
                                     "valeurs": "0;0;0;0;0;0;0.05;0.4;1.1;1.9;2.6;3;3.1;;;;;;;;;;;"},
-    "tab5_maj_historique": {"cle": "serre", "vue": "jour", "entete": "Serre|2026-06-15T07:00|60|1485|18.2|0",
-                            "mesures": "17.1,16.8,17.5;16.9,16.6,17.2;;16.5,16.2,16.8",
+    # Humidité (ADR-0047) : 7e champ de l'en-tête, trois champs de plus par créneau ; avec
+    # la prévision, ce que HA n'envoie jamais ensemble : tout le tracé à la fois.
+    "tab5_maj_historique": {"cle": "serre", "vue": "jour", "entete": "Serre|2026-06-15T07:00|60|1485|18.2|0|62",
+                            "mesures": "17.1,16.8,17.5,58,55,61;16.9,16.6,17.2;;,,,64,60,70;16.5,16.2,16.8,66,63,69",
                             "previsions": "1500,19.4;1560,20.8;1620,22.1"},
 }
 
