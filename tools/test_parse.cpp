@@ -433,6 +433,86 @@ static void test_pluie_phrase() {
     expect(!p.code, "phrase : vide");
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 5. Calendrier
+// ════════════════════════════════════════════════════════════════════════════
+
+static void test_calendrier_mois() {
+    int y = -1, m = -1;
+    expect(calendrier_mois_lire("2026", "9", y, m) && y == 2026 && m == 9, "mois : 2026-9");
+    expect(calendrier_mois_lire("2000", "01", y, m) && calendrier_mois_lire("2100", "12", y, m), "mois : bornes comprises");
+    expect(!calendrier_mois_lire("1999", "5", y, m) && !calendrier_mois_lire("2101", "5", y, m) &&
+               !calendrier_mois_lire("2026", "0", y, m) && !calendrier_mois_lire("2026", "13", y, m),
+           "mois : hors bornes refusé");
+    expect(!calendrier_mois_lire("", "", y, m) && y == 0 && m == 0, "mois : vide = 0, refusé");
+    expect(calendrier_mois_lire("2026abc", "9x", y, m) && y == 2026 && m == 9, "mois [figé] : atoi ignore la fin");
+}
+
+static void test_calendrier_champ() {
+    const std::string h = "08:00-16:00||14:00-22:00";
+    expect(calendrier_champ(h, 0, '|') == "08:00-16:00" && calendrier_champ(h, 1, '|').empty() &&
+               calendrier_champ(h, 2, '|') == "14:00-22:00",
+           "champ : champs vides comptés");
+    expect(calendrier_champ(h, 3, '|').empty() && calendrier_champ(h, 30, '|').empty(), "champ : au-delà = \"\"");
+    expect(calendrier_champ("a~b~", 2, '~').empty() && calendrier_champ("a~b~", 1, '~') == "b", "champ : « ~ »");
+    expect(calendrier_champ("", 0, '|').empty(), "champ : texte vide");
+    expect(calendrier_champ("abc", -1, '|') == "abc", "champ [figé] : index négatif = premier champ");
+}
+
+static void test_calendrier_code() {
+    const std::string c = "0A1fFF";
+    expect(calendrier_code_jour(c, 1) == 0x0A && calendrier_code_jour(c, 2) == 0x1F && calendrier_code_jour(c, 3) == 0xFF,
+           "code : hexadécimal, casse libre");
+    expect(calendrier_code_jour(c, 4) == 0 && calendrier_code_jour("0", 1) == 0, "code : trop court = 0");
+    expect(calendrier_code_jour("zG", 1) == 0 && calendrier_code_jour("1z", 1) == 0x10, "code : non hexadécimal = 0");
+    expect(calendrier_code_jour(c, 0) == 0 && calendrier_code_jour(c, -5) == 0, "code : jour < 1 = 0");
+}
+
+static void test_calendrier_date() {
+    int y = 0, m = 0, d = 0;
+    expect(calendrier_date_lire("2026-09-17", y, m, d) && y == 2026 && m == 9 && d == 17, "date : ISO");
+    expect(!calendrier_date_lire("", y, m, d) && !calendrier_date_lire("2026-09", y, m, d) &&
+               !calendrier_date_lire("x", y, m, d),
+           "date : incomplète refusée");
+    expect(calendrier_date_lire("2026-13-40", y, m, d) && m == 13 && d == 40, "date [figé] : aucune borne");
+    expect(calendrier_date_lire("2026-9-1T08:00", y, m, d) && d == 1, "date : la suite est ignorée");
+}
+
+static void test_calendrier_jour() {
+    {
+        LecteurJourCalendrier l("travail|Travail 08:00 – 16:00;rdv|Dentiste 14:30");
+        CalJourLigne a = l.suivante();
+        expect(a.type == CalJourType::LIGNE && std::strcmp(a.genre, "travail") == 0 &&
+                   std::strcmp(a.texte, "Travail 08:00 – 16:00") == 0,
+               "jour : première ligne");
+        CalJourLigne b = l.suivante();
+        expect(b.type == CalJourType::LIGNE && std::strcmp(b.genre, "rdv") == 0, "jour : seconde ligne");
+        expect(l.suivante().type == CalJourType::FIN, "jour : fin");
+    }
+    {
+        LecteurJourCalendrier l(";;sans;vide|;|x;a|b|c");
+        expect(l.suivante().type == CalJourType::AUTRE, "jour [figé] : « ;; » sauté, sans « | » = AUTRE");
+        expect(l.suivante().type == CalJourType::AUTRE, "jour : texte vide = AUTRE");
+        CalJourLigne x = l.suivante();
+        expect(x.type == CalJourType::LIGNE && x.genre[0] == '\0' && std::strcmp(x.texte, "x") == 0,
+               "jour : genre vide gardé");
+        CalJourLigne c = l.suivante();
+        expect(c.type == CalJourType::LIGNE && std::strcmp(c.texte, "b|c") == 0, "jour : texte = le reste");
+        expect(l.suivante().type == CalJourType::FIN, "jour : fin après");
+    }
+    {
+        std::string longue = "rdv|" + std::string(kCalendrierJourMax, 'x');
+        LecteurJourCalendrier l(longue.c_str());
+        CalJourLigne a = l.suivante();
+        expect(a.type == CalJourType::LIGNE && std::strlen(a.texte) == kCalendrierJourMax - 1 - 4,
+               "jour : coupé à 1 023 octets");
+    }
+    {
+        LecteurJourCalendrier l("");
+        expect(l.suivante().type == CalJourType::FIN, "jour : vide");
+    }
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -448,6 +528,11 @@ int main() {
     test_pluie_niveau();
     test_pluie_barres();
     test_pluie_phrase();
+    test_calendrier_mois();
+    test_calendrier_champ();
+    test_calendrier_code();
+    test_calendrier_date();
+    test_calendrier_jour();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

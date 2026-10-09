@@ -27,6 +27,8 @@ FAMILLES = [
     ("4", "tab5_maj_alertes_historique", "payload"),
     ("5", "tab5_maj_info_texte", "texte"),
     ("6", "tab5_maj_pluie_1h_bulk", "payload"),
+    ("7", "tab5_maj_calendrier_mois", "heures"),
+    ("8", "tab5_maj_calendrier_jour", "payload"),
 ]
 
 

@@ -186,3 +186,45 @@ struct PluiePhrase {
     int64_t debut;
 };
 PluiePhrase pluie_phrase_lire(const std::string& phrase);
+
+// ─── 5. Calendrier (tab5_maj_calendrier_mois, tab5_maj_calendrier_jour) ───
+// Mois poussé : année et mois par atoi ; vrai s'ils sont dans 2000..2100 et 1..12.
+bool calendrier_mois_lire(const std::string& annee, const std::string& mois, int& y, int& m);
+
+// idx-ième champ (0 = le premier) de `s` séparé par `sep`, champs vides compris ; "" s'il
+// n'y en a pas autant. Heures du mois (« | ») et détails embarqués (« ~ »).
+std::string calendrier_champ(const std::string& s, int idx, char sep);
+
+// Code du jour `day` (1-31) : deux chiffres hexadécimaux (casse libre) à (day - 1) × 2 ;
+// 0 si `codes` est trop court ou si day < 1. Un caractère non hexadécimal vaut 0.
+// Bits : CAL_BIT_*.
+int calendrier_code_jour(const std::string& codes, int day);
+
+// Date « AAAA-MM-JJ » (sscanf « %d-%d-%d ») ; faux si les trois nombres n'y sont pas.
+// Aucune borne : « 2026-13-40 » est lu tel quel.
+bool calendrier_date_lire(const char* date_iso, int& y, int& m, int& d);
+
+// Détail du jour « type|texte;type|texte;… » (script HA tab5_calendrier_jour) : 1 023
+// octets lus (l'appelant journalise au-delà), découpé en place dans le lecteur.
+// [figé] strtok_r : « ;; » sauté. Une ligne sans « | » ou au texte vide est AUTRE.
+constexpr size_t kCalendrierJourMax = 1024;
+enum class CalJourType : uint8_t {
+    FIN,
+    LIGNE,
+    AUTRE,
+};
+struct CalJourLigne {
+    CalJourType type;
+    const char* genre;  // « travail », « ferie », « vacances », « rdv », « anniv », « fete »…
+    const char* texte;  // le reste après le premier « | »
+};
+class LecteurJourCalendrier {
+public:
+    explicit LecteurJourCalendrier(const char* payload);
+    CalJourLigne suivante();
+
+private:
+    char buf_[kCalendrierJourMax];
+    char* save_ = nullptr;
+    bool premier_ = true;
+};

@@ -72,6 +72,29 @@ void pluie(const std::string& p) {
     pluie_niveau(p);
 }
 
+// Mois : le payload sert de codes, d'heures (« | ») et de détails (« ~ »), comme les trois
+// variables du service ; tous les jours sont lus, comme le rendu de la grille.
+void calendrier_mois(const std::string& p) {
+    int y = 0, m = 0;
+    calendrier_mois_lire(p, p, y, m);
+    for (int day = 1; day <= 31; day++) {
+        calendrier_code_jour(p, day);
+        calendrier_champ(p, day - 1, '|');
+        calendrier_champ(p, day - 1, '~');
+    }
+}
+
+void calendrier_jour(const std::string& p) {
+    int y = 0, m = 0, d = 0;
+    calendrier_date_lire(p.c_str(), y, m, d);
+    LecteurJourCalendrier l(p.c_str());
+    int lignes = 0;
+    for (CalJourLigne c = l.suivante(); c.type != CalJourType::FIN; c = l.suivante()) {
+        if (c.type == CalJourType::LIGNE) lignes += (std::strcmp(c.genre, "travail") == 0) ? 1 : 0;
+    }
+    (void) lignes;
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -87,7 +110,9 @@ constexpr Parseur kParseurs[] = {
     alertes_ha,  // '3' tab5_maj_alertes_ha_bulk
     historique,  // '4' tab5_maj_alertes_historique
     info,        // '5' tab5_maj_info_texte
-    pluie,       // '6' tab5_maj_pluie_1h_bulk
+    pluie,            // '6' tab5_maj_pluie_1h_bulk
+    calendrier_mois,  // '7' tab5_maj_calendrier_mois
+    calendrier_jour,  // '8' tab5_maj_calendrier_jour
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

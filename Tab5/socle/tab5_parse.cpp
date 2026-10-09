@@ -240,3 +240,70 @@ PluiePhrase pluie_phrase_lire(const std::string& phrase) {
     }
     return p;
 }
+
+// ─── 5. Calendrier ───
+// Avant : cal_store_month_data(), cal_field_delim(), cal_hex_val(), le sscanf de
+// cal_show_day_detail_loading() et la boucle de cal_render_day_detail()
+// (Tab5/ecran/tab5_calendar.cpp).
+
+bool calendrier_mois_lire(const std::string& annee, const std::string& mois, int& y, int& m) {
+    y = atoi(annee.c_str());
+    m = atoi(mois.c_str());
+    return !(y < 2000 || y > 2100 || m < 1 || m > 12);
+}
+
+// n-ième champ d'une chaîne délimitée par un séparateur — champs vides autorisés
+// (strtok_r fusionnerait les séparateurs consécutifs, donc parcours manuel).
+std::string calendrier_champ(const std::string& s, int idx, char sep) {
+    size_t start = 0;
+    for (int i = 0; i < idx; i++) {
+        const size_t p = s.find(sep, start);
+        if (p == std::string::npos) return "";
+        start = p + 1;
+    }
+    size_t end = s.find(sep, start);
+    if (end == std::string::npos) end = s.size();
+    return s.substr(start, end - start);
+}
+
+namespace {
+int hex_val(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    return 0;
+}
+}  // namespace
+
+int calendrier_code_jour(const std::string& codes, int day) {
+    // day < 1 : jamais demandé par l'écran (jours 1 à 31) ; 0 plutôt qu'un index négatif.
+    if (day < 1) return 0;
+    if ((int) codes.size() >= day * 2) return hex_val(codes[(day - 1) * 2]) * 16 + hex_val(codes[(day - 1) * 2 + 1]);
+    return 0;
+}
+
+bool calendrier_date_lire(const char* date_iso, int& y, int& m, int& d) {
+    return sscanf(date_iso, "%d-%d-%d", &y, &m, &d) == 3;
+}
+
+LecteurJourCalendrier::LecteurJourCalendrier(const char* payload) {
+    strncpy(buf_, payload, sizeof(buf_) - 1);
+    buf_[sizeof(buf_) - 1] = '\0';
+}
+
+CalJourLigne LecteurJourCalendrier::suivante() {
+    CalJourLigne l{CalJourType::FIN, nullptr, nullptr};
+    char* tok = strtok_r(premier_ ? buf_ : nullptr, ";", &save_);
+    premier_ = false;
+    if (tok == nullptr) return l;
+    char* sep = strchr(tok, '|');
+    if (sep == nullptr || *(sep + 1) == '\0') {
+        l.type = CalJourType::AUTRE;
+        return l;
+    }
+    *sep = '\0';
+    l.type = CalJourType::LIGNE;
+    l.genre = tok;
+    l.texte = sep + 1;
+    return l;
+}
