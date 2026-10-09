@@ -3,7 +3,8 @@
 # @file tab5-roue.yaml
 # @role Roue d'actions rapides d'une tuile (ADR-0036) : pose dans g_roue_ui les widgets de
 #       ui_components/roue_actions.yaml (roue_bouton.yaml, roue_choix.yaml,
-#       roue_legende.yaml) que tab5_roue.cpp dessine, et le lien « Maison » ; puis
+#       roue_legende.yaml) que tab5_roue.cpp dessine, le lien « Maison » et l'ancre de la
+#       roue de navigation (ADR-0042, la carte centrale) ; puis
 #       roue_brancher() (arcs, geste bloqué, effet d'appui). Ce que la roue offre pour une
 #       tuile se décide dans tab5_tuiles_roue.cpp. Sorti de tab5-tuiles.yaml le 08/10/2026
 #       (lot L7 de l'audit du 07/10/2026), mêmes pointeurs, même ordre.
@@ -31,20 +32,19 @@ script:
           roue.moyeu_icone = id(roue_moyeu_icone);
           roue.moyeu_valeur = id(roue_moyeu_valeur);
           roue.nom = id(roue_nom);
-          roue.lien_legende[0] = id(roue_lien_0);
-          roue.lien_legende[1] = id(roue_lien_1);
-          // Premier anneau : le bouton N, son icône, son point (une famille).
-          const auto bouton = [&roue](int n, auto* b, auto* icone, auto* point) {
+          // Premier anneau : le bouton N, son icône, son point (une famille), son mot.
+          const auto bouton = [&roue](int n, auto* b, auto* icone, auto* point, auto* legende) {
             roue.bouton[n] = b;
             roue.icone[n] = icone;
             roue.point[n] = point;
+            roue.legende[n] = legende;
           };
-          bouton(0, id(roue_bouton_0), id(roue_bouton_0_icone), id(roue_bouton_0_point));
-          bouton(1, id(roue_bouton_1), id(roue_bouton_1_icone), id(roue_bouton_1_point));
-          bouton(2, id(roue_bouton_2), id(roue_bouton_2_icone), id(roue_bouton_2_point));
-          bouton(3, id(roue_bouton_3), id(roue_bouton_3_icone), id(roue_bouton_3_point));
-          bouton(4, id(roue_bouton_4), id(roue_bouton_4_icone), id(roue_bouton_4_point));
-          bouton(5, id(roue_bouton_5), id(roue_bouton_5_icone), id(roue_bouton_5_point));
+          bouton(0, id(roue_bouton_0), id(roue_bouton_0_icone), id(roue_bouton_0_point), id(roue_bouton_0_legende));
+          bouton(1, id(roue_bouton_1), id(roue_bouton_1_icone), id(roue_bouton_1_point), id(roue_bouton_1_legende));
+          bouton(2, id(roue_bouton_2), id(roue_bouton_2_icone), id(roue_bouton_2_point), id(roue_bouton_2_legende));
+          bouton(3, id(roue_bouton_3), id(roue_bouton_3_icone), id(roue_bouton_3_point), id(roue_bouton_3_legende));
+          bouton(4, id(roue_bouton_4), id(roue_bouton_4_icone), id(roue_bouton_4_point), id(roue_bouton_4_legende));
+          bouton(5, id(roue_bouton_5), id(roue_bouton_5_icone), id(roue_bouton_5_point), id(roue_bouton_5_legende));
           // Second anneau : le choix N, son icône, son texte (« 50 % »), sa légende.
           const auto choix = [&roue](int n, auto* c, auto* icone, auto* texte, auto* legende) {
             roue.choix[n] = c;
@@ -60,4 +60,6 @@ script:
           choix(5, id(roue_choix_5), id(roue_choix_5_icone), id(roue_choix_5_texte), id(roue_choix_5_legende));
           // Lien « Maison » : la routine unique d'ouverture d'un écran (tab5-navigation.yaml).
           roue.ouvrir_ecran = [](int e) { id(tab5_ecran_ouvrir).execute(e); };
+          // Roue de navigation (ADR-0042) : ancrée au centre de la carte centrale.
+          roue.carte_centrale = id(central_card);
           roue_brancher();

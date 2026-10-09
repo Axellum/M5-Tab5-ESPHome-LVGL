@@ -311,8 +311,10 @@ lvgl:
 
         - !include ../ui_components/climate_card.yaml
         # ==================== CENTRAL CARD (Alertes, Pluie, Planning) ====================
-        # Appui long sur un panneau de l'accueil (planning, pluie, vigilance, info, alertes HA) :
-        # historique des alertes (popup « Alertes », lot 4 du plan des alertes, 06/10/2026).
+        # Appui long sur un panneau de l'accueil (planning, pluie, vigilance, info, alertes HA)
+        # ou sur le titre d'une page (prévisions, pièce du mode HA) : la roue de navigation
+        # (ADR-0042, 09/10/2026), centrée sur la carte, dont le premier bouton est le popup
+        # « Alertes » qu'ouvrait cet appui long avant (lot 4 du plan des alertes).
         - obj:
             id: central_card
             x: 20
@@ -476,6 +478,9 @@ lvgl:
                                 lambda: 'return maison_titre_appui_valide();'
                               then:
                                 - script.execute: tab5_maison_ouvrir
+                        # Appui long : la roue de navigation (ADR-0042), comme les panneaux.
+                        on_long_press:
+                          - lambda: 'roue_navigation_ouvrir();'
 
               # Info Wrapper (résumé test — panneau 3, tap météo = dismiss définitif)
               - obj:

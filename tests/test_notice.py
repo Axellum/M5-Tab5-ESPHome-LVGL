@@ -36,9 +36,11 @@ APPUIS_LONGS = {
     "btn_rangee": "plants.md",
     "climate_card.yaml": "temperature.md",
     "maison_ligne.yaml": "house.md",
-    # Carte centrale : chaque panneau de l'accueil ouvre l'historique des alertes.
-    # (alertes, pluie, planning, info, alertes HA : un gabarit depuis le 08/10/2026, YML-4).
+    # Carte centrale : chaque panneau de l'accueil ouvre la roue de navigation (ADR-0042)
+    # (alertes, pluie, planning, info, alertes HA : un gabarit depuis le 08/10/2026, YML-4),
+    # comme le titre d'une page (prévisions, pièce du mode HA).
     "central_bouton.yaml": "home.md",
+    "btn_page_title_tap": "home.md",
     "forecast_day_body.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
     "switch_card.yaml": "tiles.md",
@@ -65,6 +67,13 @@ NON_MONTREES = {
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
+    # Roue de navigation (ADR-0042), décrite dans home.md (carte centrale).
+    "roue-navigation": "roue de navigation (ADR-0042), décrite dans home.md ; image à tirer du rendu",
+    "roue-navigation-pieces": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
+    "roue-navigation-appareils": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
+    "roue-navigation-tablette": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
+    "roue-navigation-bureau": "accueil-ha-piece-4 montre la même pièce ; le choix d'une pièce est décrit dans home.md",
+    "aller-lumieres": "lumieres-chambre montre la même fenêtre ; l'ouverture par la roue est décrite dans home.md",
     "maison": "image à tirer du rendu de la PR du popup Maison, puis citer dans house.md",
     "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",

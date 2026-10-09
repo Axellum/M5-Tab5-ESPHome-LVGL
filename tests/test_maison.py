@@ -74,9 +74,10 @@ def test_option_maison_du_select_a_la_fin():
     controles = _lire("Tab5", "paquets", "tab5-navigation.yaml")
     bloc = controles.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s*-\s*"([^"]+)"', bloc, re.M)
-    # À la fin à son arrivée ; seules des options plus récentes le suivent (« Météo »,
-    # ADR-0043) : les index des autres options ne bougent pas.
-    assert options[options.index("Maison"):] == ["Maison", "Météo"], "les index des options ne bougent pas"
+    # Ajoutée à la fin le 07/10/2026 : les index des autres options ne bougent pas. Celles
+    # de la roue de navigation (ADR-0042) et du popup Météo (ADR-0043) sont venues après elle.
+    assert options[12] == "Maison", "à la fin : les index des autres options ne bougent pas"
+    assert options[13:] == ["Lumières", "Volet", "Température", "Météo"]
     # L'index de l'option est sa valeur d'Ecran (tab5_zones.h, tests/test_appuis.py) ; le
     # select et les appuis longs passent par la routine unique tab5_ecran_ouvrir.
     enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", contrat(), re.S).group(1)
@@ -211,7 +212,8 @@ def test_tap_du_titre_de_la_piece_en_mode_ha():
     bouton = lvgl.split("id: btn_page_title_tap", 1)[1].split("# Info Wrapper", 1)[0]
     assert "lambda: 'return maison_titre_appui_valide();'" in bouton
     assert "script.execute: tab5_maison_ouvrir" in bouton
-    assert "on_long_press" not in bouton
+    # Appui long : la roue de navigation (ADR-0042), comme les panneaux de la carte.
+    assert bouton.split("on_long_press:", 1)[1].strip().startswith("- lambda: 'roue_navigation_ouvrir();'")
     valide = _fonction(_maison(), "maison_titre_appui_valide")
     assert "if (!g_central_ctx.ha_mode) return false;" in valide
     # Garde commune « appui au bout d'un glissement » (lot L10) : tab5_internal.h.

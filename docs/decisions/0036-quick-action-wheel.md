@@ -52,4 +52,5 @@ The link to the tile's full popup was called « Réglages », the name of the ta
 
 - One C++ unit (`tab5_roue.cpp`), four UI files, one 36 px MDI font of 23 glyphs, one more window in `ModalRegistry`.
 - The rendering (`tools/rendu/ecrans.py`) redoes the geometry (`roue_centres`, `roue_choix_centres`) to touch « Détails » on the popup screens and a family on the wheel screens, and captures `roue-lampe` (brightness unfolded), `roue-lampe-couleurs`, `roue-volet` (positions), `roue-clim` (modes) and `maison-roue`; `tests/test_roue.py` compares both sides and holds the buttons, the choices, the commands and the closings.
+- The same wheel serves the navigation wheel of the central card ([ADR-0042](0042-navigation-wheel.md), 2026-10-09), which adds a « words » mode (a word beside each button) and no second engine.
 - Reaching a popup takes a long press then « Détails »: one touch more than before, for the less frequent settings (the room's other lights, the drawn shutter, the fan of a climate).

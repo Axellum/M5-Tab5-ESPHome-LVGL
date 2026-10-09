@@ -8,9 +8,25 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1090;
+static const uint16_t kI18nKeyCount = 1106;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1210,7 +1226,6 @@ static const char* const kI18nKeys[] = {
     "8 consoles — une seule à la fois",
     "8 niveaux, 3 vies, power-ups",
     "8,0 cases/s",
-    "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée.",
     "9 min",
     "ACTIF",
     "AMPOULE",
@@ -1232,6 +1247,7 @@ static const char* const kI18nKeys[] = {
     "Adresse IP",
     "Adversaire",
     "Affichée — estimation en pions, indicative",
+    "Agenda",
     "Agilité",
     "Aimant du mineur",
     "Aimant mineur",
@@ -1240,6 +1256,7 @@ static const char* const kI18nKeys[] = {
     "Alerte Météo Orange en cours ! Restez prudent.",
     "Alerte Météo Rouge en cours ! Restez prudent.",
     "Alertes",
+    "Aller à",
     "Allumer",
     "Allumer seulement",
     "Allumé",
@@ -1250,6 +1267,7 @@ static const char* const kI18nKeys[] = {
     "Ampoule Salon",
     "Analyse…",
     "Anglaises 8×8",
+    "Animations",
     "Anneau de fer",
     "Anneau rouge sur la dernière pierre posée",
     "Anniv.",
@@ -1263,6 +1281,7 @@ static const char* const kI18nKeys[] = {
     "Aperçu du territoire : ACTIVÉ",
     "Aperçu du territoire : DÉSACTIVÉ",
     "Appareil",
+    "Appareils",
     "Apparence",
     "Appuyer sur un emplacement le fait passer à l'objet suivant.",
     "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement.",
@@ -1271,6 +1290,7 @@ static const char* const kI18nKeys[] = {
     "Arrêter",
     "Arts",
     "Arts & Littérature",
+    "Assistant",
     "Assistant vocal",
     "Attire les bonus alentour",
     "Au repos",
@@ -1380,12 +1400,14 @@ static const char* const kI18nKeys[] = {
     "Classique",
     "Climatisation",
     "Climatisation Salon",
+    "Clims",
     "Coffre : %d âmes",
     "Coffre : %s !",
     "Coffre-fort",
     "Colonnes",
     "Commencer",
     "Comment gagner ses 6 parts",
+    "Complètes",
     "Composez les équipes, puis réglez les questions",
     "Comptabilise uniquement le mode Joueur contre Tab.",
     "Confirmation du coup : ACTIVÉE",
@@ -1479,6 +1501,7 @@ static const char* const kI18nKeys[] = {
     "Ensoleillé",
     "Erreur",
     "Escalier",
+    "Essentielles",
     "Eval %+.1f",
     "Exact — %s remporte la partie !",
     "Expert",
@@ -1561,6 +1584,7 @@ static const char* const kI18nKeys[] = {
     "Jamais",
     "Janv",
     "Jeu",
+    "Jeux",
     "Jouable",
     "Jouer",
     "Jouer !",
@@ -1641,6 +1665,7 @@ static const char* const kI18nKeys[] = {
     "Lode Runner 1983\nCreuse · grimpe · fuis",
     "Luminosité",
     "Lumière",
+    "Lumières",
     "Lun",
     "MAINTENANT",
     "MAISON",
@@ -1674,6 +1699,7 @@ static const char* const kI18nKeys[] = {
     "Mix",
     "Mixte",
     "Mode",
+    "Mode de charge",
     "Mode de jeu",
     "Mode dieu : %s",
     "Mode entraînement",
@@ -1785,6 +1811,8 @@ static const char* const kI18nKeys[] = {
     "Pièce %d",
     "Pièce %d/%d",
     "Pièce : %s",
+    "Pièces",
+    "Plantes",
     "Pluie",
     "Pluie dans l'heure",
     "Pluie et neige",
@@ -1984,6 +2012,7 @@ static const char* const kI18nKeys[] = {
     "TOUS LES NIVEAUX !",
     "TOUT EFFACER ?",
     "Tab contre Tab",
+    "Tablette",
     "Taille affichée : %s",
     "Taille du goban  —  9x9 / 13x13 / 19x19",
     "Taille du texte",
@@ -2000,6 +2029,7 @@ static const char* const kI18nKeys[] = {
     "Temps écoulé — la réponse était : %s",
     "Temps écoulé — matériel insuffisant pour mater",
     "Température",
+    "Températures",
     "Tension",
     "Tester",
     "Thème",
@@ -2078,11 +2108,13 @@ static const char* const kI18nKeys[] = {
     "Voit les prises simples et les répond",
     "Volet",
     "Volet arrêté.",
+    "Volets",
     "Volume constant",
     "Votre couleur",
     "Vous",
     "Vous jouez %s",
     "Vous jouez les %s",
+    "Wi-Fi éco",
     "Zigzag",
     "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.",
     "août",
@@ -2304,7 +2336,6 @@ static const char* const kI18n_en[] = {
     "8 consoles — one at a time",  // "8 consoles — une seule à la fois"
     "8 levels, 3 lives, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8.0 tiles/s",  // "8,0 cases/s"
-    "80 %: charging stops at 80 % and resumes at 70 %, for a tablet that is always plugged in.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "ON",  // "ACTIF"
     "BULB",  // "AMPOULE"
@@ -2326,6 +2357,7 @@ static const char* const kI18n_en[] = {
     "IP address",  // "Adresse IP"
     "Opponent",  // "Adversaire"
     "Shown — rough estimate in pawns",  // "Affichée — estimation en pions, indicative"
+    "Agenda",  // "Agenda"
     "Agility",  // "Agilité"
     "Miner's Magnet",  // "Aimant du mineur"
     "Minor Magnet",  // "Aimant mineur"
@@ -2334,6 +2366,7 @@ static const char* const kI18n_en[] = {
     "Orange weather warning in progress! Stay safe.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Red weather warning in progress! Stay safe.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Alerts",  // "Alertes"
+    "Go to",  // "Aller à"
     "Turn on",  // "Allumer"
     "Turn on only",  // "Allumer seulement"
     "On",  // "Allumé"
@@ -2344,6 +2377,7 @@ static const char* const kI18n_en[] = {
     "Living room bulb",  // "Ampoule Salon"
     "Thinking…",  // "Analyse…"
     "English 8x8",  // "Anglaises 8×8"
+    "Animations",  // "Animations"
     "Iron Ring",  // "Anneau de fer"
     "Red ring on the last stone played",  // "Anneau rouge sur la dernière pierre posée"
     "B-day",  // "Anniv."
@@ -2357,6 +2391,7 @@ static const char* const kI18n_en[] = {
     "Territory preview: ON",  // "Aperçu du territoire : ACTIVÉ"
     "Territory preview: OFF",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Device",  // "Appareil"
+    "Devices",  // "Appareils"
     "Appearance",  // "Apparence"
     "Tapping a slot switches it to the next item.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tapping an owned item sells it back for half its price. A sold item is also unequipped.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -2365,6 +2400,7 @@ static const char* const kI18n_en[] = {
     "Stop",  // "Arrêter"
     "Arts",  // "Arts"
     "Arts & Literature",  // "Arts & Littérature"
+    "Assistant",  // "Assistant"
     "Voice assistant",  // "Assistant vocal"
     "Pulls in nearby pickups",  // "Attire les bonus alentour"
     "Idle",  // "Au repos"
@@ -2474,12 +2510,14 @@ static const char* const kI18n_en[] = {
     "Classic",  // "Classique"
     "Air conditioning",  // "Climatisation"
     "Living room AC",  // "Climatisation Salon"
+    "Air con",  // "Clims"
     "Chest: %d souls",  // "Coffre : %d âmes"
     "Chest: %s!",  // "Coffre : %s !"
     "The Vault",  // "Coffre-fort"
     "Columns",  // "Colonnes"
     "Start",  // "Commencer"
     "How to win all 6 wedges",  // "Comment gagner ses 6 parts"
+    "Full",  // "Complètes"
     "Pick the teams, then set up the questions",  // "Composez les équipes, puis réglez les questions"
     "Only Player vs Tab games are counted.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Move confirmation: ON",  // "Confirmation du coup : ACTIVÉE"
@@ -2573,6 +2611,7 @@ static const char* const kI18n_en[] = {
     "Sunny",  // "Ensoleillé"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
+    "Essential",  // "Essentielles"
     "Eval %+.1f",  // "Eval %+.1f"
     "Correct — %s wins the game!",  // "Exact — %s remporte la partie !"
     "Expert",  // "Expert"
@@ -2655,6 +2694,7 @@ static const char* const kI18n_en[] = {
     "Never",  // "Jamais"
     "Jan",  // "Janv"
     "Thu",  // "Jeu"
+    "Games",  // "Jeux"
     "Playable",  // "Jouable"
     "Play",  // "Jouer"
     "Play!",  // "Jouer !"
@@ -2735,6 +2775,7 @@ static const char* const kI18n_en[] = {
     "Lode Runner 1983\nDig · climb · run",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Brightness",  // "Luminosité"
     "Light",  // "Lumière"
+    "Lights",  // "Lumières"
     "Mon",  // "Lun"
     "NOW",  // "MAINTENANT"
     "HOME",  // "MAISON"
@@ -2768,6 +2809,7 @@ static const char* const kI18n_en[] = {
     "Mix",  // "Mix"
     "Mixed",  // "Mixte"
     "Mode",  // "Mode"
+    "Charging mode",  // "Mode de charge"
     "Game mode",  // "Mode de jeu"
     "God mode: %s",  // "Mode dieu : %s"
     "Training mode",  // "Mode entraînement"
@@ -2879,6 +2921,8 @@ static const char* const kI18n_en[] = {
     "Room %d",  // "Pièce %d"
     "Room %d/%d",  // "Pièce %d/%d"
     "Room: %s",  // "Pièce : %s"
+    "Rooms",  // "Pièces"
+    "Plants",  // "Plantes"
     "Rain",  // "Pluie"
     "Rain in the next hour",  // "Pluie dans l'heure"
     "Sleet",  // "Pluie et neige"
@@ -3078,6 +3122,7 @@ static const char* const kI18n_en[] = {
     "ALL LEVELS CLEARED!",  // "TOUS LES NIVEAUX !"
     "CLEAR EVERYTHING?",  // "TOUT EFFACER ?"
     "Tab vs Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Size shown: %s",  // "Taille affichée : %s"
     "Board size  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Text size",  // "Taille du texte"
@@ -3094,6 +3139,7 @@ static const char* const kI18n_en[] = {
     "Time's up — the answer was: %s",  // "Temps écoulé — la réponse était : %s"
     "Time out — insufficient material to mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperature",  // "Température"
+    "Temperatures",  // "Températures"
     "Voltage",  // "Tension"
     "Test",  // "Tester"
     "Theme",  // "Thème"
@@ -3172,11 +3218,13 @@ static const char* const kI18n_en[] = {
     "Sees simple captures and answers them",  // "Voit les prises simples et les répond"
     "Shutter",  // "Volet"
     "Shutter stopped.",  // "Volet arrêté."
+    "Shutters",  // "Volets"
     "Constant volume",  // "Volume constant"
     "Your color",  // "Votre couleur"
     "You",  // "Vous"
     "You play %s",  // "Vous jouez %s"
     "Human: %s",  // "Vous jouez les %s"
+    "Eco Wi-Fi",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Left zone / right zone = flippers (hold). Bottom center = plunger.\nShake the tablet to nudge the ball — three nudges in a row and it's TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "August",  // "août"
@@ -3398,7 +3446,6 @@ static const char* const kI18n_de[] = {
     "8 Konsolen — immer nur eine",  // "8 consoles — une seule à la fois"
     "8 Level, 3 Leben, Power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 Felder/s",  // "8,0 cases/s"
-    "80 %: Laden stoppt bei 80 % und setzt bei 70 % wieder ein, für ein dauerhaft angeschlossenes Tablet.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "AN",  // "ACTIF"
     "LAMPE",  // "AMPOULE"
@@ -3420,6 +3467,7 @@ static const char* const kI18n_de[] = {
     "IP-Adresse",  // "Adresse IP"
     "Gegner",  // "Adversaire"
     "An — grobe Schätzung in Bauern",  // "Affichée — estimation en pions, indicative"
+    "Termine",  // "Agenda"
     "Agilität",  // "Agilité"
     "Bergmannsmagnet",  // "Aimant du mineur"
     "Kleiner Magnet",  // "Aimant mineur"
@@ -3428,6 +3476,7 @@ static const char* const kI18n_de[] = {
     "Unwetterwarnung Orange aktiv! Bleib vorsichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Unwetterwarnung Rot aktiv! Bleib vorsichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Warnungen",  // "Alertes"
+    "Gehe zu",  // "Aller à"
     "Einschalten",  // "Allumer"
     "Nur einschalten",  // "Allumer seulement"
     "An",  // "Allumé"
@@ -3438,6 +3487,7 @@ static const char* const kI18n_de[] = {
     "Wohnzimmerlampe",  // "Ampoule Salon"
     "Analyse…",  // "Analyse…"
     "Englisch 8x8",  // "Anglaises 8×8"
+    "Animationen",  // "Animations"
     "Eisenring",  // "Anneau de fer"
     "Roter Ring um den zuletzt gesetzten Stein",  // "Anneau rouge sur la dernière pierre posée"
     "Geb.",  // "Anniv."
@@ -3451,6 +3501,7 @@ static const char* const kI18n_de[] = {
     "Gebietsvorschau: AN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebietsvorschau: AUS",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Gerät",  // "Appareil"
+    "Geräte",  // "Appareils"
     "Aussehen",  // "Apparence"
     "Tippen auf einen Platz wechselt zum nächsten Gegenstand.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Ein Gegenstand im Besitz wird per Tippen zum halben Preis verkauft. Verkauftes wird auch abgelegt.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -3459,6 +3510,7 @@ static const char* const kI18n_de[] = {
     "Stopp",  // "Arrêter"
     "Kunst",  // "Arts"
     "Kunst & Literatur",  // "Arts & Littérature"
+    "Assistent",  // "Assistant"
     "Sprachassistent",  // "Assistant vocal"
     "Zieht Boni in der Nähe an",  // "Attire les bonus alentour"
     "Ruhend",  // "Au repos"
@@ -3477,7 +3529,7 @@ static const char* const kI18n_de[] = {
     "Noch keine Scores.\nStarte ein Spiel!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Keine Arbeit geplant",  // "Aucun travail de prévu"
     "Kein Austausch",  // "Aucun échange"
-    "Keiner",  // "Aucune"
+    "Keine",  // "Aucune"
     "Keine Warnungen",  // "Aucune alerte"
     "Kein laufendes Spiel",  // "Aucune partie en cours"
     "Kein gespeichertes Spiel",  // "Aucune partie sauvegardée"
@@ -3568,12 +3620,14 @@ static const char* const kI18n_de[] = {
     "Klassisch",  // "Classique"
     "Klimaanlage",  // "Climatisation"
     "Klima Wohnzimmer",  // "Climatisation Salon"
+    "Klima",  // "Clims"
     "Truhe: %d Seelen",  // "Coffre : %d âmes"
     "Truhe: %s!",  // "Coffre : %s !"
     "Tresor",  // "Coffre-fort"
     "Säulen",  // "Colonnes"
     "Starten",  // "Commencer"
     "So gewinnt man alle 6 Ecken",  // "Comment gagner ses 6 parts"
+    "Alle",  // "Complètes"
     "Teams bilden, dann die Fragen einstellen",  // "Composez les équipes, puis réglez les questions"
     "Nur der Modus Spieler gegen Tab wird gezählt.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Zugbestätigung: AN",  // "Confirmation du coup : ACTIVÉE"
@@ -3667,6 +3721,7 @@ static const char* const kI18n_de[] = {
     "Sonnig",  // "Ensoleillé"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
+    "Wesentliche",  // "Essentielles"
     "Eval %+.1f",  // "Eval %+.1f"
     "Richtig — %s gewinnt das Spiel!",  // "Exact — %s remporte la partie !"
     "Experte",  // "Expert"
@@ -3749,6 +3804,7 @@ static const char* const kI18n_de[] = {
     "Nie",  // "Jamais"
     "Jan",  // "Janv"
     "Do",  // "Jeu"
+    "Spiele",  // "Jeux"
     "Spielbar",  // "Jouable"
     "Spielen",  // "Jouer"
     "Los!",  // "Jouer !"
@@ -3829,6 +3885,7 @@ static const char* const kI18n_de[] = {
     "Lode Runner 1983\nGraben · klettern · fliehen",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Helligkeit",  // "Luminosité"
     "Licht",  // "Lumière"
+    "Lichter",  // "Lumières"
     "Mo",  // "Lun"
     "JETZT",  // "MAINTENANT"
     "HAUS",  // "MAISON"
@@ -3862,6 +3919,7 @@ static const char* const kI18n_de[] = {
     "Mix",  // "Mix"
     "Kombi",  // "Mixte"
     "Modus",  // "Mode"
+    "Lademodus",  // "Mode de charge"
     "Spielmodus",  // "Mode de jeu"
     "Gottmodus: %s",  // "Mode dieu : %s"
     "Trainingsmodus",  // "Mode entraînement"
@@ -3973,6 +4031,8 @@ static const char* const kI18n_de[] = {
     "Raum %d",  // "Pièce %d"
     "Raum %d/%d",  // "Pièce %d/%d"
     "Raum: %s",  // "Pièce : %s"
+    "Räume",  // "Pièces"
+    "Pflanzen",  // "Plantes"
     "Regen",  // "Pluie"
     "Regen in der nächsten Stunde",  // "Pluie dans l'heure"
     "Schneeregen",  // "Pluie et neige"
@@ -4172,6 +4232,7 @@ static const char* const kI18n_de[] = {
     "ALLE LEVEL GESCHAFFT!",  // "TOUS LES NIVEAUX !"
     "ALLES LÖSCHEN?",  // "TOUT EFFACER ?"
     "Tab gegen Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Angezeigte Größe: %s",  // "Taille affichée : %s"
     "Brettgröße  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Textgröße",  // "Taille du texte"
@@ -4188,6 +4249,7 @@ static const char* const kI18n_de[] = {
     "Zeit um — die Antwort war: %s",  // "Temps écoulé — la réponse était : %s"
     "Zeit ist um — zu wenig Material zum Mattsetzen",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatur",  // "Température"
+    "Temperaturen",  // "Températures"
     "Spannung",  // "Tension"
     "Testen",  // "Tester"
     "Design",  // "Thème"
@@ -4266,11 +4328,13 @@ static const char* const kI18n_de[] = {
     "Sieht einfache Schläge und antwortet",  // "Voit les prises simples et les répond"
     "Rollladen",  // "Volet"
     "Rollladen gestoppt.",  // "Volet arrêté."
+    "Rollläden",  // "Volets"
     "Feste Lautstärke",  // "Volume constant"
     "Deine Farbe",  // "Votre couleur"
     "Du",  // "Vous"
     "Du spielst %s",  // "Vous jouez %s"
     "Mensch: %s",  // "Vous jouez les %s"
+    "WLAN sparen",  // "Wi-Fi éco"
     "Zickzack",  // "Zigzag"
     "Linke / rechte Zone = Flipper (halten). Unten Mitte = Abschuss.\nTablet schütteln, um den Ball anzustoßen — dreimal zu viel und es gibt TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "August",  // "août"
@@ -4492,7 +4556,6 @@ static const char* const kI18n_nl[] = {
     "8 consoles — één tegelijk",  // "8 consoles — une seule à la fois"
     "8 levels, 3 levens, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 vakjes/s",  // "8,0 cases/s"
-    "80 %: laden stopt bij 80 % en hervat bij 70 %, voor een tablet die altijd aan de lader hangt.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "AAN",  // "ACTIF"
     "LAMP",  // "AMPOULE"
@@ -4514,6 +4577,7 @@ static const char* const kI18n_nl[] = {
     "IP-adres",  // "Adresse IP"
     "Tegenstander",  // "Adversaire"
     "Getoond — ruwe schatting in pionnen",  // "Affichée — estimation en pions, indicative"
+    "Planning",  // "Agenda"
     "Agiliteit",  // "Agilité"
     "Mijnwerkersmagneet",  // "Aimant du mineur"
     "Kleine magneet",  // "Aimant mineur"
@@ -4522,6 +4586,7 @@ static const char* const kI18n_nl[] = {
     "Weeralarm code oranje! Wees voorzichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Weeralarm code rood! Wees voorzichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Meldingen",  // "Alertes"
+    "Ga naar",  // "Aller à"
     "Aanzetten",  // "Allumer"
     "Alleen aanzetten",  // "Allumer seulement"
     "Aan",  // "Allumé"
@@ -4532,6 +4597,7 @@ static const char* const kI18n_nl[] = {
     "Lamp woonkamer",  // "Ampoule Salon"
     "Analyse…",  // "Analyse…"
     "Engels 8x8",  // "Anglaises 8×8"
+    "Animaties",  // "Animations"
     "IJzeren ring",  // "Anneau de fer"
     "Rode ring om de laatst gespeelde steen",  // "Anneau rouge sur la dernière pierre posée"
     "Jarig",  // "Anniv."
@@ -4545,6 +4611,7 @@ static const char* const kI18n_nl[] = {
     "Gebiedsweergave: AAN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebiedsweergave: UIT",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Apparaat",  // "Appareil"
+    "Apparaten",  // "Appareils"
     "Weergave",  // "Apparence"
     "Tik op een vak om naar het volgende voorwerp te wisselen.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tik op een voorwerp in je bezit om het voor de halve prijs te verkopen. Een verkocht voorwerp gaat ook uit je uitrusting.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -4553,6 +4620,7 @@ static const char* const kI18n_nl[] = {
     "Stop",  // "Arrêter"
     "Kunst",  // "Arts"
     "Kunst & Literatuur",  // "Arts & Littérature"
+    "Assistent",  // "Assistant"
     "Spraakassistent",  // "Assistant vocal"
     "Trekt nabije bonussen aan",  // "Attire les bonus alentour"
     "In rust",  // "Au repos"
@@ -4662,12 +4730,14 @@ static const char* const kI18n_nl[] = {
     "Klassiek",  // "Classique"
     "Airco",  // "Climatisation"
     "Airco woonkamer",  // "Climatisation Salon"
+    "Airco's",  // "Clims"
     "Kist: %d zielen",  // "Coffre : %d âmes"
     "Kist: %s!",  // "Coffre : %s !"
     "De kluis",  // "Coffre-fort"
     "Zuilen",  // "Colonnes"
     "Starten",  // "Commencer"
     "Zo win je alle 6 partjes",  // "Comment gagner ses 6 parts"
+    "Volledig",  // "Complètes"
     "Stel de teams samen en kies de vragen",  // "Composez les équipes, puis réglez les questions"
     "Telt alleen partijen Speler tegen Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Zetbevestiging: AAN",  // "Confirmation du coup : ACTIVÉE"
@@ -4761,6 +4831,7 @@ static const char* const kI18n_nl[] = {
     "Zonnig",  // "Ensoleillé"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
+    "Essentieel",  // "Essentielles"
     "Eval %+.1f",  // "Eval %+.1f"
     "Goed — %s wint het spel!",  // "Exact — %s remporte la partie !"
     "Expert",  // "Expert"
@@ -4843,6 +4914,7 @@ static const char* const kI18n_nl[] = {
     "Nooit",  // "Jamais"
     "Jan",  // "Janv"
     "Do",  // "Jeu"
+    "Spellen",  // "Jeux"
     "Speelbaar",  // "Jouable"
     "Spelen",  // "Jouer"
     "Spelen!",  // "Jouer !"
@@ -4923,6 +4995,7 @@ static const char* const kI18n_nl[] = {
     "Lode Runner 1983\nGraaf · klim · vlucht",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Helderheid",  // "Luminosité"
     "Licht",  // "Lumière"
+    "Lampen",  // "Lumières"
     "Ma",  // "Lun"
     "NU",  // "MAINTENANT"
     "HUIS",  // "MAISON"
@@ -4956,6 +5029,7 @@ static const char* const kI18n_nl[] = {
     "Mix",  // "Mix"
     "Mix",  // "Mixte"
     "Modus",  // "Mode"
+    "Laadmodus",  // "Mode de charge"
     "Spelmodus",  // "Mode de jeu"
     "Godmodus: %s",  // "Mode dieu : %s"
     "Oefenmodus",  // "Mode entraînement"
@@ -5067,6 +5141,8 @@ static const char* const kI18n_nl[] = {
     "Kamer %d",  // "Pièce %d"
     "Kamer %d/%d",  // "Pièce %d/%d"
     "Kamer: %s",  // "Pièce : %s"
+    "Kamers",  // "Pièces"
+    "Planten",  // "Plantes"
     "Regen",  // "Pluie"
     "Regen het komende uur",  // "Pluie dans l'heure"
     "Natte sneeuw",  // "Pluie et neige"
@@ -5266,6 +5342,7 @@ static const char* const kI18n_nl[] = {
     "ALLE LEVELS GEHAALD!",  // "TOUS LES NIVEAUX !"
     "ALLES WISSEN?",  // "TOUT EFFACER ?"
     "Tab tegen Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Getoonde grootte: %s",  // "Taille affichée : %s"
     "Gobangrootte  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Tekstgrootte",  // "Taille du texte"
@@ -5282,6 +5359,7 @@ static const char* const kI18n_nl[] = {
     "Tijd om — het antwoord was: %s",  // "Temps écoulé — la réponse était : %s"
     "Tijd om — te weinig materiaal voor mat",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatuur",  // "Température"
+    "Temperaturen",  // "Températures"
     "Spanning",  // "Tension"
     "Testen",  // "Tester"
     "Thema",  // "Thème"
@@ -5360,11 +5438,13 @@ static const char* const kI18n_nl[] = {
     "Ziet simpele slagen en beantwoordt ze",  // "Voit les prises simples et les répond"
     "Rolluik",  // "Volet"
     "Rolluik gestopt.",  // "Volet arrêté."
+    "Rolluiken",  // "Volets"
     "Vast volume",  // "Volume constant"
     "Jouw kleur",  // "Votre couleur"
     "Jij",  // "Vous"
     "Jij speelt %s",  // "Vous jouez %s"
     "Mens: %s",  // "Vous jouez les %s"
+    "Zuinige wifi",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Linkerzone / rechterzone = flippers (vasthouden). Midden onder = plunjer.\nSchud de tablet om de bal te duwen — drie keer te veel op rij en het is TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "augustus",  // "août"
@@ -5586,7 +5666,6 @@ static const char* const kI18n_es[] = {
     "8 consolas — una a la vez",  // "8 consoles — une seule à la fois"
     "8 niveles, 3 vidas, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 casillas/s",  // "8,0 cases/s"
-    "80 %: la carga se detiene al 80 % y se reanuda al 70 %, para una tableta siempre enchufada.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "ACTIVO",  // "ACTIF"
     "LÁMPARA",  // "AMPOULE"
@@ -5608,6 +5687,7 @@ static const char* const kI18n_es[] = {
     "Dirección IP",  // "Adresse IP"
     "Rival",  // "Adversaire"
     "Visible — estimación en peones, orientativa",  // "Affichée — estimation en pions, indicative"
+    "Agenda",  // "Agenda"
     "Agilidad",  // "Agilité"
     "Imán del minero",  // "Aimant du mineur"
     "Imán menor",  // "Aimant mineur"
@@ -5616,6 +5696,7 @@ static const char* const kI18n_es[] = {
     "¡Alerta meteorológica naranja! Ten cuidado.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "¡Alerta meteorológica roja! Ten cuidado.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Alertas",  // "Alertes"
+    "Ir a",  // "Aller à"
     "Encender",  // "Allumer"
     "Solo encender",  // "Allumer seulement"
     "ON",  // "Allumé"
@@ -5626,6 +5707,7 @@ static const char* const kI18n_es[] = {
     "Lámpara salón",  // "Ampoule Salon"
     "Analizando…",  // "Analyse…"
     "Inglesas 8x8",  // "Anglaises 8×8"
+    "Animaciones",  // "Animations"
     "Anillo de hierro",  // "Anneau de fer"
     "Anillo rojo en la última piedra jugada",  // "Anneau rouge sur la dernière pierre posée"
     "Cumple",  // "Anniv."
@@ -5639,6 +5721,7 @@ static const char* const kI18n_es[] = {
     "Vista del territorio: SÍ",  // "Aperçu du territoire : ACTIVÉ"
     "Vista del territorio: NO",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
+    "Aparatos",  // "Appareils"
     "Aspecto",  // "Apparence"
     "Tocar una ranura la cambia al objeto siguiente.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocar un objeto que ya tienes lo vende a mitad de precio. Un objeto vendido también se quita del equipo.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -5647,6 +5730,7 @@ static const char* const kI18n_es[] = {
     "Detener",  // "Arrêter"
     "Arte",  // "Arts"
     "Arte y Literatura",  // "Arts & Littérature"
+    "Asistente",  // "Assistant"
     "Asistente de voz",  // "Assistant vocal"
     "Atrae los bonus cercanos",  // "Attire les bonus alentour"
     "En reposo",  // "Au repos"
@@ -5756,12 +5840,14 @@ static const char* const kI18n_es[] = {
     "Clásico",  // "Classique"
     "Climatización",  // "Climatisation"
     "Climatización salón",  // "Climatisation Salon"
+    "Climas",  // "Clims"
     "Cofre: %d almas",  // "Coffre : %d âmes"
     "¡Cofre: %s!",  // "Coffre : %s !"
     "Caja fuerte",  // "Coffre-fort"
     "Columnas",  // "Colonnes"
     "Empezar",  // "Commencer"
     "Cómo ganar los 6 quesitos",  // "Comment gagner ses 6 parts"
+    "Completas",  // "Complètes"
     "Forma los equipos y luego ajusta las preguntas",  // "Composez les équipes, puis réglez les questions"
     "Solo cuenta el modo Jugador contra Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Confirmar jugada: SÍ",  // "Confirmation du coup : ACTIVÉE"
@@ -5855,6 +5941,7 @@ static const char* const kI18n_es[] = {
     "Soleado",  // "Ensoleillé"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
+    "Esenciales",  // "Essentielles"
     "Eval %+.1f",  // "Eval %+.1f"
     "Correcto — ¡%s gana la partida!",  // "Exact — %s remporte la partie !"
     "Experto",  // "Expert"
@@ -5937,6 +6024,7 @@ static const char* const kI18n_es[] = {
     "Nunca",  // "Jamais"
     "Ene",  // "Janv"
     "Jue",  // "Jeu"
+    "Juegos",  // "Jeux"
     "Jugable",  // "Jouable"
     "Jugar",  // "Jouer"
     "¡Jugar!",  // "Jouer !"
@@ -6017,6 +6105,7 @@ static const char* const kI18n_es[] = {
     "Lode Runner 1983\nCava · trepa · huye",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Brillo",  // "Luminosité"
     "Luz",  // "Lumière"
+    "Luces",  // "Lumières"
     "Lun",  // "Lun"
     "AHORA",  // "MAINTENANT"
     "CASA",  // "MAISON"
@@ -6050,6 +6139,7 @@ static const char* const kI18n_es[] = {
     "Mix",  // "Mix"
     "Mixto",  // "Mixte"
     "Modo",  // "Mode"
+    "Modo de carga",  // "Mode de charge"
     "Modo de juego",  // "Mode de jeu"
     "Modo dios: %s",  // "Mode dieu : %s"
     "Modo entrenamiento",  // "Mode entraînement"
@@ -6161,6 +6251,8 @@ static const char* const kI18n_es[] = {
     "Estancia %d",  // "Pièce %d"
     "Estancia %d/%d",  // "Pièce %d/%d"
     "Estancia: %s",  // "Pièce : %s"
+    "Estancias",  // "Pièces"
+    "Plantas",  // "Plantes"
     "Lluvia",  // "Pluie"
     "Lluvia en la próxima hora",  // "Pluie dans l'heure"
     "Aguanieve",  // "Pluie et neige"
@@ -6360,6 +6452,7 @@ static const char* const kI18n_es[] = {
     "¡TODOS LOS NIVELES!",  // "TOUS LES NIVEAUX !"
     "¿BORRAR TODO?",  // "TOUT EFFACER ?"
     "Tab contra Tab",  // "Tab contre Tab"
+    "Tableta",  // "Tablette"
     "Tamaño mostrado: %s",  // "Taille affichée : %s"
     "Tamaño del goban  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Tamaño del texto",  // "Taille du texte"
@@ -6376,6 +6469,7 @@ static const char* const kI18n_es[] = {
     "Tiempo agotado — la respuesta era: %s",  // "Temps écoulé — la réponse était : %s"
     "Tiempo agotado — material insuficiente para dar mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
+    "Temperaturas",  // "Températures"
     "Tensión",  // "Tension"
     "Probar",  // "Tester"
     "Tema",  // "Thème"
@@ -6454,11 +6548,13 @@ static const char* const kI18n_es[] = {
     "Ve las capturas simples y las responde",  // "Voit les prises simples et les répond"
     "Persiana",  // "Volet"
     "Persiana detenida.",  // "Volet arrêté."
+    "Persianas",  // "Volets"
     "Volumen constante",  // "Volume constant"
     "Tu color",  // "Votre couleur"
     "Tú",  // "Vous"
     "Juegas: %s",  // "Vous jouez %s"
     "Juegas con las %s",  // "Vous jouez les %s"
+    "Wi-Fi eco",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Zona izquierda / derecha = paletas (mantener). Abajo al centro = lanzador.\nSacude la tableta para empujar la bola — tres abusos seguidos y es TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "agosto",  // "août"
@@ -6680,7 +6776,6 @@ static const char* const kI18n_it[] = {
     "8 console — una alla volta",  // "8 consoles — une seule à la fois"
     "8 livelli, 3 vite, power-up",  // "8 niveaux, 3 vies, power-ups"
     "8,0 caselle/s",  // "8,0 cases/s"
-    "80 %: la carica si ferma all'80 % e riprende al 70 %, per un tablet sempre collegato.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "ATTIVA",  // "ACTIF"
     "LUCI",  // "AMPOULE"
@@ -6702,6 +6797,7 @@ static const char* const kI18n_it[] = {
     "Indirizzo IP",  // "Adresse IP"
     "Avversario",  // "Adversaire"
     "Mostrata — stima indicativa in pedoni",  // "Affichée — estimation en pions, indicative"
+    "Agenda",  // "Agenda"
     "Agilità",  // "Agilité"
     "Magnete del minatore",  // "Aimant du mineur"
     "Magnete minore",  // "Aimant mineur"
@@ -6710,6 +6806,7 @@ static const char* const kI18n_it[] = {
     "Allerta meteo arancione in corso! Fai attenzione.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Allerta meteo rossa in corso! Fai attenzione.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Avvisi",  // "Alertes"
+    "Vai a",  // "Aller à"
     "Accendi",  // "Allumer"
     "Solo accensione",  // "Allumer seulement"
     "Acceso",  // "Allumé"
@@ -6720,6 +6817,7 @@ static const char* const kI18n_it[] = {
     "Lampadina soggiorno",  // "Ampoule Salon"
     "Analisi…",  // "Analyse…"
     "Inglese 8x8",  // "Anglaises 8×8"
+    "Animazioni",  // "Animations"
     "Anello di ferro",  // "Anneau de fer"
     "Anello rosso sull'ultima pietra giocata",  // "Anneau rouge sur la dernière pierre posée"
     "Compl.",  // "Anniv."
@@ -6733,6 +6831,7 @@ static const char* const kI18n_it[] = {
     "Anteprima territorio: ATTIVA",  // "Aperçu du territoire : ACTIVÉ"
     "Anteprima territorio: DISATTIVATA",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
+    "Dispositivi",  // "Appareils"
     "Aspetto",  // "Apparence"
     "Tocca uno slot per passare all'oggetto successivo.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocca un oggetto posseduto per rivenderlo a metà prezzo. Un oggetto rivenduto viene anche tolto dall'equipaggiamento.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -6741,6 +6840,7 @@ static const char* const kI18n_it[] = {
     "Ferma",  // "Arrêter"
     "Arte",  // "Arts"
     "Arte & Letteratura",  // "Arts & Littérature"
+    "Assistente",  // "Assistant"
     "Assistente vocale",  // "Assistant vocal"
     "Attira i bonus vicini",  // "Attire les bonus alentour"
     "A riposo",  // "Au repos"
@@ -6850,12 +6950,14 @@ static const char* const kI18n_it[] = {
     "Classica",  // "Classique"
     "Climatizzatore",  // "Climatisation"
     "Clima soggiorno",  // "Climatisation Salon"
+    "Clima",  // "Clims"
     "Scrigno: %d anime",  // "Coffre : %d âmes"
     "Scrigno: %s!",  // "Coffre : %s !"
     "Cassaforte",  // "Coffre-fort"
     "Colonne",  // "Colonnes"
     "Inizia",  // "Commencer"
     "Come vincere i 6 spicchi",  // "Comment gagner ses 6 parts"
+    "Complete",  // "Complètes"
     "Forma le squadre, poi imposta le domande",  // "Composez les équipes, puis réglez les questions"
     "Conta solo la modalità Giocatore vs Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Conferma mossa: ATTIVA",  // "Confirmation du coup : ACTIVÉE"
@@ -6949,6 +7051,7 @@ static const char* const kI18n_it[] = {
     "Soleggiato",  // "Ensoleillé"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
+    "Essenziali",  // "Essentielles"
     "Val %+.1f",  // "Eval %+.1f"
     "Esatto — %s vince la partita!",  // "Exact — %s remporte la partie !"
     "Esperto",  // "Expert"
@@ -7031,6 +7134,7 @@ static const char* const kI18n_it[] = {
     "Mai",  // "Jamais"
     "Gen",  // "Janv"
     "Gio",  // "Jeu"
+    "Giochi",  // "Jeux"
     "Giocabile",  // "Jouable"
     "Gioca",  // "Jouer"
     "Gioca!",  // "Jouer !"
@@ -7111,6 +7215,7 @@ static const char* const kI18n_it[] = {
     "Lode Runner 1983\nScava · sali · fuggi",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Luminosità",  // "Luminosité"
     "Luce",  // "Lumière"
+    "Luci",  // "Lumières"
     "Lun",  // "Lun"
     "ORA",  // "MAINTENANT"
     "CASA",  // "MAISON"
@@ -7144,6 +7249,7 @@ static const char* const kI18n_it[] = {
     "Mix",  // "Mix"
     "Misto",  // "Mixte"
     "Modalità",  // "Mode"
+    "Modalità di carica",  // "Mode de charge"
     "Modalità",  // "Mode de jeu"
     "Modalità Dio: %s",  // "Mode dieu : %s"
     "Modalità allenamento",  // "Mode entraînement"
@@ -7255,6 +7361,8 @@ static const char* const kI18n_it[] = {
     "Stanza %d",  // "Pièce %d"
     "Stanza %d/%d",  // "Pièce %d/%d"
     "Stanza: %s",  // "Pièce : %s"
+    "Stanze",  // "Pièces"
+    "Piante",  // "Plantes"
     "Pioggia",  // "Pluie"
     "Pioggia nella prossima ora",  // "Pluie dans l'heure"
     "Pioggia e neve",  // "Pluie et neige"
@@ -7454,6 +7562,7 @@ static const char* const kI18n_it[] = {
     "TUTTI I LIVELLI!",  // "TOUS LES NIVEAUX !"
     "CANCELLARE TUTTO?",  // "TOUT EFFACER ?"
     "Tab vs Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Goban mostrato: %s",  // "Taille affichée : %s"
     "Goban  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Dimensione testo",  // "Taille du texte"
@@ -7470,6 +7579,7 @@ static const char* const kI18n_it[] = {
     "Tempo scaduto — la risposta era: %s",  // "Temps écoulé — la réponse était : %s"
     "Tempo scaduto — materiale insufficiente",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
+    "Temperature",  // "Températures"
     "Tensione",  // "Tension"
     "Prova",  // "Tester"
     "Tema",  // "Thème"
@@ -7548,11 +7658,13 @@ static const char* const kI18n_it[] = {
     "Vede le prese semplici e risponde",  // "Voit les prises simples et les répond"
     "Tapparella",  // "Volet"
     "Tapparella fermata.",  // "Volet arrêté."
+    "Tapparelle",  // "Volets"
     "Volume costante",  // "Volume constant"
     "Il tuo colore",  // "Votre couleur"
     "Tu",  // "Vous"
     "Giochi col %s",  // "Vous jouez %s"
     "Giochi col %s",  // "Vous jouez les %s"
+    "Wi-Fi eco",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Zona sinistra / destra = flipper (tieni premuto). In basso al centro = lanciatore.\nScuoti il tablet per spingere la palla — tre volte di troppo di fila ed è TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "agosto",  // "août"
@@ -7774,7 +7886,6 @@ static const char* const kI18n_tr[] = {
     "8 konsol — aynı anda yalnız biri",  // "8 consoles — une seule à la fois"
     "8 seviye, 3 can, güçlendirme",  // "8 niveaux, 3 vies, power-ups"
     "8,0 kare/sn",  // "8,0 cases/s"
-    "%80: şarj %80'de durur ve %70'te yeniden başlar; sürekli prize takılı bir tablet için.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 dk",  // "9 min"
     "AÇIK",  // "ACTIF"
     "AMPUL",  // "AMPOULE"
@@ -7796,6 +7907,7 @@ static const char* const kI18n_tr[] = {
     "IP adresi",  // "Adresse IP"
     "Rakip",  // "Adversaire"
     "Açık — piyon cinsinden tahmin, yaklaşık",  // "Affichée — estimation en pions, indicative"
+    "Ajanda",  // "Agenda"
     "Çeviklik",  // "Agilité"
     "Madenci Mıknatısı",  // "Aimant du mineur"
     "Küçük Mıknatıs",  // "Aimant mineur"
@@ -7804,6 +7916,7 @@ static const char* const kI18n_tr[] = {
     "Turuncu hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Kırmızı hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Uyarılar",  // "Alertes"
+    "Git",  // "Aller à"
     "Aç",  // "Allumer"
     "Yalnızca aç",  // "Allumer seulement"
     "Açık",  // "Allumé"
@@ -7814,6 +7927,7 @@ static const char* const kI18n_tr[] = {
     "Salon ampulü",  // "Ampoule Salon"
     "Analiz…",  // "Analyse…"
     "İngiliz 8x8",  // "Anglaises 8×8"
+    "Animasyonlar",  // "Animations"
     "Demir Yüzük",  // "Anneau de fer"
     "Son konan taşta kırmızı halka",  // "Anneau rouge sur la dernière pierre posée"
     "Doğum günü",  // "Anniv."
@@ -7827,6 +7941,7 @@ static const char* const kI18n_tr[] = {
     "Alan önizlemesi: AÇIK",  // "Aperçu du territoire : ACTIVÉ"
     "Alan önizlemesi: KAPALI",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Cihaz",  // "Appareil"
+    "Cihazlar",  // "Appareils"
     "Görünüm",  // "Apparence"
     "Bir yuvaya dokunmak onu sonraki eşyaya geçirir.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Sahip olunan bir eşyaya dokunmak onu fiyatının yarısına geri satar. Satılan eşya teçhizattan da çıkarılır.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -7835,6 +7950,7 @@ static const char* const kI18n_tr[] = {
     "Durdur",  // "Arrêter"
     "Sanat",  // "Arts"
     "Sanat & Edebiyat",  // "Arts & Littérature"
+    "Asistan",  // "Assistant"
     "Sesli asistan",  // "Assistant vocal"
     "Yakındaki bonusları çeker",  // "Attire les bonus alentour"
     "Beklemede",  // "Au repos"
@@ -7853,7 +7969,7 @@ static const char* const kI18n_tr[] = {
     "Henüz skor yok.\nBir oyun başlat!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Planlı iş yok",  // "Aucun travail de prévu"
     "Akış yok",  // "Aucun échange"
-    "Yok",  // "Aucune"
+    "Hiçbiri",  // "Aucune"
     "Uyarı yok",  // "Aucune alerte"
     "Devam eden oyun yok",  // "Aucune partie en cours"
     "Kayıtlı oyun yok",  // "Aucune partie sauvegardée"
@@ -7944,12 +8060,14 @@ static const char* const kI18n_tr[] = {
     "Klasik",  // "Classique"
     "Klima",  // "Climatisation"
     "Salon klima",  // "Climatisation Salon"
+    "Klimalar",  // "Clims"
     "Sandık: %d ruh",  // "Coffre : %d âmes"
     "Sandık: %s!",  // "Coffre : %s !"
     "Kasa",  // "Coffre-fort"
     "Sütunlar",  // "Colonnes"
     "Başla",  // "Commencer"
     "6 dilim nasıl kazanılır",  // "Comment gagner ses 6 parts"
+    "Tümü",  // "Complètes"
     "Takımları kur, sonra soruları ayarla",  // "Composez les équipes, puis réglez les questions"
     "Yalnız Oyuncu - Tab modu sayılır.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Hamle onayı: AÇIK",  // "Confirmation du coup : ACTIVÉE"
@@ -8043,6 +8161,7 @@ static const char* const kI18n_tr[] = {
     "Güneşli",  // "Ensoleillé"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
+    "Temel",  // "Essentielles"
     "Değ. %+.1f",  // "Eval %+.1f"
     "Doğru — oyunu %s kazandı!",  // "Exact — %s remporte la partie !"
     "Uzman",  // "Expert"
@@ -8125,6 +8244,7 @@ static const char* const kI18n_tr[] = {
     "Asla",  // "Jamais"
     "Oca",  // "Janv"
     "Per",  // "Jeu"
+    "Oyunlar",  // "Jeux"
     "Oynanabilir",  // "Jouable"
     "Oyna",  // "Jouer"
     "Oyna!",  // "Jouer !"
@@ -8205,6 +8325,7 @@ static const char* const kI18n_tr[] = {
     "Lode Runner 1983\nKaz · tırman · kaç",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Parlaklık",  // "Luminosité"
     "Işık",  // "Lumière"
+    "Işıklar",  // "Lumières"
     "Pzt",  // "Lun"
     "ŞİMDİ",  // "MAINTENANT"
     "EV",  // "MAISON"
@@ -8238,6 +8359,7 @@ static const char* const kI18n_tr[] = {
     "Karma",  // "Mix"
     "Karma",  // "Mixte"
     "Mod",  // "Mode"
+    "Şarj modu",  // "Mode de charge"
     "Oyun modu",  // "Mode de jeu"
     "Tanrı modu: %s",  // "Mode dieu : %s"
     "Antrenman modu",  // "Mode entraînement"
@@ -8349,6 +8471,8 @@ static const char* const kI18n_tr[] = {
     "Oda %d",  // "Pièce %d"
     "Oda %d/%d",  // "Pièce %d/%d"
     "Oda: %s",  // "Pièce : %s"
+    "Odalar",  // "Pièces"
+    "Bitkiler",  // "Plantes"
     "Yağmur",  // "Pluie"
     "Önümüzdeki saatte yağmur",  // "Pluie dans l'heure"
     "Karla karışık yağmur",  // "Pluie et neige"
@@ -8548,6 +8672,7 @@ static const char* const kI18n_tr[] = {
     "TÜM SEVİYELER!",  // "TOUS LES NIVEAUX !"
     "HEPSİ SİLİNSİN Mİ?",  // "TOUT EFFACER ?"
     "Tab - Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Gösterilen boyut: %s",  // "Taille affichée : %s"
     "Tahta boyutu  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Metin boyutu",  // "Taille du texte"
@@ -8564,6 +8689,7 @@ static const char* const kI18n_tr[] = {
     "Süre doldu — yanıt: %s",  // "Temps écoulé — la réponse était : %s"
     "Süre doldu — mat için yetersiz materyal",  // "Temps écoulé — matériel insuffisant pour mater"
     "Sıcaklık",  // "Température"
+    "Sıcaklıklar",  // "Températures"
     "Gerilim",  // "Tension"
     "Dene",  // "Tester"
     "Tema",  // "Thème"
@@ -8642,11 +8768,13 @@ static const char* const kI18n_tr[] = {
     "Basit almaları görür, karşılık verir",  // "Voit les prises simples et les répond"
     "Panjur",  // "Volet"
     "Panjur durdu.",  // "Volet arrêté."
+    "Panjurlar",  // "Volets"
     "Sabit ses",  // "Volume constant"
     "Rengin",  // "Votre couleur"
     "Sen",  // "Vous"
     "Oynadığın taş: %s",  // "Vous jouez %s"
     "Sen oynuyorsun: %s",  // "Vous jouez les %s"
+    "Eko Wi-Fi",  // "Wi-Fi éco"
     "Zikzak",  // "Zigzag"
     "Sol bölge / sağ bölge = flipperler (basılı tut). Alt orta = fırlatıcı.\nBilyeyi itmek için tableti salla — üst üste üç kez abartırsan TILT olur.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "Ağustos",  // "août"

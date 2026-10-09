@@ -22,6 +22,10 @@
 #include <esp_heap_caps.h>
 #include <esp_hosted.h>
 #include <esp_hosted_host_fw_ver.h>
+#ifdef USE_WIFI  // la vraie tablette ; pas le rendu hors tablette (pas de Wi-Fi)
+#include <esp_wifi.h>
+#include "esphome/components/wifi/wifi_component.h"
+#endif
 #if defined(ESP_PLATFORM)
 #include <esp_ipc.h>
 #include <esp_timer.h>
@@ -268,4 +272,46 @@ bool read_c6_firmware_version(char* out, size_t n) {
     ESP_LOGI("tab5.c6", "ESP-Hosted : C6 en %s, bibliotheque du P4 en %d.%d.%d", out,
              ESP_HOSTED_VERSION_MAJOR_1, ESP_HOSTED_VERSION_MINOR_1, ESP_HOSTED_VERSION_PATCH_1);
     return true;
+}
+
+// =============================================================================
+// Wi-Fi éco (09/10/2026, demande d'Axel ; ADR-0045) — économie légère du Wi-Fi à chaud
+// =============================================================================
+// esp_wifi_set_ps() passe par ESP-Hosted : esp_wifi_remote_set_ps → rpc_wifi_set_ps,
+// requête SYNCHRONE au C6, qui appelle esp_wifi_set_ps chez lui (esp_hosted 2.12.12 du
+// build : host/api/src/esp_wifi_weak.c, slave/main/slave_wifi_std.c). Une requête sans
+// réponse bloque la boucle jusqu'à 5 s (DEFAULT_RPC_RSP_TIMEOUT) : on n'en envoie qu'une
+// par décision et par connexion. ESPHome envoie déjà la même requête (mode NONE) à chaque
+// démarrage de la station (WIFI_EVENT_STA_START, wifi_component_esp_idf.cpp).
+// set_power_save_mode() range le mode chez ESPHome, qui le réapplique alors lui-même à
+// ce démarrage : la décision survit à une reconnexion complète.
+namespace {
+// Décision envoyée au C6 (1 éco, 0 normal ; −1 : à renvoyer). 0 au départ : c'est le
+// mode qu'ESPHome pose au démarrage (power_save_mode: NONE).
+int8_t s_wifi_eco_envoye = 0;
+}  // namespace
+
+void wifi_eco_appliquer(bool eco) {
+#ifdef USE_WIFI
+    auto* const w = esphome::wifi::global_wifi_component;
+    if (w == nullptr) return;
+    w->set_power_save_mode(eco ? esphome::wifi::WIFI_POWER_SAVE_LIGHT : esphome::wifi::WIFI_POWER_SAVE_NONE);
+    if (!w->is_connected()) {
+        // Déconnecté en éco : renvoyée une fois reconnecté (le C6 a pu repartir).
+        if (s_wifi_eco_envoye == 1) s_wifi_eco_envoye = -1;
+        return;
+    }
+    const int8_t voulu = eco ? 1 : 0;
+    if (voulu == s_wifi_eco_envoye) return;
+    s_wifi_eco_envoye = voulu;  // une seule tentative, réussie ou non
+    const esp_err_t err = esp_wifi_set_ps(eco ? WIFI_PS_MIN_MODEM : WIFI_PS_NONE);
+    // [AI-DEBUG] « Le Wi-Fi éco marche-t-il ? » : ces lignes le disent (tag tab5.wifi).
+    if (err == ESP_OK) {
+        ESP_LOGI("tab5.wifi", "Wi-Fi eco %s", eco ? "actif (economie legere, WIFI_PS_MIN_MODEM)" : "coupe");
+    } else {
+        ESP_LOGW("tab5.wifi", "Wi-Fi eco %s refuse par le C6 : %s", eco ? "actif" : "coupe", esp_err_to_name(err));
+    }
+#else
+    (void) eco;  // rendu hors tablette : pas de Wi-Fi
+#endif
 }

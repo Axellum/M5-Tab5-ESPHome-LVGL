@@ -51,5 +51,6 @@ obj:
           - label: { id: "lbl_ha_alert_${n}", text: "", styles: [style_police_date, style_bandeau_text_soft] }
           - label: { id: "lbl_ha_alert_cpt_${n}", text: "", hidden: true, styles: style_bandeau_text_dim }
     # Bouton du panneau (central_bouton.yaml, comme les autres panneaux de l'accueil) : un
-    # tap acquitte cette alerte, un appui long ouvre l'historique des alertes (lot 4).
+    # tap acquitte cette alerte, un appui long ouvre la roue de navigation (ADR-0042), dont
+    # le premier bouton est l'historique des alertes (lot 4).
     - !include { file: central_bouton.yaml, vars: { id: "btn_ha_alert_tap_${n}", appui: [ script.execute: { id: tab5_dismiss_ha_alert, slot: "${n}" } ] } }

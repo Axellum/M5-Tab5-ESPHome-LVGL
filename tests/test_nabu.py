@@ -408,8 +408,9 @@ def test_cle_defil_du_blueprint():
 def test_tap_des_heures_dans_le_blueprint():
     entrees = _entrees()
     options = [o["value"] for o in entrees["geste_heures_court"]["selector"]["select"]["options"]]
-    # « meteo » (popup Météo, ADR-0043) est venu après lui : un code de plus va à la fin.
-    assert options[options.index("nabu_suivant"):] == ["nabu_suivant", "meteo"]
+    # À la fin de la liste le 09/10/2026 (index 17 en NVS) ; la roue de navigation
+    # (ADR-0042) a ajouté ses codes après lui.
+    assert options[options.index("ecoute") + 1] == "nabu_suivant"
     assert "panneau Ok Nabu" in entrees["geste_heures_court"]["description"]
 
 

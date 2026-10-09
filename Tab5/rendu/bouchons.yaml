@@ -157,6 +157,27 @@ select:
     initial_option: "100 %"
     on_value:
       - script.execute: tab5_reglages_sync_ui
+  # « Tab5 Mode de charge » et « Tab5 Wi-Fi éco » (09/10/2026, ADR-0045) : même chose
+  # (chargeur et Wi-Fi absents du rendu), mêmes options dans le même ordre.
+  - platform: template
+    id: tab5_mode_charge
+    optimistic: true
+    options:
+      - "Classique"
+      - "Rapide"
+    initial_option: "Classique"
+    on_value:
+      - script.execute: tab5_reglages_sync_ui
+  - platform: template
+    id: tab5_wifi_eco
+    optimistic: true
+    options:
+      - "Jamais"
+      - "Sur batterie"
+      - "Toujours"
+    initial_option: "Jamais"
+    on_value:
+      - script.execute: tab5_reglages_sync_ui
 
 # Capture de l'écran, appelée par tools/rendu/capturer.py après chaque scène. S'ajoute
 # aux actions de tab5-api-logic.yaml (les listes `services:` des packages se suivent).

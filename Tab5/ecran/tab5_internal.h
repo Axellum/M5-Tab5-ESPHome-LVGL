@@ -273,14 +273,50 @@ const char* clim_nom();
 uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 
 // --- Roue d'actions rapides (tab5_roue.cpp, ADR-0036) ---
-// Icône d'un bouton (glyphe_roue, mdi_font_36) ; AUCUNE : un texte ou une pastille.
+// Icône d'un bouton (glyphe_roue, mdi_font_36) ; AUCUNE : un texte ou une pastille. Après
+// REGLAGES : celles de la roue de navigation (ADR-0042), familles puis destinations.
 enum class RoueIcone : uint8_t {
     AUCUNE,
-    ETEINDRE, ALLUMER, LUMINOSITE, BLANCS, COULEURS,
-    OUVRIR, STOP, FERMER, POSITION,
-    MODE, CHAUFFER, REFROIDIR, SECHER, VENTILER, CONSIGNE, OPTIONS,
-    ECO, BOOST, SILENCE, OSCILLATION, BRISE,
-    MAISON, REGLAGES,
+    ETEINDRE,
+    ALLUMER,
+    LUMINOSITE,
+    BLANCS,
+    COULEURS,
+    OUVRIR,
+    STOP,
+    FERMER,
+    POSITION,
+    MODE,
+    CHAUFFER,
+    REFROIDIR,
+    SECHER,
+    VENTILER,
+    CONSIGNE,
+    OPTIONS,
+    ECO,
+    BOOST,
+    SILENCE,
+    OSCILLATION,
+    BRISE,
+    MAISON,
+    REGLAGES,
+    ALERTES,
+    PIECES,
+    APPAREILS,
+    AGENDA,
+    TABLETTE,
+    ASSISTANT,
+    LUMIERES,
+    VOLET,
+    CLIMS,
+    TEMPERATURE,
+    ENERGIE,
+    PLANTES,
+    CALENDRIER,
+    REVEIL,
+    JEUX,
+    ENGRENAGE,
+    SYSTEME,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
 // anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
@@ -289,7 +325,9 @@ struct RoueBouton {
     RoueIcone icone = RoueIcone::AUCUNE;
     RoueGenre genre = RoueGenre::ACTION;
     bool courant = false;           // action : l'état de l'appareil (verre teinté, halo)
-    const char* legende = nullptr;  // lien : son mot sous le bouton, déjà traduit
+    // Son mot, déjà traduit : sous un lien ; avec RoueTete::mots, au-delà de chaque bouton
+    // qui en a un (roue de navigation, ADR-0042).
+    const char* legende = nullptr;
 };
 // Bouton du second anneau : une icône, un texte (« 50 % », « 21.5° ») ou une pastille de
 // couleur (celle qu'une lampe prendra), avec un mot dessous s'il le faut (« Chaud »).
@@ -309,8 +347,13 @@ struct RoueTete {
     const char* nom = "";
     int jauge = -1;                 // 0 à 100 ; -1 : pas de jauge
     uint32_t couleur = 0;           // couleur d'état de l'appareil
+    // Roue de navigation (ADR-0042) : chaque bouton du premier anneau porte son mot au-delà
+    // de lui (pas seulement les liens, dessous) ; une famille dépliée les cache et écrit
+    // le sien dans le moyeu, à la place de `valeur`.
+    bool mots = false;
 };
-// Ce que fait la roue au toucher, fournie par celui qui l'ouvre (tab5_tuiles_roue.cpp).
+// Ce que fait la roue au toucher, fournie par celui qui l'ouvre (tab5_tuiles_roue.cpp,
+// tab5_roue_navigation.cpp).
 struct RoueRappels {
     void (*choisir)(int i) = nullptr;                   // action ou lien i, roue fermée
     int (*famille)(int i, RoueChoix* out) = nullptr;    // choix de la famille i (≤ kRoueChoix)
@@ -318,9 +361,9 @@ struct RoueRappels {
     void (*rejouer)() = nullptr;                        // repeindre (thème, état) : rouvre ou ferme
 };
 // Ouvre la roue autour du centre de `ancre` (n boutons de gauche à droite, n ≤
-// kRoueBoutons). `garder` : un repeint de la même roue (thème, état poussé), la famille
-// dépliée le reste si son bouton est toujours la même famille. Faux, et rien d'ouvert, sans
-// widgets.
+// kRoueBoutons ; la roue de navigation, ADR-0042 : la carte centrale). `garder` : un
+// repeint de la même roue (thème, état poussé), la famille dépliée le reste si son bouton
+// est toujours la même famille. Faux, et rien d'ouvert, sans widgets.
 bool roue_ouvrir(lv_obj_t* ancre, const RoueTete& tete, const RoueBouton* b, int n, const RoueRappels& r,
                  bool garder);
 // theme_rejouer_ui (tab5_theme.cpp) : roue ouverte repeinte dans la nouvelle palette.

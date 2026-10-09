@@ -19,6 +19,8 @@
 // anneaux de boutons ronds : le premier pour ses commandes, ses familles de réglages et
 // deux liens (« Maison », « Détails » : le popup d'avant) ; le second, déplié au-dessus
 // d'une famille, pour ses choix (luminosités, couleurs, modes…).
+// La même roue sert à la navigation (ADR-0042, tab5_roue_navigation.cpp) : l'appui long de
+// la carte centrale ouvre les écrans de la tablette, rangés en familles.
 // =============================================================================
 constexpr int kRoueBoutons = 6;  // premier anneau : 4 commandes ou familles + 2 liens
 constexpr int kRoueChoix = 6;    // second anneau : les 6 couleurs d'une lampe au plus
@@ -33,7 +35,7 @@ struct RoueUI {
     lv_obj_t* moyeu_icone = nullptr;             // roue_moyeu_icone (mdi_font_45)
     lv_obj_t* moyeu_valeur = nullptr;            // roue_moyeu_valeur (ligne d'état)
     lv_obj_t* nom = nullptr;                     // roue_nom : nom de l'appareil
-    lv_obj_t* lien_legende[2] = {};              // roue_lien_0 (gauche), roue_lien_1 (droite)
+    lv_obj_t* legende[kRoueBoutons] = {};        // roue_bouton_N_legende : le mot du bouton N
     lv_obj_t* bouton[kRoueBoutons] = {};         // roue_bouton_N
     lv_obj_t* icone[kRoueBoutons] = {};          // roue_bouton_N_icone (mdi_font_36)
     lv_obj_t* point[kRoueBoutons] = {};          // roue_bouton_N_point : marque une famille
@@ -41,9 +43,14 @@ struct RoueUI {
     lv_obj_t* choix_icone[kRoueChoix] = {};      // roue_choix_N_icone (mdi_font_36)
     lv_obj_t* choix_texte[kRoueChoix] = {};      // roue_choix_N_texte (« 50 % »)
     lv_obj_t* choix_legende[kRoueChoix] = {};    // roue_choix_N_legende (« Chaud »)
-    void (*ouvrir_ecran)(int ecran) = nullptr;   // script tab5_ecran_ouvrir (lien « Maison »)
+    void (*ouvrir_ecran)(int ecran) = nullptr;   // script tab5_ecran_ouvrir (lien « Maison », navigation)
+    lv_obj_t* carte_centrale = nullptr;          // central_card : ancre de la roue de navigation
 };
 extern RoueUI g_roue_ui;
+// Roue de navigation (ADR-0042, tab5_roue_navigation.cpp) : appui long de la carte
+// centrale (central_bouton.yaml, btn_page_title_tap) ou geste « roue » de l'accueil
+// (ADR-0039). Ancrée au centre de la carte centrale ; rien au bout d'un glissement.
+void roue_navigation_ouvrir();
 // Une fois, les widgets posés : arcs de dessin seulement, geste bloqué sur le voile, effet
 // d'appui des boutons.
 void roue_brancher();

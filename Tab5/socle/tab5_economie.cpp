@@ -7,7 +7,7 @@
  *       (Tab5/paquets/tab5-economie.yaml), lancé chaque seconde et à chaque événement utile.
  * @architecture_constraint Ni ESPHome ni LVGL ici : le YAML lit les entités, applique
  *       le PWM et la période de LVGL ; les animations sont coupées dans tab5_anim.cpp
- *       (animations_reduites).
+ *       (animations_niveau).
  *       Le plafond est appliqué À LA SORTIE du rétroéclairage (output template
  *       `backlight_plafonne`, tab5-hardware.yaml), pas à l'état de la lumière : HA, le
  *       curseur des Réglages et le réveil gardent la luminosité choisie, et elle revient

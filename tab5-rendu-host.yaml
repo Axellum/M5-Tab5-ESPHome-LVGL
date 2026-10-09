@@ -104,6 +104,7 @@ esphome:
     - Tab5/ecran/tab5_rangee.cpp
     - Tab5/ecran/tab5_reglables.cpp
     - Tab5/ecran/tab5_roue.cpp
+    - Tab5/ecran/tab5_roue_navigation.cpp
     - Tab5/ecran/tab5_energie.cpp
     - Tab5/ecran/tab5_historique.cpp
     - Tab5/ecran/tab5_theme.cpp

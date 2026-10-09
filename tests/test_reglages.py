@@ -36,7 +36,8 @@ FLECHE = re.compile(r"file: bouton_pas\.yaml, .*appui: \[ script\.execute: \{ id
 CHAMPS = {"REGLAGE_EXTINCTION": "extinction", "REGLAGE_OKAY_NABU": "okay_nabu", "REGLAGE_TAPE": "tape",
           "REGLAGE_MODE": "mode", "REGLAGE_NUIT": "nuit", "REGLAGE_LANGUE": "langue",
           "REGLAGE_LIMITE_CHARGE": "limite", "REGLAGE_ECONOMIE": "economie",
-          "REGLAGE_BATTERIE_MONTEE": "montee"}
+          "REGLAGE_BATTERIE_MONTEE": "montee", "REGLAGE_MODE_CHARGE": "mode_charge",
+          "REGLAGE_WIFI_ECO": "wifi_eco", "REGLAGE_ANIMATIONS": "animations"}
 OUI_NON = ("REGLAGE_OKAY_NABU", "REGLAGE_TAPE", "REGLAGE_NUIT", "REGLAGE_BATTERIE_MONTEE")
 ONGLET = re.compile(r"file: reglages_onglet\.yaml, vars: \{ prefixe: reglages, id: (\w+), x: \d+, page: (\d+), label_text: \"([^\"]*)\" \}")
 # Conteneur de chaque page (reglages_popup.yaml ; la page Système est console_sys.yaml).
@@ -96,7 +97,11 @@ def test_une_pastille_par_option_dans_l_ordre_du_select():
             ("REGLAGE_MODE", "tab5-themes.yaml", "tab5_theme_mode", "REGLAGES_NB_MODES"),
             ("REGLAGE_LIMITE_CHARGE", "tab5-sensors-diagnostics.yaml", "tab5_limite_charge",
              "REGLAGES_NB_LIMITES"),
-            ("REGLAGE_ECONOMIE", "tab5-economie.yaml", "tab5_economie", "REGLAGES_NB_ECONOMIE")):
+            ("REGLAGE_ECONOMIE", "tab5-economie.yaml", "tab5_economie", "REGLAGES_NB_ECONOMIE"),
+            ("REGLAGE_MODE_CHARGE", "tab5-sensors-diagnostics.yaml", "tab5_mode_charge",
+             "REGLAGES_NB_MODES_CHARGE"),
+            ("REGLAGE_WIFI_ECO", "tab5-sensors-diagnostics.yaml", "tab5_wifi_eco", "REGLAGES_NB_WIFI_ECO"),
+            ("REGLAGE_ANIMATIONS", "tab5-economie.yaml", "tab5_animations", "REGLAGES_NB_ANIMATIONS")):
         options = _options(fichier, select)
         assert [libelle for _, _, libelle in boutons[nom]] == options, f"{nom} : libellés ≠ options de {select}"
         assert [valeur for _, valeur, _ in boutons[nom]] == list(range(len(options))), nom
@@ -217,5 +222,6 @@ def test_gardes_de_la_console_par_la_page_systeme():
 
 
 def test_bouchon_du_rendu_comme_le_vrai_select():
-    vrai = _options("tab5-sensors-diagnostics.yaml", "tab5_limite_charge")
-    assert _options("rendu/bouchons.yaml", "tab5_limite_charge") == vrai
+    for ident in ("tab5_limite_charge", "tab5_mode_charge", "tab5_wifi_eco"):
+        vrai = _options("tab5-sensors-diagnostics.yaml", ident)
+        assert _options("rendu/bouchons.yaml", ident) == vrai, ident

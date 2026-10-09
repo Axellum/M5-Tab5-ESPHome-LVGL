@@ -113,7 +113,13 @@ constexpr CodeGeste kCodesGestes[] = {
     {"ecoute", Ecran::AUCUN, GesteAction::ECOUTE},
     // Panneau Ok Nabu à lignes (09/10/2026, lot 3, ADR-0041) : ajouté à la fin (NVS, index 17).
     {"nabu_suivant", Ecran::AUCUN, GesteAction::NABU_SUIVANTE},
-    // Popup Météo (09/10/2026, ADR-0043) : ajouté à la fin (NVS, index 18).
+    // Roue de navigation (09/10/2026, ADR-0042) : ses trois écrans nouveaux et la roue
+    // elle-même, ajoutés à la fin (NVS).
+    {"lumieres", Ecran::LUMIERES, GesteAction::ECRAN},
+    {"volet", Ecran::VOLET, GesteAction::ECRAN},
+    {"temperature", Ecran::TEMPERATURE, GesteAction::ECRAN},
+    {"roue", Ecran::AUCUN, GesteAction::ROUE},
+    // Popup Météo (09/10/2026, ADR-0043) : ajouté à la fin (NVS, index 22).
     {"meteo", Ecran::METEO, GesteAction::ECRAN},
 };
 constexpr int kNbCodes = static_cast<int>(sizeof(kCodesGestes) / sizeof(kCodesGestes[0]));
@@ -445,6 +451,7 @@ const char* code_glyphe(int8_t c) {
         case GesteAction::RANGEE_SUIVANTE: return "\U000F0729";   // view-sequential (rangée sous l'horloge)
         case GesteAction::ECOUTE: return "\U000F07C5";            // ear-hearing (Ok Nabu)
         case GesteAction::NABU_SUIVANTE: return "\U000F050A";     // microphone-message (panneau Ok Nabu)
+        case GesteAction::ROUE: return "\U000F1382";              // compass-rose (moyeu de la roue)
         case GesteAction::ECRAN: break;
         default: return nullptr;
     }
@@ -460,6 +467,9 @@ const char* code_glyphe(int8_t c) {
         case Ecran::REGLAGES: return "\U000F0493";    // cog
         case Ecran::ALERTES: return "\U000F0E81";     // bell-alert-outline
         case Ecran::MAISON: return "\U000F02DC";      // home
+        case Ecran::LUMIERES: return "\U000F0335";    // lightbulb
+        case Ecran::VOLET: return "\U000F111E";       // window-shutter-open
+        case Ecran::TEMPERATURE: return "\U000F050F"; // thermometer
         case Ecran::METEO: return "\U000F0595";       // weather-partly-cloudy (titre du popup Météo)
         case Ecran::ARCADE: return "\U000F0297";      // gamepad-variant
         default: return nullptr;
@@ -724,6 +734,12 @@ bool ecran_sans_zone(Ecran e) {
         case Ecran::CLIM: return zone_absente(Zone::CLIM);
         case Ecran::PLANTES: return zones_pots_presents() == 0;
         case Ecran::TV: return zone_absente(Zone::TV);
+        // ADR-0042 : aucune tuile dont le popup s'ouvre ; aucune température à l'accueil
+        // (salon, serre, ou celle de la pièce affichée en mode HA, ADR-0040).
+        case Ecran::LUMIERES:
+        case Ecran::VOLET: return !tuiles_ecran_disponible(e);
+        case Ecran::TEMPERATURE:
+            return accueil_historique_cle(false) == nullptr && accueil_historique_cle(true) == nullptr;
         default: return false;
     }
 }

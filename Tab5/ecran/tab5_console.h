@@ -68,3 +68,10 @@ void update_console_batterie_ui(lv_obj_t* icone, lv_obj_t* valeur);
 // RPC sur le lien SDIO (réponse attendue au plus 1 s). false si le lien ne répond pas.
 // Capteur « Tab5 C6 Version » de tab5-sensors-diagnostics.yaml.
 bool read_c6_firmware_version(char* out, size_t n);
+
+// Wi-Fi éco (09/10/2026, ADR-0045) : économie légère du Wi-Fi (WIFI_PS_MIN_MODEM) ou
+// aucune (WIFI_PS_NONE), envoyée au C6 seulement quand la décision change, Wi-Fi
+// connecté, et rangée chez ESPHome pour la reconnexion suivante. Décision :
+// wifi_eco_voulu() (tab5_economie.h) ; appelant : script tab5_wifi_eco_appliquer
+// (tab5-sensors-diagnostics.yaml). Sans effet dans le rendu hors tablette.
+void wifi_eco_appliquer(bool eco);
