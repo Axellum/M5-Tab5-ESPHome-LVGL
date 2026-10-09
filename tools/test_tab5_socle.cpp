@@ -202,6 +202,8 @@ static void test_modele_ha() {
     expect(std::strcmp(modele_ha::tuile_cle(0, 4).s, "t04") == 0 && std::strcmp(modele_ha::tuile_cle(4, 0).s, "t40") == 0,
            "clé de tuile : tRT");
     expect(std::strcmp(modele_ha::piece_cle(3).s, "p3") == 0, "clé de pièce : pR");
+    expect(std::strcmp(modele_ha::clim_piece_cle(0).s, "cp0") == 0 && std::strcmp(modele_ha::clim_piece_cle(4).s, "cp4") == 0,
+           "clé de la clim d'une pièce : cpR (ADR-0040)");
 }
 
 int main() {

@@ -458,18 +458,35 @@ def ecrans_des_pieces(pieces: dict) -> tuple:
     assert PAGE_DE_LA_PIECE[0] in occupees, "la pièce de l'accueil (R = 0) doit avoir un appareil"
     ecrans = []
     for r in sorted(pieces):
-        page = PAGE_DE_LA_PIECE[r]
-        if page not in occupees:
+        if PAGE_DE_LA_PIECE[r] not in occupees:
             continue
-        if page >= 2:
-            aller = (HA_VERS_LA_GAUCHE,) * sum(1 for p in occupees if 2 < p <= page)
-            retour = (VERS_LA_DROITE,) * (page - 2)
-        else:
-            aller = (HA_VERS_LA_DROITE,) * sum(1 for p in occupees if page <= p < 2)
-            retour = (VERS_LA_GAUCHE,) * (2 - page)
-        ecrans.append(Ecran(f"accueil-ha-piece-{r + 1}", (Toucher(*BOUTON_HA),) + aller,
-                            (Toucher(*BOUTON_HA),) + retour))
+        aller, retour = vers_la_piece(pieces, r)
+        ecrans.append(Ecran(f"accueil-ha-piece-{r + 1}", aller, retour))
     return tuple(ecrans)
+
+
+def vers_la_piece(pieces: dict, r: int) -> tuple[tuple, tuple]:
+    """(aller, retour) : « HA » puis les gestes jusqu'à la pièce R ; « HA » puis les gestes
+    météo jusqu'à la page 2 (voir ecrans_des_pieces)."""
+    occupees = sorted(PAGE_DE_LA_PIECE[k] for k, p in pieces.items() if p.tuiles)
+    page = PAGE_DE_LA_PIECE[r]
+    assert page in occupees, f"pièce {r} sans appareil : le mode HA la saute"
+    if page >= 2:
+        aller = (HA_VERS_LA_GAUCHE,) * sum(1 for p in occupees if 2 < p <= page)
+        retour = (VERS_LA_DROITE,) * (page - 2)
+    else:
+        aller = (HA_VERS_LA_DROITE,) * sum(1 for p in occupees if page <= p < 2)
+        retour = (VERS_LA_GAUCHE,) * (2 - page)
+    return (Toucher(*BOUTON_HA),) + aller, (Toucher(*BOUTON_HA),) + retour
+
+
+# Climat de la pièce (ADR-0040) : le Bureau de la démo (R = 3, page 1) a une température,
+# une humidité et une clim. En mode HA sur lui, appui long sur sa température : son
+# historique (clé p3) ; toucher la consigne de la tuile − / + : la fenêtre de sa clim.
+# `fermer` referme la fenêtre (croix du chrome modal) avant de quitter le mode HA.
+PIECE_CLIMAT = 3
+assert PIECES[PIECE_CLIMAT].climat is not None and PIECES[PIECE_CLIMAT].climat.reglages
+ALLER_PIECE_CLIMAT, RETOUR_PIECE_CLIMAT = vers_la_piece(PIECES, PIECE_CLIMAT)
 
 REVEIL_TESTER = (550, 641)
 SONNERIE_ARRETER = (440, 540)
@@ -791,14 +808,18 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("appareil-confirmer", (VERS_LA_GAUCHE, Long(*TUILE_JE_PARS), Toucher(*BOUTON_APPAREIL)),
           (Attendre(3.5), Toucher(*FERMER_POPUP), VERS_LA_DROITE)),
     Ecran("climatisation", (Toucher(*CONSIGNE_CLIM),)),
-    # Carrousel des clims (ADR-0038) par la température de la pièce : la démo n'a que la
-    # clim du blueprint, l'écran est celui du dessus (ni pastilles ni glisse).
+    # La clim d'une pièce (ADR-0040), ouverte par la tuile − / + en mode HA sur elle.
+    Ecran("climatisation-piece", ALLER_PIECE_CLIMAT + (Toucher(*CONSIGNE_CLIM),),
+          (Toucher(*FERMER_POPUP),) + RETOUR_PIECE_CLIMAT),
+    # Carrousel des clims (ADR-0038) par la température de la pièce : la démo a la clim du
+    # blueprint et la clim propre du Bureau (ADR-0040) : deux pastilles, sur la première.
     Ecran("climatisation-par-la-piece", (Toucher(*SALON),)),
-    # Puis trois clims (CLIMS_DE_TUILES) : la clim du blueprint (première page), un geste
-    # vers la gauche, la clim du bureau, un second, la clim sans nom (titre « Bureau »,
-    # trois boutons). En mode HA sur le Bureau, le toucher de la température ouvre sur la
-    # clim de la pièce (deuxième page). `fermer` repousse les définitions de la démo : les
-    # deux clims de tuile sont oubliées, rien ne reste pour les écrans suivants.
+    # Puis quatre clims (CLIMS_DE_TUILES, et la clim propre du Bureau, ADR-0040, en
+    # dernier) : la clim du blueprint (première page), un geste vers la gauche, la clim du
+    # bureau, un second, la clim sans nom (titre « Bureau », trois boutons). En mode HA sur
+    # le Bureau, le toucher de la température ouvre sur la clim propre de la pièce
+    # (« Climatiseur du bureau », quatrième page). `fermer` repousse les définitions de la
+    # démo : les deux clims de tuile sont oubliées, rien ne reste pour les écrans suivants.
     Ecran("climatisation-carrousel", CLIMS_DE_TUILES + (Toucher(*SALON),), MAISON_DE_LA_DEMO),
     Ecran("climatisation-carrousel-page-2", CLIMS_DE_TUILES + (Toucher(*SALON), CARROUSEL_SUIVANTE),
           MAISON_DE_LA_DEMO),
@@ -837,6 +858,10 @@ ECRANS: tuple[Ecran, ...] = (
           (Long(*SERRE), Toucher(*TEMPERATURE_VUES["semaine"]), _historique("serre", "semaine"))),
     Ecran("temperature-serre-mois", (Long(*SERRE), Toucher(*TEMPERATURE_VUES["mois"]), _historique("serre", "mois"))),
     Ecran("temperature-dehors", (Long(*SERRE), _historique("serre", "jour", exterieur=True))),
+    # Température d'une pièce en mode HA (ADR-0040) : sans prévision.
+    Ecran("temperature-piece",
+          ALLER_PIECE_CLIMAT + (Long(*SALON_TEMP), _historique(f"p{PIECE_CLIMAT}", "jour")),
+          (Toucher(*FERMER_POPUP),) + RETOUR_PIECE_CLIMAT),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
     # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.

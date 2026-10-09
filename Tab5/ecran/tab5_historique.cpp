@@ -6,6 +6,8 @@
  *       prévision de la météo à sa suite.
  *         - Appui long sur la température de la pièce (clé salon) ou sur la seconde
  *           (clé serre ; l'appui court garde l'arcade) : script tab5_historique_ouvrir.
+ *           En mode HA, sur une pièce dont le blueprint a déclaré la température
+ *           (ADR-0040), l'appui long de gauche montre la sienne : clé pR (R = 0 à 4).
  *         - Trois vues : 24 h (créneaux d'une heure), 7 jours (trois heures), 30 jours
  *           (un jour). Chaque créneau porte la moyenne (la courbe) et le minimum et le
  *           maximum (une barre pâle derrière elle) ; la valeur actuelle finit la courbe.
@@ -49,8 +51,12 @@ namespace {
 
 enum Vue : int { JOUR = 0, SEMAINE = 1, MOIS = 2, NB_VUES = 3 };
 constexpr const char* kVues[NB_VUES] = {"jour", "semaine", "mois"};
-enum Cle : int { SALON = 0, SERRE = 1, NB_CLES = 2 };
-constexpr const char* kCles[NB_CLES] = {"salon", "serre"};
+// salon et serre : les deux températures de l'accueil ; p0 à p4 : la température d'une
+// pièce en mode HA (ADR-0040, tab5_piece_climat.cpp), comme le salon (pas de prévision).
+enum Cle : int { SALON = 0,
+                 SERRE = 1,
+                 NB_CLES = 7 };
+constexpr const char* kCles[NB_CLES] = {"salon", "serre", "p0", "p1", "p2", "p3", "p4"};
 enum Carte : int { MAINTENANT = 0, MINIMUM = 1, MAXIMUM = 2, PREVU = 3, NB_CARTES = 4 };
 
 // Créneaux d'une vue (24 + l'heure en cours, 56 + les trois heures en cours, 30 + le

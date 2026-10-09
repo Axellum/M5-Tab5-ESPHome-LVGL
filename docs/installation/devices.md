@@ -27,7 +27,7 @@ Every section opens folded except Room 1: click its title to open it. Each field
 | Section | What you pick | More |
 |---|---|---|
 | Pièce 1 — accueil · Room 1 — home | a name and up to five devices: the tiles of the home page, left to right | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
-| Pièce 2 to 5 · Room 2 to 5 | the rooms one or two swipes away | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
+| Pièce 2 to 5 · Room 2 to 5 | the rooms one or two swipes away; in every room, optionally, its temperature, humidity and climate (shown in HA mode) | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
 | Personnaliser des tuiles · Customise tiles | another name, icon or behaviour for a tile (on only, confirm, read only) | [tile icons](../tiles_icons.md) |
 | TV, téléphone · TV, phone | the TV, its remote, the phone battery | [other zones](adapt-to-your-home.md#other-zones) |
 | Températures · Temperatures | room temperature and humidity, a second temperature (greenhouse) and whether it is outdoors | [temperature history](adapt-to-your-home.md#temperature-history) |
@@ -80,7 +80,7 @@ Toutes les sections s'ouvrent repliées, sauf la pièce 1 : cliquez sur un titre
 | Section | Ce que vous choisissez | Plus |
 |---|---|---|
 | Pièce 1 — accueil · Room 1 — home | un nom et jusqu'à cinq appareils : les tuiles de l'accueil, de gauche à droite | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
-| Pièce 2 à 5 · Room 2 to 5 | les pièces à un ou deux glissements | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
+| Pièce 2 à 5 · Room 2 to 5 | les pièces à un ou deux glissements ; dans chaque pièce, en option, sa température, son humidité et sa clim (montrées en mode HA) | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
 | Personnaliser des tuiles · Customise tiles | un autre nom, une autre icône ou un comportement pour une tuile (allumer seulement, confirmer, lecture seule) | [icônes des tuiles](../tiles_icons.md#version-française) |
 | TV, téléphone · TV, phone | la TV, sa télécommande, la batterie du téléphone | [autres zones](adapt-to-your-home.md#autres-zones) |
 | Températures · Temperatures | température et humidité de la pièce, une seconde température (serre) et si elle est dehors | [historique des températures](adapt-to-your-home.md#historique-des-températures) |

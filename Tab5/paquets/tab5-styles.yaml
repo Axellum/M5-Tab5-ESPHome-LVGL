@@ -320,7 +320,7 @@ font:
 
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
   # réveil, en-tête de la sélection des consoles, cartes du popup Énergie ; températures
-  # de l'accueil (salon, serre).
+  # de l'accueil (salon, serre ; en mode HA, thermomètre et goutte de la pièce, ADR-0040).
   - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_45
     size: 45

@@ -73,7 +73,8 @@ def build_emplacements_payload(absentes: frozenset = frozenset(), pieces: dict |
     payload = "".join(f"{cle}|{etat}|{valeur};" for cle, (etat, valeur) in EMPLACEMENTS.items()
                       if zone_de(cle) not in absentes)
     if pieces is not None:
-        payload += build_etats_tuiles(pieces, clim, rangee, nabu) + build_etats_reglables(reglables)
+        payload += (build_etats_tuiles(pieces, clim, rangee, nabu) + build_etats_reglables(reglables)
+                    + build_climat_pieces(pieces))
     assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
     return payload
 
@@ -154,9 +155,23 @@ class Tuile:
 
 
 @dataclass(frozen=True)
+class ClimatPiece:
+    """Température, humidité et clim d'une pièce (ADR-0040, champs « Température de la
+    pièce », « Humidité de la pièce » et « Climatisation de la pièce » du blueprint). En
+    mode HA sur la pièce, la tablette les montre à la place du salon et de la serre, et
+    la tuile − / + règle la clim. Poussés dans tab5_maj_emplacements comme le blueprint :
+    « crpR|réglages; », « pR|température|humidité|clim; », « cepR|état; »."""
+    temperature: str        # la mesure (« nan » : inconnue)
+    humidite: str = ""      # '' : non déclarée (rien à droite)
+    reglages: str = ""      # clim : « min|max|pas|unité|capacités|nom » (ceux de crRT) ; '' : aucune
+    etat: str = ""          # clim : « consigne|pièce|mode|préréglage|ventilation|oscillation » (ceRT)
+
+
+@dataclass(frozen=True)
 class Piece:
     nom: str      # '' : pas d'entrée « p », la tablette écrit « Pièce n » dans sa langue
     tuiles: dict  # position T (0 = gauche … 4 = droite, sur toutes les pages) -> Tuile
+    climat: ClimatPiece | None = None  # ADR-0040 ; None : l'écran d'avant en mode HA
 
 
 # La maison de la démo : cinq pièces, tous les types et toutes les options, un nom que
@@ -175,8 +190,8 @@ PIECES: dict = {
         # Une scène a pour état l'heure de sa dernière activation.
         4: Tuile("act", "Soirée cinéma", "scene", etat="2026-06-15T20:45:00+00:00"),
     }),
-    # Jours 5-9.
-    1: Piece("Entrée", {
+    # Jours 5-9. Une température déclarée, sans humidité ni clim (ADR-0040).
+    1: Piece("Entrée", climat=ClimatPiece("19.6"), tuiles={
         0: Tuile("bin", "Porte d'entrée", "porte", complement="door"),
         1: Tuile("bin", "Mouvement du couloir", "mouvement", complement="motion", etat="on"),
         # Lecture seule : c'est le détecteur qui l'allume.
@@ -193,8 +208,11 @@ PIECES: dict = {
         2: Tuile("cli", "Climatisation", "clim", "m", etat="cool", valeur="23.5"),
         4: Tuile("bin", "Présence", "presence", complement="presence"),
     }),
-    # Heures 0-4. Deux tuiles à gauche : recentrées en mode HA.
-    3: Piece("Bureau", {
+    # Heures 0-4. Deux tuiles à gauche : recentrées en mode HA. Température, humidité et
+    # clim de la pièce (ADR-0040) : un climatiseur qui n'est sur aucune tuile, réglé par
+    # la tuile − / + en mode HA.
+    3: Piece("Bureau", climat=ClimatPiece(
+        "22.8", "45", "16.0|30.0|0.5|°C|chdfq|Climatiseur du bureau", "22.0|22.8|cool|none|auto|stop"), tuiles={
         # Jamais éteint depuis l'écran (réveil par le réseau).
         0: Tuile("int", "Ordinateur", "ordinateur", "o", etat="on"),
         # Le capteur solaire de la section « Énergie » (option e, ADR-0028) : son appui
@@ -325,6 +343,30 @@ def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None, reglables
     payload += build_reglables_payload(reglables)
     assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
     return payload
+
+
+def build_climat_pieces(pieces: dict) -> str:
+    """Climat des cinq pièces (ADR-0040), comme la dernière poussée du blueprint après
+    une connexion : pièce par pièce, « crpR|réglages; » (s'il y a une clim), « pR|
+    température|humidité|clim; » (champs vides : rien de déclaré, la tablette oublie la
+    pièce), « cepR|état; ». Une pièce absente ou sans climat : « pR|||0; »."""
+    parts = []
+    for r in range(len(PAGE_DE_LA_PIECE)):
+        piece = pieces.get(r)
+        c = piece.climat if piece is not None else None
+        if c is None:
+            parts.append(f"p{r}|||0;")
+            continue
+        assert _nombre(c.temperature) is not None or c.temperature == "nan", f"p{r} : température"
+        assert c.humidite == "" or _nombre(c.humidite) is not None, f"p{r} : humidité"
+        assert bool(c.reglages) == bool(c.etat), f"p{r} : une clim a ses réglages et son état"
+        if c.reglages:
+            assert len(c.reglages.split("|")) == 6 and len(c.etat.split("|")) == 6, f"p{r} : champs de la clim"
+            parts.append(f"crp{r}|{c.reglages};")
+        parts.append(f"p{r}|{c.temperature}|{c.humidite}|{'1' if c.reglages else '0'};")
+        if c.etat:
+            parts.append(f"cep{r}|{c.etat};")
+    return "".join(parts)
 
 
 def build_etats_tuiles(pieces: dict, clim: dict | None = None, rangee: "Rangee | None" = None,
@@ -639,7 +681,8 @@ def build_energie_historique(vue: str, aujourd_hui: _dt.date) -> dict:
 # température est dehors : la case du blueprint).
 # ---------------------------------------------------------------------------
 
-HISTORIQUE_CLES = ("salon", "serre")
+# salon, serre, puis la température de la pièce R en mode HA (ADR-0040) : pR.
+HISTORIQUE_CLES = ("salon", "serre", "p0", "p1", "p2", "p3", "p4")
 # vue : (minutes par créneau, créneaux complets avant celui en cours)
 HISTORIQUE_VUES = {"jour": (60, 24), "semaine": (180, 56), "mois": (1440, 30)}
 HISTORIQUE_PREV_MAX = 48     # Prev p[kPrevMax] de tab5_historique.cpp
@@ -657,10 +700,30 @@ def _dehors(t: _dt.datetime) -> float:
     return 18.0 + _onde(t, 15, 6.0, 4.1, 1.5)
 
 
+def climat_historique(cle: str) -> ClimatPiece | None:
+    """Climat de la pièce d'une clé pR (ADR-0040), None pour salon, serre ou une pièce
+    sans température : le package répond alors comme sans capteur (nom vide, actuel nan,
+    aucune mesure)."""
+    if not cle.startswith("p"):
+        return None
+    piece = PIECES.get(int(cle[1:]))
+    return piece.climat if piece is not None else None
+
+
+def historique_actuel(cle: str) -> str:
+    """Valeur de l'accueil sur laquelle la courbe finit (« nan » : pas de capteur)."""
+    if cle in ("salon", "serre"):
+        return EMPLACEMENTS[cle][1]
+    c = climat_historique(cle)
+    return c.temperature if c is not None else "nan"
+
+
 def _courbe(cle: str, exterieur: bool):
     """Température de la démo à l'instant t (heure locale naïve), avant recalage."""
-    if cle == "salon":
-        return lambda t: 20.8 + _onde(t, 18, 0.8, 5.3, 0.4)
+    if cle == "salon" or cle.startswith("p"):
+        # Une pièce chauffée ; la phase change d'une pièce à l'autre.
+        decalage = 0 if cle == "salon" else int(cle[1:]) * 2
+        return lambda t: 20.8 + _onde(t, 18 + decalage, 0.8, 5.3, 0.4)
     if exterieur:
         return _dehors
     return lambda t: 19.0 + _onde(t, 14, 5.0, 6.7, 1.2)
@@ -688,7 +751,12 @@ def build_historique(cle: str, vue: str, maintenant: _dt.datetime, exterieur: bo
     exterieur = exterieur and cle == "serre"
     pas, nb = HISTORIQUE_VUES[vue]
     debut = debut_historique(vue, maintenant)
-    actuel = float(EMPLACEMENTS[cle][1])
+    if historique_actuel(cle) == "nan":
+        # Pièce sans température déclarée : comme le package sans capteur.
+        entete = "|".join(["", debut.strftime("%Y-%m-%dT%H:%M"), str(pas), str(_minutes(debut, maintenant)),
+                           "nan", "0"])
+        return {"cle": cle, "vue": vue, "entete": entete, "mesures": "", "previsions": ""}
+    actuel = float(historique_actuel(cle))
     brute = _courbe(cle, exterieur)
     decalage = actuel - brute(maintenant)
     temp = (lambda t: brute(t) + decalage)
@@ -727,7 +795,8 @@ def build_historique(cle: str, vue: str, maintenant: _dt.datetime, exterieur: bo
     minutes = [int(p.split(",")[0]) for p in previsions]
     assert minutes == sorted(set(minutes)), "prévision hors de l'ordre"
 
-    nom = {"salon": "Salon", "serre": "Jardin" if exterieur else "Serre"}[cle]
+    # Le package nomme la pièce du capteur : pour pR, celle de la démo.
+    nom = {"salon": "Salon", "serre": "Jardin" if exterieur else "Serre"}.get(cle) or PIECES[int(cle[1:])].nom
     entete = "|".join([nom, debut.strftime("%Y-%m-%dT%H:%M"), str(pas), str(_minutes(debut, maintenant)),
                        f"{actuel:.1f}", "1" if exterieur else "0"])
     assert len(entete.split("|")) == 6 and ";" not in entete
@@ -740,9 +809,10 @@ def build_historique(cle: str, vue: str, maintenant: _dt.datetime, exterieur: bo
 # Tab5/paquets/tab5-api-logic.yaml, découpage : parse_and_update_vigilance() dans
 # Tab5/ecran/tab5_services.cpp). Le firmware lit 11 à 13 champs '|' : la démo envoie les
 # 11 de Météo-France ; brouillard et feux de forêt (MeteoAlarm, lot 4c) sont
-# facultatifs en fin de payload. strtok_r fusionne les délimiteurs consécutifs, donc
-# un champ vide au milieu décale tous les suivants (silencieux). On ne laisse
-# donc jamais un champ vide : "Vert" par défaut pour les 9 niveaux de vigilance.
+# facultatifs en fin de payload. Jusqu'au correctif qui a suivi le lot F, strtok_r
+# fusionnait les délimiteurs consécutifs et un champ vide au milieu décalait tous les
+# suivants (un firmware 3.7.0 le fait encore) : on ne laisse donc jamais un champ
+# vide, "Vert" par défaut pour les 9 niveaux de vigilance, comme HA.
 # Nombres tenus par tests/test_doc_comptes.py.
 # ---------------------------------------------------------------------------
 

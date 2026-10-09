@@ -12,10 +12,12 @@
  *       LVGL (tests/test_rangement.py). Un refus journalisé (payload_refuse,
  *       payload_trop_long) reste chez l'appelant, avant l'appel.
  * @ai_instruction Extraction NEUTRE : chaque fonction reprend à l'identique la boucle
- *       qu'elle remplace, travers compris (strtok_r qui fusionne les champs vides, atoi
- *       qui lit « 3x » comme 3, tampons de pile coupés à leur taille). tools/test_parse.cpp
- *       fige ces comportements ; en changer un est un changement de contrat, dans une PR
- *       à part, pas un nettoyage.
+ *       qu'elle remplace, travers compris (atoi qui lit « 3x » comme 3, tampons de pile
+ *       coupés à leur taille). tools/test_parse.cpp fige ces comportements ; en changer un
+ *       est un changement de contrat, dans une PR à part, pas un nettoyage. Cinq défauts
+ *       relevés par le lot F ont été corrigés ainsi, à part (PR « fix(parse) ») : phrase
+ *       « @-1,0 », champs vides de la vigilance, index et nombres illisibles ou non finis
+ *       des prévisions, production solaire coupée à 15 octets. Chacun a son test.
  */
 #pragma once
 #include <cmath>
@@ -25,6 +27,7 @@
 
 #include "tab5_champs.h"
 #include "tab5_core.h"
+#include "tab5_geometrie.h"
 
 // ─── 1. Prévisions (tab5_maj_meteo_heures_bulk / tab5_maj_meteo_jours_bulk) ───
 // Payloads « idx|heure|condition|temp|pluvio;… » et
@@ -33,20 +36,35 @@
 // payload plus long (payload_trop_long), au-delà la fin serait ignorée.
 constexpr size_t kPrevisionsMax = 2048;
 
-// Premier créneau du bloc horaire (atoi du payload : « 5|… » → 5, illisible → 0).
+// Bornes plausibles d'un nombre de prévision (correctif du lot F) : au-delà, ou non fini
+// (« nan », « inf », « 1e99 »), l'enregistrement entier est ignoré et le créneau garde ce
+// qu'il avait. Températures en °C comme en °F (records : -89 °C, 134 °F) ; pluie en mm
+// sur le créneau, jamais négative.
+constexpr double kPrevisionTempMin = -100.0;
+constexpr double kPrevisionTempMax = 150.0;
+constexpr double kPrevisionPluieMax = 1000.0;
+
+// Premier créneau du bloc horaire (« 5|… » → 5, par strtol comme l'atoi d'avant). -1 si
+// aucun chiffre n'est lu (« abc », vide) ou s'il est négatif, 15 au-delà de 14 : l'appelant
+// refuse alors le payload (payload_refuse) au lieu de le prendre pour le bloc 0.
 int previsions_premier_creneau(const char* payload);
 
 // Créneaux horaires : enregistrement d'au moins 5 champs (« | », champs vides gardés)
 // et d'index 0 à 14 → heures[idx] (heure, condition, température, pluie en mm ; atof, donc
-// « abc » = 0). Le reste est ignoré. Les enregistrements vides (« ;; ») sont sautés
-// (strtok_r).
-void previsions_heures_lire(const char* payload, HourForecastData heures[15]);
+// « abc » ou vide = 0, ce que HA envoie pour une valeur absente). Le reste est ignoré. Les
+// enregistrements vides (« ;; ») sont sautés (strtok_r) : chaque enregistrement porte son
+// index, rien ne se décale.
+// Renvoie le nombre d'enregistrements ignorés parce qu'illisibles : index sans chiffre, ou
+// nombre non fini ou hors des bornes ci-dessus (rien n'est écrit pour eux ; l'appelant le
+// journalise une fois par payload). Un index hors de 0 à 14 reste ignoré sans être compté.
+int previsions_heures_lire(const char* payload, HourForecastData heures[15]);
 
 // Jours : enregistrement d'au moins 9 champs et de jour 0 à 14 → jours[jour] ; les trois
 // drapeaux valent vrai si le champ commence par « 1 ». Le jour 0 date le lot :
 // `ancre` = local_day_number_today() au moment de la lecture (-1 si l'heure n'est pas
-// réglée), comme cal_jours_anchor_day.
-void previsions_jours_lire(const char* payload, DayForecastData jours[15], int32_t& ancre);
+// réglée), comme cal_jours_anchor_day. Index et températures lus et refusés comme les
+// heures ; même valeur de retour (un jour 0 refusé ne touche pas l'ancre).
+int previsions_jours_lire(const char* payload, DayForecastData jours[15], int32_t& ancre);
 
 // ─── 2. Vigilance (tab5_maj_alerte_meteo_france) ───
 // « phrase pluie|globale|vent|inondation|orages|pluie-inondation|neige-verglas|grand froid|
@@ -58,8 +76,9 @@ constexpr int kVigilanceActivesMax = 4;   // cases d'icônes du bandeau
 
 // Payload découpé en place dans `buf` (1 023 octets lus : l'appelant journalise un payload
 // plus long, dont les derniers champs manquent). champs[i] vaut "" au-delà du dernier.
-// [figé] strtok_r : des « | » consécutifs comptent pour un, un champ vide décale donc les
-// suivants (R6 de l'audit) ; HA envoie toujours « Vert », jamais un champ vide.
+// Champs vides gardés à leur place (split_fields) : « p||Orange » laisse le champ 1 vide
+// et « Orange » au champ 2. Jusqu'au correctif du lot F, strtok_r les fusionnait et un
+// champ vide décalait les suivants (R6 de l'audit) ; HA envoie toujours « Vert ».
 struct VigilanceLue {
     char buf[1024];
     const char* champs[kVigilanceChamps];
@@ -105,7 +124,9 @@ struct AlerteHaJeton {
 class LecteurAlertesHa {
 public:
     explicit LecteurAlertesHa(const char* payload);
-    // Jeton suivant. [figé] strtok_r : les « ; » consécutifs sont sautés.
+    // Jeton suivant. strtok_r : les « ; » consécutifs sont sautés ; sans effet sur la
+    // suite (un jeton vide serait AUTRE, que l'écran ignore, et chaque alerte porte son id).
+    // Les champs d'une alerte, eux, gardent leurs vides (split_fields).
     AlerteHaJeton suivant();
 
 private:
@@ -167,8 +188,9 @@ int pluie_niveau(const std::string& intensite);
 
 // Barres « idx|intensité;idx|intensité;… » : 255 octets lus (l'appelant refuse au-delà).
 // Un enregistrement sans « | » est sauté, les autres sont rendus dans l'ordre, index par
-// atoi (hors de 0 à 8 compris : c'est l'écran qui les ignore). [figé] strtok_r : « ;; »
-// sauté. Au plus kPluieBarresMax enregistrements tiennent dans 255 octets (« |;|;… »).
+// atoi (hors de 0 à 8 compris : c'est l'écran qui les ignore). strtok_r : « ;; » sauté,
+// sans décalage (chaque enregistrement porte son index ; l'intensité vide est gardée).
+// Au plus kPluieBarresMax enregistrements tiennent dans 255 octets (« |;|;… »).
 constexpr size_t kPluieMax = 255;
 constexpr int kPluieBarresMax = 128;
 struct PluieBarre {
@@ -179,8 +201,9 @@ int pluie_barres_lire(const char* payload, PluieBarre out[kPluieBarresMax]);
 
 // Phrase pluie (1er champ de la vigilance, lot 4c) : « @niveau,début » (niveau -1 à 5 par
 // atoi, début = epoch UTC par strtoll après la première virgule, 0 sans virgule), « @- »
-// (aucune source : niveau -2, début 0), ou un texte sans « @ » montré tel quel
-// (code = false, niveau et début non lus).
+// sans chiffre après le « - » (aucune source : niveau -2, début 0), ou un texte sans « @ »
+// montré tel quel (code = false, niveau et début non lus). « @-1,0 » (pas de données, ce
+// que HA envoie sans relevé) donne le niveau -1, plus « aucune source » (correctif du lot F).
 struct PluiePhrase {
     bool code;
     int niveau;
@@ -207,7 +230,8 @@ bool calendrier_date_lire(const char* date_iso, int& y, int& m, int& d);
 
 // Détail du jour « type|texte;type|texte;… » (script HA tab5_calendrier_jour) : 1 023
 // octets lus (l'appelant journalise au-delà), découpé en place dans le lecteur.
-// [figé] strtok_r : « ;; » sauté. Une ligne sans « | » ou au texte vide est AUTRE.
+// strtok_r : « ;; » sauté, sans décalage (chaque ligne porte son genre ; l'écran ne compte
+// que les LIGNE). Une ligne sans « | » ou au texte vide est AUTRE.
 constexpr size_t kCalendrierJourMax = 1024;
 enum class CalJourType : uint8_t {
     FIN,
@@ -250,10 +274,24 @@ void emplacement_etat_valeur(const Champ& reste, Champ& etat, Champ& valeur);
 // (« unavailable ») ou non finie (« inf », lot A) ; « 21.5 °C » → 21.5.
 float emplacement_nombre(const std::string& valeur);
 
-// Production solaire « solaire|pourcentage » : 15 premiers octets lus (strtof), NAN si
-// vide, illisible ou non fini, sinon borné à 0..100. [figé] un texte plus long est coupé
-// à 15 octets, pas refusé.
+// Production solaire « solaire|pourcentage » : champ_nombre (strtof sur n octets), NAN si
+// vide, illisible, non fini ou plus long que kChampNombreMax (31 octets : refusé, plus
+// coupé à 15 depuis le correctif du lot F), sinon borné à 0..100.
 float solaire_pourcent(const char* valeur, size_t n);
+
+// Climat d'une pièce « pR|température|humidité|clim » (ADR-0040, 09/10/2026) : R de 0 à
+// kPieces - 1 (tab5_geometrie.h). Pour chaque mesure, champ vide ou absent = aucune sonde
+// déclarée ; « nan » ou illisible = sonde déclarée, valeur inconnue (NAN). clim : le
+// quatrième champ vaut exactement « 1 ». Faux, et `out` intact, si la clé n'est pas « pR ».
+struct PieceClimatLu {
+    int piece = -1;
+    bool temperature = false;  // une sonde de température est déclarée
+    float t = NAN;
+    bool humidite = false;  // une sonde d'humidité est déclarée
+    float h = NAN;
+    bool clim = false;
+};
+bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out);
 
 // ─── 7. Clim (clés « climr », « crRT » et « ceRT » de tab5_maj_emplacements) ───
 // Réglages et état d'une clim (ADR-0026, ADR-0027), venus de Tab5/ecran/tab5_clim.cpp

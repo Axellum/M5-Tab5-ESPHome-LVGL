@@ -72,4 +72,14 @@ inline CleTuile piece_cle(int r) {
     return c;
 }
 
+// Emplacement des commandes de la clim de la pièce R (ADR-0040) : « cpR ». Pas « pR »
+// + action : « pR » / « eteindre » est déjà « Pièce : tout éteindre ».
+inline CleTuile clim_piece_cle(int r) {
+    CleTuile c;
+    c.s[0] = 'c';
+    c.s[1] = 'p';
+    c.s[2] = static_cast<char>('0' + r);
+    return c;
+}
+
 }  // namespace modele_ha

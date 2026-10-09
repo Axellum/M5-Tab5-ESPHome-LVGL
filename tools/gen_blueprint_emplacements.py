@@ -3,8 +3,9 @@
 
 [AI-CONTEXT] Audit du 07/10/2026, HA-8. Le blueprint
 HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml déclare les mêmes
-déclencheurs pour chaque pièce (6 × 5), chaque ligne de la rangée sous l'horloge (2 × 3) et,
-depuis le lot 3 (09/10/2026, ADR-0041), chaque ligne du panneau « Ok Nabu » (2 × 3) :
+déclencheurs pour chaque pièce (6 × 5, plus 2 × 5 pour la clim de la pièce depuis
+l'ADR-0040), chaque ligne de la rangée sous l'horloge (2 × 3) et, depuis le lot 3
+(09/10/2026, ADR-0041), chaque ligne du panneau « Ok Nabu » (2 × 3) :
 recopiés à la main, une pièce oubliée ou un attribut mal recopié ne se voyait qu'à l'usage.
 Ce script les écrit entre trois paires de marqueurs, sur le modèle de
 tools/gen_tuiles_icones.py :
@@ -90,6 +91,16 @@ def _attribut(entree: str, attribut: str, ident: str, ind: str) -> list[str]:
             f"{ind}  not_from: [null]", f"{ind}  not_to: [null]", f"{ind}  id: {ident}"]
 
 
+def _clim_piece(n: int, ind: str) -> list[str]:
+    """Clim de la pièce n (ADR-0040, entrée piece_<n>_clim) : son état seulement (`to: ~`,
+    sans les attributs : la température de la pièce bouge par dixièmes et part avec les
+    mesures lentes), puis sa consigne tant qu'elle a une (les − / + comptent à partir
+    d'elle)."""
+    entree, ident = f"piece_{n}_clim", f"piece_{n}_clim"
+    return ([f"{ind}- trigger: state", f"{ind}  entity_id: !input {entree}", f"{ind}  to: ~", f"{ind}  id: {ident}"]
+            + _attribut(entree, "temperature", f"{ident}_consigne", ind))
+
+
 def rendre_pieces(ind: str) -> list[str]:
     out: list[str] = []
     for n in range(1, PIECES + 1):
@@ -98,6 +109,7 @@ def rendre_pieces(ind: str) -> list[str]:
         out += _sortie(entree, ident, ind)
         for suffixe, attribut in ATTRIBUTS_PIECE:
             out += _attribut(entree, attribut, f"{ident}_{suffixe}", ind)
+        out += _clim_piece(n, ind)
     return out
 
 
@@ -151,7 +163,7 @@ def main(argv: list[str]) -> int:
     except ErreurBlueprint as e:
         print(f"❌ {e}")
         return 1
-    resume = (f"{PIECES} pièces × {2 + len(ATTRIBUTS_PIECE)} déclencheurs, "
+    resume = (f"{PIECES} pièces × {2 + len(ATTRIBUTS_PIECE) + 2} déclencheurs, "
               f"{LIGNES_RANGEE} lignes de rangée × 2, {LIGNES_NABU} lignes du panneau Ok Nabu × 2")
     if "--check" in argv:
         if attendu != texte:

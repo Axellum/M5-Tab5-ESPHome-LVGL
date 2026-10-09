@@ -4,7 +4,8 @@
  * @role Implémentation de tab5_parse.h : logique pure, compilée à l'identique dans le
  *       firmware, dans les tests hôte (tools/test_parse.cpp) et dans le harnais libFuzzer
  *       (tools/fuzz/fuzz_parse.cpp). Chaque fonction est la boucle de l'écran qu'elle
- *       remplace, déplacée telle quelle (lot F de l'audit du 30/09/2026).
+ *       remplace, déplacée telle quelle (lot F de l'audit du 30/09/2026), sauf les cinq
+ *       défauts corrigés à part ensuite (commentaires « correctif du lot F »).
  */
 #include "tab5_parse.h"
 
@@ -19,13 +20,40 @@
 // Tab5/ecran/tab5_forecast.cpp. Tampon de pile plutôt qu'une copie std::string du payload
 // (jusqu'à 2 048 octets, fragmentation de la SRAM).
 
-int previsions_premier_creneau(const char* payload) { return std::atoi(payload); }
+namespace {
+// Index d'un enregistrement de prévisions : strtol, comme l'atoi d'avant (blancs de tête
+// sautés, signe lu, la fin ignorée : « 3x » = 3), mais faux si aucun chiffre n'est lu
+// (« abc », vide) au lieu de 0, qui écrasait le premier créneau (correctif du lot F).
+bool index_prevision(const char* s, long& idx) {
+    char* bout = nullptr;
+    idx = std::strtol(s, &bout, 10);
+    return bout != s;
+}
 
-void previsions_heures_lire(const char* payload, HourForecastData heures[15]) {
+// Nombre d'une prévision : atof comme avant (un champ vide ou illisible vaut 0, ce que HA
+// envoie déjà pour une valeur absente : `| float(0)`), refusé s'il n'est pas fini ou hors
+// de [bas, haut] (« nan », « inf », « 1e99 », correctif du lot F). Bornes testées sur le
+// double, avant la conversion en float.
+bool nombre_prevision(const char* s, double bas, double haut, float& out) {
+    const double v = std::atof(s);
+    if (!std::isfinite(v) || v < bas || v > haut) return false;
+    out = static_cast<float>(v);
+    return true;
+}
+}  // namespace
+
+int previsions_premier_creneau(const char* payload) {
+    long idx = 0;
+    if (!index_prevision(payload, idx) || idx < 0) return -1;
+    return idx > 14 ? 15 : static_cast<int>(idx);
+}
+
+int previsions_heures_lire(const char* payload, HourForecastData heures[15]) {
     char buf[kPrevisionsMax + 1];
     strncpy(buf, payload, sizeof(buf) - 1);
     buf[sizeof(buf) - 1] = '\0';
     char* saveptr1 = nullptr;
+    int ignores = 0;
 
     char* token = strtok_r(buf, ";", &saveptr1);
     while (token != nullptr) {
@@ -33,23 +61,33 @@ void previsions_heures_lire(const char* payload, HourForecastData heures[15]) {
         const int num_parts = split_fields(token, '|', parts, 6);
 
         if (num_parts >= 5) {
-            int idx = std::atoi(parts[0]);
-            if (idx >= 0 && idx < 15) {
-                heures[idx].heure_texte = parts[1];
-                heures[idx].condition = parts[2];
-                heures[idx].temp = std::atof(parts[3]);
-                heures[idx].pluvio = std::atof(parts[4]);
+            long idx = 0;
+            float temp = 0.0f, pluvio = 0.0f;
+            if (!index_prevision(parts[0], idx)) {
+                ignores++;
+            } else if (idx >= 0 && idx < 15) {
+                if (nombre_prevision(parts[3], kPrevisionTempMin, kPrevisionTempMax, temp) &&
+                    nombre_prevision(parts[4], 0.0, kPrevisionPluieMax, pluvio)) {
+                    heures[idx].heure_texte = parts[1];
+                    heures[idx].condition = parts[2];
+                    heures[idx].temp = temp;
+                    heures[idx].pluvio = pluvio;
+                } else {
+                    ignores++;
+                }
             }
         }
         token = strtok_r(nullptr, ";", &saveptr1);
     }
+    return ignores;
 }
 
-void previsions_jours_lire(const char* payload, DayForecastData jours[15], int32_t& ancre) {
+int previsions_jours_lire(const char* payload, DayForecastData jours[15], int32_t& ancre) {
     char buf[kPrevisionsMax + 1];
     strncpy(buf, payload, sizeof(buf) - 1);
     buf[sizeof(buf) - 1] = '\0';
     char* saveptr1 = nullptr;
+    int ignores = 0;
 
     char* token = strtok_r(buf, ";", &saveptr1);
     while (token != nullptr) {
@@ -58,26 +96,35 @@ void previsions_jours_lire(const char* payload, DayForecastData jours[15], int32
         const int num_parts = split_fields(token, '|', parts, 10);
 
         if (num_parts >= 9) {
-            int jour = std::atoi(parts[0]);
-            if (jour >= 0 && jour < 15) {
-                jours[jour].nom_jour = parts[1];
-                jours[jour].condition = parts[2];
-                jours[jour].tmin = std::atof(parts[3]);
-                jours[jour].tmax = std::atof(parts[4]);
-                jours[jour].est_repos = (parts[5][0] == '1');
-                jours[jour].est_dimanche = (parts[6][0] == '1');
-                jours[jour].est_passe = (parts[7][0] == '1');
-                jours[jour].heures_ouverture = parts[8];
-                // HA calcule l'index 0 sur SON « aujourd'hui » au moment du push : on
-                // date la case 0 avec le jour local de réception (écart possible
-                // seulement si le push chevauche minuit à la seconde près). Heure pas
-                // encore synchronisée → -1 : le réveil reste sur l'heure fixe jusqu'au
-                // push suivant (cycle /10 min) plutôt que de deviner.
-                if (jour == 0) ancre = local_day_number_today();
+            long jour = 0;
+            float tmin = 0.0f, tmax = 0.0f;
+            if (!index_prevision(parts[0], jour)) {
+                ignores++;
+            } else if (jour >= 0 && jour < 15) {
+                if (nombre_prevision(parts[3], kPrevisionTempMin, kPrevisionTempMax, tmin) &&
+                    nombre_prevision(parts[4], kPrevisionTempMin, kPrevisionTempMax, tmax)) {
+                    jours[jour].nom_jour = parts[1];
+                    jours[jour].condition = parts[2];
+                    jours[jour].tmin = tmin;
+                    jours[jour].tmax = tmax;
+                    jours[jour].est_repos = (parts[5][0] == '1');
+                    jours[jour].est_dimanche = (parts[6][0] == '1');
+                    jours[jour].est_passe = (parts[7][0] == '1');
+                    jours[jour].heures_ouverture = parts[8];
+                    // HA calcule l'index 0 sur SON « aujourd'hui » au moment du push : on
+                    // date la case 0 avec le jour local de réception (écart possible
+                    // seulement si le push chevauche minuit à la seconde près). Heure pas
+                    // encore synchronisée → -1 : le réveil reste sur l'heure fixe jusqu'au
+                    // push suivant (cycle /10 min) plutôt que de deviner.
+                    if (jour == 0) ancre = local_day_number_today();
+                } else {
+                    ignores++;
+                }
             }
         }
         token = strtok_r(nullptr, ";", &saveptr1);
     }
+    return ignores;
 }
 
 // ─── 2. Vigilance ───
@@ -88,14 +135,14 @@ void vigilance_lire(const char* payload, VigilanceLue& v) {
     // complet dépassait parfois 512 et tronquait les derniers champs (#T165).
     strncpy(v.buf, payload, sizeof(v.buf) - 1);
     v.buf[sizeof(v.buf) - 1] = '\0';
-    // strtok_r saute les champs vides consécutifs ("||"), comme l'ancien lambda :
-    // un champ vide décalerait les suivants. Contrat HA inchangé — HA envoie
-    // toujours "Vert" plutôt qu'une chaîne vide.
-    char* saveptr = nullptr;
-    for (int i = 0; i < kVigilanceChamps; i++) {
-        char* tok = strtok_r(i == 0 ? v.buf : nullptr, "|", &saveptr);
-        v.champs[i] = tok ? tok : "";
-    }
+    // split_fields garde les champs vides (« || ») : chaque champ reste à sa place. Avant
+    // (strtok_r, jusqu'au lot F), un champ vide faisait remonter les suivants d'un cran
+    // (R6 de l'audit du 30/09/2026). HA envoie toujours « Vert », jamais un champ vide :
+    // ses payloads se lisent comme avant. Au-delà de 13 champs, le 13e s'arrête au « | »
+    // suivant, comme avec strtok_r.
+    char* parts[kVigilanceChamps];
+    const int n = split_fields(v.buf, '|', parts, kVigilanceChamps);
+    for (int i = 0; i < kVigilanceChamps; i++) v.champs[i] = i < n ? parts[i] : "";
 }
 
 NiveauVigilance vigilance_niveau(const char* s) {
@@ -232,7 +279,11 @@ PluiePhrase pluie_phrase_lire(const std::string& phrase) {
     PluiePhrase p{false, 0, 0};
     if (phrase.empty() || phrase[0] != '@') return p;
     p.code = true;
-    if (phrase.size() >= 2 && phrase[1] == '-') {
+    // « @- » sans chiffre après le « - » : aucune source. « @-1,0 » (pas de données, envoyé
+    // par HA) est un niveau négatif, lu par atoi ; avant le correctif du lot F, le « - »
+    // seul suffisait et « Pas de données » ne s'affichait jamais.
+    const bool chiffre = phrase.size() >= 3 && phrase[2] >= '0' && phrase[2] <= '9';
+    if (phrase.size() >= 2 && phrase[1] == '-' && !chiffre) {
         p.niveau = -2;
         p.debut = 0;
     } else {
@@ -347,16 +398,35 @@ float emplacement_nombre(const std::string& valeur) {
 }
 
 float solaire_pourcent(const char* valeur, size_t n) {
-    char tampon[16];
-    const size_t l = n < sizeof(tampon) - 1 ? n : sizeof(tampon) - 1;
-    memcpy(tampon, valeur, l);
-    tampon[l] = '\0';
-    char* bout = nullptr;
-    float v = strtof(tampon, &bout);
-    if (l == 0 || bout == tampon) v = NAN;
-    v = tab5_fini_ou_nan(v);
+    // champ_nombre (tab5_champs.h) : vide, illisible, non fini ou plus long que
+    // kChampNombreMax (31 octets) = NAN. Avant le correctif du lot F, un tampon de 16
+    // octets coupait le texte à 15 sans le dire (« 000000000000000099 » valait 0). HA
+    // envoie un entier de 0 à 100 ou « nan » (blueprint, solaire_pourcent).
+    float v = champ_nombre(valeur, n, NAN);
     if (!std::isnan(v)) v = v < 0.0f ? 0.0f : (v > 100.0f ? 100.0f : v);
     return v;
+}
+
+// Nouveau (ADR-0040), pas une extraction : écrit ici d'emblée, l'écran n'en garde que
+// l'affichage (Tab5/ecran/tab5_piece_climat.cpp).
+namespace {
+bool mesure_lire(const Champ& f, float& v) {
+    v = f.n == 0 ? NAN : champ_nombre(f, NAN);
+    return f.n != 0;
+}
+}  // namespace
+
+bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out) {
+    if (cle.n != 2 || cle.p[0] != 'p' || cle.p[1] < '0' || cle.p[1] >= '0' + kPieces) return false;
+    Champ f[3] = {};
+    const int k = champs_decouper(reste.p, reste.n, '|', f, 3);
+    out.piece = cle.p[1] - '0';
+    out.temperature = k > 0 && mesure_lire(f[0], out.t);
+    out.humidite = k > 1 && mesure_lire(f[1], out.h);
+    if (!out.temperature) out.t = NAN;
+    if (!out.humidite) out.h = NAN;
+    out.clim = k > 2 && champ_est(f[2], "1");
+    return true;
 }
 
 // ─── 7. Clim ───

@@ -441,7 +441,10 @@ def test_entrees_des_pieces_et_sections():
     for n in range(2, 6):
         assert sections[f"piece_{n}"]["collapsed"] is True
     assert sections["piece_1"]["name"].startswith("Pièce 1 — accueil")
-    assert set(sections[f"piece_{1}"]["input"]) == {"piece_1_nom", "piece_1_tuiles"}
+    for n in range(1, 6):
+        # Température, humidité et clim de la pièce : ADR-0040.
+        assert list(sections[f"piece_{n}"]["input"]) == [f"piece_{n}_{c}" for c in (
+            "nom", "tuiles", "temperature", "humidite", "clim")]
     assert sections["accueil_3x"]["collapsed"] is True
     assert set(sections["accueil_3x"]["input"]) == {"lumiere_1", "lumiere_2", "lumiere_3", "pc", "volet"}
     assert sections["personnaliser"]["collapsed"] is True
@@ -506,9 +509,14 @@ def test_declencheurs_des_pieces():
     ids = [t["id"] for t in bp["triggers"]]
     assert len(ids) == len(set(ids)), "identifiants de déclencheurs en double"
     for n in range(1, 6):
-        mes = [t for t in bp["triggers"] if t["id"].startswith(f"piece_{n}")]
+        mes = [t for t in bp["triggers"] if t["id"].startswith(f"piece_{n}")
+               and not t["id"].startswith(f"piece_{n}_clim")]
         assert [t["id"] for t in mes] == [f"piece_{n}", f"piece_{n}_sortie", f"piece_{n}_luminosite",
                                          f"piece_{n}_couleur", f"piece_{n}_position", f"piece_{n}_consigne"]
+        # La clim de la pièce (ADR-0040) a les siens, sur son entrée.
+        clim = [t for t in bp["triggers"] if t["id"].startswith(f"piece_{n}_clim")]
+        assert [t["id"] for t in clim] == [f"piece_{n}_clim", f"piece_{n}_clim_consigne"]
+        assert all(t["entity_id"].nom == f"piece_{n}_clim" for t in clim)
         assert all(t["entity_id"].nom == f"piece_{n}_tuiles" for t in mes)
         visibles = mes[0]["to"]
         # « on »/« off » sans guillemets seraient des booléens, refusés par le schéma.

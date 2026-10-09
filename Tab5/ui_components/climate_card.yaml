@@ -15,9 +15,9 @@
 #                          entre les boutons du haut (y 110) et la tuile (y 218), alignées
 #                          sur le bord gauche du − et le bord droit du +. Valeurs et consigne
 #                          dans la police de la date du thème (style_police_date).
-# @architecture_constraint `current_serre`/`val_temp_salon` sont mis à jour par les services
-#                          `tab5_maj_clim`/helpers C++ (tab5-api-logic.yaml,
-#                          tab5-sensors-domotique.yaml). `clim_target` est aussi poussé par
+# @architecture_constraint `current_serre`/`val_temp_salon` sont mis à jour par
+#                          tab5_piece_climat.cpp (capteurs temp_salon / temp_serre de
+#                          tab5-sensors-domotique.yaml, clé « pR » de tab5_maj_emplacements). `clim_target` est aussi poussé par
 #                          tab5_maj_clim (autoritaire), MAIS mis à jour de façon OPTIMISTE au
 #                          tap ± ci-dessous (21/07) via update_clim_target_ui + débounce.
 # @architecture_constraint Tuile − / + au choix (ADR-0033, 06/10/2026) : un appui long sur la
@@ -33,6 +33,13 @@
 #                          reglables_pas() et la valeur par reglables_valeur_appui()
 #                          (tab5_reglables.cpp). Le tap court sur les minutes de l'horloge
 #                          (« auto », lot A) passe à l'appareil suivant : reglables_suivant().
+# @architecture_constraint Climat de la pièce (ADR-0040, 09/10/2026) : en mode HA, sur une
+#                          pièce dont le blueprint a déclaré la température, les deux rangées
+#                          du haut montrent un thermomètre et sa température (gauche), une
+#                          goutte et son humidité si elle est déclarée (droite, sinon rien),
+#                          et la tuile − / + règle la clim de la pièce si elle en a une.
+#                          Textes, glyphes, couleurs et masquage de ces quatre labels :
+#                          tab5_piece_climat.cpp seulement (accueil_temperatures_ui).
 # @ai_instruction Les boutons +/- reprennent le mécanisme optimiste+débounce du popup
 #                 (accumulation dans clim_target_temp, un seul set_temperature par geste via
 #                 tab5_debounce_clim_temp). Pas et bornes : clim_consigne_suivante() (réglages
@@ -114,7 +121,11 @@ obj:
         on_short_click:
           - script.execute: tab5_arcade_open
         on_long_press:
-          - lambda: 'if (!zone_absente(Zone::SERRE)) id(tab5_historique_ouvrir).execute(std::string("serre"));'
+          # « serre », rien sans serre ; en mode HA sur une pièce à température déclarée
+          # (ADR-0040), la droite montre son humidité : rien non plus.
+          - lambda: |-
+              const char* cle = accueil_historique_cle(true);
+              if (cle != nullptr) id(tab5_historique_ouvrir).execute(std::string(cle));
 
     # Zone tactile sur l'icône et la température du salon → appui court : le carrousel des
     # clims (popup Climatisation, une page par clim ; ADR-0038, demande d'Axel du
@@ -139,7 +150,11 @@ obj:
         on_short_click:
           - lambda: 'if (!clim_carrousel_ouvrir()) reglables_liste_basculer();'
         on_long_press:
-          - lambda: 'if (!zone_absente(Zone::SALON)) id(tab5_historique_ouvrir).execute(std::string("salon"));'
+          # « salon », rien sans salon ; en mode HA sur une pièce à température déclarée
+          # (ADR-0040), l'historique de cette température : « pR ».
+          - lambda: |-
+              const char* cle = accueil_historique_cle(false);
+              if (cle != nullptr) id(tab5_historique_ouvrir).execute(std::string(cle));
 
     # ═══ Zone verre uniquement autour de − / cible / + ═══
     - obj:

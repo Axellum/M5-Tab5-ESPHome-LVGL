@@ -636,6 +636,12 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
             appliquees++;
             continue;
         }
+        // Climat de la pièce (ADR-0040) : « pR|température|humidité|clim »
+        // (tab5_piece_climat.cpp, lecture par piece_climat_lire, tab5_parse.h).
+        if (piece_climat_recu(e.cle.p, e.cle.n, e.reste.p, e.reste.n)) {
+            appliquees++;
+            continue;
+        }
         Champ c_etat, c_valeur;
         emplacement_etat_valeur(e.reste, c_etat, c_valeur);
         const std::string cle(e.cle.p, e.cle.n);
@@ -801,13 +807,11 @@ void zones_apply_ui() {
     // tablette) : masquée sans clim ni appareil, comme avant sans clim (tab5_reglables.cpp).
     reglables_appliquer_ui();
 
-    // Températures : salon masqué ; sans serre, l'icône devient une manette, la zone
-    // tactile de l'arcade (btn_serre_games) reste à la même place.
-    ui_hidden(u.icon_salon, zone_absente(Zone::SALON));
-    ui_hidden(u.val_salon, zone_absente(Zone::SALON));
-    const bool sans_serre = zone_absente(Zone::SERRE);
-    ui_hidden(u.val_serre, sans_serre);
-    ui_text(u.icon_serre, sans_serre ? "\U000F0297" : "\U000F002D");
+    // Températures : la pièce affichée en mode HA quand elle a une température déclarée,
+    // sinon le salon (masqué avec sa zone) et la serre (sans elle, l'icône devient une
+    // manette, la zone tactile de l'arcade reste à la même place) — tab5_piece_climat.cpp,
+    // ADR-0040.
+    accueil_temperatures_ui();
 
     // Pots : ligne des plantes de la rangée sous l'horloge (sans pot, elle sort de la
     // rotation, ADR-0031 ; la rangée disparaît s'il n'y a rien d'autre) et popup « Mes
