@@ -233,6 +233,134 @@ static void test_vigilance() {
            "niveau : comparaison exacte");
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 3. Alertes HA, historique, bandeau info
+// ════════════════════════════════════════════════════════════════════════════
+
+static bool alerte_vaut(const AlerteHaJeton& j, const char* id, const char* niveau, const char* texte) {
+    return j.type == AlerteHaType::ALERTE && std::strcmp(j.id, id) == 0 && std::strcmp(j.niveau, niveau) == 0 &&
+           std::strcmp(j.texte, texte) == 0;
+}
+
+static void test_alertes_ha() {
+    {
+        LecteurAlertesHa l("@n:6;u#1|Rouge|@maj:HA Core;i#2|Orange|@indispo:3");
+        const AlerteHaJeton t = l.suivant();
+        expect(t.type == AlerteHaType::TOTAL && t.total == 6, "bandeaux : en-tête « @n:6 »");
+        expect(alerte_vaut(l.suivant(), "u#1", "Rouge", "@maj:HA Core"), "bandeaux : première alerte");
+        expect(alerte_vaut(l.suivant(), "i#2", "Orange", "@indispo:3"), "bandeaux : seconde alerte");
+        expect(l.suivant().type == AlerteHaType::FIN && l.suivant().type == AlerteHaType::FIN,
+               "bandeaux : fin, et fin encore après");
+    }
+    {
+        LecteurAlertesHa l(";;x;a|b;id|n|t|reste;id2||");
+        expect(l.suivant().type == AlerteHaType::AUTRE, "bandeaux [figé] : « ;; » sauté, un champ = AUTRE");
+        expect(l.suivant().type == AlerteHaType::AUTRE, "bandeaux : deux champs = AUTRE");
+        expect(alerte_vaut(l.suivant(), "id", "n", "t"), "bandeaux : le texte s'arrête au « | » suivant");
+        expect(alerte_vaut(l.suivant(), "id2", "", ""), "bandeaux : niveau et texte vides gardés");
+        expect(l.suivant().type == AlerteHaType::FIN, "bandeaux : fin");
+    }
+    {
+        LecteurAlertesHa l("@n:abc;@n:;@n:-2");
+        const int a = l.suivant().total, b = l.suivant().total, c = l.suivant().total;
+        expect(a == 0 && b == 0 && c == -2, "bandeaux [figé] : total = atoi (illisible 0, négatif gardé)");
+    }
+    {
+        LecteurAlertesHa l("");
+        expect(l.suivant().type == AlerteHaType::FIN, "bandeaux : payload vide");
+    }
+    {
+        std::string longue = "id|n|" + std::string(kAlertesHaMax, 'x') + ";id2|n|t";
+        LecteurAlertesHa l(longue.c_str());
+        const AlerteHaJeton j = l.suivant();
+        expect(j.type == AlerteHaType::ALERTE && std::strlen(j.texte) == kAlertesHaMax - 5 &&
+                   l.suivant().type == AlerteHaType::FIN,
+               "bandeaux : coupé à kAlertesHaMax octets");
+    }
+}
+
+static void test_alerte_texte() {
+    AlerteTexteLu t = alerte_texte_lire("@maj:Home Assistant Core");
+    expect(t.code == AlerteTexteCode::MAJ && std::strcmp(t.reste, "Home Assistant Core") == 0, "libellé : @maj");
+    t = alerte_texte_lire("@indispo:12");
+    expect(t.code == AlerteTexteCode::INDISPO && t.nombre == 12, "libellé : @indispo");
+    t = alerte_texte_lire("@indispo:x");
+    expect(t.code == AlerteTexteCode::INDISPO && t.nombre == 0, "libellé [figé] : @indispo illisible = 0 (atoi)");
+    t = alerte_texte_lire("@vigi:Orange");
+    expect(t.code == AlerteTexteCode::VIGI && vigilance_niveau(t.reste) == NiveauVigilance::ORANGE, "libellé : @vigi");
+    t = alerte_texte_lire("Capteur en panne");
+    expect(t.code == AlerteTexteCode::TEXTE && std::strcmp(t.reste, "Capteur en panne") == 0, "libellé : texte libre");
+    t = alerte_texte_lire("@MAJ:x");
+    expect(t.code == AlerteTexteCode::TEXTE, "libellé : préfixe sensible à la casse");
+    t = alerte_texte_lire("");
+    expect(t.code == AlerteTexteCode::TEXTE && t.reste[0] == '\0', "libellé : vide");
+}
+
+static bool texte_vaut(const Champ& c, const char* attendu) {
+    return c.n == std::strlen(attendu) && std::memcmp(c.p, attendu, c.n) == 0;
+}
+
+static void test_alertes_historique() {
+    AlerteHistoriqueLue e[20];
+    int ill = -1;
+    int n = alertes_historique_lire(
+        "1791381720|1791382200|0|Rouge|@maj:Home Assistant Core;1791370000|0|1791375400|Orange|@vigi:Orange", e, 20, ill);
+    expect(n == 2 && ill == 0, "historique : deux entrées");
+    expect(e[0].apparue == 1791381720u && e[0].lue == 1791382200u && e[0].terminee == 0 && e[0].gravite == 'R' &&
+               texte_vaut(e[0].texte, "@maj:Home Assistant Core"),
+           "historique : première entrée");
+    expect(e[1].lue == 0 && e[1].terminee == 1791375400u && e[1].gravite == 'O', "historique : seconde entrée");
+
+    n = alertes_historique_lire("1|0|0|Jaune|a;2|0|0||b;3|0|0|x|c;4|0|0|jaune|d", e, 20, ill);
+    expect(n == 4 && e[0].gravite == 'J' && e[1].gravite == 'O' && e[2].gravite == 'O' && e[3].gravite == 'O',
+           "historique : gravité R/J à la première lettre, sinon O");
+
+    n = alertes_historique_lire("1|-1|4102444801|R|a;4102444800|abc||R|b", e, 20, ill);
+    expect(n == 2 && e[0].lue == 0 && e[0].terminee == 0 && e[1].apparue == kAlerteEpochMax && e[1].lue == 0,
+           "historique : epoch « -1 », au-delà de 2100 ou illisible = 0 ; 2100 compris");
+
+    n = alertes_historique_lire("0|0|0|R|a;|0|0|R|b;x|0|0|R|c;1|0|0|R", e, 20, ill);
+    expect(n == 0 && ill == 4, "historique : apparue 0, vide, illisible, quatre champs = illisibles");
+
+    n = alertes_historique_lire(";;1|0|0|R|a;", e, 20, ill);
+    expect(n == 1 && ill == 2, "historique : entrées vides illisibles, « ; » final sans entrée");
+
+    n = alertes_historique_lire("1|0|0|R|a|b|c", e, 20, ill);
+    expect(n == 1 && texte_vaut(e[0].texte, "a|b|c"), "historique : le libellé prend le reste");
+
+    std::string beaucoup;
+    for (int i = 1; i <= 25; i++) beaucoup += std::to_string(i) + "|0|0|R|t;";
+    beaucoup = "x;" + beaucoup;
+    n = alertes_historique_lire(beaucoup.c_str(), e, 20, ill);
+    expect(n == 20 && e[19].apparue == 20 && ill == 1, "historique : au plus `max` entrées, la lecture s'arrête là");
+
+    n = alertes_historique_lire("", e, 20, ill);
+    expect(n == 0 && ill == 0, "historique : payload vide");
+}
+
+static void test_info_code() {
+    InfoCodeLu lu;
+    info_code_lire("1|Home Assistant Core|0|0|0|", lu);
+    expect(lu.nb_maj == 1 && std::strcmp(lu.titre, "Home Assistant Core") == 0 && lu.nb_err == 0 &&
+               lu.nb_indispo == 0 && !lu.jaune && lu.vigi[0] == '\0',
+           "info : une MAJ");
+    info_code_lire("2||3|4|1|rouge", lu);
+    expect(lu.nb_maj == 2 && lu.titre[0] == '\0' && lu.nb_err == 3 && lu.nb_indispo == 4 && lu.jaune &&
+               std::strcmp(lu.vigi, "rouge") == 0,
+           "info : tous les compteurs, titre vide gardé");
+    info_code_lire("", lu);
+    expect(lu.nb_maj == 0 && lu.titre[0] == '\0' && lu.vigi[0] == '\0' && !lu.jaune, "info : vide");
+    info_code_lire("5", lu);
+    expect(lu.nb_maj == 5 && lu.nb_err == 0 && lu.vigi[0] == '\0', "info : champs absents = \"\" (0)");
+    info_code_lire("1|t|0|0|0|orange|en trop", lu);
+    expect(std::strcmp(lu.vigi, "orange") == 0, "info : champs en trop ignorés");
+    info_code_lire("x|t|y|z|2|", lu);
+    expect(lu.nb_maj == 0 && lu.nb_err == 0 && lu.jaune, "info [figé] : nombres par atoi, « 2 » = jaune");
+    std::string longue = "1|" + std::string(300, 'T');
+    info_code_lire(longue.c_str(), lu);
+    expect(std::strlen(lu.titre) == 253, "info : copié dans 255 octets");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -241,6 +369,10 @@ int main() {
     test_previsions_heures();
     test_previsions_jours();
     test_vigilance();
+    test_alertes_ha();
+    test_alerte_texte();
+    test_alertes_historique();
+    test_info_code();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

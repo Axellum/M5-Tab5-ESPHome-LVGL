@@ -46,12 +46,39 @@ void vigilance(const std::string& p) {
     for (int i = 0; i < n; i++) vigilance_niveau(a[i].niveau);
 }
 
+void alertes_ha(const std::string& p) {
+    LecteurAlertesHa l(p.c_str());
+    // Borné comme l'écran (4 bandeaux) puis au-delà : le lecteur doit finir seul.
+    for (AlerteHaJeton j = l.suivant(); j.type != AlerteHaType::FIN; j = l.suivant()) {
+        if (j.type == AlerteHaType::ALERTE) alerte_texte_lire(j.texte);
+    }
+}
+
+void historique(const std::string& p) {
+    AlerteHistoriqueLue e[20];
+    int illisibles = 0;
+    const int n = alertes_historique_lire(p.c_str(), e, 20, illisibles);
+    for (int i = 0; i < n; i++) {
+        const std::string texte(e[i].texte.p, e[i].texte.n);
+        alerte_texte_lire(texte.c_str());
+    }
+}
+
+void info(const std::string& p) {
+    // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
+    InfoCodeLu lu;
+    info_code_lire(p.rfind("@ha|", 0) == 0 ? p.c_str() + 4 : p.c_str(), lu);
+}
+
 // Un parseur par entrée ; l'ordre fixe le premier octet des graines (tools/fuzz/graines.py).
 using Parseur = void (*)(const std::string&);
 constexpr Parseur kParseurs[] = {
     heures,  // '0' tab5_maj_previsions_heures_bulk
     jours,      // '1' tab5_maj_previsions_jours_bulk
-    vigilance,  // '2' tab5_maj_alerte_meteo_france
+    vigilance,   // '2' tab5_maj_alerte_meteo_france
+    alertes_ha,  // '3' tab5_maj_alertes_ha_bulk
+    historique,  // '4' tab5_maj_alertes_historique
+    info,        // '5' tab5_maj_info_texte
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

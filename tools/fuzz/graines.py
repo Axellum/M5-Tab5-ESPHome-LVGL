@@ -23,6 +23,9 @@ FAMILLES = [
     ("0", "tab5_maj_previsions_heures_bulk", "payload"),
     ("1", "tab5_maj_previsions_jours_bulk", "payload"),
     ("2", "tab5_maj_alerte_meteo_france", "payload"),
+    ("3", "tab5_maj_alertes_ha_bulk", "payload"),
+    ("4", "tab5_maj_alertes_historique", "payload"),
+    ("5", "tab5_maj_info_texte", "texte"),
 ]
 
 

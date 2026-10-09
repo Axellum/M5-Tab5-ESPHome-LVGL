@@ -8,6 +8,7 @@
  */
 #include "tab5_parse.h"
 
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
@@ -110,4 +111,88 @@ int vigilance_actives(const VigilanceLue& v, VigilanceActive out[kVigilanceActiv
         out[n++] = VigilanceActive{i, state};
     }
     return n;
+}
+
+// ─── 3. Alertes HA, historique des alertes, bandeau info ───
+// Avant : la boucle de parse_and_update_ha_alerts_bulk(), le début de ha_alerte_texte()
+// et de compose_info_code() (Tab5/ecran/tab5_central.cpp), la boucle
+// d'alertes_historique_recu() (Tab5/ecran/tab5_alertes.cpp).
+
+LecteurAlertesHa::LecteurAlertesHa(const char* payload) {
+    strncpy(buf_, payload, sizeof(buf_) - 1);
+    buf_[sizeof(buf_) - 1] = '\0';
+}
+
+AlerteHaJeton LecteurAlertesHa::suivant() {
+    AlerteHaJeton j{AlerteHaType::FIN, 0, nullptr, nullptr, nullptr};
+    char* token = strtok_r(premier_ ? buf_ : nullptr, ";", &save_);
+    premier_ = false;
+    if (token == nullptr) return j;
+    // En-tête « @n:N » (alertes du 06/10/2026, lot 3) : HA a N alertes à lire en tout,
+    // plus que les 4 bandeaux. Un jeton d'un seul champ : l'ancien firmware l'ignore.
+    if (strncmp(token, "@n:", 3) == 0) {
+        j.type = AlerteHaType::TOTAL;
+        j.total = atoi(token + 3);
+        return j;
+    }
+    char* parts[3];
+    const int num_parts = split_fields(token, '|', parts, 3);
+    if (num_parts < 3) {
+        j.type = AlerteHaType::AUTRE;
+        return j;
+    }
+    j.type = AlerteHaType::ALERTE;
+    j.id = parts[0];
+    j.niveau = parts[1];
+    j.texte = parts[2];
+    return j;
+}
+
+AlerteTexteLu alerte_texte_lire(const char* brut) {
+    if (strncmp(brut, "@maj:", 5) == 0) return {AlerteTexteCode::MAJ, brut + 5, 0};
+    if (strncmp(brut, "@indispo:", 9) == 0) return {AlerteTexteCode::INDISPO, brut + 9, atoi(brut + 9)};
+    if (strncmp(brut, "@vigi:", 6) == 0) return {AlerteTexteCode::VIGI, brut + 6, 0};
+    return {AlerteTexteCode::TEXTE, brut, 0};
+}
+
+int alertes_historique_lire(const char* payload, AlerteHistoriqueLue out[], int max, int& illisibles) {
+    int nb = 0;
+    illisibles = 0;
+    const char* p = payload;
+    while (*p != '\0' && nb < max) {
+        const char* fin = strchr(p, ';');
+        const size_t n = fin ? static_cast<size_t>(fin - p) : strlen(p);
+        // « apparue|lue|terminée|gravité|libellé » : le libellé est le reste (il ne contient
+        // ni « | » ni « ; », HA les remplace) ; une entrée sans ses cinq champs est ignorée.
+        Champ f[5] = {};
+        if (champs_decouper_reste(p, n, '|', f, 5) == 5) {
+            AlerteHistoriqueLue& e = out[nb];
+            e.apparue = champ_entier(f[0], kAlerteEpochMax, 0);
+            e.lue = champ_entier(f[1], kAlerteEpochMax, 0);
+            e.terminee = champ_entier(f[2], kAlerteEpochMax, 0);
+            e.gravite = f[3].n > 0 ? f[3].p[0] : 'O';
+            if (e.gravite != 'R' && e.gravite != 'J') e.gravite = 'O';
+            e.texte = f[4];
+            if (e.apparue != 0) nb++;
+            else illisibles++;
+        } else {
+            illisibles++;
+        }
+        if (fin == nullptr) break;
+        p = fin + 1;
+    }
+    return nb;
+}
+
+void info_code_lire(const char* apres_prefixe, InfoCodeLu& out) {
+    snprintf(out.buf, sizeof(out.buf), "%s", apres_prefixe);
+    char* f[6];
+    const int n = split_fields(out.buf, '|', f, 6);
+    auto champ = [&](int i) -> const char* { return i < n ? f[i] : ""; };
+    out.nb_maj = atoi(champ(0));
+    out.titre = champ(1);
+    out.nb_err = atoi(champ(2));
+    out.nb_indispo = atoi(champ(3));
+    out.jaune = atoi(champ(4)) != 0;
+    out.vigi = champ(5);
 }

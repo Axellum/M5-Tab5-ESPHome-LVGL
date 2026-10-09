@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "tab5_champs.h"
 #include "tab5_core.h"
 
 // ─── 1. Prévisions (tab5_maj_meteo_heures_bulk / tab5_maj_meteo_jours_bulk) ───
@@ -80,3 +81,78 @@ struct VigilanceActive {
     const char* niveau;
 };
 int vigilance_actives(const VigilanceLue& v, VigilanceActive out[kVigilanceActivesMax]);
+
+// ─── 3. Alertes HA, historique des alertes, bandeau info ───
+// Bandeaux (tab5_maj_alertes_ha_bulk) : « @n:N;id|niveau|texte;id|niveau|texte;… »,
+// 1 024 octets au plus (l'appelant refuse au-delà). Lu jeton par jeton, découpé en place
+// dans le tampon du lecteur ; les pointeurs rendus vivent autant que lui.
+constexpr size_t kAlertesHaMax = 1024;
+enum class AlerteHaType : uint8_t {
+    FIN,     // plus de jeton
+    TOTAL,   // « @n:N » : total = atoi(N), alertes à lire en tout chez HA
+    ALERTE,  // au moins 3 champs « | » : id, niveau, texte (le 3e s'arrête au « | » suivant)
+    AUTRE,   // moins de 3 champs : ignoré par l'écran
+};
+struct AlerteHaJeton {
+    AlerteHaType type;
+    int total;
+    const char* id;
+    const char* niveau;
+    const char* texte;
+};
+class LecteurAlertesHa {
+public:
+    explicit LecteurAlertesHa(const char* payload);
+    // Jeton suivant. [figé] strtok_r : les « ; » consécutifs sont sautés.
+    AlerteHaJeton suivant();
+
+private:
+    char buf_[kAlertesHaMax + 1];
+    char* save_ = nullptr;
+    bool premier_ = true;
+};
+
+// Libellé codé d'une alerte (lot 4c, 27/09/2026) : « @maj:<titre> », « @indispo:<n> »
+// (nombre = atoi), « @vigi:<niveau> » ; tout autre texte se montre tel quel.
+enum class AlerteTexteCode : uint8_t {
+    TEXTE,
+    MAJ,
+    INDISPO,
+    VIGI,
+};
+struct AlerteTexteLu {
+    AlerteTexteCode code;
+    const char* reste;  // après le préfixe (le texte entier pour TEXTE)
+    int nombre;         // INDISPO seulement
+};
+AlerteTexteLu alerte_texte_lire(const char* brut);
+
+// Historique (tab5_maj_alertes_historique) : « apparue|lue|terminée|gravité|libellé;… »,
+// libellé = le reste. Epochs : champ_entier() borné à kAlerteEpochMax (2100), 0 sinon
+// (vide, illisible, « -1 »). Gravité : 'R' ou 'J' si le champ commence ainsi, 'O' sinon.
+// Une entrée sans ses cinq champs, ou avec apparue = 0, est comptée dans `illisibles` et
+// sautée. Au plus `max` entrées gardées ; lecture du texte jusqu'au premier zéro.
+constexpr uint32_t kAlerteEpochMax = 4102444800u;
+struct AlerteHistoriqueLue {
+    uint32_t apparue;
+    uint32_t lue;       // 0 : pas encore lue
+    uint32_t terminee;  // 0 : en cours
+    char gravite;       // 'R', 'O' ou 'J'
+    Champ texte;        // dans le payload, sans zéro final
+};
+int alertes_historique_lire(const char* payload, AlerteHistoriqueLue out[], int max, int& illisibles);
+
+// Bandeau info codé (tab5_maj_info_texte, lot 4c) : après « @ha| »,
+// « nb MAJ|titre|nb erreurs|nb indispo|jaune 0/1|vigilance ». Copié dans `buf` (255
+// octets lus), découpé par split_fields (champs vides gardés) ; un champ absent vaut "",
+// donc 0. Nombres : atoi.
+struct InfoCodeLu {
+    char buf[256];
+    int nb_maj;
+    const char* titre;
+    int nb_err;
+    int nb_indispo;
+    bool jaune;
+    const char* vigi;
+};
+void info_code_lire(const char* apres_prefixe, InfoCodeLu& out);
