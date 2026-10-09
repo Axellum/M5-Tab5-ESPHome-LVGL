@@ -114,8 +114,9 @@ def test_pastilles_du_popup():
 def test_gestes_de_la_carte_clim():
     salon = _bloc_yaml(CARTE, "btn_reglables_liste", "\n    - ")
     assert "on_short_click:\n          - lambda: 'if (!clim_carrousel_ouvrir()) reglables_liste_basculer();'" in salon
-    # L'appui long (historique, ADR-0032) ne change pas.
-    assert 'id(tab5_historique_ouvrir).execute(std::string("salon"));' in salon
+    # L'appui long : l'historique (ADR-0032), du salon ou de la pièce affichée (ADR-0040).
+    assert "accueil_historique_cle(false);" in salon
+    assert "id(tab5_historique_ouvrir).execute(std::string(cle));" in salon
     # La liste de la tuile − / + : appui long sur la valeur entre − et +.
     valeur = _bloc_yaml(CARTE, "btn_clim_target_click", "\n          - button:")
     assert "on_long_press:\n                - lambda: 'reglables_liste_basculer();'" in valeur

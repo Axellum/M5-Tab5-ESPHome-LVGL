@@ -14,6 +14,8 @@
 
 ![The same window when the second temperature is outdoors: the forecast extends the curve](../images/notice/temperature-dehors-en.webp)
 
+**A room in HA mode.** If the room's section of the blueprint declares a temperature sensor (« Température de la pièce »), the home screen shows that room's temperature on the left while you are on it in HA mode, its humidity on the right with a drop when a humidity sensor is declared; a long press on it opens its history, with no forecast. If the section also declares a climate (« Climatisation de la pièce »), the − and + under it adjust that climate, and a tap on its setpoint opens its climate window. In weather mode, or on a room without these fields, the home screen shows the living room and the second temperature as before.
+
 Home Assistant sends the curve only while the window is open, from its long-term statistics: the sensor needs a state class (thermometers have one), and the forecast is the weather entity picked for the tablet. Without statistics, the window says there is no history; before Home Assistant answers, it says it is waiting.
 
 ---
@@ -31,5 +33,7 @@ Home Assistant sends the curve only while the window is open, from its long-term
 - **Prévision**, pour la seconde température seulement : en or, sur un fond teinté après « Maintenant ». Une prévision par jour a aussi sa barre du minimum au maximum. Si le blueprint dit que cette température est dehors (« La seconde température est dehors »), la prévision prolonge la courbe et s'appelle « Prévu » ; sinon (une serre, une autre pièce), elle reste à part, sous le nom « Dehors, prévu ».
 
 ![La même fenêtre quand la seconde température est dehors : la prévision prolonge la courbe](../images/notice/temperature-dehors-fr.webp)
+
+**Une pièce en mode HA.** Si la section de la pièce dans le blueprint déclare une sonde de température (« Température de la pièce »), l'écran d'accueil montre la température de cette pièce à gauche quand vous êtes dessus en mode HA, son humidité à droite avec une goutte quand une sonde d'humidité est déclarée ; un appui long dessus ouvre son historique, sans prévision. Si la section déclare aussi une clim (« Climatisation de la pièce »), le − et le + en dessous règlent cette clim, et un toucher sur sa consigne ouvre sa fenêtre de clim. En mode météo, ou sur une pièce sans ces champs, l'écran d'accueil montre le salon et la seconde température comme avant.
 
 Home Assistant n'envoie la courbe que pendant que la fenêtre est ouverte, depuis ses statistiques longue durée : le capteur doit avoir une classe d'état (les thermomètres en ont une), et la prévision est celle de l'entité météo choisie pour la tablette. Sans statistiques, la fenêtre dit qu'il n'y a pas d'historique ; avant que Home Assistant réponde, elle dit qu'elle attend.

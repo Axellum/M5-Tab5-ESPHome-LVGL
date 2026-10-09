@@ -100,8 +100,20 @@ def test_etats_suivent_la_grammaire(maison):
 def test_etats_a_la_suite_des_emplacements_3x():
     payload = scenarios.build_emplacements_payload(frozenset(), PIECES, scenarios.SCENES[0].clim)
     assert payload.startswith(scenarios.build_emplacements_payload())
-    assert payload.endswith(build_etats_tuiles(PIECES, scenarios.SCENES[0].clim))
+    # Puis le climat des pièces (ADR-0040), en dernier comme le blueprint.
+    assert payload.endswith(build_etats_tuiles(PIECES, scenarios.SCENES[0].clim)
+                            + scenarios.build_climat_pieces(PIECES))
     assert "t00|" not in scenarios.build_emplacements_payload(), "sans pièces, pas de clé tRT"
+
+
+def test_climat_des_pieces():
+    """ADR-0040 : les cinq pièces, dans l'ordre, chacune « pR|température|humidité|clim »
+    entre les réglages et l'état de sa clim ; une pièce sans climat ou absente vide."""
+    assert scenarios.build_climat_pieces(PIECES) == (
+        "p0|||0;p1|19.6||0;"
+        "p2|||0;crp3|16.0|30.0|0.5|°C|chdfq|Climatiseur du bureau;p3|22.8|45|1;"
+        "cep3|22.0|22.8|cool|none|auto|stop;p4|||0;")
+    assert scenarios.build_climat_pieces(scenarios.PIECES_MINIMALES) == "".join(f"p{r}|||0;" for r in range(5))
 
 
 def test_echappement_des_champs_texte():

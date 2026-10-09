@@ -4,7 +4,8 @@
 # @role Popup « Température » de la tablette (ADR-0032, 06/10/2026) : l'historique d'une
 #       des deux températures de l'accueil et, pour la seconde (serre ou dehors), la
 #       prévision de la météo à sa suite. La tablette émet esphome.tab5_historique
-#       (cle = salon | serre, vue = jour | semaine | mois) à l'ouverture du popup (appui
+#       (cle = salon | serre, ou p0 à p4 pour la température d'une pièce en mode HA,
+#       ADR-0040 ; vue = jour | semaine | mois) à l'ouverture du popup (appui
 #       long sur la température) et à chaque bouton de vue ; le blueprint « Tab5 —
 #       emplacements », qui connaît le capteur de chaque emplacement, lance
 #       script.tab5_historique avec lui. Le script pousse UNE fois l'action
@@ -61,7 +62,7 @@ script:
         description: "Préfixe des actions de la tablette (entrée « tablette » du blueprint)"
         example: tab5_ha_hmi
       cle:
-        description: "Température montrée : salon (la pièce) ou serre (la seconde)"
+        description: "Température montrée : salon (la pièce), serre (la seconde), ou p0 à p4 (une pièce en mode HA)"
         example: serre
       vue:
         description: "Vue montrée par le popup : jour (24 h), semaine (7 jours) ou mois (30 jours)"
@@ -74,7 +75,9 @@ script:
         example: false
     variables:
       vue_demandee: "{{ vue if vue in ['jour', 'semaine', 'mois'] else 'jour' }}"
-      cle_demandee: "{{ cle if cle in ['salon', 'serre'] else 'salon' }}"
+      # p0 à p4 : la température d'une pièce en mode HA (ADR-0040), comme salon (sans
+      # prévision). La réponse porte la clé demandée : le popup ignore celle d'une autre.
+      cle_demandee: "{{ cle if cle in ['salon', 'serre', 'p0', 'p1', 'p2', 'p3', 'p4'] else 'salon' }}"
       # states[''] lève une erreur (domaine invalide) : le « . » d'abord.
       entite: "{{ capteur if capteur is string and '.' in capteur and states[capteur] is not none else '' }}"
       pas: "{{ {'jour': 60, 'semaine': 180, 'mois': 1440}[vue_demandee] }}"

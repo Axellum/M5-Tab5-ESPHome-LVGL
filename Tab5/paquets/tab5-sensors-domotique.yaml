@@ -196,7 +196,9 @@ sensor:
     on_value:
       - lambda: |-
           if (zone_vue(Zone::SERRE)) id(tab5_zones_apply).execute();
-          update_temp_ui(id(current_serre), x); // AXE1/Phase 3 : helper centralise
+          // Gardée, et peinte quand la zone des températures montre la serre (en mode HA,
+          // elle peut montrer la pièce : ADR-0040, ecran/tab5_piece_climat.cpp).
+          accueil_serre_temperature(x);
 
   - platform: template
     id: temp_salon
@@ -204,14 +206,13 @@ sensor:
     on_value:
       - lambda: |-
           if (zone_vue(Zone::SALON)) id(tab5_zones_apply).execute();
-          update_temp_ui(id(val_temp_salon), x); // Gradient continu colorimetrique (helper centralise)
+          accueil_salon_temperature(x);  // gardée, peinte quand la zone montre le salon
 
   - platform: template
     id: hum_salon
     update_interval: never
     on_value:
-      - lambda: |-
-          if (!std::isnan(x)) set_icon_color_ui(id(icon_salon), get_humidity_color(x));
+      - lambda: 'accueil_salon_humidite(x);'  # couleur de l'icône du salon (NaN : inchangée)
 
   # Humidité des 5 pots : chaque mise à jour relance le script tab5_pots_maj (plus bas),
   # qui trie les 4 emplacements de la ligne des plantes et peint le popup « Mes Plantes ».

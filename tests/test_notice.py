@@ -54,6 +54,9 @@ NON_MONTREES = {
     "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",
     "temperature-serre-mois": "temperature-serre montre la même fenêtre ; les vues sont décrites",
+    # Climat de la pièce en mode HA (ADR-0040), décrit dans temperature.md.
+    "temperature-piece": "temperature-serre montre la même fenêtre ; la température d'une pièce est décrite",
+    "climatisation-piece": "climatisation montre la même fenêtre ; la clim d'une pièce est décrite",
     # Images à tirer du rendu de la PR (tools/site/images_notice.py), puis citées.
     "appareil-scene": "appareil montre la même fenêtre ; la scène est décrite dans tiles.md",
     "console-batterie-en-charge": "console-batterie montre la même ligne ; l'éclair est décrit",

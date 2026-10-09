@@ -532,10 +532,14 @@ def test_ouverture_et_fermeture_du_popup():
 def test_table_des_clims_de_tuile_en_psram_a_la_demande():
     cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
     assert "ClimTuile* s_ct = nullptr;" in cartes
-    table = _corps_fonction(cartes, "tuile_clim")
+    # Une table pour les tuiles et les clims de pièce (ADR-0040) : tuile_clim et
+    # piece_clim passent par case_clim, qui l'alloue.
+    assert "return case_clim(r * kTuiles + t, creer);" in _corps_fonction(cartes, "tuile_clim")
+    assert "return case_clim(kCasesTuiles + r, creer);" in _corps_fonction(cartes, "piece_clim")
+    table = _corps_fonction(cartes, "case_clim")
     assert "if (!creer) return nullptr;" in table
     assert table.index("MALLOC_CAP_SPIRAM") < table.index("MALLOC_CAP_INTERNAL")
-    assert "new (&table[i]) ClimTuile();" in table
+    assert "new (&table[k]) ClimTuile();" in table
     assert not re.search(r"^EXT_RAM_BSS_ATTR", cartes, re.M), "constructeurs : pas de BSS externe"
     # Modes bornés : la chaîne reste dans son std::string (tab5_parse.h depuis le lot F).
     assert "constexpr size_t kModeMax = 15;" in _lire("Tab5", "socle", "tab5_parse.h")

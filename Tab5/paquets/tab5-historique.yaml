@@ -3,8 +3,9 @@
 # @file tab5-historique.yaml
 # @role Popup « Température » (ADR-0032, 06/10/2026) : pose les widgets que
 #       tab5_historique.cpp dessine (g_historique_ui) et sa demande à Home Assistant.
-#         - tab5_historique_ouvrir (cle = salon | serre) : ouvre le popup, depuis un appui
-#           long sur une des deux températures de l'accueil (climate_card.yaml). Pose les
+#         - tab5_historique_ouvrir (cle = salon | serre | p0…p4) : ouvre le popup, depuis
+#           un appui long sur une des deux températures de l'accueil (climate_card.yaml ;
+#           pR : la température de la pièce affichée en mode HA, ADR-0040). Pose les
 #           widgets à la première ouverture, puis historique_ouvrir() : vue 24 h, dessin,
 #           demande à HA.
 #         - tab5_historique_demande : événement esphome.tab5_historique (cle, vue = jour |

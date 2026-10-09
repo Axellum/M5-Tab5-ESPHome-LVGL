@@ -367,15 +367,30 @@ void clim_tuile_oublier(int r, int t);
 // tab5_clim.cpp, réglages d'une clim de tuile reçus : repeindre la tuile (son bouton
 // apparaît, ADR-0027).
 void tuiles_repeindre(int r, int t);
+// Clim de la pièce R (ADR-0040, clés crpR / cepR, emplacement des commandes « cpR »).
+// La tablette a-t-elle ses réglages ? (tab5_piece_climat.cpp : la tuile − / + la règle).
+bool clim_piece_connue(int r);
+// tab5_reglables.cpp, toucher de la consigne de la tuile − / + : le popup montre cette
+// clim. Faux, et rien ne change, sans ses réglages.
+bool clim_afficher_piece(int r);
+// tab5_reglables.cpp, − / + : un pas de plus (sens > 0) ou de moins, borné ; affichage
+// tout de suite, envoi par tab5_debounce_clim_tuile. Consigne inconnue : rien.
+void clim_piece_pas(int r, int sens);
+// tab5_piece_climat.cpp : la pièce n'a plus de clim — réglages et état oubliés, popup
+// refermé s'il la montrait, consigne en attente annulée.
+void clim_piece_oublier(int r);
+// tab5_reglables.cpp, la tuile − / + : consigne écrite comme sur la carte (« 21.5 »,
+// « -- ») et sa couleur ; renvoie la couleur de l'icône (comme clim_carte_valeur).
+uint32_t clim_piece_carte(int r, char* buf, size_t n, uint32_t& couleur_valeur);
 // Les clims que la tablette connaît, dans l'ordre des pages du carrousel du popup clim
 // (ADR-0038) : celle du blueprint d'abord (sauf si HA l'a déclarée absente), puis celle
 // de chaque tuile cli sans l'option m dont la tablette a les réglages (crRT), pièce par
-// pièce, tuile par tuile ; une clim du même nom qu'une clim déjà listée (la clim du
-// blueprint posée aussi sur une tuile sans m) n'est pas listée deux fois. LA seule liste :
-// une clim de plus (la clim propre à une pièce) = une ligne dans clims_enumerer() et un
-// cas dans clim_ref_afficher() (tab5_clim.cpp).
+// pièce, tuile par tuile, puis la clim propre de chaque pièce (ADR-0040, réglages crpR
+// reçus) ; une clim du même nom qu'une clim déjà listée (la clim du blueprint posée aussi
+// sur une tuile sans m) n'est pas listée deux fois. LA seule liste : une clim de plus =
+// une ligne dans clims_enumerer() et un cas dans clim_ref_afficher() (tab5_clim.cpp).
 struct ClimRef {
-    int8_t r = -1;      // tuile tRT ; r = t = -1 : la clim du blueprint
+    int8_t r = -1;      // tuile tRT ; t = -1 : la clim de la pièce r ; r = t = -1 : celle du blueprint
     int8_t t = -1;
     int8_t piece = -1;  // pièce où elle est (ouverture sur la pièce affichée) ; -1 : aucune
 };
