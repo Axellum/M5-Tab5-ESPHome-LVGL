@@ -562,6 +562,47 @@ blueprint:
                     - valve
                     - number
                     - input_number
+        reglables_defilement:
+          name: Défilement · Scrolling
+          description: >-
+            Fixe (par défaut) : l'appareil change seulement par un geste (le choix dans
+            la liste, ou le tap sur les minutes de l'horloge, automatique). Automatique :
+            la clim et ces appareils se relaient avec la carte centrale (pas le volume de
+            la tablette) ; un geste en montre un autre et le compte repart de zéro. Rien
+            ne tourne pendant que la liste est ouverte ou qu'une valeur attend d'être
+            envoyée. Firmware 3.8 ou plus récent.
+
+
+            Fixed (default): the device changes only with a gesture (the choice in the
+            list, or the tap on the clock's minutes, automatic). Automatic: the climate
+            and these devices take turns with the central card (not the tablet's volume);
+            a gesture shows another one and the count starts again. Nothing turns while
+            the list is open or a value waits to be sent. Firmware 3.8 or newer.
+          default: fixe
+          selector:
+            select:
+              options:
+                - value: auto
+                  label: "Automatique · Automatic"
+                - value: fixe
+                  label: "Fixe · Fixed"
+        reglables_duree:
+          name: Durée d'un appareil · Time per device
+          description: >-
+            En défilement automatique : un appareil reste n secondes, arrondies aux
+            8 secondes de la carte centrale.
+
+
+            With automatic scrolling: a device stays n seconds, rounded to the central
+            card's 8 seconds.
+          default: 32
+          selector:
+            number:
+              min: 8
+              max: 120
+              step: 8
+              unit_of_measurement: s
+              mode: slider
     plantes:
       name: Plantes · Plants
       icon: mdi:sprout
@@ -763,6 +804,161 @@ blueprint:
               step: 8
               unit_of_measurement: s
               mode: slider
+        rangee_defilement:
+          name: Défilement · Scrolling
+          description: >-
+            Automatique : les lignes se relaient avec la carte centrale. Fixe : la ligne
+            change seulement par un geste (un appui sur la rangée, ou un geste « Ligne
+            suivante sous l'horloge » de la section « Horloge et boutons du haut »).
+            Firmware 3.8 ou plus récent ; avant, toujours automatique.
+
+
+            Automatic: the lines take turns with the central card. Fixed: the line changes
+            only with a gesture (a tap on the row, or a « Next line under the clock »
+            gesture of the « Clock and top buttons » section). Firmware 3.8 or newer;
+            before, always automatic.
+          default: auto
+          selector:
+            select:
+              options:
+                - value: auto
+                  label: "Automatique · Automatic"
+                - value: fixe
+                  label: "Fixe · Fixed"
+    # Panneau « Ok Nabu » (lot 3, 09/10/2026, ADR-0041) : le cadre à gauche, sous les
+    # boutons Domo et Discu, montre jusqu'à trois lignes de quatre éléments plus celle de
+    # l'écoute (« Ok Nabu: ON / OFF »), avec le format, le modèle et le dessin de la rangée
+    # sous l'horloge (une seule source). Affichage seul, comme elle. Clés nLI, np et nd de
+    # tab5_maj_tuiles, états nLI de tab5_maj_emplacements ; un firmware plus ancien les
+    # ignore (l'écoute seule, comme avant).
+    panneau_nabu:
+      name: Panneau Ok Nabu · Ok Nabu panel
+      icon: mdi:microphone-message
+      collapsed: true
+      description: >-
+        Le cadre « Ok Nabu » de l'accueil, à gauche sous les boutons Domo et Discu
+        (firmware 3.8 ou plus récent) : jusqu'à trois lignes de quatre capteurs, plus la
+        ligne d'écoute. Un tap sur la ligne d'écoute allume ou coupe l'écoute du mot de
+        réveil, comme avant ; sur une ligne de capteurs, il ne fait rien. Le tap sur les
+        heures de l'horloge (automatique, section « Horloge et boutons du haut ») passe à
+        la ligne suivante. Sans ligne ici, le cadre reste celui d'avant.
+
+
+        The « Ok Nabu » frame of the home page, on the left under the Domo and Discu
+        buttons (firmware 3.8 or newer): up to three lines of four sensors, plus the
+        listening line. A tap on the listening line turns wake word listening on or off,
+        as before; on a sensor line it does nothing. A tap on the clock's hours
+        (automatic, « Clock and top buttons » section) shows the next line. With no line
+        here, the frame stays as before.
+      input:
+        nabu_ligne_1:
+          name: Ligne 1 · Line 1
+          description: >-
+            Quatre au plus, de gauche à droite, comme sous l'horloge : un capteur montre
+            sa valeur, les autres leur icône.
+
+
+            Four at most, left to right, as under the clock: a sensor shows its value,
+            the others their icon.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_rangee
+        nabu_ligne_2:
+          name: Ligne 2 · Line 2
+          description: >-
+            Quatre au plus. Une ligne vide est sautée.
+
+
+            Four at most. An empty line is skipped.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_rangee
+        nabu_ligne_3:
+          name: Ligne 3 · Line 3
+          description: >-
+            Quatre au plus. Avec la ligne d'écoute, le panneau garde trois lignes : la
+            dernière attend que l'écoute soit masquée.
+
+
+            Four at most. With the listening line the panel keeps three lines: the last
+            one waits until the listening line is hidden.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_rangee
+        nabu_ecoute:
+          name: Ligne d'écoute · Listening line
+          description: >-
+            Sa place dans le panneau (« Ok Nabu: ON / OFF »). Masquée : le panneau ne
+            montre que les capteurs, et l'écoute se commande par un geste « Écoute « Ok
+            Nabu » » ou par l'interrupteur de la tablette dans Home Assistant. Masquée et
+            sans ligne : le cadre disparaît.
+
+
+            Its place in the panel (« Ok Nabu: ON / OFF »). Hidden: the panel shows only
+            the sensors, and listening is controlled by a « « Ok Nabu » listening »
+            gesture or by the tablet's switch in Home Assistant. Hidden with no line: the
+            frame disappears.
+          default: "0"
+          selector:
+            select:
+              options:
+                - value: "0"
+                  label: "En premier · First"
+                - value: "1"
+                  label: "En deuxième · Second"
+                - value: "2"
+                  label: "En troisième · Third"
+                - value: masquee
+                  label: "Masquée · Hidden"
+        nabu_defilement:
+          name: Défilement · Scrolling
+          description: >-
+            Fixe (par défaut) : la ligne change seulement par un geste (le tap sur les
+            heures, automatique). Automatique : les lignes se relaient avec la carte
+            centrale, comme sous l'horloge ; un geste montre la suivante et le compte
+            repart de zéro.
+
+
+            Fixed (default): the line changes only with a gesture (the tap on the hours,
+            automatic). Automatic: the lines take turns with the central card, as under the
+            clock; a gesture shows the next one and the count starts again.
+          default: fixe
+          selector:
+            select:
+              options:
+                - value: auto
+                  label: "Automatique · Automatic"
+                - value: fixe
+                  label: "Fixe · Fixed"
+        nabu_duree:
+          name: Durée d'une ligne · Time per line
+          description: >-
+            En défilement automatique : la carte centrale change toutes les 8 secondes,
+            le panneau un tour sur n, juste avant elle.
+
+
+            With automatic scrolling: the central card changes every 8 seconds, the panel
+            every n turns, just before it.
+          default: 32
+          selector:
+            number:
+              min: 8
+              max: 120
+              step: 8
+              unit_of_measurement: s
+              mode: slider
     # Horloge et boutons du haut (07/10/2026 pour les appuis longs des boutons, 09/10/2026
     # pour tout le reste, lot A, ADR-0039) : le tap court et l'appui long des trois zones de
     # l'horloge (heures, minutes, date) et des trois boutons en haut à droite de l'accueil.
@@ -798,10 +994,14 @@ blueprint:
         geste_heures_court:
           name: "Heures : tap · Hours: tap"
           description: >-
-            Les deux chiffres des heures, en haut à gauche de l'horloge. Automatique : rien.
+            Les deux chiffres des heures, en haut à gauche de l'horloge. Automatique : la
+            ligne suivante du panneau Ok Nabu (section « Panneau Ok Nabu ») ; rien quand
+            il n'a que l'écoute.
 
 
-            The two hour digits, top left of the clock. Automatic: nothing.
+            The two hour digits, top left of the clock. Automatic: the next line of the Ok
+            Nabu panel (« Ok Nabu panel » section); nothing when it only has the
+            listening line.
           default: auto
           selector:
             select:
@@ -843,6 +1043,8 @@ blueprint:
                   value: rangee_suivante
                 - label: "Écoute « Ok Nabu » (marche / arrêt) · « Ok Nabu » listening (on / off)"
                   value: ecoute
+                - label: "Ligne suivante du panneau Ok Nabu · Next line of the Ok Nabu panel"
+                  value: nabu_suivant
         geste_heures_long:
           name: "Heures : appui long · Hours: long press"
           description: >-
@@ -1878,12 +2080,19 @@ variables:
     - !input piece_5_nom
   personnalisation: !input personnalisation
   # Rangée sous l'horloge (ADR-0031) : lignes choisies, place des plantes, durée.
+  # Les lignes des deux zones à lignes : la rangée sous l'horloge (0 à 2, clés h…) puis
+  # le panneau Ok Nabu (3 à 5, clés n…, lot 3, ADR-0041).
   rangee_lignes:
     - !input rangee_ligne_1
     - !input rangee_ligne_2
     - !input rangee_ligne_3
+    - !input nabu_ligne_1
+    - !input nabu_ligne_2
+    - !input nabu_ligne_3
   rangee_plantes: !input rangee_plantes
   rangee_duree: !input rangee_duree
+  nabu_ecoute: !input nabu_ecoute
+  nabu_duree: !input nabu_duree
   # Tuile − / + au choix (ADR-0033) : appareils choisis, dans l'ordre.
   reglables_choix: !input reglables
   # clé -> entité (chaîne vide si rien n'est choisi). Les détails des pots viennent de
@@ -1985,19 +2194,21 @@ variables:
       {%- endif -%}
     {%- endfor -%}
     {{ ns.l }}
-  # Rangée sous l'horloge (ADR-0031) : [{cle: 'hLI', l: L, r: -1, e: entité, type, s: ''}],
-  # les quatre premières entités de chaque ligne qui existent et dont le domaine a un
-  # type, sauf les actions (scènes, scripts, boutons : rien à montrer). À part de
-  # `tuiles` : la liste blanche des commandes de l'écran ne les connaît pas.
+  # Rangée sous l'horloge (ADR-0031) et panneau Ok Nabu (lot 3, ADR-0041) :
+  # [{cle: 'zLI', z: 'h' ou 'n', l: L, r: -1, e: entité, type, s: ''}], les quatre
+  # premières entités de chaque ligne qui existent et dont le domaine a un type, sauf les
+  # actions (scènes, scripts, boutons : rien à montrer). À part de `tuiles` : la liste
+  # blanche des commandes de l'écran ne les connaît pas.
   rangee: >-
     {%- set ns = namespace(l=[], i=0) -%}
-    {%- for n in range(3) -%}
+    {%- for n in range(6) -%}
+      {%- set z = 'h' if n < 3 else 'n' -%}
       {%- set brut = rangee_lignes[n] -%}
       {%- set liste = [brut] if brut is string else (brut if brut else []) -%}
       {%- set ns.i = 0 -%}
       {%- for e in liste -%}
         {%- if ns.i < 4 and e is string and types_par_domaine.get(e.split('.')[0], 'act') != 'act' and states[e] is not none -%}
-          {%- set ns.l = ns.l + [{'cle': 'h' ~ n ~ ns.i, 'l': n, 'r': -1, 'e': e, 'type': types_par_domaine[e.split('.')[0]], 's': ''}] -%}
+          {%- set ns.l = ns.l + [{'cle': z ~ (n % 3) ~ ns.i, 'z': z, 'l': n % 3, 'r': -1, 'e': e, 'type': types_par_domaine[e.split('.')[0]], 's': ''}] -%}
           {%- set ns.i = ns.i + 1 -%}
         {%- endif -%}
       {%- endfor -%}
@@ -2229,11 +2440,12 @@ variables:
   # repartent (avec tous les états), sans attendre une reconnexion.
   redefinir: >-
     {{ protocole == 2
-       and (trigger.id.startswith('piece_') or trigger.id.startswith('rangee_') or trigger.id.startswith('reglable')
+       and (trigger.id.startswith('piece_') or trigger.id.startswith('rangee_') or trigger.id.startswith('nabu_')
+            or trigger.id.startswith('reglable')
             or trigger.id in ['pc', 'tv', 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3'])
        and trigger.from_state is defined and (trigger.from_state is none or trigger.to_state is none) }}
   # Tuiles à pousser (clés tRT), et éléments de la rangée sous l'horloge (clés hLI,
-  # ADR-0031). Toutes après les définitions ; une tuile quand son entité change ce que
+  # ADR-0031) et du panneau Ok Nabu (clés nLI, ADR-0041). Toutes après les définitions ; une tuile quand son entité change ce que
   # l'écran montre (état, luminosité, couleur, position, consigne d'une clim : les − / +
   # du popup comptent à partir d'elle) ; un élément de la rangée quand son état change ;
   # les types_mesures avec les mesures lentes. Calculées quel que soit le protocole (la
@@ -2256,9 +2468,11 @@ variables:
       {%- set vises = [trigger.from_state.state if trigger.from_state else '',
                        trigger.to_state.state if trigger.to_state else ''] | select('match', '^cover[.]') | list -%}
       {{ (tuiles + rangee) | selectattr('e', 'in', vises) | map(attribute='cle') | list }}
-    {%- elif trigger.from_state is defined and trigger.id.startswith('rangee_') -%}
-      {#- Rangée : l'état seulement (déclencheurs rangee_n et rangee_n_sortie). -#}
-      {{ rangee | selectattr('l', 'eq', trigger.id[7] | int - 1) | selectattr('e', 'eq', trigger.entity_id)
+    {%- elif trigger.from_state is defined and (trigger.id.startswith('rangee_') or trigger.id.startswith('nabu_')) -%}
+      {#- Rangée et panneau Ok Nabu : l'état seulement (déclencheurs rangee_n,
+          rangee_n_sortie, nabu_n, nabu_n_sortie). -#}
+      {{ rangee | selectattr('z', 'eq', 'h' if trigger.id.startswith('rangee_') else 'n')
+         | selectattr('l', 'eq', trigger.id.split('_')[1] | int - 1) | selectattr('e', 'eq', trigger.entity_id)
          | selectattr('type', 'in', types_immediats) | map(attribute='cle') | list }}
     {%- elif trigger.from_state is defined and (trigger.id.startswith('piece_') or trigger.id in ['pc', 'tv', 'volet', 'lumiere_1', 'lumiere_2', 'lumiere_3']) -%}
       {%- set avant = trigger.from_state -%}
@@ -2415,7 +2629,7 @@ variables:
   # en « auto ».
   codes_gestes: [auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie,
                  reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante,
-                 ecoute]
+                 ecoute, nabu_suivant]
   # « gestes|c1|…|c12; » : les 12 gestes dans l'ORDRE de l'enum Geste (tab5_zones.h) —
   # heures tap, heures long, minutes tap, minutes long, date tap, date long, maison tap,
   # maison long, engrenage tap, engrenage long, manette tap, manette long. Poussé avec
@@ -2454,6 +2668,22 @@ variables:
       {%- set ns.l = ns.l + [c if c is string and c in codes_gestes else 'auto'] -%}
     {%- endfor -%}
     appuis|{{ ns.l | join('|') }};
+  # Défilement au choix (lot 3, 09/10/2026, ADR-0041) : « defil|rangée|nabu|clim|
+  # secondes; », chaque zone « auto » ou « fixe » (autre chose : son défaut, auto pour la
+  # rangée, fixe pour les deux autres) ; secondes = durée d'un appareil de la tuile − / +
+  # en auto. Poussée avec tous les états, comme gestes ; un firmware plus ancien ignore la
+  # clé, un firmware 3.8 remet les défauts quand gestes arrive sans elle.
+  defilement_choix:
+    - !input rangee_defilement
+    - !input nabu_defilement
+    - !input reglables_defilement
+  reglables_duree: !input reglables_duree
+  defil: >-
+    {%- set ns = namespace(l=[]) -%}
+    {%- for c in defilement_choix -%}
+      {%- set ns.l = ns.l + [c if c in ['auto', 'fixe'] else ''] -%}
+    {%- endfor -%}
+    defil|{{ ns.l | join('|') }}|{{ reglables_duree | float(32) | round(0) | int }};
 
 triggers:
   - trigger: event
@@ -2707,6 +2937,36 @@ triggers:
     not_to: *etats_visibles
     id: rangee_3_sortie
   # <<< déclencheurs de la rangée
+  # Panneau Ok Nabu (ADR-0041) : comme la rangée.
+  # >>> déclencheurs du panneau Ok Nabu (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)
+  - trigger: state
+    entity_id: !input nabu_ligne_1
+    to: *etats_visibles
+    id: nabu_1
+  - trigger: state
+    entity_id: !input nabu_ligne_1
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: nabu_1_sortie
+  - trigger: state
+    entity_id: !input nabu_ligne_2
+    to: *etats_visibles
+    id: nabu_2
+  - trigger: state
+    entity_id: !input nabu_ligne_2
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: nabu_2_sortie
+  - trigger: state
+    entity_id: !input nabu_ligne_3
+    to: *etats_visibles
+    id: nabu_3
+  - trigger: state
+    entity_id: !input nabu_ligne_3
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: nabu_3_sortie
+  # <<< déclencheurs du panneau Ok Nabu
   # Tuile − / + au choix (ADR-0033) : l'état (`to: ~`, sans les attributs), puis
   # l'attribut qui porte la valeur réglée tant que l'appareil reste allumé ou en place
   # (not_from / not_to [null] : l'allumage et l'extinction sont vus par « reglable »).
@@ -2883,10 +3143,11 @@ actions:
             {%- set ns.r = ns.r ~ c ~ '|' ~ (states(x) | replace('|', '/') | replace(';', ',')) ~ '|' ~ v ~ ';' -%}
           {%- endif -%}
         {%- endfor -%}
-        {#- Gestes de l'horloge et des boutons du haut (variables appuis, puis gestes), avec
-            tous les états. Un firmware sans ces choix ignore les clés (clé inconnue). -#}
+        {#- Gestes de l'horloge et des boutons du haut (variables appuis, puis gestes) et
+            défilement au choix (variable defil), avec tous les états. Un firmware sans ces
+            choix ignore les clés (clé inconnue). -#}
         {%- if tout_pousser -%}
-          {%- set ns.r = ns.r ~ appuis ~ gestes -%}
+          {%- set ns.r = ns.r ~ appuis ~ gestes ~ defil -%}
         {%- endif -%}
         {#- Icône solaire du bandeau : « solaire|pourcentage; » (voir solaire_a_pousser). Un
             firmware sans cette icône ignore la clé (clé inconnue). -#}
@@ -3653,16 +3914,23 @@ actions:
           # « pR|nom; » puis « tRT|type|icône|options|complément|nom; » (ADR-0023) ; puis la
           # rangée sous l'horloge (ADR-0031) : « hp|place des plantes; » (0 à 2, « - » :
           # masquées), « hd|secondes d'une ligne; », « hLI|type|icône|options|complément|
-          # nom|classe; » (classe d'appareil : la couleur de la valeur). n = 5 : la rangée,
-          # avec la même traduction que les tuiles.
+          # nom|classe; » (classe d'appareil : la couleur de la valeur) ; puis le panneau
+          # Ok Nabu (ADR-0041), au même format : « np|place de l'écoute; », « nd|…; »,
+          # « nLI|…; ». n = 5 : la rangée, n = 6 : le panneau, avec la même traduction que
+          # les tuiles.
           definitions: >-
             {%- set ns = namespace(r='') -%}
-            {%- for n in range(6) -%}
-              {%- set dans = (tuiles | selectattr('r', 'eq', n) | list) if n < 5 else rangee -%}
+            {%- for n in range(7) -%}
+              {%- set dans = (tuiles | selectattr('r', 'eq', n) | list) if n < 5
+                             else (rangee | selectattr('z', 'eq', 'h' if n == 5 else 'n') | list) -%}
               {%- if n == 5 -%}
                 {%- set piece = '' -%}
                 {%- set ns.r = ns.r ~ 'hp|' ~ ('-' if rangee_plantes not in ['0', '1', '2'] else rangee_plantes)
                               ~ ';hd|' ~ (rangee_duree | float(32) | round(0) | int) ~ ';' -%}
+              {%- elif n == 6 -%}
+                {%- set piece = '' -%}
+                {%- set ns.r = ns.r ~ 'np|' ~ ('-' if nabu_ecoute not in ['0', '1', '2'] else nabu_ecoute)
+                              ~ ';nd|' ~ (nabu_duree | float(32) | round(0) | int) ~ ';' -%}
               {%- endif -%}
               {%- if dans | count > 0 -%}
                 {%- if n < 5 -%}
@@ -3727,7 +3995,7 @@ actions:
                   {%- set ns.r = ns.r ~ t.cle ~ '|' ~ t.type ~ '|' ~ icone ~ '|' ~ options ~ '|'
                                 ~ (complement | replace('|', '/') | replace(';', ',')) ~ '|'
                                 ~ (nom.s | replace('|', '/') | replace(';', ','))
-                                ~ (('|' ~ (classe | replace('|', '/') | replace(';', ','))) if n == 5 else '') ~ ';' -%}
+                                ~ (('|' ~ (classe | replace('|', '/') | replace(';', ','))) if n >= 5 else '') ~ ';' -%}
                 {%- endfor -%}
               {%- endif -%}
             {%- endfor -%}
@@ -3766,7 +4034,8 @@ actions:
   # position (vol), la mesure (cap), la température de la pièce (cli), nan sinon ;
   # couleur = « RRGGBB » d'une lumière allumée qui donne rgb_color. Dans la même
   # poussée, les clims des tuiles (crRT avant, ceRT après, ADR-0027) et les éléments de
-  # la rangée sous l'horloge (« hLI|état|valeur|couleur; », mêmes champs, ADR-0031).
+  # la rangée sous l'horloge (« hLI|état|valeur|couleur; », mêmes champs, ADR-0031) et du
+  # panneau Ok Nabu (« nLI|… », ADR-0041).
   - if: "{{ tuiles_a_pousser | count > 0 }}"
     then:
       - variables:

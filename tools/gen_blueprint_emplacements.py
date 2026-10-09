@@ -3,23 +3,26 @@
 
 [AI-CONTEXT] Audit du 07/10/2026, HA-8. Le blueprint
 HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml déclare les mêmes
-déclencheurs pour chaque pièce (6 × 5) et chaque ligne de la rangée sous l'horloge (2 × 3) :
+déclencheurs pour chaque pièce (6 × 5), chaque ligne de la rangée sous l'horloge (2 × 3) et,
+depuis le lot 3 (09/10/2026, ADR-0041), chaque ligne du panneau « Ok Nabu » (2 × 3) :
 recopiés à la main, une pièce oubliée ou un attribut mal recopié ne se voyait qu'à l'usage.
-Ce script les écrit entre deux paires de marqueurs, sur le modèle de
+Ce script les écrit entre trois paires de marqueurs, sur le modèle de
 tools/gen_tuiles_icones.py :
 
   # >>> déclencheurs des pièces (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)
   # <<< déclencheurs des pièces
   # >>> déclencheurs de la rangée (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)
   # <<< déclencheurs de la rangée
+  # >>> déclencheurs du panneau Ok Nabu (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)
+  # <<< déclencheurs du panneau Ok Nabu
 
     python tools/gen_blueprint_emplacements.py          # réécrit les parties générées
     python tools/gen_blueprint_emplacements.py --check  # exit 1 si elles sont périmées (n'écrit rien)
 
-Source unique : les tables ci-dessous (PIECES, ATTRIBUTS_PIECE, LIGNES_RANGEE,
+Source unique : les tables ci-dessous (PIECES, ATTRIBUTS_PIECE, LIGNES_RANGEE, LIGNES_NABU,
 ETATS_VISIBLES). Ajouter un attribut suivi = une ligne de ATTRIBUTS_PIECE, puis relancer.
 Les `id:` des déclencheurs (piece_n, piece_n_sortie, piece_n_<suffixe>, rangee_n,
-rangee_n_sortie) sont lus par les variables du blueprint (redefinir, tuiles_a_pousser,
+rangee_n_sortie, nabu_n, nabu_n_sortie) sont lus par les variables du blueprint (redefinir, tuiles_a_pousser,
 rangee…) : ne pas les renommer.
 Le reste du fichier (commentaires autour, autres déclencheurs, entrées) s'édite à la main.
 tests/test_blueprint_genere.py échoue si le blueprint commité n'est pas la sortie du script.
@@ -37,6 +40,7 @@ BLUEPRINT = REPO / "HomeAssistant_Config" / "blueprints" / "automation" / "tab5"
 
 PIECES = 5          # ADR-0023 : 5 pièces de 5 tuiles, entrées piece_<n>_tuiles
 LIGNES_RANGEE = 3   # ADR-0031 : 3 lignes sous l'horloge, entrées rangee_ligne_<n>
+LIGNES_NABU = 3     # ADR-0041 : 3 lignes du panneau Ok Nabu, entrées nabu_ligne_<n>
 
 # Attributs d'une tuile suivis pendant que l'appareil reste allumé ou en place
 # (suffixe de l'id, attribut HA), dans l'ordre du fichier.
@@ -59,6 +63,8 @@ MARQUES_PIECES = ("# >>> déclencheurs des pièces (généré par tools/gen_blue
                   "# <<< déclencheurs des pièces")
 MARQUES_RANGEE = ("# >>> déclencheurs de la rangée (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)",
                   "# <<< déclencheurs de la rangée")
+MARQUES_NABU = ("# >>> déclencheurs du panneau Ok Nabu (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)",
+                "# <<< déclencheurs du panneau Ok Nabu")
 
 
 class ErreurBlueprint(ValueError):
@@ -95,13 +101,22 @@ def rendre_pieces(ind: str) -> list[str]:
     return out
 
 
-def rendre_rangee(ind: str) -> list[str]:
+def _lignes(prefixe: str, nombre: int, ind: str) -> list[str]:
+    """Une zone à lignes (rangée, panneau Ok Nabu) : état et sortie de chaque ligne."""
     out: list[str] = []
-    for n in range(1, LIGNES_RANGEE + 1):
-        entree, ident = f"rangee_ligne_{n}", f"rangee_{n}"
+    for n in range(1, nombre + 1):
+        entree, ident = f"{prefixe}_ligne_{n}", f"{prefixe}_{n}"
         out += _etat(entree, ident, ind, premier=False)
         out += _sortie(entree, ident, ind)
     return out
+
+
+def rendre_rangee(ind: str) -> list[str]:
+    return _lignes("rangee", LIGNES_RANGEE, ind)
+
+
+def rendre_nabu(ind: str) -> list[str]:
+    return _lignes("nabu", LIGNES_NABU, ind)
 
 
 def _marques(lignes: list[str], debut: str, fin: str) -> tuple[int, int]:
@@ -115,7 +130,8 @@ def _marques(lignes: list[str], debut: str, fin: str) -> tuple[int, int]:
 def rendre_blueprint(texte: str) -> str:
     """Le blueprint (texte en LF) avec ses parties générées à jour."""
     lignes = texte.split("\n")
-    for marques, rendre in ((MARQUES_PIECES, rendre_pieces), (MARQUES_RANGEE, rendre_rangee)):
+    for marques, rendre in ((MARQUES_PIECES, rendre_pieces), (MARQUES_RANGEE, rendre_rangee),
+                            (MARQUES_NABU, rendre_nabu)):
         a, b = _marques(lignes, *marques)
         ind = lignes[a][: len(lignes[a]) - len(lignes[a].lstrip())]
         lignes[a + 1:b] = rendre(ind)
@@ -136,7 +152,7 @@ def main(argv: list[str]) -> int:
         print(f"❌ {e}")
         return 1
     resume = (f"{PIECES} pièces × {2 + len(ATTRIBUTS_PIECE)} déclencheurs, "
-              f"{LIGNES_RANGEE} lignes de rangée × 2")
+              f"{LIGNES_RANGEE} lignes de rangée × 2, {LIGNES_NABU} lignes du panneau Ok Nabu × 2")
     if "--check" in argv:
         if attendu != texte:
             print(f"❌ {BLUEPRINT.relative_to(REPO).as_posix()} n'est pas à jour : "
