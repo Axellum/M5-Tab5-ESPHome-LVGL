@@ -70,8 +70,9 @@ def test_cle_climr_identique_des_deux_cotes():
     assert "'climr|'" in _variables_actions()["clim_reglages"]
     # Routée avant la table des emplacements 3.x, vers clim_reglages_recu().
     zones = _lire("Tab5", "ecran", "tab5_zones.cpp")
-    assert zones.index("kCleClimReglages) == 0") < zones.index("for (size_t i = 0; i < n; i++)")
-    assert "clim_reglages_recu(payload.data() + p1 + 1" in zones
+    # Découpage par emplacement_suivant() (Tab5/socle/tab5_parse.cpp, lot F).
+    assert zones.index("champ_est(e.cle, kCleClimReglages)") < zones.index("for (size_t i = 0; i < n; i++)")
+    assert "clim_reglages_recu(e.reste.p, e.reste.n)" in zones
 
 
 def _lettres_blueprint():

@@ -513,6 +513,103 @@ static void test_calendrier_jour() {
     }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 6. Emplacements et zones
+// ════════════════════════════════════════════════════════════════════════════
+
+static bool champ_vaut(const Champ& c, const char* s) {
+    return c.n == std::strlen(s) && std::memcmp(c.p, s, c.n) == 0;
+}
+
+static void test_emplacements() {
+    {
+        const std::string p = "a|1;b;;c|2|3";
+        size_t debut = 0;
+        EmplacementLu e;
+        expect(emplacement_suivant(p, debut, e) && e.a_cle && champ_vaut(e.cle, "a") && champ_vaut(e.reste, "1"),
+               "emplacements : clé|reste");
+        expect(emplacement_suivant(p, debut, e) && !e.a_cle && e.cle.n == 0 && e.reste.n == 0,
+               "emplacements : sans « | », sans clé");
+        expect(emplacement_suivant(p, debut, e) && !e.a_cle, "emplacements : « ;; » rendu vide (pas sauté)");
+        expect(emplacement_suivant(p, debut, e) && champ_vaut(e.cle, "c") && champ_vaut(e.reste, "2|3"),
+               "emplacements : le reste garde ses « | »");
+        expect(!emplacement_suivant(p, debut, e), "emplacements : fin");
+    }
+    {
+        const std::string p = "a;b|1";  // le « | » est dans l'enregistrement suivant
+        size_t debut = 0;
+        EmplacementLu e;
+        expect(emplacement_suivant(p, debut, e) && !e.a_cle, "emplacements : « | » d'après ignoré");
+        expect(emplacement_suivant(p, debut, e) && champ_vaut(e.cle, "b"), "emplacements : puis b");
+    }
+    {
+        const std::string p = "a|1;";
+        size_t debut = 0;
+        EmplacementLu e;
+        expect(emplacement_suivant(p, debut, e) && !emplacement_suivant(p, debut, e),
+               "emplacements : « ; » final sans enregistrement vide");
+        const std::string vide;
+        debut = 0;
+        expect(!emplacement_suivant(vide, debut, e), "emplacements : payload vide");
+    }
+    {
+        const std::string p("a|x\0y;b|2", 9);  // zéro au milieu : lu sur la longueur
+        size_t debut = 0;
+        EmplacementLu e;
+        expect(emplacement_suivant(p, debut, e) && e.reste.n == 3, "emplacements : zéro gardé dans le reste");
+        expect(emplacement_suivant(p, debut, e) && champ_vaut(e.cle, "b"), "emplacements : la suite est lue");
+    }
+}
+
+static void test_emplacement_etat_valeur() {
+    struct Cas {
+        const char* reste;
+        const char* etat;
+        const char* valeur;
+    };
+    const Cas cas[] = {
+        {"on|180", "on", "180"},
+        {"on", "on", ""},
+        {"on|", "on", ""},
+        {"on|1|2", "on", "1|2"},
+        {"", "", ""},
+        {"|5", "", "5"},
+    };
+    for (const Cas& c : cas) {
+        const Champ reste{c.reste, std::strlen(c.reste)};
+        Champ etat, valeur;
+        emplacement_etat_valeur(reste, etat, valeur);
+        char msg[96];
+        std::snprintf(msg, sizeof(msg), "état|valeur : « %s »", c.reste);
+        expect(champ_vaut(etat, c.etat) && champ_vaut(valeur, c.valeur), msg);
+    }
+}
+
+static void test_emplacement_nombre() {
+    expect(emplacement_nombre("21.5") == 21.5f, "nombre : 21.5");
+    expect(emplacement_nombre("21.5 °C") == 21.5f, "nombre : la fin est ignorée");
+    expect(emplacement_nombre("-3") == -3.0f, "nombre : négatif");
+    expect(std::isnan(emplacement_nombre("")), "nombre : vide = NAN");
+    expect(std::isnan(emplacement_nombre("unavailable")), "nombre : illisible = NAN");
+    expect(std::isnan(emplacement_nombre("inf")) && std::isnan(emplacement_nombre("-inf")),
+           "nombre : « inf » = NAN (lot A)");
+    expect(std::isnan(emplacement_nombre("nan")), "nombre : « nan » = NAN");
+    expect(std::isnan(emplacement_nombre("1e99")), "nombre : hors des float = NAN");
+    expect(emplacement_nombre("0x10") == 16.0f, "nombre [figé] : l'hexadécimal de strtof est lu");
+}
+
+static void test_solaire() {
+    auto lire = [](const char* s) { return solaire_pourcent(s, std::strlen(s)); };
+    expect(lire("45") == 45.0f, "solaire : 45");
+    expect(lire("12.5%") == 12.5f, "solaire : la fin est ignorée");
+    expect(lire("150") == 100.0f && lire("-5") == 0.0f, "solaire : borné à 0..100");
+    expect(std::isnan(lire("")) && std::isnan(lire("abc")), "solaire : vide ou illisible = NAN");
+    expect(std::isnan(lire("inf")) && std::isnan(lire("nan")), "solaire : non fini = NAN");
+    expect(solaire_pourcent("45xyz", 2) == 45.0f, "solaire : lu sur n octets, sans zéro final");
+    expect(lire("000000000000000099") == 0.0f, "solaire [figé] : coupé à 15 octets (« …99 » perdu)");
+    expect(lire("1234567890123456789") == 100.0f, "solaire [figé] : long = coupé puis borné");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -533,6 +630,10 @@ int main() {
     test_calendrier_code();
     test_calendrier_date();
     test_calendrier_jour();
+    test_emplacements();
+    test_emplacement_etat_valeur();
+    test_emplacement_nombre();
+    test_solaire();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

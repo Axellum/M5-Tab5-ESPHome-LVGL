@@ -8,6 +8,7 @@
  */
 #include "tab5_parse.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -306,4 +307,53 @@ CalJourLigne LecteurJourCalendrier::suivante() {
     l.genre = tok;
     l.texte = sep + 1;
     return l;
+}
+
+// ─── 6. Emplacements et zones ───
+// Avant : le parcours d'emplacements_appliquer(), le découpage et le strtof de sa table
+// 3.x, et la lecture de solaire_recu() (Tab5/ecran/tab5_zones.cpp).
+
+bool emplacement_suivant(const std::string& payload, size_t& debut, EmplacementLu& e) {
+    if (debut >= payload.size()) return false;
+    size_t fin = payload.find(';', debut);
+    if (fin == std::string::npos) fin = payload.size();
+    const size_t p1 = payload.find('|', debut);
+    e.a_cle = p1 != std::string::npos && p1 < fin;
+    if (e.a_cle) {
+        e.cle = Champ{payload.data() + debut, p1 - debut};
+        e.reste = Champ{payload.data() + p1 + 1, fin - p1 - 1};
+    } else {
+        e.cle = Champ{payload.data() + debut, 0};
+        e.reste = Champ{payload.data() + fin, 0};
+    }
+    debut = fin + 1;
+    return true;
+}
+
+void emplacement_etat_valeur(const Champ& reste, Champ& etat, Champ& valeur) {
+    const char* fin = reste.p + reste.n;
+    const char* p = reste.p;
+    etat = champ_suivant(p, fin, '|');
+    const bool trois = etat.p + etat.n < fin;  // un second « | » dans le reste
+    valeur = trois ? Champ{p, static_cast<size_t>(fin - p)} : Champ{fin, 0};
+}
+
+float emplacement_nombre(const std::string& valeur) {
+    char* bout = nullptr;
+    float v = strtof(valeur.c_str(), &bout);
+    if (valeur.empty() || bout == valeur.c_str()) v = NAN;  // « unavailable »…
+    return tab5_fini_ou_nan(v);  // « inf » : inconnue aussi (lot A, audit du 30/09)
+}
+
+float solaire_pourcent(const char* valeur, size_t n) {
+    char tampon[16];
+    const size_t l = n < sizeof(tampon) - 1 ? n : sizeof(tampon) - 1;
+    memcpy(tampon, valeur, l);
+    tampon[l] = '\0';
+    char* bout = nullptr;
+    float v = strtof(tampon, &bout);
+    if (l == 0 || bout == tampon) v = NAN;
+    v = tab5_fini_ou_nan(v);
+    if (!std::isnan(v)) v = v < 0.0f ? 0.0f : (v > 100.0f ? 100.0f : v);
+    return v;
 }

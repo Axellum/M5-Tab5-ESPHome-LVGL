@@ -228,3 +228,28 @@ private:
     char* save_ = nullptr;
     bool premier_ = true;
 };
+
+// ─── 6. Emplacements et zones (tab5_maj_emplacements) ───
+// « clé|reste;clé|reste;… » parcouru enregistrement par enregistrement, sur toute la
+// longueur du payload (zéros compris). `debut` avance après le « ; » ; faux à la fin.
+// a_cle : l'enregistrement a un « | » ; sinon cle et reste sont vides et l'écran l'ignore.
+// Un enregistrement vide (« ;; ») est rendu, sans clé.
+struct EmplacementLu {
+    bool a_cle;
+    Champ cle;    // avant le premier « | »
+    Champ reste;  // après, jusqu'au « ; »
+};
+bool emplacement_suivant(const std::string& payload, size_t& debut, EmplacementLu& e);
+
+// Emplacement 3.x « clé|état[|valeur] » : reste coupé au premier « | » ; valeur vide
+// sans second « | » (le reste après lui, « | » compris, sinon).
+void emplacement_etat_valeur(const Champ& reste, Champ& etat, Champ& valeur);
+
+// Valeur numérique d'un emplacement (strtof sur le texte entier) : NAN si vide, illisible
+// (« unavailable ») ou non finie (« inf », lot A) ; « 21.5 °C » → 21.5.
+float emplacement_nombre(const std::string& valeur);
+
+// Production solaire « solaire|pourcentage » : 15 premiers octets lus (strtof), NAN si
+// vide, illisible ou non fini, sinon borné à 0..100. [figé] un texte plus long est coupé
+// à 15 octets, pas refusé.
+float solaire_pourcent(const char* valeur, size_t n);

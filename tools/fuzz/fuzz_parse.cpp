@@ -95,6 +95,20 @@ void calendrier_jour(const std::string& p) {
     (void) lignes;
 }
 
+// Emplacements : chaque reste est lu comme la table 3.x (état|valeur, nombre) et comme la
+// production solaire, quelle que soit sa clé.
+void emplacements(const std::string& p) {
+    size_t debut = 0;
+    EmplacementLu e;
+    while (emplacement_suivant(p, debut, e)) {
+        if (!e.a_cle) continue;
+        solaire_pourcent(e.reste.p, e.reste.n);
+        Champ etat, valeur;
+        emplacement_etat_valeur(e.reste, etat, valeur);
+        emplacement_nombre(std::string(valeur.p, valeur.n));
+    }
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -113,6 +127,7 @@ constexpr Parseur kParseurs[] = {
     pluie,            // '6' tab5_maj_pluie_1h_bulk
     calendrier_mois,  // '7' tab5_maj_calendrier_mois
     calendrier_jour,  // '8' tab5_maj_calendrier_jour
+    emplacements,     // '9' tab5_maj_emplacements
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 
