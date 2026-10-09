@@ -44,3 +44,39 @@ void previsions_heures_lire(const char* payload, HourForecastData heures[15]);
 // `ancre` = local_day_number_today() au moment de la lecture (-1 si l'heure n'est pas
 // réglée), comme cal_jours_anchor_day.
 void previsions_jours_lire(const char* payload, DayForecastData jours[15], int32_t& ancre);
+
+// ─── 2. Vigilance (tab5_maj_alerte_meteo_france) ───
+// « phrase pluie|globale|vent|inondation|orages|pluie-inondation|neige-verglas|grand froid|
+//   vagues-submersion|canicule|avalanches[|brouillard|feux de forêt] » : 11 champs pour
+// Météo-France, 13 avec MeteoAlarm (lot 4c, 27/09/2026).
+constexpr int kVigilanceChamps = 13;
+constexpr int kVigilancePhenomenes = 11;  // champs 2 à 12
+constexpr int kVigilanceActivesMax = 4;   // cases d'icônes du bandeau
+
+// Payload découpé en place dans `buf` (1 023 octets lus : l'appelant journalise un payload
+// plus long, dont les derniers champs manquent). champs[i] vaut "" au-delà du dernier.
+// [figé] strtok_r : des « | » consécutifs comptent pour un, un champ vide décale donc les
+// suivants (R6 de l'audit) ; HA envoie toujours « Vert », jamais un champ vide.
+struct VigilanceLue {
+    char buf[1024];
+    const char* champs[kVigilanceChamps];
+};
+void vigilance_lire(const char* payload, VigilanceLue& v);
+
+// Niveau d'un champ, comparaison exacte (casse comprise) : « Jaune », « Orange », « Rouge ».
+enum class NiveauVigilance : uint8_t {
+    AUTRE,
+    JAUNE,
+    ORANGE,
+    ROUGE,
+};
+NiveauVigilance vigilance_niveau(const char* s);
+
+// Phénomènes actifs, dans l'ordre du payload, au plus kVigilanceActivesMax : un champ
+// ni vide, ni « Vert », ni « unknown » (tout autre texte compte, « Jaune » ou pas).
+// out[k].phenomene = 0 (vent) à 10 (feux de forêt) ; out[k].niveau pointe dans v.buf.
+struct VigilanceActive {
+    int phenomene;
+    const char* niveau;
+};
+int vigilance_actives(const VigilanceLue& v, VigilanceActive out[kVigilanceActivesMax]);

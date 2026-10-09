@@ -37,11 +37,21 @@ void heures(const std::string& p) {
 
 void jours(const std::string& p) { previsions_jours_lire(p.c_str(), cal_jours_data, cal_jours_anchor_day); }
 
+void vigilance(const std::string& p) {
+    VigilanceLue v;
+    vigilance_lire(p.c_str(), v);
+    vigilance_niveau(v.champs[1]);
+    VigilanceActive a[kVigilanceActivesMax];
+    const int n = vigilance_actives(v, a);
+    for (int i = 0; i < n; i++) vigilance_niveau(a[i].niveau);
+}
+
 // Un parseur par entrée ; l'ordre fixe le premier octet des graines (tools/fuzz/graines.py).
 using Parseur = void (*)(const std::string&);
 constexpr Parseur kParseurs[] = {
     heures,  // '0' tab5_maj_previsions_heures_bulk
-    jours,   // '1' tab5_maj_previsions_jours_bulk
+    jours,      // '1' tab5_maj_previsions_jours_bulk
+    vigilance,  // '2' tab5_maj_alerte_meteo_france
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

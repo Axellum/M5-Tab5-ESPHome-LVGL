@@ -76,3 +76,38 @@ void previsions_jours_lire(const char* payload, DayForecastData jours[15], int32
         token = strtok_r(nullptr, ";", &saveptr1);
     }
 }
+
+// ─── 2. Vigilance ───
+// Avant : le début de parse_and_update_vigilance(), Tab5/ecran/tab5_services.cpp.
+
+void vigilance_lire(const char* payload, VigilanceLue& v) {
+    // 1024 (était 512) : la phrase de vigilance peut être longue, un payload
+    // complet dépassait parfois 512 et tronquait les derniers champs (#T165).
+    strncpy(v.buf, payload, sizeof(v.buf) - 1);
+    v.buf[sizeof(v.buf) - 1] = '\0';
+    // strtok_r saute les champs vides consécutifs ("||"), comme l'ancien lambda :
+    // un champ vide décalerait les suivants. Contrat HA inchangé — HA envoie
+    // toujours "Vert" plutôt qu'une chaîne vide.
+    char* saveptr = nullptr;
+    for (int i = 0; i < kVigilanceChamps; i++) {
+        char* tok = strtok_r(i == 0 ? v.buf : nullptr, "|", &saveptr);
+        v.champs[i] = tok ? tok : "";
+    }
+}
+
+NiveauVigilance vigilance_niveau(const char* s) {
+    if (strcmp(s, "Jaune") == 0) return NiveauVigilance::JAUNE;
+    if (strcmp(s, "Orange") == 0) return NiveauVigilance::ORANGE;
+    if (strcmp(s, "Rouge") == 0) return NiveauVigilance::ROUGE;
+    return NiveauVigilance::AUTRE;
+}
+
+int vigilance_actives(const VigilanceLue& v, VigilanceActive out[kVigilanceActivesMax]) {
+    int n = 0;
+    for (int i = 0; i < kVigilancePhenomenes && n < kVigilanceActivesMax; i++) {
+        const char* state = v.champs[2 + i];
+        if (strlen(state) == 0 || strcmp(state, "Vert") == 0 || strcmp(state, "unknown") == 0) continue;
+        out[n++] = VigilanceActive{i, state};
+    }
+    return n;
+}

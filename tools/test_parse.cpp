@@ -173,6 +173,66 @@ static void test_previsions_jours() {
     expect(std::isinf(d[5].tmin) && std::isinf(d[5].tmax), "jours [figé] : « inf » passe (atof)");
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 2. Vigilance
+// ════════════════════════════════════════════════════════════════════════════
+
+static void test_vigilance() {
+    VigilanceLue v;
+    VigilanceActive a[kVigilanceActivesMax];
+    vigilance_lire("@2,179|Jaune|Vert|Orange|Vert|Vert|Vert|Vert|Vert|Rouge|Vert|Vert|Jaune", v);
+    expect(std::strcmp(v.champs[0], "@2,179") == 0 && std::strcmp(v.champs[1], "Jaune") == 0,
+           "vigilance : phrase pluie et niveau global");
+    int n = vigilance_actives(v, a);
+    expect(n == 3 && a[0].phenomene == 1 && std::strcmp(a[0].niveau, "Orange") == 0 && a[1].phenomene == 7 &&
+               std::strcmp(a[1].niveau, "Rouge") == 0 && a[2].phenomene == 10,
+           "vigilance : phénomènes actifs dans l'ordre (inondation, canicule, feux de forêt)");
+
+    vigilance_lire("p|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Jaune", v);
+    expect(std::strcmp(v.champs[11], "") == 0 && std::strcmp(v.champs[12], "") == 0,
+           "vigilance : 11 champs (Météo-France), les deux derniers vides");
+    n = vigilance_actives(v, a);
+    expect(n == 1 && a[0].phenomene == 8, "vigilance : avalanches seules");
+
+    vigilance_lire("p|Jaune||Orange|Vert", v);
+    expect(std::strcmp(v.champs[2], "Orange") == 0 && std::strcmp(v.champs[3], "Vert") == 0,
+           "vigilance [figé] : « || » fusionné, le champ suivant remonte (R6, strtok_r)");
+
+    vigilance_lire("|Rouge|Vert", v);
+    expect(std::strcmp(v.champs[0], "Rouge") == 0 && std::strcmp(v.champs[1], "Vert") == 0,
+           "vigilance [figé] : phrase vide, tout remonte d'un cran");
+
+    vigilance_lire("p|Rouge|Jaune|Jaune|Jaune|Jaune|Jaune|Jaune", v);
+    n = vigilance_actives(v, a);
+    expect(n == kVigilanceActivesMax && a[0].phenomene == 0 && a[3].phenomene == 3,
+           "vigilance : au plus 4 phénomènes, les premiers");
+
+    vigilance_lire("p|g|unknown|Vert|Foo|jaune", v);
+    n = vigilance_actives(v, a);
+    expect(n == 2 && a[0].phenomene == 2 && a[1].phenomene == 3 &&
+               vigilance_niveau(a[0].niveau) == NiveauVigilance::AUTRE,
+           "vigilance : « unknown » et « Vert » sautés, tout autre texte compte");
+
+    vigilance_lire("", v);
+    bool vides = true;
+    for (int i = 0; i < kVigilanceChamps; i++) vides = vides && v.champs[i][0] == '\0';
+    expect(vides && vigilance_actives(v, a) == 0, "vigilance : payload vide");
+
+    // Plus long que le tampon : la fin manque (l'appelant le journalise).
+    std::string longue(1020, 'x');
+    longue += "|Rouge|Rouge";
+    vigilance_lire(longue.c_str(), v);
+    expect(std::strlen(v.champs[0]) == 1020 && std::strcmp(v.champs[1], "Ro") == 0 && v.champs[2][0] == '\0',
+           "vigilance : coupé à 1 023 octets");
+
+    expect(vigilance_niveau("Jaune") == NiveauVigilance::JAUNE && vigilance_niveau("Orange") == NiveauVigilance::ORANGE &&
+               vigilance_niveau("Rouge") == NiveauVigilance::ROUGE,
+           "niveau : les trois couleurs");
+    expect(vigilance_niveau("rouge") == NiveauVigilance::AUTRE && vigilance_niveau("Rouge ") == NiveauVigilance::AUTRE &&
+               vigilance_niveau("") == NiveauVigilance::AUTRE,
+           "niveau : comparaison exacte");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -180,6 +240,7 @@ int main() {
 
     test_previsions_heures();
     test_previsions_jours();
+    test_vigilance();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

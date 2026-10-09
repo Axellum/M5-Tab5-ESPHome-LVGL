@@ -22,6 +22,7 @@ import fuzz_services  # noqa: E402
 FAMILLES = [
     ("0", "tab5_maj_previsions_heures_bulk", "payload"),
     ("1", "tab5_maj_previsions_jours_bulk", "payload"),
+    ("2", "tab5_maj_alerte_meteo_france", "payload"),
 ]
 
 

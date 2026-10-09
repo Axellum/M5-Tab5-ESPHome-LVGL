@@ -98,28 +98,17 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         s_vigilance_payload = payload;
         s_vigilance_ui = ui;
     }
-    // 1024 (était 512) : la phrase de vigilance peut être longue, un payload
-    // complet dépassait parfois 512 et tronquait les derniers champs (#T165).
-    char buf[1024];
-    strncpy(buf, payload.c_str(), sizeof(buf) - 1);
-    buf[sizeof(buf) - 1] = '\0';
+    // Lecture : vigilance_lire() (Tab5/socle/tab5_parse.h, lot F), tampon de 1 024 octets
+    // et strtok_r (un champ vide décalerait les suivants ; HA envoie toujours « Vert »).
+    // 13 champs depuis le lot 4c (27/09/2026) : brouillard et feux de forêt en fin de
+    // payload, pour les alertes MeteoAlarm qui n'ont pas de case Météo-France. Un payload
+    // à 11 champs (Météo-France) laisse ces deux cases vides.
+    VigilanceLue lue;
+    vigilance_lire(payload.c_str(), lue);
     // Plus long que le tampon : coupé (les derniers champs manquent, #T165), donc dit.
-    if (payload.size() >= sizeof(buf)) payload_refuse("tab5.vigilance", "coupé à 1023 octets", payload.size());
-
-    // strtok_r saute les champs vides consécutifs ("||"), comme l'ancien lambda :
-    // un champ vide décalerait les suivants. Contrat HA inchangé — HA envoie
-    // toujours "Vert" plutôt qu'une chaîne vide. 13 champs depuis le lot 4c
-    // (27/09/2026) : brouillard et feux de forêt en fin de payload, pour les
-    // alertes MeteoAlarm qui n'ont pas de case Météo-France. Un payload à 11
-    // champs (Météo-France) laisse ces deux cases vides.
-    char* saveptr = nullptr;
-    const char* fields[13];
-    for (int i = 0; i < 13; i++) {
-        char* tok = strtok_r(i == 0 ? buf : nullptr, "|", &saveptr);
-        fields[i] = tok ? tok : "";
-    }
-    const char* phrase_pluie = fields[0];
-    const char* globale = fields[1];
+    if (payload.size() >= sizeof(lue.buf)) payload_refuse("tab5.vigilance", "coupé à 1023 octets", payload.size());
+    const char* phrase_pluie = lue.champs[0];
+    const char* globale = lue.champs[1];
 
     update_rain_phrase_ui(ui.lbl_phrase, std::string(phrase_pluie));
     if (ui.lbl_pluie_val != nullptr)  lv_obj_add_flag(ui.lbl_pluie_val, LV_OBJ_FLAG_HIDDEN);
@@ -127,13 +116,16 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
 
     // Couleur de la date (sous l'horloge : palette UIHorloge) selon la vigilance globale.
     uint32_t col_date = UIHorloge.SUCCESS;
-    if (strcmp(globale, "Jaune") == 0)       col_date = UIHorloge.ALERT_DATE_YELLOW;
-    else if (strcmp(globale, "Orange") == 0) col_date = UIHorloge.ALERT_DATE_ORANGE;
-    else if (strcmp(globale, "Rouge") == 0)  col_date = UIHorloge.ALERT_DATE_RED;
+    switch (vigilance_niveau(globale)) {
+        case NiveauVigilance::JAUNE: col_date = UIHorloge.ALERT_DATE_YELLOW; break;
+        case NiveauVigilance::ORANGE: col_date = UIHorloge.ALERT_DATE_ORANGE; break;
+        case NiveauVigilance::ROUGE: col_date = UIHorloge.ALERT_DATE_RED; break;
+        default: break;
+    }
     if (ui.lbl_date != nullptr) lv_obj_set_style_text_color(ui.lbl_date, lv_color_hex(col_date), LV_PART_MAIN);
 
     // Phénomènes, dans l'ordre du payload, avec leur glyphe MDI.
-    static const char* const kIcons[11] = {
+    static const char* const kIcons[kVigilancePhenomenes] = {
         "\U000F059D",  // vent
         "\U000F0EFA",  // inondation
         "\U000F0593",  // orages
@@ -146,15 +138,9 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         "\U000F0591",  // brouillard (MeteoAlarm)
         "\U000F0238",  // feux de forêt (MeteoAlarm)
     };
-    struct AlertEntry { const char* icon; const char* level; };
-    constexpr size_t MAX_ALERTES = 4;
-    AlertEntry actives[MAX_ALERTES];
-    size_t active_count = 0;
-    for (int i = 0; i < 11 && active_count < MAX_ALERTES; i++) {
-        const char* state = fields[2 + i];
-        if (strlen(state) == 0 || strcmp(state, "Vert") == 0 || strcmp(state, "unknown") == 0) continue;
-        actives[active_count++] = AlertEntry{kIcons[i], state};
-    }
+    // Phénomènes actifs (ni vides, ni « Vert », ni « unknown »), au plus 4 : vigilance_actives().
+    VigilanceActive actives[kVigilanceActivesMax];
+    const size_t active_count = static_cast<size_t>(vigilance_actives(lue, actives));
 
     // Icônes du bandeau central : palette UIBandeau (sombre en clair pour certains thèmes).
     const bool pastille = palette_claire(UIBandeau);
@@ -163,10 +149,11 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         if (slot == nullptr) continue;
         const bool shown = i < active_count;
         if (shown) {
-            lv_label_set_text(slot, actives[i].icon);
+            lv_label_set_text(slot, kIcons[actives[i].phenomene]);
             uint32_t c = UIBandeau.ALERT_YELLOW;
-            if (strcmp(actives[i].level, "Orange") == 0)     c = UIBandeau.ALERT_ORANGE;
-            else if (strcmp(actives[i].level, "Rouge") == 0) c = UIBandeau.ALERT_RED;
+            const NiveauVigilance niveau = vigilance_niveau(actives[i].niveau);
+            if (niveau == NiveauVigilance::ORANGE) c = UIBandeau.ALERT_ORANGE;
+            else if (niveau == NiveauVigilance::ROUGE) c = UIBandeau.ALERT_RED;
             lv_obj_set_style_text_color(slot, lv_color_hex(pastille ? UIBandeau.TEXT_PRIMARY : c), LV_PART_MAIN);
             lv_obj_set_style_text_opa(slot, 255, LV_PART_MAIN);
             vigilance_pastille(slot, pastille, c);
