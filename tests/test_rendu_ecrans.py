@@ -138,9 +138,10 @@ def test_un_ecran_en_mode_ha_par_piece_de_la_demo():
         # Le popup Maison (ADR-0037) s'ouvre en mode HA par le titre de la pièce, le carrousel
         # des clims (ADR-0038) par la température de la pièce : ils couvrent la rangée, ce
         # n'est pas l'écran d'une pièce. De même les fenêtres du climat d'une pièce
-        # (ADR-0040), ouvertes en mode HA sur elle.
+        # (ADR-0040), ouvertes en mode HA sur elle, et la roue de sa clim (ADR-0048).
         # La pièce choisie dans la roue de navigation (ADR-0042) l'est aussi par un swipe.
-        if ha and not ecran.nom.startswith(("maison-", "climatisation-", "roue-navigation-")) \
+        if ha and not ecran.nom.startswith(("maison-", "climatisation-", "roue-clim-temperature",
+                                            "roue-navigation-")) \
                 and ecran.nom not in POPUPS_EN_MODE_HA:
             assert page not in obtenues, (ecran.nom, obtenues.get(page))
             obtenues[page] = ecran.nom

@@ -71,6 +71,10 @@ NON_MONTREES = {
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
+    # Roue d'une clim par la température de la pièce (ADR-0048), décrite dans climate.md.
+    "roue-clim-temperature": "roue d'une clim (ADR-0048), décrite dans climate.md ; image à tirer du rendu",
+    "roue-clim-temperature-clims": "roue-clim-temperature montre la même roue ; « Clims » est décrit",
+    "roue-clim-temperature-meteo": "roue-clim-temperature montre la même roue, sur la clim du blueprint",
     # Roue de navigation (ADR-0042), décrite dans home.md (carte centrale).
     "roue-navigation": "roue de navigation (ADR-0042), décrite dans home.md ; image à tirer du rendu",
     "roue-navigation-pieces": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",

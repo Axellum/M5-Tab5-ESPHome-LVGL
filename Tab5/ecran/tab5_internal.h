@@ -376,10 +376,37 @@ void roue_rejouer_theme();
 // a pas (type sans roue, option k ou r, clim sans capacité connue) : l'appelant ouvre
 // alors le popup (tuile_ouvrir_popup).
 bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison = false);
-// tab5_clim.cpp, pour la roue : les lettres de capacité (ADR-0026) de la clim du
-// blueprint (r < 0) ou de celle de la tuile tRT, seulement si HA les a poussées (climr,
-// crRT) ; nullptr sinon.
+// tab5_tuiles_roue.cpp (ADR-0048) : la roue de la clim `c` (celle du blueprint, d'une
+// tuile ou d'une pièce, ClimRef plus bas), ouverte par le toucher de la température de la
+// pièce (clim_temperature_ouvrir, tab5_clim.cpp) autour de `ancre` : les boutons clim de
+// la roue d'une tuile cli (même code), « Clims ▸ » à la place de « Maison » quand la
+// tablette en connaît plusieurs, « Détails » = le carrousel sur elle. Faux, et rien
+// d'ouvert, sans réglages reçus pour elle (l'appelant ouvre alors le carrousel).
+struct ClimRef;
+bool clim_roue_ouvrir(const ClimRef& c, lv_obj_t* ancre);
+// tab5_clim.cpp, quand HA pousse les réglages ou l'état d'une clim (ou qu'elle est
+// oubliée) : la roue ouverte sur une clim (tuile cli ou température) se repeint, ou se
+// ferme si elle n'en a plus. Ne coûte qu'un test roue fermée.
+void roue_clim_changee();
+// tab5_clim.cpp, pour la roue. Les clims y sont désignées par (r, t) comme dans ClimRef :
+// r < 0 la clim du blueprint, t < 0 la clim de la pièce r (ADR-0040), sinon celle de la
+// tuile tRT. Lettres de capacité (ADR-0026), seulement si HA les a poussées (climr, crRT,
+// crpR) ; nullptr sinon.
 const char* clim_capacites_connues(int r, int t);
+// Mode poussé par HA pour cette clim (« cool », « off »…) ; « » inconnu.
+const char* clim_mode_connu(int r, int t);
+// Moyeu de la roue de cette clim et sa ligne dans « Clims ▸ » : nom (celui de HA, sinon la
+// pièce, sinon « Climatisation »), ligne d'état comme une tuile cli (température de la
+// pièce, « -- », « Éteint », « Hors ligne »), consigne écrite (« 21.5° », « -- »), couleur
+// d'état (celle de l'icône de la tuile − / +), allumée ou non.
+struct ClimTete {
+    char nom[49] = "";
+    char ligne[24] = "";
+    char consigne[10] = "";
+    uint32_t couleur = 0;
+    bool actif = false;
+};
+void clim_tete(int r, int t, ClimTete& out);
 // Consignes que la roue propose à cette clim : la sienne et deux pas de chaque côté, dans
 // ses bornes, croissantes, sans doublon (au plus 5) ; `courant` : le rang de la sienne.
 // 0 si sa consigne ou ses réglages sont inconnus. `textes` : comme sur la carte, avec le
@@ -493,6 +520,14 @@ struct ClimRef {
 };
 // Écrit au plus `max` clims dans `out`, dans l'ordre ci-dessus ; renvoie leur nombre.
 int clims_enumerer(ClimRef* out, int max);
+// La clim que vise le toucher de la température de la pièce : celle de la pièce affichée
+// en mode HA (sa clim propre, sinon la première de ses tuiles), sinon la première de
+// clims_enumerer (celle du blueprint). Faux si la tablette n'en connaît aucune.
+bool clim_ref_choisir(ClimRef& out);
+// Le carrousel (popup clim, ADR-0038) ouvert sur la clim `c` : « Détails » de sa roue, ou
+// le toucher de la température quand elle n'a pas de roue. Faux si le popup ne peut pas
+// la montrer (réglages d'une clim de tuile ou de pièce pas reçus).
+bool clim_carrousel_ouvrir_sur(const ClimRef& c);
 // tab5_tuiles.cpp : la pièce affichée en mode HA (ADR-0023), -1 en mode météo ou en mode
 // héritage (aucune pièce reçue).
 int tuiles_piece_mode_ha();
