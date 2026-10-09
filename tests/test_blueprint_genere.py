@@ -68,6 +68,12 @@ def test_chaque_piece_et_chaque_ligne_ont_tous_leurs_declencheurs():
             assert par_id[ident]["entity_id"] == {"!input": f"piece_{n}_tuiles"}, ident
         for suffixe, attribut in gen.ATTRIBUTS_PIECE:
             assert par_id[f"piece_{n}_{suffixe}"]["attribute"] == attribut
+        # Clim de la pièce (ADR-0040) : son état sans ses attributs, puis sa consigne.
+        assert {f"piece_{n}_temperature", f"piece_{n}_humidite", f"piece_{n}_clim"} <= noms
+        etat, consigne = par_id[f"piece_{n}_clim"], par_id[f"piece_{n}_clim_consigne"]
+        assert etat["entity_id"] == consigne["entity_id"] == {"!input": f"piece_{n}_clim"}
+        assert "to" in etat and etat["to"] is None and "attribute" not in etat
+        assert consigne["attribute"] == "temperature"
     for n in range(1, gen.LIGNES_RANGEE + 1):
         assert f"rangee_ligne_{n}" in noms
         for ident in (f"rangee_{n}", f"rangee_{n}_sortie"):

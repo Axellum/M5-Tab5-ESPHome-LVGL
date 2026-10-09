@@ -112,14 +112,30 @@ def test_chaque_ecran_revient_a_l_accueil_en_mode_meteo():
         assert (page, ha) == (2, False), (ecran.nom, page, ha)
 
 
+POPUPS_EN_MODE_HA = {"temperature-piece", "climatisation-piece"}
+
+
+def test_les_fenetres_du_climat_d_une_piece():
+    """ADR-0040 : ouvertes en mode HA sur la pièce de la démo qui a température, humidité et
+    clim ; la fenêtre refermée avant de quitter le mode HA (sinon « HA » tombe sur le voile)."""
+    for nom in POPUPS_EN_MODE_HA:
+        ecran = next(e for e in ECRANS if e.nom == nom)
+        _, page, ha = _jouer(ecran.etapes)
+        assert ha and page == PAGE_DE_LA_PIECE[ecrans.PIECE_CLIMAT], nom
+        assert ecran.fermer[0] == Toucher(*ecrans.FERMER_POPUP), nom
+    climat = PIECES[ecrans.PIECE_CLIMAT].climat
+    assert climat.humidite and climat.reglages
+
+
 def test_un_ecran_en_mode_ha_par_piece_de_la_demo():
     attendues = {PAGE_DE_LA_PIECE[r]: f"accueil-ha-piece-{r + 1}" for r in PIECES}
     obtenues = {}
     for ecran in ECRANS:
         _, page, ha = _jouer(ecran.etapes)
         # Le popup Maison (ADR-0037) s'ouvre en mode HA par le titre de la pièce : il couvre
-        # la rangée, ce n'est pas l'écran d'une pièce.
-        if ha and not ecran.nom.startswith("maison-"):
+        # la rangée, ce n'est pas l'écran d'une pièce. De même les fenêtres du climat d'une
+        # pièce (ADR-0040), ouvertes en mode HA sur elle.
+        if ha and not ecran.nom.startswith("maison-") and ecran.nom not in POPUPS_EN_MODE_HA:
             assert page not in obtenues, (ecran.nom, obtenues.get(page))
             obtenues[page] = ecran.nom
     assert obtenues == attendues
