@@ -1329,3 +1329,17 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "PROCHAIN RENDEZ-VOUS": "PROSSIMO APPUNTAMENTO"
 "Annoncer avant": "Annunciare"
 "le début du rendez-vous": "prima dell'appuntamento"
+
+# Roue de navigation (appui long de la carte centrale, tab5_roue_navigation.cpp, ADR-0042)
+"Aller à": "Vai a"
+"Pièces": "Stanze"
+"Appareils": "Dispositivi"
+"Agenda": "Agenda"
+"Tablette": "Tablet"
+"Assistant": "Assistente"
+"Températures": "Temperature"
+"Clims": "Clima"
+"Lumières": "Luci"
+"Volets": "Tapparelle"
+"Plantes": "Piante"
+"Jeux": "Giochi"

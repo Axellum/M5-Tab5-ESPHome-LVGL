@@ -215,6 +215,7 @@ font:
       - "\U000F0E81"  # bell-alert-outline (tap : Alertes)
       - "\U000F1051"  # led-strip-variant
       - "\U000F111E"  # window-shutter-open
+      - "\U000F1382"  # compass-rose (tap : roue de navigation, ADR-0042)
       - "\U000F14C9"  # plus-minus-variant (tap : appareil suivant de la tuile − / +)
       # >>> tuiles
       # Palette des tuiles de pièce (ADR-0023), sauf les glyphes déjà listés au-dessus.
@@ -320,7 +321,8 @@ font:
 
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
   # réveil, en-tête de la sélection des consoles, cartes du popup Énergie ; températures
-  # de l'accueil (salon, serre ; en mode HA, thermomètre et goutte de la pièce, ADR-0040).
+  # de l'accueil (salon, serre ; en mode HA, thermomètre et goutte de la pièce, ADR-0040) ;
+  # moyeu de la roue de navigation (rose des vents, ADR-0042).
   - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_45
     size: 45
@@ -359,6 +361,7 @@ font:
       - "\U000F0D3E"  # transmission-tower (popup Énergie, réseau sans échange)
       - "\U000F0E79"  # arrow-up-down
       - "\U000F1051"  # led-strip-variant
+      - "\U000F1382"  # compass-rose (moyeu de la roue de navigation, ADR-0042)
       - "\U000F146D"  # fan-chevron-down
       - "\U000F14DE"  # rocket-launch
       - "\U000F17DE"  # battery-arrow-down (popup Énergie, décharge)
@@ -634,10 +637,12 @@ font:
       - "\U000F024A"  # flower (mini icône : Plantes)
       - "\U000F0297"  # gamepad-variant (mini icône : Arcade)
       - "\U000F02DC"  # home (mini icône : Maison)
+      - "\U000F0335"  # lightbulb (mini icône : Lumières, ADR-0042)
       - "\U000F036C"  # microphone (mini icône : Assistant vocal)
       - "\U000F0379"  # monitor
       - "\U000F0493"  # cog (mini icône : Réglages)
       - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
+      - "\U000F050F"  # thermometer (mini icône : Température)
       - "\U000F0596"  # weather-pouring
       - "\U000F05A9"  # wifi
       - "\U000F05CE"  # clock-alert-outline (prévisions périmées, au-dessus des tuiles)
@@ -651,8 +656,10 @@ font:
       - "\U000F0D9B"  # solar-panel (production solaire du bandeau, tous les paliers ; mini icône « auto » de « HA »)
       - "\U000F0E17"  # calendar-month (mini icône : Calendrier)
       - "\U000F0E81"  # bell-alert-outline (mini icône : Alertes)
+      - "\U000F111E"  # window-shutter-open (mini icône : Volet)
       - "\U000F12A1"  # battery-low (20 à 40 %)
       - "\U000F12A2"  # battery-medium (41 à 80 %)
+      - "\U000F1382"  # compass-rose (mini icône : roue de navigation)
       - "\U000F14C9"  # plus-minus-variant (mini icône : appareil suivant de la tuile − / +)
 
   # 36 px — popup Assistant vocal (assistant_popup.yaml).
@@ -675,21 +682,31 @@ font:
 
   # 36 px — roue d'actions rapides (ADR-0036, ui_components/roue_bouton.yaml et
   # roue_choix.yaml) : icônes posées par glyphe_roue() (tab5_roue.cpp, MDI_CODE_TARGETS de
-  # la règle 7). Celles de la clim sont celles de son popup.
+  # la règle 7). Celles de la clim sont celles de son popup ; celles de la roue de
+  # navigation (ADR-0042) disent ses familles et ses écrans.
   - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_36
     size: 36
     bpp: 1
     glyphs:
+      - "\U000F001B"  # air-conditioner (navigation : Clims)
+      - "\U000F0020"  # alarm (navigation : Réveil)
       - "\U000F00DF"  # brightness-6 (Luminosité)
+      - "\U000F00F0"  # calendar-clock (navigation : Agenda)
+      - "\U000F018D"  # console (navigation : Système)
       - "\U000F0210"  # fan
       - "\U000F0238"  # fire
+      - "\U000F024A"  # flower (navigation : Plantes)
+      - "\U000F0297"  # gamepad-variant (navigation : Jeux)
       - "\U000F02DC"  # home (lien « Maison »)
       - "\U000F032A"  # leaf (Éco)
+      - "\U000F036C"  # microphone (navigation : Assistant)
       - "\U000F0393"  # thermostat (Mode)
       - "\U000F03D8"  # palette (Couleurs)
       - "\U000F0425"  # power
+      - "\U000F0493"  # cog (navigation : Réglages)
       - "\U000F04DB"  # stop
+      - "\U000F04F6"  # tablet (navigation : Tablette)
       - "\U000F050F"  # thermometer (Consigne)
       - "\U000F058E"  # water-percent
       - "\U000F059D"  # weather-windy (Brise)
@@ -698,9 +715,16 @@ font:
       - "\U000F0717"  # snowflake
       - "\U000F072E"  # arrow-down-bold
       - "\U000F0737"  # arrow-up-bold
+      - "\U000F0821"  # floor-plan (navigation : Pièces)
       - "\U000F084F"  # arrow-expand-vertical (Position)
+      - "\U000F0A72"  # solar-power (navigation : Énergie)
       - "\U000F0AE2"  # star-four-points (Options)
+      - "\U000F0E17"  # calendar-month (navigation : Calendrier)
       - "\U000F0E79"  # arrow-up-down (Oscillation)
+      - "\U000F0E81"  # bell-alert-outline (navigation : Alertes, ADR-0042)
+      - "\U000F111E"  # window-shutter-open (navigation : Volets)
+      - "\U000F1252"  # home-lightbulb-outline (navigation : Appareils)
+      - "\U000F1253"  # lightbulb-group (navigation : Lumières)
       - "\U000F146D"  # fan-chevron-down (Silence)
       - "\U000F14DE"  # rocket-launch (Boost)
       - "\U000F1542"  # tune-variant (lien « Détails » de la roue)

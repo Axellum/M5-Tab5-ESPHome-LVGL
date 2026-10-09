@@ -1323,3 +1323,17 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "PROCHAIN RENDEZ-VOUS": "SONRAKİ RANDEVU"
 "Annoncer avant": "Duyur"
 "le début du rendez-vous": "randevudan önce"
+
+# Roue de navigation (appui long de la carte centrale, tab5_roue_navigation.cpp, ADR-0042)
+"Aller à": "Git"
+"Pièces": "Odalar"
+"Appareils": "Cihazlar"
+"Agenda": "Ajanda"
+"Tablette": "Tablet"
+"Assistant": "Asistan"
+"Températures": "Sıcaklıklar"
+"Clims": "Klimalar"
+"Lumières": "Işıklar"
+"Volets": "Panjurlar"
+"Plantes": "Bitkiler"
+"Jeux": "Oyunlar"

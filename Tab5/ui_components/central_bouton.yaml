@@ -6,7 +6,9 @@
 # [AI-WARNING] Le bouton n'est pas décoratif : posé EN DERNIER dans le wrapper SIZE_CONTENT
 # de son panneau, ${central_w} × 80, c'est lui qui reçoit l'appui, et c'est cette structure
 # qui laisse le swipe paginer (voir l'avertissement de page_title_wrapper, tab5-lvgl.yaml).
-# Appui long : l'historique des alertes (popup « Alertes », lot 4 du plan des alertes).
+# Appui long : la roue de navigation (ADR-0042, 09/10/2026), centrée sur la carte ; le
+# popup « Alertes » (lot 4 du plan des alertes), qu'il ouvrait avant, en est le premier
+# bouton.
 button:
   id: "${id}"
   align: CENTER
@@ -15,4 +17,4 @@ button:
   styles: style_invisible
   on_short_click: ${appui}
   on_long_press:
-    - script.execute: tab5_alertes_ouvrir
+    - lambda: 'roue_navigation_ouvrir();'

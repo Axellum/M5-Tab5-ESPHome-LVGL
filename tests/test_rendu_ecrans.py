@@ -74,7 +74,8 @@ def test_portraits():
 #   4 revient à 2 ; vers la droite 4→3→2→1→0, et 0 revient à 2 ; geste compté si le
 #   doigt est à y ≥ FORECAST_SWIPE_Y_MIN ;
 # - mode HA : pièce suivante (gauche) ou précédente (droite) qui a un appareil, sans
-#   boucler ; « HA » bascule le mode ; « Aller à l'écran → Accueil » le quitte.
+#   boucler ; « HA » bascule le mode ; « Aller à l'écran → Accueil » le quitte ; une pièce
+#   choisie dans la roue de navigation (ADR-0042, NAV_BUREAU) y met le mode HA.
 # ---------------------------------------------------------------------------
 
 PAGES_OCCUPEES = sorted(PAGE_DE_LA_PIECE[r] for r, p in PIECES.items() if p.tuiles)
@@ -90,6 +91,8 @@ def _jouer(etapes, page=2, ha=False):
             ha = not ha
         elif isinstance(etape, Aller) and etape.option == "Accueil":
             ha = False
+        elif etape == ecrans.NAV_BUREAU:
+            ha, page = True, PAGE_DE_LA_PIECE[ecrans.PIECE_CLIMAT]
         elif (isinstance(etape, Glisser) and not etape.dans_popup and etape.y2 >= Y_MIN_GESTE
               and etape.x1 != etape.x2):
             gauche = etape.x2 < etape.x1
@@ -136,7 +139,9 @@ def test_un_ecran_en_mode_ha_par_piece_de_la_demo():
         # des clims (ADR-0038) par la température de la pièce : ils couvrent la rangée, ce
         # n'est pas l'écran d'une pièce. De même les fenêtres du climat d'une pièce
         # (ADR-0040), ouvertes en mode HA sur elle.
-        if ha and not ecran.nom.startswith(("maison-", "climatisation-")) and ecran.nom not in POPUPS_EN_MODE_HA:
+        # La pièce choisie dans la roue de navigation (ADR-0042) l'est aussi par un swipe.
+        if ha and not ecran.nom.startswith(("maison-", "climatisation-", "roue-navigation-")) \
+                and ecran.nom not in POPUPS_EN_MODE_HA:
             assert page not in obtenues, (ecran.nom, obtenues.get(page))
             obtenues[page] = ecran.nom
     assert obtenues == attendues

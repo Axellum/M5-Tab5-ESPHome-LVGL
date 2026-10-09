@@ -1276,3 +1276,17 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "PROCHAIN RENDEZ-VOUS": "VOLGENDE AFSPRAAK"
 "Annoncer avant": "Melden"
 "le début du rendez-vous": "vóór de afspraak"
+
+# Roue de navigation (appui long de la carte centrale, tab5_roue_navigation.cpp, ADR-0042)
+"Aller à": "Ga naar"
+"Pièces": "Kamers"
+"Appareils": "Apparaten"
+"Agenda": "Planning"
+"Tablette": "Tablet"
+"Assistant": "Assistent"
+"Températures": "Temperaturen"
+"Clims": "Airco's"
+"Lumières": "Lampen"
+"Volets": "Rolluiken"
+"Plantes": "Planten"
+"Jeux": "Spellen"
