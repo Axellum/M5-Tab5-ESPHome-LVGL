@@ -13,6 +13,11 @@
  *       montée » ; une prise quand il n'y a pas de batterie (présence décidée chargeur coupé
  *       par tab5_batterie.h, 08/10/2026 ; discussion #278). Le même état peint la ligne
  *       « Batterie » de la console système (update_console_batterie_ui, 06/10/2026).
+ *       Et les gestes de l'accueil au choix (09/10/2026, lot A, ADR-0039) : les trois zones
+ *       de l'horloge (heures, minutes, date) et les trois boutons du haut, tap court et
+ *       appui long, choisis dans le blueprint (clés « gestes », puis l'ancienne « appuis ») ;
+ *       geste_cible() dit ce que fait un geste, le script tab5_geste
+ *       (tab5-navigation.yaml) le fait ; boutons_haut_apply_ui() peint les icônes.
  * @architecture_constraint Rien ne disparaît sans réponse de HA : la tablette seule ne
  *       sait pas distinguer une entité absente d'une entité pas encore transmise. Une
  *       donnée reçue fait toujours réapparaître sa zone (zone_vue), même si HA l'a
@@ -22,6 +27,10 @@
  *       ci-dessous (même ordre), puis ses widgets dans zones_apply_ui(). Les clés
  *       sont lues par HA (package tab5_push.yaml) : ne jamais les traduire ni les renommer
  *       sans le package. tests/test_zones.py vérifie qu'elles concordent.
+ *       Un code de geste de plus (écran ou action) : à la FIN de kCodesGestes (la NVS garde
+ *       son index), son glyphe dans code_glyphe() (mdi_font_26 et mdi_font_70, règle 9),
+ *       son cas dans le script tab5_geste s'il est une action, et dans le blueprint
+ *       (codes_gestes, options &codes_gestes) : tests/test_gestes.py compare.
  */
 #include "tab5_internal.h"
 #include "tab5_geometrie.h"
@@ -53,47 +62,94 @@ constexpr char kCleClimReglages[] = "climr";
 // plus ancien l'ignore. Ne pas la renommer sans le blueprint (tests/test_solaire.py).
 constexpr char kCleSolaire[] = "solaire";
 
-// Appuis longs des trois boutons du haut (07/10/2026) dans tab5_maj_emplacements :
-// « appuis|maison|engrenage|manette », un code par bouton (kCodesEcran, ou « auto »).
-// Poussée par le blueprint (section « Boutons du haut ») avec tous les états. Une clé et
-// pas une action, comme solaire : un firmware plus ancien l'ignore et garde ses appuis
-// longs. Codes lus par le blueprint : ni traduits ni renommés sans lui (tests/test_appuis.py).
+// Gestes de l'accueil (09/10/2026, lot A, ADR-0039) dans tab5_maj_emplacements :
+// « gestes|c1|…|c12 », un code par geste dans l'ordre de l'enum Geste (heures court, heures
+// long, minutes court, minutes long, date court, date long, maison court, maison long,
+// engrenage court, engrenage long, manette court, manette long), « auto » ou un code de
+// kCodesGestes. Poussée par le blueprint (section « Horloge et boutons du haut ») avec tous
+// les états. Une clé et pas une variable de service : un firmware plus ancien l'ignore.
+// Codes lus par le blueprint : ni traduits ni renommés sans lui (tests/test_gestes.py).
+constexpr char kCleGestes[] = "gestes";
+// L'ancienne clé (07/10/2026) : « appuis|maison|engrenage|manette », les appuis longs des
+// trois boutons. Toujours lue (blueprint d'avant le lot A) ; un payload qui porte aussi
+// « gestes » la laisse de côté (gestes_fin_payload).
 constexpr char kCleAppuis[] = "appuis";
-struct CodeEcran {
+struct CodeGeste {
     const char* code;
-    Ecran ecran;
+    Ecran ecran;  // l'écran ouvert (action ECRAN), AUCUN sinon
+    GesteAction action;
 };
-// L'INDEX d'un code dans cette table est ce que garde la NVS (SauvegardeAppuis) : un code
-// de plus s'ajoute à la FIN, aucun ne se retire ni ne se déplace.
-constexpr CodeEcran kCodesEcran[] = {
-    {"rien", Ecran::AUCUN},          {"assistant", Ecran::ASSISTANT}, {"calendrier", Ecran::CALENDRIER},
-    {"reveil", Ecran::REVEIL},       {"clim", Ecran::CLIM},           {"plantes", Ecran::PLANTES},
-    {"tv", Ecran::TV},               {"console", Ecran::CONSOLE},     {"energie", Ecran::ENERGIE},
-    {"reglages", Ecran::REGLAGES},   {"alertes", Ecran::ALERTES},     {"arcade", Ecran::ARCADE},
-    {"maison", Ecran::MAISON},  // popup Maison (ADR-0037), 07/10/2026 : ajouté à la fin (NVS)
+// L'INDEX d'un code dans cette table est ce que garde la NVS (SauvegardeAppuis,
+// SauvegardeGestes) : un code de plus s'ajoute à la FIN, aucun ne se retire ni ne se
+// déplace. Le lot 3 ajoutera « nabu_suivant » (ligne Ok Nabu suivante) après « ecoute ».
+constexpr CodeGeste kCodesGestes[] = {
+    {"rien", Ecran::AUCUN, GesteAction::RIEN},
+    {"assistant", Ecran::ASSISTANT, GesteAction::ECRAN},
+    {"calendrier", Ecran::CALENDRIER, GesteAction::ECRAN},
+    {"reveil", Ecran::REVEIL, GesteAction::ECRAN},
+    {"clim", Ecran::CLIM, GesteAction::ECRAN},
+    {"plantes", Ecran::PLANTES, GesteAction::ECRAN},
+    {"tv", Ecran::TV, GesteAction::ECRAN},
+    {"console", Ecran::CONSOLE, GesteAction::ECRAN},
+    {"energie", Ecran::ENERGIE, GesteAction::ECRAN},
+    {"reglages", Ecran::REGLAGES, GesteAction::ECRAN},
+    {"alertes", Ecran::ALERTES, GesteAction::ECRAN},
+    {"arcade", Ecran::ARCADE, GesteAction::ECRAN},
+    // Popup Maison (ADR-0037), 07/10/2026 : ajouté à la fin (NVS).
+    {"maison", Ecran::MAISON, GesteAction::ECRAN},
+    // Actions de l'accueil (09/10/2026, lot A) : ajoutées à la fin (NVS).
+    {"mode_domo", Ecran::AUCUN, GesteAction::MODE_DOMO},
+    {"appareil_suivant", Ecran::AUCUN, GesteAction::APPAREIL_SUIVANT},
+    {"rangee_suivante", Ecran::AUCUN, GesteAction::RANGEE_SUIVANTE},
+    {"ecoute", Ecran::AUCUN, GesteAction::ECOUTE},
 };
-// « auto » : l'appui long d'avant le choix (06/10/2026), par bouton (ordre de BoutonHaut).
+constexpr int kNbCodes = static_cast<int>(sizeof(kCodesGestes) / sizeof(kCodesGestes[0]));
 constexpr int8_t kAuto = -1;
+// « auto » d'un appui long de bouton sans choix dans la clé appuis : l'écran d'avant le
+// choix (06/10/2026), par bouton (ordre de BoutonHaut).
 constexpr Ecran kEcranAuto[BOUTON_HAUT_NB] = {Ecran::ENERGIE, Ecran::CONSOLE, Ecran::TV};
-
+// « auto » de chaque geste (ordre de Geste) : le comportement d'avant le choix, un code de
+// kCodesGestes. nullptr : l'appui long d'un bouton, qui suit la clé appuis (puis kEcranAuto).
+constexpr const char* kGestesAuto[GESTE_NB] = {
+    "rien",
+    "reveil",  // heures
+    "appareil_suivant",
+    "reveil",  // minutes
+    "rangee_suivante",
+    "calendrier",  // date
+    "mode_domo",
+    nullptr,  // maison
+    "reglages",
+    nullptr,  // engrenage (Réglages : page Écran, tab5_modal_registry_init)
+    "arcade",
+    nullptr,  // manette
+};
 constexpr uint32_t kMagic = 0x5A4F4E31;    // « ZON1 »
 constexpr uint32_t kPrefKey = 0x7A6F6E65;  // « zone »
 constexpr uint32_t kMagicAppuis = 0x41505031;    // « APP1 »
 constexpr uint32_t kPrefKeyAppuis = 0x61707569;  // « apui »
+constexpr uint32_t kMagicGestes = 0x47535431;    // « GST1 »
+constexpr uint32_t kPrefKeyGestes = 0x67657374;  // « gest »
 
 struct Sauvegarde {
     uint32_t magic;
     uint32_t absentes;
 };
 
-// Choix des appuis longs, gardés en NVS : la mini icône est juste dès le démarrage,
-// avant que HA les repousse. Par bouton : l'index du code dans kCodesEcran (stable même si
-// l'enum Ecran gagne une valeur avant ARCADE), -1 pour « auto ».
+// Choix des appuis longs (clé appuis), gardés en NVS : la mini icône est juste dès le
+// démarrage, avant que HA les repousse. Par bouton : l'index du code dans kCodesGestes
+// (stable même si l'enum Ecran gagne une valeur avant ARCADE), -1 pour « auto ». Taille
+// inchangée depuis le 07/10/2026 (magic APP1).
 struct SauvegardeAppuis {
     uint32_t magic;
     int8_t code[BOUTON_HAUT_NB];
 };
-constexpr int kNbCodes = static_cast<int>(sizeof(kCodesEcran) / sizeof(kCodesEcran[0]));
+// Choix des 12 gestes (clé gestes), même principe : index dans kCodesGestes, -1 « auto ».
+// Une taille de plus (un geste ajouté) = un nouveau magic.
+struct SauvegardeGestes {
+    uint32_t magic;
+    int8_t code[GESTE_NB];
+};
 
 uint32_t s_absentes = 0;  // zones masquées, gardées en NVS
 uint32_t s_vues = 0;      // entités suivies entendues depuis le démarrage
@@ -102,9 +158,18 @@ bool s_charge = false;
 // même au mode démo (qui n'est pas « Home Assistant »). Réarmé à chaque connexion de HA.
 bool s_demande = true;
 esphome::ESPPreferenceObject s_pref;
-// Écran de l'appui long de chaque bouton (BoutonHaut) : kAuto, ou une valeur d'Ecran.
+// Appui long de chaque bouton (BoutonHaut) d'après la clé appuis : kAuto, ou un index de
+// kCodesGestes.
 int8_t s_appuis[BOUTON_HAUT_NB] = {kAuto, kAuto, kAuto};
 esphome::ESPPreferenceObject s_pref_appuis;
+// Chaque geste (Geste) d'après la clé gestes : kAuto, ou un index de kCodesGestes.
+static_assert(GESTE_NB == 12, "un geste de plus : son « auto » (kGestesAuto), le blueprint, un nouveau magic");
+int8_t s_gestes[GESTE_NB] = {kAuto, kAuto, kAuto, kAuto, kAuto, kAuto,
+                             kAuto, kAuto, kAuto, kAuto, kAuto, kAuto};
+esphome::ESPPreferenceObject s_pref_gestes;
+// Clés vues dans le payload en cours (emplacements_appliquer, gestes_fin_payload).
+bool s_appuis_vue = false;
+bool s_gestes_vue = false;
 
 constexpr uint32_t bit_de(Zone z) { return 1u << static_cast<int>(z); }
 
@@ -241,74 +306,136 @@ void charger() {
     if (s_pref_appuis.load(&a) && a.magic == kMagicAppuis) {
         for (int b = 0; b < BOUTON_HAUT_NB; b++) {
             const int c = a.code[b];
-            s_appuis[b] = (c >= 0 && c < kNbCodes) ? static_cast<int8_t>(kCodesEcran[c].ecran) : kAuto;
+            s_appuis[b] = (c >= 0 && c < kNbCodes) ? static_cast<int8_t>(c) : kAuto;
+        }
+    }
+    s_pref_gestes = esphome::global_preferences->make_preference<SauvegardeGestes>(kPrefKeyGestes);
+    SauvegardeGestes g{};
+    if (s_pref_gestes.load(&g) && g.magic == kMagicGestes) {
+        for (int i = 0; i < GESTE_NB; i++) {
+            const int c = g.code[i];
+            s_gestes[i] = (c >= 0 && c < kNbCodes) ? static_cast<int8_t>(c) : kAuto;
         }
     }
 }
 
-// Un code d'appui long (champ de la clé appuis) : une valeur d'Ecran, ou kAuto pour
+// Un code (champ des clés appuis et gestes) : son index dans kCodesGestes, ou kAuto pour
 // « auto », un champ vide ou un code inconnu (blueprint plus récent que ce firmware).
-int8_t appui_code(const char* p, size_t n) {
-    for (const CodeEcran& c : kCodesEcran) {
-        if (std::strlen(c.code) == n && std::strncmp(p, c.code, n) == 0) return static_cast<int8_t>(c.ecran);
+int8_t code_lu(const Champ& f) {
+    for (int c = 0; c < kNbCodes; c++) {
+        if (champ_est(f, kCodesGestes[c].code)) return static_cast<int8_t>(c);
     }
     return kAuto;
 }
 
-const char* appui_nom(int8_t choix) {
-    if (choix == kAuto) return "auto";
-    for (const CodeEcran& c : kCodesEcran) {
-        if (static_cast<int8_t>(c.ecran) == choix) return c.code;
+const char* code_nom(int8_t c) { return (c >= 0 && c < kNbCodes) ? kCodesGestes[c].code : "auto"; }
+
+// Index d'un code écrit en toutes lettres (kGestesAuto) ; « rien » s'il n'existe pas.
+int8_t code_index(const char* nom) {
+    for (int c = 0; c < kNbCodes; c++) {
+        if (std::strcmp(kCodesGestes[c].code, nom) == 0) return static_cast<int8_t>(c);
     }
-    return "?";
+    return 0;
 }
 
-// « appuis|maison|engrenage|manette » : un champ manquant vaut « auto ». Gardé en NVS et
-// repeint seulement s'il change (poussé à chaque connexion).
+// Champs « a|b|c… » dans `choix` (`nb` au plus) : un champ manquant ou inconnu vaut
+// « auto », les champs en trop sont ignorés (blueprint plus récent : gestes ajoutés).
+void codes_lire(const char* valeur, size_t n, int8_t* choix, int nb) {
+    Champ f[GESTE_NB];
+    const int k = champs_decouper(valeur, n, '|', f, nb);
+    for (int i = 0; i < nb; i++) choix[i] = i < k ? code_lu(f[i]) : kAuto;
+}
+
+// « appuis|maison|engrenage|manette ». Gardé en NVS et repeint seulement s'il change
+// (poussé à chaque connexion).
 void appuis_recu(const char* valeur, size_t n) {
     charger();
-    int8_t choix[BOUTON_HAUT_NB] = {kAuto, kAuto, kAuto};
-    size_t debut = 0;
-    for (int b = 0; b < BOUTON_HAUT_NB && debut <= n; b++) {
-        const char* sep = static_cast<const char*>(std::memchr(valeur + debut, '|', n - debut));
-        const size_t fin = sep != nullptr ? static_cast<size_t>(sep - valeur) : n;
-        choix[b] = appui_code(valeur + debut, fin - debut);
-        debut = fin + 1;
-    }
+    s_appuis_vue = true;
+    int8_t choix[BOUTON_HAUT_NB];
+    codes_lire(valeur, n, choix, BOUTON_HAUT_NB);
     if (std::memcmp(choix, s_appuis, sizeof(choix)) == 0) return;
     std::memcpy(s_appuis, choix, sizeof(choix));
     SauvegardeAppuis a;
     std::memset(&a, 0, sizeof(a));  // octet de bourrage compris : rien d'indéterminé en NVS
     a.magic = kMagicAppuis;
-    for (int b = 0; b < BOUTON_HAUT_NB; b++) {
-        a.code[b] = -1;
-        for (int c = 0; c < kNbCodes; c++) {
-            if (static_cast<int8_t>(kCodesEcran[c].ecran) == s_appuis[b]) a.code[b] = static_cast<int8_t>(c);
-        }
-    }
+    std::memcpy(a.code, s_appuis, sizeof(a.code));
     s_pref_appuis.save(&a);
-    ESP_LOGI("tab5.zones", "Appuis longs : maison %s, engrenage %s, manette %s", appui_nom(s_appuis[BOUTON_MAISON]),
-             appui_nom(s_appuis[BOUTON_ENGRENAGE]), appui_nom(s_appuis[BOUTON_MANETTE]));
+    ESP_LOGI("tab5.zones", "Appuis longs : maison %s, engrenage %s, manette %s", code_nom(s_appuis[BOUTON_MAISON]),
+             code_nom(s_appuis[BOUTON_ENGRENAGE]), code_nom(s_appuis[BOUTON_MANETTE]));
     boutons_haut_apply_ui();
 }
 
-// Glyphe de la mini icône du bouton b (mdi_font_26), nullptr = masquée. « auto » : celles
-// du 06/10/2026 (panneau solaire, écran de la télécommande, rien sur l'engrenage). Un
-// écran choisi : le glyphe de l'en-tête de son popup (tests/test_appuis.py), sauf la
-// console (son en-tête garde le flocon de l'ancien bouton, qui se lirait « clim ») et
-// l'Arcade (sans en-tête : la manette).
-const char* mini_glyphe(BoutonHaut b, int8_t choix) {
-    if (choix == kAuto) {
-        if (!ecran_disponible(kEcranAuto[b])) return nullptr;
-        switch (b) {
-            case BOUTON_MAISON: return "\U000F0D9B";   // solar-panel (icône du bandeau d'état)
-            case BOUTON_MANETTE: return "\U000F07C0";  // desktop-classic (télécommande TV)
-            default: return nullptr;
-        }
+void gestes_garder(const int8_t* choix) {
+    if (std::memcmp(choix, s_gestes, sizeof(s_gestes)) == 0) return;
+    std::memcpy(s_gestes, choix, sizeof(s_gestes));
+    SauvegardeGestes g;
+    std::memset(&g, 0, sizeof(g));  // bourrage compris : rien d'indéterminé en NVS
+    g.magic = kMagicGestes;
+    std::memcpy(g.code, s_gestes, sizeof(g.code));
+    s_pref_gestes.save(&g);
+    ESP_LOGI("tab5.zones",
+             "Gestes : heures %s/%s, minutes %s/%s, date %s/%s, maison %s/%s, engrenage %s/%s, "
+             "manette %s/%s",
+             code_nom(s_gestes[0]), code_nom(s_gestes[1]), code_nom(s_gestes[2]),
+             code_nom(s_gestes[3]), code_nom(s_gestes[4]), code_nom(s_gestes[5]), code_nom(s_gestes[6]),
+             code_nom(s_gestes[7]), code_nom(s_gestes[8]), code_nom(s_gestes[9]), code_nom(s_gestes[10]),
+             code_nom(s_gestes[11]));
+    boutons_haut_apply_ui();
+}
+
+// « gestes|c1|…|c12 » (ordre de Geste).
+void gestes_recu(const char* valeur, size_t n) {
+    charger();
+    s_gestes_vue = true;
+    int8_t choix[GESTE_NB];
+    codes_lire(valeur, n, choix, GESTE_NB);
+    gestes_garder(choix);
+}
+
+// Fin d'un payload : la clé appuis sans la clé gestes vient d'un blueprint d'avant le lot A,
+// qui ne sait rien des gestes. Ses appuis longs comptent alors seuls : les gestes gardés
+// d'un blueprint plus récent repartent en « auto » (« gestes remplace appuis quand elle
+// est présente »).
+void gestes_fin_payload() {
+    if (s_appuis_vue && !s_gestes_vue) {
+        int8_t aucun[GESTE_NB];
+        std::memset(aucun, kAuto, sizeof(aucun));
+        gestes_garder(aucun);
     }
-    const Ecran e = static_cast<Ecran>(choix);
-    if (!ecran_disponible(e)) return nullptr;
-    switch (e) {
+    s_appuis_vue = s_gestes_vue = false;
+}
+
+bool est_bouton(int g) { return g >= GESTE_MAISON_COURT && g < GESTE_NB; }
+bool est_long(int g) { return (g % 2) == 1; }
+BoutonHaut bouton_de(int g) { return static_cast<BoutonHaut>((g - GESTE_MAISON_COURT) / 2); }
+
+// Code effectif du geste g : son choix dans la clé gestes ; « auto » : pour l'appui long
+// d'un bouton, son choix dans la clé appuis (kAuto s'il n'en a pas : kEcranAuto), sinon
+// l'« auto » du geste (kGestesAuto).
+int8_t code_effectif(int g) {
+    if (s_gestes[g] != kAuto) return s_gestes[g];
+    if (est_bouton(g) && est_long(g)) return s_appuis[bouton_de(g)];
+    return code_index(kGestesAuto[g]);
+}
+
+// Glyphe d'un code (index de kCodesGestes), nullptr pour « rien ». Le même dans les deux
+// polices où il s'affiche : mini icône d'un bouton (mdi_font_26, ce que fait l'appui long)
+// et icône centrale (mdi_font_70, ce que fait le tap quand il n'est pas « auto »). Un
+// écran : le glyphe de l'en-tête de son popup (tests/test_appuis.py), sauf la console
+// (son en-tête gardait le flocon de l'ancien bouton, qui se lirait « clim ») et l'Arcade
+// (sans en-tête : la manette). Une action : son icône (tests/test_gestes.py).
+const char* code_glyphe(int8_t c) {
+    if (c < 0 || c >= kNbCodes) return nullptr;
+    const CodeGeste& k = kCodesGestes[c];
+    switch (k.action) {
+        case GesteAction::MODE_DOMO: return "\U000F07D0";         // home-assistant (le bouton maison)
+        case GesteAction::APPAREIL_SUIVANT: return "\U000F14C9";  // plus-minus-variant (tuile − / +)
+        case GesteAction::RANGEE_SUIVANTE: return "\U000F0729";   // view-sequential (rangée sous l'horloge)
+        case GesteAction::ECOUTE: return "\U000F07C5";            // ear-hearing (Ok Nabu)
+        case GesteAction::ECRAN: break;
+        default: return nullptr;
+    }
+    switch (k.ecran) {
         case Ecran::ASSISTANT: return "\U000F036C";   // microphone
         case Ecran::CALENDRIER: return "\U000F0E17";  // calendar-month
         case Ecran::REVEIL: return "\U000F0020";      // alarm
@@ -322,6 +449,44 @@ const char* mini_glyphe(BoutonHaut b, int8_t choix) {
         case Ecran::MAISON: return "\U000F02DC";      // home
         case Ecran::ARCADE: return "\U000F0297";      // gamepad-variant
         default: return nullptr;
+    }
+}
+
+// Le code fait-il quelque chose dans cette maison ? Un écran absent (ecran_disponible) ou
+// « rien » : non.
+bool code_actif(int8_t c) {
+    if (c < 0 || c >= kNbCodes) return false;
+    const CodeGeste& k = kCodesGestes[c];
+    if (k.action == GesteAction::RIEN) return false;
+    return k.action != GesteAction::ECRAN || ecran_disponible(k.ecran);
+}
+
+// Glyphe de la mini icône du bouton b (mdi_font_26) : ce que fait son appui long,
+// nullptr = masquée (rien, ou un écran absent). « auto » sans choix : celles du 06/10/2026
+// (panneau solaire, écran de la télécommande, rien sur l'engrenage).
+const char* mini_glyphe(BoutonHaut b) {
+    const int8_t c = code_effectif(geste_bouton(b, true));
+    if (c == kAuto) {
+        if (!ecran_disponible(kEcranAuto[b])) return nullptr;
+        switch (b) {
+            case BOUTON_MAISON: return "\U000F0D9B";   // solar-panel (icône du bandeau d'état)
+            case BOUTON_MANETTE: return "\U000F07C0";  // desktop-classic (télécommande TV)
+            default: return nullptr;
+        }
+    }
+    return code_actif(c) ? code_glyphe(c) : nullptr;
+}
+
+// Glyphe de l'icône centrale du bouton b (mdi_font_70) : celle d'origine (tab5-lvgl.yaml)
+// tant que son tap est « auto » ou ne fait rien ; sinon celle de ce que fait le tap.
+const char* tap_glyphe(BoutonHaut b) {
+    const int8_t c = s_gestes[geste_bouton(b, false)];
+    const char* g = (c != kAuto && code_actif(c)) ? code_glyphe(c) : nullptr;
+    if (g != nullptr) return g;
+    switch (b) {
+        case BOUTON_MAISON: return "\U000F07D0";     // home-assistant
+        case BOUTON_ENGRENAGE: return "\U000F0493";  // cog
+        default: return "\U000F0297";                // gamepad-variant
     }
 }
 
@@ -445,6 +610,14 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
             debut = fin + 1;
             continue;
         }
+        // Gestes de l'horloge et des boutons du haut (lot A) : « gestes|c1|…|c12 ».
+        if (p1 != std::string::npos && p1 < fin && p1 - debut == sizeof(kCleGestes) - 1 &&
+            payload.compare(debut, p1 - debut, kCleGestes) == 0) {
+            gestes_recu(payload.data() + p1 + 1, fin - p1 - 1);
+            appliquees++;
+            debut = fin + 1;
+            continue;
+        }
         // Clims des tuiles (ADR-0027) : « crRT|réglages » et « ceRT|état » (tab5_clim.cpp).
         if (p1 != std::string::npos && p1 < fin &&
             clim_tuile_recu(payload.data() + debut, p1 - debut, payload.data() + p1 + 1, fin - p1 - 1)) {
@@ -482,6 +655,7 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
         }
         debut = fin + 1;
     }
+    gestes_fin_payload();
     return appliquees;
 }
 
@@ -555,22 +729,31 @@ bool ecran_disponible(Ecran e) {
     return !ecran_sans_zone(e);
 }
 
-int bouton_haut_ecran(BoutonHaut b) {
-    if (b >= BOUTON_HAUT_NB) return 0;
+GesteCible geste_cible(int geste) {
+    constexpr GesteCible kRien{GesteAction::RIEN, 0};
+    if (geste < 0 || geste >= GESTE_NB) return kRien;
     charger();
-    const int8_t c = s_appuis[b];
-    const Ecran e = c == kAuto ? kEcranAuto[b] : static_cast<Ecran>(c);
-    return ecran_disponible(e) ? static_cast<int>(e) : 0;
+    const int8_t c = code_effectif(geste);
+    if (c == kAuto) {  // appui long d'un bouton, sans choix nulle part
+        const Ecran e = kEcranAuto[bouton_de(geste)];
+        return ecran_disponible(e) ? GesteCible{GesteAction::ECRAN, static_cast<int>(e)} : kRien;
+    }
+    if (!code_actif(c)) return kRien;
+    const CodeGeste& k = kCodesGestes[c];
+    return GesteCible{k.action, k.action == GesteAction::ECRAN ? static_cast<int>(k.ecran) : 0};
 }
 
 void boutons_haut_apply_ui() {
     charger();
     for (int b = 0; b < BOUTON_HAUT_NB; b++) {
-        lv_obj_t* const icone = g_zones_ui.mini[b];
-        if (icone == nullptr) continue;  // avant tab5_zones_apply (setup)
-        const char* glyphe = mini_glyphe(static_cast<BoutonHaut>(b), s_appuis[b]);
-        if (glyphe != nullptr) ui_text(icone, glyphe);
-        ui_hidden(icone, glyphe == nullptr);
+        const BoutonHaut bouton = static_cast<BoutonHaut>(b);
+        lv_obj_t* const mini = g_zones_ui.mini[b];
+        if (mini != nullptr) {  // nullptr avant tab5_zones_apply (setup)
+            const char* glyphe = mini_glyphe(bouton);
+            if (glyphe != nullptr) ui_text(mini, glyphe);
+            ui_hidden(mini, glyphe == nullptr);
+        }
+        if (g_zones_ui.icone[b] != nullptr) ui_text(g_zones_ui.icone[b], tap_glyphe(bouton));
     }
 }
 
@@ -604,9 +787,10 @@ void zones_apply_ui() {
     solaire_peindre();
 
     // Boutons du haut (06/10/2026) : ils restent à leur place, la manette ouvre l'Arcade
-    // même sans TV. Leur mini icône dit ce qu'ouvre l'appui long, quand il ouvre quelque
+    // même sans TV. Leur mini icône dit ce que fait l'appui long, quand il fait quelque
     // chose (choix du blueprint depuis le 07/10/2026 ; « auto » : la télécommande sur la
-    // manette, le popup Énergie sur « HA » quand la production solaire est reçue).
+    // manette, le popup Énergie sur « HA » quand la production solaire est reçue) ; leur
+    // icône centrale, ce que fait le tap quand le blueprint l'a changé (09/10/2026).
     boutons_haut_apply_ui();
 
     // Tuiles (épaules, boutons) et calque « HA » : ce sont les tuiles de la pièce de la

@@ -49,6 +49,10 @@ script:
           u.mini[BOUTON_MAISON] = id(icon_mini_ha);
           u.mini[BOUTON_ENGRENAGE] = id(icon_mini_sys);
           u.mini[BOUTON_MANETTE] = id(icon_mini_tv);
+          // Leurs icônes centrales : ce que fait le tap quand le blueprint l'a changé.
+          u.icone[BOUTON_MAISON] = id(icon_ha);
+          u.icone[BOUTON_ENGRENAGE] = id(icon_engrenage);
+          u.icone[BOUTON_MANETTE] = id(icon_manette);
           u.icon_salon = id(icon_salon);
           u.val_salon = id(val_temp_salon);
           u.icon_serre = id(icon_serre);

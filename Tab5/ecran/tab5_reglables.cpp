@@ -360,9 +360,16 @@ void peindre_carte() {
     const bool clim = en.sorte == Sorte::CLIM;
     ui_hidden(u.consigne_clim, !clim);
     ui_hidden(u.rangee, clim);
-    if (clim) return;
     Vue v;
     vue(en, v);
+    if (clim) {
+        // La clim aussi a son icône devant sa consigne (09/10/2026, lot A : les minutes
+        // passent d'un appareil à l'autre sans dérouler la liste, l'icône dit lequel). La
+        // consigne elle-même reste peinte par tab5_clim.cpp (clim_target).
+        ui_text(u.consigne_icone, v.icone);
+        ui_text_color(u.consigne_icone, v.couleur_icone);
+        return;
+    }
     ui_text(u.icone, v.icone);
     ui_text_color(u.icone, v.couleur_icone);
     texte_ha_coupe(u.valeur, v.valeur, kLargeurValeurCarte);
@@ -604,6 +611,16 @@ void reglables_choisir(int ligne) {
     }
     reglables_liste_fermer();
     peindre_carte();
+}
+
+void reglables_suivant() {
+    charger();
+    if (!tuile_visible()) return;  // tuile masquée : rien à régler
+    Entree l[kReglablesLignes];
+    const int n = lister(l);
+    // Même chemin qu'un toucher de ligne : la valeur en attente part, le choix va en NVS,
+    // la liste (ouverte ou non) est refermée.
+    reglables_choisir((choisie(l, n) + 1) % n);
 }
 
 void reglables_volume_tablette() {
