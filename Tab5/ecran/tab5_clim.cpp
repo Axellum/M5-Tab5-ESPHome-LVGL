@@ -143,6 +143,13 @@ void cle_piece(int r, char out[4]) { std::memcpy(out, modele_ha::clim_piece_cle(
 
 bool vue_tuile() { return s_vue >= 0 && s_ct != nullptr; }
 const ClimReglages& vue_reglages() { return vue_tuile() ? s_ct[s_vue].reglages : s_clim; }
+// Pièce de la clim affichée : celle de sa tuile, ou la pièce elle-même (ADR-0040) ; -1 pour
+// la clim du blueprint. Tuile de la clim affichée : -1 pour une clim de pièce.
+int vue_piece_index() {
+    if (!vue_tuile()) return -1;
+    return s_vue >= kCasesTuiles ? s_vue - kCasesTuiles : s_vue / kTuiles;
+}
+int vue_tuile_index() { return (vue_tuile() && s_vue < kCasesTuiles) ? s_vue % kTuiles : -1; }
 
 // Champs de l'état de la clim affichée : ceux du blueprint sont ses globals (pointeurs
 // posés par tab5_clim_ui), ceux d'une tuile sa case de la table.
@@ -320,13 +327,13 @@ void popup_reglages_ui(float consigne) {
     }
     ui_text(u.unite, clim_unite(r));
 
-    // Titre : le nom de la clim dans HA ; sans nom, celui de la pièce de sa tuile (les pages
-    // du carrousel se distinguent, ADR-0038), sinon « Climatisation ».
+    // Titre : le nom de la clim dans HA ; sans nom, celui de la pièce de sa tuile ou de la
+    // pièce elle-même (les pages du carrousel se distinguent, ADR-0038, ADR-0040), sinon
+    // « Climatisation ».
     char piece[49];
     const char* titre = r.nom;
     if (titre[0] == '\0') {
-        titre = (vue_tuile() && tuiles_piece_titre(s_vue / kTuiles, piece, sizeof(piece))) ? piece
-                                                                                           : tr("Climatisation");
+        titre = tuiles_piece_titre(vue_piece_index(), piece, sizeof(piece)) ? piece : tr("Climatisation");
     }
     texte_ha_coupe(u.titre, titre, kLargeurTitreClim);
 
@@ -549,7 +556,10 @@ void clim_piece_oublier(int r) {
     cle_piece(r, cle);
     // Une consigne en attente irait à une clim que la pièce n'a plus : elle ne part pas.
     if (std::strcmp(s_attente.cle, cle) == 0) s_attente = Attente{};
-    if (s_vue != kCasesTuiles + r) return;
+    if (s_vue != kCasesTuiles + r) {
+        carrousel_pastilles();  // une page de moins dans le carrousel
+        return;
+    }
     if (popup_visible()) animate_popup_close(g_clim_ui.popup);
     s_vue = -1;
     popup_peindre();
@@ -628,9 +638,9 @@ std::string clim_tuile_attente_texte() { return clim_consigne_texte(s_attente.va
 
 namespace {
 
-// Toutes les clims possibles : celle du blueprint et une par tuile. La clim propre à une
-// pièce (à venir) en ajoutera kPieces.
-constexpr int kClimsConnues = 1 + kPieces * kTuiles;
+// Toutes les clims possibles : celle du blueprint, une par tuile et une par pièce (la clim
+// de la section « Pièce R » du blueprint, ADR-0040).
+constexpr int kClimsConnues = 1 + kPieces * kTuiles + kPieces;
 
 bool meme_nom(const char* a, const char* b) {
     return a != nullptr && b != nullptr && a[0] != '\0' && std::strcmp(a, b) == 0;
@@ -638,7 +648,7 @@ bool meme_nom(const char* a, const char* b) {
 
 const char* ref_nom(const ClimRef& c) {
     if (c.r < 0) return s_clim.nom;
-    const ClimTuile* ct = tuile_clim(c.r, c.t, false);
+    const ClimTuile* ct = c.t < 0 ? piece_clim(c.r, false) : tuile_clim(c.r, c.t, false);
     return ct != nullptr ? ct->reglages.nom : nullptr;
 }
 
@@ -648,6 +658,7 @@ bool clim_ref_afficher(const ClimRef& c) {
         clim_afficher_blueprint();
         return true;
     }
+    if (c.t < 0) return clim_afficher_piece(c.r);  // la clim de la pièce (ADR-0040)
     return clim_afficher_tuile(c.r, c.t);
 }
 
@@ -655,8 +666,8 @@ bool clim_ref_afficher(const ClimRef& c) {
 // écarté par clims_enumerer, ouvert par sa tuile) ; -1 si elle n'y est pas (au-delà des
 // kClimPastilles premières : aucune pastille allumée).
 int carrousel_rang(const ClimRef* l, int n) {
-    const int r = vue_tuile() ? s_vue / kTuiles : -1;
-    const int t = vue_tuile() ? s_vue % kTuiles : -1;
+    const int r = vue_piece_index();
+    const int t = vue_tuile_index();
     for (int i = 0; i < n; i++)
         if (l[i].r == r && l[i].t == t) return i;
     const char* nom = vue_reglages().nom;
@@ -717,6 +728,11 @@ int clims_enumerer(ClimRef* out, int max) {
         for (int r = 0; r < kPieces; r++)
             for (int t = 0; t < kTuiles; t++)
                 if (s_ct[r * kTuiles + t].reglages.recu) ajouter(r, t, r, s_ct[r * kTuiles + t].reglages.nom);
+        // 3. La clim de chaque pièce (section « Pièce R » du blueprint, ADR-0040), réglages
+        // reçus (crpR) ; t = -1. Après les tuiles : la même clim posée aussi sur une tuile de
+        // la pièce (même nom) n'a qu'une page, celle de la tuile.
+        for (int r = 0; r < kPieces; r++)
+            if (s_ct[kCasesTuiles + r].reglages.recu) ajouter(r, -1, r, s_ct[kCasesTuiles + r].reglages.nom);
     }
     return n;
 }
@@ -740,13 +756,17 @@ bool clim_carrousel_ouvrir() {
     ClimRef l[kClimPastilles];
     const int n = clims_enumerer(l, kClimPastilles);
     if (n == 0) return false;
-    // La clim de la pièce affichée en mode HA, sinon la première (celle du blueprint).
+    // La clim de la pièce affichée en mode HA — sa clim propre d'abord (ADR-0040, celle que
+    // règle la tuile − / +), sinon la première de ses tuiles —, sinon la première (celle du
+    // blueprint).
     int i = 0;
     const int piece = tuiles_piece_mode_ha();
+    bool trouvee = false;
     for (int k = 0; piece >= 0 && k < n; k++) {
-        if (l[k].piece == piece) {
+        if (l[k].piece == piece && (!trouvee || l[k].t < 0)) {
             i = k;
-            break;
+            trouvee = true;
+            if (l[k].t < 0) break;
         }
     }
     if (!clim_ref_afficher(l[i])) return false;

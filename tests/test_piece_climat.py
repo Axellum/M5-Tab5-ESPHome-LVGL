@@ -261,6 +261,26 @@ def test_repeint_quand_la_piece_change():
         assert f in capteurs, f
 
 
+def test_le_carrousel_liste_les_clims_des_pieces():
+    """ADR-0038 + ADR-0040 : la clim propre de chaque pièce a sa page, après les tuiles."""
+    clim = _lire(source("tab5_clim.cpp"))
+    assert "constexpr int kClimsConnues = 1 + kPieces * kTuiles + kPieces;" in clim
+    liste = _fonction(clim, "clims_enumerer")
+    tuiles = liste.index("ajouter(r, t, r, s_ct[r * kTuiles + t].reglages.nom)")
+    pieces = liste.index("ajouter(r, -1, r, s_ct[kCasesTuiles + r].reglages.nom)")
+    assert tuiles < pieces
+    assert "if (c.t < 0) return clim_afficher_piece(c.r);" in _fonction(clim, "clim_ref_afficher")
+    assert "c.t < 0 ? piece_clim(c.r, false)" in _fonction(clim, "ref_nom")
+    rang = _fonction(clim, "carrousel_rang")
+    assert "vue_piece_index()" in rang and "vue_tuile_index()" in rang
+    # En mode HA, la clim propre de la pièce d'abord, sinon la première de ses tuiles.
+    assert "if (l[k].t < 0) break;" in _fonction(clim, "clim_carrousel_ouvrir")
+    # Une page de moins quand la pièce perd sa clim.
+    assert "carrousel_pastilles();" in _fonction(clim, "clim_piece_oublier")
+    # Une seule pièce « affichée en mode HA » (celle du lot B, sans le mode héritage).
+    assert _lire(source("tab5_tuiles.cpp")).count("int tuiles_piece_mode_ha()") == 1
+
+
 def test_la_tuile_moins_plus_suit_la_clim_de_la_piece():
     reglables = _lire(source("tab5_reglables.cpp"))
     assert "piece_climat_clim()" in _fonction(reglables, "tuile_visible")
