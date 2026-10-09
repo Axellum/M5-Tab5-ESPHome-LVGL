@@ -98,8 +98,8 @@ bool parse_and_update_vigilance(const std::string& payload, const VigilanceUI& u
         s_vigilance_payload = payload;
         s_vigilance_ui = ui;
     }
-    // Lecture : vigilance_lire() (Tab5/socle/tab5_parse.h, lot F), tampon de 1 024 octets
-    // et strtok_r (un champ vide décalerait les suivants ; HA envoie toujours « Vert »).
+    // Lecture : vigilance_lire() (Tab5/socle/tab5_parse.h, lot F), tampon de 1 024 octets ;
+    // un champ vide reste à sa place (HA envoie de toute façon « Vert »).
     // 13 champs depuis le lot 4c (27/09/2026) : brouillard et feux de forêt en fin de
     // payload, pour les alertes MeteoAlarm qui n'ont pas de case Météo-France. Un payload
     // à 11 champs (Météo-France) laisse ces deux cases vides.
