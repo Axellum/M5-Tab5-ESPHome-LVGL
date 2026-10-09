@@ -106,6 +106,7 @@ esphome:
     - Tab5/ecran/tab5_energie.cpp
     - Tab5/ecran/tab5_historique.cpp
     - Tab5/ecran/tab5_theme.cpp
+    - Tab5/ecran/tab5_pages.cpp
     - Tab5/ecran/tab5_reglages.cpp
     - Tab5/socle/tab5_economie.h
     - Tab5/socle/tab5_economie.cpp

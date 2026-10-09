@@ -20,7 +20,9 @@
  *       Changer de langue redémarre la tablette (on_value du select « Langue ») : une
  *       pastille de langue ouvre d'abord une confirmation, jamais le redémarrage direct.
  *       Changement de page INSTANTANÉ (préférence d'Axel, AGENTS.md) : les conteneurs des
- *       pages sont masqués / montrés, sans glissement ni fondu.
+ *       pages sont masqués / montrés, sans glissement ni fondu. Le mécanisme des pages
+ *       (noms en haut, geste, choix en couleur d'accent) est partagé avec le popup du
+ *       réveil depuis le 09/10/2026 : tab5_pages.cpp (PopupPages).
  * @ai_instruction Un réglage de plus : sa valeur dans ReglageId (tab5_custom.h, à la fin),
  *       son cas dans tab5_reglages_choisir, son champ dans ReglagesEtat et ReglagesUI, sa
  *       ligne dans tab5_reglages_sync_ui et tab5_reglages_ouvrir, et un
@@ -29,11 +31,12 @@
  *       (avant REGLAGES_NB_PAGES), son conteneur et son nom (reglages_onglet.yaml) dans
  *       reglages_popup.yaml, leurs lignes dans tab5_reglages_ouvrir.
  * @ai_warning [AI-WARNING] Le geste de changement de page s'arrête au popup : le drapeau
- *       LV_OBJ_FLAG_GESTURE_BUBBLE est retiré de reglages_popup (reglages_preparer). Sans
- *       ça, LVGL le remonte jusqu'à page_main, dont le on_gesture change les prévisions
- *       ou la pièce derrière le popup (handle_swipe_gesture, tab5_central.cpp). Un geste
- *       parti d'un curseur (luminosité, volume de la page Système) n'est pas un
- *       changement de page : LVGL émet aussi LV_EVENT_GESTURE pendant qu'on le glisse.
+ *       LV_OBJ_FLAG_GESTURE_BUBBLE est retiré de reglages_popup (reglages_preparer →
+ *       pages_brancher, tab5_pages.cpp). Sans ça, LVGL le remonte jusqu'à page_main, dont
+ *       le on_gesture change les prévisions ou la pièce derrière le popup
+ *       (handle_swipe_gesture, tab5_central.cpp). Un geste parti d'un curseur (luminosité,
+ *       volume de la page Système) n'est pas un changement de page : LVGL émet aussi
+ *       LV_EVENT_GESTURE pendant qu'on le glisse.
  */
 #include "tab5_internal.h"
 #include "tab5_economie.h"  // economie_sur_batterie() : ligne « État » de la page Batterie
@@ -49,8 +52,9 @@ namespace {
 // Langue choisie, en attente de « Confirmer » (−1 : aucune).
 int s_langue_choix = -1;
 
-// Page affichée (ReglagesPage) : posée par reglages_afficher_page(), jamais ailleurs.
-int s_page = REGLAGES_PAGE_ECRAN;
+// Pages (ReglagesPage), noms en haut et geste : tab5_pages.cpp. Page affichée posée par
+// reglages_afficher_page() (pages_montrer), jamais ailleurs.
+PopupPages s_pages;
 
 // Dernier état peint, pour reglages_rejouer_theme() (repeinture d'un changement de thème).
 ReglagesEtat s_etat;
@@ -59,21 +63,9 @@ ReglagesEtat s_etat;
 // et texte), les autres exactement au style du bouton (style_clim_btn, bordure et
 // formes du thème) : on retire la bordure locale au lieu du gris « inactif » de
 // highlight_button_border, comme le bouton « HA » (tab5_tuiles.cpp). Le texte est le
-// premier enfant du bouton (reglages_choix_btn.yaml, reglages_onglet.yaml).
-void peindre_choix(lv_obj_t* const* boutons, int n, int actif) {
-    for (int i = 0; i < n; i++) {
-        lv_obj_t* const b = boutons[i];
-        if (b == nullptr) continue;
-        const bool on = (i == actif);
-        if (on) {
-            highlight_button_border(b, true, UIColor.ACCENT, 3);
-        } else {
-            for (lv_style_prop_t p : {LV_STYLE_BORDER_COLOR, LV_STYLE_BORDER_OPA, LV_STYLE_BORDER_WIDTH})
-                lv_obj_remove_local_style_prop(b, p, LV_PART_MAIN);
-        }
-        ui_text_color(lv_obj_get_child(b, 0), on ? UIColor.ACCENT : UIColor.TEXT_SOFT);
-    }
-}
+// premier enfant du bouton (reglages_choix_btn.yaml, reglages_onglet.yaml). Partagé
+// avec le popup du réveil : choix_peindre (tab5_pages.cpp).
+inline void peindre_choix(lv_obj_t* const* boutons, int n, int actif) { choix_peindre(boutons, n, actif); }
 
 // Oui / Non : 0 = Oui, 1 = Non (ordre des boutons du YAML).
 inline int oui_non(bool v) { return v ? 0 : 1; }
@@ -104,25 +96,6 @@ void fermer_confirmations() {
     ui_hidden(g_reglages_ui.confirm_reboot, true);
 }
 
-// LV_EVENT_GESTURE du popup (reglages_preparer) : gauche = page suivante, droite = page
-// précédente, en boucle (reglages_page_voisine, tab5_core.cpp). LVGL l'émet pendant
-// l'appui, dès que le doigt a parcouru gesture_min_distance (lv_indev.c, indev_gesture),
-// comme pour les prévisions. lv_indev_wait_release() : le lever du doigt qui suit ne
-// déclenche rien (ni le bouton où le geste est parti, ni un appui long), c'est le
-// « tap qui suit un glissement est ignoré » des autres popups, pour tout le popup.
-void geste_rappel(lv_event_t* /*e*/) {
-    lv_indev_t* const indev = lv_indev_active();
-    if (indev == nullptr) return;
-    const lv_dir_t dir = lv_indev_get_gesture_dir(indev);
-    if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
-    // Un curseur (luminosité, volume) glissé de côté : c'est son réglage, pas une page.
-    for (lv_obj_t* o = lv_indev_get_active_obj(); o != nullptr && o != g_reglages_ui.popup; o = lv_obj_get_parent(o)) {
-        if (lv_obj_check_type(o, &lv_slider_class)) return;
-    }
-    lv_indev_wait_release(indev);
-    reglages_afficher_page(reglages_page_voisine(s_page, REGLAGES_NB_PAGES, dir == LV_DIR_LEFT));
-}
-
 }  // namespace
 
 void reglages_preparer() {
@@ -135,10 +108,15 @@ void reglages_preparer() {
         ui_hidden(b, !existe);
         if (existe) ui_text(lv_obj_get_child(b, 0), i18n_language_name(i));
     }
-    // Geste gauche / droite : arrêté au popup ([AI-WARNING] de l'en-tête), traité ici.
+    // Geste gauche / droite : arrêté au popup ([AI-WARNING] de l'en-tête), page voisine
+    // montrée par reglages_afficher_page (confirmations refermées, page peinte).
     if (u.popup != nullptr) {
-        lv_obj_remove_flag(u.popup, LV_OBJ_FLAG_GESTURE_BUBBLE);
-        lv_obj_add_event_cb(u.popup, geste_rappel, LV_EVENT_GESTURE, nullptr);
+        s_pages.popup = u.popup;
+        s_pages.page = u.page;
+        s_pages.onglet = u.onglet;
+        s_pages.n = REGLAGES_NB_PAGES;
+        s_pages.afficher = reglages_afficher_page;
+        pages_brancher(s_pages);
     }
 }
 
@@ -185,25 +163,19 @@ void reglages_peindre(const ReglagesEtat& e) {
 // palette active.
 void reglages_rejouer_theme() {
     reglages_peindre(s_etat);
-    if (g_reglages_ui.popup != nullptr) peindre_choix(g_reglages_ui.onglet, REGLAGES_NB_PAGES, s_page);
+    if (g_reglages_ui.popup != nullptr) peindre_choix(g_reglages_ui.onglet, REGLAGES_NB_PAGES, s_pages.courante);
 }
 
 void reglages_afficher_page(int page) {
     const ReglagesUI& u = g_reglages_ui;
     if (u.popup == nullptr) return;
-    if (page < 0 || page >= REGLAGES_NB_PAGES) page = REGLAGES_PAGE_ECRAN;
     fermer_confirmations();
-    s_page = page;
-    for (int i = 0; i < REGLAGES_NB_PAGES; i++) ui_hidden(u.page[i], i != page);
-    peindre_choix(u.onglet, REGLAGES_NB_PAGES, page);
-    if (page == REGLAGES_PAGE_BATTERIE) peindre_batterie();
-    if (u.page_montree != nullptr) u.page_montree(page);
+    pages_montrer(s_pages, page);  // hors bornes : la page Écran (la première)
+    if (s_pages.courante == REGLAGES_PAGE_BATTERIE) peindre_batterie();
+    if (u.page_montree != nullptr) u.page_montree(s_pages.courante);
 }
 
-bool reglages_page_visible(int page) {
-    const ReglagesUI& u = g_reglages_ui;
-    return u.popup != nullptr && s_page == page && !lv_obj_has_flag(u.popup, LV_OBJ_FLAG_HIDDEN);
-}
+bool reglages_page_visible(int page) { return pages_visible(s_pages, page); }
 
 void reglages_batterie_peindre() {
     if (reglages_page_visible(REGLAGES_PAGE_BATTERIE)) peindre_batterie();

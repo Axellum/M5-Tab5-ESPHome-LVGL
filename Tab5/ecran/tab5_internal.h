@@ -83,6 +83,34 @@ inline bool ui_appui_glisse() {
     return indev != nullptr && (lv_indev_get_press_moved(indev) || lv_indev_get_gesture_dir(indev) != LV_DIR_NONE);
 }
 
+// --- Popup à pages (tab5_pages.cpp, 09/10/2026) : Réglages, Réveil ---
+// Les noms des pages en haut (reglages_onglet.yaml, texte = premier enfant), celle affichée
+// en couleur d'accent ; un geste gauche / droite dans le popup montre la page suivante /
+// précédente, en boucle, sans animation. Chaque popup garde le sien (static de son .cpp :
+// pages_brancher garde son adresse pour le geste).
+struct PopupPages {
+    lv_obj_t* popup = nullptr;            // reçoit le geste (GESTURE_BUBBLE retiré)
+    lv_obj_t* const* page = nullptr;      // n conteneurs, dans l'ordre des noms
+    lv_obj_t* const* onglet = nullptr;    // n noms en haut
+    int n = 0;
+    int courante = 0;                     // page affichée, posée par pages_montrer()
+    void (*afficher)(int page) = nullptr; // ce que fait le geste (le popup referme ses
+                                          // confirmations, peint sa page…) ; nullptr :
+                                          // pages_montrer seul
+};
+// Une fois, popup posé : le geste s'arrête au popup et change de page (sauf parti d'un
+// curseur ou d'un rouleau).
+void pages_brancher(PopupPages& p);
+// Montre `page` (hors bornes : la première), masque les autres, son nom en couleur d'accent.
+void pages_montrer(PopupPages& p, int page);
+// Popup ouvert sur `page` (faux avant pages_brancher).
+bool pages_visible(const PopupPages& p, int page);
+// Bouton à choix (texte = premier enfant) : l'option active en couleur d'accent (bordure et
+// texte), les autres au style du bouton (bordure locale retirée, texte TEXT_SOFT).
+// choix_peindre : une rangée de n boutons, `actif` en accent (-1 : aucun).
+void choix_bouton(lv_obj_t* b, bool on);
+void choix_peindre(lv_obj_t* const* boutons, int n, int actif);
+
 // --- tab5_text.cpp ---
 // Normalise un texte venu de HA (Latin-1 / mojibake) en UTF-8 valide pour LVGL.
 std::string normalize_text_utf8(const std::string& in);
