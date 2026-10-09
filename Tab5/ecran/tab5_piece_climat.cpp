@@ -5,8 +5,8 @@
  *       températures de la carte clim de l'accueil (climate_card.yaml : icon_salon /
  *       val_temp_salon à gauche, icon_serre / current_serre à droite) montre, en mode HA,
  *       la température et l'humidité de la pièce affichée quand le blueprint en a déclaré
- *       une ; le salon et la serre sinon. Aussi la clé « pR » de tab5_maj_emplacements, la
- *       clé du popup Température d'un appui long, et la pièce dont la tuile − / + règle la
+ *       une ; le salon et la serre sinon. Aussi la clé « pR » de tab5_maj_emplacements (lue
+ *       par piece_climat_lire, Tab5/socle/tab5_parse.h), la clé du popup Température d'un appui long, et la pièce dont la tuile − / + règle la
  *       clim (piece_climat_clim, lue par tab5_reglables.cpp).
  * @architecture_constraint Seul écrivain de ces quatre widgets depuis l'ADR-0040 : les
  *       capteurs du salon et de la serre (tab5-sensors-domotique.yaml) passent par
@@ -105,29 +105,20 @@ void humidite(lv_obj_t* label, float h) {
     ui_text_color(label, get_humidity_color(h));
 }
 
-bool lire_presence(const Champ& f, float& v) {
-    if (f.n == 0) {
-        v = NAN;
-        return false;
-    }
-    v = champ_nombre(f, NAN);
-    return true;
-}
-
 }  // namespace
 
 bool piece_climat_recu(const char* cle, size_t n_cle, const char* reste, size_t n_reste) {
-    if (n_cle != 2 || cle[0] != 'p' || cle[1] < '0' || cle[1] >= '0' + kPieces) return false;
-    const int r = cle[1] - '0';
-    Champ f[3] = {};
-    const int k = champs_decouper(reste, n_reste, '|', f, 3);
+    // Lecture : piece_climat_lire (Tab5/socle/tab5_parse.h, testée sur PC et fuzzée).
+    PieceClimatLu lu;
+    if (!piece_climat_lire(Champ{cle, n_cle}, Champ{reste, n_reste}, lu)) return false;
+    const int r = lu.piece;
     PieceClimat& p = s_pieces[r];
     const bool avait_clim = p.clim;
-    p.temperature = k > 0 && lire_presence(f[0], p.t);
-    p.humidite = k > 1 && lire_presence(f[1], p.h);
-    if (!p.temperature) p.t = NAN;
-    if (!p.humidite) p.h = NAN;
-    p.clim = k > 2 && champ_est(f[2], "1");
+    p.temperature = lu.temperature;
+    p.t = lu.t;
+    p.humidite = lu.humidite;
+    p.h = lu.h;
+    p.clim = lu.clim;
     // Clim retirée de la pièce : ses réglages et son état sont oubliés (le popup se ferme
     // s'il la montrait, une consigne en attente ne part pas).
     if (avait_clim && !p.clim) clim_piece_oublier(r);

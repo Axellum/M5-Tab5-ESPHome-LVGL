@@ -610,6 +610,51 @@ static void test_solaire() {
     expect(lire("1234567890123456789") == 100.0f, "solaire [figé] : long = coupé puis borné");
 }
 
+static bool piece(const char* cle, const char* reste, PieceClimatLu& lu) {
+    return piece_climat_lire(Champ{cle, std::strlen(cle)}, Champ{reste, std::strlen(reste)}, lu);
+}
+
+static void test_piece_climat() {
+    {
+        PieceClimatLu lu;
+        expect(piece("p2", "21.5|48|1", lu) && lu.piece == 2, "pièce : clé p2");
+        expect(lu.temperature && lu.t == 21.5f && lu.humidite && lu.h == 48.0f && lu.clim,
+               "pièce : température, humidité, clim");
+    }
+    {
+        PieceClimatLu lu;
+        expect(piece("p0", "19||0", lu) && lu.temperature && !lu.humidite && std::isnan(lu.h) && !lu.clim,
+               "pièce : humidité vide = pas de sonde, clim 0");
+    }
+    {
+        PieceClimatLu lu;
+        expect(piece("p4", "nan|abc|", lu) && lu.temperature && std::isnan(lu.t) && lu.humidite &&
+                   std::isnan(lu.h) && !lu.clim,
+               "pièce : « nan » ou illisible = sonde déclarée, valeur inconnue");
+    }
+    {
+        PieceClimatLu lu;
+        expect(piece("p1", "inf|-inf|1", lu) && std::isnan(lu.t) && std::isnan(lu.h) && lu.clim,
+               "pièce : non fini = inconnu");
+    }
+    {
+        PieceClimatLu lu;
+        expect(piece("p3", "", lu) && !lu.temperature && !lu.humidite && !lu.clim && std::isnan(lu.t),
+               "pièce : rien de déclaré (reste vide)");
+        expect(piece("p3", "20", lu) && lu.temperature && !lu.humidite && !lu.clim,
+               "pièce : champs absents = non déclarés");
+        expect(piece("p3", "||1x", lu) && !lu.temperature && !lu.clim, "pièce : clim exactement « 1 »");
+    }
+    {
+        PieceClimatLu lu;
+        lu.piece = 9;
+        expect(!piece("p5", "20|50|1", lu) && lu.piece == 9, "pièce : p5 hors des cinq pièces, rien changé");
+        expect(!piece("pa", "20", lu) && !piece("p", "20", lu) && !piece("p00", "20", lu) &&
+                   !piece("r0", "20", lu) && lu.piece == 9,
+               "pièce : autre clé refusée");
+    }
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // 7. Clim
 // ════════════════════════════════════════════════════════════════════════════
@@ -724,6 +769,7 @@ int main() {
     test_emplacement_etat_valeur();
     test_emplacement_nombre();
     test_solaire();
+    test_piece_climat();
     test_clim_reglages();
     test_clim_etat();
 

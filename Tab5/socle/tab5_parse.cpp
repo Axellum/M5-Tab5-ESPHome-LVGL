@@ -359,6 +359,28 @@ float solaire_pourcent(const char* valeur, size_t n) {
     return v;
 }
 
+// Nouveau (ADR-0040), pas une extraction : écrit ici d'emblée, l'écran n'en garde que
+// l'affichage (Tab5/ecran/tab5_piece_climat.cpp).
+namespace {
+bool mesure_lire(const Champ& f, float& v) {
+    v = f.n == 0 ? NAN : champ_nombre(f, NAN);
+    return f.n != 0;
+}
+}  // namespace
+
+bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out) {
+    if (cle.n != 2 || cle.p[0] != 'p' || cle.p[1] < '0' || cle.p[1] >= '0' + kPieces) return false;
+    Champ f[3] = {};
+    const int k = champs_decouper(reste.p, reste.n, '|', f, 3);
+    out.piece = cle.p[1] - '0';
+    out.temperature = k > 0 && mesure_lire(f[0], out.t);
+    out.humidite = k > 1 && mesure_lire(f[1], out.h);
+    if (!out.temperature) out.t = NAN;
+    if (!out.humidite) out.h = NAN;
+    out.clim = k > 2 && champ_est(f[2], "1");
+    return true;
+}
+
 // ─── 7. Clim ───
 // Avant : lire_reglages() et lire_etat() de Tab5/ecran/tab5_clim.cpp.
 

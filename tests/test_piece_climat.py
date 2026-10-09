@@ -233,8 +233,12 @@ def test_routage_des_cles():
     assert "piece_climat_recu(" in appliquer
     assert appliquer.index("reglables_etat_recu(") < appliquer.index("piece_climat_recu(")
     piece = _fonction(_lire(source("tab5_piece_climat.cpp")), "piece_climat_recu")
-    assert "if (n_cle != 2 || cle[0] != 'p' || cle[1] < '0' || cle[1] >= '0' + kPieces) return false;" in piece
-    assert "champs_decouper(reste, n_reste, '|', f, 3)" in piece
+    # La lecture est celle de Tab5/socle/tab5_parse (testée par tools/test_parse.cpp, fuzzée).
+    assert "if (!piece_climat_lire(Champ{cle, n_cle}, Champ{reste, n_reste}, lu)) return false;" in piece
+    lire = _fonction(_lire(source("tab5_parse.cpp")), "piece_climat_lire")
+    assert "cle.p[1] >= '0' + kPieces) return false;" in lire
+    assert "champs_decouper(reste.p, reste.n, '|', f, 3)" in lire
+    assert 'champ_est(f[2], "1")' in lire
     clim = _lire(source("tab5_clim.cpp"))
     recu = _fonction(clim, "clim_tuile_recu")
     assert "const bool piece = cle[2] == kPrefixePiece;" in recu and "kCasesTuiles + r" in recu

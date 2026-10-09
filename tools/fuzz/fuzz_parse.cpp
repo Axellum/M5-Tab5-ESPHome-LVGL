@@ -97,7 +97,8 @@ void calendrier_jour(const std::string& p) {
 
 // Emplacements : chaque reste est lu comme la table 3.x (état|valeur, nombre), comme la
 // production solaire et comme les clés de la clim (climr/crRT, ceRT), quelle que soit sa
-// clé : le firmware les reçoit toutes par ce service.
+// clé : le firmware les reçoit toutes par ce service. Le climat d'une pièce (« pR ») est
+// lu avec sa vraie clé.
 void emplacements(const std::string& p) {
     size_t debut = 0;
     EmplacementLu e;
@@ -115,6 +116,8 @@ void emplacements(const std::string& p) {
         }
         ClimEtat c;
         clim_etat_lire(e.reste.p, e.reste.n, c);
+        PieceClimatLu pc;
+        piece_climat_lire(e.cle, e.reste, pc);
     }
 }
 

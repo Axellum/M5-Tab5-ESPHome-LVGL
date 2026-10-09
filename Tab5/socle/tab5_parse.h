@@ -25,6 +25,7 @@
 
 #include "tab5_champs.h"
 #include "tab5_core.h"
+#include "tab5_geometrie.h"
 
 // ─── 1. Prévisions (tab5_maj_meteo_heures_bulk / tab5_maj_meteo_jours_bulk) ───
 // Payloads « idx|heure|condition|temp|pluvio;… » et
@@ -254,6 +255,20 @@ float emplacement_nombre(const std::string& valeur);
 // vide, illisible ou non fini, sinon borné à 0..100. [figé] un texte plus long est coupé
 // à 15 octets, pas refusé.
 float solaire_pourcent(const char* valeur, size_t n);
+
+// Climat d'une pièce « pR|température|humidité|clim » (ADR-0040, 09/10/2026) : R de 0 à
+// kPieces - 1 (tab5_geometrie.h). Pour chaque mesure, champ vide ou absent = aucune sonde
+// déclarée ; « nan » ou illisible = sonde déclarée, valeur inconnue (NAN). clim : le
+// quatrième champ vaut exactement « 1 ». Faux, et `out` intact, si la clé n'est pas « pR ».
+struct PieceClimatLu {
+    int piece = -1;
+    bool temperature = false;  // une sonde de température est déclarée
+    float t = NAN;
+    bool humidite = false;  // une sonde d'humidité est déclarée
+    float h = NAN;
+    bool clim = false;
+};
+bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out);
 
 // ─── 7. Clim (clés « climr », « crRT » et « ceRT » de tab5_maj_emplacements) ───
 // Réglages et état d'une clim (ADR-0026, ADR-0027), venus de Tab5/ecran/tab5_clim.cpp
