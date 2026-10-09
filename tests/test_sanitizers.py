@@ -81,6 +81,45 @@ def test_codes_de_sortie(tmp_path):
         assert rapports.main() == attendu, (fichiers, temoin)
 
 
+# Rapport réel du job sanitizers du 09/10/2026 (run 37979465496, popup Réveil).
+ROULEAU = """.piolibdeps/tab5-rendu/lvgl/src/widgets/roller/lv_roller.c:598:46: runtime error: left shift of negative value -4712
+    #0 0x55c3 in draw_main .piolibdeps/tab5-rendu/lvgl/src/widgets/roller/lv_roller.c:598
+    #1 0x55c4 in lv_roller_event .piolibdeps/tab5-rendu/lvgl/src/widgets/roller/lv_roller.c:509
+"""
+
+
+def test_rapports_connus_justifies():
+    """Chaque entrée de CONNUS : une ligne d'erreur d'une bibliothèque (jamais de notre
+    code), sans valeur, et une justification qui renvoie au code amont, version figée."""
+    assert rapports.CONNUS
+    for cle, raison in rapports.CONNUS.items():
+        assert "runtime error:" in cle or "ERROR: " in cle, cle
+        assert not cle.startswith(("src/", "Tab5/")) and "/lvgl/" in "/" + cle, f"{cle} : pas une bibliothèque"
+        assert not cle.rstrip().endswith(tuple("0123456789")), f"{cle} : la valeur ne fait pas partie de la clé"
+        assert len(raison) >= 120, f"{cle} : justification trop courte"
+        assert "https://github.com/" in raison and "/blob/v" in raison, f"{cle} : lien amont à une version figée"
+
+
+def test_rapport_connu_affiche_sans_echec(tmp_path, capsys):
+    (bloc,) = rapports.extraire(ROULEAU)
+    assert rapports.connu(bloc) is not None
+    # Une autre valeur : la même ligne connue ; une autre ligne, un autre genre : inconnus.
+    assert rapports.connu(bloc.replace("-4712", "-12")) is not None
+    assert rapports.connu(bloc.replace("598:46", "599:46")) is None
+    assert rapports.connu(bloc.replace("left shift of negative value", "signed integer overflow:")) is None
+    seul, mixte = tmp_path / "seul.log", tmp_path / "mixte.log"
+    seul.write_text(ROULEAU, encoding="utf-8")
+    mixte.write_text(ROULEAU + UBSAN, encoding="utf-8")
+    sys.argv = ["rapports.py", str(seul)]
+    assert rapports.main() == 0
+    sortie = capsys.readouterr().out
+    assert "1 connu(s) (amont)" in sortie and "connu, amont : LVGL 9.5.0" in sortie and "lv_roller.c:598" in sortie
+    sys.argv = ["rapports.py", str(mixte)]
+    assert rapports.main() == 1, "un rapport inconnu à côté d'un connu fait toujours échouer"
+    sys.argv = ["rapports.py", "--temoin", str(seul)]
+    assert rapports.main() == 0, "le témoin positif compte tous les rapports"
+
+
 def test_variante_branche_le_script_sous_esphome():
     source = "substitutions:\n  a: b\nesphome:\n  name: tab5-rendu\n"
     texte = variante.variante(source, Path("/depot/tools/sanitizers/pio_drapeaux.py"))

@@ -6,8 +6,15 @@ témoin positif ; le premier bilan de l'audit disait « 0 rapport » à tort). L
 donne donc aucun `log_path` : il envoie les sorties standard et d'erreur de la tablette
 dans un seul fichier et le lit ici.
 
-    python tools/sanitizers/rapports.py <journal>...          # code 1 si un rapport
+    python tools/sanitizers/rapports.py <journal>...          # code 1 si un rapport inconnu
     python tools/sanitizers/rapports.py --temoin <journal>    # code 1 si AUCUN rapport
+
+Rapports connus (CONNUS) : un défaut amont, bénin et impossible à éviter de notre côté
+sans changer le rendu, est toujours affiché (« connu, amont ») mais ne fait pas échouer
+le job. Clé = la ligne d'erreur exacte sans la valeur (fichier:ligne:colonne et genre) :
+si la bibliothèque change, la ligne bouge, le rapport redevient inconnu et le job
+rouge, ce qui oblige à revérifier. Chaque entrée a sa justification et son lien amont
+(tests/test_sanitizers.py). Une entrée = une décision, jamais un rapport de notre code.
 """
 
 from __future__ import annotations
@@ -20,6 +27,22 @@ from pathlib import Path
 MARQUE = re.compile(r"runtime error:|ERROR: AddressSanitizer|ERROR: LeakSanitizer")
 PILE = re.compile(r"^\s+#\d+ ")
 ADRESSES = re.compile(r"==\d+==|0x[0-9a-fA-F]+")
+
+# Ligne d'erreur exacte, sans la valeur (le rapport doit s'arrêter à la clé, puis
+# éventuellement un nombre) → justification, lien amont compris.
+CONNUS: dict[str, str] = {
+    "lvgl/src/widgets/roller/lv_roller.c:598:46: runtime error: left shift of negative value": (
+        "LVGL 9.5.0, draw_main du rouleau (lv_roller) : label_y_prop, l'écart entre le texte "
+        "et la ligne du milieu, est négatif dès que l'option choisie n'est pas la première "
+        "(toujours en mode infini), puis décalé de 14 bits. Indéfini en C, mais GCC (firmware "
+        "et tablette virtuelle) ne le traite pas comme tel (« Integers implementation » de "
+        "son manuel) : le résultat est la valeur × 16384, sans débordement (mode infini "
+        "plafonné à 15 pages, texte de 54 000 px au plus contre 131 072). Inchangé sur la "
+        "branche master de LVGL au 09/10/2026. Popup Réveil, 09/10/2026. "
+        "https://github.com/lvgl/lvgl/blob/v9.5.0/src/widgets/roller/lv_roller.c#L598"
+    ),
+}
+_FIN_CONNUE = re.compile(r"\s*-?\d*\s*$")
 
 
 def extraire(texte: str, pile: int = 8) -> list[str]:
@@ -53,6 +76,17 @@ def distincts(blocs: list[str]) -> list[str]:
     return sortie
 
 
+def connu(bloc: str) -> str | None:
+    """La clé de CONNUS dont ce rapport est l'occurrence, sinon None : la ligne d'erreur
+    contient la clé, suivie au plus d'une valeur numérique."""
+    ligne = bloc.splitlines()[0] if bloc else ""
+    for cle in CONNUS:
+        i = ligne.find(cle)
+        if i >= 0 and _FIN_CONNUE.fullmatch(ligne[i + len(cle):]):
+            return cle
+    return None
+
+
 class Journal:
     """Un journal lu au fur et à mesure : les rapports apparus depuis la lecture précédente."""
 
@@ -80,12 +114,16 @@ def main() -> int:
     for chemin in args.journaux:
         blocs += extraire(chemin.read_text(encoding="utf-8", errors="replace"))
     uniques = distincts(blocs)
-    print(f"{len(blocs)} rapport(s), {len(uniques)} distinct(s)")
+    inconnus = [b for b in blocs if connu(b) is None]
+    print(f"{len(blocs)} rapport(s), {len(uniques)} distinct(s), {len(blocs) - len(inconnus)} connu(s) (amont)")
     for bloc in uniques[:40]:
+        cle = connu(bloc)
+        if cle is not None:
+            print(f"connu, amont : {CONNUS[cle]}")
         print(bloc, end="\n\n")
     if args.temoin:
         return 0 if blocs else 1
-    return 1 if blocs else 0
+    return 1 if inconnus else 0
 
 
 if __name__ == "__main__":
