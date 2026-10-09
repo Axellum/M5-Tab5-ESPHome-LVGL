@@ -38,9 +38,11 @@ APPUIS_LONGS = {
     "maison_ligne.yaml": "house.md",
     # Une ligne des popups Lumières et Volets (ADR-0046) : la roue de sa tuile.
     "piece_ligne.yaml": "lights.md",
-    # Carte centrale : chaque panneau de l'accueil ouvre l'historique des alertes.
-    # (alertes, pluie, planning, info, alertes HA : un gabarit depuis le 08/10/2026, YML-4).
+    # Carte centrale : chaque panneau de l'accueil ouvre la roue de navigation (ADR-0042)
+    # (alertes, pluie, planning, info, alertes HA : un gabarit depuis le 08/10/2026, YML-4),
+    # comme le titre d'une page (prévisions, pièce du mode HA).
     "central_bouton.yaml": "home.md",
+    "btn_page_title_tap": "home.md",
     "forecast_day_body.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
     "switch_card.yaml": "tiles.md",
@@ -67,19 +69,25 @@ NON_MONTREES = {
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
+    # Roue de navigation (ADR-0042), décrite dans home.md (carte centrale).
+    "roue-navigation": "roue de navigation (ADR-0042), décrite dans home.md ; image à tirer du rendu",
+    "roue-navigation-pieces": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
+    "roue-navigation-appareils": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
+    "roue-navigation-tablette": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
+    "roue-navigation-bureau": "accueil-ha-piece-4 montre la même pièce ; le choix d'une pièce est décrit dans home.md",
+    "aller-lumieres": "lumieres-chambre montre la même fenêtre ; l'ouverture par la roue est décrite dans home.md",
     "maison": "image à tirer du rendu de la PR du popup Maison, puis citer dans house.md",
     "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
     "maison-roue": "roue d'actions rapides (ADR-0036) devant le popup Maison, décrite dans house.md",
     # Lumières et Volets en pages (ADR-0046, 09/10/2026) : décrits dans lights.md et
     # shutters.md ; images à tirer du rendu de la PR, puis citées.
-    "lumieres-par-aller": "popup Lumières par « Aller à l'écran », décrit dans lights.md ; image à tirer du rendu",
-    "lumieres-page-suivante": "lumieres-par-aller montre la même fenêtre ; le glissement est décrit dans lights.md",
-    "lumieres-onglet": "lumieres-par-aller montre la même fenêtre ; le nom d'une pièce est décrit dans lights.md",
+    "lumieres-page-suivante": "aller-lumieres montre la même fenêtre ; le glissement est décrit dans lights.md",
+    "lumieres-onglet": "aller-lumieres montre la même fenêtre ; le nom d'une pièce est décrit dans lights.md",
     "lumieres-roue": "roue d'une ligne du popup Lumières, décrite dans lights.md ; image à tirer du rendu",
-    "volets-par-aller": "popup Volets par « Aller à l'écran », décrit dans shutters.md ; image à tirer du rendu",
-    "volets-page-suivante": "volets-par-aller montre la même fenêtre ; le glissement est décrit dans shutters.md",
-    "volets-une-piece": "volets-par-aller montre la même fenêtre ; une seule pièce, décrite dans shutters.md",
+    "aller-volet": "popup Volets par « Aller à l'écran » → Volet, décrit dans shutters.md ; image à tirer du rendu",
+    "volets-page-suivante": "aller-volet montre la même fenêtre ; le glissement est décrit dans shutters.md",
+    "volets-une-piece": "aller-volet montre la même fenêtre ; une seule pièce, décrite dans shutters.md",
     # Réglages en quatre pages (08/10/2026) : images à tirer du rendu de la PR, puis citées.
     "reglages-apparence": "page Apparence des Réglages, décrite dans settings.md ; image à tirer du rendu",
     "reglages-batterie-en-charge": "page Batterie des Réglages, décrite dans settings.md ; image à tirer du rendu",

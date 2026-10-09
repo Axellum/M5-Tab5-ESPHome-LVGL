@@ -136,7 +136,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Volet arrêté.": "Tapparella fermata."
 # Shutter popup (long press of a shutter tile, 2026-10-05)
 "POSITION": "POSIZIONE"
-"Volets": "Tapparelle"
 "VOLETS": "TAPPARELLE"
 "Tout ouvrir": "Apri tutto"
 "Tout fermer": "Chiudi tutto"
@@ -182,7 +181,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Lights popup ---------------------------------------------------------------
 # Lights and Shutters popups, one page per room (ADR-0046, 2026-10-09).
-"Lumières": "Luci"
 "AMPOULES": "LUCI"
 "Tout éteindre": "Spegni tutto"
 # Popup Maison (ADR-0037) : titre, et le bouton de sa barre de titre.
@@ -1317,3 +1315,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Prévisions de %d h %02d": "Previsioni delle %d:%02d"
 "Prévisions d'hier %d h %02d": "Previsioni di ieri %d:%02d"
 "Prévisions vieilles de %d jours": "Previsioni di %d giorni fa"
+# Roue de navigation (appui long de la carte centrale, tab5_roue_navigation.cpp, ADR-0042)
+"Aller à": "Vai a"
+"Pièces": "Stanze"
+"Appareils": "Dispositivi"
+"Agenda": "Agenda"
+"Tablette": "Tablet"
+"Assistant": "Assistente"
+"Températures": "Temperature"
+"Clims": "Clima"
+"Lumières": "Luci"
+"Volets": "Tapparelle"
+"Plantes": "Piante"
+"Jeux": "Giochi"

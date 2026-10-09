@@ -1353,16 +1353,72 @@ void tuiles_mode_ha(bool actif) {
     reglables_clim_changee();
 }
 
+// Mode HA : la pièce de la page `page` — cartes, titre de la carte centrale, zone des
+// températures et tuile − / + (ADR-0040). Le swipe et la roue de navigation.
+static void montrer_page_ha(int page) {
+    aller_page(page);
+    peindre_cartes();
+    central_mode_ha(g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, g_central_ctx);
+    accueil_temperatures_ui();  // la nouvelle pièce, ou le salon et la serre (ADR-0040)
+    reglables_clim_changee();
+}
+
 // Mode HA : la page suivante dans l'ordre de la météo, pièce vide comprise (elle dit
 // « Aucun appareil ») — comme les cinq pages de prévisions. Avant le 28/09, les pièces
 // vides étaient sautées : avec une seule pièce configurée, le swipe ne faisait rien.
 void tuiles_swipe_ha(bool gauche) {
     charger();
-    aller_page(forecast_page_suivante(g_central_ctx.forecast_page, gauche));
-    peindre_cartes();
-    central_mode_ha(g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, g_central_ctx);
-    accueil_temperatures_ui();  // la nouvelle pièce, ou le salon et la serre (ADR-0040)
-    reglables_clim_changee();
+    montrer_page_ha(forecast_page_suivante(g_central_ctx.forecast_page, gauche));
+}
+
+bool tuiles_aller_piece(int r) {
+    charger();
+    if (r < 0 || r >= kPieces || !piece_non_vide(r)) return false;
+    int page = -1;
+    for (int p = 0; p < kPieces; p++)
+        if (kPieceDePage[p] == r) page = p;
+    if (page < 0) return false;
+    // D'abord le mode HA par son seul chemin (calques, bouton « HA ») : il se pose sur la
+    // pièce non vide la plus proche de la page affichée, puis on va sur celle demandée.
+    if (!g_central_ctx.ha_mode) tuiles_mode_ha(true);
+    if (!g_central_ctx.ha_mode) return false;
+    if (g_central_ctx.forecast_page != page) montrer_page_ha(page);
+    return true;
+}
+
+// La tuile qu'ouvre l'écran `e` (Lumières, Volet) : la pièce de la page affichée d'abord,
+// puis les pièces dans l'ordre du blueprint. Le popup s'ouvre sur la page de cette pièce
+// (une page par pièce, ADR-0046) ; ses critères sont ceux des pages : est_lumiere (lum sans
+// l'option r ; mode héritage : les lumières de la 3.1) et est_volet (vol sans l'option r
+// ni k ; mode héritage : aucun), sinon l'écran s'ouvrirait sur un popup vide.
+static bool tuile_de_ecran(Ecran e, int& r_out, int& t_out) {
+    charger();
+    const int premiere = piece_courante();
+    for (int i = -1; i < kPieces; i++) {
+        const int r = i < 0 ? premiere : i;
+        if (i == premiere) continue;  // déjà vue
+        for (int t = 0; t < kTuiles; t++) {
+            const bool ok = e == Ecran::LUMIERES ? est_lumiere(r, t) : e == Ecran::VOLET && est_volet(r, t);
+            if (ok) {
+                r_out = r;
+                t_out = t;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool tuiles_ecran_disponible(Ecran e) {
+    int r, t;
+    return tuile_de_ecran(e, r, t);
+}
+
+void tuiles_ecran_ouvrir(Ecran e) {
+    int r, t;
+    if (!tuile_de_ecran(e, r, t)) return;
+    if (e == Ecran::LUMIERES) popup_lumiere_ouvrir(r, t);
+    else popup_volet_ouvrir(r, t);
 }
 
 // « Pièce n/5 » (n = numéro de la pièce dans le blueprint), puis son nom, « Pièce n »

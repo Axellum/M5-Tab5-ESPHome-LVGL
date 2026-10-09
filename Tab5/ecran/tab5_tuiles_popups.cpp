@@ -753,18 +753,6 @@ void popup_lumiere_ligne_appui(int idx, bool long_appui) {
     tuile_appui_maison(s_pl.piece, s_pl.tuiles[idx], long_appui, ligne != nullptr ? lv_obj_get_child(ligne, 0) : nullptr);
 }
 
-void lumieres_ouvrir() {
-    charger();
-    popup_lumiere_ouvrir(piece_courante(), -1);
-}
-
-bool tuiles_lumieres_presentes() {
-    charger();
-    for (int r = 0; r < kPieces; r++)
-        if (tuiles_piece_a_lumieres(r)) return true;
-    return false;
-}
-
 void popup_volet_choisir(int idx) {
     charger();
     if (idx < 0 || idx >= s_pv.n || !s_pv.ouvert() || idx == s_pv.choix) return;
@@ -804,19 +792,6 @@ void popup_volets_tout(const char* action) {
     if (action == nullptr || !s_pv.ouvert()) return;
     for (int i = 0; i < s_pv.n; i++)
         if (est_volet(s_pv.piece, s_pv.tuiles[i])) envoyer_tuile(s_pv.piece, s_pv.tuiles[i], action);
-}
-
-void volets_ouvrir() {
-    charger();
-    popup_volet_ouvrir(piece_courante(), -1);
-}
-
-bool tuiles_volets_presents() {
-    charger();
-    for (int r = 0; r < kPieces; r++)
-        for (int t = 0; t < kTuiles; t++)
-            if (est_volet(r, t)) return true;
-    return false;
 }
 
 // Grand bouton du popup d'un appareil : le toucher de SA tuile, par le même chemin.

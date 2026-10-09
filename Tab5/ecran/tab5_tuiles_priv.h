@@ -158,6 +158,8 @@ void tuile_appui_piece(int r, int t, bool long_appui);
 // ─── tab5_tuiles_popups.cpp ─────────────────────────────────────────────────────────
 
 bool est_lumiere(int r, int t);
+// Un volet du popup Volets (vol sans l'option r ni k, jamais en mode héritage).
+bool est_volet(int r, int t);
 bool vol_position_connue(const Etat& e);
 void popup_lumiere_ouvrir(int r, int t);
 void popup_volet_ouvrir(int r, int t);

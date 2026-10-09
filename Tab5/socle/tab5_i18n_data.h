@@ -8,9 +8,19 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1060;
+static const uint16_t kI18nKeyCount = 1070;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1200,12 +1210,14 @@ static const char* const kI18nKeys[] = {
     "Adresse IP",
     "Adversaire",
     "Affichée — estimation en pions, indicative",
+    "Agenda",
     "Agilité",
     "Aimant du mineur",
     "Aimant mineur",
     "Alerte Météo Orange en cours ! Restez prudent.",
     "Alerte Météo Rouge en cours ! Restez prudent.",
     "Alertes",
+    "Aller à",
     "Allumer",
     "Allumer seulement",
     "Allumé",
@@ -1226,6 +1238,7 @@ static const char* const kI18nKeys[] = {
     "Aperçu du territoire : ACTIVÉ",
     "Aperçu du territoire : DÉSACTIVÉ",
     "Appareil",
+    "Appareils",
     "Apparence",
     "Appuyer sur un emplacement le fait passer à l'objet suivant.",
     "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement.",
@@ -1234,6 +1247,7 @@ static const char* const kI18nKeys[] = {
     "Arrêter",
     "Arts",
     "Arts & Littérature",
+    "Assistant",
     "Assistant vocal",
     "Attire les bonus alentour",
     "Au repos",
@@ -1341,6 +1355,7 @@ static const char* const kI18nKeys[] = {
     "Classique",
     "Climatisation",
     "Climatisation Salon",
+    "Clims",
     "Coffre : %d âmes",
     "Coffre : %s !",
     "Coffre-fort",
@@ -1515,6 +1530,7 @@ static const char* const kI18nKeys[] = {
     "Jamais",
     "Janv",
     "Jeu",
+    "Jeux",
     "Jouable",
     "Jouer",
     "Jouer !",
@@ -1733,6 +1749,8 @@ static const char* const kI18nKeys[] = {
     "Pièce %d",
     "Pièce %d/%d",
     "Pièce : %s",
+    "Pièces",
+    "Plantes",
     "Pluie",
     "Pluie faible",
     "Pluie modérée",
@@ -1928,6 +1946,7 @@ static const char* const kI18nKeys[] = {
     "TOUS LES NIVEAUX !",
     "TOUT EFFACER ?",
     "Tab contre Tab",
+    "Tablette",
     "Taille affichée : %s",
     "Taille du goban  —  9x9 / 13x13 / 19x19",
     "Taille du texte",
@@ -1943,6 +1962,7 @@ static const char* const kI18nKeys[] = {
     "Temps écoulé — la réponse était : %s",
     "Temps écoulé — matériel insuffisant pour mater",
     "Température",
+    "Températures",
     "Tension",
     "Tester",
     "Thème",
@@ -2264,12 +2284,14 @@ static const char* const kI18n_en[] = {
     "IP address",  // "Adresse IP"
     "Opponent",  // "Adversaire"
     "Shown — rough estimate in pawns",  // "Affichée — estimation en pions, indicative"
+    "Agenda",  // "Agenda"
     "Agility",  // "Agilité"
     "Miner's Magnet",  // "Aimant du mineur"
     "Minor Magnet",  // "Aimant mineur"
     "Orange weather warning in progress! Stay safe.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Red weather warning in progress! Stay safe.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Alerts",  // "Alertes"
+    "Go to",  // "Aller à"
     "Turn on",  // "Allumer"
     "Turn on only",  // "Allumer seulement"
     "On",  // "Allumé"
@@ -2290,6 +2312,7 @@ static const char* const kI18n_en[] = {
     "Territory preview: ON",  // "Aperçu du territoire : ACTIVÉ"
     "Territory preview: OFF",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Device",  // "Appareil"
+    "Devices",  // "Appareils"
     "Appearance",  // "Apparence"
     "Tapping a slot switches it to the next item.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tapping an owned item sells it back for half its price. A sold item is also unequipped.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -2298,6 +2321,7 @@ static const char* const kI18n_en[] = {
     "Stop",  // "Arrêter"
     "Arts",  // "Arts"
     "Arts & Literature",  // "Arts & Littérature"
+    "Assistant",  // "Assistant"
     "Voice assistant",  // "Assistant vocal"
     "Pulls in nearby pickups",  // "Attire les bonus alentour"
     "Idle",  // "Au repos"
@@ -2405,6 +2429,7 @@ static const char* const kI18n_en[] = {
     "Classic",  // "Classique"
     "Air conditioning",  // "Climatisation"
     "Living room AC",  // "Climatisation Salon"
+    "Air con",  // "Clims"
     "Chest: %d souls",  // "Coffre : %d âmes"
     "Chest: %s!",  // "Coffre : %s !"
     "The Vault",  // "Coffre-fort"
@@ -2579,6 +2604,7 @@ static const char* const kI18n_en[] = {
     "Never",  // "Jamais"
     "Jan",  // "Janv"
     "Thu",  // "Jeu"
+    "Games",  // "Jeux"
     "Playable",  // "Jouable"
     "Play",  // "Jouer"
     "Play!",  // "Jouer !"
@@ -2797,6 +2823,8 @@ static const char* const kI18n_en[] = {
     "Room %d",  // "Pièce %d"
     "Room %d/%d",  // "Pièce %d/%d"
     "Room: %s",  // "Pièce : %s"
+    "Rooms",  // "Pièces"
+    "Plants",  // "Plantes"
     "Rain",  // "Pluie"
     "Light rain",  // "Pluie faible"
     "Moderate rain",  // "Pluie modérée"
@@ -2992,6 +3020,7 @@ static const char* const kI18n_en[] = {
     "ALL LEVELS CLEARED!",  // "TOUS LES NIVEAUX !"
     "CLEAR EVERYTHING?",  // "TOUT EFFACER ?"
     "Tab vs Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Size shown: %s",  // "Taille affichée : %s"
     "Board size  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Text size",  // "Taille du texte"
@@ -3007,6 +3036,7 @@ static const char* const kI18n_en[] = {
     "Time's up — the answer was: %s",  // "Temps écoulé — la réponse était : %s"
     "Time out — insufficient material to mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperature",  // "Température"
+    "Temperatures",  // "Températures"
     "Voltage",  // "Tension"
     "Test",  // "Tester"
     "Theme",  // "Thème"
@@ -3328,12 +3358,14 @@ static const char* const kI18n_de[] = {
     "IP-Adresse",  // "Adresse IP"
     "Gegner",  // "Adversaire"
     "An — grobe Schätzung in Bauern",  // "Affichée — estimation en pions, indicative"
+    "Termine",  // "Agenda"
     "Agilität",  // "Agilité"
     "Bergmannsmagnet",  // "Aimant du mineur"
     "Kleiner Magnet",  // "Aimant mineur"
     "Unwetterwarnung Orange aktiv! Bleib vorsichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Unwetterwarnung Rot aktiv! Bleib vorsichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Warnungen",  // "Alertes"
+    "Gehe zu",  // "Aller à"
     "Einschalten",  // "Allumer"
     "Nur einschalten",  // "Allumer seulement"
     "An",  // "Allumé"
@@ -3354,6 +3386,7 @@ static const char* const kI18n_de[] = {
     "Gebietsvorschau: AN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebietsvorschau: AUS",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Gerät",  // "Appareil"
+    "Geräte",  // "Appareils"
     "Aussehen",  // "Apparence"
     "Tippen auf einen Platz wechselt zum nächsten Gegenstand.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Ein Gegenstand im Besitz wird per Tippen zum halben Preis verkauft. Verkauftes wird auch abgelegt.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -3362,6 +3395,7 @@ static const char* const kI18n_de[] = {
     "Stopp",  // "Arrêter"
     "Kunst",  // "Arts"
     "Kunst & Literatur",  // "Arts & Littérature"
+    "Assistent",  // "Assistant"
     "Sprachassistent",  // "Assistant vocal"
     "Zieht Boni in der Nähe an",  // "Attire les bonus alentour"
     "Ruhend",  // "Au repos"
@@ -3469,6 +3503,7 @@ static const char* const kI18n_de[] = {
     "Klassisch",  // "Classique"
     "Klimaanlage",  // "Climatisation"
     "Klima Wohnzimmer",  // "Climatisation Salon"
+    "Klima",  // "Clims"
     "Truhe: %d Seelen",  // "Coffre : %d âmes"
     "Truhe: %s!",  // "Coffre : %s !"
     "Tresor",  // "Coffre-fort"
@@ -3643,6 +3678,7 @@ static const char* const kI18n_de[] = {
     "Nie",  // "Jamais"
     "Jan",  // "Janv"
     "Do",  // "Jeu"
+    "Spiele",  // "Jeux"
     "Spielbar",  // "Jouable"
     "Spielen",  // "Jouer"
     "Los!",  // "Jouer !"
@@ -3861,6 +3897,8 @@ static const char* const kI18n_de[] = {
     "Raum %d",  // "Pièce %d"
     "Raum %d/%d",  // "Pièce %d/%d"
     "Raum: %s",  // "Pièce : %s"
+    "Räume",  // "Pièces"
+    "Pflanzen",  // "Plantes"
     "Regen",  // "Pluie"
     "Leichter Regen",  // "Pluie faible"
     "Mäßiger Regen",  // "Pluie modérée"
@@ -4056,6 +4094,7 @@ static const char* const kI18n_de[] = {
     "ALLE LEVEL GESCHAFFT!",  // "TOUS LES NIVEAUX !"
     "ALLES LÖSCHEN?",  // "TOUT EFFACER ?"
     "Tab gegen Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Angezeigte Größe: %s",  // "Taille affichée : %s"
     "Brettgröße  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Textgröße",  // "Taille du texte"
@@ -4071,6 +4110,7 @@ static const char* const kI18n_de[] = {
     "Zeit um — die Antwort war: %s",  // "Temps écoulé — la réponse était : %s"
     "Zeit ist um — zu wenig Material zum Mattsetzen",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatur",  // "Température"
+    "Temperaturen",  // "Températures"
     "Spannung",  // "Tension"
     "Testen",  // "Tester"
     "Design",  // "Thème"
@@ -4392,12 +4432,14 @@ static const char* const kI18n_nl[] = {
     "IP-adres",  // "Adresse IP"
     "Tegenstander",  // "Adversaire"
     "Getoond — ruwe schatting in pionnen",  // "Affichée — estimation en pions, indicative"
+    "Planning",  // "Agenda"
     "Agiliteit",  // "Agilité"
     "Mijnwerkersmagneet",  // "Aimant du mineur"
     "Kleine magneet",  // "Aimant mineur"
     "Weeralarm code oranje! Wees voorzichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Weeralarm code rood! Wees voorzichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Meldingen",  // "Alertes"
+    "Ga naar",  // "Aller à"
     "Aanzetten",  // "Allumer"
     "Alleen aanzetten",  // "Allumer seulement"
     "Aan",  // "Allumé"
@@ -4418,6 +4460,7 @@ static const char* const kI18n_nl[] = {
     "Gebiedsweergave: AAN",  // "Aperçu du territoire : ACTIVÉ"
     "Gebiedsweergave: UIT",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Apparaat",  // "Appareil"
+    "Apparaten",  // "Appareils"
     "Weergave",  // "Apparence"
     "Tik op een vak om naar het volgende voorwerp te wisselen.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tik op een voorwerp in je bezit om het voor de halve prijs te verkopen. Een verkocht voorwerp gaat ook uit je uitrusting.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -4426,6 +4469,7 @@ static const char* const kI18n_nl[] = {
     "Stop",  // "Arrêter"
     "Kunst",  // "Arts"
     "Kunst & Literatuur",  // "Arts & Littérature"
+    "Assistent",  // "Assistant"
     "Spraakassistent",  // "Assistant vocal"
     "Trekt nabije bonussen aan",  // "Attire les bonus alentour"
     "In rust",  // "Au repos"
@@ -4533,6 +4577,7 @@ static const char* const kI18n_nl[] = {
     "Klassiek",  // "Classique"
     "Airco",  // "Climatisation"
     "Airco woonkamer",  // "Climatisation Salon"
+    "Airco's",  // "Clims"
     "Kist: %d zielen",  // "Coffre : %d âmes"
     "Kist: %s!",  // "Coffre : %s !"
     "De kluis",  // "Coffre-fort"
@@ -4707,6 +4752,7 @@ static const char* const kI18n_nl[] = {
     "Nooit",  // "Jamais"
     "Jan",  // "Janv"
     "Do",  // "Jeu"
+    "Spellen",  // "Jeux"
     "Speelbaar",  // "Jouable"
     "Spelen",  // "Jouer"
     "Spelen!",  // "Jouer !"
@@ -4925,6 +4971,8 @@ static const char* const kI18n_nl[] = {
     "Kamer %d",  // "Pièce %d"
     "Kamer %d/%d",  // "Pièce %d/%d"
     "Kamer: %s",  // "Pièce : %s"
+    "Kamers",  // "Pièces"
+    "Planten",  // "Plantes"
     "Regen",  // "Pluie"
     "Lichte regen",  // "Pluie faible"
     "Matige regen",  // "Pluie modérée"
@@ -5120,6 +5168,7 @@ static const char* const kI18n_nl[] = {
     "ALLE LEVELS GEHAALD!",  // "TOUS LES NIVEAUX !"
     "ALLES WISSEN?",  // "TOUT EFFACER ?"
     "Tab tegen Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Getoonde grootte: %s",  // "Taille affichée : %s"
     "Gobangrootte  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Tekstgrootte",  // "Taille du texte"
@@ -5135,6 +5184,7 @@ static const char* const kI18n_nl[] = {
     "Tijd om — het antwoord was: %s",  // "Temps écoulé — la réponse était : %s"
     "Tijd om — te weinig materiaal voor mat",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatuur",  // "Température"
+    "Temperaturen",  // "Températures"
     "Spanning",  // "Tension"
     "Testen",  // "Tester"
     "Thema",  // "Thème"
@@ -5456,12 +5506,14 @@ static const char* const kI18n_es[] = {
     "Dirección IP",  // "Adresse IP"
     "Rival",  // "Adversaire"
     "Visible — estimación en peones, orientativa",  // "Affichée — estimation en pions, indicative"
+    "Agenda",  // "Agenda"
     "Agilidad",  // "Agilité"
     "Imán del minero",  // "Aimant du mineur"
     "Imán menor",  // "Aimant mineur"
     "¡Alerta meteorológica naranja! Ten cuidado.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "¡Alerta meteorológica roja! Ten cuidado.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Alertas",  // "Alertes"
+    "Ir a",  // "Aller à"
     "Encender",  // "Allumer"
     "Solo encender",  // "Allumer seulement"
     "ON",  // "Allumé"
@@ -5482,6 +5534,7 @@ static const char* const kI18n_es[] = {
     "Vista del territorio: SÍ",  // "Aperçu du territoire : ACTIVÉ"
     "Vista del territorio: NO",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
+    "Aparatos",  // "Appareils"
     "Aspecto",  // "Apparence"
     "Tocar una ranura la cambia al objeto siguiente.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocar un objeto que ya tienes lo vende a mitad de precio. Un objeto vendido también se quita del equipo.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -5490,6 +5543,7 @@ static const char* const kI18n_es[] = {
     "Detener",  // "Arrêter"
     "Arte",  // "Arts"
     "Arte y Literatura",  // "Arts & Littérature"
+    "Asistente",  // "Assistant"
     "Asistente de voz",  // "Assistant vocal"
     "Atrae los bonus cercanos",  // "Attire les bonus alentour"
     "En reposo",  // "Au repos"
@@ -5597,6 +5651,7 @@ static const char* const kI18n_es[] = {
     "Clásico",  // "Classique"
     "Climatización",  // "Climatisation"
     "Climatización salón",  // "Climatisation Salon"
+    "Climas",  // "Clims"
     "Cofre: %d almas",  // "Coffre : %d âmes"
     "¡Cofre: %s!",  // "Coffre : %s !"
     "Caja fuerte",  // "Coffre-fort"
@@ -5771,6 +5826,7 @@ static const char* const kI18n_es[] = {
     "Nunca",  // "Jamais"
     "Ene",  // "Janv"
     "Jue",  // "Jeu"
+    "Juegos",  // "Jeux"
     "Jugable",  // "Jouable"
     "Jugar",  // "Jouer"
     "¡Jugar!",  // "Jouer !"
@@ -5989,6 +6045,8 @@ static const char* const kI18n_es[] = {
     "Estancia %d",  // "Pièce %d"
     "Estancia %d/%d",  // "Pièce %d/%d"
     "Estancia: %s",  // "Pièce : %s"
+    "Estancias",  // "Pièces"
+    "Plantas",  // "Plantes"
     "Lluvia",  // "Pluie"
     "Lluvia débil",  // "Pluie faible"
     "Lluvia moderada",  // "Pluie modérée"
@@ -6184,6 +6242,7 @@ static const char* const kI18n_es[] = {
     "¡TODOS LOS NIVELES!",  // "TOUS LES NIVEAUX !"
     "¿BORRAR TODO?",  // "TOUT EFFACER ?"
     "Tab contra Tab",  // "Tab contre Tab"
+    "Tableta",  // "Tablette"
     "Tamaño mostrado: %s",  // "Taille affichée : %s"
     "Tamaño del goban  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Tamaño del texto",  // "Taille du texte"
@@ -6199,6 +6258,7 @@ static const char* const kI18n_es[] = {
     "Tiempo agotado — la respuesta era: %s",  // "Temps écoulé — la réponse était : %s"
     "Tiempo agotado — material insuficiente para dar mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
+    "Temperaturas",  // "Températures"
     "Tensión",  // "Tension"
     "Probar",  // "Tester"
     "Tema",  // "Thème"
@@ -6520,12 +6580,14 @@ static const char* const kI18n_it[] = {
     "Indirizzo IP",  // "Adresse IP"
     "Avversario",  // "Adversaire"
     "Mostrata — stima indicativa in pedoni",  // "Affichée — estimation en pions, indicative"
+    "Agenda",  // "Agenda"
     "Agilità",  // "Agilité"
     "Magnete del minatore",  // "Aimant du mineur"
     "Magnete minore",  // "Aimant mineur"
     "Allerta meteo arancione in corso! Fai attenzione.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Allerta meteo rossa in corso! Fai attenzione.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Avvisi",  // "Alertes"
+    "Vai a",  // "Aller à"
     "Accendi",  // "Allumer"
     "Solo accensione",  // "Allumer seulement"
     "Acceso",  // "Allumé"
@@ -6546,6 +6608,7 @@ static const char* const kI18n_it[] = {
     "Anteprima territorio: ATTIVA",  // "Aperçu du territoire : ACTIVÉ"
     "Anteprima territorio: DISATTIVATA",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Dispositivo",  // "Appareil"
+    "Dispositivi",  // "Appareils"
     "Aspetto",  // "Apparence"
     "Tocca uno slot per passare all'oggetto successivo.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocca un oggetto posseduto per rivenderlo a metà prezzo. Un oggetto rivenduto viene anche tolto dall'equipaggiamento.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -6554,6 +6617,7 @@ static const char* const kI18n_it[] = {
     "Ferma",  // "Arrêter"
     "Arte",  // "Arts"
     "Arte & Letteratura",  // "Arts & Littérature"
+    "Assistente",  // "Assistant"
     "Assistente vocale",  // "Assistant vocal"
     "Attira i bonus vicini",  // "Attire les bonus alentour"
     "A riposo",  // "Au repos"
@@ -6661,6 +6725,7 @@ static const char* const kI18n_it[] = {
     "Classica",  // "Classique"
     "Climatizzatore",  // "Climatisation"
     "Clima soggiorno",  // "Climatisation Salon"
+    "Clima",  // "Clims"
     "Scrigno: %d anime",  // "Coffre : %d âmes"
     "Scrigno: %s!",  // "Coffre : %s !"
     "Cassaforte",  // "Coffre-fort"
@@ -6835,6 +6900,7 @@ static const char* const kI18n_it[] = {
     "Mai",  // "Jamais"
     "Gen",  // "Janv"
     "Gio",  // "Jeu"
+    "Giochi",  // "Jeux"
     "Giocabile",  // "Jouable"
     "Gioca",  // "Jouer"
     "Gioca!",  // "Jouer !"
@@ -7053,6 +7119,8 @@ static const char* const kI18n_it[] = {
     "Stanza %d",  // "Pièce %d"
     "Stanza %d/%d",  // "Pièce %d/%d"
     "Stanza: %s",  // "Pièce : %s"
+    "Stanze",  // "Pièces"
+    "Piante",  // "Plantes"
     "Pioggia",  // "Pluie"
     "Pioggia debole",  // "Pluie faible"
     "Pioggia moderata",  // "Pluie modérée"
@@ -7248,6 +7316,7 @@ static const char* const kI18n_it[] = {
     "TUTTI I LIVELLI!",  // "TOUS LES NIVEAUX !"
     "CANCELLARE TUTTO?",  // "TOUT EFFACER ?"
     "Tab vs Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Goban mostrato: %s",  // "Taille affichée : %s"
     "Goban  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Dimensione testo",  // "Taille du texte"
@@ -7263,6 +7332,7 @@ static const char* const kI18n_it[] = {
     "Tempo scaduto — la risposta era: %s",  // "Temps écoulé — la réponse était : %s"
     "Tempo scaduto — materiale insufficiente",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
+    "Temperature",  // "Températures"
     "Tensione",  // "Tension"
     "Prova",  // "Tester"
     "Tema",  // "Thème"
@@ -7584,12 +7654,14 @@ static const char* const kI18n_tr[] = {
     "IP adresi",  // "Adresse IP"
     "Rakip",  // "Adversaire"
     "Açık — piyon cinsinden tahmin, yaklaşık",  // "Affichée — estimation en pions, indicative"
+    "Ajanda",  // "Agenda"
     "Çeviklik",  // "Agilité"
     "Madenci Mıknatısı",  // "Aimant du mineur"
     "Küçük Mıknatıs",  // "Aimant mineur"
     "Turuncu hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Kırmızı hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Uyarılar",  // "Alertes"
+    "Git",  // "Aller à"
     "Aç",  // "Allumer"
     "Yalnızca aç",  // "Allumer seulement"
     "Açık",  // "Allumé"
@@ -7610,6 +7682,7 @@ static const char* const kI18n_tr[] = {
     "Alan önizlemesi: AÇIK",  // "Aperçu du territoire : ACTIVÉ"
     "Alan önizlemesi: KAPALI",  // "Aperçu du territoire : DÉSACTIVÉ"
     "Cihaz",  // "Appareil"
+    "Cihazlar",  // "Appareils"
     "Görünüm",  // "Apparence"
     "Bir yuvaya dokunmak onu sonraki eşyaya geçirir.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Sahip olunan bir eşyaya dokunmak onu fiyatının yarısına geri satar. Satılan eşya teçhizattan da çıkarılır.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
@@ -7618,6 +7691,7 @@ static const char* const kI18n_tr[] = {
     "Durdur",  // "Arrêter"
     "Sanat",  // "Arts"
     "Sanat & Edebiyat",  // "Arts & Littérature"
+    "Asistan",  // "Assistant"
     "Sesli asistan",  // "Assistant vocal"
     "Yakındaki bonusları çeker",  // "Attire les bonus alentour"
     "Beklemede",  // "Au repos"
@@ -7725,6 +7799,7 @@ static const char* const kI18n_tr[] = {
     "Klasik",  // "Classique"
     "Klima",  // "Climatisation"
     "Salon klima",  // "Climatisation Salon"
+    "Klimalar",  // "Clims"
     "Sandık: %d ruh",  // "Coffre : %d âmes"
     "Sandık: %s!",  // "Coffre : %s !"
     "Kasa",  // "Coffre-fort"
@@ -7899,6 +7974,7 @@ static const char* const kI18n_tr[] = {
     "Asla",  // "Jamais"
     "Oca",  // "Janv"
     "Per",  // "Jeu"
+    "Oyunlar",  // "Jeux"
     "Oynanabilir",  // "Jouable"
     "Oyna",  // "Jouer"
     "Oyna!",  // "Jouer !"
@@ -8117,6 +8193,8 @@ static const char* const kI18n_tr[] = {
     "Oda %d",  // "Pièce %d"
     "Oda %d/%d",  // "Pièce %d/%d"
     "Oda: %s",  // "Pièce : %s"
+    "Odalar",  // "Pièces"
+    "Bitkiler",  // "Plantes"
     "Yağmur",  // "Pluie"
     "Hafif yağmur",  // "Pluie faible"
     "Orta yağmur",  // "Pluie modérée"
@@ -8312,6 +8390,7 @@ static const char* const kI18n_tr[] = {
     "TÜM SEVİYELER!",  // "TOUS LES NIVEAUX !"
     "HEPSİ SİLİNSİN Mİ?",  // "TOUT EFFACER ?"
     "Tab - Tab",  // "Tab contre Tab"
+    "Tablet",  // "Tablette"
     "Gösterilen boyut: %s",  // "Taille affichée : %s"
     "Tahta boyutu  —  9x9 / 13x13 / 19x19",  // "Taille du goban  —  9x9 / 13x13 / 19x19"
     "Metin boyutu",  // "Taille du texte"
@@ -8327,6 +8406,7 @@ static const char* const kI18n_tr[] = {
     "Süre doldu — yanıt: %s",  // "Temps écoulé — la réponse était : %s"
     "Süre doldu — mat için yetersiz materyal",  // "Temps écoulé — matériel insuffisant pour mater"
     "Sıcaklık",  // "Température"
+    "Sıcaklıklar",  // "Températures"
     "Gerilim",  // "Tension"
     "Dene",  // "Tester"
     "Tema",  // "Thème"

@@ -125,7 +125,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Volet arrêté.": "Rolluik gestopt."
 # Shutter popup (long press of a shutter tile, 2026-10-05)
 "POSITION": "POSITIE"
-"Volets": "Rolluiken"
 "VOLETS": "ROLLUIKEN"
 "Tout ouvrir": "Alles open"
 "Tout fermer": "Alles dicht"
@@ -171,7 +170,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 
 # --- Lights popup ---------------------------------------------------------------
 # Lights and Shutters popups, one page per room (ADR-0046, 2026-10-09).
-"Lumières": "Lampen"
 "AMPOULES": "LAMPEN"
 "Tout éteindre": "Alles uit"
 # Popup Maison (ADR-0037) : titre, et le bouton de sa barre de titre.
@@ -1263,3 +1261,16 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Prévisions de %d h %02d": "Verwachting van %d:%02d"
 "Prévisions d'hier %d h %02d": "Verwachting van gisteren %d:%02d"
 "Prévisions vieilles de %d jours": "Verwachting %d dagen oud"
+# Roue de navigation (appui long de la carte centrale, tab5_roue_navigation.cpp, ADR-0042)
+"Aller à": "Ga naar"
+"Pièces": "Kamers"
+"Appareils": "Apparaten"
+"Agenda": "Planning"
+"Tablette": "Tablet"
+"Assistant": "Assistent"
+"Températures": "Temperaturen"
+"Clims": "Airco's"
+"Lumières": "Lampen"
+"Volets": "Rolluiken"
+"Plantes": "Planten"
+"Jeux": "Spellen"

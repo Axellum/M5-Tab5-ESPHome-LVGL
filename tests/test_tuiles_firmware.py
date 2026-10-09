@@ -593,8 +593,9 @@ def test_geometrie_du_volet_dessine():
 
 def test_popup_du_volet_inscrit_et_branche():
     scripts = _lire("Tab5", "paquets", "tab5-navigation.yaml")
-    assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volets",\s+ModalRegistry::POPUP,\s+'
-                     r'\[\] \{ volets_ouvrir\(\); \}\);', scripts)
+    # Ouvert aussi sans tuile touchée (« Aller à l'écran », roue de navigation, ADR-0042).
+    assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volet",\s+ModalRegistry::POPUP,'
+                     r'\s+\[\] \{ tuiles_ecran_ouvrir\(Ecran::VOLET\); \}\);', scripts)
     assert "- !include ../ui_components/volet_popup.yaml" in _lire("Tab5", "paquets", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
     for champ, widget in (("vol_popup", "volet_popup"), ("vol_nom", "volet_nom"),

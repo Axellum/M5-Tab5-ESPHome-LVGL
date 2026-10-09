@@ -21,8 +21,8 @@ namespace esphome { namespace font { class Font; } }
 // =============================================================================
 // Popup « Alertes » (alertes_popup.yaml) : les 20 dernières alertes, une ligne chacune
 // (pastille de la gravité, libellé, « apparue 14 h 02 · lue 14 h 10 · terminée 15 h 30 »),
-// et « Tout marquer comme lu ». Ouvert par un appui long sur la carte centrale ou par
-// « Aller à l'écran → Alertes ». Home Assistant répond à l'événement
+// et « Tout marquer comme lu ». Ouvert par la roue de navigation (appui long sur la carte
+// centrale, ADR-0042) ou par « Aller à l'écran → Alertes ». Home Assistant répond à l'événement
 // esphome.tab5_alertes_historique par l'action tab5_maj_alertes_historique.
 //
 // Widgets posés par le script tab5_alertes_ouvrir (tab5-alertes.yaml) à la première

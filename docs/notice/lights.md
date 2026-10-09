@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a long press on a light: its card in device mode, or the weather icon of a card that holds it; then **Details** among its [quick actions](tiles.md#quick-actions) (a light set to *confirm* opens it at once). It opens on that light's room, with that light selected. Also with « Aller à l'écran » → *Lumières* from Home Assistant, or a [home page gesture](home.md) set to *Lights*: on the room shown on the home page, or the first one that has lights. A tap on a light's card only turns it on or off ([bottom row](tiles.md)).
+**Opens with** a long press on a light: its card in device mode, or the weather icon of a card that holds it; then **Details** among its [quick actions](tiles.md#quick-actions) (a light set to *confirm* opens it at once). It opens on that light's room, with that light selected. Also with « Aller à l'écran » → *Lumières* from Home Assistant, the [navigation wheel](home.md#central-card-12) (*Appareils* → *Lumières*), or a [home page gesture](home.md) set to *Lights of the room shown*: on the room shown on the home page, or the first one that has lights. A tap on a light's card only turns it on or off ([bottom row](tiles.md)).
 
 ![The lights window: the lights of the room, brightness at 70 %, whites and colours](../images/notice/lumieres-chambre-en.webp)
 
@@ -33,7 +33,7 @@
 
 ---
 
-**S'ouvre par** un appui long sur une lumière : sa carte en mode appareils, ou l'icône météo d'une carte qui la porte ; puis **Détails** parmi ses [actions rapides](tiles.md#actions-rapides) (une lumière réglée sur *confirmer* l'ouvre tout de suite). Elle s'ouvre sur la pièce de cette lumière, cette lumière choisie. Aussi par « Aller à l'écran » → *Lumières* depuis Home Assistant, ou un [geste de l'accueil](home.md#version-française) réglé sur *Lumières* : sur la pièce affichée à l'accueil, ou la première qui a des lumières. Un tap sur la carte d'une lumière l'allume ou l'éteint seulement ([rangée du bas](tiles.md#version-française)).
+**S'ouvre par** un appui long sur une lumière : sa carte en mode appareils, ou l'icône météo d'une carte qui la porte ; puis **Détails** parmi ses [actions rapides](tiles.md#actions-rapides) (une lumière réglée sur *confirmer* l'ouvre tout de suite). Elle s'ouvre sur la pièce de cette lumière, cette lumière choisie. Aussi par « Aller à l'écran » → *Lumières* depuis Home Assistant, la [roue de navigation](home.md#carte-centrale-12) (*Appareils* → *Lumières*), ou un [geste de l'accueil](home.md#version-française) réglé sur *Lumières de la pièce affichée* : sur la pièce affichée à l'accueil, ou la première qui a des lumières. Un tap sur la carte d'une lumière l'allume ou l'éteint seulement ([rangée du bas](tiles.md#version-française)).
 
 ![La fenêtre des lumières : les lumières de la pièce, luminosité à 70 %, blancs et couleurs](../images/notice/lumieres-chambre-fr.webp)
 

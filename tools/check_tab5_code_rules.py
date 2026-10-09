@@ -365,6 +365,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     # Roue d'actions rapides (ADR-0036) : icônes de ses deux anneaux (roue_bouton.yaml,
     # roue_choix.yaml, mdi_font_36).
     ("tab5_roue.cpp", "glyphe_roue"): ("roue_bouton_*_icone", "roue_choix_*_icone"),
+    # Roue de navigation (ADR-0042) : la rose des vents de son moyeu (mdi_font_45).
+    ("tab5_roue_navigation.cpp", "glyphe_navigation"): ("roue_moyeu_icone",),
     ("tab5_services.cpp", "parse_and_update_vigilance"): ("alerte_slot_*",),
     ("tab5_services.cpp", "update_rain_predict_icon_ui"): ("icon_rain_predict",),
     # Zone des températures de l'accueil (ADR-0040) : canapé / thermomètre de la pièce à
@@ -873,7 +875,6 @@ PUBLIQUES_SANS_APPELANT = {
     "clim_oscillation_actif",
     "clim_preset_actif",
     "solaire_present",          # tab5_zones.cpp : production solaire connue
-    "ecran_disponible",         # tab5_zones.cpp : écran disponible pour un appui long
     "tuile_titre_appui",        # tab5_tuiles.cpp : appui sur le titre de la carte centrale
 }
 RE_CPP_DEF = re.compile(r"^[A-Za-z_][\w:<>,\s*&]*?[\s*&](\w+)\s*\([^;{}]*\)\s*(?:const\s*)?\{", re.M)

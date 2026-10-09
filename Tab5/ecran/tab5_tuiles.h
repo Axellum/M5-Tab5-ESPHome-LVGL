@@ -124,6 +124,15 @@ void tuiles_brancher_titres();
 // courante, ou de la plus proche qui a des appareils ; titre de la pièce dans la carte
 // centrale ; en sortant, la météo de la page courante.
 void tuiles_mode_ha(bool actif);
+// Roue de navigation (ADR-0042, tab5_roue_navigation.cpp) : le mode HA sur la pièce R du
+// blueprint (sa page, ses cartes, le titre de la carte centrale). Faux si elle n'a aucun
+// appareil.
+bool tuiles_aller_piece(int r);
+// Écrans Lumières et Volet (Ecran::LUMIERES, Ecran::VOLET, ADR-0042) : une tuile en ouvre-t-elle
+// le popup (ecran_sans_zone, tab5_zones.cpp) ; l'ouvrir (registre, tab5-navigation.yaml) —
+// la pièce de la page affichée d'abord, puis les pièces dans l'ordre du blueprint.
+bool tuiles_ecran_disponible(Ecran e);
+void tuiles_ecran_ouvrir(Ecran e);
 
 // Interrupteur « Tab5 Appareils sur la météo » (tab5-ha-controls.yaml, 05/10/2026) :
 // éteint, les prévisions du mode météo ne montrent plus les appareils des pièces (ni
@@ -148,8 +157,9 @@ void tuiles_heritage_volet_sens();
 // Popups à pages par pièce (ADR-0046, 09/10/2026) : Lumières (light_popup.yaml) et Volets
 // (volet_popup.yaml), une page par pièce qui a des lumières (des volets pilotables : vol
 // sans l'option r ni k). Ouverts par l'appui long d'une tuile (sa pièce, cette tuile), par
-// « Aller à l'écran » et les gestes de l'accueil (lumieres_ouvrir / volets_ouvrir : la
-// pièce affichée, sinon la première qui en a ; rien sans aucune). Leurs lignes
+// « Aller à l'écran », la roue de navigation et les gestes de l'accueil (Ecran::LUMIERES,
+// Ecran::VOLET, tuiles_ecran_ouvrir : la pièce affichée, sinon la première qui en a ; rien
+// sans aucune). Leurs lignes
 // (piece_ligne.yaml) : `idx` = rang dans la page.
 //   - *_choisir : toucher d'une ligne, elle devient celle que pilotent la partie droite ;
 //   - *_ligne_appui : toucher de sa pastille (le toucher de la tuile) ou appui long (sa
@@ -182,10 +192,6 @@ void popup_lumiere_choisir(int idx);
 // « Tout éteindre » : pR / eteindre (toutes les lumières de la pièce affichée), lumieres /
 // eteindre en mode héritage.
 void popup_lumiere_tout_eteindre();
-// « Aller à l'écran → Lumières / Volets » et les gestes de l'accueil (registre des
-// fenêtres, tab5-navigation.yaml). Aucune lumière (aucun volet) dans la maison : rien.
-void lumieres_ouvrir();
-void volets_ouvrir();
 // Couleur montrée d'une teinte de lampe (color_name : « warmwhite », « gold »…) : la
 // seule liste, pour les pastilles du popup lumière (light_white_btn.yaml,
 // light_color_preset_btn.yaml) et de la roue (UI-8). Nom inconnu : UIColor.TEXT_DIM.

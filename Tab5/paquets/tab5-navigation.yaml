@@ -6,7 +6,7 @@
 #       - le registre des fenêtres modales (`tab5_modal_registry_init`, ADR-0013) :
 #         chaque fenêtre, son libellé et, pour un écran, la façon de l'ouvrir ;
 #       - `tab5_ecran_ouvrir`, la SEULE routine d'ouverture d'un écran (select
-#         « Aller à l'écran », gestes de l'accueil) ;
+#         « Aller à l'écran », gestes de l'accueil, roue de navigation : ADR-0042) ;
 #       - `tab5_geste` (09/10/2026, lot A) : un geste de l'horloge ou des trois boutons du
 #         haut, choisi dans le blueprint ;
 #       - le select « Aller à l'écran » et le text_sensor « Écran courant ».
@@ -69,12 +69,13 @@ script:
           // Le calendrier a besoin de son mois courant + du rendu.
           ModalRegistry::add(id(calendar_popup),         "Calendrier",       ModalRegistry::POPUP,
                              [] { id(tab5_calendar_open).execute(); });
-          // Lumières et Volets (ADR-0046) : une page par pièce, ouverts sur la pièce affichée
-          // (la première qui en a sinon) ; rien sans aucune lumière (aucun volet).
+          // Lumières et volet (ADR-0042) : le popup d'une tuile, ouvert sans tuile touchée —
+          // celle de la pièce affichée d'abord (tuiles_ecran_ouvrir, tab5_tuiles.cpp). Une
+          // page par pièce dans les deux popups (ADR-0046) : ils s'ouvrent sur cette pièce.
           ModalRegistry::add(id(light_options_popup),    "Lumières",         ModalRegistry::POPUP,
-                             [] { lumieres_ouvrir(); });
-          ModalRegistry::add(id(volet_popup),            "Volets",           ModalRegistry::POPUP,
-                             [] { volets_ouvrir(); });
+                             [] { tuiles_ecran_ouvrir(Ecran::LUMIERES); });
+          ModalRegistry::add(id(volet_popup),            "Volet",            ModalRegistry::POPUP,
+                             [] { tuiles_ecran_ouvrir(Ecran::VOLET); });
           ModalRegistry::add(id(appareil_popup),         "Appareil",         ModalRegistry::POPUP);
           // La clim du blueprint : le popup a pu montrer celle d'une tuile (ADR-0027) et
           // être refermé par close_all().
@@ -89,7 +90,14 @@ script:
           // (« Console système » : la page Système, tab5_ecran_ouvrir).
           ModalRegistry::add(id(reglages_popup),         "Réglages",         ModalRegistry::POPUP,
                              [] { id(tab5_reglages_ouvrir).execute(REGLAGES_PAGE_ECRAN); });
-          ModalRegistry::add(id(historique_popup),       "Température",      ModalRegistry::POPUP);
+          // Température (ADR-0032) : celle de gauche de l'accueil (salon, ou la pièce affichée
+          // en mode HA, ADR-0040), sinon la serre (ADR-0042).
+          ModalRegistry::add(id(historique_popup),       "Température",      ModalRegistry::POPUP,
+                             [] {
+                               const char* cle = accueil_historique_cle(false);
+                               if (cle == nullptr) cle = accueil_historique_cle(true);
+                               if (cle != nullptr) id(tab5_historique_ouvrir).execute(std::string(cle));
+                             });
           // Alertes : pose les widgets et demande l'historique à HA.
           ModalRegistry::add(id(alertes_popup),          "Alertes",          ModalRegistry::POPUP,
                              [] { id(tab5_alertes_ouvrir).execute(); });
@@ -136,11 +144,14 @@ script:
             id(tab5_wake_word_active).toggle();  // le tap du bouton « Ok Nabu »
           } else if (c.action == GesteAction::NABU_SUIVANTE) {
             nabu_suivant();  // panneau Ok Nabu : ligne suivante (lot 3, ADR-0041)
+          } else if (c.action == GesteAction::ROUE) {
+            roue_navigation_ouvrir();  // l'appui long de la carte centrale (ADR-0042)
           }
 
   # Ouverture d'un écran (07/10/2026) : la routine UNIQUE du select « Aller à l'écran »
-  # (plus bas) et des gestes de l'accueil (script tab5_geste ci-dessus, écran choisi dans
-  # le blueprint, geste_cible()). `ecran` = valeur d'Ecran
+  # (plus bas), des gestes de l'accueil (script tab5_geste ci-dessus, écran choisi dans
+  # le blueprint, geste_cible()) et de la roue de navigation (ADR-0042,
+  # tab5_roue_navigation.cpp, par RoueUI::ouvrir_ecran). `ecran` = valeur d'Ecran
   # (tab5_custom.h) : l'index d'une option du select, ou ARCADE, qui n'en est pas une
   # (lancer l'Arcade à distance n'a pas d'usage). Tout s'exécute pendant l'appel (aucun
   # délai) ; le select se remet lui-même sur « — » ensuite.
@@ -306,9 +317,10 @@ select:
   # text_sensor ci-dessus) : le select retombe sur « — » aussitôt l'action faite.
   # Republier « — » redéclenche bien on_value, mais l'index 0 ne fait rien —
   # la récursion s'arrête là.
-  # Volontairement absente : « Arcade » (lancer un jeu à distance sur une tablette
-  # murale n'a pas d'usage). « Lumières » et « Volets » y sont depuis l'ADR-0046 : le
-  # popup s'ouvre sur la pièce affichée et choisit sa première lumière (son premier volet).
+  # Volontairement absent : « Arcade » (lancer un jeu à distance sur une tablette
+  # murale n'a pas d'usage). « Lumières » l'était jusqu'au 09/10/2026 (le popup suivait
+  # la dernière lampe touchée) : il s'ouvre maintenant sur les lumières de la pièce
+  # affichée, ou de la première qui en a (tuiles_ecran_ouvrir, ADR-0042).
   # Les options sont lues par HA : jamais traduites, et une nouvelle s'ajoute à la fin
   # (l'index de l'option EST la valeur d'Ecran, tab5_custom.h).
   - platform: template
@@ -335,9 +347,12 @@ select:
       - "Alertes"
       # Toute la maison, pièce par pièce (ADR-0037, 07/10/2026), à la fin aussi.
       - "Maison"
-      # Lumières et Volets, une page par pièce (ADR-0046, 09/10/2026), à la fin aussi.
+      # Roue de navigation (ADR-0042, 09/10/2026) : les popups d'une tuile (Lumières et
+      # Volets, une page par pièce, ADR-0046) et la température de l'accueil, ouverts sans
+      # tuile touchée. À la fin aussi.
       - "Lumières"
-      - "Volets"
+      - "Volet"
+      - "Température"
     on_value:
       # Toute l'ouverture est dans tab5_ecran_ouvrir (plus haut), partagé avec les appuis
       # longs des boutons du haut : l'index de l'option EST la valeur d'Ecran
