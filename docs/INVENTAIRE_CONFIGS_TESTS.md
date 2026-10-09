@@ -171,6 +171,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_reglables.py` | `tests/` | Contenu | Tuile − / + (ADR-0033) : types, domaines, icônes, bornes par type, liste blanche des commandes, blueprint ↔ `tab5_reglables.cpp`. |
 | `test_reglages.py` | `tests/` | Contenu | Popup Réglages : contrat numérique `ReglageId` / index d'option entre `reglages_popup.yaml` et le C++. |
 | `test_roue.py` | `tests/` | Contenu | Roue d'actions rapides (ADR-0036) : géométrie, anneaux, liens « Maison » et « Détails », commandes, lue dans le C++ et le YAML. |
+| `test_sante_statistiques.py` | `tests/` | Contenu + rendu | Statistiques longues de fiabilité (lot K, 09/10/2026) : la garde « reboot inattendu » émet `tab5_sante_redemarrage` avant son filtre « demandé » ; compteurs `total_increasing` et durée de fonctionnement continu (`duration`, sans `now()`) rendus. |
 | `test_solaire.py` | `tests/` | Contenu + rendu | Icône solaire du bandeau d'état : clé `solaire` de `tab5_maj_emplacements`, blueprint ↔ firmware. |
 | `test_themes.py` | `tests/` | Contenu | Palettes, catalogue des thèmes et styles de rôle (ADR-0029) : chaque palette donne tous les rôles, chaque style lit la palette. |
 | `test_tuiles_blueprint.py` | `tests/` | Contenu + rendu | Pièces et tuiles (ADR-0023), côté HA : types, options et commandes du blueprint = tableaux de l'ADR, états poussés. |

@@ -7,7 +7,9 @@
 #       déconnectée (c), erreur de rendu d'un template dans une poussée écran (d),
 #       journal des démarrages et coupures envoyé par le Tab5 (e), fichiers HA plus
 #       anciens que le firmware (f, 29/09/2026), batterie faible quand la tablette
-#       tourne sur sa batterie (g, 08/10/2026).
+#       tourne sur sa batterie (g, 08/10/2026). Et trois capteurs à statistiques
+#       longues (lot K, 09/10/2026) : redémarrages, redémarrages inattendus (comptés
+#       par la garde b) et fonctionnement continu en heures.
 # @architecture_constraint L'écran est push-only (cf. docs/decisions/0001) : si
 #       les poussées s'arrêtent, l'écran se fige SILENCIEUSEMENT, sans erreur HA
 #       visible. Ces automations sont le filet de sécurité côté HA — il n'y a
@@ -15,6 +17,8 @@
 # @ai_warning Jamais de now() brut dans les templates (cf. l'en-tête
 #       de packages/tab5_push.yaml) : toute la détection repose sur les fenêtres
 #       `for:` des déclencheurs et sur trigger.from_state / trigger.to_state.
+#       La durée de fonctionnement continu lit l'instant de son déclencheur
+#       (trigger.now, trigger.to_state.last_updated), pas now().
 # @ai_instruction Les gardes notifient via le script tab5_health_notify
 #       (notification persistante + notify.notify) : un seul endroit à adapter.
 #       Chaque canal y porte continue_on_error: true : l'échec d'un canal
@@ -188,6 +192,13 @@ automation:
                or raison is match('First boot after install')
                or raison is match('Power button or RTC watchdog')
                or raison in ['software via esp_restart', 'USB peripheral']) }}
+      # Statistiques longues (lot K, 09/10/2026) : chaque redémarrage reconnu ici,
+      # demandé ou non, est compté par « Tab5 · redémarrages » et, s'il est inattendu
+      # (même classement que la notification), par « Tab5 · redémarrages inattendus »
+      # (fin de ce fichier). Avant la condition : un redémarrage demandé compte aussi.
+      - event: tab5_sante_redemarrage
+        event_data:
+          inattendu: "{{ 'non' if demande else 'oui' }}"
       - condition: template
         value_template: "{{ not demande }}"
       - action: script.tab5_health_notify
@@ -498,3 +509,82 @@ template:
         attributes:
           fichiers: "{{ states('sensor.tab5_version_des_fichiers_ha') }}"
           tablette: "{{ state_attr('sensor.tab5_tablette', 'version') or '' }}"
+
+  # ==========================================================================
+  # Statistiques longues de fiabilité (lot K, 09/10/2026)
+  # --------------------------------------------------------------------------
+  # Le recorder ne garde les états que quelques jours (purge_keep_days ; ≈ 7 chez
+  # l'auteur, audit du 30/09/2026) ; « Tab5 Uptime » est un horodatage et « Raison du
+  # redémarrage » un texte : ni l'un ni l'autre n'a de statistiques. Ces trois capteurs ont un state_class : HA en garde
+  # les statistiques longue durée (moyenne, min, max par heure ; somme d'un compteur)
+  # sans limite de temps. Lecture : Outils de développement → Statistiques, ou une
+  # carte « Graphique de statistiques ».
+  # --------------------------------------------------------------------------
+  # Compteurs : +1 à chaque événement tab5_sante_redemarrage, émis par la garde (b)
+  # (même détection, même classement « demandé / inattendu » que sa notification :
+  # aucune logique recopiée). Un retour de la tablette sans nouveau démarrage, le
+  # démarrage de HA ou l'arrivée de la tablette dans HA ne passent pas sa condition :
+  # ils ne comptent pas. Modèles à déclencheurs : HA restaure leur état à son
+  # redémarrage (doc de l'intégration Template), `this.state` repart de là ; au
+  # démarrage et au rechargement des modèles, +0 (un HA neuf affiche 0 tout de suite).
+  # Si l'état restauré manquait, le compteur repartirait de 0 : total_increasing lit
+  # une baisse comme une remise à zéro, la somme des statistiques continue de monter.
+  # Limite : un redémarrage de HA pendant l'attente de la raison (≤ 1 min) le perd.
+  - triggers:
+      - trigger: event
+        event_type: tab5_sante_redemarrage
+        id: redemarrage
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+    sensor:
+      - name: "Tab5 · redémarrages"
+        unique_id: tab5_redemarrages
+        default_entity_id: sensor.tab5_redemarrages
+        icon: mdi:restart
+        state_class: total_increasing
+        state: "{{ (this.state | int(0)) + (1 if trigger.id == 'redemarrage' else 0) }}"
+      - name: "Tab5 · redémarrages inattendus"
+        unique_id: tab5_redemarrages_inattendus
+        default_entity_id: sensor.tab5_redemarrages_inattendus
+        icon: mdi:restart-alert
+        state_class: total_increasing
+        state: >-
+          {{ (this.state | int(0))
+             + (1 if trigger.id == 'redemarrage' and trigger.event.data.inattendu == 'oui' else 0) }}
+
+  # Durée de fonctionnement continue, en heures : depuis le dernier démarrage de la
+  # tablette (miroir sensor.tab5_demarrage, tab5_reglages.yaml), recalculée toutes les
+  # 15 min (96 lignes par jour en base) et à chaque changement du démarrage. Le max
+  # d'une journée = la plus longue période sans redémarrage. Indisponible quand la
+  # tablette l'est (HA ne la voit plus, heure pas encore réglée) : pas de point faux
+  # dans les statistiques.
+  # Sans now() : l'instant est celui du déclencheur, `trigger.now` (time_pattern) ou
+  # `trigger.to_state.last_updated` (le démarrage ou son attribut `source` vient de
+  # changer : last_changed, lui, ne bouge pas pour un attribut) ; rien n'est passé
+  # à une action, le nombre arrondi seul est rendu. max(0, …) : le démarrage est
+  # arrondi à ±64 s (float 32 bits, garde (b)) et peut tomber après l'instant.
+  - triggers:
+      - trigger: time_pattern
+        minutes: "/15"
+        id: horloge
+      - trigger: state
+        entity_id: sensor.tab5_demarrage
+        id: demarrage
+    sensor:
+      - name: "Tab5 · fonctionnement continu"
+        unique_id: tab5_fonctionnement_continu
+        default_entity_id: sensor.tab5_fonctionnement_continu
+        icon: mdi:timer-outline
+        device_class: duration
+        state_class: measurement
+        unit_of_measurement: h
+        availability: "{{ as_timestamp(states('sensor.tab5_demarrage'), none) is not none }}"
+        state: >-
+          {%- set debut = as_timestamp(states('sensor.tab5_demarrage'), none) -%}
+          {%- set instant = trigger.now if trigger.id == 'horloge'
+              else (trigger.to_state.last_updated if trigger.to_state is not none else none) -%}
+          {%- if debut is none or instant is none -%}{{ none }}
+          {%- else -%}{{ ([0, (as_timestamp(instant) - debut) / 3600] | max) | round(2) }}
+          {%- endif -%}
