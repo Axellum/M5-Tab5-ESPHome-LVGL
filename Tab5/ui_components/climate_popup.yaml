@@ -5,8 +5,17 @@
 #       3 cartes de verre : MODE (Froid/Chaud/Sec/Ventil./Éteint), TEMPÉRATURE
 #       (arc 320 px + cible au centre + boutons ± + température pièce) et OPTIONS
 #       (presets Éco/Boost, Silence, flux d'air Oscillation/Brise).
-#       Ouvert en tapant la cible de la carte clim compacte (climate_card.yaml), par
-#       « Aller à l'écran → Climatisation », ou par une tuile cli (ADR-0023, ADR-0027).
+#       Ouvert en tapant la température de la pièce ou la cible de la carte clim compacte
+#       (climate_card.yaml), par « Aller à l'écran → Climatisation », ou par une tuile cli
+#       (ADR-0023, ADR-0027).
+#       CARROUSEL (ADR-0038, 09/10/2026) : une page par clim que la tablette connaît
+#       (clims_enumerer(), ecran/tab5_clim.cpp : celle du blueprint, puis celles des tuiles
+#       cli sans m). Glisser à gauche / à droite = clim suivante / précédente, en boucle,
+#       changement instantané ; pastilles en bas (clim_pastilles). Une page = ce popup
+#       entier, repeint pour cette clim (titre = son nom, boutons qu'elle n'a pas masqués) :
+#       pas de second popup. Une seule clim : ni pastilles ni glisse. Le geste s'arrête au
+#       popup (LV_OBJ_FLAG_GESTURE_BUBBLE retiré par clim_carrousel_preparer) ; l'arc glissé
+#       de côté reste un réglage de la consigne.
 # @architecture_constraint NON factorisable au-delà de ce qui l'est déjà (décision explicite,
 #                          #T164, ADR-0007) : chaque bouton restant envoie une commande
 #                          DIFFÉRENTE (oscillation / ventilation / eteindre) avec son geste
@@ -286,3 +295,35 @@ obj:
                     widgets:
                       - label: { id: popup_icon_clim_windnice, text: "\U000F059D", align: LEFT_MID, x: 20, text_font: mdi_font_45, styles: style_text_dim }
                       - label: { text: "Brise", align: LEFT_MID, x: 88, text_font: roboto_32_b }
+
+          # ═══ PASTILLES DU CARROUSEL (ADR-0038) : une par clim, celle affichée large ═══
+          # Comme celles de la carte centrale (16 × 4, la page courante 30 de large et
+          # opaque : pagination_afficher). Masquées sous deux clims ; au plus 8
+          # (kClimPastilles, ecran/tab5_clim.h). Sous les trois cartes : le contenu de la
+          # carte modale fait 686 px de haut (690 moins la bordure de 2), les cartes
+          # finissent à 670 ; les pastilles occupent 676-680, 6 px sous elles et au-dessus
+          # du bord.
+          - obj:
+              id: clim_pastilles
+              align: BOTTOM_MID
+              y: -6
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              hidden: true
+              styles: style_transparent
+              scrollable: false
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_main: CENTER
+                flex_align_cross: CENTER
+                pad_column: 8
+              widgets:
+                - obj: { id: clim_pastille_0, width: 30, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 100%, border_width: 0 }
+                - obj: { id: clim_pastille_1, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: clim_pastille_2, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: clim_pastille_3, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: clim_pastille_4, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: clim_pastille_5, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: clim_pastille_6, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: clim_pastille_7, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
