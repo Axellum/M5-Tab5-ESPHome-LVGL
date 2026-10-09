@@ -770,16 +770,12 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
     lv_label_set_recolor(lbl, false);
     RainPhrase& s = g_rain_phrase;
     s.lbl = lbl;
-    if (!phrase.empty() && phrase[0] == '@') {
+    // « @niveau,début », « @- » ou texte brut : pluie_phrase_lire() (tab5_parse.h, lot F).
+    const PluiePhrase lue = pluie_phrase_lire(phrase);
+    if (lue.code) {
         s.code = true;
-        if (phrase.size() >= 2 && phrase[1] == '-') {
-            s.niveau = -2;
-            s.debut = 0;
-        } else {
-            s.niveau = atoi(phrase.c_str() + 1);
-            const char* virgule = strchr(phrase.c_str(), ',');
-            s.debut = virgule ? strtoll(virgule + 1, nullptr, 10) : 0;
-        }
+        s.niveau = lue.niveau;
+        s.debut = lue.debut;
         rain_phrase_render();
         return;
     }

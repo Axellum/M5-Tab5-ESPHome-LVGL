@@ -167,18 +167,11 @@ void vigilance_rejouer() {
     if (!s_vigilance_payload.empty()) parse_and_update_vigilance(s_vigilance_payload, s_vigilance_ui);
 }
 
-// Intensité → couleur + hauteur (px) d'une barre. Deux écritures acceptées : le
-// libellé Météo-France (« Pluie faible » … « Pluie très forte »), ou un niveau
-// chiffré « 0 » à « 4 » (lot 4c, 27/09/2026) que les adaptateurs des autres
-// fournisseurs calculent côté HA à partir des mm/h. Tout autre texte vide la barre.
-static int rain_level(const std::string& intensite) {
-    if (intensite.size() == 1 && intensite[0] >= '0' && intensite[0] <= '4') return intensite[0] - '0';
-    if (intensite == "Pluie faible")     return 1;
-    if (intensite == "Pluie modérée")    return 2;
-    if (intensite == "Pluie forte")      return 3;
-    if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") return 4;
-    return 0;
-}
+// Intensité → niveau 0 à 4 : pluie_niveau() (Tab5/socle/tab5_parse.h, lot F). Deux
+// écritures acceptées : le libellé Météo-France (« Pluie faible » … « Pluie très
+// forte »), ou un niveau chiffré « 0 » à « 4 » (lot 4c, 27/09/2026) que les adaptateurs
+// des autres fournisseurs calculent côté HA à partir des mm/h. Tout autre texte vide la
+// barre. Niveau → couleur + hauteur (px) : ci-dessous.
 
 // Barres du bandeau central : palette UIBandeau.
 static void rain_level_style(int niveau, uint32_t& color, int& height) {
@@ -213,15 +206,13 @@ static bool rain_any_bar() {
     return false;
 }
 
-// Histogramme pluie 1 h : 9 barres de 5 min (rb_0_in … rb_8_in). intensite =
-// libellé Météo-France (« Pluie faible » … « Pluie très forte »), tout autre
-// texte vide la barre. Retourne true si au moins une barre est non vide — à
-// stocker dans has_rain.
-static bool update_rain_bar_ui(int idx, const std::string& intensite, lv_obj_t* const bars[9]) {
+// Histogramme pluie 1 h : 9 barres de 5 min (rb_0_in … rb_8_in). niveau =
+// pluie_niveau() de l'intensité reçue (0 : barre vide). Retourne true si au moins une
+// barre est non vide — à stocker dans has_rain.
+static bool update_rain_bar_ui(int idx, int niveau, lv_obj_t* const bars[9]) {
     if (idx >= 0 && idx < 9 && bars[idx] != nullptr) {
         uint32_t c;
         int h;
-        const int niveau = rain_level(intensite);
         rain_level_style(niveau, c, h);
         lv_obj_set_style_bg_color(bars[idx], lv_color_hex(c), LV_PART_MAIN);
         lv_obj_set_height(bars[idx], h);
@@ -248,17 +239,11 @@ void rain_bars_rejouer() {
 // Tampon fixe : un payload trop long est refusé en bloc (log WARN), les barres
 // restent en l'état. Retourne has_rain (au moins une barre non vide).
 bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9]) {
-    char buf[256];
-    if (payload_trop_long("tab5.rain", payload.size(), sizeof(buf) - 1)) return rain_any_bar();
-    strncpy(buf, payload.c_str(), sizeof(buf));
-    buf[sizeof(buf) - 1] = '\0';
-    char* save = nullptr;
-    for (char* rec = strtok_r(buf, ";", &save); rec != nullptr; rec = strtok_r(nullptr, ";", &save)) {
-        char* sep = strchr(rec, '|');
-        if (sep == nullptr) continue;
-        *sep = '\0';
-        update_rain_bar_ui(atoi(rec), std::string(sep + 1), bars);
-    }
+    if (payload_trop_long("tab5.rain", payload.size(), kPluieMax)) return rain_any_bar();
+    // Lecture : pluie_barres_lire() (tab5_parse.h, lot F), enregistrements dans l'ordre.
+    PluieBarre lues[kPluieBarresMax];
+    const int n = pluie_barres_lire(payload.c_str(), lues);
+    for (int i = 0; i < n; i++) update_rain_bar_ui(lues[i].idx, lues[i].niveau, bars);
     return rain_any_bar();
 }
 

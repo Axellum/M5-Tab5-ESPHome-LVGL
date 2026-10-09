@@ -20,6 +20,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 #include "tab5_champs.h"
 #include "tab5_core.h"
@@ -156,3 +157,32 @@ struct InfoCodeLu {
     const char* vigi;
 };
 void info_code_lire(const char* apres_prefixe, InfoCodeLu& out);
+
+// ─── 4. Pluie (tab5_maj_pluie_1h_bulk, phrase de la vigilance) ───
+// Niveau 0 à 4 d'une barre : « 0 » à « 4 » (adaptateurs des autres fournisseurs, lot 4c),
+// ou le libellé Météo-France (« Pluie faible » 1, « Pluie modérée » 2, « Pluie forte » 3,
+// « Pluie très forte » ou « Pluie trés forte » 4) ; tout autre texte : 0 (barre vide).
+int pluie_niveau(const std::string& intensite);
+
+// Barres « idx|intensité;idx|intensité;… » : 255 octets lus (l'appelant refuse au-delà).
+// Un enregistrement sans « | » est sauté, les autres sont rendus dans l'ordre, index par
+// atoi (hors de 0 à 8 compris : c'est l'écran qui les ignore). [figé] strtok_r : « ;; »
+// sauté. Au plus kPluieBarresMax enregistrements tiennent dans 255 octets (« |;|;… »).
+constexpr size_t kPluieMax = 255;
+constexpr int kPluieBarresMax = 128;
+struct PluieBarre {
+    int idx;
+    int niveau;
+};
+int pluie_barres_lire(const char* payload, PluieBarre out[kPluieBarresMax]);
+
+// Phrase pluie (1er champ de la vigilance, lot 4c) : « @niveau,début » (niveau -1 à 5 par
+// atoi, début = epoch UTC par strtoll après la première virgule, 0 sans virgule), « @- »
+// (aucune source : niveau -2, début 0), ou un texte sans « @ » montré tel quel
+// (code = false, niveau et début non lus).
+struct PluiePhrase {
+    bool code;
+    int niveau;
+    int64_t debut;
+};
+PluiePhrase pluie_phrase_lire(const std::string& phrase);

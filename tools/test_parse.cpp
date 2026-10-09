@@ -20,6 +20,7 @@
 #include "tab5_parse.h"
 
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -361,6 +362,77 @@ static void test_info_code() {
     expect(std::strlen(lu.titre) == 253, "info : copié dans 255 octets");
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 4. Pluie
+// ════════════════════════════════════════════════════════════════════════════
+
+static void test_pluie_niveau() {
+    expect(pluie_niveau("0") == 0 && pluie_niveau("3") == 3 && pluie_niveau("4") == 4, "pluie : chiffres 0 à 4");
+    expect(pluie_niveau("5") == 0 && pluie_niveau("-1") == 0 && pluie_niveau("12") == 0 && pluie_niveau("") == 0,
+           "pluie : autre chiffre ou vide = 0");
+    expect(pluie_niveau("Pluie faible") == 1 && pluie_niveau("Pluie modérée") == 2 && pluie_niveau("Pluie forte") == 3,
+           "pluie : libellés Météo-France");
+    expect(pluie_niveau("Pluie très forte") == 4 && pluie_niveau("Pluie trés forte") == 4,
+           "pluie : « très forte », et la faute d'accent de Météo-France");
+    expect(pluie_niveau("Temps sec") == 0 && pluie_niveau("pluie faible") == 0 && pluie_niveau("Pluie faible ") == 0,
+           "pluie : comparaison exacte");
+}
+
+static void test_pluie_barres() {
+    PluieBarre b[kPluieBarresMax];
+    int n = pluie_barres_lire("0|Temps sec;1|Pluie faible;2|Pluie modérée;8|4", b);
+    expect(n == 4 && b[0].idx == 0 && b[0].niveau == 0 && b[1].niveau == 1 && b[2].niveau == 2 && b[3].idx == 8 &&
+               b[3].niveau == 4,
+           "pluie : barres dans l'ordre");
+
+    n = pluie_barres_lire(";;3;4|2;9|1;-1|3;x|4;5|", b);
+    expect(n == 5 && b[0].idx == 4 && b[1].idx == 9 && b[2].idx == -1 && b[3].idx == 0 && b[4].idx == 5 &&
+               b[4].niveau == 0,
+           "pluie [figé] : sans « | » sauté, index par atoi (hors bornes rendus, « x » = 0), intensité vide = 0");
+
+    n = pluie_barres_lire("1|a|b", b);
+    expect(n == 1 && b[0].niveau == 0, "pluie : intensité = tout après le premier « | »");
+
+    n = pluie_barres_lire("", b);
+    expect(n == 0, "pluie : payload vide");
+
+    std::string plein;
+    for (int i = 0; i < 128; i++) plein += (i ? ";|" : "|");
+    expect(plein.size() == 255 && pluie_barres_lire(plein.c_str(), b) == kPluieBarresMax,
+           "pluie : 128 enregistrements tiennent dans 255 octets");
+
+    std::string longue(kPluieMax, ';');
+    longue += "1|4";
+    n = pluie_barres_lire(longue.c_str(), b);
+    expect(n == 0, "pluie : au-delà de 255 octets, ignoré");
+}
+
+static void test_pluie_phrase() {
+    PluiePhrase p = pluie_phrase_lire("@2,1790000000");
+    expect(p.code && p.niveau == 2 && p.debut == 1790000000, "phrase : niveau et début");
+    p = pluie_phrase_lire("@0,0");
+    expect(p.code && p.niveau == 0 && p.debut == 0, "phrase : temps sec");
+    p = pluie_phrase_lire("@-");
+    expect(p.code && p.niveau == -2 && p.debut == 0, "phrase : aucune source");
+    // HA envoie « @-1,0 » quand il n'a pas de données (packages/tab5_meteo_sources.yaml,
+    // tab5_push.yaml) : la tablette le lit comme « @- » (aucune source, phrase vide) et
+    // n'affiche jamais « Pas de données ». Signalé avec le lot F, pas corrigé ici.
+    p = pluie_phrase_lire("@-1,0");
+    expect(p.code && p.niveau == -2 && p.debut == 0, "phrase [figé] : « @-1,0 » lu comme « @- » (aucune source)");
+    p = pluie_phrase_lire("@3");
+    expect(p.code && p.niveau == 3 && p.debut == 0, "phrase : sans virgule, début 0");
+    p = pluie_phrase_lire("@x,y");
+    expect(p.code && p.niveau == 0 && p.debut == 0, "phrase [figé] : illisible = 0");
+    p = pluie_phrase_lire("@1,99999999999999999999999");
+    expect(p.code && p.debut == INT64_MAX, "phrase : début saturé par strtoll");
+    p = pluie_phrase_lire("@");
+    expect(p.code && p.niveau == 0 && p.debut == 0, "phrase : « @ » seul");
+    p = pluie_phrase_lire("Averses dans 12 mn");
+    expect(!p.code, "phrase : texte sans « @ »");
+    p = pluie_phrase_lire("");
+    expect(!p.code, "phrase : vide");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -373,6 +445,9 @@ int main() {
     test_alerte_texte();
     test_alertes_historique();
     test_info_code();
+    test_pluie_niveau();
+    test_pluie_barres();
+    test_pluie_phrase();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

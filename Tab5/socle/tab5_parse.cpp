@@ -196,3 +196,47 @@ void info_code_lire(const char* apres_prefixe, InfoCodeLu& out) {
     out.jaune = atoi(champ(4)) != 0;
     out.vigi = champ(5);
 }
+
+// ─── 4. Pluie ───
+// Avant : rain_level() et la boucle d'update_rain_bars_bulk_ui() (tab5_services.cpp), le
+// décodage d'update_rain_phrase_ui() (tab5_central.cpp).
+
+int pluie_niveau(const std::string& intensite) {
+    if (intensite.size() == 1 && intensite[0] >= '0' && intensite[0] <= '4') return intensite[0] - '0';
+    if (intensite == "Pluie faible") return 1;
+    if (intensite == "Pluie modérée") return 2;
+    if (intensite == "Pluie forte") return 3;
+    if (intensite == "Pluie très forte" || intensite == "Pluie trés forte") return 4;
+    return 0;
+}
+
+int pluie_barres_lire(const char* payload, PluieBarre out[kPluieBarresMax]) {
+    char buf[kPluieMax + 1];
+    strncpy(buf, payload, sizeof(buf));
+    buf[sizeof(buf) - 1] = '\0';
+    int n = 0;
+    char* save = nullptr;
+    for (char* rec = strtok_r(buf, ";", &save); rec != nullptr && n < kPluieBarresMax;
+         rec = strtok_r(nullptr, ";", &save)) {
+        char* sep = strchr(rec, '|');
+        if (sep == nullptr) continue;
+        *sep = '\0';
+        out[n++] = PluieBarre{atoi(rec), pluie_niveau(std::string(sep + 1))};
+    }
+    return n;
+}
+
+PluiePhrase pluie_phrase_lire(const std::string& phrase) {
+    PluiePhrase p{false, 0, 0};
+    if (phrase.empty() || phrase[0] != '@') return p;
+    p.code = true;
+    if (phrase.size() >= 2 && phrase[1] == '-') {
+        p.niveau = -2;
+        p.debut = 0;
+    } else {
+        p.niveau = atoi(phrase.c_str() + 1);
+        const char* virgule = strchr(phrase.c_str(), ',');
+        p.debut = virgule ? strtoll(virgule + 1, nullptr, 10) : 0;
+    }
+    return p;
+}

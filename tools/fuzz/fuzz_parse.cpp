@@ -40,6 +40,8 @@ void jours(const std::string& p) { previsions_jours_lire(p.c_str(), cal_jours_da
 void vigilance(const std::string& p) {
     VigilanceLue v;
     vigilance_lire(p.c_str(), v);
+    // Le premier champ est la phrase pluie (update_rain_phrase_ui, tab5_central.cpp).
+    pluie_phrase_lire(std::string(v.champs[0]));
     vigilance_niveau(v.champs[1]);
     VigilanceActive a[kVigilanceActivesMax];
     const int n = vigilance_actives(v, a);
@@ -64,6 +66,12 @@ void historique(const std::string& p) {
     }
 }
 
+void pluie(const std::string& p) {
+    PluieBarre b[kPluieBarresMax];
+    pluie_barres_lire(p.c_str(), b);
+    pluie_niveau(p);
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -79,6 +87,7 @@ constexpr Parseur kParseurs[] = {
     alertes_ha,  // '3' tab5_maj_alertes_ha_bulk
     historique,  // '4' tab5_maj_alertes_historique
     info,        // '5' tab5_maj_info_texte
+    pluie,       // '6' tab5_maj_pluie_1h_bulk
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 
