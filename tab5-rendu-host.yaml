@@ -78,6 +78,7 @@ esphome:
     - Tab5/ecran/tab5_historique.h
     - Tab5/ecran/tab5_alertes.h
     - Tab5/ecran/tab5_maison.h
+    - Tab5/ecran/tab5_piece_climat.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_custom.cpp
     - Tab5/ecran/tab5_internal.h
@@ -110,6 +111,7 @@ esphome:
     - Tab5/ecran/tab5_batterie.cpp
     - Tab5/ecran/tab5_alertes.cpp
     - Tab5/ecran/tab5_maison.cpp
+    - Tab5/ecran/tab5_piece_climat.cpp
     - Tab5/jeux/game_common.h
     - Tab5/jeux/marble_game.h
     - Tab5/jeux/marble_game.cpp

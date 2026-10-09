@@ -2479,6 +2479,10 @@ void theme_rejouer_ui() {
     // Roue d'actions rapides ouverte (ADR-0036) : repeinte sur place, pas refermée.
     roue_rejouer_theme();
     cartes_rejouer_theme();
+    // Après les cartes, qui rejouent la dernière température écrite sur chaque label : la
+    // zone des températures (salon et serre, ou la pièce en mode HA, ADR-0040), icônes
+    // teintées par l'humidité comprises.
+    accueil_temperatures_ui();
     energie_rejouer_theme();
     reglages_rejouer_theme();
     historique_rejouer_theme();

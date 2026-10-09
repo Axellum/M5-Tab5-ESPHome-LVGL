@@ -366,6 +366,23 @@ void clim_tuile_oublier(int r, int t);
 // tab5_clim.cpp, réglages d'une clim de tuile reçus : repeindre la tuile (son bouton
 // apparaît, ADR-0027).
 void tuiles_repeindre(int r, int t);
+// Clim de la pièce R (ADR-0040, clés crpR / cepR, emplacement des commandes « cpR »).
+// La tablette a-t-elle ses réglages ? (tab5_piece_climat.cpp : la tuile − / + la règle).
+bool clim_piece_connue(int r);
+// tab5_reglables.cpp, toucher de la consigne de la tuile − / + : le popup montre cette
+// clim. Faux, et rien ne change, sans ses réglages.
+bool clim_afficher_piece(int r);
+// tab5_reglables.cpp, − / + : un pas de plus (sens > 0) ou de moins, borné ; affichage
+// tout de suite, envoi par tab5_debounce_clim_tuile. Consigne inconnue : rien.
+void clim_piece_pas(int r, int sens);
+// tab5_piece_climat.cpp : la pièce n'a plus de clim — réglages et état oubliés, popup
+// refermé s'il la montrait, consigne en attente annulée.
+void clim_piece_oublier(int r);
+// tab5_reglables.cpp, la tuile − / + : consigne écrite comme sur la carte (« 21.5 »,
+// « -- ») et sa couleur ; renvoie la couleur de l'icône (comme clim_carte_valeur).
+uint32_t clim_piece_carte(int r, char* buf, size_t n, uint32_t& couleur_valeur);
+// tab5_tuiles.cpp : la pièce affichée en mode HA (ADR-0023), -1 hors du mode HA.
+int tuiles_piece_mode_ha();
 
 // --- tab5_central.cpp, pour les pièces ---
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de

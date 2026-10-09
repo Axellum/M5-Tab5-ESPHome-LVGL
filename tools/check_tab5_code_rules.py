@@ -367,7 +367,9 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_roue.cpp", "glyphe_roue"): ("roue_bouton_*_icone", "roue_choix_*_icone"),
     ("tab5_services.cpp", "parse_and_update_vigilance"): ("alerte_slot_*",),
     ("tab5_services.cpp", "update_rain_predict_icon_ui"): ("icon_rain_predict",),
-    ("tab5_zones.cpp", "zones_apply_ui"): ("icon_serre",),
+    # Zone des températures de l'accueil (ADR-0040) : canapé / thermomètre de la pièce à
+    # gauche, serre / manette / goutte de la pièce à droite.
+    ("tab5_piece_climat.cpp", "accueil_temperatures_ui"): ("icon_salon", "icon_serre"),
     # Batterie de la tablette dans le bandeau d'état (04/10/2026) et sur la ligne
     # « Batterie » de la console système (06/10/2026, mdi_font_32).
     ("tab5_zones.cpp", "batterie_glyphe"): ("icon_batterie", "lbl_sys_batterie_icone"),

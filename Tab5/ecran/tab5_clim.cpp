@@ -2,7 +2,9 @@
  * [AI-CONTEXT]
  * @file tab5_clim.cpp
  * @role Clim (ADR-0026, ADR-0027) : cible optimiste et retour de HA, réglages venus de
- *       l'appareil — clé « climr » —, clims des tuiles — clés « crRT » et « ceRT » — et clim
+ *       l'appareil — clé « climr » —, clims des tuiles — clés « crRT » et « ceRT » —, clims
+ *       des pièces — « crpR » et « cepR », ADR-0040, réglées par la tuile − / + quand la
+ *       zone des températures montre la pièce — et clim
  *       affichée par le popup, carte de l'accueil, coloration (clim_recolorer) et ce que la
  *       roue d'actions rapides en lit (clim_capacites_connues, clim_roue_*). Sortie de
  *       tab5_cards.cpp le 08/10/2026 (lot L7 de l'audit du 07/10/2026), lignes identiques ;
@@ -12,15 +14,17 @@
  * @architecture_constraint Deux clims ne se mélangent jamais. La carte de l'accueil montre
  *       la clim du blueprint (ses globals clim_*, que tab5_maj_clim écrit) ; le popup
  *       montre la « clim affichée » (s_vue) : celle du blueprint, ou une clim de tuile
- *       (table s_ct, en PSRAM). Un retour de HA pour l'une ne touche jamais les widgets
- *       de l'autre ; les gestes du popup écrivent l'état de la clim affichée et partent à
- *       son emplacement (« clim » ou « tRT »).
+ *       (table s_ct, en PSRAM), ou de pièce (mêmes cases, après celles des tuiles). Un
+ *       retour de HA pour l'une ne touche jamais les widgets de l'autre ; les gestes du
+ *       popup écrivent l'état de la clim affichée et partent à son emplacement (« clim »,
+ *       « tRT » ou « cpR »).
  * @regle_absolue Seul point de contact avec l'API LVGL, comme avant : les YAML
  *                n'appellent que des helpers déclarés dans tab5_custom.h. Les
  *                helpers partagés entre unités sont déclarés dans tab5_internal.h.
  * @memory_constraint Pas de std::string dans une boucle de parsing : découper un char* en place.
  *       `split_fields()` (tab5_core.h) garde les champs vides ; `strtok_r` les fusionne.
- *       Les clims des tuiles : 25 cases en PSRAM, allouées à la première clé cr/ce.
+ *       Les clims des tuiles et des pièces : 30 cases en PSRAM, allouées à la première clé
+ *       cr/ce.
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"
@@ -102,26 +106,36 @@ struct ClimTuile {
     ClimEtat etat;
 };
 
-// 25 cases (≈ 4,5 Ko) en PSRAM, allouées à la première clé cr/ce : rien tant qu'aucune
-// tuile n'a sa clim, rien en RAM interne. Pas d'EXT_RAM_BSS_ATTR : ces cases ont des
-// valeurs initiales (constructeurs), et une BSS externe n'en garde aucune.
-ClimTuile* s_ct = nullptr;
-// Clim affichée par le popup : case r * kTuiles + t d'une tuile ; -1 = celle du blueprint.
-int s_vue = -1;
-char s_vue_cle[4] = "";  // « tRT » de la tuile affichée
+// Clims des pièces (ADR-0040) : la clim déclarée dans la section « Pièce R » du blueprint,
+// clés « crpR » / « cepR » (mêmes champs que crRT / ceRT), réglée par la tuile − / + quand
+// la zone des températures montre la pièce. Cinq cases de plus après celles des tuiles ;
+// emplacement de ses commandes « cpR » (« pR » est déjà « Pièce : tout éteindre »).
+constexpr char kPrefixePiece = 'p';
+constexpr int kCasesTuiles = kPieces * kTuiles;
+constexpr int kCases = kCasesTuiles + kPieces;
 
-// Consigne d'une clim de tuile en attente de son débounce : clé et valeur prises au geste.
+// 30 cases (≈ 5,4 Ko) en PSRAM, allouées à la première clé cr/ce : rien tant qu'aucune
+// tuile ni aucune pièce n'a sa clim, rien en RAM interne. Pas d'EXT_RAM_BSS_ATTR : ces
+// cases ont des valeurs initiales (constructeurs), et une BSS externe n'en garde aucune.
+ClimTuile* s_ct = nullptr;
+// Clim affichée par le popup : case r * kTuiles + t d'une tuile, kCasesTuiles + r d'une
+// pièce ; -1 = celle du blueprint.
+int s_vue = -1;
+char s_vue_cle[4] = "";  // « tRT » de la tuile affichée, « cpR » de la pièce
+
+// Consigne d'une clim de tuile ou de pièce en attente de son débounce : clé et valeur
+// prises au geste.
 struct Attente {
     char cle[4] = "";
     float valeur = NAN;
 };
 Attente s_attente;
 
-ClimTuile* tuile_clim(int r, int t, bool creer) {
-    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return nullptr;
+ClimTuile* case_clim(int i, bool creer) {
+    if (i < 0 || i >= kCases) return nullptr;
     if (s_ct == nullptr) {
         if (!creer) return nullptr;
-        const size_t octets = sizeof(ClimTuile) * kPieces * kTuiles;
+        const size_t octets = sizeof(ClimTuile) * kCases;
         void* p = heap_caps_malloc(octets, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
         if (p == nullptr) p = heap_caps_malloc(octets, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
         if (p == nullptr) {
@@ -129,12 +143,25 @@ ClimTuile* tuile_clim(int r, int t, bool creer) {
             return nullptr;
         }
         ClimTuile* table = static_cast<ClimTuile*>(p);
-        for (int i = 0; i < kPieces * kTuiles; i++) new (&table[i]) ClimTuile();
+        for (int k = 0; k < kCases; k++) new (&table[k]) ClimTuile();
         s_ct = table;
         ESP_LOGI("tab5.clim", "Clims des tuiles : %u octets", static_cast<unsigned>(octets));
     }
-    return &s_ct[r * kTuiles + t];
+    return &s_ct[i];
 }
+
+ClimTuile* tuile_clim(int r, int t, bool creer) {
+    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return nullptr;
+    return case_clim(r * kTuiles + t, creer);
+}
+
+ClimTuile* piece_clim(int r, bool creer) {
+    if (r < 0 || r >= kPieces) return nullptr;
+    return case_clim(kCasesTuiles + r, creer);
+}
+
+// Emplacement des commandes de la clim de la pièce R : « cpR » (modele_ha::clim_piece_cle).
+void cle_piece(int r, char out[4]) { std::memcpy(out, modele_ha::clim_piece_cle(r).s, 4); }
 
 bool vue_tuile() { return s_vue >= 0 && s_ct != nullptr; }
 const ClimReglages& vue_reglages() { return vue_tuile() ? s_ct[s_vue].reglages : s_clim; }
@@ -423,6 +450,15 @@ uint32_t couleur_consigne(const std::string& mode) {
     return UIColor.TEXT_PRIMARY;
 }
 
+// Icône d'une clim sur la tuile − / + et dans sa liste : la couleur de la consigne en
+// froid ou en chaud, discrète éteinte, grisée hors ligne, verte dans un autre mode.
+uint32_t couleur_icone_carte(const std::string& mode) {
+    if (mode == "cool" || mode == "heat") return couleur_consigne(mode);
+    if (mode == "off") return UIColor.TEXT_DIM;
+    if (mode == "unavailable" || mode == "unknown") return UIColor.INACTIVE;
+    return UIColor.SUCCESS;
+}
+
 }  // namespace
 
 ClimUI g_clim_ui;
@@ -451,24 +487,33 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
     const bool reglages = std::strncmp(cle, kCleReglagesTuile, 2) == 0;
     const bool etat = std::strncmp(cle, kCleEtatTuile, 2) == 0;
     if (!reglages && !etat) return false;
-    if (cle[2] < '0' || cle[2] > '4' || cle[3] < '0' || cle[3] > '4') return false;
-    const int r = cle[2] - '0', t = cle[3] - '0';
-    ClimTuile* c = tuile_clim(r, t, true);
-    if (c == nullptr) return true;  // pas de mémoire : ignorée (journal de tuile_clim)
+    // « crpR » / « cepR » : la clim de la pièce R (ADR-0040) ; « crRT » / « ceRT » : celle
+    // de la tuile tRT. Un firmware d'avant l'ADR-0040 ignore « p » (chiffre attendu).
+    const bool piece = cle[2] == kPrefixePiece;
+    if (piece ? (cle[3] < '0' || cle[3] > '4') : (cle[2] < '0' || cle[2] > '4' || cle[3] < '0' || cle[3] > '4'))
+        return false;
+    const int r = piece ? cle[3] - '0' : cle[2] - '0';
+    const int t = piece ? -1 : cle[3] - '0';
+    const int i = piece ? kCasesTuiles + r : r * kTuiles + t;
+    ClimTuile* c = case_clim(i, true);
+    if (c == nullptr) return true;  // pas de mémoire : ignorée (journal de case_clim)
     vue_verifier();
-    const bool affichee = vue_tuile() && s_vue == r * kTuiles + t;
+    const bool affichee = vue_tuile() && s_vue == i;
     if (reglages) {
         // Défauts de la 3.2 pour une clim encore inconnue, ses derniers réglages sinon.
         ClimReglages lu = c->reglages.recu ? c->reglages : ClimReglages{};
         const int k = lire_reglages(reste, n_reste, lu);
         if (k < 5) {
-            ESP_LOGW("tab5.clim", "Reglages de la clim t%d%d illisibles (%d champs) : ignores", r, t, k);
+            ESP_LOGW("tab5.clim", "Reglages de la clim %.4s illisibles (%d champs) : ignores", cle, k);
             return true;
         }
         c->reglages = lu;
-        ESP_LOGI("tab5.clim", "Reglages de la clim t%d%d : %.1f-%.1f, pas %.2f, %s, [%s]", r, t,
+        ESP_LOGI("tab5.clim", "Reglages de la clim %.4s : %.1f-%.1f, pas %.2f, %s, [%s]", cle,
                  lu.min, lu.max, lu.pas, lu.fahrenheit ? "F" : "C", lu.capacites);
-        tuiles_repeindre(r, t);  // son bouton apparaît : l'appui ouvre le popup
+        // Tuile : son bouton apparaît (l'appui ouvre le popup). Pièce : la tuile − / + peut
+        // la régler.
+        if (piece) reglables_clim_changee();
+        else tuiles_repeindre(r, t);
         if (affichee) popup_peindre();
         return true;
     }
@@ -478,6 +523,7 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
         popup_piece_ui(c->etat.piece);
         clim_recolorer();
     }
+    if (piece) reglables_clim_changee();  // sa consigne sur la tuile − / +
     return true;
 }
 
@@ -510,6 +556,57 @@ void clim_tuile_oublier(int r, int t) {
     if (popup_visible()) animate_popup_close(g_clim_ui.popup);
     s_vue = -1;
     popup_peindre();
+}
+
+bool clim_piece_connue(int r) {
+    const ClimTuile* c = piece_clim(r, false);
+    return c != nullptr && c->reglages.recu;
+}
+
+bool clim_afficher_piece(int r) {
+    if (!clim_piece_connue(r)) return false;
+    s_vue = kCasesTuiles + r;
+    cle_piece(r, s_vue_cle);
+    popup_peindre();
+    return true;
+}
+
+void clim_piece_pas(int r, int sens) {
+    ClimTuile* c = piece_clim(r, false);
+    if (c == nullptr || !c->reglages.recu || std::isnan(c->etat.consigne)) return;  // inconnue : rien
+    const float v = consigne_suivante(c->reglages, c->etat.consigne, sens);
+    c->etat.consigne = v;
+    // Même chemin que le popup sur une clim de tuile : clé et valeur gardées pour
+    // tab5_debounce_clim_tuile, qui envoie « cpR » / consigne 250 ms après le dernier appui.
+    cle_piece(r, s_attente.cle);
+    s_attente.valeur = v;
+    if (vue_tuile() && s_vue == kCasesTuiles + r) popup_consigne_ui(v, false);
+    if (g_clim_ui.debounce_tuile != nullptr) g_clim_ui.debounce_tuile();
+    reglables_clim_changee();
+}
+
+void clim_piece_oublier(int r) {
+    ClimTuile* c = piece_clim(r, false);
+    if (c == nullptr) return;
+    *c = ClimTuile();
+    char cle[4];
+    cle_piece(r, cle);
+    // Une consigne en attente irait à une clim que la pièce n'a plus : elle ne part pas.
+    if (std::strcmp(s_attente.cle, cle) == 0) s_attente = Attente{};
+    if (s_vue != kCasesTuiles + r) return;
+    if (popup_visible()) animate_popup_close(g_clim_ui.popup);
+    s_vue = -1;
+    popup_peindre();
+}
+
+uint32_t clim_piece_carte(int r, char* buf, size_t n, uint32_t& couleur_valeur) {
+    const ClimTuile* c = piece_clim(r, false);
+    static const std::string kSansMode;
+    const ClimReglages& g = c != nullptr ? c->reglages : s_clim;
+    clim_format_consigne(g, buf, n, c != nullptr ? c->etat.consigne : NAN);
+    const std::string& mode = c != nullptr ? c->etat.mode : kSansMode;
+    couleur_valeur = couleur_consigne(mode);
+    return couleur_icone_carte(mode);
 }
 
 const char* clim_affichee_cle() {
@@ -632,10 +729,7 @@ uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur) {
     static const std::string kSansMode;
     const std::string& mode = g_clim_ui.mode_bp != nullptr ? *g_clim_ui.mode_bp : kSansMode;
     couleur_valeur = couleur_consigne(mode);
-    if (mode == "cool" || mode == "heat") return couleur_valeur;
-    if (mode == "off") return UIColor.TEXT_DIM;
-    if (mode == "unavailable" || mode == "unknown") return UIColor.INACTIVE;
-    return UIColor.SUCCESS;
+    return couleur_icone_carte(mode);
 }
 
 void clim_recolorer() {
