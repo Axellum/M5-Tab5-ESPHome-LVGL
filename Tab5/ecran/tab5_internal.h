@@ -531,6 +531,8 @@ void rangee_rejouer_theme();
 void cartes_rejouer_theme();
 void energie_rejouer_theme();
 void reglages_rejouer_theme();
+// Popup du réveil (alarm_render.cpp) : noms des pages et réglages, depuis le dernier état.
+void reveil_rejouer_theme();
 // Batterie de la tablette (tab5_zones.cpp), lue par la page Batterie des Réglages
 // (tab5_reglages.cpp, 08/10/2026) : dernier niveau publié (%, NAN inconnu) et dernier
 // état de CHG_STAT, ceux de l'icône du bandeau.

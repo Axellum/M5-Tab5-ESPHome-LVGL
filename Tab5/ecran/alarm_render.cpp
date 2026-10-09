@@ -187,9 +187,30 @@ int reveil_rouleau_valeur(int quoi, int index) {
     return rouleau_valeur(d.bas, d.haut, d.pas, s_extra[quoi], index);
 }
 
+// Dernier état peint (repris par reveil_rejouer_theme).
+namespace {
+struct DernierReveil {
+    time_t now = 0;
+    bool crescendo = false;
+    bool tts_on = false;
+    bool rdv_on = false;
+} s_dernier;
+}  // namespace
+
+// Changement de thème (theme_rejouer_ui, tab5_theme.cpp) : les couleurs posées ici
+// (nom de la page affichée et option active en accent, texte des autres, bascule,
+// phrases) reprennent la palette active, popup ouvert ou non. Vu au rendu du 09/10/2026 :
+// sans cet appel, les noms des pages gardaient les couleurs du thème d'avant.
+void reveil_rejouer_theme() {
+    if (g_reveil_ui.popup == nullptr) return;
+    choix_peindre(g_reveil_ui.onglet, REVEIL_NB_PAGES, s_pages.courante);
+    alarm_render_settings(s_dernier.now, s_dernier.crescendo, s_dernier.tts_on, s_dernier.rdv_on);
+}
+
 void alarm_render_settings(time_t now, bool crescendo, bool tts_on, bool rdv_on) {
     const ReveilUI& u = g_reveil_ui;
     if (u.popup == nullptr) return;  // jamais ouvert : rien à peindre
+    s_dernier = {now, crescendo, tts_on, rdv_on};
     const AlarmCfg& c = g_alarm_cfg;
     char buf[96];
 
