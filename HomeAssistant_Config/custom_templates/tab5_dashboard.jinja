@@ -85,6 +85,8 @@
   ('economie', 'select', 'tab5_economie_d_energie'), ('sur_batterie', 'binary_sensor', 'tab5_sur_batterie'),
   ('courant', 'sensor', 'tab5_courant_batterie'),
   ('limite_charge', 'select', 'tab5_limite_de_charge'), ('consommation', 'sensor', 'tab5_consommation'),
+  ('mode_charge', 'select', 'tab5_mode_de_charge'), ('wifi_eco', 'select', 'tab5_wi_fi_eco'),
+  ('animations', 'select', 'tab5_animations'),
   ('mesure_conso', 'switch', 'tab5_mesure_de_consommation'),
   ('dac', 'select', 'tab5_dac_output'), ('antenne', 'select', 'wifi_antenna'),
   ('zones', 'sensor', 'zones_masquees'),
@@ -741,6 +743,20 @@ views:
             heading: "{{ t('Luminosité plafonnée à 50 %, au plus bas après 30 s sans toucher ou sous 35 % de batterie ; sans animation', 'Brightness capped at 50%, lowest after 30 s without a touch or below 35% battery; no animation') }}"
             heading_style: subtitle
 {%- endif %}
+{#- Animations (firmware du 09/10/2026, ADR-0045) : l'économie d'énergie active les coupe toutes. #}
+{%- if T.animations %}
+          - type: tile
+            entity: {{ T.animations }}
+            name: "{{ t('Animations', 'Animations') }}"
+            icon: mdi:animation-play
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+          - type: heading
+            heading: "{{ t('Essentielles : seule la carte du centre tourne ; Aucune : tout est instantané', 'Essentielles: only the centre card turns; Aucune: everything is instant') }}"
+            heading_style: subtitle
+{%- endif %}
 {#- Limite de charge (firmware du 08/10/2026) : « 100 % » ou « 80 % », pour une tablette toujours branchée. #}
 {%- if T.limite_charge %}
           - type: tile
@@ -753,6 +769,33 @@ views:
                 style: dropdown
           - type: heading
             heading: "{{ t('80 % : la charge s’arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée', '80%: charging stops at 80% and resumes at 70%, for a tablet that stays plugged in') }}"
+            heading_style: subtitle
+{%- endif %}
+{#- Mode de charge et Wi-Fi éco (firmware du 09/10/2026, ADR-0045). #}
+{%- if T.mode_charge %}
+          - type: tile
+            entity: {{ T.mode_charge }}
+            name: "{{ t('Mode de charge', 'Charging mode') }}"
+            icon: mdi:battery-charging-high
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+          - type: heading
+            heading: "{{ t('Rapide : la charge rapide du chargeur, seulement quand il est allumé', 'Rapide: the charger’s quick charge, only while it is on') }}"
+            heading_style: subtitle
+{%- endif %}
+{%- if T.wifi_eco %}
+          - type: tile
+            entity: {{ T.wifi_eco }}
+            name: "{{ t('Wi-Fi éco', 'Eco Wi-Fi') }}"
+            icon: mdi:wifi-cog
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+          - type: heading
+            heading: "{{ t('Le Wi-Fi somnole entre deux balises : réponses parfois plus lentes ; jamais pendant la voix, un son ou une mise à jour', 'Wi-Fi dozes between beacons: answers may come later; never during voice, sound or an update') }}"
             heading_style: subtitle
 {%- endif %}
 {%- if T.theme_nuit %}
@@ -2147,6 +2190,42 @@ views:
     'es': '80 %: la carga se detiene al 80 % y se reanuda al 70 %, para una tableta siempre enchufada',
     'it': '80 %: la carica si ferma all’80 % e riprende al 70 %, per un tablet sempre collegato',
     'tr': '%80: şarj %80’de durur ve %70’te yeniden başlar; sürekli takılı bir tablet için'},
+  'Animations': {
+    'de': 'Animationen',
+    'nl': 'Animaties',
+    'es': 'Animaciones',
+    'it': 'Animazioni',
+    'tr': 'Animasyonlar'},
+  'Essentielles : seule la carte du centre tourne ; Aucune : tout est instantané': {
+    'de': 'Essentielles: nur die mittlere Karte dreht sich; Aucune: alles sofort',
+    'nl': 'Essentielles: alleen de middelste kaart draait; Aucune: alles direct',
+    'es': 'Essentielles: solo gira la tarjeta central; Aucune: todo es instantáneo',
+    'it': 'Essentielles: ruota solo la scheda centrale; Aucune: tutto è istantaneo',
+    'tr': 'Essentielles: yalnızca ortadaki kart döner; Aucune: her şey anında'},
+  'Mode de charge': {
+    'de': 'Lademodus',
+    'nl': 'Laadmodus',
+    'es': 'Modo de carga',
+    'it': 'Modalità di carica',
+    'tr': 'Şarj modu'},
+  'Rapide : la charge rapide du chargeur, seulement quand il est allumé': {
+    'de': 'Rapide: die Schnellladung des Ladegeräts, nur wenn es eingeschaltet ist',
+    'nl': 'Rapide: het snelladen van de lader, alleen als die aan staat',
+    'es': 'Rapide: la carga rápida del cargador, solo cuando está encendido',
+    'it': 'Rapide: la carica rapida del caricatore, solo quando è acceso',
+    'tr': 'Rapide: şarj cihazının hızlı şarjı, yalnızca açıkken'},
+  'Wi-Fi éco': {
+    'de': 'WLAN sparen',
+    'nl': 'Zuinige wifi',
+    'es': 'Wi-Fi eco',
+    'it': 'Wi-Fi eco',
+    'tr': 'Eko Wi-Fi'},
+  'Le Wi-Fi somnole entre deux balises : réponses parfois plus lentes ; jamais pendant la voix, un son ou une mise à jour': {
+    'de': 'Das WLAN döst zwischen zwei Beacons: Antworten manchmal langsamer; nie bei Sprache, Ton oder einem Update',
+    'nl': 'De wifi sluimert tussen twee beacons: antwoorden soms trager; nooit tijdens spraak, geluid of een update',
+    'es': 'El Wi-Fi dormita entre dos balizas: respuestas a veces más lentas; nunca durante la voz, un sonido o una actualización',
+    'it': 'Il Wi-Fi sonnecchia tra due beacon: risposte a volte più lente; mai durante la voce, un suono o un aggiornamento',
+    'tr': 'Wi-Fi iki işaret arasında uyur: yanıtlar bazen daha yavaş; ses, konuşma veya güncelleme sırasında asla'},
   'Nuit (thème auto)': {
     'de': 'Nacht (Auto-Design)',
     'nl': 'Nacht (auto-thema)',

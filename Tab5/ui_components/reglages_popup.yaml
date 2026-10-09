@@ -8,10 +8,13 @@
 #         - « Écran » : luminosité (curseur), extinction auto (6 choix), rallumer l'écran
 #           à « Okay Nabu », rallumer l'écran d'une tape (Oui / Non) ;
 #         - « Apparence » : thème (précédent / suivant), clair ou sombre (3), nuit du
-#           mode Auto (Oui / Non), langue (une pastille par langue) ;
-#         - « Batterie » : limite de charge, économie d'énergie, batterie montée ; à
-#           droite, état, niveau, tension et consommation lus (rafraîchis seulement page
-#           affichée : reglages_batterie_peindre, tab5-sensors-diagnostics.yaml) ;
+#           mode Auto (Oui / Non) et animations (3) côte à côte, langue (une pastille
+#           par langue) ;
+#         - « Batterie » : limite et mode de charge côte à côte, économie d'énergie,
+#           Wi-Fi éco, batterie montée ; à droite, état, niveau, tension et consommation
+#           lus (rafraîchis seulement page affichée : reglages_batterie_peindre,
+#           tab5-sensors-diagnostics.yaml). Mode de charge, Wi-Fi éco et animations :
+#           09/10/2026, ADR-0045 ;
 #         - « Système » : l'ancienne console système (console_sys.yaml).
 #       Ouvert par un tap sur le bouton central du haut (engrenage, btn_control_console :
 #       page Écran), son appui long (page Système) ou par « Aller à l'écran → Réglages /
@@ -32,10 +35,12 @@
 #       1185 (1168 px utiles). Batterie (et Système) : deux cartes de 589 de large (x 24
 #       et 637). Dans une carte : titre à y 14, rangées à partir de y 60 (titre de rangée
 #       reglages_rangee.yaml : icône 32 px + libellé sur 40 px ; commande 40 px plus bas,
-#       56 px de haut). ÉCRAN et BATTERIE : rangées au pas de 141 (dernière commande
-#       523..579 sur ÉCRAN). APPARENCE : 3 rangées au pas de 119, puis les langues sur
-#       deux lignes (457..513, 523..579). ÉTAT : 4 rangées au pas de 141, valeur à la
-#       hauteur des boutons de la carte voisine. Noms des pages : 200 × 44 à x 318, 528,
+#       56 px de haut). ÉCRAN et BATTERIE : 4 rangées au pas de 141 (dernière commande
+#       523..579). APPARENCE : 3 rangées au pas de 119, puis les langues sur deux lignes
+#       (457..513, 523..579). Deux rangées côte à côte (09/10/2026) : APPARENCE y 298,
+#       nuit 17..591 et animations 611..1185 ; BATTERIE y 60, limite 17..289 et mode de
+#       charge 300..572 ; 10 px entre deux boutons. ÉTAT : 4 rangées au pas de 141, valeur
+#       à la hauteur des boutons de la carte voisine. Noms des pages : 200 × 44 à x 318, 528,
 #       738 et 948 (titre jusqu'à x ~290 en allemand, croix à x 1160).
 # @ai_instruction Une icône de plus = son glyphe dans mdi_font_32 (tab5-styles.yaml). Un
 #       réglage ou une page de plus : voir l'en-tête de tab5_reglages.cpp.
@@ -186,9 +191,18 @@ obj:
                       # Nuit du mode Auto (« Nuit (thème auto) ») : HA la règle d'après le soleil
                       # (packages/tab5_push.yaml), au coucher, au lever et à chaque connexion de la
                       # tablette ; la changer ici vaut jusque-là. Sans effet hors du mode Auto.
-                      - !include { file: reglages_rangee.yaml, vars: { y: 298, w: 1168, icon: "\U000F0594", label_text: "Nuit (mode Auto)" } }
-                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_oui, x: 17, y: 338, w: 579, reglage: 5, valeur: 1, label_text: "Oui" } }
-                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_non, x: 606, y: 338, w: 579, reglage: 5, valeur: 0, label_text: "Non" } }
+                      # Moitié gauche depuis le 09/10/2026 : les animations à droite.
+                      - !include { file: reglages_rangee.yaml, vars: { y: 298, w: 574, icon: "\U000F0594", label_text: "Nuit (mode Auto)" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_oui, x: 17, y: 338, w: 282, reglage: 5, valeur: 1, label_text: "Oui" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_non, x: 309, y: 338, w: 282, reglage: 5, valeur: 0, label_text: "Non" } }
+
+                      # Animations (09/10/2026, ADR-0045) : options du select « Tab5 Animations »
+                      # (tab5-economie.yaml), dans son ordre (ChoixAnimations, tab5_economie.h).
+                      # Le mode économie actif impose « Aucune » sans changer le choix montré ici.
+                      - !include { file: reglages_rangee.yaml, vars: { x: 611, y: 298, w: 574, icon: "\U000F093A", label_text: "Animations" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_animations_0, x: 611, y: 338, w: 185, reglage: 12, valeur: 0, label_text: "Complètes" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_animations_1, x: 806, y: 338, w: 184, reglage: 12, valeur: 1, label_text: "Essentielles" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_animations_2, x: 1000, y: 338, w: 185, reglage: 12, valeur: 2, label_text: "Aucune" } }
 
                       # Langue : une pastille par langue de Tab5/lang/, dans l'ordre du select
                       # « Langue » (noms natifs écrits par reglages_preparer()).
@@ -269,11 +283,21 @@ obj:
                     widgets:
                       - label: { text: "BATTERIE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-                      # Limite de charge : options du select « Tab5 Limite de charge »
-                      # (tab5-sensors-diagnostics.yaml), dans son ordre (LimiteCharge, tab5_batterie.h).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 555, icon: "\U000F0084", label_text: "Limite de charge" } }
-                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_limite_0, x: 17, y: 100, w: 272, reglage: 7, valeur: 0, label_text: "100 %" } }
-                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_limite_1, x: 300, y: 100, w: 272, reglage: 7, valeur: 1, label_text: "80 %" } }
+                      # Limite de charge (moitié gauche) : options du select « Tab5 Limite de
+                      # charge » (tab5-sensors-diagnostics.yaml), dans son ordre (LimiteCharge,
+                      # tab5_batterie.h). Ce que fait « 80 % » : arrêt à 80 %, reprise à 70 %
+                      # (expliqué sur le tableau de bord de HA ; la phrase de cette carte a laissé
+                      # sa place aux rangées du 09/10/2026).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 272, icon: "\U000F0084", label_text: "Limite de charge" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_limite_0, x: 17, y: 100, w: 131, reglage: 7, valeur: 0, label_text: "100 %" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_limite_1, x: 158, y: 100, w: 131, reglage: 7, valeur: 1, label_text: "80 %" } }
+
+                      # Mode de charge (moitié droite, 09/10/2026, ADR-0045) : options du select
+                      # « Tab5 Mode de charge » (tab5-sensors-diagnostics.yaml), dans son ordre
+                      # (ModeCharge, tab5_batterie.h). Rapide = nCHG_QC_EN, chargeur allumé seulement.
+                      - !include { file: reglages_rangee.yaml, vars: { x: 300, y: 60, w: 272, icon: "\U000F12A6", label_text: "Mode de charge" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_charge_0, x: 300, y: 100, w: 131, reglage: 10, valeur: 0, label_text: "Classique" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_charge_1, x: 441, y: 100, w: 131, reglage: 10, valeur: 1, label_text: "Rapide" } }
 
                       # Économie d'énergie : options du select « Tab5 Économie d'énergie »
                       # (tab5-economie.yaml), dans son ordre (ChoixEconomie, tab5_economie.h).
@@ -282,15 +306,19 @@ obj:
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_economie_1, x: 205, y: 241, w: 178, reglage: 8, valeur: 1, label_text: "Sur batterie" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_economie_2, x: 394, y: 241, w: 178, reglage: 8, valeur: 2, label_text: "Toujours" } }
 
+                      # Wi-Fi éco (09/10/2026, ADR-0045) : options du select « Tab5 Wi-Fi éco »
+                      # (tab5-sensors-diagnostics.yaml), les mêmes que l'économie d'énergie.
+                      - !include { file: reglages_rangee.yaml, vars: { y: 342, w: 555, icon: "\U000F05A9", label_text: "Wi-Fi éco" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_wifi_eco_0, x: 17, y: 382, w: 178, reglage: 11, valeur: 0, label_text: "Jamais" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_wifi_eco_1, x: 205, y: 382, w: 178, reglage: 11, valeur: 1, label_text: "Sur batterie" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_wifi_eco_2, x: 394, y: 382, w: 178, reglage: 11, valeur: 2, label_text: "Toujours" } }
+
                       # Batterie montée (« Tab5 Batterie montée », tab5-ha-controls.yaml) : Oui
                       # montre l'icône de la batterie dans le bandeau d'état (une prise quand la
                       # tension dit qu'il n'y en a pas).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 342, w: 555, icon: "\U000F0079", label_text: "Batterie montée" } }
-                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_montee_oui, x: 17, y: 382, w: 272, reglage: 9, valeur: 1, label_text: "Oui" } }
-                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_montee_non, x: 300, y: 382, w: 272, reglage: 9, valeur: 0, label_text: "Non" } }
-
-                      # Ce que fait « 80 % » (tab5_batterie.h : arrêt à 80 %, reprise à 70 %).
-                      - label: { text: "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée.", align: TOP_LEFT, x: 22, y: 470, width: 545, long_mode: WRAP, styles: style_text_dim }
+                      - !include { file: reglages_rangee.yaml, vars: { y: 483, w: 555, icon: "\U000F0079", label_text: "Batterie montée" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_montee_oui, x: 17, y: 523, w: 272, reglage: 9, valeur: 1, label_text: "Oui" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_montee_non, x: 300, y: 523, w: 272, reglage: 9, valeur: 0, label_text: "Non" } }
 
                 # ── État lu (droite) : écrit par reglages_batterie_peindre() ──
                 - obj:

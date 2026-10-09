@@ -21,6 +21,15 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Réglages : mode de charge, animations, Wi-Fi éco (ADR-0045)
+
+- **Demande d'Axel** : trois réglages de plus, dans les Réglages de la tablette et dans Home Assistant (tableau de bord du Tab5 compris). Les défauts gardent le comportement d'avant. **Non testé sur la tablette.**
+- **« Tab5 Mode de charge »** (Classique / Rapide, page Batterie, à côté de la limite de charge) : « Rapide » allume la charge rapide du chargeur (`nCHG_QC_EN`, P5), seulement quand le chargeur est allumé — jamais sans batterie, pendant une sonde ou en pause à 80 % (`charge_rapide_voulue()`, `tab5_batterie.h`, appliqué par l'interval qui commande CHG_EN). M5Unified appelle ces deux états 500 mA et 1000 mA : **non mesuré**.
+- **« Tab5 Animations »** (Complètes / Essentielles / Aucune, page Apparence, à côté de Nuit) : « Essentielles » garde la seule rotation de la carte centrale ; « Aucune » rend tout instantané. Un seul point de décision, `economie_decider()` : l'économie d'énergie active impose « Aucune », comme avant. `animations_reduites()` devient `animations_niveau()`.
+- **« Tab5 Wi-Fi éco »** (Jamais / Sur batterie / Toujours, page Batterie) : l'économie légère du Wi-Fi (`WIFI_PS_MIN_MODEM`), appliquée à chaud par une requête au C6 à chaque changement de décision, jamais pendant la voix, un son ou une OTA (`wifi_eco_voulu()`, `wifi_eco_appliquer()`, journal `tab5.wifi`). Courant gagné, latence ajoutée et prise en compte par le C6 1.4.1 : **non vérifiés**.
+- **Écran** : rangées côte à côte (Nuit et Animations ; Limite et Mode de charge), Wi-Fi éco sous l'économie d'énergie ; la phrase sous la limite de charge (« 80 % : la charge s'arrête à 80 % et reprend à 70 % ») quitte l'écran faute de place, elle reste sous la tuile du tableau de bord HA. `reglages_rangee.yaml` prend un `x` facultatif. Traductions dans les six langues.
+- **Home Assistant** : trois tuiles sur le tableau de bord du Tab5 (`custom_templates/tab5_dashboard.jinja`, à recopier pour les voir). Pas de nouvelle variable de service : contrat inchangé, ordre de mise à jour indifférent.
+
 ### 2026-10-09 — Panneau « Ok Nabu » à lignes et défilement au choix (lot 3, ADR-0041)
 
 - **Des lignes dans le bouton « Ok Nabu »** : jusqu'à trois lignes de quatre capteurs, choisies dans la nouvelle section « Panneau Ok Nabu · Ok Nabu panel » du blueprint « Tab5 — emplacements », avec le même modèle, le même dessin et les mêmes clés que la rangée sous l'horloge (lettre `n` : `np`, `nd`, `nLI` dans `tab5_maj_tuiles`, états `nLI` dans `tab5_maj_emplacements`). La ligne d'écoute « Ok Nabu : ON / OFF » vient en premier d'origine (deuxième, troisième ou masquée au choix). Un tap sur la ligne d'écoute bascule toujours le mot de réveil ; sur une ligne de capteurs, il ne fait rien. Pastilles sous le panneau, même glissement que la rangée, 14 px de marge dans le cadre pour ne rien couper dans un cadre en gélule (thème Capsule ; `tests/test_nabu.py` le calcule pour les 21 thèmes).

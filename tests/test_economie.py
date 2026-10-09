@@ -58,6 +58,28 @@ def test_select_options_dans_l_ordre_de_l_enum_et_defaut_sur_batterie():
     assert valeurs == {"JAMAIS": 0, "SUR_BATTERIE": 1, "TOUJOURS": 2}, valeurs
 
 
+def test_select_animations_dans_l_ordre_de_l_enum_et_defaut_completes():
+    """Animations (09/10/2026) : l'index choisi est un ChoixAnimations ; « Complètes » =
+    le comportement d'avant ; le mode éco actif force « Aucune » dans economie_decider
+    (un seul point de décision, testé par tools/test_alarm_clock.cpp)."""
+    s = next(s for s in _yaml("tab5-economie.yaml")["select"] if s.get("id") == "tab5_animations")
+    assert s["name"] == "Tab5 Animations"
+    assert s["options"] == ["Complètes", "Essentielles", "Aucune"]
+    assert s["initial_option"] == "Complètes", "défaut : le comportement d'avant"
+    assert s["restore_value"] is True and s["optimistic"] is True
+    assert s["entity_category"] == "config"
+    assert {"script.execute": SCRIPT} in s["on_value"]
+    enum = re.search(r"enum class ChoixAnimations[^{]*\{([^}]*)\}", _entete())
+    assert enum, "ChoixAnimations introuvable dans tab5_economie.h"
+    valeurs = {nom: int(v) for nom, v in re.findall(r"(\w+)\s*=\s*(\d+)", enum.group(1))}
+    assert valeurs == {"COMPLETES": 0, "ESSENTIELLES": 1, "AUCUNE": 2}, valeurs
+    # Un seul point de décision : seul le script règle le niveau des animations.
+    for chemin in (TAB5 / "paquets").glob("*.yaml"):
+        texte = _sans_commentaires(chemin.read_text(encoding="utf-8"))
+        n = texte.count("animations_niveau(")
+        assert n == (1 if chemin.name == "tab5-economie.yaml" else 0), (chemin.name, n)
+
+
 def test_la_lumiere_passe_par_la_sortie_plafonnee():
     hw = _yaml("tab5-hardware.yaml")
     sorties = {o["id"]: o for o in hw["output"]}
@@ -122,7 +144,8 @@ def test_le_script_lit_la_liste_et_s_applique_chaque_seconde():
     code = _sans_commentaires(script["then"][0]["lambda"])
     for motif in ("id(ecran_veille_permise)", "GameRegistry::any_open()", "economie_decider(in)",
                   "id(backlight).gamma_correct_lut(d.plafond)", "set_refresh_interval(d.periode_ms)",
-                  "animations_reduites(d.animations_reduites)", "std::min(ui_idle_ms(), depuis_allumage)"):
+                  "animations_niveau(d.animations)", "std::min(ui_idle_ms(), depuis_allumage)",
+                  "id(tab5_animations).active_index()"):
         assert motif in code, motif
     assert any(i.get("interval") == "1s" and {"script.execute": SCRIPT} in i["then"] for i in eco["interval"])
 
