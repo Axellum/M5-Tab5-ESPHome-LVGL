@@ -58,7 +58,7 @@ struct LecteurUI {
     lv_obj_t* artiste = nullptr;                  // lecteur_artiste
     lv_obj_t* album = nullptr;                    // lecteur_album
     lv_obj_t* lecture = nullptr;                  // lecteur_lecture : position, commandes, volume
-    lv_obj_t* position = nullptr;                 // lecteur_position (curseur 0 à 1000)
+    lv_obj_t* position = nullptr;                 // lecteur_barre (curseur 0 à 1000)
     lv_obj_t* ecoule = nullptr;                   // lecteur_ecoule
     lv_obj_t* duree = nullptr;                    // lecteur_duree
     lv_obj_t* btn[7] = {};                        // lecteur_btn_N, ordre de LecteurBouton

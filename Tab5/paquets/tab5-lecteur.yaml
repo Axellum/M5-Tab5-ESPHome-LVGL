@@ -50,7 +50,7 @@ script:
           u.artiste = id(lecteur_artiste);
           u.album = id(lecteur_album);
           u.lecture = id(lecteur_lecture);
-          u.position = id(lecteur_position);
+          u.position = id(lecteur_barre);
           u.ecoule = id(lecteur_ecoule);
           u.duree = id(lecteur_duree);
           u.btn[LECTEUR_BTN_LECTURE] = id(lecteur_btn_0);

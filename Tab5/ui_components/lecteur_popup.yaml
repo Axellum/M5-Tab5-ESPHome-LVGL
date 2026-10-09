@@ -131,8 +131,11 @@ obj:
               widgets:
                 # Barre de lecture : 0 à 1000 (pour mille de la durée). Touchable seulement
                 # si le lecteur sait se déplacer (seek) : tab5_lecteur.cpp ôte CLICKABLE sinon.
+                # Id « lecteur_barre », pas « lecteur_position » : ESPHome fait de chaque id
+                # une variable globale de main.cpp, qui heurterait lecteur_position()
+                # (tab5_parse.h).
                 - slider:
-                    id: lecteur_position
+                    id: lecteur_barre
                     align: TOP_LEFT
                     x: 0
                     y: 8

@@ -24,6 +24,7 @@
  */
 #include "tab5_internal.h"
 #include "tab5_geometrie.h"
+#include "lvgl_private.h"  // lv_image_cache_drop() (cache d'images, hors de lvgl.h en 9.5)
 #include <cmath>
 #include <cstdio>
 #include <cstring>
