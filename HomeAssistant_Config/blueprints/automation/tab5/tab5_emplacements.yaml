@@ -177,6 +177,50 @@ blueprint:
                     - person
                     - lock
                     - climate
+        piece_1_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_1_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_1_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
     piece_2:
       name: "Pièce 2 — J+5 → J+9 · Room 2 — day 5 → 9"
       icon: mdi:home-outline
@@ -213,6 +257,50 @@ blueprint:
               reorder: true
               filter:
                 - domain: *domaines_tuiles
+        piece_2_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_2_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_2_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
     piece_3:
       name: "Pièce 3 — J+10 → J+14 · Room 3 — day 10 → 14"
       icon: mdi:home-outline
@@ -249,6 +337,50 @@ blueprint:
               reorder: true
               filter:
                 - domain: *domaines_tuiles
+        piece_3_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_3_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_3_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
     piece_4:
       name: "Pièce 4 — prochaines heures · Room 4 — next hours"
       icon: mdi:home-outline
@@ -285,6 +417,50 @@ blueprint:
               reorder: true
               filter:
                 - domain: *domaines_tuiles
+        piece_4_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_4_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_4_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
     piece_5:
       name: "Pièce 5 — heures suivantes · Room 5 — later hours"
       icon: mdi:home-outline
@@ -321,6 +497,50 @@ blueprint:
               reorder: true
               filter:
                 - domain: *domaines_tuiles
+        piece_5_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_5_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_5_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
     personnaliser:
       name: Personnaliser des tuiles · Customise tiles
       icon: mdi:palette-outline
@@ -1751,6 +1971,24 @@ variables:
     - !input piece_3_nom
     - !input piece_4_nom
     - !input piece_5_nom
+  # Climat des pièces (ADR-0040) : sonde de température, d'humidité et clim de chaque
+  # section « Pièce n », toutes facultatives.
+  pieces_climat_choix:
+    - temperature: !input piece_1_temperature
+      humidite: !input piece_1_humidite
+      clim: !input piece_1_clim
+    - temperature: !input piece_2_temperature
+      humidite: !input piece_2_humidite
+      clim: !input piece_2_clim
+    - temperature: !input piece_3_temperature
+      humidite: !input piece_3_humidite
+      clim: !input piece_3_clim
+    - temperature: !input piece_4_temperature
+      humidite: !input piece_4_humidite
+      clim: !input piece_4_clim
+    - temperature: !input piece_5_temperature
+      humidite: !input piece_5_humidite
+      clim: !input piece_5_clim
   personnalisation: !input personnalisation
   # Rangée sous l'horloge (ADR-0031) : lignes choisies, place des plantes, durée.
   rangee_lignes:
@@ -1882,6 +2120,25 @@ variables:
   # (option m, dont climr et tab5_maj_clim portent les réglages et l'état). Chacune a ses
   # réglages (clé crRT) et son état (clé ceRT) ; son appui ouvre le popup pour elle.
   tuiles_clim: "{{ tuiles | selectattr('type', 'eq', 'cli') | rejectattr('e', 'eq', sources.clim) | list }}"
+  # Climat des pièces (ADR-0040) : [{r: R, cle: 'cpR', temperature, humidite, clim}], une
+  # entrée par pièce, chaque champ l'entité choisie si elle existe (et, pour la clim, si
+  # c'est une clim), '' sinon. La tablette montre la pièce en mode HA quand temperature
+  # est rempli. `cle` : l'emplacement des commandes de sa clim — la liste blanche des
+  # commandes « cpR » (seule une clim déclarée ici en reçoit).
+  pieces_climat: >-
+    {%- set ns = namespace(l=[]) -%}
+    {%- for n in range(5) -%}
+      {%- set choix = pieces_climat_choix[n] if pieces_climat_choix[n] is mapping else {} -%}
+      {%- set v = namespace(d={'r': n, 'cle': 'cp' ~ n}) -%}
+      {%- for k, domaine in [('temperature', 'sensor.'), ('humidite', 'sensor.'), ('clim', 'climate.')] -%}
+        {%- set x = choix.get(k) -%}
+        {%- set x = x if x is string else (x | first if x else '') -%}
+        {%- set ok = x is string and x.startswith(domaine) and states[x] is not none -%}
+        {%- set v.d = dict(v.d, **{k: x if ok else ''}) -%}
+      {%- endfor -%}
+      {%- set ns.l = ns.l + [v.d] -%}
+    {%- endfor -%}
+    {{ ns.l }}
   # Le volet que suit le package volet_serre_tracking.yaml : celui que nomme sa liste
   # « Tab5 · volet à course simulée », s'il existe. Sa tuile montre l'état tenu par le
   # package (input_text.volet_serre_etat), ses commandes passent par
@@ -2165,6 +2422,35 @@ variables:
     {%- else -%}
       {{ [] }}
     {%- endif -%}
+  # Climat des pièces à pousser (ADR-0040) : les numéros R des pièces. Toutes avec les
+  # définitions, vides comprises (« pR|||0; » : la tablette oublie ce qui a été retiré du
+  # blueprint) ; avec les mesures lentes, celles dont une sonde a changé ou dont la clim a
+  # bougé (pièce, ventilation…) depuis le passage d'avant ; une seule quand sa clim change
+  # d'état ou de consigne (déclencheurs piece_n_clim, piece_n_clim_consigne) : les − / +
+  # comptent à partir de sa consigne. Poussées seulement au protocole 2.
+  pieces_climat_a_pousser: >-
+    {%- if tout_pousser or trigger.id == 'zones' or redefinir -%}
+      {{ pieces_climat | map(attribute='r') | list }}
+    {%- elif trigger.id == 'mesures' -%}
+      {%- set ns = namespace(l=[]) -%}
+      {%- for p in pieces_climat if p.temperature -%}
+        {%- set vu = namespace(v=false) -%}
+        {%- for x in [p.temperature, p.humidite] if x and (now() - states[x].last_changed).total_seconds() < fenetre_mesures -%}
+          {%- set vu.v = true -%}
+        {%- endfor -%}
+        {%- if p.clim and (now() - states[p.clim].last_updated).total_seconds() < fenetre_mesures -%}
+          {%- set vu.v = true -%}
+        {%- endif -%}
+        {%- if vu.v -%}{%- set ns.l = ns.l + [p.r] -%}{%- endif -%}
+      {%- endfor -%}
+      {{ ns.l }}
+    {%- elif trigger.from_state is defined and trigger.id.startswith('piece_')
+          and (trigger.id.endswith('_clim') or trigger.id.endswith('_clim_consigne')) -%}
+      {{ pieces_climat | selectattr('r', 'eq', trigger.id[6] | int - 1) | selectattr('clim', 'eq', trigger.entity_id)
+         | map(attribute='r') | list }}
+    {%- else -%}
+      {{ [] }}
+    {%- endif -%}
   # Météo choisie ici (section « Météo », discussion #278). Vide ([] ou « liste ») = rien.
   meteo_choisie:
     previsions: !input meteo_previsions
@@ -2340,7 +2626,7 @@ triggers:
   - trigger: state
     entity_id: !input volet
     id: volet
-  # Pièces (ADR-0023), six déclencheurs par pièce, pour ne jamais réveiller
+  # Pièces (ADR-0023), des déclencheurs par pièce choisis pour ne jamais réveiller
   # l'automatisation sur un capteur qui change (une mesure part avec les mesures
   # lentes) ni sur un attribut que l'écran ne montre pas (position GPS d'une personne,
   # volume d'un lecteur, température de la pièce d'une clim) :
@@ -2353,6 +2639,11 @@ triggers:
   #                    portent parmi les domaines des tuiles (ADR-0027 : les − / + du popup
   #                    d'une clim de tuile partent de sa consigne, elle ne peut attendre
   #                    5 minutes).
+  #   piece_n_clim     la clim de la pièce (ADR-0040) change d'état (`to: ~` : pas sur
+  #                    ses attributs, la température qu'elle mesure part avec les mesures
+  #                    lentes) ;
+  #   piece_n_clim_consigne  sa consigne change pendant qu'elle reste allumée.
+  # Soit huit déclencheurs par pièce.
   # « on » et « off » entre guillemets : sans eux, YAML 1.1 lit des booléens, que le
   # schéma du déclencheur refuse.
   # >>> déclencheurs des pièces (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)
@@ -2390,6 +2681,16 @@ triggers:
     not_to: [null]
     id: piece_1_consigne
   - trigger: state
+    entity_id: !input piece_1_clim
+    to: ~
+    id: piece_1_clim
+  - trigger: state
+    entity_id: !input piece_1_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_1_clim_consigne
+  - trigger: state
     entity_id: !input piece_2_tuiles
     to: *etats_visibles
     id: piece_2
@@ -2422,6 +2723,16 @@ triggers:
     not_from: [null]
     not_to: [null]
     id: piece_2_consigne
+  - trigger: state
+    entity_id: !input piece_2_clim
+    to: ~
+    id: piece_2_clim
+  - trigger: state
+    entity_id: !input piece_2_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_2_clim_consigne
   - trigger: state
     entity_id: !input piece_3_tuiles
     to: *etats_visibles
@@ -2456,6 +2767,16 @@ triggers:
     not_to: [null]
     id: piece_3_consigne
   - trigger: state
+    entity_id: !input piece_3_clim
+    to: ~
+    id: piece_3_clim
+  - trigger: state
+    entity_id: !input piece_3_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_3_clim_consigne
+  - trigger: state
     entity_id: !input piece_4_tuiles
     to: *etats_visibles
     id: piece_4
@@ -2489,6 +2810,16 @@ triggers:
     not_to: [null]
     id: piece_4_consigne
   - trigger: state
+    entity_id: !input piece_4_clim
+    to: ~
+    id: piece_4_clim
+  - trigger: state
+    entity_id: !input piece_4_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_4_clim_consigne
+  - trigger: state
     entity_id: !input piece_5_tuiles
     to: *etats_visibles
     id: piece_5
@@ -2521,6 +2852,16 @@ triggers:
     not_from: [null]
     not_to: [null]
     id: piece_5_consigne
+  - trigger: state
+    entity_id: !input piece_5_clim
+    to: ~
+    id: piece_5_clim
+  - trigger: state
+    entity_id: !input piece_5_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_5_clim_consigne
   # <<< déclencheurs des pièces
   # Rangée sous l'horloge (ADR-0031) : l'état seulement, comme piece_n et piece_n_sortie
   # (une mesure part avec les mesures lentes) ; elle ne montre ni luminosité ni position.
@@ -2697,7 +3038,8 @@ conditions:
       {%- else -%}
         {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie', 'historique'] or cles | count > 0
            or solaire_a_pousser
-           or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0 or reglables_a_pousser | count > 0)) }}
+           or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0 or reglables_a_pousser | count > 0
+                                   or pieces_climat_a_pousser | count > 0)) }}
       {%- endif -%}
   # Déclencheurs venus de HA (rechargement, démarrage, mesures, changements d'état) : seulement
   # si une tablette est connectée, sinon « Action … not found » (pas encore ajoutée)
@@ -2756,9 +3098,10 @@ actions:
       clim: "{{ sources.clim if sources.clim and states[sources.clim] is not none else '' }}"
       volet: "{{ sources.volet if sources.volet and states[sources.volet] is not none else '' }}"
       # Réglages des clims (ADR-0026) : entité → « min|max|pas|unité|capacités|nom », pour
-      # la clim du blueprint (clé climr) et pour chaque clim de tuile (clé crRT, ADR-0027) :
-      # une seule traduction pour toutes. Un firmware plus ancien ignore ces clés (clé
-      # inconnue) ; sans climr, le nouveau garde 16-30, 0,5, °C et tous les boutons.
+      # la clim du blueprint (clé climr), pour chaque clim de tuile (clé crRT, ADR-0027) et
+      # de pièce (clé crpR, ADR-0040) : une seule traduction pour toutes. Un firmware plus
+      # ancien ignore ces clés (clé inconnue) ; sans climr, le nouveau garde 16-30, 0,5, °C
+      # et tous les boutons.
       # Unité : celle d'une entité weather.*, qui suit le système d'unités de HA comme les
       # attributs de la clim (min_temp, temperature…) ; sans météo, une borne basse de 40
       # ou plus ne peut être qu'en °F. Pas : target_temp_step, sinon 1 en °F, 0,5 en °C.
@@ -2770,7 +3113,8 @@ actions:
           {%- set t = w.attributes.get('temperature_unit', '') | string -%}
           {%- if t in ['°C', '°F'] -%}{%- set u.s = t -%}{%- endif -%}
         {%- endfor -%}
-        {%- for e in ([clim] if clim else []) + (tuiles_clim | map(attribute='e') | list) -%}
+        {%- for e in ([clim] if clim else []) + (tuiles_clim | map(attribute='e') | list)
+                     + (pieces_climat | map(attribute='clim') | select | list) -%}
           {%- if e not in ns.d and states[e] is not none -%}
             {%- set mn = state_attr(e, 'min_temp') | float(16.0) -%}
             {%- set mx = state_attr(e, 'max_temp') | float(30.0) -%}
@@ -2894,12 +3238,21 @@ actions:
       # lit les statistiques du recorder et la prévision, et pousse la série
       # (script.turn_on : sans attendre, la file de cette automatisation reste libre). Sans
       # le package : rien, le popup attend.
+      # Clés p0 à p4 (ADR-0040) : la température d'une pièce en mode HA, sa sonde de la
+      # section « Pièce R + 1 ».
       - alias: "La tablette ouvre l'historique d'une température"
         conditions: "{{ trigger.id == 'historique' }}"
         sequence:
+          - variables:
+              h_cle: "{{ trigger.event.data.cle | default('') | string }}"
+              h_capteur: >-
+                {%- if h_cle in ['salon', 'serre'] -%}{{ sources.get(h_cle, '') }}
+                {%- else -%}{{ pieces_climat | selectattr('r', 'eq', (h_cle[1:] | int(-1)) if h_cle[:1] == 'p' else -1)
+                                 | map(attribute='temperature') | first | default('', true) }}
+                {%- endif -%}
           - if: >-
               {{ states['script.tab5_historique'] is not none
-                 and trigger.event.data.cle | default('') in ['salon', 'serre'] }}
+                 and h_cle in ['salon', 'serre', 'p0', 'p1', 'p2', 'p3', 'p4'] }}
             then:
               - action: script.turn_on
                 target:
@@ -2907,10 +3260,10 @@ actions:
                 data:
                   variables:
                     tablette: "{{ tablette }}"
-                    cle: "{{ trigger.event.data.cle }}"
+                    cle: "{{ h_cle }}"
                     vue: "{{ trigger.event.data.vue | default('jour', true) }}"
-                    capteur: "{{ sources.get(trigger.event.data.cle, '') }}"
-                    exterieur: "{{ trigger.event.data.cle == 'serre' and serre_exterieure | bool(false) }}"
+                    capteur: "{{ h_capteur }}"
+                    exterieur: "{{ h_cle == 'serre' and serre_exterieure | bool(false) }}"
 
       - alias: "La tablette demande quelles zones sont absentes"
         conditions: "{{ trigger.id in ['zones', 'pipeline_discussion'] }}"
@@ -2953,16 +3306,19 @@ actions:
               # « clim »), ou celle d'une tuile (tRT dont l'entité est une clim : la liste
               # blanche reste « une entité qu'une tuile porte »). Les mêmes branches
               # « Clim : … » traduisent pour les deux. Une clim de la tuile − / + (rN,
-              # ADR-0033) aussi, pour sa consigne seulement.
+              # ADR-0033) aussi, pour sa consigne seulement. Et la clim d'une pièce
+              # (emplacement « cpR », ADR-0040), si la section « Pièce R + 1 » en déclare une.
+              p_clim: "{{ pieces_climat | selectattr('cle', 'eq', emplacement) | map(attribute='clim') | first | default('', true) }}"
               clim_cible: >-
                 {%- if emplacement == 'clim' -%}{{ clim }}
                 {%- elif t_domaine == 'climate' -%}{{ t_entite }}
                 {%- elif r_domaine == 'climate' and commande == 'consigne' -%}{{ r_entite }}
+                {%- elif p_clim -%}{{ p_clim }}
                 {%- endif -%}
-              # Sa commande : telle quelle pour la clim du blueprint et celle de la tuile
-              # − / + ; pour une tuile, après son comportement (lecture seule : rien ;
-              # allumer seulement : pas d'arrêt).
-              clim_commande: "{{ commande if emplacement == 'clim' or r_domaine == 'climate' else t_commande }}"
+              # Sa commande : telle quelle pour la clim du blueprint, celle de la tuile
+              # − / + et celle d'une pièce ; pour une tuile, après son comportement (lecture
+              # seule : rien ; allumer seulement : pas d'arrêt).
+              clim_commande: "{{ commande if emplacement == 'clim' or r_domaine == 'climate' or p_clim else t_commande }}"
           - choose:
               - alias: "Lumière : basculer"
                 conditions: "{{ emplacement.startswith('lumiere_') and commande == 'basculer' and cible != '' }}"
@@ -3731,4 +4087,40 @@ actions:
           - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
             data:
               payload: "{{ etats_reglables }}"
+            continue_on_error: true
+  # Climat des pièces (ADR-0040), pièce par pièce, dans cet ordre : réglages de sa clim
+  # « crpR|min|max|pas|unité|capacités|nom; » (ceux de climr : reglages_clims) avec les
+  # définitions ou quand ils ont pu changer ; « pR|température|humidité|clim; » (champ vide :
+  # rien de déclaré ; nan : valeur inconnue ; clim 1 ou 0) ; état de sa clim
+  # « cepR|consigne|pièce|mode|préréglage|ventilation|oscillation; » (les champs de ceRT).
+  # Un firmware sans le climat des pièces ignore ces clés.
+  - if: "{{ protocole == 2 and pieces_climat_a_pousser | count > 0 }}"
+    then:
+      - variables:
+          climat_pieces: >-
+            {%- set tout = tout_pousser or trigger.id == 'zones' or redefinir -%}
+            {%- set ns = namespace(r='') -%}
+            {%- for p in pieces_climat if p.r in pieces_climat_a_pousser -%}
+              {%- if p.temperature and p.clim in reglages_clims
+                    and (tout or (reglages_changes and trigger.entity_id == p.clim)) -%}
+                {%- set ns.r = ns.r ~ 'crp' ~ p.r ~ '|' ~ reglages_clims[p.clim] ~ ';' -%}
+              {%- endif -%}
+              {%- set t = (states(p.temperature) | float('nan')) if p.temperature else '' -%}
+              {%- set h = (states(p.humidite) | float('nan')) if p.temperature and p.humidite else '' -%}
+              {%- set ns.r = ns.r ~ 'p' ~ p.r ~ '|' ~ t ~ '|' ~ h ~ '|' ~ ('1' if p.temperature and p.clim else '0') ~ ';' -%}
+              {%- if p.temperature and p.clim -%}
+                {%- set a = states[p.clim].attributes -%}
+                {%- set champs = [a.get('temperature') | float('nan'), a.get('current_temperature') | float('nan'),
+                                  states(p.clim), a.get('preset_mode') | default('none', true),
+                                  a.get('fan_mode') | default('auto', true), a.get('swing_mode') | default('stop', true)] -%}
+                {%- set ns.r = ns.r ~ 'cep' ~ p.r ~ '|'
+                              ~ (champs | map('string') | map('replace', '|', '/') | map('replace', ';', ',') | join('|')) ~ ';' -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ ns.r }}
+      - if: "{{ climat_pieces != '' }}"
+        then:
+          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+            data:
+              payload: "{{ climat_pieces }}"
             continue_on_error: true
