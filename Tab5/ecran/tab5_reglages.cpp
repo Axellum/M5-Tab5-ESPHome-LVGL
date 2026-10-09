@@ -30,13 +30,10 @@
  *       Un texte affiché passe par tr(). Une page de plus : sa valeur dans ReglagesPage
  *       (avant REGLAGES_NB_PAGES), son conteneur et son nom (reglages_onglet.yaml) dans
  *       reglages_popup.yaml, leurs lignes dans tab5_reglages_ouvrir.
- * @ai_warning [AI-WARNING] Le geste de changement de page s'arrête au popup : le drapeau
- *       LV_OBJ_FLAG_GESTURE_BUBBLE est retiré de reglages_popup (reglages_preparer, par
- *       ui_pages_geste de tab5_anim.cpp, partagé avec le popup Météo). Sans
- *       ça, LVGL le remonte jusqu'à page_main, dont le on_gesture change les prévisions
- *       ou la pièce derrière le popup (handle_swipe_gesture, tab5_central.cpp). Un geste
- *       parti d'un curseur (luminosité, volume de la page Système) n'est pas un
- *       changement de page : LVGL émet aussi LV_EVENT_GESTURE pendant qu'on le glisse.
+ * @ai_warning [AI-WARNING] Le geste de changement de page s'arrête au popup et ne part
+ *       pas d'un curseur (luminosité, volume de la page Système) : la brique commune des
+ *       popups à pages, pages_brancher (tab5_pages.cpp, ADR-0046), branchée par
+ *       reglages_preparer. Lire son [AI-WARNING] avant d'y toucher.
  */
 #include "tab5_internal.h"
 #include "tab5_economie.h"  // economie_sur_batterie() : ligne « État » de la page Batterie
@@ -58,9 +55,9 @@ int s_page = REGLAGES_PAGE_ECRAN;
 // Dernier état peint, pour reglages_rejouer_theme() (repeinture d'un changement de thème).
 ReglagesEtat s_etat;
 
-// Une rangée de boutons à choix, et les noms des pages en haut : ui_choix_peindre()
-// (tab5_anim.cpp, partagée avec le popup Météo depuis le 09/10/2026).
-constexpr auto peindre_choix = ui_choix_peindre;
+// Une rangée de boutons à choix : l'option active en accent, les autres au style du bouton
+// (choix_peindre, tab5_pages.cpp : la même recette que les noms des pages en haut).
+constexpr auto peindre_choix = &choix_peindre;
 
 // Oui / Non : 0 = Oui, 1 = Non (ordre des boutons du YAML).
 inline int oui_non(bool v) { return v ? 0 : 1; }
@@ -91,11 +88,10 @@ void fermer_confirmations() {
     ui_hidden(g_reglages_ui.confirm_reboot, true);
 }
 
-// Geste gauche / droite dans le popup (ui_pages_geste, tab5_anim.cpp) : page suivante ou
-// précédente, en boucle (reglages_page_voisine, tab5_core.cpp).
-void page_voisine(bool suivante) {
-    reglages_afficher_page(reglages_page_voisine(s_page, REGLAGES_NB_PAGES, suivante));
-}
+// Geste gauche / droite du popup (popup à pages, ADR-0046) : quatre pages, en boucle.
+int nombre_pages() { return REGLAGES_NB_PAGES; }
+int page_courante() { return s_page; }
+PagesPopup s_pages{nullptr, nombre_pages, page_courante, reglages_afficher_page};
 
 }  // namespace
 
@@ -109,8 +105,9 @@ void reglages_preparer() {
         ui_hidden(b, !existe);
         if (existe) ui_text(lv_obj_get_child(b, 0), i18n_language_name(i));
     }
-    // Geste gauche / droite : arrêté au popup ([AI-WARNING] de l'en-tête).
-    ui_pages_geste(u.popup, page_voisine);
+    // Geste gauche / droite : la brique des popups à pages ([AI-WARNING] de l'en-tête).
+    s_pages.popup = u.popup;
+    pages_brancher(&s_pages);
 }
 
 void reglages_luminosite_ui(int pourcent) {

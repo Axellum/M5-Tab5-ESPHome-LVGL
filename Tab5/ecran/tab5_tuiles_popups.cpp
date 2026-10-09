@@ -2,27 +2,31 @@
  * [AI-CONTEXT]
  * @file tab5_tuiles_popups.cpp
  * @role Popups d'une tuile (sorti de tab5_tuiles.cpp le 08/10/2026, lot L7 de l'audit du
- *       07/10/2026) : lumière (les lumières de la pièce, appui long d'une lum, ADR-0023),
- *       volet (appui long d'une vol sans l'option k, 05/10/2026 : position, volet dessiné
- *       qu'on fait glisser, envoyé au relâcher, Ouvrir / Stop / Fermer) et appareil (appui
- *       long d'une int, d'une act ou d'une med sans l'option t, 06/10/2026 : la fenêtre
- *       « plus d'infos » d'un tableau de bord HA, dont le grand bouton refait le toucher de
- *       la tuile). Leur base commune : PopupTuile (pièce, tuile, ouvert, revalidation).
+ *       07/10/2026) : Lumières et Volets (à pages par pièce depuis le 09/10/2026,
+ *       ADR-0046 : toutes les lumières, tous les volets de la maison, une page par pièce
+ *       qui en a, PopupPieces ; à droite, la lumière choisie — arc, couleurs — ou le volet
+ *       choisi — volet dessiné qu'on fait glisser, envoyé au relâcher, Ouvrir / Stop /
+ *       Fermer) et appareil (appui long d'une int, d'une act ou d'une med sans l'option t,
+ *       06/10/2026 : la fenêtre « plus d'infos » d'un tableau de bord HA, dont le grand
+ *       bouton refait le toucher de la tuile). Leur base commune : PopupTuile (pièce,
+ *       tuile, ouvert, revalidation).
  * @architecture_constraint Lit le modèle des tuiles par tab5_tuiles_priv.h (s_m, s_etats,
  *       vue_def, gestes…) et n'envoie rien par lui-même : envoyer_tuile / tuile_appui_piece
  *       (tab5_tuiles.cpp). Repeints quand l'état de leur tuile change (peindre_tuile →
  *       popup_*_etat), revalidés quand les définitions changent (tuiles_definir →
  *       popups_revalider), repeints au changement de thème (popups_rejouer_theme).
  *       Widgets : ui_components/light_popup.yaml, volet_popup.yaml, appareil_popup.yaml,
- *       posés dans g_tuiles_ui par tab5-tuiles.yaml.
+ *       piece_ligne.yaml (lignes), pages_onglet.yaml (noms des pièces), posés dans
+ *       g_tuiles_ui par tab5-tuiles.yaml. Le glissement de pièce en pièce : la brique des
+ *       popups à pages (tab5_pages.cpp), branchée par tuiles_brancher_popup_volet.
  * @ai_instruction Un texte affiché passe par tr() ; un nom venu de HA s'affiche tel quel
- *       (ui_texte_coupe). Glyphes posés d'ici (règle 7) : glyphe_commande
- *       (MDI_CODE_TARGETS de check_tab5_code_rules.py).
+ *       (ui_texte_coupe). Glyphes posés d'ici (règle 7) : glyphe_commande, et ceux des
+ *       lignes par tuile_peindre_ligne (palette des tuiles, heritage_glyphe_carte) :
+ *       MDI_CODE_TARGETS de check_tab5_code_rules.py (icon_light_sel_*, volet_ligne_*_icone).
  */
 #include "tab5_tuiles_priv.h"
 #include "tab5_geometrie.h"
 #include "tab5_modele_ha.h"
-#include "tab5_tuiles_icones.h"
 #include "lvgl.h"
 #include <algorithm>
 #include <cmath>
@@ -85,13 +89,99 @@ void popup_tuile_revalider(const P&, bool valide, void (*peindre)()) {
     else animate_popup_close(P::conteneur());
 }
 
-// ─── Popup lumière : les lumières de la pièce (ADR-0023) ─────────────────────────────
+// ─── Popups à pages par pièce : Lumières et Volets (ADR-0046) ───────────────────────
+//
+// Demande d'Axel du 09/10/2026 : les popups Lumières et Volets montrent toutes les
+// lumières (tous les volets) de la maison, une page par pièce qui en a ; on passe de l'une
+// à l'autre d'un glissement ou d'un tap sur son nom, en haut (la brique des popups à
+// pages, tab5_pages.cpp). PopupPieces<C> garde les pages, les lignes de la page affichée
+// et la ligne choisie (piece, tuile : celles que pilote la partie droite du popup) ; chaque
+// popup dit quelle tuile en est une ligne (`garde`) et peint sa partie droite. Les lignes
+// sont la carte du mode HA couchée (tuile_peindre_ligne), comme celles du popup Maison.
 
-struct PopupLumiere : PopupTuile<&TuilesUI::lum_popup> {
-    int n = 0;                 // lignes du sélecteur
+template <lv_obj_t* TuilesUI::* C>
+struct PopupPieces : PopupTuile<C> {
+    int nb = 0;                // pages : les pièces qui ont au moins une ligne
+    int pieces[kPieces] = {};  // pièce de chaque page, dans l'ordre du blueprint
+    int page = 0;              // page affichée : piece = pieces[page]
+    int n = 0;                 // lignes de la page affichée
     int tuiles[kTuiles] = {};  // tuile de chaque ligne, dans l'ordre des tuiles
-    int choix = 0;             // ligne pilotée (current_light_slot) : tuile = tuiles[choix]
+    int choix = 0;             // ligne choisie : tuile = tuiles[choix]
 };
+
+// Pages et lignes de `p` : les pièces qui ont au moins une tuile `garde`, la page de la
+// pièce `r` (sinon la première), ses lignes, celle de la tuile `t` choisie (sinon la
+// première). Faux, et `p` sans page, si aucune pièce n'en a. Ne touche qu'aux champs de
+// PopupPieces : ce que le popup garde en plus (le doigt sur le volet) reste.
+template <class P>
+bool pieces_calculer(P& p, bool (*garde)(int, int), int r, int t) {
+    p.nb = p.n = p.page = p.choix = 0;
+    p.piece = p.tuile = -1;
+    for (int i = 0; i < kPieces; i++) {
+        for (int j = 0; j < kTuiles; j++) {
+            if (!garde(i, j)) continue;
+            if (i == r) p.page = p.nb;
+            p.pieces[p.nb++] = i;
+            break;
+        }
+    }
+    if (p.nb == 0) return false;
+    p.piece = p.pieces[p.page];
+    for (int j = 0; j < kTuiles; j++) {
+        if (!garde(p.piece, j)) continue;
+        if (j == t) p.choix = p.n;
+        p.tuiles[p.n++] = j;
+    }
+    p.tuile = p.tuiles[p.choix];
+    return true;
+}
+
+// Une ligne (piece_ligne.yaml) : la tuile tRT avec les mots, l'icône et les couleurs de sa
+// carte du mode HA, la ligne choisie entourée d'accent. Enfants lus ici : 0 la pastille
+// (son enfant 0 : l'icône), 1 le nom, 2 l'état. Texte : 342 − 86 (pastille) − 12 de marge.
+constexpr int32_t kLigneTexte = 244;
+void ligne_peindre(lv_obj_t* b, int r, int t, bool choisie) {
+    if (b == nullptr) return;
+    lv_obj_t* pastille = lv_obj_get_child(b, 0);
+    const TuileWidgets w{pastille, pastille != nullptr ? lv_obj_get_child(pastille, 0) : nullptr,
+                         lv_obj_get_child(b, 1), lv_obj_get_child(b, 2)};
+    tuile_peindre_ligne(r, t, w, kLigneTexte);
+    highlight_button_border(b, choisie, UIColor.ACCENT, 3);
+}
+
+// Les lignes de la page affichée ; celles d'au-delà masquées.
+template <class P>
+void lignes_peindre(const P& p, lv_obj_t* const* lignes) {
+    for (int i = 0; i < kTuiles; i++) {
+        const bool visible = i < p.n;
+        ui_hidden(lignes[i], !visible);
+        if (visible) ligne_peindre(lignes[i], p.piece, p.tuiles[i], i == p.choix);
+    }
+}
+
+// La ligne de la tuile `t` si la page la montre (un état a changé).
+template <class P>
+void ligne_de_la_tuile(const P& p, lv_obj_t* const* lignes, int t) {
+    for (int i = 0; i < p.n; i++)
+        if (p.tuiles[i] == t) ligne_peindre(lignes[i], p.piece, t, i == p.choix);
+}
+
+// Les noms des pièces en haut (pages_onglets : aucun sous deux pages), celui de la page
+// affichée en accent. Nom : celui de la carte centrale en mode HA (tuiles_piece_titre).
+template <class P>
+void onglets_peindre(const P& p, lv_obj_t* const* onglets) {
+    char noms[kPieces][40];  // un nom de HA (kNom) ou « Pièce n » traduit
+    const char* ptr[kPieces] = {};
+    for (int i = 0; i < p.nb; i++) {
+        if (!tuiles_piece_titre(p.pieces[i], noms[i], sizeof(noms[i]))) noms[i][0] = '\0';
+        ptr[i] = noms[i];
+    }
+    pages_onglets(onglets, kPieces, ptr, p.nb, p.page);
+}
+
+// ─── Popup Lumières : les lumières de la maison, pièce par pièce ───────────────────
+
+struct PopupLumiere : PopupPieces<&TuilesUI::lum_popup> {};
 PopupLumiere s_pl;
 
 // Une lumière pilotable de la pièce : tuile lum sans option r ; en mode héritage,
@@ -109,11 +199,6 @@ bool lumiere_allumee(int r, int t) {
 
 float lumiere_luminosite(int r, int t) {
     return heritage() ? s_h.lum_val[t - 2] : s_etats[r][t].valeur;
-}
-
-const char* lumiere_nom(int r, int t) {
-    if (!heritage()) return s_m.tuiles[r][t].nom;
-    return t == 2 ? tr("Chambre") : (t == 3 ? tr("Salon") : "LEDs");
 }
 
 // Clé des commandes du popup : tRT, ou lumiere_N en mode héritage (commandes 3.x).
@@ -142,64 +227,32 @@ void popup_lumiere_arc() {
     ui_text(u.lum_pct, buf);
 }
 
-// Une ligne du sélecteur : icône (palette ou 3.1) dorée si allumée, nom coupé.
-void popup_lumiere_ligne(int i) {
-    const TuilesUI& u = g_tuiles_ui;
-    const int r = s_pl.piece, t = s_pl.tuiles[i];
-    const bool on = lumiere_allumee(r, t);
-    const char* icone = heritage() ? heritage_glyphe_selecteur(t) : tuile_icone(s_m.tuiles[r][t].icone, on, "lum");
-    ui_text(u.lum_sel_icone[i], icone);
-    ui_text_color(u.lum_sel_icone[i], on ? UIColor.INFO : UIColor.TEXT_DIM);
-    ui_texte_coupe(u.lum_sel_nom[i], lumiere_nom(r, t), 244);  // 342 − 88 − marge
-}
-
-// Tout le popup : lignes (serrées au-delà de trois), surbrillance, titre, bouton
-// marche/arrêt et arc de la ligne choisie.
+// Tout le popup : noms des pièces, lignes de la page affichée (la choisie entourée), arc
+// de la ligne choisie. Le titre ne bouge plus (« Lumières ») : la lumière choisie est
+// celle qui est entourée.
 void popup_lumiere_peindre() {
     const TuilesUI& u = g_tuiles_ui;
     if (u.lum_popup == nullptr) return;
-    const bool serre = s_pl.n > 3;
-    const int32_t hauteur = serre ? 54 : 86, pas = serre ? 60 : 96;
-    for (int i = 0; i < kTuiles; i++) {
-        lv_obj_t* b = u.lum_sel[i];
-        const bool visible = i < s_pl.n;
-        ui_hidden(b, !visible);
-        if (!visible || b == nullptr) continue;
-        ui_y(b, 50 + i * pas);
-        if (lv_obj_get_style_height(b, LV_PART_MAIN) != hauteur) lv_obj_set_height(b, hauteur);
-        highlight_button_border(b, i == s_pl.choix, UIColor.ACCENT, 3);
-        popup_lumiere_ligne(i);
-    }
-    if (s_pl.n == 0) return;
-    const int r = s_pl.piece, t = s_pl.tuile;
-    if (heritage()) {
-        const char* titre = t == 2 ? tr("Ampoule Chambre") : (t == 3 ? tr("Ampoule Salon") : tr("Ampoule LEDs"));
-        ui_text(u.lum_titre, titre);
-    } else {
-        ui_text(u.lum_titre, lumiere_nom(r, t));
-    }
-    ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor.INFO : UIColor.TEXT_DIM);
+    onglets_peindre(s_pl, u.lum_onglet);
+    lignes_peindre(s_pl, u.lum_ligne);
     popup_lumiere_arc();
 }
 
-// Lignes du popup : les lumières de la pièce `r`, ligne choisie = celle de la tuile `t`
-// (sinon la première). Faux si la pièce n'en a aucune.
+// Pages et lignes du popup (pieces_calculer) : la page de la pièce `r`, la ligne de la
+// tuile `t`, et la clé des commandes de la partie droite. Faux si la maison n'a aucune
+// lumière.
 bool popup_lumiere_lignes(int r, int t) {
     const TuilesUI& u = g_tuiles_ui;
-    s_pl = PopupLumiere{};
-    s_pl.piece = r;
-    for (int i = 0; i < kTuiles; i++)
-        if (est_lumiere(r, i)) {
-            if (i == t) s_pl.choix = s_pl.n;
-            s_pl.tuiles[s_pl.n++] = i;
-        }
-    if (s_pl.n == 0) return false;
-    s_pl.tuile = s_pl.tuiles[s_pl.choix];
-    if (u.lum_cle != nullptr) lumiere_cle(r, s_pl.tuile, *u.lum_cle);
+    if (!pieces_calculer(s_pl, est_lumiere, r, t)) {
+        s_pl = PopupLumiere{};
+        return false;
+    }
+    if (u.lum_cle != nullptr) lumiere_cle(s_pl.piece, s_pl.tuile, *u.lum_cle);
     return true;
 }
 
-// Lumières de la pièce `r`, ligne choisie = celle de la tuile `t` (appui long).
+// Le popup sur la pièce `r` et la lumière `t` (appui long d'une tuile, « Détails » de sa
+// roue ; -1 : la première de la pièce, ou de la première pièce qui en a).
 void popup_lumiere_ouvrir(int r, int t) {
     if (PopupLumiere::conteneur() == nullptr || !popup_lumiere_lignes(r, t)) return;
     popup_lumiere_peindre();
@@ -207,10 +260,10 @@ void popup_lumiere_ouvrir(int r, int t) {
 }
 
 // Nouvelles définitions des tuiles (UI-1, audit du 07/10/2026), comme les popups volet et
-// appareil : ouvert, les lignes de la même pièce sont recalculées — la lampe choisie le
-// reste si elle est encore une lumière, sinon la première — puis le popup est repeint ;
-// plus aucune lumière dans la pièce : refermé. Fermé (y compris par sa croix, que le C++
-// ne voit pas), il est oublié : aucun index ne vise plus une tuile disparue.
+// appareil : ouvert, pages et lignes sont recalculées — la pièce et la lampe choisies le
+// restent si elles ont encore des lumières, sinon la première — puis le popup est
+// repeint ; plus aucune lumière dans la maison : refermé. Fermé (y compris par sa croix,
+// que le C++ ne voit pas), il est oublié : aucun index ne vise plus une tuile disparue.
 void popup_lumiere_revalider() {
     if (!s_pl.ouvert()) {
         s_pl = PopupLumiere{};
@@ -220,32 +273,31 @@ void popup_lumiere_revalider() {
     popup_tuile_revalider(s_pl, popup_lumiere_lignes(s_pl.piece, choisie), popup_lumiere_peindre);
 }
 
-// Un état a changé : la ligne de cette tuile si le popup la montre.
+// Un état a changé : la ligne de cette tuile si la page la montre, l'arc si c'est la
+// lumière choisie.
 void popup_lumiere_etat(int r, int t) {
     if (!s_pl.ouvert() || r != s_pl.piece) return;
-    const TuilesUI& u = g_tuiles_ui;
-    for (int i = 0; i < s_pl.n; i++) {
-        if (s_pl.tuiles[i] != t) continue;
-        popup_lumiere_ligne(i);
-        if (i == s_pl.choix) {
-            ui_text_color(u.lum_power, lumiere_allumee(r, t) ? UIColor.INFO : UIColor.TEXT_DIM);
-            popup_lumiere_arc();
-        }
-    }
+    ligne_de_la_tuile(s_pl, g_tuiles_ui.lum_ligne, t);
+    if (t == s_pl.tuile) popup_lumiere_arc();
 }
 
-// ─── Popup du volet (05/10/2026, discussion #278) ───────────────────────────────────
-//
-// Appui long d'une tuile vol sans l'option k : un volet dessiné (06/10/2026, même
-// discussion : « like ha animation, not a basic slider ») qu'on fait glisser du doigt
-// (position connue seulement, envoyée au relâcher : action « position »), la position en
-// grand, l'état en mots et Ouvrir / Stop / Fermer (les commandes de la tuile). Tant qu'il
-// est ouvert, il suit l'état de SA tuile (peindre_tuile → popup_volet_etat) : chaque
-// position poussée par HA redessine le tablier directement, sans interpolation ni fondu
-// (préférence d'Axel : transitions instantanées) — le volet dessiné descend quand le vrai
-// descend, au rythme des poussées.
+// Brique des popups à pages (tab5_pages.cpp) : le glissement de pièce en pièce.
+int lumieres_nombre() { return s_pl.nb; }
+int lumieres_page() { return s_pl.ouvert() && s_pl.nb > 0 ? s_pl.page : -1; }
+PagesPopup s_pages_lumieres{nullptr, lumieres_nombre, lumieres_page, popup_lumiere_page};
 
-struct PopupVolet : PopupTuile<&TuilesUI::vol_popup> {
+// ─── Popup Volets (05/10/2026, discussion #278 ; à pages par pièce, ADR-0046) ───────
+//
+// Les volets de la maison, pièce par pièce ; à droite, le volet choisi : un volet dessiné
+// (06/10/2026, même discussion : « like ha animation, not a basic slider ») qu'on fait
+// glisser du doigt (position connue seulement, envoyée au relâcher : action « position »),
+// son nom, la position en grand, l'état en mots et Ouvrir / Stop / Fermer (les commandes
+// de la tuile). Tant qu'il est ouvert, il suit l'état des volets de la page
+// (peindre_tuile → popup_volet_etat) : chaque position poussée par HA redessine le
+// tablier directement, sans interpolation ni fondu (préférence d'Axel : transitions
+// instantanées) — le volet dessiné descend quand le vrai descend, au rythme des poussées.
+
+struct PopupVolet : PopupPieces<&TuilesUI::vol_popup> {
     bool saisi = false;   // un doigt tient le volet (position connue à l'appui)
     bool glisse = false;  // il a glissé au-delà du seuil : son relâcher envoie la position
     bool cible = false;   // position envoyée : dessinée jusqu'au prochain état de HA
@@ -256,11 +308,12 @@ struct PopupVolet : PopupTuile<&TuilesUI::vol_popup> {
 };
 PopupVolet s_pv;
 
-// Géométrie (volet_popup.yaml) : l'état sous la position, ou seul au milieu de la carte
-// (598 px de haut, 53 px de texte) ; titre : la barre d'en-tête moins l'icône et la croix.
-constexpr int32_t kVoletEtatSous = 360;
-constexpr int32_t kVoletEtatSeul = 272;
-constexpr int32_t kVoletTitreLargeur = 1000;
+// Géométrie (volet_popup.yaml) : à droite du volet dessiné (x 392..796 de la carte), le
+// nom en haut (y 56), la position (y 104, chiffres de 130 px), l'état dessous, ou seul
+// entre le nom et les commandes (y 404) quand la position n'est pas connue.
+constexpr int32_t kVoletEtatSous = 280;
+constexpr int32_t kVoletEtatSeul = 200;
+constexpr int32_t kVoletNomLargeur = 380;
 // Volet dessiné : hauteur de la fenêtre et du tablier (volet_fenetre, volet_tablier de
 // volet_popup.yaml, tests/test_tuiles_firmware.py compare), lames de 38 px.
 constexpr int32_t kVoletFenetreH = 456;
@@ -283,12 +336,19 @@ uint32_t s_lame_fond = 0;
 uint32_t s_lame_joint = 0;
 lv_opa_t s_lame_opa = LV_OPA_COVER;
 
-// La tuile du popup est-elle toujours un volet pilotable ? (les définitions peuvent
-// changer popup ouvert ; le mode héritage n'ouvre jamais ce popup.)
+// Un volet du popup : tuile vol sans l'option r (lecture seule) ni k (ses commandes
+// passent par la confirmation de sa tuile, qui n'ouvre pas ce popup). Le mode héritage
+// n'ouvre jamais ce popup (son volet 3.x a son propre sens, tuiles_heritage_volet_sens).
+bool est_volet(int r, int t) {
+    if (heritage() || !tuile_presente(r, t)) return false;
+    const Def& d = s_m.tuiles[r][t];
+    return d.type == static_cast<uint8_t>(Type::VOL) && !(d.options & (OPT_R | OPT_K));
+}
+
+// Le volet choisi est-il toujours un volet du popup ? (les définitions peuvent changer
+// popup ouvert.)
 bool popup_volet_valide() {
-    if (!s_pv.en_grille()) return false;
-    const Def& d = s_m.tuiles[s_pv.piece][s_pv.tuile];
-    return d.type == static_cast<uint8_t>(Type::VOL) && !(d.options & OPT_R);
+    return s_pv.en_grille() && est_volet(s_pv.piece, s_pv.tuile);
 }
 
 // Position 0-100 connue : un état en ligne et une valeur dans les bornes. NaN : le volet
@@ -382,13 +442,13 @@ void popup_volet_dessiner(int pos, bool estompe) {
     lv_obj_report_style_change(&s_lame);
 }
 
-// Titre, volet dessiné, position (rangée « 45 % », ou rien), état en mots.
+// Le volet choisi : nom, volet dessiné, position (rangée « 45 % », ou rien), état en mots.
 void popup_volet_peindre() {
     const TuilesUI& u = g_tuiles_ui;
     if (u.vol_popup == nullptr || !popup_volet_valide()) return;
     const int r = s_pv.piece, t = s_pv.tuile;
     const Etat& e = s_etats[r][t];
-    ui_texte_coupe(u.vol_titre, s_m.tuiles[r][t].nom, kVoletTitreLargeur);
+    ui_texte_coupe(u.vol_nom, s_m.tuiles[r][t].nom, kVoletNomLargeur);
     const bool connue = vol_position_connue(e);
     ui_hidden(u.vol_position, !connue);
     // Pas pendant un glissement : le retour de HA ferait sauter le volet sous le doigt
@@ -405,12 +465,68 @@ void popup_volet_peindre() {
     ui_y(u.vol_etat, connue ? kVoletEtatSous : kVoletEtatSeul);
 }
 
-void popup_volet_ouvrir(int r, int t) { popup_tuile_ouvrir(s_pv, r, t, popup_volet_peindre); }
+// Un autre volet choisi : le doigt et la position envoyée du précédent oubliés (le
+// dessin reprend l'état de HA du nouveau). Le seul autre oubli de la position envoyée :
+// l'état poussé par HA (popup_volet_etat_pousse).
+void volet_doigt_oublier() {
+    s_pv.saisi = false;
+    s_pv.glisse = false;
+    s_pv.cible = false;
+}
 
-// Un état a changé : le popup, s'il montre cette tuile.
+// Tout le popup : noms des pièces, lignes de la page affichée, volet choisi.
+void popup_volet_page_peindre() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (u.vol_popup == nullptr) return;
+    onglets_peindre(s_pv, u.vol_onglet);
+    lignes_peindre(s_pv, u.vol_ligne);
+    popup_volet_peindre();
+}
+
+// Le popup sur la pièce `r` et le volet `t` (-1 : le premier de la pièce, ou de la
+// première pièce qui en a) : le doigt, la position envoyée et le dessin d'avant oubliés,
+// comme à chaque changement de volet choisi. Faux si la maison n'a aucun volet.
+bool popup_volet_montrer(int r, int t) {
+    s_pv = PopupVolet{};
+    if (!pieces_calculer(s_pv, est_volet, r, t)) return false;
+    popup_volet_page_peindre();
+    return true;
+}
+
+// Appui long d'une tuile vol, « Détails » de sa roue, « Aller à l'écran → Volets ».
+void popup_volet_ouvrir(int r, int t) {
+    if (PopupVolet::conteneur() == nullptr || !popup_volet_montrer(r, t)) return;
+    animate_popup_open(PopupVolet::conteneur());
+}
+
+// Nouvelles définitions, popup ouvert : pages et lignes recalculées (la pièce et le volet
+// choisis le restent s'ils sont encore là, sinon le premier) ; le doigt et la position
+// envoyée restent si c'est le même volet. Plus aucun volet : refermé.
+void popup_volet_revalider() {
+    if (!s_pv.ouvert()) return;
+    const int r = s_pv.piece, t = s_pv.tuile;
+    if (!pieces_calculer(s_pv, est_volet, r, t)) {
+        animate_popup_close(PopupVolet::conteneur());
+        return;
+    }
+    if (s_pv.piece != r || s_pv.tuile != t) volet_doigt_oublier();
+    popup_volet_page_peindre();
+}
+
+// Un état a changé : la ligne de cette tuile si la page la montre, et le volet dessiné
+// si c'est le volet choisi.
 void popup_volet_etat(int r, int t) {
+    if (!s_pv.ouvert() || r != s_pv.piece) return;
+    ligne_de_la_tuile(s_pv, g_tuiles_ui.vol_ligne, t);
     if (s_pv.montre(r, t)) popup_volet_peindre();
 }
+
+// Brique des popups à pages (tab5_pages.cpp) : le glissement de pièce en pièce. Un
+// glissement sur le volet dessiné le règle et ne remonte pas jusque-là (son cadre garde
+// le geste, tuiles_brancher_popup_volet).
+int volets_nombre() { return s_pv.nb; }
+int volets_page() { return s_pv.ouvert() && s_pv.nb > 0 ? s_pv.page : -1; }
+PagesPopup s_pages_volets{nullptr, volets_nombre, volets_page, popup_volet_page};
 
 // Relâcher après un glissement : « position » + 0-100 à la tuile du popup (événement
 // esphome.tab5_action ; le blueprint la passe à cover / valve.set_…_position de l'entité
@@ -578,20 +694,20 @@ void popup_appareil_etat(int r, int t) {
 
 // ─── Ce que tab5_tuiles.cpp demande aux trois popups ────────────────────────────────
 
-// Nouvelles définitions des tuiles (tuiles_definir) : popups volet et appareil ouverts sur
-// une tuile qui n'a plus ce popup (plus un volet pilotable, tuile devenue lecture seule,
-// autre type…) refermés, repeints sinon ; le popup lumière revalidé (ses lignes étaient des
-// index de tuiles de l'ancienne définition).
+// Nouvelles définitions des tuiles (tuiles_definir) : le popup d'un appareil ouvert sur
+// une tuile qui n'a plus ce popup (tuile devenue lecture seule, autre type…) refermé,
+// repeint sinon ; les popups Lumières et Volets revalidés (leurs pages et lignes étaient
+// des index de pièces et de tuiles de l'ancienne définition).
 void popups_revalider() {
-    popup_tuile_revalider(s_pv, popup_volet_valide(), popup_volet_peindre);
+    popup_volet_revalider();
     popup_tuile_revalider(s_pa, popup_appareil_valide(), popup_appareil_peindre);
     popup_lumiere_revalider();
 }
 
 // Thèmes (ADR-0029) : les trois popups repeints depuis le dernier état.
 void popups_rejouer_theme() {
-    if (s_pl.n > 0) popup_lumiere_peindre();
-    if (s_pv.ouvert()) popup_volet_peindre();
+    if (s_pl.ouvert() && s_pl.n > 0) popup_lumiere_peindre();
+    if (s_pv.ouvert()) popup_volet_page_peindre();
     if (s_pa.ouvert()) popup_appareil_peindre();
 }
 
@@ -608,18 +724,74 @@ using namespace tuiles;
 void popup_lumiere_choisir(int idx) {
     charger();
     const TuilesUI& u = g_tuiles_ui;
-    if (idx < 0 || idx >= s_pl.n || u.lum_popup == nullptr) return;
+    if (idx < 0 || idx >= s_pl.n || !s_pl.ouvert()) return;
     s_pl.choix = idx;
     s_pl.tuile = s_pl.tuiles[idx];
     if (u.lum_cle != nullptr) lumiere_cle(s_pl.piece, s_pl.tuile, *u.lum_cle);
+    lignes_peindre(s_pl, u.lum_ligne);
+    popup_lumiere_arc();
+}
+
+void popup_lumiere_page(int page) {
+    charger();
+    if (!s_pl.ouvert() || page < 0 || page >= s_pl.nb || page == s_pl.page) return;
+    // Plus aucune lumière (définitions changées entre deux appels) : refermé.
+    if (!popup_lumiere_lignes(s_pl.pieces[page], -1)) {
+        animate_popup_close(PopupLumiere::conteneur());
+        return;
+    }
     popup_lumiere_peindre();
-    if (!s_pl.ouvert()) animate_popup_open(u.lum_popup);
+}
+
+// Toucher de la pastille d'une ligne : le toucher de sa tuile (allumer / éteindre, avec la
+// confirmation de l'option k) ; appui long : sa roue, ancrée sur la pastille, sinon le
+// chemin de sa tuile (tuile_appui_maison, comme une ligne du popup Maison).
+void popup_lumiere_ligne_appui(int idx, bool long_appui) {
+    charger();
+    if (idx < 0 || idx >= s_pl.n || !s_pl.ouvert()) return;
+    lv_obj_t* ligne = g_tuiles_ui.lum_ligne[idx];
+    tuile_appui_maison(s_pl.piece, s_pl.tuiles[idx], long_appui, ligne != nullptr ? lv_obj_get_child(ligne, 0) : nullptr);
+}
+
+void popup_volet_choisir(int idx) {
+    charger();
+    if (idx < 0 || idx >= s_pv.n || !s_pv.ouvert() || idx == s_pv.choix) return;
+    s_pv.choix = idx;
+    s_pv.tuile = s_pv.tuiles[idx];
+    volet_doigt_oublier();
+    lignes_peindre(s_pv, g_tuiles_ui.vol_ligne);
+    popup_volet_peindre();
+}
+
+void popup_volet_page(int page) {
+    charger();
+    if (!s_pv.ouvert() || page < 0 || page >= s_pv.nb || page == s_pv.page) return;
+    // Plus aucun volet (définitions changées entre deux appels) : refermé.
+    if (!popup_volet_montrer(s_pv.pieces[page], -1)) animate_popup_close(PopupVolet::conteneur());
+}
+
+// Toucher de la pastille : le toucher de la tuile (le sens du volet : ouvrir, fermer, ou
+// arrêter un volet en route) ; appui long : sa roue, sinon le chemin de sa tuile.
+void popup_volet_ligne_appui(int idx, bool long_appui) {
+    charger();
+    if (idx < 0 || idx >= s_pv.n || !s_pv.ouvert()) return;
+    lv_obj_t* ligne = g_tuiles_ui.vol_ligne[idx];
+    tuile_appui_maison(s_pv.piece, s_pv.tuiles[idx], long_appui, ligne != nullptr ? lv_obj_get_child(ligne, 0) : nullptr);
 }
 
 void popup_volet_commande(const char* action) {
     charger();
     if (action == nullptr || !popup_volet_valide()) return;
     envoyer_tuile(s_pv.piece, s_pv.tuile, action);
+}
+
+// « Tout ouvrir » / « Tout fermer » : la commande à chaque volet de la page, une action
+// par volet (esphome.tab5_action), comme son bouton.
+void popup_volets_tout(const char* action) {
+    charger();
+    if (action == nullptr || !s_pv.ouvert()) return;
+    for (int i = 0; i < s_pv.n; i++)
+        if (est_volet(s_pv.piece, s_pv.tuiles[i])) envoyer_tuile(s_pv.piece, s_pv.tuiles[i], action);
 }
 
 // Grand bouton du popup d'un appareil : le toucher de SA tuile, par le même chemin.
@@ -640,6 +812,11 @@ void tuiles_brancher_popup_volet() {
     lv_obj_remove_flag(cadre, LV_OBJ_FLAG_GESTURE_BUBBLE);
     for (lv_event_code_t code : {LV_EVENT_PRESSED, LV_EVENT_PRESSING, LV_EVENT_RELEASED, LV_EVENT_PRESS_LOST})
         lv_obj_add_event_cb(cadre, volet_cadre_rappel, code, nullptr);
+    // De pièce en pièce d'un glissement (ADR-0046), les deux popups à pages par pièce.
+    s_pages_volets.popup = g_tuiles_ui.vol_popup;
+    pages_brancher(&s_pages_volets);
+    s_pages_lumieres.popup = g_tuiles_ui.lum_popup;
+    pages_brancher(&s_pages_lumieres);
 }
 
 void popup_lumiere_tout_eteindre() { tuiles_piece_eteindre(s_pl.piece); }

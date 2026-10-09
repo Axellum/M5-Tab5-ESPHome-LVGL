@@ -8,11 +8,9 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1108;
+static const uint16_t kI18nKeyCount = 1106;
 
 static const char* const kI18nCtx[] = {
-    "",
-    "",
     "",
     "",
     "",
@@ -1230,7 +1228,7 @@ static const char* const kI18nKeys[] = {
     "8,0 cases/s",
     "9 min",
     "ACTIF",
-    "AMPOULE",
+    "AMPOULES",
     "APPARENCE",
     "Abandon",
     "Abandon  —  comptage indicatif : %.1f contre %.1f",
@@ -1263,10 +1261,6 @@ static const char* const kI18nKeys[] = {
     "Allumer seulement",
     "Allumé",
     "Amateur",
-    "Ampoule",
-    "Ampoule Chambre",
-    "Ampoule LEDs",
-    "Ampoule Salon",
     "Analyse…",
     "Anglaises 8×8",
     "Animations",
@@ -1357,7 +1351,6 @@ static const char* const kI18nKeys[] = {
     "CATÉGORIE AU CHOIX",
     "CLASSEMENT",
     "COMMANDE",
-    "COMMANDES",
     "COMMENCER LA PARTIE",
     "CONFIRMER",
     "COULEURS",
@@ -2055,8 +2048,10 @@ static const char* const kI18nKeys[] = {
     "Tour %u · au tour de %s",
     "Tournez la tablette à la verticale",
     "Tout est enregistré et survit au redémarrage.",
+    "Tout fermer",
     "Tout le Top 10 local, meilleur score compris.",
     "Tout marquer comme lu",
+    "Tout ouvrir",
     "Tout vivant",
     "Tout éteindre",
     "Toutes les parties et les réglages sont conservés dans le Tab.",
@@ -2081,6 +2076,7 @@ static const char* const kI18nKeys[] = {
     "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant.",
     "VICTOIRE",
     "VICTOIRE !",
+    "VOLETS",
     "VOTRE DEMANDE",
     "Vac. scolaires",
     "Valider le score",
@@ -2342,7 +2338,7 @@ static const char* const kI18n_en[] = {
     "8.0 tiles/s",  // "8,0 cases/s"
     "9 min",  // "9 min"
     "ON",  // "ACTIF"
-    "BULB",  // "AMPOULE"
+    "LIGHTS",  // "AMPOULES"
     "APPEARANCE",  // "APPARENCE"
     "Resign",  // "Abandon"
     "Resignation  —  estimated count: %.1f vs %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
@@ -2375,10 +2371,6 @@ static const char* const kI18n_en[] = {
     "Turn on only",  // "Allumer seulement"
     "On",  // "Allumé"
     "Amateur",  // "Amateur"
-    "Bulb",  // "Ampoule"
-    "Bedroom bulb",  // "Ampoule Chambre"
-    "LED strip",  // "Ampoule LEDs"
-    "Living room bulb",  // "Ampoule Salon"
     "Thinking…",  // "Analyse…"
     "English 8x8",  // "Anglaises 8×8"
     "Animations",  // "Animations"
@@ -2469,7 +2461,6 @@ static const char* const kI18n_en[] = {
     "CHOOSE A CATEGORY",  // "CATÉGORIE AU CHOIX"
     "LEADERBOARD",  // "CLASSEMENT"
     "CONTROL",  // "COMMANDE"
-    "CONTROLS",  // "COMMANDES"
     "START THE GAME",  // "COMMENCER LA PARTIE"
     "CONFIRM",  // "CONFIRMER"
     "COLORS",  // "COULEURS"
@@ -3167,8 +3158,10 @@ static const char* const kI18n_en[] = {
     "Round %u · %s to play",  // "Tour %u · au tour de %s"
     "Turn the tablet upright",  // "Tournez la tablette à la verticale"
     "Everything is saved and survives a restart.",  // "Tout est enregistré et survit au redémarrage."
+    "Close all",  // "Tout fermer"
     "The whole local top 10, best score included.",  // "Tout le Top 10 local, meilleur score compris."
     "Mark all as read",  // "Tout marquer comme lu"
+    "Open all",  // "Tout ouvrir"
     "All alive",  // "Tout vivant"
     "All off",  // "Tout éteindre"
     "All games and settings are kept on the Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -3193,6 +3186,7 @@ static const char* const kI18n_en[] = {
     "One touch at a time: in Buttons mode, you dig while standing still. Mixed mode frees your finger to dig on the move.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
     "VICTORY",  // "VICTOIRE"
     "VICTORY!",  // "VICTOIRE !"
+    "SHUTTERS",  // "VOLETS"
     "YOUR REQUEST",  // "VOTRE DEMANDE"
     "School hol.",  // "Vac. scolaires"
     "Confirm score",  // "Valider le score"
@@ -3454,7 +3448,7 @@ static const char* const kI18n_de[] = {
     "8,0 Felder/s",  // "8,0 cases/s"
     "9 min",  // "9 min"
     "AN",  // "ACTIF"
-    "LAMPE",  // "AMPOULE"
+    "LAMPEN",  // "AMPOULES"
     "AUSSEHEN",  // "APPARENCE"
     "Aufgeben",  // "Abandon"
     "Aufgabe  —  geschätzte Zählung: %.1f zu %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
@@ -3487,10 +3481,6 @@ static const char* const kI18n_de[] = {
     "Nur einschalten",  // "Allumer seulement"
     "An",  // "Allumé"
     "Amateur",  // "Amateur"
-    "Lampe",  // "Ampoule"
-    "Schlafzimmerlampe",  // "Ampoule Chambre"
-    "LED-Streifen",  // "Ampoule LEDs"
-    "Wohnzimmerlampe",  // "Ampoule Salon"
     "Analyse…",  // "Analyse…"
     "Englisch 8x8",  // "Anglaises 8×8"
     "Animationen",  // "Animations"
@@ -3581,7 +3571,6 @@ static const char* const kI18n_de[] = {
     "FREIE KATEGORIE",  // "CATÉGORIE AU CHOIX"
     "BESTENLISTE",  // "CLASSEMENT"
     "STEUERUNG",  // "COMMANDE"
-    "STEUERUNG",  // "COMMANDES"
     "SPIEL STARTEN",  // "COMMENCER LA PARTIE"
     "BESTÄTIGEN",  // "CONFIRMER"
     "FARBEN",  // "COULEURS"
@@ -4279,8 +4268,10 @@ static const char* const kI18n_de[] = {
     "Runde %u · %s ist dran",  // "Tour %u · au tour de %s"
     "Tablet hochkant drehen",  // "Tournez la tablette à la verticale"
     "Alles wird gespeichert und übersteht Neustarts.",  // "Tout est enregistré et survit au redémarrage."
+    "Alle schließen",  // "Tout fermer"
     "Die ganze lokale Top 10, inkl. Highscore.",  // "Tout le Top 10 local, meilleur score compris."
     "Alle als gelesen markieren",  // "Tout marquer comme lu"
+    "Alle öffnen",  // "Tout ouvrir"
     "Alles lebt",  // "Tout vivant"
     "Alle aus",  // "Tout éteindre"
     "Alle Partien und Einstellungen bleiben im Tab gespeichert.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -4305,6 +4296,7 @@ static const char* const kI18n_de[] = {
     "Nur ein Touchpunkt gleichzeitig: Im Modus Tasten wird im Stehen gegraben. Der Modus Kombi gibt den Finger frei, um im Laufen zu graben.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
     "SIEG",  // "VICTOIRE"
     "SIEG!",  // "VICTOIRE !"
+    "ROLLLÄDEN",  // "VOLETS"
     "DEINE FRAGE",  // "VOTRE DEMANDE"
     "Schulferien",  // "Vac. scolaires"
     "Score bestätigen",  // "Valider le score"
@@ -4566,7 +4558,7 @@ static const char* const kI18n_nl[] = {
     "8,0 vakjes/s",  // "8,0 cases/s"
     "9 min",  // "9 min"
     "AAN",  // "ACTIF"
-    "LAMP",  // "AMPOULE"
+    "LAMPEN",  // "AMPOULES"
     "WEERGAVE",  // "APPARENCE"
     "Opgeven",  // "Abandon"
     "Opgegeven  —  indicatieve telling: %.1f tegen %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
@@ -4599,10 +4591,6 @@ static const char* const kI18n_nl[] = {
     "Alleen aanzetten",  // "Allumer seulement"
     "Aan",  // "Allumé"
     "Amateur",  // "Amateur"
-    "Lamp",  // "Ampoule"
-    "Lamp slaapkamer",  // "Ampoule Chambre"
-    "Ledstrip",  // "Ampoule LEDs"
-    "Lamp woonkamer",  // "Ampoule Salon"
     "Analyse…",  // "Analyse…"
     "Engels 8x8",  // "Anglaises 8×8"
     "Animaties",  // "Animations"
@@ -4693,7 +4681,6 @@ static const char* const kI18n_nl[] = {
     "KIES EEN CATEGORIE",  // "CATÉGORIE AU CHOIX"
     "RANGLIJST",  // "CLASSEMENT"
     "BEDIENING",  // "COMMANDE"
-    "BEDIENING",  // "COMMANDES"
     "SPEL STARTEN",  // "COMMENCER LA PARTIE"
     "BEVESTIGEN",  // "CONFIRMER"
     "KLEUREN",  // "COULEURS"
@@ -5391,8 +5378,10 @@ static const char* const kI18n_nl[] = {
     "Ronde %u · beurt aan %s",  // "Tour %u · au tour de %s"
     "Houd de tablet rechtop",  // "Tournez la tablette à la verticale"
     "Alles wordt bewaard, ook na een herstart.",  // "Tout est enregistré et survit au redémarrage."
+    "Alles dicht",  // "Tout fermer"
     "De hele lokale top 10, inclusief beste score.",  // "Tout le Top 10 local, meilleur score compris."
     "Alles als gelezen markeren",  // "Tout marquer comme lu"
+    "Alles open",  // "Tout ouvrir"
     "Alles levend",  // "Tout vivant"
     "Alles uit",  // "Tout éteindre"
     "Alle partijen en opties blijven bewaard in de Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -5417,6 +5406,7 @@ static const char* const kI18n_nl[] = {
     "Eén aanraking tegelijk: in Knoppen-modus graaf je terwijl je stilstaat. Mix-modus maakt je vinger vrij om al lopend te graven.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
     "GEWONNEN",  // "VICTOIRE"
     "GEWONNEN!",  // "VICTOIRE !"
+    "ROLLUIKEN",  // "VOLETS"
     "JOUW VRAAG",  // "VOTRE DEMANDE"
     "Schoolvakantie",  // "Vac. scolaires"
     "Score bevestigen",  // "Valider le score"
@@ -5678,7 +5668,7 @@ static const char* const kI18n_es[] = {
     "8,0 casillas/s",  // "8,0 cases/s"
     "9 min",  // "9 min"
     "ACTIVO",  // "ACTIF"
-    "LÁMPARA",  // "AMPOULE"
+    "LUCES",  // "AMPOULES"
     "APARIENCIA",  // "APPARENCE"
     "Rendirse",  // "Abandon"
     "Abandono  —  conteo orientativo: %.1f contra %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
@@ -5711,10 +5701,6 @@ static const char* const kI18n_es[] = {
     "Solo encender",  // "Allumer seulement"
     "ON",  // "Allumé"
     "Aficionado",  // "Amateur"
-    "Lámpara",  // "Ampoule"
-    "Lámpara dormitorio",  // "Ampoule Chambre"
-    "Tira LED",  // "Ampoule LEDs"
-    "Lámpara salón",  // "Ampoule Salon"
     "Analizando…",  // "Analyse…"
     "Inglesas 8x8",  // "Anglaises 8×8"
     "Animaciones",  // "Animations"
@@ -5805,7 +5791,6 @@ static const char* const kI18n_es[] = {
     "CATEGORÍA A ELEGIR",  // "CATÉGORIE AU CHOIX"
     "CLASIFICACIÓN",  // "CLASSEMENT"
     "CONTROL",  // "COMMANDE"
-    "CONTROLES",  // "COMMANDES"
     "EMPEZAR LA PARTIDA",  // "COMMENCER LA PARTIE"
     "CONFIRMAR",  // "CONFIRMER"
     "COLORES",  // "COULEURS"
@@ -6503,8 +6488,10 @@ static const char* const kI18n_es[] = {
     "Ronda %u · turno de %s",  // "Tour %u · au tour de %s"
     "Gira la tableta en vertical",  // "Tournez la tablette à la verticale"
     "Todo se guarda y sobrevive al reinicio.",  // "Tout est enregistré et survit au redémarrage."
+    "Cerrar todo",  // "Tout fermer"
     "Todo el Top 10 local, récord incluido.",  // "Tout le Top 10 local, meilleur score compris."
     "Marcar todo como leído",  // "Tout marquer comme lu"
+    "Abrir todo",  // "Tout ouvrir"
     "Todo vivo",  // "Tout vivant"
     "Apagar todo",  // "Tout éteindre"
     "Todas las partidas y ajustes se guardan en el Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -6529,6 +6516,7 @@ static const char* const kI18n_es[] = {
     "Un solo toque a la vez: en modo Botones se cava estando quieto. El modo Mixto libera el dedo para cavar en marcha.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
     "VICTORIA",  // "VICTOIRE"
     "¡VICTORIA!",  // "VICTOIRE !"
+    "PERSIANAS",  // "VOLETS"
     "TU PREGUNTA",  // "VOTRE DEMANDE"
     "Vac. escolares",  // "Vac. scolaires"
     "Validar resultado",  // "Valider le score"
@@ -6790,7 +6778,7 @@ static const char* const kI18n_it[] = {
     "8,0 caselle/s",  // "8,0 cases/s"
     "9 min",  // "9 min"
     "ATTIVA",  // "ACTIF"
-    "LUCI",  // "AMPOULE"
+    "LUCI",  // "AMPOULES"
     "ASPETTO",  // "APPARENCE"
     "Abbandona",  // "Abandon"
     "Abbandono  —  conteggio indicativo: %.1f a %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
@@ -6823,10 +6811,6 @@ static const char* const kI18n_it[] = {
     "Solo accensione",  // "Allumer seulement"
     "Acceso",  // "Allumé"
     "Amatore",  // "Amateur"
-    "Lampadina",  // "Ampoule"
-    "Lampadina camera",  // "Ampoule Chambre"
-    "Striscia LED",  // "Ampoule LEDs"
-    "Lampadina soggiorno",  // "Ampoule Salon"
     "Analisi…",  // "Analyse…"
     "Inglese 8x8",  // "Anglaises 8×8"
     "Animazioni",  // "Animations"
@@ -6917,7 +6901,6 @@ static const char* const kI18n_it[] = {
     "CATEGORIA A SCELTA",  // "CATÉGORIE AU CHOIX"
     "CLASSIFICA",  // "CLASSEMENT"
     "COMANDO",  // "COMMANDE"
-    "COMANDI",  // "COMMANDES"
     "INIZIA LA PARTITA",  // "COMMENCER LA PARTIE"
     "CONFERMA",  // "CONFIRMER"
     "COLORI",  // "COULEURS"
@@ -7615,8 +7598,10 @@ static const char* const kI18n_it[] = {
     "Turno %u · tocca a %s",  // "Tour %u · au tour de %s"
     "Ruota il tablet in verticale",  // "Tournez la tablette à la verticale"
     "Tutto viene salvato e resta dopo un riavvio.",  // "Tout est enregistré et survit au redémarrage."
+    "Chiudi tutto",  // "Tout fermer"
     "Tutta la Top 10 locale, record compreso.",  // "Tout le Top 10 local, meilleur score compris."
     "Segna tutto come letto",  // "Tout marquer comme lu"
+    "Apri tutto",  // "Tout ouvrir"
     "Tutti vivi",  // "Tout vivant"
     "Spegni tutto",  // "Tout éteindre"
     "Partite e opzioni restano salvate nel Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -7641,6 +7626,7 @@ static const char* const kI18n_it[] = {
     "Un solo tocco alla volta: in modalità Pulsanti si scava da fermi. La modalità Misto libera il dito per scavare camminando.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
     "VITTORIA",  // "VICTOIRE"
     "VITTORIA!",  // "VICTOIRE !"
+    "TAPPARELLE",  // "VOLETS"
     "RICHIESTA",  // "VOTRE DEMANDE"
     "Vacanze scol.",  // "Vac. scolaires"
     "Conferma punteggio",  // "Valider le score"
@@ -7902,7 +7888,7 @@ static const char* const kI18n_tr[] = {
     "8,0 kare/sn",  // "8,0 cases/s"
     "9 dk",  // "9 min"
     "AÇIK",  // "ACTIF"
-    "AMPUL",  // "AMPOULE"
+    "IŞIKLAR",  // "AMPOULES"
     "GÖRÜNÜM",  // "APPARENCE"
     "Pes",  // "Abandon"
     "Pes  —  tahmini sayım: %.1f - %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
@@ -7935,10 +7921,6 @@ static const char* const kI18n_tr[] = {
     "Yalnızca aç",  // "Allumer seulement"
     "Açık",  // "Allumé"
     "Amatör",  // "Amateur"
-    "Ampul",  // "Ampoule"
-    "Yatak odası ampulü",  // "Ampoule Chambre"
-    "LED şerit",  // "Ampoule LEDs"
-    "Salon ampulü",  // "Ampoule Salon"
     "Analiz…",  // "Analyse…"
     "İngiliz 8x8",  // "Anglaises 8×8"
     "Animasyonlar",  // "Animations"
@@ -8029,7 +8011,6 @@ static const char* const kI18n_tr[] = {
     "KATEGORİ SEÇ",  // "CATÉGORIE AU CHOIX"
     "SIRALAMA",  // "CLASSEMENT"
     "KOMUT",  // "COMMANDE"
-    "KOMUTLAR",  // "COMMANDES"
     "OYUNA BAŞLA",  // "COMMENCER LA PARTIE"
     "ONAYLA",  // "CONFIRMER"
     "RENKLER",  // "COULEURS"
@@ -8727,8 +8708,10 @@ static const char* const kI18n_tr[] = {
     "Tur %u · sıra: %s",  // "Tour %u · au tour de %s"
     "Tableti dik çevir",  // "Tournez la tablette à la verticale"
     "Her şey kaydedilir, yeniden başlatmada korunur.",  // "Tout est enregistré et survit au redémarrage."
+    "Tümünü kapat",  // "Tout fermer"
     "Yerel ilk 10'un tamamı, en iyi skor dahil.",  // "Tout le Top 10 local, meilleur score compris."
     "Tümünü okundu işaretle",  // "Tout marquer comme lu"
+    "Tümünü aç",  // "Tout ouvrir"
     "Hepsi canlı",  // "Tout vivant"
     "Hepsini kapat",  // "Tout éteindre"
     "Tüm oyunlar ve ayarlar Tab'da saklanır.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
@@ -8753,6 +8736,7 @@ static const char* const kI18n_tr[] = {
     "Aynı anda tek dokunuş: Düğmeler modunda dururken kazılır. Karma mod, yürürken kazmak için parmağı serbest bırakır.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
     "ZAFER",  // "VICTOIRE"
     "ZAFER!",  // "VICTOIRE !"
+    "PANJURLAR",  // "VOLETS"
     "İSTEĞİN",  // "VOTRE DEMANDE"
     "Okul tatili",  // "Vac. scolaires"
     "Skoru onayla",  // "Valider le score"

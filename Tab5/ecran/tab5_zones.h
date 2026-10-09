@@ -147,8 +147,9 @@ enum class Ecran : uint8_t {
     ALERTES,
     MAISON,      // popup Maison (ADR-0037) : option du select et choix d'appui long (code « maison »)
     // Roue de navigation (ADR-0042, 09/10/2026) : les popups d'une tuile ouverts sans tuile
-    // touchée — lumières et volet de la pièce affichée en mode HA, sinon de la première qui
-    // en a (tuiles_ecran_ouvrir) ; température de l'accueil, celle du salon d'abord.
+    // touchée — Lumières et Volets (une page par pièce, ADR-0046) sur la pièce affichée en
+    // mode HA, sinon la première qui en a (tuiles_ecran_ouvrir) ; température de l'accueil,
+    // celle du salon d'abord.
     LUMIERES,
     VOLET,
     TEMPERATURE,
@@ -219,8 +220,9 @@ bool batterie_tension_ui(float tension, uint32_t maintenant_ms);
 // puissance crête choisie dans le blueprint) : l'appui long du bouton « HA » ouvre alors
 // le popup Énergie (choix « auto »), et sa mini icône le signale.
 bool solaire_present();
-// Écran dont la zone est absente de cette maison (clim, plantes sans aucun pot, TV) : sa
-// fenêtre n'aurait rien à montrer ni à piloter. Lu par tab5_ecran_ouvrir.
+// Écran dont la zone est absente de cette maison (clim, plantes sans aucun pot, TV ;
+// Lumières et Volets sans aucune tuile de ce genre, ADR-0046) : sa fenêtre n'aurait rien
+// à montrer ni à piloter. Lu par tab5_ecran_ouvrir.
 bool ecran_sans_zone(Ecran e);
 // Écran qu'un geste peut ouvrir : sa zone est là et, pour Énergie, la production
 // solaire est reçue (la condition de l'appui long du bouton « HA » depuis le 06/10/2026).

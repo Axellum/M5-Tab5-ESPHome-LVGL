@@ -43,7 +43,7 @@ DOC = REPO / "docs" / "tiles_icons.md"
 TTF = REPO / "Tab5" / "fonts" / "materialdesignicons-webfont.ttf"
 
 # Polices des widgets qui affichent la palette : cartes du mode HA (icon_sw*, 70 px),
-# sélecteur du popup lumière (icon_light_sel_*, 45 px), épaules des tuiles (icon_card_*, 32 px).
+# lignes des popups Lumières et Volets (icon_light_sel_*, volet_ligne_*_icone, 45 px), épaules des tuiles (icon_card_*, 32 px).
 POLICES = ("mdi_font_70", "mdi_font_45", "mdi_font_32")
 TYPES = ("lum", "int", "vol", "med", "act", "cap", "bin", "cli")   # ADR-0023
 

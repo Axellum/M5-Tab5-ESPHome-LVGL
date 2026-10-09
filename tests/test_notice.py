@@ -36,6 +36,8 @@ APPUIS_LONGS = {
     "btn_rangee": "plants.md",
     "climate_card.yaml": "temperature.md",
     "maison_ligne.yaml": "house.md",
+    # Une ligne des popups Lumières et Volets (ADR-0046) : la roue de sa tuile.
+    "piece_ligne.yaml": "lights.md",
     # Carte centrale : chaque panneau de l'accueil ouvre la roue de navigation (ADR-0042)
     # (alertes, pluie, planning, info, alertes HA : un gabarit depuis le 08/10/2026, YML-4),
     # comme le titre d'une page (prévisions, pièce du mode HA).
@@ -87,6 +89,14 @@ NON_MONTREES = {
     "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
     "maison-roue": "roue d'actions rapides (ADR-0036) devant le popup Maison, décrite dans house.md",
+    # Lumières et Volets en pages (ADR-0046, 09/10/2026) : décrits dans lights.md et
+    # shutters.md ; images à tirer du rendu de la PR, puis citées.
+    "lumieres-page-suivante": "aller-lumieres montre la même fenêtre ; le glissement est décrit dans lights.md",
+    "lumieres-onglet": "aller-lumieres montre la même fenêtre ; le nom d'une pièce est décrit dans lights.md",
+    "lumieres-roue": "roue d'une ligne du popup Lumières, décrite dans lights.md ; image à tirer du rendu",
+    "aller-volet": "popup Volets par « Aller à l'écran » → Volet, décrit dans shutters.md ; image à tirer du rendu",
+    "volets-page-suivante": "aller-volet montre la même fenêtre ; le glissement est décrit dans shutters.md",
+    "volets-une-piece": "aller-volet montre la même fenêtre ; une seule pièce, décrite dans shutters.md",
     # Popup Météo (ADR-0043, 09/10/2026), décrit dans weather.md : images à tirer du rendu
     # de la PR, puis citées.
     "meteo-aujourdhui": "page Aujourd'hui du popup Météo, décrite dans weather.md ; image à tirer du rendu",
