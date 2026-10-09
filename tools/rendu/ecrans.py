@@ -720,6 +720,16 @@ METEO_SCENE_3 = (
 METEO_PAGES = {"jour": (433, 41), "jours": (643, 41), "details": (853, 41)}
 METEO_GLISSER = Glisser(1100, 675, 500, 675, dans_popup=True)
 
+# Popup Caméras (ADR-0049, cameras_popup.yaml) : la liste que le blueprint renverrait à
+# l'événement esphome.tab5_cameras, poussée avant l'ouverture. Le rendu ne télécharge rien
+# (Tab5/rendu/composants/online_image) : la capture montre la page de la première caméra
+# (nom, pastilles, « Chargement... »), pas d'image.
+CAMERAS_DONNEES = Service("tab5_maj_cameras", (
+    ("adresse", "http://homeassistant.local:8123"),
+    ("cameras", "Entrée|/api/camera_proxy/camera.entree?token=a;Jardin|/api/camera_proxy/camera.jardin?token=b;"
+                "Garage|/api/camera_proxy/camera.garage?token=c"),
+))
+
 
 def _historique(cle: str, vue: str, exterieur: bool = False) -> Service:
     """Ce que pousserait script.tab5_historique (tools/demo/scenarios.py)."""
@@ -1036,6 +1046,8 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("meteo-aujourdhui", METEO_DONNEES + (Aller("Météo"),), METEO_SCENE_3),
     Ecran("meteo-jours", METEO_DONNEES + (Aller("Météo"), METEO_GLISSER), METEO_SCENE_3),
     Ecran("meteo-details", METEO_DONNEES + (Aller("Météo"), Toucher(*METEO_PAGES["details"])), METEO_SCENE_3),
+    # Popup Caméras (ADR-0049) : trois caméras, la première montrée.
+    Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"))),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
     # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.

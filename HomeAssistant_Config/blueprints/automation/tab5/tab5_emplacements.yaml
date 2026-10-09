@@ -67,6 +67,13 @@
 #         Geste) et l'ancienne « appuis|maison|engrenage|manette » (variable appuis, pour un
 #         firmware 3.7), avec tous les états ; un code inconnu part en « auto ». Un
 #         firmware plus ancien les ignore et garde ses gestes.
+#       - section « Caméras » (ADR-0049, 09/10/2026, discussion #278), facultative : les
+#         caméras du popup Caméras de la tablette (image fixe rafraîchie, pas de vidéo).
+#         À l'événement esphome.tab5_cameras (ouverture du popup, puis toutes les
+#         4 minutes et après un échec tant qu'il reste ouvert), pousse tab5_maj_cameras :
+#         l'adresse (cameras_adresse, vide = celle que la tablette voit) et « nom|image »
+#         par caméra, image = entity_picture (jeton qui change toutes les 5 minutes).
+#         Rien tant que le popup est fermé ; aucun package à installer.
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -1282,6 +1289,8 @@ blueprint:
                   value: roue
                 - label: "Météo · Weather"
                   value: meteo
+                - label: "Caméras · Cameras"
+                  value: cameras
         geste_heures_long:
           name: "Heures : appui long · Hours: long press"
           description: >-
@@ -1788,6 +1797,55 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: temperature
+    # Caméras (ADR-0049, 09/10/2026, discussion #278) : le popup Caméras de la tablette,
+    # une image fixe par caméra, rafraîchie tant qu'il est ouvert. Vide : le popup le dit.
+    cameras:
+      name: "Caméras · Cameras"
+      icon: mdi:cctv
+      collapsed: true
+      description: >-
+        Facultatif : les caméras du popup Caméras, ouvert par un geste de l'accueil
+        (section « Horloge et boutons du haut ») ou par l'entité « Aller à l'écran » de la
+        tablette (une sonnette, par exemple). Il montre une image fixe de chaque caméra,
+        rafraîchie toutes les quelques secondes tant qu'il est ouvert : pas de vidéo, et
+        rien n'est demandé quand il est fermé.
+
+
+        Optional: the cameras of the Cameras popup, opened by a home gesture (« Clock and
+        top buttons » section) or by the tablet's « Aller à l'écran » entity (a doorbell,
+        for instance). It shows a still image of each camera, refreshed every few seconds
+        while it is open: no video, and nothing is asked while it is closed.
+      input:
+        cameras_liste:
+          name: Caméras · Cameras
+          description: >-
+            Huit au plus, dans l'ordre des pages du popup.
+
+
+            Eight at most, in the popup's page order.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: camera
+        cameras_adresse:
+          name: Adresse de Home Assistant · Home Assistant address
+          description: >-
+            Vide (le plus souvent) : l'adresse IP d'où Home Assistant se connecte à la
+            tablette, port 8123. À remplir seulement si les images ne viennent pas (autre
+            port, https, Home Assistant derrière un proxy) : l'adresse que la tablette
+            doit appeler, par exemple https://ha.example.com.
+
+
+            Empty (most often): the IP address Home Assistant connects to the tablet
+            from, port 8123. Fill it only if the images do not come (other port, https,
+            Home Assistant behind a proxy): the address the tablet must call, for
+            instance https://ha.example.com.
+          default: ""
+          selector:
+            text:
     # Réglage 3.x (ADR-0019) : les cinq places fixes de l'accueil. Lu par un firmware
     # 3.0/3.1, et par un firmware 3.2 tant que la pièce 1 est vide (ADR-0023).
     accueil_3x:
@@ -2932,7 +2990,10 @@ variables:
   # en « auto ».
   codes_gestes: [auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie,
                  reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante,
-                 ecoute, nabu_suivant, lumieres, volet, temperature, roue, meteo]
+                 ecoute, nabu_suivant, lumieres, volet, temperature, roue, meteo, cameras]
+  # Popup Caméras (ADR-0049) : lues par la branche « La tablette demande ses caméras ».
+  cameras_liste: !input cameras_liste
+  cameras_adresse: !input cameras_adresse
   # « gestes|c1|…|c12; » : les 12 gestes dans l'ORDRE de l'enum Geste (tab5_zones.h) —
   # heures tap, heures long, minutes tap, minutes long, date tap, date long, maison tap,
   # maison long, engrenage tap, engrenage long, manette tap, manette long. Poussé avec
@@ -3006,6 +3067,10 @@ triggers:
   - trigger: event
     event_type: esphome.tab5_historique
     id: historique
+  # Popup Caméras (ADR-0049) : ouvert, toutes les 4 minutes s'il le reste, après un échec.
+  - trigger: event
+    event_type: esphome.tab5_cameras
+    id: cameras
   - trigger: state
     entity_id: !input lumiere_1
     id: lumiere_1
@@ -3467,7 +3532,7 @@ conditions:
       {%- if trigger.id in meteo_declencheurs -%}
         {{ meteo_a_ecrire | count > 0 }}
       {%- else -%}
-        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie', 'historique'] or cles | count > 0
+        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie', 'historique', 'cameras'] or cles | count > 0
            or solaire_a_pousser
            or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0 or reglables_a_pousser | count > 0
                                    or pieces_climat_a_pousser | count > 0)) }}
@@ -3480,7 +3545,7 @@ conditions:
   - condition: template
     value_template: >-
       {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
-      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique'] + meteo_declencheurs
+      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique', 'cameras'] + meteo_declencheurs
          or tab5_connectee() == 'oui' }}
 
 actions:
@@ -3664,6 +3729,29 @@ actions:
                           {{ dict(energie, solaires=energie_solaires, productions=energie_productions,
                                   reseau_inverse=energie_reseau_inverse | bool(false),
                                   batterie_inverse=energie_batterie_inverse | bool(false)) }}
+
+      # Popup Caméras (ADR-0049) : la tablette demande ses caméras à l'ouverture, puis toutes
+      # les 4 minutes et après un échec tant qu'il reste ouvert. La réponse donne le
+      # entity_picture du moment : son jeton change toutes les 5 minutes et l'ancien reste
+      # valable 5 minutes de plus (homeassistant/components/camera), la tablette n'a donc
+      # jamais une URL périmée. Une caméra sans entity_picture (supprimée, pas encore
+      # chargée) est sautée ; huit au plus. Section vide : une réponse vide, le popup dit
+      # qu'aucune caméra n'est choisie. Pas de script ni de package : une seule action.
+      - alias: "La tablette demande ses caméras"
+        conditions: "{{ trigger.id == 'cameras' }}"
+        sequence:
+          - action: "esphome.{{ tablette }}_tab5_maj_cameras"
+            data:
+              adresse: "{{ cameras_adresse | default('', true) | string | trim }}"
+              cameras: >-
+                {%- set l = cameras_liste if cameras_liste is list else ([cameras_liste] if cameras_liste else []) -%}
+                {%- set ns = namespace(r=[]) -%}
+                {%- for c in l if c is string and states[c] is not none and state_attr(c, 'entity_picture') -%}
+                  {%- set nom = (state_attr(c, 'friendly_name') or c) | string | replace('|', '/') | replace(';', ',') -%}
+                  {%- set ns.r = ns.r + [nom ~ '|' ~ state_attr(c, 'entity_picture')] -%}
+                {%- endfor -%}
+                {{ ns.r[:8] | join(';') }}
+            continue_on_error: true
 
       # Popup Température (ADR-0032) : la tablette dit quelle température (salon, serre) et
       # quelle vue (jour, semaine, mois) elle montre ; le script du package tab5_historique

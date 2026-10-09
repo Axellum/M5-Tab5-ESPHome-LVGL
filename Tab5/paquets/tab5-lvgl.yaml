@@ -580,6 +580,8 @@ lvgl:
         - !include ../ui_components/maison_popup.yaml
         # Popup Météo (ADR-0043).
         - !include ../ui_components/meteo_popup.yaml
+        # Popup Caméras (ADR-0049).
+        - !include ../ui_components/cameras_popup.yaml
         - !include ../ui_components/calendar_popup.yaml
         - !include ../ui_components/assistant_popup.yaml
         - !include ../ui_components/alarm_popup.yaml

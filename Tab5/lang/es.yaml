@@ -1409,3 +1409,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "uv|Extrême": "Extremo"
 "Indice UV": "Índice UV"
 "Gel": "Helada"
+# Popup Caméras (ADR-0049, 09/10/2026).
+"Caméras": "Cámaras"
+"Aucune caméra choisie": "Ninguna cámara elegida"
+"Adresse de Home Assistant inconnue": "Dirección de Home Assistant desconocida"
+"Image de %02d:%02d:%02d": "Imagen de las %02d:%02d:%02d"
+"Plus d'image depuis %02d:%02d:%02d": "Sin imagen desde las %02d:%02d:%02d"

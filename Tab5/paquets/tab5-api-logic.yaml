@@ -84,6 +84,9 @@ api:
           # Zones optionnelles (lot 5) : redemander à HA quelles zones sont absentes. La
           # demande part avec la première poussée des prévisions (tab5_zones_demande).
           - lambda: 'zones_nouvelle_connexion();'
+          # Popup Caméras (ADR-0049) : l'adresse de HA, base des images (« http://IP:8123 »)
+          # quand le blueprint n'en donne pas.
+          - lambda: 'cameras_hote_ha(client_address);'
 
   services:
 
@@ -638,6 +641,23 @@ api:
           example: "0;0;0;0;0;0;0.05;0.4;1.1;1.9;2.6;3;3.1;;;;;;;;;;;"
       then:
         - lambda: 'energie_historique(vue, debut, valeurs);'
+
+    # Caméras (ADR-0049, discussion #278) : réponse à l'événement esphome.tab5_cameras,
+    # poussée par le blueprint « Tab5 — emplacements » (section « Caméras »). Rien n'est
+    # poussé tant que le popup est fermé.
+    - service: tab5_maj_cameras
+      description: "Popup Caméras : les caméras choisies dans le blueprint et le chemin de leur image fixe."
+      variables:
+        adresse:
+          type: string
+          description: "Adresse de Home Assistant vue par la tablette (http:// ou https://, sans / final) ; vide = celle de la connexion de l'API, port 8123."
+          example: "http://homeassistant.local:8123"
+        cameras:
+          type: string
+          description: "Caméras « nom|image » séparées par ; dans l'ordre du blueprint, 8 au plus — image = l'attribut entity_picture (/api/camera_proxy/camera.x?token=…) ou une URL complète d'une image JPEG. Dans un nom, | et ; deviennent / et ,. Vide = aucune caméra choisie."
+          example: "Entrée|/api/camera_proxy/camera.entree?token=abc123;Jardin|/api/camera_proxy/camera.jardin?token=def456"
+      then:
+        - lambda: 'cameras_recues(adresse, cameras);'
 
     # Historique des températures (ADR-0032) : réponse à l'événement esphome.tab5_historique
     # (cle, vue), par script.tab5_historique (packages/tab5_historique.yaml) que lance le

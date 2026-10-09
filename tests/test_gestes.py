@@ -128,10 +128,11 @@ def test_actions_de_l_accueil():
         branche = script.split(f"GesteAction::{action})", 1)[1].split("} else if", 1)[0]
         assert BRANCHES[action] in branche, action
     # « nabu_suivant » (lot 3) ajouté à la fin, puis la roue de navigation (ADR-0042) et le
-    # popup Météo (ADR-0043) : la NVS garde l'index du code.
+    # popups Météo (ADR-0043) et Caméras (ADR-0049) : la NVS garde l'index du code.
     assert list(actions).index("nabu_suivant") == 17
     assert list(actions)[18:] == list(ROUE_CODES) + list(ECRANS_APRES)
     assert list(actions).index("meteo") == 22
+    assert list(actions).index("cameras") == 23
 
 
 def test_auto_comme_avant():

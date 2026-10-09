@@ -206,6 +206,7 @@ font:
       - "\U000F06A9"  # robot
       - "\U000F0717"  # snowflake (tap : Climatisation)
       - "\U000F0729"  # view-sequential (tap : ligne suivante sous l'horloge)
+      - "\U000F07AE"  # cctv (tap : Caméras, ADR-0049)
       - "\U000F07C0"  # desktop-classic (tap : télécommande TV)
       - "\U000F07C5"  # ear-hearing (tap : Ok Nabu)
       - "\U000F07D0"  # home-assistant
@@ -527,6 +528,7 @@ font:
       - "\U000F0717"  # snowflake
       - "\U000F0741"  # gesture-tap (Réglages : rallumer d'une tape)
       - "\U000F075D"  # volume-plus (Réveil : volume progressif)
+      - "\U000F07AE"  # cctv (titre du popup Caméras, ADR-0049)
       - "\U000F07C0"  # desktop-classic
       - "\U000F07D0"  # home-assistant
       - "\U000F093A"  # animation-play (Réglages : animations)
@@ -654,6 +656,7 @@ font:
       - "\U000F06A5"  # power-plug (tablette sans batterie détectée)
       - "\U000F0717"  # snowflake (mini icône : Climatisation)
       - "\U000F0729"  # view-sequential (mini icône : ligne suivante sous l'horloge, 09/10/2026)
+      - "\U000F07AE"  # cctv (mini icône : Caméras, ADR-0049)
       - "\U000F07C0"  # desktop-classic (mini icône de la manette : télécommande TV, 06/10/2026)
       - "\U000F07C5"  # ear-hearing (mini icône : Ok Nabu)
       - "\U000F07D0"  # home-assistant (mini icône : mode Domo)

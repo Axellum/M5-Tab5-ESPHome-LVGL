@@ -75,9 +75,10 @@ def test_option_maison_du_select_a_la_fin():
     bloc = controles.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s*-\s*"([^"]+)"', bloc, re.M)
     # Ajoutée à la fin le 07/10/2026 : les index des autres options ne bougent pas. Celles
-    # de la roue de navigation (ADR-0042) et du popup Météo (ADR-0043) sont venues après elle.
+    # de la roue de navigation (ADR-0042) et des popups Météo (ADR-0043) et Caméras
+    # (ADR-0049) sont venues après elle.
     assert options[12] == "Maison", "à la fin : les index des autres options ne bougent pas"
-    assert options[13:] == ["Lumières", "Volet", "Température", "Météo"]
+    assert options[13:] == ["Lumières", "Volet", "Température", "Météo", "Caméras"]
     # L'index de l'option est sa valeur d'Ecran (tab5_zones.h, tests/test_appuis.py) ; le
     # select et les appuis longs passent par la routine unique tab5_ecran_ouvrir.
     enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", contrat(), re.S).group(1)

@@ -91,6 +91,10 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_historique": {"cle": "serre", "vue": "jour", "entete": "Serre|2026-06-15T07:00|60|1485|18.2|0|62",
                             "mesures": "17.1,16.8,17.5,58,55,61;16.9,16.6,17.2;;,,,64,60,70;16.5,16.2,16.8,66,63,69",
                             "previsions": "1500,19.4;1560,20.8;1620,22.1"},
+    # Caméras (ADR-0049) : la liste que le blueprint pousse à l'ouverture du popup.
+    "tab5_maj_cameras": {"adresse": "http://homeassistant.local:8123",
+                         "cameras": "Entrée|/api/camera_proxy/camera.entree?token=abc123;"
+                                    "Jardin|/api/camera_proxy/camera.jardin?token=def456"},
 }
 
 NOMBRES = ["", "-1", "0", "15", "16", "31", "32", "99", "255", "256", "2147483647", "-2147483648",
