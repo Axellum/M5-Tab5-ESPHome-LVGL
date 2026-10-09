@@ -13,7 +13,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
-for dossier in ("tools", "tools/demo", "tools/hote", "tools/rendu", "tools/publication", "tools/installation_ha",
+for dossier in ("tools", "tools/demo", "tools/rendu", "tools/publication", "tools/installation_ha",
                 "tools/sanitizers", "tools/site"):
     chemin = str(REPO / dossier)
     if chemin not in sys.path:

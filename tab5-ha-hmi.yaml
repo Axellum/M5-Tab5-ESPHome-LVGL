@@ -200,7 +200,10 @@ esphome:
     - Tab5/jeux/trivia_questions.h
     - Tab5/jeux/trivia_game.cpp
     # Jeu « Dames » (dames internationales / anglaises) — sous-module isolé.
-    # draughts_ai.* = moteur + IA ; draughts_game.* = UI et machine à états.
+    # draughts_engine.* = moteur pur (aucun LVGL, testé sur PC) ; draughts_ai.* = IA ;
+    # draughts_game.* = UI et machine à états.
+    - Tab5/jeux/draughts_engine.h
+    - Tab5/jeux/draughts_engine.cpp
     - Tab5/jeux/draughts_ai.h
     - Tab5/jeux/draughts_ai.cpp
     - Tab5/jeux/draughts_game.h
