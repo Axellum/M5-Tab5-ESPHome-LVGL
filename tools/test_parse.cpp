@@ -610,6 +610,96 @@ static void test_solaire() {
     expect(lire("1234567890123456789") == 100.0f, "solaire [figé] : long = coupé puis borné");
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 7. Clim
+// ════════════════════════════════════════════════════════════════════════════
+
+static int reglages(const char* s, ClimReglages& r, Champ& nom) {
+    return clim_reglages_lire(s, std::strlen(s), r, nom);
+}
+
+static void test_clim_reglages() {
+    {
+        ClimReglages r;
+        Champ nom;
+        expect(reglages("17|31|1|°C|chdfebqsw|Salon", r, nom) == 6, "clim : six champs");
+        expect(r.min == 17.0f && r.max == 31.0f && r.pas == 1.0f && !r.fahrenheit && r.recu,
+               "clim : bornes, pas, °C");
+        expect(std::strcmp(r.capacites, "chdfebqsw") == 0 && champ_vaut(nom, "Salon"), "clim : capacités et nom");
+    }
+    {
+        ClimReglages r;
+        std::strcpy(r.nom, "Ancien");
+        Champ nom;
+        expect(reglages("60|86|1|°F|cq", r, nom) == 5 && r.fahrenheit && nom.n == 0 && r.nom[0] == '\0',
+               "clim : cinq champs, °F, nom vidé");
+    }
+    {
+        ClimReglages r;
+        Champ nom;
+        expect(reglages("17|31|1|°C", r, nom) == 4 && !r.recu && r.min == 16.0f, "clim : moins de 5 champs, rien");
+        expect(reglages("", r, nom) == 1 && !r.recu, "clim : vide, rien");
+    }
+    {
+        ClimReglages r;
+        Champ nom;
+        reglages("16|30|0.5|°C|c|Salon|bis", r, nom);
+        expect(champ_vaut(nom, "Salon|bis"), "clim : le nom prend tout le reste");
+    }
+    {
+        ClimReglages r;
+        Champ nom;
+        reglages("-1e30|30|0.5|°C|c", r, nom);
+        expect(r.min == 16.0f && r.max == 30.0f, "clim : borne hors plage ignorée (lot A)");
+        reglages("30|16|0.5|°C|c", r, nom);
+        expect(r.min == 16.0f && r.max == 30.0f, "clim : min ≥ max ignoré");
+        reglages("nan|inf|nan|°C|c", r, nom);
+        expect(r.min == 16.0f && r.max == 30.0f && r.pas == 0.5f, "clim : nan/inf = valeurs d'avant");
+        reglages("-100|200|10|°C|c", r, nom);
+        expect(r.min == -100.0f && r.max == 200.0f && r.pas == 10.0f, "clim : bornes et pas extrêmes acceptés");
+        reglages("16|30|0|°C|c", r, nom);
+        expect(r.pas == 10.0f, "clim : pas nul ignoré");
+        reglages("16|30|11|°C|c", r, nom);
+        expect(r.pas == 10.0f, "clim : pas > 10 ignoré");
+        reglages("||||", r, nom);
+        expect(r.min == 16.0f && r.max == 30.0f && r.pas == 10.0f && !r.fahrenheit && r.capacites[0] == '\0',
+               "clim : champs vides = valeurs d'avant, aucune capacité");
+    }
+    {
+        ClimReglages r;
+        Champ nom;
+        reglages("16|30|0.5|°C|C-h1d", r, nom);
+        expect(std::strcmp(r.capacites, "hd") == 0, "clim : seules les minuscules sont gardées");
+        reglages("16|30|0.5|°C|abcdefghijklmnopqrstuvwxyz", r, nom);
+        expect(std::strlen(r.capacites) == 15, "clim : capacités bornées à 15 lettres");
+    }
+}
+
+static void test_clim_etat() {
+    auto lire = [](const char* s, ClimEtat& e) { clim_etat_lire(s, std::strlen(s), e); };
+    {
+        ClimEtat e;
+        lire("21.5|20.8|cool|boost|auto|off", e);
+        expect(e.consigne == 21.5f && e.piece == 20.8f && e.mode == "cool" && e.preset == "boost" &&
+                   e.ventilation == "auto" && e.oscillation == "off",
+               "clim état : six champs");
+        lire("nan|x|heat", e);
+        expect(std::isnan(e.consigne) && std::isnan(e.piece) && e.mode == "heat" && e.preset.empty() &&
+                   e.oscillation.empty(),
+               "clim état : nombres illisibles inconnus, modes absents vidés");
+        lire("", e);
+        expect(std::isnan(e.consigne) && e.mode.empty(), "clim état : vide");
+        lire("inf|1e99", e);
+        expect(std::isnan(e.consigne) && std::isnan(e.piece), "clim état : non fini = inconnu");
+    }
+    {
+        ClimEtat e;
+        lire("1|2|abcdefghijklmnopqrst|b|c|d|e", e);
+        expect(e.mode.size() == kModeMax, "clim état : mode borné à 15 octets");
+        expect(e.oscillation == "d|e", "clim état : le dernier champ prend le reste");
+    }
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -634,6 +724,8 @@ int main() {
     test_emplacement_etat_valeur();
     test_emplacement_nombre();
     test_solaire();
+    test_clim_reglages();
+    test_clim_etat();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

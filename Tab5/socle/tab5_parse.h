@@ -18,6 +18,7 @@
  *       à part, pas un nettoyage.
  */
 #pragma once
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -253,3 +254,48 @@ float emplacement_nombre(const std::string& valeur);
 // vide, illisible ou non fini, sinon borné à 0..100. [figé] un texte plus long est coupé
 // à 15 octets, pas refusé.
 float solaire_pourcent(const char* valeur, size_t n);
+
+// ─── 7. Clim (clés « climr », « crRT » et « ceRT » de tab5_maj_emplacements) ───
+// Réglages et état d'une clim (ADR-0026, ADR-0027), venus de Tab5/ecran/tab5_clim.cpp
+// tels quels : l'écran garde ses tables (s_clim, s_ct) et ce qu'il en peint.
+
+// Plage plausible des bornes d'une clim, en °C comme en °F : des « min|max » reçus
+// au-delà sont ignorés, et l'arc n'en reçoit jamais d'autres (lot A, audit du 30/09/2026).
+constexpr int kClimBorneBasse = -100;
+constexpr int kClimBorneHaute = 200;
+
+struct ClimReglages {
+    float min = 16.0f;
+    float max = 30.0f;
+    float pas = 0.5f;
+    bool fahrenheit = false;
+    // Lettres des boutons que l'appareil gère (tableau de l'ADR-0026) : c froid, h chaud,
+    // d sec, f ventilation, e Éco, b Boost, q Silence, s Oscillation, w Brise.
+    char capacites[16] = "chdfebqsw";
+    char nom[49] = "";  // friendly_name de la clim, 48 octets au plus
+    bool recu = false;
+};
+
+// Modes gardés sur 15 octets au plus : la chaîne reste dans son std::string (petite
+// chaîne, sans allocation). Aucun mode de HA n'est plus long.
+constexpr size_t kModeMax = 15;
+
+struct ClimEtat {
+    float consigne = NAN;  // NaN : inconnue (« -- » ; − / + ne font rien, l'arc la choisit)
+    float piece = NAN;     // température de la pièce
+    std::string mode;
+    std::string preset;
+    std::string ventilation;
+    std::string oscillation;
+};
+
+// Réglages « min|max|pas|unité|capacités|nom » (climr ou crRT, sans la clé) dans `r`,
+// dont les valeurs servent de défaut à un nombre illisible. Renvoie le nombre de champs :
+// moins de 5, rien n'est changé. Le nom n'est pas copié : `nom` le désigne (6 champs ;
+// vide sinon, et r.nom est vidé) et l'écran le copie par texte_ha_copier (glyphes des
+// polices, tab5_internal.h).
+int clim_reglages_lire(const char* reste, size_t n, ClimReglages& r, Champ& nom);
+
+// État « consigne|pièce|mode|préréglage|ventilation|oscillation » (ceRT, sans la clé) :
+// les nombres « nan » ou illisibles sont inconnus, les modes gardés tels quels (bornés).
+void clim_etat_lire(const char* reste, size_t n, ClimEtat& e);

@@ -8,6 +8,7 @@
  */
 #include "tab5_parse.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -356,4 +357,46 @@ float solaire_pourcent(const char* valeur, size_t n) {
     v = tab5_fini_ou_nan(v);
     if (!std::isnan(v)) v = v < 0.0f ? 0.0f : (v > 100.0f ? 100.0f : v);
     return v;
+}
+
+// ─── 7. Clim ───
+// Avant : lire_reglages() et lire_etat() de Tab5/ecran/tab5_clim.cpp.
+
+int clim_reglages_lire(const char* reste, size_t n, ClimReglages& r, Champ& nom) {
+    Champ f[6] = {};
+    const int k = champs_decouper_reste(reste, n, '|', f, 6);
+    nom = Champ{reste + n, 0};
+    if (k < 5) return k;
+    const float mn = champ_nombre(f[0], r.min);
+    const float mx = champ_nombre(f[1], r.max);
+    // Bornes hors de toute clim réelle (« -1e30 ») ignorées : elles deviendraient celles
+    // de l'arc (lot A de l'audit du 30/09/2026).
+    if (mn < mx && mn >= kClimBorneBasse && mx <= kClimBorneHaute) {
+        r.min = mn;
+        r.max = mx;
+    }
+    const float pas = champ_nombre(f[2], r.pas);
+    if (pas > 0.0f && pas <= 10.0f) r.pas = pas;
+    // « °F » ou « °C » (UTF-8) : la dernière lettre suffit.
+    r.fahrenheit = f[3].n > 0 && f[3].p[f[3].n - 1] == 'F';
+    size_t j = 0;
+    for (size_t i = 0; i < f[4].n && j + 1 < sizeof(r.capacites); i++)
+        if (f[4].p[i] >= 'a' && f[4].p[i] <= 'z') r.capacites[j++] = f[4].p[i];
+    r.capacites[j] = '\0';
+    if (k == 6) nom = f[5];
+    else r.nom[0] = '\0';
+    r.recu = true;
+    return k;
+}
+
+void clim_etat_lire(const char* reste, size_t n, ClimEtat& e) {
+    Champ f[6] = {};
+    const int k = champs_decouper_reste(reste, n, '|', f, 6);
+    e.consigne = k > 0 ? champ_nombre(f[0], NAN) : NAN;
+    e.piece = k > 1 ? champ_nombre(f[1], NAN) : NAN;
+    std::string* modes[4] = {&e.mode, &e.preset, &e.ventilation, &e.oscillation};
+    for (int i = 0; i < 4; i++) {
+        if (k > 2 + i) modes[i]->assign(f[2 + i].p, std::min(f[2 + i].n, kModeMax));
+        else modes[i]->clear();
+    }
 }
