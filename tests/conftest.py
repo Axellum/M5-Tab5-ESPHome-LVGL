@@ -14,7 +14,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 
 for dossier in ("tools", "tools/demo", "tools/hote", "tools/rendu", "tools/publication", "tools/installation_ha",
-                "tools/sanitizers", "tools/site"):
+                "tools/sanitizers", "tools/site", "tools/fuzz"):
     chemin = str(REPO / dossier)
     if chemin not in sys.path:
         sys.path.insert(0, chemin)
