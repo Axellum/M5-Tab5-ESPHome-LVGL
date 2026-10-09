@@ -48,3 +48,4 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0036](0036-quick-action-wheel.md) | A long press on a light, a shutter or a climate opens a wheel of quick actions around the tile — two rings: its commands and their families, then the « Maison » and « Détails » links |
 | [0037](0037-house-popup.md) | A House popup — every room of the blueprint at once, one column per room, rows drawn and touched like the tiles, « Éteindre les lumières » in the title bar |
 | [0039](0039-gestes-accueil.md) | The home gestures — the clock in three touch areas (hours, minutes, date), the tap and long press of the clock and of the three top buttons chosen in the blueprint (`gestes` key), screens or actions |
+| [0041](0041-ok-nabu-panel-scrolling.md) | The « Ok Nabu » panel takes lines like the row under the clock (`nLI`, `np`, `nd`), the hours tap shows its next line, and the row, the panel and the − / + tile scroll by choice (`defil` key) |
