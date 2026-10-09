@@ -838,6 +838,96 @@ static void test_clim_etat() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// 8. Popup Température (tab5_maj_historique ; humidité : ADR-0047)
+// ════════════════════════════════════════════════════════════════════════════
+
+static Champ c_(const char* s) { return Champ{s, std::strlen(s)}; }
+
+static Champ histo(const char* entete, const char* mesures, const char* prev, HistoriqueSerie& s) {
+    return historique_lire(c_(entete), c_(mesures), c_(prev), s);
+}
+
+static void test_humidite_lire() {
+    expect(humidite_lire(c_("48")) == 48 && humidite_lire(c_("47.6")) == 48 && humidite_lire(c_("0")) == 0 &&
+               humidite_lire(c_("100")) == 100,
+           "humidité : % arrondi");
+    expect(humidite_lire(c_("")) == kHumiditeAucune && humidite_lire(c_("nan")) == kHumiditeAucune &&
+               humidite_lire(c_("abc")) == kHumiditeAucune && humidite_lire(c_("inf")) == kHumiditeAucune,
+           "humidité : vide, nan, illisible, non finie = aucune");
+    expect(humidite_lire(c_("-1")) == kHumiditeAucune && humidite_lire(c_("100.4")) == kHumiditeAucune &&
+               humidite_lire(c_("1e30")) == kHumiditeAucune,
+           "humidité : hors de 0 à 100 = aucune");
+}
+
+static void test_historique() {
+    static HistoriqueSerie s;  // ~2 Ko : hors de la pile
+    {
+        // Ce que pousse le package sans sonde d'humidité (6 champs) : l'écran d'avant.
+        const Champ nom = histo("Serre|2026-06-15T07:00|60|1485|18.2|0", "17.1,16.8,17.5;16.9,16.6,17.2;;16.5,16.2,16.8",
+                                "1500,19.4;1560,20.8,18.0,22.5;1620,22.1", s);
+        expect(s.recue && champ_vaut(nom, "Serre") && s.nom[0] == '\0', "historique : nom rendu, pas copié");
+        expect(s.debut_jour == jour_civil(2026, 6, 15) && s.debut_min == 420 && s.pas == 60 && s.maintenant == 1485 &&
+                   s.actuel == 18.2f && !s.exterieur,
+               "historique : en-tête");
+        expect(!s.humidite && s.h_actuelle == kHumiditeAucune, "historique : 6 champs = pas d'humidité");
+        expect(s.n == 4 && s.m[0].moy == 17.1f && s.m[0].mn == 16.8f && s.m[0].mx == 17.5f && std::isnan(s.m[2].moy) &&
+                   std::isnan(s.m[2].mn) && s.m[3].mx == 16.8f && s.m[0].h_moy == kHumiditeAucune,
+               "historique : créneaux, un vide");
+        expect(s.np == 3 && s.p[0].minute == 1500 && s.p[0].moy == 19.4f && std::isnan(s.p[0].mn) &&
+                   s.p[1].mn == 18.0f && s.p[1].mx == 22.5f && s.p[2].minute == 1620,
+               "historique : prévision, mini et maxi d'un jour");
+    }
+    {
+        // Avec une sonde d'humidité (ADR-0047) : 7e champ, trois champs de plus par créneau.
+        histo("Bureau|2026-06-15T07:00|60|1485|22.8|0|45", "21.0,20.5,21.6,52,48,57;,,,55,50,61;19.9,19.5,20.4;", "", s);
+        expect(s.humidite && s.h_actuelle == 45, "historique : humidité déclarée et actuelle");
+        expect(s.n == 3 && s.m[0].h_moy == 52 && s.m[0].h_mn == 48 && s.m[0].h_mx == 57, "historique : humidité d'un créneau");
+        expect(std::isnan(s.m[1].moy) && s.m[1].h_moy == 55 && s.m[1].h_mx == 61,
+               "historique : humidité sans température dans un créneau");
+        expect(s.m[2].moy == 19.9f && s.m[2].h_moy == kHumiditeAucune, "historique : température sans humidité");
+        histo("Bureau|2026-06-15T07:00|60|1485|22.8|0|nan", "", "", s);
+        expect(s.humidite && s.h_actuelle == kHumiditeAucune && s.n == 0, "historique : « nan » = déclarée, inconnue");
+        histo("Bureau|2026-06-15T07:00|60|1485|22.8|0|", "", "", s);
+        expect(!s.humidite, "historique : 7e champ vide = pas de sonde");
+        histo("Bureau|2026-06-15T07:00|60|1485|22.8|1|150|x", "21,20,22,-5,101,abc", "", s);
+        expect(s.exterieur && s.humidite && s.h_actuelle == kHumiditeAucune && s.m[0].h_moy == kHumiditeAucune &&
+                   s.m[0].h_mn == kHumiditeAucune && s.m[0].h_mx == kHumiditeAucune && s.m[0].moy == 21.0f,
+               "historique : humidités hors de 0 à 100 = aucune, la suite ignorée");
+    }
+    {
+        // Bornes : date, pas, minutes, températures.
+        histo("|2026-13-40T25:00|0|-5|1e30|0", "1e30,-2000,5", "", s);
+        expect(s.debut_jour == jour_civil(2000, 1, 1) && s.debut_min == 0, "historique : date illisible = 2000-01-01 00:00");
+        expect(s.pas == 60 && s.maintenant == 0 && std::isnan(s.actuel), "historique : pas, minute, actuel hors bornes");
+        expect(std::isnan(s.m[0].moy) && std::isnan(s.m[0].mn) && s.m[0].mx == 5.0f, "historique : températures bornées");
+        histo("x|2026-06-15T07:00|1441|abc|nan|0", "", "", s);
+        expect(s.pas == 60 && s.maintenant == 0, "historique : pas > 1440, minute illisible");
+        histo("x|2026-06-15T07:00|1440|1000000|20|0", "", "", s);
+        expect(s.pas == 1440 && s.maintenant == 1000000, "historique : bornes hautes acceptées");
+        histo("", "", "", s);
+        expect(s.recue && s.n == 0 && s.np == 0 && s.pas == 60 && !s.humidite, "historique : tout vide");
+    }
+    {
+        // Prévision hors de l'ordre ou illisible : sautée.
+        histo("x|2026-06-15T07:00|60|10|20|0", "", "100,1;90,2;abc,3;-5,4;200,5;200,6;300", s);
+        expect(s.np == 3 && s.p[0].minute == 100 && s.p[1].minute == 200 && s.p[1].moy == 5.0f && s.p[2].minute == 300 &&
+                   std::isnan(s.p[2].moy),
+               "historique : prévision hors de l'ordre ou illisible sautée");
+    }
+    {
+        // Plafonds : 64 créneaux, 48 points.
+        std::string m, p;
+        for (int i = 0; i < 70; i++) m += "20,19,21;";
+        for (int i = 0; i < 60; i++) p += std::to_string(100 + i) + ",20;";
+        histo("x|2026-06-15T07:00|60|10|20|0", m.c_str(), p.c_str(), s);
+        expect(s.n == kHistoriqueMesuresMax && s.np == kHistoriquePrevMax, "historique : 64 créneaux, 48 points au plus");
+        // Remise à neuf : rien de la série d'avant ne reste.
+        histo("y|2026-06-15T07:00|60|10|20|0", "", "", s);
+        expect(s.n == 0 && s.np == 0 && std::isnan(s.m[0].moy), "historique : série remise à neuf");
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // Payloads tels que HA les envoie : mêmes sorties qu'avant les correctifs du lot F
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -923,6 +1013,8 @@ int main() {
     test_piece_climat();
     test_clim_reglages();
     test_clim_etat();
+    test_humidite_lire();
+    test_historique();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

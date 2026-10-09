@@ -8,9 +8,11 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1106;
+static const uint16_t kI18nKeyCount = 1108;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
     "",
     "",
     "",
@@ -1499,6 +1501,7 @@ static const char* const kI18nKeys[] = {
     "En cours",
     "En mouvement",
     "Ensoleillé",
+    "Entre %d et %d %%",
     "Erreur",
     "Escalier",
     "Essentielles",
@@ -1547,6 +1550,7 @@ static const char* const kI18nKeys[] = {
     "Grêle",
     "Géographie",
     "H.C.",
+    "HUMIDITÉ",
     "Handicap : %d pierres",
     "Handicap : aucun",
     "Heure fixe",
@@ -2609,6 +2613,7 @@ static const char* const kI18n_en[] = {
     "Running",  // "En cours"
     "Moving",  // "En mouvement"
     "Sunny",  // "Ensoleillé"
+    "Between %d and %d %%",  // "Entre %d et %d %%"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
     "Essential",  // "Essentielles"
@@ -2657,6 +2662,7 @@ static const char* const kI18n_en[] = {
     "Hail",  // "Grêle"
     "Geography",  // "Géographie"
     "N.R.",  // "H.C."
+    "HUMIDITY",  // "HUMIDITÉ"
     "Handicap: %d stones",  // "Handicap : %d pierres"
     "Handicap: none",  // "Handicap : aucun"
     "Fixed time",  // "Heure fixe"
@@ -3719,6 +3725,7 @@ static const char* const kI18n_de[] = {
     "Läuft",  // "En cours"
     "In Bewegung",  // "En mouvement"
     "Sonnig",  // "Ensoleillé"
+    "Zwischen %d und %d %%",  // "Entre %d et %d %%"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
     "Wesentliche",  // "Essentielles"
@@ -3767,6 +3774,7 @@ static const char* const kI18n_de[] = {
     "Hagel",  // "Grêle"
     "Geografie",  // "Géographie"
     "a.W.",  // "H.C."
+    "LUFTFEUCHTE",  // "HUMIDITÉ"
     "Vorgabe: %d Steine",  // "Handicap : %d pierres"
     "Vorgabe: keine",  // "Handicap : aucun"
     "Feste Zeit",  // "Heure fixe"
@@ -4829,6 +4837,7 @@ static const char* const kI18n_nl[] = {
     "Bezig",  // "En cours"
     "In beweging",  // "En mouvement"
     "Zonnig",  // "Ensoleillé"
+    "Tussen %d en %d %%",  // "Entre %d et %d %%"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
     "Essentieel",  // "Essentielles"
@@ -4877,6 +4886,7 @@ static const char* const kI18n_nl[] = {
     "Hagel",  // "Grêle"
     "Geografie",  // "Géographie"
     "B.M.",  // "H.C."
+    "VOCHTIGHEID",  // "HUMIDITÉ"
     "Handicap: %d stenen",  // "Handicap : %d pierres"
     "Handicap: geen",  // "Handicap : aucun"
     "Vaste tijd",  // "Heure fixe"
@@ -5939,6 +5949,7 @@ static const char* const kI18n_es[] = {
     "En curso",  // "En cours"
     "En movimiento",  // "En mouvement"
     "Soleado",  // "Ensoleillé"
+    "Entre %d y %d %%",  // "Entre %d et %d %%"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
     "Esenciales",  // "Essentielles"
@@ -5987,6 +5998,7 @@ static const char* const kI18n_es[] = {
     "Granizo",  // "Grêle"
     "Geografía",  // "Géographie"
     "N.C.",  // "H.C."
+    "HUMEDAD",  // "HUMIDITÉ"
     "Hándicap: %d piedras",  // "Handicap : %d pierres"
     "Hándicap: ninguno",  // "Handicap : aucun"
     "Hora fija",  // "Heure fixe"
@@ -7049,6 +7061,7 @@ static const char* const kI18n_it[] = {
     "In corso",  // "En cours"
     "In movimento",  // "En mouvement"
     "Soleggiato",  // "Ensoleillé"
+    "Tra %d e %d %%",  // "Entre %d et %d %%"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
     "Essenziali",  // "Essentielles"
@@ -7097,6 +7110,7 @@ static const char* const kI18n_it[] = {
     "Grandine",  // "Grêle"
     "Geografia",  // "Géographie"
     "F.C.",  // "H.C."
+    "UMIDITÀ",  // "HUMIDITÉ"
     "Handicap: %d pietre",  // "Handicap : %d pierres"
     "Handicap: nessuno",  // "Handicap : aucun"
     "Ora fissa",  // "Heure fixe"
@@ -8159,6 +8173,7 @@ static const char* const kI18n_tr[] = {
     "Çalışıyor",  // "En cours"
     "Hareket ediyor",  // "En mouvement"
     "Güneşli",  // "Ensoleillé"
+    "%d ile %d %% arası",  // "Entre %d et %d %%"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
     "Temel",  // "Essentielles"
@@ -8207,6 +8222,7 @@ static const char* const kI18n_tr[] = {
     "Dolu",  // "Grêle"
     "Coğrafya",  // "Géographie"
     "S.D.",  // "H.C."
+    "NEM",  // "HUMIDITÉ"
     "Handikap: %d taş",  // "Handicap : %d pierres"
     "Handikap: yok",  // "Handicap : aucun"
     "Sabit saat",  // "Heure fixe"

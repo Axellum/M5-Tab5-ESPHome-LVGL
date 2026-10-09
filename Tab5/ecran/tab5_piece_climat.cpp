@@ -188,12 +188,15 @@ void accueil_temperatures_ui() {
 const char* accueil_historique_cle(bool droite) {
     const int r = piece_montree();
     if (r >= 0) {
-        // L'humidité de la pièce n'a pas d'historique (le popup montre des températures).
-        return droite ? nullptr : kClesHistorique[r];
+        // À droite, l'humidité de la pièce : le même popup, qui la trace avec la
+        // température (ADR-0047) ; rien sans humidité déclarée.
+        return droite && !s_pieces[r].humidite ? nullptr : kClesHistorique[r];
     }
     if (droite) return zone_absente(Zone::SERRE) ? nullptr : "serre";
     return zone_absente(Zone::SALON) ? nullptr : "salon";
 }
+
+bool piece_climat_a_temperature(int r) { return r >= 0 && r < kPieces && s_pieces[r].temperature; }
 
 int piece_climat_clim() {
     const int r = piece_montree();

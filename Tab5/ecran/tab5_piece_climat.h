@@ -49,10 +49,14 @@ void accueil_serre_temperature(float x);
 void accueil_temperatures_ui();
 
 // Appui long sur la température de gauche (droite = faux) ou de droite : la clé du popup
-// Température (ADR-0032) — « salon », « serre », ou « pR » pour la pièce affichée —, ou
-// nullptr quand il n'y a rien à montrer (zone absente, pas d'humidité de pièce : la
-// droite n'a pas d'historique de pièce).
+// Température (ADR-0032) — « salon », « serre », ou « pR » pour la pièce affichée, des
+// deux côtés quand elle a une humidité (ADR-0047) —, ou nullptr quand il n'y a rien à
+// montrer (zone absente, pièce sans humidité à droite).
 const char* accueil_historique_cle(bool droite);
+
+// Popup Température (tab5_historique.cpp, ADR-0047) : la pièce R a une température
+// déclarée par le blueprint, donc son onglet.
+bool piece_climat_a_temperature(int r);
 
 // tab5_reglables.cpp : la pièce affichée a une clim déclarée dont la tablette a reçu
 // les réglages (crpR) — la tuile − / + la règle. Renvoie R, ou -1.

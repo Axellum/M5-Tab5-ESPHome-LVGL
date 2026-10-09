@@ -1220,6 +1220,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Dehors, prévu": "Draußen, Prognose"
 "Mesuré": "Gemessen"
 "Minimum et maximum": "Minimum und Maximum"
+"HUMIDITÉ": "LUFTFEUCHTE"
+"Humidité": "Luftfeuchte"
+"Entre %d et %d %%": "Zwischen %d und %d %%"
 
 # Thèmes (ADR-0029) : mode de la rangée « Thème » de la console système
 "Sombre": "Dunkel"
@@ -1327,6 +1330,5 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "uv|Élevé": "Hoch"
 "uv|Très élevé": "Sehr hoch"
 "uv|Extrême": "Extrem"
-"Humidité": "Luftfeuchte"
 "Indice UV": "UV-Index"
 "Gel": "Frost"

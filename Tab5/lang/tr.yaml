@@ -1248,6 +1248,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Dehors, prévu": "Dışarı, tahmin"
 "Mesuré": "Ölçülen"
 "Minimum et maximum": "En düşük ve en yüksek"
+"HUMIDITÉ": "NEM"
+"Humidité": "Nem"
+"Entre %d et %d %%": "%d ile %d %% arası"
 
 # Thèmes (ADR-0029) : mode de la rangée « Thème » de la console système
 "Sombre": "Koyu"
@@ -1355,6 +1358,5 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "uv|Élevé": "Yüksek"
 "uv|Très élevé": "Çok yüksek"
 "uv|Extrême": "Aşırı"
-"Humidité": "Nem"
 "Indice UV": "UV indeksi"
 "Gel": "Don"

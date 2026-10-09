@@ -1,0 +1,28 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Onglet d'une température du popup « Température » (historique_popup.yaml,
+# ADR-0047, 09/10/2026), réutilisé 7 fois (salon, pièces p0 à p4, serre) : un tap montre
+# sa température à la même vue (historique_onglet, tab5_historique.cpp). Même bouton que
+# les pages des Réglages (reglages_onglet.yaml) ; tout le reste est posé par le C++ :
+# visible seulement avec deux températures connues ou plus, nom (celui de la pièce ou
+# poussé par HA), largeur (200 px au plus), x (calé à droite, avant la croix), couleur
+# d'accent sur l'onglet affiché (premier enfant = le texte).
+# Options d'en-tête : frères de la barre de titre (modal_header.yaml), alignés sur sa
+# ligne (y=4, hauteur 44) ; le popup les pose après l'include de la barre.
+# vars : n (rang de l'onglet, 0 à 6, en nombre NON quoté).
+# ═══════════════════════════════════════════════════════
+button:
+  id: historique_onglet_${n}
+  align: TOP_LEFT
+  x: 0
+  y: 4
+  width: 200
+  height: 44
+  radius: 14
+  pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+  hidden: true
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) historique_onglet(${n});'
+  widgets:
+    - label: { text: "", align: CENTER, width: 190, text_align: CENTER, long_mode: DOT }

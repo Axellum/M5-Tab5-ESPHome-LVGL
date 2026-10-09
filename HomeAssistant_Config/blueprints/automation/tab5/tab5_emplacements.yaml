@@ -3671,16 +3671,24 @@ actions:
       # (script.turn_on : sans attendre, la file de cette automatisation reste libre). Sans
       # le package : rien, le popup attend.
       # Clés p0 à p4 (ADR-0040) : la température d'une pièce en mode HA, sa sonde de la
-      # section « Pièce R + 1 ».
+      # section « Pièce R + 1 ». Humidité (ADR-0047) : celle du salon (« Salon —
+      # humidité ») ou de la pièce, tracée avec la température ; aucune pour la serre.
       - alias: "La tablette ouvre l'historique d'une température"
         conditions: "{{ trigger.id == 'historique' }}"
         sequence:
           - variables:
               h_cle: "{{ trigger.event.data.cle | default('') | string }}"
+              h_piece: >-
+                {{ pieces_climat | selectattr('r', 'eq', (h_cle[1:] | int(-1)) if h_cle[:1] == 'p' else -1)
+                   | first | default({}, true) }}
               h_capteur: >-
                 {%- if h_cle in ['salon', 'serre'] -%}{{ sources.get(h_cle, '') }}
-                {%- else -%}{{ pieces_climat | selectattr('r', 'eq', (h_cle[1:] | int(-1)) if h_cle[:1] == 'p' else -1)
-                                 | map(attribute='temperature') | first | default('', true) }}
+                {%- else -%}{{ h_piece.get('temperature', '') }}
+                {%- endif -%}
+              h_humidite: >-
+                {%- if h_cle == 'salon' -%}{{ sources.get('salon_hum', '') }}
+                {%- elif h_cle == 'serre' -%}{{ '' }}
+                {%- else -%}{{ h_piece.get('humidite', '') }}
                 {%- endif -%}
           - if: >-
               {{ states['script.tab5_historique'] is not none
@@ -3696,6 +3704,7 @@ actions:
                     vue: "{{ trigger.event.data.vue | default('jour', true) }}"
                     capteur: "{{ h_capteur }}"
                     exterieur: "{{ h_cle == 'serre' and serre_exterieure | bool(false) }}"
+                    humidite: "{{ h_humidite }}"
 
       - alias: "La tablette demande quelles zones sont absentes"
         conditions: "{{ trigger.id in ['zones', 'pipeline_discussion'] }}"
