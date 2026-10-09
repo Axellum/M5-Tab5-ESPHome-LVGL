@@ -70,8 +70,9 @@ def test_cle_climr_identique_des_deux_cotes():
     assert "'climr|'" in _variables_actions()["clim_reglages"]
     # Routée avant la table des emplacements 3.x, vers clim_reglages_recu().
     zones = _lire("Tab5", "ecran", "tab5_zones.cpp")
-    assert zones.index("kCleClimReglages) == 0") < zones.index("for (size_t i = 0; i < n; i++)")
-    assert "clim_reglages_recu(payload.data() + p1 + 1" in zones
+    # Découpage par emplacement_suivant() (Tab5/socle/tab5_parse.cpp, lot F).
+    assert zones.index("champ_est(e.cle, kCleClimReglages)") < zones.index("for (size_t i = 0; i < n; i++)")
+    assert "clim_reglages_recu(e.reste.p, e.reste.n)" in zones
 
 
 def _lettres_blueprint():
@@ -91,8 +92,9 @@ def test_lettres_des_capacites_identiques_partout():
     assert blueprint == list("chdfebqsw"), "une fois chacune, dans l'ordre de l'ADR"
     assert sorted(firmware) == sorted(blueprint), "chaque lettre émise masque un bouton, et réciproquement"
     assert _lettres_adr() == blueprint
-    # Sans climr, tous les boutons : la valeur par défaut porte toutes les lettres.
-    m = re.search(r'char capacites\[16\] = "(\w+)";', cartes)
+    # Sans climr, tous les boutons : la valeur par défaut porte toutes les lettres
+    # (struct ClimReglages, Tab5/socle/tab5_parse.h depuis le lot F).
+    m = re.search(r'char capacites\[16\] = "(\w+)";', _lire("Tab5", "socle", "tab5_parse.h"))
     assert m and m.group(1) == "".join(blueprint)
 
 
@@ -148,8 +150,8 @@ def test_plus_de_pas_ni_de_bornes_en_dur_dans_les_boutons():
     assert popup.count("clim_popup_pas(-1)") == 1 and popup.count("clim_popup_pas(+1)") == 1
     assert "clim_target_temp" not in popup and "consigne_suivante(vue_reglages(), base, sens)" in \
         _corps_fonction(_lire("Tab5", "ecran", "tab5_clim.cpp"), "clim_popup_pas")
-    # Sans climr : 16-30 et 0,5, comme l'arc du YAML.
-    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
+    # Sans climr : 16-30 et 0,5, comme l'arc du YAML (struct ClimReglages, tab5_parse.h).
+    cartes = _lire("Tab5", "socle", "tab5_parse.h")
     for defaut in ("float min = 16.0f;", "float max = 30.0f;", "float pas = 0.5f;"):
         assert defaut in cartes, defaut
     popup = _lire("Tab5", "ui_components", "climate_popup.yaml")
@@ -450,7 +452,8 @@ def test_champs_de_ce_dans_l_ordre_de_tab5_maj_clim():
     assert vu == attendu
     assert modele.count("| float('nan')") == 2
     # Le firmware les lit dans cet ordre (consigne, pièce, puis les quatre modes).
-    lire = _corps_fonction(_lire("Tab5", "ecran", "tab5_clim.cpp"), "lire_etat")
+    lire = _corps_fonction(_lire("Tab5", "socle", "tab5_parse.cpp"), "clim_etat_lire")
+    assert "clim_etat_lire(reste, n_reste, c->etat);" in _lire("Tab5", "ecran", "tab5_clim.cpp")
     assert "e.consigne = k > 0 ?" in lire and "e.piece = k > 1 ?" in lire
     assert "std::string* modes[4] = {&e.mode, &e.preset, &e.ventilation, &e.oscillation};" in lire
 
@@ -534,8 +537,8 @@ def test_table_des_clims_de_tuile_en_psram_a_la_demande():
     assert table.index("MALLOC_CAP_SPIRAM") < table.index("MALLOC_CAP_INTERNAL")
     assert "new (&table[i]) ClimTuile();" in table
     assert not re.search(r"^EXT_RAM_BSS_ATTR", cartes, re.M), "constructeurs : pas de BSS externe"
-    # Modes bornés : la chaîne reste dans son std::string.
-    assert "constexpr size_t kModeMax = 15;" in cartes
+    # Modes bornés : la chaîne reste dans son std::string (tab5_parse.h depuis le lot F).
+    assert "constexpr size_t kModeMax = 15;" in _lire("Tab5", "socle", "tab5_parse.h")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

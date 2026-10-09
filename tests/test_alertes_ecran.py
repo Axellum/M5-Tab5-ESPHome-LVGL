@@ -92,7 +92,12 @@ def test_le_firmware_lit_l_en_tete_et_affiche_le_rang():
     cpp = (RACINE / "Tab5" / "ecran" / "tab5_central.cpp").read_text(encoding="utf-8")
     corps = cpp[cpp.index("bool parse_and_update_ha_alerts_bulk("):]
     corps = corps[:corps.index("\n}\n")]
-    assert corps.index('strncmp(token, "@n:", 3)') < corps.index("split_fields(token")
+    # Lecture jeton par jeton dans Tab5/socle/tab5_parse.cpp (lot F de l'audit du 30/09/2026).
+    assert "LecteurAlertesHa lecteur(payload.c_str());" in corps and "AlerteHaType::TOTAL" in corps
+    parse = (RACINE / "Tab5" / "socle" / "tab5_parse.cpp").read_text(encoding="utf-8")
+    suivant = parse[parse.index("AlerteHaJeton LecteurAlertesHa::suivant()"):]
+    suivant = suivant[:suivant.index("\n}\n")]
+    assert suivant.index('strncmp(token, "@n:", 3)') < suivant.index("split_fields(token")
     assert "if (total > slot_idx)" in corps
     yaml_panneau = (RACINE / "Tab5" / "ui_components" / "ha_alert_panel.yaml").read_text(encoding="utf-8")
     assert 'id: "lbl_ha_alert_cpt_${n}"' in yaml_panneau
@@ -107,9 +112,9 @@ def test_le_libelle_des_bandeaux_passe_par_le_filtre_des_glyphes():
     corps = corps[:corps.index("\n}\n")]
     assert "texte_ha_copier(brut, sizeof(brut), parts[2], strlen(parts[2]));" in corps
     assert "ha_alerte_texte(brut)" in corps and "ha_alerte_texte(parts[2])" not in corps
-    assert "if (payload.length() > 1024)" in corps
+    assert _limite_du_firmware() == 1024
     historique = (RACINE / "Tab5" / "ecran" / "tab5_alertes.cpp").read_text(encoding="utf-8")
-    assert "texte_ha_copier(brut, sizeof(brut), f[4].p, f[4].n);" in historique
+    assert "texte_ha_copier(brut, sizeof(brut), lues[k].texte.p, lues[k].texte.n);" in historique
 
 
 # ─── Taille bornée (audit du 07/10/2026, DO-6) ───────────────────────────────
@@ -123,9 +128,13 @@ def _octets(texte):
 def _limite_du_firmware():
     cpp = (RACINE / "Tab5" / "ecran" / "tab5_central.cpp").read_text(encoding="utf-8")
     corps = cpp[cpp.index("bool parse_and_update_ha_alerts_bulk("):]
-    m = re.search(r"if \(payload\.length\(\) > (\d+)\)", corps)
+    m = re.search(r"if \(payload\.length\(\) > (kAlertesHaMax)\)", corps)
     assert m, "garde de taille introuvable dans parse_and_update_ha_alerts_bulk"
-    return int(m.group(1))
+    # La limite est le tampon du lecteur (Tab5/socle/tab5_parse.h, lot F).
+    entete = (RACINE / "Tab5" / "socle" / "tab5_parse.h").read_text(encoding="utf-8")
+    valeur = re.search(r"constexpr size_t kAlertesHaMax = (\d+);", entete)
+    assert valeur, "kAlertesHaMax introuvable dans tab5_parse.h"
+    return int(valeur.group(1))
 
 
 def test_libelle_coupe_a_100_caracteres_sans_separateur():
