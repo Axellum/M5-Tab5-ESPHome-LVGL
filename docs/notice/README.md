@@ -54,7 +54,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Plants | long press on the plants line, under the clock | [Plants](plants.md) |
 | Alerts | long press on the central card | [Alerts](alerts.md) |
 | House | in device mode, tap on the room's name in the central card | [House](house.md) |
-| Cameras | « Aller à l'écran » (Home Assistant), or a button given « Caméras · Cameras » by the blueprint | [Cameras](cameras.md) |
+| Cameras | « Agenda ▸ Caméras » on the navigation wheel, « Aller à l'écran » (Home Assistant), or a button given « Caméras · Cameras » by the blueprint | [Cameras](cameras.md) |
 | Settings | the gear button | [Settings](settings.md) |
 | System console (System page of the settings) | long press on the gear button | [System console](console.md) |
 | Arcade | the gamepad button, or the greenhouse temperature | [Arcade](arcade.md) |
@@ -119,7 +119,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Plantes | appui long sur la ligne des plantes, sous l'horloge | [Plantes](plants.md#version-française) |
 | Alertes | appui long sur la carte centrale | [Alertes](alerts.md#version-française) |
 | Maison | en mode appareils, tap sur le nom de la pièce dans la carte centrale | [Maison](house.md#version-française) |
-| Caméras | « Aller à l'écran » (Home Assistant), ou un bouton auquel le blueprint donne « Caméras · Cameras » | [Caméras](cameras.md#version-française) |
+| Caméras | « Agenda ▸ Caméras » de la roue de navigation, « Aller à l'écran » (Home Assistant), ou un bouton auquel le blueprint donne « Caméras · Cameras » | [Caméras](cameras.md#version-française) |
 | Réglages | le bouton engrenage | [Réglages](settings.md#version-française) |
 | Console système (page Système des réglages) | appui long sur le bouton engrenage | [Console système](console.md#version-française) |
 | Arcade | le bouton manette, ou la température de la serre | [Arcade](arcade.md#version-française) |

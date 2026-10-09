@@ -266,7 +266,7 @@ uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 // --- Roue d'actions rapides (tab5_roue.cpp, ADR-0036) ---
 // Icône d'un bouton (glyphe_roue, mdi_font_36) ; AUCUNE : un texte ou une pastille. Après
 // REGLAGES : celles de la roue de navigation (ADR-0042), familles puis destinations ;
-// METEO (popup Météo, ADR-0043) en dernier.
+// METEO (popup Météo, ADR-0043) puis CAMERAS (popup Caméras, ADR-0049) en dernier.
 enum class RoueIcone : uint8_t {
     AUCUNE,
     ETEINDRE,
@@ -310,6 +310,7 @@ enum class RoueIcone : uint8_t {
     ENGRENAGE,
     SYSTEME,
     METEO,
+    CAMERAS,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
 // anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).

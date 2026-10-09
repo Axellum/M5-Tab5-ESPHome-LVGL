@@ -996,7 +996,7 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("roue-navigation-pieces", (Long(*CARTE_CENTRALE), nav(NAV_PIECES)), (ROUE_FERMER, ROUE_FERMER)),
     Ecran("roue-navigation-appareils", (Long(*CARTE_CENTRALE), nav(NAV_APPAREILS)), (ROUE_FERMER, ROUE_FERMER)),
     Ecran("roue-navigation-tablette", (Long(*CARTE_CENTRALE), nav(NAV_TABLETTE)), (ROUE_FERMER, ROUE_FERMER)),
-    # Agenda ▸ : Météo (ADR-0043) en tête, puis Calendrier et Réveil.
+    # Agenda ▸ : Météo (ADR-0043) en tête, puis Calendrier, Réveil et Caméras (ADR-0049).
     Ecran("roue-navigation-agenda", (Long(*CARTE_CENTRALE), nav(NAV_AGENDA)), (ROUE_FERMER, ROUE_FERMER)),
     # Une pièce choisie dans la roue : le mode HA sur elle, sans swipe.
     Ecran("roue-navigation-bureau", (Long(*CARTE_CENTRALE), nav(NAV_PIECES), NAV_BUREAU), RETOUR_PIECE_CLIMAT),
