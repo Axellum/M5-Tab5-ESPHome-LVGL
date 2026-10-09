@@ -50,7 +50,7 @@ In every text field `|` becomes `/` and `;` becomes `,` (as today).
 | `lum` | `light` | `basculer` | quick-action wheel, whose « Détails » link opens the light popup ([ADR-0036](0036-quick-action-wheel.md), updates 2026-10-07, below); with `k`, the light popup (the room's `lum` tiles) |
 | `int` | `switch`, `input_boolean`, `fan`, `humidifier`, `automation` | `basculer` (`allumer` only, with `o`) | device popup (update 2026-10-06, below) |
 | `vol` | `cover`, `valve` | moving → `arreter` (pause); else the chosen direction (`ouvrir` / `fermer`, see below) | quick-action wheel, whose « Détails » link opens the shutter popup (updates 2026-10-05 and 2026-10-07, below); with `k`, the other one of `ouvrir`/`fermer` |
-| `med` | `media_player` | `basculer` | TV remote, with `t`; else the device popup (update 2026-10-06) |
+| `med` | `media_player` | `basculer` | TV remote, with `t`; else the music player popup ([ADR-0050](0050-music-player.md), update 2026-10-10; the device popup from 2026-10-06 before) |
 | `act` | `scene`, `script`, `button`, `input_button` | `lancer` | device popup (update 2026-10-06) |
 | `cap` | `sensor`, `number`, `input_number` | — (read only) | — |
 | `bin` | `binary_sensor`, `device_tracker`, `person`, `lock` | — (read only) | — |
