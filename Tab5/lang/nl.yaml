@@ -1200,6 +1200,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Dehors, prévu": "Buiten, verwacht"
 "Mesuré": "Gemeten"
 "Minimum et maximum": "Minimum en maximum"
+"HUMIDITÉ": "VOCHTIGHEID"
+"Humidité": "Vochtigheid"
+"Entre %d et %d %%": "Tussen %d en %d %%"
 
 # Thèmes (ADR-0029) : mode de la rangée « Thème » de la console système
 "Sombre": "Donker"

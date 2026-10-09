@@ -3,9 +3,11 @@
 # @file historique_popup.yaml
 # @role Popup « Température » (ADR-0032, 06/10/2026) : en haut la valeur actuelle, le
 #       minimum et le maximum de la période (et la prévision pour la seconde
-#       température) ; en bas la courbe, ses trois vues (24 h / 7 jours / 30 jours) et la
-#       prévision de la météo à sa suite. Ouvert par un appui long sur une des deux
-#       températures de l'accueil (climate_card.yaml → tab5_historique_ouvrir).
+#       température, ou l'humidité d'une pièce qui en a une, ADR-0047) ; en bas la courbe
+#       (et celle de l'humidité), ses trois vues (24 h / 7 jours / 30 jours) et la
+#       prévision de la météo à sa suite. À côté du titre, un onglet par température
+#       connue ; un glissement passe à la suivante. Ouvert par un appui long sur une
+#       température (climate_card.yaml → tab5_historique_ouvrir).
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
 #       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Température » dans
 #       tab5_modal_registry_init). Corps : x 24..1226, y 72..670 — cartes de 150 px en
@@ -37,6 +39,15 @@ obj:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F050F", icon_style: "style_text_info", title: "Température", title_id: "historique_popup_titre", close_btn_id: "btn_historique_close", popup_id: historique_popup } }
+
+          # ═══ ONGLETS : une page par température connue (ADR-0047), posés par le C++ ═══
+          - !include { file: historique_onglet.yaml, vars: { n: "0" } }
+          - !include { file: historique_onglet.yaml, vars: { n: "1" } }
+          - !include { file: historique_onglet.yaml, vars: { n: "2" } }
+          - !include { file: historique_onglet.yaml, vars: { n: "3" } }
+          - !include { file: historique_onglet.yaml, vars: { n: "4" } }
+          - !include { file: historique_onglet.yaml, vars: { n: "5" } }
+          - !include { file: historique_onglet.yaml, vars: { n: "6" } }
 
           # ═══ CHIFFRES : maintenant, minimum, maximum (+ prévu pour la seconde) ═══
           - !include { file: historique_carte.yaml, vars: { n: "0" } }
