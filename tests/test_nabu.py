@@ -26,7 +26,7 @@ import pytest
 import yaml
 
 from tests import test_tuiles_blueprint as bp
-from tests.commun import lire as _lire
+from tests.commun import avec_jetons, jeton, lire as _lire
 
 import ecrans  # noqa: E402
 import scenarios  # noqa: E402
@@ -53,7 +53,11 @@ RANGEE_CPP = _lire("Tab5", "ecran", "tab5_rangee.cpp")
 REGLABLES_CPP = _lire("Tab5", "ecran", "tab5_reglables.cpp")
 ZONES_CPP = _lire("Tab5", "ecran", "tab5_zones.cpp")
 INTERNAL_H = _lire("Tab5", "ecran", "tab5_internal.h")
-LVGL = _lire("Tab5", "paquets", "tab5-lvgl.yaml")
+LVGL = avec_jetons(_lire("Tab5", "paquets", "tab5-lvgl.yaml"))
+# Le cadre Ok Nabu (et la tuile − / +, en miroir) : une ligne de zone (la hauteur de la
+# rangée sous l'horloge) dans une bordure de 1 px (09/10/2026, tab5-ui-tokens.yaml).
+LIGNE = jeton("ligne_zone_h")
+CADRE = jeton("cadre_bas_h")
 TOUR = _entier(INTERNAL_H, "kTourCentralS")
 
 
@@ -126,15 +130,21 @@ def test_le_tap_du_cadre_ne_bascule_l_ecoute_que_sur_sa_ligne():
 def test_panneaux_dans_le_cadre_et_non_cliquables():
     bouton = LVGL.split("id: btn_ok_nabu", 1)[1].split("\n        # Pastilles", 1)[0]
     w, h = (int(re.search(rf"^            {c}: (\d+)$", bouton, re.M).group(1)) for c in ("width", "height"))
-    assert (w, h) == (405, 90)
+    assert (w, h) == (405, CADRE)
+    # Pas d'arithmétique dans les substitutions d'ESPHome : les deux jetons sont écrits à la
+    # main, la bordure de 1 px du cadre de chaque côté.
+    assert CADRE == LIGNE + 2
     assert "pad_all: 0" in bouton and "scrollable: false" in bouton
     ecoute = bouton.split("id: nabu_ecoute", 1)[1].split("- label:", 1)[0]
-    assert "width: 401" in ecoute and "height: 88" in ecoute and "clickable: false" in ecoute
+    assert "width: 401" in ecoute and f"height: {LIGNE}" in ecoute and "clickable: false" in ecoute
     for ident, el in (("nabu_a", "na"), ("nabu_b", "nb")):
-        assert (f'file: ../ui_components/rangee_panneau.yaml, vars: {{ id: {ident}, el: "{el}", '
-                f'hauteur: "88" }}') in bouton
-    panneau = _lire("Tab5", "ui_components", "rangee_panneau.yaml")
+        assert f'file: ../ui_components/rangee_panneau.yaml, vars: {{ id: {ident}, el: "{el}" }}' in bouton
+    # Les panneaux ont la hauteur d'une ligne de zone, sous l'horloge comme dans le cadre.
+    panneau = avec_jetons(_lire("Tab5", "ui_components", "rangee_panneau.yaml"))
     assert "width: 401" in panneau and "clickable: false" in panneau
+    assert panneau.count(f"height: {LIGNE}\n") == 2 and "${hauteur}" not in panneau
+    rangee = avec_jetons(_lire("Tab5", "ui_components", "rangee.yaml"))
+    assert rangee.count(f"height: {LIGNE}\n") == 2
     assert "clickable: false" in _lire("Tab5", "ui_components", "rangee_element.yaml")
     # 401 = kLargeur du dessin (tab5_rangee.cpp) : la place mesurée est celle du panneau.
     assert _entier(RANGEE_CPP, "kLargeur") == 401
@@ -152,15 +162,16 @@ def test_panneaux_dans_le_cadre_et_non_cliquables():
 # Géométrie : l'arrondi du cadre dans les 21 thèmes, les pastilles
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _formes_du_cadre():
-    """{fichier du thème: (rayon, bordure)} de style_clim_btn_page (tab5_theme.cpp) : la
-    valeur de base, ou celle du thème en sombre (le clair a les mêmes formes)."""
+def _formes_du_cadre(style="style_clim_btn_page", index=8):
+    """{fichier du thème: (rayon, bordure)} d'un style de cadre (tab5_theme.cpp, son index
+    dans la table des formes) : la valeur de base, ou celle du thème et du mode. Par défaut
+    style_clim_btn_page, le cadre Ok Nabu ; style_clim_carte_page (3) : la tuile − / +."""
     import gen_themes
     theme = _lire("Tab5", "ecran", "tab5_theme.cpp")
     base = {}
     par_theme = {}
     for prop, valeur, suite in re.findall(
-            r"\{8, LV_STYLE_(RADIUS|BORDER_WIDTH), FORME_NOMBRE, (\d+)\},  // style_clim_btn_page(.*)$",
+            rf"\{{{index}, LV_STYLE_(RADIUS|BORDER_WIDTH), FORME_NOMBRE, (\d+)\}},  // {style}(.*)$",
             theme, re.M):
         m = re.fullmatch(r" (\w+) \((sombre|clair)\)", suite)
         if not suite:
@@ -190,21 +201,27 @@ def _dans_l_arrondi(x, y, w, h, rayon, bordure):
 
 
 def test_les_elements_restent_dans_l_arrondi_du_cadre_dans_chaque_theme():
-    """Boîte des éléments au pire, dans le cadre de 405 × 90 :
-    - icônes seules (70 px, quatre) : écart SPACE_EVENLY de (401 − 4 × 70) / 5 ;
+    """Boîte des éléments au pire, dans le cadre de 405 × cadre_bas_h (72) :
+    - icônes seules (45 px dans le cadre, kIconesSeulesCadre, quatre) : écart SPACE_EVENLY
+      de (401 − 4 × 45) / 5 ;
     - avec valeurs : le premier élément à kMargeCadre du bord du panneau, une ligne de
       texte de 45 px comptée 54 px de haut (interligne), l'icône de 45 px.
     Chaque coin de ces boîtes reste dans l'arrondi intérieur du cadre (bordure retirée),
-    dans les 21 thèmes et les deux modes (Capsule : gélule de rayon 45, bordure de 4 px)."""
-    w, h, panneau_w, panneau_h = 405, 90, 401, 88
+    dans les 21 thèmes et les deux modes (Capsule : gélule de rayon 45, borné à 36 par la
+    hauteur du cadre, bordure de 4 px)."""
+    w, h, panneau_w, panneau_h = 405, CADRE, 401, LIGNE
     marge = _entier(RANGEE_CPP, "kMargeCadre")
-    assert "{RANGEE_NABU, Defilement::NABU, g_nabu_ui, kMargeCadre}" in RANGEE_CPP
-    assert "kLargeur - (n + 1) * d.marge" in RANGEE_CPP
+    assert "{RANGEE_NABU, Defilement::NABU, g_nabu_ui, kMargeCadre, kIconesSeulesCadre}" in RANGEE_CPP
+    assert "kLargeur - (n + 1) * d.marge" in RANGEE_CPP and "const Taille* t = &d.seules;" in RANGEE_CPP
+    # Icônes seules : police_icone[1] (mdi_font_45, tab5-rangee.yaml), sans valeur.
+    assert _constante(RANGEE_CPP, "kIconesSeulesCadre") == "{1, 0, false}"
+    assert "u.police_icone[1] = id(mdi_font_45);" in _lire("Tab5", "paquets", "tab5-rangee.yaml")
+    icone = 45
     x0 = (w - panneau_w) // 2
     y0 = (h - panneau_h) // 2
-    ecart_icones = (panneau_w - 4 * 70) / 5
+    ecart_icones = (panneau_w - 4 * icone) / 5
     boites = [
-        (x0 + max(marge, ecart_icones), y0 + (panneau_h - 70) / 2, 70, 70),   # icône seule, à gauche
+        (x0 + max(marge, ecart_icones), y0 + (panneau_h - icone) / 2, icone, icone),  # icône seule, à gauche
         (x0 + marge, (h - 45) / 2, 45, 45),                                   # icône d'une valeur
         (w - x0 - marge - 60, (h - 54) / 2, 60, 54),                          # texte, à droite
     ]
@@ -218,9 +235,11 @@ def test_pastilles_entre_le_cadre_et_la_carte_centrale():
     gabarit = _lire("Tab5", "ui_components", "rangee_pastilles.yaml")
     y = int(re.search(r"^  y: (\d+)$", gabarit, re.M).group(1))
     hauteur = max(int(v) for v in re.findall(r"height: (\d+), radius", gabarit))
-    bouton = LVGL.split("id: btn_ok_nabu", 1)[1]
-    bas_du_cadre = 218 + 90
-    assert re.search(r"^            y: 218$", bouton, re.M) and re.search(r"^            height: 90$", bouton, re.M)
+    bouton = LVGL.split("id: btn_ok_nabu", 1)[1].split("widgets:", 1)[0]
+    haut, hauteur_cadre = (int(re.search(rf"^            {c}: (\d+)$", bouton, re.M).group(1)) for c in ("y", "height"))
+    bas_du_cadre = haut + hauteur_cadre
+    # Bas du cadre à y 308, aligné sur la tuile − / + (bas de la carte clim : 110 + 198).
+    assert bas_du_cadre == 308
     carte = LVGL.split("id: central_card", 1)[1]
     haut_de_la_carte = int(re.search(r"^            y: (\d+)$", carte, re.M).group(1))
     assert bas_du_cadre < y and y + hauteur < haut_de_la_carte
@@ -228,6 +247,54 @@ def test_pastilles_entre_le_cadre_et_la_carte_centrale():
     assert ('rangee_pastilles.yaml, vars: { nom: nabu, align: TOP_LEFT, x: "20", largeur: "405" }') in LVGL
     assert ('rangee_pastilles.yaml, vars: { nom: rangee, align: TOP_MID, x: "0", largeur: SIZE_CONTENT }') in LVGL
     assert "clickable: false" in gabarit
+
+
+def test_tuile_clim_en_miroir_du_cadre():
+    """La tuile − / + (climate_card.yaml) a la hauteur du cadre Ok Nabu, bas à y 308 comme
+    lui. − et + : à 14 px des côtés (bordure de 1 px comprise), alignés sur les températures
+    au-dessus, centrés en hauteur ; leurs coins arrondis restent dans l'arrondi intérieur de
+    la tuile dans les 21 thèmes et les deux modes (Capsule : rayon 36, bordure de 4 px ; au
+    rendu du 09/10/2026, 56 px à 8 px du bord y étaient rognés)."""
+    carte = avec_jetons(_lire("Tab5", "ui_components", "climate_card.yaml"))
+    entete = carte.split("\nobj:", 1)[1].split("widgets:", 1)[0]
+    y_carte, h_carte = (int(re.search(rf"^  {c}: (\d+)$", entete, re.M).group(1)) for c in ("y", "height"))
+    assert y_carte + h_carte == 308
+    zone = carte.split("id: climate_controls_zone", 1)[1].split("widgets:", 1)[0]
+    assert "align: BOTTOM_MID" in zone and "width: 405" in zone and f"height: {CADRE}\n" in zone
+    temperatures = [int(v) for v in re.findall(r"align: (?:LEFT|RIGHT)_MID\n        x: (-?\d+)", carte)]
+    assert len(temperatures) == 2
+    w_tuile = 405
+    boites = []
+    for ident, cote in (("btn_clim_minus", "LEFT_MID"), ("btn_clim_plus", "RIGHT_MID")):
+        bouton = carte.split(f"id: {ident}", 1)[1].split("on_short_click", 1)[0]
+        assert f"align: {cote}" in bouton, ident
+        x, w, h, r = (int(re.search(rf"\n\s+{c}: (-?\d+)", bouton).group(1)) for c in ("x", "width", "height", "radius"))
+        assert w == h and abs(x) + 1 == 14 and [abs(t) for t in temperatures] == [14, 14], ident
+        gauche = 1 + x if x >= 0 else w_tuile - 1 + x - w
+        boites.append((gauche, (CADRE - h) / 2, w, h, r))
+    for (fichier, mode), (rayon, bordure) in _formes_du_cadre("style_clim_carte_page", 3).items():
+        for bx, by, bw, bh, br in boites:
+            # Points des quatre arcs de coin du bouton (rayon local `radius:`, posé sur lui).
+            for cx, cy, sx, sy in ((bx + br, by + br, -1, -1), (bx + bw - br, by + br, 1, -1),
+                                   (bx + br, by + bh - br, -1, 1), (bx + bw - br, by + bh - br, 1, 1)):
+                for k in range(10):
+                    a = math.pi / 2 * k / 9
+                    px, py = cx + sx * br * math.cos(a), cy + sy * br * math.sin(a)
+                    assert _dans_l_arrondi(px, py, w_tuile, CADRE, rayon, bordure), (fichier, mode, (px, py))
+
+
+def test_lignes_centrees_en_hauteur():
+    """Une ligne de capteurs est centrée dans la hauteur de son panneau (sous l'horloge et
+    dans le cadre) : sans flex_align_track: CENTER, LVGL pose la piste en haut (START par
+    défaut) et flex_align_cross ne centre que dans la piste (rendu du 09/10/2026 : encre à
+    4 px du haut du cadre, 31 px du bas)."""
+    panneau = _lire("Tab5", "ui_components", "rangee_panneau.yaml")
+    disposition = panneau.split("layout:", 1)[1].split("widgets:", 1)[0]
+    assert "flex_flow: ROW" in disposition
+    assert "flex_align_cross: CENTER" in disposition and "flex_align_track: CENTER" in disposition
+    # Chaque élément centre aussi son icône et sa valeur (empilées ou côte à côte).
+    element = _lire("Tab5", "ui_components", "rangee_element.yaml")
+    assert "flex_align_cross: CENTER" in element and "flex_align_track: CENTER" in element
 
 
 # ─────────────────────────────────────────────────────────────────────────────

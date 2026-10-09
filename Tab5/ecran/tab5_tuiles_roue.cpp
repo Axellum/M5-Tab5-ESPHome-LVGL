@@ -613,7 +613,7 @@ void roue_clim_changee() {
 }
 
 // Ancre de la roue d'une clim (ADR-0048). La température de la pièce est trop haute (centre
-// en y 164) : autour d'elle, la roue passerait sous l'ancre, en éventail serré et pivoté
+// en y 173) : autour d'elle, la roue passerait sous l'ancre, en éventail serré et pivoté
 // sur la tuile − / + et la carte centrale (rendu du 09/10/2026). Le moyeu montre la clim, il
 // n'a pas à être sur la température : il se pose sur un point bas, à la verticale de la zone
 // touchée, ramenée dans [kClimAncreXMin, kClimAncreXMax], où les deux anneaux et leurs mots

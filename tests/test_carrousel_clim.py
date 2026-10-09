@@ -13,14 +13,14 @@ Le contrat tient en des chaînes qu'aucun compilateur ne compare :
   rejouent."""
 import re
 
-from tests.commun import lire as _lire
+from tests.commun import avec_jetons, jeton, lire as _lire
 
 import ecrans  # noqa: E402 — tools/rendu, mis sur sys.path par tests/conftest.py
 
 CLIM = _lire("Tab5", "ecran", "tab5_clim.cpp")
 ENTETE = _lire("Tab5", "ecran", "tab5_clim.h")
 POPUP = _lire("Tab5", "ui_components", "climate_popup.yaml")
-CARTE = _lire("Tab5", "ui_components", "climate_card.yaml")
+CARTE = avec_jetons(_lire("Tab5", "ui_components", "climate_card.yaml"))
 
 
 def _corps(source, signature):
@@ -133,11 +133,12 @@ def test_gestes_de_la_carte_clim():
 
 
 def test_le_rendu_touche_la_valeur_et_rejoue_le_carrousel():
-    # btn_clim_target_click : centré dans climate_controls_zone (405 × 90, en bas de la
+    # btn_clim_target_click : centré dans climate_controls_zone (405 × cadre_bas_h, en bas de la
     # carte de 198 posée en 855, 110).
     valeur = _bloc_yaml(CARTE, "btn_clim_target_click", "on_short_click")
     w, h = _nombre(valeur, "width"), _nombre(valeur, "height")
-    x0, y0 = 855 + (405 - w) / 2, 110 + 198 - 90 + (90 - h) / 2
+    tuile = jeton("cadre_bas_h")
+    x0, y0 = 855 + (405 - w) / 2, 110 + 198 - tuile + (tuile - h) / 2
     x, y = ecrans.CONSIGNE_CLIM
     assert x0 < x < x0 + w and y0 < y < y0 + h
     noms = {e.nom: e for e in ecrans.ECRANS}

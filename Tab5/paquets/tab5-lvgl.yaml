@@ -57,13 +57,14 @@ lvgl:
         # d'air au-dessus et au-dessous de l'icône dans chaque bouton.
 
         # --- Voice Assistant Panel (Left) ---
-        # Micro au milieu de la colonne (160-285, encre centrée sur la rangée Domo / Discu).
-        - label: { id: icon_mic_status, text: "\U000F036C", align: TOP_LEFT, x: 162, y: 69, text_font: mdi_font_120, styles: style_text_dim }
+        # Micro au milieu de la colonne (160-285, encre centrée sur la rangée Domo / Discu :
+        # 12 px au-dessus d'elle, qui suit le cadre Ok Nabu).
+        - label: { id: icon_mic_status, text: "\U000F036C", align: TOP_LEFT, x: 162, y: 78, text_font: mdi_font_120, styles: style_text_dim }
         - button:
             id: btn_assist_trigger
             align: TOP_LEFT
             x: 162
-            y: 69
+            y: 78
             width: 120
             height: 120
             styles: style_invisible
@@ -76,12 +77,13 @@ lvgl:
         # Bouton Domo (et Discu ci-dessous) : masqués sans pipeline de discussion dans HA
         # (zone « discussion », zones_apply_ui) ; le micro reste au milieu.
         # Icône seule (05/10/2026). Rangée centrée entre le bandeau d'état (encre jusqu'à
-        # y 34) et Ok Nabu (y 218) : 47 px d'air au-dessus, 47 au-dessous.
+        # y 34) et Ok Nabu (y 236 depuis le 09/10/2026, cadre de 72 px, cadre_bas_h) : 56 px
+        # d'air au-dessus, 56 au-dessous.
         - button:
             id: btn_mode_domo
             align: TOP_LEFT
             x: 20
-            y: 81
+            y: 90
             width: 125
             height: 90
             styles: style_clim_btn_page
@@ -97,7 +99,7 @@ lvgl:
             id: btn_mode_discu
             align: TOP_LEFT
             x: 300
-            y: 81
+            y: 90
             width: 125
             height: 90
             styles: style_clim_btn_page
@@ -109,7 +111,10 @@ lvgl:
               - label: { text: "\U000F06A9", align: CENTER, text_font: mdi_font_70 }
 
         # Bouton OK Nabu : même place que la tuile clim, en miroir (toute la colonne,
-        # 90 px de haut, bas à y 308), texte à la taille de la date (45 px). Le bouton
+        # bas à y 308), texte à la taille de la date (45 px). Hauteur ajustée au texte le
+        # 09/10/2026 (demande d'Axel, 90 px avant : le texte « nageait ») : cadre_bas_h
+        # (72), un intérieur d'une ligne de zone (ligne_zone_h, 70 : la hauteur de la
+        # rangée sous l'horloge), tab5-ui-tokens.yaml. Le bouton
         # Muet qui le précédait est retiré le 05/10/2026 : le son se coupe depuis le
         # popup Assistant vocal (btn_assist_mute).
         # Panneau à lignes depuis le 09/10/2026 (lot 3, ADR-0041) : comme la rangée sous
@@ -119,16 +124,16 @@ lvgl:
         # lignes de quatre capteurs (nabu_a, nabu_b, en alternance). Tap : le mot de réveil
         # quand la ligne d'écoute est à l'écran, rien sur une ligne de capteurs (affichage
         # seul, comme la rangée) ; ligne suivante : le tap des heures (« auto »). Les
-        # panneaux tiennent dans la bordure (401 × 88 au centre de 403 × 88), non
+        # panneaux tiennent dans la bordure (401 × 70 au centre de 403 × 70), non
         # cliquables : le toucher reste au bouton. Masqué sans aucune ligne (écoute masquée
         # et aucun capteur).
         - button:
             id: btn_ok_nabu
             align: TOP_LEFT
             x: 20
-            y: 218
+            y: 236
             width: 405
-            height: 90
+            height: ${cadre_bas_h}
             pad_all: 0
             scrollable: false
             styles: style_clim_btn_page
@@ -143,15 +148,15 @@ lvgl:
                   id: nabu_ecoute
                   align: CENTER
                   width: 401
-                  height: 88
+                  height: ${ligne_zone_h}
                   styles: style_transparent
                   clickable: false
                   scrollable: false
                   scrollbar_mode: "OFF"
                   widgets:
                     - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, styles: [style_police_date, style_text_success] }
-              - !include { file: ../ui_components/rangee_panneau.yaml, vars: { id: nabu_a, el: "na", hauteur: "88" } }
-              - !include { file: ../ui_components/rangee_panneau.yaml, vars: { id: nabu_b, el: "nb", hauteur: "88" } }
+              - !include { file: ../ui_components/rangee_panneau.yaml, vars: { id: nabu_a, el: "na" } }
+              - !include { file: ../ui_components/rangee_panneau.yaml, vars: { id: nabu_b, el: "nb" } }
         # Pastilles du panneau Ok Nabu (une par ligne, masquées sous deux lignes), centrées
         # sous lui à la hauteur de celles de la rangée.
         - !include { file: ../ui_components/rangee_pastilles.yaml, vars: { nom: nabu, align: TOP_LEFT, x: "20", largeur: "405" } }
@@ -294,7 +299,7 @@ lvgl:
             x: 0
             y: 244
             width: 401
-            height: 70
+            height: ${ligne_zone_h}
             styles: style_invisible
             on_short_click:
               - lambda: 'rangee_toucher();'
@@ -506,10 +511,15 @@ lvgl:
 
         # ==================== PAGINATION BARS ====================
         # Zone de pagination (points de navigation des pages forecast).
+        # y 420 (demande d'Axel du 09/10/2026, 414 puis 417 avant) : les points (4 px) sont
+        # en haut du conteneur (piste flex à START, flex_align_track par défaut), donc à
+        # y 420-423, 3 px sous le bas de la carte centrale (416) et 18 px au-dessus des
+        # onglets des tuiles (442). Les tuiles, posées après, restent au-dessus de ce
+        # conteneur là où il les recouvre (y 442-449).
         - obj:
             id: pagination_container
             x: 480
-            y: 417
+            y: 420
             width: 310
             height: 30
             styles: style_transparent
