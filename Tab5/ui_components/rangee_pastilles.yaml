@@ -1,0 +1,29 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 2x par tab5-lvgl.yaml : les
+# pastilles d'une zone à lignes (tab5_rangee.cpp, pastilles()), une par ligne, la courante
+# large et opaque (pagination_afficher, la recette de la carte centrale) ; masquées sous
+# deux lignes. Toutes deux à y 319 : entre le bas de la grille du haut (encre des icônes
+# et bas du panneau Ok Nabu à y 308) et la carte centrale (y 333), sans toucher le micro
+# ni le bandeau central.
+# Vars : nom (rangee, nabu → <nom>_pastilles, <nom>_pastille_0 … 2), align et x (la
+# rangée : TOP_MID, 0 ; le panneau Ok Nabu : TOP_LEFT, 20), largeur (SIZE_CONTENT sous
+# l'horloge ; 405, celle du panneau, pour les centrer sous lui).
+obj:
+  id: "${nom}_pastilles"
+  align: ${align}
+  x: ${x}
+  y: 319
+  width: ${largeur}
+  height: SIZE_CONTENT
+  styles: style_transparent
+  clickable: false
+  hidden: true
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_main: CENTER
+    flex_align_cross: CENTER
+    pad_column: 6
+  widgets:
+    - obj: { id: "${nom}_pastille_0", width: 30, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 100%, border_width: 0 }
+    - obj: { id: "${nom}_pastille_1", width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+    - obj: { id: "${nom}_pastille_2", width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }

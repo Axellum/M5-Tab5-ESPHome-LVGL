@@ -1,6 +1,8 @@
-# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 8x par rangee.yaml : un
-# élément d'une ligne de capteurs de la rangée sous l'horloge (ADR-0031), 4 par panneau,
-# 2 panneaux. Var : el (« a0 » … « b3 » : panneau a ou b, élément 0 à 3).
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 16x par rangee_panneau.yaml :
+# un élément d'une ligne de capteurs d'une zone à lignes — la rangée sous l'horloge
+# (ADR-0031) et le panneau « Ok Nabu » (lot 3, ADR-0041) —, 4 par panneau, 2 panneaux par
+# zone. Var : el (« a0 » … « b3 » sous l'horloge, « na0 » … « nb3 » dans le panneau Ok
+# Nabu : panneau, élément 0 à 3). clickable: false : le toucher va à la zone tactile.
 # Icône + valeur côte à côte, ou l'une au-dessus de l'autre : tab5_rangee.cpp (remplir)
 # choisit les polices et le sens (flex ROW / COLUMN) selon la place, masque la valeur
 # d'un appareil qui n'en a pas et l'élément vide. pad_column = kEcart de tab5_rangee.cpp.
@@ -13,6 +15,7 @@ obj:
   width: SIZE_CONTENT
   height: SIZE_CONTENT
   styles: style_transparent
+  clickable: false
   scrollable: false
   hidden: true
   layout:

@@ -19,6 +19,8 @@
  *       appui long, choisis dans le blueprint (clés « gestes », puis l'ancienne « appuis ») ;
  *       geste_cible() dit ce que fait un geste, le script tab5_geste
  *       (tab5-navigation.yaml) le fait ; boutons_haut_apply_ui() peint les icônes.
+ *       Et la clé « defil » (09/10/2026, lot 3, ADR-0041 : défilement auto / fixe de la
+ *       rangée, du panneau Ok Nabu et de la tuile − / +), routée vers tab5_rangee.cpp.
  * @architecture_constraint Rien ne disparaît sans réponse de HA : la tablette seule ne
  *       sait pas distinguer une entité absente d'une entité pas encore transmise. Une
  *       donnée reçue fait toujours réapparaître sa zone (zone_vue), même si HA l'a
@@ -75,6 +77,12 @@ constexpr char kCleGestes[] = "gestes";
 // trois boutons. Toujours lue (blueprint d'avant le lot A) ; un payload qui porte aussi
 // « gestes » la laisse de côté (gestes_fin_payload).
 constexpr char kCleAppuis[] = "appuis";
+// Défilement au choix (09/10/2026, lot 3, ADR-0041) : « defil|rangée|nabu|clim|secondes »,
+// lu par defilement_recu() (tab5_rangee.cpp). Poussée par le blueprint avec les gestes ; un
+// payload de gestes sans elle (blueprint d'avant le lot 3) remet les défauts
+// (gestes_fin_payload). Valeurs lues par le blueprint : ni traduites ni renommées sans lui
+// (tests/test_nabu.py).
+constexpr char kCleDefilement[] = "defil";
 struct CodeGeste {
     const char* code;
     Ecran ecran;  // l'écran ouvert (action ECRAN), AUCUN sinon
@@ -82,7 +90,7 @@ struct CodeGeste {
 };
 // L'INDEX d'un code dans cette table est ce que garde la NVS (SauvegardeAppuis,
 // SauvegardeGestes) : un code de plus s'ajoute à la FIN, aucun ne se retire ni ne se
-// déplace. Le lot 3 ajoutera « nabu_suivant » (ligne Ok Nabu suivante) après « ecoute ».
+// déplace.
 constexpr CodeGeste kCodesGestes[] = {
     {"rien", Ecran::AUCUN, GesteAction::RIEN},
     {"assistant", Ecran::ASSISTANT, GesteAction::ECRAN},
@@ -103,6 +111,8 @@ constexpr CodeGeste kCodesGestes[] = {
     {"appareil_suivant", Ecran::AUCUN, GesteAction::APPAREIL_SUIVANT},
     {"rangee_suivante", Ecran::AUCUN, GesteAction::RANGEE_SUIVANTE},
     {"ecoute", Ecran::AUCUN, GesteAction::ECOUTE},
+    // Panneau Ok Nabu à lignes (09/10/2026, lot 3, ADR-0041) : ajouté à la fin (NVS, index 17).
+    {"nabu_suivant", Ecran::AUCUN, GesteAction::NABU_SUIVANTE},
 };
 constexpr int kNbCodes = static_cast<int>(sizeof(kCodesGestes) / sizeof(kCodesGestes[0]));
 constexpr int8_t kAuto = -1;
@@ -111,8 +121,10 @@ constexpr int8_t kAuto = -1;
 constexpr Ecran kEcranAuto[BOUTON_HAUT_NB] = {Ecran::ENERGIE, Ecran::CONSOLE, Ecran::TV};
 // « auto » de chaque geste (ordre de Geste) : le comportement d'avant le choix, un code de
 // kCodesGestes. nullptr : l'appui long d'un bouton, qui suit la clé appuis (puis kEcranAuto).
+// Tap des heures : la ligne suivante du panneau Ok Nabu depuis le lot 3 (« rien » avant) ;
+// avec le panneau d'origine (l'écoute seule, aucune ligne du blueprint), il ne fait rien.
 constexpr const char* kGestesAuto[GESTE_NB] = {
-    "rien",
+    "nabu_suivant",
     "reveil",  // heures
     "appareil_suivant",
     "reveil",  // minutes
@@ -171,6 +183,7 @@ esphome::ESPPreferenceObject s_pref_gestes;
 // Clés vues dans le payload en cours (emplacements_appliquer, gestes_fin_payload).
 bool s_appuis_vue = false;
 bool s_gestes_vue = false;
+bool s_defil_vue = false;
 
 constexpr uint32_t bit_de(Zone z) { return 1u << static_cast<int>(z); }
 
@@ -389,13 +402,17 @@ void gestes_recu(const char* valeur, size_t n) {
 // qui ne sait rien des gestes. Ses appuis longs comptent alors seuls : les gestes gardés
 // d'un blueprint plus récent repartent en « auto » (« gestes remplace appuis quand elle
 // est présente »).
+// Même règle pour le défilement (lot 3) : un payload qui porte les gestes (ou les appuis)
+// sans la clé defil vient d'un blueprint qui ne la connaît pas ; ses zones reprennent leurs
+// défauts (rangée auto, Ok Nabu et tuile − / + fixes).
 void gestes_fin_payload() {
     if (s_appuis_vue && !s_gestes_vue) {
         int8_t aucun[GESTE_NB];
         std::memset(aucun, kAuto, sizeof(aucun));
         gestes_garder(aucun);
     }
-    s_appuis_vue = s_gestes_vue = false;
+    if ((s_appuis_vue || s_gestes_vue) && !s_defil_vue) defilement_defaut();
+    s_appuis_vue = s_gestes_vue = s_defil_vue = false;
 }
 
 bool est_bouton(int g) { return g >= GESTE_MAISON_COURT && g < GESTE_NB; }
@@ -425,6 +442,7 @@ const char* code_glyphe(int8_t c) {
         case GesteAction::APPAREIL_SUIVANT: return "\U000F14C9";  // plus-minus-variant (tuile − / +)
         case GesteAction::RANGEE_SUIVANTE: return "\U000F0729";   // view-sequential (rangée sous l'horloge)
         case GesteAction::ECOUTE: return "\U000F07C5";            // ear-hearing (Ok Nabu)
+        case GesteAction::NABU_SUIVANTE: return "\U000F050A";     // microphone-message (panneau Ok Nabu)
         case GesteAction::ECRAN: break;
         default: return nullptr;
     }
@@ -598,6 +616,13 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
         // Gestes de l'horloge et des boutons du haut (lot A) : « gestes|c1|…|c12 ».
         if (champ_est(e.cle, kCleGestes)) {
             gestes_recu(e.reste.p, e.reste.n);
+            appliquees++;
+            continue;
+        }
+        // Défilement des zones (lot 3) : « defil|rangée|nabu|clim|secondes ».
+        if (champ_est(e.cle, kCleDefilement)) {
+            s_defil_vue = true;
+            defilement_recu(e.reste.p, e.reste.n);
             appliquees++;
             continue;
         }

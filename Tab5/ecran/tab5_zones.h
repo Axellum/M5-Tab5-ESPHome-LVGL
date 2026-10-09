@@ -81,7 +81,7 @@ enum BoutonHaut : uint8_t {
 // de la NVS (SauvegardeGestes, tab5_zones.cpp) : un geste de plus va à la FIN (nouveau
 // champ, nouvelle préférence), aucun ne se déplace. tests/test_gestes.py compare.
 enum Geste : uint8_t {
-    GESTE_HEURES_COURT,     // auto : rien (le lot 3 y mettra « ligne Ok Nabu suivante »)
+    GESTE_HEURES_COURT,     // auto : ligne suivante du panneau Ok Nabu (lot 3 ; « rien » avant)
     GESTE_HEURES_LONG,      // auto : Réveil
     GESTE_MINUTES_COURT,    // auto : appareil suivant de la tuile − / + (ADR-0033)
     GESTE_MINUTES_LONG,     // auto : Réveil
@@ -108,6 +108,7 @@ enum class GesteAction : uint8_t {
     APPAREIL_SUIVANT,  // tuile − / + : appareil suivant (reglables_suivant)
     RANGEE_SUIVANTE,   // rangée sous l'horloge : ligne suivante (rangee_toucher)
     ECOUTE,            // bascule du mot de réveil « Ok Nabu » (switch tab5_wake_word_active)
+    NABU_SUIVANTE,     // panneau Ok Nabu : ligne suivante (nabu_suivant, lot 3)
 };
 struct GesteCible {
     GesteAction action;
