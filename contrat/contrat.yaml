@@ -1,0 +1,104 @@
+# Contrat Home Assistant <-> firmware de la tablette : instantané lu dans le code.
+# Généré par `python tools/contrat_api.py --write` : ne modifier à la main que `version:`.
+# - services : actions `api: services:` (Tab5/paquets/tab5-api-logic.yaml), variable: type.
+#   Toutes les variables sont obligatoires, et HA refuse une clé en trop.
+# - evenements : événements `homeassistant.event` émis par le firmware, et leurs champs.
+# Version (semver du contrat, distincte de celle du firmware), contre le dernier tag :
+# MAJEURE si un fichier HA d'avant peut casser (action retirée, variable ajoutée, retirée
+# ou de type changé, événement ou champ plus émis), MINEURE pour un ajout pur (action,
+# événement ou champ nouveau). tests/test_contrat_versions.py le vérifie.
+version: 1.0.0
+services:
+  tab5_assist_reponse:
+    image_url: string
+    texte: string
+  tab5_maj_alerte_meteo_france:
+    payload: string
+  tab5_maj_alertes_ha_bulk:
+    payload: string
+  tab5_maj_alertes_historique:
+    payload: string
+  tab5_maj_calendrier_jour:
+    date: string
+    payload: string
+  tab5_maj_calendrier_mois:
+    annee: string
+    codes: string
+    details: string
+    heures: string
+    mois: string
+  tab5_maj_clim:
+    current: string
+    fan: string
+    mode: string
+    preset: string
+    swing: string
+    target: string
+  tab5_maj_emplacements:
+    payload: string
+  tab5_maj_energie:
+    payload: string
+  tab5_maj_energie_historique:
+    debut: string
+    valeurs: string
+    vue: string
+  tab5_maj_historique:
+    cle: string
+    entete: string
+    mesures: string
+    previsions: string
+    vue: string
+  tab5_maj_info_texte:
+    couleur: string
+    meteo_id: string
+    texte: string
+  tab5_maj_meteo_actuelle:
+    condition: string
+    humidite: string
+    temperature: string
+  tab5_maj_planning:
+    ligne1: string
+    ligne2: string
+  tab5_maj_pluie_1h_bulk:
+    payload: string
+  tab5_maj_previsions_heures_bulk:
+    payload: string
+  tab5_maj_previsions_jours_bulk:
+    payload: string
+  tab5_maj_probabilites:
+    gel: string
+    neige: string
+    uv: string
+  tab5_maj_rdv_prochains:
+    payload: string
+  tab5_maj_reponse_vocale:
+    texte: string
+  tab5_maj_tuiles:
+    payload: string
+  tab5_maj_volet_etat:
+    etat_physique: string
+  tab5_maj_zones:
+    absentes: string
+evenements:
+  esphome.tab5_action: [action, emplacement, valeur]
+  esphome.tab5_alarm_snooze: []
+  esphome.tab5_alarm_start: []
+  esphome.tab5_alarm_stop: []
+  esphome.tab5_alarm_timeout: []
+  esphome.tab5_alerte_lue: [alert_id]
+  esphome.tab5_alertes_historique: []
+  esphome.tab5_annonce: [message]
+  esphome.tab5_batterie_faible: [niveau, seuil]
+  esphome.tab5_calendrier_jour: [date]
+  esphome.tab5_calendrier_mois: [annee, mois]
+  esphome.tab5_connected: []
+  esphome.tab5_energie: [vue]
+  esphome.tab5_historique: [cle, vue]
+  esphome.tab5_journal: [demarrages, grave, lignes, raison]
+  esphome.tab5_maj_ecran: []
+  esphome.tab5_mode_assistant: [option]
+  esphome.tab5_recharger_automatisations: []
+  esphome.tab5_redemarrage_ha_confirme: []
+  esphome.tab5_reveil_annonce: []
+  esphome.tab5_voix_stop: []
+  esphome.tab5_zones: [zones]

@@ -6,7 +6,8 @@ name: ESPHome Tab5 Compilation
 #     Quelques secondes.
 #   - python : hooks pre-commit (yamllint, BOM, secrets, placeholders HA), esptool
 #     figé (mêmes commandes que publication.yml), tests hôte (pytest = tests/ +
-#     outils + miroirs Python des échecs et des dames + garde-fous de contenu), vrais
+#     outils + miroirs Python des échecs et des dames + garde-fous de contenu, dont
+#     le contrat HA ↔ firmware contre les tags publiés, récupérés sans historique), vrais
 #     moteurs Go, échecs, dames et réveil et socle commun compilés par g++ (échecs
 #     et dames sous ASan + UBSan), dry-run du demo pusher. Toujours exécuté. Check REQUIS.
 #   - build  : compilation ESPHome complète (~5 min avec le ccache). Check REQUIS
@@ -94,6 +95,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Tags publiés (contrat HA ↔ firmware contre les versions précédentes)
+        # tests/test_contrat_versions.py lit le code des tags v* (semver du contrat, matrice
+        # N-1) ; le checkout superficiel n'en a aucun. Un commit par tag, sans historique.
+        run: git fetch --no-tags --depth=1 origin "+refs/tags/v*:refs/tags/v*"
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.13"
