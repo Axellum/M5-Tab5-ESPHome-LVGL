@@ -19,6 +19,9 @@ Tout est ici, une fois :
   * `ChargeurSansBalises` : une balise (`!lambda`, `!include`, `!secret`, `!input`…) vaut None ;
   * `ChargeurBalisesBrutes` : une balise sur un scalaire vaut ce scalaire brut, sinon None ;
   * `ChargeurEntrees` : un `!input x` de blueprint vaut `{"!input": "x"}`.
+- `jeton(nom)`, `avec_jetons(texte)` : un jeton de géométrie de
+  `Tab5/paquets/tab5-ui-tokens.yaml` en entier, et un texte YAML où chaque `${jeton}` connu
+  est remplacé par sa valeur (pour lire une hauteur posée par un jeton comme un nombre).
 - `bloc_service(nom)` : le texte d'un service de `Tab5/paquets/tab5-api-logic.yaml`, de sa ligne
   `- service: nom` à la suivante (ou à la fin du bloc `api:`).
 - `CacheJinja` : cache en mémoire du code compilé des modèles Jinja (`bytecode_cache=` d'un
@@ -99,6 +102,22 @@ def fichiers_du_depot(dossier: Path, motif: str = "*") -> list[Path]:
 def charger(*chemin, chargeur=ChargeurSansBalises):
     """Un YAML du dépôt (chemin comme `lire`), lu par `chargeur`."""
     return yaml.load(lire(*chemin), Loader=chargeur)
+
+
+def _jetons() -> dict[str, str]:
+    return {k: str(v) for k, v in charger("Tab5", "paquets", "tab5-ui-tokens.yaml")["substitutions"].items()}
+
+
+def jeton(nom: str) -> int:
+    """Valeur entière d'un jeton de géométrie (`Tab5/paquets/tab5-ui-tokens.yaml`)."""
+    return int(_jetons()[nom])
+
+
+def avec_jetons(texte: str) -> str:
+    """`texte` où chaque `${jeton}` de `tab5-ui-tokens.yaml` est remplacé par sa valeur,
+    comme ESPHome le fait (les autres substitutions restent telles quelles)."""
+    valeurs = _jetons()
+    return re.sub(r"\$\{(\w+)\}", lambda m: valeurs.get(m.group(1), m.group(0)), texte)
 
 
 _SERVICE = re.compile(r"^([ \t]*)- service: (\S+)[ \t]*$", re.M)

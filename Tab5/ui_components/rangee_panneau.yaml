@@ -4,8 +4,9 @@
 # lot 3, ADR-0041). Chaque zone en a deux, remplis en alternance : celui qui entre n'est
 # jamais celui qui sort.
 # Vars : id (le panneau), el (préfixe de ses éléments : « a », « b », « na », « nb » →
-# rangee_el_<el>0 … 3, rangee_icone_*, rangee_texte_*), hauteur (70 sous l'horloge, 88
-# dans la bordure du panneau Ok Nabu).
+# rangee_el_<el>0 … 3, rangee_icone_*, rangee_texte_*). Hauteur : une ligne de zone
+# (ligne_zone_h, tab5-ui-tokens.yaml), la même sous l'horloge et dans la bordure du cadre
+# Ok Nabu (09/10/2026 ; 88 dans le cadre avant, quand il faisait 90 px de haut).
 # Le panneau a UN enfant, son contenu : transition_widgets() (tab5_anim.cpp) l'anime comme
 # les panneaux de la carte centrale, le panneau coupe ce qui en sort. scrollable: false :
 # le glissement (translate_y) ne doit jamais le rendre défilant. clickable: false : le
@@ -15,7 +16,7 @@ obj:
   id: "${id}"
   align: CENTER
   width: 401
-  height: ${hauteur}
+  height: ${ligne_zone_h}
   styles: style_transparent
   clickable: false
   scrollable: false
@@ -24,7 +25,7 @@ obj:
   widgets:
     - obj:
         width: 401
-        height: ${hauteur}
+        height: ${ligne_zone_h}
         styles: style_transparent
         clickable: false
         scrollable: false

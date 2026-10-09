@@ -21,9 +21,11 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
-### 2026-10-09 — Accueil : lignes de capteurs centrées en hauteur
+### 2026-10-09 — Accueil : lignes de capteurs centrées en hauteur, cadres Ok Nabu et − / + ajustés au texte
 
 - **Demande d'Axel** : les lignes de capteurs de la rangée sous l'horloge (ADR-0031) et du panneau « Ok Nabu » (ADR-0041) collaient au haut de leur zone — sur le rendu, encre à 4 px du haut du cadre Ok Nabu et 31 px du bas, à 3 px du haut de la rangée et 17 px du bas. Cause : LVGL pose la piste d'une flexbox en haut (`flex_align_track` à START par défaut) ; `flex_align_cross: CENTER` ne centrait l'élément que dans cette piste. `rangee_panneau.yaml` centre maintenant la piste. La ligne des plantes et la ligne d'écoute ne changent pas. **Non testé sur la tablette.**
+- **Demande d'Axel** : les cadres « Ok Nabu » et − / + étaient trop hauts pour leur texte (90 px pour une ligne de 45 px, le texte « nageait »). Ils font 72 px (`cadre_bas_h`) : un intérieur d'une ligne de zone (`ligne_zone_h`, 70 px, la hauteur de la rangée sous l'horloge, où se dessinent les mêmes lignes ; deux jetons de `tab5-ui-tokens.yaml`), bas toujours à y 308. La place libérée va au-dessus : la rangée Domo / micro / Discu reste centrée entre le bandeau d'état et le cadre Ok Nabu (56 px d'air de chaque côté, 47 avant ; y 90 au lieu de 81), les températures entre les boutons du haut et la tuile − / + (centre à y 173 au lieu de 164, zones tactiles avec). − et + font 56 px (la taille de leur icône) à 8 px des quatre bords, au lieu de 62 px à 14 px. Dans le cadre Ok Nabu, une ligne d'icônes sans valeur prend des icônes de 45 px (70 sous l'horloge) et les éléments gardent 17 px des bords (`kMargeCadre`, 14 avant) pour rester dans la gélule du thème Capsule. **Non testé sur la tablette** ; au rendu hors tablette, à regarder sur l'écran : la taille de − et + au doigt.
+- Tests : `tests/commun.py` gagne `jeton()` et `avec_jetons()` (lire une géométrie posée par un jeton) ; `test_nabu.py` (cadre, arrondi dans les 21 thèmes avec le nouveau rayon borné, tuile − / + en miroir, lignes centrées), `test_carrousel_clim.py`, `test_roue_clim.py`, `test_gestes.py` suivent. Rendu : le point de toucher de la température du salon passe à (955, 173).
 
 ### 2026-10-09 — Popup Météo : les prévisions en graphiques (ADR-0043)
 

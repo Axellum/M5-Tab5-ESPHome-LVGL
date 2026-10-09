@@ -9,10 +9,13 @@
 #       carrousel des clims (ADR-0038).
 # @architecture_constraint Grille du haut (tab5-lvgl.yaml, 05/10/2026) : la carte occupe la
 #                          colonne de droite sous HA / Sys / TV (855-1260, bord droit
-#                          aligné sur le bandeau central). Tuile verre 405 × 90, bas à y 308
-#                          (25 px au-dessus du bandeau, comme bandeau → titres météo),
-#                          − et + de 62 px à 14 px des quatre bords. Températures centrées
-#                          entre les boutons du haut (y 110) et la tuile (y 218), alignées
+#                          aligné sur le bandeau central). Tuile verre 405 × 72 (cadre_bas_h,
+#                          tab5-ui-tokens.yaml, en miroir du cadre Ok Nabu ; 90 avant le
+#                          09/10/2026 : la consigne « nageait »), bas à y 308 (25 px
+#                          au-dessus du bandeau, comme bandeau → titres météo), − et + de
+#                          56 px (la taille de leur police, mdi_font_56) à 8 px des quatre
+#                          bords. Températures centrées
+#                          entre les boutons du haut (y 110) et la tuile (y 236), alignées
 #                          sur le bord gauche du − et le bord droit du +. Valeurs et consigne
 #                          dans la police de la date du thème (style_police_date).
 # @architecture_constraint `current_serre`/`val_temp_salon` sont mis à jour par
@@ -64,14 +67,15 @@ obj:
     # Icône de 45 px + valeur dans la police de la date du thème (style_police_date,
     # demande d'Axel du 05/10/2026), en rangées flex : l'icône suit la largeur du texte,
     # qui change avec la police (« -12.5 ° » : 97 à 145 px selon le thème). Rangées
-    # centrées à y 54 de la carte (164 sur l'écran, milieu de 110-218), alignées sur le
+    # centrées à y 63 de la carte (173 sur l'écran, milieu de 110-236 ; y 164 avant le
+    # 09/10/2026, au milieu de 110-218, quand la tuile faisait 90 px), alignées sur le
     # bord gauche du − et le bord droit du + ; 8 px entre icône et valeur : au pire
     # (police la plus large, serre à -12.5 °) salon 14..192 et serre 193..391 ne se
     # touchent pas. Une valeur masquée (zones_apply_ui) sort de la rangée (flex).
     - obj:
         align: LEFT_MID
         x: 14
-        y: -45
+        y: -36
         width: SIZE_CONTENT
         height: SIZE_CONTENT
         styles: style_transparent
@@ -87,7 +91,7 @@ obj:
     - obj:
         align: RIGHT_MID
         x: -14
-        y: -45
+        y: -36
         width: SIZE_CONTENT
         height: SIZE_CONTENT
         styles: style_transparent
@@ -107,14 +111,15 @@ obj:
     # [26/07/2026] FIX : la zone était posée à côté de ce qu'elle est censée
     # couvrir (elle ne touchait QUE l'icône, jamais la valeur affichée : taper la
     # température ne déclenchait rien). Depuis le 05/10/2026 (rangée de 45 px) : la
-    # rangée serre occupe au plus 193..391 et y 24..85 (texte jusqu'à 61 px de haut) ;
-    # la zone couvre 199..399 et y 22..86, sans toucher la rangée salon (≤ 192 dans la
-    # police la plus large) ni climate_controls_zone (± et cible, dès y 108).
+    # rangée serre occupe au plus 193..391 et y 33..94 (texte jusqu'à 61 px de haut ;
+    # 9 px plus bas depuis le 09/10/2026, avec la tuile − / + de 72 px) ; la zone couvre
+    # 199..399 et y 31..95, sans toucher la rangée salon (≤ 192 dans la police la plus
+    # large) ni climate_controls_zone (± et cible, dès y 126).
     - button:
         id: btn_serre_games
         align: TOP_RIGHT
         x: -6
-        y: 22
+        y: 31
         width: 200
         height: 64
         styles: style_invisible
@@ -136,9 +141,9 @@ obj:
     # Sans aucune clim connue, la liste des appareils de la tuile − / +
     # (ADR-0033), qu'il déroulait avant le 09/10/2026 ; elle s'ouvre maintenant par un
     # appui long sur la valeur entre − et + (btn_clim_target_click). Même boîte que
-    # celle de la serre, côté gauche : la rangée salon occupe au plus 14..192 et y 24..85 ;
-    # la zone couvre 4..196 et y 22..86, sans toucher btn_serre_games (199..399) ni
-    # climate_controls_zone (dès y 108). Elle reste là sans capteur du salon (sa place).
+    # celle de la serre, côté gauche : la rangée salon occupe au plus 14..192 et y 33..94 ;
+    # la zone couvre 4..196 et y 31..95, sans toucher btn_serre_games (199..399) ni
+    # climate_controls_zone (dès y 126). Elle reste là sans capteur du salon (sa place).
     # Appui long : l'historique de la température de la pièce (popup « Température »,
     # ADR-0032) ; pièce absente, il ne fait rien. Une seule zone pour les deux gestes
     # (LVGL n'envoie pas l'appui court après un appui long), comme btn_serre_games.
@@ -146,7 +151,7 @@ obj:
         id: btn_reglables_liste
         align: TOP_LEFT
         x: 4
-        y: 22
+        y: 31
         width: 192
         height: 64
         styles: style_invisible
@@ -165,7 +170,7 @@ obj:
         align: BOTTOM_MID
         y: 0
         width: 405
-        height: 90
+        height: ${cadre_bas_h}
         styles: style_clim_carte_page
         scrollbar_mode: "OFF"
         # − et + en verre plein (style_clim_btn, opaque depuis le 01/10/2026) : ils sont
@@ -195,7 +200,7 @@ obj:
               align_to: { id: clim_target, align: OUT_LEFT_MID, x: -8 }
 
           # Autre appareil que la clim (ADR-0033) : son icône (palette des tuiles) et sa
-          # valeur dans la police de la date, centrées entre − et + (75..330 : 255 px ;
+          # valeur dans la police de la date, centrées entre − et + (64..341 : 277 px ;
           # « 100 % » et une icône de 45 px en prennent ~180). Masquée quand la clim est
           # choisie ; peinte par tab5_reglables.cpp.
           - obj:
@@ -219,9 +224,10 @@ obj:
               id: btn_clim_target_click
               align: CENTER
               # 200 : couvre la valeur d'un autre appareil (icône + texte, jusqu'à 243 px)
-              # sans toucher − (13 à 75) ni + (330 à 392).
+              # sans toucher − (8 à 64) ni + (341 à 397) ; toute la hauteur de la tuile
+              # dans sa bordure.
               width: 200
-              height: 68
+              height: ${ligne_zone_h}
               styles: style_invisible
               on_short_click:
                 # Le popup montre la clim du blueprint, celle de cette carte (il a pu
@@ -243,9 +249,12 @@ obj:
           - button:
               id: btn_clim_minus
               align: LEFT_MID
-              x: 13  # + bordure 1 px de la tuile = 14 px du bord, comme en haut et en bas
-              width: 62
-              height: 62
+              # + bordure 1 px de la tuile = 8 px du bord, comme en haut et en bas : 56 px
+              # (la police de l'icône) dans les 70 de l'intérieur de la tuile, 7 + 7 d'air
+              # (62 px à 14 du bord tant que la tuile faisait 90 px, avant le 09/10/2026).
+              x: 7
+              width: 56
+              height: 56
               radius: 12
               styles: style_clim_btn
               pressed:
@@ -275,9 +284,9 @@ obj:
           - button:
               id: btn_clim_plus
               align: RIGHT_MID
-              x: -13
-              width: 62
-              height: 62
+              x: -7
+              width: 56
+              height: 56
               radius: 12
               styles: style_clim_btn
               pressed:

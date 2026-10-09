@@ -112,11 +112,11 @@ def test_glyphe_de_clims():
 
 
 def test_ecrans_du_rendu():
-    # L'ancre : le centre de btn_reglables_liste (carte en 855, 110 ; zone x 4, y 22, 192 × 64).
+    # L'ancre : le centre de btn_reglables_liste (carte en 855, 110 ; zone x 4, y 31, 192 × 64).
     zone = CARTE.split("id: btn_reglables_liste", 1)[1].split("on_short_click", 1)[0]
     x, y, w, h = (int(re.search(rf"\n\s+{k}: (\d+)", zone).group(1)) for k in ("x", "y", "width", "height"))
-    assert (855 + x + w // 2, 110 + y + h // 2) == ecrans.SALON == (955, 164)
-    assert ecrans.roue_dessous(164), "la température est trop haute pour y poser la roue"
+    assert (855 + x + w // 2, 110 + y + h // 2) == ecrans.SALON == (955, 173)
+    assert ecrans.roue_dessous(173), "la température est trop haute pour y poser la roue"
     # L'ancre basse de clim_ancre_basse() : mêmes constantes que le rendu.
     ancre = {k: int(re.search(rf"constexpr int32_t {k} = (\d+);", ROUE).group(1))
              for k in ("kClimAncreY", "kClimAncreXMin", "kClimAncreXMax")}

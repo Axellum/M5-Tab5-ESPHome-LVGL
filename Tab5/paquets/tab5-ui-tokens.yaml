@@ -40,3 +40,13 @@ substitutions:
   # la reprend (kLargeurPanneauCentral, tab5_central.cpp) : tests/test_geometrie_partagee.py
   # vérifie que les deux restent égales.
   central_w: "1180"
+  # Accueil, cadres « Ok Nabu » (btn_ok_nabu, tab5-lvgl.yaml) et − / + (climate_controls_zone,
+  # climate_card.yaml), en miroir, bas à y 308 (09/10/2026, demande d'Axel : 90 px, le
+  # texte « nageait » dedans). Leur intérieur est une ligne de zone (ligne_zone_h) : la
+  # hauteur de la rangée sous l'horloge, où se dessinent les mêmes lignes de capteurs
+  # (rangee_panneau.yaml) ; une ligne de texte de 45 px (encre 33 px en Roboto) y garde
+  # 18 px d'air au-dessus et au-dessous. cadre_bas_h = ligne_zone_h + 2 × 1 px de bordure
+  # (pas d'arithmétique dans les substitutions : changer l'un, c'est changer l'autre ;
+  # tests/test_nabu.py les compare).
+  ligne_zone_h: "70"
+  cadre_bas_h: "72"

@@ -76,7 +76,7 @@ packages:
 ## 2. Package roles
 
 ### `tab5-ui-tokens.yaml`
-Shared dimensional tokens, loaded first so every other package can reference them: modal card size (`modal_card_w`/`modal_card_h`), the 52 px title bar offset (`modal_body_y`), bottom margin (`modal_bottom_y`), calendar grid origin (`cal_grid_y`). Changing a popup's geometry means changing a token here, not 8 hardcoded numbers across `ui_components/`.
+Shared dimensional tokens, loaded first so every other package can reference them: modal card size (`modal_card_w`/`modal_card_h`), the 52 px title bar offset (`modal_body_y`), bottom margin (`modal_bottom_y`), calendar grid origin (`cal_grid_y`), and on the home page the height of a line of the row under the clock (`ligne_zone_h`) and of the Ok Nabu and − / + frames around one (`cadre_bas_h`). Changing a popup's geometry means changing a token here, not 8 hardcoded numbers across `ui_components/`.
 
 ---
 
@@ -413,7 +413,7 @@ Le fichier racine fait trois choses :
 ## 2. Rôles des packages
 
 ### `tab5-ui-tokens.yaml`
-Tokens dimensionnels partagés, chargés en premier pour que tous les autres packages puissent y faire référence : taille de la carte modale (`modal_card_w`/`modal_card_h`), décalage de la barre de titre de 52 px (`modal_body_y`), marge basse (`modal_bottom_y`), origine de la grille calendrier (`cal_grid_y`). Changer la géométrie d'un popup = changer un token ici, pas 8 nombres en dur dispersés dans `ui_components/`.
+Tokens dimensionnels partagés, chargés en premier pour que tous les autres packages puissent y faire référence : taille de la carte modale (`modal_card_w`/`modal_card_h`), décalage de la barre de titre de 52 px (`modal_body_y`), marge basse (`modal_bottom_y`), origine de la grille calendrier (`cal_grid_y`) et, sur l'accueil, la hauteur d'une ligne de la rangée sous l'horloge (`ligne_zone_h`) et des cadres Ok Nabu et − / + qui en entourent une (`cadre_bas_h`). Changer la géométrie d'un popup = changer un token ici, pas 8 nombres en dur dispersés dans `ui_components/`.
 
 ---
 

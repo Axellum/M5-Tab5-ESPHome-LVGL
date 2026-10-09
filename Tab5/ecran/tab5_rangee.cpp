@@ -14,7 +14,8 @@
  *           (modèle, NVS et états dans tab5_tuiles.cpp : rangee_element). Un capteur ou une
  *           clim montre icône + valeur, tout autre appareil son icône seule, colorée selon
  *           son état. Affichage seul : un toucher n'agit sur aucun appareil.
- *       Taille d'une ligne : sans valeur, des icônes de 70 px (celles des plantes) ; avec,
+ *       Taille d'une ligne : sans valeur, des icônes de 70 px (celles des plantes ; 45 dans
+ *       le cadre Ok Nabu, kIconesSeulesCadre) ; avec,
  *       la plus grande où tout tient sur 401 px (la largeur de l'horloge, et celle du
  *       panneau Ok Nabu dans sa bordure) — icônes et valeurs de 45 px (police de la date
  *       du thème), 32 px, valeurs de 22 px, puis icône au-dessus de la valeur ; au-delà
@@ -61,9 +62,10 @@ constexpr int8_t kSpeciale = -1;    // dans l'ordre des lignes : les plantes, l'
 constexpr int32_t kLargeur = 401;   // largeur de l'horloge (rangee.yaml), des panneaux Ok Nabu
 constexpr int32_t kMarge = 8;       // écart minimal entre deux éléments, et aux bords
 // Dans le cadre du panneau Ok Nabu, plus d'air aux bords : le cadre du thème peut être une
-// gélule (Capsule : rayon 45, bordure de 4 px) ; avec 14 px, la boîte d'un élément reste
-// dans son arrondi intérieur dans les 21 thèmes (tests/test_nabu.py le calcule).
-constexpr int32_t kMargeCadre = 14;
+// gélule (Capsule : rayon 45, borné à 36 par les 72 px du cadre, bordure de 4 px) ; avec
+// 17 px, la boîte d'un élément reste dans son arrondi intérieur dans les 21 thèmes
+// (tests/test_nabu.py le calcule ; 14 px tant que le cadre faisait 90 px de haut).
+constexpr int32_t kMargeCadre = 17;
 constexpr int32_t kEcart = 6;       // entre l'icône et la valeur (pad_column de rangee_element.yaml)
 
 // Tailles d'une ligne qui a des valeurs, de la plus grande à la plus petite. icone :
@@ -75,7 +77,11 @@ struct Taille {
     int texte;
     bool empile;
 };
+// Une ligne sans valeur : des icônes de 70 px sous l'horloge (celles des plantes, aussi
+// hautes que la rangée) ; de 45 px dans le cadre Ok Nabu, dont l'intérieur a la hauteur de
+// la rangée (ligne_zone_h, 70 px) mais une bordure, parfois arrondie en gélule (09/10/2026).
 constexpr Taille kIconesSeules = {0, 0, false};
+constexpr Taille kIconesSeulesCadre = {1, 0, false};
 constexpr Taille kTailles[] = {
     {1, 0, false},
     {2, 1, false},
@@ -91,7 +97,8 @@ struct Defileur {
     Defilement defilement;     // son réglage auto / fixe
     RangeeUI& u;
     int32_t marge;             // écart minimal entre deux éléments et aux bords
-    bool pret = false;         // widgets posés, premier dessin fait
+    Taille seules;             // taille d'une ligne sans valeur
+    bool pret = false;        // widgets posés, premier dessin fait
     int8_t ordre[kPlaces] = {};  // lignes affichées tour à tour : kSpeciale ou 0 à 2
     int n = 0;
     int courante = 0;          // index dans ordre
@@ -99,8 +106,8 @@ struct Defileur {
     lv_obj_t* vu = nullptr;    // panneau à l'écran
 };
 Defileur s_zones[RANGEE_NB] = {
-    {RANGEE_HORLOGE, Defilement::RANGEE, g_rangee_ui, kMarge},
-    {RANGEE_NABU, Defilement::NABU, g_nabu_ui, kMargeCadre},
+    {RANGEE_HORLOGE, Defilement::RANGEE, g_rangee_ui, kMarge, kIconesSeules},
+    {RANGEE_NABU, Defilement::NABU, g_nabu_ui, kMargeCadre, kIconesSeulesCadre},
 };
 
 // ─── Mesure et polices ──────────────────────────────────────────────────────────────
@@ -162,7 +169,7 @@ void remplir(const Defileur& d, int p, int l) {
         if (e[i].mesure) n_mesures++;
     }
     const int32_t place = kLargeur - (n + 1) * d.marge;
-    const Taille* t = &kIconesSeules;
+    const Taille* t = &d.seules;
     bool couper = false;
     if (n_mesures > 0) {
         t = &kTailles[kNbTailles - 1];
