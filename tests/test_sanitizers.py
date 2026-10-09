@@ -6,6 +6,7 @@ Le premier passage de l'audit comptait les fichiers d'un `log_path` que UBSan
 n'utilisait pas : « 0 rapport » alors qu'il y en avait. Ces tests tiennent la lecture
 du journal (rapports.py) sur des extraits réels du 30/09, et le workflow sur ses
 garde-fous (témoin positif, aucun log_path)."""
+import re
 import sys
 from pathlib import Path
 
@@ -97,7 +98,7 @@ def test_rapports_connus_justifies():
         assert not cle.startswith(("src/", "Tab5/")) and "/lvgl/" in "/" + cle, f"{cle} : pas une bibliothèque"
         assert not cle.rstrip().endswith(tuple("0123456789")), f"{cle} : la valeur ne fait pas partie de la clé"
         assert len(raison) >= 120, f"{cle} : justification trop courte"
-        assert "https://github.com/" in raison and "/blob/v" in raison, f"{cle} : lien amont à une version figée"
+        assert re.search(r"https://github\.com/[\w.-]+/[\w.-]+/blob/v\d", raison), f"{cle} : lien amont à une version figée"
 
 
 def test_rapport_connu_affiche_sans_echec(tmp_path, capsys):
