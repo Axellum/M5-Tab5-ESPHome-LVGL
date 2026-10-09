@@ -24,7 +24,8 @@ constexpr int kReglablesLignes = 10;  // clim + huit appareils du blueprint + ta
 // dessin ; commandes posées par le même script (lambdas sans capture).
 struct ReglablesUI {
     lv_obj_t* zone = nullptr;             // climate_controls_zone : − / valeur / +
-    lv_obj_t* consigne_clim = nullptr;    // clim_target : montrée quand la clim est choisie
+    lv_obj_t* consigne_clim = nullptr;    // clim_target : la consigne de la clim, quand elle est choisie
+    lv_obj_t* consigne_icone = nullptr;   // clim_consigne_icone : l'icône de la clim, à gauche de sa consigne
     lv_obj_t* rangee = nullptr;           // reglable_rangee : icône + valeur d'un autre appareil
     lv_obj_t* icone = nullptr;            // reglable_icone
     lv_obj_t* valeur = nullptr;           // reglable_valeur
@@ -53,6 +54,10 @@ void reglables_valeur_appui();
 // ligne : cet appareil est choisi, la liste se ferme ; ailleurs : elle se ferme.
 void reglables_liste_basculer();
 void reglables_choisir(int ligne);
+// Appareil suivant de la liste, sans la dérouler (geste « appareil_suivant », par défaut le
+// tap court sur les minutes de l'horloge, 09/10/2026) : après le dernier, le premier.
+// Rien quand la tuile est masquée.
+void reglables_suivant();
 void reglables_liste_fermer();
 bool reglables_liste_ouverte();
 // tab5_volume_apply : le volume de la tablette a changé (carte et liste s'il est choisi).

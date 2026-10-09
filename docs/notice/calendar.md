@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a long press on the clock (a tap opens the [alarm clock](alarm.md)).
+**Opens with** a long press on the date, under the clock (a long press on the time opens the [alarm clock](alarm.md)); another gesture can be chosen in the blueprint ([home screen](home.md#clock-and-date-5)).
 
 ![The calendar: June 2026, work hours in each day, today framed, legend at the bottom](../images/notice/calendrier-en.webp)
 
@@ -24,7 +24,7 @@ The grid of days works without Home Assistant; the hours and events come from yo
 
 ---
 
-**S'ouvre par** un appui long sur l'horloge (un tap ouvre le [réveil](alarm.md#version-française)).
+**S'ouvre par** un appui long sur la date, sous l'horloge (un appui long sur l'heure ouvre le [réveil](alarm.md#version-française)) ; un autre geste peut se choisir dans le blueprint ([écran d'accueil](home.md#horloge-et-date-5)).
 
 ![Le calendrier : juin 2026, les heures de travail dans chaque jour, aujourd'hui encadré, la légende en bas](../images/notice/calendrier-fr.webp)
 

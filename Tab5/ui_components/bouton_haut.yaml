@@ -3,15 +3,18 @@
 # 08/10/2026 (audit, YML-4) : géométrie, appui long et mini icône étaient écrits trois fois.
 # Vars : id (btn_control_ha / _console / _tv, lus par tab5-tuiles.yaml et les tests),
 #        x (855 / 995 / 1135 : bord droit à 1260, comme le bandeau central),
-#        bouton (valeur de BoutonHaut, tab5_custom.h),
-#        appui (actions du tap, liste d'actions ESPHome passée telle quelle),
-#        icone_id / icone (icône centrale, mdi_font_70),
-#        mini_id / mini (mini icône en haut à droite, mdi_font_26 : l'écran qu'ouvre
-#        l'appui long ; glyphe et visibilité posés par boutons_haut_apply_ui(),
-#        tab5_zones.cpp ; ce glyphe-ci n'est que celui d'avant la première image).
-# Appui long : l'écran choisi dans le blueprint (section « Boutons du haut », clé appuis ;
-# « auto » : Énergie, console, télécommande TV), donné par bouton_haut_ecran()
-# (tab5_zones.cpp), 0 = rien, et ouvert par tab5_ecran_ouvrir (tab5-navigation.yaml).
+#        bouton (valeur de BoutonHaut, tab5_zones.h),
+#        icone_id / icone (icône centrale, mdi_font_70 : celle d'origine ; ce que fait le
+#        tap quand le blueprint l'a changé, posée par boutons_haut_apply_ui()),
+#        mini_id / mini (mini icône en haut à droite, mdi_font_26 : ce que fait l'appui
+#        long ; glyphe et visibilité posés par boutons_haut_apply_ui(), tab5_zones.cpp ;
+#        ce glyphe-ci n'est que celui d'avant la première image).
+# Gestes (09/10/2026, lot A, ADR-0039) : le tap court et l'appui long sont deux gestes
+# (geste_bouton(), enum Geste), choisis dans le blueprint (section « Horloge et boutons du
+# haut », clé gestes ; l'ancienne clé appuis pour l'appui long). « auto » : le tap d'avant
+# (mode HA, Réglages, Arcade) et l'appui long d'avant (Énergie, console, télécommande TV).
+# Le script tab5_geste (tab5-navigation.yaml) les exécute, par geste_cible() ; un écran
+# s'ouvre toujours par tab5_ecran_ouvrir. LVGL n'envoie pas le tap court après un appui long.
 # pad_all: 0 : la mini icône se pose au pixel près (le thème ajoutait ~21 px de marge
 # intérieure), l'icône centrale ne bouge pas.
 button:
@@ -24,11 +27,10 @@ button:
   radius: 18
   pad_all: 0
   styles: style_clim_btn_page
-  on_short_click: ${appui}
+  on_short_click:
+    - lambda: 'id(tab5_geste).execute(geste_bouton(${bouton}, false));'
   on_long_press:
-    - lambda: |-
-        const int e = bouton_haut_ecran(${bouton});
-        if (e != 0) id(tab5_ecran_ouvrir).execute(e);
+    - lambda: 'id(tab5_geste).execute(geste_bouton(${bouton}, true));'
   widgets:
     - label: { id: "${icone_id}", text: "${icone}", align: CENTER, text_font: mdi_font_70 }
     - label: { id: "${mini_id}", text: "${mini}", align: TOP_RIGHT, x: -8, y: 6, text_font: mdi_font_26, styles: style_text_dim, hidden: true }

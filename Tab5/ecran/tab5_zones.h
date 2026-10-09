@@ -63,24 +63,69 @@ enum BandeauIcone : uint8_t {
 };
 
 // Boutons du haut à droite de l'accueil, de gauche à droite (06/10/2026 : un tap et un
-// appui long chacun). L'écran qu'ouvre l'appui long se choisit dans le blueprint
-// « Tab5 — emplacements » (07/10/2026, section « Boutons du haut ») : clé
-// « appuis|maison|engrenage|manette » de tab5_maj_emplacements (tab5_zones.cpp).
+// appui long chacun). Leurs deux gestes se choisissent dans le blueprint
+// « Tab5 — emplacements » (section « Horloge et boutons du haut ») : clé « gestes » de
+// tab5_maj_emplacements depuis le 09/10/2026 (Geste ci-dessous), et l'ancienne clé
+// « appuis|maison|engrenage|manette » (07/10/2026, appuis longs seuls), toujours lue.
 enum BoutonHaut : uint8_t {
-    BOUTON_MAISON,     // btn_control_ha (tap : mode HA)
-    BOUTON_ENGRENAGE,  // btn_control_console (tap : Réglages)
-    BOUTON_MANETTE,    // btn_control_tv (tap : Arcade)
+    BOUTON_MAISON,     // btn_control_ha (tap « auto » : mode HA)
+    BOUTON_ENGRENAGE,  // btn_control_console (tap « auto » : Réglages)
+    BOUTON_MANETTE,    // btn_control_tv (tap « auto » : Arcade)
     BOUTON_HAUT_NB
 };
 
+// Gestes de l'accueil au choix (09/10/2026, lot A, ADR-0039) : l'horloge en trois zones
+// tactiles (heures, minutes, date ; ui_components/horloge_zone.yaml) et les trois boutons
+// du haut, un tap court et un appui long chacun. Cet ORDRE est celui des 12 champs de la
+// clé « gestes|c1|…|c12 » de tab5_maj_emplacements (variable gestes du blueprint) et celui
+// de la NVS (SauvegardeGestes, tab5_zones.cpp) : un geste de plus va à la FIN (nouveau
+// champ, nouvelle préférence), aucun ne se déplace. tests/test_gestes.py compare.
+enum Geste : uint8_t {
+    GESTE_HEURES_COURT,     // auto : rien (le lot 3 y mettra « ligne Ok Nabu suivante »)
+    GESTE_HEURES_LONG,      // auto : Réveil
+    GESTE_MINUTES_COURT,    // auto : appareil suivant de la tuile − / + (ADR-0033)
+    GESTE_MINUTES_LONG,     // auto : Réveil
+    GESTE_DATE_COURT,       // auto : ligne suivante de la rangée sous l'horloge (ADR-0031)
+    GESTE_DATE_LONG,        // auto : Calendrier
+    GESTE_MAISON_COURT,     // auto : mode HA (tuiles_mode_ha)
+    GESTE_MAISON_LONG,      // auto : la clé appuis, sinon Énergie (avec la production solaire)
+    GESTE_ENGRENAGE_COURT,  // auto : Réglages (page Écran)
+    GESTE_ENGRENAGE_LONG,   // auto : la clé appuis, sinon la console système
+    GESTE_MANETTE_COURT,    // auto : Arcade
+    GESTE_MANETTE_LONG,     // auto : la clé appuis, sinon la télécommande TV
+    GESTE_NB
+};
+// Geste d'un bouton du haut (ordre de BoutonHaut) : tap court ou appui long.
+constexpr int geste_bouton(BoutonHaut b, bool long_appui) {
+    return GESTE_MAISON_COURT + 2 * static_cast<int>(b) + (long_appui ? 1 : 0);
+}
+// Ce que fait un geste : ouvrir un écran (par tab5_ecran_ouvrir), ou une action de
+// l'accueil. Le script tab5_geste (tab5-navigation.yaml) l'exécute.
+enum class GesteAction : uint8_t {
+    RIEN,
+    ECRAN,             // `ecran` = valeur d'Ecran, pour id(tab5_ecran_ouvrir).execute()
+    MODE_DOMO,         // bascule du mode HA (tuiles_mode_ha), le tap du bouton maison
+    APPAREIL_SUIVANT,  // tuile − / + : appareil suivant (reglables_suivant)
+    RANGEE_SUIVANTE,   // rangée sous l'horloge : ligne suivante (rangee_toucher)
+    ECOUTE,            // bascule du mot de réveil « Ok Nabu » (switch tab5_wake_word_active)
+};
+struct GesteCible {
+    GesteAction action;
+    int ecran;  // valeur d'Ecran pour ECRAN, 0 sinon
+};
+// Geste (valeur de Geste) → ce qu'il fait maintenant : le choix du blueprint, « auto »
+// sinon ; un écran absent de cette maison (ecran_disponible) ne fait rien.
+GesteCible geste_cible(int geste);
+
 // Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-navigation.yaml), routine unique du
-// select « Aller à l'écran » et des appuis longs des boutons du haut. Les valeurs 0 à 11
-// SONT les index des options du select, dans le même ordre (tests/test_appuis.py) ;
-// ARCADE n'est pas une option du select (lancer l'Arcade à distance n'a pas d'usage),
-// seulement un choix d'appui long. Un écran de plus : avant ARCADE ici, à la fin du select
-// (ARCADE et NB se décalent : la NVS garde l'index du code dans kCodesEcran, tab5_zones.cpp,
-// jamais cette valeur), et son code à la fin de kCodesEcran et dans le blueprint ; sa
-// fenêtre et son ouverture : une ligne de tab5_modal_registry_init (tab5-navigation.yaml).
+// select « Aller à l'écran » et des gestes de l'accueil (horloge, boutons du haut). Les
+// valeurs 0 à 12 SONT les index des options du select, dans le même ordre
+// (tests/test_appuis.py) ; ARCADE n'est pas une option du select (lancer l'Arcade à
+// distance n'a pas d'usage), seulement un choix de geste. Un écran de plus : avant ARCADE
+// ici, à la fin du select (ARCADE et NB se décalent : la NVS garde l'index du code dans
+// kCodesGestes, tab5_zones.cpp, jamais cette valeur), et son code à la fin de kCodesGestes
+// et dans le blueprint ; sa fenêtre et son ouverture : une ligne de
+// tab5_modal_registry_init (tab5-navigation.yaml).
 enum class Ecran : uint8_t {
     AUCUN,       // « — » : position de repos du select ; « rien » pour un appui long
     ACCUEIL, ASSISTANT, CALENDRIER, REVEIL, CLIM, PLANTES, TV, CONSOLE, ENERGIE, REGLAGES, ALERTES,
@@ -93,10 +138,13 @@ enum class Ecran : uint8_t {
 struct ZonesUI {
     lv_obj_t* bandeau[BANDEAU_NB] = {};  // bandeau d'état, indexé par BandeauIcone
     // Mini icônes des boutons du haut (06/10/2026), indexées par BoutonHaut
-    // (icon_mini_ha, icon_mini_sys, icon_mini_tv) : l'écran qu'ouvre l'appui long du
-    // bouton, quand il est disponible (boutons_haut_apply_ui, tab5_zones.cpp). Les trois
+    // (icon_mini_ha, icon_mini_sys, icon_mini_tv) : ce que fait l'appui long du bouton,
+    // quand il fait quelque chose (boutons_haut_apply_ui, tab5_zones.cpp). Les trois
     // boutons ne bougent pas : la manette ouvre l'Arcade même sans TV.
     lv_obj_t* mini[BOUTON_HAUT_NB] = {};
+    // Icônes centrales des mêmes boutons (icon_ha, icon_engrenage, icon_manette, 09/10/2026) :
+    // celle d'origine, ou ce que fait le tap quand le blueprint l'a changé.
+    lv_obj_t* icone[BOUTON_HAUT_NB] = {};
     // Les cartes du calque « HA » et le sélecteur du popup lumière suivent les pièces
     // depuis l'ADR-0023 (g_tuiles_ui, tab5_tuiles.cpp).
     lv_obj_t* icon_salon = nullptr;
@@ -150,17 +198,14 @@ bool solaire_present();
 // Écran dont la zone est absente de cette maison (clim, plantes sans aucun pot, TV) : sa
 // fenêtre n'aurait rien à montrer ni à piloter. Lu par tab5_ecran_ouvrir.
 bool ecran_sans_zone(Ecran e);
-// Écran qu'un appui long peut ouvrir : sa zone est là et, pour Énergie, la production
+// Écran qu'un geste peut ouvrir : sa zone est là et, pour Énergie, la production
 // solaire est reçue (la condition de l'appui long du bouton « HA » depuis le 06/10/2026).
 // Plus strict que le select, qui ouvre Énergie sans production solaire.
 bool ecran_disponible(Ecran e);
-// Écran qu'ouvre l'appui long du bouton b (valeur d'Ecran, pour
-// id(tab5_ecran_ouvrir).execute()) : le choix du blueprint (« auto » : Énergie, console,
-// télécommande TV, comme avant le 07/10/2026), 0 (Ecran::AUCUN) s'il ne fait rien.
-int bouton_haut_ecran(BoutonHaut b);
-// Mini icônes des trois boutons : glyphe de l'écran choisi s'il est disponible, celles du
-// 06/10/2026 en « auto » (aucune sur l'engrenage), masquées sinon. Appelée par
-// zones_apply_ui(), à la production solaire reçue ou perdue et au choix reçu.
+// Mini icônes des trois boutons : ce que fait leur appui long (glyphe de l'écran ou de
+// l'action choisis, celles du 06/10/2026 en « auto », aucune sur l'engrenage), masquées
+// s'il ne fait rien ; icônes centrales : ce que fait leur tap s'il n'est pas « auto ».
+// Appelée par zones_apply_ui(), à la production solaire reçue ou perdue et au choix reçu.
 void boutons_haut_apply_ui();
 // Tuile i (0 à 4) de l'accueil : son appareil est-il absent ?
 bool zone_tuile_absente(int tuile);

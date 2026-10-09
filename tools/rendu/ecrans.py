@@ -180,7 +180,14 @@ def _panneau(n: int) -> Service:
 # Écran principal (paysage 1280×720).
 # ---------------------------------------------------------------------------
 
-HORLOGE = (640, 105)          # court : Réveil · long : Calendrier
+# Horloge en trois zones (09/10/2026, lot A, ui_components/horloge_zone.yaml) : heures
+# (440..639 × 20..157), minutes (640..840 × 20..157), date (440..840 × 158..229). « auto » :
+# heures court rien, long Réveil ; minutes court appareil suivant de la tuile − / +, long
+# Réveil ; date court ligne suivante de la rangée, long Calendrier.
+# tests/test_gestes.py les compare aux zones de Tab5/paquets/tab5-lvgl.yaml.
+HEURES = (540, 90)
+MINUTES = (740, 90)
+DATE = (640, 195)
 MICRO = (206, 145)            # long : Assistant vocal
 DOMO, DISCU = (72, 150), (340, 150)
 # Rangée du haut (06/10/2026 : fixe, avec ou sans TV) : HA (court : appareils, long :
@@ -383,13 +390,23 @@ SANS_SOLAIRE = (_solaire("nan"),)
 
 
 def _appuis(maison: str, engrenage: str, manette: str) -> Service:
-    """Appuis longs des trois boutons du haut, comme les pousse le blueprint (clé appuis de
-    tab5_maj_emplacements, section « Boutons du haut » ; codes de kCodesEcran ou « auto »)."""
+    """Appuis longs des trois boutons du haut, comme les pousse un blueprint d'avant le lot A
+    (clé appuis de tab5_maj_emplacements seule ; codes de kCodesGestes ou « auto »)."""
     return Service("tab5_maj_emplacements", (("payload", f"appuis|{maison}|{engrenage}|{manette};"),))
 
 
-# Le choix reste en NVS : retour à « auto » (les mini icônes d'avant) pour les autres écrans.
+def _gestes(*codes: str) -> Service:
+    """Les 12 gestes de l'accueil comme les pousse le blueprint (09/10/2026, lot A : clé
+    appuis puis clé gestes, dans l'ordre de l'enum Geste ; codes de kCodesGestes ou
+    « auto »)."""
+    assert len(codes) == 12, codes
+    appuis = f"appuis|{codes[7]}|{codes[9]}|{codes[11]};"
+    return Service("tab5_maj_emplacements", (("payload", appuis + "gestes|" + "|".join(codes) + ";"),))
+
+
+# Le choix reste en NVS : retour à « auto » (les icônes d'avant) pour les autres écrans.
 APPUIS_AUTO = (_appuis("auto", "auto", "auto"),)
+GESTES_AUTO = (_gestes(*["auto"] * 12),)
 
 
 def _appareils_meteo(montres: bool) -> Service:
@@ -639,6 +656,15 @@ ECRANS: tuple[Ecran, ...] = (
     # Appuis longs au choix (07/10/2026) : la mini icône de chaque bouton du haut montre
     # l'écran choisi (en-tête de sa fenêtre) : alertes, calendrier, Arcade.
     Ecran("accueil-appuis-choisis", (_appuis("alertes", "calendrier", "arcade"),), APPUIS_AUTO),
+    # Gestes au choix (09/10/2026, lot A) : taps des trois boutons changés (calendrier,
+    # écoute « Ok Nabu », ligne suivante : leur icône centrale le dit), appuis longs changés
+    # (mode Domo, appareil suivant, réveil : la mini icône).
+    Ecran("accueil-gestes-choisis",
+          (_gestes("auto", "auto", "auto", "auto", "auto", "auto",
+                   "calendrier", "mode_domo", "ecoute", "appareil_suivant", "rangee_suivante", "reveil"),),
+          GESTES_AUTO),
+    # Tap sur la date (« auto ») : la ligne suivante de la rangée, comme un tap sur elle.
+    Ecran("accueil-date-rangee-ligne-2", (Toucher(*DATE),), (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE))),
     # Rangée sous l'horloge (ADR-0031) : trois lignes dans la démo (plantes, climat,
     # énergie et maison ; scenarios.RANGEE). Un appui passe à la suivante ; le retour à
     # l'accueil ne la remet pas, `fermer` finit le tour jusqu'à la première.
@@ -650,16 +676,22 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-tuile-liste", (Toucher(*SALON),)),
     Ecran("accueil-tuile-enceinte", (Toucher(*SALON), Toucher(*LIGNES_REGLABLES[4])),
           (Toucher(*SALON), Toucher(*LIGNES_REGLABLES[0]))),
+    # Tap sur les minutes (« auto », lot A) : l'appareil suivant de la liste (le premier de
+    # la démo après la clim) sans la dérouler ; `fermer` remet la clim.
+    Ecran("accueil-minutes-appareil-suivant", (Toucher(*MINUTES),),
+          (Toucher(*SALON), Toucher(*LIGNES_REGLABLES[0]))),
 
     # --- Fenêtres ---------------------------------------------------------------------
-    Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Toucher(*HORLOGE))),
-    Ecran("reveil-sonnerie", (Toucher(*HORLOGE), Toucher(*REVEIL_TESTER, apres=1.5)),
+    # Réveil : appui long sur les heures (lot A ; les minutes l'ouvrent aussi).
+    Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Long(*HEURES))),
+    Ecran("reveil-sonnerie", (Long(*HEURES), Toucher(*REVEIL_TESTER, apres=1.5)),
           (Toucher(*SONNERIE_ARRETER),)),
     Ecran("assistant", (Long(*MICRO),)),
     Ecran("assistant-reponse",
           (Service("tab5_assist_reponse", (("texte", REPONSE_ASSISTANT), ("image_url", ""))),)),
-    Ecran("calendrier", (Service("tab5_maj_calendrier_mois", _calendrier_juin_2026()), Long(*HORLOGE))),
-    Ecran("calendrier-jour", (Long(*HORLOGE), Toucher(*CAL_JOUR_18))),
+    # Calendrier : appui long sur la date (lot A).
+    Ecran("calendrier", (Service("tab5_maj_calendrier_mois", _calendrier_juin_2026()), Long(*DATE))),
+    Ecran("calendrier-jour", (Long(*DATE), Toucher(*CAL_JOUR_18))),
     Ecran("lumieres-chambre", (Long(*TUILES["chambre"]), roue_reglages(TUILES["chambre"], ROUE_BOUTONS["chambre"]))),
     Ecran("lumieres-salon", (Long(*TUILES["salon"]), roue_reglages(TUILES["salon"], ROUE_BOUTONS["salon"]))),
     Ecran("volet", (Long(*TUILE_VOLET), roue_reglages(TUILE_VOLET, ROUE_BOUTONS["volet"]))),

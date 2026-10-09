@@ -375,6 +375,10 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_zones.cpp", "solaire_glyphe"): ("icon_solaire",),
     # Mini icônes des trois boutons du haut (07/10/2026) : l'écran qu'ouvre leur appui long.
     ("tab5_zones.cpp", "mini_glyphe"): ("icon_mini_*",),
+    # Gestes de l'accueil (09/10/2026, lot A) : le glyphe d'un code (écran ou action), en
+    # mini icône (appui long) et en icône centrale (tap changé) ; les icônes d'origine.
+    ("tab5_zones.cpp", "code_glyphe"): ("icon_mini_*", "icon_ha", "icon_engrenage", "icon_manette"),
+    ("tab5_zones.cpp", "tap_glyphe"): ("icon_ha", "icon_engrenage", "icon_manette"),
     # Palette des tuiles de pièce (ADR-0023) : table au niveau du fichier, d'où la fonction vide.
     # Ses glyphes s'affichent sur les cartes du mode HA (icon_sw*, mdi_font_70), dans les
     # épaules des tuiles (icon_card_*, mdi_font_32) et dans le sélecteur du popup lumière
@@ -384,7 +388,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     # selon la ligne (tab5_rangee.cpp) : les mêmes trois polices. Le popup d'un appareil
     # (appareil_icone, mdi_font_70, 06/10/2026) montre l'icône de sa tuile comme les cartes.
     # La tuile − / + (ADR-0033, tab5_reglables.cpp) montre la même palette en mdi_font_45 :
-    # reglable_icone sur la carte clim, reglable_ligne_*_icone dans sa liste.
+    # reglable_icone sur la carte clim, reglable_ligne_*_icone dans sa liste, et l'icône de
+    # la clim à gauche de sa consigne (clim_consigne_icone, 09/10/2026).
     # Le popup Maison (ADR-0037) : la même palette en mdi_font_32, maison_icone_* (une ligne par tuile).
     # Le moyeu de la roue d'actions rapides (ADR-0036) : l'icône de la tuile en mdi_font_45.
     ("tab5_tuiles_icones.h", ""): (
@@ -395,6 +400,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
         "appareil_icone",
         "reglable_icone",
         "reglable_ligne_*_icone",
+        "clim_consigne_icone",
         "maison_icone_*",
         "roue_moyeu_icone",
     ),

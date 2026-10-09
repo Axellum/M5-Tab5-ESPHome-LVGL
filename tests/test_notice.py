@@ -29,7 +29,8 @@ ANNOTE = "accueil-annote"
 # fichier pour un composant de Tab5/ui_components/ (ses ids sont des modèles).
 APPUIS_LONGS = {
     "btn_assist_trigger": "voice.md",
-    "btn_clock_calendar_zone": "calendar.md",
+    # Les trois zones de l'horloge (heures, minutes, date) : un gabarit (09/10/2026, lot A).
+    "horloge_zone.yaml": "home.md",
     # Les trois boutons du haut : un gabarit (08/10/2026, audit YML-4).
     "bouton_haut.yaml": "home.md",
     "btn_rangee": "plants.md",

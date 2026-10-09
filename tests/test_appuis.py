@@ -8,12 +8,16 @@ variable ou une action : un firmware plus ancien ignore une clé inconnue (comme
 et climr, ADR-0026). Côté tablette, une seule routine d'ouverture, le script
 tab5_ecran_ouvrir, partagée avec le select « Aller à l'écran » (règle 5).
 
+Depuis le 09/10/2026 (lot A, ADR-0039), les taps et l'horloge aussi se choisissent (clé
+gestes, tests/test_gestes.py) ; la clé appuis reste poussée et lue (firmware 3.7, vieux
+blueprint).
+
 On vérifie :
-- les mêmes codes des deux côtés (firmware, sélecteurs du blueprint, liste du modèle) ;
+- les mêmes codes d'écran des deux côtés (firmware, sélecteurs du blueprint) ;
 - l'enum Ecran (tab5_zones.h, inclus par tab5_custom.h) = les options du select, dans l'ordre, puis l'Arcade ;
-- les trois boutons : leur appui long passe par bouton_haut_ecran() et la routine
-  unique, leur mini icône existe (même géométrie) et est branchée ; le select aussi passe
-  par la routine, la console n'a qu'une ouverture ;
+- les trois boutons : leurs gestes passent par le script tab5_geste (geste_bouton()) et
+  la routine unique, leur mini icône existe (même géométrie) et est branchée ; le select
+  aussi passe par la routine, la console n'a qu'une ouverture ;
 - la mini icône d'un écran choisi = le glyphe de l'en-tête de son popup ;
 - au rendu des VRAIS modèles Jinja du blueprint : défauts, choix, valeurs inconnues, et
   quand la clé part."""
@@ -49,9 +53,11 @@ CODES = {
     "rien": "AUCUN", "assistant": "ASSISTANT", "calendrier": "CALENDRIER", "reveil": "REVEIL",
     "clim": "CLIM", "plantes": "PLANTES", "tv": "TV", "console": "CONSOLE", "energie": "ENERGIE",
     "reglages": "REGLAGES", "alertes": "ALERTES", "arcade": "ARCADE",
-    # Ajouté à la fin (07/10/2026) : la NVS garde l'index du code dans kCodesEcran.
+    # Ajouté à la fin (07/10/2026) : la NVS garde l'index du code dans kCodesGestes.
     "maison": "MAISON",
 }
+# Après les écrans, les actions de l'accueil (09/10/2026, lot A ; tests/test_gestes.py).
+ACTIONS = ["mode_domo", "appareil_suivant", "rangee_suivante", "ecoute"]
 # Bouton (ordre de BoutonHaut) → (widget, mini icône).
 BOUTONS = (("BOUTON_MAISON", "btn_control_ha", "icon_mini_ha"),
            ("BOUTON_ENGRENAGE", "btn_control_console", "icon_mini_sys"),
@@ -84,8 +90,9 @@ def _enum(nom):
 
 
 def _codes_firmware():
-    table = re.search(r"kCodesEcran\[\] = \{(.*?)\};", _lire(ZONES_CPP), re.S).group(1)
-    return dict(re.findall(r'\{"(\w+)", Ecran::(\w+)\}', table))
+    """kCodesGestes : code → écran, dans l'ordre (les actions ont Ecran::AUCUN)."""
+    table = re.search(r"kCodesGestes\[\] = \{(.*?)\n\};", _lire(ZONES_CPP), re.S).group(1)
+    return dict(re.findall(r'\{"(\w+)", Ecran::(\w+), GesteAction::\w+\}', table))
 
 
 def _bloc_bouton(ident):
@@ -110,21 +117,24 @@ def test_cle_appuis_des_deux_cotes():
 
 
 def test_memes_codes_firmware_et_blueprint():
-    assert _codes_firmware() == CODES
+    codes = _codes_firmware()
     # Même ORDRE : la NVS garde l'index du code, un code de plus va à la fin.
-    assert list(_codes_firmware()) == list(CODES)
+    assert list(codes)[:len(CODES)] == list(CODES)
+    assert {c: codes[c] for c in CODES} == CODES
+    assert list(codes)[len(CODES):] == ACTIONS
     bp = yaml.load(_lire(BLUEPRINT).replace("!input", "!!str"), Loader=yaml.SafeLoader)
     section = bp["blueprint"]["input"]["boutons_haut"]
     assert section.get("collapsed") is True
     entrees = section["input"]
-    assert list(entrees) == ["appui_maison", "appui_engrenage", "appui_manette"]
-    for nom, e in entrees.items():
+    # Les trois entrées d'avant le lot A restent (automatisations déjà enregistrées).
+    for nom in ("appui_maison", "appui_engrenage", "appui_manette"):
+        e = entrees[nom]
         assert e["default"] == "auto", nom
         valeurs = [o["value"] for o in e["selector"]["select"]["options"]]
-        assert valeurs == ["auto"] + list(CODES), nom
+        assert valeurs == ["auto"] + list(CODES) + ACTIONS, nom
         assert all(" · " in o["label"] or o["value"] == "arcade" for o in e["selector"]["select"]["options"]), nom
-    modele = bp["variables"]["appuis"]
-    assert re.findall(r"'(\w+)'", modele.split("%}", 1)[0]) == ["auto"] + list(CODES)
+    assert bp["variables"]["codes_gestes"] == ["auto"] + list(CODES) + ACTIONS
+    assert "codes_gestes" in bp["variables"]["appuis"]
 
 
 def test_ecran_suit_les_options_du_select():
@@ -154,9 +164,10 @@ def test_trois_boutons_par_la_routine_unique():
     geometrie = None
     for bouton, ident, mini in BOUTONS:
         bloc = _bloc_bouton(ident)
+        court = bloc.split("on_short_click:", 1)[1].split("on_long_press:", 1)[0]
         appui = bloc.split("on_long_press:", 1)[1].split("widgets:", 1)[0]
-        assert f"bouton_haut_ecran({bouton})" in appui, ident
-        assert "id(tab5_ecran_ouvrir).execute(e)" in appui, ident
+        assert f"id(tab5_geste).execute(geste_bouton({bouton}, false))" in court, ident
+        assert f"id(tab5_geste).execute(geste_bouton({bouton}, true))" in appui, ident
         label = re.search(rf"- label: \{{ id: {mini},[^}}]*\}}", bloc).group(0)
         for attendu in ("hidden: true", "text_font: mdi_font_26", "styles: style_text_dim"):
             assert attendu in label, (mini, attendu)
@@ -198,9 +209,10 @@ def test_select_par_la_routine_unique():
 
 
 def test_mini_glyphes_des_en_tetes():
-    corps = _fonction(_lire(ZONES_CPP), "const char* mini_glyphe(")
+    corps = _fonction(_lire(ZONES_CPP), "const char* code_glyphe(")
     glyphes = dict(re.findall(r'case Ecran::(\w+): return "\\U(000F[0-9A-F]{4})"', corps))
     assert set(glyphes) == set(CODES.values()) - {"AUCUN"}
+    corps += _fonction(_lire(ZONES_CPP), "const char* mini_glyphe(")
     for ecran, fichier in EN_TETES.items():
         en_tete = re.search(r'modal_header\.yaml, vars: \{ icon: "\\U(000F[0-9A-F]{4})"',
                             _lire(os.path.join(TAB5, "ui_components", fichier))).group(1)

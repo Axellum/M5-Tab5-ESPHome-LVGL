@@ -60,7 +60,7 @@ REPERES = {
     2: (ecrans.MICRO, (-26, -60)),
     3: (ecrans.DISCU, (-34, -62)),
     4: (centre_du_widget("btn_ok_nabu"), (-194, -38)),
-    5: (ecrans.HORLOGE, (-190, -76)),
+    5: (ecrans.HEURES, (-90, -61)),  # même pastille qu'avant les trois zones (450, 29)
     6: (ecrans.BOUTON_HA, (-55, -40)),
     7: (ecrans.BOUTON_SYS, (-59, -40)),
     8: (ecrans.BOUTON_TV, (-63, -40)),

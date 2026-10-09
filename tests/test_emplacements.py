@@ -66,7 +66,8 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
                 continue
             # Appuis longs des boutons du haut (07/10/2026) : non remplis, ceux d'avant le
             # choix (tests/test_appuis.py).
-            if nom.startswith("appui_"):
+            # Gestes de l'horloge et des taps (09/10/2026, tests/test_gestes.py) : pareil.
+            if nom.startswith(("appui_", "geste_")):
                 assert entree["default"] == "auto", f"{nom} : non rempli doit valoir \"auto\""
                 continue
             if "text" in entree["selector"]:  # nom d'une pièce (ADR-0023)
