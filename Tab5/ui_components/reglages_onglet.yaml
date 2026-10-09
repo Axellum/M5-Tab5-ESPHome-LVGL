@@ -25,12 +25,7 @@ button:
   on_short_click:
     - lambda: 'if (!ui_appui_glisse()) ${ afficher | default("reglages_afficher_page") }(${page});'
   widgets:
-    # 5 px d'air de chaque côté du nom (190 sur 200 avant le 09/10/2026).
-    - label:
-        text: "${label_text}"
-        align: CENTER
-        width: 100%
-        pad_left: 5
-        pad_right: 5
-        text_align: CENTER
-        long_mode: DOT
+    # 5 px d'air de chaque côté du nom : largeur fixe, w - 10 (190 sur 200 dans les
+    # Réglages). Pas de `width: 100%` : la bordure de 3 px du nom actif réduit la zone de
+    # contenu, et le texte des Réglages bougeait d'un pixel (rendu du 09/10/2026).
+    - label: { text: "${label_text}", align: CENTER, width: "${ (w | default(200)) - 10 }", text_align: CENTER, long_mode: DOT }
