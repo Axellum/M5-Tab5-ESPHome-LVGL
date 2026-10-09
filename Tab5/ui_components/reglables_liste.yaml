@@ -1,8 +1,10 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file reglables_liste.yaml
-# @role Liste de la tuile − / + (ADR-0033, demande d'Axel du 06/10/2026) : toucher l'icône
-#       ou la température du salon (btn_reglables_liste, climate_card.yaml) la déroule ;
+# @role Liste de la tuile − / + (ADR-0033, demande d'Axel du 06/10/2026) : un appui long sur
+#       la valeur entre − et + (btn_clim_target_click, climate_card.yaml) la déroule — et
+#       toucher la température du salon quand la tablette ne connaît aucune clim (sinon ce
+#       toucher ouvre le carrousel des clims, ADR-0038, depuis le 09/10/2026) ;
 #       une ligne par appareil réglable : la clim du blueprint (si elle existe), les
 #       appareils de la section « Tuile − / + » du blueprint, le volume de la tablette
 #       toujours en dernier. Toucher une ligne choisit l'appareil (mémorisé, NVS) et
