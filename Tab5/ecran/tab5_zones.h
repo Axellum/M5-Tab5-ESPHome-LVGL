@@ -154,6 +154,7 @@ enum class Ecran : uint8_t {
     VOLET,
     TEMPERATURE,
     METEO,       // popup Météo (ADR-0043) : option du select et code de geste « meteo »
+    MUSIQUE,     // lecteur de musique (ADR-0050) : option du select et code de geste « musique »
     ARCADE,
     NB
 };

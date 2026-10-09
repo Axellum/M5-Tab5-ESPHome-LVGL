@@ -14,6 +14,11 @@ substitutions:
   # Carte modale — 15 px des bords de l'écran 1280×720
   modal_card_w: "1250"
   modal_card_h: "690"
+  # Carte du popup Musique (ADR-0050) : centrée et plus petite, le tableau de bord voilé
+  # reste visible autour. Le C++ la reprend (kLecteurCarteL/H, Tab5/socle/tab5_geometrie.h) :
+  # tests/test_geometrie_partagee.py tient les deux égales.
+  lecteur_card_w: "940"
+  lecteur_card_h: "536"
   # Barre de titre compacte : 4 (haut) + 44 (ligne) + 4
   modal_hdr_h: "52"
   # Premier y libre sous la barre de titre : ${modal_hdr_h} + 20 px d'air

@@ -160,6 +160,9 @@ lvgl:
         # Pastilles du panneau Ok Nabu (une par ligne, masquées sous deux lignes), centrées
         # sous lui à la hauteur de celles de la rangée.
         - !include { file: ../ui_components/rangee_pastilles.yaml, vars: { nom: nabu, align: TOP_LEFT, x: "20", largeur: "405" } }
+        # Mini-barre « en lecture » du lecteur de musique (ADR-0050) : par-dessus le cadre
+        # Ok Nabu quand le lecteur montré joue ; un tap ouvre le popup Musique.
+        - !include ../ui_components/lecteur_mini.yaml
 
         # --- Centre: Horloge ---
         # Marges égales (05/10/2026, demande d'Axel) : autant d'air entre le haut de la
@@ -590,6 +593,8 @@ lvgl:
         - !include ../ui_components/maison_popup.yaml
         # Popup Météo (ADR-0043).
         - !include ../ui_components/meteo_popup.yaml
+        # Popup Musique (ADR-0050) : après Maison, il passe devant elle (tuile med touchée).
+        - !include ../ui_components/lecteur_popup.yaml
         - !include ../ui_components/calendar_popup.yaml
         - !include ../ui_components/assistant_popup.yaml
         - !include ../ui_components/alarm_popup.yaml

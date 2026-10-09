@@ -666,6 +666,28 @@ THEME_CADRE_GELULE = "Capsule"
 THEME_PAR_DEFAUT = "Relief doux"
 
 
+# Popup Musique (ADR-0050, lecteur_popup.yaml) : trois lecteurs choisis, le premier en
+# pause (une position qui n'avance pas : la capture ne dépend pas de l'instant), toutes
+# les commandes offertes, aléatoire actif, répétition de tout. Pas de pochette : le rendu
+# ne télécharge rien (ImageMuette), la note de musique s'affiche. Format de
+# packages/tab5_lecteur.yaml (script tab5_lecteur_pousser).
+LECTEUR_LISTE = "Salon|speaker;Apple TV|tv;Freebox|receiver"
+LECTEUR_EN_PAUSE = Service("tab5_maj_lecteur", (
+    ("lecteurs", LECTEUR_LISTE),
+    ("etat", "0|Salon|speaker|paused|Le vent du large|Les Marées|Carnets de voyage|Spotify|83|254|45|0|1|all|lsvmpnaro|"),
+))
+# Un lecteur éteint, hors de la liste (une tuile med) : « Lecteur éteint » et « Allumer ».
+LECTEUR_ETEINT = Service("tab5_maj_lecteur", (
+    ("lecteurs", LECTEUR_LISTE),
+    ("etat", "-1|TV Samsung|tv|off" + "|" * 11 + "o|"),
+))
+# Après chaque capture : plus aucun lecteur, la barre « en lecture » s'en va et le cadre
+# Ok Nabu revient pour les captures suivantes.
+LECTEUR_AUCUN = Service("tab5_maj_lecteur", (("lecteurs", ""), ("etat", "")))
+# Le voile autour de la carte (940 × 536 centrée) ferme le popup.
+LECTEUR_VOILE = Toucher(60, 360)
+
+
 # Popup Météo (ADR-0043, meteo_popup.yaml) : une journée qui change (soleil le matin,
 # orage l'après-midi, éclaircies le soir), de 07:00 (l'heure figée, 07:45 : la colonne
 # de l'heure en cours) à 21:00, dix jours contrastés, une pluie dans l'heure qui monte
@@ -1036,6 +1058,12 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("meteo-aujourdhui", METEO_DONNEES + (Aller("Météo"),), METEO_SCENE_3),
     Ecran("meteo-jours", METEO_DONNEES + (Aller("Météo"), METEO_GLISSER), METEO_SCENE_3),
     Ecran("meteo-details", METEO_DONNEES + (Aller("Météo"), Toucher(*METEO_PAGES["details"])), METEO_SCENE_3),
+    # Popup Musique (ADR-0050) : vide (« En attente de Home Assistant »), en pause avec ses
+    # trois lecteurs, éteint ; la barre « en lecture » de l'accueil, sur le cadre Ok Nabu.
+    Ecran("musique-vide", (Aller("Musique"),), (LECTEUR_VOILE,)),
+    Ecran("musique", (LECTEUR_EN_PAUSE, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
+    Ecran("musique-eteint", (LECTEUR_ETEINT, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
+    Ecran("accueil-musique", (LECTEUR_EN_PAUSE,), (LECTEUR_AUCUN,)),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
     # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.

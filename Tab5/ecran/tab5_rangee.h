@@ -49,6 +49,10 @@ void rangee_toucher();
 // Panneau Ok Nabu (geste « nabu_suivant », tap court des heures en « auto ») : la ligne
 // suivante, le compte des tours repart.
 void nabu_suivant();
+// Mini-barre du lecteur de musique (ADR-0050, tab5_lecteur.cpp) : montrée, elle couvre le
+// cadre « Ok Nabu » ; le panneau et ses pastilles se masquent, et reviennent tels quels
+// quand elle se masque (le défilement continue dessous).
+void nabu_masquer(bool masquee);
 // La ligne d'écoute du panneau Ok Nabu est-elle à l'écran ? Seul son tap bascule le mot
 // de réveil ; sur une ligne de capteurs, le tap ne fait rien (affichage seul, comme la
 // rangée ; ADR-0041).

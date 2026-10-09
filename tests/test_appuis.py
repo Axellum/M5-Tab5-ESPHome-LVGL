@@ -51,6 +51,8 @@ OPTIONS = {
     "LUMIERES": "Lumières", "VOLET": "Volet", "TEMPERATURE": "Température",
     # Popup Météo (ADR-0043, 09/10/2026) : après eux.
     "METEO": "Météo",
+    # Lecteur de musique (ADR-0050, 10/10/2026) : à la fin aussi.
+    "MUSIQUE": "Musique",
 }
 # Code du blueprint → valeur d'Ecran.
 CODES = {
@@ -65,8 +67,9 @@ ACTIONS = ["mode_domo", "appareil_suivant", "rangee_suivante", "ecoute", "nabu_s
 # Puis la roue de navigation (09/10/2026, ADR-0042) : ses trois écrans et la roue elle-même
 # (une action : Ecran::AUCUN), à la fin (NVS).
 ROUE_CODES = {"lumieres": "LUMIERES", "volet": "VOLET", "temperature": "TEMPERATURE", "roue": "AUCUN"}
-# Puis le popup Météo (09/10/2026, ADR-0043), à la fin aussi.
-ECRANS_APRES = {"meteo": "METEO"}
+# Puis le popup Météo (09/10/2026, ADR-0043) et le lecteur de musique (10/10/2026,
+# ADR-0050), à la fin aussi.
+ECRANS_APRES = {"meteo": "METEO", "musique": "MUSIQUE"}
 # Tous les codes, dans l'ordre de kCodesGestes, avec « auto » en tête : le blueprint.
 TOUS = ["auto"] + list(CODES) + ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES)
 # Bouton (ordre de BoutonHaut) → (widget, mini icône).
@@ -80,7 +83,7 @@ EN_TETES = {
     "ENERGIE": "energie_popup.yaml", "REGLAGES": "reglages_popup.yaml", "ALERTES": "alertes_popup.yaml",
     "MAISON": "maison_popup.yaml",
     "LUMIERES": "light_popup.yaml", "VOLET": "volet_popup.yaml", "TEMPERATURE": "historique_popup.yaml",
-    "METEO": "meteo_popup.yaml",
+    "METEO": "meteo_popup.yaml", "MUSIQUE": "lecteur_popup.yaml",
 }
 
 

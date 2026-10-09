@@ -1,0 +1,28 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file lecteur_commande.yaml
+# @role Bouton rond d'une commande du lecteur de musique (ADR-0050) : aléatoire,
+#       précédent, suivant, répétition (lecteur_popup.yaml, 4 fois ; la lecture / pause,
+#       plus grande et en accent, est écrite à part). Règle 5 : un gabarit, pas quatre copies.
+# @architecture_constraint L'appui passe par lecteur_appui(n) (tab5_lecteur.cpp), n =
+#       LecteurBouton (tab5_lecteur.h). Glyphe et couleur de l'icône posés par le C++
+#       (glyphe_aleatoire, glyphe_repetition : MDI_CODE_TARGETS, police fixe mdi_font_45 ici,
+#       règle 7). Masqué quand le lecteur n'offre pas la commande (supported_features).
+# vars : n (LecteurBouton), x (gauche, dans lecteur_lecture), y, taille (diamètre),
+#        icone (glyphe de départ, dans mdi_font_45).
+# ═══════════════════════════════════════════════════════
+button:
+  id: lecteur_btn_${n}
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: ${taille}
+  height: ${taille}
+  radius: 999
+  pad_all: 0
+  hidden: true
+  styles: style_clim_btn
+  on_short_click:
+    - lambda: 'lecteur_appui(${n});'
+  widgets:
+    - label: { id: "lecteur_ico_${n}", text: "${icone}", align: CENTER, text_font: mdi_font_45, styles: style_text_soft }

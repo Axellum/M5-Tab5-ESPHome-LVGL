@@ -84,6 +84,9 @@ api:
           # Zones optionnelles (lot 5) : redemander à HA quelles zones sont absentes. La
           # demande part avec la première poussée des prévisions (tab5_zones_demande).
           - lambda: 'zones_nouvelle_connexion();'
+          # Lecteur de musique (ADR-0050) : l'adresse de HA, base des pochettes que HA
+          # envoie en chemin relatif (/api/media_player_proxy/…).
+          - lambda: 'lecteur_hote_ha(client_address);'
 
   services:
 
@@ -560,7 +563,7 @@ api:
       variables:
         payload:
           type: string
-          description: "« clé|état|valeur » séparés par ; — clés lumiere_1 à lumiere_3, pc, tv, telephone, salon, salon_hum, serre, pot_1 à pot_5 et pot_N_ec, _lux, _temp, _bat. État = état Home Assistant tel quel ; valeur = nombre affiché (luminosité 0-255, %, °C, µS/cm, lx), nan s'il n'y en a pas. Tuiles de pièce (ADR-0023, depuis 3.2.0) : « tRT|état|valeur|couleur », R pièce et T tuile de 0 à 4, valeur = luminosité 0-255, position 0-100, mesure ou température de la pièce (nan sinon), couleur = RRGGBB d'une lumière allumée, vide sinon. Réglages de la clim (ADR-0026, avant tab5_maj_clim) : « climr|min|max|pas|unité|capacités|nom », nombres à point décimal, unité °C ou °F, capacités = lettres des boutons gérés parmi c, h, d, f (froid, chaud, sec, ventilation), e (Éco), b (Boost), q (Silence), s (Oscillation), w (Brise). Clim d'une tuile cli sans l'option m (ADR-0027) : réglages « crRT|min|max|pas|unité|capacités|nom » (comme climr) et état « ceRT|consigne|pièce|mode|préréglage|ventilation|oscillation » (champs de tab5_maj_clim, nan si inconnu). Production solaire du bandeau d'état : « solaire|pourcentage », 0 à 100 de la puissance crête, nan = aucune valeur (icône masquée). Éléments de la rangée sous l'horloge (ADR-0031) et du panneau Ok Nabu (ADR-0041) : « hLI|état|valeur|couleur » et « nLI|état|valeur|couleur », mêmes champs que tRT. Appareils de la tuile − / + (ADR-0033) : « rN|état|valeur », N de 0 à 7, valeur dans l'unité de sa définition (nan sinon). Climat de la pièce R (ADR-0040) : « pR|température|humidité|clim », champ vide = rien de déclaré, nan = inconnue, clim 1 ou 0 ; réglages et état de sa clim « crpR|… » et « cepR|… » (champs de crRT et ceRT). Gestes de l'accueil (lot A) : « gestes|c1|…|c12 », un code par geste dans l'ordre heures tap, heures long, minutes tap, minutes long, date tap, date long, maison tap, maison long, engrenage tap, engrenage long, manette tap, manette long ; et l'ancienne clé « appuis|maison|engrenage|manette » (appuis longs seuls, laissée de côté quand gestes est dans le même payload). Codes : auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie, reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante, ecoute, nabu_suivant, lumieres, volet, temperature, roue (roue de navigation, ADR-0042 ; un code inconnu vaut auto). Défilement (ADR-0041) : « defil|rangée|nabu|clim|secondes », chaque zone auto ou fixe (autre chose : son défaut, auto, fixe, fixe), secondes = durée d'un appareil de la tuile − / + en auto ; des gestes sans defil remettent les défauts."
+          description: "« clé|état|valeur » séparés par ; — clés lumiere_1 à lumiere_3, pc, tv, telephone, salon, salon_hum, serre, pot_1 à pot_5 et pot_N_ec, _lux, _temp, _bat. État = état Home Assistant tel quel ; valeur = nombre affiché (luminosité 0-255, %, °C, µS/cm, lx), nan s'il n'y en a pas. Tuiles de pièce (ADR-0023, depuis 3.2.0) : « tRT|état|valeur|couleur », R pièce et T tuile de 0 à 4, valeur = luminosité 0-255, position 0-100, mesure ou température de la pièce (nan sinon), couleur = RRGGBB d'une lumière allumée, vide sinon. Réglages de la clim (ADR-0026, avant tab5_maj_clim) : « climr|min|max|pas|unité|capacités|nom », nombres à point décimal, unité °C ou °F, capacités = lettres des boutons gérés parmi c, h, d, f (froid, chaud, sec, ventilation), e (Éco), b (Boost), q (Silence), s (Oscillation), w (Brise). Clim d'une tuile cli sans l'option m (ADR-0027) : réglages « crRT|min|max|pas|unité|capacités|nom » (comme climr) et état « ceRT|consigne|pièce|mode|préréglage|ventilation|oscillation » (champs de tab5_maj_clim, nan si inconnu). Production solaire du bandeau d'état : « solaire|pourcentage », 0 à 100 de la puissance crête, nan = aucune valeur (icône masquée). Éléments de la rangée sous l'horloge (ADR-0031) et du panneau Ok Nabu (ADR-0041) : « hLI|état|valeur|couleur » et « nLI|état|valeur|couleur », mêmes champs que tRT. Appareils de la tuile − / + (ADR-0033) : « rN|état|valeur », N de 0 à 7, valeur dans l'unité de sa définition (nan sinon). Climat de la pièce R (ADR-0040) : « pR|température|humidité|clim », champ vide = rien de déclaré, nan = inconnue, clim 1 ou 0 ; réglages et état de sa clim « crpR|… » et « cepR|… » (champs de crRT et ceRT). Gestes de l'accueil (lot A) : « gestes|c1|…|c12 », un code par geste dans l'ordre heures tap, heures long, minutes tap, minutes long, date tap, date long, maison tap, maison long, engrenage tap, engrenage long, manette tap, manette long ; et l'ancienne clé « appuis|maison|engrenage|manette » (appuis longs seuls, laissée de côté quand gestes est dans le même payload). Codes : auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie, reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante, ecoute, nabu_suivant, lumieres, volet, temperature, roue (roue de navigation, ADR-0042), meteo (popup Météo, ADR-0043), musique (lecteur de musique, ADR-0050) ; un code inconnu vaut auto. Défilement (ADR-0041) : « defil|rangée|nabu|clim|secondes », chaque zone auto ou fixe (autre chose : son défaut, auto, fixe, fixe), secondes = durée d'un appareil de la tuile − / + en auto ; des gestes sans defil remettent les défauts."
           example: "lumiere_1|on|180;salon|21.4|21.4;t02|on|128|FFB347;t01|open|45|;"
       then:
         - lambda: |-
@@ -681,6 +684,26 @@ api:
           example: "1791381720|1791382200|0|Rouge|@maj:Home Assistant Core;1791370000|0|1791375400|Orange|Porte du garage"
       then:
         - lambda: 'alertes_historique_recu(payload);'
+
+    # Lecteur de musique (ADR-0050, 10/10/2026) : poussé par script.tab5_lecteur_pousser
+    # (HomeAssistant_Config/packages/tab5_lecteur.yaml) quand le lecteur montré change
+    # (morceau, état, volume…), quand la liste « Tab5 · lecteurs de musique » change et à
+    # l'événement esphome.tab5_lecteur « ouvrir ». Lu par lecteurs_lire() et
+    # lecteur_etat_lire() (Tab5/socle/tab5_parse.h, section 9).
+    - service: tab5_maj_lecteur
+      description: "Lecteur de musique : la liste des lecteurs choisis et l'état du lecteur montré."
+      variables:
+        lecteurs:
+          type: string
+          description: "Lecteurs choisis dans « Tab5 · lecteurs de musique », dans l'ordre, séparés par ; — « nom|genre », genre tv, speaker, receiver ou vide (device_class de HA). 6 au plus ; vide : aucun lecteur choisi."
+          example: "Salon|tv;Cuisine|speaker"
+        etat:
+          type: string
+          description: "actif|nom|genre|état|titre|artiste|album|application|position|durée|volume|muet|aléatoire|répétition|fonctions|image — actif = index dans lecteurs (-1 : aucun), état HA tel quel (playing, paused, idle, off, on, standby, buffering, unavailable), position et durée en secondes (nan sans), position déjà avancée jusqu'à l'envoi, volume 0 à 100 (nan sans), muet et aléatoire 1, 0 ou vide, répétition off, all, one ou vide, fonctions = lettres de ce que le lecteur sait faire (l lecture et pause, s position, v volume, m muet, p précédent, n suivant, a aléatoire, r répétition, o allumer), image = entity_picture (chemin relatif à HA, complété par http://adresse-de-HA:8123, ou URL http/https complète ; vide sans pochette). Les « | » et « ; » des textes sont remplacés par « / » et « , »."
+          example: "1|Cuisine|speaker|playing|Bohemian Rhapsody|Queen|A Night at the Opera|Spotify|83|354|42|0|1|all|lspnvmar|/api/media_player_proxy/media_player.cuisine?token=x&cache=1"
+      then:
+        - script.execute: tab5_lecteur_lier
+        - lambda: 'lecteur_recu(lecteurs, etat);'
 
 # Fenêtre d'appairage (lot 6b, ADR-0020) : une tablette qui n'a pas encore de clé API
 # (neuve, ou jamais ajoutée à HA) n'accepte le premier contact de HA que pendant les

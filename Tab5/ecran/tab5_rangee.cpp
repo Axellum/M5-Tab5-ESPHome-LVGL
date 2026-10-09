@@ -99,6 +99,7 @@ struct Defileur {
     int32_t marge;             // écart minimal entre deux éléments et aux bords
     Taille seules;             // taille d'une ligne sans valeur
     bool pret = false;        // widgets posés, premier dessin fait
+    bool masquee = false;     // couverte par la mini-barre du lecteur (nabu_masquer, ADR-0050)
     int8_t ordre[kPlaces] = {};  // lignes affichées tour à tour : kSpeciale ou 0 à 2
     int n = 0;
     int courante = 0;          // index dans ordre
@@ -214,7 +215,7 @@ int panneau_affiche(const Defileur& d) {
 // recette) : une par ligne, la courante large et opaque ; aucune sous deux lignes.
 void pastilles(const Defileur& d) {
     const RangeeUI& u = d.u;
-    ui_hidden(u.pastilles_cadre, d.n < 2);
+    ui_hidden(u.pastilles_cadre, d.n < 2 || d.masquee);
     for (int i = 0; i < kPlaces; i++) ui_hidden(u.pastilles[i], i >= d.n);
     pagination_afficher(u.pastilles, kPlaces, d.courante);
 }
@@ -288,8 +289,8 @@ void appliquer(Defileur& d) {
     const bool meme = d.vu != nullptr && n == d.n && std::memcmp(ordre, d.ordre, sizeof(ordre)) == 0;
     std::memcpy(d.ordre, ordre, sizeof(ordre));
     d.n = n;
-    ui_hidden(u.zone, n == 0);
-    ui_hidden(u.toucher, n == 0);
+    ui_hidden(u.zone, n == 0 || d.masquee);
+    ui_hidden(u.toucher, n == 0 || d.masquee);
     if (n == 0) {
         d.vu = nullptr;
         d.courante = 0;
@@ -405,6 +406,15 @@ void rangee_toucher() {
 
 void nabu_suivant() {
     if (s_zones[RANGEE_NABU].pret) suivante(s_zones[RANGEE_NABU]);
+}
+
+void nabu_masquer(bool masquee) {
+    Defileur& d = s_zones[RANGEE_NABU];
+    if (d.masquee == masquee) return;
+    d.masquee = masquee;
+    // Avant le premier dessin, le panneau est celui du YAML (la ligne d'écoute) : il revient.
+    ui_hidden(d.u.zone, masquee || (d.pret && d.n == 0));
+    pastilles(d);
 }
 
 bool nabu_ecoute_affichee() {
