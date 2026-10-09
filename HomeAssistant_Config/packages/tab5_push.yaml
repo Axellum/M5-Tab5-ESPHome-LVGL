@@ -393,16 +393,17 @@ automation:
             target:
               entity_id: "{{ meteo }}"
             response_variable: hourly_var_tab5
-      # 2 chunks de 5 créneaux (0-4, 5-9) — l'ancienne triple copie du même bloc ne
-      # différait que par les bornes range() (#3). base = (repeat.index-1)*5.
-      # 2 et non plus 3 (25/09/2026) : l'écran n'a que deux pages horaires (créneaux
-      # 0-9) ; le bloc 10-14 était analysé à chaque cycle mais jamais affiché.
+      # 3 chunks de 5 créneaux (0-4, 5-9, 10-14) — l'ancienne triple copie du même bloc
+      # ne différait que par les bornes range() (#3). base = (repeat.index-1)*5.
+      # Les tuiles n'affichent que 0-9 (deux pages horaires) ; le bloc 10-14, retiré le
+      # 25/09/2026 faute d'écran, revient le 09/10/2026 : le popup Météo (ADR-0043)
+      # montre les 15 heures. Un firmware plus ancien l'accepte sans l'afficher.
       - if:
           - condition: template
             value_template: "{{ not meteo_en_panne }}"
         then:
           - repeat:
-              count: 2
+              count: 3
               sequence:
                 - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
                   continue_on_error: true

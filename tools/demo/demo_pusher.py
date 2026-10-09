@@ -369,9 +369,9 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
     await appeler("tab5_maj_pluie_1h_bulk", payload=build_pluie_1h_bulk_payload(scene.pluie_1h))
     await attendre(DELAI_ENTRE_BLOCS)
 
-    # Deux blocs comme la prod depuis le 25/09/2026 : l'écran n'affiche que les
-    # créneaux 0-9 (deux pages horaires), le bloc 10-14 n'était jamais peint.
-    for debut in (0, 5):
+    # Trois blocs comme la prod (09/10/2026) : les tuiles affichent les créneaux 0-9
+    # (deux pages horaires), le popup Météo les 15 (ADR-0043).
+    for debut in (0, 5, 10):
         payload = build_heures_bulk_payload(scene.heures[debut:debut + 5])
         await appeler("tab5_maj_previsions_heures_bulk", payload=payload)
         await attendre(DELAI_BOUCLE_HEURES)
