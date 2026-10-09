@@ -485,6 +485,7 @@ void clim_popup_pas(int sens) {
 void clim_popup_mode(const char* mode) {
     champ_vue(ChampClim::MODE) = mode;
     clim_recolorer();
+    reglables_clim_changee();  // l'icône de la clim sur la tuile − / + prend la couleur du mode
 }
 
 // Bascules : actif sous tous ses noms (clim_*_actif) → retour à none / auto / stop ; sinon

@@ -14,7 +14,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 2 | Microphone | listen now; while it answers: stop it and listen again | voice assistant window |
 | 3 | Discu button (robot) | voice mode: conversation | — |
 | 4 | **Ok Nabu** | wake word on / off | — |
-| 5 | Clock and date | alarm clock | calendar |
+| 5 | Clock: hours, minutes, date | minutes: next device of − / +; date: next line under the clock | hours or minutes: alarm clock; date: calendar |
 | 6 | Home Assistant button | bottom row: weather ↔ your devices | Energy window, with a solar production |
 | 7 | Gear button | settings | system console |
 | 8 | Gamepad button | Arcade, the games | TV remote, with a TV |
@@ -25,7 +25,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 13 | A card of the bottom row (its large icon) | the command of its device | the window of its device |
 | 14 | A day's temperatures | that day's schedule, for 6 s | — |
 
-The long press of buttons 6 to 8 can open another screen, the [house](house.md) for instance, chosen in the blueprint ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
+The tap and the long press of 5 (hours, minutes, date) and of buttons 6 to 8 can do something else, open the [house](house.md) for instance, chosen in the blueprint ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
 **Swipe** left or right on the bottom row: the other forecast pages, or the next room in device mode.
 
@@ -46,8 +46,8 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Shutter | long press on a shutter | [Shutters](shutters.md) |
 | Climate | the climate target, or a climate card | [Climate](climate.md) |
 | TV remote | long press on the gamepad button, or on a TV | [TV remote](tv.md) |
-| Calendar | long press on the clock | [Calendar](calendar.md) |
-| Alarm clock | tap on the clock | [Alarm clock](alarm.md) |
+| Calendar | long press on the date | [Calendar](calendar.md) |
+| Alarm clock | long press on the time | [Alarm clock](alarm.md) |
 | Voice assistant | long press on the microphone | [Voice](voice.md) |
 | Energy | a solar or energy card, or a long press on the Home Assistant button | [Energy](energy.md) |
 | Temperature | long press on one of the two temperatures | [Temperature](temperature.md) |
@@ -78,7 +78,7 @@ Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt u
 | 2 | Micro | écoute tout de suite ; pendant une réponse : la coupe et réécoute | fenêtre de l'assistant vocal |
 | 3 | Bouton Discu (robot) | mode vocal : discussion | — |
 | 4 | **Ok Nabu** | mot de réveil activé / coupé | — |
-| 5 | Horloge et date | réveil | calendrier |
+| 5 | Horloge : heures, minutes, date | minutes : appareil suivant de − / + ; date : ligne suivante sous l'horloge | heures ou minutes : réveil ; date : calendrier |
 | 6 | Bouton Home Assistant | rangée du bas : météo ↔ vos appareils | fenêtre Énergie, avec une production solaire |
 | 7 | Bouton engrenage | réglages | console système |
 | 8 | Bouton manette | Arcade, les jeux | télécommande TV, avec une TV |
@@ -89,7 +89,7 @@ Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt u
 | 13 | Une carte de la rangée du bas (sa grande icône) | la commande de son appareil | la fenêtre de son appareil |
 | 14 | Les températures d'un jour | le planning de ce jour, 6 s | — |
 
-L'appui long des boutons 6 à 8 peut ouvrir un autre écran, la [maison](house.md#version-française) par exemple, choisi dans le blueprint ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
+Le tap et l'appui long de 5 (heures, minutes, date) et des boutons 6 à 8 peuvent faire autre chose, ouvrir la [maison](house.md#version-française) par exemple, choisi dans le blueprint ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
 **Glisser** vers la gauche ou la droite sur la rangée du bas : les autres pages de prévisions, ou la pièce suivante en mode appareils.
 
@@ -110,8 +110,8 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Volet | appui long sur un volet | [Volets](shutters.md#version-française) |
 | Clim | la consigne de la clim, ou une carte clim | [Clim](climate.md#version-française) |
 | Télécommande TV | appui long sur le bouton manette, ou sur une TV | [Télécommande TV](tv.md#version-française) |
-| Calendrier | appui long sur l'horloge | [Calendrier](calendar.md#version-française) |
-| Réveil | tap sur l'horloge | [Réveil](alarm.md#version-française) |
+| Calendrier | appui long sur la date | [Calendrier](calendar.md#version-française) |
+| Réveil | appui long sur l'heure | [Réveil](alarm.md#version-française) |
 | Assistant vocal | appui long sur le micro | [Voix](voice.md#version-française) |
 | Énergie | une carte solaire ou énergie, ou un appui long sur le bouton Home Assistant | [Énergie](energy.md#version-française) |
 | Température | appui long sur l'une des deux températures | [Température](temperature.md#version-française) |

@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a tap on the clock (a long press opens the [calendar](calendar.md)). The alarm rings even without Home Assistant: the time, the next days' work hours and the melody are on the tablet.
+**Opens with** a long press on the time, hours or minutes (a long press on the date opens the [calendar](calendar.md)); another gesture can be chosen in the blueprint ([home screen](home.md#clock-and-date-5)). The alarm rings even without Home Assistant: the time, the next days' work hours and the melody are on the tablet.
 
 ![The alarm clock window: switch, fixed time, days, mode, limits, next alarm, ringtone and options](../images/notice/reveil-en.webp)
 
@@ -46,7 +46,7 @@ The same settings are entities of the tablet in Home Assistant ([tablet settings
 
 ---
 
-**S'ouvre par** un tap sur l'horloge (un appui long ouvre le [calendrier](calendar.md#version-française)). Le réveil sonne même sans Home Assistant : l'heure, les heures de travail des jours qui viennent et la mélodie sont sur la tablette.
+**S'ouvre par** un appui long sur l'heure, heures ou minutes (un appui long sur la date ouvre le [calendrier](calendar.md#version-française)) ; un autre geste peut se choisir dans le blueprint ([écran d'accueil](home.md#horloge-et-date-5)). Le réveil sonne même sans Home Assistant : l'heure, les heures de travail des jours qui viennent et la mélodie sont sur la tablette.
 
 ![La fenêtre du réveil : interrupteur, heure fixe, jours, mode, limites, prochaine sonnerie, sonnerie et options](../images/notice/reveil-fr.webp)
 

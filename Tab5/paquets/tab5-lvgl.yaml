@@ -175,24 +175,25 @@ lvgl:
               - !include { file: ../ui_components/clock_roller.yaml, vars: { d: m1, x: 297 } }
               - label: { id: lbl_date, text: "", align: TOP_MID, y: 135, styles: [style_police_date, style_horloge_text_soft] }
 
-        # Zone tactile invisible par-dessus l'horloge/date. Deux gestes sur la
-        # même tuile, dans l'ordre qui va de soi quand on regarde une horloge :
-        #   - tap court  -> réglages du RÉVEIL (alarm_popup.yaml)
-        #   - appui long -> CALENDRIER mensuel (inchangé depuis juillet)
-        # Le tap court ne faisait rien jusqu'au 05/08/2026 : aucun geste existant
-        # n'est repris à un autre usage.
-        - button:
-            id: btn_clock_calendar_zone
-            align: TOP_MID
-            x: 0
-            y: 20
-            width: 401
-            height: 210
-            styles: style_invisible
-            on_short_click:
-              - script.execute: tab5_alarm_open
-            on_long_press:
-              - script.execute: tab5_calendar_open
+        # Trois zones tactiles invisibles sur l'horloge (09/10/2026, lot A, ADR-0039 ;
+        # avant, une seule, btn_clock_calendar_zone : tap = réveil, long = calendrier).
+        # Chacune a un tap court et un appui long, choisis dans le blueprint (section
+        # « Horloge et boutons du haut », clé gestes ; Geste dans tab5_zones.h) :
+        #   - HEURES  (haut gauche)  : « auto » rien / Réveil ;
+        #   - MINUTES (haut droite)  : « auto » appareil suivant de la tuile − / + / Réveil ;
+        #   - DATE    (bas)          : « auto » ligne suivante de la rangée / Calendrier.
+        # Elles couvrent toute la tuile (x 440..840, y 20..229), sans trou ni
+        # recouvrement :
+        #   - coupe verticale à x 640, le milieu de la tuile, qui tombe dans le « : »
+        #     (x 181..218 de la tuile, 621..658 de la page, selon la police du thème) ;
+        #     heures 440..639 (200 px), minutes 640..840 (201 px) ;
+        #   - coupe horizontale à y 158 = tuile + 1 (bordure) + police_theme.DATE_BASE
+        #     (177) − 40 : les cadres des chiffres finissent au-dessus, et l'encre de la
+        #     date (au plus 40 px au-dessus de sa ligne de base) commence en dessous, dans
+        #     les 21 thèmes (tests/test_polices_themes.py, tests/test_gestes.py).
+        - !include { file: ../ui_components/horloge_zone.yaml, vars: { id: btn_horloge_heures, x: "440", y: "20", largeur: "200", hauteur: "138", court: GESTE_HEURES_COURT, long_appui: GESTE_HEURES_LONG } }
+        - !include { file: ../ui_components/horloge_zone.yaml, vars: { id: btn_horloge_minutes, x: "640", y: "20", largeur: "201", hauteur: "138", court: GESTE_MINUTES_COURT, long_appui: GESTE_MINUTES_LONG } }
+        - !include { file: ../ui_components/horloge_zone.yaml, vars: { id: btn_horloge_date, x: "440", y: "158", largeur: "401", hauteur: "72", court: GESTE_DATE_COURT, long_appui: GESTE_DATE_LONG } }
 
         # --- Top Left: Status Icons (Small) ---
         # TV = icon_card_pc (épaule carte J0, moniteur) — pas d'icône TV ici
@@ -220,31 +221,33 @@ lvgl:
         # --- Top Right Buttons (même habillage verre que Domo/Discu) ---
         # Icône seule (05/10/2026). Chaque bouton a un tap et un appui long (06/10/2026,
         # demande d'Axel) ; une mini icône (mdi_font_26, le jeu du bandeau d'état en haut à
-        # gauche) en haut à droite de la tuile dit ce qu'ouvre l'appui long, quand il ouvre
+        # gauche) en haut à droite de la tuile dit ce que fait l'appui long, quand il fait
         # quelque chose. Les trois restent à leur place : sans TV, la manette ouvre toujours
-        # l'Arcade. Appuis longs au choix (07/10/2026, section « Boutons du haut » du
-        # blueprint) : bouton_haut_ecran() (tab5_zones.cpp) donne l'écran, tab5_ecran_ouvrir
-        # (tab5-navigation.yaml) l'ouvre. Un bouton = ui_components/bouton_haut.yaml
-        # (08/10/2026, audit YML-4 : géométrie, appui long et mini icône écrits une fois).
+        # l'Arcade. Les deux gestes au choix (appuis longs le 07/10/2026, taps le 09/10/2026 ;
+        # section « Horloge et boutons du haut » du blueprint) : geste_cible()
+        # (tab5_zones.cpp) dit ce que fait le geste, le script tab5_geste
+        # (tab5-navigation.yaml) le fait ; un tap changé change l'icône centrale. Un bouton =
+        # ui_components/bouton_haut.yaml (08/10/2026, audit YML-4 : géométrie, gestes et
+        # mini icône écrits une fois).
         #
-        # Maison : tap = mode HA (ADR-0023) : les cartes de la pièce de la page courante (ou
-        # de la plus proche qui a des appareils), fondu croisé avec la météo, titre de la
-        # pièce dans la carte centrale, bouton en couleur d'accent. Masqué sans aucun
-        # appareil. Tout est dans tuiles_mode_ha() (tab5_tuiles.cpp). Appui long « auto » :
+        # Maison : tap « auto » = mode HA (ADR-0023, action mode_domo) : les cartes de la
+        # pièce de la page courante (ou de la plus proche qui a des appareils), fondu croisé
+        # avec la météo, titre de la pièce dans la carte centrale, bouton en couleur
+        # d'accent. Masqué sans aucun appareil. Tout est dans tuiles_mode_ha()
+        # (tab5_tuiles.cpp) ; la mention « prévisions périmées » suit tout de suite (masquée
+        # en mode HA, previsions_fraicheur_tick(), tab5_forecast.cpp). Appui long « auto » :
         # popup Énergie (ADR-0028), quand HA pousse la production solaire.
-        # Après le tap, la mention « prévisions périmées » suit tout de suite (masquée
-        # en mode HA, previsions_fraicheur_tick(), tab5_forecast.cpp).
-        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_ha, x: "855", bouton: BOUTON_MAISON, appui: [ lambda: 'tuiles_mode_ha(!g_central_ctx.ha_mode);', lambda: 'previsions_fraicheur_tick(id(previsions_perimees), id(lbl_previsions_perimees));' ], icone_id: icon_ha, icone: "\U000F07D0", mini_id: icon_mini_ha, mini: "\U000F0D9B" } }
-        # Engrenage : tap = Réglages de la tablette sur leur page Écran (tab5-reglages.yaml ;
-        # `page: 0` = REGLAGES_PAGE_ECRAN), appui long = leur page Système (l'ancienne console
-        # système) en « auto » (avant le 06/10/2026, le flocon ouvrait la console d'un tap),
-        # sans mini icône en « auto ».
-        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_console, x: "995", bouton: BOUTON_ENGRENAGE, appui: [ script.execute: { id: tab5_reglages_ouvrir, page: 0 } ], icone_id: icon_engrenage, icone: "\U000F0493", mini_id: icon_mini_sys, mini: "\U000F018D" } }
-        # Manette : tap = Arcade (comme la seconde température), appui long « auto » =
-        # télécommande TV quand une TV est choisie dans le blueprint (zone TV) : la mini
+        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_ha, x: "855", bouton: BOUTON_MAISON, icone_id: icon_ha, icone: "\U000F07D0", mini_id: icon_mini_ha, mini: "\U000F0D9B" } }
+        # Engrenage : tap « auto » = Réglages de la tablette sur leur page Écran (code
+        # reglages : tab5_reglages_ouvrir(REGLAGES_PAGE_ECRAN) par le registre), appui long
+        # = leur page Système (l'ancienne console système) en « auto » (avant le 06/10/2026,
+        # le flocon ouvrait la console d'un tap), sans mini icône en « auto ».
+        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_console, x: "995", bouton: BOUTON_ENGRENAGE, icone_id: icon_engrenage, icone: "\U000F0493", mini_id: icon_mini_sys, mini: "\U000F018D" } }
+        # Manette : tap « auto » = Arcade (comme la seconde température), appui long « auto »
+        # = télécommande TV quand une TV est choisie dans le blueprint (zone TV) : la mini
         # icône de l'écran le signale (glyphe de l'en-tête de tv_remote_popup.yaml). Avant le
         # 06/10/2026, ce bouton était la télécommande et disparaissait sans TV.
-        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_tv, x: "1135", bouton: BOUTON_MANETTE, appui: [ script.execute: tab5_arcade_open ], icone_id: icon_manette, icone: "\U000F0297", mini_id: icon_mini_tv, mini: "\U000F07C0" } }
+        - !include { file: ../ui_components/bouton_haut.yaml, vars: { id: btn_control_tv, x: "1135", bouton: BOUTON_MANETTE, icone_id: icon_manette, icone: "\U000F0297", mini_id: icon_mini_tv, mini: "\U000F07C0" } }
 
         # ==================== RANGÉE SOUS L'HORLOGE (ADR-0031) ====================
         # Les plantes et jusqu'à trois lignes de capteurs décrites par HA, qui se

@@ -26,10 +26,13 @@
 #                          ADR-0038) déroule la liste
 #                          (reglables_liste.yaml) : la clim du blueprint, les appareils de la
 #                          section « Tuile − / + » du blueprint, le volume de la tablette. Le
-#                          choix reste (NVS). Clim choisie : tout ce qui suit est inchangé.
-#                          Autre appareil : clim_target est masqué, reglable_rangee montre son
-#                          icône et sa valeur ; − / + passent par reglables_pas() et la valeur
-#                          par reglables_valeur_appui() (tab5_reglables.cpp).
+#                          choix reste (NVS). Clim choisie : tout ce qui suit est inchangé,
+#                          sauf l'icône de la clim à gauche de clim_target (clim_consigne_icone,
+#                          09/10/2026). Autre appareil : clim_target et son icône sont masqués,
+#                          reglable_rangee montre son icône et sa valeur ; − / + passent par
+#                          reglables_pas() et la valeur par reglables_valeur_appui()
+#                          (tab5_reglables.cpp). Le tap court sur les minutes de l'horloge
+#                          (« auto », lot A) passe à l'appareil suivant : reglables_suivant().
 # @ai_instruction Les boutons +/- reprennent le mécanisme optimiste+débounce du popup
 #                 (accumulation dans clim_target_temp, un seul set_temperature par geste via
 #                 tab5_debounce_clim_temp). Pas et bornes : clim_consigne_suivante() (réglages
@@ -156,6 +159,22 @@ obj:
               align: CENTER
               # Police de la date du thème (05/10/2026, avant roboto_55_b).
               styles: style_police_date
+          # Clim choisie : son icône (palette des tuiles, couleur du mode) à gauche de sa
+          # consigne (09/10/2026, lot A : on sait toujours ce que règle la tuile, même quand
+          # les minutes de l'horloge font passer d'un appareil à l'autre). La consigne reste
+          # au centre exact de la tuile, comme avant ; l'icône est posée contre elle, à
+          # 8 px. align_to ne place qu'une fois, après le setup (ESPHome) : la largeur de la
+          # consigne change avec le texte et la police du thème, alors tab5_reglables.cpp
+          # replace l'icône à chaque changement de taille (consigne_icone_placer). Vide,
+          # l'icône ne décale rien. Tient entre − et + dans les 21 thèmes
+          # (tests/test_gestes.py). Peinte par tab5_reglables.cpp, la consigne par
+          # tab5_clim.cpp.
+          - label:
+              id: clim_consigne_icone
+              text: ""
+              text_font: mdi_font_45
+              styles: style_text_dim
+              align_to: { id: clim_target, align: OUT_LEFT_MID, x: -8 }
 
           # Autre appareil que la clim (ADR-0033) : son icône (palette des tuiles) et sa
           # valeur dans la police de la date, centrées entre − et + (75..330 : 255 px ;

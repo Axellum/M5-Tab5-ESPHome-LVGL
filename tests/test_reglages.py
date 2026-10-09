@@ -174,9 +174,12 @@ def test_un_nom_et_un_conteneur_par_page():
     # La page Système (l'ancienne console) est dans le popup, plus à part.
     assert "!include console_sys.yaml" in popup
     assert "console_sys.yaml" not in _lire(TAB5 / "paquets" / "tab5-lvgl.yaml")
-    # Engrenage : un tap ouvre la page Écran (son appui long passe par tab5_ecran_ouvrir).
-    lvgl = _lire(TAB5 / "paquets" / "tab5-lvgl.yaml").replace("\r\n", "\n")
-    assert "appui: [ script.execute: { id: tab5_reglages_ouvrir, page: 0 } ]" in lvgl
+    # Engrenage : un tap « auto » ouvre la page Écran (code reglages de kGestesAuto ; les
+    # deux gestes passent par tab5_ecran_ouvrir et le registre, tests/test_gestes.py,
+    # tests/test_appuis.py).
+    zones = _lire(TAB5 / "ecran" / "tab5_zones.cpp").replace("\r\n", "\n")
+    auto = zones.split("kGestesAuto[GESTE_NB] = {", 1)[1].split("};", 1)[0]
+    assert re.search(r'"reglages",\s+nullptr,\s+// engrenage', auto)
 
 
 def test_geste_de_page_reste_dans_le_popup():
