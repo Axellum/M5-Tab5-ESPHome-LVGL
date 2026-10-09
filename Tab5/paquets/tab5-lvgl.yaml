@@ -511,10 +511,15 @@ lvgl:
 
         # ==================== PAGINATION BARS ====================
         # Zone de pagination (points de navigation des pages forecast).
+        # y 420 (demande d'Axel du 09/10/2026, 414 puis 417 avant) : les points (4 px) sont
+        # en haut du conteneur (piste flex à START, flex_align_track par défaut), donc à
+        # y 420-423, 3 px sous le bas de la carte centrale (416) et 18 px au-dessus des
+        # onglets des tuiles (442). Les tuiles, posées après, restent au-dessus de ce
+        # conteneur là où il les recouvre (y 442-449).
         - obj:
             id: pagination_container
             x: 480
-            y: 417
+            y: 420
             width: 310
             height: 30
             styles: style_transparent
