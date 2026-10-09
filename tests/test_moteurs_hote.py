@@ -9,14 +9,13 @@ compilateur, ce qui les rend probants :
   jamais branché ne prouverait rien) ;
 - les valeurs perft du test C++ sont celles du miroir Python (échecs et dames), qui reste
   pour le poste de dev ;
-- le bloc pur du moteur des dames s'extrait encore de Tab5/jeux/draughts_game.cpp
-  (tools/hote/extraire_moteur_dames.py), sans rien de LVGL ni des préférences.
+- le moteur des dames (Tab5/jeux/draughts_engine.*) reste pur : ni LVGL, ni ESPHome,
+  ni préférences.
 """
 import re
 
 import pytest
 
-import extraire_moteur_dames as dames
 import test_chess_perft as miroir_echecs
 import test_draughts_engine as miroir_dames
 from tests.commun import REPO, lire
@@ -57,17 +56,20 @@ def test_perft_des_dames_egaux_au_miroir_python(nom, attendu):
     assert m and [int(v) for v in m.group(1).split(",")] == attendu
 
 
-def test_moteur_des_dames_extractible_et_pur():
-    bloc = dames.extraire(lire("Tab5", "jeux", "draughts_game.cpp"))
-    assert bloc.startswith('#line ') and bloc.rstrip().endswith("}  // namespace Draughts")
-    for fonction in ("void pos_init(", "int gen_moves(", "void apply_move(", "void refresh_endgame("):
-        assert fonction in bloc, f"{fonction} hors du bloc extrait"
-    impurs = sorted(set(re.findall(r"\blv_\w+|\bglobal_preferences\b|\bApp\.\w+|\bid\(\w+\)", bloc)))
+@pytest.mark.parametrize("fichier", ["draughts_engine.h", "draughts_engine.cpp"])
+def test_moteur_des_dames_pur(fichier):
+    # La CI le compile sans tools/hote/esphome.h ; ce garde le dit dès pytest, sans g++.
+    texte = lire("Tab5", "jeux", fichier)
+    inclus = re.findall(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]', texte, re.M)
+    assert set(inclus) <= {"draughts_engine.h", "cstdint", "cstring"}, f"{fichier} inclut {inclus}"
+    impurs = sorted(set(re.findall(r"\blv_\w+|\besphome\b|\bglobal_preferences\b|\bApp\.\w+|\bESP_LOG\w*", texte)))
     assert not impurs, f"le moteur des dames n'est plus pur : {impurs}"
 
 
-def test_extraction_refuse_une_borne_absente_ou_double():
-    with pytest.raises(ValueError):
-        dames.extraire("namespace Draughts {\n}\n")
-    with pytest.raises(ValueError):
-        dames.extraire("namespace Draughts {\nnamespace Draughts {\n}  // namespace Engine\n")
+def test_moteur_des_dames_complet():
+    texte = lire("Tab5", "jeux", "draughts_engine.cpp")
+    for fonction in ("void pos_init(", "int gen_moves(", "void apply_move(", "void refresh_endgame(",
+                     "bool is_terminal(", "int eval_full("):
+        assert fonction in texte, f"{fonction} hors de draughts_engine.cpp"
+    assert "namespace Engine" not in lire("Tab5", "jeux", "draughts_game.cpp"), \
+        "le moteur des dames est revenu dans draughts_game.cpp"

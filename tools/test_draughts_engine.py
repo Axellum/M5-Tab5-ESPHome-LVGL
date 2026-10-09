@@ -2,7 +2,7 @@
 """
 [AI-CONTEXT]
 @file tools/test_draughts_engine.py
-@role Miroir Python du générateur de coups de Tab5/jeux/draughts_game.cpp (jeu « Dames
+@role Miroir Python du générateur de coups de Tab5/jeux/draughts_engine.cpp (jeu « Dames
       Tab », namespace Draughts::Engine), exécuté contre les valeurs perft de
       référence des dames internationales 10×10 et des dames anglaises 8×8.
 
@@ -17,8 +17,8 @@
       Il ne valide PAS le binaire compilé.
 
 @reference La RÉFÉRENCE est tools/test_draughts_engine.cpp : le VRAI moteur
-      (bloc Draughts::Engine de draughts_game.cpp, extrait par
-      tools/hote/extraire_moteur_dames.py), compilé par g++ sous ASan + UBSan
+      (Draughts::Engine, module pur draughts_engine.cpp depuis le 09/10/2026),
+      compilé tel quel par g++ sous ASan + UBSan
       contre les mêmes perft (jusqu'à 7 en 10×10 et 8 en 8×8) et les mêmes règles,
       dans le job `python` de la CI (depuis le 08/10/2026 ; constat OUT-2 de
       l'audit du 07/10/2026). Si les deux divergent, le test C++ fait foi. Ce
@@ -26,7 +26,7 @@
       tests/test_moteurs_hote.py tient les valeurs perft égales des deux côtés.
 
 @ai_instruction Toute modification de gen_moves() / search_*_caps() /
-      apply_move() dans draughts_game.cpp doit être répercutée ici, et ce
+      apply_move() dans draughts_engine.cpp doit être répercutée ici, et ce
       script re-exécuté (`pytest` le joue aussi, donc la CI).
 
 Références perft (position initiale, nombre de coups légaux complets — une
@@ -42,7 +42,7 @@ from __future__ import annotations
 import sys
 import time
 
-# --- Miroir de draughts_game.h (namespace Engine) ---------------------------
+# --- Miroir de draughts_engine.h (namespace Engine) -------------------------
 MAX_N = 10
 MAX_MOVES = 96   # borne du tableau C++ : vérifiée par les tests (jamais atteinte)
 MAX_CAPS = 20
