@@ -21,6 +21,10 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Corrigé : points de pagination des prévisions 3 px plus bas
+
+- Les points sous la carte centrale (`pagination_container`, `tab5-lvgl.yaml`) passent de y 414 à 417 (demande d'Axel). Les points restent à 430-434, sous la carte (bas à 416) et au-dessus des onglets des tuiles (442) ; rien d'autre ne bouge. Rendu à l'écran non vérifié.
+
 ### 2026-10-09 — Corrigé : défauts de lecture des payloads de HA relevés par le lot F
 
 Firmware seul (`Tab5/socle/tab5_parse.cpp`) : aucun fichier Home Assistant à recopier, les payloads de HA (ceux de la v3.7.0 compris) se lisent comme avant. Contrat inchangé (1.0.0).
