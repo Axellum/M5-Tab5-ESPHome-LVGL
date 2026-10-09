@@ -445,8 +445,12 @@ static void test_langue() {
     expect_str(format_long_day_label(1), "Thursday, October 1", "titre long en anglais, sans « 1er »");
     expect_str(tr("Calendrier"), "Calendar", "texte d'écran traduit");
     expect_str(tr("texte absent des tables"), "texte absent des tables", "clé inconnue rendue telle quelle");
-    expect_str(tr_ctx("mardi", "M"), "T", "contexte : M = mardi");
-    expect_str(tr_ctx("mercredi", "M"), "W", "contexte : M = mercredi");
+    // Initiales des jours du réveil (« mardi|M ») retirées le 09/10/2026 (noms courts) :
+    // la même lettre, deux contextes, ce sont maintenant les pièces d'échecs en notation.
+    expect_str(tr_ctx("san", "D"), "Q", "contexte : D = dame (notation)");
+    expect_str(tr_ctx("san", "T"), "R", "contexte : T = tour (notation)");
+    expect_str(tr_ctx("nudge", "Douce"), "Low", "contexte : secousse douce du flipper");
+    expect_str(tr("Douce"), "Gentle", "sans contexte : mélodie douce du réveil");
     expect_str(tr_ctx("clim", "Chaud"), "Heat", "contexte : mode chauffage de la clim");
     expect_str(tr("Chaud"), "Warm", "sans contexte : blanc chaud d'une lampe");
     expect_str(ha_day_name("Auj"), "Today", "nom de jour HA : aujourd'hui");
