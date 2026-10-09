@@ -88,14 +88,21 @@ static void start_anim(void* var, int32_t from, int32_t to, uint32_t dur,
     lv_anim_start(&a);
 }
 
-// Mode économie d'énergie (tab5_economie.h, script tab5_economie_appliquer) : chaque
-// animation de ce fichier pose directement son état final, celui que posent ses
-// callbacks de fin. Une animation déjà partie quand le mode s'enclenche finit normalement.
-static bool g_animations_reduites = false;
+// Niveau des animations (select « Tab5 Animations », mode économie : economie_decider,
+// tab5_economie.h ; posé par le script tab5_economie_appliquer, ADR-0045). Une animation
+// coupée pose directement son état final, celui que posent ses callbacks de fin. Une
+// animation déjà partie quand le niveau baisse finit normalement.
+static ChoixAnimations g_animations = ChoixAnimations::COMPLETES;
 
-void animations_reduites(bool reduites) {
-    g_animations_reduites = reduites;
+void animations_niveau(ChoixAnimations niveau) {
+    g_animations = niveau;
 }
+
+// La rotation de la carte centrale (et de la rangée sous l'horloge, calée sur elle) :
+// gardée en « Essentielles », la seule animation voulue par Axel (AGENTS.md).
+static bool rotation_animee() { return g_animations != ChoixAnimations::AUCUNE; }
+// Tout le reste (glissements, fondus, alertes, icônes, horloge) : « Complètes » seulement.
+static bool details_animes() { return g_animations == ChoixAnimations::COMPLETES; }
 
 // Contenu d'un panneau du rotateur central : son premier enfant (libellé, ou rangée
 // d'icônes et de barres). Le panneau lui-même fait toute la largeur de la carte, à
@@ -128,8 +135,8 @@ static void anim_out_contenu_ready_cb(lv_anim_t* a) {
 void transition_widgets(lv_obj_t* out_wrap, lv_obj_t* in_wrap) {
     if (out_wrap == in_wrap) return;
 
-    if (g_animations_reduites) {
-        // Mode économie : l'état de fin des deux animations, tout de suite.
+    if (!rotation_animee()) {
+        // « Aucune » (ou mode économie) : l'état de fin des deux animations, tout de suite.
         if (out_wrap) {
             transition_couper(out_wrap);
             lv_obj_add_flag(out_wrap, LV_OBJ_FLAG_HIDDEN);
@@ -264,7 +271,7 @@ bool close_popup_if_open(lv_obj_t* card) {
     return true;
 }
 
-// Mode économie : un calque à sa place de fin (x = 0, opaque), visible ou masqué,
+// Animations coupées (« Essentielles », « Aucune », mode économie) : un calque à sa place de fin (x = 0, opaque), visible ou masqué,
 // sans animation en cours. C'est ce que posent les animations et leurs callbacks de fin
 // ci-dessous (anim_swipe_out_ready_cb, anim_hide_ready_cb).
 static void calque_poser_final(lv_obj_t* o, bool visible) {
@@ -285,7 +292,7 @@ static void calque_poser_final(lv_obj_t* o, bool visible) {
 // Derivee de transition_widgets() mais en horizontal.
 void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t dir) {
     if (out_layer == in_layer) return;
-    if (g_animations_reduites) {
+    if (!details_animes()) {
         calque_poser_final(out_layer, false);
         calque_poser_final(in_layer, true);
         return;
@@ -321,7 +328,7 @@ void animate_swipe_horizontal(lv_obj_t* out_layer, lv_obj_t* in_layer, lv_dir_t 
 // Duree/amplitude : UIAnim::ALERT_* (180ms / 44px — etait 300ms / 100px).
 void animate_alert_enter(lv_obj_t* alert_wrap) {
     if (!alert_wrap) return;
-    if (g_animations_reduites) {
+    if (!details_animes()) {
         calque_poser_final(alert_wrap, true);
         return;
     }
@@ -345,7 +352,7 @@ void animate_alert_enter(lv_obj_t* alert_wrap) {
 // on ne le remet pas transparent : rejouer l'entree le blankerait.
 void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer) {
     if (out_layer == in_layer) return;
-    if (g_animations_reduites) {
+    if (!details_animes()) {
         calque_poser_final(out_layer, false);
         calque_poser_final(in_layer, true);
         return;
@@ -414,7 +421,7 @@ static void roll_in_one_label(lv_obj_t* o, uint32_t delay_ms) {
                anim_opa_cb, nullptr, delay_ms);
 }
 
-// Mode économie : l'icône reste où update_meteo_icon() vient de la poser, opaque. Un
+// Animations coupées : l'icône reste où update_meteo_icon() vient de la poser, opaque. Un
 // rouleau encore en route est retiré : il réécrirait l'ancien décalage.
 static void roll_poser_final(lv_obj_t* o) {
     if (!o) return;
@@ -425,7 +432,7 @@ static void roll_poser_final(lv_obj_t* o) {
 
 void animate_icon_roll_in(lv_obj_t* l1, lv_obj_t* l2, uint32_t delay_ms) {
     if (g_forecast_roll_suppress) return;
-    if (g_animations_reduites) {
+    if (!details_animes()) {
         roll_poser_final(l1);
         roll_poser_final(l2);
         return;
@@ -473,7 +480,7 @@ static void roll_clock_digit(ClockDigitRoller& r, int box_h, char digit) {
 // n'a été peint, les deux labels du YAML sont superposés (même texte).
 static void set_clock_digit_immediate(ClockDigitRoller& r, int box_h, char digit) {
     if (!r.lbl[r.cur]) return;
-    // Mode économie : la pose directe remplace aussi le rouleau (une minute plus
+    // Animations coupées : la pose directe remplace aussi le rouleau (une minute plus
     // tard que le précédent : rien ne tourne en principe, mais rien ne doit réécrire
     // la position posée ici).
     lv_anim_delete(r.lbl[0], anim_ty_cb);
@@ -498,12 +505,12 @@ void update_clock_date_ui(lv_obj_t* lbl_date,
         snprintf(hhmm, sizeof(hhmm), "%02d%02d", hour, minute);
 
         // Un rouleau par chiffre : de 22 a 23 mn, seule l'unite tourne.
-        // shown == 0 (jamais peint) ou mode économie -> pose directe.
+        // shown == 0 (jamais peint) ou animations sous « Complètes » -> pose directe.
         for (int i = 0; i < 4; i++) {
             ClockDigitRoller& r = c.d[i];
             if (r.shown == hhmm[i] || !r.wrap) continue;
             const int box_h = clock_box_h(r);
-            if (r.shown == 0 || g_animations_reduites) set_clock_digit_immediate(r, box_h, hhmm[i]);
+            if (r.shown == 0 || !details_animes()) set_clock_digit_immediate(r, box_h, hhmm[i]);
             else              roll_clock_digit(r, box_h, hhmm[i]);
         }
     }

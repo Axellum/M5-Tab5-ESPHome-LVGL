@@ -4,8 +4,10 @@
  * @role Popup « Réglages » (06/10/2026, demande d'Axel), en quatre pages depuis le
  *       08/10/2026 : « Écran » (luminosité, extinction auto, rallumage par « Okay Nabu »
  *       et par une tape), « Apparence » (thème, clair ou sombre, nuit du mode Auto,
- *       langue), « Batterie » (limite de charge, économie d'énergie, batterie montée ; état,
- *       niveau, tension et consommation lus) et « Système » (l'ancienne console système,
+ *       animations, langue), « Batterie » (limite et mode de charge, économie d'énergie,
+ *       Wi-Fi éco, batterie montée ; état, niveau, tension et consommation lus ; mode de
+ *       charge, Wi-Fi éco et animations depuis le 09/10/2026, ADR-0045) et « Système »
+ *       (l'ancienne console système,
  *       console_sys.yaml, remplie par le YAML). Les noms des pages sont en haut, à côté du
  *       titre, celle affichée en couleur d'accent.
  *       Ouvert par un tap sur le bouton central du haut (engrenage, page Écran), son appui
@@ -150,11 +152,14 @@ void reglages_peindre(const ReglagesEtat& e) {
     ui_text(u.theme_nom, THEMES[theme].nom);
     peindre_choix(u.mode, REGLAGES_NB_MODES, e.mode);
     peindre_choix(u.nuit, 2, oui_non(e.nuit));
+    peindre_choix(u.animations, REGLAGES_NB_ANIMATIONS, e.animations);
 
     peindre_choix(u.langue, REGLAGES_NB_LANGUES, e.langue);
 
     peindre_choix(u.limite, REGLAGES_NB_LIMITES, e.limite);
+    peindre_choix(u.mode_charge, REGLAGES_NB_MODES_CHARGE, e.mode_charge);
     peindre_choix(u.economie, REGLAGES_NB_ECONOMIE, e.economie);
+    peindre_choix(u.wifi_eco, REGLAGES_NB_WIFI_ECO, e.wifi_eco);
     peindre_choix(u.montee, 2, oui_non(e.montee));
 }
 

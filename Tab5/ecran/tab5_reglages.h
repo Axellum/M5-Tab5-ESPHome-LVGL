@@ -24,8 +24,8 @@
 // « Aller à l'écran → Console système » : page Système, l'ancienne console système.
 // Les réglages de l'écran qu'on veut changer sans passer par Home Assistant :
 // luminosité, extinction auto, rallumage par « Okay Nabu » et par une tape ; thème,
-// clair ou sombre, nuit du mode Auto, langue ; limite de charge, économie d'énergie,
-// batterie montée. Chacun reste l'entité exposée à HA : le
+// clair ou sombre, nuit du mode Auto, animations, langue ; limite de charge, mode de
+// charge, économie d'énergie, Wi-Fi éco, batterie montée. Chacun reste l'entité exposée à HA : le
 // popup ne garde rien, il écrit l'entité (script tab5_reglages_choisir) et se repeint
 // depuis elle (tab5_reglages_sync_ui, lancé par chaque entité quand elle change).
 //
@@ -54,6 +54,10 @@ enum ReglageId : int {
     REGLAGE_LIMITE_CHARGE = 7,    // select « Tab5 Limite de charge » (index)
     REGLAGE_ECONOMIE = 8,         // select « Tab5 Économie d'énergie » (index)
     REGLAGE_BATTERIE_MONTEE = 9,  // interrupteur « Tab5 Batterie montée »
+    // 09/10/2026 (ADR-0045) : page Batterie (mode de charge, Wi-Fi éco), page Apparence.
+    REGLAGE_MODE_CHARGE = 10,     // select « Tab5 Mode de charge » (index)
+    REGLAGE_WIFI_ECO = 11,        // select « Tab5 Wi-Fi éco » (index)
+    REGLAGE_ANIMATIONS = 12,      // select « Tab5 Animations » (index)
 };
 
 // Boutons à choix : autant que d'options (Oui/Non : 0 = Oui, 1 = Non). Langues : une
@@ -63,6 +67,9 @@ constexpr int REGLAGES_NB_MODES = 3;
 constexpr int REGLAGES_NB_LANGUES = 7;
 constexpr int REGLAGES_NB_LIMITES = 2;   // « 100 % », « 80 % » (LimiteCharge, tab5_batterie.h)
 constexpr int REGLAGES_NB_ECONOMIE = 3;  // « Jamais », « Sur batterie », « Toujours »
+constexpr int REGLAGES_NB_MODES_CHARGE = 2;  // « Classique », « Rapide » (ModeCharge, tab5_batterie.h)
+constexpr int REGLAGES_NB_WIFI_ECO = 3;      // « Jamais », « Sur batterie », « Toujours »
+constexpr int REGLAGES_NB_ANIMATIONS = 3;    // « Complètes », « Essentielles », « Aucune »
 
 // Widgets posés par le script tab5_reglages_ouvrir (tab5-reglages.yaml) à la première
 // ouverture : id() n'existe que dans une lambda YAML.
@@ -86,6 +93,10 @@ struct ReglagesUI {
     lv_obj_t* limite[REGLAGES_NB_LIMITES] = {};
     lv_obj_t* economie[REGLAGES_NB_ECONOMIE] = {};
     lv_obj_t* montee[2] = {};
+    lv_obj_t* mode_charge[REGLAGES_NB_MODES_CHARGE] = {};
+    lv_obj_t* wifi_eco[REGLAGES_NB_WIFI_ECO] = {};
+    // Page Apparence (09/10/2026).
+    lv_obj_t* animations[REGLAGES_NB_ANIMATIONS] = {};
     lv_obj_t* batt_etat = nullptr;                    // reglages_batt_etat (« En charge »…)
     lv_obj_t* batt_niveau = nullptr;                  // reglages_batt_niveau
     lv_obj_t* batt_tension = nullptr;                 // reglages_batt_tension
@@ -113,6 +124,9 @@ struct ReglagesEtat {
     int limite = 0;
     int economie = 1;
     bool montee = false;
+    int mode_charge = 0;
+    int wifi_eco = 0;
+    int animations = 0;
 };
 
 // Noms natifs des langues sur leurs pastilles (une fois, à la première ouverture).

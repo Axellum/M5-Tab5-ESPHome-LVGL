@@ -76,6 +76,14 @@ script:
             u.economie[2] = id(reglages_economie_2);
             u.montee[0] = id(reglages_montee_oui);
             u.montee[1] = id(reglages_montee_non);
+            u.mode_charge[0] = id(reglages_mode_charge_0);
+            u.mode_charge[1] = id(reglages_mode_charge_1);
+            u.wifi_eco[0] = id(reglages_wifi_eco_0);
+            u.wifi_eco[1] = id(reglages_wifi_eco_1);
+            u.wifi_eco[2] = id(reglages_wifi_eco_2);
+            u.animations[0] = id(reglages_animations_0);
+            u.animations[1] = id(reglages_animations_1);
+            u.animations[2] = id(reglages_animations_2);
             u.batt_etat = id(reglages_batt_etat);
             u.batt_niveau = id(reglages_batt_niveau);
             u.batt_tension = id(reglages_batt_tension);
@@ -128,6 +136,9 @@ script:
           e.limite = (int) id(tab5_limite_charge).active_index().value_or(0);
           e.economie = (int) id(tab5_economie).active_index().value_or(1);
           e.montee = id(tab5_batterie_montee).state;
+          e.mode_charge = (int) id(tab5_mode_charge).active_index().value_or(0);
+          e.wifi_eco = (int) id(tab5_wifi_eco).active_index().value_or(0);
+          e.animations = (int) id(tab5_animations).active_index().value_or(0);
           reglages_peindre(e);
 
   # `reglage` : ReglageId (tab5_custom.h) ; `valeur` : index de l'option, 1 / 0 pour
@@ -190,6 +201,24 @@ script:
             case REGLAGE_BATTERIE_MONTEE:
               if (valeur != 0) id(tab5_batterie_montee).turn_on(); else id(tab5_batterie_montee).turn_off();
               break;
+            case REGLAGE_MODE_CHARGE: {
+              auto call = id(tab5_mode_charge).make_call();
+              call.set_index(valeur);
+              call.perform();
+              break;
+            }
+            case REGLAGE_WIFI_ECO: {
+              auto call = id(tab5_wifi_eco).make_call();
+              call.set_index(valeur);
+              call.perform();
+              break;
+            }
+            case REGLAGE_ANIMATIONS: {
+              auto call = id(tab5_animations).make_call();
+              call.set_index(valeur);
+              call.perform();
+              break;
+            }
             default:
               break;
           }

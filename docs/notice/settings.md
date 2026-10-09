@@ -22,16 +22,19 @@ The page names sit at the top, next to the title: the page shown is lit. Tap a n
 - **Theme**: the two arrows go to the previous or the next theme; the screen repaints at once. The name stays the same in every language.
 - **Light or dark**: **Dark**, **Light** or **Auto**: light by day, dark at night.
 - **Night (Auto mode)**: what Auto follows. Home Assistant sets it from the sun, at sunset, at sunrise and each time the tablet connects: a change made here lasts until then.
+- **Animations**: **Full** (the default), **Essential**: only the central card still turns, or **None**: everything is instant. While power saving is on, it is **None**.
 - **Language**: one button per language, written in that language. The tablet asks first, because it restarts in the new language: **Cancel** or **Confirm**.
 
 ![Before changing the language, the tablet asks: Cancel or Confirm](../images/notice/reglages-langue-en.webp)
 
 **Battery**
 
-On the left, three settings:
+On the left, five settings:
 
 - **Charge limit**: **100 %** or **80 %**. At 80 %, charging stops at 80 % and starts again at 70 %: for a tablet that stays plugged in.
+- **Charging mode**: **Classic** (the default) or **Fast**: the charger's quick charge, only while the battery is charging.
 - **Power saving**: **Never**, **On battery** (the default) or **Always**: what caps the brightness, as above.
+- **Eco Wi-Fi**: **Never** (the default), **On battery** or **Always**: the Wi-Fi saves a little power between two exchanges; answers may come a little later. Never during voice, sound or an update.
 - **Battery fitted**: **Yes** shows the battery icon in the status bar (a plug when the voltage says there is no battery).
 
 On the right, what the tablet reads, refreshed every 2 seconds while the page is shown:
@@ -69,16 +72,19 @@ Les noms des pages sont en haut, à côté du titre : la page affichée est allu
 - **Thème** : les deux flèches passent au thème précédent ou suivant ; l'écran se repeint aussitôt. Le nom reste le même dans toutes les langues.
 - **Clair ou sombre** : **Sombre**, **Clair** ou **Auto** : clair le jour, sombre la nuit.
 - **Nuit (mode Auto)** : ce que suit Auto. Home Assistant le règle d'après le soleil, au coucher, au lever et à chaque connexion de la tablette : un changement fait ici dure jusque-là.
+- **Animations** : **Complètes** (d'origine), **Essentielles** : seule la carte du centre tourne encore, ou **Aucune** : tout est instantané. Quand l'économie d'énergie est active, c'est **Aucune**.
 - **Langue** : un bouton par langue, écrite dans sa langue. La tablette demande d'abord, parce qu'elle redémarre dans la nouvelle langue : **Annuler** ou **Confirmer**.
 
 ![Avant de changer de langue, la tablette demande : Annuler ou Confirmer](../images/notice/reglages-langue-fr.webp)
 
 **Batterie**
 
-À gauche, trois réglages :
+À gauche, cinq réglages :
 
 - **Limite de charge** : **100 %** ou **80 %**. À 80 %, la charge s'arrête à 80 % et reprend à 70 % : pour une tablette toujours branchée.
+- **Mode de charge** : **Classique** (d'origine) ou **Rapide** : la charge rapide du chargeur, seulement pendant que la batterie charge.
 - **Économie d'énergie** : **Jamais**, **Sur batterie** (d'origine) ou **Toujours** : ce qui plafonne la luminosité, comme plus haut.
+- **Wi-Fi éco** : **Jamais** (d'origine), **Sur batterie** ou **Toujours** : le Wi-Fi économise un peu entre deux échanges ; les réponses peuvent arriver un peu plus tard. Jamais pendant la voix, un son ou une mise à jour.
 - **Batterie montée** : **Oui** montre l'icône de la batterie dans le bandeau d'état (une prise quand la tension dit qu'il n'y a pas de batterie).
 
 À droite, ce que la tablette lit, rafraîchi toutes les 2 secondes tant que la page est affichée :
