@@ -399,3 +399,37 @@ uint8_t humidite_lire(const Champ& c);
 // créneaux et kHistoriquePrevMax points. Renvoie le nom (premier champ de l'en-tête), que
 // l'écran copie dans s.nom.
 Champ historique_lire(const Champ& entete, const Champ& mesures, const Champ& previsions, HistoriqueSerie& s);
+
+// ─── 9. Popup Caméras (tab5_maj_cameras, ADR-0049) ───
+// Variable cameras : « nom|image;nom|image » dans l'ordre du blueprint, `image` = l'attribut
+// entity_picture de la caméra (« /api/camera_proxy/camera.x?token=… », chemin relatif à
+// Home Assistant) ou une URL complète. HA retire « | » et « ; » des noms.
+constexpr int kCamerasMax = 8;
+constexpr size_t kCameraNomMax = 48;      // copié par l'écran (texte_ha_copier)
+constexpr size_t kCameraImageMax = 256;   // chemin + jeton : ~110 octets chez HA
+constexpr size_t kCameraUrlMax = 384;     // base + image + « &width=…&height=… »
+
+struct CameraLue {
+    Champ nom;
+    Champ image;
+};
+
+// Au plus kCamerasMax caméras, dans l'ordre. Un enregistrement sans image (vide, « ;; »,
+// « nom| ») est sauté ; un nom vide est gardé (l'écran n'en montre aucun). Renvoie le
+// nombre lu.
+int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax]);
+
+// Base « http://hôte:8123 » tirée de l'adresse du client API de Home Assistant (celle que
+// l'API ESPHome donne à on_client_connected) : IPv4 telle quelle, IPv6 entre crochets.
+// Faux (out vidé) si l'adresse est vide, trop longue ou contient autre chose que des
+// chiffres hexadécimaux, « . » et « : » (une zone IPv6 « %eth0 » comprise).
+bool camera_base_depuis_hote(const char* hote, char* out, size_t n);
+
+// URL à télécharger : `image` telle quelle si elle commence par http:// ou https://, sinon
+// `base` (http:// ou https://, sans « / » final) suivie de l'image (« / » ajouté s'il
+// manque). Pour le proxy des caméras (/api/camera_proxy/), « width=L&height=H » ajoutés
+// (« ? » ou « & ») s'ils n'y sont pas : HA réduit alors l'image avant de l'envoyer.
+// Faux (out vidé) si l'image est vide, si une base est nécessaire et qu'elle manque ou ne
+// commence pas par http(s)://, si l'URL contient un espace ou un caractère de contrôle,
+// ou si elle ne tient pas dans `n`.
+bool camera_url(const Champ& image, const char* base, int largeur, int hauteur, char* out, size_t n);

@@ -10,6 +10,7 @@
 #include "tab5_parse.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -562,4 +563,97 @@ Champ historique_lire(const Champ& entete, const Champ& mesures, const Champ& pr
         s.np++;
     }
     return nom;
+}
+
+// ─── 9. Popup Caméras (ADR-0049) ───
+// Nouveau (lot « Caméras », 09/10/2026) : aucune boucle de l'écran remplacée.
+
+namespace {
+
+bool commence_par(const char* p, size_t n, const char* mot) {
+    const size_t m = std::strlen(mot);
+    return p != nullptr && n >= m && std::memcmp(p, mot, m) == 0;
+}
+
+bool url_absolue(const char* p, size_t n) { return commence_par(p, n, "http://") || commence_par(p, n, "https://"); }
+
+// Ajoute [p, p + m) à out (longueur courante `l`) ; faux si ça ne tient pas (zéro compris).
+bool ajouter(char* out, size_t n, size_t& l, const char* p, size_t m) {
+    if (m >= n - l) return false;
+    std::memcpy(out + l, p, m);
+    l += m;
+    out[l] = '\0';
+    return true;
+}
+
+bool ajouter(char* out, size_t n, size_t& l, const char* s) { return ajouter(out, n, l, s, std::strlen(s)); }
+
+}  // namespace
+
+int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax]) {
+    const char* p = payload.p;
+    const char* fin = p + payload.n;
+    int n = 0;
+    while (p < fin && n < kCamerasMax) {
+        const Champ c = champ_suivant(p, fin, ';');
+        const char* q = c.p;
+        const char* qf = c.p + c.n;
+        const Champ nom = champ_suivant(q, qf, '|');
+        const Champ image = champ_suivant(q, qf, '|');
+        if (image.n == 0) continue;  // vide, « ;; » ou « nom| » : rien à montrer
+        cameras[n].nom = nom;
+        cameras[n].image = image;
+        n++;
+    }
+    return n;
+}
+
+bool camera_base_depuis_hote(const char* hote, char* out, size_t n) {
+    if (out == nullptr || n == 0) return false;
+    out[0] = '\0';
+    if (hote == nullptr || hote[0] == '\0') return false;
+    const size_t m = std::strlen(hote);
+    if (m > 45) return false;  // INET6_ADDRSTRLEN - 1
+    bool ipv6 = false;
+    for (size_t i = 0; i < m; i++) {
+        const char c = hote[i];
+        if (c == ':') ipv6 = true;
+        else if (c != '.' && !std::isxdigit(static_cast<unsigned char>(c))) return false;
+    }
+    size_t l = 0;
+    const bool ok = ajouter(out, n, l, ipv6 ? "http://[" : "http://") && ajouter(out, n, l, hote, m) &&
+                    ajouter(out, n, l, ipv6 ? "]:8123" : ":8123");
+    if (!ok) out[0] = '\0';
+    return ok;
+}
+
+bool camera_url(const Champ& image, const char* base, int largeur, int hauteur, char* out, size_t n) {
+    if (out == nullptr || n == 0) return false;
+    out[0] = '\0';
+    if (image.p == nullptr || image.n == 0) return false;
+    size_t l = 0;
+    bool ok = true;
+    if (!url_absolue(image.p, image.n)) {
+        const size_t b = base != nullptr ? std::strlen(base) : 0;
+        if (!url_absolue(base, b)) return false;  // base vide comprise
+        size_t bl = b;
+        while (bl > 0 && base[bl - 1] == '/') bl--;
+        ok = ajouter(out, n, l, base, bl) && (image.p[0] == '/' || ajouter(out, n, l, "/"));
+    }
+    ok = ok && ajouter(out, n, l, image.p, image.n);
+    // Proxy des caméras de HA (CameraImageView) : l'image est réduite par HA seulement si
+    // largeur ET hauteur sont données.
+    if (ok && largeur > 0 && hauteur > 0 && std::strstr(out, "/api/camera_proxy/") != nullptr &&
+        std::strstr(out, "width=") == nullptr && std::strstr(out, "height=") == nullptr) {
+        char taille[40];
+        std::snprintf(taille, sizeof(taille), "%cwidth=%d&height=%d", std::strchr(out, '?') != nullptr ? '&' : '?',
+                      largeur, hauteur);
+        ok = ajouter(out, n, l, taille);
+    }
+    for (size_t i = 0; ok && i < l; i++) {
+        const unsigned char c = static_cast<unsigned char>(out[i]);
+        if (c <= 0x20 || c == 0x7F) ok = false;  // espace, saut de ligne, zéro : requête HTTP cassée
+    }
+    if (!ok) out[0] = '\0';
+    return ok;
 }
