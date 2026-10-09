@@ -105,7 +105,7 @@ Weather adapters (lot 4c-2, 2026-09-27). Two selects pick the source **in Home A
 OpenWeatherMap (forecasts and rain) was tried on the author's installation on 2026-09-27; the MeteoAlarm branch and the twice-daily/hourly grouping were tested with simulated data in Home Assistant's template engine only. DWD was added to the author's installation on 2026-09-29 (a day without warnings); its warnings and CAP Alerts were tested with simulated data (template engine, fresh-install CI). Setup: [weather providers](../docs/installation/weather.md).
 
 ### `packages/tab5_health.yaml`
-Health-monitoring package: six guard automations that alert when the push pipeline silently degrades, or when the tablet runs low on its battery. Because the Tab5 is push-only (see `docs/decisions/0001-push-only-zero-polling.md`), a stale screen raises no error on its own — these automations are the HA-side safety net.
+Health-monitoring package: six guard automations that alert when the push pipeline silently degrades, or when the tablet runs low on its battery, and three sensors that keep long-term reliability statistics. Because the Tab5 is push-only (see `docs/decisions/0001-push-only-zero-polling.md`), a stale screen raises no error on its own — these automations are the HA-side safety net.
 
 What it watches:
 - **A new boot time on `Tab5 Uptime`** (a timestamp, published once per boot since 26/09/2026) — unexpected device reboot (brownout, firmware crash, power cut); a plain Wi-Fi drop without reboot comes back with the same boot time and does *not* trigger it
@@ -115,9 +115,16 @@ What it watches:
 - **Home Assistant files older than the firmware** (since 2026-09-29) — `sensor.tab5_version_des_fichiers_ha` holds the release of the archive these files came from (« dépôt » when copied from the repository: never compared); `binary_sensor.tab5_fichiers_ha_en_retard` turns on when the tablet runs a newer X.Y (major or minor: a patch release alone does not count, it may ask for a single file). Persistent notification only, removed once the versions meet
 - **A low battery, sent by the Tab5** (`esphome.tab5_batterie_faible`, since 2026-10-08) — while the tablet runs on its battery, the firmware sends the event when the level drops below 20 %, then below 10 % (once per threshold, re-armed at 30 % or when charging resumes), with `niveau` (level in %) and `seuil` (« 20 » or « 10 »). Persistent notification (the 10 % one replaces the 20 % one) and phone push, in French: « Tab5 : batterie faible » or « batterie presque vide », with the level
 
+Long-term reliability statistics (since 2026-10-09): the recorder keeps states for a few days only, and `Tab5 Uptime` (a timestamp) and the reset reason (a text) have no statistics. Three trigger-based sensors with a `state_class` fill the gap; HA keeps their long-term statistics with no time limit:
+- `sensor.tab5_redemarrages` « Tab5 · redémarrages » (`total_increasing`) — +1 on each `tab5_sante_redemarrage` event, fired by the unexpected-reboot guard for every restart it recognizes, requested or not (a Wi-Fi drop without reboot, a HA restart or the tablet's arrival in HA never reach that point)
+- `sensor.tab5_redemarrages_inattendus` « Tab5 · redémarrages inattendus » (`total_increasing`) — the same event when the guard classifies the restart as unexpected (the very variable that decides its notification: no copied logic)
+- `sensor.tab5_fonctionnement_continu` « Tab5 · fonctionnement continu » (`duration`, `measurement`, hours) — time since the last boot, every 15 min and when the boot time changes; unavailable while the tablet is
+
+Both counters restore their state after a HA restart (trigger-based template sensors) and add 0 on HA start and template reload; if a restored value were ever missing, `total_increasing` reads the drop as a meter reset and the statistics sum keeps growing.
+
 Design notes:
 - The guards notify through one script, `script.tab5_health_notify` (persistent notification + `notify.notify`), so the channels are adapted in a single place; each channel carries `continue_on_error: true` so one failing channel doesn't block the other
-- No template uses raw `now()` — detection relies on trigger `for:` windows and `trigger.from_state` / `trigger.to_state`
+- No template uses raw `now()` — detection relies on trigger `for:` windows and `trigger.from_state` / `trigger.to_state`; the run time reads the instant of its own trigger (`trigger.now`, `trigger.to_state.last_updated`)
 - Numeric comparisons use `| float(0)` defaults (boot safety)
 
 It's a self-contained HA *package*; enable packages in `configuration.yaml` first:
@@ -373,7 +380,7 @@ Adaptateurs météo (lot 4c-2, 27/09/2026). Deux listes choisissent la source **
 OpenWeatherMap (prévisions et pluie) a été essayé sur l'installation de l'auteur le 27/09/2026 ; la branche MeteoAlarm et le regroupement des demi-journées et des heures n'ont été testés qu'avec des données simulées dans le moteur de modèles de Home Assistant. Le DWD a été ajouté à l'installation de l'auteur le 29/09/2026 (un jour sans alerte) ; ses alertes et CAP Alerts ont été testés avec des données simulées (moteur de modèles, CI d'installation à neuf). Installation : [fournisseurs météo](../docs/installation/weather.md#version-française).
 
 ### `packages/tab5_health.yaml`
-Package de surveillance santé : six automations de garde qui alertent quand le pipeline de push se dégrade silencieusement, ou quand la batterie de la tablette s'épuise. Le Tab5 étant push-only (voir `docs/decisions/0001-push-only-zero-polling.md`), un écran figé ne lève aucune erreur par lui-même — ces automations sont le filet de sécurité côté HA.
+Package de surveillance santé : six automations de garde qui alertent quand le pipeline de push se dégrade silencieusement, ou quand la batterie de la tablette s'épuise, et trois capteurs qui gardent des statistiques longues de fiabilité. Le Tab5 étant push-only (voir `docs/decisions/0001-push-only-zero-polling.md`), un écran figé ne lève aucune erreur par lui-même — ces automations sont le filet de sécurité côté HA.
 
 Ce qui est surveillé :
 - **Une nouvelle heure de démarrage sur `Tab5 Uptime`** (un horodatage, publié une fois par démarrage depuis le 26/09/2026) — reboot inattendu de l'appareil (brownout, crash firmware, coupure d'alimentation) ; une simple coupure Wi-Fi sans reboot revient avec la même heure de démarrage et ne déclenche *pas* ; un redémarrage demandé non plus (depuis le 27/09/2026 : mise à jour, bouton « Redémarrage Système », changement de langue, reset par l'USB, lus dans `Tab5 Raison du redémarrage`), et la notification donne la raison
@@ -383,9 +390,16 @@ Ce qui est surveillé :
 - **Des fichiers Home Assistant plus anciens que le firmware** (depuis le 29/09/2026) — `sensor.tab5_version_des_fichiers_ha` porte la release de l'archive d'où viennent ces fichiers (« dépôt » s'ils sont copiés depuis le dépôt : jamais comparés) ; `binary_sensor.tab5_fichiers_ha_en_retard` s'allume quand la tablette tourne une version X.Y plus récente (majeure ou mineure : une version corrective seule ne compte pas, elle peut ne demander qu'un fichier). Notification persistante seulement, retirée quand les versions se rejoignent
 - **Une batterie faible, envoyée par le Tab5** (`esphome.tab5_batterie_faible`, depuis le 08/10/2026) — quand la tablette tourne sur sa batterie, le firmware envoie l'événement quand le niveau passe sous 20 %, puis sous 10 % (une fois par seuil, ré-armé à 30 % ou quand la charge reprend), avec `niveau` (en %) et `seuil` (« 20 » ou « 10 »). Notification persistante (celle de 10 % remplace celle de 20 %) et téléphone : « Tab5 : batterie faible » ou « batterie presque vide », avec le niveau
 
+Statistiques longues de fiabilité (depuis le 09/10/2026) : le recorder ne garde les états que quelques jours, et `Tab5 Uptime` (un horodatage) comme la raison du démarrage (un texte) n'ont pas de statistiques. Trois capteurs de modèle à déclencheurs, avec un `state_class`, comblent le manque ; HA garde leurs statistiques longue durée sans limite de temps :
+- `sensor.tab5_redemarrages` « Tab5 · redémarrages » (`total_increasing`) — +1 à chaque événement `tab5_sante_redemarrage`, émis par la garde « reboot inattendu » pour chaque redémarrage qu'elle reconnaît, demandé ou non (une coupure Wi-Fi sans reboot, un redémarrage de HA ou l'arrivée de la tablette dans HA n'arrivent jamais jusque-là)
+- `sensor.tab5_redemarrages_inattendus` « Tab5 · redémarrages inattendus » (`total_increasing`) — le même événement quand la garde classe le redémarrage comme inattendu (la variable même qui décide de sa notification : aucune logique recopiée)
+- `sensor.tab5_fonctionnement_continu` « Tab5 · fonctionnement continu » (`duration`, `measurement`, heures) — temps depuis le dernier démarrage, toutes les 15 min et quand l'heure de démarrage change ; indisponible quand la tablette l'est
+
+Les deux compteurs retrouvent leur état après un redémarrage de HA (capteurs de modèle à déclencheurs) et ajoutent 0 au démarrage de HA et au rechargement des modèles ; si une valeur restaurée manquait un jour, `total_increasing` lit la baisse comme une remise à zéro et la somme des statistiques continue de monter.
+
 Notes de conception :
 - Les gardes notifient via un seul script, `script.tab5_health_notify` (notification persistante + `notify.notify`) : les canaux s'adaptent à un seul endroit ; chaque canal porte `continue_on_error: true`, un canal en échec ne bloque pas l'autre
-- Aucun template n'utilise `now()` brut — la détection repose sur les fenêtres `for:` des déclencheurs et sur `trigger.from_state` / `trigger.to_state`
+- Aucun template n'utilise `now()` brut — la détection repose sur les fenêtres `for:` des déclencheurs et sur `trigger.from_state` / `trigger.to_state` ; la durée de fonctionnement lit l'instant de son propre déclencheur (`trigger.now`, `trigger.to_state.last_updated`)
 - Les comparaisons numériques utilisent des défauts `| float(0)` (sécurité au boot)
 
 C'est un *package* HA autonome ; activez d'abord les packages dans `configuration.yaml` :
