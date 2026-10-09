@@ -48,6 +48,16 @@ def test_graines_tirees_du_contrat():
         assert contenu == sel.encode() + fuzz_services.GRAINES[service][variable].encode("utf-8")
 
 
+def test_graines_des_cas_limites():
+    # Une graine par défaut corrigé après le lot F, sur un parseur du harnais, à part des
+    # graines tirées du contrat (noms distincts : aucune n'en écrase une autre).
+    selecteurs = {sel for sel, _, _ in graines.FAMILLES}
+    limites = graines.graines_limites()
+    assert len(limites) == len(graines.LIMITES) >= 4
+    assert all(sel in selecteurs for sel, _, _ in graines.LIMITES)
+    assert not set(limites) & set(graines.graines())
+
+
 def test_le_job_fuzz_a_son_temoin():
     wf = lire(".github", "workflows", "sanitizers.yml")
     job = wf.split("\n  fuzz-parseurs:\n", 1)[1]

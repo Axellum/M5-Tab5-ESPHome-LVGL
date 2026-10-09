@@ -5,8 +5,13 @@
  *
  * Extraction NEUTRE : ces tests figent le comportement de la boucle d'origine, travers
  * compris. Un cas marqué « [figé] » décrit un comportement discutable gardé tel quel
- * (strtok_r qui fusionne les champs vides, atoi qui lit un index illisible comme 0, « inf »
- * accepté…) : le changer est un changement de contrat, dans une PR à part.
+ * (atoi qui lit « 3x » comme 3, « 0x10 » lu par strtof…) : le changer est un changement
+ * de contrat, dans une PR à part.
+ * Un cas marqué « [corrigé] » affirme le bon comportement d'un des cinq défauts relevés
+ * par le lot F et corrigés à part : phrase « @-1,0 », champs vides de la vigilance, index
+ * illisible et nombres non finis des prévisions, production solaire coupée à 15 octets.
+ * test_payloads_ha() garde, pour ces mêmes lecteurs, les sorties d'avant sur les payloads
+ * tels que HA les envoie.
  *
  * Build & run (CI, job `python` de .github/workflows/esphome-tab5.yml) :
  *   g++ -std=c++17 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all \
@@ -97,22 +102,50 @@ static void test_previsions_heures() {
     for (int i = 0; i < 15; i++) rien = rien && h[i].heure_texte.empty();
     expect(rien, "heures : index hors de 0 à 14 ignoré");
 
+    // Index illisible : avant le correctif, atoi le lisait comme 0 et le créneau 0 était
+    // écrasé. Désormais rien n'est écrit et l'enregistrement est compté (journalisé une fois
+    // par l'appelant) ; les enregistrements lisibles du même payload passent.
     vider(h);
-    previsions_heures_lire("abc|zz|sunny|1|2", h);
-    expect(h[0].heure_texte == "zz", "heures [figé] : index illisible lu comme 0 (atoi)");
+    h[0].heure_texte = "garde";
+    int ign = previsions_heures_lire("abc|zz|sunny|1|2;|yy|sunny|1|2;1|11h|rainy|3|0", h);
+    expect(h[0].heure_texte == "garde" && h[0].condition.empty() && ign == 2,
+           "heures [corrigé] : index illisible ou vide = enregistrement ignoré, créneau 0 intact");
+    expect(h[1].heure_texte == "11h" && h[1].temp == 3.0f, "heures [corrigé] : la suite du payload est lue");
 
     vider(h);
-    previsions_heures_lire("6|a|b|abc|", h);
-    expect(h[6].temp == 0.0f && h[6].pluvio == 0.0f, "heures [figé] : nombre illisible ou vide = 0 (atof)");
+    ign = previsions_heures_lire("3x|a|b|1|2; 4|c|d|5|6", h);
+    expect(h[3].heure_texte == "a" && h[4].heure_texte == "c" && ign == 0,
+           "heures [figé] : index lu comme atoi le lisait (« 3x » = 3, blanc de tête sauté)");
 
     vider(h);
-    previsions_heures_lire("7|a|b|nan|inf", h);
-    expect(std::isnan(h[7].temp) && std::isinf(h[7].pluvio), "heures [figé] : « nan » et « inf » passent (atof)");
+    ign = previsions_heures_lire("6|a|b|abc|", h);
+    expect(h[6].heure_texte == "a" && h[6].temp == 0.0f && h[6].pluvio == 0.0f && ign == 0,
+           "heures [figé] : nombre illisible ou vide = 0 (atof ; HA envoie 0 pour une valeur absente)");
+
+    // Nombres non finis ou hors des bornes plausibles : enregistrement ignoré, le créneau
+    // garde sa valeur d'avant (pas de « nan° » ni d'infini à l'écran).
+    vider(h);
+    previsions_heures_lire("7|10h|sunny|12|0.5;8|11h|sunny|13|0", h);
+    ign = previsions_heures_lire("7|x|rainy|nan|1;8|y|rainy|2|inf", h);
+    expect(h[7].heure_texte == "10h" && h[7].temp == 12.0f && h[7].pluvio == 0.5f && h[8].heure_texte == "11h" &&
+               h[8].pluvio == 0.0f && ign == 2,
+           "heures [corrigé] : « nan » et « inf » refusés, créneau inchangé");
 
     vider(h);
-    previsions_heures_lire("8|a|b|1e99|-1e99", h);
-    expect(std::isinf(h[8].temp) && std::isinf(h[8].pluvio) && h[8].pluvio < 0,
-           "heures [figé] : hors des float = infini");
+    ign = previsions_heures_lire("8|a|b|1e99|0;9|a|b|1|-1e99;10|a|b|-inf|0", h);
+    expect(h[8].heure_texte.empty() && h[9].heure_texte.empty() && h[10].heure_texte.empty() && ign == 3,
+           "heures [corrigé] : hors des float (« 1e99 ») et « -inf » refusés");
+
+    vider(h);
+    ign = previsions_heures_lire("0|a|b|-100|0;1|a|b|150|1000;2|a|b|-100.5|0;3|a|b|150.5|0;4|a|b|1|1000.5;5|a|b|1|-0.1",
+                                 h);
+    expect(h[0].temp == -100.0f && h[1].temp == 150.0f && h[1].pluvio == 1000.0f && h[2].heure_texte.empty() &&
+               h[3].heure_texte.empty() && h[4].heure_texte.empty() && h[5].heure_texte.empty() && ign == 4,
+           "heures [corrigé] : bornes -100..150 (°C ou °F) et pluie 0..1000 comprises, au-delà refusé");
+
+    vider(h);
+    expect(previsions_heures_lire("15|a|b|1|2;-1|a|b|nan|2", h) == 0,
+           "heures : index hors de 0 à 14 ignoré sans être compté (comme avant)");
 
     vider(h);
     previsions_heures_lire("", h);
@@ -125,9 +158,13 @@ static void test_previsions_heures() {
     previsions_heures_lire(long_payload.c_str(), h);
     expect(h[9].heure_texte.empty(), "heures : au-delà de kPrevisionsMax, ignoré");
 
-    expect(previsions_premier_creneau("5|10h|a|1|2") == 5 && previsions_premier_creneau("") == 0 &&
-               previsions_premier_creneau("x") == 0 && previsions_premier_creneau("-3|") == -3,
-           "premier créneau : atoi");
+    expect(previsions_premier_creneau("5|10h|a|1|2") == 5 && previsions_premier_creneau("0|x") == 0 &&
+               previsions_premier_creneau("14|") == 14,
+           "premier créneau : lu comme atoi le lisait");
+    expect(previsions_premier_creneau("") < 0 && previsions_premier_creneau("x") < 0 &&
+               previsions_premier_creneau("|10h") < 0 && previsions_premier_creneau("-3|") < 0 &&
+               previsions_premier_creneau("15|") >= 15 && previsions_premier_creneau("99999999999999999999|") >= 15,
+           "premier créneau [corrigé] : illisible = refusé par l'appelant (plus le bloc 0), hors bornes aussi");
 }
 
 static void test_previsions_jours() {
@@ -170,8 +207,19 @@ static void test_previsions_jours() {
     expect(rien, "jours : jour hors de 0 à 14 ignoré");
 
     vider(d);
-    previsions_jours_lire("5|Sam|a|inf|-inf|0|0|0|h", d, ancre);
-    expect(std::isinf(d[5].tmin) && std::isinf(d[5].tmax), "jours [figé] : « inf » passe (atof)");
+    d[5].nom_jour = "garde";
+    d[5].tmin = 4.0f;
+    int ign = previsions_jours_lire("5|Sam|a|inf|-inf|0|0|0|h;6|Dim|a|nan|3|0|1|0|;7|Lun|a|1|1e99|0|0|0|", d, ancre);
+    expect(d[5].nom_jour == "garde" && d[5].tmin == 4.0f && d[6].nom_jour.empty() && d[7].nom_jour.empty() && ign == 3,
+           "jours [corrigé] : « inf », « nan », « 1e99 » refusés, jour inchangé");
+
+    vider(d);
+    ancre = -7;
+    g_now = 1790000000;
+    ign = previsions_jours_lire("x|Auj|a|1|2|0|0|0|;0|Auj|a|nan|2|0|0|0|;2|Mer|a|-3.5|151|0|0|0|", d, ancre);
+    expect(d[0].nom_jour.empty() && d[2].nom_jour.empty() && ancre == -7 && ign == 3,
+           "jours [corrigé] : index illisible ignoré (plus le jour 0), jour 0 refusé sans toucher l'ancre, "
+           "température au-delà de 150 refusée");
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -196,12 +244,23 @@ static void test_vigilance() {
     expect(n == 1 && a[0].phenomene == 8, "vigilance : avalanches seules");
 
     vigilance_lire("p|Jaune||Orange|Vert", v);
-    expect(std::strcmp(v.champs[2], "Orange") == 0 && std::strcmp(v.champs[3], "Vert") == 0,
-           "vigilance [figé] : « || » fusionné, le champ suivant remonte (R6, strtok_r)");
+    expect(std::strcmp(v.champs[2], "") == 0 && std::strcmp(v.champs[3], "Orange") == 0 &&
+               std::strcmp(v.champs[4], "Vert") == 0,
+           "vigilance [corrigé] : « || » garde le champ vide, les suivants restent à leur place (R6)");
+    n = vigilance_actives(v, a);
+    expect(n == 1 && a[0].phenomene == 1, "vigilance [corrigé] : l'orange reste sur l'inondation, pas sur le vent");
 
     vigilance_lire("|Rouge|Vert", v);
-    expect(std::strcmp(v.champs[0], "Rouge") == 0 && std::strcmp(v.champs[1], "Vert") == 0,
-           "vigilance [figé] : phrase vide, tout remonte d'un cran");
+    expect(std::strcmp(v.champs[0], "") == 0 && std::strcmp(v.champs[1], "Rouge") == 0 &&
+               std::strcmp(v.champs[2], "Vert") == 0,
+           "vigilance [corrigé] : phrase vide, rien ne remonte");
+
+    vigilance_lire("p|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Jaune|Rouge|Rouge", v);
+    expect(std::strcmp(v.champs[12], "Jaune") == 0, "vigilance : au-delà de 13 champs, le 13e s'arrête au « | »");
+
+    vigilance_lire("p|Vert|", v);
+    expect(std::strcmp(v.champs[1], "Vert") == 0 && v.champs[2][0] == '\0' && v.champs[3][0] == '\0',
+           "vigilance : « | » final, champ vide puis rien");
 
     vigilance_lire("p|Rouge|Jaune|Jaune|Jaune|Jaune|Jaune|Jaune", v);
     n = vigilance_actives(v, a);
@@ -255,11 +314,19 @@ static void test_alertes_ha() {
     }
     {
         LecteurAlertesHa l(";;x;a|b;id|n|t|reste;id2||");
-        expect(l.suivant().type == AlerteHaType::AUTRE, "bandeaux [figé] : « ;; » sauté, un champ = AUTRE");
+        expect(l.suivant().type == AlerteHaType::AUTRE, "bandeaux : « ;; » sauté, un champ = AUTRE");
         expect(l.suivant().type == AlerteHaType::AUTRE, "bandeaux : deux champs = AUTRE");
         expect(alerte_vaut(l.suivant(), "id", "n", "t"), "bandeaux : le texte s'arrête au « | » suivant");
         expect(alerte_vaut(l.suivant(), "id2", "", ""), "bandeaux : niveau et texte vides gardés");
         expect(l.suivant().type == AlerteHaType::FIN, "bandeaux : fin");
+    }
+    {
+        // Un enregistrement vide ne décale rien (défaut 2 du lot F, faux positif ici) : chaque
+        // alerte porte son id, et ses champs vides restent à leur place (split_fields).
+        LecteurAlertesHa l("a|Rouge|x;;b||y");
+        expect(alerte_vaut(l.suivant(), "a", "Rouge", "x") && alerte_vaut(l.suivant(), "b", "", "y") &&
+                   l.suivant().type == AlerteHaType::FIN,
+               "bandeaux : « ;; » et niveau vide, aucun décalage");
     }
     {
         LecteurAlertesHa l("@n:abc;@n:;@n:-2");
@@ -390,6 +457,13 @@ static void test_pluie_barres() {
                b[4].niveau == 0,
            "pluie [figé] : sans « | » sauté, index par atoi (hors bornes rendus, « x » = 0), intensité vide = 0");
 
+    // « ;; » sauté sans décalage (défaut 2 du lot F, faux positif ici) : chaque barre porte
+    // son index, et une intensité vide reste vide.
+    n = pluie_barres_lire("0|1;;1|;;2|3", b);
+    expect(n == 3 && b[0].idx == 0 && b[0].niveau == 1 && b[1].idx == 1 && b[1].niveau == 0 && b[2].idx == 2 &&
+               b[2].niveau == 3,
+           "pluie : enregistrement ou intensité vides, aucun décalage");
+
     n = pluie_barres_lire("1|a|b", b);
     expect(n == 1 && b[0].niveau == 0, "pluie : intensité = tout après le premier « | »");
 
@@ -415,10 +489,14 @@ static void test_pluie_phrase() {
     p = pluie_phrase_lire("@-");
     expect(p.code && p.niveau == -2 && p.debut == 0, "phrase : aucune source");
     // HA envoie « @-1,0 » quand il n'a pas de données (packages/tab5_meteo_sources.yaml,
-    // tab5_push.yaml) : la tablette le lit comme « @- » (aucune source, phrase vide) et
-    // n'affiche jamais « Pas de données ». Signalé avec le lot F, pas corrigé ici.
+    // tab5_push.yaml, déjà ainsi dans la 3.7.0) : niveau -1, « Pas de données » à l'écran
+    // (rain_phrase_render). Avant le correctif, lu comme « @- » (aucune source, phrase vide).
     p = pluie_phrase_lire("@-1,0");
-    expect(p.code && p.niveau == -2 && p.debut == 0, "phrase [figé] : « @-1,0 » lu comme « @- » (aucune source)");
+    expect(p.code && p.niveau == -1 && p.debut == 0, "phrase [corrigé] : « @-1,0 » = pas de données (niveau -1)");
+    p = pluie_phrase_lire("@-1");
+    expect(p.code && p.niveau == -1 && p.debut == 0, "phrase [corrigé] : « @-1 » sans virgule = pas de données");
+    p = pluie_phrase_lire("@-x");
+    expect(p.code && p.niveau == -2, "phrase : « @- » suivi d'autre chose qu'un chiffre = aucune source");
     p = pluie_phrase_lire("@3");
     expect(p.code && p.niveau == 3 && p.debut == 0, "phrase : sans virgule, début 0");
     p = pluie_phrase_lire("@x,y");
@@ -491,7 +569,7 @@ static void test_calendrier_jour() {
     }
     {
         LecteurJourCalendrier l(";;sans;vide|;|x;a|b|c");
-        expect(l.suivante().type == CalJourType::AUTRE, "jour [figé] : « ;; » sauté, sans « | » = AUTRE");
+        expect(l.suivante().type == CalJourType::AUTRE, "jour : « ;; » sauté, sans « | » = AUTRE");
         expect(l.suivante().type == CalJourType::AUTRE, "jour : texte vide = AUTRE");
         CalJourLigne x = l.suivante();
         expect(x.type == CalJourType::LIGNE && x.genre[0] == '\0' && std::strcmp(x.texte, "x") == 0,
@@ -510,6 +588,17 @@ static void test_calendrier_jour() {
     {
         LecteurJourCalendrier l("");
         expect(l.suivante().type == CalJourType::FIN, "jour : vide");
+    }
+    {
+        // « ;; » sauté sans décalage (défaut 2 du lot F, faux positif ici) : chaque ligne
+        // porte son genre, l'écran ne compte que les LIGNE.
+        LecteurJourCalendrier l("rdv|A;;ferie|B");
+        CalJourLigne a = l.suivante();
+        CalJourLigne b = l.suivante();
+        expect(a.type == CalJourType::LIGNE && std::strcmp(a.genre, "rdv") == 0 && std::strcmp(a.texte, "A") == 0 &&
+                   b.type == CalJourType::LIGNE && std::strcmp(b.genre, "ferie") == 0 && std::strcmp(b.texte, "B") == 0 &&
+                   l.suivante().type == CalJourType::FIN,
+               "jour : « ;; », aucun décalage");
     }
 }
 
@@ -606,8 +695,11 @@ static void test_solaire() {
     expect(std::isnan(lire("")) && std::isnan(lire("abc")), "solaire : vide ou illisible = NAN");
     expect(std::isnan(lire("inf")) && std::isnan(lire("nan")), "solaire : non fini = NAN");
     expect(solaire_pourcent("45xyz", 2) == 45.0f, "solaire : lu sur n octets, sans zéro final");
-    expect(lire("000000000000000099") == 0.0f, "solaire [figé] : coupé à 15 octets (« …99 » perdu)");
-    expect(lire("1234567890123456789") == 100.0f, "solaire [figé] : long = coupé puis borné");
+    expect(lire("000000000000000099") == 99.0f, "solaire [corrigé] : plus coupé à 15 octets (« …99 » lu)");
+    expect(lire("1234567890123456789") == 100.0f, "solaire : long mais lisible = lu puis borné");
+    const std::string limite = "45" + std::string(kChampNombreMax - 2, '0');  // 31 octets
+    expect(lire(limite.c_str()) == 100.0f && std::isnan(lire((limite + "0").c_str())),
+           "solaire [corrigé] : au-delà de 31 octets refusé (NAN), pas coupé");
 }
 
 static bool piece(const char* cle, const char* reste, PieceClimatLu& lu) {
@@ -745,6 +837,65 @@ static void test_clim_etat() {
     }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// Payloads tels que HA les envoie : mêmes sorties qu'avant les correctifs du lot F
+// ════════════════════════════════════════════════════════════════════════════
+
+static void test_payloads_ha() {
+    // Heures (packages/tab5_push.yaml, section 8 ; identique dans la 3.7.0) :
+    // « i|HH:00|condition|temp|pluvio; » × 5, nombres écrits par Jinja après `| float(0)`,
+    // créneau sans prévision = « i|00:00|unknown|0|0; ».
+    HourForecastData h[15];
+    vider(h);
+    const char* heures =
+        "5|14:00|partlycloudy|21.5|0.0;6|15:00|rainy|-3.0|1.2;7|16:00|clear-night|0.30000000000000004|1e-05;"
+        "8|00:00|unknown|0|0;9|18:00|sunny|104.0|0.0;";
+    int ign = previsions_heures_lire(heures, h);
+    expect(ign == 0 && previsions_premier_creneau(heures) == 5, "HA heures : rien d'ignoré, bloc 5");
+    expect(h[5].heure_texte == "14:00" && h[5].condition == "partlycloudy" && h[5].temp == 21.5f && h[5].pluvio == 0.0f &&
+               h[6].temp == -3.0f && h[6].pluvio == static_cast<float>(1.2) &&
+               h[7].temp == static_cast<float>(0.30000000000000004) && h[7].pluvio == static_cast<float>(1e-05) &&
+               h[8].heure_texte == "00:00" && h[8].condition == "unknown" && h[8].temp == 0.0f && h[9].temp == 104.0f,
+           "HA heures : mêmes valeurs qu'avec atoi/atof");
+
+    // Jours (section 5) : « i|nom|condition|tmin|tmax|repos|dimanche|passé|heures; » × 15.
+    DayForecastData d[15];
+    vider(d);
+    int32_t ancre = -7;
+    g_now = 1790000000;
+    ign = previsions_jours_lire(
+        "0|Auj|rainy|8.5|15.0|0|0|0|08:00-16:00;1|Mar|sunny|-2.0|4.0|1|0|0|;14|Dim|unknown|0|0|1|1|1|;", d, ancre);
+    expect(ign == 0 && ancre == local_day_number_today() && d[0].nom_jour == "Auj" && d[0].tmin == 8.5f &&
+               d[0].tmax == 15.0f && d[0].heures_ouverture == "08:00-16:00" && d[1].tmin == -2.0f && d[1].est_repos &&
+               d[14].condition == "unknown" && d[14].est_dimanche && d[14].est_passe && d[14].tmax == 0.0f,
+           "HA jours : mêmes valeurs qu'avec atoi/atof, ancre posée");
+
+    // Vigilance (script tab5_push_alertes) : code de pluie, globale, 11 phénomènes, jamais vides.
+    VigilanceLue v;
+    VigilanceActive a[kVigilanceActivesMax];
+    vigilance_lire("@2,1790000600|Orange|Vert|Orange|Jaune|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert", v);
+    const int n = vigilance_actives(v, a);
+    expect(std::strcmp(v.champs[0], "@2,1790000600") == 0 && vigilance_niveau(v.champs[1]) == NiveauVigilance::ORANGE &&
+               n == 2 && a[0].phenomene == 1 && a[1].phenomene == 2 && std::strcmp(v.champs[12], "Vert") == 0,
+           "HA vigilance : 13 champs à leur place");
+    vigilance_lire("@-1,0|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert|Vert", v);
+    expect(std::strcmp(v.champs[0], "@-1,0") == 0 && v.champs[11][0] == '\0' && vigilance_actives(v, a) == 0,
+           "HA vigilance : forme Météo-France (11 champs)");
+
+    // Codes de pluie (packages/tab5_meteo_sources.yaml) autres que « @-1,0 » : inchangés.
+    PluiePhrase p = pluie_phrase_lire("@-");
+    expect(p.code && p.niveau == -2 && p.debut == 0, "HA pluie : « @- » = aucune source");
+    p = pluie_phrase_lire("@0,0");
+    expect(p.code && p.niveau == 0 && p.debut == 0, "HA pluie : « @0,0 » = temps sec");
+    p = pluie_phrase_lire("@5,1790000600");
+    expect(p.code && p.niveau == 5 && p.debut == 1790000600, "HA pluie : « @5,début »");
+
+    // Production solaire (blueprint, solaire_pourcent) : entier de 0 à 100, ou « nan ».
+    auto sol = [](const char* s) { return solaire_pourcent(s, std::strlen(s)); };
+    expect(sol("0") == 0.0f && sol("50") == 50.0f && sol("100") == 100.0f && std::isnan(sol("nan")),
+           "HA solaire : 0, 50, 100, nan");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -772,6 +923,7 @@ int main() {
     test_piece_climat();
     test_clim_reglages();
     test_clim_etat();
+    test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;
