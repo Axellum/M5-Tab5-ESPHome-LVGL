@@ -635,6 +635,7 @@ font:
       - "\U000F024A"  # flower (mini icône : Plantes)
       - "\U000F0297"  # gamepad-variant (mini icône : Arcade)
       - "\U000F02DC"  # home (mini icône : Maison)
+      - "\U000F0335"  # lightbulb (mini icône : Lumières, ADR-0046)
       - "\U000F036C"  # microphone (mini icône : Assistant vocal)
       - "\U000F0379"  # monitor
       - "\U000F0493"  # cog (mini icône : Réglages)
@@ -652,6 +653,7 @@ font:
       - "\U000F0D9B"  # solar-panel (production solaire du bandeau, tous les paliers ; mini icône « auto » de « HA »)
       - "\U000F0E17"  # calendar-month (mini icône : Calendrier)
       - "\U000F0E81"  # bell-alert-outline (mini icône : Alertes)
+      - "\U000F111E"  # window-shutter-open (mini icône : Volets, ADR-0046)
       - "\U000F12A1"  # battery-low (20 à 40 %)
       - "\U000F12A2"  # battery-medium (41 à 80 %)
       - "\U000F14C9"  # plus-minus-variant (mini icône : appareil suivant de la tuile − / +)

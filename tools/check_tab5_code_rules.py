@@ -877,7 +877,6 @@ PUBLIQUES_SANS_APPELANT = {
     "clim_preset_actif",
     "solaire_present",          # tab5_zones.cpp : production solaire connue
     "ecran_disponible",         # tab5_zones.cpp : écran disponible pour un appui long
-    "boutons_haut_apply_ui",    # tab5_zones.cpp : mini icônes des trois boutons du haut
     "tuile_titre_appui",        # tab5_tuiles.cpp : appui sur le titre de la carte centrale
 }
 RE_CPP_DEF = re.compile(r"^[A-Za-z_][\w:<>,\s*&]*?[\s*&](\w+)\s*\([^;{}]*\)\s*(?:const\s*)?\{", re.M)

@@ -1165,6 +1165,9 @@ bool tuiles_definir(const std::string& payload) {
     // Popups lumière, volet et appareil : revalidés (tab5_tuiles_popups.cpp).
     popups_revalider();
     tuiles_appliquer_ui();
+    // Gestes de l'accueil réglés sur Lumières ou Volets (ADR-0046) : disponibles selon les
+    // tuiles, leurs icônes suivent.
+    boutons_haut_apply_ui();
     return true;
 }
 

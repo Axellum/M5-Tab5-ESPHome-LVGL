@@ -113,6 +113,10 @@ constexpr CodeGeste kCodesGestes[] = {
     {"ecoute", Ecran::AUCUN, GesteAction::ECOUTE},
     // Panneau Ok Nabu à lignes (09/10/2026, lot 3, ADR-0041) : ajouté à la fin (NVS, index 17).
     {"nabu_suivant", Ecran::AUCUN, GesteAction::NABU_SUIVANTE},
+    // Popups Lumières et Volets, une page par pièce (09/10/2026, ADR-0046) : ajoutés à la fin
+    // (NVS, index 18 et 19).
+    {"lumieres", Ecran::LUMIERES, GesteAction::ECRAN},
+    {"volets", Ecran::VOLETS, GesteAction::ECRAN},
 };
 constexpr int kNbCodes = static_cast<int>(sizeof(kCodesGestes) / sizeof(kCodesGestes[0]));
 constexpr int8_t kAuto = -1;
@@ -458,6 +462,8 @@ const char* code_glyphe(int8_t c) {
         case Ecran::REGLAGES: return "\U000F0493";    // cog
         case Ecran::ALERTES: return "\U000F0E81";     // bell-alert-outline
         case Ecran::MAISON: return "\U000F02DC";      // home
+        case Ecran::LUMIERES: return "\U000F0335";    // lightbulb
+        case Ecran::VOLETS: return "\U000F111E";      // window-shutter-open
         case Ecran::ARCADE: return "\U000F0297";      // gamepad-variant
         default: return nullptr;
     }
@@ -721,6 +727,9 @@ bool ecran_sans_zone(Ecran e) {
         case Ecran::CLIM: return zone_absente(Zone::CLIM);
         case Ecran::PLANTES: return zones_pots_presents() == 0;
         case Ecran::TV: return zone_absente(Zone::TV);
+        // Tuiles du blueprint (ADR-0046) : ni lumière ni volet, rien à montrer.
+        case Ecran::LUMIERES: return !tuiles_lumieres_presentes();
+        case Ecran::VOLETS: return !tuiles_volets_presents();
         default: return false;
     }
 }

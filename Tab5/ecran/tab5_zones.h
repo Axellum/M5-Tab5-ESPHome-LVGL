@@ -120,7 +120,7 @@ GesteCible geste_cible(int geste);
 
 // Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-navigation.yaml), routine unique du
 // select « Aller à l'écran » et des gestes de l'accueil (horloge, boutons du haut). Les
-// valeurs 0 à 12 SONT les index des options du select, dans le même ordre
+// valeurs 0 à 14 SONT les index des options du select, dans le même ordre
 // (tests/test_appuis.py) ; ARCADE n'est pas une option du select (lancer l'Arcade à
 // distance n'a pas d'usage), seulement un choix de geste. Un écran de plus : avant ARCADE
 // ici, à la fin du select (ARCADE et NB se décalent : la NVS garde l'index du code dans
@@ -129,8 +129,22 @@ GesteCible geste_cible(int geste);
 // tab5_modal_registry_init (tab5-navigation.yaml).
 enum class Ecran : uint8_t {
     AUCUN,       // « — » : position de repos du select ; « rien » pour un appui long
-    ACCUEIL, ASSISTANT, CALENDRIER, REVEIL, CLIM, PLANTES, TV, CONSOLE, ENERGIE, REGLAGES, ALERTES,
+    ACCUEIL,
+    ASSISTANT,
+    CALENDRIER,
+    REVEIL,
+    CLIM,
+    PLANTES,
+    TV,
+    CONSOLE,
+    ENERGIE,
+    REGLAGES,
+    ALERTES,
     MAISON,      // popup Maison (ADR-0037) : option du select et choix d'appui long (code « maison »)
+    // Popups Lumières et Volets, une page par pièce (ADR-0046, 09/10/2026) : codes « lumieres »
+    // et « volets », absents sans aucune lumière (aucun volet) dans les tuiles.
+    LUMIERES,
+    VOLETS,
     ARCADE,
     NB
 };
@@ -196,8 +210,9 @@ bool batterie_tension_ui(float tension, uint32_t maintenant_ms);
 // puissance crête choisie dans le blueprint) : l'appui long du bouton « HA » ouvre alors
 // le popup Énergie (choix « auto »), et sa mini icône le signale.
 bool solaire_present();
-// Écran dont la zone est absente de cette maison (clim, plantes sans aucun pot, TV) : sa
-// fenêtre n'aurait rien à montrer ni à piloter. Lu par tab5_ecran_ouvrir.
+// Écran dont la zone est absente de cette maison (clim, plantes sans aucun pot, TV ;
+// Lumières et Volets sans aucune tuile de ce genre, ADR-0046) : sa fenêtre n'aurait rien
+// à montrer ni à piloter. Lu par tab5_ecran_ouvrir.
 bool ecran_sans_zone(Ecran e);
 // Écran qu'un geste peut ouvrir : sa zone est là et, pour Énergie, la production
 // solaire est reçue (la condition de l'appui long du bouton « HA » depuis le 06/10/2026).

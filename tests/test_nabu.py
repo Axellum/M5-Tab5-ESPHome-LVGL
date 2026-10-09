@@ -408,7 +408,8 @@ def test_cle_defil_du_blueprint():
 def test_tap_des_heures_dans_le_blueprint():
     entrees = _entrees()
     options = [o["value"] for o in entrees["geste_heures_court"]["selector"]["select"]["options"]]
-    assert options[-1] == "nabu_suivant"
+    # Après les actions du lot A ; Lumières et Volets (ADR-0046) sont venus après.
+    assert options[-3:] == ["nabu_suivant", "lumieres", "volets"]
     assert "panneau Ok Nabu" in entrees["geste_heures_court"]["description"]
 
 
