@@ -179,7 +179,7 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 | `test_tuiles_icones.py` | `tests/` | Contenu | Palette des icônes des tuiles : parties générées par `tools/gen_tuiles_icones.py` à jour (C++, glyphes MDI, blueprint). |
 | `test_zones.py` | `tests/` | Contenu | Zones optionnelles : enum `Zone`, `kCles`, demande `esphome.tab5_zones` et HA d'accord, dans l'ordre. |
 | `test_guards.py` | `tests/` | Contenu | Joue les 8 garde-fous ci-dessous sur le C++/YAML réel (chrome modal, registre, règles de code, salles Marble, niveaux Lode, niveaux d'Arcanoïde, questions de Trial Poursuite, comptes de la cartographie). |
-| `test_moteurs_hote.py` | `tests/` | Contenu | Tests C++ des moteurs (audit du 07/10/2026, OUT-2) : chaque `tools/test_*.cpp` compilé et lancé par le job `python`, perft des tests C++ d'échecs et de dames égaux à leurs miroirs Python, bloc du moteur des dames extractible de `draughts_game.cpp` sans LVGL ni préférences. |
+| `test_moteurs_hote.py` | `tests/` | Contenu | Tests C++ des moteurs (audit du 07/10/2026, OUT-2) : chaque `tools/test_*.cpp` compilé et lancé par le job `python`, perft des tests C++ d'échecs et de dames égaux à leurs miroirs Python, moteur des dames (`draughts_engine.*`) pur : ni LVGL, ni ESPHome, ni préférences. |
 | `conftest.py` | `tests/` | — | Pose une fois le `sys.path` des outils importés par les tests (`tools/`, `tools/demo/`, `tools/rendu/`…). |
 | `commun.py` | `tests/` | — | Utilitaires communs (OUT-3) : chemins, `lire()`, chargeurs YAML (libyaml quand elle est là), `fichiers_du_depot()` (fichiers suivis ou non ignorés), `bloc_service()`, cache Jinja de session. |
 | `__init__.py` | `tests/` | — | Marqueur de package. |
@@ -190,10 +190,10 @@ Depuis le 26/09/2026, il n'y a plus de fichiers de production privés : le HA de
 |---|---|---|---|
 | `test_go_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Règles du Go contre le vrai `go_engine.cpp` : capture, suicide, ko, œil, handicap, territoire, score, parties aléatoires — g++ en CI (job `python`). Seul test du Go : son miroir Python, doublon, est retiré le 08/10/2026. |
 | `test_chess_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Le vrai `chess_ai.cpp` contre la suite perft (5 positions, 17 profondeurs) et une recherche courte, sous ASan + UBSan — g++ en CI (job `python`). Fait foi. |
-| `test_draughts_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Le `Draughts::Engine` de `draughts_game.cpp` (extrait au build par `tools/hote/extraire_moteur_dames.py`) contre les perft 10×10 et 8×8 et les règles, sous ASan + UBSan — g++ en CI (job `python`). Fait foi. |
+| `test_draughts_engine.cpp` | `tools/` | Unitaire (C++ hôte) | Le `Draughts::Engine` de `draughts_engine.cpp` (module pur, compilé tel quel) contre les perft 10×10 et 8×8 et les règles, sous ASan + UBSan — g++ en CI (job `python`). Fait foi. |
 | `test_chess_perft.py` | `tools/` | Unitaire (miroir Python) | Générateur d'échecs contre la suite perft standard ; miroir de `test_chess_engine.cpp`, gardé pour un poste sans g++. |
 | `test_draughts_engine.py` | `tools/` | Unitaire (miroir Python) | Générateur de dames (10×10 et 8×8) contre les perft de référence + règles (prise majoritaire, dame volante, promotion) ; miroir de `test_draughts_engine.cpp`, gardé pour un poste sans g++. |
-| `hote/` | `tools/` | Support | `esphome.h` minimal (journal, `millis()`) pour compiler un moteur hors ESPHome, et `extraire_moteur_dames.py`. |
+| `hote/` | `tools/` | Support | `esphome.h` minimal (journal, `millis()`) pour compiler le moteur d'échecs hors ESPHome. |
 | `test_alarm_clock.cpp` | `tools/` | Unitaire (C++ hôte) | Moteur du réveil réel (`alarm_clock.cpp` + `tab5_core.cpp`) : 13 scénarios, horloge simulée, fuseau Europe/Paris et changements d'heure — g++ en CI (job `python`). |
 | `test_tab5_socle.cpp` | `tools/` | Unitaire (C++ hôte) | Socle commun (`tab5_champs.cpp` + `tab5_core.cpp`, lot L5) : lecture bornée des payloads, dates, heures « HH:MM », géométrie et modèle des tuiles — g++ en CI (job `python`). |
 
@@ -276,7 +276,7 @@ python tools/contrat_api.py --matrice --en    # tableau N-1 pour la note de rele
 │   ├── rendu/   (captures du rendu hors tablette)
 │   ├── sanitizers/   (fuzz et cas ciblés sous ASan + UBSan)
 │   ├── site/   (construction du site de documentation)
-│   ├── hote/   (esphome.h minimal, extraction du moteur des dames)
+│   ├── hote/   (esphome.h minimal du test d'échecs)
 │   ├── test_go_engine.cpp
 │   ├── test_chess_engine.cpp
 │   ├── test_draughts_engine.cpp
