@@ -18,7 +18,14 @@
  *       nomme aucune entité ; elle dit seulement qu'elle veut la liste. Le téléchargement
  *       bloque la boucle principale le temps que HA réponde (http_request est synchrone
  *       jusqu'aux en-têtes) puis le temps du décodage JPEG (un seul appel) : d'où une
- *       image à la fois, jamais deux, et rien quand le popup est fermé.
+ *       image à la fois, jamais deux, et rien quand le popup est fermé. Une caméra hors
+ *       ligne (ou un HA qui ne répond pas) gèle l'écran jusqu'au timeout de http_request
+ *       (12 s, tab5-assist.yaml) à CHAQUE essai : après un échec, l'essai suivant attend
+ *       10 s, puis 30 s, puis 60 s (kEchecsDelaisMs), remis à zéro par une image reçue, un
+ *       changement de page ou une réouverture. Ne pas raccourcir ces délais sans l'avoir
+ *       mesuré sur la tablette avec une caméra débranchée.
+ *       Un téléchargement sans fin ni échec au bout de 60 s est abandonné par
+ *       online_image.release (connexion fermée), jamais seulement oublié.
  *       Couleurs : styles de rôle du YAML (cameras_popup.yaml) ; ce fichier n'écrit que du
  *       texte, des affichages et la source de l'image. Pas de cameras_rejouer_theme : rien
  *       n'y est peint d'une couleur.
@@ -33,6 +40,7 @@
  */
 #include "tab5_internal.h"
 #include "tab5_parse.h"
+#include "esphome/components/image/image.h"
 #include "lvgl.h"
 #include <cstdio>
 #include <cstring>
@@ -49,9 +57,14 @@ namespace {
 constexpr int kImageL = 960;
 constexpr int kImageH = 540;
 constexpr int kRafraichirMs = 5000;            // après une image, avant la suivante
-constexpr int kApresErreurMs = 10000;          // après un échec
+constexpr int kApresErreurMs = 10000;          // après un échec (URL illisible, 1er échec réseau)
 constexpr uint32_t kRedemanderMs = 240000;     // liste (jetons) redemandée à HA
-constexpr uint32_t kErreurRedemanderMs = 30000;
+constexpr uint32_t kErreurRedemanderMs = 30000;   // après un échec, et tant que rien n'est reçu
+// Échecs réseau de suite sur la page montrée : 10 s, 30 s, puis 60 s avant le suivant.
+// Une caméra hors ligne gèle l'écran jusqu'au timeout de http_request (12 s) à chaque
+// essai : plus ils sont espacés, moins l'écran gèle. Remis à zéro par une image reçue ou
+// un changement de page.
+constexpr int kEchecsDelaisMs[] = {10000, 30000, 60000};
 constexpr uint32_t kTelechargementPerduMs = 60000;   // au-delà, plus rien n'est attendu
 
 struct Camera {
@@ -73,6 +86,13 @@ time_t s_quand = 0;         // heure de cette image
 bool s_erreur = false;      // le dernier téléchargement de la page a échoué
 bool s_sans_adresse = false;
 uint32_t s_demande_ms = 0;
+int s_echecs = 0;           // échecs réseau de suite sur la page montrée
+
+int delai_apres_echec() {
+    const int n = static_cast<int>(sizeof(kEchecsDelaisMs) / sizeof(kEchecsDelaisMs[0]));
+    const int i = s_echecs < 1 ? 0 : (s_echecs > n ? n - 1 : s_echecs - 1);
+    return kEchecsDelaisMs[i];
+}
 
 bool visible() {
     const CamerasUI& u = g_cameras_ui;
@@ -95,12 +115,12 @@ void peindre() {
     const CamerasUI& u = g_cameras_ui;
     const bool image = s_n > 0 && s_montree == s_page;
     const char* message = nullptr;
-    if (!s_recue) message = "En attente de Home Assistant";
-    else if (s_n == 0) message = "Aucune caméra choisie";
+    if (!s_recue) message = tr_noop("En attente de Home Assistant");
+    else if (s_n == 0) message = tr_noop("Aucune caméra choisie");
     else if (image) message = nullptr;
-    else if (s_sans_adresse) message = "Adresse de Home Assistant inconnue";
-    else if (s_erreur) message = "Image indisponible";
-    else message = "Chargement...";
+    else if (s_sans_adresse) message = tr_noop("Adresse de Home Assistant inconnue");
+    else if (s_erreur) message = tr_noop("Image indisponible");
+    else message = tr_noop("Chargement...");
     ui_hidden(u.image, !image);
     ui_hidden(u.message, message == nullptr);
     if (message != nullptr) ui_text(u.message, tr(message));
@@ -118,7 +138,9 @@ void peindre() {
     pagination_afficher(u.pastille, s_n, s_page);
 }
 
-// Plus rien d'affiché ni de gardé : l'image décodée (~1 Mo de PSRAM) est rendue.
+// Plus rien d'affiché : l'image décodée (~1 Mo de PSRAM) est rendue et une connexion en
+// cours est fermée (online_image.release). Le tampon de téléchargement d'ESPHome, lui, ne
+// rétrécit pas : il garde la taille du plus gros JPEG reçu.
 void liberer() {
     ui_hidden(g_cameras_ui.image, true);
     s_montree = -1;
@@ -134,6 +156,9 @@ void charger() {
     char url[kCameraUrlMax];
     if (!camera_url(Champ{c.image, std::strlen(c.image)}, base, kImageL, kImageH, url, sizeof(url))) {
         s_sans_adresse = c.image[0] != '\0' && !url_absolue(c.image) && base[0] == '\0';
+        // Sans l'URL : elle porte le jeton d'accès de HA.
+        ESP_LOGW("tab5.cameras", "URL de la caméra %d illisible (%s)", s_page + 1,
+                 s_sans_adresse ? "adresse de HA inconnue" : "image vide, trop longue ou refusée");
         s_erreur = true;
         peindre();
         attendre(kApresErreurMs);
@@ -154,6 +179,7 @@ void afficher_page(int page) {
     if (page < 0 || page >= s_n || page == s_page) return;
     s_page = page;
     s_erreur = false;
+    s_echecs = 0;   // une autre caméra : son premier essai sans attendre
     ui_mark_activity();
     peindre();
     // Un téléchargement en cours (autre caméra) : sa fin enchaîne sur celle-ci.
@@ -209,9 +235,12 @@ void cameras_ouvrir() {
     animate_popup_open(u.popup);
     ui_mark_activity();
     peindre();
-    // La liste à chaque ouverture : des jetons neufs. Une liste récente sert sans attendre.
+    s_echecs = 0;
+    // La liste à chaque ouverture : des jetons neufs. Une liste récente sert sans attendre ;
+    // sinon le prochain tic redemande si rien n'est venu (un blueprint pas à jour ne répond pas).
     demander();
-    if (s_recue && s_n > 0 && esphome::millis() - s_recue_ms < kRedemanderMs) attendre(0);
+    const bool recente = s_recue && s_n > 0 && esphome::millis() - s_recue_ms < kRedemanderMs;
+    attendre(recente ? 0 : static_cast<int>(kErreurRedemanderMs));
 }
 
 void cameras_tic() {
@@ -221,11 +250,26 @@ void cameras_tic() {
         return;
     }
     const uint32_t maintenant = esphome::millis();
+    if (!s_recue) {
+        // Aucune liste encore : redemandée toutes les 30 s tant que le popup est ouvert.
+        if (maintenant - s_demande_ms >= kErreurRedemanderMs) demander();
+        attendre(static_cast<int>(kErreurRedemanderMs));
+        return;
+    }
     if (s_en_cours >= 0) {
         if (maintenant - s_en_cours_ms < kTelechargementPerduMs) return;   // sa fin enchaîne
-        s_en_cours = -1;   // jamais fini ni échoué : plus rien n'est attendu
+        // Jamais fini ni échoué : la connexion est fermée et le tampon rendu (release),
+        // pour qu'une image en retard ne s'affiche pas sur la page d'une autre caméra et
+        // que le téléchargement suivant puisse partir.
+        liberer();
+        s_en_cours = -1;
+        s_erreur = true;
+        s_echecs++;
+        peindre();
+        attendre(delai_apres_echec());
+        return;
     }
-    if (s_recue && maintenant - s_demande_ms >= kRedemanderMs) demander();
+    if (maintenant - s_demande_ms >= kRedemanderMs) demander();
     charger();
 }
 
@@ -243,7 +287,10 @@ void cameras_image_prete() {
     s_montree = cam;
     s_quand = tab5_time_source(nullptr);
     if (u.image != nullptr && u.source != nullptr) lv_image_set_src(u.image, u.source->get_lv_image_dsc());
-    if (cam == s_page) s_erreur = false;
+    if (cam == s_page) {
+        s_erreur = false;
+        s_echecs = 0;
+    }
     peindre();
     attendre(cam == s_page ? kRafraichirMs : 0);
 }
@@ -261,12 +308,15 @@ void cameras_image_erreur() {
         liberer();
         return;
     }
-    if (cam == s_page) s_erreur = true;
-    ESP_LOGW("tab5.cameras", "image de la caméra %d indisponible", cam + 1);
+    if (cam == s_page) {
+        s_erreur = true;
+        s_echecs++;
+    }
+    ESP_LOGW("tab5.cameras", "image de la caméra %d indisponible (%d échec(s) de suite)", cam + 1, s_echecs);
     // Jeton périmé (401) ou caméra hors ligne : la liste redemandée, 30 s au plus souvent.
     if (esphome::millis() - s_demande_ms >= kErreurRedemanderMs) demander();
     peindre();
-    attendre(cam == s_page ? kApresErreurMs : 0);
+    attendre(cam == s_page ? delai_apres_echec() : 0);
 }
 
 void cameras_hote_ha(const std::string& adresse) {

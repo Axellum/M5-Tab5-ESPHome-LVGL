@@ -13,7 +13,7 @@ What the window can say instead of an image:
 - « En attente de Home Assistant »: the tablet has asked Home Assistant for the cameras and has no answer yet (the blueprint's automation must be up to date).
 - « Aucune caméra choisie »: the « Caméras · Cameras » section is empty.
 - « Chargement... »: the first image of this camera is on its way.
-- « Image indisponible »: the image could not be read (camera offline, a format the tablet does not read, such as a progressive JPEG); the tablet tries again 10 s later.
+- « Image indisponible »: the image could not be read (camera offline, a format the tablet does not read, such as a progressive JPEG); the tablet tries again 10 s later, then 30 s, then every minute while it keeps failing (each try may freeze the screen up to 12 s).
 - « Adresse de Home Assistant inconnue »: the tablet does not know how to reach Home Assistant. Fill « Adresse de Home Assistant » in the blueprint's section (for instance `https://ha.example.com`); it is needed anyway with https, another port or a reverse proxy.
 - « Plus d'image depuis 14:32:05 », under the image in place of its time: the last image stays on screen, but the next ones fail.
 
@@ -34,7 +34,7 @@ Ce que la fenêtre peut dire à la place d'une image :
 - « En attente de Home Assistant » : la tablette a demandé les caméras à Home Assistant et n'a pas encore de réponse (l'automatisation du blueprint doit être à jour).
 - « Aucune caméra choisie » : la section « Caméras · Cameras » est vide.
 - « Chargement... » : la première image de cette caméra arrive.
-- « Image indisponible » : l'image n'a pas pu être lue (caméra hors ligne, format que la tablette ne lit pas, comme un JPEG progressif) ; la tablette réessaie 10 s plus tard.
+- « Image indisponible » : l'image n'a pas pu être lue (caméra hors ligne, format que la tablette ne lit pas, comme un JPEG progressif) ; la tablette réessaie 10 s plus tard, puis 30 s, puis toutes les minutes tant que l'échec dure (chaque essai peut figer l'écran jusqu'à 12 s).
 - « Adresse de Home Assistant inconnue » : la tablette ne sait pas joindre Home Assistant. Remplir « Adresse de Home Assistant » dans la section du blueprint (par exemple `https://ha.example.com`) ; c'est nécessaire de toute façon en https, sur un autre port ou derrière un proxy.
 - « Plus d'image depuis 14:32:05 », sous l'image à la place de son heure : la dernière image reste affichée, mais les suivantes échouent.
 
