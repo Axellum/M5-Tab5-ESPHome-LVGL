@@ -13,8 +13,8 @@
 #                          tab5-ui-tokens.yaml, en miroir du cadre Ok Nabu ; 90 avant le
 #                          09/10/2026 : la consigne « nageait »), bas à y 308 (25 px
 #                          au-dessus du bandeau, comme bandeau → titres météo), − et + de
-#                          56 px (la taille de leur police, mdi_font_56) à 8 px des quatre
-#                          bords. Températures centrées
+#                          52 px à 14 px des côtés et 10 px du haut et du bas (62 px à 14 px
+#                          des quatre bords avant). Températures centrées
 #                          entre les boutons du haut (y 110) et la tuile (y 236), alignées
 #                          sur le bord gauche du − et le bord droit du +. Valeurs et consigne
 #                          dans la police de la date du thème (style_police_date).
@@ -200,7 +200,7 @@ obj:
               align_to: { id: clim_target, align: OUT_LEFT_MID, x: -8 }
 
           # Autre appareil que la clim (ADR-0033) : son icône (palette des tuiles) et sa
-          # valeur dans la police de la date, centrées entre − et + (64..341 : 277 px ;
+          # valeur dans la police de la date, centrées entre − et + (66..339 : 273 px ;
           # « 100 % » et une icône de 45 px en prennent ~180). Masquée quand la clim est
           # choisie ; peinte par tab5_reglables.cpp.
           - obj:
@@ -224,7 +224,7 @@ obj:
               id: btn_clim_target_click
               align: CENTER
               # 200 : couvre la valeur d'un autre appareil (icône + texte, jusqu'à 243 px)
-              # sans toucher − (8 à 64) ni + (341 à 397) ; toute la hauteur de la tuile
+              # sans toucher − (14 à 66) ni + (339 à 391) ; toute la hauteur de la tuile
               # dans sa bordure.
               width: 200
               height: ${ligne_zone_h}
@@ -249,12 +249,15 @@ obj:
           - button:
               id: btn_clim_minus
               align: LEFT_MID
-              # + bordure 1 px de la tuile = 8 px du bord, comme en haut et en bas : 56 px
-              # (la police de l'icône) dans les 70 de l'intérieur de la tuile, 7 + 7 d'air
-              # (62 px à 14 du bord tant que la tuile faisait 90 px, avant le 09/10/2026).
-              x: 7
-              width: 56
-              height: 56
+              # + bordure 1 px de la tuile = 14 px du bord, aligné sur les températures au-dessus
+              # (x 14) ; 52 px de haut, 10 px d'air en haut et en bas dans les 72 de la tuile
+              # (62 px à 14 px des quatre bords tant qu'elle faisait 90 px, avant le
+              # 09/10/2026). Pas plus grand ni plus près du bord : en gélule (thème Capsule,
+              # rayon 36, bordure de 4 px), un coin y serait rogné par l'arrondi (vu au rendu
+              # avec 56 px à 8 px du bord) ; tests/test_nabu.py le calcule dans les 21 thèmes.
+              x: 13
+              width: 52
+              height: 52
               radius: 12
               styles: style_clim_btn
               pressed:
@@ -284,9 +287,9 @@ obj:
           - button:
               id: btn_clim_plus
               align: RIGHT_MID
-              x: -7
-              width: 56
-              height: 56
+              x: -13
+              width: 52
+              height: 52
               radius: 12
               styles: style_clim_btn
               pressed:

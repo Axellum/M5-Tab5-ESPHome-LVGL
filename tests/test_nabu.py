@@ -162,15 +162,16 @@ def test_panneaux_dans_le_cadre_et_non_cliquables():
 # Géométrie : l'arrondi du cadre dans les 21 thèmes, les pastilles
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _formes_du_cadre():
-    """{fichier du thème: (rayon, bordure)} de style_clim_btn_page (tab5_theme.cpp) : la
-    valeur de base, ou celle du thème en sombre (le clair a les mêmes formes)."""
+def _formes_du_cadre(style="style_clim_btn_page", index=8):
+    """{fichier du thème: (rayon, bordure)} d'un style de cadre (tab5_theme.cpp, son index
+    dans la table des formes) : la valeur de base, ou celle du thème et du mode. Par défaut
+    style_clim_btn_page, le cadre Ok Nabu ; style_clim_carte_page (3) : la tuile − / +."""
     import gen_themes
     theme = _lire("Tab5", "ecran", "tab5_theme.cpp")
     base = {}
     par_theme = {}
     for prop, valeur, suite in re.findall(
-            r"\{8, LV_STYLE_(RADIUS|BORDER_WIDTH), FORME_NOMBRE, (\d+)\},  // style_clim_btn_page(.*)$",
+            rf"\{{{index}, LV_STYLE_(RADIUS|BORDER_WIDTH), FORME_NOMBRE, (\d+)\}},  // {style}(.*)$",
             theme, re.M):
         m = re.fullmatch(r" (\w+) \((sombre|clair)\)", suite)
         if not suite:
@@ -250,17 +251,36 @@ def test_pastilles_entre_le_cadre_et_la_carte_centrale():
 
 def test_tuile_clim_en_miroir_du_cadre():
     """La tuile − / + (climate_card.yaml) a la hauteur du cadre Ok Nabu, bas à y 308 comme
-    lui ; − et + sont à la même distance des quatre bords (bordure de 1 px comprise)."""
+    lui. − et + : à 14 px des côtés (bordure de 1 px comprise), alignés sur les températures
+    au-dessus, centrés en hauteur ; leurs coins arrondis restent dans l'arrondi intérieur de
+    la tuile dans les 21 thèmes et les deux modes (Capsule : rayon 36, bordure de 4 px ; au
+    rendu du 09/10/2026, 56 px à 8 px du bord y étaient rognés)."""
     carte = avec_jetons(_lire("Tab5", "ui_components", "climate_card.yaml"))
     entete = carte.split("\nobj:", 1)[1].split("widgets:", 1)[0]
     y_carte, h_carte = (int(re.search(rf"^  {c}: (\d+)$", entete, re.M).group(1)) for c in ("y", "height"))
     assert y_carte + h_carte == 308
     zone = carte.split("id: climate_controls_zone", 1)[1].split("widgets:", 1)[0]
     assert "align: BOTTOM_MID" in zone and "width: 405" in zone and f"height: {CADRE}\n" in zone
-    for ident in ("btn_clim_minus", "btn_clim_plus"):
+    temperatures = [int(v) for v in re.findall(r"align: (?:LEFT|RIGHT)_MID\n        x: (-?\d+)", carte)]
+    assert len(temperatures) == 2
+    w_tuile = 405
+    boites = []
+    for ident, cote in (("btn_clim_minus", "LEFT_MID"), ("btn_clim_plus", "RIGHT_MID")):
         bouton = carte.split(f"id: {ident}", 1)[1].split("on_short_click", 1)[0]
-        x, w, h = (int(re.search(rf"\n\s+{c}: (-?\d+)", bouton).group(1)) for c in ("x", "width", "height"))
-        assert w == h and (CADRE - h) // 2 == abs(x) + 1, ident
+        assert f"align: {cote}" in bouton, ident
+        x, w, h, r = (int(re.search(rf"\n\s+{c}: (-?\d+)", bouton).group(1)) for c in ("x", "width", "height", "radius"))
+        assert w == h and abs(x) + 1 == 14 and [abs(t) for t in temperatures] == [14, 14], ident
+        gauche = 1 + x if x >= 0 else w_tuile - 1 + x - w
+        boites.append((gauche, (CADRE - h) / 2, w, h, r))
+    for (fichier, mode), (rayon, bordure) in _formes_du_cadre("style_clim_carte_page", 3).items():
+        for bx, by, bw, bh, br in boites:
+            # Points des quatre arcs de coin du bouton (rayon local `radius:`, posé sur lui).
+            for cx, cy, sx, sy in ((bx + br, by + br, -1, -1), (bx + bw - br, by + br, 1, -1),
+                                   (bx + br, by + bh - br, -1, 1), (bx + bw - br, by + bh - br, 1, 1)):
+                for k in range(10):
+                    a = math.pi / 2 * k / 9
+                    px, py = cx + sx * br * math.cos(a), cy + sy * br * math.sin(a)
+                    assert _dans_l_arrondi(px, py, w_tuile, CADRE, rayon, bordure), (fichier, mode, (px, py))
 
 
 def test_lignes_centrees_en_hauteur():

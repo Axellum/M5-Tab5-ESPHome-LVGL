@@ -262,7 +262,7 @@ def test_le_rendu_touche_chaque_zone():
 # ─── Tuile − / + : l'icône de la clim tient entre − et + ─────────────────────
 
 def test_icone_de_la_clim_entre_moins_et_plus():
-    """La consigne reste au centre exact de la zone − / + (64..341 : 277 px depuis la
+    """La consigne reste au centre exact de la zone − / + (66..339 : 273 px depuis la
     tuile de 72 px du 09/10/2026, 255 avant), comme avant ;
     l'icône de 45 px est posée à 8 px à sa gauche (align_to, puis suivie en C++ à chaque
     changement de taille). Avec la consigne la plus large (« 88.8 », un °F à décimale) dans
@@ -293,7 +293,7 @@ def test_icone_de_la_clim_entre_moins_et_plus():
         taille = mesures[cle]["date"]["taille"]
         texte = max(police_theme.largeur(m, t, taille, ref) for t in textes)
         gauche = texte // 2 + 8 + 45
-        assert gauche <= 277 // 2 - 10,f"{theme.fichier} : {gauche} px à gauche du centre, entre − et +"
+        assert gauche <= 273 // 2 - 10, f"{theme.fichier} : {gauche} px à gauche du centre, entre − et +"
 
 
 # ─── Blueprint : rendu des vrais modèles ─────────────────────────────────────
