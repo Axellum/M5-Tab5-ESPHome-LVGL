@@ -109,31 +109,35 @@ script:
           u.carte_etat[4] = id(lbl_sw4_state);
           u.popup_tv = id(tv_remote_popup);
           u.popup_clim = id(clim_options_popup);
-          // Popup lumière : les lumières de la pièce.
+          // Popup Lumières : une page par pièce (ADR-0046), ses lignes et les noms des pièces.
           u.lum_popup = id(light_options_popup);
-          u.lum_titre = id(popup_light_title);
-          u.lum_sel[0] = id(btn_light_sel_0);
-          u.lum_sel[1] = id(btn_light_sel_1);
-          u.lum_sel[2] = id(btn_light_sel_2);
-          u.lum_sel[3] = id(btn_light_sel_3);
-          u.lum_sel[4] = id(btn_light_sel_4);
-          u.lum_sel_icone[0] = id(icon_light_sel_0);
-          u.lum_sel_icone[1] = id(icon_light_sel_1);
-          u.lum_sel_icone[2] = id(icon_light_sel_2);
-          u.lum_sel_icone[3] = id(icon_light_sel_3);
-          u.lum_sel_icone[4] = id(icon_light_sel_4);
-          u.lum_sel_nom[0] = id(lbl_light_sel_0);
-          u.lum_sel_nom[1] = id(lbl_light_sel_1);
-          u.lum_sel_nom[2] = id(lbl_light_sel_2);
-          u.lum_sel_nom[3] = id(lbl_light_sel_3);
-          u.lum_sel_nom[4] = id(lbl_light_sel_4);
-          u.lum_power = id(btn_light_power_icon);
+          u.lum_ligne[0] = id(btn_light_sel_0);
+          u.lum_ligne[1] = id(btn_light_sel_1);
+          u.lum_ligne[2] = id(btn_light_sel_2);
+          u.lum_ligne[3] = id(btn_light_sel_3);
+          u.lum_ligne[4] = id(btn_light_sel_4);
+          u.lum_onglet[0] = id(lum_onglet_0);
+          u.lum_onglet[1] = id(lum_onglet_1);
+          u.lum_onglet[2] = id(lum_onglet_2);
+          u.lum_onglet[3] = id(lum_onglet_3);
+          u.lum_onglet[4] = id(lum_onglet_4);
           u.lum_arc = id(arc_light_brightness);
           u.lum_pct = id(lbl_light_brightness_val);
           u.lum_cle = &id(current_light_slot);
-          // Popup du volet (appui long d'une tuile vol, 05/10/2026).
+          // Popup Volets (05/10/2026 ; une page par pièce, ADR-0046) : lignes, noms des
+          // pièces, et à droite le volet choisi.
           u.vol_popup = id(volet_popup);
-          u.vol_titre = id(volet_popup_titre);
+          u.vol_ligne[0] = id(volet_ligne_0);
+          u.vol_ligne[1] = id(volet_ligne_1);
+          u.vol_ligne[2] = id(volet_ligne_2);
+          u.vol_ligne[3] = id(volet_ligne_3);
+          u.vol_ligne[4] = id(volet_ligne_4);
+          u.vol_onglet[0] = id(vol_onglet_0);
+          u.vol_onglet[1] = id(vol_onglet_1);
+          u.vol_onglet[2] = id(vol_onglet_2);
+          u.vol_onglet[3] = id(vol_onglet_3);
+          u.vol_onglet[4] = id(vol_onglet_4);
+          u.vol_nom = id(volet_nom);
           u.vol_position = id(volet_position);
           u.vol_nombre = id(volet_nombre);
           u.vol_etat = id(volet_etat);
@@ -159,7 +163,8 @@ script:
           u.energie_ouvrir = []() { id(tab5_energie_ouvrir).execute(); };
           // Toucher d'un titre = sens d'un volet (28/09) ; une fois, les pointeurs posés.
           tuiles_brancher_titres();
-          // Volet dessiné du popup : ses lames, glisser, relâcher (une fois aussi).
+          // Volet dessiné du popup : ses lames, glisser, relâcher (une fois aussi) ; et le
+          // glissement de pièce en pièce des popups Lumières et Volets (tab5_pages.cpp).
           tuiles_brancher_popup_volet();
       # Roue d'actions rapides (ADR-0036) : ses widgets dans g_roue_ui, juste après ceux des
       # tuiles, comme quand ils étaient ici (tab5-roue.yaml, lot L7 du 08/10/2026).

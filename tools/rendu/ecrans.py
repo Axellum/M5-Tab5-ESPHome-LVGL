@@ -236,7 +236,22 @@ VOLET_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t01|opening|45
 # de 456 px, de 45 % à 13 % (volet_cadre_rappel, tab5_tuiles_popups.cpp). Vertical, au-dessus
 # des tuiles : ni swipe de page ni bouton sous le doigt. Le relâcher envoie « position »,
 # que personne n'applique ici : la capture montre le volet là où le doigt l'a laissé.
-VOLET_TIRE = Glisser(265, 250, 265, 400)
+# Depuis l'ADR-0046 le volet dessiné est dans la carte de droite (x 426 + 56 dans la carte
+# modale) : écran x 497 à 833.
+VOLET_TIRE = Glisser(665, 250, 665, 400)
+# Popups Lumières et Volets, une page par pièce (ADR-0046, 09/10/2026). La démo a des
+# lumières au Salon, dans la Chambre d'amis et au Jardin (l'Applique de l'Entrée est en
+# lecture seule), des volets au Salon et au Jardin. Le glissement part loin de l'arc et
+# du volet dessiné (ils gardent leur geste) : bas de la carte COULEURS, droite de la carte
+# POSITION.
+LUMIERES_SUIVANTE = Glisser(1150, 660, 450, 660, dans_popup=True)
+VOLETS_SUIVANTE = Glisser(1180, 300, 480, 300, dans_popup=True)
+# Nom de la troisième pièce en haut (trois noms de 200 px collés à la croix : x 948 à 1148
+# dans la carte modale, y 4 à 48 ; pages_onglets, tab5_pages.cpp).
+LUMIERES_ONGLET_3 = (15 + 1048, 15 + 26)
+# Première ligne de la carte AMPOULES (x 24 + 22, y 72 + 50 dans la carte modale, 342 × 84),
+# sur le nom : l'appui long ouvre la roue de la tuile autour de sa pastille.
+LUMIERES_LIGNE_0 = (15 + 24 + 22 + 200, 15 + 72 + 50 + 42)
 
 # Roue d'actions rapides (ADR-0036, 07/10/2026) : l'appui long d'une lampe, d'un volet ou
 # d'une clim pose un moyeu sur la tuile et deux anneaux de boutons au-dessus. Premier anneau :
@@ -827,6 +842,16 @@ ECRANS: tuple[Ecran, ...] = (
                                   roue_reglages(TUILE_VOLET, ROUE_BOUTONS["volet-sans-position"])),
           (VOLET_DE_LA_DEMO,)),
     Ecran("volet-glisse", (Long(*TUILE_VOLET), roue_reglages(TUILE_VOLET, ROUE_BOUTONS["volet"]), VOLET_TIRE)),
+    # Popups Lumières et Volets en pages (ADR-0046) : par « Aller à l'écran » (la pièce de
+    # l'accueil, ou la première qui en a ; Lumières : « aller-lumieres », plus bas), la page
+    # suivante d'un glissement, une pièce par son nom, la roue d'une ligne ; une seule pièce
+    # de volets (ni noms ni glissement).
+    Ecran("lumieres-page-suivante", (Aller("Lumières"), LUMIERES_SUIVANTE)),
+    Ecran("lumieres-onglet", (Aller("Lumières"), Toucher(*LUMIERES_ONGLET_3))),
+    Ecran("lumieres-roue", (Aller("Lumières"), Long(*LUMIERES_LIGNE_0)), (ROUE_FERMER,)),
+    Ecran("aller-volet", (Aller("Volet"),)),
+    Ecran("volets-page-suivante", (Aller("Volet"), VOLETS_SUIVANTE)),
+    Ecran("volets-une-piece", (MAISON_DEUX_PIECES, Aller("Volet")), MAISON_DE_LA_DEMO),
     # Roue d'actions rapides (ADR-0036) : la lampe, ses luminosités dépliées (50 % marqué)
     # puis ses couleurs ; le volet, ses positions dépliées (50 % marqué). Fermer : un
     # toucher replie le second anneau, le suivant ferme la roue. Celle de la clim est la

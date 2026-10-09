@@ -23,7 +23,7 @@ Constraints: push-only and events-only ([ADR-0001](0001-push-only-zero-polling.m
 - **A new variable or action** (`humidite`, `tab5_maj_humidite`): a major version of the contract for every HA file that calls it, while longer fields are already ignored by older firmware.
 - **Two stacked charts** (temperature above, humidity below): each gets half the height, the time axis twice, and the cards no room; one chart with two scales reads the link between heating and drying at a glance.
 - **A separate humidity popup**: the author asked for the room's climate in one place.
-- **Waiting for the shared « paged popup » brick** (lot `feat/popups-par-piece`): not published when this was written. The tabs and the swipe are written here with the Réglages' gesture code (`reglages_page_voisine()`) and button template; to plug into the brick once it exists.
+- **Waiting for the shared « paged popup » brick** (lot `feat/popups-par-piece`): not published when this was written. The tabs and the swipe were written here with the Réglages' gesture code (`reglages_page_voisine()`) and button template. Since [ADR-0046](0046-popups-a-pages.md) the swipe is the brick's `pages_brancher()` and the active tab is painted by its `choix_peindre()`; the placement of the tabs stays here (it starts after the title, the brick at x = 318).
 - **Keeping only the shown temperature's views** (ADR-0032's ~6 KB): every tab change would show « En attente de Home Assistant » for a moment; 40 KB of PSRAM is cheap.
 
 ## Consequences

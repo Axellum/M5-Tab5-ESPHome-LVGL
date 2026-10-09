@@ -436,6 +436,31 @@ void tuile_appui_maison(int r, int t, bool long_appui, lv_obj_t* ancre);
 void maison_tuile_changee(int r, int t);
 void maison_definitions_changees();
 
+// --- Popup à pages (tab5_pages.cpp, ADR-0046) ---
+// La brique commune des popups à plusieurs pages (Réglages ; Lumières et Volets, une page
+// par pièce) : glisser à gauche / à droite = page suivante / précédente, en boucle, arrêté
+// au popup, sauf parti d'un curseur ou d'un arc ; noms des pages en haut. Le popup garde sa
+// page : `nombre` (pages aujourd'hui), `courante` (celle affichée, -1 aucune), `afficher`
+// (montre la page i, repeint ses onglets). L'objet doit vivre aussi longtemps que le popup
+// (une variable de fichier) : son adresse est la donnée du rappel LVGL.
+struct PagesPopup {
+    lv_obj_t* popup = nullptr;
+    int (*nombre)() = nullptr;
+    int (*courante)() = nullptr;
+    void (*afficher)(int page) = nullptr;
+};
+// Branche le geste (une fois, même rappelé : l'ancien rappel est retiré d'abord).
+void pages_brancher(PagesPopup* p);
+// Onglets d'en-tête (pages_onglet.yaml) : les `n` premiers montrés quand il y a au moins
+// deux pages (aucun sinon), collés à la croix, `noms[i]` coupé avec « … », celui de
+// `courante` en accent ; les autres masqués. `max` : onglets posés par le YAML.
+void pages_onglets(lv_obj_t* const* onglets, int max, const char* const* noms, int n, int courante);
+// Largeur d'un onglet pour `n` pages (200 px au plus, 158 à cinq).
+int32_t pages_onglet_largeur(int n);
+// Une rangée de boutons à choix : celui d'index `actif` en accent (bordure et texte, premier
+// enfant), les autres au style du bouton. Onglets des pages, options des Réglages.
+void choix_peindre(lv_obj_t* const* boutons, int n, int actif);
+
 // --- Alertes (tab5_central.cpp) ---
 // Libellé codé d'une alerte, composé dans la langue de l'écran : « @maj:<titre> » →
 // « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo », « @vigi:<niveau> » →

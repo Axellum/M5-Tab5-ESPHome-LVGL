@@ -162,7 +162,8 @@ def test_auto_comme_avant():
     dispo = _fonction(_lire(ZONES_CPP), "bool ecran_disponible(")
     assert "Ecran::ENERGIE && !solaire_present()" in dispo, "Énergie : seulement avec la production solaire"
     sans_zone = _fonction(_lire(ZONES_CPP), "bool ecran_sans_zone(")
-    for cas in ("Zone::CLIM", "zones_pots_presents() == 0", "Zone::TV"):
+    for cas in ("Zone::CLIM", "zones_pots_presents() == 0", "Zone::TV",
+                "Ecran::VOLET: return !tuiles_ecran_disponible(e);"):
         assert cas in sans_zone
 
 

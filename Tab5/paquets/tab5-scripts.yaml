@@ -150,15 +150,21 @@ script:
   # Debounce de l'arc luminosité du popup lumière : chaque tick de glissement
   # redémarre le délai, un seul light.turn_on part une fois le doigt immobile
   # (même contrainte que le volume — ne pas spammer HA à chaque tick).
+  # La lampe (`cible`) et la valeur sont celles du geste (ADR-0046, relecture du
+  # 09/10/2026) : une autre lampe choisie, ou une autre pièce glissée, pendant les
+  # 200 ms ne reçoit pas la luminosité de la précédente.
   - id: tab5_debounce_light_brightness
     mode: restart
+    parameters:
+      cible: string
+      valeur: int
     then:
       - delay: 200ms
       - script.execute:
           id: tab5_action
-          emplacement: !lambda 'return id(current_light_slot);'
+          emplacement: !lambda 'return cible;'
           commande: luminosite
-          valeur: !lambda 'return to_string(lv_arc_get_value(id(arc_light_brightness)));'
+          valeur: !lambda 'return to_string(valeur);'
 
   # Debounce de la cible de la clim du blueprint (boutons ± de la carte de l'accueil,
   # arc et boutons ± du popup quand il la montre) : un seul climate.set_temperature par
@@ -365,18 +371,6 @@ script:
                 data:
                   alert_id: !lambda 'return id(temp_dismiss_alert_id);'
             - script.execute: tab5_central_rotator_auto
-
-  # Popup lumière : choisit la ligne light_idx du sélecteur (0-4 = rang de la lumière
-  # dans la pièce, ADR-0023) — titre, surbrillance, icône power, arc depuis la
-  # luminosité reçue, et current_light_slot = clé de la tuile (tRT, ou lumiere_N en mode
-  # héritage). Appelé par les boutons du sélecteur (light_sel_btn.yaml). L'ouverture
-  # vient de l'appui long d'une tuile lum (tuile_appui, tab5_tuiles.cpp).
-  - id: tab5_light_popup_show
-    mode: restart
-    parameters:
-      light_idx: int
-    then:
-      - lambda: 'popup_lumiere_choisir(light_idx);'
 
   # Touche physique de la télécommande TV (tv_remote_popup.yaml et ses gabarits
   # tv_pad_btn.yaml / tv_transport_btn.yaml) : une seule commande paramétrée au

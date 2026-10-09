@@ -70,7 +70,8 @@ script:
           ModalRegistry::add(id(calendar_popup),         "Calendrier",       ModalRegistry::POPUP,
                              [] { id(tab5_calendar_open).execute(); });
           // Lumières et volet (ADR-0042) : le popup d'une tuile, ouvert sans tuile touchée —
-          // celle de la pièce affichée d'abord (tuiles_ecran_ouvrir, tab5_tuiles.cpp).
+          // celle de la pièce affichée d'abord (tuiles_ecran_ouvrir, tab5_tuiles.cpp). Une
+          // page par pièce dans les deux popups (ADR-0046) : ils s'ouvrent sur cette pièce.
           ModalRegistry::add(id(light_options_popup),    "Lumières",         ModalRegistry::POPUP,
                              [] { tuiles_ecran_ouvrir(Ecran::LUMIERES); });
           ModalRegistry::add(id(volet_popup),            "Volet",            ModalRegistry::POPUP,
@@ -346,8 +347,9 @@ select:
       - "Alertes"
       # Toute la maison, pièce par pièce (ADR-0037, 07/10/2026), à la fin aussi.
       - "Maison"
-      # Roue de navigation (ADR-0042, 09/10/2026) : les popups d'une tuile et la
-      # température de l'accueil, ouverts sans tuile touchée. À la fin aussi.
+      # Roue de navigation (ADR-0042, 09/10/2026) : les popups d'une tuile (Lumières et
+      # Volets, une page par pièce, ADR-0046) et la température de l'accueil, ouverts sans
+      # tuile touchée. À la fin aussi.
       - "Lumières"
       - "Volet"
       - "Température"

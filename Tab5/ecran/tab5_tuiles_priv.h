@@ -141,7 +141,7 @@ extern Minuterie s_ok;
 void charger();
 bool heritage();
 bool tuile_presente(int r, int t);
-const char* heritage_glyphe_selecteur(int t);
+int piece_courante();
 bool minuterie_sur(const Minuterie& m, int r, int t);
 bool vol_mouvement(const char* s);
 Gestes gestes(const Def& d, bool clim_connue);
@@ -158,6 +158,8 @@ void tuile_appui_piece(int r, int t, bool long_appui);
 // ─── tab5_tuiles_popups.cpp ─────────────────────────────────────────────────────────
 
 bool est_lumiere(int r, int t);
+// Un volet du popup Volets (vol sans l'option r ni k, jamais en mode héritage).
+bool est_volet(int r, int t);
 bool vol_position_connue(const Etat& e);
 void popup_lumiere_ouvrir(int r, int t);
 void popup_volet_ouvrir(int r, int t);

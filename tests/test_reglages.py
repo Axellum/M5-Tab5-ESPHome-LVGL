@@ -190,16 +190,15 @@ def test_un_nom_et_un_conteneur_par_page():
 def test_geste_de_page_reste_dans_le_popup():
     cpp = _lire(TAB5 / "ecran" / "tab5_reglages.cpp").replace("\r\n", "\n")
     preparer = _corps(cpp, "void reglages_preparer()")
-    # Le geste s'arrête au popup : page_main ne change ni les prévisions ni la pièce.
-    assert "lv_obj_remove_flag(u.popup, LV_OBJ_FLAG_GESTURE_BUBBLE);" in preparer
-    assert "lv_obj_add_event_cb(u.popup, geste_rappel, LV_EVENT_GESTURE, nullptr);" in preparer
-    geste = _corps(cpp, "void geste_rappel(")
-    assert "dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT" in geste
-    # Un curseur glissé (luminosité, volume) n'est pas un changement de page ; le lever du
-    # doigt qui suit le geste ne déclenche rien (ni tap, ni appui long). Dans cet ordre.
-    assert "lv_obj_check_type(o, &lv_slider_class)" in geste
-    assert (geste.index("lv_slider_class") < geste.index("lv_indev_wait_release(indev);")
-            < geste.index("reglages_afficher_page("))
+    # Le geste passe par la brique commune des popups à pages (ADR-0046, tab5_pages.cpp :
+    # arrêté au popup, ignoré sur un curseur, lever du doigt sans effet ; détail dans
+    # tests/test_pages_popup.py) : quatre pages, celle affichée, reglages_afficher_page.
+    assert "s_pages.popup = u.popup;\n    pages_brancher(&s_pages);" in preparer
+    assert "PagesPopup s_pages{nullptr, nombre_pages, page_courante, reglages_afficher_page};" in cpp
+    assert "int nombre_pages() { return REGLAGES_NB_PAGES; }" in cpp
+    assert "int page_courante() { return s_page; }" in cpp
+    # Plus de geste écrit ici : un seul, celui de la brique.
+    assert "LV_EVENT_GESTURE" not in cpp and "lv_indev_wait_release" not in cpp
 
 
 def test_gardes_de_la_console_par_la_page_systeme():
