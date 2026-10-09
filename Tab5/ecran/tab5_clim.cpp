@@ -11,6 +11,9 @@
  *       elle y était venue de tab5_services.cpp le 29/09/2026 (update_clim_from_ha_ui(),
  *       devenue clim_blueprint_recu() avec les clims des tuiles, et la coloration du script
  *       tab5_clim_recolor, clim_recolorer()) : tout l'affichage de la clim est ici.
+ *       Carrousel des clims (ADR-0038, 09/10/2026) : le popup a une page par clim de
+ *       clims_enumerer() — la seule liste des clims de la tablette —, la page étant la clim
+ *       affichée ; geste gauche / droite et pastilles en bas (carrousel_*).
  * @architecture_constraint Deux clims ne se mélangent jamais. La carte de l'accueil montre
  *       la clim du blueprint (ses globals clim_*, que tab5_maj_clim écrit) ; le popup
  *       montre la « clim affichée » (s_vue) : celle du blueprint, ou une clim de tuile
@@ -317,8 +320,15 @@ void popup_reglages_ui(float consigne) {
     }
     ui_text(u.unite, clim_unite(r));
 
-    // Titre : le nom de la clim dans HA ; sans nom, « Climatisation ».
-    texte_ha_coupe(u.titre, r.nom[0] != '\0' ? r.nom : tr("Climatisation"), kLargeurTitreClim);
+    // Titre : le nom de la clim dans HA ; sans nom, celui de la pièce de sa tuile (les pages
+    // du carrousel se distinguent, ADR-0038), sinon « Climatisation ».
+    char piece[49];
+    const char* titre = r.nom;
+    if (titre[0] == '\0') {
+        titre = (vue_tuile() && tuiles_piece_titre(s_vue / kTuiles, piece, sizeof(piece))) ? piece
+                                                                                           : tr("Climatisation");
+    }
+    texte_ha_coupe(u.titre, titre, kLargeurTitreClim);
 
     // Carte MODE : les modes que l'appareil n'a pas disparaissent (« Éteint » reste).
     ui_hidden(u.mode_froid, !clim_capacite('c'));
@@ -329,8 +339,11 @@ void popup_reglages_ui(float consigne) {
     clim_options_empiler();
 }
 
+// Pastilles du carrousel (ADR-0038), plus bas : la page de la clim affichée.
+void carrousel_pastilles();
+
 // Tout le popup d'après la clim affichée (elle vient de changer) : réglages, cible,
-// pièce, couleurs.
+// pièce, couleurs, pastille du carrousel.
 void popup_peindre() {
     const float consigne = vue_tuile() ? s_ct[s_vue].etat.consigne : s_clim_consigne;
     const float piece = vue_tuile() ? s_ct[s_vue].etat.piece : s_clim_piece;
@@ -338,6 +351,7 @@ void popup_peindre() {
     popup_consigne_ui(consigne, false);
     popup_piece_ui(piece);
     clim_recolorer();
+    carrousel_pastilles();
 }
 
 bool popup_visible() {
@@ -453,6 +467,7 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
         if (piece) reglables_clim_changee();
         else tuiles_repeindre(r, t);
         if (affichee) popup_peindre();
+        else carrousel_pastilles();  // une page de plus (ou un nom changé) dans le carrousel
         return true;
     }
     clim_etat_lire(reste, n_reste, c->etat);  // Tab5/socle/tab5_parse.cpp (lot F)
@@ -490,7 +505,10 @@ void clim_tuile_oublier(int r, int t) {
     *c = ClimTuile();
     // Une consigne en attente irait à l'appareil qui a pris sa place : elle ne part pas.
     if (std::strcmp(s_attente.cle, modele_ha::tuile_cle(r, t).s) == 0) s_attente = Attente{};
-    if (s_vue != r * kTuiles + t) return;
+    if (s_vue != r * kTuiles + t) {
+        carrousel_pastilles();  // une page de moins dans le carrousel
+        return;
+    }
     if (popup_visible()) animate_popup_close(g_clim_ui.popup);
     s_vue = -1;
     popup_peindre();
@@ -599,6 +617,143 @@ const std::string& clim_affichee_oscillation() { return champ_vue(ChampClim::OSC
 const char* clim_tuile_attente_cle() { return s_attente.cle; }
 
 std::string clim_tuile_attente_texte() { return clim_consigne_texte(s_attente.valeur); }
+
+// ─── Carrousel des clims (ADR-0038) ──────────────────────────────────────────────
+// Le popup a une page par clim que la tablette connaît (clims_enumerer, la seule liste) :
+// la page est la clim affichée (s_vue), rien d'autre n'est gardé. Glisser à gauche ou à
+// droite affiche la suivante ou la précédente, en boucle (reglages_page_voisine,
+// tab5_core.cpp) ; les pastilles du bas (pagination_afficher, celles de la carte
+// centrale) disent laquelle. Changement de page instantané, sans glissement ni fondu
+// (préférence d'Axel, AGENTS.md). Une seule clim : ni pastilles ni glisse.
+
+namespace {
+
+// Toutes les clims possibles : celle du blueprint et une par tuile. La clim propre à une
+// pièce (à venir) en ajoutera kPieces.
+constexpr int kClimsConnues = 1 + kPieces * kTuiles;
+
+bool meme_nom(const char* a, const char* b) {
+    return a != nullptr && b != nullptr && a[0] != '\0' && std::strcmp(a, b) == 0;
+}
+
+const char* ref_nom(const ClimRef& c) {
+    if (c.r < 0) return s_clim.nom;
+    const ClimTuile* ct = tuile_clim(c.r, c.t, false);
+    return ct != nullptr ? ct->reglages.nom : nullptr;
+}
+
+// Affiche la clim `c` dans le popup. Une sorte de clim de plus = un cas ici.
+bool clim_ref_afficher(const ClimRef& c) {
+    if (c.r < 0) {
+        clim_afficher_blueprint();
+        return true;
+    }
+    return clim_afficher_tuile(c.r, c.t);
+}
+
+// Rang de la clim affichée dans `l` : elle-même, sinon celle du même nom (le doublon
+// écarté par clims_enumerer, ouvert par sa tuile) ; -1 si elle n'y est pas (au-delà des
+// kClimPastilles premières : aucune pastille allumée).
+int carrousel_rang(const ClimRef* l, int n) {
+    const int r = vue_tuile() ? s_vue / kTuiles : -1;
+    const int t = vue_tuile() ? s_vue % kTuiles : -1;
+    for (int i = 0; i < n; i++)
+        if (l[i].r == r && l[i].t == t) return i;
+    const char* nom = vue_reglages().nom;
+    for (int i = 0; i < n; i++)
+        if (meme_nom(ref_nom(l[i]), nom)) return i;
+    return -1;
+}
+
+void carrousel_pastilles() {
+    const ClimUI& u = g_clim_ui;
+    if (u.pastilles_cadre == nullptr) return;
+    ClimRef l[kClimPastilles];
+    const int n = clims_enumerer(l, kClimPastilles);
+    ui_hidden(u.pastilles_cadre, n < 2);
+    for (int i = 0; i < kClimPastilles; i++) ui_hidden(u.pastilles[i], i >= n);
+    if (n >= 2) pagination_afficher(u.pastilles, kClimPastilles, carrousel_rang(l, n));
+}
+
+// LV_EVENT_GESTURE du popup (clim_carrousel_preparer), comme les pages des Réglages
+// (tab5_reglages.cpp) : gauche = clim suivante, droite = précédente. L'arc glissé de côté
+// règle la consigne, ce n'est pas une page. lv_indev_wait_release() : le lever du doigt
+// qui suit ne déclenche rien (ni le bouton où le geste est parti, ni un appui long).
+void carrousel_geste(lv_event_t* /*e*/) {
+    lv_indev_t* const indev = lv_indev_active();
+    if (indev == nullptr) return;
+    const lv_dir_t dir = lv_indev_get_gesture_dir(indev);
+    if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
+    for (lv_obj_t* o = lv_indev_get_active_obj(); o != nullptr && o != g_clim_ui.popup; o = lv_obj_get_parent(o)) {
+        if (lv_obj_check_type(o, &lv_arc_class)) return;
+    }
+    ClimRef l[kClimPastilles];
+    const int n = clims_enumerer(l, kClimPastilles);
+    if (n < 2) return;
+    lv_indev_wait_release(indev);
+    clim_ref_afficher(l[reglages_page_voisine(carrousel_rang(l, n), n, dir == LV_DIR_LEFT)]);
+    carrousel_pastilles();
+}
+
+}  // namespace
+
+int clims_enumerer(ClimRef* out, int max) {
+    if (out == nullptr || max <= 0) return 0;
+    if (max > kClimsConnues) max = kClimsConnues;
+    const char* noms[kClimsConnues];
+    int n = 0;
+    // Une clim du même nom qu'une clim déjà listée n'a pas sa page (même appareil).
+    auto ajouter = [&](int r, int t, int piece, const char* nom) {
+        if (n >= max) return;
+        for (int i = 0; i < n; i++)
+            if (meme_nom(noms[i], nom)) return;
+        noms[n] = nom;
+        out[n++] = ClimRef{static_cast<int8_t>(r), static_cast<int8_t>(t), static_cast<int8_t>(piece)};
+    };
+    // 1. La clim du blueprint (la carte de l'accueil), sauf si HA l'a déclarée absente.
+    if (!zone_absente(Zone::CLIM)) ajouter(-1, -1, -1, s_clim.nom);
+    // 2. Les clims des tuiles cli sans l'option m (ADR-0027), réglages reçus.
+    if (s_ct != nullptr) {
+        for (int r = 0; r < kPieces; r++)
+            for (int t = 0; t < kTuiles; t++)
+                if (s_ct[r * kTuiles + t].reglages.recu) ajouter(r, t, r, s_ct[r * kTuiles + t].reglages.nom);
+    }
+    return n;
+}
+
+void clim_carrousel_preparer() {
+    lv_obj_t* const p = g_clim_ui.popup;
+    if (p == nullptr) return;
+    // Geste arrêté au popup : sinon LVGL le remonte jusqu'à page_main, qui changerait les
+    // prévisions ou la pièce derrière (handle_swipe_gesture, tab5_central.cpp).
+    lv_obj_remove_flag(p, LV_OBJ_FLAG_GESTURE_BUBBLE);
+    // [AI-WARNING] tab5_clim_ui est relancé par tab5_zones_apply après chaque réponse de
+    // HA : sans ce retrait, un rappel de plus à chaque fois, et un glissement sautait
+    // autant de pages (vu dans le rendu hors tablette du 09/10/2026, deux pages par geste).
+    lv_obj_remove_event_cb(p, carrousel_geste);
+    lv_obj_add_event_cb(p, carrousel_geste, LV_EVENT_GESTURE, nullptr);
+    carrousel_pastilles();
+}
+
+bool clim_carrousel_ouvrir() {
+    if (g_clim_ui.popup == nullptr) return false;
+    ClimRef l[kClimPastilles];
+    const int n = clims_enumerer(l, kClimPastilles);
+    if (n == 0) return false;
+    // La clim de la pièce affichée en mode HA, sinon la première (celle du blueprint).
+    int i = 0;
+    const int piece = tuiles_piece_mode_ha();
+    for (int k = 0; piece >= 0 && k < n; k++) {
+        if (l[k].piece == piece) {
+            i = k;
+            break;
+        }
+    }
+    if (!clim_ref_afficher(l[i])) return false;
+    carrousel_pastilles();
+    animate_popup_open(g_clim_ui.popup);
+    return true;
+}
 
 float clim_consigne_suivante(float t, int sens) { return consigne_suivante(s_clim, t, sens); }
 

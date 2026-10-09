@@ -4,7 +4,9 @@
 
 ---
 
-**Opens with** a tap on the target temperature of the home screen, or on a climate card ([bottom row](tiles.md); a long press shows its [quick actions](tiles.md#quick-actions), whose **Details** opens this window): that card's unit, with its name as title. When the window closes, the home screen goes back to the climate picked in the blueprint.
+**Opens with** a tap on the target temperature of the home screen, or on a climate card ([bottom row](tiles.md); a long press shows its [quick actions](tiles.md#quick-actions), whose **Details** opens this window): that card's unit, with its name as title. When the window closes, the home screen goes back to the climate picked in the blueprint. A tap on the room temperature of the home screen opens it too, on the unit of the room shown in HA mode when it has one.
+
+**Several units**: the window has one page per climate unit (the one picked in the blueprint, then those placed on room cards). Swipe left or right for the next or previous one; the dots at the bottom show which one. With a single unit, there are no dots.
 
 ![The climate window: modes, target 20.0 with the arc, options](../images/notice/climatisation-en.webp)
 
@@ -29,7 +31,9 @@ The window follows your unit: its temperature range and step, and only the butto
 
 ---
 
-**S'ouvre par** un tap sur la consigne de l'écran d'accueil, ou sur une carte de clim ([rangée du bas](tiles.md#version-française) ; un appui long montre ses [actions rapides](tiles.md#actions-rapides), dont **Détails** ouvre cette fenêtre) : l'appareil de cette carte, avec son nom pour titre. À la fermeture de la fenêtre, l'accueil revient à la clim choisie dans le blueprint.
+**S'ouvre par** un tap sur la consigne de l'écran d'accueil, ou sur une carte de clim ([rangée du bas](tiles.md#version-française) ; un appui long montre ses [actions rapides](tiles.md#actions-rapides), dont **Détails** ouvre cette fenêtre) : l'appareil de cette carte, avec son nom pour titre. À la fermeture de la fenêtre, l'accueil revient à la clim choisie dans le blueprint. Un tap sur la température de la pièce de l'accueil l'ouvre aussi, sur la clim de la pièce affichée en mode HA quand elle en a une.
+
+**Plusieurs clims** : la fenêtre a une page par clim (celle choisie dans le blueprint, puis celles posées sur des cartes de pièce). Glissez à gauche ou à droite pour la suivante ou la précédente ; les pastilles du bas disent laquelle. Avec une seule clim, pas de pastilles.
 
 ![La fenêtre de la clim : modes, consigne 20.0 avec l'arc, options](../images/notice/climatisation-fr.webp)
 

@@ -75,6 +75,13 @@ NON_MONTREES = {
     "reglages-sans-batterie": "reglages-batterie-en-charge montre la même page ; « Pas de batterie détectée » "
                               "est décrit dans settings.md",
     "reglages-curseur": "reglages montre la même page ; le curseur qui ne change pas de page est décrit",
+    # Carrousel des clims (ADR-0038, 09/10/2026) : décrit dans climate.md et home.md.
+    "climatisation-par-la-piece": "climatisation montre la même fenêtre (une seule clim dans la démo)",
+    "climatisation-carrousel": "carrousel des clims, décrit dans climate.md ; image à tirer du rendu de la PR",
+    "climatisation-carrousel-page-2": "climatisation-carrousel montre le même carrousel, page suivante",
+    "climatisation-carrousel-page-3": "climatisation-carrousel montre le même carrousel ; titre de la pièce décrit",
+    "climatisation-carrousel-mode-ha": "climatisation-carrousel montre le même carrousel ; l'ouverture sur la "
+                                       "pièce est décrite dans climate.md",
 }
 
 

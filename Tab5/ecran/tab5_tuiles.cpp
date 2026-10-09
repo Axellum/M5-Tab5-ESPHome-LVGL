@@ -1312,8 +1312,6 @@ void tuiles_mode_ha(bool actif) {
     reglables_clim_changee();
 }
 
-int tuiles_piece_mode_ha() { return g_central_ctx.ha_mode ? piece_courante() : -1; }
-
 // Mode HA : la page suivante dans l'ordre de la météo, pièce vide comprise (elle dit
 // « Aucun appareil ») — comme les cinq pages de prévisions. Avant le 28/09, les pièces
 // vides étaient sautées : avec une seule pièce configurée, le swipe ne faisait rien.
@@ -1550,6 +1548,14 @@ void tuiles_heritage_volet_sens() {
 // peint). Il ne lit rien d'autre que les tuiles : ce qu'il montre et ce qu'il fait passe
 // par les fonctions des cartes du mode HA (vue, peindre_vue_sur) et des tuiles
 // (tuile_appui_piece). Aucune donnée ni commande nouvelle.
+
+// Carrousel du popup clim (ADR-0038, tab5_clim.cpp) : il s'ouvre sur la clim de la pièce
+// affichée en mode HA. En mode météo, ou sans pièces reçues, aucune.
+int tuiles_piece_mode_ha() {
+    charger();
+    if (!g_central_ctx.ha_mode || heritage()) return -1;
+    return piece_courante();
+}
 
 bool tuiles_piece_titre(int r, char* out, size_t n) {
     charger();

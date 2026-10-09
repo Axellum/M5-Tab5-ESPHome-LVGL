@@ -382,7 +382,22 @@ void clim_piece_oublier(int r);
 // tab5_reglables.cpp, la tuile − / + : consigne écrite comme sur la carte (« 21.5 »,
 // « -- ») et sa couleur ; renvoie la couleur de l'icône (comme clim_carte_valeur).
 uint32_t clim_piece_carte(int r, char* buf, size_t n, uint32_t& couleur_valeur);
-// tab5_tuiles.cpp : la pièce affichée en mode HA (ADR-0023), -1 hors du mode HA.
+// Les clims que la tablette connaît, dans l'ordre des pages du carrousel du popup clim
+// (ADR-0038) : celle du blueprint d'abord (sauf si HA l'a déclarée absente), puis celle
+// de chaque tuile cli sans l'option m dont la tablette a les réglages (crRT), pièce par
+// pièce, tuile par tuile, puis la clim propre de chaque pièce (ADR-0040, réglages crpR
+// reçus) ; une clim du même nom qu'une clim déjà listée (la clim du blueprint posée aussi
+// sur une tuile sans m) n'est pas listée deux fois. LA seule liste : une clim de plus =
+// une ligne dans clims_enumerer() et un cas dans clim_ref_afficher() (tab5_clim.cpp).
+struct ClimRef {
+    int8_t r = -1;      // tuile tRT ; t = -1 : la clim de la pièce r ; r = t = -1 : celle du blueprint
+    int8_t t = -1;
+    int8_t piece = -1;  // pièce où elle est (ouverture sur la pièce affichée) ; -1 : aucune
+};
+// Écrit au plus `max` clims dans `out`, dans l'ordre ci-dessus ; renvoie leur nombre.
+int clims_enumerer(ClimRef* out, int max);
+// tab5_tuiles.cpp : la pièce affichée en mode HA (ADR-0023), -1 en mode météo ou en mode
+// héritage (aucune pièce reçue).
 int tuiles_piece_mode_ha();
 
 // --- tab5_central.cpp, pour les pièces ---
