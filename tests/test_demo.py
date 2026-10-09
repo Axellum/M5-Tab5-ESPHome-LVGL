@@ -159,17 +159,20 @@ def test_firmware_3_2_definitions_puis_etats(monkeypatch):
         noms = [nom for nom, _ in appels]
         assert noms.index(demo_pusher.SERVICE_TUILES) < noms.index("tab5_maj_emplacements")
         pieces, rangee = scenarios.pieces_de(absentes), scenarios.rangee_de(absentes)
-        reglables = scenarios.reglables_de(absentes)
+        reglables, nabu = scenarios.reglables_de(absentes), scenarios.nabu_de(absentes)
         donnees = dict(appels)
         assert donnees[demo_pusher.SERVICE_TUILES]["payload"] == scenarios.build_tuiles_payload(
-            pieces, rangee, reglables)
+            pieces, rangee, reglables, nabu)
         clim = None if "clim" in absentes else scenarios.SCENES[2].clim
         assert donnees["tab5_maj_emplacements"]["payload"] == scenarios.build_emplacements_payload(
-            absentes, pieces, clim, rangee, reglables)
+            absentes, pieces, clim, rangee, reglables, nabu)
         assert re.search(r"(^|;)t00\|", donnees["tab5_maj_emplacements"]["payload"])
         # Rangée sous l'horloge (ADR-0031) : ses réglages toujours, ses éléments s'il y en a.
         assert "hp|0;hd|32;" in donnees[demo_pusher.SERVICE_TUILES]["payload"]
         assert bool(re.search(r"(^|;)h00\|", donnees["tab5_maj_emplacements"]["payload"])) == (not absentes)
+        # Panneau Ok Nabu (ADR-0041) : celui d'un blueprint sans ligne, l'écoute seule.
+        assert "np|0;nd|32;" in donnees[demo_pusher.SERVICE_TUILES]["payload"]
+        assert not re.search(r"(^|;)n[0-2][0-3]\|", donnees["tab5_maj_emplacements"]["payload"])
         # Tuile − / + (ADR-0033) : ses appareils dans la maison complète seulement.
         for service in (demo_pusher.SERVICE_TUILES, "tab5_maj_emplacements"):
             assert bool(re.search(r"(^|;)r0\|", donnees[service]["payload"])) == (not absentes)

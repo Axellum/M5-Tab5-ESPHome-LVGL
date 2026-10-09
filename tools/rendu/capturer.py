@@ -66,7 +66,7 @@ sys.path.insert(0, str(RACINE))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from demo_pusher import _appeler, _donner_une_cle, _lire_cle_demo, _pousser_scene  # noqa: E402
-from ecrans import ECRANS, PORTRAITS, Aller, Attendre, Glisser, Service, Toucher  # noqa: E402
+from ecrans import ECRANS, PORTRAITS, Aller, Attendre, Choisir, Glisser, Service, Toucher  # noqa: E402
 from scenarios import SCENES, build_zones_absentes  # noqa: E402
 
 logger = logging.getLogger("capturer")
@@ -189,6 +189,9 @@ class Rendu:
             await asyncio.sleep(0.4 + etape.apres)
         elif isinstance(etape, Aller):
             self.choisir("Aller à l'écran", etape.option)
+            await asyncio.sleep(etape.apres)
+        elif isinstance(etape, Choisir):
+            self.choisir(etape.select, etape.option)
             await asyncio.sleep(etape.apres)
         elif isinstance(etape, Service):
             await self.appeler(etape.nom, **dict(etape.donnees))

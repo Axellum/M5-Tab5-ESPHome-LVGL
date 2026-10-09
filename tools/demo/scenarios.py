@@ -62,17 +62,18 @@ def zone_de(cle: str) -> str:
 
 def build_emplacements_payload(absentes: frozenset = frozenset(), pieces: dict | None = None,
                                clim: dict | None = None, rangee: "Rangee | None" = None,
-                               reglables: tuple = ()) -> str:
+                               reglables: tuple = (), nabu: "Rangee | None" = None) -> str:
     """tab5_maj_emplacements : tous les emplacements, sauf ceux d'une zone retirée
     (`--maison-minimale` : comme le blueprint, rien n'est poussé pour une case vide).
     Avec `pieces` (firmware qui a tab5_maj_tuiles), les états des tuiles suivent (clés
     tRT, build_etats_tuiles) ; `clim` = celle de la scène, pour la tuile de la clim ;
     `rangee` : les états de la rangée sous l'horloge après eux (clés hLI, ADR-0031) ;
-    `reglables` : puis ceux des appareils de la tuile − / + (clés rN, ADR-0033)."""
+    `nabu` : ceux du panneau Ok Nabu (clés nLI, ADR-0041) ; `reglables` : puis ceux des
+    appareils de la tuile − / + (clés rN, ADR-0033)."""
     payload = "".join(f"{cle}|{etat}|{valeur};" for cle, (etat, valeur) in EMPLACEMENTS.items()
                       if zone_de(cle) not in absentes)
     if pieces is not None:
-        payload += build_etats_tuiles(pieces, clim, rangee) + build_etats_reglables(reglables)
+        payload += build_etats_tuiles(pieces, clim, rangee, nabu) + build_etats_reglables(reglables)
     assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
     return payload
 
@@ -304,12 +305,14 @@ def _tuiles_de(pieces: dict):
             yield f"t{r}{t}", tuile
 
 
-def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None, reglables: tuple = ()) -> str:
+def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None, reglables: tuple = (),
+                         nabu: "Rangee | None" = None) -> str:
     """tab5_maj_tuiles : « pR|nom;tRT|type|icône|options|complément|nom;… » (ADR-0023).
     Instantané complet : une tuile ou une pièce absente est vide. Une pièce sans nom n'a
     pas d'entrée « p » (la tablette écrit « Pièce n »). `rangee` : la rangée sous
-    l'horloge à la suite (build_rangee_payload, ADR-0031) ; `reglables` : les appareils
-    de la tuile − / + (build_reglables_payload, ADR-0033)."""
+    l'horloge à la suite (build_rangee_payload, ADR-0031) ; `nabu` : le panneau Ok Nabu,
+    au même format (clés n…, ADR-0041) ; `reglables` : les appareils de la tuile − / +
+    (build_reglables_payload, ADR-0033)."""
     entrees = []
     for r, piece in sorted(pieces.items()):
         if piece.nom:
@@ -318,24 +321,28 @@ def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None, reglables
             entrees.append("|".join((cle, tuile.type, tuile.icone, tuile.options,
                                      echapper(tuile.complement), echapper(tuile.nom))))
     payload = "".join(f"{e};" for e in entrees) + (build_rangee_payload(rangee) if rangee is not None else "")
+    payload += build_rangee_payload(nabu) if nabu is not None else ""
     payload += build_reglables_payload(reglables)
     assert len(payload.encode("utf-8")) < 32 * 1024, "au-delà d'un message API ESPHome (32 Kio)"
     return payload
 
 
-def build_etats_tuiles(pieces: dict, clim: dict | None = None, rangee: "Rangee | None" = None) -> str:
+def build_etats_tuiles(pieces: dict, clim: dict | None = None, rangee: "Rangee | None" = None,
+                       nabu: "Rangee | None" = None) -> str:
     """Clés tRT de tab5_maj_emplacements : « tRT|état|valeur|couleur;… », toutes les
     tuiles, comme le blueprint juste après les définitions. `clim` : voir etat_tuile.
-    `rangee` : puis les éléments de la rangée sous l'horloge (clés hLI, mêmes champs)."""
+    `rangee` : puis les éléments de la rangée sous l'horloge (clés hLI, mêmes champs) ;
+    `nabu` : puis ceux du panneau Ok Nabu (clés nLI)."""
     parts = []
     for cle, tuile in _tuiles_de(pieces):
         etat, valeur, couleur = etat_tuile(tuile, clim)
         verifier_etat(cle, tuile, etat, valeur, couleur)
         parts.append(f"{cle}|{echapper(etat)}|{valeur}|{couleur};")
-    for cle, element in _elements_de(rangee) if rangee is not None else ():
-        t = element.tuile
-        verifier_etat(cle, t, t.etat, t.valeur, t.couleur)
-        parts.append(f"{cle}|{echapper(t.etat)}|{t.valeur}|{t.couleur};")
+    for zone in (rangee, nabu):
+        for cle, element in _elements_de(zone) if zone is not None else ():
+            t = element.tuile
+            verifier_etat(cle, t, t.etat, t.valeur, t.couleur)
+            parts.append(f"{cle}|{echapper(t.etat)}|{t.valeur}|{t.couleur};")
     return "".join(parts)
 
 
@@ -347,9 +354,12 @@ def build_etats_tuiles(pieces: dict, clim: dict | None = None, rangee: "Rangee |
 # champs d'une tuile, plus la classe d'appareil, qui colore la valeur) ; les états
 # « hLI|état|valeur|couleur; » suivent ceux des tuiles. Pas d'action (les scènes,
 # scripts et boutons n'ont rien à montrer) : la rangée ne commande rien.
+# Le panneau « Ok Nabu » (lot 3, ADR-0041) a le même format, clés n… : « np|place de la
+# ligne d'écoute;nd|secondes;nLI|…; » (Rangee(lettre="n")).
 # ---------------------------------------------------------------------------
 
 PLACES_PLANTES = ("0", "1", "2", "-")
+LETTRES_ZONE = ("h", "n")   # h : rangée sous l'horloge ; n : panneau Ok Nabu
 ELEMENTS_PAR_LIGNE = 4
 LIGNES_MAX = 3
 
@@ -364,8 +374,10 @@ class Element:
 @dataclass(frozen=True)
 class Rangee:
     lignes: tuple          # LIGNES_MAX lignes au plus, de ELEMENTS_PAR_LIGNE éléments au plus
-    plantes: str = "0"     # place de la ligne des plantes (PLACES_PLANTES ; « - » : masquée)
+    plantes: str = "0"     # place de la ligne spéciale : les plantes sous l'horloge, l'écoute
+                           # dans le panneau Ok Nabu (PLACES_PLANTES ; « - » : masquée)
     duree: int = 32        # secondes d'une ligne (arrondies aux tours de 8 s de la carte centrale)
+    lettre: str = "h"      # LETTRES_ZONE : la zone, première lettre de ses clés
 
 
 # La rangée de la démo : les plantes d'abord (les pots de EMPLACEMENTS), puis une ligne
@@ -387,21 +399,47 @@ RANGEE = Rangee((
 # `--maison-minimale` : aucune ligne choisie, les réglages par défaut (plantes seules).
 RANGEE_MINIMALE = Rangee(())
 
+# Panneau Ok Nabu (ADR-0041) : celui du blueprint sans ligne choisie, l'écoute seule
+# (« np|0;nd|32; ») ; la démo le garde, l'accueil reste celui des références du rendu.
+NABU = Rangee((), lettre="n")
+# Avec deux lignes de capteurs (l'écoute d'abord) : capturé par le rendu, lignes 1 à 3
+# (tools/rendu/ecrans.py, « accueil-nabu-ligne-1 » à « -3 »). Ligne « air » (CO2, humidité,
+# cave, fumée) et ligne « ouvertures » (porte, fenêtre, serrure, garage).
+NABU_TROIS_LIGNES = Rangee((
+    (Element(Tuile("cap", "CO2 du bureau", "co2", complement="ppm", etat="612", valeur="612"), "carbon_dioxide"),
+     Element(Tuile("cap", "Humidité de la chambre", "humidite", complement="%", etat="47", valeur="47"), "humidity"),
+     Element(Tuile("cap", "Cave", "thermometre", complement="°C", etat="14.2", valeur="14.2"), "temperature"),
+     Element(Tuile("bin", "Fumée", "fumee", complement="smoke", etat="off"))),
+    (Element(Tuile("bin", "Porte d'entrée", "porte", complement="door", etat="off")),
+     Element(Tuile("bin", "Fenêtre de la chambre", "fenetre", complement="window", etat="on")),
+     Element(Tuile("bin", "Serrure", "serrure", complement="lock", etat="locked")),
+     Element(Tuile("bin", "Garage", "garage", complement="garage_door", etat="off"))),
+), lettre="n")
+# Une ligne de capteurs seule, l'écoute masquée : le panneau sans pastilles.
+NABU_UNE_LIGNE = Rangee(NABU_TROIS_LIGNES.lignes[:1], plantes="-", lettre="n")
+
 
 def rangee_de(absentes: frozenset) -> Rangee:
     """La rangée poussée : la maison minimale (des zones retirées) n'en a pas."""
     return RANGEE_MINIMALE if absentes else RANGEE
 
 
+def nabu_de(absentes: frozenset) -> Rangee:
+    """Le panneau Ok Nabu poussé : celui d'un blueprint sans ligne, dans les deux maisons."""
+    return NABU
+
+
 def _elements_de(rangee: Rangee):
-    """(clé « hLI », élément) vérifié, ligne par ligne, comme une tuile plus sa classe."""
-    assert rangee.plantes in PLACES_PLANTES, f"place des plantes {rangee.plantes!r}"
+    """(clé « hLI » ou « nLI », élément) vérifié, ligne par ligne, comme une tuile plus sa
+    classe."""
+    assert rangee.lettre in LETTRES_ZONE, f"zone {rangee.lettre!r}"
+    assert rangee.plantes in PLACES_PLANTES, f"place de la ligne spéciale {rangee.plantes!r}"
     assert 1 <= rangee.duree <= 999, f"durée d'une ligne {rangee.duree}"
     assert len(rangee.lignes) <= LIGNES_MAX, "trois lignes au plus"
     for l, ligne in enumerate(rangee.lignes):
         assert 0 < len(ligne) <= ELEMENTS_PAR_LIGNE, f"ligne {l} : un à quatre éléments"
         for i, element in enumerate(ligne):
-            cle = f"h{l}{i}"
+            cle = f"{rangee.lettre}{l}{i}"
             verifier_definition(cle, element.tuile)
             assert element.tuile.type != "act", f"{cle} : une action n'a rien à montrer"
             assert _CODE_ICONE.fullmatch(element.classe), f"{cle} : classe d'appareil {element.classe!r}"
@@ -410,8 +448,10 @@ def _elements_de(rangee: Rangee):
 
 def build_rangee_payload(rangee: Rangee) -> str:
     """Définitions de la rangée dans tab5_maj_tuiles : « hp|place;hd|secondes;
-    hLI|type|icône|options|complément|nom|classe;… » (ADR-0031)."""
-    entrees = [f"hp|{rangee.plantes}", f"hd|{rangee.duree}"]
+    hLI|type|icône|options|complément|nom|classe;… » (ADR-0031) ; « np|…;nd|…;nLI|…; »
+    pour le panneau Ok Nabu (ADR-0041)."""
+    z = rangee.lettre
+    entrees = [f"{z}p|{rangee.plantes}", f"{z}d|{rangee.duree}"]
     for cle, element in _elements_de(rangee):
         t = element.tuile
         entrees.append("|".join((cle, t.type, t.icone, t.options, echapper(t.complement), echapper(t.nom),

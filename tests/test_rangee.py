@@ -34,7 +34,9 @@ def _constante(source, nom):
 
 TUILES_CPP = _lire("Tab5", "ecran", "tab5_tuiles.cpp")
 RANGEE_CPP = _lire("Tab5", "ecran", "tab5_rangee.cpp")
-TOUR = _constante(TUILES_CPP, "kTourCentralS")
+INTERNAL_H = _lire("Tab5", "ecran", "tab5_internal.h")
+# Une seule définition du tour, partagée par le modèle, le dessin et la tuile − / +.
+TOUR = _constante(INTERNAL_H, "kTourCentralS")
 
 
 def _entrees():
@@ -58,9 +60,13 @@ def test_la_rangee_tourne_juste_avant_la_carte_centrale():
     garde = rotateur.split("rangee_tour();", 1)[0].rsplit("- if:", 1)[1]
     assert "light.is_on: backlight" in garde and "any_popup_visible" in garde
     assert "forecast_page" not in garde
-    # Un tour compté par appel ; la ligne change tous les rangee_tours() tours.
-    tour = RANGEE_CPP.split("void rangee_tour()", 1)[1].split("\n}\n", 1)[0]
-    assert "rangee_tours()" in tour and "suivante()" in tour
+    # Un tour compté par appel, pour chaque zone à lignes (la rangée, le panneau Ok Nabu,
+    # lot 3) ; la ligne change tous les rangee_tours(z) tours.
+    rangee_tour = RANGEE_CPP.split("void rangee_tour()", 1)[1].split("\n}\n", 1)[0]
+    assert "for (Defileur& d : s_zones) tour(d);" in rangee_tour and "reglables_tour();" in rangee_tour
+    tour = RANGEE_CPP.split("void tour(Defileur& d)", 1)[1].split("\n}\n", 1)[0]
+    assert "rangee_tours(d.z)" in tour and "suivante(d)" in tour
+    assert "kTourCentralS = " not in TUILES_CPP + RANGEE_CPP, "une seule définition (tab5_internal.h)"
 
 
 def test_duree_du_blueprint_en_tours_de_la_carte_centrale():
@@ -80,7 +86,7 @@ def test_place_des_plantes_par_defaut_la_premiere():
     assert valeurs == ["0", "1", "2", "masquees"] and plantes["default"] == "0"
     # Firmware : ModeleRangee{} met plantes à 0 (première), « hp|- » ou illisible : -1.
     assert "g.plantes = static_cast<int8_t>(ok ? place : -1);" in TUILES_CPP
-    assert "rangee->tours = kToursDefaut;" in TUILES_CPP
+    assert "g.tours = kToursDefaut;" in TUILES_CPP
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -91,23 +97,32 @@ def test_bornes_identiques_firmware_blueprint_demo():
     assert _constante(TUILES_CPP, "kLignes") == _constante(RANGEE_CPP, "kPlaces") == scenarios.LIGNES_MAX == 3
     assert _constante(TUILES_CPP, "kElements") == _constante(RANGEE_CPP, "kParLigne") == scenarios.ELEMENTS_PAR_LIGNE == 4
     rangee = bp._blueprint()["variables"]["rangee"]
-    assert "range(3)" in rangee and "ns.i < 4" in rangee
+    # Deux zones de trois lignes (la rangée, puis le panneau Ok Nabu, lot 3).
+    assert "range(6)" in rangee and "n % 3" in rangee and "ns.i < 4" in rangee
     assert [f"rangee_ligne_{n}" for n in (1, 2, 3)] == [k for k in _entrees() if k.startswith("rangee_ligne_")]
-    # Quatre éléments par ligne : rangee_element.yaml inclus 2 panneaux × 4 fois.
+    # Quatre éléments par ligne : rangee_panneau.yaml inclus 2 fois sous l'horloge, et
+    # rangee_element.yaml 4 fois par panneau.
     ui = _lire("Tab5", "ui_components", "rangee.yaml")
-    assert sorted(re.findall(r'el: "([ab][0-3])"', ui)) == [f"{p}{i}" for p in "ab" for i in range(4)]
+    assert sorted(re.findall(r'el: "([ab])"', ui)) == ["a", "b"]
+    panneau = _lire("Tab5", "ui_components", "rangee_panneau.yaml")
+    assert re.findall(r'el: "\$\{el\}([0-9])"', panneau) == ["0", "1", "2", "3"]
 
 
 def test_le_firmware_lit_les_trois_cles():
     lire = TUILES_CPP.split("void lire_entree(", 1)[1].split("\n}\n", 1)[0]
     assert "Champ f[7];" in lire and "decouper(s, n, f, 7)" in lire
-    assert "f[0].p[1] == 'p'" in lire and "f[0].p[1] == 'd'" in lire
-    assert "copier_icone(e.classe, f[6].p, f[6].n)" in lire
-    # Les états hLI passent par tuiles_etat_recu, comme les tRT.
+    assert "zone_de_lettre(f[0].p[0])" in lire and "lire_entree_rangee(f, nf, zones[z]);" in lire
+    rangee = TUILES_CPP.split("void lire_entree_rangee(", 1)[1].split("\n}\n", 1)[0]
+    assert "f[0].p[1] == 'p'" in rangee and "f[0].p[1] == 'd'" in rangee
+    assert "copier_icone(e.classe, f[6].p, f[6].n)" in rangee
+    # Les états hLI (et nLI) passent par tuiles_etat_recu, comme les tRT.
     recu = TUILES_CPP.split("bool tuiles_etat_recu(", 1)[1].split("\n}\n", 1)[0]
-    assert "cle[0] == 'h'" in recu and "rangee_element_change(r, t);" in recu
-    # Préférence à part : le modèle des pièces garde sa taille (NVS depuis la 3.2).
-    assert "make_preference<ModeleRangee>(kPrefKeyRangee)" in TUILES_CPP
+    assert "zone_de_lettre(cle[0])" in recu and "rangee_element_change(z, r, t);" in recu
+    # Préférence à part, une par zone : le modèle des pièces garde sa taille (NVS depuis
+    # la 3.2) ; la rangée garde sa clé « rang » et son magic « RAN1 ».
+    assert "make_preference<ModeleRangee>(kPrefKeyRangee[z])" in TUILES_CPP
+    assert re.search(r"kPrefKeyRangee\[RANGEE_NB\] = \{0x72616E67,", TUILES_CPP)
+    assert re.search(r"kMagicRangee\[RANGEE_NB\] = \{0x52414E31,", TUILES_CPP)
 
 
 def _champs(payload):

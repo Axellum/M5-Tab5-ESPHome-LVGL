@@ -216,9 +216,12 @@ def test_ce_que_le_job_attend_est_ce_que_calcule_le_blueprint():
     assert verifier.juger_definitions(definitions, icones) == []
     etats_tuiles = verifier.entrees_de(passage.etats_tuiles())
     assert [e[0] for e in etats_tuiles] == [c for c, _ in verifier.tuiles_attendues() + verifier.rangee_attendue()]
-    # Rangée sous l'horloge (ADR-0031) : le bouton (action) sauté, quatre au plus, ligne 2 vide.
+    # Rangée sous l'horloge (ADR-0031) : le bouton (action) sauté, quatre au plus, ligne 2 vide ;
+    # panneau Ok Nabu (ADR-0041) : sa ligne 2 seule.
     assert verifier.rangee_attendue() == [("h00", "cap"), ("h01", "cap"), ("h02", "bin"), ("h03", "bin"),
-                                          ("h20", "cap")]
+                                          ("h20", "cap"), ("n10", "cap"), ("n11", "bin")]
+    assert "np|-;nd|24;n10|cap|" in definitions
+    assert verifier.juger_definitions(definitions.replace("np|-;", "np|0;"), icones)
     # Tuile − / + (ADR-0033) : la clim du blueprint et la serrure sautées, la vanne sans lien.
     assert [(r["cle"], r["e"]) for r in passage["reglables"]] == [
         ("r0", "media_player.living_room"), ("r1", "light.ceiling_lights"), ("r2", "climate.heatpump"),
