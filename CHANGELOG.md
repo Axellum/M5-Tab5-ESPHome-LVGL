@@ -21,6 +21,10 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Accueil : lignes de capteurs centrées en hauteur
+
+- **Demande d'Axel** : les lignes de capteurs de la rangée sous l'horloge (ADR-0031) et du panneau « Ok Nabu » (ADR-0041) collaient au haut de leur zone — sur le rendu, encre à 4 px du haut du cadre Ok Nabu et 31 px du bas, à 3 px du haut de la rangée et 17 px du bas. Cause : LVGL pose la piste d'une flexbox en haut (`flex_align_track` à START par défaut) ; `flex_align_cross: CENTER` ne centrait l'élément que dans cette piste. `rangee_panneau.yaml` centre maintenant la piste. La ligne des plantes et la ligne d'écoute ne changent pas. **Non testé sur la tablette.**
+
 ### 2026-10-09 — Popup Météo : les prévisions en graphiques (ADR-0043)
 
 - **Demande d'Axel** : une fenêtre « Météo » plein écran, chrome partagé, trois pages changées par leur nom à côté du titre ou d'un glissé, comme les Réglages. « Aujourd'hui » : la météo du moment (icône, température, condition en mots, minimum et maximum du jour, pluie sur les heures montrées) puis jusqu'à 15 heures en courbe lissée (monotone, sans dépassement), icônes, valeurs à la couleur de la température, barres de pluie en mm, l'heure en cours marquée, « Demain » après minuit. « 10 jours » : une ligne par jour, barre en dégradé du minimum au maximum sur une échelle commune, la température du moment en point. « Détails » : la pluie dans l'heure à l'échelle du temps devant des lignes de niveau, la phrase de la carte centrale, humidité, indice UV (niveaux de l'OMS), probabilités de gel et de neige. **Non testé sur la tablette.**

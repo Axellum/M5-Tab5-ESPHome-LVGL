@@ -29,11 +29,18 @@ obj:
         clickable: false
         scrollable: false
         scrollbar_mode: "OFF"
+        # flex_align_track: CENTER centre la ligne dans la hauteur du panneau. Sans lui, LVGL
+        # (lv_flex.c) pose la piste en haut (START par défaut) : flex_align_cross ne centre
+        # un élément que dans la piste, haute comme le plus grand élément. Les lignes de
+        # valeurs collaient au haut de la rangée et du cadre Ok Nabu (encre 4 px sous le
+        # haut, 31 px au-dessus du bas sur le rendu du 09/10/2026) ; seules les icônes de
+        # 70 px, aussi hautes que la rangée, semblaient centrées.
         layout:
           type: FLEX
           flex_flow: ROW
           flex_align_main: SPACE_EVENLY
           flex_align_cross: CENTER
+          flex_align_track: CENTER
           pad_column: 0
         widgets:
           - !include { file: rangee_element.yaml, vars: { el: "${el}0" } }
