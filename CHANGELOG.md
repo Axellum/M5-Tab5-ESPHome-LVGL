@@ -21,6 +21,16 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Popup Température : l'humidité avec la température, une page par pièce (ADR-0047)
+
+- **Demande d'Axel** : un graphique des températures et de l'humidité des capteurs de chaque pièce, si présents, et passer d'une pièce à l'autre dans le popup. **Non testé sur la tablette.**
+- **Humidité** : quand l'emplacement a une sonde d'humidité (« Salon — humidité » pour le salon, « Humidité de la pièce » pour une pièce, ADR-0040 ; jamais la serre), sa courbe est tracée sur le même graphique, dans la couleur de l'humidité (`HUMIDITY_WET`, l'accent secondaire sur un thème dont l'accent est du même bleu), avec son échelle en % à droite sur les mêmes lignes de grille ; les degrés passent en couleur d'accent, la légende devient « Température », « Minimum et maximum », « Humidité », et la quatrième carte montre l'humidité du moment et sa plage. Sans sonde d'humidité : le popup d'avant, à l'identique.
+- **Pages** : un onglet par température connue à côté du titre (salon, chaque pièce à température déclarée, seconde température ; aucun avec une seule), comme les pages des Réglages ; un toucher ou un glissement à gauche ou à droite montre la suivante, à la même vue, tout de suite d'après ce que la tablette garde (les trois vues de chaque température déjà vue, ~40 Ko de PSRAM au lieu de ~6 Ko), puis la réponse de HA. Un appui long sur l'humidité d'une pièce (à droite, mode HA) ouvre aussi le popup. Onglets et geste écrits dans `tab5_historique.cpp`, en attendant la brique commune « popup à pages ».
+- **Contrat inchangé (1.0.0)** : mêmes variables de `tab5_maj_historique`, champs plus longs (septième champ d'en-tête = humidité actuelle, trois valeurs d'humidité en % entiers par créneau), qu'un firmware plus ancien ignore. Lecture déplacée dans `historique_lire()` (`Tab5/socle/tab5_parse.h`), testée par `tools/test_parse.cpp` et fuzzée (onzième parseur de `tools/fuzz/fuzz_parse.cpp`).
+- **Home Assistant** : `packages/tab5_historique.yaml` (champ `humidite` du script, deuxième statistique dans le même `recorder.get_statistics`) et le blueprint « Tab5 — emplacements » (il passe la sonde d'humidité de l'emplacement) changent : à recopier.
+- **Ordre de mise à jour HA ↔ firmware** : indifférent. Nouveaux fichiers HA avec un ancien firmware : champs d'humidité ignorés, popup d'avant. Nouveau firmware avec d'anciens fichiers HA : pas d'humidité, le popup d'avant avec ses onglets. Il faut les deux pour voir la courbe d'humidité.
+- **Rendu et démo** : humidité du salon et du Bureau dans la démo ; `temperature-salon`, `temperature-piece` et les écrans `temperature-serre*` / `temperature-dehors` changent (onglets) ; nouveaux écrans `temperature-glisser` (du salon à l'Entrée, sa température seule) et `temperature-onglet` (l'onglet du Bureau, vue 7 jours).
+
 ### 2026-10-09 — Réglages : mode de charge, animations, Wi-Fi éco (ADR-0045)
 
 - **Demande d'Axel** : trois réglages de plus, dans les Réglages de la tablette et dans Home Assistant (tableau de bord du Tab5 compris). Les défauts gardent le comportement d'avant. **Non testé sur la tablette.**

@@ -289,14 +289,16 @@ HA pushes only while the popup is open (package `tab5_energie.yaml`); instant tr
 
 ## Temperature popup — history and forecast
 
-Opened by a long press on one of the two home-screen temperatures ([ADR-0032](decisions/0032-temperature-history-popup.md)): the room's (`salon` slot) or the second one (`serre` slot, a greenhouse or outdoors). A tap on the second one still opens the Arcade. In HA mode on a room whose temperature the blueprint declares ([ADR-0040](decisions/0040-room-climate.md)), the left one is that room's (`p0` to `p4`), without forecast.
+Opened by a long press on one of the two home-screen temperatures ([ADR-0032](decisions/0032-temperature-history-popup.md)): the room's (`salon` slot) or the second one (`serre` slot, a greenhouse or outdoors). A tap on the second one still opens the Arcade. In HA mode on a room whose temperature the blueprint declares ([ADR-0040](decisions/0040-room-climate.md)), the left one is that room's (`p0` to `p4`), without forecast — and the right one too when it shows the room's humidity (ADR-0047).
 
 - **Top**: **Now** (and the average of the period), **Minimum** and **Maximum** with when they were reached, each in the screen's temperature colour. For the second temperature, a fourth card: the highest forecast temperature, the lowest below.
 - **Bottom**: the title gives the place (the sensor's area, pushed by HA) and the period; three buttons switch between **24 h** (hour by hour), **7 days** (every three hours) and **30 days** (day by day). The accent line is the mean of each slot, ending on the current value (a dot); a pale bar behind it goes from the minimum to the maximum. Grid every 1, 2, 5, 10… degrees, time axis every 3 h, 6 h, a day…
 - **Forecast** (second temperature only): a gold line on a tinted background after a « Maintenant » mark, with gold min-max bars for a day-by-day forecast. The blueprint box « La seconde température est dehors » makes it extend the curve (« Prévu »); unticked, it is the outdoor forecast next to a greenhouse (« Dehors, prévu »).
+- **Humidity** ([ADR-0047](decisions/0047-room-climate-chart.md)): when the slot has a humidity sensor (the living room's, or the room's), a second line in the humidity colour (`HUMIDITY_WET`, the secondary accent when a theme's accent is the same blue) on the same chart, its % scale on the right on the same grid lines, the degrees then in the accent colour; legend « Température », « Minimum et maximum », « Humidité »; the fourth card shows the humidity now (in its home-screen colour) and its range. Without a humidity sensor, the popup is unchanged.
+- **Pages** (ADR-0047): one tab per known temperature next to the title (`salon`, each `pR` with a declared temperature, `serre`; hidden with a single one), the shown one in the accent colour like the Réglages pages; a tap or a left/right swipe (the gesture stops at the popup) shows the next one, at the same view, at once from what the tablet keeps, then HA's answer.
 - Before Home Assistant answers: « En attente de Home Assistant »; sensor without statistics: « Aucun historique ».
 
-HA pushes once per request, only while the popup is open (package `tab5_historique.yaml`, recorder statistics and `weather.get_forecasts`); the tablet keeps the three views of the temperature shown in PSRAM (~6 KB) and nothing in NVS.
+HA pushes once per request, only while the popup is open (package `tab5_historique.yaml`, recorder statistics and `weather.get_forecasts`); the tablet keeps the three views of each temperature already shown in PSRAM (~40 KB) and nothing in NVS.
 
 ---
 
@@ -681,14 +683,16 @@ HA ne pousse que pendant que le popup est ouvert (package `tab5_energie.yaml`) ;
 
 ## Popup Température — historique et prévision
 
-S'ouvre par un appui long sur l'une des deux températures de l'accueil ([ADR-0032](decisions/0032-temperature-history-popup.md)) : celle de la pièce (emplacement `salon`) ou la seconde (emplacement `serre`, une serre ou dehors). Un tap sur la seconde ouvre toujours l'Arcade. En mode HA sur une pièce dont le blueprint déclare la température ([ADR-0040](decisions/0040-room-climate.md)), celle de gauche est la sienne (`p0` à `p4`), sans prévision.
+S'ouvre par un appui long sur l'une des deux températures de l'accueil ([ADR-0032](decisions/0032-temperature-history-popup.md)) : celle de la pièce (emplacement `salon`) ou la seconde (emplacement `serre`, une serre ou dehors). Un tap sur la seconde ouvre toujours l'Arcade. En mode HA sur une pièce dont le blueprint déclare la température ([ADR-0040](decisions/0040-room-climate.md)), celle de gauche est la sienne (`p0` à `p4`), sans prévision — et celle de droite aussi quand elle montre l'humidité de la pièce (ADR-0047).
 
 - **En haut** : **Maintenant** (et la moyenne de la période), **Minimum** et **Maximum** avec leur moment, chacun dans la couleur de température de l'écran. Pour la seconde température, une quatrième carte : la température prévue la plus haute, la plus basse dessous.
 - **En bas** : le titre donne le lieu (la pièce du capteur, poussée par HA) et la période ; trois boutons passent de **24 h** (heure par heure) à **7 jours** (toutes les trois heures) et **30 jours** (jour par jour). La ligne d'accent est la moyenne de chaque créneau, finie sur la valeur actuelle (un point) ; une barre pâle derrière elle va du minimum au maximum. Graduations tous les 1, 2, 5, 10… degrés, axe des temps toutes les 3 h, 6 h, un jour…
 - **Prévision** (seconde température seulement) : une ligne or sur un fond teinté après le trait « Maintenant », avec les barres mini-maxi or d'une prévision par jour. La case du blueprint « La seconde température est dehors » lui fait prolonger la courbe (« Prévu ») ; décochée, c'est la prévision de dehors à côté d'une serre (« Dehors, prévu »).
+- **Humidité** ([ADR-0047](decisions/0047-room-climate-chart.md)) : quand l'emplacement a une sonde d'humidité (celle du salon, ou celle de la pièce), une seconde ligne dans la couleur de l'humidité (`HUMIDITY_WET`, l'accent secondaire quand l'accent d'un thème est du même bleu) sur le même graphique, son échelle en % à droite sur les mêmes lignes de grille, les degrés passant alors en couleur d'accent ; légende « Température », « Minimum et maximum », « Humidité » ; la quatrième carte montre l'humidité du moment (dans sa couleur de l'accueil) et sa plage. Sans sonde d'humidité, le popup ne change pas.
+- **Pages** (ADR-0047) : un onglet par température connue à côté du titre (`salon`, chaque `pR` à température déclarée, `serre` ; aucun avec une seule), celui montré en couleur d'accent comme les pages des Réglages ; un toucher ou un glissement à gauche ou à droite (le geste s'arrête au popup) montre la suivante, à la même vue, tout de suite d'après ce que la tablette garde, puis la réponse de HA.
 - Avant que Home Assistant réponde : « En attente de Home Assistant » ; capteur sans statistiques : « Aucun historique ».
 
-HA pousse une fois par demande, seulement popup ouvert (package `tab5_historique.yaml`, statistiques du recorder et `weather.get_forecasts`) ; la tablette garde les trois vues de la température montrée en PSRAM (~6 Ko), rien en NVS.
+HA pousse une fois par demande, seulement popup ouvert (package `tab5_historique.yaml`, statistiques du recorder et `weather.get_forecasts`) ; la tablette garde en PSRAM les trois vues de chaque température déjà montrée (~40 Ko), rien en NVS.
 
 ---
 

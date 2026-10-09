@@ -32,3 +32,7 @@ Constraints: push-only and events-only ([ADR-0001](0001-push-only-zero-polling.m
 - A room climate's settings (`crpR`) only leave with its state changes or a reconnection: a climate that changes its settings without changing its state is seen at the next reconnection, like the tile climates.
 - The − / + list still opens in HA mode on a room with a climate, but a choice made there (or « next device », [ADR-0039](0039-gestes-accueil.md)) shows only out of HA mode or on another room.
 - One more file (`tab5_piece_climat.*`); about 5 × 180 bytes more of PSRAM when a room climate is known; two icons (thermometer F050F, drop F058E) already in `mdi_font_45`.
+
+## Update (2026-10-09)
+
+[ADR-0047](0047-room-climate-chart.md): the humidity now has a history, drawn with the temperature in the same popup; a long press on the right side (the room's humidity) opens it too.
