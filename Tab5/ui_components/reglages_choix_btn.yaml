@@ -1,7 +1,8 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT] Bouton à choix du popup « Réglages » (reglages_popup.yaml, 06/10/2026),
-# réutilisé 22 fois : extinction auto (6), Oui / Non (3 × 2), clair ou sombre (3),
-# langues (7). Un appui écrit l'entité par le script tab5_reglages_choisir
+# réutilisé 37 fois : extinction auto (6), Oui / Non (4 × 2), clair ou sombre (3),
+# langues (7), animations (3), limite (2) et mode de charge (2), économie d'énergie (3),
+# Wi-Fi éco (3). Un appui écrit l'entité par le script tab5_reglages_choisir
 # (tab5-reglages.yaml) ; la surbrillance de l'option active est posée par
 # reglages_peindre() (tab5_reglages.cpp), qui lit le texte comme premier enfant du bouton.
 # vars : id, x, y, w (hauteur fixe 56 px), reglage (ReglageId de tab5_custom.h, en nombre),

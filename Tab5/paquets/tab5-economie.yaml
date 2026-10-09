@@ -10,6 +10,8 @@
 #         - LVGL limité à 30 images/s, sauf pendant un jeu.
 #       « Sur batterie » se décide au courant de l'INA226 (tab5-sensors-diagnostics.yaml) :
 #       sans batterie détectée, ou en charge, jamais.
+#       Le select « Tab5 Animations » (09/10/2026, ADR-0045) est ici aussi : le niveau
+#       appliqué sort de la même décision (« Aucune » imposé par le mode actif).
 # @architecture_constraint Ce fichier ne lit que des entités, des globals et des
 #       fonctions C++ : il est aussi chargé par le rendu hors tablette, où rien ne
 #       l'enclenche (pas de batterie, « Sur batterie » par défaut). Ses entrées :
@@ -46,6 +48,29 @@ select:
       # Page Batterie des Réglages (tab5-reglages.yaml) : repeinte s'il a déjà été ouvert.
       - script.execute: tab5_reglages_sync_ui
 
+  # Animations de l'interface (09/10/2026, demande d'Axel ; ADR-0045) : « Complètes »
+  # (le défaut, le comportement d'avant), « Essentielles » (seule la rotation de la carte
+  # centrale et de la rangée sous l'horloge) ou « Aucune ». Le mode économie actif impose
+  # « Aucune » : un seul point de décision, economie_decider() (tab5_economie.h), appliqué
+  # par le script plus bas. Gardé en mémoire : la tablette garde l'INDEX, une option
+  # nouvelle s'ajoute à la fin, avec sa valeur dans ChoixAnimations.
+  - platform: template
+    id: tab5_animations
+    name: "Tab5 Animations"
+    icon: mdi:animation-play
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Complètes"
+      - "Essentielles"
+      - "Aucune"
+    initial_option: "Complètes"
+    on_value:
+      - script.execute: tab5_economie_appliquer
+      # Page Apparence des Réglages : repeinte s'il a déjà été ouvert.
+      - script.execute: tab5_reglages_sync_ui
+
 binary_sensor:
   # La tablette tourne-t-elle sur sa batterie ? Décidé à chaque lecture du courant de
   # l'INA226 (toutes les 60 s ; tab5_economie.h) et dès que la charge reprend. Toujours
@@ -75,6 +100,8 @@ script:
           const uint32_t depuis_allumage = millis() - id(ecran_allume_ms);
           in.inactif_ms = std::min(ui_idle_ms(), depuis_allumage);
           in.jeu_ouvert = GameRegistry::any_open();
+          const auto animations = id(tab5_animations).active_index();
+          in.animations = animations.has_value() ? (uint8_t) *animations : 0;
           const DecisionEconomie d = economie_decider(in);
           // Le plafond passe par la même correction gamma que la lumière : la sortie
           // compare deux valeurs de la même échelle (backlight_plafonne).
@@ -87,7 +114,7 @@ script:
             id(backlight_pwm).set_level(economie_sortie_actuelle());
           }
           if (economie_periode(d.periode_ms)) id(tab5_lvgl)->set_refresh_interval(d.periode_ms);
-          animations_reduites(d.animations_reduites);
+          animations_niveau(d.animations);
 
 interval:
   - interval: 1s

@@ -27,6 +27,10 @@
 #           est allumé ; une prise quand la batterie n'est pas détectée.
 #           Console système (06/10/2026) : la ligne « Batterie » relit le même état gardé
 #           par le C++ (update_console_batterie_ui, interval 2 s plus bas, console ouverte).
+#           « Tab5 Mode de charge » (09/10/2026, ADR-0045) : charge rapide (P5) en
+#           « Rapide », chargeur allumé seulement.
+# @wifi « Tab5 Wi-Fi éco » (09/10/2026, ADR-0045) : économie légère du Wi-Fi jamais, sur
+#       batterie ou toujours, appliquée à chaud (script tab5_wifi_eco_appliquer).
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
 #                         C++ depuis tab5_custom.cpp (ex: update_console_diagnostics_ui(...) ).
@@ -42,6 +46,8 @@
 # YAML n'a pas d'identifiants). Un YAML avec identifiants les rangerait sous le hash de
 # la config : ils ne passeraient pas d'un firmware à l'autre.
 wifi:
+  # Le mode au démarrage. « Tab5 Wi-Fi éco » (plus bas, ADR-0045) passe à chaud en
+  # économie légère, puis revient ici (wifi_eco_appliquer, tab5_console.cpp).
   power_save_mode: NONE
   # Connexion sans balayage (01/10/2026, mesure du démarrage) : la tablette retourne
   # directement au point d'accès et au canal de sa dernière connexion, gardés en NVS
@@ -106,10 +112,13 @@ switch:
       number: 7
     restore_mode: ALWAYS_ON
 
-  # nCHG_QC_EN (P5, actif bas) : charge rapide ARRÊTÉE, comme la config de référence
-  # ESPHome (M5Unified l'active au démarrage). Tablette branchée : la charge standard demande
-  # moins de courant au chargeur USB (docs/hardware.md, Battery), la rapide chauffe plus.
-  # M5Unified appelle les deux modes 500 et 1 000 mA (setChargeCurrent), non mesuré.
+  # nCHG_QC_EN (P5, actif bas) : charge rapide ARRÊTÉE au démarrage, comme la config de
+  # référence ESPHome (M5Unified l'active au démarrage). Tablette branchée : la charge
+  # standard demande moins de courant au chargeur USB (docs/hardware.md, Battery), la
+  # rapide chauffe plus. M5Unified appelle les deux modes 500 et 1 000 mA
+  # (setChargeCurrent), non mesuré. Depuis le 09/10/2026 (ADR-0045), commandé par
+  # l'interval de 1 s du chargeur d'après « Tab5 Mode de charge » : allumé seulement en
+  # « Rapide » ET chargeur allumé (charge_rapide_voulue, tab5_batterie.h).
   - platform: gpio
     id: quick_charge
     name: "Quick Charge"
@@ -482,6 +491,47 @@ select:
       # Page Batterie des Réglages (tab5-reglages.yaml) : repeinte s'il a déjà été ouvert.
       - script.execute: tab5_reglages_sync_ui
 
+  # Mode de charge de la batterie (09/10/2026, demande d'Axel ; ADR-0045) : « Classique »
+  # (le défaut, le comportement d'avant : charge rapide arrêtée) ou « Rapide »
+  # (nCHG_QC_EN, `quick_charge`). Sans effet chargeur coupé (sans batterie, pendant une
+  # sonde, en pause à 80 %) : l'interval de 1 s plus bas ne l'allume qu'avec CHG_EN.
+  # Gardé en mémoire : la tablette garde l'INDEX, une option nouvelle s'ajoute à la fin,
+  # avec sa valeur dans ModeCharge (tests/test_batterie.py relit les deux).
+  - platform: template
+    id: tab5_mode_charge
+    name: "Tab5 Mode de charge"
+    icon: mdi:battery-charging-high
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Classique"
+      - "Rapide"
+    initial_option: "Classique"
+    on_value:
+      - script.execute: tab5_reglages_sync_ui
+
+  # Wi-Fi éco (09/10/2026, demande d'Axel ; ADR-0045) : économie légère du Wi-Fi
+  # (WIFI_PS_MIN_MODEM, envoyée au C6 par ESP-Hosted) jamais (le défaut, le comportement
+  # d'avant : power_save_mode NONE plus haut), sur batterie ou toujours, comme « Tab5
+  # Économie d'énergie » ; jamais pendant la voix, un son ou une OTA (wifi_eco_voulu,
+  # tab5_economie.h). Appliqué à chaud par le script tab5_wifi_eco_appliquer.
+  - platform: template
+    id: tab5_wifi_eco
+    name: "Tab5 Wi-Fi éco"
+    icon: mdi:wifi-cog
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - "Jamais"
+      - "Sur batterie"
+      - "Toujours"
+    initial_option: "Jamais"
+    on_value:
+      - script.execute: tab5_wifi_eco_appliquer
+      - script.execute: tab5_reglages_sync_ui
+
   - platform: template
     id: wifi_antenna_select
     name: "WiFi Antenna"
@@ -596,6 +646,9 @@ interval:
 
   # Chargeur (08/10/2026, tab5_batterie.h) : CHG_EN suit chargeur_pas() ; à la fin du
   # repos d'une sonde (chargeur coupé 8 s), une lecture de l'INA226 tout de suite.
+  # Charge rapide (09/10/2026, ADR-0045) : nCHG_QC_EN suit « Tab5 Mode de charge », mais
+  # seulement chargeur allumé (charge_rapide_voulue) ; posée après CHG_EN, dans l'ordre de
+  # M5Unified (setChargeCurrent : P7 puis P5).
   # [AI-DEBUG] Chaque commande est journalisée (tag tab5.batterie) avec sa raison.
   - interval: 1s
     then:
@@ -606,7 +659,19 @@ interval:
             if (a.allumer) id(charge_enable).turn_on();
             else id(charge_enable).turn_off();
           }
+          const bool rapide = charge_rapide_voulue(id(tab5_mode_charge).active_index().value_or(0), a.allumer);
+          if (rapide != id(quick_charge).state) {
+            ESP_LOGI("tab5.batterie", "Charge rapide %s", rapide ? "allumee" : "arretee");
+            if (rapide) id(quick_charge).turn_on();
+            else id(quick_charge).turn_off();
+          }
           if (a.lire) id(ina226_batterie).update();
+
+  # Wi-Fi éco (09/10/2026, ADR-0045) : la décision suit « sur batterie » et les flux
+  # (voix, son, OTA) ; le script n'envoie une commande au C6 que si elle change.
+  - interval: 1s
+    then:
+      - script.execute: tab5_wifi_eco_appliquer
 
   # Mesure de consommation (interrupteur « Tab5 Mesure de consommation » plus haut) :
   # une lecture de l'INA226 toutes les 2 s en plus de celle de la minute.
@@ -664,6 +729,21 @@ interval:
 # tab5_journal.cpp) : jamais pour un démarrage normal. Côté HA, la garde (e) de
 # packages/tab5_health.yaml en fait une notification. Journal vidé une fois HA joint.
 script:
+  # Wi-Fi éco (09/10/2026, ADR-0045) : décision pure (wifi_eco_voulu, tab5_economie.h),
+  # appliquée par wifi_eco_appliquer() (tab5_console.cpp), qui ne parle au C6 que quand
+  # la décision change, Wi-Fi connecté (une fois de plus après chaque reconnexion).
+  # Flux : assistant vocal (comme l'extinction auto, tab5-ha-controls.yaml), lecteur qui
+  # joue ou annonce, mise à jour du firmware.
+  - id: tab5_wifi_eco_appliquer
+    then:
+      - lambda: |-
+          const auto etat = id(speaker_player)->state;
+          const bool flux = id(va)->is_running() || id(va)->is_continuous() || id(ota_en_cours) ||
+                            etat == media_player::MEDIA_PLAYER_STATE_PLAYING ||
+                            etat == media_player::MEDIA_PLAYER_STATE_ANNOUNCING;
+          wifi_eco_appliquer(wifi_eco_voulu(id(tab5_wifi_eco).active_index().value_or(0),
+                                            economie_sur_batterie(), flux));
+
   # Fin de la mesure de consommation : 2 h après l'allumage de l'interrupteur (un test
   # complet dure environ 1 h). Arrêté quand on le coupe ; restart s'il est rallumé.
   - id: tab5_mesure_conso_fin
