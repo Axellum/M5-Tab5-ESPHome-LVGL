@@ -348,6 +348,10 @@ struct TuileWidgets {
 // aucun appareil. A-t-elle une lumière pilotable (tuile lum sans l'option r) ?
 bool tuiles_piece_titre(int r, char* out, size_t n);
 bool tuiles_piece_a_lumieres(int r);
+// Popups Lumières et Volets (ADR-0046) : la maison a-t-elle au moins une lumière (un volet
+// pilotable) ? Sans, « Aller à l'écran » et les gestes ne les ouvrent pas (ecran_sans_zone).
+bool tuiles_lumieres_presentes();
+bool tuiles_volets_presents();
 // « Pièce : tout éteindre » de la pièce R (pR / eteindre ; lumieres / eteindre en mode
 // héritage), comme « Tout éteindre » du popup lumière.
 void tuiles_piece_eteindre(int r);

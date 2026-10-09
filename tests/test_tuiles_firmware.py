@@ -204,47 +204,59 @@ def test_tout_eteindre_de_la_piece():
 
 def test_popup_lumiere_revalide_aux_nouvelles_definitions():
     """UI-1 (audit du 07/10/2026) : comme les popups volet et appareil, le popup lumière
-    est revalidé quand HA renvoie les définitions — lignes recalculées sur la même pièce
-    et repeintes, refermé s'il n'y a plus de lumière, oublié s'il est fermé."""
+    est revalidé quand HA renvoie les définitions — pages et lignes recalculées sur la même
+    pièce (ADR-0046 : la première qui a des lumières si elle n'en a plus) et repeintes,
+    refermé s'il n'y a plus de lumière dans la maison, oublié s'il est fermé."""
     cpp = _cpp()
     # tuiles_definir → popups_revalider (tab5_tuiles_popups.cpp, lot L7) : volet, appareil, lumière.
     assert "popups_revalider();" in _fonction(cpp, "tuiles_definir")
     assert "popup_lumiere_revalider();" in _fonction(cpp, "popups_revalider")
+    assert "popup_volet_revalider();" in _fonction(cpp, "popups_revalider")
     corps = _fonction(cpp, "popup_lumiere_revalider")
     assert "s_pl = PopupLumiere{};" in corps
     # Mêmes lignes qu'à l'ouverture (popup_lumiere_lignes) ; refermé sans lumière, repeint
-    # sinon (popup_tuile_revalider, commun aux trois popups, lot L7).
+    # sinon (popup_tuile_revalider, commun aux popups, lot L7).
     assert ("popup_tuile_revalider(s_pl, popup_lumiere_lignes(s_pl.piece, choisie), popup_lumiere_peindre);"
             in corps)
     assert "popup_lumiere_lignes(r, t)" in _fonction(cpp, "popup_lumiere_ouvrir")
     lignes = _fonction(cpp, "popup_lumiere_lignes")
-    assert "s_pl = PopupLumiere{};" in lignes and "est_lumiere(r, i)" in lignes
+    assert "pieces_calculer(s_pl, est_lumiere, r, t)" in lignes and "s_pl = PopupLumiere{};" in lignes
     # La clé des commandes suit la lampe choisie (mode héritage → clés tRT).
-    assert "s_pl.tuile = s_pl.tuiles[s_pl.choix];" in lignes
-    assert "lumiere_cle(r, s_pl.tuile, *u.lum_cle);" in lignes
+    assert "lumiere_cle(s_pl.piece, s_pl.tuile, *u.lum_cle);" in lignes
+    calcul = _fonction(cpp, "pieces_calculer")
+    assert "p.tuile = p.tuiles[p.choix];" in calcul and "p.piece = p.pieces[p.page];" in calcul
     revalider = _fonction(cpp, "popup_tuile_revalider")
     assert "if (!P::ouvert()) return;" in revalider
     assert "if (valide) peindre();\n    else animate_popup_close(P::conteneur());" in revalider
+    volet = _fonction(cpp, "popup_volet_revalider")
+    assert "pieces_calculer(s_pv, est_volet, r, t)" in volet and "animate_popup_close(PopupVolet::conteneur());" in volet
 
 
 def test_les_trois_popups_d_une_tuile_partagent_popup_tuile():
     """UI-4 (audit du 07/10/2026, lot L7) : pièce, tuile, « ouvert ? », ouverture et
-    revalidation des popups lumière, volet et appareil écrits une fois (PopupTuile)."""
+    revalidation des popups lumière, volet et appareil écrits une fois (PopupTuile) ; les
+    pages par pièce des popups Lumières et Volets une fois aussi (PopupPieces, ADR-0046)."""
     cpp = _cpp()
-    for struct, conteneur in (("PopupLumiere", "lum_popup"), ("PopupVolet", "vol_popup"),
-                              ("PopupAppareil", "app_popup")):
-        assert f"struct {struct} : PopupTuile<&TuilesUI::{conteneur}>" in cpp, struct
+    assert "struct PopupPieces : PopupTuile<C>" in cpp
+    for struct, base in (("PopupLumiere", "PopupPieces<&TuilesUI::lum_popup>"),
+                         ("PopupVolet", "PopupPieces<&TuilesUI::vol_popup>"),
+                         ("PopupAppareil", "PopupTuile<&TuilesUI::app_popup>")):
+        assert f"struct {struct} : {base}" in cpp, struct
     # Plus de « ouvert ? » ni de bornes écrits à la main, popup par popup.
     for ancien in ("bool popup_ouvert()", "bool popup_volet_ouvert()", "bool popup_appareil_ouvert()",
                    "r >= kPieces || t < 0 || t >= kTuiles || heritage()"):
         assert ancien not in cpp, ancien
     assert cpp.count("!lv_obj_has_flag(p, LV_OBJ_FLAG_HIDDEN)") == 1
-    assert "void popup_volet_ouvrir(int r, int t) { popup_tuile_ouvrir(s_pv, r, t, popup_volet_peindre); }" in cpp
+    assert "pieces_calculer(s_pv, est_volet, r, t)" in _fonction(cpp, "popup_volet_montrer")
     assert ("void popup_appareil_ouvrir(int r, int t) { popup_tuile_ouvrir(s_pa, r, t, popup_appareil_peindre); }"
             in cpp)
     ouvrir = _fonction(cpp, "popup_tuile_ouvrir")
     assert ouvrir.index("p = P{};") < ouvrir.index("peindre();") < ouvrir.index("animate_popup_open(P::conteneur());")
-    assert "if (s_pv.montre(r, t)) popup_volet_peindre();" in _fonction(cpp, "popup_volet_etat")
+    # Un état : la ligne de la tuile (si la page la montre), puis la partie droite.
+    etat = _fonction(cpp, "popup_volet_etat")
+    assert "ligne_de_la_tuile(s_pv, g_tuiles_ui.vol_ligne, t);" in etat
+    assert "if (s_pv.montre(r, t)) popup_volet_peindre();" in etat
+    assert "ligne_de_la_tuile(s_pl, g_tuiles_ui.lum_ligne, t);" in _fonction(cpp, "popup_lumiere_etat")
     assert "if (s_pa.montre(r, t)) popup_appareil_peindre();" in _fonction(cpp, "popup_appareil_etat")
 
 
@@ -393,7 +405,9 @@ def test_widgets_poses_sans_toucher_a_l_on_boot():
         assert f"u.heure_g[{t}] = id(icon_card_h{4 - t}_g);" in tuiles
         assert f"u.heure_bouton[{t}] = id(btn_h{4 - t}_action);" in tuiles
         assert f"u.carte_nom[{t}] = id(lbl_sw{t}_title);" in tuiles
-        assert f"u.lum_sel[{t}] = id(btn_light_sel_{t});" in tuiles
+        assert f"u.lum_ligne[{t}] = id(btn_light_sel_{t});" in tuiles
+        assert f"u.vol_ligne[{t}] = id(volet_ligne_{t});" in tuiles
+        assert f"u.lum_onglet[{t}] = id(lum_onglet_{t});" in tuiles and f"u.vol_onglet[{t}] = id(vol_onglet_{t});" in tuiles
     zones = _lire("Tab5", "paquets", "tab5-zones.yaml").split("- id: tab5_zones_apply", 1)[1]
     assert zones.index("script.execute: tab5_tuiles_ui") < zones.index("zones_apply_ui();")
     on_boot = _lire("tab5-ha-hmi.yaml").split("  on_boot:", 1)[1].split("\npackages:", 1)[0]
@@ -467,9 +481,14 @@ def test_commandes_du_popup_du_volet_dans_le_contrat():
     adr = _commandes_de_l_adr()
     # Boutons : les commandes de tuile d'un volet, rien d'autre.
     popup = _lire("Tab5", "ui_components", "volet_popup.yaml")
-    boutons = re.findall(r"file: volet_btn\.yaml, vars: \{[^}]*commande: (\w+)", popup)
-    assert sorted(boutons) == ["arreter", "fermer", "ouvrir"]
-    assert "popup_volet_commande(\"${commande}\");" in _lire("Tab5", "ui_components", "volet_btn.yaml")
+    boutons = re.findall(r"file: volet_btn\.yaml, vars: \{[^}]*appel: (\w+), commande: (\w+)", popup)
+    assert sorted(c for a, c in boutons if a == "popup_volet_commande") == ["arreter", "fermer", "ouvrir"]
+    # Tout ouvrir / Tout fermer (ADR-0046) : la commande à chaque volet de la page.
+    assert sorted(c for a, c in boutons if a == "popup_volets_tout") == ["fermer", "ouvrir"]
+    assert len(boutons) == 5
+    assert "${appel}(\"${commande}\");" in _lire("Tab5", "ui_components", "volet_btn.yaml")
+    tout = _fonction(cpp, "popup_volets_tout")
+    assert "if (est_volet(s_pv.piece, s_pv.tuiles[i])) envoyer_tuile(s_pv.piece, s_pv.tuiles[i], action);" in tout
     assert "envoyer_tuile(s_pv.piece, s_pv.tuile, action);" in _fonction(cpp, "popup_volet_commande")
     # Volet dessiné : « position » (dans le tableau de l'ADR), 0-100, à la tuile du popup,
     # et jamais sans position connue (même si elle s'est perdue pendant le geste).
@@ -532,7 +551,9 @@ def test_le_volet_dessine_suit_la_position_de_ha():
     recu = _fonction(cpp, "tuiles_etat_recu")
     assert recu.index("popup_volet_etat_pousse(r, t);") < recu.index("peindre_tuile(r, t);")
     assert "if (r == s_pv.piece && t == s_pv.tuile) s_pv.cible = false;" in _fonction(cpp, "popup_volet_etat_pousse")
-    assert cpp.count("s_pv.cible = true;") == 1 and cpp.count("s_pv.cible = false;") == 1
+    # Oubliée aussi quand un autre volet est choisi (volet_doigt_oublier, ADR-0046).
+    assert cpp.count("s_pv.cible = true;") == 1 and cpp.count("s_pv.cible = false;") == 2
+    assert "s_pv.cible = false;" in _fonction(cpp, "volet_doigt_oublier")
     assert "ui_hidden(u.vol_position, !connue);" in peindre
     dessiner = _fonction(cpp, "popup_volet_dessiner")
     assert "ui_y(g_tuiles_ui.vol_tablier, -(std::clamp(pos, 0, 100) * kVoletFenetreH) / 100);" in dessiner
@@ -572,10 +593,11 @@ def test_geometrie_du_volet_dessine():
 
 def test_popup_du_volet_inscrit_et_branche():
     scripts = _lire("Tab5", "paquets", "tab5-navigation.yaml")
-    assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volet",\s+ModalRegistry::POPUP\);', scripts)
+    assert re.search(r'ModalRegistry::add\(id\(volet_popup\),\s+"Volets",\s+ModalRegistry::POPUP,\s+'
+                     r'\[\] \{ volets_ouvrir\(\); \}\);', scripts)
     assert "- !include ../ui_components/volet_popup.yaml" in _lire("Tab5", "paquets", "tab5-lvgl.yaml")
     tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
-    for champ, widget in (("vol_popup", "volet_popup"), ("vol_titre", "volet_popup_titre"),
+    for champ, widget in (("vol_popup", "volet_popup"), ("vol_nom", "volet_nom"),
                           ("vol_position", "volet_position"), ("vol_nombre", "volet_nombre"),
                           ("vol_etat", "volet_etat"), ("vol_cadre", "volet_cadre"),
                           ("vol_tablier", "volet_tablier")):
@@ -637,7 +659,7 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
     assert "popups_revalider();" in _fonction(cpp, "tuiles_definir")
     revalider = _fonction(cpp, "popups_revalider")
     assert "popup_tuile_revalider(s_pa, popup_appareil_valide(), popup_appareil_peindre);" in revalider
-    assert "popup_tuile_revalider(s_pv, popup_volet_valide(), popup_volet_peindre);" in revalider
+    assert "popup_volet_revalider();" in revalider
     assert "popups_rejouer_theme();" in _fonction(cpp, "tuiles_rejouer_theme")
     assert "if (s_pa.ouvert()) popup_appareil_peindre();" in _fonction(cpp, "popups_rejouer_theme")
     # Le popup dit l'option k et l'option o, et ce que fera l'appui.

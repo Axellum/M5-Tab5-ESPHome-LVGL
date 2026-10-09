@@ -141,7 +141,7 @@ extern Minuterie s_ok;
 void charger();
 bool heritage();
 bool tuile_presente(int r, int t);
-const char* heritage_glyphe_selecteur(int t);
+int piece_courante();
 bool minuterie_sur(const Minuterie& m, int r, int t);
 bool vol_mouvement(const char* s);
 Gestes gestes(const Def& d, bool clim_connue);

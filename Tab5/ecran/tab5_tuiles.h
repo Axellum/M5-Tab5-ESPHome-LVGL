@@ -68,19 +68,20 @@ struct TuilesUI {
     // avec l'option m, sinon celle de la tuile, ADR-0027).
     lv_obj_t* popup_tv = nullptr;
     lv_obj_t* popup_clim = nullptr;
-    // Popup lumière (light_popup.yaml) : sélecteur des lumières de la pièce (5 au plus).
+    // Popups Lumières et Volets, une page par pièce (ADR-0046) : les lignes de la pièce
+    // affichée (piece_ligne.yaml, 5 au plus) et les noms des pièces (pages_onglet.yaml).
+    // Popup Lumières (light_popup.yaml).
     lv_obj_t* lum_popup = nullptr;        // light_options_popup
-    lv_obj_t* lum_titre = nullptr;        // popup_light_title
-    lv_obj_t* lum_sel[5] = {};            // btn_light_sel_N
-    lv_obj_t* lum_sel_icone[5] = {};      // icon_light_sel_N
-    lv_obj_t* lum_sel_nom[5] = {};        // lbl_light_sel_N
-    lv_obj_t* lum_power = nullptr;        // btn_light_power_icon
+    lv_obj_t* lum_ligne[5] = {};          // btn_light_sel_N
+    lv_obj_t* lum_onglet[5] = {};         // lum_onglet_N
     lv_obj_t* lum_arc = nullptr;          // arc_light_brightness
     lv_obj_t* lum_pct = nullptr;          // lbl_light_brightness_val
     std::string* lum_cle = nullptr;       // &id(current_light_slot) : cible des commandes
-    // Popup du volet (volet_popup.yaml, 05/10/2026) : ouvert par l'appui long d'une tuile vol.
+    // Popup Volets (volet_popup.yaml, 05/10/2026) : le volet choisi, dessiné, à droite.
     lv_obj_t* vol_popup = nullptr;        // volet_popup
-    lv_obj_t* vol_titre = nullptr;        // volet_popup_titre
+    lv_obj_t* vol_ligne[5] = {};          // volet_ligne_N
+    lv_obj_t* vol_onglet[5] = {};         // vol_onglet_N
+    lv_obj_t* vol_nom = nullptr;          // volet_nom : le nom du volet choisi
     lv_obj_t* vol_position = nullptr;     // volet_position : rangée « 45 % »
     lv_obj_t* vol_nombre = nullptr;       // volet_nombre : chiffres (police de l'horloge)
     lv_obj_t* vol_etat = nullptr;         // volet_etat : l'état en mots
@@ -143,13 +144,29 @@ bool tuiles_heritage_volet(const std::string& etat_physique);
 // prochaine commande (volet_target_open) et repeint la flèche.
 void tuiles_heritage_volet_sens();
 
-// Popup du volet (volet_popup.yaml, ouvert par l'appui long d'une tuile vol sans
-// l'option k, 05/10/2026, discussion #278). Boutons Ouvrir / Stop / Fermer : la commande
-// `action` (ouvrir, arreter, fermer) à la tuile du popup, comme son appui.
+// Popups à pages par pièce (ADR-0046, 09/10/2026) : Lumières (light_popup.yaml) et Volets
+// (volet_popup.yaml), une page par pièce qui a des lumières (des volets pilotables : vol
+// sans l'option r ni k). Ouverts par l'appui long d'une tuile (sa pièce, cette tuile), par
+// « Aller à l'écran » et les gestes de l'accueil (lumieres_ouvrir / volets_ouvrir : la
+// pièce affichée, sinon la première qui en a ; rien sans aucune). Leurs lignes
+// (piece_ligne.yaml) : `idx` = rang dans la page.
+//   - *_choisir : toucher d'une ligne, elle devient celle que pilotent la partie droite ;
+//   - *_ligne_appui : toucher de sa pastille (le toucher de la tuile) ou appui long (sa
+//     roue d'actions rapides, sinon le chemin de la tuile) ;
+//   - *_page : tap sur le nom d'une pièce (pages_onglet.yaml) ; le glissement passe par
+//     la même fonction (tab5_pages.cpp).
+void popup_lumiere_page(int page);
+void popup_lumiere_ligne_appui(int idx, bool long_appui);
+void popup_volet_choisir(int idx);
+void popup_volet_page(int page);
+void popup_volet_ligne_appui(int idx, bool long_appui);
+// Boutons Ouvrir / Stop / Fermer : la commande `action` (ouvrir, arreter, fermer) au
+// volet choisi, comme son appui. Tout ouvrir / Tout fermer : à chaque volet de la page.
 void popup_volet_commande(const char* action);
+void popup_volets_tout(const char* action);
 // Construit les lames du volet dessiné et branche les événements de son cadre (glisser :
-// le dessin et le nombre suivent ; relâcher : « position » part). Une fois, depuis
-// tab5_tuiles_ui.
+// le dessin et le nombre suivent ; relâcher : « position » part), puis le glissement de
+// pièce en pièce des deux popups. Une fois, depuis tab5_tuiles_ui.
 void tuiles_brancher_popup_volet();
 
 // Popup d'un appareil (appareil_popup.yaml, ouvert par l'appui long d'une tuile int, act,
@@ -157,14 +174,17 @@ void tuiles_brancher_popup_volet();
 // toucher de la tuile du popup (même commande, même confirmation avec l'option k).
 void popup_appareil_appui();
 
-// Popup lumière (ouvert par l'appui long d'une tuile lum) : ses lignes sont les lumières
-// de la pièce, dans l'ordre des tuiles. Choisit la ligne `idx` (script
-// tab5_light_popup_show, boutons du sélecteur) : titre, surbrillance, arc, et
-// current_light_slot = clé de la tuile (tRT, ou lumiere_N en mode héritage).
+// Popup Lumières : ses lignes sont les lumières de la pièce affichée, dans l'ordre des
+// tuiles. Choisit la ligne `idx` : surbrillance, arc, et current_light_slot = clé de la
+// tuile (tRT, ou lumiere_N en mode héritage).
 void popup_lumiere_choisir(int idx);
-// « Tout éteindre » : pR / eteindre (toutes les lumières de la pièce), lumieres /
+// « Tout éteindre » : pR / eteindre (toutes les lumières de la pièce affichée), lumieres /
 // eteindre en mode héritage.
 void popup_lumiere_tout_eteindre();
+// « Aller à l'écran → Lumières / Volets » et les gestes de l'accueil (registre des
+// fenêtres, tab5-navigation.yaml). Aucune lumière (aucun volet) dans la maison : rien.
+void lumieres_ouvrir();
+void volets_ouvrir();
 // Couleur montrée d'une teinte de lampe (color_name : « warmwhite », « gold »…) : la
 // seule liste, pour les pastilles du popup lumière (light_white_btn.yaml,
 // light_color_preset_btn.yaml) et de la roue (UI-8). Nom inconnu : UIColor.TEXT_DIM.

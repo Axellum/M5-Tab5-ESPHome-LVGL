@@ -36,6 +36,8 @@ APPUIS_LONGS = {
     "btn_rangee": "plants.md",
     "climate_card.yaml": "temperature.md",
     "maison_ligne.yaml": "house.md",
+    # Une ligne des popups Lumières et Volets (ADR-0046) : la roue de sa tuile.
+    "piece_ligne.yaml": "lights.md",
     # Carte centrale : chaque panneau de l'accueil ouvre l'historique des alertes.
     # (alertes, pluie, planning, info, alertes HA : un gabarit depuis le 08/10/2026, YML-4).
     "central_bouton.yaml": "home.md",

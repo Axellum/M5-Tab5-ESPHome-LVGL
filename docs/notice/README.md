@@ -42,8 +42,8 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 
 | Window | Opens from | Page |
 |---|---|---|
-| Lights | long press on a light | [Lights](lights.md) |
-| Shutter | long press on a shutter | [Shutters](shutters.md) |
+| Lights | long press on a light, or « Aller à l'écran » | [Lights](lights.md) |
+| Shutters | long press on a shutter, or « Aller à l'écran » | [Shutters](shutters.md) |
 | Climate | the climate target, or a climate card | [Climate](climate.md) |
 | TV remote | long press on the gamepad button, or on a TV | [TV remote](tv.md) |
 | Calendar | long press on the date | [Calendar](calendar.md) |
@@ -106,8 +106,8 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 
 | Fenêtre | S'ouvre depuis | Page |
 |---|---|---|
-| Lumières | appui long sur une lumière | [Lumières](lights.md#version-française) |
-| Volet | appui long sur un volet | [Volets](shutters.md#version-française) |
+| Lumières | appui long sur une lumière, ou « Aller à l'écran » | [Lumières](lights.md#version-française) |
+| Volets | appui long sur un volet, ou « Aller à l'écran » | [Volets](shutters.md#version-française) |
 | Clim | la consigne de la clim, ou une carte clim | [Clim](climate.md#version-française) |
 | Télécommande TV | appui long sur le bouton manette, ou sur une TV | [Télécommande TV](tv.md#version-française) |
 | Calendrier | appui long sur la date | [Calendrier](calendar.md#version-française) |

@@ -422,16 +422,8 @@ const char* heritage_glyphe_epaule(int t, bool volet_ferme) {
     }
 }
 
-// … dans le sélecteur du popup lumière (45 px, tuiles 2 à 4)…
-const char* heritage_glyphe_selecteur(int t) {
-    switch (t) {
-        case 2: return "\U000F02E3";   // bed
-        case 3: return "\U000F04B9";   // sofa
-        default: return "\U000F1051";  // led-strip-variant
-    }
-}
-
-// … et sur les cartes du mode HA (70 px).
+// … et sur les cartes du mode HA (70 px), les lignes du popup Maison (32 px) et celles du
+// popup Lumières (45 px, ADR-0046 : il dessinait avant ses lignes avec ses propres glyphes).
 const char* heritage_glyphe_carte(int t) {
     switch (t) {
         case 0: return "\U000F0379";   // monitor

@@ -351,9 +351,9 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_energie.cpp", "glyphe_carte"): ("energie_icone_*",),
     # Pièces (ADR-0023) : icônes 3.1 du mode héritage (cartes du mode HA, épaules gauches
     # de l'accueil), ampoule et flèche du volet sur les épaules droites de toutes les tuiles.
-    # Le popup Maison (ADR-0037) montre la carte de chaque tuile, héritage compris (maison_icone_*, mdi_font_32).
-    ("tab5_tuiles.cpp", "heritage_glyphe_carte"): ("icon_sw?", "maison_icone_*"),
-    ("tab5_tuiles.cpp", "heritage_glyphe_selecteur"): ("icon_light_sel_*",),
+    # Le popup Maison (ADR-0037) montre la carte de chaque tuile, héritage compris (maison_icone_*, mdi_font_32),
+    # comme les lignes du popup Lumières (ADR-0046 : icon_light_sel_*, mdi_font_45).
+    ("tab5_tuiles.cpp", "heritage_glyphe_carte"): ("icon_sw?", "maison_icone_*", "icon_light_sel_*"),
     ("tab5_tuiles.cpp", "heritage_glyphe_epaule"): (
         "icon_card_pc", "icon_card_shutter1", "icon_card_lit_j2", "icon_card_salon_j3", "icon_card_led_j4"),
     ("tab5_tuiles.cpp", "glyphe_ampoule"): (
@@ -383,8 +383,8 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_zones.cpp", "tap_glyphe"): ("icon_ha", "icon_engrenage", "icon_manette"),
     # Palette des tuiles de pièce (ADR-0023) : table au niveau du fichier, d'où la fonction vide.
     # Ses glyphes s'affichent sur les cartes du mode HA (icon_sw*, mdi_font_70), dans les
-    # épaules des tuiles (icon_card_*, mdi_font_32) et dans le sélecteur du popup lumière
-    # (icon_light_sel_*, mdi_font_45) : tools/gen_tuiles_icones.py les écrit dans ces trois
+    # épaules des tuiles (icon_card_*, mdi_font_32) et dans les lignes des popups Lumières
+    # et Volets (icon_light_sel_*, volet_ligne_*_icone, mdi_font_45, ADR-0046) : tools/gen_tuiles_icones.py les écrit dans ces trois
     # polices (POLICES), à garder d'accord avec cette ligne. La rangée sous l'horloge
     # (ADR-0031, rangee_icone_*, déclarés en mdi_font_32) passe ses icônes en 45 ou 70 px
     # selon la ligne (tab5_rangee.cpp) : les mêmes trois polices. Le popup d'un appareil
@@ -398,6 +398,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
         "icon_sw?",
         "icon_card_*",
         "icon_light_sel_*",
+        "volet_ligne_*_icone",
         "rangee_icone_*",
         "appareil_icone",
         "reglable_icone",
@@ -501,8 +502,13 @@ def widget_font_map(sources: list[Path]) -> dict[str, str]:
     return out
 
 
-def _template_font(template: Path, var: str) -> str | None:
-    """Police sous laquelle un gabarit !include affiche `${var}`."""
+RE_TEXT_FONT_VAR = re.compile(r"\btext_font:\s*[\"']?\$\{(\w+)\}")
+
+
+def _template_font(template: Path, var: str, valeurs: dict[str, str] | None = None) -> str | None:
+    """Police sous laquelle un gabarit !include affiche `${var}`. Une police elle-même
+    variable (`text_font: "${icon_font}"`, volet_btn.yaml, 09/10/2026) se lit dans les
+    `valeurs` de l'inclusion."""
     if not template.is_file():
         return None
     lines = _yaml_lines(template)
@@ -514,6 +520,9 @@ def _template_font(template: Path, var: str) -> str | None:
             font = RE_TEXT_FONT.search(f"text_font: {_mapping_siblings(lines, i).get('text_font', '')}")
         if font is not None:
             return font.group(1)
+        variable = RE_TEXT_FONT_VAR.search(line)
+        if variable is not None and valeurs is not None:
+            return valeurs.get(variable.group(1))
     return None
 
 
@@ -588,9 +597,10 @@ def mdi_glyph_coverage(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
                     use(where, cp, font.group(1), "label")
             elif inc is not None:
                 template = path.parent / inc.group(1)
+                valeurs = {k: v.strip("\"'") for k, v in RE_VAR_SIMPLE.findall(inc.group(2))}
                 for var, value in re.findall(rf"(\w+):\s*({RE_YAML_QUOTED})", inc.group(2)):
                     for cp in RE_MDI.findall(value):
-                        use(where, cp, _template_font(template, var), f"gabarit {inc.group(1)}, ${{{var}}}")
+                        use(where, cp, _template_font(template, var, valeurs), f"gabarit {inc.group(1)}, ${{{var}}}")
             elif set_text is not None:
                 w = set_text.group(1)
                 for cp in cps:

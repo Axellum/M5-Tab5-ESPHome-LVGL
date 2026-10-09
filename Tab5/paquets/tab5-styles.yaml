@@ -444,7 +444,8 @@ font:
       - "\U000F1C01"  # robot-vacuum-off (aspirateur)
       # <<< tuiles
 
-  # 56 px — cartes du popup plantes, boutons -/+/marche de la clim, tuiles des consoles.
+  # 56 px — cartes du popup plantes, boutons -/+ de la clim, tuiles des consoles. (Le
+  # « power » du bouton On / Off du popup lumière est parti avec lui le 09/10/2026, ADR-0046.)
   - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_56
     size: 56
@@ -455,7 +456,6 @@ font:
       - "\U000F02E5"  # pot
       - "\U000F0374"  # minus
       - "\U000F0415"  # plus
-      - "\U000F0425"  # power
       - "\U000F0570"  # view-grid
       - "\U000F05DD"  # bullseye
       - "\U000F0857"  # chess-king

@@ -1,15 +1,20 @@
 # ═══════════════════════════════════════════════════════
-# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 3× par volet_popup.yaml :
-# un bouton de la carte COMMANDES du popup du volet (Ouvrir, Stop, Fermer), qui envoie
-# sa commande à la tuile du popup par popup_volet_commande() (tab5_tuiles.cpp).
-# vars : y (position dans la carte), commande (ouvrir, arreter ou fermer : commandes de
-#        tuile de l'ADR-0023, rien d'autre), icon (glyphe MDI en mdi_font_45 : il doit
-#        figurer dans la liste `glyphs` de mdi_font_45), icon_style (style de rôle
-#        style_text_*, la couleur suit le thème), text (le mot, traduit au démarrage).
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5× par volet_popup.yaml :
+# Ouvrir / Stop / Fermer du volet choisi (carte POSITION) et Tout ouvrir / Tout fermer de la
+# pièce affichée (carte VOLETS). L'icône dans une pastille ronde teintée, le mot dessous,
+# comme un bouton d'un tableau de bord de Home Assistant.
+# vars : x, y, w, h (place dans la carte), pastille / rayon / pastille_y (diamètre, moitié
+#        du diamètre, haut de la pastille), texte_y (le mot, depuis le bas : négatif), appel (popup_volet_commande : le volet choisi ;
+#        popup_volets_tout : chaque volet listé de la pièce — tab5_tuiles.h), commande
+#        (ouvrir, arreter ou fermer : commandes de tuile de l'ADR-0023, rien d'autre), icon
+#        (glyphe MDI : il doit figurer dans la liste `glyphs` de icon_font), icon_font
+#        (mdi_font_45 ou mdi_font_32), icon_style (style de rôle style_text_*, la couleur
+#        suit le thème), text (le mot, traduit au démarrage ; roboto_22, 120 px au plus).
 # Créé le 05/10/2026 (popup du volet, discussion #278). Le 06/10/2026 (même discussion :
-# « buttons can be like ha dashboard buttons ») : l'icône dans une pastille ronde teintée,
-# le mot à côté, comme une tuile de Home Assistant. Le bouton garde le verre partagé
-# (style_clim_btn : formes du thème et effet d'appui des boutons de rayon 18).
+# « buttons can be like ha dashboard buttons ») : l'icône dans une pastille ronde teintée.
+# Le 09/10/2026 (popup à pages, ADR-0046) : le mot sous la pastille (trois boutons côte à
+# côte à droite du volet dessiné, deux sous la liste des volets). Le bouton garde le verre
+# partagé (style_clim_btn : formes du thème et effet d'appui des boutons de rayon 18).
 # @ai_instruction La pastille est un obj : `clickable: false` — NE PAS retirer, sinon elle
 #        prend l'appui à la place du bouton et on_short_click ne part plus.
 #        Teinte : TEXT_SOFT à 14 % sur le verre (style de rôle + opacité locale), plus
@@ -17,26 +22,32 @@
 # ═══════════════════════════════════════════════════════
 button:
   align: TOP_LEFT
-  x: 22
+  x: ${x}
   y: ${y}
-  width: 342
-  height: 158
+  width: ${w}
+  height: ${h}
+  pad_all: 0
+  scrollable: false
   styles: style_clim_btn
   on_short_click:
-    - lambda: 'popup_volet_commande("${commande}");'
+    - lambda: 'if (!ui_appui_glisse()) ${appel}("${commande}");'
   widgets:
     - obj:
-        align: LEFT_MID
-        x: 12
-        width: 100
-        height: 100
+        align: TOP_MID
+        y: ${pastille_y}
+        width: ${pastille}
+        height: ${pastille}
         styles: style_bg_soft
         bg_opa: 14%
         border_width: 0
-        radius: 50
+        radius: ${rayon}
         pad_all: 0
         clickable: false
         scrollable: false
         widgets:
-          - label: { text: "${icon}", align: CENTER, text_font: mdi_font_45, styles: "${icon_style}" }
-    - label: { text: "${text}", align: LEFT_MID, x: 132, text_font: roboto_32_b }
+          - label: { text: "${icon}", align: CENTER, text_font: "${icon_font}", styles: "${icon_style}" }
+    - label:
+        text: "${text}"
+        align: BOTTOM_MID
+        y: ${texte_y}
+        text_font: roboto_22

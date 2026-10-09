@@ -1,24 +1,33 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file light_popup.yaml
-# @role Popup plein écran contrôle lumière (carte 1250×690, 15 px des bords écran 1280×720).
-#       3 cartes de verre : AMPOULE (sélecteur des lumières de la pièce + On/Off + Tout
-#       éteindre), LUMINOSITÉ (arc 320 px + valeur % live + 4 raccourcis) et COULEURS (3
-#       blancs nommés + 12 pastilles rondes). Ouvert par l'appui long d'une tuile lum
-#       (tuile météo ou carte du mode HA, tuile_appui → tab5_tuiles.cpp), sur la lumière
-#       appuyée ; le sélecteur passe par script.tab5_light_popup_show → popup_lumiere_choisir().
-#       Pièces (ADR-0023) : le sélecteur liste les lumières de la pièce (5 au plus) ; en mode
-#       héritage, lumiere_1..3 comme en 3.1.
-# @architecture_constraint Toutes les actions ciblent id(current_light_slot) — PAS une
-#       entité en dur — : la clé de la tuile choisie (tRT, ou lumiere_N en mode héritage).
-#       Ne pas renommer btn_light_power_icon / arc_light_brightness / lbl_light_brightness_val
-#       / popup_light_title : posés dans g_tuiles_ui (tab5-tuiles.yaml) et repeints par
-#       tab5_tuiles.cpp à chaque état reçu.
+# @role Popup « Lumières » (carte 1250×690, 15 px des bords écran 1280×720), à pages depuis
+#       le 09/10/2026 (ADR-0046) : une page par pièce qui a des lumières, les noms des
+#       pièces en haut (pages_onglet.yaml), on passe de l'une à l'autre d'un glissement ou
+#       d'un tap sur son nom. Une seule pièce : ni noms ni glissement. Trois cartes de verre :
+#       - AMPOULES : les lumières de la pièce (5 au plus, piece_ligne.yaml) — pastille =
+#         allumer / éteindre, ligne = la choisir, appui long = sa roue (ADR-0036) — et
+#         « Tout éteindre » (la pièce affichée) ;
+#       - LUMINOSITÉ : arc 320 px + valeur % live + 4 raccourcis, pour la lumière choisie ;
+#       - COULEURS : 3 blancs nommés + 12 pastilles rondes, pour la lumière choisie.
+#       Ouvert par l'appui long d'une tuile lum (ou « Détails » de sa roue) sur sa pièce et
+#       cette lumière, ou par « Aller à l'écran → Lumières » / un geste de l'accueil sur la
+#       pièce affichée (la première qui a des lumières sinon). Mode héritage : une page, la
+#       pièce 0 et lumiere_1..3 comme en 3.1.
+# @architecture_constraint Toutes les actions de l'arc, des raccourcis et des couleurs
+#       ciblent id(current_light_slot) — PAS une entité en dur — : la clé de la lumière
+#       choisie (tRT, ou lumiere_N en mode héritage). Ne pas renommer arc_light_brightness
+#       / lbl_light_brightness_val / btn_light_sel_N / icon_light_sel_N / lum_onglet_N :
+#       posés dans g_tuiles_ui (tab5-tuiles.yaml) et repeints par tab5_tuiles_popups.cpp.
+#       Le glissement de page : la brique des popups à pages (tab5_pages.cpp) ; glisser sur
+#       l'arc règle la luminosité, il ne change pas de pièce.
 # @ai_instruction Cadre modal v4 (ADR-0009) : modal_scrim.yaml + modal_header.yaml
 #       (barre de titre 52 px + 20 px d'air, corps à y=72). `scrollable: false` partout — NE PAS retirer.
-#       Les 12 pastilles couleur via light_color_preset_btn.yaml (#T164) ; sélecteur,
-#       raccourcis de niveau et blancs nommés via light_sel_btn.yaml, light_level_btn.yaml
-#       et light_white_btn.yaml (audit du 26/09/2026, lot 7.3).
+#       Les 12 pastilles couleur via light_color_preset_btn.yaml (#T164) ; lignes, raccourcis
+#       de niveau et blancs nommés via piece_ligne.yaml, light_level_btn.yaml et
+#       light_white_btn.yaml (audit du 26/09/2026, lot 7.3).
+#       Le gros bouton « On / Off » de la lumière choisie (jusqu'au 09/10/2026) est devenu la
+#       pastille de chaque ligne : sa place sert aux cinq lignes de 84 px.
 # ═══════════════════════════════════════════════════════
 obj:
   id: light_options_popup
@@ -41,9 +50,16 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_style: "style_text_gold", title: "Ampoule", title_id: "popup_light_title", close_btn_id: "btn_light_close", popup_id: light_options_popup } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0335", icon_style: "style_text_gold", title: "Lumières", title_id: "popup_light_title", close_btn_id: "btn_light_close", popup_id: light_options_popup } }
 
-          # ═══ CARTE AMPOULE (gauche) : sélecteur 3 lumières + puissance ═══
+          # Noms des pièces, sur la ligne du titre (pages_onglet.yaml) : posés par pages_onglets().
+          - !include { file: pages_onglet.yaml, vars: { id: lum_onglet_0, page: 0, choisir: popup_lumiere_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: lum_onglet_1, page: 1, choisir: popup_lumiere_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: lum_onglet_2, page: 2, choisir: popup_lumiere_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: lum_onglet_3, page: 3, choisir: popup_lumiere_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: lum_onglet_4, page: 4, choisir: popup_lumiere_page } }
+
+          # ═══ CARTE AMPOULES (gauche) : les lumières de la pièce + Tout éteindre ═══
           - obj:
               align: TOP_LEFT
               x: 24
@@ -53,41 +69,25 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "AMPOULE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+                - label: { text: "AMPOULES", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-                # Sélecteur (ADR-0023) : une ligne par lumière de la pièce, 5 au plus —
-                # position, hauteur (serrées au-delà de trois), icône, nom et surbrillance
-                # posés par tab5_tuiles.cpp (popup_lumiere_peindre). Textes et glyphes
-                # d'ici : ceux d'avant la première ouverture.
-                - !include { file: light_sel_btn.yaml, vars: { idx: 0, y: 50, icon: "\U000F02E3", name: "Chambre" } }
-                - !include { file: light_sel_btn.yaml, vars: { idx: 1, y: 146, icon: "\U000F04B9", name: "Salon" } }
-                - !include { file: light_sel_btn.yaml, vars: { idx: 2, y: 242, icon: "\U000F1051", name: "LEDs" } }
-                - !include { file: light_sel_btn.yaml, vars: { idx: 3, y: 290, icon: "\U000F1051", name: "" } }
-                - !include { file: light_sel_btn.yaml, vars: { idx: 4, y: 350, icon: "\U000F1051", name: "" } }
+                # Une ligne par lumière de la pièce, 5 au plus (ADR-0023), 84 px tous les 92 :
+                # icône, nom, état, surbrillance et affichage posés par tab5_tuiles_popups.cpp.
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_0, icone_id: icon_light_sel_0, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 0, y: 50 } }
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_1, icone_id: icon_light_sel_1, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 1, y: 142 } }
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_2, icone_id: icon_light_sel_2, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 2, y: 234 } }
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_3, icone_id: icon_light_sel_3, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 3, y: 326 } }
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_4, icone_id: icon_light_sel_4, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 4, y: 418 } }
 
-                # On/Off de la lumière sélectionnée (icône recolorée par tab5_tuiles.cpp)
+                # Tout éteindre — les lumières de la pièce affichée d'un coup (coucher) :
+                # pR / eteindre (ADR-0023), lumieres / eteindre en mode héritage (le
+                # blueprint 3.x saute les lampes absentes).
                 - button:
                     align: TOP_LEFT
                     x: 22
-                    y: 356
+                    y: 516
                     width: 342
-                    height: 96
-                    styles: style_clim_btn
-                    on_short_click:
-                      - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: basculer, valeur: "" }
-                    widgets:
-                      - label: { id: btn_light_power_icon, text: "\U000F0425", align: LEFT_MID, x: 28, text_font: mdi_font_56, styles: style_text_dim }
-                      - label: { text: "On / Off", align: LEFT_MID, x: 110, text_font: roboto_32_b }
-
-                # Tout éteindre — les lumières de la pièce d'un coup (coucher) : pR / eteindre
-                # (ADR-0023), lumieres / eteindre en mode héritage (le blueprint 3.x saute
-                # les lampes absentes).
-                - button:
-                    align: TOP_LEFT
-                    x: 22
-                    y: 468
-                    width: 342
-                    height: 76
+                    height: 68
                     styles: style_clim_btn
                     on_short_click:
                       - lambda: 'popup_lumiere_tout_eteindre();'

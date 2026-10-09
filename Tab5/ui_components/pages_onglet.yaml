@@ -1,0 +1,33 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Nom d'une page d'un popup à pages (ADR-0046, 09/10/2026), réutilisé 5 fois
+# par light_popup.yaml et 5 fois par volet_popup.yaml : le nom d'une pièce, en haut, sur la
+# ligne du titre. Un tap montre sa page (`choisir`, une fonction de tab5_tuiles.h) ; un tap
+# au bout d'un glissement ne fait rien (ui_appui_glisse).
+# Position, largeur, nom (coupé avec « … »), affichage et couleur d'accent de la page
+# affichée : posés par pages_onglets() (tab5_pages.cpp) — collés à la croix, 200 px au
+# plus, aucun sous deux pages. Ce qui est écrit ici n'est que l'état d'avant.
+# Options d'en-tête : frères de la barre de titre (modal_header.yaml), alignés sur sa ligne
+# (y = 4, hauteur 44), comme les noms des pages des Réglages (reglages_onglet.yaml, aux
+# positions fixes : leurs noms sont traduits au démarrage, pas posés par le C++).
+# vars : id, page (0 à 4, en nombre NON quoté), choisir (nom de la fonction C++, sans
+#        parenthèses : popup_lumiere_page, popup_volet_page).
+# @architecture_constraint Le nom est le PREMIER enfant (lu par pages_onglets et
+#        choix_peindre).
+# ═══════════════════════════════════════════════════════
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: 318
+  y: 4
+  width: 200
+  height: 44
+  radius: 14
+  pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) ${choisir}(${page});'
+  widgets:
+    - label: { text: "", align: CENTER }

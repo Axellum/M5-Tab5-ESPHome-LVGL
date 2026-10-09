@@ -1,38 +1,46 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file volet_popup.yaml
-# @role Popup d'un volet (05/10/2026, discussion #278 : « la position du volet, dans une
-#       fenêtre, et les boutons aussi »). Ouvert par l'appui long d'une tuile vol (tuile
-#       météo ou carte du mode HA, tuile_appui → popup_volet_ouvrir, tab5_tuiles.cpp),
-#       sur ce volet. Deux cartes de verre :
-#       - POSITION : un volet dessiné (06/10/2026, discussion #278 : « like ha animation,
-#         not a basic slider ») — une fenêtre dont le tablier à lames descend depuis le
-#         coffre selon la position — et, à sa droite, la position en grand (« 45 »,
-#         chiffres de l'horloge, « % » de la date) avec l'état en mots dessous
-#         (« Partiel », « En mouvement »…). On fait glisser le volet du doigt, vers le
-#         haut ou le bas : le dessin et le nombre suivent, la position part au relâcher.
-#         Position inconnue (NaN, -1 du volet à course simulée, volet qui ne la donne
-#         pas) : le dessin montre l'état (ouvert en haut, fermé en bas, sinon à
-#         mi-hauteur en lames estompées), sans glissement ni nombre ;
-#       - COMMANDES : Ouvrir / Stop / Fermer (gabarit volet_btn.yaml), l'icône dans une
-#         pastille ronde, comme les boutons d'un tableau de bord de Home Assistant.
-#       Titre = nom de la tuile. Tout est repeint par tab5_tuiles.cpp quand l'état ou la
-#       position du volet change, popup ouvert (popup_volet_etat), sans animation :
-#       chaque position poussée redessine directement (« transitions instantanées »).
+# @role Popup « Volets » (05/10/2026, discussion #278 : « la position du volet, dans une
+#       fenêtre, et les boutons aussi »), à pages depuis le 09/10/2026 (ADR-0046) : une
+#       page par pièce qui a des volets, les noms des pièces en haut (pages_onglet.yaml),
+#       on passe de l'une à l'autre d'un glissement ou d'un tap sur son nom. Une seule
+#       pièce : ni noms ni glissement. Deux cartes de verre :
+#       - VOLETS : les volets de la pièce (5 au plus, piece_ligne.yaml) — pastille = le
+#         toucher de la tuile (son sens), ligne = le choisir, appui long = sa roue
+#         (ADR-0036) — et « Tout ouvrir » / « Tout fermer » (la pièce affichée) ;
+#       - POSITION, du volet choisi : un volet dessiné (06/10/2026, discussion #278 :
+#         « like ha animation, not a basic slider ») — une fenêtre dont le tablier à lames
+#         descend depuis le coffre selon la position — et, à sa droite, son nom, la
+#         position en grand (« 45 », chiffres de l'horloge, « % » de la date), l'état en
+#         mots dessous (« Partiel », « En mouvement »…) et Ouvrir / Stop / Fermer
+#         (gabarit volet_btn.yaml). On fait glisser le volet du doigt, vers le haut ou le
+#         bas : le dessin et le nombre suivent, la position part au relâcher. Position
+#         inconnue (NaN, -1 du volet à course simulée, volet qui ne la donne pas) : le
+#         dessin montre l'état (ouvert en haut, fermé en bas, sinon à mi-hauteur en lames
+#         estompées), sans glissement ni nombre.
+#       Ouvert par l'appui long d'une tuile vol (ou « Détails » de sa roue) sur sa pièce et
+#       ce volet, ou par « Aller à l'écran → Volets » / un geste de l'accueil sur la pièce
+#       affichée (la première qui a des volets sinon). Un volet de l'option k (confirmation)
+#       ou r (lecture seule) n'y est pas : ses commandes passent par sa tuile.
+#       Tout est repeint par tab5_tuiles_popups.cpp quand l'état ou la position d'un volet
+#       change, popup ouvert, sans animation (« transitions instantanées »).
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
-#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Volet » dans
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Volets » dans
 #       tab5_modal_registry_init). Commandes : celles des tuiles (ouvrir, fermer, arreter)
 #       et « position » (0-100), événement esphome.tab5_action, emplacement tRT ; le
 #       blueprint « Tab5 — emplacements » les applique à l'entité de CETTE tuile.
-#       Corps : x 24..1226, y 72..670 (cartes de 800 et 386 px, 16 px d'écart).
-#       Ne pas renommer volet_popup / volet_popup_titre / volet_nombre / volet_position /
-#       volet_etat / volet_cadre / volet_tablier : posés dans g_tuiles_ui
-#       (tab5-tuiles.yaml). Le cadre n'a pas d'événement ici : glisser et relâcher sont
-#       branchés en C++ (tuiles_brancher_popup_volet), qui seul sait ignorer un toucher
-#       sans glissement et un PRESS_LOST ; il y crée aussi les lames du tablier (builder,
-#       règle 5) et leur style, dont il pose les couleurs (palette du thème) à chaque repeint.
-#       Hauteur de la fenêtre (456) et des lames : kVoletFenetreH / kVoletLameH de
-#       tab5_tuiles.cpp (tests/test_tuiles_firmware.py compare les deux).
+#       Corps : x 24..1226, y 72..670 (cartes de 386 et 800 px, 16 px d'écart).
+#       Ne pas renommer volet_popup / volet_nom / volet_nombre / volet_position /
+#       volet_etat / volet_cadre / volet_tablier / volet_ligne_N / vol_onglet_N : posés
+#       dans g_tuiles_ui (tab5-tuiles.yaml). Le cadre n'a pas d'événement ici : glisser et
+#       relâcher sont branchés en C++ (tuiles_brancher_popup_volet), qui seul sait ignorer
+#       un toucher sans glissement et un PRESS_LOST ; il y crée aussi les lames du tablier
+#       (builder, règle 5) et leur style, dont il pose les couleurs (palette du thème) à
+#       chaque repeint. Hauteur de la fenêtre (456) et des lames : kVoletFenetreH /
+#       kVoletLameH de tab5_tuiles_popups.cpp (tests/test_tuiles_firmware.py compare les deux).
+#       Glisser sur le volet dessiné le règle ; ce n'est pas un changement de pièce (la
+#       brique des pages, tab5_pages.cpp, ne voit pas ce geste : le cadre le garde).
 # @ai_instruction `scrollable: false` partout — NE PAS retirer. `clickable: false` sur la
 #       fenêtre et le tablier : le toucher doit arriver au cadre, seul à porter les
 #       événements du glissement. Le label volet_nombre est dans la police de l'horloge
@@ -60,13 +68,44 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
-          # Titre : le nom de la tuile, posé par popup_volet_peindre().
-          - !include { file: modal_header.yaml, vars: { icon: "\U000F111E", icon_style: "style_text_accent", title: "Volet", title_id: "volet_popup_titre", close_btn_id: "btn_volet_close", popup_id: volet_popup } }
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F111E", icon_style: "style_text_accent", title: "Volets", title_id: "volet_popup_titre", close_btn_id: "btn_volet_close", popup_id: volet_popup } }
 
-          # ═══ CARTE POSITION (gauche) : le volet dessiné, la position, l'état ═══
+          # Noms des pièces, sur la ligne du titre (pages_onglet.yaml) : posés par pages_onglets().
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_0, page: 0, choisir: popup_volet_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_1, page: 1, choisir: popup_volet_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_2, page: 2, choisir: popup_volet_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_3, page: 3, choisir: popup_volet_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_4, page: 4, choisir: popup_volet_page } }
+
+          # ═══ CARTE VOLETS (gauche) : les volets de la pièce + Tout ouvrir / Tout fermer ═══
           - obj:
               align: TOP_LEFT
               x: 24
+              y: ${modal_body_y}
+              width: 386
+              height: 598
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { text: "VOLETS", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+
+                # Une ligne par volet de la pièce, 5 au plus (ADR-0023), 84 px tous les 92 :
+                # icône, nom, état, surbrillance et affichage posés par tab5_tuiles_popups.cpp.
+                - !include { file: piece_ligne.yaml, vars: { id: volet_ligne_0, icone_id: volet_ligne_0_icone, choisir: popup_volet_choisir, appui: popup_volet_ligne_appui, idx: 0, y: 50 } }
+                - !include { file: piece_ligne.yaml, vars: { id: volet_ligne_1, icone_id: volet_ligne_1_icone, choisir: popup_volet_choisir, appui: popup_volet_ligne_appui, idx: 1, y: 142 } }
+                - !include { file: piece_ligne.yaml, vars: { id: volet_ligne_2, icone_id: volet_ligne_2_icone, choisir: popup_volet_choisir, appui: popup_volet_ligne_appui, idx: 2, y: 234 } }
+                - !include { file: piece_ligne.yaml, vars: { id: volet_ligne_3, icone_id: volet_ligne_3_icone, choisir: popup_volet_choisir, appui: popup_volet_ligne_appui, idx: 3, y: 326 } }
+                - !include { file: piece_ligne.yaml, vars: { id: volet_ligne_4, icone_id: volet_ligne_4_icone, choisir: popup_volet_choisir, appui: popup_volet_ligne_appui, idx: 4, y: 418 } }
+
+                # Toute la pièce affichée d'un coup : la commande de chacun de ses volets
+                # listés (popup_volets_tout, une action par volet, comme sa tuile).
+                - !include { file: volet_btn.yaml, vars: { x: 22, y: 510, w: 163, h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: ouvrir, icon: "\U000F005D", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout ouvrir" } }
+                - !include { file: volet_btn.yaml, vars: { x: 201, y: 510, w: 163, h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: fermer, icon: "\U000F0045", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout fermer" } }
+
+          # ═══ CARTE POSITION (droite) : le volet choisi, dessiné, sa position, ses commandes ═══
+          - obj:
+              align: TOP_LEFT
+              x: 426
               y: ${modal_body_y}
               width: 800
               height: 598
@@ -79,7 +118,7 @@ obj:
                 # tient la fenêtre ; dans la fenêtre, le tablier glisse verticalement
                 # (y = −position × 456 / 100) et la fenêtre le rogne : à 100 % il est
                 # rentré dans le coffre, à 0 % il couvre toute la vitre. Haut et bas du
-                # cadre (y 56..566) alignés sur ceux des boutons Ouvrir et Fermer.
+                # cadre (y 56..566) alignés sur le nom et le bas des commandes.
                 - obj:
                     id: volet_cadre
                     align: TOP_LEFT
@@ -125,14 +164,23 @@ obj:
                                 clickable: false
                                 scrollable: false
 
+                # À droite du volet (x 392..796, milieu à +196 du centre de la carte) :
+                # le nom du volet choisi (coupé avec « … » par le C++), la position, l'état.
+                - label:
+                    id: volet_nom
+                    text: ""
+                    align: TOP_MID
+                    x: 196
+                    y: 56
+                    text_font: roboto_32_b
+
                 # « 45 % » : chiffres dans la police de l'horloge, « % » dans celle de la
                 # date, posés côte à côte (flex), le « % » remonté sur la ligne de base.
-                # Centré sur la place à droite du volet (x 392..800 : milieu à +196).
                 - obj:
                     id: volet_position
                     align: TOP_MID
                     x: 196
-                    y: 184
+                    y: 104
                     width: SIZE_CONTENT
                     height: SIZE_CONTENT
                     styles: style_transparent
@@ -148,27 +196,18 @@ obj:
                       - label: { id: volet_nombre, text: "0", styles: style_police_horloge }
                       - label: { text: "%", styles: style_police_date, pad_bottom: 24 }
 
-                # État en mots : sous la position (y posé par tab5_tuiles.cpp), ou seul,
-                # au milieu de la carte, quand la position n'est pas connue.
+                # État en mots : sous la position (y posé par tab5_tuiles_popups.cpp), ou
+                # seul, entre le nom et les commandes, quand la position n'est pas connue.
                 - label:
                     id: volet_etat
                     text: "--"
                     align: TOP_MID
                     x: 196
-                    y: 272
+                    y: 200
                     styles: style_police_date
 
-          # ═══ CARTE COMMANDES (droite) : Ouvrir / Stop / Fermer ═══
-          - obj:
-              align: TOP_LEFT
-              x: 840
-              y: ${modal_body_y}
-              width: 386
-              height: 598
-              styles: style_glass_card
-              scrollable: false
-              widgets:
-                - label: { text: "COMMANDES", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
-                - !include { file: volet_btn.yaml, vars: { y: 56, commande: ouvrir, icon: "\U000F005D", icon_style: style_text_accent, text: "Ouvrir" } }
-                - !include { file: volet_btn.yaml, vars: { y: 232, commande: arreter, icon: "\U000F04DB", icon_style: style_text_warning, text: "Stop" } }
-                - !include { file: volet_btn.yaml, vars: { y: 408, commande: fermer, icon: "\U000F0045", icon_style: style_text_accent, text: "Fermer" } }
+                # Ouvrir / Stop / Fermer du volet choisi, côte à côte, le bas aligné sur
+                # celui du volet dessiné (566).
+                - !include { file: volet_btn.yaml, vars: { x: 402, y: 404, w: 120, h: 162, pastille: 80, rayon: 40, pastille_y: 24, texte_y: -22, appel: popup_volet_commande, commande: ouvrir, icon: "\U000F005D", icon_font: mdi_font_45, icon_style: style_text_accent, text: "Ouvrir" } }
+                - !include { file: volet_btn.yaml, vars: { x: 534, y: 404, w: 120, h: 162, pastille: 80, rayon: 40, pastille_y: 24, texte_y: -22, appel: popup_volet_commande, commande: arreter, icon: "\U000F04DB", icon_font: mdi_font_45, icon_style: style_text_warning, text: "Stop" } }
+                - !include { file: volet_btn.yaml, vars: { x: 666, y: 404, w: 120, h: 162, pastille: 80, rayon: 40, pastille_y: 24, texte_y: -22, appel: popup_volet_commande, commande: fermer, icon: "\U000F0045", icon_font: mdi_font_45, icon_style: style_text_accent, text: "Fermer" } }

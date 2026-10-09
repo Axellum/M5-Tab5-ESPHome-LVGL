@@ -1,0 +1,63 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5× par light_popup.yaml et 5×
+# par volet_popup.yaml (ADR-0046, 09/10/2026) : une ligne de la liste de gauche d'un popup
+# à pages par pièce = une lumière (resp. un volet) de la pièce affichée, dessinée comme sa
+# carte du mode HA couchée (carte « tile » de HA) : pastille ronde de l'icône dans la
+# couleur de son état, nom, état (« 65 % », « Éteint », « Ouvert »…).
+#   - toucher de la ligne : la choisir (l'arc et les couleurs, ou le volet dessiné et ses
+#     commandes, la pilotent) ;
+#   - toucher de la pastille : le toucher de la tuile (allumer / éteindre une lampe, le
+#     sens d'un volet ; confirmation de l'option k comprise), comme une tuile de HA ;
+#   - appui long (ligne ou pastille) : la roue d'actions rapides de la tuile (ADR-0036),
+#     ancrée sur la pastille ; rien pour une tuile qui n'en a pas.
+#   Un geste au bout d'un glissement (changement de pièce) ne fait rien (ui_appui_glisse).
+# Sorti de light_sel_btn.yaml (sélecteur du popup lumière, 26/09/2026) le 09/10/2026.
+# vars : id (le bouton de la ligne), icone_id (l'icône : la règle 7 de
+#        check_tab5_code_rules.py y retrouve la palette des tuiles, mdi_font_45), choisir et
+#        appui (fonctions de tab5_tuiles.h, sans parenthèses : popup_lumiere_choisir /
+#        popup_lumiere_ligne_appui, popup_volet_choisir / popup_volet_ligne_appui), idx (0-4,
+#        rang de la ligne, nombre NON quoté), y (position dans la carte).
+# @architecture_constraint L'ORDRE des enfants est lu par tab5_tuiles_popups.cpp
+#   (ligne_widgets) : 0 pastille (son enfant 0 : l'icône), 1 nom, 2 état. Position,
+#   textes, couleurs, surbrillance et affichage : posés par le C++.
+# @ai_instruction La pastille est cliquable (toucher de la tuile) : elle prend l'appui,
+#   la ligne ne le voit pas. `scrollable: false` partout.
+# ═══════════════════════════════════════════════════════
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: 22
+  y: ${y}
+  width: 342
+  height: 84
+  pad_all: 0   # positions exactes des enfants (le thème ajoutait sa marge)
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) ${choisir}(${idx});'
+  on_long_press:
+    - lambda: 'if (!ui_appui_glisse()) ${appui}(${idx}, true);'
+  widgets:
+    # 0 — pastille ronde : la couleur de l'état à 20 % (posée par le C++), l'icône pleine.
+    - obj:
+        align: LEFT_MID
+        x: 12
+        width: 60
+        height: 60
+        radius: 30
+        styles: style_bg_dim
+        bg_opa: 20%
+        border_width: 0
+        pad_all: 0
+        scrollable: false
+        pressed: { bg_opa: 45% }
+        on_short_click:
+          - lambda: 'if (!ui_appui_glisse()) ${appui}(${idx}, false);'
+        on_long_press:
+          - lambda: 'if (!ui_appui_glisse()) ${appui}(${idx}, true);'
+        widgets:
+          - label: { id: "${icone_id}", text: "", align: CENTER, text_font: mdi_font_45, styles: style_text_dim }
+    # 1 — nom (coupé avec « … »), 2 — état dans sa couleur.
+    - label: { text: "", align: LEFT_MID, x: 86, y: -15, text_font: roboto_32_b }
+    - label: { text: "", align: LEFT_MID, x: 86, y: 21, text_font: roboto_22, styles: style_text_dim }
