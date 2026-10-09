@@ -468,7 +468,7 @@ font:
       - "\U000F15A2"  # ladder
 
   # 32 px — barre de titre des modales (ADR-0009), tuiles du dashboard, détail du jour
-  # du calendrier, chevrons du réveil, Console système.
+  # du calendrier, titres de rangée du réveil, Console système.
   - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_32
     size: 32
@@ -489,10 +489,8 @@ font:
       - "\U000F00DF"  # brightness-6 (Réglages : luminosité)
       - "\U000F00EB"  # cake-variant
       - "\U000F00F0"  # calendar-clock
-      - "\U000F0140"  # chevron-down
       - "\U000F0141"  # chevron-left
       - "\U000F0142"  # chevron-right
-      - "\U000F0143"  # chevron-up
       - "\U000F0150"  # clock-outline
       - "\U000F0156"  # close
       - "\U000F0241"  # flash
@@ -520,6 +518,7 @@ font:
       - "\U000F06E8"  # lightbulb-on
       - "\U000F0717"  # snowflake
       - "\U000F0741"  # gesture-tap (Réglages : rallumer d'une tape)
+      - "\U000F075D"  # volume-plus (Réveil : volume progressif)
       - "\U000F07C0"  # desktop-classic
       - "\U000F07D0"  # home-assistant
       - "\U000F09D3"  # calendar-star

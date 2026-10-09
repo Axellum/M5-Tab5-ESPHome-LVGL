@@ -75,6 +75,12 @@ NON_MONTREES = {
     "reglages-sans-batterie": "reglages-batterie-en-charge montre la même page ; « Pas de batterie détectée » "
                               "est décrit dans settings.md",
     "reglages-curseur": "reglages montre la même page ; le curseur qui ne change pas de page est décrit",
+    # Réveil en cinq pages (09/10/2026) : pages décrites dans alarm.md ; images à tirer du
+    # rendu de la PR, puis citées.
+    "reveil-jours": "page Jours du Réveil, décrite dans alarm.md ; image à tirer du rendu",
+    "reveil-ouverture": "page Ouverture du Réveil, décrite dans alarm.md ; image à tirer du rendu",
+    "reveil-reglages-sonnerie": "page Sonnerie du Réveil, décrite dans alarm.md ; image à tirer du rendu",
+    "reveil-annonces": "page Annonces du Réveil, décrite dans alarm.md ; image à tirer du rendu",
     # Carrousel des clims (ADR-0038, 09/10/2026) : décrit dans climate.md et home.md.
     "climatisation-par-la-piece": "climatisation montre la même fenêtre (une seule clim dans la démo)",
     "climatisation-carrousel": "carrousel des clims, décrit dans climate.md ; image à tirer du rendu de la PR",

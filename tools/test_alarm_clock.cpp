@@ -717,6 +717,8 @@ static void test_reglages_pages_et_batterie() {
     expect(reglages_page_voisine(7, 4, true) == 0 && reglages_page_voisine(-1, 4, false) == 0,
            "page hors bornes : la première");
     expect(reglages_page_voisine(0, 0, true) == 0, "aucune page : 0");
+    expect(reglages_page_voisine(4, 5, true) == 0 && reglages_page_voisine(0, 5, false) == 4,
+           "Réveil (5 pages) : Annonces → Heure et Heure → Annonces, en boucle");
 
     using P = PresenceBatterie;
     expect_str(batterie_etat_texte(P::INCONNUE, true, true), "Mesure en cours", "avant la première décision");
@@ -829,6 +831,39 @@ static void test_economie() {
            "éco : plancher 10 % (minimum du curseur), plafond 50 %, basse à 35 %, 30 s");
 }
 
+// Rouleaux du popup Réveil (09/10/2026) : une valeur hors pas venue de HA est montrée
+// telle quelle (insérée à sa place), jamais arrondie en silence ; index ↔ valeur
+// réciproques, bornes tenues.
+static void test_rouleaux() {
+    // Minutes de 5 en 5 : 00, 05 … 55 (12 options).
+    expect(rouleau_extra(0, 59, 5, 15) == -1, "minute sur le pas : pas d'extra");
+    expect(rouleau_extra(0, 59, 5, 3) == 3 && rouleau_extra(0, 59, 5, 57) == 57, "minute hors pas : extra");
+    expect(rouleau_extra(0, 59, 5, 75) == -1 && rouleau_extra(0, 59, 5, -2) == -1, "hors bornes : pas d'extra");
+    expect(rouleau_nombre(0, 59, 5, -1) == 12, "minutes : 12 options");
+    expect(rouleau_nombre(0, 59, 5, 3) == 13, "minutes avec 03 : 13 options");
+    expect(rouleau_valeur(0, 59, 5, -1, 0) == 0 && rouleau_valeur(0, 59, 5, -1, 11) == 55, "première et dernière");
+    expect(rouleau_valeur(0, 59, 5, -1, 12) == -1 && rouleau_valeur(0, 59, 5, -1, -1) == -1, "index hors bornes");
+    expect(rouleau_valeur(0, 59, 5, 3, 1) == 3 && rouleau_valeur(0, 59, 5, 3, 2) == 5, "03 entre 00 et 05");
+    expect(rouleau_valeur(0, 59, 5, 57, 12) == 57 && rouleau_valeur(0, 59, 5, 57, 11) == 55, "57 après 55");
+    expect(rouleau_index(0, 59, 5, 3, 3) == 1 && rouleau_index(0, 59, 5, 3, 5) == 2, "index autour de l'extra");
+    expect(rouleau_index(0, 59, 5, -1, 58) == 11, "58 sans extra : 55, le pas le plus proche dans les bornes");
+    expect(rouleau_index(0, 59, 5, -1, 7) == 1, "7 sans extra : 05");
+    // Réciprocité sur tous les rouleaux du popup (bornes et pas de tab5-alarm.yaml).
+    const int r[][3] = {{0, 23, 1}, {0, 59, 5}, {0, 1439, 15}, {0, 240, 5}, {0, 14, 1}, {1, 30, 1}, {1, 60, 1}, {0, 120, 5}};
+    for (const auto& d : r) {
+        for (int extra : {-1, d[0] + 1}) {
+            const int e = rouleau_extra(d[0], d[1], d[2], extra);
+            const int n = rouleau_nombre(d[0], d[1], d[2], e);
+            bool ok = n >= 1;
+            for (int i = 0; i < n && ok; i++) ok = rouleau_index(d[0], d[1], d[2], e, rouleau_valeur(d[0], d[1], d[2], e, i)) == i;
+            expect(ok, "rouleau : index → valeur → index identique");
+        }
+    }
+    expect(rouleau_index(1, 30, 1, -1, 0) == 0 && rouleau_index(1, 30, 1, -1, 99) == 29, "valeur ramenée dans les bornes");
+    expect(rouleau_valeur(0, 1439, 15, -1, 95) == 1425, "pas avant / après : 23:45 en dernier");
+    expect(rouleau_nombre(0, 10, 0, -1) == 11, "pas nul compté comme 1");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -852,6 +887,7 @@ int main() {
     test_chargeur();
     test_console_batterie_et_cpu();
     test_reglages_pages_et_batterie();
+    test_rouleaux();
     test_economie();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

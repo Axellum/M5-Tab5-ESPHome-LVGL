@@ -190,6 +190,22 @@ void batterie_texte_console(char* buf, size_t n, bool montee, PresenceBatterie p
 // 0..nb-1 : la première. Pure, testée par tools/test_alarm_clock.cpp.
 int reglages_page_voisine(int page, int nb, bool gauche);
 
+// ─── Rouleaux du popup Réveil (09/10/2026, demande d'Axel) ───
+// Un rouleau à pas propose bas, bas + pas, … jusqu'à haut (inclus s'il tombe sur le pas).
+// Une valeur hors pas venue de Home Assistant (07:03 alors que le rouleau des minutes va
+// de 5 en 5) est insérée à sa place, `extra`, pour que le rouleau la montre telle quelle
+// au lieu de l'arrondir en silence ; −1 : aucune. Pures, testées par
+// tools/test_alarm_clock.cpp.
+// `extra` d'une valeur : elle-même si elle est dans [bas, haut] hors du pas, sinon −1.
+int rouleau_extra(int bas, int haut, int pas, int valeur);
+// Nombre d'options du rouleau (avec `extra` s'il est valable).
+int rouleau_nombre(int bas, int haut, int pas, int extra);
+// Valeur de l'option `index` (0 = la première), −1 hors bornes.
+int rouleau_valeur(int bas, int haut, int pas, int extra, int index);
+// Option qui montre `valeur` : `extra` lui-même, sinon le pas le plus proche (valeur
+// ramenée dans [bas, haut]).
+int rouleau_index(int bas, int haut, int pas, int extra, int valeur);
+
 // Page Batterie des Réglages, ligne « État » : « Mesure en cours » avant la première
 // décision (30 premières secondes), « Pas de batterie détectée », « Sur batterie » (la
 // tablette tourne sur elle : courant de décharge lu, tab5_economie.h), « En charge »

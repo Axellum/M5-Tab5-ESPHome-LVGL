@@ -208,3 +208,27 @@ def test_pages_des_reglages():
     for geste in (ecrans.REGLAGES_GLISSER_DEPUIS_UN_BOUTON, ecrans.REGLAGES_GLISSER_CURSEUR,
                   ecrans.REGLAGES_CURSEUR_A_100):
         assert geste.dans_popup and geste.y1 == geste.y2, geste
+
+
+def test_pages_du_reveil():
+    """Les appuis sur les noms des pages du Réveil tombent au milieu de leur bouton (même
+    gabarit que les Réglages, largeur passée en `w`), dans l'ordre des pages ; « Tester » et
+    le préréglage d'où part le geste, au milieu des leurs (pages à y 72 de la carte
+    modale, cartes de la page à x 24 et 637)."""
+    popup = _lire("Tab5", "ui_components", "alarm_popup.yaml")
+    onglets = re.findall(r"file: reglages_onglet\.yaml, vars: \{ id: \w+, x: (\d+), w: (\d+), page: \d+,", popup)
+    noms = ("heure", "jours", "ouverture", "sonnerie", "annonces")
+    assert len(onglets) == len(noms)
+    assert [ecrans.REVEIL_PAGES[n] for n in noms] == [(15 + int(x) + int(w) // 2, 15 + 4 + 22) for x, w in onglets]
+    # « Tester » : bouton de la carte de droite (x 637) de la page Heure.
+    m = re.search(r"id: btn_alarm_test\s+align: TOP_LEFT\s+x: (\d+)\s+y: (\d+)\s+width: (\d+)\s+height: (\d+)", popup)
+    assert m, "btn_alarm_test"
+    x, y, w, h = (int(v) for v in m.groups())
+    assert ecrans.REVEIL_TESTER == (15 + 637 + x + w // 2, 15 + 72 + y + h // 2)
+    # Le geste part du préréglage « Week-end » (carte de la page Jours à x 24).
+    m = re.search(r"id: btn_alarm_jours_3, x: (\d+), y: (\d+), w: (\d+),", popup)
+    assert m, "btn_alarm_jours_3"
+    x, y, w = (int(v) for v in m.groups())
+    geste = ecrans.REVEIL_GLISSER_DEPUIS_UN_BOUTON
+    assert geste.dans_popup and geste.y1 == geste.y2 and geste.x2 < geste.x1, geste
+    assert 15 + 24 + x < geste.x1 < 15 + 24 + x + w and 15 + 72 + y < geste.y1 < 15 + 72 + y + 60, geste
