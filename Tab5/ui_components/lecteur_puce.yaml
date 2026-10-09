@@ -4,8 +4,10 @@
 # @role Pastille d'un lecteur de la liste « Tab5 · lecteurs de musique » (ADR-0050), en bas
 #       du popup Musique (lecteur_popup.yaml, 6 fois : kLecteurPuces). Toucher : ce lecteur
 #       devient le lecteur montré (lecteur_puce(n), événement « choisir »).
-# @architecture_constraint Position x, nom, icône et bord de l'active posés par
-#       tab5_lecteur.cpp (peindre_puces : centrées dans la carte, 136 px, 12 px d'écart) ;
+# @architecture_constraint Position x, largeur, nom, icône et bord de l'active posés par
+#       tab5_lecteur.cpp (peindre_puces : centrées dans la carte, chacune à la largeur de son
+#       nom dans la part de la rangée qui lui revient, 12 px d'écart ; « … » seulement si la
+#       rangée ne suffit pas) ;
 #       icône par glyphe_genre (MDI_CODE_TARGETS, mdi_font_32, règle 7). Masquée au-delà du
 #       nombre de lecteurs choisis.
 # vars : n (0 à 5)

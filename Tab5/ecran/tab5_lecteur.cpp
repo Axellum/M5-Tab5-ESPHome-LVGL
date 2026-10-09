@@ -41,10 +41,15 @@ constexpr int32_t kTexteL = 508;          // colonne de droite du popup
 constexpr int32_t kNomL = 520;            // en-tête, à côté de la pastille de l'application
 constexpr int32_t kNomSeulL = 740;        // en-tête sans pastille
 constexpr int32_t kAppL = 180;            // pastille de l'application
-constexpr int32_t kPuceL = 136;           // une pastille de lecteur
+// Pastilles des lecteurs : chacune à la largeur de son nom (icône de 32 px à 12 px du
+// bord, nom à 48 px, 16 px de marge à droite), entre kPuceMinL et la part de la rangée
+// qui lui revient ; « … » seulement quand la rangée entière ne suffit pas.
 constexpr int32_t kPuceEcart = 12;
+constexpr int32_t kPuceNomX = 48;         // lecteur_puce.yaml : x du nom
+constexpr int32_t kPuceMargeD = 16;
+constexpr int32_t kPuceMinL = 96;
+constexpr int32_t kPucesL = kLecteurCarteL - 2 * 24;   // rangée : les marges de la pochette
 constexpr int32_t kPucesCentreX = kLecteurCarteL / 2;  // milieu de la carte
-constexpr int32_t kPuceNomL = kPuceL - 54;  // icône de 32 px et marges
 constexpr int32_t kMiniTexteL = 252;      // mini-barre : entre la vignette et le bouton
 constexpr uint32_t kPauseVisibleMs = 5u * 60u * 1000u;  // mini-barre après une pause
 
@@ -222,25 +227,70 @@ void peindre_commandes() {
     ui_text_color(u.ico_repetition, repete ? UIColor.ACCENT : UIColor.TEXT_SOFT);
 }
 
+// Largeur du texte dans la police du label (une ligne).
+int32_t largeur_texte(lv_obj_t* lbl, const char* txt) {
+    const lv_font_t* f = lbl != nullptr ? lv_obj_get_style_text_font(lbl, LV_PART_MAIN) : nullptr;
+    if (f == nullptr || txt == nullptr) return 0;
+    lv_point_t p;
+    lv_text_get_size(&p, txt, f, lv_obj_get_style_text_letter_space(lbl, LV_PART_MAIN), 0, LV_COORD_MAX,
+                     LV_TEXT_FLAG_NONE);
+    return p.x;
+}
+
 void peindre_puces() {
     const LecteurUI& u = ui();
-    const int32_t largeur = s_n * kPuceL + (s_n > 0 ? (s_n - 1) * kPuceEcart : 0);
+    // Noms montrés : celui de HA, sinon « Lecteur n ».
+    std::string noms[kLecteurPuces];
+    int32_t largeurs[kLecteurPuces] = {};
+    for (int i = 0; i < s_n && i < kLecteurPuces; i++) {
+        if (s_lecteurs[i].nom[0] != '\0') {
+            noms[i] = s_lecteurs[i].nom;
+        } else {
+            char n[4];
+            std::snprintf(n, sizeof(n), "%d", i + 1);
+            noms[i] = tr_fill("Lecteur {n}", {{"n", n}});
+        }
+        const int32_t naturelle = kPuceNomX + largeur_texte(u.puce_nom[i], noms[i].c_str()) + kPuceMargeD;
+        largeurs[i] = naturelle < kPuceMinL ? kPuceMinL : naturelle;
+    }
+    // Partage de la rangée : une pastille qui tient dans sa part garde sa largeur, la place
+    // qu'elle laisse revient aux autres ; celles qui dépassent encore se partagent le reste.
+    if (s_n > 0) {
+        bool fixe[kLecteurPuces] = {};
+        int32_t reste = kPucesL - (s_n - 1) * kPuceEcart;
+        int libres = s_n;
+        bool change = true;
+        while (change && libres > 0) {
+            change = false;
+            const int32_t part = reste / libres;
+            for (int i = 0; i < s_n; i++) {
+                if (fixe[i] || largeurs[i] > part) continue;
+                fixe[i] = true;
+                reste -= largeurs[i];
+                libres--;
+                change = true;
+            }
+        }
+        if (libres > 0) {
+            const int32_t part = reste / libres;
+            for (int i = 0; i < s_n; i++)
+                if (!fixe[i]) largeurs[i] = part;
+        }
+    }
+    int32_t largeur = s_n > 0 ? (s_n - 1) * kPuceEcart : 0;
+    for (int i = 0; i < s_n; i++) largeur += largeurs[i];
     int32_t x = kPucesCentreX - largeur / 2;
     for (int i = 0; i < kLecteurPuces; i++) {
         const bool montre = i < s_n;
         ui_hidden(u.puce[i], !montre);
         if (!montre) continue;
         ui_x(u.puce[i], x);
-        x += kPuceL + kPuceEcart;
+        lv_obj_set_width(u.puce[i], largeurs[i]);
+        x += largeurs[i] + kPuceEcart;
         ui_text(u.puce_icone[i], glyphe_genre(s_lecteurs[i].genre));
-        if (s_lecteurs[i].nom[0] != '\0') {
-            texte_ha_coupe(u.puce_nom[i], s_lecteurs[i].nom, kPuceNomL);
-        } else {
-            char n[4];
-            std::snprintf(n, sizeof(n), "%d", i + 1);
-            const std::string nom = tr_fill("Lecteur {n}", {{"n", n}});
-            texte_ha_coupe(u.puce_nom[i], nom.c_str(), kPuceNomL);
-        }
+        const int32_t nom_l = largeurs[i] - kPuceNomX - kPuceMargeD;
+        lv_obj_set_width(u.puce_nom[i], nom_l);
+        texte_ha_coupe(u.puce_nom[i], noms[i].c_str(), nom_l);
         const bool actif = i == s_e.lu.actif;
         // Active : bord accent de 3 px ; les autres : le liseré du verre (GLASS_RIM).
         highlight_button_border(u.puce[i], actif, UIColor.ACCENT, 3);

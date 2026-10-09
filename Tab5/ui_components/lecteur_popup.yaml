@@ -65,6 +65,10 @@ obj:
                 - label: { id: lecteur_app_texte, text: "", align: CENTER, text_font: roboto_22, styles: style_text_soft }
 
           # ═══ POCHETTE (360 × 360, coins arrondis) ═══
+          # Fond uni (rôle ARC_TRACK, pas le dégradé du verre qui traçait une bande), bord
+          # GLASS_RIM plein sur les quatre côtés, dessiné APRÈS les enfants (border_post)
+          # pour rester net par-dessus l'image ; clip_corner découpe l'image et la note
+          # aux coins arrondis (demande d'Axel sur le rendu du 10/10/2026).
           - obj:
               align: TOP_LEFT
               x: 24
@@ -73,14 +77,20 @@ obj:
               height: 360
               pad_all: 0
               radius: 20
+              bg_opa: 100%
+              border_width: 2
+              border_opa: 100%
+              border_post: true
+              clip_corner: true
+              shadow_width: 0
               scrollable: false
               clickable: false
-              styles: style_glass_card
+              styles: [style_bg_arc_track, style_border_glass_rim]
               widgets:
                 # Sans pochette (aucune, en téléchargement, refusée) : une note de musique.
                 - label: { id: lecteur_pochette_vide, text: "\U000F075A", align: CENTER, text_font: mdi_font_120, styles: style_text_dim }
                 # Image téléchargée (image lecteur_pochette, tab5-lecteur.yaml), en COVER :
-                # posée par lecteur_image_prete(). Le rayon du style découpe ses coins.
+                # posée par lecteur_image_prete(). Le cadre (clip_corner) découpe ses coins.
                 - image:
                     id: lecteur_pochette_img
                     src: lecteur_pochette
