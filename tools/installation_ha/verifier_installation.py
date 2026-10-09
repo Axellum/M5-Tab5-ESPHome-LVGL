@@ -186,12 +186,17 @@ PERSONNALISATION = [
 # Rangée sous l'horloge (ADR-0031) : ligne 1 de six entités, dont quatre ont un élément
 # (le bouton, une action, est sauté ; la lampe, cinquième, n'a plus de place) ; ligne 2
 # vide ; ligne 3 d'un capteur. Plantes en deuxième, 40 s par ligne.
+# Panneau Ok Nabu (ADR-0041), même format : ligne 2 de deux entités (la ligne 1 vide),
+# écoute masquée, 24 s par ligne.
 RANGEE = {
     "rangee_ligne_1": ["sensor.serre_ci_temperature", "button.push", "sensor.outside_humidity",
                        "binary_sensor.movement_backyard", "lock.front_door", "light.bed_light"],
     "rangee_ligne_3": ["sensor.telephone_ci_batterie"],
     "rangee_plantes": "1",
     "rangee_duree": 40,
+    "nabu_ligne_2": ["sensor.outside_temperature", "lock.front_door"],
+    "nabu_ecoute": "masquee",
+    "nabu_duree": 24,
 }
 # Tuile − / + (ADR-0033) : la TV du blueprint (option t, sa tuile t20), la clim du
 # blueprint (sautée : la tablette la met déjà en tête), une lampe (t03, lumiere_2), la
@@ -410,7 +415,7 @@ def entites_de_test() -> list[str]:
             entites.update(valeur)
     entites.update(p["entite"] for p in PERSONNALISATION)
     for cle, valeur in RANGEE.items():
-        if cle.startswith("rangee_ligne_"):
+        if cle.startswith(("rangee_ligne_", "nabu_ligne_")):
             entites.update(valeur)
     entites.update(REGLABLES["reglables"])
     return sorted(entites)
@@ -440,12 +445,14 @@ def tuiles_attendues() -> list[tuple[str, str]]:
 
 
 def rangee_attendue() -> list[tuple[str, str]]:
-    """(clé, type) des éléments de la rangée sous l'horloge (ADR-0031) : les quatre
-    premières entités de chaque ligne dont le type n'est pas une action."""
+    """(clé, type) des éléments de la rangée sous l'horloge (ADR-0031, clés h…) puis du
+    panneau Ok Nabu (ADR-0041, clés n…) : les quatre premières entités de chaque ligne dont
+    le type n'est pas une action."""
     elements = []
-    for n in range(3):
-        types = [TYPES_PAR_DOMAINE[e.split(".")[0]] for e in RANGEE.get(f"rangee_ligne_{n + 1}", [])]
-        elements += [(f"h{n}{i}", t) for i, t in enumerate([t for t in types if t != "act"][:4])]
+    for lettre, entree in (("h", "rangee"), ("n", "nabu")):
+        for n in range(3):
+            types = [TYPES_PAR_DOMAINE[e.split(".")[0]] for e in RANGEE.get(f"{entree}_ligne_{n + 1}", [])]
+            elements += [(f"{lettre}{n}{i}", t) for i, t in enumerate([t for t in types if t != "act"][:4])]
     return elements
 
 
@@ -460,10 +467,11 @@ def juger_definitions(definitions: str, icones_mdi: dict[str, str]) -> list[str]
     entrees = entrees_de(definitions)
     pieces = {e[0]: e for e in entrees if e[0].startswith("p")}
     tuiles = {e[0]: e for e in entrees if e[0].startswith("t")}
-    rangee = {e[0]: e for e in entrees if re.fullmatch(r"h[0-4][0-4]", e[0])}
-    reglages = {e[0]: e for e in entrees if e[0] in ("hp", "hd")}
+    rangee = {e[0]: e for e in entrees if re.fullmatch(r"[hn][0-4][0-4]", e[0])}
+    reglages = {e[0]: e for e in entrees if e[0] in ("hp", "hd", "np", "nd")}
     reglables = {e[0]: e for e in entrees if re.fullmatch(r"r[0-7]", e[0])}
-    # pR et hp / hd : deux champs ; hLI : sept (la classe en plus) ; tRT : six ; rN : dix.
+    # pR et hp / hd / np / nd : deux champs ; hLI et nLI : sept (la classe en plus) ; tRT :
+    # six ; rN : dix.
     if mauvaises := [e for e in entrees
                      if len(e) != (2 if e[0].startswith("p") or e[0] in reglages else 7 if e[0] in rangee
                                    else 10 if e[0] in reglables else 6)]:
@@ -480,7 +488,9 @@ def juger_definitions(definitions: str, icones_mdi: dict[str, str]) -> list[str]
             continue
         if not (mn < mx and pas > 0):
             problemes.append(f"{cle} : bornes {e[5:8]}")
-    attendus = {"hp": str(RANGEE["rangee_plantes"]), "hd": str(RANGEE["rangee_duree"])}
+    attendus = {"hp": str(RANGEE["rangee_plantes"]), "hd": str(RANGEE["rangee_duree"]),
+                "np": "-" if RANGEE["nabu_ecoute"] == "masquee" else RANGEE["nabu_ecoute"],
+                "nd": str(RANGEE["nabu_duree"])}
     if {c: e[1] for c, e in reglages.items()} != attendus:
         problemes.append(f"réglages de la rangée {list(reglages.values())} au lieu de {attendus}")
     if [(cle, e[1]) for cle, e in rangee.items()] != rangee_attendue():
@@ -1295,8 +1305,8 @@ async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rappor
     etats = variables.get("etats_tuiles") or ""
     rangee = [cle for cle, _ in rangee_attendue()]
     rapport.verifier([e[0] for e in entrees_de(etats)] == tuiles + rangee and all(len(e) == 4 for e in entrees_de(etats)),
-                     "pièces : l'état de chaque tuile et de chaque élément de la rangée est calculé après les "
-                     "définitions (tRT|état|valeur|couleur, hLI de même)",
+                     "pièces : l'état de chaque tuile, de chaque élément de la rangée et du panneau Ok Nabu "
+                     "est calculé après les définitions (tRT|état|valeur|couleur, hLI et nLI de même)",
                      f"etats_tuiles = {etats!r}")
     reglages_clims = variables.get("reglages_tuiles") or ""
     etats_clims = variables.get("etats_clims") or ""

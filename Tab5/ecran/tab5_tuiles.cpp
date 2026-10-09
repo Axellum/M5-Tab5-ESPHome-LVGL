@@ -27,6 +27,10 @@
  *           (« hLI|type|icône|options|complément|nom|classe », « hp|place des plantes »)
  *           et les mêmes états (clés hLI). Modèle et NVS ici (clé à part, magie « RAN1 »),
  *           dessin et rotation dans tab5_rangee.cpp (rangee_element, plus bas).
+ *         - Panneau « Ok Nabu » (09/10/2026, lot 3) : le même modèle, une seconde fois
+ *           (RANGEE_NABU) — clés « nLI », « np » (place de la ligne d'écoute), « nd », sa
+ *           propre préférence (magie « NAB1 »). Une seule traduction et un seul dessin pour
+ *           les deux zones (règle 5).
  *         - Popup Maison (ADR-0037, 07/10/2026) : toutes les pièces à la fois, une ligne
  *           par tuile. Disposé et peint par tab5_maison.cpp, qui ne lit le modèle que par
  *           les fonctions de la fin de ce fichier (tuile_gestes, tuile_peindre_ligne :
@@ -95,35 +99,54 @@ struct DefRangee {
     char classe[kClasse];
 };
 
-// Exactement ce qui part en NVS (octets seulement, sans bourrage : memcmp fiable).
+// Exactement ce qui part en NVS (octets seulement, sans bourrage : memcmp fiable). Le
+// même pour les deux zones (RangeeZone) : la rangée sous l'horloge et le panneau Ok Nabu.
 struct ModeleRangee {
     uint32_t magic;
-    int8_t plantes;       // place de la ligne des plantes : 0 à 2, -1 masquée
+    int8_t plantes;       // place de la ligne spéciale : 0 à 2, -1 masquée (les plantes
+                          // sous l'horloge, l'écoute « Ok Nabu » dans son panneau)
     uint8_t tours;        // une ligne dure `tours` tours de la carte centrale (1 à 15)
     uint8_t reserve[2];
     DefRangee el[kLignes][kElements];
 };
 
-constexpr uint32_t kMagicRangee = 0x52414E31;    // « RAN1 »
-constexpr uint32_t kPrefKeyRangee = 0x72616E67;  // « rang »
+// Par zone (ordre de RangeeZone) : la lettre de ses clés, sa magie et sa clé de NVS. La
+// rangée garde celles de l'ADR-0031 (son enregistrement d'avant reste lu).
+constexpr char kLettreZone[RANGEE_NB] = {'h', 'n'};
+constexpr uint32_t kMagicRangee[RANGEE_NB] = {0x52414E31, 0x4E414231};    // « RAN1 », « NAB1 »
+constexpr uint32_t kPrefKeyRangee[RANGEE_NB] = {0x72616E67, 0x6E616275};  // « rang », « nabu »
 // La rangée est calée sur le rotateur de la carte centrale (demande d'Axel du 06/10/2026) :
-// un tour = sa période, 8 s (tab5_central_rotator_auto, tab5-scripts.yaml : 7,8 s, la
-// rangée, puis 0,2 s et la carte centrale ; tests/test_rangee.py compare). Le blueprint
-// envoie la durée d'une ligne en secondes (« hd|32 ») ; sans elle, 4 tours (32 s).
-constexpr int kTourCentralS = 8;
+// un tour = sa période, kTourCentralS (tab5_internal.h). Le blueprint envoie la durée
+// d'une ligne en secondes (« hd|32 », « nd|32 ») ; sans elle, 4 tours (32 s).
 constexpr uint8_t kToursDefaut = 4;
 constexpr uint8_t kToursMax = 15;
 
 // ~2,3 Ko lus au dessin et aux poussées seulement : en PSRAM (BSS externe, remise à zéro
 // au démarrage, CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY), pas dans les ~226 Ko de
-// RAM interne libre. La rangée (~1,2 Ko avec ses états) aussi.
+// RAM interne libre. La rangée et le panneau Ok Nabu (~1,2 Ko chacun avec leurs états) aussi.
 EXT_RAM_BSS_ATTR Modele s_m;
 EXT_RAM_BSS_ATTR Etat s_etats[kPieces][kTuiles];
-EXT_RAM_BSS_ATTR ModeleRangee s_rg;
-EXT_RAM_BSS_ATTR Etat s_etats_rg[kLignes][kElements];
+EXT_RAM_BSS_ATTR ModeleRangee s_rg[RANGEE_NB];
+EXT_RAM_BSS_ATTR Etat s_etats_rg[RANGEE_NB][kLignes][kElements];
 bool s_charge = false;
 esphome::ESPPreferenceObject s_pref;
-esphome::ESPPreferenceObject s_pref_rg;
+esphome::ESPPreferenceObject s_pref_rg[RANGEE_NB];
+
+// Une zone à lignes vide (rien reçu, ou un blueprint d'avant elle) : sa ligne spéciale
+// seule, en première place, 4 tours — les plantes sous l'horloge (l'écran d'avant
+// l'ADR-0031), « Ok Nabu: ON / OFF » dans le panneau (l'écran d'avant le lot 3).
+void rangee_vide(ModeleRangee& g, int z) {
+    g = ModeleRangee{};
+    g.magic = kMagicRangee[z];
+    g.tours = kToursDefaut;
+}
+
+// Zone d'une lettre de clé (« h », « n »), -1 sinon.
+int zone_de_lettre(char c) {
+    for (int z = 0; z < RANGEE_NB; z++)
+        if (kLettreZone[z] == c) return z;
+    return -1;
+}
 // Interrupteur « Tab5 Appareils sur la météo » (tab5-ha-controls.yaml, 05/10/2026,
 // discussion #278) : éteint, le mode météo montre les prévisions seules — ni épaules, ni
 // bouton d'action, ni bascule du sens d'un volet par le titre. Le mode HA ne change pas.
@@ -149,18 +172,18 @@ void charger() {
         s_m = Modele{};
         s_m.magic = kMagic;
     }
-    for (auto& ligne : s_etats_rg)
-        for (Etat& e : ligne) etat_vider(e);
-    s_pref_rg = esphome::global_preferences->make_preference<ModeleRangee>(kPrefKeyRangee);
-    ModeleRangee g{};
-    if (s_pref_rg.load(&g) && g.magic == kMagicRangee) {
-        s_rg = g;
-        ESP_LOGI("tab5.tuiles", "Rangée sous l'horloge relue de la NVS");
-    } else {
-        // Rien reçu : les plantes seules, en première ligne (l'écran d'avant l'ADR-0031).
-        s_rg = ModeleRangee{};
-        s_rg.magic = kMagicRangee;
-        s_rg.tours = kToursDefaut;
+    for (auto& zone : s_etats_rg)
+        for (auto& ligne : zone)
+            for (Etat& e : ligne) etat_vider(e);
+    for (int z = 0; z < RANGEE_NB; z++) {
+        s_pref_rg[z] = esphome::global_preferences->make_preference<ModeleRangee>(kPrefKeyRangee[z]);
+        ModeleRangee g{};
+        if (s_pref_rg[z].load(&g) && g.magic == kMagicRangee[z]) {
+            s_rg[z] = g;
+            ESP_LOGI("tab5.tuiles", "%s relue de la NVS", z == RANGEE_NABU ? "Panneau Ok Nabu" : "Rangée sous l'horloge");
+        } else {
+            rangee_vide(s_rg[z], z);  // rien reçu : la ligne spéciale seule
+        }
     }
 }
 
@@ -272,27 +295,21 @@ void lire_def(const Champ* f, int nf, Def& d) {
     if (d.type == static_cast<uint8_t>(Type::VIDE)) d = Def{};
 }
 
-// Une entrée de tab5_maj_tuiles dans `m` (pièces) ou `g` (rangée sous l'horloge) ; une
-// clé inconnue est ignorée.
-void lire_entree(const char* s, size_t n, Modele& m, ModeleRangee& g) {
-    Champ f[7];
-    const int nf = decouper(s, n, f, 7);
-    if (nf < 2) return;
-    int r = 0, t = 0;
-    if (f[0].n == 2 && f[0].p[0] == 'p' && chiffre_0_4(f[0].p[1], r)) {
-        copier_texte(m.pieces[r], kNom, f[1].p, f[1].n);
-        return;
-    }
-    // « hp|0 » à « hp|2 » : place de la ligne des plantes ; autre chose (« hp|- ») : masquée.
-    if (f[0].n == 2 && f[0].p[0] == 'h' && f[0].p[1] == 'p') {
+// Une entrée d'une zone à lignes (f[0] = sa clé, lettre de la zone comprise), la même
+// grammaire pour la rangée (h) et le panneau Ok Nabu (n) :
+//   - « xp|0 » à « xp|2 » : place de la ligne spéciale (plantes, écoute) ; autre chose
+//     (« xp|- ») : masquée ;
+//   - « xd|secondes » : durée d'une ligne, arrondie au tour de la carte centrale le plus
+//     proche (1 à 15 tours) ; illisible : le défaut ;
+//   - « xLI|type|icône|options|complément|nom|classe » : élément I de la ligne L.
+void lire_entree_rangee(const Champ* f, int nf, ModeleRangee& g) {
+    if (f[0].n == 2 && f[0].p[1] == 'p') {
         int place = 0;
         const bool ok = f[1].n == 1 && chiffre_0_4(f[1].p[0], place) && place < kLignes;
         g.plantes = static_cast<int8_t>(ok ? place : -1);
         return;
     }
-    // « hd|secondes » : durée d'une ligne, arrondie au tour de la carte centrale le plus
-    // proche (1 à 15 tours) ; illisible : le défaut.
-    if (f[0].n == 2 && f[0].p[0] == 'h' && f[0].p[1] == 'd') {
+    if (f[0].n == 2 && f[0].p[1] == 'd') {
         int s = 0;
         bool ok = f[1].n > 0 && f[1].n <= 3;
         for (size_t k = 0; ok && k < f[1].n; k++) {
@@ -303,13 +320,30 @@ void lire_entree(const char* s, size_t n, Modele& m, ModeleRangee& g) {
         g.tours = ok ? static_cast<uint8_t>(std::max(1, std::min<int>(kToursMax, tours))) : kToursDefaut;
         return;
     }
-    // « hLI|type|icône|options|complément|nom|classe » : élément I de la ligne L.
-    if (f[0].n == 3 && f[0].p[0] == 'h') {
+    if (f[0].n == 3) {
         int l = 0, i = 0;
         if (!chiffre_0_4(f[0].p[1], l) || l >= kLignes || !chiffre_0_4(f[0].p[2], i) || i >= kElements) return;
         DefRangee& e = g.el[l][i];
         lire_def(f, nf, e.d);
         if (nf > 6 && e.d.type != static_cast<uint8_t>(Type::VIDE)) copier_icone(e.classe, f[6].p, f[6].n);
+    }
+}
+
+// Une entrée de tab5_maj_tuiles dans `m` (pièces) ou `g` (zones à lignes : rangée sous
+// l'horloge, clés h…, et panneau Ok Nabu, clés n…, mêmes champs) ; une clé inconnue est
+// ignorée.
+void lire_entree(const char* s, size_t n, Modele& m, ModeleRangee (&zones)[RANGEE_NB]) {
+    Champ f[7];
+    const int nf = decouper(s, n, f, 7);
+    if (nf < 2) return;
+    int r = 0, t = 0;
+    if (f[0].n == 2 && f[0].p[0] == 'p' && chiffre_0_4(f[0].p[1], r)) {
+        copier_texte(m.pieces[r], kNom, f[1].p, f[1].n);
+        return;
+    }
+    const int z = zone_de_lettre(f[0].p[0]);
+    if (z >= 0 && (f[0].n == 2 || f[0].n == 3)) {
+        lire_entree_rangee(f, nf, zones[z]);
         return;
     }
     if (f[0].n != 3 || f[0].p[0] != 't' || !chiffre_0_4(f[0].p[1], r) || !chiffre_0_4(f[0].p[2], t)) return;
@@ -1031,21 +1065,23 @@ void appui_heritage(int t, bool long_appui) {
 
 // ─── Rangée sous l'horloge (ADR-0031) ───────────────────────────────────────────────
 
-// Définitions de la rangée lues dans tab5_maj_tuiles : gardées et redessinées si elles
-// changent. Un élément qui change d'appareil repart grisé (son état était l'ancien).
-bool rangee_definir(const ModeleRangee& neuf) {
-    if (std::memcmp(&neuf, &s_rg, sizeof(ModeleRangee)) == 0) return false;
+// Définitions d'une zone à lignes (rangée, panneau Ok Nabu) lues dans tab5_maj_tuiles :
+// gardées et redessinées si elles changent. Un élément qui change d'appareil repart grisé
+// (son état était l'ancien).
+bool rangee_definir(int z, const ModeleRangee& neuf) {
+    ModeleRangee& g = s_rg[z];
+    if (std::memcmp(&neuf, &g, sizeof(ModeleRangee)) == 0) return false;
     int n = 0;
     for (int l = 0; l < kLignes; l++)
         for (int i = 0; i < kElements; i++) {
-            if (std::memcmp(&neuf.el[l][i], &s_rg.el[l][i], sizeof(DefRangee)) != 0) etat_vider(s_etats_rg[l][i]);
+            if (std::memcmp(&neuf.el[l][i], &g.el[l][i], sizeof(DefRangee)) != 0) etat_vider(s_etats_rg[z][l][i]);
             if (neuf.el[l][i].d.type != static_cast<uint8_t>(Type::VIDE)) n++;
         }
-    s_rg = neuf;
-    s_pref_rg.save(&s_rg);
-    ESP_LOGI("tab5.tuiles", "Rangée sous l'horloge : %d élément(s), plantes %d, %d tour(s) par ligne", n,
-             s_rg.plantes + 1, s_rg.tours);
-    rangee_definitions_changees();
+    g = neuf;
+    s_pref_rg[z].save(&g);
+    ESP_LOGI("tab5.tuiles", "%s : %d élément(s), ligne spéciale %d, %d tour(s) par ligne",
+             z == RANGEE_NABU ? "Panneau Ok Nabu" : "Rangée sous l'horloge", n, g.plantes + 1, g.tours);
+    rangee_definitions_changees(z);
     return true;
 }
 
@@ -1093,19 +1129,23 @@ bool tuiles_definir(const std::string& payload) {
     std::unique_ptr<Modele> neuf(new Modele());
     neuf->magic = kMagic;
     neuf->recues = 1;
-    // La rangée sous l'horloge aussi (ADR-0031) : sans clé h, les plantes seules, en
-    // première ligne — un blueprint d'avant la rangée garde l'écran d'avant.
-    std::unique_ptr<ModeleRangee> rangee(new ModeleRangee());
-    rangee->magic = kMagicRangee;
-    rangee->tours = kToursDefaut;
+    // La rangée sous l'horloge aussi (ADR-0031) et le panneau Ok Nabu (lot 3) : sans clé
+    // h (n), les plantes (l'écoute) seules, en première ligne — un blueprint plus ancien
+    // garde l'écran d'avant.
+    struct Rangees {
+        ModeleRangee z[RANGEE_NB];
+    };
+    std::unique_ptr<Rangees> rangees(new Rangees());
+    for (int z = 0; z < RANGEE_NB; z++) rangee_vide(rangees->z[z], z);
     size_t debut = 0;
     while (debut < payload.size()) {
         size_t fin = payload.find(';', debut);
         if (fin == std::string::npos) fin = payload.size();
-        lire_entree(payload.data() + debut, fin - debut, *neuf, *rangee);
+        lire_entree(payload.data() + debut, fin - debut, *neuf, rangees->z);
         debut = fin + 1;
     }
-    const bool rangee_changee = rangee_definir(*rangee);
+    bool rangee_changee = false;
+    for (int z = 0; z < RANGEE_NB; z++) rangee_changee |= rangee_definir(z, rangees->z[z]);
     if (std::memcmp(neuf.get(), &s_m, sizeof(Modele)) == 0) return rangee_changee || reglables_changes;
     // Une tuile qui change d'appareil repart grisée : l'état reçu était celui de l'ancien.
     // Sa clim aussi est oubliée (ADR-0027) : le blueprint renvoie ses réglages juste après.
@@ -1139,12 +1179,14 @@ bool tuiles_definir(const std::string& payload) {
 bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n_reste) {
     int r = 0, t = 0;
     if (n_cle != 3) return false;
-    // Élément I de la ligne L de la rangée sous l'horloge (ADR-0031).
-    if (cle[0] == 'h') {
+    // Élément I de la ligne L de la rangée sous l'horloge (« hLI », ADR-0031) ou du
+    // panneau Ok Nabu (« nLI », lot 3).
+    const int z = zone_de_lettre(cle[0]);
+    if (z >= 0) {
         if (!chiffre_0_4(cle[1], r) || r >= kLignes || !chiffre_0_4(cle[2], t) || t >= kElements) return false;
         charger();
-        etat_lire(s_etats_rg[r][t], reste, n_reste);
-        rangee_element_change(r, t);
+        etat_lire(s_etats_rg[z][r][t], reste, n_reste);
+        rangee_element_change(z, r, t);
         return true;
     }
     if (cle[0] != 't' || !chiffre_0_4(cle[1], r) || !chiffre_0_4(cle[2], t)) return false;
@@ -1158,22 +1200,26 @@ bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n
     return true;
 }
 
-// ─── Rangée sous l'horloge (ADR-0031), lue par tab5_rangee.cpp ──────────────────────
+// ─── Zones à lignes (rangée ADR-0031, panneau Ok Nabu), lues par tab5_rangee.cpp ────
 
-int rangee_place_plantes() {
+namespace {
+bool zone_valide(int z) { return z >= 0 && z < RANGEE_NB; }
+}  // namespace
+
+int rangee_place_speciale(int z) {
     charger();
-    return s_rg.plantes;
+    return zone_valide(z) ? s_rg[z].plantes : -1;
 }
 
-int rangee_tours() {
+int rangee_tours(int z) {
     charger();
-    return std::max<int>(1, s_rg.tours);
+    return zone_valide(z) ? std::max<int>(1, s_rg[z].tours) : kToursDefaut;
 }
 
-bool rangee_ligne_remplie(int l) {
+bool rangee_ligne_remplie(int z, int l) {
     charger();
-    if (l < 0 || l >= kLignes) return false;
-    for (const DefRangee& g : s_rg.el[l])
+    if (!zone_valide(z) || l < 0 || l >= kLignes) return false;
+    for (const DefRangee& g : s_rg[z].el[l])
         if (g.d.type != static_cast<uint8_t>(Type::VIDE)) return true;
     return false;
 }
@@ -1183,14 +1229,14 @@ bool rangee_ligne_remplie(int l) {
 // et colorée selon sa nature (classe d'appareil) : l'échelle des températures de
 // l'écran, celle de l'humidité, celle des batteries, l'or pour la puissance et l'énergie.
 // Les tuiles gardent leurs couleurs (« INFO » pour un capteur qui n'est pas en °).
-bool rangee_element(int l, int i, RangeeElement& out) {
+bool rangee_element(int z, int l, int i, RangeeElement& out) {
     charger();
     out = RangeeElement{};
-    if (l < 0 || l >= kLignes || i < 0 || i >= kElements) return false;
-    const DefRangee& g = s_rg.el[l][i];
+    if (!zone_valide(z) || l < 0 || l >= kLignes || i < 0 || i >= kElements) return false;
+    const DefRangee& g = s_rg[z].el[l][i];
     const Type type = static_cast<Type>(g.d.type);
     if (type == Type::VIDE) return false;
-    const Etat& e = s_etats_rg[l][i];
+    const Etat& e = s_etats_rg[z][l][i];
     Vue v;
     vue_def(g.d, e, -1, i, v);
     out.icone = v.icone;

@@ -625,6 +625,10 @@ def test_definitions_de_toutes_les_pieces():
         # aucune ligne choisie (tests/test_rangee.py pour le reste).
         ["hp", "0"],
         ["hd", "32"],
+        # Panneau Ok Nabu (ADR-0041) : l'écoute en premier, 32 s ; aucune ligne choisie
+        # (tests/test_nabu.py pour le reste).
+        ["np", "0"],
+        ["nd", "32"],
     ]
     assert defs == attendu
 
@@ -691,7 +695,7 @@ def test_sans_piece_1_l_accueil_vient_des_entrees_3x():
 def test_rien_de_choisi():
     p = _passage(entrees={})
     # Seuls les réglages de la rangée partent (leurs défauts, ceux du firmware).
-    assert p["tuiles"] == [] and p["rangee"] == [] and p.definitions() == "hp|0;hd|32;"
+    assert p["tuiles"] == [] and p["rangee"] == [] and p.definitions() == "hp|0;hd|32;np|0;nd|32;"
     assert p["tuiles_a_pousser"] == []
 
 

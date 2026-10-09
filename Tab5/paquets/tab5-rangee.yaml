@@ -1,8 +1,9 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file tab5-rangee.yaml
-# @role Rangée sous l'horloge (ADR-0031, 06/10/2026) : pose les widgets que
-#       tab5_rangee.cpp dessine (g_rangee_ui). Le modèle (définitions hLI / hp / hd de
+# @role Rangée sous l'horloge (ADR-0031, 06/10/2026) et panneau « Ok Nabu » (lot 3,
+#       09/10/2026, ADR-0041) : pose les widgets que tab5_rangee.cpp dessine (g_rangee_ui,
+#       g_nabu_ui ; définitions nLI / np / nd et états nLI pour le panneau). Le modèle (définitions hLI / hp / hd de
 #       l'action tab5_maj_tuiles, états hLI de tab5_maj_emplacements) et sa NVS vivent
 #       dans tab5_tuiles.cpp, le dessin et la rotation dans tab5_rangee.cpp ; la rotation
 #       est donnée par le rotateur de la carte centrale (tab5_central_rotator_auto,
@@ -11,8 +12,8 @@
 #       (tab5-zones.yaml), lancé à la fin du setup AVANT la première image, exécute ce
 #       script avant zones_apply_ui(), qui dessine la rangée. Chargé APRÈS tab5_lvgl :
 #       il référence des widgets. Aucun lv_* ici.
-# @ai_instruction Un widget de plus pour la rangée = son champ dans RangeeUI
-#       (tab5_custom.h) et sa ligne ici.
+# @ai_instruction Un widget de plus pour une zone à lignes = son champ dans RangeeUI
+#       (tab5_rangee.h) et sa ligne ici, pour chaque zone.
 # ============================================================================
 
 script:
@@ -22,7 +23,7 @@ script:
           RangeeUI& u = g_rangee_ui;
           u.zone = id(rangee_capteurs);
           u.toucher = id(btn_rangee);
-          u.panneau_plantes = id(rangee_plantes);
+          u.panneau_special = id(rangee_plantes);
           u.panneau[0] = id(rangee_a);
           u.panneau[1] = id(rangee_b);
           u.element[0][0] = id(rangee_el_a0);
@@ -60,3 +61,41 @@ script:
           u.police_icone[2] = id(mdi_font_32);
           u.police_texte[0] = id(roboto_32_b);
           u.police_texte[1] = id(roboto_22);
+          // Panneau Ok Nabu (lot 3, ADR-0041) : le même dessin, ses propres widgets ;
+          // btn_ok_nabu est à la fois la zone et la zone tactile (toucher : nullptr).
+          RangeeUI& n = g_nabu_ui;
+          n.zone = id(btn_ok_nabu);
+          n.panneau_special = id(nabu_ecoute);
+          n.panneau[0] = id(nabu_a);
+          n.panneau[1] = id(nabu_b);
+          n.element[0][0] = id(rangee_el_na0);
+          n.element[0][1] = id(rangee_el_na1);
+          n.element[0][2] = id(rangee_el_na2);
+          n.element[0][3] = id(rangee_el_na3);
+          n.element[1][0] = id(rangee_el_nb0);
+          n.element[1][1] = id(rangee_el_nb1);
+          n.element[1][2] = id(rangee_el_nb2);
+          n.element[1][3] = id(rangee_el_nb3);
+          n.icone[0][0] = id(rangee_icone_na0);
+          n.icone[0][1] = id(rangee_icone_na1);
+          n.icone[0][2] = id(rangee_icone_na2);
+          n.icone[0][3] = id(rangee_icone_na3);
+          n.icone[1][0] = id(rangee_icone_nb0);
+          n.icone[1][1] = id(rangee_icone_nb1);
+          n.icone[1][2] = id(rangee_icone_nb2);
+          n.icone[1][3] = id(rangee_icone_nb3);
+          n.texte[0][0] = id(rangee_texte_na0);
+          n.texte[0][1] = id(rangee_texte_na1);
+          n.texte[0][2] = id(rangee_texte_na2);
+          n.texte[0][3] = id(rangee_texte_na3);
+          n.texte[1][0] = id(rangee_texte_nb0);
+          n.texte[1][1] = id(rangee_texte_nb1);
+          n.texte[1][2] = id(rangee_texte_nb2);
+          n.texte[1][3] = id(rangee_texte_nb3);
+          n.pastilles_cadre = id(nabu_pastilles);
+          n.pastilles[0] = id(nabu_pastille_0);
+          n.pastilles[1] = id(nabu_pastille_1);
+          n.pastilles[2] = id(nabu_pastille_2);
+          n.date = u.date;
+          for (int i = 0; i < 3; i++) n.police_icone[i] = u.police_icone[i];
+          for (int i = 0; i < 2; i++) n.police_texte[i] = u.police_texte[i];

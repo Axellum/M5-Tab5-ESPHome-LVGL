@@ -57,7 +57,7 @@ CODES = {
     "maison": "MAISON",
 }
 # Après les écrans, les actions de l'accueil (09/10/2026, lot A ; tests/test_gestes.py).
-ACTIONS = ["mode_domo", "appareil_suivant", "rangee_suivante", "ecoute"]
+ACTIONS = ["mode_domo", "appareil_suivant", "rangee_suivante", "ecoute", "nabu_suivant"]
 # Bouton (ordre de BoutonHaut) → (widget, mini icône).
 BOUTONS = (("BOUTON_MAISON", "btn_control_ha", "icon_mini_ha"),
            ("BOUTON_ENGRENAGE", "btn_control_console", "icon_mini_sys"),

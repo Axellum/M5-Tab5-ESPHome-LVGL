@@ -14,7 +14,11 @@
  *         - le volume de la tablette, en dernier (local : tab5_volume_apply).
  *       Le choix reste fixe jusqu'au suivant, même après un redémarrage (NVS « RGC1 »),
  *       reconnu par le type et le nom de l'appareil plutôt que par sa place : réordonner
- *       la liste dans le blueprint ne change pas d'appareil.
+ *       la liste dans le blueprint ne change pas d'appareil. Défilement au choix (lot 3,
+ *       09/10/2026, ADR-0041, clé defil) : « fixe » par défaut (ce qui précède) ; en
+ *       « auto », la clim et les appareils du blueprint se relaient seuls, calés sur la
+ *       carte centrale (reglables_tour), sans écrire la NVS ; un geste remet le compte à
+ *       zéro.
  *       En mode HA, sur une pièce qui a sa clim (ADR-0040, piece_climat_clim()), la tuile
  *       règle cette clim à la place du choix, sans le changer : − / + par clim_piece_pas(),
  *       la consigne ouvre le popup clim sur elle (clim_afficher_piece, tab5_clim.cpp).
@@ -112,6 +116,13 @@ constexpr float kPasTablette = 5.0f;
 EXT_RAM_BSS_ATTR Modele s_m;
 EXT_RAM_BSS_ATTR Etat s_etats[kHA];
 uint32_t s_choix = kIdClim;
+// Le choix gardé en NVS : celui d'un geste. Le défilement « auto » (reglables_tour) change
+// s_choix sans l'écrire (une écriture par tour userait la flash) : au démarrage, la tuile
+// revient au dernier appareil choisi à la main.
+uint32_t s_choix_sauve = kIdClim;
+// Tours de la carte centrale depuis le dernier changement d'appareil (défilement « auto ») ;
+// un geste sur la tuile le remet à zéro.
+int s_tours = 0;
 bool s_charge = false;
 esphome::ESPPreferenceObject s_pref;
 esphome::ESPPreferenceObject s_pref_choix;
@@ -151,6 +162,7 @@ void charger() {
     s_pref_choix = esphome::global_preferences->make_preference<Choix>(kPrefKeyChoix);
     Choix c{};
     if (s_pref_choix.load(&c) && c.magic == kMagicChoix && c.id != 0) s_choix = c.id;
+    s_choix_sauve = s_choix;
 }
 
 bool hors_ligne(const Etat& e) { return !e.recu || etat_indisponible(e.brut); }
@@ -587,6 +599,7 @@ bool reglables_clim_choisie() {
 
 void reglables_pas(int sens) {
     charger();
+    s_tours = 0;  // un geste : l'appareil réglé reste une durée entière (défilement auto)
     const ReglablesUI& u = g_reglables_ui;
     const int piece = piece_climat_clim();
     if (piece >= 0) {
@@ -647,6 +660,7 @@ void reglables_liste_basculer() {
     charger();
     const ReglablesUI& u = g_reglables_ui;
     if (u.liste == nullptr) return;
+    s_tours = 0;
     if (liste_ouverte()) {
         reglables_liste_fermer();
         return;
@@ -667,14 +681,46 @@ void reglables_choisir(int ligne) {
     if (ligne < 0 || ligne >= n) return;
     // Un geste sur l'appareil d'avant part tout de suite, avant de changer.
     envoyer_attente();
+    s_tours = 0;
     const uint32_t id = identite(l[ligne]);
-    if (id != s_choix) {
-        s_choix = id;
-        Choix c{kMagicChoix, s_choix};
+    s_choix = id;
+    if (id != s_choix_sauve) {
+        s_choix_sauve = id;
+        Choix c{kMagicChoix, id};
         s_pref_choix.save(&c);
         ESP_LOGI("tab5.reglables", "Tuile -/+ : ligne %d choisie", ligne);
     }
     reglables_liste_fermer();
+    peindre_carte();
+}
+
+// Défilement « auto » de la tuile − / + (lot 3, 09/10/2026, ADR-0041) : appelé à chaque
+// tour de la carte centrale (rangee_tour, écran allumé, aucune fenêtre ouverte). Tous les
+// defilement_tours_clim() tours, l'appareil suivant de la liste — la clim et ceux du
+// blueprint, pas le volume de la tablette (il se choisit à la main) —, sans écrire la NVS
+// ni dérouler la liste. Rien tant que la liste est ouverte ou qu'une valeur attend son
+// envoi : le compte repart, l'appareil qu'on règle ne s'en va pas sous le doigt. Rien non
+// plus quand la tuile règle la clim de la pièce affichée (ADR-0040) : le choix, caché,
+// changerait sans que rien ne bouge à l'écran.
+void reglables_tour() {
+    if (!s_charge || !defilement_auto(Defilement::CLIM) || !tuile_visible() || liste_ouverte() ||
+        s_attente.cle[0] != '\0' || piece_climat_clim() >= 0) {
+        s_tours = 0;
+        return;
+    }
+    if (++s_tours < defilement_tours_clim()) return;
+    s_tours = 0;
+    Entree l[kReglablesLignes];
+    const int n = lister(l);
+    int relais = 0;
+    for (int k = 0; k < n; k++)
+        if (l[k].sorte != Sorte::TABLETTE) relais++;
+    if (relais < 2) return;  // un seul appareil : rien à faire tourner
+    int j = choisie(l, n);
+    do {
+        j = (j + 1) % n;
+    } while (l[j].sorte == Sorte::TABLETTE);
+    s_choix = identite(l[j]);
     peindre_carte();
 }
 

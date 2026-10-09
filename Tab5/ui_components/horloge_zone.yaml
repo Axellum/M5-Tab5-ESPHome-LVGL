@@ -6,7 +6,7 @@
 #        la PAGE, la tuile clock_tile est à x 440..840, y 20..229),
 #        court / long_appui (valeur de Geste, tab5_zones.h : ce que fait le geste se
 #        choisit dans le blueprint, section « Horloge et boutons du haut » ; « auto » :
-#        heures rien / réveil, minutes appareil suivant de la tuile − / + / réveil, date
+#        heures ligne suivante du panneau Ok Nabu (lot 3) / réveil, minutes appareil suivant de la tuile − / + / réveil, date
 #        ligne suivante de la rangée / calendrier).
 # Le script tab5_geste (tab5-navigation.yaml) exécute le geste par geste_cible()
 # (tab5_zones.cpp). LVGL n'envoie pas le tap court après un appui long.

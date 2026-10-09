@@ -324,14 +324,15 @@ def test_action_tab5_maj_tuiles_et_son_exemple():
     lettres = set("dcoktrm")
     for entree in filter(None, exemple.split(";")):
         champs = entree.split("|")
-        if re.fullmatch(r"p[0-4]|hp|hd", champs[0]):
+        if re.fullmatch(r"p[0-4]|hp|hd|np|nd", champs[0]):
             assert len(champs) == 2, entree
             continue
-        # Rangée sous l'horloge (ADR-0031) : la classe d'appareil en septième champ.
-        if re.fullmatch(r"h[0-2][0-3]", champs[0]):
+        # Rangée sous l'horloge (ADR-0031) et panneau Ok Nabu (ADR-0041) : la classe
+        # d'appareil en septième champ.
+        if re.fullmatch(r"[hn][0-2][0-3]", champs[0]):
             assert len(champs) == 7 and re.fullmatch(r"[a-z0-9_]{0,15}", champs[6]), entree
             champs = champs[:6]
-        assert re.fullmatch(r"[th][0-4][0-4]", champs[0]) and len(champs) == 6, entree
+        assert re.fullmatch(r"[thn][0-4][0-4]", champs[0]) and len(champs) == 6, entree
         assert champs[1] in types and re.fullmatch(r"[a-z0-9_]{0,15}", champs[2]), entree
         assert set(champs[3]) <= lettres, entree
 
@@ -340,9 +341,11 @@ def test_etats_routes_avant_les_emplacements_3x():
     corps = _fonction(_lire("Tab5", "ecran", "tab5_zones.cpp"), "emplacements_appliquer")
     assert corps.index("tuiles_etat_recu(") < corps.index("for (size_t i = 0; i < n; i++)")
     recu = _fonction(_cpp(), "tuiles_etat_recu")
-    # « tRT » (ou « hLI », rangée sous l'horloge, ADR-0031) : trois caractères, R et T de
-    # 0 à 4 ; puis état | valeur | couleur (6 hex), lus par etat_lire pour les deux.
-    assert "if (n_cle != 3) return false;" in recu and "cle[0] != 't'" in recu and "cle[0] == 'h'" in recu
+    # « tRT » (ou « hLI » / « nLI », rangée sous l'horloge et panneau Ok Nabu, ADR-0031 et
+    # 0041) : trois caractères, R et T de 0 à 4 ; puis état | valeur | couleur (6 hex), lus
+    # par etat_lire pour les deux.
+    assert "if (n_cle != 3) return false;" in recu and "cle[0] != 't'" in recu
+    assert "zone_de_lettre(cle[0])" in recu
     assert recu.count("etat_lire(") == 2
     lire = _fonction(_cpp(), "etat_lire")
     assert "decouper(reste, n_reste, f, 3)" in lire and "f[2].n == 6" in lire

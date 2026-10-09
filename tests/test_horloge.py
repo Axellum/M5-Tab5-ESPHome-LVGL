@@ -55,16 +55,34 @@ def _charger(*chemin):
         return yaml.load(f, Loader=_Chargeur)
 
 
+def _marquer(noeud, dossier):
+    """Note sur chaque `!include` d'un gabarit le dossier de ce gabarit : ESPHome résout
+    un chemin relatif depuis le fichier qui l'inclut (rangee_panneau.yaml inclut
+    rangee_element.yaml, lot 3)."""
+    if isinstance(noeud, _Inclusion):
+        noeud.dossier = dossier
+    if isinstance(noeud, dict):
+        for v in noeud.values():
+            _marquer(v, dossier)
+    elif isinstance(noeud, list):
+        for v in noeud:
+            _marquer(v, dossier)
+
+
 def _deplier(entree):
-    """Un `!include { file, vars }` de tab5-lvgl.yaml, déplié comme ESPHome : le gabarit
-    (chemin relatif à Tab5/paquets/) avec chaque ${var} remplacé."""
+    """Un `!include { file, vars }`, déplié comme ESPHome : le gabarit (chemin relatif au
+    fichier qui l'inclut, Tab5/paquets/ pour tab5-lvgl.yaml) avec chaque ${var} remplacé."""
     if not isinstance(entree, _Inclusion):
         return entree
-    with open(os.path.join(REPO, "Tab5", "paquets", entree["file"]), encoding="utf-8") as f:
+    dossier = getattr(entree, "dossier", os.path.join(REPO, "Tab5", "paquets"))
+    chemin = os.path.normpath(os.path.join(dossier, entree["file"]))
+    with open(chemin, encoding="utf-8") as f:
         texte = f.read()
     for nom, valeur in (entree.get("vars") or {}).items():
         texte = texte.replace("${%s}" % nom, str(valeur))
-    return yaml.load(texte, Loader=_Chargeur)
+    contenu = yaml.load(texte, Loader=_Chargeur)
+    _marquer(contenu, os.path.dirname(chemin))
+    return contenu
 
 
 def _widgets(liste):

@@ -1,0 +1,42 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4x : un panneau de quatre
+# éléments d'une zone à lignes (tab5_rangee.cpp) — rangee_a et rangee_b sous l'horloge
+# (rangee.yaml, ADR-0031), nabu_a et nabu_b dans le panneau « Ok Nabu » (tab5-lvgl.yaml,
+# lot 3, ADR-0041). Chaque zone en a deux, remplis en alternance : celui qui entre n'est
+# jamais celui qui sort.
+# Vars : id (le panneau), el (préfixe de ses éléments : « a », « b », « na », « nb » →
+# rangee_el_<el>0 … 3, rangee_icone_*, rangee_texte_*), hauteur (70 sous l'horloge, 88
+# dans la bordure du panneau Ok Nabu).
+# Le panneau a UN enfant, son contenu : transition_widgets() (tab5_anim.cpp) l'anime comme
+# les panneaux de la carte centrale, le panneau coupe ce qui en sort. scrollable: false :
+# le glissement (translate_y) ne doit jamais le rendre défilant. clickable: false : le
+# toucher va à la zone tactile de la zone (btn_rangee par-dessus la rangée, btn_ok_nabu
+# autour du panneau Ok Nabu), jamais à un panneau.
+obj:
+  id: "${id}"
+  align: CENTER
+  width: 401
+  height: ${hauteur}
+  styles: style_transparent
+  clickable: false
+  scrollable: false
+  scrollbar_mode: "OFF"
+  hidden: true
+  widgets:
+    - obj:
+        width: 401
+        height: ${hauteur}
+        styles: style_transparent
+        clickable: false
+        scrollable: false
+        scrollbar_mode: "OFF"
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: SPACE_EVENLY
+          flex_align_cross: CENTER
+          pad_column: 0
+        widgets:
+          - !include { file: rangee_element.yaml, vars: { el: "${el}0" } }
+          - !include { file: rangee_element.yaml, vars: { el: "${el}1" } }
+          - !include { file: rangee_element.yaml, vars: { el: "${el}2" } }
+          - !include { file: rangee_element.yaml, vars: { el: "${el}3" } }

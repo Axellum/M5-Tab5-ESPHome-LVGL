@@ -25,9 +25,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
-from scenarios import (PAGE_DE_LA_PIECE, PIECES, RANGEE, REGLABLES, SCENES, Piece, Tuile,  # noqa: E402
-                       build_alerte_payload, build_etats_tuiles, build_historique, build_tuiles_payload,
-                       code_pluie)
+from scenarios import (NABU, NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE, PIECES,  # noqa: E402
+                       RANGEE, REGLABLES, SCENES, Piece, Tuile, build_alerte_payload, build_etats_tuiles,
+                       build_historique, build_tuiles_payload, code_pluie)
 
 
 @dataclass(frozen=True)
@@ -74,6 +74,16 @@ class Service:
     nom: str
     donnees: tuple = ()
     apres: float = 0.8
+
+
+@dataclass(frozen=True)
+class Choisir:
+    """Option d'un select de la tablette (nom et options de Tab5/paquets/*.yaml, jamais
+    traduits : « Thème » → « Almanach imprimé »). Un thème se repeint à la boucle
+    suivante : `apres` lui laisse le temps."""
+    select: str
+    option: str
+    apres: float = 2.0
 
 
 @dataclass(frozen=True)
@@ -183,7 +193,7 @@ def _panneau(n: int) -> Service:
 
 # Horloge en trois zones (09/10/2026, lot A, ui_components/horloge_zone.yaml) : heures
 # (440..639 × 20..157), minutes (640..840 × 20..157), date (440..840 × 158..229). « auto » :
-# heures court rien, long Réveil ; minutes court appareil suivant de la tuile − / +, long
+# heures court ligne suivante du panneau Ok Nabu (lot 3), long Réveil ; minutes court appareil suivant de la tuile − / +, long
 # Réveil ; date court ligne suivante de la rangée, long Calendrier.
 # tests/test_gestes.py les compare aux zones de Tab5/paquets/tab5-lvgl.yaml.
 HEURES = (540, 90)
@@ -573,6 +583,23 @@ CLIMS_DE_TUILES = (
 CARROUSEL_SUIVANTE = Glisser(1150, 668, 450, 668, dans_popup=True)
 
 
+# Panneau Ok Nabu (lot 3, ADR-0041) : les définitions de la démo avec d'autres lignes pour
+# lui (clés n…), puis leurs états. Les pièces, la rangée et la tuile − / + ne changent pas :
+# l'écran garde leurs états. `fermer` repousse celui de la démo (l'écoute seule, NABU).
+def _nabu(nabu) -> tuple:
+    return (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES, nabu)),)),
+            Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({}, None, None, nabu)),)))
+
+
+NABU_DE_LA_DEMO = _nabu(NABU)[:1]
+# Thème à la police de date la plus large (valeurs de 45 px, comme la date ; « 612 ppm » :
+# 191 px en IBM Plex Serif 700 contre 188 en Nunito 800, celle de Relief doux, le défaut).
+THEME_POLICE_LARGE = "Almanach imprimé"
+# Thème au cadre le plus serré : une gélule (rayon 45, bordure de 4 px).
+THEME_CADRE_GELULE = "Capsule"
+THEME_PAR_DEFAUT = "Relief doux"
+
+
 def _historique(cle: str, vue: str, exterieur: bool = False) -> Service:
     """Ce que pousserait script.tab5_historique (tools/demo/scenarios.py)."""
     return Service("tab5_maj_historique", tuple(build_historique(cle, vue, MOMENT_DES_CAPTURES, exterieur).items()))
@@ -714,6 +741,22 @@ ECRANS: tuple[Ecran, ...] = (
     # l'accueil ne la remet pas, `fermer` finit le tour jusqu'à la première.
     Ecran("accueil-rangee-ligne-2", (Toucher(*SOUS_HORLOGE),), (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE))),
     Ecran("accueil-rangee-ligne-3", (Toucher(*SOUS_HORLOGE), Toucher(*SOUS_HORLOGE)), (Toucher(*SOUS_HORLOGE),)),
+    # Panneau Ok Nabu (lot 3, ADR-0041) : trois lignes (l'écoute, une ligne « air », une
+    # ligne « ouvertures » ; scenarios.NABU_TROIS_LIGNES), trois pastilles dessous ; le tap
+    # des heures (« auto ») passe à la suivante. Puis une ligne de capteurs seule, l'écoute
+    # masquée (sans pastilles), et la ligne « air » dans le thème à la police la plus large
+    # puis dans celui au cadre le plus serré.
+    Ecran("accueil-nabu-ligne-1", _nabu(NABU_TROIS_LIGNES), NABU_DE_LA_DEMO),
+    Ecran("accueil-nabu-ligne-2", _nabu(NABU_TROIS_LIGNES) + (Toucher(*HEURES),), NABU_DE_LA_DEMO),
+    Ecran("accueil-nabu-ligne-3", _nabu(NABU_TROIS_LIGNES) + (Toucher(*HEURES), Toucher(*HEURES)),
+          NABU_DE_LA_DEMO),
+    Ecran("accueil-nabu-une-ligne", _nabu(NABU_UNE_LIGNE), NABU_DE_LA_DEMO),
+    Ecran("accueil-nabu-police-large",
+          (Choisir("Thème", THEME_POLICE_LARGE),) + _nabu(NABU_TROIS_LIGNES) + (Toucher(*HEURES),),
+          NABU_DE_LA_DEMO + (Choisir("Thème", THEME_PAR_DEFAUT),)),
+    Ecran("accueil-nabu-gelule",
+          (Choisir("Thème", THEME_CADRE_GELULE),) + _nabu(NABU_TROIS_LIGNES) + (Toucher(*HEURES),),
+          NABU_DE_LA_DEMO + (Choisir("Thème", THEME_PAR_DEFAUT),)),
     # Tuile − / + (ADR-0033) : la liste par l'appui long sur la valeur entre − et +
     # (ADR-0038 ; clim, les quatre appareils de la démo, scenarios.REGLABLES, la tablette ;
     # le retour à l'accueil la ferme), puis l'enceinte (ligne 4) choisie à la place de la

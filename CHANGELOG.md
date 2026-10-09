@@ -21,6 +21,15 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Panneau « Ok Nabu » à lignes et défilement au choix (lot 3, ADR-0041)
+
+- **Des lignes dans le bouton « Ok Nabu »** : jusqu'à trois lignes de quatre capteurs, choisies dans la nouvelle section « Panneau Ok Nabu · Ok Nabu panel » du blueprint « Tab5 — emplacements », avec le même modèle, le même dessin et les mêmes clés que la rangée sous l'horloge (lettre `n` : `np`, `nd`, `nLI` dans `tab5_maj_tuiles`, états `nLI` dans `tab5_maj_emplacements`). La ligne d'écoute « Ok Nabu : ON / OFF » vient en premier d'origine (deuxième, troisième ou masquée au choix). Un tap sur la ligne d'écoute bascule toujours le mot de réveil ; sur une ligne de capteurs, il ne fait rien. Pastilles sous le panneau, même glissement que la rangée, 14 px de marge dans le cadre pour ne rien couper dans un cadre en gélule (thème Capsule ; `tests/test_nabu.py` le calcule pour les 21 thèmes).
+- **Tap sur les heures** : sa valeur « auto » devient « ligne suivante du panneau Ok Nabu » (code `nabu_suivant`, index 17, icône `microphone-message`), aussi au choix pour les onze autres gestes. Sans ligne dans le panneau, il ne fait rien, comme avant.
+- **Défilement au choix** pour la rangée sous l'horloge, le panneau Ok Nabu et la tuile − / + : « Automatique » (avec la carte centrale) ou « Fixe ». D'origine : rangée automatique, panneau et tuile fixes, soit l'écran d'avant. En automatique, un geste remet le compte à zéro ; la tuile − / + passe par la clim et les appareils du blueprint (pas le son de la tablette), sans écrire la NVS, jamais liste ouverte. Clé `defil|rangée|nabu|clim|secondes;` poussée avec les gestes, gardée en NVS. `kTourCentralS` n'a plus qu'une définition (`tab5_internal.h`).
+- **Gabarits** : `ui_components/rangee_panneau.yaml` (les deux panneaux de quatre éléments de chaque zone) et `ui_components/rangee_pastilles.yaml` (les pastilles des deux zones).
+- **Ordre de mise à jour** : indifférent, `contrat/contrat.yaml` ne change pas (des clés dans les payloads existants). Ce blueprint avec un firmware d'avant : les clés `n` et `defil` ignorées, le bouton reste « Ok Nabu : ON / OFF ». Un blueprint d'avant avec ce firmware : le bouton d'avant et les défilements d'origine.
+- Non essayé sur la tablette au moment de la PR (rendu dans les 21 thèmes, tap au doigt, défilement).
+
 ### 2026-10-09 — Corrigé : points de pagination des prévisions 3 px plus bas
 
 - Les points sous la carte centrale (`pagination_container`, `tab5-lvgl.yaml`) passent de y 414 à 417 (demande d'Axel). Les points restent à 430-434, sous la carte (bas à 416) et au-dessus des onglets des tuiles (442) ; rien d'autre ne bouge. Rendu à l'écran non vérifié.

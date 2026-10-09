@@ -130,6 +130,8 @@ script:
             rangee_toucher();  // le toucher de la rangée sous l'horloge (ADR-0031)
           } else if (c.action == GesteAction::ECOUTE) {
             id(tab5_wake_word_active).toggle();  // le tap du bouton « Ok Nabu »
+          } else if (c.action == GesteAction::NABU_SUIVANTE) {
+            nabu_suivant();  // panneau Ok Nabu : ligne suivante (lot 3, ADR-0041)
           }
 
   # Ouverture d'un écran (07/10/2026) : la routine UNIQUE du select « Aller à l'écran »

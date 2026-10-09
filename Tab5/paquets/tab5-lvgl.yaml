@@ -112,6 +112,16 @@ lvgl:
         # 90 px de haut, bas à y 308), texte à la taille de la date (45 px). Le bouton
         # Muet qui le précédait est retiré le 05/10/2026 : le son se coupe depuis le
         # popup Assistant vocal (btn_assist_mute).
+        # Panneau à lignes depuis le 09/10/2026 (lot 3, ADR-0041) : comme la rangée sous
+        # l'horloge, jusqu'à trois lignes choisies dans le blueprint (section « Panneau
+        # Ok Nabu », clés nLI / np / nd ; tab5_rangee.cpp les dessine) — la ligne d'écoute
+        # (nabu_ecoute, « Ok Nabu: ON / OFF », la seule par défaut : l'écran d'avant) et des
+        # lignes de quatre capteurs (nabu_a, nabu_b, en alternance). Tap : le mot de réveil
+        # quand la ligne d'écoute est à l'écran, rien sur une ligne de capteurs (affichage
+        # seul, comme la rangée) ; ligne suivante : le tap des heures (« auto »). Les
+        # panneaux tiennent dans la bordure (401 × 88 au centre de 403 × 88), non
+        # cliquables : le toucher reste au bouton. Masqué sans aucune ligne (écoute masquée
+        # et aucun capteur).
         - button:
             id: btn_ok_nabu
             align: TOP_LEFT
@@ -119,11 +129,32 @@ lvgl:
             y: 218
             width: 405
             height: 90
+            pad_all: 0
+            scrollable: false
             styles: style_clim_btn_page
             on_short_click:
-              - switch.toggle: tab5_wake_word_active
+              - if:
+                  condition:
+                    lambda: 'return nabu_ecoute_affichee();'
+                  then:
+                    - switch.toggle: tab5_wake_word_active
             widgets:
-              - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, styles: [style_police_date, style_text_success] }
+              - obj:
+                  id: nabu_ecoute
+                  align: CENTER
+                  width: 401
+                  height: 88
+                  styles: style_transparent
+                  clickable: false
+                  scrollable: false
+                  scrollbar_mode: "OFF"
+                  widgets:
+                    - label: { id: lbl_ok_nabu, text: "Ok Nabu: ON", align: CENTER, styles: [style_police_date, style_text_success] }
+              - !include { file: ../ui_components/rangee_panneau.yaml, vars: { id: nabu_a, el: "na", hauteur: "88" } }
+              - !include { file: ../ui_components/rangee_panneau.yaml, vars: { id: nabu_b, el: "nb", hauteur: "88" } }
+        # Pastilles du panneau Ok Nabu (une par ligne, masquées sous deux lignes), centrées
+        # sous lui à la hauteur de celles de la rangée.
+        - !include { file: ../ui_components/rangee_pastilles.yaml, vars: { nom: nabu, align: TOP_LEFT, x: "20", largeur: "405" } }
 
         # --- Centre: Horloge ---
         # Marges égales (05/10/2026, demande d'Axel) : autant d'air entre le haut de la
@@ -179,7 +210,7 @@ lvgl:
         # avant, une seule, btn_clock_calendar_zone : tap = réveil, long = calendrier).
         # Chacune a un tap court et un appui long, choisis dans le blueprint (section
         # « Horloge et boutons du haut », clé gestes ; Geste dans tab5_zones.h) :
-        #   - HEURES  (haut gauche)  : « auto » rien / Réveil ;
+        #   - HEURES  (haut gauche)  : « auto » ligne suivante du panneau Ok Nabu (lot 3) / Réveil ;
         #   - MINUTES (haut droite)  : « auto » appareil suivant de la tuile − / + / Réveil ;
         #   - DATE    (bas)          : « auto » ligne suivante de la rangée / Calendrier.
         # Elles couvrent toute la tuile (x 440..840, y 20..229), sans trou ni
@@ -274,25 +305,7 @@ lvgl:
         # Pastilles de la rangée : une par ligne, sous elle (entre ses icônes, encre jusqu'à
         # y 308, et la carte centrale, y 333), comme celles de la carte centrale ;
         # masquées sous deux lignes (tab5_rangee.cpp, pastilles()).
-        - obj:
-            id: rangee_pastilles
-            align: TOP_MID
-            x: 0
-            y: 319
-            width: SIZE_CONTENT
-            height: SIZE_CONTENT
-            styles: style_transparent
-            hidden: true
-            layout:
-              type: FLEX
-              flex_flow: ROW
-              flex_align_main: CENTER
-              flex_align_cross: CENTER
-              pad_column: 6
-            widgets:
-              - obj: { id: rangee_pastille_0, width: 30, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 100%, border_width: 0 }
-              - obj: { id: rangee_pastille_1, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
-              - obj: { id: rangee_pastille_2, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+        - !include { file: ../ui_components/rangee_pastilles.yaml, vars: { nom: rangee, align: TOP_MID, x: "0", largeur: SIZE_CONTENT } }
 
         # ==================== CLIMATE CONTROL (MIDDLE RIGHT) ====================
 

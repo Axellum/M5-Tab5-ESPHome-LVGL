@@ -201,6 +201,7 @@ font:
       - "\U000F0379"  # monitor
       - "\U000F0493"  # cog (bouton du haut : Réglages, 06/10/2026)
       - "\U000F04B9"  # sofa
+      - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
       - "\U000F06A9"  # robot
       - "\U000F0717"  # snowflake (tap : Climatisation)
       - "\U000F0729"  # view-sequential (tap : ligne suivante sous l'horloge)
@@ -635,6 +636,7 @@ font:
       - "\U000F036C"  # microphone (mini icône : Assistant vocal)
       - "\U000F0379"  # monitor
       - "\U000F0493"  # cog (mini icône : Réglages)
+      - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
       - "\U000F0596"  # weather-pouring
       - "\U000F05A9"  # wifi
       - "\U000F05CE"  # clock-alert-outline (prévisions périmées, au-dessus des tuiles)

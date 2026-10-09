@@ -271,7 +271,9 @@ script:
   # et la carte centrale suit juste après : une cascade de haut en bas (animations de
   # 190 ms). Tour compté hors de l'accueil aussi (la carte centrale, elle, n'y tourne
   # pas), jamais écran éteint ni popup ouvert. 7,8 s + 0,2 s = la période de 8 s
-  # (kTourCentralS de tab5_tuiles.cpp, tests/test_rangee.py).
+  # (kTourCentralS de tab5_internal.h, tests/test_rangee.py). Depuis le lot 3
+  # (09/10/2026, ADR-0041), rangee_tour() fait tourner de même le panneau Ok Nabu et la
+  # tuile − / + quand le blueprint les met en « auto » (défilement au choix).
   - id: tab5_central_rotator_auto
     mode: restart
     then:

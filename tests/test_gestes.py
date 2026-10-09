@@ -42,9 +42,11 @@ CLIM_CARTE = os.path.join(TAB5, "ui_components", "climate_card.yaml")
 THEME_CPP = os.path.join(TAB5, "ecran", "tab5_theme.cpp")
 
 # Ordre des 12 champs de la clé (enum Geste) → entrée du blueprint, et « auto » attendu :
-# le comportement d'avant le lot A (None : appui long d'un bouton, qui suit la clé appuis).
+# le comportement d'avant le lot A (None : appui long d'un bouton, qui suit la clé appuis),
+# sauf le tap des heures, la ligne suivante du panneau Ok Nabu depuis le lot 3 (ADR-0041 ;
+# avec le panneau d'origine, l'écoute seule, il ne fait toujours rien).
 GESTES = (
-    ("GESTE_HEURES_COURT", "geste_heures_court", "rien"),
+    ("GESTE_HEURES_COURT", "geste_heures_court", "nabu_suivant"),
     ("GESTE_HEURES_LONG", "geste_heures_long", "reveil"),
     ("GESTE_MINUTES_COURT", "geste_minutes_court", "appareil_suivant"),
     ("GESTE_MINUTES_LONG", "geste_minutes_long", "reveil"),
@@ -63,6 +65,7 @@ BRANCHES = {
     "APPAREIL_SUIVANT": "reglables_suivant();",
     "RANGEE_SUIVANTE": "rangee_toucher();",
     "ECOUTE": "id(tab5_wake_word_active).toggle();",
+    "NABU_SUIVANTE": "nabu_suivant();",
 }
 
 
@@ -123,8 +126,8 @@ def test_actions_de_l_accueil():
     for action in set(actions.values()) - {"ECRAN", "RIEN"}:
         branche = script.split(f"GesteAction::{action})", 1)[1].split("} else if", 1)[0]
         assert BRANCHES[action] in branche, action
-    # Le lot 3 ajoutera « nabu_suivant » à la fin : la NVS garde l'index du code.
-    assert "nabu_suivant" in _lire(ZONES_CPP)
+    # « nabu_suivant » (lot 3) ajouté à la fin : la NVS garde l'index du code.
+    assert list(actions)[-1] == "nabu_suivant" and list(actions).index("nabu_suivant") == 17
 
 
 def test_auto_comme_avant():
@@ -313,7 +316,7 @@ def test_un_choix_par_geste():
     assert p.count("gestes|") == 1
 
 
-@pytest.mark.parametrize("valeur", ["cuisine", "", None, "AUTO", "Ecoute", "nabu_suivant"])
+@pytest.mark.parametrize("valeur", ["cuisine", "", None, "AUTO", "Ecoute", "Nabu_suivant"])
 def test_valeur_inconnue_part_en_auto(valeur):
     p = _payload("connexion", geste_heures_court=valeur, geste_date_long="calendrier")
     assert "gestes|auto|auto|auto|auto|auto|calendrier|auto|auto|auto|auto|auto|auto;" in p

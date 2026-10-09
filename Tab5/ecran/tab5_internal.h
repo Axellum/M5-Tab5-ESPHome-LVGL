@@ -183,19 +183,54 @@ struct RangeeElement {
                                         // texte n'est pas coupé au milieu d'un caractère
     uint32_t couleur_texte = 0;
 };
-// tab5_tuiles.cpp. Place de la ligne des plantes (0 à 2, -1 masquée) ; tours de la carte
-// centrale par ligne (1 à 15) ; ligne de capteurs l (0 à 2) définie ; élément i (0 à 3)
-// de la ligne l (faux s'il est vide).
-int rangee_place_plantes();
-int rangee_tours();
-bool rangee_ligne_remplie(int l);
-bool rangee_element(int l, int i, RangeeElement& out);
+// Zones à lignes (lot 3, 09/10/2026) : le même modèle et le même dessin pour la rangée
+// sous l'horloge (clés h…, ligne spéciale = les plantes) et le panneau « Ok Nabu » (clés
+// n…, ligne spéciale = l'écoute). L'ordre est l'index du modèle (tab5_tuiles.cpp) et de
+// son dessin (tab5_rangee.cpp).
+enum RangeeZone : uint8_t {
+    RANGEE_HORLOGE,
+    RANGEE_NABU,
+    RANGEE_NB,
+};
+// Un tour de la carte centrale, en secondes : la période du rotateur
+// (tab5_central_rotator_auto, tab5-scripts.yaml : 7,8 s, rangee_tour(), puis 0,2 s et la
+// carte centrale ; tests/test_rangee.py compare). Les durées du blueprint (« hd|32 »,
+// « nd|32 », le 4e champ de « defil ») sont arrondies au tour le plus proche.
+constexpr int kTourCentralS = 8;
+// tab5_tuiles.cpp, zone z. Place de la ligne spéciale (0 à 2, -1 masquée) ; tours de la
+// carte centrale par ligne (1 à 15) ; ligne de capteurs l (0 à 2) définie ; élément i
+// (0 à 3) de la ligne l (faux s'il est vide).
+int rangee_place_speciale(int z);
+int rangee_tours(int z);
+bool rangee_ligne_remplie(int z, int l);
+bool rangee_element(int z, int l, int i, RangeeElement& out);
 // tab5_rangee.cpp. zones_apply_ui : tout redessiner (lignes, pots présents) ; les
-// définitions de la rangée ont changé (tuiles_definir) ; l'état de l'élément i de la
-// ligne l est arrivé (tuiles_etat_recu).
+// définitions de la zone z ont changé (tuiles_definir) ; l'état de l'élément i de la
+// ligne l de la zone z est arrivé (tuiles_etat_recu).
 void rangee_appliquer_ui();
-void rangee_definitions_changees();
-void rangee_element_change(int l, int i);
+void rangee_definitions_changees(int z);
+void rangee_element_change(int z, int l, int i);
+
+// Défilement au choix (lot 3, 09/10/2026) : « auto » (les lignes ou les appareils se
+// relaient seuls, calés sur la carte centrale) ou « fixe » (seulement par un geste), une
+// zone à la fois. Clé « defil|rangée|nabu|clim|secondes » de tab5_maj_emplacements
+// (blueprint, avec tous les états), gardée en NVS ; tab5_rangee.cpp. Sans la clé : la
+// rangée en auto, le panneau Ok Nabu et la tuile − / + fixes (l'écran d'avant).
+enum class Defilement : uint8_t {
+    RANGEE,
+    NABU,
+    CLIM,
+    NB,
+};
+bool defilement_auto(Defilement d);
+// Tours de la carte centrale par appareil de la tuile − / + en auto (1 à 15).
+int defilement_tours_clim();
+// « defil|… » reçue (emplacements_appliquer) ; defilement_defaut() : un payload de gestes
+// sans elle (blueprint d'avant le lot 3) remet les défauts.
+void defilement_recu(const char* valeur, size_t n);
+void defilement_defaut();
+// tab5_reglables.cpp : un tour de la carte centrale pour la tuile − / + (rangee_tour).
+void reglables_tour();
 
 // --- Tuile − / + au choix (tab5_reglables.cpp, ADR-0033) ---
 // tuiles_definir (tab5_tuiles.cpp) : les entrées « rN|type|icône|options|lien|min|max|pas|
