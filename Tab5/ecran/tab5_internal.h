@@ -357,7 +357,7 @@ void roue_rejouer_theme();
 // a pas (type sans roue, option k ou r, clim sans capacité connue) : l'appelant ouvre
 // alors le popup (tuile_ouvrir_popup).
 bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison = false);
-// tab5_tuiles_roue.cpp (ADR-0047) : la roue de la clim `c` (celle du blueprint, d'une
+// tab5_tuiles_roue.cpp (ADR-0048) : la roue de la clim `c` (celle du blueprint, d'une
 // tuile ou d'une pièce, ClimRef plus bas), ouverte par le toucher de la température de la
 // pièce (clim_temperature_ouvrir, tab5_clim.cpp) autour de `ancre` : les boutons clim de
 // la roue d'une tuile cli (même code), « Clims ▸ » à la place de « Maison » quand la

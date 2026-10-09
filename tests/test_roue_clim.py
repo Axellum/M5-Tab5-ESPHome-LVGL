@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Roue d'une clim par la température de la pièce (ADR-0047, 09/10/2026) : le toucher de la
+"""Roue d'une clim par la température de la pièce (ADR-0048, 09/10/2026) : le toucher de la
 température de la carte clim ouvre la roue d'actions rapides (ADR-0036) de la clim
 qu'ouvrait le carrousel (ADR-0038), posée sur la température ; « Détails » = le carrousel
 sur elle, « Clims ▸ » (au moins deux clims) passe la roue sur une autre.
@@ -177,6 +177,6 @@ def _roue_entiere(xa: int, ya: int, n: int = 6, m: int = 6) -> bool:
 
 
 def test_adr():
-    texte = _lire("docs", "decisions", "0047-climate-wheel-from-temperature.md")
+    texte = _lire("docs", "decisions", "0048-climate-wheel-from-temperature.md")
     assert "clim_roue_ouvrir" in texte and "« Clims ▸ »" in texte and "« Détails »" in texte
-    assert "0047-climate-wheel-from-temperature.md" in _lire("docs", "decisions", "0038-climate-carousel.md")
+    assert "0048-climate-wheel-from-temperature.md" in _lire("docs", "decisions", "0038-climate-carousel.md")

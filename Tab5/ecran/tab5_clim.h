@@ -137,7 +137,7 @@ void clim_afficher_blueprint();
 void clim_carrousel_preparer();
 // Toucher court de la température de la pièce (btn_reglables_liste, climate_card.yaml,
 // passé en `ancre`) : la roue de la clim de la pièce affichée en mode HA si elle en a une,
-// sinon de la première (celle du blueprint), posée sur la température (ADR-0047) ; sans
+// sinon de la première (celle du blueprint), posée sur la température (ADR-0048) ; sans
 // réglages reçus pour elle, le carrousel ouvert sur elle (ADR-0038). Faux, et rien
 // d'ouvert, si la tablette ne connaît aucune clim (la carte déroule alors la liste de la
 // tuile − / +, comme avant).

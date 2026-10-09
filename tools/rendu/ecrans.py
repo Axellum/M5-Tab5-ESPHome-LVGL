@@ -212,7 +212,7 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 SOUS_HORLOGE = (640, 270)
 SERRE = (1172, 158)           # court : Arcade
 # Température du salon (btn_reglables_liste, climate_card.yaml : carte en 855, 110, zone
-# 4..196 × 22..86, centre 955, 164) : court, la roue de la clim (ADR-0047, ancrée plus bas) ;
+# 4..196 × 22..86, centre 955, 164) : court, la roue de la clim (ADR-0048, ancrée plus bas) ;
 # sans réglages reçus pour la clim (celle du blueprint avant « climr »), le carrousel des
 # clims (popup Climatisation, ADR-0038).
 # Tuile − / + (ADR-0033) : long sur la valeur entre − et + (CONSIGNE_CLIM,
@@ -372,7 +372,7 @@ VOLET_A_50 = Service("tab5_maj_emplacements", (("payload", "t01|open|50|;"),))
 # Les valeurs par défaut de la tablette (16-30 °C, pas 0,5, toutes les lettres), sans nom ;
 # marqué : le mode de la dernière scène (ventilation).
 CLIM_CAPACITES = Service("tab5_maj_emplacements", (("payload", "climr|16|30|0.5|°C|chdfebqsw;"),))
-# Roue d'une clim (ADR-0047), ouverte par la température de la pièce (SALON) : « Clims ▸ »
+# Roue d'une clim (ADR-0048), ouverte par la température de la pièce (SALON) : « Clims ▸ »
 # (au moins deux clims : la démo a celle du blueprint et la clim propre du Bureau),
 # Éteindre, Mode, Consigne, Options, « Détails » (le carrousel sur elle). La clim du Bureau
 # (« chdfq ») et celle du blueprint après « climr » ont les trois familles. La température
@@ -573,6 +573,13 @@ REGLAGES_CURSEUR_A_100 = Glisser(400, 215, 1270, 215, dans_popup=True)
 SALON_TEMP = (954, 158)
 TEMPERATURE_VUES = {"jour": (828, 287), "semaine": (988, 287), "mois": (1148, 287)}
 MOMENT_DES_CAPTURES = _dt.datetime(2026, 6, 16, 7, 45)
+# Onglets du popup (ADR-0047) : une page par température connue — le salon, les pièces de
+# la démo qui ont une température (Entrée p1, Bureau p3), la serre —, 200 × 44 calés à
+# droite jusqu'à x 1148 de la carte modale, soit les places des pages des Réglages.
+# Un glissement vers la gauche dans le graphique : la page suivante (salon → Entrée).
+TEMPERATURE_ONGLETS = {"salon": (433, 41), "p1": (643, 41), "p3": (853, 41), "serre": (1063, 41)}
+TEMPERATURE_SUIVANTE = Glisser(1100, 520, 450, 520, dans_popup=True)
+assert PIECES[1].climat is not None and not PIECES[1].climat.humidite, "l'Entrée : sa température seule"
 
 
 # Popup Maison (ADR-0037) avec deux pièces seulement : le Salon (cinq appareils) et la
@@ -858,11 +865,11 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("climatisation-carrousel-page-3",
           CLIMS_DE_TUILES + (Toucher(*SALON), CARROUSEL_SUIVANTE, CARROUSEL_SUIVANTE), MAISON_DE_LA_DEMO),
     # En mode HA, la clim propre du Bureau a ses réglages : le toucher ouvre sa roue
-    # (ADR-0047), son « Détails » le carrousel sur elle.
+    # (ADR-0048), son « Détails » le carrousel sur elle.
     Ecran("climatisation-carrousel-mode-ha",
           CLIMS_DE_TUILES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON), ROUE_CLIM_DETAILS),
           (Toucher(*FERMER_POPUP), Toucher(*BOUTON_HA), VERS_LA_GAUCHE) + MAISON_DE_LA_DEMO),
-    # Roue de la clim par la température de la pièce (ADR-0047), en mode HA sur le Bureau :
+    # Roue de la clim par la température de la pièce (ADR-0048), en mode HA sur le Bureau :
     # sa clim propre (« Climatiseur du bureau », en froid) ; puis « Clims ▸ » déplié (la
     # clim du blueprint et elle, marquée). Un toucher replie, le suivant ferme.
     Ecran("roue-clim-temperature", ALLER_PIECE_CLIMAT + (Toucher(*SALON),),
@@ -912,10 +919,18 @@ ECRANS: tuple[Ecran, ...] = (
           (Long(*SERRE), Toucher(*TEMPERATURE_VUES["semaine"]), _historique("serre", "semaine"))),
     Ecran("temperature-serre-mois", (Long(*SERRE), Toucher(*TEMPERATURE_VUES["mois"]), _historique("serre", "mois"))),
     Ecran("temperature-dehors", (Long(*SERRE), _historique("serre", "jour", exterieur=True))),
-    # Température d'une pièce en mode HA (ADR-0040) : sans prévision.
+    # Température d'une pièce en mode HA (ADR-0040) : sans prévision ; le Bureau a aussi son
+    # humidité (ADR-0047), tracée avec la température.
     Ecran("temperature-piece",
           ALLER_PIECE_CLIMAT + (Long(*SALON_TEMP), _historique(f"p{PIECE_CLIMAT}", "jour")),
           (Toucher(*FERMER_POPUP),) + RETOUR_PIECE_CLIMAT),
+    # Pages du popup (ADR-0047) : du salon, un glissement montre l'Entrée (sa température
+    # seule : le rendu d'avant l'humidité) ; l'onglet du Bureau, sa semaine.
+    Ecran("temperature-glisser",
+          (Long(*SALON_TEMP), _historique("salon", "jour"), TEMPERATURE_SUIVANTE, _historique("p1", "jour"))),
+    Ecran("temperature-onglet",
+          (Long(*SALON_TEMP), _historique("salon", "jour"), Toucher(*TEMPERATURE_VUES["semaine"]),
+           _historique("salon", "semaine"), Toucher(*TEMPERATURE_ONGLETS["p3"]), _historique("p3", "semaine"))),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
     # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.
@@ -1021,7 +1036,7 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("roue-clim", (VERS_LA_GAUCHE, VERS_LA_GAUCHE, CLIM_CAPACITES, Long(*TUILES["chambre"]),
                         roue_famille(TUILES["chambre"], ROUE_BOUTONS["clim"], ROUE_MODE)),
           (ROUE_FERMER, ROUE_FERMER, VERS_LA_DROITE, VERS_LA_DROITE)),
-    # Roue de la clim par la température de la pièce en mode météo (ADR-0047) : la clim du
+    # Roue de la clim par la température de la pièce en mode météo (ADR-0048) : la clim du
     # blueprint, qui n'en a une qu'après « climr » (avant : le carrousel, écrans
     # « climatisation-par-la-piece » et « climatisation-carrousel* »).
     Ecran("roue-clim-temperature-meteo", (CLIM_CAPACITES, Toucher(*SALON)), (ROUE_FERMER,)),

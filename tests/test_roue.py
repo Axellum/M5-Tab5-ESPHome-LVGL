@@ -234,7 +234,7 @@ def test_types_et_options_de_la_roue():
         assert f"commande(RoueAction::{action}," in vol
     assert "if (vol_position_connue(e)) famille(RoueAction::POSITION" in vol
     # Clim : les boutons de composer_clim, le même code pour la tuile cli et pour la roue
-    # d'une clim (ADR-0047) ; sans capacité reçue, pas de roue.
+    # d'une clim (ADR-0048) ; sans capacité reçue, pas de roue.
     assert "if (!composer_clim(rt.clim, e.brut)) return 0;" in cli
     clim = corps.split("auto composer_clim = ", 1)[1].split("\n    };", 1)[0]
     assert "if (capacites == nullptr) return false;" in clim

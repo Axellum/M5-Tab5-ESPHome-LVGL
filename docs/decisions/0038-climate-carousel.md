@@ -1,6 +1,6 @@
 # ADR-0038: The climate popup is a carousel — one page per climate the tablet knows, opened by a tap on the room's temperature
 
-**Status:** Accepted (2026-10-09, asked for and decided by the author; not tried on a tablet when written). *Amended the same day by [ADR-0047](0047-climate-wheel-from-temperature.md): the tap on the room's temperature opens a climate's quick-action wheel, whose « Détails » opens this carousel (see « Update » below).*
+**Status:** Accepted (2026-10-09, asked for and decided by the author; not tried on a tablet when written). *Amended the same day by [ADR-0048](0048-climate-wheel-from-temperature.md): the tap on the room's temperature opens a climate's quick-action wheel, whose « Détails » opens this carousel (see « Update » below).*
 **Date:** 2026-10-09
 
 ## Context
@@ -11,9 +11,9 @@ The author asked (2026-10-09) for « a carousel to manage the climate when I tap
 
 Constraints: one source rather than N copies (code rule 5); the shared modal chrome ([ADR-0009](0009-modal-shell-header.md)); one modal registry ([ADR-0013](0013-single-registry-consoles-modals.md)); instant transitions, no fade (the author's taste); the climate popup stays non-factorised per button ([ADR-0007](0007-climate-popup-not-factorized.md)).
 
-### Update (2026-10-09, ADR-0047)
+### Update (2026-10-09, ADR-0048)
 
-The author had asked for a **wheel** (the quick-action wheel of the tiles, [ADR-0036](0036-quick-action-wheel.md)), not a page. The tap on the room's temperature now opens the wheel of the same climate ([ADR-0047](0047-climate-wheel-from-temperature.md)); its « Détails » opens this carousel on it. The carousel, its single list, its swipe and its dots do not change; it still opens directly from the temperature while the chosen climate has no settings yet (the blueprint's before `climr`).
+The author had asked for a **wheel** (the quick-action wheel of the tiles, [ADR-0036](0036-quick-action-wheel.md)), not a page. The tap on the room's temperature now opens the wheel of the same climate ([ADR-0048](0048-climate-wheel-from-temperature.md)); its « Détails » opens this carousel on it. The carousel, its single list, its swipe and its dots do not change; it still opens directly from the temperature while the chosen climate has no settings yet (the blueprint's before `climr`).
 
 ## Decision
 

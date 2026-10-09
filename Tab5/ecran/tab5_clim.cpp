@@ -791,7 +791,7 @@ bool clim_carrousel_ouvrir_sur(const ClimRef& c) {
 bool clim_temperature_ouvrir(lv_obj_t* ancre) {
     ClimRef c;
     if (!clim_ref_choisir(c)) return false;  // aucune clim : la liste de la tuile − / +
-    // Sa roue (ADR-0047) ; sans réglages reçus (la clim du blueprint avant climr), le
+    // Sa roue (ADR-0048) ; sans réglages reçus (la clim du blueprint avant climr), le
     // carrousel sur elle, comme avant.
     if (clim_roue_ouvrir(c, ancre)) return true;
     return clim_carrousel_ouvrir_sur(c);
@@ -912,7 +912,7 @@ void clim_recolorer() {
 
 // Roue d'actions rapides (ADR-0036, tab5_tuiles_roue.cpp) : les modes qu'elle offre sont ceux que
 // HA a poussés pour cette clim (climr pour celle du blueprint, crRT pour une tuile, crpR
-// pour une pièce, ADR-0047) ; les capacités par défaut de la 3.2 ne comptent pas (rien
+// pour une pièce, ADR-0048) ; les capacités par défaut de la 3.2 ne comptent pas (rien
 // reçu : pas de roue, le popup).
 const char* clim_capacites_connues(int r, int t) {
     if (r < 0) return s_clim.recu ? s_clim.capacites : nullptr;

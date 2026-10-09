@@ -87,7 +87,7 @@ def test_ouverture_sur_la_piece_affichee():
     # Le carrousel ouvert sur une clim : sa page, puis le popup.
     ouvrir = _corps(CLIM, "bool clim_carrousel_ouvrir_sur(const ClimRef& c) {")
     assert ouvrir.index("clim_ref_afficher(c)") < ouvrir.index("animate_popup_open(g_clim_ui.popup);")
-    # Le toucher de la température (ADR-0047) : la roue, sinon le carrousel sur elle.
+    # Le toucher de la température (ADR-0048) : la roue, sinon le carrousel sur elle.
     temperature = _corps(CLIM, "bool clim_temperature_ouvrir(lv_obj_t* ancre) {")
     assert temperature.index("if (!clim_ref_choisir(c)) return false;") < temperature.index(
         "if (clim_roue_ouvrir(c, ancre)) return true;") < temperature.index("return clim_carrousel_ouvrir_sur(c);")

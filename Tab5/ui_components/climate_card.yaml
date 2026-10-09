@@ -122,13 +122,14 @@ obj:
           - script.execute: tab5_arcade_open
         on_long_press:
           # « serre », rien sans serre ; en mode HA sur une pièce à température déclarée
-          # (ADR-0040), la droite montre son humidité : rien non plus.
+          # (ADR-0040), la droite montre son humidité : « pR » si elle est déclarée (le
+          # popup la trace avec la température, ADR-0047), rien sinon.
           - lambda: |-
               const char* cle = accueil_historique_cle(true);
               if (cle != nullptr) id(tab5_historique_ouvrir).execute(std::string(cle));
 
     # Zone tactile sur l'icône et la température du salon → appui court : la roue de la
-    # clim (ADR-0047, demande d'Axel du 09/10/2026), posée sur cette zone : la clim de la
+    # clim (ADR-0048, demande d'Axel du 09/10/2026), posée sur cette zone : la clim de la
     # pièce affichée en mode HA, sinon celle du blueprint ; son « Détails » ouvre le
     # carrousel des clims (popup Climatisation, une page par clim, ADR-0038) sur elle, qui
     # s'ouvre directement tant que HA n'a pas poussé ses réglages (pas de roue sans eux).

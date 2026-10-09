@@ -673,9 +673,12 @@ def build_energie_historique(vue: str, aujourd_hui: _dt.date) -> dict:
 # et, pour la seconde, la prévision de la météo. Ce que pousserait script.tab5_historique
 # (HomeAssistant_Config/packages/tab5_historique.yaml) en réponse à l'événement
 # esphome.tab5_historique (cle, vue), action tab5_maj_historique :
-#   entete = « nom|debut|pas|maintenant|actuel|exterieur » (debut AAAA-MM-JJTHH:MM local,
-#   minutes à l'horloge locale), mesures = « moy,min,max » par créneau, « ; » (nb + 1
-#   créneaux, le dernier en cours), previsions = « minute,moy[,min,max] », « ; ».
+#   entete = « nom|debut|pas|maintenant|actuel|exterieur[|humidite] » (debut
+#   AAAA-MM-JJTHH:MM local, minutes à l'horloge locale ; humidite : avec un capteur
+#   d'humidité, ADR-0047), mesures = « moy,min,max[,h_moy,h_min,h_max] » par créneau,
+#   « ; » (nb + 1 créneaux, le dernier en cours), previsions = « minute,moy[,min,max] », « ; ».
+# Humidité : le salon (« salon_hum ») et le Bureau (p3) ; l'Entrée (p1) n'a que sa
+# température.
 # Courbes inventées, finies sur la valeur de l'accueil (EMPLACEMENTS) : la pièce chauffée,
 # une serre qui monte au soleil ; dehors, la prévision (ou toute la courbe si la seconde
 # température est dehors : la case du blueprint).
@@ -685,8 +688,8 @@ def build_energie_historique(vue: str, aujourd_hui: _dt.date) -> dict:
 HISTORIQUE_CLES = ("salon", "serre", "p0", "p1", "p2", "p3", "p4")
 # vue : (minutes par créneau, créneaux complets avant celui en cours)
 HISTORIQUE_VUES = {"jour": (60, 24), "semaine": (180, 56), "mois": (1440, 30)}
-HISTORIQUE_PREV_MAX = 48     # Prev p[kPrevMax] de tab5_historique.cpp
-HISTORIQUE_MESURES_MAX = 64  # Point m[kMesuresMax]
+HISTORIQUE_PREV_MAX = 48     # kHistoriquePrevMax de Tab5/socle/tab5_parse.h
+HISTORIQUE_MESURES_MAX = 64  # kHistoriqueMesuresMax
 
 
 def _onde(t: _dt.datetime, pic: float, ampl: float, periode_j: float, ampl_j: float) -> float:
@@ -716,6 +719,22 @@ def historique_actuel(cle: str) -> str:
         return EMPLACEMENTS[cle][1]
     c = climat_historique(cle)
     return c.temperature if c is not None else "nan"
+
+
+def historique_humidite(cle: str) -> str:
+    """Humidité sur laquelle la courbe d'humidité finit (ADR-0047) : celle du salon
+    (« salon_hum ») ou de la pièce ; '' sans capteur d'humidité (la serre, une pièce sans)."""
+    if cle == "salon":
+        return EMPLACEMENTS["salon_hum"][1]
+    c = climat_historique(cle)
+    return c.humidite if c is not None and c.temperature else ""
+
+
+def _humidite(cle: str):
+    """Humidité de la démo à l'instant t, avant recalage : plus humide la nuit, sèche
+    l'après-midi quand la pièce chauffe."""
+    decalage = 0 if cle == "salon" else int(cle[1:]) * 2
+    return lambda t: 50.0 - _onde(t, 17 + decalage, 6.0, 4.3, 3.0)
 
 
 def _courbe(cle: str, exterieur: bool):
@@ -760,17 +779,29 @@ def build_historique(cle: str, vue: str, maintenant: _dt.datetime, exterieur: bo
     brute = _courbe(cle, exterieur)
     decalage = actuel - brute(maintenant)
     temp = (lambda t: brute(t) + decalage)
+    # Humidité (ADR-0047) : recalée sur celle de l'accueil, en % entiers comme le package.
+    h_actuelle = historique_humidite(cle)
+    if h_actuelle:
+        h_brute = _humidite(cle)
+        h_decalage = float(h_actuelle) - h_brute(maintenant)
+        humid = (lambda t: min(100.0, max(0.0, h_brute(t) + h_decalage)))
+
+    def echantillons(f, t, fin):
+        valeurs = []
+        while t < fin:
+            valeurs.append(f(t))
+            t += _dt.timedelta(minutes=10)
+        return valeurs or [f(fin)]
 
     mesures = []
     for i in range(nb + 1):
         t, fin = debut + _dt.timedelta(minutes=i * pas), min(debut + _dt.timedelta(minutes=(i + 1) * pas), maintenant)
-        valeurs = []
-        while t < fin:
-            valeurs.append(temp(t))
-            t += _dt.timedelta(minutes=10)
-        if not valeurs:
-            valeurs = [temp(fin)]
-        mesures.append(f"{sum(valeurs) / len(valeurs):.1f},{min(valeurs):.1f},{max(valeurs):.1f}")
+        valeurs = echantillons(temp, t, fin)
+        creneau = f"{sum(valeurs) / len(valeurs):.1f},{min(valeurs):.1f},{max(valeurs):.1f}"
+        if h_actuelle:
+            h = echantillons(humid, t, fin)
+            creneau += f",{round(sum(h) / len(h))},{round(min(h))},{round(max(h))}"
+        mesures.append(creneau)
     assert len(mesures) == nb + 1 <= HISTORIQUE_MESURES_MAX, vue
 
     previsions = []
@@ -797,9 +828,12 @@ def build_historique(cle: str, vue: str, maintenant: _dt.datetime, exterieur: bo
 
     # Le package nomme la pièce du capteur : pour pR, celle de la démo.
     nom = {"salon": "Salon", "serre": "Jardin" if exterieur else "Serre"}.get(cle) or PIECES[int(cle[1:])].nom
-    entete = "|".join([nom, debut.strftime("%Y-%m-%dT%H:%M"), str(pas), str(_minutes(debut, maintenant)),
-                       f"{actuel:.1f}", "1" if exterieur else "0"])
-    assert len(entete.split("|")) == 6 and ";" not in entete
+    champs = [nom, debut.strftime("%Y-%m-%dT%H:%M"), str(pas), str(_minutes(debut, maintenant)),
+              f"{actuel:.1f}", "1" if exterieur else "0"]
+    if h_actuelle:
+        champs.append(h_actuelle)   # septième champ : seulement avec un capteur d'humidité
+    entete = "|".join(champs)
+    assert len(entete.split("|")) == (7 if h_actuelle else 6) and ";" not in entete
     return {"cle": cle, "vue": vue, "entete": entete, "mesures": ";".join(mesures),
             "previsions": ";".join(previsions)}
 

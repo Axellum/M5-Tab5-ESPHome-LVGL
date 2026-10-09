@@ -1,4 +1,4 @@
-# ADR-0047: A tap on the room's temperature opens the wheel of a climate; its « Détails » is the carousel
+# ADR-0048: A tap on the room's temperature opens the wheel of a climate; its « Détails » is the carousel
 
 **Status:** Proposed (2026-10-09, asked for by the author; not tried on a tablet when written). Amends the gestures of [ADR-0038](0038-climate-carousel.md).
 **Date:** 2026-10-09

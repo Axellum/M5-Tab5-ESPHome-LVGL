@@ -58,6 +58,10 @@ NON_MONTREES = {
     "temperature-serre-mois": "temperature-serre montre la même fenêtre ; les vues sont décrites",
     # Climat de la pièce en mode HA (ADR-0040), décrit dans temperature.md.
     "temperature-piece": "temperature-serre montre la même fenêtre ; la température d'une pièce est décrite",
+    # Humidité et pages du popup Température (ADR-0047), décrites dans temperature.md.
+    "temperature-glisser": "temperature-serre montre la même fenêtre ; le glissement est décrit",
+    "temperature-onglet": "temperature-serre montre la même fenêtre ; les onglets et l'humidité sont décrits ; "
+                          "image à tirer du rendu de la PR",
     "climatisation-piece": "climatisation montre la même fenêtre ; la clim d'une pièce est décrite",
     # Images à tirer du rendu de la PR (tools/site/images_notice.py), puis citées.
     "appareil-scene": "appareil montre la même fenêtre ; la scène est décrite dans tiles.md",
@@ -67,8 +71,8 @@ NON_MONTREES = {
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
-    # Roue d'une clim par la température de la pièce (ADR-0047), décrite dans climate.md.
-    "roue-clim-temperature": "roue d'une clim (ADR-0047), décrite dans climate.md ; image à tirer du rendu",
+    # Roue d'une clim par la température de la pièce (ADR-0048), décrite dans climate.md.
+    "roue-clim-temperature": "roue d'une clim (ADR-0048), décrite dans climate.md ; image à tirer du rendu",
     "roue-clim-temperature-clims": "roue-clim-temperature montre la même roue ; « Clims » est décrit",
     "roue-clim-temperature-meteo": "roue-clim-temperature montre la même roue, sur la clim du blueprint",
     # Roue de navigation (ADR-0042), décrite dans home.md (carte centrale).

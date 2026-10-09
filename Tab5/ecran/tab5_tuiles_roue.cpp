@@ -13,7 +13,7 @@
  *       tuile ou du blueprint par clim_cible() et les fonctions clim_* de tab5_clim.cpp.
  *       Ouverte par tuile_roue_ouvrir (n'importe quelle ancre : carte du mode HA, tuile
  *       météo, ligne du popup Maison) ; roue_tuile_etat la suit (peindre_tuile).
- *       Roue d'une clim quelconque (ADR-0047, 09/10/2026) : ouverte par le toucher de la
+ *       Roue d'une clim quelconque (ADR-0048, 09/10/2026) : ouverte par le toucher de la
  *       température de la pièce (clim_roue_ouvrir, sans tuile : rt.r = -1), ses boutons
  *       sont ceux de la clim d'une tuile cli — le même code, composer_clim dans
  *       roue_composer —, « Clims ▸ » à la place de « Maison » quand la tablette en connaît
@@ -82,7 +82,7 @@ uint32_t lampe_teinte(const char* nom) {
 // événements esphome.tab5_action, mêmes valeurs que la tuile et ses popups : ADR-0023,
 // ADR-0026, ADR-0027), aucune mise à jour optimiste nouvelle. Un choix ferme la roue.
 //
-// Roue d'une clim (ADR-0047) : le toucher de la température de la pièce ouvre la roue de
+// Roue d'une clim (ADR-0048) : le toucher de la température de la pièce ouvre la roue de
 // la clim qu'ouvrait le carrousel (celle de la pièce affichée en mode HA, sinon celle du
 // blueprint), sans tuile. Mêmes boutons clim qu'une tuile cli ; « Clims ▸ » (au moins deux
 // clims) déplie les autres sur le second anneau, en toucher une rouvre la roue sur elle ;
@@ -148,7 +148,7 @@ struct RoueTuile {
 };
 RoueTuile s_rt;
 
-// La roue d'une clim, sans tuile (ADR-0047) ; sinon celle de la tuile tRT.
+// La roue d'une clim, sans tuile (ADR-0048) ; sinon celle de la tuile tRT.
 bool roue_de_clim(const RoueTuile& rt) { return rt.r < 0; }
 bool vise_une_clim(const RoueTuile& rt) { return rt.clim.r >= -1; }
 
@@ -167,7 +167,7 @@ ClimEmplacement clim_emplacement(const ClimRef& c) {
 }
 
 // Mode de la clim visée, pour marquer l'état courant : l'état poussé de la tuile cli
-// (comme avant l'ADR-0047), celui de la clim elle-même pour la roue d'une clim.
+// (comme avant l'ADR-0048), celui de la clim elle-même pour la roue d'une clim.
 const char* roue_clim_mode(const RoueTuile& rt) {
     if (!roue_de_clim(rt)) return s_etats[rt.r][rt.t].brut;
     return clim_mode_connu(rt.clim.r, rt.clim.t);
@@ -197,7 +197,7 @@ struct RoueEnvoi {
 };
 
 // Boutons du premier anneau de la tuile tRT, ou de la clim de la roue d'une clim (r < 0,
-// ADR-0047), dans `b` (leurs actions dans `rt`) : « Maison » d'abord (sauf depuis lui ;
+// ADR-0048), dans `b` (leurs actions dans `rt`) : « Maison » d'abord (sauf depuis lui ;
 // « Clims ▸ » à sa place sur la roue d'une clim quand la tablette en connaît plusieurs),
 // « Détails » en dernier. 0 sans roue : type sans roue, option r, option k (une lampe ou
 // un volet à confirmer garde son appui long d'avant), clim sans capacité reçue, aucune
@@ -218,7 +218,7 @@ int roue_composer(int r, int t, bool depuis_maison, RoueBouton b[kRoueBoutons], 
     };
     auto famille = [&](RoueAction a, RoueIcone i) { ajouter(a, i, RoueGenre::FAMILLE, false, nullptr); };
     // Les boutons d'une clim (ADR-0036) : ce que HA a poussé pour elle, rien d'autre. Ceux
-    // de la tuile cli et ceux de la roue d'une clim (ADR-0047) : ce code seul.
+    // de la tuile cli et ceux de la roue d'une clim (ADR-0048) : ce code seul.
     auto composer_clim = [&](const ClimRef& c, const char* mode) -> bool {
         const char* capacites = clim_capacites_connues(c.r, c.t);
         if (capacites == nullptr) return false;
@@ -428,7 +428,7 @@ int roue_choix(const RoueTuile& rt, int i, RoueChoix c[kRoueChoix], RoueEnvoi en
             break;
         }
         case RoueAction::CLIMS: {
-            // Les autres clims (ADR-0047) : leur consigne (éteinte : l'icône Éteindre), leur
+            // Les autres clims (ADR-0048) : leur consigne (éteinte : l'icône Éteindre), leur
             // nom dessous ; celle de la roue marquée. Rien n'est envoyé : un toucher rouvre
             // la roue sur elle (roue_tuile_choisir_choix).
             ClimRef l[kRoueChoix];
@@ -489,7 +489,7 @@ void roue_tuile_choisir(int i) {
             if (g_roue_ui.ouvrir_ecran != nullptr) g_roue_ui.ouvrir_ecran(static_cast<int>(Ecran::MAISON));
             return;
         case RoueAction::REGLAGES:
-            // Roue d'une clim : le carrousel des clims sur elle (ADR-0038, ADR-0047).
+            // Roue d'une clim : le carrousel des clims sur elle (ADR-0038, ADR-0048).
             if (roue_de_clim(rt)) clim_carrousel_ouvrir_sur(rt.clim);
             else tuile_ouvrir_popup(rt.r, rt.t);
             return;
@@ -533,7 +533,7 @@ void roue_tuile_choisir_choix(int i, int j) {
     RoueEnvoi env[kRoueChoix];
     const int m = roue_choix(rt, i, c, env);
     if (j < 0 || j >= m) return;
-    // « Clims ▸ » (ADR-0047) : la roue rouverte sur la clim touchée, à la même place ; sans
+    // « Clims ▸ » (ADR-0048) : la roue rouverte sur la clim touchée, à la même place ; sans
     // réglages reçus pour elle, le carrousel sur elle.
     if (rt.action[i] == RoueAction::CLIMS) {
         ClimRef l[kRoueChoix];
@@ -564,7 +564,7 @@ bool roue_tuile_peindre(RoueTuile& rt, bool garder) {
     ClimTete clim;
     if (roue_de_clim(rt)) {
         // Le moyeu d'une clim : l'icône, la ligne d'état et la couleur d'une tuile cli, son
-        // nom, la jauge de sa consigne (ADR-0047).
+        // nom, la jauge de sa consigne (ADR-0048).
         clim_tete(rt.clim.r, rt.clim.t, clim);
         tete.icone = tuile_icone("clim", clim.actif, nullptr);
         tete.valeur = clim.ligne;
@@ -612,7 +612,7 @@ void roue_clim_changee() {
     if (roue_actions_ouverte() && vise_une_clim(s_rt)) roue_tuile_rejouer();
 }
 
-// Ancre de la roue d'une clim (ADR-0047). La température de la pièce est trop haute (centre
+// Ancre de la roue d'une clim (ADR-0048). La température de la pièce est trop haute (centre
 // en y 164) : autour d'elle, la roue passerait sous l'ancre, en éventail serré et pivoté
 // sur la tuile − / + et la carte centrale (rendu du 09/10/2026). Le moyeu montre la clim, il
 // n'a pas à être sur la température : il se pose sur un point bas, à la verticale de la zone

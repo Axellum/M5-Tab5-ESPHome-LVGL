@@ -8,9 +8,12 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1072;
+static const uint16_t kI18nKeyCount = 1075;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1459,6 +1462,7 @@ static const char* const kI18nKeys[] = {
     "En charge",
     "En cours",
     "En mouvement",
+    "Entre %d et %d %%",
     "Erreur",
     "Escalier",
     "Essentielles",
@@ -1502,6 +1506,7 @@ static const char* const kI18nKeys[] = {
     "Groupes morts retirés : %d noirs, %d blancs",
     "Géographie",
     "H.C.",
+    "HUMIDITÉ",
     "Handicap : %d pierres",
     "Handicap : aucun",
     "Heure fixe",
@@ -1511,6 +1516,7 @@ static const char* const kI18nKeys[] = {
     "Home Assistant hors ligne",
     "Hors du top %d",
     "Hors ligne",
+    "Humidité",
     "IA : %s",
     "IMU",
     "Illimité",
@@ -2535,6 +2541,7 @@ static const char* const kI18n_en[] = {
     "Charging",  // "En charge"
     "Running",  // "En cours"
     "Moving",  // "En mouvement"
+    "Between %d and %d %%",  // "Entre %d et %d %%"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
     "Essential",  // "Essentielles"
@@ -2578,6 +2585,7 @@ static const char* const kI18n_en[] = {
     "Dead stones removed: %d black, %d white",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Geography",  // "Géographie"
     "N.R.",  // "H.C."
+    "HUMIDITY",  // "HUMIDITÉ"
     "Handicap: %d stones",  // "Handicap : %d pierres"
     "Handicap: none",  // "Handicap : aucun"
     "Fixed time",  // "Heure fixe"
@@ -2587,6 +2595,7 @@ static const char* const kI18n_en[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Not in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Humidity",  // "Humidité"
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "No limit",  // "Illimité"
@@ -3611,6 +3620,7 @@ static const char* const kI18n_de[] = {
     "Lädt",  // "En charge"
     "Läuft",  // "En cours"
     "In Bewegung",  // "En mouvement"
+    "Zwischen %d und %d %%",  // "Entre %d et %d %%"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
     "Wesentliche",  // "Essentielles"
@@ -3654,6 +3664,7 @@ static const char* const kI18n_de[] = {
     "Tote Steine entfernt: %d schwarz, %d weiß",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Geografie",  // "Géographie"
     "a.W.",  // "H.C."
+    "LUFTFEUCHTE",  // "HUMIDITÉ"
     "Vorgabe: %d Steine",  // "Handicap : %d pierres"
     "Vorgabe: keine",  // "Handicap : aucun"
     "Feste Zeit",  // "Heure fixe"
@@ -3663,6 +3674,7 @@ static const char* const kI18n_de[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Nicht in Top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Luftfeuchte",  // "Humidité"
     "KI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Endlos",  // "Illimité"
@@ -4687,6 +4699,7 @@ static const char* const kI18n_nl[] = {
     "Laden",  // "En charge"
     "Bezig",  // "En cours"
     "In beweging",  // "En mouvement"
+    "Tussen %d en %d %%",  // "Entre %d et %d %%"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
     "Essentieel",  // "Essentielles"
@@ -4730,6 +4743,7 @@ static const char* const kI18n_nl[] = {
     "Dode stenen verwijderd: %d zwart, %d wit",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Geografie",  // "Géographie"
     "B.M.",  // "H.C."
+    "VOCHTIGHEID",  // "HUMIDITÉ"
     "Handicap: %d stenen",  // "Handicap : %d pierres"
     "Handicap: geen",  // "Handicap : aucun"
     "Vaste tijd",  // "Heure fixe"
@@ -4739,6 +4753,7 @@ static const char* const kI18n_nl[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Niet in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Vochtigheid",  // "Humidité"
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Onbeperkt",  // "Illimité"
@@ -5763,6 +5778,7 @@ static const char* const kI18n_es[] = {
     "Cargando",  // "En charge"
     "En curso",  // "En cours"
     "En movimiento",  // "En mouvement"
+    "Entre %d y %d %%",  // "Entre %d et %d %%"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
     "Esenciales",  // "Essentielles"
@@ -5806,6 +5822,7 @@ static const char* const kI18n_es[] = {
     "Piedras muertas: %d negras, %d blancas",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Geografía",  // "Géographie"
     "N.C.",  // "H.C."
+    "HUMEDAD",  // "HUMIDITÉ"
     "Hándicap: %d piedras",  // "Handicap : %d pierres"
     "Hándicap: ninguno",  // "Handicap : aucun"
     "Hora fija",  // "Heure fixe"
@@ -5815,6 +5832,7 @@ static const char* const kI18n_es[] = {
     "Home Assistant sin conexión",  // "Home Assistant hors ligne"
     "Fuera del top %d",  // "Hors du top %d"
     "Sin conexión",  // "Hors ligne"
+    "Humedad",  // "Humidité"
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Ilimitado",  // "Illimité"
@@ -6839,6 +6857,7 @@ static const char* const kI18n_it[] = {
     "In carica",  // "En charge"
     "In corso",  // "En cours"
     "In movimento",  // "En mouvement"
+    "Tra %d e %d %%",  // "Entre %d et %d %%"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
     "Essenziali",  // "Essentielles"
@@ -6882,6 +6901,7 @@ static const char* const kI18n_it[] = {
     "Pietre morte rimosse: %d nere, %d bianche",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Geografia",  // "Géographie"
     "F.C.",  // "H.C."
+    "UMIDITÀ",  // "HUMIDITÉ"
     "Handicap: %d pietre",  // "Handicap : %d pierres"
     "Handicap: nessuno",  // "Handicap : aucun"
     "Ora fissa",  // "Heure fixe"
@@ -6891,6 +6911,7 @@ static const char* const kI18n_it[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Non in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Umidità",  // "Humidité"
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Illimitato",  // "Illimité"
@@ -7915,6 +7936,7 @@ static const char* const kI18n_tr[] = {
     "Şarj oluyor",  // "En charge"
     "Çalışıyor",  // "En cours"
     "Hareket ediyor",  // "En mouvement"
+    "%d ile %d %% arası",  // "Entre %d et %d %%"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
     "Temel",  // "Essentielles"
@@ -7958,6 +7980,7 @@ static const char* const kI18n_tr[] = {
     "Alınan ölü taş: %d siyah, %d beyaz",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Coğrafya",  // "Géographie"
     "S.D.",  // "H.C."
+    "NEM",  // "HUMIDITÉ"
     "Handikap: %d taş",  // "Handicap : %d pierres"
     "Handikap: yok",  // "Handicap : aucun"
     "Sabit saat",  // "Heure fixe"
@@ -7967,6 +7990,7 @@ static const char* const kI18n_tr[] = {
     "Home Assistant çevrimdışı",  // "Home Assistant hors ligne"
     "İlk %d dışında",  // "Hors du top %d"
     "Çevrimdışı",  // "Hors ligne"
+    "Nem",  // "Humidité"
     "YZ: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Sınırsız",  // "Illimité"
