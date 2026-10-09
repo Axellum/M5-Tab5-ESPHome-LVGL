@@ -8,9 +8,14 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1055;
+static const uint16_t kI18nKeyCount = 1060;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1174,7 +1179,6 @@ static const char* const kI18nKeys[] = {
     "8 consoles — une seule à la fois",
     "8 niveaux, 3 vies, power-ups",
     "8,0 cases/s",
-    "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée.",
     "9 min",
     "ACTIF",
     "AMPOULE",
@@ -1212,6 +1216,7 @@ static const char* const kI18nKeys[] = {
     "Ampoule Salon",
     "Analyse…",
     "Anglaises 8×8",
+    "Animations",
     "Anneau de fer",
     "Anneau rouge sur la dernière pierre posée",
     "Anniv.",
@@ -1251,6 +1256,7 @@ static const char* const kI18nKeys[] = {
     "Aucun score pour l'instant.\nLance une partie !",
     "Aucun travail de prévu",
     "Aucun échange",
+    "Aucune",
     "Aucune alerte",
     "Aucune partie en cours",
     "Aucune partie sauvegardée",
@@ -1346,6 +1352,7 @@ static const char* const kI18nKeys[] = {
     "Colonnes",
     "Commencer",
     "Comment gagner ses 6 parts",
+    "Complètes",
     "Composez les équipes, puis réglez les questions",
     "Comptabilise uniquement le mode Joueur contre Tab.",
     "Confirmation du coup : ACTIVÉE",
@@ -1437,6 +1444,7 @@ static const char* const kI18nKeys[] = {
     "En mouvement",
     "Erreur",
     "Escalier",
+    "Essentielles",
     "Eval %+.1f",
     "Exact — %s remporte la partie !",
     "Expert",
@@ -1624,6 +1632,7 @@ static const char* const kI18nKeys[] = {
     "Mix",
     "Mixte",
     "Mode",
+    "Mode de charge",
     "Mode de jeu",
     "Mode dieu : %s",
     "Mode entraînement",
@@ -2019,6 +2028,7 @@ static const char* const kI18nKeys[] = {
     "Vous",
     "Vous jouez %s",
     "Vous jouez les %s",
+    "Wi-Fi éco",
     "Zigzag",
     "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.",
     "août",
@@ -2233,7 +2243,6 @@ static const char* const kI18n_en[] = {
     "8 consoles — one at a time",  // "8 consoles — une seule à la fois"
     "8 levels, 3 lives, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8.0 tiles/s",  // "8,0 cases/s"
-    "80 %: charging stops at 80 % and resumes at 70 %, for a tablet that is always plugged in.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "ON",  // "ACTIF"
     "BULB",  // "AMPOULE"
@@ -2271,6 +2280,7 @@ static const char* const kI18n_en[] = {
     "Living room bulb",  // "Ampoule Salon"
     "Thinking…",  // "Analyse…"
     "English 8x8",  // "Anglaises 8×8"
+    "Animations",  // "Animations"
     "Iron Ring",  // "Anneau de fer"
     "Red ring on the last stone played",  // "Anneau rouge sur la dernière pierre posée"
     "B-day",  // "Anniv."
@@ -2310,6 +2320,7 @@ static const char* const kI18n_en[] = {
     "No scores yet.\nStart a game!",  // "Aucun score pour l'instant.\nLance une partie !"
     "No work scheduled",  // "Aucun travail de prévu"
     "No exchange",  // "Aucun échange"
+    "None",  // "Aucune"
     "No alerts",  // "Aucune alerte"
     "No game in progress",  // "Aucune partie en cours"
     "No saved game",  // "Aucune partie sauvegardée"
@@ -2405,6 +2416,7 @@ static const char* const kI18n_en[] = {
     "Columns",  // "Colonnes"
     "Start",  // "Commencer"
     "How to win all 6 wedges",  // "Comment gagner ses 6 parts"
+    "Full",  // "Complètes"
     "Pick the teams, then set up the questions",  // "Composez les équipes, puis réglez les questions"
     "Only Player vs Tab games are counted.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Move confirmation: ON",  // "Confirmation du coup : ACTIVÉE"
@@ -2496,6 +2508,7 @@ static const char* const kI18n_en[] = {
     "Moving",  // "En mouvement"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
+    "Essential",  // "Essentielles"
     "Eval %+.1f",  // "Eval %+.1f"
     "Correct — %s wins the game!",  // "Exact — %s remporte la partie !"
     "Expert",  // "Expert"
@@ -2683,6 +2696,7 @@ static const char* const kI18n_en[] = {
     "Mix",  // "Mix"
     "Mixed",  // "Mixte"
     "Mode",  // "Mode"
+    "Charging mode",  // "Mode de charge"
     "Game mode",  // "Mode de jeu"
     "God mode: %s",  // "Mode dieu : %s"
     "Training mode",  // "Mode entraînement"
@@ -3078,6 +3092,7 @@ static const char* const kI18n_en[] = {
     "You",  // "Vous"
     "You play %s",  // "Vous jouez %s"
     "Human: %s",  // "Vous jouez les %s"
+    "Eco Wi-Fi",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Left zone / right zone = flippers (hold). Bottom center = plunger.\nShake the tablet to nudge the ball — three nudges in a row and it's TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "August",  // "août"
@@ -3292,7 +3307,6 @@ static const char* const kI18n_de[] = {
     "8 Konsolen — immer nur eine",  // "8 consoles — une seule à la fois"
     "8 Level, 3 Leben, Power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 Felder/s",  // "8,0 cases/s"
-    "80 %: Laden stoppt bei 80 % und setzt bei 70 % wieder ein, für ein dauerhaft angeschlossenes Tablet.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "AN",  // "ACTIF"
     "LAMPE",  // "AMPOULE"
@@ -3330,6 +3344,7 @@ static const char* const kI18n_de[] = {
     "Wohnzimmerlampe",  // "Ampoule Salon"
     "Analyse…",  // "Analyse…"
     "Englisch 8x8",  // "Anglaises 8×8"
+    "Animationen",  // "Animations"
     "Eisenring",  // "Anneau de fer"
     "Roter Ring um den zuletzt gesetzten Stein",  // "Anneau rouge sur la dernière pierre posée"
     "Geb.",  // "Anniv."
@@ -3369,6 +3384,7 @@ static const char* const kI18n_de[] = {
     "Noch keine Scores.\nStarte ein Spiel!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Keine Arbeit geplant",  // "Aucun travail de prévu"
     "Kein Austausch",  // "Aucun échange"
+    "Keine",  // "Aucune"
     "Keine Warnungen",  // "Aucune alerte"
     "Kein laufendes Spiel",  // "Aucune partie en cours"
     "Kein gespeichertes Spiel",  // "Aucune partie sauvegardée"
@@ -3464,6 +3480,7 @@ static const char* const kI18n_de[] = {
     "Säulen",  // "Colonnes"
     "Starten",  // "Commencer"
     "So gewinnt man alle 6 Ecken",  // "Comment gagner ses 6 parts"
+    "Alle",  // "Complètes"
     "Teams bilden, dann die Fragen einstellen",  // "Composez les équipes, puis réglez les questions"
     "Nur der Modus Spieler gegen Tab wird gezählt.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Zugbestätigung: AN",  // "Confirmation du coup : ACTIVÉE"
@@ -3555,6 +3572,7 @@ static const char* const kI18n_de[] = {
     "In Bewegung",  // "En mouvement"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
+    "Wesentliche",  // "Essentielles"
     "Eval %+.1f",  // "Eval %+.1f"
     "Richtig — %s gewinnt das Spiel!",  // "Exact — %s remporte la partie !"
     "Experte",  // "Expert"
@@ -3742,6 +3760,7 @@ static const char* const kI18n_de[] = {
     "Mix",  // "Mix"
     "Kombi",  // "Mixte"
     "Modus",  // "Mode"
+    "Lademodus",  // "Mode de charge"
     "Spielmodus",  // "Mode de jeu"
     "Gottmodus: %s",  // "Mode dieu : %s"
     "Trainingsmodus",  // "Mode entraînement"
@@ -4137,6 +4156,7 @@ static const char* const kI18n_de[] = {
     "Du",  // "Vous"
     "Du spielst %s",  // "Vous jouez %s"
     "Mensch: %s",  // "Vous jouez les %s"
+    "WLAN sparen",  // "Wi-Fi éco"
     "Zickzack",  // "Zigzag"
     "Linke / rechte Zone = Flipper (halten). Unten Mitte = Abschuss.\nTablet schütteln, um den Ball anzustoßen — dreimal zu viel und es gibt TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "August",  // "août"
@@ -4351,7 +4371,6 @@ static const char* const kI18n_nl[] = {
     "8 consoles — één tegelijk",  // "8 consoles — une seule à la fois"
     "8 levels, 3 levens, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 vakjes/s",  // "8,0 cases/s"
-    "80 %: laden stopt bij 80 % en hervat bij 70 %, voor een tablet die altijd aan de lader hangt.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "AAN",  // "ACTIF"
     "LAMP",  // "AMPOULE"
@@ -4389,6 +4408,7 @@ static const char* const kI18n_nl[] = {
     "Lamp woonkamer",  // "Ampoule Salon"
     "Analyse…",  // "Analyse…"
     "Engels 8x8",  // "Anglaises 8×8"
+    "Animaties",  // "Animations"
     "IJzeren ring",  // "Anneau de fer"
     "Rode ring om de laatst gespeelde steen",  // "Anneau rouge sur la dernière pierre posée"
     "Jarig",  // "Anniv."
@@ -4428,6 +4448,7 @@ static const char* const kI18n_nl[] = {
     "Nog geen scores.\nStart een spel!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Geen werk gepland",  // "Aucun travail de prévu"
     "Geen uitwisseling",  // "Aucun échange"
+    "Geen",  // "Aucune"
     "Geen meldingen",  // "Aucune alerte"
     "Geen spel bezig",  // "Aucune partie en cours"
     "Geen opgeslagen spel",  // "Aucune partie sauvegardée"
@@ -4523,6 +4544,7 @@ static const char* const kI18n_nl[] = {
     "Zuilen",  // "Colonnes"
     "Starten",  // "Commencer"
     "Zo win je alle 6 partjes",  // "Comment gagner ses 6 parts"
+    "Volledig",  // "Complètes"
     "Stel de teams samen en kies de vragen",  // "Composez les équipes, puis réglez les questions"
     "Telt alleen partijen Speler tegen Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Zetbevestiging: AAN",  // "Confirmation du coup : ACTIVÉE"
@@ -4614,6 +4636,7 @@ static const char* const kI18n_nl[] = {
     "In beweging",  // "En mouvement"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
+    "Essentieel",  // "Essentielles"
     "Eval %+.1f",  // "Eval %+.1f"
     "Goed — %s wint het spel!",  // "Exact — %s remporte la partie !"
     "Expert",  // "Expert"
@@ -4801,6 +4824,7 @@ static const char* const kI18n_nl[] = {
     "Mix",  // "Mix"
     "Mix",  // "Mixte"
     "Modus",  // "Mode"
+    "Laadmodus",  // "Mode de charge"
     "Spelmodus",  // "Mode de jeu"
     "Godmodus: %s",  // "Mode dieu : %s"
     "Oefenmodus",  // "Mode entraînement"
@@ -5196,6 +5220,7 @@ static const char* const kI18n_nl[] = {
     "Jij",  // "Vous"
     "Jij speelt %s",  // "Vous jouez %s"
     "Mens: %s",  // "Vous jouez les %s"
+    "Zuinige wifi",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Linkerzone / rechterzone = flippers (vasthouden). Midden onder = plunjer.\nSchud de tablet om de bal te duwen — drie keer te veel op rij en het is TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "augustus",  // "août"
@@ -5410,7 +5435,6 @@ static const char* const kI18n_es[] = {
     "8 consolas — una a la vez",  // "8 consoles — une seule à la fois"
     "8 niveles, 3 vidas, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 casillas/s",  // "8,0 cases/s"
-    "80 %: la carga se detiene al 80 % y se reanuda al 70 %, para una tableta siempre enchufada.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "ACTIVO",  // "ACTIF"
     "LÁMPARA",  // "AMPOULE"
@@ -5448,6 +5472,7 @@ static const char* const kI18n_es[] = {
     "Lámpara salón",  // "Ampoule Salon"
     "Analizando…",  // "Analyse…"
     "Inglesas 8x8",  // "Anglaises 8×8"
+    "Animaciones",  // "Animations"
     "Anillo de hierro",  // "Anneau de fer"
     "Anillo rojo en la última piedra jugada",  // "Anneau rouge sur la dernière pierre posée"
     "Cumple",  // "Anniv."
@@ -5487,6 +5512,7 @@ static const char* const kI18n_es[] = {
     "Aún no hay puntuaciones.\n¡Empieza una partida!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Sin trabajo previsto",  // "Aucun travail de prévu"
     "Sin intercambio",  // "Aucun échange"
+    "Ninguna",  // "Aucune"
     "Sin alertas",  // "Aucune alerte"
     "Ninguna partida en curso",  // "Aucune partie en cours"
     "Ninguna partida guardada",  // "Aucune partie sauvegardée"
@@ -5582,6 +5608,7 @@ static const char* const kI18n_es[] = {
     "Columnas",  // "Colonnes"
     "Empezar",  // "Commencer"
     "Cómo ganar los 6 quesitos",  // "Comment gagner ses 6 parts"
+    "Completas",  // "Complètes"
     "Forma los equipos y luego ajusta las preguntas",  // "Composez les équipes, puis réglez les questions"
     "Solo cuenta el modo Jugador contra Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Confirmar jugada: SÍ",  // "Confirmation du coup : ACTIVÉE"
@@ -5673,6 +5700,7 @@ static const char* const kI18n_es[] = {
     "En movimiento",  // "En mouvement"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
+    "Esenciales",  // "Essentielles"
     "Eval %+.1f",  // "Eval %+.1f"
     "Correcto — ¡%s gana la partida!",  // "Exact — %s remporte la partie !"
     "Experto",  // "Expert"
@@ -5860,6 +5888,7 @@ static const char* const kI18n_es[] = {
     "Mix",  // "Mix"
     "Mixto",  // "Mixte"
     "Modo",  // "Mode"
+    "Modo de carga",  // "Mode de charge"
     "Modo de juego",  // "Mode de jeu"
     "Modo dios: %s",  // "Mode dieu : %s"
     "Modo entrenamiento",  // "Mode entraînement"
@@ -6255,6 +6284,7 @@ static const char* const kI18n_es[] = {
     "Tú",  // "Vous"
     "Juegas: %s",  // "Vous jouez %s"
     "Juegas con las %s",  // "Vous jouez les %s"
+    "Wi-Fi eco",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Zona izquierda / derecha = paletas (mantener). Abajo al centro = lanzador.\nSacude la tableta para empujar la bola — tres abusos seguidos y es TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "agosto",  // "août"
@@ -6469,7 +6499,6 @@ static const char* const kI18n_it[] = {
     "8 console — una alla volta",  // "8 consoles — une seule à la fois"
     "8 livelli, 3 vite, power-up",  // "8 niveaux, 3 vies, power-ups"
     "8,0 caselle/s",  // "8,0 cases/s"
-    "80 %: la carica si ferma all'80 % e riprende al 70 %, per un tablet sempre collegato.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 min",  // "9 min"
     "ATTIVA",  // "ACTIF"
     "LUCI",  // "AMPOULE"
@@ -6507,6 +6536,7 @@ static const char* const kI18n_it[] = {
     "Lampadina soggiorno",  // "Ampoule Salon"
     "Analisi…",  // "Analyse…"
     "Inglese 8x8",  // "Anglaises 8×8"
+    "Animazioni",  // "Animations"
     "Anello di ferro",  // "Anneau de fer"
     "Anello rosso sull'ultima pietra giocata",  // "Anneau rouge sur la dernière pierre posée"
     "Compl.",  // "Anniv."
@@ -6546,6 +6576,7 @@ static const char* const kI18n_it[] = {
     "Ancora nessun punteggio.\nInizia una partita!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Nessun lavoro previsto",  // "Aucun travail de prévu"
     "Nessuno scambio",  // "Aucun échange"
+    "Nessuna",  // "Aucune"
     "Nessun avviso",  // "Aucune alerte"
     "Nessuna partita in corso",  // "Aucune partie en cours"
     "Nessuna partita salvata",  // "Aucune partie sauvegardée"
@@ -6641,6 +6672,7 @@ static const char* const kI18n_it[] = {
     "Colonne",  // "Colonnes"
     "Inizia",  // "Commencer"
     "Come vincere i 6 spicchi",  // "Comment gagner ses 6 parts"
+    "Complete",  // "Complètes"
     "Forma le squadre, poi imposta le domande",  // "Composez les équipes, puis réglez les questions"
     "Conta solo la modalità Giocatore vs Tab.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Conferma mossa: ATTIVA",  // "Confirmation du coup : ACTIVÉE"
@@ -6732,6 +6764,7 @@ static const char* const kI18n_it[] = {
     "In movimento",  // "En mouvement"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
+    "Essenziali",  // "Essentielles"
     "Val %+.1f",  // "Eval %+.1f"
     "Esatto — %s vince la partita!",  // "Exact — %s remporte la partie !"
     "Esperto",  // "Expert"
@@ -6919,6 +6952,7 @@ static const char* const kI18n_it[] = {
     "Mix",  // "Mix"
     "Misto",  // "Mixte"
     "Modalità",  // "Mode"
+    "Modalità di carica",  // "Mode de charge"
     "Modalità",  // "Mode de jeu"
     "Modalità Dio: %s",  // "Mode dieu : %s"
     "Modalità allenamento",  // "Mode entraînement"
@@ -7314,6 +7348,7 @@ static const char* const kI18n_it[] = {
     "Tu",  // "Vous"
     "Giochi col %s",  // "Vous jouez %s"
     "Giochi col %s",  // "Vous jouez les %s"
+    "Wi-Fi eco",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Zona sinistra / destra = flipper (tieni premuto). In basso al centro = lanciatore.\nScuoti il tablet per spingere la palla — tre volte di troppo di fila ed è TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "agosto",  // "août"
@@ -7528,7 +7563,6 @@ static const char* const kI18n_tr[] = {
     "8 konsol — aynı anda yalnız biri",  // "8 consoles — une seule à la fois"
     "8 seviye, 3 can, güçlendirme",  // "8 niveaux, 3 vies, power-ups"
     "8,0 kare/sn",  // "8,0 cases/s"
-    "%80: şarj %80'de durur ve %70'te yeniden başlar; sürekli prize takılı bir tablet için.",  // "80 % : la charge s'arrête à 80 % et reprend à 70 %, pour une tablette toujours branchée."
     "9 dk",  // "9 min"
     "AÇIK",  // "ACTIF"
     "AMPUL",  // "AMPOULE"
@@ -7566,6 +7600,7 @@ static const char* const kI18n_tr[] = {
     "Salon ampulü",  // "Ampoule Salon"
     "Analiz…",  // "Analyse…"
     "İngiliz 8x8",  // "Anglaises 8×8"
+    "Animasyonlar",  // "Animations"
     "Demir Yüzük",  // "Anneau de fer"
     "Son konan taşta kırmızı halka",  // "Anneau rouge sur la dernière pierre posée"
     "Doğum günü",  // "Anniv."
@@ -7605,6 +7640,7 @@ static const char* const kI18n_tr[] = {
     "Henüz skor yok.\nBir oyun başlat!",  // "Aucun score pour l'instant.\nLance une partie !"
     "Planlı iş yok",  // "Aucun travail de prévu"
     "Akış yok",  // "Aucun échange"
+    "Hiçbiri",  // "Aucune"
     "Uyarı yok",  // "Aucune alerte"
     "Devam eden oyun yok",  // "Aucune partie en cours"
     "Kayıtlı oyun yok",  // "Aucune partie sauvegardée"
@@ -7700,6 +7736,7 @@ static const char* const kI18n_tr[] = {
     "Sütunlar",  // "Colonnes"
     "Başla",  // "Commencer"
     "6 dilim nasıl kazanılır",  // "Comment gagner ses 6 parts"
+    "Tümü",  // "Complètes"
     "Takımları kur, sonra soruları ayarla",  // "Composez les équipes, puis réglez les questions"
     "Yalnız Oyuncu - Tab modu sayılır.",  // "Comptabilise uniquement le mode Joueur contre Tab."
     "Hamle onayı: AÇIK",  // "Confirmation du coup : ACTIVÉE"
@@ -7791,6 +7828,7 @@ static const char* const kI18n_tr[] = {
     "Hareket ediyor",  // "En mouvement"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
+    "Temel",  // "Essentielles"
     "Değ. %+.1f",  // "Eval %+.1f"
     "Doğru — oyunu %s kazandı!",  // "Exact — %s remporte la partie !"
     "Uzman",  // "Expert"
@@ -7978,6 +8016,7 @@ static const char* const kI18n_tr[] = {
     "Karma",  // "Mix"
     "Karma",  // "Mixte"
     "Mod",  // "Mode"
+    "Şarj modu",  // "Mode de charge"
     "Oyun modu",  // "Mode de jeu"
     "Tanrı modu: %s",  // "Mode dieu : %s"
     "Antrenman modu",  // "Mode entraînement"
@@ -8373,6 +8412,7 @@ static const char* const kI18n_tr[] = {
     "Sen",  // "Vous"
     "Oynadığın taş: %s",  // "Vous jouez %s"
     "Sen oynuyorsun: %s",  // "Vous jouez les %s"
+    "Eko Wi-Fi",  // "Wi-Fi éco"
     "Zikzak",  // "Zigzag"
     "Sol bölge / sağ bölge = flipperler (basılı tut). Alt orta = fırlatıcı.\nBilyeyi itmek için tableti salla — üst üste üç kez abartırsan TILT olur.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "Ağustos",  // "août"

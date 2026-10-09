@@ -8,26 +8,61 @@
  *           (kEcoPlancher, le minimum du curseur des Réglages) après kEcoAssombrirMs
  *           sans toucher ou sous kEcoNiveauBas % de batterie ;
  *         - coupe les animations du projet (tab5_anim.cpp : panneau tournant, alertes,
- *           icônes, horloge, glissements) ;
+ *           icônes, horloge, glissements) : le niveau « Aucune » du select « Tab5
+ *           Animations », quel que soit le choix (09/10/2026, animations_effectives) ;
  *         - limite LVGL à 30 images/s (kEcoPeriodeMs), sauf pendant un jeu.
  *       « Sur batterie » se décide au courant de l'INA226 (economie_courant_lu).
+ *       Aussi ici, parce qu'elles en dépendent (09/10/2026, ADR-0045) : le niveau des
+ *       animations (ChoixAnimations) et le Wi-Fi éco (wifi_eco_voulu).
  * @architecture_constraint Aucune dépendance ESPHome ni LVGL : ce fichier se compile sur
  *       PC (tools/test_alarm_clock.cpp l'inclut, g++ en CI). L'état vivant et les appels
  *       du YAML sont dans tab5_economie.cpp.
- * @ai_instruction L'ordre de ChoixEconomie est celui des options du select (la tablette
- *       garde l'INDEX choisi) : une option nouvelle s'ajoute à la fin
- *       (tests/test_economie.py relit les deux).
+ * @ai_instruction L'ordre de ChoixEconomie (et de ChoixAnimations) est celui des options
+ *       du select (la tablette garde l'INDEX choisi) : une option nouvelle s'ajoute à la
+ *       fin (tests/test_economie.py relit les deux).
  */
 #pragma once
 #include <cmath>
 #include <cstdint>
 
-// Options du select « Tab5 Économie d'énergie », dans l'ordre.
+// Options du select « Tab5 Économie d'énergie », dans l'ordre. Le select « Tab5 Wi-Fi
+// éco » (tab5-sensors-diagnostics.yaml) a les mêmes options, dans le même ordre, mais
+// « Jamais » par défaut.
 enum class ChoixEconomie : uint8_t {
     JAMAIS = 0,
     SUR_BATTERIE = 1,  // défaut : rien ne change sur secteur
     TOUJOURS = 2,
 };
+
+// ─── Animations (09/10/2026, demande d'Axel ; ADR-0045) ───
+// Options du select « Tab5 Animations », dans l'ordre (la tablette garde l'INDEX). Un
+// seul point de décision : economie_decider() rend le niveau appliqué (DecisionEconomie::
+// animations), que tab5_anim.cpp reçoit par animations_niveau().
+//   - COMPLETES : toutes les animations de tab5_anim.cpp (le comportement d'avant) ;
+//   - ESSENTIELLES : seule la rotation de la carte centrale (et de la rangée sous
+//     l'horloge, calée sur elle : transition_widgets), la seule animation gardée exprès
+//     par Axel (AGENTS.md) ; glissements, fondus, alertes, icônes et horloge instantanés ;
+//   - AUCUNE : tout instantané. C'est le niveau du mode économie actif (inchangé depuis
+//     le 06/10/2026), quel que soit le choix.
+// Les popups, les pages et les boutons n'ont déjà aucune transition, quel que soit le
+// niveau (animate_popup_open, LV_THEME_DEFAULT_TRANSITION_TIME=0). Les jeux gardent les
+// leurs.
+enum class ChoixAnimations : uint8_t {
+    COMPLETES = 0,     // défaut
+    ESSENTIELLES = 1,
+    AUCUNE = 2,
+};
+
+// Niveau appliqué : le mode économie actif impose « Aucune » ; sinon le choix (index
+// inconnu : « Complètes »).
+inline ChoixAnimations animations_effectives(uint8_t choix, bool economie_active) {
+    if (economie_active) return ChoixAnimations::AUCUNE;
+    switch (static_cast<ChoixAnimations>(choix)) {
+        case ChoixAnimations::ESSENTIELLES: return ChoixAnimations::ESSENTIELLES;
+        case ChoixAnimations::AUCUNE: return ChoixAnimations::AUCUNE;
+        default: return ChoixAnimations::COMPLETES;
+    }
+}
 
 // ─── Sur batterie ? (courant de l'INA226, lu toutes les 60 s) ───
 // Sens : M5Unified (Power_Class.inl, getBatteryCurrent) note que le shunt du Tab5 est
@@ -118,6 +153,7 @@ struct EntreesEconomie {
     bool veille_permise = false;
     uint32_t inactif_ms = 0;      // depuis le dernier toucher ou le dernier allumage
     bool jeu_ouvert = false;
+    uint8_t animations = 0;       // index du select « Tab5 Animations » (ChoixAnimations)
 };
 
 struct DecisionEconomie {
@@ -125,7 +161,7 @@ struct DecisionEconomie {
     bool assombri = false;
     float plafond = 1.0f;          // luminosité maximale (0-1, avant la correction gamma)
     uint32_t periode_ms = kEcoPeriodeNormaleMs;
-    bool animations_reduites = false;
+    ChoixAnimations animations = ChoixAnimations::COMPLETES;  // niveau appliqué
 };
 
 inline bool economie_active(uint8_t choix, bool sur_batterie) {
@@ -139,14 +175,25 @@ inline bool economie_active(uint8_t choix, bool sur_batterie) {
 inline DecisionEconomie economie_decider(const EntreesEconomie& in) {
     DecisionEconomie d;
     d.active = economie_active(in.choix, in.sur_batterie);
+    d.animations = animations_effectives(in.animations, d.active);
     if (!d.active) return d;
     d.assombri = in.ecran_allume && in.veille_permise && in.inactif_ms >= kEcoAssombrirMs;
     d.plafond = (d.assombri || in.batterie_basse) ? kEcoPlancher : kEcoPlafond;
     // Un jeu garde ses 60 images/s (Neon Apron, Arcanoïde…) ; ses animations sont les
     // siennes, pas celles de tab5_anim.cpp.
     d.periode_ms = in.jeu_ouvert ? kEcoPeriodeNormaleMs : kEcoPeriodeMs;
-    d.animations_reduites = true;
     return d;
+}
+
+// ─── Wi-Fi éco (09/10/2026, demande d'Axel ; ADR-0045) ───
+// Select « Tab5 Wi-Fi éco » : mêmes options que le mode économie (ChoixEconomie), défaut
+// « Jamais » (le comportement d'avant : power_save_mode NONE). Actif, la station passe en
+// économie légère (WIFI_PS_MIN_MODEM, « LIGHT » d'ESPHome) : la radio du C6 dort entre
+// deux balises DTIM du point d'accès, un paquet qui arrive attend son réveil. Jamais
+// pendant un flux (`flux_en_cours` : assistant vocal, lecteur qui joue ou annonce, mise à
+// jour) : le son et l'OTA restent à pleine vitesse. Index inconnu : « Jamais ».
+inline bool wifi_eco_voulu(uint8_t choix, bool sur_batterie, bool flux_en_cours) {
+    return !flux_en_cours && economie_active(choix, sur_batterie);
 }
 
 // ─── Appels du YAML (tab5_economie.cpp : un seul état, celui de la tablette) ───

@@ -485,6 +485,7 @@ font:
       - "\U000F0091"  # battery-unknown
       - "\U000F12A1"  # battery-low
       - "\U000F12A2"  # battery-medium
+      - "\U000F12A6"  # battery-charging-high (Réglages : mode de charge)
       - "\U000F00D6"  # briefcase
       - "\U000F00DF"  # brightness-6 (Réglages : luminosité)
       - "\U000F00EB"  # cake-variant
@@ -522,6 +523,7 @@ font:
       - "\U000F0741"  # gesture-tap (Réglages : rallumer d'une tape)
       - "\U000F07C0"  # desktop-classic
       - "\U000F07D0"  # home-assistant
+      - "\U000F093A"  # animation-play (Réglages : animations)
       - "\U000F09D3"  # calendar-star
       - "\U000F0D90"  # monitor-off (Réglages : extinction auto)
       - "\U000F0E17"  # calendar-month

@@ -13,6 +13,7 @@
  */
 #pragma once
 #include "esphome.h"
+#include "tab5_economie.h"  // ChoixAnimations
 
 // UIAnim (durées/amplitudes d'animation) et UIIdle (retour à l'accueil par
 // inactivité) : voir tab5_tokens.h.
@@ -59,10 +60,13 @@ void animate_crossfade_layers(lv_obj_t* out_layer, lv_obj_t* in_layer);
 // changement de calque (le calque glisse déjà, un rouleau en plus = bruit).
 extern bool g_forecast_roll_suppress;
 
-// Mode économie d'énergie (tab5_economie.h) : true = plus aucune animation de ce
-// fichier (panneau tournant, alertes, glissements, fondus, icônes, horloge), chaque
-// transition pose directement son état final. Les jeux gardent les leurs.
-void animations_reduites(bool reduites);
+// Niveau des animations de ce fichier (09/10/2026, ADR-0045), décidé par
+// economie_decider() (tab5_economie.h : le select « Tab5 Animations », « Aucune » imposé
+// par le mode économie actif) et posé par le script tab5_economie_appliquer :
+// COMPLETES = toutes ; ESSENTIELLES = seule la rotation de la carte centrale et de la
+// rangée sous l'horloge (transition_widgets) ; AUCUNE = chaque transition pose
+// directement son état final. Les jeux gardent les leurs.
+void animations_niveau(ChoixAnimations niveau);
 
 // =============================================================================
 // Horloge à rouleau — un rouleau PAR CHIFFRE (H H : M M)

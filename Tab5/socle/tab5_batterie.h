@@ -25,8 +25,11 @@
  *       PC (tools/test_alarm_clock.cpp l'inclut, g++ en CI). L'état vivant et les appels
  *       du YAML sont dans tab5_batterie.cpp ; le YAML (tab5-sensors-diagnostics.yaml)
  *       commande l'interrupteur et l'INA226.
- * @ai_instruction L'ordre de LimiteCharge est celui des options du select « Tab5 Limite
- *       de charge » (tab5-ha-controls.yaml, la tablette garde l'INDEX) : une option
+ *       Mode de charge (09/10/2026) : « Classique » ou « Rapide » (nCHG_QC_EN, P5), pris
+ *       en compte seulement chargeur allumé (charge_rapide_voulue, ADR-0045).
+ * @ai_instruction L'ordre de LimiteCharge et de ModeCharge est celui des options des
+ *       selects « Tab5 Limite de charge » et « Tab5 Mode de charge »
+ *       (tab5-sensors-diagnostics.yaml, la tablette garde l'INDEX) : une option
  *       nouvelle s'ajoute à la fin (tests/test_batterie.py relit les deux).
  *       Pas encore mesuré (pas de batterie chez l'auteur) : chargeur arrêté et USB
  *       branché, la tablette tourne-t-elle sur l'USB ou sur sa batterie ? Si c'est sur
@@ -44,6 +47,25 @@ enum class LimiteCharge : uint8_t {
     COMPLETE = 0,        // « 100 % » (défaut)
     QUATRE_VINGTS = 1,   // « 80 % » : tablette branchée en permanence
 };
+
+// ─── Mode de charge (09/10/2026, demande d'Axel ; ADR-0045) ───
+// Options du select « Tab5 Mode de charge », dans l'ordre (la tablette garde l'INDEX).
+// Il commande nCHG_QC_EN (pi4ioe2 P5, actif bas : `quick_charge`, inverted) :
+// M5Unified (Power_Class.inl, setChargeCurrent, commit b926d64 du 02/10/2026) nomme
+// « 500 mA » CHG_EN haut + P5 haut (charge rapide arrêtée) et « 1000 mA » CHG_EN haut +
+// P5 bas (charge rapide), et coupe les deux pour 0 mA. Ces courants sont ceux de la
+// bibliothèque : jamais mesurés sur une tablette (l'auteur n'a pas de batterie).
+enum class ModeCharge : uint8_t {
+    CLASSIQUE = 0,  // « Classique » (défaut) : charge rapide arrêtée, comme avant
+    RAPIDE = 1,     // « Rapide »
+};
+
+// Charge rapide voulue : seulement chargeur ALLUMÉ (chargeur_pas() décide CHG_EN : sans
+// batterie, pendant une sonde ou à 80 % il est coupé, et la charge rapide avec lui,
+// comme le fait M5Unified). Index inconnu : Classique.
+inline bool charge_rapide_voulue(uint8_t mode, bool chargeur_allume) {
+    return chargeur_allume && static_cast<ModeCharge>(mode) == ModeCharge::RAPIDE;
+}
 
 // ─── Présence (chargeur coupé) ───
 constexpr float kBatterieSeuilV = 3.0f;           // chargeur coupé : au-dessus = batterie
