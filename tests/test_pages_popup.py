@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Popup à pages (ADR-0046, 09/10/2026) : la brique commune des popups à plusieurs pages
-(Tab5/ecran/tab5_pages.cpp) — Réglages, Lumières, Volets et Température — lue dans le vrai C++.
+(Tab5/ecran/tab5_pages.cpp) — Réglages, Lumières, Volets, Température et Réveil — lue dans
+le vrai C++.
 
 On vérifie :
-- le geste : arrêté au popup (GESTURE_BUBBLE retiré), ignoré quand il part d'un curseur ou
-  d'un arc, sans effet sous deux pages, lever du doigt muet, page voisine en boucle ;
+- le geste : arrêté au popup (GESTURE_BUBBLE retiré), ignoré quand il part d'un curseur,
+  d'un arc ou d'un rouleau, sans effet sous deux pages, lever du doigt muet, page voisine en boucle ;
   branché sans doublon (le rappel retiré avant d'être ajouté) ;
 - la géométrie des onglets : quatre pages tombent sur les noms des Réglages, cinq tiennent
   entre le titre et la croix ;
@@ -51,8 +52,11 @@ def test_geste_curseur_arc_et_lever_du_doigt():
     # Un curseur ou un arc glissé de côté règle sa valeur ; sous deux pages, rien ; le
     # lever du doigt qui suit ne déclenche rien. Dans cet ordre.
     assert "lv_obj_check_type(o, &lv_slider_class) || lv_obj_check_type(o, &lv_arc_class)" in geste
+    # Un rouleau (lv_roller, popup Réveil) se glisse de haut en bas ; en biais, LVGL y voit
+    # aussi un geste gauche / droite : c'est son réglage (09/10/2026).
+    assert "if (lv_obj_check_type(o, &lv_roller_class)) return;" in geste
     assert "if (n < 2) return;" in geste
-    assert (geste.index("lv_arc_class") < geste.index("if (n < 2) return;")
+    assert (geste.index("lv_arc_class") < geste.index("lv_roller_class") < geste.index("if (n < 2) return;")
             < geste.index("lv_indev_wait_release(indev);") < geste.index("p->afficher("))
     assert "reglages_page_voisine(p->courante(), n, dir == LV_DIR_LEFT)" in geste
     # Transitions instantanées : aucune animation dans la brique.
@@ -73,7 +77,9 @@ def test_onglets_a_la_place_des_noms_des_reglages():
     reglages = [int(x) for x in re.findall(r"file: reglages_onglet\.yaml, vars: \{ prefixe: reglages, id: \w+, x: (\d+),", popup)]
     xs, w = _x_onglets(4)
     assert xs == reglages and w == 200
-    largeur = int(re.search(r"\n  width: (\d+)\n", lire(TAB5 / "ui_components" / "reglages_onglet.yaml")).group(1))
+    # Largeur par défaut de reglages_onglet.yaml (le Réveil passe la sienne, `w`).
+    largeur = int(re.search(r"\n  width: \$\{ w \| default\((\d+)\) \}\n",
+                            lire(TAB5 / "ui_components" / "reglages_onglet.yaml")).group(1))
     assert largeur == w
     xs, w = _x_onglets(5)
     assert xs[0] >= _constante("kOngletsDebut") and xs[-1] + w == _constante("kOngletsFin")
@@ -102,3 +108,14 @@ def test_temperature_par_la_brique():
     assert "PagesPopup s_pages{nullptr, nombre_pages, rang_courant, afficher_page};" in cpp
     assert "choix_peindre(u.onglet, n, rang_courant());" in cpp
     assert "void peindre_onglet(" not in cpp, "la couleur de l'onglet : choix_peindre"
+
+
+def test_reveil_par_la_brique():
+    """Popup Réveil (09/10/2026) : son geste et la couleur du nom de la page affichée par la
+    brique ; la place de ses noms reste celle du YAML (alarm_popup.yaml), pas pages_onglets."""
+    cpp = lire(TAB5 / "ecran" / "alarm_render.cpp").replace("\r\n", "\n")
+    assert "PagesPopup s_pages{nullptr, nombre_pages, page_courante, reveil_afficher_page};" in cpp
+    assert "s_pages.popup = u.popup;\n    pages_brancher(&s_pages);" in cpp
+    afficher = _corps(cpp, "void reveil_afficher_page(")
+    assert "choix_peindre(u.onglet, REVEIL_NB_PAGES, page);" in afficher
+    assert "pages_onglets(" not in cpp

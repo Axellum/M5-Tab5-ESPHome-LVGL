@@ -1,0 +1,34 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Bouton à choix du popup « Réveil » (alarm_popup.yaml, 09/10/2026), réutilisé
+# 19 fois : mode (3), préréglages de jours (4), jours de repos (2), mélodies (4) et Oui / Non
+# (volume progressif, annonce parlée, annonce des rendez-vous : 3 × 2). Même allure que
+# reglages_choix_btn.yaml, mais le tap passe tel quel à ESPHome (var `appui`, liste
+# d'actions : `[ switch.turn_on: tab5_alarm_tts ]`, `[ select.set_index: { id: …, index: 2 } ]`).
+# L'option active est peinte par alarm_render_settings() (alarm_render.cpp) avec
+# choix_peindre() (tab5_pages.cpp), qui lit le texte comme PREMIER enfant du bouton.
+# vars : id, x, y, w, label_text (traduit au démarrage ; vide si le C++ l'écrit),
+#        appui (actions du tap) ; facultative : h (hauteur, défaut 60).
+# Piège ESPHome (comme bouton_pas.yaml) : la substitution garde le type de la variable,
+# les paramètres d'un script doivent rester des nombres NON quotés.
+# ═══════════════════════════════════════════════════════
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: ${w}
+  height: ${ h | default(60) }
+  radius: 14
+  pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click: ${appui}
+  widgets:
+    - label:
+        text: "${label_text}"
+        align: CENTER
+        width: 100%
+        pad_left: 8
+        pad_right: 8
+        text_align: CENTER
+        long_mode: DOT

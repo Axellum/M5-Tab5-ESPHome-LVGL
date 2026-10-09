@@ -161,6 +161,8 @@ esphome:
     - Tab5/ecran/tab5_historique.cpp
     # Thèmes de l'écran : palette active et repeinture des modules (ADR-0029, lot 2).
     - Tab5/ecran/tab5_theme.cpp
+    # Popup à pages (Réglages, Réveil) : noms en haut, geste, choix en accent (09/10/2026).
+    - Tab5/ecran/tab5_pages.cpp
     # Popup Réglages de la tablette : peinture des choix (06/10/2026).
     - Tab5/ecran/tab5_reglages.cpp
     # Mode économie d'énergie (06/10/2026) : règles pures (compilées aussi sur PC par

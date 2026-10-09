@@ -448,8 +448,8 @@ void maison_definitions_changees();
 
 // --- Popup à pages (tab5_pages.cpp, ADR-0046) ---
 // La brique commune des popups à plusieurs pages (Réglages ; Lumières et Volets, une page
-// par pièce) : glisser à gauche / à droite = page suivante / précédente, en boucle, arrêté
-// au popup, sauf parti d'un curseur ou d'un arc ; noms des pages en haut. Le popup garde sa
+// par pièce ; Réveil) : glisser à gauche / à droite = page suivante / précédente, en boucle,
+// arrêté au popup, sauf parti d'un curseur, d'un arc ou d'un rouleau ; noms des pages en haut. Le popup garde sa
 // page : `nombre` (pages aujourd'hui), `courante` (celle affichée, -1 aucune), `afficher`
 // (montre la page i, repeint ses onglets). L'objet doit vivre aussi longtemps que le popup
 // (une variable de fichier) : son adresse est la donnée du rappel LVGL.
@@ -586,6 +586,8 @@ void rangee_rejouer_theme();
 void cartes_rejouer_theme();
 void energie_rejouer_theme();
 void reglages_rejouer_theme();
+// Popup du réveil (alarm_render.cpp) : noms des pages et réglages, depuis le dernier état.
+void reveil_rejouer_theme();
 // Batterie de la tablette (tab5_zones.cpp), lue par la page Batterie des Réglages
 // (tab5_reglages.cpp, 08/10/2026) : dernier niveau publié (%, NAN inconnu) et dernier
 // état de CHG_STAT, ceux de l'icône du bandeau.

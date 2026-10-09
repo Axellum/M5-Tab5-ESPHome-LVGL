@@ -1,25 +1,46 @@
 # ═══════════════════════════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file alarm_popup.yaml
-# @role Fenêtre de réglage du réveil (carte modale standard 1250×690, cadre v4).
-#       Colonne gauche = ce qui décide QUAND ça sonne (activation + heure, jours,
-#       mode, bornes du mode calendrier). Colonne droite = ce qui se passe QUAND
-#       ça sonne (récapitulatif, sonnerie, répétition, annonces).
-# @architecture_constraint Positions ABSOLUES, comme assistant_popup.yaml : les
-#       états actifs ne changent que la BORDURE (dessinée à l'intérieur), donc
-#       aucun bouton ne se décale quand on l'active. Aucune logique ici — chaque
-#       geste appelle un script de tab5-alarm.yaml, et TOUT le repaint passe par
-#       `alarm_render_settings()` (alarm_clock.cpp) via `tab5_alarm_sync_ui`.
-# @architecture_constraint Ce fichier ne LIT aucun état : il ne fait qu'écrire
-#       (gestes) et exposer des ids (repaint). C'est ce qui garantit que l'écran
-#       et Home Assistant montrent toujours la même chose — les deux affichent
-#       le même `g_alarm_cfg`.
-# @open Tap court sur la tuile horloge (tab5-lvgl.yaml ; l'appui LONG reste le
-#       calendrier), ou depuis HA via le select « Aller à l'écran ».
-# @geometry Corps = y 72 → 578 (barre d'action de 84 px ancrée à
-#       ${modal_bottom_y}). Deux colonnes de 589 px : x=24 et x=637.
-#       Gauche  : 72..222 (150) · 234..330 (96) · 342..468 (126) · 480..578 (98)
-#       Droite  : 72..222 (150) · 234..424 (190) · 436..578 (142)
+# @role Fenêtre de réglage du réveil, en cinq pages depuis le 09/10/2026 (demande d'Axel :
+#       « plus claire, plus grande, avec le switch pour passer d'une partie à l'autre comme
+#       les Paramètres, les roues dès que possible »). Pages changées au doigt (glisser à
+#       gauche ou à droite, en boucle) ou par leur nom en haut, à côté du titre (celle
+#       affichée en couleur d'accent), par la brique des popups à pages (pages_brancher et choix_peindre, tab5_pages.cpp, ADR-0046 ; les noms gardent leur place ici) :
+#         - « Heure » : l'heure fixe sur deux rouleaux (heures, minutes de 5 en 5), la
+#           grande bascule marche / arrêt, la prochaine sonnerie, « Tester » et l'arrêt ;
+#         - « Jours » : le mode (Fixe, Travail, Ouverture), les jours de l'heure fixe (7
+#           pastilles et 4 préréglages), les jours de repos (Silence, Heure fixe) ;
+#         - « Ouverture » : les réglages du mode « Avant l'ouverture » sur quatre
+#           rouleaux (délai, pas avant, pas après, repos mini) ;
+#         - « Sonnerie » : la mélodie (un appui la choisit et la fait entendre), le
+#           volume, le volume progressif, la répétition et la durée max (rouleaux) ;
+#         - « Annonces » : l'annonce parlée, l'annonce des rendez-vous, son avance
+#           (rouleau) et le prochain rendez-vous.
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y} ; les noms des pages sont des options d'en-tête,
+#       reglages_onglet.yaml), registre unique (ADR-0013). Ce fichier ne LIT aucun état :
+#       chaque geste écrit une entité de tab5-alarm.yaml (directement, ou par un script :
+#       tab5_alarm_rouleau, tab5_alarm_toggle_day, tab5_alarm_melodie), et TOUT le
+#       repaint passe par alarm_render_settings() (alarm_render.cpp) via
+#       tab5_alarm_sync_ui : l'écran et Home Assistant montrent toujours le même
+#       g_alarm_cfg. Positions ABSOLUES : l'option active ne change que la bordure et la
+#       couleur du texte, rien ne bouge. Changement de page instantané (conteneurs
+#       masqués / montrés) ; le geste s'arrête au popup et n'est pas pris quand il part
+#       d'un rouleau ou du curseur ([AI-WARNING] de tab5_pages.cpp).
+#       Contrat HA inchangé : mêmes entités qu'avant le 09/10/2026.
+# @open Appui long sur l'heure de l'accueil (lot A), ou depuis HA par le select
+#       « Aller à l'écran » (tab5_alarm_open : toujours sur la page Heure).
+# @geometry Une page = un conteneur sans fond à y ${modal_body_y}, 598 px de haut (20 px du
+#       bas), comme les Réglages. Heure, Sonnerie et Annonces : deux cartes de 589 de large
+#       (x 24 et 637) ; Jours et Ouverture : une carte de 1202 (x 24), commandes de 17 à
+#       1185. Titres de rangée (reglages_rangee.yaml) sur 40 px, commande 40 px plus bas,
+#       boutons à choix de 60 px (choix_btn.yaml). Rouleaux (rouleau.yaml) : heures et
+#       minutes en roboto_130_b, trois rangées de 153 px (459) ; les autres en
+#       roboto_45_b, rangées de 53 + 17 = 70 px (350 = cinq rangées, 210 = trois). Noms des
+#       pages : 184 × 44 à x 196 + 190 × i (titre jusqu'à x ~170 en allemand, croix à
+#       x 1160).
+# @ai_instruction Une icône de plus = son glyphe dans mdi_font_32 (tab5-styles.yaml). Un
+#       rouleau de plus : voir l'en-tête d'alarm_render.cpp.
 # ═══════════════════════════════════════════════════════════════════════════
 obj:
   id: alarm_popup
@@ -38,393 +59,357 @@ obj:
         height: ${modal_card_h}
         styles: style_modal_card
         scrollable: false
+        scrollbar_mode: "OFF"
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F0020", icon_style: "style_text_accent", title: "Réveil", title_id: "popup_alarm_title", close_btn_id: "btn_alarm_close", close_lambda: "id(tab5_alarm_close).execute();" } }
 
+          # Noms des pages (options d'en-tête, reglages_onglet.yaml) : `page` = ReveilPage.
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_heure, x: 196, w: 184, page: 0, label_text: "Heure" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_jours, x: 386, w: 184, page: 1, label_text: "Jours" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_ouverture, x: 576, w: 184, page: 2, label_text: "Ouverture" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_sonnerie, x: 766, w: 184, page: 3, label_text: "Sonnerie" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_annonces, x: 956, w: 184, page: 4, label_text: "Annonces" } }
+
           # ═══════════════════════════════════════════════════════════════════
-          # A — ACTIVATION + HEURE FIXE                       (gauche, 72..222)
+          # PAGE HEURE
           # ═══════════════════════════════════════════════════════════════════
           - obj:
+              id: alarm_page_heure
               align: TOP_LEFT
-              x: 24
+              x: 0
               y: ${modal_body_y}
-              width: 589
-              height: 150
-              styles: style_glass_card
+              width: 100%
+              height: 598
               scrollable: false
+              styles: style_invisible
               widgets:
-                # Grande bascule ON/OFF — c'est le geste le plus fréquent, il a
-                # donc la plus grande cible de la fenêtre.
-                - button:
-                    id: btn_alarm_enable
+                # Heure fixe : deux rouleaux centrés dans la carte (heures 85..275, « : » au
+                # centre, minutes 314..504). Les minutes vont de 5 en 5 ; une minute réglée
+                # autrement depuis HA s'y montre telle quelle (alarm_render.cpp).
+                - obj:
                     align: TOP_LEFT
-                    x: 16
-                    y: 20
-                    width: 200
-                    height: 110
-                    radius: 18
-                    styles: style_clim_btn
-                    on_short_click:
-                      - switch.toggle: tab5_alarm_enabled
+                    x: 24
+                    y: 0
+                    width: 589
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
                     widgets:
-                      - label: { id: icon_alarm_enable, text: "\U000F0020", align: CENTER, y: -22, text_font: mdi_font_45 }
-                      - label: { id: lbl_alarm_enable, text: "Réveil éteint", align: CENTER, y: 28, styles: style_text_dim }
+                      - label: { text: "HEURE DU RÉVEIL", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_heure, x: 85, y: 60, w: 190, h: 459, police: roboto_130_b, ecart: 0, quoi: 0 } }
+                      - label: { text: ":", align: TOP_MID, x: 0, y: 203, text_font: roboto_130_b, styles: style_text_soft }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_minutes, x: 314, y: 60, w: 190, h: 459, police: roboto_130_b, ecart: 0, quoi: 1 } }
+                      - label: { text: "Glisser les chiffres vers le haut ou vers le bas.", align: TOP_LEFT, x: 22, y: 540, width: 545, text_align: CENTER, styles: style_text_dim }
 
-                - label: { text: "Heure fixe", align: TOP_LEFT, x: 232, y: 14, width: 170, text_align: CENTER, styles: style_text_dim }
-                - label: { id: lbl_alarm_time, text: "07:00", align: TOP_LEFT, x: 232, y: 42, width: 170, text_align: CENTER, text_font: roboto_55_b }
-
-                # Réglage ± heures / ± minutes. Le pas de 5 min est volontaire :
-                # on règle un réveil, pas un chronomètre.
-                - label: { text: "H", align: TOP_LEFT, x: 416, y: 8, width: 76, text_align: CENTER, styles: style_text_dim }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_h_up", x: "416", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", appui: [ script.execute: { id: tab5_alarm_shift, cible: 0, delta: 60 } ] } }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_h_dn", x: "416", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", appui: [ script.execute: { id: tab5_alarm_shift, cible: 0, delta: -60 } ] } }
-
-                - label: { text: "MIN", align: TOP_LEFT, x: 500, y: 8, width: 76, text_align: CENTER, styles: style_text_dim }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_m_up", x: "500", y: "38", w: "76", h: "48", r: "14", icon: "\U000F0143", appui: [ script.execute: { id: tab5_alarm_shift, cible: 0, delta: 5 } ] } }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_m_dn", x: "500", y: "92", w: "76", h: "48", r: "14", icon: "\U000F0140", appui: [ script.execute: { id: tab5_alarm_shift, cible: 0, delta: -5 } ] } }
-
-          # ═══════════════════════════════════════════════════════════════════
-          # B — JOURS DE LA SEMAINE                           (gauche, 234..330)
-          # ═══════════════════════════════════════════════════════════════════
-          # 7 pastilles de 72 px, pas de 80 (8 px de jeu). Le libellé rappelle
-          # que ce sélecteur ne gouverne QUE l'heure fixe : un jour travaillé
-          # sonne quel que soit le jour de la semaine (cf. alarm_clock.cpp).
-          - obj:
-              align: TOP_LEFT
-              x: 24
-              y: 234
-              width: 589
-              height: 96
-              styles: style_glass_card
-              scrollable: false
-              widgets:
-                - label: { text: "Jours (heure fixe uniquement)", align: TOP_LEFT, x: 18, y: 6, styles: style_text_dim }
-                - !include { file: alarm_day_chip.yaml, vars: { n: 0, x: "18", letter: "L" } }
-                - !include { file: alarm_day_chip.yaml, vars: { n: 1, x: "98", letter: "M" } }
-                - !include { file: alarm_day_chip.yaml, vars: { n: 2, x: "178", letter: "M" } }
-                - !include { file: alarm_day_chip.yaml, vars: { n: 3, x: "258", letter: "J" } }
-                - !include { file: alarm_day_chip.yaml, vars: { n: 4, x: "338", letter: "V" } }
-                - !include { file: alarm_day_chip.yaml, vars: { n: 5, x: "418", letter: "S" } }
-                - !include { file: alarm_day_chip.yaml, vars: { n: 6, x: "498", letter: "D" } }
-
-          # ═══════════════════════════════════════════════════════════════════
-          # C — MODE                                          (gauche, 342..468)
-          # ═══════════════════════════════════════════════════════════════════
-          - obj:
-              align: TOP_LEFT
-              x: 24
-              y: 342
-              width: 589
-              height: 126
-              styles: style_glass_card
-              scrollable: false
-              widgets:
-                # Libellés des boutons centrés dans la place À DROITE du pictogramme : centrés sur
-                # tout le bouton, « Ouverture », « Werkbegin », « Shift start » passaient dessous
-                # (rendu hors tablette, 27/09/2026). Même règle pour les boutons d'annonce. Sans
-                # marge intérieure (pad_all: 0), les x sont ceux du bouton.
-                - label: { text: "Mode", align: TOP_LEFT, x: 16, y: 8, styles: style_text_dim }
-                - button:
-                    id: btn_alarm_mode_0
+                # Marche / arrêt, prochaine sonnerie, test : la carte qui répond à « à quelle
+                # heure ça sonne, et pourquoi ».
+                - obj:
                     align: TOP_LEFT
-                    x: 12
-                    y: 38
-                    width: 181
-                    height: 56
-                    radius: 16
-                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
-                    styles: style_clim_btn
-                    pressed: { bg_opa: 30% }
-                    on_short_click:
-                      - select.set_index: { id: tab5_alarm_mode, index: 0 }
+                    x: 637
+                    y: 0
+                    width: 589
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
                     widgets:
-                      - label: { text: "\U000F0150", align: LEFT_MID, x: 14, text_font: mdi_font_32 }
-                      - label: { text: "Fixe", align: LEFT_MID, x: 52, width: 121, text_align: CENTER }
-                - button:
-                    id: btn_alarm_mode_1
-                    align: TOP_LEFT
-                    x: 205
-                    y: 38
-                    width: 181
-                    height: 56
-                    radius: 16
-                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
-                    styles: style_clim_btn
-                    pressed: { bg_opa: 30% }
-                    on_short_click:
-                      - select.set_index: { id: tab5_alarm_mode, index: 1 }
-                    widgets:
-                      - label: { text: "\U000F00D6", align: LEFT_MID, x: 14, text_font: mdi_font_32 }
-                      - label: { text: "Travail", align: LEFT_MID, x: 52, width: 121, text_align: CENTER }
-                - button:
-                    id: btn_alarm_mode_2
-                    align: TOP_LEFT
-                    x: 398
-                    y: 38
-                    width: 181
-                    height: 56
-                    radius: 16
-                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
-                    styles: style_clim_btn
-                    pressed: { bg_opa: 30% }
-                    on_short_click:
-                      - select.set_index: { id: tab5_alarm_mode, index: 2 }
-                    widgets:
-                      - label: { text: "\U000F00F0", align: LEFT_MID, x: 14, text_font: mdi_font_32 }
-                      - label: { text: "Ouverture", align: LEFT_MID, x: 52, width: 121, text_align: CENTER }
-                - label: { id: lbl_alarm_mode_hint, text: "", align: TOP_LEFT, x: 16, y: 98, width: 557, styles: style_text_dim }
+                      # Grande bascule ON/OFF : le geste le plus fréquent, la plus grande cible.
+                      - button:
+                          id: btn_alarm_enable
+                          align: TOP_LEFT
+                          x: 16
+                          y: 16
+                          width: 557
+                          height: 140
+                          radius: 18
+                          pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+                          styles: style_clim_btn
+                          pressed: { bg_opa: 30% }
+                          on_short_click:
+                            - switch.toggle: tab5_alarm_enabled
+                          widgets:
+                            - label: { id: icon_alarm_enable, text: "\U000F0020", align: LEFT_MID, x: 36, text_font: mdi_font_45 }
+                            - label: { id: lbl_alarm_enable, text: "Réveil éteint", align: LEFT_MID, x: 104, width: 437, text_font: roboto_32_b, styles: style_text_dim }
+
+                      - label: { text: "\U000F0021", align: TOP_LEFT, x: 16, y: 182, text_font: mdi_font_45, styles: style_text_accent }
+                      - label: { text: "PROCHAINE SONNERIE", align: TOP_LEFT, x: 76, y: 194, styles: style_text_dim }
+                      - label: { id: lbl_alarm_next, text: "", align: TOP_LEFT, x: 16, y: 244, width: 557, styles: style_police_date }
+                      - label: { id: lbl_alarm_next_sub, text: "", align: TOP_LEFT, x: 16, y: 308, width: 557, long_mode: WRAP, styles: style_text_dim }
+
+                      # Test grandeur nature : passe par la VRAIE machine d'état (calque,
+                      # crescendo, arrêt à la voix), pas par un raccourci — tester autre chose
+                      # que ce qui sonnera n'aurait aucune valeur.
+                      - button:
+                          id: btn_alarm_test
+                          align: TOP_LEFT
+                          x: 16
+                          y: 482
+                          width: 360
+                          height: 100
+                          radius: 20
+                          styles: style_pill_accent
+                          pressed:
+                            bg_opa: 45%
+                          on_short_click:
+                            - globals.set:
+                                id: alarm_ring_scheduled
+                                value: 'false'
+                            - globals.set:
+                                id: alarm_ring_cycle
+                                value: '0'
+                            - script.execute: tab5_alarm_ring_start
+                          widgets:
+                            - label: { text: "\U000F040A", align: LEFT_MID, x: 40, text_font: mdi_font_45, styles: style_text_on_accent }
+                            - label: { text: "Tester", align: CENTER, x: 24, text_font: roboto_32_b, styles: style_text_on_accent }
+
+                      - button:
+                          id: btn_alarm_stop_now
+                          align: TOP_LEFT
+                          x: 392
+                          y: 482
+                          width: 181
+                          height: 100
+                          radius: 20
+                          styles: style_clim_btn
+                          pressed: { bg_opa: 30% }
+                          on_short_click:
+                            - script.execute: tab5_alarm_stop
+                          widgets:
+                            - label: { text: "\U000F04DB", align: CENTER, text_font: mdi_font_45, styles: style_text_error }
 
           # ═══════════════════════════════════════════════════════════════════
-          # C2 — BORNES DU MODE CALENDRIER                    (gauche, 480..578)
+          # PAGE JOURS
           # ═══════════════════════════════════════════════════════════════════
-          # « Repos mini » est ce qui exploite l'heure de FERMETURE de la veille :
-          # après une fermeture à 21:00, un repos de 9 h interdit de sonner avant
-          # 06:00 — sauf si « Pas après » l'impose (arriver à l'heure gagne).
           - obj:
+              id: alarm_page_jours
               align: TOP_LEFT
-              x: 24
-              y: 480
-              width: 589
-              height: 98
-              styles: style_glass_card
-              scrollable: false
-              widgets:
-                - label: { text: "Délai", align: TOP_LEFT, x: 12, y: 8, width: 131, text_align: CENTER, styles: style_text_dim }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_lead_dn", x: "12", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_alarm_lead, cycle: false } ] } }
-                - label: { id: lbl_alarm_lead, text: "1h30", align: TOP_LEFT, x: 48, y: 52, width: 59, text_align: CENTER }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_lead_up", x: "107", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_alarm_lead, cycle: false } ] } }
-
-                - label: { text: "Pas avant", align: TOP_LEFT, x: 155, y: 8, width: 131, text_align: CENTER, styles: style_text_dim }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_early_dn", x: "155", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", appui: [ script.execute: { id: tab5_alarm_shift, cible: 1, delta: -15 } ] } }
-                - label: { id: lbl_alarm_early, text: "05:00", align: TOP_LEFT, x: 191, y: 52, width: 59, text_align: CENTER }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_early_up", x: "250", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", appui: [ script.execute: { id: tab5_alarm_shift, cible: 1, delta: 15 } ] } }
-
-                - label: { text: "Pas après", align: TOP_LEFT, x: 298, y: 8, width: 131, text_align: CENTER, styles: style_text_dim }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_late_dn", x: "298", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", appui: [ script.execute: { id: tab5_alarm_shift, cible: 2, delta: -15 } ] } }
-                - label: { id: lbl_alarm_late, text: "09:00", align: TOP_LEFT, x: 334, y: 52, width: 59, text_align: CENTER }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_late_up", x: "393", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", appui: [ script.execute: { id: tab5_alarm_shift, cible: 2, delta: 15 } ] } }
-
-                - label: { text: "Repos mini", align: TOP_LEFT, x: 441, y: 8, width: 131, text_align: CENTER, styles: style_text_dim }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_rest_dn", x: "441", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_alarm_rest_hours, cycle: false } ] } }
-                - label: { id: lbl_alarm_rest, text: "—", align: TOP_LEFT, x: 477, y: 52, width: 59, text_align: CENTER }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_rest_up", x: "536", y: "40", w: "36", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_alarm_rest_hours, cycle: false } ] } }
-
-          # ═══════════════════════════════════════════════════════════════════
-          # D — PROCHAINE SONNERIE                            (droite, 72..222)
-          # ═══════════════════════════════════════════════════════════════════
-          # La carte la plus importante de la fenêtre : elle répond à la seule
-          # question qui compte (« à quelle heure ça sonne, et pourquoi »).
-          - obj:
-              align: TOP_LEFT
-              x: 637
+              x: 0
               y: ${modal_body_y}
-              width: 589
-              height: 150
-              styles: style_glass_card
+              width: 100%
+              height: 598
+              hidden: true
               scrollable: false
+              styles: style_invisible
               widgets:
-                - label: { text: "\U000F0021", align: TOP_LEFT, x: 16, y: 20, text_font: mdi_font_45, styles: style_text_accent }
-                - label: { text: "PROCHAINE SONNERIE", align: TOP_LEFT, x: 76, y: 20, styles: style_text_dim }
-                - label: { id: lbl_alarm_next, text: "", align: TOP_LEFT, x: 76, y: 52, width: 497, styles: style_police_date }
-                - label: { id: lbl_alarm_next_sub, text: "", align: TOP_LEFT, x: 76, y: 112, width: 497, styles: style_text_dim }
-
-                # Bascule « jours de repos » : posée ici parce qu'elle explique
-                # directement la ligne du dessus (« repos » vs une vraie heure).
-                - button:
-                    id: btn_alarm_repos
-                    align: TOP_RIGHT
-                    x: -16
-                    y: 16
-                    width: 160
-                    height: 44
-                    radius: 14
-                    styles: style_clim_btn
-                    pressed: { bg_opa: 30% }
-                    on_short_click:
-                      - switch.toggle: tab5_alarm_repos_fixe
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 0
+                    width: 1202
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
                     widgets:
-                      - label: { id: lbl_alarm_repos, text: "Repos : silence", align: CENTER, styles: style_text_dim }
+                      # Mode : l'index du select est l'entier de g_alarm_cfg.mode (AlarmMode).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 18, w: 1168, icon: "\U000F0150", label_text: "Mode" } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_mode_0, x: 17, y: 58, w: 384, label_text: "Fixe", appui: [ select.set_index: { id: tab5_alarm_mode, index: 0 } ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_mode_1, x: 409, y: 58, w: 384, label_text: "Travail", appui: [ select.set_index: { id: tab5_alarm_mode, index: 1 } ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_mode_2, x: 801, y: 58, w: 384, label_text: "Ouverture", appui: [ select.set_index: { id: tab5_alarm_mode, index: 2 } ] } }
+                      - label: { id: lbl_alarm_mode_hint, text: "", align: TOP_LEFT, x: 22, y: 128, width: 1158, styles: style_text_dim }
+
+                      # Jours de l'heure fixe : 7 pastilles de 160 px au pas de 168, puis les
+                      # préréglages du select « Réveil : jours » (le 5ᵉ, « Personnalisé », est ce
+                      # que donnent les pastilles : aucun bouton ne s'allume alors).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 182, w: 1168, icon: "\U000F0E17", label_text: "Jours de l'heure fixe" } }
+                      - !include { file: alarm_day_chip.yaml, vars: { n: 0, x: "17", y: "222" } }
+                      - !include { file: alarm_day_chip.yaml, vars: { n: 1, x: "185", y: "222" } }
+                      - !include { file: alarm_day_chip.yaml, vars: { n: 2, x: "353", y: "222" } }
+                      - !include { file: alarm_day_chip.yaml, vars: { n: 3, x: "521", y: "222" } }
+                      - !include { file: alarm_day_chip.yaml, vars: { n: 4, x: "689", y: "222" } }
+                      - !include { file: alarm_day_chip.yaml, vars: { n: 5, x: "857", y: "222" } }
+                      - !include { file: alarm_day_chip.yaml, vars: { n: 6, x: "1025", y: "222" } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_jours_0, x: 17, y: 302, w: 286, label_text: "Tous les jours", appui: [ select.set_index: { id: tab5_alarm_days, index: 0 } ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_jours_1, x: 311, y: 302, w: 286, label_text: "Lundi-Vendredi", appui: [ select.set_index: { id: tab5_alarm_days, index: 1 } ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_jours_2, x: 605, y: 302, w: 286, label_text: "Lundi-Samedi", appui: [ select.set_index: { id: tab5_alarm_days, index: 2 } ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_jours_3, x: 899, y: 302, w: 286, label_text: "Week-end", appui: [ select.set_index: { id: tab5_alarm_days, index: 3 } ] } }
+
+                      # Jours sans travail au calendrier (modes Travail et Ouverture) : silence, ou
+                      # l'heure fixe les jours cochés (interrupteur « sonner les jours de repos »).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 396, w: 1168, icon: "\U000F02E3", label_text: "Jours de repos" } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_repos_silence, x: 17, y: 436, w: 580, label_text: "Silence", appui: [ switch.turn_off: tab5_alarm_repos_fixe ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_repos_fixe, x: 605, y: 436, w: 580, label_text: "Heure fixe", appui: [ switch.turn_on: tab5_alarm_repos_fixe ] } }
+                      - label: { id: lbl_alarm_repos_hint, text: "", align: TOP_LEFT, x: 22, y: 506, width: 1158, styles: style_text_dim }
 
           # ═══════════════════════════════════════════════════════════════════
-          # E — SONNERIE                                      (droite, 234..424)
+          # PAGE OUVERTURE (mode « Avant l'ouverture »)
           # ═══════════════════════════════════════════════════════════════════
+          # « Repos mini » exploite l'heure de FERMETURE de la veille : après une fermeture
+          # à 21:00, un repos de 9 h interdit de sonner avant 06:00 — sauf si « Pas après »
+          # l'impose (arriver à l'heure gagne). Quatre colonnes de 280 au pas de 296.
           - obj:
+              id: alarm_page_ouverture
               align: TOP_LEFT
-              x: 637
-              y: 234
-              width: 589
-              height: 190
-              styles: style_glass_card
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              hidden: true
               scrollable: false
+              styles: style_invisible
               widgets:
-                - label: { text: "\U000F0387", align: TOP_LEFT, x: 16, y: 8, text_font: mdi_font_32, styles: style_text_dim }
-                - label: { text: "Sonnerie", align: TOP_LEFT, x: 58, y: 10, styles: style_text_dim }
-
-                # Changer de mélodie la joue aussitôt (tab5_alarm_cycle_melody) :
-                # choisir une sonnerie sans l'entendre n'a aucun intérêt.
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_mel_prev", x: "44", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0141", appui: [ script.execute: { id: tab5_alarm_cycle_melody, delta: -1 } ] } }
-                - label: { id: lbl_alarm_melody, text: "Classique", align: TOP_LEFT, x: 104, y: 51, width: 380, text_align: CENTER, text_font: roboto_32_b }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_mel_next", x: "492", y: "38", w: "52", h: "52", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_alarm_cycle_melody, delta: 1 } ] } }
-
-                - label: { text: "\U000F057E", align: TOP_LEFT, x: 16, y: 98, text_font: mdi_font_32, styles: style_text_dim }
-                - slider:
-                    id: slider_alarm_vol
+                - obj:
                     align: TOP_LEFT
-                    x: 64
-                    y: 106
-                    width: 390
-                    height: 20
-                    min_value: 10
-                    max_value: 100
-                    value: 80
-                    on_value:
-                      # Le volume du réveil est indépendant du volume système :
-                      # il passe par sa propre entité, jamais par
-                      # `tab5_volume_apply` (qui, lui, écrit `system_volume`).
-                      - number.set:
-                          id: tab5_alarm_volume
-                          value: !lambda 'return x;'
-                - label: { id: lbl_alarm_vol, text: "80 %", align: TOP_LEFT, x: 466, y: 100, width: 100, text_align: CENTER, text_font: roboto_32_b }
-
-                - button:
-                    id: btn_alarm_cresc
-                    align: TOP_LEFT
-                    x: 16
-                    y: 142
-                    width: 557
-                    height: 44
-                    radius: 14
-                    styles: style_clim_btn
-                    pressed: { bg_opa: 30% }
-                    on_short_click:
-                      - switch.toggle: tab5_alarm_crescendo
+                    x: 24
+                    y: 0
+                    width: 1202
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
                     widgets:
-                      - label: { id: lbl_alarm_cresc, text: "Volume constant", align: CENTER, styles: style_text_dim }
+                      - label: { text: "Délai", align: TOP_LEFT, x: 17, y: 18, width: 280, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_delai, x: 17, y: 62, w: 280, h: 350, police: roboto_45_b, ecart: 17, quoi: 4 } }
+                      - label: { text: "avant l'ouverture", align: TOP_LEFT, x: 17, y: 422, width: 280, text_align: CENTER, styles: style_text_dim }
+
+                      - label: { text: "Pas avant", align: TOP_LEFT, x: 313, y: 18, width: 280, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_pas_avant, x: 313, y: 62, w: 280, h: 350, police: roboto_45_b, ecart: 17, quoi: 2 } }
+                      - label: { text: "au plus tôt", align: TOP_LEFT, x: 313, y: 422, width: 280, text_align: CENTER, styles: style_text_dim }
+
+                      - label: { text: "Pas après", align: TOP_LEFT, x: 609, y: 18, width: 280, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_pas_apres, x: 609, y: 62, w: 280, h: 350, police: roboto_45_b, ecart: 17, quoi: 3 } }
+                      - label: { text: "au plus tard", align: TOP_LEFT, x: 609, y: 422, width: 280, text_align: CENTER, styles: style_text_dim }
+
+                      - label: { text: "Repos mini", align: TOP_LEFT, x: 905, y: 18, width: 280, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_repos, x: 905, y: 62, w: 280, h: 350, police: roboto_45_b, ecart: 17, quoi: 5 } }
+                      - label: { text: "après la fermeture", align: TOP_LEFT, x: 905, y: 422, width: 280, text_align: CENTER, styles: style_text_dim }
+
+                      # Ce que ces réglages donnent, ou qu'ils ne servent pas (autre mode).
+                      - label: { id: lbl_alarm_ouverture_hint, text: "", align: TOP_LEFT, x: 22, y: 486, width: 1158, long_mode: WRAP, text_align: CENTER }
 
           # ═══════════════════════════════════════════════════════════════════
-          # F — RÉPÉTITION + ANNONCES                         (droite, 436..578)
+          # PAGE SONNERIE
           # ═══════════════════════════════════════════════════════════════════
           - obj:
+              id: alarm_page_sonnerie
               align: TOP_LEFT
-              x: 637
-              y: 436
-              width: 589
-              height: 142
-              styles: style_glass_card
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              hidden: true
               scrollable: false
+              styles: style_invisible
               widgets:
-                - label: { text: "Répétition", align: TOP_LEFT, x: 16, y: 6, width: 180, text_align: CENTER, styles: style_text_dim }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_snooze_dn", x: "16", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_alarm_snooze_min, cycle: false } ] } }
-                - label: { id: lbl_alarm_snooze, text: "9 min", align: TOP_LEFT, x: 64, y: 48, width: 84, text_align: CENTER }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_snooze_up", x: "148", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_alarm_snooze_min, cycle: false } ] } }
-
-                - label: { text: "Durée max", align: TOP_LEFT, x: 206, y: 6, width: 180, text_align: CENTER, styles: style_text_dim }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_maxring_dn", x: "206", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_alarm_max_ring, cycle: false } ] } }
-                - label: { id: lbl_alarm_maxring, text: "15 min", align: TOP_LEFT, x: 254, y: 48, width: 84, text_align: CENTER }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_maxring_up", x: "338", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_alarm_max_ring, cycle: false } ] } }
-
-                - label: { text: "RDV avant", align: TOP_LEFT, x: 396, y: 6, width: 180, text_align: CENTER, styles: style_text_dim }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_rdvlead_dn", x: "396", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0141", appui: [ number.decrement: { id: tab5_rdv_lead, cycle: false } ] } }
-                - label: { id: lbl_alarm_rdv_lead, text: "15 min", align: TOP_LEFT, x: 444, y: 48, width: 84, text_align: CENTER }
-                - !include { file: bouton_pas.yaml, vars: { id: "btn_alarm_rdvlead_up", x: "528", y: "36", w: "48", h: "48", r: "12", icon: "\U000F0142", appui: [ number.increment: { id: tab5_rdv_lead, cycle: false } ] } }
-
-                - button:
-                    id: btn_alarm_tts
+                - obj:
                     align: TOP_LEFT
-                    x: 16
-                    y: 94
-                    width: 278
-                    height: 42
-                    radius: 14
-                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
-                    styles: style_clim_btn
-                    pressed: { bg_opa: 30% }
-                    on_short_click:
-                      - switch.toggle: tab5_alarm_tts
+                    x: 24
+                    y: 0
+                    width: 589
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
                     widgets:
-                      - label: { text: "\U000F05CB", align: LEFT_MID, x: 12, text_font: mdi_font_32, styles: style_text_dim }
-                      - label: { id: lbl_alarm_tts, text: "Sonnerie seule", align: LEFT_MID, x: 50, width: 220, text_align: CENTER, styles: style_text_dim }
-                - button:
-                    id: btn_alarm_rdv
-                    align: TOP_LEFT
-                    x: 304
-                    y: 94
-                    width: 278
-                    height: 42
-                    radius: 14
-                    pad_all: 0   # positions exactes : le thème ajoutait ~21 px
-                    styles: style_clim_btn
-                    pressed: { bg_opa: 30% }
-                    on_short_click:
-                      - switch.toggle: tab5_alarm_rdv_on
-                    widgets:
-                      - label: { text: "\U000F00F0", align: LEFT_MID, x: 12, text_font: mdi_font_32, styles: style_text_dim }
-                      - label: { id: lbl_alarm_rdv, text: "RDV silencieux", align: LEFT_MID, x: 50, width: 220, text_align: CENTER, styles: style_text_dim }
+                      # Choisir une mélodie la joue aussitôt (tab5_alarm_melodie) : choisir une
+                      # sonnerie sans l'entendre n'a aucun intérêt. Ordre du select HA.
+                      - !include { file: reglages_rangee.yaml, vars: { y: 16, w: 555, icon: "\U000F0387", label_text: "Mélodie" } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_melodie_0, x: 17, y: 56, w: 273, label_text: "Douce", appui: [ script.execute: { id: tab5_alarm_melodie, index: 0 } ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_melodie_1, x: 298, y: 56, w: 273, label_text: "Classique", appui: [ script.execute: { id: tab5_alarm_melodie, index: 1 } ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_melodie_2, x: 17, y: 124, w: 273, label_text: "Insistante", appui: [ script.execute: { id: tab5_alarm_melodie, index: 2 } ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_melodie_3, x: 298, y: 124, w: 273, label_text: "Carillon", appui: [ script.execute: { id: tab5_alarm_melodie, index: 3 } ] } }
+                      - label: { text: "Toucher une mélodie la fait entendre.", align: TOP_LEFT, x: 22, y: 194, width: 545, styles: style_text_dim }
 
-          # ═══ BARRE D'ACTION (bas) ═══
+                      # Volume du réveil, indépendant du volume système : sa propre entité, jamais
+                      # `tab5_volume_apply` (qui écrit `system_volume`). Le glisser de côté n'y
+                      # change pas de page (tab5_pages.cpp).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 246, w: 555, icon: "\U000F057E", label_text: "Volume" } }
+                      - label: { id: lbl_alarm_vol, text: "80 %", align: TOP_RIGHT, x: -22, y: 244, text_font: roboto_32_b }
+                      - slider:
+                          id: slider_alarm_vol
+                          align: TOP_LEFT
+                          x: 30
+                          y: 304
+                          width: 529
+                          height: 20
+                          min_value: 10
+                          max_value: 100
+                          value: 80
+                          # Mêmes styles que le curseur de luminosité des Réglages : couleurs du thème.
+                          styles: style_bg_arc_track
+                          radius: 10
+                          indicator:
+                            styles: style_bg_accent
+                            radius: 10
+                          knob:
+                            styles: style_bg_soft
+                          on_value:
+                            - number.set:
+                                id: tab5_alarm_volume
+                                value: !lambda 'return x;'
+
+                      - !include { file: reglages_rangee.yaml, vars: { y: 368, w: 555, icon: "\U000F075D", label_text: "Volume progressif" } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_progressif_oui, x: 17, y: 408, w: 273, label_text: "Oui", appui: [ switch.turn_on: tab5_alarm_crescendo ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_progressif_non, x: 298, y: 408, w: 273, label_text: "Non", appui: [ switch.turn_off: tab5_alarm_crescendo ] } }
+                      - label: { text: "Monte doucement jusqu'au volume réglé.", align: TOP_LEFT, x: 22, y: 478, width: 545, styles: style_text_dim }
+
+                # Répétition et durée max : deux rouleaux de 270 (x 17 et 302).
+                - obj:
+                    align: TOP_LEFT
+                    x: 637
+                    y: 0
+                    width: 589
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - label: { text: "Répétition", align: TOP_LEFT, x: 17, y: 18, width: 270, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_repetition, x: 17, y: 62, w: 270, h: 350, police: roboto_45_b, ecart: 17, quoi: 6 } }
+                      - label: { text: "entre deux sonneries", align: TOP_LEFT, x: 17, y: 422, width: 270, text_align: CENTER, styles: style_text_dim }
+
+                      - label: { text: "Durée max", align: TOP_LEFT, x: 302, y: 18, width: 270, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_duree_max, x: 302, y: 62, w: 270, h: 350, police: roboto_45_b, ecart: 17, quoi: 7 } }
+                      - label: { text: "puis arrêt automatique", align: TOP_LEFT, x: 302, y: 422, width: 270, text_align: CENTER, styles: style_text_dim }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE ANNONCES
+          # ═══════════════════════════════════════════════════════════════════
           - obj:
-              align: BOTTOM_MID
-              y: ${modal_bottom_y}
-              width: 1202
-              height: 84
-              styles: style_transparent
+              id: alarm_page_annonces
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              hidden: true
               scrollable: false
+              styles: style_invisible
               widgets:
-                # Prochain RDV : une ligne, coupée en C++ (kLargeurRdvSuivant, alarm_render.cpp)
-                # avant le bouton « Tester ». Pas de `width` : avec 500 px, un titre long
-                # passait sous ce bouton translucide (audit du 01/10/2026).
-                - label: { id: lbl_alarm_rdv_next, text: "", align: LEFT_MID, x: 8, styles: style_text_dim }
-
-                # Test grandeur nature : passe par la VRAIE machine d'état
-                # (overlay, crescendo, arrêt à la voix), pas par un raccourci —
-                # tester autre chose que ce qui sonnera n'aurait aucune valeur.
-                - button:
-                    id: btn_alarm_test
-                    align: CENTER
-                    x: -90
-                    width: 220
-                    height: 68
-                    radius: 20
-                    styles: style_pill_accent
-                    pressed:
-                      bg_opa: 45%
-                    on_short_click:
-                      - globals.set:
-                          id: alarm_ring_scheduled
-                          value: 'false'
-                      - globals.set:
-                          id: alarm_ring_cycle
-                          value: '0'
-                      - script.execute: tab5_alarm_ring_start
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 0
+                    width: 589
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
                     widgets:
-                      - label: { text: "\U000F040A", align: LEFT_MID, x: 24, text_font: mdi_font_45, styles: style_text_on_accent }
-                      - label: { text: "Tester", align: CENTER, x: 22, text_font: roboto_32_b, styles: style_text_on_accent }
+                      # Annonce parlée : un événement que Home Assistant transforme en annonce
+                      # (tab5_alarm_speak), au premier passage de sonnerie seulement.
+                      - !include { file: reglages_rangee.yaml, vars: { y: 16, w: 555, icon: "\U000F05CB", label_text: "Annonce parlée au réveil" } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_tts_oui, x: 17, y: 56, w: 273, label_text: "Oui", appui: [ switch.turn_on: tab5_alarm_tts ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_tts_non, x: 298, y: 56, w: 273, label_text: "Non", appui: [ switch.turn_off: tab5_alarm_tts ] } }
+                      - label: { text: "Après la première sonnerie, Home Assistant annonce la météo et le planning.", align: TOP_LEFT, x: 22, y: 128, width: 545, long_mode: WRAP, styles: style_text_dim }
 
-                - button:
-                    id: btn_alarm_stop_now
-                    align: CENTER
-                    x: 140
-                    width: 160
-                    height: 68
-                    radius: 20
-                    styles: style_clim_btn
-                    pressed: { bg_opa: 30% }
-                    on_short_click:
-                      - script.execute: tab5_alarm_stop
-                    widgets:
-                      - label: { text: "\U000F04DB", align: CENTER, text_font: mdi_font_45, styles: style_text_error }
+                      # Rendez-vous : bandeau à l'écran et annonce vocale (tab5_rdv_announce).
+                      - !include { file: reglages_rangee.yaml, vars: { y: 236, w: 555, icon: "\U000F00F0", label_text: "Annonce des rendez-vous" } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_rdv_oui, x: 17, y: 276, w: 273, label_text: "Oui", appui: [ switch.turn_on: tab5_alarm_rdv_on ] } }
+                      - !include { file: choix_btn.yaml, vars: { id: btn_alarm_rdv_non, x: 298, y: 276, w: 273, label_text: "Non", appui: [ switch.turn_off: tab5_alarm_rdv_on ] } }
+                      - label: { text: "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous.", align: TOP_LEFT, x: 22, y: 348, width: 545, long_mode: WRAP, styles: style_text_dim }
 
-                - button:
-                    align: RIGHT_MID
-                    x: -4
-                    width: 180
-                    height: 68
-                    radius: 20
-                    styles: style_clim_btn
-                    pressed: { bg_opa: 30% }
-                    on_short_click:
-                      - script.execute: tab5_alarm_close
+                - obj:
+                    align: TOP_LEFT
+                    x: 637
+                    y: 0
+                    width: 589
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
                     widgets:
-                      - label: { text: "Fermer", align: CENTER }
+                      # Prochain rendez-vous (poussé par HA, tab5_maj_rdv_prochains) : trois
+                      # lignes au plus, « … » au-delà (hauteur fixe).
+                      - label: { text: "\U000F09D3", align: TOP_LEFT, x: 17, y: 14, text_font: mdi_font_32, styles: style_text_accent }
+                      - label: { text: "PROCHAIN RENDEZ-VOUS", align: TOP_LEFT, x: 57, y: 18, styles: style_text_dim }
+                      - label: { id: lbl_alarm_rdv_next, text: "", align: TOP_LEFT, x: 22, y: 64, width: 545, height: 120, long_mode: DOT, text_font: roboto_32_b }
+
+                      - label: { text: "Annoncer avant", align: TOP_LEFT, x: 17, y: 214, width: 555, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_rdv_avant, x: 160, y: 262, w: 270, h: 210, police: roboto_45_b, ecart: 17, quoi: 8 } }
+                      - label: { text: "le début du rendez-vous", align: TOP_LEFT, x: 17, y: 482, width: 555, text_align: CENTER, styles: style_text_dim }
