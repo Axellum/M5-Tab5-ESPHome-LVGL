@@ -5,8 +5,8 @@
 #       1280×720). Grille 7×6 lundi-en-tête (42 cellules construites en C++), navigation
 #       ◀ / mois affiché / ▶ + bouton "Aujourd'hui", légende en bas, et sous-popup
 #       détail du jour (cal_day_popup, 780×540) ouvert au tap sur une cellule.
-#       Ouvert par on_long_press de btn_clock_calendar_zone (tab5-lvgl.yaml, zone
-#       tactile invisible sur la tuile horloge/date).
+#       Ouvert par l'appui long sur la date de l'horloge (btn_horloge_date,
+#       horloge_zone.yaml, geste « auto » ; ADR-0039), ou par un autre geste choisi.
 # @architecture_constraint La grille (numéros, alignement lundi-dimanche, weekend,
 #       "aujourd'hui") est calculée EN LOCAL par cal_render_month() (tab5_custom.cpp,
 #       date SNTP) — le popup reste utilisable sans HA. HA enrichit ensuite chaque mois

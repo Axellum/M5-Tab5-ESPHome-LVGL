@@ -368,9 +368,37 @@ constexpr int32_t kLargeurValeurLigne = 120;
 // et son écart (8).
 constexpr int32_t kLargeurValeurCarte = 190;
 
+// L'icône de la clim contre sa consigne (09/10/2026, lot A) : la consigne reste au centre
+// exact de la tuile, l'icône à 8 px à sa gauche. align_to (climate_card.yaml) ne place
+// qu'une fois ; la largeur de la consigne change avec son texte et la police du thème,
+// alors l'icône suit chaque changement de taille de l'une ou de l'autre. lv_obj_align()
+// reste en vigueur aux mises en page suivantes (centre de la tuile + décalage), même
+// quand ce rappel tombe pendant une mise en page (la position de la consigne n'y est pas
+// encore recalculée, sa largeur si).
+constexpr int32_t kEcartIconeConsigne = 8;
+bool s_icone_suivie = false;
+
+void consigne_icone_placer(lv_event_t*) {
+    const ReglablesUI& u = g_reglables_ui;
+    if (u.consigne_clim == nullptr || u.consigne_icone == nullptr) return;
+    const int32_t w = lv_obj_get_width(u.consigne_clim);
+    const int32_t wi = lv_obj_get_width(u.consigne_icone);
+    // Consigne centrée : x1 = c − w/2 ; bord droit de l'icône = x1 − écart.
+    lv_obj_align(u.consigne_icone, LV_ALIGN_CENTER, -(w / 2) - kEcartIconeConsigne - wi + wi / 2, 0);
+}
+
+void consigne_icone_suivre() {
+    const ReglablesUI& u = g_reglables_ui;
+    if (s_icone_suivie || u.consigne_clim == nullptr || u.consigne_icone == nullptr) return;
+    s_icone_suivie = true;
+    lv_obj_add_event_cb(u.consigne_clim, consigne_icone_placer, LV_EVENT_SIZE_CHANGED, nullptr);
+    lv_obj_add_event_cb(u.consigne_icone, consigne_icone_placer, LV_EVENT_SIZE_CHANGED, nullptr);
+}
+
 void peindre_carte() {
     const ReglablesUI& u = g_reglables_ui;
     if (u.zone == nullptr) return;
+    consigne_icone_suivre();
     ui_hidden(u.zone, !tuile_visible());
     // La pièce affichée a sa clim (ADR-0040) : elle passe avant le choix de la liste, qui
     // revient hors du mode HA ou sur une pièce sans clim.
@@ -378,11 +406,19 @@ void peindre_carte() {
     const Entree en = entree_choisie();
     const bool clim = piece < 0 && en.sorte == Sorte::CLIM;
     ui_hidden(u.consigne_clim, !clim);
+    ui_hidden(u.consigne_icone, !clim);
     ui_hidden(u.rangee, clim);
-    if (clim) return;
     Vue v;
     if (piece >= 0) vue_piece(piece, v);
     else vue(en, v);
+    if (clim) {
+        // La clim aussi a son icône, à gauche de sa consigne (09/10/2026, lot A : les
+        // minutes passent d'un appareil à l'autre sans dérouler la liste, l'icône dit
+        // lequel). La consigne elle-même reste peinte par tab5_clim.cpp (clim_target).
+        ui_text(u.consigne_icone, v.icone);
+        ui_text_color(u.consigne_icone, v.couleur_icone);
+        return;
+    }
     ui_text(u.icone, v.icone);
     ui_text_color(u.icone, v.couleur_icone);
     texte_ha_coupe(u.valeur, v.valeur, kLargeurValeurCarte);
@@ -639,6 +675,16 @@ void reglables_choisir(int ligne) {
     }
     reglables_liste_fermer();
     peindre_carte();
+}
+
+void reglables_suivant() {
+    charger();
+    if (!tuile_visible()) return;  // tuile masquée : rien à régler
+    Entree l[kReglablesLignes];
+    const int n = lister(l);
+    // Même chemin qu'un toucher de ligne : la valeur en attente part, le choix va en NVS,
+    // la liste (ouverte ou non) est refermée.
+    reglables_choisir((choisie(l, n) + 1) % n);
 }
 
 void reglables_volume_tablette() {

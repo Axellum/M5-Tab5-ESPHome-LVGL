@@ -22,6 +22,7 @@ script:
           ReglablesUI& u = g_reglables_ui;
           u.zone = id(climate_controls_zone);
           u.consigne_clim = id(clim_target);
+          u.consigne_icone = id(clim_consigne_icone);
           u.rangee = id(reglable_rangee);
           u.icone = id(reglable_icone);
           u.valeur = id(reglable_valeur);

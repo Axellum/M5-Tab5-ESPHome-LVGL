@@ -75,6 +75,8 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_calendrier_jour": {"date": "2026-09-17", "payload": "travail|08:00-16:00;rdv|Dentiste 14:30"},
     "tab5_maj_zones": {"absentes": "clim,pot_4,pot_5"},
     "tab5_maj_emplacements": {"payload": "lumiere_1|on|180;salon|21.4|21.4;t02|on|128|FFB347;t01|open|45|;climr|16|30|0.5|°C|7|Salon;appuis|auto|rien|arcade;"
+                                         "gestes|auto|reveil|appareil_suivant|auto|rangee_suivante|calendrier|"
+                                         "mode_domo|auto|reglages|auto|ecoute|tv;"
                                          "h00|21.4|21.4|;h01|on|180|FFB347;r0|on|35;r1|on|128;"},
     "tab5_maj_tuiles": {"payload": "p0|Salon;t00|lum|lampadaire|d||Lampadaire;t01|vol||||Volet;t02|cap|thermometre||°C|Température;"
                                    "hp|0;hd|32;h00|cap|thermometre||°C|Salon|temperature;h01|lum|lampadaire|d||Lampadaire|;"

@@ -60,11 +60,13 @@
 #         tuiles, états « rN|état|valeur » (variables reglables, reglables_bornes,
 #         déclencheurs reglable_…) ; la commande « regler » (ou « consigne » pour une
 #         clim) ne vise que ces entités-là.
-#       - section « Boutons du haut » (07/10/2026), facultative : l'écran qu'ouvre l'appui
-#         long de chacun des trois boutons en haut à droite de l'accueil. Clé
-#         « appuis|maison|engrenage|manette » de tab5_maj_emplacements (variable appuis),
-#         avec tous les états ; un code inconnu part en « auto ». Un firmware plus ancien
-#         l'ignore et garde ses appuis longs.
+#       - section « Horloge et boutons du haut » (07/10/2026, étendue le 09/10/2026, lot A,
+#         ADR-0039), facultative : le tap et l'appui long des trois zones de l'horloge
+#         (heures, minutes, date) et des trois boutons en haut à droite de l'accueil. Clé
+#         « gestes|c1|…|c12 » de tab5_maj_emplacements (variable gestes, ordre de l'enum
+#         Geste) et l'ancienne « appuis|maison|engrenage|manette » (variable appuis, pour un
+#         firmware 3.7), avec tous les états ; un code inconnu part en « auto ». Un
+#         firmware plus ancien les ignore et garde ses gestes.
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -981,46 +983,50 @@ blueprint:
               step: 8
               unit_of_measurement: s
               mode: slider
-    # Boutons du haut (07/10/2026, demande d'Axel) : l'écran qu'ouvre l'appui long de chacun
-    # des trois boutons en haut à droite de l'accueil. Les taps ne changent pas. Clé
-    # « appuis » de tab5_maj_emplacements (variable appuis) ; un firmware plus ancien
-    # l'ignore. Codes = kCodesEcran de Tab5/ecran/tab5_zones.cpp, plus « auto »
-    # (tests/test_appuis.py) : ni traduits ni renommés sans le firmware.
+    # Horloge et boutons du haut (07/10/2026 pour les appuis longs des boutons, 09/10/2026
+    # pour tout le reste, lot A, ADR-0039) : le tap court et l'appui long des trois zones de
+    # l'horloge (heures, minutes, date) et des trois boutons en haut à droite de l'accueil.
+    # Clé « gestes » de tab5_maj_emplacements (variable gestes, 12 champs dans l'ordre des
+    # entrées ci-dessous) et, pour un firmware 3.7, l'ancienne clé « appuis » (variable
+    # appuis, les trois appuis longs) ; un firmware plus ancien ignore l'une et l'autre.
+    # La section garde sa clé boutons_haut et ses trois entrées appui_* (automatisations
+    # déjà enregistrées). Codes = kCodesGestes de Tab5/ecran/tab5_zones.cpp, plus « auto »
+    # (tests/test_gestes.py) : ni traduits ni renommés sans le firmware.
     boutons_haut:
-      name: Boutons du haut · Top buttons
+      name: Horloge et boutons du haut · Clock and top buttons
       icon: mdi:gesture-tap-hold
       collapsed: true
       description: >-
-        L'écran qu'ouvre un appui long sur chacun des trois boutons en haut à droite de
-        l'accueil (firmware 3.7 ou plus récent). Le tap ne change pas. Une petite icône
-        dans le coin du bouton montre l'écran choisi ; un écran absent de la maison (pas de
-        clim, de plantes, de TV, ou pas de production solaire pour Énergie) ne s'ouvre pas.
-        Si l'engrenage n'ouvre plus la console système, l'entité « Aller à l'écran » de la
-        tablette l'ouvre toujours.
+        Ce que font un tap et un appui long sur l'horloge de l'accueil (trois zones : les
+        heures, les minutes, la date) et sur les trois boutons en haut à droite (firmware
+        3.8 ou plus récent ; les appuis longs des boutons dès la 3.7). Automatique : ce que
+        le geste faisait avant ce choix. Une petite icône dans le coin d'un bouton montre ce
+        que fait son appui long ; un tap changé change son icône. Un écran absent de la
+        maison (pas de clim, de plantes, de TV, ou pas de production solaire pour Énergie)
+        ne s'ouvre pas. L'entité « Aller à l'écran » de la tablette ouvre toujours chaque
+        écran.
 
 
-        The screen a long press opens on each of the three buttons at the top right of the
-        home page (firmware 3.7 or newer). The tap does not change. A small icon in the
-        button's corner shows the chosen screen; a screen your home lacks (no climate,
-        plants or TV, or no solar production for Energy) does not open. If the gear no
-        longer opens the system console, the tablet's « Aller à l'écran » entity still
-        does.
+        What a tap and a long press do on the home page clock (three zones: the hours, the
+        minutes, the date) and on the three buttons at the top right (firmware 3.8 or
+        newer; the long presses of the buttons from 3.7). Automatic: what the gesture did
+        before this choice. A small icon in a button's corner shows what its long press
+        does; a changed tap changes its icon. A screen your home lacks (no climate, plants
+        or TV, or no solar production for Energy) does not open. The tablet's « Aller à
+        l'écran » entity still opens every screen.
       input:
-        appui_maison:
-          name: "Maison : appui long · House: long press"
+        geste_heures_court:
+          name: "Heures : tap · Hours: tap"
           description: >-
-            Le bouton maison, à gauche des trois (son tap montre vos appareils ; masqué
-            quand aucune pièce n'en a). Automatique : la fenêtre Énergie, quand la
-            production solaire s'affiche.
+            Les deux chiffres des heures, en haut à gauche de l'horloge. Automatique : rien.
 
 
-            The house button, left of the three (its tap shows your devices; hidden when no
-            room has any). Automatic: the Energy window, when the solar production shows.
+            The two hour digits, top left of the clock. Automatic: nothing.
           default: auto
           selector:
             select:
               mode: dropdown
-              options: &ecrans_appui_long
+              options: &codes_gestes
                 - label: "Automatique (par défaut) · Automatic (default)"
                   value: auto
                 - label: "Rien · Nothing"
@@ -1049,34 +1055,153 @@ blueprint:
                   value: arcade
                 - label: "Maison · House"
                   value: maison
+                - label: "Mode Domo : les appareils de la pièce · Domo mode: the room's devices"
+                  value: mode_domo
+                - label: "Appareil suivant de la tuile − / + · Next device of the − / + tile"
+                  value: appareil_suivant
+                - label: "Ligne suivante sous l'horloge · Next line under the clock"
+                  value: rangee_suivante
+                - label: "Écoute « Ok Nabu » (marche / arrêt) · « Ok Nabu » listening (on / off)"
+                  value: ecoute
+        geste_heures_long:
+          name: "Heures : appui long · Hours: long press"
+          description: >-
+            Automatique : le réveil.
+
+
+            Automatic: the alarm clock.
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *codes_gestes
+        geste_minutes_court:
+          name: "Minutes : tap · Minutes: tap"
+          description: >-
+            Les deux chiffres des minutes, en haut à droite de l'horloge. Automatique :
+            l'appareil suivant de la tuile − / + (sans dérouler sa liste ; l'icône devant la
+            valeur dit lequel).
+
+
+            The two minute digits, top right of the clock. Automatic: the next device of the
+            − / + tile (without opening its list; the icon before the value tells which).
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *codes_gestes
+        geste_minutes_long:
+          name: "Minutes : appui long · Minutes: long press"
+          description: >-
+            Automatique : le réveil.
+
+
+            Automatic: the alarm clock.
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *codes_gestes
+        geste_date_court:
+          name: "Date : tap · Date: tap"
+          description: >-
+            La date, sous l'heure. Automatique : la ligne suivante de la rangée sous
+            l'horloge (section « Sous l'horloge »).
+
+
+            The date, under the time. Automatic: the next line of the row under the clock
+            (section « Sous l'horloge · Under the clock »).
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *codes_gestes
+        geste_date_long:
+          name: "Date : appui long · Date: long press"
+          description: >-
+            Automatique : le calendrier.
+
+
+            Automatic: the calendar.
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *codes_gestes
+        geste_maison_court:
+          name: "Maison : tap · House: tap"
+          description: >-
+            Le bouton maison, à gauche des trois (masqué quand aucune pièce n'a
+            d'appareil). Automatique : les appareils de la pièce (mode Domo).
+
+
+            The house button, left of the three (hidden when no room has any device).
+            Automatic: the room's devices (Domo mode).
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *codes_gestes
+        appui_maison:
+          name: "Maison : appui long · House: long press"
+          description: >-
+            Automatique : la fenêtre Énergie, quand la production solaire s'affiche.
+
+
+            Automatic: the Energy window, when the solar production shows.
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *codes_gestes
+        geste_engrenage_court:
+          name: "Engrenage : tap · Gear: tap"
+          description: >-
+            Le bouton engrenage, au milieu. Automatique : les réglages de la tablette.
+
+
+            The gear button, in the middle. Automatic: the tablet's settings.
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *codes_gestes
         appui_engrenage:
           name: "Engrenage : appui long · Gear: long press"
           description: >-
-            Le bouton engrenage, au milieu (son tap ouvre les réglages). Automatique : la
-            console système.
+            Automatique : la console système.
 
 
-            The gear button, in the middle (its tap opens the settings). Automatic: the
-            system console.
+            Automatic: the system console.
           default: auto
           selector:
             select:
               mode: dropdown
-              options: *ecrans_appui_long
+              options: *codes_gestes
+        geste_manette_court:
+          name: "Manette : tap · Gamepad: tap"
+          description: >-
+            Le bouton manette, à droite. Automatique : l'Arcade.
+
+
+            The gamepad button, on the right. Automatic: the Arcade.
+          default: auto
+          selector:
+            select:
+              mode: dropdown
+              options: *codes_gestes
         appui_manette:
           name: "Manette : appui long · Gamepad: long press"
           description: >-
-            Le bouton manette, à droite (son tap ouvre l'Arcade). Automatique : la
-            télécommande TV, quand une TV est choisie.
+            Automatique : la télécommande TV, quand une TV est choisie.
 
 
-            The gamepad button, on the right (its tap opens the Arcade). Automatic: the TV
-            remote, when a TV is picked.
+            Automatic: the TV remote, when a TV is picked.
           default: auto
           selector:
             select:
               mode: dropdown
-              options: *ecrans_appui_long
+              options: *codes_gestes
     planning:
       name: Planning de travail · Work schedule
       icon: mdi:calendar-clock
@@ -2570,20 +2695,49 @@ variables:
     {%- endfor -%}
     {{ tout_pousser
        or (trigger.id == 'mesures' and energie_crete | float(0) > 0 and ns.change) }}
-  # Appuis longs des boutons du haut (section « Boutons du haut ») : « appuis|maison|
-  # engrenage|manette; », poussé avec tous les états (connexion, rechargement — dont
-  # l'enregistrement de l'automatisation —, MAJ Écran, démarrage de HA). Un code hors de
-  # la liste (automatisation écrite à la main) part en « auto ».
+  # Gestes de l'horloge et des boutons du haut (section « Horloge et boutons du haut ») :
+  # codes de kCodesGestes (Tab5/ecran/tab5_zones.cpp) plus « auto », dans le même ordre
+  # (tests/test_gestes.py). Un code hors de la liste (automatisation écrite à la main) part
+  # en « auto ».
+  codes_gestes: [auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie,
+                 reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante,
+                 ecoute]
+  # « gestes|c1|…|c12; » : les 12 gestes dans l'ORDRE de l'enum Geste (tab5_zones.h) —
+  # heures tap, heures long, minutes tap, minutes long, date tap, date long, maison tap,
+  # maison long, engrenage tap, engrenage long, manette tap, manette long. Poussé avec
+  # tous les états (connexion, rechargement — dont l'enregistrement de l'automatisation —,
+  # MAJ Écran, démarrage de HA). Un firmware plus ancien ignore la clé.
+  gestes_choix:
+    - !input geste_heures_court
+    - !input geste_heures_long
+    - !input geste_minutes_court
+    - !input geste_minutes_long
+    - !input geste_date_court
+    - !input geste_date_long
+    - !input geste_maison_court
+    - !input appui_maison
+    - !input geste_engrenage_court
+    - !input appui_engrenage
+    - !input geste_manette_court
+    - !input appui_manette
+  gestes: >-
+    {%- set ns = namespace(l=[]) -%}
+    {%- for c in gestes_choix -%}
+      {%- set ns.l = ns.l + [c if c is string and c in codes_gestes else 'auto'] -%}
+    {%- endfor -%}
+    gestes|{{ ns.l | join('|') }};
+  # Appuis longs des boutons du haut, l'ancienne clé (07/10/2026) : « appuis|maison|
+  # engrenage|manette; », pour un firmware 3.7, qui ne lit pas « gestes » (une action de
+  # l'accueil y vaut « auto ») ; un firmware plus récent la laisse de côté quand « gestes »
+  # est dans le même payload. Poussée avec tous les états, comme gestes.
   appuis_choix:
     - !input appui_maison
     - !input appui_engrenage
     - !input appui_manette
   appuis: >-
-    {%- set codes = ['auto', 'rien', 'assistant', 'calendrier', 'reveil', 'clim', 'plantes', 'tv',
-                     'console', 'energie', 'reglages', 'alertes', 'arcade', 'maison'] -%}
     {%- set ns = namespace(l=[]) -%}
     {%- for c in appuis_choix -%}
-      {%- set ns.l = ns.l + [c if c is string and c in codes else 'auto'] -%}
+      {%- set ns.l = ns.l + [c if c is string and c in codes_gestes else 'auto'] -%}
     {%- endfor -%}
     appuis|{{ ns.l | join('|') }};
 
@@ -3071,10 +3225,10 @@ actions:
             {%- set ns.r = ns.r ~ c ~ '|' ~ (states(x) | replace('|', '/') | replace(';', ',')) ~ '|' ~ v ~ ';' -%}
           {%- endif -%}
         {%- endfor -%}
-        {#- Appuis longs des boutons du haut (variable appuis), avec tous les états. Un
-            firmware sans ce choix ignore la clé (clé inconnue). -#}
+        {#- Gestes de l'horloge et des boutons du haut (variables appuis, puis gestes), avec
+            tous les états. Un firmware sans ces choix ignore les clés (clé inconnue). -#}
         {%- if tout_pousser -%}
-          {%- set ns.r = ns.r ~ appuis -%}
+          {%- set ns.r = ns.r ~ appuis ~ gestes -%}
         {%- endif -%}
         {#- Icône solaire du bandeau : « solaire|pourcentage; » (voir solaire_a_pousser). Un
             firmware sans cette icône ignore la clé (clé inconnue). -#}

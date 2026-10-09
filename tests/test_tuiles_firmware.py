@@ -429,7 +429,9 @@ def test_mode_ha_seule_source_et_swipe_par_piece():
     assert "!ctx.ha_mode" in _fonction(central, "rotator_owns_card")
     assert "if (g_central_ctx.ha_mode) return RetourAuto::RIEN;" in _lire("Tab5", "ecran", "tab5_anim.cpp")
     assert "if (e == Ecran::ACCUEIL) tuiles_mode_ha(false);" in _lire("Tab5", "paquets", "tab5-navigation.yaml")
-    assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "paquets", "tab5-lvgl.yaml")
+    # Le tap du bouton maison (action mode_domo, au choix depuis le 09/10/2026) : script
+    # tab5_geste (tests/test_gestes.py).
+    assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "paquets", "tab5-navigation.yaml")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

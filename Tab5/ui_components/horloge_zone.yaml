@@ -1,0 +1,25 @@
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 3x par tab5-lvgl.yaml : une des
+# trois zones tactiles invisibles posées sur la tuile de l'horloge (09/10/2026, lot A,
+# ADR-0039) — HEURES, MINUTES, DATE. Avant, une seule zone couvrait toute la tuile
+# (btn_clock_calendar_zone : tap = réveil, appui long = calendrier).
+# Vars : id (btn_horloge_heures / _minutes / _date), x, y, largeur, hauteur (coordonnées de
+#        la PAGE, la tuile clock_tile est à x 440..840, y 20..229),
+#        court / long_appui (valeur de Geste, tab5_zones.h : ce que fait le geste se
+#        choisit dans le blueprint, section « Horloge et boutons du haut » ; « auto » :
+#        heures rien / réveil, minutes appareil suivant de la tuile − / + / réveil, date
+#        ligne suivante de la rangée / calendrier).
+# Le script tab5_geste (tab5-navigation.yaml) exécute le geste par geste_cible()
+# (tab5_zones.cpp). LVGL n'envoie pas le tap court après un appui long.
+# Invisible (style_invisible) : l'horloge reste dessinée par clock_tile, dessous.
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: ${largeur}
+  height: ${hauteur}
+  styles: style_invisible
+  on_short_click:
+    - lambda: 'id(tab5_geste).execute(${court});'
+  on_long_press:
+    - lambda: 'id(tab5_geste).execute(${long_appui});'

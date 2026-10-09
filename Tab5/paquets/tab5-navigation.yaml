@@ -6,17 +6,19 @@
 #       - le registre des fenêtres modales (`tab5_modal_registry_init`, ADR-0013) :
 #         chaque fenêtre, son libellé et, pour un écran, la façon de l'ouvrir ;
 #       - `tab5_ecran_ouvrir`, la SEULE routine d'ouverture d'un écran (select
-#         « Aller à l'écran », appuis longs des trois boutons du haut) ;
+#         « Aller à l'écran », gestes de l'accueil) ;
+#       - `tab5_geste` (09/10/2026, lot A) : un geste de l'horloge ou des trois boutons du
+#         haut, choisi dans le blueprint ;
 #       - le select « Aller à l'écran » et le text_sensor « Écran courant ».
 # @architecture_constraint La liste des écrans vit en trois endroits qu'ESPHome ne sait
-#       pas réunir : l'enum Ecran (tab5_custom.h : valeurs, codes de kCodesEcran gardés en
+#       pas réunir : l'enum Ecran (tab5_custom.h : valeurs, codes de kCodesGestes gardés en
 #       NVS), les options du select (lues par HA : ni traduites, ni réordonnées) et le
 #       registre ci-dessous (fenêtre, libellé, ouverture). Les trois sont tenus
 #       d'accord par des tests : ordre enum ↔ select (tests/test_appuis.py), libellés
 #       select ↔ registre (tools/check_tab5_registry.py). Un écran de plus : sa valeur
 #       dans l'enum (avant ARCADE), son option à la fin du select, sa ligne `add` ici
 #       avec son ouverture si elle passe par un script, et son code à la fin de
-#       kCodesEcran (tab5_zones.cpp) et dans le blueprint. Avant le 08/10/2026, un
+#       kCodesGestes (tab5_zones.cpp) et dans le blueprint. Avant le 08/10/2026, un
 #       `switch` de 12 cas dans tab5_ecran_ouvrir recopiait la liste une 4e fois.
 #       Chargé APRÈS tab5_lvgl (il référence ses widgets) et avant tab5_ha_controls,
 #       à la place qu'avaient ses entités dans ce fichier.
@@ -98,9 +100,41 @@ script:
           ModalRegistry::add(id(reglables_liste),        nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(roue_actions),           nullptr,            ModalRegistry::SUBWINDOW);
 
+  # Un geste de l'accueil (09/10/2026, lot A, ADR-0039) : tap court ou appui long sur une
+  # des trois zones de l'horloge (ui_components/horloge_zone.yaml) ou un des trois boutons
+  # du haut (ui_components/bouton_haut.yaml). `geste` = valeur de Geste (tab5_zones.h) ;
+  # geste_cible() (tab5_zones.cpp) dit ce qu'il fait d'après le blueprint (clés gestes et
+  # appuis, « auto » sinon). Un écran s'ouvre par tab5_ecran_ouvrir, la routine unique ;
+  # une action de l'accueil est faite ici, comme le faisait son geste d'origine. Une
+  # action de plus : sa valeur dans GesteAction, son code à la fin de kCodesGestes, sa
+  # branche ici. Pas de `switch` : les actions sont peu nombreuses, chaque branche dit
+  # d'où elle vient.
+  - id: tab5_geste
+    mode: queued
+    max_runs: 4
+    parameters:
+      geste: int
+    then:
+      - lambda: |-
+          const GesteCible c = geste_cible(geste);
+          if (c.action == GesteAction::ECRAN) {
+            id(tab5_ecran_ouvrir).execute(c.ecran);
+          } else if (c.action == GesteAction::MODE_DOMO) {
+            // Le tap d'origine du bouton maison (ADR-0023) ; « prévisions périmées » suit
+            // tout de suite (masquée en mode HA, tab5_forecast.cpp).
+            tuiles_mode_ha(!g_central_ctx.ha_mode);
+            previsions_fraicheur_tick(id(previsions_perimees), id(lbl_previsions_perimees));
+          } else if (c.action == GesteAction::APPAREIL_SUIVANT) {
+            reglables_suivant();  // tuile − / + (ADR-0033), le choix reste en NVS
+          } else if (c.action == GesteAction::RANGEE_SUIVANTE) {
+            rangee_toucher();  // le toucher de la rangée sous l'horloge (ADR-0031)
+          } else if (c.action == GesteAction::ECOUTE) {
+            id(tab5_wake_word_active).toggle();  // le tap du bouton « Ok Nabu »
+          }
+
   # Ouverture d'un écran (07/10/2026) : la routine UNIQUE du select « Aller à l'écran »
-  # (plus bas) et des appuis longs des trois boutons du haut (ui_components/bouton_haut.yaml,
-  # écran choisi dans le blueprint, bouton_haut_ecran()). `ecran` = valeur d'Ecran
+  # (plus bas) et des gestes de l'accueil (script tab5_geste ci-dessus, écran choisi dans
+  # le blueprint, geste_cible()). `ecran` = valeur d'Ecran
   # (tab5_custom.h) : l'index d'une option du select, ou ARCADE, qui n'en est pas une
   # (lancer l'Arcade à distance n'a pas d'usage). Tout s'exécute pendant l'appel (aucun
   # délai) ; le select se remet lui-même sur « — » ensuite.
@@ -159,7 +193,7 @@ script:
 
           // Zone absente de cette maison (lot 5, tab5-zones.yaml) : sa fenêtre n'aurait
           // rien à montrer ni à piloter. Les options restent : HA lit la liste fixe.
-          // (Un appui long ne demande jamais un écran absent : bouton_haut_ecran().)
+          // (Un geste ne demande jamais un écran absent : geste_cible().)
           if (ecran_sans_zone(e)) {
             ESP_LOGI("TAB5", "Aller a l'ecran : '%s' absent de cette maison", nom);
             return;

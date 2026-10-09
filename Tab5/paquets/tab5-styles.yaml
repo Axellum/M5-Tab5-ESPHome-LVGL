@@ -189,20 +189,32 @@ font:
     size: 70
     bpp: 1
     glyphs:
-      - "\U000F0020"  # alarm
+      # Bouton du haut dont le tap est changé dans le blueprint (09/10/2026, lot A) : le
+      # glyphe de ce que fait le tap (code_glyphe, tab5_zones.cpp) ; ceux de la palette
+      # (flower, home, solar-power) sont plus bas.
+      - "\U000F0020"  # alarm (aussi tap : Réveil)
+      - "\U000F018D"  # console (tap : Console système)
       - "\U000F0297"  # gamepad-variant (bouton du haut : Arcade, 06/10/2026)
       - "\U000F02E3"  # bed
       - "\U000F02E5"  # pot
+      - "\U000F036C"  # microphone (tap : Assistant vocal)
       - "\U000F0379"  # monitor
       - "\U000F0493"  # cog (bouton du haut : Réglages, 06/10/2026)
       - "\U000F04B9"  # sofa
       - "\U000F06A9"  # robot
+      - "\U000F0717"  # snowflake (tap : Climatisation)
+      - "\U000F0729"  # view-sequential (tap : ligne suivante sous l'horloge)
+      - "\U000F07C0"  # desktop-classic (tap : télécommande TV)
+      - "\U000F07C5"  # ear-hearing (tap : Ok Nabu)
       - "\U000F07D0"  # home-assistant
       - "\U000F09F1"  # flower-tulip
       - "\U000F0D08"  # flower-poppy
+      - "\U000F0E17"  # calendar-month (tap : Calendrier)
       - "\U000F0E66"  # sprout
+      - "\U000F0E81"  # bell-alert-outline (tap : Alertes)
       - "\U000F1051"  # led-strip-variant
       - "\U000F111E"  # window-shutter-open
+      - "\U000F14C9"  # plus-minus-variant (tap : appareil suivant de la tuile − / +)
       # >>> tuiles
       # Palette des tuiles de pièce (ADR-0023), sauf les glyphes déjà listés au-dessus.
       - "\U000F001B"  # air-conditioner (clim)
@@ -628,13 +640,17 @@ font:
       - "\U000F05CE"  # clock-alert-outline (prévisions périmées, au-dessus des tuiles)
       - "\U000F06A5"  # power-plug (tablette sans batterie détectée)
       - "\U000F0717"  # snowflake (mini icône : Climatisation)
+      - "\U000F0729"  # view-sequential (mini icône : ligne suivante sous l'horloge, 09/10/2026)
       - "\U000F07C0"  # desktop-classic (mini icône de la manette : télécommande TV, 06/10/2026)
+      - "\U000F07C5"  # ear-hearing (mini icône : Ok Nabu)
+      - "\U000F07D0"  # home-assistant (mini icône : mode Domo)
       - "\U000F0A72"  # solar-power (mini icône : Énergie choisie dans le blueprint)
       - "\U000F0D9B"  # solar-panel (production solaire du bandeau, tous les paliers ; mini icône « auto » de « HA »)
       - "\U000F0E17"  # calendar-month (mini icône : Calendrier)
       - "\U000F0E81"  # bell-alert-outline (mini icône : Alertes)
       - "\U000F12A1"  # battery-low (20 à 40 %)
       - "\U000F12A2"  # battery-medium (41 à 80 %)
+      - "\U000F14C9"  # plus-minus-variant (mini icône : appareil suivant de la tuile − / +)
 
   # 36 px — popup Assistant vocal (assistant_popup.yaml).
   - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
