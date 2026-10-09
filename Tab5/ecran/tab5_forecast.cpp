@@ -1,9 +1,10 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_forecast.cpp
- * @role Météo : icônes (update_meteo_icon), couleurs température/humidité, parsing
- *       des payloads bulk jours/heures (cal_jours_data / cal_heures_data), rafraîchissement
- *       des 5 tuiles journalières et horaires.
+ * @role Météo : icônes (update_meteo_icon), couleurs température/humidité, réception
+ *       des payloads bulk jours/heures (cal_jours_data / cal_heures_data ; leur lecture est
+ *       dans Tab5/socle/tab5_parse.cpp depuis le lot F), rafraîchissement des 5 tuiles
+ *       journalières et horaires.
  *       Unité de compilation issue de la scission de tab5_custom.cpp (lot (e) de
  *       l'audit du 06/09/2026, faite le 08/09/2026) : mêmes fonctions, même ordre,
  *       aucune logique modifiée.
@@ -158,38 +159,17 @@ uint32_t get_temperature_color(float t) {
 // Centralise le parsing du payload serialise et la mise a jour LVGL
 // =============================================================================
 
-// Remplacement de split_token par un parsing in-place avec strtok_r pour éviter la fragmentation de la SRAM.
+// Lecture des payloads : previsions_heures_lire() / previsions_jours_lire()
+// (Tab5/socle/tab5_parse.h, lot F de l'audit du 30/09/2026), testées sur PC.
 static void parse_and_update_heures_bulk(const std::string& payload) {
     if (payload.empty()) return;
-    if (payload_trop_long("tab5.forecast", payload.size(), 2048)) return;  // tampon de pile
+    if (payload_trop_long("tab5.forecast", payload.size(), kPrevisionsMax)) return;  // tampon de pile
     ESP_LOGD("tab5.forecast", "Received heures bulk payload length: %d", payload.length());
-    // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
-    // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
-    char buf[2049];
-    strncpy(buf, payload.c_str(), sizeof(buf) - 1);
-    buf[sizeof(buf) - 1] = '\0';
-    char* saveptr1 = nullptr;
-
-    char* token = strtok_r(buf, ";", &saveptr1);
-    while (token != nullptr) {
-        char* parts[6];
-        const int num_parts = split_fields(token, '|', parts, 6);
-
-        if (num_parts >= 5) {
-            int idx = std::atoi(parts[0]);
-            if (idx >= 0 && idx < 15) {
-                cal_heures_data[idx].heure_texte = parts[1];
-                cal_heures_data[idx].condition = parts[2];
-                cal_heures_data[idx].temp = std::atof(parts[3]);
-                cal_heures_data[idx].pluvio = std::atof(parts[4]);
-            }
-        }
-        token = strtok_r(nullptr, ";", &saveptr1);
-    }
+    previsions_heures_lire(payload.c_str(), cal_heures_data);
 }
 
 bool accept_heures_bulk(const std::string& payload, int forecast_page) {
-    const int premier = std::atoi(payload.c_str());  // idx du 1er créneau du bloc
+    const int premier = previsions_premier_creneau(payload.c_str());  // idx du 1er créneau du bloc
     if (premier < 0 || premier >= 15) {
         payload_refuse("tab5.forecast", "heures : premier créneau hors de 0 à 14", payload.size());
         return false;
@@ -205,42 +185,10 @@ bool accept_heures_bulk(const std::string& payload, int forecast_page) {
 
 void parse_and_update_jours_bulk(const std::string& payload) {
     if (payload.empty()) return;
-    if (payload_trop_long("tab5.forecast", payload.size(), 2048)) return;  // tampon de pile
+    if (payload_trop_long("tab5.forecast", payload.size(), kPrevisionsMax)) return;  // tampon de pile
     ESP_LOGD("tab5.forecast", "Received jours bulk payload length: %d", payload.length());
-    // Buffer stack plutot que "std::string s = payload;" (copie heap evitable
-    // jusqu'a 2048 octets) - mirroir du fix deja applique a tab5_maj_alerte_meteo_france.
-    char buf[2049];
-    strncpy(buf, payload.c_str(), sizeof(buf) - 1);
-    buf[sizeof(buf) - 1] = '\0';
-    char* saveptr1 = nullptr;
-
-    char* token = strtok_r(buf, ";", &saveptr1);
-    while (token != nullptr) {
-        // Découper chaque token par '|' — in-place, pas de std::vector
-        char* parts[10];  // 9 champs attendus + marge
-        const int num_parts = split_fields(token, '|', parts, 10);
-
-        if (num_parts >= 9) {
-            int jour = std::atoi(parts[0]);
-            if (jour >= 0 && jour < 15) {
-                cal_jours_data[jour].nom_jour = parts[1];
-                cal_jours_data[jour].condition = parts[2];
-                cal_jours_data[jour].tmin = std::atof(parts[3]);
-                cal_jours_data[jour].tmax = std::atof(parts[4]);
-                cal_jours_data[jour].est_repos = (parts[5][0] == '1');
-                cal_jours_data[jour].est_dimanche = (parts[6][0] == '1');
-                cal_jours_data[jour].est_passe = (parts[7][0] == '1');
-                cal_jours_data[jour].heures_ouverture = parts[8];
-                // HA calcule l'index 0 sur SON « aujourd'hui » au moment du push : on
-                // date la case 0 avec le jour local de réception (écart possible
-                // seulement si le push chevauche minuit à la seconde près). Heure pas
-                // encore synchronisée → -1 : le réveil reste sur l'heure fixe jusqu'au
-                // push suivant (cycle /10 min) plutôt que de deviner.
-                if (jour == 0) cal_jours_anchor_day = local_day_number_today();
-            }
-        }
-        token = strtok_r(nullptr, ";", &saveptr1);
-    }
+    // Le jour 0 date le lot : cal_jours_anchor_day (tab5_core.h).
+    previsions_jours_lire(payload.c_str(), cal_jours_data, cal_jours_anchor_day);
 }
 
 // =============================================================================
