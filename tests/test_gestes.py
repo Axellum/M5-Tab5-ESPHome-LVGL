@@ -17,7 +17,7 @@ On vérifie :
 - les trois zones de l'horloge couvrent la tuile sans trou ni recouvrement, coupées entre
   les chiffres et la date dans les 21 thèmes ; le rendu les touche ;
 - la NVS : nouvelle préférence, taille de SauvegardeAppuis inchangée ;
-- l'icône de la clim devant sa consigne tient entre − et + dans les 21 thèmes ;
+- l'icône de la clim, à gauche de sa consigne restée au centre, tient avant − dans les 21 thèmes ;
 - au rendu des VRAIS modèles Jinja du blueprint : défauts, choix, valeurs inconnues, quand
   la clé part."""
 import os
@@ -255,16 +255,25 @@ def test_le_rendu_touche_chaque_zone():
 # ─── Tuile − / + : l'icône de la clim tient entre − et + ─────────────────────
 
 def test_icone_de_la_clim_entre_moins_et_plus():
-    """Rangée flex (icône de 45 px, 8 px, consigne) centrée dans les 255 px entre − (finit
-    à 75) et + (commence à 330) : au moins 10 px d'air de chaque côté avec la consigne la
-    plus large (« 88.8 », un °F à décimale) dans la police de date de chaque thème."""
+    """La consigne reste au centre exact de la zone − / + (75..330 : 255 px), comme avant ;
+    l'icône de 45 px est posée à 8 px à sa gauche (align_to, puis suivie en C++ à chaque
+    changement de taille). Avec la consigne la plus large (« 88.8 », un °F à décimale) dans
+    la police de date de chaque thème, la moitié gauche (demi-consigne, 8 px, icône) laisse
+    au moins 10 px d'air avant −."""
     import gen_themes
     import police_theme
     carte = _lire(CLIM_CARTE)
-    rangee = carte.split("id: clim_consigne_rangee", 1)[1].split("- button:", 1)[0]
-    assert "align: CENTER" in rangee and "pad_column: 8" in rangee and "width: SIZE_CONTENT" in rangee
-    assert "id: clim_consigne_icone" in rangee and "text_font: mdi_font_45" in rangee
-    assert "id: clim_target" in rangee
+    zone = carte.split("id: climate_controls_zone", 1)[1].split("id: reglable_rangee", 1)[0]
+    assert "clim_consigne_rangee" not in carte
+    cible = zone.split("id: clim_target\n", 1)[1].split("- label:", 1)[0]
+    assert "align: CENTER" in cible and "styles: style_police_date" in cible
+    icone = zone.split("id: clim_consigne_icone\n", 1)[1].split("\n\n", 1)[0]
+    assert "text_font: mdi_font_45" in icone
+    assert "align_to: { id: clim_target, align: OUT_LEFT_MID, x: -8 }" in icone
+    placer = _fonction(_lire(os.path.join(TAB5, "ecran", "tab5_reglables.cpp")), "void consigne_icone_placer(")
+    assert "lv_obj_align(u.consigne_icone, LV_ALIGN_CENTER, -(w / 2) - kEcartIconeConsigne - wi + wi / 2, 0);" in placer
+    suivre = _fonction(_lire(os.path.join(TAB5, "ecran", "tab5_reglables.cpp")), "void consigne_icone_suivre(")
+    assert suivre.count("LV_EVENT_SIZE_CHANGED") == 2
     mesures = gen_themes.lire_polices()
     ref_cle = police_theme.REFERENCE
     textes = ("88.8", "--")
@@ -275,7 +284,8 @@ def test_icone_de_la_clim_entre_moins_et_plus():
         m = police_theme.mesurer(police_theme.fichier(*cle.rsplit("@", 1)), chars)
         taille = mesures[cle]["date"]["taille"]
         texte = max(police_theme.largeur(m, t, taille, ref) for t in textes)
-        assert 45 + 8 + texte <= 255 - 2 * 10, f"{theme.fichier} : {45 + 8 + texte} px entre − et +"
+        gauche = texte // 2 + 8 + 45
+        assert gauche <= 255 // 2 - 10, f"{theme.fichier} : {gauche} px à gauche du centre, entre − et +"
 
 
 # ─── Blueprint : rendu des vrais modèles ─────────────────────────────────────

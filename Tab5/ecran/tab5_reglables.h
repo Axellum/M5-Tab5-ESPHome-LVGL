@@ -24,8 +24,8 @@ constexpr int kReglablesLignes = 10;  // clim + huit appareils du blueprint + ta
 // dessin ; commandes posées par le même script (lambdas sans capture).
 struct ReglablesUI {
     lv_obj_t* zone = nullptr;             // climate_controls_zone : − / valeur / +
-    lv_obj_t* consigne_clim = nullptr;    // clim_consigne_rangee : icône + clim_target, quand la clim est choisie
-    lv_obj_t* consigne_icone = nullptr;   // clim_consigne_icone : l'icône de la clim devant sa consigne
+    lv_obj_t* consigne_clim = nullptr;    // clim_target : la consigne de la clim, quand elle est choisie
+    lv_obj_t* consigne_icone = nullptr;   // clim_consigne_icone : l'icône de la clim, à gauche de sa consigne
     lv_obj_t* rangee = nullptr;           // reglable_rangee : icône + valeur d'un autre appareil
     lv_obj_t* icone = nullptr;            // reglable_icone
     lv_obj_t* valeur = nullptr;           // reglable_valeur

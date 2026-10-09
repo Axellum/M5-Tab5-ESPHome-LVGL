@@ -24,8 +24,8 @@
 #                          (reglables_liste.yaml) : la clim du blueprint, les appareils de la
 #                          section « Tuile − / + » du blueprint, le volume de la tablette. Le
 #                          choix reste (NVS). Clim choisie : tout ce qui suit est inchangé,
-#                          sauf l'icône de la clim devant clim_target (clim_consigne_rangee,
-#                          09/10/2026). Autre appareil : clim_consigne_rangee est masquée,
+#                          sauf l'icône de la clim à gauche de clim_target (clim_consigne_icone,
+#                          09/10/2026). Autre appareil : clim_target et son icône sont masqués,
 #                          reglable_rangee montre son icône et sa valeur ; − / + passent par
 #                          reglables_pas() et la valeur par reglables_valeur_appui()
 #                          (tab5_reglables.cpp). Le tap court sur les minutes de l'horloge
@@ -146,31 +146,28 @@ obj:
         # − et + en verre plein (style_clim_btn, opaque depuis le 01/10/2026) : ils sont
         # posés sur cette tuile, pas sur la page — un pré-mélange sur BG serait faux ici.
         widgets:
-          # Clim choisie : son icône (palette des tuiles, couleur du mode) devant sa
-          # consigne (09/10/2026, lot A : on sait toujours ce que règle la tuile, même quand
-          # les minutes de l'horloge font passer d'un appareil à l'autre). Rangée flex
-          # centrée comme reglable_rangee : elle suit la largeur du texte, qui change avec
-          # la police du thème (tests/test_gestes.py : tient entre − et + dans les 21).
-          # L'icône est peinte par tab5_reglables.cpp, la consigne par tab5_clim.cpp.
-          - obj:
-              id: clim_consigne_rangee
+          - label:
+              id: clim_target
+              text: ""
               align: CENTER
-              width: SIZE_CONTENT
-              height: SIZE_CONTENT
-              styles: style_transparent
-              scrollable: false
-              layout:
-                type: FLEX
-                flex_flow: ROW
-                flex_align_cross: CENTER
-                pad_column: 8
-              widgets:
-                - label: { id: clim_consigne_icone, text: "", text_font: mdi_font_45, styles: style_text_dim }
-                - label:
-                    id: clim_target
-                    text: ""
-                    # Police de la date du thème (05/10/2026, avant roboto_55_b).
-                    styles: style_police_date
+              # Police de la date du thème (05/10/2026, avant roboto_55_b).
+              styles: style_police_date
+          # Clim choisie : son icône (palette des tuiles, couleur du mode) à gauche de sa
+          # consigne (09/10/2026, lot A : on sait toujours ce que règle la tuile, même quand
+          # les minutes de l'horloge font passer d'un appareil à l'autre). La consigne reste
+          # au centre exact de la tuile, comme avant ; l'icône est posée contre elle, à
+          # 8 px. align_to ne place qu'une fois, après le setup (ESPHome) : la largeur de la
+          # consigne change avec le texte et la police du thème, alors tab5_reglables.cpp
+          # replace l'icône à chaque changement de taille (consigne_icone_placer). Vide,
+          # l'icône ne décale rien. Tient entre − et + dans les 21 thèmes
+          # (tests/test_gestes.py). Peinte par tab5_reglables.cpp, la consigne par
+          # tab5_clim.cpp.
+          - label:
+              id: clim_consigne_icone
+              text: ""
+              text_font: mdi_font_45
+              styles: style_text_dim
+              align_to: { id: clim_target, align: OUT_LEFT_MID, x: -8 }
 
           # Autre appareil que la clim (ADR-0033) : son icône (palette des tuiles) et sa
           # valeur dans la police de la date, centrées entre − et + (75..330 : 255 px ;
