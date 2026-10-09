@@ -23,14 +23,16 @@ endroit : ceux de l'automatisation, restreints par une condition `trigger` ou un
 nulle part doit figurer dans CHAMPS_NON_LUS, avec sa raison.
 
 Les noms des événements eux-mêmes (émis ↔ écoutés) : tests/test_actions_ha.py. Les
-comptes et tables de la documentation : tests/test_doc_comptes.py."""
+comptes et tables de la documentation : tests/test_doc_comptes.py.
+
+La lecture des deux moitiés vit dans tools/contrat_api.py (phase 2, lot E : la même
+lecture sert à n'importe quel tag publié, pour le semver et la matrice N-1 de
+tests/test_contrat_versions.py) ; ce fichier en garde les vérifications."""
 import re
 from pathlib import Path
 
-import yaml
-
-from tests.test_actions_ha import _Chargeur, _fichiers_firmware, _parcourir
-from tests.commun import fichiers_du_depot
+import contrat_api
+from tests.test_actions_ha import _emissions
 
 REPO = Path(__file__).resolve().parent.parent
 HA = REPO / "HomeAssistant_Config"
@@ -46,41 +48,15 @@ CHAMPS_NON_LUS = {
     # la sienne (`cles_zones`, comparée à celle de la tablette par tests/test_zones.py).
     ("esphome.tab5_zones", "zones"),
 }
-# Ajouté par l'intégration ESPHome de HA à chaque événement d'un appareil.
-CHAMPS_DE_HA = {"device_id"}
-
-# « esphome.<appareil>_<action> » : `{{ tablette }}` dans le blueprint, le nom de
-# l'appareil (tab5_ha_hmi) dans les packages. Les actions de la tablette commencent
-# toutes par tab5_maj_ ou tab5_assist_.
-APPEL = re.compile(r"esphome\.(?:\{\{\s*\w+\s*\}\}|[a-z0-9_]+?)_(tab5_(?:maj|assist)_\w+)")
-LECTURE = re.compile(r"trigger\.event\.data(?:\.(\w+)|\[\s*['\"](\w+)['\"]\s*\])")
-ID_UNIQUE = re.compile(r"\{\{\s*trigger\.id\s*==\s*['\"](\w+)['\"]\s*\}\}")
-ID_LISTE = re.compile(r"\{\{\s*trigger\.id\s+in\s+\[([^\]]*)\]\s*\}\}")
-
-
-class _ChargeurFirmware(_Chargeur):
-    """Comme _Chargeur (étiquettes ESPHome ignorées), plus `<<: !include …` sauté : le
-    fichier inclus n'est pas lu, et PyYAML refuse une fusion qui n'est pas un dict."""
-
-    def flatten_mapping(self, noeud):
-        noeud.value = [(k, v) for k, v in noeud.value
-                       if not (k.tag == "tag:yaml.org,2002:merge" and isinstance(v, yaml.ScalarNode))]
-        super().flatten_mapping(noeud)
-
-
-def _charger(chemin):
-    return yaml.load(chemin.read_text(encoding="utf-8"), Loader=_ChargeurFirmware)
-
-
-def _relatif(chemin):
-    return chemin.relative_to(REPO).as_posix()
+CHAMPS_DE_HA = contrat_api.CHAMPS_DE_HA
 
 
 # ─── Le contrat du firmware ──────────────────────────────────────────────────
 
 def _actions(chemin):
     """{action: (variables…)} d'un bloc `api: services:`, dans l'ordre du fichier."""
-    return {s["service"]: tuple(s.get("variables") or {}) for s in _charger(chemin)["api"]["services"]}
+    return {nom: tuple(variables)
+            for nom, variables in contrat_api.actions_du_texte(chemin.read_text(encoding="utf-8")).items()}
 
 
 def contrat():
@@ -104,23 +80,12 @@ def test_lecture_de_la_demo_egale_a_celle_de_pyyaml():
 
 def _fichiers_ha():
     # Sans les fichiers ignorés par git (rendered/, placeholders.yaml) : en local comme en CI.
-    return [p for p in fichiers_du_depot(HA, "*.yaml") if p.name != "placeholders.example.yaml"]
+    return [REPO / c for c in contrat_api.fichiers_ha(contrat_api.arbre())]
 
 
 def appels_ha():
     """[(fichier, action, clés de data)] de chaque appel d'une action de la tablette."""
-    appels = []
-    for chemin in _fichiers_ha():
-        for d in _parcourir(_charger(chemin)):
-            nom = d.get("action", d.get("service"))
-            if not (isinstance(nom, str) and nom.startswith("esphome.")):
-                continue
-            m = APPEL.fullmatch(nom)
-            assert m, f"{_relatif(chemin)} : « {nom} », forme d'appel inconnue de ce test"
-            data = d.get("data") or {}
-            assert isinstance(data, dict), f"{_relatif(chemin)} : {nom}, `data:` doit être un dictionnaire"
-            appels.append((_relatif(chemin), m.group(1), tuple(data)))
-    return appels
+    return contrat_api.appels_ha(contrat_api.arbre())
 
 
 def test_les_appels_de_ha_sont_trouves():
@@ -175,101 +140,18 @@ def test_chaque_appel_du_rendu_passe_exactement_les_variables():
 def champs_emis():
     """{événement: champs} des `homeassistant.event` du firmware. Un même événement émis
     à plusieurs endroits porte partout les mêmes champs."""
-    emis, ou = {}, {}
-    for chemin in _fichiers_firmware():
-        for d in _parcourir(_charger(chemin)):
-            evt = d.get("homeassistant.event")
-            if not isinstance(evt, dict):
-                continue
-            nom = evt["event"]
-            assert "variables" not in evt, f"{_relatif(chemin)} : {nom}, champs en `variables:` non lus ici"
-            champs = frozenset(evt.get("data") or {}) | frozenset(evt.get("data_template") or {})
-            if nom in emis:
-                assert emis[nom] == champs, (f"{nom} : {sorted(champs)} dans {_relatif(chemin)}, "
-                                             f"{sorted(emis[nom])} dans {ou[nom]}")
-            emis[nom], ou[nom] = champs, _relatif(chemin)
-    return emis
-
-
-def _cle(declencheur, rang):
-    """Un déclencheur sans id a pour id son rang (comme dans HA)."""
-    return str(declencheur.get("id", rang))
-
-
-def _ids_restreints(conditions):
-    """Ids des déclencheurs auxquels ces conditions (liées par ET) limitent l'exécution,
-    ou None si elles ne disent rien du déclencheur."""
-    if isinstance(conditions, str):
-        if m := ID_UNIQUE.fullmatch(conditions.strip()):
-            return {m.group(1)}
-        if m := ID_LISTE.fullmatch(conditions.strip()):
-            return set(re.findall(r"['\"](\w+)['\"]", m.group(1)))
-        return None
-    if isinstance(conditions, dict):
-        if conditions.get("condition") == "trigger":
-            ids = conditions["id"]
-            return {str(i) for i in ids} if isinstance(ids, list) else {str(ids)}
-        if conditions.get("condition") == "template":
-            return _ids_restreints(conditions.get("value_template"))
-        return None
-    if isinstance(conditions, list):
-        restreints = None
-        for c in conditions:
-            if (ids := _ids_restreints(c)) is not None:
-                restreints = ids if restreints is None else restreints & ids
-        return restreints
-    return None
-
-
-def _lectures(noeud, possibles, sortie):
-    """(champ, ids des déclencheurs possibles) de chaque lecture de trigger.event.data."""
-    if isinstance(noeud, str):
-        for a, b in LECTURE.findall(noeud):
-            sortie.append((a or b, possibles))
-    elif isinstance(noeud, list):
-        for v in noeud:
-            _lectures(v, possibles, sortie)
-    elif isinstance(noeud, dict):
-        # Option d'un choose (conditions + sequence) ou if/then : la branche ne s'exécute
-        # que pour les déclencheurs admis ; le else, pour les autres.
-        garde = noeud.get("conditions", noeud.get("if"))
-        ids = _ids_restreints(garde) if garde is not None else None
-        dedans = possibles if ids is None else possibles & ids
-        for cle, v in noeud.items():
-            _lectures(v, possibles if cle == "else" else dedans, sortie)
-
-
-def _automatisations(noeud):
-    """Chaque dict qui a une liste de déclencheurs : automatisation, blueprint, entité de
-    modèle à déclencheurs."""
-    if isinstance(noeud, dict):
-        declencheurs = noeud.get("triggers", noeud.get("trigger"))
-        if isinstance(declencheurs, list):
-            yield noeud, declencheurs
-            return
-        for v in noeud.values():
-            yield from _automatisations(v)
-    elif isinstance(noeud, list):
-        for v in noeud:
-            yield from _automatisations(v)
+    return contrat_api.champs_emis(contrat_api.arbre())
 
 
 def champs_lus():
     """{événement esphome.tab5_*: {champ: [fichiers]}} lus par les fichiers de HA."""
-    lus = {}
-    for chemin in _fichiers_ha():
-        for auto, declencheurs in _automatisations(_charger(chemin)):
-            evenements = {_cle(t, i): t.get("event_type") for i, t in enumerate(declencheurs)
-                          if (t.get("trigger") or t.get("platform")) == "event"}
-            sortie = []
-            _lectures({k: v for k, v in auto.items() if k not in ("triggers", "trigger")},
-                      {_cle(t, i) for i, t in enumerate(declencheurs)}, sortie)
-            for champ, possibles in sortie:
-                for cle in possibles:
-                    evt = evenements.get(cle)
-                    if isinstance(evt, str) and evt.startswith("esphome.tab5_"):
-                        lus.setdefault(evt, {}).setdefault(champ, []).append(_relatif(chemin))
-    return lus
+    return contrat_api.champs_lus(contrat_api.arbre())
+
+
+def test_les_evenements_emis_sont_ceux_de_test_actions_ha():
+    """Garde : la liste de fichiers du firmware de contrat_api (toute disposition de Tab5/,
+    pour lire un tag) trouve les mêmes événements que celle de tests/test_actions_ha.py."""
+    assert set(champs_emis()) == set(_emissions())
 
 
 def test_les_champs_sont_trouves():

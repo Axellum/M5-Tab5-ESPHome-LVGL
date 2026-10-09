@@ -19,6 +19,16 @@ le 08/10/2026 : test de consommation dans Home Assistant et lecture de la batter
 pendant le test (#405), `tools/mesure_conso.py` (#404). Fichiers Home Assistant à recopier avant le
 firmware.
 
+**Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
+
+### 2026-10-09 — Contrat HA ↔ firmware prouvé entre versions (lot E de l'audit du 30/09)
+
+- **Instantané du contrat** `contrat/contrat.yaml` (nouveau) : les 23 actions de la tablette avec leurs variables, les 22 événements `esphome.tab5_*` avec leurs champs, et une version semver du contrat (1.0.0 = celui de la 3.8.0-rc.3), distincte de celle du firmware. Généré par `tools/contrat_api.py --write`, vérifié par `--check` et pytest. Aucune action ni variable changée.
+- **Semver contre le dernier tag** (`tests/test_contrat_versions.py`) : le contrat du dernier tag est lu dans son propre code (`git cat-file`) ; une action retirée, une variable ajoutée, retirée ou de type changé, un événement ou un champ plus émis exigent une version majeure ; une action, un événement ou un champ nouveau, une mineure. Le message dit quelle version poser.
+- **Matrice N-1** (`python tools/contrat_api.py --matrice`, tableau Markdown, `--en` pour la note de release) : firmware d'une version avec les fichiers HA de l'autre, dans les deux sens, contre le dernier tag stable et le dernier tag. Un appel qui ne peut pas partir avec l'ancien firmware (déclenché par un événement qu'il n'émet pas, garde `protocole` du blueprint) ne compte pas. Sans étiquette dans `[Unreleased]`, les deux sens doivent passer ; une ligne « **Contrat HA ↔ firmware** : … (depuis vX) » du CHANGELOG annonce l'ordre et pytest la confronte à la matrice. Aujourd'hui, 3.8.0-rc.3 contre 3.7.0 : compatible dans les deux sens (seul `esphome.tab5_batterie_faible` attend l'autre moitié).
+- **CI** : le job `python` récupère les tags `v*` sans historique (`git fetch --depth=1`) ; sans eux, ces tests échouent en CI et sont sautés en local.
+- `tests/test_contrat.py` (phase 1) lit le contrat par le même module, sans changement de ses vérifications.
+
 ### 2026-10-09 — Lot J de l'audit du 30/09 (sécurité) : page d'installation et publication
 
 - **Page `/install/`** : politique de sécurité du contenu (CSP) qui n'autorise que le script de la page (par son empreinte) et ESP Web Tools 10.4.0 depuis son dossier de jsDelivr ; empreinte SRI sur le script d'entrée. Essayé dans un navigateur : la page marche, un script d'un autre dossier ou injecté est bloqué ; non essayé : l'ouverture de la fenêtre d'installation avec une vraie tablette. `tests/test_csp_installation.py` vérifie l'empreinte et la version.
