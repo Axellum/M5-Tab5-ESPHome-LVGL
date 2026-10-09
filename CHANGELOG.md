@@ -21,6 +21,14 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Lecture des payloads de HA testée sur PC et fuzzée (lot F de l'audit du 30/09)
+
+- **`Tab5/socle/tab5_parse.h/.cpp`** (nouveau, pur : ni ESPHome ni LVGL) : la lecture des chaînes poussées par Home Assistant sort des unités d'écran, famille par famille — prévisions heures et jours, vigilance, alertes HA, historique des alertes et bandeau info, pluie (barres et phrase), calendrier (mois et détail du jour), emplacements et production solaire, réglages et état de la clim. Les unités d'écran l'appellent et ne gardent que l'affichage. **Extraction neutre** : boucles recopiées, travers compris (`strtok_r` qui fusionne les champs vides, `atoi` qui lit un index illisible comme 0, « inf » accepté par les prévisions) ; les changer est un changement de contrat, laissé à une PR à part.
+- **`tools/test_parse.cpp`** (nouveau) : chaque parseur sur le vrai code — cas normaux, champs vides, payloads tronqués, valeurs extrêmes, « nan » et « inf » ; les comportements discutables gardés sont marqués « [figé] ». Compilé par g++ sous ASan + UBSan dans le job `python` de la CI.
+- **Fuzz libFuzzer** permanent (`tools/fuzz/fuzz_parse.cpp`, clang `-fsanitize=fuzzer,address,undefined`) : job `fuzz-parseurs` de `sanitizers.yml` (non requis), 3 min par run, graines tirées des payloads du fuzz de la tablette virtuelle (`tools/fuzz/graines.py`), témoin positif rejoué avant (un comportement indéfini connu doit être signalé). `tests/test_fuzz_parse.py` tient chaque fonction de `tab5_parse.h` testée ET fuzzée.
+- Restent dans les unités d'écran : la lecture des tuiles et des tuiles − / + (`tab5_tuiles.cpp`, `tab5_reglables.cpp` : structures gardées en NVS, filtre des glyphes des polices), et les `atof`/`atoi`/`sscanf` des lambdas YAML (`tab5-api-logic.yaml`, `tab5-calendar.yaml`).
+- Aucun changement de comportement attendu ; non testé sur la tablette.
+
 ### 2026-10-09 — Contrat HA ↔ firmware prouvé entre versions (lot E de l'audit du 30/09)
 
 - **Instantané du contrat** `contrat/contrat.yaml` (nouveau) : les 23 actions de la tablette avec leurs variables, les 22 événements `esphome.tab5_*` avec leurs champs, et une version semver du contrat (1.0.0 = celui de la 3.8.0-rc.3), distincte de celle du firmware. Généré par `tools/contrat_api.py --write`, vérifié par `--check` et pytest. Aucune action ni variable changée.
