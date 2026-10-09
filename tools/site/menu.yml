@@ -126,6 +126,9 @@
         - en: Weather
           fr: Météo
           page: docs/notice/weather.md
+        - en: Cameras
+          fr: Caméras
+          page: docs/notice/cameras.md
         - en: Settings
           fr: Réglages
           page: docs/notice/settings.md

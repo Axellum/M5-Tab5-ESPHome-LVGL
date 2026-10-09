@@ -331,6 +331,19 @@ Nothing new with Home Assistant: the hourly and daily forecasts, rain bars and s
 
 ---
 
+## Cameras popup — a still image of each camera
+
+Opened by « Aller à l'écran → Caméras » (so Home Assistant can open it, from a doorbell automation for instance) or a home gesture (code `cameras`, [ADR-0039](decisions/0039-gestes-accueil.md)) ([ADR-0049](decisions/0049-cameras-popup.md), `tab5_cameras.cpp`, `ui_components/cameras_popup.yaml`, [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)). Shared chrome (ADR-0009), title « Caméras », header icon `cctv`. One page per camera picked in the blueprint's « Caméras · Cameras » section (eight at most, in its order), changed by a left / right swipe (`pages_brancher()`, ADR-0046), looping; the pagination dots of the home page under it from two cameras on.
+
+- A 960 × 540 glass frame with the image, the camera's name under it on the left and « Image de 14:32:05 » on the right.
+- **No video**: one `online_image` (JPEG, `resize: 960x540`, RGB565 in PSRAM) downloads the camera shown, the next image 5 s after the previous one, **only while the popup is open**; closed, the decoded image (about 1 MB) is released and nothing more is downloaded.
+- The URL is the camera's `entity_picture` (`/api/camera_proxy/…?token=…`) with `width=960&height=540`, so Home Assistant scales a larger JPEG down before sending it. The token turns every 5 minutes: the tablet asks for the list again (`esphome.tab5_cameras`) at the opening, every 4 minutes while open and after a failed image; the blueprint answers with `tab5_maj_cameras`.
+- Messages in place of the image: « En attente de Home Assistant », « Aucune caméra choisie », « Chargement... », « Image indisponible », « Adresse de Home Assistant inconnue »; « Plus d'image depuis 14:32:05 » under a kept image when the next ones fail.
+
+The main loop waits while Home Assistant takes the snapshot and while the JPEG is decoded (estimated 0.2 to 0.5 s at 960 × 540, not measured): the screen may freeze for that time, once per image.
+
+---
+
 ## Color coding for readability
 
 Color is used consistently as a primary information channel — to let you read state at a glance without reading labels.
@@ -738,6 +751,19 @@ Ouvert par « Aller à l'écran → Météo », un geste de l'accueil (code `met
 - **« Détails »** : « Pluie dans l'heure » avec la phrase de la carte centrale dans la couleur de son niveau, les neuf barres à l'échelle du temps (0-30 min par 5, puis par 10 min), hauteur = niveau, devant quatre lignes de niveau pointillées (« Faible » à « Très forte »), axe « Maintenant », 15, 30, 45, 60 min ; une barre sèche est un trait de 4 px. Puis quatre cartes de 288 × 210 : humidité (couleur de `get_humidity_color()`, air sec / confortable / humide), indice UV (niveau de l'OMS : faible, modéré, élevé, très élevé, extrême, en couleur), probabilités de gel et de neige.
 
 Rien de nouveau avec Home Assistant : les prévisions horaires et journalières, les barres et la phrase de pluie que reçoit déjà l'accueil, plus des champs de `tab5_maj_meteo_actuelle` et `tab5_maj_probabilites` jusque-là réservés. `packages/tab5_push.yaml` renvoie le troisième bloc horaire (heures 10-14). Les widgets des tracés sont créés une fois, à la première ouverture ; repeints à l'ouverture, au changement de page, à chaque poussée s'il est affiché et au changement de thème.
+
+---
+
+## Popup Caméras — une image fixe de chaque caméra
+
+Ouvert par « Aller à l'écran → Caméras » (Home Assistant peut donc l'ouvrir, depuis une automatisation de sonnette par exemple) ou un geste de l'accueil (code `cameras`, [ADR-0039](decisions/0039-gestes-accueil.md)) ([ADR-0049](decisions/0049-cameras-popup.md), `tab5_cameras.cpp`, `ui_components/cameras_popup.yaml`, [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)). Chrome partagé (ADR-0009), titre « Caméras », icône d'en-tête `cctv`. Une page par caméra choisie dans la section « Caméras · Cameras » du blueprint (huit au plus, dans son ordre), changée par un glissé gauche / droite (`pages_brancher()`, ADR-0046), en boucle ; les pastilles de pagination de l'accueil dessous à partir de deux caméras.
+
+- Un cadre de verre de 960 × 540 avec l'image, le nom de la caméra dessous à gauche et « Image de 14:32:05 » à droite.
+- **Pas de vidéo** : une seule `online_image` (JPEG, `resize: 960x540`, RGB565 en PSRAM) télécharge la caméra montrée, l'image suivante 5 s après la précédente, **seulement tant que le popup est ouvert** ; fermé, l'image décodée (environ 1 Mo) est libérée et plus rien n'est téléchargé.
+- L'URL est l'`entity_picture` de la caméra (`/api/camera_proxy/…?token=…`) avec `width=960&height=540`, pour que Home Assistant réduise un JPEG plus grand avant de l'envoyer. Le jeton tourne toutes les 5 minutes : la tablette redemande la liste (`esphome.tab5_cameras`) à l'ouverture, toutes les 4 minutes tant qu'il reste ouvert et après une image en échec ; le blueprint répond par `tab5_maj_cameras`.
+- Messages à la place de l'image : « En attente de Home Assistant », « Aucune caméra choisie », « Chargement... », « Image indisponible », « Adresse de Home Assistant inconnue » ; « Plus d'image depuis 14:32:05 » sous une image gardée quand les suivantes échouent.
+
+La boucle principale attend pendant que Home Assistant prend l'image et pendant le décodage du JPEG (estimé de 0,2 à 0,5 s en 960 × 540, non mesuré) : l'écran peut se figer ce temps-là, une fois par image.
 
 ---
 

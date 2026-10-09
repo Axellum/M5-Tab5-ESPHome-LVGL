@@ -21,6 +21,16 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Popup Caméras : une image fixe de chaque caméra (ADR-0049)
+
+Demandé dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (caméras Tapo). Firmware et blueprint « Tab5 — emplacements » à recopier ; ni package ni script. **Non testé sur la tablette ni avec une vraie caméra.**
+
+- **Une page par caméra** choisie dans la nouvelle section « Caméras · Cameras » du blueprint (8 au plus), changée d'un glissé ; le nom et l'heure de l'image dessous, des pastilles à partir de deux caméras. **Pas de vidéo** : une image fixe, la suivante 5 s après la précédente, **seulement popup ouvert** ; l'image décodée (960 × 540 RGB565, environ 1 Mo de PSRAM) est libérée à la fermeture.
+- **Contrat 1.1.0 (ajout)** : événement `esphome.tab5_cameras` (ouverture, toutes les 4 min popup ouvert, après une image en échec) et action `tab5_maj_cameras(adresse, cameras)` (« nom|image;… », `image` = l'`entity_picture`, jeton tourné par HA toutes les 5 min). Lecture en C++ pur (`cameras_lire()`, `camera_url()`, `camera_base_depuis_hote()`, `tab5_parse`), testée et fuzzée. La tablette ajoute `width=960&height=540` pour que HA réduise l'image ; l'adresse de HA est celle d'où il se connecte (port 8123), ou celle du blueprint.
+- **Ouverture** : option « Caméras » de « Aller à l'écran » (HA peut l'ouvrir, une sonnette par exemple), code de geste `cameras` (index 23) dans le blueprint. Glyphe `cctv` ajouté à `mdi_font_70`, `_32` et `_26`. Ni tuile ni bouton de la roue de navigation (écartés dans l'ADR).
+- **Coûts estimés, non mesurés** : boucle principale bloquée pendant la capture par HA puis le décodage (0,2 à 0,5 s estimés par image) ; tampon de téléchargement de la taille du JPEG gardé après la fermeture (limite d'ESPHome). JPEG progressif refusé (« Image indisponible »).
+- Notice [Caméras](docs/notice/cameras.md), rendu hors tablette `cameras` (la page sans image : le rendu ne télécharge rien).
+
 ### 2026-10-09 — Réveil en cinq pages, réglé sur des rouleaux
 
 Firmware seul : aucun fichier Home Assistant à recopier, mêmes entités, contrat inchangé.
