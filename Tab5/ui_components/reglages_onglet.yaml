@@ -4,7 +4,9 @@
 # (meteo_popup.yaml, ADR-0043 : Aujourd'hui, 10 jours, Détails). Un tap montre sa page
 # (${prefixe}_afficher_page : reglages_afficher_page, tab5_reglages.cpp, ou
 # meteo_afficher_page, tab5_meteo.cpp), qui met le nom de la page affichée en couleur
-# d'accent comme l'option active d'une rangée (ui_choix_peindre ; premier enfant = le texte).
+# d'accent comme l'option active d'une rangée (choix_peindre, tab5_pages.cpp ; premier
+# enfant = le texte). Positions fixes, noms traduits au démarrage ; les onglets posés par
+# le C++ (noms des pièces) sont pages_onglet.yaml.
 # Options d'en-tête : frères de la barre de titre (modal_header.yaml), alignés sur sa
 # ligne (y=4, hauteur 44) ; le popup les pose après l'include de la barre.
 # vars : prefixe (reglages | meteo), id, x, page (ReglagesPage ou MeteoPage, en nombre NON

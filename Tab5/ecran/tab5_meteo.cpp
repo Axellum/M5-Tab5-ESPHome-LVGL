@@ -837,11 +837,12 @@ void peindre() {
     }
 }
 
-// Geste gauche / droite dans le popup (ui_pages_geste) : page suivante ou précédente, en
-// boucle (reglages_page_voisine, tab5_core.cpp : la même règle que les Réglages).
-void page_voisine(bool suivante) {
-    meteo_afficher_page(reglages_page_voisine(s_page, METEO_NB_PAGES, suivante));
-}
+// Pages du popup pour la brique commune (pages_brancher, tab5_pages.cpp, ADR-0046) :
+// gauche = page suivante, droite = précédente, en boucle. Les noms des pages restent aux
+// places fixes du YAML (reglages_onglet.yaml), comme ceux des Réglages.
+int nombre_pages() { return METEO_NB_PAGES; }
+int page_courante() { return s_page; }
+PagesPopup s_pages{nullptr, nombre_pages, page_courante, meteo_afficher_page};
 
 }  // namespace
 
@@ -850,7 +851,8 @@ void meteo_ouvrir(int page) {
     if (u.popup == nullptr) return;
     if (s_h.courbe == nullptr) {
         construire();
-        ui_pages_geste(u.popup, page_voisine);
+        s_pages.popup = u.popup;
+        pages_brancher(&s_pages);
     }
     meteo_afficher_page(page);
 }
@@ -861,7 +863,7 @@ void meteo_afficher_page(int page) {
     if (page < 0 || page >= METEO_NB_PAGES) page = METEO_PAGE_JOUR;
     s_page = page;
     for (int i = 0; i < METEO_NB_PAGES; i++) ui_hidden(u.page[i], i != page);
-    ui_choix_peindre(u.onglet, METEO_NB_PAGES, page);
+    choix_peindre(u.onglet, METEO_NB_PAGES, page);
     peindre();
 }
 
@@ -900,6 +902,6 @@ void meteo_rejouer_theme() {
     for (Icone& i : s_j.icone) i.cond[0] = '\0';
     s_icone_maintenant[0] = '\0';
     if (!visible()) return;
-    ui_choix_peindre(g_meteo_ui.onglet, METEO_NB_PAGES, s_page);
+    choix_peindre(g_meteo_ui.onglet, METEO_NB_PAGES, s_page);
     peindre();
 }

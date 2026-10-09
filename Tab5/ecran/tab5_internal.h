@@ -83,16 +83,7 @@ inline bool ui_appui_glisse() {
     return indev != nullptr && (lv_indev_get_press_moved(indev) || lv_indev_get_gesture_dir(indev) != LV_DIR_NONE);
 }
 
-// --- Popups à pages et tracés construits en C++ (tab5_anim.cpp, 09/10/2026) ---
-// Rangée de boutons à choix, ou noms des pages en haut d'un popup (reglages_onglet.yaml) :
-// l'option `actif` en couleur d'accent (bordure et texte, premier enfant), les autres au
-// style du bouton. Réglages et Météo.
-void ui_choix_peindre(lv_obj_t* const* boutons, int n, int actif);
-// Pages d'un popup changées au doigt : un geste gauche appelle changer(true) (page
-// suivante), un geste droite changer(false). Le geste s'arrête au popup (rien ne change
-// derrière lui) ; parti d'un curseur, il reste le réglage du curseur ; le lever du doigt
-// qui suit ne déclenche rien. Une fois par popup, à la pose de ses widgets.
-void ui_pages_geste(lv_obj_t* popup, void (*changer)(bool suivante));
+// --- Tracés construits en C++ (tab5_anim.cpp, 09/10/2026) ---
 // Briques d'un tracé (popups Température et Météo) : un rectangle sans style (opacité,
 // rayon), une lv_line (son tableau de points doit vivre aussi longtemps qu'elle), tous deux
 // non cliquables et masqués ; ui_poser() les place, les taille et les montre.
