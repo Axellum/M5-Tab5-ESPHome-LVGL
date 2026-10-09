@@ -88,11 +88,11 @@ api:
   services:
 
     - service: tab5_maj_previsions_heures_bulk
-      description: "Prévisions horaires : cinq créneaux en un appel (deux appels couvrent les dix heures affichées ; un bloc 10-14 est accepté mais jamais affiché)."
+      description: "Prévisions horaires : cinq créneaux en un appel. Trois appels couvrent les quinze heures : les dix premières sur les tuiles, toutes dans le popup Météo."
       variables:
         payload:
           type: string
-          description: "Cinq créneaux « idx|heure|condition|température|pluie » séparés par ; — idx de 0 à 9 affichés (10 à 14 acceptés), condition = état météo Home Assistant."
+          description: "Cinq créneaux « idx|heure|condition|température|pluie » séparés par ; — idx de 0 à 14 (0 à 9 sur les tuiles, tous dans le popup Météo), condition = état météo Home Assistant."
           example: "0|14:00|sunny|21.4|0;1|15:00|cloudy|20.8|0.2;"
       then:
         - lambda: |-
@@ -237,53 +237,58 @@ api:
                            {id(alerte_slot_0), id(alerte_slot_1), id(alerte_slot_2), id(alerte_slot_3)}};
             central_set_vigilance(parse_and_update_vigilance(payload, ui));
 
-    # `uv` et `gel` sont reçus mais non exploités par l'UI : paramètres RÉSERVÉS.
-    # Le contrat a 3 appelants côté HA, on ne le rétrécit pas ; seule `neige` agit
-    # (flocon si probabilité ≥ 5, sinon goutte colorée par l'hygrométrie).
+    # Les trois font les cartes Indice UV, Gel et Neige du popup Météo (ADR-0043,
+    # meteo_probabilites_recues()) ; `neige` fait aussi le flocon de la carte centrale
+    # (probabilité ≥ 5, sinon goutte colorée par l'hygrométrie).
     - service: tab5_maj_probabilites
-      description: "Probabilités UV, gel et neige. Seule « neige » agit aujourd'hui ; « uv » et « gel » sont des paramètres réservés."
+      description: "Indice UV, probabilités de gel et de neige : page « Détails » du popup Météo ; la neige fait aussi le flocon de la carte centrale."
       variables:
         uv:
           type: string
-          description: "Indice UV. Reçu mais pas affiché : paramètre réservé, le contrat n'est pas rétréci."
+          description: "Indice UV : carte « Indice UV » du popup Météo (niveau de l'OMS, de Faible à Extrême)."
           example: "4"
         gel:
           type: string
-          description: "Probabilité de gel en pourcent. Reçue mais pas affichée : paramètre réservé."
+          description: "Probabilité de gel en pourcent : carte « Gel » du popup Météo."
           example: "0"
         neige:
           type: string
-          description: "Probabilité de neige en pourcent : l'icône devient un flocon à partir de 5."
+          description: "Probabilité de neige en pourcent : carte « Neige » du popup Météo, et l'icône de la carte centrale devient un flocon à partir de 5."
           example: "0"
       then:
         - lambda: |-
             if (id(j0_day) == nullptr) return;
             id(global_neige) = atoi(neige.c_str());
             update_rain_predict_icon_ui(id(icon_rain_predict), id(global_neige), (float) id(global_humidite));
+            // Popup Météo (ADR-0043) : gardés, page Détails repeinte si elle est affichée.
+            meteo_probabilites_recues(tab5_fini_ou_nan(atof(uv.c_str())), tab5_fini_ou_nan(atof(gel.c_str())),
+                                      tab5_fini_ou_nan(atof(neige.c_str())));
 
-    # `condition` et `temperature` sont reçus mais non exploités : paramètres
-    # RÉSERVÉS depuis le retrait de la grosse icône météo centrale (même raison,
-    # contrat conservé). Seule `humidite` agit, sur la couleur de la goutte.
+    # `condition` et `temperature`, réservés depuis le retrait de la grosse icône météo
+    # centrale (contrat conservé), font la carte « Maintenant » du popup Météo depuis le
+    # 09/10/2026 (ADR-0043). `humidite` colore aussi la goutte de la carte centrale.
     - service: tab5_maj_meteo_actuelle
-      description: "Conditions du moment. Seule « humidite » agit depuis le retrait de la grande icône météo centrale ; les deux autres sont réservées."
+      description: "Conditions du moment : carte « Maintenant » et humidité du popup Météo ; l'humidité colore aussi la goutte de la carte centrale."
       variables:
         condition:
           type: string
-          description: "Condition météo Home Assistant. Reçue mais pas affichée : paramètre réservé."
+          description: "Condition météo Home Assistant : icône et texte de la carte « Maintenant » du popup Météo."
           example: "sunny"
         temperature:
           type: string
-          description: "Température extérieure en degrés Celsius. Reçue mais pas affichée : paramètre réservé."
+          description: "Température extérieure en degrés Celsius : carte « Maintenant » et point du jour sur la page « 10 jours » du popup Météo."
           example: "22.4"
         humidite:
           type: string
-          description: "Hygrométrie en pourcent : elle colore la goutte de la carte centrale."
+          description: "Hygrométrie en pourcent : elle colore la goutte de la carte centrale, et fait la carte « Humidité » du popup Météo."
           example: "68"
       then:
         - lambda: |-
             if (id(icon_rain_predict) == nullptr) return;
             id(global_humidite) = tab5_fini_ou_nan(atof(humidite.c_str()));
             update_rain_predict_icon_ui(id(icon_rain_predict), id(global_neige), (float) id(global_humidite));
+            // Popup Météo (ADR-0043) : gardées, page affichée repeinte.
+            meteo_actuelle_recue(condition, tab5_fini_ou_nan(atof(temperature.c_str())), id(global_humidite));
 
     # Les 9 barres en UN appel (ADR-0003, audit §4.1 point 3) : payload
     # « idx|intensité;idx|intensité;… », idx 0..8 = 0,5,10,15,20,25 puis 35,45,55 min,

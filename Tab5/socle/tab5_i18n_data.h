@@ -8,9 +8,37 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1073;
+static const uint16_t kI18nKeyCount = 1106;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1083,6 +1111,11 @@ static const char* const kI18nCtx[] = {
     "san",
     "san",
     "san",
+    "uv",
+    "uv",
+    "uv",
+    "uv",
+    "uv",
     "vendredi",
 };
 
@@ -1163,6 +1196,7 @@ static const char* const kI18nKeys[] = {
     "1 erreur",
     "1 min",
     "1 à 6 équipes",
+    "10 jours",
     "10 min",
     "10,0 cases/s - réflexes exigés",
     "12 derniers mois",
@@ -1217,6 +1251,8 @@ static const char* const kI18nKeys[] = {
     "Agilité",
     "Aimant du mineur",
     "Aimant mineur",
+    "Air humide",
+    "Air sec",
     "Alerte Météo Orange en cours ! Restez prudent.",
     "Alerte Météo Rouge en cours ! Restez prudent.",
     "Alertes",
@@ -1310,6 +1346,7 @@ static const char* const kI18nKeys[] = {
     "Boutons",
     "Bravo ! Part « %s » gagnée — vous rejouez.",
     "Brise",
+    "Brouillard",
     "Btn",
     "CATÉGORIE AU CHOIX",
     "CLASSEMENT",
@@ -1376,6 +1413,7 @@ static const char* const kI18nKeys[] = {
     "Confirmer chaque commande",
     "Confirmer la remise à zéro",
     "Confirmé",
+    "Confortable",
     "Connecté",
     "Conservés en NVS, valables pour toutes les parties",
     "Consommation",
@@ -1455,6 +1493,7 @@ static const char* const kI18nKeys[] = {
     "En charge",
     "En cours",
     "En mouvement",
+    "Ensoleillé",
     "Entre %d et %d %%",
     "Erreur",
     "Escalier",
@@ -1468,6 +1507,7 @@ static const char* const kI18nKeys[] = {
     "FINALE — %s",
     "Facile",
     "Faciles + moyennes",
+    "Faible",
     "Faux chemin",
     "Fermer",
     "Fermé",
@@ -1483,7 +1523,9 @@ static const char* const kI18nKeys[] = {
     "Flux d'air",
     "Force de la secousse nécessaire",
     "Force du Tab",
+    "Forte",
     "Forteresse",
+    "Fortes pluies",
     "Freinage nettement plus mordant",
     "Froid",
     "Fulgurante",
@@ -1492,11 +1534,13 @@ static const char* const kI18nKeys[] = {
     "GAME OVER",
     "GESTION",
     "Gantelet poli",
+    "Gel",
     "Gestes IMU",
     "Gestes, règle des 50 coups, évaluation, vitesse de démo",
     "Gestes, règles, affichage",
     "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5",
     "Groupes morts retirés : %d noirs, %d blancs",
+    "Grêle",
     "Géographie",
     "H.C.",
     "HUMIDITÉ",
@@ -1524,6 +1568,7 @@ static const char* const kI18nKeys[] = {
     "Indice",
     "Indice : %s",
     "Indice : passer",
+    "Indice UV",
     "Indice affiché",
     "Indice en recharge",
     "Insistante",
@@ -1646,6 +1691,7 @@ static const char* const kI18nKeys[] = {
     "Mesure en cours",
     "Mesuré",
     "Minimum",
+    "Minimum %s · Maximum %s",
     "Minimum et maximum",
     "Mix",
     "Mixte",
@@ -1654,6 +1700,7 @@ static const char* const kI18nKeys[] = {
     "Mode de jeu",
     "Mode dieu : %s",
     "Mode entraînement",
+    "Modérée",
     "Mois",
     "Mouvement",
     "Moyen",
@@ -1661,12 +1708,14 @@ static const char* const kI18nKeys[] = {
     "Moyennes + difficiles",
     "Mur plein",
     "MÉMOIRE",
+    "Météo",
     "Même mode, mêmes réglages",
     "Mêmes réglages",
     "NIVEAU TERMINÉ",
     "NIVEAUX",
     "NOUVEAU RECORD !",
     "NOUVELLE PARTIE",
+    "Neige",
     "Niv %d/8",
     "Niveau",
     "Niveau %d - %s",
@@ -1694,8 +1743,10 @@ static const char* const kI18nKeys[] = {
     "Nouvelle partie",
     "Nouvelle partie, 3 billes",
     "Nov",
+    "Nuageux",
     "Nudge, sens de l'écran, calibration",
     "Nuit (mode Auto)",
+    "Nuit claire",
     "Nulle automatique après 50 coups sans prise ni pion",
     "Nulle déclarée en mode démo",
     "Nulle par accord entre les joueurs",
@@ -1707,6 +1758,8 @@ static const char* const kI18nKeys[] = {
     "Or",
     "Or %d",
     "Or restant %d",
+    "Orage",
+    "Orage et pluie",
     "Orientation : %s",
     "Oscillation",
     "Oui",
@@ -1758,8 +1811,11 @@ static const char* const kI18nKeys[] = {
     "Pièces",
     "Plantes",
     "Pluie",
+    "Pluie dans l'heure",
+    "Pluie et neige",
     "Pluie faible",
     "Pluie modérée",
+    "Pluie sur %d h",
     "Plume de suie",
     "Points neutres (dame) : %d",
     "Portail ouvert !",
@@ -1780,6 +1836,7 @@ static const char* const kI18nKeys[] = {
     "Prise obligatoire",
     "Prise x%d",
     "Prisonniers de la partie : Noir %u, Blanc %u",
+    "Probabilité",
     "Produit aujourd'hui",
     "Progressif",
     "Proposer nulle",
@@ -1963,6 +2020,7 @@ static const char* const kI18nKeys[] = {
     "Temps actif",
     "Temps de boucle",
     "Temps de jeu cumulé : %u min",
+    "Temps exceptionnel",
     "Temps sec",
     "Temps écoulé",
     "Temps écoulé — la réponse était : %s",
@@ -2003,6 +2061,7 @@ static const char* const kI18nKeys[] = {
     "Travail (horaire inconnu)",
     "Triple répétition de la position",
     "Trone",
+    "Très forte",
     "Très rapide",
     "Tu rouleras encore.",
     "Tu sors du dédale. Il te laisse partir.",
@@ -2023,6 +2082,7 @@ static const char* const kI18nKeys[] = {
     "Valider le score",
     "Variante, mode, niveau",
     "Ven",
+    "Venteux",
     "Ventilation",
     "Verrouillé",
     "Vers le réseau",
@@ -2112,6 +2172,7 @@ static const char* const kI18nKeys[] = {
     "Échec et mat",
     "Échecs FIDE complets\n5 niveaux d'IA embarquée",
     "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local",
+    "Éclaircies",
     "Éco",
     "Économie d'énergie",
     "Écoute…",
@@ -2159,6 +2220,11 @@ static const char* const kI18nKeys[] = {
     "F",
     "R",
     "T",
+    "Extrême",
+    "Faible",
+    "Modéré",
+    "Très élevé",
+    "Élevé",
     "V",
 };
 
@@ -2240,6 +2306,7 @@ static const char* const kI18n_en[] = {
     "1 error",  // "1 erreur"
     "1 min",  // "1 min"
     "1 to 6 teams",  // "1 à 6 équipes"
+    "10 days",  // "10 jours"
     "10 min",  // "10 min"
     "10.0 tiles/s - quick reflexes",  // "10,0 cases/s - réflexes exigés"
     "Last 12 months",  // "12 derniers mois"
@@ -2294,6 +2361,8 @@ static const char* const kI18n_en[] = {
     "Agility",  // "Agilité"
     "Miner's Magnet",  // "Aimant du mineur"
     "Minor Magnet",  // "Aimant mineur"
+    "Humid air",  // "Air humide"
+    "Dry air",  // "Air sec"
     "Orange weather warning in progress! Stay safe.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Red weather warning in progress! Stay safe.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Alerts",  // "Alertes"
@@ -2387,6 +2456,7 @@ static const char* const kI18n_en[] = {
     "Buttons",  // "Boutons"
     "Well done! “%s” wedge won — roll again.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Breeze",  // "Brise"
+    "Fog",  // "Brouillard"
     "Btn",  // "Btn"
     "CHOOSE A CATEGORY",  // "CATÉGORIE AU CHOIX"
     "LEADERBOARD",  // "CLASSEMENT"
@@ -2453,6 +2523,7 @@ static const char* const kI18n_en[] = {
     "Confirm each command",  // "Confirmer chaque commande"
     "Confirm reset",  // "Confirmer la remise à zéro"
     "Advanced",  // "Confirmé"
+    "Comfortable",  // "Confortable"
     "Connected",  // "Connecté"
     "Saved in NVS, used for every game",  // "Conservés en NVS, valables pour toutes les parties"
     "Consumption",  // "Consommation"
@@ -2532,6 +2603,7 @@ static const char* const kI18n_en[] = {
     "Charging",  // "En charge"
     "Running",  // "En cours"
     "Moving",  // "En mouvement"
+    "Sunny",  // "Ensoleillé"
     "Between %d and %d %%",  // "Entre %d et %d %%"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
@@ -2545,6 +2617,7 @@ static const char* const kI18n_en[] = {
     "FINAL — %s",  // "FINALE — %s"
     "Easy",  // "Facile"
     "Easy + medium",  // "Faciles + moyennes"
+    "Light",  // "Faible"
     "False Trail",  // "Faux chemin"
     "Close",  // "Fermer"
     "Closed",  // "Fermé"
@@ -2560,7 +2633,9 @@ static const char* const kI18n_en[] = {
     "Airflow",  // "Flux d'air"
     "Shake strength needed",  // "Force de la secousse nécessaire"
     "Tab strength",  // "Force du Tab"
+    "Heavy",  // "Forte"
     "Fortress",  // "Forteresse"
+    "Heavy rain",  // "Fortes pluies"
     "Much sharper braking",  // "Freinage nettement plus mordant"
     "Cool",  // "Froid"
     "Blazing",  // "Fulgurante"
@@ -2569,11 +2644,13 @@ static const char* const kI18n_en[] = {
     "GAME OVER",  // "GAME OVER"
     "MANAGEMENT",  // "GESTION"
     "Polished Gauntlet",  // "Gantelet poli"
+    "Frost",  // "Gel"
     "IMU gestures",  // "Gestes IMU"
     "Gestures, 50-move rule, evaluation, demo speed",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gestures, rules, display",  // "Gestes, règles, affichage"
     "Go 9×9 / 13×13 / 19×19\nChinese scoring · komi 6.5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Dead stones removed: %d black, %d white",  // "Groupes morts retirés : %d noirs, %d blancs"
+    "Hail",  // "Grêle"
     "Geography",  // "Géographie"
     "N.R.",  // "H.C."
     "HUMIDITY",  // "HUMIDITÉ"
@@ -2601,6 +2678,7 @@ static const char* const kI18n_en[] = {
     "Hint",  // "Indice"
     "Hint: %s",  // "Indice : %s"
     "Hint: pass",  // "Indice : passer"
+    "UV index",  // "Indice UV"
     "Hint shown",  // "Indice affiché"
     "Hint recharging",  // "Indice en recharge"
     "Insistent",  // "Insistante"
@@ -2723,6 +2801,7 @@ static const char* const kI18n_en[] = {
     "Measuring",  // "Mesure en cours"
     "Measured",  // "Mesuré"
     "Minimum",  // "Minimum"
+    "Low %s · High %s",  // "Minimum %s · Maximum %s"
     "Minimum and maximum",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Mixed",  // "Mixte"
@@ -2731,6 +2810,7 @@ static const char* const kI18n_en[] = {
     "Game mode",  // "Mode de jeu"
     "God mode: %s",  // "Mode dieu : %s"
     "Training mode",  // "Mode entraînement"
+    "Moderate",  // "Modérée"
     "Months",  // "Mois"
     "Moving",  // "Mouvement"
     "Medium",  // "Moyen"
@@ -2738,12 +2818,14 @@ static const char* const kI18n_en[] = {
     "Medium + hard",  // "Moyennes + difficiles"
     "Solid wall",  // "Mur plein"
     "MEMORY",  // "MÉMOIRE"
+    "Weather",  // "Météo"
     "Same mode, same settings",  // "Même mode, mêmes réglages"
     "Same settings",  // "Mêmes réglages"
     "LEVEL CLEARED",  // "NIVEAU TERMINÉ"
     "LEVELS",  // "NIVEAUX"
     "NEW HIGH SCORE!",  // "NOUVEAU RECORD !"
     "NEW GAME",  // "NOUVELLE PARTIE"
+    "Snow",  // "Neige"
     "Lvl %d/8",  // "Niv %d/8"
     "Level",  // "Niveau"
     "Level %d - %s",  // "Niveau %d - %s"
@@ -2771,8 +2853,10 @@ static const char* const kI18n_en[] = {
     "New game",  // "Nouvelle partie"
     "New game, 3 balls",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
+    "Cloudy",  // "Nuageux"
     "Nudge, screen flip, calibration",  // "Nudge, sens de l'écran, calibration"
     "Night (Auto mode)",  // "Nuit (mode Auto)"
+    "Clear night",  // "Nuit claire"
     "Auto draw after 50 moves, no capture or pawn move",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Draw declared in demo mode",  // "Nulle déclarée en mode démo"
     "Draw by mutual agreement",  // "Nulle par accord entre les joueurs"
@@ -2784,6 +2868,8 @@ static const char* const kI18n_en[] = {
     "Gold",  // "Or"
     "Gold %d",  // "Or %d"
     "Gold left %d",  // "Or restant %d"
+    "Thunderstorm",  // "Orage"
+    "Thunderstorm and rain",  // "Orage et pluie"
     "Orientation: %s",  // "Orientation : %s"
     "Swing",  // "Oscillation"
     "Yes",  // "Oui"
@@ -2835,8 +2921,11 @@ static const char* const kI18n_en[] = {
     "Rooms",  // "Pièces"
     "Plants",  // "Plantes"
     "Rain",  // "Pluie"
+    "Rain in the next hour",  // "Pluie dans l'heure"
+    "Sleet",  // "Pluie et neige"
     "Light rain",  // "Pluie faible"
     "Moderate rain",  // "Pluie modérée"
+    "Rain over %d h",  // "Pluie sur %d h"
     "Soot Feather",  // "Plume de suie"
     "Neutral points (dame): %d",  // "Points neutres (dame) : %d"
     "Portal open!",  // "Portail ouvert !"
@@ -2857,6 +2946,7 @@ static const char* const kI18n_en[] = {
     "Must capture",  // "Prise obligatoire"
     "Capture x%d",  // "Prise x%d"
     "Captures: Black %u, White %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Probability",  // "Probabilité"
     "Produced today",  // "Produit aujourd'hui"
     "Gradual",  // "Progressif"
     "Offer a draw",  // "Proposer nulle"
@@ -3040,6 +3130,7 @@ static const char* const kI18n_en[] = {
     "Uptime",  // "Temps actif"
     "Loop time",  // "Temps de boucle"
     "Total play time: %u min",  // "Temps de jeu cumulé : %u min"
+    "Unusual weather",  // "Temps exceptionnel"
     "Dry",  // "Temps sec"
     "Time out",  // "Temps écoulé"
     "Time's up — the answer was: %s",  // "Temps écoulé — la réponse était : %s"
@@ -3080,6 +3171,7 @@ static const char* const kI18n_en[] = {
     "Work (unknown hours)",  // "Travail (horaire inconnu)"
     "Threefold repetition",  // "Triple répétition de la position"
     "Throne",  // "Trone"
+    "Very heavy",  // "Très forte"
     "Very fast",  // "Très rapide"
     "You'll roll again.",  // "Tu rouleras encore."
     "You leave the Maze. It lets you go.",  // "Tu sors du dédale. Il te laisse partir."
@@ -3100,6 +3192,7 @@ static const char* const kI18n_en[] = {
     "Confirm score",  // "Valider le score"
     "Set variant / mode / level",  // "Variante, mode, niveau"
     "Fri",  // "Ven"
+    "Windy",  // "Venteux"
     "Fan",  // "Ventilation"
     "Locked",  // "Verrouillé"
     "To the grid",  // "Vers le réseau"
@@ -3189,6 +3282,7 @@ static const char* const kI18n_en[] = {
     "Checkmate",  // "Échec et mat"
     "Full FIDE chess\n5 on-device AI levels",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Tab's chessboard — FIDE rules, built-in AI, 100% local",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
+    "Sunny spells",  // "Éclaircies"
     "Eco",  // "Éco"
     "Power saving",  // "Économie d'énergie"
     "Listening…",  // "Écoute…"
@@ -3236,6 +3330,11 @@ static const char* const kI18n_en[] = {
     "B",  // "san|F"
     "K",  // "san|R"
     "R",  // "san|T"
+    "Extreme",  // "uv|Extrême"
+    "Low",  // "uv|Faible"
+    "Moderate",  // "uv|Modéré"
+    "Very high",  // "uv|Très élevé"
+    "High",  // "uv|Élevé"
     "F",  // "vendredi|V"
 };
 
@@ -3317,6 +3416,7 @@ static const char* const kI18n_de[] = {
     "1 Fehler",  // "1 erreur"
     "1 min",  // "1 min"
     "1 bis 6 Teams",  // "1 à 6 équipes"
+    "10 Tage",  // "10 jours"
     "10 min",  // "10 min"
     "10,0 Felder/s - schnelle Reflexe",  // "10,0 cases/s - réflexes exigés"
     "Letzte 12 Monate",  // "12 derniers mois"
@@ -3371,6 +3471,8 @@ static const char* const kI18n_de[] = {
     "Agilität",  // "Agilité"
     "Bergmannsmagnet",  // "Aimant du mineur"
     "Kleiner Magnet",  // "Aimant mineur"
+    "Feuchte Luft",  // "Air humide"
+    "Trockene Luft",  // "Air sec"
     "Unwetterwarnung Orange aktiv! Bleib vorsichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Unwetterwarnung Rot aktiv! Bleib vorsichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Warnungen",  // "Alertes"
@@ -3464,6 +3566,7 @@ static const char* const kI18n_de[] = {
     "Tasten",  // "Boutons"
     "Bravo! Ecke „%s“ gewonnen — nochmal würfeln.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Brise",  // "Brise"
+    "Nebel",  // "Brouillard"
     "Tasten",  // "Btn"
     "FREIE KATEGORIE",  // "CATÉGORIE AU CHOIX"
     "BESTENLISTE",  // "CLASSEMENT"
@@ -3530,6 +3633,7 @@ static const char* const kI18n_de[] = {
     "Jeden Befehl bestätigen",  // "Confirmer chaque commande"
     "Reset bestätigen",  // "Confirmer la remise à zéro"
     "Erfahren",  // "Confirmé"
+    "Angenehm",  // "Confortable"
     "Verbunden",  // "Connecté"
     "In NVS gespeichert, gilt für alle Partien",  // "Conservés en NVS, valables pour toutes les parties"
     "Verbrauch",  // "Consommation"
@@ -3609,6 +3713,7 @@ static const char* const kI18n_de[] = {
     "Lädt",  // "En charge"
     "Läuft",  // "En cours"
     "In Bewegung",  // "En mouvement"
+    "Sonnig",  // "Ensoleillé"
     "Zwischen %d und %d %%",  // "Entre %d et %d %%"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
@@ -3622,6 +3727,7 @@ static const char* const kI18n_de[] = {
     "FINALE — %s",  // "FINALE — %s"
     "Leicht",  // "Facile"
     "Leicht + mittel",  // "Faciles + moyennes"
+    "Leicht",  // "Faible"
     "Holzweg",  // "Faux chemin"
     "Schließen",  // "Fermer"
     "Zu",  // "Fermé"
@@ -3637,7 +3743,9 @@ static const char* const kI18n_de[] = {
     "Luftstrom",  // "Flux d'air"
     "Nötige Schüttelstärke",  // "Force de la secousse nécessaire"
     "Tab-Stärke",  // "Force du Tab"
+    "Stark",  // "Forte"
     "Festung",  // "Forteresse"
+    "Starkregen",  // "Fortes pluies"
     "Deutlich schärferes Bremsen",  // "Freinage nettement plus mordant"
     "Kühl",  // "Froid"
     "Blitzschnell",  // "Fulgurante"
@@ -3646,11 +3754,13 @@ static const char* const kI18n_de[] = {
     "GAME OVER",  // "GAME OVER"
     "VERWALTUNG",  // "GESTION"
     "Polierter Handschuh",  // "Gantelet poli"
+    "Frost",  // "Gel"
     "IMU-Gesten",  // "Gestes IMU"
     "Gesten, 50-Züge-Regel, Bewertung, Demo-Tempo",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gesten, Regeln, Anzeige",  // "Gestes, règles, affichage"
     "Go 9×9 / 13×13 / 19×19\nChin. Zählung · Komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Tote Steine entfernt: %d schwarz, %d weiß",  // "Groupes morts retirés : %d noirs, %d blancs"
+    "Hagel",  // "Grêle"
     "Geografie",  // "Géographie"
     "a.W.",  // "H.C."
     "LUFTFEUCHTE",  // "HUMIDITÉ"
@@ -3678,6 +3788,7 @@ static const char* const kI18n_de[] = {
     "Tipp",  // "Indice"
     "Tipp: %s",  // "Indice : %s"
     "Tipp: passen",  // "Indice : passer"
+    "UV-Index",  // "Indice UV"
     "Tipp angezeigt",  // "Indice affiché"
     "Tipp lädt nach",  // "Indice en recharge"
     "Hartnäckig",  // "Insistante"
@@ -3800,6 +3911,7 @@ static const char* const kI18n_de[] = {
     "Wird gemessen",  // "Mesure en cours"
     "Gemessen",  // "Mesuré"
     "Minimum",  // "Minimum"
+    "Min. %s · Max. %s",  // "Minimum %s · Maximum %s"
     "Minimum und Maximum",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Kombi",  // "Mixte"
@@ -3808,6 +3920,7 @@ static const char* const kI18n_de[] = {
     "Spielmodus",  // "Mode de jeu"
     "Gottmodus: %s",  // "Mode dieu : %s"
     "Trainingsmodus",  // "Mode entraînement"
+    "Mäßig",  // "Modérée"
     "Monate",  // "Mois"
     "Fährt",  // "Mouvement"
     "Mittel",  // "Moyen"
@@ -3815,12 +3928,14 @@ static const char* const kI18n_de[] = {
     "Mittel + schwer",  // "Moyennes + difficiles"
     "Volle Mauer",  // "Mur plein"
     "SPEICHER",  // "MÉMOIRE"
+    "Wetter",  // "Météo"
     "Selber Modus, selbe Optionen",  // "Même mode, mêmes réglages"
     "Gleiches Setup",  // "Mêmes réglages"
     "LEVEL GESCHAFFT",  // "NIVEAU TERMINÉ"
     "LEVEL",  // "NIVEAUX"
     "NEUER REKORD!",  // "NOUVEAU RECORD !"
     "NEUES SPIEL",  // "NOUVELLE PARTIE"
+    "Schnee",  // "Neige"
     "Lvl %d/8",  // "Niv %d/8"
     "Ladestand",  // "Niveau"
     "Level %d - %s",  // "Niveau %d - %s"
@@ -3848,8 +3963,10 @@ static const char* const kI18n_de[] = {
     "Neue Partie",  // "Nouvelle partie"
     "Neues Spiel, 3 Bälle",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
+    "Bewölkt",  // "Nuageux"
     "Nudge, Bildausrichtung, Kalibrierung",  // "Nudge, sens de l'écran, calibration"
     "Nacht (Modus Auto)",  // "Nuit (mode Auto)"
+    "Klare Nacht",  // "Nuit claire"
     "Autom. Remis nach 50 Zügen ohne Schlag oder Bauernzug",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Remis im Demomodus erklärt",  // "Nulle déclarée en mode démo"
     "Remis durch Einigung",  // "Nulle par accord entre les joueurs"
@@ -3861,6 +3978,8 @@ static const char* const kI18n_de[] = {
     "Gold",  // "Or"
     "Gold %d",  // "Or %d"
     "Gold übrig %d",  // "Or restant %d"
+    "Gewitter",  // "Orage"
+    "Gewitter und Regen",  // "Orage et pluie"
     "Ausrichtung: %s",  // "Orientation : %s"
     "Schwenken",  // "Oscillation"
     "Ja",  // "Oui"
@@ -3912,8 +4031,11 @@ static const char* const kI18n_de[] = {
     "Räume",  // "Pièces"
     "Pflanzen",  // "Plantes"
     "Regen",  // "Pluie"
+    "Regen in der nächsten Stunde",  // "Pluie dans l'heure"
+    "Schneeregen",  // "Pluie et neige"
     "Leichter Regen",  // "Pluie faible"
     "Mäßiger Regen",  // "Pluie modérée"
+    "Regen in %d Std.",  // "Pluie sur %d h"
     "Rußfeder",  // "Plume de suie"
     "Neutrale Punkte (Dame): %d",  // "Points neutres (dame) : %d"
     "Portal offen!",  // "Portail ouvert !"
@@ -3934,6 +4056,7 @@ static const char* const kI18n_de[] = {
     "Schlagzwang",  // "Prise obligatoire"
     "Schlag x%d",  // "Prise x%d"
     "Gefangene: Schwarz %u, Weiß %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Wahrscheinlichkeit",  // "Probabilité"
     "Heute erzeugt",  // "Produit aujourd'hui"
     "Ansteigend",  // "Progressif"
     "Remis anbieten",  // "Proposer nulle"
@@ -4117,6 +4240,7 @@ static const char* const kI18n_de[] = {
     "Laufzeit",  // "Temps actif"
     "Schleifenzeit",  // "Temps de boucle"
     "Gesamtspielzeit: %u min",  // "Temps de jeu cumulé : %u min"
+    "Ungewöhnliches Wetter",  // "Temps exceptionnel"
     "Trocken",  // "Temps sec"
     "Zeit ist um",  // "Temps écoulé"
     "Zeit um — die Antwort war: %s",  // "Temps écoulé — la réponse était : %s"
@@ -4157,6 +4281,7 @@ static const char* const kI18n_de[] = {
     "Arbeit (Zeit unbekannt)",  // "Travail (horaire inconnu)"
     "Dreifache Stellungswiederholung",  // "Triple répétition de la position"
     "Thron",  // "Trone"
+    "Sehr stark",  // "Très forte"
     "Rasant",  // "Très rapide"
     "Du rollst wieder.",  // "Tu rouleras encore."
     "Raus aus dem Labyrinth. Es lässt dich gehen.",  // "Tu sors du dédale. Il te laisse partir."
@@ -4177,6 +4302,7 @@ static const char* const kI18n_de[] = {
     "Score bestätigen",  // "Valider le score"
     "Setup: Variante / Modus / Stufe",  // "Variante, mode, niveau"
     "Fr",  // "Ven"
+    "Windig",  // "Venteux"
     "Lüften",  // "Ventilation"
     "Gesperrt",  // "Verrouillé"
     "Ins Netz",  // "Vers le réseau"
@@ -4266,6 +4392,7 @@ static const char* const kI18n_de[] = {
     "Schachmatt",  // "Échec et mat"
     "Schach nach FIDE-Regeln\n5 KI-Stufen im Gerät",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Schachbrett des Tab — FIDE-Regeln, KI an Bord, 100 % lokal",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
+    "Heiter",  // "Éclaircies"
     "Eco",  // "Éco"
     "Energiesparen",  // "Économie d'énergie"
     "Höre zu…",  // "Écoute…"
@@ -4313,6 +4440,11 @@ static const char* const kI18n_de[] = {
     "L",  // "san|F"
     "K",  // "san|R"
     "T",  // "san|T"
+    "Extrem",  // "uv|Extrême"
+    "Niedrig",  // "uv|Faible"
+    "Mäßig",  // "uv|Modéré"
+    "Sehr hoch",  // "uv|Très élevé"
+    "Hoch",  // "uv|Élevé"
     "F",  // "vendredi|V"
 };
 
@@ -4394,6 +4526,7 @@ static const char* const kI18n_nl[] = {
     "1 fout",  // "1 erreur"
     "1 min",  // "1 min"
     "1 tot 6 teams",  // "1 à 6 équipes"
+    "10 dagen",  // "10 jours"
     "10 min",  // "10 min"
     "10,0 vakjes/s - snelle reflexen",  // "10,0 cases/s - réflexes exigés"
     "Laatste 12 maanden",  // "12 derniers mois"
@@ -4448,6 +4581,8 @@ static const char* const kI18n_nl[] = {
     "Agiliteit",  // "Agilité"
     "Mijnwerkersmagneet",  // "Aimant du mineur"
     "Kleine magneet",  // "Aimant mineur"
+    "Vochtige lucht",  // "Air humide"
+    "Droge lucht",  // "Air sec"
     "Weeralarm code oranje! Wees voorzichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Weeralarm code rood! Wees voorzichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Meldingen",  // "Alertes"
@@ -4541,6 +4676,7 @@ static const char* const kI18n_nl[] = {
     "Knoppen",  // "Boutons"
     "Bravo! Partje “%s” gewonnen — gooi opnieuw.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Bries",  // "Brise"
+    "Mist",  // "Brouillard"
     "Knp",  // "Btn"
     "KIES EEN CATEGORIE",  // "CATÉGORIE AU CHOIX"
     "RANGLIJST",  // "CLASSEMENT"
@@ -4607,6 +4743,7 @@ static const char* const kI18n_nl[] = {
     "Elke opdracht bevestigen",  // "Confirmer chaque commande"
     "Reset bevestigen",  // "Confirmer la remise à zéro"
     "Gevorderd",  // "Confirmé"
+    "Comfortabel",  // "Confortable"
     "Verbonden",  // "Connecté"
     "Bewaard in NVS, geldig voor alle partijen",  // "Conservés en NVS, valables pour toutes les parties"
     "Verbruik",  // "Consommation"
@@ -4686,6 +4823,7 @@ static const char* const kI18n_nl[] = {
     "Laden",  // "En charge"
     "Bezig",  // "En cours"
     "In beweging",  // "En mouvement"
+    "Zonnig",  // "Ensoleillé"
     "Tussen %d en %d %%",  // "Entre %d et %d %%"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
@@ -4699,6 +4837,7 @@ static const char* const kI18n_nl[] = {
     "FINALE — %s",  // "FINALE — %s"
     "Simpel",  // "Facile"
     "Simpel + normaal",  // "Faciles + moyennes"
+    "Licht",  // "Faible"
     "Dwaalspoor",  // "Faux chemin"
     "Sluiten",  // "Fermer"
     "Dicht",  // "Fermé"
@@ -4714,7 +4853,9 @@ static const char* const kI18n_nl[] = {
     "Luchtstroom",  // "Flux d'air"
     "Benodigde schudkracht",  // "Force de la secousse nécessaire"
     "Tab-sterkte",  // "Force du Tab"
+    "Zwaar",  // "Forte"
     "Vesting",  // "Forteresse"
+    "Zware regen",  // "Fortes pluies"
     "Veel scherper remmen",  // "Freinage nettement plus mordant"
     "Koel",  // "Froid"
     "Bliksem",  // "Fulgurante"
@@ -4723,11 +4864,13 @@ static const char* const kI18n_nl[] = {
     "GAME OVER",  // "GAME OVER"
     "BEHEER",  // "GESTION"
     "Glanzende handschoen",  // "Gantelet poli"
+    "Vorst",  // "Gel"
     "IMU-gebaren",  // "Gestes IMU"
     "Gebaren, 50-zettenregel, evaluatie, demosnelheid",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gebaren, regels, weergave",  // "Gestes, règles, affichage"
     "Go 9×9 / 13×13 / 19×19\nChinese telling · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Dode stenen verwijderd: %d zwart, %d wit",  // "Groupes morts retirés : %d noirs, %d blancs"
+    "Hagel",  // "Grêle"
     "Geografie",  // "Géographie"
     "B.M.",  // "H.C."
     "VOCHTIGHEID",  // "HUMIDITÉ"
@@ -4755,6 +4898,7 @@ static const char* const kI18n_nl[] = {
     "Hint",  // "Indice"
     "Hint: %s",  // "Indice : %s"
     "Hint: passen",  // "Indice : passer"
+    "UV-index",  // "Indice UV"
     "Hint getoond",  // "Indice affiché"
     "Hint laadt op",  // "Indice en recharge"
     "Dringend",  // "Insistante"
@@ -4877,6 +5021,7 @@ static const char* const kI18n_nl[] = {
     "Bezig met meten",  // "Mesure en cours"
     "Gemeten",  // "Mesuré"
     "Minimum",  // "Minimum"
+    "Min. %s · Max. %s",  // "Minimum %s · Maximum %s"
     "Minimum en maximum",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Mix",  // "Mixte"
@@ -4885,6 +5030,7 @@ static const char* const kI18n_nl[] = {
     "Spelmodus",  // "Mode de jeu"
     "Godmodus: %s",  // "Mode dieu : %s"
     "Oefenmodus",  // "Mode entraînement"
+    "Matig",  // "Modérée"
     "Maanden",  // "Mois"
     "Beweegt",  // "Mouvement"
     "Normaal",  // "Moyen"
@@ -4892,12 +5038,14 @@ static const char* const kI18n_nl[] = {
     "Normaal + moeilijk",  // "Moyennes + difficiles"
     "Volle muur",  // "Mur plein"
     "GEHEUGEN",  // "MÉMOIRE"
+    "Weer",  // "Météo"
     "Zelfde modus, zelfde opties",  // "Même mode, mêmes réglages"
     "Zelfde opties",  // "Mêmes réglages"
     "LEVEL GEHAALD",  // "NIVEAU TERMINÉ"
     "LEVELS",  // "NIVEAUX"
     "NIEUW RECORD!",  // "NOUVEAU RECORD !"
     "NIEUW SPEL",  // "NOUVELLE PARTIE"
+    "Sneeuw",  // "Neige"
     "Lvl %d/8",  // "Niv %d/8"
     "Niveau",  // "Niveau"
     "Level %d - %s",  // "Niveau %d - %s"
@@ -4925,8 +5073,10 @@ static const char* const kI18n_nl[] = {
     "Nieuwe partij",  // "Nouvelle partie"
     "Nieuw spel, 3 ballen",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
+    "Bewolkt",  // "Nuageux"
     "Nudge, schermstand, kalibratie",  // "Nudge, sens de l'écran, calibration"
     "Nacht (modus Auto)",  // "Nuit (mode Auto)"
+    "Heldere nacht",  // "Nuit claire"
     "Automatisch remise na 50 zetten zonder slag of pionzet",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Remise verklaard in demomodus",  // "Nulle déclarée en mode démo"
     "Remise in onderling overleg",  // "Nulle par accord entre les joueurs"
@@ -4938,6 +5088,8 @@ static const char* const kI18n_nl[] = {
     "Goud",  // "Or"
     "Goud %d",  // "Or %d"
     "Goud over %d",  // "Or restant %d"
+    "Onweer",  // "Orage"
+    "Onweer en regen",  // "Orage et pluie"
     "Oriëntatie: %s",  // "Orientation : %s"
     "Zwenken",  // "Oscillation"
     "Ja",  // "Oui"
@@ -4989,8 +5141,11 @@ static const char* const kI18n_nl[] = {
     "Kamers",  // "Pièces"
     "Planten",  // "Plantes"
     "Regen",  // "Pluie"
+    "Regen het komende uur",  // "Pluie dans l'heure"
+    "Natte sneeuw",  // "Pluie et neige"
     "Lichte regen",  // "Pluie faible"
     "Matige regen",  // "Pluie modérée"
+    "Regen in %d u",  // "Pluie sur %d h"
     "Roetveer",  // "Plume de suie"
     "Neutrale punten (dame): %d",  // "Points neutres (dame) : %d"
     "Portaal open!",  // "Portail ouvert !"
@@ -5011,6 +5166,7 @@ static const char* const kI18n_nl[] = {
     "Slagplicht",  // "Prise obligatoire"
     "Slag x%d",  // "Prise x%d"
     "Gevangen stenen: Zwart %u, Wit %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Kans",  // "Probabilité"
     "Vandaag opgewekt",  // "Produit aujourd'hui"
     "Oplopend",  // "Progressif"
     "Remise aanbieden",  // "Proposer nulle"
@@ -5194,6 +5350,7 @@ static const char* const kI18n_nl[] = {
     "Uptime",  // "Temps actif"
     "Lustijd",  // "Temps de boucle"
     "Totale speeltijd: %u min",  // "Temps de jeu cumulé : %u min"
+    "Uitzonderlijk weer",  // "Temps exceptionnel"
     "Droog",  // "Temps sec"
     "Tijd om",  // "Temps écoulé"
     "Tijd om — het antwoord was: %s",  // "Temps écoulé — la réponse était : %s"
@@ -5234,6 +5391,7 @@ static const char* const kI18n_nl[] = {
     "Werk (tijden onbekend)",  // "Travail (horaire inconnu)"
     "Drievoudige stellingherhaling",  // "Triple répétition de la position"
     "Troon",  // "Trone"
+    "Zeer zwaar",  // "Très forte"
     "Zeer snel",  // "Très rapide"
     "Je zult weer rollen.",  // "Tu rouleras encore."
     "Je verlaat het Doolhof. Het laat je gaan.",  // "Tu sors du dédale. Il te laisse partir."
@@ -5254,6 +5412,7 @@ static const char* const kI18n_nl[] = {
     "Score bevestigen",  // "Valider le score"
     "Variant / modus / niveau kiezen",  // "Variante, mode, niveau"
     "Vr",  // "Ven"
+    "Winderig",  // "Venteux"
     "Ventilatie",  // "Ventilation"
     "Op slot",  // "Verrouillé"
     "Naar het net",  // "Vers le réseau"
@@ -5343,6 +5502,7 @@ static const char* const kI18n_nl[] = {
     "Schaakmat",  // "Échec et mat"
     "Volledig FIDE-schaak\n5 niveaus ingebouwde AI",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Schaakbord van de Tab — FIDE-regels, ingebouwde AI, 100% lokaal",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
+    "Opklaringen",  // "Éclaircies"
     "Eco",  // "Éco"
     "Energiebesparing",  // "Économie d'énergie"
     "Luistert…",  // "Écoute…"
@@ -5390,6 +5550,11 @@ static const char* const kI18n_nl[] = {
     "L",  // "san|F"
     "K",  // "san|R"
     "T",  // "san|T"
+    "Extreem",  // "uv|Extrême"
+    "Laag",  // "uv|Faible"
+    "Matig",  // "uv|Modéré"
+    "Zeer hoog",  // "uv|Très élevé"
+    "Hoog",  // "uv|Élevé"
     "V",  // "vendredi|V"
 };
 
@@ -5471,6 +5636,7 @@ static const char* const kI18n_es[] = {
     "1 error",  // "1 erreur"
     "1 min",  // "1 min"
     "1 a 6 equipos",  // "1 à 6 équipes"
+    "10 días",  // "10 jours"
     "10 min",  // "10 min"
     "10,0 casillas/s - reflejos rápidos",  // "10,0 cases/s - réflexes exigés"
     "Últimos 12 meses",  // "12 derniers mois"
@@ -5525,6 +5691,8 @@ static const char* const kI18n_es[] = {
     "Agilidad",  // "Agilité"
     "Imán del minero",  // "Aimant du mineur"
     "Imán menor",  // "Aimant mineur"
+    "Aire húmedo",  // "Air humide"
+    "Aire seco",  // "Air sec"
     "¡Alerta meteorológica naranja! Ten cuidado.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "¡Alerta meteorológica roja! Ten cuidado.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Alertas",  // "Alertes"
@@ -5618,6 +5786,7 @@ static const char* const kI18n_es[] = {
     "Botones",  // "Boutons"
     "¡Bravo! Quesito «%s» ganado — vuelves a tirar.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Brisa",  // "Brise"
+    "Niebla",  // "Brouillard"
     "Botones",  // "Btn"
     "CATEGORÍA A ELEGIR",  // "CATÉGORIE AU CHOIX"
     "CLASIFICACIÓN",  // "CLASSEMENT"
@@ -5684,6 +5853,7 @@ static const char* const kI18n_es[] = {
     "Confirmar cada orden",  // "Confirmer chaque commande"
     "Confirmar el reinicio",  // "Confirmer la remise à zéro"
     "Avanzado",  // "Confirmé"
+    "Confortable",  // "Confortable"
     "Conectado",  // "Connecté"
     "Guardados en NVS, válidos para todas las partidas",  // "Conservés en NVS, valables pour toutes les parties"
     "Consumo",  // "Consommation"
@@ -5763,6 +5933,7 @@ static const char* const kI18n_es[] = {
     "Cargando",  // "En charge"
     "En curso",  // "En cours"
     "En movimiento",  // "En mouvement"
+    "Soleado",  // "Ensoleillé"
     "Entre %d y %d %%",  // "Entre %d et %d %%"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
@@ -5776,6 +5947,7 @@ static const char* const kI18n_es[] = {
     "FINAL — %s",  // "FINALE — %s"
     "Fácil",  // "Facile"
     "Fáciles + medias",  // "Faciles + moyennes"
+    "Débil",  // "Faible"
     "Camino falso",  // "Faux chemin"
     "Cerrar",  // "Fermer"
     "Cerrada",  // "Fermé"
@@ -5791,7 +5963,9 @@ static const char* const kI18n_es[] = {
     "Flujo de aire",  // "Flux d'air"
     "Fuerza de sacudida necesaria",  // "Force de la secousse nécessaire"
     "Fuerza del Tab",  // "Force du Tab"
+    "Fuerte",  // "Forte"
     "Fortaleza",  // "Forteresse"
+    "Lluvias fuertes",  // "Fortes pluies"
     "Frenado mucho más firme",  // "Freinage nettement plus mordant"
     "Frío",  // "Froid"
     "Fulgurante",  // "Fulgurante"
@@ -5800,11 +5974,13 @@ static const char* const kI18n_es[] = {
     "GAME OVER",  // "GAME OVER"
     "GESTIÓN",  // "GESTION"
     "Guantelete pulido",  // "Gantelet poli"
+    "Helada",  // "Gel"
     "Gestos IMU",  // "Gestes IMU"
     "Gestos, regla de 50 jugadas, evaluación, velocidad de demo",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gestos, reglas, pantalla",  // "Gestes, règles, affichage"
     "Go 9×9 / 13×13 / 19×19\nConteo chino · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Piedras muertas: %d negras, %d blancas",  // "Groupes morts retirés : %d noirs, %d blancs"
+    "Granizo",  // "Grêle"
     "Geografía",  // "Géographie"
     "N.C.",  // "H.C."
     "HUMEDAD",  // "HUMIDITÉ"
@@ -5832,6 +6008,7 @@ static const char* const kI18n_es[] = {
     "Pista",  // "Indice"
     "Pista: %s",  // "Indice : %s"
     "Pista: pasar",  // "Indice : passer"
+    "Índice UV",  // "Indice UV"
     "Pista mostrada",  // "Indice affiché"
     "Pista recargándose",  // "Indice en recharge"
     "Insistente",  // "Insistante"
@@ -5954,6 +6131,7 @@ static const char* const kI18n_es[] = {
     "Midiendo",  // "Mesure en cours"
     "Medida",  // "Mesuré"
     "Mínima",  // "Minimum"
+    "Mín. %s · Máx. %s",  // "Minimum %s · Maximum %s"
     "Mínima y máxima",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Mixto",  // "Mixte"
@@ -5962,6 +6140,7 @@ static const char* const kI18n_es[] = {
     "Modo de juego",  // "Mode de jeu"
     "Modo dios: %s",  // "Mode dieu : %s"
     "Modo entrenamiento",  // "Mode entraînement"
+    "Moderada",  // "Modérée"
     "Meses",  // "Mois"
     "Moviendo",  // "Mouvement"
     "Media",  // "Moyen"
@@ -5969,12 +6148,14 @@ static const char* const kI18n_es[] = {
     "Medias + difíciles",  // "Moyennes + difficiles"
     "Muro sólido",  // "Mur plein"
     "MEMORIA",  // "MÉMOIRE"
+    "Tiempo",  // "Météo"
     "Mismo modo, mismos ajustes",  // "Même mode, mêmes réglages"
     "Mismos ajustes",  // "Mêmes réglages"
     "NIVEL COMPLETADO",  // "NIVEAU TERMINÉ"
     "NIVELES",  // "NIVEAUX"
     "¡NUEVO RÉCORD!",  // "NOUVEAU RECORD !"
     "NUEVA PARTIDA",  // "NOUVELLE PARTIE"
+    "Nieve",  // "Neige"
     "Niv %d/8",  // "Niv %d/8"
     "Nivel",  // "Niveau"
     "Nivel %d - %s",  // "Niveau %d - %s"
@@ -6002,8 +6183,10 @@ static const char* const kI18n_es[] = {
     "Nueva partida",  // "Nouvelle partie"
     "Nueva partida, 3 bolas",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
+    "Nublado",  // "Nuageux"
     "Nudge, orientación, calibración",  // "Nudge, sens de l'écran, calibration"
     "Noche (modo Auto)",  // "Nuit (mode Auto)"
+    "Noche despejada",  // "Nuit claire"
     "Tablas automáticas tras 50 jugadas sin captura ni peón",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Tablas declaradas en modo demo",  // "Nulle déclarée en mode démo"
     "Tablas por mutuo acuerdo",  // "Nulle par accord entre les joueurs"
@@ -6015,6 +6198,8 @@ static const char* const kI18n_es[] = {
     "Oro",  // "Or"
     "Oro %d",  // "Or %d"
     "Oro restante %d",  // "Or restant %d"
+    "Tormenta",  // "Orage"
+    "Tormenta y lluvia",  // "Orage et pluie"
     "Orientación: %s",  // "Orientation : %s"
     "Oscilación",  // "Oscillation"
     "Sí",  // "Oui"
@@ -6066,8 +6251,11 @@ static const char* const kI18n_es[] = {
     "Estancias",  // "Pièces"
     "Plantas",  // "Plantes"
     "Lluvia",  // "Pluie"
+    "Lluvia en la próxima hora",  // "Pluie dans l'heure"
+    "Aguanieve",  // "Pluie et neige"
     "Lluvia débil",  // "Pluie faible"
     "Lluvia moderada",  // "Pluie modérée"
+    "Lluvia en %d h",  // "Pluie sur %d h"
     "Pluma de hollín",  // "Plume de suie"
     "Puntos neutrales (dame): %d",  // "Points neutres (dame) : %d"
     "¡Portal abierto!",  // "Portail ouvert !"
@@ -6088,6 +6276,7 @@ static const char* const kI18n_es[] = {
     "Captura obligatoria",  // "Prise obligatoire"
     "Captura x%d",  // "Prise x%d"
     "Prisioneros: Negro %u, Blanco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Probabilidad",  // "Probabilité"
     "Producido hoy",  // "Produit aujourd'hui"
     "Progresivo",  // "Progressif"
     "Ofrecer tablas",  // "Proposer nulle"
@@ -6271,6 +6460,7 @@ static const char* const kI18n_es[] = {
     "Tiempo activo",  // "Temps actif"
     "Tiempo de bucle",  // "Temps de boucle"
     "Tiempo de juego total: %u min",  // "Temps de jeu cumulé : %u min"
+    "Tiempo excepcional",  // "Temps exceptionnel"
     "Tiempo seco",  // "Temps sec"
     "Tiempo agotado",  // "Temps écoulé"
     "Tiempo agotado — la respuesta era: %s",  // "Temps écoulé — la réponse était : %s"
@@ -6311,6 +6501,7 @@ static const char* const kI18n_es[] = {
     "Trabajo (sin horario)",  // "Travail (horaire inconnu)"
     "Triple repetición de la posición",  // "Triple répétition de la position"
     "Trono",  // "Trone"
+    "Muy fuerte",  // "Très forte"
     "Muy rápida",  // "Très rapide"
     "Volverás a rodar.",  // "Tu rouleras encore."
     "Sales del Laberinto. Te deja marchar.",  // "Tu sors du dédale. Il te laisse partir."
@@ -6331,6 +6522,7 @@ static const char* const kI18n_es[] = {
     "Validar resultado",  // "Valider le score"
     "Variante, modo, nivel",  // "Variante, mode, niveau"
     "Vie",  // "Ven"
+    "Ventoso",  // "Venteux"
     "Ventilación",  // "Ventilation"
     "Bloqueado",  // "Verrouillé"
     "Hacia la red",  // "Vers le réseau"
@@ -6420,6 +6612,7 @@ static const char* const kI18n_es[] = {
     "Jaque mate",  // "Échec et mat"
     "Ajedrez FIDE completo\n5 niveles de IA integrada",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Tablero del Tab — reglas FIDE, IA integrada, 100 % local",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
+    "Intervalos de sol",  // "Éclaircies"
     "Eco",  // "Éco"
     "Ahorro de energía",  // "Économie d'énergie"
     "Escuchando…",  // "Écoute…"
@@ -6467,6 +6660,11 @@ static const char* const kI18n_es[] = {
     "A",  // "san|F"
     "R",  // "san|R"
     "T",  // "san|T"
+    "Extremo",  // "uv|Extrême"
+    "Bajo",  // "uv|Faible"
+    "Moderado",  // "uv|Modéré"
+    "Muy alto",  // "uv|Très élevé"
+    "Alto",  // "uv|Élevé"
     "V",  // "vendredi|V"
 };
 
@@ -6548,6 +6746,7 @@ static const char* const kI18n_it[] = {
     "1 errore",  // "1 erreur"
     "1 min",  // "1 min"
     "1–6 squadre",  // "1 à 6 équipes"
+    "10 giorni",  // "10 jours"
     "10 min",  // "10 min"
     "10,0 caselle/s - riflessi pronti",  // "10,0 cases/s - réflexes exigés"
     "Ultimi 12 mesi",  // "12 derniers mois"
@@ -6602,6 +6801,8 @@ static const char* const kI18n_it[] = {
     "Agilità",  // "Agilité"
     "Magnete del minatore",  // "Aimant du mineur"
     "Magnete minore",  // "Aimant mineur"
+    "Aria umida",  // "Air humide"
+    "Aria secca",  // "Air sec"
     "Allerta meteo arancione in corso! Fai attenzione.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Allerta meteo rossa in corso! Fai attenzione.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Avvisi",  // "Alertes"
@@ -6695,6 +6896,7 @@ static const char* const kI18n_it[] = {
     "Pulsanti",  // "Boutons"
     "Bravo! Spicchio «%s» vinto — tira ancora.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Brezza",  // "Brise"
+    "Nebbia",  // "Brouillard"
     "Pulsanti",  // "Btn"
     "CATEGORIA A SCELTA",  // "CATÉGORIE AU CHOIX"
     "CLASSIFICA",  // "CLASSEMENT"
@@ -6761,6 +6963,7 @@ static const char* const kI18n_it[] = {
     "Conferma ogni comando",  // "Confirmer chaque commande"
     "Conferma l'azzeramento",  // "Confirmer la remise à zéro"
     "Avanzato",  // "Confirmé"
+    "Confortevole",  // "Confortable"
     "Connesso",  // "Connecté"
     "Salvate in NVS, valide per tutte le partite",  // "Conservés en NVS, valables pour toutes les parties"
     "Consumo",  // "Consommation"
@@ -6840,6 +7043,7 @@ static const char* const kI18n_it[] = {
     "In carica",  // "En charge"
     "In corso",  // "En cours"
     "In movimento",  // "En mouvement"
+    "Soleggiato",  // "Ensoleillé"
     "Tra %d e %d %%",  // "Entre %d et %d %%"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
@@ -6853,6 +7057,7 @@ static const char* const kI18n_it[] = {
     "FINALE — %s",  // "FINALE — %s"
     "Facile",  // "Facile"
     "Facili + medie",  // "Faciles + moyennes"
+    "Debole",  // "Faible"
     "Falsa pista",  // "Faux chemin"
     "Chiudi",  // "Fermer"
     "Chiusa",  // "Fermé"
@@ -6868,7 +7073,9 @@ static const char* const kI18n_it[] = {
     "Flusso d'aria",  // "Flux d'air"
     "Forza di scossa necessaria",  // "Force de la secousse nécessaire"
     "Forza del Tab",  // "Force du Tab"
+    "Forte",  // "Forte"
     "Fortezza",  // "Forteresse"
+    "Piogge forti",  // "Fortes pluies"
     "Frenata molto più decisa",  // "Freinage nettement plus mordant"
     "Freddo",  // "Froid"
     "Fulminea",  // "Fulgurante"
@@ -6877,11 +7084,13 @@ static const char* const kI18n_it[] = {
     "GAME OVER",  // "GAME OVER"
     "GESTIONE",  // "GESTION"
     "Guanto lucido",  // "Gantelet poli"
+    "Gelo",  // "Gel"
     "Gesti IMU",  // "Gestes IMU"
     "Gesti, regola delle 50 mosse, valutazione, velocità demo",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gesti, regole, schermo",  // "Gestes, règles, affichage"
     "Go 9×9 / 13×13 / 19×19\nRegole cinesi · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Pietre morte rimosse: %d nere, %d bianche",  // "Groupes morts retirés : %d noirs, %d blancs"
+    "Grandine",  // "Grêle"
     "Geografia",  // "Géographie"
     "F.C.",  // "H.C."
     "UMIDITÀ",  // "HUMIDITÉ"
@@ -6909,6 +7118,7 @@ static const char* const kI18n_it[] = {
     "Aiuto",  // "Indice"
     "Suggerimento: %s",  // "Indice : %s"
     "Suggerimento: passa",  // "Indice : passer"
+    "Indice UV",  // "Indice UV"
     "Suggerimento mostrato",  // "Indice affiché"
     "Suggerimento in ricarica",  // "Indice en recharge"
     "Insistente",  // "Insistante"
@@ -7031,6 +7241,7 @@ static const char* const kI18n_it[] = {
     "Misura in corso",  // "Mesure en cours"
     "Misurata",  // "Mesuré"
     "Minima",  // "Minimum"
+    "Min %s · Max %s",  // "Minimum %s · Maximum %s"
     "Minima e massima",  // "Minimum et maximum"
     "Mix",  // "Mix"
     "Misto",  // "Mixte"
@@ -7039,6 +7250,7 @@ static const char* const kI18n_it[] = {
     "Modalità",  // "Mode de jeu"
     "Modalità Dio: %s",  // "Mode dieu : %s"
     "Modalità allenamento",  // "Mode entraînement"
+    "Moderata",  // "Modérée"
     "Mesi",  // "Mois"
     "In moto",  // "Mouvement"
     "Medio",  // "Moyen"
@@ -7046,12 +7258,14 @@ static const char* const kI18n_it[] = {
     "Medie + difficili",  // "Moyennes + difficiles"
     "Muro pieno",  // "Mur plein"
     "MEMORIA",  // "MÉMOIRE"
+    "Meteo",  // "Météo"
     "Stessa modalità, stesse opzioni",  // "Même mode, mêmes réglages"
     "Stesse opzioni",  // "Mêmes réglages"
     "LIVELLO SUPERATO",  // "NIVEAU TERMINÉ"
     "LIVELLI",  // "NIVEAUX"
     "NUOVO RECORD!",  // "NOUVEAU RECORD !"
     "NUOVA PARTITA",  // "NOUVELLE PARTIE"
+    "Neve",  // "Neige"
     "Liv %d/8",  // "Niv %d/8"
     "Livello",  // "Niveau"
     "Livello %d - %s",  // "Niveau %d - %s"
@@ -7079,8 +7293,10 @@ static const char* const kI18n_it[] = {
     "Nuova partita",  // "Nouvelle partie"
     "Nuova partita, 3 palle",  // "Nouvelle partie, 3 billes"
     "Nov",  // "Nov"
+    "Nuvoloso",  // "Nuageux"
     "Nudge, orientamento, calibrazione",  // "Nudge, sens de l'écran, calibration"
     "Notte (modalità Auto)",  // "Nuit (mode Auto)"
+    "Notte serena",  // "Nuit claire"
     "Patta automatica dopo 50 mosse senza prese né pedoni",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Patta dichiarata in modalità demo",  // "Nulle déclarée en mode démo"
     "Patta d'accordo tra i giocatori",  // "Nulle par accord entre les joueurs"
@@ -7092,6 +7308,8 @@ static const char* const kI18n_it[] = {
     "Oro",  // "Or"
     "Oro %d",  // "Or %d"
     "Oro rimasto %d",  // "Or restant %d"
+    "Temporale",  // "Orage"
+    "Temporale e pioggia",  // "Orage et pluie"
     "Orientamento: %s",  // "Orientation : %s"
     "Oscillazione",  // "Oscillation"
     "Sì",  // "Oui"
@@ -7143,8 +7361,11 @@ static const char* const kI18n_it[] = {
     "Stanze",  // "Pièces"
     "Piante",  // "Plantes"
     "Pioggia",  // "Pluie"
+    "Pioggia nella prossima ora",  // "Pluie dans l'heure"
+    "Pioggia e neve",  // "Pluie et neige"
     "Pioggia debole",  // "Pluie faible"
     "Pioggia moderata",  // "Pluie modérée"
+    "Pioggia in %d h",  // "Pluie sur %d h"
     "Piuma di fuliggine",  // "Plume de suie"
     "Punti neutri (dame): %d",  // "Points neutres (dame) : %d"
     "Portale aperto!",  // "Portail ouvert !"
@@ -7165,6 +7386,7 @@ static const char* const kI18n_it[] = {
     "Presa obbligatoria",  // "Prise obligatoire"
     "Presa x%d",  // "Prise x%d"
     "Prigionieri: Nero %u, Bianco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Probabilità",  // "Probabilité"
     "Prodotto oggi",  // "Produit aujourd'hui"
     "Progressivo",  // "Progressif"
     "Proponi patta",  // "Proposer nulle"
@@ -7348,6 +7570,7 @@ static const char* const kI18n_it[] = {
     "Tempo attivo",  // "Temps actif"
     "Tempo di ciclo",  // "Temps de boucle"
     "Tempo di gioco totale: %u min",  // "Temps de jeu cumulé : %u min"
+    "Tempo eccezionale",  // "Temps exceptionnel"
     "Asciutto",  // "Temps sec"
     "Tempo scaduto",  // "Temps écoulé"
     "Tempo scaduto — la risposta era: %s",  // "Temps écoulé — la réponse était : %s"
@@ -7388,6 +7611,7 @@ static const char* const kI18n_it[] = {
     "Lavoro (orario ignoto)",  // "Travail (horaire inconnu)"
     "Triplice ripetizione della posizione",  // "Triple répétition de la position"
     "Trono",  // "Trone"
+    "Molto forte",  // "Très forte"
     "Rapidissima",  // "Très rapide"
     "Rotolerai ancora.",  // "Tu rouleras encore."
     "Esci dal Labirinto. Ti lascia andare.",  // "Tu sors du dédale. Il te laisse partir."
@@ -7408,6 +7632,7 @@ static const char* const kI18n_it[] = {
     "Conferma punteggio",  // "Valider le score"
     "Variante, modalità, livello",  // "Variante, mode, niveau"
     "Ven",  // "Ven"
+    "Ventoso",  // "Venteux"
     "Ventilazione",  // "Ventilation"
     "Bloccato",  // "Verrouillé"
     "Verso la rete",  // "Vers le réseau"
@@ -7497,6 +7722,7 @@ static const char* const kI18n_it[] = {
     "Scacco matto",  // "Échec et mat"
     "Scacchi FIDE completi\n5 livelli di IA integrata",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "La scacchiera del Tab — regole FIDE, IA integrata, 100% locale",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
+    "Schiarite",  // "Éclaircies"
     "Eco",  // "Éco"
     "Risparmio energetico",  // "Économie d'énergie"
     "Ascolto…",  // "Écoute…"
@@ -7544,6 +7770,11 @@ static const char* const kI18n_it[] = {
     "A",  // "san|F"
     "R",  // "san|R"
     "T",  // "san|T"
+    "Estremo",  // "uv|Extrême"
+    "Basso",  // "uv|Faible"
+    "Moderato",  // "uv|Modéré"
+    "Molto alto",  // "uv|Très élevé"
+    "Alto",  // "uv|Élevé"
     "V",  // "vendredi|V"
 };
 
@@ -7625,6 +7856,7 @@ static const char* const kI18n_tr[] = {
     "1 hata",  // "1 erreur"
     "1 dk",  // "1 min"
     "1-6 takım",  // "1 à 6 équipes"
+    "10 gün",  // "10 jours"
     "10 dk",  // "10 min"
     "10,0 kare/sn - refleks şart",  // "10,0 cases/s - réflexes exigés"
     "Son 12 ay",  // "12 derniers mois"
@@ -7679,6 +7911,8 @@ static const char* const kI18n_tr[] = {
     "Çeviklik",  // "Agilité"
     "Madenci Mıknatısı",  // "Aimant du mineur"
     "Küçük Mıknatıs",  // "Aimant mineur"
+    "Nemli hava",  // "Air humide"
+    "Kuru hava",  // "Air sec"
     "Turuncu hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Kırmızı hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Uyarılar",  // "Alertes"
@@ -7772,6 +8006,7 @@ static const char* const kI18n_tr[] = {
     "Düğmeler",  // "Boutons"
     "Bravo! “%s” dilimi kazanıldı — tekrar atıyorsun.",  // "Bravo ! Part « %s » gagnée — vous rejouez."
     "Esinti",  // "Brise"
+    "Sis",  // "Brouillard"
     "Düğme",  // "Btn"
     "KATEGORİ SEÇ",  // "CATÉGORIE AU CHOIX"
     "SIRALAMA",  // "CLASSEMENT"
@@ -7838,6 +8073,7 @@ static const char* const kI18n_tr[] = {
     "Her komutu onayla",  // "Confirmer chaque commande"
     "Sıfırlamayı onayla",  // "Confirmer la remise à zéro"
     "İleri",  // "Confirmé"
+    "Konforlu",  // "Confortable"
     "Bağlı",  // "Connecté"
     "NVS'de saklanır, tüm oyunlar için geçerli",  // "Conservés en NVS, valables pour toutes les parties"
     "Tüketim",  // "Consommation"
@@ -7917,6 +8153,7 @@ static const char* const kI18n_tr[] = {
     "Şarj oluyor",  // "En charge"
     "Çalışıyor",  // "En cours"
     "Hareket ediyor",  // "En mouvement"
+    "Güneşli",  // "Ensoleillé"
     "%d ile %d %% arası",  // "Entre %d et %d %%"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
@@ -7930,6 +8167,7 @@ static const char* const kI18n_tr[] = {
     "FİNAL — %s",  // "FINALE — %s"
     "Kolay",  // "Facile"
     "Kolay + orta",  // "Faciles + moyennes"
+    "Hafif",  // "Faible"
     "Yanlış Yol",  // "Faux chemin"
     "Kapat",  // "Fermer"
     "Kapalı",  // "Fermé"
@@ -7945,7 +8183,9 @@ static const char* const kI18n_tr[] = {
     "Hava akışı",  // "Flux d'air"
     "Gereken sallama gücü",  // "Force de la secousse nécessaire"
     "Tab gücü",  // "Force du Tab"
+    "Kuvvetli",  // "Forte"
     "Kale",  // "Forteresse"
+    "Şiddetli yağmur",  // "Fortes pluies"
     "Çok daha sert frenleme",  // "Freinage nettement plus mordant"
     "Soğuk",  // "Froid"
     "Şimşek",  // "Fulgurante"
@@ -7954,11 +8194,13 @@ static const char* const kI18n_tr[] = {
     "OYUN BİTTİ",  // "GAME OVER"
     "YÖNETİM",  // "GESTION"
     "Parlak Eldiven",  // "Gantelet poli"
+    "Don",  // "Gel"
     "IMU hareketleri",  // "Gestes IMU"
     "Hareketler, 50 hamle kuralı, değerlendirme, demo hızı",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Hareketler, kurallar, görünüm",  // "Gestes, règles, affichage"
     "Go 9×9 / 13×13 / 19×19\nÇin sayımı · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Alınan ölü taş: %d siyah, %d beyaz",  // "Groupes morts retirés : %d noirs, %d blancs"
+    "Dolu",  // "Grêle"
     "Coğrafya",  // "Géographie"
     "S.D.",  // "H.C."
     "NEM",  // "HUMIDITÉ"
@@ -7986,6 +8228,7 @@ static const char* const kI18n_tr[] = {
     "İpucu",  // "Indice"
     "İpucu: %s",  // "Indice : %s"
     "İpucu: pas",  // "Indice : passer"
+    "UV indeksi",  // "Indice UV"
     "İpucu gösterildi",  // "Indice affiché"
     "İpucu hazırlanıyor",  // "Indice en recharge"
     "Israrlı",  // "Insistante"
@@ -8108,6 +8351,7 @@ static const char* const kI18n_tr[] = {
     "Ölçülüyor",  // "Mesure en cours"
     "Ölçülen",  // "Mesuré"
     "En düşük",  // "Minimum"
+    "En düşük %s · En yüksek %s",  // "Minimum %s · Maximum %s"
     "En düşük ve en yüksek",  // "Minimum et maximum"
     "Karma",  // "Mix"
     "Karma",  // "Mixte"
@@ -8116,6 +8360,7 @@ static const char* const kI18n_tr[] = {
     "Oyun modu",  // "Mode de jeu"
     "Tanrı modu: %s",  // "Mode dieu : %s"
     "Antrenman modu",  // "Mode entraînement"
+    "Orta",  // "Modérée"
     "Aylar",  // "Mois"
     "Hareket",  // "Mouvement"
     "Orta",  // "Moyen"
@@ -8123,12 +8368,14 @@ static const char* const kI18n_tr[] = {
     "Orta + zor",  // "Moyennes + difficiles"
     "Düz duvar",  // "Mur plein"
     "BELLEK",  // "MÉMOIRE"
+    "Hava durumu",  // "Météo"
     "Aynı mod, aynı ayarlar",  // "Même mode, mêmes réglages"
     "Aynı ayarlar",  // "Mêmes réglages"
     "SEVİYE BİTTİ",  // "NIVEAU TERMINÉ"
     "SEVİYELER",  // "NIVEAUX"
     "YENİ REKOR!",  // "NOUVEAU RECORD !"
     "YENİ OYUN",  // "NOUVELLE PARTIE"
+    "Kar",  // "Neige"
     "Sev %d/8",  // "Niv %d/8"
     "Seviye",  // "Niveau"
     "Seviye %d - %s",  // "Niveau %d - %s"
@@ -8156,8 +8403,10 @@ static const char* const kI18n_tr[] = {
     "Yeni oyun",  // "Nouvelle partie"
     "Yeni oyun, 3 bilye",  // "Nouvelle partie, 3 billes"
     "Kas",  // "Nov"
+    "Bulutlu",  // "Nuageux"
     "Dürtme, ekran yönü, kalibrasyon",  // "Nudge, sens de l'écran, calibration"
     "Gece (Otomatik mod)",  // "Nuit (mode Auto)"
+    "Açık gece",  // "Nuit claire"
     "Alma veya piyon hamlesi olmadan 50 hamlede otomatik beraberlik",  // "Nulle automatique après 50 coups sans prise ni pion"
     "Demo modunda beraberlik ilan edildi",  // "Nulle déclarée en mode démo"
     "Oyuncuların anlaşmasıyla beraberlik",  // "Nulle par accord entre les joueurs"
@@ -8169,6 +8418,8 @@ static const char* const kI18n_tr[] = {
     "Altın",  // "Or"
     "Altın %d",  // "Or %d"
     "Kalan altın %d",  // "Or restant %d"
+    "Fırtına",  // "Orage"
+    "Fırtına ve yağmur",  // "Orage et pluie"
     "Yön: %s",  // "Orientation : %s"
     "Salınım",  // "Oscillation"
     "Evet",  // "Oui"
@@ -8220,8 +8471,11 @@ static const char* const kI18n_tr[] = {
     "Odalar",  // "Pièces"
     "Bitkiler",  // "Plantes"
     "Yağmur",  // "Pluie"
+    "Önümüzdeki saatte yağmur",  // "Pluie dans l'heure"
+    "Karla karışık yağmur",  // "Pluie et neige"
     "Hafif yağmur",  // "Pluie faible"
     "Orta yağmur",  // "Pluie modérée"
+    "%d saatte yağmur",  // "Pluie sur %d h"
     "Kurum Tüyü",  // "Plume de suie"
     "Nötr noktalar (dame): %d",  // "Points neutres (dame) : %d"
     "Portal açık!",  // "Portail ouvert !"
@@ -8242,6 +8496,7 @@ static const char* const kI18n_tr[] = {
     "Alma zorunlu",  // "Prise obligatoire"
     "Alma x%d",  // "Prise x%d"
     "Oyundaki esirler: Siyah %u, Beyaz %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
+    "Olasılık",  // "Probabilité"
     "Bugün üretilen",  // "Produit aujourd'hui"
     "Kademeli",  // "Progressif"
     "Beraberlik öner",  // "Proposer nulle"
@@ -8425,6 +8680,7 @@ static const char* const kI18n_tr[] = {
     "Açık kalma",  // "Temps actif"
     "Döngü süresi",  // "Temps de boucle"
     "Toplam oyun süresi: %u dk",  // "Temps de jeu cumulé : %u min"
+    "Olağanüstü hava",  // "Temps exceptionnel"
     "Kuru",  // "Temps sec"
     "Süre doldu",  // "Temps écoulé"
     "Süre doldu — yanıt: %s",  // "Temps écoulé — la réponse était : %s"
@@ -8465,6 +8721,7 @@ static const char* const kI18n_tr[] = {
     "İş (saat bilinmiyor)",  // "Travail (horaire inconnu)"
     "Konumun üç kez tekrarı",  // "Triple répétition de la position"
     "Taht",  // "Trone"
+    "Çok kuvvetli",  // "Très forte"
     "Çok hızlı",  // "Très rapide"
     "Yine yuvarlanacaksın.",  // "Tu rouleras encore."
     "Labirentten çıkıyorsun. Gitmene izin veriyor.",  // "Tu sors du dédale. Il te laisse partir."
@@ -8485,6 +8742,7 @@ static const char* const kI18n_tr[] = {
     "Skoru onayla",  // "Valider le score"
     "Varyant, mod, seviye",  // "Variante, mode, niveau"
     "Cum",  // "Ven"
+    "Rüzgârlı",  // "Venteux"
     "Fan",  // "Ventilation"
     "Kilitli",  // "Verrouillé"
     "Şebekeye",  // "Vers le réseau"
@@ -8574,6 +8832,7 @@ static const char* const kI18n_tr[] = {
     "Şah mat",  // "Échec et mat"
     "Tam FIDE satranç\n5 seviye yerleşik YZ",  // "Échecs FIDE complets\n5 niveaux d'IA embarquée"
     "Tab'ın satranç tahtası — FIDE kuralları, yerleşik YZ, %100 yerel",  // "Échiquier du Tab — règles FIDE, IA embarquée, 100 % local"
+    "Parçalı güneşli",  // "Éclaircies"
     "Eko",  // "Éco"
     "Güç tasarrufu",  // "Économie d'énergie"
     "Dinliyor…",  // "Écoute…"
@@ -8621,6 +8880,11 @@ static const char* const kI18n_tr[] = {
     "F",  // "san|F"
     "Ş",  // "san|R"
     "K",  // "san|T"
+    "Aşırı",  // "uv|Extrême"
+    "Düşük",  // "uv|Faible"
+    "Orta",  // "uv|Modéré"
+    "Çok yüksek",  // "uv|Très élevé"
+    "Yüksek",  // "uv|Élevé"
     "C",  // "vendredi|V"
 };
 

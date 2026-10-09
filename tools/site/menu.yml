@@ -123,6 +123,9 @@
         - en: House
           fr: Maison
           page: docs/notice/house.md
+        - en: Weather
+          fr: Météo
+          page: docs/notice/weather.md
         - en: Settings
           fr: Réglages
           page: docs/notice/settings.md

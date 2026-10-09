@@ -83,6 +83,14 @@ inline bool ui_appui_glisse() {
     return indev != nullptr && (lv_indev_get_press_moved(indev) || lv_indev_get_gesture_dir(indev) != LV_DIR_NONE);
 }
 
+// --- Tracés construits en C++ (tab5_anim.cpp, 09/10/2026) ---
+// Briques d'un tracé (popups Température et Météo) : un rectangle sans style (opacité,
+// rayon), une lv_line (son tableau de points doit vivre aussi longtemps qu'elle), tous deux
+// non cliquables et masqués ; ui_poser() les place, les taille et les montre.
+lv_obj_t* ui_rectangle(lv_obj_t* parent, lv_opa_t opa, int32_t rayon);
+lv_obj_t* ui_ligne(lv_obj_t* parent, int32_t epaisseur);
+void ui_poser(lv_obj_t* o, int32_t x, int32_t y, int32_t w, int32_t h);
+
 // --- tab5_text.cpp ---
 // Normalise un texte venu de HA (Latin-1 / mojibake) en UTF-8 valide pour LVGL.
 std::string normalize_text_utf8(const std::string& in);
@@ -257,7 +265,8 @@ uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 
 // --- Roue d'actions rapides (tab5_roue.cpp, ADR-0036) ---
 // Icône d'un bouton (glyphe_roue, mdi_font_36) ; AUCUNE : un texte ou une pastille. Après
-// REGLAGES : celles de la roue de navigation (ADR-0042), familles puis destinations.
+// REGLAGES : celles de la roue de navigation (ADR-0042), familles puis destinations ;
+// METEO (popup Météo, ADR-0043) en dernier.
 enum class RoueIcone : uint8_t {
     AUCUNE,
     ETEINDRE,
@@ -300,6 +309,7 @@ enum class RoueIcone : uint8_t {
     JEUX,
     ENGRENAGE,
     SYSTEME,
+    METEO,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
 // anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
@@ -538,6 +548,19 @@ bool clim_carrousel_ouvrir_sur(const ClimRef& c);
 // héritage (aucune pièce reçue).
 int tuiles_piece_mode_ha();
 
+// --- Popup Météo (tab5_meteo.cpp, ADR-0043) ---
+// Les prévisions (heures, jours), la pluie dans l'heure ou sa phrase viennent de changer :
+// le popup se repeint s'il est affiché (un test sinon). tab5_forecast.cpp,
+// tab5_services.cpp, tab5_central.cpp.
+void meteo_donnees_changees();
+// tab5_services.cpp : niveau (0 sec à 4 très forte) de la barre i (0 à 8) de la pluie dans
+// l'heure ; -1 tant que HA n'a rien poussé.
+int pluie_barre_niveau(int i);
+// tab5_central.cpp : la phrase de la pluie telle que la carte centrale l'affiche
+// (« Pluie faible dans 12 mn », « Temps sec ») et son niveau (-1 pas de données, 0 sec,
+// 1 à 4, 5 intensité inconnue ; -2 sans source ou phrase en texte brut). "" sans phrase.
+const char* pluie_phrase_lue(int& niveau);
+
 // --- tab5_central.cpp, pour les pièces ---
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de
 // handle_swipe_gesture) : gauche 0→1→2→3→4→2, droite 4→3→2→1→0→2.
@@ -569,6 +592,7 @@ void reglages_rejouer_theme();
 float batterie_niveau_lu();
 bool batterie_en_charge_lue();
 void historique_rejouer_theme();
+void meteo_rejouer_theme();
 void alertes_rejouer_theme();
 void zones_rejouer_theme();
 void assist_rejouer_theme();

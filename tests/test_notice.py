@@ -82,6 +82,7 @@ NON_MONTREES = {
     "roue-navigation-pieces": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
     "roue-navigation-appareils": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
     "roue-navigation-tablette": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
+    "roue-navigation-agenda": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
     "roue-navigation-bureau": "accueil-ha-piece-4 montre la même pièce ; le choix d'une pièce est décrit dans home.md",
     "aller-lumieres": "lumieres-chambre montre la même fenêtre ; l'ouverture par la roue est décrite dans home.md",
     "maison": "image à tirer du rendu de la PR du popup Maison, puis citer dans house.md",
@@ -96,6 +97,11 @@ NON_MONTREES = {
     "aller-volet": "popup Volets par « Aller à l'écran » → Volet, décrit dans shutters.md ; image à tirer du rendu",
     "volets-page-suivante": "aller-volet montre la même fenêtre ; le glissement est décrit dans shutters.md",
     "volets-une-piece": "aller-volet montre la même fenêtre ; une seule pièce, décrite dans shutters.md",
+    # Popup Météo (ADR-0043, 09/10/2026), décrit dans weather.md : images à tirer du rendu
+    # de la PR, puis citées.
+    "meteo-aujourdhui": "page Aujourd'hui du popup Météo, décrite dans weather.md ; image à tirer du rendu",
+    "meteo-jours": "page 10 jours du popup Météo, décrite dans weather.md ; image à tirer du rendu",
+    "meteo-details": "page Détails du popup Météo, décrite dans weather.md ; image à tirer du rendu",
     # Réglages en quatre pages (08/10/2026) : images à tirer du rendu de la PR, puis citées.
     "reglages-apparence": "page Apparence des Réglages, décrite dans settings.md ; image à tirer du rendu",
     "reglages-batterie-en-charge": "page Batterie des Réglages, décrite dans settings.md ; image à tirer du rendu",

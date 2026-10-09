@@ -68,17 +68,19 @@ static constexpr MeteoIconSpec kMeteoIcons[] = {
     {"windy-variant",        MeteoIcon::WIND,  &Palette::METEO_CLOUD,     nullptr,               &Palette::TEXT_PRIMARY,    false,   0,   0,   0},
 };
 
-void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s) {
+void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s, int echelle_pct) {
     const MeteoIconSpec* s = &kMeteoIconDefault;
     for (const MeteoIconSpec& e : kMeteoIcons) {
         if (state == e.cond) { s = &e; break; }
     }
+    // Décalages calés sur 120 px : à l'échelle des polices passées (popup Météo, ADR-0043).
+    const auto echelle = [echelle_pct](int8_t v) { return static_cast<int32_t>(v) * echelle_pct / 100; };
 
     if (l1_obj) {
         lv_obj_remove_flag(l1_obj, LV_OBJ_FLAG_HIDDEN);
         lv_label_set_text(l1_obj, s->l1);
         lv_obj_set_style_text_color(l1_obj, lv_color_hex(UIColor.*s->l1_color), LV_PART_MAIN);
-        lv_obj_set_style_translate_y(l1_obj, s->l1_y, LV_PART_MAIN);
+        lv_obj_set_style_translate_y(l1_obj, echelle(s->l1_y), LV_PART_MAIN);
         esphome::lvgl::lv_obj_set_style_text_font(l1_obj, f_card, LV_PART_MAIN);
         if (s->l2 && l2_obj) { lv_obj_move_to_index(l1_obj, -1); }
     }
@@ -87,8 +89,8 @@ void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& st
             lv_obj_remove_flag(l2_obj, LV_OBJ_FLAG_HIDDEN);
             lv_label_set_text(l2_obj, s->l2);
             lv_obj_set_style_text_color(l2_obj, lv_color_hex(UIColor.*s->l2_color), LV_PART_MAIN);
-            lv_obj_set_style_translate_x(l2_obj, s->l2_x, LV_PART_MAIN);
-            lv_obj_set_style_translate_y(l2_obj, s->l2_y, LV_PART_MAIN);
+            lv_obj_set_style_translate_x(l2_obj, echelle(s->l2_x), LV_PART_MAIN);
+            lv_obj_set_style_translate_y(l2_obj, echelle(s->l2_y), LV_PART_MAIN);
             esphome::lvgl::lv_obj_set_style_text_font(l2_obj, s->l2_small ? f_card_s : f_card, LV_PART_MAIN);
         } else {
             lv_obj_add_flag(l2_obj, LV_OBJ_FLAG_HIDDEN);
@@ -169,6 +171,7 @@ static void parse_and_update_heures_bulk(const std::string& payload) {
     // garde ce qu'il avait ; une ligne de journal par payload, comme l'historique des alertes.
     if (previsions_heures_lire(payload.c_str(), cal_heures_data) > 0)
         payload_refuse("tab5.forecast", "heures : créneau(x) illisible(s) ignoré(s)", payload.size());
+    meteo_donnees_changees();  // popup Météo affiché : repeint (ADR-0043)
 }
 
 bool accept_heures_bulk(const std::string& payload, int forecast_page) {
@@ -196,6 +199,7 @@ void parse_and_update_jours_bulk(const std::string& payload) {
     // et journalisés une fois, comme les heures.
     if (previsions_jours_lire(payload.c_str(), cal_jours_data, cal_jours_anchor_day) > 0)
         payload_refuse("tab5.forecast", "jours : jour(s) illisible(s) ignoré(s)", payload.size());
+    meteo_donnees_changees();
 }
 
 // =============================================================================

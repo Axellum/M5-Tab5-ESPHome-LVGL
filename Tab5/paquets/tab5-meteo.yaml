@@ -1,0 +1,62 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-meteo.yaml
+# @role Popup « Météo » (ADR-0043, 09/10/2026) : pose les widgets que tab5_meteo.cpp
+#       peint (g_meteo_ui).
+#         - tab5_meteo_ouvrir (page : MeteoPage) : « Aller à l'écran → Météo », un geste
+#           de l'accueil (code « meteo », ADR-0039) ou un appui long sur une tuile de
+#           prévision sans appareil, tous par tab5_ecran_ouvrir et la ligne du registre
+#           (tab5-navigation.yaml). Pose les widgets à la première ouverture, puis
+#           meteo_ouvrir() : tracés construits une fois, page montrée et peinte ; ouvre.
+# @architecture_constraint Push-only et contrat inchangé (ADR-0001, ADR-0043) : rien
+#       n'est demandé à Home Assistant, le popup lit ce qu'il a déjà poussé. Chargé APRÈS
+#       tab5_lvgl (il référence des widgets). Aucun lv_* ici.
+# @ai_instruction Un widget de plus = son champ dans MeteoUI (tab5_meteo.h) et sa ligne
+#       ici.
+# ============================================================================
+
+script:
+  - id: tab5_meteo_ouvrir
+    parameters:
+      page: int
+    then:
+      - lambda: |-
+          MeteoUI& u = g_meteo_ui;
+          if (u.popup == nullptr) {
+            u.page[METEO_PAGE_JOUR] = id(meteo_page_jour);
+            u.page[METEO_PAGE_JOURS] = id(meteo_page_jours);
+            u.page[METEO_PAGE_DETAILS] = id(meteo_page_details);
+            u.onglet[METEO_PAGE_JOUR] = id(meteo_onglet_jour);
+            u.onglet[METEO_PAGE_JOURS] = id(meteo_onglet_jours);
+            u.onglet[METEO_PAGE_DETAILS] = id(meteo_onglet_details);
+            u.icone_l1 = id(meteo_maintenant_l1);
+            u.icone_l2 = id(meteo_maintenant_l2);
+            u.temperature = id(meteo_maintenant_temperature);
+            u.condition = id(meteo_maintenant_condition);
+            u.min_max = id(meteo_maintenant_min_max);
+            u.pluie_titre = id(meteo_pluie_titre);
+            u.pluie_total = id(meteo_pluie_total);
+            u.zone_heures = id(meteo_zone_heures);
+            u.zone_jours = id(meteo_zone_jours);
+            u.pluie_phrase = id(meteo_pluie_phrase);
+            u.zone_pluie = id(meteo_zone_pluie);
+            u.carte_valeur[METEO_CARTE_HUMIDITE] = id(meteo_carte_valeur_0);
+            u.carte_valeur[METEO_CARTE_UV] = id(meteo_carte_valeur_1);
+            u.carte_valeur[METEO_CARTE_GEL] = id(meteo_carte_valeur_2);
+            u.carte_valeur[METEO_CARTE_NEIGE] = id(meteo_carte_valeur_3);
+            u.carte_detail[METEO_CARTE_HUMIDITE] = id(meteo_carte_detail_0);
+            u.carte_detail[METEO_CARTE_UV] = id(meteo_carte_detail_1);
+            u.carte_detail[METEO_CARTE_GEL] = id(meteo_carte_detail_2);
+            u.carte_detail[METEO_CARTE_NEIGE] = id(meteo_carte_detail_3);
+            u.police = id(roboto_22);
+            u.police_grasse = id(roboto_32_b);
+            u.icone = id(font_meteo_card);
+            u.icone_petite = id(font_meteo_card_small);
+            u.icone_m = id(font_meteo_48);
+            u.icone_m_petite = id(font_meteo_32);
+            // En dernier : meteo_ouvrir() ne fait rien tant que popup est nul.
+            u.popup = id(meteo_popup);
+          }
+          // Page montrée et peinte avant d'ouvrir : aucune image d'une ouverture précédente.
+          meteo_ouvrir(page);
+          animate_popup_open(id(meteo_popup));

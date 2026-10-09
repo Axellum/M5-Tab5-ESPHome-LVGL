@@ -44,6 +44,7 @@
 #include "tab5_energie.h"
 #include "tab5_reglages.h"
 #include "tab5_historique.h"
+#include "tab5_meteo.h"
 #include "tab5_alertes.h"
 #include "tab5_maison.h"
 #include "tab5_piece_climat.h"

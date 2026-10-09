@@ -2486,6 +2486,7 @@ void theme_rejouer_ui() {
     energie_rejouer_theme();
     reglages_rejouer_theme();
     historique_rejouer_theme();
+    meteo_rejouer_theme();
     alertes_rejouer_theme();
     zones_rejouer_theme();
     assist_rejouer_theme();

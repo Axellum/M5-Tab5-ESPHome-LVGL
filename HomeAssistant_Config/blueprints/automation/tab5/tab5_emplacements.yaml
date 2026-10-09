@@ -1280,6 +1280,8 @@ blueprint:
                   value: temperature
                 - label: "Roue de navigation · Navigation wheel"
                   value: roue
+                - label: "Météo · Weather"
+                  value: meteo
         geste_heures_long:
           name: "Heures : appui long · Hours: long press"
           description: >-
@@ -2930,7 +2932,7 @@ variables:
   # en « auto ».
   codes_gestes: [auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie,
                  reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante,
-                 ecoute, nabu_suivant, lumieres, volet, temperature, roue]
+                 ecoute, nabu_suivant, lumieres, volet, temperature, roue, meteo]
   # « gestes|c1|…|c12; » : les 12 gestes dans l'ORDRE de l'enum Geste (tab5_zones.h) —
   # heures tap, heures long, minutes tap, minutes long, date tap, date long, maison tap,
   # maison long, engrenage tap, engrenage long, manette tap, manette long. Poussé avec
