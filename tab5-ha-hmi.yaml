@@ -85,6 +85,10 @@ esphome:
     # tools/test_tab5_socle.cpp (audit du 07/10/2026, lot L5).
     - Tab5/socle/tab5_champs.h
     - Tab5/socle/tab5_champs.cpp
+    # Lecture des payloads de HA par service (prévisions, vigilance, alertes, pluie…) :
+    # pure, testée sur PC par tools/test_parse.cpp et fuzzée (lot F de l'audit du 30/09/2026).
+    - Tab5/socle/tab5_parse.h
+    - Tab5/socle/tab5_parse.cpp
     # Géométrie partagée des popups construits en C++ (écran, carte modale, pièces) :
     # en-tête seul, inclus par les .cpp qui s'en servent (lot L5).
     - Tab5/socle/tab5_geometrie.h

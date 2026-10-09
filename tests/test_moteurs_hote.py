@@ -39,7 +39,8 @@ def test_chaque_test_cpp_est_compile_et_lance_par_la_ci(test_cpp):
 def test_tests_cpp_presents():
     # Le paramétrage ci-dessus ne prouve rien sur une liste vide.
     noms = {p.name for p in (REPO / "tools").glob("test_*.cpp")}
-    assert {"test_go_engine.cpp", "test_chess_engine.cpp", "test_draughts_engine.cpp", "test_alarm_clock.cpp"} <= noms
+    assert {"test_go_engine.cpp", "test_chess_engine.cpp", "test_draughts_engine.cpp", "test_alarm_clock.cpp",
+            "test_parse.cpp"} <= noms
 
 
 def test_perft_des_echecs_egaux_au_miroir_python():
