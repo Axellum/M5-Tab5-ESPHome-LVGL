@@ -74,7 +74,7 @@ def test_onglets_a_la_place_des_noms_des_reglages():
     """Quatre pages : les x des quatre noms des Réglages (reglages_popup.yaml) ; cinq
     pièces : entre la fin du titre (x 318) et la croix (8 px avant elle)."""
     popup = lire(TAB5 / "ui_components" / "reglages_popup.yaml")
-    reglages = [int(x) for x in re.findall(r"file: reglages_onglet\.yaml, vars: \{ id: \w+, x: (\d+),", popup)]
+    reglages = [int(x) for x in re.findall(r"file: reglages_onglet\.yaml, vars: \{ prefixe: reglages, id: \w+, x: (\d+),", popup)]
     xs, w = _x_onglets(4)
     assert xs == reglages and w == 200
     # Largeur par défaut de reglages_onglet.yaml (le Réveil passe la sienne, `w`).

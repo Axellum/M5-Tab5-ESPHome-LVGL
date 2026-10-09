@@ -578,6 +578,8 @@ lvgl:
         - !include ../ui_components/alertes_popup.yaml
         # Popup Maison (ADR-0037) : passe derrière un popup ouvert depuis une de ses lignes.
         - !include ../ui_components/maison_popup.yaml
+        # Popup Météo (ADR-0043).
+        - !include ../ui_components/meteo_popup.yaml
         - !include ../ui_components/calendar_popup.yaml
         - !include ../ui_components/assistant_popup.yaml
         - !include ../ui_components/alarm_popup.yaml

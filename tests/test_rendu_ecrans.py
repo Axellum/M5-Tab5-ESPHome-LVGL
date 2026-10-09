@@ -208,7 +208,7 @@ def test_pages_des_reglages():
     (reglages_onglet.yaml : 200 × 44 à y 4 de la carte modale, posée à 15 px des bords),
     dans l'ordre des pages, et les gestes du popup y sont marqués comme tels."""
     popup = _lire("Tab5", "ui_components", "reglages_popup.yaml")
-    xs = [int(x) for x in re.findall(r"file: reglages_onglet\.yaml, vars: \{ id: \w+, x: (\d+), page: \d+,", popup)]
+    xs = [int(x) for x in re.findall(r"file: reglages_onglet\.yaml, vars: \{ prefixe: reglages, id: \w+, x: (\d+), page: \d+,", popup)]
     noms = ("ecran", "apparence", "batterie", "systeme")
     assert [ecrans.REGLAGES_PAGES[n] for n in noms] == [(15 + x + 100, 15 + 4 + 22) for x in xs]
     for geste in (ecrans.REGLAGES_GLISSER_DEPUIS_UN_BOUTON, ecrans.REGLAGES_GLISSER_CURSEUR,
@@ -222,7 +222,7 @@ def test_pages_du_reveil():
     le préréglage d'où part le geste, au milieu des leurs (pages à y 72 de la carte
     modale, cartes de la page à x 24 et 637)."""
     popup = _lire("Tab5", "ui_components", "alarm_popup.yaml")
-    onglets = re.findall(r"file: reglages_onglet\.yaml, vars: \{ id: \w+, x: (\d+), w: (\d+), page: \d+,", popup)
+    onglets = re.findall(r"file: reglages_onglet\.yaml, vars: \{ prefixe: reveil, id: \w+, x: (\d+), w: (\d+), page: \d+,", popup)
     noms = ("heure", "jours", "ouverture", "sonnerie", "annonces")
     assert len(onglets) == len(noms)
     assert [ecrans.REVEIL_PAGES[n] for n in noms] == [(15 + int(x) + int(w) // 2, 15 + 4 + 22) for x, w in onglets]

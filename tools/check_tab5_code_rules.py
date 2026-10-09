@@ -869,7 +869,6 @@ def chemins_chauds(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
 # mieux dans tab5_internal.h : animate_crossfade_layers, update_central_forecast_page_ui,
 # moisture_slots_refresh, zone_tuile_absente, zones_pots_presents, central_planning_set_off.)
 PUBLIQUES_SANS_APPELANT = {
-    "update_meteo_icon",        # tab5_forecast.cpp : dessin d'une tuile météo
     "clim_eco_actif",           # tab5_clim.cpp : état des boutons de la clim (lus aussi par tests/test_clim.py)
     "clim_silence_actif",
     "clim_oscillation_actif",

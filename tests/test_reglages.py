@@ -39,7 +39,7 @@ CHAMPS = {"REGLAGE_EXTINCTION": "extinction", "REGLAGE_OKAY_NABU": "okay_nabu", 
           "REGLAGE_BATTERIE_MONTEE": "montee", "REGLAGE_MODE_CHARGE": "mode_charge",
           "REGLAGE_WIFI_ECO": "wifi_eco", "REGLAGE_ANIMATIONS": "animations"}
 OUI_NON = ("REGLAGE_OKAY_NABU", "REGLAGE_TAPE", "REGLAGE_NUIT", "REGLAGE_BATTERIE_MONTEE")
-ONGLET = re.compile(r"file: reglages_onglet\.yaml, vars: \{ id: (\w+), x: \d+, page: (\d+), label_text: \"([^\"]*)\" \}")
+ONGLET = re.compile(r"file: reglages_onglet\.yaml, vars: \{ prefixe: reglages, id: (\w+), x: \d+, page: (\d+), label_text: \"([^\"]*)\" \}")
 # Conteneur de chaque page (reglages_popup.yaml ; la page Système est console_sys.yaml).
 PAGES = {"REGLAGES_PAGE_ECRAN": "reglages_page_ecran", "REGLAGES_PAGE_APPARENCE": "reglages_page_apparence",
          "REGLAGES_PAGE_BATTERIE": "reglages_page_batterie", "REGLAGES_PAGE_SYSTEME": "reglages_page_systeme"}

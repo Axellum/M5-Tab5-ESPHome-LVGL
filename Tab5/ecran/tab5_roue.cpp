@@ -202,6 +202,7 @@ const char* glyphe_roue(RoueIcone i) {
         case RoueIcone::JEUX: return "\U000F0297";         // gamepad-variant
         case RoueIcone::ENGRENAGE: return "\U000F0493";    // cog
         case RoueIcone::SYSTEME: return "\U000F018D";      // console
+        case RoueIcone::METEO: return "\U000F0595";        // weather-partly-cloudy
         default: return "";
     }
 }

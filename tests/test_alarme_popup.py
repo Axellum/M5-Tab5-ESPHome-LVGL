@@ -86,7 +86,7 @@ def test_un_nom_par_page_dans_l_ordre():
     assert [o["page"] for o in onglets] == list(range(len(pages))), "un nom par page, dans l'ordre"
     ouvrir = _script("tab5_alarm_open")
     for o, nom in zip(onglets, pages):
-        assert o["afficher"] == "reveil_afficher_page", o["id"]
+        assert o["prefixe"] == "reveil", o["id"]  # reveil_afficher_page
         assert ouvrir.count(f"u.onglet[{nom}] = id({o['id']});") == 1, o["id"]
         page = "alarm_page_" + nom.removeprefix("REVEIL_PAGE_").lower()
         assert ouvrir.count(f"u.page[{nom}] = id({page});") == 1, page

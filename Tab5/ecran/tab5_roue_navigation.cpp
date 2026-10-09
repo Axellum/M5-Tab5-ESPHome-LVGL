@@ -19,8 +19,7 @@
  *       tables), noms des pièces tels que HA les donne.
  * @ai_instruction Un écran de plus dans une famille : sa ligne dans kAppareils, kAgenda ou
  *       kTablette (kRoueChoix au plus par famille), son icône dans RoueIcone et
- *       glyphe_roue (tab5_roue.cpp, mdi_font_36, règle 9). La Météo (lot
- *       feat/meteo-graphique, Ecran::METEO) va en tête de kAgenda. Un bouton de plus au
+ *       glyphe_roue (tab5_roue.cpp, mdi_font_36, règle 9). Un bouton de plus au
  *       premier anneau : kPremier (kRoueBoutons au plus). tests/test_roue_navigation.py
  *       relit ces tables.
  */
@@ -47,9 +46,9 @@ constexpr Destination kAppareils[] = {
     {Ecran::ENERGIE, RoueIcone::ENERGIE, tr_noop("Énergie")},
     {Ecran::PLANTES, RoueIcone::PLANTES, tr_noop("Plantes")},
 };
-// Agenda : le temps qui vient. Emplacement de la Météo (lot feat/meteo-graphique,
-// Ecran::METEO) : en tête, {Ecran::METEO, RoueIcone::METEO, tr_noop("Météo")}.
+// Agenda : le temps qui vient, la Météo en tête (popup Météo, ADR-0043).
 constexpr Destination kAgenda[] = {
+    {Ecran::METEO, RoueIcone::METEO, tr_noop("Météo")},
     {Ecran::CALENDRIER, RoueIcone::CALENDRIER, tr_noop("Calendrier")},
     {Ecran::REVEIL, RoueIcone::REVEIL, tr_noop("Réveil")},
 };

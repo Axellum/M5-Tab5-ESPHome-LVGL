@@ -1,15 +1,19 @@
 # ═══════════════════════════════════════════════════════
-# [AI-CONTEXT] Nom d'une page d'un popup à pages (tab5_pages.cpp) : « Réglages »
-# (reglages_popup.yaml, 08/10/2026 : Écran, Apparence, Batterie, Système) et « Réveil »
+# [AI-CONTEXT] Nom d'une page d'un popup à pages, en haut à côté du titre : « Réglages »
+# (reglages_popup.yaml, 08/10/2026 : Écran, Apparence, Batterie, Système), « Météo »
+# (meteo_popup.yaml, ADR-0043 : Aujourd'hui, 10 jours, Détails) et « Réveil »
 # (alarm_popup.yaml, 09/10/2026 : Heure, Jours, Ouverture, Sonnerie, Annonces). Un tap
-# montre sa page (fonction `afficher`), qui met le nom de la page affichée en couleur
-# d'accent comme l'option active d'une rangée (premier enfant = le texte).
+# montre sa page (${prefixe}_afficher_page : reglages_afficher_page, tab5_reglages.cpp,
+# meteo_afficher_page, tab5_meteo.cpp, ou reveil_afficher_page, alarm_render.cpp), qui
+# met le nom de la page affichée en couleur d'accent comme l'option active d'une rangée
+# (choix_peindre, tab5_pages.cpp ; premier enfant = le texte). Positions fixes, noms
+# traduits au démarrage ; les onglets posés par le C++ (noms des pièces) sont
+# pages_onglet.yaml.
 # Options d'en-tête : frères de la barre de titre (modal_header.yaml), alignés sur sa
 # ligne (y=4, hauteur 44) ; le popup les pose après l'include de la barre.
-# vars : id, x, page (numéro de page, ReglagesPage ou ReveilPage, en nombre NON quoté),
-#        label_text (traduit au démarrage) ; facultatives : afficher (fonction C++
-#        `void (int)` qui montre la page, défaut reglages_afficher_page), w (largeur,
-#        défaut 200).
+# vars : prefixe (reglages | meteo | reveil), id, x, page (ReglagesPage, MeteoPage ou
+#        ReveilPage, en nombre NON quoté), label_text (traduit au démarrage) ;
+#        facultative : w (largeur, défaut 200 ; le Réveil, cinq pages, en prend 184).
 # ═══════════════════════════════════════════════════════
 button:
   id: ${id}
@@ -23,9 +27,9 @@ button:
   styles: style_clim_btn
   pressed: { bg_opa: 30% }
   on_short_click:
-    - lambda: 'if (!ui_appui_glisse()) ${ afficher | default("reglages_afficher_page") }(${page});'
+    - lambda: 'if (!ui_appui_glisse()) ${prefixe}_afficher_page(${page});'
   widgets:
     # 5 px d'air de chaque côté du nom : largeur fixe, w - 10 (190 sur 200 dans les
-    # Réglages). Pas de `width: 100%` : la bordure de 3 px du nom actif réduit la zone de
-    # contenu, et le texte des Réglages bougeait d'un pixel (rendu du 09/10/2026).
+    # Réglages et la Météo). Pas de `width: 100%` : la bordure de 3 px du nom actif réduit
+    # la zone de contenu, et le texte bougeait d'un pixel (rendu du 09/10/2026).
     - label: { text: "${label_text}", align: CENTER, width: "${ (w | default(200)) - 10 }", text_align: CENTER, long_mode: DOT }

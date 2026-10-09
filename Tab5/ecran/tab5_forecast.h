@@ -18,8 +18,10 @@
 
 namespace esphome { namespace font { class Font; } }
 
-// Icône météo d'une tuile (police 120 px, 80 px pour le petit calque 2).
-void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s);
+// Icône météo d'une tuile (police 120 px, 80 px pour le petit calque 2). echelle_pct : la
+// taille des polices passées en % de celles des tuiles, qui met les décalages du calque 2
+// à l'échelle (popup Météo, ADR-0043 : 48 et 32 px, 40 %).
+void update_meteo_icon(lv_obj_t* l1_obj, lv_obj_t* l2_obj, const std::string& state, esphome::font::Font* f_card, esphome::font::Font* f_card_s, int echelle_pct = 100);
 
 // Palette : UIColor, ou UIBandeau dans le bandeau central (icône de la pluie).
 uint32_t get_humidity_color(float x, const Palette& p = UIColor);
@@ -52,7 +54,8 @@ void parse_and_update_jours_bulk(const std::string& payload);
 // Prévisions horaires reçues par blocs de 5 créneaux (idx 0, 5 ou 10 en tête) :
 // analyse le bloc s'il a changé et renvoie true seulement s'il faut repeindre les
 // tuiles À L'ÉCRAN — calque horaire visible (pages 0-1) et bloc de cette page
-// (page 0 = créneaux 5-9, page 1 = 0-4 ; le bloc 10-14 n'est jamais affiché).
+// (page 0 = créneaux 5-9, page 1 = 0-4 ; le bloc 10-14 n'est pas sur les tuiles, seulement
+// dans le popup Météo, ADR-0043).
 bool accept_heures_bulk(const std::string& payload, int forecast_page);
 
 // Prévisions périmées (08/10/2026, tab5_forecast.cpp). `zone` = previsions_perimees

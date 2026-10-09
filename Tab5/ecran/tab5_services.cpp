@@ -198,6 +198,8 @@ static int s_rain_bar_height[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 // (rain_bars_rejouer()) sans attendre la prochaine poussée.
 static int s_rain_bar_level[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 static lv_obj_t* s_rain_bar_obj[9] = {};
+// Une poussée des barres reçue (popup Météo : « en attente » avant, ADR-0043).
+static bool s_pluie_recue = false;
 
 static bool rain_any_bar() {
     for (int i = 0; i < 9; i++) {
@@ -244,7 +246,14 @@ bool update_rain_bars_bulk_ui(const std::string& payload, lv_obj_t* const bars[9
     PluieBarre lues[kPluieBarresMax];
     const int n = pluie_barres_lire(payload.c_str(), lues);
     for (int i = 0; i < n; i++) update_rain_bar_ui(lues[i].idx, lues[i].niveau, bars);
+    s_pluie_recue = true;
+    meteo_donnees_changees();  // popup Météo affiché : repeint (ADR-0043)
     return rain_any_bar();
+}
+
+int pluie_barre_niveau(int i) {
+    if (!s_pluie_recue || i < 0 || i >= 9) return -1;
+    return s_rain_bar_level[i];
 }
 
 // Thèmes : la dernière prédiction posée (rain_predict_rejouer()).

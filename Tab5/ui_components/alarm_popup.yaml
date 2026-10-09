@@ -66,11 +66,11 @@ obj:
           - !include { file: modal_header.yaml, vars: { icon: "\U000F0020", icon_style: "style_text_accent", title: "Réveil", title_id: "popup_alarm_title", close_btn_id: "btn_alarm_close", close_lambda: "id(tab5_alarm_close).execute();" } }
 
           # Noms des pages (options d'en-tête, reglages_onglet.yaml) : `page` = ReveilPage.
-          - !include { file: reglages_onglet.yaml, vars: { id: alarm_onglet_heure, x: 196, w: 184, page: 0, afficher: reveil_afficher_page, label_text: "Heure" } }
-          - !include { file: reglages_onglet.yaml, vars: { id: alarm_onglet_jours, x: 386, w: 184, page: 1, afficher: reveil_afficher_page, label_text: "Jours" } }
-          - !include { file: reglages_onglet.yaml, vars: { id: alarm_onglet_ouverture, x: 576, w: 184, page: 2, afficher: reveil_afficher_page, label_text: "Ouverture" } }
-          - !include { file: reglages_onglet.yaml, vars: { id: alarm_onglet_sonnerie, x: 766, w: 184, page: 3, afficher: reveil_afficher_page, label_text: "Sonnerie" } }
-          - !include { file: reglages_onglet.yaml, vars: { id: alarm_onglet_annonces, x: 956, w: 184, page: 4, afficher: reveil_afficher_page, label_text: "Annonces" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_heure, x: 196, w: 184, page: 0, label_text: "Heure" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_jours, x: 386, w: 184, page: 1, label_text: "Jours" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_ouverture, x: 576, w: 184, page: 2, label_text: "Ouverture" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_sonnerie, x: 766, w: 184, page: 3, label_text: "Sonnerie" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reveil, id: alarm_onglet_annonces, x: 956, w: 184, page: 4, label_text: "Annonces" } }
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE HEURE

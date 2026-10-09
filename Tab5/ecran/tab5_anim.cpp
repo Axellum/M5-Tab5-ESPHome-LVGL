@@ -636,3 +636,39 @@ void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color, int32_t
     ui_style_num(btn, LV_STYLE_BORDER_OPA, active ? LV_OPA_COVER : LV_OPA_40);
     ui_style_num(btn, LV_STYLE_BORDER_WIDTH, active ? active_width : 1);
 }
+
+// --- Tracés construits en C++ (Température ADR-0032, Météo ADR-0043) -----------------------
+
+// Un rectangle sans style, non cliquable, masqué : grille, barres, teinte, traits, points.
+lv_obj_t* ui_rectangle(lv_obj_t* parent, lv_opa_t opa, int32_t rayon) {
+    lv_obj_t* o = lv_obj_create(parent);
+    lv_obj_remove_style_all(o);
+    lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
+    lv_obj_set_style_radius(o, rayon, LV_PART_MAIN);
+    lv_obj_set_size(o, 2, 2);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    return o;
+}
+
+// Une ligne (lv_line) arrondie, non cliquable, masquée. lv_line_set_points() ne copie pas
+// les points : leur tableau doit vivre aussi longtemps que la ligne.
+lv_obj_t* ui_ligne(lv_obj_t* parent, int32_t epaisseur) {
+    lv_obj_t* o = lv_line_create(parent);
+    lv_obj_set_pos(o, 0, 0);
+    lv_obj_set_style_line_width(o, epaisseur, LV_PART_MAIN);
+    lv_obj_set_style_line_rounded(o, true, LV_PART_MAIN);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    return o;
+}
+
+// Place, taille, et montre (chaque écriture comparée d'abord).
+void ui_poser(lv_obj_t* o, int32_t x, int32_t y, int32_t w, int32_t h) {
+    if (o == nullptr) return;
+    if (lv_obj_get_style_width(o, LV_PART_MAIN) != w) lv_obj_set_width(o, w);
+    if (lv_obj_get_style_height(o, LV_PART_MAIN) != h) lv_obj_set_height(o, h);
+    ui_x(o, x);
+    ui_y(o, y);
+    ui_hidden(o, false);
+}

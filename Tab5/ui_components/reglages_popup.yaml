@@ -69,10 +69,10 @@ obj:
           - !include { file: modal_header.yaml, vars: { icon: "\U000F0493", icon_style: "style_text_accent", title: "Réglages", title_id: "reglages_titre", close_btn_id: "btn_reglages_close", close_lambda: "reglages_fermer();" } }
 
           # Noms des pages (options d'en-tête, reglages_onglet.yaml) : `page` = ReglagesPage.
-          - !include { file: reglages_onglet.yaml, vars: { id: reglages_onglet_ecran, x: 318, page: 0, label_text: "Écran" } }
-          - !include { file: reglages_onglet.yaml, vars: { id: reglages_onglet_apparence, x: 528, page: 1, label_text: "Apparence" } }
-          - !include { file: reglages_onglet.yaml, vars: { id: reglages_onglet_batterie, x: 738, page: 2, label_text: "Batterie" } }
-          - !include { file: reglages_onglet.yaml, vars: { id: reglages_onglet_systeme, x: 948, page: 3, label_text: "Système" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reglages, id: reglages_onglet_ecran, x: 318, page: 0, label_text: "Écran" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reglages, id: reglages_onglet_apparence, x: 528, page: 1, label_text: "Apparence" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reglages, id: reglages_onglet_batterie, x: 738, page: 2, label_text: "Batterie" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: reglages, id: reglages_onglet_systeme, x: 948, page: 3, label_text: "Système" } }
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE ÉCRAN
