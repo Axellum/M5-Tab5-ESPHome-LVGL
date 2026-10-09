@@ -1,0 +1,351 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_lecteur.yaml
+# @role Popup « Musique » de la tablette (ADR-0050, 10/10/2026) : un lecteur de musique
+#       façon Spotify pour n'importe quel media_player de Home Assistant (Apple TV, TV,
+#       Freebox, enceinte, la tablette elle-même…).
+#         - Les lecteurs proposés : la liste « Tab5 · lecteurs de musique · music
+#           players » (packages/tab5_reglages.yaml, plusieurs choix, 6 au plus, jamais
+#           devinés) ; sa mémoire input_text.tab5_choix_lecteurs.
+#         - Le lecteur montré : input_text.tab5_lecteur_actif (une pastille touchée,
+#           une tuile med ouverte), sinon le premier de la liste qui joue, sinon le
+#           premier de la liste. Un lecteur de la liste qui SE MET à jouer devient le
+#           lecteur montré quand celui-ci ne joue pas.
+#         - Poussée : script.tab5_lecteur_pousser (action tab5_maj_lecteur) quand le
+#           lecteur montré change (morceau, état, volume, position déplacée…), quand la
+#           liste change, à la connexion de la tablette et à l'ouverture du popup.
+#         - Commandes : la tablette émet esphome.tab5_lecteur (action, lecteur, valeur) ;
+#           packages/tab5_evenements.yaml lance script.tab5_lecteur_commande, qui
+#           n'agit que sur un lecteur de la liste ou sur le lecteur montré.
+#         - Appui long d'une tuile med sans option t : le blueprint « Tab5 —
+#           emplacements » retrouve le media_player de la tuile et lance
+#           script.tab5_lecteur_montrer.
+# @payload_contract tab5_maj_lecteur (Tab5/paquets/tab5-api-logic.yaml, tab5_parse.h
+#       section 9) :
+#         lecteurs = « nom|genre » séparés par « ; », genre = device_class (tv, speaker,
+#           receiver) ou vide ;
+#         etat = « actif|nom|genre|état|titre|artiste|album|application|position|durée|
+#           volume|muet|aléatoire|répétition|fonctions|image » ; actif = index dans
+#           lecteurs (-1 : lecteur d'une tuile hors liste) ; vide = aucun lecteur.
+#       Les « | », « ; » et sauts de ligne des textes deviennent « / », « , » et espaces.
+#       Position avancée jusqu'à l'envoi en lecture (media_position + temps écoulé depuis
+#       media_position_updated_at), nan sans ; volume 0 à 100 ; fonctions = lettres de
+#       supported_features (MediaPlayerEntityFeature) : l PAUSE|PLAY, s SEEK, v
+#       VOLUME_SET, m VOLUME_MUTE, p PREVIOUS_TRACK, n NEXT_TRACK, a SHUFFLE_SET,
+#       r REPEAT_SET, o TURN_ON ; image = entity_picture (relatif : la tablette ajoute
+#       http://adresse-de-HA:8123).
+# @limits La pochette d'un HA servi en https sur 8123 n'arrive pas (la tablette
+#       complète un chemin relatif en http) : la note de musique s'affiche à la place.
+#       Le nom d'un lecteur sans friendly_name part vide : l'écran écrit « Lecteur N »,
+#       jamais un entity_id.
+# @security Aucun nom d'action ni d'entité ne vient de l'événement : l'index désigne un
+#       lecteur de la liste choisie, « -1 » le lecteur montré (choisi par une pastille ou
+#       par le blueprint, depuis une tuile med de la tablette).
+# @install Avec les autres packages (homeassistant.packages: !include_dir_named
+#       packages), après tab5_reglages.yaml et custom_templates/tab5_tablette.jinja.
+#       Rien à renseigner ici.
+# ============================================================================
+
+input_text:
+  # Mémoire du lecteur montré : écrite par une pastille du popup (choisir), par une
+  # tuile med ouverte (blueprint), ou quand un lecteur de la liste se met à jouer.
+  tab5_lecteur_actif:
+    name: "Tab5 · mémoire · lecteur montré"
+    icon: mdi:content-save-outline
+    max: 255
+
+template:
+  # Miroirs : un déclencheur `state:` exige un entity_id écrit dans le YAML. Le premier
+  # dit quel lecteur montrer ; le second change dès que ce lecteur change (état, morceau,
+  # volume…) ou qu'un lecteur de la liste se met à jouer.
+  - sensor:
+      - name: "Tab5 · lecteur montré"
+        unique_id: tab5_lecteur_montre
+        icon: mdi:music
+        state: >-
+          {%- set liste = states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
+               | select('match', 'media_player[.]') | unique | list -%}
+          {%- set m = states('input_text.tab5_lecteur_actif') -%}
+          {%- set jouent = liste | select('is_state', 'playing') | list -%}
+          {%- if m.startswith('media_player.') and expand(m) | count > 0 -%}{{ m }}
+          {%- elif jouent -%}{{ jouent | first }}
+          {%- elif liste -%}{{ liste | first }}
+          {%- else -%}Aucun
+          {%- endif -%}
+      - name: "Tab5 · signature du lecteur"
+        unique_id: tab5_lecteur_signature
+        icon: mdi:music-circle-outline
+        state: >-
+          {%- set a = states('sensor.tab5_lecteur_montre') -%}
+          {{ states(a) if a.startswith('media_player.') else 'Aucun' }}
+        attributes:
+          lecteur: "{{ states('sensor.tab5_lecteur_montre') }}"
+          signature: >-
+            {%- set a = states('sensor.tab5_lecteur_montre') -%}
+            {%- if a.startswith('media_player.') -%}
+              {%- set n = namespace(s=states(a)) -%}
+              {%- for k in ['friendly_name', 'media_title', 'media_artist', 'media_album_name', 'app_name',
+                            'media_duration', 'media_position_updated_at', 'volume_level', 'is_volume_muted',
+                            'shuffle', 'repeat', 'supported_features', 'entity_picture'] -%}
+                {%- set n.s = n.s ~ '|' ~ (state_attr(a, k) | string) -%}
+              {%- endfor -%}
+              {{ n.s }}
+            {%- endif -%}
+          # Lecteurs de la liste qui jouent : celui qui s'y ajoute devient le lecteur montré
+          # (automatisation ci-dessous), si celui-ci ne joue pas.
+          en_lecture: >-
+            {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
+               | select('match', 'media_player[.]') | unique | select('is_state', 'playing') | list }}
+          liste: >-
+            {%- set n = namespace(s='') -%}
+            {%- for e in states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
+                 | select('match', 'media_player[.]') | unique -%}
+              {%- set n.s = n.s ~ e ~ '|' ~ (state_attr(e, 'friendly_name') | string) ~ '|'
+                   ~ (state_attr(e, 'device_class') | string) ~ ';' -%}
+            {%- endfor -%}
+            {{ n.s }}
+
+automation:
+  - id: tab5_lecteur
+    alias: "Tab5 — lecteur de musique (poussée)"
+    description: >-
+      Pousse vers la tablette le lecteur de musique montré par son popup Musique quand il
+      change, quand la liste « Tab5 · lecteurs de musique » change et à la connexion de la
+      tablette (ADR-0050).
+    mode: queued
+    max: 5
+    triggers:
+      - trigger: state
+        entity_id: sensor.tab5_signature_du_lecteur
+      - trigger: event
+        event_type: esphome.tab5_connected
+    conditions:
+      # Garde d'origine (comme tab5_evenements.yaml) : tab5_connected d'une tablette
+      # tab5-ha-hmi seulement ; le miroir passe toujours.
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
+    actions:
+      # Un lecteur de la liste vient de se mettre à jouer et le lecteur montré ne joue
+      # pas : on montre celui qui joue.
+      - variables:
+          avant: >-
+            {{ (trigger.from_state.attributes.en_lecture | default([], true))
+               if trigger.platform == 'state' and trigger.from_state is not none else [] }}
+          maintenant: >-
+            {{ (trigger.to_state.attributes.en_lecture | default([], true))
+               if trigger.platform == 'state' and trigger.to_state is not none else [] }}
+          nouveaux: "{{ maintenant | reject('in', avant) | list }}"
+          montre: "{{ states('sensor.tab5_lecteur_montre') }}"
+      - if: "{{ nouveaux | count > 0 and not is_state(montre, 'playing') and (nouveaux | first) != montre }}"
+        then:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_lecteur_actif
+            data:
+              value: "{{ nouveaux | first }}"
+          # Le miroir change à son tour et relance cette automatisation : elle poussera.
+          - stop: "Lecteur montré changé"
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_lecteur_pousser
+
+script:
+  tab5_lecteur_pousser:
+    alias: "Tab5 — lecteur de musique : pousser l'état"
+    description: >-
+      Pousse la liste des lecteurs choisis et l'état du lecteur montré (action
+      tab5_maj_lecteur). Mode restart et 0,4 s d'attente : une rafale de changements
+      (morceau suivant : titre, artiste, pochette, durée…) part en une seule poussée.
+    mode: restart
+    sequence:
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' }}
+      - delay:
+          milliseconds: 400
+      - variables:
+          liste: >-
+            {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
+               | select('match', 'media_player[.]') | unique | list }}
+          a: "{{ states('sensor.tab5_lecteur_montre') }}"
+          lecteurs: >-
+            {%- set n = namespace(l=[]) -%}
+            {%- for e in liste[:6] -%}
+              {%- set nom = (state_attr(e, 'friendly_name') or '') | string -%}
+              {%- set genre = state_attr(e, 'device_class') if state_attr(e, 'device_class') in ['tv', 'speaker', 'receiver'] else '' -%}
+              {%- set n.l = n.l + [nom | replace('|', '/') | replace(';', ',') | replace('\n', ' ') ~ '|' ~ genre] -%}
+            {%- endfor -%}
+            {{ n.l | join(';') }}
+          etat: >-
+            {%- macro t(v) -%}{{ (v or '') | string | replace('|', '/') | replace(';', ',') | replace('\n', ' ') }}{%- endmacro -%}
+            {%- macro drapeau(v) -%}{{ '' if v is none else ('1' if v else '0') }}{%- endmacro -%}
+            {%- if a.startswith('media_player.') and expand(a) | count > 0 -%}
+              {%- set s = states(a) -%}
+              {%- set f = state_attr(a, 'supported_features') | int(0) -%}
+              {%- set genre = state_attr(a, 'device_class') if state_attr(a, 'device_class') in ['tv', 'speaker', 'receiver'] else '' -%}
+              {%- set duree = state_attr(a, 'media_duration') -%}
+              {%- set pos = state_attr(a, 'media_position') -%}
+              {%- set maj = state_attr(a, 'media_position_updated_at') -%}
+              {%- if pos is number -%}
+                {%- if s == 'playing' and maj is not none -%}
+                  {%- set pos = pos + [0, now().timestamp() - as_timestamp(maj, now().timestamp())] | max -%}
+                {%- endif -%}
+                {%- set position = (pos | round(1)) | string -%}
+              {%- else -%}
+                {%- set position = 'nan' -%}
+              {%- endif -%}
+              {%- set vol = state_attr(a, 'volume_level') -%}
+              {%- set lettres = ('l' if f | bitwise_and(1) or f | bitwise_and(16384) else '')
+                   ~ ('s' if f | bitwise_and(2) else '') ~ ('v' if f | bitwise_and(4) else '')
+                   ~ ('m' if f | bitwise_and(8) else '') ~ ('p' if f | bitwise_and(16) else '')
+                   ~ ('n' if f | bitwise_and(32) else '') ~ ('a' if f | bitwise_and(32768) else '')
+                   ~ ('r' if f | bitwise_and(262144) else '') ~ ('o' if f | bitwise_and(128) else '') -%}
+              {{- liste.index(a) if a in liste[:6] else -1 }}|{{ t(state_attr(a, 'friendly_name')) }}|{{ genre }}|{{ s }}
+              {{- '|' }}{{ t(state_attr(a, 'media_title')) }}|{{ t(state_attr(a, 'media_artist') or state_attr(a, 'media_album_artist')) }}
+              {{- '|' }}{{ t(state_attr(a, 'media_album_name')) }}|{{ t(state_attr(a, 'app_name')) }}|{{ position }}
+              {{- '|' }}{{ (duree | round(0) | int) if duree is number and duree > 0 else 'nan' }}
+              {{- '|' }}{{ ((vol * 100) | round(0) | int) if vol is number else 'nan' }}
+              {{- '|' }}{{ drapeau(state_attr(a, 'is_volume_muted')) }}|{{ drapeau(state_attr(a, 'shuffle')) }}
+              {{- '|' }}{{ state_attr(a, 'repeat') if state_attr(a, 'repeat') in ['off', 'all', 'one'] else '' }}
+              {{- '|' }}{{ lettres }}|{{ (state_attr(a, 'entity_picture') or '') | string | replace('|', '%7C') | replace(' ', '%20') }}
+            {%- endif -%}
+      - action: esphome.tab5_ha_hmi_tab5_maj_lecteur
+        continue_on_error: true
+        data:
+          lecteurs: "{{ lecteurs }}"
+          etat: "{{ etat }}"
+
+  tab5_lecteur_commande:
+    alias: "Tab5 — lecteur de musique : commande de la tablette"
+    description: >-
+      Lancé par packages/tab5_evenements.yaml à l'événement esphome.tab5_lecteur.
+      N'agit que sur un lecteur de la liste « Tab5 · lecteurs de musique » ou sur le
+      lecteur montré (ADR-0050).
+    mode: queued
+    max: 10
+    fields:
+      commande:
+        description: "Donnée « action » de l'événement : lecture, precedent, suivant, aleatoire, repetition, muet, volume, position, allumer, choisir ou ouvrir"
+      lecteur:
+        description: "Index dans la liste, « -1 » (le lecteur montré) ou la clé d'une tuile (« tRT », ouvrir)"
+      valeur:
+        description: "1/0 (aléatoire, muet), off/all/one (répétition), 0 à 100 (volume), secondes (position)"
+    sequence:
+      - variables:
+          liste: >-
+            {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
+               | select('match', 'media_player[.]') | unique | list }}
+          i: "{{ (lecteur | default('') | string) | int(-99) }}"
+          montre: "{{ states('sensor.tab5_lecteur_montre') }}"
+          cible: >-
+            {%- if 0 <= i < [liste | count, 6] | min -%}{{ liste[i] }}
+            {%- elif montre.startswith('media_player.') and expand(montre) | count > 0 -%}{{ montre }}
+            {%- endif -%}
+          a: "{{ commande | default('') | string }}"
+          v: "{{ valeur | default('') | string }}"
+      - choose:
+          # Ouverture du popup : l'état frais. Une tuile (lecteur « tRT ») : le blueprint
+          # lance aussi script.tab5_lecteur_montrer ; les deux poussées n'en font qu'une
+          # (tab5_lecteur_pousser, mode restart).
+          - conditions: "{{ a == 'ouvrir' }}"
+            sequence:
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_lecteur_pousser
+          # Pastille touchée : ce lecteur de la liste devient le lecteur montré.
+          - conditions: "{{ a == 'choisir' and 0 <= i < [liste | count, 6] | min }}"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.tab5_lecteur_actif
+                data:
+                  value: "{{ liste[i] }}"
+          - conditions: "{{ cible != '' and a == 'lecture' }}"
+            sequence:
+              - action: media_player.media_play_pause
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+          - conditions: "{{ cible != '' and a == 'precedent' }}"
+            sequence:
+              - action: media_player.media_previous_track
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+          - conditions: "{{ cible != '' and a == 'suivant' }}"
+            sequence:
+              - action: media_player.media_next_track
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+          - conditions: "{{ cible != '' and a == 'aleatoire' }}"
+            sequence:
+              - action: media_player.shuffle_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  shuffle: "{{ v == '1' }}"
+          - conditions: "{{ cible != '' and a == 'repetition' and v in ['off', 'all', 'one'] }}"
+            sequence:
+              - action: media_player.repeat_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  repeat: "{{ v }}"
+          - conditions: "{{ cible != '' and a == 'muet' }}"
+            sequence:
+              - action: media_player.volume_mute
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  is_volume_muted: "{{ v == '1' }}"
+          - conditions: "{{ cible != '' and a == 'volume' and v | is_number }}"
+            sequence:
+              - action: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  volume_level: "{{ ([0, [100, v | float(0)] | min] | max / 100) | round(2) }}"
+          - conditions: "{{ cible != '' and a == 'position' and v | is_number }}"
+            sequence:
+              - action: media_player.media_seek
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+                data:
+                  seek_position: "{{ [0, v | float(0)] | max }}"
+          - conditions: "{{ cible != '' and a == 'allumer' }}"
+            sequence:
+              - action: media_player.turn_on
+                continue_on_error: true
+                target:
+                  entity_id: "{{ cible }}"
+
+  tab5_lecteur_montrer:
+    alias: "Tab5 — lecteur de musique : montrer le lecteur d'une tuile"
+    description: >-
+      Lancé par le blueprint « Tab5 — emplacements » quand la tablette ouvre le lecteur
+      depuis une tuile med : ce media_player devient le lecteur montré (ADR-0050).
+    mode: queued
+    max: 3
+    fields:
+      entite:
+        description: "media_player de la tuile (résolu par le blueprint)"
+    sequence:
+      - condition: template
+        value_template: "{{ (entite | default('') | string).startswith('media_player.') and expand(entite) | count > 0 }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.tab5_lecteur_actif
+        data:
+          value: "{{ entite }}"
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_lecteur_pousser

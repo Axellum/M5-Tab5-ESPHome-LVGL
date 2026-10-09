@@ -48,6 +48,11 @@
 #         (cle = salon | serre, vue), lance script.tab5_historique (packages/tab5_historique.yaml)
 #         avec le capteur de l'emplacement et la case serre_exterieure (« la seconde
 #         température est dehors »), qui pousse sa courbe et, pour la seconde, la prévision ;
+#       - popup « Musique » (ADR-0050, 10/10/2026) : à l'événement esphome.tab5_lecteur
+#         « ouvrir » d'une tuile med sans option t (lecteur = sa clé tRT), lance
+#         script.tab5_lecteur_montrer (packages/tab5_lecteur.yaml) avec le media_player de la
+#         tuile : le popup montre ce lecteur. Le reste du lecteur (liste, commandes) est au
+#         package, pas ici ;
 #       - section « Sous l'horloge » (ADR-0031, 06/10/2026), facultative : la rangée sous
 #         l'horloge de l'accueil, jusqu'à trois lignes de quatre éléments plus celle des
 #         plantes. Définitions « hp » (place des plantes), « hd » (durée d'une ligne) et
@@ -1282,6 +1287,8 @@ blueprint:
                   value: roue
                 - label: "Météo · Weather"
                   value: meteo
+                - label: "Musique (lecteur) · Music (player)"
+                  value: musique
         geste_heures_long:
           name: "Heures : appui long · Hours: long press"
           description: >-
@@ -2932,7 +2939,8 @@ variables:
   # en « auto ».
   codes_gestes: [auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie,
                  reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante,
-                 ecoute, nabu_suivant, lumieres, volet, temperature, roue, meteo]
+                 ecoute, nabu_suivant, lumieres, volet, temperature, roue, meteo,
+                 musique]
   # « gestes|c1|…|c12; » : les 12 gestes dans l'ORDRE de l'enum Geste (tab5_zones.h) —
   # heures tap, heures long, minutes tap, minutes long, date tap, date long, maison tap,
   # maison long, engrenage tap, engrenage long, manette tap, manette long. Poussé avec
@@ -3006,6 +3014,10 @@ triggers:
   - trigger: event
     event_type: esphome.tab5_historique
     id: historique
+  # Popup Musique (ADR-0050) : ouvert par une tuile med (donnée lecteur = sa clé tRT).
+  - trigger: event
+    event_type: esphome.tab5_lecteur
+    id: lecteur
   - trigger: state
     entity_id: !input lumiere_1
     id: lumiere_1
@@ -3467,7 +3479,7 @@ conditions:
       {%- if trigger.id in meteo_declencheurs -%}
         {{ meteo_a_ecrire | count > 0 }}
       {%- else -%}
-        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie', 'historique'] or cles | count > 0
+        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie', 'historique', 'lecteur'] or cles | count > 0
            or solaire_a_pousser
            or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0 or reglables_a_pousser | count > 0
                                    or pieces_climat_a_pousser | count > 0)) }}
@@ -3480,7 +3492,7 @@ conditions:
   - condition: template
     value_template: >-
       {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
-      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique'] + meteo_declencheurs
+      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique', 'lecteur'] + meteo_declencheurs
          or tab5_connectee() == 'oui' }}
 
 actions:
@@ -3705,6 +3717,34 @@ actions:
                     capteur: "{{ h_capteur }}"
                     exterieur: "{{ h_cle == 'serre' and serre_exterieure | bool(false) }}"
                     humidite: "{{ h_humidite }}"
+
+      # Popup Musique (ADR-0050) : l'appui long d'une tuile med sans option t ouvre le
+      # lecteur de musique sur le media_player de la tuile. Le blueprint est la liste
+      # blanche : une clé sans tuile, ou dont l'entité n'est pas un media_player, ne montre
+      # rien de neuf (le package pousse alors le lecteur courant). Les autres actions de
+      # l'événement (commandes, choix d'un lecteur) sont au package : rien ici, et
+      # l'événement s'arrête dans cette branche (jamais dans la branche par défaut).
+      - alias: "La tablette ouvre le lecteur de musique depuis une tuile"
+        conditions: "{{ trigger.id == 'lecteur' }}"
+        sequence:
+          - variables:
+              l_cle: >-
+                {{ (trigger.event.data.lecteur | default('') | string)
+                   if (trigger.event.data.action | default('')) == 'ouvrir' else '' }}
+              l_tuile: >-
+                {{ tuiles | selectattr('cle', 'eq', l_cle) | list | first | default({}, true)
+                   if l_cle[:1] == 't' else {} }}
+              l_entite: >-
+                {{ l_tuile.e if (l_tuile.e | default('') | string).startswith('media_player.')
+                   and states[l_tuile.e] is not none else '' }}
+          - if: "{{ states['script.tab5_lecteur_montrer'] is not none and l_entite != '' }}"
+            then:
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_lecteur_montrer
+                data:
+                  variables:
+                    entite: "{{ l_entite }}"
 
       - alias: "La tablette demande quelles zones sont absentes"
         conditions: "{{ trigger.id in ['zones', 'pipeline_discussion'] }}"

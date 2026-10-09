@@ -23,13 +23,18 @@
 # @contrat État d'une liste = entity_id choisi, ou « Aucun ». Les packages lisent
 #       `states('select.tab5_…')` et vérifient l'existence (`expand(x) | count > 0`,
 #       qui ne lève jamais d'erreur, contrairement à `states[x]` sur « Aucun »).
+#       « Tab5 · lecteurs de musique » (ADR-0050) est une liste à PLUSIEURS choix : son
+#       état est un résumé (« 2 choisi(s) · 2 chosen »), ses options « ✓ media_player.x »
+#       (choisi : le toucher le retire) et « ○ media_player.x » (le toucher l'ajoute, 6 au
+#       plus) ; la mémoire input_text.tab5_choix_lecteurs garde les entity_id séparés par
+#       des virgules, dans l'ordre du choix : c'est elle que lit packages/tab5_lecteur.yaml.
 #       Choix par défaut (liste jamais réglée) seulement quand il n'y a pas
 #       d'ambiguïté : le seul agenda dont le nom dit « anniversaires » (ou
 #       birthday…), le seul agenda de jours fériés (intégration Jours fériés, ou nom
 #       qui le dit), le seul téléphone de l'application mobile, le seul agenda dont
 #       le nom dit « vacances scolaires » (ou school holidays…). Agenda de travail,
-#       agenda des rendez-vous, capteur de présence et pipeline de discussion :
-#       jamais devinés.
+#       agenda des rendez-vous, capteur de présence, pipeline de discussion et lecteurs
+#       de musique : jamais devinés.
 # @i18n Noms des listes en deux langues, « français · english » (29/09/2026) : ce
 #       sont eux que cherche un utilisateur non francophone. Les ÉTATS (« Aucun »,
 #       entity_id, noms de pipeline) ne se traduisent jamais : les packages les lisent.
@@ -77,6 +82,11 @@ input_text:
     name: "Tab5 · mémoire · pipeline de discussion"
     icon: mdi:content-save-outline
     max: 255
+  # Lecteurs de musique du popup Musique (ADR-0050) : entity_id séparés par des virgules.
+  tab5_choix_lecteurs:
+    name: "Tab5 · mémoire · lecteurs de musique"
+    icon: mdi:content-save-outline
+    max: 255
   # Réglé à la main (pas une mémoire de liste). Mots qui font d'un événement de
   # l'agenda de travail un événement de TRAVAIL (horaires du planning, heure du
   # réveil) : séparés par des virgules, sans casse, cherchés dans le titre. Vide =
@@ -108,6 +118,7 @@ template:
           - input_text.tab5_choix_agenda_vacances
           - input_text.tab5_choix_telephone
           - input_text.tab5_choix_presence
+          - input_text.tab5_choix_lecteurs
     # Audit du 07/10/2026, HA-18 : pas pour une mise à jour du registre qui ne touche que
     # capabilities / supported_features / options / suggested_object_id (419 des 485
     # entity_registry_updated chez l'auteur du 01 au 08/10/2026), que la liste ne lit
@@ -139,6 +150,12 @@ template:
         {{ ((integration_entities('holiday') | select('match', 'calendar[.]') | list)
             + (agendas | select('search', 'ferie|holiday|feiertag|feestdag|festiv') | reject('in', auto_vacances) | list)) | unique | list }}
       auto_telephones: "{{ integration_entities('mobile_app') | select('match', 'device_tracker[.]') | list }}"
+      # Lecteurs de musique (ADR-0050) : tous les media_player, les choisis d'abord.
+      lecteurs_ha: "{{ states.media_player | map(attribute='entity_id') | list }}"
+      lecteurs_choisis: >-
+        {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
+           | select('match', 'media_player[.]') | unique | list }}
+      lecteurs_resume: "{{ lecteurs_choisis | count }} choisi(s) · {{ lecteurs_choisis | count }} chosen"
     select:
       - name: "Tab5 · agenda de travail · work calendar"
         unique_id: tab5_agenda_de_travail
@@ -264,6 +281,35 @@ template:
               entity_id: input_text.tab5_choix_presence
             data:
               value: "{{ option }}"
+      # Plusieurs choix (voir @contrat) : toucher « ○ x » l'ajoute à la fin (6 au plus,
+      # les pastilles du popup Musique), « ✓ x » le retire ; le résumé ne change rien.
+      - name: "Tab5 · lecteurs de musique · music players"
+        unique_id: tab5_lecteurs_de_musique
+        default_entity_id: select.tab5_lecteurs_de_musique
+        icon: mdi:music-box-multiple
+        options: >-
+          {{ [lecteurs_resume] + (lecteurs_choisis | map('regex_replace', '^', '✓ ') | list)
+             + (lecteurs_ha | reject('in', lecteurs_choisis) | map('regex_replace', '^', '○ ') | list) }}
+        state: "{{ lecteurs_resume }}"
+        select_option:
+          - variables:
+              entite: "{{ option[2:] | trim }}"
+              liste: >-
+                {%- set choisis = states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
+                     | select('match', 'media_player[.]') | unique | list -%}
+                {%- if option.startswith('✓ ') -%}
+                  {{ choisis | reject('eq', entite) | join(',') }}
+                {%- elif option.startswith('○ ') and entite.startswith('media_player.') and entite not in choisis
+                         and choisis | count < 6 -%}
+                  {{ (choisis + [entite]) | join(',') }}
+                {%- else -%}
+                  {{ choisis | join(',') }}
+                {%- endif -%}
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_lecteurs
+            data:
+              value: "{{ liste }}"
 
   # Pipeline du mode « Discussion » de l'écran (bouton « Discu ») : un des pipelines
   # Assist de HA. Modèle ORDINAIRE, sans déclencheurs : il ne lit que le select de
