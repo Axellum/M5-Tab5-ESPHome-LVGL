@@ -72,6 +72,7 @@ NON_MONTREES = {
     "roue-navigation-pieces": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
     "roue-navigation-appareils": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
     "roue-navigation-tablette": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
+    "roue-navigation-agenda": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
     "roue-navigation-bureau": "accueil-ha-piece-4 montre la même pièce ; le choix d'une pièce est décrit dans home.md",
     "aller-lumieres": "lumieres-chambre montre la même fenêtre ; l'ouverture par la roue est décrite dans home.md",
     "maison": "image à tirer du rendu de la PR du popup Maison, puis citer dans house.md",

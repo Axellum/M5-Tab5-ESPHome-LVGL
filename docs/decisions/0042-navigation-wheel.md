@@ -16,7 +16,7 @@ The author asked (2026-10-09) for « a multiple-choice wheel on the long press o
   - **Alertes** — the alerts history (what the long press used to open; shown as the « current » state while an alert is on screen);
   - **Pièces ▸** — Maison ([ADR-0037](0037-house-popup.md)), then each room that has devices, its number in the button and its name under it: a touch puts HA mode on that room (`tuiles_aller_piece`), the room on screen is marked;
   - **Appareils ▸** — Températures, Clims, Lumières, Volets, Énergie, Plantes;
-  - **Agenda ▸** — Calendrier, Réveil (the weather screen of the parallel lot goes first here, `Ecran::METEO`, once it exists);
+  - **Agenda ▸** — Météo ([ADR-0043](0043-weather-popup.md), added with it), Calendrier, Réveil;
   - **Tablette ▸** — Jeux, Réglages, Système;
   - **Assistant** — the voice assistant (« discussions »).
 - **Only what this home has.** A screen with nothing to show (`ecran_disponible`: no climate, no plant, no light tile…) is not offered; an empty family disappears and the other buttons close up (the ring is re-centred by ADR-0036's layout). Recomputed at each opening, unfolding and touch: it follows the zones and rooms pushed by Home Assistant.
@@ -30,7 +30,7 @@ The author asked (2026-10-09) for « a multiple-choice wheel on the long press o
 - **A dedicated navigation popup or a grid of icons**: a second set of widgets, chrome and geometry for what the wheel already does (rule 5), and a different gesture from the tiles'.
 - **Twelve buttons on two rings without families**: the first ring holds six 72 px buttons above a card at y 375; the second ring is the families' (ADR-0036). Two levels at most keep every screen two touches away.
 - **Captions only on the hub** (the tile wheel's way): the author asked for something readable; a word per button reads at a glance, and the measured distance keeps it off the neighbouring buttons whatever the word's length in the seven screen languages.
-- **A new `Ecran::METEO` here**: it belongs to the weather lot (`feat/meteo-graphique`); its place is reserved at the head of the Agenda family.
+- **A new `Ecran::METEO` here**: it belongs to the weather lot (`feat/meteo-graphique`); its place was reserved at the head of the Agenda family, and the weather lot ([ADR-0043](0043-weather-popup.md)) filled it.
 - **Keeping the alerts history on the long press and the wheel elsewhere**: the alerts stay one touch further (the first button, marked when an alert is on), and the central card is the largest, most central target of the home page.
 
 ## Consequences

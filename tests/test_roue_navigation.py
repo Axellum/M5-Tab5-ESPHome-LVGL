@@ -65,14 +65,13 @@ def test_premier_anneau():
 def test_chaque_page_de_la_demande_a_sa_place():
     """« alertes, jeux, discussions, paramètres, pages des pièces, des lumières, des
     clims, des températures, météo, calendrier, réveil, volets » (Axel, 09/10/2026). Les
-    pièces : le bouton Pièces ; la météo : l'emplacement réservé en tête de kAgenda pour le
-    lot feat/meteo-graphique (Ecran::METEO n'existe pas encore)."""
+    pièces : le bouton Pièces ; la météo : en tête de kAgenda (popup Météo, ADR-0043)."""
     ecrans_nav = {e for nom in ("kAppareils", "kAgenda", "kTablette") for e, _, _ in _table(nom)}
     ecrans_nav |= set(re.findall(r"Genre::ECRAN, RoueIcone::\w+, tr_noop\(\"[^\"]+\"\), Ecran::(\w+)", _nav()))
     assert ecrans_nav == {"ALERTES", "ARCADE", "ASSISTANT", "REGLAGES", "LUMIERES", "CLIM", "TEMPERATURE",
-                          "CALENDRIER", "REVEIL", "VOLET", "ENERGIE", "PLANTES", "CONSOLE"}
+                          "CALENDRIER", "REVEIL", "VOLET", "ENERGIE", "PLANTES", "CONSOLE", "METEO"}
     assert "Genre::PIECES" in _nav()
-    assert "{Ecran::METEO, RoueIcone::METEO, tr_noop(\"Météo\")}" in _nav().split("constexpr Destination kAgenda")[0]
+    assert _table("kAgenda")[0] == ("METEO", "METEO", "Météo")
 
 
 def test_destinations_valeurs_d_ecran_et_icones_connues():

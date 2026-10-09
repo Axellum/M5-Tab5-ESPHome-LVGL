@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a long press on a weather card of the bottom row that holds no device, with the « Météo » entry of the tablet's « Aller à l'écran » list in Home Assistant, or with a tap or a long press of the clock or of a button top right when the blueprint gives it « Météo · Weather » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
+**Opens with** a long press on a weather card of the bottom row that holds no device, with « Agenda ▸ Météo » on the [navigation wheel](home.md) (long press on the central card), with the « Météo » entry of the tablet's « Aller à l'écran » list in Home Assistant, or with a tap or a long press of the clock or of a button top right when the blueprint gives it « Météo · Weather » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
 The weather in graphs, on three pages. Their names are at the top, next to the title, the one shown in colour: **tap a name**, or **swipe** left or right anywhere in the window, to change page (the last one leads back to the first).
 
@@ -20,7 +20,7 @@ Everything comes from what Home Assistant already sends to the home page: nothin
 
 ---
 
-**S'ouvre par** un appui long sur une carte météo de la rangée du bas qui ne porte pas d'appareil, par l'entrée « Météo » de la liste « Aller à l'écran » de la tablette dans Home Assistant, ou par un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Météo · Weather » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
+**S'ouvre par** un appui long sur une carte météo de la rangée du bas qui ne porte pas d'appareil, par « Agenda ▸ Météo » de la [roue de navigation](home.md#version-française) (appui long sur la carte centrale), par l'entrée « Météo » de la liste « Aller à l'écran » de la tablette dans Home Assistant, ou par un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Météo · Weather » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
 La météo en graphiques, sur trois pages. Leurs noms sont en haut, à côté du titre, celle affichée en couleur : **tap sur un nom**, ou **glisser** vers la gauche ou la droite n'importe où dans la fenêtre, pour changer de page (la dernière ramène à la première).
 
