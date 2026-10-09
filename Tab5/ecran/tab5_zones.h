@@ -120,20 +120,25 @@ GesteCible geste_cible(int geste);
 
 // Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-navigation.yaml), routine unique du
 // select « Aller à l'écran » et des gestes de l'accueil (horloge, boutons du haut). Les
-// valeurs 0 à 12 SONT les index des options du select, dans le même ordre
+// valeurs 0 à 13 SONT les index des options du select, dans le même ordre
 // (tests/test_appuis.py) ; ARCADE n'est pas une option du select (lancer l'Arcade à
 // distance n'a pas d'usage), seulement un choix de geste. Un écran de plus : avant ARCADE
 // ici, à la fin du select (ARCADE et NB se décalent : la NVS garde l'index du code dans
 // kCodesGestes, tab5_zones.cpp, jamais cette valeur), et son code à la fin de kCodesGestes
 // et dans le blueprint ; sa fenêtre et son ouverture : une ligne de
 // tab5_modal_registry_init (tab5-navigation.yaml).
+// Liste gardée telle quelle par clang-format (une valeur de plus ne doit pas réécrire
+// toute la liste, que d'autres lots touchent aussi).
+// clang-format off
 enum class Ecran : uint8_t {
     AUCUN,       // « — » : position de repos du select ; « rien » pour un appui long
     ACCUEIL, ASSISTANT, CALENDRIER, REVEIL, CLIM, PLANTES, TV, CONSOLE, ENERGIE, REGLAGES, ALERTES,
     MAISON,      // popup Maison (ADR-0037) : option du select et choix d'appui long (code « maison »)
+    METEO,       // popup Météo (ADR-0043) : option du select et code de geste « meteo »
     ARCADE,
     NB
 };
+// clang-format on
 
 // Widgets que le masquage touche, posés par le script tab5_zones_apply (tab5-zones.yaml).
 struct ZonesUI {

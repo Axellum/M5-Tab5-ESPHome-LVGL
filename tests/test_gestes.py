@@ -27,7 +27,7 @@ import pytest
 import yaml
 
 from tests.commun import lire as _lire
-from tests.test_appuis import ACTIONS, CODES, _codes_firmware, _fonction
+from tests.test_appuis import ACTIONS, CODES, ECRANS_APRES, ORDRE, _codes_firmware, _fonction
 from tests.test_tuiles_blueprint import Passage, _evenement
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -99,7 +99,7 @@ def test_ordre_des_douze_champs():
 
 def test_memes_codes_firmware_et_blueprint():
     codes = _codes_firmware()
-    assert list(codes) == list(CODES) + ACTIONS
+    assert list(codes) == ORDRE
     bp = _bp()
     attendus = ["auto"] + list(codes)
     assert bp["variables"]["codes_gestes"] == attendus
@@ -119,7 +119,7 @@ def test_actions_de_l_accueil():
     actions = _actions_firmware()
     assert [c for c, a in actions.items() if a not in ("ECRAN", "RIEN")] == ACTIONS
     assert actions["rien"] == "RIEN"
-    assert all(actions[c] == "ECRAN" for c in CODES if c != "rien")
+    assert all(actions[c] == "ECRAN" for c in list(CODES) + list(ECRANS_APRES) if c != "rien")
     script = _lire(NAVIGATION).split("- id: tab5_geste", 1)[1].split("\n  - id:", 1)[0]
     assert "geste_cible(geste)" in script
     assert "id(tab5_ecran_ouvrir).execute(c.ecran);" in script, "un écran s'ouvre par la routine unique"
@@ -127,7 +127,9 @@ def test_actions_de_l_accueil():
         branche = script.split(f"GesteAction::{action})", 1)[1].split("} else if", 1)[0]
         assert BRANCHES[action] in branche, action
     # « nabu_suivant » (lot 3) ajouté à la fin : la NVS garde l'index du code.
-    assert list(actions)[-1] == "nabu_suivant" and list(actions).index("nabu_suivant") == 17
+    assert list(actions).index("nabu_suivant") == 17
+    # « meteo » (popup Météo, ADR-0043) après lui, pour la même raison.
+    assert list(actions)[-1] == "meteo" and list(actions).index("meteo") == 18
 
 
 def test_auto_comme_avant():

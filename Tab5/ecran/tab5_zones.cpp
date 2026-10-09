@@ -113,6 +113,8 @@ constexpr CodeGeste kCodesGestes[] = {
     {"ecoute", Ecran::AUCUN, GesteAction::ECOUTE},
     // Panneau Ok Nabu à lignes (09/10/2026, lot 3, ADR-0041) : ajouté à la fin (NVS, index 17).
     {"nabu_suivant", Ecran::AUCUN, GesteAction::NABU_SUIVANTE},
+    // Popup Météo (09/10/2026, ADR-0043) : ajouté à la fin (NVS, index 18).
+    {"meteo", Ecran::METEO, GesteAction::ECRAN},
 };
 constexpr int kNbCodes = static_cast<int>(sizeof(kCodesGestes) / sizeof(kCodesGestes[0]));
 constexpr int8_t kAuto = -1;
@@ -458,6 +460,7 @@ const char* code_glyphe(int8_t c) {
         case Ecran::REGLAGES: return "\U000F0493";    // cog
         case Ecran::ALERTES: return "\U000F0E81";     // bell-alert-outline
         case Ecran::MAISON: return "\U000F02DC";      // home
+        case Ecran::METEO: return "\U000F0595";       // weather-partly-cloudy (titre du popup Météo)
         case Ecran::ARCADE: return "\U000F0297";      // gamepad-variant
         default: return nullptr;
     }

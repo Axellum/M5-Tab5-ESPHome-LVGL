@@ -5,6 +5,8 @@
 # Épaules (`icon_card_hN_g` / `_d`) et bouton invisible (`btn_hN_action`) : l'appareil de
 # la tuile T de la pièce de la page horaire (pièces 3 et 4), posés par tab5_tuiles.cpp ;
 # masqués sans appareil. Ids en `icon_card_*` : motif de la règle 7 pour la palette.
+# Appui long sur le corps d'une tuile sans appareil (bouton masqué) : le popup Météo
+# (ADR-0043, meteo_tuile_libre), jamais au bout d'un glissement (ui_appui_glisse).
 obj:
   x: ${x_pos}
   y: ${meteo_cell_y}
@@ -20,6 +22,8 @@ obj:
         height: 205
         styles: style_meteo_card_page
         scrollbar_mode: "OFF"
+        on_long_press:
+          - lambda: 'if (!ui_appui_glisse() && meteo_tuile_libre(id(btn_h${idx}_action))) id(tab5_ecran_ouvrir).execute((int) Ecran::METEO);'
         widgets:
           - label: { id: "h${idx}_icon_layer1", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
           - label: { id: "h${idx}_icon_layer2", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }

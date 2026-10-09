@@ -25,9 +25,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
-from scenarios import (NABU, NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE, PIECES,  # noqa: E402
-                       RANGEE, REGLABLES, SCENES, Piece, Tuile, build_alerte_payload, build_etats_tuiles,
-                       build_historique, build_tuiles_payload, code_pluie)
+from scenarios import (JOURS_FR, NABU, NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,  # noqa: E402
+                       PIECES, RANGEE, REGLABLES, SCENES, HeureForecast, JourForecast, Piece, Tuile,
+                       build_alerte_payload, build_etats_tuiles, build_heures_bulk_payload, build_historique,
+                       build_jours_bulk_payload, build_pluie_1h_bulk_payload, build_tuiles_payload, code_pluie)
 
 
 @dataclass(frozen=True)
@@ -600,6 +601,61 @@ THEME_CADRE_GELULE = "Capsule"
 THEME_PAR_DEFAUT = "Relief doux"
 
 
+# Popup Météo (ADR-0043, meteo_popup.yaml) : une journée qui change (soleil le matin,
+# orage l'après-midi, éclaircies le soir), de 07:00 (l'heure figée, 07:45 : la colonne
+# de l'heure en cours) à 21:00, dix jours contrastés, une pluie dans l'heure qui monte
+# puis retombe. Le rendu pousse ces données lui-même ; `fermer` remet celles de la
+# scène 3 (la dernière jouée avant les écrans) : l'accueil les montre aussi. Le retour
+# à l'accueil (« Aller à l'écran » → Accueil) referme le popup.
+_METEO_HEURES = (
+    ("partlycloudy", 14.2, 0.0), ("sunny", 15.8, 0.0), ("sunny", 17.9, 0.0), ("sunny", 20.1, 0.0),
+    ("partlycloudy", 22.4, 0.0), ("partlycloudy", 23.6, 0.0), ("cloudy", 24.1, 0.0), ("rainy", 22.0, 1.2),
+    ("pouring", 19.4, 4.6), ("lightning-rainy", 18.2, 8.8), ("rainy", 17.5, 2.1), ("cloudy", 17.1, 0.3),
+    ("partlycloudy", 16.4, 0.0), ("partlycloudy", 15.2, 0.0), ("clear-night", 14.0, 0.0),
+)
+_METEO_JOURS = (
+    ("lightning-rainy", 12.1, 24.3), ("sunny", 14.0, 27.5), ("sunny", 16.2, 30.1), ("partlycloudy", 15.4, 26.0),
+    ("rainy", 12.8, 19.6), ("pouring", 10.9, 16.2), ("cloudy", 9.5, 17.8), ("partlycloudy", 11.0, 21.4),
+    ("sunny", 13.3, 24.9), ("windy", 12.0, 20.5), ("fog", 8.7, 15.1), ("snowy-rainy", 1.4, 6.2),
+    ("partlycloudy", 7.9, 14.8), ("sunny", 10.1, 19.0), ("hail", 9.2, 13.5),
+)
+_METEO_HEURES_PAYLOADS = tuple(build_heures_bulk_payload([
+    HeureForecast(i, f"{7 + i:02d}:00", c, t, p) for i, (c, t, p) in enumerate(_METEO_HEURES)][d:d + 5])
+    for d in (0, 5, 10))
+_METEO_JOURS_PAYLOAD = build_jours_bulk_payload([
+    JourForecast(i, "Auj" if i == 0 else JOURS_FR[((MOMENT_DES_CAPTURES + _dt.timedelta(days=i)).weekday() + 1) % 7],
+                 c, tmin, tmax, (MOMENT_DES_CAPTURES + _dt.timedelta(days=i)).weekday() >= 5,
+                 (MOMENT_DES_CAPTURES + _dt.timedelta(days=i)).weekday() == 6)
+    for i, (c, tmin, tmax) in enumerate(_METEO_JOURS)])
+_METEO_PLUIE_1H = ("Temps sec", "Temps sec", "Pluie faible", "Pluie modérée", "Pluie forte", "Pluie très forte",
+                   "Pluie modérée", "Pluie faible", "Temps sec")
+METEO_DONNEES = (
+    Service("tab5_maj_meteo_actuelle", (("condition", "partlycloudy"), ("temperature", "15.3"), ("humidite", "72"))),
+    Service("tab5_maj_probabilites", (("uv", "6"), ("gel", "0"), ("neige", "0"))),
+    *(Service("tab5_maj_previsions_heures_bulk", (("payload", p),)) for p in _METEO_HEURES_PAYLOADS),
+    Service("tab5_maj_previsions_jours_bulk", (("payload", _METEO_JOURS_PAYLOAD),)),
+    Service("tab5_maj_pluie_1h_bulk", (("payload", build_pluie_1h_bulk_payload(_METEO_PLUIE_1H)),)),
+    Service("tab5_maj_alerte_meteo_france",
+            (("payload", build_alerte_payload(phrase_pluie=code_pluie(1, 10), **SCENES[2].alerte)),)),
+)
+_S3 = SCENES[2]
+METEO_SCENE_3 = (
+    Service("tab5_maj_meteo_actuelle", (("condition", _S3.meteo_condition), ("temperature", str(_S3.meteo_temperature)),
+                                        ("humidite", str(_S3.meteo_humidite)))),
+    Service("tab5_maj_probabilites", tuple((k, str(v)) for k, v in _S3.probabilites.items())),
+    *(Service("tab5_maj_previsions_heures_bulk", (("payload", build_heures_bulk_payload(_S3.heures[d:d + 5])),))
+      for d in (0, 5, 10)),
+    Service("tab5_maj_previsions_jours_bulk", (("payload", build_jours_bulk_payload(_S3.jours)),)),
+    Service("tab5_maj_pluie_1h_bulk", (("payload", build_pluie_1h_bulk_payload(_S3.pluie_1h)),)),
+    Service("tab5_maj_alerte_meteo_france", (("payload", VIGILANCE_SCENE_3),)),
+)
+# Noms des pages en haut (reglages_onglet.yaml, mêmes places que ceux des Réglages) et un
+# geste dans le popup, vers la gauche (page suivante), parti du verre de la carte des
+# heures, sous ses barres de pluie (y 645 à l'écran : zone 1166 × 404 à y 87 + 166 + 14).
+METEO_PAGES = {"jour": (433, 41), "jours": (643, 41), "details": (853, 41)}
+METEO_GLISSER = Glisser(1100, 675, 500, 675, dans_popup=True)
+
+
 def _historique(cle: str, vue: str, exterieur: bool = False) -> Service:
     """Ce que pousserait script.tab5_historique (tools/demo/scenarios.py)."""
     return Service("tab5_maj_historique", tuple(build_historique(cle, vue, MOMENT_DES_CAPTURES, exterieur).items()))
@@ -862,6 +918,11 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("temperature-piece",
           ALLER_PIECE_CLIMAT + (Long(*SALON_TEMP), _historique(f"p{PIECE_CLIMAT}", "jour")),
           (Toucher(*FERMER_POPUP),) + RETOUR_PIECE_CLIMAT),
+    # Popup Météo (ADR-0043) : ses trois pages, avec des données qui varient ; la page
+    # « 10 jours » par un geste dans le popup, « Détails » par son nom en haut.
+    Ecran("meteo-aujourdhui", METEO_DONNEES + (Aller("Météo"),), METEO_SCENE_3),
+    Ecran("meteo-jours", METEO_DONNEES + (Aller("Météo"), METEO_GLISSER), METEO_SCENE_3),
+    Ecran("meteo-details", METEO_DONNEES + (Aller("Météo"), Toucher(*METEO_PAGES["details"])), METEO_SCENE_3),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
     # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.

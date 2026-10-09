@@ -202,6 +202,7 @@ font:
       - "\U000F0493"  # cog (bouton du haut : Réglages, 06/10/2026)
       - "\U000F04B9"  # sofa
       - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
+      - "\U000F0595"  # weather-partly-cloudy (tap : Météo)
       - "\U000F06A9"  # robot
       - "\U000F0717"  # snowflake (tap : Climatisation)
       - "\U000F0729"  # view-sequential (tap : ligne suivante sous l'horloge)
@@ -353,6 +354,8 @@ font:
       - "\U000F054C"  # undo
       - "\U000F0581"  # volume-off
       - "\U000F058E"  # water-percent
+      - "\U000F0598"  # weather-snowy (carte Neige du popup Météo)
+      - "\U000F0599"  # weather-sunny (carte Indice UV du popup Météo)
       - "\U000F059D"  # weather-windy
       - "\U000F068E"  # alarm-snooze
       - "\U000F0717"  # snowflake
@@ -514,6 +517,7 @@ font:
       - "\U000F057E"  # volume-high
       - "\U000F0581"  # volume-off
       - "\U000F0594"  # weather-night (Réglages : nuit du mode Auto)
+      - "\U000F0595"  # weather-partly-cloudy (titre du popup Météo, ADR-0043)
       - "\U000F05A9"  # wifi
       - "\U000F05CA"  # translate (Réglages : langue)
       - "\U000F05CB"  # account-voice
@@ -637,6 +641,7 @@ font:
       - "\U000F0379"  # monitor
       - "\U000F0493"  # cog (mini icône : Réglages)
       - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
+      - "\U000F0595"  # weather-partly-cloudy (mini icône : Météo)
       - "\U000F0596"  # weather-pouring
       - "\U000F05A9"  # wifi
       - "\U000F05CE"  # clock-alert-outline (prévisions périmées, au-dessus des tuiles)
@@ -722,6 +727,19 @@ font:
     size: 80
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
              # bitmaps divisés par deux, validé à l'œil par Axel
+    glyphs: "\U0000F00B\U0000F00F"
+
+  # Les mêmes icônes à 40 % (48 et 32 px), popup Météo (ADR-0043) : heures et jours
+  # (update_meteo_icon(…, 40), tab5_meteo.cpp). Mêmes 10 glyphes, même calque 2 réduit.
+  - file: "Tab5/fonts/IconeMeteo.ttf"
+    id: font_meteo_48
+    size: 48
+    bpp: 2
+    glyphs: "\U0000F000\U0000F001\U0000F002\U0000F005\U0000F006\U0000F007\U0000F00B\U0000F00E\U0000F00F\U0000F015"
+  - file: "Tab5/fonts/IconeMeteo.ttf"
+    id: font_meteo_32
+    size: 32
+    bpp: 2
     glyphs: "\U0000F00B\U0000F00F"
 
   # --- Jeu « Roi Noir » : pièces d'échecs -----------------------------------

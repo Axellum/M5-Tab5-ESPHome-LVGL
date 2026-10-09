@@ -629,3 +629,95 @@ void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color, int32_t
     ui_style_num(btn, LV_STYLE_BORDER_OPA, active ? LV_OPA_COVER : LV_OPA_40);
     ui_style_num(btn, LV_STYLE_BORDER_WIDTH, active ? active_width : 1);
 }
+
+// --- Popups à pages (Réglages, 08/10/2026 ; Météo, ADR-0043) -------------------------------
+// Sortis de tab5_reglages.cpp le 09/10/2026 pour la Météo : une seule rangée d'options, un
+// seul geste de page (règle 5).
+
+// L'option active en couleur d'accent (bordure et texte), les autres exactement au style du
+// bouton (style_clim_btn, bordure et formes du thème) : on retire la bordure locale au lieu
+// du gris « inactif » de highlight_button_border, comme le bouton « HA » (tab5_tuiles.cpp).
+// Le texte est le premier enfant du bouton (reglages_choix_btn.yaml, reglages_onglet.yaml).
+void ui_choix_peindre(lv_obj_t* const* boutons, int n, int actif) {
+    for (int i = 0; i < n; i++) {
+        lv_obj_t* const b = boutons[i];
+        if (b == nullptr) continue;
+        const bool on = (i == actif);
+        if (on) {
+            highlight_button_border(b, true, UIColor.ACCENT, 3);
+        } else {
+            for (lv_style_prop_t p : {LV_STYLE_BORDER_COLOR, LV_STYLE_BORDER_OPA, LV_STYLE_BORDER_WIDTH})
+                lv_obj_remove_local_style_prop(b, p, LV_PART_MAIN);
+        }
+        ui_text_color(lv_obj_get_child(b, 0), on ? UIColor.ACCENT : UIColor.TEXT_SOFT);
+    }
+}
+
+namespace {
+// LV_EVENT_GESTURE d'un popup à pages (ui_pages_geste) : gauche = page suivante, droite =
+// page précédente. LVGL l'émet pendant l'appui, dès que le doigt a parcouru
+// gesture_min_distance (lv_indev.c, indev_gesture), comme pour les prévisions.
+// lv_indev_wait_release() : le lever du doigt qui suit ne déclenche rien (ni le bouton où
+// le geste est parti, ni un appui long), c'est le « tap qui suit un glissement est ignoré »
+// des autres popups, pour tout le popup.
+void pages_geste_rappel(lv_event_t* e) {
+    lv_indev_t* const indev = lv_indev_active();
+    if (indev == nullptr) return;
+    const lv_dir_t dir = lv_indev_get_gesture_dir(indev);
+    if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
+    lv_obj_t* const popup = lv_event_get_current_target_obj(e);
+    // Un curseur (luminosité, volume) glissé de côté : c'est son réglage, pas une page.
+    for (lv_obj_t* o = lv_indev_get_active_obj(); o != nullptr && o != popup; o = lv_obj_get_parent(o)) {
+        if (lv_obj_check_type(o, &lv_slider_class)) return;
+    }
+    auto changer = reinterpret_cast<void (*)(bool)>(lv_event_get_user_data(e));
+    if (changer == nullptr) return;
+    lv_indev_wait_release(indev);
+    changer(dir == LV_DIR_LEFT);
+}
+}  // namespace
+
+// Le geste s'arrête au popup : sans le retrait de LV_OBJ_FLAG_GESTURE_BUBBLE, LVGL le
+// remonterait jusqu'à page_main, dont le on_gesture change les prévisions ou la pièce
+// derrière le popup (handle_swipe_gesture, tab5_central.cpp).
+void ui_pages_geste(lv_obj_t* popup, void (*changer)(bool suivante)) {
+    if (popup == nullptr || changer == nullptr) return;
+    lv_obj_remove_flag(popup, LV_OBJ_FLAG_GESTURE_BUBBLE);
+    lv_obj_add_event_cb(popup, pages_geste_rappel, LV_EVENT_GESTURE, reinterpret_cast<void*>(changer));
+}
+
+// --- Tracés construits en C++ (Température ADR-0032, Météo ADR-0043) -----------------------
+
+// Un rectangle sans style, non cliquable, masqué : grille, barres, teinte, traits, points.
+lv_obj_t* ui_rectangle(lv_obj_t* parent, lv_opa_t opa, int32_t rayon) {
+    lv_obj_t* o = lv_obj_create(parent);
+    lv_obj_remove_style_all(o);
+    lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
+    lv_obj_set_style_radius(o, rayon, LV_PART_MAIN);
+    lv_obj_set_size(o, 2, 2);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    return o;
+}
+
+// Une ligne (lv_line) arrondie, non cliquable, masquée. lv_line_set_points() ne copie pas
+// les points : leur tableau doit vivre aussi longtemps que la ligne.
+lv_obj_t* ui_ligne(lv_obj_t* parent, int32_t epaisseur) {
+    lv_obj_t* o = lv_line_create(parent);
+    lv_obj_set_pos(o, 0, 0);
+    lv_obj_set_style_line_width(o, epaisseur, LV_PART_MAIN);
+    lv_obj_set_style_line_rounded(o, true, LV_PART_MAIN);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    return o;
+}
+
+// Place, taille, et montre (chaque écriture comparée d'abord).
+void ui_poser(lv_obj_t* o, int32_t x, int32_t y, int32_t w, int32_t h) {
+    if (o == nullptr) return;
+    if (lv_obj_get_style_width(o, LV_PART_MAIN) != w) lv_obj_set_width(o, w);
+    if (lv_obj_get_style_height(o, LV_PART_MAIN) != h) lv_obj_set_height(o, h);
+    ui_x(o, x);
+    ui_y(o, y);
+    ui_hidden(o, false);
+}

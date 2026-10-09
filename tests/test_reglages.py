@@ -38,7 +38,7 @@ CHAMPS = {"REGLAGE_EXTINCTION": "extinction", "REGLAGE_OKAY_NABU": "okay_nabu", 
           "REGLAGE_LIMITE_CHARGE": "limite", "REGLAGE_ECONOMIE": "economie",
           "REGLAGE_BATTERIE_MONTEE": "montee"}
 OUI_NON = ("REGLAGE_OKAY_NABU", "REGLAGE_TAPE", "REGLAGE_NUIT", "REGLAGE_BATTERIE_MONTEE")
-ONGLET = re.compile(r"file: reglages_onglet\.yaml, vars: \{ id: (\w+), x: \d+, page: (\d+), label_text: \"([^\"]*)\" \}")
+ONGLET = re.compile(r"file: reglages_onglet\.yaml, vars: \{ prefixe: reglages, id: (\w+), x: \d+, page: (\d+), label_text: \"([^\"]*)\" \}")
 # Conteneur de chaque page (reglages_popup.yaml ; la page Système est console_sys.yaml).
 PAGES = {"REGLAGES_PAGE_ECRAN": "reglages_page_ecran", "REGLAGES_PAGE_APPARENCE": "reglages_page_apparence",
          "REGLAGES_PAGE_BATTERIE": "reglages_page_batterie", "REGLAGES_PAGE_SYSTEME": "reglages_page_systeme"}
@@ -185,16 +185,23 @@ def test_un_nom_et_un_conteneur_par_page():
 def test_geste_de_page_reste_dans_le_popup():
     cpp = _lire(TAB5 / "ecran" / "tab5_reglages.cpp").replace("\r\n", "\n")
     preparer = _corps(cpp, "void reglages_preparer()")
+    # Le geste de page est partagé avec le popup Météo depuis le 09/10/2026 (ui_pages_geste,
+    # tab5_anim.cpp) : gauche = page suivante, en boucle (reglages_page_voisine).
+    assert "ui_pages_geste(u.popup, page_voisine);" in preparer
+    voisine = _corps(cpp, "void page_voisine(")
+    assert "reglages_afficher_page(reglages_page_voisine(s_page, REGLAGES_NB_PAGES, suivante));" in voisine
+    anim = _lire(TAB5 / "ecran" / "tab5_anim.cpp").replace("\r\n", "\n")
     # Le geste s'arrête au popup : page_main ne change ni les prévisions ni la pièce.
-    assert "lv_obj_remove_flag(u.popup, LV_OBJ_FLAG_GESTURE_BUBBLE);" in preparer
-    assert "lv_obj_add_event_cb(u.popup, geste_rappel, LV_EVENT_GESTURE, nullptr);" in preparer
-    geste = _corps(cpp, "void geste_rappel(")
+    pose = _corps(anim, "void ui_pages_geste(")
+    assert "lv_obj_remove_flag(popup, LV_OBJ_FLAG_GESTURE_BUBBLE);" in pose
+    assert "lv_obj_add_event_cb(popup, pages_geste_rappel, LV_EVENT_GESTURE," in pose
+    geste = _corps(anim, "void pages_geste_rappel(")
     assert "dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT" in geste
     # Un curseur glissé (luminosité, volume) n'est pas un changement de page ; le lever du
     # doigt qui suit le geste ne déclenche rien (ni tap, ni appui long). Dans cet ordre.
     assert "lv_obj_check_type(o, &lv_slider_class)" in geste
     assert (geste.index("lv_slider_class") < geste.index("lv_indev_wait_release(indev);")
-            < geste.index("reglages_afficher_page("))
+            < geste.index("changer(dir == LV_DIR_LEFT);"))
 
 
 def test_gardes_de_la_console_par_la_page_systeme():

@@ -1,0 +1,195 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file meteo_popup.yaml
+# @role Popup « Météo » (ADR-0043, 09/10/2026, demande d'Axel) : la météo en graphiques,
+#       trois pages changées au doigt (glisser à gauche ou à droite, en boucle) ou par
+#       leur nom en haut, à côté du titre (celle affichée en couleur d'accent) :
+#         - « Aujourd'hui » : carte « Maintenant » (icône, température, condition,
+#           minimum et maximum du jour, pluie prévue), puis les heures qui viennent :
+#           icônes, courbe des températures, barres de pluie ;
+#         - « 10 jours » : minimum et maximum de chaque jour en barres sur une échelle
+#           commune ;
+#         - « Détails » : la pluie dans l'heure, puis humidité, indice UV, gel et neige.
+#       Ouvert par « Aller à l'écran → Météo », un geste de l'accueil (code « meteo »)
+#       ou un appui long sur une tuile de prévision sans appareil.
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y} ; les noms des pages sont des options d'en-tête,
+#       reglages_onglet.yaml avec `prefixe: meteo`), registre unique
+#       (ADR-0013 : « Météo » dans tab5_modal_registry_init). Ce fichier ne pose que les
+#       cadres et les textes fixes : tab5_meteo.cpp écrit les valeurs et construit les
+#       tracés dans les trois zones (meteo_zone_heures, _jours, _pluie) à la première
+#       ouverture. Changement de page instantané (conteneurs masqués / montrés).
+# @geometry Une page = un conteneur sans fond à y ${modal_body_y}, 598 px de haut (20 px
+#       du bas), cartes à x 24 (1202 de large). Aujourd'hui : « Maintenant » 150 px, puis
+#       les heures 432 px (y 166, zone 1166 × 404 à x 18, y 14). 10 jours : une carte de
+#       598 px (zone 1166 × 580 à x 18, y 9 : dix lignes de 58). Détails : pluie dans
+#       l'heure 372 px (zone 1166 × 290 à x 18, y 70), puis quatre cartes de 288 × 210 à
+#       y 388 (x 24, 329, 633, 938). Noms des pages : 200 × 44 à x 318, 528 et 738.
+# @ai_instruction Une page de plus : voir l'en-tête de tab5_meteo.cpp. Une icône de plus :
+#       son glyphe dans la police de son widget (tab5-styles.yaml, règle 9).
+# ═══════════════════════════════════════════════════════════════════════════
+obj:
+  id: meteo_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: meteo_popup } }
+
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        scrollbar_mode: "OFF"
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0595", icon_style: "style_text_info", title: "Météo", title_id: "meteo_titre", close_btn_id: "btn_meteo_close", popup_id: meteo_popup } }
+
+          # Noms des pages (options d'en-tête, reglages_onglet.yaml) : `page` = MeteoPage.
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: meteo, id: meteo_onglet_jour, x: 318, page: 0, label_text: "Aujourd'hui" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: meteo, id: meteo_onglet_jours, x: 528, page: 1, label_text: "10 jours" } }
+          - !include { file: reglages_onglet.yaml, vars: { prefixe: meteo, id: meteo_onglet_details, x: 738, page: 2, label_text: "Détails" } }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE AUJOURD'HUI
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: meteo_page_jour
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              scrollable: false
+              styles: style_invisible
+              widgets:
+                # Maintenant : icône, température, condition, minimum et maximum du jour ;
+                # à droite, la pluie prévue sur les heures montrées dessous.
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 0
+                    width: 1202
+                    height: 150
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      # Boîte de l'icône : update_meteo_icon() range ses deux calques entre eux.
+                      - obj:
+                          align: TOP_LEFT
+                          x: 10
+                          y: 0
+                          width: 150
+                          height: 150
+                          styles: style_transparent
+                          scrollable: false
+                          widgets:
+                            - label: { id: meteo_maintenant_l2, text: "", hidden: true, align: CENTER, text_font: font_meteo_card }
+                            - label: { id: meteo_maintenant_l1, text: "", hidden: true, align: CENTER, text_font: font_meteo_card }
+                      - label: { id: meteo_maintenant_temperature, text: "--°", align: LEFT_MID, x: 172, y: 0, width: 160, long_mode: CLIP, text_font: roboto_55_b }
+                      - label: { text: "Maintenant", align: TOP_LEFT, x: 340, y: 20, styles: style_text_accent }
+                      - label: { id: meteo_maintenant_condition, text: "", align: TOP_LEFT, x: 340, y: 50, width: 460, long_mode: DOT, text_font: roboto_32_b }
+                      - label: { id: meteo_maintenant_min_max, text: "", align: TOP_LEFT, x: 340, y: 98, width: 460, long_mode: DOT, styles: style_text_dim }
+                      - label: { id: meteo_pluie_titre, text: "", align: TOP_RIGHT, x: -24, y: 34, styles: style_text_dim }
+                      - label: { id: meteo_pluie_total, text: "", align: TOP_RIGHT, x: -24, y: 70, text_font: roboto_32_b }
+                # Les heures qui viennent : tracés de tab5_meteo.cpp (construire_heures).
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 166
+                    width: 1202
+                    height: 432
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - obj:
+                          id: meteo_zone_heures
+                          align: TOP_LEFT
+                          x: 18
+                          y: 14
+                          width: 1166
+                          height: 404
+                          styles: style_transparent
+                          scrollable: false
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE 10 JOURS
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: meteo_page_jours
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              hidden: true
+              scrollable: false
+              styles: style_invisible
+              widgets:
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 0
+                    width: 1202
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      # Dix lignes de 58 px : tab5_meteo.cpp (construire_jours).
+                      - obj:
+                          id: meteo_zone_jours
+                          align: TOP_LEFT
+                          x: 18
+                          y: 9
+                          width: 1166
+                          height: 580
+                          styles: style_transparent
+                          scrollable: false
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE DÉTAILS
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: meteo_page_details
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              hidden: true
+              scrollable: false
+              styles: style_invisible
+              widgets:
+                # Pluie dans l'heure : les 9 barres de la carte centrale, à l'échelle du
+                # temps, et sa phrase à droite (tab5_meteo.cpp, construire_pluie).
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 0
+                    width: 1202
+                    height: 372
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - label: { text: "Pluie dans l'heure", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
+                      - label: { id: meteo_pluie_phrase, text: "", align: TOP_RIGHT, x: -22, y: 22, width: 640, long_mode: DOT, text_align: RIGHT, text_font: roboto_32_b }
+                      - obj:
+                          id: meteo_zone_pluie
+                          align: TOP_LEFT
+                          x: 18
+                          y: 70
+                          width: 1166
+                          height: 290
+                          styles: style_transparent
+                          scrollable: false
+                # Humidité, indice UV, probabilités de gel et de neige (meteo_carte.yaml).
+                - !include { file: meteo_carte.yaml, vars: { n: "0", x: "24", icone: "\U000F058E", nom: "Humidité" } }
+                - !include { file: meteo_carte.yaml, vars: { n: "1", x: "329", icone: "\U000F0599", nom: "Indice UV" } }
+                - !include { file: meteo_carte.yaml, vars: { n: "2", x: "633", icone: "\U000F0717", nom: "Gel" } }
+                - !include { file: meteo_carte.yaml, vars: { n: "3", x: "938", icone: "\U000F0598", nom: "Neige" } }

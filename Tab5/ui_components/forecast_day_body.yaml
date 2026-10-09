@@ -6,13 +6,17 @@
 #        à tuile_appui()), btn_w (largeur du bouton invisible : 140, 130 pour la tuile 4).
 # Icônes météo : update_meteo_icon()/refresh_daily_forecast() (tab5_forecast.cpp). Le
 # bouton (ids lus par l'on_boot de tab5-ha-hmi.yaml, g_day_slots) : tap / appui long →
-# tuile_appui(n, …), l'appareil de la tuile de la pièce de la page (ADR-0023).
+# tuile_appui(n, …), l'appareil de la tuile de la pièce de la page (ADR-0023). Appui long
+# sur le corps d'une tuile sans appareil (bouton masqué) : le popup Météo (ADR-0043,
+# meteo_tuile_libre), jamais au bout d'un glissement (ui_appui_glisse).
 obj:
   y: 35
   width: 230
   height: 205
   styles: style_meteo_card_page
   scrollbar_mode: "OFF"
+  on_long_press:
+    - lambda: 'if (!ui_appui_glisse() && meteo_tuile_libre(id(btn_j${n}_action))) id(tab5_ecran_ouvrir).execute((int) Ecran::METEO);'
   widgets:
     - label: { id: "j${n}_icon_layer1", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }
     - label: { id: "j${n}_icon_layer2", text: "", hidden: true, align: CENTER, y: 0, text_font: font_meteo_card }

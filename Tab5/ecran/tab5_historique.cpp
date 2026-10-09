@@ -359,14 +359,11 @@ void cacher_trace() {
     ui_hidden(s_legende, true);
 }
 
-void poser(lv_obj_t* o, int32_t x, int32_t y, int32_t w, int32_t h) {
-    if (o == nullptr) return;
-    if (lv_obj_get_style_width(o, LV_PART_MAIN) != w) lv_obj_set_width(o, w);
-    if (lv_obj_get_style_height(o, LV_PART_MAIN) != h) lv_obj_set_height(o, h);
-    ui_x(o, x);
-    ui_y(o, y);
-    ui_hidden(o, false);
-}
+// Briques du tracé : ui_poser(), ui_rectangle(), ui_ligne() (tab5_anim.cpp, partagées avec
+// le popup Météo depuis le 09/10/2026).
+constexpr auto poser = ui_poser;
+constexpr auto rectangle = ui_rectangle;
+constexpr auto ligne = ui_ligne;
 
 // --- Graphique : une fonction par étape (lot L10 de l'audit du 07/10, ex-peindre_graphique
 // d'un seul bloc de 200 lignes ; mêmes calculs, dans le même ordre) ---------------------
@@ -679,18 +676,6 @@ void couleurs() {
     ui_text_color(s_vide, UIColor.TEXT_DIM);
 }
 
-// Un rectangle sans style, non cliquable, masqué : grille, barres, teinte, traits.
-lv_obj_t* rectangle(lv_obj_t* parent, lv_opa_t opa, int32_t rayon) {
-    lv_obj_t* o = lv_obj_create(parent);
-    lv_obj_remove_style_all(o);
-    lv_obj_set_style_bg_opa(o, opa, LV_PART_MAIN);
-    lv_obj_set_style_radius(o, rayon, LV_PART_MAIN);
-    lv_obj_set_size(o, 2, 2);
-    lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-    return o;
-}
-
 lv_obj_t* libelle(lv_obj_t* parent) {
     lv_obj_t* l = lv_label_create(parent);
     if (g_historique_ui.police != nullptr)
@@ -698,16 +683,6 @@ lv_obj_t* libelle(lv_obj_t* parent) {
     lv_label_set_text(l, "");
     lv_obj_add_flag(l, LV_OBJ_FLAG_HIDDEN);
     return l;
-}
-
-lv_obj_t* ligne(lv_obj_t* parent, int32_t epaisseur) {
-    lv_obj_t* o = lv_line_create(parent);
-    lv_obj_set_pos(o, 0, 0);
-    lv_obj_set_style_line_width(o, epaisseur, LV_PART_MAIN);
-    lv_obj_set_style_line_rounded(o, true, LV_PART_MAIN);
-    lv_obj_remove_flag(o, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
-    return o;
 }
 
 // Élément de légende : un échantillon puis son texte, en rangée.

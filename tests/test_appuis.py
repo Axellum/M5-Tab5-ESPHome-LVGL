@@ -46,7 +46,7 @@ OPTIONS = {
     "AUCUN": "—", "ACCUEIL": "Accueil", "ASSISTANT": "Assistant vocal", "CALENDRIER": "Calendrier",
     "REVEIL": "Réveil", "CLIM": "Climatisation", "PLANTES": "Plantes", "TV": "Télécommande TV",
     "CONSOLE": "Console système", "ENERGIE": "Énergie", "REGLAGES": "Réglages", "ALERTES": "Alertes",
-    "MAISON": "Maison",
+    "MAISON": "Maison", "METEO": "Météo",
 }
 # Code du blueprint → valeur d'Ecran.
 CODES = {
@@ -58,6 +58,11 @@ CODES = {
 }
 # Après les écrans, les actions de l'accueil (09/10/2026, lot A ; tests/test_gestes.py).
 ACTIONS = ["mode_domo", "appareil_suivant", "rangee_suivante", "ecoute", "nabu_suivant"]
+# Écrans ajoutés après les actions (la NVS garde l'index du code : un code de plus va à la
+# fin, écran ou action) : le popup Météo (09/10/2026, ADR-0043).
+ECRANS_APRES = {"meteo": "METEO"}
+# Tous les codes de kCodesGestes, dans l'ordre.
+ORDRE = list(CODES) + ACTIONS + list(ECRANS_APRES)
 # Bouton (ordre de BoutonHaut) → (widget, mini icône).
 BOUTONS = (("BOUTON_MAISON", "btn_control_ha", "icon_mini_ha"),
            ("BOUTON_ENGRENAGE", "btn_control_console", "icon_mini_sys"),
@@ -67,7 +72,7 @@ EN_TETES = {
     "ASSISTANT": "assistant_popup.yaml", "CALENDRIER": "calendar_popup.yaml", "REVEIL": "alarm_popup.yaml",
     "CLIM": "climate_popup.yaml", "PLANTES": "pots_popup.yaml", "TV": "tv_remote_popup.yaml",
     "ENERGIE": "energie_popup.yaml", "REGLAGES": "reglages_popup.yaml", "ALERTES": "alertes_popup.yaml",
-    "MAISON": "maison_popup.yaml",
+    "MAISON": "maison_popup.yaml", "METEO": "meteo_popup.yaml",
 }
 
 
@@ -121,7 +126,8 @@ def test_memes_codes_firmware_et_blueprint():
     # Même ORDRE : la NVS garde l'index du code, un code de plus va à la fin.
     assert list(codes)[:len(CODES)] == list(CODES)
     assert {c: codes[c] for c in CODES} == CODES
-    assert list(codes)[len(CODES):] == ACTIONS
+    assert list(codes) == ORDRE
+    assert {c: codes[c] for c in ECRANS_APRES} == ECRANS_APRES
     bp = yaml.load(_lire(BLUEPRINT).replace("!input", "!!str"), Loader=yaml.SafeLoader)
     section = bp["blueprint"]["input"]["boutons_haut"]
     assert section.get("collapsed") is True
@@ -131,9 +137,9 @@ def test_memes_codes_firmware_et_blueprint():
         e = entrees[nom]
         assert e["default"] == "auto", nom
         valeurs = [o["value"] for o in e["selector"]["select"]["options"]]
-        assert valeurs == ["auto"] + list(CODES) + ACTIONS, nom
+        assert valeurs == ["auto"] + ORDRE, nom
         assert all(" · " in o["label"] or o["value"] == "arcade" for o in e["selector"]["select"]["options"]), nom
-    assert bp["variables"]["codes_gestes"] == ["auto"] + list(CODES) + ACTIONS
+    assert bp["variables"]["codes_gestes"] == ["auto"] + ORDRE
     assert "codes_gestes" in bp["variables"]["appuis"]
 
 
@@ -211,7 +217,7 @@ def test_select_par_la_routine_unique():
 def test_mini_glyphes_des_en_tetes():
     corps = _fonction(_lire(ZONES_CPP), "const char* code_glyphe(")
     glyphes = dict(re.findall(r'case Ecran::(\w+): return "\\U(000F[0-9A-F]{4})"', corps))
-    assert set(glyphes) == set(CODES.values()) - {"AUCUN"}
+    assert set(glyphes) == (set(CODES.values()) | set(ECRANS_APRES.values())) - {"AUCUN"}
     corps += _fonction(_lire(ZONES_CPP), "const char* mini_glyphe(")
     for ecran, fichier in EN_TETES.items():
         en_tete = re.search(r'modal_header\.yaml, vars: \{ icon: "\\U(000F[0-9A-F]{4})"',

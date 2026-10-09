@@ -1,0 +1,22 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Carte du bas de la page « Détails » du popup Météo (ADR-0043), réutilisée
+# 4 fois par meteo_popup.yaml : 0 humidité, 1 indice UV, 2 gel, 3 neige (MeteoCarte,
+# tab5_meteo.h). 288 × 210, comme les cartes des popups Température et Énergie.
+# vars : n (0-3, suffixe des ids lus par tab5_meteo.cpp via g_meteo_ui), x, icone (glyphe
+#        MDI de mdi_font_45, règle 9), nom (traduit au démarrage).
+# tab5_meteo.cpp écrit la valeur (à la couleur de son niveau) et le détail ; « -- » tant
+# que Home Assistant n'a rien poussé.
+# ═══════════════════════════════════════════════════════
+obj:
+  align: TOP_LEFT
+  x: ${x}
+  y: 388
+  width: 288
+  height: 210
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    - label: { text: "${nom}", align: TOP_LEFT, x: 22, y: 16, width: 200, long_mode: DOT, styles: style_text_accent }
+    - label: { text: "${icone}", align: TOP_RIGHT, x: -18, y: 12, text_font: mdi_font_45, styles: style_text_dim }
+    - label: { id: "meteo_carte_valeur_${n}", text: "--", align: TOP_LEFT, x: 22, y: 70, styles: style_police_date }
+    - label: { id: "meteo_carte_detail_${n}", text: "", align: TOP_LEFT, x: 22, y: 150, width: 250, long_mode: DOT, styles: style_text_dim }

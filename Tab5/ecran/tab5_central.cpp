@@ -761,9 +761,17 @@ static void rain_phrase_render() {
         else snprintf(buf, sizeof(buf), tr("%s dans %ld mn"), label, minutes);
     }
     ui_text(s.lbl, buf);
+    meteo_donnees_changees();  // la même phrase dans le popup Météo (ADR-0043)
 }
 
 void rain_phrase_tick() { rain_phrase_render(); }
+
+const char* pluie_phrase_lue(int& niveau) {
+    const RainPhrase& s = g_rain_phrase;
+    niveau = s.code ? s.niveau : -2;
+    const char* t = s.lbl != nullptr ? lv_label_get_text(s.lbl) : nullptr;
+    return t != nullptr ? t : "";
+}
 
 void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
     if (!lbl) return;
@@ -782,6 +790,7 @@ void update_rain_phrase_ui(lv_obj_t* lbl, const std::string& phrase) {
     s.code = false;
     std::string t = normalize_text_utf8(phrase);
     ui_text(lbl, t.c_str());
+    meteo_donnees_changees();
 }
 
 // Changer de page ou de mode (météo ↔ HA) met fin aux overlays de la carte centrale

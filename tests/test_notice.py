@@ -69,6 +69,11 @@ NON_MONTREES = {
     "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
     "maison-roue": "roue d'actions rapides (ADR-0036) devant le popup Maison, décrite dans house.md",
+    # Popup Météo (ADR-0043, 09/10/2026), décrit dans weather.md : images à tirer du rendu
+    # de la PR, puis citées.
+    "meteo-aujourdhui": "page Aujourd'hui du popup Météo, décrite dans weather.md ; image à tirer du rendu",
+    "meteo-jours": "page 10 jours du popup Météo, décrite dans weather.md ; image à tirer du rendu",
+    "meteo-details": "page Détails du popup Météo, décrite dans weather.md ; image à tirer du rendu",
     # Réglages en quatre pages (08/10/2026) : images à tirer du rendu de la PR, puis citées.
     "reglages-apparence": "page Apparence des Réglages, décrite dans settings.md ; image à tirer du rendu",
     "reglages-batterie-en-charge": "page Batterie des Réglages, décrite dans settings.md ; image à tirer du rendu",

@@ -74,7 +74,9 @@ def test_option_maison_du_select_a_la_fin():
     controles = _lire("Tab5", "paquets", "tab5-navigation.yaml")
     bloc = controles.split("id: tab5_goto_screen", 1)[1].split("on_value:", 1)[0]
     options = re.findall(r'^\s*-\s*"([^"]+)"', bloc, re.M)
-    assert options[-1] == "Maison", "à la fin : les index des autres options ne bougent pas"
+    # À la fin à son arrivée ; seules des options plus récentes le suivent (« Météo »,
+    # ADR-0043) : les index des autres options ne bougent pas.
+    assert options[options.index("Maison"):] == ["Maison", "Météo"], "les index des options ne bougent pas"
     # L'index de l'option est sa valeur d'Ecran (tab5_zones.h, tests/test_appuis.py) ; le
     # select et les appuis longs passent par la routine unique tab5_ecran_ouvrir.
     enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", contrat(), re.S).group(1)
