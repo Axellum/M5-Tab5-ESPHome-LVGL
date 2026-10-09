@@ -21,6 +21,12 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Moteur des dames dans son propre module (lot G de l'audit du 30/09)
+
+- **`Tab5/jeux/draughts_engine.h` / `.cpp`** (nouveaux) : le moteur des dames (`Draughts::Engine` : position de départ, génération des coups, application, nulles, évaluation) quitte `draughts_game.{h,cpp}`, où il partageait le fichier avec l'interface LVGL et la sauvegarde. Code déplacé tel quel, ligne à ligne : aucun changement de comportement. `draughts_ai.*` garde l'IA, `draughts_game.*` l'interface.
+- **Test C++ du moteur** : `tools/test_draughts_engine.cpp` compile `draughts_engine.cpp` directement, sans l'en-tête de remplacement d'ESPHome. Supprimés : `tools/hote/extraire_moteur_dames.py` (qui recopiait le bloc par script) et son garde dans `tests/test_moteurs_hote.py`, remplacé par un garde de pureté du nouveau module. Le miroir Python `tools/test_draughts_engine.py` reste.
+- Le test C++ des échecs (`tools/test_chess_engine.cpp`, vrai `chess_ai.cpp` sous ASan + UBSan) était déjà en CI depuis le lot L9 (#391) : inchangé.
+
 ### 2026-10-09 — Contrat HA ↔ firmware prouvé entre versions (lot E de l'audit du 30/09)
 
 - **Instantané du contrat** `contrat/contrat.yaml` (nouveau) : les 23 actions de la tablette avec leurs variables, les 22 événements `esphome.tab5_*` avec leurs champs, et une version semver du contrat (1.0.0 = celui de la 3.8.0-rc.3), distincte de celle du firmware. Généré par `tools/contrat_api.py --write`, vérifié par `--check` et pytest. Aucune action ni variable changée.

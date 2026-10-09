@@ -130,6 +130,8 @@ esphome:
     - Tab5/jeux/trivia_game.h
     - Tab5/jeux/trivia_questions.h
     - Tab5/jeux/trivia_game.cpp
+    - Tab5/jeux/draughts_engine.h
+    - Tab5/jeux/draughts_engine.cpp
     - Tab5/jeux/draughts_ai.h
     - Tab5/jeux/draughts_ai.cpp
     - Tab5/jeux/draughts_game.h

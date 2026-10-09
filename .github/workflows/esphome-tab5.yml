@@ -157,14 +157,13 @@ jobs:
             -Wall -Wextra -I tools/hote -I Tab5/rendu/hote -I Tab5/socle -I Tab5/jeux -o "$RUNNER_TEMP/test_chess_engine" \
             tools/test_chess_engine.cpp Tab5/jeux/chess_ai.cpp Tab5/socle/tab5_i18n.cpp
           "$RUNNER_TEMP/test_chess_engine"
-      - name: Moteur de dames C++ (le Draughts::Engine de draughts_game.cpp contre les perft)
-        # Le moteur partage son fichier avec l'interface LVGL du jeu : son bloc pur en est
-        # extrait tel quel (#line : une erreur pointe la vraie ligne de draughts_game.cpp).
+      - name: Moteur de dames C++ (le vrai draughts_engine.cpp contre les perft)
+        # Module pur : compilé tel quel, sans tools/hote/esphome.h (s'il en avait besoin,
+        # il ne serait plus pur et cette étape casserait).
         run: |
-          python tools/hote/extraire_moteur_dames.py "$RUNNER_TEMP/hote/draughts_moteur_extrait.inc"
           g++ -std=c++17 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
-            -Wall -Wextra -I tools/hote -I "$RUNNER_TEMP/hote" -I Tab5/socle -I Tab5/jeux -o "$RUNNER_TEMP/test_draughts_engine" \
-            tools/test_draughts_engine.cpp
+            -Wall -Wextra -I Tab5/jeux -o "$RUNNER_TEMP/test_draughts_engine" \
+            tools/test_draughts_engine.cpp Tab5/jeux/draughts_engine.cpp
           "$RUNNER_TEMP/test_draughts_engine"
       - name: Moteur du réveil C++ (alarm_clock.cpp + tab5_core.cpp + tab5_i18n.cpp, horloge simulée)
         # Le réveil doit sonner sans Home Assistant : son moteur est pur (lot 8b)
