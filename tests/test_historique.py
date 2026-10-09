@@ -39,6 +39,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PACKAGE = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_historique.yaml")
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
 CPP = os.path.join(REPO, "Tab5", "ecran", "tab5_historique.cpp")
+PARSE = os.path.join(REPO, "Tab5", "socle", "tab5_parse.h")
 CLIMAT = os.path.join(REPO, "Tab5", "ui_components", "climate_card.yaml")
 
 import demo_pusher  # noqa: E402
@@ -66,8 +67,11 @@ def test_vues_cles_et_limites_du_firmware():
     cles = re.findall(r'"(\w+)"', re.search(r"kCles\[NB_CLES\] = \{([^}]*)\}", cpp).group(1))
     assert tuple(vues) == tuple(scenarios.HISTORIQUE_VUES) == ("jour", "semaine", "mois")
     assert tuple(cles) == scenarios.HISTORIQUE_CLES == ("salon", "serre", "p0", "p1", "p2", "p3", "p4")
-    mesures_max = int(re.search(r"kMesuresMax = (\d+);", cpp).group(1))
-    prev_max = int(re.search(r"kPrevMax = (\d+);", cpp).group(1))
+    # Plafonds de la lecture (historique_lire, tab5_parse.h), ceux de l'écran.
+    parse = _lire(PARSE)
+    assert "kMesuresMax = kHistoriqueMesuresMax;" in cpp and "kPrevMax = kHistoriquePrevMax;" in cpp
+    mesures_max = int(re.search(r"kHistoriqueMesuresMax = (\d+);", parse).group(1))
+    prev_max = int(re.search(r"kHistoriquePrevMax = (\d+);", parse).group(1))
     assert mesures_max == scenarios.HISTORIQUE_MESURES_MAX and prev_max == scenarios.HISTORIQUE_PREV_MAX
     for vue, (_, nb) in scenarios.HISTORIQUE_VUES.items():
         assert nb + 1 <= mesures_max, f"{vue} : {nb + 1} créneaux pour {mesures_max} places"
@@ -82,36 +86,44 @@ def test_vues_cles_et_limites_du_firmware():
 
 
 def test_bornes_de_lecture_du_firmware():
-    """historique_recu() rejette un pas, une minute ou une température hors de ses bornes
-    (payload faux, et pas de débordement en entier) : celles du package doivent y tenir."""
-    cpp = _lire(CPP)
-    borne = lambda nom: float(re.search(rf"constexpr float {nom} = ([\d.e+]+)f;", cpp).group(1))
+    """historique_lire() (tab5_parse.h) rejette un pas, une minute ou une température hors
+    de ses bornes (payload faux, et pas de débordement en entier) : celles du package
+    doivent y tenir."""
+    parse = _lire(PARSE)
+    borne = lambda nom: float(re.search(rf"constexpr float {nom} = ([\d.e+]+)f;", parse).group(1))
     pas_max = max(pas for pas, _ in scenarios.HISTORIQUE_VUES.values())
-    assert pas_max <= borne("kPasMax")
+    assert pas_max <= borne("kHistoriquePasMax")
     # Vue 30 jours : 30 jours + aujourd'hui, puis 7 jours de prévision au plus, à midi.
     pas, nb = scenarios.HISTORIQUE_VUES["mois"]
-    assert (nb + 7) * pas + 720 <= borne("kMinutesMax")
-    assert borne("kTempMax") >= 150, "une température en °F doit passer"
+    assert (nb + 7) * pas + 720 <= borne("kHistoriqueMinutesMax")
+    assert borne("kHistoriqueTempMax") >= 150, "une température en °F doit passer"
 
 
 def _lire_comme_le_firmware(entete, mesures, previsions):
-    """Découpe de historique_recu() : 6 champs « | », créneaux « ; » de 3 champs « , »
-    (un créneau vide final n'est pas lu), points « minute,moy[,min,max] » dans l'ordre."""
+    """Découpe de historique_lire() : 6 champs « | », plus l'humidité actuelle en 7e avec
+    un capteur d'humidité (ADR-0047) ; créneaux « ; » de 3 champs « , », ou 6 avec
+    l'humidité en % entiers (un créneau vide final n'est pas lu) ; points
+    « minute,moy[,min,max] » dans l'ordre."""
     champs = entete.split("|")
-    assert len(champs) == 6, entete
-    nom, debut, pas, maintenant, actuel, exterieur = champs
+    assert len(champs) in (6, 7), entete
+    nom, debut, pas, maintenant, actuel, exterieur = champs[:6]
+    humidite = champs[6] if len(champs) == 7 else None
+    assert humidite is None or humidite == "nan" or 0 <= int(humidite) <= 100, humidite
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}", debut), debut
     creneaux = mesures.split(";") if mesures else []
     if creneaux and creneaux[-1] == "":
         creneaux = creneaux[:-1]
     for c in creneaux:
-        assert c == "" or len(c.split(",")) == 3, c
+        n = len(c.split(","))
+        assert c == "" or n == 3 or (humidite is not None and n == 6), c
+        if n == 6:
+            assert all(re.fullmatch(r"\d{1,3}", h) and int(h) <= 100 for h in c.split(",")[3:]), c
     points = [p.split(",") for p in previsions.split(";")] if previsions else []
     minutes = [int(p[0]) for p in points]
     assert minutes == sorted(set(minutes)), "prévision hors de l'ordre : le firmware en sauterait"
     assert all(len(p) in (2, 4) for p in points)
     return {"nom": nom, "debut": debut, "pas": int(pas), "maintenant": int(maintenant), "actuel": actuel,
-            "exterieur": exterieur, "creneaux": creneaux, "points": points}
+            "exterieur": exterieur, "humidite": humidite, "creneaux": creneaux, "points": points}
 
 
 @pytest.mark.parametrize("cle", scenarios.HISTORIQUE_CLES)
@@ -128,6 +140,10 @@ def test_demo_dans_le_format(cle, vue):
         assert cle.startswith("p") and lu["nom"] == "" and lu["creneaux"] == [] and lu["points"] == []
         return
     assert lu["pas"] == pas and len(lu["creneaux"]) == nb + 1
+    # Humidité (ADR-0047) : celle de l'accueil, et trois valeurs de plus par créneau.
+    assert lu["humidite"] == (scenarios.historique_humidite(cle) or None)
+    assert all(len(c.split(",")) == (6 if lu["humidite"] else 3) for c in lu["creneaux"])
+    assert (lu["humidite"] is not None) == (cle in ("salon", "p3")), "la démo : le salon et le Bureau"
     debut = dt.datetime.fromisoformat(lu["debut"])
     assert lu["maintenant"] == (moment - debut).total_seconds() // 60
     assert nb * pas <= lu["maintenant"] < (nb + 1) * pas, "maintenant tombe dans le dernier créneau"
@@ -145,7 +161,8 @@ def test_demo_dehors_prolonge_la_courbe():
     # Dehors : le premier point prévu reste près de la valeur actuelle (22.1 à 07:45).
     premier = float(dehors["previsions"].split(";")[0].split(",")[1])
     assert abs(premier - 22.1) < 2.5
-    assert scenarios.build_historique("salon", "jour", moment, exterieur=True)["entete"].endswith("|0")
+    # Sixième champ (le salon a aussi l'humidité en septième, ADR-0047).
+    assert scenarios.build_historique("salon", "jour", moment, exterieur=True)["entete"].split("|")[5] == "0"
 
 
 # ─── Package : imitation de ce que ses modèles appellent dans HA ─────────────
@@ -468,6 +485,88 @@ def test_aucune_ligne_aucun_capteur_reponse_manquante():
     assert e.poussee["mesures"] == "" and e.action.endswith("_tab5_maj_historique")
 
 
+# ─── Package : humidité (ADR-0047) ───────────────────────────────────────────
+
+HUMIDITE = "sensor.bureau_humidite"
+
+
+def _humidite(t_utc):
+    """Une humidité de pièce : 62 % vers 5 h UTC, 38 % vers 17 h UTC."""
+    h = t_utc.hour + t_utc.minute / 60
+    return 50.0 + 12.0 * math.cos(2 * math.pi * (h - 5) / 24)
+
+
+def _lignes_humidite(lignes):
+    """Les lignes d'une humidité aux mêmes heures que celles d'une température."""
+    sortie = []
+    for r in lignes:
+        u = dt.datetime.fromisoformat(r["start"])
+        fin = dt.datetime.fromisoformat(r["end"])
+        pas = int((fin - u).total_seconds() // 600)
+        echantillons = [_humidite(u + dt.timedelta(minutes=10 * k)) for k in range(pas)]
+        sortie.append({"start": r["start"], "end": r["end"], "mean": sum(echantillons) / len(echantillons),
+                       "min": min(echantillons), "max": max(echantillons)})
+    return sortie
+
+
+def _maison_humide(valeur="47.6"):
+    return _maison() + [EtatHA(HUMIDITE, valeur, aire="Bureau", friendly_name="Bureau Humidité")]
+
+
+@pytest.mark.parametrize("vue", tuple(scenarios.HISTORIQUE_VUES))
+def test_humidite_par_creneau(vue):
+    pas, nb = scenarios.HISTORIQUE_VUES[vue]
+    debut = _debut_attendu(vue, MAINTENANT)
+    lignes = (_lignes_jours if vue == "mois" else _lignes_heures)(debut.replace(tzinfo=PARIS), MAINTENANT)
+    humides = _lignes_humidite(lignes)
+    # Une heure sans température mais avec l'humidité, une autre sans humidité.
+    if vue != "mois":
+        lignes = [r for r in lignes if r is not lignes[3]]
+        humides = [r for r in humides if r is not humides[7]]
+    e = Execution(dict(_champs(cle="p3", vue=vue), humidite=HUMIDITE), etats=_maison_humide(),
+                  stats={"statistics": {CAPTEUR: lignes, HUMIDITE: humides}})
+    assert e.demande_stats["statistic_ids"] == [CAPTEUR, HUMIDITE]
+    assert e.lu()["humidite"] == "48"
+    t_attendus = _creneaux_attendus(lignes, debut, pas, nb)
+    h_attendus = _creneaux_attendus(humides, debut, pas, nb)
+    creneaux = e.poussee["mesures"].split(";")
+    assert len(creneaux) == nb + 1
+    for k, (c, t, h) in enumerate(zip(creneaux, t_attendus, h_attendus)):
+        champs = c.split(",") if c else []
+        if h is None:
+            _comparer([c], [t])
+            continue
+        assert len(champs) == 6, f"créneau {k} : {c!r}"
+        if t is None:
+            assert champs[:3] == ["", "", ""], f"créneau {k} : pas de température"
+        else:
+            _comparer([",".join(champs[:3])], [t])
+        assert [int(x) for x in champs[3:]] == [round(x) for x in h], f"créneau {k}"
+    if vue == "jour":   # un créneau par heure : les deux heures retirées se voient
+        assert creneaux[3].startswith(",,,") and len(creneaux[7].split(",")) == 3
+
+
+def test_humidite_absente_inconnue_ou_supprimee():
+    lignes = _lignes_heures(_debut_attendu("jour", MAINTENANT).replace(tzinfo=PARIS), MAINTENANT)
+    sans = Execution(_champs(cle="p3"), etats=_maison_humide(), stats=_reponse(lignes))
+    # Champ absent (blueprint d'avant l'ADR-0047), vide, ou capteur supprimé : la poussée
+    # d'avant, octet pour octet (six champs d'en-tête, trois par créneau).
+    for humidite in ("", "sensor.disparu", None):
+        champs = _champs(cle="p3") if humidite is None else dict(_champs(cle="p3"), humidite=humidite)
+        e = Execution(champs, etats=_maison_humide(), stats=_reponse(lignes))
+        assert e.poussee == sans.poussee and e.demande_stats["statistic_ids"] == [CAPTEUR]
+        assert e.lu()["humidite"] is None
+    # Capteur sans valeur : « nan » ; sans statistiques : créneaux de trois champs.
+    e = Execution(dict(_champs(cle="p3"), humidite=HUMIDITE), etats=_maison_humide("unavailable"),
+                  stats=_reponse(lignes))
+    assert e.lu()["humidite"] == "nan" and e.poussee["mesures"] == sans.poussee["mesures"]
+    # Humidité seule (la température n'a pas de statistiques) : « ,,, » et ses trois valeurs.
+    e = Execution(dict(_champs(cle="p3"), humidite=HUMIDITE), etats=_maison_humide(),
+                  stats={"statistics": {HUMIDITE: _lignes_humidite(lignes)}})
+    creneaux = e.poussee["mesures"].split(";")
+    assert len(creneaux) == 25 and creneaux[-1] == "" and all(c.startswith(",,,") for c in creneaux[:-1])
+
+
 # ─── Package : prévision ─────────────────────────────────────────────────────
 
 def _prevision_heures(maintenant, n=48):
@@ -565,7 +664,7 @@ def test_une_seule_prevision_reste_un_texte():
 def test_mode_et_champs_du_script():
     script = _script()
     assert script["mode"] == "parallel", "deux vues demandées de suite : chacune sa réponse"
-    assert set(script["fields"]) == {"tablette", "cle", "vue", "capteur", "exterieur"}
+    assert set(script["fields"]) == {"tablette", "cle", "vue", "capteur", "exterieur", "humidite"}
 
 
 # ─── Blueprint ───────────────────────────────────────────────────────────────
@@ -640,6 +739,31 @@ def test_blueprint_temperature_de_la_piece(cle, capteur):
     assert v["cle"] == cle and v["vue"] == "mois" and v["capteur"] == capteur and v["exterieur"] is False
 
 
+def _etats_humides():
+    return _maison_bp() + [
+        Etat("sensor.bureau_t", "22.8", "Bureau", friendly_name="Bureau", unit_of_measurement="°C",
+             device_class="temperature"),
+        Etat("sensor.bureau_h", "45", "Bureau", friendly_name="Bureau", unit_of_measurement="%",
+             device_class="humidity"),
+        Etat("sensor.salon_h", "48", "Salon", friendly_name="Salon", unit_of_measurement="%",
+             device_class="humidity"),
+    ]
+
+
+# Humidité (ADR-0047) : celle du salon (« Salon — humidité ») ou de la pièce, jamais de la
+# serre ; une sonde supprimée de HA n'est pas envoyée.
+@pytest.mark.parametrize("cle, humidite", [
+    ("salon", "sensor.salon_h"), ("serre", ""), ("p1", "sensor.bureau_h"), ("p0", ""), ("p2", ""),
+])
+def test_blueprint_humidite(cle, humidite):
+    entrees = dict(ENTREES, salon_humidite="sensor.salon_h", piece_2_temperature="sensor.bureau_t",
+                   piece_2_humidite="sensor.bureau_h", piece_3_temperature="sensor.bureau_t",
+                   piece_3_humidite="sensor.disparu")
+    v = _variables_envoyees(Passage(entrees, _etats_humides(), _evenement("historique", cle=cle)))
+    assert v["humidite"] == humidite
+    assert set(v) == set(_script()["fields"])
+
+
 def test_blueprint_temperature_d_une_piece_absente():
     """Une sonde choisie puis supprimée de HA : pas de capteur (le package répond « aucun
     historique »), pas d'erreur."""
@@ -662,7 +786,8 @@ def test_blueprint_ecoute_l_evenement():
 def test_appuis_longs_et_registre():
     climat = _lire(CLIMAT)
     # La clé vient de accueil_historique_cle() : salon / serre, ou pR en mode HA sur une
-    # pièce qui a une température (ADR-0040) ; nullptr (zone absente, humidité) : rien.
+    # pièce qui a une température (ADR-0040), à droite aussi quand elle a une humidité
+    # (ADR-0047) ; nullptr (zone absente, pièce sans humidité à droite) : rien.
     for droite in ("false", "true"):
         assert (f"const char* cle = accueil_historique_cle({droite});\n"
                 "              if (cle != nullptr) id(tab5_historique_ouvrir).execute(std::string(cle));"
@@ -670,7 +795,7 @@ def test_appuis_longs_et_registre():
     piece = _lire(os.path.join(REPO, "Tab5", "ecran", "tab5_piece_climat.cpp"))
     assert 'return zone_absente(Zone::SERRE) ? nullptr : "serre";' in piece
     assert 'return zone_absente(Zone::SALON) ? nullptr : "salon";' in piece
-    assert "return droite ? nullptr : kClesHistorique[r];" in piece
+    assert "return droite && !s_pieces[r].humidite ? nullptr : kClesHistorique[r];" in piece
     serre = climat.split("id: btn_serre_games", 1)[1].split("- obj:", 1)[0]
     assert "script.execute: tab5_arcade_open" in serre and "on_long_press:" in serre, \
         "l'appui court sur la serre garde l'arcade"
