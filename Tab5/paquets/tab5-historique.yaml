@@ -17,7 +17,7 @@
 # @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
 #       nomme aucune entité, elle dit seulement quelle température et quelle vue elle
 #       montre. Chargé APRÈS tab5_lvgl : il référence des widgets. Aucun lv_* ici.
-# @ai_instruction Un widget de plus = son champ dans HistoriqueUI (tab5_custom.h) et sa
+# @ai_instruction Un widget de plus = son champ dans HistoriqueUI (tab5_historique.h) et sa
 #       ligne ici. La commande est une lambda SANS capture (pointeur de fonction), comme
 #       celle de tab5-energie.yaml.
 # ============================================================================

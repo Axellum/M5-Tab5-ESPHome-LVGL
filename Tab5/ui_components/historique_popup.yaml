@@ -14,7 +14,7 @@
 #       haut (y 72), graphique de 432 px en dessous (y 238, 16 px d'écart, bas à 670).
 #       Tout ce qui bouge est écrit par tab5_historique.cpp (cartes montrées, largeurs,
 #       titre, tracé) : aucune valeur posée ici.
-# @ai_instruction Un widget de plus = son champ dans HistoriqueUI (tab5_custom.h) et sa
+# @ai_instruction Un widget de plus = son champ dans HistoriqueUI (tab5_historique.h) et sa
 #       ligne dans le script tab5_historique_ouvrir (tab5-historique.yaml).
 # ═══════════════════════════════════════════════════════
 obj:
