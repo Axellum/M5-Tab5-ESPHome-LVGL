@@ -34,18 +34,25 @@ def test_chaque_parseur_est_teste_et_fuzze():
 def test_graines_dans_l_ordre_du_harnais():
     fuzz = lire("tools", "fuzz", "fuzz_parse.cpp")
     bloc = fuzz.split("kParseurs[] = {", 1)[1].split("};", 1)[0]
-    harnais = re.findall(r"//\s*'(\d)'\s+(tab5_\w+)", bloc)
+    harnais = re.findall(r"//\s*'(.)'\s+(tab5_\w+)", bloc)
     assert len(harnais) == bloc.count(",") >= 2, "un parseur du harnais sans son commentaire « 'k' service »"
     assert harnais == [(sel, service) for sel, service, _ in graines.FAMILLES]
-    assert [sel for sel, _ in harnais] == [str(i) for i in range(len(harnais))], "sélecteurs 0, 1, 2… dans l'ordre"
+    # (octet - '0') modulo le nombre de parseurs : 0, 1… 9, puis « : », « ; »…
+    assert [sel for sel, _ in harnais] == [graines.selecteur(i) for i in range(len(harnais))], \
+        "sélecteurs 0, 1, 2… dans l'ordre"
 
 
 def test_graines_tirees_du_contrat():
     import fuzz_services
 
     for (nom, contenu), (sel, service, variable) in zip(graines.graines().items(), graines.FAMILLES):
-        assert nom == f"{sel}_{service}"
-        assert contenu == sel.encode() + fuzz_services.GRAINES[service][variable].encode("utf-8")
+        assert nom == f"{ord(sel) - ord('0')}_{service}" and ":" not in nom
+        variables = (variable,) if isinstance(variable, str) else variable
+        attendu = "\n".join(fuzz_services.GRAINES[service][v] for v in variables)
+        assert contenu == sel.encode() + attendu.encode("utf-8")
+        if not isinstance(variable, str):
+            # Le harnais redécoupe sur « \n » : aucune variable ne doit en contenir.
+            assert all("\n" not in fuzz_services.GRAINES[service][v] for v in variables)
 
 
 def test_graines_des_cas_limites():
