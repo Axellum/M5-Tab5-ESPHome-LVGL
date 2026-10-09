@@ -4,8 +4,9 @@
 # lot 3, ADR-0041). Chaque zone en a deux, remplis en alternance : celui qui entre n'est
 # jamais celui qui sort.
 # Vars : id (le panneau), el (préfixe de ses éléments : « a », « b », « na », « nb » →
-# rangee_el_<el>0 … 3, rangee_icone_*, rangee_texte_*), hauteur (70 sous l'horloge, 88
-# dans la bordure du panneau Ok Nabu).
+# rangee_el_<el>0 … 3, rangee_icone_*, rangee_texte_*). Hauteur : une ligne de zone
+# (ligne_zone_h, tab5-ui-tokens.yaml), la même sous l'horloge et dans la bordure du cadre
+# Ok Nabu (09/10/2026 ; 88 dans le cadre avant, quand il faisait 90 px de haut).
 # Le panneau a UN enfant, son contenu : transition_widgets() (tab5_anim.cpp) l'anime comme
 # les panneaux de la carte centrale, le panneau coupe ce qui en sort. scrollable: false :
 # le glissement (translate_y) ne doit jamais le rendre défilant. clickable: false : le
@@ -15,7 +16,7 @@ obj:
   id: "${id}"
   align: CENTER
   width: 401
-  height: ${hauteur}
+  height: ${ligne_zone_h}
   styles: style_transparent
   clickable: false
   scrollable: false
@@ -24,16 +25,23 @@ obj:
   widgets:
     - obj:
         width: 401
-        height: ${hauteur}
+        height: ${ligne_zone_h}
         styles: style_transparent
         clickable: false
         scrollable: false
         scrollbar_mode: "OFF"
+        # flex_align_track: CENTER centre la ligne dans la hauteur du panneau. Sans lui, LVGL
+        # (lv_flex.c) pose la piste en haut (START par défaut) : flex_align_cross ne centre
+        # un élément que dans la piste, haute comme le plus grand élément. Les lignes de
+        # valeurs collaient au haut de la rangée et du cadre Ok Nabu (encre 4 px sous le
+        # haut, 31 px au-dessus du bas sur le rendu du 09/10/2026) ; seules les icônes de
+        # 70 px, aussi hautes que la rangée, semblaient centrées.
         layout:
           type: FLEX
           flex_flow: ROW
           flex_align_main: SPACE_EVENLY
           flex_align_cross: CENTER
+          flex_align_track: CENTER
           pad_column: 0
         widgets:
           - !include { file: rangee_element.yaml, vars: { el: "${el}0" } }

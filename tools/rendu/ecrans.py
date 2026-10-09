@@ -213,13 +213,13 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 SOUS_HORLOGE = (640, 270)
 SERRE = (1172, 158)           # court : Arcade
 # Température du salon (btn_reglables_liste, climate_card.yaml : carte en 855, 110, zone
-# 4..196 × 22..86, centre 955, 164) : court, la roue de la clim (ADR-0048, ancrée plus bas) ;
+# 4..196 × 31..95, centre 955, 173) : court, la roue de la clim (ADR-0048, ancrée plus bas) ;
 # sans réglages reçus pour la clim (celle du blueprint avant « climr »), le carrousel des
 # clims (popup Climatisation, ADR-0038).
 # Tuile − / + (ADR-0033) : long sur la valeur entre − et + (CONSIGNE_CLIM,
 # btn_clim_target_click), la liste ; ses lignes (reglables_liste.yaml : panneau en 740,
 # 110, bord 2 + marge 6, lignes de 52 + 2).
-SALON = (955, 164)
+SALON = (955, 173)
 LIGNES_REGLABLES = tuple((1000, 110 + 2 + 6 + 54 * k + 26) for k in range(10))
 CONSIGNE_CLIM = (1061, 251)   # court : Climatisation · long : la liste de la tuile − / +
 TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
@@ -593,7 +593,7 @@ REGLAGES_CURSEUR_A_100 = Glisser(400, 215, 1270, 215, dans_popup=True)
 
 # Popup Température (ADR-0032, historique_popup.yaml) : appui long sur la température de
 # la pièce (btn_reglables_liste, aussi le carrousel des clims au toucher court ; x 859-1051
-# et y 132-196 à l'écran) ou sur la seconde
+# et y 141-205 à l'écran) ou sur la seconde
 # (SERRE). Boutons de vue : carte du graphique à y 253-685 à l'écran, boutons de 150 × 48
 # à 18, 178 et 338 px de son bord droit (x 1241). Le rendu ne répond à aucun événement :
 # il pousse lui-même la réponse de script.tab5_historique, datée de l'heure figée.

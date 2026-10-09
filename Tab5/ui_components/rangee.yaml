@@ -25,7 +25,7 @@ obj:
   x: 0
   y: 244
   width: 401
-  height: 70
+  height: ${ligne_zone_h}
   styles: style_transparent
   scrollable: false
   scrollbar_mode: "OFF"
@@ -33,7 +33,7 @@ obj:
     - obj:
         id: rangee_plantes
         width: 401
-        height: 70
+        height: ${ligne_zone_h}
         styles: style_transparent
         scrollable: false
         scrollbar_mode: "OFF"
@@ -41,5 +41,6 @@ obj:
           - !include moisture_sensors.yaml
 
     # Les deux panneaux de capteurs (rangee_panneau.yaml, partagé avec le panneau Ok Nabu).
-    - !include { file: rangee_panneau.yaml, vars: { id: rangee_a, el: "a", hauteur: "70" } }
-    - !include { file: rangee_panneau.yaml, vars: { id: rangee_b, el: "b", hauteur: "70" } }
+    # Leur hauteur est celle de la rangée : ligne_zone_h (tab5-ui-tokens.yaml).
+    - !include { file: rangee_panneau.yaml, vars: { id: rangee_a, el: "a" } }
+    - !include { file: rangee_panneau.yaml, vars: { id: rangee_b, el: "b" } }
