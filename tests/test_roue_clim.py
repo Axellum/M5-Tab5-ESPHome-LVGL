@@ -116,8 +116,19 @@ def test_ecrans_du_rendu():
     zone = CARTE.split("id: btn_reglables_liste", 1)[1].split("on_short_click", 1)[0]
     x, y, w, h = (int(re.search(rf"\n\s+{k}: (\d+)", zone).group(1)) for k in ("x", "y", "width", "height"))
     assert (855 + x + w // 2, 110 + y + h // 2) == ecrans.SALON == (955, 164)
-    assert ecrans.roue_dessous(164), "ancre haute : la roue sous elle"
-    centres = ecrans.roue_centres(*ecrans.SALON, ecrans.ROUE_CLIM_TEMPERATURE)
+    assert ecrans.roue_dessous(164), "la température est trop haute pour y poser la roue"
+    # L'ancre basse de clim_ancre_basse() : mêmes constantes que le rendu.
+    ancre = {k: int(re.search(rf"constexpr int32_t {k} = (\d+);", ROUE).group(1))
+             for k in ("kClimAncreY", "kClimAncreXMin", "kClimAncreXMax")}
+    assert ecrans.ROUE_CLIM_ANCRE == (min(max(955, ancre["kClimAncreXMin"]), ancre["kClimAncreXMax"]),
+                                      ancre["kClimAncreY"])
+    # Sur tout ce domaine, les deux anneaux et leurs mots tiennent au-dessus, sans pivot,
+    # six familles de six choix comprises (la géométrie de disposer(), recopiée par le rendu).
+    for xa in (ancre["kClimAncreXMin"], ancre["kClimAncreXMax"]):
+        assert _roue_entiere(xa, ancre["kClimAncreY"]), xa
+    assert "rt.ancre = clim_ancre_basse(ancre);" in _fonction(ROUE, "clim_roue_ouvrir")
+    assert "if (zone == s_clim_ancre) return zone;" in _fonction(ROUE, "clim_ancre_basse")
+    centres = ecrans.roue_centres(*ecrans.ROUE_CLIM_ANCRE, ecrans.ROUE_CLIM_TEMPERATURE)
     assert (ecrans.ROUE_CLIM_DETAILS.x, ecrans.ROUE_CLIM_DETAILS.y) == centres[-1]
     assert (ecrans.ROUE_CLIM_CLIMS.x, ecrans.ROUE_CLIM_CLIMS.y) == centres[ecrans.ROUE_CLIMS]
     # La clim du Bureau de la démo a ses trois familles (modes, consigne connue, Silence) :
@@ -132,6 +143,29 @@ def test_ecrans_du_rendu():
     assert par_nom["roue-clim-temperature-clims"].etapes[-1] == ecrans.ROUE_CLIM_CLIMS
     meteo = par_nom["roue-clim-temperature-meteo"].etapes
     assert meteo == (ecrans.CLIM_CAPACITES, ecrans.Toucher(*ecrans.SALON))
+
+
+def _roue_entiere(xa: int, ya: int, n: int = 6, m: int = 6) -> bool:
+    """Premier anneau de n boutons et second de m choix pour chaque famille : au-dessus de
+    l'ancre, sans pivot, mots des choix (150 px, centrés à kRayon2 + kLegende2) dans l'écran."""
+    e = ecrans
+    largeur, hauteur = e.ROUE_ECRAN
+    if e.roue_dessous(ya):
+        return False
+    p = e._roue_disposer(xa, ya, n, e.ROUE_RAYON, e.ROUE_PAS_ANGLE, 90, e.ROUE_DIAMETRE // 2, False)
+    if p[0][2] != 90 + (n - 1) * e.ROUE_PAS_ANGLE // 2:
+        return False
+    for _, _, a in p:
+        q = e._roue_disposer(xa, ya, m, e.ROUE_RAYON2, e.ROUE_PAS_ANGLE2, a, e.ROUE_DIAMETRE2 // 2, False)
+        if q[0][2] != a + (m - 1) * e.ROUE_PAS_ANGLE2 // 2:
+            return False
+        for _, _, b in q:
+            d = e.ROUE_RAYON2 + e.ROUE_LEGENDE2
+            lx = xa + e._roue_echelle(d, e._roue_sin5(b + 90))
+            ly = ya - e._roue_echelle(d, e._roue_sin5(b))
+            if not (75 <= lx <= largeur - 75 and e.ROUE_LEGENDE_H // 2 <= ly <= hauteur - e.ROUE_LEGENDE_H // 2):
+                return False
+    return True
 
 
 def test_adr():

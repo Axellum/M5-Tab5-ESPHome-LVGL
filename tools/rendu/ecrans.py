@@ -212,7 +212,7 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 SOUS_HORLOGE = (640, 270)
 SERRE = (1172, 158)           # court : Arcade
 # Température du salon (btn_reglables_liste, climate_card.yaml : carte en 855, 110, zone
-# 4..196 × 22..86, centre 955, 164) : court, la roue de la clim posée sur elle (ADR-0047) ;
+# 4..196 × 22..86, centre 955, 164) : court, la roue de la clim (ADR-0047, ancrée plus bas) ;
 # sans réglages reçus pour la clim (celle du blueprint avant « climr »), le carrousel des
 # clims (popup Climatisation, ADR-0038).
 # Tuile − / + (ADR-0033) : long sur la valeur entre − et + (CONSIGNE_CLIM,
@@ -360,15 +360,18 @@ VOLET_A_50 = Service("tab5_maj_emplacements", (("payload", "t01|open|50|;"),))
 # Les valeurs par défaut de la tablette (16-30 °C, pas 0,5, toutes les lettres), sans nom ;
 # marqué : le mode de la dernière scène (ventilation).
 CLIM_CAPACITES = Service("tab5_maj_emplacements", (("payload", "climr|16|30|0.5|°C|chdfebqsw;"),))
-# Roue d'une clim (ADR-0047), posée sur la température de la pièce (SALON, le centre de
-# btn_reglables_liste) : « Clims ▸ » (au moins deux clims : la démo a celle du blueprint et
-# la clim propre du Bureau), Éteindre, Mode, Consigne, Options, « Détails » (le carrousel
-# sur elle). La clim du Bureau (« chdfq ») et celle du blueprint après « climr » ont les
-# trois familles. Ancre haute : la roue est sous elle.
+# Roue d'une clim (ADR-0047), ouverte par la température de la pièce (SALON) : « Clims ▸ »
+# (au moins deux clims : la démo a celle du blueprint et la clim propre du Bureau),
+# Éteindre, Mode, Consigne, Options, « Détails » (le carrousel sur elle). La clim du Bureau
+# (« chdfq ») et celle du blueprint après « climr » ont les trois familles. La température
+# est trop haute (la roue passerait dessous, serrée) : le moyeu se pose sur un point bas, à
+# la verticale de la zone touchée ramenée dans [440, 840], en y 480 (clim_ancre_basse,
+# tab5_tuiles_roue.cpp) ; l'éventail s'ouvre au-dessus, entier.
+ROUE_CLIM_ANCRE = (min(max(SALON[0], 440), 840), 480)
 ROUE_CLIM_TEMPERATURE = 6
 ROUE_CLIMS = 0
-ROUE_CLIM_DETAILS = Toucher(*roue_centres(955, 164, ROUE_CLIM_TEMPERATURE)[-1])
-ROUE_CLIM_CLIMS = Toucher(*roue_centres(955, 164, ROUE_CLIM_TEMPERATURE)[ROUE_CLIMS])
+ROUE_CLIM_DETAILS = Toucher(*roue_centres(*ROUE_CLIM_ANCRE, ROUE_CLIM_TEMPERATURE)[-1])
+ROUE_CLIM_CLIMS = Toucher(*roue_centres(*ROUE_CLIM_ANCRE, ROUE_CLIM_TEMPERATURE)[ROUE_CLIMS])
 
 # Gestes sur les prévisions (mode météo) : départ et arrivée entre deux tuiles, pas sur
 # un bouton (un bouton garde l'appui et se déclencherait au relâché).

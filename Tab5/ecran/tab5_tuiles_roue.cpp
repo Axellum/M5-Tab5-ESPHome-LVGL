@@ -17,7 +17,9 @@
  *       température de la pièce (clim_roue_ouvrir, sans tuile : rt.r = -1), ses boutons
  *       sont ceux de la clim d'une tuile cli — le même code, composer_clim dans
  *       roue_composer —, « Clims ▸ » à la place de « Maison » quand la tablette en connaît
- *       plusieurs, « Détails » = le carrousel des clims sur elle (ADR-0038).
+ *       plusieurs, « Détails » = le carrousel des clims sur elle (ADR-0038). Son moyeu
+ *       n'est pas sur la température (trop haute) mais sur une ancre basse
+ *       (clim_ancre_basse) : l'éventail s'ouvre au-dessus, entier.
  * @ai_instruction Une famille de plus : sa RoueAction, sa ligne dans roue_composer et dans
  *       roue_choix, son glyphe dans glyphe_roue (tab5_roue.cpp, règle 9). Les commandes
  *       envoyées restent celles du tableau de l'ADR-0023 (tests/test_roue.py compare).
@@ -610,12 +612,44 @@ void roue_clim_changee() {
     if (roue_actions_ouverte() && vise_une_clim(s_rt)) roue_tuile_rejouer();
 }
 
+// Ancre de la roue d'une clim (ADR-0047). La température de la pièce est trop haute (centre
+// en y 164) : autour d'elle, la roue passerait sous l'ancre, en éventail serré et pivoté
+// sur la tuile − / + et la carte centrale (rendu du 09/10/2026). Le moyeu montre la clim, il
+// n'a pas à être sur la température : il se pose sur un point bas, à la verticale de la zone
+// touchée, ramenée dans [kClimAncreXMin, kClimAncreXMax], où les deux anneaux et leurs mots
+// tiennent au-dessus sans pivot, six familles de six choix comprises (mesuré par
+// disposer() : y de 364 à 504 et x de 424 à 856 ; tests/test_roue_clim.py refait la mesure).
+// Un objet de 1 px sans style ni toucher, créé une fois sur le calque du haut : roue_ouvrir()
+// garde sa signature (une ancre lv_obj_t*) et sa géométrie.
+namespace {
+constexpr int32_t kClimAncreY = 480;
+constexpr int32_t kClimAncreXMin = 440;
+constexpr int32_t kClimAncreXMax = 840;
+lv_obj_t* s_clim_ancre = nullptr;
+
+lv_obj_t* clim_ancre_basse(lv_obj_t* zone) {
+    if (zone == s_clim_ancre) return zone;  // « Clims ▸ » : la roue rouvre au même endroit
+    if (s_clim_ancre == nullptr) {
+        s_clim_ancre = lv_obj_create(lv_layer_top());
+        lv_obj_remove_style_all(s_clim_ancre);
+        lv_obj_remove_flag(s_clim_ancre, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_size(s_clim_ancre, 1, 1);
+    }
+    lv_obj_update_layout(zone);
+    lv_area_t a;
+    lv_obj_get_coords(zone, &a);
+    ui_x(s_clim_ancre, std::clamp(a.x1 + lv_area_get_width(&a) / 2, kClimAncreXMin, kClimAncreXMax));
+    ui_y(s_clim_ancre, kClimAncreY);
+    return s_clim_ancre;
+}
+}  // namespace
+
 bool clim_roue_ouvrir(const ClimRef& c, lv_obj_t* ancre) {
     charger();
     if (ancre == nullptr || c.r < -1 || c.r >= kPieces || c.t >= kTuiles) return false;
     RoueTuile rt;
     rt.clim = c;
-    rt.ancre = ancre;
+    rt.ancre = clim_ancre_basse(ancre);
     return roue_tuile_peindre(rt, false);
 }
 
