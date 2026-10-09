@@ -125,7 +125,10 @@ jobs:
     needs: compiler
     runs-on: ubuntu-latest
     # La galerie démarre le rendu une fois par thème et par mode (36 démarrages à froid).
-    timeout-minutes: ${{ matrix.langue == 'galerie' && 45 || 30 }}
+    # « clair » rejoue les captures deux fois (bascule à chaud, puis démarrage à froid) : mesuré
+    # le 2026-10-09 sur main, 26,1 à 29,5 min (30,1 min = annulé à la limite de 30, run 37936987986),
+    # contre 19 à 21 min pour une langue et 29 min pour la galerie. 45 min = ~29 min + 50 %.
+    timeout-minutes: ${{ (matrix.langue == 'galerie' || matrix.langue == 'clair') && 45 || 30 }}
     strategy:
       fail-fast: false
       matrix:
