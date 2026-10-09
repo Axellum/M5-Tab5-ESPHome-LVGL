@@ -1,7 +1,8 @@
 /**
  * Harnais libFuzzer de la lecture des payloads de Home Assistant (Tab5/socle/tab5_parse.h,
  * lot F de l'audit du 30/09/2026). Le premier octet choisit le parseur
- * ((octet - '0') modulo le nombre de parseurs : « 0… » = le premier), le reste est le
+ * ((octet - '0') modulo le nombre de parseurs : « 0… » = le premier, « : » le onzième,
+ * le caractère qui suit « 9 »), le reste est le
  * payload, passé comme le firmware le passe (std::string, puis c_str() ou data()/size()).
  * Les graines sont les payloads du fuzz de la tablette virtuelle
  * (tools/sanitizers/fuzz_services.py), écrites par tools/fuzz/graines.py.
@@ -121,6 +122,26 @@ void emplacements(const std::string& p) {
     }
 }
 
+// Popup Température : les trois variables du service (entete, mesures, previsions)
+// séparées par un saut de ligne dans le payload (tools/fuzz/graines.py) ; une variable
+// absente vaut "". Chaque champ est aussi lu comme une humidité.
+void temperature(const std::string& p) {
+    static HistoriqueSerie s;  // ~2 Ko : hors de la pile, comme le bloc PSRAM de l'écran
+    std::string v[3];
+    size_t debut = 0;
+    for (int i = 0; i < 3; i++) {
+        const size_t saut = i < 2 ? p.find('\n', debut) : std::string::npos;
+        v[i] = p.substr(debut, saut == std::string::npos ? std::string::npos : saut - debut);
+        if (saut == std::string::npos) break;
+        debut = saut + 1;  // saut < p.size() : debut <= p.size()
+    }
+    const Champ nom = historique_lire(Champ{v[0].data(), v[0].size()}, Champ{v[1].data(), v[1].size()},
+                                      Champ{v[2].data(), v[2].size()}, s);
+    const std::string copie(nom.p, nom.n);  // ce que texte_ha_copier recevrait
+    (void) copie;
+    humidite_lire(Champ{p.data(), p.size()});
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -140,6 +161,7 @@ constexpr Parseur kParseurs[] = {
     calendrier_mois,  // '7' tab5_maj_calendrier_mois
     calendrier_jour,  // '8' tab5_maj_calendrier_jour
     emplacements,     // '9' tab5_maj_emplacements
+    temperature,      // ':' tab5_maj_historique
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

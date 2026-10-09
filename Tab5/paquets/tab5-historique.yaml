@@ -9,14 +9,15 @@
 #           widgets à la première ouverture, puis historique_ouvrir() : vue 24 h, dessin,
 #           demande à HA.
 #         - tab5_historique_demande : événement esphome.tab5_historique (cle, vue = jour |
-#           semaine | mois), émis à l'ouverture et à chaque bouton de vue. Le blueprint
+#           semaine | mois), émis à l'ouverture, à chaque bouton de vue et à chaque
+#           changement de température (onglet ou glissement, ADR-0047). Le blueprint
 #           « Tab5 — emplacements » y répond en lançant script.tab5_historique
 #           (HomeAssistant_Config/packages/tab5_historique.yaml), qui pousse la série
 #           (action tab5_maj_historique, tab5-api-logic.yaml).
 # @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
 #       nomme aucune entité, elle dit seulement quelle température et quelle vue elle
 #       montre. Chargé APRÈS tab5_lvgl : il référence des widgets. Aucun lv_* ici.
-# @ai_instruction Un widget de plus = son champ dans HistoriqueUI (tab5_custom.h) et sa
+# @ai_instruction Un widget de plus = son champ dans HistoriqueUI (tab5_historique.h) et sa
 #       ligne ici. La commande est une lambda SANS capture (pointeur de fonction), comme
 #       celle de tab5-energie.yaml.
 # ============================================================================
@@ -50,6 +51,14 @@ script:
             u.vue_btn[1] = id(historique_vue_1);
             u.vue_btn[2] = id(historique_vue_2);
             u.zone = id(historique_zone);
+            u.titre_popup = id(historique_popup_titre);
+            u.onglet[0] = id(historique_onglet_0);
+            u.onglet[1] = id(historique_onglet_1);
+            u.onglet[2] = id(historique_onglet_2);
+            u.onglet[3] = id(historique_onglet_3);
+            u.onglet[4] = id(historique_onglet_4);
+            u.onglet[5] = id(historique_onglet_5);
+            u.onglet[6] = id(historique_onglet_6);
             u.police = id(roboto_22);
             u.demander = [](const char* c, const char* vue) {
               id(tab5_historique_demande).execute(std::string(c), std::string(vue));
