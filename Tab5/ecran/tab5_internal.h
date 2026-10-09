@@ -402,6 +402,23 @@ void clim_tuile_oublier(int r, int t);
 // tab5_clim.cpp, réglages d'une clim de tuile reçus : repeindre la tuile (son bouton
 // apparaît, ADR-0027).
 void tuiles_repeindre(int r, int t);
+// Les clims que la tablette connaît, dans l'ordre des pages du carrousel du popup clim
+// (ADR-0038) : celle du blueprint d'abord (sauf si HA l'a déclarée absente), puis celle
+// de chaque tuile cli sans l'option m dont la tablette a les réglages (crRT), pièce par
+// pièce, tuile par tuile ; une clim du même nom qu'une clim déjà listée (la clim du
+// blueprint posée aussi sur une tuile sans m) n'est pas listée deux fois. LA seule liste :
+// une clim de plus (la clim propre à une pièce) = une ligne dans clims_enumerer() et un
+// cas dans clim_ref_afficher() (tab5_clim.cpp).
+struct ClimRef {
+    int8_t r = -1;      // tuile tRT ; r = t = -1 : la clim du blueprint
+    int8_t t = -1;
+    int8_t piece = -1;  // pièce où elle est (ouverture sur la pièce affichée) ; -1 : aucune
+};
+// Écrit au plus `max` clims dans `out`, dans l'ordre ci-dessus ; renvoie leur nombre.
+int clims_enumerer(ClimRef* out, int max);
+// tab5_tuiles.cpp : la pièce affichée en mode HA (ADR-0023), -1 en mode météo ou en mode
+// héritage (aucune pièce reçue).
+int tuiles_piece_mode_ha();
 
 // --- tab5_central.cpp, pour les pièces ---
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de

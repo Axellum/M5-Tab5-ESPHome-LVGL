@@ -1589,6 +1589,14 @@ void tuiles_heritage_volet_sens() {
 // par les fonctions des cartes du mode HA (vue, peindre_vue_sur) et des tuiles
 // (tuile_appui_piece). Aucune donnée ni commande nouvelle.
 
+// Carrousel du popup clim (ADR-0038, tab5_clim.cpp) : il s'ouvre sur la clim de la pièce
+// affichée en mode HA. En mode météo, ou sans pièces reçues, aucune.
+int tuiles_piece_mode_ha() {
+    charger();
+    if (!g_central_ctx.ha_mode || heritage()) return -1;
+    return piece_courante();
+}
+
 bool tuiles_piece_titre(int r, char* out, size_t n) {
     charger();
     if (r < 0 || r >= kPieces || out == nullptr || n == 0 || !piece_non_vide(r)) return false;

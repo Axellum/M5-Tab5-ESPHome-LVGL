@@ -202,8 +202,8 @@ script:
   # Widgets de la clim (ADR-0026, ADR-0027) posés dans g_clim_ui : ceux que les réglages
   # de l'appareil adaptent (bornes de l'arc, unité, titre, boutons gérés, sections des
   # options), ceux que clim_recolorer() colore (icônes des modes et options, libellé
-  # « Chaud »), l'état de la clim du blueprint (ses globals) et les deux débounces de la
-  # consigne. id() n'existe que dans les lambdas YAML. Lancé par tab5_zones_apply à la
+  # « Chaud »), les pastilles du carrousel (ADR-0038), l'état de la clim du blueprint (ses
+  # globals) et les deux débounces de la consigne. id() n'existe que dans les lambdas YAML. Lancé par tab5_zones_apply à la
   # fin du setup, avant toute poussée de HA, comme tab5_tuiles_ui. Aucun lv_* ici.
   # La coloration (ancien script tab5_clim_recolor) est dans le C++ depuis le 29/09/2026 :
   # la carte suit la clim du blueprint, le popup la clim affichée.
@@ -242,6 +242,15 @@ script:
           u.icone_oscillation = id(popup_icon_clim_swing);
           u.icone_brise = id(popup_icon_clim_windnice);
           u.libelle_chaud = id(popup_lbl_clim_heat);
+          u.pastilles_cadre = id(clim_pastilles);
+          u.pastilles[0] = id(clim_pastille_0);
+          u.pastilles[1] = id(clim_pastille_1);
+          u.pastilles[2] = id(clim_pastille_2);
+          u.pastilles[3] = id(clim_pastille_3);
+          u.pastilles[4] = id(clim_pastille_4);
+          u.pastilles[5] = id(clim_pastille_5);
+          u.pastilles[6] = id(clim_pastille_6);
+          u.pastilles[7] = id(clim_pastille_7);
           u.consigne_bp = &id(clim_target_temp);
           u.mode_bp = &id(clim_hvac_mode);
           u.preset_bp = &id(clim_preset_mode);
@@ -249,6 +258,8 @@ script:
           u.oscillation_bp = &id(clim_swing_mode);
           u.debounce_blueprint = []() { id(tab5_debounce_clim_temp).execute(); };
           u.debounce_tuile = []() { id(tab5_debounce_clim_tuile).execute(); };
+          // Carrousel des clims (ADR-0038) : geste gauche / droite arrêté au popup.
+          clim_carrousel_preparer();
 
   # Rotateur central auto (8s) — mode restart : tout tap/advance remet le délai à zéro.
   # Pas de rotation sous un popup ouvert (audit 25/09/2026, lot 3) : la transition

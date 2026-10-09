@@ -3,7 +3,8 @@
  * @file tab5_reglables.cpp
  * @role Tuile − / + au choix (ADR-0033, 06/10/2026, demande d'Axel) : les boutons − / +
  *       de la carte clim de l'accueil (climate_card.yaml) règlent l'appareil choisi dans
- *       une liste qui se déroule au toucher de la température du salon :
+ *       une liste qui se déroule à l'appui long sur la valeur entre − et + (toucher la
+ *       température du salon jusqu'au 09/10/2026, devenu le carrousel des clims, ADR-0038) :
  *         - la clim du blueprint, en tête quand elle existe : rien ne change pour elle
  *           (consigne clim_target, globals clim_*, popup clim au toucher de la valeur) ;
  *         - jusqu'à huit appareils choisis dans le blueprint (clés rN de tab5_maj_tuiles,

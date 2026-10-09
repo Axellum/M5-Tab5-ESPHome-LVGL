@@ -1,8 +1,8 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_clim.h
- * @role Clim (tab5_clim.cpp, ADR-0026, ADR-0027) : réglages de l'appareil, carte de
- *       l'accueil, popup et clim affichée.
+ * @role Clim (tab5_clim.cpp, ADR-0026, ADR-0027, ADR-0038) : réglages de l'appareil, carte
+ *       de l'accueil, popup, clim affichée et carrousel des clims.
  * @architecture_constraint Sorti de tab5_custom.h le 08/10/2026, lignes recopiées telles
  *       quelles : tab5_custom.h l'inclut, les lambdas YAML et les unités `tab5_*.cpp` n'ont
  *       rien à changer. Une fonction déclarée ici a un appelant hors de son fichier (règle 12
@@ -36,6 +36,11 @@ void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target);
 // gestes et ses commandes vont à celle-là. La carte de l'accueil reste celle du
 // blueprint, dont l'état est dans ses globals (clim_target_temp, clim_hvac_mode…).
 // =============================================================================
+// Pages du carrousel du popup (ADR-0038) : une pastille par clim, 8 au plus
+// (clim_pastille_0..7 de climate_popup.yaml). Au-delà, une clim reste joignable par sa
+// tuile, sans page dans le carrousel.
+constexpr int kClimPastilles = 8;
+
 // Widgets adaptés, posés par le script tab5_clim_ui (tab5-scripts.yaml), que lance
 // tab5_zones_apply à la fin du setup.
 struct ClimUI {
@@ -74,6 +79,10 @@ struct ClimUI {
     lv_obj_t* icone_oscillation = nullptr;  // popup_icon_clim_swing
     lv_obj_t* icone_brise = nullptr;        // popup_icon_clim_windnice
     lv_obj_t* libelle_chaud = nullptr;      // popup_lbl_clim_heat
+    // Carrousel (ADR-0038) : rangée des pastilles (masquée sous deux clims) et ses pastilles.
+    lv_obj_t* pastilles_cadre = nullptr;    // clim_pastilles
+    // clim_pastille_0..7 ; nuls avant tab5_clim_ui (g_clim_ui est global, donc mis à zéro).
+    lv_obj_t* pastilles[kClimPastilles];
     // État de la clim du blueprint : ses globals, qu'écrivent tab5_maj_clim et les gestes
     // (carte, popup quand il la montre).
     float* consigne_bp = nullptr;           // &id(clim_target_temp)
@@ -119,6 +128,18 @@ void clim_recolorer();
 // avec l'option m, « Aller à l'écran → Climatisation », et à la fermeture (croix, voile).
 // Celle d'une tuile : clim_afficher_tuile() (tab5_internal.h), à l'appui de la tuile.
 void clim_afficher_blueprint();
+
+// Carrousel des clims (ADR-0038) : le popup a une page par clim (clims_enumerer(),
+// tab5_internal.h), d'où qu'il soit ouvert ; glisser à gauche ou à droite montre la
+// suivante ou la précédente (en boucle), les pastilles du bas disent laquelle. Une seule
+// clim : ni pastilles ni glisse. Script tab5_clim_ui (fin du setup) : le geste s'arrête au
+// popup et y change de page.
+void clim_carrousel_preparer();
+// Toucher court de la température de la pièce (btn_reglables_liste, climate_card.yaml) :
+// le popup ouvert sur la clim de la pièce affichée en mode HA si elle en a une, sinon sur
+// la première (celle du blueprint). Faux, et rien d'ouvert, si la tablette ne connaît
+// aucune clim (la carte déroule alors la liste de la tuile − / +, comme avant).
+bool clim_carrousel_ouvrir();
 // Emplacement des commandes du popup : « clim » (clim du blueprint) ou « tRT ».
 const char* clim_affichee_cle();
 // Gestes du popup, sur la clim affichée : affichage optimiste et couleurs (l'envoi suit,
