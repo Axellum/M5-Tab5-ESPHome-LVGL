@@ -491,7 +491,7 @@ lvgl:
         - obj:
             id: pagination_container
             x: 480
-            y: 414
+            y: 417
             width: 310
             height: 30
             styles: style_transparent
