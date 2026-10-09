@@ -48,7 +48,7 @@ The constraints still hold:
   - A new red alert takes the central card at once, and the rotator restarts so it stays a full turn. Then it rotates with the rest: the weather and the rain stay visible.
 - **History.**
   - HA keeps the last 30 alerts (appeared, read, ended, severity, text, source) in the sensor's `historique` attribute.
-  - A long press on the central card opens the « Alertes » popup (ADR-0009 chrome, ADR-0013 registry). It shows the 20 latest alerts the user is subscribed to, and a « Tout marquer comme lu » button that sends `alert_id: "*"`.
+  - A long press on the central card opens the « Alertes » popup (since [ADR-0042](0042-navigation-wheel.md), 2026-10-09: through « Alertes », the first button of the navigation wheel that the long press opens) (ADR-0009 chrome, ADR-0013 registry). It shows the 20 latest alerts the user is subscribed to, and a « Tout marquer comme lu » button that sends `alert_id: "*"`.
   - The popup **asks** for the history when it opens (event `esphome.tab5_alertes_historique`). HA answers with the action `tab5_maj_alertes_historique` and pushes again while the tablet's current screen is « Alertes » and the history changes.
   - The Health view of the HA dashboard shows the same list.
 
