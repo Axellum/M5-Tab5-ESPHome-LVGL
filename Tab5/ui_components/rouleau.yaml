@@ -1,0 +1,37 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Rouleau de réglage (lv_roller) du popup « Réveil » (alarm_popup.yaml,
+# 09/10/2026, demande d'Axel : « les roues dès que possible »), réutilisé 9 fois : heures
+# et minutes de l'heure fixe, délai, pas avant, pas après, repos mini, répétition, durée
+# max, annonce des rendez-vous. Un glissement vertical parcourt toute la plage ; la ligne
+# du milieu est la valeur, dans une bande de verre en couleur d'accent.
+# Les options (« 07 », « 05:15 », « 1h30 », « 9 min »…) sont écrites par le C++
+# (alarm_render.cpp, ecrire_options : textes traduits, valeur hors pas venue de HA insérée
+# à sa place) : celle du YAML n'est qu'une place. Un choix lance le script
+# tab5_alarm_rouleau (tab5-alarm.yaml), qui écrit l'entité ; le rouleau est repeint par
+# alarm_render_settings() comme le reste du popup.
+# vars : id, x, y, w, h (hauteur : un nombre de rangées × (hauteur de ligne de la police
+#        + ecart)), police (id de police, la même pour toutes les rangées : LVGL mesure le
+#        pas du rouleau sur la police de la rangée normale), ecart (text_line_space, px),
+#        quoi (ReveilRouleau d'alarm_render.h, en nombre NON quoté).
+# Le geste de page du popup n'est pas pris quand il part d'un rouleau (tab5_pages.cpp).
+# ═══════════════════════════════════════════════════════
+roller:
+  id: ${id}
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: ${w}
+  height: ${h}
+  options: ["--"]
+  text_font: ${police}
+  text_line_space: ${ecart}
+  text_align: CENTER
+  styles: [style_transparent, style_text_dim]
+  selected:
+    text_font: ${police}
+    styles: [style_clim_btn, style_text_accent]
+  on_value:
+    - script.execute:
+        id: tab5_alarm_rouleau
+        quoi: ${quoi}
+        index: !lambda 'return (int) x;'

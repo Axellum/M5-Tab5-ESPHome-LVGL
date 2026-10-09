@@ -258,6 +258,51 @@ int reglages_page_voisine(int page, int nb, bool gauche) {
     return gauche ? (page + 1) % nb : (page + nb - 1) % nb;
 }
 
+// ─── Rouleaux du popup Réveil (09/10/2026) ───
+
+namespace {
+// Nombre de pas de bas à haut (au moins un : bas lui-même) ; pas ≤ 0 compte comme 1.
+int rouleau_pas_nombre(int bas, int haut, int pas) { return haut < bas ? 1 : (haut - bas) / pas + 1; }
+// Place de `extra` : juste après le pas qui le précède.
+int rouleau_place_extra(int bas, int pas, int extra) { return (extra - bas) / pas + 1; }
+}  // namespace
+
+int rouleau_extra(int bas, int haut, int pas, int valeur) {
+    if (pas <= 0) pas = 1;
+    if (valeur < bas || valeur > haut) return -1;
+    return (valeur - bas) % pas != 0 ? valeur : -1;
+}
+
+int rouleau_nombre(int bas, int haut, int pas, int extra) {
+    if (pas <= 0) pas = 1;
+    return rouleau_pas_nombre(bas, haut, pas) + (rouleau_extra(bas, haut, pas, extra) >= 0 ? 1 : 0);
+}
+
+int rouleau_valeur(int bas, int haut, int pas, int extra, int index) {
+    if (pas <= 0) pas = 1;
+    if (index < 0 || index >= rouleau_nombre(bas, haut, pas, extra)) return -1;
+    if (rouleau_extra(bas, haut, pas, extra) >= 0) {
+        const int k = rouleau_place_extra(bas, pas, extra);
+        if (index == k) return extra;
+        if (index > k) index--;
+    }
+    return bas + index * pas;
+}
+
+int rouleau_index(int bas, int haut, int pas, int extra, int valeur) {
+    if (pas <= 0) pas = 1;
+    if (haut < bas) haut = bas;
+    const bool avec_extra = rouleau_extra(bas, haut, pas, extra) >= 0;
+    if (avec_extra && valeur == extra) return rouleau_place_extra(bas, pas, extra);
+    if (valeur < bas) valeur = bas;
+    if (valeur > haut) valeur = haut;
+    int i = (valeur - bas + pas / 2) / pas;
+    const int n = rouleau_pas_nombre(bas, haut, pas);
+    if (i >= n) i = n - 1;
+    if (avec_extra && i >= rouleau_place_extra(bas, pas, extra)) i++;
+    return i;
+}
+
 const char* batterie_etat_texte(PresenceBatterie presence, bool en_charge, bool sur_batterie) {
     switch (presence) {
         case PresenceBatterie::INCONNUE: return tr("Mesure en cours");

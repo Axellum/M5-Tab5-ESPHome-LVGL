@@ -8,7 +8,7 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1106;
+static const uint16_t kI18nKeyCount = 1119;
 
 static const char* const kI18nCtx[] = {
     "",
@@ -1080,9 +1080,28 @@ static const char* const kI18nCtx[] = {
     "",
     "",
     "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "clim",
     "coup",
-    "dimanche",
     "echecs",
     "echecs",
     "echecs",
@@ -1090,10 +1109,6 @@ static const char* const kI18nCtx[] = {
     "echecs",
     "echecs",
     "energie",
-    "jeudi",
-    "lundi",
-    "mardi",
-    "mercredi",
     "nudge",
     "nudge",
     "nudge",
@@ -1105,7 +1120,6 @@ static const char* const kI18nCtx[] = {
     "pendule",
     "plateau",
     "raison",
-    "samedi",
     "san",
     "san",
     "san",
@@ -1116,7 +1130,6 @@ static const char* const kI18nCtx[] = {
     "uv",
     "uv",
     "uv",
-    "vendredi",
 };
 
 static const char* const kI18nKeys[] = {
@@ -1200,7 +1213,6 @@ static const char* const kI18nKeys[] = {
     "10 min",
     "10,0 cases/s - réflexes exigés",
     "12 derniers mois",
-    "15 min",
     "15 min + 10 s",
     "1er",
     "2 Jours",
@@ -1226,7 +1238,6 @@ static const char* const kI18nKeys[] = {
     "8 consoles — une seule à la fois",
     "8 niveaux, 3 vies, power-ups",
     "8,0 cases/s",
-    "9 min",
     "ACTIF",
     "AMPOULES",
     "APPARENCE",
@@ -1267,8 +1278,10 @@ static const char* const kI18nKeys[] = {
     "Anneau de fer",
     "Anneau rouge sur la dernière pierre posée",
     "Anniv.",
-    "Annonce des RDV",
-    "Annonce parlée",
+    "Annonce des rendez-vous",
+    "Annonce parlée au réveil",
+    "Annoncer avant",
+    "Annonces",
     "Annule le dernier demi-coup",
     "Annule votre coup et la réponse du Tab",
     "Annuler",
@@ -1282,6 +1295,7 @@ static const char* const kI18nKeys[] = {
     "Appuyer sur un emplacement le fait passer à l'objet suivant.",
     "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement.",
     "Appuyez sur le micro puis parlez…",
+    "Après la première sonnerie, Home Assistant annonce la météo et le planning.",
     "Argent",
     "Arrêter",
     "Arts",
@@ -1371,6 +1385,7 @@ static const char* const kI18nKeys[] = {
     "Casse-briques Atari\n8 niveaux · power-ups",
     "Cathédrale",
     "Cerveau / LLM",
+    "Ces réglages ne servent qu'au mode « Ouverture » (page Jours).",
     "Ces réglages s'appliquent au lancement de la prochaine run.",
     "Ces réglages s'appliquent à la prochaine question",
     "Ces réglages sont sauvegardés automatiquement.",
@@ -1492,6 +1507,7 @@ static const char* const kI18nKeys[] = {
     "En attente de Home Assistant",
     "En charge",
     "En cours",
+    "En mode Fixe, seuls les jours cochés comptent.",
     "En mouvement",
     "Ensoleillé",
     "Entre %d et %d %%",
@@ -1538,14 +1554,17 @@ static const char* const kI18nKeys[] = {
     "Gestes IMU",
     "Gestes, règle des 50 coups, évaluation, vitesse de démo",
     "Gestes, règles, affichage",
+    "Glisser les chiffres vers le haut ou vers le bas.",
     "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5",
     "Groupes morts retirés : %d noirs, %d blancs",
     "Grêle",
     "Géographie",
     "H.C.",
+    "HEURE DU RÉVEIL",
     "HUMIDITÉ",
     "Handicap : %d pierres",
     "Handicap : aucun",
+    "Heure",
     "Heure fixe",
     "Heure non synchronisée",
     "Heures",
@@ -1593,9 +1612,11 @@ static const char* const kI18nKeys[] = {
     "Joueur contre joueur",
     "Jour",
     "Jour hors plage",
+    "Jour sans travail au calendrier : silence, ou l'heure fixe si le jour est coché.",
     "Journée",
     "Jours",
-    "Jours (heure fixe uniquement)",
+    "Jours de l'heure fixe",
+    "Jours de repos",
     "Juil",
     "Juin",
     "Komi 0,5 pour Blanc",
@@ -1664,6 +1685,8 @@ static const char* const kI18nKeys[] = {
     "Lumière",
     "Lumières",
     "Lun",
+    "Lundi-Samedi",
+    "Lundi-Vendredi",
     "MAINTENANT",
     "MAISON",
     "MAJ Écran",
@@ -1702,12 +1725,14 @@ static const char* const kI18nKeys[] = {
     "Mode entraînement",
     "Modérée",
     "Mois",
+    "Monte doucement jusqu'au volume réglé.",
     "Mouvement",
     "Moyen",
     "Moyenne",
     "Moyennes + difficiles",
     "Mur plein",
     "MÉMOIRE",
+    "Mélodie",
     "Météo",
     "Même mode, mêmes réglages",
     "Mêmes réglages",
@@ -1773,6 +1798,7 @@ static const char* const kI18nKeys[] = {
     "PAUSE",
     "PC Bureau",
     "POSITION",
+    "PROCHAIN RENDEZ-VOUS",
     "PROCHAINE SONNERIE",
     "PROMOTION",
     "PRÉVU",
@@ -1838,7 +1864,6 @@ static const char* const kI18nKeys[] = {
     "Prisonniers de la partie : Noir %u, Blanc %u",
     "Probabilité",
     "Produit aujourd'hui",
-    "Progressif",
     "Proposer nulle",
     "Présent",
     "Prévisions d'hier %d h %02d",
@@ -1857,8 +1882,6 @@ static const char* const kI18nKeys[] = {
     "Quitter le jeu",
     "Quiz rétro-salon\n1 à 6 équipes",
     "RDV",
-    "RDV avant",
-    "RDV silencieux",
     "RECORD %s",
     "Rallumer l'écran d'une tape",
     "Rallumer l'écran à « Okay Nabu »",
@@ -1891,8 +1914,6 @@ static const char* const kI18nKeys[] = {
     "Remettre les compteurs à zéro",
     "Remettre les statistiques à zéro",
     "Remettre les stats à zéro ?",
-    "Repos : heure fixe",
-    "Repos : silence",
     "Repos mini",
     "Reprendre",
     "Reprendre (vide)",
@@ -1990,10 +2011,10 @@ static const char* const kI18nKeys[] = {
     "Sombre",
     "Son de la tablette",
     "Sonne avant l'ouverture lue dans le calendrier.",
-    "Sonne à l'heure fixe, les jours cochés ci-dessus.",
+    "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}.",
+    "Sonne à l'heure fixe, les jours cochés ci-dessous.",
     "Sonne à l'heure fixe, uniquement les jours travaillés.",
     "Sonnerie",
-    "Sonnerie seule",
     "Sortie de chaque jeu : hub, puis « Quitter »",
     "Sortie ouverte ! Grimpe tout en haut.",
     "Sports",
@@ -2036,6 +2057,7 @@ static const char* const kI18nKeys[] = {
     "Toucher le bandeau du haut pendant la partie ouvre le menu de pause.",
     "Toucher pour changer",
     "Toucher une ligne pour changer sa valeur",
+    "Toucher une mélodie la fait entendre.",
     "Touchez : internationales 10×10 ou anglaises 8×8",
     "Touchez l'interrupteur pour l'armer",
     "Touchez l'écran ou dites « Stop » pour arrêter",
@@ -2047,6 +2069,7 @@ static const char* const kI18nKeys[] = {
     "Tour %u",
     "Tour %u · au tour de %s",
     "Tournez la tablette à la verticale",
+    "Tous les jours",
     "Tout est enregistré et survit au redémarrage.",
     "Tout fermer",
     "Tout le Top 10 local, meilleur score compris.",
@@ -2066,6 +2089,7 @@ static const char* const kI18nKeys[] = {
     "Tu rouleras encore.",
     "Tu sors du dédale. Il te laisse partir.",
     "Télécommande TV",
+    "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous.",
     "Un bouclier à chaque nouvelle salle",
     "Un bouclier à chaque salle",
     "Un niveau se débloque en terminant le précédent.",
@@ -2109,23 +2133,30 @@ static const char* const kI18nKeys[] = {
     "Volet",
     "Volet arrêté.",
     "Volets",
-    "Volume constant",
+    "Volume",
+    "Volume progressif",
     "Votre couleur",
     "Vous",
     "Vous jouez %s",
     "Vous jouez les %s",
+    "Week-end",
     "Wi-Fi éco",
     "Zigzag",
     "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.",
     "août",
     "apparue %s",
+    "après la fermeture",
     "au Tab",
+    "au plus tard",
+    "au plus tôt",
     "aucun",
+    "avant l'ouverture",
     "avril",
     "b = billes jouées, MB = multiball déclenché.",
     "dimanche",
     "décembre",
     "en attente du calendrier",
+    "entre deux sonneries",
     "fulgur.",
     "février",
     "inactif",
@@ -2134,6 +2165,7 @@ static const char* const kI18nKeys[] = {
     "jeudi",
     "juillet",
     "juin",
+    "le début du rendez-vous",
     "lue %s",
     "lundi",
     "mai",
@@ -2146,6 +2178,7 @@ static const char* const kI18nKeys[] = {
     "octobre",
     "ou secouez la tablette",
     "passe",
+    "puis arrêt automatique",
     "rapide",
     "repos",
     "retournée",
@@ -2191,7 +2224,6 @@ static const char* const kI18nKeys[] = {
     "Œil du dédale",
     "Chaud",
     "Annuler",
-    "D",
     "Cavalier",
     "Dame",
     "Fou",
@@ -2199,10 +2231,6 @@ static const char* const kI18nKeys[] = {
     "Roi",
     "Tour",
     "RÉSEAU",
-    "J",
-    "L",
-    "M",
-    "M",
     "Douce",
     "Normale",
     "Très douce",
@@ -2214,7 +2242,6 @@ static const char* const kI18nKeys[] = {
     "N",
     "Abandonner",
     "Abandon",
-    "S",
     "C",
     "D",
     "F",
@@ -2225,7 +2252,6 @@ static const char* const kI18nKeys[] = {
     "Modéré",
     "Très élevé",
     "Élevé",
-    "V",
 };
 
 // English (en.yaml)
@@ -2310,7 +2336,6 @@ static const char* const kI18n_en[] = {
     "10 min",  // "10 min"
     "10.0 tiles/s - quick reflexes",  // "10,0 cases/s - réflexes exigés"
     "Last 12 months",  // "12 derniers mois"
-    "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
     "2 Days",  // "2 Jours"
@@ -2336,7 +2361,6 @@ static const char* const kI18n_en[] = {
     "8 consoles — one at a time",  // "8 consoles — une seule à la fois"
     "8 levels, 3 lives, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8.0 tiles/s",  // "8,0 cases/s"
-    "9 min",  // "9 min"
     "ON",  // "ACTIF"
     "LIGHTS",  // "AMPOULES"
     "APPEARANCE",  // "APPARENCE"
@@ -2377,8 +2401,10 @@ static const char* const kI18n_en[] = {
     "Iron Ring",  // "Anneau de fer"
     "Red ring on the last stone played",  // "Anneau rouge sur la dernière pierre posée"
     "B-day",  // "Anniv."
-    "Announce appts",  // "Annonce des RDV"
-    "Voice announcement",  // "Annonce parlée"
+    "Appointment announcements",  // "Annonce des rendez-vous"
+    "Spoken wake-up announcement",  // "Annonce parlée au réveil"
+    "Announce",  // "Annoncer avant"
+    "Announcements",  // "Annonces"
     "Undoes the last half-move",  // "Annule le dernier demi-coup"
     "Undoes your move and Tab's reply",  // "Annule votre coup et la réponse du Tab"
     "Cancel",  // "Annuler"
@@ -2392,6 +2418,7 @@ static const char* const kI18n_en[] = {
     "Tapping a slot switches it to the next item.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tapping an owned item sells it back for half its price. A sold item is also unequipped.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tap the mic, then speak…",  // "Appuyez sur le micro puis parlez…"
+    "After the first ring, Home Assistant announces the weather and the schedule.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Silver",  // "Argent"
     "Stop",  // "Arrêter"
     "Arts",  // "Arts"
@@ -2481,6 +2508,7 @@ static const char* const kI18n_en[] = {
     "Atari brick breaker\n8 levels · power-ups",  // "Casse-briques Atari\n8 niveaux · power-ups"
     "Cathedral",  // "Cathédrale"
     "Brain / LLM",  // "Cerveau / LLM"
+    "These settings only apply to the “Shift start” mode (Days page).",  // "Ces réglages ne servent qu'au mode « Ouverture » (page Jours)."
     "These settings apply when the next run starts.",  // "Ces réglages s'appliquent au lancement de la prochaine run."
     "These settings apply from the next question",  // "Ces réglages s'appliquent à la prochaine question"
     "Settings are saved automatically.",  // "Ces réglages sont sauvegardés automatiquement."
@@ -2602,6 +2630,7 @@ static const char* const kI18n_en[] = {
     "Waiting for Home Assistant",  // "En attente de Home Assistant"
     "Charging",  // "En charge"
     "Running",  // "En cours"
+    "In Fixed mode, only the checked days count.",  // "En mode Fixe, seuls les jours cochés comptent."
     "Moving",  // "En mouvement"
     "Sunny",  // "Ensoleillé"
     "Between %d and %d %%",  // "Entre %d et %d %%"
@@ -2648,14 +2677,17 @@ static const char* const kI18n_en[] = {
     "IMU gestures",  // "Gestes IMU"
     "Gestures, 50-move rule, evaluation, demo speed",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gestures, rules, display",  // "Gestes, règles, affichage"
+    "Slide the digits up or down.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nChinese scoring · komi 6.5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Dead stones removed: %d black, %d white",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Hail",  // "Grêle"
     "Geography",  // "Géographie"
     "N.R.",  // "H.C."
+    "ALARM TIME",  // "HEURE DU RÉVEIL"
     "HUMIDITY",  // "HUMIDITÉ"
     "Handicap: %d stones",  // "Handicap : %d pierres"
     "Handicap: none",  // "Handicap : aucun"
+    "Time",  // "Heure"
     "Fixed time",  // "Heure fixe"
     "Time not synced",  // "Heure non synchronisée"
     "Hours",  // "Heures"
@@ -2703,9 +2735,11 @@ static const char* const kI18n_en[] = {
     "Player vs player",  // "Joueur contre joueur"
     "Day",  // "Jour"
     "Day out of range",  // "Jour hors plage"
+    "Day off in the calendar: silent, or the fixed time if the day is checked.",  // "Jour sans travail au calendrier : silence, ou l'heure fixe si le jour est coché."
     "Today",  // "Journée"
     "Days",  // "Jours"
-    "Days (fixed time only)",  // "Jours (heure fixe uniquement)"
+    "Days for the fixed time",  // "Jours de l'heure fixe"
+    "Days off",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
     "Komi 0.5 for White",  // "Komi 0,5 pour Blanc"
@@ -2774,6 +2808,8 @@ static const char* const kI18n_en[] = {
     "Light",  // "Lumière"
     "Lights",  // "Lumières"
     "Mon",  // "Lun"
+    "Monday-Saturday",  // "Lundi-Samedi"
+    "Monday-Friday",  // "Lundi-Vendredi"
     "NOW",  // "MAINTENANT"
     "HOME",  // "MAISON"
     "Refresh screen",  // "MAJ Écran"
@@ -2812,12 +2848,14 @@ static const char* const kI18n_en[] = {
     "Training mode",  // "Mode entraînement"
     "Moderate",  // "Modérée"
     "Months",  // "Mois"
+    "Rises gently up to the set volume.",  // "Monte doucement jusqu'au volume réglé."
     "Moving",  // "Mouvement"
     "Medium",  // "Moyen"
     "Average",  // "Moyenne"
     "Medium + hard",  // "Moyennes + difficiles"
     "Solid wall",  // "Mur plein"
     "MEMORY",  // "MÉMOIRE"
+    "Melody",  // "Mélodie"
     "Weather",  // "Météo"
     "Same mode, same settings",  // "Même mode, mêmes réglages"
     "Same settings",  // "Mêmes réglages"
@@ -2883,6 +2921,7 @@ static const char* const kI18n_en[] = {
     "PAUSED",  // "PAUSE"
     "Office PC",  // "PC Bureau"
     "POSITION",  // "POSITION"
+    "NEXT APPOINTMENT",  // "PROCHAIN RENDEZ-VOUS"
     "NEXT ALARM",  // "PROCHAINE SONNERIE"
     "PROMOTION",  // "PROMOTION"
     "FORECAST",  // "PRÉVU"
@@ -2948,7 +2987,6 @@ static const char* const kI18n_en[] = {
     "Captures: Black %u, White %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Probability",  // "Probabilité"
     "Produced today",  // "Produit aujourd'hui"
-    "Gradual",  // "Progressif"
     "Offer a draw",  // "Proposer nulle"
     "Home",  // "Présent"
     "Forecast from yesterday %d:%02d",  // "Prévisions d'hier %d h %02d"
@@ -2967,8 +3005,6 @@ static const char* const kI18n_en[] = {
     "Quit game",  // "Quitter le jeu"
     "Retro party quiz\n1 to 6 teams · in French",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Appt",  // "RDV"
-    "Appt lead",  // "RDV avant"
-    "Silent appts",  // "RDV silencieux"
     "BEST %s",  // "RECORD %s"
     "Wake the screen with a tap",  // "Rallumer l'écran d'une tape"
     "Wake the screen on “Okay Nabu”",  // "Rallumer l'écran à « Okay Nabu »"
@@ -3001,8 +3037,6 @@ static const char* const kI18n_en[] = {
     "Reset the counters",  // "Remettre les compteurs à zéro"
     "Reset statistics",  // "Remettre les statistiques à zéro"
     "Reset stats?",  // "Remettre les stats à zéro ?"
-    "Day off: fixed time",  // "Repos : heure fixe"
-    "Day off: silent",  // "Repos : silence"
     "Min rest",  // "Repos mini"
     "Resume",  // "Reprendre"
     "Resume (empty)",  // "Reprendre (vide)"
@@ -3100,10 +3134,10 @@ static const char* const kI18n_en[] = {
     "Dark",  // "Sombre"
     "Tablet volume",  // "Son de la tablette"
     "Rings before the shift start read from the calendar.",  // "Sonne avant l'ouverture lue dans le calendrier."
-    "Rings at the fixed time, on the days checked above.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
+    "Rings {avance} before the shift start in the calendar, never before {avant} or after {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
+    "Rings at the fixed time, on the days checked below.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Rings at the fixed time, on work days only.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Ringtone",  // "Sonnerie"
-    "Ring only",  // "Sonnerie seule"
     "To leave a game: hub, then “Quit”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Exit open! Climb to the very top.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Sports",  // "Sports"
@@ -3146,6 +3180,7 @@ static const char* const kI18n_en[] = {
     "Tap the top bar during a game to open the pause menu.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tap to change",  // "Toucher pour changer"
     "Tap a row to change its value",  // "Toucher une ligne pour changer sa valeur"
+    "Tap a melody to hear it.",  // "Toucher une mélodie la fait entendre."
     "Tap: Intl 10x10 / English 8x8",  // "Touchez : internationales 10×10 ou anglaises 8×8"
     "Tap the switch to arm it",  // "Touchez l'interrupteur pour l'armer"
     "Touch the screen or say \"Stop\" to stop",  // "Touchez l'écran ou dites « Stop » pour arrêter"
@@ -3157,6 +3192,7 @@ static const char* const kI18n_en[] = {
     "Round %u",  // "Tour %u"
     "Round %u · %s to play",  // "Tour %u · au tour de %s"
     "Turn the tablet upright",  // "Tournez la tablette à la verticale"
+    "Every day",  // "Tous les jours"
     "Everything is saved and survives a restart.",  // "Tout est enregistré et survit au redémarrage."
     "Close all",  // "Tout fermer"
     "The whole local top 10, best score included.",  // "Tout le Top 10 local, meilleur score compris."
@@ -3176,6 +3212,7 @@ static const char* const kI18n_en[] = {
     "You'll roll again.",  // "Tu rouleras encore."
     "You leave the Maze. It lets you go.",  // "Tu sors du dédale. Il te laisse partir."
     "TV remote",  // "Télécommande TV"
+    "An on-screen banner and a voice announcement before each appointment.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "A shield in every new room",  // "Un bouclier à chaque nouvelle salle"
     "A shield in every room",  // "Un bouclier à chaque salle"
     "Clear a level to unlock the next one.",  // "Un niveau se débloque en terminant le précédent."
@@ -3219,23 +3256,30 @@ static const char* const kI18n_en[] = {
     "Shutter",  // "Volet"
     "Shutter stopped.",  // "Volet arrêté."
     "Shutters",  // "Volets"
-    "Constant volume",  // "Volume constant"
+    "Volume",  // "Volume"
+    "Gradual volume",  // "Volume progressif"
     "Your color",  // "Votre couleur"
     "You",  // "Vous"
     "You play %s",  // "Vous jouez %s"
     "Human: %s",  // "Vous jouez les %s"
+    "Weekend",  // "Week-end"
     "Eco Wi-Fi",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Left zone / right zone = flippers (hold). Bottom center = plunger.\nShake the tablet to nudge the ball — three nudges in a row and it's TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "August",  // "août"
     "appeared %s",  // "apparue %s"
+    "after shift end",  // "après la fermeture"
     "Tab",  // "au Tab"
+    "at the latest",  // "au plus tard"
+    "at the earliest",  // "au plus tôt"
     "none",  // "aucun"
+    "before shift start",  // "avant l'ouverture"
     "April",  // "avril"
     "b = balls played, MB = multiball triggered.",  // "b = billes jouées, MB = multiball déclenché."
     "Sunday",  // "dimanche"
     "December",  // "décembre"
     "waiting for the calendar",  // "en attente du calendrier"
+    "between two rings",  // "entre deux sonneries"
     "blazing",  // "fulgur."
     "February",  // "février"
     "off",  // "inactif"
@@ -3244,6 +3288,7 @@ static const char* const kI18n_en[] = {
     "Thursday",  // "jeudi"
     "July",  // "juillet"
     "June",  // "juin"
+    "before the appointment",  // "le début du rendez-vous"
     "read %s",  // "lue %s"
     "Monday",  // "lundi"
     "May",  // "mai"
@@ -3256,6 +3301,7 @@ static const char* const kI18n_en[] = {
     "October",  // "octobre"
     "or shake the tablet",  // "ou secouez la tablette"
     "pass",  // "passe"
+    "then stops by itself",  // "puis arrêt automatique"
     "fast",  // "rapide"
     "day off",  // "repos"
     "flipped",  // "retournée"
@@ -3301,7 +3347,6 @@ static const char* const kI18n_en[] = {
     "Eye of the Maze",  // "Œil du dédale"
     "Heat",  // "clim|Chaud"
     "Undo",  // "coup|Annuler"
-    "S",  // "dimanche|D"
     "Knight",  // "echecs|Cavalier"
     "Queen",  // "echecs|Dame"
     "Bishop",  // "echecs|Fou"
@@ -3309,10 +3354,6 @@ static const char* const kI18n_en[] = {
     "King",  // "echecs|Roi"
     "Rook",  // "echecs|Tour"
     "GRID",  // "energie|RÉSEAU"
-    "T",  // "jeudi|J"
-    "M",  // "lundi|L"
-    "T",  // "mardi|M"
-    "W",  // "mercredi|M"
     "Low",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
     "Very low",  // "nudge|Très douce"
@@ -3324,7 +3365,6 @@ static const char* const kI18n_en[] = {
     "B",  // "pendule|N"
     "Resign",  // "plateau|Abandonner"
     "Resignation",  // "raison|Abandon"
-    "S",  // "samedi|S"
     "N",  // "san|C"
     "Q",  // "san|D"
     "B",  // "san|F"
@@ -3335,7 +3375,6 @@ static const char* const kI18n_en[] = {
     "Moderate",  // "uv|Modéré"
     "Very high",  // "uv|Très élevé"
     "High",  // "uv|Élevé"
-    "F",  // "vendredi|V"
 };
 
 // Deutsch (de.yaml)
@@ -3420,7 +3459,6 @@ static const char* const kI18n_de[] = {
     "10 min",  // "10 min"
     "10,0 Felder/s - schnelle Reflexe",  // "10,0 cases/s - réflexes exigés"
     "Letzte 12 Monate",  // "12 derniers mois"
-    "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
     "2 Tage",  // "2 Jours"
@@ -3446,7 +3484,6 @@ static const char* const kI18n_de[] = {
     "8 Konsolen — immer nur eine",  // "8 consoles — une seule à la fois"
     "8 Level, 3 Leben, Power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 Felder/s",  // "8,0 cases/s"
-    "9 min",  // "9 min"
     "AN",  // "ACTIF"
     "LAMPEN",  // "AMPOULES"
     "AUSSEHEN",  // "APPARENCE"
@@ -3487,8 +3524,10 @@ static const char* const kI18n_de[] = {
     "Eisenring",  // "Anneau de fer"
     "Roter Ring um den zuletzt gesetzten Stein",  // "Anneau rouge sur la dernière pierre posée"
     "Geb.",  // "Anniv."
-    "Termine ansagen",  // "Annonce des RDV"
-    "Sprachansage",  // "Annonce parlée"
+    "Terminansagen",  // "Annonce des rendez-vous"
+    "Sprachansage beim Wecken",  // "Annonce parlée au réveil"
+    "Ansage",  // "Annoncer avant"
+    "Ansagen",  // "Annonces"
     "Nimmt den letzten Halbzug zurück",  // "Annule le dernier demi-coup"
     "Nimmt deinen Zug und den des Tab zurück",  // "Annule votre coup et la réponse du Tab"
     "Abbrechen",  // "Annuler"
@@ -3502,6 +3541,7 @@ static const char* const kI18n_de[] = {
     "Tippen auf einen Platz wechselt zum nächsten Gegenstand.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Ein Gegenstand im Besitz wird per Tippen zum halben Preis verkauft. Verkauftes wird auch abgelegt.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Mikrofon antippen, dann sprechen…",  // "Appuyez sur le micro puis parlez…"
+    "Nach dem ersten Klingeln sagt Home Assistant Wetter und Planung an.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Silber",  // "Argent"
     "Stopp",  // "Arrêter"
     "Kunst",  // "Arts"
@@ -3591,6 +3631,7 @@ static const char* const kI18n_de[] = {
     "Atari-Breakout\n8 Level · Power-ups",  // "Casse-briques Atari\n8 niveaux · power-ups"
     "Kathedrale",  // "Cathédrale"
     "Gehirn / LLM",  // "Cerveau / LLM"
+    "Diese Einstellungen gelten nur im Modus „Schicht“ (Seite Tage).",  // "Ces réglages ne servent qu'au mode « Ouverture » (page Jours)."
     "Diese Einstellungen gelten ab dem nächsten Run.",  // "Ces réglages s'appliquent au lancement de la prochaine run."
     "Die Einstellungen gelten ab der nächsten Frage",  // "Ces réglages s'appliquent à la prochaine question"
     "Die Einstellungen werden automatisch gespeichert.",  // "Ces réglages sont sauvegardés automatiquement."
@@ -3712,6 +3753,7 @@ static const char* const kI18n_de[] = {
     "Warte auf Home Assistant",  // "En attente de Home Assistant"
     "Lädt",  // "En charge"
     "Läuft",  // "En cours"
+    "Im Modus „Fest“ zählen nur die gewählten Tage.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In Bewegung",  // "En mouvement"
     "Sonnig",  // "Ensoleillé"
     "Zwischen %d und %d %%",  // "Entre %d et %d %%"
@@ -3758,14 +3800,17 @@ static const char* const kI18n_de[] = {
     "IMU-Gesten",  // "Gestes IMU"
     "Gesten, 50-Züge-Regel, Bewertung, Demo-Tempo",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gesten, Regeln, Anzeige",  // "Gestes, règles, affichage"
+    "Ziffern nach oben oder unten schieben.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nChin. Zählung · Komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Tote Steine entfernt: %d schwarz, %d weiß",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Hagel",  // "Grêle"
     "Geografie",  // "Géographie"
     "a.W.",  // "H.C."
+    "WECKZEIT",  // "HEURE DU RÉVEIL"
     "LUFTFEUCHTE",  // "HUMIDITÉ"
     "Vorgabe: %d Steine",  // "Handicap : %d pierres"
     "Vorgabe: keine",  // "Handicap : aucun"
+    "Uhrzeit",  // "Heure"
     "Feste Zeit",  // "Heure fixe"
     "Zeit nicht synchronisiert",  // "Heure non synchronisée"
     "Stunden",  // "Heures"
@@ -3813,9 +3858,11 @@ static const char* const kI18n_de[] = {
     "Spieler gegen Spieler",  // "Joueur contre joueur"
     "Tag",  // "Jour"
     "Tag nicht verfügbar",  // "Jour hors plage"
+    "Freier Tag im Kalender: still, oder feste Zeit, wenn der Tag gewählt ist.",  // "Jour sans travail au calendrier : silence, ou l'heure fixe si le jour est coché."
     "Heute",  // "Journée"
     "Tage",  // "Jours"
-    "Tage (nur bei fester Zeit)",  // "Jours (heure fixe uniquement)"
+    "Tage für die feste Zeit",  // "Jours de l'heure fixe"
+    "Freie Tage",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
     "Komi 0,5 für Weiß",  // "Komi 0,5 pour Blanc"
@@ -3884,6 +3931,8 @@ static const char* const kI18n_de[] = {
     "Licht",  // "Lumière"
     "Lichter",  // "Lumières"
     "Mo",  // "Lun"
+    "Montag-Samstag",  // "Lundi-Samedi"
+    "Montag-Freitag",  // "Lundi-Vendredi"
     "JETZT",  // "MAINTENANT"
     "HAUS",  // "MAISON"
     "Aktualisieren",  // "MAJ Écran"
@@ -3922,12 +3971,14 @@ static const char* const kI18n_de[] = {
     "Trainingsmodus",  // "Mode entraînement"
     "Mäßig",  // "Modérée"
     "Monate",  // "Mois"
+    "Steigt sanft bis zur eingestellten Lautstärke.",  // "Monte doucement jusqu'au volume réglé."
     "Fährt",  // "Mouvement"
     "Mittel",  // "Moyen"
     "Mittel",  // "Moyenne"
     "Mittel + schwer",  // "Moyennes + difficiles"
     "Volle Mauer",  // "Mur plein"
     "SPEICHER",  // "MÉMOIRE"
+    "Melodie",  // "Mélodie"
     "Wetter",  // "Météo"
     "Selber Modus, selbe Optionen",  // "Même mode, mêmes réglages"
     "Gleiches Setup",  // "Mêmes réglages"
@@ -3993,6 +4044,7 @@ static const char* const kI18n_de[] = {
     "PAUSE",  // "PAUSE"
     "Büro-PC",  // "PC Bureau"
     "POSITION",  // "POSITION"
+    "NÄCHSTER TERMIN",  // "PROCHAIN RENDEZ-VOUS"
     "NÄCHSTER WECKRUF",  // "PROCHAINE SONNERIE"
     "UMWANDLUNG",  // "PROMOTION"
     "PROGNOSE",  // "PRÉVU"
@@ -4058,7 +4110,6 @@ static const char* const kI18n_de[] = {
     "Gefangene: Schwarz %u, Weiß %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Wahrscheinlichkeit",  // "Probabilité"
     "Heute erzeugt",  // "Produit aujourd'hui"
-    "Ansteigend",  // "Progressif"
     "Remis anbieten",  // "Proposer nulle"
     "Anwesend",  // "Présent"
     "Vorhersage von gestern %d:%02d",  // "Prévisions d'hier %d h %02d"
@@ -4077,8 +4128,6 @@ static const char* const kI18n_de[] = {
     "Spiel beenden",  // "Quitter le jeu"
     "Retro-Partyquiz\n1–6 Teams · Französisch",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Termin",  // "RDV"
-    "Vor Termin",  // "RDV avant"
-    "Termine stumm",  // "RDV silencieux"
     "REKORD %s",  // "RECORD %s"
     "Bildschirm durch Antippen einschalten",  // "Rallumer l'écran d'une tape"
     "Bildschirm bei „Okay Nabu“ einschalten",  // "Rallumer l'écran à « Okay Nabu »"
@@ -4111,8 +4160,6 @@ static const char* const kI18n_de[] = {
     "Zähler zurücksetzen",  // "Remettre les compteurs à zéro"
     "Statistik-Reset",  // "Remettre les statistiques à zéro"
     "Stats-Reset?",  // "Remettre les stats à zéro ?"
-    "Frei: feste Zeit",  // "Repos : heure fixe"
-    "Frei: still",  // "Repos : silence"
     "Min. Ruhe",  // "Repos mini"
     "Weiter",  // "Reprendre"
     "Fortsetzen (leer)",  // "Reprendre (vide)"
@@ -4210,10 +4257,10 @@ static const char* const kI18n_de[] = {
     "Dunkel",  // "Sombre"
     "Tablet-Lautstärke",  // "Son de la tablette"
     "Klingelt vor Schichtbeginn laut Kalender.",  // "Sonne avant l'ouverture lue dans le calendrier."
-    "Klingelt zur festen Zeit an den oben gewählten Tagen.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
+    "Klingelt {avance} vor Schichtbeginn laut Kalender, nie vor {avant} und nie nach {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
+    "Klingelt zur festen Zeit an den unten gewählten Tagen.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Klingelt zur festen Zeit, nur an Arbeitstagen.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Klingelton",  // "Sonnerie"
-    "Nur Klingelton",  // "Sonnerie seule"
     "Spiel verlassen: Hub, dann „Beenden“",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Ausgang offen! Klettere ganz nach oben.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Sport",  // "Sports"
@@ -4256,6 +4303,7 @@ static const char* const kI18n_de[] = {
     "Obere Leiste im Spiel antippen öffnet das Pausenmenü.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Antippen zum Ändern",  // "Toucher pour changer"
     "Zeile antippen, um den Wert zu ändern",  // "Toucher une ligne pour changer sa valeur"
+    "Antippen spielt die Melodie ab.",  // "Toucher une mélodie la fait entendre."
     "Tippen: Int. 10x10 / Englisch 8x8",  // "Touchez : internationales 10×10 ou anglaises 8×8"
     "Zum Aktivieren Schalter antippen",  // "Touchez l'interrupteur pour l'armer"
     "Zum Beenden Bildschirm antippen oder „Stop“ sagen",  // "Touchez l'écran ou dites « Stop » pour arrêter"
@@ -4267,6 +4315,7 @@ static const char* const kI18n_de[] = {
     "Runde %u",  // "Tour %u"
     "Runde %u · %s ist dran",  // "Tour %u · au tour de %s"
     "Tablet hochkant drehen",  // "Tournez la tablette à la verticale"
+    "Jeden Tag",  // "Tous les jours"
     "Alles wird gespeichert und übersteht Neustarts.",  // "Tout est enregistré et survit au redémarrage."
     "Alle schließen",  // "Tout fermer"
     "Die ganze lokale Top 10, inkl. Highscore.",  // "Tout le Top 10 local, meilleur score compris."
@@ -4286,6 +4335,7 @@ static const char* const kI18n_de[] = {
     "Du rollst wieder.",  // "Tu rouleras encore."
     "Raus aus dem Labyrinth. Es lässt dich gehen.",  // "Tu sors du dédale. Il te laisse partir."
     "TV-Fernbedienung",  // "Télécommande TV"
+    "Ein Banner auf dem Bildschirm und eine Sprachansage vor jedem Termin.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Ein Schild in jedem neuen Raum",  // "Un bouclier à chaque nouvelle salle"
     "Ein Schild in jedem Raum",  // "Un bouclier à chaque salle"
     "Ein Level wird durch Abschluss des vorigen frei.",  // "Un niveau se débloque en terminant le précédent."
@@ -4329,23 +4379,30 @@ static const char* const kI18n_de[] = {
     "Rollladen",  // "Volet"
     "Rollladen gestoppt.",  // "Volet arrêté."
     "Rollläden",  // "Volets"
-    "Feste Lautstärke",  // "Volume constant"
+    "Lautstärke",  // "Volume"
+    "Ansteigende Lautstärke",  // "Volume progressif"
     "Deine Farbe",  // "Votre couleur"
     "Du",  // "Vous"
     "Du spielst %s",  // "Vous jouez %s"
     "Mensch: %s",  // "Vous jouez les %s"
+    "Wochenende",  // "Week-end"
     "WLAN sparen",  // "Wi-Fi éco"
     "Zickzack",  // "Zigzag"
     "Linke / rechte Zone = Flipper (halten). Unten Mitte = Abschuss.\nTablet schütteln, um den Ball anzustoßen — dreimal zu viel und es gibt TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "August",  // "août"
     "erschienen %s",  // "apparue %s"
+    "nach Schichtende",  // "après la fermeture"
     "Tab",  // "au Tab"
+    "spätestens",  // "au plus tard"
+    "frühestens",  // "au plus tôt"
     "keine",  // "aucun"
+    "vor Schichtbeginn",  // "avant l'ouverture"
     "April",  // "avril"
     "b = gespielte Bälle, MB = Multiball ausgelöst.",  // "b = billes jouées, MB = multiball déclenché."
     "Sonntag",  // "dimanche"
     "Dezember",  // "décembre"
     "warte auf Kalender",  // "en attente du calendrier"
+    "zwischen zwei Weckrufen",  // "entre deux sonneries"
     "blitz",  // "fulgur."
     "Februar",  // "février"
     "aus",  // "inactif"
@@ -4354,6 +4411,7 @@ static const char* const kI18n_de[] = {
     "Donnerstag",  // "jeudi"
     "Juli",  // "juillet"
     "Juni",  // "juin"
+    "vor dem Termin",  // "le début du rendez-vous"
     "gelesen %s",  // "lue %s"
     "Montag",  // "lundi"
     "Mai",  // "mai"
@@ -4366,6 +4424,7 @@ static const char* const kI18n_de[] = {
     "Oktober",  // "octobre"
     "oder Tablet schütteln",  // "ou secouez la tablette"
     "passt",  // "passe"
+    "dann automatisch aus",  // "puis arrêt automatique"
     "schnell",  // "rapide"
     "frei",  // "repos"
     "gedreht",  // "retournée"
@@ -4411,7 +4470,6 @@ static const char* const kI18n_de[] = {
     "Labyrinthauge",  // "Œil du dédale"
     "Heizen",  // "clim|Chaud"
     "Zurück",  // "coup|Annuler"
-    "S",  // "dimanche|D"
     "Springer",  // "echecs|Cavalier"
     "Dame",  // "echecs|Dame"
     "Läufer",  // "echecs|Fou"
@@ -4419,10 +4477,6 @@ static const char* const kI18n_de[] = {
     "König",  // "echecs|Roi"
     "Turm",  // "echecs|Tour"
     "NETZ",  // "energie|RÉSEAU"
-    "D",  // "jeudi|J"
-    "M",  // "lundi|L"
-    "D",  // "mardi|M"
-    "M",  // "mercredi|M"
     "Gering",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
     "Sehr gering",  // "nudge|Très douce"
@@ -4434,7 +4488,6 @@ static const char* const kI18n_de[] = {
     "S",  // "pendule|N"
     "Aufgeben",  // "plateau|Abandonner"
     "Aufgabe",  // "raison|Abandon"
-    "S",  // "samedi|S"
     "S",  // "san|C"
     "D",  // "san|D"
     "L",  // "san|F"
@@ -4445,7 +4498,6 @@ static const char* const kI18n_de[] = {
     "Mäßig",  // "uv|Modéré"
     "Sehr hoch",  // "uv|Très élevé"
     "Hoch",  // "uv|Élevé"
-    "F",  // "vendredi|V"
 };
 
 // Nederlands (nl.yaml)
@@ -4530,7 +4582,6 @@ static const char* const kI18n_nl[] = {
     "10 min",  // "10 min"
     "10,0 vakjes/s - snelle reflexen",  // "10,0 cases/s - réflexes exigés"
     "Laatste 12 maanden",  // "12 derniers mois"
-    "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
     "2 dagen",  // "2 Jours"
@@ -4556,7 +4607,6 @@ static const char* const kI18n_nl[] = {
     "8 consoles — één tegelijk",  // "8 consoles — une seule à la fois"
     "8 levels, 3 levens, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 vakjes/s",  // "8,0 cases/s"
-    "9 min",  // "9 min"
     "AAN",  // "ACTIF"
     "LAMPEN",  // "AMPOULES"
     "WEERGAVE",  // "APPARENCE"
@@ -4597,8 +4647,10 @@ static const char* const kI18n_nl[] = {
     "IJzeren ring",  // "Anneau de fer"
     "Rode ring om de laatst gespeelde steen",  // "Anneau rouge sur la dernière pierre posée"
     "Jarig",  // "Anniv."
-    "Afspraken melden",  // "Annonce des RDV"
-    "Gesproken melding",  // "Annonce parlée"
+    "Afspraken melden",  // "Annonce des rendez-vous"
+    "Gesproken melding bij het wekken",  // "Annonce parlée au réveil"
+    "Melden",  // "Annoncer avant"
+    "Meldingen",  // "Annonces"
     "Neemt de laatste halve zet terug",  // "Annule le dernier demi-coup"
     "Neemt je zet en het antwoord van Tab terug",  // "Annule votre coup et la réponse du Tab"
     "Annuleren",  // "Annuler"
@@ -4612,6 +4664,7 @@ static const char* const kI18n_nl[] = {
     "Tik op een vak om naar het volgende voorwerp te wisselen.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tik op een voorwerp in je bezit om het voor de halve prijs te verkopen. Een verkocht voorwerp gaat ook uit je uitrusting.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tik op de microfoon en spreek…",  // "Appuyez sur le micro puis parlez…"
+    "Na de eerste keer afgaan meldt Home Assistant het weer en de planning.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Zilver",  // "Argent"
     "Stop",  // "Arrêter"
     "Kunst",  // "Arts"
@@ -4701,6 +4754,7 @@ static const char* const kI18n_nl[] = {
     "Atari-breakout\n8 levels · power-ups",  // "Casse-briques Atari\n8 niveaux · power-ups"
     "Kathedraal",  // "Cathédrale"
     "Brein / LLM",  // "Cerveau / LLM"
+    "Deze instellingen gelden alleen voor de modus „Werkbegin” (pagina Dagen).",  // "Ces réglages ne servent qu'au mode « Ouverture » (page Jours)."
     "Deze opties gelden vanaf de volgende run.",  // "Ces réglages s'appliquent au lancement de la prochaine run."
     "Deze opties gelden vanaf de volgende vraag",  // "Ces réglages s'appliquent à la prochaine question"
     "Deze opties worden automatisch opgeslagen.",  // "Ces réglages sont sauvegardés automatiquement."
@@ -4822,6 +4876,7 @@ static const char* const kI18n_nl[] = {
     "Wachten op Home Assistant",  // "En attente de Home Assistant"
     "Laden",  // "En charge"
     "Bezig",  // "En cours"
+    "In de modus Vast tellen alleen de aangevinkte dagen.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In beweging",  // "En mouvement"
     "Zonnig",  // "Ensoleillé"
     "Tussen %d en %d %%",  // "Entre %d et %d %%"
@@ -4868,14 +4923,17 @@ static const char* const kI18n_nl[] = {
     "IMU-gebaren",  // "Gestes IMU"
     "Gebaren, 50-zettenregel, evaluatie, demosnelheid",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gebaren, regels, weergave",  // "Gestes, règles, affichage"
+    "Schuif de cijfers omhoog of omlaag.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nChinese telling · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Dode stenen verwijderd: %d zwart, %d wit",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Hagel",  // "Grêle"
     "Geografie",  // "Géographie"
     "B.M.",  // "H.C."
+    "WEKTIJD",  // "HEURE DU RÉVEIL"
     "VOCHTIGHEID",  // "HUMIDITÉ"
     "Handicap: %d stenen",  // "Handicap : %d pierres"
     "Handicap: geen",  // "Handicap : aucun"
+    "Tijd",  // "Heure"
     "Vaste tijd",  // "Heure fixe"
     "Tijd niet gesynchroniseerd",  // "Heure non synchronisée"
     "Uren",  // "Heures"
@@ -4923,9 +4981,11 @@ static const char* const kI18n_nl[] = {
     "Speler tegen speler",  // "Joueur contre joueur"
     "Dag",  // "Jour"
     "Dag buiten bereik",  // "Jour hors plage"
+    "Vrije dag in de agenda: stil, of de vaste tijd als de dag is aangevinkt.",  // "Jour sans travail au calendrier : silence, ou l'heure fixe si le jour est coché."
     "Vandaag",  // "Journée"
     "Dagen",  // "Jours"
-    "Dagen (alleen vaste tijd)",  // "Jours (heure fixe uniquement)"
+    "Dagen voor de vaste tijd",  // "Jours de l'heure fixe"
+    "Vrije dagen",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
     "Komi 0,5 voor Wit",  // "Komi 0,5 pour Blanc"
@@ -4994,6 +5054,8 @@ static const char* const kI18n_nl[] = {
     "Licht",  // "Lumière"
     "Lampen",  // "Lumières"
     "Ma",  // "Lun"
+    "Maandag-zaterdag",  // "Lundi-Samedi"
+    "Maandag-vrijdag",  // "Lundi-Vendredi"
     "NU",  // "MAINTENANT"
     "HUIS",  // "MAISON"
     "Scherm verversen",  // "MAJ Écran"
@@ -5032,12 +5094,14 @@ static const char* const kI18n_nl[] = {
     "Oefenmodus",  // "Mode entraînement"
     "Matig",  // "Modérée"
     "Maanden",  // "Mois"
+    "Loopt rustig op tot het ingestelde volume.",  // "Monte doucement jusqu'au volume réglé."
     "Beweegt",  // "Mouvement"
     "Normaal",  // "Moyen"
     "Gemiddeld",  // "Moyenne"
     "Normaal + moeilijk",  // "Moyennes + difficiles"
     "Volle muur",  // "Mur plein"
     "GEHEUGEN",  // "MÉMOIRE"
+    "Melodie",  // "Mélodie"
     "Weer",  // "Météo"
     "Zelfde modus, zelfde opties",  // "Même mode, mêmes réglages"
     "Zelfde opties",  // "Mêmes réglages"
@@ -5103,6 +5167,7 @@ static const char* const kI18n_nl[] = {
     "PAUZE",  // "PAUSE"
     "Bureau-pc",  // "PC Bureau"
     "POSITIE",  // "POSITION"
+    "VOLGENDE AFSPRAAK",  // "PROCHAIN RENDEZ-VOUS"
     "VOLGEND ALARM",  // "PROCHAINE SONNERIE"
     "PROMOTIE",  // "PROMOTION"
     "VERWACHT",  // "PRÉVU"
@@ -5168,7 +5233,6 @@ static const char* const kI18n_nl[] = {
     "Gevangen stenen: Zwart %u, Wit %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Kans",  // "Probabilité"
     "Vandaag opgewekt",  // "Produit aujourd'hui"
-    "Oplopend",  // "Progressif"
     "Remise aanbieden",  // "Proposer nulle"
     "Aanwezig",  // "Présent"
     "Verwachting van gisteren %d:%02d",  // "Prévisions d'hier %d h %02d"
@@ -5187,8 +5251,6 @@ static const char* const kI18n_nl[] = {
     "Spel verlaten",  // "Quitter le jeu"
     "Retro-partyquiz\n1 tot 6 teams · Franstalig",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Afspr.",  // "RDV"
-    "Herinnering",  // "RDV avant"
-    "Stille afspraken",  // "RDV silencieux"
     "RECORD %s",  // "RECORD %s"
     "Scherm aan met een tik",  // "Rallumer l'écran d'une tape"
     "Scherm aan bij „Okay Nabu”",  // "Rallumer l'écran à « Okay Nabu »"
@@ -5221,8 +5283,6 @@ static const char* const kI18n_nl[] = {
     "Tellers op nul zetten",  // "Remettre les compteurs à zéro"
     "Statistieken resetten",  // "Remettre les statistiques à zéro"
     "Stats resetten?",  // "Remettre les stats à zéro ?"
-    "Vrij: vaste tijd",  // "Repos : heure fixe"
-    "Vrij: stil",  // "Repos : silence"
     "Min. rust",  // "Repos mini"
     "Hervatten",  // "Reprendre"
     "Hervatten (leeg)",  // "Reprendre (vide)"
@@ -5320,10 +5380,10 @@ static const char* const kI18n_nl[] = {
     "Donker",  // "Sombre"
     "Tabletvolume",  // "Son de la tablette"
     "Gaat af vóór het werkbegin uit de agenda.",  // "Sonne avant l'ouverture lue dans le calendrier."
-    "Gaat af op de vaste tijd, op de dagen hierboven.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
+    "Gaat {avance} vóór het werkbegin uit de agenda af, nooit vóór {avant} of na {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
+    "Gaat af op de vaste tijd, op de dagen hieronder.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Gaat af op de vaste tijd, alleen op werkdagen.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Wekgeluid",  // "Sonnerie"
-    "Alleen wekgeluid",  // "Sonnerie seule"
     "Een spel verlaten: hub, dan “Afsluiten”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Uitgang open! Klim helemaal naar boven.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Sport",  // "Sports"
@@ -5366,6 +5426,7 @@ static const char* const kI18n_nl[] = {
     "Tik tijdens de partij op de bovenbalk voor het pauzemenu.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tik om te wijzigen",  // "Toucher pour changer"
     "Tik op een regel om de waarde te wijzigen",  // "Toucher une ligne pour changer sa valeur"
+    "Tik op een melodie om ze te horen.",  // "Toucher une mélodie la fait entendre."
     "Tik: Intl 10x10 / Engels 8x8",  // "Touchez : internationales 10×10 ou anglaises 8×8"
     "Tik op de schakelaar om te activeren",  // "Touchez l'interrupteur pour l'armer"
     "Tik op het scherm of zeg \"Stop\" om te stoppen",  // "Touchez l'écran ou dites « Stop » pour arrêter"
@@ -5377,6 +5438,7 @@ static const char* const kI18n_nl[] = {
     "Ronde %u",  // "Tour %u"
     "Ronde %u · beurt aan %s",  // "Tour %u · au tour de %s"
     "Houd de tablet rechtop",  // "Tournez la tablette à la verticale"
+    "Elke dag",  // "Tous les jours"
     "Alles wordt bewaard, ook na een herstart.",  // "Tout est enregistré et survit au redémarrage."
     "Alles dicht",  // "Tout fermer"
     "De hele lokale top 10, inclusief beste score.",  // "Tout le Top 10 local, meilleur score compris."
@@ -5396,6 +5458,7 @@ static const char* const kI18n_nl[] = {
     "Je zult weer rollen.",  // "Tu rouleras encore."
     "Je verlaat het Doolhof. Het laat je gaan.",  // "Tu sors du dédale. Il te laisse partir."
     "Tv-bediening",  // "Télécommande TV"
+    "Een banner op het scherm en een gesproken melding vóór elke afspraak.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Een schild in elke nieuwe kamer",  // "Un bouclier à chaque nouvelle salle"
     "Een schild in elke kamer",  // "Un bouclier à chaque salle"
     "Haal een level om het volgende te ontgrendelen.",  // "Un niveau se débloque en terminant le précédent."
@@ -5439,23 +5502,30 @@ static const char* const kI18n_nl[] = {
     "Rolluik",  // "Volet"
     "Rolluik gestopt.",  // "Volet arrêté."
     "Rolluiken",  // "Volets"
-    "Vast volume",  // "Volume constant"
+    "Volume",  // "Volume"
+    "Oplopend volume",  // "Volume progressif"
     "Jouw kleur",  // "Votre couleur"
     "Jij",  // "Vous"
     "Jij speelt %s",  // "Vous jouez %s"
     "Mens: %s",  // "Vous jouez les %s"
+    "Weekend",  // "Week-end"
     "Zuinige wifi",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Linkerzone / rechterzone = flippers (vasthouden). Midden onder = plunjer.\nSchud de tablet om de bal te duwen — drie keer te veel op rij en het is TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "augustus",  // "août"
     "verschenen %s",  // "apparue %s"
+    "na werkeinde",  // "après la fermeture"
     "Tab",  // "au Tab"
+    "uiterlijk",  // "au plus tard"
+    "op zijn vroegst",  // "au plus tôt"
     "geen",  // "aucun"
+    "vóór werkbegin",  // "avant l'ouverture"
     "april",  // "avril"
     "b = gespeelde ballen, MB = multiball gestart.",  // "b = billes jouées, MB = multiball déclenché."
     "zondag",  // "dimanche"
     "december",  // "décembre"
     "wacht op de agenda",  // "en attente du calendrier"
+    "tussen twee keer afgaan",  // "entre deux sonneries"
     "bliksem",  // "fulgur."
     "februari",  // "février"
     "uit",  // "inactif"
@@ -5464,6 +5534,7 @@ static const char* const kI18n_nl[] = {
     "donderdag",  // "jeudi"
     "juli",  // "juillet"
     "juni",  // "juin"
+    "vóór de afspraak",  // "le début du rendez-vous"
     "gelezen %s",  // "lue %s"
     "maandag",  // "lundi"
     "mei",  // "mai"
@@ -5476,6 +5547,7 @@ static const char* const kI18n_nl[] = {
     "oktober",  // "octobre"
     "of schud de tablet",  // "ou secouez la tablette"
     "past",  // "passe"
+    "daarna automatisch uit",  // "puis arrêt automatique"
     "snel",  // "rapide"
     "vrij",  // "repos"
     "omgedraaid",  // "retournée"
@@ -5521,7 +5593,6 @@ static const char* const kI18n_nl[] = {
     "Doolhofoog",  // "Œil du dédale"
     "Warm",  // "clim|Chaud"
     "Zet terug",  // "coup|Annuler"
-    "Z",  // "dimanche|D"
     "Paard",  // "echecs|Cavalier"
     "Dame",  // "echecs|Dame"
     "Loper",  // "echecs|Fou"
@@ -5529,10 +5600,6 @@ static const char* const kI18n_nl[] = {
     "Koning",  // "echecs|Roi"
     "Toren",  // "echecs|Tour"
     "NET",  // "energie|RÉSEAU"
-    "D",  // "jeudi|J"
-    "M",  // "lundi|L"
-    "D",  // "mardi|M"
-    "W",  // "mercredi|M"
     "Laag",  // "nudge|Douce"
     "Normaal",  // "nudge|Normale"
     "Zeer laag",  // "nudge|Très douce"
@@ -5544,7 +5611,6 @@ static const char* const kI18n_nl[] = {
     "Z",  // "pendule|N"
     "Opgeven",  // "plateau|Abandonner"
     "Opgave",  // "raison|Abandon"
-    "Z",  // "samedi|S"
     "P",  // "san|C"
     "D",  // "san|D"
     "L",  // "san|F"
@@ -5555,7 +5621,6 @@ static const char* const kI18n_nl[] = {
     "Matig",  // "uv|Modéré"
     "Zeer hoog",  // "uv|Très élevé"
     "Hoog",  // "uv|Élevé"
-    "V",  // "vendredi|V"
 };
 
 // Español (es.yaml)
@@ -5640,7 +5705,6 @@ static const char* const kI18n_es[] = {
     "10 min",  // "10 min"
     "10,0 casillas/s - reflejos rápidos",  // "10,0 cases/s - réflexes exigés"
     "Últimos 12 meses",  // "12 derniers mois"
-    "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1",  // "1er"
     "2 días",  // "2 Jours"
@@ -5666,7 +5730,6 @@ static const char* const kI18n_es[] = {
     "8 consolas — una a la vez",  // "8 consoles — une seule à la fois"
     "8 niveles, 3 vidas, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 casillas/s",  // "8,0 cases/s"
-    "9 min",  // "9 min"
     "ACTIVO",  // "ACTIF"
     "LUCES",  // "AMPOULES"
     "APARIENCIA",  // "APPARENCE"
@@ -5707,8 +5770,10 @@ static const char* const kI18n_es[] = {
     "Anillo de hierro",  // "Anneau de fer"
     "Anillo rojo en la última piedra jugada",  // "Anneau rouge sur la dernière pierre posée"
     "Cumple",  // "Anniv."
-    "Anunciar citas",  // "Annonce des RDV"
-    "Anuncio de voz",  // "Annonce parlée"
+    "Anuncio de citas",  // "Annonce des rendez-vous"
+    "Anuncio de voz al despertar",  // "Annonce parlée au réveil"
+    "Anunciar",  // "Annoncer avant"
+    "Avisos",  // "Annonces"
     "Deshace la última media jugada",  // "Annule le dernier demi-coup"
     "Deshace tu jugada y la respuesta del Tab",  // "Annule votre coup et la réponse du Tab"
     "Cancelar",  // "Annuler"
@@ -5722,6 +5787,7 @@ static const char* const kI18n_es[] = {
     "Tocar una ranura la cambia al objeto siguiente.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocar un objeto que ya tienes lo vende a mitad de precio. Un objeto vendido también se quita del equipo.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Toca el micro y habla…",  // "Appuyez sur le micro puis parlez…"
+    "Tras el primer timbre, Home Assistant anuncia el tiempo y la agenda.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Plata",  // "Argent"
     "Detener",  // "Arrêter"
     "Arte",  // "Arts"
@@ -5811,6 +5877,7 @@ static const char* const kI18n_es[] = {
     "Rompeladrillos Atari\n8 niveles · power-ups",  // "Casse-briques Atari\n8 niveaux · power-ups"
     "Catedral",  // "Cathédrale"
     "Cerebro / LLM",  // "Cerveau / LLM"
+    "Estos ajustes solo sirven para el modo «Turno» (página Días).",  // "Ces réglages ne servent qu'au mode « Ouverture » (page Jours)."
     "Estos ajustes se aplican al iniciar la próxima run.",  // "Ces réglages s'appliquent au lancement de la prochaine run."
     "Estos ajustes se aplican desde la próxima pregunta",  // "Ces réglages s'appliquent à la prochaine question"
     "Estos ajustes se guardan automáticamente.",  // "Ces réglages sont sauvegardés automatiquement."
@@ -5932,6 +5999,7 @@ static const char* const kI18n_es[] = {
     "Esperando a Home Assistant",  // "En attente de Home Assistant"
     "Cargando",  // "En charge"
     "En curso",  // "En cours"
+    "En modo Fija, solo cuentan los días marcados.",  // "En mode Fixe, seuls les jours cochés comptent."
     "En movimiento",  // "En mouvement"
     "Soleado",  // "Ensoleillé"
     "Entre %d y %d %%",  // "Entre %d et %d %%"
@@ -5978,14 +6046,17 @@ static const char* const kI18n_es[] = {
     "Gestos IMU",  // "Gestes IMU"
     "Gestos, regla de 50 jugadas, evaluación, velocidad de demo",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gestos, reglas, pantalla",  // "Gestes, règles, affichage"
+    "Desliza los números hacia arriba o abajo.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nConteo chino · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Piedras muertas: %d negras, %d blancas",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Granizo",  // "Grêle"
     "Geografía",  // "Géographie"
     "N.C.",  // "H.C."
+    "HORA DE LA ALARMA",  // "HEURE DU RÉVEIL"
     "HUMEDAD",  // "HUMIDITÉ"
     "Hándicap: %d piedras",  // "Handicap : %d pierres"
     "Hándicap: ninguno",  // "Handicap : aucun"
+    "Hora",  // "Heure"
     "Hora fija",  // "Heure fixe"
     "Hora no sincronizada",  // "Heure non synchronisée"
     "Horas",  // "Heures"
@@ -6033,9 +6104,11 @@ static const char* const kI18n_es[] = {
     "Jugador contra jugador",  // "Joueur contre joueur"
     "Día",  // "Jour"
     "Día fuera de rango",  // "Jour hors plage"
+    "Día libre en el calendario: silencio, o la hora fija si el día está marcado.",  // "Jour sans travail au calendrier : silence, ou l'heure fixe si le jour est coché."
     "Hoy",  // "Journée"
     "Días",  // "Jours"
-    "Días (solo hora fija)",  // "Jours (heure fixe uniquement)"
+    "Días de la hora fija",  // "Jours de l'heure fixe"
+    "Días libres",  // "Jours de repos"
     "Jul",  // "Juil"
     "Jun",  // "Juin"
     "Komi 0,5 para Blanco",  // "Komi 0,5 pour Blanc"
@@ -6104,6 +6177,8 @@ static const char* const kI18n_es[] = {
     "Luz",  // "Lumière"
     "Luces",  // "Lumières"
     "Lun",  // "Lun"
+    "Lunes-sábado",  // "Lundi-Samedi"
+    "Lunes-viernes",  // "Lundi-Vendredi"
     "AHORA",  // "MAINTENANT"
     "CASA",  // "MAISON"
     "Refrescar pantalla",  // "MAJ Écran"
@@ -6142,12 +6217,14 @@ static const char* const kI18n_es[] = {
     "Modo entrenamiento",  // "Mode entraînement"
     "Moderada",  // "Modérée"
     "Meses",  // "Mois"
+    "Sube suavemente hasta el volumen elegido.",  // "Monte doucement jusqu'au volume réglé."
     "Moviendo",  // "Mouvement"
     "Media",  // "Moyen"
     "Media",  // "Moyenne"
     "Medias + difíciles",  // "Moyennes + difficiles"
     "Muro sólido",  // "Mur plein"
     "MEMORIA",  // "MÉMOIRE"
+    "Melodía",  // "Mélodie"
     "Tiempo",  // "Météo"
     "Mismo modo, mismos ajustes",  // "Même mode, mêmes réglages"
     "Mismos ajustes",  // "Mêmes réglages"
@@ -6213,6 +6290,7 @@ static const char* const kI18n_es[] = {
     "PAUSA",  // "PAUSE"
     "PC oficina",  // "PC Bureau"
     "POSICIÓN",  // "POSITION"
+    "PRÓXIMA CITA",  // "PROCHAIN RENDEZ-VOUS"
     "PRÓXIMA ALARMA",  // "PROCHAINE SONNERIE"
     "CORONACIÓN",  // "PROMOTION"
     "PREVISTA",  // "PRÉVU"
@@ -6278,7 +6356,6 @@ static const char* const kI18n_es[] = {
     "Prisioneros: Negro %u, Blanco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Probabilidad",  // "Probabilité"
     "Producido hoy",  // "Produit aujourd'hui"
-    "Progresivo",  // "Progressif"
     "Ofrecer tablas",  // "Proposer nulle"
     "Presente",  // "Présent"
     "Previsión de ayer %d:%02d",  // "Prévisions d'hier %d h %02d"
@@ -6297,8 +6374,6 @@ static const char* const kI18n_es[] = {
     "Salir del juego",  // "Quitter le jeu"
     "Quiz retro de salón\n1 a 6 equipos · en francés",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Cita",  // "RDV"
-    "Antes de cita",  // "RDV avant"
-    "Citas en silencio",  // "RDV silencieux"
     "RÉCORD %s",  // "RECORD %s"
     "Encender la pantalla con un toque",  // "Rallumer l'écran d'une tape"
     "Encender la pantalla con «Okay Nabu»",  // "Rallumer l'écran à « Okay Nabu »"
@@ -6331,8 +6406,6 @@ static const char* const kI18n_es[] = {
     "Poner los contadores a cero",  // "Remettre les compteurs à zéro"
     "Reiniciar estadísticas",  // "Remettre les statistiques à zéro"
     "¿Reiniciar estadísticas?",  // "Remettre les stats à zéro ?"
-    "Libre: hora fija",  // "Repos : heure fixe"
-    "Libre: silencio",  // "Repos : silence"
     "Sueño mín.",  // "Repos mini"
     "Reanudar",  // "Reprendre"
     "Reanudar (vacío)",  // "Reprendre (vide)"
@@ -6430,10 +6503,10 @@ static const char* const kI18n_es[] = {
     "Oscuro",  // "Sombre"
     "Sonido de la tableta",  // "Son de la tablette"
     "Suena antes del turno leído en el calendario.",  // "Sonne avant l'ouverture lue dans le calendrier."
-    "Suena a la hora fija, los días marcados arriba.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
+    "Suena {avance} antes del turno del calendario, nunca antes de las {avant} ni después de las {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
+    "Suena a la hora fija, los días marcados abajo.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Suena a la hora fija, solo los días laborables.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Tono",  // "Sonnerie"
-    "Solo tono",  // "Sonnerie seule"
     "Para salir de un juego: hub y luego «Salir»",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "¡Salida abierta! Trepa hasta arriba.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Deportes",  // "Sports"
@@ -6476,6 +6549,7 @@ static const char* const kI18n_es[] = {
     "Tocar la barra superior durante la partida abre el menú de pausa.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Toca para cambiar",  // "Toucher pour changer"
     "Toca una fila para cambiar su valor",  // "Toucher une ligne pour changer sa valeur"
+    "Toca una melodía para oírla.",  // "Toucher une mélodie la fait entendre."
     "Toca: Int. 10x10 / Inglesas 8x8",  // "Touchez : internationales 10×10 ou anglaises 8×8"
     "Toca el interruptor para activarla",  // "Touchez l'interrupteur pour l'armer"
     "Toca la pantalla o di «Stop» para detenerla",  // "Touchez l'écran ou dites « Stop » pour arrêter"
@@ -6487,6 +6561,7 @@ static const char* const kI18n_es[] = {
     "Ronda %u",  // "Tour %u"
     "Ronda %u · turno de %s",  // "Tour %u · au tour de %s"
     "Gira la tableta en vertical",  // "Tournez la tablette à la verticale"
+    "Todos los días",  // "Tous les jours"
     "Todo se guarda y sobrevive al reinicio.",  // "Tout est enregistré et survit au redémarrage."
     "Cerrar todo",  // "Tout fermer"
     "Todo el Top 10 local, récord incluido.",  // "Tout le Top 10 local, meilleur score compris."
@@ -6506,6 +6581,7 @@ static const char* const kI18n_es[] = {
     "Volverás a rodar.",  // "Tu rouleras encore."
     "Sales del Laberinto. Te deja marchar.",  // "Tu sors du dédale. Il te laisse partir."
     "Control remoto TV",  // "Télécommande TV"
+    "Un aviso en pantalla y un anuncio de voz antes de cada cita.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Un escudo en cada sala nueva",  // "Un bouclier à chaque nouvelle salle"
     "Un escudo en cada sala",  // "Un bouclier à chaque salle"
     "Un nivel se desbloquea al completar el anterior.",  // "Un niveau se débloque en terminant le précédent."
@@ -6549,23 +6625,30 @@ static const char* const kI18n_es[] = {
     "Persiana",  // "Volet"
     "Persiana detenida.",  // "Volet arrêté."
     "Persianas",  // "Volets"
-    "Volumen constante",  // "Volume constant"
+    "Volumen",  // "Volume"
+    "Volumen progresivo",  // "Volume progressif"
     "Tu color",  // "Votre couleur"
     "Tú",  // "Vous"
     "Juegas: %s",  // "Vous jouez %s"
     "Juegas con las %s",  // "Vous jouez les %s"
+    "Fin de semana",  // "Week-end"
     "Wi-Fi eco",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Zona izquierda / derecha = paletas (mantener). Abajo al centro = lanzador.\nSacude la tableta para empujar la bola — tres abusos seguidos y es TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "agosto",  // "août"
     "aparecida %s",  // "apparue %s"
+    "tras el fin del turno",  // "après la fermeture"
     "del Tab",  // "au Tab"
+    "como muy tarde",  // "au plus tard"
+    "como muy pronto",  // "au plus tôt"
     "ninguno",  // "aucun"
+    "antes del turno",  // "avant l'ouverture"
     "abril",  // "avril"
     "b = bolas jugadas, MB = multiball activado.",  // "b = billes jouées, MB = multiball déclenché."
     "domingo",  // "dimanche"
     "diciembre",  // "décembre"
     "esperando el calendario",  // "en attente du calendrier"
+    "entre dos timbres",  // "entre deux sonneries"
     "fulgur.",  // "fulgur."
     "febrero",  // "février"
     "inactivo",  // "inactif"
@@ -6574,6 +6657,7 @@ static const char* const kI18n_es[] = {
     "jueves",  // "jeudi"
     "julio",  // "juillet"
     "junio",  // "juin"
+    "antes de la cita",  // "le début du rendez-vous"
     "leída %s",  // "lue %s"
     "lunes",  // "lundi"
     "mayo",  // "mai"
@@ -6586,6 +6670,7 @@ static const char* const kI18n_es[] = {
     "octubre",  // "octobre"
     "o sacude la tableta",  // "ou secouez la tablette"
     "pasa",  // "passe"
+    "luego se detiene sola",  // "puis arrêt automatique"
     "rápida",  // "rapide"
     "libre",  // "repos"
     "girada",  // "retournée"
@@ -6631,7 +6716,6 @@ static const char* const kI18n_es[] = {
     "Ojo del Laberinto",  // "Œil du dédale"
     "Calor",  // "clim|Chaud"
     "Deshacer",  // "coup|Annuler"
-    "D",  // "dimanche|D"
     "Caballo",  // "echecs|Cavalier"
     "Dama",  // "echecs|Dame"
     "Alfil",  // "echecs|Fou"
@@ -6639,10 +6723,6 @@ static const char* const kI18n_es[] = {
     "Rey",  // "echecs|Roi"
     "Torre",  // "echecs|Tour"
     "RED",  // "energie|RÉSEAU"
-    "J",  // "jeudi|J"
-    "L",  // "lundi|L"
-    "M",  // "mardi|M"
-    "X",  // "mercredi|M"
     "Baja",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
     "Muy baja",  // "nudge|Très douce"
@@ -6654,7 +6734,6 @@ static const char* const kI18n_es[] = {
     "N",  // "pendule|N"
     "Rendirse",  // "plateau|Abandonner"
     "Abandono",  // "raison|Abandon"
-    "S",  // "samedi|S"
     "C",  // "san|C"
     "D",  // "san|D"
     "A",  // "san|F"
@@ -6665,7 +6744,6 @@ static const char* const kI18n_es[] = {
     "Moderado",  // "uv|Modéré"
     "Muy alto",  // "uv|Très élevé"
     "Alto",  // "uv|Élevé"
-    "V",  // "vendredi|V"
 };
 
 // Italiano (it.yaml)
@@ -6750,7 +6828,6 @@ static const char* const kI18n_it[] = {
     "10 min",  // "10 min"
     "10,0 caselle/s - riflessi pronti",  // "10,0 cases/s - réflexes exigés"
     "Ultimi 12 mesi",  // "12 derniers mois"
-    "15 min",  // "15 min"
     "15 min + 10 s",  // "15 min + 10 s"
     "1°",  // "1er"
     "2 giorni",  // "2 Jours"
@@ -6776,7 +6853,6 @@ static const char* const kI18n_it[] = {
     "8 console — una alla volta",  // "8 consoles — une seule à la fois"
     "8 livelli, 3 vite, power-up",  // "8 niveaux, 3 vies, power-ups"
     "8,0 caselle/s",  // "8,0 cases/s"
-    "9 min",  // "9 min"
     "ATTIVA",  // "ACTIF"
     "LUCI",  // "AMPOULES"
     "ASPETTO",  // "APPARENCE"
@@ -6817,8 +6893,10 @@ static const char* const kI18n_it[] = {
     "Anello di ferro",  // "Anneau de fer"
     "Anello rosso sull'ultima pietra giocata",  // "Anneau rouge sur la dernière pierre posée"
     "Compl.",  // "Anniv."
-    "Annuncia appunt.",  // "Annonce des RDV"
-    "Annuncio vocale",  // "Annonce parlée"
+    "Annuncio appuntamenti",  // "Annonce des rendez-vous"
+    "Annuncio vocale al risveglio",  // "Annonce parlée au réveil"
+    "Annunciare",  // "Annoncer avant"
+    "Annunci",  // "Annonces"
     "Annulla l'ultima semimossa",  // "Annule le dernier demi-coup"
     "Annulla la tua mossa e la risposta del Tab",  // "Annule votre coup et la réponse du Tab"
     "Annulla",  // "Annuler"
@@ -6832,6 +6910,7 @@ static const char* const kI18n_it[] = {
     "Tocca uno slot per passare all'oggetto successivo.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Tocca un oggetto posseduto per rivenderlo a metà prezzo. Un oggetto rivenduto viene anche tolto dall'equipaggiamento.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Tocca il microfono, poi parla…",  // "Appuyez sur le micro puis parlez…"
+    "Dopo il primo squillo, Home Assistant annuncia meteo e programma.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Argento",  // "Argent"
     "Ferma",  // "Arrêter"
     "Arte",  // "Arts"
@@ -6921,6 +7000,7 @@ static const char* const kI18n_it[] = {
     "Rompimattoni Atari\n8 livelli · power-up",  // "Casse-briques Atari\n8 niveaux · power-ups"
     "Cattedrale",  // "Cathédrale"
     "Cervello / LLM",  // "Cerveau / LLM"
+    "Queste impostazioni valgono solo per la modalità «Inizio turno» (pagina Giorni).",  // "Ces réglages ne servent qu'au mode « Ouverture » (page Jours)."
     "Queste opzioni valgono dall'inizio della prossima run.",  // "Ces réglages s'appliquent au lancement de la prochaine run."
     "Le opzioni valgono dalla prossima domanda",  // "Ces réglages s'appliquent à la prochaine question"
     "Le opzioni vengono salvate automaticamente.",  // "Ces réglages sont sauvegardés automatiquement."
@@ -7042,6 +7122,7 @@ static const char* const kI18n_it[] = {
     "In attesa di Home Assistant",  // "En attente de Home Assistant"
     "In carica",  // "En charge"
     "In corso",  // "En cours"
+    "In modalità Fissa contano solo i giorni selezionati.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In movimento",  // "En mouvement"
     "Soleggiato",  // "Ensoleillé"
     "Tra %d e %d %%",  // "Entre %d et %d %%"
@@ -7088,14 +7169,17 @@ static const char* const kI18n_it[] = {
     "Gesti IMU",  // "Gestes IMU"
     "Gesti, regola delle 50 mosse, valutazione, velocità demo",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gesti, regole, schermo",  // "Gestes, règles, affichage"
+    "Scorri le cifre in su o in giù.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nRegole cinesi · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Pietre morte rimosse: %d nere, %d bianche",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Grandine",  // "Grêle"
     "Geografia",  // "Géographie"
     "F.C.",  // "H.C."
+    "ORA DELLA SVEGLIA",  // "HEURE DU RÉVEIL"
     "UMIDITÀ",  // "HUMIDITÉ"
     "Handicap: %d pietre",  // "Handicap : %d pierres"
     "Handicap: nessuno",  // "Handicap : aucun"
+    "Ora",  // "Heure"
     "Ora fissa",  // "Heure fixe"
     "Ora non sincronizzata",  // "Heure non synchronisée"
     "Ore",  // "Heures"
@@ -7143,9 +7227,11 @@ static const char* const kI18n_it[] = {
     "Giocatore vs giocatore",  // "Joueur contre joueur"
     "Giorno",  // "Jour"
     "Giorno non valido",  // "Jour hors plage"
+    "Giorno libero nel calendario: silenzio, o l'ora fissa se il giorno è selezionato.",  // "Jour sans travail au calendrier : silence, ou l'heure fixe si le jour est coché."
     "Oggi",  // "Journée"
     "Giorni",  // "Jours"
-    "Giorni (solo con ora fissa)",  // "Jours (heure fixe uniquement)"
+    "Giorni dell'ora fissa",  // "Jours de l'heure fixe"
+    "Giorni liberi",  // "Jours de repos"
     "Lug",  // "Juil"
     "Giu",  // "Juin"
     "Komi 0,5 al Bianco",  // "Komi 0,5 pour Blanc"
@@ -7214,6 +7300,8 @@ static const char* const kI18n_it[] = {
     "Luce",  // "Lumière"
     "Luci",  // "Lumières"
     "Lun",  // "Lun"
+    "Lunedì-sabato",  // "Lundi-Samedi"
+    "Lunedì-venerdì",  // "Lundi-Vendredi"
     "ORA",  // "MAINTENANT"
     "CASA",  // "MAISON"
     "Aggiorna schermo",  // "MAJ Écran"
@@ -7252,12 +7340,14 @@ static const char* const kI18n_it[] = {
     "Modalità allenamento",  // "Mode entraînement"
     "Moderata",  // "Modérée"
     "Mesi",  // "Mois"
+    "Sale piano fino al volume impostato.",  // "Monte doucement jusqu'au volume réglé."
     "In moto",  // "Mouvement"
     "Medio",  // "Moyen"
     "Media",  // "Moyenne"
     "Medie + difficili",  // "Moyennes + difficiles"
     "Muro pieno",  // "Mur plein"
     "MEMORIA",  // "MÉMOIRE"
+    "Melodia",  // "Mélodie"
     "Meteo",  // "Météo"
     "Stessa modalità, stesse opzioni",  // "Même mode, mêmes réglages"
     "Stesse opzioni",  // "Mêmes réglages"
@@ -7323,6 +7413,7 @@ static const char* const kI18n_it[] = {
     "PAUSA",  // "PAUSE"
     "PC Studio",  // "PC Bureau"
     "POSIZIONE",  // "POSITION"
+    "PROSSIMO APPUNTAMENTO",  // "PROCHAIN RENDEZ-VOUS"
     "PROSSIMA SVEGLIA",  // "PROCHAINE SONNERIE"
     "PROMOZIONE",  // "PROMOTION"
     "PREVISTA",  // "PRÉVU"
@@ -7388,7 +7479,6 @@ static const char* const kI18n_it[] = {
     "Prigionieri: Nero %u, Bianco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Probabilità",  // "Probabilité"
     "Prodotto oggi",  // "Produit aujourd'hui"
-    "Progressivo",  // "Progressif"
     "Proponi patta",  // "Proposer nulle"
     "Presente",  // "Présent"
     "Previsioni di ieri %d:%02d",  // "Prévisions d'hier %d h %02d"
@@ -7407,8 +7497,6 @@ static const char* const kI18n_it[] = {
     "Esci dal gioco",  // "Quitter le jeu"
     "Quiz retrò da salotto\n1-6 squadre · in francese",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Appunt.",  // "RDV"
-    "Preavviso",  // "RDV avant"
-    "Appunt. muti",  // "RDV silencieux"
     "RECORD %s",  // "RECORD %s"
     "Riaccendi lo schermo con un tocco",  // "Rallumer l'écran d'une tape"
     "Riaccendi lo schermo con «Okay Nabu»",  // "Rallumer l'écran à « Okay Nabu »"
@@ -7441,8 +7529,6 @@ static const char* const kI18n_it[] = {
     "Azzera i contatori",  // "Remettre les compteurs à zéro"
     "Azzera le statistiche",  // "Remettre les statistiques à zéro"
     "Azzerare le statistiche?",  // "Remettre les stats à zéro ?"
-    "Riposo: ora fissa",  // "Repos : heure fixe"
-    "Riposo: silenzio",  // "Repos : silence"
     "Riposo min.",  // "Repos mini"
     "Riprendi",  // "Reprendre"
     "Riprendi (vuoto)",  // "Reprendre (vide)"
@@ -7540,10 +7626,10 @@ static const char* const kI18n_it[] = {
     "Scuro",  // "Sombre"
     "Volume del tablet",  // "Son de la tablette"
     "Suona prima dell'inizio turno letto nel calendario.",  // "Sonne avant l'ouverture lue dans le calendrier."
-    "Suona all'ora fissa, nei giorni selezionati sopra.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
+    "Suona {avance} prima dell'inizio turno del calendario, mai prima delle {avant} né dopo le {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
+    "Suona all'ora fissa, nei giorni selezionati sotto.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Suona all'ora fissa, solo nei giorni lavorativi.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Suoneria",  // "Sonnerie"
-    "Solo suoneria",  // "Sonnerie seule"
     "Per uscire da un gioco: hub, poi «Esci»",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Uscita aperta! Sali fino in cima.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Sport",  // "Sports"
@@ -7586,6 +7672,7 @@ static const char* const kI18n_it[] = {
     "Tocca la barra in alto durante la partita per il menu di pausa.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tocca per cambiare",  // "Toucher pour changer"
     "Tocca una riga per cambiarne il valore",  // "Toucher une ligne pour changer sa valeur"
+    "Tocca una melodia per ascoltarla.",  // "Toucher une mélodie la fait entendre."
     "Tocca: internaz. 10x10 / inglese 8x8",  // "Touchez : internationales 10×10 ou anglaises 8×8"
     "Tocca l'interruttore per attivarla",  // "Touchez l'interrupteur pour l'armer"
     "Tocca lo schermo o di' «Stop» per fermarla",  // "Touchez l'écran ou dites « Stop » pour arrêter"
@@ -7597,6 +7684,7 @@ static const char* const kI18n_it[] = {
     "Turno %u",  // "Tour %u"
     "Turno %u · tocca a %s",  // "Tour %u · au tour de %s"
     "Ruota il tablet in verticale",  // "Tournez la tablette à la verticale"
+    "Tutti i giorni",  // "Tous les jours"
     "Tutto viene salvato e resta dopo un riavvio.",  // "Tout est enregistré et survit au redémarrage."
     "Chiudi tutto",  // "Tout fermer"
     "Tutta la Top 10 locale, record compreso.",  // "Tout le Top 10 local, meilleur score compris."
@@ -7616,6 +7704,7 @@ static const char* const kI18n_it[] = {
     "Rotolerai ancora.",  // "Tu rouleras encore."
     "Esci dal Labirinto. Ti lascia andare.",  // "Tu sors du dédale. Il te laisse partir."
     "Telecomando TV",  // "Télécommande TV"
+    "Un banner sullo schermo e un annuncio vocale prima di ogni appuntamento.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Uno scudo a ogni nuova stanza",  // "Un bouclier à chaque nouvelle salle"
     "Uno scudo in ogni stanza",  // "Un bouclier à chaque salle"
     "Completa un livello per sbloccare il successivo.",  // "Un niveau se débloque en terminant le précédent."
@@ -7659,23 +7748,30 @@ static const char* const kI18n_it[] = {
     "Tapparella",  // "Volet"
     "Tapparella fermata.",  // "Volet arrêté."
     "Tapparelle",  // "Volets"
-    "Volume costante",  // "Volume constant"
+    "Volume",  // "Volume"
+    "Volume progressivo",  // "Volume progressif"
     "Il tuo colore",  // "Votre couleur"
     "Tu",  // "Vous"
     "Giochi col %s",  // "Vous jouez %s"
     "Giochi col %s",  // "Vous jouez les %s"
+    "Fine settimana",  // "Week-end"
     "Wi-Fi eco",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Zona sinistra / destra = flipper (tieni premuto). In basso al centro = lanciatore.\nScuoti il tablet per spingere la palla — tre volte di troppo di fila ed è TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "agosto",  // "août"
     "comparso %s",  // "apparue %s"
+    "dopo la fine turno",  // "après la fermeture"
     "del Tab",  // "au Tab"
+    "al più tardi",  // "au plus tard"
+    "al più presto",  // "au plus tôt"
     "nessuno",  // "aucun"
+    "prima del turno",  // "avant l'ouverture"
     "aprile",  // "avril"
     "b = palle giocate, MB = multiball attivato.",  // "b = billes jouées, MB = multiball déclenché."
     "domenica",  // "dimanche"
     "dicembre",  // "décembre"
     "in attesa del calendario",  // "en attente du calendrier"
+    "tra due squilli",  // "entre deux sonneries"
     "fulminea",  // "fulgur."
     "febbraio",  // "février"
     "inattiva",  // "inactif"
@@ -7684,6 +7780,7 @@ static const char* const kI18n_it[] = {
     "giovedì",  // "jeudi"
     "luglio",  // "juillet"
     "giugno",  // "juin"
+    "prima dell'appuntamento",  // "le début du rendez-vous"
     "letto %s",  // "lue %s"
     "lunedì",  // "lundi"
     "maggio",  // "mai"
@@ -7696,6 +7793,7 @@ static const char* const kI18n_it[] = {
     "ottobre",  // "octobre"
     "o scuoti il tablet",  // "ou secouez la tablette"
     "passo",  // "passe"
+    "poi si ferma da sola",  // "puis arrêt automatique"
     "rapida",  // "rapide"
     "riposo",  // "repos"
     "capovolto",  // "retournée"
@@ -7741,7 +7839,6 @@ static const char* const kI18n_it[] = {
     "Occhio del Labirinto",  // "Œil du dédale"
     "Caldo",  // "clim|Chaud"
     "Annulla",  // "coup|Annuler"
-    "D",  // "dimanche|D"
     "Cavallo",  // "echecs|Cavalier"
     "Donna",  // "echecs|Dame"
     "Alfiere",  // "echecs|Fou"
@@ -7749,10 +7846,6 @@ static const char* const kI18n_it[] = {
     "Re",  // "echecs|Roi"
     "Torre",  // "echecs|Tour"
     "RETE",  // "energie|RÉSEAU"
-    "G",  // "jeudi|J"
-    "L",  // "lundi|L"
-    "M",  // "mardi|M"
-    "M",  // "mercredi|M"
     "Bassa",  // "nudge|Douce"
     "Normale",  // "nudge|Normale"
     "Molto bassa",  // "nudge|Très douce"
@@ -7764,7 +7857,6 @@ static const char* const kI18n_it[] = {
     "N",  // "pendule|N"
     "Abbandona",  // "plateau|Abandonner"
     "Abbandono",  // "raison|Abandon"
-    "S",  // "samedi|S"
     "C",  // "san|C"
     "D",  // "san|D"
     "A",  // "san|F"
@@ -7775,7 +7867,6 @@ static const char* const kI18n_it[] = {
     "Moderato",  // "uv|Modéré"
     "Molto alto",  // "uv|Très élevé"
     "Alto",  // "uv|Élevé"
-    "V",  // "vendredi|V"
 };
 
 // Türkçe (tr.yaml)
@@ -7860,7 +7951,6 @@ static const char* const kI18n_tr[] = {
     "10 dk",  // "10 min"
     "10,0 kare/sn - refleks şart",  // "10,0 cases/s - réflexes exigés"
     "Son 12 ay",  // "12 derniers mois"
-    "15 dk",  // "15 min"
     "15 dk + 10 sn",  // "15 min + 10 s"
     "1",  // "1er"
     "2 Gün",  // "2 Jours"
@@ -7886,7 +7976,6 @@ static const char* const kI18n_tr[] = {
     "8 konsol — aynı anda yalnız biri",  // "8 consoles — une seule à la fois"
     "8 seviye, 3 can, güçlendirme",  // "8 niveaux, 3 vies, power-ups"
     "8,0 kare/sn",  // "8,0 cases/s"
-    "9 dk",  // "9 min"
     "AÇIK",  // "ACTIF"
     "IŞIKLAR",  // "AMPOULES"
     "GÖRÜNÜM",  // "APPARENCE"
@@ -7927,8 +8016,10 @@ static const char* const kI18n_tr[] = {
     "Demir Yüzük",  // "Anneau de fer"
     "Son konan taşta kırmızı halka",  // "Anneau rouge sur la dernière pierre posée"
     "Doğum günü",  // "Anniv."
-    "Randevu duyur",  // "Annonce des RDV"
-    "Sesli duyuru",  // "Annonce parlée"
+    "Randevu duyurusu",  // "Annonce des rendez-vous"
+    "Uyanınca sesli duyuru",  // "Annonce parlée au réveil"
+    "Duyur",  // "Annoncer avant"
+    "Duyurular",  // "Annonces"
     "Son yarım hamleyi geri alır",  // "Annule le dernier demi-coup"
     "Hamleni ve Tab'ın yanıtını geri alır",  // "Annule votre coup et la réponse du Tab"
     "İptal",  // "Annuler"
@@ -7942,6 +8033,7 @@ static const char* const kI18n_tr[] = {
     "Bir yuvaya dokunmak onu sonraki eşyaya geçirir.",  // "Appuyer sur un emplacement le fait passer à l'objet suivant."
     "Sahip olunan bir eşyaya dokunmak onu fiyatının yarısına geri satar. Satılan eşya teçhizattan da çıkarılır.",  // "Appuyer sur un objet possédé le revend à la moitié de son prix. Un objet revendu est aussi retiré de l'équipement."
     "Mikrofona dokun, sonra konuş…",  // "Appuyez sur le micro puis parlez…"
+    "İlk çalmadan sonra Home Assistant hava durumunu ve planı duyurur.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Gümüş",  // "Argent"
     "Durdur",  // "Arrêter"
     "Sanat",  // "Arts"
@@ -8031,6 +8123,7 @@ static const char* const kI18n_tr[] = {
     "Atari tuğla kırma\n8 seviye · güçlendirme",  // "Casse-briques Atari\n8 niveaux · power-ups"
     "Katedral",  // "Cathédrale"
     "Beyin / LLM",  // "Cerveau / LLM"
+    "Bu ayarlar yalnızca « Mesai başı » modunda geçerlidir (Günler sayfası).",  // "Ces réglages ne servent qu'au mode « Ouverture » (page Jours)."
     "Bu ayarlar sonraki sefer başlarken uygulanır.",  // "Ces réglages s'appliquent au lancement de la prochaine run."
     "Bu ayarlar sonraki soruda geçerli olur",  // "Ces réglages s'appliquent à la prochaine question"
     "Ayarlar otomatik kaydedilir.",  // "Ces réglages sont sauvegardés automatiquement."
@@ -8152,6 +8245,7 @@ static const char* const kI18n_tr[] = {
     "Home Assistant bekleniyor",  // "En attente de Home Assistant"
     "Şarj oluyor",  // "En charge"
     "Çalışıyor",  // "En cours"
+    "Sabit modda yalnızca işaretli günler geçerlidir.",  // "En mode Fixe, seuls les jours cochés comptent."
     "Hareket ediyor",  // "En mouvement"
     "Güneşli",  // "Ensoleillé"
     "%d ile %d %% arası",  // "Entre %d et %d %%"
@@ -8198,14 +8292,17 @@ static const char* const kI18n_tr[] = {
     "IMU hareketleri",  // "Gestes IMU"
     "Hareketler, 50 hamle kuralı, değerlendirme, demo hızı",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Hareketler, kurallar, görünüm",  // "Gestes, règles, affichage"
+    "Rakamları yukarı veya aşağı kaydırın.",  // "Glisser les chiffres vers le haut ou vers le bas."
     "Go 9×9 / 13×13 / 19×19\nÇin sayımı · komi 6,5",  // "Go 9×9 / 13×13 / 19×19\nScore chinois · komi 6,5"
     "Alınan ölü taş: %d siyah, %d beyaz",  // "Groupes morts retirés : %d noirs, %d blancs"
     "Dolu",  // "Grêle"
     "Coğrafya",  // "Géographie"
     "S.D.",  // "H.C."
+    "ALARM SAATİ",  // "HEURE DU RÉVEIL"
     "NEM",  // "HUMIDITÉ"
     "Handikap: %d taş",  // "Handicap : %d pierres"
     "Handikap: yok",  // "Handicap : aucun"
+    "Saat",  // "Heure"
     "Sabit saat",  // "Heure fixe"
     "Saat eşitlenmedi",  // "Heure non synchronisée"
     "Saatler",  // "Heures"
@@ -8253,9 +8350,11 @@ static const char* const kI18n_tr[] = {
     "Oyuncu - Oyuncu",  // "Joueur contre joueur"
     "Gün",  // "Jour"
     "Gün aralık dışı",  // "Jour hors plage"
+    "Takvimde izinli gün: sessiz ya da gün işaretliyse sabit saat.",  // "Jour sans travail au calendrier : silence, ou l'heure fixe si le jour est coché."
     "Bugün",  // "Journée"
     "Günler",  // "Jours"
-    "Günler (yalnız sabit saat)",  // "Jours (heure fixe uniquement)"
+    "Sabit saat günleri",  // "Jours de l'heure fixe"
+    "İzin günleri",  // "Jours de repos"
     "Tem",  // "Juil"
     "Haz",  // "Juin"
     "Beyaz için komi 0,5",  // "Komi 0,5 pour Blanc"
@@ -8324,6 +8423,8 @@ static const char* const kI18n_tr[] = {
     "Işık",  // "Lumière"
     "Işıklar",  // "Lumières"
     "Pzt",  // "Lun"
+    "Pazartesi-Cumartesi",  // "Lundi-Samedi"
+    "Pazartesi-Cuma",  // "Lundi-Vendredi"
     "ŞİMDİ",  // "MAINTENANT"
     "EV",  // "MAISON"
     "Ekranı yenile",  // "MAJ Écran"
@@ -8362,12 +8463,14 @@ static const char* const kI18n_tr[] = {
     "Antrenman modu",  // "Mode entraînement"
     "Orta",  // "Modérée"
     "Aylar",  // "Mois"
+    "Ayarlanan ses düzeyine yavaşça yükselir.",  // "Monte doucement jusqu'au volume réglé."
     "Hareket",  // "Mouvement"
     "Orta",  // "Moyen"
     "Ortalama",  // "Moyenne"
     "Orta + zor",  // "Moyennes + difficiles"
     "Düz duvar",  // "Mur plein"
     "BELLEK",  // "MÉMOIRE"
+    "Melodi",  // "Mélodie"
     "Hava durumu",  // "Météo"
     "Aynı mod, aynı ayarlar",  // "Même mode, mêmes réglages"
     "Aynı ayarlar",  // "Mêmes réglages"
@@ -8433,6 +8536,7 @@ static const char* const kI18n_tr[] = {
     "DURAKLATILDI",  // "PAUSE"
     "Ofis PC",  // "PC Bureau"
     "KONUM",  // "POSITION"
+    "SONRAKİ RANDEVU",  // "PROCHAIN RENDEZ-VOUS"
     "SONRAKİ ALARM",  // "PROCHAINE SONNERIE"
     "TERFİ",  // "PROMOTION"
     "TAHMİN",  // "PRÉVU"
@@ -8498,7 +8602,6 @@ static const char* const kI18n_tr[] = {
     "Oyundaki esirler: Siyah %u, Beyaz %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Olasılık",  // "Probabilité"
     "Bugün üretilen",  // "Produit aujourd'hui"
-    "Kademeli",  // "Progressif"
     "Beraberlik öner",  // "Proposer nulle"
     "Evde",  // "Présent"
     "Dünkü %d:%02d tahmini",  // "Prévisions d'hier %d h %02d"
@@ -8517,8 +8620,6 @@ static const char* const kI18n_tr[] = {
     "Oyundan çık",  // "Quitter le jeu"
     "Retro salon yarışması\n1-6 takım · Fransızca",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Randevu",  // "RDV"
-    "Randevu ön.",  // "RDV avant"
-    "Sessiz randevu",  // "RDV silencieux"
     "REKOR %s",  // "RECORD %s"
     "Dokununca ekranı aç",  // "Rallumer l'écran d'une tape"
     "«Okay Nabu» ile ekranı aç",  // "Rallumer l'écran à « Okay Nabu »"
@@ -8551,8 +8652,6 @@ static const char* const kI18n_tr[] = {
     "Sayaçları sıfırla",  // "Remettre les compteurs à zéro"
     "İstatistikleri sıfırla",  // "Remettre les statistiques à zéro"
     "İstatistikler sıfırlansın mı?",  // "Remettre les stats à zéro ?"
-    "İzin: sabit saat",  // "Repos : heure fixe"
-    "İzin: sessiz",  // "Repos : silence"
     "Min. izin",  // "Repos mini"
     "Devam",  // "Reprendre"
     "Devam (boş)",  // "Reprendre (vide)"
@@ -8650,10 +8749,10 @@ static const char* const kI18n_tr[] = {
     "Koyu",  // "Sombre"
     "Tablet ses düzeyi",  // "Son de la tablette"
     "Takvimden okunan mesai başından önce çalar.",  // "Sonne avant l'ouverture lue dans le calendrier."
-    "Yukarıda işaretli günlerde sabit saatte çalar.",  // "Sonne à l'heure fixe, les jours cochés ci-dessus."
+    "Takvimdeki mesai başından {avance} önce çalar; asla {avant} öncesinde ya da {apres} sonrasında değil.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
+    "Aşağıda işaretli günlerde sabit saatte çalar.",  // "Sonne à l'heure fixe, les jours cochés ci-dessous."
     "Yalnızca çalışılan günlerde sabit saatte çalar.",  // "Sonne à l'heure fixe, uniquement les jours travaillés."
     "Zil sesi",  // "Sonnerie"
-    "Yalnız zil",  // "Sonnerie seule"
     "Oyundan çıkış: merkez, sonra “Çık”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Çıkış açık! En tepeye tırman.",  // "Sortie ouverte ! Grimpe tout en haut."
     "Spor",  // "Sports"
@@ -8696,6 +8795,7 @@ static const char* const kI18n_tr[] = {
     "Oyun sırasında üst banda dokunmak duraklatma menüsünü açar.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Değiştirmek için dokun",  // "Toucher pour changer"
     "Değerini değiştirmek için bir satıra dokun",  // "Toucher une ligne pour changer sa valeur"
+    "Dinlemek için bir melodiye dokunun.",  // "Toucher une mélodie la fait entendre."
     "Dokun: uluslararası 10x10 / İngiliz 8x8",  // "Touchez : internationales 10×10 ou anglaises 8×8"
     "Kurmak için anahtara dokun",  // "Touchez l'interrupteur pour l'armer"
     "Durdurmak için ekrana dokun ya da “Stop” de",  // "Touchez l'écran ou dites « Stop » pour arrêter"
@@ -8707,6 +8807,7 @@ static const char* const kI18n_tr[] = {
     "Tur %u",  // "Tour %u"
     "Tur %u · sıra: %s",  // "Tour %u · au tour de %s"
     "Tableti dik çevir",  // "Tournez la tablette à la verticale"
+    "Her gün",  // "Tous les jours"
     "Her şey kaydedilir, yeniden başlatmada korunur.",  // "Tout est enregistré et survit au redémarrage."
     "Tümünü kapat",  // "Tout fermer"
     "Yerel ilk 10'un tamamı, en iyi skor dahil.",  // "Tout le Top 10 local, meilleur score compris."
@@ -8726,6 +8827,7 @@ static const char* const kI18n_tr[] = {
     "Yine yuvarlanacaksın.",  // "Tu rouleras encore."
     "Labirentten çıkıyorsun. Gitmene izin veriyor.",  // "Tu sors du dédale. Il te laisse partir."
     "TV kumandası",  // "Télécommande TV"
+    "Her randevudan önce ekranda bir bant ve sesli bir duyuru.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Her yeni odada bir kalkan",  // "Un bouclier à chaque nouvelle salle"
     "Her odada bir kalkan",  // "Un bouclier à chaque salle"
     "Bir seviye, öncekini bitirince açılır.",  // "Un niveau se débloque en terminant le précédent."
@@ -8769,23 +8871,30 @@ static const char* const kI18n_tr[] = {
     "Panjur",  // "Volet"
     "Panjur durdu.",  // "Volet arrêté."
     "Panjurlar",  // "Volets"
-    "Sabit ses",  // "Volume constant"
+    "Ses düzeyi",  // "Volume"
+    "Kademeli ses",  // "Volume progressif"
     "Rengin",  // "Votre couleur"
     "Sen",  // "Vous"
     "Oynadığın taş: %s",  // "Vous jouez %s"
     "Sen oynuyorsun: %s",  // "Vous jouez les %s"
+    "Hafta sonu",  // "Week-end"
     "Eko Wi-Fi",  // "Wi-Fi éco"
     "Zikzak",  // "Zigzag"
     "Sol bölge / sağ bölge = flipperler (basılı tut). Alt orta = fırlatıcı.\nBilyeyi itmek için tableti salla — üst üste üç kez abartırsan TILT olur.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
     "Ağustos",  // "août"
     "çıktı %s",  // "apparue %s"
+    "mesai bitiminden sonra",  // "après la fermeture"
     "Tab'da",  // "au Tab"
+    "en geç",  // "au plus tard"
+    "en erken",  // "au plus tôt"
     "yok",  // "aucun"
+    "mesai başından önce",  // "avant l'ouverture"
     "Nisan",  // "avril"
     "b = oynanan bilye, MB = multiball tetiklendi.",  // "b = billes jouées, MB = multiball déclenché."
     "Pazar",  // "dimanche"
     "Aralık",  // "décembre"
     "takvim bekleniyor",  // "en attente du calendrier"
+    "iki çalma arasında",  // "entre deux sonneries"
     "şimşek",  // "fulgur."
     "Şubat",  // "février"
     "kapalı",  // "inactif"
@@ -8794,6 +8903,7 @@ static const char* const kI18n_tr[] = {
     "Perşembe",  // "jeudi"
     "Temmuz",  // "juillet"
     "Haziran",  // "juin"
+    "randevudan önce",  // "le début du rendez-vous"
     "okundu %s",  // "lue %s"
     "Pazartesi",  // "lundi"
     "Mayıs",  // "mai"
@@ -8806,6 +8916,7 @@ static const char* const kI18n_tr[] = {
     "Ekim",  // "octobre"
     "ya da tableti salla",  // "ou secouez la tablette"
     "pas",  // "passe"
+    "sonra kendiliğinden durur",  // "puis arrêt automatique"
     "hızlı",  // "rapide"
     "izin",  // "repos"
     "ters",  // "retournée"
@@ -8851,7 +8962,6 @@ static const char* const kI18n_tr[] = {
     "Labirentin Gözü",  // "Œil du dédale"
     "Isıtma",  // "clim|Chaud"
     "Geri al",  // "coup|Annuler"
-    "P",  // "dimanche|D"
     "At",  // "echecs|Cavalier"
     "Vezir",  // "echecs|Dame"
     "Fil",  // "echecs|Fou"
@@ -8859,10 +8969,6 @@ static const char* const kI18n_tr[] = {
     "Şah",  // "echecs|Roi"
     "Kale",  // "echecs|Tour"
     "ŞEBEKE",  // "energie|RÉSEAU"
-    "P",  // "jeudi|J"
-    "P",  // "lundi|L"
-    "S",  // "mardi|M"
-    "Ç",  // "mercredi|M"
     "Düşük",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
     "Çok düşük",  // "nudge|Très douce"
@@ -8874,7 +8980,6 @@ static const char* const kI18n_tr[] = {
     "S",  // "pendule|N"
     "Pes et",  // "plateau|Abandonner"
     "Pes",  // "raison|Abandon"
-    "C",  // "samedi|S"
     "A",  // "san|C"
     "V",  // "san|D"
     "F",  // "san|F"
@@ -8885,7 +8990,6 @@ static const char* const kI18n_tr[] = {
     "Orta",  // "uv|Modéré"
     "Çok yüksek",  // "uv|Très élevé"
     "Yüksek",  // "uv|Élevé"
-    "C",  // "vendredi|V"
 };
 
 static const char* const* const kI18nTables[] = {nullptr, kI18n_en, kI18n_de, kI18n_nl, kI18n_es, kI18n_it, kI18n_tr};

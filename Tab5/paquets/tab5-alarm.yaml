@@ -436,71 +436,97 @@ script:
       - script.execute: tab5_alarm_sync_ui
 
   # ─── Repeinture du popup + de la pastille d'état ──────────────────────────
-  # La structure de pointeurs est reconstruite à chaque appel (et non `static`
-  # comme tab5_cal_render) : ce script tourne aussi au boot, avant que LVGL n'ait
-  # créé les widgets, et un `static` figerait des nullptr pour toute la session.
-  # Coût réel : ~40 écritures de pointeur, sur un chemin froid (changement de
-  # réglage ou ouverture de fenêtre), jamais dans une boucle.
+  # Les pointeurs du popup sont posés une fois, à sa première ouverture
+  # (tab5_alarm_open → g_reveil_ui) : avant, alarm_render_settings() ne fait rien, la
+  # pastille de la barre d'état si (ce script tourne aussi au boot, avant LVGL :
+  # alarm_render_status_icon ignore un pointeur nul).
   - id: tab5_alarm_sync_ui
     mode: restart
     then:
       - lambda: |-
-          if (id(lbl_alarm_time) == nullptr) return;   // LVGL pas encore construit
           auto t = id(sntp_time).now();
           const time_t now = t.is_valid() ? (time_t) t.timestamp : 0;
-
-          AlarmSettingsUI ui{};
-          ui.btn_enable    = id(btn_alarm_enable);
-          ui.icon_enable   = id(icon_alarm_enable);
-          ui.lbl_enable    = id(lbl_alarm_enable);
-          ui.lbl_time      = id(lbl_alarm_time);
-          ui.day_btn[0] = id(btn_alarm_day_0); ui.day_lbl[0] = id(lbl_alarm_day_0);
-          ui.day_btn[1] = id(btn_alarm_day_1); ui.day_lbl[1] = id(lbl_alarm_day_1);
-          ui.day_btn[2] = id(btn_alarm_day_2); ui.day_lbl[2] = id(lbl_alarm_day_2);
-          ui.day_btn[3] = id(btn_alarm_day_3); ui.day_lbl[3] = id(lbl_alarm_day_3);
-          ui.day_btn[4] = id(btn_alarm_day_4); ui.day_lbl[4] = id(lbl_alarm_day_4);
-          ui.day_btn[5] = id(btn_alarm_day_5); ui.day_lbl[5] = id(lbl_alarm_day_5);
-          ui.day_btn[6] = id(btn_alarm_day_6); ui.day_lbl[6] = id(lbl_alarm_day_6);
-          ui.mode_btn[0]   = id(btn_alarm_mode_0);
-          ui.mode_btn[1]   = id(btn_alarm_mode_1);
-          ui.mode_btn[2]   = id(btn_alarm_mode_2);
-          ui.lbl_mode_hint = id(lbl_alarm_mode_hint);
-          ui.lbl_lead      = id(lbl_alarm_lead);
-          ui.lbl_early     = id(lbl_alarm_early);
-          ui.lbl_late      = id(lbl_alarm_late);
-          ui.lbl_rest      = id(lbl_alarm_rest);
-          ui.btn_repos     = id(btn_alarm_repos);
-          ui.lbl_repos     = id(lbl_alarm_repos);
-          ui.lbl_next      = id(lbl_alarm_next);
-          ui.lbl_next_sub  = id(lbl_alarm_next_sub);
-          ui.lbl_melody    = id(lbl_alarm_melody);
-          ui.lbl_vol       = id(lbl_alarm_vol);
-          ui.slider_vol    = id(slider_alarm_vol);
-          ui.btn_cresc     = id(btn_alarm_cresc);
-          ui.lbl_cresc     = id(lbl_alarm_cresc);
-          ui.lbl_snooze    = id(lbl_alarm_snooze);
-          ui.lbl_maxring   = id(lbl_alarm_maxring);
-          ui.btn_tts       = id(btn_alarm_tts);
-          ui.lbl_tts       = id(lbl_alarm_tts);
-          ui.btn_rdv       = id(btn_alarm_rdv);
-          ui.lbl_rdv       = id(lbl_alarm_rdv);
-          ui.lbl_rdv_lead  = id(lbl_alarm_rdv_lead);
-          ui.lbl_rdv_next  = id(lbl_alarm_rdv_next);
-
-          alarm_render_settings(ui, now, id(tab5_alarm_crescendo).state, id(tab5_alarm_tts).state,
+          alarm_render_settings(now, id(tab5_alarm_crescendo).state, id(tab5_alarm_tts).state,
                                 id(tab5_alarm_rdv_on).state);
           alarm_render_status_icon(id(icon_alarm_status), now);
 
   # ─── Ouverture / fermeture du popup de réglages ───────────────────────────
+  # Toujours sur la page Heure (celle de la question « à quelle heure ça sonne »).
   - id: tab5_alarm_open
     mode: restart
     then:
+      - lambda: |-
+          ReveilUI& u = g_reveil_ui;
+          if (u.popup == nullptr) {
+            u.page[REVEIL_PAGE_HEURE] = id(alarm_page_heure);
+            u.page[REVEIL_PAGE_JOURS] = id(alarm_page_jours);
+            u.page[REVEIL_PAGE_OUVERTURE] = id(alarm_page_ouverture);
+            u.page[REVEIL_PAGE_SONNERIE] = id(alarm_page_sonnerie);
+            u.page[REVEIL_PAGE_ANNONCES] = id(alarm_page_annonces);
+            u.onglet[REVEIL_PAGE_HEURE] = id(alarm_onglet_heure);
+            u.onglet[REVEIL_PAGE_JOURS] = id(alarm_onglet_jours);
+            u.onglet[REVEIL_PAGE_OUVERTURE] = id(alarm_onglet_ouverture);
+            u.onglet[REVEIL_PAGE_SONNERIE] = id(alarm_onglet_sonnerie);
+            u.onglet[REVEIL_PAGE_ANNONCES] = id(alarm_onglet_annonces);
+            u.rouleau[REVEIL_ROULEAU_HEURE] = id(roller_alarm_heure)->obj;
+            u.rouleau[REVEIL_ROULEAU_MINUTES] = id(roller_alarm_minutes)->obj;
+            u.rouleau[REVEIL_ROULEAU_PAS_AVANT] = id(roller_alarm_pas_avant)->obj;
+            u.rouleau[REVEIL_ROULEAU_PAS_APRES] = id(roller_alarm_pas_apres)->obj;
+            u.rouleau[REVEIL_ROULEAU_DELAI] = id(roller_alarm_delai)->obj;
+            u.rouleau[REVEIL_ROULEAU_REPOS] = id(roller_alarm_repos)->obj;
+            u.rouleau[REVEIL_ROULEAU_REPETITION] = id(roller_alarm_repetition)->obj;
+            u.rouleau[REVEIL_ROULEAU_DUREE_MAX] = id(roller_alarm_duree_max)->obj;
+            u.rouleau[REVEIL_ROULEAU_RDV_AVANT] = id(roller_alarm_rdv_avant)->obj;
+            u.btn_enable = id(btn_alarm_enable);
+            u.icon_enable = id(icon_alarm_enable);
+            u.lbl_enable = id(lbl_alarm_enable);
+            u.lbl_next = id(lbl_alarm_next);
+            u.lbl_next_sub = id(lbl_alarm_next_sub);
+            u.mode[AlarmMode::FIXE] = id(btn_alarm_mode_0);
+            u.mode[AlarmMode::TRAVAIL] = id(btn_alarm_mode_1);
+            u.mode[AlarmMode::EMBAUCHE] = id(btn_alarm_mode_2);
+            u.lbl_mode_hint = id(lbl_alarm_mode_hint);
+            u.day_btn[0] = id(btn_alarm_day_0); u.day_lbl[0] = id(lbl_alarm_day_0);
+            u.day_btn[1] = id(btn_alarm_day_1); u.day_lbl[1] = id(lbl_alarm_day_1);
+            u.day_btn[2] = id(btn_alarm_day_2); u.day_lbl[2] = id(lbl_alarm_day_2);
+            u.day_btn[3] = id(btn_alarm_day_3); u.day_lbl[3] = id(lbl_alarm_day_3);
+            u.day_btn[4] = id(btn_alarm_day_4); u.day_lbl[4] = id(lbl_alarm_day_4);
+            u.day_btn[5] = id(btn_alarm_day_5); u.day_lbl[5] = id(lbl_alarm_day_5);
+            u.day_btn[6] = id(btn_alarm_day_6); u.day_lbl[6] = id(lbl_alarm_day_6);
+            u.prereglage[0] = id(btn_alarm_jours_0);
+            u.prereglage[1] = id(btn_alarm_jours_1);
+            u.prereglage[2] = id(btn_alarm_jours_2);
+            u.prereglage[3] = id(btn_alarm_jours_3);
+            u.repos[0] = id(btn_alarm_repos_silence);
+            u.repos[1] = id(btn_alarm_repos_fixe);
+            u.lbl_repos_hint = id(lbl_alarm_repos_hint);
+            u.lbl_ouverture_hint = id(lbl_alarm_ouverture_hint);
+            u.melodie[0] = id(btn_alarm_melodie_0);
+            u.melodie[1] = id(btn_alarm_melodie_1);
+            u.melodie[2] = id(btn_alarm_melodie_2);
+            u.melodie[3] = id(btn_alarm_melodie_3);
+            u.slider_vol = id(slider_alarm_vol);
+            u.lbl_vol = id(lbl_alarm_vol);
+            // Oui / Non : 0 = Oui, 1 = Non (alarm_render_settings).
+            u.progressif[0] = id(btn_alarm_progressif_oui);
+            u.progressif[1] = id(btn_alarm_progressif_non);
+            u.tts[0] = id(btn_alarm_tts_oui);
+            u.tts[1] = id(btn_alarm_tts_non);
+            u.rdv[0] = id(btn_alarm_rdv_oui);
+            u.rdv[1] = id(btn_alarm_rdv_non);
+            u.lbl_rdv_next = id(lbl_alarm_rdv_next);
+            // En dernier : alarm_render_settings() ne fait rien tant que popup est nul.
+            u.popup = id(alarm_popup);
+            reveil_preparer();
+          }
+      # Peint avant d'ouvrir : aucune image avec l'état d'une ouverture précédente.
       - script.execute: tab5_alarm_refresh
       - lambda: |-
           // Ouverture éventuellement PROGRAMMÉE (select HA « Aller à l'écran ») :
           // sans ui_mark_activity(), le retour auto à l'inactivité referme la
           // fenêtre au tick suivant. Piège documenté dans tab5_custom.h.
           ui_mark_activity();
+          reveil_afficher_page(REVEIL_PAGE_HEURE);
           animate_popup_open(id(alarm_popup));
 
   - id: tab5_alarm_close
@@ -509,23 +535,37 @@ script:
       - lambda: 'animate_popup_close(id(alarm_popup));'
 
   # ─── Réglages depuis la dalle ─────────────────────────────────────────────
-  # Décalage d'une des trois heures (± heures, ± minutes, ± 15 min) :
-  # cible 0 = heure fixe, 1 = « jamais avant », 2 = « jamais après ». Le modulo
-  # 1440 fait boucler proprement 23:55 -> 00:00 sans cas particulier.
-  # `make_call().set_time().perform()` est exactement ce que fait l'action
-  # `datetime.time.set` (TimeSetAction::play), qui exige un id fixe.
-  - id: tab5_alarm_shift
-    mode: single
+  # Un rouleau du popup s'est arrêté sur l'option `index` (rouleau.yaml, `quoi` =
+  # ReveilRouleau d'alarm_render.h) : sa valeur (reveil_rouleau_valeur, qui connaît les
+  # options écrites) va dans l'entité. Heures et minutes changent l'heure fixe en gardant
+  # l'autre moitié. `make_call().set_time().perform()` est exactement ce que fait
+  # l'action `datetime.time.set` (TimeSetAction::play), qui exige un id fixe ; de même
+  # `make_call().set_value()` pour `number.set`. Mis en file : deux rouleaux lâchés coup
+  # sur coup gardent chacun leur réglage.
+  - id: tab5_alarm_rouleau
+    mode: queued
     parameters:
-      cible: int
-      delta: int
+      quoi: int
+      index: int
     then:
       - lambda: |-
-          auto* e = cible == 1 ? id(tab5_alarm_early) : cible == 2 ? id(tab5_alarm_late) : id(tab5_alarm_time);
-          const int defaut = cible == 1 ? 5 * 60 : cible == 2 ? 9 * 60 : 7 * 60;
-          const int base = e->has_state() ? (e->hour * 60 + e->minute) : defaut;
-          const int m = ((base + delta) % 1440 + 1440) % 1440;
-          e->make_call().set_time(m / 60, m % 60, 0).perform();
+          const int v = reveil_rouleau_valeur(quoi, index);
+          if (v < 0) return;
+          auto heure = [](auto* e, int m) { e->make_call().set_time(m / 60, m % 60, 0).perform(); };
+          auto nombre = [](auto* n, int val) { n->make_call().set_value((float) val).perform(); };
+          const int fixe = g_alarm_cfg.fixed_min;
+          switch (quoi) {
+            case REVEIL_ROULEAU_HEURE: heure(id(tab5_alarm_time), v * 60 + fixe % 60); break;
+            case REVEIL_ROULEAU_MINUTES: heure(id(tab5_alarm_time), (fixe / 60) * 60 + v); break;
+            case REVEIL_ROULEAU_PAS_AVANT: heure(id(tab5_alarm_early), v); break;
+            case REVEIL_ROULEAU_PAS_APRES: heure(id(tab5_alarm_late), v); break;
+            case REVEIL_ROULEAU_DELAI: nombre(id(tab5_alarm_lead), v); break;
+            case REVEIL_ROULEAU_REPOS: nombre(id(tab5_alarm_rest_hours), v); break;
+            case REVEIL_ROULEAU_REPETITION: nombre(id(tab5_alarm_snooze_min), v); break;
+            case REVEIL_ROULEAU_DUREE_MAX: nombre(id(tab5_alarm_max_ring), v); break;
+            case REVEIL_ROULEAU_RDV_AVANT: nombre(id(tab5_rdv_lead), v); break;
+            default: break;
+          }
 
   # Bascule d'un jour de la semaine (0 = lundi). Le select de préréglages est
   # remis à jour par tab5_alarm_refresh, qui y écrit « Personnalisé » si besoin.
@@ -539,15 +579,15 @@ script:
           id(alarm_days_mask) ^= (uint8_t) (1 << day);
       - script.execute: tab5_alarm_refresh
 
-  # Mélodie suivante / précédente (les deux chevrons du popup).
-  - id: tab5_alarm_cycle_melody
+  # Mélodie choisie sur la page Sonnerie (index du select HA « Réveil : sonnerie »).
+  - id: tab5_alarm_melodie
     mode: single
     parameters:
-      delta: int
+      index: int
     then:
       - select.set_index:
           id: tab5_alarm_melody
-          index: !lambda 'return (size_t) ((g_alarm_cfg.melody + delta + ALARM_MELODY_COUNT) % ALARM_MELODY_COUNT);'
+          index: !lambda 'return (size_t) ((index % ALARM_MELODY_COUNT + ALARM_MELODY_COUNT) % ALARM_MELODY_COUNT);'
       # Écoute immédiate du choix : régler une sonnerie sans l'entendre n'a
       # aucun sens. Sans effet si le réveil est déjà en train de sonner.
       - if:
@@ -1005,7 +1045,7 @@ interval:
   # pour libérer le bus, cet invariant repose sur une chaîne de redémarrages bien
   # placés — et il suffit d'un chemin interrompu pour laisser le micro éteint
   # sans que rien ne le signale (`tab5_alarm_preview` est en `mode: restart` :
-  # un second tap sur les chevrons tue l'instance en cours avant sa restauration).
+  # un second tap sur une mélodie tue l'instance en cours avant sa restauration).
   # Plutôt que de fiabiliser chaque appelant un par un, on réconcilie ici.
   # Toutes les conditions « quelque chose est en train de jouer » sont testées :
   # ce filet ne doit JAMAIS reprendre le bus à un son en cours.

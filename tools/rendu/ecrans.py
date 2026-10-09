@@ -536,7 +536,18 @@ PIECES_OCCUPEES = sorted(r for r, p in PIECES.items() if p.tuiles)
 NAV_BUREAU = Toucher(*roue_choix_centres(*CARTE_CENTRALE, ROUE_NAVIGATION, NAV_PIECES, 1 + len(PIECES_OCCUPEES))
                      [1 + PIECES_OCCUPEES.index(PIECE_CLIMAT)])
 
-REVEIL_TESTER = (550, 641)
+# Popup Réveil (alarm_popup.yaml), cinq pages depuis le 09/10/2026, sur le modèle des
+# Réglages : noms des pages de 184 × 44 à x 196 + 190 × i de la carte modale (posée à
+# 15 px des bords), sur la ligne du titre ; pages à y 72 de la carte, cartes à x 24
+# (et 637). « Tester » : 360 × 100 à (16, 482) de la carte de droite de la page Heure.
+REVEIL_PAGES = {"heure": (303, 41), "jours": (493, 41), "ouverture": (683, 41),
+                "sonnerie": (873, 41), "annonces": (1063, 41)}
+REVEIL_TESTER = (848, 619)
+# Geste vers la gauche sur la page Jours, parti du préréglage « Week-end » (286 × 60 à
+# (899, 302) de la carte, Lundi-Vendredi par défaut) : la page suivante (Ouverture), et
+# le préréglage ne se déclenche pas au relâché (« reveil-jours », capturé ensuite, montre
+# toujours « Lundi-Vendredi »).
+REVEIL_GLISSER_DEPUIS_UN_BOUTON = Glisser(1150, 419, 550, 419, dans_popup=True)
 SONNERIE_ARRETER = (440, 540)
 CAL_JOUR_18 = (642, 342)      # cellule du jeudi 18 (rangée 2, colonne 3)
 # Carte GESTION de la console (page Système des Réglages depuis le 08/10/2026 : carte de
@@ -881,8 +892,14 @@ ECRANS: tuple[Ecran, ...] = (
           (Long(*CONSIGNE_CLIM), Toucher(*LIGNES_REGLABLES[0]))),
 
     # --- Fenêtres ---------------------------------------------------------------------
-    # Réveil : appui long sur les heures (lot A ; les minutes l'ouvrent aussi).
+    # Réveil : appui long sur les heures (lot A ; les minutes l'ouvrent aussi), toujours
+    # sur la page Heure ; les autres pages par leur nom en haut, Ouverture par un geste.
     Ecran("reveil", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Long(*HEURES))),
+    Ecran("reveil-ouverture", (Long(*HEURES), Toucher(*REVEIL_PAGES["jours"]), REVEIL_GLISSER_DEPUIS_UN_BOUTON)),
+    Ecran("reveil-jours", (Long(*HEURES), Toucher(*REVEIL_PAGES["jours"]))),
+    Ecran("reveil-reglages-sonnerie", (Long(*HEURES), Toucher(*REVEIL_PAGES["sonnerie"]))),
+    Ecran("reveil-annonces", (Service("tab5_maj_rdv_prochains", (("payload", RDV),)), Long(*HEURES),
+                              Toucher(*REVEIL_PAGES["annonces"]))),
     Ecran("reveil-sonnerie", (Long(*HEURES), Toucher(*REVEIL_TESTER, apres=1.5)),
           (Toucher(*SONNERIE_ARRETER),)),
     Ecran("assistant", (Long(*MICRO),)),
