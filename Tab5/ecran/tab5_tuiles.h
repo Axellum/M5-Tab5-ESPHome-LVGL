@@ -122,6 +122,15 @@ void tuiles_brancher_titres();
 // courante, ou de la plus proche qui a des appareils ; titre de la pièce dans la carte
 // centrale ; en sortant, la météo de la page courante.
 void tuiles_mode_ha(bool actif);
+// Roue de navigation (ADR-0042, tab5_roue_navigation.cpp) : le mode HA sur la pièce R du
+// blueprint (sa page, ses cartes, le titre de la carte centrale). Faux si elle n'a aucun
+// appareil.
+bool tuiles_aller_piece(int r);
+// Écrans Lumières et Volet (Ecran::LUMIERES, Ecran::VOLET, ADR-0042) : une tuile en ouvre-t-elle
+// le popup (ecran_sans_zone, tab5_zones.cpp) ; l'ouvrir (registre, tab5-navigation.yaml) —
+// la pièce de la page affichée d'abord, puis les pièces dans l'ordre du blueprint.
+bool tuiles_ecran_disponible(Ecran e);
+void tuiles_ecran_ouvrir(Ecran e);
 
 // Interrupteur « Tab5 Appareils sur la météo » (tab5-ha-controls.yaml, 05/10/2026) :
 // éteint, les prévisions du mode météo ne montrent plus les appareils des pièces (ni

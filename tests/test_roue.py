@@ -461,25 +461,28 @@ def test_widgets_et_leurs_pointeurs():
     assert re.findall(r"file: roue_bouton\.yaml, vars: \{ n: (\d) \}", yaml) == [str(i) for i in range(n)]
     assert re.findall(r"file: roue_choix\.yaml, vars: \{ n: (\d) \}", yaml) == [str(j) for j in range(m)]
     legendes = re.findall(r"file: roue_legende\.yaml, vars: \{ id: (\w+) \}", yaml)
-    assert legendes == [f"roue_choix_{j}_legende" for j in range(m)] + ["roue_lien_0", "roue_lien_1"]
+    # Un mot par choix, puis un par bouton du premier anneau (les liens ; tous dans la roue
+    # de navigation, ADR-0042).
+    assert legendes == [f"roue_choix_{j}_legende" for j in range(m)] + [f"roue_bouton_{i}_legende" for i in range(n)]
     # Les pointeurs sont posés par tab5-roue.yaml (sorti de tab5-tuiles.yaml, lot L7) ;
     # boutons et choix par deux aides, une ligne par N, dans l'ordre des champs.
     pose = _lire("Tab5", "paquets", "tab5-roue.yaml")
     attendus = [("fond", "roue_actions"), ("bande[0]", "roue_bande_0"), ("bande[1]", "roue_bande_1"),
                 ("jauge", "roue_jauge"), ("moyeu", "roue_moyeu"), ("moyeu_icone", "roue_moyeu_icone"),
                 ("moyeu_valeur", "roue_moyeu_valeur"), ("nom", "roue_nom"),
-                ("lien_legende[0]", "roue_lien_0"), ("lien_legende[1]", "roue_lien_1")]
+                ("carte_centrale", "central_card")]
     for champ, wid in attendus:
         assert f"roue.{champ} = id({wid});" in pose, champ
-    aide_bouton = pose.split("const auto bouton = [&roue](int n, auto* b, auto* icone, auto* point) {", 1)[1]
+    aide_bouton = pose.split("const auto bouton = [&roue](int n, auto* b, auto* icone, auto* point, auto* legende) {",
+                             1)[1]
     assert re.findall(r"roue\.(\w+)\[n\] = (\w+);", aide_bouton.split("};", 1)[0]) == [
-        ("bouton", "b"), ("icone", "icone"), ("point", "point")]
+        ("bouton", "b"), ("icone", "icone"), ("point", "point"), ("legende", "legende")]
     aide_choix = pose.split("const auto choix = [&roue](int n, auto* c, auto* icone, auto* texte, auto* legende) {", 1)[1]
     assert re.findall(r"roue\.(\w+)\[n\] = (\w+);", aide_choix.split("};", 1)[0]) == [
         ("choix", "c"), ("choix_icone", "icone"), ("choix_texte", "texte"), ("choix_legende", "legende")]
     for i in range(n):
         assert (f"bouton({i}, id(roue_bouton_{i}), id(roue_bouton_{i}_icone), "
-                f"id(roue_bouton_{i}_point));") in pose, i
+                f"id(roue_bouton_{i}_point), id(roue_bouton_{i}_legende));") in pose, i
     for j in range(m):
         assert (f"choix({j}, id(roue_choix_{j}), id(roue_choix_{j}_icone), id(roue_choix_{j}_texte), "
                 f"id(roue_choix_{j}_legende));") in pose, j
