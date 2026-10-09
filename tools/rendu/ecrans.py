@@ -211,7 +211,10 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 # Rangée sous l'horloge (ADR-0031, zone btn_rangee) : court, ligne suivante ; long sur la
 # ligne des plantes, Plantes.
 SOUS_HORLOGE = (640, 270)
-SERRE = (1172, 158)           # court : Arcade
+# Seconde température (btn_serre_games) : court, le contenu suivant de la zone à gauche de
+# l'horloge (ADR-0051 : vocal, puis le graphique des prévisions ; l'Arcade avant le
+# 10/10/2026, désormais par le tap du bouton manette, BOUTON_TV) ; long, son historique.
+SERRE = (1172, 158)
 # Température du salon (btn_reglables_liste, climate_card.yaml : carte en 855, 110, zone
 # 4..196 × 31..95, centre 955, 173) : court, la roue de la clim (ADR-0048, ancrée plus bas) ;
 # sans réglages reçus pour la clim (celle du blueprint avant « climr »), le carrousel des
@@ -742,8 +745,8 @@ def _menu(y: int, x: int = 640) -> Toucher:
 
 
 def _arcade(jeu: str, *etapes) -> tuple:
-    """Accueil → sélecteur Arcade → console `jeu` → étapes."""
-    return (Toucher(*SERRE, apres=1.0), Toucher(*CARTES[jeu], apres=1.2)) + etapes
+    """Accueil → sélecteur Arcade (tap du bouton manette, « auto ») → console `jeu` → étapes."""
+    return (Toucher(*BOUTON_TV, apres=1.0), Toucher(*CARTES[jeu], apres=1.2)) + etapes
 
 
 def _jeu(nom: str, jeu: str, etapes: tuple = (), fermer: tuple = (), portrait: bool = False,
@@ -878,6 +881,13 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-nabu-gelule",
           (Choisir("Thème", THEME_CADRE_GELULE),) + _nabu(NABU_TROIS_LIGNES) + (Toucher(*HEURES),),
           NABU_DE_LA_DEMO + (Choisir("Thème", THEME_PAR_DEFAUT),)),
+    # Zone à gauche de l'horloge (ADR-0051) : le tap sur la seconde température passe du
+    # vocal au graphique des 15 heures de la démo (cycle par défaut : vocal, graphique) ;
+    # `fermer` revient au vocal (le choix est gardé en NVS). Puis le même graphique dans le
+    # thème au cadre le plus arrondi (gélule).
+    Ecran("accueil-zone-graphique", (Toucher(*SERRE),), (Toucher(*SERRE),)),
+    Ecran("accueil-zone-graphique-gelule", (Choisir("Thème", THEME_CADRE_GELULE), Toucher(*SERRE)),
+          (Toucher(*SERRE), Choisir("Thème", THEME_PAR_DEFAUT))),
     # Tuile − / + (ADR-0033) : la liste par l'appui long sur la valeur entre − et +
     # (ADR-0038 ; clim, les quatre appareils de la démo, scenarios.REGLABLES, la tablette ;
     # le retour à l'accueil la ferme), puis l'enceinte (ligne 4) choisie à la place de la
@@ -1069,7 +1079,7 @@ ECRANS: tuple[Ecran, ...] = (
           (Toucher(*CONFIRMATION_ANNULER),)),
 
     # --- Arcade -----------------------------------------------------------------------
-    Ecran("arcade", (Toucher(*SERRE, apres=1.0),)),
+    Ecran("arcade", (Toucher(*BOUTON_TV, apres=1.0),)),
 
     _jeu("", "fil-dor"),
     _jeu("feu-de-camp", "fil-dor", (_menu(249),)),

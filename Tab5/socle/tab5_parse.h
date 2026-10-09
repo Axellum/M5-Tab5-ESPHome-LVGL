@@ -293,6 +293,34 @@ struct PieceClimatLu {
 };
 bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out);
 
+// Zone à gauche de l'horloge au choix (ADR-0051, 10/10/2026) : « gauche|défaut|c1|c2|… ».
+// Contenus, dans l'ORDRE du cycle et de la NVS (Tab5/ecran/tab5_zone_gauche.cpp) : une
+// valeur de plus va à la FIN, aucune ne se déplace. Codes lus par le blueprint
+// (codes_gauche) : ni traduits ni renommés sans lui (tests/test_zone_gauche.py).
+// LECTEUR est réservé au lecteur audio compact (lot 2, sur le lecteur de l'ADR-0050) : lu,
+// gardé, mais sauté tant que l'écran ne sait pas le montrer.
+enum class ZoneGauche : uint8_t {
+    VOCAL,      // le micro et les boutons Domo / Discu (l'écran d'avant)
+    GRAPHIQUE,  // les prévisions des heures qui viennent en courbe et barres de pluie
+    LECTEUR,    // réservé (lot 2)
+    NB
+};
+constexpr const char* kZoneGaucheCodes[static_cast<int>(ZoneGauche::NB)] = {"vocal", "graphique", "lecteur"};
+constexpr uint8_t zone_gauche_bit(ZoneGauche z) { return static_cast<uint8_t>(1u << static_cast<int>(z)); }
+// Sans la clé (blueprint plus ancien) : le vocal au départ, le vocal et le graphique au tap.
+constexpr ZoneGauche kZoneGaucheDefaut = ZoneGauche::VOCAL;
+constexpr uint8_t kZoneGaucheCycleDefaut = zone_gauche_bit(ZoneGauche::VOCAL) | zone_gauche_bit(ZoneGauche::GRAPHIQUE);
+struct ZoneGaucheLu {
+    ZoneGauche defaut = kZoneGaucheDefaut;
+    uint8_t cycle = kZoneGaucheCycleDefaut;  // un bit par contenu proposé au tap (zone_gauche_bit)
+};
+// Premier champ : le contenu au départ (vide ou inconnu : le vocal). Les suivants : les
+// contenus proposés au tap, dans n'importe quel ordre, codes inconnus ignorés (blueprint
+// plus récent). Le contenu de départ en fait toujours partie : sans autre champ, le tap ne
+// change rien. Au-delà de kZoneGaucheChampsMax champs, la fin est ignorée.
+constexpr int kZoneGaucheChampsMax = 8;
+ZoneGaucheLu zone_gauche_lire(const char* valeur, size_t n);
+
 // ─── 7. Clim (clés « climr », « crRT » et « ceRT » de tab5_maj_emplacements) ───
 // Réglages et état d'une clim (ADR-0026, ADR-0027), venus de Tab5/ecran/tab5_clim.cpp
 // tels quels : l'écran garde ses tables (s_clim, s_ct) et ce qu'il en peint.

@@ -169,8 +169,9 @@ void accueil_temperatures_ui() {
         return;
     }
     // Le salon et la serre, comme avant l'ADR-0040. Salon masqué avec sa zone ; sans
-    // serre, l'icône devient une manette (la zone tactile de l'arcade, btn_serre_games,
-    // reste à la même place).
+    // serre, l'icône dit ce que fait le tap de sa zone tactile (btn_serre_games, restée à la
+    // même place) : le contenu suivant de la zone à gauche de l'horloge (view-carousel,
+    // l'icône du geste « zone_gauche_suivante », ADR-0051 ; une manette avant, pour l'Arcade).
     const bool sans_salon = zone_absente(Zone::SALON);
     ui_hidden(u.icon_salon, sans_salon);
     ui_hidden(u.val_salon, sans_salon);
@@ -180,7 +181,7 @@ void accueil_temperatures_ui() {
     const bool sans_serre = zone_absente(Zone::SERRE);
     ui_hidden(u.icon_serre, false);
     ui_hidden(u.val_serre, sans_serre);
-    ui_text(u.icon_serre, sans_serre ? "\U000F0297" : "\U000F002D");
+    ui_text(u.icon_serre, sans_serre ? "\U000F056C" : "\U000F002D");
     couleur_des_styles(u.icon_serre);
     temperature(u.val_serre, s_accueil.serre_recu, s_accueil.serre);
 }

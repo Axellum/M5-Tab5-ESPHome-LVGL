@@ -62,10 +62,12 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
             # Réglages de la rangée sous l'horloge (ADR-0031) : non remplis, ceux du
             # firmware (plantes en premier, 32 s ; tests/test_rangee.py compare).
             # Pareil pour le panneau Ok Nabu et le défilement au choix (lot 3, ADR-0041 ;
-            # tests/test_nabu.py) : l'écran d'avant le choix.
+            # tests/test_nabu.py) : l'écran d'avant le choix. Zone à gauche de l'horloge
+            # (ADR-0051, tests/test_zone_gauche.py) : le vocal au départ, comme avant.
             defauts = {"rangee_plantes": "0", "rangee_duree": 32, "nabu_ecoute": "0", "nabu_duree": 32,
                        "rangee_defilement": "auto", "nabu_defilement": "fixe",
-                       "reglables_defilement": "fixe", "reglables_duree": 32}
+                       "reglables_defilement": "fixe", "reglables_duree": 32,
+                       "gauche_depart": "vocal", "gauche_cycle": ["vocal", "graphique"]}
             if nom in defauts:
                 assert entree["default"] == defauts[nom], nom
                 continue

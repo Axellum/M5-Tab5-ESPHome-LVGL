@@ -40,7 +40,7 @@ A zone whose Home Assistant entity doesn't exist disappears from the screen ([AD
 ```bash
 python tools/demo/demo_pusher.py --host <device-ip> --maison-minimale
 ```
-The script then behaves like a Home Assistant without a climate unit, TV, phone, third light, greenhouse sensor, plants 3 to 5, shutter or work calendar: it pushes nothing for those slots, answers the tablet's `esphome.tab5_zones` request with their keys, and pushes nothing for the climate and the shutter. What stays: the PC, two lights, the living-room temperature and two plants. The greenhouse spot shows a gamepad (the arcade entrance stays where it was). On a 3.2 firmware, the rooms come down to one, without a name (« Pièce 1 » on screen): the PC and the two lamps, where they were in 3.x.
+The script then behaves like a Home Assistant without a climate unit, TV, phone, third light, greenhouse sensor, plants 3 to 5, shutter or work calendar: it pushes nothing for those slots, answers the tablet's `esphome.tab5_zones` request with their keys, and pushes nothing for the climate and the shutter. What stays: the PC, two lights, the living-room temperature and two plants. The greenhouse spot shows a carousel icon (its tap still switches the area left of the clock). On a 3.2 firmware, the rooms come down to one, without a name (« Pièce 1 » on screen): the PC and the two lamps, where they were in 3.x.
 
 **Restart the tablet when switching from a full demo to this one**: a zone that has already received data stays on screen (data always wins). The other way round needs nothing: a full demo answers "nothing missing" as soon as it connects.
 
@@ -129,7 +129,7 @@ Le script se comporte alors comme un Home Assistant sans clim, TV, téléphone, 
 - il répond à la demande `esphome.tab5_zones` de la tablette avec leurs clés ;
 - il ne pousse rien pour la clim ni le volet.
 
-Il reste le PC, deux lumières, la température du salon et deux pots. À la place de la serre, une manette : l'entrée de l'arcade ne bouge pas. Avec un firmware 3.2, il ne reste qu'une pièce, sans nom (« Pièce 1 » à l'écran) : le PC et les deux lampes, à leur place de la 3.x.
+Il reste le PC, deux lumières, la température du salon et deux pots. À la place de la serre, une icône de carrousel : son tap change toujours la zone à gauche de l'horloge. Avec un firmware 3.2, il ne reste qu'une pièce, sans nom (« Pièce 1 » à l'écran) : le PC et les deux lampes, à leur place de la 3.x.
 
 **Redémarrez la tablette en passant d'une démo complète à celle-ci** : une zone qui a déjà reçu une donnée reste à l'écran (la donnée l'emporte). Dans l'autre sens, rien à faire : une démo complète répond « rien ne manque » dès sa connexion.
 
