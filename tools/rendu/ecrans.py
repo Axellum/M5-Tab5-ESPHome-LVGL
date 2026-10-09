@@ -220,7 +220,7 @@ SALON = (955, 164)
 LIGNES_REGLABLES = tuple((1000, 110 + 2 + 6 + 54 * k + 26) for k in range(10))
 CONSIGNE_CLIM = (1061, 251)   # court : Climatisation · long : la liste de la tuile − / +
 TUILE_J1_TEMP = (390, 684)    # court : planning de ce jour, 6 s
-CARTE_CENTRALE = (640, 375)   # long : historique des alertes (popup « Alertes »)
+CARTE_CENTRALE = (640, 375)   # long : la roue de navigation (ADR-0042), ancrée ici
 # Long : Lumières. Avec les pièces (ADR-0023), les lampes T2 et T3 de la pièce de
 # l'accueil (tools/demo/scenarios.py) : le popup liste les lumières de la pièce.
 TUILES = {"chambre": (640, 572), "salon": (890, 572)}
@@ -348,6 +348,18 @@ ROUE_MODE = 2
 # Toucher hors des boutons (coin bas gauche, loin de toute roue) : il replie le second
 # anneau, puis ferme la roue.
 ROUE_FERMER = Toucher(60, 700)
+# Roue de navigation (ADR-0042, 09/10/2026) : l'appui long de la carte centrale ouvre la
+# même roue, ancrée en son centre, sur les écrans de la tablette. Premier anneau de la démo
+# (aucune famille vide) : Alertes, Pièces, Appareils, Agenda, Tablette, Assistant.
+ROUE_NAVIGATION = 6
+NAV_ALERTES, NAV_PIECES, NAV_APPAREILS, NAV_AGENDA, NAV_TABLETTE, NAV_ASSISTANT = range(ROUE_NAVIGATION)
+
+
+def nav(i: int) -> Toucher:
+    """Toucher du bouton i du premier anneau de la roue de navigation."""
+    return Toucher(*roue_centres(*CARTE_CENTRALE, ROUE_NAVIGATION)[i])
+
+
 # Roue de la lampe T2 à 50 % (128/255) : le choix « 50 % » marqué.
 LAMPE_A_50 = Service("tab5_maj_emplacements", (("payload", "t02|on|128|FF8C1A;"),))
 LAMPE_DE_LA_DEMO = Service("tab5_maj_emplacements", (("payload", "t02|on|180|FF8C1A;"),))
@@ -487,6 +499,12 @@ def vers_la_piece(pieces: dict, r: int) -> tuple[tuple, tuple]:
 PIECE_CLIMAT = 3
 assert PIECES[PIECE_CLIMAT].climat is not None and PIECES[PIECE_CLIMAT].climat.reglages
 ALLER_PIECE_CLIMAT, RETOUR_PIECE_CLIMAT = vers_la_piece(PIECES, PIECE_CLIMAT)
+# Roue de navigation (ADR-0042) : la famille Pièces déplie Maison puis chaque pièce qui a
+# des appareils, dans l'ordre du blueprint ; toucher le Bureau y met le mode HA, d'un coup.
+# Retour : celui de vers_la_piece (« HA », puis les gestes météo jusqu'à l'accueil).
+PIECES_OCCUPEES = sorted(r for r, p in PIECES.items() if p.tuiles)
+NAV_BUREAU = Toucher(*roue_choix_centres(*CARTE_CENTRALE, ROUE_NAVIGATION, NAV_PIECES, 1 + len(PIECES_OCCUPEES))
+                     [1 + PIECES_OCCUPEES.index(PIECE_CLIMAT)])
 
 REVEIL_TESTER = (550, 641)
 SONNERIE_ARRETER = (440, 540)
@@ -836,9 +854,22 @@ ECRANS: tuple[Ecran, ...] = (
           CLIMS_DE_TUILES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE, Toucher(*SALON)),
           (Toucher(*FERMER_POPUP), Toucher(*BOUTON_HA), VERS_LA_GAUCHE) + MAISON_DE_LA_DEMO),
     # Historique des alertes (lot 4 du plan des alertes) : la liste d'abord, comme HA la
-    # pousserait, puis l'appui long sur la carte centrale.
+    # pousserait, puis l'appui long sur la carte centrale et « Alertes », premier bouton de
+    # la roue de navigation (ADR-0042).
     Ecran("alertes", (Service("tab5_maj_alertes_historique", (("payload", HISTORIQUE_ALERTES),)),
-                      Long(*CARTE_CENTRALE))),
+                      Long(*CARTE_CENTRALE), nav(NAV_ALERTES))),
+    # Roue de navigation (ADR-0042) : repliée (un mot par bouton, « Aller à » au moyeu), puis
+    # trois familles dépliées (le moyeu dit laquelle). Fermer : un toucher replie, le
+    # suivant ferme.
+    Ecran("roue-navigation", (Long(*CARTE_CENTRALE),), (ROUE_FERMER,)),
+    Ecran("roue-navigation-pieces", (Long(*CARTE_CENTRALE), nav(NAV_PIECES)), (ROUE_FERMER, ROUE_FERMER)),
+    Ecran("roue-navigation-appareils", (Long(*CARTE_CENTRALE), nav(NAV_APPAREILS)), (ROUE_FERMER, ROUE_FERMER)),
+    Ecran("roue-navigation-tablette", (Long(*CARTE_CENTRALE), nav(NAV_TABLETTE)), (ROUE_FERMER, ROUE_FERMER)),
+    # Une pièce choisie dans la roue : le mode HA sur elle, sans swipe.
+    Ecran("roue-navigation-bureau", (Long(*CARTE_CENTRALE), nav(NAV_PIECES), NAV_BUREAU), RETOUR_PIECE_CLIMAT),
+    # Les popups d'une tuile ouverts sans tuile (ADR-0042) : les lumières de la pièce
+    # affichée (l'accueil : la Chambre et le Salon), par « Aller à l'écran ».
+    Ecran("aller-lumieres", (Aller("Lumières"),)),
     # Popup Maison (ADR-0037) : les cinq pièces de la démo par « Aller à l'écran », puis par
     # un tap sur le titre de la pièce en mode HA, puis deux pièces (colonnes plus larges).
     Ecran("maison", (Aller("Maison"),)),

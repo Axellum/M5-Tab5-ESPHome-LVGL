@@ -10,6 +10,8 @@
 #       liens aux bouts, « Maison » et « Détails » (le popup complet) ; toucher une
 #       famille déplie ses choix sur le second. Toucher un choix envoie sa commande et
 #       ferme la roue ; toucher le voile ou le moyeu replie le second anneau, puis ferme.
+#       La même roue sert à la navigation (ADR-0042, 09/10/2026) : l'appui long de la carte
+#       centrale l'ouvre sur les écrans de la tablette, chaque bouton avec son mot.
 # @architecture_constraint Ce n'est pas un popup modal : ni en-tête ni carte (ADR-0009
 #       vise les fenêtres modales), comme la liste de la tuile − / + (reglables_liste.yaml),
 #       mais le voile partagé des popups (modal_scrim.yaml) à 60 % : les tuiles restent
@@ -22,7 +24,8 @@
 # @ai_instruction Positions, tailles des bandes, couleurs, glyphes et textes : tab5_roue.cpp
 #       (roue_ouvrir), à chaque ouverture ; les valeurs d'ici ne sont que celles d'avant.
 #       Ordre = ordre de dessin : bandes de verre (arcs à bouts ronds, dessous), second
-#       anneau et ses mots, premier anneau et les mots des liens, jauge, moyeu, nom. Les
+#       anneau et ses mots, premier anneau et ses mots (liens ; tous en navigation), jauge,
+#       moyeu, nom. Les
 #       arcs ne prennent pas le toucher (roue_brancher leur retire CLICKABLE et le bouton) :
 #       un toucher sur une bande arrive au voile. Un bouton de plus = kRoueBoutons ou
 #       kRoueChoix (tab5_custom.h), une ligne ici et ses pointeurs dans tab5-roue.yaml.
@@ -92,8 +95,14 @@ obj:
     - !include { file: roue_bouton.yaml, vars: { n: 3 } }
     - !include { file: roue_bouton.yaml, vars: { n: 4 } }
     - !include { file: roue_bouton.yaml, vars: { n: 5 } }
-    - !include { file: roue_legende.yaml, vars: { id: roue_lien_0 } }
-    - !include { file: roue_legende.yaml, vars: { id: roue_lien_1 } }
+    # Mot du bouton N : sous un lien (« Maison », « Détails ») ; en navigation (ADR-0042),
+    # au-delà de chaque bouton.
+    - !include { file: roue_legende.yaml, vars: { id: roue_bouton_0_legende } }
+    - !include { file: roue_legende.yaml, vars: { id: roue_bouton_1_legende } }
+    - !include { file: roue_legende.yaml, vars: { id: roue_bouton_2_legende } }
+    - !include { file: roue_legende.yaml, vars: { id: roue_bouton_3_legende } }
+    - !include { file: roue_legende.yaml, vars: { id: roue_bouton_4_legende } }
+    - !include { file: roue_legende.yaml, vars: { id: roue_bouton_5_legende } }
     # Jauge autour du moyeu : luminosité, position ou consigne (piste des arcs, valeur dans
     # la couleur d'état posée en C++), ouverte en bas, sous le nom.
     - arc:

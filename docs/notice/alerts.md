@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a long press on the central card of the home screen, whatever it shows: the schedule, the rain, a warning, a message or an alert.
+**Opens with** « Alerts », the first button of the navigation wheel: a long press on the central card of the home screen, whatever it shows (the schedule, the rain, a warning, a message or an alert), opens the wheel ([home screen](home.md#central-card-12)).
 
 ![The alerts window: the latest alerts, one line each, with when they appeared, were read and ended](../images/notice/alertes-en.webp)
 
@@ -20,7 +20,7 @@ Only the alerts you subscribed to show here, as on the central card: the « Tab5
 
 ---
 
-**S'ouvre par** un appui long sur la carte centrale de l'accueil, quoi qu'elle montre : le planning, la pluie, une vigilance, un message ou une alerte.
+**S'ouvre par** « Alertes », le premier bouton de la roue de navigation : un appui long sur la carte centrale de l'accueil, quoi qu'elle montre (le planning, la pluie, une vigilance, un message ou une alerte), ouvre la roue ([accueil](home.md#carte-centrale-12)).
 
 ![La fenêtre des alertes : les dernières alertes, une ligne chacune, avec l'heure où elles sont apparues, ont été lues et se sont terminées](../images/notice/alertes-fr.webp)
 

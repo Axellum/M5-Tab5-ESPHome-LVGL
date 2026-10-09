@@ -249,9 +249,12 @@ def test_routage_des_cles():
 
 def test_repeint_quand_la_piece_change():
     tuiles = _lire(source("tab5_tuiles.cpp"))
-    for f in ("tuiles_mode_ha", "tuiles_swipe_ha"):
+    for f in ("tuiles_mode_ha", "montrer_page_ha"):
         corps = _fonction(tuiles, f)
         assert "accueil_temperatures_ui();" in corps and "reglables_clim_changee();" in corps, f
+    # Le swipe et la roue de navigation (ADR-0042) changent de pièce par montrer_page_ha.
+    for f in ("tuiles_swipe_ha", "tuiles_aller_piece"):
+        assert "montrer_page_ha(" in _fonction(tuiles, f), f
     theme = _lire(source("tab5_theme.cpp"))
     assert theme.index("cartes_rejouer_theme();") < theme.index("accueil_temperatures_ui();"), \
         "la pièce après les cartes : update_temp_ui du salon ne repeint pas par-dessus"

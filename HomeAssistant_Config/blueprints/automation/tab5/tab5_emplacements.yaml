@@ -1201,18 +1201,22 @@ blueprint:
         3.8 ou plus récent ; les appuis longs des boutons dès la 3.7). Automatique : ce que
         le geste faisait avant ce choix. Une petite icône dans le coin d'un bouton montre ce
         que fait son appui long ; un tap changé change son icône. Un écran absent de la
-        maison (pas de clim, de plantes, de TV, ou pas de production solaire pour Énergie)
-        ne s'ouvre pas. L'entité « Aller à l'écran » de la tablette ouvre toujours chaque
-        écran.
+        maison (pas de clim, de plantes, de TV, de lumière, de volet, de température, ou pas
+        de production solaire pour Énergie) ne s'ouvre pas. L'entité « Aller à l'écran » de
+        la tablette ouvre toujours chaque écran. « Roue de navigation » ouvre la roue de
+        l'appui long de la carte centrale (firmware 3.8 ou plus récent ; un firmware plus
+        ancien en fait « Automatique »).
 
 
         What a tap and a long press do on the home page clock (three zones: the hours, the
         minutes, the date) and on the three buttons at the top right (firmware 3.8 or
         newer; the long presses of the buttons from 3.7). Automatic: what the gesture did
         before this choice. A small icon in a button's corner shows what its long press
-        does; a changed tap changes its icon. A screen your home lacks (no climate, plants
-        or TV, or no solar production for Energy) does not open. The tablet's « Aller à
-        l'écran » entity still opens every screen.
+        does; a changed tap changes its icon. A screen your home lacks (no climate, plants,
+        TV, light, shutter or temperature, or no solar production for Energy) does not open.
+        The tablet's « Aller à l'écran » entity still opens every screen. « Navigation
+        wheel » opens the wheel of the central card's long press (firmware 3.8 or newer; an
+        older firmware treats it as « Automatic »).
       input:
         geste_heures_court:
           name: "Heures : tap · Hours: tap"
@@ -1268,6 +1272,14 @@ blueprint:
                   value: ecoute
                 - label: "Ligne suivante du panneau Ok Nabu · Next line of the Ok Nabu panel"
                   value: nabu_suivant
+                - label: "Lumières de la pièce affichée · Lights of the room shown"
+                  value: lumieres
+                - label: "Volet de la pièce affichée · Shutter of the room shown"
+                  value: volet
+                - label: "Température (historique) · Temperature (history)"
+                  value: temperature
+                - label: "Roue de navigation · Navigation wheel"
+                  value: roue
         geste_heures_long:
           name: "Heures : appui long · Hours: long press"
           description: >-
@@ -2918,7 +2930,7 @@ variables:
   # en « auto ».
   codes_gestes: [auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie,
                  reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante,
-                 ecoute, nabu_suivant]
+                 ecoute, nabu_suivant, lumieres, volet, temperature, roue]
   # « gestes|c1|…|c12; » : les 12 gestes dans l'ORDRE de l'enum Geste (tab5_zones.h) —
   # heures tap, heures long, minutes tap, minutes long, date tap, date long, maison tap,
   # maison long, engrenage tap, engrenage long, manette tap, manette long. Poussé avec
