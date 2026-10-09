@@ -930,7 +930,6 @@ static void test_historique() {
 // ════════════════════════════════════════════════════════════════════════════
 // 9. Popup Caméras (tab5_maj_cameras, ADR-0049)
 // ════════════════════════════════════════════════════════════════════════════
-static bool champ_vaut(const Champ& c, const char* s) { return c.n == std::strlen(s) && std::memcmp(c.p, s, c.n) == 0; }
 
 static void test_cameras_lire() {
     CameraLue c[kCamerasMax];
