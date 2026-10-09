@@ -71,6 +71,15 @@ NON_MONTREES = {
     "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
     "maison-roue": "roue d'actions rapides (ADR-0036) devant le popup Maison, décrite dans house.md",
+    # Lumières et Volets en pages (ADR-0046, 09/10/2026) : décrits dans lights.md et
+    # shutters.md ; images à tirer du rendu de la PR, puis citées.
+    "lumieres-par-aller": "popup Lumières par « Aller à l'écran », décrit dans lights.md ; image à tirer du rendu",
+    "lumieres-page-suivante": "lumieres-par-aller montre la même fenêtre ; le glissement est décrit dans lights.md",
+    "lumieres-onglet": "lumieres-par-aller montre la même fenêtre ; le nom d'une pièce est décrit dans lights.md",
+    "lumieres-roue": "roue d'une ligne du popup Lumières, décrite dans lights.md ; image à tirer du rendu",
+    "volets-par-aller": "popup Volets par « Aller à l'écran », décrit dans shutters.md ; image à tirer du rendu",
+    "volets-page-suivante": "volets-par-aller montre la même fenêtre ; le glissement est décrit dans shutters.md",
+    "volets-une-piece": "volets-par-aller montre la même fenêtre ; une seule pièce, décrite dans shutters.md",
     # Réglages en quatre pages (08/10/2026) : images à tirer du rendu de la PR, puis citées.
     "reglages-apparence": "page Apparence des Réglages, décrite dans settings.md ; image à tirer du rendu",
     "reglages-batterie-en-charge": "page Batterie des Réglages, décrite dans settings.md ; image à tirer du rendu",
