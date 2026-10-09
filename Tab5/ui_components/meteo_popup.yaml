@@ -189,7 +189,7 @@ obj:
                           styles: style_transparent
                           scrollable: false
                 # Humidité, indice UV, probabilités de gel et de neige (meteo_carte.yaml).
-                - !include { file: meteo_carte.yaml, vars: { n: "0", x: "24", icone: "\U000F058E", nom: "Humidité" } }
-                - !include { file: meteo_carte.yaml, vars: { n: "1", x: "329", icone: "\U000F0599", nom: "Indice UV" } }
-                - !include { file: meteo_carte.yaml, vars: { n: "2", x: "633", icone: "\U000F0717", nom: "Gel" } }
-                - !include { file: meteo_carte.yaml, vars: { n: "3", x: "938", icone: "\U000F0598", nom: "Neige" } }
+                - !include { file: meteo_carte.yaml, vars: { n: "0", x: "24", icone: "\U000F058E", label_text: "Humidité" } }
+                - !include { file: meteo_carte.yaml, vars: { n: "1", x: "329", icone: "\U000F0599", label_text: "Indice UV" } }
+                - !include { file: meteo_carte.yaml, vars: { n: "2", x: "633", icone: "\U000F0717", label_text: "Gel" } }
+                - !include { file: meteo_carte.yaml, vars: { n: "3", x: "938", icone: "\U000F0598", label_text: "Neige" } }

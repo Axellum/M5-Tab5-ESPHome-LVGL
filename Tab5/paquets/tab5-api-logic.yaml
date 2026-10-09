@@ -237,9 +237,9 @@ api:
                            {id(alerte_slot_0), id(alerte_slot_1), id(alerte_slot_2), id(alerte_slot_3)}};
             central_set_vigilance(parse_and_update_vigilance(payload, ui));
 
-    # `uv` et `gel` sont reçus mais non exploités par l'UI : paramètres RÉSERVÉS.
-    # Le contrat a 3 appelants côté HA, on ne le rétrécit pas ; seule `neige` agit
-    # (flocon si probabilité ≥ 5, sinon goutte colorée par l'hygrométrie).
+    # Les trois font les cartes Indice UV, Gel et Neige du popup Météo (ADR-0043,
+    # meteo_probabilites_recues()) ; `neige` fait aussi le flocon de la carte centrale
+    # (probabilité ≥ 5, sinon goutte colorée par l'hygrométrie).
     - service: tab5_maj_probabilites
       description: "Indice UV, probabilités de gel et de neige : page « Détails » du popup Météo ; la neige fait aussi le flocon de la carte centrale."
       variables:

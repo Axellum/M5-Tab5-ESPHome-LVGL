@@ -8,9 +8,12 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1087;
+static const uint16_t kI18nKeyCount = 1090;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1512,6 +1515,7 @@ static const char* const kI18nKeys[] = {
     "GAME OVER",
     "GESTION",
     "Gantelet poli",
+    "Gel",
     "Gestes IMU",
     "Gestes, règle des 50 coups, évaluation, vitesse de démo",
     "Gestes, règles, affichage",
@@ -1529,6 +1533,7 @@ static const char* const kI18nKeys[] = {
     "Home Assistant hors ligne",
     "Hors du top %d",
     "Hors ligne",
+    "Humidité",
     "IA : %s",
     "IMU",
     "Illimité",
@@ -1543,6 +1548,7 @@ static const char* const kI18nKeys[] = {
     "Indice",
     "Indice : %s",
     "Indice : passer",
+    "Indice UV",
     "Indice affiché",
     "Indice en recharge",
     "Insistante",
@@ -2603,6 +2609,7 @@ static const char* const kI18n_en[] = {
     "GAME OVER",  // "GAME OVER"
     "MANAGEMENT",  // "GESTION"
     "Polished Gauntlet",  // "Gantelet poli"
+    "Frost",  // "Gel"
     "IMU gestures",  // "Gestes IMU"
     "Gestures, 50-move rule, evaluation, demo speed",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gestures, rules, display",  // "Gestes, règles, affichage"
@@ -2620,6 +2627,7 @@ static const char* const kI18n_en[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Not in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Humidity",  // "Humidité"
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "No limit",  // "Illimité"
@@ -2634,6 +2642,7 @@ static const char* const kI18n_en[] = {
     "Hint",  // "Indice"
     "Hint: %s",  // "Indice : %s"
     "Hint: pass",  // "Indice : passer"
+    "UV index",  // "Indice UV"
     "Hint shown",  // "Indice affiché"
     "Hint recharging",  // "Indice en recharge"
     "Insistent",  // "Insistante"
@@ -3694,6 +3703,7 @@ static const char* const kI18n_de[] = {
     "GAME OVER",  // "GAME OVER"
     "VERWALTUNG",  // "GESTION"
     "Polierter Handschuh",  // "Gantelet poli"
+    "Frost",  // "Gel"
     "IMU-Gesten",  // "Gestes IMU"
     "Gesten, 50-Züge-Regel, Bewertung, Demo-Tempo",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gesten, Regeln, Anzeige",  // "Gestes, règles, affichage"
@@ -3711,6 +3721,7 @@ static const char* const kI18n_de[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Nicht in Top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Luftfeuchte",  // "Humidité"
     "KI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Endlos",  // "Illimité"
@@ -3725,6 +3736,7 @@ static const char* const kI18n_de[] = {
     "Tipp",  // "Indice"
     "Tipp: %s",  // "Indice : %s"
     "Tipp: passen",  // "Indice : passer"
+    "UV-Index",  // "Indice UV"
     "Tipp angezeigt",  // "Indice affiché"
     "Tipp lädt nach",  // "Indice en recharge"
     "Hartnäckig",  // "Insistante"
@@ -4785,6 +4797,7 @@ static const char* const kI18n_nl[] = {
     "GAME OVER",  // "GAME OVER"
     "BEHEER",  // "GESTION"
     "Glanzende handschoen",  // "Gantelet poli"
+    "Vorst",  // "Gel"
     "IMU-gebaren",  // "Gestes IMU"
     "Gebaren, 50-zettenregel, evaluatie, demosnelheid",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gebaren, regels, weergave",  // "Gestes, règles, affichage"
@@ -4802,6 +4815,7 @@ static const char* const kI18n_nl[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Niet in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Vochtigheid",  // "Humidité"
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Onbeperkt",  // "Illimité"
@@ -4816,6 +4830,7 @@ static const char* const kI18n_nl[] = {
     "Hint",  // "Indice"
     "Hint: %s",  // "Indice : %s"
     "Hint: passen",  // "Indice : passer"
+    "UV-index",  // "Indice UV"
     "Hint getoond",  // "Indice affiché"
     "Hint laadt op",  // "Indice en recharge"
     "Dringend",  // "Insistante"
@@ -5876,6 +5891,7 @@ static const char* const kI18n_es[] = {
     "GAME OVER",  // "GAME OVER"
     "GESTIÓN",  // "GESTION"
     "Guantelete pulido",  // "Gantelet poli"
+    "Helada",  // "Gel"
     "Gestos IMU",  // "Gestes IMU"
     "Gestos, regla de 50 jugadas, evaluación, velocidad de demo",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gestos, reglas, pantalla",  // "Gestes, règles, affichage"
@@ -5893,6 +5909,7 @@ static const char* const kI18n_es[] = {
     "Home Assistant sin conexión",  // "Home Assistant hors ligne"
     "Fuera del top %d",  // "Hors du top %d"
     "Sin conexión",  // "Hors ligne"
+    "Humedad",  // "Humidité"
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Ilimitado",  // "Illimité"
@@ -5907,6 +5924,7 @@ static const char* const kI18n_es[] = {
     "Pista",  // "Indice"
     "Pista: %s",  // "Indice : %s"
     "Pista: pasar",  // "Indice : passer"
+    "Índice UV",  // "Indice UV"
     "Pista mostrada",  // "Indice affiché"
     "Pista recargándose",  // "Indice en recharge"
     "Insistente",  // "Insistante"
@@ -6967,6 +6985,7 @@ static const char* const kI18n_it[] = {
     "GAME OVER",  // "GAME OVER"
     "GESTIONE",  // "GESTION"
     "Guanto lucido",  // "Gantelet poli"
+    "Gelo",  // "Gel"
     "Gesti IMU",  // "Gestes IMU"
     "Gesti, regola delle 50 mosse, valutazione, velocità demo",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Gesti, regole, schermo",  // "Gestes, règles, affichage"
@@ -6984,6 +7003,7 @@ static const char* const kI18n_it[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Non in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Umidità",  // "Humidité"
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Illimitato",  // "Illimité"
@@ -6998,6 +7018,7 @@ static const char* const kI18n_it[] = {
     "Aiuto",  // "Indice"
     "Suggerimento: %s",  // "Indice : %s"
     "Suggerimento: passa",  // "Indice : passer"
+    "Indice UV",  // "Indice UV"
     "Suggerimento mostrato",  // "Indice affiché"
     "Suggerimento in ricarica",  // "Indice en recharge"
     "Insistente",  // "Insistante"
@@ -8058,6 +8079,7 @@ static const char* const kI18n_tr[] = {
     "OYUN BİTTİ",  // "GAME OVER"
     "YÖNETİM",  // "GESTION"
     "Parlak Eldiven",  // "Gantelet poli"
+    "Don",  // "Gel"
     "IMU hareketleri",  // "Gestes IMU"
     "Hareketler, 50 hamle kuralı, değerlendirme, demo hızı",  // "Gestes, règle des 50 coups, évaluation, vitesse de démo"
     "Hareketler, kurallar, görünüm",  // "Gestes, règles, affichage"
@@ -8075,6 +8097,7 @@ static const char* const kI18n_tr[] = {
     "Home Assistant çevrimdışı",  // "Home Assistant hors ligne"
     "İlk %d dışında",  // "Hors du top %d"
     "Çevrimdışı",  // "Hors ligne"
+    "Nem",  // "Humidité"
     "YZ: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Sınırsız",  // "Illimité"
@@ -8089,6 +8112,7 @@ static const char* const kI18n_tr[] = {
     "İpucu",  // "Indice"
     "İpucu: %s",  // "Indice : %s"
     "İpucu: pas",  // "Indice : passer"
+    "UV indeksi",  // "Indice UV"
     "İpucu gösterildi",  // "Indice affiché"
     "İpucu hazırlanıyor",  // "Indice en recharge"
     "Israrlı",  // "Insistante"

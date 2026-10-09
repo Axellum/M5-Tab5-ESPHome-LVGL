@@ -101,6 +101,20 @@ const char* texte_condition(const char* cond) {
     return "";
 }
 
+// Hauteur d'une ligne de la police d'un libellé : « … » (LV_LABEL_LONG_MODE_DOTS) ne
+// se pose qu'à hauteur fixe ; sans elle, le libellé passe à la ligne.
+int32_t hauteur_ligne(lv_obj_t* o) {
+    const lv_font_t* f = lv_obj_get_style_text_font(o, LV_PART_MAIN);
+    return f != nullptr ? lv_font_get_line_height(f) : LV_SIZE_CONTENT;
+}
+
+// Les libellés du YAML coupés par « … » (long_mode: DOT) : une ligne de haut.
+void une_ligne(lv_obj_t* o) {
+    if (o == nullptr) return;
+    lv_obj_set_height(o, hauteur_ligne(o));
+    lv_label_set_long_mode(o, LV_LABEL_LONG_MODE_DOTS);
+}
+
 bool visible() {
     const MeteoUI& u = g_meteo_ui;
     return u.popup != nullptr && !lv_obj_has_flag(u.popup, LV_OBJ_FLAG_HIDDEN);
@@ -316,6 +330,8 @@ void peindre_heures(int n) {
         ui_text_color(s_h.vide, UIColor.TEXT_DIM);
         for (lv_obj_t* o : {s_h.colonne, s_h.minuit, s_h.base, s_h.courbe}) ui_hidden(o, true);
         cacher_heures(0);
+        ui_text(g_meteo_ui.pluie_titre, "");
+        ui_text(g_meteo_ui.pluie_total, "");
         return;
     }
     const float largeur = static_cast<float>(kGraphiqueL) / n;
@@ -434,7 +450,9 @@ char s_icone_maintenant[24] = {};
 void peindre_maintenant(int n) {
     const MeteoUI& u = g_meteo_ui;
     const char* cond = s_actuelle.condition;
-    float temp = s_actuelle.temperature;
+    // Sans condition poussée (source indisponible), la température gardée ne vaut rien
+    // non plus : HA envoie alors 0 (tab5_push.yaml), soit « 0° ». La première heure, sinon.
+    float temp = cond[0] != '\0' ? s_actuelle.temperature : NAN;
     if (cond[0] == '\0' && n > 0) cond = cal_heures_data[0].condition.c_str();
     if (!std::isfinite(temp) && n > 0) temp = cal_heures_data[0].temp;
     if (cond[0] != '\0' && std::strncmp(s_icone_maintenant, cond, sizeof(s_icone_maintenant) - 1) != 0) {
@@ -442,7 +460,11 @@ void peindre_maintenant(int n) {
         update_meteo_icon(u.icone_l1, u.icone_l2, cond, u.icone, u.icone_petite);
     }
     ui_hidden(u.icone_l1, cond[0] == '\0');
-    if (cond[0] == '\0') ui_hidden(u.icone_l2, true);
+    if (cond[0] == '\0') {
+        // Icône cachée : la même condition, plus tard, la réécrit (et remontre son 2e calque).
+        ui_hidden(u.icone_l2, true);
+        s_icone_maintenant[0] = '\0';
+    }
     char buf[48];
     degres(buf, sizeof(buf), temp);
     ui_text(u.temperature, buf);
@@ -549,7 +571,7 @@ void peindre_jours() {
         const bool montre = r < n;
         for (lv_obj_t* o : {s_j.nom[r], s_j.tmin[r], s_j.piste[r], s_j.barre[r], s_j.tmax[r], s_j.icone[r].boite})
             if (!montre) ui_hidden(o, true);
-        ui_hidden(s_j.sep[r], !montre || r == n - 1);
+        if (!montre || r == n - 1) ui_hidden(s_j.sep[r], true);
         if (!montre) continue;
         const DayForecastData& d = cal_jours_data[cases[r]];
         const int32_t y = r * kLigneH;
@@ -567,7 +589,7 @@ void peindre_jours() {
             ui_text(s_j.nom[r], ha_day_name(d.nom_jour));
         }
         ui_text_color(s_j.nom[r], o == 0 && jour_connu ? UIColor.INFO : UIColor.TEXT_PRIMARY);
-        ui_poser(s_j.nom[r], kNomX, y + kTexteDy, kNomL, LV_SIZE_CONTENT);
+        ui_poser(s_j.nom[r], kNomX, y + kTexteDy, kNomL, hauteur_ligne(s_j.nom[r]));
         icone_peindre(s_j.icone[r], d.condition);
         ui_poser(s_j.icone[r].boite, kJourIconeX, y, kJourIconeL, kLigneH);
         degres(buf, sizeof(buf), d.tmin);
@@ -589,7 +611,7 @@ void peindre_jours() {
         ui_style_couleur(s_j.barre[r], LV_STYLE_BG_COLOR, get_temperature_color(d.tmin));
         ui_style_couleur(s_j.barre[r], LV_STYLE_BG_GRAD_COLOR, get_temperature_color(d.tmax));
         ui_poser(s_j.barre[r], x0, yb, x1 - x0, kPisteH);
-        ui_poser(s_j.sep[r], kNomX, y + kLigneH - 1, kGraphiqueL - 2 * kNomX, 1);
+        if (r < n - 1) ui_poser(s_j.sep[r], kNomX, y + kLigneH - 1, kGraphiqueL - 2 * kNomX, 1);
     }
     // La température du moment sur la ligne d'aujourd'hui.
     if (n > 0 && jour_connu && decalage[0] == 0 && std::isfinite(actuelle)) {
@@ -784,6 +806,9 @@ void peindre_cartes() {
 // ─── Ensemble ────────────────────────────────────────────────────────────────────────────
 
 void construire() {
+    const MeteoUI& u = g_meteo_ui;
+    for (lv_obj_t* o : {u.condition, u.min_max, u.pluie_phrase}) une_ligne(o);
+    for (lv_obj_t* o : u.carte_detail) une_ligne(o);
     construire_heures();
     construire_jours();
     construire_pluie();
@@ -864,7 +889,8 @@ void meteo_donnees_changees() {
 }
 
 // Changement de thème (theme_rejouer_ui, tab5_theme.cpp) : couleurs fixes, icônes
-// (caches vidés : update_meteo_icon reprend la palette) et page affichée.
+// (caches vidés : update_meteo_icon reprend la palette) ; la page seulement si le popup
+// est affiché (sinon, son ouverture la repeint).
 void meteo_rejouer_theme() {
     if (g_meteo_ui.popup == nullptr || s_h.courbe == nullptr) return;
     couleurs_heures();
@@ -873,6 +899,7 @@ void meteo_rejouer_theme() {
     for (Icone& i : s_h.icone) i.cond[0] = '\0';
     for (Icone& i : s_j.icone) i.cond[0] = '\0';
     s_icone_maintenant[0] = '\0';
+    if (!visible()) return;
     ui_choix_peindre(g_meteo_ui.onglet, METEO_NB_PAGES, s_page);
     peindre();
 }

@@ -1288,3 +1288,6 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "uv|Élevé": "High"
 "uv|Très élevé": "Very high"
 "uv|Extrême": "Extreme"
+"Humidité": "Humidity"
+"Indice UV": "UV index"
+"Gel": "Frost"
