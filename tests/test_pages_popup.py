@@ -4,8 +4,8 @@
 le vrai C++.
 
 On vérifie :
-- le geste : arrêté au popup (GESTURE_BUBBLE retiré), ignoré quand il part d'un curseur
-  ou d'un arc, sans effet sous deux pages, lever du doigt muet, page voisine en boucle ;
+- le geste : arrêté au popup (GESTURE_BUBBLE retiré), ignoré quand il part d'un curseur,
+  d'un arc ou d'un rouleau, sans effet sous deux pages, lever du doigt muet, page voisine en boucle ;
   branché sans doublon (le rappel retiré avant d'être ajouté) ;
 - la géométrie des onglets : quatre pages tombent sur les noms des Réglages, cinq tiennent
   entre le titre et la croix ;
@@ -52,8 +52,11 @@ def test_geste_curseur_arc_et_lever_du_doigt():
     # Un curseur ou un arc glissé de côté règle sa valeur ; sous deux pages, rien ; le
     # lever du doigt qui suit ne déclenche rien. Dans cet ordre.
     assert "lv_obj_check_type(o, &lv_slider_class) || lv_obj_check_type(o, &lv_arc_class)" in geste
+    # Un rouleau (lv_roller, popup Réveil) se glisse de haut en bas ; en biais, LVGL y voit
+    # aussi un geste gauche / droite : c'est son réglage (09/10/2026).
+    assert "if (lv_obj_check_type(o, &lv_roller_class)) return;" in geste
     assert "if (n < 2) return;" in geste
-    assert (geste.index("lv_arc_class") < geste.index("if (n < 2) return;")
+    assert (geste.index("lv_arc_class") < geste.index("lv_roller_class") < geste.index("if (n < 2) return;")
             < geste.index("lv_indev_wait_release(indev);") < geste.index("p->afficher("))
     assert "reglages_page_voisine(p->courante(), n, dir == LV_DIR_LEFT)" in geste
     # Transitions instantanées : aucune animation dans la brique.

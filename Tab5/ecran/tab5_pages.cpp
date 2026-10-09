@@ -23,8 +23,8 @@
  * @ai_warning [AI-WARNING] Le geste s'arrête au popup : LV_OBJ_FLAG_GESTURE_BUBBLE retiré
  *       (pages_brancher). Sans ça, LVGL le remonte jusqu'à page_main, dont le on_gesture
  *       change les prévisions ou la pièce derrière le popup (handle_swipe_gesture,
- *       tab5_central.cpp). Un geste parti d'un curseur ou d'un arc (luminosité, volume,
- *       arc d'une lampe) est son réglage, pas une page : LVGL émet aussi LV_EVENT_GESTURE
+ *       tab5_central.cpp). Un geste parti d'un curseur, d'un arc ou d'un rouleau
+ *       (luminosité, volume, arc d'une lampe, rouleaux du réveil) est son réglage, pas une page : LVGL émet aussi LV_EVENT_GESTURE
  *       pendant qu'on le glisse. pages_brancher peut être rappelé (script de pose relancé) :
  *       son rappel est retiré avant d'être ajouté, sinon un glissement sautait autant de
  *       pages (vu sur le carrousel des clims dans le rendu du 09/10/2026).
@@ -57,9 +57,14 @@ void geste_rappel(lv_event_t* e) {
         return;
     const lv_dir_t dir = lv_indev_get_gesture_dir(indev);
     if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
-    // Un curseur ou un arc glissé de côté : c'est son réglage, pas une page.
+    // Un curseur, un arc ou un rouleau glissé de côté : c'est son réglage, pas une page. Un
+    // rouleau (lv_roller, réveil, 09/10/2026) se glisse de haut en bas, mais un doigt en
+    // biais y donne aussi un geste gauche / droite.
     for (lv_obj_t* o = lv_indev_get_active_obj(); o != nullptr && o != p->popup; o = lv_obj_get_parent(o)) {
         if (lv_obj_check_type(o, &lv_slider_class) || lv_obj_check_type(o, &lv_arc_class)) return;
+#if LV_USE_ROLLER
+        if (lv_obj_check_type(o, &lv_roller_class)) return;
+#endif
     }
     const int n = p->nombre();
     if (n < 2) return;

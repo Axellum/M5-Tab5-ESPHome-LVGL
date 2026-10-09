@@ -439,7 +439,7 @@ void maison_definitions_changees();
 // --- Popup à pages (tab5_pages.cpp, ADR-0046) ---
 // La brique commune des popups à plusieurs pages (Réglages ; Lumières et Volets, une page
 // par pièce ; Réveil) : glisser à gauche / à droite = page suivante / précédente, en boucle,
-// arrêté au popup, sauf parti d'un curseur ou d'un arc ; noms des pages en haut. Le popup garde sa
+// arrêté au popup, sauf parti d'un curseur, d'un arc ou d'un rouleau ; noms des pages en haut. Le popup garde sa
 // page : `nombre` (pages aujourd'hui), `courante` (celle affichée, -1 aucune), `afficher`
 // (montre la page i, repeint ses onglets). L'objet doit vivre aussi longtemps que le popup
 // (une variable de fichier) : son adresse est la donnée du rappel LVGL.
