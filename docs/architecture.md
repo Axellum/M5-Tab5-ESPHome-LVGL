@@ -197,7 +197,7 @@ page_main (1280×720, the whole dashboard)
                      screen page, long press = system page)
 
 separate pages, outside the dashboard flow (all `skip: true` — see §6):
-├── page_arcade   (4×2 selector, opened by the gamepad button or the greenhouse temperature)
+├── page_arcade   (4×2 selector, opened by the gamepad button or the navigation wheel)
 └── page_marble / page_arkanoid / page_pinball / page_lode / page_go /
     page_trivia / page_chess / page_draughts      (one per console)
 ```
@@ -364,7 +364,7 @@ The 8 game consoles are **isolated sub-modules** that share no state with the HM
 - **Zero HA/network dependency** — games work fully offline
 - **Adaptive IMU polling** — `tab5-imu.yaml` switches from 100 ms (10 Hz) at rest to 33 ms (30 Hz) when a tilt-controlled game is open
 
-Navigation goes through `lvgl.page.show:` (YAML) or `lv_scr_load()` (C++); the selector page `page_arcade` is the single entry point, opened by tapping the greenhouse temperature. The C++ files are included via `esphome: includes:` in the entry point (not as packages). Each game lives in its own namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) with a uniform API: `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`. Those entry points are listed **once**, in `Tab5/ecran/tab5_registry.cpp` (`GameRegistry::kGames`, with an `imu_fast` flag per console): the global close, the adaptive IMU poll, the IMU dispatch and the HA "current screen" sensor all read that table instead of naming the games (ADR-0013). The same file hosts `ModalRegistry`, the single list of modal windows, filled once by the `tab5_modal_registry_init` script.
+Navigation goes through `lvgl.page.show:` (YAML) or `lv_scr_load()` (C++); the selector page `page_arcade` is the single entry point, opened by the `tab5_arcade_open` script (the gamepad button's tap, « Jeux » in the navigation wheel; the greenhouse temperature's tap switches the area left of the clock since [ADR-0051](decisions/0051-left-zone-choice.md)). The C++ files are included via `esphome: includes:` in the entry point (not as packages). Each game lives in its own namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) with a uniform API: `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`. Those entry points are listed **once**, in `Tab5/ecran/tab5_registry.cpp` (`GameRegistry::kGames`, with an `imu_fast` flag per console): the global close, the adaptive IMU poll, the IMU dispatch and the HA "current screen" sensor all read that table instead of naming the games (ADR-0013). The same file hosts `ModalRegistry`, the single list of modal windows, filled once by the `tab5_modal_registry_init` script.
 
 > **Status: early prototypes.** These are first-pass AI-generated games to test embedded code generation capabilities — functional but not visually polished.
 
@@ -519,7 +519,7 @@ page_main (1280×720, tout le dashboard)
                      page écran, appui long = page système)
 
 pages séparées, hors parcours dashboard (toutes en `skip: true` — voir §6) :
-├── page_arcade   (sélecteur 4×2, ouvert par le bouton manette ou la température de la serre)
+├── page_arcade   (sélecteur 4×2, ouvert par le bouton manette ou la roue de navigation)
 └── page_marble / page_arkanoid / page_pinball / page_lode / page_go /
     page_trivia / page_chess / page_draughts      (une par console)
 ```
@@ -684,7 +684,7 @@ Les 8 consoles sont des **sous-modules isolés** qui ne partagent aucun état av
 - **Zéro dépendance HA / réseau** — les jeux fonctionnent entièrement hors ligne
 - **Polling IMU adaptatif** — `tab5-imu.yaml` passe de 100 ms (10 Hz) au repos à 33 ms (30 Hz) quand un jeu à l'inclinaison est ouvert
 
-La navigation passe par `lvgl.page.show:` (YAML) ou `lv_scr_load()` (C++) ; la page sélecteur `page_arcade` est le point d'entrée unique, ouverte par un tap sur la température de la serre. Les fichiers C++ sont inclus via `esphome: includes:` dans le point d'entrée (pas en tant que packages). Chaque jeu vit dans son propre namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) avec une API uniforme : `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`. Ces points d'entrée sont listés **une seule fois**, dans `Tab5/ecran/tab5_registry.cpp` (`GameRegistry::kGames`, avec un drapeau `imu_fast` par console) : la fermeture globale, le poll IMU adaptatif, le dispatch IMU et le capteur HA « Écran courant » lisent cette table au lieu de nommer les jeux (ADR-0013). Le même fichier porte `ModalRegistry`, la liste unique des fenêtres modales, remplie une fois par le script `tab5_modal_registry_init`.
+La navigation passe par `lvgl.page.show:` (YAML) ou `lv_scr_load()` (C++) ; la page sélecteur `page_arcade` est le point d'entrée unique, ouverte par le script `tab5_arcade_open` (tap du bouton manette, « Jeux » dans la roue de navigation ; le tap sur la température de la serre change la zone à gauche de l'horloge depuis l'[ADR-0051](decisions/0051-left-zone-choice.md)). Les fichiers C++ sont inclus via `esphome: includes:` dans le point d'entrée (pas en tant que packages). Chaque jeu vit dans son propre namespace (`Marble`, `Arkanoid`, `Pinball`, `Lode`, `Go`, `Trivia`, `Draughts`, `Chess`) avec une API uniforme : `open()`, `close()`, `is_open()`, `on_imu(ax, ay, az)`. Ces points d'entrée sont listés **une seule fois**, dans `Tab5/ecran/tab5_registry.cpp` (`GameRegistry::kGames`, avec un drapeau `imu_fast` par console) : la fermeture globale, le poll IMU adaptatif, le dispatch IMU et le capteur HA « Écran courant » lisent cette table au lieu de nommer les jeux (ADR-0013). Le même fichier porte `ModalRegistry`, la liste unique des fenêtres modales, remplie une fois par le script `tab5_modal_registry_init`.
 
 **Une exception à l'orientation** : `Pinball::open()` bascule LVGL en portrait 720×1280 et `Pinball::close()` restaure `rotation: 270`. C'est la seule console qui touche à l'orientation — voir le bloc `[AI-CONTEXT]` « ORIENTATION » en tête de `pinball_game.cpp`.
 
