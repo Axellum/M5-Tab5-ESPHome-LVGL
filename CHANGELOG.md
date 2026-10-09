@@ -21,6 +21,12 @@ firmware.
 
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.7.0).
 
+### 2026-10-09 — Fiabilité mesurable au-delà de 7 jours (lot K de l'audit du 30/09, Home Assistant seul)
+
+- **Trois capteurs à statistiques longues** dans `packages/tab5_health.yaml` : le recorder ne garde les états que quelques jours, et « Tab5 Uptime » (horodatage) comme « Raison du redémarrage » (texte) n'avaient pas de statistiques. « Tab5 · redémarrages » et « Tab5 · redémarrages inattendus » (`total_increasing`) comptent l'événement `tab5_sante_redemarrage` que la garde « reboot inattendu » émet désormais pour chaque redémarrage reconnu, avec son propre classement demandé / inattendu (rien n'est recopié) ; une coupure Wi-Fi sans reboot, un redémarrage de HA ou l'arrivée de la tablette ne comptent pas. « Tab5 · fonctionnement continu » (`duration`, `measurement`, heures) : temps depuis le dernier démarrage, toutes les 15 min, sans `now()` (instant du déclencheur). Lecture : Outils de développement → Statistiques. Pas de tuile dans le tableau de bord du Tab5.
+- Modèles validés par le moteur de modèles du Home Assistant de l'auteur (2026.10.0, `POST /api/template`) contre un calcul Python indépendant ; `tests/test_sante_statistiques.py`. **Non vérifié** : le comptage sur un vrai redémarrage et la restauration après un redémarrage de HA.
+- *À faire en mettant à jour* : recopier `packages/tab5_health.yaml`, recharger les automatisations et les modèles. Aucun changement du firmware.
+
 ### 2026-10-09 — Moteur des dames dans son propre module (lot G de l'audit du 30/09)
 
 - **`Tab5/jeux/draughts_engine.h` / `.cpp`** (nouveaux) : le moteur des dames (`Draughts::Engine` : position de départ, génération des coups, application, nulles, évaluation) quitte `draughts_game.{h,cpp}`, où il partageait le fichier avec l'interface LVGL et la sauvegarde. Code déplacé tel quel, ligne à ligne : aucun changement de comportement. `draughts_ai.*` garde l'IA, `draughts_game.*` l'interface.
