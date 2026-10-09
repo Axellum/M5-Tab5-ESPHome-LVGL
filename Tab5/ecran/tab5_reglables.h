@@ -16,8 +16,8 @@
 // =============================================================================
 // Tuile − / + au choix (tab5_reglables.cpp, ADR-0033) : les boutons − / + de la carte
 // clim de l'accueil règlent la clim du blueprint, un appareil choisi dans le blueprint
-// (clés rN) ou le volume de la tablette, choisi dans une liste qui se déroule au
-// toucher de la température du salon. Le choix reste en NVS.
+// (clés rN) ou le volume de la tablette, choisi dans une liste qui se déroule à l'appui
+// long sur la valeur entre − et + (ADR-0038). Le choix reste en NVS.
 // =============================================================================
 constexpr int kReglablesLignes = 10;  // clim + huit appareils du blueprint + tablette
 // Widgets, posés par le script tab5_reglables_ui (tab5-reglables.yaml) avant le premier
@@ -50,7 +50,8 @@ void reglables_pas(int sens);
 void reglables_envoyer_attente();
 // Toucher de la valeur d'un autre appareil : le popup de sa tuile, ou la télécommande.
 void reglables_valeur_appui();
-// Toucher de la température du salon : la liste s'ouvre (ou se ferme) ; toucher d'une
+// Appui long sur la valeur entre − et + (ou toucher de la température du salon quand la
+// tablette ne connaît aucune clim) : la liste s'ouvre (ou se ferme) ; toucher d'une
 // ligne : cet appareil est choisi, la liste se ferme ; ailleurs : elle se ferme.
 void reglables_liste_basculer();
 void reglables_choisir(int ligne);
