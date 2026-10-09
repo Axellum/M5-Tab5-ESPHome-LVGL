@@ -706,7 +706,7 @@ void popups_revalider() {
 
 // Thèmes (ADR-0029) : les trois popups repeints depuis le dernier état.
 void popups_rejouer_theme() {
-    if (s_pl.n > 0) popup_lumiere_peindre();
+    if (s_pl.ouvert() && s_pl.n > 0) popup_lumiere_peindre();
     if (s_pv.ouvert()) popup_volet_page_peindre();
     if (s_pa.ouvert()) popup_appareil_peindre();
 }
@@ -735,7 +735,12 @@ void popup_lumiere_choisir(int idx) {
 void popup_lumiere_page(int page) {
     charger();
     if (!s_pl.ouvert() || page < 0 || page >= s_pl.nb || page == s_pl.page) return;
-    if (popup_lumiere_lignes(s_pl.pieces[page], -1)) popup_lumiere_peindre();
+    // Plus aucune lumière (définitions changées entre deux appels) : refermé.
+    if (!popup_lumiere_lignes(s_pl.pieces[page], -1)) {
+        animate_popup_close(PopupLumiere::conteneur());
+        return;
+    }
+    popup_lumiere_peindre();
 }
 
 // Toucher de la pastille d'une ligne : le toucher de sa tuile (allumer / éteindre, avec la
@@ -773,7 +778,8 @@ void popup_volet_choisir(int idx) {
 void popup_volet_page(int page) {
     charger();
     if (!s_pv.ouvert() || page < 0 || page >= s_pv.nb || page == s_pv.page) return;
-    popup_volet_montrer(s_pv.pieces[page], -1);
+    // Plus aucun volet (définitions changées entre deux appels) : refermé.
+    if (!popup_volet_montrer(s_pv.pieces[page], -1)) animate_popup_close(PopupVolet::conteneur());
 }
 
 // Toucher de la pastille : le toucher de la tuile (le sens du volet : ouvrir, fermer, ou

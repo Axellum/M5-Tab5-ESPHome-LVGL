@@ -731,9 +731,6 @@ LV_YAML_PLAFONDS: dict[str, dict[str, int]] = {
     # Geste de balayage de la page : point et direction lus sur l'entrée LVGL
     # (le traitement est dans handle_swipe_gesture(), tab5_central.cpp).
     "tab5-lvgl.yaml": {"lv_indev_active": 1, "lv_indev_get_point": 1, "lv_indev_get_gesture_dir": 1},
-    # Valeur de l'arc de luminosité lue pour l'envoi (la console au premier plan est partie
-    # le 08/10/2026 : c'est une page des Réglages).
-    "tab5-scripts.yaml": {"lv_arc_get_value": 1},
     # Page Système des Réglages : les deux écrans de confirmation (afficher, masquer,
     # premier plan) et l'état « Redémarrage... » de HA. Candidat à un `console_confirmer()`
     # en C++. Voile et croix ne les masquent plus ici (reglages_fermer, 08/10/2026).

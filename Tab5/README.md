@@ -240,7 +240,7 @@ L'autre moitié du contrat. **Le firmware n'appelle aucune action de HA** (plus 
 | `volet_target_open`, `volet_en_mouvement` | bool | volet 3.x (mode héritage : sens de la prochaine commande, mouvement) ; `volet_en_mouvement` arme aussi le mot « Stop » |
 | `plan_ligne_1`, `plan_ligne_2` | string | texte planning brut |
 | `ha_alert_id_0…3` | string | ids des bandeaux alertes/infos HA (`tab5_maj_alertes_ha_bulk`) — leur présence et le panneau affiché vivent dans `g_central_ctx` (voir plus haut) ; `tab5_dismissed_local` mémorise les ids masqués au tap |
-| `current_light_slot` | string | cible des commandes du popup lumière : clé de la tuile choisie (`tRT`, ADR-0023), ou `lumiere_1` à `lumiere_3` en mode héritage (posé par `popup_lumiere_choisir()`) |
+| `current_light_slot` | string | cible des commandes du popup lumière : clé de la tuile choisie (`tRT`, ADR-0023), ou `lumiere_1` à `lumiere_3` en mode héritage (posé par `popup_lumiere_choisir()` et `popup_lumiere_lignes()` : ouverture, page, nouvelles définitions ; lu au geste par `tab5_debounce_light_brightness`) |
 | `va_stop_armed` | bool | modèle wake word « Stop » armé (volet en mouvement) |
 | `ecran_allume_ms` | uint32_t | `millis()` du dernier allumage du rétroéclairage (`on_turn_on` de `backlight`) : l'extinction auto de l'écran (select « Tab5 Extinction auto de l'écran », `tab5-ha-controls.yaml`) compte depuis le plus récent de cet instant et du dernier appui lu par LVGL |
 | `ota_en_cours` | bool | mise à jour du firmware en cours (`on_begin` / `on_abort` / `on_error` des deux `ota:`) : pas d'extinction auto pendant une OTA |

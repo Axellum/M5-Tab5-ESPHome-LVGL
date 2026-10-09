@@ -135,7 +135,11 @@ obj:
                           char buf[8];
                           snprintf(buf, sizeof(buf), "%d %%", x > 0 ? lum_pct(x) : 0);
                           lv_label_set_text(id(lbl_light_brightness_val), buf);
-                      - script.execute: tab5_debounce_light_brightness
+                      # La lampe et la valeur du geste (tab5-scripts.yaml).
+                      - script.execute:
+                          id: tab5_debounce_light_brightness
+                          cible: !lambda 'return id(current_light_slot);'
+                          valeur: !lambda 'return static_cast<int>(x);'
 
                 # Valeur % au centre de l'arc
                 - label:

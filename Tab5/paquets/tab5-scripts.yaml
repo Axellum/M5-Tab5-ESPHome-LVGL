@@ -150,15 +150,21 @@ script:
   # Debounce de l'arc luminosité du popup lumière : chaque tick de glissement
   # redémarre le délai, un seul light.turn_on part une fois le doigt immobile
   # (même contrainte que le volume — ne pas spammer HA à chaque tick).
+  # La lampe (`cible`) et la valeur sont celles du geste (ADR-0046, relecture du
+  # 09/10/2026) : une autre lampe choisie, ou une autre pièce glissée, pendant les
+  # 200 ms ne reçoit pas la luminosité de la précédente.
   - id: tab5_debounce_light_brightness
     mode: restart
+    parameters:
+      cible: string
+      valeur: int
     then:
       - delay: 200ms
       - script.execute:
           id: tab5_action
-          emplacement: !lambda 'return id(current_light_slot);'
+          emplacement: !lambda 'return cible;'
           commande: luminosite
-          valeur: !lambda 'return to_string(lv_arc_get_value(id(arc_light_brightness)));'
+          valeur: !lambda 'return to_string(valeur);'
 
   # Debounce de la cible de la clim du blueprint (boutons ± de la carte de l'accueil,
   # arc et boutons ± du popup quand il la montre) : un seul climate.set_temperature par

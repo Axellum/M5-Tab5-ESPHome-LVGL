@@ -13,6 +13,7 @@
  */
 #pragma once
 #include "esphome.h"
+#include "tab5_geometrie.h"
 #include <string>
 
 namespace esphome { namespace font { class Font; } }
@@ -72,15 +73,15 @@ struct TuilesUI {
     // affichée (piece_ligne.yaml, 5 au plus) et les noms des pièces (pages_onglet.yaml).
     // Popup Lumières (light_popup.yaml).
     lv_obj_t* lum_popup = nullptr;        // light_options_popup
-    lv_obj_t* lum_ligne[5] = {};          // btn_light_sel_N
-    lv_obj_t* lum_onglet[5] = {};         // lum_onglet_N
+    lv_obj_t* lum_ligne[kTuiles] = {};    // btn_light_sel_N
+    lv_obj_t* lum_onglet[kPieces] = {};   // lum_onglet_N
     lv_obj_t* lum_arc = nullptr;          // arc_light_brightness
     lv_obj_t* lum_pct = nullptr;          // lbl_light_brightness_val
     std::string* lum_cle = nullptr;       // &id(current_light_slot) : cible des commandes
     // Popup Volets (volet_popup.yaml, 05/10/2026) : le volet choisi, dessiné, à droite.
     lv_obj_t* vol_popup = nullptr;        // volet_popup
-    lv_obj_t* vol_ligne[5] = {};          // volet_ligne_N
-    lv_obj_t* vol_onglet[5] = {};         // vol_onglet_N
+    lv_obj_t* vol_ligne[kTuiles] = {};    // volet_ligne_N
+    lv_obj_t* vol_onglet[kPieces] = {};   // vol_onglet_N
     lv_obj_t* vol_nom = nullptr;          // volet_nom : le nom du volet choisi
     lv_obj_t* vol_position = nullptr;     // volet_position : rangée « 45 % »
     lv_obj_t* vol_nombre = nullptr;       // volet_nombre : chiffres (police de l'horloge)
