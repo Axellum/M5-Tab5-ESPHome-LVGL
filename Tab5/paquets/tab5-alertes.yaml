@@ -4,8 +4,8 @@
 # @role Popup « Alertes » (lot 4 du plan des alertes de la carte centrale, 06/10/2026) :
 #       pose les widgets que tab5_alertes.cpp peint (g_alertes_ui) et ses deux demandes à
 #       Home Assistant.
-#         - tab5_alertes_ouvrir : ouvre le popup (appui long sur la carte centrale de
-#           l'accueil, tab5-lvgl.yaml, ou « Aller à l'écran → Alertes »). Pose les widgets
+#         - tab5_alertes_ouvrir : ouvre le popup (« Alertes » de la roue de navigation,
+#           ADR-0042, ou « Aller à l'écran → Alertes »). Pose les widgets
 #           à la première ouverture, puis alertes_ouvrir() : dernière liste reçue, demande.
 #         - tab5_alertes_demande : événement esphome.tab5_alertes_historique. HA y répond
 #           par l'action tab5_maj_alertes_historique (tab5-api-logic.yaml) :
