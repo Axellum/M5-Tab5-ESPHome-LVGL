@@ -22,13 +22,61 @@
         "title": "Tab5 — Home Assistant files",
         "data": {
           "mettre_a_jour_tablette": "Then update the tablet",
-          "reinstaller": "Install the files of this version again now"
+          "reinstaller": "Install the files of this version again now",
+          "assistant": "Start the setup assistant"
         },
         "data_description": {
           "mettre_a_jour_tablette": "Once the files are in place, install the firmware of the same version as soon as the tablet's « Firmware » entity offers it.",
-          "reinstaller": "For a Tab5 file deleted or edited by mistake. The current ones are saved first."
+          "reinstaller": "For a Tab5 file deleted or edited by mistake. The current ones are saved first.",
+          "assistant": "Prepares the screen slots automation from your Home Assistant areas. Nothing is written until you confirm; an existing automation only changes if you ask for it."
+        }
+      },
+      "pieces": {
+        "title": "Assistant · rooms",
+        "description": "The assistant prepares the screen slots automation (blueprint « Tab5 — emplacements de l'écran · screen slots ») from your Home Assistant areas. {nombre} area(s) have devices the tablet can show; the best equipped are already picked, {max} at most. Nothing is written before the summary.",
+        "data": {
+          "pieces": "Rooms of the tablet"
+        },
+        "data_description": {
+          "pieces": "Five at most, in the order of the bottom row's pages: the first on the home page, the next ones a swipe away."
+        }
+      },
+      "piece": {
+        "title": "Assistant · room {numero} of {total}: {zone}",
+        "description": "Filled in from the Home Assistant area « {zone} »: its lights, covers, switches, fans and media players ({max} at most), its temperature and humidity sensors and its climate. Change anything you like.",
+        "data": {
+          "nom": "Name shown",
+          "tuiles": "Tiles",
+          "temperature": "Room temperature",
+          "humidite": "Room humidity",
+          "clim": "Room climate"
+        },
+        "data_description": {
+          "nom": "Empty: the area its devices share.",
+          "tuiles": "Five at most, left to right.",
+          "temperature": "Optional. Shown on the home page while this room is on screen.",
+          "humidite": "Optional, with the temperature.",
+          "clim": "Optional, with the temperature: the home page's − / + buttons adjust it."
+        }
+      },
+      "recapitulatif": {
+        "title": "Assistant · summary",
+        "description": "{resume}\n\n{action}",
+        "data": {
+          "mettre_a_jour": "Replace the rooms of the existing automation"
+        },
+        "data_description": {
+          "mettre_a_jour": "Its other settings (weather, energy, gestures…) stay as they are."
         }
       }
+    },
+    "abort": {
+      "aucune_piece": "No Home Assistant area has a device the tablet can show: the assistant has nothing to offer and changes nothing. Assign your devices to areas in Home Assistant, then start it again (Settings → Devices & services → Tab5 → Configure, box « Start the setup assistant »), or fill in the blueprint's automation by hand."
+    },
+    "error": {
+      "aucune_piece_choisie": "Pick at least one room.",
+      "trop_de_pieces": "Five rooms at most.",
+      "trop_de_tuiles": "Five tiles at most."
     }
   },
   "issues": {
@@ -72,6 +120,59 @@
     "firmware_echec": {
       "title": "Tab5: the tablet did not update to {version}",
       "description": "The Tab5 files {version} are in place, but the tablet still runs another version after {essais} tries of its update. Install it by hand: Settings → Updates (or the tablet's « Firmware » entity) → Install, with the tablet on and connected. The reason of each try is in the log (Settings → System → Logs, « tab5 »). This message goes away once the tablet runs {version}."
+    },
+    "configurer_pieces": {
+      "title": "Tab5: set up the tablet from your rooms",
+      "fix_flow": {
+        "step": {
+          "pieces": {
+            "title": "Assistant · rooms",
+            "description": "The assistant prepares the screen slots automation (blueprint « Tab5 — emplacements de l'écran · screen slots ») from your Home Assistant areas. {nombre} area(s) have devices the tablet can show; the best equipped are already picked, {max} at most. Nothing is written before the summary.",
+            "data": {
+              "pieces": "Rooms of the tablet"
+            },
+            "data_description": {
+              "pieces": "Five at most, in the order of the bottom row's pages: the first on the home page, the next ones a swipe away."
+            }
+          },
+          "piece": {
+            "title": "Assistant · room {numero} of {total}: {zone}",
+            "description": "Filled in from the Home Assistant area « {zone} »: its lights, covers, switches, fans and media players ({max} at most), its temperature and humidity sensors and its climate. Change anything you like.",
+            "data": {
+              "nom": "Name shown",
+              "tuiles": "Tiles",
+              "temperature": "Room temperature",
+              "humidite": "Room humidity",
+              "clim": "Room climate"
+            },
+            "data_description": {
+              "nom": "Empty: the area its devices share.",
+              "tuiles": "Five at most, left to right.",
+              "temperature": "Optional. Shown on the home page while this room is on screen.",
+              "humidite": "Optional, with the temperature.",
+              "clim": "Optional, with the temperature: the home page's − / + buttons adjust it."
+            }
+          },
+          "recapitulatif": {
+            "title": "Assistant · summary",
+            "description": "{resume}\n\n{action}",
+            "data": {
+              "mettre_a_jour": "Replace the rooms of the existing automation"
+            },
+            "data_description": {
+              "mettre_a_jour": "Its other settings (weather, energy, gestures…) stay as they are."
+            }
+          }
+        },
+        "abort": {
+          "aucune_piece": "No Home Assistant area has a device the tablet can show: the assistant has nothing to offer and changes nothing. Assign your devices to areas in Home Assistant, then start it again (Settings → Devices & services → Tab5 → Configure, box « Start the setup assistant »), or fill in the blueprint's automation by hand."
+        },
+        "error": {
+          "aucune_piece_choisie": "Pick at least one room.",
+          "trop_de_pieces": "Five rooms at most.",
+          "trop_de_tuiles": "Five tiles at most."
+        }
+      }
     }
   }
 }

@@ -22,13 +22,61 @@
         "title": "Tab5 — fichiers Home Assistant",
         "data": {
           "mettre_a_jour_tablette": "Mettre ensuite la tablette à jour",
-          "reinstaller": "Réinstaller maintenant les fichiers de cette version"
+          "reinstaller": "Réinstaller maintenant les fichiers de cette version",
+          "assistant": "Lancer l'assistant de configuration"
         },
         "data_description": {
           "mettre_a_jour_tablette": "Une fois les fichiers en place, installer le firmware de la même version dès que l'entité « Firmware » de la tablette le propose.",
-          "reinstaller": "Pour un fichier du Tab5 effacé ou modifié par erreur. Les fichiers actuels sont d'abord sauvegardés."
+          "reinstaller": "Pour un fichier du Tab5 effacé ou modifié par erreur. Les fichiers actuels sont d'abord sauvegardés.",
+          "assistant": "Prépare l'automatisation des emplacements de l'écran à partir de vos pièces de Home Assistant. Rien n'est écrit sans votre validation ; une automatisation déjà là ne change que si vous le demandez."
+        }
+      },
+      "pieces": {
+        "title": "Assistant · pièces",
+        "description": "L'assistant prépare l'automatisation des emplacements de l'écran (blueprint « Tab5 — emplacements de l'écran ») à partir de vos pièces de Home Assistant. {nombre} pièce(s) ont des appareils que la tablette sait montrer ; les mieux équipées sont déjà choisies, {max} au plus. Rien n'est écrit avant le récapitulatif.",
+        "data": {
+          "pieces": "Pièces de la tablette"
+        },
+        "data_description": {
+          "pieces": "Cinq au plus, dans l'ordre des pages de la rangée du bas : la première sur l'accueil, les suivantes d'un glissement."
+        }
+      },
+      "piece": {
+        "title": "Assistant · pièce {numero} sur {total} : {zone}",
+        "description": "Pré-rempli d'après la pièce « {zone} » de Home Assistant : ses lumières, volets, interrupteurs, ventilateurs et lecteurs ({max} au plus), son capteur de température, d'humidité et sa climatisation. Changez ce que vous voulez.",
+        "data": {
+          "nom": "Nom affiché",
+          "tuiles": "Tuiles",
+          "temperature": "Température de la pièce",
+          "humidite": "Humidité de la pièce",
+          "clim": "Climatisation de la pièce"
+        },
+        "data_description": {
+          "nom": "Vide : le nom de la pièce commune à ses appareils.",
+          "tuiles": "Cinq au plus, de gauche à droite.",
+          "temperature": "Facultatif. Affichée sur l'accueil quand cette pièce est à l'écran.",
+          "humidite": "Facultatif, avec la température.",
+          "clim": "Facultatif, avec la température : les boutons − / + de l'accueil la règlent."
+        }
+      },
+      "recapitulatif": {
+        "title": "Assistant · récapitulatif",
+        "description": "{resume}\n\n{action}",
+        "data": {
+          "mettre_a_jour": "Remplacer les pièces de l'automatisation existante"
+        },
+        "data_description": {
+          "mettre_a_jour": "Ses autres réglages (météo, énergie, gestes…) restent tels quels."
         }
       }
+    },
+    "abort": {
+      "aucune_piece": "Aucune pièce de Home Assistant n'a d'appareil que la tablette sait montrer : l'assistant n'a rien à proposer et ne change rien. Rattachez vos appareils à des pièces dans Home Assistant, puis relancez-le (Paramètres → Appareils et services → Tab5 → Configurer, case « Lancer l'assistant de configuration »), ou remplissez l'automatisation du blueprint à la main."
+    },
+    "error": {
+      "aucune_piece_choisie": "Choisissez au moins une pièce.",
+      "trop_de_pieces": "Cinq pièces au plus.",
+      "trop_de_tuiles": "Cinq tuiles au plus."
     }
   },
   "issues": {
@@ -72,6 +120,59 @@
     "firmware_echec": {
       "title": "Tab5 : la tablette n'est pas passée en {version}",
       "description": "Les fichiers du Tab5 {version} sont en place, mais la tablette tourne toujours une autre version après {essais} essais de sa mise à jour. Installez-la à la main : Paramètres → Mises à jour (ou l'entité « Firmware » de la tablette) → Installer, tablette allumée et connectée. La raison de chaque essai est dans le journal (Paramètres → Système → Journaux, « tab5 »). Ce message disparaît dès que la tablette tourne en {version}."
+    },
+    "configurer_pieces": {
+      "title": "Tab5 : configurer la tablette depuis vos pièces",
+      "fix_flow": {
+        "step": {
+          "pieces": {
+            "title": "Assistant · pièces",
+            "description": "L'assistant prépare l'automatisation des emplacements de l'écran (blueprint « Tab5 — emplacements de l'écran ») à partir de vos pièces de Home Assistant. {nombre} pièce(s) ont des appareils que la tablette sait montrer ; les mieux équipées sont déjà choisies, {max} au plus. Rien n'est écrit avant le récapitulatif.",
+            "data": {
+              "pieces": "Pièces de la tablette"
+            },
+            "data_description": {
+              "pieces": "Cinq au plus, dans l'ordre des pages de la rangée du bas : la première sur l'accueil, les suivantes d'un glissement."
+            }
+          },
+          "piece": {
+            "title": "Assistant · pièce {numero} sur {total} : {zone}",
+            "description": "Pré-rempli d'après la pièce « {zone} » de Home Assistant : ses lumières, volets, interrupteurs, ventilateurs et lecteurs ({max} au plus), son capteur de température, d'humidité et sa climatisation. Changez ce que vous voulez.",
+            "data": {
+              "nom": "Nom affiché",
+              "tuiles": "Tuiles",
+              "temperature": "Température de la pièce",
+              "humidite": "Humidité de la pièce",
+              "clim": "Climatisation de la pièce"
+            },
+            "data_description": {
+              "nom": "Vide : le nom de la pièce commune à ses appareils.",
+              "tuiles": "Cinq au plus, de gauche à droite.",
+              "temperature": "Facultatif. Affichée sur l'accueil quand cette pièce est à l'écran.",
+              "humidite": "Facultatif, avec la température.",
+              "clim": "Facultatif, avec la température : les boutons − / + de l'accueil la règlent."
+            }
+          },
+          "recapitulatif": {
+            "title": "Assistant · récapitulatif",
+            "description": "{resume}\n\n{action}",
+            "data": {
+              "mettre_a_jour": "Remplacer les pièces de l'automatisation existante"
+            },
+            "data_description": {
+              "mettre_a_jour": "Ses autres réglages (météo, énergie, gestes…) restent tels quels."
+            }
+          }
+        },
+        "abort": {
+          "aucune_piece": "Aucune pièce de Home Assistant n'a d'appareil que la tablette sait montrer : l'assistant n'a rien à proposer et ne change rien. Rattachez vos appareils à des pièces dans Home Assistant, puis relancez-le (Paramètres → Appareils et services → Tab5 → Configurer, case « Lancer l'assistant de configuration »), ou remplissez l'automatisation du blueprint à la main."
+        },
+        "error": {
+          "aucune_piece_choisie": "Choisissez au moins une pièce.",
+          "trop_de_pieces": "Cinq pièces au plus.",
+          "trop_de_tuiles": "Cinq tuiles au plus."
+        }
+      }
     }
   }
 }

@@ -13,6 +13,8 @@ GARDER_SAUVEGARDES = 5
 CONF_FIRMWARE = "mettre_a_jour_tablette"
 # Option (formulaire seulement) : réinstaller les fichiers de cette version maintenant.
 CONF_REINSTALLER = "reinstaller"
+# Option (formulaire seulement) : enchaîner sur l'assistant de configuration (ADR-0052).
+CONF_ASSISTANT = "assistant"
 
 # Modèle d'appareil du firmware (bloc `project:` de tab5-ha-hmi.yaml) : c'est par lui que
 # les packages trouvent la tablette (packages/tab5_evenements.yaml), et l'intégration aussi.
@@ -38,6 +40,9 @@ ISSUE_REDEMARRAGE = "redemarrage_requis"
 ISSUE_REMPLACES = "fichiers_remplaces"
 # La tablette n'a toujours pas la version après firmware.ESSAIS_MAX essais (firmware.py).
 ISSUE_FIRMWARE = "firmware_echec"
+# Fichiers actifs et aucune automatisation du blueprint : « Configurer la tablette depuis
+# vos pièces ». Sa réparation EST l'assistant (assistant_flux.py, ADR-0052).
+ISSUE_ASSISTANT = "configurer_pieces"
 
 # Paramètre {signaler} de « configuration_invalide » : hassfest refuse une URL écrite
 # dans les traductions.

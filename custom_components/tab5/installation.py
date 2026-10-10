@@ -41,6 +41,10 @@ BLUEPRINT = "blueprints/automation/tab5/tab5_emplacements.yaml"
 # Une copie importée par l'URL du blueprint garde cette URL dans son `source_url`.
 SIGNATURE_BLUEPRINT = "github.com/Axellum/M5-Tab5-ESPHome-LVGL/"
 SAUVEGARDES = "tab5_sauvegardes"
+# Une sauvegarde d'installation : dossier nommé par etiquette() (date d'abord). Les autres
+# dossiers de tab5_sauvegardes/ (automatisations/ de l'assistant, assistant.py) ne sont ni
+# réutilisés ni nettoyés ici.
+SAUVEGARDE_DATEE = re.compile(r"^\d{8}-\d{6}_")
 # Suffixe de l'écriture atomique : ne finit pas par .yaml, que `!include_dir_named
 # packages` chargerait si HA relisait la configuration au mauvais moment.
 TEMPORAIRE = ".tab5-tmp"
@@ -229,9 +233,16 @@ def restaurer(config: Path, plan: Plan, sauvegarde: Path | None) -> None:
 
 def derniere_sauvegarde(config: Path) -> Path | None:
     """La sauvegarde la plus récente (même ordre que nettoyer_sauvegardes)."""
-    racine = config / SAUVEGARDES
-    dossiers = sorted(d for d in racine.iterdir() if d.is_dir()) if racine.is_dir() else []
+    dossiers = _datees(config)
     return dossiers[-1] if dossiers else None
+
+
+def _datees(config: Path) -> list[Path]:
+    """Les sauvegardes d'installation, de la plus ancienne à la plus récente."""
+    racine = config / SAUVEGARDES
+    if not racine.is_dir():
+        return []
+    return sorted(d for d in racine.iterdir() if d.is_dir() and SAUVEGARDE_DATEE.match(d.name))
 
 
 def meme_contenu(config: Path, sauvegarde: Path, fichiers: list[str]) -> bool:
@@ -243,10 +254,7 @@ def meme_contenu(config: Path, sauvegarde: Path, fichiers: list[str]) -> bool:
 
 def nettoyer_sauvegardes(config: Path, garder: int) -> list[str]:
     """Garde les `garder` sauvegardes les plus récentes (leur nom commence par la date)."""
-    racine = config / SAUVEGARDES
-    if not racine.is_dir():
-        return []
-    dossiers = sorted(d for d in racine.iterdir() if d.is_dir())
+    dossiers = _datees(config)
     retires = []
     for d in dossiers[:-garder] if garder > 0 else dossiers:
         shutil.rmtree(d)

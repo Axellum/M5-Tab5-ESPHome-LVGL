@@ -27,7 +27,11 @@
         4. constate l'effet : le capteur « Tab5 · version des fichiers HA »
            (packages/tab5_health.yaml) donne la nouvelle version ; sinon une réparation dit
            quoi faire (ligne `packages:` absente, ou redémarrage) ;
-        5. prévient (notification), puis, si l'option est cochée, lance la mise à jour de la
+        5. propose l'assistant de configuration (ADR-0052) : fichiers actifs et aucune
+           automatisation du blueprint tab5_emplacements → réparation « configurer_pieces »,
+           dont le formulaire est l'assistant (assistant_flux.py) ; retirée dès qu'une
+           automatisation du blueprint existe ;
+        6. prévient (notification), puis, si l'option est cochée, lance la mise à jour de la
            tablette dès que son entité « Firmware » propose CETTE version (même release) ;
            `firmware_attendu` n'est oublié qu'une fois cette version lue sur la tablette, un
            essai sans effet est refait (firmware.py), puis la réparation « firmware_echec »
@@ -67,7 +71,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 
-from . import firmware, installation, messages
+from . import assistant_flux, firmware, installation, messages
 from .const import (
     ATTENTE_CAPTEUR_S,
     CAPTEUR_VERSION,
@@ -75,6 +79,7 @@ from .const import (
     DOMAIN,
     DOSSIER_FICHIERS,
     GARDER_SAUVEGARDES,
+    ISSUE_ASSISTANT,
     ISSUE_CONFIGURATION,
     ISSUE_FICHIERS_ABSENTS,
     ISSUE_FIRMWARE,
@@ -120,7 +125,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     mémoire part, et une nouvelle installation repartira comme la première fois."""
     await Store(hass, STOCKAGE_VERSION, STOCKAGE_CLE).async_remove()
     for cle in (ISSUE_FICHIERS_ABSENTS, ISSUE_CONFIGURATION, ISSUE_PACKAGES, ISSUE_REDEMARRAGE,
-                ISSUE_REMPLACES, ISSUE_FIRMWARE):
+                ISSUE_REMPLACES, ISSUE_FIRMWARE, ISSUE_ASSISTANT):
         ir.async_delete_issue(hass, DOMAIN, cle)
 
 
@@ -172,7 +177,22 @@ class Gestionnaire:
                 # laissé place à celle-ci : les réparations n'ont plus lieu d'être.
                 for cle in (ISSUE_PACKAGES, ISSUE_REDEMARRAGE, ISSUE_CONFIGURATION, ISSUE_FICHIERS_ABSENTS):
                     ir.async_delete_issue(self.hass, DOMAIN, cle)
+        try:
+            await self._proposer_assistant()
+        except Exception:  # noqa: BLE001 — une proposition ratée n'empêche pas le firmware
+            _LOGGER.exception("Tab5 : proposition de l'assistant de configuration impossible")
         await self.async_verifier_firmware(rafraichir=True)
+
+    async def _proposer_assistant(self) -> None:
+        """Fichiers actifs (le blueprint est là) et aucune automatisation du blueprint :
+        la réparation « configurer_pieces » propose l'assistant. Une automatisation du
+        blueprint, quelle qu'elle soit, la retire : rien n'est jamais proposé par-dessus."""
+        if not self._version_active():
+            return
+        if await assistant_flux.automatisations_tab5(self.hass, self.config):
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_ASSISTANT)
+            return
+        self._probleme(ISSUE_ASSISTANT, ir.IssueSeverity.WARNING, {}, reparable=True)
 
     def _version_active(self) -> bool:
         etat = self.hass.states.get(CAPTEUR_VERSION)

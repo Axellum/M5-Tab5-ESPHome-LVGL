@@ -92,13 +92,16 @@ def test_traductions_completes():
                                            for c in cles(v, prefixe + k + ".")}
     assert cles(en) == cles(fr), "en.json et fr.json : mêmes clés"
     assert set(en["config"]["step"]["user"]["data"]) == {const.CONF_FIRMWARE}
-    assert set(en["options"]["step"]["init"]["data"]) == {const.CONF_FIRMWARE, const.CONF_REINSTALLER}
+    assert set(en["options"]["step"]["init"]["data"]) == {const.CONF_FIRMWARE, const.CONF_REINSTALLER,
+                                                          const.CONF_ASSISTANT}
     issues = {v for k, v in vars(const).items() if k.startswith("ISSUE_")}
     assert set(en["issues"]) == issues, "une réparation par constante ISSUE_*"
     assert set(en["issues"][const.ISSUE_REDEMARRAGE]["fix_flow"]["error"]) == {const.ISSUE_CONFIGURATION}
     parametres = {const.ISSUE_PACKAGES: set(), const.ISSUE_CONFIGURATION: {"version", "signaler"},
                   const.ISSUE_REMPLACES: {"fichiers", "sauvegarde"},
-                  const.ISSUE_FIRMWARE: {"version", "essais"}}
+                  const.ISSUE_FIRMWARE: {"version", "essais"},
+                  # Les étapes de l'assistant (assistant_flux.py, description_placeholders).
+                  const.ISSUE_ASSISTANT: {"nombre", "max", "numero", "total", "zone", "resume", "action"}}
     for langue in (en, fr):
         # hassfest refuse une URL dans une traduction : elle passe par un paramètre.
         assert not re.search(r"https?://", json.dumps(langue, ensure_ascii=False))
@@ -121,7 +124,7 @@ def test_constantes_lues_dans_les_packages():
 
 
 def test_modules_purs_sans_home_assistant():
-    for nom in ("installation", "messages", "const", "firmware"):
+    for nom in ("installation", "messages", "const", "firmware", "assistant"):
         texte = (INTEGRATION / f"{nom}.py").read_text(encoding="utf-8")
         assert not re.search(r"^\s*(from|import)\s+(homeassistant|\.)", texte, re.M), nom
 
