@@ -30,7 +30,14 @@
 //     puissance (W).
 // Une valeur inconnue s'écrit « — », jamais un zéro inventé. Popup fermé : rien n'est
 // repeint, la poussée ne fait que garder les valeurs et le point de la courbe.
+// Dans le bandeau, à droite (ADR-0060) : jusqu'à trois boutons d'action — décharger le
+// modèle, réveiller le PC, redémarrer le service —, montrés, grisés ou absents selon ce
+// que HA pousse (14e champ). Décharger et redémarrer demandent un second tap dans les
+// 4 s (« Confirmer ? ») ; réveiller part au premier. Un tap envoie l'événement
+// esphome.tab5_serveur_ia_action (champ `action` = code, jamais un texte libre) ; HA
+// choisit quoi faire et sur quoi (packages/tab5_llm.yaml).
 constexpr int kServeurIaCartes = 4;  // VRAM, GPU, RAM, puissance
+constexpr int kServeurIaBoutons = 3;  // = kServeurIaActions (tab5_parse.h), vérifié par le .cpp
 
 // Widgets posés par le script tab5_serveur_ia_lier (tab5-serveur-ia.yaml) : id() n'existe
 // que dans une lambda YAML.
@@ -53,6 +60,11 @@ struct ServeurIaUI {
     lv_obj_t* titre[kServeurIaCartes] = {};       // serveur_ia_titre_N
     lv_obj_t* valeur[kServeurIaCartes] = {};      // serveur_ia_valeur_N (police de la date)
     lv_obj_t* detail[kServeurIaCartes] = {};      // serveur_ia_detail_N
+    lv_obj_t* action[kServeurIaBoutons] = {};        // serveur_ia_action_N (serveur_ia_action.yaml)
+    lv_obj_t* action_icone[kServeurIaBoutons] = {};  // serveur_ia_action_icone_N (mdi_font_32)
+    lv_obj_t* action_texte[kServeurIaBoutons] = {};  // serveur_ia_action_texte_N
+    // Événement esphome.tab5_serveur_ia_action (script tab5_serveur_ia_evenement) : le code.
+    void (*envoyer)(const char* action) = nullptr;
 };
 extern ServeurIaUI g_serveur_ia_ui;
 
@@ -61,6 +73,10 @@ extern ServeurIaUI g_serveur_ia_ui;
 void serveur_ia_recu(const std::string& payload);
 // Script tab5_serveur_ia_ouvrir : peint le popup (dernier état reçu) avant son ouverture.
 void serveur_ia_ouvrir();
+// Bouton d'action `i` touché (serveur_ia_action.yaml, ADR-0060) : rien s'il est absent,
+// grisé ou si une action est partie il y a moins de 5 s ; décharger et redémarrer : le
+// premier tap arme « Confirmer ? » (4 s), le second envoie ; réveiller : envoie.
+void serveur_ia_action_touchee(int i);
 // Thèmes (ADR-0029) : pastille, valeurs, barres et courbe. Appelé par theme_rejouer_ui()
 // (tab5_theme.cpp).
 void serveur_ia_rejouer_theme();

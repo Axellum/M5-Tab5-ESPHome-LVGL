@@ -85,6 +85,8 @@ LIMITES = [
     # Serveur IA (ADR-0059) : nombres négatifs, non finis, hors bornes, champs de trop, un
     # second serveur ignoré.
     ("?", "serveur_ia_bornes", ";A|x||-1|-1|1e99|-2|inf|101|nan|9|-5|1e9|en trop;B|1|m|1|1|1|1|1|1|1|1|1|1"),
+    # Actions (ADR-0060) : codes actifs, grisés, inconnus, vides, en double, « - » seul.
+    ("?", "serveur_ia_actions", "A|1|||||||||||" + "|-decharger,reveiller,,-,redemarrer,-redemarrer,x" + ",decharger" * 40),
 ]
 
 

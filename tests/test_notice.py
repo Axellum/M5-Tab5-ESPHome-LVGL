@@ -129,6 +129,9 @@ NON_MONTREES = {
     "serveur-ia": "popup Serveur IA, décrit dans ai-server.md ; image à tirer du rendu",
     "serveur-ia-hors-ligne": "serveur-ia montre la même fenêtre ; « Hors ligne » et « — » sont décrits dans ai-server.md",
     "serveur-ia-vide": "serveur-ia montre la même fenêtre ; « Aucun » partout est décrit dans ai-server.md",
+    # Boutons d'action (ADR-0060), décrits dans ai-server.md : images à tirer du rendu de la PR.
+    "serveur-ia-actions": "boutons d'action du popup Serveur IA, décrits dans ai-server.md ; image à tirer du rendu",
+    "serveur-ia-confirmer": "serveur-ia-actions montre la même fenêtre ; « Confirmer ? » est décrit dans ai-server.md",
     # Réglages en quatre pages (08/10/2026) : images à tirer du rendu de la PR, puis citées.
     "reglages-apparence": "page Apparence des Réglages, décrite dans settings.md ; image à tirer du rendu",
     "reglages-batterie-en-charge": "page Batterie des Réglages, décrite dans settings.md ; image à tirer du rendu",

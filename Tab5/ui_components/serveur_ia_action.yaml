@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Bouton d'action du popup Serveur IA (ADR-0060, 10/10/2026), réutilisé 3 fois
+# par serveur_ia_popup.yaml, dans le bandeau : 0 Décharger, 1 Réveiller, 2 Redémarrer
+# (index = kServeurIaActionCodes, tab5_parse.h). Un tap appelle serveur_ia_action_touchee(n)
+# (tab5_serveur_ia.cpp), qui demande un second tap pour 0 et 2 ; un tap au bout d'un
+# glissement ne fait rien (ui_appui_glisse).
+# Position, largeur, affichage, texte (traduit : tr()) et couleurs (montré, grisé,
+# « Confirmer ? », « Envoyé ») : posés par peindre_actions() (tab5_serveur_ia.cpp). Ce qui
+# est écrit ici n'est que l'état d'avant la première peinture (caché).
+# vars : n (0 à 2, en nombre NON quoté), icon (glyphe MDI, dans mdi_font_32).
+# ═══════════════════════════════════════════════════════
+button:
+  id: "serveur_ia_action_${n}"
+  align: TOP_LEFT
+  x: 0
+  y: 10
+  width: 200
+  height: 52
+  radius: 14
+  pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) serveur_ia_action_touchee(${n});'
+  widgets:
+    - label: { id: "serveur_ia_action_icone_${n}", text: "${icon}", align: TOP_LEFT, x: 16, y: 8, text_font: mdi_font_32, styles: style_text_accent }
+    - label: { id: "serveur_ia_action_texte_${n}", text: "", align: TOP_LEFT, x: 58, y: 12, styles: style_text_soft }

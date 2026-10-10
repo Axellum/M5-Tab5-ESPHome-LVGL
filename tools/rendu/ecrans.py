@@ -780,6 +780,14 @@ SERVEUR_IA_COURBE = tuple(
 SERVEUR_IA_HORS_LIGNE = Service("tab5_maj_serveur_ia", (("payload", build_serveur_ia_payload(
     {"nom": "PC bureau", "etat": "0", "vram_total": "16.0"})),))
 SERVEUR_IA_AUCUN = Service("tab5_maj_serveur_ia", (("payload", build_serveur_ia_payload(None)),))
+# Boutons d'action (ADR-0060) : le serveur de la courbe, décharger et redémarrer actifs,
+# réveiller grisé (il est en ligne). Le bouton le plus à droite, « Redémarrer », est posé
+# contre le bord droit du bandeau (x 39 à 1241, y 87 à 163 à l'écran ; 200 px et plus de
+# large) : un toucher en (1150, 125) le prend dans toutes les langues et arme
+# « Confirmer ? » (rien n'est envoyé au premier tap).
+SERVEUR_IA_ACTIONS = Service("tab5_maj_serveur_ia", (("payload", build_serveur_ia_payload(
+    {**SERVEUR_IA, "actions": "decharger,-reveiller,redemarrer"})),))
+SERVEUR_IA_REDEMARRER = Toucher(1150, 125)
 SERVEUR_IA_REMISE = Service("tab5_maj_serveur_ia", (("payload", build_serveur_ia_payload(
     SERVEUR_IA_SCENES[SCENES[-1].nom])),))
 
@@ -1279,6 +1287,13 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("serveur-ia-hors-ligne", SERVEUR_IA_COURBE + (SERVEUR_IA_HORS_LIGNE, Aller("Serveur IA")),
           (SERVEUR_IA_REMISE,)),
     Ecran("serveur-ia-vide", (SERVEUR_IA_AUCUN, Aller("Serveur IA")), (SERVEUR_IA_REMISE,)),
+    # Actions (ADR-0060) : les trois boutons (un grisé), puis « Confirmer ? » sur
+    # Redémarrer après un premier tap (capturé dans les 4 s de la confirmation).
+    Ecran("serveur-ia-actions", SERVEUR_IA_COURBE + (SERVEUR_IA_ACTIONS, Aller("Serveur IA")),
+          (SERVEUR_IA_REMISE,)),
+    Ecran("serveur-ia-confirmer", SERVEUR_IA_COURBE + (SERVEUR_IA_ACTIONS, Aller("Serveur IA"),
+                                                       SERVEUR_IA_REDEMARRER),
+          (SERVEUR_IA_REMISE,)),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée

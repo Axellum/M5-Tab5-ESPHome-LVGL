@@ -10,7 +10,13 @@
  *           des kServeurIaPoints dernières poussées, requêtes en cours et en file ;
  *         - à droite, quatre cartes (serveur_ia_carte.yaml) : VRAM utilisée sur totale et
  *           sa barre, température du GPU colorée par niveau, RAM en % et sa barre,
- *           puissance en W.
+ *           puissance en W ;
+ *         - (ADR-0060) à droite du bandeau, jusqu'à trois boutons d'action
+ *           (serveur_ia_action.yaml) : Décharger, Réveiller, Redémarrer. Montrés, grisés
+ *           (INACTIVE, le tap ne fait rien) ou absents selon le 14e champ ; décharger et
+ *           redémarrer : premier tap = « Confirmer ? » (WARNING, 4 s), second tap = envoi ;
+ *           réveiller : envoi au premier tap. Après un envoi : « Envoyé » (SUCCESS) et plus
+ *           aucun envoi pendant 5 s (la cadence du script de HA).
  * @architecture_constraint Push-only et events-only (ADR-0001, ADR-0025) : rien n'est
  *       demandé à HA ; aucune entité nommée ; AUCUN seuil ici (HA pousse le niveau de la
  *       température). Une valeur inconnue s'écrit « — » (serveur_ia_nombre_texte), jamais
@@ -25,10 +31,16 @@
  * @ai_warning lv_line_set_points() ne COPIE PAS les points : s_pts et s_base vivent au
  *       niveau du fichier. Les icônes des cartes sont posées par le YAML (mdi_font_32) :
  *       aucun glyphe n'est écrit d'ici.
+ *       Actions (ADR-0060, events-only) : la tablette n'envoie qu'un CODE
+ *       (kServeurIaActionCodes) par l'événement esphome.tab5_serveur_ia_action ; jamais un
+ *       nom de modèle, une adresse ou une commande : HA décide quoi faire et refuse ce
+ *       qu'il n'a pas offert. Le modèle et le nom sont coupés (texte_ha_coupe) à la place
+ *       que laissent les boutons.
  * @ai_instruction Un widget de plus = son champ dans ServeurIaUI (tab5_serveur_ia.h) et sa
  *       ligne dans le script tab5_serveur_ia_lier (tab5-serveur-ia.yaml). Un texte affiché
- *       passe par tr(). Les boutons d'action (lot 3) iront dans le bandeau, à droite du
- *       modèle : le modèle y est coupé à la place qui reste (texte_ha_coupe).
+ *       passe par tr(). Une action de plus = son code dans kServeurIaActionCodes
+ *       (tab5_parse.h), son bouton (serveur_ia_action.yaml), son libellé ici et sa branche
+ *       dans le script tab5_serveur_ia_action (packages/tab5_llm.yaml).
  */
 #include "tab5_internal.h"
 #include "tab5_geometrie.h"
@@ -46,6 +58,7 @@ constexpr size_t kModeleMax = 96;
 constexpr int kLisse = 4;  // points de courbe entre deux poussées
 constexpr int kCourbeMax = (kServeurIaPoints - 1) * kLisse + 1;
 static_assert(kServeurIaPoints <= kCourbeLissePoints, "ui_courbe_lisse ne trace pas plus de points");
+static_assert(kServeurIaBoutons == kServeurIaActions, "un bouton par code d'action (tab5_parse.h)");
 
 // Corps de la carte modale : x kCorpsX..kCorpsX + kCorpsW, y kCorpsY..kCorpsBas (comme
 // Froid). Bandeau en haut, puis la carte des tokens/s à gauche et la grille 2 × 2 à droite.
@@ -70,6 +83,13 @@ constexpr int32_t kPoint = 12;        // dernier point de la courbe
 constexpr int32_t kAnneau = 3;        // son anneau, à la couleur du fond
 constexpr int32_t kPastille = 20;
 constexpr int32_t kBarreH = 12;
+// Boutons d'action (ADR-0060), dans le bandeau.
+constexpr int32_t kBoutonH = 52;
+constexpr int32_t kBoutonPad = 16;     // à gauche de l'icône, à droite du texte
+constexpr int32_t kBoutonEcart = 12;   // entre deux boutons
+constexpr int32_t kApresBoutons = 28;  // entre le modèle et le premier bouton
+constexpr uint32_t kConfirmationMs = 4000;
+constexpr uint32_t kEnvoyeMs = 5000;   // = la cadence du script tab5_serveur_ia_action de HA
 
 // Les quatre petites cartes (index de ServeurIaUI::carte).
 constexpr int VRAM = 0;
@@ -84,6 +104,15 @@ char s_modele[kModeleMax + 1] = {};
 bool s_recu = false;     // une poussée de HA est arrivée depuis le démarrage
 bool s_present = false;  // la dernière poussée décrit un serveur
 ServeurIaCourbe s_courbe;
+
+// Délais des boutons d'action (ADR-0060) : un timer LVGL d'un seul tour et le bouton
+// concerné (-1 : aucun).
+struct Delai {
+    lv_timer_t* timer = nullptr;
+    int i = -1;
+};
+Delai s_confirmation;  // bouton qui attend son second tap (« Confirmer ? »)
+Delai s_envoye;        // bouton qui vient d'envoyer (« Envoyé ») : plus aucun envoi d'ici là
 
 // Objets créés à la première peinture.
 lv_obj_t* s_pastille = nullptr;
@@ -160,6 +189,104 @@ void valeur_unite(char* out, size_t n, float v, int decimales, const char* forma
     else snprintf(out, n, "%s", t);
 }
 
+// ─── Boutons d'action (ADR-0060) ───
+
+void peindre_bandeau();
+
+const char* libelle_action(int i) {
+    switch (i) {
+        case kServeurIaDecharger: return tr("Décharger");
+        case kServeurIaReveiller: return tr("Réveiller");
+        default: return tr("Redémarrer");
+    }
+}
+
+// Réveiller un PC éteint ne coûte rien : un tap suffit. Décharger un modèle (le recharger
+// prend du temps) et redémarrer le service coupent ce qui tourne : second tap.
+bool a_confirmer(int i) { return i != kServeurIaReveiller; }
+
+bool montre(int i) { return (s_lu.actions & (1u << i)) != 0; }
+bool actif(int i) { return (s_lu.actives & (1u << i)) != 0; }
+
+void delai_fin(lv_timer_t* timer) {
+    Delai* d = static_cast<Delai*>(lv_timer_get_user_data(timer));
+    d->timer = nullptr;  // un seul tour : LVGL supprime le timer après ce rappel
+    d->i = -1;
+    if (popup_ouvert()) peindre_bandeau();
+}
+
+// Sans repeindre : l'appelant repeint (ou le popup est fermé).
+void delai_arreter(Delai& d) {
+    if (d.timer != nullptr) lv_timer_delete(d.timer);
+    d.timer = nullptr;
+    d.i = -1;
+}
+
+void delai_armer(Delai& d, int i, uint32_t ms) {
+    delai_arreter(d);
+    d.i = i;
+    d.timer = lv_timer_create(delai_fin, ms, &d);
+    lv_timer_set_repeat_count(d.timer, 1);
+}
+
+// Les boutons montrés, de droite à gauche, centrés dans la hauteur `ch` ; renvoie le bord
+// droit de ce qui reste à leur gauche (le modèle). Largeur d'un bouton : celle de son plus
+// long texte possible, pour qu'il ne bouge pas quand il passe à « Confirmer ? ».
+int32_t peindre_actions(int32_t cw, int32_t ch) {
+    const ServeurIaUI& u = ui();
+    const int32_t marge = (ch - kBoutonH) / 2;
+    int32_t droite = cw - marge;
+    bool un = false;
+    for (int i = kServeurIaBoutons - 1; i >= 0; i--) {
+        lv_obj_t* b = u.action[i];
+        if (b == nullptr || u.action_icone[i] == nullptr || u.action_texte[i] == nullptr) continue;
+        ui_hidden(b, !montre(i));
+        if (!montre(i)) continue;
+        const bool confirme = actif(i) && s_confirmation.i == i;
+        const bool envoye = s_envoye.i == i;
+        const char* libelle = libelle_action(i);
+        const char* texte = envoye ? tr("Envoyé") : (confirme ? tr("Confirmer ?") : libelle);
+        // Grisé : réglé dans HA, sans objet maintenant (le tap ne fait rien).
+        uint32_t c_icone = UIColor.ACCENT, c_texte = UIColor.TEXT_SOFT;
+        // Pendant « Envoyé » (kEnvoyeMs), les autres boutons ne font rien : grisés aussi.
+        if (!actif(i) || (s_envoye.timer != nullptr && !envoye)) c_icone = c_texte = UIColor.INACTIVE;
+        if (confirme) c_icone = c_texte = UIColor.WARNING;
+        if (envoye) c_icone = c_texte = UIColor.SUCCESS;
+        ui_text(u.action_texte[i], texte);
+        ui_text_color(u.action_texte[i], c_texte);
+        ui_text_color(u.action_icone[i], c_icone);
+        // En confirmation : bordure WARNING. Sinon, exactement le style du bouton
+        // (style_clim_btn : bordure du thème, ADR-0029) — la bordure locale est retirée,
+        // comme choix_peindre() (tab5_pages.cpp) ; LVGL ne repeint que si elle existait.
+        if (confirme) {
+            ui_style_couleur(b, LV_STYLE_BORDER_COLOR, UIColor.WARNING);
+            ui_style_num(b, LV_STYLE_BORDER_WIDTH, 2);
+            ui_style_num(b, LV_STYLE_BORDER_OPA, LV_OPA_COVER);
+        } else {
+            for (lv_style_prop_t p : {LV_STYLE_BORDER_COLOR, LV_STYLE_BORDER_OPA, LV_STYLE_BORDER_WIDTH})
+                lv_obj_remove_local_style_prop(b, p, LV_PART_MAIN);
+        }
+        int32_t lt = largeur_texte(u.action_texte[i], libelle);
+        const int32_t le = largeur_texte(u.action_texte[i], tr("Envoyé"));
+        if (le > lt) lt = le;
+        if (a_confirmer(i)) {
+            const int32_t lc = largeur_texte(u.action_texte[i], tr("Confirmer ?"));
+            if (lc > lt) lt = lc;
+        }
+        const int32_t li = largeur_texte(u.action_icone[i], lv_label_get_text(u.action_icone[i]));
+        const int32_t w = kBoutonPad + li + kIconeEcart + lt + kBoutonPad;
+        droite -= w;
+        ui_poser(b, droite, marge, w, kBoutonH);
+        // Enfants placés dans la bordure (LVGL 9) : centrés sur la hauteur utile.
+        const int32_t hb = kBoutonH - 2 * lv_obj_get_style_border_width(b, LV_PART_MAIN);
+        poser(u.action_icone[i], kBoutonPad, (hb - hauteur_ligne(u.action_icone[i])) / 2);
+        poser(u.action_texte[i], kBoutonPad + li + kIconeEcart, (hb - hauteur_ligne(u.action_texte[i])) / 2);
+        droite -= kBoutonEcart;
+        un = true;
+    }
+    return un ? droite + kBoutonEcart - kApresBoutons : cw - kMarge;
+}
+
 // ─── Bandeau ───
 
 void peindre_bandeau() {
@@ -181,17 +308,21 @@ void peindre_bandeau() {
     int32_t x = kMarge + kPastille + 14;
     poser(u.etat, x, (ch - hauteur_ligne(u.etat)) / 2);
     x += largeur_texte(u.etat, etat) + 28;
-    // Le modèle à droite (aucun : « Aucun modèle chargé »), le nom entre les deux.
+    // Les boutons d'action tout à droite (ADR-0060), puis le modèle à leur gauche (aucun :
+    // « Aucun modèle chargé »), le nom entre l'état et le modèle.
+    const int32_t fin = peindre_actions(cw, ch);
     const char* modele = s_modele[0] != '\0' ? s_modele : tr("Aucun modèle chargé");
     ui_text_color(u.modele, s_modele[0] != '\0' ? UIColor.TEXT_SOFT : UIColor.TEXT_DIM);
-    const int32_t modele_max = (cw - x) / 2;
+    // Avec un nom : la moitié de la place au modèle ; sans nom (caché) : toute la place.
+    const int32_t place = fin > x ? fin - x : 0;
+    const int32_t modele_max = s_nom[0] != '\0' ? place / 2 : place;
     texte_ha_coupe(u.modele, modele, modele_max);
     const int32_t lm = largeur_texte(u.modele, lv_label_get_text(u.modele));
-    poser(u.modele, cw - kMarge - lm, (ch - hauteur_ligne(u.modele)) / 2);
+    poser(u.modele, fin - lm, (ch - hauteur_ligne(u.modele)) / 2);
     ui_hidden(u.nom, s_nom[0] == '\0');
     if (s_nom[0] != '\0') {
         poser(u.nom, x, (ch - hauteur_ligne(u.nom)) / 2);
-        texte_ha_coupe(u.nom, s_nom, cw - kMarge - lm - 28 - x);
+        texte_ha_coupe(u.nom, s_nom, fin - lm - 28 - x);
     }
 }
 
@@ -425,10 +556,35 @@ void serveur_ia_recu(const std::string& payload) {
         s_courbe = ServeurIaCourbe{};
     }
     s_recu = true;
+    // L'action qui attendait son second tap n'est plus offerte (grisée, retirée) : rien à
+    // confirmer.
+    if (s_confirmation.i >= 0 && !actif(s_confirmation.i)) delai_arreter(s_confirmation);
     if (popup_ouvert()) peindre_popup();
 }
 
-void serveur_ia_ouvrir() { peindre_popup(); }
+void serveur_ia_ouvrir() {
+    // Une confirmation armée avant la fermeture ne survit pas à la réouverture.
+    delai_arreter(s_confirmation);
+    peindre_popup();
+}
+
+void serveur_ia_action_touchee(int i) {
+    if (i < 0 || i >= kServeurIaBoutons || !popup_ouvert()) return;
+    // Absent ou grisé : rien. Une action partie il y a moins de kEnvoyeMs : rien non plus
+    // (HA en ignorerait une autre, mode single et 5 s d'attente).
+    if (!actif(i) || s_envoye.timer != nullptr) return;
+    if (a_confirmer(i) && s_confirmation.i != i) {
+        delai_armer(s_confirmation, i, kConfirmationMs);  // un autre bouton armé : remplacé
+        peindre_bandeau();
+        return;
+    }
+    delai_arreter(s_confirmation);
+    const ServeurIaUI& u = ui();
+    if (u.envoyer != nullptr) u.envoyer(kServeurIaActionCodes[i]);
+    ESP_LOGI(kTag, "action demandée à HA : %s", kServeurIaActionCodes[i]);
+    delai_armer(s_envoye, i, kEnvoyeMs);
+    peindre_bandeau();
+}
 
 void serveur_ia_rejouer_theme() {
     if (popup_ouvert()) peindre_popup();

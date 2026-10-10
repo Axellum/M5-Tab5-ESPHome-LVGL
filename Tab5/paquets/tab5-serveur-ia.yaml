@@ -8,9 +8,13 @@
 #           popup fermé, elle ne peint rien, et un popup jamais ouvert a popup == nullptr) ;
 #         - tab5_serveur_ia_ouvrir : peint le popup Serveur IA (dernier état reçu) et
 #           l'ouvre (« Aller à l'écran → Serveur IA », geste « serveur_ia », roue de
-#           navigation).
+#           navigation) ;
+#         - tab5_serveur_ia_evenement : événement esphome.tab5_serveur_ia_action (champ
+#           `action`, un code), émis par un bouton d'action confirmé (ADR-0060).
 # @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
-#       nomme aucune entité et ne demande rien, HA pousse (packages/tab5_serveur_ia.yaml).
+#       nomme aucune entité et n'appelle aucune action ; HA pousse
+#       (packages/tab5_serveur_ia.yaml) et décide quoi faire d'une demande
+#       (packages/tab5_evenements.yaml → script.tab5_serveur_ia_action).
 #       Chargé APRÈS tab5_lvgl : il référence des widgets. Aucun lv_* ici.
 # @ai_instruction Un widget de plus = son champ dans ServeurIaUI (tab5_serveur_ia.h) et sa
 #       ligne ici.
@@ -54,6 +58,16 @@ script:
           u.detail[1] = id(serveur_ia_detail_1);
           u.detail[2] = id(serveur_ia_detail_2);
           u.detail[3] = id(serveur_ia_detail_3);
+          u.action[0] = id(serveur_ia_action_0);
+          u.action[1] = id(serveur_ia_action_1);
+          u.action[2] = id(serveur_ia_action_2);
+          u.action_icone[0] = id(serveur_ia_action_icone_0);
+          u.action_icone[1] = id(serveur_ia_action_icone_1);
+          u.action_icone[2] = id(serveur_ia_action_icone_2);
+          u.action_texte[0] = id(serveur_ia_action_texte_0);
+          u.action_texte[1] = id(serveur_ia_action_texte_1);
+          u.action_texte[2] = id(serveur_ia_action_texte_2);
+          u.envoyer = [](const char* action) { id(tab5_serveur_ia_evenement).execute(std::string(action)); };
           // En dernier : peindre_popup() ne fait rien tant que popup est nul.
           u.popup = id(serveur_ia_popup);
 
@@ -63,3 +77,17 @@ script:
       - lambda: |-
           serveur_ia_ouvrir();
           animate_popup_open(id(serveur_ia_popup));
+
+  # Actions (ADR-0060) : un code (decharger, reveiller, redemarrer ; kServeurIaActionCodes),
+  # rien d'autre. packages/tab5_evenements.yaml le passe au script tab5_serveur_ia_action
+  # (packages/tab5_llm.yaml), qui refuse ce qu'il n'a pas offert.
+  - id: tab5_serveur_ia_evenement
+    mode: queued
+    max_runs: 3
+    parameters:
+      action: string
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_serveur_ia_action
+          data:
+            action: !lambda 'return action;'

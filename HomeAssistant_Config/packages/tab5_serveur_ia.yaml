@@ -17,8 +17,8 @@
 #           si le payload a changé pendant l'attente). Tout de suite quand une liste
 #           change, à la connexion de la tablette, à « MAJ Écran » et au démarrage de HA.
 # @payload_contract tab5_maj_serveur_ia (Tab5/paquets/tab5-api-logic.yaml, tab5_parse.h
-#       section 14) : UN enregistrement de treize champs :
-#       « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance ».
+#       section 14) : UN enregistrement de quatorze champs :
+#       « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance|actions ».
 #         nom = nom de l'appareil du premier capteur choisi qui en a un (40 caractères ;
 #           vide : la tablette n'en montre pas) ; etat 1 / 0 / vide (voir `en_ligne` et
 #           `hors_ligne`) ; modele = l'état du capteur du modèle (80 caractères ; « aucun »,
@@ -31,6 +31,11 @@
 #           (kW, mW convertis). Valeurs arrondies : moins de poussées pour un bruit de
 #           mesure. Un champ inconnu est VIDE (la tablette écrit « — », jamais un zéro).
 #           Les « | », « ; » et sauts de ligne des textes deviennent « / », « , » et espaces.
+#         actions (ADR-0060) = les boutons d'action du popup : l'état de
+#           sensor.tab5_serveur_ia_actions (packages/tab5_llm.yaml), codes « decharger »,
+#           « reveiller », « redemarrer », précédés de « - » quand ils sont grisés, séparés
+#           par « , » ; vide sans ce capteur ou avec « aucune » (pas de bouton). Seuls ces
+#           codes passent (filtre ci-dessous) : rien d'autre n'arrive à la tablette.
 # @rules SEUILS de la température du GPU, à un seul endroit (`attention`, `critique` de
 #       l'attribut payload, en °C) : 80 et 90 par défaut, valeurs prudentes NON VÉRIFIÉES
 #       pour chaque GPU (la plupart des cartes ralentissent d'elles-mêmes vers 83-90 °C,
@@ -395,7 +400,10 @@ template:
               {%- set ram = n.ram | round(0) | int if n.ram is number and u.ram == '%' else '' -%}
               {%- set k = {'W': 1, 'kW': 1000, 'mW': 0.001}.get(u.watts) -%}
               {%- set watts = (n.watts * k) | round(0) | int if n.watts is number and k is number else '' -%}
-              {%- set champs = [nom.t[:40], etat, modele[:80], tps, cours, file, vram, total, pct, temp, niveau, ram, watts] -%}
+              {%- set actions = states('sensor.tab5_serveur_ia_actions').split(',')
+                  | select('match', '^-?(decharger|reveiller|redemarrer)$') | join(',') -%}
+              {%- set champs = [nom.t[:40], etat, modele[:80], tps, cours, file, vram, total, pct, temp, niveau, ram, watts,
+                                actions] -%}
               {{ champs | map('string') | map('replace', '|', '/') | map('replace', ';', ',') | map('replace', '\n', ' ') | join('|') }}
             {%- endif -%}
 

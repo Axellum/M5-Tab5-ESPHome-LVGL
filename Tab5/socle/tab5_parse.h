@@ -778,10 +778,10 @@ const char* telecommande_emplacement(int i);
 
 // ─── 14. Serveur IA : un serveur de LLM local (tab5_maj_serveur_ia, ADR-0059) ───
 // Une variable, poussée par packages/tab5_serveur_ia.yaml (deux secondes au moins entre
-// deux poussées) : UN enregistrement de treize champs « | » — le format admet d'autres
+// deux poussées) : UN enregistrement de quatorze champs « | » — le format admet d'autres
 // enregistrements après un « ; », que ce firmware ignore (un serveur, ADR-0059) ; vide :
 // aucun capteur choisi dans les listes « Tab5 · serveur IA ».
-//   « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance »
+//   « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance|actions »
 //   nom        nom de l'appareil du serveur dans HA (vide : l'écran n'en montre pas) ;
 //   etat       1 en ligne, 0 hors ligne, autre ou vide : inconnu ;
 //   modele     le modèle chargé, tel que HA l'écrit (vide : aucun) ;
@@ -790,7 +790,13 @@ const char* telecommande_emplacement(int i);
 //   temp       température du GPU en °C ; niveau 0 normale, 1 élevée, 2 critique (les
 //              seuils sont dans HA, la tablette n'en code aucun ; au-delà de 2 : 2 ;
 //              vide, illisible ou négatif : kServeurIaNiveauInconnu) ;
-//   ram        RAM utilisée en % ; puissance  en W.
+//   ram        RAM utilisée en % ; puissance  en W ;
+//   actions    (ADR-0060, 14e champ) les boutons d'action du popup, codes séparés par
+//              « , » parmi kServeurIaActionCodes : « code » = bouton actif, « -code » =
+//              bouton grisé (réglé dans HA mais sans objet maintenant : réveiller un
+//              serveur en ligne…), code absent = pas de bouton ; un code inconnu est
+//              ignoré. Absent (HA d'avant l'ADR-0060) : aucun bouton. Un firmware d'avant
+//              ignore ce champ (champs_decouper s'arrête à treize).
 // Un champ vide, illisible, non fini ou hors de ses bornes est INCONNU (NAN, ou -1 pour
 // les requêtes) : l'écran écrit « — », jamais un zéro inventé.
 constexpr size_t kServeurIaMax = 1024;      // payload : un serveur fait ~200 octets
@@ -800,6 +806,14 @@ constexpr float kServeurIaVramMax = 1.0e5f;  // Go
 constexpr float kServeurIaTempMax = 200.0f;  // °C
 constexpr float kServeurIaPuissanceMax = 1.0e5f;  // W
 constexpr uint8_t kServeurIaNiveauInconnu = 255;   // niveau que HA n'a pas donné
+// Actions sur le serveur (ADR-0060) : index = rang du bouton dans le bandeau et bit de
+// ServeurIaLu::actions / actives. Le code est aussi le champ `action` de l'événement
+// esphome.tab5_serveur_ia_action (packages/tab5_llm.yaml, script tab5_serveur_ia_action).
+constexpr int kServeurIaActions = 3;
+constexpr int kServeurIaDecharger = 0;   // décharger le(s) modèle(s) : libère la VRAM
+constexpr int kServeurIaReveiller = 1;   // réveiller le PC (Wake-on-LAN)
+constexpr int kServeurIaRedemarrer = 2;  // redémarrer le service (script ou bouton choisi dans HA)
+constexpr const char* kServeurIaActionCodes[kServeurIaActions] = {"decharger", "reveiller", "redemarrer"};
 struct ServeurIaLu {
     Champ nom{nullptr, 0};     // copiés par l'écran (texte_ha_copier)
     Champ modele{nullptr, 0};
@@ -814,6 +828,8 @@ struct ServeurIaLu {
     uint8_t niveau = kServeurIaNiveauInconnu;  // de la température : 0, 1, 2, ou inconnu
     float ram = NAN;           // 0 à 100
     float puissance = NAN;
+    uint8_t actions = 0;       // bit i (kServeurIaActionCodes[i]) : bouton montré
+    uint8_t actives = 0;       // bit i : bouton actif (montré sans ce bit : grisé)
 };
 // Faux sans enregistrement (payload vide ou « ; » seul) : aucun serveur choisi.
 bool serveur_ia_lire(const Champ& payload, ServeurIaLu& out);

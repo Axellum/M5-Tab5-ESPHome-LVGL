@@ -648,14 +648,17 @@ def build_energie_payload(instantane: dict | None = None) -> str:
 
 # ---------------------------------------------------------------------------
 # Popup Serveur IA (ADR-0059) — tab5_maj_serveur_ia, payload d'un serveur :
-#   « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance »
+#   « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance|actions »
 # etat 1 / 0 / vide ; nombres à point décimal, vides si inconnus ; niveau 0-2 (seuils de
-# packages/tab5_serveur_ia.yaml : 80 et 90 °C). Un serveur par scène : la démo montre un
-# serveur qui travaille, un serveur chaud et chargé, un serveur au repos.
+# packages/tab5_serveur_ia.yaml : 80 et 90 °C) ; actions (ADR-0060) : codes
+# SERVEUR_IA_ACTIONS séparés par « , », « -code » grisé. Un serveur par scène : la démo
+# montre un serveur qui travaille (sans bouton : le rendu « serveur-ia » reste celui de
+# l'ADR-0059), un serveur chaud et chargé, un serveur au repos.
 # ---------------------------------------------------------------------------
 
 SERVEUR_IA_CHAMPS = ("nom", "etat", "modele", "tps", "cours", "file", "vram", "vram_total",
-                     "vram_pct", "temp", "niveau", "ram", "puissance")
+                     "vram_pct", "temp", "niveau", "ram", "puissance", "actions")
+SERVEUR_IA_ACTIONS = ("decharger", "reveiller", "redemarrer")  # kServeurIaActionCodes (tab5_parse.h)
 SERVEUR_IA_SCENES = {
     "Journée ensoleillée": {
         "nom": "PC bureau", "etat": "1", "modele": "qwen2.5-coder-32b-instruct", "tps": "42.7",
@@ -666,17 +669,20 @@ SERVEUR_IA_SCENES = {
         "nom": "PC bureau", "etat": "1", "modele": "llama-3.3-70b-instruct", "tps": "9.4",
         "cours": "2", "file": "3", "vram": "15.6", "vram_total": "16.0", "vram_pct": "98",
         "temp": "84", "niveau": "1", "ram": "81", "puissance": "342",
+        "actions": "decharger,-reveiller,redemarrer",
     },
     "Jour de repos, plantes à surveiller": {
         "nom": "PC bureau", "etat": "1", "modele": "", "tps": "0.0",
         "cours": "0", "file": "0", "vram": "0.4", "vram_total": "16.0", "vram_pct": "3",
         "temp": "42", "niveau": "0", "ram": "22", "puissance": "61",
+        # Aucun modèle chargé : rien à décharger (grisé).
+        "actions": "-decharger,-reveiller,redemarrer",
     },
 }
 
 
 def build_serveur_ia_payload(valeurs: dict | None) -> str:
-    """tab5_maj_serveur_ia : les treize champs dans l'ordre du contrat, séparés par « | » ;
+    """tab5_maj_serveur_ia : les quatorze champs dans l'ordre du contrat, séparés par « | » ;
     None : aucun capteur choisi (payload vide)."""
     if valeurs is None:
         return ""
@@ -684,7 +690,10 @@ def build_serveur_ia_payload(valeurs: dict | None) -> str:
     champs = [str(valeurs.get(c, "")) for c in SERVEUR_IA_CHAMPS]
     for champ, v in zip(SERVEUR_IA_CHAMPS, champs):
         assert "|" not in v and ";" not in v, f"{champ} : séparateur dans {v!r}"
-        if champ not in ("nom", "modele"):
+        if champ == "actions":
+            for code in filter(None, v.split(",")):
+                assert code.lstrip("-") in SERVEUR_IA_ACTIONS, f"actions : code inconnu {code!r}"
+        elif champ not in ("nom", "modele"):
             _nombre_ou_vide(champ, v)
     assert champs[1] in ("", "0", "1"), f"etat : {champs[1]!r}"
     assert champs[10] in ("", "0", "1", "2"), f"niveau : {champs[10]!r}"

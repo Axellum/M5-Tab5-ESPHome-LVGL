@@ -1505,7 +1505,7 @@ static void test_serveur_ia_lire() {
                s.en_ligne == 1 && vaut(s.modele, "qwen2.5-coder-32b") && s.tps == 42.7f && s.en_cours == 2 &&
                s.file == 3 && s.vram == 11.2f && s.vram_total == 16.0f && s.vram_pct == 70.0f &&
                s.temperature == 68.0f && s.niveau == 1 && s.ram == 43.0f && s.puissance == 285.0f,
-           "serveur IA : les treize champs");
+           "serveur IA : les treize premiers champs");
     expect(serveur_ia_lire(ch("||||||||||||"), s) && s.nom.n == 0 && s.en_ligne == -1 && s.modele.n == 0 &&
                std::isnan(s.tps) && s.en_cours == -1 && s.file == -1 && std::isnan(s.vram) && std::isnan(s.vram_total) &&
                std::isnan(s.vram_pct) && std::isnan(s.temperature) && s.niveau == kServeurIaNiveauInconnu &&
@@ -1533,10 +1533,36 @@ static void test_serveur_ia_lire() {
            "serveur IA : requêtes écrites en flottant par HA");
     expect(serveur_ia_lire(ch(";;B|1;C|0"), s) && vaut(s.nom, "B") && s.en_ligne == 1,
            "serveur IA : le premier enregistrement non vide, les autres ignorés");
-    expect(serveur_ia_lire(ch("A|1|un|deux|3|4|5|6|7|8|0|9|10|en trop"), s) && s.puissance == 10.0f,
+    expect(serveur_ia_lire(ch("A|1|un|deux|3|4|5|6|7|8|0|9|10|decharger|en trop"), s) && s.puissance == 10.0f &&
+               s.actions == 1 && s.actives == 1,
            "serveur IA : un champ de trop est ignoré");
     expect(!serveur_ia_lire(ch(""), s) && !serveur_ia_lire(ch(";"), s) && !serveur_ia_lire(Champ{nullptr, 0}, s),
            "serveur IA : vide = aucun serveur");
+}
+
+// Actions (ADR-0060) : le quatorzième champ.
+static void test_serveur_ia_actions() {
+    ServeurIaLu s;
+    const char* treize = "A|1|m|1|0|0|1|16|6|50|0|40|100";
+    expect(serveur_ia_lire(ch(treize), s) && s.actions == 0 && s.actives == 0,
+           "serveur IA : treize champs (HA d'avant l'ADR-0060) = aucun bouton");
+    expect(serveur_ia_lire(ch("A|1|m|1|0|0|1|16|6|50|0|40|100|decharger,reveiller,redemarrer"), s) &&
+               s.actions == 7 && s.actives == 7,
+           "serveur IA : les trois actions actives");
+    expect(serveur_ia_lire(ch("A|0||||||||||||-decharger,reveiller,-redemarrer"), s) && s.actions == 7 && s.actives == 2,
+           "serveur IA : « -code » = bouton grisé");
+    expect(serveur_ia_lire(ch("A|1||||||||||||redemarrer"), s) && s.actions == 4 && s.actives == 4,
+           "serveur IA : une seule action, les autres absentes");
+    expect(serveur_ia_lire(ch("A|1||||||||||||shutdown,rm -rf,,-,Decharger, reveiller,decharger "), s) &&
+               s.actions == 0 && s.actives == 0,
+           "serveur IA : code inconnu, vide, mal écrit ou entouré d'espaces ignoré");
+    expect(serveur_ia_lire(ch("A|1||||||||||||-reveiller,reveiller,decharger,decharger,"), s) && s.actions == 3 &&
+               s.actives == 3,
+           "serveur IA : un code en double ne gêne pas, actif s'il l'est une fois");
+    expect(std::strcmp(kServeurIaActionCodes[kServeurIaDecharger], "decharger") == 0 &&
+               std::strcmp(kServeurIaActionCodes[kServeurIaReveiller], "reveiller") == 0 &&
+               std::strcmp(kServeurIaActionCodes[kServeurIaRedemarrer], "redemarrer") == 0,
+           "serveur IA : codes de l'événement esphome.tab5_serveur_ia_action");
 }
 
 static void test_serveur_ia_textes() {
@@ -1718,6 +1744,7 @@ int main() {
     test_froid_textes();
     test_telecommandes();
     test_serveur_ia_lire();
+    test_serveur_ia_actions();
     test_serveur_ia_textes();
     test_energie_soleil();
     test_energie_bilan();

@@ -84,7 +84,7 @@ LMSTUDIO = _rep(200, {"models": [
 # ─── Calcul attendu, écrit à part ────────────────────────────────────────────
 
 def _attendu(type_ia, adresse_ok, r):
-    vide = dict(etat="aucun", raison="", modeles=[], vram=None, memoire=None, tokens=None, secondes=None,
+    vide = dict(etat="aucun", raison="", modeles=[], instances=[], vram=None, memoire=None, tokens=None, secondes=None,
                 requetes=None, attente=None, slots=None)
     if type_ia not in TYPES:
         return dict(vide, raison="type Aucun")
@@ -105,8 +105,10 @@ def _attendu(type_ia, adresse_ok, r):
             return dict(vide, etat="hors_ligne", raison="pas de réponse")
         if rm["status"] != 200:
             return dict(vide, etat="erreur", raison=f"HTTP {rm['status']} sur /api/v1/models (LM Studio 0.4 et plus)")
-        return dict(vide, etat="ok", modeles=[m["display_name"] or m["key"] for m in rm["content"]["models"]
-                                               if m["loaded_instances"]])
+        charges = [m for m in rm["content"]["models"] if m["loaded_instances"]]
+        # Identifiants des instances (ADR-0060) : ce que /api/v1/models/unload attend.
+        return dict(vide, etat="ok", modeles=[m["display_name"] or m["key"] for m in charges],
+                    instances=[i["id"] for m in charges for i in m["loaded_instances"]])
     sante = r.get("r_sante")
     if sante is None:
         return dict(vide, etat="hors_ligne", raison="pas de réponse")

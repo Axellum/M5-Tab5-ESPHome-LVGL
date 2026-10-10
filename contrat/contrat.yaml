@@ -120,5 +120,6 @@ evenements:
   esphome.tab5_recharger_automatisations: []
   esphome.tab5_redemarrage_ha_confirme: []
   esphome.tab5_reveil_annonce: []
+  esphome.tab5_serveur_ia_action: [action]
   esphome.tab5_voix_stop: []
   esphome.tab5_zones: [zones]

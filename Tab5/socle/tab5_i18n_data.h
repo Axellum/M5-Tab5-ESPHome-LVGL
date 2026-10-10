@@ -8,9 +8,13 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1233;
+static const uint16_t kI18nKeyCount = 1237;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1637,6 +1641,7 @@ static const char* const kI18nKeys[] = {
     "Débutant : ne voit qu'un coup, se trompe",
     "Déc",
     "Décharge",
+    "Décharger",
     "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs ».",
     "Découverte",
     "Dédale",
@@ -1669,6 +1674,7 @@ static const char* const kI18nKeys[] = {
     "En mouvement",
     "Ensoleillé",
     "Entre %d et %d %%",
+    "Envoyé",
     "Erreur",
     "Escalier",
     "Essentielles",
@@ -2091,6 +2097,7 @@ static const char* const kI18nKeys[] = {
     "Record : %s",
     "Reculer",
     "Redémarrage...",
+    "Redémarrer",
     "Redémarrer HA",
     "Redémarrer Home Assistant ?",
     "Redémarrer la tablette ?",
@@ -2155,6 +2162,7 @@ static const char* const kI18nKeys[] = {
     "Réveil",
     "Réveil actif",
     "Réveil éteint",
+    "Réveiller",
     "SECOUSSE = LANCER LE DÉ",
     "SFX : actifs",
     "SFX : coupés",
@@ -2874,6 +2882,7 @@ static const char* const kI18n_en[] = {
     "Beginner: sees one move, makes mistakes",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dec",  // "Déc"
     "Discharging",  // "Décharge"
+    "Unload",  // "Décharger"
     "Declare them in Home Assistant: lists “Tab5 · réfrigérateurs · fridges” and “Tab5 · congélateurs · freezers”.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Discovery",  // "Découverte"
     "Maze",  // "Dédale"
@@ -2906,6 +2915,7 @@ static const char* const kI18n_en[] = {
     "Moving",  // "En mouvement"
     "Sunny",  // "Ensoleillé"
     "Between %d and %d %%",  // "Entre %d et %d %%"
+    "Sent",  // "Envoyé"
     "Error",  // "Erreur"
     "Staircase",  // "Escalier"
     "Essential",  // "Essentielles"
@@ -3328,6 +3338,7 @@ static const char* const kI18n_en[] = {
     "Best: %s",  // "Record : %s"
     "Rewind",  // "Reculer"
     "Restarting...",  // "Redémarrage..."
+    "Restart",  // "Redémarrer"
     "Restart HA",  // "Redémarrer HA"
     "Restart Home Assistant?",  // "Redémarrer Home Assistant ?"
     "Restart the tablet?",  // "Redémarrer la tablette ?"
@@ -3392,6 +3403,7 @@ static const char* const kI18n_en[] = {
     "Alarm",  // "Réveil"
     "Alarm on",  // "Réveil actif"
     "Alarm off",  // "Réveil éteint"
+    "Wake up",  // "Réveiller"
     "SHAKE = ROLL THE DIE",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: on",  // "SFX : actifs"
     "SFX: off",  // "SFX : coupés"
@@ -4111,6 +4123,7 @@ static const char* const kI18n_de[] = {
     "Anfänger: sieht einen Zug, macht Fehler",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dez",  // "Déc"
     "Entlädt",  // "Décharge"
+    "Entladen",  // "Décharger"
     "Lege sie in Home Assistant fest: Listen „Tab5 · réfrigérateurs · Kühlschränke“ und „Tab5 · congélateurs · Gefrierschränke“.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Entdeckung",  // "Découverte"
     "Gewirr",  // "Dédale"
@@ -4143,6 +4156,7 @@ static const char* const kI18n_de[] = {
     "In Bewegung",  // "En mouvement"
     "Sonnig",  // "Ensoleillé"
     "Zwischen %d und %d %%",  // "Entre %d et %d %%"
+    "Gesendet",  // "Envoyé"
     "Fehler",  // "Erreur"
     "Treppe",  // "Escalier"
     "Wesentliche",  // "Essentielles"
@@ -4565,6 +4579,7 @@ static const char* const kI18n_de[] = {
     "Rekord: %s",  // "Record : %s"
     "Rückwärts",  // "Reculer"
     "Neustart...",  // "Redémarrage..."
+    "Neu starten",  // "Redémarrer"
     "HA neu starten",  // "Redémarrer HA"
     "Home Assistant neu starten?",  // "Redémarrer Home Assistant ?"
     "Tablet neu starten?",  // "Redémarrer la tablette ?"
@@ -4629,6 +4644,7 @@ static const char* const kI18n_de[] = {
     "Wecker",  // "Réveil"
     "Wecker an",  // "Réveil actif"
     "Wecker aus",  // "Réveil éteint"
+    "Aufwecken",  // "Réveiller"
     "SCHÜTTELN = WÜRFELN",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: an",  // "SFX : actifs"
     "SFX: aus",  // "SFX : coupés"
@@ -5348,6 +5364,7 @@ static const char* const kI18n_nl[] = {
     "Beginner: ziet één zet, maakt fouten",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dec",  // "Déc"
     "Ontladen",  // "Décharge"
+    "Ontladen",  // "Décharger"
     "Geef ze op in Home Assistant: lijsten „Tab5 · réfrigérateurs · koelkasten” en „Tab5 · congélateurs · vriezers”.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Ontdekking",  // "Découverte"
     "Doolhof",  // "Dédale"
@@ -5380,6 +5397,7 @@ static const char* const kI18n_nl[] = {
     "In beweging",  // "En mouvement"
     "Zonnig",  // "Ensoleillé"
     "Tussen %d en %d %%",  // "Entre %d et %d %%"
+    "Verzonden",  // "Envoyé"
     "Fout",  // "Erreur"
     "Trap",  // "Escalier"
     "Essentieel",  // "Essentielles"
@@ -5802,6 +5820,7 @@ static const char* const kI18n_nl[] = {
     "Record: %s",  // "Record : %s"
     "Achteruit",  // "Reculer"
     "Herstarten...",  // "Redémarrage..."
+    "Herstarten",  // "Redémarrer"
     "HA herstarten",  // "Redémarrer HA"
     "Home Assistant herstarten?",  // "Redémarrer Home Assistant ?"
     "Tablet herstarten?",  // "Redémarrer la tablette ?"
@@ -5866,6 +5885,7 @@ static const char* const kI18n_nl[] = {
     "Wekker",  // "Réveil"
     "Wekker aan",  // "Réveil actif"
     "Wekker uit",  // "Réveil éteint"
+    "Wekken",  // "Réveiller"
     "SCHUDDEN = DOBBELEN",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: aan",  // "SFX : actifs"
     "SFX: uit",  // "SFX : coupés"
@@ -6585,6 +6605,7 @@ static const char* const kI18n_es[] = {
     "Principiante: ve una jugada, se equivoca",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dic",  // "Déc"
     "Descarga",  // "Décharge"
+    "Descargar",  // "Décharger"
     "Decláralos en Home Assistant: listas «Tab5 · réfrigérateurs · neveras» y «Tab5 · congélateurs · congeladores».",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Hallazgo",  // "Découverte"
     "Laberinto",  // "Dédale"
@@ -6617,6 +6638,7 @@ static const char* const kI18n_es[] = {
     "En movimiento",  // "En mouvement"
     "Soleado",  // "Ensoleillé"
     "Entre %d y %d %%",  // "Entre %d et %d %%"
+    "Enviado",  // "Envoyé"
     "Error",  // "Erreur"
     "Escalera",  // "Escalier"
     "Esenciales",  // "Essentielles"
@@ -7039,6 +7061,7 @@ static const char* const kI18n_es[] = {
     "Récord: %s",  // "Record : %s"
     "Retroceder",  // "Reculer"
     "Reiniciando...",  // "Redémarrage..."
+    "Reiniciar",  // "Redémarrer"
     "Reiniciar HA",  // "Redémarrer HA"
     "¿Reiniciar Home Assistant?",  // "Redémarrer Home Assistant ?"
     "¿Reiniciar la tableta?",  // "Redémarrer la tablette ?"
@@ -7103,6 +7126,7 @@ static const char* const kI18n_es[] = {
     "Alarma",  // "Réveil"
     "Alarma activa",  // "Réveil actif"
     "Alarma apagada",  // "Réveil éteint"
+    "Despertar",  // "Réveiller"
     "SACUDIR = TIRAR EL DADO",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: activos",  // "SFX : actifs"
     "SFX: apagados",  // "SFX : coupés"
@@ -7822,6 +7846,7 @@ static const char* const kI18n_it[] = {
     "Principiante: vede una sola mossa, sbaglia",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dic",  // "Déc"
     "Scarica",  // "Décharge"
+    "Scarica",  // "Décharger"
     "Dichiarali in Home Assistant: elenchi «Tab5 · réfrigérateurs · frigoriferi» e «Tab5 · congélateurs · congelatori».",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Scoperta",  // "Découverte"
     "Dedalo",  // "Dédale"
@@ -7854,6 +7879,7 @@ static const char* const kI18n_it[] = {
     "In movimento",  // "En mouvement"
     "Soleggiato",  // "Ensoleillé"
     "Tra %d e %d %%",  // "Entre %d et %d %%"
+    "Inviato",  // "Envoyé"
     "Errore",  // "Erreur"
     "Scala",  // "Escalier"
     "Essenziali",  // "Essentielles"
@@ -8276,6 +8302,7 @@ static const char* const kI18n_it[] = {
     "Record: %s",  // "Record : %s"
     "Riavvolgi",  // "Reculer"
     "Riavvio...",  // "Redémarrage..."
+    "Riavvia",  // "Redémarrer"
     "Riavvia HA",  // "Redémarrer HA"
     "Riavviare Home Assistant?",  // "Redémarrer Home Assistant ?"
     "Riavviare il tablet?",  // "Redémarrer la tablette ?"
@@ -8340,6 +8367,7 @@ static const char* const kI18n_it[] = {
     "Sveglia",  // "Réveil"
     "Sveglia attiva",  // "Réveil actif"
     "Sveglia spenta",  // "Réveil éteint"
+    "Risveglia",  // "Réveiller"
     "SCOSSA = TIRA IL DADO",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: accesi",  // "SFX : actifs"
     "SFX: spenti",  // "SFX : coupés"
@@ -9059,6 +9087,7 @@ static const char* const kI18n_tr[] = {
     "Başlangıç: tek hamle görür, hata yapar",  // "Débutant : ne voit qu'un coup, se trompe"
     "Ara",  // "Déc"
     "Deşarj",  // "Décharge"
+    "Boşalt",  // "Décharger"
     "Home Assistant'ta tanımlayın: “Tab5 · réfrigérateurs · buzdolapları” ve “Tab5 · congélateurs · dondurucular” listeleri.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Keşif",  // "Découverte"
     "Labirent",  // "Dédale"
@@ -9091,6 +9120,7 @@ static const char* const kI18n_tr[] = {
     "Hareket ediyor",  // "En mouvement"
     "Güneşli",  // "Ensoleillé"
     "%d ile %d %% arası",  // "Entre %d et %d %%"
+    "Gönderildi",  // "Envoyé"
     "Hata",  // "Erreur"
     "Merdiven",  // "Escalier"
     "Temel",  // "Essentielles"
@@ -9513,6 +9543,7 @@ static const char* const kI18n_tr[] = {
     "Rekor: %s",  // "Record : %s"
     "Geri sar",  // "Reculer"
     "Yeniden başlıyor...",  // "Redémarrage..."
+    "Yeniden başlat",  // "Redémarrer"
     "HA'yı yeniden başlat",  // "Redémarrer HA"
     "HA yeniden başlatılsın mı?",  // "Redémarrer Home Assistant ?"
     "Tablet yeniden başlatılsın mı?",  // "Redémarrer la tablette ?"
@@ -9577,6 +9608,7 @@ static const char* const kI18n_tr[] = {
     "Alarm",  // "Réveil"
     "Alarm açık",  // "Réveil actif"
     "Alarm kapalı",  // "Réveil éteint"
+    "Uyandır",  // "Réveiller"
     "SALLAMA = ZAR AT",  // "SECOUSSE = LANCER LE DÉ"
     "SFX: açık",  // "SFX : actifs"
     "SFX: kapalı",  // "SFX : coupés"

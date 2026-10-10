@@ -785,6 +785,7 @@ api:
     # Serveur IA (ADR-0059, 10/10/2026) : packages/tab5_serveur_ia.yaml pousse les capteurs
     # choisis dans les listes « Tab5 · serveur IA, … », au changement, deux secondes au moins
     # entre deux poussées. Lu par serveur_ia_lire() (Tab5/socle/tab5_parse.h, section 14).
+    # 14e champ (ADR-0060) : les boutons d'action offerts par packages/tab5_llm.yaml.
     # Popup fermé, la poussée ne repeint rien (elle garde les valeurs et le point de courbe) :
     # pas de tab5_serveur_ia_lier ici, l'ouverture lie les widgets (popup jamais ouvert =
     # g_serveur_ia_ui.popup nul, serveur_ia_recu() ne touche à rien).
@@ -793,8 +794,8 @@ api:
       variables:
         payload:
           type: string
-          description: "Un serveur : « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance » — etat 1 en ligne, 0 hors ligne, vide inconnu ; tps en tokens par seconde ; cours et file = requêtes en cours et en file (entiers) ; vram et vram_total en Go ; vram_pct, ram de 0 à 100 ; temp = température du GPU en °C ; niveau 0 normale, 1 élevée, 2 critique (seuils de HA) ; puissance en W. Nombres à point décimal ; un champ vide est inconnu (« — » à l'écran). 1024 octets au plus ; ce qui suit un « ; » est ignoré ; vide : aucun capteur choisi. Les « | » et « ; » des textes sont remplacés par « / » et « , »."
-          example: "PC bureau|1|qwen2.5-coder-32b-instruct|42.7|2|3|11.2|16|70|78|1|43|285"
+          description: "Un serveur : « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance|actions » — etat 1 en ligne, 0 hors ligne, vide inconnu ; tps en tokens par seconde ; cours et file = requêtes en cours et en file (entiers) ; vram et vram_total en Go ; vram_pct, ram de 0 à 100 ; temp = température du GPU en °C ; niveau 0 normale, 1 élevée, 2 critique (seuils de HA) ; puissance en W ; actions = boutons du popup (ADR-0060), codes decharger, reveiller, redemarrer séparés par « , », « -code » grisé, absent pas de bouton (champ absent : aucun bouton). Nombres à point décimal ; un champ vide est inconnu (« — » à l'écran). 1024 octets au plus ; ce qui suit un « ; » est ignoré ; vide : aucun capteur choisi. Les « | » et « ; » des textes sont remplacés par « / » et « , »."
+          example: "PC bureau|1|qwen2.5-coder-32b-instruct|42.7|2|3|11.2|16|70|78|1|43|285|decharger,-reveiller,redemarrer"
       then:
         - lambda: 'serveur_ia_recu(payload);'
 

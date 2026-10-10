@@ -1536,3 +1536,8 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Température critique": "Temperatura crítica"
 "Aucun serveur choisi": "Ningún servidor elegido"
 "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA ».": "Elige sus sensores en Home Assistant: listas «Tab5 · serveur IA · AI server»."
+# Serveur IA, boutons d'action (tab5_serveur_ia.cpp, ADR-0060).
+"Décharger": "Descargar"
+"Réveiller": "Despertar"
+"Redémarrer": "Reiniciar"
+"Envoyé": "Enviado"

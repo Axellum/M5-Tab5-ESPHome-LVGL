@@ -25,6 +25,9 @@
 #                     valeur)                ADR-0050) : n'agit que sur un lecteur de la
 #                                            liste choisie ou sur le lecteur montré ; le
 #                                            blueprint écoute aussi « ouvrir » d'une tuile
+#       tab5_serveur_ia_action (action)    → script.tab5_serveur_ia_action (tab5_llm.yaml,
+#                                            ADR-0060) : decharger / reveiller / redemarrer,
+#                                            seulement si le package l'offre à cet instant
 #       Les autres événements de la tablette ont leur consommateur ailleurs :
 #       tab5_connected (tab5_push, tab5_reveil, tab5_reglages, blueprint), tab5_zones,
 #       tab5_action et tab5_energie (blueprint « Tab5 — emplacements », qui connaît les
@@ -108,6 +111,9 @@ automation:
       - trigger: event
         event_type: esphome.tab5_lecteur
         id: lecteur
+      - trigger: event
+        event_type: esphome.tab5_serveur_ia_action
+        id: serveur_ia_action
     conditions:
       # La tablette, reconnue à son modèle comme dans le blueprint et les poussées.
       # Un événement sans device_id (tiré à la main) ou dont le device_id est une
@@ -311,6 +317,27 @@ automation:
                         commande: "{{ trigger.event.data.action | default('') | string }}"
                         lecteur: "{{ trigger.event.data.lecteur | default('') | string }}"
                         valeur: "{{ trigger.event.data.valeur | default('') | string }}"
+
+          # Serveur IA (ADR-0060) : un code seulement, jamais un modèle, une adresse ou une
+          # entité ; le script ne fait que ce que sensor.tab5_serveur_ia_actions offre, et
+          # une action par 5 s au plus.
+          - alias: "Serveur IA : action du popup (décharger, réveiller, redémarrer)"
+            conditions:
+              - condition: trigger
+                id: serveur_ia_action
+            sequence:
+              - variables:
+                  demande: "{{ trigger.event.data.action | default('') | string }}"
+              - if: >-
+                  {{ states['script.tab5_serveur_ia_action'] is not none
+                     and demande in ['decharger', 'reveiller', 'redemarrer'] }}
+                then:
+                  - action: script.turn_on
+                    target:
+                      entity_id: script.tab5_serveur_ia_action
+                    data:
+                      variables:
+                        code: "{{ demande }}"
 
           - alias: "Console système : redémarrer Home Assistant (confirmé à l'écran)"
             conditions:

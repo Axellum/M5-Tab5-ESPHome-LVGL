@@ -880,7 +880,9 @@ views:
                                ('select.tab5_refrigerateurs', 'Réfrigérateurs (popup Froid)', 'Fridges (Cold popup)', 'mdi:fridge-outline'),
                                ('select.tab5_congelateurs', 'Congélateurs (popup Froid)', 'Freezers (Cold popup)', 'mdi:snowflake-thermometer'),
                                ('input_select.tab5_serveur_ia_type', 'Serveur IA local', 'Local AI server', 'mdi:brain'),
-                               ('input_text.tab5_serveur_ia_adresse', 'Adresse du serveur IA', 'AI server address', 'mdi:server-network')] %}
+                               ('input_text.tab5_serveur_ia_adresse', 'Adresse du serveur IA', 'AI server address', 'mdi:server-network'),
+                               ('input_text.tab5_serveur_ia_mac', 'Adresse MAC du serveur IA (Réveiller)', 'AI server MAC address (Wake up)', 'mdi:power'),
+                               ('select.tab5_serveur_ia_redemarrage', 'Redémarrage du serveur IA (script ou bouton)', 'AI server restart (script or button)', 'mdi:restart')] %}
 {%- if e in present %}
           - type: tile
             entity: {{ e }}
@@ -2393,6 +2395,18 @@ views:
     'es': 'Dirección del servidor de IA',
     'it': 'Indirizzo del server IA',
     'tr': 'Yapay zekâ sunucusunun adresi'},
+  'Adresse MAC du serveur IA (Réveiller)': {
+    'de': 'MAC-Adresse des KI-Servers (Aufwecken)',
+    'nl': 'MAC-adres van de AI-server (Wekken)',
+    'es': 'Dirección MAC del servidor de IA (Despertar)',
+    'it': 'Indirizzo MAC del server IA (Risveglia)',
+    'tr': 'Yapay zekâ sunucusunun MAC adresi (Uyandır)'},
+  'Redémarrage du serveur IA (script ou bouton)': {
+    'de': 'Neustart des KI-Servers (Skript oder Taste)',
+    'nl': 'Herstart van de AI-server (script of knop)',
+    'es': 'Reinicio del servidor de IA (script o botón)',
+    'it': 'Riavvio del server IA (script o pulsante)',
+    'tr': 'Yapay zekâ sunucusunun yeniden başlatılması (betik veya düğme)'},
   'Popup Serveur IA : un capteur par mesure': {
     'de': 'Popup KI-Server: ein Sensor pro Messwert',
     'nl': 'Pop-up AI-server: één sensor per meting',
