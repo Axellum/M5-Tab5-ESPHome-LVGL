@@ -3,7 +3,7 @@
  * @file tab5_zone_gauche.cpp
  * @role Zone à gauche de l'horloge au choix (ADR-0051, 10/10/2026, demande d'Axel : « sur
  *       cette zone, j'aimerais qu'on puisse choisir soit le vocal, soit un lecteur audio,
- *       soit un graphique ; très beau, léger »). Deux contenus aujourd'hui :
+ *       soit un graphique ; très beau, léger »). Trois contenus :
  *         - « vocal » : le conteneur zone_vocal de tab5-lvgl.yaml (micro, Domo, Discu),
  *           montré ou masqué d'un bloc ; ses widgets, leurs gestes et le masquage de Domo /
  *           Discu sans pipeline de discussion (zone « discussion », tab5_zones.cpp) ne
@@ -17,8 +17,11 @@
  *           toute pluie annoncée visible, rien sans pluie), trois heures sous le pied des
  *           barres, le cumul de pluie à droite. Une trentaine d'objets, créés à la première
  *           apparition (style revu le 10/10/2026, demande d'Axel sur la capture du rendu).
- *       « lecteur » (le lecteur audio compact, lot 2 sur le lecteur de l'ADR-0050) est lu,
- *       gardé et sauté tant que disponible() ne le connaît pas.
+ *         - « lecteur » (lot 2, sur le lecteur de l'ADR-0050) : la carte zone_lecteur
+ *           (lecteur_zone.yaml), montrée ou masquée d'ici ; tab5_lecteur.cpp la peint
+ *           (mêmes données et commandes que le popup Musique, lecteur_zone_montrer) et
+ *           masque la mini-barre « en lecture » tant qu'elle est montrée. Sauté quand HA a
+ *           dit qu'aucun lecteur n'est choisi (lecteur_zone_disponible).
  *       Ce qui est montré : le contenu courant (NVS), sinon celui de départ, sinon le vocal.
  *       Le blueprint choisit le départ et les contenus du cycle (clé « gauche »,
  *       zone_gauche_lire dans Tab5/socle/tab5_parse.cpp) ; un nouveau départ s'affiche tout
@@ -74,8 +77,17 @@ struct Etat {
 };
 Etat s_etat;
 
-// Ce que l'écran sait montrer. LECTEUR : lot 2.
-bool disponible(ZoneGauche z) { return z == ZoneGauche::VOCAL || z == ZoneGauche::GRAPHIQUE; }
+// Ce que l'écran sait montrer. Le lecteur compact (lot 2) : sauté quand HA a dit
+// qu'aucun lecteur n'est choisi (sa liste « Tab5 · lecteurs de musique » est vide) ; avant
+// toute poussée, il se montre (« En attente de Home Assistant »).
+bool disponible(ZoneGauche z) {
+    switch (z) {
+        case ZoneGauche::VOCAL:
+        case ZoneGauche::GRAPHIQUE: return true;
+        case ZoneGauche::LECTEUR: return g_zone_gauche_ui.lecteur != nullptr && lecteur_zone_disponible();
+        default: return false;
+    }
+}
 
 bool proposee(ZoneGauche z) { return (s_etat.cycle & zone_gauche_bit(z)) != 0 && disponible(z); }
 
@@ -535,6 +547,8 @@ void zone_gauche_appliquer() {
     const ZoneGauche z = montree();
     ui_hidden(u.vocal, z != ZoneGauche::VOCAL);
     ui_hidden(u.graphique, z != ZoneGauche::GRAPHIQUE);
+    ui_hidden(u.lecteur, z != ZoneGauche::LECTEUR);
+    lecteur_zone_montrer(z == ZoneGauche::LECTEUR);  // et la mini-barre, masquée ou rendue
     if (z != ZoneGauche::GRAPHIQUE || u.graphique == nullptr) return;
     construire();
     if (s_g.sale) peindre();

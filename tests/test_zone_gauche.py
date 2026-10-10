@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Zone à gauche de l'horloge au choix (ADR-0051, 10/10/2026, demande d'Axel) : au-dessus du
-cadre Ok Nabu, le vocal (micro, Domo, Discu : l'écran d'avant) ou le graphique des heures qui
-viennent ; le lecteur audio compact est réservé (lot 2).
+cadre Ok Nabu, le vocal (micro, Domo, Discu : l'écran d'avant), le graphique des heures qui
+viennent ou le lecteur de musique compact (lot 2, sur le lecteur de l'ADR-0050).
 
 Une clé de tab5_maj_emplacements, « gauche|départ|c1|… », et pas une variable de service : le
 contrat (contrat/contrat.yaml) ne change pas, un firmware plus ancien ignore la clé. Sa
@@ -18,6 +18,8 @@ On vérifie :
   joignable (bouton manette, roue de navigation) ;
 - le graphique repeint à l'arrivée des prévisions horaires et au changement de thème ; son
   dégradé et ses barres de pluie lisibles ;
+- le lecteur compact : même emprise que le graphique, les commandes du popup, le popup
+  Musique au tap, la mini-barre masquée tant qu'il est montré, sauté sans lecteur choisi ;
 - au rendu des VRAIS modèles Jinja du blueprint : défauts, choix, valeurs inconnues, quand la
   clé part."""
 import os
@@ -37,6 +39,8 @@ PARSE_H = os.path.join(TAB5, "socle", "tab5_parse.h")
 GAUCHE_CPP = os.path.join(TAB5, "ecran", "tab5_zone_gauche.cpp")
 ZONES_CPP = os.path.join(TAB5, "ecran", "tab5_zones.cpp")
 LVGL = os.path.join(TAB5, "paquets", "tab5-lvgl.yaml")
+LECTEUR_CPP = os.path.join(TAB5, "ecran", "tab5_lecteur.cpp")
+LECTEUR_ZONE = os.path.join(TAB5, "ui_components", "lecteur_zone.yaml")
 CLIMAT = os.path.join(TAB5, "ui_components", "climate_card.yaml")
 
 VOCAL = ("icon_mic_status", "btn_assist_trigger", "btn_mode_domo", "btn_mode_discu")
@@ -80,7 +84,7 @@ def test_memes_codes_firmware_et_blueprint():
 
 def test_le_blueprint_ne_propose_que_ce_que_l_ecran_sait_montrer():
     proposes = [z.lower() for z in _disponibles()]
-    assert proposes == ["vocal", "graphique"], "lecteur : lot 2 (ADR-0050), sauté en attendant"
+    assert proposes == ["vocal", "graphique", "lecteur"]
     section = _bp()["blueprint"]["input"]["zone_gauche"]
     assert section.get("collapsed") is True
     assert section["name"] == "Zone à gauche de l'horloge · Left of the clock"
@@ -92,9 +96,9 @@ def test_le_blueprint_ne_propose_que_ce_que_l_ecran_sait_montrer():
         assert [o["value"] for o in options] == proposes, nom
         assert all(" · " in o["label"] for o in options), nom
     assert entrees["gauche_depart"]["default"] == "vocal", "l'écran d'avant au départ"
-    assert entrees["gauche_cycle"]["default"] == proposes
+    assert entrees["gauche_cycle"]["default"] == proposes, "le lecteur, sauté sans lecteur choisi, en fait partie"
     assert entrees["gauche_cycle"]["selector"]["select"]["multiple"] is True
-    # Le défaut du firmware sans la clé est le même que celui du blueprint.
+    # Sans la clé (blueprint d'avant le lecteur compact), l'écran de ce blueprint-là.
     parse = _lire(PARSE_H)
     assert "kZoneGaucheDefaut = ZoneGauche::VOCAL;" in parse
     assert ("kZoneGaucheCycleDefaut = zone_gauche_bit(ZoneGauche::VOCAL) | zone_gauche_bit(ZoneGauche::GRAPHIQUE);"
@@ -197,6 +201,65 @@ def test_repeint_aux_previsions_et_au_theme():
     assert "if (s_g.sale) peindre();" in appliquer
 
 
+# ─── Lecteur compact (lot 2) ───────────────────────────────────────────────────
+
+def _carte(texte, ident):
+    debut = texte.index(f"id: {ident}\n")
+    return texte[debut:].split("widgets:", 1)[0]
+
+
+def test_lecteur_compact_meme_emprise_que_le_graphique():
+    lecteur = _carte(_lire(LECTEUR_ZONE), "zone_lecteur")
+    graphique = _bloc_lvgl("zone_graphique")
+    for cle in ("align", "x", "y", "width", "height", "pad_all", "hidden", "styles"):
+        v = re.search(rf"^\s+{cle}: (.+)$", graphique, re.M).group(1)
+        assert re.search(rf"^  {cle}: {re.escape(v)}$", lecteur, re.M), cle
+    assert "id(tab5_ecran_ouvrir).execute((int) Ecran::MUSIQUE);" in lecteur and "ui_appui_glisse()" in lecteur
+    assert "- !include ../ui_components/lecteur_zone.yaml" in _lire(LVGL)
+
+
+def test_lecteur_compact_commandes_du_popup():
+    yaml_zone = _lire(LECTEUR_ZONE)
+    for n, bouton in ((1, "LECTEUR_BTN_PRECEDENT"), (0, "LECTEUR_BTN_LECTURE"), (2, "LECTEUR_BTN_SUIVANT")):
+        bloc = yaml_zone.split(f"id: lecteur_zone_btn_{n}\n", 1)[1].split("\n    - ", 1)[0]
+        assert f"lecteur_appui({bouton});" in bloc, n
+    # Aucune nouvelle donnée de HA, aucune entité : les widgets se lient au lecteur de l'ADR-0050.
+    lier = _lire(TAB5, "paquets", "tab5-lecteur.yaml").split("- id: tab5_lecteur_lier", 1)[1].split("\n  - id:", 1)[0]
+    for w in ("zone_lecteur", "lecteur_zone_cadre", "lecteur_zone_img", "lecteur_zone_vide", "lecteur_zone_titre",
+              "lecteur_zone_artiste", "lecteur_zone_barre", "lecteur_zone_btn_0", "lecteur_zone_btn_1",
+              "lecteur_zone_btn_2", "lecteur_zone_ico"):
+        assert f"id({w})" in lier, w
+    # Liés au démarrage : le lecteur peut être le contenu de départ, avant toute poussée.
+    zones = _lire(TAB5, "paquets", "tab5-zones.yaml").split("- id: tab5_zones_apply", 1)[1]
+    assert zones.index("script.execute: tab5_lecteur_lier") < zones.index("zone_gauche_appliquer();")
+    assert "g.lecteur = id(zone_lecteur);" in zones
+    cpp = _lire(LECTEUR_CPP)
+    assert "u.zone_pochette}" in _fonction(cpp, "void lecteur_image_prete("), "la pochette du popup, même image"
+
+
+def test_lecteur_compact_et_mini_barre():
+    cpp = _lire(LECTEUR_CPP)
+    assert "const bool montre = mini_visible() && !s_zone_montre;" in _fonction(cpp, "void peindre_mini()")
+    montrer = _fonction(cpp, "void lecteur_zone_montrer(bool montre)")
+    assert "peindre_zone();" in montrer and "peindre_mini();" in montrer
+    appliquer = _fonction(_lire(GAUCHE_CPP), "void zone_gauche_appliquer(")
+    assert "ui_hidden(u.lecteur, z != ZoneGauche::LECTEUR);" in appliquer
+    assert "lecteur_zone_montrer(z == ZoneGauche::LECTEUR);" in appliquer
+    # Peint seulement montré, sinon marqué « sale ».
+    peindre = _fonction(cpp, "void peindre_zone()")
+    assert "s_zone_sale = true;" in peindre and "if (!s_zone_montre)" in peindre
+
+
+def test_lecteur_saute_sans_lecteur_choisi():
+    disponible = _fonction(_lire(GAUCHE_CPP), "bool disponible(ZoneGauche z)")
+    assert "case ZoneGauche::LECTEUR: return g_zone_gauche_ui.lecteur != nullptr && lecteur_zone_disponible();" \
+        in disponible
+    cpp = _lire(LECTEUR_CPP)
+    assert "return !(s_recu && s_e.lu.etat == LecteurEtat::AUCUN);" in _fonction(cpp, "bool lecteur_zone_disponible()")
+    recu = _fonction(cpp, "void lecteur_recu(")
+    assert "if (lecteur_zone_disponible() != zone_avant) zone_gauche_appliquer();" in recu
+
+
 def test_module_inclus_partout():
     for racine in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
         texte = _lire(racine)
@@ -238,7 +301,7 @@ def _payload(declencheur, **entrees):
 
 def test_defauts():
     p = _payload("connexion")
-    assert "gauche|vocal|graphique;" in p
+    assert "gauche|vocal|graphique|lecteur;" in p
     assert p.index("defil|") < p.index("gauche|"), "avec les gestes, après eux"
 
 
@@ -250,6 +313,7 @@ def test_defauts():
     ("radio", ["graphique", "camera"], "gauche|vocal|graphique;"),
     (None, None, "gauche|vocal;"),
     ("vocal", ["lecteur"], "gauche|vocal|lecteur;"),
+    ("lecteur", ["graphique"], "gauche|lecteur|graphique;"),
 ])
 def test_choix(depart, cycle, attendu):
     p = _payload("connexion", gauche_depart=depart, gauche_cycle=cycle)
@@ -258,7 +322,7 @@ def test_choix(depart, cycle, attendu):
 
 @pytest.mark.parametrize("declencheur", ["connexion", "rechargement", "maj_ecran", "demarrage_ha"])
 def test_part_avec_tous_les_etats(declencheur):
-    assert "gauche|graphique|vocal;" in _payload(declencheur, gauche_depart="graphique")
+    assert "gauche|graphique|vocal|lecteur;" in _payload(declencheur, gauche_depart="graphique")
 
 
 @pytest.mark.parametrize("declencheur", ["zones", "action"])

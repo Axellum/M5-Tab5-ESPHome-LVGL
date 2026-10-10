@@ -1,0 +1,126 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file lecteur_zone.yaml
+# @role Lecteur compact de la zone à gauche de l'horloge (ADR-0051, lot 2, sur le lecteur
+#       de l'ADR-0050) : la pochette (celle du popup Musique, même image décodée), le
+#       titre, l'artiste, une barre de lecture fine, et précédent / lecture-pause / suivant.
+#       Rien en lecture : la phrase du popup (« Rien en lecture », « Lecteur éteint »…) et
+#       le nom du lecteur. Un tap hors des boutons ouvre le popup Musique.
+# @architecture_constraint Même emprise que zone_graphique (x 20, y 42, 405 × 184, le verre
+#       des boutons de la colonne, style_clim_btn_page) ; montrée ou masquée d'un bloc par
+#       zone_gauche_appliquer() (tab5_zone_gauche.cpp). Tout ce qui dépend du thème
+#       (bordure, rayon du cadre) et des données est posé par tab5_lecteur.cpp
+#       (peindre_zone) : les valeurs ci-dessous sont celles du thème par défaut. Couleurs
+#       par les styles de rôle (règle 1) ; glyphes fixes dans mdi_font_45 et mdi_font_70,
+#       celui de lecture / pause posé par glyphe_lecture (MDI_CODE_TARGETS, règle 9).
+#       Les boutons prennent le toucher (le tap de la carte ne part pas) ; leurs appuis
+#       passent par lecteur_appui() (LecteurBouton, tab5_lecteur.h), comme ceux du popup.
+# ═══════════════════════════════════════════════════════
+button:
+  id: zone_lecteur
+  align: TOP_LEFT
+  x: 20
+  y: 42
+  width: 405
+  height: 184
+  pad_all: 0
+  hidden: true
+  scrollable: false
+  scrollbar_mode: "OFF"
+  styles: style_clim_btn_page
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) id(tab5_ecran_ouvrir).execute((int) Ecran::MUSIQUE);'
+  widgets:
+    # Pochette carrée à gauche, sur toute la hauteur moins 16 px d'air ; sans image, la
+    # note de musique du popup. Son rayon suit celui de la carte (peindre_zone).
+    - obj:
+        id: lecteur_zone_cadre
+        align: TOP_LEFT
+        x: 16
+        y: 16
+        width: 150
+        height: 150
+        pad_all: 0
+        radius: 14
+        clickable: false
+        scrollable: false
+        styles: style_glass_card
+        widgets:
+          - label: { id: lecteur_zone_vide, text: "\U000F075A", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
+          - image:
+              id: lecteur_zone_img
+              src: lecteur_pochette
+              align: CENTER
+              width: 150
+              height: 150
+              radius: 14
+              hidden: true
+    # Titre et artiste, coupés par « … » à la largeur de la colonne (peindre_zone).
+    - label: { id: lecteur_zone_titre, text: "", align: TOP_LEFT, x: 182, y: 18, text_font: roboto_22 }
+    - label: { id: lecteur_zone_artiste, text: "", align: TOP_LEFT, x: 182, y: 46, text_font: roboto_22, styles: style_text_dim }
+    # Barre de lecture fine, sans curseur (la position se règle dans le popup) ; masquée
+    # pour un direct (durée inconnue) et quand rien ne se lit.
+    - bar:
+        id: lecteur_zone_barre
+        align: TOP_LEFT
+        x: 182
+        y: 86
+        width: 205
+        height: 4
+        min_value: 0
+        max_value: 1000
+        value: 0
+        clickable: false
+        hidden: true
+        styles: style_bg_arc_track
+        radius: 2
+        indicator:
+          styles: style_bg_accent
+          radius: 2
+    # Précédent, lecture / pause (en accent), suivant : centrés sous la colonne. Chacun
+    # masqué à sa place quand le lecteur ne l'offre pas (supported_features).
+    - button:
+        id: lecteur_zone_btn_1
+        align: TOP_LEFT
+        x: 190
+        y: 110
+        width: 52
+        height: 52
+        radius: 999
+        pad_all: 0
+        hidden: true
+        styles: style_invisible
+        on_short_click:
+          - lambda: 'lecteur_appui(LECTEUR_BTN_PRECEDENT);'
+        widgets:
+          - label: { text: "\U000F04AE", align: CENTER, text_font: mdi_font_45, styles: style_text_soft }
+    - button:
+        id: lecteur_zone_btn_0
+        align: TOP_LEFT
+        x: 254
+        y: 106
+        width: 60
+        height: 60
+        radius: 999
+        pad_all: 0
+        hidden: true
+        styles: style_pill_accent
+        on_short_click:
+          - lambda: 'lecteur_appui(LECTEUR_BTN_LECTURE);'
+        widgets:
+          - label: { id: lecteur_zone_ico, text: "\U000F040A", align: CENTER, text_font: mdi_font_45, styles: style_text_on_accent }
+    - button:
+        id: lecteur_zone_btn_2
+        align: TOP_LEFT
+        x: 326
+        y: 110
+        width: 52
+        height: 52
+        radius: 999
+        pad_all: 0
+        hidden: true
+        styles: style_invisible
+        on_short_click:
+          - lambda: 'lecteur_appui(LECTEUR_BTN_SUIVANT);'
+        widgets:
+          - label: { text: "\U000F04AD", align: CENTER, text_font: mdi_font_45, styles: style_text_soft }

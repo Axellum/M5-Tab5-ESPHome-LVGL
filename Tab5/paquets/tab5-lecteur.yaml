@@ -4,7 +4,9 @@
 # @role Lecteur de musique (ADR-0050, 10/10/2026) : pose les widgets que tab5_lecteur.cpp
 #       peint (g_lecteur_ui), la pochette téléchargée et l'événement des commandes.
 #         - tab5_lecteur_lier : widgets et commandes dans g_lecteur_ui, une fois (appelé
-#           par la poussée tab5_maj_lecteur, tab5-api-logic.yaml, et à l'ouverture) ;
+#           au démarrage par tab5_zones_apply, tab5-zones.yaml, pour le lecteur compact de
+#           la zone à gauche de l'horloge ; par la poussée tab5_maj_lecteur,
+#           tab5-api-logic.yaml, et à l'ouverture) ;
 #         - tab5_lecteur_ouvrir : ouvre le popup (« Aller à l'écran → Musique », geste
 #           « musique », mini-barre, appui long d'une tuile med sans t avec sa clé tRT) ;
 #         - tab5_lecteur_evenement : événement esphome.tab5_lecteur (action, lecteur,
@@ -92,6 +94,17 @@ script:
           u.mini_titre = id(lecteur_mini_titre);
           u.mini_artiste = id(lecteur_mini_artiste);
           u.mini_ico = id(lecteur_mini_ico);
+          u.zone = id(zone_lecteur);
+          u.zone_cadre = id(lecteur_zone_cadre);
+          u.zone_pochette = id(lecteur_zone_img);
+          u.zone_vide = id(lecteur_zone_vide);
+          u.zone_titre = id(lecteur_zone_titre);
+          u.zone_artiste = id(lecteur_zone_artiste);
+          u.zone_barre = id(lecteur_zone_barre);
+          u.zone_btn[0] = id(lecteur_zone_btn_1);
+          u.zone_btn[1] = id(lecteur_zone_btn_0);
+          u.zone_btn[2] = id(lecteur_zone_btn_2);
+          u.zone_ico = id(lecteur_zone_ico);
           u.envoyer = [](const char* action, const char* lecteur, const char* valeur) {
             id(tab5_lecteur_evenement).execute(std::string(action), std::string(lecteur), std::string(valeur));
           };
@@ -141,8 +154,8 @@ script:
           else:
             - online_image.release: lecteur_pochette
 
-# La position avance d'elle-même en lecture (popup ouvert) ; la mini-barre se masque 5 min
-# après une pause. Rien n'est repeint quand rien ne change (ui_text compare).
+# La position avance d'elle-même en lecture (popup ouvert, lecteur compact montré) ; la
+# mini-barre se masque 5 min après une pause. Rien n'est repeint quand rien ne change (ui_text compare).
 interval:
   - interval: 1s
     then:
