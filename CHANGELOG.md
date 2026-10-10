@@ -30,6 +30,10 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.7.0).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
 
+### 2026-10-10 — Correctif : la mini-barre « en lecture » se montre à chaque pause
+
+- **Mini-barre masquée une pause sur deux** (#430) : l'instant de la pause était gardé comme `millis() | 1` pour que 0 veuille dire « pas en pause ». Quand la milliseconde était paire, cet instant dépassait `millis()` d'un, et la peinture faite dans la même milliseconde lisait un écart de 2^32 − 1 ms au lieu de 0 : la mini-barre restait cachée et le cadre Ok Nabu en place. Un drapeau séparé (`s_en_pause`) remplace l'astuce (`Tab5/ecran/tab5_lecteur.cpp`). C'est aussi ce qui faisait échouer au hasard l'étape « bascule à chaud = démarrage à froid » du rendu clair (`accueil-musique-clair.png`, l'une des deux séries avec la mini-barre, l'autre sans). Non essayé sur la tablette.
+
 ### 2026-10-10 — Accueil : le lecteur de musique dans la zone à gauche de l'horloge, et un graphique plus lisible (ADR-0051, lot 2)
 
 - **Lecteur compact** (plan validé par Axel : « très beau, léger ») : troisième contenu de la zone à gauche de l'horloge, à la place du vocal ou du graphique, dans une carte de la même emprise (`zone_lecteur`, nouveau composant `Tab5/ui_components/lecteur_zone.yaml`). La pochette (la même image que le popup Musique, sans second téléchargement), le titre, l'artiste, une fine barre de position, précédent / lecture-pause / suivant ; rien en lecture : la phrase du popup (« Rien en lecture », « Lecteur éteint »…) et le nom du lecteur. Un tap hors des boutons ouvre le popup Musique. Mêmes données et mêmes commandes que le lecteur de l'ADR-0050 (`tab5_maj_lecteur`, événement `esphome.tab5_lecteur`) : rien de nouveau côté Home Assistant, aucune entité nommée, contrat inchangé, aucune nouvelle clé de traduction. Pochette aux coins concentriques à ceux de la carte, textes coupés avant le coin arrondi, dans chaque thème ; repeint seulement montré (sinon au retour). Le volume n'y est pas (il ne tiendrait pas proprement ; le popup l'a).
