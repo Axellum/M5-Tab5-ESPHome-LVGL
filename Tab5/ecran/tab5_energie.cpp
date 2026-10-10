@@ -489,6 +489,14 @@ void energie_historique(const std::string& vue, const std::string& debut, const 
     if (v == s_vue) peindre();
 }
 
+// ADR-0058 : à écrire (lot firmware).
+void energie_soleil(const std::string& payload) { (void) payload; }
+void energie_bilan(const std::string& vue, const std::string& debut, const std::string& payload) {
+    (void) vue;
+    (void) debut;
+    (void) payload;
+}
+
 void energie_ouvrir() {
     EnergieUI& u = g_energie_ui;
     if (u.popup == nullptr) return;

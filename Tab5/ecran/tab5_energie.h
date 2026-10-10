@@ -57,6 +57,12 @@ void energie_instantane(const std::string& payload);
 // le jour des heures, le premier des jours, le 1er du premier mois), valeurs en kWh
 // séparées par « ; » (vide = pas de donnée). 24, 30 et 12 valeurs au plus.
 void energie_historique(const std::string& vue, const std::string& debut, const std::string& valeurs);
+// Action tab5_maj_energie_soleil (ADR-0058) : « lever|midi|coucher|prevu_jour|
+// prevu_demain|source|creneau_debut|creneau_fin|prevu|clair » (page « Aujourd'hui »).
+void energie_soleil(const std::string& payload);
+// Action tab5_maj_energie_bilan (ADR-0058) : vue, début comme l'historique, payload
+// « devise|vente|achat|gain » (page « Bilan »).
+void energie_bilan(const std::string& vue, const std::string& debut, const std::string& payload);
 // Ouvre le popup (vue des heures), le peint, et demande ses données à HA.
 void energie_ouvrir();
 // Boutons Heures / Jours / Mois : change la vue et la demande à HA.

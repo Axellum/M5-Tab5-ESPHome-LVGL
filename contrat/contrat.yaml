@@ -41,10 +41,16 @@ services:
     payload: string
   tab5_maj_energie:
     payload: string
+  tab5_maj_energie_bilan:
+    debut: string
+    payload: string
+    vue: string
   tab5_maj_energie_historique:
     debut: string
     valeurs: string
     vue: string
+  tab5_maj_energie_soleil:
+    payload: string
   tab5_maj_froid:
     payload: string
   tab5_maj_historique:
