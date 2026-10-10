@@ -876,13 +876,15 @@ views:
                                ('select.tab5_lecteurs_de_musique', 'Lecteurs de musique (popup Musique)', 'Music players (Music popup)', 'mdi:music-box-multiple'),
                                ('select.tab5_capteurs_suivis', 'Capteurs suivis (popup Suivi)', 'Tracked sensors (Tracking popup)', 'mdi:chart-line'),
                                ('select.tab5_refrigerateurs', 'Réfrigérateurs (popup Froid)', 'Fridges (Cold popup)', 'mdi:fridge-outline'),
-                               ('select.tab5_congelateurs', 'Congélateurs (popup Froid)', 'Freezers (Cold popup)', 'mdi:snowflake-thermometer')] %}
+                               ('select.tab5_congelateurs', 'Congélateurs (popup Froid)', 'Freezers (Cold popup)', 'mdi:snowflake-thermometer'),
+                               ('input_select.tab5_serveur_ia_type', 'Serveur IA local', 'Local AI server', 'mdi:brain'),
+                               ('input_text.tab5_serveur_ia_adresse', 'Adresse du serveur IA', 'AI server address', 'mdi:server-network')] %}
 {%- if e in present %}
           - type: tile
             entity: {{ e }}
             name: "{{ t(fr_, en_) }}"
             icon: {{ icone }}
-{%- if e.startswith('select.') %}
+{%- if e.startswith('select.') or e.startswith('input_select.') %}
             features:
               - type: select-options
                 style: dropdown
@@ -2329,6 +2331,18 @@ views:
     'es': 'Congeladores (ventana Frío)',
     'it': 'Congelatori (popup Freddo)',
     'tr': 'Dondurucular (Soğuk penceresi)'},
+  'Serveur IA local': {
+    'de': 'Lokaler KI-Server',
+    'nl': 'Lokale AI-server',
+    'es': 'Servidor de IA local',
+    'it': 'Server IA locale',
+    'tr': 'Yerel yapay zekâ sunucusu'},
+  'Adresse du serveur IA': {
+    'de': 'Adresse des KI-Servers',
+    'nl': 'Adres van de AI-server',
+    'es': 'Dirección del servidor de IA',
+    'it': 'Indirizzo del server IA',
+    'tr': 'Yapay zekâ sunucusunun adresi'},
   'Volet à course simulée': {
     'de': 'Rollladen mit simulierter Laufzeit',
     'nl': 'Rolluik met gesimuleerde looptijd',

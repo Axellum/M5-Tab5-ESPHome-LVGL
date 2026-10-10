@@ -17,6 +17,7 @@ Firmware that turns the M5Stack Tab5 into a Home Assistant wall screen, built wi
 | use it: every tap and long press | [User manual](notice/README.md) |
 | know how each part of the screen works | [Screens and features](screens.md) |
 | talk to it | [Voice assistant](voice_assistant.md) |
+| follow a local AI server (Ollama, llama.cpp, LM Studio) | [Local AI server](serveur-ia.md) |
 | choose the icon of a tile | [Tile icons](tiles_icons.md) |
 | fix something that went wrong | [Known incidents](troubleshooting.md), then [Debugging](debugging.md) |
 | understand how it is built | [Architecture](architecture.md), [Hardware](hardware.md), [Design decisions](decisions/README.md) |
@@ -42,6 +43,7 @@ Un firmware qui fait de la M5Stack Tab5 un écran mural Home Assistant, construi
 | m'en servir : chaque tap et appui long | [Notice d'utilisation](notice/README.md#version-française) |
 | savoir comment marche chaque partie de l'écran | [Écrans et fonctions](screens.md#version-française) |
 | lui parler | [Assistant vocal](voice_assistant.md#version-française) |
+| suivre un serveur IA local (Ollama, llama.cpp, LM Studio) | [Serveur IA local](serveur-ia.md#version-française) |
 | choisir l'icône d'une tuile | [Icônes des tuiles](tiles_icons.md#version-française) |
 | réparer ce qui ne marche pas | [Incidents connus](troubleshooting.md#version-française), puis [Diagnostiquer](debugging.md#version-française) |
 | comprendre comment il est fait | [Architecture](architecture.md#version-française), [Matériel](hardware.md#version-française), [Décisions d'architecture](decisions/README.md) (en anglais) |

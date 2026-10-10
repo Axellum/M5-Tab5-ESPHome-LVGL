@@ -190,6 +190,14 @@ Without this package, the popup and the card left of the clock wait (« En atten
 
 ---
 
+### `packages/tab5_llm.yaml` — a local AI server (optional settings)
+Sensors for a local inference server — **Ollama**, **llama.cpp** (`llama-server`) or **LM Studio** — with no firmware change ([guide](../docs/serveur-ia.md)). Pick the server in « Tab5 · type de serveur IA · AI server type » (« Aucun » by default: no request at all) and type its address in « Tab5 · adresse du serveur IA · AI server address » (`http://host:port`).
+- `sensor.tab5_serveur_ia_releve` (trigger-based, every 30 s, only when a server is chosen) calls `rest_command.tab5_serveur_ia` (GET, 5 s at most): Ollama `/api/ps`; llama.cpp `/health`, `/props`, `/metrics` (with `--metrics`), `/slots`; LM Studio `/api/v1/models` (0.4 and later). State `aucun` / `ok` / `chargement` / `hors_ligne` / `erreur`, the reason in the `raison` attribute.
+- Visible sensors: `binary_sensor.tab5_serveur_ia_en_ligne`, `sensor.tab5_serveur_ia_modele` (loaded models), and three with `state_class: measurement`, offered in « Tab5 · capteurs suivis »: `sensor.tab5_serveur_ia_vram` (GiB, Ollama), `sensor.tab5_serveur_ia_vitesse` (tokens/s, llama.cpp with `--metrics`), `sensor.tab5_serveur_ia_requetes` (llama.cpp). A value the server does not give is unavailable, never invented (Ollama has no global tokens/s counter).
+- Hardware (GPU temperature and VRAM, RAM, power): not here; use the Glances or System Monitor integration and pick its sensors in « Tab5 · capteurs suivis ».
+
+---
+
 ### `packages/tab5_froid.yaml` — fridges and freezers
 Backend of the firmware's **Fridges and freezers popup**, of its central-card alerts and of the icon that blinks on the clock ([ADR-0055](../docs/decisions/0055-fridge-freezer-monitoring.md)). The appliances are the temperature sensors chosen in the lists « Tab5 · réfrigérateurs · fridges » and « Tab5 · congélateurs · freezers » (`packages/tab5_reglages.yaml`, four at most in all, only sensors with `state_class: measurement`; never guessed).
 - `script.tab5_froid_calculer` (`mode: queued`) is where Home Assistant decides: **thresholds in one place**, the `seuils` variable at the top of the script (fridge 0 to 5 °C; attention when the 15-minute mean leaves it; serious above 8 °C for 30 min or at 10 °C; freezer -18 °C at most, attention above -15 °C, serious above -12 °C for 30 min or at -10 °C; a rise of 2 / 4 °C since the lowest of the last 30 minutes is « door open? », still there after 20 minutes without cooling down « door not closed »; no reading for 30 minutes « sensor silent »). It reads `recorder.get_statistics` (5-minute and hourly), keeps the state in `sensor.tab5_froid` (a trigger-based template sensor, restored at restart, updated by the `tab5_froid_bilan` event) and pushes `tab5_maj_froid` when the tablet is connected.
@@ -494,6 +502,14 @@ Le côté HA du **popup Suivi** du firmware et du contenu « capteur » à gauch
 - Automatisation `tab5_suivi` : à un changement d'un capteur suivi (le miroir « Tab5 · signature du suivi »), pousse tout de suite, attend cinq minutes et ne pousse à nouveau que si quelque chose a changé entre-temps — une poussée toutes les cinq minutes au plus. Automatisation `tab5_suivi_immediat` : tout de suite quand la liste change, à la connexion de la tablette, à « MAJ Écran », au démarrage de HA et toutes les heures (la courbe avance).
 
 Sans ce package, le popup et la carte à gauche de l'horloge attendent (« En attente de Home Assistant »).
+
+---
+
+### `packages/tab5_llm.yaml` — un serveur IA local (réglages facultatifs)
+Des capteurs pour un serveur d'inférence local — **Ollama**, **llama.cpp** (`llama-server`) ou **LM Studio** — sans toucher au firmware ([guide](../docs/serveur-ia.md#version-française)). Choisir le serveur dans « Tab5 · type de serveur IA · AI server type » (« Aucun » par défaut : aucune requête) et taper son adresse dans « Tab5 · adresse du serveur IA · AI server address » (`http://hôte:port`).
+- `sensor.tab5_serveur_ia_releve` (à déclencheurs, toutes les 30 s, seulement quand un serveur est choisi) appelle `rest_command.tab5_serveur_ia` (GET, 5 s au plus) : Ollama `/api/ps` ; llama.cpp `/health`, `/props`, `/metrics` (avec `--metrics`), `/slots` ; LM Studio `/api/v1/models` (0.4 et plus). État `aucun` / `ok` / `chargement` / `hors_ligne` / `erreur`, la raison dans l'attribut `raison`.
+- Capteurs visibles : `binary_sensor.tab5_serveur_ia_en_ligne`, `sensor.tab5_serveur_ia_modele` (modèles chargés), et trois à `state_class: measurement`, proposés dans « Tab5 · capteurs suivis » : `sensor.tab5_serveur_ia_vram` (Gio, Ollama), `sensor.tab5_serveur_ia_vitesse` (tokens/s, llama.cpp avec `--metrics`), `sensor.tab5_serveur_ia_requetes` (llama.cpp). Une valeur que le serveur ne donne pas reste indisponible, jamais inventée (Ollama n'a pas de compteur global de tokens/s).
+- Matériel (température et VRAM du GPU, RAM, puissance) : pas ici ; l'intégration Glances ou System Monitor, dont on choisit les capteurs dans « Tab5 · capteurs suivis ».
 
 ---
 

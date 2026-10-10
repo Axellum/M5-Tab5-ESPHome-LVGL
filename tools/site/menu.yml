@@ -153,6 +153,9 @@
     - en: Voice assistant
       fr: Assistant vocal
       page: docs/voice_assistant.md
+    - en: Local AI server
+      fr: Serveur IA local
+      page: docs/serveur-ia.md
     - en: Tile icons
       fr: Icônes des tuiles
       page: docs/tiles_icons.md
