@@ -18,7 +18,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 6 | Home Assistant button | bottom row: weather ↔ your devices | Energy window, with a solar production |
 | 7 | Gear button | settings | system console |
 | 8 | Gamepad button | Arcade, the games | TV remote, with a TV |
-| 9 | Second temperature (greenhouse) | left of the clock: voice controls or chart of the coming hours | its history and the forecast |
+| 9 | Second temperature (greenhouse) | left of the clock: voice controls, chart of the coming hours or music player | its history and the forecast |
 | 10 | Climate: target, − and + | target: climate window (another device chosen: its window); − / +: one step | — |
 | 11 | Row under the clock: plants and sensors | next line | on the plants: plant details |
 | 12 | Central card | next panel, or dismiss a message | Alerts window |
@@ -83,7 +83,7 @@ Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt u
 | 6 | Bouton Home Assistant | rangée du bas : météo ↔ vos appareils | fenêtre Énergie, avec une production solaire |
 | 7 | Bouton engrenage | réglages | console système |
 | 8 | Bouton manette | Arcade, les jeux | télécommande TV, avec une TV |
-| 9 | Seconde température (serre) | à gauche de l'horloge : commandes vocales ou graphique des prochaines heures | son historique et la prévision |
+| 9 | Seconde température (serre) | à gauche de l'horloge : commandes vocales, graphique des prochaines heures ou lecteur de musique | son historique et la prévision |
 | 10 | Clim : consigne, − et + | consigne : fenêtre de la clim (un autre appareil choisi : sa fenêtre) ; − / + : un pas | — |
 | 11 | Rangée sous l'horloge : plantes et capteurs | ligne suivante | sur les plantes : détail des plantes |
 | 12 | Carte centrale | panneau suivant, ou écarter un message | fenêtre des alertes |
