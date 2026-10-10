@@ -72,6 +72,20 @@ def _entrees(bp):
     return toutes
 
 
+def test_pas_des_selecteurs_nombre_acceptes_par_ha():
+    """HA refuse tout le blueprint si le `step` d'un sélecteur `number` est sous 0,001 (ni
+    « any ») : l'automatisation reste « unavailable » (CI « Intégration HACS », 10/10/2026,
+    step 0.0001 des prix de l'énergie)."""
+    fautifs = []
+    for nom, entree in _entrees(_blueprint()).items():
+        nombre = (entree.get("selector") or {}).get("number")
+        if isinstance(nombre, dict) and "step" in nombre:
+            pas = nombre["step"]
+            if pas != "any" and not (isinstance(pas, (int, float)) and pas >= 0.001):
+                fautifs.append(f"{nom} : step {pas!r}")
+    assert not fautifs, fautifs
+
+
 def _substituer(valeur, entrees):
     if isinstance(valeur, _Entree):
         return entrees[valeur.nom]
@@ -468,9 +482,14 @@ def test_editeur_lisible():
     energie = [n for n in sections if n.startswith("energie")]
     assert energie == ["energie", "energie_reseau_maison", "energie_stockage"]
     assert list(sections["energie"]["input"]) == ["energie_solaire", "energie_solaire_autres", "energie_crete",
-                                                  "energie_production", "energie_production_autres"]
+                                                  "energie_production", "energie_production_autres",
+                                                  "energie_prevision_jour", "energie_prevision_demain"]
     assert list(sections["energie_reseau_maison"]["input"]) == ["energie_reseau", "energie_reseau_export",
-                                                               "energie_reseau_inverse", "energie_maison"]
+                                                               "energie_reseau_inverse", "energie_maison",
+                                                               "energie_compteur_achat", "energie_compteur_vente",
+                                                               "energie_prix_achat", "energie_prix_achat_entite",
+                                                               "energie_prix_revente", "energie_prix_revente_entite",
+                                                               "energie_devise"]
     assert list(sections["energie_stockage"]["input"]) == ["energie_batterie", "energie_batterie_puissance",
                                                            "energie_batterie_inverse", "energie_batterie_temperature"]
 

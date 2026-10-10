@@ -576,6 +576,21 @@ TUILE_SCENE = (1140, 572)
 TUILE_JE_PARS = (890, 572)
 BOUTON_APPAREIL = (1048, 341)
 ENERGIE_VUES = {"heures": (828, 347), "jours": (988, 347), "mois": (1148, 347)}
+# Le popup Énergie a quatre pages depuis l'ADR-0058 : Flux, Aujourd'hui, Production (les
+# cartes et les barres d'avant, avec les boutons de vue ci-dessus), Bilan. Il s'ouvre sur la
+# première qui a des données (la démo les pousse toutes : Flux) ; un glisser vers la gauche
+# passe à la suivante, en boucle (pages_brancher, ADR-0046). Les captures changent de page
+# par le geste, pas par le nom de l'onglet (leur place dépend du firmware, non mesurée) :
+# le geste part de la carte du graphique (y 640, hors des boutons de vue) et chaque écran
+# ramène le popup sur Flux avant de le fermer, au cas où il garde sa page.
+ENERGIE_PAGE_SUIVANTE = Glisser(1150, 640, 450, 640, dans_popup=True)
+ENERGIE_PAGE_PRECEDENTE = Glisser(450, 640, 1150, 640, dans_popup=True)
+ENERGIE_VERS_AUJOURDHUI = (ENERGIE_PAGE_SUIVANTE,)
+ENERGIE_VERS_PRODUCTION = (ENERGIE_PAGE_SUIVANTE,) * 2
+ENERGIE_VERS_BILAN = (ENERGIE_PAGE_PRECEDENTE,)   # Flux → Bilan : la page d'avant, en boucle
+ENERGIE_RETOUR_AUJOURDHUI = (ENERGIE_PAGE_PRECEDENTE,)
+ENERGIE_RETOUR_PRODUCTION = (ENERGIE_PAGE_PRECEDENTE,) * 2
+ENERGIE_RETOUR_BILAN = (ENERGIE_PAGE_SUIVANTE,)
 # Popup Réglages (reglages_popup.yaml), quatre pages depuis le 08/10/2026. Noms des pages
 # en haut : 200 × 44 à x 318 + 210 × i de la carte modale (posée à 15 px des bords), sur
 # la ligne du titre. Cartes des pages Écran et Apparence à (39, 87) à l'écran, 1202 de
@@ -1180,9 +1195,20 @@ ECRANS: tuple[Ecran, ...] = (
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis
     # les vues Jours et Mois par « Aller à l'écran ». Données : la scène (demo_pusher,
     # _pousser_energie), datée du jour figé des captures.
-    Ecran("energie-heures", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)), (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
-    Ecran("energie-jours", (Aller("Énergie"), Toucher(*ENERGIE_VUES["jours"]))),
-    Ecran("energie-mois", (Aller("Énergie"), Toucher(*ENERGIE_VUES["mois"]))),
+    # Quatre pages (ADR-0058, 10/10/2026) : le flux d'abord (page d'ouverture), le soleil et la
+    # prévision du jour, la production (les vues Heures, Jours et Mois d'avant, dans cet
+    # ordre : elles partagent la vue choisie), puis le bilan sur la vue des heures.
+    Ecran("energie-flux", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)), (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
+    Ecran("energie-aujourdhui", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_AUJOURDHUI,
+          ENERGIE_RETOUR_AUJOURDHUI + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
+    Ecran("energie-bilan", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_BILAN,
+          ENERGIE_RETOUR_BILAN + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
+    Ecran("energie-heures", (VERS_LA_DROITE, Toucher(*TUILE_SOLAIRE)) + ENERGIE_VERS_PRODUCTION,
+          ENERGIE_RETOUR_PRODUCTION + (Toucher(*FERMER_POPUP), VERS_LA_GAUCHE)),
+    Ecran("energie-jours", (Aller("Énergie"),) + ENERGIE_VERS_PRODUCTION + (Toucher(*ENERGIE_VUES["jours"]),),
+          ENERGIE_RETOUR_PRODUCTION),
+    Ecran("energie-mois", (Aller("Énergie"),) + ENERGIE_VERS_PRODUCTION + (Toucher(*ENERGIE_VUES["mois"]),),
+          ENERGIE_RETOUR_PRODUCTION),
     # Température (ADR-0032) : la pièce sur 24 h ; la seconde température, une serre avec
     # la prévision de dehors à part, sur les trois vues ; puis dehors (case du blueprint
     # cochée), la prévision qui prolonge la courbe.

@@ -8,9 +8,40 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1206;
+static const uint16_t kI18nKeyCount = 1237;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1231,12 +1262,16 @@ static const char* const kI18nKeys[] = {
     " le lendemain",
     "%.1f  contre  %.1f      (écart %.1f)",
     "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n",
+    "%d %% de la production",
+    "%d %% du consommé",
+    "%d %% solaire",
     "%d / 5 (plus haut = plus sensible)",
     "%d MAJ",
     "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo",
     "%d demi-coups joués",
     "%d erreurs",
     "%d h %02d",
+    "%d h – %d h",
     "%d heures",
     "%d heures %d",
     "%d indispo",
@@ -1329,9 +1364,11 @@ static const char* const kI18nKeys[] = {
     "8 consoles — une seule à la fois",
     "8 niveaux, 3 vies, power-ups",
     "8,0 cases/s",
+    "ACHETÉ",
     "ACTIF",
     "AMPOULES",
     "APPARENCE",
+    "AUTOCONSOMMÉ",
     "Abandon",
     "Abandon  —  comptage indicatif : %.1f contre %.1f",
     "Abandonner",
@@ -1342,6 +1379,7 @@ static const char* const kI18nKeys[] = {
     "Accord entre les deux joueurs",
     "Accueil",
     "Acheter et revendre des objets",
+    "Acheté",
     "Actif",
     "Activé",
     "Activée",
@@ -1399,6 +1437,7 @@ static const char* const kI18nKeys[] = {
     "Au tour de Blanc",
     "Au tour de Noir",
     "Au-dessus de la norme",
+    "Aucun",
     "Aucun appareil",
     "Aucun appareil déclaré",
     "Aucun capteur d'énergie choisi",
@@ -1423,6 +1462,7 @@ static const char* const kI18nKeys[] = {
     "Aucune caméra choisie",
     "Aucune partie en cours",
     "Aucune partie sauvegardée",
+    "Aucune production ni prévision",
     "Aucune question jouée",
     "Aucune question jouée pour le moment",
     "Aucune sonnerie prévue",
@@ -1432,6 +1472,7 @@ static const char* const kI18nKeys[] = {
     "Aujourd'hui",
     "Aujourd'hui {heure}",
     "Auto",
+    "Autoconsommé",
     "Autres",
     "Avancer",
     "Averses",
@@ -1443,6 +1484,7 @@ static const char* const kI18nKeys[] = {
     "Batterie",
     "Batterie montée",
     "Bientôt sec",
+    "Bilan",
     "Bilan contre le Tab (par variante et niveau)",
     "Bilan face au Tab",
     "Bilan par niveau, records, classement local",
@@ -1510,6 +1552,7 @@ static const char* const kI18nKeys[] = {
     "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique ».",
     "Choix du mode, de la couleur, du niveau et de la pendule",
     "Chute nette. Reprends ton souffle.",
+    "Ciel clair",
     "Clair",
     "Clair ou sombre",
     "Classement",
@@ -1542,12 +1585,14 @@ static const char* const kI18nKeys[] = {
     "Connecté",
     "Conservés en NVS, valables pour toutes les parties",
     "Consommation",
+    "Consommé",
     "Contrôle",
     "Contrôle : %s",
     "Contrôle : %s   -   Vitesse : %s",
     "Contrôle, sensibilité, calibration, SFX",
     "Coordonnées : AFFICHÉES",
     "Coordonnées : MASQUÉES",
+    "Coucher",
     "Couleur (contre le Tab)",
     "Couleur du joueur",
     "Couloirs",
@@ -1557,8 +1602,10 @@ static const char* const kI18nKeys[] = {
     "Coup de chaud depuis %s",
     "Coup illégal",
     "Coup interdit (ko ou suicide)",
+    "Courbe en cours d'apprentissage",
     "Couronne fêlée",
     "Crème",
+    "Créneau",
     "Cuivre",
     "Cumul carrière : %lu points",
     "Cœur de braise",
@@ -1653,6 +1700,7 @@ static const char* const kI18nKeys[] = {
     "Finesse",
     "Fixe",
     "Flipper néon · 3 billes\nTablette à la verticale",
+    "Flux",
     "Flux d'air",
     "Fond de l'horloge",
     "Force de la secousse nécessaire",
@@ -1667,6 +1715,7 @@ static const char* const kI18nKeys[] = {
     "Fulgurante",
     "Férié",
     "Févr",
+    "GAINS",
     "GAME OVER",
     "GESTION",
     "Gantelet poli",
@@ -1807,6 +1856,8 @@ static const char* const kI18nKeys[] = {
     "Les âmes sont conservées",
     "Les âmes sont déjà mises de côté.",
     "Lettres A..T et chiffres autour du goban",
+    "Lever",
+    "Lever et coucher du soleil inconnus",
     "Limite de charge",
     "Lode Runner 1983\nCreuse · grimpe · fuis",
     "Luminosité",
@@ -1833,6 +1884,7 @@ static const char* const kI18nKeys[] = {
     "Mars",
     "Masquée",
     "Matériel insuffisant pour mater",
+    "Meilleur créneau",
     "Meilleur score : %lu",
     "Meilleur score : %u   -   Contrôle : %s",
     "Menu",
@@ -1842,6 +1894,7 @@ static const char* const kI18nKeys[] = {
     "Mesure en attente",
     "Mesure en cours",
     "Mesuré",
+    "Midi",
     "Min %s °C · max %s °C",
     "Minimum",
     "Minimum %s · Maximum %s",
@@ -1997,14 +2050,21 @@ static const char* const kI18nKeys[] = {
     "Prise x%d",
     "Prisonniers de la partie : Noir %u, Blanc %u",
     "Probabilité",
+    "Production",
+    "Produit",
     "Produit aujourd'hui",
     "Proposer nulle",
     "Précédent",
     "Présent",
+    "Prévision",
+    "Prévision : externe",
+    "Prévision : météo",
     "Prévisions d'hier %d h %02d",
     "Prévisions de %d h %02d",
     "Prévisions vieilles de %d jours",
     "Prévu",
+    "Prévu aujourd'hui",
+    "Prévu demain",
     "Prêt",
     "Puissance",
     "Purement cosmétique",
@@ -2257,6 +2317,7 @@ static const char* const kI18nKeys[] = {
     "Un serment de plus.",
     "Un seul choix. Il te suivra jusqu'à la fin de la run.",
     "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant.",
+    "VENDU",
     "VICTOIRE",
     "VICTOIRE !",
     "VOLETS",
@@ -2265,6 +2326,7 @@ static const char* const kI18nKeys[] = {
     "Valider le score",
     "Variante, mode, niveau",
     "Ven",
+    "Vendu",
     "Venteux",
     "Ventilation",
     "Verrouillé",
@@ -2441,12 +2503,16 @@ static const char* const kI18n_en[] = {
     " the next day",  // " le lendemain"
     "%.1f  vs  %.1f      (margin %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
+    "%d %% of production",  // "%d %% de la production"
+    "%d %% of consumption",  // "%d %% du consommé"
+    "%d %% solar",  // "%d %% solaire"
     "%d / 5 (higher = more sensitive)",  // "%d / 5 (plus haut = plus sensible)"
     "%d updates",  // "%d MAJ"
     "%d half-moves  ·  level %s  ·  local rating: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d half-moves played",  // "%d demi-coups joués"
     "%d errors",  // "%d erreurs"
     "%d:%02d",  // "%d h %02d"
+    "%d:00 – %d:00",  // "%d h – %d h"
     "%d:00",  // "%d heures"
     "%d:%02d",  // "%d heures %d"
     "%d unavailable",  // "%d indispo"
@@ -2539,9 +2605,11 @@ static const char* const kI18n_en[] = {
     "8 consoles — one at a time",  // "8 consoles — une seule à la fois"
     "8 levels, 3 lives, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8.0 tiles/s",  // "8,0 cases/s"
+    "IMPORTED",  // "ACHETÉ"
     "ON",  // "ACTIF"
     "LIGHTS",  // "AMPOULES"
     "APPEARANCE",  // "APPARENCE"
+    "SELF-USED",  // "AUTOCONSOMMÉ"
     "Resign",  // "Abandon"
     "Resignation  —  estimated count: %.1f vs %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Give up",  // "Abandonner"
@@ -2552,6 +2620,7 @@ static const char* const kI18n_en[] = {
     "Both players must agree",  // "Accord entre les deux joueurs"
     "Home",  // "Accueil"
     "Buy and sell items",  // "Acheter et revendre des objets"
+    "Imported",  // "Acheté"
     "Active",  // "Actif"
     "On",  // "Activé"
     "On",  // "Activée"
@@ -2609,6 +2678,7 @@ static const char* const kI18n_en[] = {
     "White to play",  // "Au tour de Blanc"
     "Black to play",  // "Au tour de Noir"
     "Above the norm",  // "Au-dessus de la norme"
+    "None",  // "Aucun"
     "No device",  // "Aucun appareil"
     "No appliance declared",  // "Aucun appareil déclaré"
     "No energy sensor chosen",  // "Aucun capteur d'énergie choisi"
@@ -2633,6 +2703,7 @@ static const char* const kI18n_en[] = {
     "No camera chosen",  // "Aucune caméra choisie"
     "No game in progress",  // "Aucune partie en cours"
     "No saved game",  // "Aucune partie sauvegardée"
+    "No production or forecast",  // "Aucune production ni prévision"
     "No questions played",  // "Aucune question jouée"
     "No questions played yet",  // "Aucune question jouée pour le moment"
     "No alarm scheduled",  // "Aucune sonnerie prévue"
@@ -2642,6 +2713,7 @@ static const char* const kI18n_en[] = {
     "Today",  // "Aujourd'hui"
     "Today {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Self-used",  // "Autoconsommé"
     "Other",  // "Autres"
     "Forward",  // "Avancer"
     "Showers",  // "Averses"
@@ -2653,6 +2725,7 @@ static const char* const kI18n_en[] = {
     "Battery",  // "Batterie"
     "Battery fitted",  // "Batterie montée"
     "Drying soon",  // "Bientôt sec"
+    "Balance",  // "Bilan"
     "Record vs Tab (by variant / level)",  // "Bilan contre le Tab (par variante et niveau)"
     "Record against the Tab",  // "Bilan face au Tab"
     "Results by level, records, local rating",  // "Bilan par niveau, records, classement local"
@@ -2720,6 +2793,7 @@ static const char* const kI18n_en[] = {
     "Choose your players in Home Assistant: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Choose mode, color, level and clock",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Clean fall. Catch your breath.",  // "Chute nette. Reprends ton souffle."
+    "Clear sky",  // "Ciel clair"
     "Light",  // "Clair"
     "Light or dark",  // "Clair ou sombre"
     "Leaderboard",  // "Classement"
@@ -2752,12 +2826,14 @@ static const char* const kI18n_en[] = {
     "Connected",  // "Connecté"
     "Saved in NVS, used for every game",  // "Conservés en NVS, valables pour toutes les parties"
     "Consumption",  // "Consommation"
+    "Used",  // "Consommé"
     "Control",  // "Contrôle"
     "Control: %s",  // "Contrôle : %s"
     "Control: %s   -   Speed: %s",  // "Contrôle : %s   -   Vitesse : %s"
     "Control, sensitivity, calibration, SFX",  // "Contrôle, sensibilité, calibration, SFX"
     "Coordinates: SHOWN",  // "Coordonnées : AFFICHÉES"
     "Coordinates: HIDDEN",  // "Coordonnées : MASQUÉES"
+    "Sunset",  // "Coucher"
     "Color (vs Tab mode)",  // "Couleur (contre le Tab)"
     "Player color",  // "Couleur du joueur"
     "Corridors",  // "Couloirs"
@@ -2767,8 +2843,10 @@ static const char* const kI18n_en[] = {
     "Heat spike since %s",  // "Coup de chaud depuis %s"
     "Illegal move",  // "Coup illégal"
     "Illegal move (ko or suicide)",  // "Coup interdit (ko ou suicide)"
+    "Curve still being learned",  // "Courbe en cours d'apprentissage"
     "Cracked Crown",  // "Couronne fêlée"
     "Cream",  // "Crème"
+    "Window",  // "Créneau"
     "Copper",  // "Cuivre"
     "Career total: %lu points",  // "Cumul carrière : %lu points"
     "Ember Heart",  // "Cœur de braise"
@@ -2863,6 +2941,7 @@ static const char* const kI18n_en[] = {
     "Finesse",  // "Finesse"
     "Fixed",  // "Fixe"
     "Neon pinball · 3 balls\nHold the tablet upright",  // "Flipper néon · 3 billes\nTablette à la verticale"
+    "Flow",  // "Flux"
     "Airflow",  // "Flux d'air"
     "Clock background",  // "Fond de l'horloge"
     "Shake strength needed",  // "Force de la secousse nécessaire"
@@ -2877,6 +2956,7 @@ static const char* const kI18n_en[] = {
     "Blazing",  // "Fulgurante"
     "Holiday",  // "Férié"
     "Feb",  // "Févr"
+    "SAVINGS",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "MANAGEMENT",  // "GESTION"
     "Polished Gauntlet",  // "Gantelet poli"
@@ -3017,6 +3097,8 @@ static const char* const kI18n_en[] = {
     "Your souls are kept",  // "Les âmes sont conservées"
     "Your souls are already set aside.",  // "Les âmes sont déjà mises de côté."
     "Letters A..T and numbers around the board",  // "Lettres A..T et chiffres autour du goban"
+    "Sunrise",  // "Lever"
+    "Sunrise and sunset unknown",  // "Lever et coucher du soleil inconnus"
     "Charge limit",  // "Limite de charge"
     "Lode Runner 1983\nDig · climb · run",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Brightness",  // "Luminosité"
@@ -3043,6 +3125,7 @@ static const char* const kI18n_en[] = {
     "Mar",  // "Mars"
     "Hidden",  // "Masquée"
     "Insufficient material to mate",  // "Matériel insuffisant pour mater"
+    "Best window",  // "Meilleur créneau"
     "Best score: %lu",  // "Meilleur score : %lu"
     "Best score: %u   -   Control: %s",  // "Meilleur score : %u   -   Contrôle : %s"
     "Menu",  // "Menu"
@@ -3052,6 +3135,7 @@ static const char* const kI18n_en[] = {
     "Waiting for a reading",  // "Mesure en attente"
     "Measuring",  // "Mesure en cours"
     "Measured",  // "Mesuré"
+    "Noon",  // "Midi"
     "Min %s °C · max %s °C",  // "Min %s °C · max %s °C"
     "Minimum",  // "Minimum"
     "Low %s · High %s",  // "Minimum %s · Maximum %s"
@@ -3207,14 +3291,21 @@ static const char* const kI18n_en[] = {
     "Capture x%d",  // "Prise x%d"
     "Captures: Black %u, White %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Probability",  // "Probabilité"
+    "Production",  // "Production"
+    "Produced",  // "Produit"
     "Produced today",  // "Produit aujourd'hui"
     "Offer a draw",  // "Proposer nulle"
     "Previous",  // "Précédent"
     "Home",  // "Présent"
+    "Forecast",  // "Prévision"
+    "Forecast: external",  // "Prévision : externe"
+    "Forecast: weather",  // "Prévision : météo"
     "Forecast from yesterday %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Forecast from %d:%02d",  // "Prévisions de %d h %02d"
     "Forecast %d days old",  // "Prévisions vieilles de %d jours"
     "Forecast",  // "Prévu"
+    "Forecast today",  // "Prévu aujourd'hui"
+    "Forecast tomorrow",  // "Prévu demain"
     "Ready",  // "Prêt"
     "Power",  // "Puissance"
     "Purely cosmetic",  // "Purement cosmétique"
@@ -3467,6 +3558,7 @@ static const char* const kI18n_en[] = {
     "One more oath.",  // "Un serment de plus."
     "Only one choice. It follows you to the end of the run.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "One touch at a time: in Buttons mode, you dig while standing still. Mixed mode frees your finger to dig on the move.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
+    "EXPORTED",  // "VENDU"
     "VICTORY",  // "VICTOIRE"
     "VICTORY!",  // "VICTOIRE !"
     "SHUTTERS",  // "VOLETS"
@@ -3475,6 +3567,7 @@ static const char* const kI18n_en[] = {
     "Confirm score",  // "Valider le score"
     "Set variant / mode / level",  // "Variante, mode, niveau"
     "Fri",  // "Ven"
+    "Exported",  // "Vendu"
     "Windy",  // "Venteux"
     "Fan",  // "Ventilation"
     "Locked",  // "Verrouillé"
@@ -3651,12 +3744,16 @@ static const char* const kI18n_de[] = {
     " am Folgetag",  // " le lendemain"
     "%.1f  zu  %.1f      (Abstand %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   Lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
+    "%d %% der Produktion",  // "%d %% de la production"
+    "%d %% des Verbrauchs",  // "%d %% du consommé"
+    "%d %% Solar",  // "%d %% solaire"
     "%d / 5 (höher = empfindlicher)",  // "%d / 5 (plus haut = plus sensible)"
     "%d Updates",  // "%d MAJ"
     "%d Halbzüge  ·  Stufe %s  ·  lokale Wertung: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d Halbzüge gespielt",  // "%d demi-coups joués"
     "%d Fehler",  // "%d erreurs"
     "%d:%02d",  // "%d h %02d"
+    "%d – %d Uhr",  // "%d h – %d h"
     "%d Uhr",  // "%d heures"
     "%d Uhr %d",  // "%d heures %d"
     "%d offline",  // "%d indispo"
@@ -3749,9 +3846,11 @@ static const char* const kI18n_de[] = {
     "8 Konsolen — immer nur eine",  // "8 consoles — une seule à la fois"
     "8 Level, 3 Leben, Power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 Felder/s",  // "8,0 cases/s"
+    "BEZOGEN",  // "ACHETÉ"
     "AN",  // "ACTIF"
     "LAMPEN",  // "AMPOULES"
     "AUSSEHEN",  // "APPARENCE"
+    "EIGENNUTZUNG",  // "AUTOCONSOMMÉ"
     "Aufgeben",  // "Abandon"
     "Aufgabe  —  geschätzte Zählung: %.1f zu %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Aufgeben",  // "Abandonner"
@@ -3762,6 +3861,7 @@ static const char* const kI18n_de[] = {
     "Beide Spieler müssen zustimmen",  // "Accord entre les deux joueurs"
     "Start",  // "Accueil"
     "Gegenstände kaufen und verkaufen",  // "Acheter et revendre des objets"
+    "Bezogen",  // "Acheté"
     "Aktiv",  // "Actif"
     "An",  // "Activé"
     "An",  // "Activée"
@@ -3819,6 +3919,7 @@ static const char* const kI18n_de[] = {
     "Weiß am Zug",  // "Au tour de Blanc"
     "Schwarz am Zug",  // "Au tour de Noir"
     "Über der Norm",  // "Au-dessus de la norme"
+    "Keines",  // "Aucun"
     "Kein Gerät",  // "Aucun appareil"
     "Kein Gerät angegeben",  // "Aucun appareil déclaré"
     "Kein Energiesensor gewählt",  // "Aucun capteur d'énergie choisi"
@@ -3843,6 +3944,7 @@ static const char* const kI18n_de[] = {
     "Keine Kamera gewählt",  // "Aucune caméra choisie"
     "Kein laufendes Spiel",  // "Aucune partie en cours"
     "Kein gespeichertes Spiel",  // "Aucune partie sauvegardée"
+    "Keine Produktion, keine Prognose",  // "Aucune production ni prévision"
     "Keine Fragen gespielt",  // "Aucune question jouée"
     "Noch keine Fragen gespielt",  // "Aucune question jouée pour le moment"
     "Kein Wecker geplant",  // "Aucune sonnerie prévue"
@@ -3852,6 +3954,7 @@ static const char* const kI18n_de[] = {
     "Heute",  // "Aujourd'hui"
     "Heute {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Eigennutzung",  // "Autoconsommé"
     "Andere",  // "Autres"
     "Vorwärts",  // "Avancer"
     "Schauer",  // "Averses"
@@ -3863,6 +3966,7 @@ static const char* const kI18n_de[] = {
     "Batterie",  // "Batterie"
     "Akku eingebaut",  // "Batterie montée"
     "Bald trocken",  // "Bientôt sec"
+    "Bilanz",  // "Bilan"
     "Bilanz vs Tab (nach Variante / Stufe)",  // "Bilan contre le Tab (par variante et niveau)"
     "Bilanz gegen den Tab",  // "Bilan face au Tab"
     "Bilanz nach Stufe, Rekorde, lokale Wertung",  // "Bilan par niveau, records, classement local"
@@ -3930,6 +4034,7 @@ static const char* const kI18n_de[] = {
     "Wähle deine Player in Home Assistant: „Tab5 · lecteurs de musique · music players“.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Modus, Farbe, Stufe und Uhr wählen",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Glatter Sturz. Atme durch.",  // "Chute nette. Reprends ton souffle."
+    "Klarer Himmel",  // "Ciel clair"
     "Hell",  // "Clair"
     "Hell oder dunkel",  // "Clair ou sombre"
     "Bestenliste",  // "Classement"
@@ -3962,12 +4067,14 @@ static const char* const kI18n_de[] = {
     "Verbunden",  // "Connecté"
     "In NVS gespeichert, gilt für alle Partien",  // "Conservés en NVS, valables pour toutes les parties"
     "Verbrauch",  // "Consommation"
+    "Verbraucht",  // "Consommé"
     "Steuerung",  // "Contrôle"
     "Steuerung: %s",  // "Contrôle : %s"
     "Steuerung: %s   -   Tempo: %s",  // "Contrôle : %s   -   Vitesse : %s"
     "Steuerung, Empfindlichkeit, Kalibrierung, SFX",  // "Contrôle, sensibilité, calibration, SFX"
     "Koordinaten: SICHTBAR",  // "Coordonnées : AFFICHÉES"
     "Koordinaten: VERBORGEN",  // "Coordonnées : MASQUÉES"
+    "Untergang",  // "Coucher"
     "Farbe (Modus vs Tab)",  // "Couleur (contre le Tab)"
     "Spielerfarbe",  // "Couleur du joueur"
     "Gänge",  // "Couloirs"
@@ -3977,8 +4084,10 @@ static const char* const kI18n_de[] = {
     "Hitzespitze seit %s",  // "Coup de chaud depuis %s"
     "Ungültiger Zug",  // "Coup illégal"
     "Verbotener Zug (Ko oder Suizid)",  // "Coup interdit (ko ou suicide)"
+    "Kurve wird noch gelernt",  // "Courbe en cours d'apprentissage"
     "Rissige Krone",  // "Couronne fêlée"
     "Creme",  // "Crème"
+    "Zeitfenster",  // "Créneau"
     "Kupfer",  // "Cuivre"
     "Karriere gesamt: %lu Punkte",  // "Cumul carrière : %lu points"
     "Glutherz",  // "Cœur de braise"
@@ -4073,6 +4182,7 @@ static const char* const kI18n_de[] = {
     "Finesse",  // "Finesse"
     "Fest",  // "Fixe"
     "Neon-Flipper · 3 Bälle\nTablet hochkant halten",  // "Flipper néon · 3 billes\nTablette à la verticale"
+    "Fluss",  // "Flux"
     "Luftstrom",  // "Flux d'air"
     "Uhr-Hintergrund",  // "Fond de l'horloge"
     "Nötige Schüttelstärke",  // "Force de la secousse nécessaire"
@@ -4087,6 +4197,7 @@ static const char* const kI18n_de[] = {
     "Blitzschnell",  // "Fulgurante"
     "Feiertag",  // "Férié"
     "Feb",  // "Févr"
+    "ERSPARNIS",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "VERWALTUNG",  // "GESTION"
     "Polierter Handschuh",  // "Gantelet poli"
@@ -4227,6 +4338,8 @@ static const char* const kI18n_de[] = {
     "Die Seelen bleiben erhalten",  // "Les âmes sont conservées"
     "Die Seelen sind schon gesichert.",  // "Les âmes sont déjà mises de côté."
     "Buchstaben A..T und Zahlen am Brettrand",  // "Lettres A..T et chiffres autour du goban"
+    "Aufgang",  // "Lever"
+    "Sonnenauf- und -untergang unbekannt",  // "Lever et coucher du soleil inconnus"
     "Ladegrenze",  // "Limite de charge"
     "Lode Runner 1983\nGraben · klettern · fliehen",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Helligkeit",  // "Luminosité"
@@ -4253,6 +4366,7 @@ static const char* const kI18n_de[] = {
     "Mär",  // "Mars"
     "Verborgen",  // "Masquée"
     "Zu wenig Material zum Mattsetzen",  // "Matériel insuffisant pour mater"
+    "Bestes Zeitfenster",  // "Meilleur créneau"
     "Highscore: %lu",  // "Meilleur score : %lu"
     "Highscore: %u   -   Steuerung: %s",  // "Meilleur score : %u   -   Contrôle : %s"
     "Menü",  // "Menu"
@@ -4262,6 +4376,7 @@ static const char* const kI18n_de[] = {
     "Warte auf Messwert",  // "Mesure en attente"
     "Wird gemessen",  // "Mesure en cours"
     "Gemessen",  // "Mesuré"
+    "Mittag",  // "Midi"
     "Min %s °C · max. %s °C",  // "Min %s °C · max %s °C"
     "Minimum",  // "Minimum"
     "Min. %s · Max. %s",  // "Minimum %s · Maximum %s"
@@ -4417,14 +4532,21 @@ static const char* const kI18n_de[] = {
     "Schlag x%d",  // "Prise x%d"
     "Gefangene: Schwarz %u, Weiß %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Wahrscheinlichkeit",  // "Probabilité"
+    "Produktion",  // "Production"
+    "Erzeugt",  // "Produit"
     "Heute erzeugt",  // "Produit aujourd'hui"
     "Remis anbieten",  // "Proposer nulle"
     "Vorheriger",  // "Précédent"
     "Anwesend",  // "Présent"
+    "Prognose",  // "Prévision"
+    "Prognose: extern",  // "Prévision : externe"
+    "Prognose: Wetter",  // "Prévision : météo"
     "Vorhersage von gestern %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Vorhersage von %d:%02d",  // "Prévisions de %d h %02d"
     "Vorhersage %d Tage alt",  // "Prévisions vieilles de %d jours"
     "Prognose",  // "Prévu"
+    "Prognose heute",  // "Prévu aujourd'hui"
+    "Prognose morgen",  // "Prévu demain"
     "Bereit",  // "Prêt"
     "Leistung",  // "Puissance"
     "Rein kosmetisch",  // "Purement cosmétique"
@@ -4677,6 +4799,7 @@ static const char* const kI18n_de[] = {
     "Ein Schwur mehr.",  // "Un serment de plus."
     "Nur eine Wahl. Sie begleitet dich bis zum Ende des Runs.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Nur ein Touchpunkt gleichzeitig: Im Modus Tasten wird im Stehen gegraben. Der Modus Kombi gibt den Finger frei, um im Laufen zu graben.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
+    "EINGESPEIST",  // "VENDU"
     "SIEG",  // "VICTOIRE"
     "SIEG!",  // "VICTOIRE !"
     "ROLLLÄDEN",  // "VOLETS"
@@ -4685,6 +4808,7 @@ static const char* const kI18n_de[] = {
     "Score bestätigen",  // "Valider le score"
     "Setup: Variante / Modus / Stufe",  // "Variante, mode, niveau"
     "Fr",  // "Ven"
+    "Eingespeist",  // "Vendu"
     "Windig",  // "Venteux"
     "Lüften",  // "Ventilation"
     "Gesperrt",  // "Verrouillé"
@@ -4861,12 +4985,16 @@ static const char* const kI18n_nl[] = {
     " de dag erna",  // " le lendemain"
     "%.1f  tegen  %.1f      (verschil %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
+    "%d %% van de productie",  // "%d %% de la production"
+    "%d %% van het verbruik",  // "%d %% du consommé"
+    "%d %% zon",  // "%d %% solaire"
     "%d / 5 (hoger = gevoeliger)",  // "%d / 5 (plus haut = plus sensible)"
     "%d updates",  // "%d MAJ"
     "%d halve zetten  ·  niveau %s  ·  lokale rating: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d halve zetten gespeeld",  // "%d demi-coups joués"
     "%d fouten",  // "%d erreurs"
     "%d:%02d",  // "%d h %02d"
+    "%d – %d uur",  // "%d h – %d h"
     "%d uur",  // "%d heures"
     "%d uur %d",  // "%d heures %d"
     "%d onbeschikbaar",  // "%d indispo"
@@ -4959,9 +5087,11 @@ static const char* const kI18n_nl[] = {
     "8 consoles — één tegelijk",  // "8 consoles — une seule à la fois"
     "8 levels, 3 levens, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 vakjes/s",  // "8,0 cases/s"
+    "AFGENOMEN",  // "ACHETÉ"
     "AAN",  // "ACTIF"
     "LAMPEN",  // "AMPOULES"
     "WEERGAVE",  // "APPARENCE"
+    "EIGEN GEBRUIK",  // "AUTOCONSOMMÉ"
     "Opgeven",  // "Abandon"
     "Opgegeven  —  indicatieve telling: %.1f tegen %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Opgeven",  // "Abandonner"
@@ -4972,6 +5102,7 @@ static const char* const kI18n_nl[] = {
     "Beide spelers moeten akkoord zijn",  // "Accord entre les deux joueurs"
     "Home",  // "Accueil"
     "Voorwerpen kopen en verkopen",  // "Acheter et revendre des objets"
+    "Afgenomen",  // "Acheté"
     "Actief",  // "Actif"
     "Aan",  // "Activé"
     "Aan",  // "Activée"
@@ -5029,6 +5160,7 @@ static const char* const kI18n_nl[] = {
     "Wit aan zet",  // "Au tour de Blanc"
     "Zwart aan zet",  // "Au tour de Noir"
     "Boven de norm",  // "Au-dessus de la norme"
+    "Geen",  // "Aucun"
     "Geen apparaat",  // "Aucun appareil"
     "Geen apparaat opgegeven",  // "Aucun appareil déclaré"
     "Geen energiesensor gekozen",  // "Aucun capteur d'énergie choisi"
@@ -5053,6 +5185,7 @@ static const char* const kI18n_nl[] = {
     "Geen camera gekozen",  // "Aucune caméra choisie"
     "Geen spel bezig",  // "Aucune partie en cours"
     "Geen opgeslagen spel",  // "Aucune partie sauvegardée"
+    "Geen productie of voorspelling",  // "Aucune production ni prévision"
     "Geen vragen gespeeld",  // "Aucune question jouée"
     "Nog geen vragen gespeeld",  // "Aucune question jouée pour le moment"
     "Geen alarm gepland",  // "Aucune sonnerie prévue"
@@ -5062,6 +5195,7 @@ static const char* const kI18n_nl[] = {
     "Vandaag",  // "Aujourd'hui"
     "Vandaag {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Eigen gebruik",  // "Autoconsommé"
     "Overige",  // "Autres"
     "Vooruit",  // "Avancer"
     "Buien",  // "Averses"
@@ -5073,6 +5207,7 @@ static const char* const kI18n_nl[] = {
     "Batterij",  // "Batterie"
     "Batterij geplaatst",  // "Batterie montée"
     "Bijna droog",  // "Bientôt sec"
+    "Balans",  // "Bilan"
     "Resultaten vs Tab (per variant / niveau)",  // "Bilan contre le Tab (par variante et niveau)"
     "Resultaten tegen Tab",  // "Bilan face au Tab"
     "Resultaten per niveau, records, lokale rating",  // "Bilan par niveau, records, classement local"
@@ -5140,6 +5275,7 @@ static const char* const kI18n_nl[] = {
     "Kies je spelers in Home Assistant: „Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Kies modus, kleur, niveau en klok",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Zuivere val. Kom even op adem.",  // "Chute nette. Reprends ton souffle."
+    "Heldere hemel",  // "Ciel clair"
     "Licht",  // "Clair"
     "Licht of donker",  // "Clair ou sombre"
     "Ranglijst",  // "Classement"
@@ -5172,12 +5308,14 @@ static const char* const kI18n_nl[] = {
     "Verbonden",  // "Connecté"
     "Bewaard in NVS, geldig voor alle partijen",  // "Conservés en NVS, valables pour toutes les parties"
     "Verbruik",  // "Consommation"
+    "Verbruikt",  // "Consommé"
     "Besturing",  // "Contrôle"
     "Besturing: %s",  // "Contrôle : %s"
     "Besturing: %s   -   Snelheid: %s",  // "Contrôle : %s   -   Vitesse : %s"
     "Besturing, gevoeligheid, kalibratie, SFX",  // "Contrôle, sensibilité, calibration, SFX"
     "Coördinaten: ZICHTBAAR",  // "Coordonnées : AFFICHÉES"
     "Coördinaten: VERBORGEN",  // "Coordonnées : MASQUÉES"
+    "Ondergang",  // "Coucher"
     "Kleur (modus vs Tab)",  // "Couleur (contre le Tab)"
     "Spelerskleur",  // "Couleur du joueur"
     "Gangen",  // "Couloirs"
@@ -5187,8 +5325,10 @@ static const char* const kI18n_nl[] = {
     "Hitte-piek sinds %s",  // "Coup de chaud depuis %s"
     "Ongeldige zet",  // "Coup illégal"
     "Verboden zet (ko of zelfmoord)",  // "Coup interdit (ko ou suicide)"
+    "Curve wordt nog geleerd",  // "Courbe en cours d'apprentissage"
     "Gebarsten kroon",  // "Couronne fêlée"
     "Crème",  // "Crème"
+    "Periode",  // "Créneau"
     "Koper",  // "Cuivre"
     "Carrièretotaal: %lu punten",  // "Cumul carrière : %lu points"
     "Gloeiend hart",  // "Cœur de braise"
@@ -5283,6 +5423,7 @@ static const char* const kI18n_nl[] = {
     "Finesse",  // "Finesse"
     "Vast",  // "Fixe"
     "Neon-flipper · 3 ballen\nHoud de tablet rechtop",  // "Flipper néon · 3 billes\nTablette à la verticale"
+    "Stroom",  // "Flux"
     "Luchtstroom",  // "Flux d'air"
     "Klokachtergrond",  // "Fond de l'horloge"
     "Benodigde schudkracht",  // "Force de la secousse nécessaire"
@@ -5297,6 +5438,7 @@ static const char* const kI18n_nl[] = {
     "Bliksem",  // "Fulgurante"
     "Feestdag",  // "Férié"
     "Feb",  // "Févr"
+    "BESPARING",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "BEHEER",  // "GESTION"
     "Glanzende handschoen",  // "Gantelet poli"
@@ -5437,6 +5579,8 @@ static const char* const kI18n_nl[] = {
     "Je zielen blijven bewaard",  // "Les âmes sont conservées"
     "Je zielen zijn al veiliggesteld.",  // "Les âmes sont déjà mises de côté."
     "Letters A..T en cijfers rond de goban",  // "Lettres A..T et chiffres autour du goban"
+    "Opkomst",  // "Lever"
+    "Zonsopkomst en -ondergang onbekend",  // "Lever et coucher du soleil inconnus"
     "Laadlimiet",  // "Limite de charge"
     "Lode Runner 1983\nGraaf · klim · vlucht",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Helderheid",  // "Luminosité"
@@ -5463,6 +5607,7 @@ static const char* const kI18n_nl[] = {
     "Mrt",  // "Mars"
     "Verborgen",  // "Masquée"
     "Te weinig materiaal voor mat",  // "Matériel insuffisant pour mater"
+    "Beste periode",  // "Meilleur créneau"
     "Beste score: %lu",  // "Meilleur score : %lu"
     "Beste score: %u   -   Besturing: %s",  // "Meilleur score : %u   -   Contrôle : %s"
     "Menu",  // "Menu"
@@ -5472,6 +5617,7 @@ static const char* const kI18n_nl[] = {
     "Wachten op meting",  // "Mesure en attente"
     "Bezig met meten",  // "Mesure en cours"
     "Gemeten",  // "Mesuré"
+    "Middag",  // "Midi"
     "Min %s °C · max %s °C",  // "Min %s °C · max %s °C"
     "Minimum",  // "Minimum"
     "Min. %s · Max. %s",  // "Minimum %s · Maximum %s"
@@ -5627,14 +5773,21 @@ static const char* const kI18n_nl[] = {
     "Slag x%d",  // "Prise x%d"
     "Gevangen stenen: Zwart %u, Wit %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Kans",  // "Probabilité"
+    "Productie",  // "Production"
+    "Opgewekt",  // "Produit"
     "Vandaag opgewekt",  // "Produit aujourd'hui"
     "Remise aanbieden",  // "Proposer nulle"
     "Vorige",  // "Précédent"
     "Aanwezig",  // "Présent"
+    "Voorspelling",  // "Prévision"
+    "Voorspelling: extern",  // "Prévision : externe"
+    "Voorspelling: weer",  // "Prévision : météo"
     "Verwachting van gisteren %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Verwachting van %d:%02d",  // "Prévisions de %d h %02d"
     "Verwachting %d dagen oud",  // "Prévisions vieilles de %d jours"
     "Verwacht",  // "Prévu"
+    "Verwacht vandaag",  // "Prévu aujourd'hui"
+    "Verwacht morgen",  // "Prévu demain"
     "Klaar",  // "Prêt"
     "Vermogen",  // "Puissance"
     "Puur cosmetisch",  // "Purement cosmétique"
@@ -5887,6 +6040,7 @@ static const char* const kI18n_nl[] = {
     "Nog een eed.",  // "Un serment de plus."
     "Eén keuze. Die volgt je tot het einde van de run.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Eén aanraking tegelijk: in Knoppen-modus graaf je terwijl je stilstaat. Mix-modus maakt je vinger vrij om al lopend te graven.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
+    "TERUGGELEVERD",  // "VENDU"
     "GEWONNEN",  // "VICTOIRE"
     "GEWONNEN!",  // "VICTOIRE !"
     "ROLLUIKEN",  // "VOLETS"
@@ -5895,6 +6049,7 @@ static const char* const kI18n_nl[] = {
     "Score bevestigen",  // "Valider le score"
     "Variant / modus / niveau kiezen",  // "Variante, mode, niveau"
     "Vr",  // "Ven"
+    "Teruggeleverd",  // "Vendu"
     "Winderig",  // "Venteux"
     "Ventilatie",  // "Ventilation"
     "Op slot",  // "Verrouillé"
@@ -6071,12 +6226,16 @@ static const char* const kI18n_es[] = {
     " del día siguiente",  // " le lendemain"
     "%.1f  contra  %.1f      (diferencia %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
+    "%d %% de la producción",  // "%d %% de la production"
+    "%d %% del consumo",  // "%d %% du consommé"
+    "%d %% solar",  // "%d %% solaire"
     "%d / 5 (más alto = más sensible)",  // "%d / 5 (plus haut = plus sensible)"
     "%d actualizaciones",  // "%d MAJ"
     "%d medias jugadas  ·  nivel %s  ·  clasificación local: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d medias jugadas",  // "%d demi-coups joués"
     "%d errores",  // "%d erreurs"
     "%d:%02d",  // "%d h %02d"
+    "%d h – %d h",  // "%d h – %d h"
     "%d horas",  // "%d heures"
     "%d y %d",  // "%d heures %d"
     "%d no disponibles",  // "%d indispo"
@@ -6169,9 +6328,11 @@ static const char* const kI18n_es[] = {
     "8 consolas — una a la vez",  // "8 consoles — une seule à la fois"
     "8 niveles, 3 vidas, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 casillas/s",  // "8,0 cases/s"
+    "COMPRADO",  // "ACHETÉ"
     "ACTIVO",  // "ACTIF"
     "LUCES",  // "AMPOULES"
     "APARIENCIA",  // "APPARENCE"
+    "AUTOCONSUMO",  // "AUTOCONSOMMÉ"
     "Rendirse",  // "Abandon"
     "Abandono  —  conteo orientativo: %.1f contra %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Abandonar",  // "Abandonner"
@@ -6182,6 +6343,7 @@ static const char* const kI18n_es[] = {
     "Acuerdo entre los dos jugadores",  // "Accord entre les deux joueurs"
     "Inicio",  // "Accueil"
     "Comprar y vender objetos",  // "Acheter et revendre des objets"
+    "Comprado",  // "Acheté"
     "Activo",  // "Actif"
     "Activado",  // "Activé"
     "Activada",  // "Activée"
@@ -6239,6 +6401,7 @@ static const char* const kI18n_es[] = {
     "Turno de Blanco",  // "Au tour de Blanc"
     "Turno de Negro",  // "Au tour de Noir"
     "Por encima de la norma",  // "Au-dessus de la norme"
+    "Ninguna",  // "Aucun"
     "Ningún dispositivo",  // "Aucun appareil"
     "Ningún aparato declarado",  // "Aucun appareil déclaré"
     "Ningún sensor de energía elegido",  // "Aucun capteur d'énergie choisi"
@@ -6263,6 +6426,7 @@ static const char* const kI18n_es[] = {
     "Ninguna cámara elegida",  // "Aucune caméra choisie"
     "Ninguna partida en curso",  // "Aucune partie en cours"
     "Ninguna partida guardada",  // "Aucune partie sauvegardée"
+    "Sin producción ni previsión",  // "Aucune production ni prévision"
     "Sin preguntas jugadas",  // "Aucune question jouée"
     "Aún no hay preguntas jugadas",  // "Aucune question jouée pour le moment"
     "Ninguna alarma prevista",  // "Aucune sonnerie prévue"
@@ -6272,6 +6436,7 @@ static const char* const kI18n_es[] = {
     "Hoy",  // "Aujourd'hui"
     "Hoy {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Autoconsumo",  // "Autoconsommé"
     "Otras",  // "Autres"
     "Adelantar",  // "Avancer"
     "Chubascos",  // "Averses"
@@ -6283,6 +6448,7 @@ static const char* const kI18n_es[] = {
     "Batería",  // "Batterie"
     "Batería instalada",  // "Batterie montée"
     "Casi seca",  // "Bientôt sec"
+    "Balance",  // "Bilan"
     "Balance vs Tab (por variante y nivel)",  // "Bilan contre le Tab (par variante et niveau)"
     "Balance contra el Tab",  // "Bilan face au Tab"
     "Balance por nivel, récords, clasificación local",  // "Bilan par niveau, records, classement local"
@@ -6350,6 +6516,7 @@ static const char* const kI18n_es[] = {
     "Elige tus reproductores en Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Elige modo, color, nivel y reloj",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caída limpia. Recupera el aliento.",  // "Chute nette. Reprends ton souffle."
+    "Cielo despejado",  // "Ciel clair"
     "Claro",  // "Clair"
     "Claro u oscuro",  // "Clair ou sombre"
     "Clasificación",  // "Classement"
@@ -6382,12 +6549,14 @@ static const char* const kI18n_es[] = {
     "Conectado",  // "Connecté"
     "Guardados en NVS, válidos para todas las partidas",  // "Conservés en NVS, valables pour toutes les parties"
     "Consumo",  // "Consommation"
+    "Consumido",  // "Consommé"
     "Control",  // "Contrôle"
     "Control: %s",  // "Contrôle : %s"
     "Control: %s   -   Velocidad: %s",  // "Contrôle : %s   -   Vitesse : %s"
     "Control, sensibilidad, calibración, SFX",  // "Contrôle, sensibilité, calibration, SFX"
     "Coordenadas: VISIBLES",  // "Coordonnées : AFFICHÉES"
     "Coordenadas: OCULTAS",  // "Coordonnées : MASQUÉES"
+    "Puesta",  // "Coucher"
     "Color (contra el Tab)",  // "Couleur (contre le Tab)"
     "Color del jugador",  // "Couleur du joueur"
     "Pasillos",  // "Couloirs"
@@ -6397,8 +6566,10 @@ static const char* const kI18n_es[] = {
     "Pico de calor desde %s",  // "Coup de chaud depuis %s"
     "Jugada ilegal",  // "Coup illégal"
     "Jugada prohibida (ko o suicidio)",  // "Coup interdit (ko ou suicide)"
+    "Curva en aprendizaje",  // "Courbe en cours d'apprentissage"
     "Corona agrietada",  // "Couronne fêlée"
     "Crema",  // "Crème"
+    "Franja",  // "Créneau"
     "Cobre",  // "Cuivre"
     "Total de carrera: %lu puntos",  // "Cumul carrière : %lu points"
     "Corazón de brasa",  // "Cœur de braise"
@@ -6493,6 +6664,7 @@ static const char* const kI18n_es[] = {
     "Sutileza",  // "Finesse"
     "Fija",  // "Fixe"
     "Pinball neón · 3 bolas\nTableta en vertical",  // "Flipper néon · 3 billes\nTablette à la verticale"
+    "Flujo",  // "Flux"
     "Flujo de aire",  // "Flux d'air"
     "Fondo del reloj",  // "Fond de l'horloge"
     "Fuerza de sacudida necesaria",  // "Force de la secousse nécessaire"
@@ -6507,6 +6679,7 @@ static const char* const kI18n_es[] = {
     "Fulgurante",  // "Fulgurante"
     "Festivo",  // "Férié"
     "Feb",  // "Févr"
+    "AHORRO",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "GESTIÓN",  // "GESTION"
     "Guantelete pulido",  // "Gantelet poli"
@@ -6647,6 +6820,8 @@ static const char* const kI18n_es[] = {
     "Conservas las almas",  // "Les âmes sont conservées"
     "Las almas ya están a salvo.",  // "Les âmes sont déjà mises de côté."
     "Letras A..T y números alrededor del goban",  // "Lettres A..T et chiffres autour du goban"
+    "Salida",  // "Lever"
+    "Salida y puesta del sol desconocidas",  // "Lever et coucher du soleil inconnus"
     "Límite de carga",  // "Limite de charge"
     "Lode Runner 1983\nCava · trepa · huye",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Brillo",  // "Luminosité"
@@ -6673,6 +6848,7 @@ static const char* const kI18n_es[] = {
     "Mar",  // "Mars"
     "Oculta",  // "Masquée"
     "Material insuficiente para dar mate",  // "Matériel insuffisant pour mater"
+    "Mejor franja",  // "Meilleur créneau"
     "Récord: %lu",  // "Meilleur score : %lu"
     "Récord: %u   -   Control: %s",  // "Meilleur score : %u   -   Contrôle : %s"
     "Menú",  // "Menu"
@@ -6682,6 +6858,7 @@ static const char* const kI18n_es[] = {
     "Medición pendiente",  // "Mesure en attente"
     "Midiendo",  // "Mesure en cours"
     "Medida",  // "Mesuré"
+    "Mediodía",  // "Midi"
     "Mín %s °C · máx %s °C",  // "Min %s °C · max %s °C"
     "Mínima",  // "Minimum"
     "Mín. %s · Máx. %s",  // "Minimum %s · Maximum %s"
@@ -6837,14 +7014,21 @@ static const char* const kI18n_es[] = {
     "Captura x%d",  // "Prise x%d"
     "Prisioneros: Negro %u, Blanco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Probabilidad",  // "Probabilité"
+    "Producción",  // "Production"
+    "Producido",  // "Produit"
     "Producido hoy",  // "Produit aujourd'hui"
     "Ofrecer tablas",  // "Proposer nulle"
     "Anterior",  // "Précédent"
     "Presente",  // "Présent"
+    "Previsión",  // "Prévision"
+    "Previsión: externa",  // "Prévision : externe"
+    "Previsión: tiempo",  // "Prévision : météo"
     "Previsión de ayer %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Previsión de las %d:%02d",  // "Prévisions de %d h %02d"
     "Previsión de hace %d días",  // "Prévisions vieilles de %d jours"
     "Prevista",  // "Prévu"
+    "Previsto hoy",  // "Prévu aujourd'hui"
+    "Previsto mañana",  // "Prévu demain"
     "Listo",  // "Prêt"
     "Potencia",  // "Puissance"
     "Puramente estético",  // "Purement cosmétique"
@@ -7097,6 +7281,7 @@ static const char* const kI18n_es[] = {
     "Un juramento más.",  // "Un serment de plus."
     "Una sola elección. Te acompañará hasta el final de la run.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Un solo toque a la vez: en modo Botones se cava estando quieto. El modo Mixto libera el dedo para cavar en marcha.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
+    "VENDIDO",  // "VENDU"
     "VICTORIA",  // "VICTOIRE"
     "¡VICTORIA!",  // "VICTOIRE !"
     "PERSIANAS",  // "VOLETS"
@@ -7105,6 +7290,7 @@ static const char* const kI18n_es[] = {
     "Validar resultado",  // "Valider le score"
     "Variante, modo, nivel",  // "Variante, mode, niveau"
     "Vie",  // "Ven"
+    "Vendido",  // "Vendu"
     "Ventoso",  // "Venteux"
     "Ventilación",  // "Ventilation"
     "Bloqueado",  // "Verrouillé"
@@ -7281,12 +7467,16 @@ static const char* const kI18n_it[] = {
     " di domani",  // " le lendemain"
     "%.1f  a  %.1f      (scarto %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   liv %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
+    "%d %% della produzione",  // "%d %% de la production"
+    "%d %% del consumo",  // "%d %% du consommé"
+    "%d %% solare",  // "%d %% solaire"
     "%d / 5 (più alto = più sensibile)",  // "%d / 5 (plus haut = plus sensible)"
     "%d aggiorn.",  // "%d MAJ"
     "%d semimosse  ·  livello %s  ·  punteggio locale: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d semimosse giocate",  // "%d demi-coups joués"
     "%d errori",  // "%d erreurs"
     "%d:%02d",  // "%d h %02d"
+    "%d – %d",  // "%d h – %d h"
     "%d",  // "%d heures"
     "%d e %d",  // "%d heures %d"
     "%d non disp.",  // "%d indispo"
@@ -7379,9 +7569,11 @@ static const char* const kI18n_it[] = {
     "8 console — una alla volta",  // "8 consoles — une seule à la fois"
     "8 livelli, 3 vite, power-up",  // "8 niveaux, 3 vies, power-ups"
     "8,0 caselle/s",  // "8,0 cases/s"
+    "ACQUISTATO",  // "ACHETÉ"
     "ATTIVA",  // "ACTIF"
     "LUCI",  // "AMPOULES"
     "ASPETTO",  // "APPARENCE"
+    "AUTOCONSUMO",  // "AUTOCONSOMMÉ"
     "Abbandona",  // "Abandon"
     "Abbandono  —  conteggio indicativo: %.1f a %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Abbandona",  // "Abandonner"
@@ -7392,6 +7584,7 @@ static const char* const kI18n_it[] = {
     "Accordo tra i due giocatori",  // "Accord entre les deux joueurs"
     "Home",  // "Accueil"
     "Compra e rivendi oggetti",  // "Acheter et revendre des objets"
+    "Acquistato",  // "Acheté"
     "Attivo",  // "Actif"
     "Attiva",  // "Activé"
     "Attiva",  // "Activée"
@@ -7449,6 +7642,7 @@ static const char* const kI18n_it[] = {
     "Tocca al Bianco",  // "Au tour de Blanc"
     "Tocca al Nero",  // "Au tour de Noir"
     "Sopra la norma",  // "Au-dessus de la norme"
+    "Nessuna",  // "Aucun"
     "Nessun dispositivo",  // "Aucun appareil"
     "Nessun apparecchio dichiarato",  // "Aucun appareil déclaré"
     "Nessun sensore di energia scelto",  // "Aucun capteur d'énergie choisi"
@@ -7473,6 +7667,7 @@ static const char* const kI18n_it[] = {
     "Nessuna telecamera scelta",  // "Aucune caméra choisie"
     "Nessuna partita in corso",  // "Aucune partie en cours"
     "Nessuna partita salvata",  // "Aucune partie sauvegardée"
+    "Nessuna produzione né previsione",  // "Aucune production ni prévision"
     "Nessuna domanda giocata",  // "Aucune question jouée"
     "Ancora nessuna domanda giocata",  // "Aucune question jouée pour le moment"
     "Nessuna sveglia prevista",  // "Aucune sonnerie prévue"
@@ -7482,6 +7677,7 @@ static const char* const kI18n_it[] = {
     "Oggi",  // "Aujourd'hui"
     "Oggi {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Autoconsumo",  // "Autoconsommé"
     "Altre",  // "Autres"
     "Avanti",  // "Avancer"
     "Rovesci",  // "Averses"
@@ -7493,6 +7689,7 @@ static const char* const kI18n_it[] = {
     "Batteria",  // "Batterie"
     "Batteria montata",  // "Batterie montée"
     "Quasi secco",  // "Bientôt sec"
+    "Bilancio",  // "Bilan"
     "Bilancio vs Tab (per variante e livello)",  // "Bilan contre le Tab (par variante et niveau)"
     "Bilancio contro il Tab",  // "Bilan face au Tab"
     "Bilancio per livello, record, punteggio locale",  // "Bilan par niveau, records, classement local"
@@ -7560,6 +7757,7 @@ static const char* const kI18n_it[] = {
     "Scegli i tuoi lettori in Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Scegli modalità, colore, livello e orologio",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caduta netta. Riprendi fiato.",  // "Chute nette. Reprends ton souffle."
+    "Cielo sereno",  // "Ciel clair"
     "Chiaro",  // "Clair"
     "Chiaro o scuro",  // "Clair ou sombre"
     "Classifica",  // "Classement"
@@ -7592,12 +7790,14 @@ static const char* const kI18n_it[] = {
     "Connesso",  // "Connecté"
     "Salvate in NVS, valide per tutte le partite",  // "Conservés en NVS, valables pour toutes les parties"
     "Consumo",  // "Consommation"
+    "Consumato",  // "Consommé"
     "Controllo",  // "Contrôle"
     "Controllo: %s",  // "Contrôle : %s"
     "Controllo: %s   -   Velocità: %s",  // "Contrôle : %s   -   Vitesse : %s"
     "Controllo, sensibilità, calibrazione, SFX",  // "Contrôle, sensibilité, calibration, SFX"
     "Coordinate: VISIBILI",  // "Coordonnées : AFFICHÉES"
     "Coordinate: NASCOSTE",  // "Coordonnées : MASQUÉES"
+    "Tramonto",  // "Coucher"
     "Colore (contro il Tab)",  // "Couleur (contre le Tab)"
     "Colore del giocatore",  // "Couleur du joueur"
     "Corridoi",  // "Couloirs"
@@ -7607,8 +7807,10 @@ static const char* const kI18n_it[] = {
     "Picco di caldo da %s",  // "Coup de chaud depuis %s"
     "Mossa illegale",  // "Coup illégal"
     "Mossa vietata (ko o suicidio)",  // "Coup interdit (ko ou suicide)"
+    "Curva in apprendimento",  // "Courbe en cours d'apprentissage"
     "Corona incrinata",  // "Couronne fêlée"
     "Crema",  // "Crème"
+    "Fascia",  // "Créneau"
     "Rame",  // "Cuivre"
     "Totale carriera: %lu punti",  // "Cumul carrière : %lu points"
     "Cuore di brace",  // "Cœur de braise"
@@ -7703,6 +7905,7 @@ static const char* const kI18n_it[] = {
     "Finezza",  // "Finesse"
     "Fissa",  // "Fixe"
     "Flipper al neon · 3 palline\nTablet in verticale",  // "Flipper néon · 3 billes\nTablette à la verticale"
+    "Flusso",  // "Flux"
     "Flusso d'aria",  // "Flux d'air"
     "Sfondo dell'orologio",  // "Fond de l'horloge"
     "Forza di scossa necessaria",  // "Force de la secousse nécessaire"
@@ -7717,6 +7920,7 @@ static const char* const kI18n_it[] = {
     "Fulminea",  // "Fulgurante"
     "Festivo",  // "Férié"
     "Feb",  // "Févr"
+    "RISPARMIO",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "GESTIONE",  // "GESTION"
     "Guanto lucido",  // "Gantelet poli"
@@ -7857,6 +8061,8 @@ static const char* const kI18n_it[] = {
     "Le anime restano tue",  // "Les âmes sont conservées"
     "Le anime sono già al sicuro.",  // "Les âmes sont déjà mises de côté."
     "Lettere A..T e numeri attorno al goban",  // "Lettres A..T et chiffres autour du goban"
+    "Alba",  // "Lever"
+    "Alba e tramonto sconosciuti",  // "Lever et coucher du soleil inconnus"
     "Limite di carica",  // "Limite de charge"
     "Lode Runner 1983\nScava · sali · fuggi",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Luminosità",  // "Luminosité"
@@ -7883,6 +8089,7 @@ static const char* const kI18n_it[] = {
     "Mar",  // "Mars"
     "Nascosta",  // "Masquée"
     "Materiale insufficiente per il matto",  // "Matériel insuffisant pour mater"
+    "Fascia migliore",  // "Meilleur créneau"
     "Record: %lu",  // "Meilleur score : %lu"
     "Record: %u   -   Controllo: %s",  // "Meilleur score : %u   -   Contrôle : %s"
     "Menu",  // "Menu"
@@ -7892,6 +8099,7 @@ static const char* const kI18n_it[] = {
     "Misura in attesa",  // "Mesure en attente"
     "Misura in corso",  // "Mesure en cours"
     "Misurata",  // "Mesuré"
+    "Mezzogiorno",  // "Midi"
     "Min %s °C · max %s °C",  // "Min %s °C · max %s °C"
     "Minima",  // "Minimum"
     "Min %s · Max %s",  // "Minimum %s · Maximum %s"
@@ -8047,14 +8255,21 @@ static const char* const kI18n_it[] = {
     "Presa x%d",  // "Prise x%d"
     "Prigionieri: Nero %u, Bianco %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Probabilità",  // "Probabilité"
+    "Produzione",  // "Production"
+    "Prodotto",  // "Produit"
     "Prodotto oggi",  // "Produit aujourd'hui"
     "Proponi patta",  // "Proposer nulle"
     "Precedente",  // "Précédent"
     "Presente",  // "Présent"
+    "Previsione",  // "Prévision"
+    "Previsione: esterna",  // "Prévision : externe"
+    "Previsione: meteo",  // "Prévision : météo"
     "Previsioni di ieri %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Previsioni delle %d:%02d",  // "Prévisions de %d h %02d"
     "Previsioni di %d giorni fa",  // "Prévisions vieilles de %d jours"
     "Prevista",  // "Prévu"
+    "Previsto oggi",  // "Prévu aujourd'hui"
+    "Previsto domani",  // "Prévu demain"
     "Pronto",  // "Prêt"
     "Potenza",  // "Puissance"
     "Puramente estetico",  // "Purement cosmétique"
@@ -8307,6 +8522,7 @@ static const char* const kI18n_it[] = {
     "Un giuramento in più.",  // "Un serment de plus."
     "Una sola scelta. Ti seguirà fino alla fine della run.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Un solo tocco alla volta: in modalità Pulsanti si scava da fermi. La modalità Misto libera il dito per scavare camminando.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
+    "VENDUTO",  // "VENDU"
     "VITTORIA",  // "VICTOIRE"
     "VITTORIA!",  // "VICTOIRE !"
     "TAPPARELLE",  // "VOLETS"
@@ -8315,6 +8531,7 @@ static const char* const kI18n_it[] = {
     "Conferma punteggio",  // "Valider le score"
     "Variante, modalità, livello",  // "Variante, mode, niveau"
     "Ven",  // "Ven"
+    "Venduto",  // "Vendu"
     "Ventoso",  // "Venteux"
     "Ventilazione",  // "Ventilation"
     "Bloccato",  // "Verrouillé"
@@ -8491,12 +8708,16 @@ static const char* const kI18n_tr[] = {
     " ertesi gün",  // " le lendemain"
     "%.1f  -  %.1f      (fark %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   sev %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
+    "Üretimin %d %%",  // "%d %% de la production"
+    "Tüketimin %d %%",  // "%d %% du consommé"
+    "%d %% güneş",  // "%d %% solaire"
     "%d / 5 (yüksek = daha hassas)",  // "%d / 5 (plus haut = plus sensible)"
     "%d güncelleme",  // "%d MAJ"
     "%d yarım hamle  ·  seviye %s  ·  yerel derece: %u Elo",  // "%d demi-coups  ·  niveau %s  ·  classement local : %u Elo"
     "%d yarım hamle oynandı",  // "%d demi-coups joués"
     "%d hata",  // "%d erreurs"
     "%d:%02d",  // "%d h %02d"
+    "%d:00 – %d:00",  // "%d h – %d h"
     "%d:00",  // "%d heures"
     "%d:%02d",  // "%d heures %d"
     "%d erişilemez",  // "%d indispo"
@@ -8589,9 +8810,11 @@ static const char* const kI18n_tr[] = {
     "8 konsol — aynı anda yalnız biri",  // "8 consoles — une seule à la fois"
     "8 seviye, 3 can, güçlendirme",  // "8 niveaux, 3 vies, power-ups"
     "8,0 kare/sn",  // "8,0 cases/s"
+    "ALINAN",  // "ACHETÉ"
     "AÇIK",  // "ACTIF"
     "IŞIKLAR",  // "AMPOULES"
     "GÖRÜNÜM",  // "APPARENCE"
+    "ÖZ TÜKETİM",  // "AUTOCONSOMMÉ"
     "Pes",  // "Abandon"
     "Pes  —  tahmini sayım: %.1f - %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Bırak",  // "Abandonner"
@@ -8602,6 +8825,7 @@ static const char* const kI18n_tr[] = {
     "İki oyuncunun anlaşması gerekir",  // "Accord entre les deux joueurs"
     "Ana sayfa",  // "Accueil"
     "Eşya al ve geri sat",  // "Acheter et revendre des objets"
+    "Alınan",  // "Acheté"
     "Etkin",  // "Actif"
     "Açık",  // "Activé"
     "Açık",  // "Activée"
@@ -8659,6 +8883,7 @@ static const char* const kI18n_tr[] = {
     "Sıra: Beyaz",  // "Au tour de Blanc"
     "Sıra: Siyah",  // "Au tour de Noir"
     "Normun üstünde",  // "Au-dessus de la norme"
+    "Yok",  // "Aucun"
     "Cihaz yok",  // "Aucun appareil"
     "Tanımlı cihaz yok",  // "Aucun appareil déclaré"
     "Enerji sensörü seçilmedi",  // "Aucun capteur d'énergie choisi"
@@ -8683,6 +8908,7 @@ static const char* const kI18n_tr[] = {
     "Kamera seçilmedi",  // "Aucune caméra choisie"
     "Devam eden oyun yok",  // "Aucune partie en cours"
     "Kayıtlı oyun yok",  // "Aucune partie sauvegardée"
+    "Üretim ve tahmin yok",  // "Aucune production ni prévision"
     "Oynanan soru yok",  // "Aucune question jouée"
     "Henüz oynanan soru yok",  // "Aucune question jouée pour le moment"
     "Planlı alarm yok",  // "Aucune sonnerie prévue"
@@ -8692,6 +8918,7 @@ static const char* const kI18n_tr[] = {
     "Bugün",  // "Aujourd'hui"
     "Bugün {heure}",  // "Aujourd'hui {heure}"
     "Otomatik",  // "Auto"
+    "Öz tüketim",  // "Autoconsommé"
     "Diğer",  // "Autres"
     "İleri",  // "Avancer"
     "Sağanak",  // "Averses"
@@ -8703,6 +8930,7 @@ static const char* const kI18n_tr[] = {
     "Pil",  // "Batterie"
     "Pil takılı",  // "Batterie montée"
     "Kurumak üzere",  // "Bientôt sec"
+    "Bilanço",  // "Bilan"
     "Tab'a karşı sonuçlar (varyant ve seviyeye göre)",  // "Bilan contre le Tab (par variante et niveau)"
     "Tab karşısında sonuçlar",  // "Bilan face au Tab"
     "Seviyeye göre sonuçlar, rekorlar, yerel derece",  // "Bilan par niveau, records, classement local"
@@ -8770,6 +8998,7 @@ static const char* const kI18n_tr[] = {
     "Oynatıcılarınızı Home Assistant'ta seçin: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Mod, renk, seviye ve saat seçimi",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Temiz bir düşüş. Nefes al.",  // "Chute nette. Reprends ton souffle."
+    "Açık gökyüzü",  // "Ciel clair"
     "Açık",  // "Clair"
     "Açık veya koyu",  // "Clair ou sombre"
     "Sıralama",  // "Classement"
@@ -8802,12 +9031,14 @@ static const char* const kI18n_tr[] = {
     "Bağlı",  // "Connecté"
     "NVS'de saklanır, tüm oyunlar için geçerli",  // "Conservés en NVS, valables pour toutes les parties"
     "Tüketim",  // "Consommation"
+    "Tüketilen",  // "Consommé"
     "Kontrol",  // "Contrôle"
     "Kontrol: %s",  // "Contrôle : %s"
     "Kontrol: %s   -   Hız: %s",  // "Contrôle : %s   -   Vitesse : %s"
     "Kontrol, hassasiyet, kalibrasyon, SFX",  // "Contrôle, sensibilité, calibration, SFX"
     "Koordinatlar: GÖRÜNÜR",  // "Coordonnées : AFFICHÉES"
     "Koordinatlar: GİZLİ",  // "Coordonnées : MASQUÉES"
+    "Gün batımı",  // "Coucher"
     "Renk (Tab'a karşı)",  // "Couleur (contre le Tab)"
     "Oyuncu rengi",  // "Couleur du joueur"
     "Koridorlar",  // "Couloirs"
@@ -8817,8 +9048,10 @@ static const char* const kI18n_tr[] = {
     "%s beri sıcaklık artışı",  // "Coup de chaud depuis %s"
     "Geçersiz hamle",  // "Coup illégal"
     "Yasak hamle (ko veya intihar)",  // "Coup interdit (ko ou suicide)"
+    "Eğri öğreniliyor",  // "Courbe en cours d'apprentissage"
     "Çatlak Taç",  // "Couronne fêlée"
     "Krem",  // "Crème"
+    "Aralık",  // "Créneau"
     "Bakır",  // "Cuivre"
     "Kariyer toplamı: %lu puan",  // "Cumul carrière : %lu points"
     "Kor Yürek",  // "Cœur de braise"
@@ -8913,6 +9146,7 @@ static const char* const kI18n_tr[] = {
     "İncelik",  // "Finesse"
     "Sabit",  // "Fixe"
     "Neon pinball · 3 bilye\nTableti dik tut",  // "Flipper néon · 3 billes\nTablette à la verticale"
+    "Akış",  // "Flux"
     "Hava akışı",  // "Flux d'air"
     "Saat arka planı",  // "Fond de l'horloge"
     "Gereken sallama gücü",  // "Force de la secousse nécessaire"
@@ -8927,6 +9161,7 @@ static const char* const kI18n_tr[] = {
     "Şimşek",  // "Fulgurante"
     "Tatil",  // "Férié"
     "Şub",  // "Févr"
+    "KAZANÇ",  // "GAINS"
     "OYUN BİTTİ",  // "GAME OVER"
     "YÖNETİM",  // "GESTION"
     "Parlak Eldiven",  // "Gantelet poli"
@@ -9067,6 +9302,8 @@ static const char* const kI18n_tr[] = {
     "Ruhlar korunur",  // "Les âmes sont conservées"
     "Ruhlar zaten kenara ayrıldı.",  // "Les âmes sont déjà mises de côté."
     "Tahtanın çevresinde A..T harfleri ve rakamlar",  // "Lettres A..T et chiffres autour du goban"
+    "Gün doğumu",  // "Lever"
+    "Gün doğumu ve batımı bilinmiyor",  // "Lever et coucher du soleil inconnus"
     "Şarj sınırı",  // "Limite de charge"
     "Lode Runner 1983\nKaz · tırman · kaç",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Parlaklık",  // "Luminosité"
@@ -9093,6 +9330,7 @@ static const char* const kI18n_tr[] = {
     "Mar",  // "Mars"
     "Gizli",  // "Masquée"
     "Mat için yetersiz materyal",  // "Matériel insuffisant pour mater"
+    "En iyi aralık",  // "Meilleur créneau"
     "En iyi skor: %lu",  // "Meilleur score : %lu"
     "En iyi skor: %u   -   Kontrol: %s",  // "Meilleur score : %u   -   Contrôle : %s"
     "Menü",  // "Menu"
@@ -9102,6 +9340,7 @@ static const char* const kI18n_tr[] = {
     "Ölçüm bekleniyor",  // "Mesure en attente"
     "Ölçülüyor",  // "Mesure en cours"
     "Ölçülen",  // "Mesuré"
+    "Öğle",  // "Midi"
     "Min %s °C · maks. %s °C",  // "Min %s °C · max %s °C"
     "En düşük",  // "Minimum"
     "En düşük %s · En yüksek %s",  // "Minimum %s · Maximum %s"
@@ -9257,14 +9496,21 @@ static const char* const kI18n_tr[] = {
     "Alma x%d",  // "Prise x%d"
     "Oyundaki esirler: Siyah %u, Beyaz %u",  // "Prisonniers de la partie : Noir %u, Blanc %u"
     "Olasılık",  // "Probabilité"
+    "Üretim",  // "Production"
+    "Üretilen",  // "Produit"
     "Bugün üretilen",  // "Produit aujourd'hui"
     "Beraberlik öner",  // "Proposer nulle"
     "Önceki",  // "Précédent"
     "Evde",  // "Présent"
+    "Tahmin",  // "Prévision"
+    "Tahmin: harici",  // "Prévision : externe"
+    "Tahmin: hava durumu",  // "Prévision : météo"
     "Dünkü %d:%02d tahmini",  // "Prévisions d'hier %d h %02d"
     "%d:%02d tahmini",  // "Prévisions de %d h %02d"
     "%d gün önceki tahmin",  // "Prévisions vieilles de %d jours"
     "Tahmin",  // "Prévu"
+    "Bugün beklenen",  // "Prévu aujourd'hui"
+    "Yarın beklenen",  // "Prévu demain"
     "Hazır",  // "Prêt"
     "Güç",  // "Puissance"
     "Tamamen kozmetik",  // "Purement cosmétique"
@@ -9517,6 +9763,7 @@ static const char* const kI18n_tr[] = {
     "Bir yemin daha.",  // "Un serment de plus."
     "Tek seçim. Seferin sonuna kadar seninle kalır.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Aynı anda tek dokunuş: Düğmeler modunda dururken kazılır. Karma mod, yürürken kazmak için parmağı serbest bırakır.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
+    "SATILAN",  // "VENDU"
     "ZAFER",  // "VICTOIRE"
     "ZAFER!",  // "VICTOIRE !"
     "PANJURLAR",  // "VOLETS"
@@ -9525,6 +9772,7 @@ static const char* const kI18n_tr[] = {
     "Skoru onayla",  // "Valider le score"
     "Varyant, mod, seviye",  // "Variante, mode, niveau"
     "Cum",  // "Ven"
+    "Satılan",  // "Vendu"
     "Rüzgârlı",  // "Venteux"
     "Fan",  // "Ventilation"
     "Kilitli",  // "Verrouillé"

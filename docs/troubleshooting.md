@@ -196,7 +196,7 @@ To go back to older files by hand: [putting older files back](installation/updat
 
 **Root cause:** the battery charger. Since 3.6.0 (PR #303, 2026-10-04), the firmware sets CHG_EN (PI4IOE 0x44 P7) to 1 at every boot. Without a battery, the charger charges into nothing: the voltage read by the INA226 swings between 4.2 and 8.39 V, or stays around 5.70–5.76 V, and « Tab5 Batterie en charge » says yes. With a trial firmware that exposed CHG_EN, switching the charger off made the hiss go away; the INA226 then read 1.83 to 1.94 V (four readings, 09:55 to 09:58) and the charging status went to « not charging ». One more observation, a single one: during the 2 minutes when the voltage read 8.39 V, the hiss could not be heard; it came back with 5.70 V.
 
-**Fix (next version):** the firmware looks for a battery with the charger switched off, and leaves the charger off when there is none: no more hiss, no more false « charging ». How it decides: [battery](hardware.md#power).
+**Fix (next version):** the firmware looks for a battery with the charger switched off, and leaves the charger off when there is none: no more hiss, no more false « charging ». Since 2026-10-10 it does not even switch the charger on while it boots when the previous boot saw no battery. How it decides: [battery](hardware.md#power).
 
 **Workaround from 3.6.0 to the latest published version:** none simple, sorry. These versions have no entity to switch the charger off, and the speaker, the microphone and the volume have nothing to do with it. A fitted battery gives the charger something to charge (whether a tablet with a battery hisses too has not been checked). Otherwise, wait for the next version.
 
@@ -368,7 +368,7 @@ Pour revenir à la main à des fichiers plus anciens : [remettre des fichiers pl
 
 **Cause racine :** le chargeur de la batterie. Depuis la 3.6.0 (PR #303, 04/10/2026), le firmware met CHG_EN (PI4IOE 0x44 P7) à 1 à chaque démarrage. Sans batterie, le chargeur charge dans le vide : la tension lue par l'INA226 oscille entre 4,2 et 8,39 V, ou reste vers 5,70-5,76 V, et « Tab5 Batterie en charge » dit oui. Avec un firmware d'essai qui exposait CHG_EN, couper le chargeur a fait disparaître le souffle ; l'INA226 lisait alors 1,83 à 1,94 V (quatre lectures, de 09:55 à 09:58) et l'état de charge est passé à « pas en charge ». Une observation de plus, une seule : pendant les 2 minutes où la tension lue était à 8,39 V, on n'entendait plus le souffle ; il est revenu avec les 5,70 V.
 
-**Correctif (prochaine version) :** le firmware cherche la batterie chargeur coupé, et laisse le chargeur coupé quand il n'y en a pas : plus de souffle, plus de faux « en charge ». Comment il décide : [batterie](hardware.md#alimentation).
+**Correctif (prochaine version) :** le firmware cherche la batterie chargeur coupé, et laisse le chargeur coupé quand il n'y en a pas : plus de souffle, plus de faux « en charge ». Depuis le 10/10/2026, il ne l'allume même plus pendant le démarrage quand le démarrage précédent n'a vu aucune batterie. Comment il décide : [batterie](hardware.md#alimentation).
 
 **Contournement de la 3.6.0 à la dernière version publiée :** aucun de simple, désolé. Ces versions n'ont pas d'entité pour couper le chargeur, et le haut-parleur, le micro ou le volume n'y sont pour rien. Une batterie montée donne au chargeur quelque chose à charger (on n'a pas vérifié si une tablette avec batterie souffle aussi). Sinon, attendre la prochaine version.
 

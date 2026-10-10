@@ -1,18 +1,32 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file energie_popup.yaml
-# @role Popup « Énergie » (ADR-0028, 04/10/2026, discussion #278) : en haut l'instantané
-#       d'une installation solaire (cartes solaire, maison, réseau, batterie), en bas
-#       l'historique de la production en barres (Heures / Jours / Mois) avec son total.
+# @role Popup « Énergie » (ADR-0028, 04/10/2026, discussion #278 ; pages : ADR-0058,
+#       10/10/2026). Quatre pages, changées au doigt (glisser à gauche ou à droite) ou par
+#       leur nom en haut, celles qui ont des données seulement :
+#         - « Flux » : solaire, maison, réseau et batterie en cercles reliés par des traits
+#           dont l'épaisseur suit la puissance, anneau solaire / réseau sur la maison ;
+#         - « Aujourd'hui » : l'arc du soleil, les 24 heures (production, prévision, courbe
+#           ciel clair, meilleur créneau) et, à droite, produit, prévu, demain ;
+#         - « Production » : l'instantané en cartes et l'historique de la production en
+#           barres (Heures / Jours / Mois) avec son total (la page d'avant l'ADR-0058) ;
+#         - « Bilan » : autoconsommé, vendu, acheté, gains en cartes, et production /
+#           consommation en barres empilées, par heure, jour ou mois.
 #       Ouvert par une tuile cap à l'option e (capteur de la section « Énergie » du
 #       blueprint, tuile_appui → tab5_energie_ouvrir) ou par « Aller à l'écran → Énergie ».
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
-#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Énergie » dans
-#       tab5_modal_registry_init). Corps : x 24..1226, y 72..670 — cartes de 210 px en
-#       haut (y 72), graphique de 372 px en bas (y 298, 16 px d'écart, 20 px du bord).
-#       Tout ce qui bouge est écrit par tab5_energie.cpp (cartes montrées, largeurs,
-#       barres) : aucune valeur posée ici.
-# @ai_instruction Un widget de plus = son champ dans EnergieUI (tab5_custom.h) et sa
+#       corps à y = ${modal_body_y} ; les noms des pages sont des options d'en-tête,
+#       pages_onglet.yaml), registre unique (ADR-0013 : « Énergie » dans
+#       tab5_modal_registry_init). Une page = un conteneur sans fond à y ${modal_body_y},
+#       598 px de haut (corps x 24..1226, 20 px du bas). Changement de page instantané
+#       (conteneurs masqués / montrés). Tout ce qui bouge est écrit par tab5_energie.cpp
+#       (pages montrées, cartes, largeurs, barres, traits, arc) : aucune valeur posée ici.
+# @geometry Production et Bilan : cartes de 210 px en haut (y 0 du conteneur ; 194 sans
+#       graphique, centrées), graphique de 372 px en bas (y 226, zone 1166 × 286 à x 18,
+#       y 72). Aujourd'hui : carte de 846 × 598 à x 24 (zone 810 × 570 à x 18, y 14) et
+#       carte de 340 × 598 à x 886 (zone 304 × 570). Flux : zone des traits sur toute la
+#       page, cercles de 190 px placés par le C++.
+# @ai_instruction Un widget de plus = son champ dans EnergieUI (tab5_energie.h) et sa
 #       ligne dans le script tab5_energie_ouvrir (tab5-energie.yaml).
 # ═══════════════════════════════════════════════════════
 obj:
@@ -38,40 +52,189 @@ obj:
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F0A72", icon_style: "style_text_gold", title: "Énergie", title_id: "energie_popup_titre", close_btn_id: "btn_energie_close", popup_id: energie_popup } }
 
-          # ═══ INSTANTANÉ : 4 cartes, celles d'un capteur choisi seulement ═══
-          #     (0 solaire, 1 maison, 2 réseau, 3 batterie ; noms écrits par tab5_energie.cpp)
-          - !include { file: energie_carte.yaml, vars: { n: "0" } }
-          - !include { file: energie_carte.yaml, vars: { n: "1" } }
-          - !include { file: energie_carte.yaml, vars: { n: "2" } }
-          - !include { file: energie_carte.yaml, vars: { n: "3" } }
+          # Noms des pages montrées, sur la ligne du titre (pages_onglet.yaml) : posés par
+          # pages_onglets() (tab5_pages.cpp), aucun sous deux pages. `page` = rang parmi
+          # les pages montrées.
+          - !include { file: pages_onglet.yaml, vars: { id: energie_onglet_0, page: 0, choisir: energie_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: energie_onglet_1, page: 1, choisir: energie_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: energie_onglet_2, page: 2, choisir: energie_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: energie_onglet_3, page: 3, choisir: energie_page } }
 
-          # ═══ HISTORIQUE DE LA PRODUCTION (capteur d'énergie choisi seulement) ═══
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE FLUX (instantané avec un capteur solaire)
+          # ═══════════════════════════════════════════════════════════════════
           - obj:
-              id: energie_graphique
+              id: energie_page_flux
               align: TOP_LEFT
-              x: 24
-              y: 298
-              width: 1202
-              height: 372
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
               hidden: true
-              styles: style_glass_card
               scrollable: false
+              styles: style_invisible
               widgets:
-                # « Aujourd'hui · 12.4 kWh », « 30 derniers jours · … », « 12 derniers mois · … »
-                - label: { id: energie_titre, text: "", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
-                - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "0", x_pos: "-338", label_text: "Heures" } }
-                - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "1", x_pos: "-178", label_text: "Jours" } }
-                - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "2", x_pos: "-18", label_text: "Mois" } }
-                # Barres, repère, maximum et axe : créés par tab5_energie.cpp (1166 × 286).
+                # Traits et anneau de la maison : sous les cercles (créés par tab5_energie.cpp).
                 - obj:
-                    id: energie_zone
+                    id: energie_flux_zone
                     align: TOP_LEFT
-                    x: 18
-                    y: 72
-                    width: 1166
-                    height: 286
+                    x: 0
+                    y: 0
+                    width: 100%
+                    height: 598
                     styles: style_transparent
                     scrollable: false
+                - !include { file: energie_flux_noeud.yaml, vars: { n: "0" } }
+                - !include { file: energie_flux_noeud.yaml, vars: { n: "1" } }
+                - !include { file: energie_flux_noeud.yaml, vars: { n: "2" } }
+                - !include { file: energie_flux_noeud.yaml, vars: { n: "3" } }
 
-          # Avant le premier instantané de Home Assistant (ou sans le package tab5_energie).
-          - label: { id: energie_attente, text: "En attente de Home Assistant", align: CENTER, y: 26, styles: style_text_dim }
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE AUJOURD'HUI (tab5_maj_energie_soleil)
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: energie_page_soleil
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              hidden: true
+              scrollable: false
+              styles: style_invisible
+              widgets:
+                # Arc du soleil et heures du jour (construits par tab5_energie.cpp).
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 0
+                    width: 846
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - obj:
+                          id: energie_soleil_zone
+                          align: TOP_LEFT
+                          x: 18
+                          y: 14
+                          width: 810
+                          height: 570
+                          styles: style_transparent
+                          scrollable: false
+                # Produit, prévu, demain, meilleur créneau, source de la prévision.
+                - obj:
+                    align: TOP_LEFT
+                    x: 886
+                    y: 0
+                    width: 340
+                    height: 598
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - obj:
+                          id: energie_soleil_infos
+                          align: TOP_LEFT
+                          x: 18
+                          y: 14
+                          width: 304
+                          height: 570
+                          styles: style_transparent
+                          scrollable: false
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE PRODUCTION (ADR-0028) : instantané en cartes, historique en barres
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: energie_page_production
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              scrollable: false
+              styles: style_invisible
+              widgets:
+                # 4 cartes, celles d'un capteur choisi seulement
+                # (0 solaire, 1 maison, 2 réseau, 3 batterie ; noms écrits par tab5_energie.cpp)
+                - !include { file: energie_carte.yaml, vars: { n: "0" } }
+                - !include { file: energie_carte.yaml, vars: { n: "1" } }
+                - !include { file: energie_carte.yaml, vars: { n: "2" } }
+                - !include { file: energie_carte.yaml, vars: { n: "3" } }
+
+                # Historique de la production (capteur d'énergie choisi seulement)
+                - obj:
+                    id: energie_graphique
+                    align: TOP_LEFT
+                    x: 24
+                    y: 226
+                    width: 1202
+                    height: 372
+                    hidden: true
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      # « Aujourd'hui · 12.4 kWh », « 30 derniers jours · … », « 12 derniers mois · … »
+                      - label: { id: energie_titre, text: "", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "0", x_pos: "-338", label_text: "Heures" } }
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "1", x_pos: "-178", label_text: "Jours" } }
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "2", x_pos: "-18", label_text: "Mois" } }
+                      # Barres, repère, maximum et axe : créés par tab5_energie.cpp (1166 × 286).
+                      - obj:
+                          id: energie_zone
+                          align: TOP_LEFT
+                          x: 18
+                          y: 72
+                          width: 1166
+                          height: 286
+                          styles: style_transparent
+                          scrollable: false
+
+                # Avant le premier instantané de Home Assistant (ou sans le package tab5_energie).
+                - label: { id: energie_attente, text: "En attente de Home Assistant", align: CENTER, y: 0, styles: style_text_dim }
+
+          # ═══════════════════════════════════════════════════════════════════
+          # PAGE BILAN (tab5_maj_energie_bilan) : mêmes vues que Production
+          # ═══════════════════════════════════════════════════════════════════
+          - obj:
+              id: energie_page_bilan
+              align: TOP_LEFT
+              x: 0
+              y: ${modal_body_y}
+              width: 100%
+              height: 598
+              hidden: true
+              scrollable: false
+              styles: style_invisible
+              widgets:
+                # 4 cartes : 4 autoconsommé, 5 vendu, 6 acheté, 7 gains (celles qui ont un
+                # compteur ou un prix seulement).
+                - !include { file: energie_carte.yaml, vars: { n: "4" } }
+                - !include { file: energie_carte.yaml, vars: { n: "5" } }
+                - !include { file: energie_carte.yaml, vars: { n: "6" } }
+                - !include { file: energie_carte.yaml, vars: { n: "7" } }
+
+                # Production et consommation en barres empilées, par créneau de la vue.
+                - obj:
+                    align: TOP_LEFT
+                    x: 24
+                    y: 226
+                    width: 1202
+                    height: 372
+                    styles: style_glass_card
+                    scrollable: false
+                    widgets:
+                      - label: { id: energie_bilan_titre, text: "", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "0", x_pos: "-338", label_text: "Heures" } }
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "1", x_pos: "-178", label_text: "Jours" } }
+                      - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "2", x_pos: "-18", label_text: "Mois" } }
+                      # Barres empilées, légende, repère, maximum et axe : tab5_energie.cpp.
+                      - obj:
+                          id: energie_bilan_zone
+                          align: TOP_LEFT
+                          x: 18
+                          y: 72
+                          width: 1166
+                          height: 286
+                          styles: style_transparent
+                          scrollable: false

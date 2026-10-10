@@ -54,8 +54,10 @@ from scenarios import (
     nabu_de,
     rangee_de,
     reglables_de,
+    build_energie_bilan,
     build_energie_historique,
     build_energie_payload,
+    build_energie_soleil,
     ENERGIE_VUES,
     build_historique,
     HISTORIQUE_CLES,
@@ -103,6 +105,10 @@ SERVICE_TUILES = "tab5_maj_tuiles"
 # trouve ses données.
 SERVICE_ENERGIE = "tab5_maj_energie"
 SERVICE_ENERGIE_HISTORIQUE = "tab5_maj_energie_historique"
+# Pages « Aujourd'hui » et « Bilan » du popup (ADR-0058) : absentes d'un firmware plus ancien,
+# que la démo n'appelle alors pas (comme HA, dont les appels sont en continue_on_error).
+SERVICE_ENERGIE_SOLEIL = "tab5_maj_energie_soleil"
+SERVICE_ENERGIE_BILAN = "tab5_maj_energie_bilan"
 # Popup Température (ADR-0032) : absent d'un firmware plus ancien. HA ne pousse qu'à
 # l'ouverture du popup (événement esphome.tab5_historique) et le popup ignore une réponse
 # pour une autre température : la démo ne répond qu'à l'événement (le rendu pousse
@@ -316,15 +322,25 @@ async def _pousser_zones(client, services_par_nom: dict, absentes: frozenset) ->
 
 async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VUES),
                            aujourd_hui: _dt.date | None = None) -> None:
-    """Réponse de script.tab5_energie (packages/tab5_energie.yaml) : l'instantané, puis
-    l'historique de chaque vue de `vues`. Rien sur un firmware sans le popup Énergie."""
+    """Réponse de script.tab5_energie (packages/tab5_energie.yaml) : l'instantané, le soleil et
+    la prévision du jour (ADR-0058), les heures du jour (la page « Aujourd'hui » les dessine
+    quelle que soit la vue), puis l'historique et le bilan de chaque vue de `vues`. Rien sur
+    un firmware sans le popup Énergie ; les deux actions de l'ADR-0058 manquent seules sur un
+    firmware qui ne les a pas encore."""
     if SERVICE_ENERGIE not in services_par_nom:
         return
     jour = aujourd_hui or _dt.date.today()
     await _appeler(client, services_par_nom, SERVICE_ENERGIE, payload=build_energie_payload())
+    if SERVICE_ENERGIE_SOLEIL in services_par_nom:
+        await _appeler(client, services_par_nom, SERVICE_ENERGIE_SOLEIL, payload=build_energie_soleil())
+    if "heures" not in vues:
+        await _appeler(client, services_par_nom, SERVICE_ENERGIE_HISTORIQUE,
+                       **build_energie_historique("heures", jour))
     for vue in vues:
         await _appeler(client, services_par_nom, SERVICE_ENERGIE_HISTORIQUE,
                        **build_energie_historique(vue, jour))
+        if SERVICE_ENERGIE_BILAN in services_par_nom:
+            await _appeler(client, services_par_nom, SERVICE_ENERGIE_BILAN, **build_energie_bilan(vue, jour))
 
 
 async def _pousser_historique(client, services_par_nom: dict, cle: str, vue: str,

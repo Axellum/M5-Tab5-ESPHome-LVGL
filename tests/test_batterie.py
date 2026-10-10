@@ -7,7 +7,8 @@ Tab5/socle/tab5_batterie.h (testées sur PC par tools/test_alarm_clock.cpp) ; ri
 le câblage YAML hors tablette : ce fichier le relit.
 
 - CHG_EN n'est commandé que par l'interval de 1 s (chargeur_pas), qui demande aussi la
-  lecture de fin de sonde à l'INA226 ;
+  lecture de fin de sonde à l'INA226 ; coupé au setup, il n'est pas allumé au démarrage
+  si le démarrage précédent n'a vu aucune batterie (mémoire en NVS, 10/10/2026) ;
 - le select « Tab5 Limite de charge » suit l'ordre de LimiteCharge (la tablette garde
   l'INDEX), défaut « 100 % » ;
 - chaque lecture de la tension passe par batterie_tension_ui ; le courant lu pendant une
@@ -69,13 +70,18 @@ def test_chg_en_commande_par_le_seul_interval_du_chargeur():
     diag = _yaml(DIAG)
     chg = next(s for s in diag["switch"] if s.get("id") == "charge_enable")
     assert chg["internal"] is True
-    assert chg["restore_mode"] == "ALWAYS_ON", "allumé 30 s au démarrage : réveil d'une batterie"
+    # Coupé au setup (10/10/2026) : le premier pas de l'interval décide du réveil de 30 s
+    # d'après la mémoire du démarrage précédent (chargeur_demarrer, tab5_batterie.h).
+    assert chg["restore_mode"] == "ALWAYS_OFF", "pas de charge dans le vide pendant le démarrage"
     assert chg["pin"]["number"] == 7
     intervals = [i for i in diag["interval"] if "chargeur_pas(" in _texte(i)]
     assert len(intervals) == 1 and intervals[0]["interval"] == "1s"
     code = _sans_commentaires(intervals[0]["then"][0]["lambda"])
     for motif in ("id(tab5_limite_charge).active_index()", "id(tab5_batterie_montee).state",
-                  "id(charge_enable).turn_on()", "id(charge_enable).turn_off()", "id(ina226_batterie).update()"):
+                  "id(tab5_batterie_memoire), millis())",
+                  "id(charge_enable).turn_on()", "id(charge_enable).turn_off()", "id(ina226_batterie).update()",
+                  "const uint8_t memoire = chargeur_memoire(id(tab5_batterie_memoire));",
+                  "if (memoire != id(tab5_batterie_memoire)) id(tab5_batterie_memoire) = memoire;"):
         assert motif in code, motif
     # Personne d'autre n'allume ni ne coupe le chargeur (le souffle revenait avec lui).
     for chemin in sources("*.yaml") + sorted((TAB5 / "ui_components").glob("*.yaml")):
@@ -83,6 +89,22 @@ def test_chg_en_commande_par_le_seul_interval_du_chargeur():
         appels = len(re.findall(r"id\(charge_enable\)\.turn_(?:on|off)\(\)", texte))
         appels += len(re.findall(r"switch\.turn_(?:on|off):\s*charge_enable\b", texte))
         assert appels == (2 if chemin.name == DIAG else 0), f"{chemin.name} : {appels} commande(s) de charge_enable"
+
+
+def test_memoire_du_demarrage_precedent():
+    """Chargeur éteint au démarrage si le démarrage précédent n'a vu aucune batterie
+    (10/10/2026, demande d'Axel) : la mémoire est un global restauré de NVS, dont les
+    valeurs suivent MemoireBatterie (0 inconnue = comportement d'avant)."""
+    g = next(g for g in _yaml(DIAG)["globals"] if g["id"] == "tab5_batterie_memoire")
+    assert g["type"] == "uint8_t" and g["restore_value"] is True and str(g["initial_value"]) == "0"
+    enum = re.search(r"enum class MemoireBatterie[^{]*\{([^}]*)\}", _entete())
+    assert enum, "MemoireBatterie introuvable dans tab5_batterie.h"
+    valeurs = {nom: int(v) for nom, v in re.findall(r"(\w+)\s*=\s*(\d+)", enum.group(1))}
+    assert valeurs == {"INCONNUE": 0, "AUCUNE": 1, "VUE": 2}, valeurs
+    # Seul l'interval du chargeur écrit la mémoire.
+    for chemin in sources("*.yaml"):
+        n = len(re.findall(r"id\(tab5_batterie_memoire\)\s*=[^=]", chemin.read_text(encoding="utf-8")))
+        assert n == (1 if chemin.name == DIAG else 0), (chemin.name, n)
 
 
 def test_select_mode_de_charge_et_charge_rapide_par_le_seul_interval():

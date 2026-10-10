@@ -177,6 +177,43 @@ USB console read without resetting the chip (`tools/capture_serie.py` recipe, ea
 
 What is left: `setup()` (5 s, including the 1 s wait the screen needs after a software restart, `[AI-WARNING]` in `tab5-ha-hmi.yaml`), the Wi-Fi association through the ESP32-C6 (2.8 s), and Home Assistant's own reconnection (1.4 s after the Wi-Fi is up, not driven by the tablet).
 
+### Boot timeline, read in Home Assistant (next version)
+
+A tablet on a mains charger has no serial log. Two diagnostic entities give, for every boot, the time of fixed steps: **Tab5 Chronologie du démarrage** up to the end of ESPHome's `setup()`, **Tab5 Chronologie du démarrage (suite)** after it (two texts because Home Assistant keeps at most 255 characters in a state). Same format, `name=ms; …`, « - » for a step not reached (yet):
+
+`ctor=…; objets=…; setup=…; bus=…; expandeur=…; avant1s=…; apres1s=…; p600=…; donnees=…; lvgl=…; wifiinit=…; reseau=…; ecoute=…; fin=…; i18n=…; zones=…`
+`ordo=…; retro=…; dessin=…; image=…; tard=…; wifi=…; api=…; fin600=…; chargeur=…`
+
+**Clock.** Every value is `esp_timer_get_time() / 1000`: ESP-IDF resets this hardware counter when it starts (`esp_timer_impl_early_init`, CORE init stage, before the C++ constructors), so neither the ROM nor the bootloader is counted (0.8 s in the table above). ESPHome's `millis()` is something else: the FreeRTOS tick count (`CONFIG_FREERTOS_HZ=1000`, `esp32/hal.cpp`), which starts with the scheduler. `ordo` is the time at which `millis()` was 0, measured once at `setup`: a value read with `millis()` (the first version of this entity, or a log line) is `value − ordo` on this scale. A tick lost during the boot would make `ordo` a little larger (not seen, not ruled out).
+
+How ESPHome boots, to read the gaps: its `main()` builds every object (the ~1,800 LVGL widgets included) and then calls `App.setup()`, which runs each component's `setup()` by decreasing priority (registration order on a tie). The `on_boot` entries are components too, run at their own priority: the entries that only mark (end of the `on_boot` list in `tab5-ha-hmi.yaml`, priorities nothing else uses) therefore bound the priority bands. The difference between two consecutive marks is the time of the `setup()`s between them.
+
+| Name | Where | What the gap before it holds |
+|---|---|---|
+| `ctor` | global C++ constructor in `Tab5/ecran/tab5_demarrage.cpp` (`do_global_ctors`, before the scheduler) | ESP-IDF's start: PSRAM, code copied to PSRAM. ESP-Hosted's own constructor (SDIO link to the C6) runs in the same phase, in no fixed order |
+| `objets` | lambda of `style_repere_demarrage`, first style (`tab5-styles.yaml`), created right after LVGL's init | scheduler start, `app_main`, construction of the ESPHome components (no I/O) |
+| `setup` | `on_boot` priority 2000, the first `setup()` | **construction of the LVGL widgets** (and of the remaining objects) |
+| `bus` | `on_boot` 801 | I²C bus, 2.5 V LDO, preferences (1000), the two I/O expanders (900) |
+| `expandeur` | USB power switch (`usb_5v_power`, expander 0x44 P3), hardware band (800) | first part of the 800 band: globals and selects restored from NVS, switches… in registration order |
+| `avant1s` / `apres1s` | `on_boot` 700, before / after the blocking `delay(1000)` (`[AI-WARNING-CRITICAL]`, left as it is) | `avant1s`: rest of the 800 band and the backlight light (799); `apres1s`: the 1 s wait itself |
+| `p600` | first action of `on_boot` 600 | nothing (registered before the display) |
+| `donnees` | `on_boot` 500 | **the whole 600 band**: display (MIPI-DSI, reset through the expander), touch, ES7210, microphone, ES8388, INA226, IMU, sensors, and the start of `on_boot` 600 (`lvgl.resume`, backlight on). They share priority 600: no mark can split them without changing a priority |
+| `lvgl` | `on_boot` 399 | 400 band, in this order: speaker (I²S), **LVGL's `setup()`**, media player |
+| `wifiinit` | `on_boot` 249 | LVGL's deferred lambdas (395) and animations (380), network (300), **Wi-Fi `setup()`** (250), which goes through the C6 |
+| `reseau` | `on_boot` 199 | SNTP (220), API, OTA, safe mode (200) |
+| `ecoute` | `on_boot` 99 | micro_wake_word, voice assistant (100) |
+| `fin` | first action of `on_boot` -100 | the rest down to -100 (debug component) |
+| `i18n` / `zones` | after `i18n_apply_boot()` / after the `tab5_zones_apply` script, `on_boot` -100 | screen language; optional zones (tiles, climate, row, − / + tile). The end of `setup()` follows |
+| `ordo` | computed at `setup` | — (see Clock) |
+| `retro` | first non-zero write to the backlight PWM (`tab5-hardware.yaml`) | the backlight really comes on |
+| `dessin` / `image` | `lvgl: on_draw_start` / first `on_draw_end` | first LVGL draw, end of the first frame sent to the screen |
+| `tard` | end of `on_boot` -100 (its `delay: 2s`, then the pressed-scale helper and the clock pointers) | — |
+| `wifi` / `api` | Wi-Fi connected / first API client (Home Assistant), first time | — |
+| `fin600` | end of `on_boot` 600 (Home Assistant awaited, `esphome.tab5_connected`, `delay: 3s`, calendar prefetch) | — |
+| `chargeur` | first time the battery charger is switched on; « - » when the previous boot saw no battery ([hardware](hardware.md), Battery) | — |
+
+The marks of the first text never publish: both texts are published at the first frame, then at each later step (`tard`, `wifi`, `api`, `fin600`, `chargeur`), never during `setup()`; Home Assistant keeps one value per boot in its history. `retro`, `dessin` and `image` normally come after `fin` (ESPHome runs the loops only after `setup()`, unless a component makes `setup()` wait for it); compare them with `fin` to know. Marking a step costs one clock read and one memory write. Source: `Tab5/socle/tab5_demarrage.h`; wiring checked by `tests/test_chronologie_demarrage.py`.
+
 ## Limits
 
 - One tablet, one screen revision, one evening per campaign.
@@ -359,6 +396,43 @@ Console USB lue sans réinitialiser la puce (recette de `tools/capture_serie.py`
 | Poussée complète reçue | 18,4-18,6 | 12,3 |
 
 Ce qui reste : `setup()` (5 s, dont l'attente de 1 s dont l'écran a besoin après un redémarrage logiciel, `[AI-WARNING]` dans `tab5-ha-hmi.yaml`), l'association Wi-Fi par l'ESP32-C6 (2,8 s) et la reconnexion de Home Assistant elle-même (1,4 s après le Wi-Fi, pas pilotée par la tablette).
+
+### Chronologie du démarrage, lue dans Home Assistant (prochaine version)
+
+Une tablette sur chargeur secteur n'a pas de journal série. Deux entités de diagnostic donnent, à chaque démarrage, l'instant d'étapes fixes : **Tab5 Chronologie du démarrage** jusqu'à la fin du `setup()` d'ESPHome, **Tab5 Chronologie du démarrage (suite)** après (deux textes parce que Home Assistant garde au plus 255 caractères dans un état). Même format, `nom=ms; …`, « - » pour une étape pas (encore) atteinte :
+
+`ctor=…; objets=…; setup=…; bus=…; expandeur=…; avant1s=…; apres1s=…; p600=…; donnees=…; lvgl=…; wifiinit=…; reseau=…; ecoute=…; fin=…; i18n=…; zones=…`
+`ordo=…; retro=…; dessin=…; image=…; tard=…; wifi=…; api=…; fin600=…; chargeur=…`
+
+**Horloge.** Chaque valeur vaut `esp_timer_get_time() / 1000` : ESP-IDF remet ce compteur matériel à zéro à son lancement (`esp_timer_impl_early_init`, étape CORE, avant les constructeurs C++) ; ni la ROM ni le chargeur de démarrage ne sont comptés (0,8 s dans le tableau ci-dessus). Le `millis()` d'ESPHome est autre chose : le compte de ticks de FreeRTOS (`CONFIG_FREERTOS_HZ=1000`, `esp32/hal.cpp`), qui part avec l'ordonnanceur. `ordo` est l'instant où `millis()` valait 0, mesuré une fois à `setup` : une valeur lue avec `millis()` (la première version de cette entité, une ligne de journal) vaut `valeur − ordo` sur cette échelle. Un tick perdu pendant le démarrage agrandirait un peu `ordo` (pas vu, pas exclu).
+
+Comment ESPHome démarre, pour lire les écarts : son `main()` construit tous les objets (les ~1 800 widgets LVGL compris), puis appelle `App.setup()`, qui lance le `setup()` de chaque composant par priorité décroissante (ordre d'enregistrement à égalité). Les entrées `on_boot` sont des composants elles aussi, lancées à leur priorité : les entrées qui ne font que marquer (fin de la liste `on_boot` de `tab5-ha-hmi.yaml`, à des priorités que rien d'autre n'a) bornent donc les bandes de priorité. L'écart entre deux marques qui se suivent est la durée des `setup()` d'entre elles.
+
+| Nom | Où | Ce que contient l'écart qui le précède |
+|---|---|---|
+| `ctor` | constructeur C++ global de `Tab5/ecran/tab5_demarrage.cpp` (`do_global_ctors`, avant l'ordonnanceur) | le lancement d'ESP-IDF : PSRAM, code copié en PSRAM. Le constructeur d'ESP-Hosted (lien SDIO vers le C6) tourne dans la même phase, dans un ordre que rien ne fixe |
+| `objets` | lambda de `style_repere_demarrage`, premier style (`tab5-styles.yaml`), créé juste après l'initialisation de LVGL | lancement de l'ordonnanceur, `app_main`, construction des composants ESPHome (sans entrée-sortie) |
+| `setup` | `on_boot` priorité 2000, le premier `setup()` | **construction des widgets LVGL** (et des objets restants) |
+| `bus` | `on_boot` 801 | bus I²C, LDO 2,5 V, préférences (1000), les deux expandeurs (900) |
+| `expandeur` | interrupteur d'alimentation USB (`usb_5v_power`, expandeur 0x44 P3), bande matérielle (800) | début de la bande 800 : globals et selects relus en NVS, interrupteurs… dans l'ordre d'enregistrement |
+| `avant1s` / `apres1s` | `on_boot` 700, avant / après le `delay(1000)` bloquant (`[AI-WARNING-CRITICAL]`, laissé tel quel) | `avant1s` : reste de la bande 800 et la lumière du rétroéclairage (799) ; `apres1s` : l'attente de 1 s elle-même |
+| `p600` | première action de l'`on_boot` 600 | rien (enregistré avant l'écran) |
+| `donnees` | `on_boot` 500 | **toute la bande 600** : écran (MIPI-DSI, reset par l'expandeur), tactile, ES7210, micro, ES8388, INA226, centrale inertielle, capteurs, et le début de l'`on_boot` 600 (`lvgl.resume`, rétroéclairage allumé). Même priorité 600 : aucune marque ne peut les séparer sans changer une priorité |
+| `lvgl` | `on_boot` 399 | bande 400, dans cet ordre : haut-parleur (I²S), **`setup()` de LVGL**, lecteur |
+| `wifiinit` | `on_boot` 249 | lambdas différées (395) et animations (380) de LVGL, réseau (300), **`setup()` du Wi-Fi** (250), qui passe par le C6 |
+| `reseau` | `on_boot` 199 | SNTP (220), API, OTA, mode sans échec (200) |
+| `ecoute` | `on_boot` 99 | micro_wake_word, assistant vocal (100) |
+| `fin` | première action de l'`on_boot` -100 | le reste jusqu'à -100 (composant debug) |
+| `i18n` / `zones` | après `i18n_apply_boot()` / après le script `tab5_zones_apply`, `on_boot` -100 | langue de l'écran ; zones optionnelles (tuiles, clim, rangée, tuile − / +). La fin de `setup()` suit |
+| `ordo` | calculé à `setup` | — (voir Horloge) |
+| `retro` | première écriture non nulle du PWM du rétroéclairage (`tab5-hardware.yaml`) | il s'allume vraiment |
+| `dessin` / `image` | `lvgl: on_draw_start` / premier `on_draw_end` | premier dessin de LVGL, fin de la première image envoyée à l'écran |
+| `tard` | fin de l'`on_boot` -100 (son `delay: 2s`, puis l'agrandissement au toucher et les pointeurs de l'horloge) | — |
+| `wifi` / `api` | Wi-Fi connecté / premier client de l'API (Home Assistant), la première fois | — |
+| `fin600` | fin de l'`on_boot` 600 (Home Assistant attendu, `esphome.tab5_connected`, `delay: 3s`, préchargement du calendrier) | — |
+| `chargeur` | premier allumage du chargeur de la batterie ; « - » quand le démarrage précédent n'a vu aucune batterie ([matériel](hardware.md#version-française), Batterie) | — |
+
+Les marques du premier texte ne publient jamais : les deux textes partent à la première image, puis à chaque étape suivante (`tard`, `wifi`, `api`, `fin600`, `chargeur`), jamais pendant `setup()` ; Home Assistant garde une valeur par démarrage dans son historique. `retro`, `dessin` et `image` viennent normalement après `fin` (ESPHome ne lance les boucles qu'après `setup()`, sauf si un composant fait attendre `setup()`) : les comparer à `fin` pour le savoir. Marquer une étape coûte une lecture d'horloge et une écriture en mémoire. Source : `Tab5/socle/tab5_demarrage.h` ; câblage relu par `tests/test_chronologie_demarrage.py`.
 
 ## Limites
 

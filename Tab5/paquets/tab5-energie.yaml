@@ -5,7 +5,8 @@
 #       tab5_energie.cpp dessine (g_energie_ui) et sa demande à Home Assistant.
 #         - tab5_energie_ouvrir : ouvre le popup (tuile cap à l'option e, ou « Aller à
 #           l'écran → Énergie »). Pose les widgets à la première ouverture, puis
-#           energie_ouvrir() : vue des heures, dessin, demande à HA.
+#           energie_ouvrir() : vue des heures, première page qui a des données (ADR-0058),
+#           dessin, demande à HA.
 #         - tab5_energie_demande : événement esphome.tab5_energie (vue = heures | jours |
 #           mois), émis à l'ouverture et à chaque bouton de vue. Le blueprint « Tab5 —
 #           emplacements » y répond en lançant script.tab5_energie
@@ -15,7 +16,7 @@
 # @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
 #       nomme aucune entité, elle dit seulement quelle vue elle montre. Chargé APRÈS
 #       tab5_lvgl : il référence des widgets. Aucun lv_* ici ; la tablette ne garde rien.
-# @ai_instruction Un widget de plus = son champ dans EnergieUI (tab5_custom.h) et sa ligne
+# @ai_instruction Un widget de plus = son champ dans EnergieUI (tab5_energie.h) et sa ligne
 #       ici. La commande est une lambda SANS capture (pointeur de fonction), comme celles
 #       de tab5-tuiles.yaml.
 # ============================================================================
@@ -26,30 +27,62 @@ script:
       - lambda: |-
           EnergieUI& u = g_energie_ui;
           if (u.popup == nullptr) {
+            u.page[0] = id(energie_page_flux);
+            u.page[1] = id(energie_page_soleil);
+            u.page[2] = id(energie_page_production);
+            u.page[3] = id(energie_page_bilan);
+            u.onglet[0] = id(energie_onglet_0);
+            u.onglet[1] = id(energie_onglet_1);
+            u.onglet[2] = id(energie_onglet_2);
+            u.onglet[3] = id(energie_onglet_3);
             u.carte[0] = id(energie_carte_0);
             u.carte[1] = id(energie_carte_1);
             u.carte[2] = id(energie_carte_2);
             u.carte[3] = id(energie_carte_3);
+            u.carte[4] = id(energie_carte_4);
+            u.carte[5] = id(energie_carte_5);
+            u.carte[6] = id(energie_carte_6);
+            u.carte[7] = id(energie_carte_7);
             u.nom[0] = id(energie_nom_0);
             u.nom[1] = id(energie_nom_1);
             u.nom[2] = id(energie_nom_2);
             u.nom[3] = id(energie_nom_3);
+            u.nom[4] = id(energie_nom_4);
+            u.nom[5] = id(energie_nom_5);
+            u.nom[6] = id(energie_nom_6);
+            u.nom[7] = id(energie_nom_7);
             u.icone[0] = id(energie_icone_0);
             u.icone[1] = id(energie_icone_1);
             u.icone[2] = id(energie_icone_2);
             u.icone[3] = id(energie_icone_3);
+            u.icone[4] = id(energie_icone_4);
+            u.icone[5] = id(energie_icone_5);
+            u.icone[6] = id(energie_icone_6);
+            u.icone[7] = id(energie_icone_7);
             u.valeur[0] = id(energie_valeur_0);
             u.valeur[1] = id(energie_valeur_1);
             u.valeur[2] = id(energie_valeur_2);
             u.valeur[3] = id(energie_valeur_3);
+            u.valeur[4] = id(energie_valeur_4);
+            u.valeur[5] = id(energie_valeur_5);
+            u.valeur[6] = id(energie_valeur_6);
+            u.valeur[7] = id(energie_valeur_7);
             u.ligne1[0] = id(energie_ligne1_0);
             u.ligne1[1] = id(energie_ligne1_1);
             u.ligne1[2] = id(energie_ligne1_2);
             u.ligne1[3] = id(energie_ligne1_3);
+            u.ligne1[4] = id(energie_ligne1_4);
+            u.ligne1[5] = id(energie_ligne1_5);
+            u.ligne1[6] = id(energie_ligne1_6);
+            u.ligne1[7] = id(energie_ligne1_7);
             u.ligne2[0] = id(energie_ligne2_0);
             u.ligne2[1] = id(energie_ligne2_1);
             u.ligne2[2] = id(energie_ligne2_2);
             u.ligne2[3] = id(energie_ligne2_3);
+            u.ligne2[4] = id(energie_ligne2_4);
+            u.ligne2[5] = id(energie_ligne2_5);
+            u.ligne2[6] = id(energie_ligne2_6);
+            u.ligne2[7] = id(energie_ligne2_7);
             u.graphique = id(energie_graphique);
             u.titre = id(energie_titre);
             u.vue_btn[0] = id(energie_vue_0);
@@ -57,7 +90,36 @@ script:
             u.vue_btn[2] = id(energie_vue_2);
             u.zone = id(energie_zone);
             u.attente = id(energie_attente);
+            u.flux_zone = id(energie_flux_zone);
+            u.flux_noeud[0] = id(energie_flux_0);
+            u.flux_noeud[1] = id(energie_flux_1);
+            u.flux_noeud[2] = id(energie_flux_2);
+            u.flux_noeud[3] = id(energie_flux_3);
+            u.flux_icone[0] = id(energie_flux_icone_0);
+            u.flux_icone[1] = id(energie_flux_icone_1);
+            u.flux_icone[2] = id(energie_flux_icone_2);
+            u.flux_icone[3] = id(energie_flux_icone_3);
+            u.flux_valeur[0] = id(energie_flux_valeur_0);
+            u.flux_valeur[1] = id(energie_flux_valeur_1);
+            u.flux_valeur[2] = id(energie_flux_valeur_2);
+            u.flux_valeur[3] = id(energie_flux_valeur_3);
+            u.flux_texte[0] = id(energie_flux_texte_0);
+            u.flux_texte[1] = id(energie_flux_texte_1);
+            u.flux_texte[2] = id(energie_flux_texte_2);
+            u.flux_texte[3] = id(energie_flux_texte_3);
+            u.flux_detail[0] = id(energie_flux_detail_0);
+            u.flux_detail[1] = id(energie_flux_detail_1);
+            u.flux_detail[2] = id(energie_flux_detail_2);
+            u.flux_detail[3] = id(energie_flux_detail_3);
+            u.soleil_zone = id(energie_soleil_zone);
+            u.soleil_infos = id(energie_soleil_infos);
+            u.bilan_titre = id(energie_bilan_titre);
+            u.bilan_vue_btn[0] = id(energie_bilan_vue_0);
+            u.bilan_vue_btn[1] = id(energie_bilan_vue_1);
+            u.bilan_vue_btn[2] = id(energie_bilan_vue_2);
+            u.bilan_zone = id(energie_bilan_zone);
             u.police = id(roboto_22);
+            u.police_grasse = id(roboto_32_b);
             u.demander = [](const char* vue) { id(tab5_energie_demande).execute(std::string(vue)); };
             // En dernier : energie_ouvrir() ne fait rien tant que popup est nul.
             u.popup = id(energie_popup);

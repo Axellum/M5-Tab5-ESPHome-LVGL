@@ -54,6 +54,11 @@ NON_MONTREES = {
     "lumieres-salon": "lumieres-chambre montre la même fenêtre, lumière allumée",
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "energie-mois": "energie-jours montre la même fenêtre ; les vues sont décrites",
+    # Pages Flux, Aujourd'hui et Bilan du popup Énergie (ADR-0058, 10/10/2026) : images à tirer du
+    # rendu de la PR (elles ne peuvent pas être capturées avant que le firmware existe), puis citées.
+    "energie-flux": "page Flux (ADR-0058) ; image à tirer du rendu de la PR",
+    "energie-aujourdhui": "page Aujourd'hui (ADR-0058) ; image à tirer du rendu de la PR",
+    "energie-bilan": "page Bilan (ADR-0058) ; image à tirer du rendu de la PR",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
     "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",

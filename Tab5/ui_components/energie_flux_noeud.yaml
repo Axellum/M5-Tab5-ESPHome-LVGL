@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Cercle de la page « Flux » du popup Énergie (ADR-0058), réutilisé 4 fois par
+# energie_popup.yaml : 0 solaire, 1 maison, 2 réseau, 3 batterie (l'ordre des cartes).
+# vars : n (0-3, suffixe des ids lus par tab5_energie.cpp via g_energie_ui).
+# Ne rien assigner ici : tab5_energie.cpp place le cercle (x, y : les traits partent de son
+# bord), le montre (la batterie seulement si elle est choisie), colore son bord sur tout le
+# tour (la source ; un thème à relief ne le pose que sur deux côtés du style partagé), et
+# écrit l'icône (mdi_font_45, glyphe_carte → MDI_CODE_TARGETS), la valeur et les deux
+# lignes du dessous (coupées avec « … » à la largeur de leur corde).
+# @geometry Cercle de 200 px (kFluxD) : icône y 12, valeur y 60, texte y 102 (corde de
+#           192 px à son bas, kFluxTexteL 180), détail y 128 (corde de 168 px, kFluxDetailL
+#           156) : « Aujourd'hui » puis « 1.47 kWh », « Charge » puis « 400 W ».
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "energie_flux_${n}"
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 200
+  height: 200
+  radius: 100
+  hidden: true
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    - label: { id: "energie_flux_icone_${n}", text: "", align: TOP_MID, y: 12, text_font: mdi_font_45, styles: style_text_dim }
+    - label: { id: "energie_flux_valeur_${n}", text: "--", align: TOP_MID, y: 60, text_font: roboto_32_b }
+    - label: { id: "energie_flux_texte_${n}", text: "", align: TOP_MID, y: 102, styles: style_text_dim }
+    - label: { id: "energie_flux_detail_${n}", text: "", align: TOP_MID, y: 128, styles: style_text_dim }

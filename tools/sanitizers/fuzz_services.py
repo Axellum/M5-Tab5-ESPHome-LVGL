@@ -87,6 +87,13 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_energie": {"payload": "3450|1180|-2270|78|0|24.5|°C|12.4"},
     "tab5_maj_energie_historique": {"vue": "heures", "debut": "2026-06-16",
                                     "valeurs": "0;0;0;0;0;0;0.05;0.4;1.1;1.9;2.6;3;3.1;;;;;;;;;;;"},
+    # Pages « Aujourd'hui » et « Bilan » (ADR-0058) : les 24 valeurs de prevu et de clair, un créneau,
+    # puis une devise multi-octets et trois séries de créneaux dont certains à venir (vides).
+    "tab5_maj_energie_soleil": {"payload": "05:47|13:52|21:56|17.8|nan|a|12|15|"
+                                           "0;0;0;0;0;0;0;0;0.12;0.79;1.53;2.2;2.68;2.93;2.38;2.12;1.67;0.94;0.42;0;0;0;0;0|"
+                                           "0;0;0;0;0;0;0;0;0.15;0.99;1.91;2.75;3.35;3.66;3.61;3.22;2.54;1.67;0.75;0;0;0;0;0"},
+    "tab5_maj_energie_bilan": {"vue": "jours", "debut": "2026-05-18",
+                              "payload": "€|1.2;0.4;3.1;0;2.2;1.8;;|0.9;5.2;0.6;7.4;1.1;;;|0.52;0.1;1.3;0.4;0.9;;;"},
     # Humidité (ADR-0047) : 7e champ de l'en-tête, trois champs de plus par créneau ; avec
     # la prévision, ce que HA n'envoie jamais ensemble : tout le tracé à la fois.
     "tab5_maj_historique": {"cle": "serre", "vue": "jour", "entete": "Serre|2026-06-15T07:00|60|1485|18.2|0|62",
