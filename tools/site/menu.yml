@@ -129,6 +129,9 @@
         - en: Music
           fr: Musique
           page: docs/notice/music.md
+        - en: Cameras
+          fr: Caméras
+          page: docs/notice/cameras.md
         - en: Settings
           fr: Réglages
           page: docs/notice/settings.md
