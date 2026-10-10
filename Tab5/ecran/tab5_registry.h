@@ -83,7 +83,7 @@ enum Kind : uint8_t {
                 // (sonnerie du réveil)
 };
 
-constexpr int MAX = 24;  // 21 inscrites au 08/10/2026 (liste de la tuile − / +, roue d'actions rapides, Maison ; la console est devenue une page des Réglages) : de la marge
+constexpr int MAX = 32;  // 25 inscrites au 10/10/2026 (Caméras, ADR-0049, et Suivi, ADR-0053, ont dépassé les 24 d'avant ; tests/test_reglages.py) : de la marge
 
 // true dès que tab5_modal_registry_init a rempli la table.
 bool ready();
