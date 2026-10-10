@@ -31,6 +31,14 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
 
+### 2026-10-10 — Popup Caméras : la mosaïque (ADR-0057, lot 2)
+
+- **Suite de la demande d'Axel** (plusieurs caméras dans plusieurs pièces). **Non testé sur la tablette ni avec de vraies caméras.**
+- **Mosaïque** dès deux caméras dans la pièce choisie (ou « Toutes ») : le cadre en quatre cases de 476 × 266 (`cameras_vignette.yaml` ×4), quatre caméras par page (deux au milieu, trois avec la troisième centrée en bas, ou 2 × 2) ; au-delà, le glissé change de page et les pastilles comptent les pages. Chaque case : le nom de la caméra dans une pastille de verre, sa petite image, « Chargement... » ou « Hors ligne depuis … » (image atténuée). **Tap sur une case** : la caméra en grand (la vue du lot 1) ; **tap sur l'image** : retour à la mosaïque, sur la page de cette caméra. La vue est gardée en NVS avec la pièce et la caméra.
+- **Vignettes demandées petites** (`width=480&height=270`) et montrées « couvrantes » : recadrées sans transformation quand elles tiennent presque (une caméra 1080p arrive à 480 × 270), réduites juste assez sinon.
+- **Toujours une image à la fois** : en mosaïque, les cases de la page à tour de rôle (d'abord celles sans image), chacune toutes les 10 s ; rien pour les autres pages. Chaque caméra garde sa dernière grande image et sa dernière vignette dans le même budget de 8 Mio. Le chargeur ne réutilise plus un tampon deux fois trop grand (une grande image rendue ne porte plus une vignette).
+- Deux textes d'écran en sept langues (« Toutes les caméras », « Touchez une image pour l'agrandir »). Test `tests/test_cameras_popup.py` : autant de puces, de cases et de pastilles dans le YAML que de constantes dans le C++. Rendu : `cameras` (mosaïque), `cameras-mosaique-page-2`, `cameras-plein-ecran`, `cameras-piece-hors-ligne`. Docs : ADR-0057 (lot 2), notice Caméras, `docs/screens.md`, cartographie.
+
 ### 2026-10-10 — Popup Caméras : plusieurs caméras dans plusieurs pièces (ADR-0057, lot 1)
 
 - **Demande d'Axel** (« fais comme tu le vois ») : gérer plusieurs caméras dans plusieurs pièces, intuitif, complet, propre, beau et léger. **Non testé sur la tablette ni avec plusieurs vraies caméras.**
