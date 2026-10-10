@@ -496,6 +496,14 @@ static void set_clock_digit_immediate(ClockDigitRoller& r, int box_h, char digit
     r.shown = digit;
 }
 
+// Fond de la tuile de l'horloge (10/10/2026) : l'opacité posée sur l'objet passe devant
+// celle du style partagé style_horloge_page, qu'un thème redessine (formes) sans la
+// toucher ; la bordure, l'ombre et le dégradé du thème reviennent avec le fond.
+void horloge_fond_ui(lv_obj_t* tuile, bool fond) {
+    if (tuile == nullptr) return;
+    lv_obj_set_style_bg_opa(tuile, fond ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
+}
+
 // Horloge + date (appelée par time: on_time de tab5-sensors-diagnostics.yaml).
 
 void update_clock_date_ui(lv_obj_t* lbl_date,

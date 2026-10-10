@@ -180,7 +180,7 @@ What is left: `setup()` (5 s, including the 1 s wait the screen needs after a so
 ## Limits
 
 - One tablet, one screen revision, one evening per campaign.
-- Not measured: touch latency, voice latency (wake word to answer), power draw.
+- Not measured: touch latency, voice latency (wake word to answer). Power draw has its own page: [power consumption](consumption.md).
 - Most of the time of a full-screen redraw is software rendering on one core; ESPHome 2026.9 draws with a single buffer and waits for each transfer, and uses the P4's 2D accelerator for rotation only.
 
 ---
@@ -363,5 +363,5 @@ Ce qui reste : `setup()` (5 s, dont l'attente de 1 s dont l'écran a besoin apr�
 ## Limites
 
 - Une tablette, une révision d'écran, une soirée par campagne.
-- Pas mesurés : latence tactile, latence vocale (du mot d'activation à la réponse), consommation.
+- Pas mesurées : latence tactile, latence vocale (du mot d'activation à la réponse). La consommation a sa page : [consommation](consumption.md#version-française).
 - L'essentiel du temps d'un redessin complet est du rendu logiciel sur un seul cœur ; ESPHome 2026.9 dessine avec un seul tampon, attend chaque envoi, et n'utilise l'accélérateur 2D du P4 que pour la rotation.

@@ -109,6 +109,10 @@ void boutons_verre_marquer(lv_obj_t* root);
 // inactif = GLASS_RIM + 1px). Le sélecteur du popup lumière passe 3 px.
 void highlight_button_border(lv_obj_t* btn, bool active, uint32_t color, int32_t active_width = 2);
 
+// Fond de la tuile de l'horloge (interrupteur « Tab5 Fond de l'horloge », 10/10/2026) :
+// sans fond, la tuile garde sa bordure ; le dégradé du thème revient avec le fond.
+void horloge_fond_ui(lv_obj_t* tuile, bool fond);
+
 // L'heure passe par g_clock_roller (plus de label lbl_time unique) : seul le
 // groupe qui change roule. La date reste un label simple.
 void update_clock_date_ui(lv_obj_t* lbl_date,
