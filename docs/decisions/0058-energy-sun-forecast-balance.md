@@ -20,6 +20,8 @@ The popup gets pages (`pages_brancher()`, ADR-0046), opened on the first one tha
 
 A page without its data is not shown; fewer than two pages = no tabs (the brick's rule).
 
+Drawing (firmware, `tab5_energie.cpp`): until the finger picks a page, the popup follows the first page that has data as the pushes arrive (Production while nothing came). LVGL 9.5 draws no dashed border nor dashed oblique line: the sun's arc is a row of dots and the forecast bars have a plain outline. The battery's share of the home ring is a third part, between solar and grid.
+
 ### Two new firmware actions (pure addition: minor version of the contract)
 
 `tab5_maj_energie_soleil(payload)` — one string, fields separated by `|`, lists by `;`:

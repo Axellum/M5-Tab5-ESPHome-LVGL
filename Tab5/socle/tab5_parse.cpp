@@ -1113,3 +1113,156 @@ const char* telecommande_emplacement(int i) {
     static constexpr const char* kCles[kTelecommandesMax] = {"tv", "tv1", "tv2", "tv3"};
     return (i >= 0 && i < kTelecommandesMax) ? kCles[i] : kCles[0];
 }
+
+// ─── 14. Énergie : soleil, prévision et bilan (ADR-0058) ───
+// Nouveau, écrit ici d'emblée.
+
+namespace {
+constexpr int kSoleilChamps = 10;
+constexpr int kBilanChamps = 4;
+
+// « HH:MM » strict sur un champ (qui n'a pas de zéro final) : 5 octets exactement.
+int energie_hhmm(const Champ& c) {
+    if (c.p == nullptr || c.n != 5) return -1;
+    char t[6];
+    std::memcpy(t, c.p, 5);
+    t[5] = '\0';
+    return hhmm_minutes(t);
+}
+
+// Heure entière 0..24 d'un champ, -1 sinon.
+int energie_heure(const Champ& c) {
+    const uint32_t h = champ_entier(c, 24, 0xFFFFFFFFu);
+    return h == 0xFFFFFFFFu ? -1 : static_cast<int>(h);
+}
+
+// Énergie d'un champ en kWh : NAN si vide, illisible, négative ou au-delà de kEnergieKwhMax.
+float energie_kwh(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    return std::isfinite(v) && v >= 0.0f && v <= kEnergieKwhMax ? v : NAN;
+}
+
+// Puissance d'un instantané (W) : NAN si non finie ou au-delà de ±kEnergieWMax.
+float energie_w(float v) { return std::isfinite(v) && std::fabs(v) <= kEnergieWMax ? v : NAN; }
+
+float somme_si(float s, float v) { return std::isfinite(v) ? (std::isfinite(s) ? s + v : v) : s; }
+
+// Liste « ; » : la boucle d'energie_historique (champ vide compté, le dernier aussi).
+// signe : une valeur négative est gardée (un gain), sinon elle vaut NAN (une énergie).
+int liste_nombres(const Champ& c, float* out, int max, bool signe) {
+    if (c.p == nullptr || c.n == 0 || out == nullptr || max <= 0) return 0;
+    const char* p = c.p;
+    const char* fin = c.p + c.n;
+    int n = 0;
+    bool apres_sep = false;
+    while ((p < fin || apres_sep) && n < max) {
+        const Champ v = champ_suivant(p, fin, ';');
+        apres_sep = p > v.p + v.n;  // le champ s'est terminé sur un « ; »
+        const float x = champ_nombre(v, NAN);
+        const bool ok = std::isfinite(x) && std::fabs(x) <= kEnergieKwhMax && (signe || x >= 0.0f);
+        out[n++] = ok ? x : NAN;
+    }
+    return n;
+}
+}  // namespace
+
+int energie_kwh_liste(const Champ& c, float* out, int max) { return liste_nombres(c, out, max, false); }
+
+bool energie_soleil_lire(const Champ& payload, EnergieSoleilLu& out) {
+    out = EnergieSoleilLu{};
+    if (payload.p == nullptr) return false;
+    Champ f[kSoleilChamps];
+    const int k = champs_decouper(payload.p, payload.n, '|', f, kSoleilChamps);
+    for (int i = k; i < kSoleilChamps; i++) f[i] = Champ{payload.p + payload.n, 0};
+    out.lever = energie_hhmm(f[0]);
+    out.midi = energie_hhmm(f[1]);
+    out.coucher = energie_hhmm(f[2]);
+    if (out.lever < 0 || out.coucher <= out.lever) out.lever = out.midi = out.coucher = -1;
+    if (out.midi <= out.lever || out.midi >= out.coucher) out.midi = -1;
+    out.prevu_jour_choisi = f[3].n > 0;
+    out.prevu_jour = energie_kwh(f[3]);
+    out.prevu_demain_choisi = f[4].n > 0;
+    out.prevu_demain = energie_kwh(f[4]);
+    if (champ_est(f[5], "a")) out.source = EnergieSource::APPRISE;
+    else if (champ_est(f[5], "e")) out.source = EnergieSource::EXTERNE;
+    out.creneau_debut = energie_heure(f[6]);
+    out.creneau_fin = energie_heure(f[7]);
+    if (out.creneau_debut < 0 || out.creneau_fin <= out.creneau_debut) out.creneau_debut = out.creneau_fin = -1;
+    out.n_prevu = energie_kwh_liste(f[8], out.prevu, kEnergieHeures);
+    out.n_clair = energie_kwh_liste(f[9], out.clair, kEnergieHeures);
+    return out.lever >= 0 || out.n_prevu > 0 || out.n_clair > 0;
+}
+
+bool energie_bilan_lire(const Champ& payload, int slots, EnergieBilanLu& out) {
+    out = EnergieBilanLu{};
+    if (payload.p == nullptr) return false;
+    if (slots > kEnergieSlotsMax) slots = kEnergieSlotsMax;
+    if (slots < 0) slots = 0;
+    Champ f[kBilanChamps];
+    const int k = champs_decouper(payload.p, payload.n, '|', f, kBilanChamps);
+    for (int i = k; i < kBilanChamps; i++) f[i] = Champ{payload.p + payload.n, 0};
+    if (f[0].n <= kEnergieDeviseMax) out.devise = f[0];
+    out.vente_choisie = f[1].n > 0;
+    out.achat_choisi = f[2].n > 0;
+    out.gain_choisi = f[3].n > 0;
+    out.n_vente = energie_kwh_liste(f[1], out.vente, slots);
+    out.n_achat = energie_kwh_liste(f[2], out.achat, slots);
+    // Le gain peut être négatif (prix de revente négatif) : borné en valeur absolue.
+    out.n_gain = liste_nombres(f[3], out.gain, slots, true);
+    return out.vente_choisie || out.achat_choisi;
+}
+
+EnergieBilanCreneau energie_bilan_creneau(float produit, const EnergieBilanLu& b, int k) {
+    EnergieBilanCreneau c;
+    if (k < 0 || k >= kEnergieSlotsMax) return c;
+    c.produit = std::isfinite(produit) && produit >= 0.0f && produit <= kEnergieKwhMax ? produit : NAN;
+    c.vendu = (b.vente_choisie && k < b.n_vente) ? b.vente[k] : NAN;
+    c.achete = (b.achat_choisi && k < b.n_achat) ? b.achat[k] : NAN;
+    c.gain = (b.gain_choisi && k < b.n_gain) ? b.gain[k] : NAN;
+    if (std::isfinite(c.produit)) c.autoconsomme = std::max(c.produit - (std::isfinite(c.vendu) ? c.vendu : 0.0f), 0.0f);
+    if (b.achat_choisi && (std::isfinite(c.autoconsomme) || std::isfinite(c.achete)))
+        c.consomme = (std::isfinite(c.autoconsomme) ? c.autoconsomme : 0.0f) +
+                     (std::isfinite(c.achete) ? c.achete : 0.0f);
+    return c;
+}
+
+EnergieBilanTotaux energie_bilan_totaux(const float* produit, int n, const EnergieBilanLu& b) {
+    EnergieBilanTotaux t;
+    if (n > kEnergieSlotsMax) n = kEnergieSlotsMax;
+    for (int k = 0; k < n; k++) {
+        const EnergieBilanCreneau c = energie_bilan_creneau(produit != nullptr ? produit[k] : NAN, b, k);
+        t.produit = somme_si(t.produit, c.produit);
+        t.autoconsomme = somme_si(t.autoconsomme, c.autoconsomme);
+        t.vendu = somme_si(t.vendu, c.vendu);
+        t.achete = somme_si(t.achete, c.achete);
+        t.consomme = somme_si(t.consomme, c.consomme);
+        t.gain = somme_si(t.gain, c.gain);
+    }
+    if (std::isfinite(t.produit) && t.produit > 0.0f && std::isfinite(t.autoconsomme))
+        t.taux = std::min(t.autoconsomme / t.produit, 1.0f);
+    return t;
+}
+
+EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, float batterie) {
+    EnergieFlux f;
+    solaire = energie_w(solaire);
+    maison = energie_w(maison);
+    reseau = energie_w(reseau);
+    batterie = energie_w(batterie);
+    const float s = std::isfinite(solaire) ? std::max(solaire, 0.0f) : 0.0f;
+    const float r = std::isfinite(reseau) ? reseau : 0.0f;
+    const float b = std::isfinite(batterie) ? batterie : 0.0f;
+    const float vente = std::max(-r, 0.0f), achat = std::max(r, 0.0f);
+    const float charge = std::max(b, 0.0f), decharge = std::max(-b, 0.0f);
+    f.solaire_reseau = std::min(vente, s);
+    f.solaire_batterie = std::min(charge, s - f.solaire_reseau);
+    f.solaire_maison = std::max(s - f.solaire_reseau - f.solaire_batterie, 0.0f);
+    f.reseau_batterie = std::min(std::max(charge - f.solaire_batterie, 0.0f), achat);
+    f.reseau_maison = std::max(achat - f.reseau_batterie, 0.0f);
+    f.batterie_reseau = std::min(std::max(vente - f.solaire_reseau, 0.0f), decharge);
+    f.batterie_maison = std::max(decharge - f.batterie_reseau, 0.0f);
+    if (std::isfinite(maison)) f.maison = maison;
+    else if (std::isfinite(solaire) || std::isfinite(reseau) || std::isfinite(batterie))
+        f.maison = f.solaire_maison + f.reseau_maison + f.batterie_maison;
+    return f;
+}

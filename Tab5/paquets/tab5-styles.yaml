@@ -383,6 +383,7 @@ font:
       - "\U000F0717"  # snowflake
       - "\U000F0D3E"  # transmission-tower (popup Énergie, réseau sans échange)
       - "\U000F0E79"  # arrow-up-down
+      - "\U000F1007"  # piggy-bank (popup Énergie, page Bilan : gains, ADR-0058)
       - "\U000F1051"  # led-strip-variant
       - "\U000F1382"  # compass-rose (moyeu de la roue de navigation, ADR-0042)
       - "\U000F146D"  # fan-chevron-down
