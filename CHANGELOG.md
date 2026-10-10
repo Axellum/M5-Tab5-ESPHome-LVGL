@@ -37,6 +37,12 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 - **Fond de la tuile de l'horloge au choix** : interrupteur « Tab5 Fond de l'horloge » (`tab5-ha-controls.yaml`, éteint par défaut, gardé en mémoire, appliqué sans redémarrage par `horloge_fond_ui()`), réglé depuis Réglages ▸ Apparence (Oui / Non à droite de « Clair ou sombre », qui passe en demi-largeur, `REGLAGE_HORLOGE_FOND`). Sans fond, la tuile garde sa bordure.
 - Une entrée de plus dans le tableau de bord HA (`tab5_dashboard.jinja`, traduite) ; le texte « Fond de l'horloge » en six langues. Aucun changement du contrat HA ↔ firmware.
 
+### 2026-10-10 — Première mesure de consommation du Tab5 : page « Consommation »
+
+- **Demande d'Axel** : mettre en doc les chiffres du test de husyildiz (rc.4, discussion #278) avec une analyse, la consommation annuelle et ce qu'on peut en tirer.
+- Nouvelle page `docs/consumption.md` (FR/EN, menu « Comprendre le projet ») : 2,63 W à 100 %, 1,74 W à 50 %, 1,23 W écran éteint ; le thème (0,02 W) et Okay Nabu / haut-parleur (0,05 W chacun) ne changent rien ; l'économie d'énergie revient à son plafond de 50 % ; kWh par an ; pistes (extinction auto sur batterie, mesure à la prise). Le « 23,7 Wh » et les « 9 h » du script de test sont signalés comme trop hauts (capacité nominale 14,8 Wh). Aucune autre tablette n'est chiffrée : non mesuré, méthode donnée.
+- `docs/hardware.md` et `docs/performance.md` ne disent plus « jamais mesurée ». Documentation seule.
+
 ### 2026-10-10 — Réfrigérateurs et congélateurs : normes, porte mal fermée, popup « Froid » et icône qui clignote sur l'horloge (ADR-0055)
 
 - **Demande d'Axel** : suivre le frigo et le congélateur — les déclarer dans les réglages, contrôler la température par rapport aux normes, repérer une montée (porte mal fermée), voir les 24 dernières heures, les alertes habituelles de la carte centrale et, pour un problème grave seulement, une icône qui clignote dans le coin de l'horloge ; un popup de gestion avec la courbe et les incidents.

@@ -186,6 +186,9 @@
     - en: Performance
       fr: Performances
       page: docs/performance.md
+    - en: Power consumption
+      fr: Consommation
+      page: docs/consumption.md
     - en: Screen languages
       fr: Langues de l'écran
       page: docs/translations.md
