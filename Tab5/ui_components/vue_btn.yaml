@@ -1,8 +1,9 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT] Bouton de vue d'un graphique de popup, réutilisé 3 fois par chacun :
-#   - energie_popup.yaml (ADR-0028) : 0 heures, 1 jours, 2 mois ;
+#   - energie_popup.yaml (ADR-0028) : 0 heures, 1 jours, 2 mois, deux fois (pages
+#     Production, prefixe energie, et Bilan, prefixe energie_bilan, ADR-0058) ;
 #   - historique_popup.yaml (ADR-0032) : 0 24 h, 1 7 jours, 2 30 jours.
-# vars : prefixe (energie | historique : id ${prefixe}_vue_N, et la fonction C++
+# vars : prefixe (energie | energie_bilan | historique : id ${prefixe}_vue_N, et la fonction C++
 #        ${prefixe}_choisir_vue appelée au toucher), n (0-2 : vue choisie), x_pos (depuis
 #        le bord droit de la carte du graphique), label_text (traduit au démarrage).
 # Surbrillance de la vue affichée : tab5_energie.cpp / tab5_historique.cpp

@@ -27,22 +27,43 @@ namespace esphome { namespace font { class Font; } }
 // (vue demandée) par les actions tab5_maj_energie et tab5_maj_energie_historique.
 //
 // Widgets posés par le script tab5_energie_ouvrir (tab5-energie.yaml) à la première
-// ouverture : id() n'existe que dans une lambda YAML. Cartes : 0 solaire, 1 maison,
-// 2 réseau, 3 batterie (energie_carte.yaml) ; vues : 0 heures, 1 jours, 2 mois.
+// ouverture : id() n'existe que dans une lambda YAML. Cartes (energie_carte.yaml) : 0
+// solaire, 1 maison, 2 réseau, 3 batterie (page Production), 4 autoconsommé, 5 vendu,
+// 6 acheté, 7 gains (page Bilan) ; vues : 0 heures, 1 jours, 2 mois. Pages (ADR-0058) :
+// 0 Flux, 1 Aujourd'hui, 2 Production, 3 Bilan.
+constexpr int kEnergieCartes = 8;
+constexpr int kEnergiePages = 4;
 struct EnergieUI {
     lv_obj_t* popup = nullptr;            // energie_popup
-    lv_obj_t* carte[4] = {};              // energie_carte_N
-    lv_obj_t* nom[4] = {};                // energie_nom_N
-    lv_obj_t* icone[4] = {};            // energie_icone_N (mdi_font_45)
-    lv_obj_t* valeur[4] = {};             // energie_valeur_N (police de la date du thème)
-    lv_obj_t* ligne1[4] = {};             // energie_ligne1_N
-    lv_obj_t* ligne2[4] = {};             // energie_ligne2_N
+    lv_obj_t* page[kEnergiePages] = {};   // energie_page_flux, _soleil, _production, _bilan
+    lv_obj_t* onglet[kEnergiePages] = {}; // energie_onglet_N (pages_onglet.yaml)
+    lv_obj_t* carte[kEnergieCartes] = {}; // energie_carte_N
+    lv_obj_t* nom[kEnergieCartes] = {};   // energie_nom_N
+    lv_obj_t* icone[kEnergieCartes] = {}; // energie_icone_N (mdi_font_45)
+    lv_obj_t* valeur[kEnergieCartes] = {};  // energie_valeur_N (police de la date du thème)
+    lv_obj_t* ligne1[kEnergieCartes] = {};  // energie_ligne1_N
+    lv_obj_t* ligne2[kEnergieCartes] = {};  // energie_ligne2_N
     lv_obj_t* graphique = nullptr;        // energie_graphique : carte du bas
     lv_obj_t* titre = nullptr;            // energie_titre : « Aujourd'hui · 12.4 kWh »
     lv_obj_t* vue_btn[3] = {};            // energie_vue_N
     lv_obj_t* zone = nullptr;             // energie_zone : barres, construites en C++
     lv_obj_t* attente = nullptr;          // energie_attente : avant le premier instantané
-    const esphome::font::Font* police = nullptr;   // roboto_22 : libellés de l'axe
+    // Page Flux : un cercle par carte (0 solaire, 1 maison, 2 réseau, 3 batterie,
+    // energie_flux_noeud.yaml), sous eux la zone des traits et de l'anneau.
+    lv_obj_t* flux_zone = nullptr;        // energie_flux_zone
+    lv_obj_t* flux_noeud[4] = {};         // energie_flux_N
+    lv_obj_t* flux_icone[4] = {};         // energie_flux_icone_N (mdi_font_45)
+    lv_obj_t* flux_valeur[4] = {};        // energie_flux_valeur_N
+    lv_obj_t* flux_texte[4] = {};         // energie_flux_texte_N
+    // Page Aujourd'hui : soleil et heures (carte de gauche), chiffres (carte de droite).
+    lv_obj_t* soleil_zone = nullptr;      // energie_soleil_zone
+    lv_obj_t* soleil_infos = nullptr;     // energie_soleil_infos
+    // Page Bilan : carte du graphique, comme celle de Production.
+    lv_obj_t* bilan_titre = nullptr;      // energie_bilan_titre
+    lv_obj_t* bilan_vue_btn[3] = {};      // energie_bilan_vue_N
+    lv_obj_t* bilan_zone = nullptr;       // energie_bilan_zone
+    const esphome::font::Font* police = nullptr;          // roboto_22 : libellés de l'axe
+    const esphome::font::Font* police_grasse = nullptr;   // roboto_32_b : chiffres
     // Événement esphome.tab5_energie (script tab5_energie_demande, lambda sans capture).
     void (*demander)(const char* vue) = nullptr;
 };
@@ -63,7 +84,12 @@ void energie_soleil(const std::string& payload);
 // Action tab5_maj_energie_bilan (ADR-0058) : vue, début comme l'historique, payload
 // « devise|vente|achat|gain » (page « Bilan »).
 void energie_bilan(const std::string& vue, const std::string& debut, const std::string& payload);
-// Ouvre le popup (vue des heures), le peint, et demande ses données à HA.
+// Ouvre le popup (vue des heures) sur la première page qui a des données (Flux, puis
+// Aujourd'hui, sinon Production ; ADR-0058), le peint, et demande ses données à HA.
 void energie_ouvrir();
 // Boutons Heures / Jours / Mois : change la vue et la demande à HA.
 void energie_choisir_vue(int vue);
+// Mêmes boutons sur la page Bilan (energie_bilan_vue_N) : la même vue que Production.
+void energie_bilan_choisir_vue(int vue);
+// Nom de page touché en haut (pages_onglet.yaml) : `rang` parmi les pages montrées.
+void energie_page(int rang);
