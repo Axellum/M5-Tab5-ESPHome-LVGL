@@ -18,7 +18,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 6 | Home Assistant button | bottom row: weather ↔ your devices | Energy window, with a solar production |
 | 7 | Gear button | settings | system console |
 | 8 | Gamepad button | Arcade, the games | TV remote, with a TV |
-| 9 | Second temperature (greenhouse) | left of the clock: voice controls, chart of the coming hours or music player | its history and the forecast |
+| 9 | Second temperature (greenhouse) | left of the clock: voice controls, chart of the coming hours, music player or tracked sensor | its history and the forecast |
 | 10 | Climate: target, − and + | target: climate window (another device chosen: its window); − / +: one step | — |
 | 11 | Row under the clock: plants and sensors | next line | on the plants: plant details |
 | 12 | Central card | next panel, or dismiss a message | Alerts window |
@@ -54,6 +54,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Plants | long press on the plants line, under the clock | [Plants](plants.md) |
 | Alerts | long press on the central card | [Alerts](alerts.md) |
 | Music | long press on a media player, the « now playing » bar, or « Aller à l'écran » | [Music](music.md) |
+| Tracking | the tracked sensor left of the clock, or « Aller à l'écran » | [Tracking](tracking.md) |
 | House | in device mode, tap on the room's name in the central card | [House](house.md) |
 | Settings | the gear button | [Settings](settings.md) |
 | System console (System page of the settings) | long press on the gear button | [System console](console.md) |
@@ -83,7 +84,7 @@ Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt u
 | 6 | Bouton Home Assistant | rangée du bas : météo ↔ vos appareils | fenêtre Énergie, avec une production solaire |
 | 7 | Bouton engrenage | réglages | console système |
 | 8 | Bouton manette | Arcade, les jeux | télécommande TV, avec une TV |
-| 9 | Seconde température (serre) | à gauche de l'horloge : commandes vocales, graphique des prochaines heures ou lecteur de musique | son historique et la prévision |
+| 9 | Seconde température (serre) | à gauche de l'horloge : commandes vocales, graphique des prochaines heures, lecteur de musique ou capteur suivi | son historique et la prévision |
 | 10 | Clim : consigne, − et + | consigne : fenêtre de la clim (un autre appareil choisi : sa fenêtre) ; − / + : un pas | — |
 | 11 | Rangée sous l'horloge : plantes et capteurs | ligne suivante | sur les plantes : détail des plantes |
 | 12 | Carte centrale | panneau suivant, ou écarter un message | fenêtre des alertes |
@@ -119,6 +120,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Plantes | appui long sur la ligne des plantes, sous l'horloge | [Plantes](plants.md#version-française) |
 | Alertes | appui long sur la carte centrale | [Alertes](alerts.md#version-française) |
 | Musique | appui long sur un lecteur multimédia, la barre « en lecture », ou « Aller à l'écran » | [Musique](music.md#version-française) |
+| Suivi | le capteur suivi à gauche de l'horloge, ou « Aller à l'écran » | [Suivi](tracking.md#version-française) |
 | Maison | en mode appareils, tap sur le nom de la pièce dans la carte centrale | [Maison](house.md#version-française) |
 | Réglages | le bouton engrenage | [Réglages](settings.md#version-française) |
 | Console système (page Système des réglages) | appui long sur le bouton engrenage | [Console système](console.md#version-française) |
