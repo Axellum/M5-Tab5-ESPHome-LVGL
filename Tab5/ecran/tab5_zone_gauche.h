@@ -30,7 +30,10 @@ class Font;
 //   - « graphique » : les 15 heures qui viennent (cal_heures_data, déjà poussées par
 //     tab5_maj_previsions_heures_bulk) en courbe des températures, repères du minimum et du
 //     maximum, barres de pluie en mm ; un tap ouvre le popup Météo ;
-//   - « lecteur » : réservé au lecteur audio compact (lot 2), sauté en attendant.
+//   - « lecteur » : le lecteur de musique compact (lot 2, sur le lecteur de l'ADR-0050 :
+//     mêmes données, mêmes commandes ; lecteur_zone.yaml, peint par tab5_lecteur.cpp), sauté
+//     quand HA a dit qu'aucun lecteur n'est choisi ; un tap hors des boutons ouvre le popup
+//     Musique, et la mini-barre « en lecture » se masque tant qu'il est montré.
 // Le blueprint choisit le contenu de départ et ceux qu'un tap fait défiler (clé « gauche »
 // de tab5_maj_emplacements) ; le tap sur la seconde température (btn_serre_games) et le
 // code de geste « zone_gauche_suivante » passent au suivant. Le choix courant est gardé en
@@ -38,12 +41,13 @@ class Font;
 struct ZoneGaucheUI {
     lv_obj_t* vocal = nullptr;              // zone_vocal (micro, Domo, Discu)
     lv_obj_t* graphique = nullptr;          // zone_graphique (carte du graphique)
+    lv_obj_t* lecteur = nullptr;            // zone_lecteur (lecteur compact, tab5_lecteur.cpp)
     esphome::font::Font* police = nullptr;  // roboto_22 : heures, valeurs, pluie
 };
 extern ZoneGaucheUI g_zone_gauche_ui;
 
-// Montre le contenu courant (l'autre masqué ; le graphique construit à sa première
-// apparition et repeint s'il a changé). Script tab5_zones_apply (tab5-zones.yaml), une fois
+// Montre le contenu courant (les autres masqués ; le graphique construit à sa première
+// apparition et repeint s'il a changé, le lecteur repeint s'il a changé). Script tab5_zones_apply (tab5-zones.yaml), une fois
 // les pointeurs posés ; sans effet sur un pointeur nul.
 void zone_gauche_appliquer();
 // Passe au contenu suivant parmi ceux proposés et disponibles, dans l'ordre de l'enum

@@ -411,10 +411,11 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ),
     # Icônes des pots sur la ligne des plantes (script tab5_pots_maj, 08/10/2026).
     ("tab5_rangee.cpp", "pots_humidite_maj"): ("icon_pot_s*",),
-    # Lecteur de musique (ADR-0050) : lecture / pause du popup (mdi_font_70) et de la
-    # mini-barre (mdi_font_45), aléatoire et répétition (lecteur_commande.yaml, mdi_font_45),
+    # Lecteur de musique (ADR-0050) : lecture / pause du popup (mdi_font_70), de la
+    # mini-barre et du lecteur compact de la zone gauche (ADR-0051, lecteur_zone.yaml ;
+    # mdi_font_45), aléatoire et répétition (lecteur_commande.yaml, mdi_font_45),
     # muet (mdi_font_32), genre de chaque pastille (lecteur_puce.yaml, mdi_font_32).
-    ("tab5_lecteur.cpp", "glyphe_lecture"): ("lecteur_ico_0", "lecteur_mini_ico"),
+    ("tab5_lecteur.cpp", "glyphe_lecture"): ("lecteur_ico_0", "lecteur_mini_ico", "lecteur_zone_ico"),
     ("tab5_lecteur.cpp", "glyphe_aleatoire"): ("lecteur_ico_3",),
     ("tab5_lecteur.cpp", "glyphe_repetition"): ("lecteur_ico_4",),
     ("tab5_lecteur.cpp", "glyphe_volume"): ("lecteur_ico_muet",),

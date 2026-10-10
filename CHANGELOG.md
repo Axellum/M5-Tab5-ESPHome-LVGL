@@ -18,9 +18,26 @@ firmware.
 le 08/10/2026 : test de consommation dans Home Assistant et lecture de la batterie toutes les 2 s
 pendant le test (#405), `tools/mesure_conso.py` (#404). Fichiers Home Assistant à recopier avant le
 firmware.
+[v3.8.0-rc.4](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.4)
+le 10/10/2026 : zone à gauche de l'horloge au choix — vocal, graphique des prochaines heures ou
+lecteur compact (#431, #432), popup Musique pour tout lecteur multimédia (#430), popups Météo en
+graphiques (#425), Réveil (#426), Lumières et Volets (#424) en pages, roue de navigation (#423) et
+roue de la clim (#420), carrousel des clims (#414), climat de la pièce (#416), historique avec
+l'humidité (#422), gestes de l'accueil au choix (#415), panneau Ok Nabu à lignes (#418), Réglages :
+charge, animations, Wi-Fi éco (#421), parseurs testés et fuzzés (#411, #417), corrections de
+l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.7.0).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
+
+### 2026-10-10 — Accueil : le lecteur de musique dans la zone à gauche de l'horloge, et un graphique plus lisible (ADR-0051, lot 2)
+
+- **Lecteur compact** (plan validé par Axel : « très beau, léger ») : troisième contenu de la zone à gauche de l'horloge, à la place du vocal ou du graphique, dans une carte de la même emprise (`zone_lecteur`, nouveau composant `Tab5/ui_components/lecteur_zone.yaml`). La pochette (la même image que le popup Musique, sans second téléchargement), le titre, l'artiste, une fine barre de position, précédent / lecture-pause / suivant ; rien en lecture : la phrase du popup (« Rien en lecture », « Lecteur éteint »…) et le nom du lecteur. Un tap hors des boutons ouvre le popup Musique. Mêmes données et mêmes commandes que le lecteur de l'ADR-0050 (`tab5_maj_lecteur`, événement `esphome.tab5_lecteur`) : rien de nouveau côté Home Assistant, aucune entité nommée, contrat inchangé, aucune nouvelle clé de traduction. Pochette aux coins concentriques à ceux de la carte, textes coupés avant le coin arrondi, dans chaque thème ; repeint seulement montré (sinon au retour). Le volume n'y est pas (il ne tiendrait pas proprement ; le popup l'a).
+- **Cycle** : « lecteur » entre dans le cycle (vocal → graphique → lecteur) et dans le contenu de départ possible ; il est **sauté quand Home Assistant a dit qu'aucun lecteur n'est choisi** (liste « Tab5 · lecteurs de musique » vide) et revient quand la liste se remplit. Avant toute poussée, il s'affiche (« En attente de Home Assistant »).
+- **Mini-barre « en lecture »** (choix d'Axel) : gardée sur le cadre Ok Nabu, masquée tant que la zone gauche montre le lecteur, elle revient quand la zone change.
+- **Graphique des 15 heures** (demande d'Axel sur la capture du rendu) : trait de 5 px arrondi, dégradé discret de la couleur de la courbe dessous (une image ARGB8888 calculée à la peinture, tampon de 156 Kio en PSRAM pris une fois ; une seule image en plus), points du plus chaud et du plus froid de 12 px cerclés, leurs valeurs posées à la première place libre (jamais sur la courbe, une barre ou l'autre valeur, ni hors du cadre), barres de pluie visibles dès qu'il pleut (8 px au moins, racine carrée de la quantité), rien sans pluie.
+- **Blueprint « Tab5 — emplacements »** : option « Lecteur de musique · Music player » dans la section « Zone à gauche de l'horloge », dans le cycle par défaut. **Blueprint à recopier** dans Home Assistant pour proposer le lecteur ; ordre libre (un firmware d'avant saute le code `lecteur`, un blueprint d'avant ne le propose pas).
+- Docs : ADR-0051 (lot 2), note dans l'ADR-0050, notice (accueil, musique, vue d'ensemble, EN/FR), `docs/screens.md`, `docs/architecture.md`, `Tab5/README.md`, cartographie. Rendu hors tablette : trois captures (`accueil-zone-lecteur`, `-vide`, `-gelule`). Tests : `tests/test_zone_gauche.py`, `test_emplacements.py`. Non essayé sur la tablette.
 
 ### 2026-10-10 — Popup Musique : un lecteur de musique pour les media_player de la maison (ADR-0050)
 
@@ -45,7 +62,7 @@ firmware.
 Demandé dans la [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (caméras Tapo). Firmware et blueprint « Tab5 — emplacements » à recopier ; ni package ni script. **Non testé sur la tablette ni avec une vraie caméra.**
 
 - **Une page par caméra** choisie dans la nouvelle section « Caméras · Cameras » du blueprint (8 au plus), changée d'un glissé ; le nom et l'heure de l'image dessous, des pastilles à partir de deux caméras. **Pas de vidéo** : une image fixe, la suivante 5 s après la précédente, **seulement popup ouvert** ; l'image décodée (960 × 540 RGB565, environ 1 Mo de PSRAM) est libérée à la fermeture.
-- **Contrat 1.1.0 (ajout)** : événement `esphome.tab5_cameras` (ouverture, toutes les 4 min popup ouvert, après une image en échec) et action `tab5_maj_cameras(adresse, cameras)` (« nom|image;… », `image` = l'`entity_picture`, jeton tourné par HA toutes les 5 min). Lecture en C++ pur (`cameras_lire()`, `camera_url()`, `ha_base_depuis_hote()`, `tab5_parse`), testée et fuzzée. La tablette ajoute `width=960&height=540` pour que HA réduise l'image ; l'adresse de HA est celle d'où il se connecte (port 8123), ou celle du blueprint.
+- **Contrat 1.2.0 (ajout)** : événement `esphome.tab5_cameras` (ouverture, toutes les 4 min popup ouvert, après une image en échec) et action `tab5_maj_cameras(adresse, cameras)` (« nom|image;… », `image` = l'`entity_picture`, jeton tourné par HA toutes les 5 min). Lecture en C++ pur (`cameras_lire()`, `camera_url()`, `ha_base_depuis_hote()`, `tab5_parse`), testée et fuzzée. La tablette ajoute `width=960&height=540` pour que HA réduise l'image ; l'adresse de HA est celle d'où il se connecte (port 8123), ou celle du blueprint.
 - **Ouverture** : option « Caméras » de « Aller à l'écran » (HA peut l'ouvrir, une sonnette par exemple), code de geste `cameras` (index 25) dans le blueprint. **Roue de navigation** (demande d'Axel) : « Caméras » à la fin de la famille « Agenda ▸ », Appareils étant plein (six choix au plus) ; toujours proposé, comme Météo (sans caméra, le popup dit « Aucune caméra choisie »). Glyphe `cctv` ajouté à `mdi_font_70`, `_36`, `_32` et `_26`. Pas de tuile (écartée dans l'ADR).
 - **Coûts estimés, non mesurés** : boucle principale bloquée pendant la capture par HA puis le décodage (0,2 à 0,5 s estimés par image) ; tampon de téléchargement de la taille du JPEG gardé après la fermeture (limite d'ESPHome). JPEG progressif refusé (« Image indisponible »). Une caméra hors ligne fige l'écran jusqu'à 12 s par essai (timeout de `http_request`) : essais espacés de 10, 30 puis 60 s après des échecs de suite.
 - Notice [Caméras](docs/notice/cameras.md), rendu hors tablette `cameras` (la page sans image : le rendu ne télécharge rien).

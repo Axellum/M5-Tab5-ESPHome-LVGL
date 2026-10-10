@@ -582,6 +582,12 @@ void zone_gauche_recu(const char* valeur, size_t n);
 // tab5_forecast.cpp : les prévisions horaires viennent de changer ; le graphique est à
 // repeindre (tout de suite s'il est affiché, sinon à sa prochaine apparition).
 void zone_gauche_donnees_changees();
+// tab5_lecteur.cpp, pour la zone à gauche de l'horloge (lecteur compact, ADR-0051 lot 2) :
+// montre ou masque son contenu (repeint s'il a changé caché ; la mini-barre « en lecture »
+// se masque tant qu'il est montré, revient ensuite), et dit s'il a quelque chose à montrer
+// (faux seulement quand HA a dit qu'aucun lecteur n'est choisi).
+void lecteur_zone_montrer(bool montre);
+bool lecteur_zone_disponible();
 
 // --- tab5_central.cpp, pour les pièces ---
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de

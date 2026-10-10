@@ -1195,33 +1195,41 @@ blueprint:
               unit_of_measurement: s
               mode: slider
     # Zone à gauche de l'horloge (ADR-0051, 10/10/2026) : au-dessus du cadre Ok Nabu, le
-    # micro et les boutons Domo / Discu (« vocal », l'écran d'avant) ou les prévisions des
-    # heures qui viennent en graphique (« graphique »). Clé « gauche|départ|c1|… » de
+    # micro et les boutons Domo / Discu (« vocal », l'écran d'avant), les prévisions des
+    # heures qui viennent en graphique (« graphique ») ou le lecteur de musique compact
+    # (« lecteur », lot 2 : les lecteurs de la liste « Tab5 · lecteurs de musique », le
+    # firmware le saute quand elle est vide). Clé « gauche|départ|c1|… » de
     # tab5_maj_emplacements (variable gauche), poussée avec les gestes ; un firmware plus
     # ancien l'ignore. Codes = kZoneGaucheCodes de Tab5/socle/tab5_parse.h
-    # (tests/test_zone_gauche.py) : ni traduits ni renommés sans le firmware. « lecteur »
-    # (lecteur audio compact, lot 2) est réservé : accepté par codes_gauche, pas encore
-    # proposé (le firmware le saute tant qu'il ne sait pas le montrer).
+    # (tests/test_zone_gauche.py) : ni traduits ni renommés sans le firmware.
     zone_gauche:
       name: Zone à gauche de l'horloge · Left of the clock
       icon: mdi:view-carousel
       collapsed: true
       description: >-
         La colonne de gauche de l'accueil, au-dessus du cadre Ok Nabu (firmware 3.8 ou plus
-        récent) : le micro et les boutons Domo / Discu, ou les prévisions des 15 heures qui
+        récent) : le micro et les boutons Domo / Discu, les prévisions des 15 heures qui
         viennent en graphique (les températures en courbe, la pluie en barres ; un tap
-        ouvre la Météo). Un tap sur la seconde température (à droite de l'accueil) passe au
-        contenu suivant, comme un geste « Zone à gauche de l'horloge : contenu suivant »
-        (section « Horloge et boutons du haut »). La tablette garde le contenu affiché quand
-        elle redémarre.
+        ouvre la Météo), ou le lecteur de musique compact (pochette, titre, artiste,
+        précédent, lecture / pause, suivant ; un tap ailleurs ouvre le popup Musique ; la
+        barre « en lecture » sur Ok Nabu se masque pendant ce temps). Le lecteur montre les
+        lecteurs choisis dans « Tab5 · lecteurs de musique » ; sans aucun, la tablette le
+        saute. Un tap sur la seconde température (à droite de l'accueil) passe au contenu
+        suivant, comme un geste « Zone à gauche de l'horloge : contenu suivant » (section
+        « Horloge et boutons du haut »). La tablette garde le contenu affiché quand elle
+        redémarre.
 
 
         The left column of the home page, above the Ok Nabu frame (firmware 3.8 or newer):
-        the microphone and the Domo / Discu buttons, or the forecast of the next 15 hours as
-        a chart (temperatures as a curve, rain as bars; a tap opens the Weather). A tap on
-        the second temperature (on the right of the home page) shows the next content, as
-        does a « Left of the clock: next content » gesture (« Clock and top buttons »
-        section). The tablet keeps the content shown when it restarts.
+        the microphone and the Domo / Discu buttons, the forecast of the next 15 hours as a
+        chart (temperatures as a curve, rain as bars; a tap opens the Weather), or the
+        compact music player (cover, title, artist, previous, play / pause, next; a tap
+        elsewhere opens the Music popup; the « now playing » bar on Ok Nabu hides meanwhile).
+        The player shows the players chosen in « Tab5 · lecteurs de musique · music
+        players »; with none, the tablet skips it. A tap on the second temperature (on the
+        right of the home page) shows the next content, as does a « Left of the clock: next
+        content » gesture (« Clock and top buttons » section). The tablet keeps the content
+        shown when it restarts.
       input:
         gauche_depart:
           name: Au départ · At start
@@ -1238,16 +1246,20 @@ blueprint:
                   value: vocal
                 - label: "Graphique des prévisions · Forecast chart"
                   value: graphique
+                - label: "Lecteur de musique · Music player"
+                  value: lecteur
         gauche_cycle:
           name: Au tap · On tap
           description: >-
-            Les contenus que le tap fait défiler, dans l'ordre vocal, graphique. Celui du
-            départ en fait toujours partie ; seul, le tap ne change rien.
+            Les contenus que le tap fait défiler, dans l'ordre vocal, graphique, lecteur.
+            Celui du départ en fait toujours partie ; seul, le tap ne change rien. Le
+            lecteur est sauté tant qu'aucun lecteur n'est choisi.
 
 
-            The contents the tap goes through, in the order voice, chart. The one at start
-            is always included; alone, the tap changes nothing.
-          default: [vocal, graphique]
+            The contents the tap goes through, in the order voice, chart, player. The one
+            at start is always included; alone, the tap changes nothing. The player is
+            skipped while no player is chosen.
+          default: [vocal, graphique, lecteur]
           selector:
             select:
               multiple: true

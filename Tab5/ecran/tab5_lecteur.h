@@ -1,8 +1,9 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_lecteur.h
- * @role Lecteur de musique (tab5_lecteur.cpp, ADR-0050) : le popup « Musique » et sa
- *       mini-barre de l'accueil.
+ * @role Lecteur de musique (tab5_lecteur.cpp, ADR-0050) : le popup « Musique », sa
+ *       mini-barre de l'accueil et le lecteur compact de la zone à gauche de l'horloge
+ *       (ADR-0051, lot 2).
  * @architecture_constraint tab5_custom.h l'inclut : les lambdas YAML et les unités
  *       `tab5_*.cpp` le voient. Une fonction déclarée ici a un appelant hors de son fichier
  *       (règle 12 de tools/check_tab5_code_rules.py, qui lit tab5_custom.h et ses en-têtes).
@@ -80,6 +81,17 @@ struct LecteurUI {
     lv_obj_t* mini_titre = nullptr;               // lecteur_mini_titre
     lv_obj_t* mini_artiste = nullptr;             // lecteur_mini_artiste
     lv_obj_t* mini_ico = nullptr;                 // lecteur_mini_ico (lecture / pause, son bouton = parent)
+    // Lecteur compact de la zone à gauche de l'horloge (lecteur_zone.yaml, ADR-0051) :
+    // montré par zone_gauche_appliquer() ; la mini-barre se masque tant qu'il l'est.
+    lv_obj_t* zone = nullptr;                     // zone_lecteur (la carte)
+    lv_obj_t* zone_cadre = nullptr;               // lecteur_zone_cadre (cadre de la pochette)
+    lv_obj_t* zone_pochette = nullptr;            // lecteur_zone_img
+    lv_obj_t* zone_vide = nullptr;                // lecteur_zone_vide (note de musique)
+    lv_obj_t* zone_titre = nullptr;               // lecteur_zone_titre
+    lv_obj_t* zone_artiste = nullptr;             // lecteur_zone_artiste
+    lv_obj_t* zone_barre = nullptr;               // lecteur_zone_barre (0 à 1000)
+    lv_obj_t* zone_btn[3] = {};                   // précédent, lecture / pause, suivant
+    lv_obj_t* zone_ico = nullptr;                 // lecteur_zone_ico (lecture / pause)
     // Événement esphome.tab5_lecteur (script tab5_lecteur_evenement) : action, lecteur
     // (index dans la liste, « -1 » ou la clé d'une tuile), valeur.
     void (*envoyer)(const char* action, const char* lecteur, const char* valeur) = nullptr;
@@ -97,8 +109,8 @@ void lecteur_recu(const std::string& lecteurs, const std::string& etat);
 // et demande à HA l'état frais (événement « ouvrir »). `cle` : la tuile med touchée
 // (« tRT »), vide pour le lecteur courant.
 void lecteur_ouvrir(const std::string& cle);
-// Interval de 1 s : la position avance en lecture (popup ouvert), la mini-barre se masque
-// 5 min après une pause.
+// Interval de 1 s : la position avance en lecture (popup ouvert, lecteur compact montré),
+// la mini-barre se masque 5 min après une pause.
 void lecteur_tic();
 // Pochette téléchargée (on_download_finished de l'image lecteur_pochette) : `dsc` est son
 // descripteur LVGL, relu après chaque téléchargement ; ou en échec (on_error).

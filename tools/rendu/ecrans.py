@@ -689,6 +689,16 @@ LECTEUR_ETEINT = Service("tab5_maj_lecteur", (
 LECTEUR_AUCUN = Service("tab5_maj_lecteur", (("lecteurs", ""), ("etat", "")))
 # Le voile autour de la carte (940 × 536 centrée) ferme le popup.
 LECTEUR_VOILE = Toucher(60, 360)
+# Lecteur compact de la zone à gauche de l'horloge (ADR-0051, lot 2) : le blueprint le met
+# au départ (clé « gauche » de tab5_maj_emplacements, il s'affiche tout de suite) ;
+# ZONE_VOCAL remet le vocal au départ et le cycle par défaut d'un blueprint d'avant.
+ZONE_LECTEUR = Service("tab5_maj_emplacements", (("payload", "gauche|lecteur|vocal|graphique|lecteur;"),))
+ZONE_VOCAL = Service("tab5_maj_emplacements", (("payload", "gauche|vocal|graphique;"),))
+# Le lecteur de la démo allumé, rien en lecture : « Rien en lecture » et ses commandes.
+LECTEUR_INACTIF = Service("tab5_maj_lecteur", (
+    ("lecteurs", LECTEUR_LISTE),
+    ("etat", "0|Salon|speaker|idle" + "|" * 7 + "45|0|0|off|lsvmpnaro|"),
+))
 
 
 # Popup Météo (ADR-0043, meteo_popup.yaml) : une journée qui change (soleil le matin,
@@ -1084,6 +1094,13 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("musique", (LECTEUR_EN_PAUSE, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
     Ecran("musique-eteint", (LECTEUR_ETEINT, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
     Ecran("accueil-musique", (LECTEUR_EN_PAUSE,), (LECTEUR_AUCUN,)),
+    # Lecteur compact dans la zone à gauche de l'horloge (ADR-0051, lot 2) : en pause (la
+    # barre « en lecture » se masque, le cadre Ok Nabu reste), allumé sans rien en lecture,
+    # puis dans le thème au cadre le plus arrondi (gélule).
+    Ecran("accueil-zone-lecteur", (LECTEUR_EN_PAUSE, ZONE_LECTEUR), (ZONE_VOCAL, LECTEUR_AUCUN)),
+    Ecran("accueil-zone-lecteur-vide", (LECTEUR_INACTIF, ZONE_LECTEUR), (ZONE_VOCAL, LECTEUR_AUCUN)),
+    Ecran("accueil-zone-lecteur-gelule", (Choisir("Thème", THEME_CADRE_GELULE), LECTEUR_EN_PAUSE, ZONE_LECTEUR),
+          (ZONE_VOCAL, LECTEUR_AUCUN, Choisir("Thème", THEME_PAR_DEFAUT))),
     # Popup Caméras (ADR-0049) : trois caméras, la première montrée.
     Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"))),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
