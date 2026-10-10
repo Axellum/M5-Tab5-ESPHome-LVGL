@@ -84,12 +84,13 @@ def test_chaque_page_de_la_demande_a_sa_place():
     ecrans_nav |= set(re.findall(r"Genre::ECRAN, RoueIcone::\w+, tr_noop\(\"[^\"]+\"\), Ecran::(\w+)", _nav()))
     assert ecrans_nav == {"ALERTES", "ARCADE", "ASSISTANT", "REGLAGES", "LUMIERES", "CLIM", "TEMPERATURE",
                           "CALENDRIER", "REVEIL", "VOLET", "ENERGIE", "PLANTES", "CONSOLE", "METEO",
-                          "MUSIQUE", "TV", "CAMERAS", "FROID"}
+                          "MUSIQUE", "TV", "CAMERAS", "FROID", "SERVEUR_IA"}
     # Caméras (ADR-0049, demande d'Axel du 09/10/2026) : à la fin d'Agenda, Appareils est plein.
     # Froid (ADR-0055, demande d'Axel du 10/10/2026) : après elles, Appareils et le premier
-    # anneau étant pleins.
-    assert _table("kAgenda")[-2] == ("CAMERAS", "CAMERAS", "Caméras")
-    assert _table("kAgenda")[-1] == ("FROID", "FROID", "Frigos")
+    # anneau étant pleins. Serveur IA (ADR-0059) : après lui, pour la même raison.
+    assert _table("kAgenda")[-3] == ("CAMERAS", "CAMERAS", "Caméras")
+    assert _table("kAgenda")[-2] == ("FROID", "FROID", "Frigos")
+    assert _table("kAgenda")[-1] == ("SERVEUR_IA", "SERVEUR_IA", "Serveur IA")
     assert "Genre::PIECES" in _nav()
     assert _table("kAgenda")[0] == ("METEO", "METEO", "Météo")
 

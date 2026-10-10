@@ -123,7 +123,7 @@ GesteCible geste_cible(int geste);
 // Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-navigation.yaml), routine unique du
 // select « Aller à l'écran », des gestes de l'accueil (horloge, boutons du haut) et de la
 // roue de navigation (ADR-0042). Les
-// valeurs 0 (AUCUN) à 20 (FROID) SONT les index des options du select, dans le même ordre
+// valeurs 0 (AUCUN) à 21 (SERVEUR_IA) SONT les index des options du select, dans le même ordre
 // (tests/test_appuis.py) ; ARCADE n'est pas une option du select (lancer l'Arcade à
 // distance n'a pas d'usage), seulement un choix de geste. Un écran de plus : avant ARCADE
 // ici, à la fin du select (ARCADE et NB se décalent : la NVS garde l'index du code dans
@@ -159,6 +159,7 @@ enum class Ecran : uint8_t {
     CAMERAS,     // popup Caméras (ADR-0049) : option du select et code de geste « cameras »
     SUIVI,       // capteurs suivis (ADR-0054) : option du select et code de geste « suivi »
     FROID,       // réfrigérateurs et congélateurs (ADR-0055) : option du select et code de geste « froid »
+    SERVEUR_IA,  // serveur de LLM local (ADR-0059) : option du select et code de geste « serveur_ia »
     ARCADE,
     NB
 };

@@ -752,6 +752,22 @@ api:
         - script.execute: tab5_froid_lier
         - lambda: 'froid_recu(payload);'
 
+    # Serveur IA (ADR-0059, 10/10/2026) : packages/tab5_serveur_ia.yaml pousse les capteurs
+    # choisis dans les listes « Tab5 · serveur IA, … », au changement, deux secondes au moins
+    # entre deux poussées. Lu par serveur_ia_lire() (Tab5/socle/tab5_parse.h, section 14).
+    # Popup fermé, la poussée ne repeint rien (elle garde les valeurs et le point de courbe) :
+    # pas de tab5_serveur_ia_lier ici, l'ouverture lie les widgets (popup jamais ouvert =
+    # g_serveur_ia_ui.popup nul, serveur_ia_recu() ne touche à rien).
+    - service: tab5_maj_serveur_ia
+      description: "Serveur IA : état, modèle chargé, tokens par seconde, requêtes, VRAM, température du GPU, RAM et puissance d'un serveur de LLM local."
+      variables:
+        payload:
+          type: string
+          description: "Un serveur : « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance » — etat 1 en ligne, 0 hors ligne, vide inconnu ; tps en tokens par seconde ; cours et file = requêtes en cours et en file (entiers) ; vram et vram_total en Go ; vram_pct, ram de 0 à 100 ; temp = température du GPU en °C ; niveau 0 normale, 1 élevée, 2 critique (seuils de HA) ; puissance en W. Nombres à point décimal ; un champ vide est inconnu (« — » à l'écran). 1024 octets au plus ; ce qui suit un « ; » est ignoré ; vide : aucun capteur choisi. Les « | » et « ; » des textes sont remplacés par « / » et « , »."
+          example: "PC bureau|1|qwen2.5-coder-32b-instruct|42.7|2|3|11.2|16|70|78|1|43|285"
+      then:
+        - lambda: 'serveur_ia_recu(payload);'
+
 # Fenêtre d'appairage (lot 6b, ADR-0020) : une tablette qui n'a pas encore de clé API
 # (neuve, ou jamais ajoutée à HA) n'accepte le premier contact de HA que pendant les
 # 30 minutes qui suivent son démarrage. Passé ce délai, elle refuse toute connexion et

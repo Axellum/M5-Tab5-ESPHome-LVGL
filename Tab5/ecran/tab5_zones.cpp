@@ -143,6 +143,8 @@ constexpr CodeGeste kCodesGestes[] = {
     {"suivi", Ecran::SUIVI, GesteAction::ECRAN},
     // Froid : réfrigérateurs et congélateurs (10/10/2026, ADR-0055) : ajouté à la fin (NVS, index 27).
     {"froid", Ecran::FROID, GesteAction::ECRAN},
+    // Serveur IA : un serveur de LLM local (10/10/2026, ADR-0059) : ajouté à la fin (NVS, index 28).
+    {"serveur_ia", Ecran::SERVEUR_IA, GesteAction::ECRAN},
 };
 constexpr int kNbCodes = static_cast<int>(sizeof(kCodesGestes) / sizeof(kCodesGestes[0]));
 constexpr int8_t kAuto = -1;
@@ -498,6 +500,7 @@ const char* code_glyphe(int8_t c) {
         case Ecran::CAMERAS: return "\U000F07AE";     // cctv (titre du popup Caméras)
         case Ecran::SUIVI: return "\U000F012A";       // chart-line (titre du popup Suivi)
         case Ecran::FROID: return "\U000F0290";       // fridge (titre du popup Froid)
+        case Ecran::SERVEUR_IA: return "\U000F048B";  // server (titre du popup Serveur IA)
         case Ecran::ARCADE: return "\U000F0297";      // gamepad-variant
         default: return nullptr;
     }
