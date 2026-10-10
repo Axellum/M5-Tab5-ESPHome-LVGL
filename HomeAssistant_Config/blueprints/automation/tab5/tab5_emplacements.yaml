@@ -76,9 +76,10 @@
 #         caméras du popup Caméras de la tablette (image fixe rafraîchie, pas de vidéo).
 #         À l'événement esphome.tab5_cameras (ouverture du popup, puis toutes les
 #         4 minutes et après un échec tant qu'il reste ouvert), pousse tab5_maj_cameras :
-#         l'adresse (cameras_adresse, vide = celle que la tablette voit) et « nom|image »
-#         par caméra, image = entity_picture (jeton qui change toutes les 5 minutes).
-#         Rien tant que le popup est fermé ; aucun package à installer.
+#         l'adresse (cameras_adresse, vide = celle que la tablette voit) et
+#         « nom|image|pièce|depuis » par caméra, image = entity_picture (jeton qui change
+#         toutes les 5 minutes), pièce = area_name (ADR-0056), depuis = heure de
+#         l'indisponibilité. Rien tant que le popup est fermé ; aucun package à installer.
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
 #       (tab5-api-logic.yaml, script tab5_action) ; tests/test_emplacements.py et
@@ -1919,21 +1920,27 @@ blueprint:
         (section « Horloge et boutons du haut ») ou par l'entité « Aller à l'écran » de la
         tablette (une sonnette, par exemple). Il montre une image fixe de chaque caméra,
         rafraîchie toutes les quelques secondes tant qu'il est ouvert : pas de vidéo, et
-        rien n'est demandé quand il est fermé.
+        rien n'est demandé quand il est fermé. Les caméras sont rangées par la pièce que
+        Home Assistant leur donne (celle de la caméra ou de son appareil) : avec deux
+        pièces ou plus, le popup les propose à gauche. Aucun réglage de plus.
 
 
         Optional: the cameras of the Cameras popup, opened by a home gesture (« Clock and
         top buttons » section) or by the tablet's « Aller à l'écran » entity (a doorbell,
         for instance). It shows a still image of each camera, refreshed every few seconds
-        while it is open: no video, and nothing is asked while it is closed.
+        while it is open: no video, and nothing is asked while it is closed. Cameras are
+        grouped by the area Home Assistant gives them (the camera's or its device's): with
+        two areas or more, the popup lists them on the left. Nothing more to set.
       input:
         cameras_liste:
           name: Caméras · Cameras
           description: >-
-            Huit au plus, dans l'ordre des pages du popup.
+            Seize au plus, dans l'ordre des pages du popup (les pièces suivent l'ordre de
+            leur première caméra).
 
 
-            Eight at most, in the popup's page order.
+            Sixteen at most, in the popup's page order (areas follow the order of their
+            first camera).
           default: []
           selector:
             entity:
@@ -3936,9 +3943,14 @@ actions:
       # les 4 minutes et après un échec tant qu'il reste ouvert. La réponse donne le
       # entity_picture du moment : son jeton change toutes les 5 minutes et l'ancien reste
       # valable 5 minutes de plus (homeassistant/components/camera), la tablette n'a donc
-      # jamais une URL périmée. Une caméra sans entity_picture (supprimée, pas encore
-      # chargée) est sautée ; huit au plus. Section vide : une réponse vide, le popup dit
-      # qu'aucune caméra n'est choisie. Pas de script ni de package : une seule action.
+      # jamais une URL périmée. ADR-0056 : chaque caméra porte sa pièce (area_name : celle
+      # de l'entité, sinon de son appareil ; vide sans pièce) et, si elle est
+      # « unavailable », l'heure depuis laquelle (last_changed, secondes Unix) : la
+      # tablette ne la demande pas et dit « Hors ligne depuis … ». « nom|image|pièce|depuis » :
+      # un firmware d'avant lit « nom|image » et ignore la suite. Une caméra ni en ligne
+      # avec une image, ni indisponible (supprimée, pas encore chargée) est sautée ; seize
+      # au plus. Section vide : une réponse vide, le popup dit qu'aucune caméra n'est
+      # choisie. Pas de script ni de package : une seule action.
       - alias: "La tablette demande ses caméras"
         conditions: "{{ trigger.id == 'cameras' }}"
         sequence:
@@ -3948,11 +3960,17 @@ actions:
               cameras: >-
                 {%- set l = cameras_liste if cameras_liste is list else ([cameras_liste] if cameras_liste else []) -%}
                 {%- set ns = namespace(r=[]) -%}
-                {%- for c in l if c is string and states[c] is not none and state_attr(c, 'entity_picture') -%}
-                  {%- set nom = (state_attr(c, 'friendly_name') or c) | string | replace('|', '/') | replace(';', ',') -%}
-                  {%- set ns.r = ns.r + [nom ~ '|' ~ state_attr(c, 'entity_picture')] -%}
+                {%- for c in l if c is string and states[c] is not none -%}
+                  {%- set image = state_attr(c, 'entity_picture') or '' -%}
+                  {%- set hors = states(c) == 'unavailable' -%}
+                  {%- if image or hors -%}
+                    {%- set nom = (state_attr(c, 'friendly_name') or c) | string | replace('|', '/') | replace(';', ',') -%}
+                    {%- set piece = (area_name(c) or '') | string | replace('|', '/') | replace(';', ',') -%}
+                    {%- set depuis = (as_timestamp(states[c].last_changed, 0) | int(0)) if hors else '' -%}
+                    {%- set ns.r = ns.r + [nom ~ '|' ~ image ~ '|' ~ piece ~ '|' ~ depuis] -%}
+                  {%- endif -%}
                 {%- endfor -%}
-                {{ ns.r[:8] | join(';') }}
+                {{ ns.r[:16] | join(';') }}
             continue_on_error: true
 
       # Popup Température (ADR-0032) : la tablette dit quelle température (salon, serre) et
