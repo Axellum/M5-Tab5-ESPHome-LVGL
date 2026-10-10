@@ -10,6 +10,7 @@
 #include "tab5_parse.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -585,4 +586,192 @@ Champ historique_lire(const Champ& entete, const Champ& mesures, const Champ& pr
         s.np++;
     }
     return nom;
+}
+
+// ─── 9. Lecteur de musique (ADR-0050) ───
+
+namespace {
+// Ajoute [s, s + m) à out (n octets, zéro final compris) ; faux si ça ne tient pas.
+bool ajouter(char* out, size_t n, size_t& l, const char* s, size_t m) {
+    if (l + m + 1 > n) return false;
+    std::memcpy(out + l, s, m);
+    l += m;
+    out[l] = '\0';
+    return true;
+}
+bool ajouter(char* out, size_t n, size_t& l, const char* s) { return ajouter(out, n, l, s, std::strlen(s)); }
+
+bool commence_par(const char* p, size_t n, const char* mot) {
+    const size_t m = std::strlen(mot);
+    return n >= m && std::memcmp(p, mot, m) == 0;
+}
+bool url_absolue(const char* p, size_t n) {
+    return p != nullptr && (commence_par(p, n, "http://") || commence_par(p, n, "https://"));
+}
+
+// 1 / 0 / -1 (inconnu) d'un champ « 1 » ou « 0 ».
+int8_t drapeau(const Champ& c) {
+    if (champ_est(c, "1")) return 1;
+    if (champ_est(c, "0")) return 0;
+    return -1;
+}
+
+// Secondes d'un champ : NAN si vide, illisible, non fini ou hors de 0 à kLecteurDureeMax.
+float secondes(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    return (std::isfinite(v) && v >= 0.0f && v <= kLecteurDureeMax) ? v : NAN;
+}
+}  // namespace
+
+LecteurGenre lecteur_genre_lire(const Champ& c) {
+    if (champ_est(c, "tv")) return LecteurGenre::TV;
+    if (champ_est(c, "speaker")) return LecteurGenre::ENCEINTE;
+    if (champ_est(c, "receiver")) return LecteurGenre::AMPLI;
+    return LecteurGenre::AUTRE;
+}
+
+int lecteurs_lire(const Champ& payload, LecteurListeLu out[kLecteursMax]) {
+    if (payload.p == nullptr) return 0;
+    const char* p = payload.p;
+    const char* fin = p + payload.n;
+    int n = 0;
+    while (p < fin && n < kLecteursMax) {
+        const Champ c = champ_suivant(p, fin, ';');
+        if (c.n == 0) continue;
+        const char* q = c.p;
+        const char* qf = c.p + c.n;
+        out[n].nom = champ_suivant(q, qf, '|');
+        out[n].genre = lecteur_genre_lire(champ_suivant(q, qf, '|'));
+        n++;
+    }
+    return n;
+}
+
+LecteurEtat lecteur_etat_code(const Champ& c) {
+    if (champ_est(c, "playing")) return LecteurEtat::LECTURE;
+    if (champ_est(c, "paused")) return LecteurEtat::PAUSE;
+    if (champ_est(c, "buffering")) return LecteurEtat::CHARGEMENT;
+    if (champ_est(c, "idle") || champ_est(c, "on")) return LecteurEtat::INACTIF;
+    if (champ_est(c, "standby")) return LecteurEtat::VEILLE;
+    if (champ_est(c, "off")) return LecteurEtat::ETEINT;
+    return LecteurEtat::INDISPONIBLE;
+}
+
+uint16_t lecteur_fonctions_lire(const Champ& c) {
+    uint16_t f = 0;
+    for (size_t i = 0; c.p != nullptr && i < c.n; i++) {
+        switch (c.p[i]) {
+            case 'l': f |= LECTEUR_F_LECTURE; break;
+            case 's': f |= LECTEUR_F_POSITION; break;
+            case 'v': f |= LECTEUR_F_VOLUME; break;
+            case 'm': f |= LECTEUR_F_MUET; break;
+            case 'p': f |= LECTEUR_F_PRECEDENT; break;
+            case 'n': f |= LECTEUR_F_SUIVANT; break;
+            case 'a': f |= LECTEUR_F_ALEATOIRE; break;
+            case 'r': f |= LECTEUR_F_REPETITION; break;
+            case 'o': f |= LECTEUR_F_ALLUMER; break;
+            default: break;
+        }
+    }
+    return f;
+}
+
+bool lecteur_etat_lire(const Champ& payload, LecteurEtatLu& out) {
+    out = LecteurEtatLu{};
+    if (payload.p == nullptr || payload.n == 0) return false;
+    Champ f[16];
+    const int n = champs_decouper_reste(payload.p, payload.n, '|', f, 16);
+    if (n < 4) return false;
+    for (int i = n; i < 16; i++) f[i] = Champ{payload.p + payload.n, 0};
+    const float actif = champ_nombre(f[0], NAN);
+    out.actif = (actif >= 0.0f && actif < static_cast<float>(kLecteursMax)) ? static_cast<int>(actif) : -1;
+    out.nom = f[1];
+    out.genre = lecteur_genre_lire(f[2]);
+    out.etat = lecteur_etat_code(f[3]);
+    out.titre = f[4];
+    out.artiste = f[5];
+    out.album = f[6];
+    out.app = f[7];
+    out.position = secondes(f[8]);
+    out.duree = secondes(f[9]);
+    if (out.duree == 0.0f) out.duree = NAN;
+    const float v = champ_nombre(f[10], NAN);
+    out.volume = (std::isfinite(v) && v >= 0.0f && v <= 100.0f) ? static_cast<int>(std::lround(v)) : -1;
+    out.muet = drapeau(f[11]);
+    out.aleatoire = drapeau(f[12]);
+    if (champ_est(f[13], "off")) out.repetition = LecteurRepetition::NON;
+    else if (champ_est(f[13], "all")) out.repetition = LecteurRepetition::TOUT;
+    else if (champ_est(f[13], "one")) out.repetition = LecteurRepetition::UNE;
+    out.fonctions = lecteur_fonctions_lire(f[14]);
+    out.image = f[15];
+    return true;
+}
+
+float lecteur_position(const LecteurEtatLu& e, float ecoule) {
+    if (std::isnan(e.position)) return NAN;
+    float p = e.position;
+    if (e.etat == LecteurEtat::LECTURE && std::isfinite(ecoule) && ecoule > 0.0f) p += ecoule;
+    if (!std::isnan(e.duree) && p > e.duree) p = e.duree;
+    return std::min(p, kLecteurDureeMax);
+}
+
+bool lecteur_temps_texte(float s, char* out, size_t n) {
+    if (out == nullptr || n == 0) return false;
+    out[0] = '\0';
+    int r = 0;
+    if (!std::isfinite(s) || s < 0.0f || s > kLecteurDureeMax) {
+        r = std::snprintf(out, n, "-:--");
+    } else {
+        const long t = static_cast<long>(s);
+        const long h = t / 3600;
+        const long m = (t / 60) % 60;
+        const long sec = t % 60;
+        r = h > 0 ? std::snprintf(out, n, "%ld:%02ld:%02ld", h, m, sec) : std::snprintf(out, n, "%ld:%02ld", m, sec);
+    }
+    if (r < 0 || static_cast<size_t>(r) >= n) {
+        out[0] = '\0';
+        return false;
+    }
+    return true;
+}
+
+bool ha_base_depuis_hote(const char* hote, char* out, size_t n) {
+    if (out == nullptr || n == 0) return false;
+    out[0] = '\0';
+    if (hote == nullptr || hote[0] == '\0') return false;
+    const size_t m = std::strlen(hote);
+    if (m > 45) return false;  // INET6_ADDRSTRLEN - 1
+    bool ipv6 = false;
+    for (size_t i = 0; i < m; i++) {
+        const char c = hote[i];
+        if (c == ':') ipv6 = true;
+        else if (c != '.' && !std::isxdigit(static_cast<unsigned char>(c))) return false;
+    }
+    size_t l = 0;
+    const bool ok = ajouter(out, n, l, ipv6 ? "http://[" : "http://") && ajouter(out, n, l, hote, m) &&
+                    ajouter(out, n, l, ipv6 ? "]:8123" : ":8123");
+    if (!ok) out[0] = '\0';
+    return ok;
+}
+
+bool ha_image_url(const Champ& image, const char* base, char* out, size_t n) {
+    if (out == nullptr || n == 0) return false;
+    out[0] = '\0';
+    if (image.p == nullptr || image.n == 0) return false;
+    size_t l = 0;
+    bool ok = true;
+    if (!url_absolue(image.p, image.n)) {
+        const size_t b = base != nullptr ? std::strlen(base) : 0;
+        if (!url_absolue(base, b)) return false;  // base vide comprise
+        size_t bl = b;
+        while (bl > 0 && base[bl - 1] == '/') bl--;
+        ok = ajouter(out, n, l, base, bl) && (image.p[0] == '/' || ajouter(out, n, l, "/"));
+    }
+    ok = ok && ajouter(out, n, l, image.p, image.n);
+    for (size_t i = 0; ok && i < l; i++) {
+        const unsigned char c = static_cast<unsigned char>(out[i]);
+        if (c <= 0x20 || c == 0x7F) ok = false;  // espace, saut de ligne, zéro : requête HTTP cassée
+    }
+    if (!ok) out[0] = '\0';
+    return ok;
 }

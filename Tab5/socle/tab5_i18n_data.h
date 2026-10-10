@@ -8,9 +8,16 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1119;
+static const uint16_t kI18nKeyCount = 1126;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1312,6 +1319,7 @@ static const char* const kI18nKeys[] = {
     "Aucun effet actif",
     "Aucun historique",
     "Aucun jour retenu dans les 8 prochains",
+    "Aucun lecteur choisi",
     "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.",
     "Aucun rendez-vous à venir",
     "Aucun score enregistré",
@@ -1400,6 +1408,7 @@ static const char* const kI18nKeys[] = {
     "Chargement image...",
     "Chargement...",
     "Chaud",
+    "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique ».",
     "Choix du mode, de la couleur, du niveau et de la pendule",
     "Chute nette. Reprends ton souffle.",
     "Clair",
@@ -1672,6 +1681,9 @@ static const char* const kI18nKeys[] = {
     "Le quiz rétro-salon — 720 questions, 6 catégories",
     "Le score est enregistré",
     "Le serveur sera indisponible ~1 minute.",
+    "Lecteur indisponible",
+    "Lecteur {n}",
+    "Lecteur éteint",
     "Lecture",
     "Lente",
     "Les deux",
@@ -1731,6 +1743,7 @@ static const char* const kI18nKeys[] = {
     "Moyenne",
     "Moyennes + difficiles",
     "Mur plein",
+    "Musique",
     "MÉMOIRE",
     "Mélodie",
     "Météo",
@@ -1934,6 +1947,7 @@ static const char* const kI18nKeys[] = {
     "Revenir au menu principal",
     "Rien",
     "Rien de prévu ce jour",
+    "Rien en lecture",
     "Rien à annuler",
     "Roguelite de bille\n6 salles · à l'inclinaison",
     "Runes %d/%u",
@@ -2435,6 +2449,7 @@ static const char* const kI18n_en[] = {
     "No active effect",  // "Aucun effet actif"
     "No history",  // "Aucun historique"
     "No day selected in the next 8",  // "Aucun jour retenu dans les 8 prochains"
+    "No player chosen",  // "Aucun lecteur choisi"
     "No items: open chests, defeat bosses, or visit the merchant.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "No upcoming appointment",  // "Aucun rendez-vous à venir"
     "No score recorded",  // "Aucun score enregistré"
@@ -2523,6 +2538,7 @@ static const char* const kI18n_en[] = {
     "Loading image...",  // "Chargement image..."
     "Loading...",  // "Chargement..."
     "Warm",  // "Chaud"
+    "Choose your players in Home Assistant: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Choose mode, color, level and clock",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Clean fall. Catch your breath.",  // "Chute nette. Reprends ton souffle."
     "Light",  // "Clair"
@@ -2795,6 +2811,9 @@ static const char* const kI18n_en[] = {
     "Retro parlor quiz — 720 questions in French, 6 categories",  // "Le quiz rétro-salon — 720 questions, 6 catégories"
     "The score is saved",  // "Le score est enregistré"
     "The server will be unavailable for ~1 minute.",  // "Le serveur sera indisponible ~1 minute."
+    "Player unavailable",  // "Lecteur indisponible"
+    "Player {n}",  // "Lecteur {n}"
+    "Player off",  // "Lecteur éteint"
     "Play",  // "Lecture"
     "Slow",  // "Lente"
     "Both",  // "Les deux"
@@ -2854,6 +2873,7 @@ static const char* const kI18n_en[] = {
     "Average",  // "Moyenne"
     "Medium + hard",  // "Moyennes + difficiles"
     "Solid wall",  // "Mur plein"
+    "Music",  // "Musique"
     "MEMORY",  // "MÉMOIRE"
     "Melody",  // "Mélodie"
     "Weather",  // "Météo"
@@ -3057,6 +3077,7 @@ static const char* const kI18n_en[] = {
     "Back to the main menu",  // "Revenir au menu principal"
     "Clear",  // "Rien"
     "Nothing planned this day",  // "Rien de prévu ce jour"
+    "Nothing playing",  // "Rien en lecture"
     "Nothing to undo",  // "Rien à annuler"
     "Marble roguelite\n6 rooms · tilt to steer",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Runes %d/%u",  // "Runes %d/%u"
@@ -3558,6 +3579,7 @@ static const char* const kI18n_de[] = {
     "Kein aktiver Effekt",  // "Aucun effet actif"
     "Kein Verlauf",  // "Aucun historique"
     "Kein Tag in den nächsten 8 gewählt",  // "Aucun jour retenu dans les 8 prochains"
+    "Kein Player ausgewählt",  // "Aucun lecteur choisi"
     "Keine Gegenstände: Truhen öffnen, Bosse besiegen oder zum Händler gehen.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Keine anstehenden Termine",  // "Aucun rendez-vous à venir"
     "Kein Score gespeichert",  // "Aucun score enregistré"
@@ -3646,6 +3668,7 @@ static const char* const kI18n_de[] = {
     "Lade Bild...",  // "Chargement image..."
     "Lädt...",  // "Chargement..."
     "Warm",  // "Chaud"
+    "Wähle deine Player in Home Assistant: „Tab5 · lecteurs de musique · music players“.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Modus, Farbe, Stufe und Uhr wählen",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Glatter Sturz. Atme durch.",  // "Chute nette. Reprends ton souffle."
     "Hell",  // "Clair"
@@ -3918,6 +3941,9 @@ static const char* const kI18n_de[] = {
     "Das Retro-Partyquiz — 720 Fragen auf Französisch, 6 Kategorien",  // "Le quiz rétro-salon — 720 questions, 6 catégories"
     "Der Score wird gespeichert",  // "Le score est enregistré"
     "Der Server ist ~1 Minute nicht erreichbar.",  // "Le serveur sera indisponible ~1 minute."
+    "Player nicht verfügbar",  // "Lecteur indisponible"
+    "Player {n}",  // "Lecteur {n}"
+    "Player aus",  // "Lecteur éteint"
     "Abspielen",  // "Lecture"
     "Langsam",  // "Lente"
     "Beides",  // "Les deux"
@@ -3977,6 +4003,7 @@ static const char* const kI18n_de[] = {
     "Mittel",  // "Moyenne"
     "Mittel + schwer",  // "Moyennes + difficiles"
     "Volle Mauer",  // "Mur plein"
+    "Musik",  // "Musique"
     "SPEICHER",  // "MÉMOIRE"
     "Melodie",  // "Mélodie"
     "Wetter",  // "Météo"
@@ -4180,6 +4207,7 @@ static const char* const kI18n_de[] = {
     "Zurück zum Hauptmenü",  // "Revenir au menu principal"
     "Frei",  // "Rien"
     "Nichts geplant an diesem Tag",  // "Rien de prévu ce jour"
+    "Nichts wird abgespielt",  // "Rien en lecture"
     "Noch kein Zug",  // "Rien à annuler"
     "Kugel-Roguelite\n6 Räume · per Neigung",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Runen %d/%u",  // "Runes %d/%u"
@@ -4681,6 +4709,7 @@ static const char* const kI18n_nl[] = {
     "Geen actief effect",  // "Aucun effet actif"
     "Geen geschiedenis",  // "Aucun historique"
     "Geen dag gekozen in de komende 8",  // "Aucun jour retenu dans les 8 prochains"
+    "Geen speler gekozen",  // "Aucun lecteur choisi"
     "Geen voorwerpen: open kisten, versla eindbazen of ga langs bij de koopman.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Geen afspraken gepland",  // "Aucun rendez-vous à venir"
     "Geen score opgeslagen",  // "Aucun score enregistré"
@@ -4769,6 +4798,7 @@ static const char* const kI18n_nl[] = {
     "Afbeelding laden...",  // "Chargement image..."
     "Laden...",  // "Chargement..."
     "Warm",  // "Chaud"
+    "Kies je spelers in Home Assistant: „Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Kies modus, kleur, niveau en klok",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Zuivere val. Kom even op adem.",  // "Chute nette. Reprends ton souffle."
     "Licht",  // "Clair"
@@ -5041,6 +5071,9 @@ static const char* const kI18n_nl[] = {
     "De retro-partyquiz — 720 Franse vragen, 6 categorieën",  // "Le quiz rétro-salon — 720 questions, 6 catégories"
     "De score wordt opgeslagen",  // "Le score est enregistré"
     "De server is ~1 minuut onbereikbaar.",  // "Le serveur sera indisponible ~1 minute."
+    "Speler niet beschikbaar",  // "Lecteur indisponible"
+    "Speler {n}",  // "Lecteur {n}"
+    "Speler uit",  // "Lecteur éteint"
     "Afspelen",  // "Lecture"
     "Traag",  // "Lente"
     "Beide",  // "Les deux"
@@ -5100,6 +5133,7 @@ static const char* const kI18n_nl[] = {
     "Gemiddeld",  // "Moyenne"
     "Normaal + moeilijk",  // "Moyennes + difficiles"
     "Volle muur",  // "Mur plein"
+    "Muziek",  // "Musique"
     "GEHEUGEN",  // "MÉMOIRE"
     "Melodie",  // "Mélodie"
     "Weer",  // "Météo"
@@ -5303,6 +5337,7 @@ static const char* const kI18n_nl[] = {
     "Terug naar hoofdmenu",  // "Revenir au menu principal"
     "Vrij",  // "Rien"
     "Niets gepland op deze dag",  // "Rien de prévu ce jour"
+    "Er speelt niets",  // "Rien en lecture"
     "Geen vorige zet",  // "Rien à annuler"
     "Knikker-roguelite\n6 kamers · kantelbesturing",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Runen %d/%u",  // "Runes %d/%u"
@@ -5804,6 +5839,7 @@ static const char* const kI18n_es[] = {
     "Sin efecto activo",  // "Aucun effet actif"
     "Sin historial",  // "Aucun historique"
     "Ningún día elegido en los próximos 8",  // "Aucun jour retenu dans les 8 prochains"
+    "Ningún reproductor elegido",  // "Aucun lecteur choisi"
     "Ningún objeto: abre cofres, derrota a los jefes o visita al mercader.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "No hay citas próximas",  // "Aucun rendez-vous à venir"
     "Sin puntuaciones",  // "Aucun score enregistré"
@@ -5892,6 +5928,7 @@ static const char* const kI18n_es[] = {
     "Cargando imagen...",  // "Chargement image..."
     "Cargando...",  // "Chargement..."
     "Cálido",  // "Chaud"
+    "Elige tus reproductores en Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Elige modo, color, nivel y reloj",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caída limpia. Recupera el aliento.",  // "Chute nette. Reprends ton souffle."
     "Claro",  // "Clair"
@@ -6164,6 +6201,9 @@ static const char* const kI18n_es[] = {
     "El quiz retro de salón — 720 preguntas en francés, 6 categorías",  // "Le quiz rétro-salon — 720 questions, 6 catégories"
     "La puntuación se guarda",  // "Le score est enregistré"
     "El servidor no estará disponible ~1 minuto.",  // "Le serveur sera indisponible ~1 minute."
+    "Reproductor no disponible",  // "Lecteur indisponible"
+    "Reproductor {n}",  // "Lecteur {n}"
+    "Reproductor apagado",  // "Lecteur éteint"
     "Reproducir",  // "Lecture"
     "Lenta",  // "Lente"
     "Ambos",  // "Les deux"
@@ -6223,6 +6263,7 @@ static const char* const kI18n_es[] = {
     "Media",  // "Moyenne"
     "Medias + difíciles",  // "Moyennes + difficiles"
     "Muro sólido",  // "Mur plein"
+    "Música",  // "Musique"
     "MEMORIA",  // "MÉMOIRE"
     "Melodía",  // "Mélodie"
     "Tiempo",  // "Météo"
@@ -6426,6 +6467,7 @@ static const char* const kI18n_es[] = {
     "Volver al menú principal",  // "Revenir au menu principal"
     "Libre",  // "Rien"
     "Nada previsto este día",  // "Rien de prévu ce jour"
+    "No se reproduce nada",  // "Rien en lecture"
     "Nada que deshacer",  // "Rien à annuler"
     "Roguelite de canica\n6 salas · por inclinación",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Runas %d/%u",  // "Runes %d/%u"
@@ -6927,6 +6969,7 @@ static const char* const kI18n_it[] = {
     "Nessun effetto attivo",  // "Aucun effet actif"
     "Nessuno storico",  // "Aucun historique"
     "Nessun giorno scelto nei prossimi 8",  // "Aucun jour retenu dans les 8 prochains"
+    "Nessun lettore scelto",  // "Aucun lecteur choisi"
     "Nessun oggetto: apri forzieri, sconfiggi i boss o passa dal mercante.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Nessun appuntamento",  // "Aucun rendez-vous à venir"
     "Nessun punteggio",  // "Aucun score enregistré"
@@ -7015,6 +7058,7 @@ static const char* const kI18n_it[] = {
     "Carico l'immagine...",  // "Chargement image..."
     "Caricamento...",  // "Chargement..."
     "Caldo",  // "Chaud"
+    "Scegli i tuoi lettori in Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Scegli modalità, colore, livello e orologio",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caduta netta. Riprendi fiato.",  // "Chute nette. Reprends ton souffle."
     "Chiaro",  // "Clair"
@@ -7287,6 +7331,9 @@ static const char* const kI18n_it[] = {
     "Il quiz retrò da salotto — 720 domande in francese, 6 categorie",  // "Le quiz rétro-salon — 720 questions, 6 catégories"
     "Il punteggio viene salvato",  // "Le score est enregistré"
     "Il server sarà offline per ~1 minuto.",  // "Le serveur sera indisponible ~1 minute."
+    "Lettore non disponibile",  // "Lecteur indisponible"
+    "Lettore {n}",  // "Lecteur {n}"
+    "Lettore spento",  // "Lecteur éteint"
     "Riproduci",  // "Lecture"
     "Lenta",  // "Lente"
     "Entrambi",  // "Les deux"
@@ -7346,6 +7393,7 @@ static const char* const kI18n_it[] = {
     "Media",  // "Moyenne"
     "Medie + difficili",  // "Moyennes + difficiles"
     "Muro pieno",  // "Mur plein"
+    "Musica",  // "Musique"
     "MEMORIA",  // "MÉMOIRE"
     "Melodia",  // "Mélodie"
     "Meteo",  // "Météo"
@@ -7549,6 +7597,7 @@ static const char* const kI18n_it[] = {
     "Torna al menu principale",  // "Revenir au menu principal"
     "Libero",  // "Rien"
     "Nessun evento quel giorno",  // "Rien de prévu ce jour"
+    "Niente in riproduzione",  // "Rien en lecture"
     "Niente da annullare",  // "Rien à annuler"
     "Roguelite con biglia\n6 stanze · a inclinazione",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Rune %d/%u",  // "Runes %d/%u"
@@ -8050,6 +8099,7 @@ static const char* const kI18n_tr[] = {
     "Etkin efekt yok",  // "Aucun effet actif"
     "Geçmiş yok",  // "Aucun historique"
     "Önümüzdeki 8 günde seçili gün yok",  // "Aucun jour retenu dans les 8 prochains"
+    "Oynatıcı seçilmedi",  // "Aucun lecteur choisi"
     "Eşya yok: sandık aç, boss yen ya da tüccara uğra.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Yaklaşan randevu yok",  // "Aucun rendez-vous à venir"
     "Kayıtlı skor yok",  // "Aucun score enregistré"
@@ -8138,6 +8188,7 @@ static const char* const kI18n_tr[] = {
     "Görsel yükleniyor...",  // "Chargement image..."
     "Yükleniyor...",  // "Chargement..."
     "Sıcak",  // "Chaud"
+    "Oynatıcılarınızı Home Assistant'ta seçin: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Mod, renk, seviye ve saat seçimi",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Temiz bir düşüş. Nefes al.",  // "Chute nette. Reprends ton souffle."
     "Açık",  // "Clair"
@@ -8410,6 +8461,9 @@ static const char* const kI18n_tr[] = {
     "Retro salon yarışması — 720 soru (Fransızca), 6 kategori",  // "Le quiz rétro-salon — 720 questions, 6 catégories"
     "Skor kaydedilir",  // "Le score est enregistré"
     "Sunucu ~1 dakika erişilemez olacak.",  // "Le serveur sera indisponible ~1 minute."
+    "Oynatıcı kullanılamıyor",  // "Lecteur indisponible"
+    "Oynatıcı {n}",  // "Lecteur {n}"
+    "Oynatıcı kapalı",  // "Lecteur éteint"
     "Oynat",  // "Lecture"
     "Yavaş",  // "Lente"
     "İkisi",  // "Les deux"
@@ -8469,6 +8523,7 @@ static const char* const kI18n_tr[] = {
     "Ortalama",  // "Moyenne"
     "Orta + zor",  // "Moyennes + difficiles"
     "Düz duvar",  // "Mur plein"
+    "Müzik",  // "Musique"
     "BELLEK",  // "MÉMOIRE"
     "Melodi",  // "Mélodie"
     "Hava durumu",  // "Météo"
@@ -8672,6 +8727,7 @@ static const char* const kI18n_tr[] = {
     "Ana menüye dön",  // "Revenir au menu principal"
     "Yok",  // "Rien"
     "O gün için plan yok",  // "Rien de prévu ce jour"
+    "Çalan bir şey yok",  // "Rien en lecture"
     "Geri alınacak bir şey yok",  // "Rien à annuler"
     "Bilyeli roguelite\n6 oda · eğerek yönlendir",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Rünler %d/%u",  // "Runes %d/%u"

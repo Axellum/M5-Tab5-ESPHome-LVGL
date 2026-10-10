@@ -982,6 +982,155 @@ static void test_historique() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// 9. Lecteur de musique (ADR-0050)
+// ════════════════════════════════════════════════════════════════════════════
+
+static Champ ch(const char* s) { return Champ{s, s ? std::strlen(s) : 0}; }
+static bool vaut(const Champ& c, const char* s) { return champ_est(c, s); }
+
+static void test_lecteurs_lire() {
+    LecteurListeLu l[kLecteursMax];
+    int n = lecteurs_lire(ch("Salon|tv;Cuisine|speaker;Ampli|receiver;Tablette|"), l);
+    expect(n == 4 && vaut(l[0].nom, "Salon") && l[0].genre == LecteurGenre::TV && l[1].genre == LecteurGenre::ENCEINTE &&
+               l[2].genre == LecteurGenre::AMPLI && vaut(l[3].nom, "Tablette") && l[3].genre == LecteurGenre::AUTRE,
+           "lecteurs : quatre lecteurs et leurs genres");
+    n = lecteurs_lire(ch(";;A|tv;;B;"), l);
+    expect(n == 2 && vaut(l[0].nom, "A") && vaut(l[1].nom, "B") && l[1].genre == LecteurGenre::AUTRE,
+           "lecteurs : « ;; » sautés, genre absent = autre");
+    n = lecteurs_lire(ch("a;b;c;d;e;f;g;h"), l);
+    expect(n == kLecteursMax && vaut(l[5].nom, "f"), "lecteurs : kLecteursMax au plus");
+    n = lecteurs_lire(ch("|tv"), l);
+    expect(n == 1 && l[0].nom.n == 0 && l[0].genre == LecteurGenre::TV, "lecteurs : nom vide gardé");
+    expect(lecteurs_lire(ch(""), l) == 0 && lecteurs_lire(Champ{nullptr, 0}, l) == 0, "lecteurs : vide = aucun");
+    expect(lecteur_genre_lire(ch("TV")) == LecteurGenre::AUTRE, "lecteurs : genre sensible à la casse");
+}
+
+static void test_lecteur_etat() {
+    LecteurEtatLu e;
+    const char* p =
+        "1|Salon|tv|playing|Bohemian Rhapsody|Queen|A Night at the Opera|Spotify|83.5|354|42|0|1|all|lspnvmar|"
+        "/api/media_player_proxy/media_player.salon?token=abc&cache=12";
+    expect(lecteur_etat_lire(ch(p), e), "état : lu");
+    expect(e.actif == 1 && vaut(e.nom, "Salon") && e.genre == LecteurGenre::TV && e.etat == LecteurEtat::LECTURE,
+           "état : index, nom, genre, état");
+    expect(vaut(e.titre, "Bohemian Rhapsody") && vaut(e.artiste, "Queen") && vaut(e.album, "A Night at the Opera") &&
+               vaut(e.app, "Spotify"),
+           "état : textes");
+    expect(e.position == 83.5f && e.duree == 354.0f && e.volume == 42 && e.muet == 0 && e.aleatoire == 1 &&
+               e.repetition == LecteurRepetition::TOUT,
+           "état : nombres et drapeaux");
+    expect(e.fonctions == (LECTEUR_F_LECTURE | LECTEUR_F_POSITION | LECTEUR_F_PRECEDENT | LECTEUR_F_SUIVANT |
+                           LECTEUR_F_VOLUME | LECTEUR_F_MUET | LECTEUR_F_ALEATOIRE | LECTEUR_F_REPETITION),
+           "état : fonctions");
+    expect(vaut(e.image, "/api/media_player_proxy/media_player.salon?token=abc&cache=12"), "état : image");
+
+    // Image en dernier : elle prend le reste, « | » compris.
+    lecteur_etat_lire(ch("0|A||paused||||||||||||http://x/a|b"), e);
+    expect(e.etat == LecteurEtat::PAUSE && vaut(e.image, "http://x/a|b"), "état : image avec « | »");
+
+    // Inconnus : « - », vides, illisibles, hors bornes, non finis.
+    lecteur_etat_lire(ch("-1|T||idle|||||-|-|nan|-|-|-||"), e);
+    expect(e.actif == -1 && e.etat == LecteurEtat::INACTIF && std::isnan(e.position) && std::isnan(e.duree) &&
+               e.volume == -1 && e.muet == -1 && e.aleatoire == -1 && e.repetition == LecteurRepetition::INCONNUE &&
+               e.fonctions == 0 && e.image.n == 0,
+           "état : champs inconnus");
+    lecteur_etat_lire(ch("9|T||on|||||-5|1e99|101|2|x|ONE|zz"), e);
+    expect(e.actif == -1 && e.etat == LecteurEtat::INACTIF && std::isnan(e.position) && std::isnan(e.duree) &&
+               e.volume == -1 && e.muet == -1 && e.aleatoire == -1 && e.repetition == LecteurRepetition::INCONNUE &&
+               e.fonctions == 0,
+           "état : hors bornes = inconnu");
+    lecteur_etat_lire(ch("2|T||playing|||||10|0|100|1|0|one|o"), e);
+    expect(e.actif == 2 && std::isnan(e.duree) && e.position == 10.0f && e.volume == 100 && e.muet == 1 &&
+               e.aleatoire == 0 && e.repetition == LecteurRepetition::UNE && e.fonctions == LECTEUR_F_ALLUMER,
+           "état : durée 0 = direct, bornes atteintes");
+    lecteur_etat_lire(ch("0|T||playing|||||||49.6"), e);
+    expect(e.volume == 50, "état : volume arrondi");
+
+    // Payload court : moins de quatre champs, rien.
+    expect(!lecteur_etat_lire(ch("0|T|tv"), e) && e.etat == LecteurEtat::AUCUN, "état : trois champs refusés");
+    expect(!lecteur_etat_lire(ch(""), e) && e.etat == LecteurEtat::AUCUN, "état : vide = aucun lecteur");
+    expect(lecteur_etat_lire(ch("0|T||off"), e) && e.etat == LecteurEtat::ETEINT && e.titre.n == 0 && e.image.n == 0,
+           "état : quatre champs suffisent");
+
+    // États de HA.
+    expect(lecteur_etat_code(ch("buffering")) == LecteurEtat::CHARGEMENT &&
+               lecteur_etat_code(ch("standby")) == LecteurEtat::VEILLE &&
+               lecteur_etat_code(ch("unavailable")) == LecteurEtat::INDISPONIBLE &&
+               lecteur_etat_code(ch("unknown")) == LecteurEtat::INDISPONIBLE &&
+               lecteur_etat_code(ch("")) == LecteurEtat::INDISPONIBLE,
+           "état : codes de HA");
+    expect(lecteur_fonctions_lire(ch("llx")) == LECTEUR_F_LECTURE && lecteur_fonctions_lire(Champ{nullptr, 3}) == 0,
+           "état : lettres répétées ou inconnues");
+}
+
+static void test_lecteur_position() {
+    LecteurEtatLu e;
+    lecteur_etat_lire(ch("0|T||playing|||||100|200"), e);
+    expect(lecteur_position(e, 5.0f) == 105.0f, "position : avancée en lecture");
+    expect(lecteur_position(e, 500.0f) == 200.0f, "position : jamais au-delà de la durée");
+    expect(lecteur_position(e, -3.0f) == 100.0f && lecteur_position(e, NAN) == 100.0f, "position : écoulé faux ignoré");
+    lecteur_etat_lire(ch("0|T||paused|||||100|200"), e);
+    expect(lecteur_position(e, 5.0f) == 100.0f, "position : figée en pause");
+    lecteur_etat_lire(ch("0|T||playing|||||100|"), e);
+    expect(lecteur_position(e, 5.0f) == 105.0f, "position : direct, sans borne de durée");
+    lecteur_etat_lire(ch("0|T||playing|||||-|200"), e);
+    expect(std::isnan(lecteur_position(e, 5.0f)), "position : inconnue");
+    lecteur_etat_lire(ch("0|T||playing|||||999999|"), e);
+    expect(lecteur_position(e, 1e30f) == kLecteurDureeMax, "position : bornée");
+}
+
+static void test_lecteur_temps() {
+    char b[16];
+    expect(lecteur_temps_texte(0.0f, b, sizeof(b)) && std::strcmp(b, "0:00") == 0, "temps : 0:00");
+    expect(lecteur_temps_texte(83.9f, b, sizeof(b)) && std::strcmp(b, "1:23") == 0, "temps : 1:23");
+    expect(lecteur_temps_texte(3599.0f, b, sizeof(b)) && std::strcmp(b, "59:59") == 0, "temps : 59:59");
+    expect(lecteur_temps_texte(3725.0f, b, sizeof(b)) && std::strcmp(b, "1:02:05") == 0, "temps : 1:02:05");
+    expect(lecteur_temps_texte(NAN, b, sizeof(b)) && std::strcmp(b, "-:--") == 0, "temps : inconnu");
+    expect(lecteur_temps_texte(-1.0f, b, sizeof(b)) && std::strcmp(b, "-:--") == 0, "temps : négatif");
+    expect(lecteur_temps_texte(2e6f, b, sizeof(b)) && std::strcmp(b, "-:--") == 0, "temps : hors bornes");
+    expect(lecteur_temps_texte(kLecteurDureeMax, b, sizeof(b)) && std::strcmp(b, "277:46:40") == 0, "temps : maximum");
+    char petit[4];
+    expect(!lecteur_temps_texte(83.0f, petit, sizeof(petit)) && petit[0] == '\0', "temps : tampon trop petit");
+    expect(!lecteur_temps_texte(83.0f, nullptr, 0), "temps : pas de tampon");
+}
+
+static void test_ha_base_depuis_hote() {
+    char b[64];
+    expect(ha_base_depuis_hote("192.0.2.10", b, sizeof(b)) && std::strcmp(b, "http://192.0.2.10:8123") == 0,
+           "base : IPv4");
+    expect(ha_base_depuis_hote("fd00::1", b, sizeof(b)) && std::strcmp(b, "http://[fd00::1]:8123") == 0, "base : IPv6");
+    expect(!ha_base_depuis_hote("", b, sizeof(b)) && b[0] == '\0', "base : adresse vide refusée");
+    expect(!ha_base_depuis_hote(nullptr, b, sizeof(b)) && b[0] == '\0', "base : adresse nulle refusée");
+    expect(!ha_base_depuis_hote("fe80::1%eth0", b, sizeof(b)) && b[0] == '\0', "base : zone IPv6 refusée");
+    expect(!ha_base_depuis_hote("ha.local/x", b, sizeof(b)), "base : nom ou chemin refusé");
+    char petit[10];
+    expect(!ha_base_depuis_hote("192.0.2.10", petit, sizeof(petit)) && petit[0] == '\0', "base : tampon trop petit");
+    expect(!ha_base_depuis_hote("1111:2222:3333:4444:5555:6666:7777:8888:9999:a", b, sizeof(b)),
+           "base : adresse trop longue");
+}
+
+static void test_ha_image_url() {
+    char u[kLecteurUrlMax];
+    auto url = [&](const char* image, const char* base) { return ha_image_url(ch(image), base, u, sizeof(u)); };
+    expect(url("/api/media_player_proxy/media_player.x?token=a", "http://192.0.2.10:8123") &&
+               std::strcmp(u, "http://192.0.2.10:8123/api/media_player_proxy/media_player.x?token=a") == 0,
+           "url : chemin relatif");
+    expect(url("api/x", "http://h:8123/") && std::strcmp(u, "http://h:8123/api/x") == 0, "url : « / » ajouté et retiré");
+    expect(url("https://i.scdn.co/image/ab67", nullptr) && std::strcmp(u, "https://i.scdn.co/image/ab67") == 0,
+           "url : URL complète sans base");
+    expect(!url("/api/x", "") && u[0] == '\0', "url : base vide refusée");
+    expect(!url("/api/x", "ftp://h") && u[0] == '\0', "url : base sans http refusée");
+    expect(!url("", "http://h") && !url(nullptr, "http://h"), "url : image vide refusée");
+    expect(!url("/a b", "http://h") && u[0] == '\0', "url : espace refusé");
+    expect(!url("/a\nb", "http://h"), "url : saut de ligne refusé");
+    const std::string zero("/a\0b", 4);
+    expect(!ha_image_url(Champ{zero.data(), zero.size()}, "http://h", u, sizeof(u)), "url : zéro refusé");
+    char petit[12];
+    expect(!ha_image_url(ch("/abcdef"), "http://h", petit, sizeof(petit)) && petit[0] == '\0',
+           "url : tampon trop petit");
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // Payloads tels que HA les envoie : mêmes sorties qu'avant les correctifs du lot F
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -1070,6 +1219,12 @@ int main() {
     test_clim_etat();
     test_humidite_lire();
     test_historique();
+    test_lecteurs_lire();
+    test_lecteur_etat();
+    test_lecteur_position();
+    test_lecteur_temps();
+    test_ha_base_depuis_hote();
+    test_ha_image_url();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

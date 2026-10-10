@@ -1,0 +1,238 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file lecteur_popup.yaml
+# @role Popup « Musique » (ADR-0050, 10/10/2026, demande d'Axel) : un lecteur multimédia
+#       de Home Assistant, façon Spotify, dans une carte centrée qui ne prend pas tout
+#       l'écran. À gauche la pochette ; à droite titre, artiste, album, barre de lecture
+#       touchable, commandes (aléatoire, précédent, lecture / pause, suivant, répétition),
+#       volume et muet ; en bas une pastille par lecteur choisi dans HA (« Tab5 · lecteurs
+#       de musique »), l'actif en accent. Dans l'en-tête : le nom du lecteur et
+#       l'application qu'il montre.
+#       Ouvert par l'appui long d'une tuile med sans option t, la mini-barre « en lecture »
+#       de l'accueil (lecteur_mini.yaml), un geste de l'accueil (code « musique ») ou
+#       « Aller à l'écran → Musique ».
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Musique » dans
+#       tab5_modal_registry_init). Carte de ${lecteur_card_w} × ${lecteur_card_h}
+#       (tab5-ui-tokens.yaml, kLecteurCarteL/H de tab5_geometrie.h) : voile à 70 % au lieu
+#       de 100, le tableau de bord reste visible autour (ADR-0050). Coordonnées dans la
+#       carte (940 × 536) : pochette x 24..384, y 72..432 ; colonne de droite x 408..916
+#       (508 px, kTexteL de tab5_lecteur.cpp) ; pastilles y 456..512. Tout ce qui bouge
+#       (textes, glyphes, masquages, couleurs d'état, pastilles) est écrit par
+#       tab5_lecteur.cpp : aucune valeur posée ici.
+# @ai_instruction Un widget de plus = son champ dans LecteurUI (tab5_lecteur.h) et sa ligne
+#       dans le script tab5_lecteur_lier (tab5-lecteur.yaml).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: lecteur_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    # Voile à 70 % : le tableau de bord se devine autour de la carte (ADR-0050).
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "70", popup_id: lecteur_popup } }
+
+    - obj:
+        align: CENTER
+        width: ${lecteur_card_w}
+        height: ${lecteur_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE : icône, nom du lecteur (tab5_lecteur.cpp), croix ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F075A", icon_style: "style_text_accent", title: "Musique", title_id: "lecteur_popup_titre", close_btn_id: "btn_lecteur_close", popup_id: lecteur_popup } }
+
+          # Options d'en-tête : l'application du lecteur (Spotify, Netflix…), une pastille
+          # sur la ligne de la barre, à gauche de la croix ; masquée sans application.
+          - obj:
+              id: lecteur_app
+              align: TOP_RIGHT
+              x: -100
+              y: 4
+              width: SIZE_CONTENT
+              height: 44
+              pad_left: 16
+              pad_right: 16
+              hidden: true
+              clickable: false
+              scrollable: false
+              styles: style_glass_card
+              widgets:
+                - label: { id: lecteur_app_texte, text: "", align: CENTER, text_font: roboto_22, styles: style_text_soft }
+
+          # ═══ POCHETTE (360 × 360, coins arrondis) ═══
+          # Fond uni (rôle ARC_TRACK, pas le dégradé du verre qui traçait une bande), bord
+          # GLASS_RIM plein sur les quatre côtés, dessiné APRÈS les enfants (border_post)
+          # pour rester net par-dessus l'image ; clip_corner découpe l'image et la note
+          # aux coins arrondis (demande d'Axel sur le rendu du 10/10/2026).
+          - obj:
+              align: TOP_LEFT
+              x: 24
+              y: ${modal_body_y}
+              width: 360
+              height: 360
+              pad_all: 0
+              radius: 20
+              bg_opa: 100%
+              border_width: 2
+              border_opa: 100%
+              border_post: true
+              clip_corner: true
+              shadow_width: 0
+              scrollable: false
+              clickable: false
+              styles: [style_bg_arc_track, style_border_glass_rim]
+              widgets:
+                # Sans pochette (aucune, en téléchargement, refusée) : une note de musique.
+                - label: { id: lecteur_pochette_vide, text: "\U000F075A", align: CENTER, text_font: mdi_font_120, styles: style_text_dim }
+                # Image téléchargée (image lecteur_pochette, tab5-lecteur.yaml), en COVER :
+                # posée par lecteur_image_prete(). Le cadre (clip_corner) découpe ses coins.
+                - image:
+                    id: lecteur_pochette_img
+                    src: lecteur_pochette
+                    align: CENTER
+                    width: 360
+                    height: 360
+                    radius: 20
+                    hidden: true
+
+          # ═══ COLONNE DE DROITE : le morceau ═══
+          - label: { id: lecteur_titre, text: "", align: TOP_LEFT, x: 408, y: 84, text_font: roboto_32_b, hidden: true }
+          - label: { id: lecteur_artiste, text: "", align: TOP_LEFT, x: 408, y: 130, text_font: roboto_22, styles: style_text_soft, hidden: true }
+          - label: { id: lecteur_album, text: "", align: TOP_LEFT, x: 408, y: 162, text_font: roboto_22, styles: style_text_dim, hidden: true }
+
+          # Rien à montrer (aucun lecteur choisi, éteint, indisponible, rien en lecture) :
+          # une phrase courte, jamais un état brut ni un identifiant d'entité.
+          - label: { id: lecteur_message, text: "En attente de Home Assistant", align: TOP_LEFT, x: 408, y: 104, width: 508, long_mode: WRAP, text_font: roboto_32_b }
+          - label: { id: lecteur_conseil, text: "", align: TOP_LEFT, x: 408, y: 156, width: 508, long_mode: WRAP, text_font: roboto_22, styles: style_text_dim, hidden: true }
+          # Lecteur éteint qui sait s'allumer (turn_on).
+          - button:
+              id: lecteur_btn_6
+              align: TOP_LEFT
+              x: 408
+              y: 260
+              width: 220
+              height: 64
+              hidden: true
+              styles: style_clim_btn
+              on_short_click:
+                - lambda: 'lecteur_appui(LECTEUR_BTN_ALLUMER);'
+              widgets:
+                - label: { text: "\U000F0425", align: LEFT_MID, x: 20, text_font: mdi_font_32, styles: style_text_accent }
+                - label: { text: "Allumer", align: LEFT_MID, x: 64, text_font: roboto_22 }
+
+          # ═══ LECTURE : position, commandes, volume (lecteur allumé seulement) ═══
+          #     Dans la colonne de droite, x 408..916, y 200..432.
+          - obj:
+              id: lecteur_lecture
+              align: TOP_LEFT
+              x: 408
+              y: 200
+              width: 508
+              height: 232
+              pad_all: 0
+              hidden: true
+              scrollable: false
+              styles: style_transparent
+              widgets:
+                # Barre de lecture : 0 à 1000 (pour mille de la durée). Touchable seulement
+                # si le lecteur sait se déplacer (seek) : tab5_lecteur.cpp ôte CLICKABLE sinon.
+                # Id « lecteur_barre », pas « lecteur_position » : ESPHome fait de chaque id
+                # une variable globale de main.cpp, qui heurterait lecteur_position()
+                # (tab5_parse.h).
+                - slider:
+                    id: lecteur_barre
+                    align: TOP_LEFT
+                    x: 0
+                    y: 8
+                    width: 508
+                    height: 14
+                    min_value: 0
+                    max_value: 1000
+                    value: 0
+                    styles: style_bg_arc_track
+                    radius: 7
+                    indicator:
+                      styles: style_bg_accent
+                      radius: 7
+                    knob:
+                      styles: style_bg_soft
+                    on_value:
+                      - lambda: 'lecteur_curseur(LECTEUR_CURSEUR_POSITION, false);'
+                    on_release:
+                      - lambda: 'lecteur_curseur(LECTEUR_CURSEUR_POSITION, true);'
+                - label: { id: lecteur_ecoule, text: "", align: TOP_LEFT, x: 0, y: 32, text_font: roboto_22, styles: style_text_dim }
+                - label: { id: lecteur_duree, text: "", align: TOP_RIGHT, x: 0, y: 32, text_font: roboto_22, styles: style_text_dim }
+
+                # Commandes, centrées dans la colonne (milieu à x 254) : aléatoire 64,
+                # précédent 72, lecture 96, suivant 72, répétition 64 ; un pas de 100 px.
+                - !include { file: lecteur_commande.yaml, vars: { n: "3", x: "22", y: "80", taille: "64", icone: "\U000F049E" } }
+                - !include { file: lecteur_commande.yaml, vars: { n: "1", x: "118", y: "76", taille: "72", icone: "\U000F04AE" } }
+                - button:
+                    id: lecteur_btn_0
+                    align: TOP_LEFT
+                    x: 206
+                    y: 64
+                    width: 96
+                    height: 96
+                    radius: 999
+                    pad_all: 0
+                    hidden: true
+                    styles: style_pill_accent
+                    on_short_click:
+                      - lambda: 'lecteur_appui(LECTEUR_BTN_LECTURE);'
+                    widgets:
+                      - label: { id: lecteur_ico_0, text: "\U000F040A", align: CENTER, text_font: mdi_font_70, styles: style_text_on_accent }
+                - !include { file: lecteur_commande.yaml, vars: { n: "2", x: "318", y: "76", taille: "72", icone: "\U000F04AD" } }
+                - !include { file: lecteur_commande.yaml, vars: { n: "4", x: "422", y: "80", taille: "64", icone: "\U000F0457" } }
+
+                # Volume : muet (icône), curseur 0 à 100, valeur.
+                - button:
+                    id: lecteur_btn_5
+                    align: TOP_LEFT
+                    x: 0
+                    y: 182
+                    width: 56
+                    height: 48
+                    pad_all: 0
+                    hidden: true
+                    styles: style_clim_btn
+                    on_short_click:
+                      - lambda: 'lecteur_appui(LECTEUR_BTN_MUET);'
+                    widgets:
+                      - label: { id: lecteur_ico_muet, text: "\U000F057E", align: CENTER, text_font: mdi_font_32, styles: style_text_soft }
+                - slider:
+                    id: lecteur_volume
+                    align: TOP_LEFT
+                    x: 76
+                    y: 199
+                    width: 340
+                    height: 14
+                    min_value: 0
+                    max_value: 100
+                    value: 0
+                    hidden: true
+                    styles: style_bg_arc_track
+                    radius: 7
+                    indicator:
+                      styles: style_bg_accent
+                      radius: 7
+                    knob:
+                      styles: style_bg_soft
+                    on_value:
+                      - lambda: 'lecteur_curseur(LECTEUR_CURSEUR_VOLUME, false);'
+                    on_release:
+                      - lambda: 'lecteur_curseur(LECTEUR_CURSEUR_VOLUME, true);'
+                - label: { id: lecteur_volume_texte, text: "", align: TOP_RIGHT, x: 0, y: 192, text_font: roboto_22, styles: style_text_soft, hidden: true }
+
+          # ═══ PASTILLES : un lecteur de la liste chacune (lecteur_puce.yaml) ═══
+          - !include { file: lecteur_puce.yaml, vars: { n: "0" } }
+          - !include { file: lecteur_puce.yaml, vars: { n: "1" } }
+          - !include { file: lecteur_puce.yaml, vars: { n: "2" } }
+          - !include { file: lecteur_puce.yaml, vars: { n: "3" } }
+          - !include { file: lecteur_puce.yaml, vars: { n: "4" } }
+          - !include { file: lecteur_puce.yaml, vars: { n: "5" } }

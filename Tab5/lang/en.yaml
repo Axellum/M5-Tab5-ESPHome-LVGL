@@ -1325,3 +1325,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "uv|Extrême": "Extreme"
 "Indice UV": "UV index"
 "Gel": "Frost"
+# Lecteur de musique (ADR-0050, 10/10/2026)
+"Musique": "Music"
+"Aucun lecteur choisi": "No player chosen"
+"Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique ».": "Choose your players in Home Assistant: “Tab5 · lecteurs de musique · music players”."
+"Lecteur éteint": "Player off"
+"Lecteur indisponible": "Player unavailable"
+"Rien en lecture": "Nothing playing"
+"Lecteur {n}": "Player {n}"

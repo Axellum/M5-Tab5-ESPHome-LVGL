@@ -21,6 +21,10 @@
 #       tab5_recharger_automatisations     → automation.reload
 #       tab5_redemarrage_ha_confirme       → homeassistant.restart (émis seulement par
 #                                            « Confirmer » de la console système)
+#       tab5_lecteur (action, lecteur,     → script.tab5_lecteur_commande (tab5_lecteur.yaml,
+#                     valeur)                ADR-0050) : n'agit que sur un lecteur de la
+#                                            liste choisie ou sur le lecteur montré ; le
+#                                            blueprint écoute aussi « ouvrir » d'une tuile
 #       Les autres événements de la tablette ont leur consommateur ailleurs :
 #       tab5_connected (tab5_push, tab5_reveil, tab5_reglages, blueprint), tab5_zones,
 #       tab5_action et tab5_energie (blueprint « Tab5 — emplacements », qui connaît les
@@ -101,6 +105,9 @@ automation:
       - trigger: event
         event_type: esphome.tab5_redemarrage_ha_confirme
         id: redemarrage_ha_confirme
+      - trigger: event
+        event_type: esphome.tab5_lecteur
+        id: lecteur
     conditions:
       # La tablette, reconnue à son modèle comme dans le blueprint et les poussées.
       # Un événement sans device_id (tiré à la main) ou dont le device_id est une
@@ -285,6 +292,25 @@ automation:
                 id: recharger_automatisations
             sequence:
               - action: automation.reload
+
+          # Lecteur de musique (ADR-0050) : la commande part au script du package, qui ne
+          # touche qu'un lecteur de la liste « Tab5 · lecteurs de musique » ou le lecteur
+          # montré. Aucune entité ne vient de l'événement (un index, une clé de tuile).
+          - alias: "Lecteur de musique : commande du popup Musique"
+            conditions:
+              - condition: trigger
+                id: lecteur
+            sequence:
+              - if: "{{ states['script.tab5_lecteur_commande'] is not none }}"
+                then:
+                  - action: script.turn_on
+                    target:
+                      entity_id: script.tab5_lecteur_commande
+                    data:
+                      variables:
+                        commande: "{{ trigger.event.data.action | default('') | string }}"
+                        lecteur: "{{ trigger.event.data.lecteur | default('') | string }}"
+                        valeur: "{{ trigger.event.data.valeur | default('') | string }}"
 
           - alias: "Console système : redémarrer Home Assistant (confirmé à l'écran)"
             conditions:

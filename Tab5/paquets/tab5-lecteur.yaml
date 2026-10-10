@@ -1,0 +1,149 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-lecteur.yaml
+# @role Lecteur de musique (ADR-0050, 10/10/2026) : pose les widgets que tab5_lecteur.cpp
+#       peint (g_lecteur_ui), la pochette téléchargée et l'événement des commandes.
+#         - tab5_lecteur_lier : widgets et commandes dans g_lecteur_ui, une fois (appelé
+#           par la poussée tab5_maj_lecteur, tab5-api-logic.yaml, et à l'ouverture) ;
+#         - tab5_lecteur_ouvrir : ouvre le popup (« Aller à l'écran → Musique », geste
+#           « musique », mini-barre, appui long d'une tuile med sans t avec sa clé tRT) ;
+#         - tab5_lecteur_evenement : événement esphome.tab5_lecteur (action, lecteur,
+#           valeur). HomeAssistant_Config/packages/tab5_evenements.yaml le traduit en
+#           actions media_player sur les lecteurs choisis seulement ; le blueprint
+#           « Tab5 — emplacements » traduit « ouvrir » d'une tuile en son media_player ;
+#         - tab5_lecteur_image : la pochette (online_image.set_url), ou sa libération.
+# @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
+#       nomme aucune entité, elle dit « l'index i de la liste » ou « la tuile tRT ». Chargé
+#       APRÈS tab5_lvgl : il référence des widgets. Aucun lv_* ici. La pochette est une
+#       image `online_image` comme celle de l'assistant (tab5-assist.yaml : même
+#       http_request) : décodée en RGB565 dans la PSRAM, ramenée dans 360 × 360 en gardant
+#       ses proportions, format lu dans la réponse (JPEG le plus souvent).
+# @ai_instruction Un widget de plus = son champ dans LecteurUI (tab5_lecteur.h) et sa ligne
+#       ici. Les commandes sont des lambdas SANS capture (pointeurs de fonction), comme
+#       celles de tab5-tuiles.yaml.
+# ============================================================================
+
+image:
+  - platform: online_image
+    id: lecteur_pochette
+    url: "http://127.0.0.1/pochette.jpg"   # remplacé au runtime par set_url
+    format: AUTO
+    type: RGB565
+    resize: 360x360
+    on_download_finished:
+      - lambda: 'lecteur_image_prete(id(lecteur_pochette)->get_lv_image_dsc());'
+    on_error:
+      - lambda: 'lecteur_image_erreur();'
+
+script:
+  - id: tab5_lecteur_lier
+    then:
+      - lambda: |-
+          LecteurUI& u = g_lecteur_ui;
+          if (u.popup != nullptr) return;
+          u.nom = id(lecteur_popup_titre);
+          u.app = id(lecteur_app);
+          u.app_texte = id(lecteur_app_texte);
+          u.pochette = id(lecteur_pochette_img);
+          u.pochette_vide = id(lecteur_pochette_vide);
+          u.titre = id(lecteur_titre);
+          u.artiste = id(lecteur_artiste);
+          u.album = id(lecteur_album);
+          u.lecture = id(lecteur_lecture);
+          u.position = id(lecteur_barre);
+          u.ecoule = id(lecteur_ecoule);
+          u.duree = id(lecteur_duree);
+          u.btn[LECTEUR_BTN_LECTURE] = id(lecteur_btn_0);
+          u.btn[LECTEUR_BTN_PRECEDENT] = id(lecteur_btn_1);
+          u.btn[LECTEUR_BTN_SUIVANT] = id(lecteur_btn_2);
+          u.btn[LECTEUR_BTN_ALEATOIRE] = id(lecteur_btn_3);
+          u.btn[LECTEUR_BTN_REPETITION] = id(lecteur_btn_4);
+          u.btn[LECTEUR_BTN_MUET] = id(lecteur_btn_5);
+          u.btn[LECTEUR_BTN_ALLUMER] = id(lecteur_btn_6);
+          u.ico_lecture = id(lecteur_ico_0);
+          u.ico_aleatoire = id(lecteur_ico_3);
+          u.ico_repetition = id(lecteur_ico_4);
+          u.ico_muet = id(lecteur_ico_muet);
+          u.volume = id(lecteur_volume);
+          u.volume_texte = id(lecteur_volume_texte);
+          u.message = id(lecteur_message);
+          u.conseil = id(lecteur_conseil);
+          u.puce[0] = id(lecteur_puce_0);
+          u.puce[1] = id(lecteur_puce_1);
+          u.puce[2] = id(lecteur_puce_2);
+          u.puce[3] = id(lecteur_puce_3);
+          u.puce[4] = id(lecteur_puce_4);
+          u.puce[5] = id(lecteur_puce_5);
+          u.puce_icone[0] = id(lecteur_puce_icone_0);
+          u.puce_icone[1] = id(lecteur_puce_icone_1);
+          u.puce_icone[2] = id(lecteur_puce_icone_2);
+          u.puce_icone[3] = id(lecteur_puce_icone_3);
+          u.puce_icone[4] = id(lecteur_puce_icone_4);
+          u.puce_icone[5] = id(lecteur_puce_icone_5);
+          u.puce_nom[0] = id(lecteur_puce_nom_0);
+          u.puce_nom[1] = id(lecteur_puce_nom_1);
+          u.puce_nom[2] = id(lecteur_puce_nom_2);
+          u.puce_nom[3] = id(lecteur_puce_nom_3);
+          u.puce_nom[4] = id(lecteur_puce_nom_4);
+          u.puce_nom[5] = id(lecteur_puce_nom_5);
+          u.mini = id(lecteur_mini);
+          u.mini_pochette = id(lecteur_mini_img);
+          u.mini_vide = id(lecteur_mini_vide);
+          u.mini_titre = id(lecteur_mini_titre);
+          u.mini_artiste = id(lecteur_mini_artiste);
+          u.mini_ico = id(lecteur_mini_ico);
+          u.envoyer = [](const char* action, const char* lecteur, const char* valeur) {
+            id(tab5_lecteur_evenement).execute(std::string(action), std::string(lecteur), std::string(valeur));
+          };
+          u.image = [](const char* url) { id(tab5_lecteur_image).execute(std::string(url)); };
+          // En dernier : le C++ ne peint rien tant que popup est nul.
+          u.popup = id(lecteur_popup);
+
+  # `cle` : la tuile med touchée (« tRT »), vide pour le lecteur courant. Le popup montre
+  # tout de suite le dernier état reçu ; HA pousse l'état frais (événement « ouvrir »).
+  - id: tab5_lecteur_ouvrir
+    parameters:
+      cle: string
+    then:
+      - script.execute: tab5_lecteur_lier
+      - lambda: |-
+          lecteur_ouvrir(cle);
+          animate_popup_open(id(lecteur_popup));
+
+  - id: tab5_lecteur_evenement
+    mode: queued
+    max_runs: 6
+    parameters:
+      action: string
+      lecteur: string
+      valeur: string
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_lecteur
+          data:
+            action: !lambda 'return action;'
+            lecteur: !lambda 'return lecteur;'
+            valeur: !lambda 'return valeur;'
+
+  # Pochette : une adresse la télécharge (online_image.set_url), "" la libère.
+  - id: tab5_lecteur_image
+    mode: restart
+    parameters:
+      url: string
+    then:
+      - if:
+          condition:
+            lambda: 'return !url.empty();'
+          then:
+            - online_image.set_url:
+                id: lecteur_pochette
+                url: !lambda 'return url;'
+          else:
+            - online_image.release: lecteur_pochette
+
+# La position avance d'elle-même en lecture (popup ouvert) ; la mini-barre se masque 5 min
+# après une pause. Rien n'est repeint quand rien ne change (ui_text compare).
+interval:
+  - interval: 1s
+    then:
+      - lambda: 'lecteur_tic();'

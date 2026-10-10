@@ -618,15 +618,21 @@ def _cas(appui, type_, suivant):
 
 
 def test_appui_long_d_un_appareil_ouvre_son_popup():
-    """L'appui long d'une tuile int, act, ou med sans l'option t (avec t : la télécommande)
-    ouvre le popup de l'appareil ; l'appui court ne change pas. Lecture seule (option r) :
-    gestes coupe avant, comme le mode météo sans appareils."""
+    """L'appui long d'une tuile int ou act ouvre le popup de l'appareil ; celui d'une med
+    sans l'option t, le lecteur de musique (ADR-0050, 10/10/2026 ; avec t : la
+    télécommande) ; l'appui court ne change pas. Lecture seule (option r) : gestes coupe
+    avant, comme le mode météo sans appareils."""
     cpp = _cpp()
     appui = _fonction(cpp, "tuile_appui_piece")
     table = _gestes_par_type()
-    for t in ("int", "act", "med"):
+    for t in ("int", "act"):
         assert table[t][2:] == (False, "APPAREIL"), t
+    assert table["med"][2:] == (False, "LECTEUR")
     assert "case Fenetre::APPAREIL:\n            popup_appareil_ouvrir(r, t);" in _fonction(cpp, "ouvrir_fenetre")
+    lecteur = _fonction(cpp, "ouvrir_fenetre").split("case Fenetre::LECTEUR:", 1)[1].split("return true;", 1)[0]
+    assert "g_tuiles_ui.lecteur_ouvrir(modele_ha::tuile_cle(r, t).s)" in lecteur
+    # Le − / + n'ouvre pas le lecteur : ses trois ouvertures sont celles de la demande.
+    assert "f == Fenetre::LECTEUR) return false;" in _fonction(cpp, "tuile_ouvrir_popup")
     # med avec l'option t : la télécommande à la place.
     assert "if (type == Type::MED && (d.options & OPT_T)) g.fenetre = Fenetre::TELECOMMANDE;" in _fonction(cpp, "gestes")
     # Les appuis courts d'aujourd'hui : basculer (allumer avec o), lancer.
@@ -636,8 +642,9 @@ def test_appui_long_d_un_appareil_ouvre_son_popup():
             "Fenetre::APPAREIL;") in _fonction(cpp, "popup_appareil_valide")
     # Le tableau de l'ADR le dit aussi.
     types = _types_de_l_adr()
-    for t in ("int", "act", "med"):
+    for t in ("int", "act"):
         assert "device popup" in types[t][1], t
+    assert "music player popup" in types["med"][1]
     # Mode météo sans appareils : aucun appui, popup compris.
     assert "if (!g_central_ctx.ha_mode && !s_appareils_meteo) return;" in _fonction(_cpp(), "tuile_appui")
 

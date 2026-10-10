@@ -161,6 +161,8 @@ script:
           u.volet_tap = []() { id(tab5_volet_tap).execute(); };
           // Option e (ADR-0028) : une tuile cap ouvre le popup Énergie (tab5-energie.yaml).
           u.energie_ouvrir = []() { id(tab5_energie_ouvrir).execute(); };
+          // Appui long d'une med sans t (ADR-0050) : le lecteur de musique (tab5-lecteur.yaml).
+          u.lecteur_ouvrir = [](const char* cle) { id(tab5_lecteur_ouvrir).execute(std::string(cle)); };
           // Toucher d'un titre = sens d'un volet (28/09) ; une fois, les pointeurs posés.
           tuiles_brancher_titres();
           // Volet dessiné du popup : ses lames, glisser, relâcher (une fois aussi) ; et le

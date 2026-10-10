@@ -92,6 +92,11 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_historique": {"cle": "serre", "vue": "jour", "entete": "Serre|2026-06-15T07:00|60|1485|18.2|0|62",
                             "mesures": "17.1,16.8,17.5,58,55,61;16.9,16.6,17.2;;,,,64,60,70;16.5,16.2,16.8,66,63,69",
                             "previsions": "1500,19.4;1560,20.8;1620,22.1"},
+    # Lecteur de musique (ADR-0050) : la liste choisie et le lecteur montré, image relative
+    # à HA (la base vient du client API).
+    "tab5_maj_lecteur": {"lecteurs": "Salon|tv;Cuisine|speaker;Tablette|",
+                         "etat": "1|Cuisine|speaker|playing|Bohemian Rhapsody|Queen|A Night at the Opera|Spotify|"
+                                 "83|354|42|0|1|all|lspnvmar|/api/media_player_proxy/media_player.cuisine?token=x&cache=1"},
 }
 
 NOMBRES = ["", "-1", "0", "15", "16", "31", "32", "99", "255", "256", "2147483647", "-2147483648",

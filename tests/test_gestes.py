@@ -27,7 +27,7 @@ import pytest
 import yaml
 
 from tests.commun import lire as _lire
-from tests.test_appuis import ACTIONS, ACTIONS_APRES, CODES, ECRANS_APRES, ROUE_CODES, _codes_firmware, _fonction
+from tests.test_appuis import ACTIONS, ACTIONS_APRES, CODES, ECRANS_APRES, ECRANS_FIN, ROUE_CODES, _codes_firmware, _fonction
 from tests.test_tuiles_blueprint import Passage, _evenement
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -101,7 +101,7 @@ def test_ordre_des_douze_champs():
 
 def test_memes_codes_firmware_et_blueprint():
     codes = _codes_firmware()
-    assert list(codes) == list(CODES) + ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES
+    assert list(codes) == list(CODES) + ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES + list(ECRANS_FIN)
     bp = _bp()
     attendus = ["auto"] + list(codes)
     assert bp["variables"]["codes_gestes"] == attendus
@@ -121,7 +121,7 @@ def test_actions_de_l_accueil():
     actions = _actions_firmware()
     assert [c for c, a in actions.items() if a not in ("ECRAN", "RIEN")] == ACTIONS + ["roue"] + ACTIONS_APRES
     assert actions["rien"] == "RIEN"
-    assert all(actions[c] == "ECRAN" for c in list(CODES) + list(ECRANS_APRES) if c != "rien")
+    assert all(actions[c] == "ECRAN" for c in list(CODES) + list(ECRANS_APRES) + list(ECRANS_FIN) if c != "rien")
     script = _lire(NAVIGATION).split("- id: tab5_geste", 1)[1].split("\n  - id:", 1)[0]
     assert "geste_cible(geste)" in script
     assert "id(tab5_ecran_ouvrir).execute(c.ecran);" in script, "un écran s'ouvre par la routine unique"
@@ -129,12 +129,13 @@ def test_actions_de_l_accueil():
         branche = script.split(f"GesteAction::{action})", 1)[1].split("} else if", 1)[0]
         assert BRANCHES[action] in branche, action
     # « nabu_suivant » (lot 3) ajouté à la fin, puis la roue de navigation (ADR-0042), le
-    # popup Météo (ADR-0043) et la zone à gauche de l'horloge (ADR-0051) : la NVS garde
-    # l'index du code.
+    # popup Météo (ADR-0043), la zone à gauche de l'horloge (ADR-0051) et le lecteur de
+    # musique (ADR-0050) : la NVS garde l'index du code.
     assert list(actions).index("nabu_suivant") == 17
-    assert list(actions)[18:] == list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES
+    assert list(actions)[18:] == list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES + list(ECRANS_FIN)
     assert list(actions).index("meteo") == 22
     assert list(actions).index("zone_gauche_suivante") == 23
+    assert list(actions).index("musique") == 24
 
 
 def test_auto_comme_avant():

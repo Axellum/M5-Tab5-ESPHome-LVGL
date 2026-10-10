@@ -1409,3 +1409,11 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "uv|Extrême": "Extremo"
 "Indice UV": "Índice UV"
 "Gel": "Helada"
+# Lecteur de musique (ADR-0050, 10/10/2026)
+"Musique": "Música"
+"Aucun lecteur choisi": "Ningún reproductor elegido"
+"Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique ».": "Elige tus reproductores en Home Assistant: «Tab5 · lecteurs de musique · music players»."
+"Lecteur éteint": "Reproductor apagado"
+"Lecteur indisponible": "Reproductor no disponible"
+"Rien en lecture": "No se reproduce nada"
+"Lecteur {n}": "Reproductor {n}"

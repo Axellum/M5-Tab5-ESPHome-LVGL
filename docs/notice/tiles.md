@@ -41,7 +41,7 @@ On a device card, or on the weather icon of a card that holds a device:
 | Light | on / off | [quick actions](#quick-actions); set to *confirm*, the [lights window](lights.md) |
 | Switch, plug, fan… | on / off | [device window](#device-window) |
 | Shutter, valve | moving: stop; open: close; otherwise: open | [quick actions](#quick-actions) |
-| TV, media player | on / off | [TV remote](tv.md), for the TV picked in the blueprint; another player: [device window](#device-window) |
+| TV, media player | on / off | [TV remote](tv.md), for the TV picked in the blueprint; another player: the [music player](music.md) |
 | Scene, script, button | runs it; the state shows « OK » for a second | [device window](#device-window) |
 | Climate | [climate window](climate.md), for this unit | [quick actions](#quick-actions); before Home Assistant sent its modes, the [climate window](climate.md) |
 | Sensor of an « Énergie » section | [energy window](energy.md) | [energy window](energy.md) |
@@ -72,7 +72,7 @@ The current state glows in the card's colour. A tap on a command or a choice sen
 
 ## Device window
 
-A long press on a switch, a plug, a fan, a scene, a script, a button, or a media player that is not the blueprint's TV opens its window, like the « more info » window of a Home Assistant dashboard. Title: the card's name.
+A long press on a switch, a plug, a fan, a scene, a script or a button opens its window, like the « more info » window of a Home Assistant dashboard. Title: the card's name.
 
 ![Long press on the computer: its window, on, set to « Turn on only »](../images/notice/appareil-en.webp)
 
@@ -126,7 +126,7 @@ Sur une carte d'appareil, ou sur l'icône météo d'une carte qui porte un appar
 | Lumière | allumer / éteindre | [actions rapides](#actions-rapides) ; réglée sur *confirmer*, la [fenêtre des lumières](lights.md#version-française) |
 | Interrupteur, prise, ventilateur… | allumer / éteindre | [fenêtre de l'appareil](#fenêtre-de-lappareil) |
 | Volet, vanne | en mouvement : stop ; ouvert : fermer ; sinon : ouvrir | [actions rapides](#actions-rapides) |
-| TV, lecteur multimédia | allumer / éteindre | [télécommande TV](tv.md#version-française), pour la TV choisie dans le blueprint ; un autre lecteur : [fenêtre de l'appareil](#fenêtre-de-lappareil) |
+| TV, lecteur multimédia | allumer / éteindre | [télécommande TV](tv.md#version-française), pour la TV choisie dans le blueprint ; un autre lecteur : le [lecteur de musique](music.md#version-française) |
 | Scène, script, bouton | le lance ; l'état affiche « OK » une seconde | [fenêtre de l'appareil](#fenêtre-de-lappareil) |
 | Clim | [fenêtre de la clim](climate.md#version-française), pour cet appareil | [actions rapides](#actions-rapides) ; avant que Home Assistant ait envoyé ses modes, la [fenêtre de la clim](climate.md#version-française) |
 | Capteur d'une section « Énergie » | [fenêtre de l'énergie](energy.md#version-française) | [fenêtre de l'énergie](energy.md#version-française) |
@@ -157,7 +157,7 @@ L'état actuel brille de la couleur de la carte. Un tap sur une commande ou un c
 
 ## Fenêtre de l'appareil
 
-Un appui long sur un interrupteur, une prise, un ventilateur, une scène, un script, un bouton, ou un lecteur multimédia qui n'est pas la TV du blueprint ouvre sa fenêtre, comme la fenêtre « plus d'infos » d'un tableau de bord Home Assistant. Titre : le nom de la carte.
+Un appui long sur un interrupteur, une prise, un ventilateur, une scène, un script ou un bouton ouvre sa fenêtre, comme la fenêtre « plus d'infos » d'un tableau de bord Home Assistant. Titre : le nom de la carte.
 
 ![Appui long sur l'ordinateur : sa fenêtre, allumé, réglé sur « Allumer seulement »](../images/notice/appareil-fr.webp)
 

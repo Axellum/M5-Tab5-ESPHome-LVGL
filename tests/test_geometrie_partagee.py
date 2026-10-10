@@ -34,11 +34,12 @@ def _constante(fichier, nom):
 # Tab5/socle/tab5_geometrie.h : constantes entières, éventuellement calculées des précédentes.
 GEOMETRIE = "tab5_geometrie.h"
 GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorpsX", "kCorpsW",
-                  "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kPieces", "kTuiles")
+                  "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kPieces", "kTuiles",
+                  "kLecteurCarteL", "kLecteurCarteH")
 # Fichiers qui s'en servent : aucun ne doit les redéfinir.
 GEOMETRIE_UTILISATEURS = ("tab5_energie.cpp", "tab5_historique.cpp", "tab5_maison.cpp", "tab5_zones.cpp",
                           "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp",
-                          "tab5_tuiles_priv.h", "tab5_roue.cpp", "tab5_clim.cpp")
+                          "tab5_tuiles_priv.h", "tab5_roue.cpp", "tab5_clim.cpp", "tab5_lecteur.cpp")
 
 
 def _geometrie():
@@ -111,6 +112,12 @@ def test_geometrie_partagee_egale_aux_jetons_et_aux_popups():
         assert corps, f"{popup} : pas de corps x {g['kCorpsX']}, largeur {g['kCorpsW']}"
         zones = [p for _t, p in widgets if p.get("id") == zone]
         assert len(zones) == 1 and zones[0].get("width") == g["kGraphiqueL"], f"{popup} : {zone}"
+    # Carte du popup Musique (ADR-0050) : égale à ses jetons, centrée, plus petite que la
+    # carte modale, et le popup la prend par ses jetons.
+    assert (g["kLecteurCarteL"], g["kLecteurCarteH"]) == (int(j["lecteur_card_w"]), int(j["lecteur_card_h"]))
+    assert g["kLecteurCarteL"] < g["kCarteL"] and g["kLecteurCarteH"] < g["kCarteH"]
+    popup = _lire("Tab5", "ui_components", "lecteur_popup.yaml")
+    assert "width: ${lecteur_card_w}" in popup and "height: ${lecteur_card_h}" in popup
     # Pièces et tuiles : cinq de chaque, comme le blueprint (ADR-0023).
     assert g["kPieces"] == g["kTuiles"] == 5
 

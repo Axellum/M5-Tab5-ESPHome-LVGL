@@ -13,7 +13,7 @@ What happens when you touch the screen: tap, long press (hold a moment), swipe. 
 | 1 | Domo button (house) | voice mode: Home Assistant commands | — |
 | 2 | Microphone | listen now; while it answers: stop it and listen again | voice assistant window |
 | 3 | Discu button (robot) | voice mode: conversation | — |
-| 4 | **Ok Nabu** | wake word on / off | — |
+| 4 | **Ok Nabu** | wake word on / off; while music plays, the « now playing » bar: the [music player](music.md) | — |
 | 5 | Clock: hours, minutes, date | minutes: next device of − / +; date: next line under the clock | hours or minutes: alarm clock; date: calendar |
 | 6 | Home Assistant button | bottom row: weather ↔ your devices | Energy window, with a solar production |
 | 7 | Gear button | settings | system console |
@@ -53,6 +53,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Temperature | long press on one of the two temperatures | [Temperature](temperature.md) |
 | Plants | long press on the plants line, under the clock | [Plants](plants.md) |
 | Alerts | long press on the central card | [Alerts](alerts.md) |
+| Music | long press on a media player, the « now playing » bar, or « Aller à l'écran » | [Music](music.md) |
 | House | in device mode, tap on the room's name in the central card | [House](house.md) |
 | Settings | the gear button | [Settings](settings.md) |
 | System console (System page of the settings) | long press on the gear button | [System console](console.md) |
@@ -77,7 +78,7 @@ Ce qui se passe quand vous touchez l'écran : tap, appui long (garder le doigt u
 | 1 | Bouton Domo (maison) | mode vocal : commandes Home Assistant | — |
 | 2 | Micro | écoute tout de suite ; pendant une réponse : la coupe et réécoute | fenêtre de l'assistant vocal |
 | 3 | Bouton Discu (robot) | mode vocal : discussion | — |
-| 4 | **Ok Nabu** | mot de réveil activé / coupé | — |
+| 4 | **Ok Nabu** | mot de réveil activé / coupé ; pendant la musique, la barre « en lecture » : le [lecteur de musique](music.md#version-française) | — |
 | 5 | Horloge : heures, minutes, date | minutes : appareil suivant de − / + ; date : ligne suivante sous l'horloge | heures ou minutes : réveil ; date : calendrier |
 | 6 | Bouton Home Assistant | rangée du bas : météo ↔ vos appareils | fenêtre Énergie, avec une production solaire |
 | 7 | Bouton engrenage | réglages | console système |
@@ -117,6 +118,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Température | appui long sur l'une des deux températures | [Température](temperature.md#version-française) |
 | Plantes | appui long sur la ligne des plantes, sous l'horloge | [Plantes](plants.md#version-française) |
 | Alertes | appui long sur la carte centrale | [Alertes](alerts.md#version-française) |
+| Musique | appui long sur un lecteur multimédia, la barre « en lecture », ou « Aller à l'écran » | [Musique](music.md#version-française) |
 | Maison | en mode appareils, tap sur le nom de la pièce dans la carte centrale | [Maison](house.md#version-française) |
 | Réglages | le bouton engrenage | [Réglages](settings.md#version-française) |
 | Console système (page Système des réglages) | appui long sur le bouton engrenage | [Console système](console.md#version-française) |
