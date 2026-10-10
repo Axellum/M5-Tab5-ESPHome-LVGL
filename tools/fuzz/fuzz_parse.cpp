@@ -259,6 +259,8 @@ void serveur_ia(const std::string& p) {
     for (int i = 0; i < kServeurIaPoints + 2; i++) c.ajouter(i % 3 ? s.tps : NAN);
     float h = 0;
     c.haut(h);
+    // Actions (ADR-0060) : un bouton actif est toujours montré, aucun bit hors des trois.
+    if ((s.actives & ~s.actions) != 0 || (s.actions >> kServeurIaActions) != 0) __builtin_trap();
 }
 
 void info(const std::string& p) {

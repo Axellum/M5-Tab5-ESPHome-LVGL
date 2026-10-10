@@ -1151,7 +1151,7 @@ const char* telecommande_emplacement(int i) {
 // Nouveau, écrit ici d'emblée.
 
 namespace {
-constexpr int kServeurIaChamps = 13;
+constexpr int kServeurIaChamps = 14;
 
 // Nombre borné à [bas, haut], NAN sinon (vide, illisible, non fini, hors bornes).
 float serveur_ia_borne(const Champ& c, float bas, float haut) {
@@ -1164,6 +1164,25 @@ float serveur_ia_borne(const Champ& c, float bas, float haut) {
 int32_t serveur_ia_requetes(const Champ& c) {
     const uint32_t v = champ_entier(c, kServeurIaRequetesMax, 0xFFFFFFFFu);
     return v == 0xFFFFFFFFu ? -1 : static_cast<int32_t>(v);
+}
+
+// Actions (ADR-0060) : « decharger,-reveiller » → bits montrés et actifs. Un code inconnu,
+// vide ou en double ne gêne pas (montré une fois, actif s'il l'est une fois).
+void serveur_ia_actions(const Champ& c, uint8_t& montrees, uint8_t& actives) {
+    montrees = actives = 0;
+    if (c.p == nullptr) return;
+    const char* p = c.p;
+    const char* fin = c.p + c.n;
+    while (p < fin) {
+        Champ code = champ_suivant(p, fin, ',');
+        const bool grise = code.n > 0 && code.p[0] == '-';
+        if (grise) code = Champ{code.p + 1, code.n - 1};
+        for (int i = 0; i < kServeurIaActions; i++) {
+            if (!champ_est(code, kServeurIaActionCodes[i])) continue;
+            montrees |= static_cast<uint8_t>(1u << i);
+            if (!grise) actives |= static_cast<uint8_t>(1u << i);
+        }
+    }
 }
 }  // namespace
 
@@ -1193,6 +1212,7 @@ bool serveur_ia_lire(const Champ& payload, ServeurIaLu& out) {
         out.niveau = niveau == 0xFFFFFFFFu ? kServeurIaNiveauInconnu : static_cast<uint8_t>(niveau > 2 ? 2 : niveau);
         out.ram = serveur_ia_borne(f[11], 0.0f, 100.0f);
         out.puissance = serveur_ia_borne(f[12], 0.0f, kServeurIaPuissanceMax);
+        serveur_ia_actions(f[13], out.actions, out.actives);
         return true;  // un serveur : les enregistrements suivants sont ignorés
     }
     return false;
