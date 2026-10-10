@@ -45,6 +45,8 @@ services:
     debut: string
     valeurs: string
     vue: string
+  tab5_maj_froid:
+    payload: string
   tab5_maj_historique:
     cle: string
     entete: string

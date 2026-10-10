@@ -42,7 +42,8 @@ extern AlertesUI g_alertes_ui;
 // Action tab5_maj_alertes_historique : « apparue|lue|terminée|gravité|libellé » séparés
 // par « ; », la plus récente d'abord, 20 au plus. Heures en secondes epoch (0 = pas
 // encore) ; gravité Rouge, Orange ou Jaune ; libellé codé comme ceux des bandeaux
-// (« @maj:titre », « @indispo:nombre », « @vigi:niveau ») ou nom d'une entité.
+// (« @maj:titre », « @indispo:nombre », « @vigi:niveau », « @froid:cause:niveau:valeur:nom »)
+// ou nom d'une entité.
 void alertes_historique_recu(const std::string& payload);
 // Ouvre le popup, le peint avec la dernière liste reçue, et demande la nouvelle à HA.
 void alertes_ouvrir();

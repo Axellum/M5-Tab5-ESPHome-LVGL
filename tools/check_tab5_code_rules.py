@@ -423,6 +423,9 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     # Capteurs suivis (ADR-0054) : flèche de tendance de chaque carte du popup
     # (suivi_carte.yaml) et de la carte de la zone gauche (suivi_zone.yaml), mdi_font_32.
     ("tab5_suivi.cpp", "glyphe_tendance"): ("suivi_fleche_*", "suivi_zone_fleche"),
+    # Froid (ADR-0055) : réfrigérateur ou flocon de chaque carte du popup (froid_carte.yaml,
+    # mdi_font_45).
+    ("tab5_froid.cpp", "glyphe_appareil"): ("froid_icone_*",),
 }
 
 

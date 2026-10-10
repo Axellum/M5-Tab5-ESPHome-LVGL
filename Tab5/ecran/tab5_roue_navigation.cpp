@@ -7,7 +7,7 @@
  *       d'actions rapides des tuiles (tab5_roue.cpp, ADR-0036) sur les écrans de la
  *       tablette. Premier anneau, de gauche à droite : Alertes, Pièces ▸, Appareils ▸,
  *       Agenda ▸, Tablette ▸, Assistant ; une famille (▸, un point) déplie ses écrans sur
- *       le second anneau, chacun avec son mot. Le moyeu dit « Aller à », puis le nom de la
+ *       le second anneau (Agenda ▸ : Météo, Calendrier, Réveil, Caméras et Froid, ADR-0055), chacun avec son mot. Le moyeu dit « Aller à », puis le nom de la
  *       famille dépliée. Ne sont proposés que les écrans qui ont quelque chose à montrer
  *       dans cette maison (ecran_disponible, pièces qui ont des appareils) ; une famille
  *       vide disparaît, les autres boutons se resserrent. Appareils ▸ : Températures,
@@ -58,11 +58,17 @@ constexpr Destination kAppareils[] = {
 // (ADR-0049, demande d'Axel du 09/10/2026) : Appareils et le premier anneau sont pleins
 // (kRoueChoix, kRoueBoutons). Toujours proposé, comme la Météo : la tablette ne connaît
 // les caméras qu'en les demandant ; sans caméra, le popup dit « Aucune caméra choisie ».
+// Froid après elles (ADR-0055, demande d'Axel du 10/10/2026) : la surveillance de la
+// maison, comme les caméras ; Appareils et le premier anneau sont toujours pleins. Proposé
+// tant que HA n'a pas dit qu'aucun appareil n'est déclaré (propose()). Son mot est
+// « Frigos », pas « Froid » : la clé « Froid » se traduit déjà « Cool » (mode d'une clim,
+// blanc d'une lampe).
 constexpr Destination kAgenda[] = {
     {Ecran::METEO, RoueIcone::METEO, tr_noop("Météo")},
     {Ecran::CALENDRIER, RoueIcone::CALENDRIER, tr_noop("Calendrier")},
     {Ecran::REVEIL, RoueIcone::REVEIL, tr_noop("Réveil")},
     {Ecran::CAMERAS, RoueIcone::CAMERAS, tr_noop("Caméras")},
+    {Ecran::FROID, RoueIcone::FROID, tr_noop("Frigos")},
 };
 // Tablette : ce qui est à elle, pas à la maison.
 constexpr Destination kTablette[] = {
@@ -120,13 +126,15 @@ struct Navigation {
 Navigation s_nav;
 char s_noms[kPieces][40];
 
-// Un écran d'une famille est-il proposé ? Ce que la maison a (ecran_disponible) ; Musique,
+// Un écran d'une famille est-il proposé ? Ce que la maison a (ecran_disponible) ; Froid
+// (ADR-0055), pas quand HA a dit qu'aucun appareil n'est déclaré (froid_disponible) ; Musique,
 // en plus, comme la zone à gauche de l'horloge (ADR-0051) : pas quand HA a dit qu'aucun
 // lecteur n'est choisi (lecteur_zone_disponible ; avant sa première réponse, proposée). Le
 // geste « musique » et « Aller à l'écran », eux, l'ouvrent toujours : choisis exprès, ils
 // montrent le popup, qui dit où choisir les lecteurs.
 bool propose(Ecran e) {
     if (!ecran_disponible(e)) return false;
+    if (e == Ecran::FROID) return froid_disponible();
     return e != Ecran::MUSIQUE || lecteur_zone_disponible();
 }
 

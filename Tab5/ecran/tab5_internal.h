@@ -320,6 +320,7 @@ enum class RoueIcone : uint8_t {
     CAMERAS,
     MUSIQUE,
     TV,
+    FROID,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
 // anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
@@ -484,7 +485,8 @@ void choix_peindre(lv_obj_t* const* boutons, int n, int actif);
 // --- Alertes (tab5_central.cpp) ---
 // Libellé codé d'une alerte, composé dans la langue de l'écran : « @maj:<titre> » →
 // « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo », « @vigi:<niveau> » →
-// « Vigilance Rouge »… Tout autre libellé (nom d'une entité) s'affiche tel quel. Bandeaux
+// « Vigilance Rouge », « @froid:<cause>:<niveau>:<valeur>:<nom> » → « Frigo : porte mal
+// fermée, 9.1 °C » (ADR-0055)… Tout autre libellé (nom d'une entité) s'affiche tel quel. Bandeaux
 // de la carte centrale et historique du popup « Alertes » (tab5_alertes.cpp).
 std::string ha_alerte_texte(const char* brut);
 
@@ -596,6 +598,9 @@ bool lecteur_zone_disponible();
 // montrer (faux seulement quand HA a dit qu'aucun capteur n'est choisi).
 void suivi_zone_montrer(bool montre);
 bool suivi_zone_disponible();
+// tab5_froid.cpp, pour la roue de navigation (ADR-0055) : faux seulement quand HA a dit
+// qu'aucun réfrigérateur ni congélateur n'est déclaré (avant sa première poussée : vrai).
+bool froid_disponible();
 // tab5_zone_gauche.cpp : le dégradé sous une courbe de la zone (graphique, capteur suivi),
 // dans `image` (une lv_image de la carte), de la couleur `couleur` sous le trait à 0 au pied
 // `base`, du haut y_haut. Un seul tampon en PSRAM (≈ 156 Kio) pour les contenus de la

@@ -2493,6 +2493,8 @@ void theme_rejouer_ui() {
     lecteur_rejouer_theme();
     // Capteurs suivis (ADR-0054) : couleurs des variations, courbes, dégradé de la zone.
     suivi_rejouer_theme();
+    // Froid (ADR-0055) : températures, statuts, courbes et norme du popup s'il est ouvert.
+    froid_rejouer_theme();
     alertes_rejouer_theme();
     zones_rejouer_theme();
     assist_rejouer_theme();

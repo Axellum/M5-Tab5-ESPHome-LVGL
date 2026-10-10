@@ -195,6 +195,7 @@ font:
       - "\U000F0020"  # alarm (aussi tap : Réveil)
       - "\U000F012A"  # chart-line (tap : Suivi, ADR-0054)
       - "\U000F018D"  # console (tap : Console système)
+      - "\U000F0290"  # fridge (tap : Froid, ADR-0055)
       - "\U000F0297"  # gamepad-variant (bouton du haut : Arcade, 06/10/2026)
       - "\U000F02E3"  # bed
       - "\U000F02E5"  # pot
@@ -346,6 +347,7 @@ font:
       - "\U000F0210"  # fan
       - "\U000F0238"  # fire
       - "\U000F024A"  # flower
+      - "\U000F0290"  # fridge (popup Froid : carte d'un réfrigérateur, ADR-0055)
       - "\U000F0297"  # gamepad-variant
       - "\U000F02DC"  # home
       - "\U000F02E3"  # bed
@@ -504,6 +506,7 @@ font:
       - "\U000F0083"  # battery-alert
       - "\U000F0084"  # battery-charging
       - "\U000F0091"  # battery-unknown
+      - "\U000F0290"  # fridge (titre du popup Froid, ADR-0055)
       - "\U000F075A"  # music (titre du popup Musique, ADR-0050)
       - "\U000F12A1"  # battery-low
       - "\U000F12A2"  # battery-medium
@@ -662,6 +665,7 @@ font:
       - "\U000F018D"  # console (mini icône : Console système)
       - "\U000F01D8"  # dots-horizontal (« ⋯ » d'une ligne du popup Maison, ADR-0037)
       - "\U000F024A"  # flower (mini icône : Plantes)
+      - "\U000F0290"  # fridge (mini icône : Froid, ADR-0055)
       - "\U000F0297"  # gamepad-variant (mini icône : Arcade)
       - "\U000F02DC"  # home (mini icône : Maison)
       - "\U000F0335"  # lightbulb (mini icône : Lumières, ADR-0042)
@@ -688,6 +692,7 @@ font:
       - "\U000F0E17"  # calendar-month (mini icône : Calendrier)
       - "\U000F0E81"  # bell-alert-outline (mini icône : Alertes)
       - "\U000F111E"  # window-shutter-open (mini icône : Volet)
+      - "\U000F11B1"  # fridge-alert (coin de l'horloge : un appareil au niveau grave, ADR-0055)
       - "\U000F12A1"  # battery-low (20 à 40 %)
       - "\U000F12A2"  # battery-medium (41 à 80 %)
       - "\U000F1382"  # compass-rose (mini icône : roue de navigation)
@@ -728,6 +733,7 @@ font:
       - "\U000F0210"  # fan
       - "\U000F0238"  # fire
       - "\U000F024A"  # flower (navigation : Plantes)
+      - "\U000F0290"  # fridge (navigation : Froid, ADR-0055)
       - "\U000F0297"  # gamepad-variant (navigation : Jeux)
       - "\U000F02DC"  # home (lien « Maison »)
       - "\U000F032A"  # leaf (Éco)
