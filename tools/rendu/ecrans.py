@@ -1036,6 +1036,8 @@ ECRANS: tuple[Ecran, ...] = (
     # suivant ferme.
     Ecran("roue-navigation", (Long(*CARTE_CENTRALE),), (ROUE_FERMER,)),
     Ecran("roue-navigation-pieces", (Long(*CARTE_CENTRALE), nav(NAV_PIECES)), (ROUE_FERMER, ROUE_FERMER)),
+    # Appareils ▸ : Températures … Plantes, puis Musique et TV (10/10/2026) : sept choix
+    # dans cette scène (pas d'Énergie), le second anneau le plus large de la démo.
     Ecran("roue-navigation-appareils", (Long(*CARTE_CENTRALE), nav(NAV_APPAREILS)), (ROUE_FERMER, ROUE_FERMER)),
     Ecran("roue-navigation-tablette", (Long(*CARTE_CENTRALE), nav(NAV_TABLETTE)), (ROUE_FERMER, ROUE_FERMER)),
     # Agenda ▸ : Météo (ADR-0043) en tête, puis Calendrier, Réveil et Caméras (ADR-0049).

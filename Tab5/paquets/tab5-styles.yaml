@@ -741,7 +741,9 @@ font:
       - "\U000F0717"  # snowflake
       - "\U000F072E"  # arrow-down-bold
       - "\U000F0737"  # arrow-up-bold
+      - "\U000F075A"  # music (navigation : Musique, l'icône du popup, ADR-0050)
       - "\U000F07AE"  # cctv (navigation : Caméras, ADR-0049)
+      - "\U000F07C0"  # desktop-classic (navigation : TV, l'icône de la télécommande)
       - "\U000F0821"  # floor-plan (navigation : Pièces)
       - "\U000F084F"  # arrow-expand-vertical (Position)
       - "\U000F0A72"  # solar-power (navigation : Énergie)

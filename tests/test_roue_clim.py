@@ -67,10 +67,10 @@ def test_liens_et_clims():
     choix = _fonction(ROUE, "roue_tuile_choisir_choix")
     clims = choix.split("if (rt.action[i] == RoueAction::CLIMS) {", 1)[1].split("return;\n    }", 1)[0]
     assert "if (!clim_roue_ouvrir(l[j], rt.ancre)) clim_carrousel_ouvrir_sur(l[j]);" in clims
-    # Les clims de « Clims ▸ » : la liste unique du carrousel, au plus kRoueChoix, celle de
-    # la roue comprise et marquée.
+    # Les clims de « Clims ▸ » : la liste unique du carrousel, au plus kRoueChoixTuile (la
+    # roue d'une tuile ou d'une clim), celle de la roue comprise et marquée.
     liste = _fonction(ROUE, "roue_clims")
-    assert "clims_enumerer(l, kClimPastilles)" in liste and "kRoueChoix" in liste
+    assert "clims_enumerer(l, kClimPastilles)" in liste and "kRoueChoixTuile" in liste
     famille = _fonction(ROUE, "roue_choix").split("case RoueAction::CLIMS: {", 1)[1].split("break;", 1)[0]
     assert 'choix(nullptr, "", k == ici)' in famille, "rien n'est envoyé, la clim de la roue marquée"
     assert "x.icone = RoueIcone::ETEINDRE;" in famille and "tete.consigne" in famille and "x.legende" in famille
