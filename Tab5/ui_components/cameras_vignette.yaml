@@ -1,0 +1,42 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file cameras_vignette.yaml
+# @role Une case de la mosaïque du popup Caméras (ADR-0057, lot 2), 4 fois (2 × 2,
+#       kCamerasVignettes) dans cameras_cadre (cameras_popup.yaml). Toucher : la caméra de
+#       la case en grand (cameras_vignette(n), tab5_cameras.cpp) ; un tap au bout d'un
+#       glissement (page suivante) ne fait rien.
+# @architecture_constraint 476 × 266 (le contenu du cadre, 960 × 540, en quatre, 8 px
+#       d'écart) ; disposer() de tab5_cameras.cpp la place (deux, trois ou quatre cases) et
+#       l'affiche. Enfants, dans l'ordre : le nom de la caméra (pastille de verre en bas à
+#       gauche, coupé par texte_ha_coupe), le message (« Chargement... », « Hors ligne »…).
+#       L'image est créée en C++ sous eux (une source fixe ne conviendrait pas, comme le
+#       grand cadre). Pas d'id : cameras_ouvrir() lit les enfants du cadre. Couleurs par
+#       les styles de rôle (règle 1).
+# vars : n (0 à 3, nombre NON quoté)
+# ═══════════════════════════════════════════════════════
+button:
+  align: TOP_LEFT
+  width: 476
+  height: 266
+  radius: 8    # = kCaseRayon (tab5_cameras.cpp) : petits exprès, voir là-bas
+  pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) cameras_vignette(${n});'
+  widgets:
+    - label:
+        text: ""
+        align: BOTTOM_LEFT
+        x: 10
+        y: -10
+        pad_left: 10
+        pad_right: 10
+        pad_top: 4
+        pad_bottom: 4
+        radius: 10
+        text_font: roboto_22
+        styles: [style_clim_btn, style_text_soft]
+    - label: { text: "", align: CENTER, text_font: roboto_22, styles: style_text_soft }

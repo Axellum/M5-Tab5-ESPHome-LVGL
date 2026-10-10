@@ -826,15 +826,50 @@ METEO_SCENE_3 = (
 METEO_PAGES = {"jour": (433, 41), "jours": (643, 41), "details": (853, 41)}
 METEO_GLISSER = Glisser(1100, 675, 500, 675, dans_popup=True)
 
-# Popup Caméras (ADR-0049, cameras_popup.yaml) : la liste que le blueprint renverrait à
-# l'événement esphome.tab5_cameras, poussée avant l'ouverture. Le rendu ne télécharge rien
-# (bouchon de tab5_cameras_charge.cpp hors ESP_PLATFORM) : la capture montre la page de la première caméra
-# (nom, pastilles, « Chargement... »), pas d'image.
+# Popup Caméras (ADR-0049, ADR-0057, cameras_popup.yaml) : la liste que le blueprint
+# renverrait à l'événement esphome.tab5_cameras (« nom|image|pièce|depuis »), poussée avant
+# l'ouverture. Le rendu ne télécharge rien : le bouchon de tab5_cameras_charge.cpp (hors
+# ESP_PLATFORM) rend une mire calculée, une teinte par caméra. Sept caméras, trois pièces
+# et une sans pièce (« Autres ») ; l'abri est hors ligne depuis 06:58 (captures à 07:45).
 CAMERAS_DONNEES = Service("tab5_maj_cameras", (
     ("adresse", "http://homeassistant.local:8123"),
-    ("cameras", "Entrée|/api/camera_proxy/camera.entree?token=a;Jardin|/api/camera_proxy/camera.jardin?token=b;"
-                "Garage|/api/camera_proxy/camera.garage?token=c"),
+    ("cameras", ";".join((
+        "Portail|/api/camera_proxy/camera.portail?token=a|Entrée|",
+        "Porte d'entrée|/api/camera_proxy/camera.porte?token=b|Entrée|",
+        "Terrasse|/api/camera_proxy/camera.terrasse?token=c|Jardin|",
+        "Potager|/api/camera_proxy/camera.potager?token=d|Jardin|",
+        f"Abri de jardin|/api/camera_proxy/camera.abri?token=e|Jardin|{_epoch(2026, 6, 16, 6, 58)}",
+        "Garage|/api/camera_proxy/camera.garage?token=f|Garage|",
+        "Couloir|/api/camera_proxy/camera.couloir?token=g||",
+    ))),
 ))
+# Puces de la colonne des pièces (x 16 à 254 de la carte, 56 px de haut, 8 d'écart, à
+# partir de y 72 ; carte à (15, 15) de l'écran) : 0 « Toutes », 1 Entrée, 2 Jardin…
+def _camera_puce(n: int) -> Toucher:
+    return Toucher(15 + 16 + 119, 15 + 72 + n * 64 + 28)
+
+
+# Balayage vers la gauche sur le cadre : page suivante de la mosaïque, ou caméra suivante
+# de la pièce en grand.
+CAMERAS_SUIVANTE = Glisser(1100, 360, 500, 360, dans_popup=True)
+CAMERAS_PRECEDENTE = Glisser(500, 360, 1100, 360, dans_popup=True)
+
+
+# Cases de la mosaïque (lot 2, cameras_vignette.yaml) : le contenu du cadre (x 270 + 2 de
+# bordure, y 72 + 2, dans la carte à (15, 15)) en cases de 476 × 266, 8 px d'écart. Centre
+# de la case k pour `n` caméras sur la page (2 : au milieu ; 3 : la 3e centrée en bas).
+def _camera_vignette(k: int, n: int = 4) -> Toucher:
+    x0, y0 = 15 + 270 + 2, 15 + 72 + 2
+    x, y = (k % 2) * 484, (k // 2) * 274
+    if n == 2:
+        y = 137
+    elif n == 3 and k == 2:
+        x = 242
+    return Toucher(x0 + x + 238, y0 + y + 133)
+
+
+# Tap sur l'image en grand : retour à la mosaïque.
+CAMERAS_MOSAIQUE = Toucher(15 + 270 + 482, 15 + 72 + 272)
 
 
 def _historique(cle: str, vue: str, exterieur: bool = False) -> Service:
@@ -1185,8 +1220,24 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-zone-lecteur-vide", (LECTEUR_INACTIF, ZONE_LECTEUR), (ZONE_VOCAL, LECTEUR_AUCUN)),
     Ecran("accueil-zone-lecteur-gelule", (Choisir("Thème", THEME_CADRE_GELULE), LECTEUR_EN_PAUSE, ZONE_LECTEUR),
           (ZONE_VOCAL, LECTEUR_AUCUN, Choisir("Thème", THEME_PAR_DEFAUT))),
-    # Popup Caméras (ADR-0049) : trois caméras, la première montrée.
-    Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"))),
+    # Popup Caméras (ADR-0049, ADR-0057) : sept caméras dans trois pièces et « Autres ». La
+    # mosaïque de « Toutes » (2 × 2, première page), sa seconde page (trois cases, l'abri
+    # hors ligne), la première caméra en grand (tap sur sa case), puis la pièce Jardin
+    # (trois caméras) et son abri hors ligne en grand. `fermer` revient à la mosaïque de
+    # « Toutes », première page, sur le Portail, quel que soit l'ordre des écrans (pièce,
+    # caméra et vue sont gardées en NVS, la page tant que la tablette tourne ; « Toutes »
+    # garde la caméra montrée : Entrée d'abord, qui montre le Portail).
+    Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"), Attendre(1.5))),
+    Ecran("cameras-mosaique-page-2",
+          (CAMERAS_DONNEES, Aller("Caméras"), Attendre(0.6), CAMERAS_SUIVANTE, Attendre(1.5)),
+          (CAMERAS_PRECEDENTE,)),
+    Ecran("cameras-plein-ecran",
+          (CAMERAS_DONNEES, Aller("Caméras"), Attendre(0.6), _camera_vignette(0), Attendre(1.0)),
+          (CAMERAS_MOSAIQUE,)),
+    Ecran("cameras-piece-hors-ligne",
+          (CAMERAS_DONNEES, Aller("Caméras"), _camera_puce(2), Attendre(0.6), _camera_vignette(2, 3),
+           Attendre(1.0)),
+          (CAMERAS_MOSAIQUE, _camera_puce(1), _camera_puce(0))),
     # Capteurs suivis (ADR-0054) : le popup avant toute poussée (« En attente de Home
     # Assistant »), avec quatre capteurs (deux rangées : 3 colonnes au plus), puis la carte
     # du premier dans la zone à gauche de l'horloge, dans le thème par défaut et en gélule.

@@ -551,25 +551,39 @@ bool ha_base_depuis_hote(const char* hote, char* out, size_t n);
 // contrôle, ou si elle ne tient pas dans `n`.
 bool ha_image_url(const Champ& image, const char* base, char* out, size_t n);
 
-// ─── 10. Popup Caméras (tab5_maj_cameras, ADR-0049) ───
-// Variable cameras : « nom|image;nom|image » dans l'ordre du blueprint, `image` = l'attribut
-// entity_picture de la caméra (« /api/camera_proxy/camera.x?token=… », chemin relatif à
-// Home Assistant) ou une URL complète. HA retire « | » et « ; » des noms. La base de HA
-// vient de ha_base_depuis_hote() (section 9), comme les pochettes du lecteur.
-constexpr int kCamerasMax = 8;
+// ─── 10. Popup Caméras (tab5_maj_cameras, ADR-0049, ADR-0057) ───
+// Variable cameras : « nom|image|pièce|hors_ligne;… » dans l'ordre du blueprint :
+//   nom        friendly_name (HA remplace « | » et « ; ») ;
+//   image      l'attribut entity_picture (« /api/camera_proxy/camera.x?token=… », chemin
+//              relatif à Home Assistant) ou une URL complète ;
+//   pièce      area_name() de la caméra (ADR-0057), vide sans pièce ; absente chez un
+//              blueprint d'avant (« nom|image ») : vide aussi ;
+//   hors_ligne horodatage Unix (secondes) depuis lequel HA la dit « unavailable », vide ou
+//              0 = en ligne ; absent chez un blueprint d'avant.
+// Un firmware d'avant lit « nom|image » et ignore la suite. La base de HA vient de
+// ha_base_depuis_hote() (section 9), comme les pochettes du lecteur.
+constexpr int kCamerasMax = 16;
 constexpr size_t kCameraNomMax = 48;      // copié par l'écran (texte_ha_copier)
+constexpr size_t kCameraPieceMax = 48;    // idem
 constexpr size_t kCameraImageMax = 256;   // chemin + jeton : ~110 octets chez HA
 constexpr size_t kCameraUrlMax = 384;     // base + image + « &width=…&height=… »
 
 struct CameraLue {
-    Champ nom;
-    Champ image;
+    Champ nom{nullptr, 0};
+    Champ image{nullptr, 0};
+    Champ piece{nullptr, 0};
+    uint32_t hors_ligne = 0;   // horodatage Unix, 0 : en ligne
+    int8_t piece_i = 0;        // rang de sa pièce parmi les pièces distinctes (cameras_lire)
 };
 
-// Au plus kCamerasMax caméras, dans l'ordre. Un enregistrement sans image (vide, « ;; »,
-// « nom| ») est sauté ; un nom vide est gardé (l'écran n'en montre aucun). Renvoie le
-// nombre lu.
-int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax]);
+// Au plus kCamerasMax caméras, dans l'ordre. Un enregistrement sans image ni hors_ligne
+// (vide, « ;; », « nom| ») est sauté ; un nom vide est gardé (l'écran n'en montre aucun).
+// Pièces : chaque caméra reçoit `piece_i`, le rang de sa pièce parmi les pièces distinctes
+// (même texte à l'octet près), dans l'ordre de leur première caméra ; la pièce vide (caméra
+// sans pièce) vient en dernier. `*pieces` (s'il est donné) reçoit leur nombre, la pièce
+// vide comprise (0 sans caméra, 1 si toutes sont dans la même pièce ou sans pièce).
+// Renvoie le nombre de caméras lues.
+int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax], int* pieces = nullptr);
 
 // URL à télécharger : celle de ha_image_url() (section 9) ; pour le proxy des caméras
 // (/api/camera_proxy/), « width=L&height=H » ajoutés (« ? » ou « & ») s'ils n'y sont pas et

@@ -1151,10 +1151,37 @@ static void test_cameras_lire() {
                champ_vaut(c[1].nom, "Cour"),
            "caméras : sans image sautée, nom vide gardé");
     expect(lire("Seule") == 0, "caméras : un nom sans image = aucune");
-    expect(lire("A|/a|champ en trop") == 1 && champ_vaut(c[0].image, "/a"), "caméras : champ en trop ignoré");
-    std::string dix;
-    for (int i = 0; i < 10; i++) dix += "C" + std::to_string(i) + "|/c" + std::to_string(i) + ";";
-    expect(lire(dix) == kCamerasMax && champ_vaut(c[kCamerasMax - 1].nom, "C7"), "caméras : 8 au plus");
+    expect(lire("A|/a|Salon|0|champ en trop") == 1 && champ_vaut(c[0].image, "/a") && champ_vaut(c[0].piece, "Salon") &&
+               c[0].hors_ligne == 0,
+           "caméras : champ en trop ignoré");
+    std::string vingt;
+    for (int i = 0; i < 20; i++) vingt += "C" + std::to_string(i) + "|/c" + std::to_string(i) + ";";
+    expect(lire(vingt) == kCamerasMax && champ_vaut(c[kCamerasMax - 1].nom, "C15"), "caméras : 16 au plus");
+}
+
+// ADR-0057 : la pièce (area_name) et « hors ligne depuis » ; un blueprint d'avant
+// (« nom|image ») reste lisible.
+static void test_cameras_pieces() {
+    CameraLue c[kCamerasMax];
+    int np = -1;
+    auto lire = [&c, &np](const std::string& s) { return cameras_lire(Champ{s.data(), s.size()}, c, &np); };
+    expect(lire("") == 0 && np == 0, "pièces : aucune caméra, aucune pièce");
+    expect(lire("A|/a;B|/b") == 2 && np == 1 && c[0].piece.n == 0 && c[1].piece_i == 0 && c[0].hors_ligne == 0,
+           "pièces : blueprint d'avant, une seule pièce (vide)");
+    expect(lire("A|/a|Jardin;B|/b|Entrée;C|/c|Jardin;D|/d") == 4 && np == 3 && c[0].piece_i == 0 &&
+               c[1].piece_i == 1 && c[2].piece_i == 0 && c[3].piece_i == 2 && champ_vaut(c[1].piece, "Entrée"),
+           "pièces : ordre de la première caméra, la pièce vide en dernier");
+    expect(lire("D|/d|;A|/a|Jardin") == 2 && np == 2 && c[0].piece_i == 1 && c[1].piece_i == 0,
+           "pièces : la pièce vide en dernier même si sa caméra est la première");
+    expect(lire("A|/a|Jardin;B|/b|Jardin") == 2 && np == 1, "pièces : toutes dans la même pièce = une");
+    expect(lire("A|/a|jardin;B|/b|Jardin") == 2 && np == 2, "pièces : comparées à l'octet près (casse)");
+    expect(lire("Porte||Entrée|1760000000;Cour|/c|Cour|") == 2 && c[0].image.n == 0 &&
+               c[0].hors_ligne == 1760000000u && c[1].hors_ligne == 0,
+           "hors ligne : gardée sans image, horodatage lu ; vide = en ligne");
+    expect(lire("A|/a||abc;B|/b||-5;C|/c||99999999999") == 3 && c[0].hors_ligne == 0 && c[1].hors_ligne == 0 &&
+               c[2].hors_ligne == 0,
+           "hors ligne : illisible, négatif ou trop grand = en ligne");
+    expect(lire("A||Salon|0") == 0, "hors ligne : 0 sans image = sautée");
 }
 
 static void test_camera_url() {
@@ -1615,6 +1642,7 @@ int main() {
     test_ha_base_depuis_hote();
     test_ha_image_url();
     test_cameras_lire();
+    test_cameras_pieces();
     test_camera_url();
     test_suivis_lire();
     test_suivi_textes();

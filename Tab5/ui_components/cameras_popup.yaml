@@ -1,19 +1,27 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file cameras_popup.yaml
-# @role Popup « Caméras » (ADR-0049, 09/10/2026, discussion #278) : l'image fixe d'une
-#       caméra de Home Assistant, rafraîchie toutes les quelques secondes, son nom et
-#       l'heure de l'image dessous, une pastille par caméra. Glisser à gauche / à droite
-#       change de caméra (tab5_pages.cpp, ADR-0046). Ouvert par « Aller à l'écran →
-#       Caméras » ou par un geste de l'accueil (code « cameras »).
+# @role Popup « Caméras » (ADR-0049, 09/10/2026, discussion #278 ; pièces : ADR-0057,
+#       10/10/2026) : l'image fixe d'une caméra de Home Assistant, rafraîchie toutes les
+#       quelques secondes, « Pièce · Caméra » et l'heure de l'image dessous, une pastille
+#       par caméra de la pièce choisie. À partir de deux pièces, une colonne à gauche :
+#       « Toutes » puis une puce par pièce (cameras_puce.yaml). Glisser à gauche / à droite
+#       change de caméra dans la pièce choisie (tab5_pages.cpp, ADR-0046). Ouvert par
+#       « Aller à l'écran → Caméras », la roue de navigation ou un geste de l'accueil.
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
 #       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Caméras » dans
-#       tab5_modal_registry_init). Corps : y 72..670 — cadre de 964 × 544 centré en haut
-#       (image de 960 × 540 dans sa bordure de 2 px), nom et heure à y 626, pastilles à
-#       y 666. Tout ce qui bouge est écrit par tab5_cameras.cpp ; couleurs par les styles
-#       de rôle (règle 1).
+#       tab5_modal_registry_init). Corps : y 72..670 — cadre de 964 × 544 (image de
+#       960 × 540 dans sa bordure de 2 px) centré (x 143) ou, avec la colonne des pièces
+#       (x 16, 238 × 544), à droite (x 270) : disposer() de tab5_cameras.cpp le place, ainsi
+#       que le nom et l'heure (y 626) et les pastilles (y 666) sous lui. Mosaïque (lot 2) :
+#       quatre cases de 476 × 266 dans le cadre (cameras_vignette.yaml), placées par
+#       disposer() selon leur nombre ; l'image en grand est alors cachée. Tout ce qui bouge
+#       est écrit par tab5_cameras.cpp ; couleurs par les styles de rôle (règle 1).
 # @ai_instruction Un widget de plus = son champ dans CamerasUI (tab5_cameras.h) et sa
-#       ligne dans le script tab5_cameras_ouvrir (tab5-cameras.yaml).
+#       ligne dans le script tab5_cameras_ouvrir (tab5-cameras.yaml). Les puces et les
+#       pastilles n'ont pas d'id : cameras_ouvrir() lit les enfants de leur conteneur, dans
+#       l'ordre (17 puces = kCamerasPuces, 16 pastilles = kCamerasPastilles, 4 cases de la
+#       mosaïque = kCamerasVignettes, après le message dans le cadre).
 # ═══════════════════════════════════════════════════════
 obj:
   id: cameras_popup
@@ -38,31 +46,80 @@ obj:
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
           - !include { file: modal_header.yaml, vars: { icon: "\U000F07AE", icon_style: "style_text_gold", title: "Caméras", title_id: "cameras_popup_titre", close_btn_id: "btn_cameras_close", popup_id: cameras_popup } }
 
-          # ═══ IMAGE : 960 × 540 (16:9), centrée dans le cadre ═══
+          # ═══ PIÈCES : « Toutes » + une puce par pièce, défilante au-delà de huit ═══
+          - obj:
+              id: cameras_pieces
+              align: TOP_LEFT
+              x: 16
+              y: ${modal_body_y}
+              width: 238
+              height: 544
+              pad_all: 0
+              hidden: true
+              styles: style_transparent
+              scrollable: true
+              scroll_dir: VER
+              scrollbar_mode: ACTIVE
+              layout:
+                type: FLEX
+                flex_flow: COLUMN
+                flex_align_main: START
+                flex_align_cross: START
+                pad_row: 8
+              widgets:
+                - !include { file: cameras_puce.yaml, vars: { n: 0 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 1 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 2 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 3 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 4 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 5 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 6 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 7 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 8 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 9 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 10 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 11 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 12 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 13 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 14 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 15 } }
+                - !include { file: cameras_puce.yaml, vars: { n: 16 } }
+
+          # ═══ IMAGE : 960 × 540 (16:9) dans son cadre ═══
           - obj:
               id: cameras_cadre
-              align: TOP_MID
+              align: TOP_LEFT
+              x: 143
               y: ${modal_body_y}
               width: 964
               height: 544
               pad_all: 0
               styles: style_glass_card
               scrollable: false
+              # Tap sur l'image en grand : retour à la mosaïque (les cases, cliquables,
+              # prennent leur propre tap).
+              on_short_click:
+                - lambda: 'if (!ui_appui_glisse()) cameras_cadre_touche();'
               widgets:
                 # L'image est créée en C++ (creer_image() de tab5_cameras.cpp, sous ce
                 # message) : un image: d'ESPHome exige une source fixe, et la source
-                # change à chaque image (tampons du chargeur, [AI-WARNING]).
-                # « Chargement... », « Image indisponible », « Aucune caméra choisie »…
-                - label: { id: cameras_message, text: "", align: CENTER, styles: style_text_dim }
+                # change à chaque image (tampons gardés, [AI-WARNING]).
+                # « Chargement... », « Hors ligne depuis 14:32 », « Aucune caméra choisie »…
+                - label: { id: cameras_message, text: "", align: CENTER, styles: style_text_soft }
+                # Mosaïque : 2 × 2 au plus (disposer() les place et les montre).
+                - !include { file: cameras_vignette.yaml, vars: { n: 0 } }
+                - !include { file: cameras_vignette.yaml, vars: { n: 1 } }
+                - !include { file: cameras_vignette.yaml, vars: { n: 2 } }
+                - !include { file: cameras_vignette.yaml, vars: { n: 3 } }
 
-          # ═══ NOM DE LA CAMÉRA ET HEURE DE L'IMAGE ═══
+          # ═══ « PIÈCE · CAMÉRA » ET HEURE DE L'IMAGE ═══
           - label:
               id: cameras_nom
               text: ""
               align: TOP_LEFT
               x: 143
               y: 626
-              width: 600
+              width: 580
               long_mode: DOT
           - label:
               id: cameras_heure
@@ -75,7 +132,7 @@ obj:
               text_align: RIGHT
               styles: style_text_dim
 
-          # ═══ PASTILLES : une par caméra (8 au plus), masquées sous deux ═══
+          # ═══ PASTILLES : une par caméra de la pièce (16 au plus), masquées sous deux ═══
           - obj:
               id: cameras_pastilles
               align: TOP_MID
@@ -92,11 +149,19 @@ obj:
                 flex_align_cross: CENTER
                 pad_column: 6
               widgets:
-                - obj: { id: cameras_pastille_0, width: 30, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 100%, border_width: 0 }
-                - obj: { id: cameras_pastille_1, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
-                - obj: { id: cameras_pastille_2, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
-                - obj: { id: cameras_pastille_3, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
-                - obj: { id: cameras_pastille_4, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
-                - obj: { id: cameras_pastille_5, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
-                - obj: { id: cameras_pastille_6, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
-                - obj: { id: cameras_pastille_7, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 30, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 100%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }

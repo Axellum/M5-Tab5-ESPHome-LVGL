@@ -688,8 +688,8 @@ api:
           example: "http://homeassistant.local:8123"
         cameras:
           type: string
-          description: "Caméras « nom|image » séparées par ; dans l'ordre du blueprint, 8 au plus — image = l'attribut entity_picture (/api/camera_proxy/camera.x?token=…) ou une URL complète d'une image JPEG. Dans un nom, | et ; deviennent / et ,. Vide = aucune caméra choisie."
-          example: "Entrée|/api/camera_proxy/camera.entree?token=abc123;Jardin|/api/camera_proxy/camera.jardin?token=def456"
+          description: "Caméras « nom|image|pièce|depuis » séparées par ; dans l'ordre du blueprint, 16 au plus — image = l'attribut entity_picture (/api/camera_proxy/camera.x?token=…) ou une URL complète d'une image JPEG ; pièce = area_name (vide sans pièce) ; depuis = horodatage Unix depuis lequel la caméra est indisponible (vide = en ligne). « nom|image » seul reste lu (blueprint d'avant). Dans un nom ou une pièce, | et ; deviennent / et ,. Vide = aucune caméra choisie."
+          example: "Entrée|/api/camera_proxy/camera.entree?token=abc123|Entrée|;Jardin|/api/camera_proxy/camera.jardin?token=def456|Jardin|;Portail||Jardin|1760000000"
       then:
         - lambda: 'cameras_recues(adresse, cameras);'
 

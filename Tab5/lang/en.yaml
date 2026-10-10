@@ -1379,6 +1379,17 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Adresse de Home Assistant inconnue": "Home Assistant address unknown"
 "Image de %02d:%02d:%02d": "Image from %02d:%02d:%02d"
 "Plus d'image depuis %02d:%02d:%02d": "No image since %02d:%02d:%02d"
+# Pièces et caméras hors ligne (ADR-0057, 10/10/2026). « Toutes » : toutes les caméras ;
+# « Autres » : les caméras sans pièce dans Home Assistant.
+"Toutes": "All"
+"Autres": "Other"
+"Hors ligne depuis %02d:%02d": "Offline since %02d:%02d"
+"Hors ligne depuis %s %02d:%02d": "Offline since %s %02d:%02d"
+"Hors ligne depuis le %d %s": "Offline since %d %s"
+# Mosaïque (lot 2) : sous le cadre, la pièce choisie (« Toutes ») et l'aide à droite
+# (360 px au plus, roboto 24).
+"Toutes les caméras": "All cameras"
+"Touchez une image pour l'agrandir": "Tap an image to enlarge it"
 
 # --- Capteurs suivis (tab5_suivi.cpp, ADR-0054) ---------------------------------
 "Suivi": "Tracking"
