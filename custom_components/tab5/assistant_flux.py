@@ -191,7 +191,9 @@ class AssistantFlux:
             elif situation.action == "fichier":
                 resultat = "a_coller"
         except assistant.FichierInutilisable as err:
-            resultat, raison = "a_coller", str(err)
+            # Une mise à jour impossible ne devient pas une seconde automatisation à coller.
+            resultat, raison = ("a_coller" if situation.action == "creer" else "rien"), str(err)
+            _LOGGER.warning("Tab5 : assistant, %s pas écrit (%s)", assistant.FICHIER, err)
         if resultat == "a_coller":
             id_ = assistant.nouvel_id(situation.automatisations, int(time.time() * 1000))
             a_coller = assistant.vers_yaml([assistant.automatisation(id_, pieces, langue)])
@@ -204,8 +206,10 @@ class AssistantFlux:
                     assistant.ecrire_si_inchange, config, situation.texte, nouveau, etiquette)
             except (assistant.FichierInutilisable, OSError) as err:
                 _LOGGER.warning("Tab5 : assistant, %s pas écrit (%s)", assistant.FICHIER, err)
-                resultat, raison = "a_coller", str(err)
-                a_coller = assistant.vers_yaml([assistant.automatisation(id_ or "tab5", pieces, langue)])
+                raison = str(err)
+                if situation.action == "creer":
+                    resultat = "a_coller"
+                    a_coller = assistant.vers_yaml([assistant.automatisation(id_ or "tab5", pieces, langue)])
             else:
                 sauvegarde = chemin.relative_to(config).as_posix() if chemin else None
                 await hass.services.async_call("automation", "reload", blocking=True)

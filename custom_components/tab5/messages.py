@@ -152,7 +152,7 @@ def assistant_resultat(langue: str | None, resultat: str, *, entite: str | None 
                           "automations file, then reload the automations:")
         lignes.append(f"```yaml\n{yaml_a_coller.rstrip()}\n```")
     else:
-        lignes.append("Rien n'a changé." if fr else "Nothing changed.")
+        lignes.append(("Rien n'a changé" if fr else "Nothing changed") + (f" ({raison})." if raison else "."))
     return titre, "\n\n".join(lignes)
 
 

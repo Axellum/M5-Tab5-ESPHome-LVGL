@@ -348,7 +348,9 @@ def situation(config: Path, ids_dans_ha: set[str]) -> Situation:
     try:
         liste = lire(texte)
     except FichierInutilisable as err:
-        return Situation("fichier", texte=texte, raison=str(err))
+        # Illisible, mais HA a chargé une automatisation du blueprint : pas de YAML à coller
+        # (ce serait un doublon).
+        return Situation("ailleurs" if ids_dans_ha else "fichier", texte=texte, raison=str(err))
     nos = du_blueprint(liste)
     ids_fichier = {str(a.get("id")) for a in nos}
     if ids_dans_ha - ids_fichier:

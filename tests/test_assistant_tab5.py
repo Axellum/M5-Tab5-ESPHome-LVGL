@@ -257,6 +257,8 @@ def test_situation(tmp_path):
     secret = _config(tmp_path / "secret", "- id: '1'\n  x: !secret y\n")
     s = A.situation(secret, set())
     assert s.action == "fichier" and A.FICHIER in s.raison
+    assert A.situation(secret, {"77"}).action == "ailleurs", \
+        "illisible mais une automatisation du blueprint chargée : pas de YAML à coller (doublon)"
 
     (tmp_path / "absent").mkdir()
     (tmp_path / "absent" / "configuration.yaml").write_text(CONF_HA, encoding="utf-8")
