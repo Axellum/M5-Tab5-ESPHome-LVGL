@@ -1,0 +1,108 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file cameras_popup.yaml
+# @role Popup « Caméras » (ADR-0049, 09/10/2026, discussion #278) : l'image fixe d'une
+#       caméra de Home Assistant, rafraîchie toutes les quelques secondes, son nom et
+#       l'heure de l'image dessous, une pastille par caméra. Glisser à gauche / à droite
+#       change de caméra (tab5_pages.cpp, ADR-0046). Ouvert par « Aller à l'écran →
+#       Caméras » ou par un geste de l'accueil (code « cameras »).
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Caméras » dans
+#       tab5_modal_registry_init). Corps : y 72..670 — cadre de 964 × 544 centré en haut
+#       (image de 960 × 540 dans sa bordure de 2 px), nom et heure à y 626, pastilles à
+#       y 666. Tout ce qui bouge est écrit par tab5_cameras.cpp ; couleurs par les styles
+#       de rôle (règle 1).
+# @ai_instruction Un widget de plus = son champ dans CamerasUI (tab5_cameras.h) et sa
+#       ligne dans le script tab5_cameras_ouvrir (tab5-cameras.yaml).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: cameras_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: cameras_popup } }
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F07AE", icon_style: "style_text_gold", title: "Caméras", title_id: "cameras_popup_titre", close_btn_id: "btn_cameras_close", popup_id: cameras_popup } }
+
+          # ═══ IMAGE : 960 × 540 (16:9), centrée dans le cadre ═══
+          - obj:
+              id: cameras_cadre
+              align: TOP_MID
+              y: ${modal_body_y}
+              width: 964
+              height: 544
+              pad_all: 0
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                # Source : le tampon de cameras_image (tab5-cameras.yaml). Caché tant
+                # qu'il ne tient pas l'image de la caméra montrée ([AI-WARNING] de
+                # tab5_cameras.cpp).
+                - image:
+                    id: cameras_img
+                    src: cameras_image
+                    align: CENTER
+                    radius: 18
+                    hidden: true
+                # « Chargement... », « Image indisponible », « Aucune caméra choisie »…
+                - label: { id: cameras_message, text: "", align: CENTER, styles: style_text_dim }
+
+          # ═══ NOM DE LA CAMÉRA ET HEURE DE L'IMAGE ═══
+          - label:
+              id: cameras_nom
+              text: ""
+              align: TOP_LEFT
+              x: 143
+              y: 626
+              width: 600
+              long_mode: DOT
+          - label:
+              id: cameras_heure
+              text: ""
+              align: TOP_RIGHT
+              x: -143
+              y: 626
+              width: 360
+              long_mode: DOT
+              text_align: RIGHT
+              styles: style_text_dim
+
+          # ═══ PASTILLES : une par caméra (8 au plus), masquées sous deux ═══
+          - obj:
+              id: cameras_pastilles
+              align: TOP_MID
+              y: 666
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              styles: style_transparent
+              clickable: false
+              hidden: true
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_main: CENTER
+                flex_align_cross: CENTER
+                pad_column: 6
+              widgets:
+                - obj: { id: cameras_pastille_0, width: 30, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 100%, border_width: 0 }
+                - obj: { id: cameras_pastille_1, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: cameras_pastille_2, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: cameras_pastille_3, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: cameras_pastille_4, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: cameras_pastille_5, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: cameras_pastille_6, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }
+                - obj: { id: cameras_pastille_7, width: 16, height: 4, radius: 2, styles: style_bg_dim, bg_opa: 40%, border_width: 0 }

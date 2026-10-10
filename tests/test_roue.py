@@ -145,12 +145,13 @@ def _dans_l_ecran(centres, r, contexte):
 
 def test_deux_anneaux_dans_l_ecran_et_sans_chevauchement():
     r1, r2 = ecrans.ROUE_DIAMETRE // 2, ecrans.ROUE_DIAMETRE2 // 2
+    m_max = int(_const(contrat(), "kRoueChoixTuile"))
     for xa, ya in _ancres() + [(104, 412), (640, 60), (40, 40), (1240, 700)]:
         for n in range(2, 7):
             premier = ecrans.roue_centres(xa, ya, n)
             _dans_l_ecran(premier, r1, (xa, ya, n))
             for famille in range(n):
-                for m in range(2, 7):
+                for m in range(2, m_max + 1):
                     second = ecrans.roue_choix_centres(xa, ya, n, famille, m)
                     _dans_l_ecran(second, r2, (xa, ya, n, famille, m))
                     if (xa, ya) not in _ancres():
@@ -165,6 +166,28 @@ def test_deux_anneaux_dans_l_ecran_et_sans_chevauchement():
                 for i in range(n - 1):
                     (x1, y1), (x2, y2) = premier[i], premier[i + 1]
                     assert math.hypot(x2 - x1, y2 - y1) >= ecrans.ROUE_DIAMETRE, (xa, ya, n, i)
+
+
+def test_roue_d_une_tuile_a_six_choix_au_plus():
+    """Le second anneau a kRoueChoix (8) widgets pour les huit écrans d'« Appareils ▸ » de
+    la roue de navigation (10/10/2026), mais la roue d'une tuile (tuiles, popup Maison,
+    roue d'une clim) s'arrête à kRoueChoixTuile (6) : à 8, l'éventail d'une tuile au bord
+    de l'écran pivote jusqu'à poser deux choix l'un sur l'autre (49 px entre deux centres
+    pour 72 px de bouton, tuile météo de gauche, mesuré le 10/10/2026)."""
+    c = contrat()
+    assert int(_const(c, "kRoueChoixTuile")) == 6 and int(_const(c, "kRoueChoix")) == 8
+    roue_tuile = _lire(source("tab5_tuiles_roue.cpp"))
+    assert re.search(r"\bkRoueChoix\b", roue_tuile) is None, "la roue d'une tuile : kRoueChoixTuile seul"
+    assert "if (m >= kRoueChoixTuile) return rebut;" in roue_tuile
+    assert "std::min(n - debut, kRoueChoixTuile)" in roue_tuile
+    pire = min(
+        math.dist(a, b)
+        for xa, ya in _ancres()
+        for n in range(2, 7)
+        for famille in range(n)
+        for second in [ecrans.roue_choix_centres(xa, ya, n, famille, 8)]
+        for i, a in enumerate(second) for b in second[i + 1:])
+    assert pire < ecrans.ROUE_DIAMETRE2
 
 
 def test_ancre_haute_roue_en_dessous():

@@ -642,6 +642,8 @@ lvgl:
         - !include ../ui_components/meteo_popup.yaml
         # Popup Musique (ADR-0050) : après Maison, il passe devant elle (tuile med touchée).
         - !include ../ui_components/lecteur_popup.yaml
+        # Popup Caméras (ADR-0049).
+        - !include ../ui_components/cameras_popup.yaml
         - !include ../ui_components/calendar_popup.yaml
         - !include ../ui_components/assistant_popup.yaml
         - !include ../ui_components/alarm_popup.yaml

@@ -775,3 +775,43 @@ bool ha_image_url(const Champ& image, const char* base, char* out, size_t n) {
     if (!ok) out[0] = '\0';
     return ok;
 }
+
+// ─── 10. Popup Caméras (ADR-0049) ───
+// Lot « Caméras » (09/10/2026) : la base et l'URL viennent des aides de la section 9.
+
+int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax]) {
+    if (payload.p == nullptr) return 0;
+    const char* p = payload.p;
+    const char* fin = p + payload.n;
+    int n = 0;
+    while (p < fin && n < kCamerasMax) {
+        const Champ c = champ_suivant(p, fin, ';');
+        const char* q = c.p;
+        const char* qf = c.p + c.n;
+        const Champ nom = champ_suivant(q, qf, '|');
+        const Champ image = champ_suivant(q, qf, '|');
+        if (image.n == 0) continue;  // vide, « ;; » ou « nom| » : rien à montrer
+        cameras[n].nom = nom;
+        cameras[n].image = image;
+        n++;
+    }
+    return n;
+}
+
+bool camera_url(const Champ& image, const char* base, int largeur, int hauteur, char* out, size_t n) {
+    if (!ha_image_url(image, base, out, n)) return false;
+    // Proxy des caméras de HA (CameraImageView) : l'image est réduite par HA seulement si
+    // largeur ET hauteur sont données.
+    if (largeur > 0 && hauteur > 0 && std::strstr(out, "/api/camera_proxy/") != nullptr &&
+        std::strstr(out, "width=") == nullptr && std::strstr(out, "height=") == nullptr) {
+        char taille[40];
+        std::snprintf(taille, sizeof(taille), "%cwidth=%d&height=%d", std::strchr(out, '?') != nullptr ? '&' : '?',
+                      largeur, hauteur);
+        size_t l = std::strlen(out);
+        if (!ajouter(out, n, l, taille)) {
+            out[0] = '\0';
+            return false;
+        }
+    }
+    return true;
+}
