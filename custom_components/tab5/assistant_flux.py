@@ -104,7 +104,7 @@ def inventaire(hass: HomeAssistant) -> Inventaire:
             entity_id=e.entity_id, nom=nom, zone=e.area_id, appareil=e.device_id,
             classe=e.device_class or e.original_device_class, desactivee=e.disabled, cachee=e.hidden,
             categorie=str(e.entity_category) if e.entity_category else None, presente=etat is not None,
-            plateforme=e.platform))
+            plateforme=e.platform, interne=assistant.est_interne(e.platform, e.unique_id)))
     # Les entités hors registre (YAML sans unique_id) ont un nom aussi, pour les listes.
     for etat in hass.states.async_all():
         inv.noms.setdefault(etat.entity_id, etat.name)
@@ -270,6 +270,7 @@ class AssistantFlux:
             return await self.async_step_recapitulatif()
         infos = assistant.Infos(noms=self._inv.noms,
                                 plateformes={e.entity_id: e.plateforme or "" for e in self._inv.entites},
+                                internes={e.entity_id for e in self._inv.entites if e.interne},
                                 classes={e.entity_id: e.classe or "" for e in self._inv.entites},
                                 pipeline_prefere=pipeline_prefere(self.hass))
         champs: dict[Any, Any] = {}

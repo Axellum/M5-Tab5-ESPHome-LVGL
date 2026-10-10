@@ -95,6 +95,7 @@ class Entite:
     categorie: str | None = None   # entity_category : config, diagnostic
     presente: bool = True          # un état dans HA (intégration chargée)
     plateforme: str | None = None  # intégration qui la fournit (mobile_app, holiday…)
+    interne: bool = False          # une entité des packages du Tab5 (est_interne) : jamais proposée
 
     @property
     def domaine(self) -> str:
@@ -120,8 +121,19 @@ def zone_de(entite: Entite, appareils: dict[str, Appareil]) -> str | None:
     return appareil.zone if appareil else None
 
 
+PREFIXE_PACKAGES = "tab5_"
+
+
+def est_interne(plateforme: str | None, unique_id: str | None) -> bool:
+    """Une entité de modèle des packages du Tab5 (leurs unique_id commencent tous par
+    « tab5_ », tests/test_assistant_tab5.py) : un miroir comme binary_sensor.tab5_presence,
+    qui suit la liste « capteur de présence » elle-même. La proposer ferait une boucle
+    (vu par la CI le 10/10/2026)."""
+    return plateforme == "template" and (unique_id or "").startswith(PREFIXE_PACKAGES)
+
+
 def utilisable(entite: Entite, appareils: dict[str, Appareil], modele_tablette: str) -> bool:
-    if entite.desactivee or entite.cachee or entite.categorie or not entite.presente:
+    if entite.desactivee or entite.cachee or entite.categorie or not entite.presente or entite.interne:
         return False
     appareil = appareils.get(entite.appareil or "")
     return not (appareil and appareil.modele == modele_tablette)
@@ -297,6 +309,7 @@ class Infos:
     plateformes: dict[str, str] = field(default_factory=dict)
     classes: dict[str, str] = field(default_factory=dict)
     pipeline_prefere: str | None = None
+    internes: set[str] = field(default_factory=set)  # entités des packages du Tab5 : jamais proposées
 
 
 def _calendriers(options: list[str]) -> list[str]:
@@ -341,7 +354,8 @@ def proposer_liste(liste: Liste, options: list[str], actuel: str | None, infos: 
     sinon la seule candidate des règles ; sinon « Aucun »."""
     if actuel and actuel != AUCUN and actuel in options:
         return actuel, False
-    candidates = [c for c in (_auto if liste.devinee else _propose)(liste.cle, options, infos) if c in options]
+    candidates = [c for c in (_auto if liste.devinee else _propose)(liste.cle, options, infos)
+                  if c in options and c not in infos.internes]
     if len(candidates) == 1:
         return candidates[0], True
     return (AUCUN if AUCUN in options else (actuel or AUCUN)), False

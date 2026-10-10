@@ -474,6 +474,26 @@ def test_proposer_liste():
     assert A._auto("telephone_suivi", ["device_tracker.pixel", "person.axel", A.AUCUN], i) == ["device_tracker.pixel"]
 
 
+def test_entites_des_packages_jamais_proposees():
+    """binary_sensor.tab5_presence (miroir de la liste « capteur de présence », classe
+    occupancy) a été proposé pour cette même liste par la CI du 10/10/2026 : une boucle."""
+    for dossier in ("packages", "optionnel"):
+        for f in sorted((REPO / "HomeAssistant_Config" / dossier).glob("*.yaml")):
+            for uid in re.findall(r"^\s*unique_id:\s*[\"']?([\w.-]+)", f.read_text(encoding="utf-8"), re.M):
+                assert uid.startswith(A.PREFIXE_PACKAGES), f"{f.name} : {uid} (est_interne ne le verrait pas)"
+    assert "unique_id: tab5_presence" in lire(*REGLAGES)
+    assert A.est_interne("template", "tab5_presence")
+    assert not A.est_interne("template", "ci_presence") and not A.est_interne("esphome", "tab5_x")
+    assert not A.utilisable(A.Entite("sensor.tab5_t", "T", classe="temperature", interne=True), {}, TABLETTE)
+    presences = ["binary_sensor.tab5_presence", "binary_sensor.salon_occupancy", A.AUCUN]
+    i = _infos()
+    i.classes["binary_sensor.tab5_presence"] = "occupancy"
+    assert A.proposer_liste(_liste("presence"), presences, A.AUCUN, i) == (A.AUCUN, False), "deux candidates"
+    i.internes = {"binary_sensor.tab5_presence"}
+    assert A.proposer_liste(_liste("presence"), presences, A.AUCUN, i) == ("binary_sensor.salon_occupancy", True)
+    assert A.proposer_liste(_liste("presence"), presences[:1] + [A.AUCUN], A.AUCUN, i) == (A.AUCUN, False)
+
+
 def test_changements_et_resumes():
     assert A.changements({"agenda_travail": "calendar.boulot", "presence": A.AUCUN, "pipeline": ""},
                          {"agenda_travail": A.AUCUN, "presence": A.AUCUN}) == {"agenda_travail": "calendar.boulot"}
