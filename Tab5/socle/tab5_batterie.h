@@ -12,7 +12,13 @@
  *       Chargeur coupé, sans batterie, l'INA226 lit 1,83 à 1,94 V (tablette de l'auteur,
  *       08/10/2026, 4 lectures) ; une batterie 2S, même vide, lit plus de 5 V.
  *         - démarrage : chargeur allumé kChargeurReveilDureeMs (réveille une batterie
- *           dont la protection a coupé), puis une « sonde » : chargeur coupé, lecture ;
+ *           dont la protection a coupé), puis une « sonde » : chargeur coupé, lecture.
+ *           Depuis le 10/10/2026 (demande d'Axel), CHG_EN est coupé au setup et ce réveil
+ *           part au premier pas, sauf si le démarrage précédent n'a vu AUCUNE batterie
+ *           (MemoireBatterie en NVS, chargeur_demarrer) : alors sonde tout de suite, sans
+ *           allumer. Risque : une batterie neuve ou totalement plate posée sur une
+ *           tablette qui n'en avait pas est vue absente ; allumer « Tab5 Batterie
+ *           montée » la réveille (tout de suite, puis une fois par heure) ;
  *         - pas de batterie : chargeur coupé, et chaque lecture (60 s) redécide : une
  *           batterie glissée tablette allumée est vue à la lecture suivante. Si
  *           l'interrupteur « Tab5 Batterie montée » dit qu'il y en a une, un réveil
@@ -115,11 +121,27 @@ inline float batterie_puissance_w(float tension, float courant_a, bool sur_batte
     return tension * courant_a;
 }
 
+// ─── Mémoire du démarrage précédent (10/10/2026, demande d'Axel) ───
+// Gardée en NVS (globals `tab5_batterie_memoire`, tab5-sensors-diagnostics.yaml) : une
+// batterie a-t-elle été vue pendant le démarrage précédent ? Sans batterie, les 30 s de
+// réveil au démarrage faisaient charger dans le vide (8,39 V lus, pic de consommation,
+// puis souffle) : si le démarrage précédent n'en a vu AUCUNE, le chargeur reste coupé et
+// une sonde lit la tension tout de suite. Inconnue (premier démarrage, NVS vide) : réveil,
+// comme avant. Valeurs gardées en NVS : ne pas les renuméroter.
+enum class MemoireBatterie : uint8_t {
+    INCONNUE = 0,
+    AUCUNE = 1,  // le démarrage précédent a décidé « pas de batterie », sans en voir une
+    VUE = 2,     // une batterie vue (chargeur coupé, ≥ kBatterieSeuilV) au démarrage précédent
+};
+
 struct EtatChargeur {
     PresenceBatterie presence = PresenceBatterie::INCONNUE;
-    bool allume = true;            // CHG_EN commandé (allumé au démarrage, ALWAYS_ON)
+    bool allume = true;            // CHG_EN commandé (voir chargeur_demarrer)
     uint32_t change_ms = 0;        // instant de la dernière commande
     bool reveil = true;            // allumé kChargeurReveilDureeMs, puis une sonde
+    bool vue = false;              // une batterie vue depuis le démarrage (MemoireBatterie::VUE)
+    bool montee_avant = false;     // « Tab5 Batterie montée » au pas précédent
+    bool reveil_demande = false;   // « montée » vient d'être allumé : réveil sans attendre l'heure
     bool sonde = false;            // chargeur coupé pour lire la tension
     bool lecture_demandee = false;
     bool sonde_vite = false;       // lecture basse chargeur allumé : sonder sans attendre
@@ -141,6 +163,7 @@ inline bool chargeur_lecture(EtatChargeur& c, float tension, uint32_t maintenant
     const PresenceBatterie avant = c.presence;
     if (!c.allume && maintenant_ms - c.change_ms >= kChargeurReposMs) {
         c.presence = tension >= kBatterieSeuilV ? PresenceBatterie::PRESENTE : PresenceBatterie::ABSENTE;
+        if (c.presence == PresenceBatterie::PRESENTE) c.vue = true;
         if (c.sonde) {
             c.sonde = false;
             c.lecture_demandee = false;
@@ -182,6 +205,11 @@ inline void chargeur_commander(EtatChargeur& c, bool allume, uint32_t maintenant
 // sonde : sans elle, la lecture suivante attendrait jusqu'à 60 s).
 inline ActionChargeur chargeur_tick(EtatChargeur& c, uint8_t limite, bool montee, uint32_t maintenant_ms) {
     ActionChargeur a;
+    // « Tab5 Batterie montée » allumé : le moyen manuel de réveiller une batterie neuve ou
+    // si vide que sa protection a coupé (vue absente), sans attendre l'heure.
+    if (montee && !c.montee_avant) c.reveil_demande = true;
+    c.montee_avant = montee;
+    if (!montee || c.presence == PresenceBatterie::PRESENTE) c.reveil_demande = false;
     if (c.sonde) {
         const uint32_t ecoule = maintenant_ms - c.change_ms;
         if (ecoule < kChargeurSondeMaxMs) {
@@ -199,6 +227,7 @@ inline ActionChargeur chargeur_tick(EtatChargeur& c, uint8_t limite, bool montee
     }
     bool sonder = false;
     if (c.reveil) {
+        c.reveil_demande = false;  // ce réveil vaut celui demandé
         chargeur_commander(c, true, maintenant_ms);
         if (maintenant_ms - c.change_ms < kChargeurReveilDureeMs) {
             a.allumer = true;
@@ -210,8 +239,9 @@ inline ActionChargeur chargeur_tick(EtatChargeur& c, uint8_t limite, bool montee
         // Batterie (ou inconnue après une sonde ratée) : retirée depuis ?
         sonder = c.sonde_vite || maintenant_ms - c.sonde_fin_ms >= kChargeurSondeMs;
     } else if (c.presence == PresenceBatterie::ABSENTE && montee && !c.allume &&
-               maintenant_ms - c.change_ms >= kChargeurReveilMs) {
+               (c.reveil_demande || maintenant_ms - c.change_ms >= kChargeurReveilMs)) {
         c.reveil = true;
+        c.reveil_demande = false;
         chargeur_commander(c, true, maintenant_ms);
         a.allumer = true;
         return a;
@@ -227,6 +257,40 @@ inline ActionChargeur chargeur_tick(EtatChargeur& c, uint8_t limite, bool montee
     chargeur_commander(c, chargeur_voulu(c, limite, maintenant_ms), maintenant_ms);
     a.allumer = c.allume;
     return a;
+}
+
+// Premier pas après le démarrage (chargeur_pas, une fois). CHG_EN est COUPÉ depuis son
+// setup (`restore_mode: ALWAYS_OFF`, 10/10/2026) ; `memoire` : MemoireBatterie gardée en
+// NVS par le démarrage précédent, `montee` : « Tab5 Batterie montée » restauré.
+//   - AUCUNE : chargeur laissé coupé, sonde tout de suite (lecture au bout de
+//     kChargeurReposMs) : pas de pic, pas de charge dans le vide ;
+//   - VUE, INCONNUE ou valeur inconnue : réveil de kChargeurReveilDureeMs puis sonde,
+//     comme avant (le chargeur s'allume à ce premier pas, à la fin de setup()).
+// Une batterie neuve ou si vide qu'elle lit moins de kBatterieSeuilV, branchée sur une
+// tablette qui n'en avait pas : vue absente ; allumer « Tab5 Batterie montée » la réveille
+// (reveil_demande, puis une fois par heure).
+inline void chargeur_demarrer(EtatChargeur& c, uint8_t memoire, bool montee, uint32_t maintenant_ms) {
+    c.allume = false;
+    c.change_ms = maintenant_ms;
+    c.montee_avant = montee;  // restauré : pas un « vient d'être allumé »
+    c.reveil_demande = false;
+    c.lecture_demandee = false;
+    if (static_cast<MemoireBatterie>(memoire) == MemoireBatterie::AUCUNE) {
+        c.reveil = false;
+        c.sonde = true;
+    } else {
+        c.reveil = true;
+        c.sonde = false;
+    }
+}
+
+// Mémoire à garder pour le démarrage suivant : VUE dès qu'une batterie a été vue pendant
+// ce démarrage (même retirée depuis), AUCUNE si la présence a été décidée absente sans
+// jamais en voir, sinon (rien de décidé encore) celle d'avant.
+inline uint8_t batterie_memoire_suivante(const EtatChargeur& c, uint8_t memoire) {
+    if (c.vue) return static_cast<uint8_t>(MemoireBatterie::VUE);
+    if (c.presence == PresenceBatterie::ABSENTE) return static_cast<uint8_t>(MemoireBatterie::AUCUNE);
+    return memoire;
 }
 
 // ─── Alerte « batterie faible » ───
@@ -261,8 +325,12 @@ inline int batterie_alerte_lue(EtatAlerteBatterie& a, float niveau, bool sur_bat
 // Une lecture de la tension (par batterie_tension_ui, tab5_zones.cpp) : vrai si la
 // présence a changé.
 bool chargeur_tension(float tension, uint32_t maintenant_ms);
-// Interval de 1 s : état voulu de CHG_EN, et s'il faut lire l'INA226 maintenant.
-ActionChargeur chargeur_pas(uint8_t limite, bool montee, uint32_t maintenant_ms);
+// Interval de 1 s : état voulu de CHG_EN, et s'il faut lire l'INA226 maintenant. Au premier
+// appel, chargeur_demarrer() avec `memoire` (MemoireBatterie du démarrage précédent).
+ActionChargeur chargeur_pas(uint8_t limite, bool montee, uint8_t memoire, uint32_t maintenant_ms);
+// Mémoire à garder en NVS pour le démarrage suivant (batterie_memoire_suivante) ; journal
+// au changement.
+uint8_t chargeur_memoire(uint8_t memoire);
 // Lecture du courant à ignorer (mode économie) : chargeur coupé pour une sonde.
 bool chargeur_sonde_en_cours(uint32_t maintenant_ms);
 PresenceBatterie batterie_presence();
