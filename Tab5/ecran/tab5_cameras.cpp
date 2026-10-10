@@ -9,39 +9,39 @@
  *           tant que le popup reste ouvert (le jeton des URL de HA change toutes les
  *           5 minutes, l'ancien reste valable 5 minutes de plus) et après un échec
  *           (30 s au plus souvent : jeton périmé, caméra hors ligne).
- *         - Image : cameras_image (online_image, tab5-cameras.yaml), une seule pour toutes
- *           les caméras ; URL construite par camera_url() (tab5_parse.h, section 9).
+ *         - Image : téléchargée et décodée HORS de la boucle principale par le chargeur
+ *           (tab5_cameras_charge.h : tâche FreeRTOS, décodeur JPEG matériel, deux
+ *           tampons), une à la fois ; URL construite par camera_url() (tab5_parse.h,
+ *           section 9). La boucle sonde le chargeur toutes les 100 ms (kSondeMs) et
+ *           montre l'image prête : quelques millisecondes, l'écran ne gèle plus.
  *         - Fermé (croix, retour automatique après 45 s sans toucher, autre écran) : le
- *           rappel suivant (cameras_tic) ou la fin du téléchargement en cours libère
- *           l'image décodée, et plus rien n'est demandé.
+ *           rappel suivant (cameras_tic), ou la fin du chargement en cours, rend la mémoire
+ *           (images, JPEG, connexion), et plus rien n'est demandé.
  * @architecture_constraint Push-only et events-only (ADR-0001, ADR-0025) : la tablette ne
- *       nomme aucune entité ; elle dit seulement qu'elle veut la liste. Le téléchargement
- *       bloque la boucle principale le temps que HA réponde (http_request est synchrone
- *       jusqu'aux en-têtes) puis le temps du décodage JPEG (un seul appel) : d'où une
- *       image à la fois, jamais deux, et rien quand le popup est fermé. Une caméra hors
- *       ligne (ou un HA qui ne répond pas) gèle l'écran jusqu'au timeout de http_request
- *       (12 s, tab5-assist.yaml) à CHAQUE essai : après un échec, l'essai suivant attend
- *       10 s, puis 30 s, puis 60 s (kEchecsDelaisMs), remis à zéro par une image reçue, un
- *       changement de page ou une réouverture. Ne pas raccourcir ces délais sans l'avoir
- *       mesuré sur la tablette avec une caméra débranchée.
- *       Un téléchargement sans fin ni échec au bout de 60 s est abandonné par
- *       online_image.release (connexion fermée), jamais seulement oublié.
+ *       nomme aucune entité ; elle dit seulement qu'elle veut la liste. Une image à la
+ *       fois, jamais deux, et rien quand le popup est fermé. Une caméra hors ligne (ou un
+ *       HA qui ne répond pas) ne gèle plus l'écran, mais occupe la tâche jusqu'à 12 s :
+ *       après un échec, l'essai suivant attend 10 s, puis 30 s, puis 60 s
+ *       (kEchecsDelaisMs), remis à zéro par une image reçue, un changement de page ou une
+ *       réouverture.
  *       Couleurs : styles de rôle du YAML (cameras_popup.yaml) ; ce fichier n'écrit que du
  *       texte, des affichages et la source de l'image. Pas de cameras_rejouer_theme : rien
- *       n'y est peint d'une couleur.
- * @ai_warning [AI-WARNING] Le widget image montre directement le tampon de cameras_image
- *       (lv_image_dsc_t d'ESPHome). online_image le LIBÈRE et remet son descripteur à zéro
- *       sur un échec de décodage, sur release() et quand la taille de l'image change :
- *       le widget doit être caché avant (peindre() le cache dès que la caméra montrée
- *       n'est pas celle du tampon, cameras_image_erreur() quand la largeur est retombée à
- *       0). Ne pas le montrer « en attendant » une image d'une autre caméra.
+ *       n'y est peint d'une couleur. Le widget image est créé ici (dans cameras_cadre) :
+ *       l'image: d'ESPHome exige une source fixe.
+ * @ai_warning [AI-WARNING] Le widget image montre directement un tampon du chargeur.
+ *       Avant camera_charge_liberer(), liberer() le cache et retire sa source ; après un
+ *       échec, l'image montrée reste valable (le chargeur écrit dans l'autre tampon) et
+ *       reste à l'écran avec « Plus d'image depuis … ». Ne pas la montrer « en attendant »
+ *       sur la page d'une autre caméra (peindre() la cache dès que la caméra montrée n'est
+ *       pas celle de l'image).
  * @ai_instruction Un texte affiché passe par tr(). Le format de tab5_maj_cameras est un
  *       contrat avec le blueprint, la démo (tools/demo/) et le rendu (tools/rendu/).
  */
 #include "tab5_internal.h"
+#include "tab5_cameras_charge.h"
 #include "tab5_parse.h"
-#include "esphome/components/image/image.h"
 #include "lvgl.h"
+#include "lvgl_private.h"  // lv_image_cache_drop() (cache d'images, hors de lvgl.h en 9.5)
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -61,12 +61,13 @@ constexpr int kRafraichirMs = 5000;            // après une image, avant la sui
 constexpr int kApresErreurMs = 10000;          // après un échec (URL illisible, 1er échec réseau)
 constexpr uint32_t kRedemanderMs = 240000;     // liste (jetons) redemandée à HA
 constexpr uint32_t kErreurRedemanderMs = 30000;   // après un échec, et tant que rien n'est reçu
-// Échecs réseau de suite sur la page montrée : 10 s, 30 s, puis 60 s avant le suivant.
-// Une caméra hors ligne gèle l'écran jusqu'au timeout de http_request (12 s) à chaque
-// essai : plus ils sont espacés, moins l'écran gèle. Remis à zéro par une image reçue ou
-// un changement de page.
+// Échecs réseau de suite sur la page montrée : 10 s, 30 s, puis 60 s avant le suivant
+// (une caméra hors ligne occupe la tâche jusqu'à 12 s, et HA, à chaque essai). Remis à
+// zéro par une image reçue ou un changement de page.
 constexpr int kEchecsDelaisMs[] = {10000, 30000, 60000};
-constexpr uint32_t kTelechargementPerduMs = 60000;   // au-delà, plus rien n'est attendu
+constexpr int kSondeMs = 100;         // chargement en cours, popup ouvert
+constexpr int kSondeFermeMs = 1000;   // chargement en cours, popup fermé (libérer à sa fin)
+constexpr int kImageRayon = 18;       // coins de l'image (cadre style_glass_card)
 
 struct Camera {
     char nom[kCameraNomMax] = {};
@@ -80,9 +81,12 @@ uint32_t s_recue_ms = 0;
 char s_adresse[128] = {};   // donnée par le blueprint (vide : celle du client de l'API)
 char s_hote[64] = {};       // tirée du client de l'API « Home Assistant »
 int s_page = 0;
-int s_en_cours = -1;        // caméra du téléchargement en cours, -1 aucun
-uint32_t s_en_cours_ms = 0;
-int s_montree = -1;         // caméra dont l'image est dans le tampon, -1 aucune
+int s_en_cours = -1;        // caméra du chargement en cours, -1 aucun
+int s_montree = -1;         // caméra dont l'image est montrée, -1 aucune
+// Deux descripteurs, un par image reçue à tour de rôle : LVGL ne garde rien d'une image
+// sous le pointeur d'une autre (lv_image_cache_drop en plus).
+lv_image_dsc_t s_dsc[2] = {};
+int s_dsc_i = 0;
 time_t s_quand = 0;         // heure de cette image
 bool s_erreur = false;      // le dernier téléchargement de la page a échoué
 bool s_sans_adresse = false;
@@ -117,8 +121,26 @@ void demander() {
     if (g_cameras_ui.demander != nullptr) g_cameras_ui.demander();
 }
 
+// Un seul rappel en attente (tab5_cameras_attente, mode restart) : pendant un chargement,
+// jamais plus loin que la sonde suivante.
 void attendre(int ms) {
+    if (s_en_cours >= 0) {
+        const int sonde = visible() ? kSondeMs : kSondeFermeMs;
+        if (ms > sonde) ms = sonde;
+    }
     if (g_cameras_ui.attendre != nullptr) g_cameras_ui.attendre(ms);
+}
+
+// Le widget image, créé une fois dans le cadre, sous le message.
+void creer_image() {
+    CamerasUI& u = g_cameras_ui;
+    if (u.image != nullptr || u.cadre == nullptr) return;
+    u.image = lv_image_create(u.cadre);
+    lv_obj_align(u.image, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_radius(u.image, kImageRayon, LV_PART_MAIN);
+    lv_obj_add_flag(u.image, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(u.image, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_move_to_index(u.image, 0);
 }
 
 void peindre() {
@@ -149,19 +171,25 @@ void peindre() {
     pagination_afficher(u.pastille, s_n, s_page);
 }
 
-// Plus rien d'affiché : l'image décodée (~1 Mo de PSRAM) est rendue et une connexion en
-// cours est fermée (online_image.release). Le tampon de téléchargement d'ESPHome, lui, ne
-// rétrécit pas : il garde la taille du plus gros JPEG reçu.
+// Plus rien d'affiché : les deux images (2 × 600 Ko de PSRAM pour une caméra 640 × 480),
+// le JPEG et la connexion à HA sont rendus. Pendant un chargement, rien n'est rendu : sa
+// fin rappelle liberer() (popup fermé).
 void liberer() {
-    ui_hidden(g_cameras_ui.image, true);
+    CamerasUI& u = g_cameras_ui;
+    if (u.image != nullptr) {
+        ui_hidden(u.image, true);
+        lv_image_set_src(u.image, nullptr);
+    }
     s_montree = -1;
-    if (g_cameras_ui.liberer != nullptr) g_cameras_ui.liberer();
+    camera_charge_liberer();
 }
 
-// Télécharge l'image de la page montrée, s'il n'y a pas déjà un téléchargement en cours.
+void image_prete(int cam);
+void image_erreur(int cam);
+
+// Lance le chargement de l'image de la page montrée, s'il n'y en a pas déjà un en cours.
 void charger() {
-    const CamerasUI& u = g_cameras_ui;
-    if (s_en_cours >= 0 || s_n == 0 || u.charger == nullptr) return;
+    if (s_en_cours >= 0 || s_n == 0) return;
     const Camera& c = s_cams[s_page];
     const char* base = s_adresse[0] != '\0' ? s_adresse : s_hote;
     char url[kCameraUrlMax];
@@ -177,10 +205,12 @@ void charger() {
     }
     s_sans_adresse = false;
     s_en_cours = s_page;
-    s_en_cours_ms = esphome::millis();
-    peindre();   // « Chargement... » d'abord : le téléchargement bloque la boucle
-    // Peut rappeler cameras_image_erreur() tout de suite (URL refusée, HA injoignable).
-    u.charger(url);
+    peindre();
+    if (!camera_charge_lancer(url)) {
+        image_erreur(s_en_cours);
+        return;
+    }
+    attendre(kSondeMs);
 }
 
 int nombre_pages() { return s_n; }
@@ -193,8 +223,66 @@ void afficher_page(int page) {
     s_echecs = 0;   // une autre caméra : son premier essai sans attendre
     ui_mark_activity();
     peindre();
-    // Un téléchargement en cours (autre caméra) : sa fin enchaîne sur celle-ci.
+    // Un chargement en cours (autre caméra) : sa fin enchaîne sur celle-ci.
     if (s_en_cours < 0) attendre(0);
+}
+
+// Fin d'un chargement réussi : l'image de `cam` devient celle du widget, montrée ou non
+// (peindre() ne la montre que sur sa page).
+void image_prete(int cam) {
+    CamerasUI& u = g_cameras_ui;
+    s_en_cours = -1;
+    if (!visible()) {
+        liberer();
+        return;
+    }
+    CameraImage img;
+    if (cam < 0 || u.image == nullptr || !camera_charge_prendre(&img)) {
+        camera_charge_acquitter();
+        attendre(0);
+        return;
+    }
+    s_dsc_i = 1 - s_dsc_i;
+    lv_image_dsc_t& d = s_dsc[s_dsc_i];
+    lv_image_cache_drop(&d);
+    d = {};
+    d.header.magic = LV_IMAGE_HEADER_MAGIC;
+    d.header.cf = LV_COLOR_FORMAT_RGB565;
+    d.header.w = static_cast<uint32_t>(img.largeur);
+    d.header.h = static_cast<uint32_t>(img.hauteur);
+    d.header.stride = static_cast<uint32_t>(img.pas);
+    d.data = img.pixels;
+    d.data_size = static_cast<uint32_t>(img.pas) * static_cast<uint32_t>(img.hauteur);
+    lv_image_set_src(u.image, &d);
+    lv_image_set_scale(u.image, echelle_image(img.largeur, img.hauteur));
+    s_montree = cam;
+    s_quand = tab5_time_source(nullptr);
+    if (cam == s_page) {
+        s_erreur = false;
+        s_echecs = 0;
+    }
+    peindre();
+    attendre(cam == s_page ? kRafraichirMs : 0);
+}
+
+// Fin d'un chargement raté (HA injoignable, jeton périmé, caméra hors ligne, JPEG refusé)
+// ou impossible à lancer. L'image montrée, s'il y en a une, reste valable.
+void image_erreur(int cam) {
+    s_en_cours = -1;
+    camera_charge_acquitter();
+    if (!visible()) {
+        liberer();
+        return;
+    }
+    if (cam == s_page) {
+        s_erreur = true;
+        s_echecs++;
+    }
+    ESP_LOGW("tab5.cameras", "image de la caméra %d indisponible (%d échec(s) de suite)", cam + 1, s_echecs);
+    // Jeton périmé (401) ou caméra hors ligne : la liste redemandée, 30 s au plus souvent.
+    if (esphome::millis() - s_demande_ms >= kErreurRedemanderMs) demander();
+    peindre();
+    attendre(cam == s_page ? delai_apres_echec() : 0);
 }
 
 // Geste gauche / droite du popup (tab5_pages.cpp, ADR-0046) ; les pastilles suivent.
@@ -241,6 +329,7 @@ void cameras_ouvrir() {
         s_pages.popup = u.popup;
         pages_brancher(&s_pages);
     }
+    creer_image();
     if (s_page >= s_n) s_page = 0;
     s_erreur = false;
     animate_popup_open(u.popup);
@@ -255,9 +344,22 @@ void cameras_ouvrir() {
 }
 
 void cameras_tic() {
+    // Un chargement en cours : sa fin d'abord (popup ouvert ou fermé).
+    if (s_en_cours >= 0) {
+        switch (camera_charge_etat()) {
+            case CameraCharge::PRETE:
+                image_prete(s_en_cours);
+                return;
+            case CameraCharge::EN_COURS:
+                attendre(kSondeMs);
+                return;
+            default:
+                image_erreur(s_en_cours);
+                return;
+        }
+    }
     if (!visible()) {
-        // Un téléchargement en cours libérera à sa fin (cameras_image_prete / _erreur).
-        if (s_en_cours < 0) liberer();
+        liberer();
         return;
     }
     const uint32_t maintenant = esphome::millis();
@@ -267,70 +369,8 @@ void cameras_tic() {
         attendre(static_cast<int>(kErreurRedemanderMs));
         return;
     }
-    if (s_en_cours >= 0) {
-        if (maintenant - s_en_cours_ms < kTelechargementPerduMs) return;   // sa fin enchaîne
-        // Jamais fini ni échoué : la connexion est fermée et le tampon rendu (release),
-        // pour qu'une image en retard ne s'affiche pas sur la page d'une autre caméra et
-        // que le téléchargement suivant puisse partir.
-        liberer();
-        s_en_cours = -1;
-        s_erreur = true;
-        s_echecs++;
-        peindre();
-        attendre(delai_apres_echec());
-        return;
-    }
     if (maintenant - s_demande_ms >= kRedemanderMs) demander();
     charger();
-}
-
-void cameras_image_prete() {
-    CamerasUI& u = g_cameras_ui;
-    const int cam = s_en_cours;
-    s_en_cours = -1;
-    if (!visible()) {
-        liberer();
-        return;
-    }
-    if (cam < 0) return;
-    // Le tampon est celui de `cam`, montrée ou non : le widget le suit dès maintenant
-    // (lv_image_set_src relit le descripteur, que le tampon ait bougé ou non, et invalide).
-    s_montree = cam;
-    s_quand = tab5_time_source(nullptr);
-    if (u.image != nullptr && u.source != nullptr) {
-        lv_image_set_src(u.image, u.source->get_lv_image_dsc());
-        lv_image_set_scale(u.image, echelle_image(u.source->get_width(), u.source->get_height()));
-    }
-    if (cam == s_page) {
-        s_erreur = false;
-        s_echecs = 0;
-    }
-    peindre();
-    attendre(cam == s_page ? kRafraichirMs : 0);
-}
-
-void cameras_image_erreur() {
-    CamerasUI& u = g_cameras_ui;
-    const int cam = s_en_cours;
-    s_en_cours = -1;
-    // Échec pendant le décodage : online_image a libéré le tampon (largeur 0).
-    if (u.source == nullptr || u.source->get_width() <= 0) {
-        ui_hidden(u.image, true);
-        s_montree = -1;
-    }
-    if (!visible()) {
-        liberer();
-        return;
-    }
-    if (cam == s_page) {
-        s_erreur = true;
-        s_echecs++;
-    }
-    ESP_LOGW("tab5.cameras", "image de la caméra %d indisponible (%d échec(s) de suite)", cam + 1, s_echecs);
-    // Jeton périmé (401) ou caméra hors ligne : la liste redemandée, 30 s au plus souvent.
-    if (esphome::millis() - s_demande_ms >= kErreurRedemanderMs) demander();
-    peindre();
-    attendre(cam == s_page ? delai_apres_echec() : 0);
 }
 
 void cameras_hote_ha(const std::string& adresse) {
