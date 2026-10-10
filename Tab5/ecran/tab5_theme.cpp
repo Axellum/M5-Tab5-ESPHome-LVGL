@@ -2497,6 +2497,8 @@ void theme_rejouer_ui() {
     froid_rejouer_theme();
     // Télécommandes (ADR-0056) : l'onglet de la page montrée, en couleur d'accent.
     telecommande_rejouer_theme();
+    // Caméras (ADR-0057) : la puce de la pièce montrée, en couleur d'accent.
+    cameras_rejouer_theme();
     alertes_rejouer_theme();
     zones_rejouer_theme();
     assist_rejouer_theme();

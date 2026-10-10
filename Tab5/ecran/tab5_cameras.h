@@ -80,6 +80,9 @@ void cameras_ouvrir();
 // l'image prête, lance la suivante, ou libère tout si le popup est fermé (plus aucun
 // rappel ensuite).
 void cameras_tic();
+// Changement de thème (theme_rejouer_ui, tab5_theme.cpp) : repeint les puces de la colonne,
+// dont la couleur d'accent et celle du texte sont des styles locaux (choix_peindre).
+void cameras_rejouer_theme();
 // Tap d'une puce de la colonne (cameras_puce.yaml) : 0 = « Toutes », n = n-ième pièce.
 void cameras_puce(int n);
 // Tap de la vignette `n` (0 à 3) de la mosaïque : sa caméra en grand.
