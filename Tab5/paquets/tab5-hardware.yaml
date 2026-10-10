@@ -275,11 +275,11 @@ output:
     id: backlight_plafonne
     type: float
     # Chronologie du démarrage (10/10/2026, tab5_demarrage.h) : la première écriture non
-    # nulle est l'allumage réel du rétroéclairage. Marquer seulement (une lecture de
-    # millis()) ; ensuite, un test d'un bit par écriture.
+    # nulle est l'allumage réel du rétroéclairage. Marquer seulement (une lecture
+    # d'horloge) ; ensuite, un test d'un bit par écriture.
     write_action:
       - lambda: |-
-          if (state > 0.0f) demarrage_marquer(EtapeDemarrage::RETRO, millis());
+          if (state > 0.0f) demarrage_marquer(EtapeDemarrage::RETRO);
           id(backlight_pwm).set_level(economie_sortie_retro(state));
 
 light:

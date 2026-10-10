@@ -1,32 +1,33 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_demarrage.h
- * @role Chronologie du démarrage (10/10/2026, demande d'Axel) : l'instant (millis(), en ms
- *       depuis le lancement d'ESP-IDF) de quelques étapes fixes du démarrage, publié vers
- *       Home Assistant par le capteur « Tab5 Chronologie du démarrage »
- *       (tab5-sensors-diagnostics.yaml). Pourquoi : une tablette sur secteur n'a pas de
- *       journal série, et la mesure du 01/10/2026 (docs/performance.md, « Démarrage, phase
- *       par phase ») ne disait ni ce qui occupe les ~5 s de setup() ni quand le
- *       rétroéclairage s'allume.
- *       Étapes, dans l'ordre de kEtapesNoms :
- *         - expandeur : allumage de l'alimentation USB (pi4ioe2 P3, `usb_5v_power`),
- *           composants matériels (priorité 800), AVANT l'attente bloquante de 1 s de
- *           l'on_boot 700 ;
- *         - retro : première écriture non nulle du PWM du rétroéclairage ;
- *         - dessin : premier dessin de LVGL (LV_EVENT_RENDER_START), juste après setup() ;
- *         - image : fin de la première image envoyée à l'écran ;
- *         - wifi : Wi-Fi connecté ; api : premier client de l'API (Home Assistant) ;
- *         - chargeur : premier allumage du chargeur de la batterie (CHG_EN). « - » quand
- *           le démarrage précédent n'a vu aucune batterie (tab5_batterie.h).
+ * @role Chronologie du démarrage (10/10/2026, demande d'Axel) : l'instant de quelques étapes
+ *       fixes du démarrage, publié vers Home Assistant par deux capteurs
+ *       (tab5-sensors-diagnostics.yaml) : « Tab5 Chronologie du démarrage » (jusqu'à la fin
+ *       de setup()) et « Tab5 Chronologie du démarrage (suite) » (après). Pourquoi : une
+ *       tablette sur secteur n'a pas de journal série, et la mesure du 10/10/2026 (7,2 s
+ *       avant l'expandeur, 14 s entre l'expandeur et le rétroéclairage) ne disait pas ce
+ *       qui les occupe.
+ *       Horloge : esp_timer_get_time() / 1000 (demarrage_horloge_ms, défini avec l'état
+ *       vivant dans Tab5/ecran/tab5_demarrage.cpp : le socle reste pur), le compteur matériel
+ *       remis à zéro par ESP-IDF à son initialisation (esp_timer_impl_early_init, étape
+ *       CORE, avant les constructeurs C++) : il ne compte ni la ROM ni le bootloader.
+ *       millis() d'ESPHome compte les ticks de FreeRTOS (CONFIG_FREERTOS_HZ=1000), donc
+ *       depuis le lancement de l'ordonnanceur : « ordo » donne l'écart (millis = valeur -
+ *       ordo). La liste des étapes, où chacune est marquée et comment la lire :
+ *       docs/performance.md, « Chronologie du démarrage ».
  * @architecture_constraint Aucune dépendance ESPHome ni LVGL : ce fichier se compile sur PC
  *       (tools/test_tab5_socle.cpp, g++ en CI). Observer sans retarder : marquer = une
- *       lecture de millis() et une écriture en mémoire ; rien n'est journalisé ni publié
+ *       lecture d'horloge et une écriture en mémoire ; rien n'est journalisé ni publié
  *       pendant setup() (le YAML ne publie qu'à partir de la première image).
- *       La séquence on_boot de tab5-ha-hmi.yaml ([AI-WARNING-CRITICAL], ADR-0005) n'est
- *       PAS instrumentée : « expandeur » et « dessin » l'encadrent.
- * @ai_instruction Une étape nouvelle s'ajoute à la FIN de EtapeDemarrage et de
- *       kEtapesNoms (le texte publié garde l'ordre ; tests/test_chronologie_demarrage.py
- *       relit les deux). Le texte va à Home Assistant : jamais traduit (pas de tr()).
+ *       Dans la séquence on_boot de tab5-ha-hmi.yaml ([AI-WARNING-CRITICAL], ADR-0005),
+ *       autorisation d'Axel du 10/10/2026 : des marques seulement, en actions à part (la
+ *       lambda du delay(1000) reste telle quelle), et des entrées qui ne font que marquer,
+ *       à des priorités libres, pour borner les bandes de priorité de setup().
+ * @ai_instruction Le texte suit l'ordre de EtapeDemarrage : une étape nouvelle se range
+ *       avant ORDO (premier texte, setup()) ou après (texte « suite »), avec son nom au même
+ *       rang de kEtapesNoms (tests/test_chronologie_demarrage.py relit les deux et la
+ *       longueur au pire). Le texte va à Home Assistant : jamais traduit (pas de tr()).
  */
 #pragma once
 #include <cstddef>
@@ -34,32 +35,80 @@
 #include <cstdio>
 
 enum class EtapeDemarrage : uint8_t {
-    EXPANDEUR = 0,
+    // Premier texte : jusqu'à la fin de setup().
+    CTOR = 0,
+    OBJETS,
+    SETUP,
+    BUS,
+    EXPANDEUR,
+    AVANT1S,
+    APRES1S,
+    P600,
+    DONNEES,
+    LVGL,
+    WIFIINIT,
+    RESEAU,
+    ECOUTE,
+    FIN,
+    I18N,
+    ZONES,
+    // Second texte (« suite ») : la boucle.
+    ORDO,
     RETRO,
     DESSIN,
     IMAGE,
+    TARD,
     WIFI,
     API,
+    FIN600,
     CHARGEUR,
     NOMBRE,
 };
 
 constexpr size_t kEtapesDemarrage = static_cast<size_t>(EtapeDemarrage::NOMBRE);
+static_assert(kEtapesDemarrage <= 32, "ChronoDemarrage::vues : un bit par étape");
+// Première étape du second texte.
+constexpr size_t kEtapesSuite = static_cast<size_t>(EtapeDemarrage::ORDO);
 
 // Noms publiés (« étape=ms »), dans l'ordre de EtapeDemarrage.
 constexpr const char* kEtapesNoms[kEtapesDemarrage] = {
+    "ctor",
+    "objets",
+    "setup",
+    "bus",
     "expandeur",
+    "avant1s",
+    "apres1s",
+    "p600",
+    "donnees",
+    "lvgl",
+    "wifiinit",
+    "reseau",
+    "ecoute",
+    "fin",
+    "i18n",
+    "zones",
+    "ordo",
     "retro",
     "dessin",
     "image",
+    "tard",
     "wifi",
     "api",
+    "fin600",
     "chargeur",
 };
 
-// Texte publié : au plus kEtapesDemarrage × « nom=4294967295; », moins de 255 caractères
-// (limite d'un état texte dans Home Assistant).
-constexpr size_t kChronoTexteMax = 160;
+// Un texte publié : moins de 255 caractères (limite d'un état texte de Home Assistant).
+// Au pire : premier texte avec chaque étape à 6 chiffres (setup() fini avant 1 000 s),
+// second texte avec chaque étape à 10 chiffres (tools/test_tab5_socle.cpp). Au-delà, le
+// texte est coupé, jamais débordé.
+constexpr size_t kChronoTexteMax = 256;
+
+enum class PartieChrono : uint8_t {
+    SETUP = 0,  // CTOR … ZONES
+    SUITE = 1,  // ORDO … CHARGEUR
+};
 
 struct ChronoDemarrage {
     uint32_t ms[kEtapesDemarrage] = {};
@@ -81,14 +130,16 @@ inline bool chrono_marquer(ChronoDemarrage& c, EtapeDemarrage e, uint32_t mainte
     return true;
 }
 
-// « expandeur=1490; retro=1532; dessin=-; … » : toutes les étapes, dans l'ordre ; « - »
+// « ctor=312; objets=1480; setup=-; … » : les étapes d'une partie, dans l'ordre ; « - »
 // pour une étape pas encore vue. Renvoie la longueur écrite (coupée à n - 1).
-inline size_t chrono_texte(const ChronoDemarrage& c, char* buf, size_t n) {
+inline size_t chrono_texte(const ChronoDemarrage& c, PartieChrono p, char* buf, size_t n) {
     if (buf == nullptr || n == 0) return 0;
     buf[0] = '\0';
+    const size_t debut = p == PartieChrono::SETUP ? 0 : kEtapesSuite;
+    const size_t fin = p == PartieChrono::SETUP ? kEtapesSuite : kEtapesDemarrage;
     size_t pos = 0;
-    for (size_t i = 0; i < kEtapesDemarrage && pos + 1 < n; i++) {
-        const char* sep = i == 0 ? "" : "; ";
+    for (size_t i = debut; i < fin && pos + 1 < n; i++) {
+        const char* sep = i == debut ? "" : "; ";
         int k;
         if (chrono_vue(c, static_cast<EtapeDemarrage>(i))) {
             k = std::snprintf(buf + pos, n - pos, "%s%s=%lu", sep, kEtapesNoms[i],
@@ -103,14 +154,27 @@ inline size_t chrono_texte(const ChronoDemarrage& c, char* buf, size_t n) {
     return pos;
 }
 
+// « ordo » : l'instant `horloge_ms` où millis() valait `millis_ms`, ramené à millis() = 0
+// (lancement de l'ordonnanceur). 0 si l'horloge est en retard (ne doit pas arriver).
+inline uint32_t chrono_ordo(uint32_t horloge_ms, uint32_t millis_ms) {
+    return horloge_ms >= millis_ms ? horloge_ms - millis_ms : 0;
+}
+
 // ─── L'état de la tablette (un seul démarrage à la fois) et les appels du YAML ───
 inline ChronoDemarrage& chrono_demarrage() {
     static ChronoDemarrage c;
     return c;
 }
 
-inline bool demarrage_marquer(EtapeDemarrage e, uint32_t maintenant_ms) {
-    return chrono_marquer(chrono_demarrage(), e, maintenant_ms);
+// Une valeur donnée ; les étapes du YAML passent par demarrage_marquer().
+inline bool demarrage_noter(EtapeDemarrage e, uint32_t ms) { return chrono_marquer(chrono_demarrage(), e, ms); }
+
+inline size_t demarrage_texte(PartieChrono p, char* buf, size_t n) {
+    return chrono_texte(chrono_demarrage(), p, buf, n);
 }
 
-inline size_t demarrage_texte(char* buf, size_t n) { return chrono_texte(chrono_demarrage(), buf, n); }
+// Définis dans Tab5/ecran/tab5_demarrage.cpp (l'horloge d'ESP-IDF, et « ctor », marqué
+// par un constructeur global de ce fichier) :
+uint32_t demarrage_horloge_ms();                     // ms depuis l'initialisation d'esp_timer
+bool demarrage_marquer(EtapeDemarrage e);            // l'étape, à demarrage_horloge_ms()
+bool demarrage_noter_ordo(uint32_t millis_maintenant);  // ORDO, avec millis() lu par l'appelant

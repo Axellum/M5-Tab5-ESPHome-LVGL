@@ -122,6 +122,7 @@ esphome:
     - Tab5/socle/tab5_batterie.h
     - Tab5/ecran/tab5_batterie.cpp
     - Tab5/socle/tab5_demarrage.h
+    - Tab5/ecran/tab5_demarrage.cpp
     - Tab5/ecran/tab5_alertes.cpp
     - Tab5/ecran/tab5_maison.cpp
     - Tab5/ecran/tab5_piece_climat.cpp

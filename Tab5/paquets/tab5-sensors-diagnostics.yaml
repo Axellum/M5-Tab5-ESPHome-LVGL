@@ -33,11 +33,13 @@
 #           « Rapide », chargeur allumé seulement.
 # @wifi « Tab5 Wi-Fi éco » (09/10/2026, ADR-0045) : économie légère du Wi-Fi jamais, sur
 #       batterie ou toujours, appliquée à chaud (script tab5_wifi_eco_appliquer).
-# @demarrage « Tab5 Chronologie du démarrage » (10/10/2026, tab5_demarrage.h) : instant
-#       de sept étapes du démarrage, marquées par usb_5v_power, le rétroéclairage
-#       (tab5-hardware.yaml), on_draw_start / on_draw_end, wifi on_connect, status_ha et
-#       le premier allumage du chargeur (interval de 1 s).
-#       Sans toucher à l'on_boot de tab5-ha-hmi.yaml.
+# @demarrage « Tab5 Chronologie du démarrage » et « … (suite) » (10/10/2026,
+#       tab5_demarrage.h) : instant des étapes du démarrage, jusqu'à la fin de setup()
+#       puis après. Marquées ici par usb_5v_power, on_draw_start / on_draw_end, wifi
+#       on_connect, status_ha et le premier allumage du chargeur (interval de 1 s) ;
+#       ailleurs par le rétroéclairage (tab5-hardware.yaml), le premier style LVGL
+#       (tab5-styles.yaml) et l'on_boot de tab5-ha-hmi.yaml (marques seules, accord
+#       d'Axel du 10/10/2026). Liste et lecture : docs/performance.md.
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
 #                         C++ depuis tab5_custom.cpp (ex: update_console_diagnostics_ui(...) ).
@@ -75,7 +77,7 @@ wifi:
     ssid: "Tab5 Fallback AP"
   # Chronologie du démarrage (10/10/2026, tab5_demarrage.h) : première connexion.
   on_connect:
-    - lambda: 'if (demarrage_marquer(EtapeDemarrage::WIFI, millis())) id(tab5_chronologie_publier).execute();'
+    - lambda: 'if (demarrage_marquer(EtapeDemarrage::WIFI)) id(tab5_chronologie_publier).execute();'
 
 # Improv par le port USB (lot 6b) : le flasheur web (lot 6c) ou ESPHome Web règlent le
 # Wi-Fi juste après le flash. Partage le port du logger (USB_SERIAL_JTAG, 115 200 bauds,
@@ -106,9 +108,9 @@ switch:
     restore_mode: ALWAYS_ON
     # Chronologie du démarrage (10/10/2026, tab5_demarrage.h) : allumée par son propre
     # setup (priorité 800, composants matériels), avant l'attente bloquante de 1 s de
-    # l'on_boot 700. Marquer seulement : une lecture de millis(), rien de publié ici.
+    # l'on_boot 700. Marquer seulement : une lecture d'horloge, rien de publié ici.
     on_turn_on:
-      - lambda: 'demarrage_marquer(EtapeDemarrage::EXPANDEUR, millis());'
+      - lambda: 'demarrage_marquer(EtapeDemarrage::EXPANDEUR);'
 
   # Charge de la batterie d'origine (discussion #278, 03/10/2026) : sans CHG_EN (P7) à 1,
   # rien ne lance le chargeur. M5Unified (Power_Class.inl, OUT_SET de 0x44) et la config
@@ -235,7 +237,7 @@ binary_sensor:
       - lambda: 'set_icon_active_ui(id(icon_ha), x, UIColor.INFO, UIColor.INACTIVE);'
       # Chronologie du démarrage (tab5_demarrage.h) : premier client de l'API.
       - lambda: |-
-          if (x && demarrage_marquer(EtapeDemarrage::API, millis())) id(tab5_chronologie_publier).execute();
+          if (x && demarrage_marquer(EtapeDemarrage::API)) id(tab5_chronologie_publier).execute();
       # Pré-fetch calendrier au reconnect HA (rising edge) : recharge le mois
       # courant + M+1 pour que le popup s'ouvre instantanément même après une coupure.
       - if:
@@ -291,17 +293,24 @@ text_sensor:
       if (++essais >= 3) return std::string("inconnue");
       return {};
 
-  # Chronologie du démarrage (10/10/2026, demande d'Axel ; Tab5/socle/tab5_demarrage.h) :
-  # « expandeur=1490; retro=1532; dessin=7810; image=8650; wifi=10550; api=11950;
-  # chargeur=- » (« - » : chargeur pas allumé, aucune batterie au démarrage précédent), en ms
-  # depuis le lancement d'ESP-IDF (millis() ; le chargeur de démarrage, ~0,8 s le
-  # 01/10/2026, vient avant). « - » : étape pas encore vue. Publiée par le script
-  # tab5_chronologie_publier à la première image, au Wi-Fi et à l'API (jamais pendant
-  # setup()) ; Home Assistant lit le dernier état à son abonnement. Lecture :
-  # docs/performance.md, « Chronologie du démarrage ».
+  # Chronologie du démarrage (10/10/2026, demande d'Axel ; Tab5/socle/tab5_demarrage.h),
+  # en deux textes de moins de 255 caractères (limite d'un état de Home Assistant) :
+  # « ctor=…; objets=…; setup=…; … zones=… » jusqu'à la fin de setup(), puis
+  # « ordo=…; retro=…; dessin=…; … chargeur=… » ; en ms depuis l'initialisation d'esp_timer
+  # par ESP-IDF (ni la ROM ni le bootloader, ~0,8 s le 01/10/2026). « - » : étape pas
+  # encore vue (chargeur : pas allumé, aucune batterie au démarrage précédent). Publiés
+  # par le script tab5_chronologie_publier à la première image, puis à chaque étape
+  # d'après setup() (jamais pendant setup()) ; Home Assistant lit le dernier état à son
+  # abonnement. Lecture : docs/performance.md, « Chronologie du démarrage ».
   - platform: template
     id: sys_chronologie
     name: "Tab5 Chronologie du démarrage"
+    icon: "mdi:timer-outline"
+    entity_category: diagnostic
+    update_interval: never
+  - platform: template
+    id: sys_chronologie_suite
+    name: "Tab5 Chronologie du démarrage (suite)"
     icon: "mdi:timer-outline"
     entity_category: diagnostic
     update_interval: never
@@ -702,7 +711,7 @@ interval:
           if (a.allumer != id(charge_enable).state) {
             if (a.allumer) {
               id(charge_enable).turn_on();
-              if (demarrage_marquer(EtapeDemarrage::CHARGEUR, millis())) id(tab5_chronologie_publier).execute();
+              if (demarrage_marquer(EtapeDemarrage::CHARGEUR)) id(tab5_chronologie_publier).execute();
             } else {
               id(charge_enable).turn_off();
             }
@@ -779,16 +788,20 @@ interval:
 # tab5_journal.cpp) : jamais pour un démarrage normal. Côté HA, la garde (e) de
 # packages/tab5_health.yaml en fait une notification. Journal vidé une fois HA joint.
 script:
-  # Chronologie du démarrage (tab5_demarrage.h) : le texte de toutes les étapes, publié à
-  # chaque étape nouvelle après setup() (trois ou quatre fois par démarrage), et une
-  # ligne de journal, la seule.
+  # Chronologie du démarrage (tab5_demarrage.h) : les deux textes, publiés à chaque étape
+  # nouvelle après setup() (image, fin de l'on_boot -100, Wi-Fi, API, fin de l'on_boot
+  # 600, chargeur : six fois au plus par démarrage), et deux lignes de journal, les seules.
+  # Le premier texte ne change plus après setup() : HA ignore l'état republié identique.
   - id: tab5_chronologie_publier
     then:
       - lambda: |-
           char buf[kChronoTexteMax];
-          demarrage_texte(buf, sizeof(buf));
+          demarrage_texte(PartieChrono::SETUP, buf, sizeof(buf));
           ESP_LOGI("tab5.demarrage", "Chronologie : %s", buf);
           id(sys_chronologie).publish_state(buf);
+          demarrage_texte(PartieChrono::SUITE, buf, sizeof(buf));
+          ESP_LOGI("tab5.demarrage", "Chronologie (suite) : %s", buf);
+          id(sys_chronologie_suite).publish_state(buf);
 
   # Wi-Fi éco (09/10/2026, ADR-0045) : décision pure (wifi_eco_voulu, tab5_economie.h),
   # appliquée par wifi_eco_appliquer() (tab5_console.cpp), qui ne parle au C6 que quand
@@ -860,7 +873,7 @@ lvgl:
   on_draw_start:
     - lambda: |-
         id(draw_t0_us) = micros();
-        demarrage_marquer(EtapeDemarrage::DESSIN, millis());
+        demarrage_marquer(EtapeDemarrage::DESSIN);
   # LV_EVENT_REFR_READY part à CHAQUE passage du timer de rafraîchissement, même
   # sans rien à redessiner (lv_refr.c : `goto refr_finish`) : sans l'appariement
   # avec un début de dessin, on mesurait le temps écoulé depuis la dernière image
@@ -871,7 +884,7 @@ lvgl:
         const uint32_t d = micros() - id(draw_t0_us);
         id(draw_t0_us) = 0;
         if (d > id(draw_max_us)) id(draw_max_us) = d;
-        if (demarrage_marquer(EtapeDemarrage::IMAGE, millis())) id(tab5_chronologie_publier).execute();
+        if (demarrage_marquer(EtapeDemarrage::IMAGE)) id(tab5_chronologie_publier).execute();
 
 globals:
   - id: draw_t0_us
