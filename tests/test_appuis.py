@@ -57,6 +57,8 @@ OPTIONS = {
     "CAMERAS": "Caméras",
     # Capteurs suivis (ADR-0054, 10/10/2026) : à la fin aussi.
     "SUIVI": "Suivi",
+    # Froid (ADR-0055, 10/10/2026) : après lui.
+    "FROID": "Froid",
 }
 # Code du blueprint → valeur d'Ecran.
 CODES = {
@@ -76,8 +78,9 @@ ECRANS_APRES = {"meteo": "METEO"}
 # Puis le contenu suivant de la zone à gauche de l'horloge (10/10/2026, ADR-0051), une action.
 ACTIONS_APRES = ["zone_gauche_suivante"]
 # Puis le lecteur de musique (10/10/2026, ADR-0050) et le popup Caméras (ADR-0049), deux
-# écrans, à la fin aussi ; puis les capteurs suivis (10/10/2026, ADR-0054), un écran.
-ECRANS_FIN = {"musique": "MUSIQUE", "cameras": "CAMERAS", "suivi": "SUIVI"}
+# écrans, à la fin aussi ; puis les capteurs suivis (10/10/2026, ADR-0054) et le froid
+# (10/10/2026, ADR-0055), un écran chacun.
+ECRANS_FIN = {"musique": "MUSIQUE", "cameras": "CAMERAS", "suivi": "SUIVI", "froid": "FROID"}
 # Tous les codes, dans l'ordre de kCodesGestes, avec « auto » en tête : le blueprint.
 TOUS = ["auto"] + list(CODES) + ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES + list(ECRANS_FIN)
 # Bouton (ordre de BoutonHaut) → (widget, mini icône).
@@ -94,6 +97,7 @@ EN_TETES = {
     "METEO": "meteo_popup.yaml", "MUSIQUE": "lecteur_popup.yaml",
     "CAMERAS": "cameras_popup.yaml",
     "SUIVI": "suivi_popup.yaml",
+    "FROID": "froid_popup.yaml",
 }
 
 

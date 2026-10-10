@@ -111,6 +111,10 @@ NON_MONTREES = {
     # de la PR, puis citées.
     "suivi": "popup Suivi, décrit dans tracking.md ; image à tirer du rendu",
     "suivi-vide": "suivi montre la même fenêtre ; l'attente de Home Assistant est décrite dans tracking.md",
+    # Popup Froid (ADR-0055, 10/10/2026), décrit dans fridge.md : images à tirer du rendu
+    # de la PR, puis citées.
+    "froid": "popup Froid, décrit dans fridge.md ; image à tirer du rendu",
+    "froid-vide": "froid montre la même fenêtre ; l'attente de Home Assistant est décrite dans fridge.md",
     # Réglages en quatre pages (08/10/2026) : images à tirer du rendu de la PR, puis citées.
     "reglages-apparence": "page Apparence des Réglages, décrite dans settings.md ; image à tirer du rendu",
     "reglages-batterie-en-charge": "page Batterie des Réglages, décrite dans settings.md ; image à tirer du rendu",
