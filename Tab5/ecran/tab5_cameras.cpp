@@ -44,7 +44,8 @@
  * @architecture_constraint Push-only et events-only (ADR-0001, ADR-0025) : la tablette ne
  *       nomme aucune entité ; elle dit seulement qu'elle veut la liste. Couleurs : styles
  *       de rôle du YAML (cameras_popup.yaml, cameras_puce.yaml) et choix_peindre() (accent
- *       de la palette active) ; ce fichier n'écrit que du texte, des positions, des
+ *       de la palette active, repeint au changement de thème par cameras_rejouer_theme()) ;
+ *       ce fichier n'écrit que du texte, des positions, des
  *       affichages, une opacité d'image et la source de l'image. Le widget image est créé
  *       ici (dans cameras_cadre) : l'image: d'ESPHome exige une source fixe.
  * @ai_warning [AI-WARNING] Les widgets image (le grand, les quatre vignettes) montrent
@@ -1056,6 +1057,12 @@ void cameras_ouvrir() {
     demander();
     const bool recente = s_recue && s_n > 0 && maintenant_ms() - s_recue_ms < kRedemanderMs;
     attendre(recente ? 0 : static_cast<int>(kErreurRedemanderMs));
+}
+
+// choix_peindre() écrit la couleur d'accent et celle du texte de chaque puce en style
+// local : elles ne suivent pas un changement de thème sans être repeintes (popup ouvert).
+void cameras_rejouer_theme() {
+    if (g_cameras_ui.popup != nullptr) peindre_puces();
 }
 
 void cameras_puce(int n) {

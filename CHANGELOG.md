@@ -31,6 +31,10 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
 
+### 2026-10-10 — Popup Caméras : la colonne des pièces suit le changement de thème
+
+- **Correctif** des lots 1 et 2 (ADR-0057) : popup ouvert, un changement de thème laissait la puce de la pièce montrée et le texte des puces dans les couleurs de l'ancien thème (`choix_peindre()` les écrit en style local). `cameras_rejouer_theme()`, appelée par `theme_rejouer_ui()`, les repeint. Vu par le rendu « clair » (bascule à chaud ≠ démarrage à froid sur `cameras` et `cameras-piece-hors-ligne`). **Non testé sur la tablette.**
+
 ### 2026-10-10 — Serveur IA local : capteurs Ollama, llama.cpp et LM Studio dans Home Assistant, sans firmware
 
 - **Demande d'Axel** (lot 0 de l'audit « Tab5 et LLM locaux » du 10/10) : superviser un serveur d'inférence local depuis Home Assistant et mettre ses chiffres dans le popup Suivi existant (ADR-0054), sans toucher au firmware.
