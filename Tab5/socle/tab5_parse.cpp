@@ -842,6 +842,18 @@ long long variation_arrondie(const SuiviLu& s) {
     if (s.genre == SuiviVariation::AUCUNE || !std::isfinite(s.variation)) return 0;
     return std::llround(static_cast<double>(s.variation) * puissance_dix(decimales_variation(s)));
 }
+
+// Un point de la courbe : un à trois chiffres, de 0 à 100. Tout le reste (vide, « 50.5 »,
+// « -1 », « x ») : aucune mesure. Pas champ_entier(), qui accepte « 50.5 » (lu 50).
+int8_t suivi_point(const Champ& c) {
+    if (c.p == nullptr || c.n == 0 || c.n > 3) return kSuiviPointAucun;
+    int v = 0;
+    for (size_t i = 0; i < c.n; i++) {
+        if (!std::isdigit(static_cast<unsigned char>(c.p[i]))) return kSuiviPointAucun;
+        v = v * 10 + (c.p[i] - '0');
+    }
+    return v <= 100 ? static_cast<int8_t>(v) : kSuiviPointAucun;
+}
 }  // namespace
 
 int suivi_decimales(const Champ& c) {
@@ -888,9 +900,7 @@ int suivis_lire(const Champ& payload, SuiviLu out[kSuivisMax]) {
         const char* q = f[5].p;
         const char* qf = f[5].p + f[5].n;
         while (q < qf && s.n < kSuiviPointsMax) {
-            const Champ c = champ_suivant(q, qf, ',');
-            const uint32_t x = champ_entier(c, 100, 0xFFFFFFFFu);
-            s.points[s.n++] = x <= 100 ? static_cast<int8_t>(x) : kSuiviPointAucun;
+            s.points[s.n++] = suivi_point(champ_suivant(q, qf, ','));
         }
         n++;
     }
