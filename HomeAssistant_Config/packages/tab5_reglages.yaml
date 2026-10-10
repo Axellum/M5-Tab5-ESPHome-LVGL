@@ -32,13 +32,18 @@
 #       « ○ sensor.x », 6 au plus, mémoire input_text.tab5_choix_suivis lue par
 #       packages/tab5_suivi.yaml) ; ne propose que les capteurs à state_class measurement
 #       (ceux qui ont des statistiques, donc une courbe).
+#       « Tab5 · réfrigérateurs » et « Tab5 · congélateurs » (ADR-0055) aussi (mémoires
+#       input_text.tab5_choix_frigos / tab5_choix_congelateurs, lues par
+#       packages/tab5_froid.yaml) : capteurs de température à state_class measurement,
+#       quatre appareils au plus EN TOUT (les cartes du popup Froid), un capteur choisi
+#       dans une liste n'est pas proposé dans l'autre.
 #       Choix par défaut (liste jamais réglée) seulement quand il n'y a pas
 #       d'ambiguïté : le seul agenda dont le nom dit « anniversaires » (ou
 #       birthday…), le seul agenda de jours fériés (intégration Jours fériés, ou nom
 #       qui le dit), le seul téléphone de l'application mobile, le seul agenda dont
 #       le nom dit « vacances scolaires » (ou school holidays…). Agenda de travail,
 #       agenda des rendez-vous, capteur de présence, pipeline de discussion, lecteurs
-#       de musique et capteurs suivis : jamais devinés.
+#       de musique, capteurs suivis, réfrigérateurs et congélateurs : jamais devinés.
 # @i18n Noms des listes en deux langues, « français · english » (29/09/2026) : ce
 #       sont eux que cherche un utilisateur non francophone. Les ÉTATS (« Aucun »,
 #       entity_id, noms de pipeline) ne se traduisent jamais : les packages les lisent.
@@ -96,6 +101,16 @@ input_text:
     name: "Tab5 · mémoire · capteurs suivis"
     icon: mdi:content-save-outline
     max: 255
+  # Capteurs de température des réfrigérateurs et des congélateurs (popup Froid,
+  # ADR-0055) : entity_id séparés par des virgules, quatre en tout avec l'autre liste.
+  tab5_choix_frigos:
+    name: "Tab5 · mémoire · réfrigérateurs"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_congelateurs:
+    name: "Tab5 · mémoire · congélateurs"
+    icon: mdi:content-save-outline
+    max: 255
   # Réglé à la main (pas une mémoire de liste). Mots qui font d'un événement de
   # l'agenda de travail un événement de TRAVAIL (horaires du planning, heure du
   # réveil) : séparés par des virgules, sans casse, cherchés dans le titre. Vide =
@@ -129,6 +144,8 @@ template:
           - input_text.tab5_choix_presence
           - input_text.tab5_choix_lecteurs
           - input_text.tab5_choix_suivis
+          - input_text.tab5_choix_frigos
+          - input_text.tab5_choix_congelateurs
     # Audit du 07/10/2026, HA-18 : pas pour une mise à jour du registre qui ne touche que
     # capabilities / supported_features / options / suggested_object_id (419 des 485
     # entity_registry_updated chez l'auteur du 01 au 08/10/2026), que la liste ne lit
@@ -176,6 +193,23 @@ template:
         {{ states('input_text.tab5_choix_suivis').split(',') | map('trim')
            | select('match', 'sensor[.]') | unique | list }}
       suivis_resume: "{{ suivis_choisis | count }} choisi(s) · {{ suivis_choisis | count }} chosen"
+      # Réfrigérateurs et congélateurs (ADR-0055) : capteurs de température à statistiques
+      # (la courbe des 24 h et les moyennes de 5 min de packages/tab5_froid.yaml). Un
+      # capteur choisi dans une liste n'est pas proposé dans l'autre.
+      froid_ha: >-
+        {{ states.sensor | selectattr('attributes.device_class', 'defined')
+           | selectattr('attributes.device_class', 'eq', 'temperature')
+           | selectattr('attributes.state_class', 'defined')
+           | selectattr('attributes.state_class', 'eq', 'measurement')
+           | map(attribute='entity_id') | list }}
+      frigos_choisis: >-
+        {{ states('input_text.tab5_choix_frigos').split(',') | map('trim')
+           | select('match', 'sensor[.]') | unique | list }}
+      congelateurs_choisis: >-
+        {{ states('input_text.tab5_choix_congelateurs').split(',') | map('trim')
+           | select('match', 'sensor[.]') | unique | reject('in', frigos_choisis) | list }}
+      frigos_resume: "{{ frigos_choisis | count }} choisi(s) · {{ frigos_choisis | count }} chosen"
+      congelateurs_resume: "{{ congelateurs_choisis | count }} choisi(s) · {{ congelateurs_choisis | count }} chosen"
     select:
       - name: "Tab5 · agenda de travail · work calendar"
         unique_id: tab5_agenda_de_travail
@@ -357,6 +391,71 @@ template:
           - action: input_text.set_value
             target:
               entity_id: input_text.tab5_choix_suivis
+            data:
+              value: "{{ liste }}"
+      # Même principe (ADR-0055) : les capteurs de température des réfrigérateurs, puis
+      # ceux des congélateurs ; quatre appareils au plus EN TOUT (les cartes du popup
+      # Froid). Un capteur de l'autre liste n'est ni proposé ni ajouté.
+      - name: "Tab5 · réfrigérateurs · fridges"
+        unique_id: tab5_refrigerateurs
+        default_entity_id: select.tab5_refrigerateurs
+        icon: mdi:fridge-outline
+        options: >-
+          {{ [frigos_resume] + (frigos_choisis | map('regex_replace', '^', '✓ ') | list)
+             + (froid_ha | reject('in', frigos_choisis + congelateurs_choisis)
+                | map('regex_replace', '^', '○ ') | list) }}
+        state: "{{ frigos_resume }}"
+        select_option:
+          - variables:
+              entite: "{{ option[2:] | trim }}"
+              autres: >-
+                {{ states('input_text.tab5_choix_congelateurs').split(',') | map('trim')
+                   | select('match', 'sensor[.]') | unique | list }}
+              liste: >-
+                {%- set choisis = states('input_text.tab5_choix_frigos').split(',') | map('trim')
+                     | select('match', 'sensor[.]') | unique | list -%}
+                {%- if option.startswith('✓ ') -%}
+                  {{ choisis | reject('eq', entite) | join(',') }}
+                {%- elif option.startswith('○ ') and entite.startswith('sensor.') and entite not in choisis
+                         and entite not in autres and (choisis + autres) | unique | list | count < 4 -%}
+                  {{ (choisis + [entite]) | join(',') }}
+                {%- else -%}
+                  {{ choisis | join(',') }}
+                {%- endif -%}
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_frigos
+            data:
+              value: "{{ liste }}"
+      - name: "Tab5 · congélateurs · freezers"
+        unique_id: tab5_congelateurs
+        default_entity_id: select.tab5_congelateurs
+        icon: mdi:snowflake-thermometer
+        options: >-
+          {{ [congelateurs_resume] + (congelateurs_choisis | map('regex_replace', '^', '✓ ') | list)
+             + (froid_ha | reject('in', frigos_choisis + congelateurs_choisis)
+                | map('regex_replace', '^', '○ ') | list) }}
+        state: "{{ congelateurs_resume }}"
+        select_option:
+          - variables:
+              entite: "{{ option[2:] | trim }}"
+              autres: >-
+                {{ states('input_text.tab5_choix_frigos').split(',') | map('trim')
+                   | select('match', 'sensor[.]') | unique | list }}
+              liste: >-
+                {%- set choisis = states('input_text.tab5_choix_congelateurs').split(',') | map('trim')
+                     | select('match', 'sensor[.]') | unique | list -%}
+                {%- if option.startswith('✓ ') -%}
+                  {{ choisis | reject('eq', entite) | join(',') }}
+                {%- elif option.startswith('○ ') and entite.startswith('sensor.') and entite not in choisis
+                         and entite not in autres and (choisis + autres) | unique | list | count < 4 -%}
+                  {{ (choisis + [entite]) | join(',') }}
+                {%- else -%}
+                  {{ choisis | join(',') }}
+                {%- endif -%}
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_congelateurs
             data:
               value: "{{ liste }}"
 

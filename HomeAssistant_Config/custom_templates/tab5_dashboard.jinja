@@ -872,7 +872,9 @@ views:
                                ('input_text.tab5_tv_adresse', 'Adresse de la TV', 'TV address', 'mdi:ip-network'),
                                ('select.tab5_volet_a_course_simulee', 'Volet à course simulée', 'Shutter with simulated travel', 'mdi:window-shutter'),
                                ('select.tab5_lecteurs_de_musique', 'Lecteurs de musique (popup Musique)', 'Music players (Music popup)', 'mdi:music-box-multiple'),
-                               ('select.tab5_capteurs_suivis', 'Capteurs suivis (popup Suivi)', 'Tracked sensors (Tracking popup)', 'mdi:chart-line')] %}
+                               ('select.tab5_capteurs_suivis', 'Capteurs suivis (popup Suivi)', 'Tracked sensors (Tracking popup)', 'mdi:chart-line'),
+                               ('select.tab5_refrigerateurs', 'Réfrigérateurs (popup Froid)', 'Fridges (Cold popup)', 'mdi:fridge-outline'),
+                               ('select.tab5_congelateurs', 'Congélateurs (popup Froid)', 'Freezers (Cold popup)', 'mdi:snowflake-thermometer')] %}
 {%- if e in present %}
           - type: tile
             entity: {{ e }}
@@ -907,7 +909,8 @@ views:
                                ('input_select.tab5_alertes_problemes', 'Capteurs « problème »', 'Problem sensors', 'mdi:alert-circle-outline'),
                                ('input_select.tab5_alertes_indisponibles', 'Entités indisponibles', 'Unavailable entities', 'mdi:help-network-outline'),
                                ('input_select.tab5_alertes_etiquette', 'Étiquette « Tab5 · alerte »', '« Tab5 · alerte » label', 'mdi:label-outline'),
-                               ('input_select.tab5_alertes_piles', 'Piles sous', 'Batteries below', 'mdi:battery-alert-variant-outline')] %}
+                               ('input_select.tab5_alertes_piles', 'Piles sous', 'Batteries below', 'mdi:battery-alert-variant-outline'),
+                               ('input_select.tab5_alertes_froid', 'Réfrigérateurs et congélateurs', 'Fridges and freezers', 'mdi:fridge-alert-outline')] %}
 {%- if e in present %}
           - type: tile
             entity: {{ e }}
@@ -2306,6 +2309,18 @@ views:
     'es': 'Sensores seguidos (ventana Seguimiento)',
     'it': 'Sensori monitorati (popup Monitoraggio)',
     'tr': 'Takip edilen sensörler (Takip penceresi)'},
+  'Réfrigérateurs (popup Froid)': {
+    'de': 'Kühlschränke (Popup Kälte)',
+    'nl': 'Koelkasten (pop-up Koude)',
+    'es': 'Neveras (ventana Frío)',
+    'it': 'Frigoriferi (popup Freddo)',
+    'tr': 'Buzdolapları (Soğuk penceresi)'},
+  'Congélateurs (popup Froid)': {
+    'de': 'Gefriergeräte (Popup Kälte)',
+    'nl': 'Vriezers (pop-up Koude)',
+    'es': 'Congeladores (ventana Frío)',
+    'it': 'Congelatori (popup Freddo)',
+    'tr': 'Dondurucular (Soğuk penceresi)'},
   'Volet à course simulée': {
     'de': 'Rollladen mit simulierter Laufzeit',
     'nl': 'Rolluik met gesimuleerde looptijd',
@@ -3116,6 +3131,12 @@ views:
     'es': 'Etiqueta «Tab5 · alerte»',
     'it': 'Etichetta «Tab5 · alerte»',
     'tr': '“Tab5 · alerte” etiketi'},
+  'Réfrigérateurs et congélateurs': {
+    'de': 'Kühl- und Gefriergeräte',
+    'nl': 'Koelkasten en vriezers',
+    'es': 'Neveras y congeladores',
+    'it': 'Frigoriferi e congelatori',
+    'tr': 'Buzdolapları ve dondurucular'},
   'Piles sous': {
     'de': 'Batterien unter',
     'nl': 'Batterijen onder',

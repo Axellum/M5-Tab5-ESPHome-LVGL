@@ -1,0 +1,380 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_froid.yaml
+# @role Réfrigérateurs et congélateurs de la tablette (ADR-0055, 10/10/2026) : contrôle
+#       des températures par rapport aux normes, détection des montées (porte mal
+#       fermée), suivi sur 24 h, incidents. Le popup « Froid » de la tablette (une carte
+#       par appareil), ses alertes de la carte centrale (source « froid » de
+#       custom_templates/tab5_alertes.jinja) et l'icône qui clignote dans le coin de
+#       l'horloge au niveau grave.
+#         - Les appareils : listes « Tab5 · réfrigérateurs · fridges » et « Tab5 ·
+#           congélateurs · freezers » (packages/tab5_reglages.yaml, plusieurs choix,
+#           quatre appareils au plus en tout, jamais devinés) ; leurs mémoires
+#           input_text.tab5_choix_frigos et input_text.tab5_choix_congelateurs. Seuls les
+#           capteurs de température à state_class measurement y sont (statistiques).
+#         - Le calcul : script.tab5_froid_calculer, qui relit l'état précédent
+#           (attributs de sensor.tab5_froid), le met à jour par l'événement
+#           tab5_froid_bilan, puis pousse le bilan vers la tablette si elle est connectée.
+#         - Quand : un capteur change (une minute au plus entre deux calculs), toutes les
+#           cinq minutes (les durées avancent sans changement), quand une liste change, à
+#           la connexion de la tablette, à « MAJ Écran » et au démarrage de HA.
+# @rules SEUILS : à un seul endroit, la variable `seuils` du script (en °C ; un capteur
+#       en °F est converti). Niveau 0 conforme, 1 attention (bandeau Orange), 2 grave
+#       (bandeau Rouge, icône de l'horloge). Dans l'ordre, la première règle vraie gagne :
+#         1. pas de mesure depuis `duree_muet` (30 min) : 1, « indispo » (capteur muet) ;
+#            moins longtemps : l'état d'avant est gardé ;
+#         2. valeur ≥ `critique`, ou > `grave` depuis `duree_grave` (30 min) : 2, « chaud »
+#            (coup de chaud) ;
+#         3. montée ≥ `porte` entre le minimum des 30 dernières minutes (statistiques de
+#            5 min) et la valeur actuelle : 1, « porte » (porte ouverte ?) ; encore là
+#            après `duree_porte` (20 min) et sans redescendre (pas plus de 0,5 °C sous le
+#            plus haut de l'épisode) : 2 (porte mal fermée) ;
+#         4. moyenne des 15 dernières minutes > `attention` : 1, « chaud » ;
+#         5. moyenne des 15 dernières minutes < `gel` (réfrigérateur) : 1, « froid ».
+#       Un incident commence au premier niveau non nul et se termine au retour à 0 : le
+#       dernier terminé (cause la plus grave, début, durée, extrême) suit l'appareil.
+# @payload_contract tab5_maj_froid (Tab5/paquets/tab5-api-logic.yaml, tab5_parse.h
+#       section 12) : payload = un enregistrement par appareil, séparés par « ; » :
+#       « nom|type|valeur|niveau|cause|depuis|min|max|bas|haut|points|icause|idebut|iduree|imax ».
+#         nom = friendly_name (40 caractères ; vide : l'écran écrit « Réfrigérateur » ou
+#           « Congélateur », jamais un entity_id) ; type f ou c ; valeur, min, max, bas,
+#           haut, imax en °C à une décimale (vides : inconnus ; bas vide = pas de limite
+#           basse) ; niveau 0-2 ; cause ok, chaud, froid, porte, indispo ; depuis et
+#           idebut en secondes epoch (0 : sans) ; points = 24 moyennes horaires puis la
+#           valeur actuelle, séparées par « , » (vide : heure sans ligne) ; iduree en
+#           minutes. Les « | », « ; » et sauts de ligne du nom deviennent « / », « , » et
+#           espaces. Payload vide : aucun appareil déclaré (l'écran dit où les déclarer).
+# @data_sources recorder.get_statistics : period hour (mean, min, max) depuis l'heure
+#       ronde moins 24 h, en UTC, pour la courbe et les extrêmes ; period 5minute (mean,
+#       min) depuis 35 minutes, pour la moyenne de 15 min et le minimum de 30 min.
+#       Une période de 5 min n'est compilée qu'après sa fin : la valeur actuelle s'ajoute
+#       toujours aux deux calculs.
+# @state sensor.tab5_froid (modèle à déclencheur, état et attributs restaurés au
+#       redémarrage) : état = niveau le plus grave, attribut `appareils` = l'état de
+#       chaque appareil (e entity_id, nom, t, v, n niveau, c cause, d depuis, g au-dessus
+#       de « grave » depuis, p écart « porte » depuis, pm plus haut de l'épisode porte,
+#       u sans mesure depuis, i incident en cours {c, n, d, m}, x dernier incident
+#       {c, d, l durée en minutes, m}, mn, mx, pts, bas, haut).
+# @install Avec les autres packages (homeassistant.packages: !include_dir_named
+#       packages), après tab5_reglages.yaml, custom_templates/tab5_tablette.jinja et
+#       custom_templates/tab5_alertes.jinja. Rien à renseigner ici.
+# @tests tests/test_froid.py rend ces modèles sur des réponses de get_statistics simulées
+#       et compare à un calcul Python indépendant (seuils, porte, capteur muet, incident).
+# ============================================================================
+
+template:
+  # Miroir : un déclencheur `state:` exige un entity_id écrit dans le YAML. Son état est
+  # le nombre d'appareils déclarés, son attribut `signature` change dès qu'un d'eux change.
+  - sensor:
+      - name: "Tab5 · signature du froid"
+        unique_id: tab5_froid_signature
+        icon: mdi:fridge-outline
+        state: >-
+          {{ ((states('input_text.tab5_choix_frigos') ~ ',' ~ states('input_text.tab5_choix_congelateurs'))
+              .split(',') | map('trim') | select('match', 'sensor[.]') | unique | list)[:4] | count }}
+        attributes:
+          signature: >-
+            {%- set n = namespace(s='') -%}
+            {%- for e in ((states('input_text.tab5_choix_frigos') ~ ',' ~ states('input_text.tab5_choix_congelateurs'))
+                 .split(',') | map('trim') | select('match', 'sensor[.]') | unique | list)[:4] -%}
+              {%- set n.s = n.s ~ e ~ '=' ~ states(e) ~ ';' -%}
+            {%- endfor -%}
+            {{ n.s }}
+
+  # L'état gardé entre deux calculs (relu par le script) et lu par les alertes : mis à
+  # jour seulement par l'événement tab5_froid_bilan du script.
+  - triggers:
+      - trigger: event
+        event_type: tab5_froid_bilan
+    sensor:
+      - name: "Tab5 · froid"
+        unique_id: tab5_froid
+        default_entity_id: sensor.tab5_froid
+        icon: mdi:fridge-outline
+        state: "{{ trigger.event.data.niveau | int(0) }}"
+        attributes:
+          appareils: "{{ trigger.event.data.appareils | default([], true) }}"
+
+automation:
+  # Un capteur a changé : calcul tout de suite, puis rien pendant une minute (mode
+  # single : les changements de cette attente sont ignorés en silence), puis un dernier
+  # calcul si la signature a bougé entre-temps.
+  - id: tab5_froid
+    alias: "Tab5 — froid (calcul au changement)"
+    description: >-
+      Recalcule l'état des réfrigérateurs et congélateurs des listes « Tab5 · … » quand
+      un de leurs capteurs change, une minute au plus entre deux calculs (ADR-0055).
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: sensor.tab5_signature_du_froid
+    actions:
+      - variables:
+          calcule: "{{ state_attr('sensor.tab5_signature_du_froid', 'signature') | string }}"
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_froid_calculer
+      - delay:
+          minutes: 1
+      - condition: template
+        value_template: "{{ state_attr('sensor.tab5_signature_du_froid', 'signature') | string != calcule }}"
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_froid_calculer
+
+  # Toutes les cinq minutes (les durées « depuis 30 min » avancent sans changement), et
+  # tout de suite : liste changée, tablette (re)connectée, « MAJ Écran », démarrage de HA.
+  - id: tab5_froid_immediat
+    alias: "Tab5 — froid (calcul périodique et immédiat)"
+    description: >-
+      Recalcule l'état des réfrigérateurs et congélateurs toutes les cinq minutes, quand
+      une des listes change, à la connexion de la tablette, à « MAJ Écran » et au
+      démarrage de Home Assistant (ADR-0055).
+    mode: queued
+    max: 3
+    triggers:
+      - trigger: time_pattern
+        minutes: "/5"
+      - trigger: state
+        entity_id:
+          - input_text.tab5_choix_frigos
+          - input_text.tab5_choix_congelateurs
+      - trigger: event
+        event_type: esphome.tab5_connected
+      - trigger: event
+        event_type: esphome.tab5_maj_ecran
+      - trigger: homeassistant
+        event: start
+    conditions:
+      # Garde d'origine (comme tab5_evenements.yaml) : un événement d'une tablette
+      # tab5-ha-hmi seulement ; les autres déclencheurs passent toujours.
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
+    actions:
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_froid_calculer
+
+script:
+  tab5_froid_calculer:
+    alias: "Tab5 — froid : calculer et pousser"
+    description: >-
+      Calcule l'état des réfrigérateurs et congélateurs (niveau, cause, depuis, extrêmes
+      et courbe des 24 h, dernier incident), le garde dans sensor.tab5_froid et le pousse
+      à la tablette (action tab5_maj_froid). Mode queued : chaque calcul relit l'état
+      laissé par le précédent.
+    mode: queued
+    max: 2
+    sequence:
+      - variables:
+          # ── SEUILS (°C), le seul endroit. f = réfrigérateur, c = congélateur. ──
+          #   bas, haut   la norme affichée (lignes de la courbe) ; bas null = pas de
+          #               limite basse ;
+          #   attention   moyenne de 15 min au-dessus : niveau 1, trop chaud ;
+          #   gel         moyenne de 15 min au-dessous : niveau 1, trop froid (null : jamais) ;
+          #   grave       au-dessus pendant duree_grave : niveau 2, coup de chaud ;
+          #   critique    atteint une fois : niveau 2 tout de suite ;
+          #   porte       montée depuis le minimum des 30 dernières minutes : porte ouverte ?
+          seuils:
+            f: {bas: 0, haut: 5, attention: 5, gel: 0, grave: 8, critique: 10, porte: 2}
+            c: {bas: null, haut: -18, attention: -15, gel: null, grave: -12, critique: -10, porte: 4}
+          duree_grave: 30   # minutes au-dessus de « grave » avant le niveau 2
+          duree_porte: 20   # minutes d'écart « porte » avant « porte mal fermée »
+          duree_muet: 30    # minutes sans mesure avant « capteur muet »
+          # Les appareils, dans l'ordre : réfrigérateurs puis congélateurs, quatre au plus.
+          appareils: >-
+            {%- set f = states('input_text.tab5_choix_frigos').split(',') | map('trim')
+                 | select('match', 'sensor[.]') | unique | list -%}
+            {%- set c = states('input_text.tab5_choix_congelateurs').split(',') | map('trim')
+                 | select('match', 'sensor[.]') | unique | reject('in', f) | list -%}
+            {{ ((f | map('regex_replace', '$', '|f') | list) + (c | map('regex_replace', '$', '|c') | list))[:4] }}
+          ids: "{{ appareils | map('regex_replace', '[|].*$', '') | list }}"
+          maintenant: "{{ now().timestamp() | int }}"
+          # Heure ronde moins 24 h, en UTC : 24 créneaux d'une heure, quel que soit le
+          # changement d'heure.
+          debut_h: "{{ (utcnow().replace(minute=0, second=0, microsecond=0) - timedelta(hours=24)).isoformat() }}"
+          debut_5: "{{ (utcnow() - timedelta(minutes=35)).isoformat() }}"
+      # Toujours appelées, au même niveau que ce qui lit leur réponse (une variable posée
+      # dans un if n'en sort pas) ; sans appareil, sur une liste vide.
+      - action: recorder.get_statistics
+        data:
+          start_time: "{{ debut_h }}"
+          statistic_ids: "{{ ids }}"
+          period: hour
+          types:
+            - mean
+            - min
+            - max
+        response_variable: stats_h
+        continue_on_error: true
+      - action: recorder.get_statistics
+        data:
+          start_time: "{{ debut_5 }}"
+          statistic_ids: "{{ ids }}"
+          period: 5minute
+          types:
+            - mean
+            - min
+        response_variable: stats_5
+        continue_on_error: true
+      - variables:
+          bilan: >-
+            {%- set sh = stats_h.statistics if stats_h is defined and stats_h is mapping
+                  and stats_h.statistics is defined and stats_h.statistics is mapping else {} -%}
+            {%- set s5 = stats_5.statistics if stats_5 is defined and stats_5 is mapping
+                  and stats_5.statistics is defined and stats_5.statistics is mapping else {} -%}
+            {%- set avant = state_attr('sensor.tab5_froid', 'appareils') -%}
+            {%- set prec = namespace(d={}) -%}
+            {%- for a in (avant if avant is sequence and avant is not string and avant is not mapping else [])
+                 if a is mapping and a.get('e') -%}
+              {%- set prec.d = dict(prec.d, **{a.get('e'): a}) -%}
+            {%- endfor -%}
+            {%- set d0 = as_datetime(debut_h) -%}
+            {%- set ns = namespace(l=[], niveau=0) -%}
+            {%- for ap in appareils -%}
+              {%- set e = ap.split('|')[0] -%}
+              {%- set t = ap.split('|')[1] -%}
+              {%- set s = seuils[t] -%}
+              {%- set p = prec.d.get(e, {}) -%}
+              {%- set fahr = (state_attr(e, 'unit_of_measurement') or '') | string in ['°F', '℉'] -%}
+              {%- set brut = states(e) -%}
+              {%- set v = (((brut | float - 32) * 5 / 9) if fahr else brut | float) if brut | is_number else none -%}
+              {#- Statistiques horaires : la courbe (moyennes) et les extrêmes de 24 h. -#}
+              {%- set h = namespace(m={}, bas=[], haut=[]) -%}
+              {%- for r in sh.get(e, []) if r is mapping -%}
+                {%- set i = ((as_datetime(r.start) - d0).total_seconds() / 3600) | round(0) | int -%}
+                {%- if 0 <= i < 24 -%}
+                  {%- if r.get('mean') is number -%}
+                    {%- set h.m = dict(h.m, **{i | string: ((r.mean - 32) * 5 / 9) if fahr else r.mean}) -%}
+                  {%- endif -%}
+                  {%- if r.get('min') is number -%}
+                    {%- set h.bas = h.bas + [((r.min - 32) * 5 / 9) if fahr else r.min] -%}
+                  {%- endif -%}
+                  {%- if r.get('max') is number -%}
+                    {%- set h.haut = h.haut + [((r.max - 32) * 5 / 9) if fahr else r.max] -%}
+                  {%- endif -%}
+                {%- endif -%}
+              {%- endfor -%}
+              {#- Statistiques de 5 min : moyennes des 15 dernières minutes (périodes
+                  commencées depuis 20 min, la valeur actuelle en plus), minimum des 30. -#}
+              {%- set q5 = namespace(m=[], bas=[]) -%}
+              {%- for r in s5.get(e, []) if r is mapping -%}
+                {%- set debut = as_datetime(r.start).timestamp() -%}
+                {%- if debut >= maintenant - 20 * 60 and r.get('mean') is number -%}
+                  {%- set q5.m = q5.m + [((r.mean - 32) * 5 / 9) if fahr else r.mean] -%}
+                {%- endif -%}
+                {%- if debut >= maintenant - 30 * 60 and r.get('min') is number -%}
+                  {%- set q5.bas = q5.bas + [((r.min - 32) * 5 / 9) if fahr else r.min] -%}
+                {%- endif -%}
+              {%- endfor -%}
+              {%- set q = namespace(n=0, c='ok', g=0, p=0, pm=none, u=0) -%}
+              {%- if v is none -%}
+                {#- 1. Pas de mesure : capteur muet après duree_muet, sinon l'état d'avant. -#}
+                {%- set q.u = p.get('u') or maintenant -%}
+                {%- if maintenant - q.u >= duree_muet * 60 -%}
+                  {%- set q.n = 1 -%}
+                  {%- set q.c = 'indispo' -%}
+                {%- else -%}
+                  {%- set q.n = p.get('n', 0) | int(0) -%}
+                  {%- set q.c = p.get('c') or 'ok' -%}
+                  {%- set q.g = p.get('g') or 0 -%}
+                  {%- set q.p = p.get('p') or 0 -%}
+                  {%- set q.pm = p.get('pm') -%}
+                {%- endif -%}
+              {%- else -%}
+                {%- set m15 = (q5.m + [v]) | sum / (q5.m + [v]) | count -%}
+                {%- set min30 = (q5.bas + [v]) | min -%}
+                {%- set q.g = (p.get('g') or maintenant) if v > s.grave else 0 -%}
+                {%- set q.p = (p.get('p') or maintenant) if v - min30 >= s.porte else 0 -%}
+                {%- set q.pm = ([p.get('pm'), v] | select('number') | max) if q.p and p.get('p') else (v if q.p else none) -%}
+                {%- if v >= s.critique or (q.g and maintenant - q.g >= duree_grave * 60) -%}
+                  {#- 2. Coup de chaud. -#}
+                  {%- set q.n = 2 -%}
+                  {%- set q.c = 'chaud' -%}
+                {%- elif q.p -%}
+                  {#- 3. Montée rapide : porte ouverte ?, puis mal fermée si elle dure sans
+                      redescendre. -#}
+                  {%- set q.n = 2 if maintenant - q.p >= duree_porte * 60 and v >= q.pm - 0.5 else 1 -%}
+                  {%- set q.c = 'porte' -%}
+                {%- elif m15 > s.attention -%}
+                  {%- set q.n = 1 -%}
+                  {%- set q.c = 'chaud' -%}
+                {%- elif s.gel is not none and m15 < s.gel -%}
+                  {%- set q.n = 1 -%}
+                  {%- set q.c = 'froid' -%}
+                {%- endif -%}
+              {%- endif -%}
+              {#- Depuis : le début de la cause en cours (gardé tant qu'elle ne change pas). -#}
+              {%- if q.c == 'ok' -%}
+                {%- set depuis = 0 -%}
+              {%- elif p.get('c') == q.c and p.get('d') -%}
+                {%- set depuis = p.get('d') | int(0) -%}
+              {%- else -%}
+                {%- set depuis = q.u if q.c == 'indispo' else q.p if q.c == 'porte'
+                                 else q.g if q.c == 'chaud' and q.g else maintenant -%}
+              {%- endif -%}
+              {#- Incident : du premier niveau non nul au retour à 0 ; extrême = le plus
+                  haut (le plus bas pour « froid »). -#}
+              {%- set ic = p.get('i') if p.get('i') is mapping else none -%}
+              {%- set x = p.get('x') if p.get('x') is mapping else none -%}
+              {%- if q.n > 0 -%}
+                {%- if ic is none -%}
+                  {%- set ic = {'c': q.c, 'n': q.n, 'd': depuis or maintenant, 'm': v} -%}
+                {%- else -%}
+                  {%- set c_i = q.c if q.n > (ic.get('n', 0) | int(0)) else ic.get('c', q.c) -%}
+                  {%- set connus = [ic.get('m'), v] | select('number') | list -%}
+                  {%- set m_i = (connus | min if c_i == 'froid' else connus | max) if connus else none -%}
+                  {%- set ic = {'c': c_i, 'n': [q.n, ic.get('n', 0) | int(0)] | max, 'd': ic.get('d') or depuis, 'm': m_i} -%}
+                {%- endif -%}
+              {%- elif ic is not none -%}
+                {%- set x = {'c': ic.get('c', 'chaud'), 'd': ic.get('d') or maintenant,
+                             'l': ((maintenant - (ic.get('d') or maintenant)) / 60) | round(0) | int, 'm': ic.get('m')} -%}
+                {%- set ic = none -%}
+              {%- endif -%}
+              {%- set pts = namespace(l=[]) -%}
+              {%- for i in range(24) -%}
+                {%- set pts.l = pts.l + [h.m.get(i | string)] -%}
+              {%- endfor -%}
+              {%- set pts.l = pts.l + [v] -%}
+              {%- set bas24 = h.bas + ([v] if v is not none else []) -%}
+              {%- set haut24 = h.haut + ([v] if v is not none else []) -%}
+              {%- set nom = ((state_attr(e, 'friendly_name') or '') | string | replace('|', '/') | replace(';', ',')
+                             | replace('\n', ' ') | trim)[:40] -%}
+              {%- set ns.niveau = [ns.niveau, q.n] | max -%}
+              {%- set ns.l = ns.l + [{'e': e, 'nom': nom, 't': t, 'v': v, 'n': q.n, 'c': q.c, 'd': depuis,
+                    'g': q.g, 'p': q.p, 'pm': q.pm, 'u': q.u, 'i': ic, 'x': x,
+                    'mn': bas24 | min if bas24 else none, 'mx': haut24 | max if haut24 else none,
+                    'pts': pts.l, 'bas': s.bas, 'haut': s.haut}] -%}
+            {%- endfor -%}
+            {{ {'niveau': ns.niveau, 'appareils': ns.l} }}
+          payload: >-
+            {%- macro f(x) -%}{{ '%.1f' | format(x) if x is number else '' }}{%- endmacro -%}
+            {%- set ns = namespace(l=[]) -%}
+            {%- for a in bilan.appareils -%}
+              {%- set x = a.x if a.x is mapping else {} -%}
+              {%- set pts = namespace(l=[]) -%}
+              {%- for y in a.pts -%}
+                {%- set pts.l = pts.l + [f(y)] -%}
+              {%- endfor -%}
+              {%- set ns.l = ns.l + [[a.nom, a.t, f(a.v), a.n, a.c, a.d | int(0), f(a.mn), f(a.mx), f(a.bas), f(a.haut),
+                    pts.l | join(','), x.get('c', ''), x.get('d', 0) | int(0), x.get('l', 0) | int(0), f(x.get('m'))]
+                    | join('|')] -%}
+            {%- endfor -%}
+            {{ ns.l | join(';') }}
+      # L'état gardé (sensor.tab5_froid), même quand la tablette est absente : les alertes
+      # et le calcul suivant le lisent.
+      - event: tab5_froid_bilan
+        event_data:
+          niveau: "{{ bilan.niveau }}"
+          appareils: "{{ bilan.appareils }}"
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' }}
+      - action: esphome.tab5_ha_hmi_tab5_maj_froid
+        continue_on_error: true
+        data:
+          payload: "{{ payload }}"
