@@ -468,9 +468,14 @@ def test_editeur_lisible():
     energie = [n for n in sections if n.startswith("energie")]
     assert energie == ["energie", "energie_reseau_maison", "energie_stockage"]
     assert list(sections["energie"]["input"]) == ["energie_solaire", "energie_solaire_autres", "energie_crete",
-                                                  "energie_production", "energie_production_autres"]
+                                                  "energie_production", "energie_production_autres",
+                                                  "energie_prevision_jour", "energie_prevision_demain"]
     assert list(sections["energie_reseau_maison"]["input"]) == ["energie_reseau", "energie_reseau_export",
-                                                               "energie_reseau_inverse", "energie_maison"]
+                                                               "energie_reseau_inverse", "energie_maison",
+                                                               "energie_compteur_achat", "energie_compteur_vente",
+                                                               "energie_prix_achat", "energie_prix_achat_entite",
+                                                               "energie_prix_revente", "energie_prix_revente_entite",
+                                                               "energie_devise"]
     assert list(sections["energie_stockage"]["input"]) == ["energie_batterie", "energie_batterie_puissance",
                                                            "energie_batterie_inverse", "energie_batterie_temperature"]
 
