@@ -121,6 +121,7 @@ esphome:
     - Tab5/ecran/tab5_maison.h
     - Tab5/ecran/tab5_piece_climat.h
     - Tab5/ecran/tab5_meteo.h
+    - Tab5/ecran/tab5_zone_gauche.h
     - Tab5/ecran/tab5_lecteur.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_custom.cpp
@@ -185,6 +186,9 @@ esphome:
     - Tab5/ecran/tab5_pages.cpp
     # Popup Météo : la météo en graphiques, heures, dix jours et détails (ADR-0043, 09/10/2026).
     - Tab5/ecran/tab5_meteo.cpp
+    # Zone à gauche de l'horloge au choix : le vocal ou les prévisions des heures qui
+    # viennent en graphique (ADR-0051, 10/10/2026).
+    - Tab5/ecran/tab5_zone_gauche.cpp
     # Lecteur de musique : popup « Musique » et mini-barre de l'accueil (ADR-0050, 10/10/2026).
     - Tab5/ecran/tab5_lecteur.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,

@@ -747,6 +747,60 @@ static void test_piece_climat() {
     }
 }
 
+static ZoneGaucheLu gauche(const char* s) { return zone_gauche_lire(s, std::strlen(s)); }
+
+static void test_zone_gauche() {
+    constexpr uint8_t V = zone_gauche_bit(ZoneGauche::VOCAL);
+    constexpr uint8_t G = zone_gauche_bit(ZoneGauche::GRAPHIQUE);
+    constexpr uint8_t L = zone_gauche_bit(ZoneGauche::LECTEUR);
+    {
+        const ZoneGaucheLu z;
+        expect(z.defaut == ZoneGauche::VOCAL && z.cycle == (V | G), "zone gauche : sans la clé, vocal puis graphique");
+    }
+    {
+        const ZoneGaucheLu z = gauche("graphique|vocal|graphique");
+        expect(z.defaut == ZoneGauche::GRAPHIQUE && z.cycle == (V | G), "zone gauche : graphique au départ, deux au tap");
+    }
+    {
+        const ZoneGaucheLu z = gauche("vocal");
+        expect(z.defaut == ZoneGauche::VOCAL && z.cycle == V, "zone gauche : rien au tap = le départ seul");
+    }
+    {
+        const ZoneGaucheLu z = gauche("graphique|vocal");
+        expect(z.cycle == (V | G), "zone gauche : le départ fait toujours partie du cycle");
+    }
+    {
+        const ZoneGaucheLu z = gauche("");
+        expect(z.defaut == ZoneGauche::VOCAL && z.cycle == V, "zone gauche : clé vide = le vocal seul");
+    }
+    {
+        const ZoneGaucheLu z = gauche("radio|graphique|camera");
+        expect(z.defaut == ZoneGauche::VOCAL && z.cycle == (V | G),
+               "zone gauche : départ inconnu = vocal, code inconnu ignoré");
+    }
+    {
+        const ZoneGaucheLu z = gauche("lecteur|graphique");
+        expect(z.defaut == ZoneGauche::LECTEUR && z.cycle == (L | G), "zone gauche : lecteur lu et gardé (lot 2)");
+    }
+    {
+        const ZoneGaucheLu z = gauche("Vocal|GRAPHIQUE| graphique|graphiques");
+        expect(z.defaut == ZoneGauche::VOCAL && z.cycle == V, "zone gauche : codes exacts seulement");
+    }
+    {
+        // Au-delà de kZoneGaucheChampsMax champs, la fin est ignorée.
+        const ZoneGaucheLu z = gauche("vocal|vocal|vocal|vocal|vocal|vocal|vocal|vocal|graphique");
+        expect(z.cycle == V, "zone gauche : champs au-delà du maximum ignorés");
+    }
+    {
+        const ZoneGaucheLu z = zone_gauche_lire("graphique|vocalXYZ", 15);
+        expect(z.defaut == ZoneGauche::GRAPHIQUE && z.cycle == (V | G), "zone gauche : lu sur n octets");
+    }
+    {
+        const ZoneGaucheLu z = gauche("|||");
+        expect(z.defaut == ZoneGauche::VOCAL && z.cycle == V, "zone gauche : champs vides");
+    }
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // 7. Clim
 // ════════════════════════════════════════════════════════════════════════════
@@ -1160,6 +1214,7 @@ int main() {
     test_emplacement_nombre();
     test_solaire();
     test_piece_climat();
+    test_zone_gauche();
     test_clim_reglages();
     test_clim_etat();
     test_humidite_lire();

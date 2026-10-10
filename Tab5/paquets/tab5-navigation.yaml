@@ -153,6 +153,8 @@ script:
             nabu_suivant();  // panneau Ok Nabu : ligne suivante (lot 3, ADR-0041)
           } else if (c.action == GesteAction::ROUE) {
             roue_navigation_ouvrir();  // l'appui long de la carte centrale (ADR-0042)
+          } else if (c.action == GesteAction::ZONE_GAUCHE_SUIVANTE) {
+            zone_gauche_suivante();  // le tap de la seconde température (ADR-0051)
           }
 
   # Ouverture d'un écran (07/10/2026) : la routine UNIQUE du select « Aller à l'écran »

@@ -5,8 +5,9 @@
 #       `style_clim_carte_page` uniquement autour de − / température cible / + —
 #       la « tuile − / + », qui règle l'appareil choisi (ADR-0033).
 #       Appui long sur une des deux températures : son historique (popup « Température »,
-#       ADR-0032) ; appui court sur la serre : l'arcade ; appui court sur la pièce : le
-#       carrousel des clims (ADR-0038).
+#       ADR-0032) ; appui court sur la serre : le contenu suivant de la zone à gauche de
+#       l'horloge (ADR-0051 ; l'arcade avant) ; appui court sur la pièce : le carrousel des
+#       clims (ADR-0038).
 # @architecture_constraint Grille du haut (tab5-lvgl.yaml, 05/10/2026) : la carte occupe la
 #                          colonne de droite sous HA / Sys / TV (855-1260, bord droit
 #                          aligné sur le bandeau central). Tuile verre 405 × 72 (cadre_bas_h,
@@ -104,10 +105,13 @@ obj:
         widgets:
           - label: { id: icon_serre, text: "\U000F002D", text_font: mdi_font_45, styles: style_text_dim }
           - label: { id: current_serre, text: "-- °", styles: [style_police_date, style_text_temp_max] }
-    # Zone tactile sur la température serre → appui court : le sélecteur de jeux Arcade ;
-    # appui long : l'historique et la prévision de la seconde température (ADR-0032 ; LVGL
-    # n'envoie pas l'appui court après un appui long). Sans serre, l'icône est une manette
-    # et l'appui long ne fait rien.
+    # Zone tactile sur la température serre → appui court : le contenu suivant de la zone à
+    # gauche de l'horloge (ADR-0051, 10/10/2026, demande d'Axel : le vocal, le graphique des
+    # prévisions… ; le sélecteur Arcade avant, qui reste au tap du bouton manette et dans la
+    # roue de navigation) ; appui long : l'historique et la prévision de la seconde
+    # température (ADR-0032 ; LVGL n'envoie pas l'appui court après un appui long). Sans
+    # serre, l'icône dit ce que fait le tap (view-carousel, tab5_piece_climat.cpp) et l'appui
+    # long ne fait rien. L'id garde son nom d'origine (docs, tests, rendu le citent).
     # [26/07/2026] FIX : la zone était posée à côté de ce qu'elle est censée
     # couvrir (elle ne touchait QUE l'icône, jamais la valeur affichée : taper la
     # température ne déclenchait rien). Depuis le 05/10/2026 (rangée de 45 px) : la
@@ -124,7 +128,7 @@ obj:
         height: 64
         styles: style_invisible
         on_short_click:
-          - script.execute: tab5_arcade_open
+          - lambda: 'if (!ui_appui_glisse()) zone_gauche_suivante();'
         on_long_press:
           # « serre », rien sans serre ; en mode HA sur une pièce à température déclarée
           # (ADR-0040), la droite montre son humidité : « pR » si elle est déclarée (le

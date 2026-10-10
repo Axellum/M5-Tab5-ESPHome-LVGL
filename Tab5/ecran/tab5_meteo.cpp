@@ -132,13 +132,18 @@ void millimetres(char* out, size_t n, float mm) {
     snprintf(out, n, mm < 9.95f ? "%.1fmm" : "%.0fmm", mm);
 }
 
-// Couleur d'une pluie horaire (mm) : les rôles de la pluie dans l'heure.
+}  // namespace
+
+// Couleur d'une pluie horaire (mm) : les rôles de la pluie dans l'heure. Partagée avec la
+// zone à gauche de l'horloge (ADR-0051, tab5_internal.h).
 uint32_t couleur_pluie_mm(float mm) {
     if (mm < 1.0f) return UIColor.RAIN_LIGHT;
     if (mm < 4.0f) return UIColor.RAIN_MODERATE;
     if (mm < 8.0f) return UIColor.RAIN_HEAVY;
     return UIColor.RAIN_EXTREME;
 }
+
+namespace {
 
 // Couleur d'un niveau de pluie dans l'heure (1 faible à 4 très forte).
 uint32_t couleur_niveau(int niveau) {
@@ -242,15 +247,20 @@ struct Heures {
 Heures s_h;
 lv_point_precise_t s_courbe_pts[(kHeuresMax - 1) * kLisse + 1];
 
+}  // namespace
+
 // Créneaux lisibles, dans l'ordre depuis le premier : heure « HH:MM » et condition connue
-// (HA pousse « 00:00 » / « unknown » pour un créneau qu'il n'a pas).
-int heures_lisibles() {
+// (HA pousse « 00:00 » / « unknown » pour un créneau qu'il n'a pas). Partagé avec la zone à
+// gauche de l'horloge (ADR-0051, tab5_internal.h).
+int previsions_heures_lisibles() {
     int n = 0;
     while (n < kHeuresMax && hhmm_minutes(cal_heures_data[n].heure_texte) >= 0 &&
            !cal_heures_data[n].condition.empty() && cal_heures_data[n].condition != "unknown")
         n++;
     return n;
 }
+
+namespace {
 
 void construire_heures() {
     lv_obj_t* z = g_meteo_ui.zone_heures;
@@ -271,44 +281,6 @@ void construire_heures() {
     }
     s_h.vide = texte(z, g_meteo_ui.police_grasse, kGraphiqueL, LV_TEXT_ALIGN_CENTER);
     lv_obj_align(s_h.vide, LV_ALIGN_CENTER, 0, 0);
-}
-
-// Courbe lissée et monotone (Fritsch-Carlson) : elle passe par chaque point sans jamais
-// dépasser deux valeurs voisines (pas de creux ni de bosse inventés entre deux heures).
-int lisser(const float* xs, const float* ys, int n, lv_point_precise_t* out) {
-    if (n < 2) return 0;
-    float d[kHeuresMax], m[kHeuresMax];
-    for (int k = 0; k < n - 1; k++) d[k] = (ys[k + 1] - ys[k]) / (xs[k + 1] - xs[k]);
-    m[0] = d[0];
-    m[n - 1] = d[n - 2];
-    for (int k = 1; k < n - 1; k++) m[k] = (d[k - 1] * d[k] <= 0.0f) ? 0.0f : (d[k - 1] + d[k]) / 2.0f;
-    for (int k = 0; k < n - 1; k++) {
-        if (d[k] == 0.0f) {
-            m[k] = m[k + 1] = 0.0f;
-            continue;
-        }
-        const float a = m[k] / d[k], b = m[k + 1] / d[k], s = a * a + b * b;
-        if (s > 9.0f) {
-            const float t = 3.0f / std::sqrt(s);
-            m[k] = t * a * d[k];
-            m[k + 1] = t * b * d[k];
-        }
-    }
-    int np = 0;
-    for (int k = 0; k < n - 1; k++) {
-        const float hx = xs[k + 1] - xs[k];
-        for (int j = 0; j < kLisse; j++) {
-            const float t = static_cast<float>(j) / kLisse, t2 = t * t, t3 = t2 * t;
-            const float y = (2 * t3 - 3 * t2 + 1) * ys[k] + (t3 - 2 * t2 + t) * hx * m[k] +
-                            (-2 * t3 + 3 * t2) * ys[k + 1] + (t3 - t2) * hx * m[k + 1];
-            out[np].x = static_cast<lv_value_precise_t>(lroundf(xs[k] + t * hx));
-            out[np].y = static_cast<lv_value_precise_t>(lroundf(y));
-            np++;
-        }
-    }
-    out[np].x = static_cast<lv_value_precise_t>(lroundf(xs[n - 1]));
-    out[np].y = static_cast<lv_value_precise_t>(lroundf(ys[n - 1]));
-    return np + 1;
 }
 
 void cacher_heures(int depuis) {
@@ -409,7 +381,7 @@ void peindre_heures(int n) {
     else ui_hidden(s_h.minuit, true);
     ui_poser(s_h.base, 0, kPluieBase, kGraphiqueL, 1);
     // Courbe : couleur de la température moyenne des heures montrées.
-    const int np = lisser(xs, ys, n, s_courbe_pts);
+    const int np = ui_courbe_lisse(xs, ys, n, kLisse, s_courbe_pts);
     ui_hidden(s_h.courbe, np < 2);
     if (np >= 2) {
         lv_obj_set_style_line_color(s_h.courbe, lv_color_hex(get_temperature_color(moyenne)), LV_PART_MAIN);
@@ -820,7 +792,7 @@ void construire() {
 void peindre() {
     switch (s_page) {
         case METEO_PAGE_JOUR: {
-            const int n = heures_lisibles();
+            const int n = previsions_heures_lisibles();
             peindre_maintenant(n);
             peindre_heures(n);
             break;

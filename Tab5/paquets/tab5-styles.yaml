@@ -204,6 +204,7 @@ font:
       - "\U000F0493"  # cog (bouton du haut : Réglages, 06/10/2026)
       - "\U000F04B9"  # sofa
       - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
+      - "\U000F056C"  # view-carousel (tap : contenu suivant de la zone à gauche de l'horloge, ADR-0051)
       - "\U000F0595"  # weather-partly-cloudy (tap : Météo)
       - "\U000F06A9"  # robot
       - "\U000F0717"  # snowflake (tap : Climatisation)
@@ -364,6 +365,7 @@ font:
       - "\U000F04B9"  # sofa
       - "\U000F04DB"  # stop
       - "\U000F054C"  # undo
+      - "\U000F056C"  # view-carousel (seconde température absente : son tap change la zone à gauche de l'horloge, ADR-0051)
       - "\U000F0581"  # volume-off
       - "\U000F058E"  # water-percent
       - "\U000F0598"  # weather-snowy (carte Neige du popup Météo)
@@ -660,6 +662,7 @@ font:
       - "\U000F0493"  # cog (mini icône : Réglages)
       - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
       - "\U000F050F"  # thermometer (mini icône : Température)
+      - "\U000F056C"  # view-carousel (mini icône : contenu suivant de la zone à gauche de l'horloge, ADR-0051)
       - "\U000F0595"  # weather-partly-cloudy (mini icône : Météo)
       - "\U000F0596"  # weather-pouring
       - "\U000F05A9"  # wifi

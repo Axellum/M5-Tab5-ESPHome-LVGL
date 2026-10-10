@@ -110,6 +110,7 @@ enum class GesteAction : uint8_t {
     ECOUTE,            // bascule du mot de réveil « Ok Nabu » (switch tab5_wake_word_active)
     NABU_SUIVANTE,     // panneau Ok Nabu : ligne suivante (nabu_suivant, lot 3)
     ROUE,              // roue de navigation (ADR-0042), comme l'appui long de la carte centrale
+    ZONE_GAUCHE_SUIVANTE,  // zone à gauche de l'horloge : contenu suivant (zone_gauche_suivante, ADR-0051)
 };
 struct GesteCible {
     GesteAction action;

@@ -431,6 +431,29 @@ bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out)
     return true;
 }
 
+// Nouveau (ADR-0051), écrit ici d'emblée comme piece_climat_lire.
+namespace {
+int zone_gauche_code(const Champ& f) {
+    for (int z = 0; z < static_cast<int>(ZoneGauche::NB); z++)
+        if (champ_est(f, kZoneGaucheCodes[z])) return z;
+    return -1;
+}
+}  // namespace
+
+ZoneGaucheLu zone_gauche_lire(const char* valeur, size_t n) {
+    ZoneGaucheLu out;
+    Champ f[kZoneGaucheChampsMax] = {};
+    const int k = champs_decouper(valeur, n, '|', f, kZoneGaucheChampsMax);
+    const int d = k > 0 ? zone_gauche_code(f[0]) : -1;
+    out.defaut = d >= 0 ? static_cast<ZoneGauche>(d) : kZoneGaucheDefaut;
+    out.cycle = zone_gauche_bit(out.defaut);
+    for (int i = 1; i < k; i++) {
+        const int z = zone_gauche_code(f[i]);
+        if (z >= 0) out.cycle |= zone_gauche_bit(static_cast<ZoneGauche>(z));
+    }
+    return out;
+}
+
 // ─── 7. Clim ───
 // Avant : lire_reglages() et lire_etat() de Tab5/ecran/tab5_clim.cpp.
 

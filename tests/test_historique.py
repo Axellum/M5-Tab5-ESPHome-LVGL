@@ -797,8 +797,10 @@ def test_appuis_longs_et_registre():
     assert 'return zone_absente(Zone::SALON) ? nullptr : "salon";' in piece
     assert "return droite && !s_pieces[r].humidite ? nullptr : kClesHistorique[r];" in piece
     serre = climat.split("id: btn_serre_games", 1)[1].split("- obj:", 1)[0]
-    assert "script.execute: tab5_arcade_open" in serre and "on_long_press:" in serre, \
-        "l'appui court sur la serre garde l'arcade"
+    # Depuis l'ADR-0051 (10/10/2026), l'appui court passe la zone à gauche de l'horloge au
+    # contenu suivant (l'arcade avant) ; l'appui long reste l'historique.
+    assert "zone_gauche_suivante();" in serre and "on_long_press:" in serre, \
+        "l'appui court sur la serre change la zone à gauche de l'horloge"
     navigation = _lire(os.path.join(REPO, "Tab5", "paquets", "tab5-navigation.yaml"))
     # Ouvert aussi sans appui long (« Aller à l'écran », roue de navigation, ADR-0042) : la
     # même clé que l'appui long de gauche, sinon celle de droite.

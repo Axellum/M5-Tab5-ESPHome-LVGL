@@ -77,6 +77,7 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_emplacements": {"payload": "lumiere_1|on|180;salon|21.4|21.4;t02|on|128|FFB347;t01|open|45|;climr|16|30|0.5|°C|7|Salon;appuis|auto|rien|arcade;"
                                          "gestes|auto|reveil|appareil_suivant|auto|rangee_suivante|calendrier|"
                                          "mode_domo|auto|reglages|auto|ecoute|tv;defil|auto|fixe|auto|32;"
+                                         "gauche|graphique|vocal|graphique;"
                                          "h00|21.4|21.4|;h01|on|180|FFB347;n00|612|612|;n01|off|nan|;"
                                          "r0|on|35;r1|on|128;"},
     "tab5_maj_tuiles": {"payload": "p0|Salon;t00|lum|lampadaire|d||Lampadaire;t01|vol||||Volet;t02|cap|thermometre||°C|Température;"

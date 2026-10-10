@@ -29,7 +29,7 @@
 //   - à gauche, un thermomètre (couleur de l'humidité de la pièce) et sa température, à
 //     la place de l'icône et de la température du salon ;
 //   - à droite, une goutte et l'humidité de la pièce (« 48 % ») si elle est déclarée, à
-//     la place de la serre ; rien sinon (la zone tactile de l'arcade reste) ;
+//     la place de la serre ; rien sinon (la zone tactile de la seconde température reste) ;
 //   - la tuile − / + règle la clim de la pièce quand elle en a une (tab5_reglables.cpp).
 // Hors du mode HA, ou sur une pièce sans température déclarée : le salon et la serre,
 // comme avant. Rien en NVS : le blueprint renvoie tout à chaque connexion.

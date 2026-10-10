@@ -195,7 +195,9 @@ script:
           Pinball::open(ui);
 
   # Ouvre le sélecteur arcade (page_arcade). Point d'entrée unique depuis le
-  # dashboard (tap sur température serre). Ferme d'abord tout jeu en cours.
+  # dashboard : le geste « arcade » (tap du bouton manette en « auto ») et « Jeux » de la
+  # roue de navigation, par tab5_ecran_ouvrir (le tap sur la température serre jusqu'au
+  # 10/10/2026, ADR-0051). Ferme d'abord tout jeu en cours.
   - id: tab5_arcade_open
     mode: single
     then:
