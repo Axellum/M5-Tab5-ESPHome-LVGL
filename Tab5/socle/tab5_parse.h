@@ -136,12 +136,14 @@ private:
 };
 
 // Libellé codé d'une alerte (lot 4c, 27/09/2026) : « @maj:<titre> », « @indispo:<n> »
-// (nombre = atoi), « @vigi:<niveau> » ; tout autre texte se montre tel quel.
+// (nombre = atoi), « @vigi:<niveau> », « @froid:<cause>:<niveau>:<valeur>:<nom> »
+// (ADR-0055, lu par froid_alerte_lire, section 12) ; tout autre texte se montre tel quel.
 enum class AlerteTexteCode : uint8_t {
     TEXTE,
     MAJ,
     INDISPO,
     VIGI,
+    FROID,
 };
 struct AlerteTexteLu {
     AlerteTexteCode code;
@@ -641,3 +643,91 @@ bool suivi_variation_texte(const SuiviLu& s, char* out, size_t n);
 // Sens de la variation arrondie comme elle s'affiche : 1 hausse, -1 baisse, 0 stable ou
 // inconnue (flèche, couleur de la variation et de la courbe).
 int suivi_sens(const SuiviLu& s);
+
+// ─── 12. Froid : réfrigérateurs et congélateurs (tab5_maj_froid, ADR-0055) ───
+// Une variable, poussée par packages/tab5_froid.yaml : un enregistrement par appareil des
+// listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs » (kFroidMax au plus, dans
+// l'ordre ; vide : aucun appareil déclaré), séparés par « ; », quinze champs « | » :
+//   « nom|type|valeur|niveau|cause|depuis|min|max|bas|haut|points|icause|idebut|iduree|imax »
+//   nom      friendly_name du capteur (HA retire « | » et « ; »), copié par l'écran ;
+//   type     f (réfrigérateur) ou c (congélateur) ; autre : enregistrement sauté ;
+//   valeur   température actuelle en °C, vide si le capteur est indisponible ;
+//   niveau   0 conforme, 1 attention, 2 grave (au-delà de 2 : 2 ; illisible : 0) ;
+//   cause    ok, chaud, froid, porte, indispo (autre : ok) — la détection est dans HA ;
+//   depuis   epoch du début de la cause en cours, 0 sans ;
+//   min, max la plus basse et la plus haute des dernières 24 h, en °C (vides : inconnues) ;
+//   bas, haut la norme de l'appareil en °C, telle que HA la pousse (bas vide : pas de
+//            limite basse, le congélateur) : la tablette n'en code aucune ;
+//   points   24 moyennes horaires puis la valeur actuelle, en °C, séparées par « , » ;
+//            vide = heure sans mesure ; kFroidPointsMax au plus, la fin ignorée ;
+//   icause…  le DERNIER incident terminé : sa cause (ok ou vide : aucun), son début
+//            (epoch), sa durée en minutes et la température la plus haute atteinte.
+// Températures hors de ±kFroidTempMax, illisibles ou non finies : inconnues (NAN).
+// Un enregistrement vide (« ;; ») ou de moins de deux champs est sauté.
+constexpr int kFroidMax = 4;
+constexpr int kFroidPointsMax = 32;  // = kCourbeLissePoints (tab5_internal.h)
+constexpr float kFroidTempMax = 80.0f;
+
+enum class FroidType : uint8_t {
+    FRIGO,        // « f » : réfrigérateur
+    CONGELATEUR,  // « c »
+};
+enum class FroidCause : uint8_t {
+    OK,
+    CHAUD,    // trop chaud (moyenne de 15 min), ou coup de chaud au niveau 2
+    FROID,    // trop froid (risque de gel, réfrigérateur)
+    PORTE,    // montée rapide : porte ouverte ? (1), porte mal fermée (2)
+    INDISPO,  // capteur muet depuis plus de 30 min
+};
+struct FroidIncident {
+    FroidCause cause = FroidCause::OK;  // OK : aucun incident
+    uint32_t debut = 0;
+    uint32_t duree_min = 0;
+    float max = NAN;
+};
+struct FroidLu {
+    Champ nom{nullptr, 0};
+    FroidType type = FroidType::FRIGO;
+    float valeur = NAN;
+    uint8_t niveau = 0;
+    FroidCause cause = FroidCause::OK;
+    uint32_t depuis = 0;
+    float min = NAN;
+    float max = NAN;
+    float bas = NAN;
+    float haut = NAN;
+    int n = 0;                         // points lus, manquants compris
+    float points[kFroidPointsMax] = {};  // NAN : heure sans mesure
+    FroidIncident dernier;
+};
+// Renvoie le nombre d'appareils lus (kFroidMax au plus), dans l'ordre.
+int froid_lire(const Champ& payload, FroidLu out[kFroidMax]);
+
+// Cause écrite par HA (« porte ») ; inconnue ou vide : OK.
+FroidCause froid_cause(const Champ& c);
+
+// « 9.1 », « -18.0 » (une décimale, jamais « -0.0 ») ; « -- » pour une température
+// inconnue. Faux si `out` est trop petit (vidé).
+bool froid_temperature_texte(float v, char* out, size_t n);
+
+// Bornes de l'axe vertical de la courbe d'un appareil : ses points, sa valeur et sa norme
+// (bas et haut) y tiennent, avec une marge ; au moins kFroidEchelleMin degrés. Faux sans
+// rien à tracer (ni point ni norme connus).
+constexpr float kFroidEchelleMin = 4.0f;
+bool froid_echelle(const FroidLu& a, float& bas, float& haut);
+
+// Niveau le plus grave des appareils lus (0 sans appareil) : 2 allume l'icône qui clignote
+// dans le coin de l'horloge.
+uint8_t froid_niveau_max(const FroidLu* a, int n);
+
+// Libellé codé d'une alerte « froid » (packages/tab5_froid.yaml → tab5_alertes.jinja) :
+// « @froid:cause:niveau:valeur:nom », lu après « @froid: » (AlerteTexteCode::FROID) ; le
+// nom est le reste (il peut contenir « : »). Valeur vide : inconnue. Faux si le texte n'a
+// pas ses quatre champs (l'écran le montre alors tel quel).
+struct FroidAlerteLu {
+    FroidCause cause = FroidCause::OK;
+    uint8_t niveau = 0;
+    float valeur = NAN;
+    const char* nom = "";
+};
+bool froid_alerte_lire(const char* reste, FroidAlerteLu& out);

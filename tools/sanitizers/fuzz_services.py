@@ -106,6 +106,13 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_suivi": {"payload": "Tesla|382.7|USD|2.05|p|20,25,,31,40,38,52,61,58,70,74,100;"
                                   "Serre|21.4|°C|-1.5|a|90,80,70,60,50,40,30,20,10,0;"
                                   "CAC 40|7803.3301|EUR|-0.95|p|50,48,47,51,49,45;Compteur|unknown||||"},
+    # Froid (ADR-0055) : un réfrigérateur au niveau grave (porte mal fermée) avec son dernier
+    # incident, un congélateur conforme sans limite basse, un capteur muet.
+    "tab5_maj_froid": {"payload": "Frigo cuisine|f|9.1|2|porte|1791381720|2.8|9.4|0|5|"
+                                  "3.1,3.0,3.2,,3.4,3.3,3.1,3.0,2.9,3.0,3.2,3.5,3.6,3.4,3.3,3.2,3.1,3.0,3.2,3.3,"
+                                  "3.4,4.8,7.2,8.6,9.1|chaud|1791300000|42|8.7;"
+                                  "Congélateur|c|-19.5|0|ok|0|-21.0|-18.2||-18|-20.1,-19.8,-19.5|||;"
+                                  "Cave à vin|f||1|indispo|1791380000|||0|5||||"},
 }
 
 NOMBRES = ["", "-1", "0", "15", "16", "31", "32", "99", "255", "256", "2147483647", "-2147483648",

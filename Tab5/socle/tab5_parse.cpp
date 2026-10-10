@@ -203,6 +203,7 @@ AlerteTexteLu alerte_texte_lire(const char* brut) {
     if (strncmp(brut, "@maj:", 5) == 0) return {AlerteTexteCode::MAJ, brut + 5, 0};
     if (strncmp(brut, "@indispo:", 9) == 0) return {AlerteTexteCode::INDISPO, brut + 9, atoi(brut + 9)};
     if (strncmp(brut, "@vigi:", 6) == 0) return {AlerteTexteCode::VIGI, brut + 6, 0};
+    if (strncmp(brut, "@froid:", 7) == 0) return {AlerteTexteCode::FROID, brut + 7, 0};
     return {AlerteTexteCode::TEXTE, brut, 0};
 }
 
@@ -948,4 +949,144 @@ bool suivi_variation_texte(const SuiviLu& s, char* out, size_t n) {
 int suivi_sens(const SuiviLu& s) {
     const long long m = variation_arrondie(s);
     return m > 0 ? 1 : (m < 0 ? -1 : 0);
+}
+
+// ─── 12. Froid : réfrigérateurs et congélateurs (ADR-0055) ───
+
+namespace {
+constexpr int kFroidChamps = 15;
+constexpr uint32_t kFroidDureeMax = 10u * 366u * 24u * 60u;  // dix ans en minutes
+
+// Température bornée (±kFroidTempMax), NAN sinon (vide, illisible, non finie).
+float froid_temperature(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    return std::isfinite(v) && std::fabs(v) <= kFroidTempMax ? v : NAN;
+}
+
+uint8_t froid_niveau(const Champ& c) {
+    // « -1 » se lit comme un très grand nombre : au-dessus du plafond, donc 0.
+    const uint32_t n = champ_entier(c, 0xFFFFFFFEu, 0);
+    return static_cast<uint8_t>(n > 2 ? 2 : n);
+}
+}  // namespace
+
+FroidCause froid_cause(const Champ& c) {
+    if (champ_est(c, "chaud")) return FroidCause::CHAUD;
+    if (champ_est(c, "froid")) return FroidCause::FROID;
+    if (champ_est(c, "porte")) return FroidCause::PORTE;
+    if (champ_est(c, "indispo")) return FroidCause::INDISPO;
+    return FroidCause::OK;
+}
+
+int froid_lire(const Champ& payload, FroidLu out[kFroidMax]) {
+    if (payload.p == nullptr) return 0;
+    const char* p = payload.p;
+    const char* fin = p + payload.n;
+    int n = 0;
+    while (p < fin && n < kFroidMax) {
+        const Champ e = champ_suivant(p, fin, ';');
+        Champ f[kFroidChamps];
+        const int k = champs_decouper(e.p, e.n, '|', f, kFroidChamps);
+        if (e.n == 0 || k < 2) continue;
+        for (int i = k; i < kFroidChamps; i++) f[i] = Champ{e.p + e.n, 0};
+        FroidType type;
+        if (champ_est(f[1], "f")) type = FroidType::FRIGO;
+        else if (champ_est(f[1], "c")) type = FroidType::CONGELATEUR;
+        else continue;
+        FroidLu& a = out[n];
+        a = FroidLu{};
+        a.nom = f[0];
+        a.type = type;
+        a.valeur = froid_temperature(f[2]);
+        a.niveau = froid_niveau(f[3]);
+        a.cause = froid_cause(f[4]);
+        a.depuis = champ_entier(f[5], kAlerteEpochMax, 0);
+        a.min = froid_temperature(f[6]);
+        a.max = froid_temperature(f[7]);
+        a.bas = froid_temperature(f[8]);
+        a.haut = froid_temperature(f[9]);
+        // Points : « , » entre deux, en °C ; un vide ou illisible = heure sans mesure. Un
+        // « , » final compte : la valeur actuelle vide (capteur muet) reste le dernier point, à
+        // sa place sur l'axe du temps (sinon la courbe s'étire d'une heure).
+        const char* q = f[10].p;
+        const char* qf = f[10].p + f[10].n;
+        bool encore = f[10].n > 0;
+        while (encore && a.n < kFroidPointsMax) {
+            const Champ c = champ_suivant(q, qf, ',');
+            encore = c.p + c.n < qf;  // un « , » suivait : un champ de plus, vide compris
+            a.points[a.n++] = froid_temperature(c);
+        }
+        a.dernier.cause = froid_cause(f[11]);
+        if (a.dernier.cause != FroidCause::OK) {
+            a.dernier.debut = champ_entier(f[12], kAlerteEpochMax, 0);
+            a.dernier.duree_min = champ_entier(f[13], kFroidDureeMax, 0);
+            a.dernier.max = froid_temperature(f[14]);
+        }
+        n++;
+    }
+    return n;
+}
+
+bool froid_temperature_texte(float v, char* out, size_t n) {
+    if (out == nullptr || n == 0) return false;
+    int r = 0;
+    if (!std::isfinite(v) || std::fabs(v) > kFroidTempMax) {
+        r = std::snprintf(out, n, "--");
+    } else {
+        // Arrondie au dixième d'abord : « -0.04 » s'écrit « 0.0 », jamais « -0.0 ».
+        double x = std::round(static_cast<double>(v) * 10.0) / 10.0;
+        if (x == 0.0) x = 0.0;
+        r = std::snprintf(out, n, "%.1f", x);
+    }
+    if (r < 0 || static_cast<size_t>(r) >= n) {
+        out[0] = '\0';
+        return false;
+    }
+    return true;
+}
+
+bool froid_echelle(const FroidLu& a, float& bas, float& haut) {
+    float lo = INFINITY;
+    float hi = -INFINITY;
+    auto prendre = [&](float v) {
+        if (!std::isfinite(v)) return;
+        lo = std::min(lo, v);
+        hi = std::max(hi, v);
+    };
+    for (int i = 0; i < a.n && i < kFroidPointsMax; i++) prendre(a.points[i]);
+    prendre(a.valeur);
+    prendre(a.bas);
+    prendre(a.haut);
+    if (!std::isfinite(lo) || !std::isfinite(hi)) return false;
+    // Un degré d'air au-dessus et au-dessous, puis kFroidEchelleMin au moins, centré.
+    lo -= 1.0f;
+    hi += 1.0f;
+    if (hi - lo < kFroidEchelleMin) {
+        const float c = (lo + hi) / 2.0f;
+        lo = c - kFroidEchelleMin / 2.0f;
+        hi = c + kFroidEchelleMin / 2.0f;
+    }
+    bas = lo;
+    haut = hi;
+    return true;
+}
+
+uint8_t froid_niveau_max(const FroidLu* a, int n) {
+    uint8_t m = 0;
+    for (int i = 0; a != nullptr && i < n; i++) m = std::max(m, a[i].niveau);
+    return m;
+}
+
+bool froid_alerte_lire(const char* reste, FroidAlerteLu& out) {
+    out = FroidAlerteLu{};
+    if (reste == nullptr) return false;
+    const char* c1 = std::strchr(reste, ':');
+    const char* c2 = c1 != nullptr ? std::strchr(c1 + 1, ':') : nullptr;
+    const char* c3 = c2 != nullptr ? std::strchr(c2 + 1, ':') : nullptr;
+    if (c3 == nullptr) return false;
+    out.cause = froid_cause(Champ{reste, static_cast<size_t>(c1 - reste)});
+    out.niveau = froid_niveau(Champ{c1 + 1, static_cast<size_t>(c2 - c1 - 1)});
+    out.valeur = froid_temperature(Champ{c2 + 1, static_cast<size_t>(c3 - c2 - 1)});
+    out.nom = c3 + 1;
+    return true;
 }

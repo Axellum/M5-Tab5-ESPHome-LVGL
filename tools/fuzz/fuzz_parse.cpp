@@ -2,7 +2,8 @@
  * Harnais libFuzzer de la lecture des payloads de Home Assistant (Tab5/socle/tab5_parse.h,
  * lot F de l'audit du 30/09/2026). Le premier octet choisit le parseur
  * ((octet - '0') modulo le nombre de parseurs : « 0… » = le premier, « : » le onzième,
- * le caractère qui suit « 9 », « ; » le douzième, « < » le treizième), le reste est le
+ * le caractère qui suit « 9 », « ; » le douzième, « < » le treizième, « = » le quatorzième,
+ * « > » le quinzième), le reste est le
  * payload, passé comme le firmware le passe (std::string, puis c_str() ou data()/size()).
  * Les graines sont les payloads du fuzz de la tablette virtuelle
  * (tools/sanitizers/fuzz_services.py), écrites par tools/fuzz/graines.py.
@@ -208,6 +209,25 @@ void suivi(const std::string& p) {
     suivi_decimales(Champ{p.data(), p.size()});
 }
 
+// Froid (ADR-0055) : la variable payload seule, et le libellé codé de ses alertes.
+void froid(const std::string& p) {
+    FroidLu a[kFroidMax];
+    const int n = froid_lire(Champ{p.data(), p.size()}, a);
+    for (int i = 0; i < n; i++) {
+        char t[16];
+        froid_temperature_texte(a[i].valeur, t, sizeof(t));
+        froid_temperature_texte(a[i].dernier.max, t, 4);
+        float bas = 0, haut = 0;
+        froid_echelle(a[i], bas, haut);
+        const std::string nom(a[i].nom.p, a[i].nom.n);  // ce que texte_ha_copier recevrait
+        (void) nom;
+    }
+    froid_niveau_max(a, n);
+    froid_cause(Champ{p.data(), p.size()});
+    FroidAlerteLu lu;
+    froid_alerte_lire(p.c_str(), lu);
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -231,6 +251,7 @@ constexpr Parseur kParseurs[] = {
     lecteur,          // ';' tab5_maj_lecteur
     cameras,          // '<' tab5_maj_cameras
     suivi,            // '=' tab5_maj_suivi
+    froid,            // '>' tab5_maj_froid
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 
