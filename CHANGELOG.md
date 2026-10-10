@@ -31,7 +31,7 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
 
-### 2026-10-10 — Popup Caméras : plusieurs caméras dans plusieurs pièces (ADR-0056, lot 1)
+### 2026-10-10 — Popup Caméras : plusieurs caméras dans plusieurs pièces (ADR-0057, lot 1)
 
 - **Demande d'Axel** (« fais comme tu le vois ») : gérer plusieurs caméras dans plusieurs pièces, intuitif, complet, propre, beau et léger. **Non testé sur la tablette ni avec plusieurs vraies caméras.**
 - **La pièce vient de Home Assistant, sans réglage** : le blueprint « Tab5 — emplacements » ajoute à chaque caméra sa pièce (`area_name` : celle de l'entité, sinon de son appareil) et, si elle est `unavailable`, l'heure depuis laquelle (`last_changed`). Format « nom|image|pièce|depuis », **16 caméras** au plus (8 avant). Même action, mêmes variables : `contrat/contrat.yaml` inchangé (1.2.0, pas encore publiée). Rétrocompatible dans les deux sens : un firmware d'avant lit « nom|image » et ignore la suite ; ce firmware lit « nom|image » d'un blueprint d'avant comme des caméras sans pièce.
@@ -39,7 +39,7 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 - **La dernière image de chaque caméra est gardée** tant que le popup est ouvert (8 Mio au plus, jamais sous 6 Mio de PSRAM libre ; la plus anciennement vue part d'abord) : revenir sur une caméra la montre tout de suite. Le chargeur **donne** son tampon décodé à l'écran au lieu d'échanger deux tampons. Les voisines de la caméra montrée sont chargées une fois entre deux images : un glissé tombe sur une image.
 - **Hors ligne** : une caméra que HA dit indisponible n'est pas demandée ; « Hors ligne depuis 14:32 » (ou « … depuis Lun 14:32 », « … depuis le 3 Oct ») au milieu du cadre, sur sa dernière image atténuée. Deux échecs de suite disent la même chose. Chaque caméra a son propre compte d'échecs et son attente (10 s, 30 s, 60 s) : une caméra en panne ne retient plus le tour des autres.
 - **Lecture du payload** en C++ pur (`cameras_lire()` : rang de la pièce de chaque caméra, pièce vide en dernier ; `tools/test_parse.cpp`, invariants dans le fuzzeur `tools/fuzz/fuzz_parse.cpp`) ; réponse du blueprint rendue par `tests/test_cameras_blueprint.py` (pièces, hors ligne, séparateurs, seize au plus, lisible par un firmware d'avant). Hors tablette, le bouchon du chargeur rend une mire calculée (une teinte par caméra) : le rendu montre la mise en page avec des images (`cameras`, `cameras-piece-hors-ligne`).
-- Cinq textes d'écran en sept langues (« Toutes », « Autres », trois « Hors ligne depuis … »). Docs : ADR-0056 (et une note dans l'ADR-0049), notice Caméras (EN/FR), `docs/screens.md`, `docs/architecture.md`, `Tab5/README.md` (table des services), `HomeAssistant_Config/README.md`, cartographie. **Blueprint à recopier** dans Home Assistant pour les pièces ; le firmware marche aussi avec l'ancien.
+- Cinq textes d'écran en sept langues (« Toutes », « Autres », trois « Hors ligne depuis … »). Docs : ADR-0057 (et une note dans l'ADR-0049), notice Caméras (EN/FR), `docs/screens.md`, `docs/architecture.md`, `Tab5/README.md` (table des services), `HomeAssistant_Config/README.md`, cartographie. **Blueprint à recopier** dans Home Assistant pour les pièces ; le firmware marche aussi avec l'ancien.
 
 ### 2026-10-10 — Popup télécommande : plusieurs télécommandes (TV, Apple TV, Freebox Player), une page chacune (ADR-0056)
 

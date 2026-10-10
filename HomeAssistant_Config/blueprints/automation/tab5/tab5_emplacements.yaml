@@ -78,7 +78,7 @@
 #         4 minutes et après un échec tant qu'il reste ouvert), pousse tab5_maj_cameras :
 #         l'adresse (cameras_adresse, vide = celle que la tablette voit) et
 #         « nom|image|pièce|depuis » par caméra, image = entity_picture (jeton qui change
-#         toutes les 5 minutes), pièce = area_name (ADR-0056), depuis = heure de
+#         toutes les 5 minutes), pièce = area_name (ADR-0057), depuis = heure de
 #         l'indisponibilité. Rien tant que le popup est fermé ; aucun package à installer.
 # @architecture_constraint Aucun placeholder : ce fichier est générique, il s'importe tel
 #       quel. Les clés d'emplacement et les commandes sont celles du firmware
@@ -3943,7 +3943,7 @@ actions:
       # les 4 minutes et après un échec tant qu'il reste ouvert. La réponse donne le
       # entity_picture du moment : son jeton change toutes les 5 minutes et l'ancien reste
       # valable 5 minutes de plus (homeassistant/components/camera), la tablette n'a donc
-      # jamais une URL périmée. ADR-0056 : chaque caméra porte sa pièce (area_name : celle
+      # jamais une URL périmée. ADR-0057 : chaque caméra porte sa pièce (area_name : celle
       # de l'entité, sinon de son appareil ; vide sans pièce) et, si elle est
       # « unavailable », l'heure depuis laquelle (last_changed, secondes Unix) : la
       # tablette ne la demande pas et dit « Hors ligne depuis … ». « nom|image|pièce|depuis » :

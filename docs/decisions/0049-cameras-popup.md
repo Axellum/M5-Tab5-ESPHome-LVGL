@@ -57,7 +57,7 @@ The first real test (a 640 × 480 camera, M5Stack AtomS3R-CAM, Home Assistant ov
 
 ## 2026-10-10 — By room
 
-[ADR-0056](0056-cameras-rooms.md) extends this popup: sixteen cameras, each with its Home Assistant area and offline time (« nom|image|pièce|depuis », same action, same variables), a room column from two rooms, the swipe and the dots inside the chosen room, the choice kept in NVS, the last image of each camera kept while the popup is open (the loader gives its buffer to the screen instead of swapping two), and a per-camera retry schedule. What is above about the URL, the token rotation, the opening and the loader still holds.
+[ADR-0057](0057-cameras-rooms.md) extends this popup: sixteen cameras, each with its Home Assistant area and offline time (« nom|image|pièce|depuis », same action, same variables), a room column from two rooms, the swipe and the dots inside the chosen room, the choice kept in NVS, the last image of each camera kept while the popup is open (the loader gives its buffer to the screen instead of swapping two), and a per-camera retry schedule. What is above about the URL, the token rotation, the opening and the loader still holds.
 
 ## Consequences
 

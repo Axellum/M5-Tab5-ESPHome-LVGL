@@ -290,7 +290,7 @@ size_t camera_psram_libre() { return heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 #include <cstdlib>
 #include <cstring>
 
-// Une mire calculée à la place de l'image (ADR-0056) : la capture du rendu montre la mise
+// Une mire calculée à la place de l'image (ADR-0057) : la capture du rendu montre la mise
 // en page avec des images (pièces, mosaïque, caméra hors ligne grisée) sans réseau. Taille
 // = width × height de l'URL (bornée à 960 × 540), 640 × 360 sans ; teinte tirée du chemin
 // de l'image (sans le jeton) : chaque caméra a la sienne, la même d'une image à l'autre.

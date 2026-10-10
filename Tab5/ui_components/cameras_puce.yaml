@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file cameras_puce.yaml
-# @role Puce d'une pièce dans la colonne de gauche du popup Caméras (ADR-0056), 17 fois
+# @role Puce d'une pièce dans la colonne de gauche du popup Caméras (ADR-0057), 17 fois
 #       (kCamerasPuces) dans cameras_pieces (cameras_popup.yaml) : n = 0 « Toutes », n ≥ 1
 #       la n-ième pièce des caméras (area_name dans Home Assistant). Toucher : ne montrer
 #       que les caméras de cette pièce (cameras_puce(n), tab5_cameras.cpp) ; un tap au bout

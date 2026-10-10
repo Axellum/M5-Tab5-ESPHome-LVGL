@@ -1,4 +1,4 @@
-# ADR-0056: Cameras by room — the Home Assistant area of each camera, a room column, the last image of each camera kept
+# ADR-0057: Cameras by room — the Home Assistant area of each camera, a room column, the last image of each camera kept
 
 **Status:** Proposed (2026-10-10; draft PR, not tried on a tablet nor with several real cameras when written).
 **Date:** 2026-10-10

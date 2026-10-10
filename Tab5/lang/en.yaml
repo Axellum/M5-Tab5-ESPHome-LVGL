@@ -1347,7 +1347,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Adresse de Home Assistant inconnue": "Home Assistant address unknown"
 "Image de %02d:%02d:%02d": "Image from %02d:%02d:%02d"
 "Plus d'image depuis %02d:%02d:%02d": "No image since %02d:%02d:%02d"
-# Pièces et caméras hors ligne (ADR-0056, 10/10/2026). « Toutes » : toutes les caméras ;
+# Pièces et caméras hors ligne (ADR-0057, 10/10/2026). « Toutes » : toutes les caméras ;
 # « Autres » : les caméras sans pièce dans Home Assistant.
 "Toutes": "All"
 "Autres": "Other"

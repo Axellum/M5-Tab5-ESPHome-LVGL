@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Popup Caméras (ADR-0049, ADR-0056), côté Home Assistant : la réponse du blueprint
+"""Popup Caméras (ADR-0049, ADR-0057), côté Home Assistant : la réponse du blueprint
 « Tab5 — emplacements » à l'événement esphome.tab5_cameras, rendue avec le VRAI modèle
 Jinja dans le bac à sable de tests/test_tuiles_blueprint.py (fausses entités, aire de
 chaque caméra, état « unavailable »).

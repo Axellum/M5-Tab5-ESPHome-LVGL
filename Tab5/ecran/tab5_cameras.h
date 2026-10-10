@@ -1,7 +1,7 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_cameras.h
- * @role Popup Caméras (tab5_cameras.cpp, ADR-0049, ADR-0056).
+ * @role Popup Caméras (tab5_cameras.cpp, ADR-0049, ADR-0057).
  * @architecture_constraint tab5_custom.h l'inclut : les lambdas YAML et les unités
  *       `tab5_*.cpp` le voient. Une fonction déclarée ici a un appelant hors de son fichier
  *       (règle 12 de tools/check_tab5_code_rules.py, qui lit tab5_custom.h et ses en-têtes).
@@ -14,7 +14,7 @@
 #include <string>
 
 // =============================================================================
-// Caméras (ADR-0049, 09/10/2026, discussion #278 ; pièces : ADR-0056, 10/10/2026)
+// Caméras (ADR-0049, 09/10/2026, discussion #278 ; pièces : ADR-0057, 10/10/2026)
 // — tab5_cameras.cpp
 // =============================================================================
 // Popup « Caméras » (cameras_popup.yaml) : les caméras choisies dans la section
@@ -31,7 +31,7 @@
 // entity_picture, pièce et « hors ligne depuis » de chaque caméra). L'image est
 // téléchargée et décodée hors de la boucle principale (tab5_cameras_charge.h : tâche
 // FreeRTOS, décodeur JPEG matériel) en PSRAM. La dernière image de chaque caméra vue est
-// gardée tant que le popup reste ouvert (8 Mio au plus, ADR-0056) : revenir sur une
+// gardée tant que le popup reste ouvert (8 Mio au plus, ADR-0057) : revenir sur une
 // caméra la montre tout de suite, l'image neuve la remplace.
 //
 // Widgets posés par le script tab5_cameras_ouvrir (tab5-cameras.yaml) à la première

@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file cameras_popup.yaml
-# @role Popup « Caméras » (ADR-0049, 09/10/2026, discussion #278 ; pièces : ADR-0056,
+# @role Popup « Caméras » (ADR-0049, 09/10/2026, discussion #278 ; pièces : ADR-0057,
 #       10/10/2026) : l'image fixe d'une caméra de Home Assistant, rafraîchie toutes les
 #       quelques secondes, « Pièce · Caméra » et l'heure de l'image dessous, une pastille
 #       par caméra de la pièce choisie. À partir de deux pièces, une colonne à gauche :

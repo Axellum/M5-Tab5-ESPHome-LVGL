@@ -551,12 +551,12 @@ bool ha_base_depuis_hote(const char* hote, char* out, size_t n);
 // contrôle, ou si elle ne tient pas dans `n`.
 bool ha_image_url(const Champ& image, const char* base, char* out, size_t n);
 
-// ─── 10. Popup Caméras (tab5_maj_cameras, ADR-0049, ADR-0056) ───
+// ─── 10. Popup Caméras (tab5_maj_cameras, ADR-0049, ADR-0057) ───
 // Variable cameras : « nom|image|pièce|hors_ligne;… » dans l'ordre du blueprint :
 //   nom        friendly_name (HA remplace « | » et « ; ») ;
 //   image      l'attribut entity_picture (« /api/camera_proxy/camera.x?token=… », chemin
 //              relatif à Home Assistant) ou une URL complète ;
-//   pièce      area_name() de la caméra (ADR-0056), vide sans pièce ; absente chez un
+//   pièce      area_name() de la caméra (ADR-0057), vide sans pièce ; absente chez un
 //              blueprint d'avant (« nom|image ») : vide aussi ;
 //   hors_ligne horodatage Unix (secondes) depuis lequel HA la dit « unavailable », vide ou
 //              0 = en ligne ; absent chez un blueprint d'avant.

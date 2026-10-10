@@ -811,7 +811,7 @@ METEO_SCENE_3 = (
 METEO_PAGES = {"jour": (433, 41), "jours": (643, 41), "details": (853, 41)}
 METEO_GLISSER = Glisser(1100, 675, 500, 675, dans_popup=True)
 
-# Popup Caméras (ADR-0049, ADR-0056, cameras_popup.yaml) : la liste que le blueprint
+# Popup Caméras (ADR-0049, ADR-0057, cameras_popup.yaml) : la liste que le blueprint
 # renverrait à l'événement esphome.tab5_cameras (« nom|image|pièce|depuis »), poussée avant
 # l'ouverture. Le rendu ne télécharge rien : le bouchon de tab5_cameras_charge.cpp (hors
 # ESP_PLATFORM) rend une mire calculée, une teinte par caméra. Sept caméras, trois pièces
@@ -1175,7 +1175,7 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-zone-lecteur-vide", (LECTEUR_INACTIF, ZONE_LECTEUR), (ZONE_VOCAL, LECTEUR_AUCUN)),
     Ecran("accueil-zone-lecteur-gelule", (Choisir("Thème", THEME_CADRE_GELULE), LECTEUR_EN_PAUSE, ZONE_LECTEUR),
           (ZONE_VOCAL, LECTEUR_AUCUN, Choisir("Thème", THEME_PAR_DEFAUT))),
-    # Popup Caméras (ADR-0049, ADR-0056) : sept caméras dans trois pièces et « Autres », la
+    # Popup Caméras (ADR-0049, ADR-0057) : sept caméras dans trois pièces et « Autres », la
     # première montrée (« Toutes »), puis la pièce Jardin et son abri hors ligne (deux
     # balayages : Terrasse → Potager → Abri de jardin). `fermer` remet « Toutes » (la pièce
     # est gardée en NVS).

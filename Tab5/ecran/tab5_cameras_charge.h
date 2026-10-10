@@ -10,7 +10,7 @@
  *           image à l'autre (pas de poignée de main TLS à chaque image), 12 s au plus.
  *         - Décodage : le décodeur JPEG MATÉRIEL de l'ESP32-P4 (esp_driver_jpeg), en
  *           RGB565 petit-boutiste, le format natif de LVGL : aucune conversion après.
- *         - Tampon de sortie (ADR-0056, 10/10/2026) : la tâche décode dans SON tampon ;
+ *         - Tampon de sortie (ADR-0057, 10/10/2026) : la tâche décode dans SON tampon ;
  *           camera_charge_prendre() le DONNE à la boucle principale (l'écran garde la
  *           dernière image de chaque caméra), qui le rend par camera_image_rendre() quand
  *           elle n'en veut plus : gardé pour le décodage suivant s'il est libre, sinon libéré.
@@ -22,7 +22,7 @@
  *       le client http_request `assist_http` (verify_ssl: false, tab5-assist.yaml).
  *       Hors tablette (rendu, plateforme host) : un bouchon sans réseau qui rend tout de
  *       suite une mire calculée (une teinte par caméra, à la taille demandée) : les
- *       captures du rendu montrent la mise en page avec des images (ADR-0056).
+ *       captures du rendu montrent la mise en page avec des images (ADR-0057).
  * @ai_warning [AI-WARNING] Une image prise appartient à l'écran : LVGL la lit tant qu'un
  *       widget la montre. Ne la rendre (camera_image_rendre) qu'après avoir retiré la source
  *       du widget et vidé le cache d'images de LVGL. Ne pas mettre la pile de la tâche en
@@ -68,5 +68,5 @@ void camera_image_rendre(CameraImage* img, bool garder = true);
 // Rend la mémoire du chargeur : son tampon de sortie, le JPEG, la connexion (les images
 // prises restent à l'écran, qui les rend). Sans effet pendant EN_COURS (renvoie faux).
 bool camera_charge_liberer();
-// PSRAM libre (octets) : l'écran borne les images gardées (ADR-0056). Hors tablette : SIZE_MAX.
+// PSRAM libre (octets) : l'écran borne les images gardées (ADR-0057). Hors tablette : SIZE_MAX.
 size_t camera_psram_libre();

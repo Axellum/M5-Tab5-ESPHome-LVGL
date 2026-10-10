@@ -14,7 +14,7 @@
 #           cours toutes les 100 ms, image de la caméra montrée toutes les 5 s, images de
 #           ses voisines entre deux, tant que le popup est ouvert). L'image est téléchargée
 #           et décodée hors de la boucle (tab5_cameras_charge.cpp : tâche FreeRTOS,
-#           décodeur JPEG matériel). Pièces, filtre et mémoire des images : ADR-0056.
+#           décodeur JPEG matériel). Pièces, filtre et mémoire des images : ADR-0057.
 # @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
 #       nomme aucune entité. Chargé APRÈS tab5_lvgl (il référence des widgets) et après
 #       tab5_assist : le https sans vérification du certificat du chargeur vient de son

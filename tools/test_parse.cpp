@@ -1159,7 +1159,7 @@ static void test_cameras_lire() {
     expect(lire(vingt) == kCamerasMax && champ_vaut(c[kCamerasMax - 1].nom, "C15"), "caméras : 16 au plus");
 }
 
-// ADR-0056 : la pièce (area_name) et « hors ligne depuis » ; un blueprint d'avant
+// ADR-0057 : la pièce (area_name) et « hors ligne depuis » ; un blueprint d'avant
 // (« nom|image ») reste lisible.
 static void test_cameras_pieces() {
     CameraLue c[kCamerasMax];

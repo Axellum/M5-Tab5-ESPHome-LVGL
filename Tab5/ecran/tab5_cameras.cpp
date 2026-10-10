@@ -2,7 +2,7 @@
  * [AI-CONTEXT]
  * @file tab5_cameras.cpp
  * @role Popup « Caméras » (ADR-0049, 09/10/2026, discussion #278 ; pièces et mémoire des
- *       images : ADR-0056, 10/10/2026) : l'image fixe des caméras de Home Assistant,
+ *       images : ADR-0057, 10/10/2026) : l'image fixe des caméras de Home Assistant,
  *       rangées par pièce, rafraîchie tant que le popup est ouvert. Pas de vidéo : un JPEG
  *       à la fois, jamais deux.
  *         - Liste : action tab5_maj_cameras (adresse, cameras), poussée par le blueprint
@@ -90,7 +90,7 @@ constexpr int kEchecsHorsLigne = 2;   // à partir de là : « Hors ligne depuis
 constexpr int kSondeMs = 100;         // chargement en cours, popup ouvert
 constexpr int kSondeFermeMs = 1000;   // chargement en cours, popup fermé (libérer à sa fin)
 
-// ─── Mémoire des images (ADR-0056) ──────────────────────────────────────────────────
+// ─── Mémoire des images (ADR-0057) ──────────────────────────────────────────────────
 // 8 Mio : huit images 960 × 540 (1 Mio), treize 640 × 480. PSRAM libre au repos : 23 Mo
 // (docs/performance.md) ; jamais moins de kPsramReserve laissés au reste du firmware.
 constexpr size_t kVuesOctetsMax = 8u * 1024u * 1024u;
