@@ -67,7 +67,7 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
             defauts = {"rangee_plantes": "0", "rangee_duree": 32, "nabu_ecoute": "0", "nabu_duree": 32,
                        "rangee_defilement": "auto", "nabu_defilement": "fixe",
                        "reglables_defilement": "fixe", "reglables_duree": 32,
-                       "gauche_depart": "vocal", "gauche_cycle": ["vocal", "graphique"]}
+                       "gauche_depart": "vocal", "gauche_cycle": ["vocal", "graphique", "lecteur"]}
             if nom in defauts:
                 assert entree["default"] == defauts[nom], nom
                 continue

@@ -57,9 +57,10 @@ lvgl:
         # d'air au-dessus et au-dessous de l'icône dans chaque bouton.
 
         # --- Zone à gauche de l'horloge au choix (ADR-0051, 10/10/2026, demande d'Axel) ---
-        # Deux contenus, l'un montré, l'autre masqué par zone_gauche_appliquer()
+        # Trois contenus, l'un montré, les autres masqués par zone_gauche_appliquer()
         # (tab5_zone_gauche.cpp) : zone_vocal (le micro et les boutons Domo / Discu, l'écran
-        # d'avant) ou zone_graphique (les heures qui viennent en courbe et barres de pluie).
+        # d'avant), zone_graphique (les heures qui viennent en courbe et barres de pluie) ou
+        # zone_lecteur (le lecteur de musique compact, lecteur_zone.yaml).
         # Le contenu suivant : tap sur la seconde température (btn_serre_games) ou le geste
         # « zone_gauche_suivante » ; le départ et le cycle se choisissent dans le blueprint
         # (clé « gauche »). Le cadre Ok Nabu, dessous, ne change pas.
@@ -152,6 +153,9 @@ lvgl:
             styles: style_clim_btn_page
             on_short_click:
               - lambda: 'if (!ui_appui_glisse()) id(tab5_ecran_ouvrir).execute((int) Ecran::METEO);'
+        # Lecteur compact (ADR-0051, lot 2, sur le lecteur de l'ADR-0050) : même emprise que
+        # le graphique, masqué au démarrage. Tap hors des boutons : le popup Musique.
+        - !include ../ui_components/lecteur_zone.yaml
 
         # Bouton OK Nabu : même place que la tuile clim, en miroir (toute la colonne,
         # bas à y 308), texte à la taille de la date (45 px). Hauteur ajustée au texte le

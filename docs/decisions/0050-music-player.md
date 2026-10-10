@@ -32,7 +32,7 @@ Constraints: push-only ([ADR-0001](0001-push-only-zero-polling.md)) — the tabl
 
 - A minor contract version: `contrat/contrat.yaml` 1.1.0 (one action and one event added). Update order: the firmware first; new HA files with an older firmware fail the player push without stopping anything else (`continue_on_error`).
 - A cover from a HA served only in https on its port does not arrive (the relative path is completed in http): the music note shows instead. Documented in the package's header.
-- The mini-bar hides the « Ok Nabu » frame while music plays: its wake-word toggle comes back 5 minutes after a pause or when playback stops (to be judged on the screen by the author).
+- The mini-bar hides the « Ok Nabu » frame while music plays: its wake-word toggle comes back 5 minutes after a pause or when playback stops (to be judged on the screen by the author). Since [ADR-0051](0051-left-zone-choice.md)'s second lot, the zone left of the clock can show a compact player on the same data and commands; the mini-bar stays hidden while it does.
 - The 70 % scrim and the 360 px cover cost a full-card redraw at opening; the position bar repaints once a second while playing.
 - New glyphs in `mdi_font_26`, `_32`, `_45`, `_70` and `_120`; seven screen texts in six languages; the HA dashboard of the Tab5 shows the new list.
 - The off-device render stubs `online_image` (no download): the cover there is the music note.
