@@ -108,6 +108,9 @@ script:
           // Musique (ADR-0050) : le lecteur courant, état frais demandé à HA.
           ModalRegistry::add(id(lecteur_popup),          "Musique",          ModalRegistry::POPUP,
                              [] { id(tab5_lecteur_ouvrir).execute(std::string()); });
+          // Caméras (ADR-0049) : pose les widgets à la première ouverture, demande la liste.
+          ModalRegistry::add(id(cameras_popup),          "Caméras",          ModalRegistry::POPUP,
+                             [] { id(tab5_cameras_ouvrir).execute(); });
           // Suivi (ADR-0053) : les capteurs suivis, dernier état reçu (rien n'est demandé à HA).
           ModalRegistry::add(id(suivi_popup),            "Suivi",            ModalRegistry::POPUP,
                              [] { id(tab5_suivi_ouvrir).execute(); });
@@ -369,6 +372,8 @@ select:
       - "Météo"
       # Le lecteur de musique (ADR-0050, 10/10/2026), à la fin aussi.
       - "Musique"
+      # L'image des caméras (ADR-0049, 09/10/2026) : une sonnette l'ouvre d'ici. À la fin.
+      - "Caméras"
       # Les capteurs suivis (ADR-0053, 10/10/2026), à la fin aussi.
       - "Suivi"
     on_value:

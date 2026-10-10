@@ -56,6 +56,7 @@ Details: [home screen](home.md) (1 to 12), [bottom row and rooms](tiles.md) (13,
 | Music | long press on a media player, the « now playing » bar, or « Aller à l'écran » | [Music](music.md) |
 | Tracking | the tracked sensor left of the clock, or « Aller à l'écran » | [Tracking](tracking.md) |
 | House | in device mode, tap on the room's name in the central card | [House](house.md) |
+| Cameras | « Agenda ▸ Caméras » on the navigation wheel, « Aller à l'écran » (Home Assistant), or a button given « Caméras · Cameras » by the blueprint | [Cameras](cameras.md) |
 | Settings | the gear button | [Settings](settings.md) |
 | System console (System page of the settings) | long press on the gear button | [System console](console.md) |
 | Arcade | the gamepad button, or « Jeux » in the navigation wheel | [Arcade](arcade.md) |
@@ -122,6 +123,7 @@ Le détail : [écran d'accueil](home.md#version-française) (1 à 12), [rangée 
 | Musique | appui long sur un lecteur multimédia, la barre « en lecture », ou « Aller à l'écran » | [Musique](music.md#version-française) |
 | Suivi | le capteur suivi à gauche de l'horloge, ou « Aller à l'écran » | [Suivi](tracking.md#version-française) |
 | Maison | en mode appareils, tap sur le nom de la pièce dans la carte centrale | [Maison](house.md#version-française) |
+| Caméras | « Agenda ▸ Caméras » de la roue de navigation, « Aller à l'écran » (Home Assistant), ou un bouton auquel le blueprint donne « Caméras · Cameras » | [Caméras](cameras.md#version-française) |
 | Réglages | le bouton engrenage | [Réglages](settings.md#version-française) |
 | Console système (page Système des réglages) | appui long sur le bouton engrenage | [Console système](console.md#version-française) |
 | Arcade | le bouton manette, ou « Jeux » dans la roue de navigation | [Arcade](arcade.md#version-française) |

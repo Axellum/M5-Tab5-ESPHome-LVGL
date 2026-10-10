@@ -300,7 +300,7 @@ bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out)
 // LECTEUR : le lecteur de musique compact (lot 2, sur le lecteur de l'ADR-0050), sauté
 // quand HA a dit qu'aucun lecteur n'est choisi (tab5_zone_gauche.cpp, disponible()).
 // CAPTEUR : le premier capteur de « Tab5 · capteurs suivis » en courbe (ADR-0053, section
-// 10), sauté de même quand HA a dit qu'aucun capteur n'est choisi.
+// 11), sauté de même quand HA a dit qu'aucun capteur n'est choisi.
 enum class ZoneGauche : uint8_t {
     VOCAL,      // le micro et les boutons Domo / Discu (l'écran d'avant)
     GRAPHIQUE,  // les prévisions des heures qui viennent en courbe et barres de pluie
@@ -549,7 +549,33 @@ bool ha_base_depuis_hote(const char* hote, char* out, size_t n);
 // contrôle, ou si elle ne tient pas dans `n`.
 bool ha_image_url(const Champ& image, const char* base, char* out, size_t n);
 
-// ─── 10. Suivi de capteurs (tab5_maj_suivi, ADR-0053) ───
+// ─── 10. Popup Caméras (tab5_maj_cameras, ADR-0049) ───
+// Variable cameras : « nom|image;nom|image » dans l'ordre du blueprint, `image` = l'attribut
+// entity_picture de la caméra (« /api/camera_proxy/camera.x?token=… », chemin relatif à
+// Home Assistant) ou une URL complète. HA retire « | » et « ; » des noms. La base de HA
+// vient de ha_base_depuis_hote() (section 9), comme les pochettes du lecteur.
+constexpr int kCamerasMax = 8;
+constexpr size_t kCameraNomMax = 48;      // copié par l'écran (texte_ha_copier)
+constexpr size_t kCameraImageMax = 256;   // chemin + jeton : ~110 octets chez HA
+constexpr size_t kCameraUrlMax = 384;     // base + image + « &width=…&height=… »
+
+struct CameraLue {
+    Champ nom;
+    Champ image;
+};
+
+// Au plus kCamerasMax caméras, dans l'ordre. Un enregistrement sans image (vide, « ;; »,
+// « nom| ») est sauté ; un nom vide est gardé (l'écran n'en montre aucun). Renvoie le
+// nombre lu.
+int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax]);
+
+// URL à télécharger : celle de ha_image_url() (section 9) ; pour le proxy des caméras
+// (/api/camera_proxy/), « width=L&height=H » ajoutés (« ? » ou « & ») s'ils n'y sont pas et
+// que L et H sont positifs : HA réduit alors l'image avant de l'envoyer. Faux (out vidé)
+// dans les cas de ha_image_url() ou si la taille ne tient pas dans `n`.
+bool camera_url(const Champ& image, const char* base, int largeur, int hauteur, char* out, size_t n);
+
+// ─── 11. Suivi de capteurs (tab5_maj_suivi, ADR-0053) ───
 // Une variable, poussée par packages/tab5_suivi.yaml : un enregistrement par capteur de la
 // liste « Tab5 · capteurs suivis », dans son ordre, séparés par « ; » (kSuivisMax au plus ;
 // vide : aucun capteur choisi) :

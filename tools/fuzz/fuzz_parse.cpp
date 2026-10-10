@@ -2,7 +2,7 @@
  * Harnais libFuzzer de la lecture des payloads de Home Assistant (Tab5/socle/tab5_parse.h,
  * lot F de l'audit du 30/09/2026). Le premier octet choisit le parseur
  * ((octet - '0') modulo le nombre de parseurs : « 0… » = le premier, « : » le onzième,
- * le caractère qui suit « 9 », « ; » le douzième), le reste est le
+ * le caractère qui suit « 9 », « ; » le douzième, « < » le treizième), le reste est le
  * payload, passé comme le firmware le passe (std::string, puis c_str() ou data()/size()).
  * Les graines sont les payloads du fuzz de la tablette virtuelle
  * (tools/sanitizers/fuzz_services.py), écrites par tools/fuzz/graines.py.
@@ -172,6 +172,27 @@ void lecteur(const std::string& p) {
     lecteur_fonctions_lire(Champ{p.data(), p.size()});
 }
 
+// Popup Caméras : les deux variables du service (adresse, cameras) séparées par un saut de
+// ligne, comme temperature(). L'URL de chaque caméra est construite avec l'adresse donnée,
+// puis avec la base tirée du payload pris comme adresse de client (on_client_connected).
+void cameras(const std::string& p) {
+    const size_t saut = p.find('\n');
+    const std::string adresse = p.substr(0, saut);
+    const std::string liste = saut == std::string::npos ? std::string() : p.substr(saut + 1);
+    char base[64];
+    ha_base_depuis_hote(adresse.c_str(), base, sizeof(base));
+    CameraLue c[kCamerasMax];
+    const int n = cameras_lire(Champ{liste.data(), liste.size()}, c);
+    char url[kCameraUrlMax];
+    for (int i = 0; i < n; i++) {
+        camera_url(c[i].image, adresse.c_str(), 960, 540, url, sizeof(url));
+        camera_url(c[i].image, base, 960, 540, url, sizeof(url));
+        const std::string copie(c[i].nom.p, c[i].nom.n);  // ce que texte_ha_copier recevrait
+        (void) copie;
+    }
+}
+
+// Suivi de capteurs (ADR-0053) : la variable payload seule.
 void suivi(const std::string& p) {
     SuiviLu s[kSuivisMax];
     const int n = suivis_lire(Champ{p.data(), p.size()}, s);
@@ -208,7 +229,8 @@ constexpr Parseur kParseurs[] = {
     emplacements,     // '9' tab5_maj_emplacements
     temperature,      // ':' tab5_maj_historique
     lecteur,          // ';' tab5_maj_lecteur
-    suivi,            // '<' tab5_maj_suivi
+    cameras,          // '<' tab5_maj_cameras
+    suivi,            // '=' tab5_maj_suivi
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

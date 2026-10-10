@@ -778,6 +778,16 @@ METEO_SCENE_3 = (
 METEO_PAGES = {"jour": (433, 41), "jours": (643, 41), "details": (853, 41)}
 METEO_GLISSER = Glisser(1100, 675, 500, 675, dans_popup=True)
 
+# Popup Caméras (ADR-0049, cameras_popup.yaml) : la liste que le blueprint renverrait à
+# l'événement esphome.tab5_cameras, poussée avant l'ouverture. Le rendu ne télécharge rien
+# (Tab5/rendu/composants/online_image) : la capture montre la page de la première caméra
+# (nom, pastilles, « Chargement... »), pas d'image.
+CAMERAS_DONNEES = Service("tab5_maj_cameras", (
+    ("adresse", "http://homeassistant.local:8123"),
+    ("cameras", "Entrée|/api/camera_proxy/camera.entree?token=a;Jardin|/api/camera_proxy/camera.jardin?token=b;"
+                "Garage|/api/camera_proxy/camera.garage?token=c"),
+))
+
 
 def _historique(cle: str, vue: str, exterieur: bool = False) -> Service:
     """Ce que pousserait script.tab5_historique (tools/demo/scenarios.py)."""
@@ -1049,9 +1059,11 @@ ECRANS: tuple[Ecran, ...] = (
     # suivant ferme.
     Ecran("roue-navigation", (Long(*CARTE_CENTRALE),), (ROUE_FERMER,)),
     Ecran("roue-navigation-pieces", (Long(*CARTE_CENTRALE), nav(NAV_PIECES)), (ROUE_FERMER, ROUE_FERMER)),
+    # Appareils ▸ : Températures … Plantes, puis Musique et TV (10/10/2026) : sept choix
+    # dans cette scène (pas d'Énergie), le second anneau le plus large de la démo.
     Ecran("roue-navigation-appareils", (Long(*CARTE_CENTRALE), nav(NAV_APPAREILS)), (ROUE_FERMER, ROUE_FERMER)),
     Ecran("roue-navigation-tablette", (Long(*CARTE_CENTRALE), nav(NAV_TABLETTE)), (ROUE_FERMER, ROUE_FERMER)),
-    # Agenda ▸ : Météo (ADR-0043) en tête, puis Calendrier et Réveil.
+    # Agenda ▸ : Météo (ADR-0043) en tête, puis Calendrier, Réveil et Caméras (ADR-0049).
     Ecran("roue-navigation-agenda", (Long(*CARTE_CENTRALE), nav(NAV_AGENDA)), (ROUE_FERMER, ROUE_FERMER)),
     # Une pièce choisie dans la roue : le mode HA sur elle, sans swipe.
     Ecran("roue-navigation-bureau", (Long(*CARTE_CENTRALE), nav(NAV_PIECES), NAV_BUREAU), RETOUR_PIECE_CLIMAT),
@@ -1114,6 +1126,8 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-zone-lecteur-vide", (LECTEUR_INACTIF, ZONE_LECTEUR), (ZONE_VOCAL, LECTEUR_AUCUN)),
     Ecran("accueil-zone-lecteur-gelule", (Choisir("Thème", THEME_CADRE_GELULE), LECTEUR_EN_PAUSE, ZONE_LECTEUR),
           (ZONE_VOCAL, LECTEUR_AUCUN, Choisir("Thème", THEME_PAR_DEFAUT))),
+    # Popup Caméras (ADR-0049) : trois caméras, la première montrée.
+    Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"))),
     # Capteurs suivis (ADR-0053) : le popup avant toute poussée (« En attente de Home
     # Assistant »), avec quatre capteurs (deux rangées : 3 colonnes au plus), puis la carte
     # du premier dans la zone à gauche de l'horloge, dans le thème par défaut et en gélule.

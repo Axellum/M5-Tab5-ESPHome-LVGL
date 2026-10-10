@@ -27,6 +27,9 @@ services:
     details: string
     heures: string
     mois: string
+  tab5_maj_cameras:
+    adresse: string
+    cameras: string
   tab5_maj_clim:
     current: string
     fan: string
@@ -96,6 +99,7 @@ evenements:
   esphome.tab5_batterie_faible: [niveau, seuil]
   esphome.tab5_calendrier_jour: [date]
   esphome.tab5_calendrier_mois: [annee, mois]
+  esphome.tab5_cameras: []
   esphome.tab5_connected: []
   esphome.tab5_energie: [vue]
   esphome.tab5_historique: [cle, vue]

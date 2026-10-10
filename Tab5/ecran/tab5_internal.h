@@ -273,7 +273,7 @@ uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 // --- Roue d'actions rapides (tab5_roue.cpp, ADR-0036) ---
 // Icône d'un bouton (glyphe_roue, mdi_font_36) ; AUCUNE : un texte ou une pastille. Après
 // REGLAGES : celles de la roue de navigation (ADR-0042), familles puis destinations ;
-// METEO (popup Météo, ADR-0043) en dernier.
+// METEO (popup Météo, ADR-0043) puis CAMERAS (popup Caméras, ADR-0049) en dernier.
 enum class RoueIcone : uint8_t {
     AUCUNE,
     ETEINDRE,
@@ -317,6 +317,9 @@ enum class RoueIcone : uint8_t {
     ENGRENAGE,
     SYSTEME,
     METEO,
+    CAMERAS,
+    MUSIQUE,
+    TV,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
 // anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
@@ -584,7 +587,8 @@ void zone_gauche_donnees_changees();
 // tab5_lecteur.cpp, pour la zone à gauche de l'horloge (lecteur compact, ADR-0051 lot 2) :
 // montre ou masque son contenu (repeint s'il a changé caché ; la mini-barre « en lecture »
 // se masque tant qu'il est montré, revient ensuite), et dit s'il a quelque chose à montrer
-// (faux seulement quand HA a dit qu'aucun lecteur n'est choisi).
+// (faux seulement quand HA a dit qu'aucun lecteur n'est choisi). La roue de navigation
+// (tab5_roue_navigation.cpp, « Appareils ▸ ») lit la même réponse pour proposer Musique.
 void lecteur_zone_montrer(bool montre);
 bool lecteur_zone_disponible();
 // tab5_suivi.cpp, pour la zone à gauche de l'horloge (capteur suivi, ADR-0053) : montre ou

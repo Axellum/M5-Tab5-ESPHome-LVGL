@@ -97,6 +97,10 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_lecteur": {"lecteurs": "Salon|tv;Cuisine|speaker;Tablette|",
                          "etat": "1|Cuisine|speaker|playing|Bohemian Rhapsody|Queen|A Night at the Opera|Spotify|"
                                  "83|354|42|0|1|all|lspnvmar|/api/media_player_proxy/media_player.cuisine?token=x&cache=1"},
+    # Caméras (ADR-0049) : la liste que le blueprint pousse à l'ouverture du popup.
+    "tab5_maj_cameras": {"adresse": "http://homeassistant.local:8123",
+                         "cameras": "Entrée|/api/camera_proxy/camera.entree?token=abc123;"
+                                    "Jardin|/api/camera_proxy/camera.jardin?token=def456"},
     # Suivi de capteurs (ADR-0053) : une variation du jour, un écart, un capteur sans
     # courbe ni valeur, des points manquants.
     "tab5_maj_suivi": {"payload": "Tesla|382.7|USD|2.05|p|20,25,,31,40,38,52,61,58,70,74,100;"

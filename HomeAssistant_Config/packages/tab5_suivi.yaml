@@ -15,7 +15,7 @@
 #           la liste change, à la connexion de la tablette, à « MAJ Écran », au démarrage
 #           de HA et toutes les heures (la courbe avance même sans changement).
 # @payload_contract tab5_maj_suivi (Tab5/paquets/tab5-api-logic.yaml, tab5_parse.h
-#       section 10) : payload = un enregistrement par capteur, séparés par « ; » :
+#       section 11) : payload = un enregistrement par capteur, séparés par « ; » :
 #       « nom|valeur|unité|variation|genre|points ».
 #         nom = friendly_name (40 caractères ; vide : l'écran écrit « Capteur », jamais
 #           un entity_id) ; valeur = l'état tel quel s'il est numérique, vide sinon ;

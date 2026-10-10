@@ -55,7 +55,7 @@ struct SuiviUI {
 };
 extern SuiviUI g_suivi_ui;
 
-// Action tab5_maj_suivi : les capteurs suivis (tab5_parse.h, section 10). Repeint le popup
+// Action tab5_maj_suivi : les capteurs suivis (tab5_parse.h, section 11). Repeint le popup
 // s'il est ouvert, la carte de la zone si elle est montrée (sinon à leur prochaine
 // apparition) ; la zone gauche saute ou retrouve le contenu « capteur » quand la liste se
 // vide ou se remplit.

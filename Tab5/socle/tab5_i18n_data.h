@@ -8,9 +8,15 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1130;
+static const uint16_t kI18nKeyCount = 1136;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1267,6 +1273,7 @@ static const char* const kI18nKeys[] = {
     "Activée",
     "Activés — une secousse franche demande un indice",
     "Adresse IP",
+    "Adresse de Home Assistant inconnue",
     "Adversaire",
     "Affichée — estimation en pions, indicative",
     "Agenda",
@@ -1334,6 +1341,7 @@ static const char* const kI18nKeys[] = {
     "Aucun échange",
     "Aucune",
     "Aucune alerte",
+    "Aucune caméra choisie",
     "Aucune partie en cours",
     "Aucune partie sauvegardée",
     "Aucune question jouée",
@@ -1392,6 +1400,7 @@ static const char* const kI18nKeys[] = {
     "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer.",
     "Calibrer à plat",
     "Calme",
+    "Caméras",
     "Capteur",
     "Carillon",
     "Case Rejouer — relancez le dé !",
@@ -1592,6 +1601,7 @@ static const char* const kI18nKeys[] = {
     "IA : %s",
     "IMU",
     "Illimité",
+    "Image de %02d:%02d:%02d",
     "Image indisponible",
     "Impitoyable",
     "Inactif",
@@ -1863,6 +1873,7 @@ static const char* const kI18nKeys[] = {
     "Pluie modérée",
     "Pluie sur %d h",
     "Plume de suie",
+    "Plus d'image depuis %02d:%02d:%02d",
     "Points neutres (dame) : %d",
     "Portail ouvert !",
     "Pose la tablette PUIS appuie",
@@ -2051,6 +2062,7 @@ static const char* const kI18nKeys[] = {
     "TEMPÉRATURE",
     "TOUS LES NIVEAUX !",
     "TOUT EFFACER ?",
+    "TV",
     "Tab contre Tab",
     "Tablette",
     "Taille affichée : %s",
@@ -2401,6 +2413,7 @@ static const char* const kI18n_en[] = {
     "On",  // "Activée"
     "On — a firm shake asks for a hint",  // "Activés — une secousse franche demande un indice"
     "IP address",  // "Adresse IP"
+    "Home Assistant address unknown",  // "Adresse de Home Assistant inconnue"
     "Opponent",  // "Adversaire"
     "Shown — rough estimate in pawns",  // "Affichée — estimation en pions, indicative"
     "Agenda",  // "Agenda"
@@ -2468,6 +2481,7 @@ static const char* const kI18n_en[] = {
     "No exchange",  // "Aucun échange"
     "None",  // "Aucune"
     "No alerts",  // "Aucune alerte"
+    "No camera chosen",  // "Aucune caméra choisie"
     "No game in progress",  // "Aucune partie en cours"
     "No saved game",  // "Aucune partie sauvegardée"
     "No questions played",  // "Aucune question jouée"
@@ -2526,6 +2540,7 @@ static const char* const kI18n_en[] = {
     "Calibrate flat BEFORE playing: the nudge is measured from this reference,\nnot from the absolute tilt. Lay the tablet flat, then tap.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Calibrate flat",  // "Calibrer à plat"
     "Calm",  // "Calme"
+    "Cameras",  // "Caméras"
     "Sensor",  // "Capteur"
     "Chime",  // "Carillon"
     "Roll Again space — roll the die!",  // "Case Rejouer — relancez le dé !"
@@ -2726,6 +2741,7 @@ static const char* const kI18n_en[] = {
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "No limit",  // "Illimité"
+    "Image from %02d:%02d:%02d",  // "Image de %02d:%02d:%02d"
     "Image unavailable",  // "Image indisponible"
     "Merciless",  // "Impitoyable"
     "Inactive",  // "Inactif"
@@ -2997,6 +3013,7 @@ static const char* const kI18n_en[] = {
     "Moderate rain",  // "Pluie modérée"
     "Rain over %d h",  // "Pluie sur %d h"
     "Soot Feather",  // "Plume de suie"
+    "No image since %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Neutral points (dame): %d",  // "Points neutres (dame) : %d"
     "Portal open!",  // "Portail ouvert !"
     "Set the tablet down THEN tap",  // "Pose la tablette PUIS appuie"
@@ -3185,6 +3202,7 @@ static const char* const kI18n_en[] = {
     "TEMPERATURE",  // "TEMPÉRATURE"
     "ALL LEVELS CLEARED!",  // "TOUS LES NIVEAUX !"
     "CLEAR EVERYTHING?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab vs Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Size shown: %s",  // "Taille affichée : %s"
@@ -3535,6 +3553,7 @@ static const char* const kI18n_de[] = {
     "An",  // "Activée"
     "An — kräftiges Schütteln fordert einen Tipp an",  // "Activés — une secousse franche demande un indice"
     "IP-Adresse",  // "Adresse IP"
+    "Adresse von Home Assistant unbekannt",  // "Adresse de Home Assistant inconnue"
     "Gegner",  // "Adversaire"
     "An — grobe Schätzung in Bauern",  // "Affichée — estimation en pions, indicative"
     "Termine",  // "Agenda"
@@ -3602,6 +3621,7 @@ static const char* const kI18n_de[] = {
     "Kein Austausch",  // "Aucun échange"
     "Keine",  // "Aucune"
     "Keine Warnungen",  // "Aucune alerte"
+    "Keine Kamera gewählt",  // "Aucune caméra choisie"
     "Kein laufendes Spiel",  // "Aucune partie en cours"
     "Kein gespeichertes Spiel",  // "Aucune partie sauvegardée"
     "Keine Fragen gespielt",  // "Aucune question jouée"
@@ -3660,6 +3680,7 @@ static const char* const kI18n_de[] = {
     "VOR dem Spiel flach kalibrieren: Der Nudge misst die Abweichung davon,\nnicht die absolute Neigung. Tablet hinlegen, dann tippen.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Flach kalibrieren",  // "Calibrer à plat"
     "Ruhig",  // "Calme"
+    "Kameras",  // "Caméras"
     "Sensor",  // "Capteur"
     "Gong",  // "Carillon"
     "Nochmal-Feld — erneut würfeln!",  // "Case Rejouer — relancez le dé !"
@@ -3860,6 +3881,7 @@ static const char* const kI18n_de[] = {
     "KI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Endlos",  // "Illimité"
+    "Bild von %02d:%02d:%02d",  // "Image de %02d:%02d:%02d"
     "Bild nicht verfügbar",  // "Image indisponible"
     "Gnadenlos",  // "Impitoyable"
     "Inaktiv",  // "Inactif"
@@ -4131,6 +4153,7 @@ static const char* const kI18n_de[] = {
     "Mäßiger Regen",  // "Pluie modérée"
     "Regen in %d Std.",  // "Pluie sur %d h"
     "Rußfeder",  // "Plume de suie"
+    "Kein Bild seit %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Neutrale Punkte (Dame): %d",  // "Points neutres (dame) : %d"
     "Portal offen!",  // "Portail ouvert !"
     "Tablet hinlegen, DANN tippen",  // "Pose la tablette PUIS appuie"
@@ -4319,6 +4342,7 @@ static const char* const kI18n_de[] = {
     "TEMPERATUR",  // "TEMPÉRATURE"
     "ALLE LEVEL GESCHAFFT!",  // "TOUS LES NIVEAUX !"
     "ALLES LÖSCHEN?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab gegen Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Angezeigte Größe: %s",  // "Taille affichée : %s"
@@ -4669,6 +4693,7 @@ static const char* const kI18n_nl[] = {
     "Aan",  // "Activée"
     "Aan — flink schudden vraagt een hint",  // "Activés — une secousse franche demande un indice"
     "IP-adres",  // "Adresse IP"
+    "Adres van Home Assistant onbekend",  // "Adresse de Home Assistant inconnue"
     "Tegenstander",  // "Adversaire"
     "Getoond — ruwe schatting in pionnen",  // "Affichée — estimation en pions, indicative"
     "Planning",  // "Agenda"
@@ -4736,6 +4761,7 @@ static const char* const kI18n_nl[] = {
     "Geen uitwisseling",  // "Aucun échange"
     "Geen",  // "Aucune"
     "Geen meldingen",  // "Aucune alerte"
+    "Geen camera gekozen",  // "Aucune caméra choisie"
     "Geen spel bezig",  // "Aucune partie en cours"
     "Geen opgeslagen spel",  // "Aucune partie sauvegardée"
     "Geen vragen gespeeld",  // "Aucune question jouée"
@@ -4794,6 +4820,7 @@ static const char* const kI18n_nl[] = {
     "Kalibreer plat VOOR je speelt: de nudge meet vanaf deze referentie,\nniet vanaf de absolute helling. Leg de tablet plat en tik.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Plat kalibreren",  // "Calibrer à plat"
     "Kalm",  // "Calme"
+    "Camera's",  // "Caméras"
     "Sensor",  // "Capteur"
     "Carillon",  // "Carillon"
     "Vak Nog eens — gooi opnieuw!",  // "Case Rejouer — relancez le dé !"
@@ -4994,6 +5021,7 @@ static const char* const kI18n_nl[] = {
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Onbeperkt",  // "Illimité"
+    "Beeld van %02d:%02d:%02d",  // "Image de %02d:%02d:%02d"
     "Geen afbeelding",  // "Image indisponible"
     "Genadeloos",  // "Impitoyable"
     "Inactief",  // "Inactif"
@@ -5265,6 +5293,7 @@ static const char* const kI18n_nl[] = {
     "Matige regen",  // "Pluie modérée"
     "Regen in %d u",  // "Pluie sur %d h"
     "Roetveer",  // "Plume de suie"
+    "Geen beeld sinds %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Neutrale punten (dame): %d",  // "Points neutres (dame) : %d"
     "Portaal open!",  // "Portail ouvert !"
     "Leg de tablet neer, tik DAN",  // "Pose la tablette PUIS appuie"
@@ -5453,6 +5482,7 @@ static const char* const kI18n_nl[] = {
     "TEMPERATUUR",  // "TEMPÉRATURE"
     "ALLE LEVELS GEHAALD!",  // "TOUS LES NIVEAUX !"
     "ALLES WISSEN?",  // "TOUT EFFACER ?"
+    "Tv",  // "TV"
     "Tab tegen Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Getoonde grootte: %s",  // "Taille affichée : %s"
@@ -5803,6 +5833,7 @@ static const char* const kI18n_es[] = {
     "Activada",  // "Activée"
     "Activados — una sacudida firme pide una pista",  // "Activés — une secousse franche demande un indice"
     "Dirección IP",  // "Adresse IP"
+    "Dirección de Home Assistant desconocida",  // "Adresse de Home Assistant inconnue"
     "Rival",  // "Adversaire"
     "Visible — estimación en peones, orientativa",  // "Affichée — estimation en pions, indicative"
     "Agenda",  // "Agenda"
@@ -5870,6 +5901,7 @@ static const char* const kI18n_es[] = {
     "Sin intercambio",  // "Aucun échange"
     "Ninguna",  // "Aucune"
     "Sin alertas",  // "Aucune alerte"
+    "Ninguna cámara elegida",  // "Aucune caméra choisie"
     "Ninguna partida en curso",  // "Aucune partie en cours"
     "Ninguna partida guardada",  // "Aucune partie sauvegardée"
     "Sin preguntas jugadas",  // "Aucune question jouée"
@@ -5928,6 +5960,7 @@ static const char* const kI18n_es[] = {
     "Calibra en plano ANTES de jugar: el nudge se mide desde esta referencia,\nno desde la inclinación absoluta. Apoya la tableta y toca.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Calibrar en plano",  // "Calibrer à plat"
     "Calma",  // "Calme"
+    "Cámaras",  // "Caméras"
     "Sensor",  // "Capteur"
     "Carillón",  // "Carillon"
     "Otra tirada — ¡tira de nuevo!",  // "Case Rejouer — relancez le dé !"
@@ -6128,6 +6161,7 @@ static const char* const kI18n_es[] = {
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Ilimitado",  // "Illimité"
+    "Imagen de las %02d:%02d:%02d",  // "Image de %02d:%02d:%02d"
     "Imagen no disponible",  // "Image indisponible"
     "Implacable",  // "Impitoyable"
     "Inactivo",  // "Inactif"
@@ -6399,6 +6433,7 @@ static const char* const kI18n_es[] = {
     "Lluvia moderada",  // "Pluie modérée"
     "Lluvia en %d h",  // "Pluie sur %d h"
     "Pluma de hollín",  // "Plume de suie"
+    "Sin imagen desde las %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Puntos neutrales (dame): %d",  // "Points neutres (dame) : %d"
     "¡Portal abierto!",  // "Portail ouvert !"
     "Apoya la tableta Y LUEGO toca",  // "Pose la tablette PUIS appuie"
@@ -6587,6 +6622,7 @@ static const char* const kI18n_es[] = {
     "TEMPERATURA",  // "TEMPÉRATURE"
     "¡TODOS LOS NIVELES!",  // "TOUS LES NIVEAUX !"
     "¿BORRAR TODO?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab contra Tab",  // "Tab contre Tab"
     "Tableta",  // "Tablette"
     "Tamaño mostrado: %s",  // "Taille affichée : %s"
@@ -6937,6 +6973,7 @@ static const char* const kI18n_it[] = {
     "Attiva",  // "Activée"
     "Attivi — una scossa decisa chiede un suggerimento",  // "Activés — une secousse franche demande un indice"
     "Indirizzo IP",  // "Adresse IP"
+    "Indirizzo di Home Assistant sconosciuto",  // "Adresse de Home Assistant inconnue"
     "Avversario",  // "Adversaire"
     "Mostrata — stima indicativa in pedoni",  // "Affichée — estimation en pions, indicative"
     "Agenda",  // "Agenda"
@@ -7004,6 +7041,7 @@ static const char* const kI18n_it[] = {
     "Nessuno scambio",  // "Aucun échange"
     "Nessuna",  // "Aucune"
     "Nessun avviso",  // "Aucune alerte"
+    "Nessuna telecamera scelta",  // "Aucune caméra choisie"
     "Nessuna partita in corso",  // "Aucune partie en cours"
     "Nessuna partita salvata",  // "Aucune partie sauvegardée"
     "Nessuna domanda giocata",  // "Aucune question jouée"
@@ -7062,6 +7100,7 @@ static const char* const kI18n_it[] = {
     "Calibra in piano PRIMA di giocare: il nudge si misura da questo riferimento,\nnon dall'inclinazione assoluta. Appoggia il tablet, poi tocca.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Calibra in piano",  // "Calibrer à plat"
     "Calma",  // "Calme"
+    "Telecamere",  // "Caméras"
     "Sensore",  // "Capteur"
     "Carillon",  // "Carillon"
     "Tira ancora — ritira il dado!",  // "Case Rejouer — relancez le dé !"
@@ -7262,6 +7301,7 @@ static const char* const kI18n_it[] = {
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Illimitato",  // "Illimité"
+    "Immagine delle %02d:%02d:%02d",  // "Image de %02d:%02d:%02d"
     "Nessuna immagine",  // "Image indisponible"
     "Spietata",  // "Impitoyable"
     "Inattivo",  // "Inactif"
@@ -7533,6 +7573,7 @@ static const char* const kI18n_it[] = {
     "Pioggia moderata",  // "Pluie modérée"
     "Pioggia in %d h",  // "Pluie sur %d h"
     "Piuma di fuliggine",  // "Plume de suie"
+    "Nessuna immagine dalle %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Punti neutri (dame): %d",  // "Points neutres (dame) : %d"
     "Portale aperto!",  // "Portail ouvert !"
     "Appoggia il tablet, POI tocca",  // "Pose la tablette PUIS appuie"
@@ -7721,6 +7762,7 @@ static const char* const kI18n_it[] = {
     "TEMPERATURA",  // "TEMPÉRATURE"
     "TUTTI I LIVELLI!",  // "TOUS LES NIVEAUX !"
     "CANCELLARE TUTTO?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab vs Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Goban mostrato: %s",  // "Taille affichée : %s"
@@ -8071,6 +8113,7 @@ static const char* const kI18n_tr[] = {
     "Açık",  // "Activée"
     "Açık — sert bir sallama ipucu ister",  // "Activés — une secousse franche demande un indice"
     "IP adresi",  // "Adresse IP"
+    "Home Assistant adresi bilinmiyor",  // "Adresse de Home Assistant inconnue"
     "Rakip",  // "Adversaire"
     "Açık — piyon cinsinden tahmin, yaklaşık",  // "Affichée — estimation en pions, indicative"
     "Ajanda",  // "Agenda"
@@ -8138,6 +8181,7 @@ static const char* const kI18n_tr[] = {
     "Akış yok",  // "Aucun échange"
     "Hiçbiri",  // "Aucune"
     "Uyarı yok",  // "Aucune alerte"
+    "Kamera seçilmedi",  // "Aucune caméra choisie"
     "Devam eden oyun yok",  // "Aucune partie en cours"
     "Kayıtlı oyun yok",  // "Aucune partie sauvegardée"
     "Oynanan soru yok",  // "Aucune question jouée"
@@ -8196,6 +8240,7 @@ static const char* const kI18n_tr[] = {
     "Oynamadan ÖNCE düz kalibre et: dürtme bu referanstan ölçülür,\nmutlak eğimden değil. Tableti yatır, sonra dokun.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Düz kalibre et",  // "Calibrer à plat"
     "Sakin",  // "Calme"
+    "Kameralar",  // "Caméras"
     "Sensör",  // "Capteur"
     "Çan sesi",  // "Carillon"
     "Tekrar at karesi — zarı yeniden at!",  // "Case Rejouer — relancez le dé !"
@@ -8396,6 +8441,7 @@ static const char* const kI18n_tr[] = {
     "YZ: %s",  // "IA : %s"
     "IMU",  // "IMU"
     "Sınırsız",  // "Illimité"
+    "Görsel saati: %02d:%02d:%02d",  // "Image de %02d:%02d:%02d"
     "Görsel yok",  // "Image indisponible"
     "Acımasız",  // "Impitoyable"
     "Pasif",  // "Inactif"
@@ -8667,6 +8713,7 @@ static const char* const kI18n_tr[] = {
     "Orta yağmur",  // "Pluie modérée"
     "%d saatte yağmur",  // "Pluie sur %d h"
     "Kurum Tüyü",  // "Plume de suie"
+    "Son görsel: %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Nötr noktalar (dame): %d",  // "Points neutres (dame) : %d"
     "Portal açık!",  // "Portail ouvert !"
     "Tableti yatır SONRA dokun",  // "Pose la tablette PUIS appuie"
@@ -8855,6 +8902,7 @@ static const char* const kI18n_tr[] = {
     "SICAKLIK",  // "TEMPÉRATURE"
     "TÜM SEVİYELER!",  // "TOUS LES NIVEAUX !"
     "HEPSİ SİLİNSİN Mİ?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab - Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Gösterilen boyut: %s",  // "Taille affichée : %s"

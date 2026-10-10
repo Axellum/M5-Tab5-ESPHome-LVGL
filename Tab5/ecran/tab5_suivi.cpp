@@ -4,7 +4,7 @@
  * @role Capteurs suivis (ADR-0053, 10/10/2026, demande d'Axel : « le graphique d'un capteur
  *       numérique choisi dans HA », à gauche de l'horloge, et un popup avec tous ceux qu'on
  *       suit). Peint, d'après ce que pousse tab5_maj_suivi (lu par suivis_lire(),
- *       Tab5/socle/tab5_parse.h, section 10) :
+ *       Tab5/socle/tab5_parse.h, section 11) :
  *         - le popup « Suivi » (suivi_popup.yaml) : une carte par capteur (suivi_carte.yaml,
  *           six au plus), en une rangée jusqu'à trois capteurs, deux au-delà (deux colonnes
  *           pour quatre), la dernière rangée centrée ; chaque carte : nom, valeur et unité,

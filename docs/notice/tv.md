@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a long press on the gamepad button, top right of the home screen, or on the card of the TV picked in the blueprint ([bottom row](tiles.md)).
+**Opens with** a long press on the gamepad button, top right of the home screen, on the card of the TV picked in the blueprint ([bottom row](tiles.md)), or « TV » under « Devices » in the [navigation wheel](home.md#central-card-12) (long press on the central card).
 
 ![The TV remote: Power, Source, Menu, the pad with OK, volume, playback keys and app buttons](../images/notice/telecommande-tv-en.webp)
 
@@ -22,7 +22,7 @@ The keys go through Home Assistant, to the remote of your TV (« Télécommande 
 
 ---
 
-**S'ouvre par** un appui long sur le bouton manette, en haut à droite de l'accueil, ou sur la carte de la TV choisie dans le blueprint ([rangée du bas](tiles.md#version-française)).
+**S'ouvre par** un appui long sur le bouton manette, en haut à droite de l'accueil, sur la carte de la TV choisie dans le blueprint ([rangée du bas](tiles.md#version-française)), ou par « TV » sous « Appareils » dans la [roue de navigation](home.md#carte-centrale-12) (appui long sur la carte centrale).
 
 ![La télécommande TV : Marche / Arrêt, Source, Menu, le pavé avec OK, le volume, les touches de lecture et les boutons d'applications](../images/notice/telecommande-tv-fr.webp)
 
