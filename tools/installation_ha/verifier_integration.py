@@ -14,6 +14,13 @@ Assistant neuf : installation, mises à jour, retour en arrière (ADR-0035).
            capteur « Tab5 · version des fichiers HA » à 9.9.1, rest_command chargé à chaud
            (absent d'un HA neuf), le blueprint remplacé et dit (réparation persistante
            « fichiers_remplaces », copie dans la sauvegarde), validée comme l'interface ;
+           l'assistant de configuration proposé (réparation « configurer_pieces ») ;
+        1 bis. l'assistant (ADR-0052) : deux pièces créées (entités de modèle et un
+           thermostat, une lumière cachée), la réparation suivie comme l'interface, valeurs
+           proposées acceptées → automatisation du blueprint écrite dans automations.yaml,
+           chargée, réparation retirée ; relancé depuis les options sans cocher « mettre à
+           jour » → automations.yaml à l'octet près ; puis en la cochant, un nom changé →
+           seules les pièces changent, une sauvegarde dans tab5_sauvegardes/automatisations/ ;
         2. mise à jour 9.9.2 comme HACS (dossier remplacé, redémarrage), avec un package
            modifié à la main et un package que la release ne livre plus → capteur 9.9.2,
            sauvegarde des deux, le retiré absent, la notification nomme le modifié ;
@@ -82,6 +89,66 @@ logger:
   default: warning
   logs:
     custom_components.tab5: info
+
+# Des appareils pour l'assistant de configuration (étape 1 bis) : rangés dans deux pièces
+# par le scénario (registre des entités), comme l'utilisateur le ferait.
+template:
+  - light:
+      - name: Plafonnier CI
+        unique_id: ci_plafonnier
+        default_entity_id: light.ci_plafonnier
+        turn_on: [{event: ci_lumiere}]
+        turn_off: [{event: ci_lumiere}]
+      - name: Applique CI
+        unique_id: ci_applique
+        default_entity_id: light.ci_applique
+        turn_on: [{event: ci_lumiere}]
+        turn_off: [{event: ci_lumiere}]
+      - name: Lumière cachée CI
+        unique_id: ci_cachee
+        default_entity_id: light.ci_cachee
+        turn_on: [{event: ci_lumiere}]
+        turn_off: [{event: ci_lumiere}]
+      - name: Chevet CI
+        unique_id: ci_chevet
+        default_entity_id: light.ci_chevet
+        turn_on: [{event: ci_lumiere}]
+        turn_off: [{event: ci_lumiere}]
+  - switch:
+      - name: Prise CI
+        unique_id: ci_prise
+        default_entity_id: switch.ci_prise
+        turn_on: [{event: ci_prise}]
+        turn_off: [{event: ci_prise}]
+  - sensor:
+      - name: Température salon CI
+        unique_id: ci_temperature_salon
+        default_entity_id: sensor.ci_temperature_salon
+        state: "21.5"
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+      - name: Humidité salon CI
+        unique_id: ci_humidite_salon
+        default_entity_id: sensor.ci_humidite_salon
+        state: "48"
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+      - name: Température chambre CI
+        unique_id: ci_temperature_chambre
+        default_entity_id: sensor.ci_temperature_chambre
+        state: "19"
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+
+climate:
+  - platform: generic_thermostat
+    name: CI clim
+    unique_id: ci_clim
+    heater: switch.ci_prise
+    target_sensor: sensor.ci_temperature_salon
 """
 LIGNE_PACKAGES = "\nhomeassistant:\n  packages: !include_dir_named packages\n"
 VIDES = {"automations.yaml": "[]\n", "scripts.yaml": "", "scenes.yaml": "", "secrets.yaml": ""}
@@ -95,6 +162,24 @@ MARQUE_MAIN = b"\n# copie a la main\n"
 # « Vérifier la configuration » ne le signale qu'en AVERTISSEMENT (contre-épreuve du
 # 07/10/2026 ci-dessous) — le cas qu'une vérification des seules erreurs laissait passer.
 CONTENU_CASSE = "input_boolean:\n  tab5_casse:\n    initial: peut-etre\n"
+# L'assistant (étape 1 bis) : les pièces créées, leurs entités, et ce qu'il doit proposer.
+PIECES_CI = {
+    "Salon CI": ["light.ci_plafonnier", "light.ci_applique", "light.ci_cachee", "switch.ci_prise",
+                 "sensor.ci_temperature_salon", "sensor.ci_humidite_salon", "climate.ci_clim"],
+    "Chambre CI": ["light.ci_chevet", "sensor.ci_temperature_chambre"],
+}
+CACHEE = "light.ci_cachee"
+PIECES_ATTENDUES = {
+    "piece_1_nom": "Salon CI",
+    "piece_1_tuiles": ["light.ci_applique", "light.ci_plafonnier", "switch.ci_prise"],
+    "piece_1_temperature": "sensor.ci_temperature_salon",
+    "piece_1_humidite": "sensor.ci_humidite_salon",
+    "piece_1_clim": "climate.ci_clim",
+    "piece_2_nom": "Chambre CI",
+    "piece_2_tuiles": ["light.ci_chevet"],
+    "piece_2_temperature": "sensor.ci_temperature_chambre",
+}
+BLUEPRINT_ASSISTANT = "tab5/tab5_emplacements.yaml"
 # Ce que « Vérifier la configuration » dit de quelques casses, écrit au journal du scénario.
 # Le 07/10/2026 (HA 2026.9.4) : clé pas un slug = rien (valide) ; initial pas un booléen et
 # domaine pas un dictionnaire = avertissement ; YAML illisible = erreur.
@@ -208,6 +293,123 @@ async def notification(ha: HA, version: str, delai: float = 120.0) -> str:
     raise Echec(f"pas de notification d'installation {version} (journal : custom_components.tab5)")
 
 
+def suggestions(etape: dict) -> dict:
+    """Les valeurs pré-remplies d'un formulaire (suggested_value), comme les montre l'interface."""
+    return {c["name"]: c["description"]["suggested_value"] for c in etape.get("data_schema") or []
+            if "suggested_value" in (c.get("description") or {})}
+
+
+async def suivre(ha: HA, chemin: str, etape: dict, saisies: list[dict | None]) -> list[dict]:
+    """Un flux à plusieurs étapes : `saisies[i]` répond à la i-ème étape (None : accepter les
+    valeurs pré-remplies). Renvoie toutes les étapes vues, la dernière comprise."""
+    vues = [etape]
+    for saisie in saisies:
+        if etape.get("type") != "form":
+            break
+        valeurs = suggestions(etape) if saisie is None else saisie
+        etape = await ha.post(f"{chemin}/{etape['flow_id']}", valeurs)
+        vues.append(etape)
+    return vues
+
+
+def automatisations_tab5(dossier: Path) -> list[dict]:
+    import yaml
+    liste = yaml.safe_load((dossier / "automations.yaml").read_text(encoding="utf-8")) or []
+    return [a for a in liste if (a.get("use_blueprint") or {}).get("path", "").endswith("tab5_emplacements.yaml")]
+
+
+async def ranger_dans_des_pieces(ha: HA, rapport: Rapport) -> dict[str, str]:
+    """Les pièces de PIECES_CI créées, leurs entités rangées dedans ; la lumière CACHEE cachée."""
+    etats = await ha.etats()
+    absentes = [e for liste in PIECES_CI.values() for e in liste if e not in etats]
+    if absentes:
+        raise Echec(f"entités de l'assistant absentes (configuration.yaml du scénario) : {absentes}")
+    zones = {}
+    for nom, entites in PIECES_CI.items():
+        zone = await ha.ws.commande("config/area_registry/create", name=nom)
+        zones[nom] = zone["area_id"]
+        for e in entites:
+            champs = {"hidden_by": "user"} if e == CACHEE else {}
+            await ha.ws.commande("config/entity_registry/update", entity_id=e, area_id=zone["area_id"], **champs)
+    rapport.ok(f"1 bis. pièces créées et entités rangées : {zones}")
+    return zones
+
+
+async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> None:
+    """Étape 1 bis : l'assistant de configuration, par la réparation puis par les options."""
+    zones = await ranger_dans_des_pieces(ha, rapport)
+    rapport.verifier(not automatisations_tab5(dossier), "1 bis. aucune automatisation du blueprint avant")
+
+    # Par la réparation « configurer_pieces », valeurs proposées acceptées.
+    reparation = "/api/repairs/issues/fix"
+    etape = await ha.post(reparation, {"handler": "tab5", "issue_id": "configurer_pieces"})
+    rapport.verifier(etape.get("step_id") == "pieces", "1 bis. la réparation ouvre l'assistant (pièces)",
+                     str(etape)[:300])
+    proposees = suggestions(etape).get("pieces")
+    rapport.verifier(proposees == [zones["Salon CI"], zones["Chambre CI"]],
+                     "1 bis. pièces proposées : les deux qui ont des appareils, la mieux équipée d'abord "
+                     "(pas les pièces vides de l'onboarding)", str(proposees))
+    vues = await suivre(ha, reparation, etape, [None, None, None, {}])
+    formulaires = [v for v in vues if v.get("type") == "form"]
+    rapport.verifier([v.get("step_id") for v in formulaires] == ["pieces", "piece", "piece", "recapitulatif"],
+                     "1 bis. étapes : pièces, pièce ×2, récapitulatif", str([v.get("step_id") for v in vues]))
+    if len(formulaires) >= 2:
+        rapport.verifier(CACHEE not in json.dumps(formulaires[1]), "1 bis. la lumière cachée n'est pas proposée")
+    recap = json.dumps(formulaires[-1].get("description_placeholders") or {}, ensure_ascii=False)
+    rapport.verifier("Salon CI" in recap and "Applique CI" in recap and "light.ci_applique" not in recap,
+                     "1 bis. le récapitulatif nomme les pièces et les appareils (pas leurs entity_id)", recap[:300])
+    rapport.verifier(vues[-1].get("type") == "create_entry", "1 bis. assistant validé", str(vues[-1])[:300])
+    nos = automatisations_tab5(dossier)
+    rapport.verifier(len(nos) == 1, "1 bis. une automatisation du blueprint dans automations.yaml", str(nos)[:300])
+    if nos:
+        a = nos[0]
+        rapport.verifier(a["use_blueprint"]["path"] == BLUEPRINT_ASSISTANT
+                         and a["use_blueprint"].get("input") == PIECES_ATTENDUES,
+                         "1 bis. entrées du blueprint = les pièces proposées", str(a)[:400])
+        etat_a = next((e for e in (await ha.etats()).values() if e["entity_id"].startswith("automation.")
+                       and str(e["attributes"].get("id")) == str(a["id"])), None)
+        rapport.verifier(etat_a is not None and etat_a["state"] == "on",
+                         "1 bis. automatisation chargée et active", str(etat_a)[:200])
+    restes = await attendre_reparations(ha, set(), {"configurer_pieces"})
+    rapport.verifier("configurer_pieces" not in restes, "1 bis. réparation « configurer_pieces » retirée", str(restes))
+    notes = {n.get("notification_id") for n in await ha.ws.commande("persistent_notification/get")}
+    rapport.verifier(f"{NOTIFICATION}_assistant" in notes, "1 bis. notification du résultat")
+
+    # Relancé depuis les options, sans cocher « mettre à jour » : rien ne change.
+    avant = (dossier / "automations.yaml").read_bytes()
+    options = "/api/config/config_entries/options/flow"
+    etape = await ha.post(options, {"handler": entree, "show_advanced_options": False})
+    vues = await suivre(ha, options, etape, [
+        {"mettre_a_jour_tablette": True, "reinstaller": False, "assistant": True}, None, None, None, None])
+    recap = [v for v in vues if v.get("step_id") == "recapitulatif"]
+    champs = [c["name"] for c in (recap[0].get("data_schema") or [])] if recap else []
+    rapport.verifier(champs == ["mettre_a_jour"], "1 bis. options : l'automatisation existante est vue, case proposée",
+                     str(recap)[:300])
+    rapport.verifier(vues[-1].get("type") == "create_entry", "1 bis. options : assistant validé sans la case",
+                     str(vues[-1])[:300])
+    rapport.verifier((dossier / "automations.yaml").read_bytes() == avant,
+                     "1 bis. sans la case : automations.yaml à l'octet près")
+    sauvegardes = dossier / "tab5_sauvegardes" / "automatisations"
+    deja = sorted(sauvegardes.glob("*")) if sauvegardes.is_dir() else []
+
+    # La case cochée, un nom changé : seules les pièces changent, sauvegarde d'abord.
+    etape = await ha.post(options, {"handler": entree, "show_advanced_options": False})
+    etape = await ha.post(f"{options}/{etape['flow_id']}",
+                          {"mettre_a_jour_tablette": True, "reinstaller": False, "assistant": True})
+    etape = await ha.post(f"{options}/{etape['flow_id']}", {"pieces": [zones["Salon CI"]]})
+    salon = {**suggestions(etape), "nom": "Séjour CI"}
+    vues = await suivre(ha, options, etape, [salon, {"mettre_a_jour": True}])
+    rapport.verifier(vues[-1].get("type") == "create_entry", "1 bis. options : mise à jour validée", str(vues[-1])[:300])
+    nos = automatisations_tab5(dossier)
+    attendu = {k: v for k, v in PIECES_ATTENDUES.items() if k.startswith("piece_1_")} | {"piece_1_nom": "Séjour CI"}
+    rapport.verifier(len(nos) == 1 and nos[0]["use_blueprint"].get("input") == attendu,
+                     "1 bis. mise à jour : la même automatisation, ses pièces remplacées (pièce 2 retirée)",
+                     str(nos)[:400])
+    nouvelles = sorted(sauvegardes.glob("*")) if sauvegardes.is_dir() else []
+    rapport.verifier(len(nouvelles) == len(deja) + 1 and nouvelles[-1].read_bytes() == avant,
+                     "1 bis. mise à jour : l'ancien automations.yaml sauvegardé", str([p.name for p in nouvelles]))
+
+
 async def etat(ha: HA, entite: str) -> str | None:
     e = (await ha.etats()).get(entite)
     return e["state"] if e else None
@@ -288,10 +490,10 @@ async def scenario(args, rapport: Rapport) -> None:
             services = {(s["domain"], n) for s in await ha.get("/api/services") for n in s["services"]}
             rapport.verifier(("rest_command", "tab5_pluie") in services,
                              "1. rest_command.tab5_pluie chargé à chaud")
-            presentes = await attendre_reparations(ha, {"fichiers_remplaces"}, set())
-            rapport.verifier(presentes == {"fichiers_remplaces"},
-                             "1. une seule réparation : « fichiers_remplaces » (blueprint copié à la main)",
-                             str(presentes))
+            presentes = await attendre_reparations(ha, {"fichiers_remplaces", "configurer_pieces"}, set())
+            rapport.verifier(presentes == {"fichiers_remplaces", "configurer_pieces"},
+                             "1. deux réparations : « fichiers_remplaces » (blueprint copié à la main) et "
+                             "« configurer_pieces » (assistant proposé)", str(presentes))
             rapport.verifier("tab5_emplacements.yaml" in texte, "1. la notification nomme le blueprint remplacé",
                              texte[:300])
             premieres = sorted((dossier / "tab5_sauvegardes").glob("*"))
@@ -308,13 +510,16 @@ async def scenario(args, rapport: Rapport) -> None:
                 fin = await ha.post(f"/api/repairs/issues/fix/{etape['flow_id']}", {})
                 rapport.verifier(fin.get("type") == "create_entry", "1. réparation validée", str(fin)[:200])
             restes = await attendre_reparations(ha, set(), {"fichiers_remplaces"})
-            rapport.verifier(not restes, "1. plus aucune réparation", str(restes))
+            rapport.verifier(restes == {"configurer_pieces"}, "1. reste l'assistant proposé", str(restes))
             manifeste = await ha.ws.commande("manifest/get", integration="tab5")
             rapport.verifier(manifeste.get("version") == "9.9.1", "1. version de l'intégration = 9.9.1",
                              str(manifeste.get("version")))
             memoire = await ha.storage("tab5.fichiers") or {}
             rapport.verifier((memoire.get("data") or {}).get("version") == "9.9.1",
                              "1. version posée gardée (.storage/tab5.fichiers)")
+
+            # ── 1 bis. Assistant de configuration ──
+            await assistant(ha, dossier, entree, rapport)
 
             # ── 2. Mise à jour 9.9.2 comme HACS ──
             dans_conteneur(f"open('/config/{MODIFIE}', 'a').write('\\n# ajout perso\\n')")

@@ -10,7 +10,8 @@ name: Intégration HACS
 #     dans home-assistant/brands pour une intégration personnalisée) ;
 #   - ha : tools/installation_ha/verifier_integration.py dans un Home Assistant NEUF en
 #     conteneur : première installation sans redémarrage, mise à jour comme HACS, retour en
-#     arrière sur une configuration cassée, ligne `packages:` absente.
+#     arrière sur une configuration cassée, ligne `packages:` absente, et l'assistant de
+#     configuration (ADR-0052 : pièces → automatisation du blueprint, sans rien écraser).
 # Les images ghcr.io de hassfest et de HACS suivent leur dernière version exprès (comme
 # ESPHome `latest`, ADR-0016) : elles annoncent ce que HA et HACS refuseront demain.
 
@@ -92,7 +93,8 @@ jobs:
           python-version: "3.13"
       - name: Outils du vérificateur
         # Réessais : PyPI répond parfois « from versions: none » (tools/ci/pip_reessai.sh).
-        run: bash tools/ci/pip_reessai.sh aiohttp
+        # pyyaml : automations.yaml relu par l'étape de l'assistant (ADR-0052).
+        run: bash tools/ci/pip_reessai.sh aiohttp pyyaml
       - name: Installer, mettre à jour, revenir en arrière dans un HA neuf
         run: |
           docker pull -q "$HA_IMAGE"
