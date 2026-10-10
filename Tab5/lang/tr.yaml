@@ -220,6 +220,12 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Pause": "Duraklat"
 "Retour": "Geri"
 "Accueil": "Ana sayfa"
+"Télécommande": "Kumanda"
+"Précédent": "Önceki"
+"Reculer": "Geri sar"
+"Lecture / Pause": "Oynat / Duraklat"
+"Avancer": "İleri"
+"Suivant": "Sonraki"
 
 # --- Calendar popup -------------------------------------------------------------
 "Calendrier": "Takvim"

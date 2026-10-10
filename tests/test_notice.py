@@ -69,6 +69,10 @@ NON_MONTREES = {
     "appareil-scene": "appareil montre la même fenêtre ; la scène est décrite dans tiles.md",
     "console-batterie-en-charge": "console-batterie montre la même ligne ; l'éclair est décrit",
     "console-sans-batterie": "console-batterie montre la même ligne ; « Sur USB » est décrit",
+    # Plusieurs télécommandes (ADR-0056, 10/10/2026), décrites dans tv.md : images à tirer
+    # du rendu de la PR, puis citées.
+    "telecommande-plusieurs": "télécommande à plusieurs pages, décrite dans tv.md ; image à tirer du rendu",
+    "telecommande-boitier": "page d'un boîtier (Apple TV), décrite dans tv.md ; image à tirer du rendu",
     "roue-lampe": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",

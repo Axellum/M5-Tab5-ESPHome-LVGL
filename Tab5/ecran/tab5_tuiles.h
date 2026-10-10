@@ -65,9 +65,9 @@ struct TuilesUI {
     lv_obj_t* carte_icone[5] = {};
     lv_obj_t* carte_nom[5] = {};
     lv_obj_t* carte_etat[5] = {};
-    // Popups qu'une tuile ouvre (télécommande de la TV, climatisation : celle du blueprint
-    // avec l'option m, sinon celle de la tuile, ADR-0027).
-    lv_obj_t* popup_tv = nullptr;
+    // Popup qu'une tuile ouvre (climatisation : celle du blueprint avec l'option m, sinon
+    // celle de la tuile, ADR-0027). La télécommande s'ouvre par telecommande_ouvrir()
+    // (tab5_telecommande.h, ADR-0056), sur la page de la TV.
     lv_obj_t* popup_clim = nullptr;
     // Popups Lumières et Volets, une page par pièce (ADR-0046) : les lignes de la pièce
     // affichée (piece_ligne.yaml, 5 au plus) et les noms des pièces (pages_onglet.yaml).

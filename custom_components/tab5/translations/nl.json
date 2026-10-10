@@ -65,6 +65,7 @@
         "data": {
           "tv": "Tv",
           "tv_telecommande": "Afstandsbediening van de tv",
+          "telecommandes_autres": "Andere afstandsbedieningen",
           "telephone": "Telefoonbatterij",
           "salon_temperature": "Kamertemperatuur (bovenaan het startscherm)",
           "salon_humidite": "Luchtvochtigheid van de kamer",
@@ -82,6 +83,7 @@
         "data_description": {
           "tv": "De knop “TV” op het scherm.",
           "tv_telecommande": "De toetsen van de afstandsbediening op het scherm.",
+          "telecommandes_autres": "Apple TV, Freebox Player…: hoogstens drie, elk een eigen pagina in de pop-up van de afstandsbediening.",
           "telephone": "Een pictogram linksboven, gekleurd naar de batterij.",
           "salon_temperature": "Voorgesteld: die van de eerste kamer.",
           "serre_temperature": "Voorgesteld: de enige temperatuur waarvan de naam “buiten” zegt.",
@@ -211,6 +213,7 @@
             "data": {
               "tv": "Tv",
               "tv_telecommande": "Afstandsbediening van de tv",
+              "telecommandes_autres": "Andere afstandsbedieningen",
               "telephone": "Telefoonbatterij",
               "salon_temperature": "Kamertemperatuur (bovenaan het startscherm)",
               "salon_humidite": "Luchtvochtigheid van de kamer",
@@ -228,6 +231,7 @@
             "data_description": {
               "tv": "De knop “TV” op het scherm.",
               "tv_telecommande": "De toetsen van de afstandsbediening op het scherm.",
+              "telecommandes_autres": "Apple TV, Freebox Player…: hoogstens drie, elk een eigen pagina in de pop-up van de afstandsbediening.",
               "telephone": "Een pictogram linksboven, gekleurd naar de batterij.",
               "salon_temperature": "Voorgesteld: die van de eerste kamer.",
               "serre_temperature": "Voorgesteld: de enige temperatuur waarvan de naam “buiten” zegt.",

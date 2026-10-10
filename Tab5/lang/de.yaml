@@ -204,6 +204,12 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Pause": "Pause"
 "Retour": "Zurück"
 "Accueil": "Start"
+"Télécommande": "Fernbedienung"
+"Précédent": "Vorheriger"
+"Reculer": "Rückwärts"
+"Lecture / Pause": "Play / Pause"
+"Avancer": "Vorwärts"
+"Suivant": "Nächster"
 
 # --- Calendar popup -------------------------------------------------------------
 "Calendrier": "Kalender"

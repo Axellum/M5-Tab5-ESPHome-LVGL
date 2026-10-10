@@ -345,6 +345,7 @@ font:
       - "\U000F0054"  # arrow-right
       - "\U000F005D"  # arrow-up
       - "\U000F0210"  # fan
+      - "\U000F0211"  # fast-forward (télécommande d'un boîtier : avancer, ADR-0056)
       - "\U000F0238"  # fire
       - "\U000F024A"  # flower
       - "\U000F0290"  # fridge (popup Froid : carte d'un réfrigérateur, ADR-0055)
@@ -357,11 +358,13 @@ font:
       - "\U000F0379"  # monitor
       - "\U000F03E4"  # pause
       - "\U000F040A"  # play
+      - "\U000F040E"  # play-pause (télécommande d'un boîtier : lecture / pause, ADR-0056)
       - "\U000F0415"  # plus
       - "\U000F0425"  # power
       - "\U000F0456"  # repeat (popup Musique : répéter tout)
       - "\U000F0457"  # repeat-off (popup Musique : sans répétition)
       - "\U000F0458"  # repeat-once (popup Musique : répéter le morceau)
+      - "\U000F045F"  # rewind (télécommande d'un boîtier : reculer, ADR-0056)
       - "\U000F049D"  # shuffle (popup Musique : aléatoire)
       - "\U000F049E"  # shuffle-disabled (popup Musique : dans l'ordre)
       - "\U000F04AD"  # skip-next (popup Musique : suivant)
@@ -370,6 +373,7 @@ font:
       - "\U000F04DB"  # stop
       - "\U000F054C"  # undo
       - "\U000F056C"  # view-carousel (seconde température absente : son tap change la zone à gauche de l'horloge, ADR-0051)
+      - "\U000F057E"  # volume-high (télécommande d'un boîtier : à la place de Muet, ADR-0056)
       - "\U000F0581"  # volume-off
       - "\U000F058E"  # water-percent
       - "\U000F0598"  # weather-snowy (carte Neige du popup Météo)

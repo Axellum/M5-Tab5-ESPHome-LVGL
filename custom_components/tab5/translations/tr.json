@@ -65,6 +65,7 @@
         "data": {
           "tv": "TV",
           "tv_telecommande": "TV uzaktan kumandası",
+          "telecommandes_autres": "Diğer kumandalar",
           "telephone": "Telefon pili",
           "salon_temperature": "Oda sıcaklığı (ana ekranın üstünde)",
           "salon_humidite": "Oda nemi",
@@ -82,6 +83,7 @@
         "data_description": {
           "tv": "Ekrandaki “TV” düğmesi.",
           "tv_telecommande": "Ekrandaki uzaktan kumanda tuşları.",
+          "telecommandes_autres": "Apple TV, Freebox Player…: en fazla üç, kumanda penceresinde her biri için bir sayfa.",
           "telephone": "Sol üstte, pil durumuna göre renklenen bir simge.",
           "salon_temperature": "Önerilen: ilk odanınki.",
           "serre_temperature": "Önerilen: adında “dış” geçen tek sıcaklık.",
@@ -211,6 +213,7 @@
             "data": {
               "tv": "TV",
               "tv_telecommande": "TV uzaktan kumandası",
+              "telecommandes_autres": "Diğer kumandalar",
               "telephone": "Telefon pili",
               "salon_temperature": "Oda sıcaklığı (ana ekranın üstünde)",
               "salon_humidite": "Oda nemi",
@@ -228,6 +231,7 @@
             "data_description": {
               "tv": "Ekrandaki “TV” düğmesi.",
               "tv_telecommande": "Ekrandaki uzaktan kumanda tuşları.",
+              "telecommandes_autres": "Apple TV, Freebox Player…: en fazla üç, kumanda penceresinde her biri için bir sayfa.",
               "telephone": "Sol üstte, pil durumuna göre renklenen bir simge.",
               "salon_temperature": "Önerilen: ilk odanınki.",
               "serre_temperature": "Önerilen: adında “dış” geçen tek sıcaklık.",

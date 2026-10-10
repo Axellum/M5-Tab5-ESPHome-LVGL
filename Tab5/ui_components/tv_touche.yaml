@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 7× par tv_remote_popup.yaml
+# (ADR-0056) : une touche de la télécommande, icône colorée à gauche et mot à côté (Source,
+# Stop, Menu, puis Lecture, Pause, Retour et Accueil à droite du pavé). Elle envoie sa
+# touche par script.tab5_tv_key (tab5-scripts.yaml), à la télécommande de la page montrée.
+# vars : id (champ de TelecommandeUI quand le C++ la cache ou la montre), x, y, w, h (dans
+#        la zone principale du popup), touche (code de touche Samsung KEY_*, le vocabulaire
+#        commun traduit par le blueprint pour un boîtier), icon (glyphe MDI en mdi_font_45 :
+#        il doit figurer dans la liste `glyphs` de mdi_font_45, sinon il s'affiche vide),
+#        icon_style (style de rôle style_text_*), text (le mot), hidden (facultatif,
+#        « true » pour une touche d'une autre disposition, montrée par
+#        telecommande_peindre()).
+# Icône à 22 px du bord gauche, mot à 82 px : les mêmes places que Marche / Arrêt.
+# ═══════════════════════════════════════════════════════
+button:
+  id: ${id}
+  align: TOP_LEFT
+  x: ${x}
+  y: ${y}
+  width: ${w}
+  height: ${h}
+  radius: 18
+  hidden: ${ hidden | default("false") }
+  styles: style_clim_btn
+  on_short_click:
+    - script.execute: { id: tab5_tv_key, touche: "${touche}" }
+  widgets:
+    - label: { text: "${icon}", align: LEFT_MID, x: 22, text_font: mdi_font_45, styles: "${icon_style}" }
+    - label: { text: "${text}", align: LEFT_MID, x: 82 }

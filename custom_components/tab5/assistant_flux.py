@@ -151,9 +151,10 @@ def _selecteur(nature: str) -> Any:
         return BooleanSelector()
     if nature == "texte":
         return TextSelector()
-    domaine, _, classe = nature.partition(":")
+    plusieurs = nature.endswith("[]")
+    domaine, _, classe = nature.removesuffix("[]").partition(":")
     filtre = {"domain": domaine} | ({"device_class": classe} if classe else {})
-    return EntitySelector({"filter": [filtre]})
+    return EntitySelector({"filter": [filtre]} | ({"multiple": True} if plusieurs else {}))
 
 
 class AssistantFlux:
