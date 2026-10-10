@@ -5,7 +5,8 @@
  *   - dates et heures (Tab5/socle/tab5_core.h/.cpp) : jour civil, jours du mois, heure
  *     valide, « HH:MM » strict, embauche tôt ;
  *   - ce que les deux modèles de tuiles partagent (Tab5/socle/tab5_modele_ha.h) ;
- *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert.
+ *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert ;
+ *   - la chronologie du démarrage (Tab5/socle/tab5_demarrage.h, 10/10/2026).
  *
  * Build & run (CI, job `python` de .github/workflows/esphome-tab5.yml) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o test_tab5_socle \
@@ -16,6 +17,7 @@
  */
 #include "tab5_champs.h"
 #include "tab5_core.h"
+#include "tab5_demarrage.h"
 #include "tab5_geometrie.h"
 #include "tab5_modele_ha.h"
 
@@ -206,6 +208,59 @@ static void test_modele_ha() {
            "clé de la clim d'une pièce : cpR (ADR-0040)");
 }
 
+// ── Chronologie du démarrage (tab5_demarrage.h, 10/10/2026) ─────────────────
+static void test_chronologie() {
+    ChronoDemarrage c;
+    char buf[kChronoTexteMax];
+    chrono_texte(c, PartieChrono::SUITE, buf, sizeof(buf));
+    expect(std::strcmp(buf, "ordo=-; retro=-; dessin=-; image=-; tard=-; wifi=-; api=-; fin600=-; chargeur=-") == 0,
+           "chronologie : rien de vu, chaque étape à « - »");
+    chrono_texte(c, PartieChrono::SETUP, buf, sizeof(buf));
+    expect(std::strncmp(buf, "ctor=-; objets=-; setup=-; bus=-; expandeur=-;", 46) == 0 &&
+               std::strstr(buf, "zones=-") != nullptr && std::strstr(buf, "ordo") == nullptr,
+           "chronologie : le premier texte s'arrête avant « ordo »");
+    expect(chrono_marquer(c, EtapeDemarrage::EXPANDEUR, 1490) && chrono_vue(c, EtapeDemarrage::EXPANDEUR),
+           "chronologie : étape marquée");
+    expect(!chrono_marquer(c, EtapeDemarrage::EXPANDEUR, 9000) &&
+               c.ms[static_cast<size_t>(EtapeDemarrage::EXPANDEUR)] == 1490,
+           "chronologie : une seule fois par démarrage (la première)");
+    chrono_marquer(c, EtapeDemarrage::IMAGE, 8650);
+    chrono_marquer(c, EtapeDemarrage::RETRO, 0);
+    chrono_texte(c, PartieChrono::SUITE, buf, sizeof(buf));
+    expect(std::strcmp(buf, "ordo=-; retro=0; dessin=-; image=8650; tard=-; wifi=-; api=-; fin600=-; chargeur=-") == 0,
+           "chronologie : ordre des étapes, pas celui des marques ; 0 ms est une valeur");
+    expect(!chrono_marquer(c, EtapeDemarrage::NOMBRE, 1) && !chrono_vue(c, EtapeDemarrage::NOMBRE),
+           "chronologie : étape hors liste ignorée");
+    // Au pire : premier texte à 6 chiffres par étape (setup() fini avant 1 000 s), second
+    // à 10 (uint32_t). Chacun sous 255 caractères (état texte de Home Assistant).
+    ChronoDemarrage pleine;
+    for (size_t i = 0; i < kEtapesDemarrage; i++)
+        chrono_marquer(pleine, static_cast<EtapeDemarrage>(i), i < kEtapesSuite ? 999999u : 0xFFFFFFFFu);
+    size_t n = chrono_texte(pleine, PartieChrono::SETUP, buf, sizeof(buf));
+    expect(n == std::strlen(buf) && n <= 255 && std::strstr(buf, "; zones=999999") != nullptr,
+           "chronologie : premier texte au pire, entier et sous 255 caractères");
+    n = chrono_texte(pleine, PartieChrono::SUITE, buf, sizeof(buf));
+    expect(n == std::strlen(buf) && n <= 255 && std::strstr(buf, "; chargeur=4294967295") != nullptr,
+           "chronologie : second texte au pire, entier et sous 255 caractères");
+    ChronoDemarrage enorme;
+    for (size_t i = 0; i < kEtapesDemarrage; i++)
+        chrono_marquer(enorme, static_cast<EtapeDemarrage>(i), 0xFFFFFFFFu);
+    n = chrono_texte(enorme, PartieChrono::SETUP, buf, sizeof(buf));
+    expect(n == sizeof(buf) - 1 && std::strlen(buf) == n, "chronologie : au-delà, texte coupé, jamais débordé");
+    char petit[12];
+    const size_t m = chrono_texte(enorme, PartieChrono::SUITE, petit, sizeof(petit));
+    expect(m == sizeof(petit) - 1 && std::strlen(petit) == m && std::strncmp(petit, "ordo=429496", 11) == 0,
+           "chronologie : tampon trop petit, texte coupé et terminé");
+    expect(chrono_texte(enorme, PartieChrono::SETUP, nullptr, 8) == 0 &&
+               chrono_texte(enorme, PartieChrono::SETUP, petit, 0) == 0,
+           "chronologie : pas de tampon, rien d'écrit");
+    expect(demarrage_noter(EtapeDemarrage::WIFI, 10550) && !demarrage_noter(EtapeDemarrage::WIFI, 1) &&
+               chrono_demarrage().ms[static_cast<size_t>(EtapeDemarrage::WIFI)] == 10550,
+           "chronologie de la tablette : un seul état");
+    expect(chrono_ordo(9300, 7191) == 2109 && chrono_ordo(5, 5) == 0 && chrono_ordo(4, 5) == 0,
+           "chronologie : ordo = horloge - millis(), jamais négatif");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -218,6 +273,7 @@ int main() {
     test_dates();
     test_hhmm();
     test_modele_ha();
+    test_chronologie();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

@@ -881,6 +881,14 @@ lvgl:
     # NB : `scrollbar_mode` n'est PAS une propriété de style : ESPHome l'ignore
     # sans avertissement dans style_definitions (vérifié dans main.cpp le
     # 26/09/2026, 6 occurrences retirées). Le poser sur le widget.
+    # Repère de la chronologie du démarrage (10/10/2026, tab5_demarrage.h) : ESPHome crée
+    # les styles dans main(), juste après l'initialisation de LVGL et avant les ~1 800
+    # widgets ; sa lambda, évaluée une fois à ce moment, marque « objets ». Posé sur aucun
+    # widget, il ne change rien à l'écran. Garder ce style EN PREMIER.
+    - id: style_repere_demarrage
+      text_letter_space: !lambda |-
+        demarrage_marquer(EtapeDemarrage::OBJETS);
+        return 0;
     # --- Carte meteo / tuiles dashboard ---
     # ESSAI C 16/07 : même décoration que les boutons Domo (style_clim_btn) —
     # fond 58%, bordure 1px/35%, radius 18. Couvre horloge, clim, bandeau central,
