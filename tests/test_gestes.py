@@ -130,12 +130,14 @@ def test_actions_de_l_accueil():
         assert BRANCHES[action] in branche, action
     # « nabu_suivant » (lot 3) ajouté à la fin, puis la roue de navigation (ADR-0042), le
     # popup Météo (ADR-0043), la zone à gauche de l'horloge (ADR-0051) et le lecteur de
-    # musique (ADR-0050) : la NVS garde l'index du code.
+    # musique (ADR-0050), puis les capteurs suivis (ADR-0053) : la NVS garde l'index du code.
     assert list(actions).index("nabu_suivant") == 17
     assert list(actions)[18:] == list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES + list(ECRANS_FIN)
     assert list(actions).index("meteo") == 22
     assert list(actions).index("zone_gauche_suivante") == 23
     assert list(actions).index("musique") == 24
+    # Capteurs suivis (ADR-0053), après le lecteur.
+    assert list(actions).index("suivi") == 25
 
 
 def test_auto_comme_avant():

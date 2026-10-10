@@ -107,6 +107,10 @@ NON_MONTREES = {
     "musique": "popup Musique, décrit dans music.md ; image à tirer du rendu",
     "musique-vide": "musique montre la même fenêtre ; l'attente de Home Assistant est décrite dans music.md",
     "musique-eteint": "musique montre la même fenêtre ; « Lecteur éteint » et « Allumer » sont décrits dans music.md",
+    # Popup Suivi (ADR-0053, 10/10/2026), décrit dans tracking.md : images à tirer du rendu
+    # de la PR, puis citées.
+    "suivi": "popup Suivi, décrit dans tracking.md ; image à tirer du rendu",
+    "suivi-vide": "suivi montre la même fenêtre ; l'attente de Home Assistant est décrite dans tracking.md",
     # Réglages en quatre pages (08/10/2026) : images à tirer du rendu de la PR, puis citées.
     "reglages-apparence": "page Apparence des Réglages, décrite dans settings.md ; image à tirer du rendu",
     "reglages-batterie-en-charge": "page Batterie des Réglages, décrite dans settings.md ; image à tirer du rendu",

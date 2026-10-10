@@ -701,6 +701,29 @@ LECTEUR_INACTIF = Service("tab5_maj_lecteur", (
 ))
 
 
+# Capteurs suivis (ADR-0053, suivi_popup.yaml et suivi_zone.yaml) : quatre capteurs au
+# format de packages/tab5_suivi.yaml (script tab5_suivi_pousser) — un cours en hausse
+# du jour (change_pct), une température en baisse sur 24 h (écart, deux heures sans
+# mesure), une puissance et un indice en baisse du jour. 24 moyennes horaires puis la
+# valeur actuelle, ramenées de 0 à 100. Noms d'exemple, aucune entité.
+def _suivi_points(*valeurs) -> str:
+    return ",".join("" if v is None else str(v) for v in valeurs)
+
+
+SUIVI_DONNEES = Service("tab5_maj_suivi", (("payload", ";".join((
+    "Cours ACME|182.4|USD|2.05|p|" + _suivi_points(12, 8, 0, 6, 15, 22, 18, 25, 31, 28, 40, 46, 43, 52, 60, 57,
+                                                    66, 71, 68, 77, 83, 80, 90, 94, 100),
+    "Serre|21.4|°C|-1.5|a|" + _suivi_points(95, 100, 92, 85, None, None, 70, 61, 55, 48, 40, 36, 30, 34, 41,
+                                             47, 52, 44, 35, 27, 18, 12, 6, 2, 0),
+    "Consommation de la maison|612|W|148|a|" + _suivi_points(10, 8, 5, 4, 0, 3, 12, 35, 60, 42, 30, 28, 33,
+                                                              45, 38, 30, 41, 58, 80, 100, 74, 52, 31, 22, 37),
+    "Indice|7803.33|pts|-0.95|p|" + _suivi_points(70, 74, 79, 85, 100, 96, 90, 83, 80, 76, 71, 68, 72, 66, 59,
+                                                  55, 48, 52, 44, 38, 31, 25, 18, 9, 0),
+))),))
+# La zone à gauche de l'horloge au départ sur le capteur (clé « gauche »).
+ZONE_CAPTEUR = Service("tab5_maj_emplacements", (("payload", "gauche|capteur|vocal|graphique|lecteur|capteur;"),))
+
+
 # Popup Météo (ADR-0043, meteo_popup.yaml) : une journée qui change (soleil le matin,
 # orage l'après-midi, éclaircies le soir), de 07:00 (l'heure figée, 07:45 : la colonne
 # de l'heure en cours) à 21:00, dix jours contrastés, une pluie dans l'heure qui monte
@@ -1091,6 +1114,14 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-zone-lecteur-vide", (LECTEUR_INACTIF, ZONE_LECTEUR), (ZONE_VOCAL, LECTEUR_AUCUN)),
     Ecran("accueil-zone-lecteur-gelule", (Choisir("Thème", THEME_CADRE_GELULE), LECTEUR_EN_PAUSE, ZONE_LECTEUR),
           (ZONE_VOCAL, LECTEUR_AUCUN, Choisir("Thème", THEME_PAR_DEFAUT))),
+    # Capteurs suivis (ADR-0053) : le popup avant toute poussée (« En attente de Home
+    # Assistant »), avec quatre capteurs (deux rangées : 3 colonnes au plus), puis la carte
+    # du premier dans la zone à gauche de l'horloge, dans le thème par défaut et en gélule.
+    Ecran("suivi-vide", (Aller("Suivi"),)),
+    Ecran("suivi", (SUIVI_DONNEES, Aller("Suivi"))),
+    Ecran("accueil-zone-capteur", (SUIVI_DONNEES, ZONE_CAPTEUR), (ZONE_VOCAL,)),
+    Ecran("accueil-zone-capteur-gelule", (Choisir("Thème", THEME_CADRE_GELULE), SUIVI_DONNEES, ZONE_CAPTEUR),
+          (ZONE_VOCAL, Choisir("Thème", THEME_PAR_DEFAUT))),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
     # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.

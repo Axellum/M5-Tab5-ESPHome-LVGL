@@ -75,7 +75,7 @@ def _bloc_lvgl(ident):
 
 def test_memes_codes_firmware_et_blueprint():
     codes = _codes_firmware()
-    assert codes == ["vocal", "graphique", "lecteur"], "un contenu de plus va à la FIN (NVS)"
+    assert codes == ["vocal", "graphique", "lecteur", "capteur"], "un contenu de plus va à la FIN (NVS)"
     assert [c.lower() for c in _enum_firmware()] == codes + ["nb"]
     bp = _bp()
     assert bp["variables"]["codes_gauche"] == codes
@@ -84,7 +84,7 @@ def test_memes_codes_firmware_et_blueprint():
 
 def test_le_blueprint_ne_propose_que_ce_que_l_ecran_sait_montrer():
     proposes = [z.lower() for z in _disponibles()]
-    assert proposes == ["vocal", "graphique", "lecteur"]
+    assert proposes == ["vocal", "graphique", "lecteur", "capteur"]
     section = _bp()["blueprint"]["input"]["zone_gauche"]
     assert section.get("collapsed") is True
     assert section["name"] == "Zone à gauche de l'horloge · Left of the clock"
@@ -96,7 +96,7 @@ def test_le_blueprint_ne_propose_que_ce_que_l_ecran_sait_montrer():
         assert [o["value"] for o in options] == proposes, nom
         assert all(" · " in o["label"] for o in options), nom
     assert entrees["gauche_depart"]["default"] == "vocal", "l'écran d'avant au départ"
-    assert entrees["gauche_cycle"]["default"] == proposes, "le lecteur, sauté sans lecteur choisi, en fait partie"
+    assert entrees["gauche_cycle"]["default"] == proposes, "le lecteur et le capteur, sautés sans choix, en font partie"
     assert entrees["gauche_cycle"]["selector"]["select"]["multiple"] is True
     # Sans la clé (blueprint d'avant le lecteur compact), l'écran de ce blueprint-là.
     parse = _lire(PARSE_H)
@@ -303,7 +303,7 @@ def _payload(declencheur, **entrees):
 
 def test_defauts():
     p = _payload("connexion")
-    assert "gauche|vocal|graphique|lecteur;" in p
+    assert "gauche|vocal|graphique|lecteur|capteur;" in p
     assert p.index("defil|") < p.index("gauche|"), "avec les gestes, après eux"
 
 
@@ -316,6 +316,7 @@ def test_defauts():
     (None, None, "gauche|vocal;"),
     ("vocal", ["lecteur"], "gauche|vocal|lecteur;"),
     ("lecteur", ["graphique"], "gauche|lecteur|graphique;"),
+    ("capteur", ["vocal"], "gauche|capteur|vocal;"),
 ])
 def test_choix(depart, cycle, attendu):
     p = _payload("connexion", gauche_depart=depart, gauche_cycle=cycle)
@@ -324,7 +325,7 @@ def test_choix(depart, cycle, attendu):
 
 @pytest.mark.parametrize("declencheur", ["connexion", "rechargement", "maj_ecran", "demarrage_ha"])
 def test_part_avec_tous_les_etats(declencheur):
-    assert "gauche|graphique|vocal|lecteur;" in _payload(declencheur, gauche_depart="graphique")
+    assert "gauche|graphique|vocal|lecteur|capteur;" in _payload(declencheur, gauche_depart="graphique")
 
 
 @pytest.mark.parametrize("declencheur", ["zones", "action"])
