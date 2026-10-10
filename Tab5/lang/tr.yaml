@@ -1240,7 +1240,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Produit": "Üretilen"
 "Consommé": "Tüketilen"
 "%d %% de la production": "Üretimin %d %%"
-"%d %% de la consommation": "Tüketimin %d %%"
+"%d %% du consommé": "Tüketimin %d %%"
 
 # Popup Température (ADR-0032) : historique des deux températures de l'accueil
 "24 h": "24 sa"

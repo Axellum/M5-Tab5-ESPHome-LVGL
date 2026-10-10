@@ -107,9 +107,13 @@ constexpr int32_t kAxeY = 258;
 constexpr float kRepos = 10.0f;
 
 // Page Flux : cercles de kFluxD (energie_flux_noeud.yaml), anneau autour de la maison.
-constexpr int32_t kFluxD = 190;
+constexpr int32_t kFluxD = 200;
 constexpr int32_t kFluxR = kFluxD / 2;
-constexpr int32_t kFluxTexteL = 156;        // texte du bas d'un cercle (corde de 176 px)
+// Deux lignes sous la valeur : le texte (corde de 192 px à son bas) et le détail (168 px).
+// Mesurés en Roboto 22 le 10/10/2026 dans les 7 langues : « Geen uitwisseling » 175 px,
+// « Aujourd'hui » 112 px ; le détail est un nombre (« 1.47 kWh », « 400 W »).
+constexpr int32_t kFluxTexteL = 180;
+constexpr int32_t kFluxDetailL = 156;
 constexpr int32_t kAnneauEcart = 5;         // entre le cercle et l'anneau
 constexpr int32_t kAnneauL = 10;            // épaisseur de l'anneau
 constexpr int32_t kAnneauD = 2 * (kFluxR + kAnneauEcart + kAnneauL);
@@ -121,8 +125,10 @@ struct Centre {
     int32_t x, y;
 };
 // Centres des cercles dans la page (1250 × 598), dans l'ordre des cartes : avec la batterie
-// (en bas), sans (les trois descendent pour remplir la page).
-constexpr Centre kCentresBatterie[NB_CARTES] = {{625, 105}, {1035, 300}, {215, 300}, {625, 493}};
+// (en bas), sans (les trois descendent pour remplir la page). Avec la batterie : 10 px
+// au-dessus du solaire, 43 px sous la batterie (le bas du verre d'un cercle a la couleur
+// du bas de la carte : rien ne doit frôler le bord de la page).
+constexpr Centre kCentresBatterie[NB_CARTES] = {{625, 110}, {1035, 285}, {215, 285}, {625, 455}};
 constexpr Centre kCentresSans[NB_CARTES] = {{625, 150}, {1035, 410}, {215, 410}, {625, 493}};
 enum Trait : int { T_SOL_MAISON,
                    T_SOL_RESEAU,
@@ -498,7 +504,9 @@ struct Vu {
     uint32_t couleur_valeur = 0;
     int etat = 0;
     uint32_t couleur = 0;
-    char ligne[48] = "";
+    char ligne[48] = "";    // carte (Production) : une ligne
+    char cercle[48] = "";   // cercle (Flux) : le texte, puis…
+    char detail[24] = "";   // … son nombre dessous (« Aujourd'hui » / « 1.47 kWh »)
 };
 
 // Solaire : sa puissance (sinon la production du jour), et la production du jour.
@@ -511,8 +519,11 @@ Vu vu_solaire() {
     if (i.jour.choisi && i.solaire.choisi) {
         kwh(x, sizeof(x), i.jour.v);
         snprintf(r.ligne, sizeof(r.ligne), "%s %s", tr("Aujourd'hui"), x);
+        snprintf(r.cercle, sizeof(r.cercle), "%s", tr("Aujourd'hui"));
+        snprintf(r.detail, sizeof(r.detail), "%s", x);
     } else if (i.jour.choisi) {
         snprintf(r.ligne, sizeof(r.ligne), "%s", tr("Produit aujourd'hui"));
+        snprintf(r.cercle, sizeof(r.cercle), "%s", tr("Aujourd'hui"));
     }
     const bool produit = !std::isnan(i.solaire.v) && i.solaire.v >= kRepos;
     r.couleur_valeur = UIColor.TEXT_PRIMARY;
@@ -529,6 +540,7 @@ Vu vu_reseau() {
     const char* sens = r.etat > 0 ? tr("Depuis le réseau") : r.etat < 0 ? tr("Vers le réseau")
                                                                         : tr("Aucun échange");
     snprintf(r.ligne, sizeof(r.ligne), "%s", std::isnan(v) ? "" : sens);
+    snprintf(r.cercle, sizeof(r.cercle), "%s", r.ligne);
     r.couleur_valeur = UIColor.TEXT_PRIMARY;
     r.couleur = r.etat > 0 ? UIColor.WARNING : r.etat < 0 ? UIColor.SUCCESS
                                                           : UIColor.TEXT_DIM;
@@ -551,10 +563,14 @@ Vu vu_batterie() {
     if (i.batterie_puissance.choisi && !std::isnan(p)) {
         if (r.etat == 0) {
             snprintf(r.ligne, sizeof(r.ligne), "%s", tr("Au repos"));
+            snprintf(r.cercle, sizeof(r.cercle), "%s", r.ligne);
         } else {
             char x[24];
             puissance(x, sizeof(x), std::fabs(p));
-            snprintf(r.ligne, sizeof(r.ligne), "%s %s", r.etat > 0 ? tr("Charge") : tr("Décharge"), x);
+            const char* sens = r.etat > 0 ? tr("Charge") : tr("Décharge");
+            snprintf(r.ligne, sizeof(r.ligne), "%s %s", sens, x);
+            snprintf(r.cercle, sizeof(r.cercle), "%s", sens);
+            snprintf(r.detail, sizeof(r.detail), "%s", x);
         }
     }
     r.couleur = r.etat > 0 ? UIColor.SUCCESS : r.etat < 0 ? UIColor.WARNING
@@ -759,17 +775,21 @@ void flux_disposer(bool batterie) {
     }
 }
 
-// Un cercle : bord à la couleur de sa source, icône à celle de son état (comme sa carte).
+// Un cercle : bord à la couleur de sa source sur tout le tour (un thème à relief ne pose
+// la bordure du verre partagé que sur deux côtés ; sans le tour entier, le bas du cercle se
+// confond avec la carte), icône à la couleur de son état (comme sa carte).
 void peindre_noeud(int c, const Vu& v, uint32_t bord) {
     const EnergieUI& u = g_energie_ui;
     lv_obj_t* o = u.flux_noeud[c];
     ui_hidden(o, false);
     contour(o, bord, 3, LV_OPA_COVER);
+    ui_style_num(o, LV_STYLE_BORDER_SIDE, LV_BORDER_SIDE_FULL);
     ui_text(u.flux_valeur[c], v.valeur);
     ui_text_color(u.flux_valeur[c], v.couleur_valeur);
     ui_text(u.flux_icone[c], glyphe_carte(c, v.etat));
     ui_text_color(u.flux_icone[c], v.couleur);
-    texte_ha_coupe(u.flux_texte[c], v.ligne, kFluxTexteL);
+    texte_ha_coupe(u.flux_texte[c], v.cercle, kFluxTexteL);
+    texte_ha_coupe(u.flux_detail[c], v.detail, kFluxDetailL);
 }
 
 void peindre_trait(int t, bool montre, float w, uint32_t couleur) {
@@ -814,10 +834,10 @@ void peindre_flux() {
     m.couleur = UIColor.INFO;
     const float entre = f.solaire_maison + f.batterie_maison + f.reseau_maison;
     if (entre >= kRepos)
-        snprintf(m.ligne, sizeof(m.ligne), tr("%d %% solaire"),
+        snprintf(m.cercle, sizeof(m.cercle), tr("%d %% solaire"),
                  static_cast<int>(std::lround(100.0f * f.solaire_maison / entre)));
     else
-        snprintf(m.ligne, sizeof(m.ligne), "%s", tr("Consommation"));
+        snprintf(m.cercle, sizeof(m.cercle), "%s", tr("Consommation"));
     peindre_noeud(MAISON, m, UIColor.INFO);
     // Réseau : bord de l'achat, ou de la vente quand il en reçoit.
     if (reseau) {
@@ -1097,9 +1117,10 @@ void peindre_bilan() {
         kwh(v, sizeof(v), t.achete);
         l2[0] = '\0';
         if (std::isfinite(t.achete) && std::isfinite(t.consomme) && t.consomme > 0.0f)
-            snprintf(l2, sizeof(l2), tr("%d %% de la consommation"),
+            // « du consommé » : « de la consommation » dépassait la carte (266 px pour 244).
+            snprintf(l2, sizeof(l2), tr("%d %% du consommé"),
                      static_cast<int>(std::lround(std::fmin(t.achete / t.consomme, 1.0f) * 100.0f)));
-        peindre_carte(ACHETE, v, UIColor.TEXT_PRIMARY, glyphe_bilan(ACHETE), UIColor.WARNING, tr("Depuis le réseau"), l2,
+        peindre_carte(ACHETE, v, UIColor.TEXT_PRIMARY, glyphe_bilan(ACHETE), UIColor.INFO, tr("Depuis le réseau"), l2,
                       largeur);
     }
     if (montre[3]) {
@@ -1279,9 +1300,11 @@ void couleurs() {
         ui_style_couleur(s_bil.prod_auto[k], LV_STYLE_BG_COLOR, UIColor.GOLD);
         ui_style_couleur(s_bil.prod_vendu[k], LV_STYLE_BG_COLOR, UIColor.SUCCESS);
         ui_style_couleur(s_bil.cons_auto[k], LV_STYLE_BG_COLOR, UIColor.GOLD);
-        ui_style_couleur(s_bil.cons_achat[k], LV_STYLE_BG_COLOR, UIColor.WARNING);
+        // Acheté en bleu, comme la consommation du réseau dans le tableau Énergie de HA :
+        // l'orange (WARNING) se confondait avec l'or de l'autoconsommé.
+        ui_style_couleur(s_bil.cons_achat[k], LV_STYLE_BG_COLOR, UIColor.INFO);
     }
-    const uint32_t legendes[kBilanLegendes] = {UIColor.GOLD, UIColor.SUCCESS, UIColor.WARNING};
+    const uint32_t legendes[kBilanLegendes] = {UIColor.GOLD, UIColor.SUCCESS, UIColor.INFO};
     for (int i = 0; i < kBilanLegendes; i++) {
         ui_style_couleur(s_bil.marque[i], LV_STYLE_BG_COLOR, legendes[i]);
         ui_text_color(s_bil.legende[i], UIColor.TEXT_SOFT);

@@ -1243,8 +1243,8 @@ static const char* const kI18nKeys[] = {
     " le lendemain",
     "%.1f  contre  %.1f      (écart %.1f)",
     "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n",
-    "%d %% de la consommation",
     "%d %% de la production",
+    "%d %% du consommé",
     "%d %% solaire",
     "%d / 5 (plus haut = plus sensible)",
     "%d MAJ",
@@ -2465,8 +2465,8 @@ static const char* const kI18n_en[] = {
     " the next day",  // " le lendemain"
     "%.1f  vs  %.1f      (margin %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% of consumption",  // "%d %% de la consommation"
     "%d %% of production",  // "%d %% de la production"
+    "%d %% of consumption",  // "%d %% du consommé"
     "%d %% solar",  // "%d %% solaire"
     "%d / 5 (higher = more sensitive)",  // "%d / 5 (plus haut = plus sensible)"
     "%d updates",  // "%d MAJ"
@@ -3687,8 +3687,8 @@ static const char* const kI18n_de[] = {
     " am Folgetag",  // " le lendemain"
     "%.1f  zu  %.1f      (Abstand %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   Lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% des Verbrauchs",  // "%d %% de la consommation"
     "%d %% der Produktion",  // "%d %% de la production"
+    "%d %% des Verbrauchs",  // "%d %% du consommé"
     "%d %% Solar",  // "%d %% solaire"
     "%d / 5 (höher = empfindlicher)",  // "%d / 5 (plus haut = plus sensible)"
     "%d Updates",  // "%d MAJ"
@@ -4909,8 +4909,8 @@ static const char* const kI18n_nl[] = {
     " de dag erna",  // " le lendemain"
     "%.1f  tegen  %.1f      (verschil %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% van het verbruik",  // "%d %% de la consommation"
     "%d %% van de productie",  // "%d %% de la production"
+    "%d %% van het verbruik",  // "%d %% du consommé"
     "%d %% zon",  // "%d %% solaire"
     "%d / 5 (hoger = gevoeliger)",  // "%d / 5 (plus haut = plus sensible)"
     "%d updates",  // "%d MAJ"
@@ -6131,8 +6131,8 @@ static const char* const kI18n_es[] = {
     " del día siguiente",  // " le lendemain"
     "%.1f  contra  %.1f      (diferencia %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% del consumo",  // "%d %% de la consommation"
     "%d %% de la producción",  // "%d %% de la production"
+    "%d %% del consumo",  // "%d %% du consommé"
     "%d %% solar",  // "%d %% solaire"
     "%d / 5 (más alto = más sensible)",  // "%d / 5 (plus haut = plus sensible)"
     "%d actualizaciones",  // "%d MAJ"
@@ -7353,8 +7353,8 @@ static const char* const kI18n_it[] = {
     " di domani",  // " le lendemain"
     "%.1f  a  %.1f      (scarto %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   liv %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% del consumo",  // "%d %% de la consommation"
     "%d %% della produzione",  // "%d %% de la production"
+    "%d %% del consumo",  // "%d %% du consommé"
     "%d %% solare",  // "%d %% solaire"
     "%d / 5 (più alto = più sensibile)",  // "%d / 5 (plus haut = plus sensible)"
     "%d aggiorn.",  // "%d MAJ"
@@ -8575,8 +8575,8 @@ static const char* const kI18n_tr[] = {
     " ertesi gün",  // " le lendemain"
     "%.1f  -  %.1f      (fark %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   sev %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "Tüketimin %d %%",  // "%d %% de la consommation"
     "Üretimin %d %%",  // "%d %% de la production"
+    "Tüketimin %d %%",  // "%d %% du consommé"
     "%d %% güneş",  // "%d %% solaire"
     "%d / 5 (yüksek = daha hassas)",  // "%d / 5 (plus haut = plus sensible)"
     "%d güncelleme",  // "%d MAJ"

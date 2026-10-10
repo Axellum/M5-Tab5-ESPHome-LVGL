@@ -54,7 +54,8 @@ struct EnergieUI {
     lv_obj_t* flux_noeud[4] = {};         // energie_flux_N
     lv_obj_t* flux_icone[4] = {};         // energie_flux_icone_N (mdi_font_45)
     lv_obj_t* flux_valeur[4] = {};        // energie_flux_valeur_N
-    lv_obj_t* flux_texte[4] = {};         // energie_flux_texte_N
+    lv_obj_t* flux_texte[4] = {};         // energie_flux_texte_N : « Aujourd'hui », « Charge »…
+    lv_obj_t* flux_detail[4] = {};        // energie_flux_detail_N : « 1.47 kWh », « 400 W »…
     // Page Aujourd'hui : soleil et heures (carte de gauche), chiffres (carte de droite).
     lv_obj_t* soleil_zone = nullptr;      // energie_soleil_zone
     lv_obj_t* soleil_infos = nullptr;     // energie_soleil_infos

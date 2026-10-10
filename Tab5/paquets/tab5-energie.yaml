@@ -107,6 +107,10 @@ script:
             u.flux_texte[1] = id(energie_flux_texte_1);
             u.flux_texte[2] = id(energie_flux_texte_2);
             u.flux_texte[3] = id(energie_flux_texte_3);
+            u.flux_detail[0] = id(energie_flux_detail_0);
+            u.flux_detail[1] = id(energie_flux_detail_1);
+            u.flux_detail[2] = id(energie_flux_detail_2);
+            u.flux_detail[3] = id(energie_flux_detail_3);
             u.soleil_zone = id(energie_soleil_zone);
             u.soleil_infos = id(energie_soleil_infos);
             u.bilan_titre = id(energie_bilan_titre);

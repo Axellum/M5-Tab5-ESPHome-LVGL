@@ -1246,7 +1246,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Produit": "Prodotto"
 "Consommé": "Consumato"
 "%d %% de la production": "%d %% della produzione"
-"%d %% de la consommation": "%d %% del consumo"
+"%d %% du consommé": "%d %% del consumo"
 
 # Popup Température (ADR-0032) : historique des deux températures de l'accueil
 "24 h": "24 h"
