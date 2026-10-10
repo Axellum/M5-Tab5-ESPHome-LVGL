@@ -4,7 +4,7 @@
 Aucun compilateur ne relie le package `tab5_serveur_ia.yaml`, l'action
 `tab5_maj_serveur_ia` et le firmware. Ce fichier le fait :
 
-- contrat : l'action et sa variable, le format (treize champs « | ») face à
+- contrat : l'action et sa variable, le format (quatorze champs « | ») face à
   `serveur_ia_lire()` (tab5_parse.h, section 14), les plafonds de longueur ;
 - package : son VRAI modèle Jinja du payload est rendu (bac à sable de Jinja, comme HA,
   imitation de tests/test_historique.py) sur des capteurs simulés et comparé à un calcul
@@ -41,7 +41,7 @@ CPP = os.path.join(TAB5, "ecran", "tab5_serveur_ia.cpp")
 ROLES = ["etat", "modele", "tokens", "en_cours", "en_file", "vram", "vram_totale", "temperature", "ram",
          "puissance"]
 CHAMPS = ["nom", "etat", "modele", "tps", "cours", "file", "vram", "vram_total", "vram_pct", "temp", "niveau",
-          "ram", "puissance"]
+          "ram", "puissance", "actions"]
 APPAREILS = {"pc_ia": {"name": "PC IA", "name_by_user": "Serveur | maison"},
              "glances": {"name": "Glances", "name_by_user": None}}
 
@@ -67,7 +67,7 @@ def test_action_du_firmware():
 
 
 def test_format_du_payload_partout():
-    """Les treize champs dans le même ordre : en-tête de la lecture, package, démo."""
+    """Les quatorze champs dans le même ordre : en-tête de la lecture, package, démo."""
     attendu = "« " + "|".join(CHAMPS) + " »"
     entete = _lire(PARSE_H)
     assert attendu in entete and attendu in _lire(PACKAGE)
@@ -76,7 +76,7 @@ def test_format_du_payload_partout():
     # Plafonds : 40 caractères de nom, 80 de modèle — sous kServeurIaMax avec tout le reste.
     maximum = int(re.search(r"constexpr size_t kServeurIaMax = (\d+);", entete).group(1))
     assert "nom.t[:40]" in _lire(PACKAGE) and "modele[:80]" in _lire(PACKAGE)
-    assert 40 * 4 + 80 * 4 + 12 * 12 < maximum, "noms en UTF-8 (4 octets au pire) et douze champs courts"
+    assert 40 * 4 + 80 * 4 + 12 * 12 + len("-decharger,-reveiller,-redemarrer") + 1 < maximum,         "noms en UTF-8 (4 octets au pire), douze champs courts et les trois actions"
 
 
 # ─── Package : le modèle du payload ────────────────────────────────────────────
@@ -126,23 +126,24 @@ def _payload(etats, choix):
 
 def _lire_comme_le_firmware(payload):
     """Découpe de serveur_ia_lire() : un enregistrement (le reste après « ; » ignoré),
-    treize champs « | », nombres finis ou vides."""
+    quatorze champs « | », nombres finis ou vides, actions parmi les trois codes."""
     if not payload:
         return None
     champs = payload.split(";")[0].split("|")
     assert len(champs) == len(CHAMPS), champs
     lu = dict(zip(CHAMPS, champs))
-    for c in CHAMPS[3:]:
+    for c in CHAMPS[3:13]:
         assert lu[c] == "" or math.isfinite(float(lu[c])), (c, lu[c])
     assert lu["etat"] in ("1", "0", "")
     assert lu["niveau"] in ("0", "1", "2", "")
+    assert all(re.fullmatch(r"-?(decharger|reveiller|redemarrer)", a) for a in filter(None, lu["actions"].split(","))),         lu["actions"]
     for c in ("cours", "file", "vram_pct", "temp", "ram", "puissance", "niveau"):
         assert lu[c] == "" or re.fullmatch(r"-?\d+", lu[c]), (c, lu[c])
     return lu
 
 
 def _attendu(nom="", etat="", modele="", tps=None, cours=None, file=None, vram_go=None, total_go=None,
-             pct=None, temp_c=None, ram=None, watts=None):
+             pct=None, temp_c=None, ram=None, watts=None, actions=""):
     """Calcul indépendant : arrondis de l'ADR-0059 (0,1 pour les tokens/s et les Go,
     entier ailleurs), niveau par 80 et 90 °C, vide pour l'inconnu."""
     def un(x, n=None):
@@ -153,7 +154,8 @@ def _attendu(nom="", etat="", modele="", tps=None, cours=None, file=None, vram_g
     niveau = "" if temp is None else str(2 if temp >= 90 else 1 if temp >= 80 else 0)
     return {"nom": nom, "etat": etat, "modele": modele, "tps": un(tps, 1), "cours": un(cours), "file": un(file),
             "vram": un(vram_go, 1), "vram_total": un(total_go, 1), "vram_pct": un(pct),
-            "temp": "" if temp is None else str(temp), "niveau": niveau, "ram": un(ram), "puissance": un(watts)}
+            "temp": "" if temp is None else str(temp), "niveau": niveau, "ram": un(ram), "puissance": un(watts),
+            "actions": actions}
 
 
 def _ollama_et_glances():
@@ -225,7 +227,7 @@ def test_hors_ligne_et_unites_converties():
 def test_etat_du_serveur(etat, attendu):
     lu = _lire_comme_le_firmware(_payload([EtatHA("binary_sensor.srv", etat)], {"etat": "binary_sensor.srv"}))
     assert lu["etat"] == attendu
-    assert [lu[c] for c in CHAMPS if c != "etat"] == [""] * 12, "rien d'inventé"
+    assert [lu[c] for c in CHAMPS if c != "etat"] == [""] * 13, "rien d'inventé"
 
 
 def test_rien_de_choisi_ou_textes_genants():
@@ -354,3 +356,24 @@ def test_couleurs_de_la_palette():
     for role in ("UIColor.SUCCESS", "UIColor.WARNING", "UIColor.ERROR", "UIColor.INACTIVE", "UIColor.ACCENT"):
         assert role in cpp, role
     assert not re.search(r"lv_color_hex\(|0x[0-9A-Fa-f]{6}", cpp), "aucune couleur en dur (règle 1)"
+
+
+# ─── Actions (ADR-0060) : le 14e champ ─────────────────────────────────────────
+
+@pytest.mark.parametrize("etat_capteur, attendu", [
+    ("decharger,-reveiller,redemarrer", "decharger,-reveiller,redemarrer"),
+    ("aucune", ""), ("unknown", ""), ("unavailable", ""),
+    # Seuls les trois codes passent, grisés ou non : rien d'autre n'arrive à la tablette.
+    ("decharger,rm -rf /,reveiller|x,-redemarrer;y,-redemarrer", "decharger,-redemarrer"),
+])
+def test_actions_dans_le_payload(etat_capteur, attendu):
+    etats = _ollama_et_glances() + [EtatHA("sensor.tab5_serveur_ia_actions", etat_capteur)]
+    lu = _lire_comme_le_firmware(_payload(etats, CHOIX_COMPLET))
+    assert lu["actions"] == attendu
+    assert lu["modele"] == "llama3.1:8b", "les autres champs ne bougent pas"
+
+
+def test_actions_sans_le_capteur():
+    """packages/tab5_llm.yaml absent (capteurs venus d'ailleurs) : aucun bouton."""
+    lu = _lire_comme_le_firmware(_payload(_ollama_et_glances(), CHOIX_COMPLET))
+    assert lu["actions"] == ""

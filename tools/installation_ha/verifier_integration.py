@@ -584,6 +584,10 @@ async def scenario(args, rapport: Rapport) -> None:
             services = {(s["domain"], n) for s in await ha.get("/api/services") for n in s["services"]}
             rapport.verifier(("rest_command", "tab5_pluie") in services,
                              "1. rest_command.tab5_pluie chargé à chaud")
+            # tab5_llm.yaml déclare `wake_on_lan:` (ADR-0060) : intégration chargée à chaud,
+            # son action enregistrée sans redémarrage.
+            rapport.verifier(("wake_on_lan", "send_magic_packet") in services,
+                             "1. wake_on_lan chargé à chaud (wake_on_lan.send_magic_packet, réveil du serveur IA)")
             presentes = await attendre_reparations(ha, {"fichiers_remplaces", "configurer_pieces"}, set())
             rapport.verifier(presentes == {"fichiers_remplaces", "configurer_pieces"},
                              "1. deux réparations : « fichiers_remplaces » (blueprint copié à la main) et "
