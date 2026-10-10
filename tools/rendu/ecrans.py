@@ -1177,13 +1177,14 @@ ECRANS: tuple[Ecran, ...] = (
           (ZONE_VOCAL, LECTEUR_AUCUN, Choisir("Thème", THEME_PAR_DEFAUT))),
     # Popup Caméras (ADR-0049, ADR-0057) : sept caméras dans trois pièces et « Autres », la
     # première montrée (« Toutes »), puis la pièce Jardin et son abri hors ligne (deux
-    # balayages : Terrasse → Potager → Abri de jardin). `fermer` remet « Toutes » (la pièce
-    # est gardée en NVS).
+    # balayages : Terrasse → Potager → Abri de jardin). `fermer` remet « Toutes » sur la
+    # première caméra, quel que soit l'ordre des écrans (pièce et caméra sont gardées en NVS,
+    # et « Toutes » garde la caméra montrée : Entrée d'abord, qui montre le Portail).
     Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"), Attendre(1.0))),
     Ecran("cameras-piece-hors-ligne",
           (CAMERAS_DONNEES, Aller("Caméras"), _camera_puce(2), Attendre(0.6), CAMERAS_SUIVANTE,
-           CAMERAS_SUIVANTE),
-          (_camera_puce(0),)),
+           CAMERAS_SUIVANTE, Attendre(1.0)),
+          (_camera_puce(1), _camera_puce(0))),
     # Capteurs suivis (ADR-0054) : le popup avant toute poussée (« En attente de Home
     # Assistant »), avec quatre capteurs (deux rangées : 3 colonnes au plus), puis la carte
     # du premier dans la zone à gauche de l'horloge, dans le thème par défaut et en gélule.
