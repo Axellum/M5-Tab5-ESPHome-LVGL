@@ -295,11 +295,15 @@ def test_ecrire_sauvegarde_et_refuse_un_fichier_change(tmp_path):
     with pytest.raises(A.FichierInutilisable):
         A.ecrire_si_inchange(tmp_path, lu, "[]\n", "20261010-120001")
     assert (tmp_path / A.FICHIER).read_text(encoding="utf-8") == nouveau
-    # GARDER sauvegardes au plus ; même étiquette : suffixée.
+    # GARDER sauvegardes au plus ; même étiquette : suffixée, et les plus récentes gardées
+    # (« -2_ » se trie avant « _ » par le nom : vu en CI le 10/10, deux écritures dans la même seconde).
+    faites = []
     for i in range(A.GARDER + 2):
         actuel = (tmp_path / A.FICHIER).read_text(encoding="utf-8")
-        A.ecrire_si_inchange(tmp_path, actuel, actuel, "20261011-000000")
+        faites.append(A.ecrire_si_inchange(tmp_path, actuel, actuel + f"# {i}\n", "20261011-000000"))
     assert len(list((tmp_path / A.SAUVEGARDES).iterdir())) == A.GARDER
+    assert A.sauvegardes(tmp_path) == faites[-A.GARDER:]
+    assert A.sauvegardes(tmp_path)[-1].read_text(encoding="utf-8").endswith(f"# {A.GARDER}\n")
     # Les sauvegardes d'installation ne voient pas ce sous-dossier.
     assert installation.derniere_sauvegarde(tmp_path).name == "20261007-120000_3.7.0"
     assert installation.nettoyer_sauvegardes(tmp_path, 0) == ["20261007-120000_3.7.0"]

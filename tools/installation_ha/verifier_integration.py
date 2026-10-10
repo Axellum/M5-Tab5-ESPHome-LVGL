@@ -405,8 +405,10 @@ async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> Non
     rapport.verifier(len(nos) == 1 and nos[0]["use_blueprint"].get("input") == attendu,
                      "1 bis. mise à jour : la même automatisation, ses pièces remplacées (pièce 2 retirée)",
                      str(nos)[:400])
-    nouvelles = sorted(sauvegardes.glob("*")) if sauvegardes.is_dir() else []
-    rapport.verifier(len(nouvelles) == len(deja) + 1 and nouvelles[-1].read_bytes() == avant,
+    # Les fichiers ajoutés, pas « le dernier par le nom » : deux sauvegardes dans la même
+    # seconde se nomment « …_ » puis « …-2_ », et « - » se trie avant « _ ».
+    nouvelles = sorted(set(sauvegardes.glob("*")) - set(deja)) if sauvegardes.is_dir() else []
+    rapport.verifier(len(nouvelles) == 1 and nouvelles[0].read_bytes() == avant,
                      "1 bis. mise à jour : l'ancien automations.yaml sauvegardé", str([p.name for p in nouvelles]))
 
 

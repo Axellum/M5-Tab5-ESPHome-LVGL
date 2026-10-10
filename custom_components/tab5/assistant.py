@@ -295,6 +295,25 @@ def remplacer_pieces(texte: str, index: int, pieces: dict[str, Any]) -> str:
     return resultat
 
 
+# « AAAAMMJJ-HHMMSS » (l'étiquette, dt_util.now()), puis « -n » à partir de la 2e de la même seconde.
+_SAUVEGARDE = re.compile(r"^(\d{8}-\d{6})(?:-(\d+))?_" + re.escape(FICHIER) + "$")
+
+
+def sauvegardes(config: Path) -> list[Path]:
+    """Les sauvegardes de l'assistant, de la plus ancienne à la plus récente. Deux dans la
+    même seconde : « <étiquette>_… » puis « <étiquette>-2_… » ; l'ordre des noms seul les
+    inverserait (« - » se trie avant « _ »)."""
+    dossier = config / SAUVEGARDES
+    if not dossier.is_dir():
+        return []
+
+    def ordre(p: Path) -> tuple[str, int]:
+        m = _SAUVEGARDE.match(p.name)
+        return (m.group(1), int(m.group(2) or 1)) if m else (p.name, 0)
+
+    return sorted(dossier.glob(f"*_{FICHIER}"), key=ordre)
+
+
 def ecrire_si_inchange(config: Path, lu: str, nouveau: str, etiquette: str) -> Path | None:
     """Sauvegarde automations.yaml dans tab5_sauvegardes/automatisations/<étiquette>_automations.yaml
     (les GARDER plus récentes), puis l'écrit de façon atomique. FichierInutilisable s'il a
@@ -308,13 +327,14 @@ def ecrire_si_inchange(config: Path, lu: str, nouveau: str, etiquette: str) -> P
     if cible.is_file():
         dossier = config / SAUVEGARDES
         dossier.mkdir(parents=True, exist_ok=True)
-        sauvegarde = dossier / f"{etiquette}_{FICHIER}"
-        n = 1
-        while sauvegarde.exists():
-            n += 1
-            sauvegarde = dossier / f"{etiquette}-{n}_{FICHIER}"
+        # Le numéro suit le plus grand de la même étiquette (un nom libéré par la purge
+        # n'est pas repris : il se trierait avant une sauvegarde plus ancienne).
+        numeros = [int(m.group(2) or 1) for p in dossier.glob(f"*_{FICHIER}")
+                   if (m := _SAUVEGARDE.match(p.name)) and m.group(1) == etiquette]
+        n = max(numeros, default=0) + 1
+        sauvegarde = dossier / (f"{etiquette}_{FICHIER}" if n == 1 else f"{etiquette}-{n}_{FICHIER}")
         shutil.copy2(cible, sauvegarde)
-        for ancienne in sorted(dossier.glob(f"*_{FICHIER}"))[:-GARDER]:
+        for ancienne in sauvegardes(config)[:-GARDER]:
             ancienne.unlink()
     tmp = cible.with_name(cible.name + TEMPORAIRE)
     try:
