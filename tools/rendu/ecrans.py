@@ -811,15 +811,31 @@ METEO_SCENE_3 = (
 METEO_PAGES = {"jour": (433, 41), "jours": (643, 41), "details": (853, 41)}
 METEO_GLISSER = Glisser(1100, 675, 500, 675, dans_popup=True)
 
-# Popup Caméras (ADR-0049, cameras_popup.yaml) : la liste que le blueprint renverrait à
-# l'événement esphome.tab5_cameras, poussée avant l'ouverture. Le rendu ne télécharge rien
-# (bouchon de tab5_cameras_charge.cpp hors ESP_PLATFORM) : la capture montre la page de la première caméra
-# (nom, pastilles, « Chargement... »), pas d'image.
+# Popup Caméras (ADR-0049, ADR-0056, cameras_popup.yaml) : la liste que le blueprint
+# renverrait à l'événement esphome.tab5_cameras (« nom|image|pièce|depuis »), poussée avant
+# l'ouverture. Le rendu ne télécharge rien : le bouchon de tab5_cameras_charge.cpp (hors
+# ESP_PLATFORM) rend une mire calculée, une teinte par caméra. Sept caméras, trois pièces
+# et une sans pièce (« Autres ») ; l'abri est hors ligne depuis 06:58 (captures à 07:45).
 CAMERAS_DONNEES = Service("tab5_maj_cameras", (
     ("adresse", "http://homeassistant.local:8123"),
-    ("cameras", "Entrée|/api/camera_proxy/camera.entree?token=a;Jardin|/api/camera_proxy/camera.jardin?token=b;"
-                "Garage|/api/camera_proxy/camera.garage?token=c"),
+    ("cameras", ";".join((
+        "Portail|/api/camera_proxy/camera.portail?token=a|Entrée|",
+        "Porte d'entrée|/api/camera_proxy/camera.porte?token=b|Entrée|",
+        "Terrasse|/api/camera_proxy/camera.terrasse?token=c|Jardin|",
+        "Potager|/api/camera_proxy/camera.potager?token=d|Jardin|",
+        f"Abri de jardin|/api/camera_proxy/camera.abri?token=e|Jardin|{_epoch(2026, 6, 16, 6, 58)}",
+        "Garage|/api/camera_proxy/camera.garage?token=f|Garage|",
+        "Couloir|/api/camera_proxy/camera.couloir?token=g||",
+    ))),
 ))
+# Puces de la colonne des pièces (x 16 à 254 de la carte, 56 px de haut, 8 d'écart, à
+# partir de y 72 ; carte à (15, 15) de l'écran) : 0 « Toutes », 1 Entrée, 2 Jardin…
+def _camera_puce(n: int) -> Toucher:
+    return Toucher(15 + 16 + 119, 15 + 72 + n * 64 + 28)
+
+
+# Balayage vers la gauche sur l'image (caméra suivante de la pièce).
+CAMERAS_SUIVANTE = Glisser(1100, 360, 500, 360, dans_popup=True)
 
 
 def _historique(cle: str, vue: str, exterieur: bool = False) -> Service:
@@ -1159,8 +1175,15 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-zone-lecteur-vide", (LECTEUR_INACTIF, ZONE_LECTEUR), (ZONE_VOCAL, LECTEUR_AUCUN)),
     Ecran("accueil-zone-lecteur-gelule", (Choisir("Thème", THEME_CADRE_GELULE), LECTEUR_EN_PAUSE, ZONE_LECTEUR),
           (ZONE_VOCAL, LECTEUR_AUCUN, Choisir("Thème", THEME_PAR_DEFAUT))),
-    # Popup Caméras (ADR-0049) : trois caméras, la première montrée.
-    Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"))),
+    # Popup Caméras (ADR-0049, ADR-0056) : sept caméras dans trois pièces et « Autres », la
+    # première montrée (« Toutes »), puis la pièce Jardin et son abri hors ligne (deux
+    # balayages : Terrasse → Potager → Abri de jardin). `fermer` remet « Toutes » (la pièce
+    # est gardée en NVS).
+    Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"), Attendre(1.0))),
+    Ecran("cameras-piece-hors-ligne",
+          (CAMERAS_DONNEES, Aller("Caméras"), _camera_puce(2), Attendre(0.6), CAMERAS_SUIVANTE,
+           CAMERAS_SUIVANTE),
+          (_camera_puce(0),)),
     # Capteurs suivis (ADR-0054) : le popup avant toute poussée (« En attente de Home
     # Assistant »), avec quatre capteurs (deux rangées : 3 colonnes au plus), puis la carte
     # du premier dans la zone à gauche de l'horloge, dans le thème par défaut et en gélule.
