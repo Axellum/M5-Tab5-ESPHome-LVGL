@@ -39,6 +39,10 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 - **Contrat** : deux actions ajoutées, `tab5_maj_energie_soleil` et `tab5_maj_energie_bilan` (version mineure) ; HA les appelle avec `continue_on_error`, un firmware plus ancien garde le popup d'avant. Démo (journée de juin), rendu hors tablette (`energie-flux`, `energie-aujourdhui`, `energie-bilan`), graines du fuzz des services, `tests/test_energie.py` (modèles Jinja contre un calcul Python indépendant).
 - Non essayé sur la tablette, ni sur une vraie installation solaire : la justesse de la courbe apprise et de la prévision reste à confirmer avec des données réelles.
 
+### 2026-10-10 — Capteurs suivis : où les choisir, dit dans la notice et dans le tableau de bord
+
+- **Demande d'Axel** : il n'a pas trouvé où choisir son capteur de bourse. La notice « Suivi » dit maintenant le chemin exact (Paramètres → Appareils et services → Entités, « capteurs suivis », entité `select.tab5_capteurs_suivis`, ou la vue Réglages du tableau de bord) et comment cocher (« ○ » devient « ✓ »). Le tableau de bord (`custom_templates/tab5_dashboard.jinja`) ajoute, sous les tuiles de la section Maison, un texte court en sept langues avec un lien vers la notice, quand la liste existe. **Documentation et texte de tableau de bord seulement** : aucun changement de firmware ni de contrat ; le tableau de bord déjà posé dans HA ne le montre qu'après régénération.
+
 ### 2026-10-10 — Repères plus fins de la chronologie du démarrage
 
 - **Demande d'Axel**, après la première mesure sur la tablette (3 démarrages : `expandeur` à 7,2 s, `retro` à 21,4 s) : découper les ~7 s d'avant l'expandeur et les ~14 s d'après. 25 étapes au lieu de 7, en deux textes de moins de 255 caractères (limite d'un état de HA) : **Tab5 Chronologie du démarrage** jusqu'à la fin de `setup()` (`ctor`, `objets`, `setup`, `bus`, `expandeur`, `avant1s`, `apres1s`, `p600`, `donnees`, `lvgl`, `wifiinit`, `reseau`, `ecoute`, `fin`, `i18n`, `zones`) et la nouvelle **Tab5 Chronologie du démarrage (suite)** (`ordo`, `retro`, `dessin`, `image`, `tard`, `wifi`, `api`, `fin600`, `chargeur`).

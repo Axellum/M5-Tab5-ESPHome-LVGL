@@ -901,6 +901,12 @@ views:
             content: |-
               {{ t("**Téléphone** (application mobile de Home Assistant) : son retour allume l'écran, son départ l'éteint. **Capteur de présence** : une présence allume l'écran, 15 min sans présence l'éteignent, sauf pendant le réveil.", "**Phone** (Home Assistant mobile app): its return turns the screen on, its departure turns it off. **Presence sensor**: presence turns the screen on, 15 min without presence turn it off, except while the alarm rings.") }}
 {%- endif %}
+{%- if 'select.tab5_capteurs_suivis' in present %}
+          - type: markdown
+            text_only: true
+            content: |-
+              {{ t("**Capteurs suivis** : ouvrez la liste, choisissez un capteur (« ○ » devient « ✓ »), puis le suivant. Six au plus ; le premier est celui montré à gauche de l'horloge. Un cours de bourse, une température, une puissance : tout capteur qui a des statistiques.", "**Tracked sensors**: open the list, pick a sensor (« ○ » becomes « ✓ »), then the next one. Six at most; the first one is shown left of the clock. A share price, a temperature, a power: any sensor that has statistics.") }} [{{ t("Le popup Suivi, pas à pas", "The Tracking popup, step by step") }}]({{ doc("notice/tracking.md", "", "") }})
+{%- endif %}
 {#- Popup Serveur IA (ADR-0059, packages/tab5_serveur_ia.yaml) : dix listes, un capteur chacune. -#}
 {%- if 'select.tab5_ia_etat' in present %}
           - type: heading
@@ -2351,6 +2357,18 @@ views:
     'es': 'Sensores seguidos (ventana Seguimiento)',
     'it': 'Sensori monitorati (popup Monitoraggio)',
     'tr': 'Takip edilen sensörler (Takip penceresi)'},
+  "**Capteurs suivis** : ouvrez la liste, choisissez un capteur (« ○ » devient « ✓ »), puis le suivant. Six au plus ; le premier est celui montré à gauche de l'horloge. Un cours de bourse, une température, une puissance : tout capteur qui a des statistiques.": {
+    'de': '**Verfolgte Sensoren**: Liste öffnen, einen Sensor wählen (« ○ » wird zu « ✓ »), dann den nächsten. Höchstens sechs; der erste wird links von der Uhr gezeigt. Ein Börsenkurs, eine Temperatur, eine Leistung: jeder Sensor mit Statistiken.',
+    'nl': '**Gevolgde sensoren**: open de lijst, kies een sensor (« ○ » wordt « ✓ »), dan de volgende. Maximaal zes; de eerste staat links van de klok. Een beurskoers, een temperatuur, een vermogen: elke sensor met statistieken.',
+    'es': '**Sensores seguidos**: abra la lista, elija un sensor (« ○ » pasa a « ✓ ») y luego el siguiente. Seis como máximo; el primero se muestra a la izquierda del reloj. Una cotización de bolsa, una temperatura, una potencia: cualquier sensor con estadísticas.',
+    'it': '**Sensori monitorati**: aprite l’elenco, scegliete un sensore (« ○ » diventa « ✓ »), poi il successivo. Al massimo sei; il primo è mostrato a sinistra dell’orologio. Una quotazione di borsa, una temperatura, una potenza: qualsiasi sensore con statistiche.',
+    'tr': '**Takip edilen sensörler**: listeyi açın, bir sensör seçin (« ○ » işareti « ✓ » olur), sonra bir sonrakini. En fazla altı; ilki saatin solunda gösterilir. Bir borsa fiyatı, bir sıcaklık, bir güç: istatistiği olan her sensör.'},
+  'Le popup Suivi, pas à pas': {
+    'de': 'Das Verlauf-Popup Schritt für Schritt',
+    'nl': 'De pop-up Volgen stap voor stap',
+    'es': 'La ventana Seguimiento paso a paso',
+    'it': 'Il popup Monitoraggio passo per passo',
+    'tr': 'Takip penceresi adım adım'},
   'Réfrigérateurs (popup Froid)': {
     'de': 'Kühlschränke (Popup Kälte)',
     'nl': 'Koelkasten (pop-up Koude)',
