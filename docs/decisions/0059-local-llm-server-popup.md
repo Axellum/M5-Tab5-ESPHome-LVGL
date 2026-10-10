@@ -1,6 +1,6 @@
 # ADR-0059: An « AI server » popup — one local LLM server, sensors picked in ten « Tab5 · … » lists, pushed by `tab5_maj_serveur_ia` on change (two seconds apart at least), the tokens-per-second curve kept by the tablet
 
-**Status:** Accepted (2026-10-10, lot 2 of the local-LLM audit; not tried on a tablet when written).
+**Status:** Accepted (2026-10-10, lot 2 of the local-LLM audit; not tried on a tablet when written). Extended by [ADR-0060](0060-ai-server-actions.md): a 14th field, the action buttons.
 **Date:** 2026-10-10
 
 ## Context
