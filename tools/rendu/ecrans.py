@@ -26,9 +26,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
 from scenarios import (JOURS_FR, NABU, NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,  # noqa: E402
-                       PIECES, RANGEE, REGLABLES, SCENES, HeureForecast, JourForecast, Piece, Tuile,
-                       build_alerte_payload, build_etats_tuiles, build_heures_bulk_payload, build_historique,
-                       build_jours_bulk_payload, build_pluie_1h_bulk_payload, build_tuiles_payload, code_pluie)
+                       PIECES, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES, HeureForecast, JourForecast, Piece,
+                       Tuile, build_alerte_payload, build_etats_tuiles, build_heures_bulk_payload, build_historique,
+                       build_jours_bulk_payload, build_pluie_1h_bulk_payload, build_serveur_ia_payload,
+                       build_tuiles_payload, code_pluie)
 
 
 @dataclass(frozen=True)
@@ -748,6 +749,25 @@ FROID_DONNEES = Service("tab5_maj_froid", (("payload", FROID_FRIGO + ";" + FROID
 # les écrans suivants restent identiques à leurs références.
 FROID_CONFORME = Service("tab5_maj_froid", (("payload", FROID_CONGELATEUR),))
 
+# Serveur IA (ADR-0059, serveur_ia_popup.yaml) : au format de packages/tab5_serveur_ia.yaml.
+# La courbe des tokens/s est gardée par la tablette, un point par poussée : 24 poussées
+# la remplissent toute (les points des scènes d'avant n'y sont plus), deux salves de
+# génération séparées par des temps morts, la dernière valeur celle du serveur. Puis un
+# serveur hors ligne (« — » partout, « Hors ligne ») et aucun capteur choisi. Remise :
+# le serveur de la dernière scène, comme après les scènes (la roue de navigation propose
+# le popup dans les écrans suivants comme dans ceux d'avant).
+SERVEUR_IA = SERVEUR_IA_SCENES[SCENES[0].nom]
+SERVEUR_IA_COURBE = tuple(
+    Service("tab5_maj_serveur_ia", (("payload", build_serveur_ia_payload({**SERVEUR_IA, "tps": f"{v:.1f}"})),),
+            apres=0.05)
+    for v in (0, 0, 12.5, 38.2, 41.7, 43.1, 42.4, 40.9, 0, 0, 0, 35.6, 44.8, 45.3, 44.1, 43.7, 42.9, 18.2, 0, 0,
+              27.4, 41.1, 42.6, 42.7))
+SERVEUR_IA_HORS_LIGNE = Service("tab5_maj_serveur_ia", (("payload", build_serveur_ia_payload(
+    {"nom": "PC bureau", "etat": "0", "vram_total": "16.0"})),))
+SERVEUR_IA_AUCUN = Service("tab5_maj_serveur_ia", (("payload", build_serveur_ia_payload(None)),))
+SERVEUR_IA_REMISE = Service("tab5_maj_serveur_ia", (("payload", build_serveur_ia_payload(
+    SERVEUR_IA_SCENES[SCENES[-1].nom])),))
+
 # Télécommandes du popup (ADR-0056) : la clé « telecommandes|écran|nom|… » que le blueprint
 # pousse avec tous les états (celles de l'auteur, sans identifiant), et la liste vide.
 TELECOMMANDES_TV_D_ABORD = Service("tab5_maj_emplacements", (
@@ -1227,6 +1247,12 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("froid-vide", (Aller("Froid"),)),
     Ecran("froid", (FROID_DONNEES, Aller("Froid")), (FROID_CONFORME,)),
     Ecran("accueil-froid", (FROID_DONNEES,), (FROID_CONFORME,), stable=False),
+    # Serveur IA (ADR-0059) : un serveur qui génère (courbe des 24 dernières poussées), le
+    # même hors ligne, puis aucun capteur choisi (où les choisir).
+    Ecran("serveur-ia", SERVEUR_IA_COURBE + (Aller("Serveur IA"),), (SERVEUR_IA_REMISE,)),
+    Ecran("serveur-ia-hors-ligne", SERVEUR_IA_COURBE + (SERVEUR_IA_HORS_LIGNE, Aller("Serveur IA")),
+          (SERVEUR_IA_REMISE,)),
+    Ecran("serveur-ia-vide", (SERVEUR_IA_AUCUN, Aller("Serveur IA")), (SERVEUR_IA_REMISE,)),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
     # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée

@@ -138,6 +138,9 @@
         - en: Fridges and freezers
           fr: Frigos et congélateurs
           page: docs/notice/fridge.md
+        - en: AI server
+          fr: Serveur IA
+          page: docs/notice/ai-server.md
         - en: Settings
           fr: Réglages
           page: docs/notice/settings.md

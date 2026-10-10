@@ -321,6 +321,7 @@ enum class RoueIcone : uint8_t {
     MUSIQUE,
     TV,
     FROID,
+    SERVEUR_IA,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
 // anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
@@ -601,6 +602,9 @@ bool suivi_zone_disponible();
 // tab5_froid.cpp, pour la roue de navigation (ADR-0055) : faux seulement quand HA a dit
 // qu'aucun réfrigérateur ni congélateur n'est déclaré (avant sa première poussée : vrai).
 bool froid_disponible();
+// tab5_serveur_ia.cpp, pour la roue de navigation (ADR-0059) : vrai seulement quand HA a
+// poussé un serveur (le paquet HA est facultatif : sans lui, rien n'arrive jamais).
+bool serveur_ia_disponible();
 // tab5_zone_gauche.cpp : le dégradé sous une courbe de la zone (graphique, capteur suivi),
 // dans `image` (une lv_image de la carte), de la couleur `couleur` sous le trait à 0 au pied
 // `base`, du haut y_haut. Un seul tampon en PSRAM (≈ 156 Kio) pour les contenus de la

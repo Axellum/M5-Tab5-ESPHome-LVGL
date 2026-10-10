@@ -1,0 +1,87 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file serveur_ia_popup.yaml
+# @role Popup « Serveur IA » (ADR-0059, 10/10/2026) : le tableau de bord d'un serveur de LLM
+#       local, d'après les capteurs choisis dans Home Assistant (listes « Tab5 · serveur
+#       IA, … », packages/tab5_serveur_ia.yaml). Bandeau (pastille en ligne / hors ligne,
+#       nom, modèle chargé), carte des tokens par seconde (grand chiffre, courbe des
+#       dernières poussées, requêtes en cours et en file), quatre cartes : VRAM, GPU, RAM,
+#       puissance. Ouvert par « Aller à l'écran → Serveur IA », par la roue de navigation
+#       (Agenda ▸ Serveur IA, quand HA a poussé un serveur) ou par un geste de l'accueil
+#       (code « serveur_ia »).
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Serveur IA » dans
+#       tab5_modal_registry_init, ouvert par tab5_serveur_ia_ouvrir). Corps : x 24..1226,
+#       y 72..670 ; tab5_serveur_ia.cpp place les cartes (bandeau de 76 px, puis la carte
+#       des tokens/s à gauche et une grille 2 × 2 à droite, 16 px d'écart) : les places
+#       posées ici ne sont que celles d'avant la première peinture.
+# @ai_instruction Un widget de plus = son champ dans ServeurIaUI (tab5_serveur_ia.h) et sa
+#       ligne dans le script tab5_serveur_ia_lier (tab5-serveur-ia.yaml). Les boutons
+#       d'action (lot 3) iront dans le bandeau, à droite.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: serveur_ia_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: serveur_ia_popup } }
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F048B", icon_style: "style_text_accent", title: "Serveur IA", title_id: "serveur_ia_popup_titre", close_btn_id: "btn_serveur_ia_close", popup_id: serveur_ia_popup } }
+
+          # ═══ BANDEAU : pastille (créée par tab5_serveur_ia.cpp), état, nom, modèle ═══
+          - obj:
+              id: serveur_ia_bandeau
+              align: TOP_LEFT
+              x: 24
+              y: ${modal_body_y}
+              width: 1202
+              height: 76
+              hidden: true
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { id: serveur_ia_etat, text: "", align: TOP_LEFT, x: 56, y: 22 }
+                - label: { id: serveur_ia_nom, text: "", align: TOP_LEFT, x: 240, y: 22, styles: style_text_accent, hidden: true }
+                - label: { id: serveur_ia_modele, text: "", align: TOP_LEFT, x: 700, y: 22, styles: style_text_soft }
+
+          # ═══ TOKENS PAR SECONDE : grand chiffre, courbe (tab5_serveur_ia.cpp), requêtes ═══
+          - obj:
+              id: serveur_ia_tps_carte
+              align: TOP_LEFT
+              x: 24
+              y: 164
+              width: 593
+              height: 506
+              hidden: true
+              styles: style_glass_card
+              scrollable: false
+              widgets:
+                - label: { id: serveur_ia_tps_icone, text: "\U000F04C5", align: TOP_LEFT, x: 22, y: 12, text_font: mdi_font_32, styles: style_text_accent }
+                - label: { id: serveur_ia_tps_titre, text: "Tokens par seconde", align: TOP_LEFT, x: 74, y: 16, styles: style_text_dim }
+                - label: { id: serveur_ia_tps_valeur, text: "—", align: TOP_LEFT, x: 22, y: 60, text_font: roboto_55_b }
+                - label: { id: serveur_ia_tps_unite, text: "tok/s", align: TOP_LEFT, x: 140, y: 80, styles: style_text_dim }
+                - label: { id: serveur_ia_requetes, text: "", align: TOP_LEFT, x: 22, y: 450, styles: style_text_dim }
+
+          # ═══ QUATRE CARTES (placées par tab5_serveur_ia.cpp) ═══
+          - !include { file: serveur_ia_carte.yaml, vars: { n: "0", icon: "\U000F08AE", title: "VRAM" } }
+          - !include { file: serveur_ia_carte.yaml, vars: { n: "1", icon: "\U000F050F", title: "GPU" } }
+          - !include { file: serveur_ia_carte.yaml, vars: { n: "2", icon: "\U000F035B", title: "RAM" } }
+          - !include { file: serveur_ia_carte.yaml, vars: { n: "3", icon: "\U000F0241", title: "Puissance" } }
+
+          # Avant la première poussée de HA, ou sans capteur choisi (et où les choisir).
+          - label: { id: serveur_ia_attente, text: "", align: CENTER, y: -10, styles: style_text_dim }
+          - label: { id: serveur_ia_conseil, text: "", align: CENTER, y: 40, width: 1100, long_mode: WRAP, text_align: CENTER, styles: style_text_dim, hidden: true }

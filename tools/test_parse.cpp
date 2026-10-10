@@ -1495,6 +1495,74 @@ static void test_telecommandes() {
            "télécommandes : emplacements tv, tv1… ; hors bornes = tv");
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 14. Serveur IA (ADR-0059)
+// ════════════════════════════════════════════════════════════════════════════
+
+static void test_serveur_ia_lire() {
+    ServeurIaLu s;
+    expect(serveur_ia_lire(ch("PC-Fix|1|qwen2.5-coder-32b|42.7|2|3|11.2|16|70|68|1|43|285"), s) && vaut(s.nom, "PC-Fix") &&
+               s.en_ligne == 1 && vaut(s.modele, "qwen2.5-coder-32b") && s.tps == 42.7f && s.en_cours == 2 &&
+               s.file == 3 && s.vram == 11.2f && s.vram_total == 16.0f && s.vram_pct == 70.0f &&
+               s.temperature == 68.0f && s.niveau == 1 && s.ram == 43.0f && s.puissance == 285.0f,
+           "serveur IA : les treize champs");
+    expect(serveur_ia_lire(ch("||||||||||||"), s) && s.nom.n == 0 && s.en_ligne == -1 && s.modele.n == 0 &&
+               std::isnan(s.tps) && s.en_cours == -1 && s.file == -1 && std::isnan(s.vram) && std::isnan(s.vram_total) &&
+               std::isnan(s.vram_pct) && std::isnan(s.temperature) && s.niveau == kServeurIaNiveauInconnu &&
+               std::isnan(s.ram) && std::isnan(s.puissance),
+           "serveur IA : champs vides = inconnus, jamais zéro (niveau compris)");
+    expect(serveur_ia_lire(ch("A|0"), s) && s.en_ligne == 0 && std::isnan(s.tps) && s.file == -1 &&
+               s.niveau == kServeurIaNiveauInconnu,
+           "serveur IA : champs absents = inconnus");
+    // Treize champs : nom, état, puis sept vides (modèle à vram_pct), temp 71, niveau, ram, puissance.
+    expect(serveur_ia_lire(ch("A|1||||||||71|chaud||"), s) && s.temperature == 71.0f &&
+               s.niveau == kServeurIaNiveauInconnu,
+           "serveur IA : niveau illisible = inconnu, pas « normale »");
+    expect(serveur_ia_lire(ch("A|1||||||||71|0||"), s) && s.temperature == 71.0f && s.niveau == 0,
+           "serveur IA : niveau 0 lu tel quel");
+    expect(serveur_ia_lire(ch("A|oui|m|nan|-1|x|-2|1e9|101|300|7|-5|inf"), s) && s.en_ligne == -1 && std::isnan(s.tps) &&
+               s.en_cours == -1 && s.file == -1 && std::isnan(s.vram) && std::isnan(s.vram_total) &&
+               std::isnan(s.vram_pct) && std::isnan(s.temperature) && s.niveau == 2 && std::isnan(s.ram) &&
+               std::isnan(s.puissance),
+           "serveur IA : illisible, négatif ou hors bornes = inconnu, niveau borné à 2");
+    expect(serveur_ia_lire(ch("A|1||0|0|0|0|0|0|-12.5|-1|0|0"), s) && s.tps == 0.0f && s.en_cours == 0 && s.file == 0 &&
+               s.vram == 0.0f && s.vram_pct == 0.0f && s.temperature == -12.5f &&
+               s.niveau == kServeurIaNiveauInconnu && s.ram == 0.0f && s.puissance == 0.0f,
+           "serveur IA : un vrai zéro reste zéro, niveau « -1 » = inconnu");
+    expect(serveur_ia_lire(ch("A|1|m|2.0|2.0|3.7"), s) && s.en_cours == 2 && s.file == 3,
+           "serveur IA : requêtes écrites en flottant par HA");
+    expect(serveur_ia_lire(ch(";;B|1;C|0"), s) && vaut(s.nom, "B") && s.en_ligne == 1,
+           "serveur IA : le premier enregistrement non vide, les autres ignorés");
+    expect(serveur_ia_lire(ch("A|1|un|deux|3|4|5|6|7|8|0|9|10|en trop"), s) && s.puissance == 10.0f,
+           "serveur IA : un champ de trop est ignoré");
+    expect(!serveur_ia_lire(ch(""), s) && !serveur_ia_lire(ch(";"), s) && !serveur_ia_lire(Champ{nullptr, 0}, s),
+           "serveur IA : vide = aucun serveur");
+}
+
+static void test_serveur_ia_textes() {
+    char t[16];
+    expect(serveur_ia_nombre_texte(42.66f, 1, t, sizeof(t)) && std::strcmp(t, "42.7") == 0, "serveur IA : 42.7");
+    expect(serveur_ia_nombre_texte(285.4f, 0, t, sizeof(t)) && std::strcmp(t, "285") == 0, "serveur IA : 285");
+    expect(serveur_ia_nombre_texte(-0.04f, 1, t, sizeof(t)) && std::strcmp(t, "0.0") == 0, "serveur IA : jamais -0.0");
+    expect(serveur_ia_nombre_texte(0.0f, 0, t, sizeof(t)) && std::strcmp(t, "0") == 0, "serveur IA : un vrai zéro");
+    expect(serveur_ia_nombre_texte(NAN, 1, t, sizeof(t)) && std::strcmp(t, "—") == 0, "serveur IA : inconnu = —");
+    expect(serveur_ia_nombre_texte(1.5f, 9, t, sizeof(t)) && std::strcmp(t, "1.500") == 0, "serveur IA : 3 décimales au plus");
+    expect(!serveur_ia_nombre_texte(12345.0f, 1, t, 4) && t[0] == '\0', "serveur IA : tampon trop petit = vide");
+    expect(!serveur_ia_nombre_texte(NAN, 0, t, 3) && t[0] == '\0', "serveur IA : « — » ne tient pas = vide");
+
+    ServeurIaCourbe c;
+    float h = 0;
+    expect(!c.haut(h), "serveur IA : courbe vide");
+    c.ajouter(NAN);
+    expect(c.n == 1 && !c.haut(h), "serveur IA : une valeur inconnue entre, rien à tracer");
+    c.ajouter(0.0f);
+    expect(c.haut(h) && h == 1.0f, "serveur IA : haut de l'axe au moins 1");
+    for (int i = 0; i < kServeurIaPoints + 5; i++) c.ajouter(static_cast<float>(i));
+    expect(c.n == kServeurIaPoints && c.v[0] == 5.0f && c.v[kServeurIaPoints - 1] == static_cast<float>(kServeurIaPoints + 4),
+           "serveur IA : kServeurIaPoints au plus, la plus ancienne sort");
+    expect(c.haut(h) && std::fabs(h - 28.0f * 1.1f) < 1e-3f, "serveur IA : 10 % d'air au-dessus du plus haut");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -1539,6 +1607,8 @@ int main() {
     test_froid_lire();
     test_froid_textes();
     test_telecommandes();
+    test_serveur_ia_lire();
+    test_serveur_ia_textes();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

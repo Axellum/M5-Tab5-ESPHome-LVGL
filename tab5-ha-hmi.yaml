@@ -127,6 +127,7 @@ esphome:
     - Tab5/ecran/tab5_suivi.h
     - Tab5/ecran/tab5_cameras_charge.h
     - Tab5/ecran/tab5_froid.h
+    - Tab5/ecran/tab5_serveur_ia.h
     - Tab5/ecran/tab5_telecommande.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_custom.cpp
@@ -208,6 +209,8 @@ esphome:
     - Tab5/ecran/tab5_cameras_charge.cpp
     # Froid : réfrigérateurs et congélateurs, popup et icône de l'horloge (ADR-0055).
     - Tab5/ecran/tab5_froid.cpp
+    # Serveur IA : tableau de bord d'un serveur de LLM local (ADR-0059).
+    - Tab5/ecran/tab5_serveur_ia.cpp
     # Télécommandes : une page par télécommande du blueprint (ADR-0056).
     - Tab5/ecran/tab5_telecommande.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
@@ -533,6 +536,9 @@ packages:
   # Froid (ADR-0055) : APRES tab5_lvgl (widgets), poussé par HA, ouvert par l'icône de
   # l'horloge, un geste, la roue de navigation ou HA.
   tab5_froid: !include Tab5/paquets/tab5-froid.yaml
+  # Serveur IA (ADR-0059) : APRES tab5_lvgl (widgets), poussé par HA, ouvert par un geste,
+  # la roue de navigation ou HA.
+  tab5_serveur_ia: !include Tab5/paquets/tab5-serveur-ia.yaml
   # Télécommandes (ADR-0056) : APRES tab5_lvgl (widgets), script lancé par tab5_tuiles_ui.
   tab5_telecommande: !include Tab5/paquets/tab5-telecommande.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les

@@ -119,6 +119,9 @@ script:
           // Froid (ADR-0055) : réfrigérateurs et congélateurs, dernier état reçu.
           ModalRegistry::add(id(froid_popup),            "Froid",            ModalRegistry::POPUP,
                              [] { id(tab5_froid_ouvrir).execute(); });
+          // Serveur IA (ADR-0059) : le serveur de LLM local, dernier état reçu.
+          ModalRegistry::add(id(serveur_ia_popup),       "Serveur IA",       ModalRegistry::POPUP,
+                             [] { id(tab5_serveur_ia_ouvrir).execute(); });
           // Après les popups qu'une de ses lignes ouvre : ouverts devant lui, ils sont nommés.
           // Maison (ADR-0037) : pose les widgets, les dispose et peint.
           ModalRegistry::add(id(maison_popup),           "Maison",           ModalRegistry::POPUP,
@@ -383,6 +386,8 @@ select:
       - "Suivi"
       # Réfrigérateurs et congélateurs (ADR-0055, 10/10/2026), à la fin aussi.
       - "Froid"
+      # Le serveur de LLM local (ADR-0059, 10/10/2026), à la fin aussi.
+      - "Serveur IA"
     on_value:
       # Toute l'ouverture est dans tab5_ecran_ouvrir (plus haut), partagé avec les appuis
       # longs des boutons du haut : l'index de l'option EST la valeur d'Ecran
