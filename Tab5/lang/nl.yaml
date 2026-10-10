@@ -1348,6 +1348,13 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Adresse de Home Assistant inconnue": "Adres van Home Assistant onbekend"
 "Image de %02d:%02d:%02d": "Beeld van %02d:%02d:%02d"
 "Plus d'image depuis %02d:%02d:%02d": "Geen beeld sinds %02d:%02d:%02d"
+# Pièces et caméras hors ligne (ADR-0057, 10/10/2026). « Toutes » : toutes les caméras ;
+# « Autres » : les caméras sans pièce dans Home Assistant.
+"Toutes": "Alle"
+"Autres": "Overige"
+"Hors ligne depuis %02d:%02d": "Offline sinds %02d:%02d"
+"Hors ligne depuis %s %02d:%02d": "Offline sinds %s %02d:%02d"
+"Hors ligne depuis le %d %s": "Offline sinds %d %s"
 
 # --- Capteurs suivis (tab5_suivi.cpp, ADR-0054) ---------------------------------
 "Suivi": "Volgen"

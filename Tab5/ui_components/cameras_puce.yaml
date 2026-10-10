@@ -1,0 +1,28 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file cameras_puce.yaml
+# @role Puce d'une pièce dans la colonne de gauche du popup Caméras (ADR-0057), 17 fois
+#       (kCamerasPuces) dans cameras_pieces (cameras_popup.yaml) : n = 0 « Toutes », n ≥ 1
+#       la n-ième pièce des caméras (area_name dans Home Assistant). Toucher : ne montrer
+#       que les caméras de cette pièce (cameras_puce(n), tab5_cameras.cpp) ; un tap au bout
+#       d'un glissement (défilement de la colonne, balayage) ne fait rien.
+# @architecture_constraint Nom (PREMIER enfant, lu par choix_peindre : accent sur la pièce
+#       choisie) et nombre de caméras (SECOND enfant) écrits par peindre_puces() ; masquée
+#       au-delà du nombre de pièces. Pas d'id : tab5_cameras.cpp lit les enfants de la
+#       colonne dans l'ordre. Couleurs par les styles de rôle (règle 1).
+# vars : n (0 à 16, nombre NON quoté)
+# ═══════════════════════════════════════════════════════
+button:
+  width: 100%
+  height: 56
+  radius: 14
+  pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) cameras_puce(${n});'
+  widgets:
+    - label: { text: "", align: LEFT_MID, x: 16, width: 168, long_mode: DOT, text_font: roboto_22, styles: style_text_soft }
+    - label: { text: "", align: RIGHT_MID, x: -16, width: 40, text_align: RIGHT, text_font: roboto_22, styles: style_text_dim }

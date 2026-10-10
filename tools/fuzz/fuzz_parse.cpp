@@ -190,13 +190,20 @@ void cameras(const std::string& p) {
     char base[64];
     ha_base_depuis_hote(adresse.c_str(), base, sizeof(base));
     CameraLue c[kCamerasMax];
-    const int n = cameras_lire(Champ{liste.data(), liste.size()}, c);
+    int pieces = 0;
+    const int n = cameras_lire(Champ{liste.data(), liste.size()}, c, &pieces);
+    // Invariants dont l'écran dépend (tab5_cameras.cpp indexe ses puces par piece_i) :
+    // jamais plus de pièces que de caméras, chaque rang dans [0, pieces).
+    if (pieces < 0 || pieces > n || (n > 0 && pieces == 0)) __builtin_trap();
     char url[kCameraUrlMax];
     for (int i = 0; i < n; i++) {
+        if (c[i].piece_i < 0 || c[i].piece_i >= pieces) __builtin_trap();
         camera_url(c[i].image, adresse.c_str(), 960, 540, url, sizeof(url));
-        camera_url(c[i].image, base, 960, 540, url, sizeof(url));
+        camera_url(c[i].image, base, 480, 270, url, sizeof(url));
         const std::string copie(c[i].nom.p, c[i].nom.n);  // ce que texte_ha_copier recevrait
+        const std::string piece(c[i].piece.p, c[i].piece.n);
         (void) copie;
+        (void) piece;
     }
 }
 

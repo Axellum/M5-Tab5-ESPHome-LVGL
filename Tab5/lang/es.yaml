@@ -1431,6 +1431,13 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Adresse de Home Assistant inconnue": "Dirección de Home Assistant desconocida"
 "Image de %02d:%02d:%02d": "Imagen de las %02d:%02d:%02d"
 "Plus d'image depuis %02d:%02d:%02d": "Sin imagen desde las %02d:%02d:%02d"
+# Pièces et caméras hors ligne (ADR-0057, 10/10/2026). « Toutes » : toutes les caméras ;
+# « Autres » : les caméras sans pièce dans Home Assistant.
+"Toutes": "Todas"
+"Autres": "Otras"
+"Hors ligne depuis %02d:%02d": "Sin conexión desde las %02d:%02d"
+"Hors ligne depuis %s %02d:%02d": "Sin conexión desde %s %02d:%02d"
+"Hors ligne depuis le %d %s": "Sin conexión desde el %d %s"
 
 # --- Capteurs suivis (tab5_suivi.cpp, ADR-0054) ---------------------------------
 "Suivi": "Seguimiento"

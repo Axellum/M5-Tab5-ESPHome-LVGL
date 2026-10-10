@@ -55,6 +55,10 @@ The first real test (a 640 × 480 camera, M5Stack AtomS3R-CAM, Home Assistant ov
 - **Measured** on the tablet the same day, same camera (12 images of 37-39 kB): Home Assistant ~0.4 s per image over the kept connection (0.6 s for the first one), hardware decoding 3-12 ms (1.0 s with `online_image`), no camera « took a long time » warning left in the main loop, worst loop of the minute 217 ms instead of 1 020 ms, one image every 5.4 s. Stack: 9 860 of the 12 288 bytes never used. Closing the popup six times during a download and an unreachable Home Assistant (`ESP_ERR_HTTP_CONNECT`, next try 10 s later): no crash, no reboot, internal RAM back to the same level after each closing.
 - Off the tablet (`tab5-rendu-host.yaml`) a stub never finishes: the popup stays on « Chargement... », as it did with the muted `online_image`.
 
+## 2026-10-10 — By room
+
+[ADR-0057](0057-cameras-rooms.md) extends this popup: sixteen cameras, each with its Home Assistant area and offline time (« nom|image|pièce|depuis », same action, same variables), a room column from two rooms, the swipe and the dots inside the chosen room, the choice kept in NVS, the last image of each camera kept while the popup is open (the loader gives its buffer to the screen instead of swapping two), and a per-camera retry schedule. What is above about the URL, the token rotation, the opening and the loader still holds.
+
 ## Consequences
 
 - The author decides whether 5 s between images and the 45 s auto-close (the popup is a popup: no touch for 45 s closes it, a doorbell image included) are right.
