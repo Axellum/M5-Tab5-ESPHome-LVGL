@@ -1043,7 +1043,7 @@ void appui_heritage(int t, bool long_appui) {
     switch (t) {
         case 0:
             if (!long_appui) envoyer("pc", "basculer");
-            else if (!zone_absente(Zone::TV)) ouvrir_popup(g_tuiles_ui.popup_tv);
+            else if (!zone_absente(Zone::TV)) telecommande_ouvrir(0);
             return;
         case 1:
             if (!long_appui && g_tuiles_ui.volet_tap != nullptr) g_tuiles_ui.volet_tap();
@@ -1496,7 +1496,7 @@ static bool ouvrir_fenetre(Fenetre f, const Def& d, int r, int t) {
             popup_appareil_ouvrir(r, t);
             return true;
         case Fenetre::TELECOMMANDE:
-            ouvrir_popup(g_tuiles_ui.popup_tv);
+            telecommande_ouvrir(0);  // la page de la TV (ADR-0056)
             return true;
         case Fenetre::CLIM: {
             // La clim du blueprint (option m) ou celle de la tuile (ADR-0027). Le popup

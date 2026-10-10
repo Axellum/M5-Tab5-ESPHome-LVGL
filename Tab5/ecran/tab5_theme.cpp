@@ -2495,6 +2495,8 @@ void theme_rejouer_ui() {
     suivi_rejouer_theme();
     // Froid (ADR-0055) : températures, statuts, courbes et norme du popup s'il est ouvert.
     froid_rejouer_theme();
+    // Télécommandes (ADR-0056) : l'onglet de la page montrée, en couleur d'accent.
+    telecommande_rejouer_theme();
     alertes_rejouer_theme();
     zones_rejouer_theme();
     assist_rejouer_theme();

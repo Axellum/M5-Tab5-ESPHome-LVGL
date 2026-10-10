@@ -653,7 +653,7 @@ void reglables_valeur_appui() {
     // Le popup de la tuile qui porte la même entité (ce que fait son appui long, ou son
     // appui pour une clim) ; sinon la télécommande de la TV du blueprint.
     if (d.lien_r >= 0 && tuile_ouvrir_popup(d.lien_r, d.lien_t)) return;
-    if (d.tv && g_tuiles_ui.popup_tv != nullptr) animate_popup_open(g_tuiles_ui.popup_tv);
+    if (d.tv) telecommande_ouvrir(0);  // la page de la TV (ADR-0056)
 }
 
 void reglables_liste_basculer() {

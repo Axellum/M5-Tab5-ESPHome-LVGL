@@ -372,19 +372,21 @@ script:
                   alert_id: !lambda 'return id(temp_dismiss_alert_id);'
             - script.execute: tab5_central_rotator_auto
 
-  # Touche physique de la télécommande TV (tv_remote_popup.yaml et ses gabarits
-  # tv_pad_btn.yaml / tv_transport_btn.yaml) : une seule commande paramétrée au
-  # lieu des quatorze blocs recopiés avant le lot 7.3 de l'audit (26/09/2026).
-  # touche = code Samsung (KEY_UP, KEY_VOLUP…). Depuis le lot 6a, commande
-  # « tv / touche » (tab5_action) : le blueprint l'envoie à la télécommande choisie.
-  # Marche/Arrêt (« tv / alimentation ») et les applications (« tv / appli ») aussi.
+  # Touche physique de la télécommande (tv_remote_popup.yaml et ses gabarits
+  # tv_pad_btn.yaml / tv_touche.yaml / tv_transport_btn.yaml) : une seule commande
+  # paramétrée au lieu des quatorze blocs recopiés avant le lot 7.3 de l'audit (26/09/2026).
+  # touche = code Samsung (KEY_UP, KEY_VOLUP…), le vocabulaire commun. Depuis le lot 6a,
+  # commande « touche » (tab5_action) : le blueprint l'envoie à la télécommande choisie.
+  # Marche/Arrêt (« alimentation ») et les applications (« appli ») aussi. Emplacement
+  # (ADR-0056) : celui de la télécommande de la page montrée, telecommande_cle()
+  # (tab5_telecommande.cpp) — « tv » pour la première, « tv1 » à « tv3 » ensuite.
   # `parallel` : chaque appui va au bout (aucun délai).
   - id: tab5_tv_key
     mode: parallel
     parameters:
       touche: string
     then:
-      - script.execute: { id: tab5_action, emplacement: tv, commande: touche, valeur: !lambda 'return touche;' }
+      - script.execute: { id: tab5_action, emplacement: !lambda 'return telecommande_cle();', commande: touche, valeur: !lambda 'return touche;' }
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Retour automatique à l'écran principal (inactivité tactile)

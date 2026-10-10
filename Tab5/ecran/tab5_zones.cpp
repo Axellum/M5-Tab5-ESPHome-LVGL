@@ -90,6 +90,11 @@ constexpr char kCleZoneGauche[] = "gauche";
 // (gestes_fin_payload). Valeurs lues par le blueprint : ni traduites ni renommées sans lui
 // (tests/test_nabu.py).
 constexpr char kCleDefilement[] = "defil";
+// Télécommandes du popup (10/10/2026, ADR-0056) : « telecommandes|écran|nom|… », lue par
+// telecommandes_lire() (Tab5/socle/tab5_parse.cpp) et gardée par tab5_telecommande.cpp.
+// Poussée par le blueprint avec les gestes ; un firmware plus ancien l'ignore. Codes lus par
+// le blueprint : ni traduits ni renommés sans lui (tests/test_telecommandes.py).
+constexpr char kCleTelecommandes[] = "telecommandes";
 struct CodeGeste {
     const char* code;
     Ecran ecran;  // l'écran ouvert (action ECRAN), AUCUN sinon
@@ -667,6 +672,12 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
             appliquees++;
             continue;
         }
+        // Télécommandes du popup (ADR-0056) : « telecommandes|écran|nom|… ».
+        if (champ_est(e.cle, kCleTelecommandes)) {
+            telecommandes_recu(e.reste.p, e.reste.n);
+            appliquees++;
+            continue;
+        }
         // Clims des tuiles (ADR-0027) : « crRT|réglages » et « ceRT|état » (tab5_clim.cpp).
         if (clim_tuile_recu(e.cle.p, e.cle.n, e.reste.p, e.reste.n)) {
             appliquees++;
@@ -761,7 +772,8 @@ bool ecran_sans_zone(Ecran e) {
     switch (e) {
         case Ecran::CLIM: return zone_absente(Zone::CLIM);
         case Ecran::PLANTES: return zones_pots_presents() == 0;
-        case Ecran::TV: return zone_absente(Zone::TV);
+        // Sans la TV du blueprint, une autre télécommande suffit (ADR-0056).
+        case Ecran::TV: return zone_absente(Zone::TV) && !telecommandes_connues();
         // ADR-0042 : aucune tuile dont le popup s'ouvre ; aucune température à l'accueil
         // (salon, serre, ou celle de la pièce affichée en mode HA, ADR-0040).
         case Ecran::LUMIERES:

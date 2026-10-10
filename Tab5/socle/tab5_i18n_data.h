@@ -8,9 +8,15 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1173;
+static const uint16_t kI18nKeyCount = 1179;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1396,6 +1402,7 @@ static const char* const kI18nKeys[] = {
     "Aujourd'hui",
     "Aujourd'hui {heure}",
     "Auto",
+    "Avancer",
     "Averses",
     "Avr",
     "BATTERIE",
@@ -1754,6 +1761,7 @@ static const char* const kI18nKeys[] = {
     "Lecteur {n}",
     "Lecteur éteint",
     "Lecture",
+    "Lecture / Pause",
     "Lente",
     "Les deux",
     "Les runs jouées en mode dieu ne sont pas comptabilisées ici.",
@@ -1952,6 +1960,7 @@ static const char* const kI18nKeys[] = {
     "Probabilité",
     "Produit aujourd'hui",
     "Proposer nulle",
+    "Précédent",
     "Présent",
     "Prévisions d'hier %d h %02d",
     "Prévisions de %d h %02d",
@@ -1986,6 +1995,7 @@ static const char* const kI18nKeys[] = {
     "Record %lu",
     "Record %u",
     "Record : %s",
+    "Reculer",
     "Redémarrage...",
     "Redémarrer HA",
     "Redémarrer Home Assistant ?",
@@ -2111,6 +2121,7 @@ static const char* const kI18nKeys[] = {
     "Sports & Loisirs",
     "Statistiques",
     "Stop",
+    "Suivant",
     "Suivi",
     "Sur USB",
     "Sur batterie",
@@ -2184,6 +2195,7 @@ static const char* const kI18nKeys[] = {
     "Très rapide",
     "Tu rouleras encore.",
     "Tu sors du dédale. Il te laisse partir.",
+    "Télécommande",
     "Télécommande TV",
     "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous.",
     "Un bouclier à chaque nouvelle salle",
@@ -2573,6 +2585,7 @@ static const char* const kI18n_en[] = {
     "Today",  // "Aujourd'hui"
     "Today {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Forward",  // "Avancer"
     "Showers",  // "Averses"
     "Apr",  // "Avr"
     "BATTERY",  // "BATTERIE"
@@ -2931,6 +2944,7 @@ static const char* const kI18n_en[] = {
     "Player {n}",  // "Lecteur {n}"
     "Player off",  // "Lecteur éteint"
     "Play",  // "Lecture"
+    "Play / Pause",  // "Lecture / Pause"
     "Slow",  // "Lente"
     "Both",  // "Les deux"
     "Runs played in god mode are not counted here.",  // "Les runs jouées en mode dieu ne sont pas comptabilisées ici."
@@ -3129,6 +3143,7 @@ static const char* const kI18n_en[] = {
     "Probability",  // "Probabilité"
     "Produced today",  // "Produit aujourd'hui"
     "Offer a draw",  // "Proposer nulle"
+    "Previous",  // "Précédent"
     "Home",  // "Présent"
     "Forecast from yesterday %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Forecast from %d:%02d",  // "Prévisions de %d h %02d"
@@ -3163,6 +3178,7 @@ static const char* const kI18n_en[] = {
     "Best %lu",  // "Record %lu"
     "Best %u",  // "Record %u"
     "Best: %s",  // "Record : %s"
+    "Rewind",  // "Reculer"
     "Restarting...",  // "Redémarrage..."
     "Restart HA",  // "Redémarrer HA"
     "Restart Home Assistant?",  // "Redémarrer Home Assistant ?"
@@ -3288,6 +3304,7 @@ static const char* const kI18n_en[] = {
     "Sports & Leisure",  // "Sports & Loisirs"
     "Statistics",  // "Statistiques"
     "Stop",  // "Stop"
+    "Next",  // "Suivant"
     "Tracking",  // "Suivi"
     "On USB",  // "Sur USB"
     "On battery",  // "Sur batterie"
@@ -3361,6 +3378,7 @@ static const char* const kI18n_en[] = {
     "Very fast",  // "Très rapide"
     "You'll roll again.",  // "Tu rouleras encore."
     "You leave the Maze. It lets you go.",  // "Tu sors du dédale. Il te laisse partir."
+    "Remote",  // "Télécommande"
     "TV remote",  // "Télécommande TV"
     "An on-screen banner and a voice announcement before each appointment.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "A shield in every new room",  // "Un bouclier à chaque nouvelle salle"
@@ -3750,6 +3768,7 @@ static const char* const kI18n_de[] = {
     "Heute",  // "Aujourd'hui"
     "Heute {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Vorwärts",  // "Avancer"
     "Schauer",  // "Averses"
     "Apr",  // "Avr"
     "BATTERIE",  // "BATTERIE"
@@ -4108,6 +4127,7 @@ static const char* const kI18n_de[] = {
     "Player {n}",  // "Lecteur {n}"
     "Player aus",  // "Lecteur éteint"
     "Abspielen",  // "Lecture"
+    "Play / Pause",  // "Lecture / Pause"
     "Langsam",  // "Lente"
     "Beides",  // "Les deux"
     "Runs im Gottmodus werden hier nicht gezählt.",  // "Les runs jouées en mode dieu ne sont pas comptabilisées ici."
@@ -4306,6 +4326,7 @@ static const char* const kI18n_de[] = {
     "Wahrscheinlichkeit",  // "Probabilité"
     "Heute erzeugt",  // "Produit aujourd'hui"
     "Remis anbieten",  // "Proposer nulle"
+    "Vorheriger",  // "Précédent"
     "Anwesend",  // "Présent"
     "Vorhersage von gestern %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Vorhersage von %d:%02d",  // "Prévisions de %d h %02d"
@@ -4340,6 +4361,7 @@ static const char* const kI18n_de[] = {
     "Rekord %lu",  // "Record %lu"
     "Best %u",  // "Record %u"
     "Rekord: %s",  // "Record : %s"
+    "Rückwärts",  // "Reculer"
     "Neustart...",  // "Redémarrage..."
     "HA neu starten",  // "Redémarrer HA"
     "Home Assistant neu starten?",  // "Redémarrer Home Assistant ?"
@@ -4465,6 +4487,7 @@ static const char* const kI18n_de[] = {
     "Sport & Freizeit",  // "Sports & Loisirs"
     "Statistik",  // "Statistiques"
     "Stopp",  // "Stop"
+    "Nächster",  // "Suivant"
     "Verlauf",  // "Suivi"
     "USB-Betrieb",  // "Sur USB"
     "Akkubetrieb",  // "Sur batterie"
@@ -4538,6 +4561,7 @@ static const char* const kI18n_de[] = {
     "Rasant",  // "Très rapide"
     "Du rollst wieder.",  // "Tu rouleras encore."
     "Raus aus dem Labyrinth. Es lässt dich gehen.",  // "Tu sors du dédale. Il te laisse partir."
+    "Fernbedienung",  // "Télécommande"
     "TV-Fernbedienung",  // "Télécommande TV"
     "Ein Banner auf dem Bildschirm und eine Sprachansage vor jedem Termin.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Ein Schild in jedem neuen Raum",  // "Un bouclier à chaque nouvelle salle"
@@ -4927,6 +4951,7 @@ static const char* const kI18n_nl[] = {
     "Vandaag",  // "Aujourd'hui"
     "Vandaag {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Vooruit",  // "Avancer"
     "Buien",  // "Averses"
     "Apr",  // "Avr"
     "ACCU",  // "BATTERIE"
@@ -5285,6 +5310,7 @@ static const char* const kI18n_nl[] = {
     "Speler {n}",  // "Lecteur {n}"
     "Speler uit",  // "Lecteur éteint"
     "Afspelen",  // "Lecture"
+    "Play / Pauze",  // "Lecture / Pause"
     "Traag",  // "Lente"
     "Beide",  // "Les deux"
     "Runs in godmodus tellen hier niet mee.",  // "Les runs jouées en mode dieu ne sont pas comptabilisées ici."
@@ -5483,6 +5509,7 @@ static const char* const kI18n_nl[] = {
     "Kans",  // "Probabilité"
     "Vandaag opgewekt",  // "Produit aujourd'hui"
     "Remise aanbieden",  // "Proposer nulle"
+    "Vorige",  // "Précédent"
     "Aanwezig",  // "Présent"
     "Verwachting van gisteren %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Verwachting van %d:%02d",  // "Prévisions de %d h %02d"
@@ -5517,6 +5544,7 @@ static const char* const kI18n_nl[] = {
     "Record %lu",  // "Record %lu"
     "Record %u",  // "Record %u"
     "Record: %s",  // "Record : %s"
+    "Achteruit",  // "Reculer"
     "Herstarten...",  // "Redémarrage..."
     "HA herstarten",  // "Redémarrer HA"
     "Home Assistant herstarten?",  // "Redémarrer Home Assistant ?"
@@ -5642,6 +5670,7 @@ static const char* const kI18n_nl[] = {
     "Sport & Ontspanning",  // "Sports & Loisirs"
     "Statistieken",  // "Statistiques"
     "Stop",  // "Stop"
+    "Volgende",  // "Suivant"
     "Volgen",  // "Suivi"
     "Via USB",  // "Sur USB"
     "Op batterij",  // "Sur batterie"
@@ -5715,6 +5744,7 @@ static const char* const kI18n_nl[] = {
     "Zeer snel",  // "Très rapide"
     "Je zult weer rollen.",  // "Tu rouleras encore."
     "Je verlaat het Doolhof. Het laat je gaan.",  // "Tu sors du dédale. Il te laisse partir."
+    "Bediening",  // "Télécommande"
     "Tv-bediening",  // "Télécommande TV"
     "Een banner op het scherm en een gesproken melding vóór elke afspraak.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Een schild in elke nieuwe kamer",  // "Un bouclier à chaque nouvelle salle"
@@ -6104,6 +6134,7 @@ static const char* const kI18n_es[] = {
     "Hoy",  // "Aujourd'hui"
     "Hoy {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Adelantar",  // "Avancer"
     "Chubascos",  // "Averses"
     "Abr",  // "Avr"
     "BATERÍA",  // "BATTERIE"
@@ -6462,6 +6493,7 @@ static const char* const kI18n_es[] = {
     "Reproductor {n}",  // "Lecteur {n}"
     "Reproductor apagado",  // "Lecteur éteint"
     "Reproducir",  // "Lecture"
+    "Play / Pausa",  // "Lecture / Pause"
     "Lenta",  // "Lente"
     "Ambos",  // "Les deux"
     "Las runs en modo dios no cuentan aquí.",  // "Les runs jouées en mode dieu ne sont pas comptabilisées ici."
@@ -6660,6 +6692,7 @@ static const char* const kI18n_es[] = {
     "Probabilidad",  // "Probabilité"
     "Producido hoy",  // "Produit aujourd'hui"
     "Ofrecer tablas",  // "Proposer nulle"
+    "Anterior",  // "Précédent"
     "Presente",  // "Présent"
     "Previsión de ayer %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Previsión de las %d:%02d",  // "Prévisions de %d h %02d"
@@ -6694,6 +6727,7 @@ static const char* const kI18n_es[] = {
     "Récord %lu",  // "Record %lu"
     "Récord %u",  // "Record %u"
     "Récord: %s",  // "Record : %s"
+    "Retroceder",  // "Reculer"
     "Reiniciando...",  // "Redémarrage..."
     "Reiniciar HA",  // "Redémarrer HA"
     "¿Reiniciar Home Assistant?",  // "Redémarrer Home Assistant ?"
@@ -6819,6 +6853,7 @@ static const char* const kI18n_es[] = {
     "Deportes y Ocio",  // "Sports & Loisirs"
     "Estadísticas",  // "Statistiques"
     "Parar",  // "Stop"
+    "Siguiente",  // "Suivant"
     "Seguimiento",  // "Suivi"
     "Por USB",  // "Sur USB"
     "Con batería",  // "Sur batterie"
@@ -6892,6 +6927,7 @@ static const char* const kI18n_es[] = {
     "Muy rápida",  // "Très rapide"
     "Volverás a rodar.",  // "Tu rouleras encore."
     "Sales del Laberinto. Te deja marchar.",  // "Tu sors du dédale. Il te laisse partir."
+    "Mando",  // "Télécommande"
     "Control remoto TV",  // "Télécommande TV"
     "Un aviso en pantalla y un anuncio de voz antes de cada cita.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Un escudo en cada sala nueva",  // "Un bouclier à chaque nouvelle salle"
@@ -7281,6 +7317,7 @@ static const char* const kI18n_it[] = {
     "Oggi",  // "Aujourd'hui"
     "Oggi {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Avanti",  // "Avancer"
     "Rovesci",  // "Averses"
     "Apr",  // "Avr"
     "BATTERIA",  // "BATTERIE"
@@ -7639,6 +7676,7 @@ static const char* const kI18n_it[] = {
     "Lettore {n}",  // "Lecteur {n}"
     "Lettore spento",  // "Lecteur éteint"
     "Riproduci",  // "Lecture"
+    "Play / Pausa",  // "Lecture / Pause"
     "Lenta",  // "Lente"
     "Entrambi",  // "Les deux"
     "Le run in modalità Dio non sono conteggiate qui.",  // "Les runs jouées en mode dieu ne sont pas comptabilisées ici."
@@ -7837,6 +7875,7 @@ static const char* const kI18n_it[] = {
     "Probabilità",  // "Probabilité"
     "Prodotto oggi",  // "Produit aujourd'hui"
     "Proponi patta",  // "Proposer nulle"
+    "Precedente",  // "Précédent"
     "Presente",  // "Présent"
     "Previsioni di ieri %d:%02d",  // "Prévisions d'hier %d h %02d"
     "Previsioni delle %d:%02d",  // "Prévisions de %d h %02d"
@@ -7871,6 +7910,7 @@ static const char* const kI18n_it[] = {
     "Record %lu",  // "Record %lu"
     "Record %u",  // "Record %u"
     "Record: %s",  // "Record : %s"
+    "Riavvolgi",  // "Reculer"
     "Riavvio...",  // "Redémarrage..."
     "Riavvia HA",  // "Redémarrer HA"
     "Riavviare Home Assistant?",  // "Redémarrer Home Assistant ?"
@@ -7996,6 +8036,7 @@ static const char* const kI18n_it[] = {
     "Sport & Tempo libero",  // "Sports & Loisirs"
     "Statistiche",  // "Statistiques"
     "Stop",  // "Stop"
+    "Successivo",  // "Suivant"
     "Monitoraggio",  // "Suivi"
     "Via USB",  // "Sur USB"
     "A batteria",  // "Sur batterie"
@@ -8069,6 +8110,7 @@ static const char* const kI18n_it[] = {
     "Rapidissima",  // "Très rapide"
     "Rotolerai ancora.",  // "Tu rouleras encore."
     "Esci dal Labirinto. Ti lascia andare.",  // "Tu sors du dédale. Il te laisse partir."
+    "Telecomando",  // "Télécommande"
     "Telecomando TV",  // "Télécommande TV"
     "Un banner sullo schermo e un annuncio vocale prima di ogni appuntamento.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Uno scudo a ogni nuova stanza",  // "Un bouclier à chaque nouvelle salle"
@@ -8458,6 +8500,7 @@ static const char* const kI18n_tr[] = {
     "Bugün",  // "Aujourd'hui"
     "Bugün {heure}",  // "Aujourd'hui {heure}"
     "Otomatik",  // "Auto"
+    "İleri",  // "Avancer"
     "Sağanak",  // "Averses"
     "Nis",  // "Avr"
     "BATARYA",  // "BATTERIE"
@@ -8816,6 +8859,7 @@ static const char* const kI18n_tr[] = {
     "Oynatıcı {n}",  // "Lecteur {n}"
     "Oynatıcı kapalı",  // "Lecteur éteint"
     "Oynat",  // "Lecture"
+    "Oynat / Duraklat",  // "Lecture / Pause"
     "Yavaş",  // "Lente"
     "İkisi",  // "Les deux"
     "Tanrı modunda oynanan seferler burada sayılmaz.",  // "Les runs jouées en mode dieu ne sont pas comptabilisées ici."
@@ -9014,6 +9058,7 @@ static const char* const kI18n_tr[] = {
     "Olasılık",  // "Probabilité"
     "Bugün üretilen",  // "Produit aujourd'hui"
     "Beraberlik öner",  // "Proposer nulle"
+    "Önceki",  // "Précédent"
     "Evde",  // "Présent"
     "Dünkü %d:%02d tahmini",  // "Prévisions d'hier %d h %02d"
     "%d:%02d tahmini",  // "Prévisions de %d h %02d"
@@ -9048,6 +9093,7 @@ static const char* const kI18n_tr[] = {
     "Rekor %lu",  // "Record %lu"
     "Rekor %u",  // "Record %u"
     "Rekor: %s",  // "Record : %s"
+    "Geri sar",  // "Reculer"
     "Yeniden başlıyor...",  // "Redémarrage..."
     "HA'yı yeniden başlat",  // "Redémarrer HA"
     "HA yeniden başlatılsın mı?",  // "Redémarrer Home Assistant ?"
@@ -9173,6 +9219,7 @@ static const char* const kI18n_tr[] = {
     "Spor & Hobi",  // "Sports & Loisirs"
     "İstatistikler",  // "Statistiques"
     "Dur",  // "Stop"
+    "Sonraki",  // "Suivant"
     "Takip",  // "Suivi"
     "USB ile",  // "Sur USB"
     "Pilde",  // "Sur batterie"
@@ -9246,6 +9293,7 @@ static const char* const kI18n_tr[] = {
     "Çok hızlı",  // "Très rapide"
     "Yine yuvarlanacaksın.",  // "Tu rouleras encore."
     "Labirentten çıkıyorsun. Gitmene izin veriyor.",  // "Tu sors du dédale. Il te laisse partir."
+    "Kumanda",  // "Télécommande"
     "TV kumandası",  // "Télécommande TV"
     "Her randevudan önce ekranda bir bant ve sesli bir duyuru.",  // "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous."
     "Her yeni odada bir kalkan",  // "Un bouclier à chaque nouvelle salle"

@@ -107,7 +107,6 @@ script:
           u.carte_etat[2] = id(lbl_sw2_state);
           u.carte_etat[3] = id(lbl_sw3_state);
           u.carte_etat[4] = id(lbl_sw4_state);
-          u.popup_tv = id(tv_remote_popup);
           u.popup_clim = id(clim_options_popup);
           // Popup Lumières : une page par pièce (ADR-0046), ses lignes et les noms des pièces.
           u.lum_popup = id(light_options_popup);
@@ -168,6 +167,9 @@ script:
           // Volet dessiné du popup : ses lames, glisser, relâcher (une fois aussi) ; et le
           // glissement de pièce en pièce des popups Lumières et Volets (tab5_pages.cpp).
           tuiles_brancher_popup_volet();
+      # Popup télécommande (ADR-0056) : ses onglets et ses deux dispositions dans
+      # g_telecommande_ui (tab5-telecommande.yaml) ; l'appui long de la tuile TV l'ouvre.
+      - script.execute: tab5_telecommande_ui
       # Roue d'actions rapides (ADR-0036) : ses widgets dans g_roue_ui, juste après ceux des
       # tuiles, comme quand ils étaient ici (tab5-roue.yaml, lot L7 du 08/10/2026).
       - script.execute: tab5_roue_ui

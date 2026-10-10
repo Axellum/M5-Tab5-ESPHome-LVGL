@@ -748,6 +748,14 @@ FROID_DONNEES = Service("tab5_maj_froid", (("payload", FROID_FRIGO + ";" + FROID
 # les écrans suivants restent identiques à leurs références.
 FROID_CONFORME = Service("tab5_maj_froid", (("payload", FROID_CONGELATEUR),))
 
+# Télécommandes du popup (ADR-0056) : la clé « telecommandes|écran|nom|… » que le blueprint
+# pousse avec tous les états (celles de l'auteur, sans identifiant), et la liste vide.
+TELECOMMANDES_TV_D_ABORD = Service("tab5_maj_emplacements", (
+    ("payload", "telecommandes|tv|TV Samsung|boitier|Apple TV|boitier|Freebox Player;"),))
+TELECOMMANDES_BOITIER_D_ABORD = Service("tab5_maj_emplacements", (
+    ("payload", "telecommandes|boitier|Apple TV|tv|TV Samsung|boitier|Freebox Player;"),))
+TELECOMMANDES_AUCUNE = Service("tab5_maj_emplacements", (("payload", "telecommandes|;"),))
+
 
 # Popup Météo (ADR-0043, meteo_popup.yaml) : une journée qui change (soleil le matin,
 # orage l'après-midi, éclaircies le soir), de 07:00 (l'heure figée, 07:45 : la colonne
@@ -1169,6 +1177,11 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("froid", (FROID_DONNEES, Aller("Froid")), (FROID_CONFORME,)),
     Ecran("accueil-froid", (FROID_DONNEES,), (FROID_CONFORME,), stable=False),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
+    # Plusieurs télécommandes (ADR-0056) : la page de la TV avec les noms en haut, puis un
+    # boîtier en première page (Stop, icône du volume, rangée de lecture). La liste vidée
+    # ensuite : la page unique d'avant pour les écrans suivants.
+    Ecran("telecommande-plusieurs", (TELECOMMANDES_TV_D_ABORD, Long(*BOUTON_TV)), (TELECOMMANDES_AUCUNE,)),
+    Ecran("telecommande-boitier", (TELECOMMANDES_BOITIER_D_ABORD, Long(*BOUTON_TV)), (TELECOMMANDES_AUCUNE,)),
     # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
     # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.
     Ecran("reglages-apparence", (Toucher(*BOUTON_SYS), REGLAGES_GLISSER_DEPUIS_UN_BOUTON)),

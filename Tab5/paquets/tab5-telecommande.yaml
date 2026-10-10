@@ -1,0 +1,36 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-telecommande.yaml
+# @role Popup télécommande à plusieurs télécommandes (ADR-0056, 10/10/2026) : pose dans
+#       g_telecommande_ui les widgets de ui_components/tv_remote_popup.yaml que
+#       tab5_telecommande.cpp montre ou cache selon la télécommande de la page (onglets,
+#       titre, Source / Stop, Muet / icône du volume, applications / rangée de lecture),
+#       puis telecommande_brancher() (glissement de page en page, tab5_pages.cpp,
+#       ADR-0046). La liste des télécommandes arrive par la clé « telecommandes » de
+#       tab5_maj_emplacements (tab5_zones.cpp → telecommandes_recu).
+# @architecture_constraint Lancé par le script tab5_tuiles_ui (tab5-tuiles.yaml) après la
+#       roue, à la fin du setup, avant la première image (tab5_zones_apply), jamais par
+#       l'on_boot. Chargé APRÈS tab5_lvgl : il référence des widgets. Aucun lv_* ici.
+# @ai_instruction Un widget de plus = son champ dans TelecommandeUI
+#       (Tab5/ecran/tab5_telecommande.h) et sa ligne ici.
+# ============================================================================
+
+script:
+  - id: tab5_telecommande_ui
+    then:
+      - lambda: |-
+          TelecommandeUI& u = g_telecommande_ui;
+          u.titre = id(popup_tv_title);
+          u.onglet[0] = id(tv_onglet_0);
+          u.onglet[1] = id(tv_onglet_1);
+          u.onglet[2] = id(tv_onglet_2);
+          u.onglet[3] = id(tv_onglet_3);
+          u.source = id(tv_touche_source);
+          u.stop = id(tv_touche_stop);
+          u.muet = id(tv_touche_muet);
+          u.volume_icone = id(tv_volume_icone);
+          u.applis = id(tv_rangee_applis);
+          u.lecture = id(tv_rangee_lecture);
+          // En dernier : telecommande_ouvrir() ne fait rien tant que popup est nul.
+          u.popup = id(tv_remote_popup);
+          telecommande_brancher();

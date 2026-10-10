@@ -1,23 +1,26 @@
 # ═══════════════════════════════════════════════════════
-# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 4× par tv_remote_popup.yaml :
-# une touche de la rangée transport sous la raquette (icône colorée + mot), qui envoie
-# sa touche par script.tab5_tv_key (tab5-scripts.yaml).
-# vars : x (position dans la rangée de 520 px), touche (code Samsung KEY_*), icon (glyphe
-#        MDI en mdi_font_45 : il doit figurer dans la liste `glyphs` de mdi_font_45),
-#        icon_style (style de rôle style_text_*), text (le mot sous l'icône).
-# « Pause » a la couleur du thème : icon_style = style_text_soft, la couleur que le
-# `theme:` donne à tout label (tab5-styles.yaml), même rendu (dans le gabarit depuis le
-# 01/10/2026).
-# Sorti de tv_remote_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 5× par tv_remote_popup.yaml :
+# une touche de la rangée de lecture d'un boîtier (Apple TV, Freebox Player ; ADR-0056),
+# en bas du popup à la place des applications de la TV : icône colorée au-dessus du mot.
+# Elle envoie sa touche par script.tab5_tv_key (tab5-scripts.yaml).
+# vars : x (position dans la rangée de 1170 px), touche (code du vocabulaire commun :
+#        KEY_PREV, KEY_REWIND, KEY_PLAYPAUSE, KEY_FF, KEY_NEXT, que le blueprint traduit en
+#        previous, skip_backward, play_pause, skip_forward, next), icon (glyphe MDI en
+#        mdi_font_45 : il doit figurer dans la liste `glyphs` de mdi_font_45), icon_style
+#        (style de rôle style_text_*), text (le mot sous l'icône).
+# 221 × 102 : la géométrie des boutons d'applications (tv_app_btn.yaml), à la même place.
+# Jusqu'à l'ADR-0056, ce gabarit faisait la rangée Lecture / Pause / Retour / Accueil
+# (121 × 100) sous le pavé ; ces quatre touches sont passées à droite du pavé
+# (tv_touche.yaml).
 # ═══════════════════════════════════════════════════════
 button:
   x: ${x}
-  width: 121
-  height: 100
+  width: 221
+  height: 102
   radius: 18
   styles: style_clim_btn
   on_short_click:
     - script.execute: { id: tab5_tv_key, touche: "${touche}" }
   widgets:
-    - label: { text: "${icon}", align: CENTER, y: -16, text_font: mdi_font_45, styles: "${icon_style}" }
-    - label: { text: "${text}", align: CENTER, y: 26 }
+    - label: { text: "${icon}", align: CENTER, y: -18, text_font: mdi_font_45, styles: "${icon_style}" }
+    - label: { text: "${text}", align: CENTER, y: 27 }

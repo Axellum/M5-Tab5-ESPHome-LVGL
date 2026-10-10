@@ -82,7 +82,9 @@ script:
           ModalRegistry::add(id(clim_options_popup),     "Climatisation",    ModalRegistry::POPUP,
                              [] { clim_afficher_blueprint(); animate_popup_open(id(clim_options_popup)); });
           ModalRegistry::add(id(pots_detail_popup),      "Plantes",          ModalRegistry::POPUP);
-          ModalRegistry::add(id(tv_remote_popup),        "Télécommande TV",  ModalRegistry::POPUP);
+          // Télécommande (ADR-0056) : sur la télécommande déjà montrée, disposition peinte.
+          ModalRegistry::add(id(tv_remote_popup),        "Télécommande TV",  ModalRegistry::POPUP,
+                             [] { telecommande_ouvrir(-1); });
           // Énergie (ADR-0028) : pose les widgets à la première ouverture, demande ses données.
           ModalRegistry::add(id(energie_popup),          "Énergie",          ModalRegistry::POPUP,
                              [] { id(tab5_energie_ouvrir).execute(); });

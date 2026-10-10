@@ -1,31 +1,59 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file tv_remote_popup.yaml
-# @role Popup télécommande TV Samsung (carte modale standard 1250×690, cadre v4).
-#       Grille symétrique 3 colonnes (290 | 440 | 290) + rangée basse 5 boutons.
-#       Ouvert par long-press carte PC (switches_card) ou btn_control_tv.
-#       Rangée basse = 5 raccourcis (Netflix · Prime · YouTube · CANAL+ · PC).
-#       Sous la raquette = lecture · pause · retour · accueil. Muet au centre
-#       du rocker de volume.
-# @ai_instruction Le modèle « Samsung S95B — Salon » n'est plus affiché en
-#       sous-titre : la barre de titre est identique pour tous les popups (ADR-0009).
-# @architecture_constraint DEUX chemins distincts, à ne pas confondre :
-#       1. Touches physiques (fléches, volume, lecture, source, menu…) →
-#          script.tab5_tv_key (tab5-scripts.yaml), commande « tv / touche » ;
-#          Marche / Arrêt = « tv / alimentation ». Le blueprint « Tab5 —
-#          emplacements » les envoie à la télécommande choisie (remote.send_command,
-#          remote.toggle), lot 6a.
-#       2. Lancement d'une APPLICATION → « tv / appli », que le blueprint confie à
-#          script.tab5_tv_app (package tab5_tv.yaml), qui traduit un nom court en
-#          app_id Tizen et fait un POST REST sur la TV.
+# @role Popup télécommande (carte modale standard 1250×690, cadre v4, ADR-0009), une page
+#       par télécommande (ADR-0056, 10/10/2026, demande d'Axel) : TV Samsung, Apple TV,
+#       Freebox Player… quatre au plus, choisies dans le blueprint « Tab5 — emplacements »
+#       (« Télécommande de la TV », puis « Autres télécommandes »). Leurs noms en haut, sur
+#       la ligne du titre (pages_onglet.yaml), et le glissement gauche / droite pour passer
+#       de l'une à l'autre : la brique commune des popups à pages (tab5_pages.cpp,
+#       ADR-0046). Une seule télécommande (ou un blueprint plus ancien) : ni onglets ni
+#       glissement, la page d'avant.
+#       Ouvert par telecommande_ouvrir() (tab5_telecommande.cpp) : appui long de la tuile TV,
+#       « Aller à l'écran → Télécommande TV », un geste (code « tv »), la valeur de la tuile
+#       − / + quand c'est la TV.
+# @architecture_constraint Disposition (corps de 1170 × 598 à y = ${modal_body_y}) :
+#       zone principale de 472 px de haut, puis 24 px d'air, puis la rangée basse (102 px,
+#       à ${modal_bottom_y} du bas de la carte). Dans la zone principale, de gauche à
+#       droite (290 + 24 + 400 + 24 + 258 + 24 + 150 = 1170, au pixel) :
+#         - colonne des commandes (290) : Marche / Arrêt, Source (TV) ou Stop (boîtier),
+#           Menu — 290 × 128 chacun, en haut, au milieu et en bas (y 0, 172, 344) ;
+#         - pavé directionnel (disque de 400, centré : y 36) avec OK au centre ;
+#         - colonne de lecture (258) : Lecture, Pause, Retour, Accueil — 258 × 100, y 0,
+#           124, 248, 372 (24 px entre deux) ;
+#         - volume (150 × 400, centré : y 36) : + , Muet (TV seulement), −.
+#       Rangée basse : les applications de la TV Samsung (Netflix, Prime, YouTube, CANAL+,
+#       PC) ou, pour un boîtier (Apple TV, Freebox Player), la rangée de lecture
+#       (Précédent, Reculer, Lecture / Pause, Avancer, Suivant) ; 5 × 221 + 4 × 16 = 1169.
+#       La disposition de la page montrée vient de HA (clé « telecommandes » de
+#       tab5_maj_emplacements, écran tv ou boitier) ; peindre() (tab5_telecommande.cpp) montre Source
+#       ou Stop, Muet ou l'icône du volume, les applications ou la rangée de lecture.
+# @architecture_constraint Les touches envoient un code de touche Samsung (KEY_UP…),
+#       le vocabulaire commun : le blueprint le traduit pour un boîtier Apple TV (up,
+#       select, top_menu, play_pause…), et un blueprint plus ancien le passe tel quel à la
+#       télécommande de la TV, comme avant l'ADR-0056. Les codes propres au boîtier
+#       (KEY_STOP, KEY_PREV, KEY_REWIND, KEY_PLAYPAUSE, KEY_FF, KEY_NEXT) n'existent que
+#       dans sa disposition. Emplacement de l'événement : telecommande_cle() — « tv » pour
+#       la première télécommande, « tv1 » à « tv3 » pour les suivantes.
+#       DEUX chemins côté HA, à ne pas confondre :
+#       1. Touches (flèches, volume, lecture, source, menu…) → script.tab5_tv_key
+#          (tab5-scripts.yaml), commande « touche » ; Marche / Arrêt = « alimentation ».
+#          Le blueprint les envoie à la télécommande de la page (remote.send_command ;
+#          remote.toggle, ou turn_on / turn_off envoyés en commande à un Apple TV, dont
+#          remote.turn_on ne fait que se connecter).
+#       2. Lancement d'une APPLICATION (TV Samsung) → « appli », que le blueprint confie à
+#          script.tab5_tv_app (package tab5_tv.yaml), qui traduit un nom court en app_id
+#          Tizen et fait un POST REST sur la TV.
 #       `media_player.select_source` ne vaut QUE pour "TV" et "HDMI" (les seules
 #       entrées du source_list) et `media_player.play_media` type `app` échoue
 #       en SILENCE sur ce firmware 2022. Voir packages/tab5_tv.yaml côté HA.
-# @ai_instruction Gabarits (lot 7.3 de l'audit, 26/09/2026) : tv_pad_btn.yaml (flèches),
-#       tv_transport_btn.yaml (lecture/pause/retour/accueil), tv_app_btn.yaml (les 5
-#       raccourcis). Pause et CANAL+ y sont depuis le 01/10/2026 (couleur du thème,
-#       style_text_soft, passée en clair). Les touches à géométrie propre (Marche/Arrêt,
-#       Source, Menu, OK, volume, Muet) restent écrites ici.
+# @ai_instruction Gabarits : tv_touche.yaml (icône + mot côte à côte : Source, Stop, Menu
+#       et la colonne de lecture), tv_pad_btn.yaml (flèches), tv_transport_btn.yaml (rangée
+#       de lecture d'un boîtier, icône au-dessus du mot), tv_app_btn.yaml (les 5
+#       applications), pages_onglet.yaml (noms des télécommandes). Marche / Arrêt, OK et le
+#       volume, à géométrie propre, restent écrits ici. Un widget peint par le C++ = son
+#       champ dans TelecommandeUI (tab5_telecommande.h) et sa ligne dans le script
+#       tab5_telecommande_ui (Tab5/paquets/tab5-telecommande.yaml).
 # ═══════════════════════════════════════════════════════
 obj:
   id: tv_remote_popup
@@ -48,155 +76,101 @@ obj:
         widgets:
 
           # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          # Titre « Télécommande » (sans « TV ») quand les onglets sont là : peindre() de tab5_telecommande.cpp.
           - !include { file: modal_header.yaml, vars: { icon: "\U000F07C0", icon_style: "style_text_info", title: "Télécommande TV", title_id: "popup_tv_title", close_btn_id: "btn_tv_close", popup_id: tv_remote_popup } }
 
-          # ═══ CORPS — grille (laisse place à la rangée basse) ═══
+          # Noms des télécommandes, sur la ligne du titre (pages_onglet.yaml) : posés par
+          # pages_onglets() (tab5_pages.cpp), aucun sous deux télécommandes.
+          - !include { file: pages_onglet.yaml, vars: { id: tv_onglet_0, page: 0, choisir: telecommande_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: tv_onglet_1, page: 1, choisir: telecommande_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: tv_onglet_2, page: 2, choisir: telecommande_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: tv_onglet_3, page: 3, choisir: telecommande_page } }
+
+          # ═══ ZONE PRINCIPALE — commandes | pavé | lecture | volume ═══
           - obj:
               align: TOP_MID
               y: ${modal_body_y}
               width: 1170
-              height: 488
+              height: 472
               styles: style_transparent
               scrollable: false
               widgets:
 
-                # ── Colonne gauche (290) ──
-                # [AI-CONTEXT] Rythme vertical UNIFORME (29/07, demande Axel « mal
-                # aligné ») : marge haute = gap = gap = marge basse = 26 px (4 x 26 +
-                # 3x128 = 488, exact). Avant : marge haute 0, marge basse 0, gaps
-                # 52 — les boutons touchaient les deux bords de la colonne (0 px de
-                # respiration), contrastant avec la colonne droite (rocker volume)
-                # qui est CENTREE et a donc 64 px de marge naturelle en haut/bas.
-                - obj:
-                    align: LEFT_MID
+                # ── Colonne des commandes (290) ──
+                # [AI-CONTEXT] Trois touches de 290 × 128, la première en haut, la
+                # dernière en bas de la zone (y 0, 172, 344 : 44 px entre deux), comme la
+                # colonne de lecture d'en face (0 … 472) : les deux colonnes encadrent le
+                # pavé à la même hauteur. Source (TV) et Stop (boîtier) partagent la place
+                # du milieu, l'une cachée.
+                - button:
+                    align: TOP_LEFT
                     x: 0
+                    y: 0
                     width: 290
-                    height: 488
-                    styles: style_transparent
+                    height: 128
+                    radius: 18
+                    styles: style_clim_btn
+                    on_short_click:
+                      - script.execute: { id: tab5_action, emplacement: !lambda 'return telecommande_cle();', commande: alimentation, valeur: "" }
+                    widgets:
+                      - label: { text: "\U000F0425", align: LEFT_MID, x: 22, text_font: mdi_font_45, styles: style_text_error }
+                      - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 82 }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_source, x: 0, y: 172, w: 290, h: 128, touche: "KEY_SOURCE", icon: "\U000F0379", icon_style: "style_text_info", text: "Source" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_stop, x: 0, y: 172, w: 290, h: 128, touche: "KEY_STOP", icon: "\U000F04DB", icon_style: "style_text_warning", text: "Stop", hidden: "true" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_menu, x: 0, y: 344, w: 290, h: 128, touche: "KEY_MENU", icon: "\U000F035C", icon_style: "style_text_dim", text: "Menu" } }
+
+                # ── Pavé directionnel (disque de 400, centré verticalement) ──
+                # [AI-WARNING] Les flèches (150 × 110 / 110 × 150, coins arrondis à 36)
+                # sont posées à 20 px du bord du disque : le coin extérieur d'une flèche
+                # est à sqrt(75² + (200 - 20)²) = 195 px du centre, sous le rayon de 200
+                # (5 px de marge). Plus près du bord, le coin sort du disque, visible en
+                # permanence (le disque a un fond et une bordure, style_meteo_card). Ne pas
+                # descendre sous 18 px sans refaire ce calcul, ni grandir les flèches.
+                # Avant l'ADR-0056 : disque de 360, flèches 138 × 100 à 18 px.
+                - obj:
+                    align: TOP_LEFT
+                    x: 314
+                    y: 36
+                    width: 400
+                    height: 400
+                    radius: 200
+                    styles: style_meteo_card
                     scrollable: false
                     widgets:
+                      # Flèches ↑ ↓ ← → : gabarit tv_pad_btn.yaml (un seul décalage par flèche, sur `axis`)
+                      - !include { file: tv_pad_btn.yaml, vars: { align: TOP_MID, axis: "y", offset: 20, w: 150, h: 110, touche: "KEY_UP", icon: "\U000F005D" } }
+                      - !include { file: tv_pad_btn.yaml, vars: { align: BOTTOM_MID, axis: "y", offset: -20, w: 150, h: 110, touche: "KEY_DOWN", icon: "\U000F0045" } }
+                      - !include { file: tv_pad_btn.yaml, vars: { align: LEFT_MID, axis: "x", offset: 20, w: 110, h: 150, touche: "KEY_LEFT", icon: "\U000F004D" } }
+                      - !include { file: tv_pad_btn.yaml, vars: { align: RIGHT_MID, axis: "x", offset: -20, w: 110, h: 150, touche: "KEY_RIGHT", icon: "\U000F0054" } }
                       - button:
-                          y: 26
-                          width: 290
-                          height: 128
-                          radius: 18
-                          styles: style_clim_btn
+                          align: CENTER
+                          width: 160
+                          height: 160
+                          radius: 80
+                          styles: style_pill_accent
+                          pressed:
+                            bg_opa: 45%
                           on_short_click:
-                            - script.execute: { id: tab5_action, emplacement: tv, commande: alimentation, valeur: "" }
+                            - script.execute: { id: tab5_tv_key, touche: "KEY_ENTER" }
                           widgets:
-                            - label: { text: "\U000F0425", align: LEFT_MID, x: 22, text_font: mdi_font_45, styles: style_text_error }
-                            - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 82 }
-                      - button:
-                          y: 180
-                          width: 290
-                          height: 128
-                          radius: 18
-                          styles: style_clim_btn
-                          on_short_click:
-                            - script.execute: { id: tab5_tv_key, touche: "KEY_SOURCE" }
-                          widgets:
-                            - label: { text: "\U000F0379", align: LEFT_MID, x: 22, text_font: mdi_font_45, styles: style_text_info }
-                            - label: { text: "Source", align: LEFT_MID, x: 82 }
-                      - button:
-                          y: 334
-                          width: 290
-                          height: 128
-                          radius: 18
-                          styles: style_clim_btn
-                          on_short_click:
-                            - script.execute: { id: tab5_tv_key, touche: "KEY_MENU" }
-                          widgets:
-                            - label: { text: "\U000F035C", align: LEFT_MID, x: 22, text_font: mdi_font_45, styles: style_text_dim }
-                            - label: { text: "Menu", align: LEFT_MID, x: 82 }
+                            - label: { text: "OK", align: CENTER, styles: [style_police_date, style_text_on_accent] }
 
-                # ── Colonne centre (520) — anneau directionnel + transport ──
-                # [AI-CONTEXT] Largeur passee de 440 a 520 le 06/08/2026. Les 3
-                # colonnes (290 + 520 + 290 = 1100) tiennent dans les 1170 du
-                # corps, il reste 35 px de gouttiere de chaque cote (c'etait 75 :
-                # de la marge dormante, alors que le centre manquait de place).
-                # [AI-CONTEXT] Le disque est passe de CENTER a TOP_MID et la
-                # rangee transport occupe le bas. Avant, lecture/pause/retour/
-                # accueil etaient coinces dans les 4 COINS autour du disque
-                # (110x64) : trop petits, sans libelle, et visuellement colles a
-                # la rangee d'apps en dessous — juge illisible sur l'appareil.
-                # En rangee, ils passent a 121x100 avec icone ET mot (~1,7x la
-                # surface), alignes sur une seule ligne. Bonus : ils ne sont plus
-                # contraints par le cercle, donc plus aucun calcul de marge.
-                # [AI-CONTEXT] Les 4 boutons du pavé (138×100 / 100×138) sont
-                # posés a y=18 / x=18 depuis le bord du disque, PAS a 10 : a 10 px,
-                # les coins exterieurs du bouton (rectangle, meme arrondi) sortent
-                # du disque de rayon 180 de 3,5 px — visible en permanence car le
-                # disque a un fond + une bordure (style_meteo_card), pas juste un
-                # halo au press. A 18 px, marge de secu ~4 px (verifie :
-                # sqrt(69^2 + (180-18)^2) = 176,1 < 180). Ne pas redescendre sous
-                # y/x=16 sans refaire ce calcul. Le disque garde son diametre de
-                # 360 : ce calcul reste donc valable tel quel.
+                # ── Colonne de lecture (258) : quatre touches, mêmes codes pour tous ──
+                # [AI-CONTEXT] Avant l'ADR-0056 c'était une rangée de 4 × 121 × 100 sous le
+                # pavé, à 8 px des applications : à côté du pavé, chaque touche fait 258 ×
+                # 100 (plus du double) avec son icône et son mot côte à côte.
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_lecture, x: 738, y: 0, w: 258, h: 100, touche: "KEY_PLAY", icon: "\U000F040A", icon_style: "style_text_success", text: "Lecture" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_pause, x: 738, y: 124, w: 258, h: 100, touche: "KEY_PAUSE", icon: "\U000F03E4", icon_style: "style_text_soft", text: "Pause" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_retour, x: 738, y: 248, w: 258, h: 100, touche: "KEY_RETURN", icon: "\U000F054C", icon_style: "style_text_dim", text: "Retour" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_accueil, x: 738, y: 372, w: 258, h: 100, touche: "KEY_HOME", icon: "\U000F02DC", icon_style: "style_text_dim", text: "Accueil" } }
+
+                # ── Volume (150 × 400, centré verticalement) ──
                 - obj:
-                    align: CENTER
-                    width: 520
-                    height: 488
-                    styles: style_transparent
-                    scrollable: false
-                    widgets:
-                      - obj:
-                          align: TOP_MID
-                          y: 0
-                          width: 360
-                          height: 360
-                          radius: 180
-                          styles: style_meteo_card
-                          scrollable: false
-                          widgets:
-                            # Flèches ↑ ↓ ← → : gabarit tv_pad_btn.yaml (un seul décalage par flèche, sur `axis`)
-                            - !include { file: tv_pad_btn.yaml, vars: { align: TOP_MID, axis: "y", offset: 18, w: 138, h: 100, touche: "KEY_UP", icon: "\U000F005D" } }
-                            - !include { file: tv_pad_btn.yaml, vars: { align: BOTTOM_MID, axis: "y", offset: -18, w: 138, h: 100, touche: "KEY_DOWN", icon: "\U000F0045" } }
-                            - !include { file: tv_pad_btn.yaml, vars: { align: LEFT_MID, axis: "x", offset: 18, w: 100, h: 138, touche: "KEY_LEFT", icon: "\U000F004D" } }
-                            - !include { file: tv_pad_btn.yaml, vars: { align: RIGHT_MID, axis: "x", offset: -18, w: 100, h: 138, touche: "KEY_RIGHT", icon: "\U000F0054" } }
-                            - button:
-                                align: CENTER
-                                width: 148
-                                height: 148
-                                radius: 74
-                                styles: style_pill_accent
-                                pressed:
-                                  bg_opa: 45%
-                                on_short_click:
-                                  - script.execute: { id: tab5_tv_key, touche: "KEY_ENTER" }
-                                widgets:
-                                  - label: { text: "OK", align: CENTER, styles: [style_police_date, style_text_on_accent] }
-
-                      # ── Rangee transport, alignee SOUS la raquette ──
-                      # [AI-WARNING] Gabarit exact, ne pas bricoler au pixel :
-                      # 4 x 121 + 3 gouttieres de 12 = 520, soit la largeur de la
-                      # colonne au pixel pres. Verticalement, le disque occupe
-                      # 0..360 et cette rangee 388..488 : 28 px de respiration
-                      # entre les deux, et la rangee s'arrete pile au bas de la
-                      # colonne. Changer la largeur de colonne impose de refaire
-                      # ces quatre x.
-                      # [AI-CONTEXT] Icone + MOT sur chaque touche : l'icone seule
-                      # avait ete jugee insuffisante sur l'appareil. L'icone est
-                      # remontee de 16 px et le mot descendu de 26 px depuis le
-                      # centre, ce qui laisse les deux respirer dans les 100 px.
-                      - obj:
-                          align: BOTTOM_MID
-                          y: 0
-                          width: 520
-                          height: 100
-                          styles: style_transparent
-                          scrollable: false
-                          widgets:
-                            - !include { file: tv_transport_btn.yaml, vars: { x: 0, touche: "KEY_PLAY", icon: "\U000F040A", icon_style: "style_text_success", text: "Lecture" } }
-                            - !include { file: tv_transport_btn.yaml, vars: { x: 133, touche: "KEY_PAUSE", icon: "\U000F03E4", icon_style: "style_text_soft", text: "Pause" } }
-                            - !include { file: tv_transport_btn.yaml, vars: { x: 266, touche: "KEY_RETURN", icon: "\U000F054C", icon_style: "style_text_dim", text: "Retour" } }
-                            - !include { file: tv_transport_btn.yaml, vars: { x: 399, touche: "KEY_HOME", icon: "\U000F02DC", icon_style: "style_text_dim", text: "Accueil" } }
-
-                # ── Colonne droite (290 px) — rocker volume centré dans la colonne ──
-                # (plus de conteneur de centrage : 145 - 75 = 70 px du bord droit)
-                - obj:
-                    align: RIGHT_MID
-                    x: -70
+                    align: TOP_LEFT
+                    x: 1020
+                    y: 36
                     width: 150
-                    height: 360
+                    height: 400
                     radius: 75
                     styles: style_meteo_card
                     scrollable: false
@@ -214,19 +188,17 @@ obj:
                             - script.execute: { id: tab5_tv_key, touche: "KEY_VOLUP" }
                           widgets:
                             - label: { text: "\U000F0415", align: CENTER, y: 8, text_font: mdi_font_45 }
-                      # [AI-CONTEXT] Ce creneau portait un simple libelle
-                      # « VOL » decoratif. Il est devenu le bouton MUET le
-                      # 06/08/2026 : « Muet » a quitte la rangee basse (que
-                      # les apps occupent desormais) et sa place logique est
-                      # ici, entre + et -, comme sur une vraie telecommande.
-                      # [AI-WARNING] Hauteur 60 px IMPOSEE : les deux touches
-                      # de volume font 150x150 dans un conteneur de 360 de
-                      # haut, il ne reste donc que 360-300 = 60 px libres au
-                      # centre. Plus grand => recouvrement des touches.
+                      # [AI-WARNING] Hauteur 100 px IMPOSÉE : les deux touches de volume font
+                      # 150 × 150 dans un conteneur de 400 de haut, il reste 400 - 300 = 100 px
+                      # au centre. Plus grand => recouvrement des touches. (60 px avant
+                      # l'ADR-0056, dans un conteneur de 360.)
+                      # Muet : TV seulement (un Apple TV n'a pas de commande muet) ; un boîtier
+                      # montre à sa place l'icône du volume, sans action (tv_volume_icone).
                       - button:
+                          id: tv_touche_muet
                           align: CENTER
                           width: 150
-                          height: 60
+                          height: 100
                           radius: 30
                           styles: [style_invisible, style_bg_accent]
                           pressed:
@@ -235,6 +207,7 @@ obj:
                             - script.execute: { id: tab5_tv_key, touche: "KEY_MUTE" }
                           widgets:
                             - label: { text: "\U000F0581", align: CENTER, text_font: mdi_font_45, styles: style_text_warning }
+                      - label: { id: tv_volume_icone, text: "\U000F057E", align: CENTER, text_font: mdi_font_45, styles: style_text_dim, hidden: true }
                       - button:
                           align: BOTTOM_MID
                           y: 0
@@ -249,14 +222,12 @@ obj:
                           widgets:
                             - label: { text: "\U000F0374", align: CENTER, y: -6, text_font: mdi_font_45 }
 
-          # ═══ RANGÉE BASSE — 5 raccourcis apps / source ═══
-          # [AI-CONTEXT] Refonte du 06/08/2026 (demande Axel « plus grands et
-          # lisibles, plus pratiques »). Cette rangee portait lecture / pause /
-          # retour / accueil / muet ; ce sont desormais les 5 raccourcis, et les
-          # touches de transport sont montees dans les coins de la raquette.
-          # Gain de lisibilite : 221x102 en roboto_32_b, contre 100x55 en
-          # roboto_22 avant, soit ~4x la surface et une police 45 % plus haute.
-          # Geometrie inchangee : 5 x 221 + 4 gouttieres de 16 = 1169 sur 1170.
+          # ═══ RANGÉE BASSE — applications (TV) ou lecture (boîtier) ═══
+          # [AI-CONTEXT] Refonte du 06/08/2026 (demande Axel « plus grands et lisibles, plus
+          # pratiques ») : 221 × 102 en roboto_32_b. Géométrie : 5 × 221 + 4 gouttières de
+          # 16 = 1169 sur 1170. La rangée de lecture d'un boîtier (ADR-0056) prend la même
+          # place et la même géométrie : on passe d'une télécommande à l'autre sans que
+          # rien ne bouge autour.
           #
           # [AI-WARNING] Les apps passent par `script.tab5_tv_app` (HA), JAMAIS
           # par `media_player.select_source` : le `source_list` de cette TV ne
@@ -268,6 +239,7 @@ obj:
           # cote HA : si Samsung en change un, on corrige le package et on
           # recharge HA, sans recompiler ni reflasher le Tab5.
           - obj:
+              id: tv_rangee_applis
               align: BOTTOM_MID
               y: ${modal_bottom_y}
               width: 1170
@@ -291,3 +263,22 @@ obj:
                 # apps : la correspondance PC -> HDMI1 vit dans tab5_tv.yaml,
                 # donc un cable deplace se corrige SANS recompiler ni reflasher.
                 - !include { file: tv_app_btn.yaml, vars: { x: 948, app: "pc", text: "PC", style: "style_text_success" } }
+
+          # Boîtier (Apple TV, Freebox Player) : la rangée de lecture, Lecture / Pause au
+          # milieu, sous le pavé. Codes traduits par le blueprint (previous, skip_backward,
+          # play_pause, skip_forward, next).
+          - obj:
+              id: tv_rangee_lecture
+              align: BOTTOM_MID
+              y: ${modal_bottom_y}
+              width: 1170
+              height: 102
+              hidden: true
+              styles: style_transparent
+              scrollable: false
+              widgets:
+                - !include { file: tv_transport_btn.yaml, vars: { x: 0, touche: "KEY_PREV", icon: "\U000F04AE", icon_style: "style_text_dim", text: "Précédent" } }
+                - !include { file: tv_transport_btn.yaml, vars: { x: 237, touche: "KEY_REWIND", icon: "\U000F045F", icon_style: "style_text_soft", text: "Reculer" } }
+                - !include { file: tv_transport_btn.yaml, vars: { x: 474, touche: "KEY_PLAYPAUSE", icon: "\U000F040E", icon_style: "style_text_success", text: "Lecture / Pause" } }
+                - !include { file: tv_transport_btn.yaml, vars: { x: 711, touche: "KEY_FF", icon: "\U000F0211", icon_style: "style_text_soft", text: "Avancer" } }
+                - !include { file: tv_transport_btn.yaml, vars: { x: 948, touche: "KEY_NEXT", icon: "\U000F04AD", icon_style: "style_text_dim", text: "Suivant" } }

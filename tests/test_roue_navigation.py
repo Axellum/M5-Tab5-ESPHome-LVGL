@@ -99,13 +99,14 @@ def test_musique_et_tv_dans_appareils():
     avec l'icône de l'en-tête de leur fenêtre (popup Musique, télécommande TV). La TV ne
     s'offre qu'avec sa zone ; Musique, comme la zone à gauche de l'horloge, tant que HA n'a
     pas dit qu'aucun lecteur n'est choisi (son geste et « Aller à l'écran » l'ouvrent
-    toujours)."""
+    toujours). Depuis l'ADR-0056, la télécommande s'offre aussi sans la TV du blueprint
+    quand HA a poussé des télécommandes (une Apple TV seule, par exemple)."""
     table = _table("kAppareils")
     assert table[0][0] == "TEMPERATURE"
     assert table[-2:] == [("MUSIQUE", "MUSIQUE", "Musique"), ("TV", "TV", "TV")]
     assert len(table) == _choix_max() == 8
     zones = lire(source("tab5_zones.cpp"))
-    assert "case Ecran::TV: return zone_absente(Zone::TV);" in zones
+    assert "case Ecran::TV: return zone_absente(Zone::TV) && !telecommandes_connues();" in zones
     assert "case Ecran::MUSIQUE:" not in zones.split("bool ecran_sans_zone(Ecran e) {", 1)[1].split("\n}", 1)[0]
     propose = _nav().split("bool propose(Ecran e) {", 1)[1].split("\n}", 1)[0]
     assert "if (!ecran_disponible(e)) return false;" in propose

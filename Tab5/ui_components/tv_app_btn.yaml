@@ -16,6 +16,6 @@ button:
   radius: 18
   styles: style_clim_btn
   on_short_click:
-    - script.execute: { id: tab5_action, emplacement: tv, commande: appli, valeur: "${app}" }
+    - script.execute: { id: tab5_action, emplacement: !lambda 'return telecommande_cle();', commande: appli, valeur: "${app}" }
   widgets:
     - label: { text: "${text}", align: CENTER, text_font: roboto_32_b, styles: "${style}" }

@@ -182,7 +182,7 @@ def test_commandes_par_type_egales_au_tableau_de_l_adr():
     assert not table["cap"][0] and not table["bin"][0] and not table["cli"][0] and not table["vide"][0]
     assert "if (d.type >= kNbTypes || (d.options & OPT_R)) return g;" in gestes
     assert "if (type == Type::MED && (d.options & OPT_T)) g.fenetre = Fenetre::TELECOMMANDE;" in gestes
-    assert "case Fenetre::TELECOMMANDE:\n            ouvrir_popup(g_tuiles_ui.popup_tv);" in _fonction(cpp, "ouvrir_fenetre")
+    assert "case Fenetre::TELECOMMANDE:\n            telecommande_ouvrir(0);" in _fonction(cpp, "ouvrir_fenetre")
     # Option k : un second appui dans les 3 s.
     assert "kConfirmationMs = 3000" in cpp and "OPT_K" in appui
 
