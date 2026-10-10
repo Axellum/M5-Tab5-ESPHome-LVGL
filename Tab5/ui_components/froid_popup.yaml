@@ -1,0 +1,51 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file froid_popup.yaml
+# @role Popup « Froid » (ADR-0055, 10/10/2026), titré « Frigos et congélateurs » (la clé
+#       « Froid » se traduit déjà « Cool », mode d'une clim) : les réfrigérateurs et congélateurs
+#       déclarés dans Home Assistant (listes « Tab5 · réfrigérateurs » et « Tab5 ·
+#       congélateurs », quatre au plus), une carte chacun — température colorée par
+#       niveau, statut, extrêmes et norme, courbe des 24 h, dernier incident.
+#       Ouvert par un tap sur l'icône qui clignote dans le coin de l'horloge, par
+#       « Aller à l'écran → Froid », par la roue de navigation (Agenda ▸ Froid) ou par un
+#       geste de l'accueil (code « froid »).
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Froid » dans
+#       tab5_modal_registry_init, ouvert par tab5_froid_ouvrir). Corps : x 24..1226,
+#       y 72..670 ; tab5_froid.cpp y répartit les cartes (une rangée pour un ou deux
+#       appareils, deux rangées de deux au-delà, 16 px d'écart) : aucune place posée ici.
+# @ai_instruction Un widget de plus = son champ dans FroidUI (tab5_froid.h) et sa ligne
+#       dans le script tab5_froid_lier (tab5-froid.yaml).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: froid_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: froid_popup } }
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F0290", icon_style: "style_text_accent", title: "Frigos et congélateurs", title_id: "froid_popup_titre", close_btn_id: "btn_froid_close", popup_id: froid_popup } }
+
+          # ═══ UNE CARTE PAR APPAREIL (placées par tab5_froid.cpp) ═══
+          - !include { file: froid_carte.yaml, vars: { n: "0" } }
+          - !include { file: froid_carte.yaml, vars: { n: "1" } }
+          - !include { file: froid_carte.yaml, vars: { n: "2" } }
+          - !include { file: froid_carte.yaml, vars: { n: "3" } }
+
+          # Avant la première poussée de HA, ou sans appareil déclaré (et où le déclarer).
+          - label: { id: froid_attente, text: "", align: CENTER, y: -10, styles: style_text_dim }
+          - label: { id: froid_conseil, text: "", align: CENTER, y: 40, width: 1100, long_mode: WRAP, text_align: CENTER, styles: style_text_dim, hidden: true }

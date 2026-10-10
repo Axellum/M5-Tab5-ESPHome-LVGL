@@ -135,6 +135,9 @@
         - en: Tracking
           fr: Suivi
           page: docs/notice/tracking.md
+        - en: Fridges and freezers
+          fr: Frigos et congélateurs
+          page: docs/notice/fridge.md
         - en: Settings
           fr: Réglages
           page: docs/notice/settings.md

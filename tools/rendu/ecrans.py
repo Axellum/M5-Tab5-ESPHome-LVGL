@@ -724,6 +724,31 @@ SUIVI_DONNEES = Service("tab5_maj_suivi", (("payload", ";".join((
 ZONE_CAPTEUR = Service("tab5_maj_emplacements", (("payload", "gauche|capteur|vocal|graphique|lecteur|capteur;"),))
 
 
+# Réfrigérateurs et congélateurs (ADR-0055, froid_popup.yaml) : au format de
+# packages/tab5_froid.yaml (script tab5_froid_calculer), date figée des captures (mardi
+# 16 juin 2026, 07:45 à Paris). Un réfrigérateur au niveau grave, porte mal fermée depuis
+# 07:12 (la courbe monte la dernière heure), dont le dernier incident date d'hier 18:40
+# (coup de chaud de 42 min, 8.7 °C au plus), et un congélateur conforme. Noms d'exemple,
+# aucune entité.
+def _froid_points(*valeurs) -> str:
+    return ",".join("" if v is None else f"{v:.1f}" for v in valeurs)
+
+
+FROID_FRIGO = ("Frigo cuisine|f|9.1|2|porte|1781586720|2.8|9.4|0|5|"
+               + _froid_points(3.4, 3.6, 3.9, 3.7, 3.5, 3.3, 3.2, 3.6, 4.1, 4.4, 3.9, 3.6, 3.4, 3.3, 3.5,
+                               3.8, 3.6, 3.2, 3.0, 2.8, None, 3.1, 3.4, 6.2, 9.1)
+               + "|chaud|1781541600|42|8.7")
+FROID_CONGELATEUR = ("Congélateur garage|c|-19.4|0|ok|0|-21.0|-17.6||-18|"
+                     + _froid_points(-19.8, -20.1, -20.4, -20.6, -20.2, -19.7, -19.2, -18.6, -17.9, -18.4,
+                                     -19.1, -19.6, -20.0, -20.3, -20.5, -20.1, -19.8, -19.5, -19.2, -19.0,
+                                     -19.3, -19.6, -19.5, -19.4, -19.4)
+                     + "||0|0|")
+FROID_DONNEES = Service("tab5_maj_froid", (("payload", FROID_FRIGO + ";" + FROID_CONGELATEUR),))
+# Remise après la capture : plus rien au niveau grave, l'icône de l'horloge s'éteint et
+# les écrans suivants restent identiques à leurs références.
+FROID_CONFORME = Service("tab5_maj_froid", (("payload", FROID_CONGELATEUR),))
+
+
 # Popup Météo (ADR-0043, meteo_popup.yaml) : une journée qui change (soleil le matin,
 # orage l'après-midi, éclaircies le soir), de 07:00 (l'heure figée, 07:45 : la colonne
 # de l'heure en cours) à 21:00, dix jours contrastés, une pluie dans l'heure qui monte
@@ -1136,6 +1161,13 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-zone-capteur", (SUIVI_DONNEES, ZONE_CAPTEUR), (ZONE_VOCAL,)),
     Ecran("accueil-zone-capteur-gelule", (Choisir("Thème", THEME_CADRE_GELULE), SUIVI_DONNEES, ZONE_CAPTEUR),
           (ZONE_VOCAL, Choisir("Thème", THEME_PAR_DEFAUT))),
+    # Réfrigérateurs et congélateurs (ADR-0055) : le popup avant toute poussée (« En
+    # attente de Home Assistant »), avec un réfrigérateur au niveau grave (porte mal
+    # fermée) et un congélateur conforme, puis l'accueil, où l'icône clignote dans le coin
+    # de l'horloge (capturée à un instant quelconque du clignotement : pas comparée).
+    Ecran("froid-vide", (Aller("Froid"),)),
+    Ecran("froid", (FROID_DONNEES, Aller("Froid")), (FROID_CONFORME,)),
+    Ecran("accueil-froid", (FROID_DONNEES,), (FROID_CONFORME,), stable=False),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
     # Réglages (quatre pages, 08/10/2026). L'engrenage ouvre la page Écran ; un glisser
     # vers la gauche parti d'un bouton montre la page Apparence sans appuyer le bouton.

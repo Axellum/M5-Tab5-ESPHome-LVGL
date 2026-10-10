@@ -1334,6 +1334,111 @@ static void test_suivi_textes() {
     expect(!suivi_variation_texte(s, t, 8) && t[0] == '\0', "suivi : variation trop longue = vide");
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 11. Froid : réfrigérateurs et congélateurs (ADR-0055)
+// ════════════════════════════════════════════════════════════════════════════
+
+static void test_froid_lire() {
+    FroidLu a[kFroidMax];
+    int n = froid_lire(ch("Frigo cuisine|f|9.1|2|porte|1791381720|2.1|9.4|0|5|3.2,3.4,,4.1,9.1|chaud|1791300000|42|8.7;"
+                          "Congélateur|c|-19.5|0|ok|0|-21|-18.2||-18|-20,-19.5|||"),
+                       a);
+    expect(n == 2 && vaut(a[0].nom, "Frigo cuisine") && a[0].type == FroidType::FRIGO && a[0].valeur == 9.1f &&
+               a[0].niveau == 2 && a[0].cause == FroidCause::PORTE && a[0].depuis == 1791381720u,
+           "froid : nom, type, valeur, niveau, cause, depuis");
+    expect(a[0].min == 2.1f && a[0].max == 9.4f && a[0].bas == 0.0f && a[0].haut == 5.0f, "froid : min, max, norme");
+    expect(a[0].n == 5 && a[0].points[0] == 3.2f && std::isnan(a[0].points[2]) && a[0].points[4] == 9.1f,
+           "froid : points en °C, un vide = heure sans mesure");
+    expect(a[0].dernier.cause == FroidCause::CHAUD && a[0].dernier.debut == 1791300000u &&
+               a[0].dernier.duree_min == 42 && a[0].dernier.max == 8.7f,
+           "froid : dernier incident");
+    expect(a[1].type == FroidType::CONGELATEUR && std::isnan(a[1].bas) && a[1].haut == -18.0f &&
+               a[1].dernier.cause == FroidCause::OK && a[1].dernier.debut == 0 && std::isnan(a[1].dernier.max),
+           "froid : congélateur sans limite basse ni incident");
+    n = froid_lire(ch("A|f||1|indispo|1791381720|||||3.2,4.1,"), a);
+    expect(n == 1 && a[0].n == 3 && a[0].points[1] == 4.1f && std::isnan(a[0].points[2]),
+           "froid : « , » final = valeur actuelle sans mesure, gardée comme dernier point");
+    n = froid_lire(ch("A|f|1|0|ok|0|||||,"), a);
+    expect(n == 1 && a[0].n == 2 && std::isnan(a[0].points[0]) && std::isnan(a[0].points[1]),
+           "froid : « , » seul = deux heures sans mesure");
+    n = froid_lire(ch("A|f||1|indispo|1791381720"), a);
+    expect(n == 1 && std::isnan(a[0].valeur) && a[0].cause == FroidCause::INDISPO && a[0].n == 0 &&
+               std::isnan(a[0].min) && std::isnan(a[0].haut),
+           "froid : capteur muet, champs absents");
+    n = froid_lire(ch("A|x|1;B;;C|c|nan|7|zzz|-1|1e30|-200|abc|81|x,90,-80.5|porte|-5|99999999|nan"), a);
+    expect(n == 1 && vaut(a[0].nom, "C") && std::isnan(a[0].valeur) && a[0].niveau == 2 &&
+               a[0].cause == FroidCause::OK && a[0].depuis == 0 && std::isnan(a[0].min) && std::isnan(a[0].max) &&
+               std::isnan(a[0].bas) && std::isnan(a[0].haut),
+           "froid : type inconnu et un seul champ sautés, niveau borné à 2, valeurs hors bornes inconnues");
+    expect(std::isnan(a[0].points[0]) && std::isnan(a[0].points[1]), "froid : points illisibles ou hors bornes");
+    expect(a[0].n == 3 && std::isnan(a[0].points[2]) && a[0].dernier.cause == FroidCause::PORTE &&
+               a[0].dernier.debut == 0 && a[0].dernier.duree_min == 0 && std::isnan(a[0].dernier.max),
+           "froid : incident aux champs illisibles");
+    n = froid_lire(ch("A|f|-1|-1"), a);
+    expect(n == 1 && a[0].niveau == 0 && a[0].valeur == -1.0f, "froid : niveau « -1 » = 0");
+    n = froid_lire(ch("a|f;b|f;c|c;d|c;e|f"), a);
+    expect(n == kFroidMax && vaut(a[3].nom, "d"), "froid : kFroidMax au plus");
+    std::string points;
+    for (int i = 0; i < 40; i++) points += (i ? ",4" : "4");
+    const std::string long_ = "A|f|4|0|ok|0|||||" + points;
+    n = froid_lire(ch(long_.c_str()), a);
+    expect(n == 1 && a[0].n == kFroidPointsMax && a[0].points[kFroidPointsMax - 1] == 4.0f,
+           "froid : kFroidPointsMax points au plus");
+    expect(froid_lire(ch(""), a) == 0 && froid_lire(Champ{nullptr, 0}, a) == 0, "froid : vide = aucun appareil");
+    expect(froid_cause(ch("chaud")) == FroidCause::CHAUD && froid_cause(ch("froid")) == FroidCause::FROID &&
+               froid_cause(ch("porte")) == FroidCause::PORTE && froid_cause(ch("indispo")) == FroidCause::INDISPO &&
+               froid_cause(ch("ok")) == FroidCause::OK && froid_cause(ch("Porte")) == FroidCause::OK &&
+               froid_cause(ch("")) == FroidCause::OK,
+           "froid : causes exactes, sinon ok");
+}
+
+static void test_froid_textes() {
+    char t[16];
+    expect(froid_temperature_texte(9.1f, t, sizeof(t)) && std::strcmp(t, "9.1") == 0, "froid : 9.1");
+    expect(froid_temperature_texte(-18.0f, t, sizeof(t)) && std::strcmp(t, "-18.0") == 0, "froid : -18.0");
+    expect(froid_temperature_texte(-0.04f, t, sizeof(t)) && std::strcmp(t, "0.0") == 0, "froid : jamais -0.0");
+    expect(froid_temperature_texte(4.96f, t, sizeof(t)) && std::strcmp(t, "5.0") == 0, "froid : arrondi au dixième");
+    expect(froid_temperature_texte(NAN, t, sizeof(t)) && std::strcmp(t, "--") == 0, "froid : inconnue = --");
+    expect(froid_temperature_texte(500.0f, t, sizeof(t)) && std::strcmp(t, "--") == 0, "froid : hors bornes = --");
+    expect(!froid_temperature_texte(-18.0f, t, 4) && t[0] == '\0', "froid : tampon trop petit = vide");
+
+    FroidLu a;
+    float bas = 0, haut = 0;
+    expect(!froid_echelle(a, bas, haut), "froid : rien à tracer");
+    a.bas = 0.0f;
+    a.haut = 5.0f;
+    a.valeur = 9.0f;
+    a.n = 3;
+    a.points[0] = 3.0f;
+    a.points[1] = NAN;
+    a.points[2] = 4.0f;
+    expect(froid_echelle(a, bas, haut) && bas == -1.0f && haut == 10.0f, "froid : échelle des points, valeur et norme");
+    FroidLu c;
+    c.haut = -18.0f;
+    c.valeur = -18.5f;
+    expect(froid_echelle(c, bas, haut) && haut - bas == kFroidEchelleMin && bas < -19.5f && haut > -17.0f,
+           "froid : échelle de kFroidEchelleMin au moins, centrée");
+
+    FroidLu l[3];
+    l[0].niveau = 1;
+    l[1].niveau = 2;
+    expect(froid_niveau_max(l, 3) == 2 && froid_niveau_max(l, 1) == 1 && froid_niveau_max(l, 0) == 0 &&
+               froid_niveau_max(nullptr, 2) == 0,
+           "froid : niveau le plus grave");
+
+    AlerteTexteLu lu = alerte_texte_lire("@froid:porte:1:9.1:Frigo : cuisine");
+    expect(lu.code == AlerteTexteCode::FROID, "libellé : @froid");
+    FroidAlerteLu f;
+    expect(froid_alerte_lire(lu.reste, f) && f.cause == FroidCause::PORTE && f.niveau == 1 && f.valeur == 9.1f &&
+               std::strcmp(f.nom, "Frigo : cuisine") == 0,
+           "froid : libellé codé, le nom prend le reste");
+    expect(froid_alerte_lire("indispo:1::Congélateur", f) && f.cause == FroidCause::INDISPO && std::isnan(f.valeur) &&
+               std::strcmp(f.nom, "Congélateur") == 0,
+           "froid : libellé sans valeur");
+    expect(!froid_alerte_lire("chaud:2:9", f) && !froid_alerte_lire(nullptr, f) && f.nom[0] == '\0',
+           "froid : libellé incomplet refusé");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -1374,6 +1479,8 @@ int main() {
     test_camera_url();
     test_suivis_lire();
     test_suivi_textes();
+    test_froid_lire();
+    test_froid_textes();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

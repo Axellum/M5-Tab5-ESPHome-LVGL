@@ -36,6 +36,7 @@ FAMILLES = [
     (";", "tab5_maj_lecteur", ("lecteurs", "etat")),
     ("<", "tab5_maj_cameras", ("adresse", "cameras")),
     ("=", "tab5_maj_suivi", "payload"),
+    (">", "tab5_maj_froid", "payload"),
 ]
 
 

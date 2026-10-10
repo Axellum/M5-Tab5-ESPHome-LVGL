@@ -1,0 +1,63 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-froid.yaml
+# @role Suivi du froid (ADR-0055, 10/10/2026) : pose les widgets que tab5_froid.cpp peint
+#       (g_froid_ui).
+#         - tab5_froid_lier : widgets dans g_froid_ui, une fois (appelé par la poussée
+#           tab5_maj_froid, tab5-api-logic.yaml, et à l'ouverture) ;
+#         - tab5_froid_ouvrir : peint le popup Froid (dernier état reçu) et l'ouvre
+#           (« Aller à l'écran → Froid », geste « froid », roue de navigation, tap sur
+#           l'icône qui clignote dans le coin de l'horloge).
+# @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
+#       nomme aucune entité et ne demande rien, HA pousse (packages/tab5_froid.yaml).
+#       Chargé APRÈS tab5_lvgl : il référence des widgets. Aucun lv_* ici.
+# @ai_instruction Un widget de plus = son champ dans FroidUI (tab5_froid.h) et sa ligne ici.
+# ============================================================================
+
+script:
+  - id: tab5_froid_lier
+    then:
+      - lambda: |-
+          FroidUI& u = g_froid_ui;
+          if (u.popup != nullptr) return;
+          u.attente = id(froid_attente);
+          u.conseil = id(froid_conseil);
+          u.carte[0] = id(froid_carte_0);
+          u.carte[1] = id(froid_carte_1);
+          u.carte[2] = id(froid_carte_2);
+          u.carte[3] = id(froid_carte_3);
+          u.icone[0] = id(froid_icone_0);
+          u.icone[1] = id(froid_icone_1);
+          u.icone[2] = id(froid_icone_2);
+          u.icone[3] = id(froid_icone_3);
+          u.nom[0] = id(froid_nom_0);
+          u.nom[1] = id(froid_nom_1);
+          u.nom[2] = id(froid_nom_2);
+          u.nom[3] = id(froid_nom_3);
+          u.valeur[0] = id(froid_valeur_0);
+          u.valeur[1] = id(froid_valeur_1);
+          u.valeur[2] = id(froid_valeur_2);
+          u.valeur[3] = id(froid_valeur_3);
+          u.statut[0] = id(froid_statut_0);
+          u.statut[1] = id(froid_statut_1);
+          u.statut[2] = id(froid_statut_2);
+          u.statut[3] = id(froid_statut_3);
+          u.extremes[0] = id(froid_extremes_0);
+          u.extremes[1] = id(froid_extremes_1);
+          u.extremes[2] = id(froid_extremes_2);
+          u.extremes[3] = id(froid_extremes_3);
+          u.incident[0] = id(froid_incident_0);
+          u.incident[1] = id(froid_incident_1);
+          u.incident[2] = id(froid_incident_2);
+          u.incident[3] = id(froid_incident_3);
+          u.alerte = id(btn_froid_alerte);
+          u.alerte_icone = id(froid_alerte_icone);
+          // En dernier : peindre_popup() ne fait rien tant que popup est nul.
+          u.popup = id(froid_popup);
+
+  - id: tab5_froid_ouvrir
+    then:
+      - script.execute: tab5_froid_lier
+      - lambda: |-
+          froid_ouvrir();
+          animate_popup_open(id(froid_popup));

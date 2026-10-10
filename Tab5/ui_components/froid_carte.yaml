@@ -1,0 +1,27 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Carte d'un appareil du popup Froid (ADR-0055), réutilisée 4 fois par
+# froid_popup.yaml : une par réfrigérateur ou congélateur déclaré dans Home Assistant.
+# vars : n (0-3, suffixe des ids lus par tab5_froid.cpp via g_froid_ui).
+# Ne rien placer ici : tab5_froid.cpp montre les cartes des appareils reçus, les répartit
+# en grille (place et taille), pose l'icône (réfrigérateur ou flocon, mdi_font_45,
+# glyphe_appareil → MDI_CODE_TARGETS), le nom (coupé par « … »), la température et le
+# statut colorés par niveau (rôles SUCCESS / WARNING / ERROR), les extrêmes et la norme,
+# le dernier incident, et trace la courbe des 24 h avec les lignes de la norme.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "froid_carte_${n}"
+  align: TOP_LEFT
+  x: 24
+  y: ${modal_body_y}
+  width: 593
+  height: 291
+  hidden: true
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    - label: { id: "froid_icone_${n}", text: "\U000F0290", align: TOP_LEFT, x: 18, y: 10, text_font: mdi_font_45, styles: style_text_accent }
+    - label: { id: "froid_nom_${n}", text: "", align: TOP_LEFT, x: 74, y: 20, styles: style_text_accent }
+    - label: { id: "froid_valeur_${n}", text: "--", align: TOP_LEFT, x: 440, y: 10, styles: style_police_date }
+    - label: { id: "froid_statut_${n}", text: "", align: TOP_LEFT, x: 22, y: 66 }
+    - label: { id: "froid_extremes_${n}", text: "", align: TOP_LEFT, x: 22, y: 98, styles: style_text_dim, hidden: true }
+    - label: { id: "froid_incident_${n}", text: "", align: TOP_LEFT, x: 22, y: 250, styles: style_text_dim }

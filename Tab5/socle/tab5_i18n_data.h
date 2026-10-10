@@ -8,9 +8,46 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1136;
+static const uint16_t kI18nKeyCount = 1173;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1186,6 +1223,7 @@ static const char* const kI18nKeys[] = {
     "%s  ·  %s  ·  coup %u",
     "%s - hors classement",
     "%s : %s",
+    "%s : %s, %s °C",
     "%s : %u / %u / %u\n",
     "%s a ses 6 parts — %s choisit la catégorie",
     "%s a ses 6 parts — choisissez votre catégorie finale",
@@ -1200,6 +1238,8 @@ static const char* const kI18nKeys[] = {
     "%s — %u V · %u N · %u D",
     "%s — cadence du mode Tab contre Tab",
     "%s — vous ouvrez %s",
+    "%u h %02u",
+    "%u min",
     "%u parties  ·  %u min de jeu",
     "%u parties · %u %% de réussite",
     "%u parties · %u questions · %u %% de réussite · %u parts gagnées",
@@ -1324,12 +1364,15 @@ static const char* const kI18nKeys[] = {
     "Au repos",
     "Au tour de Blanc",
     "Au tour de Noir",
+    "Au-dessus de la norme",
     "Aucun appareil",
+    "Aucun appareil déclaré",
     "Aucun capteur d'énergie choisi",
     "Aucun capteur suivi",
     "Aucun déplacement possible — au suivant.",
     "Aucun effet actif",
     "Aucun historique",
+    "Aucun incident",
     "Aucun jour retenu dans les 8 prochains",
     "Aucun lecteur choisi",
     "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.",
@@ -1402,6 +1445,7 @@ static const char* const kI18nKeys[] = {
     "Calme",
     "Caméras",
     "Capteur",
+    "Capteur muet",
     "Carillon",
     "Case Rejouer — relancez le dé !",
     "Casse toutes les briques. Ne laisse pas tomber la balle.",
@@ -1453,7 +1497,9 @@ static const char* const kI18nKeys[] = {
     "Confirmer chaque commande",
     "Confirmer la remise à zéro",
     "Confirmé",
+    "Conforme",
     "Confortable",
+    "Congélateur",
     "Connecté",
     "Conservés en NVS, valables pour toutes les parties",
     "Consommation",
@@ -1468,6 +1514,8 @@ static const char* const kI18nKeys[] = {
     "Couloirs",
     "Coup %u  ·  komi %.1f",
     "Coup annulé",
+    "Coup de chaud",
+    "Coup de chaud depuis %s",
     "Coup illégal",
     "Coup interdit (ko ou suicide)",
     "Couronne fêlée",
@@ -1489,6 +1537,7 @@ static const char* const kI18nKeys[] = {
     "Depuis le réseau",
     "Dernier coup : MARQUÉ",
     "Dernier coup : NON MARQUÉ",
+    "Dernier incident : %s",
     "Deux passes : marquez les groupes morts",
     "Difficile",
     "Difficulté : %s",
@@ -1506,6 +1555,7 @@ static const char* const kI18nKeys[] = {
     "Débutant : ne voit qu'un coup, se trompe",
     "Déc",
     "Décharge",
+    "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs ».",
     "Découverte",
     "Dédale",
     "Délai",
@@ -1568,6 +1618,8 @@ static const char* const kI18nKeys[] = {
     "Forteresse",
     "Fortes pluies",
     "Freinage nettement plus mordant",
+    "Frigos",
+    "Frigos et congélateurs",
     "Froid",
     "Fulgurante",
     "Férié",
@@ -1740,8 +1792,10 @@ static const char* const kI18nKeys[] = {
     "Menu principal",
     "Mer",
     "Mes Plantes",
+    "Mesure en attente",
     "Mesure en cours",
     "Mesuré",
+    "Min %s °C · max %s °C",
     "Minimum",
     "Minimum %s · Maximum %s",
     "Minimum et maximum",
@@ -1876,6 +1930,8 @@ static const char* const kI18nKeys[] = {
     "Plus d'image depuis %02d:%02d:%02d",
     "Points neutres (dame) : %d",
     "Portail ouvert !",
+    "Porte mal fermée",
+    "Porte ouverte ?",
     "Pose la tablette PUIS appuie",
     "Pose la tablette avant d'appuyer",
     "Pose la tablette et appuie",
@@ -1979,6 +2035,7 @@ static const char* const kI18nKeys[] = {
     "Règles du jeu",
     "Réflexion  %d %%",
     "Réflexion...",
+    "Réfrigérateur",
     "Réglages",
     "Réponse",
     "Réponse à l'inclinaison +18 %",
@@ -2049,6 +2106,7 @@ static const char* const kI18nKeys[] = {
     "Sonnerie",
     "Sortie de chaque jeu : hub, puis « Quitter »",
     "Sortie ouverte ! Grimpe tout en haut.",
+    "Sous la norme",
     "Sports",
     "Sports & Loisirs",
     "Statistiques",
@@ -2118,6 +2176,10 @@ static const char* const kI18nKeys[] = {
     "Travail (horaire inconnu)",
     "Triple répétition de la position",
     "Trone",
+    "Trop chaud",
+    "Trop chaud depuis %s",
+    "Trop froid",
+    "Trop froid depuis %s",
     "Très forte",
     "Très rapide",
     "Tu rouleras encore.",
@@ -2187,12 +2249,15 @@ static const char* const kI18nKeys[] = {
     "avant l'ouverture",
     "avril",
     "b = billes jouées, MB = multiball déclenché.",
+    "capteur muet",
+    "coup de chaud",
     "dimanche",
     "décembre",
     "en attente du calendrier",
     "entre deux sonneries",
     "fulgur.",
     "février",
+    "hier %s",
     "inactif",
     "inverse",
     "janvier",
@@ -2208,10 +2273,15 @@ static const char* const kI18nKeys[] = {
     "mercredi",
     "normal",
     "normale",
+    "norme %s °C au plus",
+    "norme %s à %s °C",
     "novembre",
     "octobre",
     "ou secouez la tablette",
     "passe",
+    "porte mal fermée",
+    "porte ouverte",
+    "porte ouverte ?",
     "puis arrêt automatique",
     "rapide",
     "repos",
@@ -2220,6 +2290,8 @@ static const char* const kI18nKeys[] = {
     "septembre",
     "t.rapide",
     "terminée %s",
+    "trop chaud",
+    "trop froid",
     "vendredi",
     "vive",
     "{jour_court} {quantieme} {mois_court}",
@@ -2231,6 +2303,7 @@ static const char* const kI18nKeys[] = {
     "À %s de lancer le dé",
     "À arroser !",
     "À vous",
+    "À vérifier",
     "ÉCHEC !",
     "ÉCRAN",
     "ÉQUIPES",
@@ -2254,6 +2327,7 @@ static const char* const kI18nKeys[] = {
     "Éteint",
     "Évaluation au HUD",
     "à vous",
+    "à vérifier",
     "Œil de rune",
     "Œil du dédale",
     "Chaud",
@@ -2326,6 +2400,7 @@ static const char* const kI18n_en[] = {
     "%s  ·  %s  ·  move %u",  // "%s  ·  %s  ·  coup %u"
     "%s - unranked",  // "%s - hors classement"
     "%s: %s",  // "%s : %s"
+    "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
     "%s has all 6 wedges — %s picks the category",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s has all 6 wedges — pick your final category",  // "%s a ses 6 parts — choisissez votre catégorie finale"
@@ -2340,6 +2415,8 @@ static const char* const kI18n_en[] = {
     "%s — %u W · %u D · %u L",  // "%s — %u V · %u N · %u D"
     "%s — pace of Tab vs Tab mode",  // "%s — cadence du mode Tab contre Tab"
     "%s — you move %s",  // "%s — vous ouvrez %s"
+    "%u h %02u",  // "%u h %02u"
+    "%u min",  // "%u min"
     "Games: %u  ·  %u min played",  // "%u parties  ·  %u min de jeu"
     "%u games · %u %% correct",  // "%u parties · %u %% de réussite"
     "%u games · %u questions · %u %% correct · %u wedges won",  // "%u parties · %u questions · %u %% de réussite · %u parts gagnées"
@@ -2464,12 +2541,15 @@ static const char* const kI18n_en[] = {
     "Idle",  // "Au repos"
     "White to play",  // "Au tour de Blanc"
     "Black to play",  // "Au tour de Noir"
+    "Above the norm",  // "Au-dessus de la norme"
     "No device",  // "Aucun appareil"
+    "No appliance declared",  // "Aucun appareil déclaré"
     "No energy sensor chosen",  // "Aucun capteur d'énergie choisi"
     "No tracked sensor",  // "Aucun capteur suivi"
     "No move possible — next team.",  // "Aucun déplacement possible — au suivant."
     "No active effect",  // "Aucun effet actif"
     "No history",  // "Aucun historique"
+    "No incident",  // "Aucun incident"
     "No day selected in the next 8",  // "Aucun jour retenu dans les 8 prochains"
     "No player chosen",  // "Aucun lecteur choisi"
     "No items: open chests, defeat bosses, or visit the merchant.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
@@ -2542,6 +2622,7 @@ static const char* const kI18n_en[] = {
     "Calm",  // "Calme"
     "Cameras",  // "Caméras"
     "Sensor",  // "Capteur"
+    "Sensor silent",  // "Capteur muet"
     "Chime",  // "Carillon"
     "Roll Again space — roll the die!",  // "Case Rejouer — relancez le dé !"
     "Break all the bricks. Don't drop the ball.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -2593,7 +2674,9 @@ static const char* const kI18n_en[] = {
     "Confirm each command",  // "Confirmer chaque commande"
     "Confirm reset",  // "Confirmer la remise à zéro"
     "Advanced",  // "Confirmé"
+    "Within norm",  // "Conforme"
     "Comfortable",  // "Confortable"
+    "Freezer",  // "Congélateur"
     "Connected",  // "Connecté"
     "Saved in NVS, used for every game",  // "Conservés en NVS, valables pour toutes les parties"
     "Consumption",  // "Consommation"
@@ -2608,6 +2691,8 @@ static const char* const kI18n_en[] = {
     "Corridors",  // "Couloirs"
     "Move %u  ·  komi %.1f",  // "Coup %u  ·  komi %.1f"
     "Move undone",  // "Coup annulé"
+    "Heat spike",  // "Coup de chaud"
+    "Heat spike since %s",  // "Coup de chaud depuis %s"
     "Illegal move",  // "Coup illégal"
     "Illegal move (ko or suicide)",  // "Coup interdit (ko ou suicide)"
     "Cracked Crown",  // "Couronne fêlée"
@@ -2629,6 +2714,7 @@ static const char* const kI18n_en[] = {
     "From the grid",  // "Depuis le réseau"
     "Last move: MARKED",  // "Dernier coup : MARQUÉ"
     "Last move: NOT MARKED",  // "Dernier coup : NON MARQUÉ"
+    "Last incident: %s",  // "Dernier incident : %s"
     "Two passes: mark the dead groups",  // "Deux passes : marquez les groupes morts"
     "Hard",  // "Difficile"
     "Difficulty: %s",  // "Difficulté : %s"
@@ -2646,6 +2732,7 @@ static const char* const kI18n_en[] = {
     "Beginner: sees one move, makes mistakes",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dec",  // "Déc"
     "Discharging",  // "Décharge"
+    "Declare them in Home Assistant: lists “Tab5 · réfrigérateurs · fridges” and “Tab5 · congélateurs · freezers”.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Discovery",  // "Découverte"
     "Maze",  // "Dédale"
     "Lead time",  // "Délai"
@@ -2708,6 +2795,8 @@ static const char* const kI18n_en[] = {
     "Fortress",  // "Forteresse"
     "Heavy rain",  // "Fortes pluies"
     "Much sharper braking",  // "Freinage nettement plus mordant"
+    "Fridges",  // "Frigos"
+    "Fridges and freezers",  // "Frigos et congélateurs"
     "Cool",  // "Froid"
     "Blazing",  // "Fulgurante"
     "Holiday",  // "Férié"
@@ -2880,8 +2969,10 @@ static const char* const kI18n_en[] = {
     "Main menu",  // "Menu principal"
     "Wed",  // "Mer"
     "My plants",  // "Mes Plantes"
+    "Waiting for a reading",  // "Mesure en attente"
     "Measuring",  // "Mesure en cours"
     "Measured",  // "Mesuré"
+    "Min %s °C · max %s °C",  // "Min %s °C · max %s °C"
     "Minimum",  // "Minimum"
     "Low %s · High %s",  // "Minimum %s · Maximum %s"
     "Minimum and maximum",  // "Minimum et maximum"
@@ -3016,6 +3107,8 @@ static const char* const kI18n_en[] = {
     "No image since %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Neutral points (dame): %d",  // "Points neutres (dame) : %d"
     "Portal open!",  // "Portail ouvert !"
+    "Door not closed",  // "Porte mal fermée"
+    "Door open?",  // "Porte ouverte ?"
     "Set the tablet down THEN tap",  // "Pose la tablette PUIS appuie"
     "Lay the tablet down, then tap",  // "Pose la tablette avant d'appuyer"
     "Lay the tablet down and tap",  // "Pose la tablette et appuie"
@@ -3119,6 +3212,7 @@ static const char* const kI18n_en[] = {
     "Game rules",  // "Règles du jeu"
     "Thinking  %d %%",  // "Réflexion  %d %%"
     "Thinking...",  // "Réflexion..."
+    "Fridge",  // "Réfrigérateur"
     "Settings",  // "Réglages"
     "Answer",  // "Réponse"
     "Tilt response +18%",  // "Réponse à l'inclinaison +18 %"
@@ -3189,6 +3283,7 @@ static const char* const kI18n_en[] = {
     "Ringtone",  // "Sonnerie"
     "To leave a game: hub, then “Quit”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Exit open! Climb to the very top.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Below the norm",  // "Sous la norme"
     "Sports",  // "Sports"
     "Sports & Leisure",  // "Sports & Loisirs"
     "Statistics",  // "Statistiques"
@@ -3258,6 +3353,10 @@ static const char* const kI18n_en[] = {
     "Work (unknown hours)",  // "Travail (horaire inconnu)"
     "Threefold repetition",  // "Triple répétition de la position"
     "Throne",  // "Trone"
+    "Too warm",  // "Trop chaud"
+    "Too warm since %s",  // "Trop chaud depuis %s"
+    "Too cold",  // "Trop froid"
+    "Too cold since %s",  // "Trop froid depuis %s"
     "Very heavy",  // "Très forte"
     "Very fast",  // "Très rapide"
     "You'll roll again.",  // "Tu rouleras encore."
@@ -3327,12 +3426,15 @@ static const char* const kI18n_en[] = {
     "before shift start",  // "avant l'ouverture"
     "April",  // "avril"
     "b = balls played, MB = multiball triggered.",  // "b = billes jouées, MB = multiball déclenché."
+    "sensor silent",  // "capteur muet"
+    "heat spike",  // "coup de chaud"
     "Sunday",  // "dimanche"
     "December",  // "décembre"
     "waiting for the calendar",  // "en attente du calendrier"
     "between two rings",  // "entre deux sonneries"
     "blazing",  // "fulgur."
     "February",  // "février"
+    "yesterday %s",  // "hier %s"
     "off",  // "inactif"
     "inverted",  // "inverse"
     "January",  // "janvier"
@@ -3348,10 +3450,15 @@ static const char* const kI18n_en[] = {
     "Wednesday",  // "mercredi"
     "normal",  // "normal"
     "normal",  // "normale"
+    "norm %s °C at most",  // "norme %s °C au plus"
+    "norm %s to %s °C",  // "norme %s à %s °C"
     "November",  // "novembre"
     "October",  // "octobre"
     "or shake the tablet",  // "ou secouez la tablette"
     "pass",  // "passe"
+    "door not closed",  // "porte mal fermée"
+    "door open",  // "porte ouverte"
+    "door open?",  // "porte ouverte ?"
     "then stops by itself",  // "puis arrêt automatique"
     "fast",  // "rapide"
     "day off",  // "repos"
@@ -3360,6 +3467,8 @@ static const char* const kI18n_en[] = {
     "September",  // "septembre"
     "v.fast",  // "t.rapide"
     "ended %s",  // "terminée %s"
+    "too warm",  // "trop chaud"
+    "too cold",  // "trop froid"
     "Friday",  // "vendredi"
     "brisk",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -3371,6 +3480,7 @@ static const char* const kI18n_en[] = {
     "%s, roll the die",  // "À %s de lancer le dé"
     "Needs water!",  // "À arroser !"
     "Your move",  // "À vous"
+    "To check",  // "À vérifier"
     "CHECK!",  // "ÉCHEC !"
     "SCREEN",  // "ÉCRAN"
     "TEAMS",  // "ÉQUIPES"
@@ -3394,6 +3504,7 @@ static const char* const kI18n_en[] = {
     "Off",  // "Éteint"
     "HUD evaluation",  // "Évaluation au HUD"
     "you",  // "à vous"
+    "to check",  // "à vérifier"
     "Rune Eye",  // "Œil de rune"
     "Eye of the Maze",  // "Œil du dédale"
     "Heat",  // "clim|Chaud"
@@ -3466,6 +3577,7 @@ static const char* const kI18n_de[] = {
     "%s  ·  %s  ·  Zug %u",  // "%s  ·  %s  ·  coup %u"
     "%s - außer Wertung",  // "%s - hors classement"
     "%s: %s",  // "%s : %s"
+    "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
     "%s hat alle 6 Ecken — %s wählt die Kategorie",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s hat alle 6 Ecken — Finalkategorie wählen",  // "%s a ses 6 parts — choisissez votre catégorie finale"
@@ -3480,6 +3592,8 @@ static const char* const kI18n_de[] = {
     "%s — %u S · %u R · %u N",  // "%s — %u V · %u N · %u D"
     "%s — Tempo im Modus Tab gegen Tab",  // "%s — cadence du mode Tab contre Tab"
     "%s — du ziehst %s",  // "%s — vous ouvrez %s"
+    "%u:%02u h",  // "%u h %02u"
+    "%u Min.",  // "%u min"
     "%u Partien  ·  %u min gespielt",  // "%u parties  ·  %u min de jeu"
     "%u Spiele · %u %% richtig",  // "%u parties · %u %% de réussite"
     "%u Spiele · %u Fragen · %u %% richtig · %u Ecken gewonnen",  // "%u parties · %u questions · %u %% de réussite · %u parts gagnées"
@@ -3604,12 +3718,15 @@ static const char* const kI18n_de[] = {
     "Ruhend",  // "Au repos"
     "Weiß am Zug",  // "Au tour de Blanc"
     "Schwarz am Zug",  // "Au tour de Noir"
+    "Über der Norm",  // "Au-dessus de la norme"
     "Kein Gerät",  // "Aucun appareil"
+    "Kein Gerät angegeben",  // "Aucun appareil déclaré"
     "Kein Energiesensor gewählt",  // "Aucun capteur d'énergie choisi"
     "Kein Sensor verfolgt",  // "Aucun capteur suivi"
     "Kein Zug möglich — nächstes Team.",  // "Aucun déplacement possible — au suivant."
     "Kein aktiver Effekt",  // "Aucun effet actif"
     "Kein Verlauf",  // "Aucun historique"
+    "Kein Vorfall",  // "Aucun incident"
     "Kein Tag in den nächsten 8 gewählt",  // "Aucun jour retenu dans les 8 prochains"
     "Kein Player ausgewählt",  // "Aucun lecteur choisi"
     "Keine Gegenstände: Truhen öffnen, Bosse besiegen oder zum Händler gehen.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
@@ -3682,6 +3799,7 @@ static const char* const kI18n_de[] = {
     "Ruhig",  // "Calme"
     "Kameras",  // "Caméras"
     "Sensor",  // "Capteur"
+    "Sensor stumm",  // "Capteur muet"
     "Gong",  // "Carillon"
     "Nochmal-Feld — erneut würfeln!",  // "Case Rejouer — relancez le dé !"
     "Zerstöre alle Steine. Lass den Ball nicht fallen.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -3733,7 +3851,9 @@ static const char* const kI18n_de[] = {
     "Jeden Befehl bestätigen",  // "Confirmer chaque commande"
     "Reset bestätigen",  // "Confirmer la remise à zéro"
     "Erfahren",  // "Confirmé"
+    "In Ordnung",  // "Conforme"
     "Angenehm",  // "Confortable"
+    "Gefrierschrank",  // "Congélateur"
     "Verbunden",  // "Connecté"
     "In NVS gespeichert, gilt für alle Partien",  // "Conservés en NVS, valables pour toutes les parties"
     "Verbrauch",  // "Consommation"
@@ -3748,6 +3868,8 @@ static const char* const kI18n_de[] = {
     "Gänge",  // "Couloirs"
     "Zug %u  ·  Komi %.1f",  // "Coup %u  ·  komi %.1f"
     "Zug zurück",  // "Coup annulé"
+    "Hitzespitze",  // "Coup de chaud"
+    "Hitzespitze seit %s",  // "Coup de chaud depuis %s"
     "Ungültiger Zug",  // "Coup illégal"
     "Verbotener Zug (Ko oder Suizid)",  // "Coup interdit (ko ou suicide)"
     "Rissige Krone",  // "Couronne fêlée"
@@ -3769,6 +3891,7 @@ static const char* const kI18n_de[] = {
     "Aus dem Netz",  // "Depuis le réseau"
     "Letzter Zug: MARKIERT",  // "Dernier coup : MARQUÉ"
     "Letzter Zug: UNMARKIERT",  // "Dernier coup : NON MARQUÉ"
+    "Letzter Vorfall: %s",  // "Dernier incident : %s"
     "Zweimal gepasst: tote Gruppen markieren",  // "Deux passes : marquez les groupes morts"
     "Schwer",  // "Difficile"
     "Schwierigkeit: %s",  // "Difficulté : %s"
@@ -3786,6 +3909,7 @@ static const char* const kI18n_de[] = {
     "Anfänger: sieht einen Zug, macht Fehler",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dez",  // "Déc"
     "Entlädt",  // "Décharge"
+    "Lege sie in Home Assistant fest: Listen „Tab5 · réfrigérateurs · Kühlschränke“ und „Tab5 · congélateurs · Gefrierschränke“.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Entdeckung",  // "Découverte"
     "Gewirr",  // "Dédale"
     "Vorlauf",  // "Délai"
@@ -3848,6 +3972,8 @@ static const char* const kI18n_de[] = {
     "Festung",  // "Forteresse"
     "Starkregen",  // "Fortes pluies"
     "Deutlich schärferes Bremsen",  // "Freinage nettement plus mordant"
+    "Kühlschr.",  // "Frigos"
+    "Kühlgeräte",  // "Frigos et congélateurs"
     "Kühl",  // "Froid"
     "Blitzschnell",  // "Fulgurante"
     "Feiertag",  // "Férié"
@@ -4020,8 +4146,10 @@ static const char* const kI18n_de[] = {
     "Hauptmenü",  // "Menu principal"
     "Mi",  // "Mer"
     "Pflanzen",  // "Mes Plantes"
+    "Warte auf Messwert",  // "Mesure en attente"
     "Wird gemessen",  // "Mesure en cours"
     "Gemessen",  // "Mesuré"
+    "Min %s °C · max. %s °C",  // "Min %s °C · max %s °C"
     "Minimum",  // "Minimum"
     "Min. %s · Max. %s",  // "Minimum %s · Maximum %s"
     "Minimum und Maximum",  // "Minimum et maximum"
@@ -4156,6 +4284,8 @@ static const char* const kI18n_de[] = {
     "Kein Bild seit %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Neutrale Punkte (Dame): %d",  // "Points neutres (dame) : %d"
     "Portal offen!",  // "Portail ouvert !"
+    "Tür nicht richtig zu",  // "Porte mal fermée"
+    "Tür offen?",  // "Porte ouverte ?"
     "Tablet hinlegen, DANN tippen",  // "Pose la tablette PUIS appuie"
     "Tablet hinlegen, dann tippen",  // "Pose la tablette avant d'appuyer"
     "Tablet hinlegen und tippen",  // "Pose la tablette et appuie"
@@ -4259,6 +4389,7 @@ static const char* const kI18n_de[] = {
     "Spielregeln",  // "Règles du jeu"
     "Denke  %d %%",  // "Réflexion  %d %%"
     "Denke nach...",  // "Réflexion..."
+    "Kühlschrank",  // "Réfrigérateur"
     "Optionen",  // "Réglages"
     "Antwort",  // "Réponse"
     "Neigungsreaktion +18 %",  // "Réponse à l'inclinaison +18 %"
@@ -4329,6 +4460,7 @@ static const char* const kI18n_de[] = {
     "Klingelton",  // "Sonnerie"
     "Spiel verlassen: Hub, dann „Beenden“",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Ausgang offen! Klettere ganz nach oben.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Unter der Norm",  // "Sous la norme"
     "Sport",  // "Sports"
     "Sport & Freizeit",  // "Sports & Loisirs"
     "Statistik",  // "Statistiques"
@@ -4398,6 +4530,10 @@ static const char* const kI18n_de[] = {
     "Arbeit (Zeit unbekannt)",  // "Travail (horaire inconnu)"
     "Dreifache Stellungswiederholung",  // "Triple répétition de la position"
     "Thron",  // "Trone"
+    "Zu warm",  // "Trop chaud"
+    "Zu warm seit %s",  // "Trop chaud depuis %s"
+    "Zu kalt",  // "Trop froid"
+    "Zu kalt seit %s",  // "Trop froid depuis %s"
     "Sehr stark",  // "Très forte"
     "Rasant",  // "Très rapide"
     "Du rollst wieder.",  // "Tu rouleras encore."
@@ -4467,12 +4603,15 @@ static const char* const kI18n_de[] = {
     "vor Schichtbeginn",  // "avant l'ouverture"
     "April",  // "avril"
     "b = gespielte Bälle, MB = Multiball ausgelöst.",  // "b = billes jouées, MB = multiball déclenché."
+    "Sensor stumm",  // "capteur muet"
+    "Hitzespitze",  // "coup de chaud"
     "Sonntag",  // "dimanche"
     "Dezember",  // "décembre"
     "warte auf Kalender",  // "en attente du calendrier"
     "zwischen zwei Weckrufen",  // "entre deux sonneries"
     "blitz",  // "fulgur."
     "Februar",  // "février"
+    "gestern %s",  // "hier %s"
     "aus",  // "inactif"
     "umgekehrt",  // "inverse"
     "Januar",  // "janvier"
@@ -4488,10 +4627,15 @@ static const char* const kI18n_de[] = {
     "Mittwoch",  // "mercredi"
     "normal",  // "normal"
     "normal",  // "normale"
+    "Norm max. %s °C",  // "norme %s °C au plus"
+    "Norm %s bis %s °C",  // "norme %s à %s °C"
     "November",  // "novembre"
     "Oktober",  // "octobre"
     "oder Tablet schütteln",  // "ou secouez la tablette"
     "passt",  // "passe"
+    "Tür nicht richtig zu",  // "porte mal fermée"
+    "Tür offen",  // "porte ouverte"
+    "Tür offen?",  // "porte ouverte ?"
     "dann automatisch aus",  // "puis arrêt automatique"
     "schnell",  // "rapide"
     "frei",  // "repos"
@@ -4500,6 +4644,8 @@ static const char* const kI18n_de[] = {
     "September",  // "septembre"
     "rasant",  // "t.rapide"
     "beendet %s",  // "terminée %s"
+    "zu warm",  // "trop chaud"
+    "zu kalt",  // "trop froid"
     "Freitag",  // "vendredi"
     "flott",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -4511,6 +4657,7 @@ static const char* const kI18n_de[] = {
     "%s ist dran: würfeln",  // "À %s de lancer le dé"
     "Gießen!",  // "À arroser !"
     "Dein Zug",  // "À vous"
+    "Prüfen",  // "À vérifier"
     "SCHACH!",  // "ÉCHEC !"
     "BILDSCHIRM",  // "ÉCRAN"
     "TEAMS",  // "ÉQUIPES"
@@ -4534,6 +4681,7 @@ static const char* const kI18n_de[] = {
     "Aus",  // "Éteint"
     "Bewertung im HUD",  // "Évaluation au HUD"
     "du",  // "à vous"
+    "prüfen",  // "à vérifier"
     "Runenauge",  // "Œil de rune"
     "Labyrinthauge",  // "Œil du dédale"
     "Heizen",  // "clim|Chaud"
@@ -4606,6 +4754,7 @@ static const char* const kI18n_nl[] = {
     "%s  ·  %s  ·  zet %u",  // "%s  ·  %s  ·  coup %u"
     "%s - telt niet mee",  // "%s - hors classement"
     "%s: %s",  // "%s : %s"
+    "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
     "%s heeft alle 6 partjes — %s kiest de categorie",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s heeft alle 6 partjes — kies je finalecategorie",  // "%s a ses 6 parts — choisissez votre catégorie finale"
@@ -4620,6 +4769,8 @@ static const char* const kI18n_nl[] = {
     "%s — %u W · %u R · %u V",  // "%s — %u V · %u N · %u D"
     "%s — tempo van modus Tab tegen Tab",  // "%s — cadence du mode Tab contre Tab"
     "%s — jij speelt %s",  // "%s — vous ouvrez %s"
+    "%u:%02u u",  // "%u h %02u"
+    "%u min",  // "%u min"
     "%u partijen  ·  %u min gespeeld",  // "%u parties  ·  %u min de jeu"
     "%u spellen · %u %% goed",  // "%u parties · %u %% de réussite"
     "%u spellen · %u vragen · %u %% goed · %u partjes gewonnen",  // "%u parties · %u questions · %u %% de réussite · %u parts gagnées"
@@ -4744,12 +4895,15 @@ static const char* const kI18n_nl[] = {
     "In rust",  // "Au repos"
     "Wit aan zet",  // "Au tour de Blanc"
     "Zwart aan zet",  // "Au tour de Noir"
+    "Boven de norm",  // "Au-dessus de la norme"
     "Geen apparaat",  // "Aucun appareil"
+    "Geen apparaat opgegeven",  // "Aucun appareil déclaré"
     "Geen energiesensor gekozen",  // "Aucun capteur d'énergie choisi"
     "Geen sensor gevolgd",  // "Aucun capteur suivi"
     "Geen zet mogelijk — volgende team.",  // "Aucun déplacement possible — au suivant."
     "Geen actief effect",  // "Aucun effet actif"
     "Geen geschiedenis",  // "Aucun historique"
+    "Geen incident",  // "Aucun incident"
     "Geen dag gekozen in de komende 8",  // "Aucun jour retenu dans les 8 prochains"
     "Geen speler gekozen",  // "Aucun lecteur choisi"
     "Geen voorwerpen: open kisten, versla eindbazen of ga langs bij de koopman.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
@@ -4822,6 +4976,7 @@ static const char* const kI18n_nl[] = {
     "Kalm",  // "Calme"
     "Camera's",  // "Caméras"
     "Sensor",  // "Capteur"
+    "Sensor stil",  // "Capteur muet"
     "Carillon",  // "Carillon"
     "Vak Nog eens — gooi opnieuw!",  // "Case Rejouer — relancez le dé !"
     "Breek alle stenen. Laat de bal niet vallen.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -4873,7 +5028,9 @@ static const char* const kI18n_nl[] = {
     "Elke opdracht bevestigen",  // "Confirmer chaque commande"
     "Reset bevestigen",  // "Confirmer la remise à zéro"
     "Gevorderd",  // "Confirmé"
+    "In orde",  // "Conforme"
     "Comfortabel",  // "Confortable"
+    "Vriezer",  // "Congélateur"
     "Verbonden",  // "Connecté"
     "Bewaard in NVS, geldig voor alle partijen",  // "Conservés en NVS, valables pour toutes les parties"
     "Verbruik",  // "Consommation"
@@ -4888,6 +5045,8 @@ static const char* const kI18n_nl[] = {
     "Gangen",  // "Couloirs"
     "Zet %u  ·  komi %.1f",  // "Coup %u  ·  komi %.1f"
     "Zet ongedaan",  // "Coup annulé"
+    "Hitte-piek",  // "Coup de chaud"
+    "Hitte-piek sinds %s",  // "Coup de chaud depuis %s"
     "Ongeldige zet",  // "Coup illégal"
     "Verboden zet (ko of zelfmoord)",  // "Coup interdit (ko ou suicide)"
     "Gebarsten kroon",  // "Couronne fêlée"
@@ -4909,6 +5068,7 @@ static const char* const kI18n_nl[] = {
     "Van het net",  // "Depuis le réseau"
     "Laatste zet: GEMARKEERD",  // "Dernier coup : MARQUÉ"
     "Laatste zet: NIET GEMARKEERD",  // "Dernier coup : NON MARQUÉ"
+    "Laatste incident: %s",  // "Dernier incident : %s"
     "Twee passen: markeer de dode groepen",  // "Deux passes : marquez les groupes morts"
     "Moeilijk",  // "Difficile"
     "Moeilijkheid: %s",  // "Difficulté : %s"
@@ -4926,6 +5086,7 @@ static const char* const kI18n_nl[] = {
     "Beginner: ziet één zet, maakt fouten",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dec",  // "Déc"
     "Ontladen",  // "Décharge"
+    "Geef ze op in Home Assistant: lijsten „Tab5 · réfrigérateurs · koelkasten” en „Tab5 · congélateurs · vriezers”.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Ontdekking",  // "Découverte"
     "Doolhof",  // "Dédale"
     "Marge",  // "Délai"
@@ -4988,6 +5149,8 @@ static const char* const kI18n_nl[] = {
     "Vesting",  // "Forteresse"
     "Zware regen",  // "Fortes pluies"
     "Veel scherper remmen",  // "Freinage nettement plus mordant"
+    "Koelers",  // "Frigos"
+    "Koelkasten en vriezers",  // "Frigos et congélateurs"
     "Koel",  // "Froid"
     "Bliksem",  // "Fulgurante"
     "Feestdag",  // "Férié"
@@ -5160,8 +5323,10 @@ static const char* const kI18n_nl[] = {
     "Hoofdmenu",  // "Menu principal"
     "Wo",  // "Mer"
     "Mijn planten",  // "Mes Plantes"
+    "Wachten op meting",  // "Mesure en attente"
     "Bezig met meten",  // "Mesure en cours"
     "Gemeten",  // "Mesuré"
+    "Min %s °C · max %s °C",  // "Min %s °C · max %s °C"
     "Minimum",  // "Minimum"
     "Min. %s · Max. %s",  // "Minimum %s · Maximum %s"
     "Minimum en maximum",  // "Minimum et maximum"
@@ -5296,6 +5461,8 @@ static const char* const kI18n_nl[] = {
     "Geen beeld sinds %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Neutrale punten (dame): %d",  // "Points neutres (dame) : %d"
     "Portaal open!",  // "Portail ouvert !"
+    "Deur niet goed dicht",  // "Porte mal fermée"
+    "Deur open?",  // "Porte ouverte ?"
     "Leg de tablet neer, tik DAN",  // "Pose la tablette PUIS appuie"
     "Leg de tablet neer, tik dan",  // "Pose la tablette avant d'appuyer"
     "Leg de tablet neer en tik",  // "Pose la tablette et appuie"
@@ -5399,6 +5566,7 @@ static const char* const kI18n_nl[] = {
     "Spelregels",  // "Règles du jeu"
     "Denkt na  %d %%",  // "Réflexion  %d %%"
     "Denkt na...",  // "Réflexion..."
+    "Koelkast",  // "Réfrigérateur"
     "Opties",  // "Réglages"
     "Antwoord",  // "Réponse"
     "Kantelrespons +18%",  // "Réponse à l'inclinaison +18 %"
@@ -5469,6 +5637,7 @@ static const char* const kI18n_nl[] = {
     "Wekgeluid",  // "Sonnerie"
     "Een spel verlaten: hub, dan “Afsluiten”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Uitgang open! Klim helemaal naar boven.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Onder de norm",  // "Sous la norme"
     "Sport",  // "Sports"
     "Sport & Ontspanning",  // "Sports & Loisirs"
     "Statistieken",  // "Statistiques"
@@ -5538,6 +5707,10 @@ static const char* const kI18n_nl[] = {
     "Werk (tijden onbekend)",  // "Travail (horaire inconnu)"
     "Drievoudige stellingherhaling",  // "Triple répétition de la position"
     "Troon",  // "Trone"
+    "Te warm",  // "Trop chaud"
+    "Te warm sinds %s",  // "Trop chaud depuis %s"
+    "Te koud",  // "Trop froid"
+    "Te koud sinds %s",  // "Trop froid depuis %s"
     "Zeer zwaar",  // "Très forte"
     "Zeer snel",  // "Très rapide"
     "Je zult weer rollen.",  // "Tu rouleras encore."
@@ -5607,12 +5780,15 @@ static const char* const kI18n_nl[] = {
     "vóór werkbegin",  // "avant l'ouverture"
     "april",  // "avril"
     "b = gespeelde ballen, MB = multiball gestart.",  // "b = billes jouées, MB = multiball déclenché."
+    "sensor stil",  // "capteur muet"
+    "hitte-piek",  // "coup de chaud"
     "zondag",  // "dimanche"
     "december",  // "décembre"
     "wacht op de agenda",  // "en attente du calendrier"
     "tussen twee keer afgaan",  // "entre deux sonneries"
     "bliksem",  // "fulgur."
     "februari",  // "février"
+    "gisteren %s",  // "hier %s"
     "uit",  // "inactif"
     "omgekeerd",  // "inverse"
     "januari",  // "janvier"
@@ -5628,10 +5804,15 @@ static const char* const kI18n_nl[] = {
     "woensdag",  // "mercredi"
     "normaal",  // "normal"
     "normaal",  // "normale"
+    "norm max. %s °C",  // "norme %s °C au plus"
+    "norm %s tot %s °C",  // "norme %s à %s °C"
     "november",  // "novembre"
     "oktober",  // "octobre"
     "of schud de tablet",  // "ou secouez la tablette"
     "past",  // "passe"
+    "deur niet goed dicht",  // "porte mal fermée"
+    "deur open",  // "porte ouverte"
+    "deur open?",  // "porte ouverte ?"
     "daarna automatisch uit",  // "puis arrêt automatique"
     "snel",  // "rapide"
     "vrij",  // "repos"
@@ -5640,6 +5821,8 @@ static const char* const kI18n_nl[] = {
     "september",  // "septembre"
     "z.snel",  // "t.rapide"
     "beëindigd %s",  // "terminée %s"
+    "te warm",  // "trop chaud"
+    "te koud",  // "trop froid"
     "vrijdag",  // "vendredi"
     "vlot",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -5651,6 +5834,7 @@ static const char* const kI18n_nl[] = {
     "%s mag dobbelen",  // "À %s de lancer le dé"
     "Water geven!",  // "À arroser !"
     "Jouw zet",  // "À vous"
+    "Controleren",  // "À vérifier"
     "SCHAAK!",  // "ÉCHEC !"
     "SCHERM",  // "ÉCRAN"
     "TEAMS",  // "ÉQUIPES"
@@ -5674,6 +5858,7 @@ static const char* const kI18n_nl[] = {
     "Uit",  // "Éteint"
     "Evaluatie in HUD",  // "Évaluation au HUD"
     "jij",  // "à vous"
+    "controleren",  // "à vérifier"
     "Runenoog",  // "Œil de rune"
     "Doolhofoog",  // "Œil du dédale"
     "Warm",  // "clim|Chaud"
@@ -5746,6 +5931,7 @@ static const char* const kI18n_es[] = {
     "%s  ·  %s  ·  jugada %u",  // "%s  ·  %s  ·  coup %u"
     "%s - sin clasificar",  // "%s - hors classement"
     "%s: %s",  // "%s : %s"
+    "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
     "%s tiene los 6 quesitos — %s elige la categoría",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s tiene los 6 quesitos — elige tu categoría final",  // "%s a ses 6 parts — choisissez votre catégorie finale"
@@ -5760,6 +5946,8 @@ static const char* const kI18n_es[] = {
     "%s — %u V · %u T · %u D",  // "%s — %u V · %u N · %u D"
     "%s — ritmo del modo Tab contra Tab",  // "%s — cadence du mode Tab contre Tab"
     "%s — juegas %s",  // "%s — vous ouvrez %s"
+    "%u:%02u h",  // "%u h %02u"
+    "%u min",  // "%u min"
     "%u partidas  ·  %u min de juego",  // "%u parties  ·  %u min de jeu"
     "%u partidas · %u %% de aciertos",  // "%u parties · %u %% de réussite"
     "%u partidas · %u preguntas · %u %% de aciertos · %u quesitos",  // "%u parties · %u questions · %u %% de réussite · %u parts gagnées"
@@ -5884,12 +6072,15 @@ static const char* const kI18n_es[] = {
     "En reposo",  // "Au repos"
     "Turno de Blanco",  // "Au tour de Blanc"
     "Turno de Negro",  // "Au tour de Noir"
+    "Por encima de la norma",  // "Au-dessus de la norme"
     "Ningún dispositivo",  // "Aucun appareil"
+    "Ningún aparato declarado",  // "Aucun appareil déclaré"
     "Ningún sensor de energía elegido",  // "Aucun capteur d'énergie choisi"
     "Ningún sensor seguido",  // "Aucun capteur suivi"
     "Sin movimiento posible — turno del siguiente.",  // "Aucun déplacement possible — au suivant."
     "Sin efecto activo",  // "Aucun effet actif"
     "Sin historial",  // "Aucun historique"
+    "Sin incidentes",  // "Aucun incident"
     "Ningún día elegido en los próximos 8",  // "Aucun jour retenu dans les 8 prochains"
     "Ningún reproductor elegido",  // "Aucun lecteur choisi"
     "Ningún objeto: abre cofres, derrota a los jefes o visita al mercader.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
@@ -5962,6 +6153,7 @@ static const char* const kI18n_es[] = {
     "Calma",  // "Calme"
     "Cámaras",  // "Caméras"
     "Sensor",  // "Capteur"
+    "Sensor mudo",  // "Capteur muet"
     "Carillón",  // "Carillon"
     "Otra tirada — ¡tira de nuevo!",  // "Case Rejouer — relancez le dé !"
     "Rompe todos los ladrillos. No dejes caer la bola.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -6013,7 +6205,9 @@ static const char* const kI18n_es[] = {
     "Confirmar cada orden",  // "Confirmer chaque commande"
     "Confirmar el reinicio",  // "Confirmer la remise à zéro"
     "Avanzado",  // "Confirmé"
+    "Conforme",  // "Conforme"
     "Confortable",  // "Confortable"
+    "Congelador",  // "Congélateur"
     "Conectado",  // "Connecté"
     "Guardados en NVS, válidos para todas las partidas",  // "Conservés en NVS, valables pour toutes les parties"
     "Consumo",  // "Consommation"
@@ -6028,6 +6222,8 @@ static const char* const kI18n_es[] = {
     "Pasillos",  // "Couloirs"
     "Jugada %u  ·  komi %.1f",  // "Coup %u  ·  komi %.1f"
     "Jugada deshecha",  // "Coup annulé"
+    "Pico de calor",  // "Coup de chaud"
+    "Pico de calor desde %s",  // "Coup de chaud depuis %s"
     "Jugada ilegal",  // "Coup illégal"
     "Jugada prohibida (ko o suicidio)",  // "Coup interdit (ko ou suicide)"
     "Corona agrietada",  // "Couronne fêlée"
@@ -6049,6 +6245,7 @@ static const char* const kI18n_es[] = {
     "Desde la red",  // "Depuis le réseau"
     "Última jugada: MARCADA",  // "Dernier coup : MARQUÉ"
     "Última jugada: SIN MARCAR",  // "Dernier coup : NON MARQUÉ"
+    "Último incidente: %s",  // "Dernier incident : %s"
     "Dos pases: marca los grupos muertos",  // "Deux passes : marquez les groupes morts"
     "Difícil",  // "Difficile"
     "Dificultad: %s",  // "Difficulté : %s"
@@ -6066,6 +6263,7 @@ static const char* const kI18n_es[] = {
     "Principiante: ve una jugada, se equivoca",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dic",  // "Déc"
     "Descarga",  // "Décharge"
+    "Decláralos en Home Assistant: listas «Tab5 · réfrigérateurs · neveras» y «Tab5 · congélateurs · congeladores».",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Hallazgo",  // "Découverte"
     "Laberinto",  // "Dédale"
     "Antelación",  // "Délai"
@@ -6128,6 +6326,8 @@ static const char* const kI18n_es[] = {
     "Fortaleza",  // "Forteresse"
     "Lluvias fuertes",  // "Fortes pluies"
     "Frenado mucho más firme",  // "Freinage nettement plus mordant"
+    "Neveras",  // "Frigos"
+    "Neveras y congeladores",  // "Frigos et congélateurs"
     "Frío",  // "Froid"
     "Fulgurante",  // "Fulgurante"
     "Festivo",  // "Férié"
@@ -6300,8 +6500,10 @@ static const char* const kI18n_es[] = {
     "Menú principal",  // "Menu principal"
     "Mié",  // "Mer"
     "Mis plantas",  // "Mes Plantes"
+    "Medición pendiente",  // "Mesure en attente"
     "Midiendo",  // "Mesure en cours"
     "Medida",  // "Mesuré"
+    "Mín %s °C · máx %s °C",  // "Min %s °C · max %s °C"
     "Mínima",  // "Minimum"
     "Mín. %s · Máx. %s",  // "Minimum %s · Maximum %s"
     "Mínima y máxima",  // "Minimum et maximum"
@@ -6436,6 +6638,8 @@ static const char* const kI18n_es[] = {
     "Sin imagen desde las %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Puntos neutrales (dame): %d",  // "Points neutres (dame) : %d"
     "¡Portal abierto!",  // "Portail ouvert !"
+    "Puerta mal cerrada",  // "Porte mal fermée"
+    "¿Puerta abierta?",  // "Porte ouverte ?"
     "Apoya la tableta Y LUEGO toca",  // "Pose la tablette PUIS appuie"
     "Apoya la tableta antes de tocar",  // "Pose la tablette avant d'appuyer"
     "Apoya la tableta y toca",  // "Pose la tablette et appuie"
@@ -6539,6 +6743,7 @@ static const char* const kI18n_es[] = {
     "Reglas del juego",  // "Règles du jeu"
     "Pensando  %d %%",  // "Réflexion  %d %%"
     "Pensando...",  // "Réflexion..."
+    "Nevera",  // "Réfrigérateur"
     "Ajustes",  // "Réglages"
     "Respuesta",  // "Réponse"
     "Respuesta a la inclinación +18 %",  // "Réponse à l'inclinaison +18 %"
@@ -6609,6 +6814,7 @@ static const char* const kI18n_es[] = {
     "Tono",  // "Sonnerie"
     "Para salir de un juego: hub y luego «Salir»",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "¡Salida abierta! Trepa hasta arriba.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Por debajo de la norma",  // "Sous la norme"
     "Deportes",  // "Sports"
     "Deportes y Ocio",  // "Sports & Loisirs"
     "Estadísticas",  // "Statistiques"
@@ -6678,6 +6884,10 @@ static const char* const kI18n_es[] = {
     "Trabajo (sin horario)",  // "Travail (horaire inconnu)"
     "Triple repetición de la posición",  // "Triple répétition de la position"
     "Trono",  // "Trone"
+    "Demasiado caliente",  // "Trop chaud"
+    "Demasiado caliente desde %s",  // "Trop chaud depuis %s"
+    "Demasiado frío",  // "Trop froid"
+    "Demasiado frío desde %s",  // "Trop froid depuis %s"
     "Muy fuerte",  // "Très forte"
     "Muy rápida",  // "Très rapide"
     "Volverás a rodar.",  // "Tu rouleras encore."
@@ -6747,12 +6957,15 @@ static const char* const kI18n_es[] = {
     "antes del turno",  // "avant l'ouverture"
     "abril",  // "avril"
     "b = bolas jugadas, MB = multiball activado.",  // "b = billes jouées, MB = multiball déclenché."
+    "sensor mudo",  // "capteur muet"
+    "pico de calor",  // "coup de chaud"
     "domingo",  // "dimanche"
     "diciembre",  // "décembre"
     "esperando el calendario",  // "en attente du calendrier"
     "entre dos timbres",  // "entre deux sonneries"
     "fulgur.",  // "fulgur."
     "febrero",  // "février"
+    "ayer %s",  // "hier %s"
     "inactivo",  // "inactif"
     "invertido",  // "inverse"
     "enero",  // "janvier"
@@ -6768,10 +6981,15 @@ static const char* const kI18n_es[] = {
     "miércoles",  // "mercredi"
     "normal",  // "normal"
     "normal",  // "normale"
+    "norma %s °C como máx.",  // "norme %s °C au plus"
+    "norma %s a %s °C",  // "norme %s à %s °C"
     "noviembre",  // "novembre"
     "octubre",  // "octobre"
     "o sacude la tableta",  // "ou secouez la tablette"
     "pasa",  // "passe"
+    "puerta mal cerrada",  // "porte mal fermée"
+    "puerta abierta",  // "porte ouverte"
+    "¿puerta abierta?",  // "porte ouverte ?"
     "luego se detiene sola",  // "puis arrêt automatique"
     "rápida",  // "rapide"
     "libre",  // "repos"
@@ -6780,6 +6998,8 @@ static const char* const kI18n_es[] = {
     "septiembre",  // "septembre"
     "m.rápida",  // "t.rapide"
     "terminada %s",  // "terminée %s"
+    "demasiado caliente",  // "trop chaud"
+    "demasiado frío",  // "trop froid"
     "viernes",  // "vendredi"
     "ágil",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -6791,6 +7011,7 @@ static const char* const kI18n_es[] = {
     "%s, tira el dado",  // "À %s de lancer le dé"
     "¡Regar!",  // "À arroser !"
     "Tu turno",  // "À vous"
+    "Revisar",  // "À vérifier"
     "¡JAQUE!",  // "ÉCHEC !"
     "PANTALLA",  // "ÉCRAN"
     "EQUIPOS",  // "ÉQUIPES"
@@ -6814,6 +7035,7 @@ static const char* const kI18n_es[] = {
     "OFF",  // "Éteint"
     "Evaluación en el HUD",  // "Évaluation au HUD"
     "tuyo",  // "à vous"
+    "revisar",  // "à vérifier"
     "Ojo rúnico",  // "Œil de rune"
     "Ojo del Laberinto",  // "Œil du dédale"
     "Calor",  // "clim|Chaud"
@@ -6886,6 +7108,7 @@ static const char* const kI18n_it[] = {
     "%s  ·  %s  ·  mossa %u",  // "%s  ·  %s  ·  coup %u"
     "%s - fuori classifica",  // "%s - hors classement"
     "%s: %s",  // "%s : %s"
+    "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
     "%s ha i 6 spicchi — %s sceglie la categoria",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s ha i 6 spicchi — scegli la categoria finale",  // "%s a ses 6 parts — choisissez votre catégorie finale"
@@ -6900,6 +7123,8 @@ static const char* const kI18n_it[] = {
     "%s — %u V · %u P · %u S",  // "%s — %u V · %u N · %u D"
     "%s — ritmo del Tab vs Tab",  // "%s — cadence du mode Tab contre Tab"
     "%s — muovi %s",  // "%s — vous ouvrez %s"
+    "%u:%02u h",  // "%u h %02u"
+    "%u min",  // "%u min"
     "Partite: %u  ·  %u min di gioco",  // "%u parties  ·  %u min de jeu"
     "%u partite · %u %% esatte",  // "%u parties · %u %% de réussite"
     "%u partite · %u domande · %u %% esatte · %u spicchi vinti",  // "%u parties · %u questions · %u %% de réussite · %u parts gagnées"
@@ -7024,12 +7249,15 @@ static const char* const kI18n_it[] = {
     "A riposo",  // "Au repos"
     "Tocca al Bianco",  // "Au tour de Blanc"
     "Tocca al Nero",  // "Au tour de Noir"
+    "Sopra la norma",  // "Au-dessus de la norme"
     "Nessun dispositivo",  // "Aucun appareil"
+    "Nessun apparecchio dichiarato",  // "Aucun appareil déclaré"
     "Nessun sensore di energia scelto",  // "Aucun capteur d'énergie choisi"
     "Nessun sensore monitorato",  // "Aucun capteur suivi"
     "Nessuna mossa possibile — passa la mano.",  // "Aucun déplacement possible — au suivant."
     "Nessun effetto attivo",  // "Aucun effet actif"
     "Nessuno storico",  // "Aucun historique"
+    "Nessun incidente",  // "Aucun incident"
     "Nessun giorno scelto nei prossimi 8",  // "Aucun jour retenu dans les 8 prochains"
     "Nessun lettore scelto",  // "Aucun lecteur choisi"
     "Nessun oggetto: apri forzieri, sconfiggi i boss o passa dal mercante.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
@@ -7102,6 +7330,7 @@ static const char* const kI18n_it[] = {
     "Calma",  // "Calme"
     "Telecamere",  // "Caméras"
     "Sensore",  // "Capteur"
+    "Sensore muto",  // "Capteur muet"
     "Carillon",  // "Carillon"
     "Tira ancora — ritira il dado!",  // "Case Rejouer — relancez le dé !"
     "Rompi tutti i mattoncini. Non far cadere la pallina.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -7153,7 +7382,9 @@ static const char* const kI18n_it[] = {
     "Conferma ogni comando",  // "Confirmer chaque commande"
     "Conferma l'azzeramento",  // "Confirmer la remise à zéro"
     "Avanzato",  // "Confirmé"
+    "Conforme",  // "Conforme"
     "Confortevole",  // "Confortable"
+    "Congelatore",  // "Congélateur"
     "Connesso",  // "Connecté"
     "Salvate in NVS, valide per tutte le partite",  // "Conservés en NVS, valables pour toutes les parties"
     "Consumo",  // "Consommation"
@@ -7168,6 +7399,8 @@ static const char* const kI18n_it[] = {
     "Corridoi",  // "Couloirs"
     "Mossa %u  ·  komi %.1f",  // "Coup %u  ·  komi %.1f"
     "Mossa annullata",  // "Coup annulé"
+    "Picco di caldo",  // "Coup de chaud"
+    "Picco di caldo da %s",  // "Coup de chaud depuis %s"
     "Mossa illegale",  // "Coup illégal"
     "Mossa vietata (ko o suicidio)",  // "Coup interdit (ko ou suicide)"
     "Corona incrinata",  // "Couronne fêlée"
@@ -7189,6 +7422,7 @@ static const char* const kI18n_it[] = {
     "Dalla rete",  // "Depuis le réseau"
     "Ultima mossa: SEGNATA",  // "Dernier coup : MARQUÉ"
     "Ultima mossa: NON SEGNATA",  // "Dernier coup : NON MARQUÉ"
+    "Ultimo incidente: %s",  // "Dernier incident : %s"
     "Entrambi passano: segna i gruppi morti",  // "Deux passes : marquez les groupes morts"
     "Difficile",  // "Difficile"
     "Difficoltà: %s",  // "Difficulté : %s"
@@ -7206,6 +7440,7 @@ static const char* const kI18n_it[] = {
     "Principiante: vede una sola mossa, sbaglia",  // "Débutant : ne voit qu'un coup, se trompe"
     "Dic",  // "Déc"
     "Scarica",  // "Décharge"
+    "Dichiarali in Home Assistant: elenchi «Tab5 · réfrigérateurs · frigoriferi» e «Tab5 · congélateurs · congelatori».",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Scoperta",  // "Découverte"
     "Dedalo",  // "Dédale"
     "Anticipo",  // "Délai"
@@ -7268,6 +7503,8 @@ static const char* const kI18n_it[] = {
     "Fortezza",  // "Forteresse"
     "Piogge forti",  // "Fortes pluies"
     "Frenata molto più decisa",  // "Freinage nettement plus mordant"
+    "Frigo",  // "Frigos"
+    "Frigo e congelatori",  // "Frigos et congélateurs"
     "Freddo",  // "Froid"
     "Fulminea",  // "Fulgurante"
     "Festivo",  // "Férié"
@@ -7440,8 +7677,10 @@ static const char* const kI18n_it[] = {
     "Menu principale",  // "Menu principal"
     "Mer",  // "Mer"
     "Piante",  // "Mes Plantes"
+    "Misura in attesa",  // "Mesure en attente"
     "Misura in corso",  // "Mesure en cours"
     "Misurata",  // "Mesuré"
+    "Min %s °C · max %s °C",  // "Min %s °C · max %s °C"
     "Minima",  // "Minimum"
     "Min %s · Max %s",  // "Minimum %s · Maximum %s"
     "Minima e massima",  // "Minimum et maximum"
@@ -7576,6 +7815,8 @@ static const char* const kI18n_it[] = {
     "Nessuna immagine dalle %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Punti neutri (dame): %d",  // "Points neutres (dame) : %d"
     "Portale aperto!",  // "Portail ouvert !"
+    "Porta chiusa male",  // "Porte mal fermée"
+    "Porta aperta?",  // "Porte ouverte ?"
     "Appoggia il tablet, POI tocca",  // "Pose la tablette PUIS appuie"
     "Appoggia il tablet, poi tocca",  // "Pose la tablette avant d'appuyer"
     "Appoggia il tablet e tocca",  // "Pose la tablette et appuie"
@@ -7679,6 +7920,7 @@ static const char* const kI18n_it[] = {
     "Regole",  // "Règles du jeu"
     "Calcolo  %d %%",  // "Réflexion  %d %%"
     "Elaboro...",  // "Réflexion..."
+    "Frigorifero",  // "Réfrigérateur"
     "Opzioni",  // "Réglages"
     "Risposta",  // "Réponse"
     "Risposta all'inclinazione +18%",  // "Réponse à l'inclinaison +18 %"
@@ -7749,6 +7991,7 @@ static const char* const kI18n_it[] = {
     "Suoneria",  // "Sonnerie"
     "Per uscire da un gioco: hub, poi «Esci»",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Uscita aperta! Sali fino in cima.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Sotto la norma",  // "Sous la norme"
     "Sport",  // "Sports"
     "Sport & Tempo libero",  // "Sports & Loisirs"
     "Statistiche",  // "Statistiques"
@@ -7818,6 +8061,10 @@ static const char* const kI18n_it[] = {
     "Lavoro (orario ignoto)",  // "Travail (horaire inconnu)"
     "Triplice ripetizione della posizione",  // "Triple répétition de la position"
     "Trono",  // "Trone"
+    "Troppo caldo",  // "Trop chaud"
+    "Troppo caldo da %s",  // "Trop chaud depuis %s"
+    "Troppo freddo",  // "Trop froid"
+    "Troppo freddo da %s",  // "Trop froid depuis %s"
     "Molto forte",  // "Très forte"
     "Rapidissima",  // "Très rapide"
     "Rotolerai ancora.",  // "Tu rouleras encore."
@@ -7887,12 +8134,15 @@ static const char* const kI18n_it[] = {
     "prima del turno",  // "avant l'ouverture"
     "aprile",  // "avril"
     "b = palle giocate, MB = multiball attivato.",  // "b = billes jouées, MB = multiball déclenché."
+    "sensore muto",  // "capteur muet"
+    "picco di caldo",  // "coup de chaud"
     "domenica",  // "dimanche"
     "dicembre",  // "décembre"
     "in attesa del calendario",  // "en attente du calendrier"
     "tra due squilli",  // "entre deux sonneries"
     "fulminea",  // "fulgur."
     "febbraio",  // "février"
+    "ieri %s",  // "hier %s"
     "inattiva",  // "inactif"
     "invertito",  // "inverse"
     "gennaio",  // "janvier"
@@ -7908,10 +8158,15 @@ static const char* const kI18n_it[] = {
     "mercoledì",  // "mercredi"
     "normale",  // "normal"
     "normale",  // "normale"
+    "norma %s °C al massimo",  // "norme %s °C au plus"
+    "norma da %s a %s °C",  // "norme %s à %s °C"
     "novembre",  // "novembre"
     "ottobre",  // "octobre"
     "o scuoti il tablet",  // "ou secouez la tablette"
     "passo",  // "passe"
+    "porta chiusa male",  // "porte mal fermée"
+    "porta aperta",  // "porte ouverte"
+    "porta aperta?",  // "porte ouverte ?"
     "poi si ferma da sola",  // "puis arrêt automatique"
     "rapida",  // "rapide"
     "riposo",  // "repos"
@@ -7920,6 +8175,8 @@ static const char* const kI18n_it[] = {
     "settembre",  // "septembre"
     "rapidiss",  // "t.rapide"
     "terminato %s",  // "terminée %s"
+    "troppo caldo",  // "trop chaud"
+    "troppo freddo",  // "trop froid"
     "venerdì",  // "vendredi"
     "svelta",  // "vive"
     "{jour_court} {quantieme} {mois_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -7931,6 +8188,7 @@ static const char* const kI18n_it[] = {
     "%s, tira il dado",  // "À %s de lancer le dé"
     "Da annaffiare!",  // "À arroser !"
     "Tocca a te",  // "À vous"
+    "Da controllare",  // "À vérifier"
     "SCACCO!",  // "ÉCHEC !"
     "SCHERMO",  // "ÉCRAN"
     "SQUADRE",  // "ÉQUIPES"
@@ -7954,6 +8212,7 @@ static const char* const kI18n_it[] = {
     "Spento",  // "Éteint"
     "Valutazione HUD",  // "Évaluation au HUD"
     "tuo",  // "à vous"
+    "da controllare",  // "à vérifier"
     "Occhio runico",  // "Œil de rune"
     "Occhio del Labirinto",  // "Œil du dédale"
     "Caldo",  // "clim|Chaud"
@@ -8026,6 +8285,7 @@ static const char* const kI18n_tr[] = {
     "%s  ·  %s  ·  hamle %u",  // "%s  ·  %s  ·  coup %u"
     "%s - sıralama dışı",  // "%s - hors classement"
     "%s: %s",  // "%s : %s"
+    "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
     "%s 6 dilimi topladı — kategoriyi %s seçer",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s 6 dilimi topladı — final kategorini seç",  // "%s a ses 6 parts — choisissez votre catégorie finale"
@@ -8040,6 +8300,8 @@ static const char* const kI18n_tr[] = {
     "%s — %u G · %u B · %u M",  // "%s — %u V · %u N · %u D"
     "%s — Tab - Tab modunun temposu",  // "%s — cadence du mode Tab contre Tab"
     "%s — %s oynarsın",  // "%s — vous ouvrez %s"
+    "%u:%02u sa",  // "%u h %02u"
+    "%u dk",  // "%u min"
     "Oyun: %u  ·  %u dk oynandı",  // "%u parties  ·  %u min de jeu"
     "%u oyun · %u %% başarı",  // "%u parties · %u %% de réussite"
     "%u oyun · %u soru · %u %% başarı · %u dilim kazanıldı",  // "%u parties · %u questions · %u %% de réussite · %u parts gagnées"
@@ -8164,12 +8426,15 @@ static const char* const kI18n_tr[] = {
     "Beklemede",  // "Au repos"
     "Sıra: Beyaz",  // "Au tour de Blanc"
     "Sıra: Siyah",  // "Au tour de Noir"
+    "Normun üstünde",  // "Au-dessus de la norme"
     "Cihaz yok",  // "Aucun appareil"
+    "Tanımlı cihaz yok",  // "Aucun appareil déclaré"
     "Enerji sensörü seçilmedi",  // "Aucun capteur d'énergie choisi"
     "Takip edilen sensör yok",  // "Aucun capteur suivi"
     "Hamle yok — sıra sonrakinde.",  // "Aucun déplacement possible — au suivant."
     "Etkin efekt yok",  // "Aucun effet actif"
     "Geçmiş yok",  // "Aucun historique"
+    "Olay yok",  // "Aucun incident"
     "Önümüzdeki 8 günde seçili gün yok",  // "Aucun jour retenu dans les 8 prochains"
     "Oynatıcı seçilmedi",  // "Aucun lecteur choisi"
     "Eşya yok: sandık aç, boss yen ya da tüccara uğra.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
@@ -8242,6 +8507,7 @@ static const char* const kI18n_tr[] = {
     "Sakin",  // "Calme"
     "Kameralar",  // "Caméras"
     "Sensör",  // "Capteur"
+    "Sensör sessiz",  // "Capteur muet"
     "Çan sesi",  // "Carillon"
     "Tekrar at karesi — zarı yeniden at!",  // "Case Rejouer — relancez le dé !"
     "Tüm tuğlaları kır. Topu düşürme.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -8293,7 +8559,9 @@ static const char* const kI18n_tr[] = {
     "Her komutu onayla",  // "Confirmer chaque commande"
     "Sıfırlamayı onayla",  // "Confirmer la remise à zéro"
     "İleri",  // "Confirmé"
+    "Uygun",  // "Conforme"
     "Konforlu",  // "Confortable"
+    "Dondurucu",  // "Congélateur"
     "Bağlı",  // "Connecté"
     "NVS'de saklanır, tüm oyunlar için geçerli",  // "Conservés en NVS, valables pour toutes les parties"
     "Tüketim",  // "Consommation"
@@ -8308,6 +8576,8 @@ static const char* const kI18n_tr[] = {
     "Koridorlar",  // "Couloirs"
     "Hamle %u  ·  komi %.1f",  // "Coup %u  ·  komi %.1f"
     "Hamle geri alındı",  // "Coup annulé"
+    "Sıcaklık artışı",  // "Coup de chaud"
+    "%s beri sıcaklık artışı",  // "Coup de chaud depuis %s"
     "Geçersiz hamle",  // "Coup illégal"
     "Yasak hamle (ko veya intihar)",  // "Coup interdit (ko ou suicide)"
     "Çatlak Taç",  // "Couronne fêlée"
@@ -8329,6 +8599,7 @@ static const char* const kI18n_tr[] = {
     "Şebekeden",  // "Depuis le réseau"
     "Son hamle: İŞARETLİ",  // "Dernier coup : MARQUÉ"
     "Son hamle: İŞARETSİZ",  // "Dernier coup : NON MARQUÉ"
+    "Son olay: %s",  // "Dernier incident : %s"
     "İki pas: ölü grupları işaretle",  // "Deux passes : marquez les groupes morts"
     "Zor",  // "Difficile"
     "Zorluk: %s",  // "Difficulté : %s"
@@ -8346,6 +8617,7 @@ static const char* const kI18n_tr[] = {
     "Başlangıç: tek hamle görür, hata yapar",  // "Débutant : ne voit qu'un coup, se trompe"
     "Ara",  // "Déc"
     "Deşarj",  // "Décharge"
+    "Home Assistant'ta tanımlayın: “Tab5 · réfrigérateurs · buzdolapları” ve “Tab5 · congélateurs · dondurucular” listeleri.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Keşif",  // "Découverte"
     "Labirent",  // "Dédale"
     "Ön süre",  // "Délai"
@@ -8408,6 +8680,8 @@ static const char* const kI18n_tr[] = {
     "Kale",  // "Forteresse"
     "Şiddetli yağmur",  // "Fortes pluies"
     "Çok daha sert frenleme",  // "Freinage nettement plus mordant"
+    "Buzdolabı",  // "Frigos"
+    "Buzdolapları ve dondurucular",  // "Frigos et congélateurs"
     "Soğuk",  // "Froid"
     "Şimşek",  // "Fulgurante"
     "Tatil",  // "Férié"
@@ -8580,8 +8854,10 @@ static const char* const kI18n_tr[] = {
     "Ana menü",  // "Menu principal"
     "Çar",  // "Mer"
     "Bitkilerim",  // "Mes Plantes"
+    "Ölçüm bekleniyor",  // "Mesure en attente"
     "Ölçülüyor",  // "Mesure en cours"
     "Ölçülen",  // "Mesuré"
+    "Min %s °C · maks. %s °C",  // "Min %s °C · max %s °C"
     "En düşük",  // "Minimum"
     "En düşük %s · En yüksek %s",  // "Minimum %s · Maximum %s"
     "En düşük ve en yüksek",  // "Minimum et maximum"
@@ -8716,6 +8992,8 @@ static const char* const kI18n_tr[] = {
     "Son görsel: %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
     "Nötr noktalar (dame): %d",  // "Points neutres (dame) : %d"
     "Portal açık!",  // "Portail ouvert !"
+    "Kapı tam kapanmadı",  // "Porte mal fermée"
+    "Kapı açık mı?",  // "Porte ouverte ?"
     "Tableti yatır SONRA dokun",  // "Pose la tablette PUIS appuie"
     "Dokunmadan önce tableti yatır",  // "Pose la tablette avant d'appuyer"
     "Tableti yatır ve dokun",  // "Pose la tablette et appuie"
@@ -8819,6 +9097,7 @@ static const char* const kI18n_tr[] = {
     "Oyun kuralları",  // "Règles du jeu"
     "Düşünme  %d %%",  // "Réflexion  %d %%"
     "Düşünüyor...",  // "Réflexion..."
+    "Buzdolabı",  // "Réfrigérateur"
     "Ayarlar",  // "Réglages"
     "Yanıt",  // "Réponse"
     "Eğim tepkisi +%18",  // "Réponse à l'inclinaison +18 %"
@@ -8889,6 +9168,7 @@ static const char* const kI18n_tr[] = {
     "Zil sesi",  // "Sonnerie"
     "Oyundan çıkış: merkez, sonra “Çık”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Çıkış açık! En tepeye tırman.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Normun altında",  // "Sous la norme"
     "Spor",  // "Sports"
     "Spor & Hobi",  // "Sports & Loisirs"
     "İstatistikler",  // "Statistiques"
@@ -8958,6 +9238,10 @@ static const char* const kI18n_tr[] = {
     "İş (saat bilinmiyor)",  // "Travail (horaire inconnu)"
     "Konumun üç kez tekrarı",  // "Triple répétition de la position"
     "Taht",  // "Trone"
+    "Çok sıcak",  // "Trop chaud"
+    "%s beri çok sıcak",  // "Trop chaud depuis %s"
+    "Çok soğuk",  // "Trop froid"
+    "%s beri çok soğuk",  // "Trop froid depuis %s"
     "Çok kuvvetli",  // "Très forte"
     "Çok hızlı",  // "Très rapide"
     "Yine yuvarlanacaksın.",  // "Tu rouleras encore."
@@ -9027,12 +9311,15 @@ static const char* const kI18n_tr[] = {
     "mesai başından önce",  // "avant l'ouverture"
     "Nisan",  // "avril"
     "b = oynanan bilye, MB = multiball tetiklendi.",  // "b = billes jouées, MB = multiball déclenché."
+    "sensör sessiz",  // "capteur muet"
+    "sıcaklık artışı",  // "coup de chaud"
     "Pazar",  // "dimanche"
     "Aralık",  // "décembre"
     "takvim bekleniyor",  // "en attente du calendrier"
     "iki çalma arasında",  // "entre deux sonneries"
     "şimşek",  // "fulgur."
     "Şubat",  // "février"
+    "dün %s",  // "hier %s"
     "kapalı",  // "inactif"
     "ters",  // "inverse"
     "Ocak",  // "janvier"
@@ -9048,10 +9335,15 @@ static const char* const kI18n_tr[] = {
     "Çarşamba",  // "mercredi"
     "normal",  // "normal"
     "normal",  // "normale"
+    "norm en çok %s °C",  // "norme %s °C au plus"
+    "norm %s - %s °C",  // "norme %s à %s °C"
     "Kasım",  // "novembre"
     "Ekim",  // "octobre"
     "ya da tableti salla",  // "ou secouez la tablette"
     "pas",  // "passe"
+    "kapı tam kapanmadı",  // "porte mal fermée"
+    "kapı açık",  // "porte ouverte"
+    "kapı açık mı?",  // "porte ouverte ?"
     "sonra kendiliğinden durur",  // "puis arrêt automatique"
     "hızlı",  // "rapide"
     "izin",  // "repos"
@@ -9060,6 +9352,8 @@ static const char* const kI18n_tr[] = {
     "Eylül",  // "septembre"
     "ç.hızlı",  // "t.rapide"
     "bitti %s",  // "terminée %s"
+    "çok sıcak",  // "trop chaud"
+    "çok soğuk",  // "trop froid"
     "Cuma",  // "vendredi"
     "canlı",  // "vive"
     "{quantieme} {mois_court} {jour_court}",  // "{jour_court} {quantieme} {mois_court}"
@@ -9071,6 +9365,7 @@ static const char* const kI18n_tr[] = {
     "Zarı atma sırası: %s",  // "À %s de lancer le dé"
     "Sulanmalı!",  // "À arroser !"
     "Sıra sende",  // "À vous"
+    "Kontrol et",  // "À vérifier"
     "ŞAH!",  // "ÉCHEC !"
     "EKRAN",  // "ÉCRAN"
     "TAKIMLAR",  // "ÉQUIPES"
@@ -9094,6 +9389,7 @@ static const char* const kI18n_tr[] = {
     "Kapalı",  // "Éteint"
     "Ekranda değerlendirme",  // "Évaluation au HUD"
     "sende",  // "à vous"
+    "kontrol et",  // "à vérifier"
     "Rün Gözü",  // "Œil de rune"
     "Labirentin Gözü",  // "Œil du dédale"
     "Isıtma",  // "clim|Chaud"

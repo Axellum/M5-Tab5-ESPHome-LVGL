@@ -20,6 +20,7 @@
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <cstring>
@@ -338,8 +339,9 @@ static void clear_ha_alert_slot(HaAlertSlotUI& slot) {
 // Libellés codés (lot 4c, 27/09/2026), composés dans la langue de la tablette :
 // « @maj:<titre> » → « 1 MAJ · <titre> », « @indispo:<n> » → « <n> indispo »,
 // « @vigi:<niveau> » → « Vigilance Rouge » (historique des alertes, lot 4 du
-// 06/10/2026). Tout autre libellé (nom d'un capteur en erreur, ancien package HA)
-// s'affiche tel quel. Bandeaux comme historique passent d'abord le libellé brut par
+// 06/10/2026), « @froid:<cause>:<niveau>:<valeur>:<nom> » → « Frigo cuisine : porte
+// mal fermée, 9.1 °C » (suivi du froid, ADR-0055). Tout autre libellé (nom d'un capteur
+// en erreur, ancien package HA) s'affiche tel quel. Bandeaux comme historique passent d'abord le libellé brut par
 // texte_ha_copier (glyphes des polices).
 // Le code se lit par alerte_texte_lire() (Tab5/socle/tab5_parse.h, lot F).
 std::string ha_alerte_texte(const char* brut) {
@@ -359,6 +361,26 @@ std::string ha_alerte_texte(const char* brut) {
                 case NiveauVigilance::JAUNE: return tr("Vigilance Jaune");
                 default: return normalize_text_utf8(lu.reste);
             }
+        case AlerteTexteCode::FROID: {
+            FroidAlerteLu f;
+            if (!froid_alerte_lire(lu.reste, f)) return normalize_text_utf8(lu.reste);
+            const char* mot = tr("à vérifier");
+            switch (f.cause) {
+                case FroidCause::CHAUD: mot = f.niveau >= 2 ? tr("coup de chaud") : tr("trop chaud"); break;
+                case FroidCause::FROID: mot = tr("trop froid"); break;
+                case FroidCause::PORTE: mot = f.niveau >= 2 ? tr("porte mal fermée") : tr("porte ouverte ?"); break;
+                case FroidCause::INDISPO: mot = tr("capteur muet"); break;
+                default: break;
+            }
+            char val[16];
+            const std::string nom = normalize_text_utf8(f.nom);
+            if (f.cause != FroidCause::INDISPO && std::isfinite(f.valeur) && froid_temperature_texte(f.valeur, val, sizeof(val))) {
+                snprintf(tmp, sizeof(tmp), tr("%s : %s, %s °C"), nom.c_str(), mot, val);
+            } else {
+                snprintf(tmp, sizeof(tmp), tr("%s : %s"), nom.c_str(), mot);
+            }
+            return tmp;
+        }
         default: return normalize_text_utf8(brut);
     }
 }

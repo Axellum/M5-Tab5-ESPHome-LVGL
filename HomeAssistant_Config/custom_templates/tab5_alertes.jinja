@@ -29,6 +29,8 @@
                                                     est l'union depuis le début, 100
                                                     entités au plus : voir plus bas)
     vigilance  sensor.tab5_vigilance Jaune+        niveau ET phénomènes
+    froid      appareil de sensor.tab5_froid au    cause ET niveau (la valeur change le
+               niveau 1 (Orange) ou 2 (Rouge)      libellé, pas la révision ; ADR-0055)
 
   Abonnements : listes « Tab5 · alertes … » de packages/tab5_alerts.yaml. Une source à
   laquelle on n'est pas abonné reste suivie (sans être affichée) : s'y réabonner ne fait pas
@@ -345,10 +347,24 @@
           'c': v ~ '|' ~ (state_attr('sensor.tab5_vigilance', 'phenomenes') | default('', true) | string),
           'g': v, 't': '@vigi:' ~ v, 's': 'vigilance'}}) -%}
   {%- endif -%}
+  {#- Réfrigérateurs et congélateurs (packages/tab5_froid.yaml, ADR-0055) : un id par
+      appareil, « froid:<entity_id> » ; libellé codé « @froid:cause:niveau:valeur:nom »,
+      composé par la tablette dans sa langue (ha_alerte_texte). -#}
+  {%- set froids = state_attr('sensor.tab5_froid', 'appareils') -%}
+  {%- for a in (froids if froids is sequence and froids is not string and froids is not mapping else [])
+       if a is mapping and a.get('e') and (a.get('n', 0) | int(0)) > 0 -%}
+    {%- set n = [a.get('n') | int(0), 2] | min -%}
+    {%- set val = '%.1f' | format(a.get('v')) if a.get('v') is number else '' -%}
+    {%- set ns.a = dict(ns.a, **{'froid:' ~ a.get('e'): {'c': (a.get('c') or 'ok') ~ '|' ~ n,
+          'g': 'Rouge' if n >= 2 else 'Orange', 's': 'froid',
+          't': '@froid:' ~ (a.get('c') or 'ok') ~ ':' ~ n ~ ':' ~ val ~ ':' ~ _propre(a.get('nom') or '')}}) -%}
+  {%- endfor -%}
   {#- Suivies mais plus en cours : source dans le doute, ou entité disparue. -#}
   {%- for i in suivi.keys() | list if i not in ns.a -%}
     {%- if i == 'meteo:vigilance' -%}
       {%- if v not in ['Vert', 'Jaune', 'Orange', 'Rouge'] -%}{%- set ns.inc = ns.inc + [i] -%}{%- endif -%}
+    {%- elif i.startswith('froid:') -%}
+      {%- if states('sensor.tab5_froid') in ['unavailable', 'unknown'] -%}{%- set ns.inc = ns.inc + [i] -%}{%- endif -%}
     {%- elif '.' in i and ':' not in i -%}
       {%- if states[i] is none -%}
         {%- set ns.abs = ns.abs + [i] -%}
@@ -371,7 +387,8 @@
        'probleme': states('input_select.tab5_alertes_problemes') != 'Non',
        'indispo': states('input_select.tab5_alertes_indisponibles') != 'Non',
        'etiquette': states('input_select.tab5_alertes_etiquette') != 'Non',
-       'pile': states('input_select.tab5_alertes_piles') != 'Aucune'} | to_json -}}
+       'pile': states('input_select.tab5_alertes_piles') != 'Aucune',
+       'froid': states('input_select.tab5_alertes_froid') != 'Non'} | to_json -}}
 {%- endmacro -%}
 
 {%- macro tab5_alertes_memoire(type_evt, donnees) -%}

@@ -70,6 +70,13 @@ input_select:
     options:
       - "Oui"
       - "Non"
+  # Réfrigérateurs et congélateurs (packages/tab5_froid.yaml, ADR-0055).
+  tab5_alertes_froid:
+    name: "Tab5 · alertes : réfrigérateurs et congélateurs · alerts: fridges and freezers"
+    icon: mdi:fridge-alert-outline
+    options:
+      - "Oui"
+      - "Non"
   tab5_alertes_piles:
     name: "Tab5 · alertes : piles sous · alerts: batteries below"
     icon: mdi:battery-alert-variant-outline
@@ -123,6 +130,10 @@ template:
       - trigger: state
         entity_id: sensor.tab5_vigilance
         id: tick
+      # Un réfrigérateur ou un congélateur change de niveau (packages/tab5_froid.yaml).
+      - trigger: state
+        entity_id: sensor.tab5_froid
+        id: tick
       # Un abonnement change : ses alertes partent ou arrivent tout de suite.
       - trigger: state
         entity_id:
@@ -132,6 +143,7 @@ template:
           - input_select.tab5_alertes_indisponibles
           - input_select.tab5_alertes_etiquette
           - input_select.tab5_alertes_piles
+          - input_select.tab5_alertes_froid
         id: tick
       - trigger: event
         event_type: tab5_alertes_lue

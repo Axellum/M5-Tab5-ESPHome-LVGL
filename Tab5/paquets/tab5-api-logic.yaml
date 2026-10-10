@@ -738,6 +738,19 @@ api:
         - script.execute: tab5_suivi_lier
         - lambda: 'suivi_recu(payload);'
 
+    # Froid (ADR-0055, 10/10/2026) : packages/tab5_froid.yaml pousse le bilan des appareils de
+    # « Tab5 · réfrigérateurs » et « Tab5 · congélateurs » (la détection est dans HA).
+    - service: tab5_maj_froid
+      description: "Froid : température, niveau (0 conforme, 1 attention, 2 grave), cause, norme, courbe des 24 h et dernier incident de chaque réfrigérateur et congélateur déclaré."
+      variables:
+        payload:
+          type: string
+          description: "Appareils déclarés, dans l'ordre, séparés par ; — « nom|type|valeur|niveau|cause|depuis|min|max|bas|haut|points|icause|idebut|iduree|imax » : type f (réfrigérateur) ou c (congélateur) ; valeur, min, max (24 h), bas et haut (la norme ; bas vide sans limite basse) en °C à point décimal, vides si inconnus ; niveau 0, 1 ou 2 ; cause ok, chaud, froid, porte ou indispo ; depuis = epoch du début de la cause, 0 sans ; points = 24 moyennes horaires puis la valeur actuelle en °C, séparées par des virgules, vide pour une heure sans mesure ; icause, idebut (epoch), iduree (minutes) et imax (°C) = le dernier incident terminé, vides sans. 4 appareils et 32 points au plus ; vide : aucun appareil déclaré."
+          example: "Frigo cuisine|f|9.1|2|porte|1791381720|2.8|9.4|0|5|3.1,3.0,,3.4,9.1|chaud|1791300000|42|8.7;Congélateur|c|-19.5|0|ok|0|-21|-18.2||-18|-20.1,-19.5|||"
+      then:
+        - script.execute: tab5_froid_lier
+        - lambda: 'froid_recu(payload);'
+
 # Fenêtre d'appairage (lot 6b, ADR-0020) : une tablette qui n'a pas encore de clé API
 # (neuve, ou jamais ajoutée à HA) n'accepte le premier contact de HA que pendant les
 # 30 minutes qui suivent son démarrage. Passé ce délai, elle refuse toute connexion et

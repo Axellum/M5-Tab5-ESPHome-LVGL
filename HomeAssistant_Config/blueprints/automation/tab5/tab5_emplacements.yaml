@@ -1381,6 +1381,8 @@ blueprint:
                   value: cameras
                 - label: "Suivi (capteurs suivis) · Tracking (tracked sensors)"
                   value: suivi
+                - label: "Froid (réfrigérateurs, congélateurs) · Cold (fridges, freezers)"
+                  value: froid
         geste_heures_long:
           name: "Heures : appui long · Hours: long press"
           description: >-
@@ -3081,7 +3083,7 @@ variables:
   codes_gestes: [auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie,
                  reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante,
                  ecoute, nabu_suivant, lumieres, volet, temperature, roue, meteo, zone_gauche_suivante,
-                 musique, cameras, suivi]
+                 musique, cameras, suivi, froid]
   # Popup Caméras (ADR-0049) : lues par la branche « La tablette demande ses caméras ».
   cameras_liste: !input cameras_liste
   cameras_adresse: !input cameras_adresse

@@ -87,6 +87,7 @@ esphome:
     - Tab5/ecran/tab5_cameras.h
     - Tab5/ecran/tab5_suivi.h
     - Tab5/ecran/tab5_cameras_charge.h
+    - Tab5/ecran/tab5_froid.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_custom.cpp
     - Tab5/ecran/tab5_internal.h
@@ -129,6 +130,7 @@ esphome:
     - Tab5/ecran/tab5_cameras.cpp
     - Tab5/ecran/tab5_suivi.cpp
     - Tab5/ecran/tab5_cameras_charge.cpp
+    - Tab5/ecran/tab5_froid.cpp
     - Tab5/jeux/game_common.h
     - Tab5/jeux/marble_game.h
     - Tab5/jeux/marble_game.cpp
@@ -268,6 +270,7 @@ packages:
   tab5_lecteur: !include Tab5/paquets/tab5-lecteur.yaml
   tab5_cameras: !include Tab5/paquets/tab5-cameras.yaml
   tab5_suivi: !include Tab5/paquets/tab5-suivi.yaml
+  tab5_froid: !include Tab5/paquets/tab5-froid.yaml
   tab5_zones: !include Tab5/paquets/tab5-zones.yaml
   tab5_reglages: !include Tab5/paquets/tab5-reglages.yaml
   tab5_economie: !include Tab5/paquets/tab5-economie.yaml
