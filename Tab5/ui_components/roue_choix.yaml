@@ -1,8 +1,8 @@
-# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 6x par roue_actions.yaml :
+# [AI-CONTEXT] Template paramétré (!include+vars), réutilisé 8x par roue_actions.yaml :
 # un bouton du second anneau de la roue d'actions rapides (ADR-0036) — un choix de la
 # famille dépliée : une icône (mode, option de la clim), un texte (« 50 % », « 21.5° ») ou
 # une pastille de couleur (blanc, couleur d'une lampe).
-# Var : n (0 à 5, rang de gauche à droite, nombre NON quoté : c'est l'argument int de
+# Var : n (0 à 7, rang de gauche à droite, nombre NON quoté : c'est l'argument int de
 # roue_choix_toucher()).
 # Position, icône (mdi_font_36 : MDI_CODE_TARGETS, motif roue_choix_*_icone, fonction
 # glyphe_roue de tab5_roue.cpp), texte, aspect : posés par tab5_roue.cpp à chaque dépliage.

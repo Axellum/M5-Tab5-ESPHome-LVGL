@@ -197,12 +197,15 @@ const char* glyphe_roue(RoueIcone i) {
         case RoueIcone::TEMPERATURE: return "\U000F050F";  // thermometer
         case RoueIcone::ENERGIE: return "\U000F0A72";      // solar-power
         case RoueIcone::PLANTES: return "\U000F024A";      // flower
+        case RoueIcone::MUSIQUE: return "\U000F075A";      // music (en-tête du popup Musique)
+        case RoueIcone::TV: return "\U000F07C0";           // desktop-classic (en-tête de la télécommande TV)
         case RoueIcone::CALENDRIER: return "\U000F0E17";   // calendar-month
         case RoueIcone::REVEIL: return "\U000F0020";       // alarm
         case RoueIcone::JEUX: return "\U000F0297";         // gamepad-variant
         case RoueIcone::ENGRENAGE: return "\U000F0493";    // cog
         case RoueIcone::SYSTEME: return "\U000F018D";      // console
         case RoueIcone::METEO: return "\U000F0595";        // weather-partly-cloudy
+        case RoueIcone::CAMERAS: return "\U000F07AE";      // cctv (popup Caméras, ADR-0049)
         default: return "";
     }
 }

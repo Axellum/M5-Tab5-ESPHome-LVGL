@@ -10,7 +10,9 @@
  *       le second anneau, chacun avec son mot. Le moyeu dit « Aller à », puis le nom de la
  *       famille dépliée. Ne sont proposés que les écrans qui ont quelque chose à montrer
  *       dans cette maison (ecran_disponible, pièces qui ont des appareils) ; une famille
- *       vide disparaît, les autres boutons se resserrent.
+ *       vide disparaît, les autres boutons se resserrent. Appareils ▸ : Températures,
+ *       Clims, Lumières, Volets, Énergie, Plantes, Musique, TV (les deux dernières le
+ *       10/10/2026, demande d'Axel : « ajoute musique et tv dans appareils »).
  * @architecture_constraint Aucun moteur de roue ici : ce fichier compose les boutons et dit
  *       ce que fait un toucher (RoueRappels). Un écran s'ouvre par la routine unique
  *       tab5_ecran_ouvrir (RoueUI::ouvrir_ecran, ADR-0013) ; une pièce par le mode HA
@@ -18,7 +20,8 @@
  *       gardé en NVS ; aucun événement envoyé à HA. Textes par tr() (tr_noop dans les
  *       tables), noms des pièces tels que HA les donne.
  * @ai_instruction Un écran de plus dans une famille : sa ligne dans kAppareils, kAgenda ou
- *       kTablette (kRoueChoix au plus par famille), son icône dans RoueIcone et
+ *       kTablette (kRoueChoix au plus par famille : 8, la géométrie de la carte centrale
+ *       vérifiée par tests/test_roue_navigation.py), son icône dans RoueIcone et
  *       glyphe_roue (tab5_roue.cpp, mdi_font_36, règle 9). Un bouton de plus au
  *       premier anneau : kPremier (kRoueBoutons au plus). tests/test_roue_navigation.py
  *       relit ces tables.
@@ -37,7 +40,10 @@ struct Destination {
 };
 
 // Appareils : les fenêtres de la maison. Températures en tête : son mot, le plus long,
-// est au bout de l'éventail, sans voisin d'un côté sur sa rangée.
+// est au bout de l'éventail, sans voisin d'un côté sur sa rangée. Musique (popup Musique,
+// ADR-0050) et TV (télécommande) au bout (demande d'Axel du 10/10/2026) : 8 choix, le
+// plafond kRoueChoix. La TV n'est proposée qu'avec sa zone (ecran_disponible), Musique
+// tant que HA n'a pas dit qu'aucun lecteur n'est choisi (propose()).
 constexpr Destination kAppareils[] = {
     {Ecran::TEMPERATURE, RoueIcone::TEMPERATURE, tr_noop("Températures")},
     {Ecran::CLIM, RoueIcone::CLIMS, tr_noop("Clims")},
@@ -45,12 +51,18 @@ constexpr Destination kAppareils[] = {
     {Ecran::VOLET, RoueIcone::VOLET, tr_noop("Volets")},
     {Ecran::ENERGIE, RoueIcone::ENERGIE, tr_noop("Énergie")},
     {Ecran::PLANTES, RoueIcone::PLANTES, tr_noop("Plantes")},
+    {Ecran::MUSIQUE, RoueIcone::MUSIQUE, tr_noop("Musique")},
+    {Ecran::TV, RoueIcone::TV, tr_noop("TV")},
 };
-// Agenda : le temps qui vient, la Météo en tête (popup Météo, ADR-0043).
+// Agenda : le temps qui vient, la Météo en tête (popup Météo, ADR-0043). Caméras à la fin
+// (ADR-0049, demande d'Axel du 09/10/2026) : Appareils et le premier anneau sont pleins
+// (kRoueChoix, kRoueBoutons). Toujours proposé, comme la Météo : la tablette ne connaît
+// les caméras qu'en les demandant ; sans caméra, le popup dit « Aucune caméra choisie ».
 constexpr Destination kAgenda[] = {
     {Ecran::METEO, RoueIcone::METEO, tr_noop("Météo")},
     {Ecran::CALENDRIER, RoueIcone::CALENDRIER, tr_noop("Calendrier")},
     {Ecran::REVEIL, RoueIcone::REVEIL, tr_noop("Réveil")},
+    {Ecran::CAMERAS, RoueIcone::CAMERAS, tr_noop("Caméras")},
 };
 // Tablette : ce qui est à elle, pas à la maison.
 constexpr Destination kTablette[] = {
@@ -108,6 +120,16 @@ struct Navigation {
 Navigation s_nav;
 char s_noms[kPieces][40];
 
+// Un écran d'une famille est-il proposé ? Ce que la maison a (ecran_disponible) ; Musique,
+// en plus, comme la zone à gauche de l'horloge (ADR-0051) : pas quand HA a dit qu'aucun
+// lecteur n'est choisi (lecteur_zone_disponible ; avant sa première réponse, proposée). Le
+// geste « musique » et « Aller à l'écran », eux, l'ouvrent toujours : choisis exprès, ils
+// montrent le popup, qui dit où choisir les lecteurs.
+bool propose(Ecran e) {
+    if (!ecran_disponible(e)) return false;
+    return e != Ecran::MUSIQUE || lecteur_zone_disponible();
+}
+
 // Cible d'un choix : un écran (sa valeur, > 0) ou une pièce R (-1 - R).
 constexpr int cible_piece(int r) { return -1 - r; }
 
@@ -138,7 +160,7 @@ int choix_de(const Premier& p, RoueChoix* c, int* cible) {
     }
     for (int k = 0; k < p.n && m < kRoueChoix; k++) {
         const Destination& d = p.liste[k];
-        if (!ecran_disponible(d.ecran)) continue;
+        if (!propose(d.ecran)) continue;
         c[m] = RoueChoix{};
         c[m].icone = d.icone;
         c[m].legende = tr(d.mot);

@@ -83,12 +83,16 @@ obj:
     - !include { file: roue_choix.yaml, vars: { n: 3 } }
     - !include { file: roue_choix.yaml, vars: { n: 4 } }
     - !include { file: roue_choix.yaml, vars: { n: 5 } }
+    - !include { file: roue_choix.yaml, vars: { n: 6 } }
+    - !include { file: roue_choix.yaml, vars: { n: 7 } }
     - !include { file: roue_legende.yaml, vars: { id: roue_choix_0_legende } }
     - !include { file: roue_legende.yaml, vars: { id: roue_choix_1_legende } }
     - !include { file: roue_legende.yaml, vars: { id: roue_choix_2_legende } }
     - !include { file: roue_legende.yaml, vars: { id: roue_choix_3_legende } }
     - !include { file: roue_legende.yaml, vars: { id: roue_choix_4_legende } }
     - !include { file: roue_legende.yaml, vars: { id: roue_choix_5_legende } }
+    - !include { file: roue_legende.yaml, vars: { id: roue_choix_6_legende } }
+    - !include { file: roue_legende.yaml, vars: { id: roue_choix_7_legende } }
     - !include { file: roue_bouton.yaml, vars: { n: 0 } }
     - !include { file: roue_bouton.yaml, vars: { n: 1 } }
     - !include { file: roue_bouton.yaml, vars: { n: 2 } }

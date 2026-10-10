@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a long press on a TV or media player card that is not the blueprint's TV ([tiles](tiles.md)), a tap on the « now playing » bar of the home screen or on the compact player left of the clock, the « Musique » entry of the tablet's « Aller à l'écran » list in Home Assistant, or a tap or a long press of the clock or of a button top right when the blueprint gives it « Musique (lecteur) · Music (player) » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
+**Opens with** a long press on a TV or media player card that is not the blueprint's TV ([tiles](tiles.md)), a tap on the « now playing » bar of the home screen or on the compact player left of the clock, « Musique » under « Devices » in the [navigation wheel](home.md#central-card-12) (long press on the central card; not offered once Home Assistant says no player is chosen), the « Musique » entry of the tablet's « Aller à l'écran » list in Home Assistant, or a tap or a long press of the clock or of a button top right when the blueprint gives it « Musique (lecteur) · Music (player) » ([home screen](home.md#the-three-buttons-top-right-6-to-8)).
 
 A music player for any media player of Home Assistant (an Apple TV, a TV, a Freebox, a speaker, the tablet itself…), in a window that leaves the edges of the screen visible.
 
@@ -31,7 +31,7 @@ Like every window, it closes with its **×**, a tap on the dark area around it, 
 
 ---
 
-**S'ouvre par** un appui long sur une carte TV ou lecteur multimédia qui n'est pas la TV du blueprint ([tuiles](tiles.md#version-française)), un tap sur la barre « en lecture » de l'écran d'accueil ou sur le lecteur compact à gauche de l'horloge, l'entrée « Musique » de la liste « Aller à l'écran » de la tablette dans Home Assistant, ou un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Musique (lecteur) · Music (player) » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
+**S'ouvre par** un appui long sur une carte TV ou lecteur multimédia qui n'est pas la TV du blueprint ([tuiles](tiles.md#version-française)), un tap sur la barre « en lecture » de l'écran d'accueil ou sur le lecteur compact à gauche de l'horloge, « Musique » sous « Appareils » dans la [roue de navigation](home.md#carte-centrale-12) (appui long sur la carte centrale ; plus proposée quand Home Assistant dit qu'aucun lecteur n'est choisi), l'entrée « Musique » de la liste « Aller à l'écran » de la tablette dans Home Assistant, ou un tap ou un appui long sur l'horloge ou un bouton en haut à droite quand le blueprint lui donne « Musique (lecteur) · Music (player) » ([écran d'accueil](home.md#les-trois-boutons-en-haut-à-droite-6-à-8)).
 
 Un lecteur de musique pour n'importe quel lecteur multimédia de Home Assistant (une Apple TV, une TV, une Freebox, une enceinte, la tablette elle-même…), dans une fenêtre qui laisse voir les bords de l'écran.
 

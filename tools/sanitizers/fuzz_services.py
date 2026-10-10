@@ -97,6 +97,10 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_lecteur": {"lecteurs": "Salon|tv;Cuisine|speaker;Tablette|",
                          "etat": "1|Cuisine|speaker|playing|Bohemian Rhapsody|Queen|A Night at the Opera|Spotify|"
                                  "83|354|42|0|1|all|lspnvmar|/api/media_player_proxy/media_player.cuisine?token=x&cache=1"},
+    # Caméras (ADR-0049) : la liste que le blueprint pousse à l'ouverture du popup.
+    "tab5_maj_cameras": {"adresse": "http://homeassistant.local:8123",
+                         "cameras": "Entrée|/api/camera_proxy/camera.entree?token=abc123;"
+                                    "Jardin|/api/camera_proxy/camera.jardin?token=def456"},
 }
 
 NOMBRES = ["", "-1", "0", "15", "16", "31", "32", "99", "255", "256", "2147483647", "-2147483648",
