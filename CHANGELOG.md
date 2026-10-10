@@ -18,6 +18,14 @@ firmware.
 le 08/10/2026 : test de consommation dans Home Assistant et lecture de la batterie toutes les 2 s
 pendant le test (#405), `tools/mesure_conso.py` (#404). Fichiers Home Assistant à recopier avant le
 firmware.
+[v3.8.0-rc.4](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.4)
+le 10/10/2026 : zone à gauche de l'horloge au choix — vocal, graphique des prochaines heures ou
+lecteur compact (#431, #432), popup Musique pour tout lecteur multimédia (#430), popups Météo en
+graphiques (#425), Réveil (#426), Lumières et Volets (#424) en pages, roue de navigation (#423) et
+roue de la clim (#420), carrousel des clims (#414), climat de la pièce (#416), historique avec
+l'humidité (#422), gestes de l'accueil au choix (#415), panneau Ok Nabu à lignes (#418), Réglages :
+charge, animations, Wi-Fi éco (#421), parseurs testés et fuzzés (#411, #417), corrections de
+l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.7.0).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
