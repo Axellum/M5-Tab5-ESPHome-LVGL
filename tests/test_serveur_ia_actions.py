@@ -97,7 +97,7 @@ def _attendu(type_ia, releve, adresse, modeles, instances, mac, cible, existe):
         out.append(("" if releve == "ok" and charges else "-") + "decharger")
     if re.fullmatch(r"([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}", mac.strip()):
         out.append(("-" if releve in ("ok", "chargement") else "") + "reveiller")
-    if re.match(r"(script|button)\.", cible) and existe:
+    if re.fullmatch(r"(script|button)\.[a-z0-9_]+", cible) and not cible.startswith("script.tab5_") and existe:
         out.append("redemarrer")
     return ",".join(out) or "aucune"
 
@@ -108,7 +108,8 @@ CAS = list(itertools.product(
     ["http://ia:1", ""],
     [(), ("gemma4", "qwen3:8b")],
     ["", MAC, " aa-bb-cc-dd-ee-0f ", "AA:BB:CC:DD:EE", "unknown"],
-    [("Aucun", False), ("script.relancer_ollama", True), ("button.ia_restart", True), ("script.disparu", False)],
+    [("Aucun", False), ("script.relancer_ollama", True), ("button.ia_restart", True), ("script.disparu", False),
+     ("script.tab5_push_meteo", True), ("script.a,script.b", True)],
 ))
 
 
@@ -267,6 +268,8 @@ def test_redemarrer(cible, action):
     (dict(type_ia="Ollama", mac=""), "reveiller"),                     # pas de MAC
     (dict(type_ia="Ollama", cible="script.disparu", existe=False), "redemarrer"),
     (dict(type_ia="Ollama", cible="Aucun"), "redemarrer"),
+    (dict(type_ia="Ollama", cible="script.tab5_push_meteo"), "redemarrer"),   # écrit à la main
+    (dict(type_ia="Ollama", cible="script.a,script.b"), "redemarrer"),
     (dict(type_ia="Ollama", mac=MAC, releve="hors_ligne", cible="script.x"), "reveiller,redemarrer"),
     (dict(type_ia="Ollama", cible="script.x"), "script.x"),
     (dict(type_ia="Ollama", cible="script.x"), "-redemarrer"),
@@ -286,7 +289,8 @@ def test_select_redemarrage_ni_projet_ni_tablette():
               EtatHA("light.salon", "on")]
     bloc, select = _bloc("tab5_serveur_ia_redemarrage")
     for memoire, etat in (("", "Aucun"), ("button.ia_restart", "button.ia_restart"),
-                          ("script.oublie", "script.oublie"), ("light.salon", "Aucun")):
+                          ("script.oublie", "script.oublie"), ("light.salon", "Aucun"),
+                          ("script.tab5_push_meteo", "Aucun"), ("script.a,script.b", "Aucun")):
         etats = autres + [EtatHA("input_text.tab5_choix_ia_redemarrage", memoire)]
         env = _env(etats)
         ctx = {k: _rendre(env, v, {}) for k, v in bloc["variables"].items()}

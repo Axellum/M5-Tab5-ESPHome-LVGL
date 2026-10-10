@@ -439,10 +439,10 @@ template:
         icon: mdi:restart
         options: >-
           {%- set m = states('input_text.tab5_choix_ia_redemarrage') -%}
-          {{ ia_redemarrages + ([m] if m is match('(script|button)[.]') and m not in ia_redemarrages else []) + ['Aucun'] }}
+          {{ ia_redemarrages + ([m] if m is match('(script|button)[.][a-z0-9_]+$') and not m.startswith('script.tab5_') and m not in ia_redemarrages else []) + ['Aucun'] }}
         state: >-
           {%- set m = states('input_text.tab5_choix_ia_redemarrage') -%}
-          {{ m if m is match('(script|button)[.]') else 'Aucun' }}
+          {{ m if m is match('(script|button)[.][a-z0-9_]+$') and not m.startswith('script.tab5_') else 'Aucun' }}
         select_option:
           - action: input_text.set_value
             target:
@@ -480,7 +480,8 @@ template:
               {%- set ns.l = ns.l + [('-' if releve in ['ok', 'chargement'] else '') ~ 'reveiller'] -%}
             {%- endif -%}
             {%- set cible = states('select.tab5_serveur_ia_redemarrage') -%}
-            {%- if cible is match('(script|button)[.]') and states[cible] is not none -%}
+            {%- if cible is match('(script|button)[.][a-z0-9_]+$') and not cible.startswith('script.tab5_')
+                  and states[cible] is not none -%}
               {%- set ns.l = ns.l + ['redemarrer'] -%}
             {%- endif -%}
           {%- endif -%}
