@@ -61,7 +61,7 @@ lvgl:
         # (tab5_zone_gauche.cpp) : zone_vocal (le micro et les boutons Domo / Discu, l'écran
         # d'avant), zone_graphique (les heures qui viennent en courbe et barres de pluie) ou
         # zone_lecteur (le lecteur de musique compact, lecteur_zone.yaml) ou zone_suivi (le
-        # premier capteur suivi en courbe, suivi_zone.yaml, ADR-0053).
+        # premier capteur suivi en courbe, suivi_zone.yaml, ADR-0054).
         # Le contenu suivant : tap sur la seconde température (btn_serre_games) ou le geste
         # « zone_gauche_suivante » ; le départ et le cycle se choisissent dans le blueprint
         # (clé « gauche »). Le cadre Ok Nabu, dessous, ne change pas.
@@ -157,7 +157,7 @@ lvgl:
         # Lecteur compact (ADR-0051, lot 2, sur le lecteur de l'ADR-0050) : même emprise que
         # le graphique, masqué au démarrage. Tap hors des boutons : le popup Musique.
         - !include ../ui_components/lecteur_zone.yaml
-        # Capteur suivi (ADR-0053) : même emprise, masqué au démarrage. Tap : le popup Suivi.
+        # Capteur suivi (ADR-0054) : même emprise, masqué au démarrage. Tap : le popup Suivi.
         - !include ../ui_components/suivi_zone.yaml
 
         # Bouton OK Nabu : même place que la tuile clim, en miroir (toute la colonne,
@@ -647,7 +647,7 @@ lvgl:
         - !include ../ui_components/lecteur_popup.yaml
         # Popup Caméras (ADR-0049).
         - !include ../ui_components/cameras_popup.yaml
-        # Popup Suivi (ADR-0053) : les capteurs suivis, une carte chacun.
+        # Popup Suivi (ADR-0054) : les capteurs suivis, une carte chacun.
         - !include ../ui_components/suivi_popup.yaml
         - !include ../ui_components/calendar_popup.yaml
         - !include ../ui_components/assistant_popup.yaml

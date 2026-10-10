@@ -28,7 +28,7 @@
 #       (choisi : le toucher le retire) et « ○ media_player.x » (le toucher l'ajoute, 6 au
 #       plus) ; la mémoire input_text.tab5_choix_lecteurs garde les entity_id séparés par
 #       des virgules, dans l'ordre du choix : c'est elle que lit packages/tab5_lecteur.yaml.
-#       « Tab5 · capteurs suivis » (ADR-0053) marche de même (options « ✓ sensor.x » /
+#       « Tab5 · capteurs suivis » (ADR-0054) marche de même (options « ✓ sensor.x » /
 #       « ○ sensor.x », 6 au plus, mémoire input_text.tab5_choix_suivis lue par
 #       packages/tab5_suivi.yaml) ; ne propose que les capteurs à state_class measurement
 #       (ceux qui ont des statistiques, donc une courbe).
@@ -91,7 +91,7 @@ input_text:
     name: "Tab5 · mémoire · lecteurs de musique"
     icon: mdi:content-save-outline
     max: 255
-  # Capteurs suivis du popup Suivi (ADR-0053) : entity_id séparés par des virgules.
+  # Capteurs suivis du popup Suivi (ADR-0054) : entity_id séparés par des virgules.
   tab5_choix_suivis:
     name: "Tab5 · mémoire · capteurs suivis"
     icon: mdi:content-save-outline
@@ -166,7 +166,7 @@ template:
         {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
            | select('match', 'media_player[.]') | unique | list }}
       lecteurs_resume: "{{ lecteurs_choisis | count }} choisi(s) · {{ lecteurs_choisis | count }} chosen"
-      # Capteurs suivis (ADR-0053) : ceux qui ont des statistiques (state_class
+      # Capteurs suivis (ADR-0054) : ceux qui ont des statistiques (state_class
       # measurement, donc une courbe), les choisis d'abord.
       suivis_ha: >-
         {{ states.sensor | selectattr('attributes.state_class', 'defined')
@@ -330,7 +330,7 @@ template:
               entity_id: input_text.tab5_choix_lecteurs
             data:
               value: "{{ liste }}"
-      # Même principe (ADR-0053) : six capteurs au plus, les cartes du popup Suivi ; le
+      # Même principe (ADR-0054) : six capteurs au plus, les cartes du popup Suivi ; le
       # premier est aussi la carte de la zone à gauche de l'horloge (contenu « capteur »).
       - name: "Tab5 · capteurs suivis · tracked sensors"
         unique_id: tab5_capteurs_suivis

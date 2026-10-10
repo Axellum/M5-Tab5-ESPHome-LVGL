@@ -34,7 +34,7 @@ class Font;
 //     mêmes données, mêmes commandes ; lecteur_zone.yaml, peint par tab5_lecteur.cpp), sauté
 //     quand HA a dit qu'aucun lecteur n'est choisi ; un tap hors des boutons ouvre le popup
 //     Musique, et la mini-barre « en lecture » se masque tant qu'il est montré ;
-//   - « capteur » (ADR-0053) : le premier capteur de « Tab5 · capteurs suivis » (nom, valeur,
+//   - « capteur » (ADR-0054) : le premier capteur de « Tab5 · capteurs suivis » (nom, valeur,
 //     variation, courbe des 24 h ; suivi_zone.yaml, peint par tab5_suivi.cpp), sauté quand HA
 //     a dit qu'aucun capteur n'est choisi ; un tap ouvre le popup Suivi.
 // Le blueprint choisit le contenu de départ et ceux qu'un tap fait défiler (clé « gauche »
@@ -45,7 +45,7 @@ struct ZoneGaucheUI {
     lv_obj_t* vocal = nullptr;              // zone_vocal (micro, Domo, Discu)
     lv_obj_t* graphique = nullptr;          // zone_graphique (carte du graphique)
     lv_obj_t* lecteur = nullptr;            // zone_lecteur (lecteur compact, tab5_lecteur.cpp)
-    lv_obj_t* capteur = nullptr;            // zone_suivi (capteur suivi, tab5_suivi.cpp, ADR-0053)
+    lv_obj_t* capteur = nullptr;            // zone_suivi (capteur suivi, tab5_suivi.cpp, ADR-0054)
     esphome::font::Font* police = nullptr;  // roboto_22 : heures, valeurs, pluie
 };
 extern ZoneGaucheUI g_zone_gauche_ui;

@@ -28,7 +28,7 @@
         "data_description": {
           "mettre_a_jour_tablette": "Once the files are in place, install the firmware of the same version as soon as the tablet's « Firmware » entity offers it.",
           "reinstaller": "For a Tab5 file deleted or edited by mistake. The current ones are saved first.",
-          "assistant": "Prepares the screen slots automation from your Home Assistant areas. Nothing is written until you confirm; an existing automation only changes if you ask for it."
+          "assistant": "Prepares the screen slots automation from your Home Assistant rooms, then the home settings and the « Tab5 · … » lists. Nothing is written or set without your confirmation; an existing automation only changes if you ask."
         }
       },
       "pieces": {
@@ -59,14 +59,66 @@
           "clim": "Optional, with the temperature: the home page's − / + buttons adjust it."
         }
       },
+      "maison": {
+        "title": "Assistant · home",
+        "description": "What does not depend on a room. A field is only filled in when your Home Assistant has a single possible answer (one TV, one air conditioner, one weather…) or when the existing automation already has it; otherwise it stays empty and the tablet does without. Change anything you like.",
+        "data": {
+          "tv": "TV",
+          "tv_telecommande": "TV remote",
+          "telephone": "Phone battery",
+          "salon_temperature": "Room temperature (top of the home screen)",
+          "salon_humidite": "Room humidity",
+          "serre_temperature": "Second temperature (greenhouse, outdoors…)",
+          "serre_exterieure": "The second temperature is outdoors",
+          "clim": "Climate",
+          "pot_1": "Pot 1",
+          "pot_2": "Pot 2",
+          "pot_3": "Pot 3",
+          "pot_4": "Pot 4",
+          "pot_5": "Pot 5",
+          "meteo_previsions": "Forecast weather",
+          "tablette": "Tablet name in ESPHome"
+        },
+        "data_description": {
+          "tv": "The « TV » button of the screen.",
+          "tv_telecommande": "The remote keys on the screen.",
+          "telephone": "An icon at the top left, coloured by the battery.",
+          "salon_temperature": "Suggested: the first room's.",
+          "serre_temperature": "Suggested: the only temperature whose name says « outdoor ».",
+          "clim": "The − / setpoint / + buttons of the home screen.",
+          "pot_1": "Soil moisture sensors: suggested when there are five or fewer.",
+          "meteo_previsions": "The days and hours pages.",
+          "tablette": "Read from the ESPHome integration; empty: « tab5_ha_hmi »."
+        }
+      },
+      "agendas": {
+        "title": "Assistant · calendars and people",
+        "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Aucun » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « Aucun ».",
+        "data": {
+          "agenda_travail": "Work calendar",
+          "agenda_rdv": "Appointments calendar",
+          "agenda_anniversaires": "Birthdays calendar",
+          "agenda_feries": "Public holidays calendar",
+          "agenda_vacances": "School holidays calendar",
+          "telephone_suivi": "Tracked phone",
+          "presence": "Presence sensor",
+          "pipeline": "Chat pipeline"
+        },
+        "data_description": {
+          "agenda_anniversaires": "Birthdays, holidays and phone: the list already guesses by itself when there is a single candidate.",
+          "telephone_suivi": "Turns the screen on when back, off when gone.",
+          "presence": "Turns the screen on on detection, off after 15 min without presence.",
+          "pipeline": "The « Chat » mode of the screen; « Aucun » hides its buttons."
+        }
+      },
       "recapitulatif": {
         "title": "Assistant · summary",
         "description": "{resume}\n\n{action}",
         "data": {
-          "mettre_a_jour": "Replace the rooms of the existing automation"
+          "mettre_a_jour": "Replace the rooms and home inputs of the existing automation"
         },
         "data_description": {
-          "mettre_a_jour": "Its other settings (weather, energy, gestures…) stay as they are."
+          "mettre_a_jour": "A home field left empty keeps its value; its other settings (energy, gestures…) stay as they are. The « Tab5 · … » lists are set with or without this box."
         }
       }
     },
@@ -153,14 +205,66 @@
               "clim": "Optional, with the temperature: the home page's − / + buttons adjust it."
             }
           },
+          "maison": {
+            "title": "Assistant · home",
+            "description": "What does not depend on a room. A field is only filled in when your Home Assistant has a single possible answer (one TV, one air conditioner, one weather…) or when the existing automation already has it; otherwise it stays empty and the tablet does without. Change anything you like.",
+            "data": {
+              "tv": "TV",
+              "tv_telecommande": "TV remote",
+              "telephone": "Phone battery",
+              "salon_temperature": "Room temperature (top of the home screen)",
+              "salon_humidite": "Room humidity",
+              "serre_temperature": "Second temperature (greenhouse, outdoors…)",
+              "serre_exterieure": "The second temperature is outdoors",
+              "clim": "Climate",
+              "pot_1": "Pot 1",
+              "pot_2": "Pot 2",
+              "pot_3": "Pot 3",
+              "pot_4": "Pot 4",
+              "pot_5": "Pot 5",
+              "meteo_previsions": "Forecast weather",
+              "tablette": "Tablet name in ESPHome"
+            },
+            "data_description": {
+              "tv": "The « TV » button of the screen.",
+              "tv_telecommande": "The remote keys on the screen.",
+              "telephone": "An icon at the top left, coloured by the battery.",
+              "salon_temperature": "Suggested: the first room's.",
+              "serre_temperature": "Suggested: the only temperature whose name says « outdoor ».",
+              "clim": "The − / setpoint / + buttons of the home screen.",
+              "pot_1": "Soil moisture sensors: suggested when there are five or fewer.",
+              "meteo_previsions": "The days and hours pages.",
+              "tablette": "Read from the ESPHome integration; empty: « tab5_ha_hmi »."
+            }
+          },
+          "agendas": {
+            "title": "Assistant · calendars and people",
+            "description": "The « Tab5 · … » lists (Settings → Devices & services → Entities). A choice already made stays. A list still on « Aucun » (none) gets a suggestion when a single entity fits (a calendar whose name says « work » or « appointment », the only presence or occupancy sensor, the preferred pipeline). Nothing is set before the summary; you can put anything back to « Aucun ».",
+            "data": {
+              "agenda_travail": "Work calendar",
+              "agenda_rdv": "Appointments calendar",
+              "agenda_anniversaires": "Birthdays calendar",
+              "agenda_feries": "Public holidays calendar",
+              "agenda_vacances": "School holidays calendar",
+              "telephone_suivi": "Tracked phone",
+              "presence": "Presence sensor",
+              "pipeline": "Chat pipeline"
+            },
+            "data_description": {
+              "agenda_anniversaires": "Birthdays, holidays and phone: the list already guesses by itself when there is a single candidate.",
+              "telephone_suivi": "Turns the screen on when back, off when gone.",
+              "presence": "Turns the screen on on detection, off after 15 min without presence.",
+              "pipeline": "The « Chat » mode of the screen; « Aucun » hides its buttons."
+            }
+          },
           "recapitulatif": {
             "title": "Assistant · summary",
             "description": "{resume}\n\n{action}",
             "data": {
-              "mettre_a_jour": "Replace the rooms of the existing automation"
+              "mettre_a_jour": "Replace the rooms and home inputs of the existing automation"
             },
             "data_description": {
-              "mettre_a_jour": "Its other settings (weather, energy, gestures…) stay as they are."
+              "mettre_a_jour": "A home field left empty keeps its value; its other settings (energy, gestures…) stay as they are. The « Tab5 · … » lists are set with or without this box."
             }
           }
         },

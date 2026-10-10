@@ -157,7 +157,7 @@ enum class Ecran : uint8_t {
     METEO,       // popup Météo (ADR-0043) : option du select et code de geste « meteo »
     MUSIQUE,     // lecteur de musique (ADR-0050) : option du select et code de geste « musique »
     CAMERAS,     // popup Caméras (ADR-0049) : option du select et code de geste « cameras »
-    SUIVI,       // capteurs suivis (ADR-0053) : option du select et code de geste « suivi »
+    SUIVI,       // capteurs suivis (ADR-0054) : option du select et code de geste « suivi »
     ARCADE,
     NB
 };

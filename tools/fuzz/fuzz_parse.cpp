@@ -192,7 +192,7 @@ void cameras(const std::string& p) {
     }
 }
 
-// Suivi de capteurs (ADR-0053) : la variable payload seule.
+// Suivi de capteurs (ADR-0054) : la variable payload seule.
 void suivi(const std::string& p) {
     SuiviLu s[kSuivisMax];
     const int n = suivis_lire(Champ{p.data(), p.size()}, s);

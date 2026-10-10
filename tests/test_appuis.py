@@ -55,7 +55,7 @@ OPTIONS = {
     "MUSIQUE": "Musique",
     # Popup Caméras (ADR-0049, 10/10/2026) : après lui.
     "CAMERAS": "Caméras",
-    # Capteurs suivis (ADR-0053, 10/10/2026) : à la fin aussi.
+    # Capteurs suivis (ADR-0054, 10/10/2026) : à la fin aussi.
     "SUIVI": "Suivi",
 }
 # Code du blueprint → valeur d'Ecran.
@@ -76,7 +76,7 @@ ECRANS_APRES = {"meteo": "METEO"}
 # Puis le contenu suivant de la zone à gauche de l'horloge (10/10/2026, ADR-0051), une action.
 ACTIONS_APRES = ["zone_gauche_suivante"]
 # Puis le lecteur de musique (10/10/2026, ADR-0050) et le popup Caméras (ADR-0049), deux
-# écrans, à la fin aussi ; puis les capteurs suivis (10/10/2026, ADR-0053), un écran.
+# écrans, à la fin aussi ; puis les capteurs suivis (10/10/2026, ADR-0054), un écran.
 ECRANS_FIN = {"musique": "MUSIQUE", "cameras": "CAMERAS", "suivi": "SUIVI"}
 # Tous les codes, dans l'ordre de kCodesGestes, avec « auto » en tête : le blueprint.
 TOUS = ["auto"] + list(CODES) + ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES + list(ECRANS_FIN)

@@ -591,7 +591,7 @@ void zone_gauche_donnees_changees();
 // (tab5_roue_navigation.cpp, « Appareils ▸ ») lit la même réponse pour proposer Musique.
 void lecteur_zone_montrer(bool montre);
 bool lecteur_zone_disponible();
-// tab5_suivi.cpp, pour la zone à gauche de l'horloge (capteur suivi, ADR-0053) : montre ou
+// tab5_suivi.cpp, pour la zone à gauche de l'horloge (capteur suivi, ADR-0054) : montre ou
 // masque la carte (repeinte si elle a changé cachée), et dit si elle a quelque chose à
 // montrer (faux seulement quand HA a dit qu'aucun capteur n'est choisi).
 void suivi_zone_montrer(bool montre);

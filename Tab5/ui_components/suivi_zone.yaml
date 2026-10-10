@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file suivi_zone.yaml
-# @role Capteur suivi dans la zone à gauche de l'horloge (ADR-0053, contenu « capteur » de
+# @role Capteur suivi dans la zone à gauche de l'horloge (ADR-0054, contenu « capteur » de
 #       l'ADR-0051) : le premier capteur de la liste « Tab5 · capteurs suivis » de Home
 #       Assistant — son nom et sa variation (flèche de tendance, texte coloré) en haut, sa
 #       valeur et son unité dessous, la courbe de ses 24 dernières heures en bas, sur un

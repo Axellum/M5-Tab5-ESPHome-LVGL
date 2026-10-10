@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Capteurs suivis (ADR-0053) : popup « Suivi » et carte « capteur » de la zone à gauche de
+"""Capteurs suivis (ADR-0054) : popup « Suivi » et carte « capteur » de la zone à gauche de
 l'horloge.
 
 Aucun compilateur ne relie le package `tab5_suivi.yaml`, la liste de `tab5_reglages.yaml`,

@@ -101,7 +101,7 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_cameras": {"adresse": "http://homeassistant.local:8123",
                          "cameras": "Entrée|/api/camera_proxy/camera.entree?token=abc123;"
                                     "Jardin|/api/camera_proxy/camera.jardin?token=def456"},
-    # Suivi de capteurs (ADR-0053) : une variation du jour, un écart, un capteur sans
+    # Suivi de capteurs (ADR-0054) : une variation du jour, un écart, un capteur sans
     # courbe ni valeur, des points manquants.
     "tab5_maj_suivi": {"payload": "Tesla|382.7|USD|2.05|p|20,25,,31,40,38,52,61,58,70,74,100;"
                                   "Serre|21.4|°C|-1.5|a|90,80,70,60,50,40,30,20,10,0;"

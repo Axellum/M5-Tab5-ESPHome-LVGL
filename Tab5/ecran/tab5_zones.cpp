@@ -134,7 +134,7 @@ constexpr CodeGeste kCodesGestes[] = {
     {"musique", Ecran::MUSIQUE, GesteAction::ECRAN},
     // Popup Caméras (09/10/2026, ADR-0049) : ajouté à la fin (NVS, index 25).
     {"cameras", Ecran::CAMERAS, GesteAction::ECRAN},
-    // Capteurs suivis (10/10/2026, ADR-0053) : ajouté à la fin (NVS, index 26).
+    // Capteurs suivis (10/10/2026, ADR-0054) : ajouté à la fin (NVS, index 26).
     {"suivi", Ecran::SUIVI, GesteAction::ECRAN},
 };
 constexpr int kNbCodes = static_cast<int>(sizeof(kCodesGestes) / sizeof(kCodesGestes[0]));

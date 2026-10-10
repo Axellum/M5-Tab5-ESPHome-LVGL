@@ -816,7 +816,7 @@ bool camera_url(const Champ& image, const char* base, int largeur, int hauteur, 
     return true;
 }
 
-// ─── 11. Suivi de capteurs (ADR-0053) ───
+// ─── 11. Suivi de capteurs (ADR-0054) ───
 
 namespace {
 // 10^d, d de 0 à kSuiviDecimalesMax.

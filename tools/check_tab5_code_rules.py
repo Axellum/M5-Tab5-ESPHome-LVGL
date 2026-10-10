@@ -420,7 +420,7 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_lecteur.cpp", "glyphe_repetition"): ("lecteur_ico_4",),
     ("tab5_lecteur.cpp", "glyphe_volume"): ("lecteur_ico_muet",),
     ("tab5_lecteur.cpp", "glyphe_genre"): ("lecteur_puce_icone_*",),
-    # Capteurs suivis (ADR-0053) : flèche de tendance de chaque carte du popup
+    # Capteurs suivis (ADR-0054) : flèche de tendance de chaque carte du popup
     # (suivi_carte.yaml) et de la carte de la zone gauche (suivi_zone.yaml), mdi_font_32.
     ("tab5_suivi.cpp", "glyphe_tendance"): ("suivi_fleche_*", "suivi_zone_fleche"),
 }

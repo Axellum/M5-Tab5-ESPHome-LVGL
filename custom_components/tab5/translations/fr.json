@@ -28,7 +28,7 @@
         "data_description": {
           "mettre_a_jour_tablette": "Une fois les fichiers en place, installer le firmware de la même version dès que l'entité « Firmware » de la tablette le propose.",
           "reinstaller": "Pour un fichier du Tab5 effacé ou modifié par erreur. Les fichiers actuels sont d'abord sauvegardés.",
-          "assistant": "Prépare l'automatisation des emplacements de l'écran à partir de vos pièces de Home Assistant. Rien n'est écrit sans votre validation ; une automatisation déjà là ne change que si vous le demandez."
+          "assistant": "Prépare l'automatisation des emplacements de l'écran à partir de vos pièces de Home Assistant, puis les réglages de la maison et les listes « Tab5 · … ». Rien n'est écrit ni réglé sans votre validation ; une automatisation déjà là ne change que si vous le demandez."
         }
       },
       "pieces": {
@@ -59,14 +59,66 @@
           "clim": "Facultatif, avec la température : les boutons − / + de l'accueil la règlent."
         }
       },
+      "maison": {
+        "title": "Assistant · maison",
+        "description": "Ce qui ne dépend pas d'une pièce. Un champ n'est pré-rempli que si votre Home Assistant n'a qu'une réponse possible (une seule TV, une seule clim, une seule météo…) ou si l'automatisation existante l'a déjà ; sinon il reste vide et la tablette fait sans. Changez ce que vous voulez.",
+        "data": {
+          "tv": "TV",
+          "tv_telecommande": "Télécommande de la TV",
+          "telephone": "Batterie du téléphone",
+          "salon_temperature": "Température de la pièce (en haut de l'accueil)",
+          "salon_humidite": "Humidité de la pièce",
+          "serre_temperature": "Seconde température (serre, dehors…)",
+          "serre_exterieure": "La seconde température est dehors",
+          "clim": "Climatisation",
+          "pot_1": "Pot 1",
+          "pot_2": "Pot 2",
+          "pot_3": "Pot 3",
+          "pot_4": "Pot 4",
+          "pot_5": "Pot 5",
+          "meteo_previsions": "Météo des prévisions",
+          "tablette": "Nom de la tablette dans ESPHome"
+        },
+        "data_description": {
+          "tv": "Le bouton « TV » de l'écran.",
+          "tv_telecommande": "Les touches de la télécommande à l'écran.",
+          "telephone": "Une icône en haut à gauche, colorée selon la batterie.",
+          "salon_temperature": "Proposée : celle de la première pièce.",
+          "serre_temperature": "Proposée : la seule température dont le nom dit « extérieur ».",
+          "clim": "Les boutons − / consigne / + de l'accueil.",
+          "pot_1": "Capteurs d'humidité de la terre : proposés s'il y en a cinq au plus.",
+          "meteo_previsions": "Les pages des jours et des heures.",
+          "tablette": "Lu dans l'intégration ESPHome ; vide : « tab5_ha_hmi »."
+        }
+      },
+      "agendas": {
+        "title": "Assistant · agendas et personnes",
+        "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « Aucun » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
+        "data": {
+          "agenda_travail": "Agenda de travail",
+          "agenda_rdv": "Agenda des rendez-vous",
+          "agenda_anniversaires": "Agenda des anniversaires",
+          "agenda_feries": "Agenda des jours fériés",
+          "agenda_vacances": "Agenda des vacances scolaires",
+          "telephone_suivi": "Téléphone suivi",
+          "presence": "Capteur de présence",
+          "pipeline": "Pipeline de discussion"
+        },
+        "data_description": {
+          "agenda_anniversaires": "Anniversaires, fériés, vacances et téléphone : la liste devine déjà seule s'il n'y a qu'une candidate.",
+          "telephone_suivi": "Allume l'écran au retour, l'éteint au départ.",
+          "presence": "Allume l'écran à la détection, l'éteint après 15 min sans présence.",
+          "pipeline": "Le mode « Discussion » de l'écran ; « Aucun » masque ses boutons."
+        }
+      },
       "recapitulatif": {
         "title": "Assistant · récapitulatif",
         "description": "{resume}\n\n{action}",
         "data": {
-          "mettre_a_jour": "Remplacer les pièces de l'automatisation existante"
+          "mettre_a_jour": "Remplacer les pièces et les entrées de la maison de l'automatisation existante"
         },
         "data_description": {
-          "mettre_a_jour": "Ses autres réglages (météo, énergie, gestes…) restent tels quels."
+          "mettre_a_jour": "Un champ de la maison laissé vide garde sa valeur ; ses autres réglages (énergie, gestes…) restent tels quels. Les listes « Tab5 · … » sont réglées avec ou sans cette case."
         }
       }
     },
@@ -153,14 +205,66 @@
               "clim": "Facultatif, avec la température : les boutons − / + de l'accueil la règlent."
             }
           },
+          "maison": {
+            "title": "Assistant · maison",
+            "description": "Ce qui ne dépend pas d'une pièce. Un champ n'est pré-rempli que si votre Home Assistant n'a qu'une réponse possible (une seule TV, une seule clim, une seule météo…) ou si l'automatisation existante l'a déjà ; sinon il reste vide et la tablette fait sans. Changez ce que vous voulez.",
+            "data": {
+              "tv": "TV",
+              "tv_telecommande": "Télécommande de la TV",
+              "telephone": "Batterie du téléphone",
+              "salon_temperature": "Température de la pièce (en haut de l'accueil)",
+              "salon_humidite": "Humidité de la pièce",
+              "serre_temperature": "Seconde température (serre, dehors…)",
+              "serre_exterieure": "La seconde température est dehors",
+              "clim": "Climatisation",
+              "pot_1": "Pot 1",
+              "pot_2": "Pot 2",
+              "pot_3": "Pot 3",
+              "pot_4": "Pot 4",
+              "pot_5": "Pot 5",
+              "meteo_previsions": "Météo des prévisions",
+              "tablette": "Nom de la tablette dans ESPHome"
+            },
+            "data_description": {
+              "tv": "Le bouton « TV » de l'écran.",
+              "tv_telecommande": "Les touches de la télécommande à l'écran.",
+              "telephone": "Une icône en haut à gauche, colorée selon la batterie.",
+              "salon_temperature": "Proposée : celle de la première pièce.",
+              "serre_temperature": "Proposée : la seule température dont le nom dit « extérieur ».",
+              "clim": "Les boutons − / consigne / + de l'accueil.",
+              "pot_1": "Capteurs d'humidité de la terre : proposés s'il y en a cinq au plus.",
+              "meteo_previsions": "Les pages des jours et des heures.",
+              "tablette": "Lu dans l'intégration ESPHome ; vide : « tab5_ha_hmi »."
+            }
+          },
+          "agendas": {
+            "title": "Assistant · agendas et personnes",
+            "description": "Les listes « Tab5 · … » (Paramètres → Appareils et services → Entités). Un choix déjà fait reste. Une liste encore sur « Aucun » reçoit une proposition quand une seule entité convient (un agenda dont le nom dit « travail » ou « rendez-vous », le seul capteur de présence ou d'occupation, le pipeline préféré). Rien n'est réglé avant le récapitulatif ; vous pouvez tout remettre sur « Aucun ».",
+            "data": {
+              "agenda_travail": "Agenda de travail",
+              "agenda_rdv": "Agenda des rendez-vous",
+              "agenda_anniversaires": "Agenda des anniversaires",
+              "agenda_feries": "Agenda des jours fériés",
+              "agenda_vacances": "Agenda des vacances scolaires",
+              "telephone_suivi": "Téléphone suivi",
+              "presence": "Capteur de présence",
+              "pipeline": "Pipeline de discussion"
+            },
+            "data_description": {
+              "agenda_anniversaires": "Anniversaires, fériés, vacances et téléphone : la liste devine déjà seule s'il n'y a qu'une candidate.",
+              "telephone_suivi": "Allume l'écran au retour, l'éteint au départ.",
+              "presence": "Allume l'écran à la détection, l'éteint après 15 min sans présence.",
+              "pipeline": "Le mode « Discussion » de l'écran ; « Aucun » masque ses boutons."
+            }
+          },
           "recapitulatif": {
             "title": "Assistant · récapitulatif",
             "description": "{resume}\n\n{action}",
             "data": {
-              "mettre_a_jour": "Remplacer les pièces de l'automatisation existante"
+              "mettre_a_jour": "Remplacer les pièces et les entrées de la maison de l'automatisation existante"
             },
             "data_description": {
-              "mettre_a_jour": "Ses autres réglages (météo, énergie, gestes…) restent tels quels."
+              "mettre_a_jour": "Un champ de la maison laissé vide garde sa valeur ; ses autres réglages (énergie, gestes…) restent tels quels. Les listes « Tab5 · … » sont réglées avec ou sans cette case."
             }
           }
         },

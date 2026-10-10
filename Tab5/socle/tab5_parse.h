@@ -299,13 +299,13 @@ bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out)
 // (codes_gauche) : ni traduits ni renommés sans lui (tests/test_zone_gauche.py).
 // LECTEUR : le lecteur de musique compact (lot 2, sur le lecteur de l'ADR-0050), sauté
 // quand HA a dit qu'aucun lecteur n'est choisi (tab5_zone_gauche.cpp, disponible()).
-// CAPTEUR : le premier capteur de « Tab5 · capteurs suivis » en courbe (ADR-0053, section
+// CAPTEUR : le premier capteur de « Tab5 · capteurs suivis » en courbe (ADR-0054, section
 // 11), sauté de même quand HA a dit qu'aucun capteur n'est choisi.
 enum class ZoneGauche : uint8_t {
     VOCAL,      // le micro et les boutons Domo / Discu (l'écran d'avant)
     GRAPHIQUE,  // les prévisions des heures qui viennent en courbe et barres de pluie
     LECTEUR,    // le lecteur de musique compact (lot 2)
-    CAPTEUR,    // un capteur suivi : nom, valeur, variation, courbe des 24 h (ADR-0053)
+    CAPTEUR,    // un capteur suivi : nom, valeur, variation, courbe des 24 h (ADR-0054)
     NB
 };
 constexpr const char* kZoneGaucheCodes[static_cast<int>(ZoneGauche::NB)] = {"vocal", "graphique", "lecteur",
@@ -575,7 +575,7 @@ int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax]);
 // dans les cas de ha_image_url() ou si la taille ne tient pas dans `n`.
 bool camera_url(const Champ& image, const char* base, int largeur, int hauteur, char* out, size_t n);
 
-// ─── 11. Suivi de capteurs (tab5_maj_suivi, ADR-0053) ───
+// ─── 11. Suivi de capteurs (tab5_maj_suivi, ADR-0054) ───
 // Une variable, poussée par packages/tab5_suivi.yaml : un enregistrement par capteur de la
 // liste « Tab5 · capteurs suivis », dans son ordre, séparés par « ; » (kSuivisMax au plus ;
 // vide : aucun capteur choisi) :

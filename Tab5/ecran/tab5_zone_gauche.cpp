@@ -22,7 +22,7 @@
  *           (mêmes données et commandes que le popup Musique, lecteur_zone_montrer) et
  *           masque la mini-barre « en lecture » tant qu'elle est montrée. Sauté quand HA a
  *           dit qu'aucun lecteur n'est choisi (lecteur_zone_disponible).
- *         - « capteur » (ADR-0053) : la carte zone_suivi (suivi_zone.yaml), montrée ou
+ *         - « capteur » (ADR-0054) : la carte zone_suivi (suivi_zone.yaml), montrée ou
  *           masquée d'ici ; tab5_suivi.cpp la peint (le premier capteur de « Tab5 · capteurs
  *           suivis » : nom, valeur, variation, courbe des 24 h sur un dégradé). Elle
  *           partage le tampon du dégradé du graphique (zone_degrade_peindre) : les deux ne
@@ -87,7 +87,7 @@ Etat s_etat;
 // Ce que l'écran sait montrer. Le lecteur compact (lot 2) : sauté quand HA a dit
 // qu'aucun lecteur n'est choisi (sa liste « Tab5 · lecteurs de musique » est vide) ; avant
 // toute poussée, il se montre (« En attente de Home Assistant »). Le capteur suivi
-// (ADR-0053) de même avec la liste « Tab5 · capteurs suivis ».
+// (ADR-0054) de même avec la liste « Tab5 · capteurs suivis ».
 bool disponible(ZoneGauche z) {
     switch (z) {
         case ZoneGauche::VOCAL:
@@ -186,7 +186,7 @@ struct Graphique {
 Graphique s_g;
 lv_point_precise_t s_pts[(kHeuresMax - 1) * kLisse + 1];
 // Tampon du dégradé, partagé par les contenus de la zone (le graphique et le capteur suivi,
-// ADR-0053 : jamais montrés ensemble). Une seule image le montre à la fois (s_aire_image) ;
+// ADR-0054 : jamais montrés ensemble). Une seule image le montre à la fois (s_aire_image) ;
 // celle qui le reprend vide l'autre et prévient son contenu (s_aire_perdu), qui se marque
 // « sale » et repeint son dégradé à sa prochaine apparition.
 uint8_t* s_aire_px = nullptr;  // pixels du remplissage (kAireLMax × kAireHMax × 4 octets)

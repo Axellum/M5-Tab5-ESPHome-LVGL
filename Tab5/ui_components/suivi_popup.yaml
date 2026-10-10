@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT]
 # @file suivi_popup.yaml
-# @role Popup « Suivi » (ADR-0053, 10/10/2026) : les capteurs de la liste « Tab5 · capteurs
+# @role Popup « Suivi » (ADR-0054, 10/10/2026) : les capteurs de la liste « Tab5 · capteurs
 #       suivis » de Home Assistant (six au plus), une carte chacun — nom, valeur et unité,
 #       variation colorée avec sa flèche de tendance, courbe des 24 dernières heures.
 #       Ouvert par un tap sur la carte du capteur dans la zone à gauche de l'horloge, par

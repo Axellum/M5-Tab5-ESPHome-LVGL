@@ -6,7 +6,7 @@
 
 The Tab5 screen speaks **French** (the source language), **English**, **German**, **Dutch**, **Spanish**, **Italian** or **Turkish**. Everything the screen shows or the tablet says follows the chosen language: popups, cards, dates, the alarm clock and its spoken reminders, and the eight games. Two exceptions: the **quiz questions** of Trial Poursuite stay French (more than 720 of them), and the **console names** (Fil d'Or, Roi Noir…) are proper names, kept as they are.
 
-Every language was written by an AI, like the rest of the project. The author checked the French; the English, and the German, Dutch, Spanish, Italian and Turkish translations (made with Claude from the French and English texts) have not been reviewed yet. Corrections are welcome: an issue, or a pull request on `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml`, `it.yaml` or `tr.yaml`.
+Every language was written by an AI, like the rest of the project. The author checked the French; the English, and the German, Dutch, Spanish, Italian and Turkish translations (made with Claude from the French and English texts) have not been reviewed yet. Corrections are welcome: an issue, or a pull request on `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml`, `it.yaml` or `tr.yaml`. The Home Assistant integration (HACS) speaks the same seven languages, from the server language: `custom_components/tab5/translations/*.json`, `messages.py` and the `TEXTES` / `LIBELLES` tables of `assistant.py`, translated the same way and not reviewed either.
 
 ## Choosing the language
 
@@ -61,7 +61,7 @@ Each language is one file, `Tab5/lang/<code>.yaml`: a flat mapping `"French text
 
 L'écran du Tab5 parle **français** (la langue source), **anglais**, **allemand**, **néerlandais**, **espagnol**, **italien** ou **turc**. Tout ce que l'écran affiche ou que la tablette dit suit la langue choisie : popups, cartes, dates, le réveil et ses rappels parlés, et les huit jeux. Deux exceptions : les **questions du quiz** de Trial Poursuite restent en français (plus de 720), et les **noms des consoles** (Fil d'Or, Roi Noir…) sont des noms propres, gardés tels quels.
 
-Toutes les langues ont été écrites par une IA, comme le reste du projet. L'auteur a relu le français ; l'anglais, et les traductions allemande, néerlandaise, espagnole, italienne et turque (faites avec Claude à partir des textes français et anglais), ne sont pas encore relus. Les corrections sont bienvenues : une issue, ou une pull request sur `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml`, `it.yaml` ou `tr.yaml`.
+Toutes les langues ont été écrites par une IA, comme le reste du projet. L'auteur a relu le français ; l'anglais, et les traductions allemande, néerlandaise, espagnole, italienne et turque (faites avec Claude à partir des textes français et anglais), ne sont pas encore relus. Les corrections sont bienvenues : une issue, ou une pull request sur `Tab5/lang/en.yaml`, `de.yaml`, `nl.yaml`, `es.yaml`, `it.yaml` ou `tr.yaml`. L'intégration Home Assistant (HACS) parle les mêmes sept langues, d'après la langue du serveur : `custom_components/tab5/translations/*.json`, `messages.py` et les tables `TEXTES` / `LIBELLES` d'`assistant.py`, traduits de la même façon et pas relus non plus.
 
 ## Choisir la langue
 

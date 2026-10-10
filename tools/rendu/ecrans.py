@@ -701,7 +701,7 @@ LECTEUR_INACTIF = Service("tab5_maj_lecteur", (
 ))
 
 
-# Capteurs suivis (ADR-0053, suivi_popup.yaml et suivi_zone.yaml) : quatre capteurs au
+# Capteurs suivis (ADR-0054, suivi_popup.yaml et suivi_zone.yaml) : quatre capteurs au
 # format de packages/tab5_suivi.yaml (script tab5_suivi_pousser) — un cours en hausse
 # du jour (change_pct), une température en baisse sur 24 h (écart, deux heures sans
 # mesure), une puissance et un indice en baisse du jour. 24 moyennes horaires puis la
@@ -1128,7 +1128,7 @@ ECRANS: tuple[Ecran, ...] = (
           (ZONE_VOCAL, LECTEUR_AUCUN, Choisir("Thème", THEME_PAR_DEFAUT))),
     # Popup Caméras (ADR-0049) : trois caméras, la première montrée.
     Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"))),
-    # Capteurs suivis (ADR-0053) : le popup avant toute poussée (« En attente de Home
+    # Capteurs suivis (ADR-0054) : le popup avant toute poussée (« En attente de Home
     # Assistant »), avec quatre capteurs (deux rangées : 3 colonnes au plus), puis la carte
     # du premier dans la zone à gauche de l'horloge, dans le thème par défaut et en gélule.
     Ecran("suivi-vide", (Aller("Suivi"),)),

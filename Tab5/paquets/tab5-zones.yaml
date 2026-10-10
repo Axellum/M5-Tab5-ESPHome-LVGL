@@ -40,7 +40,7 @@ script:
       # la zone à gauche de l'horloge (ADR-0051) peut être le contenu de départ, avant toute
       # poussée de HA.
       - script.execute: tab5_lecteur_lier
-      # Widgets des capteurs suivis (ADR-0053, tab5-suivi.yaml) : la carte du capteur de la
+      # Widgets des capteurs suivis (ADR-0054, tab5-suivi.yaml) : la carte du capteur de la
       # zone à gauche de l'horloge peut être le contenu de départ.
       - script.execute: tab5_suivi_lier
       - lambda: |-

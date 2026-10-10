@@ -193,7 +193,7 @@ font:
       # glyphe de ce que fait le tap (code_glyphe, tab5_zones.cpp) ; ceux de la palette
       # (flower, home, solar-power) sont plus bas.
       - "\U000F0020"  # alarm (aussi tap : Réveil)
-      - "\U000F012A"  # chart-line (tap : Suivi, ADR-0053)
+      - "\U000F012A"  # chart-line (tap : Suivi, ADR-0054)
       - "\U000F018D"  # console (tap : Console système)
       - "\U000F0297"  # gamepad-variant (bouton du haut : Arcade, 06/10/2026)
       - "\U000F02E3"  # bed
@@ -512,7 +512,7 @@ font:
       - "\U000F00DF"  # brightness-6 (Réglages : luminosité)
       - "\U000F00EB"  # cake-variant
       - "\U000F00F0"  # calendar-clock
-      - "\U000F012A"  # chart-line (titre du popup Suivi, ADR-0053)
+      - "\U000F012A"  # chart-line (titre du popup Suivi, ADR-0054)
       - "\U000F0141"  # chevron-left
       - "\U000F0142"  # chevron-right
       - "\U000F0150"  # clock-outline
@@ -530,7 +530,7 @@ font:
       - "\U000F0450"  # refresh
       - "\U000F0474"  # school
       - "\U000F0493"  # cog (Réglages : en-tête)
-      - "\U000F0533"  # trending-down (baisse d'un capteur suivi, ADR-0053)
+      - "\U000F0533"  # trending-down (baisse d'un capteur suivi, ADR-0054)
       - "\U000F0534"  # trending-neutral (capteur suivi stable)
       - "\U000F0535"  # trending-up (hausse d'un capteur suivi)
       - "\U000F04B9"  # sofa
@@ -657,7 +657,7 @@ font:
       - "\U000F0083"  # battery-alert (< 20 %)
       - "\U000F0084"  # battery-charging (en charge)
       - "\U000F0091"  # battery-unknown (pas de mesure)
-      - "\U000F012A"  # chart-line (mini icône : Suivi, ADR-0053)
+      - "\U000F012A"  # chart-line (mini icône : Suivi, ADR-0054)
       - "\U000F011E"  # cellphone-basic
       - "\U000F018D"  # console (mini icône : Console système)
       - "\U000F01D8"  # dots-horizontal (« ⋯ » d'une ligne du popup Maison, ADR-0037)

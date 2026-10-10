@@ -1,7 +1,7 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_suivi.h
- * @role Capteurs suivis (tab5_suivi.cpp, ADR-0053) : le popup plein écran « Suivi » et la
+ * @role Capteurs suivis (tab5_suivi.cpp, ADR-0054) : le popup plein écran « Suivi » et la
  *       carte du premier capteur dans la zone à gauche de l'horloge (ADR-0051).
  * @architecture_constraint tab5_custom.h l'inclut : les lambdas YAML et les unités
  *       `tab5_*.cpp` le voient. Une fonction déclarée ici a un appelant hors de son fichier
@@ -15,7 +15,7 @@
 #include <string>
 
 // =============================================================================
-// Capteurs suivis (ADR-0053, 10/10/2026, demande d'Axel) — tab5_suivi.cpp
+// Capteurs suivis (ADR-0054, 10/10/2026, demande d'Axel) — tab5_suivi.cpp
 // =============================================================================
 // Home Assistant pousse (tab5_maj_suivi, packages/tab5_suivi.yaml) les capteurs choisis
 // dans sa liste « Tab5 · capteurs suivis » (six au plus) : nom, valeur et unité, variation

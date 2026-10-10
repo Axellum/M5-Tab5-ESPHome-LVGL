@@ -67,7 +67,7 @@ packages:
   tab5_meteo:      !include Tab5/paquets/tab5-meteo.yaml          # Weather popup (ADR-0043), after tab5_lvgl
   tab5_lecteur:    !include Tab5/paquets/tab5-lecteur.yaml        # Music popup (ADR-0050), after tab5_lvgl and tab5_assist
   tab5_cameras:    !include Tab5/paquets/tab5-cameras.yaml        # Cameras popup (ADR-0049), after tab5_lvgl
-  tab5_suivi:      !include Tab5/paquets/tab5-suivi.yaml          # tracked sensors (ADR-0053), after tab5_lvgl
+  tab5_suivi:      !include Tab5/paquets/tab5-suivi.yaml          # tracked sensors (ADR-0054), after tab5_lvgl
   tab5_zones:      !include Tab5/paquets/tab5-zones.yaml          # optional zones (ADR-0018), after tab5_lvgl
   tab5_reglages:   !include Tab5/paquets/tab5-reglages.yaml       # Settings popup, after tab5_lvgl
   tab5_economie:   !include Tab5/paquets/tab5-economie.yaml       # energy saving: backlight cap, animations, LVGL rate
@@ -303,7 +303,7 @@ Music popup ([ADR-0050](decisions/0050-music-player.md), 2026-10-10): a centred 
 ---
 
 ### `tab5-suivi.yaml`
-Tracked sensors ([ADR-0053](decisions/0053-tracked-sensors.md), 2026-10-10): the « Suivi » popup — one card per sensor chosen in « Tab5 · capteurs suivis » (six at most), with its name, value and unit, change in colour with a trend arrow, and the curve of the last 24 hours — and the card of the first sensor that the zone left of the clock can show (content « capteur », [ADR-0051](decisions/0051-left-zone-choice.md)) (`ui_components/suivi_popup.yaml`, `suivi_carte.yaml`, `suivi_zone.yaml`). Home Assistant pushes them with the `tab5_maj_suivi` action (read by `tab5_parse.cpp`, section 11; `packages/tab5_suivi.yaml`); `tab5_suivi_lier` hands `g_suivi_ui` the widgets (also run at boot by `tab5_zones_apply`), `tab5_suivi_ouvrir` paints and opens the popup. Opened by a tap on the zone's card, the `suivi` gesture or « Aller à l'écran → Suivi ». Nothing is asked of Home Assistant; no `lv_*` here; loaded after `tab5-lvgl.yaml`.
+Tracked sensors ([ADR-0054](decisions/0054-tracked-sensors.md), 2026-10-10): the « Suivi » popup — one card per sensor chosen in « Tab5 · capteurs suivis » (six at most), with its name, value and unit, change in colour with a trend arrow, and the curve of the last 24 hours — and the card of the first sensor that the zone left of the clock can show (content « capteur », [ADR-0051](decisions/0051-left-zone-choice.md)) (`ui_components/suivi_popup.yaml`, `suivi_carte.yaml`, `suivi_zone.yaml`). Home Assistant pushes them with the `tab5_maj_suivi` action (read by `tab5_parse.cpp`, section 11; `packages/tab5_suivi.yaml`); `tab5_suivi_lier` hands `g_suivi_ui` the widgets (also run at boot by `tab5_zones_apply`), `tab5_suivi_ouvrir` paints and opens the popup. Opened by a tap on the zone's card, the `suivi` gesture or « Aller à l'écran → Suivi ». Nothing is asked of Home Assistant; no `lv_*` here; loaded after `tab5-lvgl.yaml`.
 
 ---
 
@@ -635,7 +635,7 @@ Popup Caméras ([ADR-0049](decisions/0049-cameras-popup.md), 09/10/2026, discuss
 ---
 
 ### `tab5-suivi.yaml`
-Capteurs suivis ([ADR-0053](decisions/0053-tracked-sensors.md), 10/10/2026) : le popup « Suivi » — une carte par capteur choisi dans « Tab5 · capteurs suivis » (six au plus), avec son nom, sa valeur et son unité, sa variation en couleur avec une flèche de tendance et la courbe des 24 dernières heures — et la carte du premier capteur que peut montrer la zone à gauche de l'horloge (contenu « capteur », [ADR-0051](decisions/0051-left-zone-choice.md)) (`ui_components/suivi_popup.yaml`, `suivi_carte.yaml`, `suivi_zone.yaml`). Home Assistant les pousse par l'action `tab5_maj_suivi` (lue par `tab5_parse.cpp`, section 11 ; `packages/tab5_suivi.yaml`) ; `tab5_suivi_lier` pose les widgets dans `g_suivi_ui` (lancé aussi au démarrage par `tab5_zones_apply`), `tab5_suivi_ouvrir` peint et ouvre le popup. Ouvert par un tap sur la carte de la zone, le geste `suivi` ou « Aller à l'écran → Suivi ». Rien n'est demandé à Home Assistant ; aucun `lv_*` ici ; chargé après `tab5-lvgl.yaml`.
+Capteurs suivis ([ADR-0054](decisions/0054-tracked-sensors.md), 10/10/2026) : le popup « Suivi » — une carte par capteur choisi dans « Tab5 · capteurs suivis » (six au plus), avec son nom, sa valeur et son unité, sa variation en couleur avec une flèche de tendance et la courbe des 24 dernières heures — et la carte du premier capteur que peut montrer la zone à gauche de l'horloge (contenu « capteur », [ADR-0051](decisions/0051-left-zone-choice.md)) (`ui_components/suivi_popup.yaml`, `suivi_carte.yaml`, `suivi_zone.yaml`). Home Assistant les pousse par l'action `tab5_maj_suivi` (lue par `tab5_parse.cpp`, section 11 ; `packages/tab5_suivi.yaml`) ; `tab5_suivi_lier` pose les widgets dans `g_suivi_ui` (lancé aussi au démarrage par `tab5_zones_apply`), `tab5_suivi_ouvrir` peint et ouvre le popup. Ouvert par un tap sur la carte de la zone, le geste `suivi` ou « Aller à l'écran → Suivi ». Rien n'est demandé à Home Assistant ; aucun `lv_*` ici ; chargé après `tab5-lvgl.yaml`.
 
 ---
 

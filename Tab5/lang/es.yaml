@@ -1425,7 +1425,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Image de %02d:%02d:%02d": "Imagen de las %02d:%02d:%02d"
 "Plus d'image depuis %02d:%02d:%02d": "Sin imagen desde las %02d:%02d:%02d"
 
-# --- Capteurs suivis (tab5_suivi.cpp, ADR-0053) ---------------------------------
+# --- Capteurs suivis (tab5_suivi.cpp, ADR-0054) ---------------------------------
 "Suivi": "Seguimiento"
 "Aucun capteur suivi": "Ningún sensor seguido"
 "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis ».": "Elige tus sensores en Home Assistant: «Tab5 · capteurs suivis · tracked sensors»."

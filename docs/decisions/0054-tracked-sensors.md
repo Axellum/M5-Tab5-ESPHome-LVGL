@@ -1,4 +1,4 @@
-# ADR-0053: Tracked sensors — any numeric sensor chosen in Home Assistant, as a curve left of the clock and in a « Suivi » popup, pushed by `tab5_maj_suivi`
+# ADR-0054: Tracked sensors — any numeric sensor chosen in Home Assistant, as a curve left of the clock and in a « Suivi » popup, pushed by `tab5_maj_suivi`
 
 **Status:** Accepted (2026-10-10, asked for by the author; not tried on a tablet when written).
 **Date:** 2026-10-10

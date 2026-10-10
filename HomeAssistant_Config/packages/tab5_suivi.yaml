@@ -1,7 +1,7 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file packages/tab5_suivi.yaml
-# @role Capteurs suivis de la tablette (ADR-0053, 10/10/2026) : le popup « Suivi » (une
+# @role Capteurs suivis de la tablette (ADR-0054, 10/10/2026) : le popup « Suivi » (une
 #       carte par capteur : nom, valeur, variation, courbe des 24 dernières heures) et la
 #       carte du PREMIER capteur dans la zone à gauche de l'horloge (contenu « capteur »
 #       du blueprint, ADR-0051). N'importe quel capteur numérique : un cours de bourse,
@@ -71,7 +71,7 @@ automation:
     alias: "Tab5 — capteurs suivis (poussée au changement)"
     description: >-
       Pousse vers la tablette les capteurs de la liste « Tab5 · capteurs suivis » quand
-      l'un d'eux change, cinq minutes au plus entre deux poussées (ADR-0053).
+      l'un d'eux change, cinq minutes au plus entre deux poussées (ADR-0054).
     mode: single
     max_exceeded: silent
     triggers:
@@ -98,7 +98,7 @@ automation:
     description: >-
       Pousse vers la tablette les capteurs suivis quand la liste « Tab5 · capteurs
       suivis » change, à la connexion de la tablette, à « MAJ Écran », au démarrage de
-      Home Assistant et toutes les heures (ADR-0053).
+      Home Assistant et toutes les heures (ADR-0054).
     mode: queued
     max: 3
     triggers:

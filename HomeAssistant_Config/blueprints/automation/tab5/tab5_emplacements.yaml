@@ -1199,7 +1199,7 @@ blueprint:
     # heures qui viennent en graphique (« graphique ») ou le lecteur de musique compact
     # (« lecteur », lot 2 : les lecteurs de la liste « Tab5 · lecteurs de musique », le
     # firmware le saute quand elle est vide) ou le premier capteur suivi en courbe
-    # (« capteur », ADR-0053 : la liste « Tab5 · capteurs suivis », sautée vide aussi).
+    # (« capteur », ADR-0054 : la liste « Tab5 · capteurs suivis », sautée vide aussi).
     # Clé « gauche|départ|c1|… » de
     # tab5_maj_emplacements (variable gauche), poussée avec les gestes ; un firmware plus
     # ancien l'ignore. Codes = kZoneGaucheCodes de Tab5/socle/tab5_parse.h

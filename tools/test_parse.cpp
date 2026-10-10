@@ -785,7 +785,7 @@ static void test_zone_gauche() {
     {
         constexpr uint8_t C = zone_gauche_bit(ZoneGauche::CAPTEUR);
         const ZoneGaucheLu z = gauche("capteur|vocal|lecteur");
-        expect(z.defaut == ZoneGauche::CAPTEUR && z.cycle == (C | V | L), "zone gauche : capteur lu et gardé (ADR-0053)");
+        expect(z.defaut == ZoneGauche::CAPTEUR && z.cycle == (C | V | L), "zone gauche : capteur lu et gardé (ADR-0054)");
     }
     {
         const ZoneGaucheLu z = gauche("Vocal|GRAPHIQUE| graphique|graphiques");
@@ -1255,7 +1255,7 @@ static void test_payloads_ha() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// 10. Suivi de capteurs (ADR-0053)
+// 10. Suivi de capteurs (ADR-0054)
 // ════════════════════════════════════════════════════════════════════════════
 
 static void test_suivis_lire() {

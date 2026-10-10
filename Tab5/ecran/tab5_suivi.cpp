@@ -1,7 +1,7 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_suivi.cpp
- * @role Capteurs suivis (ADR-0053, 10/10/2026, demande d'Axel : « le graphique d'un capteur
+ * @role Capteurs suivis (ADR-0054, 10/10/2026, demande d'Axel : « le graphique d'un capteur
  *       numérique choisi dans HA », à gauche de l'horloge, et un popup avec tous ceux qu'on
  *       suit). Peint, d'après ce que pousse tab5_maj_suivi (lu par suivis_lire(),
  *       Tab5/socle/tab5_parse.h, section 11) :

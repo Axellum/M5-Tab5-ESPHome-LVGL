@@ -76,7 +76,7 @@ def test_option_maison_du_select_a_la_fin():
     options = re.findall(r'^\s*-\s*"([^"]+)"', bloc, re.M)
     # Ajoutée à la fin le 07/10/2026 : les index des autres options ne bougent pas. Celles
     # de la roue de navigation (ADR-0042), du popup Météo (ADR-0043), du lecteur de musique
-    # (ADR-0050), du popup Caméras (ADR-0049) et du popup Suivi (ADR-0053) sont venues après elle.
+    # (ADR-0050), du popup Caméras (ADR-0049) et du popup Suivi (ADR-0054) sont venues après elle.
     assert options[12] == "Maison", "à la fin : les index des autres options ne bougent pas"
     assert options[13:] == ["Lumières", "Volet", "Température", "Météo", "Musique", "Caméras", "Suivi"]
     # L'index de l'option est sa valeur d'Ecran (tab5_zones.h, tests/test_appuis.py) ; le

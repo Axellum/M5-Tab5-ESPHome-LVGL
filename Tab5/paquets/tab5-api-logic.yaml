@@ -725,7 +725,7 @@ api:
         - script.execute: tab5_lecteur_lier
         - lambda: 'lecteur_recu(lecteurs, etat);'
 
-    # Capteurs suivis (ADR-0053, 10/10/2026) : packages/tab5_suivi.yaml pousse les capteurs de
+    # Capteurs suivis (ADR-0054, 10/10/2026) : packages/tab5_suivi.yaml pousse les capteurs de
     # « Tab5 · capteurs suivis » ; le premier est la carte de la zone à gauche de l'horloge.
     - service: tab5_maj_suivi
       description: "Capteurs suivis : nom, valeur, unité, variation et courbe des 24 h de chaque capteur choisi."

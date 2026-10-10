@@ -1,7 +1,7 @@
 # ============================================================================
 # [AI-CONTEXT]
 # @file tab5-suivi.yaml
-# @role Capteurs suivis (ADR-0053, 10/10/2026) : pose les widgets que tab5_suivi.cpp peint
+# @role Capteurs suivis (ADR-0054, 10/10/2026) : pose les widgets que tab5_suivi.cpp peint
 #       (g_suivi_ui).
 #         - tab5_suivi_lier : widgets dans g_suivi_ui, une fois (appelé au démarrage par
 #           tab5_zones_apply, tab5-zones.yaml, pour la carte du capteur de la zone à gauche

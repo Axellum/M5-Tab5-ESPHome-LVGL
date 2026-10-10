@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════
-# [AI-CONTEXT] Carte d'un capteur suivi du popup Suivi (ADR-0053), réutilisée 6 fois par
+# [AI-CONTEXT] Carte d'un capteur suivi du popup Suivi (ADR-0054), réutilisée 6 fois par
 # suivi_popup.yaml : une par capteur de la liste « Tab5 · capteurs suivis ».
 # vars : n (0-5, suffixe des ids lus par tab5_suivi.cpp via g_suivi_ui).
 # Ne rien placer ici : tab5_suivi.cpp montre les cartes des capteurs reçus, les répartit
