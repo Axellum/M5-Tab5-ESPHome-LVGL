@@ -112,6 +112,11 @@ def test_chaque_commande_de_l_ecran_a_sa_branche():
             # Popup clim (ADR-0027) : « clim » ou la tuile tRT d'une clim, traduites par les
             # mêmes branches « Clim : … » (tests/test_clim.py).
             assert f"clim_commande == '{cmd}'" in texte, f"commande {cmd!r} du popup clim sans branche"
+        elif "telecommande_cle()" in emp:
+            # Popup télécommande (ADR-0056) : « tv », « tv1 »…, résolus en rang par les
+            # branches « Télécommande : … » (tests/test_telecommandes.py).
+            assert f"tc_rang >= 0 and commande == '{cmd}'" in texte, \
+                f"commande {cmd!r} de la télécommande sans branche dans le blueprint"
         elif emp.startswith("!lambda"):
             # Clé calculée à l'exécution : une tuile tRT ou une pièce pR (ADR-0023),
             # aiguillée par le domaine de l'entité de la tuile (tests/test_tuiles_blueprint.py).

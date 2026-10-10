@@ -155,6 +155,9 @@ EMPLACEMENTS = {
     "pc": "switch.decorative_lights",
     "tv": "media_player.living_room",
     "tv_telecommande": "remote.remote_one",
+    # Popup télécommande (ADR-0056) : une seconde page ; la demo n'a pas d'Apple TV, les deux
+    # sont des « tv ». Une entité absente garderait sa place, sans nom.
+    "telecommandes_autres": ["remote.remote_two"],
     "telephone": "sensor.telephone_ci_batterie",
     "salon_temperature": "sensor.outside_temperature",
     "salon_humidite": "sensor.outside_humidity",
@@ -409,7 +412,9 @@ def entrees_blueprint() -> dict[str, Any]:
 
 def entites_de_test() -> list[str]:
     """Toutes les entités que les entrées nomment (elles doivent exister dans HA)."""
-    entites = set(EMPLACEMENTS.values())
+    entites = set()
+    for valeur in EMPLACEMENTS.values():  # une liste : les autres télécommandes (ADR-0056)
+        entites.update(valeur if isinstance(valeur, list) else [valeur])
     for cle, valeur in PIECES.items():
         if cle.endswith("_tuiles"):
             entites.update(valeur)
@@ -1315,6 +1320,14 @@ async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rappor
                      f"clims des tuiles : réglages (cr) et état (ce) de {CLIM_DE_TUILE} calculés à la connexion, "
                      "rien pour la clim du blueprint (ADR-0027)", " ; ".join(problemes))
     rapport.info(f"clims des tuiles : {reglages_clims}{etats_clims}")
+    # Popup télécommande (ADR-0056) : « telecommandes|écran|nom|…; » à la connexion, la
+    # télécommande de la TV d'abord, avec un nom (celui de son appareil ou de l'entité).
+    telecommandes = str(variables.get("telecommandes_pousse") or "")
+    champs = telecommandes.rstrip(";").split("|")
+    rapport.verifier(telecommandes.endswith(";") and champs[0] == "telecommandes" and len(champs) == 5
+                     and champs[1] == "tv" and champs[2] != "" and champs[3] == "tv",
+                     "télécommandes : les deux pages calculées à la connexion (telecommandes|tv|nom|tv|nom)",
+                     f"telecommandes_pousse = {telecommandes!r}")
 
     appels = [(run_id, a) for run_id, trace in traces.items() for a in appels_de_trace(trace)
               if str(a.get("service", "")).endswith("_tab5_maj_tuiles")]

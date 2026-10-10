@@ -645,6 +645,25 @@ blueprint:
             entity:
               filter:
                 - domain: remote
+        telecommandes_autres:
+          name: Autres télécommandes · Other remotes
+          description: >-
+            Jusqu'à trois autres télécommandes (Apple TV, Freebox Player…). Chacune a sa page
+            dans le popup de la télécommande : son nom en haut, et l'on glisse de l'une à
+            l'autre. Celles de l'intégration Apple TV ont le pavé, la lecture et le volume,
+            sans les boutons d'applications ; les autres, les touches de la TV.
+
+
+            Up to three other remotes (Apple TV, Freebox Player…). Each one gets its page in
+            the remote popup: its name at the top, and a swipe goes from one to the next.
+            Those of the Apple TV integration get the pad, playback and volume, without the
+            app buttons; the others, the keys of the TV.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: remote
         telephone:
           name: Batterie du téléphone · Phone battery
           description: >-
@@ -3158,6 +3177,73 @@ variables:
       {%- endif -%}
     {%- endfor -%}
     gauche|{{ ns.l | join('|') }};
+  # Télécommandes du popup (ADR-0056, 10/10/2026) : celle de la TV, puis les autres, sans
+  # doublon, 4 au plus. Leur rang est leur emplacement (telecommande_emplacements, même
+  # ordre que telecommande_emplacement() de Tab5/socle/tab5_parse.cpp) : « tv » pour la
+  # première, celui qu'envoie un firmware d'avant l'ADR-0056. Une télécommande
+  # indisponible garde sa place (les pages ne bougent pas quand un boîtier dort).
+  telecommandes_choix: !input telecommandes_autres
+  telecommande_emplacements: [tv, tv1, tv2, tv3]
+  telecommandes: >-
+    {%- set autres = [telecommandes_choix] if telecommandes_choix is string else (telecommandes_choix or []) -%}
+    {%- set ns = namespace(l=[]) -%}
+    {%- for e in [sources.tv_telecommande] + autres -%}
+      {%- if e is string and e.startswith('remote.') and e not in ns.l and ns.l | length < 4 -%}
+        {%- set ns.l = ns.l + [e] -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{ ns.l }}
+  # « telecommandes|écran|nom|…; » : écran « boitier » pour l'intégration Apple TV (Apple
+  # TV, Freebox Player : pavé, lecture, volume), « tv » sinon (les touches KEY_* d'une TV
+  # Samsung, ses applications) ; codes de kTelecommandeEcranCodes (tab5_parse.h). Nom :
+  # celui de l'appareil sans sa pièce ni sa parenthèse finale (« Salon · Freebox Player
+  # (Apple TV 3) » → « Freebox Player ») ; vide pour une entité que HA ne connaît plus (le
+  # firmware écrit « Télécommande N », jamais un identifiant). Poussée avec tous les
+  # états, même vide (une liste vidée efface les pages) ; un firmware plus ancien ignore
+  # la clé.
+  telecommandes_pousse: >-
+    {%- set boitiers = integration_entities('apple_tv') -%}
+    {%- set ns = namespace(l=[]) -%}
+    {%- for e in telecommandes -%}
+      {%- set dev = device_id(e) -%}
+      {%- set fn = (((device_attr(dev, 'name_by_user') or device_attr(dev, 'name')) if dev else '')
+                    or state_attr(e, 'friendly_name') or '') | string | trim -%}
+      {%- set piece = (area_name(e) or '') | string -%}
+      {%- set nom = namespace(s=fn) -%}
+      {%- set i = (fn | lower).find(piece | lower) if piece else -1 -%}
+      {%- set j = i + (piece | length) -%}
+      {%- if i >= 0 and (i == 0 or not fn[i - 1].isalnum()) and (j >= fn | length or not fn[j].isalnum()) -%}
+        {%- set reste = (fn[:i] ~ ' ' ~ fn[j:]).split() | join(' ') | trim(' -–:,·') -%}
+        {%- if reste -%}{%- set nom.s = reste -%}{%- endif -%}
+      {%- endif -%}
+      {%- if nom.s.endswith(')') and nom.s.rfind(' (') > 0 -%}{%- set nom.s = nom.s[:nom.s.rfind(' (')] | trim -%}{%- endif -%}
+      {%- set ns.l = ns.l + [('boitier' if e in boitiers else 'tv'), nom.s | replace('|', '/') | replace(';', ',')] -%}
+    {%- endfor -%}
+    telecommandes|{{ ns.l | join('|') }};
+  # Touches de l'écran (codes KEY_* d'une TV Samsung, le vocabulaire commun) → commandes de
+  # l'intégration Apple TV (méthodes RemoteControl de pyatv, vérifiées le 10/10/2026 dans
+  # homeassistant/components/apple_tv/remote.py : tout nom passe par getattr, sauf
+  # turn_on / turn_off / volume_up / volume_down). Pas de muet ni de source chez pyatv :
+  # ces touches-là n'envoient rien (le popup ne les montre pas sur un boîtier).
+  telecommande_apple_tv:
+    KEY_UP: up
+    KEY_DOWN: down
+    KEY_LEFT: left
+    KEY_RIGHT: right
+    KEY_ENTER: select
+    KEY_RETURN: menu
+    KEY_MENU: top_menu
+    KEY_HOME: home
+    KEY_PLAY: play
+    KEY_PAUSE: pause
+    KEY_PLAYPAUSE: play_pause
+    KEY_STOP: stop
+    KEY_REWIND: skip_backward
+    KEY_FF: skip_forward
+    KEY_PREV: previous
+    KEY_NEXT: next
+    KEY_VOLUP: volume_up
+    KEY_VOLDOWN: volume_down
 
 triggers:
   - trigger: event
@@ -3683,10 +3769,11 @@ actions:
         {%- endfor -%}
         {#- Gestes de l'horloge et des boutons du haut (variables appuis, puis gestes),
             défilement au choix (variable defil) et zone à gauche de l'horloge (variable
-            gauche, ADR-0051), avec tous les états. Un firmware sans ces choix ignore les
-            clés (clé inconnue). -#}
+            gauche, ADR-0051) et télécommandes du popup (variable telecommandes_pousse,
+            ADR-0056), avec tous les états. Un firmware sans ces choix ignore les clés (clé
+            inconnue). -#}
         {%- if tout_pousser -%}
-          {%- set ns.r = ns.r ~ appuis ~ gestes ~ defil ~ gauche -%}
+          {%- set ns.r = ns.r ~ appuis ~ gestes ~ defil ~ gauche ~ telecommandes_pousse -%}
         {%- endif -%}
         {#- Icône solaire du bandeau : « solaire|pourcentage; » (voir solaire_a_pousser). Un
             firmware sans cette icône ignore la clé (clé inconnue). -#}
@@ -3953,6 +4040,14 @@ actions:
               commande: "{{ trigger.event.data.action | default('') }}"
               valeur: "{{ trigger.event.data.valeur | default('') }}"
               cible: "{{ sources.get(emplacement, '') }}"
+              # Popup télécommande (ADR-0056) : « tv », « tv1 »… = la télécommande de ce rang
+              # (variable telecommandes), si elle existe encore ; « boitier » = l'intégration
+              # Apple TV, dont les touches sont traduites (telecommande_apple_tv).
+              tc_rang: "{{ telecommande_emplacements.index(emplacement) if emplacement in telecommande_emplacements else -1 }}"
+              tc_entite: >-
+                {{ telecommandes[tc_rang] if 0 <= tc_rang < telecommandes | length
+                   and states[telecommandes[tc_rang]] is not none else '' }}
+              tc_boitier: "{{ tc_entite != '' and tc_entite in integration_entities('apple_tv') }}"
               # Tuile tRT (ADR-0023) : son entité, si elle existe encore. Le blueprint
               # est la liste blanche : une clé sans tuile ne commande rien.
               tuile: "{{ tuiles | selectattr('cle', 'eq', emplacement) | first | default({}, true) }}"
@@ -4185,32 +4280,57 @@ actions:
                           entity_id: "{{ clim_cible }}"
                         data:
                           swing_mode: "{{ oscillation }}"
-              - alias: "TV : marche / arrêt"
-                conditions: "{{ emplacement == 'tv' and commande == 'alimentation' }}"
+              - alias: "Télécommande : marche / arrêt"
+                conditions: "{{ tc_rang >= 0 and commande == 'alimentation' }}"
                 sequence:
-                  - if: "{{ sources.tv_telecommande != '' and states[sources.tv_telecommande] is not none }}"
-                    then:
-                      - action: remote.toggle
-                        target:
-                          entity_id: "{{ sources.tv_telecommande }}"
-                    else:
-                      - if: "{{ sources.tv != '' and states[sources.tv] is not none }}"
-                        then:
+                  - choose:
+                      # Intégration Apple TV : remote.turn_on / turn_off ne font que connecter
+                      # HA à l'appareil ; l'allumer ou le mettre en veille passe par les
+                      # commandes turn_on / turn_off, selon l'état de son media_player.
+                      - conditions: "{{ tc_boitier }}"
+                        sequence:
+                          - variables:
+                              tc_lecteur: >-
+                                {{ device_entities(device_id(tc_entite)) | select('match', 'media_player\\.')
+                                   | first | default('') }}
+                          - action: remote.send_command
+                            target:
+                              entity_id: "{{ tc_entite }}"
+                            data:
+                              command: >-
+                                {{ 'turn_off' if tc_lecteur != '' and states(tc_lecteur) not in
+                                   ['off', 'standby', 'unavailable', 'unknown'] else 'turn_on' }}
+                            continue_on_error: true
+                      - conditions: "{{ tc_entite != '' }}"
+                        sequence:
+                          - action: remote.toggle
+                            target:
+                              entity_id: "{{ tc_entite }}"
+                      # Sans télécommande (blueprint rempli avant l'ADR-0056, ou rien de
+                      # choisi) : la TV du bouton « TV », comme avant.
+                      - conditions: "{{ tc_rang == 0 and sources.tv != '' and states[sources.tv] is not none }}"
+                        sequence:
                           - action: media_player.toggle
                             target:
                               entity_id: "{{ sources.tv }}"
-              - alias: "TV : touche de la télécommande"
-                conditions: >-
-                  {{ emplacement == 'tv' and commande == 'touche' and sources.tv_telecommande != ''
-                     and states[sources.tv_telecommande] is not none }}
+              - alias: "Télécommande : touche"
+                conditions: "{{ tc_rang >= 0 and commande == 'touche' and tc_entite != '' }}"
                 sequence:
-                  - action: remote.send_command
-                    target:
-                      entity_id: "{{ sources.tv_telecommande }}"
-                    data:
-                      command: "{{ valeur }}"
-              - alias: "TV : application (script tab5_tv_app, package tab5_tv.yaml)"
-                conditions: "{{ emplacement == 'tv' and commande == 'appli' and states['script.tab5_tv_app'] is not none }}"
+                  - variables:
+                      # Une touche sans équivalent (Source, Muet sur un boîtier) : rien.
+                      tc_commande: "{{ telecommande_apple_tv.get(valeur, '') if tc_boitier else valeur }}"
+                  - if: "{{ tc_commande != '' }}"
+                    then:
+                      - action: remote.send_command
+                        target:
+                          entity_id: "{{ tc_entite }}"
+                        data:
+                          command: "{{ tc_commande }}"
+                        continue_on_error: true
+              # Les applications de la TV choisie dans « Tab5 · TV Samsung » (une seule TV),
+              # depuis la page d'une télécommande « tv ».
+              - alias: "Télécommande : application (script tab5_tv_app, package tab5_tv.yaml)"
+                conditions: "{{ tc_rang >= 0 and commande == 'appli' and states['script.tab5_tv_app'] is not none }}"
                 sequence:
                   - action: script.tab5_tv_app
                     data:
