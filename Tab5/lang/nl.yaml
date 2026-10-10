@@ -1355,6 +1355,10 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Hors ligne depuis %02d:%02d": "Offline sinds %02d:%02d"
 "Hors ligne depuis %s %02d:%02d": "Offline sinds %s %02d:%02d"
 "Hors ligne depuis le %d %s": "Offline sinds %d %s"
+# Mosaïque (lot 2) : sous le cadre, la pièce choisie (« Toutes ») et l'aide à droite
+# (360 px au plus, roboto 24).
+"Toutes les caméras": "Alle camera's"
+"Touchez une image pour l'agrandir": "Tik op beeld om te vergroten"
 
 # --- Capteurs suivis (tab5_suivi.cpp, ADR-0054) ---------------------------------
 "Suivi": "Volgen"

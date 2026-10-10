@@ -1,4 +1,4 @@
-# ADR-0057: Cameras by room — the Home Assistant area of each camera, a room column, the last image of each camera kept
+# ADR-0057: Cameras by room — the Home Assistant area of each camera, a room column, the last image of each camera kept, a mosaic
 
 **Status:** Proposed (2026-10-10; draft PR, not tried on a tablet nor with several real cameras when written).
 **Date:** 2026-10-10
@@ -38,3 +38,22 @@ What was there: one image downloaded and decoded at a time off the main loop (`t
 
 - The author judges on the screen: the column at 238 px, the frame moved right with two rooms or more, the « Hors ligne » text over a dimmed image.
 - Blueprint to copy into Home Assistant for the rooms and the offline time; the firmware works with the older blueprint (no rooms, no offline time) and the older firmware with the new blueprint.
+
+## Lot 2 — the mosaic (2026-10-10)
+
+**Decision.**
+
+- **Two views.** With two cameras or more in the chosen room (or « Toutes »), the popup opens on a **mosaic**: the 960 × 540 content of the frame split into four 476 × 266 squares with 8 px gaps (`cameras_vignette.yaml` ×4, children of `cameras_cadre`), four cameras per page — two side by side in the middle, three with the third centred below, four in 2 × 2: the frame is always filled. Beyond four, the swipe goes from page to page (the same paged-popup brick, ADR-0046: its page count and current page come from the view), and the dots count pages. A **tap on a square** shows that camera **large** (lot 1's view, the swipe going from camera to camera); a **tap on the large image** comes back to the mosaic, on the page of that camera. The view is kept in NVS with the room and the camera (`Memo` gets a field, so a new magic `CAM2`). With a single camera in the filter, the large view only.
+- **Small images asked small.** A square asks Home Assistant for `width=480&height=270`: a 1920 × 1080 camera arrives at exactly that size (HA's TurboJPEG factor stays at or above the request), a 640 × 480 one at 480 × 360, a 2560 × 1440 one at 640 × 360. Each is shown **covering** its square (`echelle_couvrir()`): the image widget has the square's size and centres the source (`lv_image_set_inner_align(…, LV_IMAGE_ALIGN_CENTER)`), so an image that nearly fits (a reduction of 4 % or less) is **cropped without any transform** — the cheap draw — and a larger one is reduced just enough to cover it. Each square: the camera's name in a glass chip at the bottom left (`texte_ha_coupe()`, « Room · Camera » under « Toutes » when there are rooms), « Chargement... », « Hors ligne depuis … » or « Image indisponible » in the middle, an offline camera's image at 40 %. Square corners of 8 px only: LVGL 9.5 rounds an image only when it is not scaled, and on the image's own area (2 px larger than the square on each side), so a reduced thumbnail keeps square corners and a larger radius would show the gap with the button.
+- **Always one image at a time.** The scheduler (`prochaine()`) now has two modes: large, as in lot 1; mosaic, the squares of the page in turn — those without an image first, then the one whose turn passed longest ago, each refreshed every 10 s (`kRafraichirMosaiqueMs`, against 5 s large: four cameras cost Home Assistant one request every 2.5 s). Nothing is asked for the other pages. The loader is unchanged (one task, one download, the hardware decoder), except that it no longer reuses a buffer more than twice too large: a returned 1 MiB large image would otherwise have carried a 255 KiB thumbnail.
+- **Memory.** Each camera keeps its last large image and its last small one (`Vue vue`, `Vue mini`) in the same 8 MiB budget, the image seen longest ago going first, never one on screen. Sixteen thumbnails (480 × 272 decoded, 255 KiB each) take 4 MiB.
+- Two more screen texts (« Toutes les caméras », « Touchez une image pour l'agrandir »), in the seven languages. Off the tablet the loader's stub draws a test pattern at the requested size: captures `cameras` (mosaic, first page), `cameras-mosaique-page-2` (three squares, one offline), `cameras-plein-ecran` and `cameras-piece-hors-ligne` (the offline camera large).
+
+**Rejected.**
+
+- **Several downloads at once** (one per square): four TLS connections and four decoded buffers in flight, for squares that refresh every 10 s anyway; the request asked for one image at a time.
+- **Upscaling the small image while the large one loads**: an LVGL transform of a whole 960 × 540 frame on every redraw of the loading message; the large view shows its kept large image or « Chargement... » for the half second the first one takes.
+- **A mosaic of the whole house on one page** (3 × 3, 4 × 4): squares of 316 × 178 or smaller, too small to see anything on a 10" screen; rooms and pages do the sorting.
+- **A button to switch views**: the tap on a square and the tap on the image are what every camera app does; a button would take room from the frame or the header.
+
+**Costs (not measured on the tablet when written).** Main loop: four images drawn instead of one per frame of the mosaic, about the same number of pixels (four 476 × 266 against one 960 × 540), copied without transform for 16:9 cameras of 1080p; reduced (transform) for others, as the large image already is for a 2304 × 1296 camera. Home Assistant: one request every 2.5 s with four squares. Memory: as above, released at closing.

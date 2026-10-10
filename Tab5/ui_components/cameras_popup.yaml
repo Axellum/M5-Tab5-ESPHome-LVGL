@@ -13,12 +13,15 @@
 #       tab5_modal_registry_init). Corps : y 72..670 — cadre de 964 × 544 (image de
 #       960 × 540 dans sa bordure de 2 px) centré (x 143) ou, avec la colonne des pièces
 #       (x 16, 238 × 544), à droite (x 270) : disposer() de tab5_cameras.cpp le place, ainsi
-#       que le nom et l'heure (y 626) et les pastilles (y 666) sous lui. Tout ce qui bouge
+#       que le nom et l'heure (y 626) et les pastilles (y 666) sous lui. Mosaïque (lot 2) :
+#       quatre cases de 476 × 266 dans le cadre (cameras_vignette.yaml), placées par
+#       disposer() selon leur nombre ; l'image en grand est alors cachée. Tout ce qui bouge
 #       est écrit par tab5_cameras.cpp ; couleurs par les styles de rôle (règle 1).
 # @ai_instruction Un widget de plus = son champ dans CamerasUI (tab5_cameras.h) et sa
 #       ligne dans le script tab5_cameras_ouvrir (tab5-cameras.yaml). Les puces et les
 #       pastilles n'ont pas d'id : cameras_ouvrir() lit les enfants de leur conteneur, dans
-#       l'ordre (17 puces = kCamerasPuces, 16 pastilles = kCamerasPastilles).
+#       l'ordre (17 puces = kCamerasPuces, 16 pastilles = kCamerasPastilles, 4 cases de la
+#       mosaïque = kCamerasVignettes, après le message dans le cadre).
 # ═══════════════════════════════════════════════════════
 obj:
   id: cameras_popup
@@ -93,12 +96,21 @@ obj:
               pad_all: 0
               styles: style_glass_card
               scrollable: false
+              # Tap sur l'image en grand : retour à la mosaïque (les cases, cliquables,
+              # prennent leur propre tap).
+              on_short_click:
+                - lambda: 'if (!ui_appui_glisse()) cameras_cadre_touche();'
               widgets:
                 # L'image est créée en C++ (creer_image() de tab5_cameras.cpp, sous ce
                 # message) : un image: d'ESPHome exige une source fixe, et la source
                 # change à chaque image (tampons gardés, [AI-WARNING]).
                 # « Chargement... », « Hors ligne depuis 14:32 », « Aucune caméra choisie »…
                 - label: { id: cameras_message, text: "", align: CENTER, styles: style_text_soft }
+                # Mosaïque : 2 × 2 au plus (disposer() les place et les montre).
+                - !include { file: cameras_vignette.yaml, vars: { n: 0 } }
+                - !include { file: cameras_vignette.yaml, vars: { n: 1 } }
+                - !include { file: cameras_vignette.yaml, vars: { n: 2 } }
+                - !include { file: cameras_vignette.yaml, vars: { n: 3 } }
 
           # ═══ « PIÈCE · CAMÉRA » ET HEURE DE L'IMAGE ═══
           - label:

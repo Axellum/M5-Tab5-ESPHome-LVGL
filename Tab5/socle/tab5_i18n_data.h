@@ -8,9 +8,11 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1185;
+static const uint16_t kI18nKeyCount = 1187;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
     "",
     "",
     "",
@@ -2177,6 +2179,7 @@ static const char* const kI18nKeys[] = {
     "Touchez l'écran ou dites « Stop » pour arrêter",
     "Touchez les groupes MORTS, puis Valider",
     "Touchez un nom pour le changer, la pastille pour la couleur",
+    "Touchez une image pour l'agrandir",
     "Touchez une ligne pour changer sa valeur.",
     "Touchez à nouveau %s pour valider",
     "Toujours",
@@ -2192,6 +2195,7 @@ static const char* const kI18nKeys[] = {
     "Tout vivant",
     "Tout éteindre",
     "Toutes",
+    "Toutes les caméras",
     "Toutes les parties et les réglages sont conservés dans le Tab.",
     "Trait : %s",
     "Trait aux %s",
@@ -3366,6 +3370,7 @@ static const char* const kI18n_en[] = {
     "Touch the screen or say \"Stop\" to stop",  // "Touchez l'écran ou dites « Stop » pour arrêter"
     "Tap the DEAD groups, then Confirm",  // "Touchez les groupes MORTS, puis Valider"
     "Tap a name to change it, the dot to change the color",  // "Touchez un nom pour le changer, la pastille pour la couleur"
+    "Tap an image to enlarge it",  // "Touchez une image pour l'agrandir"
     "Tap a row to change its value.",  // "Touchez une ligne pour changer sa valeur."
     "Tap %s again to confirm",  // "Touchez à nouveau %s pour valider"
     "Always",  // "Toujours"
@@ -3381,6 +3386,7 @@ static const char* const kI18n_en[] = {
     "All alive",  // "Tout vivant"
     "All off",  // "Tout éteindre"
     "All",  // "Toutes"
+    "All cameras",  // "Toutes les caméras"
     "All games and settings are kept on the Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turn: %s",  // "Trait : %s"
     "%s to move",  // "Trait aux %s"
@@ -4555,6 +4561,7 @@ static const char* const kI18n_de[] = {
     "Zum Beenden Bildschirm antippen oder „Stop“ sagen",  // "Touchez l'écran ou dites « Stop » pour arrêter"
     "TOTE Gruppen antippen, dann bestätigen",  // "Touchez les groupes MORTS, puis Valider"
     "Name antippen zum Ändern, Punkt für die Farbe",  // "Touchez un nom pour le changer, la pastille pour la couleur"
+    "Bild antippen zum Vergrößern",  // "Touchez une image pour l'agrandir"
     "Zeile antippen, um den Wert zu ändern.",  // "Touchez une ligne pour changer sa valeur."
     "%s erneut antippen zum Bestätigen",  // "Touchez à nouveau %s pour valider"
     "Immer",  // "Toujours"
@@ -4570,6 +4577,7 @@ static const char* const kI18n_de[] = {
     "Alles lebt",  // "Tout vivant"
     "Alle aus",  // "Tout éteindre"
     "Alle",  // "Toutes"
+    "Alle Kameras",  // "Toutes les caméras"
     "Alle Partien und Einstellungen bleiben im Tab gespeichert.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Am Zug: %s",  // "Trait : %s"
     "%s am Zug",  // "Trait aux %s"
@@ -5744,6 +5752,7 @@ static const char* const kI18n_nl[] = {
     "Tik op het scherm of zeg \"Stop\" om te stoppen",  // "Touchez l'écran ou dites « Stop » pour arrêter"
     "Tik op de DODE groepen, dan Bevestigen",  // "Touchez les groupes MORTS, puis Valider"
     "Tik op een naam om hem te wijzigen, op de stip voor de kleur",  // "Touchez un nom pour le changer, la pastille pour la couleur"
+    "Tik op beeld om te vergroten",  // "Touchez une image pour l'agrandir"
     "Tik op een regel om de waarde te wijzigen.",  // "Touchez une ligne pour changer sa valeur."
     "Tik nogmaals op %s om te bevestigen",  // "Touchez à nouveau %s pour valider"
     "Altijd",  // "Toujours"
@@ -5759,6 +5768,7 @@ static const char* const kI18n_nl[] = {
     "Alles levend",  // "Tout vivant"
     "Alles uit",  // "Tout éteindre"
     "Alle",  // "Toutes"
+    "Alle camera's",  // "Toutes les caméras"
     "Alle partijen en opties blijven bewaard in de Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Aan zet: %s",  // "Trait : %s"
     "%s aan zet",  // "Trait aux %s"
@@ -6933,6 +6943,7 @@ static const char* const kI18n_es[] = {
     "Toca la pantalla o di «Stop» para detenerla",  // "Touchez l'écran ou dites « Stop » pour arrêter"
     "Toca los grupos MUERTOS y luego Validar",  // "Touchez les groupes MORTS, puis Valider"
     "Toca un nombre para cambiarlo, el punto para el color",  // "Touchez un nom pour le changer, la pastille pour la couleur"
+    "Toca una imagen para ampliarla",  // "Touchez une image pour l'agrandir"
     "Toca una fila para cambiar su valor.",  // "Touchez une ligne pour changer sa valeur."
     "Toca %s otra vez para confirmar",  // "Touchez à nouveau %s pour valider"
     "Siempre",  // "Toujours"
@@ -6948,6 +6959,7 @@ static const char* const kI18n_es[] = {
     "Todo vivo",  // "Tout vivant"
     "Apagar todo",  // "Tout éteindre"
     "Todas",  // "Toutes"
+    "Todas las cámaras",  // "Toutes les caméras"
     "Todas las partidas y ajustes se guardan en el Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turno: %s",  // "Trait : %s"
     "Juegan %s",  // "Trait aux %s"
@@ -8122,6 +8134,7 @@ static const char* const kI18n_it[] = {
     "Tocca lo schermo o di' «Stop» per fermarla",  // "Touchez l'écran ou dites « Stop » pour arrêter"
     "Tocca i gruppi MORTI, poi Conferma",  // "Touchez les groupes MORTS, puis Valider"
     "Tocca un nome per cambiarlo, il pallino per il colore",  // "Touchez un nom pour le changer, la pastille pour la couleur"
+    "Tocca per ingrandire",  // "Touchez une image pour l'agrandir"
     "Tocca una riga per cambiarne il valore.",  // "Touchez une ligne pour changer sa valeur."
     "Tocca di nuovo %s per confermare",  // "Touchez à nouveau %s pour valider"
     "Sempre",  // "Toujours"
@@ -8137,6 +8150,7 @@ static const char* const kI18n_it[] = {
     "Tutti vivi",  // "Tout vivant"
     "Spegni tutto",  // "Tout éteindre"
     "Tutte",  // "Toutes"
+    "Tutte le telecamere",  // "Toutes les caméras"
     "Partite e opzioni restano salvate nel Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turno: %s",  // "Trait : %s"
     "Muove il %s",  // "Trait aux %s"
@@ -9311,6 +9325,7 @@ static const char* const kI18n_tr[] = {
     "Durdurmak için ekrana dokun ya da “Stop” de",  // "Touchez l'écran ou dites « Stop » pour arrêter"
     "ÖLÜ grupları seç, sonra Onayla",  // "Touchez les groupes MORTS, puis Valider"
     "Adı değiştirmek için ada, rengi için noktaya dokun",  // "Touchez un nom pour le changer, la pastille pour la couleur"
+    "Büyütmek için görüntüye dokun",  // "Touchez une image pour l'agrandir"
     "Değerini değiştirmek için bir satıra dokun.",  // "Touchez une ligne pour changer sa valeur."
     "Onaylamak için tekrar dokun: %s",  // "Touchez à nouveau %s pour valider"
     "Her zaman",  // "Toujours"
@@ -9326,6 +9341,7 @@ static const char* const kI18n_tr[] = {
     "Hepsi canlı",  // "Tout vivant"
     "Hepsini kapat",  // "Tout éteindre"
     "Tümü",  // "Toutes"
+    "Tüm kameralar",  // "Toutes les caméras"
     "Tüm oyunlar ve ayarlar Tab'da saklanır.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Sıra: %s",  // "Trait : %s"
     "Sıra: %s",  // "Trait aux %s"
