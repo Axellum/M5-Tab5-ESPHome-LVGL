@@ -347,3 +347,12 @@ def test_aucun_device_id_en_dur():
     assert "device_id" not in set(cles(_paquet())), "aucun device_id en dur (ADR-0024)"
     _, option = _branche()
     assert "device_id" not in set(cles(option))
+
+def test_adresse_mac_sans_pattern():
+    """Un `pattern:` d'input_text est aussi vérifié sur l'état « unknown » d'une entité neuve :
+    HA la refuse et le rechargement du YAML s'arrête (CI « Intégration HACS », 10/10/2026).
+    La MAC est vérifiée par sensor.tab5_serveur_ia_actions (une mal écrite : pas de bouton)."""
+    for nom, conf in _paquet()["input_text"].items():
+        assert "pattern" not in (conf or {}), nom
+    _, offertes = _maison("Ollama", releve="hors_ligne", mac="unknown")
+    assert "reveiller" not in offertes

@@ -69,12 +69,14 @@ input_text:
     icon: mdi:server-network
     max: 255
   # Actions (ADR-0060) : adresse MAC du PC à réveiller (Wake-on-LAN), « AA:BB:CC:DD:EE:FF ».
-  # Vide (par défaut) : pas de bouton « Réveiller ».
+  # Vide (par défaut) : pas de bouton « Réveiller ». PAS de `pattern:` : HA le vérifie aussi
+  # sur l'état initial d'un input_text neuf (« unknown »), refuse l'entité et interrompt le
+  # rechargement du YAML (CI « Intégration HACS », 10/10/2026). Une adresse mal écrite ne
+  # donne simplement pas de bouton : sensor.tab5_serveur_ia_actions la vérifie.
   tab5_serveur_ia_mac:
     name: "Tab5 · adresse MAC du serveur IA · AI server MAC address"
     icon: mdi:power
     max: 17
-    pattern: "^$|^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$"
   # Mémoire de la liste « Tab5 · serveur IA, redémarrage » (une entité, ou « Aucun »).
   tab5_choix_ia_redemarrage:
     name: "Tab5 · mémoire · serveur IA, redémarrage"
