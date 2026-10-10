@@ -114,6 +114,10 @@ GRAINES: dict[str, dict[str, str]] = {
                                   "3.4,4.8,7.2,8.6,9.1|chaud|1791300000|42|8.7;"
                                   "Congélateur|c|-19.5|0|ok|0|-21.0|-18.2||-18|-20.1,-19.8,-19.5|||;"
                                   "Cave à vin|f||1|indispo|1791380000|||0|5||||"},
+    # Serveur IA (ADR-0059) : un serveur en ligne, chaud (niveau 1), deux requêtes en cours,
+    # un second serveur que le firmware ignore.
+    "tab5_maj_serveur_ia": {"payload": "PC bureau|1|qwen2.5-coder-32b-instruct-q4_k_m|42.7|2|3|11.2|16.0|70|78|1|43|285;"
+                                       "Deck|0||||||||||||"},
 }
 
 NOMBRES = ["", "-1", "0", "15", "16", "31", "32", "99", "255", "256", "2147483647", "-2147483648",

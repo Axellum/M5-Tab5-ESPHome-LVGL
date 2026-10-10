@@ -1,0 +1,24 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Petite carte du popup Serveur IA (ADR-0059), réutilisée 4 fois par
+# serveur_ia_popup.yaml : VRAM, GPU, RAM, puissance.
+# vars : n (0-3, suffixe des ids lus par tab5_serveur_ia.cpp via g_serveur_ia_ui), icon
+# (glyphe de mdi_font_32), title (traduit au démarrage par i18n_apply_boot).
+# Ne rien placer ici : tab5_serveur_ia.cpp montre et place la carte (grille 2 × 2), écrit
+# la valeur (« — » si inconnue) et son détail, colore la température par niveau et crée
+# la barre de la VRAM et de la RAM.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "serveur_ia_carte_${n}"
+  align: TOP_LEFT
+  x: 633
+  y: 164
+  width: 288
+  height: 245
+  hidden: true
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    - label: { id: "serveur_ia_icone_${n}", text: "${icon}", align: TOP_LEFT, x: 22, y: 12, text_font: mdi_font_32, styles: style_text_accent }
+    - label: { id: "serveur_ia_titre_${n}", text: "${title}", align: TOP_LEFT, x: 64, y: 16, styles: style_text_dim }
+    - label: { id: "serveur_ia_valeur_${n}", text: "—", align: TOP_LEFT, x: 22, y: 60, styles: style_police_date }
+    - label: { id: "serveur_ia_detail_${n}", text: "", align: TOP_LEFT, x: 22, y: 120, styles: style_text_dim, hidden: true }

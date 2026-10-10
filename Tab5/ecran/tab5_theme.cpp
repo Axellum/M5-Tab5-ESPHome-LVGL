@@ -2495,6 +2495,8 @@ void theme_rejouer_ui() {
     suivi_rejouer_theme();
     // Froid (ADR-0055) : températures, statuts, courbes et norme du popup s'il est ouvert.
     froid_rejouer_theme();
+    // Serveur IA (ADR-0059) : pastille, température, barres et courbe du popup s'il est ouvert.
+    serveur_ia_rejouer_theme();
     // Télécommandes (ADR-0056) : l'onglet de la page montrée, en couleur d'accent.
     telecommande_rejouer_theme();
     // Caméras (ADR-0057) : la puce de la pièce montrée, en couleur d'accent.

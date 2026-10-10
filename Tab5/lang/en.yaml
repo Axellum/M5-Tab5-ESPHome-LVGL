@@ -1403,3 +1403,21 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "%u min": "%u min"
 "%u h %02u": "%u h %02u"
 "%s : %s, %s °C": "%s: %s, %s °C"
+
+# --- Serveur IA (tab5_serveur_ia.cpp, ADR-0059) ---------------------------------
+# « VRAM », « GPU », « RAM » et « tok/s » restent tels quels (NON_TRADUITS, i18n_keys.py).
+"Serveur IA": "AI server"
+"Tokens par seconde": "Tokens per second"
+"Puissance": "Power"
+"En ligne": "Online"
+"État inconnu": "Status unknown"
+"Aucun modèle chargé": "No model loaded"
+"Requêtes en cours : %s · en file : %s": "Requests running: %s · queued: %s"
+"%s Go": "%s GB"
+"sur %s Go · %s %%": "of %s GB · %s %%"
+"sur %s Go": "of %s GB"
+"Température normale": "Normal temperature"
+"Température élevée": "High temperature"
+"Température critique": "Critical temperature"
+"Aucun serveur choisi": "No server chosen"
+"Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA ».": "Choose its sensors in Home Assistant: lists “Tab5 · serveur IA · AI server”."

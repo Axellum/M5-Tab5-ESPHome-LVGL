@@ -79,7 +79,9 @@ def test_option_maison_du_select_a_la_fin():
     # (ADR-0050), du popup Caméras (ADR-0049), du popup Suivi (ADR-0054) et du popup Froid
     # (ADR-0055) sont venues après elle.
     assert options[12] == "Maison", "à la fin : les index des autres options ne bougent pas"
-    assert options[13:] == ["Lumières", "Volet", "Température", "Météo", "Musique", "Caméras", "Suivi", "Froid"]
+    # Puis celle du popup Serveur IA (ADR-0059).
+    assert options[13:] == ["Lumières", "Volet", "Température", "Météo", "Musique", "Caméras", "Suivi", "Froid",
+                            "Serveur IA"]
     # L'index de l'option est sa valeur d'Ecran (tab5_zones.h, tests/test_appuis.py) ; le
     # select et les appuis longs passent par la routine unique tab5_ecran_ouvrir.
     enum = re.search(r"enum class Ecran : uint8_t \{(.*?)\};", contrat(), re.S).group(1)

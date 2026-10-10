@@ -81,6 +81,8 @@ services:
     payload: string
   tab5_maj_reponse_vocale:
     texte: string
+  tab5_maj_serveur_ia:
+    payload: string
   tab5_maj_suivi:
     payload: string
   tab5_maj_tuiles:

@@ -392,7 +392,7 @@ def test_chaque_poussee_attend_la_tablette():
     tablette commence par la garde « tablette connectée » (trouvée par son modèle), et
     le blueprint pousse aussi au rechargement des automatisations (défaut 4)."""
     garde = "tab5_connectee() == 'oui'"  # custom_templates/tab5_tablette.jinja (HA-7)
-    for nom in ("tab5_push", "tab5_calendar", "tab5_reveil"):
+    for nom in ("tab5_push", "tab5_calendar", "tab5_reveil", "tab5_serveur_ia"):
         paquet = yaml.load(_lire("HomeAssistant_Config", "packages", f"{nom}.yaml"), Loader=_Chargeur)
         for script, corps in (paquet.get("script") or {}).items():
             if "esphome.tab5_ha_hmi_" not in yaml.dump(corps, allow_unicode=True):
@@ -514,8 +514,8 @@ def test_listes_ignorent_le_bruit_du_registre():
             assert len(bloc.get("conditions") or []) == 1, fichier.name
             filtres.append(fichier.name)
             conditions.add(bloc["conditions"][0]["value_template"])
-    assert sorted(filtres) == ["tab5_meteo_sources.yaml", "tab5_reglages.yaml", "tab5_tv.yaml",
-                               "volet_serre_tracking.yaml"]
+    assert sorted(filtres) == ["tab5_meteo_sources.yaml", "tab5_reglages.yaml", "tab5_serveur_ia.yaml",
+                               "tab5_tv.yaml", "volet_serre_tracking.yaml"]
     assert len(conditions) == 1, "la même condition partout"
     modele = env.from_string(conditions.pop())
 

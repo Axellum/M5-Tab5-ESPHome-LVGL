@@ -3,7 +3,7 @@
  * lot F de l'audit du 30/09/2026). Le premier octet choisit le parseur
  * ((octet - '0') modulo le nombre de parseurs : « 0… » = le premier, « : » le onzième,
  * le caractère qui suit « 9 », « ; » le douzième, « < » le treizième, « = » le quatorzième,
- * « > » le quinzième), le reste est le
+ * « > » le quinzième, « ? » le seizième), le reste est le
  * payload, passé comme le firmware le passe (std::string, puis c_str() ou data()/size()).
  * Les graines sont les payloads du fuzz de la tablette virtuelle
  * (tools/sanitizers/fuzz_services.py), écrites par tools/fuzz/graines.py.
@@ -242,6 +242,25 @@ void froid(const std::string& p) {
     froid_alerte_lire(p.c_str(), lu);
 }
 
+// Serveur IA (ADR-0059) : la variable payload seule, ses textes et la courbe des tokens/s.
+void serveur_ia(const std::string& p) {
+    ServeurIaLu s;
+    if (!serveur_ia_lire(Champ{p.data(), p.size()}, s)) return;
+    char t[16];
+    for (float v : {s.tps, s.vram, s.vram_total, s.vram_pct, s.temperature, s.ram, s.puissance}) {
+        serveur_ia_nombre_texte(v, 1, t, sizeof(t));
+        serveur_ia_nombre_texte(v, 0, t, 4);
+    }
+    const std::string nom(s.nom.p, s.nom.n);  // ce que texte_ha_copier recevrait
+    const std::string modele(s.modele.p, s.modele.n);
+    (void) nom;
+    (void) modele;
+    ServeurIaCourbe c;
+    for (int i = 0; i < kServeurIaPoints + 2; i++) c.ajouter(i % 3 ? s.tps : NAN);
+    float h = 0;
+    c.haut(h);
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -266,6 +285,7 @@ constexpr Parseur kParseurs[] = {
     cameras,          // '<' tab5_maj_cameras
     suivi,            // '=' tab5_maj_suivi
     froid,            // '>' tab5_maj_froid
+    serveur_ia,       // '?' tab5_maj_serveur_ia
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 
