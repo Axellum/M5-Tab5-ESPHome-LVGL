@@ -15,7 +15,9 @@
  *         - retro : première écriture non nulle du PWM du rétroéclairage ;
  *         - dessin : premier dessin de LVGL (LV_EVENT_RENDER_START), juste après setup() ;
  *         - image : fin de la première image envoyée à l'écran ;
- *         - wifi : Wi-Fi connecté ; api : premier client de l'API (Home Assistant).
+ *         - wifi : Wi-Fi connecté ; api : premier client de l'API (Home Assistant) ;
+ *         - chargeur : premier allumage du chargeur de la batterie (CHG_EN). « - » quand
+ *           le démarrage précédent n'a vu aucune batterie (tab5_batterie.h).
  * @architecture_constraint Aucune dépendance ESPHome ni LVGL : ce fichier se compile sur PC
  *       (tools/test_tab5_socle.cpp, g++ en CI). Observer sans retarder : marquer = une
  *       lecture de millis() et une écriture en mémoire ; rien n'est journalisé ni publié
@@ -38,6 +40,7 @@ enum class EtapeDemarrage : uint8_t {
     IMAGE,
     WIFI,
     API,
+    CHARGEUR,
     NOMBRE,
 };
 
@@ -51,6 +54,7 @@ constexpr const char* kEtapesNoms[kEtapesDemarrage] = {
     "image",
     "wifi",
     "api",
+    "chargeur",
 };
 
 // Texte publié : au plus kEtapesDemarrage × « nom=4294967295; », moins de 255 caractères

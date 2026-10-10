@@ -213,7 +213,7 @@ static void test_chronologie() {
     ChronoDemarrage c;
     char buf[kChronoTexteMax];
     chrono_texte(c, buf, sizeof(buf));
-    expect(std::strcmp(buf, "expandeur=-; retro=-; dessin=-; image=-; wifi=-; api=-") == 0,
+    expect(std::strcmp(buf, "expandeur=-; retro=-; dessin=-; image=-; wifi=-; api=-; chargeur=-") == 0,
            "chronologie : rien de vu, chaque étape à « - »");
     expect(chrono_marquer(c, EtapeDemarrage::EXPANDEUR, 1490) && chrono_vue(c, EtapeDemarrage::EXPANDEUR),
            "chronologie : étape marquée");
@@ -222,7 +222,7 @@ static void test_chronologie() {
     chrono_marquer(c, EtapeDemarrage::IMAGE, 8650);
     chrono_marquer(c, EtapeDemarrage::RETRO, 0);
     chrono_texte(c, buf, sizeof(buf));
-    expect(std::strcmp(buf, "expandeur=1490; retro=0; dessin=-; image=8650; wifi=-; api=-") == 0,
+    expect(std::strcmp(buf, "expandeur=1490; retro=0; dessin=-; image=8650; wifi=-; api=-; chargeur=-") == 0,
            "chronologie : ordre des étapes, pas celui des marques ; 0 ms est une valeur");
     expect(!chrono_marquer(c, EtapeDemarrage::NOMBRE, 1) && !chrono_vue(c, EtapeDemarrage::NOMBRE),
            "chronologie : étape hors liste ignorée");

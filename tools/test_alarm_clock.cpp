@@ -622,6 +622,85 @@ static void test_chargeur() {
         expect(chargeur_voulu(r, 9, 40 * MIN), "index inconnu : 100 %");
     }
     {
+        // Démarrage (10/10/2026) : CHG_EN coupé au setup, le premier pas (fin de setup(),
+        // ~8 s) décide d'après la mémoire du démarrage précédent.
+        constexpr uint8_t AUCUNE = static_cast<uint8_t>(MemoireBatterie::AUCUNE);
+        constexpr uint8_t VUE = static_cast<uint8_t>(MemoireBatterie::VUE);
+        constexpr uint8_t INCONNUE = static_cast<uint8_t>(MemoireBatterie::INCONNUE);
+        const uint32_t t0 = 8 * S;
+        {
+            // Aucune batterie vue la dernière fois (la tablette de l'auteur) : jamais allumé.
+            EtatChargeur c;
+            chargeur_demarrer(c, AUCUNE, false, t0);
+            bool coupe = true;
+            int lectures = 0;
+            tic_jusqua(c, 0, false, t0, t0 + 7 * S, nullptr, &coupe, &lectures);
+            expect(coupe && c.sonde && lectures == 0, "aucune batterie au démarrage précédent : coupé, sonde");
+            expect(!chargeur_lecture(c, 1.9f, t0 + 5 * S) && c.presence == P::INCONNUE,
+                   "sonde de démarrage : rien de décidé avant 8 s de repos");
+            const ActionChargeur a = chargeur_tick(c, 0, false, t0 + 8 * S);
+            expect(!a.allumer && a.lire, "sonde de démarrage : lecture demandée 8 s après le premier pas");
+            expect(chargeur_lecture(c, 1.9f, t0 + 8 * S) && c.presence == P::ABSENTE, "1,9 V : pas de batterie");
+            coupe = true;
+            tic_jusqua(c, 0, false, t0 + 9 * S, 3 * 60 * MIN, nullptr, &coupe, nullptr);
+            expect(coupe, "aucune batterie : chargeur jamais allumé de tout le démarrage (pas de pic)");
+            expect(batterie_memoire_suivante(c, AUCUNE) == AUCUNE, "mémoire gardée : aucune");
+        }
+        {
+            // Batterie posée tablette éteinte, après un démarrage sans : vue par la sonde.
+            EtatChargeur c;
+            chargeur_demarrer(c, AUCUNE, false, t0);
+            expect(batterie_memoire_suivante(c, AUCUNE) == AUCUNE, "rien de décidé : mémoire d'avant");
+            chargeur_tick(c, 0, false, t0 + 8 * S);
+            expect(chargeur_lecture(c, 7.4f, t0 + 8 * S) && c.presence == P::PRESENTE,
+                   "batterie posée tablette éteinte : vue par la sonde de démarrage");
+            expect(chargeur_tick(c, 0, false, t0 + 9 * S).allumer, "puis chargée");
+            expect(batterie_memoire_suivante(c, AUCUNE) == VUE, "mémoire : batterie vue");
+            // Retirée ensuite : la mémoire reste « vue » pour ce démarrage (réveil au suivant).
+            const uint32_t t1 = 20 * MIN;
+            chargeur_lecture(c, 5.71f, t1);
+            chargeur_tick(c, 0, false, t1 + S);
+            chargeur_tick(c, 0, false, t1 + 9 * S);
+            expect(chargeur_lecture(c, 1.9f, t1 + 9 * S) && c.presence == P::ABSENTE, "retirée : absente");
+            expect(batterie_memoire_suivante(c, VUE) == VUE, "vue pendant ce démarrage : réveil au suivant");
+        }
+        for (const uint8_t memoire : {VUE, INCONNUE, static_cast<uint8_t>(7)}) {
+            // Batterie vue, mémoire vide (premier démarrage) ou illisible : réveil de 30 s.
+            EtatChargeur c;
+            chargeur_demarrer(c, memoire, false, t0);
+            expect(!c.allume, "démarrage : CHG_EN coupé au setup (ALWAYS_OFF)");
+            bool allume = true;
+            tic_jusqua(c, 0, false, t0, t0 + 29 * S, &allume, nullptr, nullptr);
+            expect(allume, "batterie vue ou mémoire inconnue : allumé 30 s dès le premier pas");
+            expect(!chargeur_tick(c, 0, false, t0 + 30 * S).allumer && c.sonde, "puis la sonde, comme avant");
+        }
+        {
+            // Le moyen manuel : allumer « Tab5 Batterie montée » réveille tout de suite.
+            EtatChargeur c;
+            chargeur_demarrer(c, AUCUNE, false, t0);
+            chargeur_tick(c, 0, false, t0 + 8 * S);
+            chargeur_lecture(c, 0.4f, t0 + 8 * S);  // batterie neuve, protection coupée
+            expect(c.presence == P::ABSENTE, "batterie plate : vue absente");
+            expect(!chargeur_tick(c, 0, false, t0 + 2 * MIN).allumer, "interrupteur éteint : coupé");
+            expect(chargeur_tick(c, 0, true, t0 + 2 * MIN + S).allumer && c.reveil,
+                   "« montée » allumé : réveil tout de suite, sans attendre l'heure");
+            bool allume = true;
+            tic_jusqua(c, 0, true, t0 + 2 * MIN + 2 * S, t0 + 2 * MIN + 30 * S, &allume, nullptr, nullptr);
+            expect(allume, "réveil manuel : allumé 30 s");
+            expect(!chargeur_tick(c, 0, true, t0 + 2 * MIN + 31 * S).allumer && c.sonde, "puis une sonde");
+            // Interrupteur déjà allumé au démarrage : pas un réveil immédiat, celui de l'heure.
+            EtatChargeur d;
+            chargeur_demarrer(d, AUCUNE, true, t0);
+            chargeur_tick(d, 0, true, t0 + 8 * S);
+            chargeur_lecture(d, 1.9f, t0 + 8 * S);
+            bool coupe = true;
+            tic_jusqua(d, 0, true, t0 + 9 * S, t0 + 60 * MIN - S, nullptr, &coupe, nullptr);
+            expect(coupe, "« montée » restauré allumé : pas de réveil avant l'heure");
+            expect(chargeur_tick(d, 0, true, t0 + 60 * MIN).allumer && d.reveil, "réveil au bout d'une heure");
+        }
+        expect(AUCUNE == 1 && VUE == 2 && INCONNUE == 0, "valeurs gardées en NVS : 0 inconnue, 1 aucune, 2 vue");
+    }
+    {
         // millis() reboucle après 49 jours : les durées se comptent quand même.
         EtatChargeur c;
         c.reveil = false;

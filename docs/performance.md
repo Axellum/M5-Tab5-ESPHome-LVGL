@@ -179,9 +179,9 @@ What is left: `setup()` (5 s, including the 1 s wait the screen needs after a so
 
 ### Boot timeline, read in Home Assistant (next version)
 
-A tablet on a mains charger has no serial log. The diagnostic entity **Tab5 Chronologie du démarrage** gives, for every boot, the time of six fixed steps, in milliseconds since ESP-IDF's timer started (`millis()`; where that origin sits between power-on and ESP-IDF's start is not verified — the bootloader took 0.8 s in the table above):
+A tablet on a mains charger has no serial log. The diagnostic entity **Tab5 Chronologie du démarrage** gives, for every boot, the time of seven fixed steps, in milliseconds since ESP-IDF's timer started (`millis()`; where that origin sits between power-on and ESP-IDF's start is not verified — the bootloader took 0.8 s in the table above):
 
-`expandeur=1490; retro=1532; dessin=7810; image=8650; wifi=10550; api=11950` (made-up values: nothing measured yet)
+`expandeur=1490; retro=1532; dessin=7810; image=8650; wifi=10550; api=11950; chargeur=-` (made-up values: nothing measured yet)
 
 | Name | Moment |
 |---|---|
@@ -191,6 +191,7 @@ A tablet on a mains charger has no serial log. The diagnostic entity **Tab5 Chro
 | `image` | end of the first frame sent to the screen |
 | `wifi` | Wi-Fi connected (first time) |
 | `api` | first API client (Home Assistant) |
+| `chargeur` | first time the battery charger is switched on; « - » when the previous boot saw no battery ([hardware](hardware.md), Battery) |
 
 « - » means the step has not happened (yet). `dessin − expandeur` is the bulk of `setup()` (1 s wait, display, audio, sensors); `retro` before `dessin` means the backlight is lit on an empty screen for `dessin − retro` ms. The text is published at the first frame, at the Wi-Fi connection and at the API connection, never during `setup()`; Home Assistant keeps one value per boot in its history. Marking a step costs one `millis()` read; the `on_boot` sequence of `tab5-ha-hmi.yaml` is not instrumented (ADR-0005), so the 1 s wait itself sits between `expandeur` and `dessin`. Source: `Tab5/socle/tab5_demarrage.h`.
 
@@ -379,9 +380,9 @@ Ce qui reste : `setup()` (5 s, dont l'attente de 1 s dont l'écran a besoin apr�
 
 ### Chronologie du démarrage, lue dans Home Assistant (prochaine version)
 
-Une tablette sur chargeur secteur n'a pas de journal série. L'entité de diagnostic **Tab5 Chronologie du démarrage** donne, à chaque démarrage, l'instant de six étapes fixes, en millisecondes depuis le lancement du minuteur d'ESP-IDF (`millis()` ; où se place cette origine entre la mise sous tension et le lancement d'ESP-IDF n'est pas vérifié — le chargeur de démarrage prenait 0,8 s dans le tableau ci-dessus) :
+Une tablette sur chargeur secteur n'a pas de journal série. L'entité de diagnostic **Tab5 Chronologie du démarrage** donne, à chaque démarrage, l'instant de sept étapes fixes, en millisecondes depuis le lancement du minuteur d'ESP-IDF (`millis()` ; où se place cette origine entre la mise sous tension et le lancement d'ESP-IDF n'est pas vérifié — le chargeur de démarrage prenait 0,8 s dans le tableau ci-dessus) :
 
-`expandeur=1490; retro=1532; dessin=7810; image=8650; wifi=10550; api=11950` (valeurs inventées : rien de mesuré encore)
+`expandeur=1490; retro=1532; dessin=7810; image=8650; wifi=10550; api=11950; chargeur=-` (valeurs inventées : rien de mesuré encore)
 
 | Nom | Moment |
 |---|---|
@@ -391,6 +392,7 @@ Une tablette sur chargeur secteur n'a pas de journal série. L'entité de diagno
 | `image` | fin de la première image envoyée à l'écran |
 | `wifi` | Wi-Fi connecté (la première fois) |
 | `api` | premier client de l'API (Home Assistant) |
+| `chargeur` | premier allumage du chargeur de la batterie ; « - » quand le démarrage précédent n'a vu aucune batterie ([matériel](hardware.md#version-française), Batterie) |
 
 « - » : étape pas (encore) vue. `dessin − expandeur` est l'essentiel de `setup()` (attente de 1 s, écran, audio, capteurs) ; un `retro` avant `dessin` veut dire que le rétroéclairage éclaire un écran vide pendant `dessin − retro` ms. Le texte est publié à la première image, à la connexion Wi-Fi et à celle de l'API, jamais pendant `setup()` ; Home Assistant garde une valeur par démarrage dans son historique. Marquer une étape coûte une lecture de `millis()` ; la séquence `on_boot` de `tab5-ha-hmi.yaml` n'est pas instrumentée (ADR-0005) : l'attente de 1 s elle-même se trouve entre `expandeur` et `dessin`. Source : `Tab5/socle/tab5_demarrage.h`.
 

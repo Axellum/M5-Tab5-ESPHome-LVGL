@@ -15,6 +15,8 @@
 #           souffle. L'interval de 1 s plus bas le commande d'après chargeur_pas() :
 #           présence lue chargeur coupé (sous 3,0 V = pas de batterie ; 1,9 V mesurés
 #           sans), coupé sans batterie, « Tab5 Limite de charge » (100 % ou 80 %) avec.
+#           Démarrage (10/10/2026) : CHG_EN coupé au setup ; pas de réveil de 30 s si le
+#           démarrage précédent n'a vu aucune batterie (tab5_batterie_memoire, en NVS).
 #           Batterie détectée : chaque lecture de l'INA226 passe par batterie_tension_ui
 #           (on_raw_value). Publiée par « Tab5 Batterie détectée » (activée par défaut) ;
 #           « Tab5 Batterie » vaut inconnu sans elle. Sur batterie : « Tab5
@@ -32,8 +34,9 @@
 # @wifi « Tab5 Wi-Fi éco » (09/10/2026, ADR-0045) : économie légère du Wi-Fi jamais, sur
 #       batterie ou toujours, appliquée à chaud (script tab5_wifi_eco_appliquer).
 # @demarrage « Tab5 Chronologie du démarrage » (10/10/2026, tab5_demarrage.h) : instant
-#       de six étapes du démarrage, marquées par usb_5v_power, le rétroéclairage
-#       (tab5-hardware.yaml), on_draw_start / on_draw_end, wifi on_connect et status_ha.
+#       de sept étapes du démarrage, marquées par usb_5v_power, le rétroéclairage
+#       (tab5-hardware.yaml), on_draw_start / on_draw_end, wifi on_connect, status_ha et
+#       le premier allumage du chargeur (interval de 1 s).
 #       Sans toucher à l'on_boot de tab5-ha-hmi.yaml.
 # @architecture_constraint Ce fichier ne DOIT contenir AUCUNE logique de présentation.
 #                         Les blocs on_value: doivent se contenter d'appeler des fonctions
@@ -108,13 +111,22 @@ switch:
       - lambda: 'demarrage_marquer(EtapeDemarrage::EXPANDEUR, millis());'
 
   # Charge de la batterie d'origine (discussion #278, 03/10/2026) : sans CHG_EN (P7) à 1,
-  # rien ne lance le chargeur. À 1 au démarrage comme M5Unified (Power_Class.inl,
-  # OUT_SET de 0x44) et la config de référence ESPHome (PR #1396 de devices.esphome.io) :
-  # 30 s pour réveiller une batterie dont la protection a coupé. Ensuite, commandé par
+  # rien ne lance le chargeur. M5Unified (Power_Class.inl, OUT_SET de 0x44) et la config
+  # de référence ESPHome (PR #1396 de devices.esphome.io) le mettent à 1 au démarrage :
+  # 30 s pour réveiller une batterie dont la protection a coupé (ici depuis le 10/10/2026 :
+  # au premier pas de l'interval, et pas si le démarrage précédent n'a vu aucune batterie,
+  # voir plus bas). Ensuite, commandé par
   # l'interval de 1 s plus bas (chargeur_pas, tab5_batterie.h) : coupé sans batterie
   # (08/10/2026 : allumé dans le vide, il soufflait), selon « Tab5 Limite de charge » avec.
   # [AI-WARNING] Ne pas le remettre allumé en permanence : c'est le souffle continu
   # d'une tablette sans batterie (docs/troubleshooting.md).
+  # [AI-WARNING] COUPÉ au setup depuis le 10/10/2026 (demande d'Axel), plus ALWAYS_ON :
+  # sans batterie, ces 30 s de charge dans le vide pendant le démarrage (8,39 V lus)
+  # faisaient un pic de consommation. Le premier pas de l'interval (fin de setup()) décide
+  # (chargeur_demarrer, tab5_batterie.h) : réveil de 30 s comme avant, sauf si le
+  # démarrage précédent n'a vu aucune batterie (globals tab5_batterie_memoire, en NVS).
+  # Batterie neuve ou totalement plate posée sur une tablette qui n'en avait pas : allumer
+  # « Tab5 Batterie montée » la réveille (docs/hardware.md, Battery).
   - platform: gpio
     id: charge_enable
     name: "Charge Enable"
@@ -122,7 +134,7 @@ switch:
     pin:
       pi4ioe5v6408: pi4ioe2
       number: 7
-    restore_mode: ALWAYS_ON
+    restore_mode: ALWAYS_OFF
 
   # nCHG_QC_EN (P5, actif bas) : charge rapide ARRÊTÉE au démarrage, comme la config de
   # référence ESPHome (M5Unified l'active au démarrage). Tablette branchée : la charge
@@ -280,7 +292,8 @@ text_sensor:
       return {};
 
   # Chronologie du démarrage (10/10/2026, demande d'Axel ; Tab5/socle/tab5_demarrage.h) :
-  # « expandeur=1490; retro=1532; dessin=7810; image=8650; wifi=10550; api=11950 », en ms
+  # « expandeur=1490; retro=1532; dessin=7810; image=8650; wifi=10550; api=11950;
+  # chargeur=- » (« - » : chargeur pas allumé, aucune batterie au démarrage précédent), en ms
   # depuis le lancement d'ESP-IDF (millis() ; le chargeur de démarrage, ~0,8 s le
   # 01/10/2026, vient avant). « - » : étape pas encore vue. Publiée par le script
   # tab5_chronologie_publier à la première image, au Wi-Fi et à l'API (jamais pendant
@@ -678,16 +691,24 @@ interval:
   # Charge rapide (09/10/2026, ADR-0045) : nCHG_QC_EN suit « Tab5 Mode de charge », mais
   # seulement chargeur allumé (charge_rapide_voulue) ; posée après CHG_EN, dans l'ordre de
   # M5Unified (setChargeCurrent : P7 puis P5).
+  # Démarrage (10/10/2026) : le premier pas lit tab5_batterie_memoire (une batterie vue au
+  # démarrage précédent ?) ; la mémoire n'est réécrite (NVS) que quand elle change.
   # [AI-DEBUG] Chaque commande est journalisée (tag tab5.batterie) avec sa raison.
   - interval: 1s
     then:
       - lambda: |-
           const auto a = chargeur_pas(id(tab5_limite_charge).active_index().value_or(0),
-                                      id(tab5_batterie_montee).state, millis());
+                                      id(tab5_batterie_montee).state, id(tab5_batterie_memoire), millis());
           if (a.allumer != id(charge_enable).state) {
-            if (a.allumer) id(charge_enable).turn_on();
-            else id(charge_enable).turn_off();
+            if (a.allumer) {
+              id(charge_enable).turn_on();
+              if (demarrage_marquer(EtapeDemarrage::CHARGEUR, millis())) id(tab5_chronologie_publier).execute();
+            } else {
+              id(charge_enable).turn_off();
+            }
           }
+          const uint8_t memoire = chargeur_memoire(id(tab5_batterie_memoire));
+          if (memoire != id(tab5_batterie_memoire)) id(tab5_batterie_memoire) = memoire;
           const bool rapide = charge_rapide_voulue(id(tab5_mode_charge).active_index().value_or(0), a.allumer);
           if (rapide != id(quick_charge).state) {
             ESP_LOGI("tab5.batterie", "Charge rapide %s", rapide ? "allumee" : "arretee");
@@ -858,4 +879,11 @@ globals:
     initial_value: '0'
   - id: draw_max_us
     type: uint32_t
+    initial_value: '0'
+  # Batterie vue au démarrage précédent (10/10/2026, MemoireBatterie de tab5_batterie.h) :
+  # 0 inconnu (premier démarrage), 1 aucune, 2 vue. En NVS, écrite seulement au changement
+  # (interval du chargeur). 1 : le chargeur n'est pas allumé au démarrage suivant.
+  - id: tab5_batterie_memoire
+    type: uint8_t
+    restore_value: true
     initial_value: '0'
