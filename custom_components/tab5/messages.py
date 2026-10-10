@@ -78,6 +78,84 @@ def installation(langue: str | None, *, avant: str | None, version: str, ecrits:
     return titre, "\n\n".join(lignes)
 
 
+def assistant_action(langue: str | None, action: str, alias: str = "", raison: str = "") -> str:
+    """Ce que fera la validation du récapitulatif de l'assistant (assistant.Situation.action)."""
+    if _fr(langue):
+        textes = {
+            "creer": "Valider crée l'automatisation « Tab5 — emplacements de l'écran » dans "
+                     "`automations.yaml` (sauvegardé avant dans `tab5_sauvegardes/automatisations/`), "
+                     "puis recharge les automatisations. Tout reste modifiable ensuite dans l'automatisation.",
+            "mettre_a_jour": f"Une automatisation du blueprint existe déjà : « {alias} ». Elle ne change que "
+                             "si vous cochez la case ci-dessous : ses pièces sont alors remplacées par "
+                             "celles-ci, ses autres réglages restent (`automations.yaml` sauvegardé avant). "
+                             "Sans la case, rien ne change.",
+            "ailleurs": "Une automatisation du blueprint existe déjà, hors de `automations.yaml` : "
+                        "l'assistant n'y touche pas. Valider ne change rien.",
+            "plusieurs": "Plusieurs automatisations du blueprint existent déjà : l'assistant ne choisit pas "
+                         "laquelle changer. Valider ne change rien.",
+            "fichier": f"L'assistant n'écrira pas `automations.yaml` ({raison}). Valider met le YAML à "
+                       "coller dans une notification.",
+        }
+    else:
+        textes = {
+            "creer": "Submitting creates the automation « Tab5 — screen slots » in `automations.yaml` "
+                     "(saved first in `tab5_sauvegardes/automatisations/`), then reloads the automations. "
+                     "Everything stays editable in the automation afterwards.",
+            "mettre_a_jour": f"An automation of the blueprint already exists: « {alias} ». It only changes if "
+                             "you tick the box below: its rooms are then replaced by these ones, its other "
+                             "settings stay (`automations.yaml` saved first). Without the box, nothing changes.",
+            "ailleurs": "An automation of the blueprint already exists outside `automations.yaml`: the "
+                        "assistant leaves it alone. Submitting changes nothing.",
+            "plusieurs": "Several automations of the blueprint already exist: the assistant does not pick "
+                         "which one to change. Submitting changes nothing.",
+            "fichier": f"The assistant will not write `automations.yaml` ({raison}). Submitting puts the YAML "
+                       "to paste in a notification.",
+        }
+    return textes[action]
+
+
+def assistant_resultat(langue: str | None, resultat: str, *, entite: str | None = None,
+                       sauvegarde: str | None = None, yaml_a_coller: str = "",
+                       raison: str = "") -> tuple[str, str]:
+    """(titre, message) à la fin de l'assistant. `resultat` : « cree », « mis_a_jour »,
+    « non_chargee » (écrite, mais HA ne l'a pas chargée), « rien » ou « a_coller »."""
+    fr = _fr(langue)
+    titre = "Tab5 : assistant de configuration" if fr else "Tab5: setup assistant"
+    lignes = []
+    if resultat in ("cree", "mis_a_jour", "non_chargee"):
+        if fr:
+            lignes.append({"cree": "Automatisation des emplacements créée",
+                           "mis_a_jour": "Pièces de l'automatisation des emplacements remplacées",
+                           "non_chargee": "Automatisation écrite dans `automations.yaml`, mais Home Assistant "
+                                          "ne l'a pas chargée : voir Paramètres → Système → Journaux"}[resultat]
+                          + (f" (`{entite}`)." if entite else "."))
+            if sauvegarde:
+                lignes.append(f"L'ancien `automations.yaml` est gardé dans `{sauvegarde}`.")
+            lignes.append("La tablette reçoit ses pièces à sa prochaine connexion. Tout se change ensuite dans "
+                          "l'automatisation (Paramètres → Automatisations et scènes).")
+        else:
+            lignes.append({"cree": "Screen slots automation created",
+                           "mis_a_jour": "Rooms of the screen slots automation replaced",
+                           "non_chargee": "Automation written to `automations.yaml`, but Home Assistant did "
+                                          "not load it: see Settings → System → Logs"}[resultat]
+                          + (f" (`{entite}`)." if entite else "."))
+            if sauvegarde:
+                lignes.append(f"The old `automations.yaml` is kept in `{sauvegarde}`.")
+            lignes.append("The tablet gets its rooms at its next connection. Change anything afterwards in the "
+                          "automation (Settings → Automations & scenes).")
+    elif resultat == "a_coller":
+        if fr:
+            lignes.append(f"`automations.yaml` n'a pas été écrit ({raison}). Ajoutez cette automatisation à "
+                          "votre fichier des automatisations, puis rechargez les automatisations :")
+        else:
+            lignes.append(f"`automations.yaml` was not written ({raison}). Add this automation to your "
+                          "automations file, then reload the automations:")
+        lignes.append(f"```yaml\n{yaml_a_coller.rstrip()}\n```")
+    else:
+        lignes.append(("Rien n'a changé" if fr else "Nothing changed") + (f" ({raison})." if raison else "."))
+    return titre, "\n\n".join(lignes)
+
+
 def firmware_lance(langue: str | None, version: str) -> tuple[str, str]:
     """(titre, message) quand la mise à jour de la tablette est lancée."""
     if _fr(langue):

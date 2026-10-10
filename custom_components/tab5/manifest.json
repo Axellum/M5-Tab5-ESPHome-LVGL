@@ -1,6 +1,7 @@
 {
   "domain": "tab5",
   "name": "Tab5 — fichiers HA · HA files",
+  "after_dependencies": ["automation"],
   "codeowners": ["@Axellum"],
   "config_flow": true,
   "documentation": "https://axellum.github.io/M5-Tab5-ESPHome-LVGL/en/installation/home-assistant-files/",

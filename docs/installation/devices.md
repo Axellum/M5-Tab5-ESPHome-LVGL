@@ -8,6 +8,8 @@ Your devices — lights, shutters, climate, plants, TV, sensors — are picked i
 
 ## Create the automation
 
+With the HACS integration, its setup assistant can create it for you from your Home Assistant areas, then you fill in the rest here ([step 1, setup assistant](home-assistant-files.md#with-hacs)). By hand:
+
 1. *Settings → Automations & scenes → Blueprints*, « Tab5 — emplacements de l'écran · screen slots ».
    Not in the list? *Import blueprint*, with
    `https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/HomeAssistant_Config/blueprints/automation/tab5/tab5_emplacements.yaml`
@@ -60,6 +62,8 @@ How to use the tiles on the screen (tap, long press, swipe): [user manual, botto
 Vos appareils — lumières, volets, clim, plantes, TV, capteurs — se choisissent dans **une automatisation**, créée depuis le blueprint « Tab5 — emplacements de l'écran · screen slots » que l'étape 1 a ajouté ([ADR-0019](../decisions/0019-logical-slots-blueprint.md)). La tablette ne nomme aucun appareil : en changer se fait dans Home Assistant, ni flash ni redémarrage.
 
 ## Créer l'automatisation
+
+Avec l'intégration HACS, son assistant de configuration peut la créer pour vous à partir de vos pièces de Home Assistant ; vous complétez ensuite ici le reste ([étape 1, assistant de configuration](home-assistant-files.md#avec-hacs)). À la main :
 
 1. *Paramètres → Automatisations et scènes → Blueprints*, « Tab5 — emplacements de l'écran · screen slots ».
    Absent de la liste ? *Importer un blueprint*, avec
