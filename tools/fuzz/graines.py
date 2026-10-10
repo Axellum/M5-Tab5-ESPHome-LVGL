@@ -37,6 +37,8 @@ FAMILLES = [
     ("<", "tab5_maj_cameras", ("adresse", "cameras")),
     ("=", "tab5_maj_suivi", "payload"),
     (">", "tab5_maj_froid", "payload"),
+    ("?", "tab5_maj_energie_soleil", "payload"),
+    ("@", "tab5_maj_energie_bilan", ("vue", "debut", "payload")),
 ]
 
 
