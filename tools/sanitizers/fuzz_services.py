@@ -89,7 +89,7 @@ GRAINES: dict[str, dict[str, str]] = {
                                     "valeurs": "0;0;0;0;0;0;0.05;0.4;1.1;1.9;2.6;3;3.1;;;;;;;;;;;"},
     # Pages « Aujourd'hui » et « Bilan » (ADR-0058) : les 24 valeurs de prevu et de clair, un créneau,
     # puis une devise multi-octets et trois séries de créneaux dont certains à venir (vides).
-    "tab5_maj_energie_soleil": {"payload": "08:13|13:52|19:31|17.8|nan|a|12|15|"
+    "tab5_maj_energie_soleil": {"payload": "05:47|13:52|21:56|17.8|nan|a|12|15|"
                                            "0;0;0;0;0;0;0;0;0.12;0.79;1.53;2.2;2.68;2.93;2.38;2.12;1.67;0.94;0.42;0;0;0;0;0|"
                                            "0;0;0;0;0;0;0;0;0.15;0.99;1.91;2.75;3.35;3.66;3.61;3.22;2.54;1.67;0.75;0;0;0;0;0"},
     "tab5_maj_energie_bilan": {"vue": "jours", "debut": "2026-05-18",

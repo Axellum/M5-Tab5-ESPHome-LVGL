@@ -677,13 +677,15 @@ def build_energie_historique(vue: str, aujourd_hui: _dt.date) -> dict:
 ENERGIE_SOLEIL_CHAMPS = ("lever", "midi", "coucher", "prevu_jour", "prevu_demain", "source",
                          "creneau_debut", "creneau_fin", "prevu", "clair")
 ENERGIE_SOLEIL = {
-    "lever": "08:13", "midi": "13:52", "coucher": "19:31",
-    "prevu_jour": "17.8", "prevu_demain": "12.1", "source": "a",
+    # Un jour de juin à Paris, comme l'historique de la démo (production dès 6 h) : prevu
+    # reprend les deux heures déjà produites (0,53 et 0,94 kWh), nuages de 16 h à 20 h.
+    "lever": "05:47", "midi": "13:52", "coucher": "21:56",
+    "prevu_jour": "32.3", "prevu_demain": "27.4", "source": "a",
     "creneau_debut": "12", "creneau_fin": "15",
-    "prevu": ["0"] * 8 + ["0.12", "0.79", "1.53", "2.2", "2.68", "2.93", "2.38", "2.12", "1.67",
-                          "0.94", "0.42"] + ["0"] * 5,
-    "clair": ["0"] * 8 + ["0.15", "0.99", "1.91", "2.75", "3.35", "3.66", "3.61", "3.22", "2.54",
-                          "1.67", "0.75"] + ["0"] * 5,
+    "prevu": ["0"] * 6 + ["0.53", "0.94", "1.77", "2.32", "2.79", "3.15", "3.39", "3.5", "3.48",
+                          "3.33", "1.87", "1.63", "1.33", "0.98", "0.96", "0.3"] + ["0"] * 2,
+    "clair": ["0"] * 6 + ["0.54", "1.28", "1.97", "2.58", "3.1", "3.5", "3.77", "3.89", "3.87",
+                          "3.7", "3.4", "2.96", "2.41", "1.78", "1.07", "0.33"] + ["0"] * 2,
 }
 
 
