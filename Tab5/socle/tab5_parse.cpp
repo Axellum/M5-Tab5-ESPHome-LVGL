@@ -1090,3 +1090,26 @@ bool froid_alerte_lire(const char* reste, FroidAlerteLu& out) {
     out.nom = c3 + 1;
     return true;
 }
+
+// ─── 13. Télécommandes (ADR-0056) ───
+// Nouveau, écrit ici d'emblée comme zone_gauche_lire.
+
+int telecommandes_lire(const char* valeur, size_t n, TelecommandeLue out[kTelecommandesMax]) {
+    if (valeur == nullptr || n == 0) return 0;
+    Champ f[2 * kTelecommandesMax] = {};
+    const int k = champs_decouper(valeur, n, '|', f, 2 * kTelecommandesMax);
+    const int nb = k / 2;  // paires complètes seulement
+    for (int i = 0; i < nb; i++) {
+        TelecommandeLue t;
+        for (int e = 0; e < static_cast<int>(TelecommandeEcran::NB); e++)
+            if (champ_est(f[2 * i], kTelecommandeEcranCodes[e])) t.ecran = static_cast<TelecommandeEcran>(e);
+        t.nom = f[2 * i + 1];
+        out[i] = t;
+    }
+    return nb;
+}
+
+const char* telecommande_emplacement(int i) {
+    static constexpr const char* kCles[kTelecommandesMax] = {"tv", "tv1", "tv2", "tv3"};
+    return (i >= 0 && i < kTelecommandesMax) ? kCles[i] : kCles[0];
+}

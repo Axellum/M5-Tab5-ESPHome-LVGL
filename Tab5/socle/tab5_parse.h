@@ -731,3 +731,33 @@ struct FroidAlerteLu {
     const char* nom = "";
 };
 bool froid_alerte_lire(const char* reste, FroidAlerteLu& out);
+
+// ─── 13. Télécommandes (clé « telecommandes » de tab5_maj_emplacements, ADR-0056) ───
+// « telecommandes|écran|nom|écran|nom… » : les télécommandes choisies dans le blueprint
+// (« Télécommande de la TV », puis « Autres télécommandes »), kTelecommandesMax au plus,
+// dans l'ordre. Une page du popup chacune. Écran = la disposition des touches :
+//   tv       Source, Muet, rangée d'applications (Netflix… : script tab5_tv_app de HA) ;
+//   boitier  Stop, rangée de lecture (précédent, reculer, lecture/pause, avancer, suivant),
+//            sans Muet ni applications (Apple TV, Freebox Player par l'intégration Apple TV).
+// Un code inconnu (blueprint plus récent) vaut tv, la disposition d'avant l'ADR. Seules les
+// paires complètes comptent ; vide (« telecommandes| ») : aucune télécommande connue, le
+// popup garde sa page unique d'avant. Les codes sont lus par le blueprint : ni traduits ni
+// renommés sans lui (tests/test_telecommandes.py).
+constexpr int kTelecommandesMax = 4;
+enum class TelecommandeEcran : uint8_t {
+    TV,
+    BOITIER,
+    NB
+};
+constexpr const char* kTelecommandeEcranCodes[static_cast<int>(TelecommandeEcran::NB)] = {"tv", "boitier"};
+struct TelecommandeLue {
+    TelecommandeEcran ecran = TelecommandeEcran::TV;
+    Champ nom{nullptr, 0};  // copié par l'écran (texte_ha_copier) ; vide : un nom par défaut
+};
+// Renvoie le nombre de télécommandes lues (0 à kTelecommandesMax).
+int telecommandes_lire(const char* valeur, size_t n, TelecommandeLue out[kTelecommandesMax]);
+
+// Emplacement de l'événement esphome.tab5_action de la télécommande `i` : « tv » pour la
+// première (l'emplacement d'avant l'ADR : un blueprint plus ancien la commande toujours),
+// « tv1 », « tv2 », « tv3 » pour les suivantes ; « tv » hors de 0..kTelecommandesMax - 1.
+const char* telecommande_emplacement(int i);

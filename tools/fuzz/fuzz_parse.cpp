@@ -121,6 +121,13 @@ void emplacements(const std::string& p) {
         PieceClimatLu pc;
         piece_climat_lire(e.cle, e.reste, pc);
         zone_gauche_lire(e.reste.p, e.reste.n);  // « gauche|… » (ADR-0051)
+        TelecommandeLue t[kTelecommandesMax];  // « telecommandes|… » (ADR-0056)
+        const int nt = telecommandes_lire(e.reste.p, e.reste.n, t);
+        for (int i = 0; i < nt; i++) {
+            const std::string nom(t[i].nom.p, t[i].nom.n);  // ce que texte_ha_copier recevrait
+            (void) nom;
+            telecommande_emplacement(i);
+        }
     }
 }
 

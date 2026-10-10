@@ -1439,6 +1439,35 @@ static void test_froid_textes() {
            "froid : libellé incomplet refusé");
 }
 
+// Télécommandes (ADR-0056) : « telecommandes|écran|nom|… », paires complètes, 4 au plus.
+static int telecommandes(const char* s, TelecommandeLue t[kTelecommandesMax]) {
+    return telecommandes_lire(s, std::strlen(s), t);
+}
+
+static bool nom_est(const TelecommandeLue& t, const char* mot) { return champ_est(t.nom, mot); }
+
+static void test_telecommandes() {
+    TelecommandeLue t[kTelecommandesMax];
+    expect(telecommandes("", t) == 0 && telecommandes_lire(nullptr, 3, t) == 0, "télécommandes : vide = aucune");
+    expect(telecommandes("tv|TV Samsung|boitier|Apple TV|boitier|Freebox Player", t) == 3 &&
+               t[0].ecran == TelecommandeEcran::TV && nom_est(t[0], "TV Samsung") &&
+               t[1].ecran == TelecommandeEcran::BOITIER && nom_est(t[1], "Apple TV") &&
+               t[2].ecran == TelecommandeEcran::BOITIER && nom_est(t[2], "Freebox Player"),
+           "télécommandes : trois, dans l'ordre");
+    expect(telecommandes("boitier|A|tv|B|boitier|C|tv|D|boitier|E", t) == kTelecommandesMax && nom_est(t[3], "D"),
+           "télécommandes : quatre au plus, la fin ignorée");
+    expect(telecommandes("magnetoscope|X", t) == 1 && t[0].ecran == TelecommandeEcran::TV,
+           "télécommandes : écran inconnu = tv");
+    expect(telecommandes("boitier|A|tv", t) == 1 && telecommandes("boitier", t) == 0,
+           "télécommandes : paires complètes seulement");
+    expect(telecommandes("boitier|", t) == 1 && t[0].nom.n == 0, "télécommandes : nom vide gardé vide");
+    expect(std::strcmp(telecommande_emplacement(0), "tv") == 0 && std::strcmp(telecommande_emplacement(1), "tv1") == 0 &&
+               std::strcmp(telecommande_emplacement(3), "tv3") == 0 &&
+               std::strcmp(telecommande_emplacement(4), "tv") == 0 &&
+               std::strcmp(telecommande_emplacement(-1), "tv") == 0,
+           "télécommandes : emplacements tv, tv1… ; hors bornes = tv");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -1481,6 +1510,7 @@ int main() {
     test_suivi_textes();
     test_froid_lire();
     test_froid_textes();
+    test_telecommandes();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
