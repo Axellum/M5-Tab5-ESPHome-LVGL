@@ -1,14 +1,17 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_lecteur.cpp
- * @role Lecteur de musique (ADR-0050, 10/10/2026) : le popup « Musique » (lecteur_popup.yaml)
- *       et la mini-barre « en lecture » de l'accueil (lecteur_mini.yaml), peints d'après
+ * @role Lecteur de musique (ADR-0050, 10/10/2026) : le popup « Musique » (lecteur_popup.yaml),
+ *       la mini-barre « en lecture » de l'accueil (lecteur_mini.yaml) et le lecteur compact
+ *       de la zone à gauche de l'horloge (lecteur_zone.yaml, ADR-0051 lot 2), peints d'après
  *       ce que pousse tab5_maj_lecteur (lu par lecteurs_lire() / lecteur_etat_lire(),
  *       tab5_parse.h, section 9).
  *         - lecteur_recu() garde la liste et l'état (textes copiés par texte_ha_copier),
  *           repeint, et ne télécharge la pochette que si son adresse change ;
  *         - lecteur_tic() (1 s) avance la position en lecture (lecteur_position()) et masque
  *           la mini-barre 5 min après une pause ;
+ *         - le lecteur compact (peindre_zone) n'est peint que montré (s_zone_montre, posé par
+ *           lecteur_zone_montrer() depuis zone_gauche_appliquer()), sinon marqué « sale » ;
  *         - les commandes partent en événement esphome.tab5_lecteur (ADR-0025) : la tablette
  *           montre tout de suite l'effet attendu (lecture / pause, aléatoire, répétition,
  *           muet, volume, position), HA confirme par sa poussée suivante.
@@ -19,7 +22,8 @@
  *       glyphe_genre (MDI_CODE_TARGETS de tools/check_tab5_code_rules.py).
  * @ai_instruction La mini-barre couvre le cadre « Ok Nabu » quand elle se montre
  *       (nabu_masquer(), tab5_rangee.cpp) : le panneau revient tel qu'il était quand elle
- *       se masque. Un widget de plus = son champ dans LecteurUI (tab5_lecteur.h) et sa
+ *       se masque. Elle ne se montre pas tant que le lecteur compact est dans la zone
+ *       gauche (choix d'Axel, 10/10/2026). Un widget de plus = son champ dans LecteurUI (tab5_lecteur.h) et sa
  *       ligne dans le script tab5_lecteur_lier (tab5-lecteur.yaml).
  */
 #include "tab5_internal.h"

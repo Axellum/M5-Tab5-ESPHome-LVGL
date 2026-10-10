@@ -46,6 +46,7 @@
 #include "lvgl.h"
 #include "lvgl_private.h"  // lv_image_cache_drop() (cache d'images, hors de lvgl.h en 9.5)
 #include <esp_heap_caps.h>
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -178,6 +179,7 @@ Graphique s_g;
 lv_point_precise_t s_pts[(kHeuresMax - 1) * kLisse + 1];
 uint8_t* s_aire_px = nullptr;  // pixels du remplissage (kAireLMax × kAireHMax × 4 octets)
 lv_image_dsc_t s_aire_dsc;     // vit avec l'image : lv_image_set_src() ne le copie pas
+bool s_aire_trace = false;     // dégradé impossible déjà signalé (une trace, pas une par peinture)
 static_assert(kHeuresMax <= kCourbeLissePoints, "ui_courbe_lisse ne trace pas plus de points");
 
 bool graphique_visible() {
@@ -287,13 +289,19 @@ void aire_peindre(int np, uint32_t couleur, int32_t y_haut, int32_t base) {
     const int32_t x0 = static_cast<int32_t>(std::floor(s_pts[0].x));
     const int32_t x1 = static_cast<int32_t>(std::ceil(s_pts[np - 1].x));
     const int32_t aw = x1 - x0 + 1, ah = base - y_haut;
+    // PSRAM seulement : 156 Kio pris à la mémoire interne priveraient le Wi-Fi et lwIP ;
+    // sans PSRAM libre, la courbe reste sans dégradé (une trace, une fois).
     if (s_aire_px == nullptr && aw > 1 && ah > 1) {
         const size_t octets = static_cast<size_t>(kAireLMax) * kAireHMax * 4;
         s_aire_px = static_cast<uint8_t*>(heap_caps_malloc(octets, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
-        if (s_aire_px == nullptr)
-            s_aire_px = static_cast<uint8_t*>(heap_caps_malloc(octets, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
     }
     if (s_aire_px == nullptr || aw <= 1 || ah <= 1 || aw > kAireLMax || ah > kAireHMax) {
+        if (!s_aire_trace) {
+            ESP_LOGW("tab5.gauche", "Dégradé du graphique non peint (%s, %ld × %ld)",
+                     s_aire_px == nullptr ? "PSRAM refusée" : "hors du tampon", static_cast<long>(aw),
+                     static_cast<long>(ah));
+            s_aire_trace = true;
+        }
         ui_hidden(s_g.aire, true);
         return;
     }
@@ -426,7 +434,9 @@ Boite repere(int i, float t, int32_t cx, int32_t cy, bool dessous, const Obstacl
 void peindre() {
     if (s_g.courbe == nullptr) return;
     s_g.sale = false;
-    const int n = previsions_heures_lisibles();
+    // Borné par le kHeuresMax de ce fichier (xs, ys, s_pts, barres), égal aujourd'hui à
+    // celui de tab5_meteo.cpp.
+    const int n = std::min(previsions_heures_lisibles(), kHeuresMax);
     const int32_t w = utile(true), h = utile(false);
     ui_hidden(s_g.vide, n >= 2);
     if (n < 2) {

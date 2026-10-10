@@ -178,7 +178,9 @@ def test_degrade_et_pluie_lisibles():
     assert re.search(r"^lv_image_dsc_t s_aire_dsc;", cpp, re.M)
     assert "LV_COLOR_FORMAT_ARGB8888" in cpp and "LV_COLOR_FORMAT_A8" not in cpp
     assert "lv_image_cache_drop(&s_aire_dsc);" in cpp
-    assert cpp.count("heap_caps_malloc(") == 2, "PSRAM, puis la mémoire interne"
+    assert cpp.count("heap_caps_malloc(") == 1 and "MALLOC_CAP_INTERNAL" not in cpp, \
+        "PSRAM seulement : 156 Kio de mémoire interne priveraient le Wi-Fi"
+    assert "std::min(previsions_heures_lisibles(), kHeuresMax)" in _fonction(cpp, "void peindre()")
     peindre = _fonction(cpp, "void peindre()")
     # Toute pluie annoncée a sa barre, haute d'au moins kPluieMin ; aucune sans pluie.
     assert "if (!(d.pluvio > 0.0f))" in peindre and "kPluieMin + " in peindre

@@ -297,12 +297,12 @@ bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out)
 // Contenus, dans l'ORDRE du cycle et de la NVS (Tab5/ecran/tab5_zone_gauche.cpp) : une
 // valeur de plus va à la FIN, aucune ne se déplace. Codes lus par le blueprint
 // (codes_gauche) : ni traduits ni renommés sans lui (tests/test_zone_gauche.py).
-// LECTEUR est réservé au lecteur audio compact (lot 2, sur le lecteur de l'ADR-0050) : lu,
-// gardé, mais sauté tant que l'écran ne sait pas le montrer.
+// LECTEUR : le lecteur de musique compact (lot 2, sur le lecteur de l'ADR-0050), sauté
+// quand HA a dit qu'aucun lecteur n'est choisi (tab5_zone_gauche.cpp, disponible()).
 enum class ZoneGauche : uint8_t {
     VOCAL,      // le micro et les boutons Domo / Discu (l'écran d'avant)
     GRAPHIQUE,  // les prévisions des heures qui viennent en courbe et barres de pluie
-    LECTEUR,    // réservé (lot 2)
+    LECTEUR,    // le lecteur de musique compact (lot 2)
     NB
 };
 constexpr const char* kZoneGaucheCodes[static_cast<int>(ZoneGauche::NB)] = {"vocal", "graphique", "lecteur"};

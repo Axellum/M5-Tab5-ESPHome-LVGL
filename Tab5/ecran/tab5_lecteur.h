@@ -1,8 +1,9 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_lecteur.h
- * @role Lecteur de musique (tab5_lecteur.cpp, ADR-0050) : le popup « Musique » et sa
- *       mini-barre de l'accueil.
+ * @role Lecteur de musique (tab5_lecteur.cpp, ADR-0050) : le popup « Musique », sa
+ *       mini-barre de l'accueil et le lecteur compact de la zone à gauche de l'horloge
+ *       (ADR-0051, lot 2).
  * @architecture_constraint tab5_custom.h l'inclut : les lambdas YAML et les unités
  *       `tab5_*.cpp` le voient. Une fonction déclarée ici a un appelant hors de son fichier
  *       (règle 12 de tools/check_tab5_code_rules.py, qui lit tab5_custom.h et ses en-têtes).
