@@ -89,7 +89,11 @@ int s_n = 0;
 Etat s_e;
 bool s_recu = false;             // une poussée de HA est arrivée depuis le démarrage
 uint32_t s_recu_ms = 0;          // réception de la position (millis)
-uint32_t s_pause_ms = 0;         // passage en pause (millis), 0 : pas en pause
+// Passage en pause (millis) et son drapeau : jamais « millis() | 1 », qui dépasse millis() d'un
+// quand la milliseconde est paire ; la différence lue dans la même milliseconde valait alors
+// 2^32 - 1 et la mini-barre restait masquée (une pause sur deux ; rendu clair, 10/10/2026).
+uint32_t s_pause_ms = 0;
+bool s_en_pause = false;
 bool s_image_prete = false;      // pochette décodée pour s_e.image
 char s_url_demandee[kLecteurUrlMax] = "";
 char s_base[64] = "";            // http://hôte:8123, d'après le client API de HA
@@ -361,7 +365,7 @@ void peindre_popup() {
 
 // Mini-barre : en lecture, ou dans les 5 min qui suivent une pause.
 bool mini_visible() {
-    if (s_e.lu.etat == LecteurEtat::PAUSE) return s_pause_ms != 0 && esphome::millis() - s_pause_ms < kPauseVisibleMs;
+    if (s_e.lu.etat == LecteurEtat::PAUSE) return s_en_pause && esphome::millis() - s_pause_ms < kPauseVisibleMs;
     return en_lecture();
 }
 
@@ -534,9 +538,12 @@ void lecteur_recu(const std::string& lecteurs, const std::string& etat) {
     s_e.lu = lu;
     s_recu_ms = esphome::millis();
     if (s_e.lu.etat == LecteurEtat::PAUSE) {
-        if (avant != LecteurEtat::PAUSE || s_pause_ms == 0) s_pause_ms = esphome::millis() | 1u;
+        if (avant != LecteurEtat::PAUSE || !s_en_pause) {
+            s_pause_ms = esphome::millis();
+            s_en_pause = true;
+        }
     } else {
-        s_pause_ms = 0;
+        s_en_pause = false;
     }
     demander_image();
     peindre();
@@ -593,7 +600,8 @@ void lecteur_appui(int bouton) {
             // L'effet attendu tout de suite ; la poussée de HA le confirme.
             s_e.lu.etat = en_lecture() ? LecteurEtat::PAUSE : LecteurEtat::LECTURE;
             s_recu_ms = esphome::millis();
-            s_pause_ms = s_e.lu.etat == LecteurEtat::PAUSE ? (esphome::millis() | 1u) : 0;
+            s_en_pause = s_e.lu.etat == LecteurEtat::PAUSE;
+            s_pause_ms = esphome::millis();
             break;
         case LECTEUR_BTN_PRECEDENT:
             if (a(LECTEUR_F_PRECEDENT)) envoyer("precedent");

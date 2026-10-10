@@ -30,6 +30,10 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.7.0).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
 
+### 2026-10-10 — Correctif : la mini-barre « en lecture » se montre à chaque pause
+
+- **Mini-barre masquée une pause sur deux** (#430) : l'instant de la pause était gardé comme `millis() | 1` pour que 0 veuille dire « pas en pause ». Quand la milliseconde était paire, cet instant dépassait `millis()` d'un, et la peinture faite dans la même milliseconde lisait un écart de 2^32 − 1 ms au lieu de 0 : la mini-barre restait cachée et le cadre Ok Nabu en place. Un drapeau séparé (`s_en_pause`) remplace l'astuce (`Tab5/ecran/tab5_lecteur.cpp`). C'est aussi ce qui faisait échouer au hasard l'étape « bascule à chaud = démarrage à froid » du rendu clair (`accueil-musique-clair.png`, l'une des deux séries avec la mini-barre, l'autre sans). Non essayé sur la tablette.
+
 ### 2026-10-10 — Roue de navigation : Musique et TV dans « Appareils ▸ » (ADR-0042)
 
 - **Demande d'Axel** (« ajoute musique et tv dans appareils ») : la famille « Appareils ▸ » de la roue de navigation (appui long de la carte centrale) finit par **Musique** (le popup Musique, ADR-0050, icône de son en-tête) et **TV** (la télécommande, icône de son en-tête). La TV n'est proposée qu'avec sa zone ; Musique, comme le lecteur de la zone à gauche de l'horloge, tant que Home Assistant n'a pas dit qu'aucun lecteur n'est choisi (le geste « musique » et « Aller à l'écran » l'ouvrent toujours).
