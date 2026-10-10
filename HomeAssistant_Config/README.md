@@ -198,6 +198,16 @@ Sensors for a local inference server — **Ollama**, **llama.cpp** (`llama-serve
 
 ---
 
+### `packages/tab5_serveur_ia.yaml` — the AI server popup
+Backend of the firmware's **AI server popup** ([ADR-0059](../docs/decisions/0059-local-llm-server-popup.md)): a live view of one local LLM server. The package talks to no server: it reads the sensors picked in ten lists « Tab5 · serveur IA, … · AI server, … » (state, model, tokens/s, requests running, requests queued, VRAM used, VRAM total, GPU temperature, RAM, power; one choice each, « Aucun » by default, never guessed; each list offers only the sensors that fit). They can come from `tab5_llm.yaml` above, Glances, System Monitor, a metered plug…
+- `sensor.tab5_poussee_serveur_ia` (state = how many lists are set) assembles the payload in its `payload` attribute: units converted (data units to GiB written « Go », °F to °C, kW to W), values rounded so that measurement noise does not push, the VRAM percentage computed, the GPU temperature level from **two thresholds in one place** (80 and 90 °C, cautious values not verified per GPU). With no `requests queued` sensor, the `en_attente` attribute of the running-requests sensor is used (the shape of `tab5_llm.yaml`).
+- Automation `tab5_serveur_ia` (mode `single`): pushes `tab5_maj_serveur_ia` on a change of the payload, **two seconds apart at least**, again after the wait if it changed meanwhile. Automation `tab5_serveur_ia_immediat`: at once when a list changes, when the tablet connects, on « MAJ Écran » and at HA start. `script.tab5_serveur_ia_pousser` pushes only when the tablet is connected.
+- The payload attribute writes a recorder row on each change: exclude `sensor.tab5_poussee_serveur_ia` from the recorder if the database size matters.
+
+Without this package, the popup waits (« En attente de Home Assistant ») and the navigation wheel does not offer it.
+
+---
+
 ### `packages/tab5_froid.yaml` — fridges and freezers
 Backend of the firmware's **Fridges and freezers popup**, of its central-card alerts and of the icon that blinks on the clock ([ADR-0055](../docs/decisions/0055-fridge-freezer-monitoring.md)). The appliances are the temperature sensors chosen in the lists « Tab5 · réfrigérateurs · fridges » and « Tab5 · congélateurs · freezers » (`packages/tab5_reglages.yaml`, four at most in all, only sensors with `state_class: measurement`; never guessed).
 - `script.tab5_froid_calculer` (`mode: queued`) is where Home Assistant decides: **thresholds in one place**, the `seuils` variable at the top of the script (fridge 0 to 5 °C; attention when the 15-minute mean leaves it; serious above 8 °C for 30 min or at 10 °C; freezer -18 °C at most, attention above -15 °C, serious above -12 °C for 30 min or at -10 °C; a rise of 2 / 4 °C since the lowest of the last 30 minutes is « door open? », still there after 20 minutes without cooling down « door not closed »; no reading for 30 minutes « sensor silent »). It reads `recorder.get_statistics` (5-minute and hourly), keeps the state in `sensor.tab5_froid` (a trigger-based template sensor, restored at restart, updated by the `tab5_froid_bilan` event) and pushes `tab5_maj_froid` when the tablet is connected.
@@ -510,6 +520,16 @@ Des capteurs pour un serveur d'inférence local — **Ollama**, **llama.cpp** (`
 - `sensor.tab5_serveur_ia_releve` (à déclencheurs, toutes les 30 s, seulement quand un serveur est choisi) appelle `rest_command.tab5_serveur_ia` (GET, 5 s au plus) : Ollama `/api/ps` ; llama.cpp `/health`, `/props`, `/metrics` (avec `--metrics`), `/slots` ; LM Studio `/api/v1/models` (0.4 et plus). État `aucun` / `ok` / `chargement` / `hors_ligne` / `erreur`, la raison dans l'attribut `raison`.
 - Capteurs visibles : `binary_sensor.tab5_serveur_ia_en_ligne`, `sensor.tab5_serveur_ia_modele` (modèles chargés), et trois à `state_class: measurement`, proposés dans « Tab5 · capteurs suivis » : `sensor.tab5_serveur_ia_vram` (Gio, Ollama), `sensor.tab5_serveur_ia_vitesse` (tokens/s, llama.cpp avec `--metrics`), `sensor.tab5_serveur_ia_requetes` (llama.cpp). Une valeur que le serveur ne donne pas reste indisponible, jamais inventée (Ollama n'a pas de compteur global de tokens/s).
 - Matériel (température et VRAM du GPU, RAM, puissance) : pas ici ; l'intégration Glances ou System Monitor, dont on choisit les capteurs dans « Tab5 · capteurs suivis ».
+
+---
+
+### `packages/tab5_serveur_ia.yaml` — le popup Serveur IA
+Backend du **popup Serveur IA** du firmware ([ADR-0059](../docs/decisions/0059-local-llm-server-popup.md)) : une vue en direct d'un serveur de LLM local. Le package ne parle à aucun serveur : il lit les capteurs choisis dans dix listes « Tab5 · serveur IA, … · AI server, … » (état, modèle, tokens/s, requêtes en cours, requêtes en file, VRAM utilisée, VRAM totale, température du GPU, RAM, puissance ; un choix chacune, « Aucun » par défaut, jamais devinés ; chaque liste ne propose que les capteurs qui conviennent). Ils peuvent venir de `tab5_llm.yaml` ci-dessus, de Glances, de System Monitor, d'une prise mesurée…
+- `sensor.tab5_poussee_serveur_ia` (état = le nombre de listes réglées) assemble le payload dans son attribut `payload` : unités converties (unités de données en Gio écrits « Go », °F en °C, kW en W), valeurs arrondies pour qu'un bruit de mesure ne pousse pas, pourcentage de VRAM calculé, niveau de la température du GPU selon **deux seuils à un seul endroit** (80 et 90 °C, valeurs prudentes non vérifiées pour chaque GPU). Sans capteur « requêtes en file », l'attribut `en_attente` du capteur des requêtes en cours sert (la forme de `tab5_llm.yaml`).
+- Automatisation `tab5_serveur_ia` (mode `single`) : pousse `tab5_maj_serveur_ia` quand le payload change, **deux secondes au moins entre deux poussées**, de nouveau après l'attente s'il a changé entre-temps. Automatisation `tab5_serveur_ia_immediat` : tout de suite quand une liste change, à la connexion de la tablette, à « MAJ Écran » et au démarrage de HA. `script.tab5_serveur_ia_pousser` ne pousse que si la tablette est connectée.
+- L'attribut payload écrit une ligne dans le recorder à chaque changement : exclure `sensor.tab5_poussee_serveur_ia` du recorder si la taille de la base compte.
+
+Sans ce package, le popup attend (« En attente de Home Assistant ») et la roue de navigation ne le propose pas.
 
 ---
 

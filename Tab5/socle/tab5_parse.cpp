@@ -1147,7 +1147,97 @@ const char* telecommande_emplacement(int i) {
     return (i >= 0 && i < kTelecommandesMax) ? kCles[i] : kCles[0];
 }
 
-// ─── 14. Énergie : soleil, prévision et bilan (ADR-0058) ───
+// ─── 14. Serveur IA (ADR-0059) ───
+// Nouveau, écrit ici d'emblée.
+
+namespace {
+constexpr int kServeurIaChamps = 13;
+
+// Nombre borné à [bas, haut], NAN sinon (vide, illisible, non fini, hors bornes).
+float serveur_ia_borne(const Champ& c, float bas, float haut) {
+    const float v = champ_nombre(c, NAN);
+    return std::isfinite(v) && v >= bas && v <= haut ? v : NAN;
+}
+
+// Requêtes : un entier de 0 à kServeurIaRequetesMax, -1 inconnu. Un nombre écrit en
+// flottant par HA (« 2.0 ») est lu 2 ; « -1 », vide ou illisible : inconnu.
+int32_t serveur_ia_requetes(const Champ& c) {
+    const uint32_t v = champ_entier(c, kServeurIaRequetesMax, 0xFFFFFFFFu);
+    return v == 0xFFFFFFFFu ? -1 : static_cast<int32_t>(v);
+}
+}  // namespace
+
+bool serveur_ia_lire(const Champ& payload, ServeurIaLu& out) {
+    out = ServeurIaLu{};
+    if (payload.p == nullptr) return false;
+    const char* p = payload.p;
+    const char* fin = p + payload.n;
+    while (p < fin) {
+        const Champ e = champ_suivant(p, fin, ';');
+        if (e.n == 0) continue;  // « ;; » : sauté
+        Champ f[kServeurIaChamps];
+        const int k = champs_decouper(e.p, e.n, '|', f, kServeurIaChamps);
+        for (int i = k; i < kServeurIaChamps; i++) f[i] = Champ{e.p + e.n, 0};
+        out.nom = f[0];
+        out.en_ligne = champ_est(f[1], "1") ? 1 : (champ_est(f[1], "0") ? 0 : -1);
+        out.modele = f[2];
+        out.tps = serveur_ia_borne(f[3], 0.0f, kServeurIaTpsMax);
+        out.en_cours = serveur_ia_requetes(f[4]);
+        out.file = serveur_ia_requetes(f[5]);
+        out.vram = serveur_ia_borne(f[6], 0.0f, kServeurIaVramMax);
+        out.vram_total = serveur_ia_borne(f[7], 0.0f, kServeurIaVramMax);
+        out.vram_pct = serveur_ia_borne(f[8], 0.0f, 100.0f);
+        out.temperature = serveur_ia_borne(f[9], -kServeurIaTempMax, kServeurIaTempMax);
+        // Vide, illisible ou « -1 » (au-dessus de max) : inconnu, jamais « normale ».
+        const uint32_t niveau = champ_entier(f[10], 0xFFFFFFFEu, 0xFFFFFFFFu);
+        out.niveau = niveau == 0xFFFFFFFFu ? kServeurIaNiveauInconnu : static_cast<uint8_t>(niveau > 2 ? 2 : niveau);
+        out.ram = serveur_ia_borne(f[11], 0.0f, 100.0f);
+        out.puissance = serveur_ia_borne(f[12], 0.0f, kServeurIaPuissanceMax);
+        return true;  // un serveur : les enregistrements suivants sont ignorés
+    }
+    return false;
+}
+
+bool serveur_ia_nombre_texte(float v, int decimales, char* out, size_t n) {
+    if (out == nullptr || n == 0) return false;
+    int r = 0;
+    if (!std::isfinite(v)) {
+        r = std::snprintf(out, n, "—");
+    } else {
+        const int d = decimales < 0 ? 0 : (decimales > 3 ? 3 : decimales);
+        double p = 1.0;
+        for (int i = 0; i < d; i++) p *= 10.0;
+        // Arrondi d'abord : « -0.04 » s'écrit « 0.0 », jamais « -0.0 ».
+        double x = std::round(static_cast<double>(v) * p) / p;
+        if (x == 0.0) x = 0.0;
+        r = std::snprintf(out, n, "%.*f", d, x);
+    }
+    if (r < 0 || static_cast<size_t>(r) >= n) {
+        out[0] = '\0';
+        return false;
+    }
+    return true;
+}
+
+void ServeurIaCourbe::ajouter(float x) {
+    if (n < 0 || n > kServeurIaPoints) n = 0;
+    if (n == kServeurIaPoints) {
+        std::memmove(v, v + 1, sizeof(float) * (kServeurIaPoints - 1));
+        n--;
+    }
+    v[n++] = x;
+}
+
+bool ServeurIaCourbe::haut(float& h) const {
+    float m = -INFINITY;
+    for (int i = 0; i < n && i < kServeurIaPoints; i++)
+        if (std::isfinite(v[i])) m = std::max(m, v[i]);
+    if (!std::isfinite(m)) return false;
+    h = std::max(m * 1.1f, 1.0f);
+    return true;
+}
+
+// ─── 15. Énergie : soleil, prévision et bilan (ADR-0058) ───
 // Nouveau, écrit ici d'emblée.
 
 namespace {

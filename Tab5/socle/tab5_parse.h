@@ -776,7 +776,68 @@ int telecommandes_lire(const char* valeur, size_t n, TelecommandeLue out[kTeleco
 // « tv1 », « tv2 », « tv3 » pour les suivantes ; « tv » hors de 0..kTelecommandesMax - 1.
 const char* telecommande_emplacement(int i);
 
-// ─── 14. Énergie : soleil, prévision et bilan (ADR-0058) ───
+// ─── 14. Serveur IA : un serveur de LLM local (tab5_maj_serveur_ia, ADR-0059) ───
+// Une variable, poussée par packages/tab5_serveur_ia.yaml (deux secondes au moins entre
+// deux poussées) : UN enregistrement de treize champs « | » — le format admet d'autres
+// enregistrements après un « ; », que ce firmware ignore (un serveur, ADR-0059) ; vide :
+// aucun capteur choisi dans les listes « Tab5 · serveur IA ».
+//   « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance »
+//   nom        nom de l'appareil du serveur dans HA (vide : l'écran n'en montre pas) ;
+//   etat       1 en ligne, 0 hors ligne, autre ou vide : inconnu ;
+//   modele     le modèle chargé, tel que HA l'écrit (vide : aucun) ;
+//   tps        tokens par seconde ; cours, file : requêtes en cours, en file (entiers) ;
+//   vram, vram_total  en Go ; vram_pct  0 à 100 (HA le calcule, ou le lit d'un capteur en %) ;
+//   temp       température du GPU en °C ; niveau 0 normale, 1 élevée, 2 critique (les
+//              seuils sont dans HA, la tablette n'en code aucun ; au-delà de 2 : 2 ;
+//              vide, illisible ou négatif : kServeurIaNiveauInconnu) ;
+//   ram        RAM utilisée en % ; puissance  en W.
+// Un champ vide, illisible, non fini ou hors de ses bornes est INCONNU (NAN, ou -1 pour
+// les requêtes) : l'écran écrit « — », jamais un zéro inventé.
+constexpr size_t kServeurIaMax = 1024;      // payload : un serveur fait ~200 octets
+constexpr float kServeurIaTpsMax = 1.0e6f;  // tokens/s au-delà : un payload faux
+constexpr uint32_t kServeurIaRequetesMax = 1000000u;
+constexpr float kServeurIaVramMax = 1.0e5f;  // Go
+constexpr float kServeurIaTempMax = 200.0f;  // °C
+constexpr float kServeurIaPuissanceMax = 1.0e5f;  // W
+constexpr uint8_t kServeurIaNiveauInconnu = 255;   // niveau que HA n'a pas donné
+struct ServeurIaLu {
+    Champ nom{nullptr, 0};     // copiés par l'écran (texte_ha_copier)
+    Champ modele{nullptr, 0};
+    int8_t en_ligne = -1;      // 1, 0, -1 inconnu
+    float tps = NAN;
+    int32_t en_cours = -1;     // -1 : inconnu
+    int32_t file = -1;
+    float vram = NAN;
+    float vram_total = NAN;
+    float vram_pct = NAN;      // 0 à 100
+    float temperature = NAN;
+    uint8_t niveau = kServeurIaNiveauInconnu;  // de la température : 0, 1, 2, ou inconnu
+    float ram = NAN;           // 0 à 100
+    float puissance = NAN;
+};
+// Faux sans enregistrement (payload vide ou « ; » seul) : aucun serveur choisi.
+bool serveur_ia_lire(const Champ& payload, ServeurIaLu& out);
+
+// Nombre d'un champ du serveur : `decimales` (0 à 3) après le point ; « — » s'il est
+// inconnu (non fini) ; jamais « -0 ». Faux si `out` est trop petit (vidé).
+bool serveur_ia_nombre_texte(float v, int decimales, char* out, size_t n);
+
+// La courbe des tokens/s : les kServeurIaPoints dernières valeurs poussées, la plus
+// ancienne d'abord (un point par poussée, deux secondes au moins entre deux : environ la
+// dernière minute quand le serveur travaille). Une valeur inconnue y entre aussi (un
+// trou dans la courbe) ; gardée par l'écran, la tablette ne demande rien.
+constexpr int kServeurIaPoints = 24;
+struct ServeurIaCourbe {
+    float v[kServeurIaPoints] = {};
+    int n = 0;
+    // Ajoute `x` à la fin ; au-delà de kServeurIaPoints, la plus ancienne sort.
+    void ajouter(float x);
+    // Haut de l'axe : la plus grande valeur connue, 10 % d'air, au moins 1 ; faux sans
+    // valeur connue.
+    bool haut(float& h) const;
+};
+
+// ─── 15. Énergie : soleil, prévision et bilan (ADR-0058) ───
 // Pages « Flux », « Aujourd'hui » et « Bilan » du popup Énergie (tab5_energie.cpp). Les
 // codes et l'ordre des champs sont un contrat avec packages/tab5_energie.yaml, la démo et
 // le rendu : ni renommés ni réordonnés sans eux.

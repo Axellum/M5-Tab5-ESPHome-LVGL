@@ -1,0 +1,492 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_serveur_ia.yaml
+# @role Popup « Serveur IA » de la tablette (ADR-0059, 10/10/2026) : le tableau de bord
+#       d'un serveur de LLM local (Ollama, llama.cpp, LM Studio, vLLM…). Ce package ne
+#       parle à aucun serveur : il lit des capteurs que l'on choisit, d'où qu'ils viennent
+#       (packages/tab5_llm.yaml pour le serveur, Glances, System Monitor, une prise
+#       mesurée, nvidia-smi par une commande…), assemble un payload et le pousse.
+#         - Les capteurs : dix listes « Tab5 · serveur IA, … · AI server, … » ci-dessous,
+#           un choix chacune, « Aucun » par défaut (jamais devinés) ; leurs mémoires
+#           input_text.tab5_choix_ia_*. Chaque liste ne propose que les capteurs qui
+#           conviennent (voir `variables:`). « Aucun » partout : payload vide, la tablette
+#           dit où choisir et la roue de navigation ne propose pas le popup.
+#         - Poussée : au changement du payload (sensor.tab5_poussee_serveur_ia, attribut
+#           `payload`), DEUX SECONDES AU MOINS entre deux poussées (automatisation
+#           tab5_serveur_ia, mode single : une poussée, deux secondes d'attente, une autre
+#           si le payload a changé pendant l'attente). Tout de suite quand une liste
+#           change, à la connexion de la tablette, à « MAJ Écran » et au démarrage de HA.
+# @payload_contract tab5_maj_serveur_ia (Tab5/paquets/tab5-api-logic.yaml, tab5_parse.h
+#       section 14) : UN enregistrement de treize champs :
+#       « nom|etat|modele|tps|cours|file|vram|vram_total|vram_pct|temp|niveau|ram|puissance ».
+#         nom = nom de l'appareil du premier capteur choisi qui en a un (40 caractères ;
+#           vide : la tablette n'en montre pas) ; etat 1 / 0 / vide (voir `en_ligne` et
+#           `hors_ligne`) ; modele = l'état du capteur du modèle (80 caractères ; « aucun »,
+#           indisponible : vide) ; tps à 0,1 près ; cours et file entiers (file : sans
+#           capteur, l'attribut `en_attente` du capteur des requêtes en cours, comme celui
+#           de packages/tab5_llm.yaml) ; vram et vram_total en Go (base 1024, comme
+#           nvidia-smi : 16384 MiB = 16 Go) à 0,1 près ; vram_pct = utilisée / totale, ou
+#           l'état d'un capteur en % choisi comme « VRAM utilisée » ; temp en °C (°F
+#           converti) et niveau 0 / 1 / 2 (SEUILS ci-dessous) ; ram en % ; puissance en W
+#           (kW, mW convertis). Valeurs arrondies : moins de poussées pour un bruit de
+#           mesure. Un champ inconnu est VIDE (la tablette écrit « — », jamais un zéro).
+#           Les « | », « ; » et sauts de ligne des textes deviennent « / », « , » et espaces.
+# @rules SEUILS de la température du GPU, à un seul endroit (`attention`, `critique` de
+#       l'attribut payload, en °C) : 80 et 90 par défaut, valeurs prudentes NON VÉRIFIÉES
+#       pour chaque GPU (la plupart des cartes ralentissent d'elles-mêmes vers 83-90 °C,
+#       selon le modèle). La tablette ne code aucun seuil : elle colore le niveau reçu.
+# @limits Le payload est l'attribut d'un capteur modèle : une ligne d'historique (recorder)
+#       à chaque changement, donc à chaque relevé des capteurs choisis (30 s pour
+#       packages/tab5_llm.yaml). L'exclure du recorder (recorder: exclude: entities:
+#       sensor.tab5_poussee_serveur_ia, dans configuration.yaml) si la base compte.
+#       La courbe des tokens/s est gardée par la tablette (un point par poussée) : elle
+#       repart de zéro à chaque redémarrage de la tablette.
+# @install Avec les autres packages (homeassistant.packages: !include_dir_named
+#       packages), après custom_templates/tab5_tablette.jinja. Rien à renseigner ici :
+#       choisir les capteurs dans les listes « Tab5 · serveur IA, … ».
+# @tests tests/test_serveur_ia_popup.py rend le payload sur des capteurs simulés et le
+#       compare à un calcul Python écrit à part, puis le lit par le même format que
+#       serveur_ia_lire() (tab5_parse.cpp).
+# ============================================================================
+
+input_text:
+  # Mémoires des dix listes (une entité choisie, ou « Aucun ») : écrites par les listes.
+  tab5_choix_ia_etat:
+    name: "Tab5 · mémoire · serveur IA, état"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_ia_modele:
+    name: "Tab5 · mémoire · serveur IA, modèle"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_ia_tokens:
+    name: "Tab5 · mémoire · serveur IA, tokens par seconde"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_ia_en_cours:
+    name: "Tab5 · mémoire · serveur IA, requêtes en cours"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_ia_en_file:
+    name: "Tab5 · mémoire · serveur IA, requêtes en file"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_ia_vram:
+    name: "Tab5 · mémoire · serveur IA, VRAM utilisée"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_ia_vram_totale:
+    name: "Tab5 · mémoire · serveur IA, VRAM totale"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_ia_temperature:
+    name: "Tab5 · mémoire · serveur IA, température du GPU"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_ia_ram:
+    name: "Tab5 · mémoire · serveur IA, RAM"
+    icon: mdi:content-save-outline
+    max: 255
+  tab5_choix_ia_puissance:
+    name: "Tab5 · mémoire · serveur IA, puissance"
+    icon: mdi:content-save-outline
+    max: 255
+
+template:
+  # ──────────────────────────────────────────────────────────────────────────
+  # 1. Les dix listes : à déclencheurs, comme celles de tab5_reglages.yaml.
+  # ──────────────────────────────────────────────────────────────────────────
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+      - trigger: event
+        event_type: entity_registry_updated
+      - trigger: state
+        entity_id:
+          - input_text.tab5_choix_ia_etat
+          - input_text.tab5_choix_ia_modele
+          - input_text.tab5_choix_ia_tokens
+          - input_text.tab5_choix_ia_en_cours
+          - input_text.tab5_choix_ia_en_file
+          - input_text.tab5_choix_ia_vram
+          - input_text.tab5_choix_ia_vram_totale
+          - input_text.tab5_choix_ia_temperature
+          - input_text.tab5_choix_ia_ram
+          - input_text.tab5_choix_ia_puissance
+    # Audit du 07/10/2026, HA-18 : pas pour une mise à jour du registre qui ne touche que
+    # capabilities / supported_features / options / suggested_object_id (419 des 485
+    # entity_registry_updated chez l'auteur du 01 au 08/10/2026), que la liste ne lit
+    # pas. Une création, une suppression, un renommage, un nom ou une classe passent.
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ trigger.platform != 'event' or trigger.event.event_type != 'entity_registry_updated'
+             or trigger.event.data.action != 'update'
+             or (trigger.event.data.changes | default({}, true)).keys()
+                | reject('in', ['capabilities', 'supported_features', 'options', 'suggested_object_id'])
+                | list | count > 0 }}
+    variables:
+      # État : un binary_sensor (connectivité, en marche…) ou un capteur texte.
+      ia_etats: >-
+        {{ (states.binary_sensor | map(attribute='entity_id') | list)
+           + (states.sensor | rejectattr('attributes.unit_of_measurement', 'defined') | map(attribute='entity_id') | list) }}
+      # Modèle : un capteur texte (sans unité).
+      ia_textes: "{{ states.sensor | rejectattr('attributes.unit_of_measurement', 'defined') | map(attribute='entity_id') | list }}"
+      # Tokens par seconde, requêtes : une mesure (state_class measurement).
+      ia_mesures: >-
+        {{ states.sensor | selectattr('attributes.state_class', 'defined')
+           | selectattr('attributes.state_class', 'eq', 'measurement') | map(attribute='entity_id') | list }}
+      # VRAM : une quantité de données, ou un pourcentage (« VRAM utilisée » seulement).
+      ia_donnees: >-
+        {{ states.sensor | selectattr('attributes.unit_of_measurement', 'defined')
+           | selectattr('attributes.unit_of_measurement', 'in', ['B', 'kB', 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB', 'TiB', '%'])
+           | map(attribute='entity_id') | list }}
+      ia_temperatures: >-
+        {{ states.sensor | selectattr('attributes.device_class', 'defined')
+           | selectattr('attributes.device_class', 'eq', 'temperature') | map(attribute='entity_id') | list }}
+      ia_pourcents: >-
+        {{ states.sensor | selectattr('attributes.unit_of_measurement', 'defined')
+           | selectattr('attributes.unit_of_measurement', 'eq', '%') | map(attribute='entity_id') | list }}
+      ia_puissances: >-
+        {{ states.sensor | selectattr('attributes.device_class', 'defined')
+           | selectattr('attributes.device_class', 'eq', 'power') | map(attribute='entity_id') | list }}
+    select:
+      - name: "Tab5 · serveur IA, état · AI server, status"
+        unique_id: tab5_ia_etat
+        default_entity_id: select.tab5_ia_etat
+        icon: mdi:lan-connect
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_etat') -%}
+          {{ ia_etats + ([m] if m is match('(binary_)?sensor[.]') and m not in ia_etats else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_etat') -%}
+          {{ m if m is match('(binary_)?sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_etat
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · serveur IA, modèle · AI server, model"
+        unique_id: tab5_ia_modele
+        default_entity_id: select.tab5_ia_modele
+        icon: mdi:brain
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_modele') -%}
+          {{ ia_textes + ([m] if m is match('sensor[.]') and m not in ia_textes else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_modele') -%}
+          {{ m if m is match('sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_modele
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · serveur IA, tokens par seconde · AI server, tokens per second"
+        unique_id: tab5_ia_tokens
+        default_entity_id: select.tab5_ia_tokens
+        icon: mdi:speedometer
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_tokens') -%}
+          {{ ia_mesures + ([m] if m is match('sensor[.]') and m not in ia_mesures else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_tokens') -%}
+          {{ m if m is match('sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_tokens
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · serveur IA, requêtes en cours · AI server, running requests"
+        unique_id: tab5_ia_en_cours
+        default_entity_id: select.tab5_ia_en_cours
+        icon: mdi:progress-clock
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_en_cours') -%}
+          {{ ia_mesures + ([m] if m is match('sensor[.]') and m not in ia_mesures else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_en_cours') -%}
+          {{ m if m is match('sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_en_cours
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · serveur IA, requêtes en file · AI server, queued requests"
+        unique_id: tab5_ia_en_file
+        default_entity_id: select.tab5_ia_en_file
+        icon: mdi:tray-full
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_en_file') -%}
+          {{ ia_mesures + ([m] if m is match('sensor[.]') and m not in ia_mesures else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_en_file') -%}
+          {{ m if m is match('sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_en_file
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · serveur IA, VRAM utilisée · AI server, VRAM used"
+        unique_id: tab5_ia_vram
+        default_entity_id: select.tab5_ia_vram
+        icon: mdi:expansion-card
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_vram') -%}
+          {{ ia_donnees + ([m] if m is match('sensor[.]') and m not in ia_donnees else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_vram') -%}
+          {{ m if m is match('sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_vram
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · serveur IA, VRAM totale · AI server, VRAM total"
+        unique_id: tab5_ia_vram_totale
+        default_entity_id: select.tab5_ia_vram_totale
+        icon: mdi:expansion-card-variant
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_vram_totale') -%}
+          {%- set l = ia_donnees | reject('in', ia_pourcents) | list -%}
+          {{ l + ([m] if m is match('sensor[.]') and m not in l else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_vram_totale') -%}
+          {{ m if m is match('sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_vram_totale
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · serveur IA, température du GPU · AI server, GPU temperature"
+        unique_id: tab5_ia_temperature
+        default_entity_id: select.tab5_ia_temperature
+        icon: mdi:thermometer
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_temperature') -%}
+          {{ ia_temperatures + ([m] if m is match('sensor[.]') and m not in ia_temperatures else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_temperature') -%}
+          {{ m if m is match('sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_temperature
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · serveur IA, RAM · AI server, RAM"
+        unique_id: tab5_ia_ram
+        default_entity_id: select.tab5_ia_ram
+        icon: mdi:memory
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_ram') -%}
+          {{ ia_pourcents + ([m] if m is match('sensor[.]') and m not in ia_pourcents else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_ram') -%}
+          {{ m if m is match('sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_ram
+            data:
+              value: "{{ option }}"
+      - name: "Tab5 · serveur IA, puissance · AI server, power"
+        unique_id: tab5_ia_puissance
+        default_entity_id: select.tab5_ia_puissance
+        icon: mdi:flash
+        options: >-
+          {%- set m = states('input_text.tab5_choix_ia_puissance') -%}
+          {{ ia_puissances + ([m] if m is match('sensor[.]') and m not in ia_puissances else []) + ['Aucun'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_ia_puissance') -%}
+          {{ m if m is match('sensor[.]') else 'Aucun' }}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_ia_puissance
+            data:
+              value: "{{ option }}"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # 2. Le payload : un modèle sans déclencheur, rendu à chaque changement d'un des
+  #    capteurs choisis (HA suit les entités lues). État = nombre de rôles choisis.
+  # ──────────────────────────────────────────────────────────────────────────
+  - sensor:
+      - name: "Tab5 · poussée du serveur IA"
+        unique_id: tab5_poussee_serveur_ia
+        default_entity_id: sensor.tab5_poussee_serveur_ia
+        icon: mdi:server
+        state: >-
+          {{ [states('select.tab5_ia_etat'), states('select.tab5_ia_modele'), states('select.tab5_ia_tokens'),
+              states('select.tab5_ia_en_cours'), states('select.tab5_ia_en_file'), states('select.tab5_ia_vram'),
+              states('select.tab5_ia_vram_totale'), states('select.tab5_ia_temperature'),
+              states('select.tab5_ia_ram'), states('select.tab5_ia_puissance')]
+             | select('match', '(binary_)?sensor[.]') | list | count }}
+        attributes:
+          payload: >-
+            {%- set attention, critique = 80, 90 -%}
+            {%- set go = {'B': 1 / 1073741824, 'kB': 1 / 1048576, 'KB': 1 / 1048576, 'KiB': 1 / 1048576,
+                          'MB': 1 / 1024, 'MiB': 1 / 1024, 'GB': 1, 'GiB': 1, 'TB': 1024, 'TiB': 1024} -%}
+            {%- set ns = namespace(e={}) -%}
+            {%- for r, s in [('etat', 'select.tab5_ia_etat'), ('modele', 'select.tab5_ia_modele'),
+                             ('tps', 'select.tab5_ia_tokens'), ('cours', 'select.tab5_ia_en_cours'),
+                             ('file', 'select.tab5_ia_en_file'), ('vram', 'select.tab5_ia_vram'),
+                             ('total', 'select.tab5_ia_vram_totale'), ('temp', 'select.tab5_ia_temperature'),
+                             ('ram', 'select.tab5_ia_ram'), ('watts', 'select.tab5_ia_puissance')] -%}
+              {%- set c = states(s) -%}
+              {%- set ns.e = dict(ns.e, **{r: c if c is match('(binary_)?sensor[.]') else ''}) -%}
+            {%- endfor -%}
+            {%- set e = ns.e -%}
+            {%- if e.values() | select | list | count > 0 -%}
+              {#- Un nombre lu tel quel, ou none (vide, indisponible, texte). -#}
+              {%- set v = namespace(n={}) -%}
+              {%- for r in ['tps', 'cours', 'file', 'vram', 'total', 'temp', 'ram', 'watts'] -%}
+                {%- set x = states(e[r]) if e[r] else '' -%}
+                {%- set v.n = dict(v.n, **{r: x | float if x | is_number else none}) -%}
+              {%- endfor -%}
+              {%- set n = v.n -%}
+              {%- set unite = namespace(u={}) -%}
+              {%- for r in ['vram', 'total', 'temp', 'watts', 'ram'] -%}
+                {%- set unite.u = dict(unite.u, **{r: (state_attr(e[r], 'unit_of_measurement') or '') if e[r] else ''}) -%}
+              {%- endfor -%}
+              {%- set u = unite.u -%}
+              {#- Nom : l'appareil du premier capteur choisi qui en a un. -#}
+              {%- set nom = namespace(t='') -%}
+              {%- for x in e.values() | select if nom.t == '' -%}
+                {%- set d = device_id(x) -%}
+                {%- if d -%}{%- set nom.t = device_attr(d, 'name_by_user') or device_attr(d, 'name') or '' -%}{%- endif -%}
+              {%- endfor -%}
+              {#- État : en ligne, hors ligne, sinon inconnu (indisponible compris). -#}
+              {%- set s = (states(e.etat) | lower | trim) if e.etat else '' -%}
+              {%- set etat = '1' if s in ['on', 'online', 'ok', 'running', 'connected', 'up', 'true', 'ready', 'chargement', 'loading']
+                  else ('0' if s in ['off', 'offline', 'down', 'false', 'stopped', 'disconnected', 'hors_ligne', 'erreur', 'error'] else '') -%}
+              {%- set m = (states(e.modele) | string | trim) if e.modele else '' -%}
+              {%- set modele = '' if m | lower in ['', 'unknown', 'unavailable', 'none', 'aucun'] else m -%}
+              {%- set tps = n.tps | round(1) if n.tps is number and n.tps >= 0 else '' -%}
+              {%- set cours = n.cours | round(0) | int if n.cours is number and n.cours >= 0 else '' -%}
+              {%- set f = n.file -%}
+              {%- if f is none and e.cours and state_attr(e.cours, 'en_attente') is number -%}
+                {%- set f = state_attr(e.cours, 'en_attente') -%}
+              {%- endif -%}
+              {%- set file = f | round(0) | int if f is number and f >= 0 else '' -%}
+              {%- set vg = n.vram * go[u.vram] if n.vram is number and u.vram in go else none -%}
+              {%- set tg = n.total * go[u.total] if n.total is number and u.total in go else none -%}
+              {%- set vram = vg | round(1) if vg is number else '' -%}
+              {%- set total = tg | round(1) if tg is number else '' -%}
+              {#- Le pourcentage sur les valeurs lues, pas sur les arrondis. -#}
+              {%- if vg is number and tg is number and tg > 0 -%}
+                {%- set pct = (vg / tg * 100) | round(0) | int -%}
+              {%- elif u.vram == '%' and n.vram is number -%}
+                {%- set pct = n.vram | round(0) | int -%}
+              {%- else -%}
+                {%- set pct = '' -%}
+              {%- endif -%}
+              {%- set t = ((n.temp - 32) * 5 / 9 if u.temp == '°F' else n.temp) if n.temp is number else none -%}
+              {%- set temp = t | round(0) | int if t is number else '' -%}
+              {%- set niveau = '' if temp == '' else (2 if temp >= critique else (1 if temp >= attention else 0)) -%}
+              {%- set ram = n.ram | round(0) | int if n.ram is number and u.ram == '%' else '' -%}
+              {%- set k = {'W': 1, 'kW': 1000, 'mW': 0.001}.get(u.watts) -%}
+              {%- set watts = (n.watts * k) | round(0) | int if n.watts is number and k is number else '' -%}
+              {%- set champs = [nom.t[:40], etat, modele[:80], tps, cours, file, vram, total, pct, temp, niveau, ram, watts] -%}
+              {{ champs | map('string') | map('replace', '|', '/') | map('replace', ';', ',') | map('replace', '\n', ' ') | join('|') }}
+            {%- endif -%}
+
+automation:
+  # Le payload a changé : poussée tout de suite, puis deux secondes d'attente (mode
+  # single : les changements de cette attente sont ignorés en silence), puis une autre
+  # poussée si le payload a changé pendant l'attente, et ainsi de suite.
+  - id: tab5_serveur_ia
+    alias: "Tab5 — serveur IA (poussée au changement)"
+    description: >-
+      Pousse vers la tablette les capteurs choisis dans les listes « Tab5 · serveur IA, … »
+      quand l'un d'eux change, deux secondes au moins entre deux poussées (ADR-0059).
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: sensor.tab5_poussee_serveur_ia
+        attribute: payload
+    actions:
+      - repeat:
+          sequence:
+            - action: script.turn_on
+              target:
+                entity_id: script.tab5_serveur_ia_pousser
+            - delay:
+                seconds: 2
+          # Le capteur n'a pas bougé pendant ces deux secondes : la dernière poussée est
+          # à jour.
+          until:
+            - condition: template
+              value_template: >-
+                {{ states.sensor.tab5_poussee_serveur_ia is none
+                   or (now() - states.sensor.tab5_poussee_serveur_ia.last_updated).total_seconds() >= 2 }}
+
+  # Tout de suite : liste changée, tablette (re)connectée, « MAJ Écran », démarrage de HA.
+  - id: tab5_serveur_ia_immediat
+    alias: "Tab5 — serveur IA (poussée immédiate)"
+    description: >-
+      Pousse vers la tablette le serveur IA quand une liste « Tab5 · serveur IA, … »
+      change, à la connexion de la tablette, à « MAJ Écran » et au démarrage de Home
+      Assistant (ADR-0059).
+    mode: queued
+    max: 3
+    triggers:
+      - trigger: state
+        entity_id:
+          - input_text.tab5_choix_ia_etat
+          - input_text.tab5_choix_ia_modele
+          - input_text.tab5_choix_ia_tokens
+          - input_text.tab5_choix_ia_en_cours
+          - input_text.tab5_choix_ia_en_file
+          - input_text.tab5_choix_ia_vram
+          - input_text.tab5_choix_ia_vram_totale
+          - input_text.tab5_choix_ia_temperature
+          - input_text.tab5_choix_ia_ram
+          - input_text.tab5_choix_ia_puissance
+      - trigger: event
+        event_type: esphome.tab5_connected
+      - trigger: event
+        event_type: esphome.tab5_maj_ecran
+      - trigger: homeassistant
+        event: start
+    conditions:
+      # Garde d'origine (comme tab5_evenements.yaml) : un événement d'une tablette
+      # tab5-ha-hmi seulement ; les autres déclencheurs passent toujours.
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
+    actions:
+      # Le modèle du payload se rend après la mémoire de la liste : un instant d'attente.
+      - delay:
+          seconds: 1
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_serveur_ia_pousser
+
+script:
+  tab5_serveur_ia_pousser:
+    alias: "Tab5 — serveur IA : pousser"
+    description: >-
+      Pousse le serveur IA (action tab5_maj_serveur_ia) : le payload que tient l'attribut
+      `payload` de sensor.tab5_poussee_serveur_ia. Mode restart : deux demandes
+      rapprochées partent en une seule poussée.
+    mode: restart
+    sequence:
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' }}
+      - action: esphome.tab5_ha_hmi_tab5_maj_serveur_ia
+        continue_on_error: true
+        data:
+          payload: "{{ state_attr('sensor.tab5_poussee_serveur_ia', 'payload') or '' }}"

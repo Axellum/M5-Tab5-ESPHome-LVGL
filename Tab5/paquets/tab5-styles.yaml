@@ -148,11 +148,13 @@ font:
   # tiret sert au « -- » de la consigne quand elle est inconnue (au boot, jusqu'au
   # 1er push de HA, ou consigne absente) : sans lui, le label restait vide. La
   # consigne de l'accueil est dans la police de la date depuis le 05/10/2026.
+  # Le « — » : tokens par seconde inconnus du popup Serveur IA (ADR-0059), jamais un
+  # zéro inventé.
   - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_55_b
     size: 55
     bpp: 4
-    glyphs: '-0123456789: °C.%'
+    glyphs: '-0123456789: °C.%—'
   - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_45_b
     size: 45
@@ -203,6 +205,7 @@ font:
       - "\U000F0379"  # monitor
       - "\U000F03E4"  # pause (lecture / pause du popup Musique, ADR-0050)
       - "\U000F040A"  # play (lecture / pause du popup Musique, ADR-0050)
+      - "\U000F048B"  # server (tap : Serveur IA, ADR-0059)
       - "\U000F0493"  # cog (bouton du haut : Réglages, 06/10/2026)
       - "\U000F04B9"  # sofa
       - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
@@ -512,6 +515,7 @@ font:
       - "\U000F0084"  # battery-charging
       - "\U000F0091"  # battery-unknown
       - "\U000F0290"  # fridge (titre du popup Froid, ADR-0055)
+      - "\U000F048B"  # server (titre du popup Serveur IA, ADR-0059)
       - "\U000F075A"  # music (titre du popup Musique, ADR-0050)
       - "\U000F12A1"  # battery-low
       - "\U000F12A2"  # battery-medium
@@ -530,6 +534,7 @@ font:
       - "\U000F02E3"  # bed
       - "\U000F032A"  # leaf (Réglages : économie d'énergie)
       - "\U000F0335"  # lightbulb
+      - "\U000F035B"  # memory (popup Serveur IA : RAM, ADR-0059)
       - "\U000F036C"  # microphone
       - "\U000F0379"  # monitor
       - "\U000F0387"  # music-note
@@ -538,6 +543,7 @@ font:
       - "\U000F0450"  # refresh
       - "\U000F0474"  # school
       - "\U000F0493"  # cog (Réglages : en-tête)
+      - "\U000F04C5"  # speedometer (popup Serveur IA : tokens par seconde, ADR-0059)
       - "\U000F0533"  # trending-down (baisse d'un capteur suivi, ADR-0054)
       - "\U000F0534"  # trending-neutral (capteur suivi stable)
       - "\U000F0535"  # trending-up (hausse d'un capteur suivi)
@@ -558,6 +564,7 @@ font:
       - "\U000F07AE"  # cctv (titre du popup Caméras, ADR-0049)
       - "\U000F07C0"  # desktop-classic
       - "\U000F07D0"  # home-assistant
+      - "\U000F08AE"  # expansion-card (popup Serveur IA : VRAM, ADR-0059)
       - "\U000F093A"  # animation-play (Réglages : animations)
       - "\U000F09D3"  # calendar-star
       - "\U000F0D90"  # monitor-off (Réglages : extinction auto)
@@ -676,6 +683,7 @@ font:
       - "\U000F0335"  # lightbulb (mini icône : Lumières, ADR-0042)
       - "\U000F036C"  # microphone (mini icône : Assistant vocal)
       - "\U000F0379"  # monitor
+      - "\U000F048B"  # server (mini icône : Serveur IA, ADR-0059)
       - "\U000F0493"  # cog (mini icône : Réglages)
       - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
       - "\U000F050F"  # thermometer (mini icône : Température)
@@ -746,6 +754,7 @@ font:
       - "\U000F0393"  # thermostat (Mode)
       - "\U000F03D8"  # palette (Couleurs)
       - "\U000F0425"  # power
+      - "\U000F048B"  # server (navigation : Serveur IA, ADR-0059)
       - "\U000F0493"  # cog (navigation : Réglages)
       - "\U000F04DB"  # stop
       - "\U000F04F6"  # tablet (navigation : Tablette)

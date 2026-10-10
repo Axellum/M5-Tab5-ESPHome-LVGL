@@ -673,6 +673,8 @@ lvgl:
         - !include ../ui_components/suivi_popup.yaml
         # Popup Froid (ADR-0055) : les réfrigérateurs et congélateurs, une carte chacun.
         - !include ../ui_components/froid_popup.yaml
+        # Popup Serveur IA (ADR-0059) : le serveur de LLM local.
+        - !include ../ui_components/serveur_ia_popup.yaml
         - !include ../ui_components/calendar_popup.yaml
         - !include ../ui_components/assistant_popup.yaml
         - !include ../ui_components/alarm_popup.yaml

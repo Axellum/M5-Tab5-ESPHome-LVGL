@@ -68,6 +68,8 @@ from scenarios import (
     build_jours_bulk_payload,
     decrire_emplacement,
     pieces_de,
+    SERVEUR_IA_SCENES,
+    build_serveur_ia_payload,
 )
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -112,6 +114,10 @@ SERVICE_ENERGIE_BILAN = "tab5_maj_energie_bilan"
 # pour une autre température : la démo ne répond qu'à l'événement (le rendu pousse
 # lui-même, tools/rendu/ecrans.py).
 SERVICE_HISTORIQUE = "tab5_maj_historique"
+# Popup Serveur IA (ADR-0059) : absent d'un firmware plus ancien. HA pousse au changement
+# des capteurs choisis ; la démo pousse le serveur de chaque scène (un point de la courbe
+# des tokens/s par scène), sauf maison minimale.
+SERVICE_SERVEUR_IA = "tab5_maj_serveur_ia"
 
 
 def lire_contrat(chemin: Path = API_LOGIC) -> dict[str, tuple[str, ...]]:
@@ -429,6 +435,11 @@ async def _pousser_scene(client, services_par_nom: dict, scene, absentes: frozen
     if not absentes:
         await attendre(DELAI_ENTRE_BLOCS)
         await _pousser_energie(client, services_par_nom, aujourd_hui=aujourd_hui)
+
+    # Popup Serveur IA (ADR-0059) : le serveur de la scène, sauf maison minimale.
+    if not absentes and SERVICE_SERVEUR_IA in services_par_nom:
+        await attendre(DELAI_ENTRE_BLOCS)
+        await appeler(SERVICE_SERVEUR_IA, payload=build_serveur_ia_payload(SERVEUR_IA_SCENES.get(scene.nom)))
 
 
 def _gerer_appel_service(interactive: bool, repondre_zones, pieces: dict | None = None,

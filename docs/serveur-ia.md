@@ -44,7 +44,7 @@ The [Tracking](notice/tracking.md) window shows a trend, not a live meter:
 - The curve is the **hourly means of the last 24 hours**, scaled between their lowest and highest values: it shows whether the VRAM or the speed went up or down, not its absolute level.
 - Six sensors at most, shared with whatever else you track.
 
-That suits temperatures, VRAM and RAM over a day. A live view (tokens/s every second or two, the loaded model, the queue) needs a dedicated window and a faster push: it is not part of this package.
+That suits temperatures, VRAM and RAM over a day. A live view (tokens/s every second or two, the loaded model, the queue) needs a dedicated window and a faster push: it is not part of this package, it is the [AI server](notice/ai-server.md) window's, fed by `packages/tab5_serveur_ia.yaml` — pick these sensors in its « Tab5 · serveur IA, … » lists.
 
 ## Hardware: GPU, CPU, RAM, power
 
@@ -112,7 +112,7 @@ La fenêtre [Suivi](notice/tracking.md#version-française) montre une tendance, 
 - La courbe est faite des **moyennes horaires des 24 dernières heures**, ramenées entre leur plus petite et leur plus grande valeur : elle dit si la VRAM ou la vitesse a monté ou baissé, pas son niveau absolu.
 - Six capteurs au plus, partagés avec tout ce que vous suivez d'autre.
 
-Cela convient aux températures, à la VRAM et à la RAM sur une journée. Une vue en direct (tokens/s toutes les une ou deux secondes, modèle chargé, file d'attente) demande une fenêtre à elle et une poussée plus rapide : ce n'est pas l'objet de ce package.
+Cela convient aux températures, à la VRAM et à la RAM sur une journée. Une vue en direct (tokens/s toutes les une ou deux secondes, modèle chargé, file d'attente) demande une fenêtre à elle et une poussée plus rapide : ce n'est pas l'objet de ce package, c'est celui de la fenêtre [Serveur IA](notice/ai-server.md#version-française), nourrie par `packages/tab5_serveur_ia.yaml` — choisir ces capteurs dans ses listes « Tab5 · serveur IA, … ».
 
 ## Matériel : GPU, processeur, RAM, puissance
 

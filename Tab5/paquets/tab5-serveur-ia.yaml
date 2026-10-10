@@ -1,0 +1,65 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-serveur-ia.yaml
+# @role Serveur IA (ADR-0059, 10/10/2026) : pose les widgets que tab5_serveur_ia.cpp peint
+#       (g_serveur_ia_ui).
+#         - tab5_serveur_ia_lier : widgets dans g_serveur_ia_ui, une fois, appelé par
+#           tab5_serveur_ia_ouvrir seulement (l'action tab5_maj_serveur_ia ne le lance pas :
+#           popup fermé, elle ne peint rien, et un popup jamais ouvert a popup == nullptr) ;
+#         - tab5_serveur_ia_ouvrir : peint le popup Serveur IA (dernier état reçu) et
+#           l'ouvre (« Aller à l'écran → Serveur IA », geste « serveur_ia », roue de
+#           navigation).
+# @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
+#       nomme aucune entité et ne demande rien, HA pousse (packages/tab5_serveur_ia.yaml).
+#       Chargé APRÈS tab5_lvgl : il référence des widgets. Aucun lv_* ici.
+# @ai_instruction Un widget de plus = son champ dans ServeurIaUI (tab5_serveur_ia.h) et sa
+#       ligne ici.
+# ============================================================================
+
+script:
+  - id: tab5_serveur_ia_lier
+    then:
+      - lambda: |-
+          ServeurIaUI& u = g_serveur_ia_ui;
+          if (u.popup != nullptr) return;
+          u.attente = id(serveur_ia_attente);
+          u.conseil = id(serveur_ia_conseil);
+          u.bandeau = id(serveur_ia_bandeau);
+          u.etat = id(serveur_ia_etat);
+          u.nom = id(serveur_ia_nom);
+          u.modele = id(serveur_ia_modele);
+          u.tps_carte = id(serveur_ia_tps_carte);
+          u.tps_icone = id(serveur_ia_tps_icone);
+          u.tps_titre = id(serveur_ia_tps_titre);
+          u.tps_valeur = id(serveur_ia_tps_valeur);
+          u.tps_unite = id(serveur_ia_tps_unite);
+          u.requetes = id(serveur_ia_requetes);
+          u.carte[0] = id(serveur_ia_carte_0);
+          u.carte[1] = id(serveur_ia_carte_1);
+          u.carte[2] = id(serveur_ia_carte_2);
+          u.carte[3] = id(serveur_ia_carte_3);
+          u.icone[0] = id(serveur_ia_icone_0);
+          u.icone[1] = id(serveur_ia_icone_1);
+          u.icone[2] = id(serveur_ia_icone_2);
+          u.icone[3] = id(serveur_ia_icone_3);
+          u.titre[0] = id(serveur_ia_titre_0);
+          u.titre[1] = id(serveur_ia_titre_1);
+          u.titre[2] = id(serveur_ia_titre_2);
+          u.titre[3] = id(serveur_ia_titre_3);
+          u.valeur[0] = id(serveur_ia_valeur_0);
+          u.valeur[1] = id(serveur_ia_valeur_1);
+          u.valeur[2] = id(serveur_ia_valeur_2);
+          u.valeur[3] = id(serveur_ia_valeur_3);
+          u.detail[0] = id(serveur_ia_detail_0);
+          u.detail[1] = id(serveur_ia_detail_1);
+          u.detail[2] = id(serveur_ia_detail_2);
+          u.detail[3] = id(serveur_ia_detail_3);
+          // En dernier : peindre_popup() ne fait rien tant que popup est nul.
+          u.popup = id(serveur_ia_popup);
+
+  - id: tab5_serveur_ia_ouvrir
+    then:
+      - script.execute: tab5_serveur_ia_lier
+      - lambda: |-
+          serveur_ia_ouvrir();
+          animate_popup_open(id(serveur_ia_popup));

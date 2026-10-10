@@ -43,6 +43,8 @@ NON_TRADUITS = {
     "Ok Nabu: ON", "Ok Nabu : ON", "Home Assistant",
     "Netflix", "Prime", "YouTube", "CANAL+", "Boost", "Flash", "LEDs",
     "On / Off", "Menu", "Source", "PC", "OK", "SRAM", "PSRAM", "Wi-Fi", "MIN",
+    # Popup Serveur IA (ADR-0059) : sigles et unité, les mêmes dans toutes les langues.
+    "VRAM", "GPU", "RAM", "tok/s",
     # Noms des consoles : des noms propres, et le libellé « Écran courant » que lit HA
     # (GameRegistry, tab5_registry.cpp). « ARCADE » s'écrit pareil dans les deux langues.
     "Fil d'Or", "Arcanoïde", "Coureur d'Or", "Go Tab", "Trial Poursuite", "Dames Tab",

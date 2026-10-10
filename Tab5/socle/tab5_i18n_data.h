@@ -8,9 +8,24 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1218;
+static const uint16_t kI18nKeyCount = 1233;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1274,6 +1289,7 @@ static const char* const kI18nKeys[] = {
     "%s : %s",
     "%s : %s, %s °C",
     "%s : %u / %u / %u\n",
+    "%s Go",
     "%s a ses 6 parts — %s choisit la catégorie",
     "%s a ses 6 parts — choisissez votre catégorie finale",
     "%s cède 120 âmes",
@@ -1428,11 +1444,13 @@ static const char* const kI18nKeys[] = {
     "Aucun incident",
     "Aucun jour retenu dans les 8 prochains",
     "Aucun lecteur choisi",
+    "Aucun modèle chargé",
     "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand.",
     "Aucun rendez-vous à venir",
     "Aucun score enregistré",
     "Aucun score enregistré pour l'instant.",
     "Aucun score pour l'instant.\nLance une partie !",
+    "Aucun serveur choisi",
     "Aucun travail de prévu",
     "Aucun échange",
     "Aucune",
@@ -1525,6 +1543,7 @@ static const char* const kI18nKeys[] = {
     "Chargement image...",
     "Chargement...",
     "Chaud",
+    "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA ».",
     "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis ».",
     "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique ».",
     "Choix du mode, de la couleur, du niveau et de la pendule",
@@ -1645,6 +1664,7 @@ static const char* const kI18nKeys[] = {
     "En attente de Home Assistant",
     "En charge",
     "En cours",
+    "En ligne",
     "En mode Fixe, seuls les jours cochés comptent.",
     "En mouvement",
     "Ensoleillé",
@@ -2040,6 +2060,7 @@ static const char* const kI18nKeys[] = {
     "Prévu aujourd'hui",
     "Prévu demain",
     "Prêt",
+    "Puissance",
     "Purement cosmétique",
     "Pyramide",
     "QUESTION FINALE",
@@ -2089,6 +2110,7 @@ static const char* const kI18nKeys[] = {
     "Reprendre (vide)",
     "Reprendre la partie",
     "Reprendre la sauvegarde",
+    "Requêtes en cours : %s · en file : %s",
     "Retour",
     "Retour au Tab",
     "Retour au goban",
@@ -2175,6 +2197,7 @@ static const char* const kI18nKeys[] = {
     "Sensibilité du nudge : %s",
     "Sept",
     "Serre",
+    "Serveur IA",
     "Seuil",
     "Si l'écran est à l'envers dans vos mains",
     "Si la bille part du mauvais côté",
@@ -2223,10 +2246,14 @@ static const char* const kI18nKeys[] = {
     "Temps écoulé — la réponse était : %s",
     "Temps écoulé — matériel insuffisant pour mater",
     "Température",
+    "Température critique",
+    "Température normale",
+    "Température élevée",
     "Températures",
     "Tension",
     "Tester",
     "Thème",
+    "Tokens par seconde",
     "Top 10 local",
     "Top 10 local (NVS)",
     "Top 10 local - conservé en NVS, survit aux reboots et aux OTA.",
@@ -2378,6 +2405,8 @@ static const char* const kI18nKeys[] = {
     "retournée",
     "samedi",
     "septembre",
+    "sur %s Go",
+    "sur %s Go · %s %%",
     "t.rapide",
     "terminée %s",
     "trop chaud",
@@ -2412,6 +2441,7 @@ static const char* const kI18nKeys[] = {
     "Équipe : %s",
     "Équipement",
     "État",
+    "État inconnu",
     "Éteindre",
     "Éteindre les lumières",
     "Éteint",
@@ -2496,6 +2526,7 @@ static const char* const kI18n_en[] = {
     "%s: %s",  // "%s : %s"
     "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
+    "%s GB",  // "%s Go"
     "%s has all 6 wedges — %s picks the category",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s has all 6 wedges — pick your final category",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s yields 120 souls",  // "%s cède 120 âmes"
@@ -2650,11 +2681,13 @@ static const char* const kI18n_en[] = {
     "No incident",  // "Aucun incident"
     "No day selected in the next 8",  // "Aucun jour retenu dans les 8 prochains"
     "No player chosen",  // "Aucun lecteur choisi"
+    "No model loaded",  // "Aucun modèle chargé"
     "No items: open chests, defeat bosses, or visit the merchant.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "No upcoming appointment",  // "Aucun rendez-vous à venir"
     "No score recorded",  // "Aucun score enregistré"
     "No scores recorded yet.",  // "Aucun score enregistré pour l'instant."
     "No scores yet.\nStart a game!",  // "Aucun score pour l'instant.\nLance une partie !"
+    "No server chosen",  // "Aucun serveur choisi"
     "No work scheduled",  // "Aucun travail de prévu"
     "No exchange",  // "Aucun échange"
     "None",  // "Aucune"
@@ -2747,6 +2780,7 @@ static const char* const kI18n_en[] = {
     "Loading image...",  // "Chargement image..."
     "Loading...",  // "Chargement..."
     "Warm",  // "Chaud"
+    "Choose its sensors in Home Assistant: lists “Tab5 · serveur IA · AI server”.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Choose your sensors in Home Assistant: “Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Choose your players in Home Assistant: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Choose mode, color, level and clock",  // "Choix du mode, de la couleur, du niveau et de la pendule"
@@ -2867,6 +2901,7 @@ static const char* const kI18n_en[] = {
     "Waiting for Home Assistant",  // "En attente de Home Assistant"
     "Charging",  // "En charge"
     "Running",  // "En cours"
+    "Online",  // "En ligne"
     "In Fixed mode, only the checked days count.",  // "En mode Fixe, seuls les jours cochés comptent."
     "Moving",  // "En mouvement"
     "Sunny",  // "Ensoleillé"
@@ -3262,6 +3297,7 @@ static const char* const kI18n_en[] = {
     "Forecast today",  // "Prévu aujourd'hui"
     "Forecast tomorrow",  // "Prévu demain"
     "Ready",  // "Prêt"
+    "Power",  // "Puissance"
     "Purely cosmetic",  // "Purement cosmétique"
     "Pyramid",  // "Pyramide"
     "FINAL QUESTION",  // "QUESTION FINALE"
@@ -3311,6 +3347,7 @@ static const char* const kI18n_en[] = {
     "Resume (empty)",  // "Reprendre (vide)"
     "Resume game",  // "Reprendre la partie"
     "Resume saved game",  // "Reprendre la sauvegarde"
+    "Requests running: %s · queued: %s",  // "Requêtes en cours : %s · en file : %s"
     "Back",  // "Retour"
     "Back to the Tab",  // "Retour au Tab"
     "Back to the board",  // "Retour au goban"
@@ -3397,6 +3434,7 @@ static const char* const kI18n_en[] = {
     "Nudge sensitivity: %s",  // "Sensibilité du nudge : %s"
     "Sep",  // "Sept"
     "Greenhouse",  // "Serre"
+    "AI server",  // "Serveur IA"
     "Threshold",  // "Seuil"
     "If the screen appears upside down",  // "Si l'écran est à l'envers dans vos mains"
     "If the ball goes the wrong way",  // "Si la bille part du mauvais côté"
@@ -3445,10 +3483,14 @@ static const char* const kI18n_en[] = {
     "Time's up — the answer was: %s",  // "Temps écoulé — la réponse était : %s"
     "Time out — insufficient material to mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperature",  // "Température"
+    "Critical temperature",  // "Température critique"
+    "Normal temperature",  // "Température normale"
+    "High temperature",  // "Température élevée"
     "Temperatures",  // "Températures"
     "Voltage",  // "Tension"
     "Test",  // "Tester"
     "Theme",  // "Thème"
+    "Tokens per second",  // "Tokens par seconde"
     "Local top 10",  // "Top 10 local"
     "Local top 10 (NVS)",  // "Top 10 local (NVS)"
     "Local top 10 - kept in NVS, survives reboots and OTA updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -3600,6 +3642,8 @@ static const char* const kI18n_en[] = {
     "flipped",  // "retournée"
     "Saturday",  // "samedi"
     "September",  // "septembre"
+    "of %s GB",  // "sur %s Go"
+    "of %s GB · %s %%",  // "sur %s Go · %s %%"
     "v.fast",  // "t.rapide"
     "ended %s",  // "terminée %s"
     "too warm",  // "trop chaud"
@@ -3634,6 +3678,7 @@ static const char* const kI18n_en[] = {
     "Team: %s",  // "Équipe : %s"
     "Equipment",  // "Équipement"
     "State",  // "État"
+    "Status unknown",  // "État inconnu"
     "Turn off",  // "Éteindre"
     "Lights off",  // "Éteindre les lumières"
     "Off",  // "Éteint"
@@ -3718,6 +3763,7 @@ static const char* const kI18n_de[] = {
     "%s: %s",  // "%s : %s"
     "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
+    "%s GB",  // "%s Go"
     "%s hat alle 6 Ecken — %s wählt die Kategorie",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s hat alle 6 Ecken — Finalkategorie wählen",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s gibt 120 Seelen",  // "%s cède 120 âmes"
@@ -3872,11 +3918,13 @@ static const char* const kI18n_de[] = {
     "Kein Vorfall",  // "Aucun incident"
     "Kein Tag in den nächsten 8 gewählt",  // "Aucun jour retenu dans les 8 prochains"
     "Kein Player ausgewählt",  // "Aucun lecteur choisi"
+    "Kein Modell geladen",  // "Aucun modèle chargé"
     "Keine Gegenstände: Truhen öffnen, Bosse besiegen oder zum Händler gehen.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Keine anstehenden Termine",  // "Aucun rendez-vous à venir"
     "Kein Score gespeichert",  // "Aucun score enregistré"
     "Noch keine Scores gespeichert.",  // "Aucun score enregistré pour l'instant."
     "Noch keine Scores.\nStarte ein Spiel!",  // "Aucun score pour l'instant.\nLance une partie !"
+    "Kein Server gewählt",  // "Aucun serveur choisi"
     "Keine Arbeit geplant",  // "Aucun travail de prévu"
     "Kein Austausch",  // "Aucun échange"
     "Keine",  // "Aucune"
@@ -3969,6 +4017,7 @@ static const char* const kI18n_de[] = {
     "Lade Bild...",  // "Chargement image..."
     "Lädt...",  // "Chargement..."
     "Warm",  // "Chaud"
+    "Wähle seine Sensoren in Home Assistant: Listen „Tab5 · serveur IA · AI server“.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Wähle deine Sensoren in Home Assistant: „Tab5 · capteurs suivis · tracked sensors“.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Wähle deine Player in Home Assistant: „Tab5 · lecteurs de musique · music players“.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Modus, Farbe, Stufe und Uhr wählen",  // "Choix du mode, de la couleur, du niveau et de la pendule"
@@ -4089,6 +4138,7 @@ static const char* const kI18n_de[] = {
     "Warte auf Home Assistant",  // "En attente de Home Assistant"
     "Lädt",  // "En charge"
     "Läuft",  // "En cours"
+    "Online",  // "En ligne"
     "Im Modus „Fest“ zählen nur die gewählten Tage.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In Bewegung",  // "En mouvement"
     "Sonnig",  // "Ensoleillé"
@@ -4484,6 +4534,7 @@ static const char* const kI18n_de[] = {
     "Prognose heute",  // "Prévu aujourd'hui"
     "Prognose morgen",  // "Prévu demain"
     "Bereit",  // "Prêt"
+    "Leistung",  // "Puissance"
     "Rein kosmetisch",  // "Purement cosmétique"
     "Pyramide",  // "Pyramide"
     "FINALFRAGE",  // "QUESTION FINALE"
@@ -4533,6 +4584,7 @@ static const char* const kI18n_de[] = {
     "Fortsetzen (leer)",  // "Reprendre (vide)"
     "Partie fortsetzen",  // "Reprendre la partie"
     "Spielstand laden",  // "Reprendre la sauvegarde"
+    "Anfragen aktiv: %s · in Warteschlange: %s",  // "Requêtes en cours : %s · en file : %s"
     "Zurück",  // "Retour"
     "Zurück zum Tab",  // "Retour au Tab"
     "Zurück zum Goban",  // "Retour au goban"
@@ -4619,6 +4671,7 @@ static const char* const kI18n_de[] = {
     "Nudge-Empfindlichkeit: %s",  // "Sensibilité du nudge : %s"
     "Sep",  // "Sept"
     "Gewächshaus",  // "Serre"
+    "KI-Server",  // "Serveur IA"
     "Schwelle",  // "Seuil"
     "Falls das Bild in deinen Händen kopfsteht",  // "Si l'écran est à l'envers dans vos mains"
     "Rollt der Ball zur falschen Seite?",  // "Si la bille part du mauvais côté"
@@ -4667,10 +4720,14 @@ static const char* const kI18n_de[] = {
     "Zeit um — die Antwort war: %s",  // "Temps écoulé — la réponse était : %s"
     "Zeit ist um — zu wenig Material zum Mattsetzen",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatur",  // "Température"
+    "Temperatur kritisch",  // "Température critique"
+    "Temperatur normal",  // "Température normale"
+    "Temperatur erhöht",  // "Température élevée"
     "Temperaturen",  // "Températures"
     "Spannung",  // "Tension"
     "Testen",  // "Tester"
     "Design",  // "Thème"
+    "Tokens pro Sekunde",  // "Tokens par seconde"
     "Lokale Top 10",  // "Top 10 local"
     "Lokale Top 10 (NVS)",  // "Top 10 local (NVS)"
     "Lokale Top 10 - in NVS gespeichert, übersteht Neustarts und OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -4822,6 +4879,8 @@ static const char* const kI18n_de[] = {
     "gedreht",  // "retournée"
     "Samstag",  // "samedi"
     "September",  // "septembre"
+    "von %s GB",  // "sur %s Go"
+    "von %s GB · %s %%",  // "sur %s Go · %s %%"
     "rasant",  // "t.rapide"
     "beendet %s",  // "terminée %s"
     "zu warm",  // "trop chaud"
@@ -4856,6 +4915,7 @@ static const char* const kI18n_de[] = {
     "Team: %s",  // "Équipe : %s"
     "Ausrüstung",  // "Équipement"
     "Zustand",  // "État"
+    "Status unbekannt",  // "État inconnu"
     "Ausschalten",  // "Éteindre"
     "Lichter aus",  // "Éteindre les lumières"
     "Aus",  // "Éteint"
@@ -4940,6 +5000,7 @@ static const char* const kI18n_nl[] = {
     "%s: %s",  // "%s : %s"
     "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
+    "%s GB",  // "%s Go"
     "%s heeft alle 6 partjes — %s kiest de categorie",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s heeft alle 6 partjes — kies je finalecategorie",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s geeft 120 zielen",  // "%s cède 120 âmes"
@@ -5094,11 +5155,13 @@ static const char* const kI18n_nl[] = {
     "Geen incident",  // "Aucun incident"
     "Geen dag gekozen in de komende 8",  // "Aucun jour retenu dans les 8 prochains"
     "Geen speler gekozen",  // "Aucun lecteur choisi"
+    "Geen model geladen",  // "Aucun modèle chargé"
     "Geen voorwerpen: open kisten, versla eindbazen of ga langs bij de koopman.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Geen afspraken gepland",  // "Aucun rendez-vous à venir"
     "Geen score opgeslagen",  // "Aucun score enregistré"
     "Nog geen scores opgeslagen.",  // "Aucun score enregistré pour l'instant."
     "Nog geen scores.\nStart een spel!",  // "Aucun score pour l'instant.\nLance une partie !"
+    "Geen server gekozen",  // "Aucun serveur choisi"
     "Geen werk gepland",  // "Aucun travail de prévu"
     "Geen uitwisseling",  // "Aucun échange"
     "Geen",  // "Aucune"
@@ -5191,6 +5254,7 @@ static const char* const kI18n_nl[] = {
     "Afbeelding laden...",  // "Chargement image..."
     "Laden...",  // "Chargement..."
     "Warm",  // "Chaud"
+    "Kies de sensoren in Home Assistant: lijsten „Tab5 · serveur IA · AI server”.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Kies je sensoren in Home Assistant: „Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Kies je spelers in Home Assistant: „Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Kies modus, kleur, niveau en klok",  // "Choix du mode, de la couleur, du niveau et de la pendule"
@@ -5311,6 +5375,7 @@ static const char* const kI18n_nl[] = {
     "Wachten op Home Assistant",  // "En attente de Home Assistant"
     "Laden",  // "En charge"
     "Bezig",  // "En cours"
+    "Online",  // "En ligne"
     "In de modus Vast tellen alleen de aangevinkte dagen.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In beweging",  // "En mouvement"
     "Zonnig",  // "Ensoleillé"
@@ -5706,6 +5771,7 @@ static const char* const kI18n_nl[] = {
     "Verwacht vandaag",  // "Prévu aujourd'hui"
     "Verwacht morgen",  // "Prévu demain"
     "Klaar",  // "Prêt"
+    "Vermogen",  // "Puissance"
     "Puur cosmetisch",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
     "SLOTVRAAG",  // "QUESTION FINALE"
@@ -5755,6 +5821,7 @@ static const char* const kI18n_nl[] = {
     "Hervatten (leeg)",  // "Reprendre (vide)"
     "Partij hervatten",  // "Reprendre la partie"
     "Opgeslagen partij laden",  // "Reprendre la sauvegarde"
+    "Verzoeken actief: %s · in wachtrij: %s",  // "Requêtes en cours : %s · en file : %s"
     "Terug",  // "Retour"
     "Terug naar de Tab",  // "Retour au Tab"
     "Terug naar goban",  // "Retour au goban"
@@ -5841,6 +5908,7 @@ static const char* const kI18n_nl[] = {
     "Nudgegevoeligheid: %s",  // "Sensibilité du nudge : %s"
     "Sep",  // "Sept"
     "Kas",  // "Serre"
+    "AI-server",  // "Serveur IA"
     "Drempel",  // "Seuil"
     "Als het scherm ondersteboven staat",  // "Si l'écran est à l'envers dans vos mains"
     "Als de bal de verkeerde kant op gaat",  // "Si la bille part du mauvais côté"
@@ -5889,10 +5957,14 @@ static const char* const kI18n_nl[] = {
     "Tijd om — het antwoord was: %s",  // "Temps écoulé — la réponse était : %s"
     "Tijd om — te weinig materiaal voor mat",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatuur",  // "Température"
+    "Kritieke temperatuur",  // "Température critique"
+    "Normale temperatuur",  // "Température normale"
+    "Verhoogde temperatuur",  // "Température élevée"
     "Temperaturen",  // "Températures"
     "Spanning",  // "Tension"
     "Testen",  // "Tester"
     "Thema",  // "Thème"
+    "Tokens per seconde",  // "Tokens par seconde"
     "Lokale top 10",  // "Top 10 local"
     "Lokale top 10 (NVS)",  // "Top 10 local (NVS)"
     "Lokale top 10 - bewaard in NVS, overleeft herstarts en OTA-updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -6044,6 +6116,8 @@ static const char* const kI18n_nl[] = {
     "omgedraaid",  // "retournée"
     "zaterdag",  // "samedi"
     "september",  // "septembre"
+    "van %s GB",  // "sur %s Go"
+    "van %s GB · %s %%",  // "sur %s Go · %s %%"
     "z.snel",  // "t.rapide"
     "beëindigd %s",  // "terminée %s"
     "te warm",  // "trop chaud"
@@ -6078,6 +6152,7 @@ static const char* const kI18n_nl[] = {
     "Team: %s",  // "Équipe : %s"
     "Uitrusting",  // "Équipement"
     "Status",  // "État"
+    "Status onbekend",  // "État inconnu"
     "Uitzetten",  // "Éteindre"
     "Lichten uit",  // "Éteindre les lumières"
     "Uit",  // "Éteint"
@@ -6162,6 +6237,7 @@ static const char* const kI18n_es[] = {
     "%s: %s",  // "%s : %s"
     "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
+    "%s GB",  // "%s Go"
     "%s tiene los 6 quesitos — %s elige la categoría",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s tiene los 6 quesitos — elige tu categoría final",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s suelta 120 almas",  // "%s cède 120 âmes"
@@ -6316,11 +6392,13 @@ static const char* const kI18n_es[] = {
     "Sin incidentes",  // "Aucun incident"
     "Ningún día elegido en los próximos 8",  // "Aucun jour retenu dans les 8 prochains"
     "Ningún reproductor elegido",  // "Aucun lecteur choisi"
+    "Ningún modelo cargado",  // "Aucun modèle chargé"
     "Ningún objeto: abre cofres, derrota a los jefes o visita al mercader.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "No hay citas próximas",  // "Aucun rendez-vous à venir"
     "Sin puntuaciones",  // "Aucun score enregistré"
     "Aún no hay puntuaciones guardadas.",  // "Aucun score enregistré pour l'instant."
     "Aún no hay puntuaciones.\n¡Empieza una partida!",  // "Aucun score pour l'instant.\nLance une partie !"
+    "Ningún servidor elegido",  // "Aucun serveur choisi"
     "Sin trabajo previsto",  // "Aucun travail de prévu"
     "Sin intercambio",  // "Aucun échange"
     "Ninguna",  // "Aucune"
@@ -6413,6 +6491,7 @@ static const char* const kI18n_es[] = {
     "Cargando imagen...",  // "Chargement image..."
     "Cargando...",  // "Chargement..."
     "Cálido",  // "Chaud"
+    "Elige sus sensores en Home Assistant: listas «Tab5 · serveur IA · AI server».",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Elige tus sensores en Home Assistant: «Tab5 · capteurs suivis · tracked sensors».",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Elige tus reproductores en Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Elige modo, color, nivel y reloj",  // "Choix du mode, de la couleur, du niveau et de la pendule"
@@ -6533,6 +6612,7 @@ static const char* const kI18n_es[] = {
     "Esperando a Home Assistant",  // "En attente de Home Assistant"
     "Cargando",  // "En charge"
     "En curso",  // "En cours"
+    "En línea",  // "En ligne"
     "En modo Fija, solo cuentan los días marcados.",  // "En mode Fixe, seuls les jours cochés comptent."
     "En movimiento",  // "En mouvement"
     "Soleado",  // "Ensoleillé"
@@ -6928,6 +7008,7 @@ static const char* const kI18n_es[] = {
     "Previsto hoy",  // "Prévu aujourd'hui"
     "Previsto mañana",  // "Prévu demain"
     "Listo",  // "Prêt"
+    "Potencia",  // "Puissance"
     "Puramente estético",  // "Purement cosmétique"
     "Pirámide",  // "Pyramide"
     "PREGUNTA FINAL",  // "QUESTION FINALE"
@@ -6977,6 +7058,7 @@ static const char* const kI18n_es[] = {
     "Reanudar (vacío)",  // "Reprendre (vide)"
     "Reanudar la partida",  // "Reprendre la partie"
     "Cargar partida guardada",  // "Reprendre la sauvegarde"
+    "Peticiones en curso: %s · en cola: %s",  // "Requêtes en cours : %s · en file : %s"
     "Volver",  // "Retour"
     "Volver al Tab",  // "Retour au Tab"
     "Volver al goban",  // "Retour au goban"
@@ -7063,6 +7145,7 @@ static const char* const kI18n_es[] = {
     "Sensibilidad del nudge: %s",  // "Sensibilité du nudge : %s"
     "Sept",  // "Sept"
     "Invernadero",  // "Serre"
+    "Servidor IA",  // "Serveur IA"
     "Umbral",  // "Seuil"
     "Si la pantalla está al revés en tus manos",  // "Si l'écran est à l'envers dans vos mains"
     "Si la bola va al lado contrario",  // "Si la bille part du mauvais côté"
@@ -7111,10 +7194,14 @@ static const char* const kI18n_es[] = {
     "Tiempo agotado — la respuesta era: %s",  // "Temps écoulé — la réponse était : %s"
     "Tiempo agotado — material insuficiente para dar mate",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
+    "Temperatura crítica",  // "Température critique"
+    "Temperatura normal",  // "Température normale"
+    "Temperatura elevada",  // "Température élevée"
     "Temperaturas",  // "Températures"
     "Tensión",  // "Tension"
     "Probar",  // "Tester"
     "Tema",  // "Thème"
+    "Tokens por segundo",  // "Tokens par seconde"
     "Top 10 local",  // "Top 10 local"
     "Top 10 local (NVS)",  // "Top 10 local (NVS)"
     "Top 10 local - guardado en NVS, sobrevive a reinicios y OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -7266,6 +7353,8 @@ static const char* const kI18n_es[] = {
     "girada",  // "retournée"
     "sábado",  // "samedi"
     "septiembre",  // "septembre"
+    "de %s GB",  // "sur %s Go"
+    "de %s GB · %s %%",  // "sur %s Go · %s %%"
     "m.rápida",  // "t.rapide"
     "terminada %s",  // "terminée %s"
     "demasiado caliente",  // "trop chaud"
@@ -7300,6 +7389,7 @@ static const char* const kI18n_es[] = {
     "Equipo: %s",  // "Équipe : %s"
     "Equipo",  // "Équipement"
     "Estado",  // "État"
+    "Estado desconocido",  // "État inconnu"
     "Apagar",  // "Éteindre"
     "Apagar las luces",  // "Éteindre les lumières"
     "OFF",  // "Éteint"
@@ -7384,6 +7474,7 @@ static const char* const kI18n_it[] = {
     "%s: %s",  // "%s : %s"
     "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
+    "%s GB",  // "%s Go"
     "%s ha i 6 spicchi — %s sceglie la categoria",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s ha i 6 spicchi — scegli la categoria finale",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s cede 120 anime",  // "%s cède 120 âmes"
@@ -7538,11 +7629,13 @@ static const char* const kI18n_it[] = {
     "Nessun incidente",  // "Aucun incident"
     "Nessun giorno scelto nei prossimi 8",  // "Aucun jour retenu dans les 8 prochains"
     "Nessun lettore scelto",  // "Aucun lecteur choisi"
+    "Nessun modello caricato",  // "Aucun modèle chargé"
     "Nessun oggetto: apri forzieri, sconfiggi i boss o passa dal mercante.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Nessun appuntamento",  // "Aucun rendez-vous à venir"
     "Nessun punteggio",  // "Aucun score enregistré"
     "Ancora nessun punteggio salvato.",  // "Aucun score enregistré pour l'instant."
     "Ancora nessun punteggio.\nInizia una partita!",  // "Aucun score pour l'instant.\nLance une partie !"
+    "Nessun server scelto",  // "Aucun serveur choisi"
     "Nessun lavoro previsto",  // "Aucun travail de prévu"
     "Nessuno scambio",  // "Aucun échange"
     "Nessuna",  // "Aucune"
@@ -7635,6 +7728,7 @@ static const char* const kI18n_it[] = {
     "Carico l'immagine...",  // "Chargement image..."
     "Caricamento...",  // "Chargement..."
     "Caldo",  // "Chaud"
+    "Scegli i suoi sensori in Home Assistant: liste «Tab5 · serveur IA · AI server».",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Scegli i tuoi sensori in Home Assistant: «Tab5 · capteurs suivis · tracked sensors».",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Scegli i tuoi lettori in Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Scegli modalità, colore, livello e orologio",  // "Choix du mode, de la couleur, du niveau et de la pendule"
@@ -7755,6 +7849,7 @@ static const char* const kI18n_it[] = {
     "In attesa di Home Assistant",  // "En attente de Home Assistant"
     "In carica",  // "En charge"
     "In corso",  // "En cours"
+    "Online",  // "En ligne"
     "In modalità Fissa contano solo i giorni selezionati.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In movimento",  // "En mouvement"
     "Soleggiato",  // "Ensoleillé"
@@ -8150,6 +8245,7 @@ static const char* const kI18n_it[] = {
     "Previsto oggi",  // "Prévu aujourd'hui"
     "Previsto domani",  // "Prévu demain"
     "Pronto",  // "Prêt"
+    "Potenza",  // "Puissance"
     "Puramente estetico",  // "Purement cosmétique"
     "Piramide",  // "Pyramide"
     "DOMANDA FINALE",  // "QUESTION FINALE"
@@ -8199,6 +8295,7 @@ static const char* const kI18n_it[] = {
     "Riprendi (vuoto)",  // "Reprendre (vide)"
     "Riprendi la partita",  // "Reprendre la partie"
     "Carica il salvataggio",  // "Reprendre la sauvegarde"
+    "Richieste in corso: %s · in coda: %s",  // "Requêtes en cours : %s · en file : %s"
     "Indietro",  // "Retour"
     "Torna al Tab",  // "Retour au Tab"
     "Torna al goban",  // "Retour au goban"
@@ -8285,6 +8382,7 @@ static const char* const kI18n_it[] = {
     "Sensibilità del nudge: %s",  // "Sensibilité du nudge : %s"
     "Set",  // "Sept"
     "Serra",  // "Serre"
+    "Server IA",  // "Serveur IA"
     "Soglia",  // "Seuil"
     "Se lo schermo ti appare capovolto",  // "Si l'écran est à l'envers dans vos mains"
     "Se la palla va dalla parte sbagliata",  // "Si la bille part du mauvais côté"
@@ -8333,10 +8431,14 @@ static const char* const kI18n_it[] = {
     "Tempo scaduto — la risposta era: %s",  // "Temps écoulé — la réponse était : %s"
     "Tempo scaduto — materiale insufficiente",  // "Temps écoulé — matériel insuffisant pour mater"
     "Temperatura",  // "Température"
+    "Temperatura critica",  // "Température critique"
+    "Temperatura normale",  // "Température normale"
+    "Temperatura elevata",  // "Température élevée"
     "Temperature",  // "Températures"
     "Tensione",  // "Tension"
     "Prova",  // "Tester"
     "Tema",  // "Thème"
+    "Token al secondo",  // "Tokens par seconde"
     "Top 10 locale",  // "Top 10 local"
     "Top 10 locale (NVS)",  // "Top 10 local (NVS)"
     "Top 10 locale - salvata in NVS, resiste a riavvii e OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -8488,6 +8590,8 @@ static const char* const kI18n_it[] = {
     "capovolto",  // "retournée"
     "sabato",  // "samedi"
     "settembre",  // "septembre"
+    "di %s GB",  // "sur %s Go"
+    "di %s GB · %s %%",  // "sur %s Go · %s %%"
     "rapidiss",  // "t.rapide"
     "terminato %s",  // "terminée %s"
     "troppo caldo",  // "trop chaud"
@@ -8522,6 +8626,7 @@ static const char* const kI18n_it[] = {
     "Squadra: %s",  // "Équipe : %s"
     "Equipaggiamento",  // "Équipement"
     "Stato",  // "État"
+    "Stato sconosciuto",  // "État inconnu"
     "Spegni",  // "Éteindre"
     "Spegni le luci",  // "Éteindre les lumières"
     "Spento",  // "Éteint"
@@ -8606,6 +8711,7 @@ static const char* const kI18n_tr[] = {
     "%s: %s",  // "%s : %s"
     "%s: %s, %s °C",  // "%s : %s, %s °C"
     "%s: %u / %u / %u\n",  // "%s : %u / %u / %u\n"
+    "%s GB",  // "%s Go"
     "%s 6 dilimi topladı — kategoriyi %s seçer",  // "%s a ses 6 parts — %s choisit la catégorie"
     "%s 6 dilimi topladı — final kategorini seç",  // "%s a ses 6 parts — choisissez votre catégorie finale"
     "%s 120 ruh verir",  // "%s cède 120 âmes"
@@ -8760,11 +8866,13 @@ static const char* const kI18n_tr[] = {
     "Olay yok",  // "Aucun incident"
     "Önümüzdeki 8 günde seçili gün yok",  // "Aucun jour retenu dans les 8 prochains"
     "Oynatıcı seçilmedi",  // "Aucun lecteur choisi"
+    "Yüklü model yok",  // "Aucun modèle chargé"
     "Eşya yok: sandık aç, boss yen ya da tüccara uğra.",  // "Aucun objet : ouvrez des coffres, battez les boss, ou passez chez le marchand."
     "Yaklaşan randevu yok",  // "Aucun rendez-vous à venir"
     "Kayıtlı skor yok",  // "Aucun score enregistré"
     "Henüz kayıtlı skor yok.",  // "Aucun score enregistré pour l'instant."
     "Henüz skor yok.\nBir oyun başlat!",  // "Aucun score pour l'instant.\nLance une partie !"
+    "Sunucu seçilmedi",  // "Aucun serveur choisi"
     "Planlı iş yok",  // "Aucun travail de prévu"
     "Akış yok",  // "Aucun échange"
     "Hiçbiri",  // "Aucune"
@@ -8857,6 +8965,7 @@ static const char* const kI18n_tr[] = {
     "Görsel yükleniyor...",  // "Chargement image..."
     "Yükleniyor...",  // "Chargement..."
     "Sıcak",  // "Chaud"
+    "Sensörlerini Home Assistant'ta seçin: “Tab5 · serveur IA · AI server” listeleri.",  // "Choisissez ses capteurs dans Home Assistant : listes « Tab5 · serveur IA »."
     "Sensörlerinizi Home Assistant'ta seçin: “Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Oynatıcılarınızı Home Assistant'ta seçin: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Mod, renk, seviye ve saat seçimi",  // "Choix du mode, de la couleur, du niveau et de la pendule"
@@ -8977,6 +9086,7 @@ static const char* const kI18n_tr[] = {
     "Home Assistant bekleniyor",  // "En attente de Home Assistant"
     "Şarj oluyor",  // "En charge"
     "Çalışıyor",  // "En cours"
+    "Çevrimiçi",  // "En ligne"
     "Sabit modda yalnızca işaretli günler geçerlidir.",  // "En mode Fixe, seuls les jours cochés comptent."
     "Hareket ediyor",  // "En mouvement"
     "Güneşli",  // "Ensoleillé"
@@ -9372,6 +9482,7 @@ static const char* const kI18n_tr[] = {
     "Bugün beklenen",  // "Prévu aujourd'hui"
     "Yarın beklenen",  // "Prévu demain"
     "Hazır",  // "Prêt"
+    "Güç",  // "Puissance"
     "Tamamen kozmetik",  // "Purement cosmétique"
     "Piramit",  // "Pyramide"
     "FİNAL SORUSU",  // "QUESTION FINALE"
@@ -9421,6 +9532,7 @@ static const char* const kI18n_tr[] = {
     "Devam (boş)",  // "Reprendre (vide)"
     "Oyuna devam et",  // "Reprendre la partie"
     "Kayda devam et",  // "Reprendre la sauvegarde"
+    "Çalışan istek: %s · kuyrukta: %s",  // "Requêtes en cours : %s · en file : %s"
     "Geri",  // "Retour"
     "Tab'a dön",  // "Retour au Tab"
     "Tahtaya dön",  // "Retour au goban"
@@ -9507,6 +9619,7 @@ static const char* const kI18n_tr[] = {
     "Dürtme hassasiyeti: %s",  // "Sensibilité du nudge : %s"
     "Eyl",  // "Sept"
     "Sera",  // "Serre"
+    "YZ sunucusu",  // "Serveur IA"
     "Eşik",  // "Seuil"
     "Ekran elinde ters duruyorsa",  // "Si l'écran est à l'envers dans vos mains"
     "Bilye yanlış tarafa gidiyorsa",  // "Si la bille part du mauvais côté"
@@ -9555,10 +9668,14 @@ static const char* const kI18n_tr[] = {
     "Süre doldu — yanıt: %s",  // "Temps écoulé — la réponse était : %s"
     "Süre doldu — mat için yetersiz materyal",  // "Temps écoulé — matériel insuffisant pour mater"
     "Sıcaklık",  // "Température"
+    "Sıcaklık kritik",  // "Température critique"
+    "Sıcaklık normal",  // "Température normale"
+    "Sıcaklık yüksek",  // "Température élevée"
     "Sıcaklıklar",  // "Températures"
     "Gerilim",  // "Tension"
     "Dene",  // "Tester"
     "Tema",  // "Thème"
+    "Saniyede token",  // "Tokens par seconde"
     "Yerel ilk 10",  // "Top 10 local"
     "Yerel ilk 10 (NVS)",  // "Top 10 local (NVS)"
     "Yerel ilk 10 - NVS'de saklanır, yeniden başlatma ve OTA'da korunur.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
@@ -9710,6 +9827,8 @@ static const char* const kI18n_tr[] = {
     "ters",  // "retournée"
     "Cumartesi",  // "samedi"
     "Eylül",  // "septembre"
+    "toplam %s GB",  // "sur %s Go"
+    "toplam %s GB · %s %%",  // "sur %s Go · %s %%"
     "ç.hızlı",  // "t.rapide"
     "bitti %s",  // "terminée %s"
     "çok sıcak",  // "trop chaud"
@@ -9744,6 +9863,7 @@ static const char* const kI18n_tr[] = {
     "Takım: %s",  // "Équipe : %s"
     "Teçhizat",  // "Équipement"
     "Durum",  // "État"
+    "Durum bilinmiyor",  // "État inconnu"
     "Kapat",  // "Éteindre"
     "Işıkları kapat",  // "Éteindre les lumières"
     "Kapalı",  // "Éteint"
