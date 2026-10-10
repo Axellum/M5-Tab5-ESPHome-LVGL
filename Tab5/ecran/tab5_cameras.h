@@ -32,7 +32,8 @@ class Image;
 // esphome.tab5_cameras ; le blueprint répond par l'action tab5_maj_cameras (nom et
 // entity_picture de chaque caméra). L'image est téléchargée par online_image
 // (cameras_image, tab5-cameras.yaml) : JPEG décodé en PSRAM, réduit par Home Assistant
-// (width / height du proxy des caméras) puis par la tablette à 960 × 540 au plus.
+// (width / height du proxy des caméras), montré à sa taille ou réduit par LVGL s'il
+// dépasse 960 × 540 (jamais agrandi : le décodage d'ESPHome agrandit pixel par pixel).
 //
 // Widgets posés par le script tab5_cameras_ouvrir (tab5-cameras.yaml) à la première
 // ouverture : id() n'existe que dans une lambda YAML. Les commandes sont des lambdas SANS

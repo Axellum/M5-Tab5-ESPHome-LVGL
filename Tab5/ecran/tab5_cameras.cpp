@@ -52,8 +52,9 @@ static_assert(kCamerasPastilles == kCamerasMax, "une pastille par caméra");
 
 namespace {
 
-// Taille de l'image (cameras_popup.yaml, resize de tab5-cameras.yaml) : 16:9, réduite par
-// HA au plus petit facteur JPEG qui reste au-dessus (1/2 d'une 1080p, 3/8 d'une 1440p).
+// Taille du cadre de l'image (cameras_popup.yaml) : 16:9, demandée à HA, qui réduit au
+// plus petit facteur JPEG qui reste au-dessus (1/2 d'une 1080p, 3/8 d'une 1440p). Une
+// image plus petite est montrée à sa taille, une plus grande réduite par echelle_image().
 constexpr int kImageL = 960;
 constexpr int kImageH = 540;
 constexpr int kRafraichirMs = 5000;            // après une image, avant la suivante
@@ -97,6 +98,16 @@ int delai_apres_echec() {
 bool visible() {
     const CamerasUI& u = g_cameras_ui;
     return u.popup != nullptr && !lv_obj_has_flag(u.popup, LV_OBJ_FLAG_HIDDEN);
+}
+
+// Échelle LVGL (256 = taille réelle) pour qu'une image tienne dans le cadre : réduite si
+// elle dépasse kImageL × kImageH (HA envoie 1152 × 648 pour une caméra 2304 × 1296),
+// jamais agrandie (le popup montre une caméra 640 × 480 à sa taille).
+uint32_t echelle_image(int l, int h) {
+    if (l <= 0 || h <= 0 || (l <= kImageL && h <= kImageH)) return LV_SCALE_NONE;
+    const uint32_t sl = static_cast<uint32_t>(kImageL) * LV_SCALE_NONE / static_cast<uint32_t>(l);
+    const uint32_t sh = static_cast<uint32_t>(kImageH) * LV_SCALE_NONE / static_cast<uint32_t>(h);
+    return sl < sh ? sl : sh;
 }
 
 bool url_absolue(const char* s) { return std::strncmp(s, "http://", 7) == 0 || std::strncmp(s, "https://", 8) == 0; }
@@ -286,7 +297,10 @@ void cameras_image_prete() {
     // (lv_image_set_src relit le descripteur, que le tampon ait bougé ou non, et invalide).
     s_montree = cam;
     s_quand = tab5_time_source(nullptr);
-    if (u.image != nullptr && u.source != nullptr) lv_image_set_src(u.image, u.source->get_lv_image_dsc());
+    if (u.image != nullptr && u.source != nullptr) {
+        lv_image_set_src(u.image, u.source->get_lv_image_dsc());
+        lv_image_set_scale(u.image, echelle_image(u.source->get_width(), u.source->get_height()));
+    }
     if (cam == s_page) {
         s_erreur = false;
         s_echecs = 0;

@@ -25,20 +25,23 @@
 # ============================================================================
 
 image:
-  # Une seule image pour toutes les caméras : 960 × 540 RGB565 = 1 036 800 octets en PSRAM
-  # (RAMAllocator d'ESPHome : PSRAM d'abord), rendus par online_image.release quand le
-  # popup se ferme. HA réduit déjà l'image (width / height ajoutés par camera_url) ; la
-  # tablette la ramène à 960 × 540 au plus, proportions gardées. JPEG progressif refusé
-  # par le décodeur d'ESPHome (JPEGDEC) : « Image indisponible ».
+  # Une seule image pour toutes les caméras, décodée à SA taille en RGB565 en PSRAM
+  # (RAMAllocator d'ESPHome : PSRAM d'abord ; 640 × 480 = 614 400 octets, 960 × 540 =
+  # 1 036 800), rendue par online_image.release quand le popup se ferme. HA réduit déjà
+  # l'image (width / height ajoutés par camera_url) ; une image plus grande que le cadre
+  # est réduite à l'affichage par LVGL (cameras_image_prete).
+  # [AI-WARNING] Pas de resize: ici. ESPHome met alors l'image à la taille donnée en
+  # l'AGRANDISSANT aussi (640 × 480 → 720 × 540), pixel par pixel dans le décodage :
+  # 1,45 s de boucle bloquée par image mesurées le 10/10/2026 avec une caméra 640 × 480.
+  # JPEG progressif refusé par le décodeur d'ESPHome (JPEGDEC) : « Image indisponible ».
   - platform: online_image
     id: cameras_image
     url: "http://127.0.0.1/placeholder.jpg"   # remplacé au runtime par set_url
     format: JPEG
     type: RGB565
-    resize: 960x540
     http_request_id: assist_http
     # Tampon du téléchargement : agrandi à la taille du JPEG (il le faut entier pour le
-    # décoder), il le reste ensuite (~100 à 200 Ko à 960 × 540, estimation).
+    # décoder), il le reste ensuite (~40 Ko pour une caméra 640 × 480, mesuré le 10/10).
     buffer_size: 16384
     on_download_finished:
       - lambda: 'cameras_image_prete();'
