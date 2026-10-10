@@ -4,7 +4,192 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-Pré-releases tirées de cette section, sur le canal bêta :
+Ordre de mise à jour depuis les dernières versions publiées, tant que `v3.8.0` n'est pas
+taguée (`tests/test_contrat_versions.py` le confronte à la matrice) :
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.7.0).
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
+
+## [3.8.0] — 2026-10-10
+
+De `v3.7.0` à aujourd'hui : soixante-dix-sept pull requests (#377 → #454, sans #398, fermée),
+dont quatre de pré-release (#380, #403, #406, #433) et trois de Dependabot (#396, #397, #399), et
+celle de la release. Quatre sont nées de la
+[discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278) (#379, #429,
+#444, #451) — merci à @husyildiz, pour son test de consommation et la capture de son tableau
+Énergie. Stable publiée trois jours après la 3.7.0, à la demande de l'auteur, au lieu des deux
+semaines habituelles entre deux stables ; vingt-deux de ces PR (#429, #434 → #454) sont arrivées
+après la [v3.8.0-rc.4](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.4)
+et ne sont passées par aucune pré-release.
+- **Nouveaux popups** : **Musique**, un lecteur pour tout `media_player`, avec une mini-barre
+  « en lecture » sur l'accueil (#430, #436, [ADR-0050](docs/decisions/0050-music-player.md)) ;
+  **Caméras**, une image fixe par caméra, rangées par pièce, en mosaïque, téléchargées et décodées
+  hors de la boucle principale (#429, #439, #440, #446, #447, #449,
+  [ADR-0049](docs/decisions/0049-cameras-popup.md), [ADR-0057](docs/decisions/0057-cameras-rooms.md)) ;
+  **Suivi**, les courbes des capteurs choisis dans Home Assistant (#438,
+  [ADR-0054](docs/decisions/0054-tracked-sensors.md)) ; **Frigos et congélateurs**, normes, porte
+  mal fermée, alertes et, au niveau grave, une icône qui clignote sur l'horloge (#441,
+  [ADR-0055](docs/decisions/0055-fridge-freezer-monitoring.md)) ; **Serveur IA**, le tableau de
+  bord d'un serveur de LLM local (débit, VRAM, température du GPU, RAM, puissance) avec
+  Décharger, Réveiller (Wake-on-LAN) et Redémarrer (#450, #453,
+  [ADR-0059](docs/decisions/0059-local-llm-server-popup.md),
+  [ADR-0060](docs/decisions/0060-ai-server-actions.md)), alimenté par les nouveaux packages
+  `tab5_llm.yaml` (Ollama, llama.cpp, LM Studio, #448) et `tab5_serveur_ia.yaml`.
+- **Popups en pages**, une seule brique pour le glissé et les noms des pages
+  ([ADR-0046](docs/decisions/0046-popups-a-pages.md)) : Réglages en quatre pages, la console
+  système devient la page Système (#400) ; Lumières et Volets, une page par pièce (#424) ; Météo
+  en graphiques sur trois pages (#425, [ADR-0043](docs/decisions/0043-weather-popup.md)) ; Réveil
+  en cinq pages, réglé sur des rouleaux (#426) ; Température avec l'humidité, une page par pièce
+  (#422, [ADR-0047](docs/decisions/0047-room-climate-chart.md)) ; Énergie en quatre pages : flux,
+  soleil et prévision du jour apprise sur la maison, production, bilan avec revente et gains
+  (#451, [ADR-0058](docs/decisions/0058-energy-sun-forecast-balance.md)) ; télécommande : TV,
+  Apple TV, Freebox Player, une page chacune (#445, [ADR-0056](docs/decisions/0056-several-remotes.md)).
+- **Accueil au choix** : la zone à gauche de l'horloge montre le vocal, un graphique des 15
+  prochaines heures, un lecteur compact ou un capteur suivi (#431, #432, #438,
+  [ADR-0051](docs/decisions/0051-left-zone-choice.md)) ; l'horloge en trois zones et douze gestes
+  au choix dans le blueprint (#415, [ADR-0039](docs/decisions/0039-gestes-accueil.md)) ; jusqu'à
+  trois lignes de capteurs dans le panneau « Ok Nabu », défilement automatique ou fixe (#418,
+  [ADR-0041](docs/decisions/0041-ok-nabu-panel-scrolling.md)) ; tuiles météo en cellule pleine et
+  fond de l'horloge au choix (#443) ; mention « prévisions périmées » quand la météo n'arrive plus
+  (#395) ; lignes centrées, cadres et points ajustés (#419, #428).
+- **Roues et climat** : roue d'actions rapides à deux anneaux (#378) ; roue de navigation sur
+  l'appui long de la carte centrale, Musique et TV dans « Appareils » (#423, #434,
+  [ADR-0042](docs/decisions/0042-navigation-wheel.md)) ; roue de la clim au toucher de la
+  température de la pièce, et carrousel des clims (#414, #420,
+  [ADR-0038](docs/decisions/0038-climate-carousel.md),
+  [ADR-0048](docs/decisions/0048-climate-wheel-from-temperature.md)) ; le climat de chaque pièce
+  en mode HA : température, humidité, clim (#416, [ADR-0040](docs/decisions/0040-room-climate.md)) ;
+  « Son de la tablette » dans la liste de la tuile − / + (#379).
+- **Batterie et alimentation** : plus de souffle sans batterie (le chargeur ne charge plus dans le
+  vide), limite de charge à 80 %, consommation en W, batterie faible sur le téléphone (#387) ;
+  chargeur laissé éteint au démarrage quand le démarrage précédent n'a vu aucune batterie (#452) ;
+  mode de charge, niveau des animations et Wi-Fi éco (#421,
+  [ADR-0045](docs/decisions/0045-charging-animations-eco-wifi.md)) ; un test de consommation
+  lancé depuis Home Assistant (#405), `tools/mesure_conso.py` (#404) et une première mesure
+  publiée, page « Consommation » (#444).
+- **Plus fluide** : changer de thème ne fige plus l'écran 3,2 s (#383) ; le popup Caméras ne gèle
+  plus l'écran à chaque image (#439, #440).
+- **Home Assistant** : l'intégration HACS a un assistant de configuration qui part des pièces de
+  Home Assistant, puis propose la maison et les listes « Tab5 · … », en sept langues (#435, #437,
+  [ADR-0052](docs/decisions/0052-setup-assistant-rooms.md),
+  [ADR-0053](docs/decisions/0053-setup-assistant-home-lists.md)) ; trois défauts de l'intégration
+  corrigés (#390) ; repli automatique sur une autre météo quand la source choisie se tait (#393) ;
+  plus de garde-fou `is_primary_active`, qui pouvait figer l'écran sans erreur (#382) ;
+  statistiques de fiabilité au-delà de 7 jours (#413) ; chronologie du démarrage dans une entité
+  de diagnostic (#452).
+- **Solidité** (audits du 30/09 et du 07/10) : correctifs du firmware et de Home Assistant (#381,
+  #382) ; lecture des payloads de HA en C++ pur, testée sur PC et fuzzée, et ses défauts corrigés
+  (#411, #417) ; contrat HA ↔ firmware vérifié entre versions (#410) ; socle C++ commun, code des
+  tuiles, YAML et données des thèmes rangés, polices figées dans le dépôt (#386, #388, #389, #392,
+  #394) ; moteur des dames dans son module (#412) ; garde-fous, tests et CI (#385, #391, #427) ;
+  `Tab5/` rangé en sous-dossiers (#401) ; normes de style et CHANGELOG archivé (#402) ; page
+  d'installation sous CSP et SRI, `SHA256SUMS` et provenance des binaires (#409).
+- **Documentation** : photo et rendus du firmware dans le README et le site (#377) ; docs de
+  l'audit du 07/10 (#384) ; première installation : ordre, prérequis, dépannage (#407, #408) ;
+  mesures des caméras sur la tablette (#442) ; où choisir les capteurs suivis (#454) ; notices
+  Musique, Caméras, Suivi, Frigos, Serveur IA et page « Consommation ».
+
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.7.0).
+
+**Ordre de mise à jour** (`python tools/contrat_api.py --matrice`, lu dans le code, pas essayé) :
+le firmware 3.7.0 avec les fichiers HA de la 3.8.0 est « cassé (6) » : six actions qu'il n'a pas
+(`tab5_maj_energie_soleil`, `tab5_maj_energie_bilan`, `tab5_maj_froid`, `tab5_maj_lecteur`,
+`tab5_maj_serveur_ia`, `tab5_maj_suivi`) sont refusées par Home Assistant et le script qui les
+appelle s'arrête ; le firmware 3.8.0 avec les fichiers HA de la 3.7.0 est « dégradé (11) » : il
+marche, mais les nouveaux popups restent vides, sans erreur. Même verdict depuis la v3.8.0-rc.4
+(canal bêta).
+
+### À faire en mettant à jour depuis la 3.7.0
+
+1. **Firmware d'abord** : entité « Firmware » dans Home Assistant. Avec l'intégration « Tab5 »
+   (HACS) : *Download* de la nouvelle version dans HACS et le redémarrage qu'il demande ;
+   l'intégration pose alors les fichiers, puis lance elle-même la mise à jour de la tablette
+   (option cochée par défaut). Dans ce cas les fichiers arrivent avant le firmware : jusqu'à la
+   fin de l'OTA, les six nouvelles poussées sont refusées.
+2. **Puis les fichiers Home Assistant**, à la main : remplacer les fichiers par ceux de
+   `tab5_home_assistant.zip` de cette version. D'abord `custom_templates/` (nouveaux :
+   `tab5_tablette.jinja`, `tab5_meteo.jinja`), puis **Outils de développement → YAML → Modèles
+   Jinja personnalisés** ; ensuite les packages, dont six nouveaux (`tab5_lecteur.yaml`,
+   `tab5_suivi.yaml`, `tab5_froid.yaml`, `tab5_llm.yaml`, `tab5_serveur_ia.yaml`,
+   `tab5_mesure_conso.yaml`), et le blueprint « Tab5 — emplacements » (le réimporter s'il a été
+   importé par son URL) ; recharger toute la configuration YAML. Le popup Serveur IA a besoin de
+   `tab5_llm.yaml` et de `tab5_serveur_ia.yaml`, recopiés après le firmware ; son bouton Réveiller
+   charge l'intégration Wake on LAN (`wake_on_lan:` dans `tab5_llm.yaml`) : redémarrer Home
+   Assistant si la clé n'était pas déjà dans `configuration.yaml` (l'intégration « Tab5 » la
+   charge sans redémarrage).
+3. **Ménage** : `input_boolean.is_primary_active` et les automatisations « Force Primary Active on
+   Boot » et « Tab5 Santé — is_primary_active OFF depuis 5 min » disparaissent ; si Home
+   Assistant les garde en « indisponible », les supprimer dans Paramètres → Entités. Le snippet
+   `tab5_alerts_dismissed_input_text.yaml` n'existe plus.
+4. **Quand vous voulez** : dans le blueprint, les nouvelles sections (« Zone à gauche de
+   l'horloge », « Panneau Ok Nabu », « Horloge et boutons du haut » et ses douze gestes,
+   « Caméras », les autres télécommandes, la température, l'humidité et la clim de chaque pièce,
+   les nouvelles entrées de l'énergie) ; les listes « Tab5 · lecteurs de musique », « Tab5 ·
+   capteurs suivis », « Tab5 · réfrigérateurs », « Tab5 · congélateurs », « Tab5 · type de
+   serveur IA » et les autres « Tab5 · serveur IA, … » ; les réglages de la tablette (Mode de
+   charge, Limite de charge, Animations, Wi-Fi éco, Fond de l'horloge) ; le tableau de bord à
+   refaire (étape 7 du guide), pour les nouvelles entités.
+
+### Mesures de la version
+
+- Taille, lue dans le journal de la CI (job `build-min` de `main` à `5bc4634`, ESPHome 2026.9.0,
+  la version des binaires publiés ; la publication recompile) : application 5 051 426 o (62,2 %
+  de 8 126 464 o), contre 4 836 246 o (59,5 %) pour la v3.8.0-rc.4 publiée. RAM statique :
+  239 834 o (53,8 %), contre 209 794 o (47,1 %) pour la rc.4 et 192 602 o (43,2 %) pour la 3.7.0.
+  Binaires OTA publiés (`st7123`) : 4 591 616 o pour la 3.7.0, 4 853 760 o pour la rc.4 ; celui
+  de la 3.8.0 n'existe qu'à la publication.
+- Mesuré sur la tablette pendant le développement (chiffres des entrées ci-dessous) : changer de
+  thème, prototype affiché en 0,44 à 0,51 s au lieu de 3,7 à 3,9 s (#383) ; Caméras, avec une
+  caméra 640 × 480, décodage matériel en 3 à 12 ms au lieu de 1,0 s et pire tour de boucle de la
+  minute à 217 ms au lieu de 1 020 ms (#440) ; sans batterie, plus de souffle une fois le chargeur
+  coupé (firmware de test, #387) ; tuiles météo en cellule pleine, essai validé (#443) ;
+  chronologie du démarrage, première version des repères, trois démarrages : expandeur à 7,2 s,
+  rétroéclairage à 21,4 s. Consommation mesurée par @husyildiz sur la rc.4 : 2,63 W écran à
+  100 %, 1,74 W à 50 %, 1,23 W écran éteint (#444).
+- La RAM interne libre et la durée d'une image n'ont pas été remesurées sur la tablette pour
+  cette version.
+- CI sur `main` à `5bc4634` : compilations requises vertes (dernière ESPHome, 2026.9.1, et
+  version minimale, 2026.9.0), job `python` vert (pytest, moteurs des jeux et parseurs sous ASan
+  et UBSan) ; intégration HACS et installation dans un Home Assistant neuf (2026.9.4 et 2026.8.3)
+  vertes. Rendu hors tablette et sanitizers : non finis à la rédaction, à lire sur ce commit.
+
+### Problèmes connus
+
+Ceux de la 3.7.0, et :
+- **Peu essayée sur la tablette** : stable trois jours après la 3.7.0, par choix de l'auteur, et
+  les vingt-deux PR d'après la rc.4 n'ont été dans aucune pré-release. Au merge, leur entrée
+  ci-dessous dit « non essayé » ou « non testé sur la tablette » pour : les popups Musique,
+  Suivi, Frigos, Serveur IA, Énergie en pages, Météo, Réveil, Lumières et Volets en pages,
+  Température avec l'humidité, Réglages en pages et leurs nouveaux réglages ; plusieurs
+  télécommandes ; les caméras par pièce et la mosaïque ; la zone à gauche de l'horloge ; la roue
+  à deux anneaux, la roue de navigation, la roue et le carrousel des clims ; le climat des
+  pièces ; le panneau Ok Nabu à lignes ; les gestes de l'horloge ; les repères fins de la
+  chronologie du démarrage et le chargeur éteint au démarrage.
+- **Mémoire** : la RAM statique passe de 192 602 o (3.7.0) à 239 834 o (+47 232 o, 53,8 %) ; ce
+  qu'il reste de RAM interne libre sur la tablette n'a pas été remesuré.
+- **Serveur IA** : seul un Ollama 0.30.6 a été lu en vrai, sans modèle chargé ; llama.cpp et
+  LM Studio n'ont jamais été interrogés ; aucune action (Décharger, Redémarrer) envoyée à un vrai
+  serveur, aucun paquet Wake-on-LAN envoyé ; le popup n'a jamais été ouvert sur la tablette. Les
+  seuils du GPU (80 et 90 °C) ne sont pas vérifiés selon les cartes. Ollama ne donne pas de débit
+  global en tokens/s, LM Studio ni VRAM ni débit hors d'une réponse : ces valeurs restent à
+  « — ».
+- **Énergie** : la courbe « ciel clair » apprise et la prévision du jour n'ont jamais été
+  confrontées à une vraie installation solaire.
+- **Caméras** : un seul essai réel, avec une caméra 640 × 480, avant les pièces et la mosaïque ;
+  jamais plusieurs vraies caméras.
+- **Musique** : la pochette est téléchargée en http ; https n'est pas pris en charge.
+- **Batterie** : la limite de charge n'a pas été essayée avec une batterie (chargeur arrêté et USB
+  branché, on ne sait pas encore si la tablette tourne sur l'USB ou sur sa batterie) ; la charge
+  « Rapide » n'est pas mesurée ; le gain et la latence du Wi-Fi éco ne sont pas vérifiés. Une
+  batterie neuve ou totalement plate posée sur une tablette qui n'en avait pas est vue absente :
+  allumer « Tab5 Batterie montée ».
+- **Fiabilité** : les compteurs de redémarrages n'ont pas été vérifiés sur un vrai redémarrage.
+- Les images de la notice des popups Lumières et Volets montrent encore l'ancien popup.
+- Les textes en allemand, néerlandais, espagnol, italien et turc (écran, tableau de bord,
+  intégration) sont écrits par une IA, pas encore relus.
+
+### Pré-releases
+
+Tirées de cette version, sur le canal bêta :
 [v3.8.0-rc.1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.8.0-rc.1)
 le 07/10/2026 : roue d'actions rapides à deux anneaux (#378), « Son de la tablette » dans la liste
 de la tuile − / + (#379).
@@ -26,10 +211,6 @@ roue de la clim (#420), carrousel des clims (#414), climat de la pièce (#416), 
 l'humidité (#422), gestes de l'accueil au choix (#415), panneau Ok Nabu à lignes (#418), Réglages :
 charge, animations, Wi-Fi éco (#421), parseurs testés et fuzzés (#411, #417), corrections de
 l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
-
-**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.7.0).
-**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
-**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
 
 ### 2026-10-10 — Popup « Serveur IA » : décharger le modèle, réveiller le PC, redémarrer le service (ADR-0060)
 
