@@ -47,8 +47,12 @@ constexpr size_t kNomMax = 48;
 constexpr size_t kUniteMax = 24;
 constexpr int kLisse = 6;  // points de courbe entre deux points poussés
 constexpr int kCourbeMax = (kSuiviPointsMax - 1) * kLisse + 1;
-// Popup : grille dans le corps de la carte modale (x kCorpsX, y kCorpsY..kCorpsBas).
-constexpr int32_t kCorpsBas = kCarteH - 20;
+// Popup : grille dans le corps de la carte modale (x kCorpsX, y kCorpsY..kCorpsBas), en
+// coordonnées de son contenu (la bordure de 2 px de style_modal_card en moins). Même air
+// en bas qu'en haut : kCorpsY = barre de titre (52, modal_hdr_h) + 20 px.
+constexpr int32_t kBordModal = 2;
+constexpr int32_t kAirCorps = 20;
+constexpr int32_t kCorpsBas = kCarteH - 2 * kBordModal - kAirCorps;
 constexpr int32_t kColonnesMax = 3;
 // Une carte du popup : marges, nom, valeur, rangée de la variation, courbe.
 constexpr int32_t kMarge = 22;
