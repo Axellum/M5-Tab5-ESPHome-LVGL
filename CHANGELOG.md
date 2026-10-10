@@ -31,6 +31,13 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
 
+### 2026-10-10 — Serveur IA local : capteurs Ollama, llama.cpp et LM Studio dans Home Assistant, sans firmware
+
+- **Demande d'Axel** (lot 0 de l'audit « Tab5 et LLM locaux » du 10/10) : superviser un serveur d'inférence local depuis Home Assistant et mettre ses chiffres dans le popup Suivi existant (ADR-0054), sans toucher au firmware.
+- **Nouveau package `packages/tab5_llm.yaml`** (rien en dur, ADR-0024) : « Tab5 · type de serveur IA · AI server type » (Aucun par défaut / Ollama / llama.cpp / LM Studio) et « Tab5 · adresse du serveur IA · AI server address » ; avec « Aucun » ou sans adresse, **aucune requête**. Un capteur à déclencheurs (`sensor.tab5_serveur_ia_releve`) interroge le serveur toutes les 30 s par `rest_command.tab5_serveur_ia` (GET, 5 s au plus) : Ollama `/api/ps` ; llama.cpp `/health`, `/props`, `/metrics` (avec `--metrics`), `/slots` ; LM Studio `/api/v1/models` (0.4 et plus). Capteurs : en ligne, modèle(s) chargé(s), et trois mesures à `state_class: measurement` proposées dans « Tab5 · capteurs suivis » — VRAM utilisée (Ollama), vitesse de génération en tokens/s (llama.cpp, écart des compteurs entre deux relevés), requêtes en cours (llama.cpp). Ce qu'un serveur ne donne pas reste indisponible : **Ollama n'a pas de compteur global de tokens/s**, LM Studio ni VRAM ni débit hors d'une réponse. Aucun capteur matériel : température et VRAM du GPU, RAM, puissance viennent de Glances ou de System Monitor.
+- Tableau de bord HA du Tab5 : les deux réglages dans « Maison » (sept langues). Nouvelle page `docs/serveur-ia.md` (EN/FR, menu « Utiliser la tablette »), dont la limite du Suivi (une poussée toutes les cinq minutes au plus, une tendance). `HomeAssistant_Config/README.md`, `docs/README.md`, cartographie.
+- **Tests** : `tests/test_serveur_ia.py` rend les vrais modèles Jinja du package sur des réponses simulées des trois serveurs (formes des docs officielles) et les compare à un calcul Python indépendant ; mêmes modèles rendus par le moteur de modèles du HA d'Axel (lecture seule). **Seul Ollama a été lu en vrai** (`/api/ps` d'un Ollama 0.30.6, aucun modèle chargé) ; **llama.cpp et LM Studio non testés contre un vrai serveur.** Contrat HA ↔ firmware inchangé. Rien à faire sur la tablette ; package à recopier dans Home Assistant.
+
 ### 2026-10-10 — Popup Caméras : la mosaïque (ADR-0057, lot 2)
 
 - **Suite de la demande d'Axel** (plusieurs caméras dans plusieurs pièces). **Non testé sur la tablette ni avec de vraies caméras.**

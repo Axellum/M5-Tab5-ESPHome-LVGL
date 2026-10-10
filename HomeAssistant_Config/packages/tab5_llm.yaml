@@ -1,0 +1,346 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_llm.yaml
+# @role Supervision d'un serveur d'inférence local (LLM) depuis Home Assistant, SANS
+#       firmware (10/10/2026) : Ollama, llama.cpp (llama-server) ou LM Studio. Crée des
+#       capteurs que l'on peut choisir dans la liste « Tab5 · capteurs suivis » (popup
+#       Suivi, ADR-0054) et que lira un futur popup « Serveur IA ». Doc : docs/serveur-ia.md.
+#         - Réglages (choisis dans HA, ADR-0024 : aucune adresse ni entité dans ce
+#           fichier) : « Tab5 · type de serveur IA » (Aucun / Ollama / llama.cpp /
+#           LM Studio) et « Tab5 · adresse du serveur IA » (http://hôte:port, sans chemin).
+#           « Aucun » ou adresse vide : AUCUNE requête, les capteurs sont indisponibles.
+#         - Relevé : un capteur à déclencheurs (`sensor.tab5_serveur_ia_releve`) interroge
+#           le serveur toutes les 30 s par rest_command.tab5_serveur_ia et range ce qu'il
+#           a lu dans ses attributs ; les capteurs visibles ne font que le recopier.
+#           C'est HA qui scrute ; la tablette reste en push-only.
+# @data_sources (docs officielles lues le 10/10/2026)
+#       - Ollama : GET /api/ps → `models[]` (`name`, `model`, `size`, `size_vram` en
+#         octets, `expires_at`). Pas de /metrics, pas de compteur global de tokens/s
+#         (le débit n'existe que dans la réponse d'une requête) : pas de capteur de débit.
+#       - llama.cpp : GET /health (200 prêt, 503 modèle en chargement ; public), /props
+#         (`model_path`, `total_slots`), /slots (`is_processing` par slot, actif par
+#         défaut, --no-slots le coupe), /metrics (texte Prometheus, seulement avec
+#         --metrics, sinon 501 : `llamacpp:tokens_predicted_total`,
+#         `llamacpp:tokens_predicted_seconds_total`, `llamacpp:requests_processing`,
+#         `llamacpp:requests_deferred`). Pas de VRAM.
+#       - LM Studio (0.4 et plus) : GET /api/v1/models → `models[]` (`key`,
+#         `display_name`, `loaded_instances[]`). Pas de VRAM, pas de débit global.
+# @limits - Vitesse de génération (llama.cpp seulement) : écart des compteurs
+#           `tokens_predicted_total` / `tokens_predicted_seconds_total` entre deux relevés
+#           (la jauge `predicted_tokens_seconds` peut être remise à zéro à chaque lecture
+#           de /metrics) ; sans token généré entre deux relevés, la dernière vitesse reste.
+#         - Serveur protégé par une clé d'API : non pris en charge (aucune clé dans un
+#           package public) ; /health de llama.cpp répond quand même, le reste non.
+#         - Matériel (température et VRAM du GPU, RAM, puissance) : PAS ici. Les
+#           intégrations Glances ou System Monitor de HA les donnent ; on les choisit
+#           dans « Tab5 · capteurs suivis ».
+#         - Le Suivi pousse au plus toutes les cinq minutes : une tendance, pas du direct.
+# @install Avec les autres packages (homeassistant.packages: !include_dir_named
+#       packages). Rien à renseigner ici : choisir le type et l'adresse dans HA.
+# @tests tests/test_serveur_ia.py rend ces modèles sur des réponses simulées des trois
+#       serveurs et compare à un calcul Python écrit à part.
+# ============================================================================
+
+input_text:
+  # Adresse du serveur : http://<hôte>:11434 (Ollama), :8080 (llama-server, 9931 sur
+  # les versions récentes), :1234 (LM Studio), les ports par défaut. Sans « http:// », il est ajouté ; un chemin est ignoré.
+  # Sans `initial` : HA la garde au redémarrage.
+  tab5_serveur_ia_adresse:
+    name: "Tab5 · adresse du serveur IA · AI server address"
+    icon: mdi:server-network
+    max: 255
+
+input_select:
+  # Premier choix « Aucun » : une installation neuve n'interroge rien.
+  tab5_serveur_ia_type:
+    name: "Tab5 · type de serveur IA · AI server type"
+    icon: mdi:brain
+    options:
+      - "Aucun"
+      - "Ollama"
+      - "llama.cpp"
+      - "LM Studio"
+
+rest_command:
+  # Une seule requête GET, adresse et chemin donnés à l'appel. 5 s au plus : un serveur
+  # éteint ne retient pas le relevé (llama.cpp : quatre requêtes par relevé).
+  tab5_serveur_ia:
+    url: "{{ adresse }}{{ chemin }}"
+    method: get
+    timeout: 5
+
+template:
+  # ──────────────────────────────────────────────────────────────────────────
+  # Relevé — capteur à déclencheurs : seul endroit qui parle au serveur.
+  # ──────────────────────────────────────────────────────────────────────────
+  - triggers:
+      - trigger: time_pattern
+        seconds: "/30"
+      - trigger: state
+        entity_id:
+          - input_select.tab5_serveur_ia_type
+          - input_text.tab5_serveur_ia_adresse
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+    # Toutes les 30 s seulement quand un serveur est choisi : avec « Aucun », rien ne
+    # s'exécute. Un changement de réglage passe toujours (le relevé dit alors « aucun »).
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ trigger.platform != 'time_pattern'
+             or (states('input_select.tab5_serveur_ia_type') in ['Ollama', 'llama.cpp', 'LM Studio']
+                 and states('input_text.tab5_serveur_ia_adresse') | trim not in ['', 'unknown', 'unavailable']) }}
+    variables:
+      type_ia: "{{ states('input_select.tab5_serveur_ia_type') }}"
+      # « hôte:port » → « http://hôte:port » ; tout chemin (« /v1 », « / ») est retiré.
+      adresse: >-
+        {%- set a = states('input_text.tab5_serveur_ia_adresse') | trim -%}
+        {%- set a = '' if a in ['unknown', 'unavailable'] else a -%}
+        {%- set a = a if a == '' or '://' in a else 'http://' ~ a -%}
+        {{ (a.split('/')[:3] | join('/')) if a.split('/') | count >= 3 and a.split('/')[2] else '' }}
+      actif: "{{ type_ia in ['Ollama', 'llama.cpp', 'LM Studio'] and adresse != '' }}"
+    actions:
+      # Une réponse manquante (serveur éteint, délai dépassé) : continue_on_error, la
+      # variable n'existe pas et le relevé dit « hors_ligne ». Un code HTTP d'erreur
+      # n'est pas une erreur pour rest_command : il est lu dans `status`.
+      - if:
+          - condition: template
+            value_template: "{{ actif and type_ia == 'Ollama' }}"
+        then:
+          - action: rest_command.tab5_serveur_ia
+            data:
+              adresse: "{{ adresse }}"
+              chemin: /api/ps
+            response_variable: r_ps
+            continue_on_error: true
+      - if:
+          - condition: template
+            value_template: "{{ actif and type_ia == 'llama.cpp' }}"
+        then:
+          - action: rest_command.tab5_serveur_ia
+            data:
+              adresse: "{{ adresse }}"
+              chemin: /health
+            response_variable: r_sante
+            continue_on_error: true
+          - action: rest_command.tab5_serveur_ia
+            data:
+              adresse: "{{ adresse }}"
+              chemin: /props
+            response_variable: r_props
+            continue_on_error: true
+          - action: rest_command.tab5_serveur_ia
+            data:
+              adresse: "{{ adresse }}"
+              chemin: /metrics
+            response_variable: r_metriques
+            continue_on_error: true
+          - action: rest_command.tab5_serveur_ia
+            data:
+              adresse: "{{ adresse }}"
+              chemin: /slots
+            response_variable: r_slots
+            continue_on_error: true
+      - if:
+          - condition: template
+            value_template: "{{ actif and type_ia == 'LM Studio' }}"
+        then:
+          - action: rest_command.tab5_serveur_ia
+            data:
+              adresse: "{{ adresse }}"
+              chemin: /api/v1/models
+            response_variable: r_modeles
+            continue_on_error: true
+      # Tout ce qui a été lu, ramené à une forme commune (none = le serveur ne le donne
+      # pas). etat : aucun / ok / chargement / hors_ligne / erreur (codes lus par les
+      # capteurs ci-dessous, jamais traduits).
+      - variables:
+          releve: >-
+            {%- set ns = namespace(etat='aucun', raison='', modeles=[], vram=none, memoire=none,
+                 tokens=none, secondes=none, requetes=none, attente=none, slots=none) -%}
+            {%- if not actif -%}
+              {%- set ns.raison = 'adresse vide' if type_ia in ['Ollama', 'llama.cpp', 'LM Studio'] else 'type Aucun' -%}
+            {%- elif type_ia == 'Ollama' -%}
+              {%- if r_ps is not defined or r_ps is not mapping -%}
+                {%- set ns.etat = 'hors_ligne' -%}
+                {%- set ns.raison = 'pas de réponse' -%}
+              {%- elif r_ps.get('status') != 200 or r_ps.get('content') is not mapping
+                       or r_ps.get('content').get('models') is not sequence -%}
+                {%- set ns.etat = 'erreur' -%}
+                {%- set ns.raison = 'HTTP ' ~ r_ps.get('status') ~ ' sur /api/ps' -%}
+              {%- else -%}
+                {%- set ns.etat = 'ok' -%}
+                {%- set ns.vram = 0 -%}
+                {%- set ns.memoire = 0 -%}
+                {%- for m in r_ps.get('content').get('models') if m is mapping -%}
+                  {%- set ns.modeles = ns.modeles + [(m.get('name') or m.get('model') or '?') | string] -%}
+                  {%- set ns.vram = ns.vram + (m.get('size_vram') | int(0)) -%}
+                  {%- set ns.memoire = ns.memoire + (m.get('size') | int(0)) -%}
+                {%- endfor -%}
+              {%- endif -%}
+            {%- elif type_ia == 'llama.cpp' -%}
+              {%- if r_sante is not defined or r_sante is not mapping -%}
+                {%- set ns.etat = 'hors_ligne' -%}
+                {%- set ns.raison = 'pas de réponse' -%}
+              {%- elif r_sante.get('status') == 503 -%}
+                {%- set ns.etat = 'chargement' -%}
+              {%- elif r_sante.get('status') == 200 -%}
+                {%- set ns.etat = 'ok' -%}
+              {%- else -%}
+                {%- set ns.etat = 'erreur' -%}
+                {%- set ns.raison = 'HTTP ' ~ r_sante.get('status') ~ ' sur /health' -%}
+              {%- endif -%}
+              {%- if ns.etat in ['ok', 'chargement'] -%}
+                {%- if r_props is defined and r_props is mapping and r_props.get('status') == 200
+                       and r_props.get('content') is mapping -%}
+                  {%- set c = r_props.get('content') -%}
+                  {%- set nom = (c.get('model_path') or '') | string | replace('\\', '/') -%}
+                  {%- set nom = nom.split('/') | last -%}
+                  {%- set nom = nom[:-5] if nom.lower().endswith('.gguf') else nom -%}
+                  {%- set ns.modeles = [nom] if nom else [] -%}
+                  {%- set ns.slots = c.get('total_slots') if c.get('total_slots') is number else none -%}
+                {%- endif -%}
+                {%- if r_metriques is defined and r_metriques is mapping and r_metriques.get('status') == 200
+                       and r_metriques.get('content') is string -%}
+                  {%- for l in r_metriques.get('content').split('\n') if l and not l.startswith('#') -%}
+                    {%- set p = l.split() -%}
+                    {%- set v = p[1] | float(none) if p | count >= 2 else none -%}
+                    {%- if v is number -%}
+                      {%- if p[0] == 'llamacpp:tokens_predicted_total' -%}{%- set ns.tokens = v -%}
+                      {%- elif p[0] == 'llamacpp:tokens_predicted_seconds_total' -%}{%- set ns.secondes = v -%}
+                      {%- elif p[0] == 'llamacpp:requests_processing' -%}{%- set ns.requetes = v | int -%}
+                      {%- elif p[0] == 'llamacpp:requests_deferred' -%}{%- set ns.attente = v | int -%}
+                      {%- endif -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                {%- endif -%}
+                {%- if ns.requetes is none and r_slots is defined and r_slots is mapping
+                       and r_slots.get('status') == 200 and r_slots.get('content') is sequence
+                       and r_slots.get('content') is not string -%}
+                  {%- set ns.requetes = r_slots.get('content') | select('mapping')
+                       | selectattr('is_processing', 'defined') | selectattr('is_processing') | list | count -%}
+                {%- endif -%}
+              {%- endif -%}
+            {%- else -%}
+              {%- if r_modeles is not defined or r_modeles is not mapping -%}
+                {%- set ns.etat = 'hors_ligne' -%}
+                {%- set ns.raison = 'pas de réponse' -%}
+              {%- elif r_modeles.get('status') != 200 or r_modeles.get('content') is not mapping
+                       or r_modeles.get('content').get('models') is not sequence -%}
+                {%- set ns.etat = 'erreur' -%}
+                {%- set ns.raison = 'HTTP ' ~ r_modeles.get('status') ~ ' sur /api/v1/models (LM Studio 0.4 et plus)' -%}
+              {%- else -%}
+                {%- set ns.etat = 'ok' -%}
+                {%- for m in r_modeles.get('content').get('models') if m is mapping and m.get('loaded_instances') -%}
+                  {%- set ns.modeles = ns.modeles + [(m.get('display_name') or m.get('key') or '?') | string] -%}
+                {%- endfor -%}
+              {%- endif -%}
+            {%- endif -%}
+            {{ dict(etat=ns.etat, raison=ns.raison, modeles=ns.modeles, vram=ns.vram, memoire=ns.memoire,
+                    tokens=ns.tokens, secondes=ns.secondes, requetes=ns.requetes, attente=ns.attente,
+                    slots=ns.slots) }}
+    sensor:
+      - name: "Tab5 · serveur IA · relevé"
+        unique_id: tab5_serveur_ia_releve
+        default_entity_id: sensor.tab5_serveur_ia_releve
+        icon: mdi:server-network
+        state: "{{ releve.etat }}"
+        # Pas d'horodatage en attribut : le recorder n'écrit une ligne que quand
+        # quelque chose change, pas toutes les 30 s.
+        attributes:
+          type: "{{ type_ia }}"
+          adresse: "{{ adresse }}"
+          raison: "{{ releve.raison }}"
+          modeles: "{{ releve.modeles }}"
+          vram_octets: "{{ releve.vram }}"
+          memoire_octets: "{{ releve.memoire }}"
+          requetes: "{{ releve.requetes }}"
+          en_attente: "{{ releve.attente }}"
+          slots: "{{ releve.slots }}"
+          tokens_total: "{{ releve.tokens }}"
+          secondes_total: "{{ releve.secondes }}"
+          # Vitesse de génération (llama.cpp) : tokens générés entre deux relevés sur le
+          # temps passé à les générer. Rien de généré depuis : la vitesse d'avant reste.
+          # Compteurs repartis de zéro (serveur relancé) ou autre serveur : on attend.
+          # `this` = l'état d'avant ce rendu (doc HA, « Self referencing »).
+          debit: >-
+            {%- set a = this.attributes if this is defined and this.attributes is defined else {} -%}
+            {%- set t, s = releve.tokens, releve.secondes -%}
+            {%- set t0, s0 = a.get('tokens_total'), a.get('secondes_total') -%}
+            {%- set avant = a.get('debit') if a.get('debit') is number else none -%}
+            {%- if t is not number or s is not number -%}
+              {{ none }}
+            {%- elif a.get('type') != type_ia or a.get('adresse') != adresse
+                     or t0 is not number or s0 is not number or t < t0 or s < s0 -%}
+              {{ none }}
+            {%- elif s > s0 and t > t0 -%}
+              {{ ((t - t0) / (s - s0)) | round(1) }}
+            {%- else -%}
+              {{ avant }}
+            {%- endif -%}
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Capteurs visibles : recopient le relevé. Indisponibles avec « Aucun », hors ligne
+  # ou quand le serveur ne donne pas la mesure. state_class measurement : ils ont des
+  # statistiques et sont proposés dans « Tab5 · capteurs suivis ».
+  # ──────────────────────────────────────────────────────────────────────────
+  - binary_sensor:
+      - name: "Tab5 · serveur IA · en ligne"
+        unique_id: tab5_serveur_ia_en_ligne
+        default_entity_id: binary_sensor.tab5_serveur_ia_en_ligne
+        device_class: connectivity
+        availability: "{{ states('sensor.tab5_serveur_ia_releve') in ['ok', 'chargement', 'hors_ligne', 'erreur'] }}"
+        state: "{{ states('sensor.tab5_serveur_ia_releve') in ['ok', 'chargement'] }}"
+    sensor:
+      - name: "Tab5 · serveur IA · modèle chargé"
+        unique_id: tab5_serveur_ia_modele
+        default_entity_id: sensor.tab5_serveur_ia_modele
+        icon: mdi:brain
+        availability: "{{ states('sensor.tab5_serveur_ia_releve') in ['ok', 'chargement'] }}"
+        # Noms des modèles en mémoire, « aucun » sans modèle chargé.
+        state: >-
+          {%- set l = state_attr('sensor.tab5_serveur_ia_releve', 'modeles') -%}
+          {{ (l | join(', '))[:255] if l is sequence and l is not string and l | count > 0 else 'aucun' }}
+        attributes:
+          nombre: >-
+            {%- set l = state_attr('sensor.tab5_serveur_ia_releve', 'modeles') -%}
+            {{ l | count if l is sequence and l is not string else 0 }}
+      - name: "Tab5 · serveur IA · VRAM utilisée"
+        unique_id: tab5_serveur_ia_vram
+        default_entity_id: sensor.tab5_serveur_ia_vram
+        icon: mdi:expansion-card
+        device_class: data_size
+        unit_of_measurement: GiB
+        state_class: measurement
+        # Ollama seulement (`size_vram` de /api/ps, somme des modèles chargés).
+        availability: >-
+          {{ states('sensor.tab5_serveur_ia_releve') == 'ok'
+             and state_attr('sensor.tab5_serveur_ia_releve', 'vram_octets') is number }}
+        state: >-
+          {%- set o = state_attr('sensor.tab5_serveur_ia_releve', 'vram_octets') -%}
+          {{ (o / 1073741824) | round(2) if o is number else none }}
+      - name: "Tab5 · serveur IA · vitesse de génération"
+        unique_id: tab5_serveur_ia_vitesse
+        default_entity_id: sensor.tab5_serveur_ia_vitesse
+        icon: mdi:speedometer
+        unit_of_measurement: tokens/s
+        state_class: measurement
+        # llama.cpp lancé avec --metrics seulement.
+        availability: >-
+          {{ states('sensor.tab5_serveur_ia_releve') == 'ok'
+             and state_attr('sensor.tab5_serveur_ia_releve', 'debit') is number }}
+        state: "{{ state_attr('sensor.tab5_serveur_ia_releve', 'debit') }}"
+      - name: "Tab5 · serveur IA · requêtes en cours"
+        unique_id: tab5_serveur_ia_requetes
+        default_entity_id: sensor.tab5_serveur_ia_requetes
+        icon: mdi:progress-clock
+        state_class: measurement
+        # llama.cpp seulement (/metrics, sinon les slots occupés de /slots).
+        availability: >-
+          {{ states('sensor.tab5_serveur_ia_releve') in ['ok', 'chargement']
+             and state_attr('sensor.tab5_serveur_ia_releve', 'requetes') is number }}
+        state: "{{ state_attr('sensor.tab5_serveur_ia_releve', 'requetes') }}"
+        attributes:
+          en_attente: "{{ state_attr('sensor.tab5_serveur_ia_releve', 'en_attente') }}"
