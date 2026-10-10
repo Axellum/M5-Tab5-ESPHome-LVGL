@@ -72,6 +72,20 @@ def _entrees(bp):
     return toutes
 
 
+def test_pas_des_selecteurs_nombre_acceptes_par_ha():
+    """HA refuse tout le blueprint si le `step` d'un sélecteur `number` est sous 0,001 (ni
+    « any ») : l'automatisation reste « unavailable » (CI « Intégration HACS », 10/10/2026,
+    step 0.0001 des prix de l'énergie)."""
+    fautifs = []
+    for nom, entree in _entrees(_blueprint()).items():
+        nombre = (entree.get("selector") or {}).get("number")
+        if isinstance(nombre, dict) and "step" in nombre:
+            pas = nombre["step"]
+            if pas != "any" and not (isinstance(pas, (int, float)) and pas >= 0.001):
+                fautifs.append(f"{nom} : step {pas!r}")
+    assert not fautifs, fautifs
+
+
 def _substituer(valeur, entrees):
     if isinstance(valeur, _Entree):
         return entrees[valeur.nom]

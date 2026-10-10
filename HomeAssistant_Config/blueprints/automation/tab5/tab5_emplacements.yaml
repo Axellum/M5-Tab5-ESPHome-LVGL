@@ -1938,7 +1938,7 @@ blueprint:
             number:
               min: 0
               max: 100
-              step: 0.0001
+              step: 0.001
               mode: box
         energie_prix_achat_entite:
           name: Capteur du prix d'achat · Purchase price sensor
@@ -1968,7 +1968,7 @@ blueprint:
             number:
               min: 0
               max: 100
-              step: 0.0001
+              step: 0.001
               mode: box
         energie_prix_revente_entite:
           name: Capteur du prix de revente · Resale price sensor
