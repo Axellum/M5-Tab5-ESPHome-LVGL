@@ -121,6 +121,8 @@ esphome:
     - Tab5/ecran/tab5_maison.h
     - Tab5/ecran/tab5_piece_climat.h
     - Tab5/ecran/tab5_meteo.h
+    - Tab5/ecran/tab5_zone_gauche.h
+    - Tab5/ecran/tab5_lecteur.h
     - Tab5/ecran/tab5_cameras.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_custom.cpp
@@ -185,6 +187,11 @@ esphome:
     - Tab5/ecran/tab5_pages.cpp
     # Popup Météo : la météo en graphiques, heures, dix jours et détails (ADR-0043, 09/10/2026).
     - Tab5/ecran/tab5_meteo.cpp
+    # Zone à gauche de l'horloge au choix : le vocal ou les prévisions des heures qui
+    # viennent en graphique (ADR-0051, 10/10/2026).
+    - Tab5/ecran/tab5_zone_gauche.cpp
+    # Lecteur de musique : popup « Musique » et mini-barre de l'accueil (ADR-0050, 10/10/2026).
+    - Tab5/ecran/tab5_lecteur.cpp
     # Popup Caméras : l'image fixe des caméras de HA, une page par caméra (ADR-0049).
     - Tab5/ecran/tab5_cameras.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
@@ -456,6 +463,9 @@ packages:
   tab5_maison: !include Tab5/paquets/tab5-maison.yaml
   # Popup Météo (ADR-0043) : APRES tab5_lvgl (widgets), ouvert par HA, un geste ou une tuile.
   tab5_meteo: !include Tab5/paquets/tab5-meteo.yaml
+  # Lecteur de musique (ADR-0050) : APRES tab5_lvgl (widgets) et tab5_assist (client HTTP
+  # des images), ouvert par une tuile med, la mini-barre, un geste ou HA.
+  tab5_lecteur: !include Tab5/paquets/tab5-lecteur.yaml
   # Popup Caméras (ADR-0049) : APRES tab5_lvgl (widgets), ouvert par HA ou par un geste.
   tab5_cameras: !include Tab5/paquets/tab5-cameras.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les

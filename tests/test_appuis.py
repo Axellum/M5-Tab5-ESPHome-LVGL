@@ -51,7 +51,9 @@ OPTIONS = {
     "LUMIERES": "Lumières", "VOLET": "Volet", "TEMPERATURE": "Température",
     # Popup Météo (ADR-0043, 09/10/2026) : après eux.
     "METEO": "Météo",
-    # Popup Caméras (ADR-0049, 09/10/2026) : après lui.
+    # Lecteur de musique (ADR-0050, 10/10/2026) : à la fin aussi.
+    "MUSIQUE": "Musique",
+    # Popup Caméras (ADR-0049, 10/10/2026) : après lui.
     "CAMERAS": "Caméras",
 }
 # Code du blueprint → valeur d'Ecran.
@@ -67,10 +69,15 @@ ACTIONS = ["mode_domo", "appareil_suivant", "rangee_suivante", "ecoute", "nabu_s
 # Puis la roue de navigation (09/10/2026, ADR-0042) : ses trois écrans et la roue elle-même
 # (une action : Ecran::AUCUN), à la fin (NVS).
 ROUE_CODES = {"lumieres": "LUMIERES", "volet": "VOLET", "temperature": "TEMPERATURE", "roue": "AUCUN"}
-# Puis le popup Météo (09/10/2026, ADR-0043) et le popup Caméras (ADR-0049), à la fin aussi.
-ECRANS_APRES = {"meteo": "METEO", "cameras": "CAMERAS"}
+# Puis le popup Météo (09/10/2026, ADR-0043), à la fin aussi.
+ECRANS_APRES = {"meteo": "METEO"}
+# Puis le contenu suivant de la zone à gauche de l'horloge (10/10/2026, ADR-0051), une action.
+ACTIONS_APRES = ["zone_gauche_suivante"]
+# Puis le lecteur de musique (10/10/2026, ADR-0050) et le popup Caméras (ADR-0049), deux
+# écrans, à la fin aussi.
+ECRANS_FIN = {"musique": "MUSIQUE", "cameras": "CAMERAS"}
 # Tous les codes, dans l'ordre de kCodesGestes, avec « auto » en tête : le blueprint.
-TOUS = ["auto"] + list(CODES) + ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES)
+TOUS = ["auto"] + list(CODES) + ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES + list(ECRANS_FIN)
 # Bouton (ordre de BoutonHaut) → (widget, mini icône).
 BOUTONS = (("BOUTON_MAISON", "btn_control_ha", "icon_mini_ha"),
            ("BOUTON_ENGRENAGE", "btn_control_console", "icon_mini_sys"),
@@ -82,7 +89,7 @@ EN_TETES = {
     "ENERGIE": "energie_popup.yaml", "REGLAGES": "reglages_popup.yaml", "ALERTES": "alertes_popup.yaml",
     "MAISON": "maison_popup.yaml",
     "LUMIERES": "light_popup.yaml", "VOLET": "volet_popup.yaml", "TEMPERATURE": "historique_popup.yaml",
-    "METEO": "meteo_popup.yaml",
+    "METEO": "meteo_popup.yaml", "MUSIQUE": "lecteur_popup.yaml",
     "CAMERAS": "cameras_popup.yaml",
 }
 
@@ -137,9 +144,11 @@ def test_memes_codes_firmware_et_blueprint():
     # Même ORDRE : la NVS garde l'index du code, un code de plus va à la fin.
     assert list(codes)[:len(CODES)] == list(CODES)
     assert {c: codes[c] for c in CODES} == CODES
-    assert list(codes)[len(CODES):] == ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES)
+    assert list(codes)[len(CODES):] == ACTIONS + list(ROUE_CODES) + list(ECRANS_APRES) + ACTIONS_APRES + list(ECRANS_FIN)
+    assert all(codes[c] == "AUCUN" for c in ACTIONS_APRES)
     assert {c: codes[c] for c in ROUE_CODES} == ROUE_CODES
     assert {c: codes[c] for c in ECRANS_APRES} == ECRANS_APRES
+    assert {c: codes[c] for c in ECRANS_FIN} == ECRANS_FIN
     bp = yaml.load(_lire(BLUEPRINT).replace("!input", "!!str"), Loader=yaml.SafeLoader)
     section = bp["blueprint"]["input"]["boutons_haut"]
     assert section.get("collapsed") is True
@@ -230,7 +239,8 @@ def test_select_par_la_routine_unique():
 def test_mini_glyphes_des_en_tetes():
     corps = _fonction(_lire(ZONES_CPP), "const char* code_glyphe(")
     glyphes = dict(re.findall(r'case Ecran::(\w+): return "\\U(000F[0-9A-F]{4})"', corps))
-    assert set(glyphes) == (set(CODES.values()) | set(ROUE_CODES.values()) | set(ECRANS_APRES.values())) - {"AUCUN"}
+    assert set(glyphes) == (set(CODES.values()) | set(ROUE_CODES.values()) | set(ECRANS_APRES.values())
+                            | set(ECRANS_FIN.values())) - {"AUCUN"}
     corps += _fonction(_lire(ZONES_CPP), "const char* mini_glyphe(")
     for ecran, fichier in EN_TETES.items():
         en_tete = re.search(r'modal_header\.yaml, vars: \{ icon: "\\U(000F[0-9A-F]{4})"',

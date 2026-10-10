@@ -4,7 +4,7 @@
 
 ---
 
-**Opens with** a long press on one of the two temperatures of the [home screen](home.md): the room's, or the second one (greenhouse or outdoors). A tap on the second one still opens the [Arcade](arcade.md).
+**Opens with** a long press on one of the two temperatures of the [home screen](home.md): the room's, or the second one (greenhouse or outdoors). A tap on the second one switches the area left of the clock between the voice controls and the chart of the coming hours.
 
 ![The temperature window of a greenhouse, 24 h view: now, minimum, maximum and the forecast, then the curve of the last 24 hours and the outdoor forecast after « Now »](../images/notice/temperature-serre-en.webp)
 
@@ -28,7 +28,7 @@ Home Assistant sends the curve only while the window is open, from its long-term
 
 ---
 
-**S'ouvre par** un appui long sur l'une des deux températures de l'[écran d'accueil](home.md#version-française) : celle de la pièce, ou la seconde (serre ou dehors). Un tap sur la seconde ouvre toujours l'[Arcade](arcade.md#version-française).
+**S'ouvre par** un appui long sur l'une des deux températures de l'[écran d'accueil](home.md#version-française) : celle de la pièce, ou la seconde (serre ou dehors). Un tap sur la seconde fait passer la zone à gauche de l'horloge des commandes vocales au graphique des prochaines heures.
 
 ![La fenêtre de la température d'une serre, vue 24 h : maintenant, minimum, maximum et la prévision, puis la courbe des dernières 24 heures et la prévision de dehors après « Maintenant »](../images/notice/temperature-serre-fr.webp)
 

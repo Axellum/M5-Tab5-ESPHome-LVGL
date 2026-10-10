@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file lecteur_puce.yaml
+# @role Pastille d'un lecteur de la liste « Tab5 · lecteurs de musique » (ADR-0050), en bas
+#       du popup Musique (lecteur_popup.yaml, 6 fois : kLecteurPuces). Toucher : ce lecteur
+#       devient le lecteur montré (lecteur_puce(n), événement « choisir »).
+# @architecture_constraint Position x, largeur, nom, icône et bord de l'active posés par
+#       tab5_lecteur.cpp (peindre_puces : centrées dans la carte, chacune à la largeur de son
+#       nom dans la part de la rangée qui lui revient, 12 px d'écart ; « … » seulement si la
+#       rangée ne suffit pas) ;
+#       icône par glyphe_genre (MDI_CODE_TARGETS, mdi_font_32, règle 7). Masquée au-delà du
+#       nombre de lecteurs choisis.
+# vars : n (0 à 5)
+# ═══════════════════════════════════════════════════════
+button:
+  id: lecteur_puce_${n}
+  align: TOP_LEFT
+  x: 0
+  y: 456
+  width: 136
+  height: 56
+  pad_all: 0
+  hidden: true
+  styles: style_clim_btn
+  on_short_click:
+    - lambda: 'lecteur_puce(${n});'
+  widgets:
+    - label: { id: "lecteur_puce_icone_${n}", text: "\U000F0387", align: LEFT_MID, x: 12, text_font: mdi_font_32, styles: style_text_soft }
+    - label: { id: "lecteur_puce_nom_${n}", text: "", align: LEFT_MID, x: 48, width: 82, long_mode: CLIP, text_font: roboto_22, styles: style_text_soft }

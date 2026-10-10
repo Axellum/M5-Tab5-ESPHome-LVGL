@@ -48,6 +48,11 @@
 #         (cle = salon | serre, vue), lance script.tab5_historique (packages/tab5_historique.yaml)
 #         avec le capteur de l'emplacement et la case serre_exterieure (« la seconde
 #         température est dehors »), qui pousse sa courbe et, pour la seconde, la prévision ;
+#       - popup « Musique » (ADR-0050, 10/10/2026) : à l'événement esphome.tab5_lecteur
+#         « ouvrir » d'une tuile med sans option t (lecteur = sa clé tRT), lance
+#         script.tab5_lecteur_montrer (packages/tab5_lecteur.yaml) avec le media_player de la
+#         tuile : le popup montre ce lecteur. Le reste du lecteur (liste, commandes) est au
+#         package, pas ici ;
 #       - section « Sous l'horloge » (ADR-0031, 06/10/2026), facultative : la rangée sous
 #         l'horloge de l'accueil, jusqu'à trois lignes de quatre éléments plus celle des
 #         plantes. Définitions « hp » (place des plantes), « hd » (durée d'une ligne) et
@@ -1189,6 +1194,64 @@ blueprint:
               step: 8
               unit_of_measurement: s
               mode: slider
+    # Zone à gauche de l'horloge (ADR-0051, 10/10/2026) : au-dessus du cadre Ok Nabu, le
+    # micro et les boutons Domo / Discu (« vocal », l'écran d'avant) ou les prévisions des
+    # heures qui viennent en graphique (« graphique »). Clé « gauche|départ|c1|… » de
+    # tab5_maj_emplacements (variable gauche), poussée avec les gestes ; un firmware plus
+    # ancien l'ignore. Codes = kZoneGaucheCodes de Tab5/socle/tab5_parse.h
+    # (tests/test_zone_gauche.py) : ni traduits ni renommés sans le firmware. « lecteur »
+    # (lecteur audio compact, lot 2) est réservé : accepté par codes_gauche, pas encore
+    # proposé (le firmware le saute tant qu'il ne sait pas le montrer).
+    zone_gauche:
+      name: Zone à gauche de l'horloge · Left of the clock
+      icon: mdi:view-carousel
+      collapsed: true
+      description: >-
+        La colonne de gauche de l'accueil, au-dessus du cadre Ok Nabu (firmware 3.8 ou plus
+        récent) : le micro et les boutons Domo / Discu, ou les prévisions des 15 heures qui
+        viennent en graphique (les températures en courbe, la pluie en barres ; un tap
+        ouvre la Météo). Un tap sur la seconde température (à droite de l'accueil) passe au
+        contenu suivant, comme un geste « Zone à gauche de l'horloge : contenu suivant »
+        (section « Horloge et boutons du haut »). La tablette garde le contenu affiché quand
+        elle redémarre.
+
+
+        The left column of the home page, above the Ok Nabu frame (firmware 3.8 or newer):
+        the microphone and the Domo / Discu buttons, or the forecast of the next 15 hours as
+        a chart (temperatures as a curve, rain as bars; a tap opens the Weather). A tap on
+        the second temperature (on the right of the home page) shows the next content, as
+        does a « Left of the clock: next content » gesture (« Clock and top buttons »
+        section). The tablet keeps the content shown when it restarts.
+      input:
+        gauche_depart:
+          name: Au départ · At start
+          description: >-
+            Le contenu montré dès que ce choix change, puis jusqu'au prochain tap.
+
+
+            The content shown as soon as this choice changes, then until the next tap.
+          default: vocal
+          selector:
+            select:
+              options: &contenus_gauche
+                - label: "Vocal : micro, Domo et Discu · Voice: microphone, Domo and Discu"
+                  value: vocal
+                - label: "Graphique des prévisions · Forecast chart"
+                  value: graphique
+        gauche_cycle:
+          name: Au tap · On tap
+          description: >-
+            Les contenus que le tap fait défiler, dans l'ordre vocal, graphique. Celui du
+            départ en fait toujours partie ; seul, le tap ne change rien.
+
+
+            The contents the tap goes through, in the order voice, chart. The one at start
+            is always included; alone, the tap changes nothing.
+          default: [vocal, graphique]
+          selector:
+            select:
+              multiple: true
+              options: *contenus_gauche
     # Horloge et boutons du haut (07/10/2026 pour les appuis longs des boutons, 09/10/2026
     # pour tout le reste, lot A, ADR-0039) : le tap court et l'appui long des trois zones de
     # l'horloge (heures, minutes, date) et des trois boutons en haut à droite de l'accueil.
@@ -1289,6 +1352,10 @@ blueprint:
                   value: roue
                 - label: "Météo · Weather"
                   value: meteo
+                - label: "Zone à gauche de l'horloge : contenu suivant · Left of the clock: next content"
+                  value: zone_gauche_suivante
+                - label: "Musique (lecteur) · Music (player)"
+                  value: musique
                 - label: "Caméras · Cameras"
                   value: cameras
         geste_heures_long:
@@ -2990,7 +3057,8 @@ variables:
   # en « auto ».
   codes_gestes: [auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie,
                  reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante,
-                 ecoute, nabu_suivant, lumieres, volet, temperature, roue, meteo, cameras]
+                 ecoute, nabu_suivant, lumieres, volet, temperature, roue, meteo, zone_gauche_suivante,
+                 musique, cameras]
   # Popup Caméras (ADR-0049) : lues par la branche « La tablette demande ses caméras ».
   cameras_liste: !input cameras_liste
   cameras_adresse: !input cameras_adresse
@@ -3048,6 +3116,23 @@ variables:
       {%- set ns.l = ns.l + [c if c in ['auto', 'fixe'] else ''] -%}
     {%- endfor -%}
     defil|{{ ns.l | join('|') }}|{{ reglables_duree | float(32) | round(0) | int }};
+  # Zone à gauche de l'horloge (ADR-0051, 10/10/2026) : « gauche|départ|c1|c2…; », codes
+  # de kZoneGaucheCodes (Tab5/socle/tab5_parse.h, même ordre). Un départ inconnu part en
+  # « vocal » ; un code inconnu du cycle est laissé de côté. Poussée avec tous les états,
+  # comme gestes ; un firmware plus ancien ignore la clé.
+  codes_gauche: [vocal, graphique, lecteur]
+  gauche_depart: !input gauche_depart
+  gauche_cycle: !input gauche_cycle
+  gauche: >-
+    {%- set d = gauche_depart if gauche_depart is string and gauche_depart in codes_gauche else 'vocal' -%}
+    {%- set liste = [gauche_cycle] if gauche_cycle is string else (gauche_cycle or []) -%}
+    {%- set ns = namespace(l=[d]) -%}
+    {%- for c in liste -%}
+      {%- if c is string and c in codes_gauche and c not in ns.l -%}
+        {%- set ns.l = ns.l + [c] -%}
+      {%- endif -%}
+    {%- endfor -%}
+    gauche|{{ ns.l | join('|') }};
 
 triggers:
   - trigger: event
@@ -3067,6 +3152,10 @@ triggers:
   - trigger: event
     event_type: esphome.tab5_historique
     id: historique
+  # Popup Musique (ADR-0050) : ouvert par une tuile med (donnée lecteur = sa clé tRT).
+  - trigger: event
+    event_type: esphome.tab5_lecteur
+    id: lecteur
   # Popup Caméras (ADR-0049) : ouvert, toutes les 4 minutes s'il le reste, après un échec.
   - trigger: event
     event_type: esphome.tab5_cameras
@@ -3532,7 +3621,7 @@ conditions:
       {%- if trigger.id in meteo_declencheurs -%}
         {{ meteo_a_ecrire | count > 0 }}
       {%- else -%}
-        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie', 'historique', 'cameras'] or cles | count > 0
+        {{ trigger.id in ['connexion', 'zones', 'action', 'clim', 'volet', 'volet_choisi', 'pipeline_discussion', 'energie', 'historique', 'lecteur', 'cameras'] or cles | count > 0
            or solaire_a_pousser
            or (protocole == 2 and (redefinir or tuiles_a_pousser | count > 0 or reglables_a_pousser | count > 0
                                    or pieces_climat_a_pousser | count > 0)) }}
@@ -3545,7 +3634,7 @@ conditions:
   - condition: template
     value_template: >-
       {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
-      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique', 'cameras'] + meteo_declencheurs
+      {{ trigger.id in ['connexion', 'zones', 'action', 'maj_ecran', 'energie', 'historique', 'lecteur', 'cameras'] + meteo_declencheurs
          or tab5_connectee() == 'oui' }}
 
 actions:
@@ -3567,11 +3656,12 @@ actions:
             {%- set ns.r = ns.r ~ c ~ '|' ~ (states(x) | replace('|', '/') | replace(';', ',')) ~ '|' ~ v ~ ';' -%}
           {%- endif -%}
         {%- endfor -%}
-        {#- Gestes de l'horloge et des boutons du haut (variables appuis, puis gestes) et
-            défilement au choix (variable defil), avec tous les états. Un firmware sans ces
-            choix ignore les clés (clé inconnue). -#}
+        {#- Gestes de l'horloge et des boutons du haut (variables appuis, puis gestes),
+            défilement au choix (variable defil) et zone à gauche de l'horloge (variable
+            gauche, ADR-0051), avec tous les états. Un firmware sans ces choix ignore les
+            clés (clé inconnue). -#}
         {%- if tout_pousser -%}
-          {%- set ns.r = ns.r ~ appuis ~ gestes ~ defil -%}
+          {%- set ns.r = ns.r ~ appuis ~ gestes ~ defil ~ gauche -%}
         {%- endif -%}
         {#- Icône solaire du bandeau : « solaire|pourcentage; » (voir solaire_a_pousser). Un
             firmware sans cette icône ignore la clé (clé inconnue). -#}
@@ -3793,6 +3883,34 @@ actions:
                     capteur: "{{ h_capteur }}"
                     exterieur: "{{ h_cle == 'serre' and serre_exterieure | bool(false) }}"
                     humidite: "{{ h_humidite }}"
+
+      # Popup Musique (ADR-0050) : l'appui long d'une tuile med sans option t ouvre le
+      # lecteur de musique sur le media_player de la tuile. Le blueprint est la liste
+      # blanche : une clé sans tuile, ou dont l'entité n'est pas un media_player, ne montre
+      # rien de neuf (le package pousse alors le lecteur courant). Les autres actions de
+      # l'événement (commandes, choix d'un lecteur) sont au package : rien ici, et
+      # l'événement s'arrête dans cette branche (jamais dans la branche par défaut).
+      - alias: "La tablette ouvre le lecteur de musique depuis une tuile"
+        conditions: "{{ trigger.id == 'lecteur' }}"
+        sequence:
+          - variables:
+              l_cle: >-
+                {{ (trigger.event.data.lecteur | default('') | string)
+                   if (trigger.event.data.action | default('')) == 'ouvrir' else '' }}
+              l_tuile: >-
+                {{ tuiles | selectattr('cle', 'eq', l_cle) | list | first | default({}, true)
+                   if l_cle[:1] == 't' else {} }}
+              l_entite: >-
+                {{ l_tuile.e if (l_tuile.e | default('') | string).startswith('media_player.')
+                   and states[l_tuile.e] is not none else '' }}
+          - if: "{{ states['script.tab5_lecteur_montrer'] is not none and l_entite != '' }}"
+            then:
+              - action: script.turn_on
+                target:
+                  entity_id: script.tab5_lecteur_montrer
+                data:
+                  variables:
+                    entite: "{{ l_entite }}"
 
       - alias: "La tablette demande quelles zones sont absentes"
         conditions: "{{ trigger.id in ['zones', 'pipeline_discussion'] }}"

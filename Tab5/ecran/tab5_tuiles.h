@@ -108,6 +108,9 @@ struct TuilesUI {
     void (*volet_tap)() = nullptr;
     // Option e (ADR-0028) : ouvre le popup Énergie (script tab5_energie_ouvrir).
     void (*energie_ouvrir)() = nullptr;
+    // Appui long d'une med sans option t (ADR-0050) : le popup Musique sur le lecteur de la
+    // tuile, `cle` = sa clé « tRT » (script tab5_lecteur_ouvrir).
+    void (*lecteur_ouvrir)(const char* cle) = nullptr;
 };
 extern TuilesUI g_tuiles_ui;
 

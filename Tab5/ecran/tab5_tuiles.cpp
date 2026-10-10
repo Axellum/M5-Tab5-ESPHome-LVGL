@@ -569,7 +569,7 @@ constexpr GesteType kGestes[] = {
     {true, "basculer", true, Fenetre::LUMIERE},   // lum : popup des lumières de la pièce
     {true, "basculer", false, Fenetre::APPAREIL}, // int : popup de l'appareil (06/10/2026)
     {true, nullptr, true, Fenetre::VOLET},        // vol : popup du volet (05/10/2026)
-    {true, "basculer", false, Fenetre::APPAREIL}, // med : option t, la télécommande de la TV
+    {true, "basculer", false, Fenetre::LECTEUR},  // med : lecteur de musique (ADR-0050), t : télécommande
     {true, "lancer", false, Fenetre::APPAREIL},   // act : « OK » 1 s après
     {false, nullptr, false, Fenetre::ENERGIE},    // cap : popup Énergie (option e, ADR-0028)
     {false, nullptr, false, Fenetre::AUCUNE},     // bin : lecture seule
@@ -1510,6 +1510,10 @@ static bool ouvrir_fenetre(Fenetre f, const Def& d, int r, int t) {
         case Fenetre::ENERGIE:
             if (g_tuiles_ui.energie_ouvrir != nullptr) g_tuiles_ui.energie_ouvrir();
             return true;
+        case Fenetre::LECTEUR:
+            // Popup Musique (ADR-0050) : HA retrouve le media_player de la tuile par sa clé.
+            if (g_tuiles_ui.lecteur_ouvrir != nullptr) g_tuiles_ui.lecteur_ouvrir(modele_ha::tuile_cle(r, t).s);
+            return true;
         default:
             return false;
     }
@@ -1563,13 +1567,14 @@ void tuiles::tuile_appui_piece(int r, int t, bool long_appui) {
 // son appui long (lumière, volet sans l'option k, télécommande de la TV), ou de son appui
 // pour une clim. Option r (lecture seule) : rien, comme sur la tuile.
 // Le popup propre à l'appareil seulement (kGestes) : ni celui d'un appareil générique
-// (int, act, med sans t), ni le popup Énergie d'un capteur.
+// (int, act), ni le popup Énergie d'un capteur, ni le lecteur de musique d'un med sans t
+// (ADR-0050 : ses trois ouvertures sont l'appui long, la mini-barre et un geste).
 bool tuile_ouvrir_popup(int r, int t) {
     charger();
     if (heritage() || !tuile_presente(r, t)) return false;
     const Def& d = s_m.tuiles[r][t];
     const Fenetre f = gestes(d, false).fenetre;
-    if (f == Fenetre::APPAREIL || f == Fenetre::ENERGIE) return false;
+    if (f == Fenetre::APPAREIL || f == Fenetre::ENERGIE || f == Fenetre::LECTEUR) return false;
     return ouvrir_fenetre(f, d, r, t);
 }
 

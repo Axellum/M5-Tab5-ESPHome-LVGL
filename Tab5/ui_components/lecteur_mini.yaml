@@ -1,0 +1,62 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file lecteur_mini.yaml
+# @role Mini-barre « en lecture » de l'accueil (ADR-0050) : vignette de la pochette, titre,
+#       artiste et un bouton lecture / pause. Visible seulement quand le lecteur montré
+#       joue (et 5 min après une pause, tab5_lecteur.cpp) ; un tap ouvre le popup Musique.
+# @architecture_constraint Posée PAR-DESSUS le cadre « Ok Nabu » (btn_ok_nabu, même
+#       géométrie : x 20, y 236, 405 × ${cadre_bas_h}) : montrée, elle masque le panneau
+#       Ok Nabu et ses pastilles (nabu_masquer(), tab5_rangee.cpp), qui reviennent tels
+#       quels quand elle se masque. Incluse dans tab5-lvgl.yaml juste après les pastilles
+#       du panneau : au-dessus de lui, sous les popups. Textes, glyphe et masquage écrits
+#       par tab5_lecteur.cpp (peindre_mini).
+# ═══════════════════════════════════════════════════════
+button:
+  id: lecteur_mini
+  align: TOP_LEFT
+  x: 20
+  y: 236
+  width: 405
+  height: ${cadre_bas_h}
+  pad_all: 0
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn_page
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) id(tab5_ecran_ouvrir).execute((int) Ecran::MUSIQUE);'
+  widgets:
+    # Vignette 56 × 56 : la pochette du popup en petit, sinon une note de musique.
+    - obj:
+        align: LEFT_MID
+        x: 8
+        width: 56
+        height: 56
+        pad_all: 0
+        radius: 12
+        clickable: false
+        scrollable: false
+        styles: style_glass_card
+        widgets:
+          - label: { id: lecteur_mini_vide, text: "\U000F0387", align: CENTER, text_font: mdi_font_32, styles: style_text_dim }
+          - image:
+              id: lecteur_mini_img
+              src: lecteur_pochette
+              align: CENTER
+              width: 56
+              height: 56
+              radius: 12
+              hidden: true
+    - label: { id: lecteur_mini_titre, text: "", align: TOP_LEFT, x: 76, y: 10, text_font: roboto_22 }
+    - label: { id: lecteur_mini_artiste, text: "", align: TOP_LEFT, x: 76, y: 38, text_font: roboto_22, styles: style_text_dim }
+    - button:
+        align: RIGHT_MID
+        x: -8
+        width: 56
+        height: 56
+        radius: 999
+        pad_all: 0
+        styles: style_pill_accent
+        on_short_click:
+          - lambda: 'lecteur_appui(LECTEUR_BTN_LECTURE);'
+        widgets:
+          - label: { id: lecteur_mini_ico, text: "\U000F03E4", align: CENTER, text_font: mdi_font_45, styles: style_text_on_accent }

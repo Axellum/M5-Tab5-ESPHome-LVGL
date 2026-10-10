@@ -27,6 +27,11 @@ constexpr int32_t kCarteL = 1250;
 constexpr int32_t kCarteH = 690;
 constexpr int32_t kCorpsY = 72;
 
+// Carte du popup Musique (tab5-ui-tokens.yaml : lecteur_card_w, lecteur_card_h ;
+// ADR-0050) : centrée, plus petite que la carte modale, le tableau de bord voilé autour.
+constexpr int32_t kLecteurCarteL = 940;
+constexpr int32_t kLecteurCarteH = 536;
+
 // Corps des popups à cartes (energie_popup.yaml, historique_popup.yaml) : x 24..1226,
 // cartes séparées de 16 px ; zone de graphique de leur carte du bas (1166 px, 18 px de
 // marge de chaque côté) et largeur d'un libellé de son axe, texte centré.

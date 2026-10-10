@@ -68,6 +68,13 @@ script:
           u.assist_discu = id(btn_assist_pipe_discu);
           u.assist_cerveau = id(lbl_assist_cerveau);
           zones_apply_ui();
+          // Zone à gauche de l'horloge (ADR-0051) : le vocal ou le graphique, d'après la
+          // NVS puis le blueprint (clé « gauche »), avant la première image.
+          ZoneGaucheUI& g = g_zone_gauche_ui;
+          g.vocal = id(zone_vocal);
+          g.graphique = id(zone_graphique);
+          g.police = id(roboto_22);
+          zone_gauche_appliquer();
           id(tab5_zones_masquees).publish_state(zones_texte_masquees());
       # Zone « discussion » absente (aucun pipeline de discussion dans HA) : ses boutons
       # sont masqués, rien ne permettrait plus de quitter le mode Discussion (popup ouvert

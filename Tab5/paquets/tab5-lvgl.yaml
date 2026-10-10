@@ -56,59 +56,102 @@ lvgl:
         # Boutons 125 × 90 et icônes MDI de 70 px (mdi_font_70, encre de 58 px) : 16 px
         # d'air au-dessus et au-dessous de l'icône dans chaque bouton.
 
+        # --- Zone à gauche de l'horloge au choix (ADR-0051, 10/10/2026, demande d'Axel) ---
+        # Deux contenus, l'un montré, l'autre masqué par zone_gauche_appliquer()
+        # (tab5_zone_gauche.cpp) : zone_vocal (le micro et les boutons Domo / Discu, l'écran
+        # d'avant) ou zone_graphique (les heures qui viennent en courbe et barres de pluie).
+        # Le contenu suivant : tap sur la seconde température (btn_serre_games) ou le geste
+        # « zone_gauche_suivante » ; le départ et le cycle se choisissent dans le blueprint
+        # (clé « gauche »). Le cadre Ok Nabu, dessous, ne change pas.
         # --- Voice Assistant Panel (Left) ---
-        # Micro au milieu de la colonne (160-285, encre centrée sur la rangée Domo / Discu :
-        # 12 px au-dessus d'elle, qui suit le cadre Ok Nabu).
-        - label: { id: icon_mic_status, text: "\U000F036C", align: TOP_LEFT, x: 162, y: 78, text_font: mdi_font_120, styles: style_text_dim }
-        - button:
-            id: btn_assist_trigger
+        # Conteneur posé au coin de l'écran, sans fond, bordure ni padding : ses enfants
+        # gardent leurs coordonnées d'écran d'avant (rendu inchangé). Il couvre le haut de la
+        # colonne jusqu'à y 230 (le cadre Ok Nabu commence à 236) ; non cliquable, il ne prend
+        # aucun toucher à ses boutons.
+        - obj:
+            id: zone_vocal
             align: TOP_LEFT
-            x: 162
-            y: 78
-            width: 120
-            height: 120
-            styles: style_invisible
-            on_short_click:
-              - script.execute: tab5_assist_toggle
-            on_long_press:
-              # Appui long sur la zone micro -> popup Assistant vocal plein écran
-              - script.execute: tab5_assist_open
+            x: 0
+            y: 0
+            width: 440
+            height: 230
+            styles: style_transparent
+            clickable: false
+            scrollable: false
+            scrollbar_mode: "OFF"
+            widgets:
+              # Micro au milieu de la colonne (160-285, encre centrée sur la rangée Domo / Discu :
+              # 12 px au-dessus d'elle, qui suit le cadre Ok Nabu).
+              - label: { id: icon_mic_status, text: "\U000F036C", align: TOP_LEFT, x: 162, y: 78, text_font: mdi_font_120, styles: style_text_dim }
+              - button:
+                  id: btn_assist_trigger
+                  align: TOP_LEFT
+                  x: 162
+                  y: 78
+                  width: 120
+                  height: 120
+                  styles: style_invisible
+                  on_short_click:
+                    - script.execute: tab5_assist_toggle
+                  on_long_press:
+                    # Appui long sur la zone micro -> popup Assistant vocal plein écran
+                    - script.execute: tab5_assist_open
 
-        # Bouton Domo (et Discu ci-dessous) : masqués sans pipeline de discussion dans HA
-        # (zone « discussion », zones_apply_ui) ; le micro reste au milieu.
-        # Icône seule (05/10/2026). Rangée centrée entre le bandeau d'état (encre jusqu'à
-        # y 34) et Ok Nabu (y 236 depuis le 09/10/2026, cadre de 72 px, cadre_bas_h) : 56 px
-        # d'air au-dessus, 56 au-dessous.
+              # Bouton Domo (et Discu ci-dessous) : masqués sans pipeline de discussion dans HA
+              # (zone « discussion », zones_apply_ui) ; le micro reste au milieu.
+              # Icône seule (05/10/2026). Rangée centrée entre le bandeau d'état (encre jusqu'à
+              # y 34) et Ok Nabu (y 236 depuis le 09/10/2026, cadre de 72 px, cadre_bas_h) : 56 px
+              # d'air au-dessus, 56 au-dessous.
+              - button:
+                  id: btn_mode_domo
+                  align: TOP_LEFT
+                  x: 20
+                  y: 90
+                  width: 125
+                  height: 90
+                  styles: style_clim_btn_page
+                  on_short_click:
+                    - script.execute:
+                        id: tab5_set_assist_mode
+                        discussion: false
+                  widgets:
+                    - label: { text: "\U000F07D0", align: CENTER, text_font: mdi_font_70 }
+
+              # Bouton Discu
+              - button:
+                  id: btn_mode_discu
+                  align: TOP_LEFT
+                  x: 300
+                  y: 90
+                  width: 125
+                  height: 90
+                  styles: style_clim_btn_page
+                  on_short_click:
+                    - script.execute:
+                        id: tab5_set_assist_mode
+                        discussion: true
+                  widgets:
+                    - label: { text: "\U000F06A9", align: CENTER, text_font: mdi_font_70 }
+
+        # Graphique des heures qui viennent (ADR-0051) : une carte du verre des boutons de la
+        # colonne (style_clim_btn_page), x 20-425 comme elle, de y 42 (8 px sous l'encre du
+        # bandeau d'état) à 226 (10 px au-dessus du cadre Ok Nabu), centrée comme la rangée
+        # Domo / Discu. Masquée au démarrage ; son contenu (courbe, barres, repères, heures)
+        # est construit en C++ à sa première apparition. Tap : le popup Météo (ADR-0043).
         - button:
-            id: btn_mode_domo
+            id: zone_graphique
             align: TOP_LEFT
             x: 20
-            y: 90
-            width: 125
-            height: 90
+            y: 42
+            width: 405
+            height: 184
+            pad_all: 0
+            hidden: true
+            scrollable: false
+            scrollbar_mode: "OFF"
             styles: style_clim_btn_page
             on_short_click:
-              - script.execute:
-                  id: tab5_set_assist_mode
-                  discussion: false
-            widgets:
-              - label: { text: "\U000F07D0", align: CENTER, text_font: mdi_font_70 }
-
-        # Bouton Discu
-        - button:
-            id: btn_mode_discu
-            align: TOP_LEFT
-            x: 300
-            y: 90
-            width: 125
-            height: 90
-            styles: style_clim_btn_page
-            on_short_click:
-              - script.execute:
-                  id: tab5_set_assist_mode
-                  discussion: true
-            widgets:
-              - label: { text: "\U000F06A9", align: CENTER, text_font: mdi_font_70 }
+              - lambda: 'if (!ui_appui_glisse()) id(tab5_ecran_ouvrir).execute((int) Ecran::METEO);'
 
         # Bouton OK Nabu : même place que la tuile clim, en miroir (toute la colonne,
         # bas à y 308), texte à la taille de la date (45 px). Hauteur ajustée au texte le
@@ -160,6 +203,9 @@ lvgl:
         # Pastilles du panneau Ok Nabu (une par ligne, masquées sous deux lignes), centrées
         # sous lui à la hauteur de celles de la rangée.
         - !include { file: ../ui_components/rangee_pastilles.yaml, vars: { nom: nabu, align: TOP_LEFT, x: "20", largeur: "405" } }
+        # Mini-barre « en lecture » du lecteur de musique (ADR-0050) : par-dessus le cadre
+        # Ok Nabu quand le lecteur montré joue ; un tap ouvre le popup Musique.
+        - !include ../ui_components/lecteur_mini.yaml
 
         # --- Centre: Horloge ---
         # Marges égales (05/10/2026, demande d'Axel) : autant d'air entre le haut de la
@@ -590,6 +636,8 @@ lvgl:
         - !include ../ui_components/maison_popup.yaml
         # Popup Météo (ADR-0043).
         - !include ../ui_components/meteo_popup.yaml
+        # Popup Musique (ADR-0050) : après Maison, il passe devant elle (tuile med touchée).
+        - !include ../ui_components/lecteur_popup.yaml
         # Popup Caméras (ADR-0049).
         - !include ../ui_components/cameras_popup.yaml
         - !include ../ui_components/calendar_popup.yaml

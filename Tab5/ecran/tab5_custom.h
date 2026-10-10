@@ -45,6 +45,8 @@
 #include "tab5_reglages.h"
 #include "tab5_historique.h"
 #include "tab5_meteo.h"
+#include "tab5_zone_gauche.h"
+#include "tab5_lecteur.h"
 #include "tab5_cameras.h"
 #include "tab5_alertes.h"
 #include "tab5_maison.h"

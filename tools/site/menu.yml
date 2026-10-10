@@ -126,6 +126,9 @@
         - en: Weather
           fr: Météo
           page: docs/notice/weather.md
+        - en: Music
+          fr: Musique
+          page: docs/notice/music.md
         - en: Cameras
           fr: Caméras
           page: docs/notice/cameras.md

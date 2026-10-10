@@ -20,7 +20,9 @@
  *       geste_cible() dit ce que fait un geste, le script tab5_geste
  *       (tab5-navigation.yaml) le fait ; boutons_haut_apply_ui() peint les icônes.
  *       Et la clé « defil » (09/10/2026, lot 3, ADR-0041 : défilement auto / fixe de la
- *       rangée, du panneau Ok Nabu et de la tuile − / +), routée vers tab5_rangee.cpp.
+ *       rangée, du panneau Ok Nabu et de la tuile − / +), routée vers tab5_rangee.cpp, et la
+ *       clé « gauche » (10/10/2026, ADR-0051 : contenu de la zone à gauche de l'horloge),
+ *       routée vers tab5_zone_gauche.cpp.
  * @architecture_constraint Rien ne disparaît sans réponse de HA : la tablette seule ne
  *       sait pas distinguer une entité absente d'une entité pas encore transmise. Une
  *       donnée reçue fait toujours réapparaître sa zone (zone_vue), même si HA l'a
@@ -77,6 +79,11 @@ constexpr char kCleGestes[] = "gestes";
 // trois boutons. Toujours lue (blueprint d'avant le lot A) ; un payload qui porte aussi
 // « gestes » la laisse de côté (gestes_fin_payload).
 constexpr char kCleAppuis[] = "appuis";
+// Zone à gauche de l'horloge (10/10/2026, ADR-0051) : « gauche|départ|c1|c2|… », lue par
+// zone_gauche_lire() (Tab5/socle/tab5_parse.cpp) et gardée par tab5_zone_gauche.cpp.
+// Poussée par le blueprint avec les gestes ; un firmware plus ancien l'ignore. Codes lus par
+// le blueprint : ni traduits ni renommés sans lui (tests/test_zone_gauche.py).
+constexpr char kCleZoneGauche[] = "gauche";
 // Défilement au choix (09/10/2026, lot 3, ADR-0041) : « defil|rangée|nabu|clim|secondes »,
 // lu par defilement_recu() (tab5_rangee.cpp). Poussée par le blueprint avec les gestes ; un
 // payload de gestes sans elle (blueprint d'avant le lot 3) remet les défauts
@@ -121,7 +128,11 @@ constexpr CodeGeste kCodesGestes[] = {
     {"roue", Ecran::AUCUN, GesteAction::ROUE},
     // Popup Météo (09/10/2026, ADR-0043) : ajouté à la fin (NVS, index 22).
     {"meteo", Ecran::METEO, GesteAction::ECRAN},
-    // Popup Caméras (09/10/2026, ADR-0049) : ajouté à la fin (NVS, index 23).
+    // Zone à gauche de l'horloge au choix (10/10/2026, ADR-0051) : ajouté à la fin (NVS, index 23).
+    {"zone_gauche_suivante", Ecran::AUCUN, GesteAction::ZONE_GAUCHE_SUIVANTE},
+    // Lecteur de musique (10/10/2026, ADR-0050) : ajouté à la fin (NVS, index 24).
+    {"musique", Ecran::MUSIQUE, GesteAction::ECRAN},
+    // Popup Caméras (09/10/2026, ADR-0049) : ajouté à la fin (NVS, index 25).
     {"cameras", Ecran::CAMERAS, GesteAction::ECRAN},
 };
 constexpr int kNbCodes = static_cast<int>(sizeof(kCodesGestes) / sizeof(kCodesGestes[0]));
@@ -454,6 +465,7 @@ const char* code_glyphe(int8_t c) {
         case GesteAction::ECOUTE: return "\U000F07C5";            // ear-hearing (Ok Nabu)
         case GesteAction::NABU_SUIVANTE: return "\U000F050A";     // microphone-message (panneau Ok Nabu)
         case GesteAction::ROUE: return "\U000F1382";              // compass-rose (moyeu de la roue)
+        case GesteAction::ZONE_GAUCHE_SUIVANTE: return "\U000F056C";  // view-carousel (contenus de la zone gauche)
         case GesteAction::ECRAN: break;
         default: return nullptr;
     }
@@ -473,6 +485,7 @@ const char* code_glyphe(int8_t c) {
         case Ecran::VOLET: return "\U000F111E";       // window-shutter-open
         case Ecran::TEMPERATURE: return "\U000F050F"; // thermometer
         case Ecran::METEO: return "\U000F0595";       // weather-partly-cloudy (titre du popup Météo)
+        case Ecran::MUSIQUE: return "\U000F075A";     // music (titre du popup Musique)
         case Ecran::CAMERAS: return "\U000F07AE";     // cctv (titre du popup Caméras)
         case Ecran::ARCADE: return "\U000F0297";      // gamepad-variant
         default: return nullptr;
@@ -639,6 +652,12 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
         if (champ_est(e.cle, kCleDefilement)) {
             s_defil_vue = true;
             defilement_recu(e.reste.p, e.reste.n);
+            appliquees++;
+            continue;
+        }
+        // Zone à gauche de l'horloge (ADR-0051) : « gauche|départ|c1|… ».
+        if (champ_est(e.cle, kCleZoneGauche)) {
+            zone_gauche_recu(e.reste.p, e.reste.n);
             appliquees++;
             continue;
         }

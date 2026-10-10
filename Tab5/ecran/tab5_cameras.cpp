@@ -320,5 +320,5 @@ void cameras_image_erreur() {
 }
 
 void cameras_hote_ha(const std::string& adresse) {
-    camera_base_depuis_hote(adresse.c_str(), s_hote, sizeof(s_hote));
+    ha_base_depuis_hote(adresse.c_str(), s_hote, sizeof(s_hote));
 }

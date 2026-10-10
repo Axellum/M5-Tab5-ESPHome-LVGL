@@ -105,6 +105,9 @@ script:
           // ouverture, page « Aujourd'hui ».
           ModalRegistry::add(id(meteo_popup),            "Météo",            ModalRegistry::POPUP,
                              [] { id(tab5_meteo_ouvrir).execute(METEO_PAGE_JOUR); });
+          // Musique (ADR-0050) : le lecteur courant, état frais demandé à HA.
+          ModalRegistry::add(id(lecteur_popup),          "Musique",          ModalRegistry::POPUP,
+                             [] { id(tab5_lecteur_ouvrir).execute(std::string()); });
           // Caméras (ADR-0049) : pose les widgets à la première ouverture, demande la liste.
           ModalRegistry::add(id(cameras_popup),          "Caméras",          ModalRegistry::POPUP,
                              [] { id(tab5_cameras_ouvrir).execute(); });
@@ -153,6 +156,8 @@ script:
             nabu_suivant();  // panneau Ok Nabu : ligne suivante (lot 3, ADR-0041)
           } else if (c.action == GesteAction::ROUE) {
             roue_navigation_ouvrir();  // l'appui long de la carte centrale (ADR-0042)
+          } else if (c.action == GesteAction::ZONE_GAUCHE_SUIVANTE) {
+            zone_gauche_suivante();  // le tap de la seconde température (ADR-0051)
           }
 
   # Ouverture d'un écran (07/10/2026) : la routine UNIQUE du select « Aller à l'écran »
@@ -362,6 +367,8 @@ select:
       - "Température"
       # La météo en graphiques (ADR-0043, 09/10/2026), à la fin aussi.
       - "Météo"
+      # Le lecteur de musique (ADR-0050, 10/10/2026), à la fin aussi.
+      - "Musique"
       # L'image des caméras (ADR-0049, 09/10/2026) : une sonnette l'ouvre d'ici. À la fin.
       - "Caméras"
     on_value:

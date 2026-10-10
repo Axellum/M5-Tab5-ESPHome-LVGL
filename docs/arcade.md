@@ -46,8 +46,11 @@ touche à l'orientation ; voir sa section plus bas avant d'en écrire une autre.
 
 Page LVGL dédiée `page_arcade`. Grille **régulière 4 × 2**, toutes les cartes au
 même format (298 × 252). Colonnes `x = 20 / 334 / 648 / 962`, rangées
-`y = 132 / 402`. **Point d'entrée unique** : la zone tactile sur la température
-de la serre (`btn_serre_games`, dans `climate_card.yaml`) → `tab5_arcade_open`.
+`y = 132 / 402`. **Ouverture** : le script `tab5_arcade_open`, appelé par le tap du
+bouton manette (geste « auto ») et par « Jeux » dans la roue de navigation (passant
+par `tab5_ecran_ouvrir`). Le tap sur la température de la serre (`btn_serre_games`)
+l'ouvrait jusqu'au 10/10/2026 ; il change désormais la zone à gauche de l'horloge
+([ADR-0051](decisions/0051-left-zone-choice.md)).
 La croix en haut à droite du sélecteur ramène à `page_main`.
 
 Chaque carte fait **trois** choses, dans cet ordre :

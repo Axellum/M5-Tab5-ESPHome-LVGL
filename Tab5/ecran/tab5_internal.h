@@ -90,6 +90,13 @@ inline bool ui_appui_glisse() {
 lv_obj_t* ui_rectangle(lv_obj_t* parent, lv_opa_t opa, int32_t rayon);
 lv_obj_t* ui_ligne(lv_obj_t* parent, int32_t epaisseur);
 void ui_poser(lv_obj_t* o, int32_t x, int32_t y, int32_t w, int32_t h);
+// Courbe lissée et monotone (Fritsch-Carlson) par les n points (xs, ys) : par_segment
+// points entre deux points donnés, écrits dans `out`, qui doit en tenir
+// (n - 1) * par_segment + 1 et vivre aussi longtemps que la lv_line qui les montre.
+// Renvoie le nombre de points écrits ; 0 sous 2 points ou au-delà de kCourbeLissePoints.
+// Popup Météo (ADR-0043) et zone à gauche de l'horloge (ADR-0051).
+constexpr int kCourbeLissePoints = 32;
+int ui_courbe_lisse(const float* xs, const float* ys, int n, int par_segment, lv_point_precise_t* out);
 
 // --- tab5_text.cpp ---
 // Normalise un texte venu de HA (Latin-1 / mojibake) en UTF-8 valide pour LVGL.
@@ -561,6 +568,20 @@ int pluie_barre_niveau(int i);
 // (« Pluie faible dans 12 mn », « Temps sec ») et son niveau (-1 pas de données, 0 sec,
 // 1 à 4, 5 intensité inconnue ; -2 sans source ou phrase en texte brut). "" sans phrase.
 const char* pluie_phrase_lue(int& niveau);
+// tab5_meteo.cpp, partagés avec la zone à gauche de l'horloge (ADR-0051) : créneaux
+// horaires lisibles depuis le premier (cal_heures_data : heure « HH:MM » et condition
+// connue), et couleur d'une pluie horaire en mm (rôles RAIN_* de la palette).
+int previsions_heures_lisibles();
+uint32_t couleur_pluie_mm(float mm);
+
+// --- Zone à gauche de l'horloge (tab5_zone_gauche.cpp, ADR-0051) ---
+// tab5_zones.cpp : la clé « gauche|défaut|c1|… » de tab5_maj_emplacements (lue par
+// zone_gauche_lire, tab5_parse.h). Gardée en NVS ; la zone change si le contenu de départ
+// change ou si celui affiché n'est plus proposé.
+void zone_gauche_recu(const char* valeur, size_t n);
+// tab5_forecast.cpp : les prévisions horaires viennent de changer ; le graphique est à
+// repeindre (tout de suite s'il est affiché, sinon à sa prochaine apparition).
+void zone_gauche_donnees_changees();
 
 // --- tab5_central.cpp, pour les pièces ---
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de
@@ -596,6 +617,7 @@ float batterie_niveau_lu();
 bool batterie_en_charge_lue();
 void historique_rejouer_theme();
 void meteo_rejouer_theme();
+void zone_gauche_rejouer_theme();
 void alertes_rejouer_theme();
 void zones_rejouer_theme();
 void assist_rejouer_theme();

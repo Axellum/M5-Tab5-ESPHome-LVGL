@@ -102,6 +102,11 @@ NON_MONTREES = {
     "meteo-aujourdhui": "page Aujourd'hui du popup Météo, décrite dans weather.md ; image à tirer du rendu",
     "meteo-jours": "page 10 jours du popup Météo, décrite dans weather.md ; image à tirer du rendu",
     "meteo-details": "page Détails du popup Météo, décrite dans weather.md ; image à tirer du rendu",
+    # Popup Musique (ADR-0050, 10/10/2026), décrit dans music.md : images à tirer du rendu
+    # de la PR, puis citées.
+    "musique": "popup Musique, décrit dans music.md ; image à tirer du rendu",
+    "musique-vide": "musique montre la même fenêtre ; l'attente de Home Assistant est décrite dans music.md",
+    "musique-eteint": "musique montre la même fenêtre ; « Lecteur éteint » et « Allumer » sont décrits dans music.md",
     # Réglages en quatre pages (08/10/2026) : images à tirer du rendu de la PR, puis citées.
     "reglages-apparence": "page Apparence des Réglages, décrite dans settings.md ; image à tirer du rendu",
     "reglages-batterie-en-charge": "page Batterie des Réglages, décrite dans settings.md ; image à tirer du rendu",

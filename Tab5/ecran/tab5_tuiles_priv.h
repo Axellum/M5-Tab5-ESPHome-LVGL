@@ -112,7 +112,16 @@ struct Minuterie {
 };
 
 // Fenêtre qu'ouvre un geste.
-enum class Fenetre : uint8_t { AUCUNE, LUMIERE, VOLET, APPAREIL, TELECOMMANDE, CLIM, ENERGIE };
+enum class Fenetre : uint8_t {
+    AUCUNE,
+    LUMIERE,
+    VOLET,
+    APPAREIL,
+    TELECOMMANDE,
+    CLIM,
+    ENERGIE,
+    LECTEUR,  // le popup Musique (ADR-0050) sur le media_player de la tuile
+};
 
 // Les gestes d'une tuile, ses options appliquées (gestes(), table kGestes).
 struct Gestes {

@@ -171,6 +171,16 @@ Nothing is pushed while the popup is closed. Without this package, the popup wai
 
 ---
 
+### `packages/tab5_lecteur.yaml` — the Music popup
+Backend of the firmware's **Music popup** ([ADR-0050](../docs/decisions/0050-music-player.md)): a music player for any `media_player` (Apple TV, TV, Freebox, speaker, the tablet itself…). The players offered are those chosen in the list « Tab5 · lecteurs de musique · music players » (`tab5_reglages.yaml`, six at most; each pick adds or removes one). The player shown is the one picked on the tablet (a chip, or the long press of a `med` tile through the blueprint), otherwise the first of the list that plays; a listed player that starts playing is shown when the current one does not play.
+- `script.tab5_lecteur_pousser` (`mode: restart`, a 0.4 s wait so a burst of changes leaves once) pushes `tab5_maj_lecteur`: the list, then the shown player — title, artist, album, app, position (advanced up to the send; the tablet advances it while playing, HA does not push every second), duration, volume, mute, shuffle, repeat, the commands it supports (`supported_features`) and its `entity_picture`. Pushed when the shown player changes, when the list changes, when the tablet connects and when the popup opens.
+- `script.tab5_lecteur_commande`, run by `tab5_evenements.yaml` on `esphome.tab5_lecteur`: play / pause, previous, next, shuffle, repeat, mute, volume, seek, turn on, choose a player. It only acts on a player of the list (by its index) or on the shown one: no action or entity name comes from the event.
+- The cover is downloaded by the tablet from Home Assistant over **http** (the address of HA the tablet sees, port 8123): a Home Assistant served only in https sends no cover, the music note shows instead.
+
+Without this package, the popup waits (« En attente de Home Assistant ») and the « now playing » bar never shows.
+
+---
+
 ### `packages/tab5_reveil.yaml`
 What Home Assistant adds to the firmware's **alarm clock** — and nothing more. **The alarm itself does not depend on this file**: the device computes its ring time from the SNTP clock and the work hours it already caches, and rings a locally synthesised melody. Stop HA and the alarm still goes off; only the spoken briefing and the appointment reminders go missing. Never move the decision to ring in here.
 
@@ -446,6 +456,16 @@ Ce qui alimente le **popup Température** du firmware ([ADR-0032](../docs/decisi
 - avec une sonde d'humidité pour cet emplacement (« Salon — humidité », ou « Humidité de la pièce » ; [ADR-0047](../docs/decisions/0047-room-climate-chart.md)), sa courbe, tirée des mêmes statistiques et tracée avec la température. Cette sonde doit aussi avoir un `state_class` ; sans, le popup montre la température seule.
 
 Rien n'est poussé quand le popup est fermé. Sans ce package, le popup attend (« En attente de Home Assistant »).
+
+---
+
+### `packages/tab5_lecteur.yaml` — le popup Musique
+Le côté HA du **popup Musique** du firmware ([ADR-0050](../docs/decisions/0050-music-player.md)) : un lecteur de musique pour n'importe quel `media_player` (Apple TV, TV, Freebox, enceinte, la tablette elle-même…). Les lecteurs proposés sont ceux choisis dans la liste « Tab5 · lecteurs de musique · music players » (`tab5_reglages.yaml`, six au plus ; chaque choix en ajoute ou en retire un). Le lecteur affiché est celui choisi sur la tablette (une pastille, ou l'appui long d'une tuile `med` par le blueprint), sinon le premier de la liste qui joue ; un lecteur de la liste qui se met à jouer est affiché quand celui en cours ne joue pas.
+- `script.tab5_lecteur_pousser` (`mode: restart`, 0,4 s d'attente pour qu'une rafale de changements parte en une fois) pousse `tab5_maj_lecteur` : la liste, puis le lecteur affiché — titre, artiste, album, application, position (avancée jusqu'à l'envoi ; la tablette l'avance pendant la lecture, HA ne pousse pas chaque seconde), durée, volume, sourdine, aléatoire, répétition, les commandes qu'il sait faire (`supported_features`) et son `entity_picture`. Poussé quand le lecteur affiché change, quand la liste change, à la connexion de la tablette et à l'ouverture du popup.
+- `script.tab5_lecteur_commande`, lancé par `tab5_evenements.yaml` à l'événement `esphome.tab5_lecteur` : lecture / pause, précédent, suivant, aléatoire, répétition, sourdine, volume, position, allumer, choisir un lecteur. Il n'agit que sur un lecteur de la liste (par son index) ou sur celui affiché : aucun nom d'action ni d'entité ne vient de l'événement.
+- La pochette est téléchargée par la tablette depuis Home Assistant en **http** (l'adresse de HA vue par la tablette, port 8123) : un Home Assistant servi seulement en https n'envoie pas de pochette, la note de musique s'affiche à la place.
+
+Sans ce package, le popup attend (« En attente de Home Assistant ») et la barre « en lecture » ne paraît jamais.
 
 ---
 

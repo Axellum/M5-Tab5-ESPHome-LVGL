@@ -53,7 +53,7 @@ A long press on one of the two home-screen temperatures opens its history ([ADR-
 | TV | TV, and Télécommande de la TV for the remote keys | TV button and remote; « HA » and « Sys » move one column right |
 | Phone | Batterie du téléphone | Status icon |
 | Room | Température de la pièce (and Humidité de la pièce) | Its temperature |
-| Greenhouse | Seconde température (serre) | Its temperature; the icon becomes a gamepad, the arcade entrance stays |
+| Greenhouse | Seconde température (serre) | Its temperature; the icon becomes a carousel, its tap still switches the area left of the clock |
 | Plants (0 to 5) | Pot 1 to 5: the moisture sensor; conductivity, light, temperature and battery are taken from the same device | Up to 4 plants: one slot each; 5: the « driest / median / wettest » summary. Popup cards, re-centred |
 | Climate | Climatisation | − / setpoint / + and the popup |
 | Work planning | Agenda de travail | Planning panel of the central card |
@@ -132,7 +132,7 @@ Un appui long sur l'une des deux températures de l'accueil ouvre son historique
 | TV | TV, et Télécommande de la TV pour les touches | Bouton TV et télécommande ; « HA » et « Sys » glissent d'une colonne |
 | Téléphone | Batterie du téléphone | Icône d'état |
 | Pièce | Température de la pièce (et Humidité de la pièce) | Sa température |
-| Serre | Seconde température (serre) | Sa température ; l'icône devient une manette, l'entrée de l'arcade reste |
+| Serre | Seconde température (serre) | Sa température ; l'icône devient un carrousel, son tap change toujours la zone à gauche de l'horloge |
 | Pots (0 à 5) | Pot 1 à 5 : le capteur d'humidité ; conductivité, éclairement, température et batterie sont pris sur le même appareil | Jusqu'à 4 pots : un emplacement chacun ; à 5 : le résumé « plus secs / médiane / plus humide ». Cartes du popup, recentrées |
 | Clim | Climatisation | − / consigne / + et le popup |
 | Planning de travail | Agenda de travail | Panneau planning de la carte centrale |

@@ -211,7 +211,10 @@ BOUTON_HA, BOUTON_SYS, BOUTON_TV = (917, 65), (1061, 65), (1205, 65)
 # Rangée sous l'horloge (ADR-0031, zone btn_rangee) : court, ligne suivante ; long sur la
 # ligne des plantes, Plantes.
 SOUS_HORLOGE = (640, 270)
-SERRE = (1172, 158)           # court : Arcade
+# Seconde température (btn_serre_games) : court, le contenu suivant de la zone à gauche de
+# l'horloge (ADR-0051 : vocal, puis le graphique des prévisions ; l'Arcade avant le
+# 10/10/2026, désormais par le tap du bouton manette, BOUTON_TV) ; long, son historique.
+SERRE = (1172, 158)
 # Température du salon (btn_reglables_liste, climate_card.yaml : carte en 855, 110, zone
 # 4..196 × 31..95, centre 955, 173) : court, la roue de la clim (ADR-0048, ancrée plus bas) ;
 # sans réglages reçus pour la clim (celle du blueprint avant « climr »), le carrousel des
@@ -666,6 +669,28 @@ THEME_CADRE_GELULE = "Capsule"
 THEME_PAR_DEFAUT = "Relief doux"
 
 
+# Popup Musique (ADR-0050, lecteur_popup.yaml) : trois lecteurs choisis, le premier en
+# pause (une position qui n'avance pas : la capture ne dépend pas de l'instant), toutes
+# les commandes offertes, aléatoire actif, répétition de tout. Pas de pochette : le rendu
+# ne télécharge rien (ImageMuette), la note de musique s'affiche. Format de
+# packages/tab5_lecteur.yaml (script tab5_lecteur_pousser).
+LECTEUR_LISTE = "Salon|speaker;Apple TV|tv;Freebox|receiver"
+LECTEUR_EN_PAUSE = Service("tab5_maj_lecteur", (
+    ("lecteurs", LECTEUR_LISTE),
+    ("etat", "0|Salon|speaker|paused|Le vent du large|Les Marées|Carnets de voyage|Spotify|83|254|45|0|1|all|lsvmpnaro|"),
+))
+# Un lecteur éteint, hors de la liste (une tuile med) : « Lecteur éteint » et « Allumer ».
+LECTEUR_ETEINT = Service("tab5_maj_lecteur", (
+    ("lecteurs", LECTEUR_LISTE),
+    ("etat", "-1|TV Samsung|tv|off" + "|" * 11 + "o|"),
+))
+# Après chaque capture : plus aucun lecteur, la barre « en lecture » s'en va et le cadre
+# Ok Nabu revient pour les captures suivantes.
+LECTEUR_AUCUN = Service("tab5_maj_lecteur", (("lecteurs", ""), ("etat", "")))
+# Le voile autour de la carte (940 × 536 centrée) ferme le popup.
+LECTEUR_VOILE = Toucher(60, 360)
+
+
 # Popup Météo (ADR-0043, meteo_popup.yaml) : une journée qui change (soleil le matin,
 # orage l'après-midi, éclaircies le soir), de 07:00 (l'heure figée, 07:45 : la colonne
 # de l'heure en cours) à 21:00, dix jours contrastés, une pluie dans l'heure qui monte
@@ -752,8 +777,8 @@ def _menu(y: int, x: int = 640) -> Toucher:
 
 
 def _arcade(jeu: str, *etapes) -> tuple:
-    """Accueil → sélecteur Arcade → console `jeu` → étapes."""
-    return (Toucher(*SERRE, apres=1.0), Toucher(*CARTES[jeu], apres=1.2)) + etapes
+    """Accueil → sélecteur Arcade (tap du bouton manette, « auto ») → console `jeu` → étapes."""
+    return (Toucher(*BOUTON_TV, apres=1.0), Toucher(*CARTES[jeu], apres=1.2)) + etapes
 
 
 def _jeu(nom: str, jeu: str, etapes: tuple = (), fermer: tuple = (), portrait: bool = False,
@@ -888,6 +913,13 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("accueil-nabu-gelule",
           (Choisir("Thème", THEME_CADRE_GELULE),) + _nabu(NABU_TROIS_LIGNES) + (Toucher(*HEURES),),
           NABU_DE_LA_DEMO + (Choisir("Thème", THEME_PAR_DEFAUT),)),
+    # Zone à gauche de l'horloge (ADR-0051) : le tap sur la seconde température passe du
+    # vocal au graphique des 15 heures de la démo (cycle par défaut : vocal, graphique) ;
+    # `fermer` revient au vocal (le choix est gardé en NVS). Puis le même graphique dans le
+    # thème au cadre le plus arrondi (gélule).
+    Ecran("accueil-zone-graphique", (Toucher(*SERRE),), (Toucher(*SERRE),)),
+    Ecran("accueil-zone-graphique-gelule", (Choisir("Thème", THEME_CADRE_GELULE), Toucher(*SERRE)),
+          (Toucher(*SERRE), Choisir("Thème", THEME_PAR_DEFAUT))),
     # Tuile − / + (ADR-0033) : la liste par l'appui long sur la valeur entre − et +
     # (ADR-0038 ; clim, les quatre appareils de la démo, scenarios.REGLABLES, la tablette ;
     # le retour à l'accueil la ferme), puis l'enceinte (ligne 4) choisie à la place de la
@@ -1046,6 +1078,12 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("meteo-aujourdhui", METEO_DONNEES + (Aller("Météo"),), METEO_SCENE_3),
     Ecran("meteo-jours", METEO_DONNEES + (Aller("Météo"), METEO_GLISSER), METEO_SCENE_3),
     Ecran("meteo-details", METEO_DONNEES + (Aller("Météo"), Toucher(*METEO_PAGES["details"])), METEO_SCENE_3),
+    # Popup Musique (ADR-0050) : vide (« En attente de Home Assistant »), en pause avec ses
+    # trois lecteurs, éteint ; la barre « en lecture » de l'accueil, sur le cadre Ok Nabu.
+    Ecran("musique-vide", (Aller("Musique"),), (LECTEUR_VOILE,)),
+    Ecran("musique", (LECTEUR_EN_PAUSE, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
+    Ecran("musique-eteint", (LECTEUR_ETEINT, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
+    Ecran("accueil-musique", (LECTEUR_EN_PAUSE,), (LECTEUR_AUCUN,)),
     # Popup Caméras (ADR-0049) : trois caméras, la première montrée.
     Ecran("cameras", (CAMERAS_DONNEES, Aller("Caméras"))),
     Ecran("telecommande-tv", (Long(*BOUTON_TV),)),
@@ -1081,7 +1119,7 @@ ECRANS: tuple[Ecran, ...] = (
           (Toucher(*CONFIRMATION_ANNULER),)),
 
     # --- Arcade -----------------------------------------------------------------------
-    Ecran("arcade", (Toucher(*SERRE, apres=1.0),)),
+    Ecran("arcade", (Toucher(*BOUTON_TV, apres=1.0),)),
 
     _jeu("", "fil-dor"),
     _jeu("feu-de-camp", "fil-dor", (_menu(249),)),

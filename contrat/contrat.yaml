@@ -55,6 +55,9 @@ services:
     couleur: string
     meteo_id: string
     texte: string
+  tab5_maj_lecteur:
+    etat: string
+    lecteurs: string
   tab5_maj_meteo_actuelle:
     condition: string
     humidite: string
@@ -99,6 +102,7 @@ evenements:
   esphome.tab5_energie: [vue]
   esphome.tab5_historique: [cle, vue]
   esphome.tab5_journal: [demarrages, grave, lignes, raison]
+  esphome.tab5_lecteur: [action, lecteur, valeur]
   esphome.tab5_maj_ecran: []
   esphome.tab5_mode_assistant: [option]
   esphome.tab5_recharger_automatisations: []

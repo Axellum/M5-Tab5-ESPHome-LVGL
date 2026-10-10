@@ -2,7 +2,7 @@
  * Harnais libFuzzer de la lecture des payloads de Home Assistant (Tab5/socle/tab5_parse.h,
  * lot F de l'audit du 30/09/2026). Le premier octet choisit le parseur
  * ((octet - '0') modulo le nombre de parseurs : « 0… » = le premier, « : » le onzième,
- * le caractère qui suit « 9 », « ; » le douzième), le reste est le
+ * le caractère qui suit « 9 », « ; » le douzième, « < » le treizième), le reste est le
  * payload, passé comme le firmware le passe (std::string, puis c_str() ou data()/size()).
  * Les graines sont les payloads du fuzz de la tablette virtuelle
  * (tools/sanitizers/fuzz_services.py), écrites par tools/fuzz/graines.py.
@@ -99,7 +99,7 @@ void calendrier_jour(const std::string& p) {
 // Emplacements : chaque reste est lu comme la table 3.x (état|valeur, nombre), comme la
 // production solaire et comme les clés de la clim (climr/crRT, ceRT), quelle que soit sa
 // clé : le firmware les reçoit toutes par ce service. Le climat d'une pièce (« pR ») est
-// lu avec sa vraie clé.
+// lu avec sa vraie clé ; la zone à gauche de l'horloge (« gauche », ADR-0051) sur tout reste.
 void emplacements(const std::string& p) {
     size_t debut = 0;
     EmplacementLu e;
@@ -119,6 +119,7 @@ void emplacements(const std::string& p) {
         clim_etat_lire(e.reste.p, e.reste.n, c);
         PieceClimatLu pc;
         piece_climat_lire(e.cle, e.reste, pc);
+        zone_gauche_lire(e.reste.p, e.reste.n);  // « gauche|… » (ADR-0051)
     }
 }
 
@@ -142,6 +143,35 @@ void temperature(const std::string& p) {
     humidite_lire(Champ{p.data(), p.size()});
 }
 
+// Lecteur de musique (ADR-0050) : les deux variables du service (lecteurs, etat) séparées
+// par un saut de ligne, comme temperature() ; l'image lue comme l'écran la lit (base tirée
+// du payload lui-même, comme une adresse de client API), la position avancée et écrite.
+void lecteur(const std::string& p) {
+    const size_t saut = p.find('\n');
+    const std::string lecteurs = p.substr(0, saut);
+    const std::string etat = saut == std::string::npos ? std::string() : p.substr(saut + 1);
+    LecteurListeLu l[kLecteursMax];
+    const int n = lecteurs_lire(Champ{lecteurs.data(), lecteurs.size()}, l);
+    for (int i = 0; i < n; i++) {
+        const std::string nom(l[i].nom.p, l[i].nom.n);  // ce que texte_ha_copier recevrait
+        (void) nom;
+    }
+    LecteurEtatLu e;
+    if (lecteur_etat_lire(Champ{etat.data(), etat.size()}, e)) {
+        char base[64];
+        ha_base_depuis_hote(lecteurs.c_str(), base, sizeof(base));
+        char url[kLecteurUrlMax];
+        ha_image_url(e.image, base, url, sizeof(url));
+        ha_image_url(e.image, lecteurs.c_str(), url, sizeof(url));
+        char t[16];
+        lecteur_temps_texte(lecteur_position(e, 1.5f), t, sizeof(t));
+        lecteur_temps_texte(e.duree, t, sizeof(t));
+    }
+    lecteur_genre_lire(Champ{p.data(), p.size()});
+    lecteur_etat_code(Champ{p.data(), p.size()});
+    lecteur_fonctions_lire(Champ{p.data(), p.size()});
+}
+
 // Popup Caméras : les deux variables du service (adresse, cameras) séparées par un saut de
 // ligne, comme temperature(). L'URL de chaque caméra est construite avec l'adresse donnée,
 // puis avec la base tirée du payload pris comme adresse de client (on_client_connected).
@@ -150,7 +180,7 @@ void cameras(const std::string& p) {
     const std::string adresse = p.substr(0, saut);
     const std::string liste = saut == std::string::npos ? std::string() : p.substr(saut + 1);
     char base[64];
-    camera_base_depuis_hote(adresse.c_str(), base, sizeof(base));
+    ha_base_depuis_hote(adresse.c_str(), base, sizeof(base));
     CameraLue c[kCamerasMax];
     const int n = cameras_lire(Champ{liste.data(), liste.size()}, c);
     char url[kCameraUrlMax];
@@ -182,7 +212,8 @@ constexpr Parseur kParseurs[] = {
     calendrier_jour,  // '8' tab5_maj_calendrier_jour
     emplacements,     // '9' tab5_maj_emplacements
     temperature,      // ':' tab5_maj_historique
-    cameras,          // ';' tab5_maj_cameras
+    lecteur,          // ';' tab5_maj_lecteur
+    cameras,          // '<' tab5_maj_cameras
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

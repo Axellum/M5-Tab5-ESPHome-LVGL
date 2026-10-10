@@ -1379,6 +1379,14 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "uv|Extrême": "Estremo"
 "Indice UV": "Indice UV"
 "Gel": "Gelo"
+# Lecteur de musique (ADR-0050, 10/10/2026)
+"Musique": "Musica"
+"Aucun lecteur choisi": "Nessun lettore scelto"
+"Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique ».": "Scegli i tuoi lettori in Home Assistant: «Tab5 · lecteurs de musique · music players»."
+"Lecteur éteint": "Lettore spento"
+"Lecteur indisponible": "Lettore non disponibile"
+"Rien en lecture": "Niente in riproduzione"
+"Lecteur {n}": "Lettore {n}"
 # Popup Caméras (ADR-0049, 09/10/2026).
 "Caméras": "Telecamere"
 "Aucune caméra choisie": "Nessuna telecamera scelta"

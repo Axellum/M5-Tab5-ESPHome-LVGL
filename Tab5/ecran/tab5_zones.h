@@ -110,6 +110,7 @@ enum class GesteAction : uint8_t {
     ECOUTE,            // bascule du mot de réveil « Ok Nabu » (switch tab5_wake_word_active)
     NABU_SUIVANTE,     // panneau Ok Nabu : ligne suivante (nabu_suivant, lot 3)
     ROUE,              // roue de navigation (ADR-0042), comme l'appui long de la carte centrale
+    ZONE_GAUCHE_SUIVANTE,  // zone à gauche de l'horloge : contenu suivant (zone_gauche_suivante, ADR-0051)
 };
 struct GesteCible {
     GesteAction action;
@@ -122,7 +123,7 @@ GesteCible geste_cible(int geste);
 // Écrans qu'ouvre le script tab5_ecran_ouvrir (tab5-navigation.yaml), routine unique du
 // select « Aller à l'écran », des gestes de l'accueil (horloge, boutons du haut) et de la
 // roue de navigation (ADR-0042). Les
-// valeurs 0 à 17 SONT les index des options du select, dans le même ordre
+// valeurs 0 à 18 SONT les index des options du select, dans le même ordre
 // (tests/test_appuis.py) ; ARCADE n'est pas une option du select (lancer l'Arcade à
 // distance n'a pas d'usage), seulement un choix de geste. Un écran de plus : avant ARCADE
 // ici, à la fin du select (ARCADE et NB se décalent : la NVS garde l'index du code dans
@@ -154,6 +155,7 @@ enum class Ecran : uint8_t {
     VOLET,
     TEMPERATURE,
     METEO,       // popup Météo (ADR-0043) : option du select et code de geste « meteo »
+    MUSIQUE,     // lecteur de musique (ADR-0050) : option du select et code de geste « musique »
     CAMERAS,     // popup Caméras (ADR-0049) : option du select et code de geste « cameras »
     ARCADE,
     NB

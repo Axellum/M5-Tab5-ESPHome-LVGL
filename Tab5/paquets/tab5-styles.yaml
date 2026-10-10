@@ -199,13 +199,17 @@ font:
       - "\U000F02E5"  # pot
       - "\U000F036C"  # microphone (tap : Assistant vocal)
       - "\U000F0379"  # monitor
+      - "\U000F03E4"  # pause (lecture / pause du popup Musique, ADR-0050)
+      - "\U000F040A"  # play (lecture / pause du popup Musique, ADR-0050)
       - "\U000F0493"  # cog (bouton du haut : Réglages, 06/10/2026)
       - "\U000F04B9"  # sofa
       - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
+      - "\U000F056C"  # view-carousel (tap : contenu suivant de la zone à gauche de l'horloge, ADR-0051)
       - "\U000F0595"  # weather-partly-cloudy (tap : Météo)
       - "\U000F06A9"  # robot
       - "\U000F0717"  # snowflake (tap : Climatisation)
       - "\U000F0729"  # view-sequential (tap : ligne suivante sous l'horloge)
+      - "\U000F075A"  # music (tap : Musique, ADR-0050)
       - "\U000F07AE"  # cctv (tap : Caméras, ADR-0049)
       - "\U000F07C0"  # desktop-classic (tap : télécommande TV)
       - "\U000F07C5"  # ear-hearing (tap : Ok Nabu)
@@ -352,9 +356,17 @@ font:
       - "\U000F040A"  # play
       - "\U000F0415"  # plus
       - "\U000F0425"  # power
+      - "\U000F0456"  # repeat (popup Musique : répéter tout)
+      - "\U000F0457"  # repeat-off (popup Musique : sans répétition)
+      - "\U000F0458"  # repeat-once (popup Musique : répéter le morceau)
+      - "\U000F049D"  # shuffle (popup Musique : aléatoire)
+      - "\U000F049E"  # shuffle-disabled (popup Musique : dans l'ordre)
+      - "\U000F04AD"  # skip-next (popup Musique : suivant)
+      - "\U000F04AE"  # skip-previous (popup Musique : précédent)
       - "\U000F04B9"  # sofa
       - "\U000F04DB"  # stop
       - "\U000F054C"  # undo
+      - "\U000F056C"  # view-carousel (seconde température absente : son tap change la zone à gauche de l'horloge, ADR-0051)
       - "\U000F0581"  # volume-off
       - "\U000F058E"  # water-percent
       - "\U000F0598"  # weather-snowy (carte Neige du popup Météo)
@@ -482,6 +494,7 @@ font:
     bpp: 1
     glyphs:
       - "\U000F0020"  # alarm
+      - "\U000F0030"  # amplifier (popup Musique : pastille d'un ampli)
       - "\U000F0045"  # arrow-down
       - "\U000F005D"  # arrow-up
       - "\U000F0079"  # battery
@@ -490,6 +503,7 @@ font:
       - "\U000F0083"  # battery-alert
       - "\U000F0084"  # battery-charging
       - "\U000F0091"  # battery-unknown
+      - "\U000F075A"  # music (titre du popup Musique, ADR-0050)
       - "\U000F12A1"  # battery-low
       - "\U000F12A2"  # battery-medium
       - "\U000F12A6"  # battery-charging-high (Réglages : mode de charge)
@@ -614,13 +628,14 @@ font:
       - "\U000F1C01"  # robot-vacuum-off (aspirateur)
       # <<< tuiles
 
-  # 120 px — grand micro de l'assistant.
+  # 120 px — grand micro de l'assistant, note de la pochette absente du popup Musique.
   - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_120
     size: 120
     bpp: 1
     glyphs:
       - "\U000F036C"  # microphone
+      - "\U000F075A"  # music (popup Musique : pochette absente)
 
   # 26 px — barre d'état (réveil, Wi-Fi, PC, production solaire, batterie de la
   # tablette, ou une prise sans batterie), pluie des cartes horaires, et mini icônes des
@@ -649,6 +664,7 @@ font:
       - "\U000F0493"  # cog (mini icône : Réglages)
       - "\U000F050A"  # microphone-message (tap des heures : ligne suivante du panneau Ok Nabu, lot 3)
       - "\U000F050F"  # thermometer (mini icône : Température)
+      - "\U000F056C"  # view-carousel (mini icône : contenu suivant de la zone à gauche de l'horloge, ADR-0051)
       - "\U000F0595"  # weather-partly-cloudy (mini icône : Météo)
       - "\U000F0596"  # weather-pouring
       - "\U000F05A9"  # wifi
@@ -656,6 +672,7 @@ font:
       - "\U000F06A5"  # power-plug (tablette sans batterie détectée)
       - "\U000F0717"  # snowflake (mini icône : Climatisation)
       - "\U000F0729"  # view-sequential (mini icône : ligne suivante sous l'horloge, 09/10/2026)
+      - "\U000F075A"  # music (mini icône : Musique, ADR-0050)
       - "\U000F07AE"  # cctv (mini icône : Caméras, ADR-0049)
       - "\U000F07C0"  # desktop-classic (mini icône de la manette : télécommande TV, 06/10/2026)
       - "\U000F07C5"  # ear-hearing (mini icône : Ok Nabu)
