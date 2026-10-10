@@ -317,6 +317,177 @@ def test_ecrire_un_fichier_absent(tmp_path):
     assert A.lire((tmp_path / A.FICHIER).read_text(encoding="utf-8"))[0]["id"] == "1"
 
 
+# ─── Maison (ADR-0053) ───────────────────────────────────────────────────────
+
+def test_champs_maison_dans_le_blueprint():
+    entrees = _entrees_du_blueprint()
+    for cle, nature in A.CHAMPS_MAISON:
+        assert cle in entrees, f"{cle} absente du blueprint"
+        assert not A.ENTREE_PIECE.match(cle), "une entrée de la maison n'est pas une pièce"
+        selecteur = entrees[cle]["selector"]
+        if nature == "bool":
+            assert "boolean" in selecteur, cle
+        elif nature == "texte":
+            assert "text" in selecteur, cle
+        else:
+            domaine, _, classe = nature.partition(":")
+            f = selecteur["entity"]["filter"][0]
+            assert f["domain"] == domaine and f.get("device_class") == (classe or None), cle
+    assert entrees["tablette"]["default"] == A.TABLETTE_DEFAUT
+    assert [c for c, _ in A.CHAMPS_MAISON if c.startswith("pot_")] == [f"pot_{n}" for n in range(1, A.MAX_POTS + 1)]
+    assert set(A.LIBELLES) >= {c for c, _ in A.CHAMPS_MAISON} | {liste.cle for liste in A.LISTES}
+
+
+def _foyer(**plus) -> tuple[list, dict]:
+    E = A.Entite
+    appareils = {"tele": A.Appareil("tele", "salon"), "box": A.Appareil("box", "salon"),
+                 "tablette": A.Appareil("tablette", "salon", TABLETTE)}
+    entites = [
+        E("media_player.tele", "Télé", appareil="tele", classe="tv"),
+        E("media_player.enceinte", "Enceinte", zone="salon", classe="speaker"),  # pas une TV
+        E("remote.tele", "Télécommande", appareil="tele"),
+        E("remote.box", "Box", appareil="box"),                                  # pas celle de la TV
+        E("sensor.pixel_battery_level", "Pixel batterie", classe="battery", plateforme="mobile_app"),
+        E("sensor.souris_batterie", "Souris", classe="battery", plateforme="zha"),  # pas un téléphone
+        E("sensor.tab5_batterie", "Tab5 batterie", appareil="tablette", classe="battery",
+          plateforme="mobile_app"),                                              # la tablette : jamais
+        E("sensor.temperature_exterieure", "Température extérieure", classe="temperature"),
+        E("sensor.t_salon", "Température salon", zone="salon", classe="temperature"),
+        E("climate.salon", "Clim", zone="salon"),
+        E("sensor.basilic", "Basilic", classe="moisture"),
+        E("sensor.menthe", "Menthe", classe="moisture"),
+        E("weather.maison", "Maison"),
+    ]
+    for liste in plus.values():
+        entites += liste
+    return entites, appareils
+
+
+def test_proposer_maison_sans_ambiguite():
+    entites, appareils = _foyer()
+    pieces = [A.Piece("salon", "Salon", (), "sensor.t_salon", "sensor.h_salon", None)]
+    assert A.proposer_maison(entites, appareils, TABLETTE, pieces, "tab5-cuisine") == {
+        "tv": "media_player.tele", "tv_telecommande": "remote.tele",
+        "telephone": "sensor.pixel_battery_level",
+        "salon_temperature": "sensor.t_salon", "salon_humidite": "sensor.h_salon",
+        "serre_temperature": "sensor.temperature_exterieure", "serre_exterieure": True,
+        "clim": "climate.salon",
+        "pot_1": "sensor.basilic", "pot_2": "sensor.menthe",                 # par nom
+        "meteo_previsions": "weather.maison", "tablette": "tab5_cuisine"}
+    # Le nom ESPHome par défaut n'est pas écrit (le blueprint l'a déjà).
+    assert "tablette" not in A.proposer_maison(entites, appareils, TABLETTE, pieces, "tab5-ha-hmi")
+    assert "tablette" not in A.proposer_maison(entites, appareils, TABLETTE, pieces, None)
+
+
+def test_proposer_maison_ambigu_ne_propose_rien():
+    E = A.Entite
+    entites, appareils = _foyer(plus=[
+        E("media_player.tele_2", "Télé chambre", classe="tv"),
+        E("sensor.outdoor_temp", "Outdoor", classe="temperature"),
+        E("climate.chambre", "Clim chambre"),
+        E("weather.autre", "Autre"),
+        E("sensor.iphone_battery_level", "iPhone", classe="battery", plateforme="mobile_app"),
+    ] + [E(f"sensor.pot_{n}", f"Pot {n}", classe="moisture") for n in range(4)])  # 6 pots
+    assert A.proposer_maison(entites, appareils, TABLETTE, []) == {}, "deux candidates : rien"
+
+
+def test_entrees_maison():
+    valeurs = {"tv": " media_player.tele ", "clim": "", "serre_exterieure": False, "tablette": "tab5_ha_hmi",
+               "pot_1": None, "inconnue": "x"}
+    assert A.entrees_maison(valeurs) == {"tv": "media_player.tele"}
+    # Une case décochée sur une automatisation qui l'avait : écrite à False (sinon reprise).
+    assert A.entrees_maison(valeurs, {"serre_exterieure": True}) == {"tv": "media_player.tele",
+                                                                      "serre_exterieure": False}
+    assert list(A.entrees_maison({"meteo_previsions": "weather.m", "tv": "media_player.t"})) == \
+        ["tv", "meteo_previsions"], "ordre du formulaire"
+
+
+def test_fusionner_avec_la_maison():
+    anciennes = {"piece_1_nom": "Séjour", "piece_2_tuiles": ["light.x"], "tv": "media_player.ancienne",
+                 "clim": "climate.garde", "gestes": ["auto"], "serre_exterieure": True}
+    nouvelles = {"piece_1_nom": "Salon", "tv": "media_player.neuve", "serre_exterieure": False}
+    assert A.fusionner(anciennes, nouvelles) == {
+        "piece_1_nom": "Salon", "tv": "media_player.neuve", "serre_exterieure": False,
+        "clim": "climate.garde", "gestes": ["auto"]}, "pièces remplacées, maison seulement si fournie"
+
+
+# ─── Listes « Tab5 · … » (packages/tab5_reglages.yaml) ──────────────────────
+
+REGLAGES = ("HomeAssistant_Config", "packages", "tab5_reglages.yaml")
+
+
+def test_listes_du_package():
+    texte = lire(*REGLAGES)
+    selects = set(re.findall(r"default_entity_id: (select\.\w+)", texte))
+    for liste in A.LISTES:
+        assert liste.select in selects, f"{liste.select} absent de tab5_reglages.yaml"
+        bloc = texte.split(f"default_entity_id: {liste.select}", 1)[1].split("select_option:", 1)[0]
+        # Le package devine-t-il cette liste (son état lit une variable auto_*) ?
+        assert ("auto_" in bloc) == liste.devinee, liste.cle
+    # Les motifs des règles du package, à l'identique.
+    for cle, variable in (("agenda_anniversaires", "auto_anniversaires"), ("agenda_vacances", "auto_vacances"),
+                          ("agenda_feries", "auto_feries")):
+        m = re.search(rf"{variable}: [>\-\s]*\"?\{{\{{[^\n]*?\n?[^\n]*?select\('search', '([^']+)'\)", texte)
+        assert m and m.group(1) == A.MOTS_PACKAGE[cle], cle
+    assert "integration_entities('holiday')" in texte and "integration_entities('mobile_app')" in texte
+    assert f"'{A.AUCUN}'" in texte
+
+
+def _infos() -> "A.Infos":
+    return A.Infos(
+        noms={"calendar.boulot": "Planning boulot", "calendar.perso": "Rendez-vous médicaux",
+              "calendar.famille": "Famille", "calendar.anniversaires": "Anniversaires",
+              "calendar.jours_feries": "Jours fériés"},
+        plateformes={"calendar.jours_feries": "holiday", "device_tracker.pixel": "mobile_app"},
+        classes={"binary_sensor.salon_occupancy": "occupancy", "binary_sensor.porte": "door"},
+        pipeline_prefere="Home Assistant")
+
+
+def _liste(cle: str) -> "A.Liste":
+    return next(liste for liste in A.LISTES if liste.cle == cle)
+
+
+def test_proposer_liste():
+    agendas = ["calendar.boulot", "calendar.perso", "calendar.famille", "calendar.anniversaires",
+               "calendar.jours_feries", A.AUCUN]
+    i = _infos()
+    # Jamais devinées par le package : une proposition plausible et unique.
+    assert A.proposer_liste(_liste("agenda_travail"), agendas, A.AUCUN, i) == ("calendar.boulot", True)
+    assert A.proposer_liste(_liste("agenda_rdv"), agendas, A.AUCUN, i) == ("calendar.perso", True), "par le nom"
+    presences = ["binary_sensor.salon_occupancy", "binary_sensor.porte", A.AUCUN]
+    assert A.proposer_liste(_liste("presence"), presences, A.AUCUN, i) == ("binary_sensor.salon_occupancy", True)
+    assert A.proposer_liste(_liste("pipeline"), ["Home Assistant", "Autre", A.AUCUN], A.AUCUN, i) == \
+        ("Home Assistant", True)
+    assert A.proposer_liste(_liste("pipeline"), [A.AUCUN], A.AUCUN, i) == (A.AUCUN, False), "pas de tablette"
+    # Un choix déjà fait reste, même si une autre candidate existe.
+    assert A.proposer_liste(_liste("agenda_travail"), agendas, "calendar.famille", i) == ("calendar.famille", False)
+    # Deux candidates : rien de proposé.
+    deux = agendas[:-1] + ["calendar.work_shifts", A.AUCUN]
+    assert A.proposer_liste(_liste("agenda_travail"), deux, A.AUCUN, i) == (A.AUCUN, False)
+    # Un agenda que le package range ailleurs n'est jamais proposé pour le travail.
+    assert A.proposer_liste(_liste("agenda_travail"), ["calendar.anniversaires_boulot", A.AUCUN], A.AUCUN, i) == \
+        (A.AUCUN, False)
+    # Devinées par le package : son état montre déjà sa candidate, gardée telle quelle.
+    assert A.proposer_liste(_liste("agenda_feries"), agendas, "calendar.jours_feries", i) == \
+        ("calendar.jours_feries", False)
+    assert A._auto("agenda_feries", agendas, i) == ["calendar.jours_feries"]
+    assert A._auto("telephone_suivi", ["device_tracker.pixel", "person.axel", A.AUCUN], i) == ["device_tracker.pixel"]
+
+
+def test_changements_et_resumes():
+    assert A.changements({"agenda_travail": "calendar.boulot", "presence": A.AUCUN, "pipeline": ""},
+                         {"agenda_travail": A.AUCUN, "presence": A.AUCUN}) == {"agenda_travail": "calendar.boulot"}
+    noms = {"calendar.boulot": "Planning boulot", "media_player.tele": "Télé"}
+    fr = A.resume_listes({"agenda_travail": "calendar.boulot"}, {"agenda_travail"}, noms, "fr")
+    assert "agenda de travail → Planning boulot (proposé)" in fr and "calendar." not in fr
+    assert "aucun changement" in A.resume_listes({}, set(), noms, "fr")
+    assert "work calendar → Planning boulot (suggested)" in A.resume_listes(
+        {"agenda_travail": "calendar.boulot"}, {"agenda_travail"}, noms, "en")
+    maison = A.resume_maison({"tv": "media_player.tele", "serre_exterieure": True}, noms, "fr")
+    assert "TV : Télé" in maison and "dehors : oui" in maison and "media_player." not in maison
+    assert "rien de proposé" in A.resume_maison({}, noms, "fr")
+
+
 # ─── Textes ──────────────────────────────────────────────────────────────────
 
 def test_resume_et_messages():
@@ -335,7 +506,11 @@ def test_resume_et_messages():
         assert "```yaml\n- id: '1'\n```" in texte and titre.startswith("Tab5")
         for resultat in ("cree", "mis_a_jour", "non_chargee", "rien"):
             assert messages.assistant_resultat(langue, resultat, entite="automation.x", sauvegarde="s")[1]
-    assert "Rien n'a changé" in messages.assistant_resultat("fr", "rien")[1]
+    assert "Automatisation inchangée" in messages.assistant_resultat("fr", "rien")[1]
+    texte = messages.assistant_resultat("fr", "rien", listes=["agenda de travail → Boulot"],
+                                        listes_ratees=["pipeline de discussion → X"])[1]
+    assert "réglées : agenda de travail → Boulot" in texte and "Pas réglées" in texte and "pipeline" in texte
+    assert "réglées" not in messages.assistant_resultat("fr", "cree")[1], "aucune liste : pas de ligne"
 
 
 def test_formulaires_et_traductions():
@@ -347,8 +522,13 @@ def test_formulaires_et_traductions():
         t = json.loads((INTEGRATION / "translations" / f"{langue}.json").read_text(encoding="utf-8"))
         options = t["options"]
         reparation = t["issues"][const.ISSUE_ASSISTANT]["fix_flow"]
-        for etape in ("pieces", "piece", "recapitulatif"):
+        for etape in ("pieces", "piece", "maison", "agendas", "recapitulatif"):
             assert reparation["step"][etape] == options["step"][etape], (langue, etape)
+            assert f'step_id="{etape}"' in flux, etape
+        assert set(options["step"]["maison"]["data"]) == {c for c, _ in A.CHAMPS_MAISON}
+        assert set(options["step"]["maison"]["data_description"]) <= {c for c, _ in A.CHAMPS_MAISON}
+        assert set(options["step"]["agendas"]["data"]) == {liste.cle for liste in A.LISTES}
+        assert set(options["step"]["agendas"]["data_description"]) <= {liste.cle for liste in A.LISTES}
         assert reparation["abort"] == options["abort"] and reparation["error"] == options["error"]
         assert set(options["step"]["piece"]["data"]) == champs_piece
         assert set(options["step"]["pieces"]["data"]) == {"pieces"}

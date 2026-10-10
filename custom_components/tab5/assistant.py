@@ -7,7 +7,12 @@
          MAX_PIECES pièces et, pour chacune, ses tuiles (MAX_TUILES entités des domaines
          DOMAINES_AUTO, dans cet ordre), son capteur de température, d'humidité et sa clim
          (entrées piece_n_temperature / _humidite / _clim, ADR-0040) ;
-      2. construit les entrées du blueprint tab5_emplacements à partir des choix ;
+      2. propose les entrées de la maison (celles qui ne dépendent pas d'une pièce,
+         CHAMPS_MAISON) quand il n'y a pas d'ambiguïté, et les choix des listes
+         « Tab5 · … » de packages/tab5_reglages.yaml (LISTES : les règles du package pour
+         celles qu'il devine, une proposition plausible pour les quatre qu'il ne devine
+         jamais) ;
+      2 bis. construit les entrées du blueprint tab5_emplacements à partir des choix ;
       3. lit et écrit automations.yaml : une automatisation `use_blueprint` ajoutée, ou les
          pièces d'une automatisation existante remplacées (seulement sur demande
          explicite), sauvegarde d'abord, écriture atomique, relecture qui vérifie le
@@ -89,6 +94,7 @@ class Entite:
     cachee: bool = False
     categorie: str | None = None   # entity_category : config, diagnostic
     presente: bool = True          # un état dans HA (intégration chargée)
+    plateforme: str | None = None  # intégration qui la fournit (mobile_app, holiday…)
 
     @property
     def domaine(self) -> str:
@@ -164,6 +170,188 @@ def classer_zones(zones: list[Zone], parzone: dict[str, list[Entite]]) -> list[Z
     return sorted(candidates, key=lambda z: (-score(parzone.get(z.id, [])), z.nom.casefold(), z.id))
 
 
+# ─── Maison : les entrées qui ne dépendent pas d'une pièce ──────────────────
+
+# (entrée du blueprint, nature) dans l'ordre du formulaire Maison. Nature : « domaine » ou
+# « domaine:classe », « bool », « texte » ; tests/test_assistant_tab5.py les compare au
+# blueprint. Les autres entrées (rangées, panneau Ok Nabu, gestes, énergie, tuile − / +,
+# météo pluie / vigilances, ancien accueil) ne sont pas proposées : leur réponse n'est pas
+# dans les registres de HA (inventaire dans l'ADR-0053).
+CHAMPS_MAISON = (
+    ("tv", "media_player"), ("tv_telecommande", "remote"), ("telephone", "sensor:battery"),
+    ("salon_temperature", "sensor:temperature"), ("salon_humidite", "sensor:humidity"),
+    ("serre_temperature", "sensor:temperature"), ("serre_exterieure", "bool"),
+    ("clim", "climate"),
+    ("pot_1", "sensor:moisture"), ("pot_2", "sensor:moisture"), ("pot_3", "sensor:moisture"),
+    ("pot_4", "sensor:moisture"), ("pot_5", "sensor:moisture"),
+    ("meteo_previsions", "weather"), ("tablette", "texte"),
+)
+TABLETTE_DEFAUT = "tab5_ha_hmi"
+MAX_POTS = 5  # pot_1 à pot_5 ; plus de capteurs : lesquels montrer n'est pas évident
+# Une température dehors, d'après son nom ou son entity_id (la seconde température).
+DEHORS = re.compile(r"ext[eé]rieu?r|outdoor|outside|dehors|au(?:ss|ß)en|buiten|esterno", re.I)
+
+
+def proposer_maison(entites: list[Entite], appareils: dict[str, Appareil], modele_tablette: str,
+                    pieces: list[Piece], nom_esphome: str | None = None) -> dict[str, Any]:
+    """Les entrées de la maison, seulement quand la réponse est sans ambiguïté (une seule
+    candidate) : la TV (seul media_player de classe tv) et sa télécommande (seul remote de
+    son appareil), la batterie du téléphone (seul capteur de batterie de l'application
+    mobile), la température et l'humidité de la pièce 1 pour celles du salon, la seule
+    température dont le nom dit « dehors » (seconde température, dehors), la seule clim,
+    les pots (1 à 5 capteurs d'humidité du sol), la seule entité météo, le nom ESPHome de
+    la tablette s'il n'est pas celui par défaut. Sinon rien : le blueprint garde son défaut."""
+    utiles = sorted((e for e in entites if utilisable(e, appareils, modele_tablette)), key=_cle_tri)
+
+    def de(domaine: str, classe: str | None = None) -> list[Entite]:
+        return [e for e in utiles if e.domaine == domaine and (classe is None or e.classe == classe)]
+
+    def seule(liste: list[Entite]) -> str | None:
+        return liste[0].entity_id if len(liste) == 1 else None
+
+    p: dict[str, Any] = {}
+    tvs = de("media_player", "tv")
+    if (tv := seule(tvs)) is not None:
+        p["tv"] = tv
+        if tvs[0].appareil:
+            p["tv_telecommande"] = seule([e for e in de("remote") if e.appareil == tvs[0].appareil])
+    p["telephone"] = seule([e for e in de("sensor", "battery") if e.plateforme == "mobile_app"])
+    if pieces:
+        p["salon_temperature"], p["salon_humidite"] = pieces[0].temperature, pieces[0].humidite
+    dehors = [e for e in de("sensor", "temperature") if DEHORS.search(e.nom) or DEHORS.search(e.entity_id)]
+    if (s := seule(dehors)) is not None:
+        p["serre_temperature"], p["serre_exterieure"] = s, True
+    p["clim"] = seule(de("climate"))
+    pots = de("sensor", "moisture")
+    if len(pots) <= MAX_POTS:
+        p.update({f"pot_{n}": e.entity_id for n, e in enumerate(pots, 1)})
+    p["meteo_previsions"] = seule(de("weather"))
+    if nom_esphome:
+        p["tablette"] = nom_esphome.strip().replace("-", "_")
+    return entrees_maison(p)
+
+
+def entrees_maison(valeurs: dict[str, Any], anciennes: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Les entrées de la maison à écrire : vides, décochées et nom de tablette par défaut
+    omis (le blueprint a déjà ce défaut), dans l'ordre de CHAMPS_MAISON. Une case décochée
+    alors que l'automatisation existante (`anciennes`) l'avait est gardée à False : sinon
+    fusionner() reprendrait l'ancienne valeur. Un champ vidé, lui, garde l'ancienne valeur
+    (vider n'efface rien ; on retire une entrée dans l'automatisation)."""
+    anciennes = anciennes or {}
+    entrees = {}
+    for cle, nature in CHAMPS_MAISON:
+        v = valeurs.get(cle)
+        if isinstance(v, str):
+            v = v.strip()
+        if nature == "bool" and v is False and cle in anciennes:
+            entrees[cle] = False
+            continue
+        if v in (None, "", [], False) or (cle == "tablette" and v == TABLETTE_DEFAUT):
+            continue
+        entrees[cle] = v
+    return entrees
+
+
+# ─── Listes « Tab5 · … » (packages/tab5_reglages.yaml) ──────────────────────
+
+AUCUN = "Aucun"
+
+
+@dataclass(frozen=True)
+class Liste:
+    cle: str        # champ du formulaire Agendas
+    select: str     # entity_id du select du package (default_entity_id)
+    devinee: bool   # le package la devine-t-il déjà quand elle n'est pas réglée ?
+
+
+LISTES = (
+    Liste("agenda_travail", "select.tab5_agenda_de_travail", False),
+    Liste("agenda_rdv", "select.tab5_agenda_des_rendez_vous", False),
+    Liste("agenda_anniversaires", "select.tab5_agenda_des_anniversaires", True),
+    Liste("agenda_feries", "select.tab5_agenda_des_jours_feries", True),
+    Liste("agenda_vacances", "select.tab5_agenda_des_vacances_scolaires", True),
+    Liste("telephone_suivi", "select.tab5_telephone", True),
+    Liste("presence", "select.tab5_capteur_de_presence", False),
+    Liste("pipeline", "select.tab5_pipeline_de_discussion", False),
+)
+# Les règles du package (auto_anniversaires, auto_vacances, auto_feries : mêmes motifs,
+# cherchés dans l'entity_id ; tests/test_assistant_tab5.py les compare), puis des mots
+# plausibles pour les deux agendas qu'il ne devine pas (cherchés aussi dans le nom).
+MOTS_PACKAGE = {
+    "agenda_anniversaires": "anniversaire|birthday|geburtstag|verjaardag|cumplea|compleann",
+    "agenda_vacances": ("vacances_scolaires|calendrier_scolaire|school|schulferien|schoolvakantie"
+                        "|vacaciones_escolares|vacanze_scolastiche"),
+    "agenda_feries": "ferie|holiday|feiertag|feestdag|festiv",
+}
+MOTS_PROPOSES = {
+    "agenda_travail": re.compile(r"travail|boulot|work|job|shift|arbeit|dienst|werk|trabajo|lavoro", re.I),
+    "agenda_rdv": re.compile(r"rendez|rdv|appointment|termin|afspra|cita|appuntament", re.I),
+}
+CLASSES_PRESENCE = ("occupancy", "presence")
+
+
+@dataclass
+class Infos:
+    """Ce que les règles des listes lisent dans HA, en plus des options de chaque liste."""
+    noms: dict[str, str] = field(default_factory=dict)
+    plateformes: dict[str, str] = field(default_factory=dict)
+    classes: dict[str, str] = field(default_factory=dict)
+    pipeline_prefere: str | None = None
+
+
+def _calendriers(options: list[str]) -> list[str]:
+    return [o for o in options if o.startswith("calendar.")]
+
+
+def _auto(cle: str, options: list[str], infos: Infos) -> list[str]:
+    """Les candidates des règles du package (auto_*), pour une liste qu'il devine."""
+    agendas = _calendriers(options)
+    if cle in ("agenda_anniversaires", "agenda_vacances"):
+        return [a for a in agendas if re.search(MOTS_PACKAGE[cle], a)]
+    if cle == "agenda_feries":
+        vacances = _auto("agenda_vacances", options, infos)
+        feries = [a for a in agendas if infos.plateformes.get(a) == "holiday"]
+        feries += [a for a in agendas if re.search(MOTS_PACKAGE[cle], a) and a not in vacances]
+        return list(dict.fromkeys(feries))
+    if cle == "telephone_suivi":
+        return [o for o in options if o.startswith("device_tracker.") and infos.plateformes.get(o) == "mobile_app"]
+    return []
+
+
+def _propose(cle: str, options: list[str], infos: Infos) -> list[str]:
+    """Les candidates plausibles d'une liste que le package ne devine jamais."""
+    if cle in MOTS_PROPOSES:
+        deja = {a for c in MOTS_PACKAGE for a in _auto(c, options, infos)}
+        autre = "agenda_rdv" if cle == "agenda_travail" else "agenda_travail"
+        resultat = []
+        for a in _calendriers(options):
+            texte = f"{a} {infos.noms.get(a, '')}"
+            if a not in deja and MOTS_PROPOSES[cle].search(texte) and not MOTS_PROPOSES[autre].search(texte):
+                resultat.append(a)
+        return resultat
+    if cle == "presence":
+        return [o for o in options if o.startswith("binary_sensor.") and infos.classes.get(o) in CLASSES_PRESENCE]
+    if cle == "pipeline":
+        return [infos.pipeline_prefere] if infos.pipeline_prefere in options else []
+    return []
+
+
+def proposer_liste(liste: Liste, options: list[str], actuel: str | None, infos: Infos) -> tuple[str, bool]:
+    """(valeur proposée, est-ce une proposition de l'assistant ?). Un choix déjà fait reste ;
+    sinon la seule candidate des règles ; sinon « Aucun »."""
+    if actuel and actuel != AUCUN and actuel in options:
+        return actuel, False
+    candidates = [c for c in (_auto if liste.devinee else _propose)(liste.cle, options, infos) if c in options]
+    if len(candidates) == 1:
+        return candidates[0], True
+    return (AUCUN if AUCUN in options else (actuel or AUCUN)), False
+
+
+def changements(choix: dict[str, str], actuels: dict[str, str]) -> dict[str, str]:
+    """Les listes à changer (select.select_option) : celles dont le choix diffère."""
+    return {cle: v for cle, v in choix.items() if v and v != actuels.get(cle)}
+
+
 # ─── Entrées du blueprint ────────────────────────────────────────────────────
 
 def entrees_blueprint(pieces: list[Piece]) -> dict[str, Any]:
@@ -185,11 +373,12 @@ def entrees_blueprint(pieces: list[Piece]) -> dict[str, Any]:
     return entrees
 
 
-def fusionner(anciennes: dict[str, Any] | None, pieces: dict[str, Any]) -> dict[str, Any]:
-    """Les entrées d'une automatisation existante, ses pièces remplacées par `pieces` ; tout
-    le reste (météo, énergie, gestes…) gardé tel quel, dans son ordre."""
-    gardees = {k: v for k, v in (anciennes or {}).items() if not ENTREE_PIECE.match(k)}
-    return {**pieces, **gardees}
+def fusionner(anciennes: dict[str, Any] | None, nouvelles: dict[str, Any]) -> dict[str, Any]:
+    """Les entrées d'une automatisation existante : ses pièces toutes remplacées par celles
+    de `nouvelles`, ses autres entrées remplacées seulement par une valeur de `nouvelles`
+    (maison) ; tout le reste (énergie, gestes…) gardé tel quel."""
+    gardees = {k: v for k, v in (anciennes or {}).items() if not ENTREE_PIECE.match(k) and k not in nouvelles}
+    return {**nouvelles, **gardees}
 
 
 # ─── automations.yaml ────────────────────────────────────────────────────────
@@ -384,6 +573,54 @@ def situation(config: Path, ids_dans_ha: set[str]) -> Situation:
         index = next(i for i, a in enumerate(liste) if a is nos[0])
         return Situation("mettre_a_jour", texte=texte, existante=nos[0], index=index, automatisations=liste)
     return Situation("creer", texte=texte, automatisations=liste)
+
+
+# Libellés courts du récapitulatif (français, anglais).
+LIBELLES = {
+    "tv": ("TV", "TV"), "tv_telecommande": ("télécommande", "remote"),
+    "telephone": ("batterie du téléphone", "phone battery"),
+    "salon_temperature": ("température du salon", "room temperature"),
+    "salon_humidite": ("humidité du salon", "room humidity"),
+    "serre_temperature": ("seconde température", "second temperature"),
+    "serre_exterieure": ("dehors", "outdoors"), "clim": ("clim", "climate"),
+    "pot_1": ("pot 1", "pot 1"), "pot_2": ("pot 2", "pot 2"), "pot_3": ("pot 3", "pot 3"),
+    "pot_4": ("pot 4", "pot 4"), "pot_5": ("pot 5", "pot 5"),
+    "meteo_previsions": ("météo", "weather"), "tablette": ("nom ESPHome", "ESPHome name"),
+    "agenda_travail": ("agenda de travail", "work calendar"),
+    "agenda_rdv": ("agenda des rendez-vous", "appointments calendar"),
+    "agenda_anniversaires": ("agenda des anniversaires", "birthdays calendar"),
+    "agenda_feries": ("agenda des jours fériés", "public holidays calendar"),
+    "agenda_vacances": ("agenda des vacances scolaires", "school holidays calendar"),
+    "telephone_suivi": ("téléphone", "phone"), "presence": ("capteur de présence", "presence sensor"),
+    "pipeline": ("pipeline de discussion", "chat pipeline"),
+}
+
+
+def resume_maison(maison: dict[str, Any], noms: dict[str, str], langue: str | None) -> str:
+    fr = (langue or "").lower().startswith("fr")
+    if not maison:
+        return "- **Maison** : rien de proposé" if fr else "- **Home**: nothing proposed"
+    parties = []
+    for cle, valeur in maison.items():
+        libelle = LIBELLES.get(cle, (cle, cle))[0 if fr else 1]
+        texte = ("oui" if fr else "yes") if valeur is True else noms.get(valeur, valeur)
+        parties.append(f"{libelle} : {texte}" if fr else f"{libelle}: {texte}")
+    return "- **Maison** : " + " ; ".join(parties) if fr else "- **Home**: " + "; ".join(parties)
+
+
+def resume_listes(changees: dict[str, str], proposees: set[str], noms: dict[str, str],
+                  langue: str | None) -> str:
+    fr = (langue or "").lower().startswith("fr")
+    if not changees:
+        return ("- **Listes « Tab5 · … »** : aucun changement" if fr
+                else "- **« Tab5 · … » lists**: no change")
+    parties = []
+    for cle, valeur in changees.items():
+        libelle = LIBELLES.get(cle, (cle, cle))[0 if fr else 1]
+        marque = (" (proposé)" if fr else " (suggested)") if cle in proposees else ""
+        parties.append(f"{libelle} → {noms.get(valeur, valeur)}{marque}")
+    return ("- **Listes « Tab5 · … »** : " + " ; ".join(parties) if fr
+            else "- **« Tab5 · … » lists**: " + "; ".join(parties))
 
 
 def resume(pieces: list[Piece], noms: dict[str, str], langue: str | None) -> str:

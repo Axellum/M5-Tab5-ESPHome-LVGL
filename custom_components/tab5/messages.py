@@ -82,32 +82,34 @@ def assistant_action(langue: str | None, action: str, alias: str = "", raison: s
     """Ce que fera la validation du récapitulatif de l'assistant (assistant.Situation.action)."""
     if _fr(langue):
         textes = {
-            "creer": "Valider crée l'automatisation « Tab5 — emplacements de l'écran » dans "
+            "creer": "Valider crée l'automatisation « Tab5 — emplacements de l'écran » (pièces et maison) dans "
                      "`automations.yaml` (sauvegardé avant dans `tab5_sauvegardes/automatisations/`), "
                      "puis recharge les automatisations. Tout reste modifiable ensuite dans l'automatisation.",
             "mettre_a_jour": f"Une automatisation du blueprint existe déjà : « {alias} ». Elle ne change que "
                              "si vous cochez la case ci-dessous : ses pièces sont alors remplacées par "
-                             "celles-ci, ses autres réglages restent (`automations.yaml` sauvegardé avant). "
-                             "Sans la case, rien ne change.",
+                             "celles-ci, ses entrées de la maison par celles remplies ici, ses autres "
+                             "réglages restent (`automations.yaml` sauvegardé avant). "
+                             "Sans la case, elle ne change pas.",
             "ailleurs": "Une automatisation du blueprint existe déjà, hors de `automations.yaml` : "
-                        "l'assistant n'y touche pas. Valider ne change rien.",
+                        "l'assistant n'y touche pas.",
             "plusieurs": "Plusieurs automatisations du blueprint existent déjà : l'assistant ne choisit pas "
-                         "laquelle changer. Valider ne change rien.",
+                         "laquelle changer : il n'y touche pas.",
             "fichier": f"L'assistant n'écrira pas `automations.yaml` ({raison}). Valider met le YAML à "
                        "coller dans une notification.",
         }
     else:
         textes = {
-            "creer": "Submitting creates the automation « Tab5 — screen slots » in `automations.yaml` "
+            "creer": "Submitting creates the automation « Tab5 — screen slots » (rooms and home) in `automations.yaml` "
                      "(saved first in `tab5_sauvegardes/automatisations/`), then reloads the automations. "
                      "Everything stays editable in the automation afterwards.",
             "mettre_a_jour": f"An automation of the blueprint already exists: « {alias} ». It only changes if "
-                             "you tick the box below: its rooms are then replaced by these ones, its other "
-                             "settings stay (`automations.yaml` saved first). Without the box, nothing changes.",
+                             "you tick the box below: its rooms are then replaced by these ones, its home inputs by "
+                             "the ones filled in here, its other settings stay (`automations.yaml` saved "
+                             "first). Without the box, it does not change.",
             "ailleurs": "An automation of the blueprint already exists outside `automations.yaml`: the "
-                        "assistant leaves it alone. Submitting changes nothing.",
+                        "assistant leaves it alone.",
             "plusieurs": "Several automations of the blueprint already exist: the assistant does not pick "
-                         "which one to change. Submitting changes nothing.",
+                         "which one to change: it leaves them alone.",
             "fichier": f"The assistant will not write `automations.yaml` ({raison}). Submitting puts the YAML "
                        "to paste in a notification.",
         }
@@ -116,9 +118,11 @@ def assistant_action(langue: str | None, action: str, alias: str = "", raison: s
 
 def assistant_resultat(langue: str | None, resultat: str, *, entite: str | None = None,
                        sauvegarde: str | None = None, yaml_a_coller: str = "",
-                       raison: str = "") -> tuple[str, str]:
+                       raison: str = "", listes: list[str] | None = None,
+                       listes_ratees: list[str] | None = None) -> tuple[str, str]:
     """(titre, message) à la fin de l'assistant. `resultat` : « cree », « mis_a_jour »,
-    « non_chargee » (écrite, mais HA ne l'a pas chargée), « rien » ou « a_coller »."""
+    « non_chargee » (écrite, mais HA ne l'a pas chargée), « rien » ou « a_coller ».
+    `listes` / `listes_ratees` : les listes « Tab5 · … » réglées ou pas (« libellé → choix »)."""
     fr = _fr(langue)
     titre = "Tab5 : assistant de configuration" if fr else "Tab5: setup assistant"
     lignes = []
@@ -152,7 +156,13 @@ def assistant_resultat(langue: str | None, resultat: str, *, entite: str | None 
                           "automations file, then reload the automations:")
         lignes.append(f"```yaml\n{yaml_a_coller.rstrip()}\n```")
     else:
-        lignes.append(("Rien n'a changé" if fr else "Nothing changed") + (f" ({raison})." if raison else "."))
+        lignes.append(("Automatisation inchangée" if fr else "Automation unchanged") + (f" ({raison})." if raison else "."))
+    if listes:
+        lignes.append(("Listes « Tab5 · … » réglées : " if fr else "« Tab5 · … » lists set: ") + " ; ".join(listes) + ".")
+    if listes_ratees:
+        lignes.append(("Pas réglées (à faire dans Paramètres → Appareils et services → Entités) : " if fr
+                       else "Not set (do it in Settings → Devices & services → Entities): ")
+                      + " ; ".join(listes_ratees) + ".")
     return titre, "\n\n".join(lignes)
 
 
