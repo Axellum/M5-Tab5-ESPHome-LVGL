@@ -1,0 +1,31 @@
+# ADR-0056: Several remotes in the remote popup — one page per remote chosen in the blueprint, keys translated by Home Assistant
+
+**Status:** Accepted (2026-10-10, asked for by the author; not tried on a tablet when written).
+**Date:** 2026-10-10
+
+## Context
+
+The remote popup drove one remote: the TV's (`tv_telecommande` input of the « Tab5 — emplacements » blueprint), with Samsung key codes (`KEY_UP`, `KEY_ENTER`…). The author has three: the Samsung TV (`samsungtv` integration), an Apple TV and a Freebox Player — both seen by Home Assistant through the Apple TV integration (pyatv). He wants them all in the same popup, a nicer layout, and touch targets at least as large as before.
+
+Constraints: push-only and events-only ([ADR-0001](0001-push-only-zero-polling.md), [ADR-0025](0025-events-only.md)) — the firmware names no entity and calls no action; the shared modal chrome ([ADR-0009](0009-modal-shell-header.md)); one swipe mechanism for popups with pages ([ADR-0046](0046-popups-a-pages.md)); colours from the palette ([ADR-0029](0029-themes-palette.md)); instant transitions; a user who only filled `tv_telecommande` must see no change.
+
+Verified on 2026-10-10 in `homeassistant/components/apple_tv/remote.py` (dev branch): `send_command` resolves any name with `getattr` on pyatv's `RemoteControl` (`up`, `down`, `left`, `right`, `select`, `menu`, `top_menu`, `home`, `play`, `pause`, `play_pause`, `stop`, `next`, `previous`, `skip_forward`, `skip_backward`…), except `turn_on` / `turn_off` (power) and `volume_up` / `volume_down`; there is no mute and no input source; `remote.turn_on` / `turn_off` only connect or disconnect Home Assistant. `samsungtv` passes the `KEY_*` codes through.
+
+## Decision
+
+- **Chosen in Home Assistant.** A new blueprint input, « Autres télécommandes · Other remotes » (`telecommandes_autres`, several `remote` entities, default empty). The list is `tv_telecommande` then the others, without duplicates, **four at most**; the rank is the page and the event slot: `tv` (the first, the slot a firmware before this ADR sends), `tv1`, `tv2`, `tv3`. An entity Home Assistant no longer knows keeps its place (pages do not move when a box sleeps) and is pushed without a name. The setup assistant ([ADR-0053](0053-setup-assistant-home-lists.md)) proposes the other remotes when it found the TV's own and there are three others at most.
+- **Pushed with every state.** A key of `tab5_maj_emplacements`, like `gestes` or `gauche`: `telecommandes|layout|name|layout|name…;` — layout `boitier` for an entity of the Apple TV integration (`integration_entities('apple_tv')`), `tv` otherwise; name = the device's (as named by the user), without its area and without a final parenthesis (« Salon · Freebox Player (Apple TV 3) » → « Freebox Player »), `|` and `;` replaced. Pushed even empty (`telecommandes|;` clears the pages). Read in pure C++ by `telecommandes_lire()` (`Tab5/socle/tab5_parse.*`, section 13; cases in `tools/test_parse.cpp`, fuzzed by `tools/fuzz/fuzz_parse.cpp`): complete pairs only, four at most, an unknown layout is `tv`. Nothing in NVS: until Home Assistant pushes, the single page of before.
+- **One page per remote.** `tab5_telecommande.cpp` (`Tab5/paquets/tab5-telecommande.yaml` hands it the widgets): the remotes' names at the top, right-aligned against the ×, and the left / right swipe — `PagesPopup` + `pages_brancher()` + `pages_onglets()`, never a second gesture handler. One remote, or none pushed: no names, no swipe. The title loses « TV » when names are shown. Changing page is instant: the same widgets are shown or hidden.
+- **Two layouts, one popup.** Body 1170 × 598 under the title: a main zone of 472 px and the bottom row (102 px).
+  - Main zone, left to right (290 + 24 + 400 + 24 + 258 + 24 + 150 = 1170): Power, Source (TV) or Stop (box), Menu — 290 × 128 each; the pad in a 400 px disc (arrows 150 × 110 pushed 20 px towards the rim, OK 160 px); Play, Pause, Back, Home — 258 × 100; volume 150 × 400 (+, Mute on a TV or the volume icon on a box, −). Every target is as large as before or larger.
+  - Bottom row: the TV's apps (Netflix, Prime, YouTube, CANAL+, PC) or the box's playback row (Previous, Rewind, Play / Pause, Forward, Next), 5 × 221.
+  - New template `tv_touche.yaml` (icon + word, seven uses); `tv_transport_btn.yaml` now makes the box's playback row.
+- **Keys keep the Samsung vocabulary.** Every key still sends `esphome.tab5_action` with `touche` / `alimentation` / `appli`; only the slot changes (`telecommande_cle()`: the page shown). The blueprint resolves the slot to its remote and, for a box, translates through one table (`telecommande_apple_tv`: `KEY_ENTER` → `select`, `KEY_RETURN` → `menu`, `KEY_MENU` → `top_menu`, `KEY_REWIND` → `skip_backward`…); a key without an equivalent (Mute, Source) sends nothing. Power: on a box, the `turn_on` / `turn_off` command according to its device's `media_player` (off, standby or unknown → on); on another remote, `remote.toggle`; slot `tv` with no remote, the TV's `media_player.toggle`, as before. Apps stay the Samsung TV's (`script.tab5_tv_app`, the TV of « Tab5 · TV Samsung »).
+- **Screen TV available without the blueprint's TV.** The navigation wheel, « Aller à l'écran » and the gestures offer the remote when the TV zone is present **or** Home Assistant pushed remotes (an Apple TV alone).
+
+## Consequences
+
+- API contract unchanged (1.2.0): no action or field added, `tab5_maj_emplacements` carries one more key, which an older firmware ignores. Both orders work: a new firmware with an older blueprint shows the single page and sends `tv`; an older firmware with the new blueprint sends `tv`, the first remote, the TV's.
+- A `tv` remote of another brand (Android TV, Harmony…) gets the Samsung `KEY_*` codes as before; a translation for it would be one more table and layout.
+- Six new screen texts in six languages; MDI glyphs `rewind` (F045F), `fast-forward` (F0211), `play-pause` (F040E) and `volume-high` (F057E) added to `mdi_font_45`.
+- Checked: blueprint templates rendered against the author's three devices with `ha_eval_template` (read only), `tests/test_telecommandes.py` (codes, slots, translations, rendered payload and routing), the off-device render. Not checked: the keys on the real devices, the Freebox Player's power commands.

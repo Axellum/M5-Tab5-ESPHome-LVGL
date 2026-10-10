@@ -50,7 +50,7 @@ A long press on one of the two home-screen temperatures opens its history ([ADR-
 
 | Zone | Blueprint input | Hidden when empty |
 |---|---|---|
-| TV | TV, and Télécommande de la TV for the remote keys | TV button and remote; « HA » and « Sys » move one column right |
+| TV | TV, and Télécommande de la TV for the remote keys (Autres télécommandes: up to three more pages, an Apple TV, a Freebox Player…) | TV button and remote; « HA » and « Sys » move one column right |
 | Phone | Batterie du téléphone | Status icon |
 | Room | Température de la pièce (and Humidité de la pièce) | Its temperature |
 | Greenhouse | Seconde température (serre) | Its temperature; the icon becomes a carousel, its tap still switches the area left of the clock |
@@ -129,7 +129,7 @@ Un appui long sur l'une des deux températures de l'accueil ouvre son historique
 
 | Zone | Entrée du blueprint | Masqué quand elle est vide |
 |---|---|---|
-| TV | TV, et Télécommande de la TV pour les touches | Bouton TV et télécommande ; « HA » et « Sys » glissent d'une colonne |
+| TV | TV, et Télécommande de la TV pour les touches (Autres télécommandes : jusqu'à trois pages de plus, un Apple TV, un Freebox Player…) | Bouton TV et télécommande ; « HA » et « Sys » glissent d'une colonne |
 | Téléphone | Batterie du téléphone | Icône d'état |
 | Pièce | Température de la pièce (et Humidité de la pièce) | Sa température |
 | Serre | Seconde température (serre) | Sa température ; l'icône devient un carrousel, son tap change toujours la zone à gauche de l'horloge |
