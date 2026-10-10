@@ -780,7 +780,14 @@ bool ha_image_url(const Champ& image, const char* base, char* out, size_t n) {
 // ─── 10. Popup Caméras (ADR-0049) ───
 // Lot « Caméras » (09/10/2026) : la base et l'URL viennent des aides de la section 9.
 
-int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax]) {
+namespace {
+bool champs_egaux(const Champ& a, const Champ& b) {
+    return a.n == b.n && (a.n == 0 || std::memcmp(a.p, b.p, a.n) == 0);
+}
+}  // namespace
+
+int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax], int* pieces) {
+    if (pieces != nullptr) *pieces = 0;
     if (payload.p == nullptr) return 0;
     const char* p = payload.p;
     const char* fin = p + payload.n;
@@ -791,11 +798,37 @@ int cameras_lire(const Champ& payload, CameraLue cameras[kCamerasMax]) {
         const char* qf = c.p + c.n;
         const Champ nom = champ_suivant(q, qf, '|');
         const Champ image = champ_suivant(q, qf, '|');
-        if (image.n == 0) continue;  // vide, « ;; » ou « nom| » : rien à montrer
-        cameras[n].nom = nom;
-        cameras[n].image = image;
+        const Champ piece = champ_suivant(q, qf, '|');
+        const Champ hors = champ_suivant(q, qf, '|');
+        const uint32_t hors_ligne = champ_entier(hors, 0xFFFFFFFEu, 0);
+        // Vide, « ;; » ou « nom| » : rien à montrer. Une caméra hors ligne sans image est
+        // gardée : l'écran dit depuis quand.
+        if (image.n == 0 && hors_ligne == 0) continue;
+        CameraLue& l = cameras[n];
+        l = CameraLue{};
+        l.nom = nom;
+        l.image = image;
+        l.piece = piece;
+        l.hors_ligne = hors_ligne;
         n++;
     }
+    // Rangs des pièces : dans l'ordre de leur première caméra, la pièce vide en dernier.
+    int np = 0;
+    Champ distinctes[kCamerasMax];
+    bool vide = false;
+    for (int i = 0; i < n; i++) {
+        if (cameras[i].piece.n == 0) {
+            vide = true;
+            continue;
+        }
+        int j = 0;
+        while (j < np && !champs_egaux(distinctes[j], cameras[i].piece)) j++;
+        if (j == np) distinctes[np++] = cameras[i].piece;
+        cameras[i].piece_i = static_cast<int8_t>(j);
+    }
+    for (int i = 0; i < n; i++)
+        if (cameras[i].piece.n == 0) cameras[i].piece_i = static_cast<int8_t>(np);
+    if (pieces != nullptr) *pieces = np + (vide ? 1 : 0);
     return n;
 }
 

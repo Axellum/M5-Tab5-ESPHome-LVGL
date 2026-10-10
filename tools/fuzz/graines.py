@@ -75,6 +75,10 @@ LIMITES = [
     (";", "lecteur_bornes", "a|tv;;b\n9|x||playing|||||-1|1e99|inf|2|-|ONE|zz|https://i.example/a b"),
     # Caméras (ADR-0049) : adresse IPv6, image vide, espace, taille déjà donnée, URL complète.
     ("<", "cameras_bornes", "fd00::1\n|;A|/a b;B|/api/camera_proxy/c?width=1;C|https://x/y.jpg;D|" + "a" * 400),
+    # Pièces et hors ligne (ADR-0056) : pièce vide en tête, même pièce en casse différente,
+    # hors ligne sans image, horodatages illisible, négatif et trop grand, plus de 16 caméras.
+    ("<", "cameras_pieces", "\nA|/a||;B|/b|Jardin|x;C||jardin|1760000000;D|/d|Jardin|-1;E|/e|É|99999999999;"
+     + ";".join(f"C{i}|/c{i}|P{i % 5}" for i in range(20))),
 ]
 
 
