@@ -124,6 +124,7 @@ esphome:
     - Tab5/ecran/tab5_zone_gauche.h
     - Tab5/ecran/tab5_lecteur.h
     - Tab5/ecran/tab5_cameras.h
+    - Tab5/ecran/tab5_suivi.h
     - Tab5/ecran/tab5_cameras_charge.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_custom.cpp
@@ -195,6 +196,8 @@ esphome:
     - Tab5/ecran/tab5_lecteur.cpp
     # Popup Caméras : l'image fixe des caméras de HA, une page par caméra (ADR-0049).
     - Tab5/ecran/tab5_cameras.cpp
+    # Capteurs suivis : popup « Suivi » et carte de la zone à gauche de l'horloge (ADR-0054).
+    - Tab5/ecran/tab5_suivi.cpp
     - Tab5/ecran/tab5_cameras_charge.cpp
     # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
     # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
@@ -470,6 +473,9 @@ packages:
   tab5_lecteur: !include Tab5/paquets/tab5-lecteur.yaml
   # Popup Caméras (ADR-0049) : APRES tab5_lvgl (widgets), ouvert par HA ou par un geste.
   tab5_cameras: !include Tab5/paquets/tab5-cameras.yaml
+  # Capteurs suivis (ADR-0054) : APRES tab5_lvgl (widgets), poussés par HA, ouverts par la
+  # carte de la zone à gauche de l'horloge, un geste ou HA.
+  tab5_suivi: !include Tab5/paquets/tab5-suivi.yaml
   # Zones optionnelles (lot 5) : APRES tab5_lvgl (widgets). Ses substitutions sont les
   # valeurs par défaut des entity_… : une clé de Tab5/user_entities.yaml l'emporte.
   tab5_zones: !include Tab5/paquets/tab5-zones.yaml

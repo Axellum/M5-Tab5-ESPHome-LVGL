@@ -111,6 +111,9 @@ script:
           // Caméras (ADR-0049) : pose les widgets à la première ouverture, demande la liste.
           ModalRegistry::add(id(cameras_popup),          "Caméras",          ModalRegistry::POPUP,
                              [] { id(tab5_cameras_ouvrir).execute(); });
+          // Suivi (ADR-0054) : les capteurs suivis, dernier état reçu (rien n'est demandé à HA).
+          ModalRegistry::add(id(suivi_popup),            "Suivi",            ModalRegistry::POPUP,
+                             [] { id(tab5_suivi_ouvrir).execute(); });
           // Après les popups qu'une de ses lignes ouvre : ouverts devant lui, ils sont nommés.
           // Maison (ADR-0037) : pose les widgets, les dispose et peint.
           ModalRegistry::add(id(maison_popup),           "Maison",           ModalRegistry::POPUP,
@@ -371,6 +374,8 @@ select:
       - "Musique"
       # L'image des caméras (ADR-0049, 09/10/2026) : une sonnette l'ouvre d'ici. À la fin.
       - "Caméras"
+      # Les capteurs suivis (ADR-0054, 10/10/2026), à la fin aussi.
+      - "Suivi"
     on_value:
       # Toute l'ouverture est dans tab5_ecran_ouvrir (plus haut), partagé avec les appuis
       # longs des boutons du haut : l'index de l'option EST la valeur d'Ecran

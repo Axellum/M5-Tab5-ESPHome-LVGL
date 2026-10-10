@@ -1,0 +1,205 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file packages/tab5_suivi.yaml
+# @role Capteurs suivis de la tablette (ADR-0054, 10/10/2026) : le popup « Suivi » (une
+#       carte par capteur : nom, valeur, variation, courbe des 24 dernières heures) et la
+#       carte du PREMIER capteur dans la zone à gauche de l'horloge (contenu « capteur »
+#       du blueprint, ADR-0051). N'importe quel capteur numérique : un cours de bourse,
+#       une température, une consommation…
+#         - Les capteurs proposés : la liste « Tab5 · capteurs suivis · tracked sensors »
+#           (packages/tab5_reglages.yaml, plusieurs choix, 6 au plus, jamais devinés) ;
+#           sa mémoire input_text.tab5_choix_suivis. Seuls les capteurs à state_class
+#           measurement y sont : les autres n'ont pas de statistiques, donc pas de courbe.
+#         - Poussée : script.tab5_suivi_pousser (action tab5_maj_suivi) quand un capteur
+#           suivi change (cinq minutes au plus entre deux poussées), tout de suite quand
+#           la liste change, à la connexion de la tablette, à « MAJ Écran », au démarrage
+#           de HA et toutes les heures (la courbe avance même sans changement).
+# @payload_contract tab5_maj_suivi (Tab5/paquets/tab5-api-logic.yaml, tab5_parse.h
+#       section 11) : payload = un enregistrement par capteur, séparés par « ; » :
+#       « nom|valeur|unité|variation|genre|points ».
+#         nom = friendly_name (40 caractères ; vide : l'écran écrit « Capteur », jamais
+#           un entity_id) ; valeur = l'état tel quel s'il est numérique, vide sinon ;
+#         variation et genre = change_pct et « p » quand l'entité le donne (cours de
+#           bourse : variation du jour en %), sinon l'écart entre la valeur et la
+#           première heure de la courbe, et « a » ; vides sans les deux ;
+#         points = 24 moyennes horaires (statistiques du recorder) puis la valeur
+#           actuelle, ramenées de 0 (minimum) à 100 (maximum), 50 pour une courbe plate,
+#           vide pour une heure sans ligne ; vide sous deux mesures.
+#       Les « | », « ; » et sauts de ligne des textes deviennent « / », « , » et espaces.
+#       Payload vide : aucun capteur choisi (l'écran dit où le choisir, la zone gauche
+#       saute le contenu « capteur »).
+# @data_sources recorder.get_statistics (period hour, type mean) depuis l'heure ronde
+#       moins 24 h, en UTC (24 créneaux d'une heure, sans piège de changement d'heure).
+#       Sans state_class, pas de ligne : la carte montre la valeur sans courbe.
+# @limits Une courbe ne tombe à zéro qu'au minimum des 24 h : une variation de 0,1 % y
+#       paraît aussi grande qu'une de 10 % (c'est une tendance, pas une échelle).
+#       Cinq minutes entre deux poussées : un capteur qui change toutes les secondes
+#       ne charge ni HA ni la tablette.
+# @install Avec les autres packages (homeassistant.packages: !include_dir_named
+#       packages), après tab5_reglages.yaml et custom_templates/tab5_tablette.jinja.
+#       Rien à renseigner ici.
+# @tests tests/test_suivi.py rend ces modèles sur des réponses de get_statistics simulées
+#       et compare à un calcul Python indépendant.
+# ============================================================================
+
+template:
+  # Miroir : un déclencheur `state:` exige un entity_id écrit dans le YAML. Son état est
+  # le nombre de capteurs choisis, son attribut `signature` change dès qu'un d'eux change
+  # (état, nom, unité, variation du jour).
+  - sensor:
+      - name: "Tab5 · signature du suivi"
+        unique_id: tab5_suivi_signature
+        icon: mdi:chart-line
+        state: >-
+          {{ states('input_text.tab5_choix_suivis').split(',') | map('trim')
+             | select('match', 'sensor[.]') | unique | list | count }}
+        attributes:
+          signature: >-
+            {%- set n = namespace(s='') -%}
+            {%- for e in (states('input_text.tab5_choix_suivis').split(',') | map('trim')
+                 | select('match', 'sensor[.]') | unique | list)[:6] -%}
+              {%- set n.s = n.s ~ e ~ '=' ~ states(e) ~ '|' ~ (state_attr(e, 'friendly_name') | string) ~ '|'
+                   ~ (state_attr(e, 'unit_of_measurement') | string) ~ '|' ~ (state_attr(e, 'change_pct') | string) ~ ';' -%}
+            {%- endfor -%}
+            {{ n.s }}
+
+automation:
+  # Un capteur suivi a changé : poussée tout de suite, puis rien pendant cinq minutes
+  # (mode single : les changements de cette attente sont ignorés en silence), puis une
+  # dernière poussée si la signature a bougé entre-temps.
+  - id: tab5_suivi
+    alias: "Tab5 — capteurs suivis (poussée au changement)"
+    description: >-
+      Pousse vers la tablette les capteurs de la liste « Tab5 · capteurs suivis » quand
+      l'un d'eux change, cinq minutes au plus entre deux poussées (ADR-0054).
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: sensor.tab5_signature_du_suivi
+    actions:
+      - variables:
+          poussee: "{{ state_attr('sensor.tab5_signature_du_suivi', 'signature') | string }}"
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_suivi_pousser
+      - delay:
+          minutes: 5
+      - condition: template
+        value_template: "{{ state_attr('sensor.tab5_signature_du_suivi', 'signature') | string != poussee }}"
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_suivi_pousser
+
+  # Tout de suite : liste changée, tablette (re)connectée, « MAJ Écran », démarrage de HA,
+  # et toutes les heures (la courbe avance d'une heure même sans changement).
+  - id: tab5_suivi_immediat
+    alias: "Tab5 — capteurs suivis (poussée immédiate)"
+    description: >-
+      Pousse vers la tablette les capteurs suivis quand la liste « Tab5 · capteurs
+      suivis » change, à la connexion de la tablette, à « MAJ Écran », au démarrage de
+      Home Assistant et toutes les heures (ADR-0054).
+    mode: queued
+    max: 3
+    triggers:
+      - trigger: state
+        entity_id: input_text.tab5_choix_suivis
+      - trigger: event
+        event_type: esphome.tab5_connected
+      - trigger: event
+        event_type: esphome.tab5_maj_ecran
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: 1
+    conditions:
+      # Garde d'origine (comme tab5_evenements.yaml) : un événement d'une tablette
+      # tab5-ha-hmi seulement ; les autres déclencheurs passent toujours.
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
+    actions:
+      - action: script.turn_on
+        target:
+          entity_id: script.tab5_suivi_pousser
+
+script:
+  tab5_suivi_pousser:
+    alias: "Tab5 — capteurs suivis : pousser"
+    description: >-
+      Pousse les capteurs de la liste « Tab5 · capteurs suivis » (action tab5_maj_suivi) :
+      nom, valeur, unité, variation et courbe des 24 dernières heures. Mode restart :
+      deux demandes rapprochées partent en une seule poussée.
+    mode: restart
+    sequence:
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' }}
+      - variables:
+          liste: >-
+            {{ (states('input_text.tab5_choix_suivis').split(',') | map('trim')
+               | select('match', 'sensor[.]') | unique | list)[:6] }}
+          # Heure ronde moins 24 h, en UTC : 24 créneaux d'une heure, quel que soit le
+          # changement d'heure.
+          debut: "{{ (utcnow().replace(minute=0, second=0, microsecond=0) - timedelta(hours=24)).isoformat() }}"
+      # Toujours appelée, au même niveau que ce qui lit sa réponse (une variable posée
+      # dans un if n'en sort pas) ; sans capteur, sur une liste vide.
+      - action: recorder.get_statistics
+        data:
+          start_time: "{{ debut }}"
+          statistic_ids: "{{ liste }}"
+          period: hour
+          types:
+            - mean
+        response_variable: stats
+        continue_on_error: true
+      - variables:
+          payload: >-
+            {%- macro t(v, n) -%}{{ ((v or '') | string | replace('|', '/') | replace(';', ',') | replace('\n', ' ') | trim)[:n] }}{%- endmacro -%}
+            {%- set brut = stats.statistics if stats is defined and stats is mapping
+                  and stats.statistics is defined and stats.statistics is mapping else {} -%}
+            {%- set d0 = as_datetime(debut) -%}
+            {%- set ns = namespace(l=[]) -%}
+            {%- for e in liste -%}
+              {%- set brut_v = states(e) -%}
+              {%- set v = brut_v | float if brut_v | is_number else none -%}
+              {%- set h = namespace(m={}) -%}
+              {%- for r in brut.get(e, []) if r.get('mean') is number -%}
+                {%- set i = ((as_datetime(r.start) - d0).total_seconds() / 3600) | round(0) | int -%}
+                {%- if 0 <= i < 24 -%}
+                  {%- set h.m = dict(h.m, **{i | string: r.mean}) -%}
+                {%- endif -%}
+              {%- endfor -%}
+              {%- set s = namespace(l=[]) -%}
+              {%- for i in range(24) -%}
+                {%- set s.l = s.l + [h.m.get(i | string)] -%}
+              {%- endfor -%}
+              {%- set s.l = s.l + [v] -%}
+              {%- set connus = s.l | reject('none') | list -%}
+              {%- set bas = connus | min if connus else 0 -%}
+              {%- set haut = connus | max if connus else 0 -%}
+              {%- set p = namespace(l=[]) -%}
+              {%- for x in s.l -%}
+                {%- set p.l = p.l + ['' if x is none else (((x - bas) / (haut - bas) * 100) | round(0) | int
+                      if haut > bas else 50)] -%}
+              {%- endfor -%}
+              {%- set premier = (s.l[:24] | reject('none') | list | first) if s.l[:24] | reject('none') | list else none -%}
+              {%- set pct = state_attr(e, 'change_pct') -%}
+              {%- if pct is number -%}
+                {%- set variation, genre = pct | round(4), 'p' -%}
+              {%- elif v is not none and premier is not none -%}
+                {%- set variation, genre = (v - premier) | round(4), 'a' -%}
+              {%- else -%}
+                {%- set variation, genre = '', '' -%}
+              {%- endif -%}
+              {%- set ns.l = ns.l + [[t(state_attr(e, 'friendly_name'), 40), brut_v if v is not none else '',
+                    t(state_attr(e, 'unit_of_measurement'), 16), variation, genre,
+                    (p.l | join(',')) if connus | count >= 2 else ''] | join('|')] -%}
+            {%- endfor -%}
+            {{ ns.l | join(';') }}
+      - action: esphome.tab5_ha_hmi_tab5_maj_suivi
+        continue_on_error: true
+        data:
+          payload: "{{ payload }}"

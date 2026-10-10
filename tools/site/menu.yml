@@ -132,6 +132,9 @@
         - en: Cameras
           fr: Caméras
           page: docs/notice/cameras.md
+        - en: Tracking
+          fr: Suivi
+          page: docs/notice/tracking.md
         - en: Settings
           fr: Réglages
           page: docs/notice/settings.md

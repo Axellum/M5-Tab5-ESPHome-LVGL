@@ -48,6 +48,7 @@
 #include "tab5_zone_gauche.h"
 #include "tab5_lecteur.h"
 #include "tab5_cameras.h"
+#include "tab5_suivi.h"
 #include "tab5_alertes.h"
 #include "tab5_maison.h"
 #include "tab5_piece_climat.h"

@@ -79,6 +79,8 @@ services:
     payload: string
   tab5_maj_reponse_vocale:
     texte: string
+  tab5_maj_suivi:
+    payload: string
   tab5_maj_tuiles:
     payload: string
   tab5_maj_volet_etat:

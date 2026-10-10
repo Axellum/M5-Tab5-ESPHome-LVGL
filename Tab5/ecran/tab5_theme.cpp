@@ -2491,6 +2491,8 @@ void theme_rejouer_ui() {
     zone_gauche_rejouer_theme();
     // Lecteur de musique (ADR-0050) : pastille active, aléatoire et répétition actifs, muet.
     lecteur_rejouer_theme();
+    // Capteurs suivis (ADR-0054) : couleurs des variations, courbes, dégradé de la zone.
+    suivi_rejouer_theme();
     alertes_rejouer_theme();
     zones_rejouer_theme();
     assist_rejouer_theme();

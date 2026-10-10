@@ -871,7 +871,8 @@ views:
                                ('select.tab5_tv_samsung', 'TV Samsung', 'Samsung TV', 'mdi:television'),
                                ('input_text.tab5_tv_adresse', 'Adresse de la TV', 'TV address', 'mdi:ip-network'),
                                ('select.tab5_volet_a_course_simulee', 'Volet à course simulée', 'Shutter with simulated travel', 'mdi:window-shutter'),
-                               ('select.tab5_lecteurs_de_musique', 'Lecteurs de musique (popup Musique)', 'Music players (Music popup)', 'mdi:music-box-multiple')] %}
+                               ('select.tab5_lecteurs_de_musique', 'Lecteurs de musique (popup Musique)', 'Music players (Music popup)', 'mdi:music-box-multiple'),
+                               ('select.tab5_capteurs_suivis', 'Capteurs suivis (popup Suivi)', 'Tracked sensors (Tracking popup)', 'mdi:chart-line')] %}
 {%- if e in present %}
           - type: tile
             entity: {{ e }}
@@ -2299,6 +2300,12 @@ views:
     'es': 'Reproductores de música (ventana Música)',
     'it': 'Lettori musicali (popup Musica)',
     'tr': 'Müzik oynatıcıları (Müzik penceresi)'},
+  'Capteurs suivis (popup Suivi)': {
+    'de': 'Verfolgte Sensoren (Popup Verlauf)',
+    'nl': 'Gevolgde sensoren (pop-up Volgen)',
+    'es': 'Sensores seguidos (ventana Seguimiento)',
+    'it': 'Sensori monitorati (popup Monitoraggio)',
+    'tr': 'Takip edilen sensörler (Takip penceresi)'},
   'Volet à course simulée': {
     'de': 'Rollladen mit simulierter Laufzeit',
     'nl': 'Rolluik met gesimuleerde looptijd',

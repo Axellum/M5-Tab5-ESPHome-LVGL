@@ -1,0 +1,50 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file suivi_popup.yaml
+# @role Popup « Suivi » (ADR-0054, 10/10/2026) : les capteurs de la liste « Tab5 · capteurs
+#       suivis » de Home Assistant (six au plus), une carte chacun — nom, valeur et unité,
+#       variation colorée avec sa flèche de tendance, courbe des 24 dernières heures.
+#       Ouvert par un tap sur la carte du capteur dans la zone à gauche de l'horloge, par
+#       « Aller à l'écran → Suivi » ou par un geste de l'accueil (code « suivi »).
+# @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
+#       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Suivi » dans
+#       tab5_modal_registry_init, ouvert par tab5_suivi_ouvrir). Corps : x 24..1226,
+#       y 72..670 ; tab5_suivi.cpp y répartit les cartes (une rangée jusqu'à trois
+#       capteurs, deux au-delà, 16 px d'écart) : aucune place posée ici.
+# @ai_instruction Un widget de plus = son champ dans SuiviUI (tab5_suivi.h) et sa ligne
+#       dans le script tab5_suivi_lier (tab5-suivi.yaml).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: suivi_popup
+  align: CENTER
+  width: 100%
+  height: 100%
+  hidden: true
+  scrollable: false
+  styles: style_invisible
+  widgets:
+    - !include { file: modal_scrim.yaml, vars: { scrim_opa: "100", popup_id: suivi_popup } }
+
+    # Carte modale — 15 px des bords écran (1280×720)
+    - obj:
+        align: CENTER
+        width: ${modal_card_w}
+        height: ${modal_card_h}
+        styles: style_modal_card
+        scrollable: false
+        widgets:
+
+          # ═══ BARRE DE TITRE (cadre v4 : icône + titre + croix, corps à y=72) ═══
+          - !include { file: modal_header.yaml, vars: { icon: "\U000F012A", icon_style: "style_text_accent", title: "Suivi", title_id: "suivi_popup_titre", close_btn_id: "btn_suivi_close", popup_id: suivi_popup } }
+
+          # ═══ UNE CARTE PAR CAPTEUR SUIVI (placées par tab5_suivi.cpp) ═══
+          - !include { file: suivi_carte.yaml, vars: { n: "0" } }
+          - !include { file: suivi_carte.yaml, vars: { n: "1" } }
+          - !include { file: suivi_carte.yaml, vars: { n: "2" } }
+          - !include { file: suivi_carte.yaml, vars: { n: "3" } }
+          - !include { file: suivi_carte.yaml, vars: { n: "4" } }
+          - !include { file: suivi_carte.yaml, vars: { n: "5" } }
+
+          # Avant la première poussée de HA, ou sans capteur choisi (et où le choisir).
+          - label: { id: suivi_attente, text: "", align: CENTER, y: -10, styles: style_text_dim }
+          - label: { id: suivi_conseil, text: "", align: CENTER, y: 30, styles: style_text_dim, hidden: true }

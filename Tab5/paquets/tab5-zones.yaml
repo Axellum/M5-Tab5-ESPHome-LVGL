@@ -40,6 +40,9 @@ script:
       # la zone à gauche de l'horloge (ADR-0051) peut être le contenu de départ, avant toute
       # poussée de HA.
       - script.execute: tab5_lecteur_lier
+      # Widgets des capteurs suivis (ADR-0054, tab5-suivi.yaml) : la carte du capteur de la
+      # zone à gauche de l'horloge peut être le contenu de départ.
+      - script.execute: tab5_suivi_lier
       - lambda: |-
           ZonesUI& u = g_zones_ui;
           // Bandeau d'état, une ligne par valeur de BandeauIcone (tab5_custom.h).
@@ -72,12 +75,13 @@ script:
           u.assist_discu = id(btn_assist_pipe_discu);
           u.assist_cerveau = id(lbl_assist_cerveau);
           zones_apply_ui();
-          // Zone à gauche de l'horloge (ADR-0051) : vocal, graphique ou lecteur, d'après la
+          // Zone à gauche de l'horloge (ADR-0051) : vocal, graphique, lecteur ou capteur, d'après la
           // NVS puis le blueprint (clé « gauche »), avant la première image.
           ZoneGaucheUI& g = g_zone_gauche_ui;
           g.vocal = id(zone_vocal);
           g.graphique = id(zone_graphique);
           g.lecteur = id(zone_lecteur);
+          g.capteur = id(zone_suivi);
           g.police = id(roboto_22);
           zone_gauche_appliquer();
           id(tab5_zones_masquees).publish_state(zones_texte_masquees());

@@ -85,6 +85,7 @@ esphome:
     - Tab5/ecran/tab5_zone_gauche.h
     - Tab5/ecran/tab5_lecteur.h
     - Tab5/ecran/tab5_cameras.h
+    - Tab5/ecran/tab5_suivi.h
     - Tab5/ecran/tab5_cameras_charge.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_custom.cpp
@@ -126,6 +127,7 @@ esphome:
     - Tab5/ecran/tab5_zone_gauche.cpp
     - Tab5/ecran/tab5_lecteur.cpp
     - Tab5/ecran/tab5_cameras.cpp
+    - Tab5/ecran/tab5_suivi.cpp
     - Tab5/ecran/tab5_cameras_charge.cpp
     - Tab5/jeux/game_common.h
     - Tab5/jeux/marble_game.h
@@ -265,6 +267,7 @@ packages:
   tab5_meteo: !include Tab5/paquets/tab5-meteo.yaml
   tab5_lecteur: !include Tab5/paquets/tab5-lecteur.yaml
   tab5_cameras: !include Tab5/paquets/tab5-cameras.yaml
+  tab5_suivi: !include Tab5/paquets/tab5-suivi.yaml
   tab5_zones: !include Tab5/paquets/tab5-zones.yaml
   tab5_reglages: !include Tab5/paquets/tab5-reglages.yaml
   tab5_economie: !include Tab5/paquets/tab5-economie.yaml

@@ -725,6 +725,19 @@ api:
         - script.execute: tab5_lecteur_lier
         - lambda: 'lecteur_recu(lecteurs, etat);'
 
+    # Capteurs suivis (ADR-0054, 10/10/2026) : packages/tab5_suivi.yaml pousse les capteurs de
+    # « Tab5 · capteurs suivis » ; le premier est la carte de la zone à gauche de l'horloge.
+    - service: tab5_maj_suivi
+      description: "Capteurs suivis : nom, valeur, unité, variation et courbe des 24 h de chaque capteur choisi."
+      variables:
+        payload:
+          type: string
+          description: "Capteurs choisis dans « Tab5 · capteurs suivis », dans l'ordre, séparés par ; — « nom|valeur|unité|variation|genre|points » : valeur nombre à point décimal (vide ou illisible : « -- »), variation nombre (vide sans), genre p (pourcentage du jour, attribut change_pct) ou a (écart depuis le début de la courbe, dans l'unité), points = la courbe des 24 dernières heures ramenée de 0 (minimum) à 100 (maximum), séparés par des virgules, vide pour une heure sans mesure. 6 capteurs et 32 points au plus ; vide : aucun capteur choisi. Les « | » et « ; » des textes sont remplacés par « / » et « , »."
+          example: "Tesla|382.7|USD|2.05|p|20,25,31,40,38,52,61,70;Serre|21.4|°C|-1.5|a|90,80,,60,55,50"
+      then:
+        - script.execute: tab5_suivi_lier
+        - lambda: 'suivi_recu(payload);'
+
 # Fenêtre d'appairage (lot 6b, ADR-0020) : une tablette qui n'a pas encore de clé API
 # (neuve, ou jamais ajoutée à HA) n'accepte le premier contact de HA que pendant les
 # 30 minutes qui suivent son démarrage. Passé ce délai, elle refuse toute connexion et

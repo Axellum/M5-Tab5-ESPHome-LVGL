@@ -28,13 +28,17 @@
 #       (choisi : le toucher le retire) et « ○ media_player.x » (le toucher l'ajoute, 6 au
 #       plus) ; la mémoire input_text.tab5_choix_lecteurs garde les entity_id séparés par
 #       des virgules, dans l'ordre du choix : c'est elle que lit packages/tab5_lecteur.yaml.
+#       « Tab5 · capteurs suivis » (ADR-0054) marche de même (options « ✓ sensor.x » /
+#       « ○ sensor.x », 6 au plus, mémoire input_text.tab5_choix_suivis lue par
+#       packages/tab5_suivi.yaml) ; ne propose que les capteurs à state_class measurement
+#       (ceux qui ont des statistiques, donc une courbe).
 #       Choix par défaut (liste jamais réglée) seulement quand il n'y a pas
 #       d'ambiguïté : le seul agenda dont le nom dit « anniversaires » (ou
 #       birthday…), le seul agenda de jours fériés (intégration Jours fériés, ou nom
 #       qui le dit), le seul téléphone de l'application mobile, le seul agenda dont
 #       le nom dit « vacances scolaires » (ou school holidays…). Agenda de travail,
-#       agenda des rendez-vous, capteur de présence, pipeline de discussion et lecteurs
-#       de musique : jamais devinés.
+#       agenda des rendez-vous, capteur de présence, pipeline de discussion, lecteurs
+#       de musique et capteurs suivis : jamais devinés.
 # @i18n Noms des listes en deux langues, « français · english » (29/09/2026) : ce
 #       sont eux que cherche un utilisateur non francophone. Les ÉTATS (« Aucun »,
 #       entity_id, noms de pipeline) ne se traduisent jamais : les packages les lisent.
@@ -87,6 +91,11 @@ input_text:
     name: "Tab5 · mémoire · lecteurs de musique"
     icon: mdi:content-save-outline
     max: 255
+  # Capteurs suivis du popup Suivi (ADR-0054) : entity_id séparés par des virgules.
+  tab5_choix_suivis:
+    name: "Tab5 · mémoire · capteurs suivis"
+    icon: mdi:content-save-outline
+    max: 255
   # Réglé à la main (pas une mémoire de liste). Mots qui font d'un événement de
   # l'agenda de travail un événement de TRAVAIL (horaires du planning, heure du
   # réveil) : séparés par des virgules, sans casse, cherchés dans le titre. Vide =
@@ -119,6 +128,7 @@ template:
           - input_text.tab5_choix_telephone
           - input_text.tab5_choix_presence
           - input_text.tab5_choix_lecteurs
+          - input_text.tab5_choix_suivis
     # Audit du 07/10/2026, HA-18 : pas pour une mise à jour du registre qui ne touche que
     # capabilities / supported_features / options / suggested_object_id (419 des 485
     # entity_registry_updated chez l'auteur du 01 au 08/10/2026), que la liste ne lit
@@ -156,6 +166,16 @@ template:
         {{ states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
            | select('match', 'media_player[.]') | unique | list }}
       lecteurs_resume: "{{ lecteurs_choisis | count }} choisi(s) · {{ lecteurs_choisis | count }} chosen"
+      # Capteurs suivis (ADR-0054) : ceux qui ont des statistiques (state_class
+      # measurement, donc une courbe), les choisis d'abord.
+      suivis_ha: >-
+        {{ states.sensor | selectattr('attributes.state_class', 'defined')
+           | selectattr('attributes.state_class', 'eq', 'measurement')
+           | map(attribute='entity_id') | list }}
+      suivis_choisis: >-
+        {{ states('input_text.tab5_choix_suivis').split(',') | map('trim')
+           | select('match', 'sensor[.]') | unique | list }}
+      suivis_resume: "{{ suivis_choisis | count }} choisi(s) · {{ suivis_choisis | count }} chosen"
     select:
       - name: "Tab5 · agenda de travail · work calendar"
         unique_id: tab5_agenda_de_travail
@@ -308,6 +328,35 @@ template:
           - action: input_text.set_value
             target:
               entity_id: input_text.tab5_choix_lecteurs
+            data:
+              value: "{{ liste }}"
+      # Même principe (ADR-0054) : six capteurs au plus, les cartes du popup Suivi ; le
+      # premier est aussi la carte de la zone à gauche de l'horloge (contenu « capteur »).
+      - name: "Tab5 · capteurs suivis · tracked sensors"
+        unique_id: tab5_capteurs_suivis
+        default_entity_id: select.tab5_capteurs_suivis
+        icon: mdi:chart-line
+        options: >-
+          {{ [suivis_resume] + (suivis_choisis | map('regex_replace', '^', '✓ ') | list)
+             + (suivis_ha | reject('in', suivis_choisis) | map('regex_replace', '^', '○ ') | list) }}
+        state: "{{ suivis_resume }}"
+        select_option:
+          - variables:
+              entite: "{{ option[2:] | trim }}"
+              liste: >-
+                {%- set choisis = states('input_text.tab5_choix_suivis').split(',') | map('trim')
+                     | select('match', 'sensor[.]') | unique | list -%}
+                {%- if option.startswith('✓ ') -%}
+                  {{ choisis | reject('eq', entite) | join(',') }}
+                {%- elif option.startswith('○ ') and entite.startswith('sensor.') and entite not in choisis
+                         and choisis | count < 6 -%}
+                  {{ (choisis + [entite]) | join(',') }}
+                {%- else -%}
+                  {{ choisis | join(',') }}
+                {%- endif -%}
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_suivis
             data:
               value: "{{ liste }}"
 

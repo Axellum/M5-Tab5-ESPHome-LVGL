@@ -134,6 +134,8 @@ constexpr CodeGeste kCodesGestes[] = {
     {"musique", Ecran::MUSIQUE, GesteAction::ECRAN},
     // Popup Caméras (09/10/2026, ADR-0049) : ajouté à la fin (NVS, index 25).
     {"cameras", Ecran::CAMERAS, GesteAction::ECRAN},
+    // Capteurs suivis (10/10/2026, ADR-0054) : ajouté à la fin (NVS, index 26).
+    {"suivi", Ecran::SUIVI, GesteAction::ECRAN},
 };
 constexpr int kNbCodes = static_cast<int>(sizeof(kCodesGestes) / sizeof(kCodesGestes[0]));
 constexpr int8_t kAuto = -1;
@@ -487,6 +489,7 @@ const char* code_glyphe(int8_t c) {
         case Ecran::METEO: return "\U000F0595";       // weather-partly-cloudy (titre du popup Météo)
         case Ecran::MUSIQUE: return "\U000F075A";     // music (titre du popup Musique)
         case Ecran::CAMERAS: return "\U000F07AE";     // cctv (titre du popup Caméras)
+        case Ecran::SUIVI: return "\U000F012A";       // chart-line (titre du popup Suivi)
         case Ecran::ARCADE: return "\U000F0297";      // gamepad-variant
         default: return nullptr;
     }

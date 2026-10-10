@@ -1388,3 +1388,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Adresse de Home Assistant inconnue": "Home Assistant adresi bilinmiyor"
 "Image de %02d:%02d:%02d": "Görsel saati: %02d:%02d:%02d"
 "Plus d'image depuis %02d:%02d:%02d": "Son görsel: %02d:%02d:%02d"
+
+# --- Capteurs suivis (tab5_suivi.cpp, ADR-0054) ---------------------------------
+"Suivi": "Takip"
+"Aucun capteur suivi": "Takip edilen sensör yok"
+"Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis ».": "Sensörlerinizi Home Assistant'ta seçin: “Tab5 · capteurs suivis · tracked sensors”."
+"Capteur": "Sensör"

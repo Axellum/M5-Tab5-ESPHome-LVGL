@@ -3,7 +3,7 @@
  * @file tab5_zone_gauche.cpp
  * @role Zone à gauche de l'horloge au choix (ADR-0051, 10/10/2026, demande d'Axel : « sur
  *       cette zone, j'aimerais qu'on puisse choisir soit le vocal, soit un lecteur audio,
- *       soit un graphique ; très beau, léger »). Trois contenus :
+ *       soit un graphique ; très beau, léger »). Quatre contenus :
  *         - « vocal » : le conteneur zone_vocal de tab5-lvgl.yaml (micro, Domo, Discu),
  *           montré ou masqué d'un bloc ; ses widgets, leurs gestes et le masquage de Domo /
  *           Discu sans pipeline de discussion (zone « discussion », tab5_zones.cpp) ne
@@ -22,6 +22,12 @@
  *           (mêmes données et commandes que le popup Musique, lecteur_zone_montrer) et
  *           masque la mini-barre « en lecture » tant qu'elle est montrée. Sauté quand HA a
  *           dit qu'aucun lecteur n'est choisi (lecteur_zone_disponible).
+ *         - « capteur » (ADR-0054) : la carte zone_suivi (suivi_zone.yaml), montrée ou
+ *           masquée d'ici ; tab5_suivi.cpp la peint (le premier capteur de « Tab5 · capteurs
+ *           suivis » : nom, valeur, variation, courbe des 24 h sur un dégradé). Elle
+ *           partage le tampon du dégradé du graphique (zone_degrade_peindre) : les deux ne
+ *           sont jamais montrés ensemble. Sautée quand HA a dit qu'aucun capteur n'est
+ *           choisi (suivi_zone_disponible).
  *       Ce qui est montré : le contenu courant (NVS), sinon celui de départ, sinon le vocal.
  *       Le blueprint choisit le départ et les contenus du cycle (clé « gauche »,
  *       zone_gauche_lire dans Tab5/socle/tab5_parse.cpp) ; un nouveau départ s'affiche tout
@@ -80,12 +86,14 @@ Etat s_etat;
 
 // Ce que l'écran sait montrer. Le lecteur compact (lot 2) : sauté quand HA a dit
 // qu'aucun lecteur n'est choisi (sa liste « Tab5 · lecteurs de musique » est vide) ; avant
-// toute poussée, il se montre (« En attente de Home Assistant »).
+// toute poussée, il se montre (« En attente de Home Assistant »). Le capteur suivi
+// (ADR-0054) de même avec la liste « Tab5 · capteurs suivis ».
 bool disponible(ZoneGauche z) {
     switch (z) {
         case ZoneGauche::VOCAL:
         case ZoneGauche::GRAPHIQUE: return true;
         case ZoneGauche::LECTEUR: return g_zone_gauche_ui.lecteur != nullptr && lecteur_zone_disponible();
+        case ZoneGauche::CAPTEUR: return g_zone_gauche_ui.capteur != nullptr && suivi_zone_disponible();
         default: return false;
     }
 }
@@ -177,9 +185,15 @@ struct Graphique {
 };
 Graphique s_g;
 lv_point_precise_t s_pts[(kHeuresMax - 1) * kLisse + 1];
+// Tampon du dégradé, partagé par les contenus de la zone (le graphique et le capteur suivi,
+// ADR-0054 : jamais montrés ensemble). Une seule image le montre à la fois (s_aire_image) ;
+// celle qui le reprend vide l'autre et prévient son contenu (s_aire_perdu), qui se marque
+// « sale » et repeint son dégradé à sa prochaine apparition.
 uint8_t* s_aire_px = nullptr;  // pixels du remplissage (kAireLMax × kAireHMax × 4 octets)
 lv_image_dsc_t s_aire_dsc;     // vit avec l'image : lv_image_set_src() ne le copie pas
 bool s_aire_trace = false;     // dégradé impossible déjà signalé (une trace, pas une par peinture)
+lv_obj_t* s_aire_image = nullptr;
+void (*s_aire_perdu)() = nullptr;
 static_assert(kHeuresMax <= kCourbeLissePoints, "ui_courbe_lisse ne trace pas plus de points");
 
 bool graphique_visible() {
@@ -271,23 +285,45 @@ void cacher_tout() {
 
 // ─── Remplissage sous la courbe ───
 
-// y de la courbe en x (interpolé entre deux points de s_pts), NAN hors de la courbe.
-float courbe_y(float x, int np) {
-    if (np < 2 || x < s_pts[0].x || x > s_pts[np - 1].x) return NAN;
+// y de la courbe `pts` en x (interpolé entre deux points), NAN hors de la courbe.
+float courbe_y_pts(const lv_point_precise_t* pts, int np, float x) {
+    if (np < 2 || x < pts[0].x || x > pts[np - 1].x) return NAN;
     int k = 0;
-    while (k < np - 2 && s_pts[k + 1].x < x) k++;
-    const float xa = s_pts[k].x, xb = s_pts[k + 1].x;
+    while (k < np - 2 && pts[k + 1].x < x) k++;
+    const float xa = pts[k].x, xb = pts[k + 1].x;
     const float t = xb > xa ? (x - xa) / (xb - xa) : 0.0f;
-    return s_pts[k].y + (s_pts[k + 1].y - s_pts[k].y) * t;
+    return pts[k].y + (pts[k + 1].y - pts[k].y) * t;
 }
 
-// Le dégradé sous la courbe, de kAireOpa sous le trait (bord lissé au pixel) à 0 au pied
-// `base` ; sa hauteur est celle de la courbe la plus haute possible (y_haut) : une heure
-// froide a un remplissage plus pâle. Calculé à chaque peinture (nouvelles prévisions ou
-// thème : quelques dizaines de milliers de pixels, une fois par heure au plus).
-void aire_peindre(int np, uint32_t couleur, int32_t y_haut, int32_t base) {
-    const int32_t x0 = static_cast<int32_t>(std::floor(s_pts[0].x));
-    const int32_t x1 = static_cast<int32_t>(std::ceil(s_pts[np - 1].x));
+// La courbe du graphique (s_pts).
+float courbe_y(float x, int np) { return courbe_y_pts(s_pts, np, x); }
+
+// Le graphique a perdu le tampon du dégradé (le capteur suivi l'a repris) : à repeindre.
+void graphique_perdu() { s_g.sale = true; }
+
+}  // namespace
+
+// Le dégradé sous la courbe `pts` dans `image`, de kAireOpa sous le trait (bord lissé au
+// pixel) à 0 au pied `base` ; sa hauteur est celle de la courbe la plus haute possible
+// (y_haut) : une courbe basse a un remplissage plus pâle. Calculé à chaque peinture
+// (nouvelles données ou thème : quelques dizaines de milliers de pixels). Faux, et l'image
+// masquée, quand il ne peut pas être peint (PSRAM refusée, hors du tampon).
+bool zone_degrade_peindre(lv_obj_t* image, const lv_point_precise_t* pts, int np, uint32_t couleur, int32_t y_haut,
+                          int32_t base, void (*perdu)()) {
+    if (image == nullptr || pts == nullptr || np < 2) {
+        ui_hidden(image, true);
+        return false;
+    }
+    // Le tampon passe à une autre image : la précédente est vidée et son contenu prévenu.
+    if (s_aire_image != nullptr && s_aire_image != image) {
+        lv_image_set_src(s_aire_image, nullptr);
+        ui_hidden(s_aire_image, true);
+        if (s_aire_perdu != nullptr) s_aire_perdu();
+    }
+    s_aire_image = image;
+    s_aire_perdu = perdu;
+    const int32_t x0 = static_cast<int32_t>(std::floor(pts[0].x));
+    const int32_t x1 = static_cast<int32_t>(std::ceil(pts[np - 1].x));
     const int32_t aw = x1 - x0 + 1, ah = base - y_haut;
     // PSRAM seulement : 156 Kio pris à la mémoire interne priveraient le Wi-Fi et lwIP ;
     // sans PSRAM libre, la courbe reste sans dégradé (une trace, une fois).
@@ -297,17 +333,17 @@ void aire_peindre(int np, uint32_t couleur, int32_t y_haut, int32_t base) {
     }
     if (s_aire_px == nullptr || aw <= 1 || ah <= 1 || aw > kAireLMax || ah > kAireHMax) {
         if (!s_aire_trace) {
-            ESP_LOGW("tab5.gauche", "Dégradé du graphique non peint (%s, %ld × %ld)",
+            ESP_LOGW("tab5.gauche", "Dégradé de la zone gauche non peint (%s, %ld × %ld)",
                      s_aire_px == nullptr ? "PSRAM refusée" : "hors du tampon", static_cast<long>(aw),
                      static_cast<long>(ah));
             s_aire_trace = true;
         }
-        ui_hidden(s_g.aire, true);
-        return;
+        ui_hidden(image, true);
+        return false;
     }
     const uint8_t r = (couleur >> 16) & 0xFF, g = (couleur >> 8) & 0xFF, b = couleur & 0xFF;
     for (int32_t i = 0; i < aw; i++) {
-        float yc = courbe_y(static_cast<float>(x0 + i) + 0.5f, np);
+        float yc = courbe_y_pts(pts, np, static_cast<float>(x0 + i) + 0.5f);
         if (std::isnan(yc)) yc = static_cast<float>(base);
         yc -= static_cast<float>(y_haut);
         for (int32_t j = 0; j < ah; j++) {
@@ -332,12 +368,15 @@ void aire_peindre(int np, uint32_t couleur, int32_t y_haut, int32_t base) {
     s_aire_dsc.data = s_aire_px;
     // Mêmes adresses, pixels neufs : rien de l'image d'avant ne doit rester en cache.
     lv_image_cache_drop(&s_aire_dsc);
-    lv_image_set_src(s_g.aire, nullptr);
-    lv_image_set_src(s_g.aire, &s_aire_dsc);
-    ui_x(s_g.aire, x0);
-    ui_y(s_g.aire, y_haut);
-    ui_hidden(s_g.aire, false);
+    lv_image_set_src(image, nullptr);
+    lv_image_set_src(image, &s_aire_dsc);
+    ui_x(image, x0);
+    ui_y(image, y_haut);
+    ui_hidden(image, false);
+    return true;
 }
+
+namespace {
 
 // ─── Repères du plus chaud et du plus froid ───
 
@@ -506,7 +545,7 @@ void peindre() {
     if (np >= 2) {
         ui_style_couleur(s_g.courbe, LV_STYLE_LINE_COLOR, couleur);
         lv_line_set_points(s_g.courbe, s_pts, static_cast<uint32_t>(np));
-        aire_peindre(np, couleur, y_haut, base);
+        zone_degrade_peindre(s_g.aire, s_pts, np, couleur, y_haut, base, graphique_perdu);
     } else {
         ui_hidden(s_g.aire, true);
     }
@@ -558,7 +597,9 @@ void zone_gauche_appliquer() {
     ui_hidden(u.vocal, z != ZoneGauche::VOCAL);
     ui_hidden(u.graphique, z != ZoneGauche::GRAPHIQUE);
     ui_hidden(u.lecteur, z != ZoneGauche::LECTEUR);
+    ui_hidden(u.capteur, z != ZoneGauche::CAPTEUR);
     lecteur_zone_montrer(z == ZoneGauche::LECTEUR);  // et la mini-barre, masquée ou rendue
+    suivi_zone_montrer(z == ZoneGauche::CAPTEUR);    // repeint s'il a changé caché
     if (z != ZoneGauche::GRAPHIQUE || u.graphique == nullptr) return;
     construire();
     if (s_g.sale) peindre();
