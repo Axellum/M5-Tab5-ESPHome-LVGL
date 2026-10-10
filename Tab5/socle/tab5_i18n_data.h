@@ -8,9 +8,14 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1180;
+static const uint16_t kI18nKeyCount = 1185;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1403,6 +1408,7 @@ static const char* const kI18nKeys[] = {
     "Aujourd'hui",
     "Aujourd'hui {heure}",
     "Auto",
+    "Autres",
     "Avancer",
     "Averses",
     "Avr",
@@ -1658,6 +1664,9 @@ static const char* const kI18nKeys[] = {
     "Home Assistant hors ligne",
     "Hors du top %d",
     "Hors ligne",
+    "Hors ligne depuis %02d:%02d",
+    "Hors ligne depuis %s %02d:%02d",
+    "Hors ligne depuis le %d %s",
     "Humidité",
     "IA : %s",
     "IMU",
@@ -2182,6 +2191,7 @@ static const char* const kI18nKeys[] = {
     "Tout ouvrir",
     "Tout vivant",
     "Tout éteindre",
+    "Toutes",
     "Toutes les parties et les réglages sont conservés dans le Tab.",
     "Trait : %s",
     "Trait aux %s",
@@ -2587,6 +2597,7 @@ static const char* const kI18n_en[] = {
     "Today",  // "Aujourd'hui"
     "Today {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Other",  // "Autres"
     "Forward",  // "Avancer"
     "Showers",  // "Averses"
     "Apr",  // "Avr"
@@ -2842,6 +2853,9 @@ static const char* const kI18n_en[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Not in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Offline since %02d:%02d",  // "Hors ligne depuis %02d:%02d"
+    "Offline since %s %02d:%02d",  // "Hors ligne depuis %s %02d:%02d"
+    "Offline since %d %s",  // "Hors ligne depuis le %d %s"
     "Humidity",  // "Humidité"
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
@@ -3366,6 +3380,7 @@ static const char* const kI18n_en[] = {
     "Open all",  // "Tout ouvrir"
     "All alive",  // "Tout vivant"
     "All off",  // "Tout éteindre"
+    "All",  // "Toutes"
     "All games and settings are kept on the Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turn: %s",  // "Trait : %s"
     "%s to move",  // "Trait aux %s"
@@ -3771,6 +3786,7 @@ static const char* const kI18n_de[] = {
     "Heute",  // "Aujourd'hui"
     "Heute {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Andere",  // "Autres"
     "Vorwärts",  // "Avancer"
     "Schauer",  // "Averses"
     "Apr",  // "Avr"
@@ -4026,6 +4042,9 @@ static const char* const kI18n_de[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Nicht in Top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Offline seit %02d:%02d",  // "Hors ligne depuis %02d:%02d"
+    "Offline seit %s %02d:%02d",  // "Hors ligne depuis %s %02d:%02d"
+    "Offline seit %d. %s",  // "Hors ligne depuis le %d %s"
     "Luftfeuchte",  // "Humidité"
     "KI: %s",  // "IA : %s"
     "IMU",  // "IMU"
@@ -4550,6 +4569,7 @@ static const char* const kI18n_de[] = {
     "Alle öffnen",  // "Tout ouvrir"
     "Alles lebt",  // "Tout vivant"
     "Alle aus",  // "Tout éteindre"
+    "Alle",  // "Toutes"
     "Alle Partien und Einstellungen bleiben im Tab gespeichert.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Am Zug: %s",  // "Trait : %s"
     "%s am Zug",  // "Trait aux %s"
@@ -4955,6 +4975,7 @@ static const char* const kI18n_nl[] = {
     "Vandaag",  // "Aujourd'hui"
     "Vandaag {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Overige",  // "Autres"
     "Vooruit",  // "Avancer"
     "Buien",  // "Averses"
     "Apr",  // "Avr"
@@ -5210,6 +5231,9 @@ static const char* const kI18n_nl[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Niet in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Offline sinds %02d:%02d",  // "Hors ligne depuis %02d:%02d"
+    "Offline sinds %s %02d:%02d",  // "Hors ligne depuis %s %02d:%02d"
+    "Offline sinds %d %s",  // "Hors ligne depuis le %d %s"
     "Vochtigheid",  // "Humidité"
     "AI: %s",  // "IA : %s"
     "IMU",  // "IMU"
@@ -5734,6 +5758,7 @@ static const char* const kI18n_nl[] = {
     "Alles open",  // "Tout ouvrir"
     "Alles levend",  // "Tout vivant"
     "Alles uit",  // "Tout éteindre"
+    "Alle",  // "Toutes"
     "Alle partijen en opties blijven bewaard in de Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Aan zet: %s",  // "Trait : %s"
     "%s aan zet",  // "Trait aux %s"
@@ -6139,6 +6164,7 @@ static const char* const kI18n_es[] = {
     "Hoy",  // "Aujourd'hui"
     "Hoy {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Otras",  // "Autres"
     "Adelantar",  // "Avancer"
     "Chubascos",  // "Averses"
     "Abr",  // "Avr"
@@ -6394,6 +6420,9 @@ static const char* const kI18n_es[] = {
     "Home Assistant sin conexión",  // "Home Assistant hors ligne"
     "Fuera del top %d",  // "Hors du top %d"
     "Sin conexión",  // "Hors ligne"
+    "Sin conexión desde las %02d:%02d",  // "Hors ligne depuis %02d:%02d"
+    "Sin conexión desde %s %02d:%02d",  // "Hors ligne depuis %s %02d:%02d"
+    "Sin conexión desde el %d %s",  // "Hors ligne depuis le %d %s"
     "Humedad",  // "Humidité"
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
@@ -6918,6 +6947,7 @@ static const char* const kI18n_es[] = {
     "Abrir todo",  // "Tout ouvrir"
     "Todo vivo",  // "Tout vivant"
     "Apagar todo",  // "Tout éteindre"
+    "Todas",  // "Toutes"
     "Todas las partidas y ajustes se guardan en el Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turno: %s",  // "Trait : %s"
     "Juegan %s",  // "Trait aux %s"
@@ -7323,6 +7353,7 @@ static const char* const kI18n_it[] = {
     "Oggi",  // "Aujourd'hui"
     "Oggi {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
+    "Altre",  // "Autres"
     "Avanti",  // "Avancer"
     "Rovesci",  // "Averses"
     "Apr",  // "Avr"
@@ -7578,6 +7609,9 @@ static const char* const kI18n_it[] = {
     "Home Assistant offline",  // "Home Assistant hors ligne"
     "Non in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
+    "Offline dalle %02d:%02d",  // "Hors ligne depuis %02d:%02d"
+    "Offline da %s %02d:%02d",  // "Hors ligne depuis %s %02d:%02d"
+    "Offline dal %d %s",  // "Hors ligne depuis le %d %s"
     "Umidità",  // "Humidité"
     "IA: %s",  // "IA : %s"
     "IMU",  // "IMU"
@@ -8102,6 +8136,7 @@ static const char* const kI18n_it[] = {
     "Apri tutto",  // "Tout ouvrir"
     "Tutti vivi",  // "Tout vivant"
     "Spegni tutto",  // "Tout éteindre"
+    "Tutte",  // "Toutes"
     "Partite e opzioni restano salvate nel Tab.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Turno: %s",  // "Trait : %s"
     "Muove il %s",  // "Trait aux %s"
@@ -8507,6 +8542,7 @@ static const char* const kI18n_tr[] = {
     "Bugün",  // "Aujourd'hui"
     "Bugün {heure}",  // "Aujourd'hui {heure}"
     "Otomatik",  // "Auto"
+    "Diğer",  // "Autres"
     "İleri",  // "Avancer"
     "Sağanak",  // "Averses"
     "Nis",  // "Avr"
@@ -8762,6 +8798,9 @@ static const char* const kI18n_tr[] = {
     "Home Assistant çevrimdışı",  // "Home Assistant hors ligne"
     "İlk %d dışında",  // "Hors du top %d"
     "Çevrimdışı",  // "Hors ligne"
+    "Son çevrimiçi: %02d:%02d",  // "Hors ligne depuis %02d:%02d"
+    "Son çevrimiçi: %s %02d:%02d",  // "Hors ligne depuis %s %02d:%02d"
+    "Son çevrimiçi: %d %s",  // "Hors ligne depuis le %d %s"
     "Nem",  // "Humidité"
     "YZ: %s",  // "IA : %s"
     "IMU",  // "IMU"
@@ -9286,6 +9325,7 @@ static const char* const kI18n_tr[] = {
     "Tümünü aç",  // "Tout ouvrir"
     "Hepsi canlı",  // "Tout vivant"
     "Hepsini kapat",  // "Tout éteindre"
+    "Tümü",  // "Toutes"
     "Tüm oyunlar ve ayarlar Tab'da saklanır.",  // "Toutes les parties et les réglages sont conservés dans le Tab."
     "Sıra: %s",  // "Trait : %s"
     "Sıra: %s",  // "Trait aux %s"

@@ -11,9 +11,10 @@
 #         - tab5_cameras_demande : événement esphome.tab5_cameras. Le blueprint « Tab5 —
 #           emplacements » y répond par l'action tab5_maj_cameras (tab5-api-logic.yaml).
 #         - tab5_cameras_attente : le seul rappel de cameras_tic() (sonde du chargement en
-#           cours toutes les 100 ms, image suivante 5 s après la précédente, tant que le
-#           popup est ouvert). L'image est téléchargée et décodée hors de la boucle
-#           (tab5_cameras_charge.cpp : tâche FreeRTOS, décodeur JPEG matériel).
+#           cours toutes les 100 ms, image de la caméra montrée toutes les 5 s, images de
+#           ses voisines entre deux, tant que le popup est ouvert). L'image est téléchargée
+#           et décodée hors de la boucle (tab5_cameras_charge.cpp : tâche FreeRTOS,
+#           décodeur JPEG matériel). Pièces, filtre et mémoire des images : ADR-0056.
 # @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
 #       nomme aucune entité. Chargé APRÈS tab5_lvgl (il référence des widgets) et après
 #       tab5_assist : le https sans vérification du certificat du chargeur vient de son
@@ -34,15 +35,9 @@ script:
             u.message = id(cameras_message);
             u.nom = id(cameras_nom);
             u.heure = id(cameras_heure);
+            // Pastilles et puces : leurs enfants, lus par cameras_ouvrir().
             u.pastilles = id(cameras_pastilles);
-            u.pastille[0] = id(cameras_pastille_0);
-            u.pastille[1] = id(cameras_pastille_1);
-            u.pastille[2] = id(cameras_pastille_2);
-            u.pastille[3] = id(cameras_pastille_3);
-            u.pastille[4] = id(cameras_pastille_4);
-            u.pastille[5] = id(cameras_pastille_5);
-            u.pastille[6] = id(cameras_pastille_6);
-            u.pastille[7] = id(cameras_pastille_7);
+            u.pieces = id(cameras_pieces);
             u.demander = [] { id(tab5_cameras_demande).execute(); };
             u.attendre = [](int ms) { id(tab5_cameras_attente).execute(ms); };
             // En dernier : cameras_ouvrir() ne fait rien tant que popup est nul.

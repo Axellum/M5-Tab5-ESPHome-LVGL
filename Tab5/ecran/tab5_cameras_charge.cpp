@@ -14,6 +14,7 @@
 #include "tab5_parse.h"
 #include "esphome/core/log.h"
 #include "driver/jpeg_decode.h"
+#include "esp_heap_caps.h"
 #include "esp_http_client.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -49,9 +50,10 @@ jpeg_decoder_handle_t s_jpeg = nullptr;
 esp_http_client_handle_t s_http = nullptr;
 char s_url[kCameraUrlMax] = {};
 Tampon s_jpeg_recu;
-Tampon s_image[2];
-int s_montree = 0;       // index du tampon que LVGL montre ; la tâche écrit dans l'autre
-CameraImage s_prete;     // décrit l'autre tampon quand l'état vaut PRETE
+// Tampon de sortie du décodeur : à la tâche ; donné à l'écran par camera_charge_prendre(),
+// remplacé par un tampon rendu (camera_image_rendre) ou alloué au décodage suivant.
+Tampon s_sortie;
+CameraImage s_prete;     // décrit s_sortie quand l'état vaut PRETE
 
 void poser(CameraCharge e) { s_etat.store(static_cast<uint8_t>(e), std::memory_order_release); }
 
@@ -158,7 +160,7 @@ size_t telecharger() {
     return 0;
 }
 
-// Décode s_jpeg_recu dans le tampon qui n'est pas montré.
+// Décode s_jpeg_recu dans le tampon de sortie (jamais montré : l'écran a les siens).
 bool decoder(size_t n) {
     jpeg_decode_picture_info_t info = {};
     if (jpeg_decoder_get_info(s_jpeg_recu.p, n, &info) != ESP_OK || info.width == 0 || info.height == 0) {
@@ -175,7 +177,7 @@ bool decoder(size_t n) {
         ESP_LOGW(TAG, "image trop grande : %ux%u", static_cast<unsigned>(info.width), static_cast<unsigned>(info.height));
         return false;
     }
-    Tampon& dst = s_image[1 - s_montree];
+    Tampon& dst = s_sortie;
     if (!tampon_au_moins(dst, static_cast<size_t>(l) * h * 2, JPEG_DEC_ALLOC_OUTPUT_BUFFER, 0)) {
         ESP_LOGW(TAG, "mémoire insuffisante pour %ux%u", static_cast<unsigned>(l), static_cast<unsigned>(h));
         return false;
@@ -193,6 +195,7 @@ bool decoder(size_t n) {
         return false;
     }
     s_prete.pixels = dst.p;
+    s_prete.octets = dst.n;
     s_prete.taille = ecrit;
     s_prete.largeur = static_cast<int>(info.width);
     s_prete.hauteur = static_cast<int>(info.height);
@@ -246,8 +249,9 @@ bool camera_charge_lancer(const char* url) {
 
 bool camera_charge_prendre(CameraImage* img) {
     if (camera_charge_etat() != CameraCharge::PRETE) return false;
-    s_montree = 1 - s_montree;
     *img = s_prete;
+    s_prete = {};
+    s_sortie = {};   // donné à l'écran : le décodage suivant en aura un autre
     poser(CameraCharge::LIBRE);
     return true;
 }
@@ -256,23 +260,114 @@ void camera_charge_acquitter() {
     if (camera_charge_etat() != CameraCharge::EN_COURS) poser(CameraCharge::LIBRE);
 }
 
+void camera_image_rendre(CameraImage* img, bool garder) {
+    if (img == nullptr || img->pixels == nullptr) return;
+    // La tâche ne touche à s_sortie que pendant EN_COURS : hors de là, il est à la boucle.
+    if (garder && camera_charge_etat() != CameraCharge::EN_COURS && s_sortie.p == nullptr) {
+        s_sortie.p = img->pixels;
+        s_sortie.n = img->octets;
+    } else {
+        std::free(img->pixels);
+    }
+    *img = {};
+}
+
 bool camera_charge_liberer() {
     const CameraCharge e = camera_charge_etat();
     if (e == CameraCharge::EN_COURS) return false;
     if (e != CameraCharge::LIBRE) poser(CameraCharge::LIBRE);
-    tampon_rendre(s_image[0]);
-    tampon_rendre(s_image[1]);
+    s_prete = {};
+    tampon_rendre(s_sortie);
     tampon_rendre(s_jpeg_recu);
     connexion_fermer();
     return true;
 }
 
-#else  // Rendu hors tablette : rien n'est téléchargé, le popup reste sur « Chargement... ».
+size_t camera_psram_libre() { return heap_caps_get_free_size(MALLOC_CAP_SPIRAM); }
 
-CameraCharge camera_charge_etat() { return CameraCharge::EN_COURS; }
-bool camera_charge_lancer(const char*) { return true; }
-bool camera_charge_prendre(CameraImage*) { return false; }
-void camera_charge_acquitter() {}
-bool camera_charge_liberer() { return false; }
+#else  // Rendu hors tablette (plateforme host) : rien n'est téléchargé.
+
+#include <cstdlib>
+#include <cstring>
+
+// Une mire calculée à la place de l'image (ADR-0056) : la capture du rendu montre la mise
+// en page avec des images (pièces, mosaïque, caméra hors ligne grisée) sans réseau. Taille
+// = width × height de l'URL (bornée à 960 × 540), 640 × 360 sans ; teinte tirée du chemin
+// de l'image (sans le jeton) : chaque caméra a la sienne, la même d'une image à l'autre.
+namespace {
+
+CameraCharge s_etat_hote = CameraCharge::LIBRE;
+CameraImage s_prete_hote;
+
+int parametre(const char* url, const char* cle, int defaut, int max) {
+    const char* p = std::strstr(url, cle);
+    if (p == nullptr) return defaut;
+    const int v = std::atoi(p + std::strlen(cle));
+    return v > 0 && v <= max ? v : defaut;
+}
+
+}  // namespace
+
+CameraCharge camera_charge_etat() { return s_etat_hote; }
+
+bool camera_charge_lancer(const char* url) {
+    if (s_etat_hote == CameraCharge::EN_COURS) return false;
+    const int l = parametre(url, "width=", 640, 960);
+    const int h = parametre(url, "height=", 360, 540);
+    uint32_t graine = 2166136261u;   // FNV-1a du chemin, jusqu'au « ? »
+    for (const char* p = url; *p != '\0' && *p != '?'; p++) graine = (graine ^ static_cast<uint8_t>(*p)) * 16777619u;
+    const size_t octets = static_cast<size_t>(l) * static_cast<size_t>(h) * 2;
+    auto* px = static_cast<uint8_t*>(std::malloc(octets));
+    if (px == nullptr) {
+        s_etat_hote = CameraCharge::ECHEC;
+        return true;
+    }
+    // Dégradé vertical (ciel → sol) dans la teinte de la caméra, bandes diagonales douces.
+    // Bornes : r ≤ 13 + 12 < 32, g ≤ 27 + 23 < 64, b ≤ 15 + 14 < 32 (RGB565 sans débordement).
+    const int r0 = 4 + static_cast<int>(graine % 10), g0 = 8 + static_cast<int>((graine >> 8) % 20),
+              b0 = 6 + static_cast<int>((graine >> 16) % 10);
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < l; x++) {
+            const int bande = ((x + y) / 48) % 2;
+            const int r = r0 + (y * 10) / h + bande * 2;
+            const int g = g0 + (y * 20) / h + bande * 3;
+            const int b = b0 + ((h - y) * 12) / h + bande * 2;
+            const uint16_t v = static_cast<uint16_t>(((r & 31) << 11) | ((g & 63) << 5) | (b & 31));
+            px[(static_cast<size_t>(y) * l + x) * 2] = static_cast<uint8_t>(v & 0xFF);
+            px[(static_cast<size_t>(y) * l + x) * 2 + 1] = static_cast<uint8_t>(v >> 8);
+        }
+    }
+    s_prete_hote = {px, octets, static_cast<uint32_t>(octets), l, h, l * 2};
+    s_etat_hote = CameraCharge::PRETE;
+    return true;
+}
+
+bool camera_charge_prendre(CameraImage* img) {
+    if (s_etat_hote != CameraCharge::PRETE) return false;
+    *img = s_prete_hote;
+    s_prete_hote = {};
+    s_etat_hote = CameraCharge::LIBRE;
+    return true;
+}
+
+void camera_charge_acquitter() {
+    if (s_etat_hote != CameraCharge::EN_COURS) s_etat_hote = CameraCharge::LIBRE;
+}
+
+void camera_image_rendre(CameraImage* img, bool) {
+    if (img == nullptr || img->pixels == nullptr) return;
+    std::free(img->pixels);
+    *img = {};
+}
+
+bool camera_charge_liberer() {
+    if (s_etat_hote == CameraCharge::EN_COURS) return false;
+    std::free(s_prete_hote.pixels);
+    s_prete_hote = {};
+    s_etat_hote = CameraCharge::LIBRE;
+    return true;
+}
+
+size_t camera_psram_libre() { return SIZE_MAX; }
 
 #endif

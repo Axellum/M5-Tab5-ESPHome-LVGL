@@ -1395,6 +1395,15 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Adresse de Home Assistant inconnue": "Home Assistant adresi bilinmiyor"
 "Image de %02d:%02d:%02d": "Görsel saati: %02d:%02d:%02d"
 "Plus d'image depuis %02d:%02d:%02d": "Son görsel: %02d:%02d:%02d"
+# Pièces et caméras hors ligne (ADR-0056, 10/10/2026). « Toutes » : toutes les caméras ;
+# « Autres » : les caméras sans pièce dans Home Assistant.
+# Turc : « Son çevrimiçi : … » (dernière connexion), sans suffixe « -den beri » qui dépendrait
+# des chiffres, et l'ordre des arguments reste celui du français.
+"Toutes": "Tümü"
+"Autres": "Diğer"
+"Hors ligne depuis %02d:%02d": "Son çevrimiçi: %02d:%02d"
+"Hors ligne depuis %s %02d:%02d": "Son çevrimiçi: %s %02d:%02d"
+"Hors ligne depuis le %d %s": "Son çevrimiçi: %d %s"
 
 # --- Capteurs suivis (tab5_suivi.cpp, ADR-0054) ---------------------------------
 "Suivi": "Takip"
