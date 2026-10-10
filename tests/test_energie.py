@@ -54,6 +54,9 @@ def test_actions_du_firmware():
     contrat = demo_pusher.lire_contrat()
     assert contrat[demo_pusher.SERVICE_ENERGIE] == ("payload",)
     assert contrat[demo_pusher.SERVICE_ENERGIE_HISTORIQUE] == ("vue", "debut", "valeurs")
+    # ADR-0058 : le soleil et la prévision du jour, le bilan d'une vue.
+    assert contrat[demo_pusher.SERVICE_ENERGIE_SOLEIL] == ("payload",)
+    assert contrat[demo_pusher.SERVICE_ENERGIE_BILAN] == ("vue", "debut", "payload")
 
 
 def test_huit_champs_dans_le_meme_ordre():
@@ -120,6 +123,21 @@ def test_demo_dans_le_format():
         assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", h["debut"])
     assert scenarios.build_energie_historique("jours", aujourd_hui)["debut"] == "2026-05-18"
     assert scenarios.build_energie_historique("mois", aujourd_hui)["debut"] == "2025-07-01"
+    # ADR-0058 : dix champs pour le soleil (24 valeurs de prévision et de ciel clair), quatre pour
+    # le bilan (autant de créneaux que la production de la même vue).
+    soleil = scenarios.build_energie_soleil().split("|")
+    assert len(soleil) == 10 and all(len(soleil[i].split(";")) == 24 for i in (8, 9))
+    for vue, n in scenarios.ENERGIE_VUES.items():
+        b = scenarios.build_energie_bilan(vue, aujourd_hui)
+        devise, *series = b["payload"].split("|")
+        assert devise == "€" and len(series) == 3 and all(len(s.split(";")) == n for s in series), vue
+        assert b["debut"] == scenarios.build_energie_historique(vue, aujourd_hui)["debut"]
+    # Falsifiable : un créneau qui n'est pas la meilleure plage, une série trop courte se voient.
+    import pytest
+    with pytest.raises(AssertionError):
+        scenarios.build_energie_soleil({**scenarios.ENERGIE_SOLEIL, "creneau_debut": "9", "creneau_fin": "12"})
+    with pytest.raises(AssertionError):
+        scenarios.build_energie_soleil({**scenarios.ENERGIE_SOLEIL, "clair": ["0"] * 23})
     # La tuile solaire de la démo ouvre le popup.
     tuiles = [t for p in scenarios.PIECES.values() for t in p.tuiles.values() if "e" in t.options]
     assert tuiles and all(t.type == "cap" for t in tuiles)
