@@ -44,6 +44,13 @@
 #         Plusieurs sources (05/10/2026, discussion #278) : energie_solaire_autres et
 #         energie_production_autres s'ajoutent aux champs principaux ; puissances et
 #         compteurs sont additionnés (energie_solaires, energie_productions).
+#         Pages Soleil et Bilan (ADR-0058, 10/10/2026), entrées facultatives : prévision
+#         externe du jour et de demain (section solaire), compteurs d'achat et de vente,
+#         prix d'achat et de revente (nombre ou capteur) et monnaie (section réseau et
+#         maison). Envoyés au script dans `capteurs` (compteur_achat, compteur_vente,
+#         prix_achat, prix_achat_entite, prix_revente, prix_revente_entite, devise,
+#         prevision_jour, prevision_demain), hors de `energie` : ils ne créent pas de
+#         tuile « e ». La prévision elle-même se calcule dans packages/tab5_energie.yaml.
 #       - popup « Température » (ADR-0032, 06/10/2026) : à l'événement esphome.tab5_historique
 #         (cle = salon | serre, vue), lance script.tab5_historique (packages/tab5_historique.yaml)
 #         avec le capteur de l'emplacement et la case serre_exterieure (« la seconde
@@ -1778,6 +1785,40 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: energy
+        # Prévision externe (ADR-0058), facultative : Forecast.Solar, Solcast… Sans elle, la
+        # prévision vient de la courbe apprise sur la production et de la météo.
+        energie_prevision_jour:
+          name: Prévision de production du jour · Today's production forecast
+          description: >-
+            Facultatif : le capteur de prévision d'un service solaire (Forecast.Solar,
+            Solcast…), en kWh pour la journée. Rempli, la forme apprise sur votre production
+            est mise à l'échelle de ce total, et la page « Aujourd'hui » le dit. Vide : la
+            tablette calcule sa prévision elle-même, avec la météo.
+
+
+            Optional: the forecast sensor of a solar service (Forecast.Solar, Solcast…), in
+            kWh for the day. Filled, the shape learned from your own production is scaled to
+            this total, and the « Today » page says so. Empty: the tablet works out its own
+            forecast, with the weather.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: energy
+        energie_prevision_demain:
+          name: Prévision de production de demain · Tomorrow's production forecast
+          description: >-
+            Facultatif : le même capteur pour le lendemain, en kWh.
+
+
+            Optional: the same sensor for the next day, in kWh.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: energy
     energie_reseau_maison:
       name: "Énergie : réseau et maison · Energy: grid and home"
       icon: mdi:transmission-tower
@@ -1845,6 +1886,113 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: power
+        # Bilan (ADR-0058), facultatif : la page « Bilan » du popup Énergie (consommation,
+        # vente au réseau, taux d'autoconsommation, gains). Sans compteur d'achat ni de
+        # vente, la page n'apparaît pas ; sans prix, elle ne montre pas de gains.
+        energie_compteur_achat:
+          name: Énergie achetée au réseau · Energy bought from the grid
+          description: >-
+            Facultatif : le compteur d'achat en kWh (celui que demande le tableau Énergie de
+            Home Assistant). Avec lui, la page « Bilan » sépare la consommation entre le
+            solaire et le réseau.
+
+
+            Optional: the import meter in kWh (the one the Home Assistant Energy dashboard
+            asks for). With it, the « Balance » page splits consumption between solar and
+            grid.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: energy
+        energie_compteur_vente:
+          name: Énergie vendue au réseau · Energy sold to the grid
+          description: >-
+            Facultatif : le compteur de vente (injection) en kWh. Avec lui, la page « Bilan »
+            montre ce qui part au réseau et le taux d'autoconsommation.
+
+
+            Optional: the export meter (feed-in) in kWh. With it, the « Balance » page shows
+            what goes to the grid and the self-consumption rate.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: energy
+        energie_prix_achat:
+          name: Prix d'achat du kWh · Purchase price per kWh
+          description: >-
+            Facultatif : dans votre monnaie (la valeur du champ « Monnaie » plus bas). Sert
+            aux gains : l'énergie solaire utilisée à la maison évite cet achat. 0 : pas de
+            prix. Un capteur de tarif choisi au champ suivant l'emporte.
+
+
+            Optional: in your currency (the « Currency » field below). Used for the savings:
+            solar energy used at home avoids this purchase. 0: no price. A tariff sensor
+            picked in the next field wins.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 0.0001
+              mode: box
+        energie_prix_achat_entite:
+          name: Capteur du prix d'achat · Purchase price sensor
+          description: >-
+            Facultatif : un capteur qui donne le prix du kWh (tarif variable,
+            heures creuses). Quand il a une valeur, il remplace le nombre ci-dessus.
+
+
+            Optional: a sensor that gives the price per kWh (dynamic tariff,
+            off-peak hours). When it has a value, it replaces the number above.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [sensor, input_number, number]
+        energie_prix_revente:
+          name: Prix de revente du kWh · Resale price per kWh
+          description: >-
+            Facultatif : ce que le réseau vous paie le kWh injecté (même monnaie). 0 : rien
+            n'est compté pour la vente. Un capteur choisi au champ suivant l'emporte.
+
+
+            Optional: what the grid pays you per kWh fed in (same currency). 0: nothing is
+            counted for the export. A sensor picked in the next field wins.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 0.0001
+              mode: box
+        energie_prix_revente_entite:
+          name: Capteur du prix de revente · Resale price sensor
+          description: >-
+            Facultatif : un capteur qui donne le prix de revente du kWh. Quand
+            il a une valeur, il remplace le nombre ci-dessus.
+
+
+            Optional: a sensor that gives the resale price per kWh. When it has
+            a value, it replaces the number above.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [sensor, input_number, number]
+        energie_devise:
+          name: Monnaie · Currency
+          description: >-
+            Le symbole écrit à côté des gains : €, $, £, CHF… (3 caractères au plus). Vide : €.
+
+
+            The symbol written next to the savings: €, $, £, CHF… (3 characters at most). Empty: €.
+          default: ""
+          selector:
+            text: {}
     energie_stockage:
       name: "Énergie : batterie · Energy: battery"
       icon: mdi:battery-charging
@@ -3057,6 +3205,27 @@ variables:
   energie_capteurs: "{{ ((energie.values() | select | list) + energie_solaires + energie_productions) | unique | list }}"
   energie_reseau_inverse: !input energie_reseau_inverse
   energie_batterie_inverse: !input energie_batterie_inverse
+  # Pages Soleil et Bilan (ADR-0058), toutes facultatives : compteurs d'achat et de vente,
+  # prix (nombre, ou capteur qui l'emporte) et monnaie du bilan, prévision externe du
+  # jour et de demain. Envoyés au script dans `capteurs` en plus des champs ci-dessus,
+  # mais hors de `energie` : ils ne rendent pas une tuile « e » ni ne comptent comme un
+  # capteur choisi (energie_capteurs). Un package plus ancien les ignore.
+  energie_plus_choix:
+    compteur_achat: !input energie_compteur_achat
+    compteur_vente: !input energie_compteur_vente
+    prix_achat_entite: !input energie_prix_achat_entite
+    prix_revente_entite: !input energie_prix_revente_entite
+    prevision_jour: !input energie_prevision_jour
+    prevision_demain: !input energie_prevision_demain
+  energie_plus: >-
+    {%- set ns = namespace(d={}) -%}
+    {%- for cle, v in energie_plus_choix.items() -%}
+      {%- set ns.d = dict(ns.d, **{cle: (v if v is string else (v | first if v else ''))}) -%}
+    {%- endfor -%}
+    {{ ns.d }}
+  energie_prix_achat: !input energie_prix_achat
+  energie_prix_revente: !input energie_prix_revente
+  energie_devise: !input energie_devise
   # Icône solaire du bandeau d'état (clé solaire de tab5_maj_emplacements) : puissance
   # des panneaux en % de leur crête (energie_crete, kWc), arrondie et bornée 0-100 (un
   # onduleur qui lit -3 W la nuit donne 0). Plusieurs sources : la somme de celles qui
@@ -3930,7 +4099,10 @@ actions:
                         capteurs: >-
                           {{ dict(energie, solaires=energie_solaires, productions=energie_productions,
                                   reseau_inverse=energie_reseau_inverse | bool(false),
-                                  batterie_inverse=energie_batterie_inverse | bool(false)) }}
+                                  batterie_inverse=energie_batterie_inverse | bool(false),
+                                  prix_achat=energie_prix_achat | float(0),
+                                  prix_revente=energie_prix_revente | float(0),
+                                  devise=energie_devise | string, **energie_plus) }}
 
       # Popup Caméras (ADR-0049) : la tablette demande ses caméras à l'ouverture, puis toutes
       # les 4 minutes et après un échec tant qu'il reste ouvert. La réponse donne le
