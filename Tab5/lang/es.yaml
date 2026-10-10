@@ -1288,6 +1288,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Thème": "Tema"
 "Clair ou sombre": "Claro u oscuro"
 "Nuit (mode Auto)": "Noche (modo Auto)"
+"Fond de l'horloge": "Fondo del reloj"
 "Langue": "Idioma"
 "Changer de langue ?": "¿Cambiar de idioma?"
 "La tablette redémarre en {langue}.": "La tableta se reinicia en {langue}."

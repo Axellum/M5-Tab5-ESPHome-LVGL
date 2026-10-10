@@ -1252,6 +1252,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Thème": "Tema"
 "Clair ou sombre": "Açık veya koyu"
 "Nuit (mode Auto)": "Gece (Otomatik mod)"
+"Fond de l'horloge": "Saat arka planı"
 "Langue": "Dil"
 "Changer de langue ?": "Dil değiştirilsin mi?"
 "La tablette redémarre en {langue}.": "Tablet {langue} diliyle yeniden başlar."

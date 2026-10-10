@@ -1205,6 +1205,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Thème": "Thema"
 "Clair ou sombre": "Licht of donker"
 "Nuit (mode Auto)": "Nacht (modus Auto)"
+"Fond de l'horloge": "Klokachtergrond"
 "Langue": "Taal"
 "Changer de langue ?": "Taal wijzigen?"
 "La tablette redémarre en {langue}.": "De tablet herstart in het {langue}."

@@ -31,6 +31,12 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
 
+### 2026-10-10 — Tuiles météo en cellule pleine et fond de l'horloge au choix
+
+- **Demande d'Axel** (essai validé sur la tablette) : les tuiles de prévisions prennent la même cellule que les tuiles des pièces — une carte pleine de 230 × 275 px, sans les deux onglets en saillie du jour et de la température ; le nom du jour et les températures s'écrivent directement sur la carte (`forecast_day_body.yaml` pleine hauteur, `forecast_day_title_tab.yaml` et `forecast_day_temp_tab.yaml` sans fond ni relief). L'icône météo, les épaules et les appuis ne bougent pas.
+- **Fond de la tuile de l'horloge au choix** : interrupteur « Tab5 Fond de l'horloge » (`tab5-ha-controls.yaml`, éteint par défaut, gardé en mémoire, appliqué sans redémarrage par `horloge_fond_ui()`), réglé depuis Réglages ▸ Apparence (Oui / Non à droite de « Clair ou sombre », qui passe en demi-largeur, `REGLAGE_HORLOGE_FOND`). Sans fond, la tuile garde sa bordure.
+- Une entrée de plus dans le tableau de bord HA (`tab5_dashboard.jinja`, traduite) ; le texte « Fond de l'horloge » en six langues. Aucun changement du contrat HA ↔ firmware.
+
 ### 2026-10-10 — Réfrigérateurs et congélateurs : normes, porte mal fermée, popup « Froid » et icône qui clignote sur l'horloge (ADR-0055)
 
 - **Demande d'Axel** : suivre le frigo et le congélateur — les déclarer dans les réglages, contrôler la température par rapport aux normes, repérer une montée (porte mal fermée), voir les 24 dernières heures, les alertes habituelles de la carte centrale et, pour un problème grave seulement, une icône qui clignote dans le coin de l'horloge ; un popup de gestion avec la courbe et les incidents.
