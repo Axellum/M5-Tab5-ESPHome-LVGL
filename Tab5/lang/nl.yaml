@@ -1291,6 +1291,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lumières": "Lampen"
 "Volets": "Rolluiken"
 "Plantes": "Planten"
+"TV": "Tv"
 "Jeux": "Spellen"
 # Popup Météo (ADR-0043, 09/10/2026). Contexte « uv » : niveau d'indice UV.
 "Météo": "Weer"

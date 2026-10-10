@@ -15,7 +15,7 @@ The author asked (2026-10-09) for « a multiple-choice wheel on the long press o
 - **Six buttons, grouped by what they are about** (twelve screens do not fit one ring of 72 px buttons):
   - **Alertes** — the alerts history (what the long press used to open; shown as the « current » state while an alert is on screen);
   - **Pièces ▸** — Maison ([ADR-0037](0037-house-popup.md)), then each room that has devices, its number in the button and its name under it: a touch puts HA mode on that room (`tuiles_aller_piece`), the room on screen is marked;
-  - **Appareils ▸** — Températures, Clims, Lumières, Volets, Énergie, Plantes;
+  - **Appareils ▸** — Températures, Clims, Lumières, Volets, Énergie, Plantes (then Musique and TV since 2026-10-10, see the note below);
   - **Agenda ▸** — Météo ([ADR-0043](0043-weather-popup.md), added with it), Calendrier, Réveil;
   - **Tablette ▸** — Jeux, Réglages, Système;
   - **Assistant** — the voice assistant (« discussions »).
@@ -39,3 +39,11 @@ The author asked (2026-10-09) for « a multiple-choice wheel on the long press o
 - A new screen in the wheel = one line in `kAppareils`, `kAgenda` or `kTablette` (`tab5_roue_navigation.cpp`), its icon in `RoueIcone` / `glyphe_roue` (`mdi_font_36`, rule 9); `tests/test_roue_navigation.py` reads the tables, the wiring and the geometry above the central card.
 - `tools/rendu/ecrans.py` opens the wheel folded, three families unfolded, a room picked and the lights window opened by « Aller à l'écran ».
 - Not tried on a tablet when written: the author judges the look and the touch.
+
+## Note (2026-10-10): Musique and TV in « Appareils ▸ », eight choices
+
+The author asked « ajoute musique et tv dans appareils ». « Appareils ▸ » ends with **Musique** (the music player popup, [ADR-0050](0050-music-player.md), its `music` icon) and **TV** (the TV remote, its `desktop-classic` icon): eight screens, past the second ring's six.
+
+- **The second ring holds eight choices** (`kRoueChoix` = 8, two more `roue_choix` widgets and their words). Measured above the central card for every first-ring size (2 to 6 buttons) and every family position: 100 px at least between two choices (28 px of air between 72 px buttons), 109.6 px from a choice to a first-ring button, all inside the screen; the eight words of « Appareils » in the seven screen languages keep 22 px of air at least between them and 38 px from any other button, none cut where « Appareils » can stand (first to third button). `tests/test_roue_navigation.py` checks all of it.
+- **The tile wheel stays at six** (`kRoueChoixTuile`, `tab5_tuiles_roue.cpp`: tiles, the House popup, the wheel of a climate). From a tile at the edge of the screen, an eight-wide fan pivots until two choices overlap (49 px between two centres for the leftmost weather tile); none of its families needs more than six (`tests/test_roue.py`).
+- **TV** is offered only with its zone (`ecran_disponible`, like the top button's long press). **Musique** like the left zone's player ([ADR-0051](0051-left-zone-choice.md)): offered until Home Assistant says no player is chosen (`lecteur_zone_disponible()`; before its first answer, offered). The wheel lists what this home has; the gesture code `musique` and « Aller à l'écran », chosen on purpose, still open the popup, which says where to choose the players.

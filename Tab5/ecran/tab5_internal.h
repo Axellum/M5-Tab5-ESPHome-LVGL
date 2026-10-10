@@ -317,6 +317,8 @@ enum class RoueIcone : uint8_t {
     ENGRENAGE,
     SYSTEME,
     METEO,
+    MUSIQUE,
+    TV,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
 // anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
@@ -584,7 +586,8 @@ void zone_gauche_donnees_changees();
 // tab5_lecteur.cpp, pour la zone à gauche de l'horloge (lecteur compact, ADR-0051 lot 2) :
 // montre ou masque son contenu (repeint s'il a changé caché ; la mini-barre « en lecture »
 // se masque tant qu'il est montré, revient ensuite), et dit s'il a quelque chose à montrer
-// (faux seulement quand HA a dit qu'aucun lecteur n'est choisi).
+// (faux seulement quand HA a dit qu'aucun lecteur n'est choisi). La roue de navigation
+// (tab5_roue_navigation.cpp, « Appareils ▸ ») lit la même réponse pour proposer Musique.
 void lecteur_zone_montrer(bool montre);
 bool lecteur_zone_disponible();
 

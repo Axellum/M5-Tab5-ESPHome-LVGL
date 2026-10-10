@@ -23,7 +23,14 @@
 // la carte centrale ouvre les écrans de la tablette, rangés en familles.
 // =============================================================================
 constexpr int kRoueBoutons = 6;  // premier anneau : 4 commandes ou familles + 2 liens
-constexpr int kRoueChoix = 6;    // second anneau : les 6 couleurs d'une lampe au plus
+// Second anneau : 8 choix au plus (les 8 écrans d'« Appareils ▸ » de la roue de navigation,
+// 10/10/2026 ; 6 avant). Ancrée sur la carte centrale, la roue en montre 8 sans chevauchement
+// (tests/test_roue_navigation.py) ; ancrée sur une tuile au bord de l'écran, un éventail de
+// 8 pivote jusqu'à faire chevaucher ses choix : la roue d'une tuile (tuiles, popup Maison,
+// roue d'une clim, tab5_tuiles_roue.cpp) s'arrête à kRoueChoixTuile (tests/test_roue.py).
+constexpr int kRoueChoix = 8;
+constexpr int kRoueChoixTuile = 6;  // les 6 couleurs d'une lampe au plus
+static_assert(kRoueChoixTuile <= kRoueChoix, "la roue d'une tuile tient dans les widgets du second anneau");
 // Widgets (ui_components/roue_actions.yaml, roue_bouton.yaml, roue_choix.yaml,
 // roue_legende.yaml), posés par le script tab5_roue_ui (tab5-roue.yaml), que tab5_tuiles_ui
 // lance avant le premier dessin.

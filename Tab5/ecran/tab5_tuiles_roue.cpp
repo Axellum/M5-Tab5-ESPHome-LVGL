@@ -173,17 +173,17 @@ const char* roue_clim_mode(const RoueTuile& rt) {
     return clim_mode_connu(rt.clim.r, rt.clim.t);
 }
 
-// « Clims ▸ » : les clims de clims_enumerer, au plus kRoueChoix, celle de la roue comprise
-// (au-delà de kRoueChoix, la fenêtre qui finit sur elle). Renvoie leur nombre, `courant` le
+// « Clims ▸ » : les clims de clims_enumerer, au plus kRoueChoixTuile, celle de la roue comprise
+// (au-delà de kRoueChoixTuile, la fenêtre qui finit sur elle). Renvoie leur nombre, `courant` le
 // rang de celle de la roue (-1 : aucune).
-int roue_clims(const RoueTuile& rt, ClimRef out[kRoueChoix], int& courant) {
+int roue_clims(const RoueTuile& rt, ClimRef out[kRoueChoixTuile], int& courant) {
     ClimRef l[kClimPastilles];
     const int n = clims_enumerer(l, kClimPastilles);
     int ici = -1;
     for (int k = 0; k < n && ici < 0; k++)
         if (l[k].r == rt.clim.r && l[k].t == rt.clim.t) ici = k;
-    const int debut = ici >= kRoueChoix ? ici - kRoueChoix + 1 : 0;
-    const int m = std::min(n - debut, kRoueChoix);
+    const int debut = ici >= kRoueChoixTuile ? ici - kRoueChoixTuile + 1 : 0;
+    const int m = std::min(n - debut, kRoueChoixTuile);
     for (int k = 0; k < m; k++) out[k] = l[debut + k];
     courant = ici >= 0 ? ici - debut : -1;
     return m;
@@ -237,7 +237,7 @@ int roue_composer(int r, int t, bool depuis_maison, RoueBouton b[kRoueBoutons], 
     if (de_clim) {
         // Roue d'une clim : « Clims ▸ » quand la tablette en connaît plusieurs (la place de
         // « Maison » : six boutons au plus), sinon « Maison ».
-        ClimRef l[kRoueChoix];
+        ClimRef l[kRoueChoixTuile];
         int ici = -1;
         if (roue_clims(rt, l, ici) >= 2) famille(RoueAction::CLIMS, RoueIcone::CLIMS);
         else ajouter(RoueAction::MAISON, RoueIcone::MAISON, RoueGenre::LIEN, false, tr("Maison"));
@@ -330,13 +330,13 @@ const char* roue_legende_bascule(char lettre) {
 
 // Noms des clims de « Clims ▸ » (leurs mots sous les choix) : lus par la roue au repeint
 // qui suit, juste après roue_choix.
-char s_noms_clims[kRoueChoix][49];
+char s_noms_clims[kRoueChoixTuile][49];
 
 // Choix du second anneau de la famille i de `rt` dans `c`, ce qu'ils envoient dans `env` ;
 // renvoie leur nombre (0 : rien à déplier). Le choix de l'état courant (luminosité,
 // position, mode, consigne, option active) est marqué ; une couleur ne l'est jamais (l'état
 // poussé n'en dit que la teinte affichée).
-int roue_choix(const RoueTuile& rt, int i, RoueChoix c[kRoueChoix], RoueEnvoi env[kRoueChoix]) {
+int roue_choix(const RoueTuile& rt, int i, RoueChoix c[kRoueChoixTuile], RoueEnvoi env[kRoueChoixTuile]) {
     if (i < 0 || i >= rt.n) return 0;
     if (!roue_de_clim(rt) && (heritage() || !tuile_presente(rt.r, rt.t))) return 0;
     // Lampe, volet : l'état de la tuile ; une clim (tuile cli ou roue d'une clim) : rt.clim.
@@ -346,7 +346,7 @@ int roue_choix(const RoueTuile& rt, int i, RoueChoix c[kRoueChoix], RoueEnvoi en
     int m = 0;
     RoueChoix rebut;
     auto choix = [&](const char* commande, const char* valeur, bool courant) -> RoueChoix& {
-        if (m >= kRoueChoix) return rebut;
+        if (m >= kRoueChoixTuile) return rebut;
         c[m] = RoueChoix{};
         c[m].courant = courant;
         env[m].commande = commande;
@@ -431,7 +431,7 @@ int roue_choix(const RoueTuile& rt, int i, RoueChoix c[kRoueChoix], RoueEnvoi en
             // Les autres clims (ADR-0048) : leur consigne (éteinte : l'icône Éteindre), leur
             // nom dessous ; celle de la roue marquée. Rien n'est envoyé : un toucher rouvre
             // la roue sur elle (roue_tuile_choisir_choix).
-            ClimRef l[kRoueChoix];
+            ClimRef l[kRoueChoixTuile];
             int ici = -1;
             const int nb = roue_clims(rt, l, ici);
             for (int k = 0; k < nb; k++) {
@@ -520,7 +520,7 @@ void roue_tuile_choisir(int i) {
 // dépliage et à chaque repeint : ils suivent l'état poussé.
 int roue_tuile_famille(int i, RoueChoix* c) {
     charger();
-    RoueEnvoi env[kRoueChoix];
+    RoueEnvoi env[kRoueChoixTuile];
     return roue_choix(s_rt, i, c, env);
 }
 
@@ -529,14 +529,14 @@ int roue_tuile_famille(int i, RoueChoix* c) {
 void roue_tuile_choisir_choix(int i, int j) {
     charger();
     const RoueTuile rt = s_rt;
-    RoueChoix c[kRoueChoix];
-    RoueEnvoi env[kRoueChoix];
+    RoueChoix c[kRoueChoixTuile];
+    RoueEnvoi env[kRoueChoixTuile];
     const int m = roue_choix(rt, i, c, env);
     if (j < 0 || j >= m) return;
     // « Clims ▸ » (ADR-0048) : la roue rouverte sur la clim touchée, à la même place ; sans
     // réglages reçus pour elle, le carrousel sur elle.
     if (rt.action[i] == RoueAction::CLIMS) {
-        ClimRef l[kRoueChoix];
+        ClimRef l[kRoueChoixTuile];
         int ici = -1;
         if (j >= roue_clims(rt, l, ici)) return;
         if (!clim_roue_ouvrir(l[j], rt.ancre)) clim_carrousel_ouvrir_sur(l[j]);

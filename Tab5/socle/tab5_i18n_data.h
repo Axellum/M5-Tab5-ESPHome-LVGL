@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1126;
+static const uint16_t kI18nKeyCount = 1127;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -2043,6 +2044,7 @@ static const char* const kI18nKeys[] = {
     "TEMPÉRATURE",
     "TOUS LES NIVEAUX !",
     "TOUT EFFACER ?",
+    "TV",
     "Tab contre Tab",
     "Tablette",
     "Taille affichée : %s",
@@ -3173,6 +3175,7 @@ static const char* const kI18n_en[] = {
     "TEMPERATURE",  // "TEMPÉRATURE"
     "ALL LEVELS CLEARED!",  // "TOUS LES NIVEAUX !"
     "CLEAR EVERYTHING?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab vs Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Size shown: %s",  // "Taille affichée : %s"
@@ -4303,6 +4306,7 @@ static const char* const kI18n_de[] = {
     "TEMPERATUR",  // "TEMPÉRATURE"
     "ALLE LEVEL GESCHAFFT!",  // "TOUS LES NIVEAUX !"
     "ALLES LÖSCHEN?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab gegen Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Angezeigte Größe: %s",  // "Taille affichée : %s"
@@ -5433,6 +5437,7 @@ static const char* const kI18n_nl[] = {
     "TEMPERATUUR",  // "TEMPÉRATURE"
     "ALLE LEVELS GEHAALD!",  // "TOUS LES NIVEAUX !"
     "ALLES WISSEN?",  // "TOUT EFFACER ?"
+    "Tv",  // "TV"
     "Tab tegen Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Getoonde grootte: %s",  // "Taille affichée : %s"
@@ -6563,6 +6568,7 @@ static const char* const kI18n_es[] = {
     "TEMPERATURA",  // "TEMPÉRATURE"
     "¡TODOS LOS NIVELES!",  // "TOUS LES NIVEAUX !"
     "¿BORRAR TODO?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab contra Tab",  // "Tab contre Tab"
     "Tableta",  // "Tablette"
     "Tamaño mostrado: %s",  // "Taille affichée : %s"
@@ -7693,6 +7699,7 @@ static const char* const kI18n_it[] = {
     "TEMPERATURA",  // "TEMPÉRATURE"
     "TUTTI I LIVELLI!",  // "TOUS LES NIVEAUX !"
     "CANCELLARE TUTTO?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab vs Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Goban mostrato: %s",  // "Taille affichée : %s"
@@ -8823,6 +8830,7 @@ static const char* const kI18n_tr[] = {
     "SICAKLIK",  // "TEMPÉRATURE"
     "TÜM SEVİYELER!",  // "TOUS LES NIVEAUX !"
     "HEPSİ SİLİNSİN Mİ?",  // "TOUT EFFACER ?"
+    "TV",  // "TV"
     "Tab - Tab",  // "Tab contre Tab"
     "Tablet",  // "Tablette"
     "Gösterilen boyut: %s",  // "Taille affichée : %s"
