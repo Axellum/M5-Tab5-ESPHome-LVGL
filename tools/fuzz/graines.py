@@ -37,6 +37,7 @@ FAMILLES = [
     ("<", "tab5_maj_cameras", ("adresse", "cameras")),
     ("=", "tab5_maj_suivi", "payload"),
     (">", "tab5_maj_froid", "payload"),
+    ("?", "tab5_maj_serveur_ia", "payload"),
 ]
 
 
@@ -79,6 +80,9 @@ LIMITES = [
     # hors ligne sans image, horodatages illisible, négatif et trop grand, plus de 16 caméras.
     ("<", "cameras_pieces", "\nA|/a||;B|/b|Jardin|x;C||jardin|1760000000;D|/d|Jardin|-1;E|/e|É|99999999999;"
      + ";".join(f"C{i}|/c{i}|P{i % 5}" for i in range(20))),
+    # Serveur IA (ADR-0059) : nombres négatifs, non finis, hors bornes, champs de trop, un
+    # second serveur ignoré.
+    ("?", "serveur_ia_bornes", ";A|x||-1|-1|1e99|-2|inf|101|nan|9|-5|1e9|en trop;B|1|m|1|1|1|1|1|1|1|1|1|1"),
 ]
 
 
