@@ -1,0 +1,282 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tab5 — Home Assistant-bestanden",
+        "description": "Deze integratie installeert de Home Assistant-bestanden van het project M5Stack Tab5 (packages, sjablonen, blueprint) en vervangt ze bij elke update via HACS. De oude bestanden worden bewaard in `tab5_sauvegardes/`. Je eigen packages, sjablonen en blueprints worden nooit aangeraakt.\n\nZet dit één keer in `configuration.yaml`, als dat nog niet gebeurd is:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```",
+        "data": {
+          "mettre_a_jour_tablette": "Daarna de tablet bijwerken"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Zodra de bestanden op hun plaats staan, de firmware van dezelfde versie installeren zodra de entiteit “Firmware” van de tablet die aanbiedt."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "De Tab5-integratie is al toegevoegd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tab5 — Home Assistant-bestanden",
+        "data": {
+          "mettre_a_jour_tablette": "Daarna de tablet bijwerken",
+          "reinstaller": "De bestanden van deze versie nu opnieuw installeren",
+          "assistant": "De configuratie-assistent starten"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Zodra de bestanden op hun plaats staan, de firmware van dezelfde versie installeren zodra de entiteit “Firmware” van de tablet die aanbiedt.",
+          "reinstaller": "Voor een Tab5-bestand dat per ongeluk is gewist of gewijzigd. De huidige bestanden worden eerst bewaard.",
+          "assistant": "Bereidt de automatisering van de schermplaatsen voor op basis van je Home Assistant-ruimtes, daarna de instellingen van het huis en de lijsten “Tab5 · …”. Er wordt niets geschreven of ingesteld zonder je bevestiging; een bestaande automatisering verandert alleen als je dat vraagt."
+        }
+      },
+      "pieces": {
+        "title": "Assistent · kamers",
+        "description": "De assistent bereidt de automatisering van de schermplaatsen (blueprint “Tab5 — emplacements de l'écran”) voor op basis van je Home Assistant-ruimtes. {nombre} ruimte(s) hebben apparaten die de tablet kan tonen; de best uitgeruste zijn al gekozen, maximaal {max}. Er wordt niets geschreven vóór het overzicht.",
+        "data": {
+          "pieces": "Kamers van de tablet"
+        },
+        "data_description": {
+          "pieces": "Maximaal vijf, in de volgorde van de pagina's van de onderste rij: de eerste op het startscherm, de volgende met een veeg."
+        }
+      },
+      "piece": {
+        "title": "Assistent · kamer {numero} van {total}: {zone}",
+        "description": "Vooraf ingevuld op basis van de Home Assistant-ruimte “{zone}”: de lampen, rolluiken, schakelaars, ventilatoren en spelers (maximaal {max}), de temperatuur- en vochtigheidssensor en de airco. Wijzig wat je wilt.",
+        "data": {
+          "nom": "Getoonde naam",
+          "tuiles": "Tegels",
+          "temperature": "Kamertemperatuur",
+          "humidite": "Luchtvochtigheid van de kamer",
+          "clim": "Airco van de kamer"
+        },
+        "data_description": {
+          "nom": "Leeg: de gemeenschappelijke ruimtenaam van de apparaten.",
+          "tuiles": "Maximaal vijf, van links naar rechts.",
+          "temperature": "Optioneel. Getoond op het startscherm wanneer deze kamer in beeld is.",
+          "humidite": "Optioneel, samen met de temperatuur.",
+          "clim": "Optioneel, samen met de temperatuur: de knoppen − / + van het startscherm regelen hem."
+        }
+      },
+      "maison": {
+        "title": "Assistent · huis",
+        "description": "Wat niet van een kamer afhangt. Een veld wordt alleen vooraf ingevuld als je Home Assistant maar één mogelijk antwoord heeft (één tv, één airco, één weerbericht…) of als de bestaande automatisering het al heeft; anders blijft het leeg en doet de tablet het zonder. Wijzig wat je wilt.",
+        "data": {
+          "tv": "Tv",
+          "tv_telecommande": "Afstandsbediening van de tv",
+          "telephone": "Telefoonbatterij",
+          "salon_temperature": "Kamertemperatuur (bovenaan het startscherm)",
+          "salon_humidite": "Luchtvochtigheid van de kamer",
+          "serre_temperature": "Tweede temperatuur (kas, buiten…)",
+          "serre_exterieure": "De tweede temperatuur is buiten",
+          "clim": "Airco",
+          "pot_1": "Pot 1",
+          "pot_2": "Pot 2",
+          "pot_3": "Pot 3",
+          "pot_4": "Pot 4",
+          "pot_5": "Pot 5",
+          "meteo_previsions": "Weer voor de voorspelling",
+          "tablette": "Naam van de tablet in ESPHome"
+        },
+        "data_description": {
+          "tv": "De knop “TV” op het scherm.",
+          "tv_telecommande": "De toetsen van de afstandsbediening op het scherm.",
+          "telephone": "Een pictogram linksboven, gekleurd naar de batterij.",
+          "salon_temperature": "Voorgesteld: die van de eerste kamer.",
+          "serre_temperature": "Voorgesteld: de enige temperatuur waarvan de naam “buiten” zegt.",
+          "clim": "De knoppen − / instelwaarde / + van het startscherm.",
+          "pot_1": "Bodemvochtsensoren: voorgesteld als er maximaal vijf zijn.",
+          "meteo_previsions": "De pagina's van de dagen en de uren.",
+          "tablette": "Gelezen uit de ESPHome-integratie; leeg: “tab5_ha_hmi”."
+        }
+      },
+      "agendas": {
+        "title": "Assistent · agenda's en personen",
+        "description": "De lijsten “Tab5 · …” (Instellingen → Apparaten & diensten → Entiteiten). Een al gemaakte keuze blijft. Een lijst die nog op “Aucun” (geen) staat, krijgt een voorstel als er precies één entiteit past (een agenda waarvan de naam “werk” of “afspraak” zegt, de enige aanwezigheids- of bezettingssensor, de voorkeurspipeline). Er wordt niets ingesteld vóór het overzicht; je kunt alles terugzetten op “Aucun”.",
+        "data": {
+          "agenda_travail": "Werkagenda",
+          "agenda_rdv": "Afsprakenagenda",
+          "agenda_anniversaires": "Verjaardagsagenda",
+          "agenda_feries": "Feestdagenagenda",
+          "agenda_vacances": "Schoolvakantieagenda",
+          "telephone_suivi": "Gevolgde telefoon",
+          "presence": "Aanwezigheidssensor",
+          "pipeline": "Chatpipeline"
+        },
+        "data_description": {
+          "agenda_anniversaires": "Verjaardagen, feestdagen, vakanties en telefoon: de lijst raadt al zelf als er maar één kandidaat is.",
+          "telephone_suivi": "Zet het scherm aan bij thuiskomst, uit bij vertrek.",
+          "presence": "Zet het scherm aan bij detectie, uit na 15 min zonder aanwezigheid.",
+          "pipeline": "De chatmodus van het scherm; “Aucun” verbergt de knoppen."
+        }
+      },
+      "recapitulatif": {
+        "title": "Assistent · overzicht",
+        "description": "{resume}\n\n{action}",
+        "data": {
+          "mettre_a_jour": "De kamers en de huisinstellingen van de bestaande automatisering vervangen"
+        },
+        "data_description": {
+          "mettre_a_jour": "Een leeg gelaten huisveld behoudt zijn waarde; de andere instellingen (energie, gebaren…) blijven zoals ze zijn. De lijsten “Tab5 · …” worden met of zonder dit vakje ingesteld."
+        }
+      }
+    },
+    "abort": {
+      "aucune_piece": "Geen enkele Home Assistant-ruimte heeft een apparaat dat de tablet kan tonen: de assistent heeft niets voor te stellen en verandert niets. Wijs je apparaten toe aan ruimtes in Home Assistant en start hem daarna opnieuw (Instellingen → Apparaten & diensten → Tab5 → Configureren, vakje “De configuratie-assistent starten”), of vul de automatisering van de blueprint met de hand in."
+    },
+    "error": {
+      "aucune_piece_choisie": "Kies minstens één kamer.",
+      "trop_de_pieces": "Maximaal vijf kamers.",
+      "trop_de_tuiles": "Maximaal vijf tegels."
+    }
+  },
+  "issues": {
+    "fichiers_absents": {
+      "title": "Tab5: geen Home Assistant-bestanden in de integratie",
+      "description": "De Tab5-integratie {version} bevat geen bestanden: ze is uit de repository gekopieerd in plaats van uit een release geïnstalleerd. Installeer haar via HACS (aangepaste repository), dat `tab5_hacs.zip` van de release downloadt."
+    },
+    "configuration_invalide": {
+      "title": "Tab5: de bestanden {version} zijn niet geïnstalleerd",
+      "description": "De nieuwe Tab5-bestanden konden niet worden geplaatst (de configuratiecontrole vond er een fout mee, of het schrijven mislukte): de vorige bestanden zijn teruggezet, er is niets veranderd. De reden staat in het logboek (Instellingen → Systeem → Logboeken, “tab5”). Na een configuratiefout worden deze bestanden niet bij elke herstart opnieuw geprobeerd: zodra de oorzaak is verholpen, ga je naar Instellingen → Apparaten & diensten → Tab5 → Configureren, “De bestanden van deze versie nu opnieuw installeren”. Als de oorzaak niet in je eigen bestanden ligt, meld die dan: {signaler}"
+    },
+    "packages_absents": {
+      "title": "Tab5: Home Assistant laadt de packages niet",
+      "description": "De Tab5-bestanden staan in `config/packages/`, maar Home Assistant leest die map niet. Voeg deze twee regels toe aan `configuration.yaml` (de regel `homeassistant:` maar één keer), controleer de configuratie en herstart daarna:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```"
+    },
+    "redemarrage_requis": {
+      "title": "Tab5: herstart Home Assistant om af te ronden",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Home Assistant herstarten",
+            "description": "De Tab5-bestanden {version} staan op hun plaats, maar sommige werken pas na een herstart. Bevestig om Home Assistant nu te herstarten."
+          }
+        },
+        "error": {
+          "configuration_invalide": "De configuratie bevat een fout: herstel die eerst (Ontwikkelhulpmiddelen → YAML → Configuratie controleren)."
+        }
+      }
+    },
+    "fichiers_remplaces": {
+      "title": "Tab5: al aanwezige bestanden zijn vervangen",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Al aanwezige Tab5-bestanden, vervangen",
+            "description": "Deze Tab5-bestanden stonden al in `config/` (vermoedelijk met de hand gekopieerd) en verschilden van die van de release: {fichiers}. Ze zijn toch vervangen, en de oude worden bewaard in {sauvegarde}. Had je er bewust een gewijzigd, kopieer je wijziging dan van daaruit.\n\nBevestig om dit bericht te sluiten."
+          }
+        }
+      }
+    },
+    "firmware_echec": {
+      "title": "Tab5: de tablet is niet bijgewerkt naar {version}",
+      "description": "De Tab5-bestanden {version} staan op hun plaats, maar de tablet draait na {essais} updatepogingen nog steeds een andere versie. Installeer haar met de hand: Instellingen → Updates (of de entiteit “Firmware” van de tablet) → Installeren, met de tablet aan en verbonden. De reden van elke poging staat in het logboek (Instellingen → Systeem → Logboeken, “tab5”). Dit bericht verdwijnt zodra de tablet {version} draait."
+    },
+    "configurer_pieces": {
+      "title": "Tab5: de tablet instellen vanuit je ruimtes",
+      "fix_flow": {
+        "step": {
+          "pieces": {
+            "title": "Assistent · kamers",
+            "description": "De assistent bereidt de automatisering van de schermplaatsen (blueprint “Tab5 — emplacements de l'écran”) voor op basis van je Home Assistant-ruimtes. {nombre} ruimte(s) hebben apparaten die de tablet kan tonen; de best uitgeruste zijn al gekozen, maximaal {max}. Er wordt niets geschreven vóór het overzicht.",
+            "data": {
+              "pieces": "Kamers van de tablet"
+            },
+            "data_description": {
+              "pieces": "Maximaal vijf, in de volgorde van de pagina's van de onderste rij: de eerste op het startscherm, de volgende met een veeg."
+            }
+          },
+          "piece": {
+            "title": "Assistent · kamer {numero} van {total}: {zone}",
+            "description": "Vooraf ingevuld op basis van de Home Assistant-ruimte “{zone}”: de lampen, rolluiken, schakelaars, ventilatoren en spelers (maximaal {max}), de temperatuur- en vochtigheidssensor en de airco. Wijzig wat je wilt.",
+            "data": {
+              "nom": "Getoonde naam",
+              "tuiles": "Tegels",
+              "temperature": "Kamertemperatuur",
+              "humidite": "Luchtvochtigheid van de kamer",
+              "clim": "Airco van de kamer"
+            },
+            "data_description": {
+              "nom": "Leeg: de gemeenschappelijke ruimtenaam van de apparaten.",
+              "tuiles": "Maximaal vijf, van links naar rechts.",
+              "temperature": "Optioneel. Getoond op het startscherm wanneer deze kamer in beeld is.",
+              "humidite": "Optioneel, samen met de temperatuur.",
+              "clim": "Optioneel, samen met de temperatuur: de knoppen − / + van het startscherm regelen hem."
+            }
+          },
+          "maison": {
+            "title": "Assistent · huis",
+            "description": "Wat niet van een kamer afhangt. Een veld wordt alleen vooraf ingevuld als je Home Assistant maar één mogelijk antwoord heeft (één tv, één airco, één weerbericht…) of als de bestaande automatisering het al heeft; anders blijft het leeg en doet de tablet het zonder. Wijzig wat je wilt.",
+            "data": {
+              "tv": "Tv",
+              "tv_telecommande": "Afstandsbediening van de tv",
+              "telephone": "Telefoonbatterij",
+              "salon_temperature": "Kamertemperatuur (bovenaan het startscherm)",
+              "salon_humidite": "Luchtvochtigheid van de kamer",
+              "serre_temperature": "Tweede temperatuur (kas, buiten…)",
+              "serre_exterieure": "De tweede temperatuur is buiten",
+              "clim": "Airco",
+              "pot_1": "Pot 1",
+              "pot_2": "Pot 2",
+              "pot_3": "Pot 3",
+              "pot_4": "Pot 4",
+              "pot_5": "Pot 5",
+              "meteo_previsions": "Weer voor de voorspelling",
+              "tablette": "Naam van de tablet in ESPHome"
+            },
+            "data_description": {
+              "tv": "De knop “TV” op het scherm.",
+              "tv_telecommande": "De toetsen van de afstandsbediening op het scherm.",
+              "telephone": "Een pictogram linksboven, gekleurd naar de batterij.",
+              "salon_temperature": "Voorgesteld: die van de eerste kamer.",
+              "serre_temperature": "Voorgesteld: de enige temperatuur waarvan de naam “buiten” zegt.",
+              "clim": "De knoppen − / instelwaarde / + van het startscherm.",
+              "pot_1": "Bodemvochtsensoren: voorgesteld als er maximaal vijf zijn.",
+              "meteo_previsions": "De pagina's van de dagen en de uren.",
+              "tablette": "Gelezen uit de ESPHome-integratie; leeg: “tab5_ha_hmi”."
+            }
+          },
+          "agendas": {
+            "title": "Assistent · agenda's en personen",
+            "description": "De lijsten “Tab5 · …” (Instellingen → Apparaten & diensten → Entiteiten). Een al gemaakte keuze blijft. Een lijst die nog op “Aucun” (geen) staat, krijgt een voorstel als er precies één entiteit past (een agenda waarvan de naam “werk” of “afspraak” zegt, de enige aanwezigheids- of bezettingssensor, de voorkeurspipeline). Er wordt niets ingesteld vóór het overzicht; je kunt alles terugzetten op “Aucun”.",
+            "data": {
+              "agenda_travail": "Werkagenda",
+              "agenda_rdv": "Afsprakenagenda",
+              "agenda_anniversaires": "Verjaardagsagenda",
+              "agenda_feries": "Feestdagenagenda",
+              "agenda_vacances": "Schoolvakantieagenda",
+              "telephone_suivi": "Gevolgde telefoon",
+              "presence": "Aanwezigheidssensor",
+              "pipeline": "Chatpipeline"
+            },
+            "data_description": {
+              "agenda_anniversaires": "Verjaardagen, feestdagen, vakanties en telefoon: de lijst raadt al zelf als er maar één kandidaat is.",
+              "telephone_suivi": "Zet het scherm aan bij thuiskomst, uit bij vertrek.",
+              "presence": "Zet het scherm aan bij detectie, uit na 15 min zonder aanwezigheid.",
+              "pipeline": "De chatmodus van het scherm; “Aucun” verbergt de knoppen."
+            }
+          },
+          "recapitulatif": {
+            "title": "Assistent · overzicht",
+            "description": "{resume}\n\n{action}",
+            "data": {
+              "mettre_a_jour": "De kamers en de huisinstellingen van de bestaande automatisering vervangen"
+            },
+            "data_description": {
+              "mettre_a_jour": "Een leeg gelaten huisveld behoudt zijn waarde; de andere instellingen (energie, gebaren…) blijven zoals ze zijn. De lijsten “Tab5 · …” worden met of zonder dit vakje ingesteld."
+            }
+          }
+        },
+        "abort": {
+          "aucune_piece": "Geen enkele Home Assistant-ruimte heeft een apparaat dat de tablet kan tonen: de assistent heeft niets voor te stellen en verandert niets. Wijs je apparaten toe aan ruimtes in Home Assistant en start hem daarna opnieuw (Instellingen → Apparaten & diensten → Tab5 → Configureren, vakje “De configuratie-assistent starten”), of vul de automatisering van de blueprint met de hand in."
+        },
+        "error": {
+          "aucune_piece_choisie": "Kies minstens één kamer.",
+          "trop_de_pieces": "Maximaal vijf kamers.",
+          "trop_de_tuiles": "Maximaal vijf tegels."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,282 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tab5 — Home Assistant dosyaları",
+        "description": "Bu entegrasyon M5Stack Tab5 projesinin Home Assistant dosyalarını (paketler, şablonlar, blueprint) kurar ve HACS ile yapılan her güncellemede bunları değiştirir. Eski dosyalar `tab5_sauvegardes/` içinde saklanır. Kendi paketleriniz, şablonlarınız ve blueprint'leriniz asla değiştirilmez.\n\nHenüz yapılmadıysa `configuration.yaml` dosyasına bir kez ekleyin:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```",
+        "data": {
+          "mettre_a_jour_tablette": "Ardından tableti güncelle"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Dosyalar yerleştikten sonra, tabletin “Firmware” varlığı sunduğu anda aynı sürümün yazılımını kur."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Tab5 entegrasyonu zaten eklenmiş."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tab5 — Home Assistant dosyaları",
+        "data": {
+          "mettre_a_jour_tablette": "Ardından tableti güncelle",
+          "reinstaller": "Bu sürümün dosyalarını şimdi yeniden kur",
+          "assistant": "Kurulum asistanını başlat"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Dosyalar yerleştikten sonra, tabletin “Firmware” varlığı sunduğu anda aynı sürümün yazılımını kur.",
+          "reinstaller": "Yanlışlıkla silinen veya değiştirilen bir Tab5 dosyası için. Mevcut dosyalar önce yedeklenir.",
+          "assistant": "Ekran yerleşimi otomasyonunu Home Assistant alanlarınızdan hazırlar, ardından ev ayarlarını ve “Tab5 · …” listelerini. Onayınız olmadan hiçbir şey yazılmaz veya ayarlanmaz; mevcut bir otomasyon yalnızca siz isterseniz değişir."
+        }
+      },
+      "pieces": {
+        "title": "Asistan · odalar",
+        "description": "Asistan, ekran yerleşimi otomasyonunu (“Tab5 — emplacements de l'écran” blueprint'i) Home Assistant alanlarınızdan hazırlar. {nombre} alanda tabletin gösterebildiği cihazlar var; en donanımlı olanlar zaten seçili, en fazla {max}. Özetten önce hiçbir şey yazılmaz.",
+        "data": {
+          "pieces": "Tabletin odaları"
+        },
+        "data_description": {
+          "pieces": "En fazla beş, alt sıradaki sayfaların sırasıyla: ilki ana ekranda, sonrakiler kaydırarak."
+        }
+      },
+      "piece": {
+        "title": "Asistan · oda {numero}/{total}: {zone}",
+        "description": "Home Assistant'taki “{zone}” alanına göre önceden dolduruldu: ışıkları, panjurları, anahtarları, vantilatörleri ve oynatıcıları (en fazla {max}), sıcaklık ve nem sensörü ve kliması. İstediğinizi değiştirin.",
+        "data": {
+          "nom": "Görünen ad",
+          "tuiles": "Kutucuklar",
+          "temperature": "Oda sıcaklığı",
+          "humidite": "Oda nemi",
+          "clim": "Odanın kliması"
+        },
+        "data_description": {
+          "nom": "Boş: cihazlarının ortak alan adı.",
+          "tuiles": "En fazla beş, soldan sağa.",
+          "temperature": "İsteğe bağlı. Bu oda ekrandayken ana ekranda gösterilir.",
+          "humidite": "İsteğe bağlı, sıcaklıkla birlikte.",
+          "clim": "İsteğe bağlı, sıcaklıkla birlikte: ana ekrandaki − / + düğmeleri onu ayarlar."
+        }
+      },
+      "maison": {
+        "title": "Asistan · ev",
+        "description": "Bir odaya bağlı olmayanlar. Bir alan yalnızca Home Assistant'ınızda tek bir olası yanıt varsa (tek bir TV, tek bir klima, tek bir hava durumu…) veya mevcut otomasyonda zaten varsa önceden doldurulur; yoksa boş kalır ve tablet onsuz çalışır. İstediğinizi değiştirin.",
+        "data": {
+          "tv": "TV",
+          "tv_telecommande": "TV uzaktan kumandası",
+          "telephone": "Telefon pili",
+          "salon_temperature": "Oda sıcaklığı (ana ekranın üstünde)",
+          "salon_humidite": "Oda nemi",
+          "serre_temperature": "İkinci sıcaklık (sera, dış mekân…)",
+          "serre_exterieure": "İkinci sıcaklık dış mekânda",
+          "clim": "Klima",
+          "pot_1": "Saksı 1",
+          "pot_2": "Saksı 2",
+          "pot_3": "Saksı 3",
+          "pot_4": "Saksı 4",
+          "pot_5": "Saksı 5",
+          "meteo_previsions": "Tahmin için hava durumu",
+          "tablette": "Tabletin ESPHome'daki adı"
+        },
+        "data_description": {
+          "tv": "Ekrandaki “TV” düğmesi.",
+          "tv_telecommande": "Ekrandaki uzaktan kumanda tuşları.",
+          "telephone": "Sol üstte, pil durumuna göre renklenen bir simge.",
+          "salon_temperature": "Önerilen: ilk odanınki.",
+          "serre_temperature": "Önerilen: adında “dış” geçen tek sıcaklık.",
+          "clim": "Ana ekrandaki − / hedef / + düğmeleri.",
+          "pot_1": "Toprak nemi sensörleri: en fazla beş tane varsa önerilir.",
+          "meteo_previsions": "Günler ve saatler sayfaları.",
+          "tablette": "ESPHome entegrasyonundan okunur; boş: “tab5_ha_hmi”."
+        }
+      },
+      "agendas": {
+        "title": "Asistan · takvimler ve kişiler",
+        "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “Aucun” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Aucun” yapabilirsiniz.",
+        "data": {
+          "agenda_travail": "İş takvimi",
+          "agenda_rdv": "Randevu takvimi",
+          "agenda_anniversaires": "Doğum günü takvimi",
+          "agenda_feries": "Resmî tatil takvimi",
+          "agenda_vacances": "Okul tatili takvimi",
+          "telephone_suivi": "Takip edilen telefon",
+          "presence": "Varlık sensörü",
+          "pipeline": "Sohbet pipeline'ı"
+        },
+        "data_description": {
+          "agenda_anniversaires": "Doğum günleri, tatiller, okul tatilleri ve telefon: tek bir aday varsa liste zaten kendisi tahmin eder.",
+          "telephone_suivi": "Dönüşte ekranı açar, ayrılışta kapatır.",
+          "presence": "Algılamada ekranı açar, 15 dk boyunca varlık olmazsa kapatır.",
+          "pipeline": "Ekranın sohbet modu; “Aucun” düğmelerini gizler."
+        }
+      },
+      "recapitulatif": {
+        "title": "Asistan · özet",
+        "description": "{resume}\n\n{action}",
+        "data": {
+          "mettre_a_jour": "Mevcut otomasyonun odalarını ve ev girdilerini değiştir"
+        },
+        "data_description": {
+          "mettre_a_jour": "Boş bırakılan bir ev alanı değerini korur; diğer ayarları (enerji, hareketler…) olduğu gibi kalır. “Tab5 · …” listeleri bu kutu işaretli olsa da olmasa da ayarlanır."
+        }
+      }
+    },
+    "abort": {
+      "aucune_piece": "Hiçbir Home Assistant alanında tabletin gösterebileceği bir cihaz yok: asistanın önerecek bir şeyi yok ve hiçbir şeyi değiştirmez. Cihazlarınızı Home Assistant'ta alanlara atayın, ardından yeniden başlatın (Ayarlar → Cihazlar ve hizmetler → Tab5 → Yapılandır, “Kurulum asistanını başlat” kutusu) ya da blueprint otomasyonunu elle doldurun."
+    },
+    "error": {
+      "aucune_piece_choisie": "En az bir oda seçin.",
+      "trop_de_pieces": "En fazla beş oda.",
+      "trop_de_tuiles": "En fazla beş kutucuk."
+    }
+  },
+  "issues": {
+    "fichiers_absents": {
+      "title": "Tab5: entegrasyonda Home Assistant dosyası yok",
+      "description": "Tab5 entegrasyonu {version} hiçbir dosya içermiyor: bir sürümden kurulmak yerine depodan kopyalanmış. HACS ile (özel depo) kurun; HACS sürümün `tab5_hacs.zip` dosyasını indirir."
+    },
+    "configuration_invalide": {
+      "title": "Tab5: {version} dosyaları kurulmadı",
+      "description": "Yeni Tab5 dosyaları yerleştirilemedi (yapılandırma denetimi onlarla ilgili bir hata buldu ya da yazma başarısız oldu): önceki dosyalar geri yüklendi, hiçbir şey değişmedi. Nedeni günlükte (Ayarlar → Sistem → Günlükler, “tab5”). Bir yapılandırma hatasından sonra bu dosyalar her yeniden başlatmada tekrar denenmez: neden düzeltildikten sonra Ayarlar → Cihazlar ve hizmetler → Tab5 → Yapılandır, “Bu sürümün dosyalarını şimdi yeniden kur” yolunu izleyin. Neden kendi dosyalarınızda değilse lütfen bildirin: {signaler}"
+    },
+    "packages_absents": {
+      "title": "Tab5: Home Assistant paketleri yüklemiyor",
+      "description": "Tab5 dosyaları `config/packages/` içinde, ancak Home Assistant bu klasörü okumuyor. Bu iki satırı `configuration.yaml` dosyasına ekleyin (`homeassistant:` satırını yalnızca bir kez), yapılandırmayı kontrol edin, ardından yeniden başlatın:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```"
+    },
+    "redemarrage_requis": {
+      "title": "Tab5: bitirmek için Home Assistant'ı yeniden başlatın",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Home Assistant'ı yeniden başlat",
+            "description": "Tab5 {version} dosyaları yerinde, ancak bazıları yalnızca yeniden başlatmadan sonra etkili olur. Home Assistant'ı şimdi yeniden başlatmak için onaylayın."
+          }
+        },
+        "error": {
+          "configuration_invalide": "Yapılandırmada bir hata var: önce onu düzeltin (Geliştirici araçları → YAML → Yapılandırmayı denetle)."
+        }
+      }
+    },
+    "fichiers_remplaces": {
+      "title": "Tab5: zaten var olan dosyalar değiştirildi",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Zaten var olan Tab5 dosyaları değiştirildi",
+            "description": "Bu Tab5 dosyaları zaten `config/` içindeydi (büyük olasılıkla elle kopyalanmış) ve sürümdekilerden farklıydı: {fichiers}. Yine de değiştirildiler; eskileri {sauvegarde} içinde saklanıyor. Birini bilerek değiştirdiyseniz, değişikliğinizi oradan geri kopyalayın.\n\nBu mesajı kapatmak için onaylayın."
+          }
+        }
+      }
+    },
+    "firmware_echec": {
+      "title": "Tab5: tablet {version} sürümüne geçmedi",
+      "description": "Tab5 {version} dosyaları yerinde, ancak tablet {essais} güncelleme denemesinden sonra hâlâ başka bir sürüm çalıştırıyor. Elle kurun: Ayarlar → Güncellemeler (veya tabletin “Firmware” varlığı) → Kur; tablet açık ve bağlı olsun. Her denemenin nedeni günlükte (Ayarlar → Sistem → Günlükler, “tab5”). Tablet {version} çalıştırdığı anda bu mesaj kaybolur."
+    },
+    "configurer_pieces": {
+      "title": "Tab5: tableti alanlarınızdan yapılandırın",
+      "fix_flow": {
+        "step": {
+          "pieces": {
+            "title": "Asistan · odalar",
+            "description": "Asistan, ekran yerleşimi otomasyonunu (“Tab5 — emplacements de l'écran” blueprint'i) Home Assistant alanlarınızdan hazırlar. {nombre} alanda tabletin gösterebildiği cihazlar var; en donanımlı olanlar zaten seçili, en fazla {max}. Özetten önce hiçbir şey yazılmaz.",
+            "data": {
+              "pieces": "Tabletin odaları"
+            },
+            "data_description": {
+              "pieces": "En fazla beş, alt sıradaki sayfaların sırasıyla: ilki ana ekranda, sonrakiler kaydırarak."
+            }
+          },
+          "piece": {
+            "title": "Asistan · oda {numero}/{total}: {zone}",
+            "description": "Home Assistant'taki “{zone}” alanına göre önceden dolduruldu: ışıkları, panjurları, anahtarları, vantilatörleri ve oynatıcıları (en fazla {max}), sıcaklık ve nem sensörü ve kliması. İstediğinizi değiştirin.",
+            "data": {
+              "nom": "Görünen ad",
+              "tuiles": "Kutucuklar",
+              "temperature": "Oda sıcaklığı",
+              "humidite": "Oda nemi",
+              "clim": "Odanın kliması"
+            },
+            "data_description": {
+              "nom": "Boş: cihazlarının ortak alan adı.",
+              "tuiles": "En fazla beş, soldan sağa.",
+              "temperature": "İsteğe bağlı. Bu oda ekrandayken ana ekranda gösterilir.",
+              "humidite": "İsteğe bağlı, sıcaklıkla birlikte.",
+              "clim": "İsteğe bağlı, sıcaklıkla birlikte: ana ekrandaki − / + düğmeleri onu ayarlar."
+            }
+          },
+          "maison": {
+            "title": "Asistan · ev",
+            "description": "Bir odaya bağlı olmayanlar. Bir alan yalnızca Home Assistant'ınızda tek bir olası yanıt varsa (tek bir TV, tek bir klima, tek bir hava durumu…) veya mevcut otomasyonda zaten varsa önceden doldurulur; yoksa boş kalır ve tablet onsuz çalışır. İstediğinizi değiştirin.",
+            "data": {
+              "tv": "TV",
+              "tv_telecommande": "TV uzaktan kumandası",
+              "telephone": "Telefon pili",
+              "salon_temperature": "Oda sıcaklığı (ana ekranın üstünde)",
+              "salon_humidite": "Oda nemi",
+              "serre_temperature": "İkinci sıcaklık (sera, dış mekân…)",
+              "serre_exterieure": "İkinci sıcaklık dış mekânda",
+              "clim": "Klima",
+              "pot_1": "Saksı 1",
+              "pot_2": "Saksı 2",
+              "pot_3": "Saksı 3",
+              "pot_4": "Saksı 4",
+              "pot_5": "Saksı 5",
+              "meteo_previsions": "Tahmin için hava durumu",
+              "tablette": "Tabletin ESPHome'daki adı"
+            },
+            "data_description": {
+              "tv": "Ekrandaki “TV” düğmesi.",
+              "tv_telecommande": "Ekrandaki uzaktan kumanda tuşları.",
+              "telephone": "Sol üstte, pil durumuna göre renklenen bir simge.",
+              "salon_temperature": "Önerilen: ilk odanınki.",
+              "serre_temperature": "Önerilen: adında “dış” geçen tek sıcaklık.",
+              "clim": "Ana ekrandaki − / hedef / + düğmeleri.",
+              "pot_1": "Toprak nemi sensörleri: en fazla beş tane varsa önerilir.",
+              "meteo_previsions": "Günler ve saatler sayfaları.",
+              "tablette": "ESPHome entegrasyonundan okunur; boş: “tab5_ha_hmi”."
+            }
+          },
+          "agendas": {
+            "title": "Asistan · takvimler ve kişiler",
+            "description": "“Tab5 · …” listeleri (Ayarlar → Cihazlar ve hizmetler → Varlıklar). Önceden yapılmış bir seçim korunur. Hâlâ “Aucun” (yok) üzerinde olan bir liste, tek bir varlık uygun olduğunda bir öneri alır (adında “mesai” veya “randevu” geçen bir takvim, tek varlık veya doluluk sensörü, tercih edilen pipeline). Özetten önce hiçbir şey ayarlanmaz; her şeyi yeniden “Aucun” yapabilirsiniz.",
+            "data": {
+              "agenda_travail": "İş takvimi",
+              "agenda_rdv": "Randevu takvimi",
+              "agenda_anniversaires": "Doğum günü takvimi",
+              "agenda_feries": "Resmî tatil takvimi",
+              "agenda_vacances": "Okul tatili takvimi",
+              "telephone_suivi": "Takip edilen telefon",
+              "presence": "Varlık sensörü",
+              "pipeline": "Sohbet pipeline'ı"
+            },
+            "data_description": {
+              "agenda_anniversaires": "Doğum günleri, tatiller, okul tatilleri ve telefon: tek bir aday varsa liste zaten kendisi tahmin eder.",
+              "telephone_suivi": "Dönüşte ekranı açar, ayrılışta kapatır.",
+              "presence": "Algılamada ekranı açar, 15 dk boyunca varlık olmazsa kapatır.",
+              "pipeline": "Ekranın sohbet modu; “Aucun” düğmelerini gizler."
+            }
+          },
+          "recapitulatif": {
+            "title": "Asistan · özet",
+            "description": "{resume}\n\n{action}",
+            "data": {
+              "mettre_a_jour": "Mevcut otomasyonun odalarını ve ev girdilerini değiştir"
+            },
+            "data_description": {
+              "mettre_a_jour": "Boş bırakılan bir ev alanı değerini korur; diğer ayarları (enerji, hareketler…) olduğu gibi kalır. “Tab5 · …” listeleri bu kutu işaretli olsa da olmasa da ayarlanır."
+            }
+          }
+        },
+        "abort": {
+          "aucune_piece": "Hiçbir Home Assistant alanında tabletin gösterebileceği bir cihaz yok: asistanın önerecek bir şeyi yok ve hiçbir şeyi değiştirmez. Cihazlarınızı Home Assistant'ta alanlara atayın, ardından yeniden başlatın (Ayarlar → Cihazlar ve hizmetler → Tab5 → Yapılandır, “Kurulum asistanını başlat” kutusu) ya da blueprint otomasyonunu elle doldurun."
+        },
+        "error": {
+          "aucune_piece_choisie": "En az bir oda seçin.",
+          "trop_de_pieces": "En fazla beş oda.",
+          "trop_de_tuiles": "En fazla beş kutucuk."
+        }
+      }
+    }
+  }
+}

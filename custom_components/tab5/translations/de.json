@@ -1,0 +1,282 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tab5 — Home-Assistant-Dateien",
+        "description": "Diese Integration installiert die Home-Assistant-Dateien des Projekts M5Stack Tab5 (Packages, Vorlagen, Blueprint) und ersetzt sie bei jeder Aktualisierung durch HACS. Die alten Dateien werden in `tab5_sauvegardes/` aufbewahrt. Ihre eigenen Packages, Vorlagen und Blueprints werden nie angefasst.\n\nEinmal in `configuration.yaml` eintragen, falls noch nicht geschehen:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```",
+        "data": {
+          "mettre_a_jour_tablette": "Danach das Tablet aktualisieren"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Sobald die Dateien installiert sind, die Firmware derselben Version installieren, sobald die Entität „Firmware“ des Tablets sie anbietet."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Die Tab5-Integration ist bereits hinzugefügt."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tab5 — Home-Assistant-Dateien",
+        "data": {
+          "mettre_a_jour_tablette": "Danach das Tablet aktualisieren",
+          "reinstaller": "Die Dateien dieser Version jetzt neu installieren",
+          "assistant": "Einrichtungsassistenten starten"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Sobald die Dateien installiert sind, die Firmware derselben Version installieren, sobald die Entität „Firmware“ des Tablets sie anbietet.",
+          "reinstaller": "Für eine versehentlich gelöschte oder geänderte Tab5-Datei. Die aktuellen Dateien werden zuerst gesichert.",
+          "assistant": "Bereitet die Automation der Bildschirmplätze aus Ihren Home-Assistant-Bereichen vor, dann die Einstellungen des Zuhauses und die Listen „Tab5 · …“. Ohne Ihre Bestätigung wird nichts geschrieben oder eingestellt; eine bestehende Automation ändert sich nur, wenn Sie es verlangen."
+        }
+      },
+      "pieces": {
+        "title": "Assistent · Räume",
+        "description": "Der Assistent bereitet die Automation der Bildschirmplätze (Blueprint „Tab5 — emplacements de l'écran“) aus Ihren Home-Assistant-Bereichen vor. {nombre} Bereich(e) haben Geräte, die das Tablet anzeigen kann; die am besten ausgestatteten sind schon gewählt, höchstens {max}. Vor der Zusammenfassung wird nichts geschrieben.",
+        "data": {
+          "pieces": "Räume des Tablets"
+        },
+        "data_description": {
+          "pieces": "Höchstens fünf, in der Reihenfolge der Seiten der unteren Reihe: der erste auf dem Startbildschirm, die weiteren per Wischen."
+        }
+      },
+      "piece": {
+        "title": "Assistent · Raum {numero} von {total}: {zone}",
+        "description": "Vorausgefüllt nach dem Home-Assistant-Bereich „{zone}“: seine Lichter, Rollläden, Schalter, Ventilatoren und Player (höchstens {max}), sein Temperatur- und Feuchtesensor und seine Klimaanlage. Ändern Sie, was Sie möchten.",
+        "data": {
+          "nom": "Angezeigter Name",
+          "tuiles": "Kacheln",
+          "temperature": "Raumtemperatur",
+          "humidite": "Raumfeuchte",
+          "clim": "Klimaanlage des Raums"
+        },
+        "data_description": {
+          "nom": "Leer: der gemeinsame Bereichsname seiner Geräte.",
+          "tuiles": "Höchstens fünf, von links nach rechts.",
+          "temperature": "Optional. Wird auf dem Startbildschirm angezeigt, wenn dieser Raum zu sehen ist.",
+          "humidite": "Optional, zusammen mit der Temperatur.",
+          "clim": "Optional, zusammen mit der Temperatur: Die Tasten − / + des Startbildschirms regeln sie."
+        }
+      },
+      "maison": {
+        "title": "Assistent · Zuhause",
+        "description": "Was nicht von einem Raum abhängt. Ein Feld wird nur vorausgefüllt, wenn Ihr Home Assistant nur eine mögliche Antwort hat (ein einziger Fernseher, eine einzige Klimaanlage, ein einziges Wetter …) oder wenn die bestehende Automation es schon enthält; sonst bleibt es leer und das Tablet kommt ohne aus. Ändern Sie, was Sie möchten.",
+        "data": {
+          "tv": "TV",
+          "tv_telecommande": "Fernbedienung des Fernsehers",
+          "telephone": "Handy-Akku",
+          "salon_temperature": "Raumtemperatur (oben auf dem Startbildschirm)",
+          "salon_humidite": "Raumfeuchte",
+          "serre_temperature": "Zweite Temperatur (Gewächshaus, draußen …)",
+          "serre_exterieure": "Die zweite Temperatur ist draußen",
+          "clim": "Klimaanlage",
+          "pot_1": "Topf 1",
+          "pot_2": "Topf 2",
+          "pot_3": "Topf 3",
+          "pot_4": "Topf 4",
+          "pot_5": "Topf 5",
+          "meteo_previsions": "Wetter für die Vorhersage",
+          "tablette": "Name des Tablets in ESPHome"
+        },
+        "data_description": {
+          "tv": "Die Taste „TV“ des Bildschirms.",
+          "tv_telecommande": "Die Tasten der Fernbedienung auf dem Bildschirm.",
+          "telephone": "Ein Symbol oben links, je nach Akku eingefärbt.",
+          "salon_temperature": "Vorgeschlagen: die des ersten Raums.",
+          "serre_temperature": "Vorgeschlagen: die einzige Temperatur, deren Name „außen“ sagt.",
+          "clim": "Die Tasten − / Sollwert / + des Startbildschirms.",
+          "pot_1": "Bodenfeuchtesensoren: vorgeschlagen, wenn es höchstens fünf gibt.",
+          "meteo_previsions": "Die Seiten der Tage und Stunden.",
+          "tablette": "Aus der ESPHome-Integration gelesen; leer: „tab5_ha_hmi“."
+        }
+      },
+      "agendas": {
+        "title": "Assistent · Kalender und Personen",
+        "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „Aucun“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Aucun“ setzen.",
+        "data": {
+          "agenda_travail": "Arbeitskalender",
+          "agenda_rdv": "Terminkalender",
+          "agenda_anniversaires": "Geburtstagskalender",
+          "agenda_feries": "Feiertagskalender",
+          "agenda_vacances": "Schulferienkalender",
+          "telephone_suivi": "Verfolgtes Handy",
+          "presence": "Anwesenheitssensor",
+          "pipeline": "Chat-Pipeline"
+        },
+        "data_description": {
+          "agenda_anniversaires": "Geburtstage, Feiertage, Ferien und Handy: Die Liste rät schon selbst, wenn es nur einen Kandidaten gibt.",
+          "telephone_suivi": "Schaltet den Bildschirm bei der Rückkehr ein, beim Weggehen aus.",
+          "presence": "Schaltet den Bildschirm bei Erkennung ein, nach 15 min ohne Anwesenheit aus.",
+          "pipeline": "Der Chat-Modus des Bildschirms; „Aucun“ blendet seine Tasten aus."
+        }
+      },
+      "recapitulatif": {
+        "title": "Assistent · Zusammenfassung",
+        "description": "{resume}\n\n{action}",
+        "data": {
+          "mettre_a_jour": "Räume und Zuhause-Eingaben der bestehenden Automation ersetzen"
+        },
+        "data_description": {
+          "mettre_a_jour": "Ein leer gelassenes Feld des Zuhauses behält seinen Wert; ihre übrigen Einstellungen (Energie, Gesten …) bleiben, wie sie sind. Die Listen „Tab5 · …“ werden mit oder ohne dieses Kästchen eingestellt."
+        }
+      }
+    },
+    "abort": {
+      "aucune_piece": "Kein Home-Assistant-Bereich hat ein Gerät, das das Tablet anzeigen kann: Der Assistent hat nichts vorzuschlagen und ändert nichts. Weisen Sie Ihre Geräte in Home Assistant Bereichen zu und starten Sie ihn dann erneut (Einstellungen → Geräte & Dienste → Tab5 → Konfigurieren, Kästchen „Einrichtungsassistenten starten“), oder füllen Sie die Automation des Blueprints von Hand aus."
+    },
+    "error": {
+      "aucune_piece_choisie": "Wählen Sie mindestens einen Raum.",
+      "trop_de_pieces": "Höchstens fünf Räume.",
+      "trop_de_tuiles": "Höchstens fünf Kacheln."
+    }
+  },
+  "issues": {
+    "fichiers_absents": {
+      "title": "Tab5: keine Home-Assistant-Dateien in der Integration",
+      "description": "Die Tab5-Integration {version} enthält keine Dateien: Sie wurde aus dem Repository kopiert, statt aus einem Release installiert zu werden. Installieren Sie sie über HACS (benutzerdefiniertes Repository), das `tab5_hacs.zip` des Releases herunterlädt."
+    },
+    "configuration_invalide": {
+      "title": "Tab5: Die Dateien {version} wurden nicht installiert",
+      "description": "Die neuen Tab5-Dateien konnten nicht installiert werden (die Konfigurationsprüfung hat mit ihnen einen Fehler gefunden, oder das Schreiben ist fehlgeschlagen): Die vorherigen Dateien wurden wiederhergestellt, nichts hat sich geändert. Der Grund steht im Protokoll (Einstellungen → System → Protokolle, „tab5“). Nach einem Konfigurationsfehler werden diese Dateien nicht bei jedem Neustart erneut versucht: Sobald die Ursache behoben ist, gehen Sie zu Einstellungen → Geräte & Dienste → Tab5 → Konfigurieren, „Die Dateien dieser Version jetzt neu installieren“. Wenn die Ursache nicht in Ihren eigenen Dateien liegt, melden Sie sie bitte: {signaler}"
+    },
+    "packages_absents": {
+      "title": "Tab5: Home Assistant lädt die Packages nicht",
+      "description": "Die Tab5-Dateien liegen in `config/packages/`, aber Home Assistant liest diesen Ordner nicht. Fügen Sie diese zwei Zeilen zu `configuration.yaml` hinzu (die Zeile `homeassistant:` nur einmal), prüfen Sie die Konfiguration und starten Sie dann neu:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```"
+    },
+    "redemarrage_requis": {
+      "title": "Tab5: Home Assistant zum Abschluss neu starten",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Home Assistant neu starten",
+            "description": "Die Tab5-Dateien {version} sind installiert, aber einige wirken erst nach einem Neustart. Bestätigen Sie, um Home Assistant jetzt neu zu starten."
+          }
+        },
+        "error": {
+          "configuration_invalide": "Die Konfiguration hat einen Fehler: Beheben Sie ihn zuerst (Entwicklerwerkzeuge → YAML → Konfiguration prüfen)."
+        }
+      }
+    },
+    "fichiers_remplaces": {
+      "title": "Tab5: Bereits vorhandene Dateien wurden ersetzt",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Bereits vorhandene Tab5-Dateien, ersetzt",
+            "description": "Diese Tab5-Dateien lagen bereits in `config/` (wohl von Hand kopiert) und unterschieden sich von denen des Releases: {fichiers}. Sie wurden trotzdem ersetzt, die alten werden in {sauvegarde} aufbewahrt. Wenn Sie eine davon absichtlich geändert hatten, übernehmen Sie Ihre Änderung von dort.\n\nBestätigen Sie, um diese Meldung zu schließen."
+          }
+        }
+      }
+    },
+    "firmware_echec": {
+      "title": "Tab5: Das Tablet wurde nicht auf {version} aktualisiert",
+      "description": "Die Tab5-Dateien {version} sind installiert, aber das Tablet läuft nach {essais} Aktualisierungsversuchen noch mit einer anderen Version. Installieren Sie sie von Hand: Einstellungen → Aktualisierungen (oder die Entität „Firmware“ des Tablets) → Installieren, Tablet eingeschaltet und verbunden. Der Grund jedes Versuchs steht im Protokoll (Einstellungen → System → Protokolle, „tab5“). Diese Meldung verschwindet, sobald das Tablet {version} ausführt."
+    },
+    "configurer_pieces": {
+      "title": "Tab5: Das Tablet aus Ihren Bereichen einrichten",
+      "fix_flow": {
+        "step": {
+          "pieces": {
+            "title": "Assistent · Räume",
+            "description": "Der Assistent bereitet die Automation der Bildschirmplätze (Blueprint „Tab5 — emplacements de l'écran“) aus Ihren Home-Assistant-Bereichen vor. {nombre} Bereich(e) haben Geräte, die das Tablet anzeigen kann; die am besten ausgestatteten sind schon gewählt, höchstens {max}. Vor der Zusammenfassung wird nichts geschrieben.",
+            "data": {
+              "pieces": "Räume des Tablets"
+            },
+            "data_description": {
+              "pieces": "Höchstens fünf, in der Reihenfolge der Seiten der unteren Reihe: der erste auf dem Startbildschirm, die weiteren per Wischen."
+            }
+          },
+          "piece": {
+            "title": "Assistent · Raum {numero} von {total}: {zone}",
+            "description": "Vorausgefüllt nach dem Home-Assistant-Bereich „{zone}“: seine Lichter, Rollläden, Schalter, Ventilatoren und Player (höchstens {max}), sein Temperatur- und Feuchtesensor und seine Klimaanlage. Ändern Sie, was Sie möchten.",
+            "data": {
+              "nom": "Angezeigter Name",
+              "tuiles": "Kacheln",
+              "temperature": "Raumtemperatur",
+              "humidite": "Raumfeuchte",
+              "clim": "Klimaanlage des Raums"
+            },
+            "data_description": {
+              "nom": "Leer: der gemeinsame Bereichsname seiner Geräte.",
+              "tuiles": "Höchstens fünf, von links nach rechts.",
+              "temperature": "Optional. Wird auf dem Startbildschirm angezeigt, wenn dieser Raum zu sehen ist.",
+              "humidite": "Optional, zusammen mit der Temperatur.",
+              "clim": "Optional, zusammen mit der Temperatur: Die Tasten − / + des Startbildschirms regeln sie."
+            }
+          },
+          "maison": {
+            "title": "Assistent · Zuhause",
+            "description": "Was nicht von einem Raum abhängt. Ein Feld wird nur vorausgefüllt, wenn Ihr Home Assistant nur eine mögliche Antwort hat (ein einziger Fernseher, eine einzige Klimaanlage, ein einziges Wetter …) oder wenn die bestehende Automation es schon enthält; sonst bleibt es leer und das Tablet kommt ohne aus. Ändern Sie, was Sie möchten.",
+            "data": {
+              "tv": "TV",
+              "tv_telecommande": "Fernbedienung des Fernsehers",
+              "telephone": "Handy-Akku",
+              "salon_temperature": "Raumtemperatur (oben auf dem Startbildschirm)",
+              "salon_humidite": "Raumfeuchte",
+              "serre_temperature": "Zweite Temperatur (Gewächshaus, draußen …)",
+              "serre_exterieure": "Die zweite Temperatur ist draußen",
+              "clim": "Klimaanlage",
+              "pot_1": "Topf 1",
+              "pot_2": "Topf 2",
+              "pot_3": "Topf 3",
+              "pot_4": "Topf 4",
+              "pot_5": "Topf 5",
+              "meteo_previsions": "Wetter für die Vorhersage",
+              "tablette": "Name des Tablets in ESPHome"
+            },
+            "data_description": {
+              "tv": "Die Taste „TV“ des Bildschirms.",
+              "tv_telecommande": "Die Tasten der Fernbedienung auf dem Bildschirm.",
+              "telephone": "Ein Symbol oben links, je nach Akku eingefärbt.",
+              "salon_temperature": "Vorgeschlagen: die des ersten Raums.",
+              "serre_temperature": "Vorgeschlagen: die einzige Temperatur, deren Name „außen“ sagt.",
+              "clim": "Die Tasten − / Sollwert / + des Startbildschirms.",
+              "pot_1": "Bodenfeuchtesensoren: vorgeschlagen, wenn es höchstens fünf gibt.",
+              "meteo_previsions": "Die Seiten der Tage und Stunden.",
+              "tablette": "Aus der ESPHome-Integration gelesen; leer: „tab5_ha_hmi“."
+            }
+          },
+          "agendas": {
+            "title": "Assistent · Kalender und Personen",
+            "description": "Die Listen „Tab5 · …“ (Einstellungen → Geräte & Dienste → Entitäten). Eine bereits getroffene Wahl bleibt. Eine Liste, die noch auf „Aucun“ (keine) steht, erhält einen Vorschlag, wenn genau eine Entität passt (ein Kalender, dessen Name „Arbeit“ oder „Termin“ sagt, der einzige Anwesenheits- oder Belegungssensor, die bevorzugte Pipeline). Vor der Zusammenfassung wird nichts eingestellt; Sie können alles wieder auf „Aucun“ setzen.",
+            "data": {
+              "agenda_travail": "Arbeitskalender",
+              "agenda_rdv": "Terminkalender",
+              "agenda_anniversaires": "Geburtstagskalender",
+              "agenda_feries": "Feiertagskalender",
+              "agenda_vacances": "Schulferienkalender",
+              "telephone_suivi": "Verfolgtes Handy",
+              "presence": "Anwesenheitssensor",
+              "pipeline": "Chat-Pipeline"
+            },
+            "data_description": {
+              "agenda_anniversaires": "Geburtstage, Feiertage, Ferien und Handy: Die Liste rät schon selbst, wenn es nur einen Kandidaten gibt.",
+              "telephone_suivi": "Schaltet den Bildschirm bei der Rückkehr ein, beim Weggehen aus.",
+              "presence": "Schaltet den Bildschirm bei Erkennung ein, nach 15 min ohne Anwesenheit aus.",
+              "pipeline": "Der Chat-Modus des Bildschirms; „Aucun“ blendet seine Tasten aus."
+            }
+          },
+          "recapitulatif": {
+            "title": "Assistent · Zusammenfassung",
+            "description": "{resume}\n\n{action}",
+            "data": {
+              "mettre_a_jour": "Räume und Zuhause-Eingaben der bestehenden Automation ersetzen"
+            },
+            "data_description": {
+              "mettre_a_jour": "Ein leer gelassenes Feld des Zuhauses behält seinen Wert; ihre übrigen Einstellungen (Energie, Gesten …) bleiben, wie sie sind. Die Listen „Tab5 · …“ werden mit oder ohne dieses Kästchen eingestellt."
+            }
+          }
+        },
+        "abort": {
+          "aucune_piece": "Kein Home-Assistant-Bereich hat ein Gerät, das das Tablet anzeigen kann: Der Assistent hat nichts vorzuschlagen und ändert nichts. Weisen Sie Ihre Geräte in Home Assistant Bereichen zu und starten Sie ihn dann erneut (Einstellungen → Geräte & Dienste → Tab5 → Konfigurieren, Kästchen „Einrichtungsassistenten starten“), oder füllen Sie die Automation des Blueprints von Hand aus."
+        },
+        "error": {
+          "aucune_piece_choisie": "Wählen Sie mindestens einen Raum.",
+          "trop_de_pieces": "Höchstens fünf Räume.",
+          "trop_de_tuiles": "Höchstens fünf Kacheln."
+        }
+      }
+    }
+  }
+}
