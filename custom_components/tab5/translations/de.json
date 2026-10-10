@@ -65,6 +65,7 @@
         "data": {
           "tv": "TV",
           "tv_telecommande": "Fernbedienung des Fernsehers",
+          "telecommandes_autres": "Weitere Fernbedienungen",
           "telephone": "Handy-Akku",
           "salon_temperature": "Raumtemperatur (oben auf dem Startbildschirm)",
           "salon_humidite": "Raumfeuchte",
@@ -82,6 +83,7 @@
         "data_description": {
           "tv": "Die Taste „TV“ des Bildschirms.",
           "tv_telecommande": "Die Tasten der Fernbedienung auf dem Bildschirm.",
+          "telecommandes_autres": "Apple TV, Freebox Player…: höchstens drei, je eine Seite im Fernbedienungs-Popup.",
           "telephone": "Ein Symbol oben links, je nach Akku eingefärbt.",
           "salon_temperature": "Vorgeschlagen: die des ersten Raums.",
           "serre_temperature": "Vorgeschlagen: die einzige Temperatur, deren Name „außen“ sagt.",
@@ -211,6 +213,7 @@
             "data": {
               "tv": "TV",
               "tv_telecommande": "Fernbedienung des Fernsehers",
+              "telecommandes_autres": "Weitere Fernbedienungen",
               "telephone": "Handy-Akku",
               "salon_temperature": "Raumtemperatur (oben auf dem Startbildschirm)",
               "salon_humidite": "Raumfeuchte",
@@ -228,6 +231,7 @@
             "data_description": {
               "tv": "Die Taste „TV“ des Bildschirms.",
               "tv_telecommande": "Die Tasten der Fernbedienung auf dem Bildschirm.",
+              "telecommandes_autres": "Apple TV, Freebox Player…: höchstens drei, je eine Seite im Fernbedienungs-Popup.",
               "telephone": "Ein Symbol oben links, je nach Akku eingefärbt.",
               "salon_temperature": "Vorgeschlagen: die des ersten Raums.",
               "serre_temperature": "Vorgeschlagen: die einzige Temperatur, deren Name „außen“ sagt.",

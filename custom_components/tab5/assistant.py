@@ -185,12 +185,14 @@ def classer_zones(zones: list[Zone], parzone: dict[str, list[Entite]]) -> list[Z
 # ─── Maison : les entrées qui ne dépendent pas d'une pièce ──────────────────
 
 # (entrée du blueprint, nature) dans l'ordre du formulaire Maison. Nature : « domaine » ou
-# « domaine:classe », « bool », « texte » ; tests/test_assistant_tab5.py les compare au
+# « domaine:classe », « domaine[] » (plusieurs entités), « bool », « texte » ;
+# tests/test_assistant_tab5.py les compare au
 # blueprint. Les autres entrées (rangées, panneau Ok Nabu, gestes, énergie, tuile − / +,
 # météo pluie / vigilances, ancien accueil) ne sont pas proposées : leur réponse n'est pas
 # dans les registres de HA (inventaire dans l'ADR-0053).
 CHAMPS_MAISON = (
-    ("tv", "media_player"), ("tv_telecommande", "remote"), ("telephone", "sensor:battery"),
+    ("tv", "media_player"), ("tv_telecommande", "remote"), ("telecommandes_autres", "remote[]"),
+    ("telephone", "sensor:battery"),
     ("salon_temperature", "sensor:temperature"), ("salon_humidite", "sensor:humidity"),
     ("serre_temperature", "sensor:temperature"), ("serre_exterieure", "bool"),
     ("clim", "climate"),
@@ -200,6 +202,8 @@ CHAMPS_MAISON = (
 )
 TABLETTE_DEFAUT = "tab5_ha_hmi"
 MAX_POTS = 5  # pot_1 à pot_5 ; plus de capteurs : lesquels montrer n'est pas évident
+# Télécommandes du popup (ADR-0056) : celle de la TV, puis trois autres au plus.
+MAX_TELECOMMANDES_AUTRES = 3
 # Une température dehors, d'après son nom ou son entity_id (la seconde température).
 DEHORS = re.compile(r"ext[eé]rieu?r|exterior|outdoor|outside|dehors|au(?:ss|ß)en|buiten|estern[oa]|dış", re.I)
 
@@ -208,7 +212,8 @@ def proposer_maison(entites: list[Entite], appareils: dict[str, Appareil], model
                     pieces: list[Piece], nom_esphome: str | None = None) -> dict[str, Any]:
     """Les entrées de la maison, seulement quand la réponse est sans ambiguïté (une seule
     candidate) : la TV (seul media_player de classe tv) et sa télécommande (seul remote de
-    son appareil), la batterie du téléphone (seul capteur de batterie de l'application
+    son appareil), puis les autres télécommandes quand celle de la TV est trouvée et qu'il
+    y en a trois au plus (chacune a sa page dans le popup, ADR-0056), la batterie du téléphone (seul capteur de batterie de l'application
     mobile), la température et l'humidité de la pièce 1 pour celles du salon, la seule
     température dont le nom dit « dehors » (seconde température, dehors), la seule clim,
     les pots (1 à 5 capteurs d'humidité du sol), la seule entité météo, le nom ESPHome de
@@ -227,6 +232,10 @@ def proposer_maison(entites: list[Entite], appareils: dict[str, Appareil], model
         p["tv"] = tv
         if tvs[0].appareil:
             p["tv_telecommande"] = seule([e for e in de("remote") if e.appareil == tvs[0].appareil])
+    if p.get("tv_telecommande"):
+        autres = [e.entity_id for e in de("remote") if e.entity_id != p["tv_telecommande"]]
+        if len(autres) <= MAX_TELECOMMANDES_AUTRES:
+            p["telecommandes_autres"] = autres
     p["telephone"] = seule([e for e in de("sensor", "battery") if e.plateforme == "mobile_app"])
     if pieces:
         p["salon_temperature"], p["salon_humidite"] = pieces[0].temperature, pieces[0].humidite
@@ -255,6 +264,8 @@ def entrees_maison(valeurs: dict[str, Any], anciennes: dict[str, Any] | None = N
         v = valeurs.get(cle)
         if isinstance(v, str):
             v = v.strip()
+        elif isinstance(v, (list, tuple)):
+            v = [x.strip() for x in v if isinstance(x, str) and x.strip()]
         if nature == "bool" and v is False and cle in anciennes:
             entrees[cle] = False
             continue
@@ -644,6 +655,9 @@ _LIBELLES = {
     "tv": ("TV", "TV", "TV", "tv", "TV", "TV", "TV"),
     "tv_telecommande": ("télécommande", "remote", "Fernbedienung", "afstandsbediening", "mando a distancia",
                         "telecomando", "uzaktan kumanda"),
+    "telecommandes_autres": ("autres télécommandes", "other remotes", "weitere Fernbedienungen",
+                             "andere afstandsbedieningen", "otros mandos", "altri telecomandi",
+                             "diğer kumandalar"),
     "telephone": ("batterie du téléphone", "phone battery", "Handy-Akku", "telefoonbatterij",
                   "batería del teléfono", "batteria del telefono", "telefon pili"),
     "salon_temperature": ("température du salon", "room temperature", "Raumtemperatur", "kamertemperatuur",
@@ -691,7 +705,12 @@ def resume_maison(maison: dict[str, Any], noms: dict[str, str], langue: str | No
         return f"- **{t['maison']}**{t['deux_points']}{t['rien']}"
     parties = []
     for cle, valeur in maison.items():
-        texte = t["oui"] if valeur is True else noms.get(valeur, valeur)
+        if valeur is True:
+            texte = t["oui"]
+        elif isinstance(valeur, list):
+            texte = ", ".join(noms.get(v, v) for v in valeur)
+        else:
+            texte = noms.get(valeur, valeur)
         parties.append(f"{libelle(cle, langue)}{t['deux_points']}{texte}")
     return f"- **{t['maison']}**{t['deux_points']}" + t["sep"].join(parties)
 

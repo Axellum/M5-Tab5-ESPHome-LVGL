@@ -65,6 +65,7 @@
         "data": {
           "tv": "TV",
           "tv_telecommande": "Mando a distancia de la TV",
+          "telecommandes_autres": "Otros mandos",
           "telephone": "Batería del teléfono",
           "salon_temperature": "Temperatura de la habitación (arriba en la pantalla de inicio)",
           "salon_humidite": "Humedad de la habitación",
@@ -82,6 +83,7 @@
         "data_description": {
           "tv": "El botón «TV» de la pantalla.",
           "tv_telecommande": "Las teclas del mando en la pantalla.",
+          "telecommandes_autres": "Apple TV, Freebox Player…: tres como máximo, una página cada uno en la ventana del mando.",
           "telephone": "Un icono arriba a la izquierda, coloreado según la batería.",
           "salon_temperature": "Propuesta: la de la primera habitación.",
           "serre_temperature": "Propuesta: la única temperatura cuyo nombre dice «exterior».",
@@ -211,6 +213,7 @@
             "data": {
               "tv": "TV",
               "tv_telecommande": "Mando a distancia de la TV",
+              "telecommandes_autres": "Otros mandos",
               "telephone": "Batería del teléfono",
               "salon_temperature": "Temperatura de la habitación (arriba en la pantalla de inicio)",
               "salon_humidite": "Humedad de la habitación",
@@ -228,6 +231,7 @@
             "data_description": {
               "tv": "El botón «TV» de la pantalla.",
               "tv_telecommande": "Las teclas del mando en la pantalla.",
+              "telecommandes_autres": "Apple TV, Freebox Player…: tres como máximo, una página cada uno en la ventana del mando.",
               "telephone": "Un icono arriba a la izquierda, coloreado según la batería.",
               "salon_temperature": "Propuesta: la de la primera habitación.",
               "serre_temperature": "Propuesta: la única temperatura cuyo nombre dice «exterior».",

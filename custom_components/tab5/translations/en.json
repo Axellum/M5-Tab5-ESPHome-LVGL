@@ -65,6 +65,7 @@
         "data": {
           "tv": "TV",
           "tv_telecommande": "TV remote",
+          "telecommandes_autres": "Other remotes",
           "telephone": "Phone battery",
           "salon_temperature": "Room temperature (top of the home screen)",
           "salon_humidite": "Room humidity",
@@ -82,6 +83,7 @@
         "data_description": {
           "tv": "The « TV » button of the screen.",
           "tv_telecommande": "The remote keys on the screen.",
+          "telecommandes_autres": "Apple TV, Freebox Player…: three at most, one page each in the remote popup.",
           "telephone": "An icon at the top left, coloured by the battery.",
           "salon_temperature": "Suggested: the first room's.",
           "serre_temperature": "Suggested: the only temperature whose name says « outdoor ».",
@@ -211,6 +213,7 @@
             "data": {
               "tv": "TV",
               "tv_telecommande": "TV remote",
+              "telecommandes_autres": "Other remotes",
               "telephone": "Phone battery",
               "salon_temperature": "Room temperature (top of the home screen)",
               "salon_humidite": "Room humidity",
@@ -228,6 +231,7 @@
             "data_description": {
               "tv": "The « TV » button of the screen.",
               "tv_telecommande": "The remote keys on the screen.",
+              "telecommandes_autres": "Apple TV, Freebox Player…: three at most, one page each in the remote popup.",
               "telephone": "An icon at the top left, coloured by the battery.",
               "salon_temperature": "Suggested: the first room's.",
               "serre_temperature": "Suggested: the only temperature whose name says « outdoor ».",

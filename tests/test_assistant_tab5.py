@@ -330,9 +330,11 @@ def test_champs_maison_dans_le_blueprint():
         elif nature == "texte":
             assert "text" in selecteur, cle
         else:
-            domaine, _, classe = nature.partition(":")
+            # « domaine[] » : plusieurs entités (les autres télécommandes, ADR-0056).
+            domaine, _, classe = nature.removesuffix("[]").partition(":")
             f = selecteur["entity"]["filter"][0]
             assert f["domain"] == domaine and f.get("device_class") == (classe or None), cle
+            assert bool(selecteur["entity"].get("multiple")) == nature.endswith("[]"), cle
     assert entrees["tablette"]["default"] == A.TABLETTE_DEFAUT
     assert [c for c, _ in A.CHAMPS_MAISON if c.startswith("pot_")] == [f"pot_{n}" for n in range(1, A.MAX_POTS + 1)]
     assert set(A.LIBELLES) >= {c for c, _ in A.CHAMPS_MAISON} | {liste.cle for liste in A.LISTES}
@@ -368,6 +370,7 @@ def test_proposer_maison_sans_ambiguite():
     pieces = [A.Piece("salon", "Salon", (), "sensor.t_salon", "sensor.h_salon", None)]
     assert A.proposer_maison(entites, appareils, TABLETTE, pieces, "tab5-cuisine") == {
         "tv": "media_player.tele", "tv_telecommande": "remote.tele",
+        "telecommandes_autres": ["remote.box"],                             # ADR-0056
         "telephone": "sensor.pixel_battery_level",
         "salon_temperature": "sensor.t_salon", "salon_humidite": "sensor.h_salon",
         "serre_temperature": "sensor.temperature_exterieure", "serre_exterieure": True,
@@ -389,6 +392,25 @@ def test_proposer_maison_ambigu_ne_propose_rien():
         E("sensor.iphone_battery_level", "iPhone", classe="battery", plateforme="mobile_app"),
     ] + [E(f"sensor.pot_{n}", f"Pot {n}", classe="moisture") for n in range(4)])  # 6 pots
     assert A.proposer_maison(entites, appareils, TABLETTE, []) == {}, "deux candidates : rien"
+
+
+def test_autres_telecommandes_seulement_si_elles_tiennent():
+    """ADR-0056 : la télécommande de la TV trouvée, les autres (trois au plus) ont chacune
+    leur page ; au-delà, lesquelles montrer n'est pas évident : rien."""
+    E = A.Entite
+    entites, appareils = _foyer(plus=[E("remote.apple_tv", "Apple TV"), E("remote.freebox", "Freebox Player")])
+    assert A.proposer_maison(entites, appareils, TABLETTE, [])["telecommandes_autres"] == \
+        ["remote.apple_tv", "remote.box", "remote.freebox"]
+    entites, appareils = _foyer(plus=[E(f"remote.r{n}", f"R{n}") for n in range(3)])
+    assert "telecommandes_autres" not in A.proposer_maison(entites, appareils, TABLETTE, [])
+
+
+def test_entrees_maison_plusieurs_entites():
+    assert A.entrees_maison({"telecommandes_autres": [" remote.a ", "", "remote.b"]}) == \
+        {"telecommandes_autres": ["remote.a", "remote.b"]}
+    assert A.entrees_maison({"telecommandes_autres": []}) == {}
+    noms = {"remote.a": "Apple TV", "remote.b": "Freebox"}
+    assert "Apple TV, Freebox" in A.resume_maison({"telecommandes_autres": ["remote.a", "remote.b"]}, noms, "fr")
 
 
 def test_entrees_maison():

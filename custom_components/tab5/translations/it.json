@@ -65,6 +65,7 @@
         "data": {
           "tv": "TV",
           "tv_telecommande": "Telecomando della TV",
+          "telecommandes_autres": "Altri telecomandi",
           "telephone": "Batteria del telefono",
           "salon_temperature": "Temperatura della stanza (in alto nella schermata iniziale)",
           "salon_humidite": "Umidità della stanza",
@@ -82,6 +83,7 @@
         "data_description": {
           "tv": "Il pulsante «TV» dello schermo.",
           "tv_telecommande": "I tasti del telecomando sullo schermo.",
+          "telecommandes_autres": "Apple TV, Freebox Player…: al massimo tre, una pagina ciascuno nel popup del telecomando.",
           "telephone": "Un'icona in alto a sinistra, colorata secondo la batteria.",
           "salon_temperature": "Proposta: quella della prima stanza.",
           "serre_temperature": "Proposta: l'unica temperatura il cui nome dice «esterno».",
@@ -211,6 +213,7 @@
             "data": {
               "tv": "TV",
               "tv_telecommande": "Telecomando della TV",
+              "telecommandes_autres": "Altri telecomandi",
               "telephone": "Batteria del telefono",
               "salon_temperature": "Temperatura della stanza (in alto nella schermata iniziale)",
               "salon_humidite": "Umidità della stanza",
@@ -228,6 +231,7 @@
             "data_description": {
               "tv": "Il pulsante «TV» dello schermo.",
               "tv_telecommande": "I tasti del telecomando sullo schermo.",
+              "telecommandes_autres": "Apple TV, Freebox Player…: al massimo tre, una pagina ciascuno nel popup del telecomando.",
               "telephone": "Un'icona in alto a sinistra, colorata secondo la batteria.",
               "salon_temperature": "Proposta: quella della prima stanza.",
               "serre_temperature": "Proposta: l'unica temperatura il cui nome dice «esterno».",
