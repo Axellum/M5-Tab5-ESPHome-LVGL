@@ -783,6 +783,11 @@ static void test_zone_gauche() {
         expect(z.defaut == ZoneGauche::LECTEUR && z.cycle == (L | G), "zone gauche : lecteur lu et gardé (lot 2)");
     }
     {
+        constexpr uint8_t C = zone_gauche_bit(ZoneGauche::CAPTEUR);
+        const ZoneGaucheLu z = gauche("capteur|vocal|lecteur");
+        expect(z.defaut == ZoneGauche::CAPTEUR && z.cycle == (C | V | L), "zone gauche : capteur lu et gardé (ADR-0053)");
+    }
+    {
         const ZoneGaucheLu z = gauche("Vocal|GRAPHIQUE| graphique|graphiques");
         expect(z.defaut == ZoneGauche::VOCAL && z.cycle == V, "zone gauche : codes exacts seulement");
     }
@@ -1189,6 +1194,86 @@ static void test_payloads_ha() {
            "HA solaire : 0, 50, 100, nan");
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 10. Suivi de capteurs (ADR-0053)
+// ════════════════════════════════════════════════════════════════════════════
+
+static void test_suivis_lire() {
+    SuiviLu s[kSuivisMax];
+    int n = suivis_lire(ch("Tesla|382.7|USD|2.05|p|0,10,,100;CAC 40|7803.3301|EUR|-0.95|p|50"), s);
+    expect(n == 2 && vaut(s[0].nom, "Tesla") && vaut(s[0].unite, "USD") && s[0].valeur == 382.7f &&
+               s[0].decimales == 1 && s[0].genre == SuiviVariation::POURCENT && s[0].variation == 2.05f,
+           "suivi : nom, valeur, unité, variation du jour");
+    expect(s[0].n == 4 && s[0].points[0] == 0 && s[0].points[1] == 10 && s[0].points[2] == kSuiviPointAucun &&
+               s[0].points[3] == 100,
+           "suivi : points, un vide = aucune mesure");
+    expect(s[1].decimales == 2 && s[1].n == 1 && s[1].points[0] == 50,
+           "suivi : « 7803.3301 » montré à 3 décimales sans zéro de fin (2)");
+    n = suivis_lire(ch("Serre|21.4|°C|1.5|a|"), s);
+    expect(n == 1 && s[0].genre == SuiviVariation::ECART && s[0].n == 0, "suivi : écart, sans courbe");
+    n = suivis_lire(ch("A|unknown||nan|p|x,101,-1,50.5,7"), s);
+    expect(n == 1 && std::isnan(s[0].valeur) && s[0].genre == SuiviVariation::AUCUNE && std::isnan(s[0].variation) &&
+               s[0].n == 5 && s[0].points[0] == kSuiviPointAucun && s[0].points[1] == kSuiviPointAucun &&
+               s[0].points[2] == kSuiviPointAucun && s[0].points[3] == kSuiviPointAucun && s[0].points[4] == 7,
+           "suivi : valeur et variation illisibles, points hors de 0 à 100 = aucune mesure");
+    n = suivis_lire(ch("A|1|u|3|z|1;B|1e30|u|1e30|a|"), s);
+    expect(n == 2 && s[0].genre == SuiviVariation::AUCUNE && std::isnan(s[1].valeur) &&
+               s[1].genre == SuiviVariation::AUCUNE,
+           "suivi : genre inconnu = aucune variation, au-delà de kSuiviValeurMax = inconnue");
+    n = suivis_lire(ch(";;A|1;;B;C|2|u|1|p|1|2|3"), s);
+    expect(n == 2 && vaut(s[0].nom, "A") && vaut(s[1].nom, "C") && s[1].n == 1,
+           "suivi : « ;; » et un seul champ sautés, le dernier champ prend le reste");
+    n = suivis_lire(ch("a|1;b|1;c|1;d|1;e|1;f|1;g|1"), s);
+    expect(n == kSuivisMax && vaut(s[5].nom, "f"), "suivi : kSuivisMax au plus");
+    std::string points;
+    for (int i = 0; i < 40; i++) points += (i ? ",9" : "9");
+    const std::string long_ = "A|1||||" + points;  // nom, valeur, trois champs vides, points
+    n = suivis_lire(ch(long_.c_str()), s);
+    expect(n == 1 && s[0].n == kSuiviPointsMax && s[0].points[kSuiviPointsMax - 1] == 9,
+           "suivi : kSuiviPointsMax points au plus");
+    expect(suivis_lire(ch(""), s) == 0 && suivis_lire(Champ{nullptr, 0}, s) == 0, "suivi : vide = aucun");
+    expect(suivi_decimales(ch("12")) == 0 && suivi_decimales(ch("0.125")) == 3 && suivi_decimales(ch("1.5 °C")) == 1 &&
+               suivi_decimales(ch("")) == 0 && suivi_decimales(Champ{nullptr, 0}) == 0,
+           "suivi : décimales écrites par HA");
+}
+
+static void test_suivi_textes() {
+    char t[24];
+    expect(suivi_nombre_texte(382.7f, 1, t, sizeof(t)) && std::strcmp(t, "382.7") == 0, "suivi : 382.7");
+    expect(suivi_nombre_texte(7803.33f, 2, t, sizeof(t)) && std::strcmp(t, "7803.33") == 0, "suivi : 7803.33");
+    expect(suivi_nombre_texte(612.0f, 0, t, sizeof(t)) && std::strcmp(t, "612") == 0, "suivi : entier");
+    expect(suivi_nombre_texte(NAN, 2, t, sizeof(t)) && std::strcmp(t, "--") == 0, "suivi : inconnue = --");
+    expect(suivi_nombre_texte(1.0f, 9, t, sizeof(t)) && std::strcmp(t, "1.000") == 0, "suivi : décimales bornées");
+    expect(!suivi_nombre_texte(7803.33f, 2, t, 4) && t[0] == '\0', "suivi : tampon trop petit = vide");
+    expect(suivi_nombre_texte(-0.0001f, 2, t, sizeof(t)) && std::strcmp(t, "0.00") == 0, "suivi : jamais -0.00");
+    expect(suivi_nombre_texte(-0.4f, 0, t, sizeof(t)) && std::strcmp(t, "0") == 0, "suivi : jamais -0");
+    expect(suivi_nombre_texte(-0.006f, 2, t, sizeof(t)) && std::strcmp(t, "-0.01") == 0, "suivi : -0.01 garde son signe");
+    expect(suivi_nombre_texte(-12.5f, 1, t, sizeof(t)) && std::strcmp(t, "-12.5") == 0, "suivi : négatif");
+    expect(suivi_nombre_texte(33554432.0f, 2, t, sizeof(t)) && std::strcmp(t, "33554432") == 0,
+           "suivi : au-delà de 2^24, sans décimale");
+    SuiviLu s;
+    s.genre = SuiviVariation::POURCENT;
+    s.variation = 2.05f;
+    expect(suivi_variation_texte(s, t, sizeof(t)) && std::strcmp(t, "+2.05 %") == 0 && suivi_sens(s) == 1,
+           "suivi : hausse du jour");
+    s.variation = -0.95f;
+    expect(suivi_variation_texte(s, t, sizeof(t)) && std::strcmp(t, "-0.95 %") == 0 && suivi_sens(s) == -1,
+           "suivi : baisse du jour");
+    s.variation = -0.001f;
+    expect(suivi_variation_texte(s, t, sizeof(t)) && std::strcmp(t, "0.00 %") == 0 && suivi_sens(s) == 0,
+           "suivi : arrondie à zéro, ni signe ni sens");
+    s.genre = SuiviVariation::ECART;
+    s.decimales = 1;
+    s.variation = 1.25f;
+    expect(suivi_variation_texte(s, t, sizeof(t)) && std::strcmp(t, "+1.3") == 0 && suivi_sens(s) == 1,
+           "suivi : écart aux décimales de la valeur");
+    s.genre = SuiviVariation::AUCUNE;
+    expect(suivi_variation_texte(s, t, sizeof(t)) && t[0] == '\0' && suivi_sens(s) == 0, "suivi : aucune variation");
+    s.genre = SuiviVariation::POURCENT;
+    s.variation = 1.0e12f;
+    expect(!suivi_variation_texte(s, t, 8) && t[0] == '\0', "suivi : variation trop longue = vide");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -1225,6 +1310,8 @@ int main() {
     test_lecteur_temps();
     test_ha_base_depuis_hote();
     test_ha_image_url();
+    test_suivis_lire();
+    test_suivi_textes();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

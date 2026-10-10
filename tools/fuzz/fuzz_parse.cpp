@@ -172,6 +172,21 @@ void lecteur(const std::string& p) {
     lecteur_fonctions_lire(Champ{p.data(), p.size()});
 }
 
+void suivi(const std::string& p) {
+    SuiviLu s[kSuivisMax];
+    const int n = suivis_lire(Champ{p.data(), p.size()}, s);
+    for (int i = 0; i < n; i++) {
+        char t[48];
+        suivi_nombre_texte(s[i].valeur, s[i].decimales, t, sizeof(t));
+        suivi_variation_texte(s[i], t, sizeof(t));
+        suivi_variation_texte(s[i], t, 4);
+        suivi_sens(s[i]);
+        const std::string nom(s[i].nom.p, s[i].nom.n);  // ce que texte_ha_copier recevrait
+        (void) nom;
+    }
+    suivi_decimales(Champ{p.data(), p.size()});
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -193,6 +208,7 @@ constexpr Parseur kParseurs[] = {
     emplacements,     // '9' tab5_maj_emplacements
     temperature,      // ':' tab5_maj_historique
     lecteur,          // ';' tab5_maj_lecteur
+    suivi,            // '<' tab5_maj_suivi
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

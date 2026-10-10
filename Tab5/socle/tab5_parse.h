@@ -299,13 +299,17 @@ bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out)
 // (codes_gauche) : ni traduits ni renommés sans lui (tests/test_zone_gauche.py).
 // LECTEUR : le lecteur de musique compact (lot 2, sur le lecteur de l'ADR-0050), sauté
 // quand HA a dit qu'aucun lecteur n'est choisi (tab5_zone_gauche.cpp, disponible()).
+// CAPTEUR : le premier capteur de « Tab5 · capteurs suivis » en courbe (ADR-0053, section
+// 10), sauté de même quand HA a dit qu'aucun capteur n'est choisi.
 enum class ZoneGauche : uint8_t {
     VOCAL,      // le micro et les boutons Domo / Discu (l'écran d'avant)
     GRAPHIQUE,  // les prévisions des heures qui viennent en courbe et barres de pluie
     LECTEUR,    // le lecteur de musique compact (lot 2)
+    CAPTEUR,    // un capteur suivi : nom, valeur, variation, courbe des 24 h (ADR-0053)
     NB
 };
-constexpr const char* kZoneGaucheCodes[static_cast<int>(ZoneGauche::NB)] = {"vocal", "graphique", "lecteur"};
+constexpr const char* kZoneGaucheCodes[static_cast<int>(ZoneGauche::NB)] = {"vocal", "graphique", "lecteur",
+                                                                            "capteur"};
 constexpr uint8_t zone_gauche_bit(ZoneGauche z) { return static_cast<uint8_t>(1u << static_cast<int>(z)); }
 // Sans la clé (blueprint plus ancien) : le vocal au départ, le vocal et le graphique au tap.
 constexpr ZoneGauche kZoneGaucheDefaut = ZoneGauche::VOCAL;
@@ -544,3 +548,70 @@ bool ha_base_depuis_hote(const char* hote, char* out, size_t n);
 // manque ou n'est pas en http(s)://, si l'URL contient un espace ou un caractère de
 // contrôle, ou si elle ne tient pas dans `n`.
 bool ha_image_url(const Champ& image, const char* base, char* out, size_t n);
+
+// ─── 10. Suivi de capteurs (tab5_maj_suivi, ADR-0053) ───
+// Une variable, poussée par packages/tab5_suivi.yaml : un enregistrement par capteur de la
+// liste « Tab5 · capteurs suivis », dans son ordre, séparés par « ; » (kSuivisMax au plus ;
+// vide : aucun capteur choisi) :
+//   « nom|valeur|unité|variation|genre|points »
+//   nom       friendly_name (HA retire « | » et « ; »), copié par l'écran (texte_ha_copier) ;
+//   valeur    l'état du capteur tel que HA l'écrit (« 382.7 », « 7803.3301 ») ; illisible,
+//             non fini ou au-delà de ±kSuiviValeurMax : inconnue (« -- ») ;
+//   unité     unit_of_measurement, vide sans ;
+//   variation et genre : « p » = pourcentage du jour (attribut change_pct de l'entité),
+//             « a » = écart depuis le premier point de la courbe, dans l'unité du capteur ;
+//             un autre genre, ou une variation illisible : aucune ;
+//   points    la courbe des 24 dernières heures, du plus ancien au plus récent, séparés par
+//             « , » : chacun de 0 (minimum de la fenêtre) à 100 (maximum), vide = aucune
+//             mesure à ce créneau ; kSuiviPointsMax au plus, la fin ignorée.
+// Un enregistrement vide (« ;; ») est sauté ; moins de deux champs : sauté aussi.
+constexpr int kSuivisMax = 6;
+constexpr int kSuiviPointsMax = 32;         // = kCourbeLissePoints (tab5_internal.h)
+constexpr int kSuiviDecimalesMax = 3;
+constexpr float kSuiviValeurMax = 1.0e12f;  // au-delà, un payload faux, pas une mesure
+// La valeur est un float : 24 bits de mantisse, entiers exacts jusqu'à 2^24 (16 777 216).
+// Au-delà, les décimales et les derniers chiffres ne sont plus ceux de HA : la valeur
+// s'écrit alors sans décimale (suivi_nombre_texte), arrondie à la précision du float.
+constexpr float kSuiviValeurExacteMax = 16777216.0f;
+constexpr int8_t kSuiviPointAucun = -1;
+
+enum class SuiviVariation : uint8_t {
+    AUCUNE,
+    POURCENT,  // « p » : pourcentage du jour (change_pct)
+    ECART,     // « a » : écart depuis le début de la courbe, dans l'unité du capteur
+};
+
+struct SuiviLu {
+    Champ nom{nullptr, 0};
+    Champ unite{nullptr, 0};
+    float valeur = NAN;
+    // Décimales à montrer : celles écrites par HA, 0 à kSuiviDecimalesMax ; au-delà, la
+    // valeur arrondie à kSuiviDecimalesMax sans ses zéros de fin (« 7803.3301 » : 2).
+    int decimales = 0;
+    float variation = NAN;
+    SuiviVariation genre = SuiviVariation::AUCUNE;
+    int n = 0;  // points lus, manquants compris
+    int8_t points[kSuiviPointsMax] = {};  // 0 à 100, kSuiviPointAucun : aucune mesure
+};
+// Renvoie le nombre de capteurs lus (kSuivisMax au plus), dans l'ordre.
+int suivis_lire(const Champ& payload, SuiviLu out[kSuivisMax]);
+
+// Chiffres après le point d'un nombre écrit par HA (« 382.7 » : 1, « 1e3 » : 0), sans
+// borne ; 0 sans point ou pour un champ vide.
+int suivi_decimales(const Champ& c);
+
+// « 382.7 », « 7803.33 » : `decimales` (bornées à 0..kSuiviDecimalesMax) après le point,
+// aucune au-delà de ±kSuiviValeurExacteMax ; « 0.00 » sans signe quand elle s'arrondit à
+// zéro (jamais « -0.00 ») ; « -- » pour une valeur inconnue, non finie ou au-delà de
+// ±kSuiviValeurMax. Faux si `out` est trop petit (le texte est alors vidé).
+bool suivi_nombre_texte(float v, int decimales, char* out, size_t n);
+
+// Variation à montrer : « +2.05 % », « -0.95 % » (POURCENT, deux décimales), « +1.2 »
+// (ECART, aux décimales de la valeur ; l'écran ajoute l'unité) ; « 0.00 % »
+// sans signe quand elle s'arrondit à zéro ; vide sans variation. Faux si `out` est trop
+// petit (vidé).
+bool suivi_variation_texte(const SuiviLu& s, char* out, size_t n);
+
+// Sens de la variation arrondie comme elle s'affiche : 1 hausse, -1 baisse, 0 stable ou
+// inconnue (flèche, couleur de la variation et de la courbe).
+int suivi_sens(const SuiviLu& s);

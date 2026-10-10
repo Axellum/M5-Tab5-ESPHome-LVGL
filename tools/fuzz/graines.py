@@ -34,6 +34,7 @@ FAMILLES = [
     # de ligne, que le harnais redécoupe (temperature(), fuzz_parse.cpp).
     (":", "tab5_maj_historique", ("entete", "mesures", "previsions")),
     (";", "tab5_maj_lecteur", ("lecteurs", "etat")),
+    ("<", "tab5_maj_suivi", "payload"),
 ]
 
 

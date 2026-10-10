@@ -775,3 +775,127 @@ bool ha_image_url(const Champ& image, const char* base, char* out, size_t n) {
     if (!ok) out[0] = '\0';
     return ok;
 }
+
+// ─── 10. Suivi de capteurs (ADR-0053) ───
+
+namespace {
+// 10^d, d de 0 à kSuiviDecimalesMax.
+double puissance_dix(int d) {
+    double p = 1.0;
+    for (int i = 0; i < d; i++) p *= 10.0;
+    return p;
+}
+
+int borner_decimales(int d) { return d < 0 ? 0 : (d > kSuiviDecimalesMax ? kSuiviDecimalesMax : d); }
+
+// Valeur bornée (±kSuiviValeurMax), NAN sinon.
+float suivi_nombre(const Champ& c) {
+    const float v = champ_nombre(c, NAN);
+    return std::isfinite(v) && std::fabs(v) <= kSuiviValeurMax ? v : NAN;
+}
+
+// Décimales de la variation telle qu'elle s'affiche.
+int decimales_variation(const SuiviLu& s) { return s.genre == SuiviVariation::POURCENT ? 2 : borner_decimales(s.decimales); }
+
+// La variation arrondie comme à l'écran, en unités de la dernière décimale (0 : stable).
+long long variation_arrondie(const SuiviLu& s) {
+    if (s.genre == SuiviVariation::AUCUNE || !std::isfinite(s.variation)) return 0;
+    return std::llround(static_cast<double>(s.variation) * puissance_dix(decimales_variation(s)));
+}
+}  // namespace
+
+int suivi_decimales(const Champ& c) {
+    if (c.p == nullptr) return 0;
+    size_t i = 0;
+    while (i < c.n && c.p[i] != '.') i++;
+    int d = 0;
+    for (i++; i < c.n && std::isdigit(static_cast<unsigned char>(c.p[i])); i++) d++;
+    return d;
+}
+
+int suivis_lire(const Champ& payload, SuiviLu out[kSuivisMax]) {
+    if (payload.p == nullptr) return 0;
+    const char* p = payload.p;
+    const char* fin = p + payload.n;
+    int n = 0;
+    while (p < fin && n < kSuivisMax) {
+        const Champ e = champ_suivant(p, fin, ';');
+        Champ f[6];
+        const int k = champs_decouper_reste(e.p, e.n, '|', f, 6);
+        if (e.n == 0 || k < 2) continue;
+        for (int i = k; i < 6; i++) f[i] = Champ{e.p + e.n, 0};
+        SuiviLu& s = out[n];
+        s = SuiviLu{};
+        s.nom = f[0];
+        s.valeur = suivi_nombre(f[1]);
+        // Au-delà de kSuiviDecimalesMax chiffres (« 7803.3301 »), la valeur arrondie sans
+        // ses zéros de fin (« 7803.33 »).
+        const int brutes = suivi_decimales(f[1]);
+        s.decimales = borner_decimales(brutes);
+        if (brutes > kSuiviDecimalesMax && std::isfinite(s.valeur)) {
+            long long m = std::llround(static_cast<double>(s.valeur) * puissance_dix(s.decimales));
+            while (s.decimales > 0 && m % 10 == 0) {
+                m /= 10;
+                s.decimales--;
+            }
+        }
+        s.unite = f[2];
+        const float v = suivi_nombre(f[3]);
+        if (std::isfinite(v) && champ_est(f[4], "p")) s.genre = SuiviVariation::POURCENT;
+        else if (std::isfinite(v) && champ_est(f[4], "a")) s.genre = SuiviVariation::ECART;
+        s.variation = s.genre == SuiviVariation::AUCUNE ? NAN : v;
+        // Points : « , » entre deux, 0 à 100 ; un vide ou illisible = aucune mesure.
+        const char* q = f[5].p;
+        const char* qf = f[5].p + f[5].n;
+        while (q < qf && s.n < kSuiviPointsMax) {
+            const Champ c = champ_suivant(q, qf, ',');
+            const uint32_t x = champ_entier(c, 100, 0xFFFFFFFFu);
+            s.points[s.n++] = x <= 100 ? static_cast<int8_t>(x) : kSuiviPointAucun;
+        }
+        n++;
+    }
+    return n;
+}
+
+bool suivi_nombre_texte(float v, int decimales, char* out, size_t n) {
+    if (out == nullptr || n == 0) return false;
+    int r = 0;
+    if (!std::isfinite(v) || std::fabs(v) > kSuiviValeurMax) {
+        r = std::snprintf(out, n, "--");
+    } else {
+        // Au-delà de 2^24, le float n'a plus de décimales justes : aucune n'est écrite.
+        const int d = std::fabs(v) >= kSuiviValeurExacteMax ? 0 : borner_decimales(decimales);
+        r = std::snprintf(out, n, "%.*f", d, static_cast<double>(v));
+    }
+    if (r < 0 || static_cast<size_t>(r) >= n) {
+        out[0] = '\0';
+        return false;
+    }
+    // « -0.00 » (une petite valeur négative arrondie à zéro) : le signe retiré.
+    if (out[0] == '-' && std::strspn(out + 1, "0.") == std::strlen(out + 1)) {
+        std::memmove(out, out + 1, std::strlen(out));
+    }
+    return true;
+}
+
+bool suivi_variation_texte(const SuiviLu& s, char* out, size_t n) {
+    if (out == nullptr || n == 0) return false;
+    out[0] = '\0';
+    if (s.genre == SuiviVariation::AUCUNE || !std::isfinite(s.variation)) return true;
+    const int d = decimales_variation(s);
+    const long long m = variation_arrondie(s);
+    // Sur l'arrondi : jamais « -0.00 » ; la valeur absolue écrite à part, le signe devant.
+    const double a = static_cast<double>(m < 0 ? -m : m) / puissance_dix(d);
+    const char* signe = m > 0 ? "+" : (m < 0 ? "-" : "");
+    const int r = std::snprintf(out, n, "%s%.*f%s", signe, d, a, s.genre == SuiviVariation::POURCENT ? " %" : "");
+    if (r < 0 || static_cast<size_t>(r) >= n) {
+        out[0] = '\0';
+        return false;
+    }
+    return true;
+}
+
+int suivi_sens(const SuiviLu& s) {
+    const long long m = variation_arrondie(s);
+    return m > 0 ? 1 : (m < 0 ? -1 : 0);
+}
