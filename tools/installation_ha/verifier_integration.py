@@ -15,12 +15,16 @@ Assistant neuf : installation, mises à jour, retour en arrière (ADR-0035).
            (absent d'un HA neuf), le blueprint remplacé et dit (réparation persistante
            « fichiers_remplaces », copie dans la sauvegarde), validée comme l'interface ;
            l'assistant de configuration proposé (réparation « configurer_pieces ») ;
-        1 bis. l'assistant (ADR-0052) : deux pièces créées (entités de modèle et un
-           thermostat, une lumière cachée), la réparation suivie comme l'interface, valeurs
-           proposées acceptées → automatisation du blueprint écrite dans automations.yaml,
-           chargée, réparation retirée ; relancé depuis les options sans cocher « mettre à
-           jour » → automations.yaml à l'octet près ; puis en la cochant, un nom changé →
-           seules les pièces changent, une sauvegarde dans tab5_sauvegardes/automatisations/ ;
+        1 bis. l'assistant (ADR-0052, ADR-0053) : deux pièces créées (entités de modèle et
+           un thermostat, une lumière cachée), une température « extérieure » sans pièce, un
+           agenda local « Travail CI » ; la réparation suivie comme l'interface, valeurs
+           proposées acceptées → pièces, maison (seulement ce qui n'a qu'une réponse) et
+           liste « Tab5 · agenda de travail » proposée ; automatisation du blueprint écrite
+           dans automations.yaml, chargée, liste réglée, réparation retirée ; relancé depuis
+           les options sans cocher « mettre à jour » → automations.yaml à l'octet près, le
+           choix de la liste gardé ; puis en la cochant, un nom changé et « dehors » décoché
+           → seules les pièces et la maison changent, une sauvegarde dans
+           tab5_sauvegardes/automatisations/ ;
         2. mise à jour 9.9.2 comme HACS (dossier remplacé, redémarrage), avec un package
            modifié à la main et un package que la release ne livre plus → capteur 9.9.2,
            sauvegarde des deux, le retiré absent, la notification nomme le modifié ;
@@ -142,6 +146,14 @@ template:
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
+      # Sans pièce : la seule température « extérieure », proposée comme seconde (maison).
+      - name: Température extérieure CI
+        unique_id: ci_temperature_exterieure
+        default_entity_id: sensor.ci_temperature_exterieure
+        state: "12"
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
 
 climate:
   - platform: generic_thermostat
@@ -179,6 +191,21 @@ PIECES_ATTENDUES = {
     "piece_2_tuiles": ["light.ci_chevet"],
     "piece_2_temperature": "sensor.ci_temperature_chambre",
 }
+# La page Maison (ADR-0053) : ce qui n'a qu'une réponse dans ce HA. La météo s'y ajoute
+# s'il n'y a qu'une entité weather (celle de l'onboarding, quand il en crée une).
+MAISON_ATTENDUE = {
+    "salon_temperature": "sensor.ci_temperature_salon",   # celles de la pièce 1
+    "salon_humidite": "sensor.ci_humidite_salon",
+    "serre_temperature": "sensor.ci_temperature_exterieure",
+    "serre_exterieure": True,
+    "clim": "climate.ci_clim",                            # la seule clim
+}
+# La page Agendas : un agenda local dont le nom dit « travail », proposé pour la liste
+# « Tab5 · agenda de travail », que le package ne devine jamais.
+AGENDA_CI = "Travail CI"
+AGENDA_CI_ENTITE = "calendar.travail_ci"
+SELECT_TRAVAIL = "select.tab5_agenda_de_travail"
+ETAPES_ASSISTANT = ["pieces", "piece", "piece", "maison", "agendas", "recapitulatif"]
 BLUEPRINT_ASSISTANT = "tab5/tab5_emplacements.yaml"
 # Ce que « Vérifier la configuration » dit de quelques casses, écrit au journal du scénario.
 # Le 07/10/2026 (HA 2026.9.4) : clé pas un slug = rien (valide) ; initial pas un booléen et
@@ -335,10 +362,44 @@ async def ranger_dans_des_pieces(ha: HA, rapport: Rapport) -> dict[str, str]:
     return zones
 
 
+async def creer_agenda(ha: HA, rapport: Rapport) -> None:
+    """Un agenda local « Travail CI », par le formulaire de l'intégration Calendrier local."""
+    chemin = "/api/config/config_entries/flow"
+    etape = await ha.post(chemin, {"handler": "local_calendar", "show_advanced_options": False})
+    noms = {c["name"] for c in etape.get("data_schema") or []}
+    saisie = {"calendar_name": AGENDA_CI} | ({"import": "create_empty"} if "import" in noms else {})
+    fin = await ha.post(f"{chemin}/{etape['flow_id']}", saisie) if etape.get("type") == "form" else etape
+    if fin.get("type") != "create_entry":
+        raise Echec(f"agenda local pas créé : {str(fin)[:300]}")
+    rapport.ok(f"1 bis. agenda local « {AGENDA_CI} » créé")
+
+
+async def options_de(ha: HA, entite: str, valeur: str, delai: float = 60.0) -> list:
+    """Les options d'un select, une fois `valeur` parmi elles (la liste suit les entités)."""
+    fin = time.monotonic() + delai
+    options: list = []
+    while time.monotonic() < fin:
+        e = (await ha.etats()).get(entite)
+        options = (e or {}).get("attributes", {}).get("options") or []
+        if valeur in options:
+            break
+        await asyncio.sleep(1)
+    return options
+
+
 async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> None:
     """Étape 1 bis : l'assistant de configuration, par la réparation puis par les options."""
+    await creer_agenda(ha, rapport)
     zones = await ranger_dans_des_pieces(ha, rapport)
     rapport.verifier(not automatisations_tab5(dossier), "1 bis. aucune automatisation du blueprint avant")
+    etats = await ha.etats()
+    meteos = [e for e in etats if e.startswith("weather.")]
+    maison = MAISON_ATTENDUE | ({"meteo_previsions": meteos[0]} if len(meteos) == 1 else {})
+    rapport.info(f"1 bis. entités météo de ce HA : {meteos}")
+    options_travail = await options_de(ha, SELECT_TRAVAIL, AGENDA_CI_ENTITE)
+    rapport.verifier(AGENDA_CI_ENTITE in options_travail and await etat(ha, SELECT_TRAVAIL) == "Aucun",
+                     "1 bis. liste « Tab5 · agenda de travail » chargée, l'agenda parmi ses choix, réglée sur « Aucun »",
+                     str(options_travail))
 
     # Par la réparation « configurer_pieces », valeurs proposées acceptées.
     reparation = "/api/repairs/issues/fix"
@@ -349,42 +410,66 @@ async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> Non
     rapport.verifier(proposees == [zones["Salon CI"], zones["Chambre CI"]],
                      "1 bis. pièces proposées : les deux qui ont des appareils, la mieux équipée d'abord "
                      "(pas les pièces vides de l'onboarding)", str(proposees))
-    vues = await suivre(ha, reparation, etape, [None, None, None, {}])
+    vues = await suivre(ha, reparation, etape, [None, None, None, None, None, {}])
     formulaires = [v for v in vues if v.get("type") == "form"]
-    rapport.verifier([v.get("step_id") for v in formulaires] == ["pieces", "piece", "piece", "recapitulatif"],
-                     "1 bis. étapes : pièces, pièce ×2, récapitulatif", str([v.get("step_id") for v in vues]))
+    rapport.verifier([v.get("step_id") for v in formulaires] == ETAPES_ASSISTANT,
+                     "1 bis. étapes : pièces, pièce ×2, maison, agendas, récapitulatif",
+                     str([v.get("step_id") for v in vues]))
+    par_etape = {v.get("step_id"): v for v in formulaires}
     if len(formulaires) >= 2:
         rapport.verifier(CACHEE not in json.dumps(formulaires[1]), "1 bis. la lumière cachée n'est pas proposée")
+    if "maison" in par_etape:
+        proposee = suggestions(par_etape["maison"])
+        defauts = {c["name"]: c.get("default") for c in par_etape["maison"].get("data_schema") or []}
+        rapport.verifier({**proposee, "serre_exterieure": defauts.get("serre_exterieure")} == maison,
+                         "1 bis. maison : seulement ce qui n'a qu'une réponse (pièce 1, extérieure, clim, météo)",
+                         str(proposee)[:400])
+    if "agendas" in par_etape:
+        proposee = suggestions(par_etape["agendas"])
+        rapport.verifier(proposee.get("agenda_travail") == AGENDA_CI_ENTITE
+                         and all(v == "Aucun" for k, v in proposee.items() if k != "agenda_travail"),
+                         "1 bis. agendas : l'agenda « travail » proposé, le reste sur « Aucun »", str(proposee)[:400])
     recap = json.dumps(formulaires[-1].get("description_placeholders") or {}, ensure_ascii=False)
-    rapport.verifier("Salon CI" in recap and "Applique CI" in recap and "light.ci_applique" not in recap,
-                     "1 bis. le récapitulatif nomme les pièces et les appareils (pas leurs entity_id)", recap[:300])
+    rapport.verifier("Salon CI" in recap and "Applique CI" in recap and "light.ci_applique" not in recap
+                     and AGENDA_CI in recap and "Température extérieure CI" in recap,
+                     "1 bis. le récapitulatif nomme les pièces, la maison et les listes (pas leurs entity_id)",
+                     recap[:500])
     rapport.verifier(vues[-1].get("type") == "create_entry", "1 bis. assistant validé", str(vues[-1])[:300])
     nos = automatisations_tab5(dossier)
     rapport.verifier(len(nos) == 1, "1 bis. une automatisation du blueprint dans automations.yaml", str(nos)[:300])
     if nos:
         a = nos[0]
         rapport.verifier(a["use_blueprint"]["path"] == BLUEPRINT_ASSISTANT
-                         and a["use_blueprint"].get("input") == PIECES_ATTENDUES,
-                         "1 bis. entrées du blueprint = les pièces proposées", str(a)[:400])
+                         and a["use_blueprint"].get("input") == PIECES_ATTENDUES | maison,
+                         "1 bis. entrées du blueprint = les pièces et la maison proposées", str(a)[:600])
         etat_a = next((e for e in (await ha.etats()).values() if e["entity_id"].startswith("automation.")
                        and str(e["attributes"].get("id")) == str(a["id"])), None)
         rapport.verifier(etat_a is not None and etat_a["state"] == "on",
                          "1 bis. automatisation chargée et active", str(etat_a)[:200])
+    rapport.verifier(await attendre_etat(ha, SELECT_TRAVAIL, AGENDA_CI_ENTITE) == AGENDA_CI_ENTITE,
+                     "1 bis. liste « Tab5 · agenda de travail » réglée sur l'agenda proposé")
     restes = await attendre_reparations(ha, set(), {"configurer_pieces"})
     rapport.verifier("configurer_pieces" not in restes, "1 bis. réparation « configurer_pieces » retirée", str(restes))
-    notes = {n.get("notification_id") for n in await ha.ws.commande("persistent_notification/get")}
-    rapport.verifier(f"{NOTIFICATION}_assistant" in notes, "1 bis. notification du résultat")
+    notes = {n.get("notification_id"): n.get("message") or ""
+             for n in await ha.ws.commande("persistent_notification/get")}
+    message = notes.get(f"{NOTIFICATION}_assistant", "")
+    rapport.verifier(bool(message), "1 bis. notification du résultat")
+    rapport.verifier(AGENDA_CI in message and "Pas réglées" not in message,
+                     "1 bis. la notification dit la liste réglée", message[:400])
 
     # Relancé depuis les options, sans cocher « mettre à jour » : rien ne change.
     avant = (dossier / "automations.yaml").read_bytes()
     options = "/api/config/config_entries/options/flow"
     etape = await ha.post(options, {"handler": entree, "show_advanced_options": False})
     vues = await suivre(ha, options, etape, [
-        {"mettre_a_jour_tablette": True, "reinstaller": False, "assistant": True}, None, None, None, None])
-    recap = [v for v in vues if v.get("step_id") == "recapitulatif"]
-    champs = [c["name"] for c in (recap[0].get("data_schema") or [])] if recap else []
+        {"mettre_a_jour_tablette": True, "reinstaller": False, "assistant": True}, None, None, None, None, None, None])
+    par_etape = {v.get("step_id"): v for v in vues if v.get("type") == "form"}
+    recap = par_etape.get("recapitulatif") or {}
+    champs = [c["name"] for c in (recap.get("data_schema") or [])]
     rapport.verifier(champs == ["mettre_a_jour"], "1 bis. options : l'automatisation existante est vue, case proposée",
                      str(recap)[:300])
+    rapport.verifier(suggestions(par_etape.get("agendas") or {}).get("agenda_travail") == AGENDA_CI_ENTITE,
+                     "1 bis. options : le choix déjà fait est gardé")
     rapport.verifier(vues[-1].get("type") == "create_entry", "1 bis. options : assistant validé sans la case",
                      str(vues[-1])[:300])
     rapport.verifier((dossier / "automations.yaml").read_bytes() == avant,
@@ -392,19 +477,26 @@ async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> Non
     sauvegardes = dossier / "tab5_sauvegardes" / "automatisations"
     deja = sorted(sauvegardes.glob("*")) if sauvegardes.is_dir() else []
 
-    # La case cochée, un nom changé : seules les pièces changent, sauvegarde d'abord.
+    # La case cochée, un nom changé, « dehors » décoché : seules les pièces et la maison
+    # changent (la case décochée comprise), sauvegarde d'abord.
     etape = await ha.post(options, {"handler": entree, "show_advanced_options": False})
     etape = await ha.post(f"{options}/{etape['flow_id']}",
                           {"mettre_a_jour_tablette": True, "reinstaller": False, "assistant": True})
     etape = await ha.post(f"{options}/{etape['flow_id']}", {"pieces": [zones["Salon CI"]]})
     salon = {**suggestions(etape), "nom": "Séjour CI"}
-    vues = await suivre(ha, options, etape, [salon, {"mettre_a_jour": True}])
+    etape = await ha.post(f"{options}/{etape['flow_id']}", salon)
+    rapport.verifier(etape.get("step_id") == "maison" and suggestions(etape)
+                     == {k: v for k, v in maison.items() if k != "serre_exterieure"},
+                     "1 bis. mise à jour : la page Maison reprend l'automatisation existante", str(etape)[:400])
+    dehors = {**suggestions(etape), "serre_exterieure": False}
+    vues = await suivre(ha, options, etape, [dehors, None, {"mettre_a_jour": True}])
     rapport.verifier(vues[-1].get("type") == "create_entry", "1 bis. options : mise à jour validée", str(vues[-1])[:300])
     nos = automatisations_tab5(dossier)
-    attendu = {k: v for k, v in PIECES_ATTENDUES.items() if k.startswith("piece_1_")} | {"piece_1_nom": "Séjour CI"}
+    attendu = ({k: v for k, v in PIECES_ATTENDUES.items() if k.startswith("piece_1_")} | maison
+               | {"piece_1_nom": "Séjour CI", "serre_exterieure": False})
     rapport.verifier(len(nos) == 1 and nos[0]["use_blueprint"].get("input") == attendu,
-                     "1 bis. mise à jour : la même automatisation, ses pièces remplacées (pièce 2 retirée)",
-                     str(nos)[:400])
+                     "1 bis. mise à jour : la même automatisation, ses pièces remplacées (pièce 2 retirée), "
+                     "la case « dehors » décochée écrite", str(nos)[:600])
     # Les fichiers ajoutés, pas « le dernier par le nom » : deux sauvegardes dans la même
     # seconde se nomment « …_ » puis « …-2_ », et « - » se trie avant « _ ».
     nouvelles = sorted(set(sauvegardes.glob("*")) - set(deja)) if sauvegardes.is_dir() else []
