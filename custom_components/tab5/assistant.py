@@ -201,7 +201,7 @@ CHAMPS_MAISON = (
 TABLETTE_DEFAUT = "tab5_ha_hmi"
 MAX_POTS = 5  # pot_1 à pot_5 ; plus de capteurs : lesquels montrer n'est pas évident
 # Une température dehors, d'après son nom ou son entity_id (la seconde température).
-DEHORS = re.compile(r"ext[eé]rieu?r|outdoor|outside|dehors|au(?:ss|ß)en|buiten|esterno", re.I)
+DEHORS = re.compile(r"ext[eé]rieu?r|exterior|outdoor|outside|dehors|au(?:ss|ß)en|buiten|estern[oa]|dış", re.I)
 
 
 def proposer_maison(entites: list[Entite], appareils: dict[str, Appareil], modele_tablette: str,
@@ -296,8 +296,8 @@ MOTS_PACKAGE = {
     "agenda_feries": "ferie|holiday|feiertag|feestdag|festiv",
 }
 MOTS_PROPOSES = {
-    "agenda_travail": re.compile(r"travail|boulot|work|job|shift|arbeit|dienst|werk|trabajo|lavoro", re.I),
-    "agenda_rdv": re.compile(r"rendez|rdv|appointment|termin|afspra|cita|appuntament", re.I),
+    "agenda_travail": re.compile(r"travail|boulot|work|job|shift|arbeit|dienst|werk|trabajo|lavoro|mesai", re.I),
+    "agenda_rdv": re.compile(r"rendez|rdv|appointment|termin|afspra|cita|appuntament|randevu", re.I),
 }
 CLASSES_PRESENCE = ("occupancy", "presence")
 
@@ -441,12 +441,11 @@ def nouvel_id(automatisations: list[dict], millisecondes: int) -> str:
 
 
 def automatisation(id_: str, entrees: dict[str, Any], langue: str | None) -> dict[str, Any]:
-    fr = (langue or "").lower().startswith("fr")
+    t = TEXTES[langue_de(langue)]
     return {
         "id": id_,
-        "alias": "Tab5 — emplacements de l'écran" if fr else "Tab5 — screen slots",
-        "description": ("Créée par l'assistant de l'intégration Tab5." if fr
-                        else "Created by the Tab5 integration's assistant."),
+        "alias": t["alias"],
+        "description": t["description"],
         "use_blueprint": {"path": BLUEPRINT_CHEMIN, "input": entrees},
     }
 
@@ -589,57 +588,130 @@ def situation(config: Path, ids_dans_ha: set[str]) -> Situation:
     return Situation("creer", texte=texte, automatisations=liste)
 
 
-# Libellés courts du récapitulatif (français, anglais).
-LIBELLES = {
-    "tv": ("TV", "TV"), "tv_telecommande": ("télécommande", "remote"),
-    "telephone": ("batterie du téléphone", "phone battery"),
-    "salon_temperature": ("température du salon", "room temperature"),
-    "salon_humidite": ("humidité du salon", "room humidity"),
-    "serre_temperature": ("seconde température", "second temperature"),
-    "serre_exterieure": ("dehors", "outdoors"), "clim": ("clim", "climate"),
-    "pot_1": ("pot 1", "pot 1"), "pot_2": ("pot 2", "pot 2"), "pot_3": ("pot 3", "pot 3"),
-    "pot_4": ("pot 4", "pot 4"), "pot_5": ("pot 5", "pot 5"),
-    "meteo_previsions": ("météo", "weather"), "tablette": ("nom ESPHome", "ESPHome name"),
-    "agenda_travail": ("agenda de travail", "work calendar"),
-    "agenda_rdv": ("agenda des rendez-vous", "appointments calendar"),
-    "agenda_anniversaires": ("agenda des anniversaires", "birthdays calendar"),
-    "agenda_feries": ("agenda des jours fériés", "public holidays calendar"),
-    "agenda_vacances": ("agenda des vacances scolaires", "school holidays calendar"),
-    "telephone_suivi": ("téléphone", "phone"), "presence": ("capteur de présence", "presence sensor"),
-    "pipeline": ("pipeline de discussion", "chat pipeline"),
+# ─── Textes (récapitulatif, nom de l'automatisation) ─────────────────────────
+# Sept langues, comme translations/*.json et l'écran ; même liste et même règle que
+# messages.LANGUES / messages.langue_de (les deux modules sont purs : test d'égalité).
+LANGUES = ("fr", "en", "de", "nl", "es", "it", "tr")
+
+
+def langue_de(langue: str | None) -> str:
+    """« fr », « fr-FR », « de_CH »… → le code d'une des LANGUES ; sinon « en »."""
+    code = (langue or "").lower().replace("_", "-").split("-")[0]
+    return code if code in LANGUES else "en"
+
+
+# Mots du récapitulatif. « deux_points » et « sep » : la typographie de chaque langue.
+TEXTES: dict[str, dict[str, str]] = {
+    "fr": {"alias": "Tab5 — emplacements de l'écran", "description": "Créée par l'assistant de l'intégration Tab5.",
+           "piece": "Pièce", "temperature": "température", "humidite": "humidité", "clim": "clim",
+           "maison": "Maison", "rien": "rien de proposé", "listes": "Listes « Tab5 · … »",
+           "aucun_changement": "aucun changement", "propose": "proposé", "oui": "oui", "aucun": "Aucun",
+           "deux_points": " : ", "sep": " ; "},
+    "en": {"alias": "Tab5 — screen slots", "description": "Created by the Tab5 integration's assistant.",
+           "piece": "Room", "temperature": "temperature", "humidite": "humidity", "clim": "climate",
+           "maison": "Home", "rien": "nothing proposed", "listes": "« Tab5 · … » lists",
+           "aucun_changement": "no change", "propose": "suggested", "oui": "yes", "aucun": "None",
+           "deux_points": ": ", "sep": "; "},
+    "de": {"alias": "Tab5 — Bildschirmplätze", "description": "Vom Assistenten der Tab5-Integration erstellt.",
+           "piece": "Raum", "temperature": "Temperatur", "humidite": "Feuchte", "clim": "Klima",
+           "maison": "Zuhause", "rien": "nichts vorgeschlagen", "listes": "Listen „Tab5 · …“",
+           "aucun_changement": "keine Änderung", "propose": "vorgeschlagen", "oui": "ja", "aucun": "Keine",
+           "deux_points": ": ", "sep": "; "},
+    "nl": {"alias": "Tab5 — schermplaatsen", "description": "Gemaakt door de assistent van de Tab5-integratie.",
+           "piece": "Kamer", "temperature": "temperatuur", "humidite": "vochtigheid", "clim": "airco",
+           "maison": "Huis", "rien": "niets voorgesteld", "listes": "Lijsten “Tab5 · …”",
+           "aucun_changement": "geen wijziging", "propose": "voorgesteld", "oui": "ja", "aucun": "Geen",
+           "deux_points": ": ", "sep": "; "},
+    "es": {"alias": "Tab5 — posiciones de la pantalla", "description": "Creada por el asistente de la integración Tab5.",
+           "piece": "Habitación", "temperature": "temperatura", "humidite": "humedad", "clim": "climatización",
+           "maison": "Casa", "rien": "nada propuesto", "listes": "Listas «Tab5 · …»",
+           "aucun_changement": "sin cambios", "propose": "propuesto", "oui": "sí", "aucun": "Ninguno",
+           "deux_points": ": ", "sep": "; "},
+    "it": {"alias": "Tab5 — posizioni dello schermo", "description": "Creata dall'assistente dell'integrazione Tab5.",
+           "piece": "Stanza", "temperature": "temperatura", "humidite": "umidità", "clim": "clima",
+           "maison": "Casa", "rien": "niente di proposto", "listes": "Liste «Tab5 · …»",
+           "aucun_changement": "nessuna modifica", "propose": "proposto", "oui": "sì", "aucun": "Nessuno",
+           "deux_points": ": ", "sep": "; "},
+    "tr": {"alias": "Tab5 — ekran yerleşimi", "description": "Tab5 entegrasyonunun asistanı tarafından oluşturuldu.",
+           "piece": "Oda", "temperature": "sıcaklık", "humidite": "nem", "clim": "klima",
+           "maison": "Ev", "rien": "öneri yok", "listes": "“Tab5 · …” listeleri",
+           "aucun_changement": "değişiklik yok", "propose": "önerildi", "oui": "evet", "aucun": "Yok",
+           "deux_points": ": ", "sep": "; "},
 }
+
+# Libellés courts du récapitulatif, dans l'ordre de LANGUES.
+_LIBELLES = {
+    "tv": ("TV", "TV", "TV", "tv", "TV", "TV", "TV"),
+    "tv_telecommande": ("télécommande", "remote", "Fernbedienung", "afstandsbediening", "mando a distancia",
+                        "telecomando", "uzaktan kumanda"),
+    "telephone": ("batterie du téléphone", "phone battery", "Handy-Akku", "telefoonbatterij",
+                  "batería del teléfono", "batteria del telefono", "telefon pili"),
+    "salon_temperature": ("température du salon", "room temperature", "Raumtemperatur", "kamertemperatuur",
+                          "temperatura de la habitación", "temperatura della stanza", "oda sıcaklığı"),
+    "salon_humidite": ("humidité du salon", "room humidity", "Raumfeuchte", "luchtvochtigheid van de kamer",
+                       "humedad de la habitación", "umidità della stanza", "oda nemi"),
+    "serre_temperature": ("seconde température", "second temperature", "zweite Temperatur", "tweede temperatuur",
+                          "segunda temperatura", "seconda temperatura", "ikinci sıcaklık"),
+    "serre_exterieure": ("dehors", "outdoors", "draußen", "buiten", "exterior", "all'esterno", "dış mekân"),
+    "clim": ("clim", "climate", "Klimaanlage", "airco", "climatización", "climatizzatore", "klima"),
+    "meteo_previsions": ("météo", "weather", "Wetter", "weer", "tiempo", "meteo", "hava durumu"),
+    "tablette": ("nom ESPHome", "ESPHome name", "ESPHome-Name", "ESPHome-naam", "nombre ESPHome",
+                 "nome ESPHome", "ESPHome adı"),
+    "agenda_travail": ("agenda de travail", "work calendar", "Arbeitskalender", "werkagenda",
+                       "calendario de trabajo", "calendario di lavoro", "iş takvimi"),
+    "agenda_rdv": ("agenda des rendez-vous", "appointments calendar", "Terminkalender", "afsprakenagenda",
+                   "calendario de citas", "calendario degli appuntamenti", "randevu takvimi"),
+    "agenda_anniversaires": ("agenda des anniversaires", "birthdays calendar", "Geburtstagskalender",
+                             "verjaardagsagenda", "calendario de cumpleaños", "calendario dei compleanni",
+                             "doğum günü takvimi"),
+    "agenda_feries": ("agenda des jours fériés", "public holidays calendar", "Feiertagskalender",
+                      "feestdagenagenda", "calendario de festivos", "calendario dei giorni festivi",
+                      "resmî tatil takvimi"),
+    "agenda_vacances": ("agenda des vacances scolaires", "school holidays calendar", "Schulferienkalender",
+                        "schoolvakantieagenda", "calendario de vacaciones escolares",
+                        "calendario delle vacanze scolastiche", "okul tatili takvimi"),
+    "telephone_suivi": ("téléphone", "phone", "Handy", "telefoon", "teléfono", "telefono", "telefon"),
+    "presence": ("capteur de présence", "presence sensor", "Anwesenheitssensor", "aanwezigheidssensor",
+                 "sensor de presencia", "sensore di presenza", "varlık sensörü"),
+    "pipeline": ("pipeline de discussion", "chat pipeline", "Chat-Pipeline", "chatpipeline",
+                 "pipeline de conversación", "pipeline di conversazione", "sohbet pipeline'ı"),
+}
+_POT = ("pot", "pot", "Topf", "pot", "maceta", "vaso", "saksı")
+_LIBELLES.update({f"pot_{n}": tuple(f"{mot} {n}" for mot in _POT) for n in range(1, MAX_POTS + 1)})
+LIBELLES: dict[str, dict[str, str]] = {cle: dict(zip(LANGUES, mots, strict=True)) for cle, mots in _LIBELLES.items()}
+
+
+def libelle(cle: str, langue: str | None) -> str:
+    return LIBELLES.get(cle, {}).get(langue_de(langue), cle)
 
 
 def resume_maison(maison: dict[str, Any], noms: dict[str, str], langue: str | None) -> str:
-    fr = (langue or "").lower().startswith("fr")
+    t = TEXTES[langue_de(langue)]
     if not maison:
-        return "- **Maison** : rien de proposé" if fr else "- **Home**: nothing proposed"
+        return f"- **{t['maison']}**{t['deux_points']}{t['rien']}"
     parties = []
     for cle, valeur in maison.items():
-        libelle = LIBELLES.get(cle, (cle, cle))[0 if fr else 1]
-        texte = ("oui" if fr else "yes") if valeur is True else noms.get(valeur, valeur)
-        parties.append(f"{libelle} : {texte}" if fr else f"{libelle}: {texte}")
-    return "- **Maison** : " + " ; ".join(parties) if fr else "- **Home**: " + "; ".join(parties)
+        texte = t["oui"] if valeur is True else noms.get(valeur, valeur)
+        parties.append(f"{libelle(cle, langue)}{t['deux_points']}{texte}")
+    return f"- **{t['maison']}**{t['deux_points']}" + t["sep"].join(parties)
 
 
 def resume_listes(changees: dict[str, str], proposees: set[str], noms: dict[str, str],
                   langue: str | None) -> str:
-    fr = (langue or "").lower().startswith("fr")
+    t = TEXTES[langue_de(langue)]
     if not changees:
-        return ("- **Listes « Tab5 · … »** : aucun changement" if fr
-                else "- **« Tab5 · … » lists**: no change")
+        return f"- **{t['listes']}**{t['deux_points']}{t['aucun_changement']}"
     parties = []
     for cle, valeur in changees.items():
-        libelle = LIBELLES.get(cle, (cle, cle))[0 if fr else 1]
-        marque = (" (proposé)" if fr else " (suggested)") if cle in proposees else ""
-        parties.append(f"{libelle} → {noms.get(valeur, valeur)}{marque}")
-    return ("- **Listes « Tab5 · … »** : " + " ; ".join(parties) if fr
-            else "- **« Tab5 · … » lists**: " + "; ".join(parties))
+        marque = f" ({t['propose']})" if cle in proposees else ""
+        parties.append(f"{libelle(cle, langue)} → {noms.get(valeur, valeur)}{marque}")
+    return f"- **{t['listes']}**{t['deux_points']}" + t["sep"].join(parties)
 
 
 def resume(pieces: list[Piece], noms: dict[str, str], langue: str | None) -> str:
     """Le récapitulatif en Markdown, une ligne par pièce (noms des entités, pas leurs id)."""
-    fr = (langue or "").lower().startswith("fr")
+    t = TEXTES[langue_de(langue)]
+    d, s = t["deux_points"], t["sep"]
     vide = "—"
 
     def nom(eid: str | None) -> str:
@@ -647,12 +719,8 @@ def resume(pieces: list[Piece], noms: dict[str, str], langue: str | None) -> str
 
     lignes = []
     for n, p in enumerate(pieces, 1):
-        tuiles = ", ".join(nom(t) for t in p.tuiles) or vide
-        titre = p.nom or (f"Pièce {n}" if fr else f"Room {n}")
-        if fr:
-            lignes.append(f"- **Pièce {n} · {titre}** : {tuiles} ; température : {nom(p.temperature)} ; "
-                          f"humidité : {nom(p.humidite)} ; clim : {nom(p.clim)}")
-        else:
-            lignes.append(f"- **Room {n} · {titre}**: {tuiles}; temperature: {nom(p.temperature)}; "
-                          f"humidity: {nom(p.humidite)}; climate: {nom(p.clim)}")
+        tuiles = ", ".join(nom(t_) for t_ in p.tuiles) or vide
+        titre = p.nom or f"{t['piece']} {n}"
+        lignes.append(f"- **{t['piece']} {n} · {titre}**{d}{tuiles}{s}{t['temperature']}{d}{nom(p.temperature)}{s}"
+                      f"{t['humidite']}{d}{nom(p.humidite)}{s}{t['clim']}{d}{nom(p.clim)}")
     return "\n".join(lignes)

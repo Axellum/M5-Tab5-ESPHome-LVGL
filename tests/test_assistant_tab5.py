@@ -517,7 +517,8 @@ def test_resume_et_messages():
     assert "**Pièce 1 · Salon** : Plafond, Applique ; température : Thermomètre ; humidité : —" in fr
     assert "**Pièce 2 · Pièce 2**" in fr and "light.a" not in fr, "des noms, pas des entity_id"
     assert "**Room 1 · Salon**: Plafond, Applique; temperature: Thermomètre" in A.resume(pieces, noms, "en")
-    for langue in ("fr", "en"):
+    for langue in A.LANGUES:
+        assert "Salon" in A.resume(pieces, noms, langue) and "{" not in A.resume(pieces, noms, langue)
         for action in ("creer", "mettre_a_jour", "ailleurs", "plusieurs", "fichier"):
             texte = messages.assistant_action(langue, action, "Ma tablette", "une raison")
             assert texte and "{" not in texte
@@ -533,12 +534,36 @@ def test_resume_et_messages():
     assert "réglées" not in messages.assistant_resultat("fr", "cree")[1], "aucune liste : pas de ligne"
 
 
+def test_sept_langues():
+    """Les textes de l'assistant et des notifications existent dans les sept langues de
+    l'écran, avec les mêmes champs ; une langue inconnue retombe sur l'anglais."""
+    assert A.LANGUES == messages.LANGUES == ("fr", "en", "de", "nl", "es", "it", "tr")
+    for langue, attendu in (("fr-FR", "fr"), ("de_CH", "de"), ("pt-BR", "en"), (None, "en"), ("TR", "tr")):
+        assert A.langue_de(langue) == messages.langue_de(langue) == attendu, langue
+    for table in (A.TEXTES, messages.TEXTES):
+        assert set(table) == set(A.LANGUES)
+        for langue in A.LANGUES:
+            assert set(table[langue]) == set(table["fr"]), langue
+            for cle, texte in table[langue].items():
+                assert set(re.findall(r"\{(\w+)\}", texte)) == set(re.findall(r"\{(\w+)\}", table["fr"][cle])), \
+                    (langue, cle)
+    for cle, mots in A.LIBELLES.items():
+        assert set(mots) == set(A.LANGUES) and all(mots.values()), cle
+    assert set(A.LIBELLES) >= {c for c, _ in A.CHAMPS_MAISON} | {liste.cle for liste in A.LISTES}
+    assert A.libelle("agenda_rdv", "tr-TR") == "randevu takvimi" and A.libelle("inconnu", "de") == "inconnu"
+    assert A.automatisation("x", {}, "de")["alias"] == "Tab5 — Bildschirmplätze"
+    # Les mots qui font proposer une entité, dans ces langues aussi.
+    for nom in ("Temperatura exterior", "Temperatura esterna", "Dış sıcaklık", "Außentemperatur"):
+        assert A.DEHORS.search(nom), nom
+    assert A.MOTS_PROPOSES["agenda_travail"].search("Mesai") and A.MOTS_PROPOSES["agenda_rdv"].search("Randevular")
+
+
 def test_formulaires_et_traductions():
     """Chaque champ des formulaires de l'assistant a son libellé, et la réparation
     « configurer_pieces » dit la même chose que les options (mêmes étapes, mêmes textes)."""
     flux = (INTEGRATION / "assistant_flux.py").read_text(encoding="utf-8")
     champs_piece = set(re.findall(r'_champ\("(\w+)"', flux))
-    for langue in ("fr", "en"):
+    for langue in A.LANGUES:
         t = json.loads((INTEGRATION / "translations" / f"{langue}.json").read_text(encoding="utf-8"))
         options = t["options"]
         reparation = t["issues"][const.ISSUE_ASSISTANT]["fix_flow"]

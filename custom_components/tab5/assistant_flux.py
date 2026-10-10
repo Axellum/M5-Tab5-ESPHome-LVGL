@@ -281,8 +281,8 @@ class AssistantFlux:
             if proposee:
                 self._propositions[liste.cle] = valeur
                 self._proposees.add(liste.cle)
-            fr = (self.hass.config.language or "").lower().startswith("fr")
-            libelles = [{"value": o, "label": (o if fr else "None") if o == assistant.AUCUN
+            aucun = assistant.TEXTES[assistant.langue_de(self.hass.config.language)]["aucun"]
+            libelles = [{"value": o, "label": aucun if o == assistant.AUCUN
                          else f"{self._inv.noms[o]} ({o})" if self._inv.noms.get(o, o) != o else o}
                         for o in options]
             champs[_champ(liste.cle, valeur)] = SelectSelector({"options": libelles, "mode": "dropdown"})
@@ -363,12 +363,10 @@ class AssistantFlux:
         """Chaque liste changée, par select.select_option (comme l'utilisateur), puis le
         constat : le select montre-t-il la valeur ? (réglées, ratées), en libellés."""
         langue = self.hass.config.language
-        fr = (langue or "").lower().startswith("fr")
         selects = {liste.cle: liste.select for liste in assistant.LISTES}
         reglees, ratees = [], []
         for cle, valeur in self._changees.items():
-            libelle = assistant.LIBELLES.get(cle, (cle, cle))[0 if fr else 1]
-            texte = f"{libelle} → {self._inv.noms.get(valeur, valeur)}"
+            texte = f"{assistant.libelle(cle, langue)} → {self._inv.noms.get(valeur, valeur)}"
             try:
                 await self.hass.services.async_call("select", "select_option",
                                                     {"entity_id": selects[cle], "option": valeur}, blocking=True)

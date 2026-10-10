@@ -83,9 +83,41 @@ def test_hacs_json():
     assert hacs["homeassistant"] == plancher, "même plancher de HA que le blueprint"
 
 
+LANGUES_INTEGRATION = ("fr", "en", "de", "nl", "es", "it", "tr")  # celles de l'écran
+
+
+def _chaines(d, prefixe=""):
+    """{« a.b.c » : texte} pour chaque chaîne d'un fichier de traduction."""
+    sortie = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            sortie |= _chaines(v, prefixe + k + ".")
+        else:
+            sortie[prefixe + k] = v
+    return sortie
+
+
+def test_sept_traductions_memes_cles_et_parametres():
+    dossier = INTEGRATION / "translations"
+    assert {p.stem for p in dossier.glob("*.json")} == set(LANGUES_INTEGRATION) == set(messages.LANGUES)
+    fr = _chaines(json.loads((dossier / "fr.json").read_text(encoding="utf-8")))
+    for langue in LANGUES_INTEGRATION:
+        brut = (dossier / f"{langue}.json").read_text(encoding="utf-8")
+        t = _chaines(json.loads(brut))
+        assert set(t) == set(fr), (langue, set(t) ^ set(fr))
+        for cle, texte in t.items():
+            assert isinstance(texte, str) and texte.strip(), (langue, cle)
+            assert set(re.findall(r"\{(\w+)\}", texte)) == set(re.findall(r"\{(\w+)\}", fr[cle])), (langue, cle)
+            # Le bloc YAML à coller reste du YAML (packages) ; un nom de fichier ne se traduit pas.
+            assert re.findall(r"`[^`]+`", texte) == re.findall(r"`[^`]+`", fr[cle]), (langue, cle)
+        assert "�" not in brut, langue
+
+
 def test_traductions_completes():
     en = json.loads((INTEGRATION / "translations" / "en.json").read_text(encoding="utf-8"))
     fr = json.loads((INTEGRATION / "translations" / "fr.json").read_text(encoding="utf-8"))
+    autres = [json.loads((INTEGRATION / "translations" / f"{x}.json").read_text(encoding="utf-8"))
+              for x in LANGUES_INTEGRATION[2:]]
 
     def cles(d, prefixe=""):
         return {prefixe + k for k in d} | {c for k, v in d.items() if isinstance(v, dict)
@@ -102,7 +134,7 @@ def test_traductions_completes():
                   const.ISSUE_FIRMWARE: {"version", "essais"},
                   # Les étapes de l'assistant (assistant_flux.py, description_placeholders).
                   const.ISSUE_ASSISTANT: {"nombre", "max", "numero", "total", "zone", "resume", "action"}}
-    for langue in (en, fr):
+    for langue in (en, fr, *autres):
         # hassfest refuse une URL dans une traduction : elle passe par un paramètre.
         assert not re.search(r"https?://", json.dumps(langue, ensure_ascii=False))
         for cle, issue in langue["issues"].items():
@@ -449,7 +481,9 @@ def test_archive_hacs_ancien_tag(tmp_path, monkeypatch):
 # ─── Notifications ───────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("langue,mot", [("fr", "remplacé"), ("fr-FR", "remplacé"), ("en", "replaced"),
-                                        ("tr", "replaced"), (None, "replaced")])
+                                        ("de", "ersetzt"), ("nl", "vervangen"), ("es", "sustituido"),
+                                        ("it", "sostituiti"), ("tr", "değiştirildi"), ("pt", "replaced"),
+                                        (None, "replaced")])
 def test_messages(langue, mot):
     titre, texte = messages.installation(
         langue, avant="3.7.0", version="3.8.0", ecrits=12, retires=1, identiques=2,

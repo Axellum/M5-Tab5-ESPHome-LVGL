@@ -22,7 +22,7 @@ What was checked before choosing (Home Assistant 2026.8.3 code, read on 2026-10-
   - **one already there, in that file**: it changes only if the box « Remplacer les pièces de l'automatisation existante » (unticked) is ticked; then only its `piece_n_*` inputs are replaced, every other input stays; the file is rewritten like the editor does;
   - **several, or one loaded from elsewhere** (a package, another include): nothing is written;
   - before writing: the file read again (changed since the summary: nothing written), copied to `tab5_sauvegardes/automatisations/<date>_automations.yaml` (5 kept; the install backups ignore that folder), then written atomically; `automation.reload`; **the effect is checked** (the automation's entity, by its id, loaded and not `unavailable`) and a notification says it.
-- **Languages**: French and English, like the rest of the integration (its `translations/` and `messages.py` have only these two).
+- **Languages**: French and English, like the rest of the integration (its `translations/` and `messages.py` have only these two). Since [ADR-0053](0053-setup-assistant-home-lists.md), the whole integration speaks the seven languages of the screen.
 
 ## Rejected
 

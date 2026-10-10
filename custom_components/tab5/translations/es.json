@@ -1,0 +1,282 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tab5 — archivos de Home Assistant",
+        "description": "Esta integración instala los archivos de Home Assistant del proyecto M5Stack Tab5 (paquetes, plantillas, blueprint) y los sustituye en cada actualización hecha por HACS. Los archivos anteriores se guardan en `tab5_sauvegardes/`. Sus propios paquetes, plantillas y blueprints nunca se tocan.\n\nAñada una vez a `configuration.yaml`, si aún no lo ha hecho:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```",
+        "data": {
+          "mettre_a_jour_tablette": "Después, actualizar la tableta"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Una vez instalados los archivos, instalar el firmware de la misma versión en cuanto la entidad «Firmware» de la tableta lo ofrezca."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "La integración Tab5 ya está añadida."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tab5 — archivos de Home Assistant",
+        "data": {
+          "mettre_a_jour_tablette": "Después, actualizar la tableta",
+          "reinstaller": "Reinstalar ahora los archivos de esta versión",
+          "assistant": "Iniciar el asistente de configuración"
+        },
+        "data_description": {
+          "mettre_a_jour_tablette": "Una vez instalados los archivos, instalar el firmware de la misma versión en cuanto la entidad «Firmware» de la tableta lo ofrezca.",
+          "reinstaller": "Para un archivo del Tab5 borrado o modificado por error. Antes se guarda una copia de los archivos actuales.",
+          "assistant": "Prepara la automatización de las posiciones de la pantalla a partir de sus áreas de Home Assistant, luego los ajustes de la casa y las listas «Tab5 · …». No se escribe ni se ajusta nada sin su confirmación; una automatización ya existente solo cambia si usted lo pide."
+        }
+      },
+      "pieces": {
+        "title": "Asistente · habitaciones",
+        "description": "El asistente prepara la automatización de las posiciones de la pantalla (blueprint «Tab5 — emplacements de l'écran») a partir de sus áreas de Home Assistant. {nombre} área(s) tienen dispositivos que la tableta sabe mostrar; las mejor equipadas ya están elegidas, {max} como máximo. No se escribe nada antes del resumen.",
+        "data": {
+          "pieces": "Habitaciones de la tableta"
+        },
+        "data_description": {
+          "pieces": "Cinco como máximo, en el orden de las páginas de la fila inferior: la primera en la pantalla de inicio, las siguientes deslizando."
+        }
+      },
+      "piece": {
+        "title": "Asistente · habitación {numero} de {total}: {zone}",
+        "description": "Rellenado a partir del área «{zone}» de Home Assistant: sus luces, persianas, interruptores, ventiladores y reproductores ({max} como máximo), su sensor de temperatura y de humedad y su climatización. Cambie lo que quiera.",
+        "data": {
+          "nom": "Nombre mostrado",
+          "tuiles": "Mosaicos",
+          "temperature": "Temperatura de la habitación",
+          "humidite": "Humedad de la habitación",
+          "clim": "Climatización de la habitación"
+        },
+        "data_description": {
+          "nom": "Vacío: el nombre del área común a sus dispositivos.",
+          "tuiles": "Cinco como máximo, de izquierda a derecha.",
+          "temperature": "Opcional. Se muestra en la pantalla de inicio cuando esta habitación está en pantalla.",
+          "humidite": "Opcional, junto con la temperatura.",
+          "clim": "Opcional, junto con la temperatura: los botones − / + de la pantalla de inicio la regulan."
+        }
+      },
+      "maison": {
+        "title": "Asistente · casa",
+        "description": "Lo que no depende de una habitación. Un campo solo se rellena si su Home Assistant tiene una única respuesta posible (una sola TV, una sola climatización, un solo servicio meteorológico…) o si la automatización existente ya lo tiene; si no, queda vacío y la tableta prescinde de él. Cambie lo que quiera.",
+        "data": {
+          "tv": "TV",
+          "tv_telecommande": "Mando a distancia de la TV",
+          "telephone": "Batería del teléfono",
+          "salon_temperature": "Temperatura de la habitación (arriba en la pantalla de inicio)",
+          "salon_humidite": "Humedad de la habitación",
+          "serre_temperature": "Segunda temperatura (invernadero, exterior…)",
+          "serre_exterieure": "La segunda temperatura es exterior",
+          "clim": "Climatización",
+          "pot_1": "Maceta 1",
+          "pot_2": "Maceta 2",
+          "pot_3": "Maceta 3",
+          "pot_4": "Maceta 4",
+          "pot_5": "Maceta 5",
+          "meteo_previsions": "Tiempo para la previsión",
+          "tablette": "Nombre de la tableta en ESPHome"
+        },
+        "data_description": {
+          "tv": "El botón «TV» de la pantalla.",
+          "tv_telecommande": "Las teclas del mando en la pantalla.",
+          "telephone": "Un icono arriba a la izquierda, coloreado según la batería.",
+          "salon_temperature": "Propuesta: la de la primera habitación.",
+          "serre_temperature": "Propuesta: la única temperatura cuyo nombre dice «exterior».",
+          "clim": "Los botones − / consigna / + de la pantalla de inicio.",
+          "pot_1": "Sensores de humedad del suelo: propuestos si hay cinco como máximo.",
+          "meteo_previsions": "Las páginas de los días y las horas.",
+          "tablette": "Leído de la integración ESPHome; vacío: «tab5_ha_hmi»."
+        }
+      },
+      "agendas": {
+        "title": "Asistente · calendarios y personas",
+        "description": "Las listas «Tab5 · …» (Ajustes → Dispositivos y servicios → Entidades). Una elección ya hecha se mantiene. Una lista que sigue en «Aucun» (ninguno) recibe una propuesta cuando una sola entidad encaja (un calendario cuyo nombre dice «trabajo» o «cita», el único sensor de presencia u ocupación, el pipeline preferido). No se ajusta nada antes del resumen; puede volver a poner todo en «Aucun».",
+        "data": {
+          "agenda_travail": "Calendario de trabajo",
+          "agenda_rdv": "Calendario de citas",
+          "agenda_anniversaires": "Calendario de cumpleaños",
+          "agenda_feries": "Calendario de festivos",
+          "agenda_vacances": "Calendario de vacaciones escolares",
+          "telephone_suivi": "Teléfono seguido",
+          "presence": "Sensor de presencia",
+          "pipeline": "Pipeline de conversación"
+        },
+        "data_description": {
+          "agenda_anniversaires": "Cumpleaños, festivos, vacaciones y teléfono: la lista ya lo adivina sola si solo hay una candidata.",
+          "telephone_suivi": "Enciende la pantalla al volver y la apaga al salir.",
+          "presence": "Enciende la pantalla al detectar y la apaga tras 15 min sin presencia.",
+          "pipeline": "El modo de conversación de la pantalla; «Aucun» oculta sus botones."
+        }
+      },
+      "recapitulatif": {
+        "title": "Asistente · resumen",
+        "description": "{resume}\n\n{action}",
+        "data": {
+          "mettre_a_jour": "Sustituir las habitaciones y las entradas de la casa de la automatización existente"
+        },
+        "data_description": {
+          "mettre_a_jour": "Un campo de la casa dejado vacío conserva su valor; sus demás ajustes (energía, gestos…) quedan tal cual. Las listas «Tab5 · …» se ajustan con o sin esta casilla."
+        }
+      }
+    },
+    "abort": {
+      "aucune_piece": "Ninguna área de Home Assistant tiene un dispositivo que la tableta sepa mostrar: el asistente no tiene nada que proponer y no cambia nada. Asigne sus dispositivos a áreas en Home Assistant y vuelva a iniciarlo (Ajustes → Dispositivos y servicios → Tab5 → Configurar, casilla «Iniciar el asistente de configuración»), o rellene a mano la automatización del blueprint."
+    },
+    "error": {
+      "aucune_piece_choisie": "Elija al menos una habitación.",
+      "trop_de_pieces": "Cinco habitaciones como máximo.",
+      "trop_de_tuiles": "Cinco mosaicos como máximo."
+    }
+  },
+  "issues": {
+    "fichiers_absents": {
+      "title": "Tab5: ningún archivo de Home Assistant en la integración",
+      "description": "La integración Tab5 {version} no contiene ningún archivo: se copió desde el repositorio en lugar de instalarse desde una release. Instálela con HACS (repositorio personalizado), que descarga `tab5_hacs.zip` de la release."
+    },
+    "configuration_invalide": {
+      "title": "Tab5: los archivos {version} no se han instalado",
+      "description": "Los nuevos archivos del Tab5 no se han podido colocar (la comprobación de la configuración encontró un error con ellos, o su escritura falló): se han restaurado los archivos anteriores, no ha cambiado nada. El motivo está en el registro (Ajustes → Sistema → Registros, «tab5»). Tras un error de configuración, estos archivos no se reintentan en cada reinicio: una vez corregida la causa, vaya a Ajustes → Dispositivos y servicios → Tab5 → Configurar, «Reinstalar ahora los archivos de esta versión». Si la causa no está en sus propios archivos, por favor infórmela: {signaler}"
+    },
+    "packages_absents": {
+      "title": "Tab5: Home Assistant no carga los paquetes",
+      "description": "Los archivos del Tab5 están en `config/packages/`, pero Home Assistant no lee esa carpeta. Añada estas dos líneas a `configuration.yaml` (la línea `homeassistant:` una sola vez), compruebe la configuración y reinicie:\n\n```yaml\nhomeassistant:\n  packages: !include_dir_named packages\n```"
+    },
+    "redemarrage_requis": {
+      "title": "Tab5: reinicie Home Assistant para terminar",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Reiniciar Home Assistant",
+            "description": "Los archivos del Tab5 {version} están instalados, pero algunos solo surten efecto tras un reinicio. Confirme para reiniciar Home Assistant ahora."
+          }
+        },
+        "error": {
+          "configuration_invalide": "La configuración tiene un error: corríjalo primero (Herramientas para desarrolladores → YAML → Comprobar configuración)."
+        }
+      }
+    },
+    "fichiers_remplaces": {
+      "title": "Tab5: se han sustituido archivos que ya existían",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Archivos del Tab5 ya existentes, sustituidos",
+            "description": "Estos archivos del Tab5 ya estaban en `config/` (copiados a mano, seguramente) y eran distintos de los de la release: {fichiers}. Se han sustituido de todos modos, y los anteriores se guardan en {sauvegarde}. Si había modificado alguno a propósito, copie su cambio desde allí.\n\nConfirme para cerrar este mensaje."
+          }
+        }
+      }
+    },
+    "firmware_echec": {
+      "title": "Tab5: la tableta no ha pasado a {version}",
+      "description": "Los archivos del Tab5 {version} están instalados, pero la tableta sigue con otra versión tras {essais} intentos de actualización. Instálela a mano: Ajustes → Actualizaciones (o la entidad «Firmware» de la tableta) → Instalar, con la tableta encendida y conectada. El motivo de cada intento está en el registro (Ajustes → Sistema → Registros, «tab5»). Este mensaje desaparece en cuanto la tableta ejecuta {version}."
+    },
+    "configurer_pieces": {
+      "title": "Tab5: configurar la tableta a partir de sus áreas",
+      "fix_flow": {
+        "step": {
+          "pieces": {
+            "title": "Asistente · habitaciones",
+            "description": "El asistente prepara la automatización de las posiciones de la pantalla (blueprint «Tab5 — emplacements de l'écran») a partir de sus áreas de Home Assistant. {nombre} área(s) tienen dispositivos que la tableta sabe mostrar; las mejor equipadas ya están elegidas, {max} como máximo. No se escribe nada antes del resumen.",
+            "data": {
+              "pieces": "Habitaciones de la tableta"
+            },
+            "data_description": {
+              "pieces": "Cinco como máximo, en el orden de las páginas de la fila inferior: la primera en la pantalla de inicio, las siguientes deslizando."
+            }
+          },
+          "piece": {
+            "title": "Asistente · habitación {numero} de {total}: {zone}",
+            "description": "Rellenado a partir del área «{zone}» de Home Assistant: sus luces, persianas, interruptores, ventiladores y reproductores ({max} como máximo), su sensor de temperatura y de humedad y su climatización. Cambie lo que quiera.",
+            "data": {
+              "nom": "Nombre mostrado",
+              "tuiles": "Mosaicos",
+              "temperature": "Temperatura de la habitación",
+              "humidite": "Humedad de la habitación",
+              "clim": "Climatización de la habitación"
+            },
+            "data_description": {
+              "nom": "Vacío: el nombre del área común a sus dispositivos.",
+              "tuiles": "Cinco como máximo, de izquierda a derecha.",
+              "temperature": "Opcional. Se muestra en la pantalla de inicio cuando esta habitación está en pantalla.",
+              "humidite": "Opcional, junto con la temperatura.",
+              "clim": "Opcional, junto con la temperatura: los botones − / + de la pantalla de inicio la regulan."
+            }
+          },
+          "maison": {
+            "title": "Asistente · casa",
+            "description": "Lo que no depende de una habitación. Un campo solo se rellena si su Home Assistant tiene una única respuesta posible (una sola TV, una sola climatización, un solo servicio meteorológico…) o si la automatización existente ya lo tiene; si no, queda vacío y la tableta prescinde de él. Cambie lo que quiera.",
+            "data": {
+              "tv": "TV",
+              "tv_telecommande": "Mando a distancia de la TV",
+              "telephone": "Batería del teléfono",
+              "salon_temperature": "Temperatura de la habitación (arriba en la pantalla de inicio)",
+              "salon_humidite": "Humedad de la habitación",
+              "serre_temperature": "Segunda temperatura (invernadero, exterior…)",
+              "serre_exterieure": "La segunda temperatura es exterior",
+              "clim": "Climatización",
+              "pot_1": "Maceta 1",
+              "pot_2": "Maceta 2",
+              "pot_3": "Maceta 3",
+              "pot_4": "Maceta 4",
+              "pot_5": "Maceta 5",
+              "meteo_previsions": "Tiempo para la previsión",
+              "tablette": "Nombre de la tableta en ESPHome"
+            },
+            "data_description": {
+              "tv": "El botón «TV» de la pantalla.",
+              "tv_telecommande": "Las teclas del mando en la pantalla.",
+              "telephone": "Un icono arriba a la izquierda, coloreado según la batería.",
+              "salon_temperature": "Propuesta: la de la primera habitación.",
+              "serre_temperature": "Propuesta: la única temperatura cuyo nombre dice «exterior».",
+              "clim": "Los botones − / consigna / + de la pantalla de inicio.",
+              "pot_1": "Sensores de humedad del suelo: propuestos si hay cinco como máximo.",
+              "meteo_previsions": "Las páginas de los días y las horas.",
+              "tablette": "Leído de la integración ESPHome; vacío: «tab5_ha_hmi»."
+            }
+          },
+          "agendas": {
+            "title": "Asistente · calendarios y personas",
+            "description": "Las listas «Tab5 · …» (Ajustes → Dispositivos y servicios → Entidades). Una elección ya hecha se mantiene. Una lista que sigue en «Aucun» (ninguno) recibe una propuesta cuando una sola entidad encaja (un calendario cuyo nombre dice «trabajo» o «cita», el único sensor de presencia u ocupación, el pipeline preferido). No se ajusta nada antes del resumen; puede volver a poner todo en «Aucun».",
+            "data": {
+              "agenda_travail": "Calendario de trabajo",
+              "agenda_rdv": "Calendario de citas",
+              "agenda_anniversaires": "Calendario de cumpleaños",
+              "agenda_feries": "Calendario de festivos",
+              "agenda_vacances": "Calendario de vacaciones escolares",
+              "telephone_suivi": "Teléfono seguido",
+              "presence": "Sensor de presencia",
+              "pipeline": "Pipeline de conversación"
+            },
+            "data_description": {
+              "agenda_anniversaires": "Cumpleaños, festivos, vacaciones y teléfono: la lista ya lo adivina sola si solo hay una candidata.",
+              "telephone_suivi": "Enciende la pantalla al volver y la apaga al salir.",
+              "presence": "Enciende la pantalla al detectar y la apaga tras 15 min sin presencia.",
+              "pipeline": "El modo de conversación de la pantalla; «Aucun» oculta sus botones."
+            }
+          },
+          "recapitulatif": {
+            "title": "Asistente · resumen",
+            "description": "{resume}\n\n{action}",
+            "data": {
+              "mettre_a_jour": "Sustituir las habitaciones y las entradas de la casa de la automatización existente"
+            },
+            "data_description": {
+              "mettre_a_jour": "Un campo de la casa dejado vacío conserva su valor; sus demás ajustes (energía, gestos…) quedan tal cual. Las listas «Tab5 · …» se ajustan con o sin esta casilla."
+            }
+          }
+        },
+        "abort": {
+          "aucune_piece": "Ninguna área de Home Assistant tiene un dispositivo que la tableta sepa mostrar: el asistente no tiene nada que proponer y no cambia nada. Asigne sus dispositivos a áreas en Home Assistant y vuelva a iniciarlo (Ajustes → Dispositivos y servicios → Tab5 → Configurar, casilla «Iniciar el asistente de configuración»), o rellene a mano la automatización del blueprint."
+        },
+        "error": {
+          "aucune_piece_choisie": "Elija al menos una habitación.",
+          "trop_de_pieces": "Cinco habitaciones como máximo.",
+          "trop_de_tuiles": "Cinco mosaicos como máximo."
+        }
+      }
+    }
+  }
+}
