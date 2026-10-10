@@ -1191,7 +1191,9 @@ blueprint:
     # micro et les boutons Domo / Discu (« vocal », l'écran d'avant), les prévisions des
     # heures qui viennent en graphique (« graphique ») ou le lecteur de musique compact
     # (« lecteur », lot 2 : les lecteurs de la liste « Tab5 · lecteurs de musique », le
-    # firmware le saute quand elle est vide). Clé « gauche|départ|c1|… » de
+    # firmware le saute quand elle est vide) ou le premier capteur suivi en courbe
+    # (« capteur », ADR-0053 : la liste « Tab5 · capteurs suivis », sautée vide aussi).
+    # Clé « gauche|départ|c1|… » de
     # tab5_maj_emplacements (variable gauche), poussée avec les gestes ; un firmware plus
     # ancien l'ignore. Codes = kZoneGaucheCodes de Tab5/socle/tab5_parse.h
     # (tests/test_zone_gauche.py) : ni traduits ni renommés sans le firmware.
@@ -1205,9 +1207,11 @@ blueprint:
         viennent en graphique (les températures en courbe, la pluie en barres ; un tap
         ouvre la Météo), ou le lecteur de musique compact (pochette, titre, artiste,
         précédent, lecture / pause, suivant ; un tap ailleurs ouvre le popup Musique ; la
-        barre « en lecture » sur Ok Nabu se masque pendant ce temps). Le lecteur montre les
-        lecteurs choisis dans « Tab5 · lecteurs de musique » ; sans aucun, la tablette le
-        saute. Un tap sur la seconde température (à droite de l'accueil) passe au contenu
+        barre « en lecture » sur Ok Nabu se masque pendant ce temps), ou un capteur suivi
+        (sa valeur, sa variation et sa courbe des 24 dernières heures ; un tap ouvre le
+        popup Suivi). Le lecteur montre les lecteurs choisis dans « Tab5 · lecteurs de
+        musique », le capteur le premier de « Tab5 · capteurs suivis » ; sans aucun, la
+        tablette les saute. Un tap sur la seconde température (à droite de l'accueil) passe au contenu
         suivant, comme un geste « Zone à gauche de l'horloge : contenu suivant » (section
         « Horloge et boutons du haut »). La tablette garde le contenu affiché quand elle
         redémarre.
@@ -1217,9 +1221,11 @@ blueprint:
         the microphone and the Domo / Discu buttons, the forecast of the next 15 hours as a
         chart (temperatures as a curve, rain as bars; a tap opens the Weather), or the
         compact music player (cover, title, artist, previous, play / pause, next; a tap
-        elsewhere opens the Music popup; the « now playing » bar on Ok Nabu hides meanwhile).
-        The player shows the players chosen in « Tab5 · lecteurs de musique · music
-        players »; with none, the tablet skips it. A tap on the second temperature (on the
+        elsewhere opens the Music popup; the « now playing » bar on Ok Nabu hides meanwhile),
+        or a tracked sensor (its value, its change and its curve over the last 24 hours; a
+        tap opens the Tracking popup). The player shows the players chosen in « Tab5 ·
+        lecteurs de musique · music players », the sensor the first one of « Tab5 ·
+        capteurs suivis · tracked sensors »; with none, the tablet skips them. A tap on the second temperature (on the
         right of the home page) shows the next content, as does a « Left of the clock: next
         content » gesture (« Clock and top buttons » section). The tablet keeps the content
         shown when it restarts.
@@ -1241,18 +1247,21 @@ blueprint:
                   value: graphique
                 - label: "Lecteur de musique · Music player"
                   value: lecteur
+                - label: "Capteur suivi en courbe · Tracked sensor as a curve"
+                  value: capteur
         gauche_cycle:
           name: Au tap · On tap
           description: >-
-            Les contenus que le tap fait défiler, dans l'ordre vocal, graphique, lecteur.
-            Celui du départ en fait toujours partie ; seul, le tap ne change rien. Le
-            lecteur est sauté tant qu'aucun lecteur n'est choisi.
+            Les contenus que le tap fait défiler, dans l'ordre vocal, graphique, lecteur,
+            capteur. Celui du départ en fait toujours partie ; seul, le tap ne change rien.
+            Le lecteur est sauté tant qu'aucun lecteur n'est choisi, le capteur tant
+            qu'aucun capteur n'est suivi.
 
 
-            The contents the tap goes through, in the order voice, chart, player. The one
-            at start is always included; alone, the tap changes nothing. The player is
-            skipped while no player is chosen.
-          default: [vocal, graphique, lecteur]
+            The contents the tap goes through, in the order voice, chart, player, sensor.
+            The one at start is always included; alone, the tap changes nothing. The player
+            is skipped while no player is chosen, the sensor while no sensor is tracked.
+          default: [vocal, graphique, lecteur, capteur]
           selector:
             select:
               multiple: true
@@ -1361,6 +1370,8 @@ blueprint:
                   value: zone_gauche_suivante
                 - label: "Musique (lecteur) · Music (player)"
                   value: musique
+                - label: "Suivi (capteurs suivis) · Tracking (tracked sensors)"
+                  value: suivi
         geste_heures_long:
           name: "Heures : appui long · Hours: long press"
           description: >-
@@ -3012,7 +3023,7 @@ variables:
   codes_gestes: [auto, rien, assistant, calendrier, reveil, clim, plantes, tv, console, energie,
                  reglages, alertes, arcade, maison, mode_domo, appareil_suivant, rangee_suivante,
                  ecoute, nabu_suivant, lumieres, volet, temperature, roue, meteo, zone_gauche_suivante,
-                 musique]
+                 musique, suivi]
   # « gestes|c1|…|c12; » : les 12 gestes dans l'ORDRE de l'enum Geste (tab5_zones.h) —
   # heures tap, heures long, minutes tap, minutes long, date tap, date long, maison tap,
   # maison long, engrenage tap, engrenage long, manette tap, manette long. Poussé avec
@@ -3071,7 +3082,7 @@ variables:
   # de kZoneGaucheCodes (Tab5/socle/tab5_parse.h, même ordre). Un départ inconnu part en
   # « vocal » ; un code inconnu du cycle est laissé de côté. Poussée avec tous les états,
   # comme gestes ; un firmware plus ancien ignore la clé.
-  codes_gauche: [vocal, graphique, lecteur]
+  codes_gauche: [vocal, graphique, lecteur, capteur]
   gauche_depart: !input gauche_depart
   gauche_cycle: !input gauche_cycle
   gauche: >-
