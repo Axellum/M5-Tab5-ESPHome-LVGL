@@ -899,6 +899,34 @@ views:
             content: |-
               {{ t("**Téléphone** (application mobile de Home Assistant) : son retour allume l'écran, son départ l'éteint. **Capteur de présence** : une présence allume l'écran, 15 min sans présence l'éteignent, sauf pendant le réveil.", "**Phone** (Home Assistant mobile app): its return turns the screen on, its departure turns it off. **Presence sensor**: presence turns the screen on, 15 min without presence turn it off, except while the alarm rings.") }}
 {%- endif %}
+{#- Popup Serveur IA (ADR-0059, packages/tab5_serveur_ia.yaml) : dix listes, un capteur chacune. -#}
+{%- if 'select.tab5_ia_etat' in present %}
+          - type: heading
+            heading: "{{ t('Popup Serveur IA : un capteur par mesure', 'AI server popup: one sensor per measure') }}"
+            heading_style: subtitle
+{%- for e, fr_, en_, icone in [('select.tab5_ia_etat', 'État', 'State', 'mdi:lan-connect'),
+                               ('select.tab5_ia_modele', 'Modèle chargé', 'Loaded model', 'mdi:brain'),
+                               ('select.tab5_ia_tokens', 'Tokens par seconde', 'Tokens per second', 'mdi:speedometer'),
+                               ('select.tab5_ia_en_cours', 'Requêtes en cours', 'Requests running', 'mdi:progress-clock'),
+                               ('select.tab5_ia_en_file', 'Requêtes en file', 'Requests queued', 'mdi:tray-full'),
+                               ('select.tab5_ia_vram', 'VRAM utilisée', 'VRAM used', 'mdi:expansion-card'),
+                               ('select.tab5_ia_vram_totale', 'VRAM totale', 'VRAM total', 'mdi:expansion-card'),
+                               ('select.tab5_ia_temperature', 'Température du GPU', 'GPU temperature', 'mdi:thermometer'),
+                               ('select.tab5_ia_ram', 'RAM utilisée', 'RAM used', 'mdi:memory'),
+                               ('select.tab5_ia_puissance', 'Puissance de la machine', 'Machine power', 'mdi:flash')] %}
+{%- if e in present %}
+          - type: tile
+            entity: {{ e }}
+            name: "{{ t(fr_, en_) }}"
+            icon: {{ icone }}
+            features:
+              - type: select-options
+                style: dropdown
+            grid_options:
+              columns: 12
+{%- endif %}
+{%- endfor %}
+{%- endif %}
 {%- if 'input_select.tab5_alertes_maj' in present %}
       - type: grid
         cards:
@@ -2343,6 +2371,66 @@ views:
     'es': 'Dirección del servidor de IA',
     'it': 'Indirizzo del server IA',
     'tr': 'Yapay zekâ sunucusunun adresi'},
+  'Popup Serveur IA : un capteur par mesure': {
+    'de': 'Popup KI-Server: ein Sensor pro Messwert',
+    'nl': 'Pop-up AI-server: één sensor per meting',
+    'es': 'Ventana Servidor de IA: un sensor por medida',
+    'it': 'Popup Server IA: un sensore per misura',
+    'tr': 'Yapay zekâ sunucusu penceresi: her ölçüm için bir sensör'},
+  'Modèle chargé': {
+    'de': 'Geladenes Modell',
+    'nl': 'Geladen model',
+    'es': 'Modelo cargado',
+    'it': 'Modello caricato',
+    'tr': 'Yüklü model'},
+  'Tokens par seconde': {
+    'de': 'Tokens pro Sekunde',
+    'nl': 'Tokens per seconde',
+    'es': 'Tokens por segundo',
+    'it': 'Token al secondo',
+    'tr': 'Saniyede token'},
+  'Requêtes en cours': {
+    'de': 'Laufende Anfragen',
+    'nl': 'Lopende verzoeken',
+    'es': 'Solicitudes en curso',
+    'it': 'Richieste in corso',
+    'tr': 'Süren istekler'},
+  'Requêtes en file': {
+    'de': 'Wartende Anfragen',
+    'nl': 'Verzoeken in de wachtrij',
+    'es': 'Solicitudes en cola',
+    'it': 'Richieste in coda',
+    'tr': 'Kuyruktaki istekler'},
+  'VRAM utilisée': {
+    'de': 'Belegter VRAM',
+    'nl': 'Gebruikt VRAM',
+    'es': 'VRAM usada',
+    'it': 'VRAM usata',
+    'tr': 'Kullanılan VRAM'},
+  'VRAM totale': {
+    'de': 'VRAM gesamt',
+    'nl': 'Totaal VRAM',
+    'es': 'VRAM total',
+    'it': 'VRAM totale',
+    'tr': 'Toplam VRAM'},
+  'Température du GPU': {
+    'de': 'GPU-Temperatur',
+    'nl': 'GPU-temperatuur',
+    'es': 'Temperatura de la GPU',
+    'it': 'Temperatura della GPU',
+    'tr': 'GPU sıcaklığı'},
+  'RAM utilisée': {
+    'de': 'Belegter RAM',
+    'nl': 'Gebruikt RAM',
+    'es': 'RAM usada',
+    'it': 'RAM usata',
+    'tr': 'Kullanılan RAM'},
+  'Puissance de la machine': {
+    'de': 'Leistung des Rechners',
+    'nl': 'Vermogen van de machine',
+    'es': 'Potencia de la máquina',
+    'it': 'Potenza della macchina',
+    'tr': 'Makinenin gücü'},
   'Volet à course simulée': {
     'de': 'Rollladen mit simulierter Laufzeit',
     'nl': 'Rolluik met gesimuleerde looptijd',
