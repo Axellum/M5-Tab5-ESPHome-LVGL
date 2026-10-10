@@ -80,6 +80,7 @@
   ('theme_nuit', 'switch', 'nuit_theme_auto'),
   ('tape', 'switch', 'tap_to_wake'), ('batterie_montee', 'switch', 'tab5_batterie_montee'),
   ('appareils_meteo', 'switch', 'tab5_appareils_sur_la_meteo'),
+  ('horloge_fond', 'switch', 'tab5_fond_de_l_horloge'),
   ('okay_nabu', 'switch', 'tab5_rallumer_l_ecran_a_okay_nabu'),
   ('extinction', 'select', 'tab5_extinction_auto_de_l_ecran'),
   ('economie', 'select', 'tab5_economie_d_energie'), ('sur_batterie', 'binary_sensor', 'tab5_sur_batterie'),
@@ -708,7 +709,8 @@ views:
 {%- for cle, fr_, en_, icone in [('tape', "Rallumer l'écran d'une tape", 'Wake the screen with a tap', 'mdi:gesture-tap'),
                                   ('okay_nabu', "Rallumer l'écran à Okay Nabu", 'Wake the screen with Okay Nabu', 'mdi:account-voice'),
                                   ('batterie_montee', 'Batterie montée', 'Battery fitted', 'mdi:battery'),
-                                  ('appareils_meteo', 'Appareils sur la météo', 'Devices on the forecast', 'mdi:lightbulb-outline')] %}
+                                  ('appareils_meteo', 'Appareils sur la météo', 'Devices on the forecast', 'mdi:lightbulb-outline'),
+                                  ('horloge_fond', "Fond de l'horloge", 'Clock background', 'mdi:clock-outline')] %}
 {%- if T[cle] %}
           - type: tile
             entity: {{ T[cle] }}
@@ -2159,6 +2161,12 @@ views:
     'es': 'Activado: el icono de batería aparece en la barra de estado',
     'it': 'Attiva: l’icona della batteria compare nella barra di stato',
     'tr': 'Açıkken pil simgesi durum şeridinde görünür'},
+  "Fond de l'horloge": {
+    'de': 'Uhr-Hintergrund',
+    'nl': 'Klokachtergrond',
+    'es': 'Fondo del reloj',
+    'it': "Sfondo dell’orologio",
+    'tr': 'Saat arka planı'},
   'Appareils sur la météo': {
     'de': 'Geräte auf der Vorhersage',
     'nl': 'Apparaten op de verwachting',

@@ -10,9 +10,9 @@
 # sur le corps d'une tuile sans appareil (bouton masqué) : le popup Météo (ADR-0043,
 # meteo_tuile_libre), jamais au bout d'un glissement (ui_appui_glisse).
 obj:
-  y: 35
+  y: 0
   width: 230
-  height: 205
+  height: 275
   styles: style_meteo_card_page
   scrollbar_mode: "OFF"
   on_long_press:

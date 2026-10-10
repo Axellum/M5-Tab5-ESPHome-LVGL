@@ -84,6 +84,8 @@ script:
             u.animations[0] = id(reglages_animations_0);
             u.animations[1] = id(reglages_animations_1);
             u.animations[2] = id(reglages_animations_2);
+            u.horloge_fond[0] = id(reglages_horloge_fond_oui);
+            u.horloge_fond[1] = id(reglages_horloge_fond_non);
             u.batt_etat = id(reglages_batt_etat);
             u.batt_niveau = id(reglages_batt_niveau);
             u.batt_tension = id(reglages_batt_tension);
@@ -139,6 +141,7 @@ script:
           e.mode_charge = (int) id(tab5_mode_charge).active_index().value_or(0);
           e.wifi_eco = (int) id(tab5_wifi_eco).active_index().value_or(0);
           e.animations = (int) id(tab5_animations).active_index().value_or(0);
+          e.horloge_fond = id(tab5_horloge_fond).state;
           reglages_peindre(e);
 
   # `reglage` : ReglageId (tab5_custom.h) ; `valeur` : index de l'option, 1 / 0 pour
@@ -219,6 +222,9 @@ script:
               call.perform();
               break;
             }
+            case REGLAGE_HORLOGE_FOND:
+              if (valeur != 0) id(tab5_horloge_fond).turn_on(); else id(tab5_horloge_fond).turn_off();
+              break;
             default:
               break;
           }

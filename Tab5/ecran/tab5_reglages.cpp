@@ -149,6 +149,7 @@ void reglages_peindre(const ReglagesEtat& e) {
     peindre_choix(u.economie, REGLAGES_NB_ECONOMIE, e.economie);
     peindre_choix(u.wifi_eco, REGLAGES_NB_WIFI_ECO, e.wifi_eco);
     peindre_choix(u.montee, 2, oui_non(e.montee));
+    peindre_choix(u.horloge_fond, 2, oui_non(e.horloge_fond));
 }
 
 // Changement de thème (theme_rejouer_ui, tab5_theme.cpp) : les couleurs posées ici

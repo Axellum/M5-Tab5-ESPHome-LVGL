@@ -58,6 +58,7 @@ enum ReglageId : int {
     REGLAGE_MODE_CHARGE = 10,     // select « Tab5 Mode de charge » (index)
     REGLAGE_WIFI_ECO = 11,        // select « Tab5 Wi-Fi éco » (index)
     REGLAGE_ANIMATIONS = 12,      // select « Tab5 Animations » (index)
+    REGLAGE_HORLOGE_FOND = 13,    // interrupteur « Tab5 Fond de l'horloge » (10/10/2026)
 };
 
 // Boutons à choix : autant que d'options (Oui/Non : 0 = Oui, 1 = Non). Langues : une
@@ -93,6 +94,7 @@ struct ReglagesUI {
     lv_obj_t* limite[REGLAGES_NB_LIMITES] = {};
     lv_obj_t* economie[REGLAGES_NB_ECONOMIE] = {};
     lv_obj_t* montee[2] = {};
+    lv_obj_t* horloge_fond[2] = {};                   // reglages_horloge_fond_oui / _non
     lv_obj_t* mode_charge[REGLAGES_NB_MODES_CHARGE] = {};
     lv_obj_t* wifi_eco[REGLAGES_NB_WIFI_ECO] = {};
     // Page Apparence (09/10/2026).
@@ -127,6 +129,7 @@ struct ReglagesEtat {
     int mode_charge = 0;
     int wifi_eco = 0;
     int animations = 0;
+    bool horloge_fond = false;
 };
 
 // Noms natifs des langues sur leurs pastilles (une fois, à la première ouverture).

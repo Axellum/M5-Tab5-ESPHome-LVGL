@@ -183,10 +183,17 @@ obj:
                       - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_suiv", x: "1113", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: 1 } ] } }
 
                       # Clair ou sombre : options du select « Clair ou sombre », dans son ordre.
-                      - !include { file: reglages_rangee.yaml, vars: { y: 179, w: 1168, icon: "\U000F050E", label_text: "Clair ou sombre" } }
-                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_0, x: 17, y: 219, w: 384, reglage: 4, valeur: 0, label_text: "Sombre" } }
-                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_1, x: 409, y: 219, w: 384, reglage: 4, valeur: 1, label_text: "Clair" } }
-                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_2, x: 801, y: 219, w: 384, reglage: 4, valeur: 2, label_text: "Auto" } }
+                      # Moitié gauche depuis le 10/10/2026 : le fond de l'horloge à droite.
+                      - !include { file: reglages_rangee.yaml, vars: { y: 179, w: 574, icon: "\U000F050E", label_text: "Clair ou sombre" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_0, x: 17, y: 219, w: 184, reglage: 4, valeur: 0, label_text: "Sombre" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_1, x: 211, y: 219, w: 185, reglage: 4, valeur: 1, label_text: "Clair" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_2, x: 406, y: 219, w: 185, reglage: 4, valeur: 2, label_text: "Auto" } }
+
+                      # Fond de la tuile de l'horloge (10/10/2026) : interrupteur « Tab5 Fond de l'horloge » ;
+                      # Non = la tuile n'a ni dégradé ni fond, sa bordure reste.
+                      - !include { file: reglages_rangee.yaml, vars: { x: 611, y: 179, w: 574, icon: "\U000F0150", label_text: "Fond de l'horloge" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_horloge_fond_oui, x: 611, y: 219, w: 282, reglage: 13, valeur: 1, label_text: "Oui" } }
+                      - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_horloge_fond_non, x: 903, y: 219, w: 282, reglage: 13, valeur: 0, label_text: "Non" } }
 
                       # Nuit du mode Auto (« Nuit (thème auto) ») : HA la règle d'après le soleil
                       # (packages/tab5_push.yaml), au coucher, au lever et à chaque connexion de la

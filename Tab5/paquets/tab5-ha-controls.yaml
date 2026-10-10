@@ -131,6 +131,20 @@ switch:
       # Page Batterie des Réglages (tab5-reglages.yaml) : repeinte s'il a déjà été ouvert.
       - script.execute: tab5_reglages_sync_ui
 
+  # Fond de la tuile de l'horloge (10/10/2026, demande d'Axel) : éteint, la tuile n'a ni
+  # dégradé ni fond (la bordure reste). Éteint par défaut, gardé en mémoire, appliqué sans
+  # redémarrage ; réglé depuis Réglages ▸ Apparence (REGLAGE_HORLOGE_FOND).
+  - platform: template
+    id: tab5_horloge_fond
+    name: "Tab5 Fond de l'horloge"
+    icon: mdi:clock-outline
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_state:
+      - lambda: 'horloge_fond_ui(id(clock_tile), x);'
+      - script.execute: tab5_reglages_sync_ui
+
   # Appareils des pièces sur les prévisions (05/10/2026, discussion #278 : un
   # utilisateur préfère des cartes météo seules). Éteint, le mode météo ne montre plus
   # les épaules ni le bouton d'action des tuiles, et le titre d'une tuile de volet ne

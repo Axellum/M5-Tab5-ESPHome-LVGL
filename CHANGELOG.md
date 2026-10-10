@@ -31,6 +31,12 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
 
+### 2026-10-10 — Tuiles météo en cellule pleine et fond de l'horloge au choix
+
+- **Demande d'Axel** (essai validé sur la tablette) : les tuiles de prévisions prennent la même cellule que les tuiles des pièces — une carte pleine de 230 × 275 px, sans les deux onglets en saillie du jour et de la température ; le nom du jour et les températures s'écrivent directement sur la carte (`forecast_day_body.yaml` pleine hauteur, `forecast_day_title_tab.yaml` et `forecast_day_temp_tab.yaml` sans fond ni relief). L'icône météo, les épaules et les appuis ne bougent pas.
+- **Fond de la tuile de l'horloge au choix** : interrupteur « Tab5 Fond de l'horloge » (`tab5-ha-controls.yaml`, éteint par défaut, gardé en mémoire, appliqué sans redémarrage par `horloge_fond_ui()`), réglé depuis Réglages ▸ Apparence (Oui / Non à droite de « Clair ou sombre », qui passe en demi-largeur, `REGLAGE_HORLOGE_FOND`). Sans fond, la tuile garde sa bordure.
+- Une entrée de plus dans le tableau de bord HA (`tab5_dashboard.jinja`, traduite) ; le texte « Fond de l'horloge » en six langues. Aucun changement du contrat HA ↔ firmware.
+
 ### 2026-10-10 — Première mesure de consommation du Tab5 : page « Consommation »
 
 - **Demande d'Axel** : mettre en doc les chiffres du test de husyildiz (rc.4, discussion #278) avec une analyse, la consommation annuelle et ce qu'on peut en tirer.

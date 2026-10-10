@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1173;
+static const uint16_t kI18nKeyCount = 1174;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -1612,6 +1613,7 @@ static const char* const kI18nKeys[] = {
     "Fixe",
     "Flipper néon · 3 billes\nTablette à la verticale",
     "Flux d'air",
+    "Fond de l'horloge",
     "Force de la secousse nécessaire",
     "Force du Tab",
     "Forte",
@@ -2789,6 +2791,7 @@ static const char* const kI18n_en[] = {
     "Fixed",  // "Fixe"
     "Neon pinball · 3 balls\nHold the tablet upright",  // "Flipper néon · 3 billes\nTablette à la verticale"
     "Airflow",  // "Flux d'air"
+    "Clock background",  // "Fond de l'horloge"
     "Shake strength needed",  // "Force de la secousse nécessaire"
     "Tab strength",  // "Force du Tab"
     "Heavy",  // "Forte"
@@ -3966,6 +3969,7 @@ static const char* const kI18n_de[] = {
     "Fest",  // "Fixe"
     "Neon-Flipper · 3 Bälle\nTablet hochkant halten",  // "Flipper néon · 3 billes\nTablette à la verticale"
     "Luftstrom",  // "Flux d'air"
+    "Uhr-Hintergrund",  // "Fond de l'horloge"
     "Nötige Schüttelstärke",  // "Force de la secousse nécessaire"
     "Tab-Stärke",  // "Force du Tab"
     "Stark",  // "Forte"
@@ -5143,6 +5147,7 @@ static const char* const kI18n_nl[] = {
     "Vast",  // "Fixe"
     "Neon-flipper · 3 ballen\nHoud de tablet rechtop",  // "Flipper néon · 3 billes\nTablette à la verticale"
     "Luchtstroom",  // "Flux d'air"
+    "Klokachtergrond",  // "Fond de l'horloge"
     "Benodigde schudkracht",  // "Force de la secousse nécessaire"
     "Tab-sterkte",  // "Force du Tab"
     "Zwaar",  // "Forte"
@@ -6320,6 +6325,7 @@ static const char* const kI18n_es[] = {
     "Fija",  // "Fixe"
     "Pinball neón · 3 bolas\nTableta en vertical",  // "Flipper néon · 3 billes\nTablette à la verticale"
     "Flujo de aire",  // "Flux d'air"
+    "Fondo del reloj",  // "Fond de l'horloge"
     "Fuerza de sacudida necesaria",  // "Force de la secousse nécessaire"
     "Fuerza del Tab",  // "Force du Tab"
     "Fuerte",  // "Forte"
@@ -7497,6 +7503,7 @@ static const char* const kI18n_it[] = {
     "Fissa",  // "Fixe"
     "Flipper al neon · 3 palline\nTablet in verticale",  // "Flipper néon · 3 billes\nTablette à la verticale"
     "Flusso d'aria",  // "Flux d'air"
+    "Sfondo dell'orologio",  // "Fond de l'horloge"
     "Forza di scossa necessaria",  // "Force de la secousse nécessaire"
     "Forza del Tab",  // "Force du Tab"
     "Forte",  // "Forte"
@@ -8674,6 +8681,7 @@ static const char* const kI18n_tr[] = {
     "Sabit",  // "Fixe"
     "Neon pinball · 3 bilye\nTableti dik tut",  // "Flipper néon · 3 billes\nTablette à la verticale"
     "Hava akışı",  // "Flux d'air"
+    "Saat arka planı",  // "Fond de l'horloge"
     "Gereken sallama gücü",  // "Force de la secousse nécessaire"
     "Tab gücü",  // "Force du Tab"
     "Kuvvetli",  // "Forte"
