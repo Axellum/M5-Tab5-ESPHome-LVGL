@@ -16,7 +16,8 @@ On vérifie :
   d'état et le cadre Ok Nabu ;
 - le tap de la seconde température et le geste « zone_gauche_suivante » ; l'Arcade toujours
   joignable (bouton manette, roue de navigation) ;
-- le graphique repeint à l'arrivée des prévisions horaires et au changement de thème ;
+- le graphique repeint à l'arrivée des prévisions horaires et au changement de thème ; son
+  dégradé et ses barres de pluie lisibles ;
 - au rendu des VRAIS modèles Jinja du blueprint : défauts, choix, valeurs inconnues, quand la
   clé part."""
 import os
@@ -164,6 +165,23 @@ def test_points_de_la_courbe_vivent_avec_elle():
     assert "lv_line_set_points(s_g.courbe, s_pts," in cpp
     assert "ui_courbe_lisse(" in cpp, "la courbe du popup Météo, une seule source"
     assert "ui_courbe_lisse(xs, ys, n, kLisse, s_courbe_pts)" in _lire(TAB5, "ecran", "tab5_meteo.cpp")
+
+
+def test_degrade_et_pluie_lisibles():
+    cpp = _lire(GAUCHE_CPP)
+    # Le dégradé sous la courbe : une image dont le descripteur vit avec elle, en ARGB8888
+    # (le dessin des images A8 n'est pas compilé), ses pixels pris une fois.
+    assert re.search(r"^lv_image_dsc_t s_aire_dsc;", cpp, re.M)
+    assert "LV_COLOR_FORMAT_ARGB8888" in cpp and "LV_COLOR_FORMAT_A8" not in cpp
+    assert "lv_image_cache_drop(&s_aire_dsc);" in cpp
+    assert cpp.count("heap_caps_malloc(") == 2, "PSRAM, puis la mémoire interne"
+    peindre = _fonction(cpp, "void peindre()")
+    # Toute pluie annoncée a sa barre, haute d'au moins kPluieMin ; aucune sans pluie.
+    assert "if (!(d.pluvio > 0.0f))" in peindre and "kPluieMin + " in peindre
+    assert re.search(r"constexpr int32_t kPluieMin = ([1-9]\d*);", cpp)
+    # Les valeurs du plus chaud et du plus froid évitent la courbe, les barres et le cadre.
+    assert "touche_courbe(encre, ob.np)" in _fonction(cpp, "bool place_libre(")
+    assert "ui_ligne(z, kTrait)" in cpp and re.search(r"constexpr int32_t kTrait = [4-9];", cpp)
 
 
 def test_repeint_aux_previsions_et_au_theme():
