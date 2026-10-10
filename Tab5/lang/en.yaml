@@ -1333,3 +1333,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lecteur indisponible": "Player unavailable"
 "Rien en lecture": "Nothing playing"
 "Lecteur {n}": "Player {n}"
+
+# --- Capteurs suivis (tab5_suivi.cpp, ADR-0053) ---------------------------------
+"Suivi": "Tracking"
+"Aucun capteur suivi": "No tracked sensor"
+"Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis ».": "Choose your sensors in Home Assistant: “Tab5 · capteurs suivis · tracked sensors”."
+"Capteur": "Sensor"

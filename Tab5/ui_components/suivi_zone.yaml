@@ -1,0 +1,38 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file suivi_zone.yaml
+# @role Capteur suivi dans la zone à gauche de l'horloge (ADR-0053, contenu « capteur » de
+#       l'ADR-0051) : le premier capteur de la liste « Tab5 · capteurs suivis » de Home
+#       Assistant — son nom et sa variation (flèche de tendance, texte coloré) en haut, sa
+#       valeur et son unité dessous, la courbe de ses 24 dernières heures en bas, sur un
+#       dégradé. Un tap ouvre le popup Suivi (tous les capteurs suivis).
+# @architecture_constraint Même emprise que zone_graphique et zone_lecteur (x 20, y 42,
+#       405 × 184, le verre des boutons de la colonne, style_clim_btn_page) ; montrée ou
+#       masquée d'un bloc par zone_gauche_appliquer() (tab5_zone_gauche.cpp). Tout ce qui
+#       dépend des données et du thème (places, textes, couleurs de la variation, courbe,
+#       dégradé) est posé par tab5_suivi.cpp (peindre_zone) : rien n'est placé ici. Couleurs
+#       fixes par les styles de rôle (règle 1) ; flèche posée par glyphe_tendance
+#       (MDI_CODE_TARGETS, règle 9), dans mdi_font_32.
+# ═══════════════════════════════════════════════════════
+button:
+  id: zone_suivi
+  align: TOP_LEFT
+  x: 20
+  y: 42
+  width: 405
+  height: 184
+  pad_all: 0
+  hidden: true
+  scrollable: false
+  scrollbar_mode: "OFF"
+  styles: style_clim_btn_page
+  on_short_click:
+    - lambda: 'if (!ui_appui_glisse()) id(tab5_ecran_ouvrir).execute((int) Ecran::SUIVI);'
+  widgets:
+    - label: { id: suivi_zone_nom, text: "", align: TOP_LEFT, x: 22, y: 12, text_font: roboto_22, styles: style_text_dim, hidden: true }
+    - label: { id: suivi_zone_fleche, text: "", align: TOP_LEFT, x: 300, y: 8, text_font: mdi_font_32, hidden: true }
+    - label: { id: suivi_zone_variation, text: "", align: TOP_LEFT, x: 334, y: 12, text_font: roboto_22, hidden: true }
+    - label: { id: suivi_zone_valeur, text: "", align: TOP_LEFT, x: 22, y: 34, styles: style_police_date, hidden: true }
+    - label: { id: suivi_zone_unite, text: "", align: TOP_LEFT, x: 160, y: 60, text_font: roboto_22, styles: style_text_dim, hidden: true }
+    # Avant la première poussée de HA : « En attente de Home Assistant ».
+    - label: { id: suivi_zone_attente, text: "", align: CENTER, styles: style_text_dim }

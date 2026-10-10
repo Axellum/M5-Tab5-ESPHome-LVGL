@@ -97,6 +97,11 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_lecteur": {"lecteurs": "Salon|tv;Cuisine|speaker;Tablette|",
                          "etat": "1|Cuisine|speaker|playing|Bohemian Rhapsody|Queen|A Night at the Opera|Spotify|"
                                  "83|354|42|0|1|all|lspnvmar|/api/media_player_proxy/media_player.cuisine?token=x&cache=1"},
+    # Suivi de capteurs (ADR-0053) : une variation du jour, un écart, un capteur sans
+    # courbe ni valeur, des points manquants.
+    "tab5_maj_suivi": {"payload": "Tesla|382.7|USD|2.05|p|20,25,,31,40,38,52,61,58,70,74,100;"
+                                  "Serre|21.4|°C|-1.5|a|90,80,70,60,50,40,30,20,10,0;"
+                                  "CAC 40|7803.3301|EUR|-0.95|p|50,48,47,51,49,45;Compteur|unknown||||"},
 }
 
 NOMBRES = ["", "-1", "0", "15", "16", "31", "32", "99", "255", "256", "2147483647", "-2147483648",

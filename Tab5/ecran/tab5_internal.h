@@ -587,6 +587,20 @@ void zone_gauche_donnees_changees();
 // (faux seulement quand HA a dit qu'aucun lecteur n'est choisi).
 void lecteur_zone_montrer(bool montre);
 bool lecteur_zone_disponible();
+// tab5_suivi.cpp, pour la zone à gauche de l'horloge (capteur suivi, ADR-0053) : montre ou
+// masque la carte (repeinte si elle a changé cachée), et dit si elle a quelque chose à
+// montrer (faux seulement quand HA a dit qu'aucun capteur n'est choisi).
+void suivi_zone_montrer(bool montre);
+bool suivi_zone_disponible();
+// tab5_zone_gauche.cpp : le dégradé sous une courbe de la zone (graphique, capteur suivi),
+// dans `image` (une lv_image de la carte), de la couleur `couleur` sous le trait à 0 au pied
+// `base`, du haut y_haut. Un seul tampon en PSRAM (≈ 156 Kio) pour les contenus de la
+// zone, jamais montrés ensemble : quand une autre image le reprend, la précédente est
+// vidée et masquée, et son `perdu` appelé (le contenu se marque « sale »). Les points
+// vivent avec la ligne (lv_line_set_points ne copie pas). Faux, image masquée, sans
+// tampon (PSRAM refusée) ou hors de ses dimensions (363 × 110 au plus).
+bool zone_degrade_peindre(lv_obj_t* image, const lv_point_precise_t* pts, int np, uint32_t couleur, int32_t y_haut,
+                          int32_t base, void (*perdu)());
 
 // --- tab5_central.cpp, pour les pièces ---
 // Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de

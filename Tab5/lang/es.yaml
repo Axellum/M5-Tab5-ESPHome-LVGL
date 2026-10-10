@@ -1417,3 +1417,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lecteur indisponible": "Reproductor no disponible"
 "Rien en lecture": "No se reproduce nada"
 "Lecteur {n}": "Reproductor {n}"
+
+# --- Capteurs suivis (tab5_suivi.cpp, ADR-0053) ---------------------------------
+"Suivi": "Seguimiento"
+"Aucun capteur suivi": "Ningún sensor seguido"
+"Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis ».": "Elige tus sensores en Home Assistant: «Tab5 · capteurs suivis · tracked sensors»."
+"Capteur": "Sensor"

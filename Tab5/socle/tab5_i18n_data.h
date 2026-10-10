@@ -8,9 +8,13 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1126;
+static const uint16_t kI18nKeyCount = 1130;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1315,6 +1319,7 @@ static const char* const kI18nKeys[] = {
     "Au tour de Noir",
     "Aucun appareil",
     "Aucun capteur d'énergie choisi",
+    "Aucun capteur suivi",
     "Aucun déplacement possible — au suivant.",
     "Aucun effet actif",
     "Aucun historique",
@@ -1387,6 +1392,7 @@ static const char* const kI18nKeys[] = {
     "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer.",
     "Calibrer à plat",
     "Calme",
+    "Capteur",
     "Carillon",
     "Case Rejouer — relancez le dé !",
     "Casse toutes les briques. Ne laisse pas tomber la balle.",
@@ -1408,6 +1414,7 @@ static const char* const kI18nKeys[] = {
     "Chargement image...",
     "Chargement...",
     "Chaud",
+    "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis ».",
     "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique ».",
     "Choix du mode, de la couleur, du niveau et de la pendule",
     "Chute nette. Reprends ton souffle.",
@@ -2035,6 +2042,7 @@ static const char* const kI18nKeys[] = {
     "Sports & Loisirs",
     "Statistiques",
     "Stop",
+    "Suivi",
     "Sur USB",
     "Sur batterie",
     "Synchronisation...",
@@ -2445,6 +2453,7 @@ static const char* const kI18n_en[] = {
     "Black to play",  // "Au tour de Noir"
     "No device",  // "Aucun appareil"
     "No energy sensor chosen",  // "Aucun capteur d'énergie choisi"
+    "No tracked sensor",  // "Aucun capteur suivi"
     "No move possible — next team.",  // "Aucun déplacement possible — au suivant."
     "No active effect",  // "Aucun effet actif"
     "No history",  // "Aucun historique"
@@ -2517,6 +2526,7 @@ static const char* const kI18n_en[] = {
     "Calibrate flat BEFORE playing: the nudge is measured from this reference,\nnot from the absolute tilt. Lay the tablet flat, then tap.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Calibrate flat",  // "Calibrer à plat"
     "Calm",  // "Calme"
+    "Sensor",  // "Capteur"
     "Chime",  // "Carillon"
     "Roll Again space — roll the die!",  // "Case Rejouer — relancez le dé !"
     "Break all the bricks. Don't drop the ball.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -2538,6 +2548,7 @@ static const char* const kI18n_en[] = {
     "Loading image...",  // "Chargement image..."
     "Loading...",  // "Chargement..."
     "Warm",  // "Chaud"
+    "Choose your sensors in Home Assistant: “Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Choose your players in Home Assistant: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Choose mode, color, level and clock",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Clean fall. Catch your breath.",  // "Chute nette. Reprends ton souffle."
@@ -3165,6 +3176,7 @@ static const char* const kI18n_en[] = {
     "Sports & Leisure",  // "Sports & Loisirs"
     "Statistics",  // "Statistiques"
     "Stop",  // "Stop"
+    "Tracking",  // "Suivi"
     "On USB",  // "Sur USB"
     "On battery",  // "Sur batterie"
     "Syncing...",  // "Synchronisation..."
@@ -3575,6 +3587,7 @@ static const char* const kI18n_de[] = {
     "Schwarz am Zug",  // "Au tour de Noir"
     "Kein Gerät",  // "Aucun appareil"
     "Kein Energiesensor gewählt",  // "Aucun capteur d'énergie choisi"
+    "Kein Sensor verfolgt",  // "Aucun capteur suivi"
     "Kein Zug möglich — nächstes Team.",  // "Aucun déplacement possible — au suivant."
     "Kein aktiver Effekt",  // "Aucun effet actif"
     "Kein Verlauf",  // "Aucun historique"
@@ -3647,6 +3660,7 @@ static const char* const kI18n_de[] = {
     "VOR dem Spiel flach kalibrieren: Der Nudge misst die Abweichung davon,\nnicht die absolute Neigung. Tablet hinlegen, dann tippen.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Flach kalibrieren",  // "Calibrer à plat"
     "Ruhig",  // "Calme"
+    "Sensor",  // "Capteur"
     "Gong",  // "Carillon"
     "Nochmal-Feld — erneut würfeln!",  // "Case Rejouer — relancez le dé !"
     "Zerstöre alle Steine. Lass den Ball nicht fallen.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -3668,6 +3682,7 @@ static const char* const kI18n_de[] = {
     "Lade Bild...",  // "Chargement image..."
     "Lädt...",  // "Chargement..."
     "Warm",  // "Chaud"
+    "Wähle deine Sensoren in Home Assistant: „Tab5 · capteurs suivis · tracked sensors“.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Wähle deine Player in Home Assistant: „Tab5 · lecteurs de musique · music players“.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Modus, Farbe, Stufe und Uhr wählen",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Glatter Sturz. Atme durch.",  // "Chute nette. Reprends ton souffle."
@@ -4295,6 +4310,7 @@ static const char* const kI18n_de[] = {
     "Sport & Freizeit",  // "Sports & Loisirs"
     "Statistik",  // "Statistiques"
     "Stopp",  // "Stop"
+    "Verlauf",  // "Suivi"
     "USB-Betrieb",  // "Sur USB"
     "Akkubetrieb",  // "Sur batterie"
     "Synchronisiere...",  // "Synchronisation..."
@@ -4705,6 +4721,7 @@ static const char* const kI18n_nl[] = {
     "Zwart aan zet",  // "Au tour de Noir"
     "Geen apparaat",  // "Aucun appareil"
     "Geen energiesensor gekozen",  // "Aucun capteur d'énergie choisi"
+    "Geen sensor gevolgd",  // "Aucun capteur suivi"
     "Geen zet mogelijk — volgende team.",  // "Aucun déplacement possible — au suivant."
     "Geen actief effect",  // "Aucun effet actif"
     "Geen geschiedenis",  // "Aucun historique"
@@ -4777,6 +4794,7 @@ static const char* const kI18n_nl[] = {
     "Kalibreer plat VOOR je speelt: de nudge meet vanaf deze referentie,\nniet vanaf de absolute helling. Leg de tablet plat en tik.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Plat kalibreren",  // "Calibrer à plat"
     "Kalm",  // "Calme"
+    "Sensor",  // "Capteur"
     "Carillon",  // "Carillon"
     "Vak Nog eens — gooi opnieuw!",  // "Case Rejouer — relancez le dé !"
     "Breek alle stenen. Laat de bal niet vallen.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -4798,6 +4816,7 @@ static const char* const kI18n_nl[] = {
     "Afbeelding laden...",  // "Chargement image..."
     "Laden...",  // "Chargement..."
     "Warm",  // "Chaud"
+    "Kies je sensoren in Home Assistant: „Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Kies je spelers in Home Assistant: „Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Kies modus, kleur, niveau en klok",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Zuivere val. Kom even op adem.",  // "Chute nette. Reprends ton souffle."
@@ -5425,6 +5444,7 @@ static const char* const kI18n_nl[] = {
     "Sport & Ontspanning",  // "Sports & Loisirs"
     "Statistieken",  // "Statistiques"
     "Stop",  // "Stop"
+    "Volgen",  // "Suivi"
     "Via USB",  // "Sur USB"
     "Op batterij",  // "Sur batterie"
     "Synchroniseren...",  // "Synchronisation..."
@@ -5835,6 +5855,7 @@ static const char* const kI18n_es[] = {
     "Turno de Negro",  // "Au tour de Noir"
     "Ningún dispositivo",  // "Aucun appareil"
     "Ningún sensor de energía elegido",  // "Aucun capteur d'énergie choisi"
+    "Ningún sensor seguido",  // "Aucun capteur suivi"
     "Sin movimiento posible — turno del siguiente.",  // "Aucun déplacement possible — au suivant."
     "Sin efecto activo",  // "Aucun effet actif"
     "Sin historial",  // "Aucun historique"
@@ -5907,6 +5928,7 @@ static const char* const kI18n_es[] = {
     "Calibra en plano ANTES de jugar: el nudge se mide desde esta referencia,\nno desde la inclinación absoluta. Apoya la tableta y toca.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Calibrar en plano",  // "Calibrer à plat"
     "Calma",  // "Calme"
+    "Sensor",  // "Capteur"
     "Carillón",  // "Carillon"
     "Otra tirada — ¡tira de nuevo!",  // "Case Rejouer — relancez le dé !"
     "Rompe todos los ladrillos. No dejes caer la bola.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -5928,6 +5950,7 @@ static const char* const kI18n_es[] = {
     "Cargando imagen...",  // "Chargement image..."
     "Cargando...",  // "Chargement..."
     "Cálido",  // "Chaud"
+    "Elige tus sensores en Home Assistant: «Tab5 · capteurs suivis · tracked sensors».",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Elige tus reproductores en Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Elige modo, color, nivel y reloj",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caída limpia. Recupera el aliento.",  // "Chute nette. Reprends ton souffle."
@@ -6555,6 +6578,7 @@ static const char* const kI18n_es[] = {
     "Deportes y Ocio",  // "Sports & Loisirs"
     "Estadísticas",  // "Statistiques"
     "Parar",  // "Stop"
+    "Seguimiento",  // "Suivi"
     "Por USB",  // "Sur USB"
     "Con batería",  // "Sur batterie"
     "Sincronizando...",  // "Synchronisation..."
@@ -6965,6 +6989,7 @@ static const char* const kI18n_it[] = {
     "Tocca al Nero",  // "Au tour de Noir"
     "Nessun dispositivo",  // "Aucun appareil"
     "Nessun sensore di energia scelto",  // "Aucun capteur d'énergie choisi"
+    "Nessun sensore monitorato",  // "Aucun capteur suivi"
     "Nessuna mossa possibile — passa la mano.",  // "Aucun déplacement possible — au suivant."
     "Nessun effetto attivo",  // "Aucun effet actif"
     "Nessuno storico",  // "Aucun historique"
@@ -7037,6 +7062,7 @@ static const char* const kI18n_it[] = {
     "Calibra in piano PRIMA di giocare: il nudge si misura da questo riferimento,\nnon dall'inclinazione assoluta. Appoggia il tablet, poi tocca.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Calibra in piano",  // "Calibrer à plat"
     "Calma",  // "Calme"
+    "Sensore",  // "Capteur"
     "Carillon",  // "Carillon"
     "Tira ancora — ritira il dado!",  // "Case Rejouer — relancez le dé !"
     "Rompi tutti i mattoncini. Non far cadere la pallina.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -7058,6 +7084,7 @@ static const char* const kI18n_it[] = {
     "Carico l'immagine...",  // "Chargement image..."
     "Caricamento...",  // "Chargement..."
     "Caldo",  // "Chaud"
+    "Scegli i tuoi sensori in Home Assistant: «Tab5 · capteurs suivis · tracked sensors».",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Scegli i tuoi lettori in Home Assistant: «Tab5 · lecteurs de musique · music players».",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Scegli modalità, colore, livello e orologio",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Caduta netta. Riprendi fiato.",  // "Chute nette. Reprends ton souffle."
@@ -7685,6 +7712,7 @@ static const char* const kI18n_it[] = {
     "Sport & Tempo libero",  // "Sports & Loisirs"
     "Statistiche",  // "Statistiques"
     "Stop",  // "Stop"
+    "Monitoraggio",  // "Suivi"
     "Via USB",  // "Sur USB"
     "A batteria",  // "Sur batterie"
     "Sincronizzo...",  // "Synchronisation..."
@@ -8095,6 +8123,7 @@ static const char* const kI18n_tr[] = {
     "Sıra: Siyah",  // "Au tour de Noir"
     "Cihaz yok",  // "Aucun appareil"
     "Enerji sensörü seçilmedi",  // "Aucun capteur d'énergie choisi"
+    "Takip edilen sensör yok",  // "Aucun capteur suivi"
     "Hamle yok — sıra sonrakinde.",  // "Aucun déplacement possible — au suivant."
     "Etkin efekt yok",  // "Aucun effet actif"
     "Geçmiş yok",  // "Aucun historique"
@@ -8167,6 +8196,7 @@ static const char* const kI18n_tr[] = {
     "Oynamadan ÖNCE düz kalibre et: dürtme bu referanstan ölçülür,\nmutlak eğimden değil. Tableti yatır, sonra dokun.",  // "Calibre à plat AVANT de jouer : le nudge mesure l'écart avec cette référence,\npas l'inclinaison absolue. Poser la tablette, puis appuyer."
     "Düz kalibre et",  // "Calibrer à plat"
     "Sakin",  // "Calme"
+    "Sensör",  // "Capteur"
     "Çan sesi",  // "Carillon"
     "Tekrar at karesi — zarı yeniden at!",  // "Case Rejouer — relancez le dé !"
     "Tüm tuğlaları kır. Topu düşürme.",  // "Casse toutes les briques. Ne laisse pas tomber la balle."
@@ -8188,6 +8218,7 @@ static const char* const kI18n_tr[] = {
     "Görsel yükleniyor...",  // "Chargement image..."
     "Yükleniyor...",  // "Chargement..."
     "Sıcak",  // "Chaud"
+    "Sensörlerinizi Home Assistant'ta seçin: “Tab5 · capteurs suivis · tracked sensors”.",  // "Choisissez vos capteurs dans Home Assistant : « Tab5 · capteurs suivis »."
     "Oynatıcılarınızı Home Assistant'ta seçin: “Tab5 · lecteurs de musique · music players”.",  // "Choisissez vos lecteurs dans Home Assistant : « Tab5 · lecteurs de musique »."
     "Mod, renk, seviye ve saat seçimi",  // "Choix du mode, de la couleur, du niveau et de la pendule"
     "Temiz bir düşüş. Nefes al.",  // "Chute nette. Reprends ton souffle."
@@ -8815,6 +8846,7 @@ static const char* const kI18n_tr[] = {
     "Spor & Hobi",  // "Sports & Loisirs"
     "İstatistikler",  // "Statistiques"
     "Dur",  // "Stop"
+    "Takip",  // "Suivi"
     "USB ile",  // "Sur USB"
     "Pilde",  // "Sur batterie"
     "Eşitleniyor...",  // "Synchronisation..."

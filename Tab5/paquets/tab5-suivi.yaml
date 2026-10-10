@@ -1,0 +1,84 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-suivi.yaml
+# @role Capteurs suivis (ADR-0053, 10/10/2026) : pose les widgets que tab5_suivi.cpp peint
+#       (g_suivi_ui).
+#         - tab5_suivi_lier : widgets dans g_suivi_ui, une fois (appelé au démarrage par
+#           tab5_zones_apply, tab5-zones.yaml, pour la carte du capteur de la zone à gauche
+#           de l'horloge ; par la poussée tab5_maj_suivi, tab5-api-logic.yaml, et à
+#           l'ouverture) ;
+#         - tab5_suivi_ouvrir : peint le popup Suivi (dernier état reçu) et l'ouvre
+#           (« Aller à l'écran → Suivi », geste « suivi », tap sur la carte de la zone).
+# @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
+#       nomme aucune entité et ne demande rien, HA pousse (packages/tab5_suivi.yaml).
+#       Chargé APRÈS tab5_lvgl : il référence des widgets. Aucun lv_* ici.
+# @ai_instruction Un widget de plus = son champ dans SuiviUI (tab5_suivi.h) et sa ligne ici.
+# ============================================================================
+
+script:
+  - id: tab5_suivi_lier
+    then:
+      - lambda: |-
+          SuiviUI& u = g_suivi_ui;
+          if (u.popup != nullptr) return;
+          u.attente = id(suivi_attente);
+          u.conseil = id(suivi_conseil);
+          u.carte[0] = id(suivi_carte_0);
+          u.carte[1] = id(suivi_carte_1);
+          u.carte[2] = id(suivi_carte_2);
+          u.carte[3] = id(suivi_carte_3);
+          u.carte[4] = id(suivi_carte_4);
+          u.carte[5] = id(suivi_carte_5);
+          u.nom[0] = id(suivi_nom_0);
+          u.nom[1] = id(suivi_nom_1);
+          u.nom[2] = id(suivi_nom_2);
+          u.nom[3] = id(suivi_nom_3);
+          u.nom[4] = id(suivi_nom_4);
+          u.nom[5] = id(suivi_nom_5);
+          u.valeur[0] = id(suivi_valeur_0);
+          u.valeur[1] = id(suivi_valeur_1);
+          u.valeur[2] = id(suivi_valeur_2);
+          u.valeur[3] = id(suivi_valeur_3);
+          u.valeur[4] = id(suivi_valeur_4);
+          u.valeur[5] = id(suivi_valeur_5);
+          u.unite[0] = id(suivi_unite_0);
+          u.unite[1] = id(suivi_unite_1);
+          u.unite[2] = id(suivi_unite_2);
+          u.unite[3] = id(suivi_unite_3);
+          u.unite[4] = id(suivi_unite_4);
+          u.unite[5] = id(suivi_unite_5);
+          u.fleche[0] = id(suivi_fleche_0);
+          u.fleche[1] = id(suivi_fleche_1);
+          u.fleche[2] = id(suivi_fleche_2);
+          u.fleche[3] = id(suivi_fleche_3);
+          u.fleche[4] = id(suivi_fleche_4);
+          u.fleche[5] = id(suivi_fleche_5);
+          u.variation[0] = id(suivi_variation_0);
+          u.variation[1] = id(suivi_variation_1);
+          u.variation[2] = id(suivi_variation_2);
+          u.variation[3] = id(suivi_variation_3);
+          u.variation[4] = id(suivi_variation_4);
+          u.variation[5] = id(suivi_variation_5);
+          u.periode[0] = id(suivi_periode_0);
+          u.periode[1] = id(suivi_periode_1);
+          u.periode[2] = id(suivi_periode_2);
+          u.periode[3] = id(suivi_periode_3);
+          u.periode[4] = id(suivi_periode_4);
+          u.periode[5] = id(suivi_periode_5);
+          u.zone = id(zone_suivi);
+          u.zone_nom = id(suivi_zone_nom);
+          u.zone_valeur = id(suivi_zone_valeur);
+          u.zone_unite = id(suivi_zone_unite);
+          u.zone_fleche = id(suivi_zone_fleche);
+          u.zone_variation = id(suivi_zone_variation);
+          u.zone_attente = id(suivi_zone_attente);
+          // En dernier : peindre_popup() ne fait rien tant que popup est nul (la zone,
+          // elle, ne dépend que de u.zone, posé plus haut).
+          u.popup = id(suivi_popup);
+
+  - id: tab5_suivi_ouvrir
+    then:
+      - script.execute: tab5_suivi_lier
+      - lambda: |-
+          suivi_ouvrir();
+          animate_popup_open(id(suivi_popup));

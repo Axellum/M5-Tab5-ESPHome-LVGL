@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT] Carte d'un capteur suivi du popup Suivi (ADR-0053), réutilisée 6 fois par
+# suivi_popup.yaml : une par capteur de la liste « Tab5 · capteurs suivis ».
+# vars : n (0-5, suffixe des ids lus par tab5_suivi.cpp via g_suivi_ui).
+# Ne rien placer ici : tab5_suivi.cpp montre les cartes des capteurs reçus, les répartit
+# en grille (place et taille), écrit le nom (coupé par « … »), la valeur et l'unité, la
+# flèche de tendance (mdi_font_32, glyphe_tendance → MDI_CODE_TARGETS), la variation et sa
+# couleur (rôles SUCCESS / ERROR / TEXT_DIM), la période, et trace la courbe des 24 h.
+# ═══════════════════════════════════════════════════════
+obj:
+  id: "suivi_carte_${n}"
+  align: TOP_LEFT
+  x: 24
+  y: ${modal_body_y}
+  width: 390
+  height: 291
+  hidden: true
+  styles: style_glass_card
+  scrollable: false
+  widgets:
+    - label: { id: "suivi_nom_${n}", text: "", align: TOP_LEFT, x: 22, y: 16, styles: style_text_accent }
+    - label: { id: "suivi_valeur_${n}", text: "--", align: TOP_LEFT, x: 22, y: 46, styles: style_police_date }
+    - label: { id: "suivi_unite_${n}", text: "", align: TOP_LEFT, x: 160, y: 72, styles: style_text_dim, hidden: true }
+    - label: { id: "suivi_fleche_${n}", text: "", align: TOP_LEFT, x: 18, y: 105, text_font: mdi_font_32, hidden: true }
+    - label: { id: "suivi_variation_${n}", text: "", align: TOP_LEFT, x: 56, y: 108, hidden: true }
+    - label: { id: "suivi_periode_${n}", text: "", align: TOP_LEFT, x: 160, y: 108, styles: style_text_dim, hidden: true }
