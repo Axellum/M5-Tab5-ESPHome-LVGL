@@ -37,3 +37,7 @@ What was checked before choosing (Home Assistant 2026.8.3 code, read on 2026-10-
 - `manifest.json` declares `after_dependencies: [automation]` (the integration imports `automations_with_blueprint`).
 - A new tile domain in the blueprint must be added to `assistant.DOMAINES_TUILES` (the test compares).
 - Tested in CI (`tools/installation_ha/verifier_integration.py`, step 1 bis, fresh Home Assistant 2026.9.4 and 2026.8.3): two areas with template entities, a generic thermostat and a hidden light; the repair followed like the interface, pre-filled values accepted → the automation written, loaded, the repair gone; run again from the options without the box → `automations.yaml` unchanged byte for byte; with the box and a new name → only the rooms changed, backup made. Not tested: the forms as rendered by the frontend, a real home.
+
+## Update (2026-10-10)
+
+[ADR-0053](0053-setup-assistant-home-lists.md) (lot 2): two more pages, *Home* (the blueprint's inputs that do not depend on a room, pre-filled only when Home Assistant has a single answer) and *Calendars and people* (the « Tab5 · … » lists, set through `select.select_option`). On update, the *Home* page now starts from the existing automation's values, which reverses the first « Rejected » point for those inputs only: the rooms are still proposed from the areas. The « update » box replaces the rooms and the home inputs given on that page.
