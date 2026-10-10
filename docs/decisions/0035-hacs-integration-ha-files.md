@@ -43,3 +43,7 @@ What was checked before choosing (2026-10-02 and 2026-10-07, HACS code and docum
 - Removing the integration leaves the files in place: they are the user's configuration from then on.
 - HACS reads the latest full release (pre-releases only when beta versions are switched on for the repository; its code filters `prerelease` unless `show_beta`). The repository can therefore be added once a full release carries `custom_components/tab5/`: 3.7.0. Releases up to 3.7.0-rc.4 have no `tab5_hacs.zip` (`archive_hacs.py` exits with code 3 on those tags).
 - `publication.yml` attaches the asset a few minutes after the release is published (job `home-assistant`). A HACS update clicked in between is expected to fail to download rather than install from the source code (HACS code, not observed yet); it works once the job is done.
+
+## Update (2026-10-10)
+
+[ADR-0052](0052-setup-assistant-rooms.md): once the files are active and no automation of the blueprint exists, the integration offers a setup assistant (a repair, and a box in its options) that writes that automation from the Home Assistant areas. It also writes `automations.yaml` (backup in `tab5_sauvegardes/automatisations/`), only after the user submits its summary.
