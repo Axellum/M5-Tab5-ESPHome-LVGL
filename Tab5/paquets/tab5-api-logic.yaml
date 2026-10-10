@@ -646,6 +646,36 @@ api:
       then:
         - lambda: 'energie_historique(vue, debut, valeurs);'
 
+    # Énergie en pages (ADR-0058) : le soleil et la prévision du jour (page « Aujourd'hui »),
+    # le bilan d'une vue (page « Bilan »). Poussés par script.tab5_energie, popup ouvert.
+    - service: tab5_maj_energie_soleil
+      description: "Popup Énergie : lever, midi et coucher du soleil, prévision du jour et de demain, meilleur créneau, prévision et courbe « ciel clair » de chaque heure."
+      variables:
+        payload:
+          type: string
+          description: "lever|midi|coucher|prevu_jour|prevu_demain|source|creneau_debut|creneau_fin|prevu|clair — heures locales HH:MM, kWh, source a (apprise × météo) ou e (prévision externe), créneau en heures entières 0-24 (fin exclue), prevu et clair = 24 valeurs en kWh séparées par ; (vide = pas de donnée)."
+          example: "08:13|13:52|19:31|17.8|12.1|a|12|15|0;0;0;0;0;0;0;0;0.1;0.6;1.4;2.2;2.6;2.5;2.0;1.3;0.8;0.3;0.05;0;0;0;0;0|0;0;0;0;0;0;0;0;0.2;0.9;1.8;2.6;3.0;2.9;2.5;1.8;1.0;0.4;0.1;0;0;0;0;0"
+      then:
+        - lambda: 'energie_soleil(payload);'
+
+    - service: tab5_maj_energie_bilan
+      description: "Popup Énergie : le bilan d'une vue — vente et achat au réseau, gains."
+      variables:
+        vue:
+          type: string
+          description: "heures, jours ou mois"
+          example: "jours"
+        debut:
+          type: string
+          description: "AAAA-MM-JJ, comme tab5_maj_energie_historique"
+          example: "2026-09-11"
+        payload:
+          type: string
+          description: "devise|vente|achat|gain — symbole (7 octets au plus, vide = pas de prix), puis kWh vendus, kWh achetés et gains par créneau, séparés par ; (champ vide = compteur ou prix non choisi)."
+          example: "€|1.2;0.8;2.1|3.4;4.0;2.2|0.95;0.88;1.10"
+      then:
+        - lambda: 'energie_bilan(vue, debut, payload);'
+
     # Caméras (ADR-0049, discussion #278) : réponse à l'événement esphome.tab5_cameras,
     # poussée par le blueprint « Tab5 — emplacements » (section « Caméras »). Rien n'est
     # poussé tant que le popup est fermé.

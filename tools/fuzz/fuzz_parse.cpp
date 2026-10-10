@@ -261,6 +261,39 @@ void serveur_ia(const std::string& p) {
     c.haut(h);
 }
 
+// Énergie, page « Aujourd'hui » (ADR-0058) : la variable payload seule ; ses nombres
+// passent aussi par le partage des flux de l'instantané (même lecture en W).
+void energie_soleil(const std::string& p) {
+    EnergieSoleilLu s;
+    energie_soleil_lire(Champ{p.data(), p.size()}, s);
+    energie_flux_calculer(s.prevu_jour, s.prevu_demain, s.n_prevu > 0 ? -s.prevu[0] : NAN,
+                          s.n_clair > 0 ? -s.clair[0] : NAN);
+    float v[kEnergieHeures];
+    energie_kwh_liste(Champ{p.data(), p.size()}, v, kEnergieHeures);
+}
+
+// Énergie, page « Bilan » (ADR-0058) : vue, début, payload séparés par un saut de ligne,
+// comme temperature() ; la production de la vue tirée de la variable debut (même liste).
+void energie_bilan(const std::string& p) {
+    std::string v[3];
+    size_t debut = 0;
+    for (int i = 0; i < 3; i++) {
+        const size_t saut = i < 2 ? p.find('\n', debut) : std::string::npos;
+        v[i] = p.substr(debut, saut == std::string::npos ? std::string::npos : saut - debut);
+        if (saut == std::string::npos) break;
+        debut = saut + 1;
+    }
+    const int slots = v[0] == "heures" ? 24 : (v[0] == "mois" ? 12 : kEnergieSlotsMax);
+    EnergieBilanLu b;
+    energie_bilan_lire(Champ{v[2].data(), v[2].size()}, slots, b);
+    float produit[kEnergieSlotsMax];
+    const int n = energie_kwh_liste(Champ{v[1].data(), v[1].size()}, produit, slots);
+    for (int k = 0; k < n; k++) energie_bilan_creneau(produit[k], b, k);
+    energie_bilan_totaux(produit, n, b);
+    const std::string devise(b.devise.p != nullptr ? b.devise.p : "", b.devise.n);  // texte_ha_copier
+    (void) devise;
+}
+
 void info(const std::string& p) {
     // L'écran ne lit que le texte après « @ha| » (compose_info_code, tab5_central.cpp).
     InfoCodeLu lu;
@@ -286,6 +319,8 @@ constexpr Parseur kParseurs[] = {
     suivi,            // '=' tab5_maj_suivi
     froid,            // '>' tab5_maj_froid
     serveur_ia,       // '?' tab5_maj_serveur_ia
+    energie_soleil,   // '@' tab5_maj_energie_soleil
+    energie_bilan,    // 'A' tab5_maj_energie_bilan
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

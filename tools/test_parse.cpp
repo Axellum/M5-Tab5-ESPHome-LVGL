@@ -1563,6 +1563,116 @@ static void test_serveur_ia_textes() {
     expect(c.haut(h) && std::fabs(h - 28.0f * 1.1f) < 1e-3f, "serveur IA : 10 % d'air au-dessus du plus haut");
 }
 
+// Énergie (ADR-0058) : soleil et prévision, bilan, flux de l'instantané.
+static bool proche(float a, float b) { return std::fabs(a - b) < 1e-4f; }
+
+static void test_energie_soleil() {
+    EnergieSoleilLu s;
+    expect(energie_soleil_lire(ch("07:12|13:40|20:05|18.4|9.1|a|12|15|0;0;1.5;;|0;0.2;2"), s) &&
+               s.lever == 7 * 60 + 12 && s.midi == 13 * 60 + 40 && s.coucher == 20 * 60 + 5 &&
+               s.prevu_jour_choisi && proche(s.prevu_jour, 18.4f) && s.prevu_demain_choisi &&
+               proche(s.prevu_demain, 9.1f) && s.source == EnergieSource::APPRISE && s.creneau_debut == 12 &&
+               s.creneau_fin == 15,
+           "soleil : payload complet");
+    expect(s.n_prevu == 5 && proche(s.prevu[2], 1.5f) && std::isnan(s.prevu[3]) && std::isnan(s.prevu[4]) &&
+               s.n_clair == 3 && proche(s.clair[2], 2.0f),
+           "soleil : listes, champs vides comptés jusqu'au dernier");
+    expect(!energie_soleil_lire(ch(""), s) && s.lever < 0 && !s.prevu_jour_choisi && s.n_prevu == 0 &&
+               s.source == EnergieSource::AUCUNE && s.creneau_debut < 0,
+           "soleil : vide = rien à montrer");
+    expect(!energie_soleil_lire(Champ{nullptr, 3}, s), "soleil : pointeur nul");
+    expect(!energie_soleil_lire(ch("20:05|13:40|07:12|||||"), s) && s.lever == -1 && s.midi == -1 && s.coucher == -1,
+           "soleil : coucher avant le lever = soleil inconnu");
+    expect(energie_soleil_lire(ch("07:12|21:00|20:05"), s) && s.lever > 0 && s.midi == -1,
+           "soleil : midi hors du jour = inconnu seul, champs manquants vides");
+    expect(!energie_soleil_lire(ch("7:12|13:40|20:05|nan||x|9|9"), s) && s.lever == -1 && s.prevu_jour_choisi &&
+               std::isnan(s.prevu_jour) && !s.prevu_demain_choisi && s.source == EnergieSource::AUCUNE &&
+               s.creneau_debut == -1 && s.creneau_fin == -1,
+           "soleil : heure non stricte, « nan » choisi sans valeur, créneau vide refusé");
+    expect(energie_soleil_lire(ch("07:12:00|13:40|20:05||||||"), s) == false && s.lever == -1,
+           "soleil : « HH:MM:SS » refusé (5 octets exactement)");
+    expect(energie_soleil_lire(ch("|||-2|1e99|e|25|30|-1;inf;3|"), s) && s.n_prevu == 3 && std::isnan(s.prevu[0]) &&
+               std::isnan(s.prevu[1]) && proche(s.prevu[2], 3.0f) && std::isnan(s.prevu_jour) &&
+               std::isnan(s.prevu_demain) && s.source == EnergieSource::EXTERNE && s.creneau_debut == -1,
+           "soleil : négatifs, non finis et heures au-delà de 24 refusés");
+    std::string longue;
+    for (int i = 0; i < 40; i++) longue += "1;";
+    const std::string p = "06:00|12:00|18:00||||||" + longue + "|" + longue;
+    expect(energie_soleil_lire(ch(p.c_str()), s) && s.n_prevu == kEnergieHeures && s.n_clair == kEnergieHeures,
+           "soleil : 24 valeurs au plus, la fin ignorée");
+    float v[4];
+    expect(energie_kwh_liste(ch("1;2"), v, 4) == 2 && energie_kwh_liste(ch(";"), v, 4) == 2 &&
+               energie_kwh_liste(ch(""), v, 4) == 0 && energie_kwh_liste(ch("1;2;3;4;5"), v, 4) == 4 &&
+               energie_kwh_liste(ch("1"), nullptr, 4) == 0 && energie_kwh_liste(ch("1"), v, 0) == 0,
+           "énergie : liste de kWh bornée");
+}
+
+static void test_energie_bilan() {
+    EnergieBilanLu b;
+    expect(energie_bilan_lire(ch("€|1;0.5;|0;2;3|0.2;-0.1;"), 24, b) && champ_est(b.devise, "€") && b.vente_choisie &&
+               b.achat_choisi && b.gain_choisi && b.n_vente == 3 && b.n_achat == 3 && b.n_gain == 3 &&
+               proche(b.gain[1], -0.1f) && std::isnan(b.vente[2]),
+           "bilan : payload complet, gain négatif gardé");
+    expect(!energie_bilan_lire(ch("€|||0.2"), 24, b) && !b.vente_choisie && !b.achat_choisi && b.gain_choisi,
+           "bilan : sans vente ni achat, rien à montrer");
+    expect(energie_bilan_lire(ch("EUROS+++|1"), 24, b) && b.devise.n == 0 && !b.achat_choisi,
+           "bilan : devise de plus de 7 octets ignorée");
+    expect(energie_bilan_lire(ch("CHF|1;1;1;1;1"), 3, b) && b.n_vente == 3 && champ_est(b.devise, "CHF"),
+           "bilan : coupé au nombre de créneaux de la vue");
+    expect(!energie_bilan_lire(Champ{nullptr, 0}, 24, b) && energie_bilan_lire(ch("|1"), 99, b) && b.n_vente == 1,
+           "bilan : pointeur nul, vue hors bornes");
+
+    // Créneaux : production 3, vendu 1 → autoconsommé 2 ; acheté 2 → consommé 4.
+    energie_bilan_lire(ch("€|1;5;|2;0;1|0.5;;"), 24, b);
+    EnergieBilanCreneau c = energie_bilan_creneau(3.0f, b, 0);
+    expect(proche(c.autoconsomme, 2.0f) && proche(c.consomme, 4.0f) && proche(c.vendu, 1.0f) && proche(c.gain, 0.5f),
+           "bilan : autoconsommé = produit − vendu, consommé = autoconsommé + acheté");
+    c = energie_bilan_creneau(3.0f, b, 1);
+    expect(proche(c.autoconsomme, 0.0f) && proche(c.consomme, 0.0f), "bilan : vendu au-delà du produit = 0, jamais négatif");
+    c = energie_bilan_creneau(NAN, b, 2);
+    expect(std::isnan(c.autoconsomme) && proche(c.consomme, 1.0f) && std::isnan(c.vendu) && std::isnan(c.gain),
+           "bilan : sans production, consommé = acheté");
+    c = energie_bilan_creneau(1.0f, b, 5);
+    expect(proche(c.autoconsomme, 1.0f) && std::isnan(c.achete) && proche(c.consomme, 1.0f),
+           "bilan : créneau au-delà des listes : rien vendu ni acheté connu");
+    c = energie_bilan_creneau(1.0f, b, 99);
+    expect(std::isnan(c.produit), "bilan : créneau hors bornes");
+    energie_bilan_lire(ch("|1"), 24, b);
+    c = energie_bilan_creneau(2.0f, b, 0);
+    expect(proche(c.autoconsomme, 1.0f) && std::isnan(c.consomme), "bilan : sans compteur d'achat, consommé inconnu");
+
+    const float prod[3] = {3.0f, 3.0f, NAN};
+    energie_bilan_lire(ch("€|1;5;|2;0;1|0.5;;"), 24, b);
+    EnergieBilanTotaux t = energie_bilan_totaux(prod, 3, b);
+    expect(proche(t.produit, 6.0f) && proche(t.autoconsomme, 2.0f) && proche(t.vendu, 6.0f) &&
+               proche(t.achete, 3.0f) && proche(t.consomme, 5.0f) && proche(t.gain, 0.5f) &&
+               proche(t.taux, 2.0f / 6.0f),
+           "bilan : totaux et taux d'autoconsommation");
+    t = energie_bilan_totaux(nullptr, 3, b);
+    expect(std::isnan(t.produit) && std::isnan(t.taux) && proche(t.achete, 3.0f), "bilan : sans production, pas de taux");
+}
+
+static void test_energie_flux() {
+    // 3 kW de soleil, 1 kW dans la maison, 2 kW vendus.
+    EnergieFlux f = energie_flux_calculer(3000.0f, 1000.0f, -2000.0f, NAN);
+    expect(proche(f.solaire_reseau, 2000.0f) && proche(f.solaire_maison, 1000.0f) && proche(f.reseau_maison, 0.0f) &&
+               proche(f.maison, 1000.0f),
+           "flux : le solaire va d'abord à la vente, le reste à la maison");
+    f = energie_flux_calculer(500.0f, NAN, 800.0f, 400.0f);
+    expect(proche(f.solaire_batterie, 400.0f) && proche(f.solaire_maison, 100.0f) && proche(f.reseau_maison, 800.0f) &&
+               proche(f.reseau_batterie, 0.0f) && proche(f.maison, 900.0f),
+           "flux : charge par le solaire, maison estimée sans mesure");
+    f = energie_flux_calculer(0.0f, 1500.0f, 1000.0f, 600.0f);
+    expect(proche(f.reseau_batterie, 600.0f) && proche(f.reseau_maison, 400.0f), "flux : charge par le réseau");
+    f = energie_flux_calculer(0.0f, 700.0f, -300.0f, -1000.0f);
+    expect(proche(f.batterie_reseau, 300.0f) && proche(f.batterie_maison, 700.0f), "flux : décharge vers la vente et la maison");
+    f = energie_flux_calculer(NAN, NAN, NAN, NAN);
+    expect(std::isnan(f.maison) && f.solaire_maison == 0.0f && f.reseau_maison == 0.0f, "flux : rien de connu");
+    f = energie_flux_calculer(-50.0f, INFINITY, 1e12f, NAN);
+    expect(f.solaire_maison == 0.0f && f.reseau_maison == 0.0f && proche(f.maison, 0.0f),
+           "flux : solaire négatif = 0, valeurs non finies ou absurdes ignorées");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -1609,6 +1719,9 @@ int main() {
     test_telecommandes();
     test_serveur_ia_lire();
     test_serveur_ia_textes();
+    test_energie_soleil();
+    test_energie_bilan();
+    test_energie_flux();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

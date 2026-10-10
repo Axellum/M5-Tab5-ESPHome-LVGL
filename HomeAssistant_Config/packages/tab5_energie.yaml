@@ -43,6 +43,53 @@
 #       qui ont une valeur (« nan » si aucune) ; production = somme des compteurs, période
 #       par période (un compteur sans ligne sur une période y compte pour 0), partiel
 #       calculé compteur par compteur.
+# @pages_soleil_bilan ADR-0058 (10/10/2026) : le popup a quatre pages ; ce script pousse
+#       les données des deux nouvelles (actions tab5_maj_energie_soleil et
+#       tab5_maj_energie_bilan, TOUJOURS avec continue_on_error : un firmware plus ancien
+#       n'a pas l'action et HA arrêterait le script).
+#       Soleil (tab5_maj_energie_soleil, « lever|midi|coucher|prevu_jour|prevu_demain|
+#       source|creneau_debut|creneau_fin|prevu|clair ») : poussé au premier tour puis au
+#       changement d'heure locale (variable soleil_cle), quelle que soit la vue. La série
+#       des heures part elle aussi au premier tour quelle que soit la vue (la page
+#       « Aujourd'hui » en a besoin).
+#       - lever / midi / coucher : attributs next_rising / next_noon / next_setting de
+#         sun.sun, en HH:MM local. Ce sont les PROCHAINS événements : un événement déjà
+#         passé aujourd'hui donne l'heure de demain (2 minutes de décalage à nos
+#         latitudes, sans conséquence sur l'arc) ; un événement à plus d'un jour (jour ou
+#         nuit polaire), ou lever pas avant coucher : champs vides.
+#       - courbe « ciel clair » apprise (clair) : statistiques `hour` des compteurs de
+#         production sur 30 jours (heures complètes seulement), pour chaque heure locale
+#         la 2e plus haute valeur (une pointe isolée ne fait pas la courbe ; une seule
+#         valeur : celle-là ; aucune ligne : 0). Vide tant que moins de 3 jours ont
+#         produit. Elle porte l'orientation, l'inclinaison et l'ombre du lieu.
+#       - prévision (prevu) = clair × (1 − 0,75 × (nuages/100)^3,4) (Kasten-Czeplak),
+#         nuages = cloud_coverage de la prévision horaire de l'entité météo, à défaut une
+#         part par condition (sunny 0, partlycloudy 50, cloudy 90, rainy 100…). La
+#         prévision d'une heure sans entrée prolonge l'entrée précédente de moins de 6 h
+#         (les prévisions passent à 3 h puis 6 h de pas) ; sans entrée : ciel clair.
+#         Entité = celle des poussées météo (sensor.tab5_meteo, entite_effective, puis
+#         sensor.tab5_sources_meteo, meteo), si elle sait la prévision horaire.
+#       - prévision externe facultative (capteurs prevision_jour / prevision_demain, kWh) :
+#         met la forme apprise à l'échelle de ce total (source « e ») ; capteur sans valeur
+#         et rien d'appris : « nan ». prevu_jour = ce total, sinon la somme du modèle où
+#         les heures passées valent la production réelle.
+#       - meilleur créneau : 3 heures consécutives, de l'heure courante au coucher, de
+#         plus grande somme prévue ; aucun si cette somme est sous 5 % de l'heure la plus
+#         forte de la courbe apprise.
+#       Bilan (tab5_maj_energie_bilan, « devise|vente|achat|gain ») : avec la production,
+#       l'historique de la vue, et les heures à chaque tour de la vue Heures. Compteurs
+#       d'achat et de vente (kWh) lus comme la production (5 minutes pour les heures et
+#       le jour, day, month) ; gain d'un créneau = (production − vente, ≥ 0) × prix
+#       d'achat + vente × prix de revente. Prix = entité si elle a une valeur, sinon le
+#       nombre ; aucun prix (0) : devise vide, pas de gain. Rien sans compteur d'achat ni
+#       de vente. Les clés de `capteurs` ajoutées (toutes facultatives, un blueprint plus
+#       ancien ne les envoie pas) : compteur_achat, compteur_vente, prix_achat,
+#       prix_achat_entite, prix_revente, prix_revente_entite, devise, prevision_jour,
+#       prevision_demain.
+# @limits_soleil Non vérifié sur une vraie installation solaire (l'auteur n'en a pas) :
+#       formats vérifiés sur la prévision horaire réelle de l'entité météo (datetime UTC,
+#       condition, pas toujours de cloud_coverage) ; courbe, prévision et gains testés sur
+#       des statistiques simulées.
 # @limits mode restart : une nouvelle demande (autre vue, réouverture) remplace la boucle
 #       en cours. Avec deux tablettes qui ouvrent le popup en même temps, la dernière
 #       demande l'emporte ; l'autre garde ses dernières valeurs.
@@ -77,7 +124,11 @@ script:
           reseau_export, maison, batterie, batterie_puissance, batterie_temperature (texte
           vide = non choisi), solaires et productions (listes : toutes les sources,
           additionnées ; solaire et production y sont ajoutés), reseau_inverse et
-          batterie_inverse (booléens).
+          batterie_inverse (booléens). Facultatifs, absents d'un blueprint plus ancien
+          (ADR-0058) : compteur_achat et compteur_vente (compteurs kWh), prix_achat et
+          prix_revente (nombres, par kWh), prix_achat_entite et prix_revente_entite
+          (entité qui l'emporte), devise (texte), prevision_jour et prevision_demain
+          (capteurs de prévision externe, kWh).
     variables:
       c: "{{ capteurs if capteurs is mapping else {} }}"
       vue_demandee: "{{ vue if vue in ['heures', 'jours', 'mois'] else 'heures' }}"
@@ -114,6 +165,36 @@ script:
         {{ (solaires + [c.get('reseau'), c.get('reseau_export'), c.get('maison')] + productions_choisies
             + [c.get('batterie'), c.get('batterie_puissance'), c.get('batterie_temperature')])
            | select('string') | reject('eq', '') | unique | list }}
+      # Bilan (ADR-0058) : compteurs d'achat et de vente qui existent (clés absentes d'un
+      # blueprint plus ancien : aucun), leur liste, prix et devise. Un prix nul = aucun
+      # prix choisi ; sans prix, la devise est vide et la tablette ne montre pas de gain.
+      reseau_ids: >-
+        {%- set a = c.get('compteur_achat', '') -%}
+        {%- set v = c.get('compteur_vente', '') -%}
+        {{ {'achat': a if a is string and a and states[a] is not none else '',
+            'vente': v if v is string and v and states[v] is not none else ''} }}
+      compteurs_reseau: "{{ reseau_ids.values() | select | list }}"
+      prix: >-
+        {%- set ea = c.get('prix_achat_entite', '') -%}
+        {%- set er = c.get('prix_revente_entite', '') -%}
+        {%- set pa = (states(ea) | float(none)) if ea is string and ea else none -%}
+        {%- set pr = (states(er) | float(none)) if er is string and er else none -%}
+        {{ {'achat': pa if pa is not none else (c.get('prix_achat', 0) | float(0)),
+            'revente': pr if pr is not none else (c.get('prix_revente', 0) | float(0))} }}
+      devise: >-
+        {%- set d = (c.get('devise', '€') | string | trim | replace('|', '') | replace(';', ''))[:3] -%}
+        {{ (d if d else '€') if prix.achat != 0 or prix.revente != 0 else '' }}
+      # Entité météo de la prévision horaire : celle des poussées météo (avec son repli),
+      # à défaut la source choisie ; '' si elle ne sait pas la prévision horaire
+      # (WeatherEntityFeature.FORECAST_HOURLY = 2, comme sensor.tab5_meteo) ou n'existe pas.
+      meteo_prevision: >-
+        {%- set e = state_attr('sensor.tab5_meteo', 'entite_effective')
+                    or state_attr('sensor.tab5_sources_meteo', 'meteo') or '' -%}
+        {%- set f = (state_attr(e, 'supported_features') | int(0)) if e else 0 -%}
+        {{ e if e and (f // 2) % 2 == 1 else '' }}
+      # Heure locale de la dernière poussée du soleil (AAAA-MM-JJTHH) : poussé au premier
+      # tour (vide) puis quand l'heure change.
+      soleil_cle: ""
       debut: "{{ now().timestamp() }}"
       # L'« Écran courant » se met à jour toutes les 5 s : à l'ouverture, il dit encore
       # l'écran d'avant pendant ce temps. Il ne compte qu'après cette grâce.
@@ -132,6 +213,7 @@ script:
             - variables:
                 minuit: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
                 t_attente: "{{ now().timestamp() }}"
+                cle_heure: "{{ now().strftime('%Y-%m-%dT%H') }}"
             # Statistiques de 5 minutes du jour : production du jour et vue des heures.
             # Au premier tour, puis au plus une fois toutes les 5 minutes, et à minuit
             # (PERF-4, voir @data_sources) ; aussi tant qu'aucune réponse n'est arrivée.
@@ -156,6 +238,22 @@ script:
                 - variables:
                     stats_t: "{{ now().timestamp() }}"
                     stats_minuit: "{{ minuit }}"
+                # Bilan (ADR-0058) : achat et vente au réseau, mêmes lignes de 5 minutes,
+                # même rythme (une demande en plus seulement avec ces compteurs).
+                - if: "{{ compteurs_reseau | count > 0 }}"
+                  then:
+                    - action: recorder.get_statistics
+                      data:
+                        start_time: "{{ minuit }}"
+                        statistic_ids: "{{ compteurs_reseau }}"
+                        period: 5minute
+                        types:
+                          - change
+                          - state
+                        units:
+                          energy: kWh
+                      response_variable: cinq_r
+                      continue_on_error: true
             - variables:
                 # Lignes de 5 minutes de TOUS les compteurs, à la suite : les sommes par
                 # heure (et celle du jour) additionnent les compteurs ; une heure où un
@@ -195,6 +293,77 @@ script:
                   {%- else -%}
                     {{ ((lignes5 | map(attribute='change') | map('float', 0) | sum) + partiel) | round(3) }}
                   {%- endif -%}
+                # Production de chaque heure du jour (24 valeurs séparées par « ; »,
+                # vide = pas de donnée : heure à venir, recorder sans ligne). Poussée par
+                # la vue Heures à chaque tour, et au premier tour quelle que soit la vue
+                # (la page « Aujourd'hui » du popup en a besoin) ; lue aussi par le soleil
+                # et le bilan.
+                serie_heures: >-
+                  {%- set ns = namespace(d={}) -%}
+                  {%- for r in lignes5 -%}
+                    {%- set h = (as_local(as_datetime(r.start)).hour) | string -%}
+                    {%- set ns.d = dict(ns.d, **{h: ns.d.get(h, 0) + (r.get('change') | float(0))}) -%}
+                  {%- endfor -%}
+                  {%- set heure = now().hour -%}
+                  {%- set ns2 = namespace(l=[]) -%}
+                  {%- for h in range(24) -%}
+                    {%- if h > heure -%}
+                      {%- set v = '' -%}
+                    {%- elif h == heure -%}
+                      {%- set v = (ns.d.get(h | string, 0) + partiel) | round(3) -%}
+                    {%- else -%}
+                      {%- set v = (ns.d[h | string] | round(3)) if (h | string) in ns.d else '' -%}
+                    {%- endif -%}
+                    {%- set ns2.l = ns2.l + [v | string] -%}
+                  {%- endfor -%}
+                  {{ ns2.l | join(';') }}
+                # Achat et vente au réseau (ADR-0058), lus comme la production : pour
+                # chaque compteur h = les 24 heures (None = pas de donnée), j = le jour
+                # (lignes de 5 minutes + partiel), c = les 5 minutes de l'heure en cours,
+                # p = le partiel (état actuel − dernier « state », converti en kWh).
+                reseau5: >-
+                  {%- set stats = cinq_r.statistics if cinq_r is defined and cinq_r is mapping
+                        and cinq_r.statistics is defined else {} -%}
+                  {%- set debut_h = now().replace(minute=0, second=0, microsecond=0) -%}
+                  {%- set heure = now().hour -%}
+                  {%- set sortie = namespace(d={}) -%}
+                  {%- for k in ['achat', 'vente'] -%}
+                    {%- set p = reseau_ids.get(k, '') -%}
+                    {%- set lignes = (stats.get(p, []) | list) if p else [] -%}
+                    {%- set par = namespace(d={}, c=0, t=0) -%}
+                    {%- for r in lignes -%}
+                      {%- set h = (as_local(as_datetime(r.start)).hour) | string -%}
+                      {%- set ch = r.get('change') | float(0) -%}
+                      {%- set par.d = dict(par.d, **{h: par.d.get(h, 0) + ch}) -%}
+                      {%- set par.t = par.t + ch -%}
+                      {%- if as_datetime(r.start) >= debut_h -%}
+                        {%- set par.c = par.c + ch -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+                    {%- set u = ((state_attr(p, 'unit_of_measurement') or 'kWh') | string) if p else 'kWh' -%}
+                    {%- set kk = {'Wh': 0.001, 'kWh': 1, 'MWh': 1000}.get(u, 1) -%}
+                    {%- set actuel = (states(p) | float(none)) if p else none -%}
+                    {%- set dernier = (lignes | last).get('state') if lignes else none -%}
+                    {%- set pa = namespace(v=0) -%}
+                    {%- if actuel is not none and dernier is not none -%}
+                      {%- set d = actuel * kk - (dernier | float(0)) -%}
+                      {%- set pa.v = d if d >= 0 else actuel * kk -%}
+                    {%- endif -%}
+                    {%- set hl = namespace(l=[]) -%}
+                    {%- for h in range(24) -%}
+                      {%- if not p or h > heure -%}
+                        {%- set v = none -%}
+                      {%- elif h == heure -%}
+                        {%- set v = par.d.get(h | string, 0) + pa.v -%}
+                      {%- else -%}
+                        {%- set v = par.d.get(h | string) -%}
+                      {%- endif -%}
+                      {%- set hl.l = hl.l + [v] -%}
+                    {%- endfor -%}
+                    {%- set j = (par.t + pa.v) if p and cinq_r is defined else none -%}
+                    {%- set sortie.d = dict(sortie.d, **{k: {'h': hl.l, 'j': j, 'c': par.c, 'p': pa.v}}) -%}
+                  {%- endfor -%}
+                  {{ sortie.d }}
                 instantane: >-
                   {%- macro watts(x, inverse=false) -%}
                     {%- if not x -%}
@@ -259,7 +428,8 @@ script:
               continue_on_error: true
             # Historique : la vue demandée au premier passage ; ensuite les heures seulement
             # (les lignes de 5 minutes sont déjà là). Jours et mois repartent à la demande
-            # suivante (bouton de vue, réouverture).
+            # suivante (bouton de vue, réouverture). Au premier passage d'une autre vue que
+            # les heures, les heures partent aussi (page « Aujourd'hui », ADR-0058).
             - if: "{{ productions | count > 0 and (repeat.index == 1 or vue_demandee == 'heures') }}"
               then:
                 - if: "{{ vue_demandee == 'heures' }}"
@@ -268,26 +438,39 @@ script:
                       data:
                         vue: heures
                         debut: "{{ now().strftime('%Y-%m-%d') }}"
-                        valeurs: >-
-                            {%- set ns = namespace(d={}) -%}
-                            {%- for r in lignes5 -%}
-                              {%- set h = (as_local(as_datetime(r.start)).hour) | string -%}
-                              {%- set ns.d = dict(ns.d, **{h: ns.d.get(h, 0) + (r.get('change') | float(0))}) -%}
-                            {%- endfor -%}
-                            {%- set heure = now().hour -%}
-                            {%- set ns2 = namespace(l=[]) -%}
-                            {%- for h in range(24) -%}
-                              {%- if h > heure -%}
-                                {%- set v = '' -%}
-                              {%- elif h == heure -%}
-                                {%- set v = (ns.d.get(h | string, 0) + partiel) | round(3) -%}
-                              {%- else -%}
-                                {%- set v = (ns.d[h | string] | round(3)) if (h | string) in ns.d else '' -%}
-                              {%- endif -%}
-                              {%- set ns2.l = ns2.l + [v | string] -%}
-                            {%- endfor -%}
-                            {{ ns2.l | join(';') }}
+                        valeurs: "{{ serie_heures }}"
                       continue_on_error: true
+                    # Bilan des heures (ADR-0058) : seulement avec un compteur d'achat ou de
+                    # vente ; sans prix, ni devise ni gain.
+                    - if: "{{ compteurs_reseau | count > 0 }}"
+                      then:
+                        - variables:
+                            bilan_payload: >-
+                              {%- macro txt(l, d) -%}
+                                {%- for x in l -%}{{ '' if x is none else (x | round(d)) }}{{ '' if loop.last else ';' }}{%- endfor -%}
+                              {%- endmacro -%}
+                              {%- set prod = serie_heures.split(';') -%}
+                              {%- set achat = reseau5.achat.h if reseau_ids.achat else [] -%}
+                              {%- set vente = reseau5.vente.h if reseau_ids.vente else [] -%}
+                              {%- set g = namespace(l=[]) -%}
+                              {%- if devise -%}
+                                {%- for h in range(prod | count) -%}
+                                  {%- set p = (prod[h] | float(none)) if prod[h] != '' else none -%}
+                                  {%- set v = vente[h] if reseau_ids.vente else 0 -%}
+                                  {%- if p is none or v is none -%}
+                                    {%- set g.l = g.l + [none] -%}
+                                  {%- else -%}
+                                    {%- set g.l = g.l + [([p - v, 0] | max) * prix.achat + v * prix.revente] -%}
+                                  {%- endif -%}
+                                {%- endfor -%}
+                              {%- endif -%}
+                              {{ [devise, txt(vente, 3), txt(achat, 3), txt(g.l, 3)] | join('|') }}
+                        - action: "esphome.{{ tablette }}_tab5_maj_energie_bilan"
+                          data:
+                            vue: heures
+                            debut: "{{ now().strftime('%Y-%m-%d') }}"
+                            payload: "{{ bilan_payload }}"
+                          continue_on_error: true
                   else:
                     - variables:
                         jours: "{{ vue_demandee == 'jours' }}"
@@ -310,46 +493,351 @@ script:
                           energy: kWh
                       response_variable: longues
                       continue_on_error: true
+                    - variables:
+                        serie_longue: >-
+                          {%- set stats = longues.statistics if longues is defined and longues is mapping and longues.statistics is defined else {} -%}
+                          {%- set p = as_datetime(premier) -%}
+                          {%- set n = now() -%}
+                          {#- Somme des compteurs, période par période : une période où un
+                              seul compteur a une ligne garde sa barre. -#}
+                          {%- set ns = namespace(d={}) -%}
+                          {%- for prod in productions -%}
+                            {%- for r in stats.get(prod, []) -%}
+                              {%- set s = as_local(as_datetime(r.start)) -%}
+                              {%- set i = ((s.date() - p.date()).days if jours else (s.year * 12 + s.month) - (p.year * 12 + p.month)) | string -%}
+                              {%- set ns.d = dict(ns.d, **{i: ns.d.get(i, 0) + (r.get('change') | float(0))}) -%}
+                            {%- endfor -%}
+                          {%- endfor -%}
+                          {%- set nb = 30 if jours else 12 -%}
+                          {#- Jour ou mois en cours : la production du jour (jours) ; le mois des
+                              heures complètes + l'heure en cours (mois). -#}
+                          {%- set heure_debut = n.replace(minute=0, second=0, microsecond=0) -%}
+                          {%- set ns5 = namespace(s=0) -%}
+                          {%- for r in lignes5 if as_datetime(r.start) >= heure_debut -%}
+                            {%- set ns5.s = ns5.s + (r.get('change') | float(0)) -%}
+                          {%- endfor -%}
+                          {%- set ns2 = namespace(l=[]) -%}
+                          {%- for i in range(nb) -%}
+                            {%- set k = i | string -%}
+                            {%- if i == nb - 1 and jours -%}
+                              {%- set v = (jour | float(0)) | round(3) if jour not in ['', 'nan'] else '' -%}
+                            {%- elif i == nb - 1 -%}
+                              {%- set v = (ns.d.get(k, 0) + ns5.s + partiel) | round(3) -%}
+                            {%- else -%}
+                              {%- set v = (ns.d[k] | round(3)) if k in ns.d else '' -%}
+                            {%- endif -%}
+                            {%- set ns2.l = ns2.l + [v | string] -%}
+                          {%- endfor -%}
+                          {{ ns2.l | join(';') }}
                     - action: "esphome.{{ tablette }}_tab5_maj_energie_historique"
                       data:
                         vue: "{{ vue_demandee }}"
                         debut: "{{ premier[:10] }}"
-                        valeurs: >-
-                            {%- set stats = longues.statistics if longues is defined and longues is mapping and longues.statistics is defined else {} -%}
-                            {%- set p = as_datetime(premier) -%}
-                            {%- set n = now() -%}
-                            {#- Somme des compteurs, période par période : une période où un
-                                seul compteur a une ligne garde sa barre. -#}
-                            {%- set ns = namespace(d={}) -%}
-                            {%- for prod in productions -%}
-                              {%- for r in stats.get(prod, []) -%}
-                                {%- set s = as_local(as_datetime(r.start)) -%}
-                                {%- set i = ((s.date() - p.date()).days if jours else (s.year * 12 + s.month) - (p.year * 12 + p.month)) | string -%}
-                                {%- set ns.d = dict(ns.d, **{i: ns.d.get(i, 0) + (r.get('change') | float(0))}) -%}
-                              {%- endfor -%}
-                            {%- endfor -%}
-                            {%- set nb = 30 if jours else 12 -%}
-                            {#- Jour ou mois en cours : la production du jour (jours) ; le mois des
-                                heures complètes + l'heure en cours (mois). -#}
-                            {%- set heure_debut = n.replace(minute=0, second=0, microsecond=0) -%}
-                            {%- set ns5 = namespace(s=0) -%}
-                            {%- for r in lignes5 if as_datetime(r.start) >= heure_debut -%}
-                              {%- set ns5.s = ns5.s + (r.get('change') | float(0)) -%}
-                            {%- endfor -%}
-                            {%- set ns2 = namespace(l=[]) -%}
-                            {%- for i in range(nb) -%}
-                              {%- set k = i | string -%}
-                              {%- if i == nb - 1 and jours -%}
-                                {%- set v = (jour | float(0)) | round(3) if jour not in ['', 'nan'] else '' -%}
-                              {%- elif i == nb - 1 -%}
-                                {%- set v = (ns.d.get(k, 0) + ns5.s + partiel) | round(3) -%}
-                              {%- else -%}
-                                {%- set v = (ns.d[k] | round(3)) if k in ns.d else '' -%}
-                              {%- endif -%}
-                              {%- set ns2.l = ns2.l + [v | string] -%}
-                            {%- endfor -%}
-                            {{ ns2.l | join(';') }}
+                        valeurs: "{{ serie_longue }}"
                       continue_on_error: true
+                    # Les heures aussi, au premier passage (page « Aujourd'hui »).
+                    - action: "esphome.{{ tablette }}_tab5_maj_energie_historique"
+                      data:
+                        vue: heures
+                        debut: "{{ now().strftime('%Y-%m-%d') }}"
+                        valeurs: "{{ serie_heures }}"
+                      continue_on_error: true
+                    # Bilan des jours ou des mois (ADR-0058) : achat et vente lus comme la
+                    # production, gain par créneau.
+                    - if: "{{ compteurs_reseau | count > 0 }}"
+                      then:
+                        - action: recorder.get_statistics
+                          data:
+                            start_time: "{{ premier }}"
+                            statistic_ids: "{{ compteurs_reseau }}"
+                            period: "{{ 'day' if jours else 'month' }}"
+                            types:
+                              - change
+                            units:
+                              energy: kWh
+                          response_variable: longues_r
+                          continue_on_error: true
+                        - variables:
+                            bilan_payload: >-
+                              {%- macro txt(l, d) -%}
+                                {%- for x in l -%}{{ '' if x is none else (x | round(d)) }}{{ '' if loop.last else ';' }}{%- endfor -%}
+                              {%- endmacro -%}
+                              {%- set stats = longues_r.statistics if longues_r is defined and longues_r is mapping
+                                    and longues_r.statistics is defined else {} -%}
+                              {%- set p0 = as_datetime(premier) -%}
+                              {%- set nb = 30 if jours else 12 -%}
+                              {%- set serie = namespace(d={}) -%}
+                              {%- for k in ['achat', 'vente'] -%}
+                                {%- set p = reseau_ids.get(k, '') -%}
+                                {%- set ns = namespace(d={}) -%}
+                                {%- for r in (stats.get(p, []) if p else []) -%}
+                                  {%- set s = as_local(as_datetime(r.start)) -%}
+                                  {%- set i = ((s.date() - p0.date()).days if jours else (s.year * 12 + s.month) - (p0.year * 12 + p0.month)) | string -%}
+                                  {%- set ns.d = dict(ns.d, **{i: ns.d.get(i, 0) + (r.get('change') | float(0))}) -%}
+                                {%- endfor -%}
+                                {%- set fam = reseau5[k] -%}
+                                {%- set ln = namespace(l=[]) -%}
+                                {%- for i in range(nb) -%}
+                                  {%- if not p -%}
+                                    {%- set v = none -%}
+                                  {%- elif i == nb - 1 and jours -%}
+                                    {%- set v = fam.j -%}
+                                  {%- elif i == nb - 1 -%}
+                                    {%- set v = ns.d.get(i | string, 0) + fam.c + fam.p -%}
+                                  {%- else -%}
+                                    {%- set v = ns.d.get(i | string) -%}
+                                  {%- endif -%}
+                                  {%- set ln.l = ln.l + [v] -%}
+                                {%- endfor -%}
+                                {%- set serie.d = dict(serie.d, **{k: ln.l}) -%}
+                              {%- endfor -%}
+                              {%- set prod = serie_longue.split(';') -%}
+                              {%- set achat = serie.d.achat if reseau_ids.achat else [] -%}
+                              {%- set vente = serie.d.vente if reseau_ids.vente else [] -%}
+                              {%- set g = namespace(l=[]) -%}
+                              {%- if devise -%}
+                                {%- for h in range(prod | count) -%}
+                                  {%- set p = (prod[h] | float(none)) if prod[h] != '' else none -%}
+                                  {%- set v = vente[h] if reseau_ids.vente else 0 -%}
+                                  {%- if p is none or v is none -%}
+                                    {%- set g.l = g.l + [none] -%}
+                                  {%- else -%}
+                                    {%- set g.l = g.l + [([p - v, 0] | max) * prix.achat + v * prix.revente] -%}
+                                  {%- endif -%}
+                                {%- endfor -%}
+                              {%- endif -%}
+                              {{ [devise, txt(vente, 3), txt(achat, 3), txt(g.l, 3)] | join('|') }}
+                        - action: "esphome.{{ tablette }}_tab5_maj_energie_bilan"
+                          data:
+                            vue: "{{ vue_demandee }}"
+                            debut: "{{ premier[:10] }}"
+                            payload: "{{ bilan_payload }}"
+                          continue_on_error: true
+            # Le soleil et la prévision du jour (ADR-0058, page « Aujourd'hui »), après
+            # l'historique de la vue demandée (qui passe en premier) : au premier
+            # tour, puis quand l'heure locale change, quelle que soit la vue. La courbe
+            # « ciel clair » (statistiques horaires de 30 jours) et la prévision horaire de
+            # l'entité météo ne sont donc demandées qu'une fois par heure. Une réponse
+            # absente (échec, rien de choisi) donne des champs vides, jamais une erreur.
+            - if: "{{ soleil_cle != cle_heure }}"
+              then:
+                - if: "{{ productions | count > 0 }}"
+                  then:
+                    - action: recorder.get_statistics
+                      data:
+                        start_time: "{{ (now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=30)).isoformat() }}"
+                        statistic_ids: "{{ productions }}"
+                        period: hour
+                        types:
+                          - change
+                        units:
+                          energy: kWh
+                      response_variable: trente
+                      continue_on_error: true
+                - if: "{{ meteo_prevision != '' }}"
+                  then:
+                    - action: weather.get_forecasts
+                      data:
+                        type: hourly
+                      target:
+                        entity_id: "{{ meteo_prevision }}"
+                      response_variable: horaires
+                      continue_on_error: true
+                - variables:
+                    # Lever, midi, coucher (HH:MM local) : prochains événements de sun.sun,
+                    # gardés s'ils tombent aujourd'hui ou demain ; lever avant coucher,
+                    # sinon rien (jour ou nuit polaire).
+                    so_soleil: >-
+                      {%- macro hhmm(x) -%}
+                        {%- set t = state_attr('sun.sun', x) -%}
+                        {%- if t -%}
+                          {%- set l = as_local(as_datetime(t)) -%}
+                          {%- if 0 <= (l.date() - now().date()).days <= 1 -%}{{ l.strftime('%H:%M') }}{%- endif -%}
+                        {%- endif -%}
+                      {%- endmacro -%}
+                      {%- set lever = hhmm('next_rising') -%}
+                      {%- set midi = hhmm('next_noon') -%}
+                      {%- set coucher = hhmm('next_setting') -%}
+                      {{ ([lever, midi, coucher] | join('|')) if lever and midi and coucher and lever < coucher else '||' }}
+                    # Courbe « ciel clair » apprise : par heure locale, la 2e plus haute
+                    # valeur des 30 derniers jours (somme des compteurs, heures complètes).
+                    # [] tant que moins de 3 jours ont produit.
+                    so_clair: >-
+                      {%- set stats = trente.statistics if trente is defined and trente is mapping
+                            and trente.statistics is defined else {} -%}
+                      {%- set debut_h = now().replace(minute=0, second=0, microsecond=0) -%}
+                      {%- set ns = namespace(d={}) -%}
+                      {%- for p in productions -%}
+                        {%- for r in stats.get(p, []) -%}
+                          {%- set s = as_local(as_datetime(r.start)) -%}
+                          {%- if s < debut_h -%}
+                            {%- set k = s.strftime('%Y-%m-%d') ~ '|' ~ s.hour -%}
+                            {%- set ns.d = dict(ns.d, **{k: ns.d.get(k, 0) + (r.get('change') | float(0))}) -%}
+                          {%- endif -%}
+                        {%- endfor -%}
+                      {%- endfor -%}
+                      {%- set vus = namespace(l=[]) -%}
+                      {%- for k, x in ns.d.items() -%}
+                        {%- if x > 0 and k.split('|')[0] not in vus.l -%}
+                          {%- set vus.l = vus.l + [k.split('|')[0]] -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- set res = namespace(l=[]) -%}
+                      {%- for h in range(24) -%}
+                        {%- set v = namespace(l=[]) -%}
+                        {%- for k, x in ns.d.items() -%}
+                          {%- if (k.split('|')[1] | int(-1)) == h -%}
+                            {%- set v.l = v.l + [[x, 0] | max] -%}
+                          {%- endif -%}
+                        {%- endfor -%}
+                        {%- set tri = v.l | sort(reverse=true) -%}
+                        {%- set res.l = res.l + [tri[1] if tri | count > 1 else (tri[0] if tri else 0)] -%}
+                      {%- endfor -%}
+                      {{ res.l if vus.l | count >= 3 and (res.l | sum) > 0 else [] }}
+                    # Nuages (%) de chaque heure d'aujourd'hui (clé « 0|h ») et de demain
+                    # (« 1|h ») : cloud_coverage de la prévision horaire, à défaut une part
+                    # par condition. Une heure sans entrée prolonge l'entrée précédente de
+                    # moins de 6 h (pas de 3 h puis 6 h plus loin) ; sans entrée, pas de clé.
+                    so_nuages: >-
+                      {%- set cond = {'sunny': 0, 'clear-night': 0, 'windy': 20, 'partlycloudy': 50,
+                            'windy-variant': 50, 'exceptional': 50, 'cloudy': 90, 'rainy': 100,
+                            'pouring': 100, 'snowy': 100, 'snowy-rainy': 100, 'fog': 100,
+                            'hail': 100, 'lightning': 100, 'lightning-rainy': 100} -%}
+                      {%- set brut = horaires.get(meteo_prevision, {}).get('forecast', [])
+                            if horaires is defined and horaires is mapping and meteo_prevision else [] -%}
+                      {%- set pts = namespace(l=[]) -%}
+                      {%- for f in brut if f.get('datetime') -%}
+                        {%- set n = f.get('cloud_coverage') if f.get('cloud_coverage') is number else cond.get(f.get('condition')) -%}
+                        {%- if n is not none -%}
+                          {%- set pts.l = pts.l + [[as_datetime(f.datetime).timestamp(), n]] -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- set mid = now().replace(hour=0, minute=0, second=0, microsecond=0) -%}
+                      {%- set sortie = namespace(d={}) -%}
+                      {%- for j in range(2) -%}
+                        {%- for h in range(24) -%}
+                          {%- set t = (mid + timedelta(days=j)).replace(hour=h).timestamp() -%}
+                          {%- set best = namespace(a=none, v=none) -%}
+                          {%- for p in pts.l -%}
+                            {%- if p[0] <= t and t - p[0] < 21600 and (best.a is none or p[0] > best.a) -%}
+                              {%- set best.a = p[0] -%}
+                              {%- set best.v = p[1] -%}
+                            {%- endif -%}
+                          {%- endfor -%}
+                          {%- if best.v is not none -%}
+                            {%- set sortie.d = dict(sortie.d, **{(j | string) ~ '|' ~ (h | string): best.v}) -%}
+                          {%- endif -%}
+                        {%- endfor -%}
+                      {%- endfor -%}
+                      {{ sortie.d }}
+                    # Prévision externe facultative (kWh) : '' = non choisie, nan = choisie
+                    # sans valeur, sinon le nombre.
+                    so_ext_jour: >-
+                      {%- set e = c.get('prevision_jour', '') -%}
+                      {%- if not e or e is not string -%}{{ '' }}
+                      {%- elif states[e] is none or (states(e) | float(none)) is none -%}nan
+                      {%- else -%}
+                        {%- set u = (state_attr(e, 'unit_of_measurement') or 'kWh') | string -%}
+                        {{ ((states(e) | float) * {'Wh': 0.001, 'kWh': 1, 'MWh': 1000}.get(u, 1)) | round(3) }}
+                      {%- endif -%}
+                    so_ext_demain: >-
+                      {%- set e = c.get('prevision_demain', '') -%}
+                      {%- if not e or e is not string -%}{{ '' }}
+                      {%- elif states[e] is none or (states(e) | float(none)) is none -%}nan
+                      {%- else -%}
+                        {%- set u = (state_attr(e, 'unit_of_measurement') or 'kWh') | string -%}
+                        {{ ((states(e) | float) * {'Wh': 0.001, 'kWh': 1, 'MWh': 1000}.get(u, 1)) | round(3) }}
+                      {%- endif -%}
+                - variables:
+                    # Forme du jour et de demain : clair × (1 − 0,75 × nuages^3,4)
+                    # (Kasten-Czeplak), nuages en part de 1 ; sans nuages connus : clair.
+                    so_forme_jour: >-
+                      {%- set ns = namespace(l=[]) -%}
+                      {%- if so_clair -%}
+                        {%- for h in range(24) -%}
+                          {%- set n = so_nuages.get('0|' ~ h) -%}
+                          {%- set q = (([[n, 0] | max, 100] | min) / 100) if n is not none else 0 -%}
+                          {%- set ns.l = ns.l + [so_clair[h] * (1 - 0.75 * q ** 3.4)] -%}
+                        {%- endfor -%}
+                      {%- endif -%}
+                      {{ ns.l }}
+                    so_forme_demain: >-
+                      {%- set ns = namespace(l=[]) -%}
+                      {%- if so_clair -%}
+                        {%- for h in range(24) -%}
+                          {%- set n = so_nuages.get('1|' ~ h) -%}
+                          {%- set q = (([[n, 0] | max, 100] | min) / 100) if n is not none else 0 -%}
+                          {%- set ns.l = ns.l + [so_clair[h] * (1 - 0.75 * q ** 3.4)] -%}
+                        {%- endfor -%}
+                      {%- endif -%}
+                      {{ ns.l }}
+                - variables:
+                    # Prévision de chaque heure d'aujourd'hui : la forme, mise à l'échelle de
+                    # la prévision externe quand elle a une valeur.
+                    so_prevu: >-
+                      {%- set somme = so_forme_jour | sum -%}
+                      {%- set k = (so_ext_jour / somme) if so_ext_jour is number and somme > 0 else 1 -%}
+                      {%- set ns = namespace(l=[]) -%}
+                      {%- for v in so_forme_jour -%}
+                        {%- set ns.l = ns.l + [v * k] -%}
+                      {%- endfor -%}
+                      {{ ns.l }}
+                    # Total du jour : la prévision externe ; sinon la somme du modèle, les
+                    # heures déjà passées valant ce qui a été produit quand on le sait.
+                    so_prevu_jour: >-
+                      {%- if so_ext_jour is number -%}{{ so_ext_jour | round(2) }}
+                      {%- elif so_forme_jour -%}
+                        {%- set prod = serie_heures.split(';') -%}
+                        {%- set ns = namespace(s=0) -%}
+                        {%- for h in range(24) -%}
+                          {%- set p = (prod[h] | float(none)) if h < now().hour and prod[h] != '' else none -%}
+                          {%- set ns.s = ns.s + (p if p is not none else so_forme_jour[h]) -%}
+                        {%- endfor -%}
+                        {{ ns.s | round(2) }}
+                      {%- elif so_ext_jour == 'nan' -%}nan
+                      {%- else -%}{{ '' }}
+                      {%- endif -%}
+                    so_prevu_demain: >-
+                      {%- if so_ext_demain is number -%}{{ so_ext_demain | round(2) }}
+                      {%- elif so_forme_demain -%}{{ so_forme_demain | sum | round(2) }}
+                      {%- elif so_ext_demain == 'nan' -%}nan
+                      {%- else -%}{{ '' }}
+                      {%- endif -%}
+                - variables:
+                    so_source: >-
+                      {{ 'e' if so_ext_jour is number or so_ext_demain is number
+                         else ('a' if so_prevu_jour is number or so_prevu_demain is number else '') }}
+                    # Meilleur créneau : 3 heures consécutives de l'heure courante au coucher
+                    # (arrondi à l'heure supérieure ; sans coucher, minuit), de plus grande
+                    # somme prévue (la plus tôt si égalité) ; aucun sous 5 % de l'heure la
+                    # plus forte de la courbe apprise.
+                    so_creneau: >-
+                      {%- set coucher = so_soleil.split('|')[2] -%}
+                      {%- set lim = (coucher[:2] | int(24) + (1 if coucher[3:5] | int(0) > 0 else 0)) if coucher else 24 -%}
+                      {%- set mx = (so_clair | max) if so_clair else 0 -%}
+                      {%- set best = namespace(a=none, s=-1) -%}
+                      {%- if so_prevu and mx > 0 -%}
+                        {%- for a in range(now().hour, 22) -%}
+                          {%- if a + 3 <= lim -%}
+                            {%- set s = so_prevu[a:a + 3] | sum -%}
+                            {%- if s > best.s -%}
+                              {%- set best.a = a -%}
+                              {%- set best.s = s -%}
+                            {%- endif -%}
+                          {%- endif -%}
+                        {%- endfor -%}
+                      {%- endif -%}
+                      {{ (best.a ~ '|' ~ (best.a + 3)) if best.a is not none and best.s >= 0.05 * mx else '|' }}
+                - variables:
+                    soleil_cle: "{{ cle_heure }}"
+                    so_payload: >-
+                      {{ [so_soleil, so_prevu_jour, so_prevu_demain, so_source, so_creneau,
+                          (so_prevu | map('round', 3) | join(';')),
+                          (so_clair | map('round', 3) | join(';'))] | join('|') }}
+                - action: "esphome.{{ tablette }}_tab5_maj_energie_soleil"
+                  data:
+                    payload: "{{ so_payload }}"
+                  continue_on_error: true
             # Au plus une poussée toutes les 5 s, puis jusqu'au prochain changement d'un
             # capteur (une minute au plus) ou la fermeture du popup.
             - delay: 5

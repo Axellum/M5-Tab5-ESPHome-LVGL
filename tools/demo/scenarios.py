@@ -716,6 +716,145 @@ def build_energie_historique(vue: str, aujourd_hui: _dt.date) -> dict:
     return {"vue": vue, "debut": debut_energie(vue, aujourd_hui).isoformat(), "valeurs": ";".join(valeurs)}
 
 
+# Page « Aujourd'hui » du popup Énergie (ADR-0058) : tab5_maj_energie_soleil, ce que pousserait
+# script.tab5_energie. « lever|midi|coucher|prevu_jour|prevu_demain|source|creneau_debut|
+# creneau_fin|prevu|clair » — HH:MM locaux, kWh, source a (courbe apprise × météo) ou e
+# (prévision externe), créneau en heures entières 0-24 (fin exclue), prevu et clair = 24
+# valeurs en kWh séparées par « ; » (vide = pas de donnée). La courbe « ciel clair » est en
+# cloche entre le lever et le coucher ; la prévision en est une part (nuages l'après-midi).
+ENERGIE_SOLEIL_CHAMPS = ("lever", "midi", "coucher", "prevu_jour", "prevu_demain", "source",
+                         "creneau_debut", "creneau_fin", "prevu", "clair")
+ENERGIE_SOLEIL = {
+    # Un jour de juin à Paris, comme l'historique de la démo (production dès 6 h) : prevu
+    # reprend les deux heures déjà produites (0,53 et 0,94 kWh), nuages de 16 h à 20 h.
+    "lever": "05:47", "midi": "13:52", "coucher": "21:56",
+    "prevu_jour": "32.3", "prevu_demain": "27.4", "source": "a",
+    "creneau_debut": "12", "creneau_fin": "15",
+    "prevu": ["0"] * 6 + ["0.53", "0.94", "1.77", "2.32", "2.79", "3.15", "3.39", "3.5", "3.48",
+                          "3.33", "1.87", "1.63", "1.33", "0.98", "0.96", "0.3"] + ["0"] * 2,
+    "clair": ["0"] * 6 + ["0.54", "1.28", "1.97", "2.58", "3.1", "3.5", "3.77", "3.89", "3.87",
+                          "3.7", "3.4", "2.96", "2.41", "1.78", "1.07", "0.33"] + ["0"] * 2,
+}
+
+
+def _heure_minutes(champ: str, v: str) -> int:
+    m = re.fullmatch(r"([01]\d|2[0-3]):([0-5]\d)", v)
+    assert m, f"{champ} : {v!r} n'est pas HH:MM"
+    return int(m.group(1)) * 60 + int(m.group(2))
+
+
+def build_energie_soleil(soleil: dict | None = None) -> str:
+    """tab5_maj_energie_soleil : les dix champs dans l'ordre du contrat, séparés par « | »,
+    prevu et clair par « ; »."""
+    e = ENERGIE_SOLEIL if soleil is None else soleil
+    assert set(e) <= set(ENERGIE_SOLEIL_CHAMPS), f"champ inconnu : {set(e) - set(ENERGIE_SOLEIL_CHAMPS)}"
+    champs = []
+    for c in ENERGIE_SOLEIL_CHAMPS:
+        v = e.get(c, "")
+        champs.append(";".join(v) if isinstance(v, (list, tuple)) else str(v))
+    d = dict(zip(ENERGIE_SOLEIL_CHAMPS, champs))
+    for c, v in d.items():
+        assert "|" not in v, f"{c} : séparateur dans {v!r}"
+        if c not in ("prevu", "clair"):
+            assert ";" not in v, f"{c} : séparateur dans {v!r}"
+    horaires = [_heure_minutes(c, d[c]) for c in ("lever", "midi", "coucher") if d[c]]
+    assert len(horaires) in (0, 3) and horaires == sorted(horaires), "lever < midi < coucher, ou aucun"
+    for c in ("prevu_jour", "prevu_demain"):
+        _nombre_ou_vide(c, d[c])
+    assert d["source"] in ("", "a", "e"), f"source : {d['source']!r}"
+    debut, fin = d["creneau_debut"], d["creneau_fin"]
+    assert (debut == "") == (fin == ""), "créneau : début et fin ensemble"
+    if debut:
+        assert debut.isdigit() and fin.isdigit() and 0 <= int(debut) < int(fin) <= 24, f"créneau {debut}-{fin}"
+    series = {}
+    for c in ("prevu", "clair"):
+        valeurs = d[c].split(";") if d[c] else []
+        assert len(valeurs) in (0, 24), f"{c} : {len(valeurs)} valeurs au lieu de 24"
+        for v in valeurs:
+            assert _nombre(v) is not None and float(v) >= 0, f"{c} : {v!r}"
+        series[c] = [float(v) for v in valeurs]
+    if series["prevu"] and d["prevu_jour"] not in ("", "nan"):
+        assert abs(sum(series["prevu"]) - float(d["prevu_jour"])) <= 0.2, "prevu_jour ≠ somme de prevu"
+    if series["prevu"] and debut:
+        meilleur = max(range(0, 22), key=lambda a: sum(series["prevu"][a:a + 3]))
+        assert int(debut) == meilleur and int(fin) == meilleur + 3, "créneau ≠ les 3 heures de plus forte prévision"
+    return "|".join(champs)
+
+
+# Page « Bilan » (ADR-0058) : tab5_maj_energie_bilan(vue, debut, payload), payload
+# « devise|vente|achat|gain ». vente et achat = kWh exportés et importés par créneau
+# (24, 30 ou 12 valeurs « ; », vides pour les créneaux à venir) ; gain = argent économisé
+# par créneau, en `devise` : consommé sur place × prix d'achat + exporté × prix de revente
+# (calculé par HA). La production du créneau est celle de ENERGIE_HISTORIQUE ; le consommé
+# sur place = production − vente. Achat des heures inventé pour une maison qui tire la nuit
+# et peu le matin (la batterie est à 64 %) ; jours et mois dérivés de la production.
+ENERGIE_DEVISE = "€"
+ENERGIE_PRIX_ACHAT, ENERGIE_PRIX_REVENTE = 0.2516, 0.13   # € par kWh
+ENERGIE_BILAN_HEURES = {
+    "vente": ["0"] * 7 + ["0.31"] + [""] * 16,
+    "achat": ["0.22", "0.19", "0.18", "0.18", "0.21", "0.28", "0.12", "0.05"] + [""] * 16,
+}
+# Part de la production exportée (cycle de 7 jours, plus de soleil que de besoin le week-end)
+# et consommation de la maison (kWh) par jour de la semaine et par mois (juillet → juin).
+ENERGIE_PART_VENTE_JOURS = (0.34, 0.41, 0.38, 0.29, 0.44, 0.47, 0.40)
+ENERGIE_PART_VENTE_MOIS = (0.46, 0.45, 0.40, 0.33, 0.24, 0.18, 0.20, 0.27, 0.35, 0.40, 0.44, 0.42)
+ENERGIE_CONSO_JOURS = (15.2, 14.1, 16.4, 18.7, 15.8, 13.2, 14.6)
+ENERGIE_CONSO_MOIS = (468.0, 452.0, 431.0, 518.0, 640.0, 724.0, 738.0, 655.0, 562.0, 488.0, 461.0, 433.0)
+
+
+def _arrondi(v: float, decimales: int = 2) -> str:
+    return f"{round(v, decimales):.{decimales}f}".rstrip("0").rstrip(".") or "0"
+
+
+def _bilan_tranche(production: list[str], vente: list[str], achat: list[str]) -> list[str]:
+    """Gain de chaque créneau ayant une production et une vente (le reste reste vide)."""
+    gains = []
+    for p, v in zip(production, vente):
+        if p in ("", "nan") or v in ("", "nan"):
+            gains.append("")
+            continue
+        sur_place = max(float(p) - float(v), 0.0)
+        gains.append(_arrondi(sur_place * ENERGIE_PRIX_ACHAT + float(v) * ENERGIE_PRIX_REVENTE))
+    return gains
+
+
+def build_energie_bilan(vue: str, aujourd_hui: _dt.date) -> dict:
+    """Variables de tab5_maj_energie_bilan pour une vue, datée de `aujourd_hui`."""
+    assert vue in ENERGIE_VUES, vue
+    production = ENERGIE_HISTORIQUE[vue]
+    n = ENERGIE_VUES[vue]
+    debut = debut_energie(vue, aujourd_hui)
+    if vue == "heures":
+        vente, achat = ENERGIE_BILAN_HEURES["vente"], ENERGIE_BILAN_HEURES["achat"]
+    else:
+        vente, achat = [], []
+        heures = ENERGIE_BILAN_HEURES
+        for i, p in enumerate(production):
+            if vue == "jours" and i == n - 1:
+                # Aujourd'hui : la somme des heures déjà écoulées, comme la production.
+                v = sum(float(x) for x in heures["vente"] if x)
+                a = sum(float(x) for x in heures["achat"] if x)
+            elif vue == "jours":
+                jour = debut + _dt.timedelta(days=i)
+                v = float(p) * ENERGIE_PART_VENTE_JOURS[jour.weekday()]
+                a = max(ENERGIE_CONSO_JOURS[jour.weekday()] - (float(p) - v), 0.6)
+            else:
+                v = float(p) * ENERGIE_PART_VENTE_MOIS[i]
+                a = max(ENERGIE_CONSO_MOIS[i] - (float(p) - v), 25.0)
+            vente.append(_arrondi(v))
+            achat.append(_arrondi(a, 1 if vue == "mois" else 2))
+    gain = _bilan_tranche(production, vente, achat)
+    assert len(vente) == len(achat) == len(gain) == n, f"{vue} : {len(vente)} valeurs"
+    for c, valeurs in (("vente", vente), ("achat", achat), ("gain", gain)):
+        for v in valeurs:
+            _nombre_ou_vide(c, v)
+            assert v in ("", "nan") or float(v) >= 0, f"{vue} : {c} négatif {v!r}"
+    assert len(ENERGIE_DEVISE.encode("utf-8")) <= 7, "devise : 7 octets au plus"
+    payload = "|".join([ENERGIE_DEVISE, ";".join(vente), ";".join(achat), ";".join(gain)])
+    assert payload.count("|") == 3 and "|" not in "".join(vente + achat + gain)
+    return {"vue": vue, "debut": debut.isoformat(), "payload": payload}
+
+
 # ---------------------------------------------------------------------------
 # Popup Température (ADR-0032) : l'historique d'une des deux températures de l'accueil
 # et, pour la seconde, la prévision de la météo. Ce que pousserait script.tab5_historique

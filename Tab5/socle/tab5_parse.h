@@ -836,3 +836,100 @@ struct ServeurIaCourbe {
     // valeur connue.
     bool haut(float& h) const;
 };
+
+// ─── 15. Énergie : soleil, prévision et bilan (ADR-0058) ───
+// Pages « Flux », « Aujourd'hui » et « Bilan » du popup Énergie (tab5_energie.cpp). Les
+// codes et l'ordre des champs sont un contrat avec packages/tab5_energie.yaml, la démo et
+// le rendu : ni renommés ni réordonnés sans eux.
+constexpr int kEnergieHeures = 24;      // créneaux d'une journée, heures locales
+constexpr int kEnergieSlotsMax = 30;    // 24 heures, 30 jours ou 12 mois
+// Une énergie de créneau ou de journée au-delà (kWh) ou négative est fausse : inconnue.
+constexpr float kEnergieKwhMax = 1e6f;
+// Une puissance (W) au-delà est fausse : inconnue (100 MW : bien au-delà d'une maison).
+constexpr float kEnergieWMax = 1e8f;
+
+// tab5_maj_energie_soleil :
+//   « lever|midi|coucher|prevu_jour|prevu_demain|source|creneau_debut|creneau_fin|prevu|clair »
+//   lever, midi, coucher  « HH:MM » locales strictes (hhmm_minutes) ; lever et coucher
+//                         illisibles, ou coucher pas après lever : soleil inconnu (les trois
+//                         à -1, pas d'arc) ; midi hors de ]lever, coucher[ : inconnu seul ;
+//   prevu_jour, _demain   kWh ; champ vide = pas de prévision (non choisie), « nan » ou
+//                         illisible = choisie sans valeur ;
+//   source                « a » apprise × météo, « e » externe, autre ou vide : aucune ;
+//   creneau_debut, _fin   heures entières 0..24, fin exclue ; illisibles, ou fin pas après
+//                         début : aucun créneau (les deux à -1) ;
+//   prevu, clair          24 valeurs en kWh au plus, « ; » entre deux ; un champ vide (heure
+//                         sans valeur) compte et vaut NAN, le dernier aussi (« 1;; » = trois) ;
+//                         n = 0 si le champ est vide.
+enum class EnergieSource : uint8_t {
+    AUCUNE,
+    APPRISE,  // « a » : courbe apprise × nuages de la météo (package)
+    EXTERNE,  // « e » : courbe apprise mise à l'échelle d'une prévision externe
+};
+struct EnergieSoleilLu {
+    int lever = -1, midi = -1, coucher = -1;  // minutes depuis minuit, -1 inconnue
+    bool prevu_jour_choisi = false, prevu_demain_choisi = false;
+    float prevu_jour = NAN, prevu_demain = NAN;
+    EnergieSource source = EnergieSource::AUCUNE;
+    int creneau_debut = -1, creneau_fin = -1;  // heures, fin exclue ; -1 : aucun
+    int n_prevu = 0, n_clair = 0;
+    float prevu[kEnergieHeures] = {};
+    float clair[kEnergieHeures] = {};
+};
+// Vrai si la page « Aujourd'hui » a de quoi se montrer : le soleil, une prévision par heure
+// ou la courbe apprise (ADR-0058).
+bool energie_soleil_lire(const Champ& payload, EnergieSoleilLu& out);
+
+// Liste de kWh d'un champ (« ; » entre deux) dans `out`, `max` valeurs au plus : la boucle
+// d'energie_historique (tab5_energie.cpp) — un champ vide compte et vaut NAN, le dernier
+// aussi ; négative, illisible ou au-delà de kEnergieKwhMax : NAN. Renvoie le nombre lu, 0
+// pour un champ vide.
+int energie_kwh_liste(const Champ& c, float* out, int max);
+
+// tab5_maj_energie_bilan, variable payload : « devise|vente|achat|gain ».
+//   devise   symbole tel quel, 7 octets au plus (au-delà : aucun), copié par l'écran ;
+//   vente, achat, gain  listes de energie_kwh_liste (gain : dans la devise, peut être
+//            négatif) ; champ vide = compteur ou prix non choisi.
+constexpr size_t kEnergieDeviseMax = 7;
+struct EnergieBilanLu {
+    Champ devise{nullptr, 0};
+    bool vente_choisie = false, achat_choisi = false, gain_choisi = false;
+    int n_vente = 0, n_achat = 0, n_gain = 0;
+    float vente[kEnergieSlotsMax] = {};
+    float achat[kEnergieSlotsMax] = {};
+    float gain[kEnergieSlotsMax] = {};
+};
+// `slots` : 24, 30 ou 12 (la vue) ; au-delà, la fin des listes est ignorée. Vrai si la page
+// « Bilan » a de quoi se montrer : vente ou achat choisi.
+bool energie_bilan_lire(const Champ& payload, int slots, EnergieBilanLu& out);
+
+// Un créneau du bilan, `produit` = la production de la même vue (tab5_maj_energie_historique),
+// NAN inconnue. Autoconsommé = produit − vendu (jamais sous 0 ; vente non choisie ou inconnue
+// sur le créneau : 0) ; consommé = autoconsommé + acheté (NAN sans compteur d'achat). Toutes
+// les valeurs NAN si inconnues.
+struct EnergieBilanCreneau {
+    float produit = NAN, autoconsomme = NAN, vendu = NAN, achete = NAN, consomme = NAN, gain = NAN;
+};
+EnergieBilanCreneau energie_bilan_creneau(float produit, const EnergieBilanLu& b, int k);
+
+// Totaux de la vue sur `n` créneaux (sommes des valeurs connues, NAN si aucune) et taux
+// d'autoconsommation = autoconsommé / produit (0..1, NAN sans production).
+struct EnergieBilanTotaux {
+    float produit = NAN, autoconsomme = NAN, vendu = NAN, achete = NAN, consomme = NAN, gain = NAN;
+    float taux = NAN;
+};
+EnergieBilanTotaux energie_bilan_totaux(const float* produit, int n, const EnergieBilanLu& b);
+
+// Flux de l'instantané (page « Flux ») en W, depuis tab5_maj_energie : solaire ≥ 0, maison,
+// réseau (+ achat, − vente), batterie (+ charge, − décharge) ; NAN = inconnue (0 pour le
+// partage). Le solaire va d'abord à la vente, puis à la charge, le reste à la maison ; la
+// charge que le solaire ne couvre pas vient du réseau ; la décharge va d'abord à la vente
+// que le solaire ne couvre pas, le reste à la maison. maison = la mesure, sinon la somme de
+// ce qui y entre (NAN si rien n'est connu).
+struct EnergieFlux {
+    float solaire_maison = 0.0f, solaire_reseau = 0.0f, solaire_batterie = 0.0f;
+    float reseau_maison = 0.0f, reseau_batterie = 0.0f;
+    float batterie_maison = 0.0f, batterie_reseau = 0.0f;
+    float maison = NAN;
+};
+EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, float batterie);
