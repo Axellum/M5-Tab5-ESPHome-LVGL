@@ -31,6 +31,10 @@ l'accueil (#419, #428). Fichiers Home Assistant à recopier avant le firmware.
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.3).
 **Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
 
+### 2026-10-10 — Chronologie du démarrage dans Home Assistant
+
+- **Demande d'Axel** : la tablette, sur chargeur secteur, n'a pas de journal série ; on ne savait ni ce qui occupe les ~5 s de `setup()` ni quand le rétroéclairage s'allume. Nouvelle entité de diagnostic **Tab5 Chronologie du démarrage** : `expandeur=…; retro=…; dessin=…; image=…; wifi=…; api=…`, en ms depuis le lancement du minuteur d'ESP-IDF (`Tab5/socle/tab5_demarrage.h`, testé sur PC par `tools/test_tab5_socle.cpp`). Marques posées sur l'alimentation USB (setup des composants matériels, avant l'attente de 1 s), la première écriture du rétroéclairage, le premier dessin LVGL et la première image, le Wi-Fi et l'API ; publiée à partir de la première image, jamais pendant `setup()`. **Aucun changement de comportement** : la séquence `on_boot` (ADR-0005) n'est pas touchée. Lecture : `docs/performance.md`, « Chronologie du démarrage ». Tableau de bord de HA : une carte de plus sous « État » (page Santé, `custom_templates/tab5_dashboard.jinja` à recopier, sept langues). **Non testé sur la tablette.**
+
 ### 2026-10-10 — Popup Caméras : la colonne des pièces suit le changement de thème
 
 - **Correctif** des lots 1 et 2 (ADR-0057) : popup ouvert, un changement de thème laissait la puce de la pièce montrée et le texte des puces dans les couleurs de l'ancien thème (`choix_peindre()` les écrit en style local). `cameras_rejouer_theme()`, appelée par `theme_rejouer_ui()`, les repeint. Vu par le rendu « clair » (bascule à chaud ≠ démarrage à froid sur `cameras` et `cameras-piece-hors-ligne`). **Non testé sur la tablette.**

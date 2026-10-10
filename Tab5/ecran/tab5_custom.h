@@ -19,6 +19,7 @@
 #include "tab5_tokens.h"
 #include "tab5_core.h"
 #include "tab5_batterie.h"  // batterie et chargeur (08/10/2026) : présence, niveau, consommation
+#include "tab5_demarrage.h"  // chronologie du démarrage (10/10/2026), publiée vers HA
 #include "tab5_i18n.h"
 #include <initializer_list>
 #include <string>
