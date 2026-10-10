@@ -16,7 +16,7 @@ The author asked (2026-10-09) for « a multiple-choice wheel on the long press o
   - **Alertes** — the alerts history (what the long press used to open; shown as the « current » state while an alert is on screen);
   - **Pièces ▸** — Maison ([ADR-0037](0037-house-popup.md)), then each room that has devices, its number in the button and its name under it: a touch puts HA mode on that room (`tuiles_aller_piece`), the room on screen is marked;
   - **Appareils ▸** — Températures, Clims, Lumières, Volets, Énergie, Plantes;
-  - **Agenda ▸** — Météo ([ADR-0043](0043-weather-popup.md), added with it), Calendrier, Réveil;
+  - **Agenda ▸** — Météo ([ADR-0043](0043-weather-popup.md), added with it), Calendrier, Réveil, Caméras ([ADR-0049](0049-cameras-popup.md), added with it: Appareils was full);
   - **Tablette ▸** — Jeux, Réglages, Système;
   - **Assistant** — the voice assistant (« discussions »).
 - **Only what this home has.** A screen with nothing to show (`ecran_disponible`: no climate, no plant, no light tile…) is not offered; an empty family disappears and the other buttons close up (the ring is re-centred by ADR-0036's layout). Recomputed at each opening, unfolding and touch: it follows the zones and rooms pushed by Home Assistant.

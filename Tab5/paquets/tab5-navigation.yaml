@@ -108,6 +108,9 @@ script:
           // Musique (ADR-0050) : le lecteur courant, état frais demandé à HA.
           ModalRegistry::add(id(lecteur_popup),          "Musique",          ModalRegistry::POPUP,
                              [] { id(tab5_lecteur_ouvrir).execute(std::string()); });
+          // Caméras (ADR-0049) : pose les widgets à la première ouverture, demande la liste.
+          ModalRegistry::add(id(cameras_popup),          "Caméras",          ModalRegistry::POPUP,
+                             [] { id(tab5_cameras_ouvrir).execute(); });
           // Après les popups qu'une de ses lignes ouvre : ouverts devant lui, ils sont nommés.
           // Maison (ADR-0037) : pose les widgets, les dispose et peint.
           ModalRegistry::add(id(maison_popup),           "Maison",           ModalRegistry::POPUP,
@@ -366,6 +369,8 @@ select:
       - "Météo"
       # Le lecteur de musique (ADR-0050, 10/10/2026), à la fin aussi.
       - "Musique"
+      # L'image des caméras (ADR-0049, 09/10/2026) : une sonnette l'ouvre d'ici. À la fin.
+      - "Caméras"
     on_value:
       # Toute l'ouverture est dans tab5_ecran_ouvrir (plus haut), partagé avec les appuis
       # longs des boutons du haut : l'index de l'option EST la valeur d'Ecran

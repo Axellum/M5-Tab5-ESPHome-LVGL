@@ -126,6 +126,9 @@ NON_MONTREES = {
     "climatisation-carrousel-page-3": "climatisation-carrousel montre le même carrousel ; titre de la pièce décrit",
     "climatisation-carrousel-mode-ha": "climatisation-carrousel montre le même carrousel ; l'ouverture sur la "
                                        "pièce est décrite dans climate.md",
+    # Popup Caméras (ADR-0049, 09/10/2026) : décrit dans cameras.md ; le rendu ne télécharge
+    # aucune image (« Chargement... »), une photo de la tablette vaudra mieux.
+    "cameras": "popup Caméras, décrit dans cameras.md ; le rendu ne montre pas d'image de caméra",
 }
 
 

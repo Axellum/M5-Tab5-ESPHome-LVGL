@@ -34,6 +34,7 @@ FAMILLES = [
     # de ligne, que le harnais redécoupe (temperature(), fuzz_parse.cpp).
     (":", "tab5_maj_historique", ("entete", "mesures", "previsions")),
     (";", "tab5_maj_lecteur", ("lecteurs", "etat")),
+    ("<", "tab5_maj_cameras", ("adresse", "cameras")),
 ]
 
 
@@ -70,6 +71,8 @@ LIMITES = [
     (":", "humidite_bornes", "x|2026-06-15T07:00|60|1485|18.2|0|150|x\n21,20,22,-5,101,nan,7;,,,48\n"),
     # Lecteur (ADR-0050) : nombres hors bornes, image absolue avec une espace, liste trouée.
     (";", "lecteur_bornes", "a|tv;;b\n9|x||playing|||||-1|1e99|inf|2|-|ONE|zz|https://i.example/a b"),
+    # Caméras (ADR-0049) : adresse IPv6, image vide, espace, taille déjà donnée, URL complète.
+    ("<", "cameras_bornes", "fd00::1\n|;A|/a b;B|/api/camera_proxy/c?width=1;C|https://x/y.jpg;D|" + "a" * 400),
 ]
 
 
