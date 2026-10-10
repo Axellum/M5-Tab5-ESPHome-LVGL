@@ -17,7 +17,8 @@
 #       posées ici ne sont que celles d'avant la première peinture.
 # @ai_instruction Un widget de plus = son champ dans ServeurIaUI (tab5_serveur_ia.h) et sa
 #       ligne dans le script tab5_serveur_ia_lier (tab5-serveur-ia.yaml). Les boutons
-#       d'action (lot 3) iront dans le bandeau, à droite.
+#       d'action (ADR-0060 : eject, power, restart) sont dans le bandeau, à droite
+#       (serveur_ia_action.yaml ×3).
 # ═══════════════════════════════════════════════════════
 obj:
   id: serveur_ia_popup
@@ -57,6 +58,10 @@ obj:
                 - label: { id: serveur_ia_etat, text: "", align: TOP_LEFT, x: 56, y: 22 }
                 - label: { id: serveur_ia_nom, text: "", align: TOP_LEFT, x: 240, y: 22, styles: style_text_accent, hidden: true }
                 - label: { id: serveur_ia_modele, text: "", align: TOP_LEFT, x: 700, y: 22, styles: style_text_soft }
+                # Actions (ADR-0060) : tout à droite, posées par tab5_serveur_ia.cpp.
+                - !include { file: serveur_ia_action.yaml, vars: { n: 0, icon: "\U000F01EA" } }
+                - !include { file: serveur_ia_action.yaml, vars: { n: 1, icon: "\U000F0425" } }
+                - !include { file: serveur_ia_action.yaml, vars: { n: 2, icon: "\U000F0709" } }
 
           # ═══ TOKENS PAR SECONDE : grand chiffre, courbe (tab5_serveur_ia.cpp), requêtes ═══
           - obj:

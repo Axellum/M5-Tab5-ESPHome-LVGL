@@ -524,6 +524,8 @@ font:
       - "\U000F00EB"  # cake-variant
       - "\U000F00F0"  # calendar-clock
       - "\U000F012A"  # chart-line (titre du popup Suivi, ADR-0054)
+      - "\U000F01EA"  # eject (popup Serveur IA : décharger le modèle, ADR-0060)
+      - "\U000F0709"  # restart (popup Serveur IA : redémarrer le service, ADR-0060)
       - "\U000F0141"  # chevron-left
       - "\U000F0142"  # chevron-right
       - "\U000F0150"  # clock-outline
