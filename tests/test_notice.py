@@ -143,6 +143,8 @@ NON_MONTREES = {
     "cameras": "popup Caméras, décrit dans cameras.md ; le rendu montre une mire, pas une image de caméra",
     "cameras-piece-hors-ligne": "popup Caméras filtré sur une pièce, caméra hors ligne : décrit dans cameras.md ; "
                                 "mire du rendu à la place des images",
+    "cameras-mosaique-page-2": "seconde page de la mosaïque des caméras, décrite dans cameras.md ; mire du rendu",
+    "cameras-plein-ecran": "une caméra en grand après un tap sur sa vignette, décrit dans cameras.md ; mire du rendu",
 }
 
 
