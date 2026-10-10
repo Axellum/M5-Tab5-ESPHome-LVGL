@@ -178,7 +178,11 @@ bool decoder(size_t n) {
         return false;
     }
     Tampon& dst = s_sortie;
-    if (!tampon_au_moins(dst, static_cast<size_t>(l) * h * 2, JPEG_DEC_ALLOC_OUTPUT_BUFFER, 0)) {
+    const size_t besoin = static_cast<size_t>(l) * h * 2;
+    // Un tampon rendu par l'écran deux fois trop grand (une grande image d'1 Mio pour une
+    // vignette de 255 Kio, mosaïque) : libéré plutôt que gardé avec la vignette.
+    if (dst.p != nullptr && dst.n > 2 * besoin) tampon_rendre(dst);
+    if (!tampon_au_moins(dst, besoin, JPEG_DEC_ALLOC_OUTPUT_BUFFER, 0)) {
         ESP_LOGW(TAG, "mémoire insuffisante pour %ux%u", static_cast<unsigned>(l), static_cast<unsigned>(h));
         return false;
     }
