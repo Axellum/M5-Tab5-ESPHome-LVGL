@@ -86,6 +86,7 @@ esphome:
     - Tab5/ecran/tab5_lecteur.h
     - Tab5/ecran/tab5_cameras.h
     - Tab5/ecran/tab5_suivi.h
+    - Tab5/ecran/tab5_cameras_charge.h
     - Tab5/ecran/tab5_theme.h
     - Tab5/ecran/tab5_custom.cpp
     - Tab5/ecran/tab5_internal.h
@@ -127,6 +128,7 @@ esphome:
     - Tab5/ecran/tab5_lecteur.cpp
     - Tab5/ecran/tab5_cameras.cpp
     - Tab5/ecran/tab5_suivi.cpp
+    - Tab5/ecran/tab5_cameras_charge.cpp
     - Tab5/jeux/game_common.h
     - Tab5/jeux/marble_game.h
     - Tab5/jeux/marble_game.cpp

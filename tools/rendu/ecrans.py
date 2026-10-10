@@ -780,7 +780,7 @@ METEO_GLISSER = Glisser(1100, 675, 500, 675, dans_popup=True)
 
 # Popup Caméras (ADR-0049, cameras_popup.yaml) : la liste que le blueprint renverrait à
 # l'événement esphome.tab5_cameras, poussée avant l'ouverture. Le rendu ne télécharge rien
-# (Tab5/rendu/composants/online_image) : la capture montre la page de la première caméra
+# (bouchon de tab5_cameras_charge.cpp hors ESP_PLATFORM) : la capture montre la page de la première caméra
 # (nom, pastilles, « Chargement... »), pas d'image.
 CAMERAS_DONNEES = Service("tab5_maj_cameras", (
     ("adresse", "http://homeassistant.local:8123"),

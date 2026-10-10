@@ -49,15 +49,9 @@ obj:
               styles: style_glass_card
               scrollable: false
               widgets:
-                # Source : le tampon de cameras_image (tab5-cameras.yaml). Caché tant
-                # qu'il ne tient pas l'image de la caméra montrée ([AI-WARNING] de
-                # tab5_cameras.cpp).
-                - image:
-                    id: cameras_img
-                    src: cameras_image
-                    align: CENTER
-                    radius: 18
-                    hidden: true
+                # L'image est créée en C++ (creer_image() de tab5_cameras.cpp, sous ce
+                # message) : un image: d'ESPHome exige une source fixe, et la source
+                # change à chaque image (tampons du chargeur, [AI-WARNING]).
                 # « Chargement... », « Image indisponible », « Aucune caméra choisie »…
                 - label: { id: cameras_message, text: "", align: CENTER, styles: style_text_dim }
 

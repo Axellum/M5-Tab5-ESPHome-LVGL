@@ -30,9 +30,10 @@ class Image;
 //
 // Rien n'est demandé tant que le popup est fermé. À l'ouverture, l'événement
 // esphome.tab5_cameras ; le blueprint répond par l'action tab5_maj_cameras (nom et
-// entity_picture de chaque caméra). L'image est téléchargée par online_image
-// (cameras_image, tab5-cameras.yaml) : JPEG décodé en PSRAM, réduit par Home Assistant
-// (width / height du proxy des caméras) puis par la tablette à 960 × 540 au plus.
+// entity_picture de chaque caméra). L'image est téléchargée et décodée hors de la boucle
+// principale (tab5_cameras_charge.h : tâche FreeRTOS, décodeur JPEG matériel) en PSRAM,
+// réduite par Home Assistant (width / height du proxy des caméras), montrée à sa taille
+// ou réduite par LVGL si elle dépasse 960 × 540.
 //
 // Widgets posés par le script tab5_cameras_ouvrir (tab5-cameras.yaml) à la première
 // ouverture : id() n'existe que dans une lambda YAML. Les commandes sont des lambdas SANS
@@ -40,17 +41,13 @@ class Image;
 constexpr int kCamerasPastilles = 8;   // = kCamerasMax (tab5_parse.h)
 struct CamerasUI {
     lv_obj_t* popup = nullptr;                    // cameras_popup
-    lv_obj_t* image = nullptr;                    // cameras_img : le widget image
+    lv_obj_t* cadre = nullptr;                    // cameras_cadre : le cadre de l'image
+    lv_obj_t* image = nullptr;                    // le widget image, créé dans le cadre (C++)
     lv_obj_t* message = nullptr;                  // cameras_message : au milieu du cadre
     lv_obj_t* nom = nullptr;                      // cameras_nom : nom de la caméra
     lv_obj_t* heure = nullptr;                    // cameras_heure : « Image de 14:32:05 »
     lv_obj_t* pastilles = nullptr;                // cameras_pastilles : la rangée
     lv_obj_t* pastille[kCamerasPastilles] = {};   // cameras_pastille_N
-    esphome::image::Image* source = nullptr;      // cameras_image (online_image)
-    // Télécharge l'URL dans cameras_image (online_image.set_url, update compris).
-    void (*charger)(const char* url) = nullptr;
-    // Libère l'image décodée (online_image.release).
-    void (*liberer)() = nullptr;
     // Événement esphome.tab5_cameras : demande la liste à Home Assistant.
     void (*demander)() = nullptr;
     // Rappelle cameras_tic() dans `ms` millisecondes (un seul rappel en attente).
@@ -64,12 +61,10 @@ extern CamerasUI g_cameras_ui;
 void cameras_recues(const std::string& adresse, const std::string& cameras);
 // Ouvre le popup (dernière caméra montrée), le peint, et demande la liste à HA.
 void cameras_ouvrir();
-// Rappel de tab5_cameras_attente : charge l'image de la caméra montrée, ou libère tout
-// si le popup est fermé (plus aucun rappel ensuite).
+// Rappel de tab5_cameras_attente : sonde le chargement en cours (toutes les 100 ms), montre
+// l'image prête, lance la suivante, ou libère tout si le popup est fermé (plus aucun
+// rappel ensuite).
 void cameras_tic();
-// online_image : image décodée (on_download_finished) ou échec (on_error).
-void cameras_image_prete();
-void cameras_image_erreur();
 // API : adresse du client « Home Assistant » (on_client_connected, tab5-api-logic.yaml),
 // base des chemins relatifs quand le blueprint n'en donne pas.
 void cameras_hote_ha(const std::string& adresse);

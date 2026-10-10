@@ -10,40 +10,19 @@
 #           widgets à la première ouverture, puis cameras_ouvrir().
 #         - tab5_cameras_demande : événement esphome.tab5_cameras. Le blueprint « Tab5 —
 #           emplacements » y répond par l'action tab5_maj_cameras (tab5-api-logic.yaml).
-#         - tab5_cameras_charger / tab5_cameras_attente : une image à la fois, la suivante
-#           5 s après la fin de la précédente, tant que le popup est ouvert.
-#         - cameras_image (online_image, JPEG) : l'image de la caméra montrée.
+#         - tab5_cameras_attente : le seul rappel de cameras_tic() (sonde du chargement en
+#           cours toutes les 100 ms, image suivante 5 s après la précédente, tant que le
+#           popup est ouvert). L'image est téléchargée et décodée hors de la boucle
+#           (tab5_cameras_charge.cpp : tâche FreeRTOS, décodeur JPEG matériel).
 # @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
 #       nomme aucune entité. Chargé APRÈS tab5_lvgl (il référence des widgets) et après
-#       tab5_assist (client http_request assist_http). Aucun lv_* ici.
-# @ai_warning [AI-WARNING] online_image télécharge dans la boucle principale : la requête
-#       attend la réponse de HA (jusqu'au timeout de 12 s d'assist_http), puis le JPEG est
-#       décodé en un seul appel. Ne pas raccourcir l'attente de tab5_cameras_attente sans
-#       mesurer ce blocage sur la tablette (ADR-0049, « Coûts »).
+#       tab5_assist : le https sans vérification du certificat du chargeur vient de son
+#       client http_request assist_http (verify_ssl: false). Aucun lv_* ici.
+# @ai_warning [AI-WARNING] Pas d'online_image ici : elle téléchargeait ET décodait dans la
+#       boucle principale (~1,6 s d'écran figé par image, mesuré le 10/10/2026, ADR-0049).
 # @ai_instruction Un widget de plus = son champ dans CamerasUI (tab5_cameras.h) et sa ligne
 #       ici. Les commandes sont des lambdas SANS capture (pointeurs de fonction).
 # ============================================================================
-
-image:
-  # Une seule image pour toutes les caméras : 960 × 540 RGB565 = 1 036 800 octets en PSRAM
-  # (RAMAllocator d'ESPHome : PSRAM d'abord), rendus par online_image.release quand le
-  # popup se ferme. HA réduit déjà l'image (width / height ajoutés par camera_url) ; la
-  # tablette la ramène à 960 × 540 au plus, proportions gardées. JPEG progressif refusé
-  # par le décodeur d'ESPHome (JPEGDEC) : « Image indisponible ».
-  - platform: online_image
-    id: cameras_image
-    url: "http://127.0.0.1/placeholder.jpg"   # remplacé au runtime par set_url
-    format: JPEG
-    type: RGB565
-    resize: 960x540
-    http_request_id: assist_http
-    # Tampon du téléchargement : agrandi à la taille du JPEG (il le faut entier pour le
-    # décoder), il le reste ensuite (~100 à 200 Ko à 960 × 540, estimation).
-    buffer_size: 16384
-    on_download_finished:
-      - lambda: 'cameras_image_prete();'
-    on_error:
-      - lambda: 'cameras_image_erreur();'
 
 script:
   - id: tab5_cameras_ouvrir
@@ -51,7 +30,7 @@ script:
       - lambda: |-
           CamerasUI& u = g_cameras_ui;
           if (u.popup == nullptr) {
-            u.image = id(cameras_img);
+            u.cadre = id(cameras_cadre);
             u.message = id(cameras_message);
             u.nom = id(cameras_nom);
             u.heure = id(cameras_heure);
@@ -64,9 +43,6 @@ script:
             u.pastille[5] = id(cameras_pastille_5);
             u.pastille[6] = id(cameras_pastille_6);
             u.pastille[7] = id(cameras_pastille_7);
-            u.source = id(cameras_image);
-            u.charger = [](const char* url) { id(tab5_cameras_charger).execute(std::string(url)); };
-            u.liberer = [] { id(tab5_cameras_liberer).execute(); };
             u.demander = [] { id(tab5_cameras_demande).execute(); };
             u.attendre = [](int ms) { id(tab5_cameras_attente).execute(ms); };
             // En dernier : cameras_ouvrir() ne fait rien tant que popup est nul.
@@ -80,19 +56,6 @@ script:
     then:
       - homeassistant.event:
           event: esphome.tab5_cameras
-
-  # set_url télécharge tout de suite (update: true par défaut).
-  - id: tab5_cameras_charger
-    parameters:
-      url: string
-    then:
-      - online_image.set_url:
-          id: cameras_image
-          url: !lambda 'return url;'
-
-  - id: tab5_cameras_liberer
-    then:
-      - online_image.release: cameras_image
 
   # Un seul rappel en attente (restart) : cameras_tic() décide s'il charge, attend la fin
   # d'un téléchargement ou libère tout (popup fermé).
