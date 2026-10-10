@@ -71,7 +71,7 @@ It changes every 8 seconds between the day's schedule, the rain in the next hour
 
     - **Rooms**: [House](house.md), then each room that has a device, its number in the button and its name beside it; a tap shows its devices in the bottom row (device mode), the room shown is lit;
     - **Devices**: temperatures (the [history](temperature.md) of the first temperature of the home screen), climate, lights and shutter (the window of the room shown, otherwise of the first room that has one), Energy, plants, [music](music.md) (unless no player is chosen in Home Assistant) and the [TV remote](tv.md) (only with a TV);
-    - **Agenda**: [weather](weather.md), [calendar](calendar.md), [alarm clock](alarm.md);
+    - **Agenda**: [weather](weather.md), [calendar](calendar.md), [alarm clock](alarm.md), [cameras](cameras.md);
     - **Tablet**: [Arcade](arcade.md) games, [settings](settings.md), [system console](console.md).
 
     Only what your home has is offered (no climate, no shutter, no solar production for Energy…): a family with nothing in it disappears. A tap on a screen opens it; a tap elsewhere folds the second ring, then closes the wheel.
@@ -151,7 +151,7 @@ Elle passe toutes les 8 secondes du planning du jour à la pluie de l'heure qui 
 
     - **Pièces** : [Maison](house.md#version-française), puis chaque pièce qui a un appareil, son numéro dans le bouton et son nom à côté ; un tap montre ses appareils dans la rangée du bas (mode appareils), la pièce affichée est allumée ;
     - **Appareils** : températures (l'[historique](temperature.md#version-française) de la première température de l'accueil), clims, lumières et volets (la fenêtre de la pièce affichée, sinon de la première qui en a), Énergie, plantes, [musique](music.md#version-française) (sauf si aucun lecteur n'est choisi dans Home Assistant) et la [télécommande TV](tv.md#version-française) (seulement avec une TV) ;
-    - **Agenda** : [météo](weather.md#version-française), [calendrier](calendar.md#version-française), [réveil](alarm.md#version-française) ;
+    - **Agenda** : [météo](weather.md#version-française), [calendrier](calendar.md#version-française), [réveil](alarm.md#version-française), [caméras](cameras.md#version-française) ;
     - **Tablette** : les jeux de l'[Arcade](arcade.md#version-française), les [réglages](settings.md#version-française), la [console système](console.md#version-française).
 
     Seul ce que la maison a est proposé (pas de clim, pas de volet, pas de production solaire pour Énergie…) : une famille vide disparaît. Un tap sur un écran l'ouvre ; un tap ailleurs replie le second anneau, puis ferme la roue.

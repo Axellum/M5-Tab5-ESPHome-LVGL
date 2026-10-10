@@ -1334,3 +1334,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lecteur indisponible": "Player unavailable"
 "Rien en lecture": "Nothing playing"
 "Lecteur {n}": "Player {n}"
+# Popup Caméras (ADR-0049, 09/10/2026).
+"Caméras": "Cameras"
+"Aucune caméra choisie": "No camera chosen"
+"Adresse de Home Assistant inconnue": "Home Assistant address unknown"
+"Image de %02d:%02d:%02d": "Image from %02d:%02d:%02d"
+"Plus d'image depuis %02d:%02d:%02d": "No image since %02d:%02d:%02d"

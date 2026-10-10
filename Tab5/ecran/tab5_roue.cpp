@@ -205,6 +205,7 @@ const char* glyphe_roue(RoueIcone i) {
         case RoueIcone::ENGRENAGE: return "\U000F0493";    // cog
         case RoueIcone::SYSTEME: return "\U000F018D";      // console
         case RoueIcone::METEO: return "\U000F0595";        // weather-partly-cloudy
+        case RoueIcone::CAMERAS: return "\U000F07AE";      // cctv (popup Caméras, ADR-0049)
         default: return "";
     }
 }

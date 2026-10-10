@@ -1335,3 +1335,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lecteur indisponible": "Speler niet beschikbaar"
 "Rien en lecture": "Er speelt niets"
 "Lecteur {n}": "Speler {n}"
+# Popup Caméras (ADR-0049, 09/10/2026).
+"Caméras": "Camera's"
+"Aucune caméra choisie": "Geen camera gekozen"
+"Adresse de Home Assistant inconnue": "Adres van Home Assistant onbekend"
+"Image de %02d:%02d:%02d": "Beeld van %02d:%02d:%02d"
+"Plus d'image depuis %02d:%02d:%02d": "Geen beeld sinds %02d:%02d:%02d"

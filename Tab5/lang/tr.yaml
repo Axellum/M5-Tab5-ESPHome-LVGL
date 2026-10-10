@@ -1382,3 +1382,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lecteur indisponible": "Oynatıcı kullanılamıyor"
 "Rien en lecture": "Çalan bir şey yok"
 "Lecteur {n}": "Oynatıcı {n}"
+# Popup Caméras (ADR-0049, 09/10/2026).
+"Caméras": "Kameralar"
+"Aucune caméra choisie": "Kamera seçilmedi"
+"Adresse de Home Assistant inconnue": "Home Assistant adresi bilinmiyor"
+"Image de %02d:%02d:%02d": "Görsel saati: %02d:%02d:%02d"
+"Plus d'image depuis %02d:%02d:%02d": "Son görsel: %02d:%02d:%02d"

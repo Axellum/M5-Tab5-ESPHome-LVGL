@@ -84,7 +84,9 @@ def test_chaque_page_de_la_demande_a_sa_place():
     ecrans_nav |= set(re.findall(r"Genre::ECRAN, RoueIcone::\w+, tr_noop\(\"[^\"]+\"\), Ecran::(\w+)", _nav()))
     assert ecrans_nav == {"ALERTES", "ARCADE", "ASSISTANT", "REGLAGES", "LUMIERES", "CLIM", "TEMPERATURE",
                           "CALENDRIER", "REVEIL", "VOLET", "ENERGIE", "PLANTES", "CONSOLE", "METEO",
-                          "MUSIQUE", "TV"}
+                          "MUSIQUE", "TV", "CAMERAS"}
+    # Caméras (ADR-0049, demande d'Axel du 09/10/2026) : à la fin d'Agenda, Appareils est plein.
+    assert _table("kAgenda")[-1] == ("CAMERAS", "CAMERAS", "Caméras")
     assert "Genre::PIECES" in _nav()
     assert _table("kAgenda")[0] == ("METEO", "METEO", "Météo")
 

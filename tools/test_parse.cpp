@@ -1131,6 +1131,66 @@ static void test_ha_image_url() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// 10. Popup Caméras (tab5_maj_cameras, ADR-0049)
+// ════════════════════════════════════════════════════════════════════════════
+
+static void test_cameras_lire() {
+    CameraLue c[kCamerasMax];
+    auto lire = [&c](const std::string& s) { return cameras_lire(Champ{s.data(), s.size()}, c); };
+    expect(lire("") == 0, "caméras : payload vide = aucune");
+    const std::string deux = "Entrée|/api/camera_proxy/camera.entree?token=abc;Jardin|/api/camera_proxy/camera.jardin?token=def";
+    expect(lire(deux) == 2 && champ_vaut(c[0].nom, "Entrée") &&
+               champ_vaut(c[0].image, "/api/camera_proxy/camera.entree?token=abc") && champ_vaut(c[1].nom, "Jardin"),
+           "caméras : deux caméras dans l'ordre");
+    expect(lire(";;Garage|;|/img.jpg;Cour|/cour.jpg;") == 2 && c[0].nom.n == 0 && champ_vaut(c[0].image, "/img.jpg") &&
+               champ_vaut(c[1].nom, "Cour"),
+           "caméras : sans image sautée, nom vide gardé");
+    expect(lire("Seule") == 0, "caméras : un nom sans image = aucune");
+    expect(lire("A|/a|champ en trop") == 1 && champ_vaut(c[0].image, "/a"), "caméras : champ en trop ignoré");
+    std::string dix;
+    for (int i = 0; i < 10; i++) dix += "C" + std::to_string(i) + "|/c" + std::to_string(i) + ";";
+    expect(lire(dix) == kCamerasMax && champ_vaut(c[kCamerasMax - 1].nom, "C7"), "caméras : 8 au plus");
+}
+
+static void test_camera_url() {
+    char u[kCameraUrlMax];
+    auto url = [&u](const char* image, const char* base, int l = 960, int h = 540) {
+        return camera_url(Champ{image, image ? std::strlen(image) : 0}, base, l, h, u, sizeof(u));
+    };
+    expect(url("/api/camera_proxy/camera.entree?token=abc", "http://192.0.2.10:8123") &&
+               std::strcmp(u, "http://192.0.2.10:8123/api/camera_proxy/camera.entree?token=abc&width=960&height=540") ==
+                   0,
+           "url : chemin du proxy, taille ajoutée avec &");
+    expect(url("/api/camera_proxy/camera.x", "https://ha.maison:8123/") &&
+               std::strcmp(u, "https://ha.maison:8123/api/camera_proxy/camera.x?width=960&height=540") == 0,
+           "url : « / » final de la base retiré, taille ajoutée avec ?");
+    expect(url("local/porte.jpg", "http://h:8123") && std::strcmp(u, "http://h:8123/local/porte.jpg") == 0,
+           "url : « / » ajouté, pas de taille hors du proxy");
+    expect(url("http://cam.lan/snap.jpg", "") && std::strcmp(u, "http://cam.lan/snap.jpg") == 0,
+           "url : URL complète telle quelle, sans base");
+    expect(url("/api/camera_proxy/camera.x?width=640&height=360", "http://h:8123") &&
+               std::strcmp(u, "http://h:8123/api/camera_proxy/camera.x?width=640&height=360") == 0,
+           "url : taille déjà donnée gardée");
+    expect(url("/api/camera_proxy/camera.x", "http://h:8123", 0, 540) &&
+               std::strcmp(u, "http://h:8123/api/camera_proxy/camera.x") == 0,
+           "url : sans largeur, pas de taille");
+    expect(!url("/api/camera_proxy/camera.x", "") && u[0] == '\0', "url : chemin sans base refusé");
+    expect(!url("/api/camera_proxy/camera.x", nullptr), "url : base nulle refusée");
+    expect(!url("/api/camera_proxy/camera.x", "ftp://h"), "url : base hors http refusée");
+    expect(!url("", "http://h:8123") && !url(nullptr, "http://h:8123"), "url : image vide refusée");
+    expect(!url("/a b.jpg", "http://h:8123") && u[0] == '\0', "url : espace refusé");
+    expect(!url("/a.jpg\r\nX: y", "http://h:8123"), "url : saut de ligne refusé");
+    const std::string zero("/a\0b", 4);
+    expect(!camera_url(Champ{zero.data(), zero.size()}, "http://h:8123", 960, 540, u, sizeof(u)), "url : zéro refusé");
+    std::string longue = "/";
+    longue += std::string(kCameraUrlMax, 'a');
+    expect(!url(longue.c_str(), "http://h:8123") && u[0] == '\0', "url : trop longue, vidée");
+    char petit[8];
+    expect(!camera_url(Champ{"/a", 2}, "http://h", 1, 1, petit, sizeof(petit)) && petit[0] == '\0',
+           "url : tampon trop petit, vidé");
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // Payloads tels que HA les envoie : mêmes sorties qu'avant les correctifs du lot F
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -1225,6 +1285,8 @@ int main() {
     test_lecteur_temps();
     test_ha_base_depuis_hote();
     test_ha_image_url();
+    test_cameras_lire();
+    test_camera_url();
     test_payloads_ha();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);

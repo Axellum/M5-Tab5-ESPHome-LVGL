@@ -54,11 +54,15 @@ constexpr Destination kAppareils[] = {
     {Ecran::MUSIQUE, RoueIcone::MUSIQUE, tr_noop("Musique")},
     {Ecran::TV, RoueIcone::TV, tr_noop("TV")},
 };
-// Agenda : le temps qui vient, la Météo en tête (popup Météo, ADR-0043).
+// Agenda : le temps qui vient, la Météo en tête (popup Météo, ADR-0043). Caméras à la fin
+// (ADR-0049, demande d'Axel du 09/10/2026) : Appareils et le premier anneau sont pleins
+// (kRoueChoix, kRoueBoutons). Toujours proposé, comme la Météo : la tablette ne connaît
+// les caméras qu'en les demandant ; sans caméra, le popup dit « Aucune caméra choisie ».
 constexpr Destination kAgenda[] = {
     {Ecran::METEO, RoueIcone::METEO, tr_noop("Météo")},
     {Ecran::CALENDRIER, RoueIcone::CALENDRIER, tr_noop("Calendrier")},
     {Ecran::REVEIL, RoueIcone::REVEIL, tr_noop("Réveil")},
+    {Ecran::CAMERAS, RoueIcone::CAMERAS, tr_noop("Caméras")},
 };
 // Tablette : ce qui est à elle, pas à la maison.
 constexpr Destination kTablette[] = {
