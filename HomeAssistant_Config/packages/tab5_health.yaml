@@ -479,31 +479,6 @@ automation:
           title: "{{ titre }}"
           message: "La tablette tourne sur sa batterie : {{ niveau }} %. Branchez-la."
 
-  # ==========================================================================
-  # (g) Surchauffe thermique critique (ADR-0061, 11/10/2026)
-  # --------------------------------------------------------------------------
-  # Émis par le firmware si le processeur dépasse 55 °C ou monte anormalement vite.
-  # Le firmware verrouille et coupe immédiatement le chargeur. Notification persistante
-  # et mobile pour alerter l'utilisateur et prévenir tout dommage matériel.
-  # ==========================================================================
-  - id: tab5_health_surchauffe
-    alias: "Tab5 — santé : surchauffe thermique critique"
-    description: >-
-      Prévient en cas de surchauffe anormale du processeur (> 55 °C) : le chargeur a été
-      automatiquement coupé et verrouillé par le firmware par sécurité.
-    mode: single
-    triggers:
-      - trigger: event
-        event_type: esphome.tab5_alerte_thermique
-    actions:
-      - action: script.tab5_health_notify
-        data:
-          notification_id: tab5_health_surchauffe
-          title: "🚨 Tab5 : SURCHAUFFE THERMIQUE DÉTECTÉE"
-          message: >-
-            Le processeur du Tab5 est monté à {{ trigger.event.data.temperature | default('?', true) }} °C.
-            Le chargeur a été automatiquement coupé et verrouillé par le firmware.
-
 template:
   # Version de ces fichiers : « dépôt » dans le dépôt, remplacée par la version de la
   # release dans l'archive tab5_home_assistant.zip (tools/publication/archive_ha.py,
