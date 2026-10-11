@@ -4,10 +4,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-Ordre de mise à jour depuis les dernières versions publiées, tant que `v3.8.0` n'est pas
+Ordre de mise à jour depuis les dernières versions publiées, tant que `v3.8.1` n'est pas
 taguée (`tests/test_contrat_versions.py` le confronte à la matrice) :
-**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.7.0).
-**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0-rc.4).
+**Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
+
+## [3.8.1] — 2026-10-11
+
+Version de sécurité et corrective : protection thermique anti-surchauffe et fiabilité de la détection batterie sans batterie physique.
+
+- **Ordre de mise à jour** :
+  - **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
+- **Sécurité thermique (anti-surchauffe)** (#457) :
+  - Verrou thermique autonome sur l'ESP32-P4 en C++ (`Tab5/socle/tab5_batterie.h`, `Tab5/ecran/tab5_batterie.cpp`) : si le SoC dépasse 55 °C ou subit une élévation brutale (+4 °C en <= 60 s avec CPU > 48 °C), coupure immédiate et verrouillage du chargeur (CHG_EN et Quick Charge) pendant au moins 15 minutes et jusqu'à refroidissement complet sous 44 °C.
+  - Surveillance accélérée de la température cœur `sys_core_temp` avec période ramenée à 10 s et filtrage dynamique vers Home Assistant (`Tab5/paquets/tab5-sensors-diagnostics.yaml`).
+- **Détection batterie sans batterie physique** (#457) :
+  - Rehaussement du seuil de présence batterie (`kBatterieSeuilV`) de 3,0 V à 5,5 V pour éviter les faux positifs dus aux tensions résiduelles/flottantes (3,29 V relevés) lorsque la tablette est alimentée sans batterie physique.
+- **Documentation et maintenance** (#456) :
+  - Archivage de la section 3.7.0 dans `docs/changelog/CHANGELOG-3.x.md`.
 
 ## [3.8.0] — 2026-10-10
 
