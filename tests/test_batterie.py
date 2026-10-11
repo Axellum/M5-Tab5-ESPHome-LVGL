@@ -192,3 +192,26 @@ def test_consommation_et_alerte_de_batterie_faible():
     # Côté HA, la garde « batterie faible » lit ces deux champs (tests/test_contrat.py).
     sante = (REPO / "HomeAssistant_Config" / "packages" / "tab5_health.yaml").read_text(encoding="utf-8")
     assert "esphome.tab5_batterie_faible" in sante
+
+
+def test_seuil_presence_batterie_et_securite_thermique():
+    """Seuil de présence batterie rehaussé à 5,5 V et sécurité thermique anti-surchauffe
+    (11/10/2026, ADR-0061) :
+    - 5,5 V évite les faux positifs sur tension résiduelle sans batterie (3,29 V observés) ;
+    - seuil critique à 55 °C et réarmement à 44 °C ;
+    - surveillance rapprochée de sys_core_temp à 10 s appelant chargeur_thermique_releve."""
+    entete = _entete()
+    seuil = re.search(r"kBatterieSeuilV\s*=\s*([\d.]+)f", entete)
+    assert seuil and float(seuil.group(1)) == 5.5, "seuil de détection batterie 2S rehaussé à 5,5 V"
+    temp_max = re.search(r"kChargeurTempMaxC\s*=\s*([\d.]+)f", entete)
+    assert temp_max and float(temp_max.group(1)) == 55.0, "seuil coupure thermique à 55 °C"
+    temp_rearme = re.search(r"kChargeurTempRearmeC\s*=\s*([\d.]+)f", entete)
+    assert temp_rearme and float(temp_rearme.group(1)) == 44.0, "seuil réarmement thermique à 44 °C"
+    pente_max = re.search(r"kChargeurPenteMaxC\s*=\s*([\d.]+)f", entete)
+    assert pente_max and float(pente_max.group(1)) == 4.0, "pente maximale autorisée à 4 °C"
+
+    diag = _yaml(DIAG)
+    temp_sensor = next(s for s in diag["sensor"] if s.get("id") == "sys_core_temp")
+    assert temp_sensor["update_interval"] == "10s", "température surveillée toutes les 10 s"
+    code_temp = _sans_commentaires(_texte(temp_sensor["on_value"]))
+    assert "chargeur_thermique_releve(x, millis())" in code_temp
