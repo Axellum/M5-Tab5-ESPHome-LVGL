@@ -363,9 +363,16 @@ sensor:
   - platform: internal_temperature
     id: sys_core_temp
     name: "Tab5 Core Temp"
-    update_interval: 60s
+    update_interval: 10s
+    filters:
+      - or:
+          - throttle: 60s
+          - delta: 1.0
     on_value:
       - lambda: |-
+          if (chargeur_thermique_releve(x, millis())) {
+            id(tab5_alerte_thermique).execute(x);
+          }
           if (!reglages_page_visible(REGLAGES_PAGE_SYSTEME)) return;
           update_console_temp_label(id(lbl_sys_temp_val), x);
 
@@ -841,6 +848,21 @@ script:
           data:
             niveau: !lambda 'return niveau;'
             seuil: !lambda 'return seuil;'
+
+  # Sécurité thermique CPU (11/10/2026, ADR-0061) : déclenchée si le CPU dépasse 55 °C
+  # ou monte anormalement vite (+4 °C en ≤ 60 s). Chargeur coupé et verrouillé.
+  - id: tab5_alerte_thermique
+    mode: single
+    parameters:
+      temp: float
+    then:
+      - logger.log:
+          format: "ALERTE SÉCURITÉ THERMIQUE : CPU Tab5 à %.1f °C, chargeur immédiatement verrouillé !"
+          args: [ 'temp' ]
+      - homeassistant.event:
+          event: esphome.tab5_alerte_thermique
+          data:
+            temperature: !lambda 'return temp;'
 
   - id: tab5_journal_envoi
     mode: restart

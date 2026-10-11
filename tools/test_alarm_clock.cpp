@@ -711,8 +711,37 @@ static void test_chargeur() {
         expect(chargeur_tick(c, 0, false, base + 8 * S).lire, "rebouclage : lecture 8 s après");
         expect(!chargeur_lecture(c, 7.4f, base + 8 * S) && !c.sonde, "rebouclage : sonde terminée");
     }
-    expect(kBatterieSeuilV == 3.0f && kBatterieBasseV == 6.0f && kChargeurReposMs == 8u * S,
-           "seuils : 3,0 V chargeur coupé, 6,0 V chargeur allumé, 8 s de repos");
+    expect(kBatterieSeuilV == 5.5f && kBatterieBasseV == 6.0f && kChargeurReposMs == 8u * S,
+           "seuils : 5,5 V chargeur coupé (évite faux positif tension résiduelle), 6,0 V chargeur allumé, 8 s de repos");
+
+    // Sécurité thermique anti-surchauffe (11/10/2026, ADR-0061)
+    {
+        EtatChargeur c;
+        c.reveil = false;
+        c.presence = P::PRESENTE;
+        c.allume = true;
+        c.niveau = 50.0f;
+        expect(chargeur_tick(c, 0, false, 0).allumer, "charge normale autorisée");
+
+        // Montée à 55 °C : verrouillage thermique immédiat
+        expect(chargeur_surveillance_thermique(c, 55.5f, 10 * S), "déclenchement verrouillage thermique à 55,5 °C");
+        expect(c.verrou_thermique, "verrou thermique actif");
+        expect(!chargeur_tick(c, 0, false, 11 * S).allumer, "chargeur immédiatement coupé et verrouillé");
+        expect(!chargeur_voulu(c, 0, 11 * S), "chargeur refusé tant que verrouillé");
+
+        // 10 min après à 50 °C : toujours verrouillé (minimum 15 min ET sous 44 °C)
+        expect(!chargeur_surveillance_thermique(c, 50.0f, 10 * MIN), "pas de réarmement prématuré");
+        expect(!chargeur_tick(c, 0, false, 10 * MIN).allumer, "toujours coupé à 10 min");
+
+        // 16 min après mais température à 46 °C : toujours verrouillé (doit être ≤ 44 °C)
+        chargeur_surveillance_thermique(c, 46.0f, 16 * MIN);
+        expect(!chargeur_tick(c, 0, false, 16 * MIN).allumer, "toujours coupé si CPU > 44 °C");
+
+        // 16 min après et température redescendue à 40 °C : réarmement
+        chargeur_surveillance_thermique(c, 40.0f, 16 * MIN + 10 * S);
+        expect(chargeur_tick(c, 0, false, 16 * MIN + 10 * S).allumer, "réarmement après refroidissement sous 44 °C");
+        expect(!c.verrou_thermique, "verrou thermique levé");
+    }
 
     // Mode de charge (09/10/2026, ADR-0045) : la charge rapide seulement chargeur allumé.
     {

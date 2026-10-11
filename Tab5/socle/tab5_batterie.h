@@ -74,8 +74,24 @@ inline bool charge_rapide_voulue(uint8_t mode, bool chargeur_allume) {
 }
 
 // ─── Présence (chargeur coupé) ───
-constexpr float kBatterieSeuilV = 3.0f;           // chargeur coupé : au-dessus = batterie
+// Rehaussé de 3,0 V à 5,5 V (11/10/2026, ADR-0061) : une batterie 2S (7,2 V nominal)
+// ne descend jamais sous 5,5 V (coupure BMS à ~6,0 V). À 3,0 V, la tension résiduelle
+// sans batterie (3,29 V relevés le 11/10) déclenchait un faux positif qui allumait
+// le chargeur dans le vide et faisait surchauffer l'ESP32-P4 à plus de 70 °C.
+constexpr float kBatterieSeuilV = 5.5f;           // chargeur coupé : au-dessus = batterie
 constexpr float kBatterieBasseV = 6.0f;           // chargeur allumé : en dessous, sonder
+
+// ─── Sécurité thermique anti-surchauffe (11/10/2026, ADR-0061) ───
+// Température normale du Tab5 : 36 à 40 °C. Au-delà de kChargeurTempMaxC (55 °C) ou
+// en cas de montée brutale (+4 °C en ≤ 60 s avec CPU > 48 °C), le chargeur est
+// immédiatement verrouillé et coupé pendant au moins kChargeurVerrouMinMs (15 min).
+// Réarmement automatique possible uniquement si la température repasse sous kChargeurTempRearmeC (44 °C).
+constexpr float kChargeurTempMaxC = 55.0f;
+constexpr float kChargeurTempRearmeC = 44.0f;
+constexpr float kChargeurPenteMaxC = 4.0f;                    // montée brutale (+4 °C en ≤ 60 s)
+constexpr uint32_t kChargeurVerrouMinMs = 15u * 60u * 1000u; // verrouillé au moins 15 min
+constexpr uint32_t kFenetrePenteMs = 60u * 1000u;
+
 // Chargeur coupé depuis au moins ce délai : la tension lue est celle de la batterie (ou
 // du vide). Mesuré le 08/10/2026 : 1,83 V lus 6 s après la coupure, sans batterie.
 constexpr uint32_t kChargeurReposMs = 8u * 1000u;
@@ -148,12 +164,52 @@ struct EtatChargeur {
     uint32_t sonde_fin_ms = 0;     // fin de la dernière sonde (0 : aucune encore)
     float tension = NAN;           // dernière lecture (V)
     float niveau = NAN;            // %, batterie présente seulement
+    bool verrou_thermique = false; // sécurité anti-surchauffe active (coupure totale de charge)
+    uint32_t verrou_thermique_ms = 0; // instant du dernier déclenchement de surchauffe
+    float derniere_temp_cpu = NAN; // dernière température CPU (°C)
+    float temp_precedente_pente = NAN; // température de référence pour calcul de pente
+    uint32_t temp_precedente_ms = 0;
 };
 
 struct ActionChargeur {
     bool allumer = true;   // état voulu de CHG_EN
     bool lire = false;     // demander une lecture de l'INA226 maintenant
 };
+
+// Surveillance thermique appelée à chaque relevé de température interne :
+// Renvoie true si le verrou thermique vient d'être déclenché (front montant).
+inline bool chargeur_surveillance_thermique(EtatChargeur& c, float temp_c, uint32_t maintenant_ms) {
+    if (!std::isfinite(temp_c)) return false;
+    c.derniere_temp_cpu = temp_c;
+
+    // Calcul de pente sur fenêtre glissante (~60 s)
+    if (c.temp_precedente_ms == 0 || maintenant_ms - c.temp_precedente_ms >= kFenetrePenteMs) {
+        c.temp_precedente_pente = temp_c;
+        c.temp_precedente_ms = maintenant_ms;
+    }
+    const bool pente_anormale = std::isfinite(c.temp_precedente_pente) &&
+                                (temp_c - c.temp_precedente_pente >= kChargeurPenteMaxC) &&
+                                (temp_c >= 48.0f);
+
+    const bool declenchement = (temp_c >= kChargeurTempMaxC) || pente_anormale;
+
+    if (declenchement) {
+        c.verrou_thermique_ms = maintenant_ms;
+        if (!c.verrou_thermique) {
+            c.verrou_thermique = true;
+            c.allume = false;
+            c.change_ms = maintenant_ms;
+            return true;
+        }
+    } else if (c.verrou_thermique) {
+        // Réarmement après délai minimum de sécurité ET retour sous le seuil sain (44 °C)
+        if (maintenant_ms - c.verrou_thermique_ms >= kChargeurVerrouMinMs &&
+            temp_c <= kChargeurTempRearmeC) {
+            c.verrou_thermique = false;
+        }
+    }
+    return false;
+}
 
 // Une lecture de la tension (V) à `maintenant_ms` (millis(), différences non signées).
 // Vrai si la présence a changé. Lecture ratée (NAN) : rien ne change.
@@ -183,6 +239,7 @@ inline bool chargeur_en_sonde(const EtatChargeur& c, uint32_t maintenant_ms) {
 
 // Chargeur voulu hors réveil et hors sonde.
 inline bool chargeur_voulu(const EtatChargeur& c, uint8_t limite, uint32_t maintenant_ms) {
+    if (c.verrou_thermique) return false;
     switch (c.presence) {
         case PresenceBatterie::ABSENTE: return false;
         case PresenceBatterie::INCONNUE: return true;
@@ -205,6 +262,21 @@ inline void chargeur_commander(EtatChargeur& c, bool allume, uint32_t maintenant
 // sonde : sans elle, la lecture suivante attendrait jusqu'à 60 s).
 inline ActionChargeur chargeur_tick(EtatChargeur& c, uint8_t limite, bool montee, uint32_t maintenant_ms) {
     ActionChargeur a;
+    // Verrouillage thermique actif : chargeur INTERDIT (aucune tentative de réveil ni de sonde)
+    if (c.verrou_thermique) {
+        if (maintenant_ms - c.verrou_thermique_ms >= kChargeurVerrouMinMs &&
+            (!std::isfinite(c.derniere_temp_cpu) || c.derniere_temp_cpu <= kChargeurTempRearmeC)) {
+            c.verrou_thermique = false;
+        } else {
+            c.allume = false;
+            c.sonde = false;
+            c.reveil = false;
+            c.reveil_demande = false;
+            a.allumer = false;
+            a.lire = false;
+            return a;
+        }
+    }
     // « Tab5 Batterie montée » allumé : le moyen manuel de réveiller une batterie neuve ou
     // si vide que sa protection a coupé (vue absente), sans attendre l'heure.
     if (montee && !c.montee_avant) c.reveil_demande = true;
@@ -344,6 +416,9 @@ float batterie_consommation(float courant_a, bool sur_batterie);
 float batterie_derniere_consommation();
 // Niveau publié : seuil d'alerte franchi (20 ou 10), 0 sinon.
 int batterie_alerte(float niveau, bool sur_batterie);
+// Surveillance thermique (11/10/2026) : relève la température CPU et verrouille le chargeur si surchauffe.
+bool chargeur_thermique_releve(float temp_c, uint32_t maintenant_ms);
+bool chargeur_est_verrouille_thermique();
 // Rendu hors tablette (Tab5/rendu/bouchons.yaml) : chargeur coupé depuis longtemps, la
 // lecture suivante décide la présence d'après sa tension.
 void chargeur_rendu_coupe(uint32_t maintenant_ms);

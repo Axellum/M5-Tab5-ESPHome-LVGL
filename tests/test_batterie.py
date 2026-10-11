@@ -192,3 +192,29 @@ def test_consommation_et_alerte_de_batterie_faible():
     # Côté HA, la garde « batterie faible » lit ces deux champs (tests/test_contrat.py).
     sante = (REPO / "HomeAssistant_Config" / "packages" / "tab5_health.yaml").read_text(encoding="utf-8")
     assert "esphome.tab5_batterie_faible" in sante
+
+
+def test_seuil_presence_batterie_et_securite_thermique():
+    """Seuil de présence batterie rehaussé à 5,5 V et sécurité thermique anti-surchauffe
+    (11/10/2026, ADR-0061) :
+    - 5,5 V évite les faux positifs sur tension résiduelle sans batterie (3,29 V observés) ;
+    - seuil critique à 55 °C et réarmement à 44 °C ;
+    - script tab5_alerte_thermique émet esphome.tab5_alerte_thermique ;
+    - garde HA tab5_health_surchauffe présente."""
+    entete = _entete()
+    seuil = re.search(r"kBatterieSeuilV\s*=\s*([\d.]+)f", entete)
+    assert seuil and float(seuil.group(1)) == 5.5, "seuil de détection batterie 2S rehaussé à 5,5 V"
+    temp_max = re.search(r"kChargeurTempMaxC\s*=\s*([\d.]+)f", entete)
+    assert temp_max and float(temp_max.group(1)) == 55.0, "seuil coupure thermique à 55 °C"
+    temp_rearme = re.search(r"kChargeurTempRearmeC\s*=\s*([\d.]+)f", entete)
+    assert temp_rearme and float(temp_rearme.group(1)) == 44.0, "seuil réarmement thermique à 44 °C"
+
+    diag = _yaml(DIAG)
+    script_therm = next(s for s in diag["script"] if s["id"] == "tab5_alerte_thermique")
+    assert script_therm["parameters"] == {"temp": "float"}
+    evt = script_therm["then"][1]["homeassistant.event"]
+    assert evt["event"] == "esphome.tab5_alerte_thermique"
+
+    sante = (REPO / "HomeAssistant_Config" / "packages" / "tab5_health.yaml").read_text(encoding="utf-8")
+    assert "esphome.tab5_alerte_thermique" in sante
+    assert "tab5_health_surchauffe" in sante
