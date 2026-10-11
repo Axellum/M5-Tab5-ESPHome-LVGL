@@ -43,7 +43,8 @@ ActionChargeur chargeur_pas(uint8_t limite, bool montee, uint8_t memoire, uint32
     const ActionChargeur a = chargeur_tick(s_chargeur, limite, montee, maintenant_ms);
     if (a.allumer != avant) {
         const char* raison;
-        if (s_chargeur.sonde && !sonde_avant) raison = "sonde : tension lue chargeur coupe";
+        if (s_chargeur.verrou_thermique) raison = "securite thermique (CPU trop chaud)";
+        else if (s_chargeur.sonde && !sonde_avant) raison = "sonde : tension lue chargeur coupe";
         else if (s_chargeur.reveil) raison = "reveil d'une batterie (demarrage ou batterie montee)";
         else if (s_chargeur.presence == PresenceBatterie::ABSENTE) raison = "pas de batterie";
         else if (s_chargeur.presence == PresenceBatterie::INCONNUE) raison = "batterie inconnue";
@@ -89,6 +90,18 @@ int batterie_alerte(float niveau, bool sur_batterie) {
     const int seuil = batterie_alerte_lue(s_alerte, niveau, sur_batterie);
     if (seuil > 0) ESP_LOGI(TAG, "Batterie faible : %.0f %% (seuil %d %%)", niveau, seuil);
     return seuil;
+}
+
+bool chargeur_thermique_releve(float temp_c, uint32_t maintenant_ms) {
+    const bool alerte = chargeur_surveillance_thermique(s_chargeur, temp_c, maintenant_ms);
+    if (alerte) {
+        ESP_LOGE(TAG, "URGENCE THERMIQUE : CPU à %.1f °C ! Chargeur immédiatement verrouillé et coupé", temp_c);
+    }
+    return alerte;
+}
+
+bool chargeur_est_verrouille_thermique() {
+    return s_chargeur.verrou_thermique;
 }
 
 void chargeur_rendu_coupe(uint32_t maintenant_ms) {
