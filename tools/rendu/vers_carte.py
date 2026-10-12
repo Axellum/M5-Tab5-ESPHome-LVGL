@@ -12,13 +12,16 @@ Les étapes d'ecrans.py sont écrites pour l'écran du Tab5 (1280×720). Sur une
 2. Les boutons des roues (ADR-0036, ADR-0042) sont recalculés pour l'écran de la carte,
    autour de leur ancre ramenée sur la carte (disposer() de tab5_roue.cpp dépend de la
    taille de l'écran).
-3. Les autres points suivent la mise en page : sur l'accueil, la colonne de l'horloge et la
+3. Les autres points suivent la mise en page : sur l'accueil, la rangée sous l'horloge et la
    carte centrale sont centrées (décalées de la moitié de l'écart de largeur), le reste est
    en place ; dans un popup, la croix est collée au bord droit de la carte modale, les noms
    des pages réduits depuis elle (onglet_x de tab5_geometrie.h), le corps ramené à la taille
-   du corps (kCorpsW × kCorpsH). Un point qui reste hors de l'écran arrête l'écran là (ses
-   étapes suivantes et `fermer` ne sont pas jouées) : il ne s'ouvrira pas, le bilan
-   (tools/rendu/bilan_carte.py) le compte.
+   du corps (kCorpsW × kCorpsH) ; le sélecteur de l'Arcade est centré en largeur, les
+   consoles restent au pixel. Un point qui reste hors de l'écran arrête l'écran là (ses
+   étapes suivantes ne sont pas jouées) : il ne s'ouvrira pas, le bilan
+   (tools/rendu/bilan_carte.py) le compte. `fermer` garde alors ses étapes qui ne sont pas
+   des gestes (le thème remis, une option rétablie) : sans elles, l'écran suivant hériterait
+   de l'état laissé (un thème changé, toutes les captures suivantes dans ce thème).
 
 Sur le Tab5, rien ne change : `adapter` rend les étapes telles quelles (les captures de
 référence restent identiques). Module pur (stdlib), vérifié par tests/test_vers_carte.py.
@@ -43,14 +46,19 @@ CROIX = 10 + 80
 # fin sur une carte (kOngletsFin = kCarteL - 102).
 ONGLETS_DEBUT_TAB5, ONGLETS_FIN_TAB5 = 196, 1148
 ONGLETS_AVANT_LE_BORD = 102
-# Accueil : au-dessus des tuiles (y 455 du Tab5), la colonne de l'horloge (x 440 à 840) et la
-# carte centrale sont centrées dans l'écran ; le reste est posé à gauche, au pixel.
-ACCUEIL_TUILES_Y = 455
+# Accueil (tab5-lvgl.yaml) : entre l'horloge et les tuiles (y 230 à 455 du Tab5), la rangée
+# sous l'horloge et sa zone tactile (TOP_MID) et la carte centrale (x 20, largeur de l'écran
+# − 40) sont centrées dans l'écran. Le reste est posé à gauche, au pixel, dont les trois zones
+# tactiles de l'horloge (horloge_zone.yaml, x 440 à 840) : la tuile de l'horloge est centrée,
+# pas elles (accueil pas encore à la taille de la carte, lot suivant).
+ACCUEIL_CENTRE_Y, ACCUEIL_TUILES_Y = 230, 455
 ACCUEIL_CENTRE = (440, 840)
 # Valeur d'Ecran::ARCADE (Tab5/ecran/tab5_zones.h) : tests/test_vers_carte.py la relit.
 ECRAN_ARCADE = 22
 # Marge des points ramenés dans l'écran (gestes, toucher qui ferme une roue).
 BORD = 15
+# Où le doigt touche (adapter) : l'accueil, un popup, le sélecteur de l'Arcade, une console.
+ACCUEIL, POPUP, ARCADE, JEU = "accueil", "popup", "arcade", "jeu"
 
 
 def taille_carte(carte: str) -> tuple[int, int]:
@@ -76,7 +84,7 @@ class Carte:
         return 0 <= x < self.l and 0 <= y < self.h
 
     def accueil(self, x: int, y: int) -> tuple[int, int]:
-        if y < ACCUEIL_TUILES_Y and ACCUEIL_CENTRE[0] <= x <= ACCUEIL_CENTRE[1]:
+        if ACCUEIL_CENTRE_Y <= y < ACCUEIL_TUILES_Y and ACCUEIL_CENTRE[0] <= x <= ACCUEIL_CENTRE[1]:
             return x + self.dx // 2, y
         return x, y
 
@@ -93,6 +101,11 @@ class Carte:
             cx = CORPS_X + round((cx - CORPS_X) * self.corps[0] / self.corps_tab5[0])
             cy = CORPS_Y + round((cy - CORPS_Y) * self.corps[1] / self.corps_tab5[1])
         return cx + MARGE_CARTE, cy + MARGE_CARTE
+
+    def arcade(self, x: int, y: int) -> tuple[int, int]:
+        """Sélecteur de l'Arcade : la grille des consoles centrée en largeur, au pixel en
+        hauteur (capture arcade.png de la 7B, lot 1)."""
+        return x + self.dx // 2, y
 
     def borner(self, x: int, y: int) -> tuple[int, int]:
         return min(max(x, BORD), self.l - BORD), min(max(y, BORD), self.h - BORD)
@@ -170,60 +183,81 @@ def adapter(ecran: E.Ecran, carte: str = "tab5", taille: tuple[int, int] | None 
         return ecran.etapes, ecran.fermer, []
     c = Carte(taille)
     roues, ouvertures, explicites, popups = _roues(c), _ouvertures(c), _explicites(c), _ouvrent_un_popup()
-    dans_popup = False
+    # Où est le doigt : ACCUEIL, POPUP (carte modale), ARCADE (le sélecteur, centré en
+    # largeur seulement) ou JEU (une console : posée au pixel, pas encore à la taille).
+    mode = ACCUEIL
     retirees: list = []
 
-    def point(x: int, y: int) -> tuple[int, int]:
-        return c.popup(x, y) if dans_popup else c.accueil(x, y)
+    def regle(m: str):
+        return {ACCUEIL: c.accueil, POPUP: c.popup, ARCADE: c.arcade}.get(m, lambda x, y: (x, y))
 
     def une(etape):
-        nonlocal dans_popup
+        nonlocal mode
         if isinstance(etape, E.Aller):
-            dans_popup = etape.option != "Accueil"
+            mode = ACCUEIL if etape.option == "Accueil" else POPUP
+            return etape
+        if isinstance(etape, E.Service) and etape.nom == "rendu_ecran":
+            mode = ARCADE
             return etape
         if isinstance(etape, E.Toucher):
             if etape in explicites:
                 return explicites[etape]
             if etape in roues:
                 nouvelle, ouvre = roues[etape]
-                dans_popup = dans_popup or ouvre
+                mode = POPUP if ouvre else mode
                 return replace(etape, x=nouvelle.x, y=nouvelle.y)
-            if not dans_popup and etape in ouvertures:
+            if mode == ACCUEIL and etape in ouvertures:
                 x, y = c.accueil(etape.x, etape.y)
                 if not c.dedans(x, y):
                     navigation = ouvertures[etape]
-                    dans_popup = isinstance(navigation, E.Aller)   # l'Arcade est une page
+                    mode = POPUP if isinstance(navigation, E.Aller) else ARCADE
                     return navigation
-            x, y = point(etape.x, etape.y)
+            x, y = regle(mode)(etape.x, etape.y)
             if not c.dedans(x, y):
                 retirees.append(etape)
                 return None
-            autres = tuple((s, *point(sx, sy)) for s, sx, sy in etape.selon_langue)
-            if etape == FERMER:
-                dans_popup = False
-            elif not dans_popup and (etape in ouvertures or etape in popups):
-                dans_popup = True
+            autres = tuple((s, *regle(mode)(sx, sy)) for s, sx, sy in etape.selon_langue)
+            if etape == FERMER and mode == POPUP:
+                mode = ACCUEIL
+            elif mode == ACCUEIL and (etape in ouvertures or etape in popups):
+                mode = POPUP
+            elif mode == ARCADE:
+                mode = JEU
             return replace(etape, x=x, y=y, selon_langue=autres)
         if isinstance(etape, E.Glisser):
-            regle = c.popup if (etape.dans_popup or dans_popup) else c.accueil
-            x1, y1 = c.borner(*regle(etape.x1, etape.y1))
-            x2, y2 = c.borner(*regle(etape.x2, etape.y2))
+            r = c.popup if etape.dans_popup else regle(mode)
+            x1, y1 = c.borner(*r(etape.x1, etape.y1))
+            x2, y2 = c.borner(*r(etape.x2, etape.y2))
             return replace(etape, x1=x1, y1=y1, x2=x2, y2=y2)
         return etape
 
     # Un geste impossible arrête l'écran là : la suite toucherait ce que l'écran affiche à
-    # la place (un autre jeu du sélecteur, une autre tuile). `fermer` défait ce que les
-    # étapes ont fait ; sans elles jusqu'au bout, rien : le retour à l'accueil suffit.
+    # la place (un autre jeu du sélecteur, une autre tuile). Dans `fermer`, les gestes
+    # s'arrêtent aussi au premier impossible (ou dès le début si les étapes ont été coupées :
+    # ils défont des gestes qui n'ont pas eu lieu), mais les étapes sans geste (Choisir,
+    # Service, Aller, Attendre) restent : elles remettent l'état commun (thème, options).
+    # Un écran resté sur l'accueil dont les gestes de `fermer` sont impossibles n'est pas
+    # joué : le retour à l'accueil (capturer.py) referme un popup ou une console, pas un
+    # changement fait sur l'accueil (l'appareil suivant de la tuile − / +).
     etapes = []
+    gestes_ok = True
     for etape in ecran.etapes:
         nouvelle = une(etape)
         if nouvelle is None:
-            return tuple(etapes), (), retirees
+            gestes_ok = False
+            break
         etapes.append(nouvelle)
+    sur_accueil, complet = mode == ACCUEIL, gestes_ok
     fermer = []
     for etape in ecran.fermer:
+        geste = isinstance(etape, (E.Toucher, E.Glisser))
+        if geste and not gestes_ok:
+            continue
         nouvelle = une(etape)
         if nouvelle is None:
-            break
+            gestes_ok = False
+            continue
         fermer.append(nouvelle)
+    if complet and not gestes_ok and sur_accueil:
+        return (), tuple(e for e in fermer if not isinstance(e, (E.Toucher, E.Glisser))), retirees
     return tuple(etapes), tuple(fermer), retirees

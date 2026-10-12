@@ -9,7 +9,9 @@ On vérifie :
   l'Arcade est ouverte par sa valeur de l'enum Ecran, et la conversion reprend la géométrie
   de tab5_geometrie.h (carte modale, corps, onglets d'en-tête) ;
 - les noms des pages des Réglages, touchés sur le Tab5, tombent sur les mêmes onglets de la
-  carte (pages_onglets, tab5_pages.cpp)."""
+  carte (pages_onglets, tab5_pages.cpp) ;
+- un écran coupé ne laisse pas d'état derrière lui (thème remis, changement d'accueil
+  impossible à défaire pas joué), l'accueil et l'Arcade suivent leur vraie mise en page."""
 import re
 
 import pytest
@@ -89,6 +91,57 @@ def test_boutons_hors_ecran_remplaces_par_la_navigation(carte):
     arcade = next(e for e in E.ECRANS if e.nom == "arcade")
     (service,) = V.adapter(arcade, carte)[0]
     assert service.nom == "rendu_ecran"
+
+
+def _ecran(nom):
+    return next(e for e in E.ECRANS if e.nom == nom)
+
+
+@pytest.mark.parametrize("carte", AUTRES)
+def test_etat_commun_remis_meme_ecran_coupe(carte):
+    """Un écran coupé par un geste hors de l'écran remet quand même le thème : sans quoi
+    toutes les captures suivantes de la carte seraient dans le thème Capsule."""
+    ecran = _ecran("accueil-zone-graphique-gelule")
+    _etapes, fermer, retirees = V.adapter(ecran, carte)
+    assert retirees and E.Choisir("Thème", "Relief doux", apres=2.0) in fermer
+    for e in E.ECRANS:
+        etapes, fermer, _r = V.adapter(e, carte)
+        choisis = [x for x in e.etapes if isinstance(x, E.Choisir)]
+        joues = [x for x in etapes if isinstance(x, E.Choisir)]
+        if joues:
+            # Ce que les étapes ont choisi, fermer le remet tel que sur le Tab5.
+            assert [x for x in fermer if isinstance(x, E.Choisir)] == \
+                [x for x in e.fermer if isinstance(x, E.Choisir)], e.nom
+        assert len(joues) <= len(choisis)
+
+
+@pytest.mark.parametrize("carte", AUTRES)
+def test_changement_d_accueil_impossible_a_defaire_pas_joue(carte):
+    """« Appareil suivant » de la tuile − / + ne se défait que par la tuile, hors de l'écran
+    de la 7B : l'écran n'est pas joué (le retour à l'accueil ne le déferait pas)."""
+    etapes, fermer, retirees = V.adapter(_ecran("accueil-minutes-appareil-suivant"), carte)
+    assert etapes == () and fermer == () and retirees
+
+
+@pytest.mark.parametrize("carte", AUTRES)
+def test_accueil_horloge_au_pixel_carte_centrale_centree(carte):
+    """Les zones tactiles de l'horloge sont posées au pixel (horloge_zone.yaml), la carte
+    centrale est centrée (x 20, largeur de l'écran − 40)."""
+    c = V.Carte(V.taille_carte(carte))
+    assert c.accueil(*E.HEURES) == E.HEURES
+    assert c.accueil(*E.CARTE_CENTRALE) == (c.l // 2, E.CARTE_CENTRALE[1])
+
+
+@pytest.mark.parametrize("carte", AUTRES)
+def test_arcade_puis_console(carte):
+    """Le sélecteur de l'Arcade est centré en largeur ; une console reste au pixel."""
+    c = V.Carte(V.taille_carte(carte))
+    etapes, _f, _r = V.adapter(_ecran("jeu-go-nouvelle-partie"), carte)
+    service, choix, menu = etapes
+    assert service.nom == "rendu_ecran"
+    ecran = _ecran("jeu-go-nouvelle-partie").etapes
+    assert (choix.x, choix.y) == (ecran[1].x + c.dx // 2, ecran[1].y)
+    assert (menu.x, menu.y) == (ecran[2].x, ecran[2].y)
 
 
 @pytest.mark.parametrize("carte", AUTRES)
