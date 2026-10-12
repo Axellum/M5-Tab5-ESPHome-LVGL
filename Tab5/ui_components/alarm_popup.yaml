@@ -86,8 +86,10 @@ obj:
               styles: style_invisible
               widgets:
                 # Heure fixe : deux rouleaux centrés dans la carte (heures 85..275, « : » au
-                # centre, minutes 314..504). Les minutes vont de 5 en 5 ; une minute réglée
-                # autrement depuis HA s'y montre telle quelle (alarm_render.cpp).
+                # centre, minutes 314..504 sur le Tab5 ; posés depuis le milieu de la carte,
+                # demi_w, pour que le « : » reste entre eux sur une carte plus étroite). Les
+                # minutes vont de 5 en 5 ; une minute réglée autrement depuis HA s'y montre
+                # telle quelle (alarm_render.cpp).
                 - obj:
                     align: TOP_LEFT
                     x: 24
@@ -98,9 +100,9 @@ obj:
                     scrollable: false
                     widgets:
                       - label: { text: "HEURE DU RÉVEIL", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_heure, x: 85, y: 60, w: 190, h: 459, police: roboto_130_b, ecart: 0, quoi: 0 } }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_heure, x: "${ demi_w | int // 2 - 209 }", y: 60, w: 190, h: 459, police: roboto_130_b, ecart: 0, quoi: 0 } }
                       - label: { text: ":", align: TOP_MID, x: 0, y: 203, text_font: roboto_130_b, styles: style_text_soft }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_minutes, x: 314, y: 60, w: 190, h: 459, police: roboto_130_b, ecart: 0, quoi: 1 } }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_minutes, x: "${ (demi_w | int + 1) // 2 + 19 }", y: 60, w: 190, h: 459, police: roboto_130_b, ecart: 0, quoi: 1 } }
                       - label: { text: "Glisser les chiffres vers le haut ou vers le bas.", align: TOP_LEFT, x: 22, y: 540, width: 545, text_align: CENTER, styles: style_text_dim }
 
                 # Marche / arrêt, prochaine sonnerie, test : la carte qui répond à « à quelle

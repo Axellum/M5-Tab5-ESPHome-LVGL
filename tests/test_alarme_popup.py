@@ -181,7 +181,7 @@ def _boite(widget):
         largeur = v.get(lv) if lv else fixe[0]
         hauteur = v.get(hv) if hv and hv in v else (fixe[1] if fixe else None)
         x = 17 if inc["file"] == "reglages_rangee.yaml" else v.get("x")
-        return int(x), int(v["y"]), int(largeur), int(hauteur)
+        return _n(x), _n(v["y"]), _n(largeur), _n(hauteur)
     (_, props), = widget.items()
     if not isinstance(props, dict) or props.get("align") != "TOP_LEFT":
         return None

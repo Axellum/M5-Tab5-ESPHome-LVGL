@@ -187,15 +187,19 @@ obj:
                     widgets:
                       - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56 }
 
-                # Température réelle de la pièce (tab5_maj_clim, ou clé ceRT d'une tuile)
-                - label: { text: "\U000F050F", align: BOTTOM_MID, x: -135, y: -20, text_font: mdi_font_32, styles: style_text_dim }
-                - label: { text: "Pièce", align: BOTTOM_MID, x: -70, y: -20, styles: style_text_dim }
+                # Température réelle de la pièce (tab5_maj_clim, ou clé ceRT d'une tuile).
+                # À 20 px du bas d'une carte de 598 (le Tab5) : y = 578 − corps_h la garde à
+                # la même hauteur quand la carte est plus courte (1024×600), sous les − / + et
+                # donc coupée par la carte plutôt que posée sur eux, tant que l'arc et les
+                # boutons ne sont pas à la taille de la carte (lot suivant).
+                - label: { text: "\U000F050F", align: BOTTOM_MID, x: -135, y: "${ 578 - corps_h | int }", text_font: mdi_font_32, styles: style_text_dim }
+                - label: { text: "Pièce", align: BOTTOM_MID, x: -70, y: "${ 578 - corps_h | int }", styles: style_text_dim }
                 - label:
                     id: val_temp_int_popup
                     text: "-- °C"
                     align: BOTTOM_MID
                     x: 55
-                    y: -20
+                    y: "${ 578 - corps_h | int }"
                     text_font: roboto_32_b
 
           # ═══ CARTE OPTIONS (droite) : presets + ventilation + flux d'air ═══
