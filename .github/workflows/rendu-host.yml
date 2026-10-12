@@ -20,6 +20,12 @@ name: Rendu hors tablette
 # Tâche « compiler » (OUT-6 de l'audit du 07/10/2026) : le rendu est compilé UNE fois et
 # passé en artefact aux neuf tâches « rendu », qui le recompilaient chacune (~2 min de
 # runner par tâche) ; les paquets pip d'ESPHome sont gardés en cache par version.
+# Tâche « rendu-7b » (ADR-0061) : le même rendu compilé pour la Waveshare 7B
+# (`-s tab5_carte waveshare-7b`, dalle virtuelle 1024×600 sans rotation), scènes et écrans
+# en français, artefact « rendu-1024x600 » à part (pas dans la comparaison des captures
+# du Tab5). INFORMATIF : l'interface n'est pas encore adaptée à cette taille, les appuis
+# gardent les coordonnées du Tab5 (beaucoup d'écrans ne s'ouvrent pas) ; la tâche n'échoue
+# que si le rendu ne compile pas, ne capture rien ou si une capture n'est pas en 1024×600.
 
 on:
   workflow_dispatch:
@@ -297,6 +303,99 @@ jobs:
             !captures/*.bmp
           if-no-files-found: warn
           retention-days: 3
+
+  # Waveshare 7B, 1024×600 (ADR-0061) : voir l'en-tête. Indépendante des tâches du Tab5
+  # (ni `needs`, ni artefact « rendu-captures-* » que `comparer` réunit).
+  rendu-7b:
+    runs-on: ubuntu-latest
+    # Compilation (~2 à 4 min) + scènes et ~200 écrans en une passe (~20 min pour une langue).
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Version plancher d'ESPHome (min_version de tab5-ha-hmi.yaml)
+        id: version
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          echo "esphome=$v" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/pip
+          key: pip-esphome-${{ steps.version.outputs.esphome }}-py3.13
+      - name: ESPHome à la version plancher, Pillow, faketime
+        env:
+          ESPHOME_VERSION: ${{ steps.version.outputs.esphome }}
+        run: |
+          bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
+          sudo apt-get install -y --no-install-recommends faketime
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.platformio
+          key: pio-host-${{ steps.version.outputs.esphome }}
+      - name: Compiler le rendu de la Waveshare 7B (1024×600)
+        env:
+          TZ: Europe/Paris
+        run: |
+          esphome -s tab5_carte waveshare-7b -s rendu_nom tab5-rendu-7b compile tab5-rendu-host.yaml
+          prog=$(find .esphome/build/tab5-rendu-7b -name program -type f | head -n 1)
+          echo "Programme 1024×600 : $prog ($(du -h "$prog" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p rendu-programme
+          cp "$prog" rendu-programme/program
+      - name: Lancer le rendu et capturer scènes et écrans (1024×600)
+        # Mêmes réglages que la tâche « fr » (date figée, préférences neuves). Les alertes de
+        # capturer.py (« identique à … : l'appui n'a rien ouvert ? ») sont attendues ici :
+        # gardées dans le journal, pas en annotations de la PR.
+        env:
+          TZ: Europe/Paris
+          DEPART: "2026-06-16 07:45:00"
+          FAKETIME_DONT_FAKE_MONOTONIC: "1"
+          ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+        run: |
+          set -o pipefail
+          prog="$PWD/rendu-programme/program"
+          chmod +x "$prog"
+          mkdir -p captures
+          export ESPHOME_SNAPSHOT_DIR="$PWD/captures"
+          faketime -f "$DEPART" "$prog" > "captures/rendu-7b.log" 2>&1 &
+          pid=$!
+          sleep 8
+          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures | sed 's/^::warning[^:]*::/alerte : /'
+          pkill -f "$prog" 2>/dev/null || true
+          kill "$pid" 2>/dev/null || true
+      - name: Taille des captures (1024×600)
+        run: |
+          python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import sys
+          from pathlib import Path
+          from PIL import Image
+          sys.path.insert(0, "tools/rendu")
+          from capturer import _portrait
+          tailles = {}
+          for png in sorted(Path("captures").glob("*.png")):
+              with Image.open(png) as image:
+                  if not _portrait(png.stem):
+                      tailles.setdefault(image.size, []).append(png.stem)
+          print("### Rendu 1024×600 (Waveshare 7B, informatif)")
+          for (l, h), noms in sorted(tailles.items()):
+              print(f"- {len(noms)} captures en {l}×{h}")
+          if set(tailles) != {(1024, 600)}:
+              sys.exit(f"Captures pas toutes en 1024×600 : {sorted(tailles)}")
+          EOF
+      - name: Journal du rendu
+        if: always()
+        run: tail -n 80 captures/rendu-7b.log || true
+      - name: Captures 1024×600
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: rendu-1024x600
+          path: |
+            captures/
+            !captures/*.bmp
+          if-no-files-found: warn
+          retention-days: 14
 
   comparer:
     needs: rendu

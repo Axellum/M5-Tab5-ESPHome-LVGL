@@ -8,7 +8,8 @@ appels que le mode démo, pièces comprises quand le rendu a l'action tab5_maj_t
 ADR-0023) et lui demande une capture (action `rendu_capture`). Les BMP
 sont écrits par le rendu dans ESPHOME_SNAPSHOT_DIR ; avec Pillow, ce script en fait
 des PNG en paysage (la dalle du Tab5 est en portrait, LVGL tourne l'image de 270°,
-vérifié sur les premières captures). Neon Apron, en portrait, n'est pas tourné.
+vérifié sur les premières captures). Neon Apron, en portrait, n'est pas tourné, ni une
+dalle déjà en paysage (Waveshare 7B, 1024×600 : `-s tab5_carte waveshare-7b`, ADR-0061).
 
 Après les scènes, chaque écran de tools/rendu/ecrans.py (fenêtres, sous-fenêtres,
 sélecteur Arcade et jeux) est ouvert comme sur la dalle, par le doigt virtuel du rendu
@@ -116,6 +117,13 @@ def _portrait(nom_fichier: str) -> bool:
     return any(nom_fichier == p or nom_fichier.startswith(p + "-") for p in PORTRAITS)
 
 
+def a_tourner(nom_fichier: str, largeur: int, hauteur: int) -> bool:
+    """Le BMP est la dalle : portrait sur le Tab5 (720×1280, LVGL tourne de 270°), à
+    remettre en paysage ; déjà en paysage sur une carte paysage native (Waveshare 7B,
+    1024×600, ADR-0061), laissé tel quel. Neon Apron, en portrait, jamais tourné."""
+    return not _portrait(nom_fichier) and hauteur > largeur
+
+
 def en_png(dossier: Path) -> list[Path]:
     """Chaque BMP du dossier devient un PNG à l'endroit (Pillow requis), puis le BMP
     (2,7 Mo, ~330 par run) est supprimé."""
@@ -128,7 +136,8 @@ def en_png(dossier: Path) -> list[Path]:
     for bmp in sorted(dossier.glob("*.bmp")):
         png = bmp.with_suffix(".png")
         with Image.open(bmp) as image:
-            (image if _portrait(bmp.stem) else image.rotate(270, expand=True)).save(png, optimize=True)
+            tourner = a_tourner(bmp.stem, image.width, image.height)
+            (image.rotate(270, expand=True) if tourner else image).save(png, optimize=True)
         bmp.unlink()
         pngs.append(png)
     return pngs

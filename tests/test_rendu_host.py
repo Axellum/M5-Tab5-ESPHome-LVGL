@@ -56,9 +56,13 @@ def test_rendu_sans_materiel_de_la_tablette():
 
 # Packages de la tablette que le rendu ne charge pas : du matériel, remplacé par
 # Tab5/rendu/bouchons.yaml, ou la publication (OTA et mise à jour, sans écran, lot 6c).
-# Tout autre package doit être repris.
-MATERIEL = ("Tab5/paquets/tab5-hardware.yaml", "Tab5/paquets/ecran-", "Tab5/paquets/tab5-sensors-diagnostics.yaml", "Tab5/paquets/tab5-imu.yaml",
-            "Tab5/paquets/publication-")
+# Tout autre package doit être repris. Depuis l'ADR-0061, le matériel et l'écran passent
+# par le package de la carte (carte-<carte>.yaml) et la centrale inertielle par un choix
+# (tab5-imu.yaml sur le Tab5, tab5-imu-absente.yaml ailleurs) ; la géométrie de la carte, elle,
+# est reprise (geometrie-<carte>.yaml, voir test_geometrie_de_la_meme_carte).
+MATERIEL = ("Tab5/paquets/tab5-hardware.yaml", "Tab5/paquets/ecran-", "Tab5/paquets/tab5-sensors-diagnostics.yaml", "Tab5/paquets/tab5-imu",
+            "Tab5/paquets/publication-", "Tab5/paquets/carte-")
+CARTE = "${ tab5_carte | default('tab5') | lower }"
 
 
 def _includes(texte):
@@ -68,7 +72,7 @@ def _includes(texte):
 
 def _packages(texte):
     bloc = texte.split("\npackages:", 1)[1]
-    return re.findall(r"!include (\S+)", bloc)
+    return re.findall(r"!include (\S.*?)\s*$", bloc, re.M)
 
 
 def test_memes_sources_cpp_que_la_tablette():
@@ -85,6 +89,15 @@ def test_chaque_package_de_la_tablette_repris_ou_materiel():
         if package.startswith(MATERIEL):
             continue
         assert package in rendu, f"{package} : à reprendre dans tab5-rendu-host.yaml (ou matériel ?)"
+
+
+def test_geometrie_de_la_meme_carte():
+    """Le rendu prend la géométrie (taille, rotation, polices) de la carte que la tablette
+    compile, choisie par la même substitution `tab5_carte` (ADR-0061)."""
+    assert f"Tab5/paquets/carte-{CARTE}.yaml" in _packages(_lire("tab5-ha-hmi.yaml"))
+    assert f"Tab5/paquets/geometrie-{CARTE}.yaml" in _packages(_lire("tab5-rendu-host.yaml"))
+    for carte in ("tab5", "waveshare-7b"):
+        assert f"geometrie: !include geometrie-{carte}.yaml" in _lire("Tab5", "paquets", f"carte-{carte}.yaml"), carte
 
 
 def test_workflow_seulement_si_l_ecran_change_et_annule_sur_pr():

@@ -32,6 +32,12 @@ esphome:
   project:
     name: axellum.tab5-ha-hmi
     version: 3.2.0-rendu
+  # Taille de l'écran de la carte (ADR-0061), comme tab5-ha-hmi.yaml : le rendu se compile
+  # aussi en 1024×600 (`-s tab5_carte waveshare-7b`, job « rendu-7b » de rendu-host.yml).
+  build_flags:
+    - -DTAB5_ECRAN_L=${carte_ecran_l}
+    - -DTAB5_ECRAN_H=${carte_ecran_h}
+    - -DTAB5_ROTATION=${carte_rotation}
   includes:
     # En-têtes d'ESP-IDF, d'ESP-Hosted et de FreeRTOS remplacés pour la plateforme host
     # (Tab5/rendu/hote/, Tab5/rendu/freertos/) : les sources du projet restent celles
@@ -251,6 +257,10 @@ external_components:
 
 packages:
   tab5_ui_tokens: !include Tab5/paquets/tab5-ui-tokens.yaml
+  # Taille de l'écran seulement (pas le matériel de la carte) : dalle virtuelle de
+  # bouchons.yaml, rotation de LVGL, jetons et polices. `tab5_carte` : tab5 (défaut) ou
+  # waveshare-7b, comme pour la tablette.
+  tab5_geometrie: !include Tab5/paquets/geometrie-${ tab5_carte | default('tab5') | lower }.yaml
   tab5_bouchons: !include Tab5/rendu/bouchons.yaml
   tab5_assist: !include Tab5/paquets/tab5-assist.yaml
   tab5_sensors_domotique: !include Tab5/paquets/tab5-sensors-domotique.yaml

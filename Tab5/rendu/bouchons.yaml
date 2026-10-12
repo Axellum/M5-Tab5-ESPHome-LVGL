@@ -9,14 +9,16 @@
 #       matériels sont remplacés par Tab5/rendu/composants/.
 # ============================================================================
 
-# L'écran : un affichage en mémoire (plateforme host), même taille que la dalle du
-# Tab5 et même `rotation: 270` côté LVGL (tab5-styles.yaml). snapshot.take écrit un BMP.
+# L'écran : un affichage en mémoire (plateforme host), même taille que la dalle de la
+# carte et même rotation côté LVGL (tab5-styles.yaml) : 720×1280 tournée de 270° pour le
+# Tab5, 1024×600 sans rotation pour la Waveshare 7B (Tab5/paquets/geometrie-<carte>.yaml,
+# ADR-0061). snapshot.take écrit un BMP de la dalle.
 display:
   - platform: snapshot
     id: tab5_display
     dimensions:
-      width: 720
-      height: 1280
+      width: ${carte_dalle_l}
+      height: ${carte_dalle_h}
     update_interval: never
 
 # Heure de la machine (fuseau de la compilation). sntp_time porte le tick minute de
