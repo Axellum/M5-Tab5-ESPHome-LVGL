@@ -399,7 +399,7 @@ lvgl:
             id: central_card
             x: 20
             y: 333
-            width: 1240
+            width: ${central_carte_w}
             height: 84
             styles: style_bandeau_page
             scrollbar_mode: "OFF"

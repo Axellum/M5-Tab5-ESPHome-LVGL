@@ -59,8 +59,8 @@ obj:
               align: TOP_LEFT
               x: 24
               y: ${modal_body_y}
-              width: 1202
-              height: 598
+              width: ${corps_w}
+              height: ${corps_h}
               styles: style_glass_card
               pad_all: 10
               scrollbar_mode: ACTIVE

@@ -81,7 +81,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               scrollable: false
               styles: style_invisible
               widgets:
@@ -92,8 +92,8 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 589
-                    height: 598
+                    width: ${demi_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -107,10 +107,10 @@ obj:
                 # heure ça sonne, et pourquoi ».
                 - obj:
                     align: TOP_LEFT
-                    x: 637
+                    x: ${demi_x}
                     y: 0
-                    width: 589
-                    height: 598
+                    width: ${demi_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -187,7 +187,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               hidden: true
               scrollable: false
               styles: style_invisible
@@ -196,8 +196,8 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 1202
-                    height: 598
+                    width: ${corps_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -243,7 +243,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               hidden: true
               scrollable: false
               styles: style_invisible
@@ -252,8 +252,8 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 1202
-                    height: 598
+                    width: ${corps_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -285,7 +285,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               hidden: true
               scrollable: false
               styles: style_invisible
@@ -294,8 +294,8 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 589
-                    height: 598
+                    width: ${demi_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -344,10 +344,10 @@ obj:
                 # Répétition et durée max : deux rouleaux de 270 (x 17 et 302).
                 - obj:
                     align: TOP_LEFT
-                    x: 637
+                    x: ${demi_x}
                     y: 0
-                    width: 589
-                    height: 598
+                    width: ${demi_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -368,7 +368,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               hidden: true
               scrollable: false
               styles: style_invisible
@@ -377,8 +377,8 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 589
-                    height: 598
+                    width: ${demi_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -397,10 +397,10 @@ obj:
 
                 - obj:
                     align: TOP_LEFT
-                    x: 637
+                    x: ${demi_x}
                     y: 0
-                    width: 589
-                    height: 598
+                    width: ${demi_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:

@@ -102,13 +102,13 @@ obj:
           # ═══ TÊTE DE GRILLE (jours de la semaine) ═══
           # En semaine : couleur du thème (blanc) ; samedi et dimanche estompés, comme
           # leurs numéros. Chaque nom est centré sur sa colonne, les numéros aussi.
-          - label: { text: "Lun", align: TOP_LEFT, x: 25, y: "${modal_body_y}", width: 168, text_align: CENTER }
-          - label: { text: "Mar", align: TOP_LEFT, x: 197, y: "${modal_body_y}", width: 168, text_align: CENTER }
-          - label: { text: "Mer", align: TOP_LEFT, x: 369, y: "${modal_body_y}", width: 168, text_align: CENTER }
-          - label: { text: "Jeu", align: TOP_LEFT, x: 541, y: "${modal_body_y}", width: 168, text_align: CENTER }
-          - label: { text: "Ven", align: TOP_LEFT, x: 713, y: "${modal_body_y}", width: 168, text_align: CENTER }
-          - label: { text: "Sam", align: TOP_LEFT, x: 885, y: "${modal_body_y}", width: 168, text_align: CENTER, styles: style_text_dim }
-          - label: { text: "Dim", align: TOP_LEFT, x: 1057, y: "${modal_body_y}", width: 168, text_align: CENTER, styles: style_text_dim }
+          - label: { text: "Lun", align: TOP_LEFT, x: "${cal_col_x0}", y: "${modal_body_y}", width: "${cal_col_w}", text_align: CENTER }
+          - label: { text: "Mar", align: TOP_LEFT, x: "${ cal_col_x0 | int + 1 * (cal_col_pas | int) }", y: "${modal_body_y}", width: "${cal_col_w}", text_align: CENTER }
+          - label: { text: "Mer", align: TOP_LEFT, x: "${ cal_col_x0 | int + 2 * (cal_col_pas | int) }", y: "${modal_body_y}", width: "${cal_col_w}", text_align: CENTER }
+          - label: { text: "Jeu", align: TOP_LEFT, x: "${ cal_col_x0 | int + 3 * (cal_col_pas | int) }", y: "${modal_body_y}", width: "${cal_col_w}", text_align: CENTER }
+          - label: { text: "Ven", align: TOP_LEFT, x: "${ cal_col_x0 | int + 4 * (cal_col_pas | int) }", y: "${modal_body_y}", width: "${cal_col_w}", text_align: CENTER }
+          - label: { text: "Sam", align: TOP_LEFT, x: "${ cal_col_x0 | int + 5 * (cal_col_pas | int) }", y: "${modal_body_y}", width: "${cal_col_w}", text_align: CENTER, styles: style_text_dim }
+          - label: { text: "Dim", align: TOP_LEFT, x: "${ cal_col_x0 | int + 6 * (cal_col_pas | int) }", y: "${modal_body_y}", width: "${cal_col_w}", text_align: CENTER, styles: style_text_dim }
 
           # ═══ GRILLE 7×6 (42 cellules, lundi en premier — idx = ligne*7 + colonne) ═══
           # Construite en C++ par cal_grid_build(), insérée ICI (juste avant la

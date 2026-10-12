@@ -49,21 +49,27 @@ namespace {
 // kCorpsY : tab5_geometrie.h), marges et écarts de 12 px entre colonnes.
 constexpr int32_t kMarge = 12;
 constexpr int32_t kEcart = 12;
-// En-tête de colonne (40 px), puis les lignes (104 px, 8 px d'écart).
+// En-tête de colonne (40 px), puis les lignes (104 px, 8 px d'écart). Sur une carte moins
+// haute que celle du Tab5 (ADR-0061, lot 2 du portage), les cinq lignes se partagent la
+// hauteur qui reste (81 px sur la Waveshare 7B) : posée par disposer(), le YAML dit 104.
 constexpr int32_t kEnteteH = 40;
 constexpr int32_t kEnteteX = 6;       // le nom, un peu en retrait du bord de la colonne
-constexpr int32_t kLigneH = 104;
+constexpr int32_t kLigneHTab5 = 104;
 constexpr int32_t kLigneEcart = 8;
 constexpr int32_t kLignesY = kCorpsY + kEnteteH + kLigneEcart;
+constexpr int32_t kLigneHMax = (kCarteH - kMarge - kLignesY - (kTuiles - 1) * kLigneEcart) / kTuiles;
+constexpr int32_t kLigneH = kLigneHMax < kLigneHTab5 ? kLigneHMax : kLigneHTab5;
 // Dans une ligne (maison_ligne.yaml) : pastille de 56 px à 12 px du bord, textes à 80 px ;
 // « ⋯ » de 36 px à 12 px du bord droit, 8 px d'air avant lui ; sans lui, 12 px de marge.
 constexpr int32_t kTexteX = 80;
 constexpr int32_t kTexteFin = 12;
 constexpr int32_t kPlusPlace = 36 + 12 + 8;
-// Hauteur de la carte (kCarteH) : la dernière ligne y tient (sur un écran de la taille du
-// Tab5 : la mise en page n'est pas encore adaptée aux plus petits, ADR-0061).
-static_assert(!kMiseEnPageTab5 || kLignesY + kTuiles * kLigneH + (kTuiles - 1) * kLigneEcart <= kCarteH - kMarge,
+// Hauteur de la carte (kCarteH) : la dernière ligne y tient, sur toutes les cartes ; une
+// ligne garde la place de sa pastille (56 px) et de ses deux textes.
+static_assert(kLignesY + kTuiles * kLigneH + (kTuiles - 1) * kLigneEcart <= kCarteH - kMarge,
               "les cinq lignes d'une pièce tiennent dans la carte");
+static_assert(kLigneH >= 72, "une ligne de la Maison garde sa pastille et ses deux textes");
+static_assert(!kMiseEnPageTab5 || kLigneH == kLigneHTab5, "Tab5 : lignes de 104 px");
 
 // Largeur des colonnes de la dernière disposition (les textes d'une ligne en dépendent).
 int32_t s_colonne = 0;
@@ -79,6 +85,10 @@ lv_obj_t* enfant(lv_obj_t* o, int i) { return o != nullptr ? lv_obj_get_child(o,
 
 void largeur(lv_obj_t* o, int32_t w) {
     if (o != nullptr && lv_obj_get_style_width(o, LV_PART_MAIN) != w) lv_obj_set_width(o, w);
+}
+
+void hauteur(lv_obj_t* o, int32_t h) {
+    if (o != nullptr && lv_obj_get_style_height(o, LV_PART_MAIN) != h) lv_obj_set_height(o, h);
 }
 
 void cliquable(lv_obj_t* o, bool oui) {
@@ -138,6 +148,7 @@ void disposer() {
             ui_x(ligne, x);
             ui_y(ligne, kLignesY + k * (kLigneH + kLigneEcart));
             largeur(ligne, s_colonne);
+            hauteur(ligne, kLigneH);
             dessiner_ligne(ligne, r, t, agit, appui_long);
             k++;
         }

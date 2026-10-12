@@ -120,11 +120,11 @@ constexpr int32_t kPointHumidite = 12;
 
 // Onglets (historique_onglet.yaml) : sur la ligne du titre, de la fin du titre à la croix
 // (80 px à 10 px du bord, modal_header.yaml), 200 px au plus et 10 px d'écart, calés à
-// droite : quatre onglets tombent aux places de ceux des Réglages (x 318 à 1148).
+// droite : quatre onglets tombent aux places de ceux des Réglages (x 318 à 1148 sur le
+// Tab5). La fin, kOngletsFin, est celle de toutes les cartes (tab5_geometrie.h).
 constexpr int kOngletsMax = NB_CLES;
 constexpr int32_t kOngletL = 200;
 constexpr int32_t kOngletEcart = 10;
-constexpr int32_t kOngletsFin = kCarteL - 102;
 constexpr int32_t kTitrePopupX = 52;        // x du titre (modal_header.yaml)
 
 using Serie = HistoriqueSerie;

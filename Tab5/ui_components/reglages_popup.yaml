@@ -83,7 +83,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               scrollable: false
               styles: style_invisible
               widgets:
@@ -91,8 +91,8 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 1202
-                    height: 598
+                    width: ${corps_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -159,7 +159,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               hidden: true
               scrollable: false
               styles: style_invisible
@@ -168,8 +168,8 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 1202
-                    height: 598
+                    width: ${corps_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -228,8 +228,8 @@ obj:
                           align: TOP_LEFT
                           x: 0
                           y: 0
-                          width: 1202
-                          height: 598
+                          width: ${corps_w}
+                          height: ${corps_h}
                           hidden: true
                           scrollable: false
                           styles: [style_bg_console_bg, style_border_accent]
@@ -239,7 +239,7 @@ obj:
                           border_opa: 60%
                           widgets:
                             - label: { text: "Changer de langue ?", align: CENTER, y: -90, text_font: roboto_32_b }
-                            - label: { id: reglages_confirmation_texte, text: "", align: CENTER, y: -40, width: 1100, text_align: CENTER, long_mode: WRAP, styles: style_text_dim }
+                            - label: { id: reglages_confirmation_texte, text: "", align: CENTER, y: -40, width: "${ corps_w | int - 102 }", text_align: CENTER, long_mode: WRAP, styles: style_text_dim }
                             - button:
                                 align: CENTER
                                 x: -130
@@ -273,7 +273,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               hidden: true
               scrollable: false
               styles: style_invisible
@@ -283,8 +283,8 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 589
-                    height: 598
+                    width: ${demi_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -330,10 +330,10 @@ obj:
                 # ── État lu (droite) : écrit par reglages_batterie_peindre() ──
                 - obj:
                     align: TOP_LEFT
-                    x: 637
+                    x: ${demi_x}
                     y: 0
-                    width: 589
-                    height: 598
+                    width: ${demi_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:

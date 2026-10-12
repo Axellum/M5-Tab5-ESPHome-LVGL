@@ -48,4 +48,4 @@ obj:
 
           # Avant la première poussée de HA, ou sans appareil déclaré (et où le déclarer).
           - label: { id: froid_attente, text: "", align: CENTER, y: -10, styles: style_text_dim }
-          - label: { id: froid_conseil, text: "", align: CENTER, y: 40, width: 1100, long_mode: WRAP, text_align: CENTER, styles: style_text_dim, hidden: true }
+          - label: { id: froid_conseil, text: "", align: CENTER, y: 40, width: "${ corps_w | int - 102 }", long_mode: WRAP, text_align: CENTER, styles: style_text_dim, hidden: true }

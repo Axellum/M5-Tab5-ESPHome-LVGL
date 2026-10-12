@@ -14,13 +14,18 @@
 # vars : prefixe (reglages | meteo | reveil), id, x, page (ReglagesPage, MeteoPage ou
 #        ReveilPage, en nombre NON quoté), label_text (traduit au démarrage) ;
 #        facultative : w (largeur, défaut 200 ; le Réveil, cinq pages, en prend 184).
+# Taille de l'écran (lot 2 du portage 1024×600, ADR-0061) : `x` et `w` sont ceux du Tab5
+# (carte de 1250, zone des onglets de x 196 à 1148). Sur une carte plus étroite, la distance
+# à la croix et la largeur sont réduites de onglets_zone / 952 (tab5-ui-tokens.yaml), comme
+# pages_onglets() le fait en C++ (onglet_x, onglet_echelle : tab5_geometrie.h). Sur le Tab5 :
+# x et w tels quels.
 # ═══════════════════════════════════════════════════════
 button:
   id: ${id}
   align: TOP_LEFT
-  x: ${x}
+  x: ${ onglets_fin | int - ((1148 - x | int) * (onglets_zone | int) / 952) | round | int }
   y: 4
-  width: ${ w | default(200) }
+  width: ${ ((w | default(200) | int) * (onglets_zone | int) / 952) | round | int }
   height: 44
   radius: 14
   pad_all: 0   # positions exactes : le thème ajoutait ~21 px
@@ -32,4 +37,4 @@ button:
     # 5 px d'air de chaque côté du nom : largeur fixe, w - 10 (190 sur 200 dans les
     # Réglages et la Météo). Pas de `width: 100%` : la bordure de 3 px du nom actif réduit
     # la zone de contenu, et le texte bougeait d'un pixel (rendu du 09/10/2026).
-    - label: { text: "${label_text}", align: CENTER, width: "${ (w | default(200)) - 10 }", text_align: CENTER, long_mode: DOT }
+    - label: { text: "${label_text}", align: CENTER, width: "${ (((w | default(200) | int) * (onglets_zone | int) / 952) | round | int) - 10 }", text_align: CENTER, long_mode: DOT }

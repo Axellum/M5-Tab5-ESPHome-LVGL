@@ -49,7 +49,7 @@ obj:
               align: TOP_LEFT
               x: 24
               y: ${modal_body_y}
-              width: 1202
+              width: ${corps_w}
               height: 76
               hidden: true
               styles: style_glass_card
@@ -89,4 +89,4 @@ obj:
 
           # Avant la première poussée de HA, ou sans capteur choisi (et où les choisir).
           - label: { id: serveur_ia_attente, text: "", align: CENTER, y: -10, styles: style_text_dim }
-          - label: { id: serveur_ia_conseil, text: "", align: CENTER, y: 40, width: 1100, long_mode: WRAP, text_align: CENTER, styles: style_text_dim, hidden: true }
+          - label: { id: serveur_ia_conseil, text: "", align: CENTER, y: 40, width: "${ corps_w | int - 102 }", long_mode: WRAP, text_align: CENTER, styles: style_text_dim, hidden: true }

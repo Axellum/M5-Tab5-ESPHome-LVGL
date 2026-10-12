@@ -3,49 +3,59 @@
 ESPHome) : ce test la tient égale des deux côtés (audit des conteneurs du 01/10/2026).
 
 - Largeur des panneaux de la carte centrale : ${central_w} (Tab5/paquets/tab5-ui-tokens.yaml)
-  et kLargeurPanneauCentral (Tab5/ecran/tab5_central.cpp, réponse vocale longue).
-- Colonnes du calendrier : les en-têtes « Lun »…« Dim » de calendar_popup.yaml et les
-  cases construites par cal_grid_build() (kCalColX0, kCalColPas, kCalColW dans
-  Tab5/ecran/tab5_calendar.cpp). Un écart décale les noms des jours de leurs cases.
+  et kPanneauCentralL (tab5_geometrie.h ; kLargeurPanneauCentral de tab5_central.cpp,
+  réponse vocale longue).
+- Colonnes du calendrier : les en-têtes « Lun »…« Dim » de calendar_popup.yaml (jetons
+  cal_col_*) et les cases construites par cal_grid_build() (kCalColX0, kCalColPas, kCalColW
+  de tab5_geometrie.h). Un écart décale les noms des jours de leurs cases.
 - Géométrie partagée du C++ (Tab5/socle/tab5_geometrie.h, lot L5 de l'audit du 07/10/2026) :
   carte modale égale aux jetons, corps des popups Énergie et Température égal à leur
   YAML, et aucune copie locale de ces constantes ni des littéraux 1280 / 1250.
 - Une taille d'écran par carte (ADR-0061) : l'écran et la carte modale du C++ (drapeaux
   -DTAB5_… de chaque carte) égaux aux jetons calculés pour cette carte, pour CHAQUE carte ;
-  les défauts de l'en-tête sont ceux du Tab5. Le reste (calendrier, corps des popups à
-  cartes) est au pixel pour 1280×720 : vérifié pour le Tab5 seulement.
+  les défauts de l'en-tête sont ceux du Tab5. Depuis le lot 2 du portage, ce que les popups
+  ont en commun (corps, graphique, demi-cartes, onglets d'en-tête, colonnes du calendrier,
+  lignes des pièces, panneaux de la carte centrale) suit la carte : égal des deux côtés et
+  dans la carte, carte par carte ; sur le Tab5, les valeurs au pixel d'avant.
 """
 import os
 import re
 
 import yaml
 import pytest
-from tests.commun import (CARTES, DRAPEAUX_CARTE, ChargeurSansBalises as _Chargeur, geometrie, geometrie_cpp,
-                          jeton, lire as _lire, source)
+from tests.commun import (CARTES, DRAPEAUX_CARTE, ChargeurSansBalises as _Chargeur, _jetons as jetons_resolus,
+                          geometrie, geometrie_cpp, jeton, lire as _lire, resoudre, source)
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 
 
-def _jetons():
-    return yaml.load(_lire("Tab5", "paquets", "tab5-ui-tokens.yaml"), Loader=_Chargeur)["substitutions"]
-
-
-def _constante(fichier, nom):
-    m = re.search(r"constexpr\s+int32_t\s+%s\s*=\s*(-?\d+)\s*;" % nom, _lire(source(fichier)))
-    assert m, f"{nom} introuvable dans {fichier}"
-    return int(m.group(1))
+def _resolu(valeur, carte="tab5"):
+    """Une valeur YAML (littéral ou `${jeton}`), calculée pour la carte."""
+    v = resoudre(valeur, jetons_resolus(carte))
+    return int(v) if isinstance(v, str) and re.fullmatch(r"-?\d+", v) else v
 
 
 # Tab5/socle/tab5_geometrie.h : constantes entières, éventuellement calculées des précédentes.
 GEOMETRIE = "tab5_geometrie.h"
-GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorpsX", "kCorpsW",
-                  "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kPieces", "kTuiles",
-                  "kLecteurCarteL", "kLecteurCarteH")
+GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorpsX", "kCorpsW", "kCorpsH",
+                  "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kDemiL", "kDemiX", "kPieces", "kTuiles",
+                  "kLecteurCarteL", "kLecteurCarteH", "kOngletsFin", "kCalColPas", "kCalColW", "kCalColX0",
+                  "kPieceLignePas", "kPieceLigneH", "kCentralCarteL", "kPanneauCentralL")
+# Le même nombre, jeton YAML (tab5-ui-tokens.yaml) ↔ constante C++, sur chaque carte.
+JETONS_CPP = {"corps_w": "kCorpsW", "corps_h": "kCorpsH", "graphique_l": "kGraphiqueL", "demi_w": "kDemiL",
+              "demi_x": "kDemiX", "onglets_fin": "kOngletsFin", "cal_col_pas": "kCalColPas",
+              "cal_col_w": "kCalColW", "cal_col_x0": "kCalColX0", "piece_ligne_pas": "kPieceLignePas",
+              "piece_ligne_h": "kPieceLigneH", "central_carte_w": "kCentralCarteL", "central_w": "kPanneauCentralL"}
+# Valeurs du Tab5 d'avant le lot 2 : elles ne bougent pas.
+TAB5_AVANT = {"kCorpsW": 1202, "kCorpsH": 598, "kGraphiqueL": 1166, "kDemiL": 589, "kDemiX": 637,
+              "kOngletsFin": 1148, "kCalColPas": 172, "kCalColW": 168, "kCalColX0": 25, "kPieceLignePas": 92,
+              "kPieceLigneH": 84, "kCentralCarteL": 1240, "kPanneauCentralL": 1180}
 # Fichiers qui s'en servent : aucun ne doit les redéfinir.
 GEOMETRIE_UTILISATEURS = ("tab5_energie.cpp", "tab5_historique.cpp", "tab5_maison.cpp", "tab5_zones.cpp",
                           "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp",
-                          "tab5_tuiles_priv.h", "tab5_roue.cpp", "tab5_clim.cpp", "tab5_lecteur.cpp")
+                          "tab5_tuiles_priv.h", "tab5_roue.cpp", "tab5_clim.cpp", "tab5_lecteur.cpp",
+                          "tab5_calendar.cpp", "tab5_central.cpp", "tab5_pages.cpp")
 
 
 def _geometrie(carte=None):
@@ -63,21 +73,38 @@ def _widgets(liste):
             yield from _widgets(props.get("widgets"))
 
 
+@pytest.mark.parametrize("carte", CARTES)
+def test_jetons_communs_egaux_au_cpp_et_dans_la_carte(carte):
+    g = _geometrie(carte)
+    for nom, cpp in JETONS_CPP.items():
+        assert jeton(nom, carte) == g[cpp], (carte, nom, cpp)
+    if carte == "tab5":
+        assert {k: g[k] for k in TAB5_AVANT} == TAB5_AVANT, "Tab5 : valeurs d'avant le lot 2"
+    # Corps sous la barre de titre, dans la carte ; deux demi-cartes côte à côte.
+    assert g["kCorpsX"] + g["kCorpsW"] + g["kCorpsX"] == g["kCarteL"]
+    assert g["kCorpsY"] + g["kCorpsH"] < g["kCarteH"]
+    assert g["kDemiX"] + g["kDemiL"] <= g["kCorpsX"] + g["kCorpsW"]
+    # Lignes d'une pièce : les cinq au-dessus des boutons de la pièce (88 px du bas du corps).
+    assert 50 + 4 * g["kPieceLignePas"] + g["kPieceLigneH"] <= g["kCorpsH"] - 88
+    assert g["kPieceLigneH"] >= 56, "une ligne garde sa pastille et ses deux textes"
+    # Carte centrale : 20 px des bords de l'écran.
+    assert g["kCentralCarteL"] + 40 == g["kEcranL"]
+
+
 def test_largeur_des_panneaux_centraux():
-    largeur = int(_jetons()["central_w"])
-    assert largeur == _constante("tab5_central.cpp", "kLargeurPanneauCentral")
+    assert "kLargeurPanneauCentral = kPanneauCentralL;" in _lire(source("tab5_central.cpp"))
     # Plus de 1180 écrit en clair dans le YAML : tout passe par le jeton.
     # Bouton des panneaux : central_bouton.yaml depuis le 08/10/2026 (audit YML-4).
     for chemin in (("Tab5", "paquets", "tab5-lvgl.yaml"), ("Tab5", "ui_components", "central_bouton.yaml")):
         texte = _lire(*chemin)
         assert "${central_w}" in texte, "/".join(chemin)
-        assert not re.search(r"^\s*width: %d\s*$" % largeur, texte, re.M), "/".join(chemin)
+        assert not re.search(r"^\s*width: (1180|1240)\s*$", texte, re.M), "/".join(chemin)
 
 
-def test_en_tetes_du_calendrier_sur_les_colonnes_des_cases():
-    x0 = _constante("tab5_calendar.cpp", "kCalColX0")
-    pas = _constante("tab5_calendar.cpp", "kCalColPas")
-    w = _constante("tab5_calendar.cpp", "kCalColW")
+@pytest.mark.parametrize("carte", CARTES)
+def test_en_tetes_du_calendrier_sur_les_colonnes_des_cases(carte):
+    g = _geometrie(carte)
+    x0, pas, w = g["kCalColX0"], g["kCalColPas"], g["kCalColW"]
     popup = yaml.load(_lire("Tab5", "ui_components", "calendar_popup.yaml"), Loader=_Chargeur)
     en_tetes = {props["text"]: props for type_, props in _widgets([popup])
                 if type_ == "label" and props.get("text") in JOURS}
@@ -85,18 +112,19 @@ def test_en_tetes_du_calendrier_sur_les_colonnes_des_cases():
     for c, jour in enumerate(JOURS):
         props = en_tetes[jour]
         assert props["align"] == "TOP_LEFT", jour
-        assert props["x"] == x0 + c * pas, f"« {jour} » décalé de sa colonne"
-        assert props["width"] == w, f"« {jour} » plus large ou plus étroit que sa case"
+        assert _resolu(props["x"], carte) == x0 + c * pas, f"« {jour} » décalé de sa colonne ({carte})"
+        assert _resolu(props["width"], carte) == w, f"« {jour} » plus large ou plus étroit que sa case ({carte})"
 
 
-def test_grille_du_calendrier_centree_dans_la_carte():
-    x0 = _constante("tab5_calendar.cpp", "kCalColX0")
-    pas = _constante("tab5_calendar.cpp", "kCalColPas")
-    w = _constante("tab5_calendar.cpp", "kCalColW")
-    carte = jeton("modal_card_w")
+@pytest.mark.parametrize("carte", CARTES)
+def test_grille_du_calendrier_centree_dans_la_carte(carte):
+    g = _geometrie(carte)
+    x0, pas, w = g["kCalColX0"], g["kCalColPas"], g["kCalColW"]
     assert pas > w, "les cases se chevauchent"
-    droite = carte - (x0 + 6 * pas + w)
-    assert droite == x0, f"grille décentrée : {x0} px à gauche, {droite} px à droite"
+    droite = g["kCarteL"] - (x0 + 6 * pas + w)
+    assert abs(droite - x0) <= 1, f"grille décentrée : {x0} px à gauche, {droite} px à droite ({carte})"
+    if carte == "tab5":
+        assert droite == x0
 
 
 # ─── Géométrie partagée du C++ (lot L5) ──────────────────────────────────────
@@ -108,10 +136,10 @@ def test_geometrie_partagee_egale_aux_jetons_et_aux_popups():
     # Corps des popups à cartes et zone de leur graphique, comme leur YAML.
     for popup, zone in (("energie_popup.yaml", "energie_zone"), ("historique_popup.yaml", "historique_zone")):
         widgets = list(_widgets([yaml.load(_lire("Tab5", "ui_components", popup), Loader=_Chargeur)]))
-        corps = [p for _t, p in widgets if p.get("x") == g["kCorpsX"] and p.get("width") == g["kCorpsW"]]
+        corps = [p for _t, p in widgets if p.get("x") == g["kCorpsX"] and _resolu(p.get("width")) == g["kCorpsW"]]
         assert corps, f"{popup} : pas de corps x {g['kCorpsX']}, largeur {g['kCorpsW']}"
         zones = [p for _t, p in widgets if p.get("id") == zone]
-        assert len(zones) == 1 and zones[0].get("width") == g["kGraphiqueL"], f"{popup} : {zone}"
+        assert len(zones) == 1 and _resolu(zones[0].get("width")) == g["kGraphiqueL"], f"{popup} : {zone}"
     # Carte du popup Musique (ADR-0050) : égale à ses jetons, centrée, plus petite que la
     # carte modale, et le popup la prend par ses jetons.
     assert (g["kLecteurCarteL"], g["kLecteurCarteH"]) == (jeton("lecteur_card_w"), jeton("lecteur_card_h"))
