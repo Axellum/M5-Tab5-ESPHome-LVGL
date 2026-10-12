@@ -1,0 +1,287 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file essais/waveshare-p4-7b.yaml
+# @role Démarrage de la Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7", 1024×600) : une
+#       page de test, sans l'interface du Tab5. Sert à cocher, carte en main, que
+#       l'écran, le tactile, le rétroéclairage, le son, les micros et le Wi-Fi par le
+#       C6 marchent avant de porter l'interface (étude du 12/10/2026).
+# @architecture_constraint Broches lues dans le BSP Waveshare
+#       (waveshare/esp32_p4_wifi6_touch_lcd_7b) et sur le schéma, copiés dans
+#       H:\AuxFilsDesIdees\contexte_ia\02_Hardware\docs_constructeurs\waveshare_p4_7b\.
+#       Le lien SDIO avec le C6 n'est PAS dans le BSP : ce sont les broches par défaut
+#       d'esp_hosted pour le P4 (CLK 18, CMD 19, D0-D3 14-17, reset 54), que garde la
+#       démo Wi-Fi de Waveshare et que montre le schéma (GPIO14-19 près du C6, GPIO54
+#       relié par 0 Ω à C6_CHIP_PU). À confirmer sur la carte : premier point à lire
+#       dans le journal (« ESP-Hosted link »).
+# @usage Aucun secret : le Wi-Fi se donne par Improv (port USB) ou par le point
+#        d'accès de secours. Flash par USB :
+#          python -m esphome run essais/waveshare-p4-7b.yaml
+#        P4 d'avant la v3 (« chip revision: v1.x » au démarrage) :
+#          python -m esphome -s p4_echantillon "true" -s nom essai-7b-rev1 run essais/waveshare-p4-7b.yaml
+# ============================================================================
+
+substitutions:
+  nom: essai-7b
+  # false = P4 de série (v3.x, ce que visent les démos Waveshare : CONFIG_ESP32P4_REV_MIN_300).
+  p4_echantillon: "false"
+
+esphome:
+  name: ${nom}
+  friendly_name: Essai Waveshare 7B
+  on_boot:
+    priority: -100
+    then:
+      - light.turn_on:
+          id: retroeclairage
+          brightness: 80%
+
+esp32:
+  variant: esp32p4
+  engineering_sample: ${p4_echantillon}
+  # 400 MHz (défaut d'ESPHome sur un P4 v3) : « experimental and may not boot »
+  # (esphome#13425). Le premier démarrage ne doit pas dépendre de ça.
+  cpu_frequency: 360MHz
+  flash_size: 32MB
+  framework:
+    type: esp-idf
+    advanced:
+      enable_idf_experimental_features: true
+
+psram:
+  mode: hex
+
+# Alimentation du PHY MIPI-DSI : LDO_VO3 à 2,5 V (BSP, display.h), comme sur le Tab5.
+esp_ldo:
+  - voltage: 2.5V
+    channel: 3
+
+esp32_hosted:
+  variant: esp32c6
+  # C6_CHIP_PU relié directement (0 Ω) à GPIO54 : reset actif à l'état bas.
+  active_high: false
+  reset_pin: GPIO54
+  clk_pin: GPIO18
+  cmd_pin: GPIO19
+  d0_pin: GPIO14
+  d1_pin: GPIO15
+  d2_pin: GPIO16
+  d3_pin: GPIO17
+  slot: 1
+  sdio_frequency: 20MHz
+  use_psram: true
+
+logger:
+  level: DEBUG
+
+# Révision réelle du P4, MAC, mémoire : à lire au premier démarrage.
+debug:
+  update_interval: 30s
+
+wifi:
+  ap:
+    ssid: "Essai 7B Fallback"
+captive_portal:
+improv_serial:
+
+api:
+  encryption: {}
+
+i2c:
+  - id: bus_bsp
+    sda: GPIO7
+    scl: GPIO8
+    scan: true
+    frequency: 400kHz
+
+display:
+  - platform: mipi_dsi
+    id: ecran
+    model: WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B
+    update_interval: never
+    auto_clear_enabled: false
+
+# GT911 : ni INT ni RST reliés au P4 (BSP : GPIO_NUM_NC), le composant interroge.
+touchscreen:
+  - platform: gt911
+    id: tactile
+    i2c_id: bus_bsp
+    update_interval: 50ms
+    on_touch:
+      - lvgl.label.update:
+          id: lbl_toucher
+          text:
+            format: "Toucher : x %d, y %d"
+            args: [ 'touch.x', 'touch.y' ]
+
+# Rétroéclairage : LEDC sur GPIO32, sortie inversée (BSP : output_invert = 1).
+output:
+  - platform: ledc
+    id: pwm_retro
+    pin:
+      number: GPIO32
+      inverted: true
+    frequency: 5000Hz
+
+light:
+  - platform: monochromatic
+    id: retroeclairage
+    name: Rétroéclairage
+    output: pwm_retro
+    default_transition_length: 0s
+    restore_mode: ALWAYS_ON
+
+# Ampli NS4150B, activé par GPIO53 (BSP : pa_pin, non inversé).
+switch:
+  - platform: gpio
+    id: ampli
+    name: Ampli
+    pin: GPIO53
+    restore_mode: ALWAYS_ON
+
+i2s_audio:
+  - id: bus_i2s
+    i2s_lrclk_pin: GPIO10
+    i2s_bclk_pin: GPIO12
+    i2s_mclk_pin: GPIO13
+
+audio_dac:
+  - platform: es8311
+    id: dac_es8311
+
+audio_adc:
+  - platform: es7210
+    id: adc_es7210
+    bits_per_sample: 16bit
+    sample_rate: 16000
+    mic_gain: 30dB
+
+speaker:
+  - platform: i2s_audio
+    id: haut_parleur
+    i2s_audio_id: bus_i2s
+    i2s_dout_pin: GPIO9
+    audio_dac: dac_es8311
+    dac_type: external
+    channel: mono
+    bits_per_sample: 16bit
+    sample_rate: 16000
+
+microphone:
+  - platform: i2s_audio
+    id: micro
+    i2s_audio_id: bus_i2s
+    i2s_din_pin: GPIO11
+    adc_type: external
+    bits_per_sample: 16bit
+    sample_rate: 16000
+    correct_dc_offset: true
+    on_data:
+      - lambda: |-
+          // Crête des échantillons 16 bits reçus : le niveau affiché par la page.
+          int pic = 0;
+          for (size_t i = 0; i + 1 < x.size(); i += 2) {
+            int16_t v = (int16_t) (x[i] | (x[i + 1] << 8));
+            int a = v < 0 ? -v : v;
+            if (a > pic) pic = a;
+          }
+          if (pic > id(micro_pic)) id(micro_pic) = pic;
+
+rtttl:
+  id: bip
+  speaker: haut_parleur
+
+globals:
+  - id: micro_pic
+    type: int
+    initial_value: '0'
+
+interval:
+  - interval: 200ms
+    then:
+      - lvgl.bar.update:
+          id: barre_micro
+          value: !lambda 'return std::min(100, id(micro_pic) * 100 / 32767);'
+      - lambda: 'id(micro_pic) = 0;'
+
+lvgl:
+  displays: [ecran]
+  touchscreens: [tactile]
+  pages:
+    - id: page_essai
+      bg_color: 0x101418
+      widgets:
+        - label:
+            x: 24
+            y: 20
+            text: "Waveshare 7B : essai du matériel"
+            text_color: 0xFFFFFF
+            text_font: montserrat_28
+        - label:
+            id: lbl_toucher
+            x: 24
+            y: 80
+            text: "Toucher : —"
+            text_color: 0x9AD1FF
+            text_font: montserrat_24
+        # Repères aux quatre coins : chaque coin touché doit donner x ≈ 0 / 1023, y ≈ 0 / 599.
+        - obj: { x: 0, y: 0, width: 40, height: 40, bg_color: 0xE04040, border_width: 0, radius: 0 }
+        - obj: { x: 984, y: 0, width: 40, height: 40, bg_color: 0x40E040, border_width: 0, radius: 0 }
+        - obj: { x: 0, y: 560, width: 40, height: 40, bg_color: 0x4080FF, border_width: 0, radius: 0 }
+        - obj: { x: 984, y: 560, width: 40, height: 40, bg_color: 0xFFFFFF, border_width: 0, radius: 0 }
+        - label:
+            x: 24
+            y: 150
+            text: "Micro (parler devant l'écran) :"
+            text_color: 0xFFFFFF
+            text_font: montserrat_20
+        - bar:
+            id: barre_micro
+            x: 24
+            y: 185
+            width: 600
+            height: 28
+            min_value: 0
+            max_value: 100
+        - button:
+            x: 24
+            y: 250
+            width: 260
+            height: 90
+            on_click:
+              - microphone.stop_capture: micro
+              - rtttl.play: 'essai:d=4,o=5,b=140:c,e,g,c6'
+            widgets:
+              - label:
+                  align: center
+                  text: "Bip"
+                  text_font: montserrat_28
+        - button:
+            x: 310
+            y: 250
+            width: 260
+            height: 90
+            on_click:
+              - microphone.capture: micro
+            widgets:
+              - label:
+                  align: center
+                  text: "Micro"
+                  text_font: montserrat_28
+        - label:
+            x: 24
+            y: 370
+            text: "Luminosité :"
+            text_color: 0xFFFFFF
+            text_font: montserrat_20
+        - slider:
+            x: 24
+            y: 410
+            width: 600
+            height: 30
+            min_value: 5
+            max_value: 100
+            value: 80
+            on_release:
+              - light.turn_on:
+                  id: retroeclairage
+                  brightness: !lambda 'return x / 100.0f;'

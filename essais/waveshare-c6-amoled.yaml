@@ -1,0 +1,189 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file essais/waveshare-c6-amoled.yaml
+# @role Essai de la Waveshare ESP32-C6-Touch-AMOLED-2.16 (480×480, ESP32-C6 sans PSRAM) :
+#       une page LVGL, le tactile, le Wi-Fi, le son et le mot de réveil, pour savoir si un
+#       petit « satellite » tient dans 512 Ko de SRAM (étude du 12/10/2026). Ce n'est pas
+#       un portage du Tab5 : le firmware du Tab5 ne tient pas sans PSRAM.
+# @architecture_constraint Broches : exemples Waveshare (user_config.h) et schéma, copiés
+#       dans H:\AuxFilsDesIdees\contexte_ia\02_Hardware\docs_constructeurs\waveshare_c6_amoled_2.16\.
+#       CS écran = GPIO15 et INT tactile = GPIO5 (exemples Arduino, confirmés par le
+#       connecteur du tactile sur le schéma : SDA, SCL, GPIO11, GPIO5) ; les exemples
+#       ESP-IDF disent l'inverse.
+#       L'écran n'a pas de broche de reset : il est alimenté par le rail ALDO3 du PMU
+#       AXP2101 (I2C 0x34), que la démo LVGL de Waveshare coupe puis rallume au démarrage.
+#       ESPHome 2026.9 n'a pas de composant AXP2101 : deux registres écrits à la main
+#       (XPowersLib : 0x94 = tension d'ALDO3, 0x90 bit 2 = ALDO3 allumé).
+#       Orientation : la démo applique swap_xy + mirror_y ; le CO5300 d'ESPHome ne fait
+#       que mirror_x / mirror_y. Rien n'est appliqué ici : le sens se règle carte en main.
+# @usage Aucun secret (Wi-Fi par Improv ou par le point d'accès de secours).
+#          python -m esphome run essais/waveshare-c6-amoled.yaml
+# ============================================================================
+
+substitutions:
+  nom: essai-c6-amoled
+
+esphome:
+  name: ${nom}
+  friendly_name: Essai Waveshare C6 AMOLED
+  on_boot:
+    # Après le bus I2C (priorité 1000), avant l'écran (matériel, 800).
+    priority: 900
+    then:
+      - lambda: |-
+          auto *bus = id(bus_i2c);
+          const uint8_t pmu = 0x34;
+          uint8_t reg = 0x94, v = 0;
+          // ALDO3 à 3,3 V : 5 bits bas = (3300 - 500) / 100 = 28.
+          if (bus->write_readv(pmu, &reg, 1, &v, 1) == i2c::ERROR_OK) {
+            uint8_t w[2] = {0x94, (uint8_t) ((v & 0xE0) | 28)};
+            bus->write(pmu, w, 2);
+          } else {
+            ESP_LOGE("essai", "AXP2101 muet sur 0x34 : l'écran restera éteint");
+          }
+          // Coupure puis remise d'ALDO3 : le reset de l'écran (démo Waveshare).
+          reg = 0x90;
+          if (bus->write_readv(pmu, &reg, 1, &v, 1) == i2c::ERROR_OK) {
+            uint8_t off[2] = {0x90, (uint8_t) (v & ~0x04)};
+            bus->write(pmu, off, 2);
+            delay(50);
+            uint8_t on[2] = {0x90, (uint8_t) (v | 0x04)};
+            bus->write(pmu, on, 2);
+            delay(150);
+          }
+
+esp32:
+  variant: esp32c6
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+
+# Mémoire libre et plus grand bloc : le chiffre qui décide.
+debug:
+  update_interval: 10s
+
+sensor:
+  - platform: debug
+    free:
+      name: Mémoire libre
+    block:
+      name: Plus grand bloc
+
+wifi:
+  ap:
+    ssid: "Essai C6 Fallback"
+captive_portal:
+improv_serial:
+
+api:
+  encryption: {}
+
+i2c:
+  - id: bus_i2c
+    sda: GPIO8
+    scl: GPIO7
+    scan: true
+    frequency: 400kHz
+
+spi:
+  - id: bus_qspi
+    type: quad
+    clk_pin: GPIO0
+    data_pins: [GPIO1, GPIO2, GPIO3, GPIO4]
+
+display:
+  - platform: mipi_spi
+    id: ecran
+    model: CO5300
+    spi_id: bus_qspi
+    cs_pin: GPIO15
+    dimensions:
+      width: 480
+      height: 480
+    data_rate: 40MHz
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: cst9220
+    id: tactile
+    i2c_id: bus_i2c
+    interrupt_pin: GPIO5
+    reset_pin: GPIO11
+    on_touch:
+      - lvgl.label.update:
+          id: lbl_toucher
+          text:
+            format: "x %d  y %d"
+            args: [ 'touch.x', 'touch.y' ]
+
+i2s_audio:
+  - id: bus_i2s
+    i2s_lrclk_pin: GPIO22
+    i2s_bclk_pin: GPIO20
+    i2s_mclk_pin: GPIO19
+
+audio_dac:
+  - platform: es8311
+    id: dac_es8311
+
+speaker:
+  - platform: i2s_audio
+    id: haut_parleur
+    i2s_audio_id: bus_i2s
+    i2s_dout_pin: GPIO23
+    audio_dac: dac_es8311
+    dac_type: external
+    channel: mono
+    bits_per_sample: 16bit
+    sample_rate: 16000
+
+microphone:
+  - platform: i2s_audio
+    id: micro
+    i2s_audio_id: bus_i2s
+    i2s_din_pin: GPIO21
+    adc_type: external
+    bits_per_sample: 16bit
+    sample_rate: 16000
+
+micro_wake_word:
+  microphone: micro
+  models:
+    - model: okay_nabu
+  on_wake_word_detected:
+    - lvgl.label.update:
+        id: lbl_reveil
+        text: "Okay Nabu entendu"
+
+lvgl:
+  displays: [ecran]
+  touchscreens: [tactile]
+  # Pas de PSRAM : un dixième d'écran (480 × 48 × 2 octets ≈ 46 Ko) au lieu de 450 Ko.
+  buffer_size: 10%
+  pages:
+    - id: page_essai
+      bg_color: 0x000000
+      widgets:
+        - label:
+            align: TOP_MID
+            y: 40
+            text: "HAUT"
+            text_color: 0xFFFFFF
+            text_font: montserrat_28
+        - label:
+            id: lbl_toucher
+            align: CENTER
+            text: "Toucher l'écran"
+            text_color: 0x9AD1FF
+            text_font: montserrat_28
+        - label:
+            id: lbl_reveil
+            align: BOTTOM_MID
+            y: -60
+            text: "Dire « Okay Nabu »"
+            text_color: 0xFFD27A
+            text_font: montserrat_20
