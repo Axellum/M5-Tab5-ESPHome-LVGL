@@ -31,6 +31,16 @@ Own an ST7121 or ILI9881C unit and willing to try? Say how it went in [Discussio
 
 ---
 
+## Waveshare ESP32-P4 7B (experimental)
+
+🧪 **Compiles, never tested.** Since October 2026 the firmware can be built for a second board, the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600, landscape panel, ESP32-P4 revision 3, 32 MB flash) — [ADR-0061](decisions/0061-board-and-screen-size.md). Add `tab5_carte: waveshare-7b` to `Tab5/user_entities.yaml`; without it, the firmware is built for the Tab5. The CI compiles it on every firmware change, and the off-device render produces its screens at 1024×600, but nobody has run it on a board yet.
+
+- **The interface is not adapted yet:** the screen size, the modal card, the calendar grid and the large fonts (×0.82) follow the board, but the layout itself is still drawn for 1280×720, so popups and the home screen overflow or get cut off at 1024×600.
+- **Hardware:** everything is in `Tab5/paquets/carte-waveshare-7b.yaml` (pins taken from a first trial of that board): `mipi_dsi` model `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B`, GT911 touch, ES8311 DAC and ES7210 ADC, ESP32-C6 over SDIO. The pin table below is the Tab5's only.
+- **What it does not have:** no IMU (the tilt games get no input, `tab5-imu-absente.yaml`), no battery gauge, no RTC, no switchable power rails: their entities stay in the firmware as stubs, with no effect.
+
+---
+
 ## M5Stack Tab5 V2
 
 The Tab5 is a 5-inch touch-screen panel from M5Stack. It uses an **ESP32-P4** as the main application processor, with a separate **ESP32-C6** co-processor handling Wi-Fi and Bluetooth connectivity. This project runs on the **ST7123** revision, which this repository calls "Tab5 V2" (see [Hardware revisions](#hardware-revisions)).
@@ -211,6 +221,16 @@ M5Stack a livré le Tab5 avec trois contrôleurs d'écran différents ([journal 
 **Sur une ST7121, deux points méritent d'être vérifiés :** le tactile dans les quatre coins en paysage, et l'ouverture puis la fermeture du flipper Neon Apron, qui passe l'écran en portrait puis le remet en paysage. L'utilisateur cité plus haut tournait l'image dans le bloc `display:` ; ce firmware la tourne dans LVGL (`rotation: 270`, modifiée à la volée par Neon Apron), un chemin que personne n'a encore signalé sur une ST7121. Un [signalement](https://github.com/esphome/esphome/issues/18712) parle d'un plantage au démarrage avec la rotation LVGL sur une ST7121, mais sur un appareil renvoyé ensuite pour un défaut d'écran : le lien est incertain. Le même signalement montre que le miroir écran/tactile abîme l'image sur une ST7121 : ce firmware ne l'utilise pas.
 
 Vous avez un Tab5 ST7121 ou ILI9881C et vous voulez bien essayer ? Racontez ce que ça a donné dans [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
+
+---
+
+## Waveshare ESP32-P4 7B (expérimentale)
+
+🧪 **Compile, jamais testée.** Depuis octobre 2026, le firmware peut être compilé pour une deuxième carte, la Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600, dalle en paysage, ESP32-P4 révision 3, flash de 32 Mo) — [ADR-0061](decisions/0061-board-and-screen-size.md). Ajoutez `tab5_carte: waveshare-7b` dans `Tab5/user_entities.yaml` ; sans cette ligne, le firmware est compilé pour le Tab5. La CI la compile à chaque changement du firmware et le rendu hors tablette produit ses écrans en 1024×600, mais personne ne l'a encore lancée sur une carte.
+
+- **L'interface n'est pas encore adaptée :** la taille de l'écran, la carte modale, la grille du calendrier et les grosses polices (×0,82) suivent la carte, mais la mise en page elle-même est toujours dessinée pour 1280×720 : en 1024×600, les popups et l'accueil débordent ou sont coupés.
+- **Matériel :** tout est dans `Tab5/paquets/carte-waveshare-7b.yaml` (broches reprises d'un premier essai de cette carte) : modèle `mipi_dsi` `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B`, tactile GT911, DAC ES8311 et ADC ES7210, ESP32-C6 en SDIO. Le tableau des broches ci-dessous est celui du Tab5 seulement.
+- **Ce qu'elle n'a pas :** pas d'IMU (les jeux à l'inclinaison ne reçoivent rien, `tab5-imu-absente.yaml`), pas de jauge de batterie, pas de RTC, pas d'alimentations commutables : leurs entités restent dans le firmware sous forme de bouchons, sans effet.
 
 ---
 

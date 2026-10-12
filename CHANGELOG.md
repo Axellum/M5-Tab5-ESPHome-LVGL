@@ -8,6 +8,12 @@ Ordre de mise à jour depuis les dernières versions publiées, tant que `v3.8.1
 taguée (`tests/test_contrat_versions.py` le confronte à la matrice) :
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
 
+- **Carte et taille de l'écran paramétrables** ([ADR-0061](docs/decisions/0061-board-and-screen-size.md)) :
+  - nouvelle substitution `tab5_carte` (`tab5` par défaut) qui choisit `Tab5/paquets/carte-<carte>.yaml` : le matériel, l'écran et la géométrie de la carte (`geometrie-<carte>.yaml` : taille de l'écran, de la dalle, rotation de LVGL, échelle des grosses polices) ;
+  - la taille n'est plus écrite qu'une fois : les jetons de `tab5-ui-tokens.yaml` en dérivent, le C++ la reçoit par `-DTAB5_ECRAN_L`, `-DTAB5_ECRAN_H` et `-DTAB5_ROTATION` (`tab5_geometrie.h`, défauts du Tab5) ; `tests/test_geometrie_partagee.py` vérifie l'égalité C++ / YAML pour chaque carte ;
+  - **sur le Tab5, rien ne change** : même configuration résolue, aux trois drapeaux de compilation près (égaux aux défauts) et à l'`id` de l'interval de la RX8130 ; le `config_hash` change, les substitutions ayant des clés en plus ;
+  - carte **Waveshare ESP32-P4 7B** (1024×600) **expérimentale** : `tab5_carte: waveshare-7b`, compilée par la CI (job `build-carte-7b`, non requis), écrans rendus en 1024×600 dans l'artefact `rendu-1024x600` (job `rendu-7b`, informatif), **jamais testée sur une carte, interface pas encore adaptée** ; le matériel du Tab5 qu'elle n'a pas (alimentations, batterie, RTC, IMU) garde ses id sous forme de bouchons ([matériel](docs/hardware.md#waveshare-esp32-p4-7b-experimental)).
+
 ## [3.8.1] — 2026-10-11
 
 Version de sécurité et corrective : protection thermique anti-surchauffe et fiabilité de la détection batterie sans batterie physique.

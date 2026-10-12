@@ -19,7 +19,7 @@ The Tab5 never polls Home Assistant's state ([ADR-0001](decisions/0001-push-only
 ## Key design decisions
 
 - **Push-only, zero polling.** The device never requests state from Home Assistant. Automations on the HA side detect changes and push data to the screen via native ESPHome service calls. In the other direction the tablet sends events, never Home Assistant actions ([ADR-0025](decisions/0025-events-only.md)). CPU stays near zero when nothing changes.
-- **Modular YAML.** The ESPHome configuration is split across thirty-seven files by concern (tokens, hardware, screen revision, publication channel, diagnostics sensors, home-automation sensors, API logic, styles, globals, scripts, UI, arcade, calendar, voice assistant, IMU, navigation, HA controls, alarm clock, rooms and tiles, quick-action wheel, row under the clock, energy popup, zones, settings popup, temperature popup, alerts popup, house popup, weather popup, music popup, tracked sensors, fridges, AI server popup, remote popup, energy saving, themes), each independently readable. Most stay under 500 lines; only the largest (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`) go beyond, and the UI is further split into 102 reusable `ui_components/*.yaml`.
+- **Modular YAML.** The ESPHome configuration is split across thirty-six files by concern (tokens, board (hardware, screen revision, screen size), publication channel, diagnostics sensors, home-automation sensors, API logic, styles, globals, scripts, UI, arcade, calendar, voice assistant, IMU, navigation, HA controls, alarm clock, rooms and tiles, quick-action wheel, row under the clock, energy popup, zones, settings popup, temperature popup, alerts popup, house popup, weather popup, music popup, tracked sensors, fridges, AI server popup, remote popup, energy saving, themes), each independently readable. Most stay under 500 lines; only the largest (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`) go beyond, and the UI is further split into 102 reusable `ui_components/*.yaml`.
 - **Native LVGL, no web stack.** LVGL refreshes up to 60 times a second from a framebuffer in the ESP32-P4's PSRAM and redraws only what changed. Measured on the tablet (firmware 3.2.0, 2026-09-28): a changed value or the clock's minute redraws in under 10 ms, the rotating panel in the middle in 15-21 ms per frame, the whole screen in 133 ms, and a popup opens in 126-197 ms. Vector fonts (Material Design Icons) replace image files entirely.
 - **Data packing.** Complex payloads (15-day forecast, hourly forecast, weather alerts) are serialized as delimited strings on the HA side and parsed in C++ on the device — one network call, zero subsequent requests.
 - **Offline resilience.** All C++ lambdas check `api.connected()` and `has_state()` before touching the UI. If HA restarts, the last known state stays on screen — and the device stays usable on its own (clock, arcade, diagnostics console). It only reboots itself after a full hour without any API client (`api: reboot_timeout: 60min`), a deliberate anti-"zombie" safety net rather than a reaction to a short HA outage.
@@ -39,8 +39,7 @@ The root file does three things:
 ```yaml
 packages:
   tab5_ui_tokens:  !include Tab5/paquets/tab5-ui-tokens.yaml
-  tab5_hardware:   !include Tab5/paquets/tab5-hardware.yaml
-  tab5_ecran:      !include Tab5/paquets/ecran-${ tab5_ecran | default('st7123') | lower }.yaml  # screen revision
+  tab5_carte:      !include Tab5/paquets/carte-${ tab5_carte | default('tab5') | lower }.yaml  # board: hardware, screen, size (ADR-0061)
   tab5_publication: !include Tab5/paquets/publication-${ tab5_publication | default('locale') }.yaml  # release channel (ADR-0022)
   tab5_sensors_diagnostics: !include Tab5/paquets/tab5-sensors-diagnostics.yaml
   tab5_sensors_domotique: !include Tab5/paquets/tab5-sensors-domotique.yaml
@@ -52,7 +51,7 @@ packages:
   tab5_arcade:     !include Tab5/paquets/tab5-arcade.yaml         # one package per feature (lot 8c),
   tab5_calendar:   !include Tab5/paquets/tab5-calendar.yaml       # after tab5_lvgl: their scripts
   tab5_assist:     !include Tab5/paquets/tab5-assist.yaml         # reference LVGL widget ids
-  tab5_imu:        !include Tab5/paquets/tab5-imu.yaml
+  tab5_imu:        !include Tab5/paquets/tab5-imu${ '' if (tab5_carte | default('tab5') | lower) == 'tab5' else '-absente' }.yaml
   tab5_navigation: !include Tab5/paquets/tab5-navigation.yaml     # after tab5_lvgl: references LVGL widget ids
   tab5_ha_controls: !include Tab5/paquets/tab5-ha-controls.yaml
   tab5_alarm:      !include Tab5/paquets/tab5-alarm.yaml          # after tab5_lvgl too
@@ -86,8 +85,13 @@ Shared dimensional tokens, loaded first so every other package can reference the
 
 ---
 
+### `carte-*.yaml`
+The board, picked at compile time by `tab5_carte:` in `Tab5/user_entities.yaml` ([ADR-0061](decisions/0061-board-and-screen-size.md)): `tab5` (the default, the M5Stack Tab5) or `waveshare-7b` (Waveshare ESP32-P4 7B, 1024×600, experimental: it compiles, it has never run on a board and the interface is still laid out for 1280×720). `carte-tab5.yaml` loads `geometrie-tab5.yaml`, `tab5-hardware.yaml` and the screen revision `ecran-*.yaml` below; `carte-waveshare-7b.yaml` holds the whole hardware of that board and stubs the ids of the Tab5 hardware it lacks (power switches, battery, RTC) so the other packages compile unchanged. Each board's `geometrie-*.yaml` gives the screen size (`carte_ecran_l`/`carte_ecran_h`, from which the tokens and the C++ `kEcranL`/`kEcranH` derive), the panel size, the LVGL rotation and the scale of the large fonts. The root file also picks `tab5-imu.yaml` (BMI270) on the Tab5 and `tab5-imu-absente.yaml` elsewhere. See [`docs/hardware.md`](hardware.md#waveshare-esp32-p4-7b-experimental).
+
+---
+
 ### `tab5-hardware.yaml`
-Low-level hardware configuration:
+Low-level hardware configuration of the Tab5 (loaded by `carte-tab5.yaml`):
 - Display and touch settings shared by the three Tab5 revisions (MIPI-DSI, pins, calibration); the display model and the touch platform come from `Tab5/paquets/ecran-<revision>.yaml` (default: `M5STACK-TAB5-ST7123` and the official `st7123` I2C platform, since ESPHome 2026.7.0; the old `external_components` shim is gone) — see [`docs/hardware.md`](hardware.md#hardware-revisions)
 - I2C bus, PI4IOE5V6408 GPIO expanders (display/touch reset lines)
 - ES8388 DAC (`audio_dac:` platform) and ES7210 microphone ADC (`audio_adc:`)
@@ -240,8 +244,8 @@ The whole voice assistant: `micro_wake_word` (`okay_nabu`, plus `Stop`), `voice_
 
 ---
 
-### `tab5-imu.yaml`
-BMI270 accelerometer: the three axes are `internal: true` (at 10–30 Hz they would flood the HA recorder for nothing). Two consumers — tap-to-wake on the dashboard, and tilt input for the games. An `interval:` re-tunes the polling rate at runtime via `set_update_interval()`: 100 ms (10 Hz) at rest, 33 ms (30 Hz) while a tilt-controlled console is open. See §6.
+### `tab5-imu*.yaml`
+`tab5-imu.yaml` on the Tab5; on a board without an IMU (ADR-0061), `tab5-imu-absente.yaml` only keeps the « Tab5 Tap-to-Wake » switch the Settings popup reads, with no name and no effect. BMI270 accelerometer: the three axes are `internal: true` (at 10–30 Hz they would flood the HA recorder for nothing). Two consumers — tap-to-wake on the dashboard, and tilt input for the games. An `interval:` re-tunes the polling rate at runtime via `set_update_interval()`: 100 ms (10 Hz) at rest, 33 ms (30 Hz) while a tilt-controlled console is open. See §6.
 
 ---
 
@@ -425,7 +429,7 @@ Le Tab5 n'interroge jamais l'état de Home Assistant ([ADR-0001](decisions/0001-
 ## Choix de conception
 
 - **Push uniquement, zéro polling.** L'appareil ne demande jamais son état à Home Assistant. Les automations côté HA détectent les changements et poussent les données vers l'écran via des appels de service ESPHome natifs. Dans l'autre sens, la tablette émet des événements, jamais des actions Home Assistant ([ADR-0025](decisions/0025-events-only.md)). Le CPU reste proche de zéro quand rien ne change.
-- **YAML modulaire.** La configuration ESPHome est découpée en trente-sept fichiers par domaine (tokens, hardware, révision d'écran, canal de publication, capteurs diagnostics, capteurs domotique, logique API, styles, globales, scripts, UI, arcade, calendrier, assistant vocal, IMU, navigation, entités HA, réveil, pièces et tuiles, roue d'actions rapides, rangée sous l'horloge, popup Énergie, zones, popup Réglages, popup Température, popup Alertes, popup Maison, popup Météo, popup Musique, capteurs suivis, frigos, popup Serveur IA, popup télécommande, économie d'énergie, thèmes), chacun lisible indépendamment. La plupart tiennent sous 500 lignes ; seuls les plus gros (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`) dépassent, et l'UI est encore découpée en 102 `ui_components/*.yaml` réutilisables.
+- **YAML modulaire.** La configuration ESPHome est découpée en trente-six fichiers par domaine (tokens, carte (hardware, révision d'écran, taille de l'écran), canal de publication, capteurs diagnostics, capteurs domotique, logique API, styles, globales, scripts, UI, arcade, calendrier, assistant vocal, IMU, navigation, entités HA, réveil, pièces et tuiles, roue d'actions rapides, rangée sous l'horloge, popup Énergie, zones, popup Réglages, popup Température, popup Alertes, popup Maison, popup Météo, popup Musique, capteurs suivis, frigos, popup Serveur IA, popup télécommande, économie d'énergie, thèmes), chacun lisible indépendamment. La plupart tiennent sous 500 lignes ; seuls les plus gros (`tab5-alarm.yaml`, `tab5-styles.yaml`, `tab5-lvgl.yaml`, `tab5-api-logic.yaml`, `tab5-sensors-diagnostics.yaml`) dépassent, et l'UI est encore découpée en 102 `ui_components/*.yaml` réutilisables.
 - **LVGL natif, pas de stack web.** LVGL rafraîchit jusqu'à 60 fois par seconde, depuis un framebuffer en PSRAM, et ne redessine que ce qui a changé. Mesuré sur la tablette (firmware 3.2.0, 28/09/2026) : une valeur ou la minute de l'horloge se redessine en moins de 10 ms, le panneau tournant du centre en 15 à 21 ms par image, l'écran entier en 133 ms, et un popup s'ouvre en 126 à 197 ms. Les polices vectorielles (Material Design Icons) remplacent complètement les fichiers image.
 - **Compression de données.** Les payloads complexes (prévisions 15 jours, prévisions horaires, alertes météo) sont sérialisés en chaînes délimitées côté HA et parsés en C++ sur l'appareil — un seul appel réseau, zéro requête suivante.
 - **Résilience hors-ligne.** Toutes les lambdas C++ vérifient `api.connected()` et `has_state()` avant de toucher l'UI. Si HA redémarre, le dernier état connu reste affiché — et l'appareil reste utilisable seul (horloge, arcade, console diag). Il ne se redémarre de lui-même qu'après une heure entière sans aucun client API (`api: reboot_timeout: 60min`), un filet anti-« zombie » assumé, pas une réaction à une coupure HA passagère.
@@ -451,8 +455,13 @@ Tokens dimensionnels partagés, chargés en premier pour que tous les autres pac
 
 ---
 
+### `carte-*.yaml`
+La carte, choisie à la compilation par `tab5_carte:` dans `Tab5/user_entities.yaml` ([ADR-0061](decisions/0061-board-and-screen-size.md)) : `tab5` (par défaut, le M5Stack Tab5) ou `waveshare-7b` (Waveshare ESP32-P4 7B, 1024×600, expérimentale : elle compile, elle n'a jamais tourné sur une carte et l'interface est encore dessinée pour 1280×720). `carte-tab5.yaml` charge `geometrie-tab5.yaml`, `tab5-hardware.yaml` et la révision d'écran `ecran-*.yaml` ci-dessous ; `carte-waveshare-7b.yaml` porte tout le matériel de cette carte et remplace par des bouchons les id du matériel du Tab5 qu'elle n'a pas (alimentations, batterie, RTC), pour que les autres packages compilent sans changer. Le `geometrie-*.yaml` de chaque carte donne la taille de l'écran (`carte_ecran_l`/`carte_ecran_h`, dont dérivent les jetons et les `kEcranL`/`kEcranH` du C++), la taille de la dalle, la rotation de LVGL et l'échelle des grosses polices. Le fichier racine choisit aussi `tab5-imu.yaml` (BMI270) sur le Tab5 et `tab5-imu-absente.yaml` ailleurs. Voir [`docs/hardware.md`](hardware.md#waveshare-esp32-p4-7b-expérimentale).
+
+---
+
 ### `tab5-hardware.yaml`
-Configuration matérielle bas niveau :
+Configuration matérielle bas niveau du Tab5 (chargée par `carte-tab5.yaml`) :
 - Réglages écran et tactile communs aux trois révisions du Tab5 (MIPI-DSI, broches, calibration) ; le modèle d'écran et la plateforme tactile viennent de `Tab5/paquets/ecran-<révision>.yaml` (par défaut : `M5STACK-TAB5-ST7123` et la plateforme I2C officielle `st7123`, depuis ESPHome 2026.7.0 ; l'ancien shim `external_components` a disparu) — voir [`docs/hardware.md`](hardware.md#révisions-matérielles)
 - Bus I2C, expanders GPIO PI4IOE5V6408 (lignes de reset écran/tactile)
 - DAC ES8388 (plateforme `audio_dac:`) et ADC micro ES7210 (`audio_adc:`)
@@ -590,8 +599,8 @@ Tout l'assistant vocal : `micro_wake_word` (`okay_nabu`, plus `Stop`), `voice_as
 
 ---
 
-### `tab5-imu.yaml`
-Accéléromètre BMI270 : les trois axes sont `internal: true` (à 10–30 Hz ils satureraient le recorder HA pour rien). Deux consommateurs — le tap-to-wake du dashboard, et l'entrée à l'inclinaison des jeux. Un `interval:` réajuste la cadence à chaud via `set_update_interval()` : 100 ms (10 Hz) au repos, 33 ms (30 Hz) quand une console pilotée à l'inclinaison est ouverte. Voir §6.
+### `tab5-imu*.yaml`
+`tab5-imu.yaml` sur le Tab5 ; sur une carte sans IMU (ADR-0061), `tab5-imu-absente.yaml` ne garde que l'interrupteur « Tab5 Tap-to-Wake » que lit le popup Réglages, sans nom et sans effet. Accéléromètre BMI270 : les trois axes sont `internal: true` (à 10–30 Hz ils satureraient le recorder HA pour rien). Deux consommateurs — le tap-to-wake du dashboard, et l'entrée à l'inclinaison des jeux. Un `interval:` réajuste la cadence à chaud via `set_update_interval()` : 100 ms (10 Hz) au repos, 33 ms (30 Hz) quand une console pilotée à l'inclinaison est ouverte. Voir §6.
 
 ---
 
