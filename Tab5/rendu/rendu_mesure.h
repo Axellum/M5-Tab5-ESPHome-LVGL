@@ -22,6 +22,8 @@
 #include "esphome.h"
 #include "tab5_geometrie.h"
 
+#include <algorithm>
+
 struct RenduCoupes {
     int coupes = 0;  // objets qui dessinent et ne tiennent pas dans leur zone visible
     int hors = 0;    // dont ceux qui dépassent l'écran
@@ -35,21 +37,30 @@ inline bool rendu_dessine(lv_obj_t* o) {
            lv_obj_get_style_border_width(o, LV_PART_MAIN) > 0;
 }
 
+// Calcul des zones écrit ici : lv_area_is_in() et lv_area_intersect() sont privés en
+// LVGL 9.5 (lv_area_private.h), et la bibliothèque du rendu hors tablette ne les déclare
+// pas sous ce nom (CI du 12/10/2026). Zones inclusives (x2, y2 compris), comme LVGL.
+inline bool rendu_dedans(const lv_area_t& a, const lv_area_t& z) {
+    return a.x1 >= z.x1 && a.y1 >= z.y1 && a.x2 <= z.x2 && a.y2 <= z.y2;
+}
+
 inline void rendu_parcourir(lv_obj_t* o, const lv_area_t& zone, const lv_area_t& ecran, RenduCoupes& r) {
     if (o == nullptr || lv_obj_has_flag(o, LV_OBJ_FLAG_HIDDEN)) return;
     lv_area_t a;
     lv_obj_get_coords(o, &a);
-    const bool plein = lv_area_get_width(&a) > 0 && lv_area_get_height(&a) > 0;
+    const bool plein = a.x2 >= a.x1 && a.y2 >= a.y1;
     if (plein && rendu_dessine(o)) {
-        if (!lv_area_is_in(&a, &zone, 0)) r.coupes++;
-        if (!lv_area_is_in(&a, &ecran, 0)) r.hors++;
+        if (!rendu_dedans(a, zone)) r.coupes++;
+        if (!rendu_dedans(a, ecran)) r.hors++;
     }
-    // Zone des enfants : celle-ci, réduite à l'objet s'il les coupe. Aucune intersection :
-    // une zone vide (x1 > x2), où rien ne tient.
+    // Zone des enfants : celle-ci, réduite à l'objet s'il les coupe (intersection ; vide,
+    // x1 > x2 ou y1 > y2, quand ils ne se touchent pas : rien n'y tient).
     lv_area_t enfants = zone;
-    if (!lv_obj_has_flag(o, LV_OBJ_FLAG_OVERFLOW_VISIBLE) && !lv_area_intersect(&enfants, &zone, &a)) {
-        enfants.x1 = 1;
-        enfants.x2 = 0;
+    if (!lv_obj_has_flag(o, LV_OBJ_FLAG_OVERFLOW_VISIBLE)) {
+        enfants.x1 = std::max(zone.x1, a.x1);
+        enfants.y1 = std::max(zone.y1, a.y1);
+        enfants.x2 = std::min(zone.x2, a.x2);
+        enfants.y2 = std::min(zone.y2, a.y2);
     }
     const uint32_t n = lv_obj_get_child_count(o);
     for (uint32_t i = 0; i < n; i++) rendu_parcourir(lv_obj_get_child(o, static_cast<int32_t>(i)), enfants, ecran, r);
