@@ -18,7 +18,7 @@ le câblage YAML hors tablette : ce fichier le relit.
 import re
 
 import yaml
-from tests.commun import REPO, ChargeurBalisesBrutes, lire, source, sources
+from tests.commun import REPO, ChargeurBalisesBrutes, lire, source, sources, vue_tab5
 
 DIAG = "tab5-sensors-diagnostics.yaml"
 RACINE = "tab5-ha-hmi.yaml"
@@ -59,7 +59,9 @@ def _noms():
 
 
 def _yaml_firmware():
-    return {c.name: c.read_text(encoding="utf-8") for c in [*sources("*.yaml"), REPO / RACINE]}
+    # Le firmware du Tab5 : une autre carte (ADR-0061) recopie la marque de son
+    # rétroéclairage dans son propre package (tests/test_carte_7b.py).
+    return {c.name: c.read_text(encoding="utf-8") for c in [*vue_tab5(sources("*.yaml")), REPO / RACINE]}
 
 
 def _on_boot():
