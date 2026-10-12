@@ -69,6 +69,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from demo_pusher import _appeler, _donner_une_cle, _lire_cle_demo, _pousser_scene  # noqa: E402
 from ecrans import ECRANS, PORTRAITS, Aller, Attendre, Choisir, Glisser, Service, Toucher  # noqa: E402
 from scenarios import SCENES, build_zones_absentes  # noqa: E402
+from vers_carte import adapter  # noqa: E402
 
 logger = logging.getLogger("capturer")
 
@@ -327,11 +328,16 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
             if sans_jeux and ecran.nom.startswith("jeu-"):
                 continue
             logger.info("Écran : %s", ecran.nom)
-            for etape in ecran.etapes:
+            # Sur une autre carte que le Tab5, les mêmes gestes ramenés à son écran
+            # (tools/rendu/vers_carte.py) ; sur le Tab5, les étapes telles quelles.
+            etapes, fermer, retirees = adapter(ecran, carte)
+            for etape in retirees:
+                logger.warning("%s : %r hors de l'écran de la carte, retiré", ecran.nom, etape)
+            for etape in etapes:
                 await rendu.jouer(etape)
             await asyncio.sleep(ecran.attente)
             await rendu.capturer(ecran.nom)
-            for etape in ecran.fermer:
+            for etape in fermer:
                 await rendu.jouer(etape)
             await rendu.accueil()
         rendu.ecrire_bilan(dossier / (f"ecrans-{carte}" + (f"-{suffixe}" if suffixe else "") + ".json"))
