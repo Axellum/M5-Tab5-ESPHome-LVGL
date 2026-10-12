@@ -361,7 +361,8 @@ jobs:
           faketime -f "$DEPART" "$prog" > "captures/rendu-7b.log" 2>&1 &
           pid=$!
           sleep 8
-          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures | sed 's/^::warning[^:]*::/alerte : /'
+          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures --carte waveshare-7b \
+            | sed 's/^::warning[^:]*::/alerte : /'
           pkill -f "$prog" 2>/dev/null || true
           kill "$pid" 2>/dev/null || true
       - name: Taille des captures (1024×600)
@@ -396,6 +397,42 @@ jobs:
             !captures/*.bmp
           if-no-files-found: warn
           retention-days: 14
+
+  # Écrans ouverts sur la 7B / attendus (ceux du Tab5), objets coupés des popups
+  # (tools/rendu/bilan_carte.py, lot 2 du portage) : le bilan de chaque carte vient de sa
+  # tâche (ecrans-<carte>.json, écrit par capturer.py), d'où une tâche à part, qui attend
+  # les deux. INFORMATIF, dans le résumé de cette tâche.
+  bilan-7b:
+    name: "Rendu 7B : écrans ouverts / attendus"
+    needs: [rendu, rendu-7b]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Bilan du Tab5 (tâche « fr »)
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        continue-on-error: true
+        with:
+          name: rendu-captures-fr
+          path: tab5
+      - name: Bilan de la 7B
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        continue-on-error: true
+        with:
+          name: rendu-1024x600
+          path: carte
+      - name: Écrans ouverts et objets coupés
+        run: |
+          if [ ! -f tab5/ecrans-tab5.json ] || [ ! -f carte/ecrans-waveshare-7b.json ]; then
+            echo "Bilan impossible : ecrans-tab5.json ou ecrans-waveshare-7b.json absent" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python tools/rendu/bilan_carte.py --tab5 tab5/ecrans-tab5.json \
+            --carte carte/ecrans-waveshare-7b.json | tee -a "$GITHUB_STEP_SUMMARY"
 
   comparer:
     needs: rendu
