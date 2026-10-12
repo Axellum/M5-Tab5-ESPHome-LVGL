@@ -19,7 +19,7 @@ import math
 import os
 
 import yaml
-from tests.commun import BaseChargeur
+from tests.commun import BaseChargeur, taille_police
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -114,7 +114,7 @@ def _styles():
 
 def _px():
     polices, _ = _styles()
-    taille = polices["roboto_130_b"]["size"]
+    taille = taille_police(polices["roboto_130_b"]["size"])   # Tab5 (ADR-0061)
     e = taille / UNITES_EM
     asc = math.ceil(ASCENDANTE * e)
     return {
@@ -247,7 +247,7 @@ def test_marges_egales_dans_la_tuile():
     haut = bordure + rouleaux[0]["y"] + y_label + px["encre_haut"] + RANGEE_VIDE_HAUT
     bas = tuile["height"] - (bordure + date["y"] + ASCENDANTE_45 + JAMBAGE_45)
     assert haut == bas, f"marges inégales : {haut} px en haut, {bas} px en bas"
-    e = _styles()[0]["roboto_130_b"]["size"] / UNITES_EM
+    e = taille_police(_styles()[0]["roboto_130_b"]["size"]) / UNITES_EM
     gauche = bordure + rouleaux[0]["x"] + math.floor(CHIFFRE_0_X[0] * e)
     droite = tuile["width"] - (bordure + rouleaux[3]["x"] + math.ceil(CHIFFRE_0_X[1] * e))
     assert abs(gauche - droite) <= 1 and gauche >= haut, (gauche, droite, haut)

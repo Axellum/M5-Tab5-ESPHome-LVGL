@@ -62,6 +62,12 @@ esphome:
     # basculent d'une image à l'autre. Les animations propres au projet
     # (tab5_anim.cpp : swipe, rouleaux, alertes) ne dépendent pas de ce réglage.
     - -DLV_THEME_DEFAULT_TRANSITION_TIME=0
+    # Taille de l'écran et rotation de repos de LVGL, celles de la carte (ADR-0061,
+    # Tab5/paquets/geometrie-<carte>.yaml) : kEcranL, kEcranH et kRotationRepos de
+    # Tab5/socle/tab5_geometrie.h. Sans ces drapeaux (tests sur PC), les valeurs du Tab5.
+    - -DTAB5_ECRAN_L=${carte_ecran_l}
+    - -DTAB5_ECRAN_H=${carte_ecran_h}
+    - -DTAB5_ROTATION=${carte_rotation}
   includes:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
     # les deux jeux qui en ont besoin (25/09/2026, audit lot 8a).
@@ -474,13 +480,14 @@ esphome:
 
 packages:
   tab5_ui_tokens: !include Tab5/paquets/tab5-ui-tokens.yaml
-  tab5_hardware: !include Tab5/paquets/tab5-hardware.yaml
-  # Écran et tactile selon la révision du Tab5 (docs/hardware.md, « Hardware revisions ») :
-  # `tab5_ecran:` dans Tab5/user_entities.yaml = st7123 (défaut, testée), st7121 (tourne
-  # chez un utilisateur depuis octobre 2026) ou ili9881c (compilée par la CI, jamais testée). Le défaut Jinja évite d'imposer la
-  # clé aux user_entities.yaml existants ; `lower` tolère « ST7121 » (vérifié sur
-  # ESPHome 2026.9.0, le plancher).
-  tab5_ecran: !include Tab5/paquets/ecran-${ tab5_ecran | default('st7123') | lower }.yaml
+  # Carte (ADR-0061) : `tab5_carte:` dans Tab5/user_entities.yaml (ou `-s tab5_carte …`)
+  # = tab5 (défaut : M5Stack Tab5, son matériel tab5-hardware.yaml et la révision de sa
+  # dalle, `tab5_ecran:`, voir carte-tab5.yaml) ou waveshare-7b (Waveshare
+  # ESP32-P4-WIFI6-Touch-LCD-7B, 1024×600, EXPÉRIMENTALE : jamais lancée sur une vraie
+  # carte, interface pas encore adaptée). Chaque carte porte la taille de son écran
+  # (geometrie-<carte>.yaml). Même place dans la liste que les deux packages qu'elle
+  # regroupe : l'ordre de la configuration du Tab5 ne change pas.
+  tab5_carte: !include Tab5/paquets/carte-${ tab5_carte | default('tab5') | lower }.yaml
   # Publication (lot 6c, ADR-0022) : `locale` (défaut, compilation sur son PC) n'ajoute
   # rien ; `stable` / `beta`, donnés par la CI de publication (`-s tab5_publication …`),
   # ajoutent l'entité de mise à jour qui lit le manifeste de la page de flashage.
@@ -497,7 +504,10 @@ packages:
   tab5_arcade: !include Tab5/paquets/tab5-arcade.yaml
   tab5_calendar: !include Tab5/paquets/tab5-calendar.yaml
   tab5_assist: !include Tab5/paquets/tab5-assist.yaml
-  tab5_imu: !include Tab5/paquets/tab5-imu.yaml
+  # IMU (BMI270) : le Tab5 seulement (tab5-imu.yaml). Une carte sans IMU prend
+  # tab5-imu-absente.yaml (« Tab5 Tap-to-Wake » sans capteur, que lit le popup Réglages) ;
+  # ses consoles n'ont ni inclinaison ni secousse (ADR-0061).
+  tab5_imu: !include Tab5/paquets/tab5-imu${ '' if (tab5_carte | default('tab5') | lower) == 'tab5' else '-absente' }.yaml
   # Navigation (08/10/2026) : registre des fenetres, « Aller a l'ecran », « Ecran courant »,
   # tab5_ecran_ouvrir. APRES tab5_lvgl : ses lambdas referencent des ids de widgets LVGL.
   tab5_navigation: !include Tab5/paquets/tab5-navigation.yaml

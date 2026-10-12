@@ -17,7 +17,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from tests.commun import contrat, lire as _lire, source
+from tests.commun import contrat, geometrie_cpp, jeton, lire as _lire, source
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -42,9 +42,7 @@ def _constexpr(source, nom):
 
 
 def _jeton(nom):
-    m = re.search(rf'^\s*{nom}: "(\d+)"', _lire("Tab5", "paquets", "tab5-ui-tokens.yaml"), re.M)
-    assert m, nom
-    return int(m.group(1))
+    return jeton(nom)
 
 
 def _maison():
@@ -189,10 +187,10 @@ def test_colonnes_dans_l_ordre_des_pieces_et_geometrie():
     assert "ui_hidden(u.vide, n > 0);" in disposer
     # Carte et corps : tab5_geometrie.h, partagé (lot L5 ; tests/test_geometrie_partagee.py).
     assert '#include "tab5_geometrie.h"' in cpp and "constexpr int32_t kCarteL" not in cpp
-    geometrie = _lire("Tab5", "socle", "tab5_geometrie.h")
-    assert int(_constexpr(geometrie, "kCarteL")) == _jeton("modal_card_w")
-    assert int(_constexpr(geometrie, "kCarteH")) == _jeton("modal_card_h")
-    assert int(_constexpr(geometrie, "kCorpsY")) == _jeton("modal_body_y")
+    geometrie = geometrie_cpp()
+    assert geometrie["kCarteL"] == _jeton("modal_card_w")
+    assert geometrie["kCarteH"] == _jeton("modal_card_h")
+    assert geometrie["kCorpsY"] == _jeton("modal_body_y")
     ligne = _lire("Tab5", "ui_components", "maison_ligne.yaml")
     assert f"height: {_constexpr(cpp, 'kLigneH')}" in ligne.split("widgets:", 1)[0]
     assert re.search(rf"x: {_constexpr(cpp, 'kTexteX')}, y: -15", ligne)

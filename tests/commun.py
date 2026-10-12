@@ -22,6 +22,11 @@ Tout est ici, une fois :
 - `jeton(nom)`, `avec_jetons(texte)` : un jeton de géométrie de
   `Tab5/paquets/tab5-ui-tokens.yaml` en entier, et un texte YAML où chaque `${jeton}` connu
   est remplacé par sa valeur (pour lire une hauteur posée par un jeton comme un nombre).
+  Calculés pour une carte (`carte=`, Tab5 par défaut ; ADR-0061) : `CARTES`,
+  `geometrie(carte)` (substitutions `carte_*`), `resoudre(valeur, contexte)` (une
+  expression `${ … }` comme ESPHome la calcule), `taille_police(size, carte)`,
+  `geometrie_cpp(carte)` (les constantes de tab5_geometrie.h pour la carte) et
+  `vue_tab5(chemins)` (sans les packages propres aux autres cartes).
 - `bloc_service(nom)` : le texte d'un service de `Tab5/paquets/tab5-api-logic.yaml`, de sa ligne
   `- service: nom` à la suivante (ou à la fin du bloc `api:`).
 - `CacheJinja` : cache en mémoire du code compilé des modèles Jinja (`bytecode_cache=` d'un
@@ -104,20 +109,94 @@ def charger(*chemin, chargeur=ChargeurSansBalises):
     return yaml.load(lire(*chemin), Loader=chargeur)
 
 
-def _jetons() -> dict[str, str]:
-    return {k: str(v) for k, v in charger("Tab5", "paquets", "tab5-ui-tokens.yaml")["substitutions"].items()}
+# Cartes (ADR-0061) : `tab5_carte` de tab5-ha-hmi.yaml, une Tab5/paquets/carte-<carte>.yaml
+# et une Tab5/paquets/geometrie-<carte>.yaml chacune. La première est le défaut.
+CARTES = ("tab5", "waveshare-7b")
+_EXPRESSION = re.compile(r"\$\{([^}]*)\}")
+_JINJA = jinja2.Environment()
 
 
-def jeton(nom: str) -> int:
-    """Valeur entière d'un jeton de géométrie (`Tab5/paquets/tab5-ui-tokens.yaml`)."""
-    return int(_jetons()[nom])
+def geometrie(carte: str = "tab5") -> dict[str, str]:
+    """Substitutions `carte_*` d'une carte (Tab5/paquets/geometrie-<carte>.yaml)."""
+    return {k: str(v) for k, v in charger("Tab5", "paquets", f"geometrie-{carte}.yaml")["substitutions"].items()}
 
 
-def avec_jetons(texte: str) -> str:
-    """`texte` où chaque `${jeton}` de `tab5-ui-tokens.yaml` est remplacé par sa valeur,
-    comme ESPHome le fait (les autres substitutions restent telles quelles)."""
-    valeurs = _jetons()
+def resoudre(valeur, contexte: dict):
+    """Une valeur YAML comme ESPHome la substitue : chaque `${expression}` est évaluée par
+    Jinja dans `contexte` (substitutions déjà connues) ; une valeur faite d'une seule
+    expression garde son type (int pour `${ carte_ecran_l | int - 30 }`). Une variable
+    inconnue laisse le texte tel quel."""
+    if not isinstance(valeur, str):
+        return valeur
+    def evaluer(expression: str):
+        return _JINJA.compile_expression(expression.strip(), undefined_to_none=False)(**contexte)
+
+    seule = _EXPRESSION.fullmatch(valeur.strip())
+    try:
+        if seule:
+            return evaluer(seule.group(1))
+        return _EXPRESSION.sub(lambda m: str(evaluer(m.group(1))), valeur)
+    except jinja2.exceptions.UndefinedError:
+        return valeur
+
+
+def _jetons(carte: str = "tab5") -> dict[str, str]:
+    """Jetons de géométrie résolus pour la carte, avec ses substitutions `carte_*`, en texte
+    comme ESPHome les voit (`| int` les convertit dans les expressions)."""
+    contexte = dict(geometrie(carte))
+    for k, v in charger("Tab5", "paquets", "tab5-ui-tokens.yaml")["substitutions"].items():
+        contexte[k] = str(resoudre(v, contexte))
+    return contexte
+
+
+def jeton(nom: str, carte: str = "tab5") -> int:
+    """Valeur entière d'un jeton de géométrie (`Tab5/paquets/tab5-ui-tokens.yaml`), calculé
+    pour la carte (Tab5 par défaut : les valeurs au pixel de la mise en page)."""
+    return int(_jetons(carte)[nom])
+
+
+def avec_jetons(texte: str, carte: str = "tab5") -> str:
+    """`texte` où chaque `${jeton}` de `tab5-ui-tokens.yaml` (et chaque `${carte_…}`) est
+    remplacé par sa valeur, comme ESPHome le fait (les autres substitutions restent telles
+    quelles)."""
+    valeurs = _jetons(carte)
     return re.sub(r"\$\{(\w+)\}", lambda m: valeurs.get(m.group(1), m.group(0)), texte)
+
+
+# Drapeau de compilation de tab5_geometrie.h → substitution de la carte qui le donne
+# (build_flags de tab5-ha-hmi.yaml et de tab5-rendu-host.yaml, ADR-0061).
+DRAPEAUX_CARTE = {"TAB5_ECRAN_L": "carte_ecran_l", "TAB5_ECRAN_H": "carte_ecran_h", "TAB5_ROTATION": "carte_rotation"}
+
+
+def geometrie_cpp(carte: str | None = None) -> dict[str, int]:
+    """Constantes entières de Tab5/socle/tab5_geometrie.h (`kEcranL`, `kCarteL`…), chacune
+    calculée des précédentes comme le compilateur le fait. `carte=None` : avec les
+    `#define` par défaut de l'en-tête (tests compilés sur PC) ; sinon avec les drapeaux
+    `-DTAB5_…` que la carte passe (ses substitutions `carte_*`)."""
+    texte = lire("Tab5", "socle", "tab5_geometrie.h")
+    macros = {n: int(v) for n, v in re.findall(r"#define\s+(TAB5_\w+)\s+(-?\d+)", texte)}
+    if carte is not None:
+        g = geometrie(carte)
+        macros.update({m: int(g[s]) for m, s in DRAPEAUX_CARTE.items()})
+    valeurs = dict(macros)
+    for nom, expr in re.findall(r"constexpr\s+int(?:32_t)?\s+(\w+)\s*=\s*([^;]+);", texte):
+        valeurs[nom] = int(eval(expr, {"__builtins__": {}}, dict(valeurs)))   # expressions du fichier
+    return {k: v for k, v in valeurs.items() if k not in macros}
+
+
+def vue_tab5(chemins) -> list[Path]:
+    """`chemins` sans les packages des autres cartes (`carte-<x>.yaml`, `geometrie-<x>.yaml`
+    et `tab5-imu-absente.yaml`, ADR-0061) : le firmware tel que le Tab5 le compile, pour les
+    gardes qui comptent une marque ou une broche par firmware."""
+    autres = {f"{p}-{c}.yaml" for c in CARTES[1:] for p in ("carte", "geometrie")} | {"tab5-imu-absente.yaml"}
+    return [c for c in chemins if Path(c).name not in autres]
+
+
+def taille_police(valeur, carte: str = "tab5") -> int:
+    """`size:` d'une police (Tab5/paquets/tab5-styles.yaml, tab5-themes.yaml) : un nombre, ou
+    l'expression de la carte `${ (130 * (carte_police_echelle | float)) | round | int }`
+    (ADR-0061), calculée pour `carte`."""
+    return int(resoudre(valeur, geometrie(carte)))
 
 
 _SERVICE = re.compile(r"^([ \t]*)- service: (\S+)[ \t]*$", re.M)

@@ -18,7 +18,7 @@ qui suit ; ce fichier lit le C++ et le YAML, comme les autres tests statiques :
 import math
 import os
 import re
-from tests.commun import contrat, lire as _lire, source
+from tests.commun import contrat, geometrie_cpp, lire as _lire, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -59,8 +59,8 @@ def _k(nom):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_constantes_du_rendu_egales_au_cpp():
-    geometrie = _lire("Tab5", "socle", "tab5_geometrie.h")   # écran partagé (lot L5, 07/10/2026)
-    assert (int(_const(geometrie, "kEcranL")), int(_const(geometrie, "kEcranH"))) == ecrans.ROUE_ECRAN
+    geometrie = geometrie_cpp()   # écran partagé (lot L5, 07/10/2026) ; le rendu garde celui du Tab5 (ADR-0061)
+    assert (geometrie["kEcranL"], geometrie["kEcranH"]) == ecrans.ROUE_ECRAN
     for cpp, rendu in (("kRayon", ecrans.ROUE_RAYON), ("kDiametre", ecrans.ROUE_DIAMETRE),
                        ("kRayon2", ecrans.ROUE_RAYON2), ("kDiametre2", ecrans.ROUE_DIAMETRE2),
                        ("kMarge", ecrans.ROUE_MARGE), ("kPasAngle", ecrans.ROUE_PAS_ANGLE),

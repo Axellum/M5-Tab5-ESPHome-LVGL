@@ -42,227 +42,227 @@
 font:
   - file: "Tab5/fonts/anton_400.ttf"
     id: police_anton_400_112
-    size: 112
+    size: ${ (112 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/anton_400.ttf"
     id: police_anton_400_32
-    size: 32
+    size: ${ (32 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/anton_400.ttf"
     id: police_anton_400_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/barlow_condensed_800.ttf"
     id: police_barlow_condensed_800_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/barlow_semi_condensed_700.ttf"
     id: police_barlow_semi_condensed_700_32
-    size: 32
+    size: ${ (32 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/barlow_semi_condensed_700.ttf"
     id: police_barlow_semi_condensed_700_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/bodoni_moda_700.ttf"
     id: police_bodoni_moda_700_120
-    size: 120
+    size: ${ (120 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/familjen_grotesk_700.ttf"
     id: police_familjen_grotesk_700_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/familjen_grotesk_700.ttf"
     id: police_familjen_grotesk_700_32
-    size: 32
+    size: ${ (32 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/familjen_grotesk_700.ttf"
     id: police_familjen_grotesk_700_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/figtree_700.ttf"
     id: police_figtree_700_31
-    size: 31
+    size: ${ (31 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/fraunces_700.ttf"
     id: police_fraunces_700_116
-    size: 116
+    size: ${ (116 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/fraunces_700.ttf"
     id: police_fraunces_700_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/fredoka_700.ttf"
     id: police_fredoka_700_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/fredoka_700.ttf"
     id: police_fredoka_700_32
-    size: 32
+    size: ${ (32 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœŸ–—’…'
   - file: "Tab5/fonts/fredoka_700.ttf"
     id: police_fredoka_700_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüıŒœ–—“”„…'
   - file: "Tab5/fonts/gloock_400.ttf"
     id: police_gloock_400_125
-    size: 125
+    size: ${ (125 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/gloock_400.ttf"
     id: police_gloock_400_30
-    size: 30
+    size: ${ (30 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/gloock_400.ttf"
     id: police_gloock_400_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/ibm_plex_serif_700.ttf"
     id: police_ibm_plex_serif_700_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/ibm_plex_serif_700.ttf"
     id: police_ibm_plex_serif_700_29
-    size: 29
+    size: ${ (29 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/ibm_plex_serif_700.ttf"
     id: police_ibm_plex_serif_700_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/jersey_10_400.ttf"
     id: police_jersey_10_400_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/jersey_10_400.ttf"
     id: police_jersey_10_400_32
-    size: 32
+    size: ${ (32 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/jersey_10_400.ttf"
     id: police_jersey_10_400_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/manrope_700.ttf"
     id: police_manrope_700_31
-    size: 31
+    size: ${ (31 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/manrope_700.ttf"
     id: police_manrope_700_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/murecho_300.ttf"
     id: police_murecho_300_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/murecho_400.ttf"
     id: police_murecho_400_32
-    size: 32
+    size: ${ (32 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/murecho_400.ttf"
     id: police_murecho_400_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/nunito_800.ttf"
     id: police_nunito_800_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/nunito_800.ttf"
     id: police_nunito_800_29
-    size: 29
+    size: ${ (29 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/nunito_800.ttf"
     id: police_nunito_800_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/overpass_700.ttf"
     id: police_overpass_700_31
-    size: 31
+    size: ${ (31 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/overpass_700.ttf"
     id: police_overpass_700_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/overpass_800.ttf"
     id: police_overpass_800_119
-    size: 119
+    size: ${ (119 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/oxanium_700.ttf"
     id: police_oxanium_700_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/oxanium_700.ttf"
     id: police_oxanium_700_31
-    size: 31
+    size: ${ (31 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/oxanium_700.ttf"
     id: police_oxanium_700_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/pacifico_400.ttf"
     id: police_pacifico_400_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/pacifico_400.ttf"
     id: police_pacifico_400_26
-    size: 26
+    size: ${ (26 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/pacifico_400.ttf"
     id: police_pacifico_400_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
   - file: "Tab5/fonts/quicksand_700.ttf"
     id: police_quicksand_700_130
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: '0123456789:'
   - file: "Tab5/fonts/quicksand_700.ttf"
     id: police_quicksand_700_31
-    size: 31
+    size: ${ (31 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !%''(),-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz«°»ÀÂÄÆÇÈÉÊËÎÏÔÖÙÛÜàáâäæçèéêëíîïóôöùúûüÿıŒœşŸ–—’…'
   - file: "Tab5/fonts/quicksand_700.ttf"
     id: police_quicksand_700_45
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2
     glyphs: ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡«°·º»¿ÀÁÂÄÇÈÉÍÓÖ×ÚÜßàáâäçèéêëìíîñòóôöùúûüĞğİıŒœŞş–—“”„…'
 # <<< polices

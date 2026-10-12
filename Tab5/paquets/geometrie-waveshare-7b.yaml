@@ -1,0 +1,21 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file geometrie-waveshare-7b.yaml
+# @role Taille de l'écran de la Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (ADR-0061) :
+#       1024×600, paysage natif (pas de rotation LVGL). Inclus par
+#       carte-waveshare-7b.yaml (firmware) et par tab5-rendu-host.yaml
+#       (`-s tab5_carte waveshare-7b`, captures en 1024×600).
+# @architecture_constraint Mêmes clés que geometrie-tab5.yaml (voir son en-tête).
+#       `carte_rotation: "0"` garde la clé `rotation:` de LVGL présente (tab5-styles.yaml,
+#       [AI-WARNING]) : ESPHome compile le support de rotation dès que la clé existe.
+# @ai_instruction EXPÉRIMENTAL : seule la taille vient d'ici. La mise en page des écrans
+#       reste au pixel pour 1280×720 (lots suivants) ; polices à 0,82 (≈ 1024 / 1280 et
+#       600 / 720), arrondies.
+# ============================================================================
+substitutions:
+  carte_ecran_l: "1024"
+  carte_ecran_h: "600"
+  carte_dalle_l: "1024"
+  carte_dalle_h: "600"
+  carte_rotation: "0"
+  carte_police_echelle: "0.82"
