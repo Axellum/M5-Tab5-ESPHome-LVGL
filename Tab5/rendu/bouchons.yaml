@@ -15,8 +15,8 @@ display:
   - platform: snapshot
     id: tab5_display
     dimensions:
-      width: 720
-      height: 1280
+      width: 600     # ESSAI 1024x600 (Waveshare 7B), branche jamais mergée
+      height: 1024
     update_interval: never
 
 # Heure de la machine (fuseau de la compilation). sntp_time porte le tick minute de
