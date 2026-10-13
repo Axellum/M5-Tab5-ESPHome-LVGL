@@ -15,7 +15,7 @@
 obj:
   id: "${id}"
   align: CENTER
-  width: 401
+  width: ${acc_ligne_l}
   height: ${ligne_zone_h}
   styles: style_transparent
   clickable: false
@@ -24,7 +24,7 @@ obj:
   hidden: true
   widgets:
     - obj:
-        width: 401
+        width: ${acc_ligne_l}
         height: ${ligne_zone_h}
         styles: style_transparent
         clickable: false

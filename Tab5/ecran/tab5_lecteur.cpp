@@ -54,18 +54,20 @@ constexpr int32_t kPuceMargeD = 16;
 constexpr int32_t kPuceMinL = 96;
 constexpr int32_t kPucesL = kLecteurCarteL - 2 * 24;   // rangée : les marges de la pochette
 constexpr int32_t kPucesCentreX = kLecteurCarteL / 2;  // milieu de la carte
-constexpr int32_t kMiniTexteL = 252;      // mini-barre : entre la vignette et le bouton
+constexpr int32_t kMiniTexteL = acc_x(252);  // mini-barre : entre la vignette et le bouton
 constexpr uint32_t kPauseVisibleMs = 5u * 60u * 1000u;  // mini-barre après une pause
 // Lecteur compact de la zone à gauche de l'horloge (lecteur_zone.yaml, ADR-0051 lot 2) :
 // pochette carrée sur la hauteur de la carte moins kZoneMarge d'air, colonne à sa droite
-// (titre, artiste, barre, boutons centrés sous elle).
-constexpr int32_t kZoneMarge = 16;
+// (titre, artiste, barre, boutons centrés sous elle). Valeurs du Tab5 ramenées à l'écran de
+// la carte (acc_x, acc_y, lot 3 du portage) ; les boutons ont la taille de leur YAML
+// (jetons acc_lect_btn, acc_lect_lecture). Les lignes de texte gardent leur pas (Roboto 22).
+constexpr int32_t kZoneMarge = acc_y(16);
 constexpr int32_t kZoneLigne = 28;        // du haut du titre au haut de l'artiste
-constexpr int32_t kZoneBarreEcart = 12;   // sous l'artiste
+constexpr int32_t kZoneBarreEcart = acc_y(12);   // sous l'artiste
 constexpr int32_t kZoneBarreH = 4;
-constexpr int32_t kZoneBtnL = 52;         // précédent, suivant
-constexpr int32_t kZoneLectureL = 60;     // lecture / pause
-constexpr int32_t kZoneBtnEcart = 12;
+constexpr int32_t kZoneBtnL = acc_y(52);         // précédent, suivant
+constexpr int32_t kZoneLectureL = acc_y(60);     // lecture / pause
+constexpr int32_t kZoneBtnEcart = acc_x(12);
 constexpr int32_t kZoneRayonMin = 10;     // pochette : rayon du cadre moins la marge, au moins
 
 struct Lecteur {

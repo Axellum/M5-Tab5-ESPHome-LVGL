@@ -31,7 +31,7 @@
 // Geste de swipe (page_main.on_gesture) : pagination previsions (y >= carte centrale)
 // =============================================================================
 
-static constexpr int32_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
+static constexpr int32_t FORECAST_SWIPE_Y_MIN = kAccCentraleY;  // haut de central_card (tab5-lvgl.yaml)
 
 // Largeur des panneaux de la carte centrale : ${central_w} de tab5-ui-tokens.yaml, calculée
 // de même par kPanneauCentralL (tab5_geometrie.h, suit l'écran de la carte, ADR-0061) et
@@ -565,7 +565,7 @@ static bool set_forecast_page_title_text(int forecast_page, lv_obj_t* lbl_page_t
     }
     lv_label_set_recolor(lbl_page_title, false);
     ui_text(lbl_page_title, plage.empty() ? chapeau.c_str() : plage.c_str());
-    lv_obj_align(lbl_page_title, LV_ALIGN_CENTER, 0, deux_lignes ? 13 : 0);
+    lv_obj_align(lbl_page_title, LV_ALIGN_CENTER, 0, deux_lignes ? kAccTitreY2 : 0);
     return true;
 }
 

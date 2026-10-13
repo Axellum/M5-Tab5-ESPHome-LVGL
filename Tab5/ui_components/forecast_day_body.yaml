@@ -11,8 +11,8 @@
 # meteo_tuile_libre), jamais au bout d'un glissement (ui_appui_glisse).
 obj:
   y: 0
-  width: 230
-  height: 275
+  width: ${acc_tuile_l}
+  height: ${acc_tuile_h}
   styles: style_meteo_card_page
   scrollbar_mode: "OFF"
   on_long_press:
@@ -25,7 +25,7 @@ obj:
         align: CENTER
         y: 0
         width: ${btn_w}
-        height: 130
+        height: ${acc_t_bouton_h}
         styles: style_invisible
         on_short_click:
           - lambda: 'tuile_appui(${n}, false);'

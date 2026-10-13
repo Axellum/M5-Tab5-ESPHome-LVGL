@@ -26,7 +26,7 @@ import pytest
 import yaml
 
 from tests import test_tuiles_blueprint as bp
-from tests.commun import avec_jetons, jeton, lire as _lire
+from tests.commun import avec_jetons, geometrie_cpp, jeton, lire as _lire
 
 import ecrans  # noqa: E402
 import scenarios  # noqa: E402
@@ -146,8 +146,10 @@ def test_panneaux_dans_le_cadre_et_non_cliquables():
     rangee = avec_jetons(_lire("Tab5", "ui_components", "rangee.yaml"))
     assert rangee.count(f"height: {LIGNE}\n") == 2
     assert "clickable: false" in _lire("Tab5", "ui_components", "rangee_element.yaml")
-    # 401 = kLargeur du dessin (tab5_rangee.cpp) : la place mesurée est celle du panneau.
-    assert _entier(RANGEE_CPP, "kLargeur") == 401
+    # 401 = kLargeur du dessin (tab5_rangee.cpp) : la place mesurée est celle du panneau
+    # (kAccLigneL de tab5_geometrie.h, égale au jeton acc_ligne_l, lot 3 du portage).
+    assert _constante(RANGEE_CPP, "kLargeur") == "kAccLigneL"
+    assert geometrie_cpp("tab5")["kAccLigneL"] == jeton("acc_ligne_l") == 401
     # tab5-rangee.yaml pose les widgets du panneau : le cadre est la zone et le toucher.
     ui = _lire("Tab5", "paquets", "tab5-rangee.yaml")
     assert "n.zone = id(btn_ok_nabu);" in ui and "n.panneau_special = id(nabu_ecoute);" in ui
@@ -232,7 +234,7 @@ def test_les_elements_restent_dans_l_arrondi_du_cadre_dans_chaque_theme():
 
 
 def test_pastilles_entre_le_cadre_et_la_carte_centrale():
-    gabarit = _lire("Tab5", "ui_components", "rangee_pastilles.yaml")
+    gabarit = avec_jetons(_lire("Tab5", "ui_components", "rangee_pastilles.yaml"))
     y = int(re.search(r"^  y: (\d+)$", gabarit, re.M).group(1))
     hauteur = max(int(v) for v in re.findall(r"height: (\d+), radius", gabarit))
     bouton = LVGL.split("id: btn_ok_nabu", 1)[1].split("widgets:", 1)[0]

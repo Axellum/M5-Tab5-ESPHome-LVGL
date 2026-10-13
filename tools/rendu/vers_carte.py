@@ -5,16 +5,19 @@ que le Tab5 (ADR-0061, lot 2 du portage 1024×600).
 Les étapes d'ecrans.py sont écrites pour l'écran du Tab5 (1280×720). Sur une autre carte,
 `adapter(ecran, carte)` les rejoue au même endroit de la mise en page, avec trois règles :
 
-1. Un geste dont le Tab5 sait l'écran qu'il ouvre et dont le point tombe hors de l'écran de
-   la carte (l'accueil n'est pas encore à sa taille : engrenage, manette, tuile − / +…) est
-   remplacé par la navigation, comme le ferait Home Assistant : « Aller à l'écran », ou
-   l'action rendu_ecran (Tab5/rendu/bouchons.yaml) pour l'Arcade, qui n'est pas une option.
+1. Un geste dont le Tab5 sait l'écran qu'il ouvre et dont le point tomberait hors de l'écran
+   de la carte est remplacé par la navigation, comme le ferait Home Assistant : « Aller à
+   l'écran », ou l'action rendu_ecran (Tab5/rendu/bouchons.yaml) pour l'Arcade, qui n'est pas
+   une option. Depuis le lot 3 (l'accueil ramené à l'écran de la carte), un point de
+   l'accueil tombe toujours dans l'écran : la règle ne se déclenche plus, elle reste en filet.
+   Le geste est joué pour de vrai, et la table dit seulement ce qu'il ouvre (un popup, ou le
+   sélecteur de l'Arcade).
 2. Les boutons des roues (ADR-0036, ADR-0042) sont recalculés pour l'écran de la carte,
    autour de leur ancre ramenée sur la carte (disposer() de tab5_roue.cpp dépend de la
    taille de l'écran).
-3. Les autres points suivent la mise en page : sur l'accueil, la rangée sous l'horloge et la
-   carte centrale sont centrées (décalées de la moitié de l'écart de largeur), le reste est
-   en place ; dans un popup, la croix est collée au bord droit de la carte modale, les noms
+3. Les autres points suivent la mise en page : l'accueil est celui du Tab5 ramené à l'écran
+   de la carte (lot 3, jetons acc_* de tab5-ui-tokens.yaml : x × l / 1280, y × h / 720,
+   arrondis) ; dans un popup, la croix est collée au bord droit de la carte modale, les noms
    des pages réduits depuis elle (onglet_x de tab5_geometrie.h), le corps ramené à la taille
    du corps (kCorpsW × kCorpsH) ; le sélecteur de l'Arcade est centré en largeur, les
    consoles restent au pixel. Un point qui reste hors de l'écran arrête l'écran là (ses
@@ -46,13 +49,11 @@ CROIX = 10 + 80
 # fin sur une carte (kOngletsFin = kCarteL - 102).
 ONGLETS_DEBUT_TAB5, ONGLETS_FIN_TAB5 = 196, 1148
 ONGLETS_AVANT_LE_BORD = 102
-# Accueil (tab5-lvgl.yaml) : entre l'horloge et les tuiles (y 230 à 455 du Tab5), la rangée
-# sous l'horloge et sa zone tactile (TOP_MID) et la carte centrale (x 20, largeur de l'écran
-# − 40) sont centrées dans l'écran. Le reste est posé à gauche, au pixel, dont les trois zones
-# tactiles de l'horloge (horloge_zone.yaml, x 440 à 840) : la tuile de l'horloge est centrée,
-# pas elles (accueil pas encore à la taille de la carte, lot suivant).
-ACCUEIL_CENTRE_Y, ACCUEIL_TUILES_Y = 230, 455
-ACCUEIL_CENTRE = (440, 840)
+# Accueil (tab5-lvgl.yaml, lot 3 du portage) : la mise en page du Tab5 ramenée à l'écran de
+# la carte, comme acc_x / acc_y de tab5_geometrie.h : (v × l + 640) // 1280 en x,
+# (v × h + 360) // 720 en y. Ancre basse de la roue d'une clim (clim_ancre_basse,
+# tab5_tuiles_roue.cpp) : x ramené dans [480, 800], y 460 sur le Tab5.
+CLIM_ANCRE_X, CLIM_ANCRE_Y = (480, 800), 460
 # Valeur d'Ecran::ARCADE (Tab5/ecran/tab5_zones.h) : tests/test_vers_carte.py la relit.
 ECRAN_ARCADE = 22
 # Marge des points ramenés dans l'écran (gestes, toucher qui ferme une roue).
@@ -83,10 +84,14 @@ class Carte:
     def dedans(self, x: int, y: int) -> bool:
         return 0 <= x < self.l and 0 <= y < self.h
 
+    def acc_x(self, v: int) -> int:
+        return (v * self.l + TAB5[0] // 2) // TAB5[0]
+
+    def acc_y(self, v: int) -> int:
+        return (v * self.h + TAB5[1] // 2) // TAB5[1]
+
     def accueil(self, x: int, y: int) -> tuple[int, int]:
-        if ACCUEIL_CENTRE_Y <= y < ACCUEIL_TUILES_Y and ACCUEIL_CENTRE[0] <= x <= ACCUEIL_CENTRE[1]:
-            return x + self.dx // 2, y
-        return x, y
+        return self.acc_x(x), self.acc_y(y)
 
     def popup(self, x: int, y: int) -> tuple[int, int]:
         cx, cy = x - MARGE_CARTE, y - MARGE_CARTE
@@ -133,14 +138,16 @@ def _roues(c: Carte) -> dict:
                                  1 + len(E.PIECES_OCCUPEES), ecran=ecran)
     roues[E.NAV_BUREAU] = (E.Toucher(*choix[1]), False)
     salon = ancre(E.SALON)
-    clim = E.roue_centres(min(max(salon[0], 480), 800), E.ROUE_CLIM_ANCRE[1], E.ROUE_CLIM_TEMPERATURE, ecran=ecran)
+    xmin, xmax = (c.acc_x(v) for v in CLIM_ANCRE_X)
+    clim = E.roue_centres(min(max(salon[0], xmin), xmax), c.acc_y(CLIM_ANCRE_Y), E.ROUE_CLIM_TEMPERATURE, ecran=ecran)
     roues[E.ROUE_CLIM_DETAILS] = (E.Toucher(*clim[-1]), True)
     roues[E.ROUE_CLIM_CLIMS] = (E.Toucher(*clim[E.ROUE_CLIMS]), False)
     return roues
 
 
 def _ouvertures(c: Carte) -> dict:
-    """Gestes de l'accueil qui ouvrent un écran : étape du Tab5 → navigation (règle 1)."""
+    """Gestes de l'accueil qui ouvrent un écran : étape du Tab5 → navigation (règle 1 ; le
+    type de la navigation dit aussi où le geste joué mène : popup ou Arcade)."""
     return {
         E.Toucher(*E.BOUTON_SYS): E.Aller("Réglages"),
         E.Long(*E.BOUTON_SYS): E.Aller("Console système"),
@@ -219,7 +226,10 @@ def adapter(ecran: E.Ecran, carte: str = "tab5", taille: tuple[int, int] | None 
             autres = tuple((s, *regle(mode)(sx, sy)) for s, sx, sy in etape.selon_langue)
             if etape == FERMER and mode == POPUP:
                 mode = ACCUEIL
-            elif mode == ACCUEIL and (etape in ouvertures or etape in popups):
+            elif mode == ACCUEIL and etape in ouvertures:
+                # Le geste joué ouvre ce que sa navigation ouvrirait : un popup, ou l'Arcade.
+                mode = POPUP if isinstance(ouvertures[etape], E.Aller) else ARCADE
+            elif mode == ACCUEIL and etape in popups:
                 mode = POPUP
             elif mode == ARCADE:
                 mode = JEU

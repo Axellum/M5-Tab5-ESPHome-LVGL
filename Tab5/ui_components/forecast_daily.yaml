@@ -24,9 +24,9 @@
 obj:
   id: layer_forecast_daily
   x: 0
-  y: 430
-  width: 1280
-  height: 290
+  y: ${acc_tuiles_y}
+  width: ${carte_ecran_l}
+  height: ${acc_tuiles_h}
   styles: style_transparent
   scrollbar_mode: "OFF"
   hidden: false
@@ -35,36 +35,36 @@ obj:
     # Tuiles 0, 2, 3, 4 : forecast_day_card.yaml (sorti le 08/10/2026, audit YML-3 : le corps
     # était écrit cinq fois). L'épaule droite de la tuile 0 n'existait pas avant les pièces
     # (ADR-0023) : cachée au démarrage.
-    - !include { file: forecast_day_card.yaml, vars: { n: "0", x: "25", btn_w: "140", day_label: "Journée", temp_w: "140", gauche_id: icon_card_pc, gauche: "\U000F07C0", droite_id: icon_card_droite_j0, droite: "\U000F0335", droite_masquee: true } }
+    - !include { file: forecast_day_card.yaml, vars: { n: "0", x: "${acc_tuile_x0}", btn_w: "${acc_t_bouton_l}", day_label: "Journée", temp_w: "${acc_t_temp_l}", gauche_id: icon_card_pc, gauche: "\U000F07C0", droite_id: icon_card_droite_j0, droite: "\U000F0335", droite_masquee: true } }
     # Tuile 1 : le cadre reste écrit pour le bouton du sens du volet, posé en dernier.
     - obj:
-        x: 275
-        y: ${meteo_cell_y}
-        width: ${meteo_cell_width}
-        height: ${meteo_cell_height}
+        x: ${acc_tuile_x1}
+        y: ${acc_tuile_cell_y}
+        width: ${acc_tuile_l}
+        height: ${acc_tuile_h}
         styles: style_transparent
         scrollbar_mode: "OFF"
         overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
         widgets:
-          - !include { file: forecast_day_body.yaml, vars: { n: "1", btn_w: "140" } }
+          - !include { file: forecast_day_body.yaml, vars: { n: "1", btn_w: "${acc_t_bouton_l}" } }
           # Icônes latérales (épaules)
-          - label: { id: icon_card_shutter1, text: "\U000F111E", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-          - label: { id: icon_card_shutter_arrow, text: "\U000F005D", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
+          - label: { id: icon_card_shutter1, text: "\U000F111E", align: TOP_LEFT, x: "${acc_t_epaule_x}", y: "${acc_t_epaule_y}", text_font: mdi_font_32, styles: style_text_dim }
+          - label: { id: icon_card_shutter_arrow, text: "\U000F005D", align: TOP_RIGHT, x: "-${acc_t_epaule_x}", y: "${acc_t_epaule_y}", text_font: mdi_font_32, styles: style_text_dim }
           - !include { file: forecast_day_title_tab.yaml, vars: { idx: "1", day_label: "Demain" } }
-          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "1", toggle_width: "130" } }
+          - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "1", toggle_width: "${acc_t_onglet_l}" } }
           - button:
               id: btn_j1_dir
               align: TOP_MID
               x: 0
               y: 0
-              width: 230
-              height: 60
+              width: ${acc_tuile_l}
+              height: ${acc_t_volet_h}
               styles: style_invisible
               pad_all: 0
               # Sens de la prochaine commande du volet 3.x (mode héritage seulement : sinon
               # masqué, la flèche suit l'état du volet de la tuile).
               on_short_click:
                 - lambda: 'tuiles_heritage_volet_sens();'
-    - !include { file: forecast_day_card.yaml, vars: { n: "2", x: "525", btn_w: "140", day_label: "2 Jours", temp_w: "130", gauche_id: icon_card_lit_j2, gauche: "\U000F02E3", droite_id: icon_card_light_j2, droite: "\U000F0335", droite_masquee: false } }
-    - !include { file: forecast_day_card.yaml, vars: { n: "3", x: "775", btn_w: "140", day_label: "3 Jours", temp_w: "130", gauche_id: icon_card_salon_j3, gauche: "\U000F04B9", droite_id: icon_card_light_j3, droite: "\U000F0335", droite_masquee: false } }
-    - !include { file: forecast_day_card.yaml, vars: { n: "4", x: "1025", btn_w: "130", day_label: "4 Jours", temp_w: "130", gauche_id: icon_card_led_j4, gauche: "\U000F1051", droite_id: icon_card_light_j4, droite: "\U000F0335", droite_masquee: false } }
+    - !include { file: forecast_day_card.yaml, vars: { n: "2", x: "${acc_tuile_x2}", btn_w: "${acc_t_bouton_l}", day_label: "2 Jours", temp_w: "${acc_t_onglet_l}", gauche_id: icon_card_lit_j2, gauche: "\U000F02E3", droite_id: icon_card_light_j2, droite: "\U000F0335", droite_masquee: false } }
+    - !include { file: forecast_day_card.yaml, vars: { n: "3", x: "${acc_tuile_x3}", btn_w: "${acc_t_bouton_l}", day_label: "3 Jours", temp_w: "${acc_t_onglet_l}", gauche_id: icon_card_salon_j3, gauche: "\U000F04B9", droite_id: icon_card_light_j3, droite: "\U000F0335", droite_masquee: false } }
+    - !include { file: forecast_day_card.yaml, vars: { n: "4", x: "${acc_tuile_x4}", btn_w: "${acc_t_bouton_l4}", day_label: "4 Jours", temp_w: "${acc_t_onglet_l}", gauche_id: icon_card_led_j4, gauche: "\U000F1051", droite_id: icon_card_light_j4, droite: "\U000F0335", droite_masquee: false } }

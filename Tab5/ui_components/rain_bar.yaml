@@ -11,7 +11,7 @@
 obj:
   id: rb_${n}
   width: ${w}
-  height: 50
+  height: ${acc_pluie_h}
   styles: style_bandeau_bg_bar_inactive
   border_width: 0
   pad_all: 0

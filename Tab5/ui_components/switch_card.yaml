@@ -7,14 +7,15 @@
 # Ids lus par tab5-tuiles.yaml (sw_card_N, sw_pastille_N, lbl_swN_title…) ; `icon_swN`
 # garde le motif `icon_sw?` de la règle 7 (tools/check_tab5_code_rules.py le déplie par
 # les vars). Pastille, icône, nom et état sont repeints par tab5_tuiles.cpp (peindre_carte).
+# Tailles : jetons acc_tuile_* et acc_sw_* (lot 3 du portage 1024×600), valeurs du Tab5 citées.
 # Le bouton invisible ne couvre que la pastille (130 × 130) : un geste parti ailleurs sur
 # la carte reste un swipe. La pastille et le nom ne prennent pas l'appui du bouton.
 obj:
   id: "sw_card_${n}"
   x: ${x}
-  y: ${meteo_cell_y}
-  width: ${meteo_cell_width}
-  height: ${meteo_cell_height}
+  y: ${acc_tuile_cell_y}
+  width: ${acc_tuile_l}
+  height: ${acc_tuile_h}
   styles: style_meteo_card_page
   scrollbar_mode: "OFF"
   widgets:
@@ -22,10 +23,10 @@ obj:
     - obj:
         id: "sw_pastille_${n}"
         align: TOP_MID
-        y: 26
-        width: 130
-        height: 130
-        radius: 65
+        y: ${acc_sw_pastille_y}
+        width: ${acc_sw_pastille}
+        height: ${acc_sw_pastille}
+        radius: ${acc_sw_rayon}
         styles: style_bg_dim
         bg_opa: 20%
         border_width: 0
@@ -36,9 +37,9 @@ obj:
     - button:
         id: "btn_sw${n}_action"
         align: TOP_MID
-        y: 26
-        width: 130
-        height: 130
+        y: ${acc_sw_pastille_y}
+        width: ${acc_sw_pastille}
+        height: ${acc_sw_pastille}
         styles: style_invisible
         on_short_click:
           - lambda: 'tuile_appui(${n}, false);'

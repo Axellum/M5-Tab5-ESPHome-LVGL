@@ -30,8 +30,8 @@ obj:
   id: moisture_sensors_card
   x: 0
   y: 0
-  width: 401
-  height: 70
+  width: ${acc_ligne_l}
+  height: ${ligne_zone_h}
   styles: style_transparent
   scrollbar_mode: "OFF"
   layout:
@@ -44,8 +44,8 @@ obj:
   widgets:
     # Slot 0 : Plus sec (rempli dynamiquement par sort_and_update_moisture_slots)
     - obj:
-        width: 70
-        height: 70
+        width: ${ligne_zone_h}
+        height: ${ligne_zone_h}
         styles: style_transparent
         scrollable: false
         widgets:
@@ -53,8 +53,8 @@ obj:
 
     # Slot 1 : 2e plus sec
     - obj:
-        width: 70
-        height: 70
+        width: ${ligne_zone_h}
+        height: ${ligne_zone_h}
         styles: style_transparent
         scrollable: false
         widgets:
@@ -62,8 +62,8 @@ obj:
 
     # Slot 2 : Médiane
     - obj:
-        width: 70
-        height: 70
+        width: ${ligne_zone_h}
+        height: ${ligne_zone_h}
         styles: style_transparent
         scrollable: false
         widgets:
@@ -71,8 +71,8 @@ obj:
 
     # Slot 3 : Plus humide
     - obj:
-        width: 70
-        height: 70
+        width: ${ligne_zone_h}
+        height: ${ligne_zone_h}
         styles: style_transparent
         scrollable: false
         widgets:

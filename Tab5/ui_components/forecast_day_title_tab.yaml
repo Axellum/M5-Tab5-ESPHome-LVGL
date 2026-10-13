@@ -4,9 +4,9 @@
 # pages journalieres 2-3 = "Lun 16". Le day_label YAML = texte initial seulement.
 obj:
   align: TOP_MID
-  y: 7
-  width: 130
-  height: 46
+  y: ${acc_t_onglet_y}
+  width: ${acc_t_onglet_l}
+  height: ${acc_t_onglet_h}
   styles: style_transparent  # plus d'onglet en saillie (essai 10/10/2026) : le texte s'écrit sur la carte pleine cellule
   scrollbar_mode: "OFF"
   widgets:

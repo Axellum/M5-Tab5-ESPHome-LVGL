@@ -36,9 +36,9 @@ obj:
   widgets:
     - obj:
         id: reglables_panneau
-        x: 740
-        y: 110
-        width: 520
+        x: ${acc_reglables_x}
+        y: ${acc_clim_y}
+        width: ${acc_reglables_l}
         height: SIZE_CONTENT
         styles: style_glass_card
         pad_all: 6

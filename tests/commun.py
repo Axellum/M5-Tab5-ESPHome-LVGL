@@ -164,8 +164,10 @@ def avec_jetons(texte: str, carte: str = "tab5") -> str:
 
 
 # Drapeau de compilation de tab5_geometrie.h → substitution de la carte qui le donne
-# (build_flags de tab5-ha-hmi.yaml et de tab5-rendu-host.yaml, ADR-0061).
-DRAPEAUX_CARTE = {"TAB5_ECRAN_L": "carte_ecran_l", "TAB5_ECRAN_H": "carte_ecran_h", "TAB5_ROTATION": "carte_rotation"}
+# (build_flags de tab5-ha-hmi.yaml et de tab5-rendu-host.yaml, ADR-0061) ; police_pct est un
+# jeton de tab5-ui-tokens.yaml calculé de carte_police_echelle (lot 3 du portage).
+DRAPEAUX_CARTE = {"TAB5_ECRAN_L": "carte_ecran_l", "TAB5_ECRAN_H": "carte_ecran_h", "TAB5_ROTATION": "carte_rotation",
+                  "TAB5_POLICE_PCT": "police_pct"}
 
 
 def geometrie_cpp(carte: str | None = None) -> dict[str, int]:
@@ -176,7 +178,7 @@ def geometrie_cpp(carte: str | None = None) -> dict[str, int]:
     texte = lire("Tab5", "socle", "tab5_geometrie.h")
     macros = {n: int(v) for n, v in re.findall(r"#define\s+(TAB5_\w+)\s+(-?\d+)", texte)}
     if carte is not None:
-        g = geometrie(carte)
+        g = _jetons(carte)
         macros.update({m: int(g[s]) for m, s in DRAPEAUX_CARTE.items()})
     valeurs = _constexpr_evaluer(texte, dict(macros))
     return {k: v for k, v in valeurs.items() if k not in macros}
