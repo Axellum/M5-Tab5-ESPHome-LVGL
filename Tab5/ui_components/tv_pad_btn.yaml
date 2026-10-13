@@ -11,14 +11,16 @@
 #        `y: 0` sur l'autre axe ajouterait une propriété de style locale par bouton.
 #        Passer `axis` entre guillemets ("x" / "y").
 # Sorti de tv_remote_popup.yaml le 26/09/2026 (audit, lot 7.3) ; flèches agrandies avec
-# le disque le 10/10/2026 (ADR-0056 : 150 × 110 sur un disque de 400).
+# le disque le 10/10/2026 (ADR-0056 : 150 × 110 sur un disque de 400). Sur une carte plus
+# petite (lot 4 du portage), disque, flèches, décalage et arrondi sont réduits ensemble (la
+# plus petite des deux échelles du corps) : la marge du calcul du popup reste la même.
 # ═══════════════════════════════════════════════════════
 button:
   align: ${align}
   ${axis}: ${offset}
   width: ${w}
   height: ${h}
-  radius: 36
+  radius: ${ [36 * (corps_w | int) // 1202, 36 * (corps_h | int) // 598] | min }
   styles: [style_invisible, style_bg_accent]
   pressed:
     bg_opa: 25%
