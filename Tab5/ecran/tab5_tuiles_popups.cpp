@@ -608,11 +608,12 @@ PopupAppareil s_pa;
 // Géométrie (appareil_popup.yaml) : titre = la barre d'en-tête moins l'icône et la
 // croix ; textes de la carte ÉTAT (800 px) et de la carte COMMANDE (386 px) ; grand
 // bouton de 380 px, rempli à moitié (allumé : en haut ; éteint : en bas) ou en entier
-// (scène, script, bouton).
-constexpr int32_t kAppareilTitreLargeur = 1000;
-constexpr int32_t kAppareilTexteLargeur = 740;
-constexpr int32_t kAppareilActionLargeur = 350;
-constexpr int32_t kAppareilBoutonHauteur = 380;
+// (scène, script, bouton). Valeurs du Tab5, ramenées au corps de la carte (lot 4 du
+// portage, ADR-0061 ; tests/test_appareil_popup.py les compare au YAML).
+constexpr int32_t kAppareilTitreLargeur = largeur_carte(1000);
+constexpr int32_t kAppareilTexteLargeur = largeur_carte(800) - 60;
+constexpr int32_t kAppareilActionLargeur = kCorpsW - largeur_carte(816) - 36;
+constexpr int32_t kAppareilBoutonHauteur = hauteur_carte(380);
 
 // La tuile du popup a-t-elle toujours ce popup ? (les définitions peuvent changer popup
 // ouvert ; kGestes : int, act, med sans l'option t ; option r : jamais ; le mode héritage

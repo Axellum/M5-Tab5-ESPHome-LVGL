@@ -25,7 +25,8 @@
 #       (basculer, allumer avec l'option o, lancer), même confirmation (option k), même
 #       « OK » ; une tuile en lecture seule (option r) n'ouvre jamais ce popup.
 #       Corps : x 24..1226, y 72..670 (cartes de 800 et 386 px, 16 px d'écart, comme le
-#       popup du volet). Ne pas renommer les ids appareil_* : posés dans g_tuiles_ui
+#       popup du volet). Valeurs du Tab5 : ramenées au corps de la carte (lot 4 du portage,
+#       ADR-0061 ; 7B : cartes de 629 et 304 px, piste de 141 × 303). Ne pas renommer les ids appareil_* : posés dans g_tuiles_ui
 #       (tab5-tuiles.yaml).
 # @ai_instruction `scrollable: false` partout — NE PAS retirer. Le remplissage du bouton
 #       est `clickable: false` : sinon il prendrait l'appui à la place du bouton. Les
@@ -63,7 +64,7 @@ obj:
               align: TOP_LEFT
               x: 24
               y: ${modal_body_y}
-              width: 800
+              width: ${ 800 * (corps_w | int) // 1202 }
               height: ${corps_h}
               styles: style_glass_card
               scrollable: false
@@ -75,10 +76,10 @@ obj:
                 - obj:
                     id: appareil_pastille
                     align: TOP_MID
-                    y: 84
-                    width: 150
-                    height: 150
-                    radius: 75
+                    y: ${ 84 * (corps_h | int) // 598 }
+                    width: ${ [150 * (corps_w | int) // 1202, 150 * (corps_h | int) // 598] | min }
+                    height: ${ [150 * (corps_w | int) // 1202, 150 * (corps_h | int) // 598] | min }
+                    radius: ${ [150 * (corps_w | int) // 1202, 150 * (corps_h | int) // 598] | min // 2 }
                     styles: style_bg_dim
                     bg_opa: 20%
                     border_width: 0
@@ -90,14 +91,14 @@ obj:
                     id: appareil_etat
                     text: "--"
                     align: TOP_MID
-                    y: 256
+                    y: ${ 256 * (corps_h | int) // 598 }
                     styles: style_police_date
 
                 - label:
                     id: appareil_piece
                     text: "Pièce"
                     align: TOP_MID
-                    y: 346
+                    y: ${ 346 * (corps_h | int) // 598 }
                     text_font: roboto_32_b
                     styles: style_text_dim
 
@@ -106,7 +107,7 @@ obj:
                     id: appareil_options
                     text: ""
                     align: TOP_MID
-                    y: 406
+                    y: ${ 406 * (corps_h | int) // 598 }
                     text_font: roboto_32_b
                     text_align: CENTER
                     hidden: true
@@ -115,24 +116,25 @@ obj:
           # ═══ CARTE COMMANDE (droite) : le grand interrupteur ═══
           - obj:
               align: TOP_LEFT
-              x: 840
+              x: ${ 24 + 816 * (corps_w | int) // 1202 }
               y: ${modal_body_y}
-              width: 386
+              width: ${ corps_w | int - 816 * (corps_w | int) // 1202 }
               height: ${corps_h}
               styles: style_glass_card
               scrollable: false
               widgets:
                 - label: { text: "COMMANDE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-                # Piste verticale (180 × 380), le remplissage dedans : en haut allumé,
-                # en bas éteint, toute la hauteur pour une scène (tab5_tuiles.cpp).
+                # Piste verticale (180 × 380 sur le Tab5, ramenée à la carte : kAppareilBoutonHauteur),
+                # le remplissage dedans : en haut allumé, en bas éteint, toute la hauteur pour une
+                # scène (tab5_tuiles_popups.cpp).
                 - button:
                     id: appareil_bouton
                     align: TOP_MID
-                    y: 64
-                    width: 180
-                    height: 380
-                    radius: 90
+                    y: ${ 64 * (corps_h | int) // 598 }
+                    width: ${ 180 * (corps_w | int) // 1202 }
+                    height: ${ 380 * (corps_h | int) // 598 }
+                    radius: ${ 180 * (corps_w | int) // 1202 // 2 }
                     styles: style_bg_arc_track
                     bg_opa: COVER
                     border_width: 0
@@ -148,10 +150,10 @@ obj:
                       - obj:
                           id: appareil_remplissage
                           align: TOP_MID
-                          y: 190
-                          width: 180
-                          height: 190
-                          radius: 90
+                          y: ${ 380 * (corps_h | int) // 598 // 2 }
+                          width: ${ 180 * (corps_w | int) // 1202 }
+                          height: ${ 380 * (corps_h | int) // 598 // 2 }
+                          radius: ${ 180 * (corps_w | int) // 1202 // 2 }
                           styles: style_bg_dim
                           bg_opa: 35%
                           border_width: 0
@@ -166,5 +168,5 @@ obj:
                     id: appareil_action
                     text: "Allumer"
                     align: TOP_MID
-                    y: 480
+                    y: ${ 480 * (corps_h | int) // 598 }
                     styles: style_police_date
