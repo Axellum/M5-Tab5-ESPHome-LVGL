@@ -882,8 +882,9 @@ void ui_fond(lv_obj_t* obj, uint32_t hex) {
 }
 
 // Nom et état d'une carte du mode HA : la carte fait 230 px, 12 px de marge de chaque
-// côté (façon carte « tile » de HA depuis le 06/10/2026 : plus d'onglets de 200 px).
-constexpr int32_t kLargeurCarteTexte = 206;
+// côté (façon carte « tile » de HA depuis le 06/10/2026 : plus d'onglets de 200 px) ; à
+// l'échelle de l'écran de la carte (kAccCarteTexteL, lot 3 du portage, ADR-0061).
+constexpr int32_t kLargeurCarteTexte = kAccCarteTexteL;
 
 // Une tuile façon carte « tile » de HA (06/10/2026, discussion #278) : l'icône en couleur
 // pleine dans une pastille ronde de la même couleur à 20 % (opacité posée par le YAML), le
@@ -909,7 +910,7 @@ void peindre_carte(int r, int t) {
 }
 
 // Cartes du mode HA : la pièce de la page courante, cartes vides masquées et les autres
-// centrées (formule des zones, ADR-0018 : pas de 250 px).
+// centrées (formule des zones, ADR-0018 : pas de 250 px sur le Tab5, kAccTuilePas).
 void peindre_cartes() {
     const TuilesUI& u = g_tuiles_ui;
     if (!g_central_ctx.ha_mode) return;
@@ -917,13 +918,13 @@ void peindre_cartes() {
     int n = 0;
     for (int t = 0; t < kTuiles; t++)
         if (u.carte[t] != nullptr && tuile_presente(r, t)) n++;
-    int32_t x = (kEcranL - (n * 250 - 20)) / 2;
+    int32_t x = (kEcranL - (n * kAccTuilePas - (kAccTuilePas - kAccTuileL))) / 2;
     for (int t = 0; t < kTuiles; t++) {
         const bool presente = tuile_presente(r, t);
         ui_hidden(u.carte[t], !presente);
         if (!presente || u.carte[t] == nullptr) continue;
         ui_x(u.carte[t], x);
-        x += 250;
+        x += kAccTuilePas;
         peindre_carte(r, t);
     }
 }

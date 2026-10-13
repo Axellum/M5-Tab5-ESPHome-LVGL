@@ -623,9 +623,10 @@ void roue_clim_changee() {
 // Un objet de 1 px sans style ni toucher, créé une fois sur le calque du haut : roue_ouvrir()
 // garde sa signature (une ancre lv_obj_t*) et sa géométrie.
 namespace {
-constexpr int32_t kClimAncreY = 460;
-constexpr int32_t kClimAncreXMin = 480;
-constexpr int32_t kClimAncreXMax = 800;
+// Valeurs du Tab5, ramenées à l'écran de la carte (acc_x, acc_y : lot 3 du portage).
+constexpr int32_t kClimAncreY = acc_y(460);
+constexpr int32_t kClimAncreXMin = acc_x(480);
+constexpr int32_t kClimAncreXMax = acc_x(800);
 lv_obj_t* s_clim_ancre = nullptr;
 
 lv_obj_t* clim_ancre_basse(lv_obj_t* zone) {

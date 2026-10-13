@@ -8,6 +8,6 @@ label:
   id: "lbl_sw${idx}_state"
   text: "${state_text}"
   align: TOP_MID
-  y: 210
+  y: ${acc_sw_etat_y}
   text_font: roboto_32_b
   styles: style_text_dim

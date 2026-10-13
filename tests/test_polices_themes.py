@@ -13,6 +13,7 @@ import math
 import re
 from pathlib import Path
 
+from tests.commun import avec_jetons
 from tests.commun import sources as _sources
 
 REPO = Path(__file__).resolve().parent.parent
@@ -31,8 +32,11 @@ def _metriques(m: dict) -> dict:
 
 def test_roboto_redonne_la_geometrie_du_yaml():
     m = _mesures()[police_theme.REFERENCE]
-    rouleau = (REPO / "Tab5" / "ui_components" / "clock_roller.yaml").read_text(encoding="utf-8")
-    lvgl = (REPO / "Tab5" / "paquets" / "tab5-lvgl.yaml").read_text(encoding="utf-8")
+    # Jetons de l'horloge (hor_*, lot 3 du portage) résolus pour le Tab5, guillemets ôtés.
+    def resolu(chemin):
+        return re.sub(r'"(-?\d+)"', r"\1", avec_jetons(chemin.read_text(encoding="utf-8")))
+    rouleau = resolu(REPO / "Tab5" / "ui_components" / "clock_roller.yaml")
+    lvgl = resolu(REPO / "Tab5" / "paquets" / "tab5-lvgl.yaml")
     ys = {int(y) for y in re.findall(r"^\s+y: (-?\d+)\n\s+styles: \[style_police_horloge", rouleau, re.M)}
     dp = re.search(r"id: lbl_time_colon, text: \":\", align: TOP_LEFT, x: (\d+), y: (-?\d+)", lvgl)
     date = re.search(r"id: lbl_date, text: \"\", align: TOP_MID, y: (\d+)", lvgl)

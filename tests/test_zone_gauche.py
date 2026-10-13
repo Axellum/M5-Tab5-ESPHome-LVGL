@@ -28,7 +28,7 @@ import re
 import pytest
 import yaml
 
-from tests.commun import lire as _lire
+from tests.commun import avec_jetons, lire as _lire
 from tests.test_appuis import _fonction
 from tests.test_tuiles_blueprint import Passage, _evenement
 
@@ -66,7 +66,8 @@ def _disponibles():
 
 
 def _bloc_lvgl(ident):
-    texte = _lire(LVGL)
+    # Jetons acc_* (lot 3 du portage 1024×600) résolus pour le Tab5, guillemets ôtés.
+    texte = re.sub(r'"(-?\d+)"', lambda m: m.group(1), avec_jetons(_lire(LVGL)))
     debut = texte.index(f"id: {ident}\n")
     return texte[debut:].split("\n        # ", 1)[0].split("\n        - ", 1)[0]
 
@@ -211,7 +212,7 @@ def _carte(texte, ident):
 
 
 def test_lecteur_compact_meme_emprise_que_le_graphique():
-    lecteur = _carte(_lire(LECTEUR_ZONE), "zone_lecteur")
+    lecteur = _carte(avec_jetons(_lire(LECTEUR_ZONE)), "zone_lecteur")
     graphique = _bloc_lvgl("zone_graphique")
     for cle in ("align", "x", "y", "width", "height", "pad_all", "hidden", "styles"):
         v = re.search(rf"^\s+{cle}: (.+)$", graphique, re.M).group(1)

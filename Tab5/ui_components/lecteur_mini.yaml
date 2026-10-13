@@ -14,9 +14,9 @@
 button:
   id: lecteur_mini
   align: TOP_LEFT
-  x: 20
-  y: 236
-  width: 405
+  x: ${acc_marge}
+  y: ${acc_cadre_y}
+  width: ${acc_col_l}
   height: ${cadre_bas_h}
   pad_all: 0
   hidden: true
@@ -29,8 +29,8 @@ button:
     - obj:
         align: LEFT_MID
         x: 8
-        width: 56
-        height: 56
+        width: ${acc_mini_vignette}
+        height: ${acc_mini_vignette}
         pad_all: 0
         radius: 12
         clickable: false
@@ -42,17 +42,17 @@ button:
               id: lecteur_mini_img
               src: lecteur_pochette
               align: CENTER
-              width: 56
-              height: 56
+              width: ${acc_mini_vignette}
+              height: ${acc_mini_vignette}
               radius: 12
               hidden: true
-    - label: { id: lecteur_mini_titre, text: "", align: TOP_LEFT, x: 76, y: 10, text_font: roboto_22 }
-    - label: { id: lecteur_mini_artiste, text: "", align: TOP_LEFT, x: 76, y: 38, text_font: roboto_22, styles: style_text_dim }
+    - label: { id: lecteur_mini_titre, text: "", align: TOP_LEFT, x: "${acc_mini_texte_x}", y: "${acc_mini_titre_y}", text_font: roboto_22 }
+    - label: { id: lecteur_mini_artiste, text: "", align: TOP_LEFT, x: "${acc_mini_texte_x}", y: "${acc_mini_artiste_y}", text_font: roboto_22, styles: style_text_dim }
     - button:
         align: RIGHT_MID
         x: -8
-        width: 56
-        height: 56
+        width: ${acc_mini_vignette}
+        height: ${acc_mini_vignette}
         radius: 999
         pad_all: 0
         styles: style_pill_accent

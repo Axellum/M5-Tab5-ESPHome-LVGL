@@ -13,7 +13,7 @@ button:
   id: "${id}"
   align: CENTER
   width: ${central_w}
-  height: 80
+  height: ${acc_centrale_bouton_h}
   styles: style_invisible
   on_short_click: ${appui}
   on_long_press:

@@ -70,21 +70,193 @@ substitutions:
   # (modal_body_y + 104 px de haut + 12 px de respiration : 188). ESPHome 2026.9 calcule
   # l'expression (lot 2 du portage) : elle suit modal_body_y.
   assist_resp_y: ${ modal_body_y | int + 116 }
-  # Carte centrale de l'accueil (central_card, tab5-lvgl.yaml : x 20, 20 px des bords de
-  # l'écran, 1240 sur le Tab5) et largeur de ses panneaux (1180 : 1198 px utiles = 1240 -
-  # 2 × 20 de marge - 2 × 1 de bordure, arrondi) : boutons invisibles d'appui des panneaux
-  # (tab5-lvgl.yaml, central_bouton.yaml) et réponse vocale longue. Le C++ les reprend
-  # (kCentralCarteL, kPanneauCentralL, tab5_geometrie.h) : tests/test_geometrie_partagee.py
-  # vérifie que les deux côtés restent égaux.
-  central_carte_w: ${ carte_ecran_l | int - 40 }
-  central_w: ${ central_carte_w | int - 60 }
-  # Accueil, cadres « Ok Nabu » (btn_ok_nabu, tab5-lvgl.yaml) et − / + (climate_controls_zone,
+  # ─── Accueil (lot 3 du portage 1024×600, ADR-0061) ────────────────────────────────────
+  # La mise en page de l'accueil est celle du Tab5, ramenée à l'écran de la carte : un x ou
+  # une largeur v du Tab5 devient (v × carte_ecran_l + 640) // 1280, un y ou une hauteur
+  # (v × carte_ecran_h + 360) // 720 (arrondi au plus proche, en entiers comme le C++) ; ce
+  # qui doit tomber juste (la colonne = trois boutons et deux gouttières, les bas alignés à
+  # y 308…) est calculé des autres jetons. Sur le Tab5 chaque jeton redonne sa valeur au
+  # pixel d'avant (tests/test_geometrie_partagee.py). Le C++ reprend ceux dont il a besoin
+  # (kAcc…, tab5_geometrie.h). Valeurs du Tab5 entre parenthèses.
+  # Grille horizontale : 20 px des bords, colonnes gauche (Domo / Discu, Ok Nabu) et droite
+  # (HA / Sys / TV, températures, − / +) de trois boutons de 125 et deux gouttières de 15
+  # (405), l'horloge entre elles (401, centrée : x 440 = 640 − 401 / 2, comme LVGL la pose).
+  acc_marge: ${ (20 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_gout: ${ (15 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_bouton_l: ${ (125 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_col_l: ${ 3 * (acc_bouton_l | int) + 2 * (acc_gout | int) }
+  acc_droite_x: ${ carte_ecran_l | int - (acc_marge | int) - (acc_col_l | int) }
+  acc_discu_x: ${ (acc_marge | int) + (acc_col_l | int) - (acc_bouton_l | int) }
+  acc_sys_x: ${ (acc_droite_x | int) + (acc_bouton_l | int) + (acc_gout | int) }
+  acc_tv_x: ${ (acc_droite_x | int) + 2 * ((acc_bouton_l | int) + (acc_gout | int)) }
+  acc_horloge_l: ${ carte_ecran_l | int - 2 * (acc_marge | int) - 2 * (acc_col_l | int) - 2 * (acc_gout | int) + 1 }
+  acc_horloge_x: ${ (carte_ecran_l | int) // 2 - (acc_horloge_l | int) // 2 }
+  acc_milieu: ${ (carte_ecran_l | int) // 2 }
+  # Hauteurs du haut : boutons (y 20, 90 de haut), horloge (210), bandeau d'état (y 10).
+  acc_haut_y: ${ (20 * (carte_ecran_h | int) + 360) // 720 }
+  acc_bouton_h: ${ (90 * (carte_ecran_h | int) + 360) // 720 }
+  acc_horloge_h: ${ (210 * (carte_ecran_h | int) + 360) // 720 }
+  acc_bandeau_y: ${ (10 * (carte_ecran_h | int) + 360) // 720 }
+  # Cadres « Ok Nabu » (btn_ok_nabu, tab5-lvgl.yaml) et − / + (climate_controls_zone,
   # climate_card.yaml), en miroir, bas à y 308 (09/10/2026, demande d'Axel : 90 px, le
   # texte « nageait » dedans). Leur intérieur est une ligne de zone (ligne_zone_h) : la
   # hauteur de la rangée sous l'horloge, où se dessinent les mêmes lignes de capteurs
   # (rangee_panneau.yaml) ; une ligne de texte de 45 px (encre 33 px en Roboto) y garde
   # 18 px d'air au-dessus et au-dessous. cadre_bas_h = ligne_zone_h + 2 × 1 px de bordure
-  # (pas d'arithmétique dans les substitutions : changer l'un, c'est changer l'autre ;
-  # tests/test_nabu.py les compare).
-  ligne_zone_h: "70"
-  cadre_bas_h: "72"
+  # (tests/test_nabu.py les compare). Largeur d'une ligne (rangée, panneaux Ok Nabu) :
+  # celle de l'horloge, au plus l'intérieur du cadre Ok Nabu (401 ; kAccLigneL).
+  ligne_zone_h: ${ (70 * (carte_ecran_h | int) + 360) // 720 }
+  cadre_bas_h: ${ ligne_zone_h | int + 2 }
+  acc_cadre_bas: ${ (308 * (carte_ecran_h | int) + 360) // 720 }
+  acc_cadre_y: ${ (acc_cadre_bas | int) - (cadre_bas_h | int) }
+  acc_ligne_l: ${ [acc_horloge_l | int, (acc_col_l | int) - 4] | min }
+  acc_rangee_y: ${ (244 * (carte_ecran_h | int) + 360) // 720 }
+  acc_pastilles_y: ${ (319 * (carte_ecran_h | int) + 360) // 720 }
+  # Colonne de gauche : zone au choix (ADR-0051, x 20, y 42, 405 × 184 ; vocal : 440 × 230),
+  # micro (x 162, y 78, 120 × 120), Domo / Discu (y 90).
+  acc_zone_y: ${ (42 * (carte_ecran_h | int) + 360) // 720 }
+  acc_zone_h: ${ (184 * (carte_ecran_h | int) + 360) // 720 }
+  acc_vocal_h: ${ (230 * (carte_ecran_h | int) + 360) // 720 }
+  acc_micro_x: ${ (162 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_micro_y: ${ (78 * (carte_ecran_h | int) + 360) // 720 }
+  acc_micro_l: ${ (120 * (carte_ecran_h | int) + 360) // 720 }
+  acc_domo_y: ${ (90 * (carte_ecran_h | int) + 360) // 720 }
+  # Colonne de droite : zone des températures et de la tuile − / + (climate_card.yaml : y 110,
+  # 198 de haut, bas sur le cadre Ok Nabu).
+  acc_clim_y: ${ (110 * (carte_ecran_h | int) + 360) // 720 }
+  acc_clim_h: ${ (acc_cadre_bas | int) - (acc_clim_y | int) }
+  # Dans la zone des températures (climate_card.yaml) : rangées à 14 px des côtés et 36 px
+  # au-dessus du milieu ; zones tactiles à y 31, 64 de haut (serre : 200 de large à 6 px du
+  # bord droit ; salon : 192 à x 4) ; dans la tuile − / + : − et + à 13 px des côtés, 10 px
+  # d'air en haut et en bas (52), rayon 12 ; valeur touchable sur 200 px.
+  acc_temp_x: ${ (14 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_temp_y: ${ -((36 * (carte_ecran_h | int) + 360) // 720) }
+  acc_temp_zone_y: ${ (31 * (carte_ecran_h | int) + 360) // 720 }
+  acc_temp_zone_h: ${ (64 * (carte_ecran_h | int) + 360) // 720 }
+  acc_serre_x: ${ -((6 * (carte_ecran_l | int) + 640) // 1280) }
+  acc_serre_l: ${ (200 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_salon_x: ${ (4 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_salon_l: ${ (192 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_pas_x: ${ (13 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_pas_l: ${ (cadre_bas_h | int) - 20 }
+  acc_pas_rayon: ${ (12 * (carte_ecran_h | int) + 360) // 720 }
+  acc_consigne_l: ${ (200 * (carte_ecran_l | int) + 640) // 1280 }
+  # Liste de la tuile − / + (reglables_liste.yaml) : panneau à x 740, 520 de large, sous les
+  # boutons du haut (acc_clim_y) ; lignes de 52.
+  acc_reglables_x: ${ (740 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_reglables_l: ${ (520 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_reglable_h: ${ (52 * (carte_ecran_h | int) + 360) // 720 }
+  # Mini-barre du lecteur (lecteur_mini.yaml, sur le cadre Ok Nabu) : vignette et bouton de
+  # 56 (le cadre moins 16), textes à x 76 (8 + vignette + 12), y 10 et 38 ; largeur des
+  # textes (252, kMiniTexteL de tab5_lecteur.cpp).
+  acc_mini_vignette: ${ (cadre_bas_h | int) - 16 }
+  acc_mini_texte_x: ${ 20 + (acc_mini_vignette | int) }
+  acc_mini_titre_y: ${ (10 * (carte_ecran_h | int) + 360) // 720 }
+  acc_mini_artiste_y: ${ (38 * (carte_ecran_h | int) + 360) // 720 }
+  # Lecteur compact de la zone à gauche (lecteur_zone.yaml) : précédent et suivant (52),
+  # lecture / pause (60) ; tab5_lecteur.cpp les place (kZoneBtnL, kZoneLectureL).
+  acc_lect_btn: ${ (52 * (carte_ecran_h | int) + 360) // 720 }
+  acc_lect_lecture: ${ (60 * (carte_ecran_h | int) + 360) // 720 }
+  # Carte centrale (central_card : x 20, y 333, 1240 × 84 sur le Tab5) et largeur de ses
+  # panneaux (1180 : 1198 px utiles = 1240 - 2 × 20 de marge - 2 × 1 de bordure, arrondi) :
+  # boutons invisibles d'appui des panneaux (tab5-lvgl.yaml, central_bouton.yaml, 80 de haut)
+  # et réponse vocale longue. Le C++ les reprend (kCentralCarteL, kPanneauCentralL,
+  # kAccCentraleY, tab5_geometrie.h) : tests/test_geometrie_partagee.py vérifie que les deux
+  # côtés restent égaux.
+  central_carte_w: ${ carte_ecran_l | int - 2 * (acc_marge | int) }
+  central_w: ${ central_carte_w | int - 60 }
+  acc_centrale_y: ${ (333 * (carte_ecran_h | int) + 360) // 720 }
+  acc_centrale_h: ${ (84 * (carte_ecran_h | int) + 360) // 720 }
+  acc_centrale_bouton_h: ${ (acc_centrale_h | int) - 4 }
+  # Dans la carte centrale : barres de pluie (50 de haut), air sous les textes de la pluie
+  # (15 ; 10 sous la valeur), chapeau « Pièce n/N » à y −26 et nom de la pièce à y +13 du
+  # milieu (kAccTitreY2, tab5_central.cpp).
+  acc_pluie_h: ${ (50 * (carte_ecran_h | int) + 360) // 720 }
+  acc_pluie_pad: ${ (15 * (carte_ecran_h | int) + 360) // 720 }
+  acc_pluie_pad_val: ${ (10 * (carte_ecran_h | int) + 360) // 720 }
+  acc_titre_sous_y: ${ -((26 * (carte_ecran_h | int) + 360) // 720) }
+  acc_titre_y2: ${ (13 * (carte_ecran_h | int) + 360) // 720 }
+  # Points de pagination (x 480, y 420, 310 × 30) et mention « prévisions périmées » (x 800,
+  # y 416, 455 × 26).
+  acc_pagination_x: ${ (480 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_pagination_y: ${ (420 * (carte_ecran_h | int) + 360) // 720 }
+  acc_pagination_l: ${ (310 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_perimees_x: ${ (800 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_perimees_y: ${ (416 * (carte_ecran_h | int) + 360) // 720 }
+  acc_perimees_l: ${ (455 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_perimees_h: ${ (26 * (carte_ecran_h | int) + 360) // 720 }
+  # Bande des cinq tuiles (prévisions, mode HA) : calques à y 430 jusqu'au bas de l'écran ;
+  # cellules de 230 × 275 au pas de 250, centrées (x 25), à y 5 du calque (kAccTuile…).
+  acc_tuiles_y: ${ (430 * (carte_ecran_h | int) + 360) // 720 }
+  acc_tuiles_h: ${ carte_ecran_h | int - (acc_tuiles_y | int) }
+  acc_tuile_l: ${ (230 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_tuile_pas: ${ (250 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_tuile_x0: ${ (carte_ecran_l | int - 4 * (acc_tuile_pas | int) - (acc_tuile_l | int)) // 2 }
+  acc_tuile_x1: ${ (acc_tuile_x0 | int) + (acc_tuile_pas | int) }
+  acc_tuile_x2: ${ (acc_tuile_x0 | int) + 2 * (acc_tuile_pas | int) }
+  acc_tuile_x3: ${ (acc_tuile_x0 | int) + 3 * (acc_tuile_pas | int) }
+  acc_tuile_x4: ${ (acc_tuile_x0 | int) + 4 * (acc_tuile_pas | int) }
+  acc_tuile_h: ${ (275 * (carte_ecran_h | int) + 360) // 720 }
+  acc_tuile_cell_y: ${ (5 * (carte_ecran_h | int) + 360) // 720 }
+  # Dans une tuile : onglet du titre (y 7, 130 × 46), onglet des températures (140 × 51, en
+  # bas), icônes des épaules (x 10, y 9), bouton de l'appareil (140 × 130 ; 130 sur la
+  # dernière), maxi / mini (x −25 / 35, y −7 du bas). Carte horaire : y 35, 205 de haut,
+  # bande du bas de 210 × 51 (goutte x 5, y −14 ; pluie x 34 ; température x −5).
+  acc_t_onglet_y: ${ (7 * (carte_ecran_h | int) + 360) // 720 }
+  acc_t_onglet_l: ${ (130 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_t_onglet_h: ${ (46 * (carte_ecran_h | int) + 360) // 720 }
+  acc_t_temp_l: ${ (140 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_t_bas_h: ${ (51 * (carte_ecran_h | int) + 360) // 720 }
+  acc_t_epaule_x: ${ (10 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_t_epaule_y: ${ (9 * (carte_ecran_h | int) + 360) // 720 }
+  acc_t_bouton_l: ${ (140 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_t_bouton_l4: ${ (130 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_t_bouton_h: ${ (130 * (carte_ecran_h | int) + 360) // 720 }
+  acc_t_max_x: ${ -((25 * (carte_ecran_l | int) + 640) // 1280) }
+  acc_t_min_x: ${ (35 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_t_texte_y: ${ -((7 * (carte_ecran_h | int) + 360) // 720) }
+  acc_t_volet_h: ${ (60 * (carte_ecran_h | int) + 360) // 720 }
+  acc_h_carte_y: ${ (35 * (carte_ecran_h | int) + 360) // 720 }
+  acc_h_carte_h: ${ (205 * (carte_ecran_h | int) + 360) // 720 }
+  acc_h_bas_l: ${ (210 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_h_goutte_x: ${ (5 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_h_goutte_y: ${ -((14 * (carte_ecran_h | int) + 360) // 720) }
+  acc_h_pluie_x: ${ (34 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_h_temp_x: ${ -((5 * (carte_ecran_l | int) + 640) // 1280) }
+  # Carte d'un appareil du mode HA (switch_card.yaml) : pastille ronde de 130 à y 26, nom à
+  # y 166 (214 × 40), état à y 210. La pastille reste ronde : sa taille suit la hauteur.
+  acc_sw_pastille_y: ${ (26 * (carte_ecran_h | int) + 360) // 720 }
+  acc_sw_pastille: ${ (130 * (carte_ecran_h | int) + 360) // 720 }
+  acc_sw_rayon: ${ (acc_sw_pastille | int) // 2 }
+  acc_sw_nom_y: ${ (166 * (carte_ecran_h | int) + 360) // 720 }
+  acc_sw_nom_l: ${ (214 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_sw_nom_h: ${ (40 * (carte_ecran_h | int) + 360) // 720 }
+  acc_sw_etat_y: ${ (210 * (carte_ecran_h | int) + 360) // 720 }
+  # Horloge (clock_tile) : sa géométrie intérieure est celle de la police des chiffres, à la
+  # taille de la carte (carte_police_echelle, en pour cent : police_pct ; drapeau
+  # TAB5_POLICE_PCT du C++) : un x, un y ou une taille v de la mise en page du Tab5 devient
+  # (v × police_pct + 50) // 100, décalé de hor_dx / hor_dy pour centrer le tout dans la
+  # tuile (0 sur le Tab5). theme_polices() (tab5_theme.cpp) fait le même calcul.
+  police_pct: ${ ((carte_police_echelle | float) * 100) | round | int }
+  hor_dx: ${ ((acc_horloge_l | int) - 2 - (399 * (police_pct | int) + 50) // 100) // 2 }
+  hor_dy: ${ ((acc_horloge_h | int) - (210 * (police_pct | int) + 50) // 100) // 2 }
+  hor_cadre_y: ${ (17 * (police_pct | int) + 50) // 100 + (hor_dy | int) }
+  hor_cadre_l: ${ (75 * (police_pct | int) + 50) // 100 }
+  hor_cadre_h: ${ (104 * (police_pct | int) + 50) // 100 }
+  hor_label_y: ${ -((23 * (police_pct | int) + 50) // 100) }
+  hor_h10_x: ${ (27 * (police_pct | int) + 50) // 100 + (hor_dx | int) }
+  hor_h1_x: ${ (102 * (police_pct | int) + 50) // 100 + (hor_dx | int) }
+  hor_m10_x: ${ (222 * (police_pct | int) + 50) // 100 + (hor_dx | int) }
+  hor_m1_x: ${ (297 * (police_pct | int) + 50) // 100 + (hor_dx | int) }
+  hor_dp_x: ${ (181 * (police_pct | int) + 50) // 100 + (hor_dx | int) }
+  hor_dp_y: ${ -((6 * (police_pct | int) + 50) // 100) + (hor_dy | int) }
+  hor_date_y: ${ (135 * (police_pct | int) + 50) // 100 + (hor_dy | int) }
+  # Zones tactiles de l'horloge (horloge_zone.yaml) : coupe verticale au milieu de l'écran,
+  # coupe horizontale à 40 px (à l'échelle) au-dessus de la ligne de base de la date (y 158
+  # sur le Tab5 : 20 + 1 + 177 − 40, voir tab5-lvgl.yaml).
+  hor_coupe_y: ${ (acc_haut_y | int) + 1 + (hor_dy | int) + (177 * (police_pct | int) + 50) // 100 - (40 * (police_pct | int) + 50) // 100 }
+  hor_heures_l: ${ (acc_milieu | int) - (acc_horloge_x | int) }
+  hor_minutes_l: ${ (acc_horloge_x | int) + (acc_horloge_l | int) - (acc_milieu | int) }
+  hor_chiffres_h: ${ (hor_coupe_y | int) - (acc_haut_y | int) }
+  hor_date_h: ${ (acc_haut_y | int) + (acc_horloge_h | int) - (hor_coupe_y | int) }
+  hor_froid_x: ${ (acc_horloge_x | int) + (acc_horloge_l | int) - 35 }

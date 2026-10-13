@@ -8,7 +8,7 @@ CI, sous la forme d'une capture identique à une autre. De même pour les pièce
 décalerait tous les suivants, et un geste parti d'un bouton le déclencherait."""
 import os
 import re
-from tests.commun import lire as _lire
+from tests.commun import avec_jetons, geometrie_cpp, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -79,7 +79,9 @@ def test_portraits():
 # ---------------------------------------------------------------------------
 
 PAGES_OCCUPEES = sorted(PAGE_DE_LA_PIECE[r] for r, p in PIECES.items() if p.tuiles)
-Y_MIN_GESTE = int(re.search(r"FORECAST_SWIPE_Y_MIN = (\d+);", _lire("Tab5", "ecran", "tab5_central.cpp")).group(1))
+# Haut de la carte centrale du Tab5 (kAccCentraleY de tab5_geometrie.h, lot 3 du portage).
+assert "FORECAST_SWIPE_Y_MIN = kAccCentraleY;" in _lire("Tab5", "ecran", "tab5_central.cpp")
+Y_MIN_GESTE = geometrie_cpp("tab5")["kAccCentraleY"]
 
 
 def _jouer(etapes, page=2, ha=False):
@@ -183,12 +185,13 @@ def test_gestes_partent_hors_des_tuiles_et_des_cartes():
 
 def _bouton(ident):
     """(x, y, largeur, hauteur) d'un bouton du haut : x de son inclusion dans
-    Tab5/paquets/tab5-lvgl.yaml, le reste du gabarit bouton_haut.yaml (08/10/2026, audit YML-4)."""
+    Tab5/paquets/tab5-lvgl.yaml, le reste du gabarit bouton_haut.yaml (08/10/2026, audit YML-4) ;
+    jetons acc_* (lot 3 du portage 1024×600) résolus pour le Tab5."""
     x = re.search(rf'file: \.\./ui_components/bouton_haut\.yaml, vars: \{{ id: {ident}, x: "(\d+)"',
-                  _lire("Tab5", "paquets", "tab5-lvgl.yaml"))
+                  avec_jetons(_lire("Tab5", "paquets", "tab5-lvgl.yaml")))
     assert x, ident
     m = re.search(r"align: TOP_LEFT\s+x: \$\{x\}\s+y: (\d+)\s+width: (\d+)\s+height: (\d+)",
-                  _lire("Tab5", "ui_components", "bouton_haut.yaml"))
+                  avec_jetons(_lire("Tab5", "ui_components", "bouton_haut.yaml")))
     assert m, "bouton_haut.yaml"
     return (int(x.group(1)),) + tuple(int(v) for v in m.groups())
 

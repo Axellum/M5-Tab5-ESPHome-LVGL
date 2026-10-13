@@ -47,6 +47,7 @@
  *       RangeeZone, sa lettre de clé (tab5_tuiles.cpp), ses widgets, une Defileur ici.
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include <algorithm>
 #include <cstring>
@@ -59,7 +60,7 @@ namespace {
 constexpr int kPlaces = 3;          // lignes à l'écran au plus, ligne spéciale comprise
 constexpr int kParLigne = 4;        // éléments d'une ligne
 constexpr int8_t kSpeciale = -1;    // dans l'ordre des lignes : les plantes, l'écoute
-constexpr int32_t kLargeur = 401;   // largeur de l'horloge (rangee.yaml), des panneaux Ok Nabu
+constexpr int32_t kLargeur = kAccLigneL;   // largeur de l'horloge (rangee.yaml), des panneaux Ok Nabu (401)
 constexpr int32_t kMarge = 8;       // écart minimal entre deux éléments, et aux bords
 // Dans le cadre du panneau Ok Nabu, plus d'air aux bords : le cadre du thème peut être une
 // gélule (Capsule : rayon 45, borné à 36 par les 72 px du cadre, bordure de 4 px) ; avec

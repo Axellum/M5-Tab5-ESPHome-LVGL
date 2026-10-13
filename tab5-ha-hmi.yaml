@@ -65,9 +65,12 @@ esphome:
     # Taille de l'écran et rotation de repos de LVGL, celles de la carte (ADR-0061,
     # Tab5/paquets/geometrie-<carte>.yaml) : kEcranL, kEcranH et kRotationRepos de
     # Tab5/socle/tab5_geometrie.h. Sans ces drapeaux (tests sur PC), les valeurs du Tab5.
+    # TAB5_POLICE_PCT : l'échelle des grosses polices en pour cent (police_pct,
+    # tab5-ui-tokens.yaml), celle de la géométrie de l'horloge (lot 3 du portage).
     - -DTAB5_ECRAN_L=${carte_ecran_l}
     - -DTAB5_ECRAN_H=${carte_ecran_h}
     - -DTAB5_ROTATION=${carte_rotation}
+    - -DTAB5_POLICE_PCT=${police_pct}
   includes:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
     # les deux jeux qui en ont besoin (25/09/2026, audit lot 8a).

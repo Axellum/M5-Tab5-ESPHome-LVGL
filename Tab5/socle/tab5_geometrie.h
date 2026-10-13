@@ -20,6 +20,9 @@
  *       le lot 2 du portage ce que les popups ont en commun : corps, graphiques, demi-cartes,
  *       onglets d'en-tête, colonnes du calendrier, lignes des pièces, panneaux de la carte
  *       centrale. La mise en page propre de chaque popup reste au pixel pour 1280×720.
+ *       Depuis le lot 3, l'accueil entier : celui du Tab5 ramené à l'écran de la carte
+ *       (acc_x, acc_y, kAcc… ; jetons acc_* et hor_* de tab5-ui-tokens.yaml), l'horloge à
+ *       l'échelle de sa police (TAB5_POLICE_PCT, police_px).
  *       Expressions : de l'arithmétique entière et au plus un `a ? b : c` par constante
  *       (tests/commun.py les recalcule en Python, carte par carte).
  */
@@ -35,12 +38,15 @@
 #ifndef TAB5_ROTATION
 #define TAB5_ROTATION 270
 #endif
+#ifndef TAB5_POLICE_PCT
+#define TAB5_POLICE_PCT 100
+#endif
 
 // Écran (paysage), celui de la carte.
 constexpr int32_t kEcranL = TAB5_ECRAN_L;
 constexpr int32_t kEcranH = TAB5_ECRAN_H;
 
-// La mise en page (positions et tailles des widgets) est encore dessinée au pixel pour
+// La mise en page propre des popups et des jeux est encore dessinée au pixel pour
 // 1280 × 720 (ADR-0061) : une vérification de mise en page au pixel ne vaut que sur un écran
 // au moins aussi grand, `static_assert(!kMiseEnPageTab5 || …)`. Toujours vraie sur le Tab5.
 constexpr bool kMiseEnPageTab5 = kEcranL >= 1280 && kEcranH >= 720;
@@ -111,11 +117,48 @@ constexpr int32_t kPieceLignePasMax = (kCorpsH - 88 - 50 + 8) / 5;
 constexpr int32_t kPieceLignePas = kPieceLignePasMax < kPieceLignePasTab5 ? kPieceLignePasMax : kPieceLignePasTab5;
 constexpr int32_t kPieceLigneH = kPieceLignePas - 8;
 
-// Panneaux de la carte centrale de l'accueil (central_card, tab5-lvgl.yaml : x 20, 20 px
-// des bords de l'écran ; jetons central_carte_w et central_w) : largeur utile des panneaux,
-// 1180 sur le Tab5 (1240 - 2 × 20 de marge - 2 × 1 de bordure, arrondi).
-constexpr int32_t kCentralCarteL = kEcranL - 40;
+// ─── Accueil (lot 3 du portage 1024×600, ADR-0061 ; jetons acc_* de tab5-ui-tokens.yaml) ───
+// La mise en page du Tab5 ramenée à l'écran de la carte : un x ou une largeur v du Tab5
+// devient acc_x(v) = (v × kEcranL + 640) / 1280, un y ou une hauteur acc_y(v) (même calcul
+// sur 720), arrondis au plus proche ; sur le Tab5, v. Le YAML fait le même calcul en
+// entiers (tests/test_geometrie_partagee.py compare, carte par carte). Valeurs positives.
+constexpr int32_t acc_x(int32_t v) { return (v * kEcranL + 640) / 1280; }
+constexpr int32_t acc_y(int32_t v) { return (v * kEcranH + 360) / 720; }
+// Marge de l'accueil aux bords de l'écran (20 px sur le Tab5 : acc_marge).
+constexpr int32_t kAccMarge = (20 * kEcranL + 640) / 1280;
+
+// Panneaux de la carte centrale de l'accueil (central_card, tab5-lvgl.yaml : x 20, y 333,
+// 20 px des bords de l'écran ; jetons central_carte_w, central_w, acc_centrale_y) : largeur
+// utile des panneaux, 1180 sur le Tab5 (1240 - 2 × 20 de marge - 2 × 1 de bordure,
+// arrondi) ; haut de la carte (sous lui, un glissement pagine les prévisions) ; y du nom de
+// la pièce sous son chapeau « Pièce n/N » (+13 du milieu, acc_titre_y2).
+constexpr int32_t kCentralCarteL = kEcranL - 2 * kAccMarge;
 constexpr int32_t kPanneauCentralL = kCentralCarteL - 60;
+constexpr int32_t kAccCentraleY = (333 * kEcranH + 360) / 720;
+constexpr int32_t kAccTitreY2 = (13 * kEcranH + 360) / 720;
+
+// Largeur d'une ligne de zone (rangée sous l'horloge, panneaux Ok Nabu ; acc_ligne_l) :
+// celle de l'horloge (401 sur le Tab5), au plus l'intérieur du cadre Ok Nabu (colonne de
+// trois boutons et deux gouttières, moins 4).
+constexpr int32_t kAccColL = 3 * ((125 * kEcranL + 640) / 1280) + 2 * ((15 * kEcranL + 640) / 1280);
+constexpr int32_t kAccHorlogeL = kEcranL - 2 * kAccMarge - 2 * kAccColL - 2 * ((15 * kEcranL + 640) / 1280) + 1;
+constexpr int32_t kAccLigneL = kAccHorlogeL < kAccColL - 4 ? kAccHorlogeL : kAccColL - 4;
+constexpr int32_t kAccHorlogeH = (210 * kEcranH + 360) / 720;
+
+// Tuiles du bas (prévisions, cartes du mode HA ; acc_tuile_l, acc_tuile_pas) : 230 px au
+// pas de 250, centrées ; texte d'une carte du mode HA (206 px, sous sa pastille).
+constexpr int32_t kAccTuileL = (230 * kEcranL + 640) / 1280;
+constexpr int32_t kAccTuilePas = (250 * kEcranL + 640) / 1280;
+constexpr int32_t kAccCarteTexteL = (206 * kEcranL + 640) / 1280;
+
+// Horloge (clock_tile) : sa géométrie intérieure suit la police des chiffres, réduite de
+// carte_police_echelle (TAB5_POLICE_PCT, en pour cent ; jeton police_pct), puis centrée
+// dans la tuile (hor_dx, hor_dy : 0 sur le Tab5). police_px(v) : une longueur v de la
+// mise en page du Tab5 à cette échelle, arrondie (signe gardé).
+constexpr int32_t kPolicePct = TAB5_POLICE_PCT;
+constexpr int32_t police_px(int32_t v) { return v >= 0 ? (v * kPolicePct + 50) / 100 : -((-v * kPolicePct + 50) / 100); }
+constexpr int32_t kHorlogeDx = (kAccHorlogeL - 2 - (399 * kPolicePct + 50) / 100) / 2;
+constexpr int32_t kHorlogeDy = (kAccHorlogeH - (210 * kPolicePct + 50) / 100) / 2;
 
 // Pièces (pages du bas) et tuiles par pièce (ADR-0023) : le blueprint en envoie autant.
 constexpr int kPieces = 5;

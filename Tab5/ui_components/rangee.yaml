@@ -23,8 +23,8 @@ obj:
   id: rangee_capteurs
   align: TOP_MID
   x: 0
-  y: 244
-  width: 401
+  y: ${acc_rangee_y}
+  width: ${acc_ligne_l}
   height: ${ligne_zone_h}
   styles: style_transparent
   scrollable: false
@@ -32,7 +32,7 @@ obj:
   widgets:
     - obj:
         id: rangee_plantes
-        width: 401
+        width: ${acc_ligne_l}
         height: ${ligne_zone_h}
         styles: style_transparent
         scrollable: false

@@ -17,10 +17,10 @@
 button:
   id: zone_suivi
   align: TOP_LEFT
-  x: 20
-  y: 42
-  width: 405
-  height: 184
+  x: ${acc_marge}
+  y: ${acc_zone_y}
+  width: ${acc_col_l}
+  height: ${acc_zone_h}
   pad_all: 0
   hidden: true
   scrollable: false

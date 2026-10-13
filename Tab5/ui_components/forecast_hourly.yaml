@@ -8,9 +8,9 @@
 obj:
   id: layer_forecast_hourly
   x: 0
-  y: 430
-  width: 1280
-  height: 290
+  y: ${acc_tuiles_y}
+  width: ${carte_ecran_l}
+  height: ${acc_tuiles_h}
   styles: style_transparent
   scrollbar_mode: "OFF"
   hidden: true
@@ -22,8 +22,8 @@ obj:
     # s'affichent dans l'ordre chronologique, la plus proche à gauche : la carte de
     # position T montre le créneau page × 5 + T (refresh_hourly_forecast, discussion #278).
     # `tuile` = position visuelle des pièces (ADR-0023) : 4 − idx.
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "25", idx: "4", tuile: "0" } }
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "275", idx: "3", tuile: "1" } }
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "525", idx: "2", tuile: "2" } }
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "775", idx: "1", tuile: "3" } }
-    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "1025", idx: "0", tuile: "4" } }
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "${acc_tuile_x0}", idx: "4", tuile: "0" } }
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "${acc_tuile_x1}", idx: "3", tuile: "1" } }
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "${acc_tuile_x2}", idx: "2", tuile: "2" } }
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "${acc_tuile_x3}", idx: "1", tuile: "3" } }
+    - !include { file: forecast_hour_card.yaml, vars: { x_pos: "${acc_tuile_x4}", idx: "0", tuile: "4" } }

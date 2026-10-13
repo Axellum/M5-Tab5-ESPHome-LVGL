@@ -46,7 +46,12 @@ GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorps
 JETONS_CPP = {"corps_w": "kCorpsW", "corps_h": "kCorpsH", "graphique_l": "kGraphiqueL", "demi_w": "kDemiL",
               "demi_x": "kDemiX", "onglets_fin": "kOngletsFin", "cal_col_pas": "kCalColPas",
               "cal_col_w": "kCalColW", "cal_col_x0": "kCalColX0", "piece_ligne_pas": "kPieceLignePas",
-              "piece_ligne_h": "kPieceLigneH", "central_carte_w": "kCentralCarteL", "central_w": "kPanneauCentralL"}
+              "piece_ligne_h": "kPieceLigneH", "central_carte_w": "kCentralCarteL", "central_w": "kPanneauCentralL",
+              # Accueil (lot 3 du portage).
+              "acc_marge": "kAccMarge", "acc_col_l": "kAccColL", "acc_horloge_l": "kAccHorlogeL",
+              "acc_horloge_h": "kAccHorlogeH", "acc_ligne_l": "kAccLigneL", "acc_centrale_y": "kAccCentraleY",
+              "acc_titre_y2": "kAccTitreY2", "acc_tuile_l": "kAccTuileL", "acc_tuile_pas": "kAccTuilePas",
+              "police_pct": "kPolicePct", "hor_dx": "kHorlogeDx", "hor_dy": "kHorlogeDy"}
 # Valeurs du Tab5 d'avant le lot 2 : elles ne bougent pas.
 TAB5_AVANT = {"kCorpsW": 1202, "kCorpsH": 598, "kGraphiqueL": 1166, "kDemiL": 589, "kDemiX": 637,
               "kOngletsFin": 1148, "kCalColPas": 172, "kCalColW": 168, "kCalColX0": 25, "kPieceLignePas": 92,
@@ -87,8 +92,8 @@ def test_jetons_communs_egaux_au_cpp_et_dans_la_carte(carte):
     # Lignes d'une pièce : les cinq au-dessus des boutons de la pièce (88 px du bas du corps).
     assert 50 + 4 * g["kPieceLignePas"] + g["kPieceLigneH"] <= g["kCorpsH"] - 88
     assert g["kPieceLigneH"] >= 56, "une ligne garde sa pastille et ses deux textes"
-    # Carte centrale : 20 px des bords de l'écran.
-    assert g["kCentralCarteL"] + 40 == g["kEcranL"]
+    # Carte centrale : à la marge de l'accueil des bords de l'écran (20 px sur le Tab5).
+    assert g["kCentralCarteL"] + 2 * g["kAccMarge"] == g["kEcranL"]
 
 
 def test_largeur_des_panneaux_centraux():
@@ -184,3 +189,81 @@ def test_aucune_copie_locale_de_la_geometrie():
         code = "\n".join(l.split("//", 1)[0] for l in sans_blocs.splitlines())
         for litteral in ("1280", "1250", "1202", "1166"):
             assert not re.search(r"\b%s\b" % litteral, code), f"{litteral} en dur dans {fichier}"
+
+
+# ─── Accueil à la taille de la carte (lot 3 du portage 1024×600) ─────────────────────────
+
+# Valeurs du Tab5 d'avant le lot 3 : chaque jeton de l'accueil les redonne au pixel.
+ACCUEIL_TAB5 = {
+    "acc_marge": 20, "acc_gout": 15, "acc_bouton_l": 125, "acc_col_l": 405, "acc_droite_x": 855, "acc_discu_x": 300, "acc_sys_x": 995, "acc_tv_x": 1135,
+    "acc_horloge_l": 401, "acc_horloge_x": 440, "acc_milieu": 640, "acc_haut_y": 20, "acc_bouton_h": 90,
+    "acc_horloge_h": 210, "acc_bandeau_y": 10, "ligne_zone_h": 70, "cadre_bas_h": 72, "acc_cadre_bas": 308,
+    "acc_cadre_y": 236, "acc_ligne_l": 401, "acc_rangee_y": 244, "acc_pastilles_y": 319, "acc_zone_y": 42,
+    "acc_zone_h": 184, "acc_vocal_h": 230, "acc_micro_x": 162, "acc_micro_y": 78, "acc_micro_l": 120,
+    "acc_domo_y": 90, "acc_clim_y": 110, "acc_clim_h": 198, "acc_temp_x": 14, "acc_temp_y": -36,
+    "acc_temp_zone_y": 31, "acc_temp_zone_h": 64, "acc_serre_x": -6, "acc_serre_l": 200, "acc_salon_x": 4,
+    "acc_salon_l": 192, "acc_pas_x": 13, "acc_pas_l": 52, "acc_pas_rayon": 12, "acc_consigne_l": 200, "acc_reglables_x": 740, "acc_reglables_l": 520, "acc_reglable_h": 52,
+    "acc_mini_vignette": 56, "acc_mini_texte_x": 76, "acc_mini_titre_y": 10, "acc_mini_artiste_y": 38,
+    "acc_lect_btn": 52, "acc_lect_lecture": 60, "central_carte_w": 1240, "central_w": 1180,
+    "acc_centrale_y": 333, "acc_centrale_h": 84, "acc_centrale_bouton_h": 80, "acc_pluie_h": 50,
+    "acc_pluie_pad": 15, "acc_pluie_pad_val": 10, "acc_titre_sous_y": -26, "acc_titre_y2": 13,
+    "acc_pagination_x": 480, "acc_pagination_y": 420, "acc_pagination_l": 310, "acc_perimees_x": 800,
+    "acc_perimees_y": 416, "acc_perimees_l": 455, "acc_perimees_h": 26, "acc_tuiles_y": 430, "acc_tuiles_h": 290,
+    "acc_tuile_l": 230, "acc_tuile_pas": 250, "acc_tuile_x0": 25, "acc_tuile_x1": 275, "acc_tuile_x2": 525,
+    "acc_tuile_x3": 775, "acc_tuile_x4": 1025, "acc_tuile_h": 275, "acc_tuile_cell_y": 5, "acc_t_onglet_y": 7,
+    "acc_t_onglet_l": 130, "acc_t_onglet_h": 46, "acc_t_temp_l": 140, "acc_t_bas_h": 51, "acc_t_epaule_x": 10,
+    "acc_t_epaule_y": 9, "acc_t_bouton_l": 140, "acc_t_bouton_l4": 130, "acc_t_bouton_h": 130, "acc_t_max_x": -25,
+    "acc_t_min_x": 35, "acc_t_texte_y": -7, "acc_t_volet_h": 60, "acc_h_carte_y": 35, "acc_h_carte_h": 205,
+    "acc_h_bas_l": 210, "acc_h_goutte_x": 5, "acc_h_goutte_y": -14, "acc_h_pluie_x": 34, "acc_h_temp_x": -5,
+    "acc_sw_pastille_y": 26, "acc_sw_pastille": 130, "acc_sw_rayon": 65, "acc_sw_nom_y": 166, "acc_sw_nom_l": 214, "acc_sw_nom_h": 40,
+    "acc_sw_etat_y": 210, "police_pct": 100, "hor_dx": 0, "hor_dy": 0, "hor_cadre_y": 17, "hor_cadre_l": 75,
+    "hor_cadre_h": 104, "hor_label_y": -23, "hor_h10_x": 27, "hor_h1_x": 102, "hor_m10_x": 222, "hor_m1_x": 297,
+    "hor_dp_x": 181, "hor_dp_y": -6, "hor_date_y": 135, "hor_coupe_y": 158, "hor_heures_l": 200,
+    "hor_minutes_l": 201, "hor_chiffres_h": 138, "hor_date_h": 72, "hor_froid_x": 806,
+}
+
+
+def test_accueil_du_tab5_au_pixel():
+    """Sur le Tab5, chaque jeton de l'accueil redonne la valeur d'avant le lot 3, et la liste
+    ci-dessus les connaît tous (un jeton acc_* ou hor_* de plus = sa valeur du Tab5 ici)."""
+    jetons = jetons_resolus("tab5")
+    assert {k: int(jetons[k]) for k in ACCUEIL_TAB5} == ACCUEIL_TAB5
+    nouveaux = {k for k in jetons if k.startswith(("acc_", "hor_"))} - set(ACCUEIL_TAB5)
+    assert not nouveaux, f"jetons de l'accueil sans valeur du Tab5 dans ACCUEIL_TAB5 : {sorted(nouveaux)}"
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_accueil_tient_dans_l_ecran_de_chaque_carte(carte):
+    """La grille de l'accueil tient dans l'écran de la carte, sans chevauchement : colonnes
+    et horloge côte à côte, rangées du haut vers le bas, cinq tuiles entières."""
+    j = {k: int(v) for k, v in jetons_resolus(carte).items() if re.fullmatch(r"-?\d+", str(v))}
+    l, h = j["carte_ecran_l"], j["carte_ecran_h"]
+    # Horizontal : colonne gauche | horloge | colonne droite, les marges aux bords.
+    assert j["acc_marge"] + j["acc_col_l"] < j["acc_horloge_x"]
+    assert j["acc_horloge_x"] + j["acc_horloge_l"] < j["acc_droite_x"]
+    assert j["acc_droite_x"] + j["acc_col_l"] + j["acc_marge"] == l
+    assert j["acc_discu_x"] + j["acc_bouton_l"] == j["acc_marge"] + j["acc_col_l"]
+    assert j["acc_ligne_l"] <= j["acc_horloge_l"] and j["acc_ligne_l"] <= j["acc_col_l"] - 4
+    # Vertical : boutons du haut, cadres du bas (Ok Nabu, − / +) alignés, carte centrale,
+    # tuiles jusqu'au bas de l'écran.
+    assert j["acc_haut_y"] + j["acc_bouton_h"] <= j["acc_clim_y"]
+    assert j["acc_clim_y"] + j["acc_clim_h"] == j["acc_cadre_y"] + j["cadre_bas_h"] == j["acc_cadre_bas"]
+    assert j["acc_zone_y"] + j["acc_zone_h"] < j["acc_cadre_y"]
+    assert j["acc_haut_y"] + j["acc_horloge_h"] <= j["acc_rangee_y"]
+    assert j["acc_rangee_y"] + j["ligne_zone_h"] < j["acc_pastilles_y"] < j["acc_centrale_y"]
+    assert j["acc_centrale_y"] + j["acc_centrale_h"] <= j["acc_pagination_y"] < j["acc_tuiles_y"] + j["acc_tuile_cell_y"]
+    assert j["acc_tuiles_y"] + j["acc_tuiles_h"] == h
+    assert j["acc_tuile_cell_y"] + j["acc_tuile_h"] <= j["acc_tuiles_h"]
+    # Cinq tuiles entières, centrées, sans se toucher.
+    assert j["acc_tuile_pas"] > j["acc_tuile_l"]
+    assert j["acc_tuile_x0"] >= 0 and j["acc_tuile_x4"] + j["acc_tuile_l"] <= l
+    assert abs((l - j["acc_tuile_x4"] - j["acc_tuile_l"]) - j["acc_tuile_x0"]) <= 1
+    # Horloge : les quatre cadres et le « : » dans la tuile, sans se chevaucher ; la coupe des
+    # zones tactiles dans la tuile.
+    interieur = j["acc_horloge_l"] - 2
+    xs = [j["hor_h10_x"], j["hor_h1_x"], j["hor_m10_x"], j["hor_m1_x"]]
+    assert xs[0] >= 0 and xs[3] + j["hor_cadre_l"] <= interieur
+    assert xs[0] + j["hor_cadre_l"] <= xs[1] and xs[1] + j["hor_cadre_l"] <= j["hor_dp_x"] < xs[2]
+    assert j["hor_cadre_y"] >= 0 and j["hor_cadre_y"] + j["hor_cadre_h"] < j["hor_coupe_y"] - j["acc_haut_y"]
+    assert j["acc_haut_y"] < j["hor_coupe_y"] < j["acc_haut_y"] + j["acc_horloge_h"]
+    assert j["hor_froid_x"] + 34 <= j["acc_horloge_x"] + j["acc_horloge_l"]

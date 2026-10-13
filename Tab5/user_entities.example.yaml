@@ -52,7 +52,11 @@
 #     entity_tab5_satellite, entity_tab5_media_player, entity_tab5_pipeline_select,
 #     entity_primary_active et entity_push_automation sont simplement ignorées. ---
 
-# --- Layout météo (généralement inchangé) ---
+# --- Layout météo : plus lu depuis le lot 3 du portage 1024×600 (ADR-0061). La taille des
+#     tuiles du bas suit l'écran de la carte (jetons acc_tuile_* de
+#     Tab5/paquets/tab5-ui-tokens.yaml) ; changer ces trois valeurs ne change rien. Elles
+#     restent pour que le fichier ne soit jamais vide : ESPHome refuse des substitutions
+#     vides (`substitutions: !include` de tab5-ha-hmi.yaml). ---
 meteo_cell_width: "230"
 meteo_cell_height: "275"
 meteo_cell_y: "5"

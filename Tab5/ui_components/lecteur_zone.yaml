@@ -6,7 +6,8 @@
 #       titre, l'artiste, une barre de lecture fine, et précédent / lecture-pause / suivant.
 #       Rien en lecture : la phrase du popup (« Rien en lecture », « Lecteur éteint »…) et
 #       le nom du lecteur. Un tap hors des boutons ouvre le popup Musique.
-# @architecture_constraint Même emprise que zone_graphique (x 20, y 42, 405 × 184, le verre
+# @architecture_constraint Même emprise que zone_graphique (x 20, y 42, 405 × 184 sur le Tab5 ;
+#       jetons acc_marge, acc_zone_y, acc_col_l, acc_zone_h depuis le lot 3 du portage ; le verre
 #       des boutons de la colonne, style_clim_btn_page) ; montrée ou masquée d'un bloc par
 #       zone_gauche_appliquer() (tab5_zone_gauche.cpp). Tout ce qui dépend du thème
 #       (bordure, rayon du cadre) et des données est posé par tab5_lecteur.cpp
@@ -19,10 +20,10 @@
 button:
   id: zone_lecteur
   align: TOP_LEFT
-  x: 20
-  y: 42
-  width: 405
-  height: 184
+  x: ${acc_marge}
+  y: ${acc_zone_y}
+  width: ${acc_col_l}
+  height: ${acc_zone_h}
   pad_all: 0
   hidden: true
   scrollable: false
@@ -84,8 +85,8 @@ button:
         align: TOP_LEFT
         x: 190
         y: 110
-        width: 52
-        height: 52
+        width: ${acc_lect_btn}
+        height: ${acc_lect_btn}
         radius: 999
         pad_all: 0
         hidden: true
@@ -99,8 +100,8 @@ button:
         align: TOP_LEFT
         x: 254
         y: 106
-        width: 60
-        height: 60
+        width: ${acc_lect_lecture}
+        height: ${acc_lect_lecture}
         radius: 999
         pad_all: 0
         hidden: true
@@ -114,8 +115,8 @@ button:
         align: TOP_LEFT
         x: 326
         y: 110
-        width: 52
-        height: 52
+        width: ${acc_lect_btn}
+        height: ${acc_lect_btn}
         radius: 999
         pad_all: 0
         hidden: true

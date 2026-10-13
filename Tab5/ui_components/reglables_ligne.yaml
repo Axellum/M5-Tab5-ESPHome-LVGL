@@ -9,7 +9,7 @@
 button:
   id: "reglable_ligne_${n}"
   width: 100%
-  height: 52
+  height: ${acc_reglable_h}
   hidden: true
   # Fond invisible ; à l'appui, la couleur du texte atténué (style_bg_dim) à 25 %.
   styles: [style_invisible, style_bg_dim]

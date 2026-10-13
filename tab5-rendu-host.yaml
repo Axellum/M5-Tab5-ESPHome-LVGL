@@ -38,6 +38,7 @@ esphome:
     - -DTAB5_ECRAN_L=${carte_ecran_l}
     - -DTAB5_ECRAN_H=${carte_ecran_h}
     - -DTAB5_ROTATION=${carte_rotation}
+    - -DTAB5_POLICE_PCT=${police_pct}
   includes:
     # En-têtes d'ESP-IDF, d'ESP-Hosted et de FreeRTOS remplacés pour la plateforme host
     # (Tab5/rendu/hote/, Tab5/rendu/freertos/) : les sources du projet restent celles

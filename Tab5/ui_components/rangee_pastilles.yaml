@@ -11,7 +11,7 @@ obj:
   id: "${nom}_pastilles"
   align: ${align}
   x: ${x}
-  y: 319
+  y: ${acc_pastilles_y}
   width: ${largeur}
   height: SIZE_CONTENT
   styles: style_transparent

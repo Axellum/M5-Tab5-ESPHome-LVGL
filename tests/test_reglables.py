@@ -19,7 +19,7 @@ import pytest
 import yaml
 
 from tests import test_tuiles_blueprint as bp  # noqa: E402
-from tests.commun import contrat, lire as _lire, sources
+from tests.commun import avec_jetons, contrat, lire as _lire, sources
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -364,7 +364,8 @@ def test_volet_du_package_par_son_script():
 # La carte clim et la liste
 # ─────────────────────────────────────────────────────────────────────────────
 
-CARTE = _lire("Tab5", "ui_components", "climate_card.yaml")
+# Jetons de l'accueil (acc_*, lot 3 du portage 1024×600) résolus pour le Tab5.
+CARTE = avec_jetons(_lire("Tab5", "ui_components", "climate_card.yaml"))
 
 
 def test_moins_plus_et_valeur_passent_par_le_module():
@@ -431,9 +432,10 @@ def test_le_rendu_touche_le_salon_et_les_lignes():
     zone = _boite(CARTE.split("id: btn_reglables_liste", 1)[1].split("on_short_click", 1)[0])
     x0, y0 = 855 + zone["x"], 110 + zone["y"]   # climate_card : x 855, y 110
     assert x0 <= ecrans.SALON[0] <= x0 + zone["width"] and y0 <= ecrans.SALON[1] <= y0 + zone["height"]
-    liste = _lire("Tab5", "ui_components", "reglables_liste.yaml")
+    liste = avec_jetons(_lire("Tab5", "ui_components", "reglables_liste.yaml"))
     panneau = _boite(liste.split("id: reglables_panneau", 1)[1], ("x", "y", "width"))
-    ligne = int(re.search(r"\n  height: (\d+)", _lire("Tab5", "ui_components", "reglables_ligne.yaml")).group(1))
+    ligne = int(re.search(r"\n  height: (\d+)",
+                          avec_jetons(_lire("Tab5", "ui_components", "reglables_ligne.yaml"))).group(1))
     assert ligne == 52 and "pad_all: 6" in liste and "pad_row: 2" in liste
     for k, (x, y) in enumerate(ecrans.LIGNES_REGLABLES):
         haut = panneau["y"] + 2 + 6 + k * (ligne + 2)
