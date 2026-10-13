@@ -16,6 +16,7 @@
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <algorithm>
@@ -173,7 +174,9 @@ void vigilance_rejouer() {
 // des autres fournisseurs calculent côté HA à partir des mm/h. Tout autre texte vide la
 // barre. Niveau → couleur + hauteur (px) : ci-dessous.
 
-// Barres du bandeau central : palette UIBandeau.
+// Barres du bandeau central : palette UIBandeau. Hauteurs du Tab5 (barre de 50 px),
+// ramenées à l'écran de la carte comme la barre elle-même (acc_y, jeton acc_pluie_h de
+// rain_bar.yaml ; lot 3 du portage 1024×600) : identiques sur le Tab5.
 static void rain_level_style(int niveau, uint32_t& color, int& height) {
     color = UIBandeau.CLIM_TRACK_INACTIVE;  // barre vide
     height = 0;
@@ -184,6 +187,7 @@ static void rain_level_style(int niveau, uint32_t& color, int& height) {
         case 4: color = UIBandeau.RAIN_EXTREME;  height = 50; break;  // max
         default: break;
     }
+    height = acc_y(height);
 }
 
 // Hauteurs posées, barre par barre. has_rain se calcule ICI et pas en relisant

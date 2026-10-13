@@ -184,7 +184,9 @@ substitutions:
   acc_perimees_x: ${ (800 * (carte_ecran_l | int) + 640) // 1280 }
   acc_perimees_y: ${ (416 * (carte_ecran_h | int) + 360) // 720 }
   acc_perimees_l: ${ (455 * (carte_ecran_l | int) + 640) // 1280 }
-  acc_perimees_h: ${ (26 * (carte_ecran_h | int) + 360) // 720 }
+  # Hauteur de la mention : celle de son texte (police par défaut, pas mise à l'échelle) ;
+  # réduite, elle coupait le bas des lettres sur la 7B (rendu du lot 3).
+  acc_perimees_h: "26"
   # Bande des cinq tuiles (prévisions, mode HA) : calques à y 430 jusqu'au bas de l'écran ;
   # cellules de 230 × 275 au pas de 250, centrées (x 25), à y 5 du calque (kAccTuile…).
   acc_tuiles_y: ${ (430 * (carte_ecran_h | int) + 360) // 720 }

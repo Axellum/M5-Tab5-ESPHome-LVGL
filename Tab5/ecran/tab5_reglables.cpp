@@ -39,6 +39,7 @@
  *       tr(). Aucune couleur en dur : UIColor.
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "tab5_tuiles_icones.h"
 #include "tab5_modele_ha.h"
 #include "lvgl.h"
@@ -375,11 +376,14 @@ void vue_piece(int r, Vue& v) {
 // Largeur du nom dans une ligne de la liste (reglables_liste.yaml : panneau de 520 px,
 // marges de 8, icône de 45 à 12 px du bord, valeur à droite) et de la valeur, à droite
 // (de 492 jusqu'à 12 px après le nom). Une unité longue d'un number ne déborde pas.
-constexpr int32_t kLargeurNom = 290;
-constexpr int32_t kLargeurValeurLigne = 120;
+// Sur une autre carte (lot 3 du portage 1024×600), le panneau et la valeur sont ramenés à
+// son écran (acc_x, jeton acc_reglables_l) ; le nom garde son x (après l'icône de 45 px) et
+// prend la place qui reste : 520 - 110 - 120 = 290 sur le Tab5.
+constexpr int32_t kLargeurValeurLigne = acc_x(120);
+constexpr int32_t kLargeurNom = acc_x(520) - 110 - kLargeurValeurLigne;
 // Valeur sur la carte : entre − (finit à 75) et + (commence à 330), moins l'icône (45)
-// et son écart (8).
-constexpr int32_t kLargeurValeurCarte = 190;
+// et son écart (8) ; ramenée à l'écran de la carte comme la tuile.
+constexpr int32_t kLargeurValeurCarte = acc_x(190);
 
 // L'icône de la clim contre sa consigne (09/10/2026, lot A) : la consigne reste au centre
 // exact de la tuile, l'icône à 8 px à sa gauche. align_to (climate_card.yaml) ne place
