@@ -178,7 +178,21 @@ def geometrie_cpp(carte: str | None = None) -> dict[str, int]:
     if carte is not None:
         g = geometrie(carte)
         macros.update({m: int(g[s]) for m, s in DRAPEAUX_CARTE.items()})
-    valeurs = dict(macros)
+    valeurs = _constexpr_evaluer(texte, dict(macros))
+    return {k: v for k, v in valeurs.items() if k not in macros}
+
+
+def _constexpr_evaluer(texte: str, valeurs: dict[str, int]) -> dict[str, int]:
+    """Les `constexpr int… NOM = expression;` de `texte`, dans l'ordre, chacune calculée des
+    précédentes et de `valeurs` comme le compilateur le fait ; `valeurs` complété."""
+    # largeur_carte(), hauteur_carte(), taille_carte() de tab5_geometrie.h (lot 4 du portage) :
+    # une longueur du Tab5 ramenée au corps de la carte, arrondie en dessous comme en C++.
+    def _ramene(corps: str, corps_tab5: str):
+        def f(v: int) -> int:
+            return -f(-v) if v < 0 else v * valeurs[corps] // valeurs[corps_tab5]
+        return f
+    fonctions = {"largeur_carte": _ramene("kCorpsW", "kCorpsWTab5"), "hauteur_carte": _ramene("kCorpsH", "kCorpsHTab5")}
+    fonctions["taille_carte"] = lambda v: min(fonctions["largeur_carte"](v), fonctions["hauteur_carte"](v))
     for nom, expr in re.findall(r"constexpr\s+int(?:32_t)?\s+(\w+)\s*=\s*([^;]+);", texte):
         # Un `a ? b : c` (un seul, le minimum d'une valeur du Tab5 et d'une autre) en Python.
         ternaire = re.fullmatch(r"([^?]+)\?([^:]+):(.+)", expr.strip())
@@ -186,8 +200,18 @@ def geometrie_cpp(carte: str | None = None) -> dict[str, int]:
             expr = "({1}) if ({0}) else ({2})".format(*ternaire.groups())
         # Division entière, comme en C++ (valeurs positives : tronquer = arrondir en dessous).
         expr = expr.replace("/", "//")
-        valeurs[nom] = int(eval(expr, {"__builtins__": {}}, dict(valeurs)))   # expressions du fichier
-    return {k: v for k, v in valeurs.items() if k not in macros}
+        try:
+            valeurs[nom] = int(eval(expr, {"__builtins__": {}}, {**valeurs, **fonctions}))   # expressions du fichier
+        except Exception:   # noqa: BLE001 — une constante d'un .cpp qui ne se calcule pas ici
+            continue
+    return valeurs
+
+
+def constantes_cpp(texte: str, carte: str | None = None) -> dict[str, int]:
+    """Constantes entières d'un .cpp de l'écran (`kVoletFenetreH`…), calculées sur la
+    géométrie de la carte (tab5_geometrie.h, comme `geometrie_cpp`) : celles qui ne s'y
+    calculent pas sont absentes. Mise en page des popups ramenée au corps (lot 4)."""
+    return {k: v for k, v in _constexpr_evaluer(texte, dict(geometrie_cpp(carte))).items()}
 
 
 def vue_tab5(chemins) -> list[Path]:

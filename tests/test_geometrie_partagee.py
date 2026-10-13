@@ -41,16 +41,19 @@ GEOMETRIE = "tab5_geometrie.h"
 GEOMETRIE_NOMS = ("kEcranL", "kEcranH", "kCarteL", "kCarteH", "kCorpsY", "kCorpsX", "kCorpsW", "kCorpsH",
                   "kCartesEcart", "kGraphiqueL", "kAxeLibelleL", "kDemiL", "kDemiX", "kPieces", "kTuiles",
                   "kLecteurCarteL", "kLecteurCarteH", "kOngletsFin", "kCalColPas", "kCalColW", "kCalColX0",
-                  "kPieceLignePas", "kPieceLigneH", "kCentralCarteL", "kPanneauCentralL")
+                  "kPieceLignePas", "kPieceLigneH", "kCentralCarteL", "kPanneauCentralL",
+                  "kCorpsWTab5", "kCorpsHTab5", "kPieceLigneL")
 # Le même nombre, jeton YAML (tab5-ui-tokens.yaml) ↔ constante C++, sur chaque carte.
 JETONS_CPP = {"corps_w": "kCorpsW", "corps_h": "kCorpsH", "graphique_l": "kGraphiqueL", "demi_w": "kDemiL",
               "demi_x": "kDemiX", "onglets_fin": "kOngletsFin", "cal_col_pas": "kCalColPas",
               "cal_col_w": "kCalColW", "cal_col_x0": "kCalColX0", "piece_ligne_pas": "kPieceLignePas",
-              "piece_ligne_h": "kPieceLigneH", "central_carte_w": "kCentralCarteL", "central_w": "kPanneauCentralL"}
+              "piece_ligne_h": "kPieceLigneH", "central_carte_w": "kCentralCarteL", "central_w": "kPanneauCentralL",
+              "piece_ligne_l": "kPieceLigneL"}
 # Valeurs du Tab5 d'avant le lot 2 : elles ne bougent pas.
 TAB5_AVANT = {"kCorpsW": 1202, "kCorpsH": 598, "kGraphiqueL": 1166, "kDemiL": 589, "kDemiX": 637,
               "kOngletsFin": 1148, "kCalColPas": 172, "kCalColW": 168, "kCalColX0": 25, "kPieceLignePas": 92,
-              "kPieceLigneH": 84, "kCentralCarteL": 1240, "kPanneauCentralL": 1180}
+              "kPieceLigneH": 84, "kCentralCarteL": 1240, "kPanneauCentralL": 1180,
+              "kPieceLigneL": 342}
 # Fichiers qui s'en servent : aucun ne doit les redéfinir.
 GEOMETRIE_UTILISATEURS = ("tab5_energie.cpp", "tab5_historique.cpp", "tab5_maison.cpp", "tab5_zones.cpp",
                           "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp",
@@ -89,6 +92,28 @@ def test_jetons_communs_egaux_au_cpp_et_dans_la_carte(carte):
     assert g["kPieceLigneH"] >= 56, "une ligne garde sa pastille et ses deux textes"
     # Carte centrale : 20 px des bords de l'écran.
     assert g["kCentralCarteL"] + 40 == g["kEcranL"]
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_mise_en_page_des_popups_ramenee_au_corps(carte):
+    """Lot 4 du portage : un littéral de la mise en page d'un popup (dessinée pour le corps du
+    Tab5, 1202 × 598) est ramené au corps de la carte, en YAML par l'expression Jinja
+    `${ v * (corps_w | int) // 1202 }` et en C++ par largeur_carte() / hauteur_carte() :
+    les deux donnent le même nombre sur chaque carte, et sur le Tab5 le nombre lui-même."""
+    g = _geometrie(carte)
+    assert (g["kCorpsWTab5"], g["kCorpsHTab5"]) == (1202, 598)
+    entete = _lire(source(GEOMETRIE))
+    assert "v * kCorpsW / kCorpsWTab5" in entete and "v * kCorpsH / kCorpsHTab5" in entete
+    jetons = jetons_resolus(carte)
+    for v in (0, 1, 22, 56, 386, 456, 598, 1202):
+        l = v * g["kCorpsW"] // g["kCorpsWTab5"]
+        h = v * g["kCorpsH"] // g["kCorpsHTab5"]
+        assert resoudre(f"${{ {v} * (corps_w | int) // 1202 }}", jetons) == l
+        assert resoudre(f"${{ {v} * (corps_h | int) // 598 }}", jetons) == h
+        assert resoudre(f"${{ 0 - {v} * (corps_h | int) // 598 }}", jetons) == -h
+        if carte == "tab5":
+            assert l == h == v
+        assert l <= v and h <= v, "jamais plus grand que sur le Tab5"
 
 
 def test_largeur_des_panneaux_centraux():

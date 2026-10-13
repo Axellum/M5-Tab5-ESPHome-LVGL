@@ -75,6 +75,19 @@ constexpr int32_t kAxeLibelleL = 120;
 constexpr int32_t kDemiL = (kCorpsW - 24) / 2;
 constexpr int32_t kDemiX = kCorpsX + kDemiL + 24;
 
+// Mise en page propre de chaque popup (lot 4 du portage 1024×600, ADR-0061) : dessinée au
+// pixel pour le corps du Tab5 (1202 × 598), elle est ramenée au corps de la carte — une
+// longueur horizontale par largeur_carte(), verticale par hauteur_carte(), le côté d'un
+// carré ou d'un cercle par taille_carte() (la plus petite des deux) —, arrondie en dessous
+// (une valeur négative : l'opposée de celle de sa valeur absolue). Le YAML fait le même
+// calcul en Jinja : `${ 386 * (corps_w | int) // 1202 }`, `${ 456 * (corps_h | int) // 598 }`
+// (tab5-ui-tokens.yaml). Sur le Tab5, chaque valeur reste la même, au pixel.
+constexpr int32_t kCorpsWTab5 = 1202;
+constexpr int32_t kCorpsHTab5 = 598;
+constexpr int32_t largeur_carte(int32_t v) { return v < 0 ? -largeur_carte(-v) : v * kCorpsW / kCorpsWTab5; }
+constexpr int32_t hauteur_carte(int32_t v) { return v < 0 ? -hauteur_carte(-v) : v * kCorpsH / kCorpsHTab5; }
+constexpr int32_t taille_carte(int32_t v) { return largeur_carte(v) < hauteur_carte(v) ? largeur_carte(v) : hauteur_carte(v); }
+
 // Onglets d'en-tête (noms des pages, pages_onglet.yaml et reglages_onglet.yaml, ADR-0046) :
 // sur la ligne du titre, jusqu'à 8 px avant la croix (modal_header.yaml : 80 px à 10 px du
 // bord). Leur mise en page est celle du Tab5 (x 318 à 1148 ; le Réveil commence à 196) ;
@@ -110,6 +123,9 @@ constexpr int32_t kPieceLignePasTab5 = 92;
 constexpr int32_t kPieceLignePasMax = (kCorpsH - 88 - 50 + 8) / 5;
 constexpr int32_t kPieceLignePas = kPieceLignePasMax < kPieceLignePasTab5 ? kPieceLignePasMax : kPieceLignePasTab5;
 constexpr int32_t kPieceLigneH = kPieceLignePas - 8;
+// Largeur d'une ligne (jeton piece_ligne_l, lot 4) : la carte de gauche de ces popups (386
+// sur le Tab5) ramenée au corps, moins 22 px de marge de chaque côté ; 342 sur le Tab5.
+constexpr int32_t kPieceLigneL = largeur_carte(386) - 44;
 
 // Panneaux de la carte centrale de l'accueil (central_card, tab5-lvgl.yaml : x 20, 20 px
 // des bords de l'écran ; jetons central_carte_w et central_w) : largeur utile des panneaux,
