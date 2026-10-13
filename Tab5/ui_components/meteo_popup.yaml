@@ -25,6 +25,12 @@
 #       598 px (zone 1166 × 580 à x 18, y 9 : dix lignes de 58). Détails : pluie dans
 #       l'heure 372 px (zone 1166 × 290 à x 18, y 70), puis quatre cartes de 288 × 210 à
 #       y 388 (x 24, 329, 633, 938). Noms des pages : 200 × 44 à x 318, 528 et 738.
+#       Sur une autre carte (lot 4 du portage, 1024×600) : hauteurs, y et colonnes ramenés
+#       au corps (`v * corps_h // 598`, `v * corps_w // 1202`), les zones des tracés en
+#       découlent (kZoneHeuresH, kZoneJoursH, kZonePluieH de tab5_meteo.cpp, égales par
+#       tests/test_meteo.py). Les icônes météo ont une police fixe : les heures gardent leur
+#       haut (heure, icône, sommet de la courbe) ; les dix jours, des lignes ramenées mais
+#       une boîte d'icône de 58 px (la zone a 58 − ligne px de plus).
 # @ai_instruction Une page de plus : voir l'en-tête de tab5_meteo.cpp. Une icône de plus :
 #       son glyphe dans la police de son widget (tab5-styles.yaml, règle 9).
 # ═══════════════════════════════════════════════════════════════════════════
@@ -76,7 +82,7 @@ obj:
                     x: 24
                     y: 0
                     width: ${corps_w}
-                    height: 150
+                    height: ${ 150 * (corps_h | int) // 598 }
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -85,26 +91,26 @@ obj:
                           align: TOP_LEFT
                           x: 10
                           y: 0
-                          width: 150
-                          height: 150
+                          width: ${ 150 * (corps_h | int) // 598 }
+                          height: ${ 150 * (corps_h | int) // 598 }
                           styles: style_transparent
                           scrollable: false
                           widgets:
                             - label: { id: meteo_maintenant_l2, text: "", hidden: true, align: CENTER, text_font: font_meteo_card }
                             - label: { id: meteo_maintenant_l1, text: "", hidden: true, align: CENTER, text_font: font_meteo_card }
-                      - label: { id: meteo_maintenant_temperature, text: "--°", align: LEFT_MID, x: 172, y: 0, width: 160, long_mode: CLIP, text_font: roboto_55_b }
-                      - label: { text: "Maintenant", align: TOP_LEFT, x: 340, y: 20, styles: style_text_accent }
-                      - label: { id: meteo_maintenant_condition, text: "", align: TOP_LEFT, x: 340, y: 50, width: 460, long_mode: DOT, text_font: roboto_32_b }
-                      - label: { id: meteo_maintenant_min_max, text: "", align: TOP_LEFT, x: 340, y: 98, width: 460, long_mode: DOT, styles: style_text_dim }
-                      - label: { id: meteo_pluie_titre, text: "", align: TOP_RIGHT, x: -24, y: 34, styles: style_text_dim }
-                      - label: { id: meteo_pluie_total, text: "", align: TOP_RIGHT, x: -24, y: 70, text_font: roboto_32_b }
+                      - label: { id: meteo_maintenant_temperature, text: "--°", align: LEFT_MID, x: "${ 172 * (corps_w | int) // 1202 }", y: 0, width: "${ 160 * (corps_w | int) // 1202 }", long_mode: CLIP, text_font: roboto_55_b }
+                      - label: { text: "Maintenant", align: TOP_LEFT, x: "${ 340 * (corps_w | int) // 1202 }", y: "${ 20 * (corps_h | int) // 598 }", styles: style_text_accent }
+                      - label: { id: meteo_maintenant_condition, text: "", align: TOP_LEFT, x: "${ 340 * (corps_w | int) // 1202 }", y: "${ 50 * (corps_h | int) // 598 }", width: "${ 460 * (corps_w | int) // 1202 }", long_mode: DOT, text_font: roboto_32_b }
+                      - label: { id: meteo_maintenant_min_max, text: "", align: TOP_LEFT, x: "${ 340 * (corps_w | int) // 1202 }", y: "${ 98 * (corps_h | int) // 598 }", width: "${ 460 * (corps_w | int) // 1202 }", long_mode: DOT, styles: style_text_dim }
+                      - label: { id: meteo_pluie_titre, text: "", align: TOP_RIGHT, x: -24, y: "${ 34 * (corps_h | int) // 598 }", styles: style_text_dim }
+                      - label: { id: meteo_pluie_total, text: "", align: TOP_RIGHT, x: -24, y: "${ 70 * (corps_h | int) // 598 }", text_font: roboto_32_b }
                 # Les heures qui viennent : tracés de tab5_meteo.cpp (construire_heures).
                 - obj:
                     align: TOP_LEFT
                     x: 24
-                    y: 166
+                    y: ${ 150 * (corps_h | int) // 598 + 16 }
                     width: ${corps_w}
-                    height: 432
+                    height: ${ corps_h | int - 150 * (corps_h | int) // 598 - 16 }
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -112,9 +118,9 @@ obj:
                           id: meteo_zone_heures
                           align: TOP_LEFT
                           x: 18
-                          y: 14
+                          y: ${ 14 * (corps_h | int) // 598 }
                           width: ${graphique_l}
-                          height: 404
+                          height: ${ corps_h | int - 150 * (corps_h | int) // 598 - 16 - 14 * (corps_h | int) // 598 - 14 }
                           styles: style_transparent
                           scrollable: false
 
@@ -146,9 +152,9 @@ obj:
                           id: meteo_zone_jours
                           align: TOP_LEFT
                           x: 18
-                          y: 9
+                          y: ${ (corps_h | int - 9 * (58 * (corps_h | int) // 598) - 58) // 2 }
                           width: ${graphique_l}
-                          height: 580
+                          height: ${ 9 * (58 * (corps_h | int) // 598) + 58 }
                           styles: style_transparent
                           scrollable: false
 
@@ -173,19 +179,19 @@ obj:
                     x: 24
                     y: 0
                     width: ${corps_w}
-                    height: 372
+                    height: ${ 372 * (corps_h | int) // 598 }
                     styles: style_glass_card
                     scrollable: false
                     widgets:
-                      - label: { text: "Pluie dans l'heure", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
-                      - label: { id: meteo_pluie_phrase, text: "", align: TOP_RIGHT, x: -22, y: 22, width: 640, long_mode: DOT, text_align: RIGHT, text_font: roboto_32_b }
+                      - label: { text: "Pluie dans l'heure", align: TOP_LEFT, x: 22, y: "${ 18 * (corps_h | int) // 598 }", text_font: roboto_32_b }
+                      - label: { id: meteo_pluie_phrase, text: "", align: TOP_RIGHT, x: -22, y: "${ 22 * (corps_h | int) // 598 }", width: "${ 640 * (corps_w | int) // 1202 }", long_mode: DOT, text_align: RIGHT, text_font: roboto_32_b }
                       - obj:
                           id: meteo_zone_pluie
                           align: TOP_LEFT
                           x: 18
-                          y: 70
+                          y: ${ 70 * (corps_h | int) // 598 }
                           width: ${graphique_l}
-                          height: 290
+                          height: ${ 372 * (corps_h | int) // 598 - 70 * (corps_h | int) // 598 - 12 }
                           styles: style_transparent
                           scrollable: false
                 # Humidité, indice UV, probabilités de gel et de neige (meteo_carte.yaml).

@@ -6,6 +6,7 @@
 # vars : prefixe (energie | energie_bilan | historique : id ${prefixe}_vue_N, et la fonction C++
 #        ${prefixe}_choisir_vue appelée au toucher), n (0-2 : vue choisie), x_pos (depuis
 #        le bord droit de la carte du graphique), label_text (traduit au démarrage).
+# Hauteur et y ramenés au corps de la carte (lot 4 du portage, 1024×600) ; largeur fixe.
 # Surbrillance de la vue affichée : tab5_energie.cpp / tab5_historique.cpp
 # (highlight_button_border).
 # ═══════════════════════════════════════════════════════
@@ -13,9 +14,9 @@ button:
   id: "${prefixe}_vue_${n}"
   align: TOP_RIGHT
   x: ${x_pos}
-  y: 10
+  y: ${ 10 * (corps_h | int) // 598 }
   width: 150
-  height: 48
+  height: ${ 48 * (corps_h | int) // 598 }
   styles: style_clim_btn
   on_short_click:
     - lambda: '${prefixe}_choisir_vue(${n});'

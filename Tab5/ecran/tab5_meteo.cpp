@@ -213,7 +213,12 @@ void icone_peindre(Icone& i, const std::string& cond) {
     update_meteo_icon(i.l1, i.l2, cond, g_meteo_ui.icone_m, g_meteo_ui.icone_m_petite, 40);
 }
 
-// ─── Page « Aujourd'hui » : les heures (meteo_zone_heures, kGraphiqueL × 404) ───────────
+// ─── Page « Aujourd'hui » : les heures (meteo_zone_heures, kGraphiqueL × kZoneHeuresH) ──
+// Sur le Tab5 : 404 px de haut. Sur une autre carte (lot 4 du portage, 1024×600), la carte
+// « Maintenant » et le haut de la zone sont ramenés au corps (hauteur_carte) et la zone
+// prend le reste, comme son YAML (tests/test_meteo_popup.py). Les icônes ont une police
+// fixe (48 px) : l'heure, l'icône et le sommet de la courbe restent en place, le bas
+// (pluie, puis le bas de la courbe) suit le bas de la zone.
 
 constexpr int kHeuresMax = 15;                  // cal_heures_data
 constexpr int kLisse = 8;                       // points de courbe par heure
@@ -222,13 +227,13 @@ constexpr int32_t kIconeY = 30;                 // icônes, boîtes de 72 × 56
 constexpr int32_t kIconeL = 72;
 constexpr int32_t kIconeH = 56;
 constexpr int32_t kCourbeHaut = 132;            // y des points : du plus chaud…
-constexpr int32_t kCourbeBas = 236;             // … au plus froid
+constexpr int32_t kZoneHeuresH = kCorpsH - hauteur_carte(150) - 16 - hauteur_carte(14) - 14;
+constexpr int32_t kPluieBase = kZoneHeuresH - 54;   // pied des barres de pluie (350)
+constexpr int32_t kPluieH = hauteur_carte(70);      // barre de la plus forte pluie
+constexpr int32_t kPluieTexteY = kZoneHeuresH - 48; // 356
+constexpr int32_t kCourbeBas = kPluieBase - kPluieH - hauteur_carte(44);  // … au plus froid (236)
 constexpr int32_t kValeurDy = 36;               // valeur au-dessus de son point
 constexpr int32_t kPoint = 12;
-constexpr int32_t kPluieBase = 350;             // pied des barres de pluie
-constexpr int32_t kPluieH = 70;                 // barre de la plus forte pluie
-constexpr int32_t kPluieTexteY = 356;
-constexpr int32_t kZoneHeuresH = 404;
 constexpr float kPluieEchelleMin = 2.0f;        // mm : une bruine reste une petite barre
 
 struct Heures {
@@ -455,17 +460,25 @@ void peindre_maintenant(int n) {
     }
 }
 
-// ─── Page « 10 jours » (meteo_zone_jours, kGraphiqueL × 580) ────────────────────────────
+// ─── Page « 10 jours » (meteo_zone_jours, kGraphiqueL × kZoneJoursH) ─────────────────────
+// Sur le Tab5 : dix lignes de 58 px (580). Sur une autre carte (lot 4 du portage), des
+// lignes ramenées (hauteur_carte(58)), mais la boîte de l'icône garde 58 px (police fixe de
+// 48 px, décalée de 5 px pour la pluie) : elle déborde de sa ligne de moitié de l'écart
+// en haut et en bas, la zone a cet écart de plus et les lignes commencent à kLignesY0.
+// Colonnes ramenées au corps (largeur_carte), la température maximale contre le bord.
 
 constexpr int kJours = 10;
-constexpr int32_t kLigneH = 58;
-constexpr int32_t kNomX = 12, kNomL = 230;
-constexpr int32_t kJourIconeX = 252, kJourIconeL = 80;
-constexpr int32_t kMinX = 340, kTempL = 100;
-constexpr int32_t kPisteX = 460, kPisteL = 580, kPisteH = 10;
-constexpr int32_t kMaxX = 1060;
+constexpr int32_t kLigneH = hauteur_carte(58);
+constexpr int32_t kJourIconeH = 58;
+constexpr int32_t kLignesY0 = (kJourIconeH - kLigneH) / 2;
+constexpr int32_t kZoneJoursH = (kJours - 1) * kLigneH + kJourIconeH;
+constexpr int32_t kNomX = 12, kNomL = largeur_carte(230);
+constexpr int32_t kJourIconeX = largeur_carte(252), kJourIconeL = largeur_carte(80);
+constexpr int32_t kMinX = largeur_carte(340), kTempL = largeur_carte(100);
+constexpr int32_t kMaxX = kGraphiqueL - 6 - kTempL;   // 1060 sur le Tab5
+constexpr int32_t kPisteX = largeur_carte(460), kPisteL = kMaxX - 20 - kPisteX, kPisteH = 10;
 constexpr int32_t kPointJour = 18;
-constexpr int32_t kTexteDy = 10;                // texte de 38 px dans une ligne de 58
+constexpr int32_t kTexteDy = hauteur_carte(10);  // texte de 38 px dans une ligne de 58
 
 struct Jours {
     lv_obj_t* vide = nullptr;
@@ -488,7 +501,7 @@ void construire_jours() {
         s_j.sep[r] = ui_rectangle(z, LV_OPA_40, 0);
         s_j.nom[r] = texte(z, p, kNomL, LV_TEXT_ALIGN_LEFT);
         lv_label_set_long_mode(s_j.nom[r], LV_LABEL_LONG_MODE_DOTS);
-        icone_creer(s_j.icone[r], z, kJourIconeL, kLigneH);
+        icone_creer(s_j.icone[r], z, kJourIconeL, kJourIconeH);
         s_j.tmin[r] = texte(z, p, kTempL, LV_TEXT_ALIGN_RIGHT);
         s_j.piste[r] = ui_rectangle(z, LV_OPA_COVER, LV_RADIUS_CIRCLE);
         s_j.barre[r] = ui_rectangle(z, LV_OPA_COVER, LV_RADIUS_CIRCLE);
@@ -546,7 +559,7 @@ void peindre_jours() {
         if (!montre || r == n - 1) ui_hidden(s_j.sep[r], true);
         if (!montre) continue;
         const DayForecastData& d = cal_jours_data[cases[r]];
-        const int32_t y = r * kLigneH;
+        const int32_t y = kLignesY0 + r * kLigneH;
         // Nom : « Aujourd'hui », « Demain », puis « Mer 17 » (l'horloge pas encore réglée :
         // le nom poussé par HA).
         const int o = decalage[r];
@@ -563,7 +576,7 @@ void peindre_jours() {
         ui_text_color(s_j.nom[r], o == 0 && jour_connu ? UIColor.INFO : UIColor.TEXT_PRIMARY);
         ui_poser(s_j.nom[r], kNomX, y + kTexteDy, kNomL, hauteur_ligne(s_j.nom[r]));
         icone_peindre(s_j.icone[r], d.condition);
-        ui_poser(s_j.icone[r].boite, kJourIconeX, y, kJourIconeL, kLigneH);
+        ui_poser(s_j.icone[r].boite, kJourIconeX, y - kLignesY0, kJourIconeL, kJourIconeH);
         degres(buf, sizeof(buf), d.tmin);
         ui_text(s_j.tmin[r], buf);
         ui_text_color(s_j.tmin[r], get_temperature_color(d.tmin));
@@ -588,7 +601,8 @@ void peindre_jours() {
     // La température du moment sur la ligne d'aujourd'hui.
     if (n > 0 && jour_connu && decalage[0] == 0 && std::isfinite(actuelle)) {
         ui_style_couleur(s_j.point, LV_STYLE_BG_COLOR, get_temperature_color(actuelle));
-        ui_poser(s_j.point, x_de(actuelle) - kPointJour / 2, (kLigneH - kPointJour) / 2, kPointJour, kPointJour);
+        ui_poser(s_j.point, x_de(actuelle) - kPointJour / 2, kLignesY0 + (kLigneH - kPointJour) / 2, kPointJour,
+                 kPointJour);
     } else {
         ui_hidden(s_j.point, true);
     }
@@ -601,16 +615,21 @@ void couleurs_jours() {
     ui_style_couleur(s_j.point, LV_STYLE_BORDER_COLOR, UIColor.TEXT_PRIMARY);
 }
 
-// ─── Page « Détails » : pluie dans l'heure (meteo_zone_pluie, kGraphiqueL × 290) ────────
+// ─── Page « Détails » : pluie dans l'heure (meteo_zone_pluie, kGraphiqueL × kZonePluieH) ─
+// 290 px de haut sur le Tab5 ; sur une autre carte, la carte et le haut de la zone ramenés
+// au corps (lot 4 du portage) : le pied des barres et l'axe suivent le bas de la zone, le
+// niveau 4 reste à y 34, la fin du temps à 16 px du bord droit.
 
 constexpr int kBarres = 9;
 // Bornes des barres en minutes : 5 min jusqu'à 30, puis 10 min (Météo-France ; les
 // adaptateurs des autres fournisseurs suivent le même découpage).
 constexpr int kBornes[kBarres + 1] = {0, 5, 10, 15, 20, 25, 30, 40, 50, 60};
 constexpr int32_t kNiveauxL = 140;              // libellés des niveaux, à gauche
-constexpr int32_t kTempsX0 = 160, kTempsX1 = 1150;
-constexpr int32_t kPiedY = 226, kNiveauH = 48;  // niveau 4 en haut, à y 34
-constexpr int32_t kAxeY = 244;
+constexpr int32_t kZonePluieH = hauteur_carte(372) - hauteur_carte(70) - 12;
+constexpr int32_t kTempsX0 = 160, kTempsX1 = kGraphiqueL - 16;   // 1150 sur le Tab5
+constexpr int32_t kPiedY = kZonePluieH - 64;                     // 226
+constexpr int32_t kNiveauH = (kPiedY - 34) / 4;  // niveau 4 en haut, à y 34 (48)
+constexpr int32_t kAxeY = kZonePluieH - 46;      // 244
 constexpr int32_t kAxeL = 140;
 constexpr int kAxeMinutes[] = {0, 15, 30, 45, 60};
 constexpr int kAxe = 5;

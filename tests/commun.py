@@ -193,7 +193,13 @@ def _constexpr_evaluer(texte: str, valeurs: dict[str, int]) -> dict[str, int]:
         return f
     fonctions = {"largeur_carte": _ramene("kCorpsW", "kCorpsWTab5"), "hauteur_carte": _ramene("kCorpsH", "kCorpsHTab5")}
     fonctions["taille_carte"] = lambda v: min(fonctions["largeur_carte"](v), fonctions["hauteur_carte"](v))
+    declarations = []
     for nom, expr in re.findall(r"constexpr\s+int(?:32_t)?\s+(\w+)\s*=\s*([^;]+);", texte):
+        # Plusieurs constantes sur une ligne (`kNomX = 12, kNomL = largeur_carte(230)`).
+        morceaux = re.split(r",\s*(\w+)\s*=(?!=)\s*", expr)
+        declarations.append((nom, morceaux[0]))
+        declarations += list(zip(morceaux[1::2], morceaux[2::2]))
+    for nom, expr in declarations:
         # Un `a ? b : c` (un seul, le minimum d'une valeur du Tab5 et d'une autre) en Python.
         ternaire = re.fullmatch(r"([^?]+)\?([^:]+):(.+)", expr.strip())
         if ternaire:
