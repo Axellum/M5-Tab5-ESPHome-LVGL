@@ -119,7 +119,8 @@ def test_chaque_touche_traduite_pour_un_boitier():
     assert sans == {"KEY_MUTE", "KEY_SOURCE"}, sans
     assert set(table) <= _touches_firmware(), "une traduction qu'aucune touche n'envoie"
     popup = lire(*POPUP)
-    source_ = popup.split("id: tv_touche_source,", 1)[1].split("}", 1)[0]
+    # La ligne de l'include (ses vars contiennent des `${ … }` depuis le lot 4 du portage).
+    source_ = popup.split("id: tv_touche_source,", 1)[1].split("\n", 1)[0]
     assert 'touche: "KEY_SOURCE"' in source_
     muet = popup.split("id: tv_touche_muet\n", 1)[1].split("- label:", 1)[0]
     assert 'touche: "KEY_MUTE"' in muet
