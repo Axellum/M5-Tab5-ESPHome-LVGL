@@ -13,7 +13,9 @@
 #       tab5_modal_registry_init). Corps : y 72..670 — cadre de 964 × 544 (image de
 #       960 × 540 dans sa bordure de 2 px) centré (x 143) ou, avec la colonne des pièces
 #       (x 16, 238 × 544), à droite (x 270) : disposer() de tab5_cameras.cpp le place, ainsi
-#       que le nom et l'heure (y 626) et les pastilles (y 666) sous lui. Mosaïque (lot 2) :
+#       que le nom et l'heure (y 626) et les pastilles (y 666) sous lui. Valeurs du Tab5 :
+#       l'image suit la carte (cameras_cadre_l / _h, tab5-ui-tokens.yaml, lot 4 du portage :
+#       724 × 409 sur la 7B, colonne de 222 px), le reste se place depuis elle. Mosaïque (lot 2) :
 #       quatre cases de 476 × 266 dans le cadre (cameras_vignette.yaml), placées par
 #       disposer() selon leur nombre ; l'image en grand est alors cachée. Tout ce qui bouge
 #       est écrit par tab5_cameras.cpp ; couleurs par les styles de rôle (règle 1).
@@ -52,8 +54,8 @@ obj:
               align: TOP_LEFT
               x: 16
               y: ${modal_body_y}
-              width: 238
-              height: 544
+              width: ${ modal_card_w | int - 48 - cameras_cadre_l | int }
+              height: ${cameras_cadre_h}
               pad_all: 0
               hidden: true
               styles: style_transparent
@@ -85,14 +87,14 @@ obj:
                 - !include { file: cameras_puce.yaml, vars: { n: 15 } }
                 - !include { file: cameras_puce.yaml, vars: { n: 16 } }
 
-          # ═══ IMAGE : 960 × 540 (16:9) dans son cadre ═══
+          # ═══ IMAGE : 960 × 540 (16:9) dans son cadre (720 × 405 sur la 7B) ═══
           - obj:
               id: cameras_cadre
               align: TOP_LEFT
-              x: 143
+              x: ${ (modal_card_w | int - cameras_cadre_l | int) // 2 }
               y: ${modal_body_y}
-              width: 964
-              height: 544
+              width: ${cameras_cadre_l}
+              height: ${cameras_cadre_h}
               pad_all: 0
               styles: style_glass_card
               scrollable: false
@@ -117,17 +119,17 @@ obj:
               id: cameras_nom
               text: ""
               align: TOP_LEFT
-              x: 143
-              y: 626
-              width: 580
+              x: ${ (modal_card_w | int - cameras_cadre_l | int) // 2 }
+              y: ${ modal_body_y | int + cameras_cadre_h | int + 10 }
+              width: ${ cameras_cadre_l | int * 580 // 964 }
               long_mode: DOT
           - label:
               id: cameras_heure
               text: ""
               align: TOP_RIGHT
-              x: -143
-              y: 626
-              width: 360
+              x: ${ 0 - (modal_card_w | int - cameras_cadre_l | int) // 2 }
+              y: ${ modal_body_y | int + cameras_cadre_h | int + 10 }
+              width: ${ cameras_cadre_l | int * 360 // 964 }
               long_mode: DOT
               text_align: RIGHT
               styles: style_text_dim
@@ -136,7 +138,7 @@ obj:
           - obj:
               id: cameras_pastilles
               align: TOP_MID
-              y: 666
+              y: ${ modal_body_y | int + cameras_cadre_h | int + 50 }
               width: SIZE_CONTENT
               height: SIZE_CONTENT
               styles: style_transparent

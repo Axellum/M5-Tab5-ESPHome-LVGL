@@ -79,8 +79,15 @@ namespace {
 // Carte de kCarteL : sans colonne, le cadre 964 × 544 est centré (143 px de chaque côté) ;
 // avec la colonne des pièces (deux pièces ou plus), il passe à droite, à kMarge du bord,
 // et la colonne prend le reste à gauche (238 px : un nom de pièce entier en roboto_22).
-constexpr int kImageL = 960;               // demandée à HA (width / height du proxy)
-constexpr int kImageH = 540;
+// Image (lot 4 du portage, ADR-0061) : 1920 × 1080 en huitièmes, la plus grande qui tient
+// dans le corps avec 58 px dessous (nom, heure, pastilles) — 4/8 sur le Tab5 (960 × 540),
+// 3/8 sur la 7B (720 × 405) ; cameras_huitiemes de tab5-ui-tokens.yaml, même calcul
+// (tests/test_cameras_popup.py).
+constexpr int kImageHuitiemesH = (kCorpsH - 58) * 8 / 1080 < 4 ? (kCorpsH - 58) * 8 / 1080 : 4;
+constexpr int kImageHuitiemesL = kCorpsW * 8 / 1920;
+constexpr int kImageHuitiemes = kImageHuitiemesL < kImageHuitiemesH ? kImageHuitiemesL : kImageHuitiemesH;
+constexpr int kImageL = 240 * kImageHuitiemes;   // demandée à HA (width / height du proxy)
+constexpr int kImageH = 135 * kImageHuitiemes;
 constexpr int32_t kCadreL = kImageL + 4;   // bordure de 2 px du verre
 constexpr int32_t kMarge = 16;
 constexpr int32_t kCadreXCentre = (kCarteL - kCadreL) / 2;           // 143
@@ -91,12 +98,13 @@ constexpr lv_opa_t kOpaHorsLigne = LV_OPA_40;   // dernière image d'une caméra
 // Mosaïque (lot 2) : le contenu du cadre (960 × 540) en quatre cases de 476 × 266, 8 px
 // d'écart (cameras_vignette.yaml). Une vignette est demandée à 480 × 270 : une caméra
 // 1920 × 1080 arrive à cette taille (HA réduit par 1/8 … 7/8, jamais sous la demande),
-// recadrée de 2 px par côté, sans transformation.
-constexpr int kVignetteL = 480;
-constexpr int kVignetteH = 270;
-constexpr int32_t kCaseL = 476;
-constexpr int32_t kCaseH = 266;
+// recadrée de 2 px par côté, sans transformation. Sur la 7B (lot 4) : cases de 356 × 198,
+// vignettes demandées à 360 × 202 (une image 1920 × 1080 y arrive réduite par echelle_couvrir()).
 constexpr int32_t kCaseEcart = 8;
+constexpr int32_t kCaseL = (kImageL - kCaseEcart) / 2;
+constexpr int32_t kCaseH = (kImageH - kCaseEcart) / 2;
+constexpr int kVignetteL = kCaseL + 4;
+constexpr int kVignetteH = kCaseH + 4;
 // Coins des cases (= radius de cameras_vignette.yaml) : petits exprès. LVGL 9.5 n'arrondit
 // une image que sans mise à l'échelle, et sur SA surface (480 × 270, 2 px de plus que la
 // case par côté) : avec 8 px, l'écart avec le bouton ne se voit pas ; avec 14, si.

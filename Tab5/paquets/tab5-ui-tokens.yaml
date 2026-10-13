@@ -75,6 +75,14 @@ substitutions:
   ligne_roboto_130_b: ${ ((1900 * ((130 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) + ((500 * ((130 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) }
   ligne_roboto_45_b: ${ ((1900 * ((45 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) + ((500 * ((45 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) }
   ligne_roboto_32_b: ${ ((1900 * ((32 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) + ((500 * ((32 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) }
+  # Caméras (lot 4 du portage) : l'image, 1920 × 1080 en huitièmes (HA réduit par 1/8 … 7/8 :
+  # la plus grande qui tient dans le corps avec le nom, l'heure et les pastilles dessous,
+  # 58 px), dans son cadre (2 px de bordure) : 4/8, 964 × 544 sur le Tab5, 3/8, 724 × 409
+  # sur la 7B ; kImageHuitiemes, kCadreL de tab5_cameras.cpp (même calcul,
+  # tests/test_cameras_popup.py).
+  cameras_huitiemes: ${ [4, (corps_h | int - 58) * 8 // 1080, (corps_w | int) * 8 // 1920] | min }
+  cameras_cadre_l: ${ 240 * (cameras_huitiemes | int) + 4 }
+  cameras_cadre_h: ${ 135 * (cameras_huitiemes | int) + 4 }
   # Première ligne de la grille calendrier (modal_body_y + 30 px d'en-tête jours)
   cal_grid_y: ${ modal_body_y | int + 30 }
   # Hauteur réservée à la grille, jusqu'à 10 px au-dessus de la légende (posée
