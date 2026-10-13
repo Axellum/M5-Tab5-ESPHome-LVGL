@@ -6,8 +6,8 @@
 # clim affichée (clim_popup_preset, ADR-0027), icône recolorée par clim_recolorer().
 button:
   id: popup_btn_clim_${suffix}
-  width: 164
-  height: 88
+  width: ${ (386 * (corps_w | int) // 1202 - 58) // 2 }
+  height: ${ 88 * (corps_h | int) // 598 }
   radius: 18
   styles: style_clim_btn
   on_short_click:
@@ -16,5 +16,5 @@ button:
     - lambda: 'clim_popup_preset("${preset_name}");'
     - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: preset, valeur: !lambda 'return clim_affichee_preset();' }
   widgets:
-    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 14, text_font: mdi_font_45, styles: style_text_dim }
-    - label: { text: "${label_text}", align: LEFT_MID, x: 72 }
+    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: "${ 14 * (corps_w | int) // 1202 }", text_font: mdi_font_45, styles: style_text_dim }
+    - label: { text: "${label_text}", align: LEFT_MID, x: "${ 72 * (corps_w | int) // 1202 }" }
