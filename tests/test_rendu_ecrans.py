@@ -8,7 +8,7 @@ CI, sous la forme d'une capture identique à une autre. De même pour les pièce
 décalerait tous les suivants, et un geste parti d'un bouton le déclencherait."""
 import os
 import re
-from tests.commun import lire as _lire
+from tests.commun import _jetons, lire as _lire, resoudre
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -227,9 +227,10 @@ def test_pages_du_reveil():
     assert len(onglets) == len(noms)
     assert [ecrans.REVEIL_PAGES[n] for n in noms] == [(15 + int(x) + int(w) // 2, 15 + 4 + 22) for x, w in onglets]
     # « Tester » : bouton de la carte de droite (x 637) de la page Heure.
-    m = re.search(r"id: btn_alarm_test\s+align: TOP_LEFT\s+x: (\d+)\s+y: (\d+)\s+width: (\d+)\s+height: (\d+)", popup)
+    # Taille ramenée au corps de la carte (lot 4 du portage) : les valeurs du Tab5.
+    m = re.search(r"id: btn_alarm_test\s+align: TOP_LEFT\s+x: (.+)\s+y: (.+)\s+width: (.+)\s+height: (.+)", popup)
     assert m, "btn_alarm_test"
-    x, y, w, h = (int(v) for v in m.groups())
+    x, y, w, h = (int(resoudre(v.strip(), _jetons("tab5"))) for v in m.groups())
     assert ecrans.REVEIL_TESTER == (15 + 637 + x + w // 2, 15 + 72 + y + h // 2)
     # Le geste part du préréglage « Week-end » (carte de la page Jours à x 24).
     m = re.search(r"id: btn_alarm_jours_3, x: (\d+), y: (\d+), w: (\d+),", popup)

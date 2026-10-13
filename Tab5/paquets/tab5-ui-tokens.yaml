@@ -68,6 +68,13 @@ substitutions:
   # Largeur d'une ligne (342) : la carte de gauche de ces popups (386 sur le Tab5, ramenée
   # au corps : kPieceLigneL) moins 22 px de marge de chaque côté (lot 4 du portage).
   piece_ligne_l: ${ 386 * (corps_w | int) // 1202 - 44 }
+  # Hauteur d'une ligne de Roboto Bold (roboto_700.ttf : ascendante 1900, descendante 500
+  # sur 2048, arrondies vers le haut comme FreeType) à la taille de la carte (polices
+  # × carte_police_echelle) : le pas des rouleaux du Réveil (rouleau.yaml) et ses lignes
+  # de texte (lot 4 du portage). Tab5 : 153 (roboto_130_b), 53 (roboto_45_b), 38 (roboto_32_b).
+  ligne_roboto_130_b: ${ ((1900 * ((130 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) + ((500 * ((130 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) }
+  ligne_roboto_45_b: ${ ((1900 * ((45 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) + ((500 * ((45 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) }
+  ligne_roboto_32_b: ${ ((1900 * ((32 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) + ((500 * ((32 * (carte_police_echelle | float)) | round | int) / 2048) | round(0, 'ceil') | int) }
   # Première ligne de la grille calendrier (modal_body_y + 30 px d'en-tête jours)
   cal_grid_y: ${ modal_body_y | int + 30 }
   # Hauteur réservée à la grille, jusqu'à 10 px au-dessus de la légende (posée

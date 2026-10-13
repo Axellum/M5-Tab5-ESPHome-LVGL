@@ -39,6 +39,13 @@
 #       roboto_45_b, rangées de 53 + 17 = 70 px (350 = cinq rangées, 210 = trois). Noms des
 #       pages : 184 × 44 à x 196 + 190 × i (titre jusqu'à x ~170 en allemand, croix à
 #       x 1160).
+#       Sur une autre carte (lot 4 du portage 1024×600, ADR-0061) : les nombres écrits sont
+#       ceux du Tab5, ramenés au corps (`v * corps_w // 1202`, `v * corps_h // 598`, dans
+#       les gabarits choix_btn.yaml, alarm_day_chip.yaml, reglages_rangee.yaml ou ici) ;
+#       ce qui est sous un titre de rangée garde ses 40 px. Les rouleaux gardent leurs
+#       rangées entières : leur hauteur est un nombre de rangées × (hauteur de ligne de la
+#       police à la taille de la carte, jetons ligne_roboto_*, + écart ramené), et ce qui
+#       est dessous se pose depuis leur bas.
 # @ai_instruction Une icône de plus = son glyphe dans mdi_font_32 (tab5-styles.yaml). Un
 #       rouleau de plus : voir l'en-tête d'alarm_render.cpp.
 # ═══════════════════════════════════════════════════════════════════════════
@@ -99,11 +106,11 @@ obj:
                     styles: style_glass_card
                     scrollable: false
                     widgets:
-                      - label: { text: "HEURE DU RÉVEIL", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_heure, x: "${ demi_w | int // 2 - 209 }", y: 60, w: 190, h: 459, police: roboto_130_b, ecart: 0, quoi: 0 } }
-                      - label: { text: ":", align: TOP_MID, x: 0, y: 203, text_font: roboto_130_b, styles: style_text_soft }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_minutes, x: "${ (demi_w | int + 1) // 2 + 19 }", y: 60, w: 190, h: 459, police: roboto_130_b, ecart: 0, quoi: 1 } }
-                      - label: { text: "Glisser les chiffres vers le haut ou vers le bas.", align: TOP_LEFT, x: 22, y: 540, width: 545, text_align: CENTER, styles: style_text_dim }
+                      - label: { text: "HEURE DU RÉVEIL", align: TOP_LEFT, x: 22, y: "${ 14 * (corps_h | int) // 598 }", styles: style_text_accent }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_heure, x: "${ demi_w | int // 2 - 19 - 190 * (corps_w | int) // 1202 }", y: "${ 60 * (corps_h | int) // 598 }", w: "${ 190 * (corps_w | int) // 1202 }", h: "${ 3 * (ligne_roboto_130_b | int) }", police: roboto_130_b, ecart: 0, quoi: 0 } }
+                      - label: { text: ":", align: TOP_MID, x: 0, y: "${ 60 * (corps_h | int) // 598 + (ligne_roboto_130_b | int) - 10 * (corps_h | int) // 598 }", text_font: roboto_130_b, styles: style_text_soft }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_minutes, x: "${ (demi_w | int + 1) // 2 + 19 }", y: "${ 60 * (corps_h | int) // 598 }", w: "${ 190 * (corps_w | int) // 1202 }", h: "${ 3 * (ligne_roboto_130_b | int) }", police: roboto_130_b, ecart: 0, quoi: 1 } }
+                      - label: { text: "Glisser les chiffres vers le haut ou vers le bas.", align: TOP_LEFT, x: 22, y: "${ 60 * (corps_h | int) // 598 + 3 * (ligne_roboto_130_b | int) + 21 * (corps_h | int) // 598 }", width: "${ demi_w | int - 44 }", text_align: CENTER, styles: style_text_dim }
 
                 # Marche / arrêt, prochaine sonnerie, test : la carte qui répond à « à quelle
                 # heure ça sonne, et pourquoi ».
@@ -122,8 +129,8 @@ obj:
                           align: TOP_LEFT
                           x: 16
                           y: 16
-                          width: 557
-                          height: 140
+                          width: ${ demi_w | int - 32 }
+                          height: ${ 140 * (corps_h | int) // 598 }
                           radius: 18
                           pad_all: 0   # positions exactes : le thème ajoutait ~21 px
                           styles: style_clim_btn
@@ -132,12 +139,12 @@ obj:
                             - switch.toggle: tab5_alarm_enabled
                           widgets:
                             - label: { id: icon_alarm_enable, text: "\U000F0020", align: LEFT_MID, x: 36, text_font: mdi_font_45 }
-                            - label: { id: lbl_alarm_enable, text: "Réveil éteint", align: LEFT_MID, x: 104, width: 437, text_font: roboto_32_b, styles: style_text_dim }
+                            - label: { id: lbl_alarm_enable, text: "Réveil éteint", align: LEFT_MID, x: 104, width: "${ demi_w | int - 152 }", text_font: roboto_32_b, styles: style_text_dim }
 
-                      - label: { text: "\U000F0021", align: TOP_LEFT, x: 16, y: 182, text_font: mdi_font_45, styles: style_text_accent }
-                      - label: { text: "PROCHAINE SONNERIE", align: TOP_LEFT, x: 76, y: 194, styles: style_text_dim }
-                      - label: { id: lbl_alarm_next, text: "", align: TOP_LEFT, x: 16, y: 244, width: 557, styles: style_police_date }
-                      - label: { id: lbl_alarm_next_sub, text: "", align: TOP_LEFT, x: 16, y: 308, width: 557, long_mode: WRAP, styles: style_text_dim }
+                      - label: { text: "\U000F0021", align: TOP_LEFT, x: 16, y: "${ 182 * (corps_h | int) // 598 }", text_font: mdi_font_45, styles: style_text_accent }
+                      - label: { text: "PROCHAINE SONNERIE", align: TOP_LEFT, x: 76, y: "${ 194 * (corps_h | int) // 598 }", styles: style_text_dim }
+                      - label: { id: lbl_alarm_next, text: "", align: TOP_LEFT, x: 16, y: "${ 244 * (corps_h | int) // 598 }", width: "${ demi_w | int - 32 }", styles: style_police_date }
+                      - label: { id: lbl_alarm_next_sub, text: "", align: TOP_LEFT, x: 16, y: "${ 308 * (corps_h | int) // 598 }", width: "${ demi_w | int - 32 }", long_mode: WRAP, styles: style_text_dim }
 
                       # Test grandeur nature : passe par la VRAIE machine d'état (calque,
                       # crescendo, arrêt à la voix), pas par un raccourci — tester autre chose
@@ -146,9 +153,9 @@ obj:
                           id: btn_alarm_test
                           align: TOP_LEFT
                           x: 16
-                          y: 482
-                          width: 360
-                          height: 100
+                          y: ${ corps_h | int - 16 - 100 * (corps_h | int) // 598 }
+                          width: ${ 360 * (corps_w | int) // 1202 }
+                          height: ${ 100 * (corps_h | int) // 598 }
                           radius: 20
                           styles: style_pill_accent
                           pressed:
@@ -168,10 +175,10 @@ obj:
                       - button:
                           id: btn_alarm_stop_now
                           align: TOP_LEFT
-                          x: 392
-                          y: 482
-                          width: 181
-                          height: 100
+                          x: ${ 392 * (corps_w | int) // 1202 }
+                          y: ${ corps_h | int - 16 - 100 * (corps_h | int) // 598 }
+                          width: ${ demi_w | int - 16 - 392 * (corps_w | int) // 1202 }
+                          height: ${ 100 * (corps_h | int) // 598 }
                           radius: 20
                           styles: style_clim_btn
                           pressed: { bg_opa: 30% }
@@ -208,7 +215,7 @@ obj:
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_mode_0, x: 17, y: 58, w: 384, label_text: "Fixe", appui: [ select.set_index: { id: tab5_alarm_mode, index: 0 } ] } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_mode_1, x: 409, y: 58, w: 384, label_text: "Travail", appui: [ select.set_index: { id: tab5_alarm_mode, index: 1 } ] } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_mode_2, x: 801, y: 58, w: 384, label_text: "Ouverture", appui: [ select.set_index: { id: tab5_alarm_mode, index: 2 } ] } }
-                      - label: { id: lbl_alarm_mode_hint, text: "", align: TOP_LEFT, x: 22, y: 128, width: 1158, styles: style_text_dim }
+                      - label: { id: lbl_alarm_mode_hint, text: "", align: TOP_LEFT, x: 22, y: "${ (128 - 40) * (corps_h | int) // 598 + 40 }", width: "${ corps_w | int - 44 }", styles: style_text_dim }
 
                       # Jours de l'heure fixe : 7 pastilles de 160 px au pas de 168, puis les
                       # préréglages du select « Réveil : jours » (le 5ᵉ, « Personnalisé », est ce
@@ -231,7 +238,7 @@ obj:
                       - !include { file: reglages_rangee.yaml, vars: { y: 396, w: 1168, icon: "\U000F02E3", label_text: "Jours de repos" } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_repos_silence, x: 17, y: 436, w: 580, label_text: "Silence", appui: [ switch.turn_off: tab5_alarm_repos_fixe ] } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_repos_fixe, x: 605, y: 436, w: 580, label_text: "Heure fixe", appui: [ switch.turn_on: tab5_alarm_repos_fixe ] } }
-                      - label: { id: lbl_alarm_repos_hint, text: "", align: TOP_LEFT, x: 22, y: 506, width: 1158, styles: style_text_dim }
+                      - label: { id: lbl_alarm_repos_hint, text: "", align: TOP_LEFT, x: 22, y: "${ (506 - 40) * (corps_h | int) // 598 + 40 }", width: "${ corps_w | int - 44 }", styles: style_text_dim }
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE OUVERTURE (mode « Avant l'ouverture »)
@@ -259,24 +266,24 @@ obj:
                     styles: style_glass_card
                     scrollable: false
                     widgets:
-                      - label: { text: "Délai", align: TOP_LEFT, x: 17, y: 18, width: 280, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_delai, x: 17, y: 62, w: 280, h: 350, police: roboto_45_b, ecart: 17, quoi: 4 } }
-                      - label: { text: "avant l'ouverture", align: TOP_LEFT, x: 17, y: 422, width: 280, text_align: CENTER, styles: style_text_dim }
+                      - label: { text: "Délai", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 }", y: "${ 18 * (corps_h | int) // 598 }", width: "${ 280 * (corps_w | int) // 1202 }", text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_delai, x: "${ 17 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 }", w: "${ 280 * (corps_w | int) // 1202 }", h: "${ 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) }", police: roboto_45_b, ecart: "${ 17 * (corps_h | int) // 598 }", quoi: 4 } }
+                      - label: { text: "avant l'ouverture", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 + 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) + 10 }", width: "${ 280 * (corps_w | int) // 1202 }", text_align: CENTER, styles: style_text_dim }
 
-                      - label: { text: "Pas avant", align: TOP_LEFT, x: 313, y: 18, width: 280, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_pas_avant, x: 313, y: 62, w: 280, h: 350, police: roboto_45_b, ecart: 17, quoi: 2 } }
-                      - label: { text: "au plus tôt", align: TOP_LEFT, x: 313, y: 422, width: 280, text_align: CENTER, styles: style_text_dim }
+                      - label: { text: "Pas avant", align: TOP_LEFT, x: "${ 313 * (corps_w | int) // 1202 }", y: "${ 18 * (corps_h | int) // 598 }", width: "${ 280 * (corps_w | int) // 1202 }", text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_pas_avant, x: "${ 313 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 }", w: "${ 280 * (corps_w | int) // 1202 }", h: "${ 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) }", police: roboto_45_b, ecart: "${ 17 * (corps_h | int) // 598 }", quoi: 2 } }
+                      - label: { text: "au plus tôt", align: TOP_LEFT, x: "${ 313 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 + 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) + 10 }", width: "${ 280 * (corps_w | int) // 1202 }", text_align: CENTER, styles: style_text_dim }
 
-                      - label: { text: "Pas après", align: TOP_LEFT, x: 609, y: 18, width: 280, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_pas_apres, x: 609, y: 62, w: 280, h: 350, police: roboto_45_b, ecart: 17, quoi: 3 } }
-                      - label: { text: "au plus tard", align: TOP_LEFT, x: 609, y: 422, width: 280, text_align: CENTER, styles: style_text_dim }
+                      - label: { text: "Pas après", align: TOP_LEFT, x: "${ 609 * (corps_w | int) // 1202 }", y: "${ 18 * (corps_h | int) // 598 }", width: "${ 280 * (corps_w | int) // 1202 }", text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_pas_apres, x: "${ 609 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 }", w: "${ 280 * (corps_w | int) // 1202 }", h: "${ 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) }", police: roboto_45_b, ecart: "${ 17 * (corps_h | int) // 598 }", quoi: 3 } }
+                      - label: { text: "au plus tard", align: TOP_LEFT, x: "${ 609 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 + 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) + 10 }", width: "${ 280 * (corps_w | int) // 1202 }", text_align: CENTER, styles: style_text_dim }
 
-                      - label: { text: "Repos mini", align: TOP_LEFT, x: 905, y: 18, width: 280, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_repos, x: 905, y: 62, w: 280, h: 350, police: roboto_45_b, ecart: 17, quoi: 5 } }
-                      - label: { text: "après la fermeture", align: TOP_LEFT, x: 905, y: 422, width: 280, text_align: CENTER, styles: style_text_dim }
+                      - label: { text: "Repos mini", align: TOP_LEFT, x: "${ 905 * (corps_w | int) // 1202 }", y: "${ 18 * (corps_h | int) // 598 }", width: "${ 280 * (corps_w | int) // 1202 }", text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_repos, x: "${ 905 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 }", w: "${ 280 * (corps_w | int) // 1202 }", h: "${ 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) }", police: roboto_45_b, ecart: "${ 17 * (corps_h | int) // 598 }", quoi: 5 } }
+                      - label: { text: "après la fermeture", align: TOP_LEFT, x: "${ 905 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 + 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) + 10 }", width: "${ 280 * (corps_w | int) // 1202 }", text_align: CENTER, styles: style_text_dim }
 
                       # Ce que ces réglages donnent, ou qu'ils ne servent pas (autre mode).
-                      - label: { id: lbl_alarm_ouverture_hint, text: "", align: TOP_LEFT, x: 22, y: 486, width: 1158, long_mode: WRAP, text_align: CENTER }
+                      - label: { id: lbl_alarm_ouverture_hint, text: "", align: TOP_LEFT, x: 22, y: "${ 486 * (corps_h | int) // 598 }", width: "${ corps_w | int - 44 }", long_mode: WRAP, text_align: CENTER }
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE SONNERIE
@@ -308,19 +315,19 @@ obj:
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_melodie_1, x: 298, y: 56, w: 273, label_text: "Classique", appui: [ script.execute: { id: tab5_alarm_melodie, index: 1 } ] } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_melodie_2, x: 17, y: 124, w: 273, label_text: "Insistante", appui: [ script.execute: { id: tab5_alarm_melodie, index: 2 } ] } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_melodie_3, x: 298, y: 124, w: 273, label_text: "Carillon", appui: [ script.execute: { id: tab5_alarm_melodie, index: 3 } ] } }
-                      - label: { text: "Toucher une mélodie la fait entendre.", align: TOP_LEFT, x: 22, y: 194, width: 545, styles: style_text_dim }
+                      - label: { text: "Toucher une mélodie la fait entendre.", align: TOP_LEFT, x: 22, y: "${ (194 - 40) * (corps_h | int) // 598 + 40 }", width: "${ demi_w | int - 44 }", styles: style_text_dim }
 
                       # Volume du réveil, indépendant du volume système : sa propre entité, jamais
                       # `tab5_volume_apply` (qui écrit `system_volume`). Le glisser de côté n'y
                       # change pas de page (tab5_pages.cpp).
                       - !include { file: reglages_rangee.yaml, vars: { y: 246, w: 555, icon: "\U000F057E", label_text: "Volume" } }
-                      - label: { id: lbl_alarm_vol, text: "80 %", align: TOP_RIGHT, x: -22, y: 244, text_font: roboto_32_b }
+                      - label: { id: lbl_alarm_vol, text: "80 %", align: TOP_RIGHT, x: -22, y: "${ 246 * (corps_h | int) // 598 - 2 }", text_font: roboto_32_b }
                       - slider:
                           id: slider_alarm_vol
                           align: TOP_LEFT
                           x: 30
-                          y: 304
-                          width: 529
+                          y: ${ 246 * (corps_h | int) // 598 + 58 }
+                          width: ${ demi_w | int - 60 }
                           height: 20
                           min_value: 10
                           max_value: 100
@@ -341,7 +348,7 @@ obj:
                       - !include { file: reglages_rangee.yaml, vars: { y: 368, w: 555, icon: "\U000F075D", label_text: "Volume progressif" } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_progressif_oui, x: 17, y: 408, w: 273, label_text: "Oui", appui: [ switch.turn_on: tab5_alarm_crescendo ] } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_progressif_non, x: 298, y: 408, w: 273, label_text: "Non", appui: [ switch.turn_off: tab5_alarm_crescendo ] } }
-                      - label: { text: "Monte doucement jusqu'au volume réglé.", align: TOP_LEFT, x: 22, y: 478, width: 545, styles: style_text_dim }
+                      - label: { text: "Monte doucement jusqu'au volume réglé.", align: TOP_LEFT, x: 22, y: "${ (478 - 40) * (corps_h | int) // 598 + 40 }", width: "${ demi_w | int - 44 }", styles: style_text_dim }
 
                 # Répétition et durée max : deux rouleaux de 270 (x 17 et 302).
                 - obj:
@@ -353,13 +360,13 @@ obj:
                     styles: style_glass_card
                     scrollable: false
                     widgets:
-                      - label: { text: "Répétition", align: TOP_LEFT, x: 17, y: 18, width: 270, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_repetition, x: 17, y: 62, w: 270, h: 350, police: roboto_45_b, ecart: 17, quoi: 6 } }
-                      - label: { text: "entre deux sonneries", align: TOP_LEFT, x: 17, y: 422, width: 270, text_align: CENTER, styles: style_text_dim }
+                      - label: { text: "Répétition", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 }", y: "${ 18 * (corps_h | int) // 598 }", width: "${ 270 * (corps_w | int) // 1202 }", text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_repetition, x: "${ 17 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 }", w: "${ 270 * (corps_w | int) // 1202 }", h: "${ 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) }", police: roboto_45_b, ecart: "${ 17 * (corps_h | int) // 598 }", quoi: 6 } }
+                      - label: { text: "entre deux sonneries", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 + 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) + 10 }", width: "${ 270 * (corps_w | int) // 1202 }", text_align: CENTER, styles: style_text_dim }
 
-                      - label: { text: "Durée max", align: TOP_LEFT, x: 302, y: 18, width: 270, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_duree_max, x: 302, y: 62, w: 270, h: 350, police: roboto_45_b, ecart: 17, quoi: 7 } }
-                      - label: { text: "puis arrêt automatique", align: TOP_LEFT, x: 302, y: 422, width: 270, text_align: CENTER, styles: style_text_dim }
+                      - label: { text: "Durée max", align: TOP_LEFT, x: "${ 302 * (corps_w | int) // 1202 }", y: "${ 18 * (corps_h | int) // 598 }", width: "${ 270 * (corps_w | int) // 1202 }", text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_duree_max, x: "${ 302 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 }", w: "${ 270 * (corps_w | int) // 1202 }", h: "${ 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) }", police: roboto_45_b, ecart: "${ 17 * (corps_h | int) // 598 }", quoi: 7 } }
+                      - label: { text: "puis arrêt automatique", align: TOP_LEFT, x: "${ 302 * (corps_w | int) // 1202 }", y: "${ 62 * (corps_h | int) // 598 + 5 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) + 10 }", width: "${ 270 * (corps_w | int) // 1202 }", text_align: CENTER, styles: style_text_dim }
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE ANNONCES
@@ -389,13 +396,13 @@ obj:
                       - !include { file: reglages_rangee.yaml, vars: { y: 16, w: 555, icon: "\U000F05CB", label_text: "Annonce parlée au réveil" } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_tts_oui, x: 17, y: 56, w: 273, label_text: "Oui", appui: [ switch.turn_on: tab5_alarm_tts ] } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_tts_non, x: 298, y: 56, w: 273, label_text: "Non", appui: [ switch.turn_off: tab5_alarm_tts ] } }
-                      - label: { text: "Après la première sonnerie, Home Assistant annonce la météo et le planning.", align: TOP_LEFT, x: 22, y: 128, width: 545, long_mode: WRAP, styles: style_text_dim }
+                      - label: { text: "Après la première sonnerie, Home Assistant annonce la météo et le planning.", align: TOP_LEFT, x: 22, y: "${ (128 - 40) * (corps_h | int) // 598 + 40 }", width: "${ demi_w | int - 44 }", long_mode: WRAP, styles: style_text_dim }
 
                       # Rendez-vous : bandeau à l'écran et annonce vocale (tab5_rdv_announce).
                       - !include { file: reglages_rangee.yaml, vars: { y: 236, w: 555, icon: "\U000F00F0", label_text: "Annonce des rendez-vous" } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_rdv_oui, x: 17, y: 276, w: 273, label_text: "Oui", appui: [ switch.turn_on: tab5_alarm_rdv_on ] } }
                       - !include { file: choix_btn.yaml, vars: { id: btn_alarm_rdv_non, x: 298, y: 276, w: 273, label_text: "Non", appui: [ switch.turn_off: tab5_alarm_rdv_on ] } }
-                      - label: { text: "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous.", align: TOP_LEFT, x: 22, y: 348, width: 545, long_mode: WRAP, styles: style_text_dim }
+                      - label: { text: "Un bandeau à l'écran et une annonce vocale, avant chaque rendez-vous.", align: TOP_LEFT, x: 22, y: "${ (348 - 40) * (corps_h | int) // 598 + 40 }", width: "${ demi_w | int - 44 }", long_mode: WRAP, styles: style_text_dim }
 
                 - obj:
                     align: TOP_LEFT
@@ -408,10 +415,10 @@ obj:
                     widgets:
                       # Prochain rendez-vous (poussé par HA, tab5_maj_rdv_prochains) : trois
                       # lignes au plus, « … » au-delà (hauteur fixe).
-                      - label: { text: "\U000F09D3", align: TOP_LEFT, x: 17, y: 14, text_font: mdi_font_32, styles: style_text_accent }
-                      - label: { text: "PROCHAIN RENDEZ-VOUS", align: TOP_LEFT, x: 57, y: 18, styles: style_text_dim }
-                      - label: { id: lbl_alarm_rdv_next, text: "", align: TOP_LEFT, x: 22, y: 64, width: 545, height: 120, long_mode: DOT, text_font: roboto_32_b }
+                      - label: { text: "\U000F09D3", align: TOP_LEFT, x: 17, y: "${ 14 * (corps_h | int) // 598 }", text_font: mdi_font_32, styles: style_text_accent }
+                      - label: { text: "PROCHAIN RENDEZ-VOUS", align: TOP_LEFT, x: 57, y: "${ 18 * (corps_h | int) // 598 }", styles: style_text_dim }
+                      - label: { id: lbl_alarm_rdv_next, text: "", align: TOP_LEFT, x: 22, y: "${ 64 * (corps_h | int) // 598 }", width: "${ demi_w | int - 44 }", height: "${ 3 * (ligne_roboto_32_b | int) + 6 }", long_mode: DOT, text_font: roboto_32_b }
 
-                      - label: { text: "Annoncer avant", align: TOP_LEFT, x: 17, y: 214, width: 555, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
-                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_rdv_avant, x: 160, y: 262, w: 270, h: 210, police: roboto_45_b, ecart: 17, quoi: 8 } }
-                      - label: { text: "le début du rendez-vous", align: TOP_LEFT, x: 17, y: 482, width: 555, text_align: CENTER, styles: style_text_dim }
+                      - label: { text: "Annoncer avant", align: TOP_LEFT, x: 17, y: "${ 214 * (corps_h | int) // 598 }", width: "${ demi_w | int - 34 }", text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+                      - !include { file: rouleau.yaml, vars: { id: roller_alarm_rdv_avant, x: "${ 160 * (corps_w | int) // 1202 }", y: "${ 262 * (corps_h | int) // 598 }", w: "${ 270 * (corps_w | int) // 1202 }", h: "${ 3 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) }", police: roboto_45_b, ecart: "${ 17 * (corps_h | int) // 598 }", quoi: 8 } }
+                      - label: { text: "le début du rendez-vous", align: TOP_LEFT, x: 17, y: "${ 262 * (corps_h | int) // 598 + 3 * ((ligne_roboto_45_b | int) + 17 * (corps_h | int) // 598) + 10 }", width: "${ demi_w | int - 34 }", text_align: CENTER, styles: style_text_dim }

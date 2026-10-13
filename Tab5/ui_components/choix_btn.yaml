@@ -10,14 +10,17 @@
 #        appui (actions du tap) ; facultative : h (hauteur, défaut 60).
 # Piège ESPHome (comme bouton_pas.yaml) : la substitution garde le type de la variable,
 # les paramètres d'un script doivent rester des nombres NON quotés.
+# Taille (lot 4 du portage 1024×600, ADR-0061) : x, w et h sont ceux du Tab5, ramenés ici au
+# corps de la carte ; y aussi, mais compté depuis 40 px au-dessus (le titre de rangée de
+# reglages_rangee.yaml, à y ramené, garde 40 px de haut) : comme reglages_choix_btn.yaml.
 # ═══════════════════════════════════════════════════════
 button:
   id: ${id}
   align: TOP_LEFT
-  x: ${x}
-  y: ${y}
-  width: ${w}
-  height: ${ h | default(60) }
+  x: ${ (x | int) * (corps_w | int) // 1202 }
+  y: ${ ((y | int) - 40) * (corps_h | int) // 598 + 40 }
+  width: ${ (w | int) * (corps_w | int) // 1202 }
+  height: ${ (h | default(60) | int) * (corps_h | int) // 598 }
   radius: 14
   pad_all: 0   # positions exactes : le thème ajoutait ~21 px
   styles: style_clim_btn
