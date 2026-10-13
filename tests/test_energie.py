@@ -32,7 +32,7 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 from tests.test_tuiles_blueprint import Etat, Passage, _chercher, _defs, _evenement
-from tests.commun import BaseChargeur, lire as _lire
+from tests.commun import CARTES, BaseChargeur, _jetons as jetons_resolus, constantes_cpp, lire as _lire, resoudre
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PACKAGE = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_energie.yaml")
@@ -1757,3 +1757,73 @@ def test_popup_au_registre_et_au_select():
     assert '- "Énergie"' in navigation
     # Le package attend exactement ce nom d'écran.
     assert "states(ecran) != 'Énergie'" in _lire(PACKAGE)
+
+# ─── Mise en page sur une autre carte (lot 4 du portage 1024×600, ADR-0061) ─────
+
+def _nombres_carte(motif: str, texte: str, jetons: dict) -> list[tuple[int, ...]]:
+    trouves = [m if isinstance(m, tuple) else (m,) for m in re.findall(motif, texte)]
+    return [tuple(int(resoudre(v.strip(), jetons)) for v in m) for m in trouves]
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_mise_en_page_ramenee_au_corps(carte):
+    """Le YAML (energie_popup.yaml, energie_carte.yaml) et tab5_energie.cpp ramènent la mise
+    en page du Tab5 au corps de la carte par le même calcul ; tout tient dans le corps, et le
+    Tab5 garde ses valeurs au pixel."""
+    popup = _lire(os.path.join(REPO, "Tab5", "ui_components", "energie_popup.yaml"))
+    carte_yaml = _lire(os.path.join(REPO, "Tab5", "ui_components", "energie_carte.yaml"))
+    jetons = jetons_resolus(carte)
+    corps_w, corps_h = int(jetons["corps_w"]), int(jetons["corps_h"])
+    k = constantes_cpp(_lire(ENERGIE_CPP), carte)
+    # Production et Bilan : cartes en haut, graphique jusqu'au bas du corps, zone des barres.
+    (h_carte,), = _nombres_carte(r"\n  height: (.+)\n", carte_yaml.replace("\r\n", "\n"), jetons)
+    assert h_carte == k["kCarteH210"] and k["kCartesSeulesY"] * 2 + h_carte <= corps_h
+    graphes = _nombres_carte(r"x: 24\s+y: (\$\{ 210.+)\s+width: \$\{corps_w\}\s+height: (.+)", popup, jetons)
+    zones = _nombres_carte(r"id: energie(?:_bilan)?_zone\s+align: TOP_LEFT\s+x: 18\s+y: (.+)\s+width: .+\s+height: (.+)", popup, jetons)
+    assert len(graphes) == len(zones) == 2
+    for (gy, gh), (zy, zh) in zip(graphes, zones):
+        assert gy == h_carte + 16 and gy + gh == corps_h
+        assert zh == k["kZoneH"] and zy + zh + 14 == gh
+    assert k["kBarresHaut"] < k["kBarresBas"] < k["kAxeY"] and k["kAxeY"] + 27 <= k["kZoneH"]
+    # Aujourd'hui : deux cartes côte à côte, zones égales au C++.
+    (sz_l, sz_h), = _nombres_carte(r"id: energie_soleil_zone\s+align: TOP_LEFT\s+x: 18\s+y: 14\s+width: (.+)\s+height: (.+)", popup, jetons)
+    (si_l, si_h), = _nombres_carte(r"id: energie_soleil_infos\s+align: TOP_LEFT\s+x: 18\s+y: 14\s+width: (.+)\s+height: (.+)", popup, jetons)
+    (droite_x, droite_l), = _nombres_carte(r"x: (\$\{ 24 \+ 862.+)\s+y: 0\s+width: (.+)\s+height: \$\{corps_h\}", popup, jetons)
+    assert (sz_l, sz_h, si_l, si_h) == (k["kSolZoneL"], k["kSolZoneH"], k["kInfosL"], k["kSolZoneH"])
+    assert 24 + sz_l + 36 < droite_x and droite_x + droite_l == 24 + corps_w and sz_h + 28 == corps_h
+    assert k["kMidiY"] + 27 <= k["kArcHaut"] < k["kHorizonY"] < k["kLeverY"] < k["kSolMaxY"] < k["kSolHaut"] < k["kSolBas"]
+    assert k["kSolBas"] < k["kSolAxeY"] < k["kLegendeY"] and k["kLegendeY"] + 27 <= k["kSolZoneH"]
+    assert k["kSolBord"] + 4 * k["kLegendePas"] <= k["kSolZoneL"] + 30, "quatre légendes dans la zone"
+    assert 3 * k["kInfosLigne"] <= k["kCadreY"] and k["kCadreY"] + k["kCadreH"] < k["kSourceY"]
+    assert k["kSourceY"] + 27 <= k["kSolZoneH"] and 52 + 38 <= k["kCadreH"] + 1
+    # Flux : centres ramenés à la page (centre_carte) ; les cercles gardent leur taille, ne se
+    # touchent pas (anneau de la maison compris) et restent dans la page.
+    cpp = _lire(ENERGIE_CPP)
+
+    def centres(nom):
+        brut = re.search(rf"kCentres{nom}\[NB_CARTES\] = \{{(.*?)\}};", cpp).group(1)
+        return [(int(x), int(y)) for x, y in re.findall(r"\{(\d+), (\d+)\}", brut)]
+
+    def ramener(x, y):
+        milieu = (k["kCorpsWTab5"] + 2 * k["kCorpsX"]) // 2
+        dx = x - milieu
+        lx = (abs(dx) * k["kCorpsW"] // k["kCorpsWTab5"]) * (1 if dx >= 0 else -1)
+        plage = k["kCorpsH"] - k["kFluxBasMarge"] - k["kFluxHautY"]
+        return k["kCarteL"] // 2 + lx, k["kFluxHautY"] + (y - k["kFluxHautY"]) * plage // (k["kCorpsHTab5"] - k["kFluxBasMarge"] - k["kFluxHautY"])
+
+    rayons = [k["kFluxR"], k["kFluxR"] + k["kAnneauEcart"] + k["kAnneauL"], k["kFluxR"], k["kFluxR"]]  # maison : anneau
+    for nom, montres in (("Batterie", 4), ("Sans", 3)):
+        tab5 = centres(nom)
+        c = [ramener(*p) for p in tab5]
+        if carte == "tab5":
+            assert c == tab5
+        for i in range(montres):
+            x, y = c[i]
+            assert rayons[i] <= x <= k["kCarteL"] - rayons[i] and rayons[i] <= y <= corps_h - rayons[i], (nom, i, c[i])
+            for j in range(i + 1, montres):
+                assert math.dist(c[i], c[j]) > rayons[i] + rayons[j], (nom, i, j)
+    if carte == "tab5":
+        assert (h_carte, k["kCartesSeulesY"], graphes[0], k["kZoneH"], k["kBarresBas"], k["kAxeY"]) == (210, 194, (226, 372), 286, 252, 258)
+        assert (k["kSolZoneL"], k["kInfosL"], droite_x, k["kLegendePas"], k["kInfosLigne"], k["kCadreY"]) == (810, 304, 886, 200, 96, 300)
+        assert (k["kArcHaut"], k["kHorizonY"], k["kLeverY"], k["kSolMaxY"], k["kSolHaut"], k["kSolBas"], k["kSolAxeY"],
+                k["kLegendeY"], k["kSourceY"]) == (48, 190, 198, 232, 262, 496, 502, 540, 540)

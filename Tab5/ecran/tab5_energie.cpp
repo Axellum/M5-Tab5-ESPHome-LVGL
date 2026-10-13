@@ -95,14 +95,19 @@ constexpr const char* kPeriodes[NB_VUES] = {tr_noop("Aujourd'hui"), tr_noop("30 
 // Géométrie (energie_popup.yaml) : une page = un conteneur de 1250 × 598 à y 72 de la
 // carte ; corps x 24..1226 (kCorpsX, kCorpsW, kCartesEcart : tab5_geometrie.h).
 constexpr int32_t kCartesY = 0;             // avec le graphique
-constexpr int32_t kCartesSeulesY = 194;     // sans : centrées dans le corps (598 − 210) / 2
+// Sur une autre carte (lot 4 du portage 1024×600), hauteurs et y ramenés au corps
+// (hauteur_carte), comme energie_popup.yaml et energie_carte.yaml (tests/test_energie.py).
+constexpr int32_t kCarteH210 = hauteur_carte(210);   // hauteur des cartes (210 sur le Tab5)
+constexpr int32_t kCartesSeulesY = (kCorpsH - kCarteH210) / 2;  // sans : centrées dans le corps (194)
 constexpr int32_t kMargeTexte = 44;         // 22 px de chaque côté
-// Zone des barres (energie_zone, energie_bilan_zone : kGraphiqueL × 286) : maximum en haut,
-// repère, barres, axe ; libellés de l'axe de kAxeLibelleL px, texte centré (tab5_geometrie.h).
+// Zone des barres (energie_zone, energie_bilan_zone : kGraphiqueL × kZoneH, 286 sur le Tab5) :
+// maximum en haut, repère, barres, axe ; libellés de l'axe de kAxeLibelleL px, texte centré
+// (tab5_geometrie.h). La carte du graphique prend le corps sous les cartes, la zone le reste.
+constexpr int32_t kZoneH = kCorpsH - kCarteH210 - 16 - hauteur_carte(72) - 14;
 constexpr int32_t kBordX = 20;              // marge : le premier libellé de l'axe tient entier
 constexpr int32_t kBarresHaut = 34;
-constexpr int32_t kBarresBas = 252;
-constexpr int32_t kAxeY = 258;
+constexpr int32_t kBarresBas = kZoneH - 34;   // 252
+constexpr int32_t kAxeY = kZoneH - 28;        // 258
 // Sous 10 W, le réseau et la batterie sont « au repos », un trait du Flux aussi.
 constexpr float kRepos = 10.0f;
 
@@ -130,6 +135,18 @@ struct Centre {
 // du bas de la carte : rien ne doit frôler le bord de la page).
 constexpr Centre kCentresBatterie[NB_CARTES] = {{625, 110}, {1035, 285}, {215, 285}, {625, 455}};
 constexpr Centre kCentresSans[NB_CARTES] = {{625, 150}, {1035, 410}, {215, 410}, {625, 493}};
+// Ces centres sont ceux du Tab5. Sur une autre carte (lot 4 du portage), un centre est ramené
+// à sa page : x depuis le milieu de la carte (largeur_carte), y entre 110 (le haut, gardé) et
+// le bas de la page moins 143 (les 43 px sous la batterie et son rayon) ; les cercles gardent
+// leur taille (polices fixes), la disposition est la même, resserrée. Sur le Tab5 : identité.
+constexpr int32_t kFluxHautY = 110;
+constexpr int32_t kFluxBasMarge = 143;
+constexpr int32_t kFluxMilieuTab5 = (kCorpsWTab5 + 2 * kCorpsX) / 2;   // 625
+constexpr Centre centre_carte(Centre t) {
+    return {kCarteL / 2 + largeur_carte(t.x - kFluxMilieuTab5),
+            kFluxHautY + (t.y - kFluxHautY) * (kCorpsH - kFluxBasMarge - kFluxHautY) /
+                             (kCorpsHTab5 - kFluxBasMarge - kFluxHautY)};
+}
 enum Trait : int { T_SOL_MAISON,
                    T_SOL_RESEAU,
                    T_RESEAU_MAISON,
@@ -145,35 +162,39 @@ enum Anneau : int { A_PISTE,
                     A_RESEAU,
                     NB_ANNEAUX };
 
-// Page Aujourd'hui : zone de gauche (energie_soleil_zone, 810 × 570), heures sur kSolL px.
-constexpr int32_t kSolZoneL = 810;
+// Page Aujourd'hui : zone de gauche (energie_soleil_zone, 810 × 570 sur le Tab5), heures sur
+// kSolL px. Sur une autre carte (lot 4 du portage) : colonnes ramenées au corps
+// (largeur_carte), le haut (arc) ramené (hauteur_carte), le bas (axe, légende) posé depuis le
+// bas de la zone ; les libellés gardent leur taille (energie_popup.yaml, même calcul).
+constexpr int32_t kSolZoneL = largeur_carte(846) - 36;
+constexpr int32_t kSolZoneH = kCorpsH - 28;
 constexpr int32_t kSolBord = 12;
 constexpr int32_t kSolL = kSolZoneL - 2 * kSolBord;
 constexpr int kArcPoints = 29;              // points de l'arc, lever et coucher compris
 constexpr int32_t kArcPoint = 6;
 constexpr int32_t kAstre = 30;              // le soleil
 constexpr int32_t kMidiY = 4;               // « Midi 13:40 » au-dessus du sommet
-constexpr int32_t kArcHaut = 48;            // sommet de l'arc
-constexpr int32_t kHorizonY = 190;
-constexpr int32_t kLeverY = 198;            // « Lever 07:12 », « Coucher 20:05 »
+constexpr int32_t kArcHaut = hauteur_carte(48);    // sommet de l'arc
+constexpr int32_t kHorizonY = hauteur_carte(190);
+constexpr int32_t kLeverY = kHorizonY + 8;         // « Lever 07:12 », « Coucher 20:05 » (198)
 constexpr int32_t kHeureL = 180;            // largeur de ces trois libellés
-constexpr int32_t kSolMaxY = 232;           // maximum et « Courbe en cours d'apprentissage »
-constexpr int32_t kSolHaut = 262;           // haut des barres
-constexpr int32_t kSolBas = 496;            // pied des barres
-constexpr int32_t kSolAxeY = 502;
+constexpr int32_t kSolMaxY = kLeverY + 34;  // maximum et « Courbe en cours d'apprentissage » (232)
+constexpr int32_t kSolHaut = kSolMaxY + 30; // haut des barres (262)
+constexpr int32_t kLegendeY = kSolZoneH - 30;   // 540
+constexpr int32_t kSolAxeY = kLegendeY - 38;    // 502
+constexpr int32_t kSolBas = kSolAxeY - 6;       // pied des barres (496)
 constexpr int32_t kSolAxeL = 64;
 constexpr int kSolAxe = 8;                  // 00:00, 03:00… 21:00
-constexpr int32_t kLegendeY = 540;
-constexpr int32_t kLegendePas = 200;
+constexpr int32_t kLegendePas = largeur_carte(200);
 constexpr int32_t kLegendeMarque = 18;
 constexpr int kSolLegendes = 4;
 constexpr int kLisse = 4;                   // points de la courbe par heure
-// Colonne de droite (energie_soleil_infos, 304 × 570).
-constexpr int32_t kInfosL = 304;
-constexpr int32_t kInfosLigne = 96;         // une rangée « libellé, valeur »
-constexpr int32_t kCadreY = 300;
-constexpr int32_t kCadreH = 112;
-constexpr int32_t kSourceY = 540;
+// Colonne de droite (energie_soleil_infos, 304 × 570 sur le Tab5 : le reste du corps).
+constexpr int32_t kInfosL = kCorpsW - largeur_carte(862) - 36;
+constexpr int32_t kInfosLigne = hauteur_carte(96);  // une rangée « libellé, valeur »
+constexpr int32_t kCadreY = hauteur_carte(300);
+constexpr int32_t kCadreH = hauteur_carte(112);
+constexpr int32_t kSourceY = kSolZoneH - 30;       // 540
 
 // Page Bilan : légende en haut à droite de la zone, kBilanLegendeL par entrée.
 constexpr int32_t kBilanLegendeL = 200;
@@ -752,7 +773,9 @@ void flux_disposer(bool batterie) {
     const int d = batterie ? 1 : 0;
     if (s_flux.disposition == d) return;
     s_flux.disposition = d;
-    const Centre* c = batterie ? kCentresBatterie : kCentresSans;
+    const Centre* t = batterie ? kCentresBatterie : kCentresSans;
+    Centre c[NB_CARTES];
+    for (int n = 0; n < NB_CARTES; n++) c[n] = centre_carte(t[n]);
     for (int n = 0; n < NB_CARTES; n++) {
         ui_x(u.flux_noeud[n], c[n].x - kFluxR);
         ui_y(u.flux_noeud[n], c[n].y - kFluxR);
