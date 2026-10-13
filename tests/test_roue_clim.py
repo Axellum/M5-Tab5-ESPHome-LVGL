@@ -14,7 +14,7 @@ Aucun compilateur ne vérifie ce qui suit ; ce fichier lit le C++, le YAML et le
 """
 import re
 
-from tests.commun import lire as _lire, source
+from tests.commun import avec_jetons, lire as _lire, source
 from tests.test_tuiles_firmware import _fonction
 
 import ecrans  # noqa: E402 — tools/rendu, mis sur sys.path par tests/conftest.py
@@ -22,7 +22,7 @@ import ecrans  # noqa: E402 — tools/rendu, mis sur sys.path par tests/conftest
 CLIM = _lire(source("tab5_clim.cpp"))
 ROUE = _lire(source("tab5_tuiles_roue.cpp"))
 INTERNE = _lire(source("tab5_internal.h"))
-CARTE = _lire("Tab5", "ui_components", "climate_card.yaml")
+CARTE = avec_jetons(_lire("Tab5", "ui_components", "climate_card.yaml"))   # jetons acc_* (lot 3)
 
 
 def test_le_toucher_ouvre_la_roue_sinon_le_carrousel():
@@ -118,8 +118,13 @@ def test_ecrans_du_rendu():
     assert (855 + x + w // 2, 110 + y + h // 2) == ecrans.SALON == (955, 173)
     assert ecrans.roue_dessous(173), "la température est trop haute pour y poser la roue"
     # L'ancre basse de clim_ancre_basse() : mêmes constantes que le rendu.
-    ancre = {k: int(re.search(rf"constexpr int32_t {k} = (\d+);", ROUE).group(1))
-             for k in ("kClimAncreY", "kClimAncreXMin", "kClimAncreXMax")}
+    # Valeurs du Tab5, ramenées à l'écran de la carte par acc_x / acc_y (lot 3 du portage) :
+    # celles d'ici, et celles que tools/rendu/vers_carte.py réduit pour une autre carte.
+    ancre = {k: int(re.search(rf"constexpr int32_t {k} = acc_{a}\((\d+)\);", ROUE).group(1))
+             for k, a in (("kClimAncreY", "y"), ("kClimAncreXMin", "x"), ("kClimAncreXMax", "x"))}
+    import vers_carte
+    assert vers_carte.CLIM_ANCRE_X == (ancre["kClimAncreXMin"], ancre["kClimAncreXMax"])
+    assert vers_carte.CLIM_ANCRE_Y == ancre["kClimAncreY"]
     assert ecrans.ROUE_CLIM_ANCRE == (min(max(955, ancre["kClimAncreXMin"]), ancre["kClimAncreXMax"]),
                                       ancre["kClimAncreY"])
     # Sur tout ce domaine, les deux anneaux et leurs mots tiennent au-dessus, sans pivot,

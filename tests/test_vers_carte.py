@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Le robot du rendu sur une autre carte que le Tab5 (tools/rendu/vers_carte.py, ADR-0061,
-lot 2 du portage 1024×600).
+lots 2 et 3 du portage 1024×600).
 
 On vérifie :
 - sur le Tab5, les étapes de chaque écran sont rendues telles quelles (captures de
@@ -10,8 +10,9 @@ On vérifie :
   de tab5_geometrie.h (carte modale, corps, onglets d'en-tête) ;
 - les noms des pages des Réglages, touchés sur le Tab5, tombent sur les mêmes onglets de la
   carte (pages_onglets, tab5_pages.cpp) ;
-- un écran coupé ne laisse pas d'état derrière lui (thème remis, changement d'accueil
-  impossible à défaire pas joué), l'accueil et l'Arcade suivent leur vraie mise en page."""
+- un écran coupé ne laisse pas d'état derrière lui (thème remis), l'accueil (ramené à
+  l'écran de la carte depuis le lot 3 : ses gestes sont joués, plus remplacés par la
+  navigation) et l'Arcade suivent leur vraie mise en page."""
 import re
 
 import pytest
@@ -19,6 +20,7 @@ import pytest
 import ecrans as E
 import vers_carte as V
 from tests.commun import CARTES, charger, geometrie, geometrie_cpp, lire
+from tests.test_gestes import _zones
 
 AUTRES = [c for c in CARTES if c != "tab5"]
 
@@ -83,14 +85,19 @@ def test_gestes_dans_l_ecran_et_options_connues(carte):
 
 
 @pytest.mark.parametrize("carte", AUTRES)
-def test_boutons_hors_ecran_remplaces_par_la_navigation(carte):
-    """L'engrenage et la manette du Tab5 sont hors de l'écran de la 7B : Réglages et l'Arcade
-    s'ouvrent par la navigation."""
-    reglages = next(e for e in E.ECRANS if e.nom == "reglages")
-    assert V.adapter(reglages, carte)[0] == (E.Aller("Réglages"),)
-    arcade = next(e for e in E.ECRANS if e.nom == "arcade")
-    (service,) = V.adapter(arcade, carte)[0]
-    assert service.nom == "rendu_ecran"
+def test_boutons_du_haut_touches_a_leur_place(carte):
+    """Depuis le lot 3, l'engrenage et la manette sont dans l'écran de la carte (boutons du
+    haut ramenés à sa taille) : Réglages et l'Arcade s'ouvrent par un vrai toucher, au point
+    du Tab5 ramené à l'écran ; la navigation n'est plus utilisée pour l'accueil."""
+    c = V.Carte(V.taille_carte(carte))
+    reglages = V.adapter(_ecran("reglages"), carte)[0]
+    assert reglages == (E.Toucher(*c.accueil(*E.BOUTON_SYS)),)
+    (toucher,) = V.adapter(_ecran("arcade"), carte)[0]
+    assert (toucher.x, toucher.y) == c.accueil(*E.BOUTON_TV)
+    for ecran in E.ECRANS:
+        etapes, fermer, _r = V.adapter(ecran, carte)
+        if not any(isinstance(x, (E.Aller, E.Service)) for x in ecran.etapes + ecran.fermer):
+            assert not any(isinstance(x, (E.Aller, E.Service)) for x in etapes + fermer), ecran.nom
 
 
 def _ecran(nom):
@@ -100,10 +107,15 @@ def _ecran(nom):
 @pytest.mark.parametrize("carte", AUTRES)
 def test_etat_commun_remis_meme_ecran_coupe(carte):
     """Un écran coupé par un geste hors de l'écran remet quand même le thème : sans quoi
-    toutes les captures suivantes de la carte seraient dans le thème Capsule."""
-    ecran = _ecran("accueil-zone-graphique-gelule")
-    _etapes, fermer, retirees = V.adapter(ecran, carte)
-    assert retirees and E.Choisir("Thème", "Relief doux", apres=2.0) in fermer
+    toutes les captures suivantes de la carte seraient dans le thème Capsule. Depuis le lot 3
+    aucun écran d'accueil n'est plus coupé : un écran construit pour l'être (une console,
+    posée au pixel, touchée au bas à droite du Tab5) le vérifie."""
+    theme, remis = E.Choisir("Thème", "Capsule"), E.Choisir("Thème", "Relief doux")
+    coupe = E.Ecran("essai", (theme, E.Toucher(*E.BOUTON_TV, apres=1.0), E.Toucher(1270, 710), E.Toucher(10, 10)),
+                    (E.Toucher(10, 10), remis))
+    etapes, fermer, retirees = V.adapter(coupe, carte)
+    assert retirees == [E.Toucher(1270, 710)] and etapes[0] == theme and len(etapes) == 2
+    assert fermer == (remis,)
     for e in E.ECRANS:
         etapes, fermer, _r = V.adapter(e, carte)
         choisis = [x for x in e.etapes if isinstance(x, E.Choisir)]
@@ -116,29 +128,41 @@ def test_etat_commun_remis_meme_ecran_coupe(carte):
 
 
 @pytest.mark.parametrize("carte", AUTRES)
-def test_changement_d_accueil_impossible_a_defaire_pas_joue(carte):
-    """« Appareil suivant » de la tuile − / + ne se défait que par la tuile, hors de l'écran
-    de la 7B : l'écran n'est pas joué (le retour à l'accueil ne le déferait pas)."""
-    etapes, fermer, retirees = V.adapter(_ecran("accueil-minutes-appareil-suivant"), carte)
-    assert etapes == () and fermer == () and retirees
+def test_changement_d_accueil_joue_et_defait(carte):
+    """« Appareil suivant » de la tuile − / + ne se défait que par la tuile : au lot 2 elle
+    était hors de l'écran de la 7B et l'écran n'était pas joué ; depuis le lot 3 il l'est,
+    `fermer` compris (même nombre d'étapes que sur le Tab5, rien de retiré)."""
+    ecran = _ecran("accueil-minutes-appareil-suivant")
+    etapes, fermer, retirees = V.adapter(ecran, carte)
+    assert retirees == [] and len(etapes) == len(ecran.etapes) and len(fermer) == len(ecran.fermer)
 
 
 @pytest.mark.parametrize("carte", AUTRES)
-def test_accueil_horloge_au_pixel_carte_centrale_centree(carte):
-    """Les zones tactiles de l'horloge sont posées au pixel (horloge_zone.yaml), la carte
-    centrale est centrée (x 20, largeur de l'écran − 40)."""
+def test_accueil_ramene_a_l_ecran_de_la_carte(carte):
+    """L'accueil est celui du Tab5 ramené à l'écran de la carte (jetons acc_* ; acc_x / acc_y
+    de tab5_geometrie.h) : chaque point de l'horloge tombe dans sa zone tactile de la carte
+    (horloge_zone.yaml, jetons résolus pour elle), la carte centrale reste centrée."""
     c = V.Carte(V.taille_carte(carte))
-    assert c.accueil(*E.HEURES) == E.HEURES
-    assert c.accueil(*E.CARTE_CENTRALE) == (c.l // 2, E.CARTE_CENTRALE[1])
+    g = geometrie_cpp(carte)
+    for v in (0, 20, 333, 640, 1280):
+        assert c.acc_x(v) == (v * g["kEcranL"] + 640) // 1280 and c.acc_y(v) == (v * g["kEcranH"] + 360) // 720
+    zones = _zones(carte)
+    for point, ident in ((E.HEURES, "btn_horloge_heures"), (E.MINUTES, "btn_horloge_minutes"),
+                         (E.DATE, "btn_horloge_date")):
+        x, y, w, h = zones[ident][:4]
+        px, py = c.accueil(*point)
+        assert x + 5 <= px < x + w - 5 and y + 5 <= py < y + h - 5, (ident, (px, py), (x, y, w, h))
+    assert c.accueil(*E.CARTE_CENTRALE)[0] == c.l // 2
 
 
 @pytest.mark.parametrize("carte", AUTRES)
 def test_arcade_puis_console(carte):
-    """Le sélecteur de l'Arcade est centré en largeur ; une console reste au pixel."""
+    """La manette touchée sur l'accueil ramené à la carte ouvre le sélecteur de l'Arcade,
+    centré en largeur ; une console reste au pixel."""
     c = V.Carte(V.taille_carte(carte))
     etapes, _f, _r = V.adapter(_ecran("jeu-go-nouvelle-partie"), carte)
-    service, choix, menu = etapes
-    assert service.nom == "rendu_ecran"
+    manette, choix, menu = etapes
+    assert (manette.x, manette.y) == c.accueil(*E.BOUTON_TV)
     ecran = _ecran("jeu-go-nouvelle-partie").etapes
     assert (choix.x, choix.y) == (ecran[1].x + c.dx // 2, ecran[1].y)
     assert (menu.x, menu.y) == (ecran[2].x, ecran[2].y)
