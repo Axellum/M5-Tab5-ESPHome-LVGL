@@ -108,9 +108,11 @@ def test_pastilles_du_popup():
     assert "align: BOTTOM_MID" in cadre and "hidden: true" in cadre
     carte_h = jeton("modal_card_h")
     corps_y = jeton("modal_body_y")
-    # Hauteur des cartes : le corps des popups, ${corps_h} (lot 2 du portage, ADR-0061).
+    # Hauteur des cartes : le corps des popups, ${corps_h} (lot 2 du portage, ADR-0061) ;
+    # largeurs ramenées au corps de la carte (lot 4).
     hauteurs = {jeton("corps_h") if h == "${corps_h}" else int(h)
-                for h in re.findall(r"y: \$\{modal_body_y\}\n\s+width: \d+\n\s+height: (\$\{corps_h\}|\d+)", POPUP)}
+                for h in re.findall(r"y: \$\{modal_body_y\}\n\s+width: (?:\d+|\$\{[^}\n]+\})\n\s+height: (\$\{corps_h\}|\d+)",
+                                    POPUP)}
     assert len(hauteurs) == 1
     bas_cartes = corps_y + hauteurs.pop()
     contenu = carte_h - 2 * 2
