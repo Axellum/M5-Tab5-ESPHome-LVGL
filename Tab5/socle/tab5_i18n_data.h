@@ -8,9 +8,21 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1237;
+static const uint16_t kI18nKeyCount = 1249;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1262,8 +1274,6 @@ static const char* const kI18nKeys[] = {
     " le lendemain",
     "%.1f  contre  %.1f      (écart %.1f)",
     "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n",
-    "%d %% de la production",
-    "%d %% du consommé",
     "%d %% solaire",
     "%d / 5 (plus haut = plus sensible)",
     "%d MAJ",
@@ -1300,6 +1310,7 @@ static const char* const kI18nKeys[] = {
     "%s cède : %s",
     "%s dans %ld mn",
     "%s est au centre : choisissez une catégorie",
+    "%s fin du mois",
     "%s remporte la partie",
     "%s · %s (dans %d min)",
     "%s · %s (maintenant)",
@@ -1364,11 +1375,9 @@ static const char* const kI18nKeys[] = {
     "8 consoles — une seule à la fois",
     "8 niveaux, 3 vies, power-ups",
     "8,0 cases/s",
-    "ACHETÉ",
     "ACTIF",
     "AMPOULES",
     "APPARENCE",
-    "AUTOCONSOMMÉ",
     "Abandon",
     "Abandon  —  comptage indicatif : %.1f contre %.1f",
     "Abandonner",
@@ -1379,7 +1388,6 @@ static const char* const kI18nKeys[] = {
     "Accord entre les deux joueurs",
     "Accueil",
     "Acheter et revendre des objets",
-    "Acheté",
     "Actif",
     "Activé",
     "Activée",
@@ -1472,12 +1480,12 @@ static const char* const kI18nKeys[] = {
     "Aujourd'hui",
     "Aujourd'hui {heure}",
     "Auto",
-    "Autoconsommé",
     "Autres",
     "Avancer",
     "Averses",
     "Avr",
     "BATTERIE",
+    "BATTERIE RÉSEAU",
     "BILLE %d / %d",
     "BILLE BONUS",
     "BILLE PERDUE",
@@ -1696,6 +1704,7 @@ static const char* const kI18nKeys[] = {
     "Fin de la run",
     "Fin de partie : 16 coups chacun",
     "Fin de partie : 5 coups chacun",
+    "Fin du mois (rythme sur %d j)",
     "Finale manquée — il faudra revenir au centre.",
     "Finesse",
     "Fixe",
@@ -1715,7 +1724,6 @@ static const char* const kI18nKeys[] = {
     "Fulgurante",
     "Férié",
     "Févr",
-    "GAINS",
     "GAME OVER",
     "GESTION",
     "Gantelet poli",
@@ -2317,7 +2325,6 @@ static const char* const kI18nKeys[] = {
     "Un serment de plus.",
     "Un seul choix. Il te suivra jusqu'à la fin de la run.",
     "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant.",
-    "VENDU",
     "VICTOIRE",
     "VICTOIRE !",
     "VOLETS",
@@ -2326,7 +2333,6 @@ static const char* const kI18nKeys[] = {
     "Valider le score",
     "Variante, mode, niveau",
     "Ven",
-    "Vendu",
     "Venteux",
     "Ventilation",
     "Verrouillé",
@@ -2364,6 +2370,7 @@ static const char* const kI18nKeys[] = {
     "Wi-Fi éco",
     "Zigzag",
     "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT.",
+    "achat / vente estimés heure par heure",
     "août",
     "apparue %s",
     "après la fermeture",
@@ -2376,8 +2383,18 @@ static const char* const kI18nKeys[] = {
     "b = billes jouées, MB = multiball déclenché.",
     "capteur muet",
     "coup de chaud",
+    "cumul",
+    "cumul de l'année",
+    "cumul du jour",
+    "cumul du mois",
+    "d'avance sur le réseau ce mois-ci",
+    "de retard sur le réseau ce mois-ci",
+    "de ta conso couverte par le soleil",
     "dimanche",
     "décembre",
+    "déficit de l'heure",
+    "déficit du jour",
+    "déficit du mois",
     "en attente du calendrier",
     "entre deux sonneries",
     "fulgur.",
@@ -2389,6 +2406,9 @@ static const char* const kI18nKeys[] = {
     "jeudi",
     "juillet",
     "juin",
+    "kWh / heure",
+    "kWh / jour",
+    "kWh / mois",
     "le début du rendez-vous",
     "lue %s",
     "lundi",
@@ -2415,6 +2435,9 @@ static const char* const kI18nKeys[] = {
     "septembre",
     "sur %s Go",
     "sur %s Go · %s %%",
+    "surplus de l'heure",
+    "surplus du jour",
+    "surplus du mois",
     "t.rapide",
     "terminée %s",
     "trop chaud",
@@ -2442,6 +2465,7 @@ static const char* const kI18nKeys[] = {
     "Éclaircies",
     "Éco",
     "Économie d'énergie",
+    "Économies",
     "Écoute…",
     "Écran",
     "Élan",
@@ -2503,8 +2527,6 @@ static const char* const kI18n_en[] = {
     " the next day",  // " le lendemain"
     "%.1f  vs  %.1f      (margin %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% of production",  // "%d %% de la production"
-    "%d %% of consumption",  // "%d %% du consommé"
     "%d %% solar",  // "%d %% solaire"
     "%d / 5 (higher = more sensitive)",  // "%d / 5 (plus haut = plus sensible)"
     "%d updates",  // "%d MAJ"
@@ -2541,6 +2563,7 @@ static const char* const kI18n_en[] = {
     "%s yields: %s",  // "%s cède : %s"
     "%s in %ld min",  // "%s dans %ld mn"
     "%s is on the hub: pick a category",  // "%s est au centre : choisissez une catégorie"
+    "%s end of month",  // "%s fin du mois"
     "%s wins the game",  // "%s remporte la partie"
     "%s · %s (in %d min)",  // "%s · %s (dans %d min)"
     "%s · %s (now)",  // "%s · %s (maintenant)"
@@ -2605,11 +2628,9 @@ static const char* const kI18n_en[] = {
     "8 consoles — one at a time",  // "8 consoles — une seule à la fois"
     "8 levels, 3 lives, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8.0 tiles/s",  // "8,0 cases/s"
-    "IMPORTED",  // "ACHETÉ"
     "ON",  // "ACTIF"
     "LIGHTS",  // "AMPOULES"
     "APPEARANCE",  // "APPARENCE"
-    "SELF-USED",  // "AUTOCONSOMMÉ"
     "Resign",  // "Abandon"
     "Resignation  —  estimated count: %.1f vs %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Give up",  // "Abandonner"
@@ -2620,7 +2641,6 @@ static const char* const kI18n_en[] = {
     "Both players must agree",  // "Accord entre les deux joueurs"
     "Home",  // "Accueil"
     "Buy and sell items",  // "Acheter et revendre des objets"
-    "Imported",  // "Acheté"
     "Active",  // "Actif"
     "On",  // "Activé"
     "On",  // "Activée"
@@ -2713,12 +2733,12 @@ static const char* const kI18n_en[] = {
     "Today",  // "Aujourd'hui"
     "Today {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
-    "Self-used",  // "Autoconsommé"
     "Other",  // "Autres"
     "Forward",  // "Avancer"
     "Showers",  // "Averses"
     "Apr",  // "Avr"
     "BATTERY",  // "BATTERIE"
+    "GRID BATTERY",  // "BATTERIE RÉSEAU"
     "BALL %d / %d",  // "BILLE %d / %d"
     "EXTRA BALL",  // "BILLE BONUS"
     "BALL LOST",  // "BILLE PERDUE"
@@ -2937,6 +2957,7 @@ static const char* const kI18n_en[] = {
     "End of the run",  // "Fin de la run"
     "Endgame: 16 moves each",  // "Fin de partie : 16 coups chacun"
     "Endgame: 5 moves each",  // "Fin de partie : 5 coups chacun"
+    "End of month (%d-day pace)",  // "Fin du mois (rythme sur %d j)"
     "Final missed — head back to the hub.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Fixed",  // "Fixe"
@@ -2956,7 +2977,6 @@ static const char* const kI18n_en[] = {
     "Blazing",  // "Fulgurante"
     "Holiday",  // "Férié"
     "Feb",  // "Févr"
-    "SAVINGS",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "MANAGEMENT",  // "GESTION"
     "Polished Gauntlet",  // "Gantelet poli"
@@ -3558,7 +3578,6 @@ static const char* const kI18n_en[] = {
     "One more oath.",  // "Un serment de plus."
     "Only one choice. It follows you to the end of the run.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "One touch at a time: in Buttons mode, you dig while standing still. Mixed mode frees your finger to dig on the move.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
-    "EXPORTED",  // "VENDU"
     "VICTORY",  // "VICTOIRE"
     "VICTORY!",  // "VICTOIRE !"
     "SHUTTERS",  // "VOLETS"
@@ -3567,7 +3586,6 @@ static const char* const kI18n_en[] = {
     "Confirm score",  // "Valider le score"
     "Set variant / mode / level",  // "Variante, mode, niveau"
     "Fri",  // "Ven"
-    "Exported",  // "Vendu"
     "Windy",  // "Venteux"
     "Fan",  // "Ventilation"
     "Locked",  // "Verrouillé"
@@ -3605,6 +3623,7 @@ static const char* const kI18n_en[] = {
     "Eco Wi-Fi",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Left zone / right zone = flippers (hold). Bottom center = plunger.\nShake the tablet to nudge the ball — three nudges in a row and it's TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
+    "import / export estimated hour by hour",  // "achat / vente estimés heure par heure"
     "August",  // "août"
     "appeared %s",  // "apparue %s"
     "after shift end",  // "après la fermeture"
@@ -3617,8 +3636,18 @@ static const char* const kI18n_en[] = {
     "b = balls played, MB = multiball triggered.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor silent",  // "capteur muet"
     "heat spike",  // "coup de chaud"
+    "total",  // "cumul"
+    "year's total",  // "cumul de l'année"
+    "today's total",  // "cumul du jour"
+    "month's total",  // "cumul du mois"
+    "ahead of the grid this month",  // "d'avance sur le réseau ce mois-ci"
+    "behind the grid this month",  // "de retard sur le réseau ce mois-ci"
+    "of your use covered by the sun",  // "de ta conso couverte par le soleil"
     "Sunday",  // "dimanche"
     "December",  // "décembre"
+    "hourly deficit",  // "déficit de l'heure"
+    "daily deficit",  // "déficit du jour"
+    "monthly deficit",  // "déficit du mois"
     "waiting for the calendar",  // "en attente du calendrier"
     "between two rings",  // "entre deux sonneries"
     "blazing",  // "fulgur."
@@ -3630,6 +3659,9 @@ static const char* const kI18n_en[] = {
     "Thursday",  // "jeudi"
     "July",  // "juillet"
     "June",  // "juin"
+    "kWh / hour",  // "kWh / heure"
+    "kWh / day",  // "kWh / jour"
+    "kWh / month",  // "kWh / mois"
     "before the appointment",  // "le début du rendez-vous"
     "read %s",  // "lue %s"
     "Monday",  // "lundi"
@@ -3656,6 +3688,9 @@ static const char* const kI18n_en[] = {
     "September",  // "septembre"
     "of %s GB",  // "sur %s Go"
     "of %s GB · %s %%",  // "sur %s Go · %s %%"
+    "hourly surplus",  // "surplus de l'heure"
+    "daily surplus",  // "surplus du jour"
+    "monthly surplus",  // "surplus du mois"
     "v.fast",  // "t.rapide"
     "ended %s",  // "terminée %s"
     "too warm",  // "trop chaud"
@@ -3683,6 +3718,7 @@ static const char* const kI18n_en[] = {
     "Sunny spells",  // "Éclaircies"
     "Eco",  // "Éco"
     "Power saving",  // "Économie d'énergie"
+    "Savings",  // "Économies"
     "Listening…",  // "Écoute…"
     "Screen",  // "Écran"
     "Momentum",  // "Élan"
@@ -3744,8 +3780,6 @@ static const char* const kI18n_de[] = {
     " am Folgetag",  // " le lendemain"
     "%.1f  zu  %.1f      (Abstand %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   Lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% der Produktion",  // "%d %% de la production"
-    "%d %% des Verbrauchs",  // "%d %% du consommé"
     "%d %% Solar",  // "%d %% solaire"
     "%d / 5 (höher = empfindlicher)",  // "%d / 5 (plus haut = plus sensible)"
     "%d Updates",  // "%d MAJ"
@@ -3782,6 +3816,7 @@ static const char* const kI18n_de[] = {
     "%s gibt: %s",  // "%s cède : %s"
     "%s in %ld min",  // "%s dans %ld mn"
     "%s ist in der Mitte: Kategorie wählen",  // "%s est au centre : choisissez une catégorie"
+    "%s Monatsende",  // "%s fin du mois"
     "%s gewinnt das Spiel",  // "%s remporte la partie"
     "%s · %s (in %d min)",  // "%s · %s (dans %d min)"
     "%s · %s (jetzt)",  // "%s · %s (maintenant)"
@@ -3846,11 +3881,9 @@ static const char* const kI18n_de[] = {
     "8 Konsolen — immer nur eine",  // "8 consoles — une seule à la fois"
     "8 Level, 3 Leben, Power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 Felder/s",  // "8,0 cases/s"
-    "BEZOGEN",  // "ACHETÉ"
     "AN",  // "ACTIF"
     "LAMPEN",  // "AMPOULES"
     "AUSSEHEN",  // "APPARENCE"
-    "EIGENNUTZUNG",  // "AUTOCONSOMMÉ"
     "Aufgeben",  // "Abandon"
     "Aufgabe  —  geschätzte Zählung: %.1f zu %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Aufgeben",  // "Abandonner"
@@ -3861,7 +3894,6 @@ static const char* const kI18n_de[] = {
     "Beide Spieler müssen zustimmen",  // "Accord entre les deux joueurs"
     "Start",  // "Accueil"
     "Gegenstände kaufen und verkaufen",  // "Acheter et revendre des objets"
-    "Bezogen",  // "Acheté"
     "Aktiv",  // "Actif"
     "An",  // "Activé"
     "An",  // "Activée"
@@ -3954,12 +3986,12 @@ static const char* const kI18n_de[] = {
     "Heute",  // "Aujourd'hui"
     "Heute {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
-    "Eigennutzung",  // "Autoconsommé"
     "Andere",  // "Autres"
     "Vorwärts",  // "Avancer"
     "Schauer",  // "Averses"
     "Apr",  // "Avr"
     "BATTERIE",  // "BATTERIE"
+    "NETZSPEICHER",  // "BATTERIE RÉSEAU"
     "BALL %d / %d",  // "BILLE %d / %d"
     "EXTRABALL",  // "BILLE BONUS"
     "BALL VERLOREN",  // "BILLE PERDUE"
@@ -4178,6 +4210,7 @@ static const char* const kI18n_de[] = {
     "Ende des Runs",  // "Fin de la run"
     "Endspiel: je 16 Züge",  // "Fin de partie : 16 coups chacun"
     "Endspiel: je 5 Züge",  // "Fin de partie : 5 coups chacun"
+    "Monatsende (Tempo %d T.)",  // "Fin du mois (rythme sur %d j)"
     "Finale verpasst — zurück zur Mitte.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Fest",  // "Fixe"
@@ -4197,7 +4230,6 @@ static const char* const kI18n_de[] = {
     "Blitzschnell",  // "Fulgurante"
     "Feiertag",  // "Férié"
     "Feb",  // "Févr"
-    "ERSPARNIS",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "VERWALTUNG",  // "GESTION"
     "Polierter Handschuh",  // "Gantelet poli"
@@ -4799,7 +4831,6 @@ static const char* const kI18n_de[] = {
     "Ein Schwur mehr.",  // "Un serment de plus."
     "Nur eine Wahl. Sie begleitet dich bis zum Ende des Runs.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Nur ein Touchpunkt gleichzeitig: Im Modus Tasten wird im Stehen gegraben. Der Modus Kombi gibt den Finger frei, um im Laufen zu graben.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
-    "EINGESPEIST",  // "VENDU"
     "SIEG",  // "VICTOIRE"
     "SIEG!",  // "VICTOIRE !"
     "ROLLLÄDEN",  // "VOLETS"
@@ -4808,7 +4839,6 @@ static const char* const kI18n_de[] = {
     "Score bestätigen",  // "Valider le score"
     "Setup: Variante / Modus / Stufe",  // "Variante, mode, niveau"
     "Fr",  // "Ven"
-    "Eingespeist",  // "Vendu"
     "Windig",  // "Venteux"
     "Lüften",  // "Ventilation"
     "Gesperrt",  // "Verrouillé"
@@ -4846,6 +4876,7 @@ static const char* const kI18n_de[] = {
     "WLAN sparen",  // "Wi-Fi éco"
     "Zickzack",  // "Zigzag"
     "Linke / rechte Zone = Flipper (halten). Unten Mitte = Abschuss.\nTablet schütteln, um den Ball anzustoßen — dreimal zu viel und es gibt TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
+    "Bezug / Einspeisung stündlich geschätzt",  // "achat / vente estimés heure par heure"
     "August",  // "août"
     "erschienen %s",  // "apparue %s"
     "nach Schichtende",  // "après la fermeture"
@@ -4858,8 +4889,18 @@ static const char* const kI18n_de[] = {
     "b = gespielte Bälle, MB = Multiball ausgelöst.",  // "b = billes jouées, MB = multiball déclenché."
     "Sensor stumm",  // "capteur muet"
     "Hitzespitze",  // "coup de chaud"
+    "Summe",  // "cumul"
+    "Jahressumme",  // "cumul de l'année"
+    "Tagessumme",  // "cumul du jour"
+    "Monatssumme",  // "cumul du mois"
+    "Vorsprung aufs Netz diesen Monat",  // "d'avance sur le réseau ce mois-ci"
+    "Rückstand zum Netz diesen Monat",  // "de retard sur le réseau ce mois-ci"
+    "deines Verbrauchs von der Sonne gedeckt",  // "de ta conso couverte par le soleil"
     "Sonntag",  // "dimanche"
     "Dezember",  // "décembre"
+    "Defizit/Std.",  // "déficit de l'heure"
+    "Defizit/Tag",  // "déficit du jour"
+    "Defizit/Monat",  // "déficit du mois"
     "warte auf Kalender",  // "en attente du calendrier"
     "zwischen zwei Weckrufen",  // "entre deux sonneries"
     "blitz",  // "fulgur."
@@ -4871,6 +4912,9 @@ static const char* const kI18n_de[] = {
     "Donnerstag",  // "jeudi"
     "Juli",  // "juillet"
     "Juni",  // "juin"
+    "kWh / Stunde",  // "kWh / heure"
+    "kWh / Tag",  // "kWh / jour"
+    "kWh / Monat",  // "kWh / mois"
     "vor dem Termin",  // "le début du rendez-vous"
     "gelesen %s",  // "lue %s"
     "Montag",  // "lundi"
@@ -4897,6 +4941,9 @@ static const char* const kI18n_de[] = {
     "September",  // "septembre"
     "von %s GB",  // "sur %s Go"
     "von %s GB · %s %%",  // "sur %s Go · %s %%"
+    "Überschuss/Std.",  // "surplus de l'heure"
+    "Überschuss/Tag",  // "surplus du jour"
+    "Überschuss/Monat",  // "surplus du mois"
     "rasant",  // "t.rapide"
     "beendet %s",  // "terminée %s"
     "zu warm",  // "trop chaud"
@@ -4924,6 +4971,7 @@ static const char* const kI18n_de[] = {
     "Heiter",  // "Éclaircies"
     "Eco",  // "Éco"
     "Energiesparen",  // "Économie d'énergie"
+    "Ersparnis",  // "Économies"
     "Höre zu…",  // "Écoute…"
     "Bildschirm",  // "Écran"
     "Schwung",  // "Élan"
@@ -4985,8 +5033,6 @@ static const char* const kI18n_nl[] = {
     " de dag erna",  // " le lendemain"
     "%.1f  tegen  %.1f      (verschil %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   lvl %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% van de productie",  // "%d %% de la production"
-    "%d %% van het verbruik",  // "%d %% du consommé"
     "%d %% zon",  // "%d %% solaire"
     "%d / 5 (hoger = gevoeliger)",  // "%d / 5 (plus haut = plus sensible)"
     "%d updates",  // "%d MAJ"
@@ -5023,6 +5069,7 @@ static const char* const kI18n_nl[] = {
     "%s geeft: %s",  // "%s cède : %s"
     "%s over %ld min",  // "%s dans %ld mn"
     "%s staat in het midden: kies een categorie",  // "%s est au centre : choisissez une catégorie"
+    "%s einde maand",  // "%s fin du mois"
     "%s wint het spel",  // "%s remporte la partie"
     "%s · %s (over %d min)",  // "%s · %s (dans %d min)"
     "%s · %s (nu)",  // "%s · %s (maintenant)"
@@ -5087,11 +5134,9 @@ static const char* const kI18n_nl[] = {
     "8 consoles — één tegelijk",  // "8 consoles — une seule à la fois"
     "8 levels, 3 levens, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 vakjes/s",  // "8,0 cases/s"
-    "AFGENOMEN",  // "ACHETÉ"
     "AAN",  // "ACTIF"
     "LAMPEN",  // "AMPOULES"
     "WEERGAVE",  // "APPARENCE"
-    "EIGEN GEBRUIK",  // "AUTOCONSOMMÉ"
     "Opgeven",  // "Abandon"
     "Opgegeven  —  indicatieve telling: %.1f tegen %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Opgeven",  // "Abandonner"
@@ -5102,7 +5147,6 @@ static const char* const kI18n_nl[] = {
     "Beide spelers moeten akkoord zijn",  // "Accord entre les deux joueurs"
     "Home",  // "Accueil"
     "Voorwerpen kopen en verkopen",  // "Acheter et revendre des objets"
-    "Afgenomen",  // "Acheté"
     "Actief",  // "Actif"
     "Aan",  // "Activé"
     "Aan",  // "Activée"
@@ -5195,12 +5239,12 @@ static const char* const kI18n_nl[] = {
     "Vandaag",  // "Aujourd'hui"
     "Vandaag {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
-    "Eigen gebruik",  // "Autoconsommé"
     "Overige",  // "Autres"
     "Vooruit",  // "Avancer"
     "Buien",  // "Averses"
     "Apr",  // "Avr"
     "ACCU",  // "BATTERIE"
+    "NETBATTERIJ",  // "BATTERIE RÉSEAU"
     "BAL %d / %d",  // "BILLE %d / %d"
     "EXTRA BAL",  // "BILLE BONUS"
     "BAL KWIJT",  // "BILLE PERDUE"
@@ -5419,6 +5463,7 @@ static const char* const kI18n_nl[] = {
     "Einde van de run",  // "Fin de la run"
     "Eindspel: elk 16 zetten",  // "Fin de partie : 16 coups chacun"
     "Eindspel: elk 5 zetten",  // "Fin de partie : 5 coups chacun"
+    "Einde maand (tempo %d d)",  // "Fin du mois (rythme sur %d j)"
     "Finale gemist — terug naar het midden.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Vast",  // "Fixe"
@@ -5438,7 +5483,6 @@ static const char* const kI18n_nl[] = {
     "Bliksem",  // "Fulgurante"
     "Feestdag",  // "Férié"
     "Feb",  // "Févr"
-    "BESPARING",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "BEHEER",  // "GESTION"
     "Glanzende handschoen",  // "Gantelet poli"
@@ -6040,7 +6084,6 @@ static const char* const kI18n_nl[] = {
     "Nog een eed.",  // "Un serment de plus."
     "Eén keuze. Die volgt je tot het einde van de run.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Eén aanraking tegelijk: in Knoppen-modus graaf je terwijl je stilstaat. Mix-modus maakt je vinger vrij om al lopend te graven.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
-    "TERUGGELEVERD",  // "VENDU"
     "GEWONNEN",  // "VICTOIRE"
     "GEWONNEN!",  // "VICTOIRE !"
     "ROLLUIKEN",  // "VOLETS"
@@ -6049,7 +6092,6 @@ static const char* const kI18n_nl[] = {
     "Score bevestigen",  // "Valider le score"
     "Variant / modus / niveau kiezen",  // "Variante, mode, niveau"
     "Vr",  // "Ven"
-    "Teruggeleverd",  // "Vendu"
     "Winderig",  // "Venteux"
     "Ventilatie",  // "Ventilation"
     "Op slot",  // "Verrouillé"
@@ -6087,6 +6129,7 @@ static const char* const kI18n_nl[] = {
     "Zuinige wifi",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Linkerzone / rechterzone = flippers (vasthouden). Midden onder = plunjer.\nSchud de tablet om de bal te duwen — drie keer te veel op rij en het is TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
+    "inkoop / verkoop per uur geschat",  // "achat / vente estimés heure par heure"
     "augustus",  // "août"
     "verschenen %s",  // "apparue %s"
     "na werkeinde",  // "après la fermeture"
@@ -6099,8 +6142,18 @@ static const char* const kI18n_nl[] = {
     "b = gespeelde ballen, MB = multiball gestart.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor stil",  // "capteur muet"
     "hitte-piek",  // "coup de chaud"
+    "totaal",  // "cumul"
+    "jaartotaal",  // "cumul de l'année"
+    "dagtotaal",  // "cumul du jour"
+    "maandtotaal",  // "cumul du mois"
+    "voorsprong op het net deze maand",  // "d'avance sur le réseau ce mois-ci"
+    "achterstand op het net deze maand",  // "de retard sur le réseau ce mois-ci"
+    "van je verbruik gedekt door de zon",  // "de ta conso couverte par le soleil"
     "zondag",  // "dimanche"
     "december",  // "décembre"
+    "tekort/uur",  // "déficit de l'heure"
+    "tekort/dag",  // "déficit du jour"
+    "tekort/maand",  // "déficit du mois"
     "wacht op de agenda",  // "en attente du calendrier"
     "tussen twee keer afgaan",  // "entre deux sonneries"
     "bliksem",  // "fulgur."
@@ -6112,6 +6165,9 @@ static const char* const kI18n_nl[] = {
     "donderdag",  // "jeudi"
     "juli",  // "juillet"
     "juni",  // "juin"
+    "kWh / uur",  // "kWh / heure"
+    "kWh / dag",  // "kWh / jour"
+    "kWh / maand",  // "kWh / mois"
     "vóór de afspraak",  // "le début du rendez-vous"
     "gelezen %s",  // "lue %s"
     "maandag",  // "lundi"
@@ -6138,6 +6194,9 @@ static const char* const kI18n_nl[] = {
     "september",  // "septembre"
     "van %s GB",  // "sur %s Go"
     "van %s GB · %s %%",  // "sur %s Go · %s %%"
+    "overschot/uur",  // "surplus de l'heure"
+    "overschot/dag",  // "surplus du jour"
+    "overschot/maand",  // "surplus du mois"
     "z.snel",  // "t.rapide"
     "beëindigd %s",  // "terminée %s"
     "te warm",  // "trop chaud"
@@ -6165,6 +6224,7 @@ static const char* const kI18n_nl[] = {
     "Opklaringen",  // "Éclaircies"
     "Eco",  // "Éco"
     "Energiebesparing",  // "Économie d'énergie"
+    "Besparing",  // "Économies"
     "Luistert…",  // "Écoute…"
     "Scherm",  // "Écran"
     "Vaart",  // "Élan"
@@ -6226,8 +6286,6 @@ static const char* const kI18n_es[] = {
     " del día siguiente",  // " le lendemain"
     "%.1f  contra  %.1f      (diferencia %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% de la producción",  // "%d %% de la production"
-    "%d %% del consumo",  // "%d %% du consommé"
     "%d %% solar",  // "%d %% solaire"
     "%d / 5 (más alto = más sensible)",  // "%d / 5 (plus haut = plus sensible)"
     "%d actualizaciones",  // "%d MAJ"
@@ -6264,6 +6322,7 @@ static const char* const kI18n_es[] = {
     "%s suelta: %s",  // "%s cède : %s"
     "%s en %ld min",  // "%s dans %ld mn"
     "%s está en el centro: elige una categoría",  // "%s est au centre : choisissez une catégorie"
+    "%s fin de mes",  // "%s fin du mois"
     "%s gana la partida",  // "%s remporte la partie"
     "%s · %s (en %d min)",  // "%s · %s (dans %d min)"
     "%s · %s (ahora)",  // "%s · %s (maintenant)"
@@ -6328,11 +6387,9 @@ static const char* const kI18n_es[] = {
     "8 consolas — una a la vez",  // "8 consoles — une seule à la fois"
     "8 niveles, 3 vidas, power-ups",  // "8 niveaux, 3 vies, power-ups"
     "8,0 casillas/s",  // "8,0 cases/s"
-    "COMPRADO",  // "ACHETÉ"
     "ACTIVO",  // "ACTIF"
     "LUCES",  // "AMPOULES"
     "APARIENCIA",  // "APPARENCE"
-    "AUTOCONSUMO",  // "AUTOCONSOMMÉ"
     "Rendirse",  // "Abandon"
     "Abandono  —  conteo orientativo: %.1f contra %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Abandonar",  // "Abandonner"
@@ -6343,7 +6400,6 @@ static const char* const kI18n_es[] = {
     "Acuerdo entre los dos jugadores",  // "Accord entre les deux joueurs"
     "Inicio",  // "Accueil"
     "Comprar y vender objetos",  // "Acheter et revendre des objets"
-    "Comprado",  // "Acheté"
     "Activo",  // "Actif"
     "Activado",  // "Activé"
     "Activada",  // "Activée"
@@ -6436,12 +6492,12 @@ static const char* const kI18n_es[] = {
     "Hoy",  // "Aujourd'hui"
     "Hoy {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
-    "Autoconsumo",  // "Autoconsommé"
     "Otras",  // "Autres"
     "Adelantar",  // "Avancer"
     "Chubascos",  // "Averses"
     "Abr",  // "Avr"
     "BATERÍA",  // "BATTERIE"
+    "BATERÍA DE RED",  // "BATTERIE RÉSEAU"
     "BOLA %d / %d",  // "BILLE %d / %d"
     "BOLA EXTRA",  // "BILLE BONUS"
     "BOLA PERDIDA",  // "BILLE PERDUE"
@@ -6660,6 +6716,7 @@ static const char* const kI18n_es[] = {
     "Fin de la run",  // "Fin de la run"
     "Final: 16 jugadas cada uno",  // "Fin de partie : 16 coups chacun"
     "Final: 5 jugadas cada uno",  // "Fin de partie : 5 coups chacun"
+    "Fin de mes (ritmo de %d d)",  // "Fin du mois (rythme sur %d j)"
     "Final fallada — hay que volver al centro.",  // "Finale manquée — il faudra revenir au centre."
     "Sutileza",  // "Finesse"
     "Fija",  // "Fixe"
@@ -6679,7 +6736,6 @@ static const char* const kI18n_es[] = {
     "Fulgurante",  // "Fulgurante"
     "Festivo",  // "Férié"
     "Feb",  // "Févr"
-    "AHORRO",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "GESTIÓN",  // "GESTION"
     "Guantelete pulido",  // "Gantelet poli"
@@ -7281,7 +7337,6 @@ static const char* const kI18n_es[] = {
     "Un juramento más.",  // "Un serment de plus."
     "Una sola elección. Te acompañará hasta el final de la run.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Un solo toque a la vez: en modo Botones se cava estando quieto. El modo Mixto libera el dedo para cavar en marcha.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
-    "VENDIDO",  // "VENDU"
     "VICTORIA",  // "VICTOIRE"
     "¡VICTORIA!",  // "VICTOIRE !"
     "PERSIANAS",  // "VOLETS"
@@ -7290,7 +7345,6 @@ static const char* const kI18n_es[] = {
     "Validar resultado",  // "Valider le score"
     "Variante, modo, nivel",  // "Variante, mode, niveau"
     "Vie",  // "Ven"
-    "Vendido",  // "Vendu"
     "Ventoso",  // "Venteux"
     "Ventilación",  // "Ventilation"
     "Bloqueado",  // "Verrouillé"
@@ -7328,6 +7382,7 @@ static const char* const kI18n_es[] = {
     "Wi-Fi eco",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Zona izquierda / derecha = paletas (mantener). Abajo al centro = lanzador.\nSacude la tableta para empujar la bola — tres abusos seguidos y es TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
+    "compra / venta estimadas hora a hora",  // "achat / vente estimés heure par heure"
     "agosto",  // "août"
     "aparecida %s",  // "apparue %s"
     "tras el fin del turno",  // "après la fermeture"
@@ -7340,8 +7395,18 @@ static const char* const kI18n_es[] = {
     "b = bolas jugadas, MB = multiball activado.",  // "b = billes jouées, MB = multiball déclenché."
     "sensor mudo",  // "capteur muet"
     "pico de calor",  // "coup de chaud"
+    "acumulado",  // "cumul"
+    "acumulado año",  // "cumul de l'année"
+    "acumulado día",  // "cumul du jour"
+    "acumulado mes",  // "cumul du mois"
+    "de ventaja sobre la red este mes",  // "d'avance sur le réseau ce mois-ci"
+    "de retraso con la red este mes",  // "de retard sur le réseau ce mois-ci"
+    "de tu consumo cubierto por el sol",  // "de ta conso couverte par le soleil"
     "domingo",  // "dimanche"
     "diciembre",  // "décembre"
+    "déficit hora",  // "déficit de l'heure"
+    "déficit día",  // "déficit du jour"
+    "déficit mes",  // "déficit du mois"
     "esperando el calendario",  // "en attente du calendrier"
     "entre dos timbres",  // "entre deux sonneries"
     "fulgur.",  // "fulgur."
@@ -7353,6 +7418,9 @@ static const char* const kI18n_es[] = {
     "jueves",  // "jeudi"
     "julio",  // "juillet"
     "junio",  // "juin"
+    "kWh / hora",  // "kWh / heure"
+    "kWh / día",  // "kWh / jour"
+    "kWh / mes",  // "kWh / mois"
     "antes de la cita",  // "le début du rendez-vous"
     "leída %s",  // "lue %s"
     "lunes",  // "lundi"
@@ -7379,6 +7447,9 @@ static const char* const kI18n_es[] = {
     "septiembre",  // "septembre"
     "de %s GB",  // "sur %s Go"
     "de %s GB · %s %%",  // "sur %s Go · %s %%"
+    "excedente hora",  // "surplus de l'heure"
+    "excedente día",  // "surplus du jour"
+    "excedente mes",  // "surplus du mois"
     "m.rápida",  // "t.rapide"
     "terminada %s",  // "terminée %s"
     "demasiado caliente",  // "trop chaud"
@@ -7406,6 +7477,7 @@ static const char* const kI18n_es[] = {
     "Intervalos de sol",  // "Éclaircies"
     "Eco",  // "Éco"
     "Ahorro de energía",  // "Économie d'énergie"
+    "Ahorro",  // "Économies"
     "Escuchando…",  // "Écoute…"
     "Pantalla",  // "Écran"
     "Impulso",  // "Élan"
@@ -7467,8 +7539,6 @@ static const char* const kI18n_it[] = {
     " di domani",  // " le lendemain"
     "%.1f  a  %.1f      (scarto %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   liv %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "%d %% della produzione",  // "%d %% de la production"
-    "%d %% del consumo",  // "%d %% du consommé"
     "%d %% solare",  // "%d %% solaire"
     "%d / 5 (più alto = più sensibile)",  // "%d / 5 (plus haut = plus sensible)"
     "%d aggiorn.",  // "%d MAJ"
@@ -7505,6 +7575,7 @@ static const char* const kI18n_it[] = {
     "%s cede: %s",  // "%s cède : %s"
     "%s tra %ld min",  // "%s dans %ld mn"
     "%s è al centro: scegli una categoria",  // "%s est au centre : choisissez une catégorie"
+    "%s fine mese",  // "%s fin du mois"
     "%s vince la partita",  // "%s remporte la partie"
     "%s · %s (tra %d min)",  // "%s · %s (dans %d min)"
     "%s · %s (ora)",  // "%s · %s (maintenant)"
@@ -7569,11 +7640,9 @@ static const char* const kI18n_it[] = {
     "8 console — una alla volta",  // "8 consoles — une seule à la fois"
     "8 livelli, 3 vite, power-up",  // "8 niveaux, 3 vies, power-ups"
     "8,0 caselle/s",  // "8,0 cases/s"
-    "ACQUISTATO",  // "ACHETÉ"
     "ATTIVA",  // "ACTIF"
     "LUCI",  // "AMPOULES"
     "ASPETTO",  // "APPARENCE"
-    "AUTOCONSUMO",  // "AUTOCONSOMMÉ"
     "Abbandona",  // "Abandon"
     "Abbandono  —  conteggio indicativo: %.1f a %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Abbandona",  // "Abandonner"
@@ -7584,7 +7653,6 @@ static const char* const kI18n_it[] = {
     "Accordo tra i due giocatori",  // "Accord entre les deux joueurs"
     "Home",  // "Accueil"
     "Compra e rivendi oggetti",  // "Acheter et revendre des objets"
-    "Acquistato",  // "Acheté"
     "Attivo",  // "Actif"
     "Attiva",  // "Activé"
     "Attiva",  // "Activée"
@@ -7677,12 +7745,12 @@ static const char* const kI18n_it[] = {
     "Oggi",  // "Aujourd'hui"
     "Oggi {heure}",  // "Aujourd'hui {heure}"
     "Auto",  // "Auto"
-    "Autoconsumo",  // "Autoconsommé"
     "Altre",  // "Autres"
     "Avanti",  // "Avancer"
     "Rovesci",  // "Averses"
     "Apr",  // "Avr"
     "BATTERIA",  // "BATTERIE"
+    "BATTERIA DI RETE",  // "BATTERIE RÉSEAU"
     "PALLA %d / %d",  // "BILLE %d / %d"
     "PALLA EXTRA",  // "BILLE BONUS"
     "PALLA PERSA",  // "BILLE PERDUE"
@@ -7901,6 +7969,7 @@ static const char* const kI18n_it[] = {
     "Fine della run",  // "Fin de la run"
     "Finale: 16 mosse a testa",  // "Fin de partie : 16 coups chacun"
     "Finale: 5 mosse a testa",  // "Fin de partie : 5 coups chacun"
+    "Fine mese (ritmo su %d g)",  // "Fin du mois (rythme sur %d j)"
     "Finale mancata — torna al centro.",  // "Finale manquée — il faudra revenir au centre."
     "Finezza",  // "Finesse"
     "Fissa",  // "Fixe"
@@ -7920,7 +7989,6 @@ static const char* const kI18n_it[] = {
     "Fulminea",  // "Fulgurante"
     "Festivo",  // "Férié"
     "Feb",  // "Févr"
-    "RISPARMIO",  // "GAINS"
     "GAME OVER",  // "GAME OVER"
     "GESTIONE",  // "GESTION"
     "Guanto lucido",  // "Gantelet poli"
@@ -8522,7 +8590,6 @@ static const char* const kI18n_it[] = {
     "Un giuramento in più.",  // "Un serment de plus."
     "Una sola scelta. Ti seguirà fino alla fine della run.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Un solo tocco alla volta: in modalità Pulsanti si scava da fermi. La modalità Misto libera il dito per scavare camminando.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
-    "VENDUTO",  // "VENDU"
     "VITTORIA",  // "VICTOIRE"
     "VITTORIA!",  // "VICTOIRE !"
     "TAPPARELLE",  // "VOLETS"
@@ -8531,7 +8598,6 @@ static const char* const kI18n_it[] = {
     "Conferma punteggio",  // "Valider le score"
     "Variante, modalità, livello",  // "Variante, mode, niveau"
     "Ven",  // "Ven"
-    "Venduto",  // "Vendu"
     "Ventoso",  // "Venteux"
     "Ventilazione",  // "Ventilation"
     "Bloccato",  // "Verrouillé"
@@ -8569,6 +8635,7 @@ static const char* const kI18n_it[] = {
     "Wi-Fi eco",  // "Wi-Fi éco"
     "Zigzag",  // "Zigzag"
     "Zona sinistra / destra = flipper (tieni premuto). In basso al centro = lanciatore.\nScuoti il tablet per spingere la palla — tre volte di troppo di fila ed è TILT.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
+    "acquisto / vendita stimati ora per ora",  // "achat / vente estimés heure par heure"
     "agosto",  // "août"
     "comparso %s",  // "apparue %s"
     "dopo la fine turno",  // "après la fermeture"
@@ -8581,8 +8648,18 @@ static const char* const kI18n_it[] = {
     "b = palle giocate, MB = multiball attivato.",  // "b = billes jouées, MB = multiball déclenché."
     "sensore muto",  // "capteur muet"
     "picco di caldo",  // "coup de chaud"
+    "cumulato",  // "cumul"
+    "cumulato anno",  // "cumul de l'année"
+    "cumulato giorno",  // "cumul du jour"
+    "cumulato mese",  // "cumul du mois"
+    "di vantaggio sulla rete questo mese",  // "d'avance sur le réseau ce mois-ci"
+    "di ritardo sulla rete questo mese",  // "de retard sur le réseau ce mois-ci"
+    "dei tuoi consumi coperti dal sole",  // "de ta conso couverte par le soleil"
     "domenica",  // "dimanche"
     "dicembre",  // "décembre"
+    "deficit orario",  // "déficit de l'heure"
+    "deficit giorno",  // "déficit du jour"
+    "deficit mese",  // "déficit du mois"
     "in attesa del calendario",  // "en attente du calendrier"
     "tra due squilli",  // "entre deux sonneries"
     "fulminea",  // "fulgur."
@@ -8594,6 +8671,9 @@ static const char* const kI18n_it[] = {
     "giovedì",  // "jeudi"
     "luglio",  // "juillet"
     "giugno",  // "juin"
+    "kWh / ora",  // "kWh / heure"
+    "kWh / giorno",  // "kWh / jour"
+    "kWh / mese",  // "kWh / mois"
     "prima dell'appuntamento",  // "le début du rendez-vous"
     "letto %s",  // "lue %s"
     "lunedì",  // "lundi"
@@ -8620,6 +8700,9 @@ static const char* const kI18n_it[] = {
     "settembre",  // "septembre"
     "di %s GB",  // "sur %s Go"
     "di %s GB · %s %%",  // "sur %s Go · %s %%"
+    "surplus orario",  // "surplus de l'heure"
+    "surplus giorno",  // "surplus du jour"
+    "surplus mese",  // "surplus du mois"
     "rapidiss",  // "t.rapide"
     "terminato %s",  // "terminée %s"
     "troppo caldo",  // "trop chaud"
@@ -8647,6 +8730,7 @@ static const char* const kI18n_it[] = {
     "Schiarite",  // "Éclaircies"
     "Eco",  // "Éco"
     "Risparmio energetico",  // "Économie d'énergie"
+    "Risparmio",  // "Économies"
     "Ascolto…",  // "Écoute…"
     "Schermo",  // "Écran"
     "Slancio",  // "Élan"
@@ -8708,8 +8792,6 @@ static const char* const kI18n_tr[] = {
     " ertesi gün",  // " le lendemain"
     "%.1f  -  %.1f      (fark %.1f)",  // "%.1f  contre  %.1f      (écart %.1f)"
     "%2d.  %7lu   sev %2d   %-11s  %s  %-8s%s\n",  // "%2d.  %7lu   niv %2d   %-11s  %s  %-8s%s\n"
-    "Üretimin %d %%",  // "%d %% de la production"
-    "Tüketimin %d %%",  // "%d %% du consommé"
     "%d %% güneş",  // "%d %% solaire"
     "%d / 5 (yüksek = daha hassas)",  // "%d / 5 (plus haut = plus sensible)"
     "%d güncelleme",  // "%d MAJ"
@@ -8746,6 +8828,7 @@ static const char* const kI18n_tr[] = {
     "%s verir: %s",  // "%s cède : %s"
     "%s %ld dk sonra",  // "%s dans %ld mn"
     "%s merkezde: bir kategori seç",  // "%s est au centre : choisissez une catégorie"
+    "%s ay sonu",  // "%s fin du mois"
     "Oyunu %s kazandı",  // "%s remporte la partie"
     "%s · %s (%d dk sonra)",  // "%s · %s (dans %d min)"
     "%s · %s (şimdi)",  // "%s · %s (maintenant)"
@@ -8810,11 +8893,9 @@ static const char* const kI18n_tr[] = {
     "8 konsol — aynı anda yalnız biri",  // "8 consoles — une seule à la fois"
     "8 seviye, 3 can, güçlendirme",  // "8 niveaux, 3 vies, power-ups"
     "8,0 kare/sn",  // "8,0 cases/s"
-    "ALINAN",  // "ACHETÉ"
     "AÇIK",  // "ACTIF"
     "IŞIKLAR",  // "AMPOULES"
     "GÖRÜNÜM",  // "APPARENCE"
-    "ÖZ TÜKETİM",  // "AUTOCONSOMMÉ"
     "Pes",  // "Abandon"
     "Pes  —  tahmini sayım: %.1f - %.1f",  // "Abandon  —  comptage indicatif : %.1f contre %.1f"
     "Bırak",  // "Abandonner"
@@ -8825,7 +8906,6 @@ static const char* const kI18n_tr[] = {
     "İki oyuncunun anlaşması gerekir",  // "Accord entre les deux joueurs"
     "Ana sayfa",  // "Accueil"
     "Eşya al ve geri sat",  // "Acheter et revendre des objets"
-    "Alınan",  // "Acheté"
     "Etkin",  // "Actif"
     "Açık",  // "Activé"
     "Açık",  // "Activée"
@@ -8918,12 +8998,12 @@ static const char* const kI18n_tr[] = {
     "Bugün",  // "Aujourd'hui"
     "Bugün {heure}",  // "Aujourd'hui {heure}"
     "Otomatik",  // "Auto"
-    "Öz tüketim",  // "Autoconsommé"
     "Diğer",  // "Autres"
     "İleri",  // "Avancer"
     "Sağanak",  // "Averses"
     "Nis",  // "Avr"
     "BATARYA",  // "BATTERIE"
+    "ŞEBEKE BATARYASI",  // "BATTERIE RÉSEAU"
     "BİLYE %d / %d",  // "BILLE %d / %d"
     "EKSTRA BİLYE",  // "BILLE BONUS"
     "BİLYE KAYBOLDU",  // "BILLE PERDUE"
@@ -9142,6 +9222,7 @@ static const char* const kI18n_tr[] = {
     "Seferin sonu",  // "Fin de la run"
     "Oyun sonu: her biri 16 hamle",  // "Fin de partie : 16 coups chacun"
     "Oyun sonu: her biri 5 hamle",  // "Fin de partie : 5 coups chacun"
+    "Ay sonu (%d günlük hız)",  // "Fin du mois (rythme sur %d j)"
     "Final kaçtı — merkeze dönmen gerek.",  // "Finale manquée — il faudra revenir au centre."
     "İncelik",  // "Finesse"
     "Sabit",  // "Fixe"
@@ -9161,7 +9242,6 @@ static const char* const kI18n_tr[] = {
     "Şimşek",  // "Fulgurante"
     "Tatil",  // "Férié"
     "Şub",  // "Févr"
-    "KAZANÇ",  // "GAINS"
     "OYUN BİTTİ",  // "GAME OVER"
     "YÖNETİM",  // "GESTION"
     "Parlak Eldiven",  // "Gantelet poli"
@@ -9763,7 +9843,6 @@ static const char* const kI18n_tr[] = {
     "Bir yemin daha.",  // "Un serment de plus."
     "Tek seçim. Seferin sonuna kadar seninle kalır.",  // "Un seul choix. Il te suivra jusqu'à la fin de la run."
     "Aynı anda tek dokunuş: Düğmeler modunda dururken kazılır. Karma mod, yürürken kazmak için parmağı serbest bırakır.",  // "Un seul point de contact à la fois : en mode Boutons, on creuse à l'arrêt. Le mode Mixte libère le doigt pour creuser en marchant."
-    "SATILAN",  // "VENDU"
     "ZAFER",  // "VICTOIRE"
     "ZAFER!",  // "VICTOIRE !"
     "PANJURLAR",  // "VOLETS"
@@ -9772,7 +9851,6 @@ static const char* const kI18n_tr[] = {
     "Skoru onayla",  // "Valider le score"
     "Varyant, mod, seviye",  // "Variante, mode, niveau"
     "Cum",  // "Ven"
-    "Satılan",  // "Vendu"
     "Rüzgârlı",  // "Venteux"
     "Fan",  // "Ventilation"
     "Kilitli",  // "Verrouillé"
@@ -9810,6 +9888,7 @@ static const char* const kI18n_tr[] = {
     "Eko Wi-Fi",  // "Wi-Fi éco"
     "Zikzak",  // "Zigzag"
     "Sol bölge / sağ bölge = flipperler (basılı tut). Alt orta = fırlatıcı.\nBilyeyi itmek için tableti salla — üst üste üç kez abartırsan TILT olur.",  // "Zone gauche / zone droite = flippers (maintien). Bas du centre = lanceur.\nSecouez la tablette pour pousser la bille — trois abus de suite et c'est TILT."
+    "alım / satış saat saat tahmini",  // "achat / vente estimés heure par heure"
     "Ağustos",  // "août"
     "çıktı %s",  // "apparue %s"
     "mesai bitiminden sonra",  // "après la fermeture"
@@ -9822,8 +9901,18 @@ static const char* const kI18n_tr[] = {
     "b = oynanan bilye, MB = multiball tetiklendi.",  // "b = billes jouées, MB = multiball déclenché."
     "sensör sessiz",  // "capteur muet"
     "sıcaklık artışı",  // "coup de chaud"
+    "toplam",  // "cumul"
+    "yıllık toplam",  // "cumul de l'année"
+    "günlük toplam",  // "cumul du jour"
+    "aylık toplam",  // "cumul du mois"
+    "bu ay şebekeye karşı fazla",  // "d'avance sur le réseau ce mois-ci"
+    "bu ay şebekeye karşı eksik",  // "de retard sur le réseau ce mois-ci"
+    "tüketiminin güneşten karşılanan kısmı",  // "de ta conso couverte par le soleil"
     "Pazar",  // "dimanche"
     "Aralık",  // "décembre"
+    "saatlik eksik",  // "déficit de l'heure"
+    "günlük eksik",  // "déficit du jour"
+    "aylık eksik",  // "déficit du mois"
     "takvim bekleniyor",  // "en attente du calendrier"
     "iki çalma arasında",  // "entre deux sonneries"
     "şimşek",  // "fulgur."
@@ -9835,6 +9924,9 @@ static const char* const kI18n_tr[] = {
     "Perşembe",  // "jeudi"
     "Temmuz",  // "juillet"
     "Haziran",  // "juin"
+    "kWh / saat",  // "kWh / heure"
+    "kWh / gün",  // "kWh / jour"
+    "kWh / ay",  // "kWh / mois"
     "randevudan önce",  // "le début du rendez-vous"
     "okundu %s",  // "lue %s"
     "Pazartesi",  // "lundi"
@@ -9861,6 +9953,9 @@ static const char* const kI18n_tr[] = {
     "Eylül",  // "septembre"
     "toplam %s GB",  // "sur %s Go"
     "toplam %s GB · %s %%",  // "sur %s Go · %s %%"
+    "saatlik fazla",  // "surplus de l'heure"
+    "günlük fazla",  // "surplus du jour"
+    "aylık fazla",  // "surplus du mois"
     "ç.hızlı",  // "t.rapide"
     "bitti %s",  // "terminée %s"
     "çok sıcak",  // "trop chaud"
@@ -9888,6 +9983,7 @@ static const char* const kI18n_tr[] = {
     "Parçalı güneşli",  // "Éclaircies"
     "Eko",  // "Éco"
     "Güç tasarrufu",  // "Économie d'énergie"
+    "Tasarruf",  // "Économies"
     "Dinliyor…",  // "Écoute…"
     "Ekran",  // "Écran"
     "Atılım",  // "Élan"
