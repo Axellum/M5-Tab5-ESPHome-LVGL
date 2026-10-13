@@ -49,6 +49,12 @@ namespace {
 
 constexpr int kNbZones = static_cast<int>(Zone::COUNT);
 
+// Cartes du popup « Mes Plantes » (pot_detail_card.yaml) : écart (18 sur le Tab5) et pas
+// (244) ramenés au corps de la carte, lot 4 du portage ; pot_carte_pas de
+// tab5-ui-tokens.yaml fait le même calcul (tests/test_plantes_popup.py).
+constexpr int32_t kPotEcart = largeur_carte(18);
+constexpr int32_t kPotPas = (kCorpsW + kPotEcart) / 5;
+
 // Clés échangées avec HA (événement esphome.tab5_zones, action tab5_maj_zones), dans
 // l'ordre de l'enum Zone.
 constexpr const char* kCles[kNbZones] = {
@@ -889,13 +895,13 @@ void zones_apply_ui() {
             if (w > 0) largeur = w;
             break;
         }
-        int32_t x = (largeur - (n_pots * 244 - 18)) / 2;
+        int32_t x = (largeur - (n_pots * kPotPas - kPotEcart)) / 2;
         for (int i = 0; i < 5; i++) {
             const bool absente = zone_absente(zone_pot(i));
             ui_hidden(u.pot_card[i], absente);
             if (absente || u.pot_card[i] == nullptr) continue;
             ui_x(u.pot_card[i], x);
-            x += 244;
+            x += kPotPas;
         }
     }
 

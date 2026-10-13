@@ -83,6 +83,18 @@ substitutions:
   cameras_huitiemes: ${ [4, (corps_h | int - 58) * 8 // 1080, (corps_w | int) * 8 // 1920] | min }
   cameras_cadre_l: ${ 240 * (cameras_huitiemes | int) + 4 }
   cameras_cadre_h: ${ 135 * (cameras_huitiemes | int) + 4 }
+  # Mes Plantes (lot 4 du portage) : cinq cartes sur la largeur du corps, l'écart ramené au
+  # corps — pas (244) et largeur (226) ; kPotPas, kPotEcart de tab5_zones.cpp. Dans une
+  # carte, les lignes Fertilité… gardent 14 px de marge tant que la carte en a la place ;
+  # sinon la marge cède (5 px sur la 7B, carte de 178) : roboto_22 ne rétrécit pas, et
+  # « Température » (128 px) doit tenir à droite de son icône (2 + 32 px et 4 px d'air),
+  # soit 168 px de ligne au moins ; le texte passe alors de x 50 à 38
+  # (tests/test_plantes_popup.py).
+  pot_carte_pas: ${ (corps_w | int + 18 * (corps_w | int) // 1202) // 5 }
+  pot_carte_l: ${ pot_carte_pas | int - 18 * (corps_w | int) // 1202 }
+  pot_ligne_marge: ${ [14, (pot_carte_l | int - 168) // 2] | min }
+  pot_ligne_l: ${ pot_carte_l | int - 2 * (pot_ligne_marge | int) }
+  pot_texte_x: ${ [50, pot_ligne_l | int - 130] | min }
   # Première ligne de la grille calendrier (modal_body_y + 30 px d'en-tête jours)
   cal_grid_y: ${ modal_body_y | int + 30 }
   # Hauteur réservée à la grille, jusqu'à 10 px au-dessus de la légende (posée
