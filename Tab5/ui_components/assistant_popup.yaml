@@ -8,6 +8,12 @@
 # @architecture_constraint Positions ABSOLUES (x/y fixes) + les états actifs ne
 #       changent que la bordure (dessinée à l'intérieur) => aucun bouton ne se
 #       décale. Toute la logique vit en C++/scripts (décision 0006), pas ici.
+#       Taille de la carte (lot 4 du portage, ADR-0061) : les littéraux du Tab5 ramenés
+#       au corps (largeurs × corps_w / 1202, hauteurs × corps_h / 598) ; le panneau
+#       Réglages et la carte Réponse s'arrêtent 8 px au-dessus de la barre d'action
+#       (corps_h - 8 - sa hauteur : 506 sur le Tab5) ; la carte « Votre demande » et le
+#       haut de la Réponse (assist_resp_y) gardent leurs 104 px (deux lignes de
+#       roboto_22, qui ne rétrécit pas). tests/test_assistant_popup.py.
 # @open Ouvert par appui long sur la zone micro (tab5-lvgl.yaml), par une demande
 #       vocale (on_stt_end -> tab5_assist_on_request) ou par le service HA
 #       tab5_assist_reponse. Fermé par le scrim, la croix ou "Fermer".
@@ -44,13 +50,13 @@ obj:
               align: TOP_LEFT
               x: 24
               y: ${modal_body_y}
-              width: 380
-              height: 506
+              width: ${ 380 * (corps_w | int) // 1202 }
+              height: ${ corps_h | int - 8 - 84 * (corps_h | int) // 598 }
               styles: style_glass_card
               scrollable: false
               widgets:
-                - label: { text: "\U000F062E", align: TOP_LEFT, x: 16, y: 14, text_font: mdi_assist_36, styles: style_text_dim }
-                - label: { text: "Réglages", align: TOP_LEFT, x: 60, y: 18, text_font: roboto_32_b }
+                - label: { text: "\U000F062E", align: TOP_LEFT, x: "${ 16 * (corps_w | int) // 1202 }", y: "${ 14 * (corps_h | int) // 598 }", text_font: mdi_assist_36, styles: style_text_dim }
+                - label: { text: "Réglages", align: TOP_LEFT, x: "${ 60 * (corps_w | int) // 1202 }", y: "${ 18 * (corps_h | int) // 598 }", text_font: roboto_32_b }
 
                 # --- Cerveau / LLM ---
                 # [AI-CONTEXT] Panneau reglages 380x506 — layout recalcule le 29/07
@@ -65,14 +71,14 @@ obj:
                 # juste sous Ok Nabu : c'est ce qui etait demande.
                 # Titre et deux boutons masqués sans pipeline de discussion dans HA (zone
                 # « discussion », zones_apply_ui) : l'espace reste vide, rien ne remonte.
-                - label: { id: lbl_assist_cerveau, text: "Cerveau / LLM", align: TOP_LEFT, x: 16, y: 68, styles: style_text_dim }
+                - label: { id: lbl_assist_cerveau, text: "Cerveau / LLM", align: TOP_LEFT, x: "${ 16 * (corps_w | int) // 1202 }", y: "${ 68 * (corps_h | int) // 598 }", styles: style_text_dim }
                 - button:
                     id: btn_assist_pipe_domo
                     align: TOP_LEFT
-                    x: 16
-                    y: 104
-                    width: 168
-                    height: 72
+                    x: ${ 16 * (corps_w | int) // 1202 }
+                    y: ${ 104 * (corps_h | int) // 598 }
+                    width: ${ 168 * (corps_w | int) // 1202 }
+                    height: ${ 72 * (corps_h | int) // 598 }
                     radius: 18
                     styles: style_clim_btn
                     on_short_click:
@@ -84,10 +90,10 @@ obj:
                 - button:
                     id: btn_assist_pipe_discu
                     align: TOP_LEFT
-                    x: 196
-                    y: 104
-                    width: 168
-                    height: 72
+                    x: ${ 196 * (corps_w | int) // 1202 }
+                    y: ${ 104 * (corps_h | int) // 598 }
+                    width: ${ 168 * (corps_w | int) // 1202 }
+                    height: ${ 72 * (corps_h | int) // 598 }
                     radius: 18
                     styles: style_clim_btn
                     on_short_click:
@@ -101,10 +107,10 @@ obj:
                 - button:
                     id: btn_assist_wake
                     align: TOP_LEFT
-                    x: 16
-                    y: 196
-                    width: 348
-                    height: 56
+                    x: ${ 16 * (corps_w | int) // 1202 }
+                    y: ${ 196 * (corps_h | int) // 598 }
+                    width: ${ 348 * (corps_w | int) // 1202 }
+                    height: ${ 56 * (corps_h | int) // 598 }
                     radius: 18
                     styles: style_clim_btn
                     on_short_click:
@@ -118,14 +124,14 @@ obj:
                 # Deux tailles depuis l'essai D8 du 26/09/2026 : A- (roboto_32_b) et A+
                 # (police de la date du thème, 45 px, depuis le 05/10/2026), qui reprennent
                 # la largeur de l'ancienne rangée A- / A / A+.
-                - label: { text: "Taille du texte", align: TOP_LEFT, x: 16, y: 276, styles: style_text_dim }
+                - label: { text: "Taille du texte", align: TOP_LEFT, x: "${ 16 * (corps_w | int) // 1202 }", y: "${ 276 * (corps_h | int) // 598 }", styles: style_text_dim }
                 - button:
                     id: btn_assist_size_s
                     align: TOP_LEFT
-                    x: 16
-                    y: 312
-                    width: 168
-                    height: 52
+                    x: ${ 16 * (corps_w | int) // 1202 }
+                    y: ${ 312 * (corps_h | int) // 598 }
+                    width: ${ 168 * (corps_w | int) // 1202 }
+                    height: ${ 52 * (corps_h | int) // 598 }
                     radius: 18
                     styles: style_clim_btn
                     on_short_click:
@@ -137,10 +143,10 @@ obj:
                 - button:
                     id: btn_assist_size_l
                     align: TOP_LEFT
-                    x: 196
-                    y: 312
-                    width: 168
-                    height: 52
+                    x: ${ 196 * (corps_w | int) // 1202 }
+                    y: ${ 312 * (corps_h | int) // 598 }
+                    width: ${ 168 * (corps_w | int) // 1202 }
+                    height: ${ 52 * (corps_h | int) // 598 }
                     radius: 18
                     styles: style_clim_btn
                     on_short_click:
@@ -158,10 +164,10 @@ obj:
                 - button:
                     id: btn_assist_mute
                     align: TOP_LEFT
-                    x: 16
-                    y: 422
-                    width: 80
-                    height: 60
+                    x: ${ 16 * (corps_w | int) // 1202 }
+                    y: ${ 422 * (corps_h | int) // 598 }
+                    width: ${ 80 * (corps_w | int) // 1202 }
+                    height: ${ 60 * (corps_h | int) // 598 }
                     radius: 18
                     styles: style_clim_btn
                     on_short_click:
@@ -188,9 +194,10 @@ obj:
                 - slider:
                     id: slider_assist_volume
                     align: TOP_LEFT
-                    x: 112
-                    y: 442
-                    width: 252
+                    x: ${ 112 * (corps_w | int) // 1202 }
+                    # Centrée sur le bouton Muet (sa hauteur reste 20 px).
+                    y: ${ 422 * (corps_h | int) // 598 + (60 * (corps_h | int) // 598 - 20) // 2 }
+                    width: ${ 252 * (corps_w | int) // 1202 }
                     height: 20
                     min_value: 0
                     max_value: 100
@@ -210,9 +217,9 @@ obj:
           # --- Votre demande ---
           - obj:
               align: TOP_LEFT
-              x: 420
+              x: ${ 24 + 396 * (corps_w | int) // 1202 }
               y: ${modal_body_y}
-              width: 806
+              width: ${ corps_w | int - 396 * (corps_w | int) // 1202 }
               height: 104
               styles: style_glass_card
               scrollable: false
@@ -224,16 +231,16 @@ obj:
                     align: TOP_LEFT
                     x: 60
                     y: 44
-                    width: 746
+                    width: ${ corps_w | int - 396 * (corps_w | int) // 1202 - 60 }
                     text: "Appuyez sur le micro puis parlez…"
 
           # --- Réponse (texte + tableaux + image) ---
           - obj:
               align: TOP_LEFT
-              x: 420
+              x: ${ 24 + 396 * (corps_w | int) // 1202 }
               y: ${assist_resp_y}
-              width: 806
-              height: 390
+              width: ${ corps_w | int - 396 * (corps_w | int) // 1202 }
+              height: ${ corps_h | int - 8 - 84 * (corps_h | int) // 598 - 116 }
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -248,8 +255,8 @@ obj:
                     align: TOP_LEFT
                     x: 16
                     y: 54
-                    width: 790
-                    height: 322
+                    width: ${ corps_w | int - 396 * (corps_w | int) // 1202 - 16 }
+                    height: ${ corps_h | int - 8 - 84 * (corps_h | int) // 598 - 116 - 68 }
                     styles: style_transparent
                     scrollbar_mode: AUTO
                     layout:
@@ -282,7 +289,7 @@ obj:
               align: BOTTOM_MID
               y: ${modal_bottom_y}
               width: ${corps_w}
-              height: 84
+              height: ${ 84 * (corps_h | int) // 598 }
               styles: style_transparent
               scrollable: false
               widgets:
@@ -292,9 +299,9 @@ obj:
                 - button:
                     id: btn_assist_mic
                     align: CENTER
-                    x: -100
-                    width: 240
-                    height: 68
+                    x: ${ 0 - 100 * (corps_w | int) // 1202 }
+                    width: ${ 240 * (corps_w | int) // 1202 }
+                    height: ${ 68 * (corps_h | int) // 598 }
                     radius: 20
                     styles: style_pill_accent
                     pressed:
@@ -302,16 +309,16 @@ obj:
                     on_short_click:
                       - script.execute: tab5_assist_toggle
                     widgets:
-                      - label: { text: "\U000F036C", align: LEFT_MID, x: 30, text_font: mdi_assist_36, styles: style_text_on_accent }
-                      - label: { text: "Parler", align: CENTER, x: 20, text_font: roboto_32_b, styles: style_text_on_accent }
+                      - label: { text: "\U000F036C", align: LEFT_MID, x: "${ 30 * (corps_w | int) // 1202 }", text_font: mdi_assist_36, styles: style_text_on_accent }
+                      - label: { text: "Parler", align: CENTER, x: "${ 20 * (corps_w | int) // 1202 }", text_font: roboto_32_b, styles: style_text_on_accent }
 
                 # Stop : coupe pipeline + TTS
                 - button:
                     id: btn_assist_stop
                     align: CENTER
-                    x: 150
-                    width: 130
-                    height: 68
+                    x: ${ 150 * (corps_w | int) // 1202 }
+                    width: ${ 130 * (corps_w | int) // 1202 }
+                    height: ${ 68 * (corps_h | int) // 598 }
                     radius: 20
                     styles: style_clim_btn
                     pressed:
@@ -325,8 +332,8 @@ obj:
                 - button:
                     align: RIGHT_MID
                     x: -4
-                    width: 180
-                    height: 68
+                    width: ${ 180 * (corps_w | int) // 1202 }
+                    height: ${ 68 * (corps_h | int) // 598 }
                     radius: 20
                     styles: style_clim_btn
                     pressed:

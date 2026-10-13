@@ -170,7 +170,9 @@ image:
     url: "http://127.0.0.1/placeholder.png"   # remplacé au runtime par set_url
     format: PNG
     type: RGB565
-    resize: 760x360
+    # 760 × 360 sur le Tab5, ramenée à la largeur du corps (lot 4 du portage, ADR-0061 :
+    # 598 × 283 sur la 7B), dans la zone défilante de la Réponse (assistant_popup.yaml).
+    resize: "${ 760 * (corps_w | int) // 1202 }x${ 360 * (corps_w | int) // 1202 }"
     on_download_finished:
       - lambda: 'assist_image_state_ui(id(assist_img_hint), id(assist_img_widget), AssistImage::READY);'
     on_error:
