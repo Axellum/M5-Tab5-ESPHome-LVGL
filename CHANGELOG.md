@@ -16,6 +16,15 @@ le confronte à la matrice) :
 
 - **Extinction auto sur batterie seulement** ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : un interrupteur « Tab5 Extinction auto sur batterie seulement » (éteint par défaut) ; allumé, le délai de « Tab5 Extinction auto de l'écran » ne joue que quand la tablette tire sur sa batterie. Avec « 5 min » : 1,74 W → 1,23 W tant que personne ne regarde la tablette ([mesure](docs/consumption.md)). Dans le tableau de bord HA (à réécrire, étape 7 de l'installation).
 
+### Modifié
+
+- **Page « Bilan » du popup Énergie en kWh** ([ADR-0062](docs/decisions/0062-energy-balance-kwh-grid-battery.md), [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : utile avec la seule production et la consommation de la maison (compensation mensuelle), l'argent seulement avec un prix.
+  - **Carte « Batterie réseau »** : le net du mois civil (vert d'avance, couleur d'avertissement de retard), une jauge centrée sur 0, la fin du mois projetée au rythme des 7 derniers jours, produit, consommé, économies avec un prix, et un anneau « % de ta conso couverte par le soleil ».
+  - **Graphique** Heures / Jours / Mois : le net par heure du jour, par jour du mois civil, par mois de l'année civile en barres, son cumul en courbe lissée, le dernier créneau pointé et, en vue Jours, la projection en points. Les quatre cartes d'avant (autoconsommé, vendu, acheté, gains) disparaissent.
+  - **Blueprint** : entrée facultative « Énergie consommée par la maison · Home energy consumption ». Sans compteur d'achat ni de vente, HA estime vente = max(0, production − consommation) et achat = max(0, consommation − production) heure par heure, et l'écran le dit.
+  - **Contrat** : trois champs en fin de payload de `tab5_maj_energie_bilan` (`prod`, `conso`, `estime`) et trois vues civiles (`heures`, `mois_civil`, `annee_civile`) ; signature inchangée (contrat 1.2.0). Calculs dans `Tab5/socle/tab5_parse.*` (tests g++ et fuzz), démo, rendu hors tablette (`energie-bilan-jours`, `energie-bilan-mois`, `energie-bilan-prix`).
+  - **Ordre de mise à jour : la tablette d'abord, puis `packages/tab5_energie.yaml` et le blueprint.** Un firmware d'avant refuse les vues `mois_civil` et `annee_civile` (appel sauté, `continue_on_error`) ; le nouveau firmware lit encore l'ancien payload.
+
 ### Corrigé
 
 - **Bas des cartes des popups dans « Relief doux » sombre** : le dégradé des cartes vitrées finissait dans la couleur du popup (0x2A2E34 sur 0x292D33), et leur bas, coins arrondis compris, semblait coupé (Énergie, Suivi, Température, Météo…). Il finit maintenant à 0x212428, plus sombre que tout le dégradé du popup (8 niveaux au moins) : le bas se lit en bas du popup comme au milieu ; le haut, le liseré et les autres thèmes ne changent pas, sans ombre ajoutée (`Tab5/themes/relief_doux.yaml`, `tools/gen_themes.py`).
