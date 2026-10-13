@@ -1676,6 +1676,130 @@ static void test_energie_bilan() {
            "bilan : totaux et taux d'autoconsommation");
     t = energie_bilan_totaux(nullptr, 3, b);
     expect(std::isnan(t.produit) && std::isnan(t.taux) && proche(t.achete, 3.0f), "bilan : sans production, pas de taux");
+
+    // ADR-0062 : prod, conso, estime ajoutés en fin.
+    expect(energie_bilan_lire(ch("|0;2|1;0||3;4|2;5|1"), 31, b) && b.prod_choisie && b.conso_choisie && b.estime &&
+               b.n_prod == 2 && b.n_conso == 2 && proche(b.prod[1], 4.0f) && proche(b.conso[1], 5.0f),
+           "bilan : production, consommation et estimation lues");
+    expect(energie_bilan_lire(ch("||||3;4|2;5|"), 31, b) && !b.vente_choisie && !b.achat_choisi && !b.estime,
+           "bilan : production et consommation seules suffisent à montrer la page");
+    expect(!energie_bilan_lire(ch("||||3;4||1"), 31, b) && b.prod_choisie && !b.conso_choisie,
+           "bilan : production sans consommation ni compteur : rien à montrer");
+    expect(energie_bilan_lire(ch("€|1|2|0.5"), 24, b) && !b.prod_choisie && !b.conso_choisie && !b.estime,
+           "bilan : payload d'un HA d'avant (quatre champs) lu comme avant");
+    expect(energie_bilan_lire(ch("|1||||||x|y|z"), 24, b) && !b.estime && b.n_vente == 1,
+           "bilan : champs au-delà du septième ignorés, « estime » autre que 1 = mesuré");
+    std::string trente_et_un;
+    for (int i = 0; i < 31; i++) trente_et_un += (i ? ";" : "") + std::to_string(i);
+    const std::string p31 = "|1|||" + trente_et_un + "|" + trente_et_un;
+    expect(energie_bilan_lire(ch(p31.c_str()), 31, b) && b.n_prod == 31 && b.n_conso == 31 && proche(b.conso[30], 30.0f),
+           "bilan : 31 jours du mois civil");
+
+    // Consommation mesurée : net = produit − consommé ; l'autoconsommé n'en dépasse jamais.
+    energie_bilan_lire(ch("|1;0;|0.5;3;||4;1;|2;3.5;5|1"), 31, b);
+    c = energie_bilan_creneau(4.0f, b, 0);
+    expect(proche(c.consomme, 2.0f) && proche(c.autoconsomme, 2.0f) && proche(c.net, 2.0f),
+           "bilan : consommé mesuré, autoconsommé borné par lui (4 − 1 = 3 > 2)");
+    c = energie_bilan_creneau(1.0f, b, 1);
+    expect(proche(c.consomme, 3.5f) && proche(c.autoconsomme, 1.0f) && proche(c.net, -2.5f),
+           "bilan : net négatif = déficit du créneau");
+    c = energie_bilan_creneau(NAN, b, 2);
+    expect(std::isnan(c.net) && proche(c.consomme, 5.0f), "bilan : production inconnue, pas de net");
+    c = energie_bilan_creneau(1.0f, b, 3);
+    expect(std::isnan(c.consomme) && std::isnan(c.net), "bilan : consommation choisie mais inconnue sur le créneau");
+    energie_bilan_lire(ch("€|1;5;|2;0;1|0.5;;"), 24, b);
+    c = energie_bilan_creneau(3.0f, b, 0);
+    expect(proche(c.net, -1.0f), "bilan : sans compteur de la maison, net = produit − (autoconsommé + acheté)");
+}
+
+static void test_energie_mois() {
+    int a, m, j;
+    energie_jour_plus(2026, 5, 18, 14, a, m, j);
+    expect(a == 2026 && m == 6 && j == 1, "jour plus : 18 mai + 14 = 1er juin");
+    energie_jour_plus(2025, 12, 31, 1, a, m, j);
+    expect(a == 2026 && m == 1 && j == 1, "jour plus : changement d'année");
+    energie_jour_plus(2024, 2, 28, 1, a, m, j);
+    expect(m == 2 && j == 29, "jour plus : 29 février d'une année bissextile");
+    energie_jour_plus(2026, 6, 16, -3, a, m, j);
+    expect(m == 6 && j == 16, "jour plus : k négatif ne bouge pas");
+
+    // Cumul : heures (pas de remise à 0), jours (au 1er), mois (en janvier).
+    const float net[6] = {1.0f, -2.0f, NAN, 4.0f, NAN, NAN};
+    float cu[6];
+    expect(energie_cumul(net, 6, EnergieVue::HEURES, 2026, 6, 16, cu) == 3 && proche(cu[0], 1.0f) &&
+               proche(cu[1], -1.0f) && proche(cu[2], -1.0f) && proche(cu[3], 3.0f) && std::isnan(cu[4]) &&
+               std::isnan(cu[5]),
+           "cumul : un trou garde le cumul, NAN après le dernier connu");
+    expect(energie_cumul(net, 6, EnergieVue::JOURS, 2026, 5, 30, cu) == 3 && proche(cu[1], -1.0f) &&
+               proche(cu[2], 0.0f) && proche(cu[3], 4.0f),
+           "cumul : les jours repartent de 0 au 1er du mois (30 mai + 2 = 1er juin)");
+    expect(energie_cumul(net, 6, EnergieVue::MOIS, 2025, 11, 1, cu) == 3 && proche(cu[1], -1.0f) &&
+               proche(cu[2], 0.0f) && proche(cu[3], 4.0f),
+           "cumul : les mois repartent de 0 en janvier (novembre + 2)");
+    const float vide[2] = {NAN, NAN};
+    expect(energie_cumul(vide, 2, EnergieVue::JOURS, 2026, 6, 1, cu) == -1 && std::isnan(cu[0]) &&
+               energie_cumul(nullptr, 2, EnergieVue::JOURS, 2026, 6, 1, cu) == -1,
+           "cumul : aucun net connu");
+
+    // Batterie réseau : juin 2026, 16 jours écoulés (le 16 pas fini), 7 jours de rythme.
+    EnergieBilanCreneau c[30];
+    for (int k = 0; k < 16; k++) {
+        c[k].produit = 20.0f;
+        c[k].consomme = k == 6 ? 25.0f : 18.0f;   // le 7 : déficit de 5
+        c[k].net = c[k].produit - c[k].consomme;
+        c[k].autoconsomme = 9.0f;
+        c[k].gain = 1.0f;
+    }
+    EnergieMois r = energie_mois(c, 30, 2026, 6, 1);
+    expect(r.ok && r.annee == 2026 && r.mois == 6 && r.jour == 16 && r.jours_mois == 30, "mois : le 16 juin");
+    expect(proche(r.produit, 320.0f) && proche(r.consomme, 295.0f) && proche(r.net, 25.0f) &&
+               proche(r.gain, 16.0f) && proche(r.couverture, 144.0f / 295.0f),
+           "mois : sommes et couverture");
+    // Rythme : les 7 jours avant le 16 (du 9 au 15) = +2 chacun ; fin = 25 + 2 × 14.
+    expect(r.n_rythme == 7 && proche(r.rythme, 2.0f) && proche(r.fin, 53.0f), "mois : rythme sur 7 jours et projection");
+    // Fenêtre glissante d'un HA d'avant (30 jours depuis le 18 mai) : seul juin compte.
+    EnergieBilanCreneau g[30];
+    for (int k = 0; k < 30; k++) {
+        g[k].produit = 10.0f;
+        g[k].consomme = 9.0f;
+        g[k].net = 1.0f;
+    }
+    r = energie_mois(g, 30, 2026, 5, 18);
+    expect(r.ok && r.mois == 6 && r.jour == 16 && proche(r.net, 16.0f) && r.n_rythme == 7 && proche(r.fin, 30.0f) &&
+               std::isnan(r.couverture),
+           "mois : fenêtre glissante, le mois du dernier jour seulement");
+    EnergieBilanCreneau un[1];
+    un[0].net = -3.0f;
+    r = energie_mois(un, 1, 2026, 6, 1);
+    expect(r.ok && proche(r.net, -3.0f) && r.n_rythme == 0 && std::isnan(r.fin), "mois : le 1er, pas de rythme");
+    expect(!energie_mois(un, 0, 2026, 6, 1).ok && !energie_mois(nullptr, 3, 2026, 6, 1).ok &&
+               !energie_mois(un, 1, 2026, 13, 1).ok,
+           "mois : rien à compter");
+
+    // Nombres ronds et échelles.
+    expect(proche(energie_rond(23.4f), 25.0f) && proche(energie_rond(37.0f), 40.0f) && proche(energie_rond(5.2f), 6.0f) &&
+               proche(energie_rond(0.05f), 0.1f) && proche(energie_rond(0.0f), 1.0f) && proche(energie_rond(NAN), 1.0f) &&
+               proche(energie_rond(9.5f), 10.0f) && proche(energie_rond(10.0f), 10.0f) && proche(energie_rond(1234.0f), 1500.0f),
+           "rond : 1, 1,5, 2, 2,5, 3, 4, 5, 6, 8 × 10^k");
+    expect(proche(energie_pas(2.0f), 2.0f) && proche(energie_pas(2.1f), 2.5f) && proche(energie_pas(3.0f), 5.0f) &&
+               proche(energie_pas(6.0f), 10.0f) && proche(energie_pas(0.3f), 0.5f),
+           "pas : 1, 2, 2,5, 5 × 10^k");
+    const float n1[4] = {5.2f, -3.4f, 4.1f, NAN};
+    const float c1[4] = {5.2f, 1.8f, 5.9f, NAN};
+    EnergieEchelle e = energie_echelle(n1, c1, 4, 37.0f);
+    expect(proche(e.haut, 6.0f) && proche(e.bas, 4.0f) && proche(e.pas, 2.0f), "échelle : barres, déficits plus courts");
+    expect(proche(e.cumul_haut, 40.0f) && proche(e.cumul_bas, 40.0f * 4.0f / 6.0f) && proche(e.cumul_pas, 10.0f),
+           "échelle : cumul et projection, même rapport");
+    const float n2[2] = {8.0f, -0.2f};
+    e = energie_echelle(n2, nullptr, 2, NAN);
+    expect(proche(e.haut, 8.0f) && proche(e.bas, 2.0f), "échelle : un déficit minuscule a au moins le quart de l'axe");
+    const float n3[2] = {-6.0f, -1.0f};
+    const float c3[2] = {-6.0f, -7.0f};
+    e = energie_echelle(n3, c3, 2, -20.0f);
+    expect(proche(e.haut, 1.5f) && proche(e.bas, 6.0f) && proche(e.cumul_bas, 20.0f) && proche(e.cumul_haut, 5.0f),
+           "échelle : que des déficits, le cumul négatif décide");
+    e = energie_echelle(nullptr, nullptr, 3, NAN);
+    expect(proche(e.haut, 1.0f) && proche(e.bas, 0.25f) && proche(e.cumul_haut, 1.0f), "échelle : rien de connu");
 }
 
 static void test_energie_flux() {
@@ -1748,6 +1872,7 @@ int main() {
     test_serveur_ia_textes();
     test_energie_soleil();
     test_energie_bilan();
+    test_energie_mois();
     test_energie_flux();
     test_payloads_ha();
 

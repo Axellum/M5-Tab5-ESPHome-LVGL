@@ -858,7 +858,9 @@ struct ServeurIaCourbe {
 // codes et l'ordre des champs sont un contrat avec packages/tab5_energie.yaml, la démo et
 // le rendu : ni renommés ni réordonnés sans eux.
 constexpr int kEnergieHeures = 24;      // créneaux d'une journée, heures locales
-constexpr int kEnergieSlotsMax = 30;    // 24 heures, 30 jours ou 12 mois
+// 24 heures, 30 jours glissants ou 12 mois ; 31 : les jours du mois civil du bilan
+// (ADR-0062).
+constexpr int kEnergieSlotsMax = 31;
 // Une énergie de créneau ou de journée au-delà (kWh) ou négative est fausse : inconnue.
 constexpr float kEnergieKwhMax = 1e6f;
 // Une puissance (W) au-delà est fausse : inconnue (100 MW : bien au-delà d'une maison).
@@ -902,31 +904,99 @@ bool energie_soleil_lire(const Champ& payload, EnergieSoleilLu& out);
 // pour un champ vide.
 int energie_kwh_liste(const Champ& c, float* out, int max);
 
-// tab5_maj_energie_bilan, variable payload : « devise|vente|achat|gain ».
+// tab5_maj_energie_bilan, variable payload : « devise|vente|achat|gain|prod|conso|estime ».
 //   devise   symbole tel quel, 7 octets au plus (au-delà : aucun), copié par l'écran ;
 //   vente, achat, gain  listes de energie_kwh_liste (gain : dans la devise, peut être
-//            négatif) ; champ vide = compteur ou prix non choisi.
+//            négatif) ; champ vide = compteur ou prix non choisi ;
+//   prod, conso  (ADR-0062, ajoutés en fin : un firmware d'avant s'arrête à gain, un HA
+//            d'avant ne les envoie pas) production et consommation de la maison par
+//            créneau, listes de energie_kwh_liste ; prod vide = la production est la série
+//            de tab5_maj_energie_historique de la même vue (HA d'avant), conso vide = pas
+//            de compteur de la maison (consommé = autoconsommé + acheté) ;
+//   estime   « 1 » : vente et achat sont estimés par HA heure par heure depuis la
+//            production et la consommation (aucun compteur d'achat ni de vente) ; autre
+//            ou vide : mesurés.
 constexpr size_t kEnergieDeviseMax = 7;
 struct EnergieBilanLu {
     Champ devise{nullptr, 0};
     bool vente_choisie = false, achat_choisi = false, gain_choisi = false;
-    int n_vente = 0, n_achat = 0, n_gain = 0;
+    bool prod_choisie = false, conso_choisie = false, estime = false;
+    int n_vente = 0, n_achat = 0, n_gain = 0, n_prod = 0, n_conso = 0;
     float vente[kEnergieSlotsMax] = {};
     float achat[kEnergieSlotsMax] = {};
     float gain[kEnergieSlotsMax] = {};
+    float prod[kEnergieSlotsMax] = {};
+    float conso[kEnergieSlotsMax] = {};
 };
-// `slots` : 24, 30 ou 12 (la vue) ; au-delà, la fin des listes est ignorée. Vrai si la page
-// « Bilan » a de quoi se montrer : vente ou achat choisi.
+// `slots` : 24, 30, 31 ou 12 (la vue) ; au-delà, la fin des listes est ignorée. Vrai si la
+// page « Bilan » a de quoi se montrer : vente ou achat choisi, ou production et
+// consommation (ADR-0062).
 bool energie_bilan_lire(const Champ& payload, int slots, EnergieBilanLu& out);
 
-// Un créneau du bilan, `produit` = la production de la même vue (tab5_maj_energie_historique),
-// NAN inconnue. Autoconsommé = produit − vendu (jamais sous 0 ; vente non choisie ou inconnue
-// sur le créneau : 0) ; consommé = autoconsommé + acheté (NAN sans compteur d'achat). Toutes
-// les valeurs NAN si inconnues.
+// Un créneau du bilan, `produit` = la production du créneau (champ prod du bilan, sinon la
+// série de tab5_maj_energie_historique de la même vue), NAN inconnue. Autoconsommé =
+// produit − vendu (jamais sous 0 ; vente non choisie ou inconnue sur le créneau : 0) ;
+// consommé = la consommation mesurée (champ conso), sinon autoconsommé + acheté (NAN sans
+// compteur d'achat) ; l'autoconsommé ne dépasse jamais le consommé connu. Net = produit −
+// consommé (ADR-0062 : positif, la maison a donné au réseau plus qu'elle n'en a pris).
+// Toutes les valeurs NAN si inconnues.
 struct EnergieBilanCreneau {
     float produit = NAN, autoconsomme = NAN, vendu = NAN, achete = NAN, consomme = NAN, gain = NAN;
+    float net = NAN;
 };
 EnergieBilanCreneau energie_bilan_creneau(float produit, const EnergieBilanLu& b, int k);
+
+// Date du créneau k d'une vue qui commence le (annee, mois, jour) : `k` jours plus tard
+// (vue jours) ; a, m, j inchangés pour k ≤ 0. Mois de 1 à 12 attendu.
+void energie_jour_plus(int annee, int mois, int jour, int k, int& a, int& m, int& j);
+
+// Vues du bilan (ADR-0062), dans l'ordre de tab5_energie.cpp.
+enum class EnergieVue : uint8_t {
+    HEURES = 0,
+    JOURS = 1,
+    MOIS = 2,
+};
+
+// Cumul du net, créneau par créneau (ADR-0062) : la vue des heures cumule la journée, celle
+// des jours repart de 0 au 1er du mois, celle des mois en janvier (une fenêtre glissante
+// d'un HA d'avant change de mois ou d'année en route). Un net inconnu au milieu garde le
+// cumul ; après le dernier net connu, NAN. `cumul` tient `n` valeurs. Renvoie l'indice du
+// dernier net connu, -1 sans aucun.
+int energie_cumul(const float* net, int n, EnergieVue vue, int annee, int mois, int jour, float* cumul);
+
+// « Batterie réseau » (ADR-0062, compensation mensuelle) : le mois civil du dernier jour
+// dont le net est connu, depuis les créneaux d'une vue des jours qui commence le (annee,
+// mois, jour). Sommes des valeurs connues des jours de ce mois (NAN sans aucune) ;
+// couverture = autoconsommé / consommé (0..1) ; rythme = net moyen des jours connus parmi
+// les 7 qui précèdent le dernier (ce jour-là n'est pas fini), n_rythme leur nombre ; fin =
+// net + rythme × jours restants après le dernier (NAN sans rythme).
+struct EnergieMois {
+    bool ok = false;
+    int annee = 0, mois = 0, jour = 0, jours_mois = 0;
+    float produit = NAN, consomme = NAN, net = NAN, autoconsomme = NAN, gain = NAN;
+    float couverture = NAN;
+    int n_rythme = 0;
+    float rythme = NAN;
+    float fin = NAN;
+};
+EnergieMois energie_mois(const EnergieBilanCreneau* c, int n, int annee, int mois, int jour);
+
+// Nombre « rond » d'une échelle : le plus petit de 1, 1,5, 2, 2,5, 3, 4, 5, 6, 8 × 10^k qui
+// atteint v (au moins 0,1 ; v non fini ou ≤ 0 : 1). Pas d'une graduation : le plus petit
+// de 1, 2, 2,5, 5 × 10^k qui atteint v (même bornes).
+float energie_rond(float v);
+float energie_pas(float v);
+
+// Échelles du graphique du bilan (ADR-0062), un zéro commun : barres du net de haut (kWh,
+// surplus) à bas (kWh, déficits, en valeur absolue), le côté le plus court au quart de
+// l'autre au moins (des déficits petits ont un axe plus court) ; cumul (et projection) de
+// cumul_haut à cumul_bas, dans le même rapport. pas, cumul_pas : graduations (≈ 3 et 4 au-
+// dessus du zéro). `cumul` et `projection` peuvent être nuls / NAN.
+struct EnergieEchelle {
+    float haut = 1.0f, bas = 0.25f, pas = 0.5f;
+    float cumul_haut = 1.0f, cumul_bas = 0.25f, cumul_pas = 0.25f;
+};
+EnergieEchelle energie_echelle(const float* net, const float* cumul, int n, float projection);
 
 // Totaux de la vue sur `n` créneaux (sommes des valeurs connues, NAN si aucune) et taux
 // d'autoconsommation = autoconsommé / produit (0..1, NAN sans production).
