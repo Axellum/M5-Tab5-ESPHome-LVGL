@@ -4,8 +4,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-Ordre de mise à jour depuis les dernières versions publiées, tant que `v3.8.1` n'est pas
-taguée (`tests/test_contrat_versions.py` le confronte à la matrice) :
+[v3.9.0-rc.1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.9.0-rc.1)
+le 13/10/2026 : extinction auto de l'écran sur batterie seulement (#463). Firmware seul ; le
+tableau de bord HA à réécrire pour y voir le nouvel interrupteur.
+
+Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
+le confronte à la matrice) :
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
 
 ### Ajouté
