@@ -8,16 +8,20 @@
 # vars : id, x, y, w (hauteur fixe 56 px), reglage (ReglageId de tab5_custom.h, en nombre),
 #        valeur (index de l'option ; Oui = 1, Non = 0), label_text (traduit au démarrage ;
 #        vide pour les langues, dont reglages_preparer() écrit le nom natif).
+# Taille (lot 4 du portage 1024×600, ADR-0061) : x, y et w sont ceux du Tab5, ramenés ici au
+#        corps de la carte : x et w × corps_w / 1202 ; le bouton reste 40 px sous le titre de sa
+#        rangée (reglages_rangee.yaml, y × corps_h / 598) : y − 40 est ramené, puis + 40 ;
+#        hauteur 56 × corps_h / 598.
 # Piège ESPHome (comme bouton_pas.yaml) : `reglage` et `valeur` doivent rester
 # des nombres NON quotés dans les vars, sinon ils partent en chaîne.
 # ═══════════════════════════════════════════════════════
 button:
   id: ${id}
   align: TOP_LEFT
-  x: ${x}
-  y: ${y}
-  width: ${w}
-  height: 56
+  x: ${ (x | int) * (corps_w | int) // 1202 }
+  y: ${ ((y | int) - 40) * (corps_h | int) // 598 + 40 }
+  width: ${ (w | int) * (corps_w | int) // 1202 }
+  height: ${ 56 * (corps_h | int) // 598 }
   radius: 14
   pad_all: 0   # positions exactes : le thème ajoutait ~21 px
   styles: style_clim_btn

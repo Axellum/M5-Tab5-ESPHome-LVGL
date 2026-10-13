@@ -42,6 +42,10 @@
 #       charge 300..572 ; 10 px entre deux boutons. ÉTAT : 4 rangées au pas de 141, valeur
 #       à la hauteur des boutons de la carte voisine. Noms des pages : 200 × 44 à x 318, 528,
 #       738 et 948 (titre jusqu'à x ~290 en allemand, croix à x 1160).
+#       Ces valeurs sont celles du Tab5 : sur une autre carte (lot 4 du portage, ADR-0061),
+#       reglages_rangee.yaml et reglages_choix_btn.yaml les ramènent au corps (× corps_w /
+#       1202, × corps_h / 598), chaque commande restant 40 px sous le titre de sa rangée ;
+#       les autres littéraux de ce fichier font le même calcul dans leur expression.
 # @ai_instruction Une icône de plus = son glyphe dans mdi_font_32 (tab5-styles.yaml). Un
 #       réglage ou une page de plus : voir l'en-tête de tab5_reglages.cpp.
 # ═══════════════════════════════════════════════════════════════════════════
@@ -101,13 +105,13 @@ obj:
                       # Luminosité du rétroéclairage (lumière « Display Backlight »). 10 % au
                       # moins : à 0, la lumière s'éteindrait (et LVGL avec elle).
                       - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 1168, icon: "\U000F00DF", label_text: "Luminosité" } }
-                      - label: { id: reglages_lum_valeur, text: "100 %", align: TOP_RIGHT, x: -22, y: 58, text_font: roboto_32_b }
+                      - label: { id: reglages_lum_valeur, text: "100 %", align: TOP_RIGHT, x: -22, y: "${ 60 * (corps_h | int) // 598 - 2 }", text_font: roboto_32_b }
                       - slider:
                           id: reglages_lum_slider
                           align: TOP_LEFT
-                          x: 30
-                          y: 118
-                          width: 1142
+                          x: ${ 30 * (corps_w | int) // 1202 }
+                          y: ${ 60 * (corps_h | int) // 598 + 58 }
+                          width: ${ 1142 * (corps_w | int) // 1202 }
                           height: 20
                           min_value: 10
                           max_value: 100
@@ -178,9 +182,9 @@ obj:
                       # Thème : précédent / suivant, en boucle (select « Thème »). Le nom est un
                       # nom propre, écrit par reglages_peindre() comme dans HA.
                       - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 1168, icon: "\U000F03D8", label_text: "Thème" } }
-                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_prec", x: "17", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0141", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: -1 } ] } }
-                      - label: { id: reglages_theme_nom, text: "--", align: TOP_LEFT, x: 97, y: 109, width: 1008, text_align: CENTER, long_mode: DOT, text_font: roboto_32_b }
-                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_suiv", x: "1113", y: "100", w: "72", h: "56", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: 1 } ] } }
+                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_prec", x: "${ 17 * (corps_w | int) // 1202 }", y: "${ 60 * (corps_h | int) // 598 + 40 }", w: "${ 72 * (corps_w | int) // 1202 }", h: "${ 56 * (corps_h | int) // 598 }", r: "14", icon: "\U000F0141", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: -1 } ] } }
+                      - label: { id: reglages_theme_nom, text: "--", align: TOP_LEFT, x: "${ 97 * (corps_w | int) // 1202 }", y: "${ 60 * (corps_h | int) // 598 + 49 }", width: "${ 1008 * (corps_w | int) // 1202 }", text_align: CENTER, long_mode: DOT, text_font: roboto_32_b }
+                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_suiv", x: "${ 1113 * (corps_w | int) // 1202 }", y: "${ 60 * (corps_h | int) // 598 + 40 }", w: "${ 72 * (corps_w | int) // 1202 }", h: "${ 56 * (corps_h | int) // 598 }", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: 1 } ] } }
 
                       # Clair ou sombre : options du select « Clair ou sombre », dans son ordre.
                       # Moitié gauche depuis le 10/10/2026 : le fond de l'horloge à droite.
@@ -340,16 +344,16 @@ obj:
                       - label: { text: "ÉTAT", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
                       - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 555, icon: "\U000F06A5", label_text: "État" } }
-                      - label: { id: reglages_batt_etat, text: "--", align: TOP_LEFT, x: 57, y: 109, width: 515, long_mode: DOT, text_font: roboto_32_b, styles: style_text_console_value }
+                      - label: { id: reglages_batt_etat, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 60 * (corps_h | int) // 598 + 49 }", width: "${ 555 * (corps_w | int) // 1202 - 40 }", long_mode: DOT, text_font: roboto_32_b, styles: style_text_console_value }
 
                       - !include { file: reglages_rangee.yaml, vars: { y: 201, w: 555, icon: "\U000F12A2", label_text: "Niveau" } }
-                      - label: { id: reglages_batt_niveau, text: "--", align: TOP_LEFT, x: 57, y: 250, text_font: roboto_32_b, styles: style_text_console_value }
+                      - label: { id: reglages_batt_niveau, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 201 * (corps_h | int) // 598 + 49 }", text_font: roboto_32_b, styles: style_text_console_value }
 
                       - !include { file: reglages_rangee.yaml, vars: { y: 342, w: 555, icon: "\U000F0241", label_text: "Tension" } }
-                      - label: { id: reglages_batt_tension, text: "--", align: TOP_LEFT, x: 57, y: 391, text_font: roboto_32_b, styles: style_text_console_value }
+                      - label: { id: reglages_batt_tension, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 342 * (corps_h | int) // 598 + 49 }", text_font: roboto_32_b, styles: style_text_console_value }
 
                       - !include { file: reglages_rangee.yaml, vars: { y: 483, w: 555, icon: "\U000F029A", label_text: "Consommation" } }
-                      - label: { id: reglages_batt_conso, text: "--", align: TOP_LEFT, x: 57, y: 532, text_font: roboto_32_b, styles: style_text_console_value }
+                      - label: { id: reglages_batt_conso, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 483 * (corps_h | int) // 598 + 49 }", text_font: roboto_32_b, styles: style_text_console_value }
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE SYSTÈME (l'ancienne console système)

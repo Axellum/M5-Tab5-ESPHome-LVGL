@@ -8,12 +8,15 @@
 #        celle de la carte moins 2 × 17, ou de la demi-rangée), icon (glyphe MDI en
 #        mdi_font_32 : il doit figurer dans la liste `glyphs` de mdi_font_32, sinon il
 #        s'affiche vide, règle 9), label_text (traduit au démarrage).
+# Taille (lot 4 du portage 1024×600, ADR-0061) : x, y et w sont ceux du Tab5, ramenés ici au
+#        corps de la carte (× corps_w / 1202, × corps_h / 598) ; la hauteur (40) ne change
+#        pas : l'icône et le libellé gardent leur taille.
 # ═══════════════════════════════════════════════════════
 obj:
   align: TOP_LEFT
-  x: ${ x | default(17) }
-  y: ${y}
-  width: ${w}
+  x: ${ (x | default(17) | int) * (corps_w | int) // 1202 }
+  y: ${ (y | int) * (corps_h | int) // 598 }
+  width: ${ (w | int) * (corps_w | int) // 1202 }
   height: 40
   styles: style_invisible
   scrollable: false
