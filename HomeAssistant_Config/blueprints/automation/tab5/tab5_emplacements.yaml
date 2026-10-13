@@ -47,7 +47,9 @@
 #         Pages Soleil et Bilan (ADR-0058, 10/10/2026), entrées facultatives : prévision
 #         externe du jour et de demain (section solaire), compteurs d'achat et de vente,
 #         prix d'achat et de revente (nombre ou capteur) et monnaie (section réseau et
-#         maison). Envoyés au script dans `capteurs` (compteur_achat, compteur_vente,
+#         maison) ; ADR-0062 : l'énergie consommée par la maison (kWh), qui suffit au
+#         Bilan avec la production (achat et vente estimés heure par heure). Envoyés au
+#         script dans `capteurs` (compteur_achat, compteur_vente, consommation,
 #         prix_achat, prix_achat_entite, prix_revente, prix_revente_entite, devise,
 #         prevision_jour, prevision_demain), hors de `energie` : ils ne créent pas de
 #         tuile « e ». La prévision elle-même se calcule dans packages/tab5_energie.yaml.
@@ -1889,9 +1891,29 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: power
-        # Bilan (ADR-0058), facultatif : la page « Bilan » du popup Énergie (consommation,
-        # vente au réseau, taux d'autoconsommation, gains). Sans compteur d'achat ni de
-        # vente, la page n'apparaît pas ; sans prix, elle ne montre pas de gains.
+        # Bilan (ADR-0058, en kWh depuis l'ADR-0062), facultatif : la page « Bilan » du
+        # popup Énergie (net du mois face au réseau, part couverte par le soleil, économies
+        # avec un prix). Elle apparaît avec la production et l'énergie consommée par la
+        # maison, ou un compteur d'achat ou de vente.
+        energie_consommation:
+          name: Énergie consommée par la maison · Home energy consumption
+          description: >-
+            Facultatif : le compteur de consommation de la maison en kWh. Avec la production,
+            il suffit à la page « Bilan » : ce que la maison a donné au réseau ou lui a pris
+            ce mois-ci, en kWh. Sans compteur d'achat ni de vente, l'achat et la vente sont
+            estimés heure par heure.
+
+
+            Optional: the home consumption meter in kWh. With the production, it is enough
+            for the « Balance » page: what the home gave to or took from the grid this month,
+            in kWh. Without import or export meters, import and export are estimated hour by
+            hour.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: energy
         energie_compteur_achat:
           name: Énergie achetée au réseau · Energy bought from the grid
           description: >-
@@ -3214,14 +3236,15 @@ variables:
   energie_capteurs: "{{ ((energie.values() | select | list) + energie_solaires + energie_productions) | unique | list }}"
   energie_reseau_inverse: !input energie_reseau_inverse
   energie_batterie_inverse: !input energie_batterie_inverse
-  # Pages Soleil et Bilan (ADR-0058), toutes facultatives : compteurs d'achat et de vente,
-  # prix (nombre, ou capteur qui l'emporte) et monnaie du bilan, prévision externe du
-  # jour et de demain. Envoyés au script dans `capteurs` en plus des champs ci-dessus,
+  # Pages Soleil et Bilan (ADR-0058), toutes facultatives : compteurs d'achat, de vente et
+  # de la maison (ADR-0062), prix (nombre, ou capteur qui l'emporte) et monnaie du bilan,
+  # prévision externe du jour et de demain. Envoyés au script dans `capteurs` en plus des champs ci-dessus,
   # mais hors de `energie` : ils ne rendent pas une tuile « e » ni ne comptent comme un
   # capteur choisi (energie_capteurs). Un package plus ancien les ignore.
   energie_plus_choix:
     compteur_achat: !input energie_compteur_achat
     compteur_vente: !input energie_compteur_vente
+    consommation: !input energie_consommation
     prix_achat_entite: !input energie_prix_achat_entite
     prix_revente_entite: !input energie_prix_revente_entite
     prevision_jour: !input energie_prevision_jour
