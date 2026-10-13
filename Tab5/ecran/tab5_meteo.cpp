@@ -132,6 +132,16 @@ void millimetres(char* out, size_t n, float mm) {
     snprintf(out, n, mm < 9.95f ? "%.1fmm" : "%.0fmm", mm);
 }
 
+// Le texte tient-il dans `largeur` avec la police de `l` ? Les colonnes des heures sont plus
+// étroites sur une carte plus petite (61 px sur la 7B, 77 sur le Tab5 : lot 4 du portage) et
+// roboto_22 ne rétrécit pas : « 4.6mm » (70 px) perd son unité, « Demain » (75 px) laisse
+// l'heure. Sur le Tab5, tout tient : rien ne change.
+bool tient(lv_obj_t* l, const char* t, int32_t largeur) {
+    lv_point_t sz;
+    lv_text_get_size(&sz, t, lv_obj_get_style_text_font(l, LV_PART_MAIN), 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+    return sz.x <= largeur;
+}
+
 }  // namespace
 
 // Couleur d'une pluie horaire (mm) : les rôles de la pluie dans l'heure. Partagée avec la
@@ -346,7 +356,8 @@ void peindre_heures(int n) {
         const uint32_t ct = get_temperature_color(d.temp);
         // Heure : « Demain » à minuit, l'heure en cours en couleur d'accent.
         lv_obj_t* lh = s_h.heure[k];
-        ui_text(lh, k == minuit ? tr("Demain") : d.heure_texte.c_str());
+        const bool demain = k == minuit && tient(lh, tr("Demain"), lib);
+        ui_text(lh, demain ? tr("Demain") : d.heure_texte.c_str());
         ui_text_color(lh, k == colonne ? UIColor.ACCENT : (k == minuit ? UIColor.TEXT_PRIMARY : UIColor.TEXT_SOFT));
         ui_poser(lh, cx - lib / 2, kHeureY, lib, LV_SIZE_CONTENT);
         icone_peindre(s_h.icone[k], d.condition);
@@ -367,6 +378,7 @@ void peindre_heures(int n) {
             ui_style_couleur(s_h.barre[k], LV_STYLE_BG_COLOR, couleur_pluie_mm(d.pluvio));
             ui_poser(s_h.barre[k], cx - lb / 2, kPluieBase - hb, lb, hb);
             millimetres(buf, sizeof(buf), d.pluvio);
+            if (!tient(s_h.pluie[k], buf, lib)) snprintf(buf, sizeof(buf), d.pluvio < 9.95f ? "%.1f" : "%.0f", d.pluvio);
             ui_text(s_h.pluie[k], buf);
             ui_poser(s_h.pluie[k], cx - lib / 2, kPluieTexteY, lib, LV_SIZE_CONTENT);
         } else {

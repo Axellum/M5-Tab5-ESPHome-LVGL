@@ -56,7 +56,8 @@ obj:
               scrollable: false
               widgets:
                 - label: { text: "\U000F062E", align: TOP_LEFT, x: "${ 16 * (corps_w | int) // 1202 }", y: "${ 14 * (corps_h | int) // 598 }", text_font: mdi_assist_36, styles: style_text_dim }
-                - label: { text: "Réglages", align: TOP_LEFT, x: "${ 60 * (corps_w | int) // 1202 }", y: "${ 18 * (corps_h | int) // 598 }", text_font: roboto_32_b }
+                # Le mot après l'icône (mdi_assist_36, taille fixe) : 44 px plus loin (x 60 sur le Tab5).
+                - label: { text: "Réglages", align: TOP_LEFT, x: "${ 16 * (corps_w | int) // 1202 + 44 }", y: "${ 18 * (corps_h | int) // 598 }", text_font: roboto_32_b }
 
                 # --- Cerveau / LLM ---
                 # [AI-CONTEXT] Panneau reglages 380x506 — layout recalcule le 29/07

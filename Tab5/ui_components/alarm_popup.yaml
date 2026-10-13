@@ -110,7 +110,10 @@ obj:
                       - !include { file: rouleau.yaml, vars: { id: roller_alarm_heure, x: "${ demi_w | int // 2 - 19 - 190 * (corps_w | int) // 1202 }", y: "${ 60 * (corps_h | int) // 598 }", w: "${ 190 * (corps_w | int) // 1202 }", h: "${ 3 * (ligne_roboto_130_b | int) }", police: roboto_130_b, ecart: 0, quoi: 0 } }
                       - label: { text: ":", align: TOP_MID, x: 0, y: "${ 60 * (corps_h | int) // 598 + (ligne_roboto_130_b | int) - 10 * (corps_h | int) // 598 }", text_font: roboto_130_b, styles: style_text_soft }
                       - !include { file: rouleau.yaml, vars: { id: roller_alarm_minutes, x: "${ (demi_w | int + 1) // 2 + 19 }", y: "${ 60 * (corps_h | int) // 598 }", w: "${ 190 * (corps_w | int) // 1202 }", h: "${ 3 * (ligne_roboto_130_b | int) }", police: roboto_130_b, ecart: 0, quoi: 1 } }
-                      - label: { text: "Glisser les chiffres vers le haut ou vers le bas.", align: TOP_LEFT, x: 22, y: "${ 60 * (corps_h | int) // 598 + 3 * (ligne_roboto_130_b | int) + 21 * (corps_h | int) // 598 }", width: "${ demi_w | int - 44 }", text_align: CENTER, styles: style_text_dim }
+                      # Une ligne : 22 px de marge tant que la carte le permet, moins sur la 7B (la
+                      # phrase française, la plus longue des sept langues, fait 447 px en roboto_22,
+                      # qui ne rétrécit pas ; sur deux lignes, la seconde sortait de la carte).
+                      - label: { text: "Glisser les chiffres vers le haut ou vers le bas.", align: TOP_LEFT, x: "${ [22, (demi_w | int - 451) // 2] | min }", y: "${ 60 * (corps_h | int) // 598 + 3 * (ligne_roboto_130_b | int) + 21 * (corps_h | int) // 598 }", width: "${ demi_w | int - 2 * ([22, (demi_w | int - 451) // 2] | min) }", text_align: CENTER, styles: style_text_dim }
 
                 # Marche / arrêt, prochaine sonnerie, test : la carte qui répond à « à quelle
                 # heure ça sonne, et pourquoi ».

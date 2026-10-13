@@ -115,13 +115,16 @@ obj:
                 - !include { file: cameras_vignette.yaml, vars: { n: 3 } }
 
           # ═══ « PIÈCE · CAMÉRA » ET HEURE DE L'IMAGE ═══
+          # L'heure garde ses 360 px tant que le cadre en laisse 300 au nom (roboto_22 ne
+          # rétrécit pas : « Touchez une image pour l'agrandir » fait 339 px) ; le nom prend
+          # le reste, 24 px avant elle (580 sur le Tab5, 340 sur la 7B).
           - label:
               id: cameras_nom
               text: ""
               align: TOP_LEFT
               x: ${ (modal_card_w | int - cameras_cadre_l | int) // 2 }
               y: ${ modal_body_y | int + cameras_cadre_h | int + 10 }
-              width: ${ cameras_cadre_l | int * 580 // 964 }
+              width: ${ cameras_cadre_l | int - 24 - ([360, cameras_cadre_l | int - 324] | min) }
               long_mode: DOT
           - label:
               id: cameras_heure
@@ -129,7 +132,7 @@ obj:
               align: TOP_RIGHT
               x: ${ 0 - (modal_card_w | int - cameras_cadre_l | int) // 2 }
               y: ${ modal_body_y | int + cameras_cadre_h | int + 10 }
-              width: ${ cameras_cadre_l | int * 360 // 964 }
+              width: ${ [360, cameras_cadre_l | int - 324] | min }
               long_mode: DOT
               text_align: RIGHT
               styles: style_text_dim

@@ -112,7 +112,9 @@ obj:
           # x 145 : « Max. Block » (allemand, 108 px depuis x 22) collait la valeur à x 130.
           - label: { id: lbl_sys_frag_val, text: "--", align: TOP_LEFT, x: 145, y: "${ 42 + 174 * (corps_h | int) // 598 }", styles: style_text_console_value }
           - label: { text: "Flash", align: TOP_LEFT, x: "${ 369 * (corps_w | int) // 1202 }", y: "${ 42 + 174 * (corps_h | int) // 598 }", styles: style_text_console_label }
-          - label: { id: lbl_sys_flash_val, text: "--", align: TOP_LEFT, x: "${ 439 * (corps_w | int) // 1202 }", y: "${ 42 + 174 * (corps_h | int) // 598 }", styles: style_text_console_value }
+          # La valeur 70 px après « Flash » (roboto_22 ne rétrécit pas : ramenée au corps,
+          # elle le touchait sur la 7B) ; x 439 sur le Tab5.
+          - label: { id: lbl_sys_flash_val, text: "--", align: TOP_LEFT, x: "${ 369 * (corps_w | int) // 1202 + 70 }", y: "${ 42 + 174 * (corps_h | int) // 598 }", styles: style_text_console_value }
 
     # ═══ CARTE RÉSEAU (haut droite) ═══
     - obj:

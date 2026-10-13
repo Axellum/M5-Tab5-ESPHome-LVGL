@@ -80,7 +80,9 @@ def test_image_et_cadre_egaux_au_cpp(carte):
     nom, heure, pastilles = (_widget(i, jetons) for i in ("cameras_nom", "cameras_heure", "cameras_pastilles"))
     assert nom["y"] == heure["y"] == int(jetons["modal_body_y"]) + cadre["height"] + 10
     assert nom["x"] == cadre["x"] and heure["x"] == -cadre["x"]
-    assert nom["width"] + heure["width"] <= cadre["width"], "le nom et l'heure côte à côte"
+    assert nom["width"] + 24 + heure["width"] == cadre["width"], "le nom et l'heure côte à côte"
+    # « Touchez une image pour l'agrandir » (339 px en roboto_22, qui ne rétrécit pas) sur une ligne.
+    assert heure["width"] >= 339
     assert pastilles["y"] + 4 <= int(jetons["modal_body_y"]) + corps_h
     # La colonne des pièces à gauche du cadre placé à droite, kMarge de chaque côté.
     pieces = _widget("cameras_pieces", jetons)
