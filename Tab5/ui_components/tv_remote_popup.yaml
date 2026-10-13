@@ -119,7 +119,16 @@ obj:
                       - script.execute: { id: tab5_action, emplacement: !lambda 'return telecommande_cle();', commande: alimentation, valeur: "" }
                     widgets:
                       - label: { text: "\U000F0425", align: LEFT_MID, x: "${ 22 * (corps_w | int) // 1202 }", text_font: mdi_font_45, styles: style_text_error }
-                      - label: { text: "Marche / Arrêt", align: LEFT_MID, x: "${ 22 * (corps_w | int) // 1202 + 60 }" }
+                      # Le mot 60 px après l'icône (mdi_font_45 ne rétrécit pas). Sur une carte
+                      # plus petite, la place qui reste à sa droite (touche − 2 × 21 de marge et
+                      # bordure du thème − x du mot) passe sous les 166 px du Tab5 : « Marche /
+                      # Arrêt » (142 px en roboto_22) va à la ligne dans la touche au lieu d'en
+                      # sortir (112 px sur la 7B). Sur le Tab5, taille au contenu, comme avant.
+                      - label:
+                          text: "Marche / Arrêt"
+                          align: LEFT_MID
+                          x: "${ 22 * (corps_w | int) // 1202 + 60 }"
+                          width: "${ 'SIZE_CONTENT' if (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) - 42 - (22 * (corps_w | int) // 1202 + 60) >= 166 else (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) - 42 - (22 * (corps_w | int) // 1202 + 60) }"
                 - !include { file: tv_touche.yaml, vars: { id: tv_touche_source, x: "${ 0 }", y: "${ ((corps_h | int - 102 - 24 * (corps_h | int) // 598) - 128 * (corps_h | int) // 598) // 2 }", w: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) }", h: "${ 128 * (corps_h | int) // 598 }", touche: "KEY_SOURCE", icon: "\U000F0379", icon_style: "style_text_info", text: "Source" } }
                 - !include { file: tv_touche.yaml, vars: { id: tv_touche_stop, x: "${ 0 }", y: "${ ((corps_h | int - 102 - 24 * (corps_h | int) // 598) - 128 * (corps_h | int) // 598) // 2 }", w: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) }", h: "${ 128 * (corps_h | int) // 598 }", touche: "KEY_STOP", icon: "\U000F04DB", icon_style: "style_text_warning", text: "Stop", hidden: "true" } }
                 - !include { file: tv_touche.yaml, vars: { id: tv_touche_menu, x: "${ 0 }", y: "${ (corps_h | int - 102 - 24 * (corps_h | int) // 598) - 128 * (corps_h | int) // 598 }", w: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) }", h: "${ 128 * (corps_h | int) // 598 }", touche: "KEY_MENU", icon: "\U000F035C", icon_style: "style_text_dim", text: "Menu" } }
