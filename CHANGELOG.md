@@ -8,6 +8,10 @@ Ordre de mise à jour depuis les dernières versions publiées, tant que `v3.8.1
 taguée (`tests/test_contrat_versions.py` le confronte à la matrice) :
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
 
+### Ajouté
+
+- **Extinction auto sur batterie seulement** ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : un interrupteur « Tab5 Extinction auto sur batterie seulement » (éteint par défaut) ; allumé, le délai de « Tab5 Extinction auto de l'écran » ne joue que quand la tablette tire sur sa batterie. Avec « 5 min » : 1,74 W → 1,23 W tant que personne ne regarde la tablette ([mesure](docs/consumption.md)). Dans le tableau de bord HA (à réécrire, étape 7 de l'installation).
+
 ## [3.8.1] — 2026-10-11
 
 Version de sécurité et corrective : protection thermique anti-surchauffe et fiabilité de la détection batterie sans batterie physique.

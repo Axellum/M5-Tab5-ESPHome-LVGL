@@ -83,6 +83,7 @@
   ('horloge_fond', 'switch', 'tab5_fond_de_l_horloge'),
   ('okay_nabu', 'switch', 'tab5_rallumer_l_ecran_a_okay_nabu'),
   ('extinction', 'select', 'tab5_extinction_auto_de_l_ecran'),
+  ('extinction_batterie', 'switch', 'tab5_extinction_auto_sur_batterie_seulement'),
   ('economie', 'select', 'tab5_economie_d_energie'), ('sur_batterie', 'binary_sensor', 'tab5_sur_batterie'),
   ('courant', 'sensor', 'tab5_courant_batterie'),
   ('limite_charge', 'select', 'tab5_limite_de_charge'), ('consommation', 'sensor', 'tab5_consommation'),
@@ -708,7 +709,8 @@ views:
             heading: "{{ t('Délai sans toucher ; jamais pendant le réveil, la voix ou un jeu', 'Time without a touch; never while the alarm rings, during voice or a game') }}"
             heading_style: subtitle
 {%- endif %}
-{%- for cle, fr_, en_, icone in [('tape', "Rallumer l'écran d'une tape", 'Wake the screen with a tap', 'mdi:gesture-tap'),
+{%- for cle, fr_, en_, icone in [('extinction_batterie', 'Extinction sur batterie seulement', 'Auto-off on battery only', 'mdi:battery-clock'),
+                                  ('tape', "Rallumer l'écran d'une tape", 'Wake the screen with a tap', 'mdi:gesture-tap'),
                                   ('okay_nabu', "Rallumer l'écran à Okay Nabu", 'Wake the screen with Okay Nabu', 'mdi:account-voice'),
                                   ('batterie_montee', 'Batterie montée', 'Battery fitted', 'mdi:battery'),
                                   ('appareils_meteo', 'Appareils sur la météo', 'Devices on the forecast', 'mdi:lightbulb-outline'),
@@ -2179,6 +2181,12 @@ views:
     'es': 'Tiempo sin tocar; nunca mientras suena la alarma, con la voz o en un juego',
     'it': 'Tempo senza tocco; mai mentre suona la sveglia, con la voce o in un gioco',
     'tr': 'Dokunmadan geçen süre; alarm çalarken, sesli asistanda veya oyunda asla'},
+  'Extinction sur batterie seulement': {
+    'de': 'Automatisch aus nur im Akkubetrieb',
+    'nl': 'Automatisch uit alleen op batterij',
+    'es': 'Apagado solo con batería',
+    'it': 'Spegnimento solo a batteria',
+    'tr': 'Yalnızca pilde otomatik kapat'},
   "Rallumer l'écran d'une tape": {
     'de': 'Bildschirm per Tipp aufwecken',
     'nl': 'Scherm wekken met een tik',
