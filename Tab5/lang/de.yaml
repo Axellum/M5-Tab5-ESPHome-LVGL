@@ -1208,7 +1208,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "BATTERIE RÉSEAU": "NETZSPEICHER"
 "d'avance sur le réseau ce mois-ci": "Vorsprung aufs Netz diesen Monat"
 "de retard sur le réseau ce mois-ci": "Rückstand zum Netz diesen Monat"
-"Fin du mois (rythme sur %d j)": "Monatsende (Tempo %d T.)"
+"Fin du mois (rythme %d j)": "Monatsende (Tempo %d T.)"
 "Économies": "Ersparnis"
 "de ta conso couverte par le soleil": "deines Verbrauchs von der Sonne gedeckt"
 "kWh / heure": "kWh / Stunde"

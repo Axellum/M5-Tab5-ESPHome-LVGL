@@ -1187,7 +1187,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "BATTERIE RÉSEAU": "GRID BATTERY"
 "d'avance sur le réseau ce mois-ci": "ahead of the grid this month"
 "de retard sur le réseau ce mois-ci": "behind the grid this month"
-"Fin du mois (rythme sur %d j)": "End of month (%d-day pace)"
+"Fin du mois (rythme %d j)": "End of month (%d-day pace)"
 "Économies": "Savings"
 "de ta conso couverte par le soleil": "of your use covered by the sun"
 "kWh / heure": "kWh / hour"

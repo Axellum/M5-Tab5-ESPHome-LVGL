@@ -1189,7 +1189,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "BATTERIE RÉSEAU": "NETBATTERIJ"
 "d'avance sur le réseau ce mois-ci": "voorsprong op het net deze maand"
 "de retard sur le réseau ce mois-ci": "achterstand op het net deze maand"
-"Fin du mois (rythme sur %d j)": "Einde maand (tempo %d d)"
+"Fin du mois (rythme %d j)": "Einde maand (tempo %d d)"
 "Économies": "Besparing"
 "de ta conso couverte par le soleil": "van je verbruik gedekt door de zon"
 "kWh / heure": "kWh / uur"

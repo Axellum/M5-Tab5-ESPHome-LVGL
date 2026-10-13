@@ -1297,7 +1297,7 @@ void peindre_heros() {
         ui_text_color(o.fin_valeur, m.fin < 0.0f ? UIColor.WARNING : UIColor.SUCCESS);
         const int32_t lv = largeur_texte(o.fin_valeur, buf);
         ui_x(o.fin_valeur, kHerosX + kHerosW - lv);
-        snprintf(buf, sizeof(buf), tr("Fin du mois (rythme sur %d j)"), m.n_rythme);
+        snprintf(buf, sizeof(buf), tr("Fin du mois (rythme %d j)"), m.n_rythme);
         texte_ha_coupe(o.fin_titre, buf, kHerosW - lv - kFinEcart);
     }
 

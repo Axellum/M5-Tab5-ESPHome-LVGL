@@ -1704,7 +1704,7 @@ static const char* const kI18nKeys[] = {
     "Fin de la run",
     "Fin de partie : 16 coups chacun",
     "Fin de partie : 5 coups chacun",
-    "Fin du mois (rythme sur %d j)",
+    "Fin du mois (rythme %d j)",
     "Finale manquée — il faudra revenir au centre.",
     "Finesse",
     "Fixe",
@@ -2957,7 +2957,7 @@ static const char* const kI18n_en[] = {
     "End of the run",  // "Fin de la run"
     "Endgame: 16 moves each",  // "Fin de partie : 16 coups chacun"
     "Endgame: 5 moves each",  // "Fin de partie : 5 coups chacun"
-    "End of month (%d-day pace)",  // "Fin du mois (rythme sur %d j)"
+    "End of month (%d-day pace)",  // "Fin du mois (rythme %d j)"
     "Final missed — head back to the hub.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Fixed",  // "Fixe"
@@ -4210,7 +4210,7 @@ static const char* const kI18n_de[] = {
     "Ende des Runs",  // "Fin de la run"
     "Endspiel: je 16 Züge",  // "Fin de partie : 16 coups chacun"
     "Endspiel: je 5 Züge",  // "Fin de partie : 5 coups chacun"
-    "Monatsende (Tempo %d T.)",  // "Fin du mois (rythme sur %d j)"
+    "Monatsende (Tempo %d T.)",  // "Fin du mois (rythme %d j)"
     "Finale verpasst — zurück zur Mitte.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Fest",  // "Fixe"
@@ -5463,7 +5463,7 @@ static const char* const kI18n_nl[] = {
     "Einde van de run",  // "Fin de la run"
     "Eindspel: elk 16 zetten",  // "Fin de partie : 16 coups chacun"
     "Eindspel: elk 5 zetten",  // "Fin de partie : 5 coups chacun"
-    "Einde maand (tempo %d d)",  // "Fin du mois (rythme sur %d j)"
+    "Einde maand (tempo %d d)",  // "Fin du mois (rythme %d j)"
     "Finale gemist — terug naar het midden.",  // "Finale manquée — il faudra revenir au centre."
     "Finesse",  // "Finesse"
     "Vast",  // "Fixe"
@@ -6716,7 +6716,7 @@ static const char* const kI18n_es[] = {
     "Fin de la run",  // "Fin de la run"
     "Final: 16 jugadas cada uno",  // "Fin de partie : 16 coups chacun"
     "Final: 5 jugadas cada uno",  // "Fin de partie : 5 coups chacun"
-    "Fin de mes (ritmo de %d d)",  // "Fin du mois (rythme sur %d j)"
+    "Fin de mes (ritmo de %d d)",  // "Fin du mois (rythme %d j)"
     "Final fallada — hay que volver al centro.",  // "Finale manquée — il faudra revenir au centre."
     "Sutileza",  // "Finesse"
     "Fija",  // "Fixe"
@@ -7969,7 +7969,7 @@ static const char* const kI18n_it[] = {
     "Fine della run",  // "Fin de la run"
     "Finale: 16 mosse a testa",  // "Fin de partie : 16 coups chacun"
     "Finale: 5 mosse a testa",  // "Fin de partie : 5 coups chacun"
-    "Fine mese (ritmo su %d g)",  // "Fin du mois (rythme sur %d j)"
+    "Fine mese (ritmo su %d g)",  // "Fin du mois (rythme %d j)"
     "Finale mancata — torna al centro.",  // "Finale manquée — il faudra revenir au centre."
     "Finezza",  // "Finesse"
     "Fissa",  // "Fixe"
@@ -9222,7 +9222,7 @@ static const char* const kI18n_tr[] = {
     "Seferin sonu",  // "Fin de la run"
     "Oyun sonu: her biri 16 hamle",  // "Fin de partie : 16 coups chacun"
     "Oyun sonu: her biri 5 hamle",  // "Fin de partie : 5 coups chacun"
-    "Ay sonu (%d günlük hız)",  // "Fin du mois (rythme sur %d j)"
+    "Ay sonu (%d günlük hız)",  // "Fin du mois (rythme %d j)"
     "Final kaçtı — merkeze dönmen gerek.",  // "Finale manquée — il faudra revenir au centre."
     "İncelik",  // "Finesse"
     "Sabit",  // "Fixe"

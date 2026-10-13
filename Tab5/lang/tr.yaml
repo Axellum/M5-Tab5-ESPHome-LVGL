@@ -1236,7 +1236,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "BATTERIE RÉSEAU": "ŞEBEKE BATARYASI"
 "d'avance sur le réseau ce mois-ci": "bu ay şebekeye karşı fazla"
 "de retard sur le réseau ce mois-ci": "bu ay şebekeye karşı eksik"
-"Fin du mois (rythme sur %d j)": "Ay sonu (%d günlük hız)"
+"Fin du mois (rythme %d j)": "Ay sonu (%d günlük hız)"
 "Économies": "Tasarruf"
 "de ta conso couverte par le soleil": "tüketiminin güneşten karşılanan kısmı"
 "kWh / heure": "kWh / saat"

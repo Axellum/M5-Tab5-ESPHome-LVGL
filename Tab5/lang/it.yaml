@@ -1242,7 +1242,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "BATTERIE RÉSEAU": "BATTERIA DI RETE"
 "d'avance sur le réseau ce mois-ci": "di vantaggio sulla rete questo mese"
 "de retard sur le réseau ce mois-ci": "di ritardo sulla rete questo mese"
-"Fin du mois (rythme sur %d j)": "Fine mese (ritmo su %d g)"
+"Fin du mois (rythme %d j)": "Fine mese (ritmo su %d g)"
 "Économies": "Risparmio"
 "de ta conso couverte par le soleil": "dei tuoi consumi coperti dal sole"
 "kWh / heure": "kWh / ora"
