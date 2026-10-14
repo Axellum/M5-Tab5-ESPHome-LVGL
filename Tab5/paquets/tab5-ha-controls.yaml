@@ -111,6 +111,20 @@ select:
       - script.execute: tab5_reglages_sync_ui
 
 switch:
+  # Extinction auto sur batterie seulement (13/10/2026, discussion #278 : la tablette
+  # portée dans la maison, 1,74 W écran allumé contre 1,23 W éteint). Allumé, le délai
+  # du select « Tab5 Extinction auto de l'écran » ne s'applique que quand la tablette
+  # tire sur sa batterie (economie_sur_batterie(), le courant de l'INA226, comme le
+  # mode économie) ; sur secteur, l'écran reste allumé. Éteint par défaut : rien ne
+  # change pour qui ne choisit rien (tests/test_extinction_auto.py).
+  - platform: template
+    id: tab5_extinction_sur_batterie
+    name: "Tab5 Extinction auto sur batterie seulement"
+    icon: mdi:battery-clock
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
   # Batterie de la tablette montée (04/10/2026) : montre son icône dans le bandeau
   # d'état, en dernier (niveau, charge et tension : tab5-sensors-diagnostics.yaml).
   # Un réglage : montrer l'icône ou pas. Allumé, l'icône devient une prise quand la
@@ -236,7 +250,9 @@ interval:
   #   - un jeu de l'Arcade ouvert (GameRegistry::any_open() : une partie en pause,
   #     c'est zéro toucher pendant des minutes, comme pour le retour à l'accueil) ;
   #   - une mise à jour du firmware (`ota_en_cours`).
-  # Pas avant la fin du démarrage (`boot_complete`).
+  # Pas avant la fin du démarrage (`boot_complete`). Avec « Tab5 Extinction auto sur
+  # batterie seulement », pas sur secteur non plus (après la liste : le mode économie
+  # la lit telle quelle).
   # Cette liste sert aussi au mode économie (tab5-economie.yaml), qui n'assombrit pas
   # l'écran pour les mêmes raisons : la condition la range dans `ecran_veille_permise`
   # avant de regarder le délai, que l'extinction auto soit choisie ou pas.
@@ -258,6 +274,8 @@ interval:
               const auto choix = id(tab5_extinction_auto).active_index();
               if (!choix.has_value() || *choix == 0 || *choix >= NB_DELAIS) return false;
               if (!permise) return false;
+              // « Sur batterie seulement » : sur secteur, pas d'extinction.
+              if (id(tab5_extinction_sur_batterie).state && !economie_sur_batterie()) return false;
               const uint32_t depuis_allumage = millis() - id(ecran_allume_ms);
               const uint32_t inactif = std::min(ui_idle_ms(), depuis_allumage);
               return inactif >= DELAIS_MIN[*choix] * 60000u;

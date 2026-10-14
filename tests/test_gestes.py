@@ -285,7 +285,7 @@ def test_icone_de_la_clim_entre_moins_et_plus():
     """La consigne reste au centre exact de la zone − / + (66..339 : 273 px depuis la
     tuile de 72 px du 09/10/2026, 255 avant), comme avant ;
     l'icône de 45 px est posée à 8 px à sa gauche (align_to, puis suivie en C++ à chaque
-    changement de taille). Avec la consigne la plus large (« 88.8 », un °F à décimale) dans
+    changement de taille). Avec la consigne la plus large (« 88.8 ° », un °F à décimale) dans
     la police de date de chaque thème, la moitié gauche (demi-consigne, 8 px, icône) laisse
     au moins 10 px d'air avant −."""
     import gen_themes
@@ -304,7 +304,8 @@ def test_icone_de_la_clim_entre_moins_et_plus():
     assert suivre.count("LV_EVENT_SIZE_CHANGED") == 2
     mesures = gen_themes.lire_polices()
     ref_cle = police_theme.REFERENCE
-    textes = ("88.8", "--")
+    # « ° » après la consigne depuis le 14/10/2026 (clim_consigne_zone, PR #471).
+    textes = ("88.8 °", "--")
     chars = "".join(sorted(set("".join(textes))))
     ref = police_theme.mesurer(police_theme.fichier(*ref_cle.rsplit("@", 1)), chars)
     for theme in gen_themes.charger():

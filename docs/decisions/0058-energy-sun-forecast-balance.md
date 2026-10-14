@@ -1,6 +1,6 @@
 # ADR-0058: Energy popup in pages — power flow, the sun and the day's forecast learned from the home's own production, and a balance with export and savings
 
-**Status:** Proposed (2026-10-10, the three lots asked by the author; not yet tried on a tablet nor with a real solar installation)
+**Status:** Proposed (2026-10-10, the three lots asked by the author; not yet tried on a tablet nor with a real solar installation) — the **Bilan** page is **superseded by [ADR-0062](0062-energy-balance-kwh-grid-battery.md)** (2026-10-13): kWh first, the grid as a battery over the calendar month, three fields more at the end of the `tab5_maj_energie_bilan` payload, an optional home-consumption meter and an hour-by-hour estimate when there is no grid meter.
 **Date:** 2026-10-10
 
 ## Context
@@ -16,7 +16,7 @@ The popup gets pages (`pages_brancher()`, ADR-0046), opened on the first one tha
 1. **Flux** — solar, home, grid and battery as circles, joined by lines whose thickness follows the power; a ring on the home split between solar and grid. Static: no running animation (battery cost, author's taste). Needs the instant (`tab5_maj_energie`) with solar picked.
 2. **Aujourd'hui** — the sun's arc from sunrise to sunset with the sun at its place (local time between `lever` and `coucher`), solar noon; the hours of the day: production (bars, from the hours series), forecast (outlined bars), the learned clear-sky curve (a line); the best window as a band; produced, forecast for the day, forecast for tomorrow. Needs `tab5_maj_energie_soleil`.
 3. **Production** — the current page of ADR-0028 (cards and bars, Hours / Days / Months), unchanged.
-4. **Bilan** — per hour, day or month (the same view as Production, the same buttons): production split into used at home / exported, consumption split into solar / grid, the self-consumption rate, the export, the savings, the total of the view. Needs `tab5_maj_energie_bilan`.
+4. **Bilan** (*replaced by [ADR-0062](0062-energy-balance-kwh-grid-battery.md)*) — per hour, day or month (the same view as Production, the same buttons): production split into used at home / exported, consumption split into solar / grid, the self-consumption rate, the export, the savings, the total of the view. Needs `tab5_maj_energie_bilan`.
 
 A page without its data is not shown; fewer than two pages = no tabs (the brick's rule).
 

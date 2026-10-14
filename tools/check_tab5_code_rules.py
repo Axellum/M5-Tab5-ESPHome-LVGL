@@ -350,9 +350,9 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_calendar.cpp", "cal_detail_type_style"): ("cal_det_icon_*",),
     ("tab5_console.cpp", "ui_sync_mute_icon"): ("icon_assist_mute",),
     # Popup Énergie (ADR-0028) : icônes des cartes (energie_carte.yaml, mdi_font_45) ; ADR-0058 :
-    # celles des cercles de la page Flux (energie_flux_noeud.yaml) et des cartes du Bilan.
+    # celles des cercles de la page Flux (energie_flux_noeud.yaml). Le Bilan n'a plus d'icône
+    # (ADR-0062).
     ("tab5_energie.cpp", "glyphe_carte"): ("energie_icone_*", "energie_flux_icone_*"),
-    ("tab5_energie.cpp", "glyphe_bilan"): ("energie_icone_*",),
     # Pièces (ADR-0023) : icônes 3.1 du mode héritage (cartes du mode HA, épaules gauches
     # de l'accueil), ampoule et flèche du volet sur les épaules droites de toutes les tuiles.
     # Le popup Maison (ADR-0037) montre la carte de chaque tuile, héritage compris (maison_icone_*, mdi_font_32),

@@ -59,6 +59,11 @@ NON_MONTREES = {
     "energie-flux": "page Flux (ADR-0058) ; image à tirer du rendu de la PR",
     "energie-aujourdhui": "page Aujourd'hui (ADR-0058) ; image à tirer du rendu de la PR",
     "energie-bilan": "page Bilan (ADR-0058) ; image à tirer du rendu de la PR",
+    # Vues Jours et Mois du Bilan en kWh et variante avec prix (ADR-0062), décrites dans
+    # energy.md : images à tirer du rendu de la PR, puis citées.
+    "energie-bilan-jours": "page Bilan, mois civil (ADR-0062) ; image à tirer du rendu de la PR",
+    "energie-bilan-mois": "energie-bilan-jours montre la même page ; la vue des mois est décrite",
+    "energie-bilan-prix": "energie-bilan-jours montre la même page ; les économies sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
     "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",
@@ -80,6 +85,11 @@ NON_MONTREES = {
     "telecommande-boitier": "page d'un boîtier (Apple TV), décrite dans tv.md ; image à tirer du rendu",
     "roue-lampe": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
+    # Tuile − / + pièce par pièce (14/10/2026, discussion #278) : écrans de vérification,
+    # réunis par tools/rendu/planche_reglables.py ; la règle est décrite dans home.md.
+    **{f"reglables-{maison}-piece-{n}{liste}": "vérification de la tuile − / + (planche_reglables.py)"
+       for maison in ("clims-n", "clims-1", "clims-0") for n in range(1, 6) for liste in ("", "-liste")},
+    "reglables-choix-piece-climat": "vérification du cas de la discussion #278 ; la règle est décrite dans home.md",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     # Roue d'une clim par la température de la pièce (ADR-0048), décrite dans climate.md.

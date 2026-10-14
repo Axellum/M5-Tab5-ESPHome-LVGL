@@ -80,10 +80,13 @@ def test_geste_comme_les_pages_des_reglages():
 def test_ouverture_sur_la_piece_affichee():
     # La clim visée par la température : celle de la pièce affichée en mode HA, sinon la
     # première ; aucune : faux (la liste de la tuile − / +).
+    # Depuis le 14/10/2026 : la clim d'ici (clim_ref_ici, celle de la tuile − / +), sinon la
+    # première de la liste.
     choisir = _corps(CLIM, "bool clim_ref_choisir(ClimRef& out) {")
+    assert choisir.index("if (clim_ref_ici(out)) return true;") < choisir.index("out = l[0];")
     assert "if (n == 0) return false;" in choisir
-    assert "tuiles_piece_mode_ha()" in choisir and "l[k].piece == piece" in choisir
-    assert "out = l[i];" in choisir
+    ici = _corps(CLIM, "bool clim_ref_ici(ClimRef& out) {")
+    assert "modele_ha::clim_ici_rang(l, n, tuiles_piece_mode_ha())" in ici and "out = l[i];" in ici
     # Le carrousel ouvert sur une clim : sa page, puis le popup.
     ouvrir = _corps(CLIM, "bool clim_carrousel_ouvrir_sur(const ClimRef& c) {")
     assert ouvrir.index("clim_ref_afficher(c)") < ouvrir.index("animate_popup_open(g_clim_ui.popup);")

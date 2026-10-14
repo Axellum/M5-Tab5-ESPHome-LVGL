@@ -148,13 +148,12 @@ Le profil éco consomme environ **moitié moins** que la référence toujours al
 
 ## Quoi en faire
 
-Réglages qui existent déjà : **Luminosité** (50 % est le bon compromis), **Extinction auto** (5 min), **Économie d'énergie** (« Sur batterie » est l'état d'origine), **Limite de charge** à 80 % pour une tablette toujours branchée, **Rallumer l'écran à « Okay Nabu »** et **d'une tape** pour le retrouver.
+Réglages qui existent déjà : **Luminosité** (50 % est le bon compromis), **Extinction auto** (5 min) avec **Extinction auto sur batterie seulement** pour qu'elle ne joue que débranchée, **Économie d'énergie** (« Sur batterie » est l'état d'origine), **Limite de charge** à 80 % pour une tablette toujours branchée, **Rallumer l'écran à « Okay Nabu »** et **d'une tape** pour le retrouver.
 
 Inutile d'après la mesure : le thème sombre sur batterie (0 W), couper Okay Nabu (0,05 W et plus de voix).
 
 Pistes qui changeraient quelque chose (non faites, à décider) :
 
-- Sur batterie, une **extinction automatique de l'écran après 5 minutes**, aujourd'hui indépendante de la source d'alimentation : elle fait passer de 1,74 W à 1,23 W tant que personne ne regarde la tablette.
 - Mesurer les points manquants : écran à 75 % et 25 % (pourquoi rien ne change sous 50 % ?), le Wi-Fi éco, et la **puissance à la prise avec une prise mesurante** (pertes du chargeur, avec et sans batterie).
 - Faire calculer l'autonomie au script de test d'après la capacité nominale de la batterie plutôt que d'après sa propre extrapolation.
 

@@ -228,6 +228,17 @@ void clim_format_consigne(const ClimReglages& r, char* buf, size_t n, float t) {
     else snprintf(buf, n, clim_pas_entier(r) ? "%.0f" : "%.1f", t);
 }
 
+// La consigne d'une clim sur la tuile − / + et dans sa liste (ADR-0033), la même pour
+// toutes les clims : « 21.5 ° », « -- » inconnue. Règle produit : « ° » toujours ; avant le
+// 14/10/2026, la clim du blueprint (clim_target) s'écrivait « 20.0 » quand les autres
+// avaient « 22.0 ° ». Le popup garde clim_format_consigne (son unité est à côté).
+void clim_consigne_zone(const ClimReglages& r, char* buf, size_t n, float t) {
+    clim_format_consigne(r, buf, n, t);
+    if (std::isnan(t)) return;
+    const size_t k = std::strlen(buf);
+    snprintf(buf + k, n - k, " \xC2\xB0");
+}
+
 // Un pas de plus (sens > 0) ou de moins, borné aux limites de l'appareil.
 float consigne_suivante(const ClimReglages& r, float t, int sens) {
     float v = t + (sens < 0 ? -r.pas : r.pas);
@@ -379,10 +390,11 @@ void vue_verifier() {
     popup_peindre();
 }
 
-// Carte de l'accueil : la cible de la clim du blueprint, au format de son pas.
+// Carte de l'accueil (la tuile − / +) : la cible de la clim du blueprint, au format de son
+// pas, avec « ° » comme les autres clims.
 void carte_consigne_ui(float t) {
     char buf[16];
-    clim_format_consigne(s_clim, buf, sizeof(buf), t);
+    clim_consigne_zone(s_clim, buf, sizeof(buf), t);
     ui_text(g_clim_ui.consigne_carte, buf);
 }
 
@@ -398,6 +410,7 @@ void consigne_geste(float t) {
         s_attente.valeur = t;
         popup_consigne_ui(t, false);
         if (u.debounce_tuile != nullptr) u.debounce_tuile();
+        reglables_clim_changee();  // la même consigne sur la tuile − / + quand elle y est
         return;
     }
     if (u.consigne_bp != nullptr) *u.consigne_bp = t;
@@ -474,10 +487,10 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
         c->reglages = lu;
         ESP_LOGI("tab5.clim", "Reglages de la clim %.4s : %.1f-%.1f, pas %.2f, %s, [%s]", cle,
                  lu.min, lu.max, lu.pas, lu.fahrenheit ? "F" : "C", lu.capacites);
-        // Tuile : son bouton apparaît (l'appui ouvre le popup). Pièce : la tuile − / + peut
-        // la régler.
-        if (piece) reglables_clim_changee();
-        else tuiles_repeindre(r, t);
+        // Tuile : son bouton apparaît (l'appui ouvre le popup). Tuile ou pièce : la clim
+        // « d'ici » de la tuile − / + (clim_ref_ici) peut devenir celle-ci.
+        if (!piece) tuiles_repeindre(r, t);
+        reglables_clim_changee();
         roue_clim_changee();
         if (affichee) popup_peindre();
         else carrousel_pastilles();  // une page de plus (ou un nom changé) dans le carrousel
@@ -489,7 +502,7 @@ bool clim_tuile_recu(const char* cle, size_t n_cle, const char* reste, size_t n_
         popup_piece_ui(c->etat.piece);
         clim_recolorer();
     }
-    if (piece) reglables_clim_changee();  // sa consigne sur la tuile − / +
+    reglables_clim_changee();  // sa consigne sur la tuile − / + quand elle y est
     roue_clim_changee();
     return true;
 }
@@ -520,6 +533,7 @@ void clim_tuile_oublier(int r, int t) {
     // Une consigne en attente irait à l'appareil qui a pris sa place : elle ne part pas.
     if (std::strcmp(s_attente.cle, modele_ha::tuile_cle(r, t).s) == 0) s_attente = Attente{};
     roue_clim_changee();
+    reglables_clim_changee();  // la clim « d'ici » de la tuile − / + a pu changer
     if (s_vue != r * kTuiles + t) {
         carrousel_pastilles();  // une page de moins dans le carrousel
         return;
@@ -542,16 +556,20 @@ bool clim_afficher_piece(int r) {
     return true;
 }
 
-void clim_piece_pas(int r, int sens) {
-    ClimTuile* c = piece_clim(r, false);
+void clim_ref_pas(const ClimRef& ref, int sens) {
+    if (ref.r < 0) return;  // la clim du blueprint : clim_target (climate_card.yaml)
+    ClimTuile* c = ref_clim(ref.r, ref.t);
     if (c == nullptr || !c->reglages.recu || std::isnan(c->etat.consigne)) return;  // inconnue : rien
     const float v = consigne_suivante(c->reglages, c->etat.consigne, sens);
     c->etat.consigne = v;
     // Même chemin que le popup sur une clim de tuile : clé et valeur gardées pour
-    // tab5_debounce_clim_tuile, qui envoie « cpR » / consigne 250 ms après le dernier appui.
-    cle_piece(r, s_attente.cle);
+    // tab5_debounce_clim_tuile, qui envoie « tRT » ou « cpR » / consigne 250 ms après le
+    // dernier appui.
+    if (ref.t < 0) cle_piece(ref.r, s_attente.cle);
+    else std::memcpy(s_attente.cle, modele_ha::tuile_cle(ref.r, ref.t).s, sizeof(s_attente.cle));
     s_attente.valeur = v;
-    if (vue_tuile() && s_vue == kCasesTuiles + r) popup_consigne_ui(v, false);
+    const int i = ref.t < 0 ? kCasesTuiles + ref.r : ref.r * kTuiles + ref.t;
+    if (vue_tuile() && s_vue == i) popup_consigne_ui(v, false);
     if (g_clim_ui.debounce_tuile != nullptr) g_clim_ui.debounce_tuile();
     reglables_clim_changee();
 }
@@ -565,6 +583,7 @@ void clim_piece_oublier(int r) {
     // Une consigne en attente irait à une clim que la pièce n'a plus : elle ne part pas.
     if (std::strcmp(s_attente.cle, cle) == 0) s_attente = Attente{};
     roue_clim_changee();
+    reglables_clim_changee();  // la clim « d'ici » de la tuile − / + a pu changer
     if (s_vue != kCasesTuiles + r) {
         carrousel_pastilles();  // une page de moins dans le carrousel
         return;
@@ -574,11 +593,11 @@ void clim_piece_oublier(int r) {
     popup_peindre();
 }
 
-uint32_t clim_piece_carte(int r, char* buf, size_t n, uint32_t& couleur_valeur) {
-    const ClimTuile* c = piece_clim(r, false);
+uint32_t clim_ref_carte(const ClimRef& ref, char* buf, size_t n, uint32_t& couleur_valeur) {
+    const ClimTuile* c = ref.r < 0 ? nullptr : ref_clim(ref.r, ref.t);
     static const std::string kSansMode;
     const ClimReglages& g = c != nullptr ? c->reglages : s_clim;
-    clim_format_consigne(g, buf, n, c != nullptr ? c->etat.consigne : NAN);
+    clim_consigne_zone(g, buf, n, c != nullptr ? c->etat.consigne : NAN);
     const std::string& mode = c != nullptr ? c->etat.mode : kSansMode;
     couleur_valeur = couleur_consigne(mode);
     return couleur_icone_carte(mode);
@@ -760,24 +779,26 @@ void clim_carrousel_preparer() {
     carrousel_pastilles();
 }
 
+bool clim_ref_ici(ClimRef& out) {
+    ClimRef l[kClimPastilles];
+    const int n = clims_enumerer(l, kClimPastilles);
+    // Une seule : elle ; plusieurs : celle de la pièce affichée en mode HA, sinon celle du
+    // blueprint (règle pure, testée sur PC : modele_ha::clim_ici_rang).
+    const int i = modele_ha::clim_ici_rang(l, n, tuiles_piece_mode_ha());
+    if (i < 0) return false;
+    out = l[i];
+    return true;
+}
+
 bool clim_ref_choisir(ClimRef& out) {
+    // La clim d'ici (la même que la tuile − / +) ; sinon, plusieurs clims et ni la pièce ni
+    // le blueprint n'en ont : la première de la liste, pour que le toucher de la
+    // température ouvre quand même une roue.
+    if (clim_ref_ici(out)) return true;
     ClimRef l[kClimPastilles];
     const int n = clims_enumerer(l, kClimPastilles);
     if (n == 0) return false;
-    // La clim de la pièce affichée en mode HA — sa clim propre d'abord (ADR-0040, celle que
-    // règle la tuile − / +), sinon la première de ses tuiles —, sinon la première (celle du
-    // blueprint).
-    int i = 0;
-    const int piece = tuiles_piece_mode_ha();
-    bool trouvee = false;
-    for (int k = 0; piece >= 0 && k < n; k++) {
-        if (l[k].piece == piece && (!trouvee || l[k].t < 0)) {
-            i = k;
-            trouvee = true;
-            if (l[k].t < 0) break;
-        }
-    }
-    out = l[i];
+    out = l[0];
     return true;
 }
 
@@ -837,7 +858,7 @@ void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target) {
     if (lbl_target == nullptr) return;
     s_clim_consigne = target;
     char buf[16];
-    clim_format_consigne(s_clim, buf, sizeof(buf), target);
+    clim_consigne_zone(s_clim, buf, sizeof(buf), target);
     ui_text(lbl_target, buf);
     if (!std::isfinite(target)) return;
     if (arc != nullptr)
@@ -863,7 +884,7 @@ void clim_blueprint_recu(float consigne, float piece) {
 const char* clim_nom() { return s_clim.nom; }
 
 uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur) {
-    clim_format_consigne(s_clim, buf, n, s_clim_consigne);
+    clim_consigne_zone(s_clim, buf, n, s_clim_consigne);
     static const std::string kSansMode;
     const std::string& mode = g_clim_ui.mode_bp != nullptr ? *g_clim_ui.mode_bp : kSansMode;
     couleur_valeur = couleur_consigne(mode);

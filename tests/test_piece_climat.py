@@ -276,19 +276,51 @@ def test_le_carrousel_liste_les_clims_des_pieces():
     assert "c.t < 0 ? piece_clim(c.r, false)" in _fonction(clim, "ref_nom")
     rang = _fonction(clim, "carrousel_rang")
     assert "vue_piece_index()" in rang and "vue_tuile_index()" in rang
-    # En mode HA, la clim propre de la pièce d'abord, sinon la première de ses tuiles.
-    assert "if (l[k].t < 0) break;" in _fonction(clim, "clim_ref_choisir")
+    # En mode HA, la clim propre de la pièce d'abord, sinon la première de ses tuiles (règle
+    # pure, testée sur PC par tools/test_tab5_socle.cpp).
+    rang = _fonction(_lire(source("tab5_modele_ha.h")), "clim_ici_rang")
+    assert "if (l[k].t < 0) return k;" in rang
+    assert "modele_ha::clim_ici_rang(" in _fonction(clim, "clim_ref_ici")
     # Une page de moins quand la pièce perd sa clim.
     assert "carrousel_pastilles();" in _fonction(clim, "clim_piece_oublier")
     # Une seule pièce « affichée en mode HA » (celle du lot B, sans le mode héritage).
     assert _lire(source("tab5_tuiles.cpp")).count("int tuiles_piece_mode_ha()") == 1
 
 
-def test_la_tuile_moins_plus_suit_la_clim_de_la_piece():
+def test_la_tuile_moins_plus_suit_la_clim_d_ici():
+    """14/10/2026 (discussion #278, décision d'Axel) : la ligne « Clim » de la tuile − / +
+    est la clim d'ici (clim_ref_ici) ; un autre appareil choisi reste choisi partout."""
     reglables = _lire(source("tab5_reglables.cpp"))
-    assert "piece_climat_clim()" in _fonction(reglables, "tuile_visible")
-    assert "clim_piece_pas(" in _fonction(reglables, "reglables_pas")
-    assert "clim_afficher_piece(" in _fonction(reglables, "reglables_valeur_appui")
+    # Plus aucun passage en force de la clim de la pièce par-dessus le choix.
+    assert "piece_climat_clim" not in reglables.split("*/", 1)[1]
+    assert "piece_climat_clim" not in _lire(source("tab5_piece_climat.h"))
+    # La ligne « Clim » existe quand il y a une clim d'ici ; la tuile aussi.
+    assert "clim_ref_ici(c)" in _fonction(reglables, "clim_ici")
+    assert "clim_ici()" in _fonction(reglables, "tuile_visible")
+    assert "if (clim_ici()) out[n++] = {Sorte::CLIM, -1};" in _fonction(reglables, "lister")
+    # Une clim de tuile ou de pièce : seulement quand la ligne « Clim » est choisie.
+    autre = _fonction(reglables, "clim_autre")
+    assert "en.sorte == Sorte::CLIM && clim_ref_ici(c) && c.r >= 0" in autre
+    # Toutes les lectures du choix passent par l'entrée choisie, puis clim_autre.
+    for signature, appel in (("peindre_carte", "vue(en, v);"),
+                             ("reglables_clim_choisie", "!clim_autre(en, c)"),
+                             ("reglables_pas", "clim_ref_pas(c, sens);"),
+                             ("reglables_valeur_appui", "clim_carrousel_ouvrir_sur(c);")):
+        corps = _fonction(reglables, signature)
+        assert corps.index("const Entree en = entree_choisie();") < corps.index(appel), signature
+    assert "clim_autre(en, c)" in _fonction(reglables, "peindre_carte")
+    assert "vue_clim_ref(c, v);" in _fonction(reglables, "vue")
+    # Le défilement auto tourne aussi sur une pièce qui a sa clim.
+    assert "piece_climat" not in _fonction(reglables, "reglables_tour")
+    # Le choix reste celui d'un geste, gardé en NVS (rien ne l'écrase au changement de pièce).
+    assert reglables.count("s_choix = ") == 4, "déclaration, charger, reglables_choisir, reglables_tour seulement"
+    clim = _lire(source("tab5_clim.cpp"))
+    pas = _fonction(clim, "clim_ref_pas")
+    assert "if (ref.r < 0) return;" in pas and "modele_ha::tuile_cle(ref.r, ref.t)" in pas
+    assert "cle_piece(ref.r, s_attente.cle)" in pas and "g_clim_ui.debounce_tuile()" in pas
+    # Une clim de tuile reçue, oubliée ou réglée au popup : la tuile − / + se repeint.
+    for f in ("clim_tuile_recu", "clim_tuile_oublier", "clim_piece_oublier", "consigne_geste"):
+        assert "reglables_clim_changee();" in _fonction(clim, f), f
 
 
 # ─── Démo ────────────────────────────────────────────────────────────────────
