@@ -114,12 +114,22 @@ display:
     update_interval: never
     auto_clear_enabled: false
 
-# GT911 : ni INT ni RST reliés au P4 (BSP : GPIO_NUM_NC), le composant interroge.
+# GT911 : le BSP déclare RST et INT non reliés (GPIO_NUM_NC), mais le schéma relie GPIO23
+# au connecteur du tactile et les trois configs publiques qui marchent sur la carte
+# (agillis/esphome-modular-lvgl-buttons, Jordi1990/openamber, fil HA t/945864) le
+# donnent en reset_pin. Le tactile est inversé en X et en Y comme chez agillis, avec la
+# rotation de 180° de LVGL (comparaison : docs_constructeurs/waveshare_p4_7b/
+# analyse_reglages_projets.md, 14/10/2026).
 touchscreen:
   - platform: gt911
     id: tactile
     i2c_id: bus_bsp
+    reset_pin: GPIO23
     update_interval: 50ms
+    transform:
+      swap_xy: false
+      mirror_x: true
+      mirror_y: true
     on_touch:
       - lvgl.label.update:
           id: lbl_toucher
@@ -224,6 +234,9 @@ interval:
 lvgl:
   displays: [ecran]
   touchscreens: [tactile]
+  # Dalle montée à l'envers par rapport au défaut du pilote : agillis, HomeTiles et le
+  # fil HA tournent l'image de 180° (constaté par Axel le 14/10 : image « à l'envers »).
+  rotation: 180
   pages:
     - id: page_essai
       bg_color: 0x101418
