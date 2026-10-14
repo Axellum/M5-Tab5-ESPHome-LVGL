@@ -676,8 +676,10 @@ CLIMS_DE_TUILES = (
 #     zone montre le premier appareil de la liste.
 # `fermer` referme la liste (un toucher hors du panneau, sur son capteur plein écran),
 # quitte le mode HA, puis remet la maison de la démo : définitions et états de la Chambre
-# d'amis (la tuile redéfinie oublie sa clim, clim_tuile_oublier), clim du blueprint
-# présente, climat des cinq pièces (le Bureau retrouve sa clim).
+# d'amis (la tuile redéfinie oublie sa clim, clim_tuile_oublier ; sa tuile de la clim du
+# blueprint reprend l'état de la dernière scène, sur laquelle s'ouvrent les écrans, sinon
+# « roue-clim » marquerait un autre mode), clim du blueprint présente, climat des cinq
+# pièces (le Bureau retrouve sa clim).
 PIECE_TUILE_CLIM = 2
 assert PIECES[PIECE_TUILE_CLIM].tuiles[2].type == "cli" and "m" in PIECES[PIECE_TUILE_CLIM].tuiles[2].options
 CHAMBRE_AVEC_SA_CLIM = {**PIECES, PIECE_TUILE_CLIM: Piece(PIECES[PIECE_TUILE_CLIM].nom, {
@@ -699,7 +701,7 @@ REGLABLES_MAISONS = {
 }
 REGLABLES_MAISON_DE_LA_DEMO = (
     Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
-    Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({2: PIECES[2]})),)),
+    Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({2: PIECES[2]}, SCENES[-1].clim)),)),
     Service("tab5_maj_zones", (("absentes", build_zones_absentes(frozenset())),)),
     Service("tab5_maj_emplacements", (("payload", build_climat_pieces(PIECES)),)),
 )

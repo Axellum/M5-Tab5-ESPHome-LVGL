@@ -177,9 +177,15 @@ def test_la_tuile_moins_plus_piece_par_piece():
     # La remise en état repousse le climat des cinq pièces (le Bureau retrouve sa clim).
     remise = ecrans.REGLABLES_MAISON_DE_LA_DEMO[-1].donnees[0][1]
     assert f"p{ecrans.PIECE_CLIMAT}|" in remise and f"crp{ecrans.PIECE_CLIMAT}|" in remise
+    # … et l'état de la dernière scène sur la tuile de la clim du blueprint (option m) :
+    # « roue-clim », plus loin, marque son mode (14/10/2026 : « cool » au lieu de
+    # « fan_only » quand la remise prenait l'état par défaut de la tuile).
+    etats = ecrans.REGLABLES_MAISON_DE_LA_DEMO[1].donnees[0][1]
+    clim = ecrans.SCENES[-1].clim
+    assert f"t{ecrans.PIECE_TUILE_CLIM}2|{clim['mode']}|{clim['current']}|;" in etats
     # La planche (tools/rendu/planche_reglables.py) lit exactement ces captures.
     import planche_reglables
-    noms = {e.nom for e in ECRANS if e.nom.startswith("reglables-")}
+    noms = {e.nom for e in ECRANS if e.nom.startswith("reglables-clims-")}
     lues = {n for _, cases in planche_reglables.plan() for _, zone, liste in cases for n in (zone, liste)}
     assert lues == noms
     assert set(planche_reglables.TITRES) == set(ecrans.REGLABLES_MAISONS)
