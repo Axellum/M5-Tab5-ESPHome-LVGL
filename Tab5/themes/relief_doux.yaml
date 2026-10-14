@@ -71,11 +71,15 @@ formes:
     radius: 30
     border_opa: 255
     border_side: [TOP, LEFT]
+  # Cartes des popups en creux : liseré sombre en haut à gauche, sans bord en bas. Le bas
+  # du dégradé reste à 9 niveaux du verre du popup (GLASS_LO_MODAL), comme en clair
+  # (0xE8ECF1 sur 0xDFE3EA) : en sombre, GLASS_LO (0x2A2E34) se fondait dans 0x292D33 et
+  # le bas des cartes, coins arrondis compris, disparaissait (13/10/2026).
   style_glass_card:
     radius: 26
     border_opa: 255
     border_side: [TOP, LEFT]
-    sombre: {border_color: 0x131517}
+    sombre: {border_color: 0x131517, bg_grad_color: 0x32363C}
     clair: {border_color: 0xA9B3C0}
 
 sombre:

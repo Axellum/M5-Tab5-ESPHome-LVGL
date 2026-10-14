@@ -83,7 +83,7 @@ static const Palette* const kPaletteStyle[] = {&UIColor, &UIHorloge, &UIBandeau,
 static constexpr uint32_t Palette::* kRolesFormes[] = {&Palette::GLASS_HI, &Palette::GLASS_HI_PAGE, &Palette::GLASS_LO, &Palette::GLASS_LO_PAGE, &Palette::GLASS_RIM};
 // État compilé (tab5-styles.yaml) de chaque propriété qu'un thème change, reposé avant
 // les formes du thème choisi.
-static constexpr int kNbFormesDefaut = 172;
+static constexpr int kNbFormesDefaut = 173;
 static constexpr Forme kFormesDefaut[] = {
     {0, LV_STYLE_RADIUS, FORME_NOMBRE, 18},  // style_meteo_card_page
     {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 1},  // style_meteo_card_page
@@ -256,12 +256,13 @@ static constexpr Forme kFormesDefaut[] = {
     {11, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 140},  // style_glass_card
     {11, LV_STYLE_BORDER_COLOR, FORME_ROLE, 4},  // style_glass_card
     {11, LV_STYLE_BG_COLOR, FORME_ROLE, 0},  // style_glass_card
+    {11, LV_STYLE_BG_GRAD_COLOR, FORME_ROLE, 2},  // style_glass_card
     {11, LV_STYLE_BG_GRAD_DIR, FORME_NOMBRE, LV_GRAD_DIR_VER},  // style_glass_card
     {0, 0, FORME_RETIRE, 0},  // (fin)
 };
 // Formes de chaque thème, mode sombre puis clair : kFormes[kFormesDebut[2 t + clair] ..
 // kFormesDebut[2 t + clair + 1][.
-static constexpr uint16_t kFormesDebut[] = {0, 0, 0, 99, 198, 324, 450, 475, 488, 530, 573, 587, 600, 658, 716, 728, 734, 760, 786, 872, 969, 1024, 1078, 1130, 1187, 1233, 1279, 1322, 1366, 1393, 1424, 1469, 1515, 1568, 1627, 1679, 1730, 1807, 1890, 1919, 1967, 2000, 2042};
+static constexpr uint16_t kFormesDebut[] = {0, 0, 0, 100, 199, 325, 451, 476, 489, 531, 574, 588, 601, 659, 717, 729, 735, 761, 787, 873, 970, 1025, 1079, 1131, 1188, 1234, 1280, 1323, 1367, 1394, 1425, 1470, 1516, 1569, 1628, 1680, 1731, 1808, 1891, 1920, 1968, 2001, 2043};
 static constexpr Forme kFormes[] = {
     {0, LV_STYLE_RADIUS, FORME_NOMBRE, 24},  // style_meteo_card_page relief_doux (sombre)
     {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_meteo_card_page relief_doux (sombre)
@@ -362,6 +363,7 @@ static constexpr Forme kFormes[] = {
     {11, LV_STYLE_BORDER_SIDE, FORME_NOMBRE, LV_BORDER_SIDE_TOP | LV_BORDER_SIDE_LEFT},  // style_glass_card relief_doux (sombre)
     {11, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_glass_card relief_doux (sombre)
     {11, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0x131517},  // style_glass_card relief_doux (sombre)
+    {11, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0x32363C},  // style_glass_card relief_doux (sombre)
     {0, LV_STYLE_RADIUS, FORME_NOMBRE, 24},  // style_meteo_card_page relief_doux (clair)
     {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_meteo_card_page relief_doux (clair)
     {0, LV_STYLE_BORDER_SIDE, FORME_NOMBRE, LV_BORDER_SIDE_TOP | LV_BORDER_SIDE_LEFT},  // style_meteo_card_page relief_doux (clair)
