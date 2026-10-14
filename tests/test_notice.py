@@ -80,6 +80,10 @@ NON_MONTREES = {
     "telecommande-boitier": "page d'un boîtier (Apple TV), décrite dans tv.md ; image à tirer du rendu",
     "roue-lampe": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
+    # Tuile − / + pièce par pièce (14/10/2026, discussion #278) : écrans de vérification,
+    # réunis par tools/rendu/planche_reglables.py ; la règle est décrite dans home.md.
+    **{f"reglables-{maison}-piece-{n}{liste}": "vérification de la tuile − / + (planche_reglables.py)"
+       for maison in ("clims-n", "clims-1", "clims-0") for n in range(1, 6) for liste in ("", "-liste")},
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     # Roue d'une clim par la température de la pièce (ADR-0048), décrite dans climate.md.

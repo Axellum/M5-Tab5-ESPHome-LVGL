@@ -27,9 +27,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
 from scenarios import (JOURS_FR, NABU, NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,  # noqa: E402
                        PIECES, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES, HeureForecast, JourForecast, Piece,
-                       Tuile, build_alerte_payload, build_etats_tuiles, build_heures_bulk_payload, build_historique,
-                       build_jours_bulk_payload, build_pluie_1h_bulk_payload, build_serveur_ia_payload,
-                       build_tuiles_payload, code_pluie)
+                       Tuile, build_alerte_payload, build_climat_pieces, build_etats_tuiles,
+                       build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
+                       build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
+                       build_zones_absentes, code_pluie)
 
 
 @dataclass(frozen=True)
@@ -662,6 +663,67 @@ CLIMS_DE_TUILES = (
                                        + "ce32|20.5|19.5|heat|none|quiet|swing;"
                                        + "cr33|18|30|1|°C|cfq|;ce33|22|17|off|none|auto|stop;"),)),
 )
+# La clim « d'ici » de la tuile − / + (14/10/2026, discussion #278, décision d'Axel ; ADR-0040,
+# mise à jour) : chaque pièce de la démo en mode HA, la zone − / + puis sa liste ouverte
+# (appui long sur la valeur), avec trois maisons ; tools/rendu/planche_reglables.py met
+# les captures sur une planche. Attendu :
+#   - « clims-n », plusieurs clims : celle du blueprint, une tuile cli SANS l'option m dans
+#     la Chambre d'amis (pièce 2 : « Clim de la chambre », sa clim) et la clim propre du
+#     Bureau (pièce 3) ; Salon, Entrée et Jardin montrent celle du blueprint ;
+#   - « clims-1 », une seule clim (celle du Bureau, la clim du blueprint déclarée absente
+#     comme le ferait HA) : la même sur toutes les pièces ;
+#   - « clims-0 », aucune (le Bureau perd aussi la sienne) : pas de ligne « Clim », la
+#     zone montre le premier appareil de la liste.
+# `fermer` referme la liste (un toucher hors du panneau, sur son capteur plein écran),
+# quitte le mode HA, puis remet la maison de la démo : définitions et états de la Chambre
+# d'amis (la tuile redéfinie oublie sa clim, clim_tuile_oublier), clim du blueprint
+# présente, climat des cinq pièces (le Bureau retrouve sa clim).
+PIECE_TUILE_CLIM = 2
+assert PIECES[PIECE_TUILE_CLIM].tuiles[2].type == "cli" and "m" in PIECES[PIECE_TUILE_CLIM].tuiles[2].options
+CHAMBRE_AVEC_SA_CLIM = {**PIECES, PIECE_TUILE_CLIM: Piece(PIECES[PIECE_TUILE_CLIM].nom, {
+    **PIECES[PIECE_TUILE_CLIM].tuiles,
+    2: Tuile("cli", "Clim de la chambre", "clim", etat="cool", valeur="23.5"),
+})}
+_BUREAU = PIECES[PIECE_CLIMAT].climat
+REGLABLES_MAISONS = {
+    "clims-n": (
+        Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(CHAMBRE_AVEC_SA_CLIM, RANGEE, REGLABLES)),)),
+        Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({2: CHAMBRE_AVEC_SA_CLIM[2]})
+                                           + "cr22|16|30|0.5|°C|chdfq|Clim de la chambre;"
+                                           + "ce22|21.0|23.5|cool|none|auto|stop;"),)),
+    ),
+    "clims-1": (Service("tab5_maj_zones", (("absentes", build_zones_absentes(frozenset({"clim"}))),)),),
+    "clims-0": (Service("tab5_maj_zones", (("absentes", build_zones_absentes(frozenset({"clim"}))),)),
+                Service("tab5_maj_emplacements",
+                        (("payload", f"p{PIECE_CLIMAT}|{_BUREAU.temperature}|{_BUREAU.humidite}|0;"),))),
+}
+REGLABLES_MAISON_DE_LA_DEMO = (
+    Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
+    Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({2: PIECES[2]})),)),
+    Service("tab5_maj_zones", (("absentes", build_zones_absentes(frozenset())),)),
+    Service("tab5_maj_emplacements", (("payload", build_climat_pieces(PIECES)),)),
+)
+# Toucher hors du panneau de la liste (reglables_liste.yaml : panneau à x 740-1260) : la
+# liste se referme (capteur plein écran) sans rien choisir.
+REGLABLES_LISTE_FERMER = Toucher(200, 300)
+
+
+def ecrans_reglables_clims(pieces: dict) -> tuple:
+    """« reglables-<maison>-piece-n » (la zone − / +) et « …-liste » (la liste ouverte),
+    n = R + 1, pour chaque maison de REGLABLES_MAISONS et chaque pièce occupée."""
+    ecrans = []
+    for maison, preparer in REGLABLES_MAISONS.items():
+        for r in sorted(pieces):
+            if not pieces[r].tuiles:
+                continue
+            aller, retour = vers_la_piece(pieces, r)
+            nom = f"reglables-{maison}-piece-{r + 1}"
+            ecrans.append(Ecran(nom, preparer + aller, retour + REGLABLES_MAISON_DE_LA_DEMO))
+            ecrans.append(Ecran(f"{nom}-liste", preparer + aller + (Long(*CONSIGNE_CLIM),),
+                                (REGLABLES_LISTE_FERMER,) + retour + REGLABLES_MAISON_DE_LA_DEMO))
+    return tuple(ecrans)
+
+
 # Geste dans le popup, vers la gauche : la clim suivante. Il part du bas de la carte
 # OPTIONS (verre vide sous ses boutons, x 857-1243 et y 631-687 à l'écran) et finit sur la
 # carte TEMPÉRATURE, sous l'arc et ses boutons.
@@ -1398,6 +1460,9 @@ ECRANS: tuple[Ecran, ...] = (
     _jeu("partie", "roi-noir", ROI_PARTIE, ROI_MENU + ROI_ABANDON + ROI_RETOUR),
     _jeu("pause", "roi-noir", ROI_PARTIE + ROI_MENU, ROI_ABANDON + ROI_RETOUR),
     _jeu("defaite", "roi-noir", ROI_PARTIE + ROI_MENU + ROI_ABANDON, ROI_RETOUR),
+
+    # La clim « d'ici » de la tuile − / + (14/10/2026) : chaque pièce, trois maisons.
+    *ecrans_reglables_clims(PIECES),
 
     # Roue de la clim (ADR-0036) en dernier, ses modes dépliés : « climr » reçu ne
     # s'efface pas, aucune capture d'après ne doit en dépendre.

@@ -140,13 +140,49 @@ def test_un_ecran_en_mode_ha_par_piece_de_la_demo():
         # n'est pas l'écran d'une pièce. De même les fenêtres du climat d'une pièce
         # (ADR-0040), ouvertes en mode HA sur elle, et la roue de sa clim (ADR-0048).
         # La pièce choisie dans la roue de navigation (ADR-0042) l'est aussi par un swipe.
+        # La tuile − / + pièce par pièce (« reglables-… », 14/10/2026) a ses propres maisons.
         if ha and not ecran.nom.startswith(("maison-", "climatisation-", "roue-clim-temperature",
-                                            "roue-navigation-")) \
+                                            "roue-navigation-", "reglables-")) \
                 and ecran.nom not in POPUPS_EN_MODE_HA:
             assert page not in obtenues, (ecran.nom, obtenues.get(page))
             obtenues[page] = ecran.nom
     assert obtenues == attendues
     assert len(PIECES) >= 4, "la démo montre au moins quatre pièces"
+
+
+def test_la_tuile_moins_plus_piece_par_piece():
+    """14/10/2026 (discussion #278) : la zone − / + et sa liste sur chaque pièce occupée,
+    avec plusieurs clims, une seule et aucune ; chaque écran remet la maison de la démo."""
+    occupees = [r for r, p in PIECES.items() if p.tuiles]
+    for maison in ("clims-n", "clims-1", "clims-0"):
+        for r in occupees:
+            for suffixe in ("", "-liste"):
+                nom = f"reglables-{maison}-piece-{r + 1}{suffixe}"
+                ecran = next((e for e in ECRANS if e.nom == nom), None)
+                assert ecran is not None, nom
+                _, page, ha = _jouer(ecran.etapes)
+                assert ha and page == PAGE_DE_LA_PIECE[r], nom
+                assert ecran.etapes[:len(ecrans.REGLABLES_MAISONS[maison])] == ecrans.REGLABLES_MAISONS[maison]
+                assert ecran.fermer[-len(ecrans.REGLABLES_MAISON_DE_LA_DEMO):] == ecrans.REGLABLES_MAISON_DE_LA_DEMO
+                if suffixe:
+                    # La liste ouverte par l'appui long sur la valeur, refermée avant « HA »
+                    # (sinon le toucher de « HA » tomberait sur son capteur plein écran).
+                    assert ecran.etapes[-1] == ecrans.Long(*ecrans.CONSIGNE_CLIM), nom
+                    assert ecran.fermer[0] == ecrans.REGLABLES_LISTE_FERMER, nom
+                    x, _y = ecran.fermer[0].x, ecran.fermer[0].y
+                    assert x < 740, "hors du panneau de la liste (reglables_liste.yaml)"
+    # La maison « plusieurs clims » a une tuile cli sans l'option m (sa clim de tuile).
+    tuile = ecrans.CHAMBRE_AVEC_SA_CLIM[ecrans.PIECE_TUILE_CLIM].tuiles[2]
+    assert tuile.type == "cli" and "m" not in tuile.options
+    # La remise en état repousse le climat des cinq pièces (le Bureau retrouve sa clim).
+    remise = ecrans.REGLABLES_MAISON_DE_LA_DEMO[-1].donnees[0][1]
+    assert f"p{ecrans.PIECE_CLIMAT}|" in remise and f"crp{ecrans.PIECE_CLIMAT}|" in remise
+    # La planche (tools/rendu/planche_reglables.py) lit exactement ces captures.
+    import planche_reglables
+    noms = {e.nom for e in ECRANS if e.nom.startswith("reglables-")}
+    lues = {n for _, cases in planche_reglables.plan() for _, zone, liste in cases for n in (zone, liste)}
+    assert lues == noms
+    assert set(planche_reglables.TITRES) == set(ecrans.REGLABLES_MAISONS)
 
 
 def _cartes(nombre):
