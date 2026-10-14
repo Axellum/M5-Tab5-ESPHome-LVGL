@@ -10,8 +10,8 @@
 #           ciel clair, meilleur créneau) et, à droite, produit, prévu, demain ;
 #         - « Production » : l'instantané en cartes et l'historique de la production en
 #           barres (Heures / Jours / Mois) avec son total (la page d'avant l'ADR-0058) ;
-#         - « Bilan » : autoconsommé, vendu, acheté, gains en cartes, et production /
-#           consommation en barres empilées, par heure, jour ou mois.
+#         - « Bilan » (en kWh, ADR-0062) : la « batterie réseau » du mois civil à gauche,
+#           le net par heure, jour ou mois en barres et son cumul en courbe à droite.
 #       Ouvert par une tuile cap à l'option e (capteur de la section « Énergie » du
 #       blueprint, tuile_appui → tab5_energie_ouvrir) ou par « Aller à l'écran → Énergie ».
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
@@ -21,9 +21,11 @@
 #       598 px de haut (corps x 24..1226, 20 px du bas). Changement de page instantané
 #       (conteneurs masqués / montrés). Tout ce qui bouge est écrit par tab5_energie.cpp
 #       (pages montrées, cartes, largeurs, barres, traits, arc) : aucune valeur posée ici.
-# @geometry Production et Bilan : cartes de 210 px en haut (y 0 du conteneur ; 194 sans
-#       graphique, centrées), graphique de 372 px en bas (y 226, zone 1166 × 286 à x 18,
-#       y 72). Aujourd'hui : carte de 846 × 598 à x 24 (zone 810 × 570 à x 18, y 14) et
+# @geometry Production : cartes de 210 px en haut (y 0 du conteneur ; 194 sans graphique,
+#       centrées), graphique de 372 px en bas (y 226, zone 1166 × 286 à x 18, y 72). Bilan :
+#       carte de 420 × 598 à x 24 (energie_bilan_heros, dessinée dans son bord) et carte de
+#       768 × 598 à x 458 (zone 764 × 530 à x 0, y 64, sous le titre et les boutons).
+#       Aujourd'hui : carte de 846 × 598 à x 24 (zone 810 × 570 à x 18, y 14) et
 #       carte de 340 × 598 à x 886 (zone 304 × 570). Flux : zone des traits sur toute la
 #       page, cercles de 190 px placés par le C++.
 # @ai_instruction Un widget de plus = son champ dans EnergieUI (tab5_energie.h) et sa
@@ -194,7 +196,7 @@ obj:
                 - label: { id: energie_attente, text: "En attente de Home Assistant", align: CENTER, y: 0, styles: style_text_dim }
 
           # ═══════════════════════════════════════════════════════════════════
-          # PAGE BILAN (tab5_maj_energie_bilan) : mêmes vues que Production
+          # PAGE BILAN (tab5_maj_energie_bilan, ADR-0062) : en kWh, mêmes vues que Production
           # ═══════════════════════════════════════════════════════════════════
           - obj:
               id: energie_page_bilan
@@ -207,34 +209,41 @@ obj:
               scrollable: false
               styles: style_invisible
               widgets:
-                # 4 cartes : 4 autoconsommé, 5 vendu, 6 acheté, 7 gains (celles qui ont un
-                # compteur ou un prix seulement).
-                - !include { file: energie_carte.yaml, vars: { n: "4" } }
-                - !include { file: energie_carte.yaml, vars: { n: "5" } }
-                - !include { file: energie_carte.yaml, vars: { n: "6" } }
-                - !include { file: energie_carte.yaml, vars: { n: "7" } }
-
-                # Production et consommation en barres empilées, par créneau de la vue.
+                # « Batterie réseau » du mois civil : net, jauge, fin du mois, produit,
+                # consommé, économies, part couverte par le soleil (tab5_energie.cpp).
                 - obj:
+                    id: energie_bilan_heros
                     align: TOP_LEFT
                     x: 24
-                    y: 226
-                    width: ${corps_w}
-                    height: 372
+                    y: 0
+                    width: 420
+                    height: ${corps_h}
+                    styles: style_glass_card
+                    scrollable: false
+                # Le net par créneau en barres et son cumul en courbe, par vue.
+                - obj:
+                    align: TOP_LEFT
+                    # À droite de la carte de 420 px, 14 px d'écart, jusqu'au bord du corps :
+                    # 768 × 598 sur le Tab5 (ADR-0061, jetons de tab5-ui-tokens.yaml).
+                    x: 458
+                    y: 0
+                    width: ${ corps_w | int - 434 }
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
+                      # « Octobre », « Aujourd'hui », « 2026 » (coupé avant les boutons).
                       - label: { id: energie_bilan_titre, text: "", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "0", x_pos: "-338", label_text: "Heures" } }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "1", x_pos: "-178", label_text: "Jours" } }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "2", x_pos: "-18", label_text: "Mois" } }
-                      # Barres empilées, légende, repère, maximum et axe : tab5_energie.cpp.
+                      # Graduations, barres, courbe, bulle, axe, légende : tab5_energie.cpp.
                       - obj:
                           id: energie_bilan_zone
                           align: TOP_LEFT
-                          x: 18
-                          y: 72
-                          width: ${graphique_l}
-                          height: 286
+                          x: 0
+                          y: 64
+                          width: ${ corps_w | int - 438 }
+                          height: ${ corps_h | int - 68 }
                           styles: style_transparent
                           scrollable: false

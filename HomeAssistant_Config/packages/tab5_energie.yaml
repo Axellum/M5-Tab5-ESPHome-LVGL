@@ -76,16 +76,24 @@
 #       - meilleur créneau : 3 heures consécutives, de l'heure courante au coucher, de
 #         plus grande somme prévue ; aucun si cette somme est sous 5 % de l'heure la plus
 #         forte de la courbe apprise.
-#       Bilan (tab5_maj_energie_bilan, « devise|vente|achat|gain ») : avec la production,
-#       l'historique de la vue, et les heures à chaque tour de la vue Heures. Compteurs
-#       d'achat et de vente (kWh) lus comme la production (5 minutes pour les heures et
-#       le jour, day, month) ; gain d'un créneau = (production − vente, ≥ 0) × prix
-#       d'achat + vente × prix de revente. Prix = entité si elle a une valeur, sinon le
-#       nombre ; aucun prix (0) : devise vide, pas de gain. Rien sans compteur d'achat ni
-#       de vente. Les clés de `capteurs` ajoutées (toutes facultatives, un blueprint plus
-#       ancien ne les envoie pas) : compteur_achat, compteur_vente, prix_achat,
-#       prix_achat_entite, prix_revente, prix_revente_entite, devise, prevision_jour,
-#       prevision_demain.
+#       Bilan (tab5_maj_energie_bilan, « devise|vente|achat|gain|prod|conso|estime » ; en
+#       kWh, ADR-0062) : avec la production et au moins un compteur du bilan (maison,
+#       achat ou vente). Vues civiles : « mois_civil » (du 1er à la fin du mois, poussée au
+#       premier passage quelle que soit la vue : la carte « Batterie réseau » de la
+#       tablette la lit), « annee_civile » (janvier à décembre, vue « mois ») et « heures »
+#       (à chaque passage de la vue « heures »). Compteurs lus comme la production (5
+#       minutes pour les heures et le jour, day, month). Sans compteur d'achat ni de vente
+#       mais avec celui de la maison, achat et vente sont estimés heure par heure (vente =
+#       max(0, production − maison), achat = max(0, maison − production), puis
+#       additionnés ; estime « 1 ») : lignes hour du mois en cours, demandées seulement
+#       dans ce cas ; l'année n'a pas d'estimation (seul son net sert). Gain d'un créneau
+#       = (production − vente, ≥ 0) × prix d'achat + vente × prix de revente. Prix =
+#       entité si elle a une valeur, sinon le nombre ; aucun prix (0) : devise vide, pas
+#       de gain. Un firmware d'avant l'ADR-0062 refuse ces noms de vue (continue_on_error) :
+#       mettre la tablette à jour avant ce package. Les clés de `capteurs` ajoutées
+#       (toutes facultatives, un blueprint plus ancien ne les envoie pas) : compteur_achat,
+#       compteur_vente, consommation (ADR-0062), prix_achat, prix_achat_entite,
+#       prix_revente, prix_revente_entite, devise, prevision_jour, prevision_demain.
 # @limits_soleil Non vérifié sur une vraie installation solaire (l'auteur n'en a pas) :
 #       formats vérifiés sur la prévision horaire réelle de l'entité météo (datetime UTC,
 #       condition, pas toujours de cloud_coverage) ; courbe, prévision et gains testés sur
@@ -125,7 +133,8 @@ script:
           vide = non choisi), solaires et productions (listes : toutes les sources,
           additionnées ; solaire et production y sont ajoutés), reseau_inverse et
           batterie_inverse (booléens). Facultatifs, absents d'un blueprint plus ancien
-          (ADR-0058) : compteur_achat et compteur_vente (compteurs kWh), prix_achat et
+          (ADR-0058) : compteur_achat, compteur_vente et consommation (compteurs kWh ; la
+          consommation de la maison, ADR-0062), prix_achat et
           prix_revente (nombres, par kWh), prix_achat_entite et prix_revente_entite
           (entité qui l'emporte), devise (texte), prevision_jour et prevision_demain
           (capteurs de prévision externe, kWh).
@@ -165,15 +174,20 @@ script:
         {{ (solaires + [c.get('reseau'), c.get('reseau_export'), c.get('maison')] + productions_choisies
             + [c.get('batterie'), c.get('batterie_puissance'), c.get('batterie_temperature')])
            | select('string') | reject('eq', '') | unique | list }}
-      # Bilan (ADR-0058) : compteurs d'achat et de vente qui existent (clés absentes d'un
-      # blueprint plus ancien : aucun), leur liste, prix et devise. Un prix nul = aucun
+      # Bilan (ADR-0058, ADR-0062) : compteurs d'achat, de vente et de la consommation de
+      # la maison qui existent (clés absentes d'un blueprint plus ancien : aucun), leur
+      # liste, prix et devise. Sans compteur d'achat ni de vente, avec celui de la maison,
+      # achat et vente sont estimés heure par heure (bilan_estime). Un prix nul = aucun
       # prix choisi ; sans prix, la devise est vide et la tablette ne montre pas de gain.
-      reseau_ids: >-
+      bilan_ids: >-
         {%- set a = c.get('compteur_achat', '') -%}
         {%- set v = c.get('compteur_vente', '') -%}
+        {%- set m = c.get('consommation', '') -%}
         {{ {'achat': a if a is string and a and states[a] is not none else '',
-            'vente': v if v is string and v and states[v] is not none else ''} }}
-      compteurs_reseau: "{{ reseau_ids.values() | select | list }}"
+            'vente': v if v is string and v and states[v] is not none else '',
+            'conso': m if m is string and m and states[m] is not none else ''} }}
+      compteurs_bilan: "{{ bilan_ids.values() | select | list }}"
+      bilan_estime: "{{ not bilan_ids.achat and not bilan_ids.vente and bilan_ids.conso != '' }}"
       prix: >-
         {%- set ea = c.get('prix_achat_entite', '') -%}
         {%- set er = c.get('prix_revente_entite', '') -%}
@@ -238,14 +252,14 @@ script:
                 - variables:
                     stats_t: "{{ now().timestamp() }}"
                     stats_minuit: "{{ minuit }}"
-                # Bilan (ADR-0058) : achat et vente au réseau, mêmes lignes de 5 minutes,
-                # même rythme (une demande en plus seulement avec ces compteurs).
-                - if: "{{ compteurs_reseau | count > 0 }}"
+                # Bilan (ADR-0058, ADR-0062) : achat, vente et maison, mêmes lignes de 5
+                # minutes, même rythme (une demande en plus seulement avec ces compteurs).
+                - if: "{{ compteurs_bilan | count > 0 }}"
                   then:
                     - action: recorder.get_statistics
                       data:
                         start_time: "{{ minuit }}"
-                        statistic_ids: "{{ compteurs_reseau }}"
+                        statistic_ids: "{{ compteurs_bilan }}"
                         period: 5minute
                         types:
                           - change
@@ -317,18 +331,18 @@ script:
                     {%- set ns2.l = ns2.l + [v | string] -%}
                   {%- endfor -%}
                   {{ ns2.l | join(';') }}
-                # Achat et vente au réseau (ADR-0058), lus comme la production : pour
-                # chaque compteur h = les 24 heures (None = pas de donnée), j = le jour
+                # Achat, vente (ADR-0058) et maison (ADR-0062), lus comme la production :
+                # pour chaque compteur h = les 24 heures (None = pas de donnée), j = le jour
                 # (lignes de 5 minutes + partiel), c = les 5 minutes de l'heure en cours,
                 # p = le partiel (état actuel − dernier « state », converti en kWh).
-                reseau5: >-
+                bilan5: >-
                   {%- set stats = cinq_r.statistics if cinq_r is defined and cinq_r is mapping
                         and cinq_r.statistics is defined else {} -%}
                   {%- set debut_h = now().replace(minute=0, second=0, microsecond=0) -%}
                   {%- set heure = now().hour -%}
                   {%- set sortie = namespace(d={}) -%}
-                  {%- for k in ['achat', 'vente'] -%}
-                    {%- set p = reseau_ids.get(k, '') -%}
+                  {%- for k in ['achat', 'vente', 'conso'] -%}
+                    {%- set p = bilan_ids.get(k, '') -%}
                     {%- set lignes = (stats.get(p, []) | list) if p else [] -%}
                     {%- set par = namespace(d={}, c=0, t=0) -%}
                     {%- for r in lignes -%}
@@ -440,37 +454,6 @@ script:
                         debut: "{{ now().strftime('%Y-%m-%d') }}"
                         valeurs: "{{ serie_heures }}"
                       continue_on_error: true
-                    # Bilan des heures (ADR-0058) : seulement avec un compteur d'achat ou de
-                    # vente ; sans prix, ni devise ni gain.
-                    - if: "{{ compteurs_reseau | count > 0 }}"
-                      then:
-                        - variables:
-                            bilan_payload: >-
-                              {%- macro txt(l, d) -%}
-                                {%- for x in l -%}{{ '' if x is none else (x | round(d)) }}{{ '' if loop.last else ';' }}{%- endfor -%}
-                              {%- endmacro -%}
-                              {%- set prod = serie_heures.split(';') -%}
-                              {%- set achat = reseau5.achat.h if reseau_ids.achat else [] -%}
-                              {%- set vente = reseau5.vente.h if reseau_ids.vente else [] -%}
-                              {%- set g = namespace(l=[]) -%}
-                              {%- if devise -%}
-                                {%- for h in range(prod | count) -%}
-                                  {%- set p = (prod[h] | float(none)) if prod[h] != '' else none -%}
-                                  {%- set v = vente[h] if reseau_ids.vente else 0 -%}
-                                  {%- if p is none or v is none -%}
-                                    {%- set g.l = g.l + [none] -%}
-                                  {%- else -%}
-                                    {%- set g.l = g.l + [([p - v, 0] | max) * prix.achat + v * prix.revente] -%}
-                                  {%- endif -%}
-                                {%- endfor -%}
-                              {%- endif -%}
-                              {{ [devise, txt(vente, 3), txt(achat, 3), txt(g.l, 3)] | join('|') }}
-                        - action: "esphome.{{ tablette }}_tab5_maj_energie_bilan"
-                          data:
-                            vue: heures
-                            debut: "{{ now().strftime('%Y-%m-%d') }}"
-                            payload: "{{ bilan_payload }}"
-                          continue_on_error: true
                   else:
                     - variables:
                         jours: "{{ vue_demandee == 'jours' }}"
@@ -542,77 +525,239 @@ script:
                         debut: "{{ now().strftime('%Y-%m-%d') }}"
                         valeurs: "{{ serie_heures }}"
                       continue_on_error: true
-                    # Bilan des jours ou des mois (ADR-0058) : achat et vente lus comme la
-                    # production, gain par créneau.
-                    - if: "{{ compteurs_reseau | count > 0 }}"
-                      then:
-                        - action: recorder.get_statistics
-                          data:
-                            start_time: "{{ premier }}"
-                            statistic_ids: "{{ compteurs_reseau }}"
-                            period: "{{ 'day' if jours else 'month' }}"
-                            types:
-                              - change
-                            units:
-                              energy: kWh
-                          response_variable: longues_r
-                          continue_on_error: true
-                        - variables:
-                            bilan_payload: >-
-                              {%- macro txt(l, d) -%}
-                                {%- for x in l -%}{{ '' if x is none else (x | round(d)) }}{{ '' if loop.last else ';' }}{%- endfor -%}
-                              {%- endmacro -%}
-                              {%- set stats = longues_r.statistics if longues_r is defined and longues_r is mapping
-                                    and longues_r.statistics is defined else {} -%}
-                              {%- set p0 = as_datetime(premier) -%}
-                              {%- set nb = 30 if jours else 12 -%}
-                              {%- set serie = namespace(d={}) -%}
-                              {%- for k in ['achat', 'vente'] -%}
-                                {%- set p = reseau_ids.get(k, '') -%}
-                                {%- set ns = namespace(d={}) -%}
-                                {%- for r in (stats.get(p, []) if p else []) -%}
-                                  {%- set s = as_local(as_datetime(r.start)) -%}
-                                  {%- set i = ((s.date() - p0.date()).days if jours else (s.year * 12 + s.month) - (p0.year * 12 + p0.month)) | string -%}
-                                  {%- set ns.d = dict(ns.d, **{i: ns.d.get(i, 0) + (r.get('change') | float(0))}) -%}
-                                {%- endfor -%}
-                                {%- set fam = reseau5[k] -%}
-                                {%- set ln = namespace(l=[]) -%}
-                                {%- for i in range(nb) -%}
-                                  {%- if not p -%}
-                                    {%- set v = none -%}
-                                  {%- elif i == nb - 1 and jours -%}
-                                    {%- set v = fam.j -%}
-                                  {%- elif i == nb - 1 -%}
-                                    {%- set v = ns.d.get(i | string, 0) + fam.c + fam.p -%}
-                                  {%- else -%}
-                                    {%- set v = ns.d.get(i | string) -%}
-                                  {%- endif -%}
-                                  {%- set ln.l = ln.l + [v] -%}
-                                {%- endfor -%}
-                                {%- set serie.d = dict(serie.d, **{k: ln.l}) -%}
-                              {%- endfor -%}
-                              {%- set prod = serie_longue.split(';') -%}
-                              {%- set achat = serie.d.achat if reseau_ids.achat else [] -%}
-                              {%- set vente = serie.d.vente if reseau_ids.vente else [] -%}
-                              {%- set g = namespace(l=[]) -%}
-                              {%- if devise -%}
-                                {%- for h in range(prod | count) -%}
-                                  {%- set p = (prod[h] | float(none)) if prod[h] != '' else none -%}
-                                  {%- set v = vente[h] if reseau_ids.vente else 0 -%}
-                                  {%- if p is none or v is none -%}
-                                    {%- set g.l = g.l + [none] -%}
-                                  {%- else -%}
-                                    {%- set g.l = g.l + [([p - v, 0] | max) * prix.achat + v * prix.revente] -%}
-                                  {%- endif -%}
-                                {%- endfor -%}
+            # Bilan (ADR-0058 ; en kWh, ADR-0062) : la production et au moins un compteur du
+            # bilan (consommation de la maison, achat ou vente). Au premier passage le mois
+            # civil (la carte « Batterie réseau » de la tablette le lit quelle que soit la
+            # vue), et l'année civile si la vue est « mois » ; les heures à chaque passage de
+            # la vue « heures ». Les vues civiles ne partent qu'au premier passage : leur
+            # réponse du recorder n'est jamais celle d'un passage précédent.
+            - variables:
+                bilan_vues: >-
+                  {%- set l = [] -%}
+                  {%- if productions | count > 0 and compteurs_bilan | count > 0 -%}
+                    {%- set l = (['heures'] if vue_demandee == 'heures' else [])
+                          + (['mois_civil'] if repeat.index == 1 else [])
+                          + (['annee_civile'] if repeat.index == 1 and vue_demandee == 'mois' else []) -%}
+                  {%- endif -%}
+                  {{ l }}
+            - repeat:
+                for_each: "{{ bilan_vues }}"
+                sequence:
+                  # Mois civil : lignes day depuis le 1er (production et compteurs) ; sans
+                  # compteur d'achat ni de vente, les lignes hour de la production et de la
+                  # maison (au plus 744 par compteur), pour estimer achat et vente heure par
+                  # heure.
+                  - if: "{{ repeat.item == 'mois_civil' }}"
+                    then:
+                      - action: recorder.get_statistics
+                        data:
+                          start_time: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
+                          statistic_ids: "{{ (productions + compteurs_bilan) | unique | list }}"
+                          period: day
+                          types:
+                            - change
+                          units:
+                            energy: kWh
+                        response_variable: bilan_jours
+                        continue_on_error: true
+                      - if: "{{ bilan_estime }}"
+                        then:
+                          - action: recorder.get_statistics
+                            data:
+                              start_time: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
+                              statistic_ids: "{{ (productions + [bilan_ids.conso]) | unique | list }}"
+                              period: hour
+                              types:
+                                - change
+                              units:
+                                energy: kWh
+                            response_variable: bilan_horaire
+                            continue_on_error: true
+                  # Année civile : lignes month depuis le 1er janvier.
+                  - if: "{{ repeat.item == 'annee_civile' }}"
+                    then:
+                      - action: recorder.get_statistics
+                        data:
+                          start_time: "{{ now().replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
+                          statistic_ids: "{{ (productions + compteurs_bilan) | unique | list }}"
+                          period: month
+                          types:
+                            - change
+                          units:
+                            energy: kWh
+                        response_variable: bilan_annee
+                        continue_on_error: true
+                  - variables:
+                      bilan_debut: >-
+                        {{ now().strftime('%Y-%m-%d') if repeat.item == 'heures'
+                           else now().strftime('%Y-%m-01' if repeat.item == 'mois_civil' else '%Y-01-01') }}
+                      # « devise|vente|achat|gain|prod|conso|estime » : un créneau par heure du
+                      # jour, par jour du mois (28 à 31) ou par mois de l'année, vide = pas de
+                      # donnée (créneau à venir, recorder sans ligne). Le créneau en cours :
+                      # heure = ses 5 minutes + le partiel ; jour = la production du jour (et
+                      # les compteurs lus de même) ; mois = sa ligne + les 5 minutes de l'heure
+                      # en cours + le partiel. Sans compteur d'achat ni de vente (estime « 1 »),
+                      # vente = max(0, production − maison) et achat = max(0, maison −
+                      # production), heure par heure puis additionnés ; l'année n'a pas
+                      # d'estimation (champs vides, ni gain) : seul son net sert. Gain d'un
+                      # créneau = (production − vente, ≥ 0) × prix d'achat + vente × prix de
+                      # revente.
+                      bilan_payload: >-
+                        {%- macro txt(l) -%}
+                          {%- for x in l -%}{{ '' if x is none else (x | round(3)) }}{{ '' if loop.last else ';' }}{%- endfor -%}
+                        {%- endmacro -%}
+                        {%- set vb = repeat.item -%}
+                        {%- set mn = now() -%}
+                        {%- set m1 = mn.replace(day=1, hour=0, minute=0, second=0, microsecond=0) -%}
+                        {%- set debut_h = mn.replace(minute=0, second=0, microsecond=0) -%}
+                        {%- if vb == 'heures' -%}
+                          {%- set nb = 24 -%}
+                          {%- set ici = mn.hour -%}
+                        {%- elif vb == 'mois_civil' -%}
+                          {%- set nb = ((m1 + timedelta(days=32)).replace(day=1) - m1).days -%}
+                          {%- set ici = mn.day - 1 -%}
+                        {%- else -%}
+                          {%- set nb = 12 -%}
+                          {%- set ici = mn.month - 1 -%}
+                        {%- endif -%}
+                        {%- if vb == 'mois_civil' and bilan_jours is defined -%}
+                          {%- set rep = bilan_jours -%}
+                        {%- elif vb == 'annee_civile' and bilan_annee is defined -%}
+                          {%- set rep = bilan_annee -%}
+                        {%- else -%}
+                          {%- set rep = {} -%}
+                        {%- endif -%}
+                        {%- set stats = rep.statistics if rep is mapping and rep.statistics is defined else {} -%}
+                        {#- Production : somme des compteurs par créneau (jour ou mois). -#}
+                        {%- set sp = namespace(d={}) -%}
+                        {%- for e in productions -%}
+                          {%- for r in stats.get(e, []) -%}
+                            {%- set s = as_local(as_datetime(r.start)) -%}
+                            {%- set k = ((s.day if vb == 'mois_civil' else s.month) - 1) | string -%}
+                            {%- set sp.d = dict(sp.d, **{k: sp.d.get(k, 0) + (r.get('change') | float(0))}) -%}
+                          {%- endfor -%}
+                        {%- endfor -%}
+                        {%- set ns5 = namespace(s=0) -%}
+                        {%- for r in lignes5 if as_datetime(r.start) >= debut_h -%}
+                          {%- set ns5.s = ns5.s + (r.get('change') | float(0)) -%}
+                        {%- endfor -%}
+                        {%- set ph = serie_heures.split(';') -%}
+                        {%- set pr = namespace(l=[]) -%}
+                        {%- for i in range(nb) -%}
+                          {%- set k = i | string -%}
+                          {%- if vb == 'heures' -%}
+                            {%- set v = (ph[i] | float(none)) if i < ph | count and ph[i] != '' else none -%}
+                          {%- elif i > ici -%}
+                            {%- set v = none -%}
+                          {%- elif i == ici and vb == 'mois_civil' -%}
+                            {%- set v = (jour | float(none)) if jour not in ['', 'nan'] else none -%}
+                          {%- elif i == ici -%}
+                            {%- set v = sp.d.get(k, 0) + ns5.s + partiel -%}
+                          {%- else -%}
+                            {%- set v = sp.d.get(k) -%}
+                          {%- endif -%}
+                          {%- set pr.l = pr.l + [v] -%}
+                        {%- endfor -%}
+                        {#- Compteurs du bilan, lus comme la production ([] : non choisi). -#}
+                        {%- set cp = namespace(d={}) -%}
+                        {%- for f in ['achat', 'vente', 'conso'] -%}
+                          {%- set eid = bilan_ids.get(f, '') -%}
+                          {%- set lg = namespace(l=[], d={}) -%}
+                          {%- if eid -%}
+                            {%- for r in stats.get(eid, []) -%}
+                              {%- set s = as_local(as_datetime(r.start)) -%}
+                              {%- set k = ((s.day if vb == 'mois_civil' else s.month) - 1) | string -%}
+                              {%- set lg.d = dict(lg.d, **{k: lg.d.get(k, 0) + (r.get('change') | float(0))}) -%}
+                            {%- endfor -%}
+                            {%- set fam = bilan5[f] -%}
+                            {%- for i in range(nb) -%}
+                              {%- set k = i | string -%}
+                              {%- if vb == 'heures' -%}
+                                {%- set v = fam.h[i] -%}
+                              {%- elif i > ici -%}
+                                {%- set v = none -%}
+                              {%- elif i == ici and vb == 'mois_civil' -%}
+                                {%- set v = fam.j -%}
+                              {%- elif i == ici -%}
+                                {%- set v = lg.d.get(k, 0) + fam.c + fam.p -%}
+                              {%- else -%}
+                                {%- set v = lg.d.get(k) -%}
                               {%- endif -%}
-                              {{ [devise, txt(vente, 3), txt(achat, 3), txt(g.l, 3)] | join('|') }}
-                        - action: "esphome.{{ tablette }}_tab5_maj_energie_bilan"
-                          data:
-                            vue: "{{ vue_demandee }}"
-                            debut: "{{ premier[:10] }}"
-                            payload: "{{ bilan_payload }}"
-                          continue_on_error: true
+                              {%- set lg.l = lg.l + [v] -%}
+                            {%- endfor -%}
+                          {%- endif -%}
+                          {%- set cp.d = dict(cp.d, **{f: lg.l}) -%}
+                        {%- endfor -%}
+                        {#- Estimation heure par heure : une heure compte si la maison y a une
+                            valeur (production sans ligne : 0, la nuit). -#}
+                        {%- set est = namespace(v=[], a=[]) -%}
+                        {%- if bilan_estime and vb == 'heures' -%}
+                          {%- for i in range(nb) -%}
+                            {%- set m = cp.d.conso[i] -%}
+                            {%- set p = pr.l[i] if pr.l[i] is not none else 0 -%}
+                            {%- set est.v = est.v + [none if m is none else ([p - m, 0] | max)] -%}
+                            {%- set est.a = est.a + [none if m is none else ([m - p, 0] | max)] -%}
+                          {%- endfor -%}
+                        {%- elif bilan_estime and vb == 'mois_civil' -%}
+                          {%- set hs = bilan_horaire.statistics if bilan_horaire is defined and bilan_horaire is mapping
+                                and bilan_horaire.statistics is defined else {} -%}
+                          {%- set hp = namespace(d={}) -%}
+                          {%- for e in productions -%}
+                            {%- for r in hs.get(e, []) -%}
+                              {%- set s = as_local(as_datetime(r.start)) -%}
+                              {%- set k = s.day ~ '|' ~ s.hour -%}
+                              {%- set hp.d = dict(hp.d, **{k: hp.d.get(k, 0) + (r.get('change') | float(0))}) -%}
+                            {%- endfor -%}
+                          {%- endfor -%}
+                          {%- set hm = namespace(d={}) -%}
+                          {%- for r in hs.get(bilan_ids.conso, []) -%}
+                            {%- set s = as_local(as_datetime(r.start)) -%}
+                            {%- set k = s.day ~ '|' ~ s.hour -%}
+                            {%- set hm.d = dict(hm.d, **{k: hm.d.get(k, 0) + (r.get('change') | float(0))}) -%}
+                          {%- endfor -%}
+                          {%- set mh = bilan5.conso.h -%}
+                          {%- for i in range(nb) -%}
+                            {%- set t = namespace(v=0, a=0, n=0) -%}
+                            {%- for h in range(24) -%}
+                              {%- set k = (i + 1) ~ '|' ~ h -%}
+                              {%- if i < ici and k in hm.d -%}
+                                {%- set p = hp.d.get(k, 0) -%}
+                                {%- set m = hm.d[k] -%}
+                              {%- elif i == ici and mh[h] is not none -%}
+                                {%- set p = (ph[h] | float(0)) if ph[h] != '' else 0 -%}
+                                {%- set m = mh[h] -%}
+                              {%- else -%}
+                                {%- set m = none -%}
+                              {%- endif -%}
+                              {%- if m is not none -%}
+                                {%- set t.v = t.v + ([p - m, 0] | max) -%}
+                                {%- set t.a = t.a + ([m - p, 0] | max) -%}
+                                {%- set t.n = t.n + 1 -%}
+                              {%- endif -%}
+                            {%- endfor -%}
+                            {%- set est.v = est.v + [t.v if t.n > 0 else none] -%}
+                            {%- set est.a = est.a + [t.a if t.n > 0 else none] -%}
+                          {%- endfor -%}
+                        {%- endif -%}
+                        {%- set vente = est.v if bilan_estime else cp.d.vente -%}
+                        {%- set achat = est.a if bilan_estime else cp.d.achat -%}
+                        {%- set g = namespace(l=[]) -%}
+                        {%- if devise and not (bilan_estime and vb == 'annee_civile') -%}
+                          {%- for i in range(nb) -%}
+                            {%- set p = pr.l[i] -%}
+                            {%- set v = vente[i] if vente else 0 -%}
+                            {%- set g.l = g.l + [none if p is none or v is none
+                                  else ([p - v, 0] | max) * prix.achat + v * prix.revente] -%}
+                          {%- endfor -%}
+                        {%- endif -%}
+                        {{ [devise, txt(vente), txt(achat), txt(g.l), txt(pr.l), txt(cp.d.conso),
+                            '1' if bilan_estime else ''] | join('|') }}
+                  - action: "esphome.{{ tablette }}_tab5_maj_energie_bilan"
+                    data:
+                      vue: "{{ repeat.item }}"
+                      debut: "{{ bilan_debut }}"
+                      payload: "{{ bilan_payload }}"
+                    continue_on_error: true
             # Le soleil et la prévision du jour (ADR-0058, page « Aujourd'hui »), après
             # l'historique de la vue demandée (qui passe en premier) : au premier
             # tour, puis quand l'heure locale change, quelle que soit la vue. La courbe

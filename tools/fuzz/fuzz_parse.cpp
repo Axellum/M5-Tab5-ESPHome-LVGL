@@ -285,13 +285,35 @@ void energie_bilan(const std::string& p) {
         if (saut == std::string::npos) break;
         debut = saut + 1;
     }
-    const int slots = v[0] == "heures" ? 24 : (v[0] == "mois" ? 12 : kEnergieSlotsMax);
+    const bool heures = v[0] == "heures";
+    const bool mois = v[0] == "mois" || v[0] == "annee_civile";
+    const int slots = heures ? 24 : (mois ? 12 : kEnergieSlotsMax);
     EnergieBilanLu b;
     energie_bilan_lire(Champ{v[2].data(), v[2].size()}, slots, b);
     float produit[kEnergieSlotsMax];
-    const int n = energie_kwh_liste(Champ{v[1].data(), v[1].size()}, produit, slots);
-    for (int k = 0; k < n; k++) energie_bilan_creneau(produit[k], b, k);
+    int n = energie_kwh_liste(Champ{v[1].data(), v[1].size()}, produit, slots);
+    // ADR-0062 : la production du bilan l'emporte sur la série de l'historique.
+    if (b.prod_choisie) {
+        n = b.n_prod;
+        for (int k = 0; k < n; k++) produit[k] = b.prod[k];
+    }
+    EnergieBilanCreneau c[kEnergieSlotsMax];
+    float net[kEnergieSlotsMax], cumul[kEnergieSlotsMax];
+    for (int k = 0; k < n; k++) {
+        c[k] = energie_bilan_creneau(produit[k], b, k);
+        net[k] = c[k].net;
+    }
     energie_bilan_totaux(produit, n, b);
+    // Date tirée de la vue : bornée comme energie_bilan() (tab5_energie.cpp).
+    const int jour = 1 + static_cast<int>(v[1].size() % 31), m = 1 + static_cast<int>(v[2].size() % 12);
+    const EnergieVue vue = heures ? EnergieVue::HEURES : (mois ? EnergieVue::MOIS : EnergieVue::JOURS);
+    const int dernier = energie_cumul(net, n, vue, 2026, m, jour, cumul);
+    const EnergieMois em = energie_mois(c, n, 2026, m, jour);
+    energie_echelle(net, cumul, n, em.fin);
+    energie_rond(dernier >= 0 ? cumul[dernier] : em.net);
+    energie_pas(em.rythme);
+    int a, mm, j;
+    energie_jour_plus(2026, m, jour, n, a, mm, j);
     const std::string devise(b.devise.p != nullptr ? b.devise.p : "", b.devise.n);  // texte_ha_copier
     (void) devise;
 }

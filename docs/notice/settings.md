@@ -13,7 +13,7 @@ The page names sit at the top, next to the title: the page shown is lit. Tap a n
 **Screen**
 
 - **Brightness**: the slider, from 10 to 100 %. On battery the energy saving mode caps it at 50 %, then lowers it to the minimum after 30 s without a touch or below 35 % battery (**Power saving**, on the Battery page).
-- **Auto screen off**: **Never**, or 1, 2, 5, 10 or 30 min without a touch. Never while the alarm rings, the voice assistant is busy or a game is open.
+- **Auto screen off**: **Never**, or 1, 2, 5, 10 or 30 min without a touch. Never while the alarm rings, the voice assistant is busy or a game is open. To have it only on battery, turn on « Tab5 Extinction auto sur batterie seulement » in Home Assistant.
 - **Wake the screen on « Okay Nabu »**: **Yes** or **No**. With No, the screen stays dark and the answer is only spoken.
 - **Wake the screen with a tap**: **Yes** or **No**, a small knock on the case.
 
@@ -63,7 +63,7 @@ Les noms des pages sont en haut, à côté du titre : la page affichée est allu
 **Écran**
 
 - **Luminosité** : le curseur, de 10 à 100 %. Sur batterie, le mode économie la plafonne à 50 %, puis la met au plus bas après 30 s sans toucher ou sous 35 % de batterie (**Économie d'énergie**, sur la page Batterie).
-- **Extinction auto** : **Jamais**, ou 1, 2, 5, 10 ou 30 min sans toucher. Jamais pendant que le réveil sonne, que l'assistant vocal travaille ou qu'un jeu est ouvert.
+- **Extinction auto** : **Jamais**, ou 1, 2, 5, 10 ou 30 min sans toucher. Jamais pendant que le réveil sonne, que l'assistant vocal travaille ou qu'un jeu est ouvert. Pour qu'elle ne joue que sur batterie, allumer « Tab5 Extinction auto sur batterie seulement » dans Home Assistant.
 - **Rallumer l'écran à « Okay Nabu »** : **Oui** ou **Non**. Sur Non, l'écran reste noir et la réponse est seulement parlée.
 - **Rallumer l'écran d'une tape** : **Oui** ou **Non**, un petit coup sur le boîtier.
 

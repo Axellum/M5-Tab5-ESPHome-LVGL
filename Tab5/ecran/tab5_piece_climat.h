@@ -30,7 +30,8 @@
 //     la place de l'icône et de la température du salon ;
 //   - à droite, une goutte et l'humidité de la pièce (« 48 % ») si elle est déclarée, à
 //     la place de la serre ; rien sinon (la zone tactile de la seconde température reste) ;
-//   - la tuile − / + règle la clim de la pièce quand elle en a une (tab5_reglables.cpp).
+//   - la ligne « Clim » de la tuile − / + règle la clim de la pièce quand elle en a une et
+//     que la maison en a plusieurs (clim_ref_ici, tab5_clim.cpp ; tab5_reglables.cpp).
 // Hors du mode HA, ou sur une pièce sans température déclarée : le salon et la serre,
 // comme avant. Rien en NVS : le blueprint renvoie tout à chaque connexion.
 
@@ -57,7 +58,3 @@ const char* accueil_historique_cle(bool droite);
 // Popup Température (tab5_historique.cpp, ADR-0047) : la pièce R a une température
 // déclarée par le blueprint, donc son onglet.
 bool piece_climat_a_temperature(int r);
-
-// tab5_reglables.cpp : la pièce affichée a une clim déclarée dont la tablette a reçu
-// les réglages (crpR) — la tuile − / + la règle. Renvoie R, ou -1.
-int piece_climat_clim();
