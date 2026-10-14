@@ -136,8 +136,11 @@ jobs:
     # La galerie démarre le rendu une fois par thème et par mode (36 démarrages à froid).
     # « clair » rejoue les captures deux fois (bascule à chaud, puis démarrage à froid) : mesuré
     # le 2026-10-09 sur main, 26,1 à 29,5 min (30,1 min = annulé à la limite de 30, run 37936987986),
-    # contre 19 à 21 min pour une langue et 29 min pour la galerie. 45 min = ~29 min + 50 %.
-    timeout-minutes: ${{ (matrix.langue == 'galerie' || matrix.langue == 'clair') && 45 || 30 }}
+    # contre 19 à 21 min pour une langue et 29 min pour la galerie. Remesuré le 2026-10-14 (runs
+    # 38122146609, 38142719679, 38442520187 sur main) : clair 44 min, galerie 30 min, une langue
+    # 27 min, à une minute de leur plafond. Plafonds = durée mesurée + ~50 % : clair 70, galerie 45,
+    # langue 45 (les écrans ajoutés, comme les trois du Bilan en kWh, allongent chaque tâche).
+    timeout-minutes: ${{ matrix.langue == 'clair' && 70 || 45 }}
     strategy:
       fail-fast: false
       matrix:

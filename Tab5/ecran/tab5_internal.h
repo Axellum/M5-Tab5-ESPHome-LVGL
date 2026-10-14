@@ -265,8 +265,8 @@ void reglables_rejouer_theme();
 // ce que fait son appui long, ou son appui pour une clim). Faux si elle n'en a pas.
 bool tuile_ouvrir_popup(int r, int t);
 // tab5_clim.cpp, pour la liste de la tuile − / + : nom de la clim du blueprint (vide
-// tant que HA ne l'a pas donné) ; sa consigne écrite comme sur la carte (« 21.5 »,
-// « -- ») et sa couleur (bleu en froid, rouge en chaud), et la couleur de son icône.
+// tant que HA ne l'a pas donné) ; sa consigne écrite comme sur la carte (« 21.5 ° »,
+// « -- » ; clim_consigne_zone, le même format pour toutes les clims) et sa couleur (bleu en froid, rouge en chaud), et la couleur de son icône.
 const char* clim_nom();
 uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 
@@ -521,20 +521,13 @@ void clim_tuile_oublier(int r, int t);
 // apparaît, ADR-0027).
 void tuiles_repeindre(int r, int t);
 // Clim de la pièce R (ADR-0040, clés crpR / cepR, emplacement des commandes « cpR »).
-// La tablette a-t-elle ses réglages ? (tab5_piece_climat.cpp : la tuile − / + la règle).
+// La tablette a-t-elle ses réglages ?
 bool clim_piece_connue(int r);
-// tab5_reglables.cpp, toucher de la consigne de la tuile − / + : le popup montre cette
-// clim. Faux, et rien ne change, sans ses réglages.
+// Le popup montre cette clim (clim_ref_afficher). Faux, et rien ne change, sans ses réglages.
 bool clim_afficher_piece(int r);
-// tab5_reglables.cpp, − / + : un pas de plus (sens > 0) ou de moins, borné ; affichage
-// tout de suite, envoi par tab5_debounce_clim_tuile. Consigne inconnue : rien.
-void clim_piece_pas(int r, int sens);
 // tab5_piece_climat.cpp : la pièce n'a plus de clim — réglages et état oubliés, popup
 // refermé s'il la montrait, consigne en attente annulée.
 void clim_piece_oublier(int r);
-// tab5_reglables.cpp, la tuile − / + : consigne écrite comme sur la carte (« 21.5 »,
-// « -- ») et sa couleur ; renvoie la couleur de l'icône (comme clim_carte_valeur).
-uint32_t clim_piece_carte(int r, char* buf, size_t n, uint32_t& couleur_valeur);
 // Les clims que la tablette connaît, dans l'ordre des pages du carrousel du popup clim
 // (ADR-0038) : celle du blueprint d'abord (sauf si HA l'a déclarée absente), puis celle
 // de chaque tuile cli sans l'option m dont la tablette a les réglages (crRT), pièce par
@@ -549,10 +542,24 @@ struct ClimRef {
 };
 // Écrit au plus `max` clims dans `out`, dans l'ordre ci-dessus ; renvoie leur nombre.
 int clims_enumerer(ClimRef* out, int max);
-// La clim que vise le toucher de la température de la pièce : celle de la pièce affichée
-// en mode HA (sa clim propre, sinon la première de ses tuiles), sinon la première de
-// clims_enumerer (celle du blueprint). Faux si la tablette n'en connaît aucune.
+// La clim « d'ici » (14/10/2026, discussion #278, décision d'Axel) : la seule de
+// clims_enumerer quand la maison n'en a qu'une, sur toutes les pièces ; avec plusieurs,
+// celle de la pièce affichée en mode HA (sa clim propre, ADR-0040, sinon la première de
+// ses tuiles), sinon celle du blueprint. Faux sinon (aucune clim, ou plusieurs et ni la
+// pièce ni le blueprint n'en ont). La ligne « Clim » de la tuile − / + (tab5_reglables.cpp)
+// et le toucher de la température (clim_ref_choisir) visent celle-ci.
+bool clim_ref_ici(ClimRef& out);
+// La clim que vise le toucher de la température de la pièce : clim_ref_ici(), sinon la
+// première de clims_enumerer. Faux si la tablette n'en connaît aucune.
 bool clim_ref_choisir(ClimRef& out);
+// tab5_reglables.cpp, − / + sur une clim de tuile ou de pièce (pas celle du blueprint, qui
+// passe par clim_target) : un pas de plus (sens > 0) ou de moins, borné ; affichage tout de
+// suite, envoi par tab5_debounce_clim_tuile (« tRT » ou « cpR »). Consigne inconnue : rien.
+void clim_ref_pas(const ClimRef& c, int sens);
+// tab5_reglables.cpp, la tuile − / + et sa liste : consigne d'une clim de tuile ou de pièce
+// écrite comme sur la carte (« 21.5 ° », « -- » ; clim_consigne_zone) et sa couleur ; renvoie la couleur de
+// l'icône (comme clim_carte_valeur).
+uint32_t clim_ref_carte(const ClimRef& c, char* buf, size_t n, uint32_t& couleur_valeur);
 // Le carrousel (popup clim, ADR-0038) ouvert sur la clim `c` : « Détails » de sa roue, ou
 // le toucher de la température quand elle n'a pas de roue. Faux si le popup ne peut pas
 // la montrer (réglages d'une clim de tuile ou de pièce pas reçus).

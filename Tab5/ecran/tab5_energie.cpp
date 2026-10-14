@@ -17,10 +17,14 @@
  *         - « Production » (ADR-0028, inchangée) : quatre cartes (solaire, maison, réseau,
  *           batterie ; une carte sans capteur disparaît) et l'historique de la production
  *           en barres (tab5_maj_energie_historique : 24 heures, 30 jours, 12 mois).
- *         - « Bilan » (tab5_maj_energie_bilan, energie_bilan_lire) : par vue (les mêmes que
- *           Production, la même s_vue), production = autoconsommé + vendu et consommation =
- *           autoconsommé + acheté en barres empilées ; taux d'autoconsommation, vendu,
- *           acheté, gains de la vue en cartes.
+ *         - « Bilan » (tab5_maj_energie_bilan, energie_bilan_lire ; en kWh, ADR-0062) : à
+ *           gauche la « batterie réseau » du mois civil (net = produit − consommé depuis
+ *           le 1er, jauge centrée sur 0, fin du mois au rythme des 7 derniers jours,
+ *           produit, consommé, économies avec un prix, part de la consommation couverte
+ *           par le soleil) ; à droite, par vue (mêmes boutons que Production, même s_vue :
+ *           heures du jour, jours du mois civil, mois de l'année civile), le net de chaque
+ *           créneau en barres (surplus en haut, déficit en bas), le cumul en courbe
+ *           lissée, le dernier créneau connu pointé, la fin du mois projetée en points.
  *       Home Assistant n'envoie rien tant que le popup est fermé : l'ouverture et chaque
  *       changement de vue émettent esphome.tab5_energie (vue), auquel le blueprint répond
  *       en lançant script.tab5_energie (packages/tab5_energie.yaml), qui pousse
@@ -46,8 +50,9 @@
  *       tous ; la lecture des deux actions de l'ADR-0058 est dans tab5_parse.* (testée et
  *       fuzzée). Un texte affiché passe par tr(). Une icône de plus = son glyphe dans
  *       mdi_font_45 (tab5-styles.yaml) ; glyphe_carte() est rattachée aux labels
- *       energie_icone_* et energie_flux_icone_*, glyphe_bilan() aux energie_icone_* par
- *       MDI_CODE_TARGETS (règle 9). Une page de plus : sa valeur dans Page, son conteneur
+ *       energie_icone_* et energie_flux_icone_* par MDI_CODE_TARGETS (règle 9). Les calculs
+ *       du Bilan (cumul, mois, échelles) sont dans tab5_parse.*, testés sur PC
+ *       (tools/test_parse.cpp). Une page de plus : sa valeur dans Page, son conteneur
  *       dans energie_popup.yaml (et EnergieUI::page), son nom dans kNomsPages, sa
  *       condition dans page_a_donnees() et son cas dans peindre().
  */
@@ -66,18 +71,20 @@ EnergieUI g_energie_ui;
 namespace {
 
 enum Carte : int { SOLAIRE = 0, MAISON = 1, RESEAU = 2, BATTERIE = 3, NB_CARTES = 4 };
-// Cartes de la page Bilan (energie_carte_4 à 7).
-enum CarteBilan : int { AUTOCONSO = 4,
-                        VENDU = 5,
-                        ACHETE = 6,
-                        GAINS = 7 };
 enum Vue : int { HEURES = 0, JOURS = 1, MOIS = 2, NB_VUES = 3 };
 constexpr const char* kVues[NB_VUES] = {"heures", "jours", "mois"};
+// Vues du Bilan poussées par un HA de l'ADR-0062 : les heures du jour, le mois civil (du 1er
+// à la fin du mois), l'année civile (janvier à décembre). Un HA d'avant pousse kVues : les
+// fenêtres glissantes de l'historique (un firmware d'avant refuse ces noms au lieu de
+// montrer des créneaux décalés).
+constexpr const char* kVuesBilan[NB_VUES] = {"heures", "mois_civil", "annee_civile"};
 constexpr int kSlots[NB_VUES] = {24, 30, 12};
-constexpr int kSlotsMax = 30;
+constexpr int kSlotsMax = 31;   // les jours d'un mois civil (Bilan)
 constexpr int kAxeMax = 12;
 static_assert(kSlotsMax == kEnergieSlotsMax, "une série de la vue la plus longue");
-static_assert(kEnergieCartes == 2 * NB_CARTES, "quatre cartes par page à cartes");
+static_assert(kEnergieCartes == NB_CARTES, "quatre cartes, page Production");
+static_assert(static_cast<int>(EnergieVue::JOURS) == JOURS && static_cast<int>(EnergieVue::MOIS) == MOIS,
+              "mêmes vues que tab5_parse.h");
 
 // Pages (ADR-0058), dans l'ordre des onglets ; Production n'a besoin de rien (elle dit
 // « En attente de Home Assistant »), elle est toujours là.
@@ -175,8 +182,60 @@ constexpr int32_t kCadreY = 300;
 constexpr int32_t kCadreH = 112;
 constexpr int32_t kSourceY = 540;
 
-// Page Bilan : légende en haut à droite de la zone, kBilanLegendeL par entrée.
-constexpr int32_t kBilanLegendeL = 200;
+// Page Bilan (ADR-0062). Carte de gauche (energie_bilan_heros, 416 × 594 dans son bord) :
+// texte de kHerosX à kHerosX + kHerosW ; mesures en Roboto 700 le 13/10/2026 (fonttools) :
+// « +888.8 » 172 px en 55, « kWh » 63 px et « 8888 kWh » 144 px en 32 ; titre du graphique :
+// « 30 derniers jours » 244 px en 32 (place : 248 px avant les boutons de vue).
+constexpr int32_t kHerosX = 24;
+constexpr int32_t kHerosW = 372;
+constexpr int32_t kHerosTitreY = 22;
+constexpr int32_t kHerosGrandY = 50;        // net du mois (police_grande)
+constexpr int32_t kHerosUniteDy = 21;       // « kWh » sur la même ligne de base
+constexpr int32_t kHerosSousY = 124;
+constexpr int32_t kJaugeY = 168;
+constexpr int32_t kJaugeL = 330;
+constexpr int32_t kJaugeH = 80;
+constexpr int32_t kJaugeBord = 3;
+constexpr int32_t kJaugeJeu = 8;            // entre le bord et le remplissage
+constexpr int32_t kJaugeBoutL = 12;         // le « + » de la pile, à droite
+constexpr int32_t kJaugeBoutH = 30;
+constexpr int32_t kJaugeDedans = kJaugeBord + kJaugeJeu;
+constexpr int32_t kJaugeDemi = (kJaugeL - 2 * kJaugeDedans) / 2;
+constexpr int32_t kJaugeZeroX = kHerosX + kJaugeDedans + kJaugeDemi;
+constexpr int32_t kEchelleY = 254;
+constexpr int32_t kFinY = 288;              // « Fin du mois (…) » à gauche, valeur à droite
+constexpr int32_t kFinEcart = 8;            // entre les deux (la valeur prend sa largeur :
+                                            // « ~ +37 » 83 px, le titre français 272 px)
+constexpr int32_t kSep1Y = 336;
+constexpr int32_t kLigneY = 346;            // produit, consommé, économies
+constexpr int32_t kLignePas = 38;
+constexpr int32_t kLigneValeurL = 190;
+constexpr int32_t kAnneauBilanD = 92;
+constexpr int32_t kAnneauBilanL = 12;
+constexpr int kHerosLignes = 3;
+// Graphique (energie_bilan_zone, kBilZoneL × 530 sous le titre et les boutons) : barres et
+// courbe de kBilX0 à kBilX1 et de kBilY0 à kBilY1 ; graduations du net à gauche, du cumul
+// à droite ; axe, légende, puis la note de l'estimation.
+constexpr int32_t kBilZoneL = 764;
+constexpr int32_t kBilUniteY = 4;           // « kWh / jour », « cumul »
+constexpr int32_t kBilX0 = 60;
+constexpr int32_t kBilX1 = 696;
+constexpr int32_t kBilY0 = 48;
+constexpr int32_t kBilY1 = 400;
+constexpr int32_t kBilAxeY = 408;
+constexpr int32_t kBilAxeL = 64;
+constexpr int32_t kBilLegendeX = 20;
+constexpr int32_t kBilLegendeY = 452;
+constexpr int32_t kBilLegendePas = 240;
+constexpr int32_t kBilNoteY = 488;
+constexpr int32_t kBilNoteL = 600;
+constexpr int32_t kBulleL = 150;            // la bulle du dernier créneau connu
+constexpr int32_t kBulleH = 40;
+constexpr int32_t kPointD = 18;             // son point sur la courbe
+constexpr int32_t kProjD = 6;               // un point de la projection
+constexpr int32_t kFinL = 300;              // « ~ +37 fin du mois »
+constexpr int32_t kBilTitreL = 248;         // titre du graphique, avant les boutons de vue
+constexpr int kGrille = 8;                  // graduations de chaque axe, au plus
 constexpr int kBilanLegendes = 3;
 
 struct Mesure {
@@ -200,8 +259,11 @@ struct Serie {
 // Bilan d'une vue (tab5_maj_energie_bilan) : la devise copiée, le reste tel que lu.
 struct Bilan {
     bool recu = false;
-    bool montre = false;   // vente ou achat choisi
+    bool montre = false;      // vente ou achat choisi, ou production et consommation
+    bool calendaire = false;  // vue civile (ADR-0062) ; faux : fenêtre glissante d'un HA
+                              // d'avant (« jours », « mois »)
     int annee = 2000, mois = 1, jour = 1;
+    int n = 0;                // créneaux de la vue (24, 28 à 31, 30 ou 12)
     char devise[kEnergieDeviseMax + 1] = {};
     EnergieBilanLu lu;
 };
@@ -272,21 +334,55 @@ struct CourbeCle {
 };
 CourbeCle s_courbe_cle;
 
-// Bilan : par créneau, la production (autoconsommé, vendu) et la consommation
-// (autoconsommé, acheté), empilées.
+// Bilan (ADR-0062) : la carte « Batterie réseau » et le graphique du net.
 struct BilanUI {
-    lv_obj_t* repere = nullptr;
-    lv_obj_t* maximum = nullptr;
+    // Carte de gauche.
+    lv_obj_t* titre = nullptr;            // « BATTERIE RÉSEAU · OCTOBRE »
+    lv_obj_t* grand = nullptr;            // « +23.4 »
+    lv_obj_t* grand_unite = nullptr;      // « kWh », après le nombre
+    lv_obj_t* sous = nullptr;             // « d'avance sur le réseau ce mois-ci »
+    lv_obj_t* jauge = nullptr;
+    lv_obj_t* jauge_bout = nullptr;
+    lv_obj_t* jauge_proj = nullptr;       // la fin du mois projetée, estompée
+    lv_obj_t* jauge_plein = nullptr;      // le net du mois
+    lv_obj_t* jauge_zero = nullptr;
+    lv_obj_t* echelle[3] = {};            // « -40 », « 0 », « +40 kWh »
+    lv_obj_t* fin_titre = nullptr;
+    lv_obj_t* fin_valeur = nullptr;
+    lv_obj_t* sep[2] = {};
+    lv_obj_t* ligne_titre[kHerosLignes] = {};   // produit, consommé, économies
+    lv_obj_t* ligne_valeur[kHerosLignes] = {};
+    lv_obj_t* anneau_piste = nullptr;
+    lv_obj_t* anneau = nullptr;
+    lv_obj_t* anneau_pct = nullptr;
+    lv_obj_t* anneau_texte = nullptr;
+    // Graphique.
+    lv_obj_t* unite = nullptr;            // « kWh / jour »
+    lv_obj_t* cumul_titre = nullptr;      // « cumul », au-dessus de l'axe de droite
     lv_obj_t* vide = nullptr;
-    lv_obj_t* prod_auto[kSlotsMax] = {};
-    lv_obj_t* prod_vendu[kSlotsMax] = {};
-    lv_obj_t* cons_auto[kSlotsMax] = {};
-    lv_obj_t* cons_achat[kSlotsMax] = {};
+    lv_obj_t* grille[kGrille] = {};
+    lv_obj_t* grad_net[kGrille] = {};
+    lv_obj_t* grad_cumul[kGrille] = {};
+    lv_obj_t* zero = nullptr;
+    lv_obj_t* barre[kSlotsMax] = {};
+    lv_obj_t* courbe = nullptr;
+    lv_obj_t* proj[kSlotsMax] = {};
+    lv_obj_t* point = nullptr;
+    lv_obj_t* bulle = nullptr;
+    lv_obj_t* bulle_texte = nullptr;
+    lv_obj_t* fin = nullptr;              // « ~ +37 fin du mois »
     lv_obj_t* axe[kAxeMax] = {};
     lv_obj_t* marque[kBilanLegendes] = {};
     lv_obj_t* legende[kBilanLegendes] = {};
+    lv_obj_t* note = nullptr;             // « achat / vente estimés heure par heure »
 };
 BilanUI s_bil;
+// Points de la courbe du cumul (lv_line_set_points ne copie pas : [AI-WARNING] de l'en-tête),
+// le point de départ à 0 compris ; repassés à LVGL seulement s'ils changent.
+constexpr int kCumulPoints = (kCourbeLissePoints - 1) * kLisse + 1;
+static_assert(kSlotsMax + 1 <= kCourbeLissePoints, "le départ et un point par créneau");
+lv_point_precise_t s_cumul_pts[kCumulPoints];
+int s_cumul_n = 0;
 
 // --- Lecture des payloads ---------------------------------------------------------------
 
@@ -382,16 +478,16 @@ lv_obj_t* libelle(lv_obj_t* parent, const esphome::font::Font* police, int32_t l
     return l;
 }
 
-// Un arc de dessin (anneau de la maison) : ni bouton, ni toucher, ni marge ; MAIN = la piste
-// (montrée par `piste`), INDICATOR = une part.
-lv_obj_t* arc_dessin(lv_obj_t* parent, bool piste) {
+// Un arc de dessin (anneau de la maison, du Bilan) : ni bouton, ni toucher, ni marge ;
+// MAIN = la piste (montrée par `piste`), INDICATOR = une part.
+lv_obj_t* arc_dessin(lv_obj_t* parent, bool piste, int32_t diametre = kAnneauD, int32_t epaisseur = kAnneauL) {
     lv_obj_t* a = lv_arc_create(parent);
     lv_obj_remove_style_all(a);
-    lv_obj_set_size(a, kAnneauD, kAnneauD);
+    lv_obj_set_size(a, diametre, diametre);
     lv_arc_set_rotation(a, 270);        // 0° en haut, sens des aiguilles
     lv_arc_set_bg_angles(a, 0, 360);    // avant tout lv_arc_set_angles ([AI-WARNING])
     for (lv_part_t part : {LV_PART_MAIN, LV_PART_INDICATOR}) {
-        lv_obj_set_style_arc_width(a, kAnneauL, part);
+        lv_obj_set_style_arc_width(a, epaisseur, part);
         lv_obj_set_style_arc_rounded(a, false, part);
     }
     lv_obj_set_style_arc_opa(a, piste ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
@@ -439,16 +535,6 @@ const char* glyphe_carte(int carte, int etat) {
             if (etat > 0) return "\U000F17E0";                               // battery-arrow-up
             if (etat < 0) return "\U000F17DE";                               // battery-arrow-down
             return "\U000F0079";                                             // battery
-    }
-}
-
-// Icône d'une carte de la page Bilan (mdi_font_45).
-const char* glyphe_bilan(int carte) {
-    switch (carte) {
-        case AUTOCONSO: return "\U000F1903";                                 // home-lightning-bolt
-        case VENDU: return "\U000F192C";                                     // transmission-tower-export
-        case ACHETE: return "\U000F192D";                                    // transmission-tower-import
-        default: return "\U000F1007";                                        // piggy-bank
     }
 }
 
@@ -1070,143 +1156,424 @@ void peindre_soleil() {
     peindre_infos_soleil(s_soleil);
 }
 
-// --- Page Bilan --------------------------------------------------------------------------
+// --- Page Bilan (ADR-0062) ----------------------------------------------------------------
+
+// Largeur d'un texte dans la police de son label (l'unité posée après le grand nombre, les
+// libellés de l'axe qui se chevaucheraient).
+int32_t largeur_texte(lv_obj_t* l, const char* t) {
+    if (l == nullptr || t == nullptr || t[0] == '\0') return 0;
+    lv_point_t sz;
+    lv_text_get_size(&sz, t, lv_obj_get_style_text_font(l, LV_PART_MAIN), 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+    return sz.x;
+}
+
+// Production du créneau k d'un bilan : son champ prod (HA de l'ADR-0062), sinon la série de
+// l'historique de la même vue (HA d'avant : les mêmes fenêtres glissantes). Jamais pour une
+// vue civile des jours ou des mois : ses créneaux ne sont pas ceux de l'historique.
+float bilan_produit(const Bilan& b, int v, int k) {
+    if (b.lu.prod_choisie) return k < b.lu.n_prod ? b.lu.prod[k] : NAN;
+    if (b.calendaire && v != HEURES) return NAN;
+    const Serie& s = s_series[v];
+    return (s.recue && k < s.n) ? s.v[k] : NAN;
+}
+
+// Créneaux d'une vue du bilan ; renvoie leur nombre (0 : pas encore reçu).
+int bilan_creneaux(int v, EnergieBilanCreneau* c) {
+    const Bilan& b = s_bilans[v];
+    if (!b.recu) return 0;
+    for (int k = 0; k < b.n && k < kSlotsMax; k++) c[k] = energie_bilan_creneau(bilan_produit(b, v, k), b.lu, k);
+    return b.n < kSlotsMax ? b.n : kSlotsMax;
+}
+
+// Un nombre de kWh signé : « +23.4 », « -3.0 » (une décimale sous 100, aucune au-delà, ou
+// `decimales`) ; « 0.0 » sans signe ; « -- » s'il est inconnu.
+void signe_kwh(char* out, size_t n, float v, int decimales = -1) {
+    if (!std::isfinite(v)) {
+        snprintf(out, n, "--");
+        return;
+    }
+    const int d = decimales >= 0 ? decimales : (std::fabs(v) < 100.0f ? 1 : 0);
+    if (std::fabs(v) < (d == 0 ? 0.5f : 0.05f)) {
+        snprintf(out, n, "%s", d == 0 ? "0" : "0.0");
+        return;
+    }
+    snprintf(out, n, "%+.*f", d, static_cast<double>(v));
+}
+
+// Une graduation : « +4 », « -2.5 », « +0.25 », « 0 ».
+void graduation(char* out, size_t n, float v) {
+    const double x = v;
+    if (std::fabs(x) < 1e-6) snprintf(out, n, "0");
+    else if (std::fabs(x - std::round(x)) < 1e-3) snprintf(out, n, "%+.0f", x);
+    else if (std::fabs(x * 10.0 - std::round(x * 10.0)) < 1e-3) snprintf(out, n, "%+.1f", x);
+    else snprintf(out, n, "%+.2f", x);
+}
+
+// y d'une valeur dans le graphique : de kBilY0 (`haut`) au zéro yz, puis de yz à kBilY1
+// (`bas`, en valeur absolue) ; bornée au cadre.
+int32_t bilan_y(float v, float haut, float bas, int32_t yz) {
+    if (v >= 0.0f) return yz - static_cast<int32_t>(std::lround(std::fmin(v / haut, 1.0f) * (yz - kBilY0)));
+    return yz + static_cast<int32_t>(std::lround(std::fmin(-v / bas, 1.0f) * (kBilY1 - yz)));
+}
+
+// Un segment de la jauge depuis le zéro, vers la droite (positif) ou la gauche, à l'échelle
+// `e` ; caché sous 2 px.
+void jauge_segment(lv_obj_t* r, float v, float e) {
+    int32_t l = static_cast<int32_t>(std::lround(std::fabs(v) / e * kJaugeDemi));
+    if (l > kJaugeDemi) l = kJaugeDemi;
+    if (l < 2) {
+        ui_hidden(r, true);
+        return;
+    }
+    ui_poser(r, v >= 0.0f ? kJaugeZeroX : kJaugeZeroX - l, kJaugeY + kJaugeDedans, l, kJaugeH - 2 * kJaugeDedans);
+}
+
+// Carte de gauche : le mois civil du dernier jour connu, lu dans le bilan des jours quelle
+// que soit la vue (HA le pousse à l'ouverture, ADR-0062).
+void peindre_heros() {
+    BilanUI& o = s_bil;
+    const Bilan& b = s_bilans[JOURS];
+    EnergieBilanCreneau c[kSlotsMax];
+    const int n = bilan_creneaux(JOURS, c);
+    const EnergieMois m = energie_mois(c, n, b.annee, b.mois, b.jour);
+    const bool ok = m.ok && std::isfinite(m.net);
+    char buf[96], x[32];
+    if (ok) snprintf(buf, sizeof(buf), "%s \xC2\xB7 %s", tr("BATTERIE RÉSEAU"), month_long_utf8(m.mois));
+    else snprintf(buf, sizeof(buf), "%s", tr("BATTERIE RÉSEAU"));
+    texte_majuscules(buf);
+    texte_ha_coupe(o.titre, buf, kHerosW);
+
+    // Le net du mois : en vert d'avance, en couleur d'avertissement de retard.
+    const uint32_t teinte = ok && m.net < 0.0f ? UIColor.WARNING : UIColor.SUCCESS;
+    signe_kwh(x, sizeof(x), ok ? m.net : NAN);
+    ui_text(o.grand, x);
+    ui_text_color(o.grand, ok ? teinte : UIColor.TEXT_DIM);
+    ui_hidden(o.grand_unite, !ok);
+    if (ok) {
+        ui_text_color(o.grand_unite, teinte);
+        ui_x(o.grand_unite, kHerosX + largeur_texte(o.grand, x) + 10);
+    }
+    const char* sous = !b.recu        ? tr("En attente de Home Assistant")
+                       : !ok          ? tr("Aucun historique")
+                       : m.net < 0.0f ? tr("de retard sur le réseau ce mois-ci")
+                                      : tr("d'avance sur le réseau ce mois-ci");
+    texte_ha_coupe(o.sous, sous, kHerosW);
+
+    // Jauge centrée sur 0 : le net, et la fin du mois projetée derrière, estompée ; échelle
+    // symétrique arrondie qui les contient tous deux.
+    const bool fin = ok && std::isfinite(m.fin);
+    for (lv_obj_t* j : {o.jauge, o.jauge_bout, o.jauge_zero, o.echelle[0], o.echelle[1], o.echelle[2]})
+        ui_hidden(j, !ok);
+    if (ok) {
+        const float e = energie_rond(std::fmax(std::fabs(m.net), fin ? std::fabs(m.fin) : 0.0f));
+        jauge_segment(o.jauge_plein, m.net, e);
+        ui_style_couleur(o.jauge_plein, LV_STYLE_BG_COLOR, teinte);
+        if (fin) {
+            const uint32_t t_fin = m.fin < 0.0f ? UIColor.WARNING : UIColor.SUCCESS;
+            jauge_segment(o.jauge_proj, m.fin, e);
+            ui_style_couleur(o.jauge_proj, LV_STYLE_BG_COLOR, t_fin);
+            contour(o.jauge_proj, t_fin, 2, LV_OPA_70);
+        } else {
+            ui_hidden(o.jauge_proj, true);
+        }
+        graduation(x, sizeof(x), -e);
+        ui_text(o.echelle[0], x);
+        ui_text(o.echelle[1], "0");
+        graduation(x, sizeof(x), e);
+        snprintf(buf, sizeof(buf), "%s kWh", x);
+        ui_text(o.echelle[2], buf);
+    } else {
+        ui_hidden(o.jauge_plein, true);
+        ui_hidden(o.jauge_proj, true);
+    }
+
+    // Fin du mois au rythme des derniers jours (leur nombre réel : moins de 7 en début de mois).
+    ui_hidden(o.fin_titre, !fin);
+    ui_hidden(o.fin_valeur, !fin);
+    if (fin) {
+        signe_kwh(x, sizeof(x), m.fin, std::fabs(m.fin) < 10.0f ? 1 : 0);
+        snprintf(buf, sizeof(buf), "~ %s", x);
+        ui_text(o.fin_valeur, buf);
+        ui_text_color(o.fin_valeur, m.fin < 0.0f ? UIColor.WARNING : UIColor.SUCCESS);
+        const int32_t lv = largeur_texte(o.fin_valeur, buf);
+        ui_x(o.fin_valeur, kHerosX + kHerosW - lv);
+        snprintf(buf, sizeof(buf), tr("Fin du mois (rythme %d j)"), m.n_rythme);
+        texte_ha_coupe(o.fin_titre, buf, kHerosW - lv - kFinEcart);
+    }
+
+    // Produit, consommé ; économies seulement avec un prix (l'argent n'apparaît que là).
+    const bool prix = ok && b.devise[0] != '\0' && std::isfinite(m.gain);
+    const int lignes = prix ? 3 : 2;
+    ui_hidden(o.sep[0], !ok);
+    for (int i = 0; i < kHerosLignes; i++) {
+        const bool montre = ok && i < lignes;
+        ui_hidden(o.ligne_titre[i], !montre);
+        ui_hidden(o.ligne_valeur[i], !montre);
+    }
+    if (ok) {
+        kwh(x, sizeof(x), m.produit);
+        ui_text(o.ligne_valeur[0], x);
+        kwh(x, sizeof(x), m.consomme);
+        ui_text(o.ligne_valeur[1], x);
+        if (prix) {
+            snprintf(buf, sizeof(buf), "%.2f %s", static_cast<double>(m.gain), b.devise);
+            ui_text(o.ligne_valeur[2], buf);
+            ui_text_color(o.ligne_valeur[2], m.gain < 0.0f ? UIColor.WARNING : UIColor.SUCCESS);
+        }
+    }
+
+    // Anneau : la part de la consommation couverte par le soleil (autoconsommé / consommé).
+    const bool anneau = ok && std::isfinite(m.couverture);
+    const int32_t y_sep = kLigneY + lignes * kLignePas + 6;
+    ui_hidden(o.sep[1], !anneau);
+    ui_hidden(o.anneau_piste, !anneau);
+    ui_hidden(o.anneau_pct, !anneau);
+    ui_hidden(o.anneau_texte, !anneau);
+    if (!anneau) {
+        ui_hidden(o.anneau, true);
+        return;
+    }
+    const int32_t ya = y_sep + 14;
+    ui_poser(o.sep[1], kHerosX, y_sep, kHerosW, 1);
+    ui_y(o.anneau_piste, ya);
+    ui_y(o.anneau, ya);
+    arc_couleur(o.anneau_piste, LV_PART_MAIN, UIColor.ARC_TRACK);
+    peindre_part(o.anneau, 0, static_cast<int32_t>(std::lround(360.0f * m.couverture)), UIColor.GOLD);
+    snprintf(x, sizeof(x), "%d %%", static_cast<int>(std::lround(100.0f * m.couverture)));
+    ui_text(o.anneau_pct, x);
+    ui_y(o.anneau_pct, ya + kAnneauBilanD / 2 - 13);
+    ui_text(o.anneau_texte, tr("de ta conso couverte par le soleil"));
+    ui_y(o.anneau_texte, ya + kAnneauBilanD / 2 - 26);
+}
+
+// Le titre du graphique : la période seule (« Octobre », « Aujourd'hui », « 2026 ») ; une
+// fenêtre glissante d'un HA d'avant garde le nom de Production.
+void titre_bilan(const Bilan& b, char* out, size_t n) {
+    if (!b.recu) snprintf(out, n, "%s", "");
+    else if (s_vue == HEURES || !b.calendaire) snprintf(out, n, "%s", tr(kPeriodes[s_vue]));
+    else if (s_vue == JOURS) snprintf(out, n, "%s", fr_capitalized(month_long_utf8(b.mois)).c_str());
+    else snprintf(out, n, "%d", b.annee);
+}
+
+// Libellé de l'axe sous le créneau k ; `regulier` : montré même loin du dernier créneau
+// connu (heures 00:00, 03:00… ; jours 1, 6, 11… et le dernier du mois, ou tous les cinq
+// en finissant par le dernier dans une fenêtre glissante ; tous les mois).
+void axe_bilan(const Bilan& b, int n, int k, char* out, size_t taille, bool& regulier) {
+    switch (s_vue) {
+        case HEURES:
+            snprintf(out, taille, "%02d:00", k);
+            regulier = k % 3 == 0;
+            return;
+        case JOURS: {
+            int a, m, j;
+            energie_jour_plus(b.annee, b.mois, b.jour, k, a, m, j);
+            snprintf(out, taille, "%d", j);
+            regulier = b.calendaire ? (k % 5 == 0 || k == n - 1) : ((n - 1 - k) % 5 == 0);
+            return;
+        }
+        default:
+            snprintf(out, taille, "%s", month_short_utf8(((b.mois - 1 + k) % 12 + 12) % 12 + 1));
+            regulier = true;
+            return;
+    }
+}
+
+void masquer_graphique_bilan() {
+    BilanUI& o = s_bil;
+    for (int g = 0; g < kGrille; g++)
+        for (lv_obj_t* x : {o.grille[g], o.grad_net[g], o.grad_cumul[g]}) ui_hidden(x, true);
+    for (int k = 0; k < kSlotsMax; k++) {
+        ui_hidden(o.barre[k], true);
+        ui_hidden(o.proj[k], true);
+    }
+    for (lv_obj_t* x : o.axe) ui_hidden(x, true);
+    for (int i = 0; i < kBilanLegendes; i++) {
+        ui_hidden(o.marque[i], true);
+        ui_hidden(o.legende[i], true);
+    }
+    for (lv_obj_t* x : {o.zero, o.courbe, o.point, o.bulle, o.fin, o.note, o.unite, o.cumul_titre}) ui_hidden(x, true);
+}
+
+// Graphique de la vue : le net de chaque créneau en barres (surplus en haut, déficit en
+// bas, l'axe le plus court au quart de l'autre au moins), le cumul en courbe lissée sur son
+// axe de droite (même zéro), le dernier créneau connu pointé avec sa bulle, et dans la vue
+// des jours d'un mois civil la fin du mois projetée en points au rythme de la carte de
+// gauche.
+void peindre_graphique_bilan() {
+    const EnergieUI& u = g_energie_ui;
+    BilanUI& o = s_bil;
+    const Bilan& b = s_bilans[s_vue];
+    char buf[96], x[32];
+    titre_bilan(b, buf, sizeof(buf));
+    texte_ha_coupe(u.bilan_titre, buf, kBilTitreL);
+
+    EnergieBilanCreneau c[kSlotsMax];
+    const int n = bilan_creneaux(s_vue, c);
+    float net[kSlotsMax], cumul[kSlotsMax];
+    for (int k = 0; k < n; k++) net[k] = c[k].net;
+    const int dernier = n > 0 ? energie_cumul(net, n, static_cast<EnergieVue>(s_vue), b.annee, b.mois, b.jour, cumul) : -1;
+    ui_hidden(o.vide, dernier >= 0);
+    if (dernier < 0) {
+        ui_text(o.vide, b.recu ? tr("Aucun historique") : tr("En attente de Home Assistant"));
+        masquer_graphique_bilan();
+        return;
+    }
+    float rythme = NAN;
+    if (s_vue == JOURS && b.calendaire && dernier < n - 1) rythme = energie_mois(c, n, b.annee, b.mois, b.jour).rythme;
+    const float fin = std::isfinite(rythme) ? cumul[dernier] + rythme * static_cast<float>(n - 1 - dernier) : NAN;
+    const EnergieEchelle e = energie_echelle(net, cumul, n, fin);
+    const int32_t yz = kBilY0 + static_cast<int32_t>(std::lround((kBilY1 - kBilY0) * e.haut / (e.haut + e.bas)));
+
+    static const char* const kUnites[NB_VUES] = {tr_noop("kWh / heure"), tr_noop("kWh / jour"), tr_noop("kWh / mois")};
+    texte_ha_coupe(o.unite, tr(kUnites[s_vue]), 300);
+    ui_hidden(o.unite, false);
+    ui_hidden(o.cumul_titre, false);
+
+    // Graduations du net (traits et libellés à gauche), puis du cumul (à droite).
+    int g = 0;
+    for (int s = 1; s >= -1; s -= 2) {
+        const float borne = (s > 0 ? e.haut : e.bas) * 1.0001f;
+        for (int i = 1; g < kGrille && i * e.pas <= borne; i++, g++) {
+            const float v = s * i * e.pas;
+            const int32_t y = bilan_y(v, e.haut, e.bas, yz);
+            ui_poser(o.grille[g], kBilX0, y, kBilX1 - kBilX0, 1);
+            graduation(x, sizeof(x), v);
+            ui_text(o.grad_net[g], x);
+            ui_poser(o.grad_net[g], 0, y - 13, kBilX0 - 10, LV_SIZE_CONTENT);
+        }
+    }
+    for (; g < kGrille; g++) {
+        ui_hidden(o.grille[g], true);
+        ui_hidden(o.grad_net[g], true);
+    }
+    const float cpas = std::fmax(e.cumul_pas, energie_pas(std::fmax(e.cumul_haut, e.cumul_bas) / 4.0f));
+    g = 0;
+    for (int s = 1; s >= -1; s -= 2) {
+        const float borne = (s > 0 ? e.cumul_haut : e.cumul_bas) * 1.0001f;
+        for (int i = 1; g < kGrille && i * cpas <= borne; i++, g++) {
+            const float v = s * i * cpas;
+            graduation(x, sizeof(x), v);
+            ui_text(o.grad_cumul[g], x);
+            ui_poser(o.grad_cumul[g], kBilX1 + 8, bilan_y(v, e.cumul_haut, e.cumul_bas, yz) - 13, kBilZoneL - kBilX1 - 8,
+                     LV_SIZE_CONTENT);
+        }
+    }
+    for (; g < kGrille; g++) ui_hidden(o.grad_cumul[g], true);
+    ui_poser(o.zero, kBilX0, yz - 1, kBilX1 - kBilX0, 2);
+
+    // Barres du net.
+    const float pas = static_cast<float>(kBilX1 - kBilX0) / static_cast<float>(n);
+    auto centre = [pas](int k) { return kBilX0 + static_cast<int32_t>(std::lround((k + 0.5f) * pas)); };
+    int32_t l = static_cast<int32_t>(pas * 0.55f);
+    if (l < 4) l = 4;
+    for (int k = 0; k < kSlotsMax; k++) {
+        lv_obj_t* r = o.barre[k];
+        const bool montre = k < n && std::isfinite(net[k]);
+        ui_hidden(r, !montre);
+        if (!montre) continue;
+        const int32_t y = bilan_y(net[k], e.haut, e.bas, yz);
+        int32_t h = y < yz ? yz - y : y - yz;
+        if (h < 2) h = 2;
+        ui_poser(r, centre(k) - l / 2, net[k] >= 0.0f ? yz - h : yz, l, h);
+        ui_style_couleur(r, LV_STYLE_BG_COLOR, net[k] >= 0.0f ? UIColor.SUCCESS : UIColor.WARNING);
+    }
+
+    // Cumul : depuis 0 au début d'une période civile, jusqu'au dernier créneau connu.
+    float xs[kCourbeLissePoints], ys[kCourbeLissePoints];
+    int np = 0;
+    if (b.calendaire) {
+        xs[np] = static_cast<float>(kBilX0);
+        ys[np++] = static_cast<float>(yz);
+    }
+    for (int k = 0; k <= dernier && np < kCourbeLissePoints; k++) {
+        xs[np] = static_cast<float>(centre(k));
+        ys[np++] = static_cast<float>(bilan_y(cumul[k], e.cumul_haut, e.cumul_bas, yz));
+    }
+    lv_point_precise_t pts[kCumulPoints];
+    const int npts = ui_courbe_lisse(xs, ys, np, kLisse, pts);
+    if (npts != s_cumul_n || std::memcmp(pts, s_cumul_pts, sizeof(lv_point_precise_t) * static_cast<size_t>(npts)) != 0) {
+        std::memcpy(s_cumul_pts, pts, sizeof(lv_point_precise_t) * static_cast<size_t>(npts));
+        s_cumul_n = npts;
+        if (npts >= 2) lv_line_set_points(o.courbe, s_cumul_pts, static_cast<uint32_t>(npts));
+    }
+    ui_hidden(o.courbe, s_cumul_n < 2);
+
+    // Le dernier créneau connu : son point sur la courbe, sa bulle au-dessus (en dessous
+    // contre le haut du cadre), gardée dans la zone.
+    const int32_t px = centre(dernier), py = bilan_y(cumul[dernier], e.cumul_haut, e.cumul_bas, yz);
+    ui_poser(o.point, px - kPointD / 2, py - kPointD / 2, kPointD, kPointD);
+    signe_kwh(x, sizeof(x), cumul[dernier]);
+    snprintf(buf, sizeof(buf), "%s kWh", x);
+    ui_text(o.bulle_texte, buf);
+    ui_hidden(o.bulle_texte, false);
+    int32_t bx = px - kBulleL / 2;
+    if (bx < 0) bx = 0;
+    if (bx > kBilZoneL - kBulleL) bx = kBilZoneL - kBulleL;
+    int32_t by = py - kPointD / 2 - 10 - kBulleH;
+    if (by < 0) by = py + kPointD / 2 + 10;
+    ui_poser(o.bulle, bx, by, kBulleL, kBulleH);
+
+    // Projection : du lendemain du dernier jour connu à la fin du mois.
+    for (int k = 0; k < kSlotsMax; k++) {
+        const bool montre = std::isfinite(fin) && k > dernier && k < n;
+        ui_hidden(o.proj[k], !montre);
+        if (!montre) continue;
+        const float v = cumul[dernier] + rythme * static_cast<float>(k - dernier);
+        ui_poser(o.proj[k], centre(k) - kProjD / 2, bilan_y(v, e.cumul_haut, e.cumul_bas, yz) - kProjD / 2, kProjD, kProjD);
+    }
+    ui_hidden(o.fin, !std::isfinite(fin));
+    if (std::isfinite(fin)) {
+        signe_kwh(x, sizeof(x), fin, std::fabs(fin) < 10.0f ? 1 : 0);
+        char approx[40];
+        snprintf(approx, sizeof(approx), "~ %s", x);
+        snprintf(buf, sizeof(buf), tr("%s fin du mois"), approx);
+        ui_text(o.fin, buf);
+        const int32_t yf = bilan_y(fin, e.cumul_haut, e.cumul_bas, yz);
+        ui_poser(o.fin, kBilX1 - kFinL, yf - 40 >= 0 ? yf - 40 : yf + 12, kFinL, LV_SIZE_CONTENT);
+    }
+
+    // Axe : les libellés réguliers, et le dernier créneau connu en couleur d'accent ; un
+    // libellé régulier qui le chevaucherait s'efface.
+    char courant[24];
+    bool regulier = false;
+    axe_bilan(b, n, dernier, courant, sizeof(courant), regulier);
+    const int32_t l_courant = largeur_texte(o.axe[0], courant);
+    int a = 0;
+    for (int k = 0; k < n && a < kAxeMax; k++) {
+        axe_bilan(b, n, k, x, sizeof(x), regulier);
+        const bool est_courant = k == dernier;
+        if (!est_courant) {
+            if (!regulier) continue;
+            const int32_t ecart = std::abs(centre(k) - px);
+            if (ecart < (largeur_texte(o.axe[0], x) + l_courant) / 2 + 8) continue;
+        }
+        lv_obj_t* lbl = o.axe[a++];
+        ui_text(lbl, x);
+        ui_text_color(lbl, est_courant ? UIColor.ACCENT : UIColor.TEXT_DIM);
+        ui_poser(lbl, centre(k) - kBilAxeL / 2, kBilAxeY, kBilAxeL, LV_SIZE_CONTENT);
+    }
+    for (; a < kAxeMax; a++) ui_hidden(o.axe[a], true);
+
+    // Légende (les noms de la vue), puis la note de l'estimation.
+    static const char* const kLegendes[NB_VUES][kBilanLegendes] = {
+        {tr_noop("surplus de l'heure"), tr_noop("déficit de l'heure"), tr_noop("cumul du jour")},
+        {tr_noop("surplus du jour"), tr_noop("déficit du jour"), tr_noop("cumul du mois")},
+        {tr_noop("surplus du mois"), tr_noop("déficit du mois"), tr_noop("cumul de l'année")}};
+    for (int i = 0; i < kBilanLegendes; i++) {
+        ui_hidden(o.marque[i], false);
+        texte_ha_coupe(o.legende[i], tr(kLegendes[s_vue][i]), kBilLegendePas - kLegendeMarque - 16);
+        ui_hidden(o.legende[i], false);
+    }
+    ui_hidden(o.note, !b.lu.estime);
+    if (b.lu.estime) texte_ha_coupe(o.note, tr("achat / vente estimés heure par heure"), kBilNoteL);
+}
 
 void peindre_bilan() {
     const EnergieUI& u = g_energie_ui;
     for (int v = 0; v < NB_VUES; v++) highlight_button_border(u.bilan_vue_btn[v], v == s_vue, UIColor.ACCENT);
-    if (s_bil.repere == nullptr) return;
-    const Bilan& b = s_bilans[s_vue];
-    const Serie& prod = s_series[s_vue];
-    const int nb = kSlots[s_vue];
-    float produit[kSlotsMax];
-    for (int k = 0; k < kSlotsMax; k++) produit[k] = (prod.recue && k < prod.n) ? prod.v[k] : NAN;
-    const EnergieBilanTotaux t = energie_bilan_totaux(produit, nb, b.lu);
-    ui_text(u.bilan_titre, tr(kPeriodes[s_vue]));
-
-    // Cartes : autoconsommé toujours ; vendu, acheté avec leur compteur ; gains avec un prix.
-    bool montre[NB_CARTES] = {true, b.lu.vente_choisie, b.lu.achat_choisi, b.devise[0] != '\0' && b.lu.gain_choisi};
-    const int32_t largeur = cartes_placer(AUTOCONSO, montre, kCartesY);
-    char v[24], l1[48], l2[48], x[24];
-    // Bilan de la vue pas encore reçu : « -- » et rien dessous (sans vente ni achat lus,
-    // le taux vaudrait 100 %).
-    if (b.recu && std::isfinite(t.taux))
-        snprintf(v, sizeof(v), "%d %%", static_cast<int>(std::lround(t.taux * 100.0f)));
-    else snprintf(v, sizeof(v), "--");
-    l1[0] = '\0';
-    l2[0] = '\0';
-    if (b.recu) {
-        kwh(x, sizeof(x), t.produit);
-        snprintf(l1, sizeof(l1), "%s %s", tr("Produit"), x);
-    }
-    if (b.recu && std::isfinite(t.consomme)) {
-        kwh(x, sizeof(x), t.consomme);
-        snprintf(l2, sizeof(l2), "%s %s", tr("Consommé"), x);
-    }
-    peindre_carte(AUTOCONSO, v, UIColor.TEXT_PRIMARY, glyphe_bilan(AUTOCONSO), UIColor.GOLD, l1, l2, largeur);
-    if (montre[1]) {
-        kwh(v, sizeof(v), t.vendu);
-        l2[0] = '\0';
-        if (std::isfinite(t.vendu) && std::isfinite(t.produit) && t.produit > 0.0f)
-            snprintf(l2, sizeof(l2), tr("%d %% de la production"),
-                     static_cast<int>(std::lround(std::fmin(t.vendu / t.produit, 1.0f) * 100.0f)));
-        peindre_carte(VENDU, v, UIColor.TEXT_PRIMARY, glyphe_bilan(VENDU), UIColor.SUCCESS, tr("Vers le réseau"), l2,
-                      largeur);
-    }
-    if (montre[2]) {
-        kwh(v, sizeof(v), t.achete);
-        l2[0] = '\0';
-        if (std::isfinite(t.achete) && std::isfinite(t.consomme) && t.consomme > 0.0f)
-            // « du consommé » : « de la consommation » dépassait la carte (266 px pour 244).
-            snprintf(l2, sizeof(l2), tr("%d %% du consommé"),
-                     static_cast<int>(std::lround(std::fmin(t.achete / t.consomme, 1.0f) * 100.0f)));
-        peindre_carte(ACHETE, v, UIColor.TEXT_PRIMARY, glyphe_bilan(ACHETE), UIColor.INFO, tr("Depuis le réseau"), l2,
-                      largeur);
-    }
-    if (montre[3]) {
-        if (std::isfinite(t.gain)) snprintf(v, sizeof(v), "%.2f %s", t.gain, b.devise);
-        else snprintf(v, sizeof(v), "--");
-        peindre_carte(GAINS, v, UIColor.TEXT_PRIMARY, glyphe_bilan(GAINS), UIColor.SUCCESS, tr(kPeriodes[s_vue]), "",
-                      largeur);
-    }
-
-    // Barres : par créneau, production (autoconsommé + vendu) à gauche, consommation
-    // (autoconsommé + acheté) à droite, à la même échelle.
-    EnergieBilanCreneau c[kSlotsMax];
-    float maximum = 0.0f;
-    for (int k = 0; k < nb; k++) {
-        c[k] = energie_bilan_creneau(produit[k], b.lu, k);
-        if (std::isfinite(c[k].produit)) maximum = std::fmax(maximum, c[k].produit);
-        if (std::isfinite(c[k].consomme)) maximum = std::fmax(maximum, c[k].consomme);
-    }
-    const bool vide = !b.recu || maximum <= 0.0f;
-    ui_hidden(s_bil.vide, !vide);
-    if (vide) ui_text(s_bil.vide, b.recu ? tr("Aucun historique") : tr("En attente de Home Assistant"));
-    ui_hidden(s_bil.repere, vide);
-    ui_hidden(s_bil.maximum, vide);
-    if (!vide) {
-        energie_formater(x, sizeof(x), maximum, "kWh");
-        ui_text(s_bil.maximum, x);
-    }
-    const int32_t pas = (kGraphiqueL - 2 * kBordX) / nb;
-    int32_t l = pas * 34 / 100;
-    if (l < 4) l = 4;
-    const int32_t pleine = kBarresBas - kBarresHaut;
-    // Une pile de deux : `bas` en bas, `haut` posé dessus ; rien sous un dixième de pixel.
-    auto pile = [pleine, maximum](lv_obj_t* o_bas, lv_obj_t* o_haut, int32_t x, float bas, float haut, int32_t lp) {
-        const bool b_ok = std::isfinite(bas) && bas > 0.0f, h_ok = std::isfinite(haut) && haut > 0.0f;
-        const int32_t hb = b_ok ? hauteur_de(bas, maximum, pleine) : 0;
-        ui_hidden(o_bas, !b_ok);
-        if (b_ok) ui_poser(o_bas, x, kBarresBas - hb, lp, hb);
-        ui_hidden(o_haut, !h_ok);
-        if (h_ok) {
-            const int32_t hh = hauteur_de(haut, maximum, pleine);
-            ui_poser(o_haut, x, kBarresBas - hb - hh, lp, hh);
-        }
-    };
-    for (int k = 0; k < kSlotsMax; k++) {
-        if (vide || k >= nb) {
-            for (lv_obj_t* o : {s_bil.prod_auto[k], s_bil.prod_vendu[k], s_bil.cons_auto[k], s_bil.cons_achat[k]})
-                ui_hidden(o, true);
-            continue;
-        }
-        const int32_t centre = kBordX + k * pas + pas / 2;
-        // Vendu affiché = produit − autoconsommé : la pile fait toujours la production.
-        const float vendu = std::isfinite(c[k].produit) && std::isfinite(c[k].autoconsomme)
-                                ? c[k].produit - c[k].autoconsomme
-                                : NAN;
-        pile(s_bil.prod_auto[k], s_bil.prod_vendu[k], centre - l - 1, c[k].autoconsomme, vendu, l);
-        const float achete = std::isfinite(c[k].consomme) ? c[k].consomme - (std::isfinite(c[k].autoconsomme)
-                                                                                 ? c[k].autoconsomme
-                                                                                 : 0.0f)
-                                                          : NAN;
-        pile(s_bil.cons_auto[k], s_bil.cons_achat[k], centre + 1, std::isfinite(c[k].consomme) ? c[k].autoconsomme : NAN,
-             achete, l);
-    }
-    // Légende : autoconsommé, puis vendu et acheté s'ils ont leur compteur, collée à droite.
-    const bool legende[kBilanLegendes] = {true, b.lu.vente_choisie, b.lu.achat_choisi};
-    static const char* const kLegendes[kBilanLegendes] = {tr_noop("Autoconsommé"), tr_noop("Vendu"), tr_noop("Acheté")};
-    int nl = 0;
-    for (bool m : legende) nl += m ? 1 : 0;
-    int rang = 0;
-    for (int i = 0; i < kBilanLegendes; i++) {
-        ui_hidden(s_bil.marque[i], !legende[i]);
-        ui_hidden(s_bil.legende[i], !legende[i]);
-        if (!legende[i]) continue;
-        const int32_t x0 = kGraphiqueL - kBordX - (nl - rang) * kBilanLegendeL;
-        ui_poser(s_bil.marque[i], x0, 5, kLegendeMarque, kLegendeMarque);
-        texte_ha_coupe(s_bil.legende[i], tr(kLegendes[i]), kBilanLegendeL - kLegendeMarque - 16);
-        ui_x(s_bil.legende[i], x0 + kLegendeMarque + 8);
-        ui_y(s_bil.legende[i], 0);
-        rang++;
-    }
-    Serie axe;
-    axe.recue = b.recu;
-    axe.annee = b.annee;
-    axe.mois = b.mois;
-    axe.jour = b.jour;
-    axe.n = nb;
-    peindre_axe(s_bil.axe, axe, nb, pas);
+    if (s_bil.courbe == nullptr) return;
+    peindre_heros();
+    peindre_graphique_bilan();
 }
 
 // --- Ensemble -----------------------------------------------------------------------------
@@ -1292,22 +1659,40 @@ void couleurs() {
     ui_style_couleur(o.marque[3], LV_STYLE_BG_COLOR, UIColor.GOLD);
     ui_style_couleur(o.cadre, LV_STYLE_BG_COLOR, UIColor.GOLD);
     contour(o.cadre, UIColor.GOLD, 2, LV_OPA_COVER);
-    // Bilan.
-    ui_style_couleur(s_bil.repere, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
-    for (lv_obj_t* l : {s_bil.maximum, s_bil.vide}) ui_text_color(l, UIColor.TEXT_DIM);
-    for (lv_obj_t* l : s_bil.axe) ui_text_color(l, UIColor.TEXT_DIM);
-    for (int k = 0; k < kSlotsMax; k++) {
-        ui_style_couleur(s_bil.prod_auto[k], LV_STYLE_BG_COLOR, UIColor.GOLD);
-        ui_style_couleur(s_bil.prod_vendu[k], LV_STYLE_BG_COLOR, UIColor.SUCCESS);
-        ui_style_couleur(s_bil.cons_auto[k], LV_STYLE_BG_COLOR, UIColor.GOLD);
-        // Acheté en bleu, comme la consommation du réseau dans le tableau Énergie de HA :
-        // l'orange (WARNING) se confondait avec l'or de l'autoconsommé.
-        ui_style_couleur(s_bil.cons_achat[k], LV_STYLE_BG_COLOR, UIColor.INFO);
-    }
-    const uint32_t legendes[kBilanLegendes] = {UIColor.GOLD, UIColor.SUCCESS, UIColor.INFO};
+    // Bilan : carte de gauche (le net, la jauge et les valeurs suivent leur signe à chaque
+    // peinture), puis le graphique (barres : leur signe ; libellés de l'axe : le courant).
+    BilanUI& b = s_bil;
+    ui_text_color(b.titre, UIColor.ACCENT);
+    ui_text_color(b.sous, UIColor.TEXT_PRIMARY);
+    ui_style_couleur(b.jauge, LV_STYLE_BG_COLOR, UIColor.BG);
+    contour(b.jauge, UIColor.TEXT_DIM, kJaugeBord, LV_OPA_COVER);
+    ui_style_couleur(b.jauge_bout, LV_STYLE_BG_COLOR, UIColor.TEXT_DIM);
+    ui_style_couleur(b.jauge_zero, LV_STYLE_BG_COLOR, UIColor.TEXT_DIM);
+    for (lv_obj_t* l : b.echelle) ui_text_color(l, UIColor.TEXT_DIM);
+    ui_text_color(b.fin_titre, UIColor.TEXT_SOFT);
+    for (lv_obj_t* s : b.sep) ui_style_couleur(s, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
+    for (lv_obj_t* l : b.ligne_titre) ui_text_color(l, UIColor.TEXT_SOFT);
+    ui_text_color(b.ligne_valeur[0], UIColor.GOLD);
+    ui_text_color(b.ligne_valeur[1], UIColor.TEXT_PRIMARY);
+    ui_text_color(b.anneau_pct, UIColor.GOLD);
+    ui_text_color(b.anneau_texte, UIColor.TEXT_PRIMARY);
+    for (lv_obj_t* l : {b.unite, b.vide, b.note}) ui_text_color(l, UIColor.TEXT_DIM);
+    ui_text_color(b.cumul_titre, UIColor.ACCENT);
+    for (lv_obj_t* l : b.grad_net) ui_text_color(l, UIColor.TEXT_DIM);
+    for (lv_obj_t* l : b.grad_cumul) ui_text_color(l, UIColor.ACCENT);
+    for (lv_obj_t* g : b.grille) ui_style_couleur(g, LV_STYLE_BG_COLOR, UIColor.GLASS_RIM);
+    ui_style_couleur(b.zero, LV_STYLE_BG_COLOR, UIColor.TEXT_DIM);
+    ui_style_couleur(b.courbe, LV_STYLE_LINE_COLOR, UIColor.ACCENT);
+    for (lv_obj_t* p : b.proj) ui_style_couleur(p, LV_STYLE_BG_COLOR, UIColor.ACCENT);
+    ui_style_couleur(b.point, LV_STYLE_BG_COLOR, UIColor.BG);
+    contour(b.point, UIColor.ACCENT, 4, LV_OPA_COVER);
+    ui_style_couleur(b.bulle, LV_STYLE_BG_COLOR, UIColor.ACCENT);
+    ui_text_color(b.bulle_texte, UIColor.TEXT_ON_ACCENT);
+    ui_text_color(b.fin, UIColor.ACCENT);
+    const uint32_t legendes[kBilanLegendes] = {UIColor.SUCCESS, UIColor.WARNING, UIColor.ACCENT};
     for (int i = 0; i < kBilanLegendes; i++) {
-        ui_style_couleur(s_bil.marque[i], LV_STYLE_BG_COLOR, legendes[i]);
-        ui_text_color(s_bil.legende[i], UIColor.TEXT_SOFT);
+        ui_style_couleur(b.marque[i], LV_STYLE_BG_COLOR, legendes[i]);
+        ui_text_color(b.legende[i], UIColor.TEXT_SOFT);
     }
 }
 
@@ -1411,36 +1796,97 @@ void construire_soleil() {
     ui_hidden(o.source, false);
 }
 
-// Bilan : noms des cartes, repère, piles, légende, axe.
+// Bilan : la carte de gauche (textes, jauge, lignes, anneau), puis le graphique (graduations,
+// zéro, barres, courbe, projection, point, bulle, axe, légende, note), dans l'ordre de dessin.
 void construire_bilan() {
     EnergieUI& u = g_energie_ui;
+    lv_obj_t* h = u.bilan_heros;
     lv_obj_t* z = u.bilan_zone;
-    if (z == nullptr) return;
-    ui_text(u.nom[AUTOCONSO], tr("AUTOCONSOMMÉ"));
-    ui_text(u.nom[VENDU], tr("VENDU"));
-    ui_text(u.nom[ACHETE], tr("ACHETÉ"));
-    ui_text(u.nom[GAINS], tr("GAINS"));
-    s_bil.repere = ui_rectangle(z, LV_OPA_40, 0);
-    ui_poser(s_bil.repere, kBordX, kBarresHaut, kGraphiqueL - 2 * kBordX, 1);
-    ui_hidden(s_bil.repere, true);
-    s_bil.maximum = libelle(z, u.police, 0);
-    lv_obj_set_pos(s_bil.maximum, kBordX, 0);
-    s_bil.vide = libelle(z, u.police, 0);
-    lv_obj_align(s_bil.vide, LV_ALIGN_CENTER, 0, 0);
-    for (int k = 0; k < kSlotsMax; k++) {
-        s_bil.prod_auto[k] = ui_rectangle(z, LV_OPA_COVER, 2);
-        s_bil.prod_vendu[k] = ui_rectangle(z, LV_OPA_COVER, 2);
-        s_bil.cons_auto[k] = ui_rectangle(z, LV_OPA_COVER, 2);
-        s_bil.cons_achat[k] = ui_rectangle(z, LV_OPA_COVER, 2);
+    if (h == nullptr || z == nullptr) return;
+    BilanUI& o = s_bil;
+    const esphome::font::Font* grande = u.police_grande != nullptr ? u.police_grande : u.police_grasse;
+    o.titre = libelle(h, u.police, kHerosW);
+    lv_obj_set_pos(o.titre, kHerosX, kHerosTitreY);
+    o.grand = libelle(h, grande, 0);
+    lv_obj_set_pos(o.grand, kHerosX, kHerosGrandY);
+    o.grand_unite = libelle(h, u.police_grasse, 0);
+    lv_obj_set_pos(o.grand_unite, kHerosX, kHerosGrandY + kHerosUniteDy);
+    ui_text(o.grand_unite, "kWh");
+    o.sous = libelle(h, u.police, kHerosW);
+    lv_obj_set_pos(o.sous, kHerosX, kHerosSousY);
+    for (lv_obj_t* l : {o.titre, o.grand, o.sous}) ui_hidden(l, false);
+    o.jauge = ui_rectangle(h, LV_OPA_50, 16);
+    ui_poser(o.jauge, kHerosX, kJaugeY, kJaugeL, kJaugeH);
+    o.jauge_bout = ui_rectangle(h, LV_OPA_COVER, 4);
+    ui_poser(o.jauge_bout, kHerosX + kJaugeL + 3, kJaugeY + (kJaugeH - kJaugeBoutH) / 2, kJaugeBoutL, kJaugeBoutH);
+    o.jauge_proj = ui_rectangle(h, LV_OPA_30, 8);
+    o.jauge_plein = ui_rectangle(h, LV_OPA_COVER, 8);
+    o.jauge_zero = ui_rectangle(h, LV_OPA_COVER, 0);
+    ui_poser(o.jauge_zero, kJaugeZeroX - 1, kJaugeY + kJaugeBord + 3, 2, kJaugeH - 2 * (kJaugeBord + 3));
+    o.echelle[0] = libelle(h, u.police, 120);
+    lv_obj_set_pos(o.echelle[0], kHerosX, kEchelleY);
+    o.echelle[1] = libelle(h, u.police, 80, LV_TEXT_ALIGN_CENTER);
+    lv_obj_set_pos(o.echelle[1], kJaugeZeroX - 40, kEchelleY);
+    o.echelle[2] = libelle(h, u.police, 160, LV_TEXT_ALIGN_RIGHT);
+    lv_obj_set_pos(o.echelle[2], kHerosX + kJaugeL - 160, kEchelleY);
+    o.fin_titre = libelle(h, u.police, 0);
+    lv_obj_set_pos(o.fin_titre, kHerosX, kFinY + 6);
+    o.fin_valeur = libelle(h, u.police_grasse, 0);
+    lv_obj_set_pos(o.fin_valeur, kHerosX, kFinY);
+    for (lv_obj_t*& s : o.sep) s = ui_rectangle(h, LV_OPA_40, 0);
+    ui_poser(o.sep[0], kHerosX, kSep1Y, kHerosW, 1);
+    static const char* const kLignes[kHerosLignes] = {tr_noop("Produit"), tr_noop("Consommé"), tr_noop("Économies")};
+    for (int i = 0; i < kHerosLignes; i++) {
+        o.ligne_titre[i] = libelle(h, u.police, kHerosW - kLigneValeurL);
+        lv_obj_set_pos(o.ligne_titre[i], kHerosX, kLigneY + i * kLignePas + 6);
+        texte_ha_coupe(o.ligne_titre[i], tr(kLignes[i]), kHerosW - kLigneValeurL);
+        o.ligne_valeur[i] = libelle(h, u.police_grasse, kLigneValeurL, LV_TEXT_ALIGN_RIGHT);
+        lv_obj_set_pos(o.ligne_valeur[i], kHerosX + kHerosW - kLigneValeurL, kLigneY + i * kLignePas);
     }
+    o.anneau_piste = arc_dessin(h, true, kAnneauBilanD, kAnneauBilanL);
+    o.anneau = arc_dessin(h, false, kAnneauBilanD, kAnneauBilanL);
+    lv_obj_set_x(o.anneau_piste, kHerosX);
+    lv_obj_set_x(o.anneau, kHerosX);
+    o.anneau_pct = libelle(h, u.police, kAnneauBilanD, LV_TEXT_ALIGN_CENTER);
+    lv_obj_set_x(o.anneau_pct, kHerosX);
+    // Deux lignes à droite de l'anneau (le texte passe à la ligne, jamais coupé).
+    o.anneau_texte = libelle(h, u.police, kHerosW - kAnneauBilanD - 16);
+    lv_label_set_long_mode(o.anneau_texte, LV_LABEL_LONG_MODE_WRAP);
+    lv_obj_set_x(o.anneau_texte, kHerosX + kAnneauBilanD + 16);
+
+    o.unite = libelle(z, u.police, 300);
+    lv_obj_set_pos(o.unite, kBilLegendeX, kBilUniteY);
+    o.cumul_titre = libelle(z, u.police, 120, LV_TEXT_ALIGN_RIGHT);
+    lv_obj_set_pos(o.cumul_titre, kBilZoneL - 8 - 120, kBilUniteY);
+    texte_ha_coupe(o.cumul_titre, tr("cumul"), 120);
+    o.vide = libelle(z, u.police, kBilZoneL, LV_TEXT_ALIGN_CENTER);
+    lv_obj_set_pos(o.vide, 0, (kBilY0 + kBilY1) / 2 - 13);
+    for (int g = 0; g < kGrille; g++) {
+        o.grille[g] = ui_rectangle(z, LV_OPA_30, 0);
+        o.grad_net[g] = libelle(z, u.police, kBilX0 - 10, LV_TEXT_ALIGN_RIGHT);
+        o.grad_cumul[g] = libelle(z, u.police, kBilZoneL - kBilX1 - 8);
+    }
+    o.zero = ui_rectangle(z, LV_OPA_60, 0);
+    for (lv_obj_t*& r : o.barre) r = ui_rectangle(z, LV_OPA_COVER, 4);
+    o.courbe = ui_ligne(z, 4);
+    for (lv_obj_t*& p : o.proj) p = ui_rectangle(z, LV_OPA_70, LV_RADIUS_CIRCLE);
+    o.point = ui_rectangle(z, LV_OPA_COVER, LV_RADIUS_CIRCLE);
+    o.bulle = ui_rectangle(z, LV_OPA_COVER, kBulleH / 2);
+    o.bulle_texte = libelle(o.bulle, u.police, kBulleL, LV_TEXT_ALIGN_CENTER);
+    lv_obj_align(o.bulle_texte, LV_ALIGN_CENTER, 0, 0);
+    o.fin = libelle(z, u.police, kFinL, LV_TEXT_ALIGN_RIGHT);
+    for (lv_obj_t*& a : o.axe) a = libelle(z, u.police, kBilAxeL, LV_TEXT_ALIGN_CENTER);
     for (int i = 0; i < kBilanLegendes; i++) {
-        s_bil.marque[i] = ui_rectangle(z, LV_OPA_COVER, 4);
-        s_bil.legende[i] = libelle(z, u.police, 0);
+        const int32_t x = kBilLegendeX + i * kBilLegendePas;
+        o.marque[i] = ui_rectangle(z, LV_OPA_COVER, i == 2 ? 2 : 4);
+        if (i == 2) ui_poser(o.marque[i], x, kBilLegendeY + 11, kLegendeMarque, 4);
+        else ui_poser(o.marque[i], x, kBilLegendeY + 4, kLegendeMarque, kLegendeMarque);
+        ui_hidden(o.marque[i], true);
+        o.legende[i] = libelle(z, u.police, 0);
+        lv_obj_set_pos(o.legende[i], x + kLegendeMarque + 8, kBilLegendeY);
     }
-    for (int k = 0; k < kAxeMax; k++) {
-        s_bil.axe[k] = libelle(z, u.police, kAxeLibelleL, LV_TEXT_ALIGN_CENTER);
-        lv_obj_set_y(s_bil.axe[k], kAxeY);
-    }
+    o.note = libelle(z, u.police, kBilNoteL, LV_TEXT_ALIGN_RIGHT);
+    lv_obj_set_pos(o.note, kBilZoneL - kBilLegendeX - kBilNoteL, kBilNoteY);
 }
 
 // Tout ce que dessine ce fichier : une fois, à la première ouverture.
@@ -1549,10 +1995,19 @@ void energie_soleil(const std::string& payload) {
     peindre();
 }
 
-// ADR-0058 : page « Bilan » (lecture : energie_bilan_lire, tab5_parse.h). Date bornée comme
-// celle de l'historique (libellés de l'axe des jours).
+// ADR-0058 : page « Bilan » (lecture : energie_bilan_lire, tab5_parse.h). Vues civiles de
+// l'ADR-0062 (« heures », « mois_civil » : autant de créneaux que de jours dans le mois,
+// « annee_civile ») ou fenêtres glissantes d'un HA d'avant (« jours », « mois »). Date
+// bornée comme celle de l'historique (libellés de l'axe des jours).
 void energie_bilan(const std::string& vue, const std::string& debut, const std::string& payload) {
-    const int v = vue_de(vue);
+    int v = -1;
+    bool calendaire = true;
+    for (int i = 0; i < NB_VUES && v < 0; i++)
+        if (vue == kVuesBilan[i]) v = i;
+    if (v < 0) {
+        v = vue_de(vue);
+        calendaire = false;
+    }
     if (v < 0) {
         payload_refuse("tab5.energie", "bilan : vue inconnue", vue.size());
         return;
@@ -1561,13 +2016,15 @@ void energie_bilan(const std::string& vue, const std::string& debut, const std::
     Bilan& b = s_bilans[v];
     b = Bilan{};
     b.recu = true;
+    b.calendaire = calendaire;
     if (std::sscanf(debut.c_str(), "%d-%d-%d", &b.annee, &b.mois, &b.jour) != 3 || b.annee < 1970 ||
         b.annee > 2200 || b.mois < 1 || b.mois > 12 || b.jour < 1 || b.jour > 31) {
         b.annee = 2000;
         b.mois = 1;
         b.jour = 1;
     }
-    b.montre = energie_bilan_lire(Champ{payload.data(), payload.size()}, kSlots[v], b.lu);
+    b.n = calendaire && v == JOURS ? jours_du_mois(b.annee, b.mois) : kSlots[v];
+    b.montre = energie_bilan_lire(Champ{payload.data(), payload.size()}, b.n, b.lu);
     if (b.lu.devise.n > 0) texte_ha_copier(b.devise, sizeof(b.devise), b.lu.devise.p, b.lu.devise.n);
     b.lu.devise = Champ{nullptr, 0};  // pointait dans le payload, qui ne vit pas plus loin
     peindre();

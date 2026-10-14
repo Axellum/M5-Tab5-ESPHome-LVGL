@@ -4,9 +4,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
-Ordre de mise à jour depuis les dernières versions publiées, tant que `v3.8.1` n'est pas
-taguée (`tests/test_contrat_versions.py` le confronte à la matrice) :
+[v3.9.0-rc.1](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.9.0-rc.1)
+le 13/10/2026 : extinction auto de l'écran sur batterie seulement (#463). Firmware seul ; le
+tableau de bord HA à réécrire pour y voir le nouvel interrupteur.
+
+[v3.9.0-rc.2](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.9.0-rc.2)
+le 14/10/2026 : page « Bilan » en kWh et batterie réseau (#465), niveau de batterie selon une
+courbe lithium-ion et sortie du mode économie à 60 % (#468), bas des cartes en « Relief doux »
+sombre (#467), tuile − / + : la clim de la pièce et le choix respecté partout (#471). La
+tablette d'abord, puis `packages/tab5_energie.yaml` et le blueprint.
+
+Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
+le confronte à la matrice) :
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
+
+### Ajouté
 
 - **Carte et taille de l'écran paramétrables** ([ADR-0061](docs/decisions/0061-board-and-screen-size.md)) :
   - nouvelle substitution `tab5_carte` (`tab5` par défaut) qui choisit `Tab5/paquets/carte-<carte>.yaml` : le matériel, l'écran et la géométrie de la carte (`geometrie-<carte>.yaml` : taille de l'écran, de la dalle, rotation de LVGL, échelle des grosses polices) ;
@@ -15,6 +27,23 @@ taguée (`tests/test_contrat_versions.py` le confronte à la matrice) :
   - carte **Waveshare ESP32-P4 7B** (1024×600) **expérimentale** : `tab5_carte: waveshare-7b`, compilée par la CI (job `build-carte-7b`, non requis), écrans rendus en 1024×600 dans l'artefact `rendu-1024x600` (job `rendu-7b`, informatif), **essayée sur une vraie carte le 14/10/2026 (écran, tactile et rétroéclairage ; image tournée de 180°, tactile du GT911 inversé avec son reset sur GPIO23), interface pas encore adaptée** ; le matériel du Tab5 qu'elle n'a pas (alimentations, batterie, RTC, IMU) garde ses id sous forme de bouchons ([matériel](docs/hardware.md#waveshare-esp32-p4-7b-experimental)).
   - **ce que les popups ont en commun suit la carte** (lot 2) : corps, graphique, demi-cartes, noms des pages en haut (Réglages, Météo, Réveil, pièces des Lumières et des Volets), colonnes du calendrier, lignes des pièces (Lumières, Volets, Maison), panneaux de la carte centrale, voiles de la roue et de la liste − / + ; constantes de `tab5_geometrie.h` et jetons `corps_w`, `corps_h`, `graphique_l`, `demi_w`, `demi_x`, `onglets_fin`, `onglets_zone`, `cal_col_*`, `piece_ligne_*`, `central_w`. La mise en page propre de chaque popup, l'accueil et les jeux restent dessinés pour 1280×720 (sauf deux chevauchements évités : rouleaux du Réveil posés depuis le milieu de leur carte, température de la pièce de la Climatisation à sa hauteur du Tab5) ; **sur le Tab5, configuration résolue identique** ;
   - rendu de la 7B : le robot des captures rejoue les gestes du Tab5 ramenés à l'écran de la carte et ouvre par la navigation ce que l'accueil y cache (`tools/rendu/vers_carte.py`, action `rendu_ecran` du rendu) ; chaque capture publie l'écran affiché et ses objets coupés (`Tab5/rendu/rendu_mesure.h`) ; job `bilan-7b` : écrans ouverts sur la 7B / attendus et objets coupés des popups, dans son résumé (`tools/rendu/bilan_carte.py`).
+- **Extinction auto sur batterie seulement** ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : un interrupteur « Tab5 Extinction auto sur batterie seulement » (éteint par défaut) ; allumé, le délai de « Tab5 Extinction auto de l'écran » ne joue que quand la tablette tire sur sa batterie. Avec « 5 min » : 1,74 W → 1,23 W tant que personne ne regarde la tablette ([mesure](docs/consumption.md)). Dans le tableau de bord HA (à réécrire, étape 7 de l'installation).
+
+### Modifié
+
+- **Page « Bilan » du popup Énergie en kWh** ([ADR-0062](docs/decisions/0062-energy-balance-kwh-grid-battery.md), [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : utile avec la seule production et la consommation de la maison (compensation mensuelle), l'argent seulement avec un prix.
+  - **Carte « Batterie réseau »** : le net du mois civil (vert d'avance, couleur d'avertissement de retard), une jauge centrée sur 0, la fin du mois projetée au rythme des 7 derniers jours, produit, consommé, économies avec un prix, et un anneau « % de ta conso couverte par le soleil ».
+  - **Graphique** Heures / Jours / Mois : le net par heure du jour, par jour du mois civil, par mois de l'année civile en barres, son cumul en courbe lissée, le dernier créneau pointé et, en vue Jours, la projection en points. Les quatre cartes d'avant (autoconsommé, vendu, acheté, gains) disparaissent.
+  - **Blueprint** : entrée facultative « Énergie consommée par la maison · Home energy consumption ». Sans compteur d'achat ni de vente, HA estime vente = max(0, production − consommation) et achat = max(0, consommation − production) heure par heure, et l'écran le dit.
+  - **Contrat** : trois champs en fin de payload de `tab5_maj_energie_bilan` (`prod`, `conso`, `estime`) et trois vues civiles (`heures`, `mois_civil`, `annee_civile`) ; signature inchangée (contrat 1.2.0). Calculs dans `Tab5/socle/tab5_parse.*` (tests g++ et fuzz), démo, rendu hors tablette (`energie-bilan-jours`, `energie-bilan-mois`, `energie-bilan-prix`).
+  - **Ordre de mise à jour : la tablette d'abord, puis `packages/tab5_energie.yaml` et le blueprint.** Un firmware d'avant refuse les vues `mois_civil` et `annee_civile` (appel sauté, `continue_on_error`) ; le nouveau firmware lit encore l'ancien payload.
+
+### Corrigé
+
+- **Niveau de la batterie selon une courbe de décharge lithium-ion** ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278), merci à @husyildiz) : « Tab5 Batterie » descendait de 100 à 65 % environ en 11 h, puis de 65 à 0 % en une heure environ. Le niveau était une droite 6,0 V = 0 % / 8,23 V = 100 % (config de référence ESPHome), alors qu'une batterie 2S reste longtemps vers 7,4 V puis s'effondre : 7,4 V donnait 63 %. `batterie_niveau_pct()` (`Tab5/socle/tab5_batterie.h`) interpole maintenant une table tension à vide → capacité d'un élément 4,2 V (Samsung EB535151VU, `samsung-sdi-battery.c` du noyau Linux), appliquée à deux éléments : 8,2 V ≈ 94 % (99 % avant), 7,8 V ≈ 67 % (81 %), 7,4 V ≈ 19 % (63 %), 7,0 V ≈ 4 % (45 %), 6,6 V et moins = 0 % (27 % à 6,6 V). Ce n'est pas une courbe mesurée sur la batterie du Tab5. Effets : les alertes 20 % / 10 % arrivent vers 7,42 / 7,32 V au lieu de 6,45 / 6,22 V, le mode économie (35 %) vers 7,54 V au lieu de 6,78 V, et la limite de charge à 80 % s'arrête vers 7,96 V lus au lieu de 7,78 V (reprise à 70 % vers 7,84 V au lieu de 7,56 V). Pas encore vu sur une tablette avec batterie.
+- **Mode économie : sortie de « batterie basse » à 60 % au lieu de 40 %** (suite de la courbe ci-dessus) : avec la courbe, 35 % (7,54 V) et 40 % (7,56 V) n'étaient séparés que de 14 mV, sur le plateau, et la luminosité baissée pouvait suffire à faire remonter la tension au-dessus du retour, donc à faire osciller le mode. 60 % tombe à 7,70 V : 0,16 V d'écart, plus que les 0,11 V de l'ancienne droite (6,78 → 6,89 V). L'entrée reste à 35 %. Sur secteur, rien ne change : « batterie basse » y retombe d'elle-même.
+- **Tuile − / + : le choix de la liste respecté dans une pièce qui a sa clim** (signalé par husyildiz, [discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : dans une pièce dotée de sa clim (ADR-0040), l'appui long ouvrait la liste mais choisir le volet ou le son de la tablette ne changeait rien, la clim de la pièce reprenait toujours la place. Désormais un appareil choisi reste choisi dans toutes les pièces, et la ligne « Clim » de la liste est la clim « d'ici » : la seule de la maison quand il n'y en a qu'une, dans toutes les pièces ; avec plusieurs, celle de la pièce affichée (sa clim propre, sinon sa tuile clim), sinon celle du blueprint ; sans clim du blueprint, pas de ligne « Clim » sur une pièce qui n'en a pas. Le toucher de la température vise la même clim, le défilement auto la fait tourner comme les autres appareils (amendements des ADR-0040 et ADR-0033). La consigne de la clim du blueprint s'y écrit aussi avec « ° » (« 20.0 ° », comme les autres clims ; avant : « 20.0 »). Firmware seul, rien à changer dans Home Assistant.
+- **Bas des cartes des popups dans « Relief doux » sombre** : le dégradé des cartes vitrées finissait dans la couleur du popup (0x2A2E34 sur 0x292D33), et leur bas, coins arrondis compris, semblait coupé (Énergie, Suivi, Température, Météo…). Il finit maintenant à 0x212428, plus sombre que tout le dégradé du popup (8 niveaux au moins) : le bas se lit en bas du popup comme au milieu ; le haut, le liseré et les autres thèmes ne changent pas, sans ombre ajoutée (`Tab5/themes/relief_doux.yaml`, `tools/gen_themes.py`).
 
 ## [3.8.1] — 2026-10-11
 

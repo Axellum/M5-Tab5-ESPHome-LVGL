@@ -59,6 +59,7 @@ from scenarios import (
     build_energie_payload,
     build_energie_soleil,
     ENERGIE_VUES,
+    vues_bilan,
     build_historique,
     HISTORIQUE_CLES,
     HISTORIQUE_VUES,
@@ -324,9 +325,10 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
                            aujourd_hui: _dt.date | None = None) -> None:
     """Réponse de script.tab5_energie (packages/tab5_energie.yaml) : l'instantané, le soleil et
     la prévision du jour (ADR-0058), les heures du jour (la page « Aujourd'hui » les dessine
-    quelle que soit la vue), puis l'historique et le bilan de chaque vue de `vues`. Rien sur
-    un firmware sans le popup Énergie ; les deux actions de l'ADR-0058 manquent seules sur un
-    firmware qui ne les a pas encore."""
+    quelle que soit la vue), l'historique de chaque vue de `vues`, puis le bilan de leurs vues
+    civiles (ADR-0062, vues_bilan : le mois civil toujours). Rien sur un firmware sans le
+    popup Énergie ; les deux actions de l'ADR-0058 manquent seules sur un firmware qui ne les
+    a pas encore."""
     if SERVICE_ENERGIE not in services_par_nom:
         return
     jour = aujourd_hui or _dt.date.today()
@@ -339,7 +341,8 @@ async def _pousser_energie(client, services_par_nom: dict, vues=tuple(ENERGIE_VU
     for vue in vues:
         await _appeler(client, services_par_nom, SERVICE_ENERGIE_HISTORIQUE,
                        **build_energie_historique(vue, jour))
-        if SERVICE_ENERGIE_BILAN in services_par_nom:
+    if SERVICE_ENERGIE_BILAN in services_par_nom:
+        for vue in vues_bilan(vues):
             await _appeler(client, services_par_nom, SERVICE_ENERGIE_BILAN, **build_energie_bilan(vue, jour))
 
 
