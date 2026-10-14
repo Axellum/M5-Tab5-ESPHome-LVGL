@@ -18,7 +18,7 @@ le confronte à la matrice) :
 
 ### Corrigé
 
-- **Bas des cartes des popups dans « Relief doux » sombre** : le dégradé des cartes vitrées finissait dans la couleur du popup (0x2A2E34 sur 0x292D33), et leur bas, coins arrondis compris, semblait coupé (Énergie, Suivi, Température, Météo…). Il finit maintenant à 0x32363C, à 9 niveaux du popup comme en clair ; le haut, le liseré et les autres thèmes ne changent pas, sans ombre ajoutée (`Tab5/themes/relief_doux.yaml`, `tools/gen_themes.py`).
+- **Bas des cartes des popups dans « Relief doux » sombre** : le dégradé des cartes vitrées finissait dans la couleur du popup (0x2A2E34 sur 0x292D33), et leur bas, coins arrondis compris, semblait coupé (Énergie, Suivi, Température, Météo…). Il finit maintenant à 0x212428, plus sombre que tout le dégradé du popup (8 niveaux au moins) : le bas se lit en bas du popup comme au milieu ; le haut, le liseré et les autres thèmes ne changent pas, sans ombre ajoutée (`Tab5/themes/relief_doux.yaml`, `tools/gen_themes.py`).
 
 ## [3.8.1] — 2026-10-11
 

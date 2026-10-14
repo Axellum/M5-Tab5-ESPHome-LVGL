@@ -363,7 +363,7 @@ static constexpr Forme kFormes[] = {
     {11, LV_STYLE_BORDER_SIDE, FORME_NOMBRE, LV_BORDER_SIDE_TOP | LV_BORDER_SIDE_LEFT},  // style_glass_card relief_doux (sombre)
     {11, LV_STYLE_BORDER_OPA, FORME_NOMBRE, 255},  // style_glass_card relief_doux (sombre)
     {11, LV_STYLE_BORDER_COLOR, FORME_COULEUR, 0x131517},  // style_glass_card relief_doux (sombre)
-    {11, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0x32363C},  // style_glass_card relief_doux (sombre)
+    {11, LV_STYLE_BG_GRAD_COLOR, FORME_COULEUR, 0x212428},  // style_glass_card relief_doux (sombre)
     {0, LV_STYLE_RADIUS, FORME_NOMBRE, 24},  // style_meteo_card_page relief_doux (clair)
     {0, LV_STYLE_BORDER_WIDTH, FORME_NOMBRE, 2},  // style_meteo_card_page relief_doux (clair)
     {0, LV_STYLE_BORDER_SIDE, FORME_NOMBRE, LV_BORDER_SIDE_TOP | LV_BORDER_SIDE_LEFT},  // style_meteo_card_page relief_doux (clair)
