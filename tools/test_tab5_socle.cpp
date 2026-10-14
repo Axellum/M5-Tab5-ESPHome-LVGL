@@ -4,7 +4,8 @@
  *     nombres (longueur, illisible, non fini), entiers non signés, plafond commun ;
  *   - dates et heures (Tab5/socle/tab5_core.h/.cpp) : jour civil, jours du mois, heure
  *     valide, « HH:MM » strict, embauche tôt ;
- *   - ce que les deux modèles de tuiles partagent (Tab5/socle/tab5_modele_ha.h) ;
+ *   - ce que les deux modèles de tuiles partagent (Tab5/socle/tab5_modele_ha.h), dont la
+ *     clim « d'ici » de la tuile − / + (clim_ici_rang, 14/10/2026) ;
  *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert ;
  *   - la chronologie du démarrage (Tab5/socle/tab5_demarrage.h, 10/10/2026) ;
  *   - le niveau de la batterie d'après sa tension (Tab5/socle/tab5_batterie.h, courbe de
@@ -230,6 +231,44 @@ static void test_modele_ha() {
            "clé de la clim d'une pièce : cpR (ADR-0040)");
 }
 
+// ── Clim « d'ici » de la tuile − / + (modele_ha::clim_ici_rang, 14/10/2026) ──
+// Rangées comme clims_enumerer : blueprint (r = t = piece = -1), tuiles (t >= 0), puis la
+// clim propre de chaque pièce (t = -1, r = piece).
+struct RefClim {
+    signed char r, t, piece;
+};
+
+static void test_clim_ici() {
+    using modele_ha::clim_ici_rang;
+    const RefClim bp = {-1, -1, -1};
+    const RefClim tuile_salon = {0, 2, 0};      // tuile cli sans m, pièce 0
+    const RefClim tuile_salon_2 = {0, 4, 0};
+    const RefClim propre_salon = {0, -1, 0};    // clim propre de la pièce 0 (ADR-0040)
+    const RefClim propre_bureau = {3, -1, 3};
+
+    expect(clim_ici_rang<RefClim>(nullptr, 0, 0) == -1, "clim d'ici : aucune clim, aucune");
+    // Une seule clim dans la maison : partout, mode météo compris, même hors de sa pièce.
+    const RefClim une[] = {propre_bureau};
+    expect(clim_ici_rang(une, 1, 3) == 0 && clim_ici_rang(une, 1, 0) == 0 && clim_ici_rang(une, 1, -1) == 0,
+           "clim d'ici : une seule clim (celle du bureau), sur toutes les pièces");
+    const RefClim une_bp[] = {bp};
+    expect(clim_ici_rang(une_bp, 1, 2) == 0, "clim d'ici : seule la clim du blueprint, partout");
+    // Plusieurs, avec la clim du blueprint.
+    const RefClim l[] = {bp, tuile_salon, tuile_salon_2, propre_salon, propre_bureau};
+    expect(clim_ici_rang(l, 5, 0) == 3, "clim d'ici : la clim propre de la pièce avant ses tuiles");
+    expect(clim_ici_rang(l, 5, 3) == 4, "clim d'ici : la clim propre du bureau sur le bureau");
+    expect(clim_ici_rang(l, 5, 1) == 0, "clim d'ici : pièce sans clim, celle du blueprint");
+    expect(clim_ici_rang(l, 5, -1) == 0, "clim d'ici : mode météo, celle du blueprint");
+    const RefClim tuiles[] = {bp, tuile_salon, tuile_salon_2, propre_bureau};
+    expect(clim_ici_rang(tuiles, 4, 0) == 1, "clim d'ici : sans clim propre, la première tuile cli de la pièce");
+    // Plusieurs, sans clim du blueprint : rien sur une pièce sans clim ni en mode météo.
+    const RefClim sans_bp[] = {tuile_salon, propre_bureau};
+    expect(clim_ici_rang(sans_bp, 2, 0) == 0 && clim_ici_rang(sans_bp, 2, 3) == 1,
+           "clim d'ici : sans clim du blueprint, celle de la pièce");
+    expect(clim_ici_rang(sans_bp, 2, 1) == -1 && clim_ici_rang(sans_bp, 2, -1) == -1,
+           "clim d'ici : sans clim du blueprint, aucune sur une pièce sans clim");
+}
+
 // ── Chronologie du démarrage (tab5_demarrage.h, 10/10/2026) ─────────────────
 static void test_chronologie() {
     ChronoDemarrage c;
@@ -345,6 +384,7 @@ int main() {
     test_majuscules();
     test_hhmm();
     test_modele_ha();
+    test_clim_ici();
     test_chronologie();
     test_niveau_batterie();
 

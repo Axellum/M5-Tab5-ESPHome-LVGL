@@ -36,3 +36,16 @@ Constraints: push-only and events-only ([ADR-0001](0001-push-only-zero-polling.m
 ## Update (2026-10-09)
 
 [ADR-0047](0047-room-climate-chart.md): the humidity now has a history, drawn with the temperature in the same popup; a long press on the right side (the room's humidity) opens it too.
+
+## Update (2026-10-14): the « Clim » line is the climate « here »; any other choice is kept on every room
+
+Reported by husyildiz (discussion #278, firmware 3.9.0-rc.1): on a room with its own climate, the − / + list opened, but choosing the shutter or the tablet's volume changed nothing — the room's climate was forced over the choice on every paint (the consequence written above, « shows only out of HA mode or on another room », which nobody could understand on the screen). Decided by the author on 2026-10-14:
+
+- **The « Clim » line of the − / + list is the climate « here »** (`clim_ref_ici()`, `tab5_clim.cpp`; the pure rule `modele_ha::clim_ici_rang()`, tested on a PC by `tools/test_tab5_socle.cpp`), among `clims_enumerer()`:
+  - only one climate in the home: that one, on every room and in weather mode;
+  - several: the room shown in HA mode — its own climate first, else its first `cli` tile without option m —, else the blueprint's;
+  - several, and neither the room nor the blueprint has one: no « Clim » line on that room (the tile shows the chosen device, or the first one).
+- **Any other device chosen in the list stays chosen on every room**, as on the rooms without a climate: the same NVS record (`RGC1`), no migration. The stored « climate » choice now means « the climate here ».
+- The line, the zone, − / +, the tap on the value and the automatic scrolling ([ADR-0041](0041-ok-nabu-panel-scrolling.md)) follow it. The blueprint's climate keeps its path (`clim_target`, its globals, its popup); a tile or room climate is painted like a device (its name from `clim_tete()`), moved by `clim_ref_pas()` (key `tRT` or `cpR`, debounce `tab5_debounce_clim_tuile`) and its value opens the carousel on it. The tap on the room's temperature ([ADR-0048](0048-climate-wheel-from-temperature.md)) aims at the same climate (`clim_ref_choisir()` = `clim_ref_ici()`, else the first of the list), so the wheel and the tile no longer disagree.
+- `piece_climat_clim()` is gone; the − / + tile no longer needs the room to have a declared temperature for its climate to show.
+- Off-device check: `tools/rendu/ecrans.py` walks every room of the demo with no, one and several climates (the − / + zone, then its list) and `tools/rendu/planche_reglables.py` lays the captures out on one sheet.
