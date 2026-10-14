@@ -77,6 +77,10 @@ constexpr float kEcoCourantSortieA = 0.020f;
 // ─── Batterie basse : la luminosité au plus bas ───
 // Niveau d'après la tension (« Tab5 Batterie », NAN tant que la batterie n'est pas
 // détectée). Hystérésis : basse à 35 % ou moins, plus basse à 40 % ou plus.
+// Depuis la courbe Li-ion (14/10/2026, tab5_batterie.h), 35 % ≈ 7,54 V et 40 % ≈ 7,56 V :
+// 14 mV d'écart seulement, sur le plateau de la courbe (6,78 / 6,89 V avec l'ancienne
+// droite). Pas mesuré : la luminosité baissée (moins de courant, tension qui remonte)
+// pourrait suffire à repasser 40 % et faire osciller le mode.
 constexpr float kEcoNiveauBas = 35.0f;
 constexpr float kEcoNiveauRetour = 40.0f;
 

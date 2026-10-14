@@ -538,7 +538,7 @@ static void test_chargeur() {
         EtatChargeur c;
         tic_jusqua(c, 0, false, 0, 38 * S, nullptr, nullptr, nullptr);
         expect(chargeur_lecture(c, 7.2f, 38 * S) && c.presence == P::PRESENTE, "7,2 V chargeur coupé : batterie");
-        expect(std::fabs(c.niveau - 53.8f) < 0.1f, "niveau d'après la tension (7,2 V ≈ 54 %)");
+        expect(std::fabs(c.niveau - 7.3f) < 0.1f, "niveau d'après la courbe Li-ion (7,2 V ≈ 7 %)");
         expect(!chargeur_en_sonde(c, 38 * S + 2 * S), "fin de sonde + 2 s : le courant compte de nouveau");
         bool allume = true;
         // Fin de la sonde à 38 s : la suivante tombe à 38 s + 10 min.
@@ -595,11 +595,11 @@ static void test_chargeur() {
         constexpr uint8_t L80 = static_cast<uint8_t>(LimiteCharge::QUATRE_VINGTS);
         EtatChargeur c;
         tic_jusqua(c, L80, false, 0, 38 * S, nullptr, nullptr, nullptr);
-        chargeur_lecture(c, 7.9f, 38 * S);  // ≈ 85 %
+        chargeur_lecture(c, 8.05f, 38 * S);  // ≈ 86 % (courbe Li-ion)
         bool coupe = true;
         tic_jusqua(c, L80, false, 39 * S, 4 * MIN, nullptr, &coupe, nullptr);
         expect(coupe, "80 % : batterie à 85 % au démarrage, chargeur coupé");
-        chargeur_lecture(c, 7.45f, 5 * MIN);  // ≈ 65 %, chargeur coupé depuis 30 s
+        chargeur_lecture(c, 7.782f, 5 * MIN);  // 65 % (3,891 V par élément), chargeur coupé depuis 30 s
         expect(c.presence == P::PRESENTE && std::fabs(c.niveau - 65.0f) < 0.1f, "chargeur coupé : niveau relu");
         expect(!chargeur_tick(c, L80, false, 5 * MIN + S).allumer, "65 % après 5 min d'arrêt : pas encore (10 min)");
         expect(chargeur_tick(c, L80, false, 11 * MIN).allumer, "65 % après 10 min d'arrêt : reprise");
@@ -608,13 +608,13 @@ static void test_chargeur() {
         r.reveil = false;
         r.presence = P::PRESENTE;
         r.allume = true;
-        r.niveau = batterie_niveau_pct(7.70f);  // ≈ 76 %
-        expect(chargeur_voulu(r, L80, 15 * MIN), "76 % en charge : continue");
-        r.niveau = batterie_niveau_pct(7.79f);  // ≈ 80,3 %
+        r.niveau = batterie_niveau_pct(7.94f);  // ≈ 78,5 % (courbe Li-ion)
+        expect(chargeur_voulu(r, L80, 15 * MIN), "78 % en charge : continue");
+        r.niveau = batterie_niveau_pct(7.96f);  // ≈ 80,5 %
         expect(!chargeur_voulu(r, L80, 20 * MIN), "80 % atteint : arrêt");
         r.allume = false;
         r.change_ms = 20 * MIN;
-        r.niveau = batterie_niveau_pct(7.65f);  // ≈ 74 %
+        r.niveau = batterie_niveau_pct(7.89f);  // ≈ 74 %
         expect(!chargeur_voulu(r, L80, 40 * MIN), "74 % : reste à l'arrêt (reprise à 70 %)");
         r.niveau = NAN;
         expect(!chargeur_voulu(r, L80, 40 * MIN), "niveau inconnu : décision gardée");
@@ -760,9 +760,8 @@ static void test_chargeur() {
         expect(!sonde.allumer && !charge_rapide_voulue(RAPIDE, sonde.allumer), "sonde : chargeur coupé, rapide coupée");
     }
 
-    // Niveau, consommation.
-    expect(batterie_niveau_pct(6.0f) == 0.0f && batterie_niveau_pct(8.23f) == 100.0f, "niveau : 6,0 V = 0 %, 8,23 V = 100 %");
-    expect(batterie_niveau_pct(5.0f) == 0.0f && batterie_niveau_pct(8.4f) == 100.0f, "niveau borné à 0..100");
+    // Niveau (courbe Li-ion, 14/10/2026 : cas détaillés dans tools/test_tab5_socle.cpp), consommation.
+    expect(batterie_niveau_pct(6.6f) == 0.0f && batterie_niveau_pct(8.36f) == 100.0f, "niveau : 6,6 V = 0 %, 8,36 V = 100 %");
     expect(std::isnan(batterie_niveau_pct(NAN)), "niveau : tension inconnue");
     expect(std::fabs(batterie_puissance_w(7.4f, 0.4f, true) - 2.96f) < 0.001f, "consommation : 7,4 V × 0,4 A = 2,96 W");
     expect(std::isnan(batterie_puissance_w(7.4f, 0.4f, false)), "consommation : inconnue sur secteur");

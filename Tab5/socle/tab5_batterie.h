@@ -103,13 +103,52 @@ constexpr uint32_t kChargeurSondeMaxMs = 30u * 1000u;        // sonde sans lectu
 // est peut-être branchée ; le mode économie l'ignore (chargeur_en_sonde).
 constexpr uint32_t kChargeurSondeFinMs = 2u * 1000u;
 
-// ─── Niveau d'après la tension (droite de battery-percentage.yaml, référence ESPHome) ───
-// 6,0 V = 0 %, 8,23 V = 100 % ; trop haut pendant la charge.
-constexpr float kBatterieVideV = 6.0f;
-constexpr float kBatteriePleineV = 8.23f;
+// ─── Niveau d'après la tension : courbe de décharge Li-ion (14/10/2026, discussion #278) ───
+// Avant : une droite 6,0 V = 0 % / 8,23 V = 100 % (battery-percentage.yaml, config de
+// référence ESPHome du Tab5). Une batterie lithium n'est pas linéaire : un long plateau
+// vers 3,7-3,8 V par élément, puis un effondrement. Chez husyildiz (14/10/2026), le niveau
+// descendait de 100 à ~65 % en 11 h, puis de 65 à 0 % en ~1 h : la droite donnait 63 % à
+// 7,4 V, là où la courbe ci-dessous en donne 19.
+// Table : tension à vide (OCV, 25 °C) d'UN élément lithium-ion 4,2 V → capacité restante,
+// `samsung_ocv_cap_eb535151vu` du noyau Linux (drivers/power/supply/samsung-sdi-battery.c,
+// commit b5289ba57a27, « Data from vendor boardfile board-janice-bm.c » : batterie Samsung
+// EB535151VU, 1500 mAh, charge à 4,2 V). Recopiée telle quelle, points en mV, croissants.
+// Ce n'est PAS la courbe mesurée de la batterie du Tab5 (2S, 7,4 V, 2000 mAh ; aucune
+// courbe publiée par M5Stack trouvée le 14/10/2026). M5Unified (Power_Class.inl, commit
+// a98dc51d2071) reste linéaire pour le Tab5 : demi-tension, 3,30 V = 0 %, 4,15 V ≈ 100 %.
+// Limites, connues :
+//   - tension À VIDE : sur batterie, l'INA226 lit la tension sous charge, un peu plus basse
+//     (résistance interne) : le niveau est plutôt sous-estimé, d'autant plus que la
+//     tablette consomme ;
+//   - pendant la charge, la tension lue est plus haute qu'au repos : le niveau lit trop haut
+//     (la limite à 80 % s'arrête avant 80 % réels) ;
+//   - 0 % dès 3,30 V par élément (6,60 V) : la courbe Samsung s'arrête là. Plus bas, il
+//     reste peu de chose (1 % entre 3,30 et 3,35 V sur cette courbe) ;
+//   - sur le plateau (30 à 50 %), 34 mV par élément séparent 30 et 50 % : le niveau y bouge
+//     par sauts (la tension est publiée à 50 mV près, filtre de « Tab5 Tension batterie »).
+constexpr int kBatterieElements = 2;   // 2S
+struct PointDecharge {
+    uint16_t mv;     // tension à vide d'un élément (mV)
+    uint8_t pct;     // capacité restante (%)
+};
+// Huit points par ligne : 29 lignes d'un point se reliraient mal.
+// clang-format off
+constexpr PointDecharge kCourbeDecharge[] = {
+    {3300, 0},  {3352, 1},  {3405, 2},  {3497, 4},  {3566, 6},  {3593, 7},  {3638, 9},  {3662, 10},
+    {3680, 12}, {3685, 15}, {3691, 18}, {3711, 20}, {3743, 25}, {3764, 30}, {3778, 40}, {3798, 50},
+    {3816, 55}, {3839, 59}, {3874, 62}, {3891, 65}, {3920, 70}, {3962, 77}, {3988, 82}, {4013, 85},
+    {4057, 89}, {4078, 92}, {4105, 95}, {4148, 99}, {4178, 100},
+};
+// clang-format on
+constexpr int kCourbePoints = sizeof(kCourbeDecharge) / sizeof(kCourbeDecharge[0]);
+// Bornes de la table, pour la batterie entière (2S) : 6,60 V = 0 %, 8,356 V = 100 %.
+constexpr float kBatterieVideV = kBatterieElements * kCourbeDecharge[0].mv / 1000.0f;
+constexpr float kBatteriePleineV = kBatterieElements * kCourbeDecharge[kCourbePoints - 1].mv / 1000.0f;
 
 // ─── Limite de charge à 80 % ───
 // Le niveau lit trop haut pendant la charge : l'arrêt se fait un peu avant 80 % réels.
+// Avec la courbe (14/10/2026) : arrêt vers 7,96 V lus (7,78 V avec la droite), reprise
+// vers 7,84 V lus chargeur coupé (7,56 V avec la droite).
 constexpr float kChargeArretPct = 80.0f;
 constexpr float kChargeReprisePct = 70.0f;
 constexpr uint32_t kChargePauseMinMs = 10u * 60u * 1000u;   // arrêt d'au moins 10 min
@@ -123,10 +162,21 @@ constexpr float kAlerteFaiblePct = 20.0f;
 constexpr float kAlerteCritiquePct = 10.0f;
 constexpr float kAlerteRearmePct = 30.0f;
 
+// Niveau (%) d'une tension de la batterie entière (V) : la tension d'un élément, puis
+// interpolation linéaire entre deux points de kCourbeDecharge ; borné à 0..100, NAN si la
+// tension n'est pas finie.
 inline float batterie_niveau_pct(float tension) {
     if (!std::isfinite(tension)) return NAN;
-    const float p = (tension - kBatterieVideV) / (kBatteriePleineV - kBatterieVideV) * 100.0f;
-    return p < 0.0f ? 0.0f : (p > 100.0f ? 100.0f : p);
+    const float mv = tension * 1000.0f / kBatterieElements;
+    if (mv <= kCourbeDecharge[0].mv) return 0.0f;
+    if (mv >= kCourbeDecharge[kCourbePoints - 1].mv) return 100.0f;
+    for (int i = 1; i < kCourbePoints; i++) {
+        const PointDecharge& b = kCourbeDecharge[i];
+        if (mv > b.mv) continue;
+        const PointDecharge& a = kCourbeDecharge[i - 1];
+        return a.pct + (mv - a.mv) * (b.pct - a.pct) / static_cast<float>(b.mv - a.mv);
+    }
+    return 100.0f;  // inatteignable (mv < dernier point)
 }
 
 // Puissance consommée (W) : tension × courant sur batterie, NAN sinon (sur secteur, le
