@@ -875,7 +875,8 @@ static void test_reglages_pages_et_batterie() {
 }
 
 // Mode économie d'énergie (06/10/2026) : sur batterie d'après le courant de l'INA226
-// (+ = décharge), batterie basse à 35 % (retour à 40 %), et la décision appliquée.
+// (+ = décharge), batterie basse à 35 % (retour à 60 % depuis le 14/10/2026), et la
+// décision appliquée.
 static void test_economie() {
     {
         EtatEconomie e;
@@ -902,11 +903,28 @@ static void test_economie() {
         expect(!e.batterie_basse, "éco : rebranchée, plus basse");
         economie_courant_lu(e, 0.30f, true, false);
         expect(!economie_niveau_lu(e, 30.0f) && e.batterie_basse, "éco : 30 %, basse");
-        expect(!economie_niveau_lu(e, 38.0f) && e.batterie_basse, "éco : 38 %, reste basse (retour à 40 %)");
+        expect(!economie_niveau_lu(e, 38.0f) && e.batterie_basse, "éco : 38 %, reste basse (retour à 60 %)");
         expect(!economie_niveau_lu(e, NAN) && e.batterie_basse, "éco : niveau inconnu, décision gardée");
-        expect(economie_niveau_lu(e, 40.0f) && !e.batterie_basse, "éco : 40 %, plus basse");
+        expect(!economie_niveau_lu(e, 40.0f) && e.batterie_basse, "éco : 40 % (l'ancien retour), reste basse");
+        expect(!economie_niveau_lu(e, 59.0f) && e.batterie_basse, "éco : 59 %, reste basse");
+        expect(economie_niveau_lu(e, 60.0f) && !e.batterie_basse, "éco : 60 % pile, plus basse");
         expect(!economie_niveau_lu(e, 36.0f) && !e.batterie_basse, "éco : 36 % en descendant, pas encore basse");
         expect(economie_niveau_lu(e, 35.0f) && e.batterie_basse, "éco : 35 % pile, basse");
+    }
+    {
+        // L'écart en TENSION entre basse et retour, sur la courbe Li-ion (14/10/2026) : au
+        // moins les 111,5 mV de l'ancienne droite (2,23 V × 5 %). Première tension (au mV)
+        // qui donne chaque seuil.
+        auto tension_mv = [](float pct) {
+            for (int mv = 6000; mv <= 8600; mv++)
+                if (batterie_niveau_pct(mv / 1000.0f) >= pct) return mv;
+            return -1;
+        };
+        const int bas = tension_mv(kEcoNiveauBas);
+        const int retour = tension_mv(kEcoNiveauRetour);
+        expect(std::abs(bas - 7542) <= 1 && std::abs(retour - 7702) <= 1, "éco : basse à 7,542 V, retour à 7,702 V lus");
+        expect(retour - bas >= 112, "éco : au moins 0,11 V entre basse et retour (14 mV avec un retour à 40 %)");
+        expect(tension_mv(40.0f) - bas < 112, "éco : un retour à 40 % serait trop près (contre-épreuve)");
     }
     {
         EntreesEconomie in;

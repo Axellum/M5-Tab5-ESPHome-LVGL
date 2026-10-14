@@ -76,13 +76,17 @@ constexpr float kEcoCourantSortieA = 0.020f;
 
 // ─── Batterie basse : la luminosité au plus bas ───
 // Niveau d'après la tension (« Tab5 Batterie », NAN tant que la batterie n'est pas
-// détectée). Hystérésis : basse à 35 % ou moins, plus basse à 40 % ou plus.
-// Depuis la courbe Li-ion (14/10/2026, tab5_batterie.h), 35 % ≈ 7,54 V et 40 % ≈ 7,56 V :
-// 14 mV d'écart seulement, sur le plateau de la courbe (6,78 / 6,89 V avec l'ancienne
-// droite). Pas mesuré : la luminosité baissée (moins de courant, tension qui remonte)
-// pourrait suffire à repasser 40 % et faire osciller le mode.
+// détectée). Hystérésis : basse à 35 % ou moins, plus basse à 60 % ou plus.
+// Retour relevé de 40 à 60 % le 14/10/2026 (validé par Axel), avec la courbe Li-ion de
+// tab5_batterie.h : 35 % ≈ 7,542 V lus ; 40 % ≈ 7,556 V ne laissait que 14 mV, sur le
+// plateau de la courbe, et la luminosité baissée (moins de courant, la tension remonte)
+// pouvait suffire à repasser le retour et faire osciller le mode. 60 % ≈ 7,701 V : 159 mV
+// d'écart, plus que les 111 mV de l'ancienne droite (35 % = 6,780 V, 40 % = 6,892 V).
+// 50 % (7,596 V) n'en aurait donné que 54. Sans coût sur secteur : « batterie basse » y
+// retombe d'elle-même (economie_basse_maj) ; sur batterie, le niveau ne remonte guère.
+// tools/test_alarm_clock.cpp vérifie l'écart en tension sur la courbe.
 constexpr float kEcoNiveauBas = 35.0f;
-constexpr float kEcoNiveauRetour = 40.0f;
+constexpr float kEcoNiveauRetour = 60.0f;
 
 // ─── Effets du mode ───
 // Luminosités en fraction de la lumière « Display Backlight » (0-1, avant la correction
