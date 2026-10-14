@@ -16,6 +16,10 @@ le confronte à la matrice) :
 
 - **Extinction auto sur batterie seulement** ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) : un interrupteur « Tab5 Extinction auto sur batterie seulement » (éteint par défaut) ; allumé, le délai de « Tab5 Extinction auto de l'écran » ne joue que quand la tablette tire sur sa batterie. Avec « 5 min » : 1,74 W → 1,23 W tant que personne ne regarde la tablette ([mesure](docs/consumption.md)). Dans le tableau de bord HA (à réécrire, étape 7 de l'installation).
 
+### Corrigé
+
+- **Niveau de la batterie selon une courbe de décharge lithium-ion** ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278), merci à @husyildiz) : « Tab5 Batterie » descendait de 100 à 65 % environ en 11 h, puis de 65 à 0 % en une heure environ. Le niveau était une droite 6,0 V = 0 % / 8,23 V = 100 % (config de référence ESPHome), alors qu'une batterie 2S reste longtemps vers 7,4 V puis s'effondre : 7,4 V donnait 63 %. `batterie_niveau_pct()` (`Tab5/socle/tab5_batterie.h`) interpole maintenant une table tension à vide → capacité d'un élément 4,2 V (Samsung EB535151VU, `samsung-sdi-battery.c` du noyau Linux), appliquée à deux éléments : 8,2 V ≈ 94 % (99 % avant), 7,8 V ≈ 67 % (81 %), 7,4 V ≈ 19 % (63 %), 7,0 V ≈ 4 % (45 %), 6,6 V et moins = 0 % (27 % à 6,6 V). Ce n'est pas une courbe mesurée sur la batterie du Tab5. Effets : les alertes 20 % / 10 % arrivent vers 7,42 / 7,32 V au lieu de 6,45 / 6,22 V, le mode économie (35 %) vers 7,54 V au lieu de 6,78 V, et la limite de charge à 80 % s'arrête vers 7,96 V lus au lieu de 7,78 V (reprise à 70 % vers 7,84 V au lieu de 7,56 V). Pas encore vu sur une tablette avec batterie.
+
 ## [3.8.1] — 2026-10-11
 
 Version de sécurité et corrective : protection thermique anti-surchauffe et fiabilité de la détection batterie sans batterie physique.
