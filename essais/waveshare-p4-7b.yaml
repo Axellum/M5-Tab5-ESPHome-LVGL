@@ -49,6 +49,8 @@ esp32:
 
 psram:
   mode: hex
+  # Comme le Tab5. Essai du 14/10 sans : ~30 « lcd.dsi: underrun » par seconde.
+  speed: 200MHz
 
 # Alimentation du PHY MIPI-DSI : LDO_VO3 à 2,5 V (BSP, display.h), comme sur le Tab5.
 esp_ldo:
@@ -57,8 +59,9 @@ esp_ldo:
 
 esp32_hosted:
   variant: esp32c6
-  # C6_CHIP_PU relié directement (0 Ω) à GPIO54 : reset actif à l'état bas.
-  active_high: false
+  # C6_CHIP_PU relié directement (0 Ω) à GPIO54. Essai du 14/10 sur la carte : avec false,
+  # « sdmmc_card_init failed » ; true = la valeur du Tab5 (même câblage) et du défaut d'esp_hosted.
+  active_high: true
   reset_pin: GPIO54
   clk_pin: GPIO18
   cmd_pin: GPIO19
