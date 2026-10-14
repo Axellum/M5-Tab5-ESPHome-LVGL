@@ -4,8 +4,9 @@
 # @role Carte Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (ADR-0061) : 7", 1024×600 paysage
 #       natif, P4 v3 (`engineering_sample: false`), 32 Mo de flash, PSRAM hex. Choisie par
 #       `tab5_carte: waveshare-7b` (Tab5/user_entities.yaml ou `-s tab5_carte waveshare-7b`).
-#       EXPÉRIMENTALE : compilée par la CI (job build-carte-7b), JAMAIS lancée sur une
-#       vraie carte, et l'interface reste au pixel pour 1280×720 (lots suivants).
+#       EXPÉRIMENTALE : compilée par la CI (job build-carte-7b) ; écran, tactile et
+#       rétroéclairage essayés sur une vraie carte le 14/10/2026 (essais/waveshare-p4-7b.yaml),
+#       l'interface reste au pixel pour 1280×720 (lots suivants).
 # @architecture_constraint Remplace carte-tab5.yaml, donc tab5-hardware.yaml et
 #       ecran-<révision>.yaml, qu'elle ne charge pas. Principe : les autres packages
 #       nomment le matériel par ses id ; cette carte fournit LES MÊMES id.
@@ -150,13 +151,23 @@ display:
     update_interval: never
     auto_clear_enabled: false
 
-# GT911 : ni INT ni RST reliés au P4 (BSP : GPIO_NUM_NC), le composant interroge. Résolution
-# lue dans le contrôleur (pas de calibration écrite). on_touch / on_release recopiés de
-# tab5-hardware.yaml (mode économie, écran rallumé au toucher).
+# GT911 : le BSP déclare RST et INT non reliés (GPIO_NUM_NC), mais le schéma relie GPIO23
+# au connecteur du tactile et les configs publiques qui marchent sur la carte
+# (agillis/esphome-modular-lvgl-buttons, Jordi1990/openamber, fil HA t/945864) le donnent
+# en reset_pin. Inversé en X et en Y pour suivre la rotation de 180° de LVGL
+# (geometrie-waveshare-7b.yaml). Essai du 14/10/2026 sur la carte : sans ces réglages,
+# 1 appui reconnu en 5 min ; avec, chaque appui arrive au bon endroit. Le composant
+# interroge (pas d'INT) ; résolution lue dans le contrôleur. on_touch / on_release
+# recopiés de tab5-hardware.yaml (mode économie, écran rallumé au toucher).
 touchscreen:
   - id: touch
     platform: gt911
+    reset_pin: GPIO23
     update_interval: 50ms
+    transform:
+      swap_xy: false
+      mirror_x: true
+      mirror_y: true
     on_touch:
       - lambda: 'ui_mark_activity();'
       - script.execute: tab5_economie_appliquer
