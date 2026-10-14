@@ -59,6 +59,11 @@ NON_MONTREES = {
     "energie-flux": "page Flux (ADR-0058) ; image à tirer du rendu de la PR",
     "energie-aujourdhui": "page Aujourd'hui (ADR-0058) ; image à tirer du rendu de la PR",
     "energie-bilan": "page Bilan (ADR-0058) ; image à tirer du rendu de la PR",
+    # Vues Jours et Mois du Bilan en kWh et variante avec prix (ADR-0062), décrites dans
+    # energy.md : images à tirer du rendu de la PR, puis citées.
+    "energie-bilan-jours": "page Bilan, mois civil (ADR-0062) ; image à tirer du rendu de la PR",
+    "energie-bilan-mois": "energie-bilan-jours montre la même page ; la vue des mois est décrite",
+    "energie-bilan-prix": "energie-bilan-jours montre la même page ; les économies sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
     "temperature-salon": "temperature-serre montre la même fenêtre, avec la prévision en plus",
     "temperature-serre-semaine": "temperature-serre montre la même fenêtre ; les vues sont décrites",

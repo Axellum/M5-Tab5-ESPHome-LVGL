@@ -149,6 +149,25 @@ static void test_entiers() {
     expect(kPayloadMax == 16u * 1024u, "plafond commun : 16 Ko");
 }
 
+static void test_majuscules() {
+    char t[64];
+    std::snprintf(t, sizeof(t), "batterie r\xC3\xA9seau \xC2\xB7 d\303\251cembre");
+    texte_majuscules(t);
+    expect(std::strcmp(t, "BATTERIE R\xC3\x89SEAU \xC2\xB7 D\303\211CEMBRE") == 0,
+           "majuscules : é → É, le point médian (C2 B7) ne bouge pas");
+    std::snprintf(t, sizeof(t), "ao\xC3\xBBt \xC5\x93uvre \xC3\xB7 \xC3\xBF \xC3\x9F 1-2");
+    texte_majuscules(t);
+    expect(std::strcmp(t, "AO\xC3\x9BT \xC5\x92UVRE \xC3\xB7 \xC3\xBF \xC3\x9F 1-2") == 0,
+           "majuscules : û, œ ; ÷, ÿ, ß et les chiffres restent");
+    std::snprintf(t, sizeof(t), "\xE2\x89\x88 a");   // ≈ sur trois octets
+    texte_majuscules(t);
+    expect(std::strcmp(t, "\xE2\x89\x88 A") == 0, "majuscules : un caractère sur trois octets reste");
+    texte_majuscules(nullptr);
+    t[0] = '\0';
+    texte_majuscules(t);
+    expect(t[0] == '\0', "majuscules : chaîne vide");
+}
+
 static void test_dates() {
     expect(jour_civil(1970, 1, 1) == 0, "jour civil : 01/01/1970 = 0");
     expect(jour_civil(1969, 12, 31) == -1, "jour civil : la veille = -1");
@@ -323,6 +342,7 @@ int main() {
     test_nombres();
     test_entiers();
     test_dates();
+    test_majuscules();
     test_hhmm();
     test_modele_ha();
     test_chronologie();

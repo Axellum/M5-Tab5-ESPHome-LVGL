@@ -117,6 +117,11 @@ const char* clock_month_short_utf8(int month);
 // commence par une lettre accentuée doit l'écrire déjà en majuscule dans sa
 // traduction.
 std::string fr_capitalized(const char* s);
+// Tout en majuscules, sur place : les lettres ASCII et les minuscules accentuées du
+// Latin-1 en UTF-8 (« é » → « É », « œ » → « Œ » ; « ÿ » et « ß » restent, leur majuscule
+// n'a pas la même longueur). Un titre de carte en capitales (« BATTERIE RÉSEAU ·
+// OCTOBRE », ADR-0062). nullptr : rien.
+void texte_majuscules(char* s);
 
 // Les mêmes libellés dans la langue de l'écran (tab5_i18n, lot 4 du 27/09/2026) :
 // ce sont EUX qu'on affiche. Les fr_* restent la source (clés de traduction dans
