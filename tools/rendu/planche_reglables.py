@@ -55,8 +55,18 @@ def plan(pieces: dict = PIECES) -> list[tuple[str, list[tuple[int, str, str]]]]:
     return sortie
 
 
+# Polices avec les accents (« Pièce », « Entrée ») : celle de Linux (CI), de Windows, puis
+# celle de Pillow, qui n'a pas « è ».
+POLICES = ("DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "arial.ttf", "segoeui.ttf")
+
+
 def _police(taille: int):
     from PIL import ImageFont
+    for nom in POLICES:
+        try:
+            return ImageFont.truetype(nom, taille)
+        except OSError:
+            continue
     try:
         return ImageFont.load_default(size=taille)
     except TypeError:  # Pillow < 10.1
