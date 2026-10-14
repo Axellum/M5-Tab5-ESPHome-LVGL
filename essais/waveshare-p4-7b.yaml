@@ -31,6 +31,13 @@ esphome:
   on_boot:
     priority: -100
     then:
+      # Test du rétroéclairage sans le curseur : 100 % → 10 % → 100 % → 80 %, 3 s chacun.
+      - light.turn_on: { id: retroeclairage, brightness: 100% }
+      - delay: 3s
+      - light.turn_on: { id: retroeclairage, brightness: 10% }
+      - delay: 3s
+      - light.turn_on: { id: retroeclairage, brightness: 100% }
+      - delay: 3s
       - light.turn_on:
           id: retroeclairage
           brightness: 80%
@@ -80,7 +87,10 @@ logger:
 debug:
   update_interval: 30s
 
+# reboot_timeout 0 : sans HA ni Wi-Fi, ESPHome redémarrait la carte toutes les 15 min
+# (« api: No clients; rebooting », essai du 14/10).
 wifi:
+  reboot_timeout: 0s
   ap:
     ssid: "Essai 7B Fallback"
 captive_portal:
@@ -88,6 +98,7 @@ improv_serial:
 
 api:
   encryption: {}
+  reboot_timeout: 0s
 
 i2c:
   - id: bus_bsp
@@ -123,7 +134,9 @@ output:
     pin:
       number: GPIO32
       inverted: true
-    frequency: 5000Hz
+    # 1000 Hz comme les configs publiques de la 7B (agillis/esphome-modular-lvgl-buttons,
+    # Jordi1990/openamber) ; 5000 Hz (BSP) : luminosité restée figée à l'essai du 14/10.
+    frequency: 1000Hz
 
 light:
   - platform: monochromatic
@@ -156,7 +169,8 @@ audio_adc:
     id: adc_es7210
     bits_per_sample: 16bit
     sample_rate: 16000
-    mic_gain: 30dB
+    # 30 dB : voix captée mais faible (essai du 14/10) ; 37,5 dB = le maximum de l'ES7210.
+    mic_gain: 37.5dB
 
 speaker:
   - platform: i2s_audio
@@ -167,7 +181,8 @@ speaker:
     dac_type: external
     channel: mono
     bits_per_sample: 16bit
-    sample_rate: 16000
+    # 48 kHz comme agillis/esphome-modular-lvgl-buttons ; à 16 kHz : un claquement, puis rien.
+    sample_rate: 48000
 
 microphone:
   - platform: i2s_audio
@@ -251,7 +266,14 @@ lvgl:
             width: 260
             height: 90
             on_click:
+              # Micro et haut-parleur partagent le bus I2S : sans attendre, « Parent bus is busy ».
               - microphone.stop_capture: micro
+              - wait_until:
+                  condition:
+                    not:
+                      microphone.is_capturing: micro
+                  timeout: 2s
+              - logger.log: { format: "ESSAI bip", level: INFO }
               - rtttl.play: 'essai:d=4,o=5,b=140:c,e,g,c6'
             widgets:
               - label:
@@ -264,6 +286,13 @@ lvgl:
             width: 260
             height: 90
             on_click:
+              - rtttl.stop:
+                  id: bip
+              - wait_until:
+                  condition:
+                    not:
+                      speaker.is_playing: haut_parleur
+                  timeout: 2s
               - microphone.capture: micro
             widgets:
               - label:
@@ -276,6 +305,27 @@ lvgl:
             text: "Luminosité :"
             text_color: 0xFFFFFF
             text_font: montserrat_20
+        - button:
+            x: 660
+            y: 380
+            width: 150
+            height: 70
+            # Sortie pilotée directement (sans la lumière), avec une trace dans le journal.
+            on_click:
+              - output.set_level: { id: pwm_retro, level: 0% }
+              - logger.log: { format: "ESSAI retro sortie 0 %%", level: INFO }
+            widgets:
+              - label: { align: center, text: "0 %", text_font: montserrat_24 }
+        - button:
+            x: 830
+            y: 380
+            width: 150
+            height: 70
+            on_click:
+              - output.set_level: { id: pwm_retro, level: 100% }
+              - logger.log: { format: "ESSAI retro sortie 100 %%", level: INFO }
+            widgets:
+              - label: { align: center, text: "100 %", text_font: montserrat_24 }
         - slider:
             x: 24
             y: 410
@@ -284,7 +334,8 @@ lvgl:
             min_value: 5
             max_value: 100
             value: 80
-            on_release:
+            # on_release ne s'est jamais déclenché sur la carte (14/10) : on_value suit le doigt.
+            on_value:
               - light.turn_on:
                   id: retroeclairage
                   brightness: !lambda 'return x / 100.0f;'
