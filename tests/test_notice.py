@@ -84,6 +84,7 @@ NON_MONTREES = {
     # réunis par tools/rendu/planche_reglables.py ; la règle est décrite dans home.md.
     **{f"reglables-{maison}-piece-{n}{liste}": "vérification de la tuile − / + (planche_reglables.py)"
        for maison in ("clims-n", "clims-1", "clims-0") for n in range(1, 6) for liste in ("", "-liste")},
+    "reglables-choix-piece-climat": "vérification du cas de la discussion #278 ; la règle est décrite dans home.md",
     "roue-volet": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-clim": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     # Roue d'une clim par la température de la pièce (ADR-0048), décrite dans climate.md.

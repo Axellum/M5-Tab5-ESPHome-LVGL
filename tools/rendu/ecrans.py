@@ -1465,6 +1465,12 @@ ECRANS: tuple[Ecran, ...] = (
 
     # La clim « d'ici » de la tuile − / + (14/10/2026) : chaque pièce, trois maisons.
     *ecrans_reglables_clims(PIECES),
+    # Le cas signalé par husyildiz (discussion #278) : sur le Bureau, qui a sa clim, choisir
+    # l'Enceinte dans la liste ; la zone − / + la montre (avant le 14/10/2026 : la clim du
+    # Bureau restait). `fermer` rechoisit la clim (première ligne) avant de quitter le mode HA.
+    Ecran("reglables-choix-piece-climat",
+          ALLER_PIECE_CLIMAT + (Long(*CONSIGNE_CLIM), Toucher(*LIGNES_REGLABLES[4])),
+          (Long(*CONSIGNE_CLIM), Toucher(*LIGNES_REGLABLES[0])) + RETOUR_PIECE_CLIMAT),
 
     # Roue de la clim (ADR-0036) en dernier, ses modes dépliés : « climr » reçu ne
     # s'efface pas, aucune capture d'après ne doit en dépendre.
