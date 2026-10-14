@@ -1262,7 +1262,7 @@ bool ServeurIaCourbe::haut(float& h) const {
 
 namespace {
 constexpr int kSoleilChamps = 10;
-constexpr int kBilanChamps = 4;
+constexpr int kBilanChamps = 7;   // 4 avant l'ADR-0062 : prod, conso, estime ajoutés en fin
 
 // « HH:MM » strict sur un champ (qui n'a pas de zéro final) : 5 octets exactement.
 int energie_hhmm(const Champ& c) {
@@ -1352,7 +1352,13 @@ bool energie_bilan_lire(const Champ& payload, int slots, EnergieBilanLu& out) {
     out.n_achat = energie_kwh_liste(f[2], out.achat, slots);
     // Le gain peut être négatif (prix de revente négatif) : borné en valeur absolue.
     out.n_gain = liste_nombres(f[3], out.gain, slots, true);
-    return out.vente_choisie || out.achat_choisi;
+    // ADR-0062 : champs ajoutés en fin, absents d'un HA d'avant (vides, donc non choisis).
+    out.prod_choisie = f[4].n > 0;
+    out.conso_choisie = f[5].n > 0;
+    out.n_prod = energie_kwh_liste(f[4], out.prod, slots);
+    out.n_conso = energie_kwh_liste(f[5], out.conso, slots);
+    out.estime = champ_est(f[6], "1");
+    return out.vente_choisie || out.achat_choisi || (out.prod_choisie && out.conso_choisie);
 }
 
 EnergieBilanCreneau energie_bilan_creneau(float produit, const EnergieBilanLu& b, int k) {
@@ -1363,10 +1369,154 @@ EnergieBilanCreneau energie_bilan_creneau(float produit, const EnergieBilanLu& b
     c.achete = (b.achat_choisi && k < b.n_achat) ? b.achat[k] : NAN;
     c.gain = (b.gain_choisi && k < b.n_gain) ? b.gain[k] : NAN;
     if (std::isfinite(c.produit)) c.autoconsomme = std::max(c.produit - (std::isfinite(c.vendu) ? c.vendu : 0.0f), 0.0f);
-    if (b.achat_choisi && (std::isfinite(c.autoconsomme) || std::isfinite(c.achete)))
+    if (b.conso_choisie) {
+        c.consomme = k < b.n_conso ? b.conso[k] : NAN;
+        if (std::isfinite(c.consomme) && std::isfinite(c.autoconsomme)) c.autoconsomme = std::min(c.autoconsomme, c.consomme);
+    } else if (b.achat_choisi && (std::isfinite(c.autoconsomme) || std::isfinite(c.achete))) {
         c.consomme = (std::isfinite(c.autoconsomme) ? c.autoconsomme : 0.0f) +
                      (std::isfinite(c.achete) ? c.achete : 0.0f);
+    }
+    if (std::isfinite(c.produit) && std::isfinite(c.consomme)) c.net = c.produit - c.consomme;
     return c;
+}
+
+void energie_jour_plus(int annee, int mois, int jour, int k, int& a, int& m, int& j) {
+    a = annee;
+    m = mois;
+    j = jour;
+    if (k <= 0 || m < 1 || m > 12) return;
+    j += k;
+    while (j > jours_du_mois(a, m)) {
+        j -= jours_du_mois(a, m);
+        if (++m > 12) {
+            m = 1;
+            a++;
+        }
+    }
+}
+
+int energie_cumul(const float* net, int n, EnergieVue vue, int annee, int mois, int jour, float* cumul) {
+    if (net == nullptr || cumul == nullptr || n <= 0) return -1;
+    if (n > kEnergieSlotsMax) n = kEnergieSlotsMax;
+    int dernier = -1;
+    for (int k = 0; k < n; k++)
+        if (std::isfinite(net[k])) dernier = k;
+    float s = 0.0f;
+    for (int k = 0; k < n; k++) {
+        bool repart = false;
+        if (k > 0 && vue == EnergieVue::JOURS) {
+            int a, m, j;
+            energie_jour_plus(annee, mois, jour, k, a, m, j);
+            repart = j == 1;
+        } else if (k > 0 && vue == EnergieVue::MOIS) {
+            repart = ((mois - 1 + k) % 12 + 12) % 12 == 0;
+        }
+        if (repart) s = 0.0f;
+        if (std::isfinite(net[k])) s += net[k];
+        cumul[k] = k <= dernier ? s : NAN;
+    }
+    return dernier;
+}
+
+EnergieMois energie_mois(const EnergieBilanCreneau* c, int n, int annee, int mois, int jour) {
+    EnergieMois r;
+    if (c == nullptr || n <= 0 || mois < 1 || mois > 12) return r;
+    if (n > kEnergieSlotsMax) n = kEnergieSlotsMax;
+    int dernier = -1;
+    for (int k = 0; k < n; k++)
+        if (std::isfinite(c[k].net)) dernier = k;
+    if (dernier < 0) return r;
+    r.ok = true;
+    energie_jour_plus(annee, mois, jour, dernier, r.annee, r.mois, r.jour);
+    r.jours_mois = jours_du_mois(r.annee, r.mois);
+    for (int k = 0; k <= dernier; k++) {
+        int a, m, j;
+        energie_jour_plus(annee, mois, jour, k, a, m, j);
+        if (a != r.annee || m != r.mois) continue;
+        r.produit = somme_si(r.produit, c[k].produit);
+        r.consomme = somme_si(r.consomme, c[k].consomme);
+        r.net = somme_si(r.net, c[k].net);
+        r.autoconsomme = somme_si(r.autoconsomme, c[k].autoconsomme);
+        r.gain = somme_si(r.gain, c[k].gain);
+    }
+    if (std::isfinite(r.consomme) && r.consomme > 0.0f && std::isfinite(r.autoconsomme))
+        r.couverture = std::min(std::max(r.autoconsomme / r.consomme, 0.0f), 1.0f);
+    float somme = 0.0f;
+    for (int k = dernier - 1; k >= 0 && k >= dernier - 7; k--)
+        if (std::isfinite(c[k].net)) {
+            somme += c[k].net;
+            r.n_rythme++;
+        }
+    if (r.n_rythme > 0) {
+        r.rythme = somme / static_cast<float>(r.n_rythme);
+        r.fin = r.net + r.rythme * static_cast<float>(r.jours_mois - r.jour);
+    }
+    return r;
+}
+
+namespace {
+// Le plus petit multiple « rond » d'une liste (× 10^k) qui atteint v, au moins 0,1.
+float rond_parmi(float v, const float* liste, int n) {
+    if (!std::isfinite(v) || v <= 0.0f) return 1.0f;
+    if (v <= 0.1f) return 0.1f;
+    if (v > kEnergieKwhMax) v = kEnergieKwhMax;
+    // 10^e par multiplications (exact pour e ≥ 0) : pas de pow() flottant à 999,9999.
+    const int e = static_cast<int>(std::floor(std::log10(static_cast<double>(v))));
+    double p = 1.0;
+    for (int i = 0; i < e; i++) p *= 10.0;
+    for (int i = 0; i > e; i--) p /= 10.0;
+    for (int tour = 0; tour < 2; tour++, p *= 10.0)
+        for (int i = 0; i < n; i++)
+            if (liste[i] * p >= v * 0.9999) return static_cast<float>(liste[i] * p);
+    return static_cast<float>(10.0 * p);
+}
+}  // namespace
+
+float energie_rond(float v) {
+    static const float kRonds[] = {1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 4.0f, 5.0f, 6.0f, 8.0f, 10.0f};
+    return rond_parmi(v, kRonds, sizeof(kRonds) / sizeof(kRonds[0]));
+}
+
+float energie_pas(float v) {
+    static const float kPas[] = {1.0f, 2.0f, 2.5f, 5.0f, 10.0f};
+    return rond_parmi(v, kPas, sizeof(kPas) / sizeof(kPas[0]));
+}
+
+EnergieEchelle energie_echelle(const float* net, const float* cumul, int n, float projection) {
+    EnergieEchelle e;
+    if (n > kEnergieSlotsMax) n = kEnergieSlotsMax;
+    float pmax = 0.0f, nmax = 0.0f, cp = 0.0f, cn = 0.0f;
+    for (int k = 0; k < n; k++) {
+        const float v = net != nullptr ? net[k] : NAN;
+        if (std::isfinite(v)) {
+            pmax = std::max(pmax, v);
+            nmax = std::max(nmax, -v);
+        }
+        const float s = cumul != nullptr ? cumul[k] : NAN;
+        if (std::isfinite(s)) {
+            cp = std::max(cp, s);
+            cn = std::max(cn, -s);
+        }
+    }
+    if (std::isfinite(projection)) {
+        cp = std::max(cp, projection);
+        cn = std::max(cn, -projection);
+    }
+    float haut = pmax > 0.0f ? energie_rond(pmax) : 0.0f;
+    float bas = nmax > 0.0f ? energie_rond(nmax) : 0.0f;
+    if (haut == 0.0f && bas == 0.0f) haut = 1.0f;
+    haut = std::max(haut, bas / 4.0f);
+    bas = std::max(bas, haut / 4.0f);
+    e.haut = haut;
+    e.bas = bas;
+    e.pas = energie_pas(std::max(haut, bas) / 3.0f);
+    // Cumul : même zéro, même rapport haut / bas ; le plus grand côté décide.
+    float ch = std::max(cp, cn * haut / bas);
+    ch = ch > 0.0f ? energie_rond(ch) : haut;
+    e.cumul_haut = ch;
+    e.cumul_bas = ch * bas / haut;
+    e.cumul_pas = energie_pas(ch / 4.0f);
+    return e;
 }
 
 EnergieBilanTotaux energie_bilan_totaux(const float* produit, int n, const EnergieBilanLu& b) {

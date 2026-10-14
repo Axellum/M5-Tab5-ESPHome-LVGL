@@ -28,10 +28,10 @@ namespace esphome { namespace font { class Font; } }
 //
 // Widgets posés par le script tab5_energie_ouvrir (tab5-energie.yaml) à la première
 // ouverture : id() n'existe que dans une lambda YAML. Cartes (energie_carte.yaml) : 0
-// solaire, 1 maison, 2 réseau, 3 batterie (page Production), 4 autoconsommé, 5 vendu,
-// 6 acheté, 7 gains (page Bilan) ; vues : 0 heures, 1 jours, 2 mois. Pages (ADR-0058) :
-// 0 Flux, 1 Aujourd'hui, 2 Production, 3 Bilan.
-constexpr int kEnergieCartes = 8;
+// solaire, 1 maison, 2 réseau, 3 batterie (page Production) ; vues : 0 heures, 1 jours,
+// 2 mois. Pages (ADR-0058) : 0 Flux, 1 Aujourd'hui, 2 Production, 3 Bilan (carte
+// « Batterie réseau » et graphique du net, construits en C++ : ADR-0062).
+constexpr int kEnergieCartes = 4;
 constexpr int kEnergiePages = 4;
 struct EnergieUI {
     lv_obj_t* popup = nullptr;            // energie_popup
@@ -59,12 +59,14 @@ struct EnergieUI {
     // Page Aujourd'hui : soleil et heures (carte de gauche), chiffres (carte de droite).
     lv_obj_t* soleil_zone = nullptr;      // energie_soleil_zone
     lv_obj_t* soleil_infos = nullptr;     // energie_soleil_infos
-    // Page Bilan : carte du graphique, comme celle de Production.
-    lv_obj_t* bilan_titre = nullptr;      // energie_bilan_titre
+    // Page Bilan (ADR-0062) : carte « Batterie réseau » à gauche, graphique du net à droite.
+    lv_obj_t* bilan_heros = nullptr;      // energie_bilan_heros : la carte de gauche
+    lv_obj_t* bilan_titre = nullptr;      // energie_bilan_titre : « Octobre », « Aujourd'hui »…
     lv_obj_t* bilan_vue_btn[3] = {};      // energie_bilan_vue_N
-    lv_obj_t* bilan_zone = nullptr;       // energie_bilan_zone
+    lv_obj_t* bilan_zone = nullptr;       // energie_bilan_zone : sous le titre et les boutons
     const esphome::font::Font* police = nullptr;          // roboto_22 : libellés de l'axe
     const esphome::font::Font* police_grasse = nullptr;   // roboto_32_b : chiffres
+    const esphome::font::Font* police_grande = nullptr;   // roboto_55_b : net du mois (Bilan)
     // Événement esphome.tab5_energie (script tab5_energie_demande, lambda sans capture).
     void (*demander)(const char* vue) = nullptr;
 };
@@ -82,8 +84,10 @@ void energie_historique(const std::string& vue, const std::string& debut, const 
 // Action tab5_maj_energie_soleil (ADR-0058) : « lever|midi|coucher|prevu_jour|
 // prevu_demain|source|creneau_debut|creneau_fin|prevu|clair » (page « Aujourd'hui »).
 void energie_soleil(const std::string& payload);
-// Action tab5_maj_energie_bilan (ADR-0058) : vue, début comme l'historique, payload
-// « devise|vente|achat|gain » (page « Bilan »).
+// Action tab5_maj_energie_bilan (ADR-0058, ADR-0062) : vue (heures, mois_civil,
+// annee_civile ; jours et mois d'un HA d'avant : fenêtres glissantes de l'historique),
+// début (AAAA-MM-JJ), payload « devise|vente|achat|gain|prod|conso|estime » (page
+// « Bilan » ; les trois derniers champs absents d'un HA d'avant).
 void energie_bilan(const std::string& vue, const std::string& debut, const std::string& payload);
 // Ouvre le popup (vue des heures) sur la première page qui a des données (Flux, puis
 // Aujourd'hui, sinon Production ; ADR-0058), le peint, et demande ses données à HA.

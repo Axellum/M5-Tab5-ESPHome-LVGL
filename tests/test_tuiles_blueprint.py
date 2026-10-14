@@ -485,7 +485,7 @@ def test_editeur_lisible():
                                                   "energie_production", "energie_production_autres",
                                                   "energie_prevision_jour", "energie_prevision_demain"]
     assert list(sections["energie_reseau_maison"]["input"]) == ["energie_reseau", "energie_reseau_export",
-                                                               "energie_reseau_inverse", "energie_maison",
+                                                               "energie_reseau_inverse", "energie_maison", "energie_consommation",
                                                                "energie_compteur_achat", "energie_compteur_vente",
                                                                "energie_prix_achat", "energie_prix_achat_entite",
                                                                "energie_prix_revente", "energie_prix_revente_entite",

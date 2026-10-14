@@ -4,9 +4,12 @@
  *     nombres (longueur, illisible, non fini), entiers non signés, plafond commun ;
  *   - dates et heures (Tab5/socle/tab5_core.h/.cpp) : jour civil, jours du mois, heure
  *     valide, « HH:MM » strict, embauche tôt ;
- *   - ce que les deux modèles de tuiles partagent (Tab5/socle/tab5_modele_ha.h) ;
+ *   - ce que les deux modèles de tuiles partagent (Tab5/socle/tab5_modele_ha.h), dont la
+ *     clim « d'ici » de la tuile − / + (clim_ici_rang, 14/10/2026) ;
  *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert ;
- *   - la chronologie du démarrage (Tab5/socle/tab5_demarrage.h, 10/10/2026).
+ *   - la chronologie du démarrage (Tab5/socle/tab5_demarrage.h, 10/10/2026) ;
+ *   - le niveau de la batterie d'après sa tension (Tab5/socle/tab5_batterie.h, courbe de
+ *     décharge Li-ion, 14/10/2026).
  *
  * Build & run (CI, job `python` de .github/workflows/esphome-tab5.yml) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o test_tab5_socle \
@@ -15,6 +18,7 @@
  * Le poste de dev n'a qu'un cross-compilateur RISC-V ; vérif locale possible :
  *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -Wall -Wextra -I Tab5/socle tools/test_tab5_socle.cpp
  */
+#include "tab5_batterie.h"
 #include "tab5_champs.h"
 #include "tab5_core.h"
 #include "tab5_demarrage.h"
@@ -146,6 +150,25 @@ static void test_entiers() {
     expect(kPayloadMax == 16u * 1024u, "plafond commun : 16 Ko");
 }
 
+static void test_majuscules() {
+    char t[64];
+    std::snprintf(t, sizeof(t), "batterie r\xC3\xA9seau \xC2\xB7 d\303\251cembre");
+    texte_majuscules(t);
+    expect(std::strcmp(t, "BATTERIE R\xC3\x89SEAU \xC2\xB7 D\303\211CEMBRE") == 0,
+           "majuscules : é → É, le point médian (C2 B7) ne bouge pas");
+    std::snprintf(t, sizeof(t), "ao\xC3\xBBt \xC5\x93uvre \xC3\xB7 \xC3\xBF \xC3\x9F 1-2");
+    texte_majuscules(t);
+    expect(std::strcmp(t, "AO\xC3\x9BT \xC5\x92UVRE \xC3\xB7 \xC3\xBF \xC3\x9F 1-2") == 0,
+           "majuscules : û, œ ; ÷, ÿ, ß et les chiffres restent");
+    std::snprintf(t, sizeof(t), "\xE2\x89\x88 a");   // ≈ sur trois octets
+    texte_majuscules(t);
+    expect(std::strcmp(t, "\xE2\x89\x88 A") == 0, "majuscules : un caractère sur trois octets reste");
+    texte_majuscules(nullptr);
+    t[0] = '\0';
+    texte_majuscules(t);
+    expect(t[0] == '\0', "majuscules : chaîne vide");
+}
+
 static void test_dates() {
     expect(jour_civil(1970, 1, 1) == 0, "jour civil : 01/01/1970 = 0");
     expect(jour_civil(1969, 12, 31) == -1, "jour civil : la veille = -1");
@@ -208,6 +231,44 @@ static void test_modele_ha() {
            "clé de la clim d'une pièce : cpR (ADR-0040)");
 }
 
+// ── Clim « d'ici » de la tuile − / + (modele_ha::clim_ici_rang, 14/10/2026) ──
+// Rangées comme clims_enumerer : blueprint (r = t = piece = -1), tuiles (t >= 0), puis la
+// clim propre de chaque pièce (t = -1, r = piece).
+struct RefClim {
+    signed char r, t, piece;
+};
+
+static void test_clim_ici() {
+    using modele_ha::clim_ici_rang;
+    const RefClim bp = {-1, -1, -1};
+    const RefClim tuile_salon = {0, 2, 0};      // tuile cli sans m, pièce 0
+    const RefClim tuile_salon_2 = {0, 4, 0};
+    const RefClim propre_salon = {0, -1, 0};    // clim propre de la pièce 0 (ADR-0040)
+    const RefClim propre_bureau = {3, -1, 3};
+
+    expect(clim_ici_rang<RefClim>(nullptr, 0, 0) == -1, "clim d'ici : aucune clim, aucune");
+    // Une seule clim dans la maison : partout, mode météo compris, même hors de sa pièce.
+    const RefClim une[] = {propre_bureau};
+    expect(clim_ici_rang(une, 1, 3) == 0 && clim_ici_rang(une, 1, 0) == 0 && clim_ici_rang(une, 1, -1) == 0,
+           "clim d'ici : une seule clim (celle du bureau), sur toutes les pièces");
+    const RefClim une_bp[] = {bp};
+    expect(clim_ici_rang(une_bp, 1, 2) == 0, "clim d'ici : seule la clim du blueprint, partout");
+    // Plusieurs, avec la clim du blueprint.
+    const RefClim l[] = {bp, tuile_salon, tuile_salon_2, propre_salon, propre_bureau};
+    expect(clim_ici_rang(l, 5, 0) == 3, "clim d'ici : la clim propre de la pièce avant ses tuiles");
+    expect(clim_ici_rang(l, 5, 3) == 4, "clim d'ici : la clim propre du bureau sur le bureau");
+    expect(clim_ici_rang(l, 5, 1) == 0, "clim d'ici : pièce sans clim, celle du blueprint");
+    expect(clim_ici_rang(l, 5, -1) == 0, "clim d'ici : mode météo, celle du blueprint");
+    const RefClim tuiles[] = {bp, tuile_salon, tuile_salon_2, propre_bureau};
+    expect(clim_ici_rang(tuiles, 4, 0) == 1, "clim d'ici : sans clim propre, la première tuile cli de la pièce");
+    // Plusieurs, sans clim du blueprint : rien sur une pièce sans clim ni en mode météo.
+    const RefClim sans_bp[] = {tuile_salon, propre_bureau};
+    expect(clim_ici_rang(sans_bp, 2, 0) == 0 && clim_ici_rang(sans_bp, 2, 3) == 1,
+           "clim d'ici : sans clim du blueprint, celle de la pièce");
+    expect(clim_ici_rang(sans_bp, 2, 1) == -1 && clim_ici_rang(sans_bp, 2, -1) == -1,
+           "clim d'ici : sans clim du blueprint, aucune sur une pièce sans clim");
+}
+
 // ── Chronologie du démarrage (tab5_demarrage.h, 10/10/2026) ─────────────────
 static void test_chronologie() {
     ChronoDemarrage c;
@@ -261,6 +322,55 @@ static void test_chronologie() {
            "chronologie : ordo = horloge - millis(), jamais négatif");
 }
 
+// ── Niveau de la batterie d'après sa tension (tab5_batterie.h, 14/10/2026) ──
+// Courbe de décharge Li-ion par élément (table Samsung du noyau Linux), batterie 2S :
+// la droite 6,0 → 8,23 V qu'elle remplace donnait 63 % à 7,4 V (discussion #278).
+static bool proche(float a, float b) { return std::fabs(a - b) < 0.05f; }
+
+static void test_niveau_batterie() {
+    // Bornes : 2 × 3,300 V = 0 %, 2 × 4,178 V = 100 %, borné au-delà.
+    expect(kBatterieVideV == 6.6f && kBatteriePleineV == 8.356f, "niveau : bornes de la table pour 2 éléments");
+    expect(batterie_niveau_pct(6.6f) == 0.0f && batterie_niveau_pct(6.0f) == 0.0f &&
+               batterie_niveau_pct(0.0f) == 0.0f && batterie_niveau_pct(-3.0f) == 0.0f,
+           "niveau : 0 % à 6,6 V et dessous");
+    expect(batterie_niveau_pct(8.356f) == 100.0f && batterie_niveau_pct(8.4f) == 100.0f &&
+               batterie_niveau_pct(12.0f) == 100.0f,
+           "niveau : 100 % à 8,356 V et au-dessus");
+    expect(std::isnan(batterie_niveau_pct(NAN)) && std::isnan(batterie_niveau_pct(INFINITY)) &&
+               std::isnan(batterie_niveau_pct(-INFINITY)),
+           "niveau : tension non finie, NAN");
+    // Points de la table (tension d'un élément × 2) : valeur exacte, aux arrondis près.
+    expect(proche(batterie_niveau_pct(7.782f), 65.0f), "niveau : 3,891 V par élément = 65 %");
+    expect(proche(batterie_niveau_pct(7.596f), 50.0f), "niveau : 3,798 V par élément = 50 %");
+    expect(proche(batterie_niveau_pct(7.422f), 20.0f), "niveau : 3,711 V par élément = 20 %");
+    expect(proche(batterie_niveau_pct(7.324f), 10.0f), "niveau : 3,662 V par élément = 10 %");
+    // Entre deux points : interpolation linéaire.
+    expect(proche(batterie_niveau_pct(7.4f), 18.9f), "niveau : 7,4 V ≈ 19 % (la droite disait 63 %)");
+    expect(proche(batterie_niveau_pct(7.8f), 66.55f), "niveau : 7,8 V ≈ 67 %");
+    expect(proche(batterie_niveau_pct(8.2f), 94.44f), "niveau : 8,2 V ≈ 94 %");
+    expect(proche(batterie_niveau_pct(7.0f), 4.09f), "niveau : 7,0 V ≈ 4 %");
+    // Table croissante (tension et capacité), puis courbe monotone et continue, mV par mV.
+    bool table_croissante = true;
+    for (int i = 1; i < kCourbePoints; i++)
+        table_croissante = table_croissante && kCourbeDecharge[i].mv > kCourbeDecharge[i - 1].mv &&
+                           kCourbeDecharge[i].pct > kCourbeDecharge[i - 1].pct;
+    expect(table_croissante && kCourbeDecharge[0].pct == 0 && kCourbeDecharge[kCourbePoints - 1].pct == 100,
+           "niveau : table strictement croissante, de 0 à 100 %");
+    bool monotone = true;
+    bool sans_saut = true;
+    float avant = batterie_niveau_pct(6.0f);
+    for (int mv = 6001; mv <= 8600; mv++) {
+        const float p = batterie_niveau_pct(mv / 1000.0f);
+        if (!(p >= avant) || p < 0.0f || p > 100.0f) monotone = false;
+        // Le plus raide : 3 % pour 5 mV par élément (12 → 15 %), soit 0,3 % par mV de la
+        // batterie entière ; au-delà de 1 %, ce serait un saut.
+        if (p - avant > 1.0f) sans_saut = false;
+        avant = p;
+    }
+    expect(monotone, "niveau : croissant avec la tension, dans 0..100");
+    expect(sans_saut, "niveau : pas de saut d'un millivolt à l'autre");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -271,9 +381,12 @@ int main() {
     test_nombres();
     test_entiers();
     test_dates();
+    test_majuscules();
     test_hhmm();
     test_modele_ha();
+    test_clim_ici();
     test_chronologie();
+    test_niveau_batterie();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

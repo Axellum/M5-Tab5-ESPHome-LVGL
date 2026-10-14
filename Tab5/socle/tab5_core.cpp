@@ -126,6 +126,23 @@ std::string fr_capitalized(const char* s) {
     return r;
 }
 
+void texte_majuscules(char* s) {
+    if (s == nullptr) return;
+    for (unsigned char* p = reinterpret_cast<unsigned char*>(s); *p != 0; p++) {
+        if (*p >= 'a' && *p <= 'z') {
+            *p = static_cast<unsigned char>(*p - 'a' + 'A');
+        } else if (*p == 0xC3 && p[1] >= 0xA0 && p[1] <= 0xBE && p[1] != 0xB7) {
+            p[1] = static_cast<unsigned char>(p[1] - 0x20);   // à..þ → À..Þ (÷ reste)
+            p++;
+        } else if (*p == 0xC5 && p[1] == 0x93) {
+            p[1] = 0x92;                                      // œ → Œ
+            p++;
+        } else if (*p >= 0xC0 && p[1] != 0) {
+            p++;                                              // autre caractère sur deux octets
+        }
+    }
+}
+
 // Libellés affichés = libellés français passés par tr() (clés de Tab5/lang/*.yaml).
 const char* day_short_utf8(int wday) { return tr(fr_day_short_utf8(wday)); }
 const char* month_short_utf8(int month) { return tr(clock_month_short_utf8(month)); }

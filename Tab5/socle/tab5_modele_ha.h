@@ -82,4 +82,28 @@ inline CleTuile clim_piece_cle(int r) {
     return c;
 }
 
+// La clim « d'ici » (14/10/2026, discussion #278, décision d'Axel) parmi les `n` clims de
+// `l`, rangées comme clims_enumerer (tab5_clim.cpp) : celle du blueprint d'abord quand elle
+// existe (r < 0), puis celles des tuiles (t >= 0), puis la clim propre de chaque pièce
+// (t < 0, ADR-0040), chacune avec sa pièce (`piece`, -1 pour celle du blueprint).
+//   - une seule clim dans la maison : elle, quelle que soit la pièce affichée ;
+//   - plusieurs : celle de la pièce `piece_affichee` (-1 : aucune, mode météo) — sa clim
+//     propre d'abord, sinon la première de ses tuiles —, sinon celle du blueprint ;
+//   - sinon -1 (aucune clim, ou plusieurs et ni la pièce ni le blueprint n'en ont).
+// Renvoie son rang dans `l`. Ref : tout type à champs r, t et piece (ClimRef). Pure,
+// testée par tools/test_tab5_socle.cpp.
+template <class Ref>
+int clim_ici_rang(const Ref* l, int n, int piece_affichee) {
+    if (l == nullptr || n <= 0) return -1;
+    if (n == 1) return 0;
+    int i = -1;
+    for (int k = 0; piece_affichee >= 0 && k < n; k++) {
+        if (l[k].piece != piece_affichee) continue;
+        if (l[k].t < 0) return k;  // la clim propre de la pièce passe avant ses tuiles
+        if (i < 0) i = k;
+    }
+    if (i >= 0) return i;
+    return l[0].r < 0 ? 0 : -1;
+}
+
 }  // namespace modele_ha

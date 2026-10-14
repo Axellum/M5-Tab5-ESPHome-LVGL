@@ -128,3 +128,16 @@ def test_chaque_ota_pose_et_leve_ota_en_cours():
                 actions = ota.get(declencheur) or []
                 assert {"globals.set": {"id": "ota_en_cours", "value": valeur}} in actions, \
                     f"{fichier} ({ota['platform']}) : {declencheur} ne pose pas ota_en_cours à {valeur}"
+
+
+def test_sur_batterie_seulement():
+    """« Tab5 Extinction auto sur batterie seulement » (13/10/2026, discussion #278) :
+    éteint par défaut ; allumé, sur secteur l'écran ne s'éteint pas. Le test vient après
+    `ecran_veille_permise`, que le mode économie lit telle quelle."""
+    s = next(s for s in _yaml("tab5-ha-controls.yaml")["switch"] if s.get("id") == "tab5_extinction_sur_batterie")
+    assert s["name"] == "Tab5 Extinction auto sur batterie seulement"
+    assert s["restore_mode"] == "RESTORE_DEFAULT_OFF" and s["entity_category"] == "config"
+    code = _sans_commentaires(_condition()[0])
+    garde = re.search(r"id\(tab5_extinction_sur_batterie\)\.state\s*&&\s*!economie_sur_batterie\(\)\)\s*return false", code)
+    assert garde, "garde « sur batterie seulement » absente de l'extinction auto"
+    assert code.index("id(ecran_veille_permise) = permise") < garde.start()

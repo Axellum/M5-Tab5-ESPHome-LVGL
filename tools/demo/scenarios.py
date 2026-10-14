@@ -11,6 +11,7 @@ sans revérifier contre le firmware réel.
 """
 from __future__ import annotations
 
+import calendar
 import datetime as _dt
 import math
 import re
@@ -790,78 +791,136 @@ def build_energie_soleil(soleil: dict | None = None) -> str:
     return "|".join(champs)
 
 
-# Page « Bilan » (ADR-0058) : tab5_maj_energie_bilan(vue, debut, payload), payload
-# « devise|vente|achat|gain ». vente et achat = kWh exportés et importés par créneau
-# (24, 30 ou 12 valeurs « ; », vides pour les créneaux à venir) ; gain = argent économisé
-# par créneau, en `devise` : consommé sur place × prix d'achat + exporté × prix de revente
-# (calculé par HA). La production du créneau est celle de ENERGIE_HISTORIQUE ; le consommé
-# sur place = production − vente. Achat des heures inventé pour une maison qui tire la nuit
-# et peu le matin (la batterie est à 64 %) ; jours et mois dérivés de la production.
+# Page « Bilan » (ADR-0062, en kWh) : tab5_maj_energie_bilan(vue, debut, payload), payload
+# « devise|vente|achat|gain|prod|conso|estime ». Ce que pousserait packages/tab5_energie.yaml
+# pour une maison en compensation mensuelle qui n'a que la production et la consommation
+# (aucun compteur d'achat ni de vente, aucun prix : husyildiz, discussion #278) :
+#   - heures   (debut = le jour) : les 24 heures du jour, à venir vides ;
+#   - mois_civil (debut = le 1er du mois) : un créneau par jour du mois, à venir vides ;
+#   - annee_civile (debut = le 1er janvier) : 12 mois, à venir vides.
+# prod = la production du créneau (celle de ENERGIE_HISTORIQUE aux mêmes dates : la page
+# Production et le Bilan disent la même chose), conso = la consommation de la maison.
+# Sans compteur d'achat ni de vente, HA estime heure par heure vente = max(0, prod − conso)
+# et achat = max(0, conso − prod) (estime « 1 ») ; un jour additionne ses heures, d'où une
+# part de la production vendue même les jours en déficit (le soleil de midi dépasse la
+# maison, la nuit tire sur le réseau). L'année n'a aucune estimation (vente, achat et gain
+# vides, estime « 1 » quand même). La variante `prix` est une maison qui a ses compteurs et un prix : mesurés
+# (estime vide), gain = autoconsommé × prix d'achat + vendu × prix de revente, l'année
+# comprise.
+ENERGIE_VUES_BILAN = {"heures": 24, "mois_civil": 30, "annee_civile": 12}   # juin : 30 jours
 ENERGIE_DEVISE = "€"
 ENERGIE_PRIX_ACHAT, ENERGIE_PRIX_REVENTE = 0.2516, 0.13   # € par kWh
-ENERGIE_BILAN_HEURES = {
-    "vente": ["0"] * 7 + ["0.31"] + [""] * 16,
-    "achat": ["0.22", "0.19", "0.18", "0.18", "0.21", "0.28", "0.12", "0.05"] + [""] * 16,
-}
-# Part de la production exportée (cycle de 7 jours, plus de soleil que de besoin le week-end)
-# et consommation de la maison (kWh) par jour de la semaine et par mois (juillet → juin).
-ENERGIE_PART_VENTE_JOURS = (0.34, 0.41, 0.38, 0.29, 0.44, 0.47, 0.40)
-ENERGIE_PART_VENTE_MOIS = (0.46, 0.45, 0.40, 0.33, 0.24, 0.18, 0.20, 0.27, 0.35, 0.40, 0.44, 0.42)
-ENERGIE_CONSO_JOURS = (15.2, 14.1, 16.4, 18.7, 15.8, 13.2, 14.6)
-ENERGIE_CONSO_MOIS = (468.0, 452.0, 431.0, 518.0, 640.0, 724.0, 738.0, 655.0, 562.0, 488.0, 461.0, 433.0)
+# Consommation de chaque heure du jour (la nuit, puis le petit-déjeuner), en kWh : la
+# production des heures est ENERGIE_HISTORIQUE["heures"].
+ENERGIE_CONSO_HEURES = ["0.22", "0.19", "0.18", "0.18", "0.21", "0.28", "0.45", "0.60"] + [""] * 16
+# Part de la production vendue (cycle de 7 jours, lundi d'abord) et consommation de la maison
+# (kWh, pompe à chaleur pour l'eau chaude, voiture le week-end) par jour de la semaine ; part
+# vendue et consommation de janvier à décembre.
+ENERGIE_PART_VENTE_JOURS = (0.46, 0.52, 0.49, 0.41, 0.55, 0.43, 0.38)
+ENERGIE_CONSO_JOURS = (20.5, 19.2, 21.8, 23.4, 20.1, 26.6, 24.9)
+ENERGIE_PART_VENTE_MOIS = (0.20, 0.27, 0.35, 0.40, 0.44, 0.47, 0.46, 0.45, 0.40, 0.33, 0.24, 0.18)
+ENERGIE_CONSO_MOIS = (738.0, 655.0, 562.0, 488.0, 461.0, 433.0, 468.0, 452.0, 431.0, 518.0, 640.0, 724.0)
 
 
 def _arrondi(v: float, decimales: int = 2) -> str:
     return f"{round(v, decimales):.{decimales}f}".rstrip("0").rstrip(".") or "0"
 
 
-def _bilan_tranche(production: list[str], vente: list[str], achat: list[str]) -> list[str]:
-    """Gain de chaque créneau ayant une production et une vente (le reste reste vide)."""
-    gains = []
-    for p, v in zip(production, vente):
-        if p in ("", "nan") or v in ("", "nan"):
-            gains.append("")
-            continue
-        sur_place = max(float(p) - float(v), 0.0)
-        gains.append(_arrondi(sur_place * ENERGIE_PRIX_ACHAT + float(v) * ENERGIE_PRIX_REVENTE))
-    return gains
-
-
-def build_energie_bilan(vue: str, aujourd_hui: _dt.date) -> dict:
-    """Variables de tab5_maj_energie_bilan pour une vue, datée de `aujourd_hui`."""
-    assert vue in ENERGIE_VUES, vue
-    production = ENERGIE_HISTORIQUE[vue]
-    n = ENERGIE_VUES[vue]
-    debut = debut_energie(vue, aujourd_hui)
+def debut_bilan(vue: str, aujourd_hui: _dt.date) -> _dt.date:
+    """Premier créneau d'une vue du bilan : le jour, le 1er du mois, le 1er janvier."""
+    assert vue in ENERGIE_VUES_BILAN, vue
     if vue == "heures":
-        vente, achat = ENERGIE_BILAN_HEURES["vente"], ENERGIE_BILAN_HEURES["achat"]
-    else:
-        vente, achat = [], []
-        heures = ENERGIE_BILAN_HEURES
-        for i, p in enumerate(production):
-            if vue == "jours" and i == n - 1:
-                # Aujourd'hui : la somme des heures déjà écoulées, comme la production.
-                v = sum(float(x) for x in heures["vente"] if x)
-                a = sum(float(x) for x in heures["achat"] if x)
-            elif vue == "jours":
-                jour = debut + _dt.timedelta(days=i)
-                v = float(p) * ENERGIE_PART_VENTE_JOURS[jour.weekday()]
-                a = max(ENERGIE_CONSO_JOURS[jour.weekday()] - (float(p) - v), 0.6)
+        return aujourd_hui
+    return aujourd_hui.replace(day=1) if vue == "mois_civil" else aujourd_hui.replace(month=1, day=1)
+
+
+def _somme(creneaux: list) -> tuple:
+    connus = [x for x in creneaux if x]
+    return tuple(sum(x[i] for x in connus) for i in range(3))
+
+
+def _bilan_creneaux(vue: str, aujourd_hui: _dt.date) -> list:
+    """(produit, consommé, vendu) de chaque créneau de la vue, None pour un créneau à venir :
+    les heures déjà écoulées (vendu = ce que la production dépasse), les jours du mois
+    jusqu'à aujourd'hui (la somme des heures pour aujourd'hui, une part de la production
+    vendue avant), les mois de l'année jusqu'au mois en cours (la somme de ses jours)."""
+    if vue == "heures":
+        return [(float(p), float(c), max(float(p) - float(c), 0.0)) if p and c else None
+                for p, c in zip(ENERGIE_HISTORIQUE["heures"], ENERGIE_CONSO_HEURES)]
+    jours_hist = debut_energie("jours", aujourd_hui)
+    if vue == "mois_civil":
+        jours = calendar.monthrange(aujourd_hui.year, aujourd_hui.month)[1]
+        sortie = []
+        for i in range(jours):
+            jour = aujourd_hui.replace(day=i + 1)
+            if jour > aujourd_hui:
+                sortie.append(None)
+            elif jour == aujourd_hui:
+                sortie.append(_somme(_bilan_creneaux("heures", aujourd_hui)))
             else:
-                v = float(p) * ENERGIE_PART_VENTE_MOIS[i]
-                a = max(ENERGIE_CONSO_MOIS[i] - (float(p) - v), 25.0)
-            vente.append(_arrondi(v))
-            achat.append(_arrondi(a, 1 if vue == "mois" else 2))
-    gain = _bilan_tranche(production, vente, achat)
-    assert len(vente) == len(achat) == len(gain) == n, f"{vue} : {len(vente)} valeurs"
-    for c, valeurs in (("vente", vente), ("achat", achat), ("gain", gain)):
+                # Le 1er d'un mois de 31 jours, un 31, sort des 30 jours de l'historique : la
+                # démo reprend sa fin (un lancement à blanc un 31 ne casse pas).
+                k = (jour - jours_hist).days % ENERGIE_VUES["jours"]
+                p = float(ENERGIE_HISTORIQUE["jours"][k])
+                sortie.append((p, ENERGIE_CONSO_JOURS[jour.weekday()], p * ENERGIE_PART_VENTE_JOURS[jour.weekday()]))
+        return sortie
+    debut_mois = debut_energie("mois", aujourd_hui)
+    sortie = []
+    for m in range(1, 13):
+        if m > aujourd_hui.month:
+            sortie.append(None)
+        elif m == aujourd_hui.month:
+            sortie.append(_somme(_bilan_creneaux("mois_civil", aujourd_hui)))
+        else:
+            k = (aujourd_hui.year - debut_mois.year) * 12 + m - debut_mois.month
+            p = float(ENERGIE_HISTORIQUE["mois"][k])
+            sortie.append((p, ENERGIE_CONSO_MOIS[m - 1], p * ENERGIE_PART_VENTE_MOIS[m - 1]))
+    return sortie
+
+
+def build_energie_bilan(vue: str, aujourd_hui: _dt.date, prix: bool = False) -> dict:
+    """Variables de tab5_maj_energie_bilan pour une vue du bilan, datée de `aujourd_hui`."""
+    creneaux = _bilan_creneaux(vue, aujourd_hui)
+    debut = debut_bilan(vue, aujourd_hui)
+    estime = "" if prix else "1"   # HA le dit pour chaque vue, l'année comprise
+    vente, achat, gain, prod, conso = [], [], [], [], []
+    for i, x in enumerate(creneaux):
+        if x is None:
+            for liste in (vente, achat, gain, prod, conso):
+                liste.append("")
+            continue
+        p, c, v = x
+        sur_place = min(p - v, c)
+        v, a = p - sur_place, c - sur_place
+        d = 1 if vue == "annee_civile" else 2
+        prod.append(_arrondi(p, d))
+        conso.append(_arrondi(c, d))
+        estimable = vue != "annee_civile" or prix   # aucune estimation sur l'année
+        vente.append(_arrondi(v, d) if estimable else "")
+        achat.append(_arrondi(a, d) if estimable else "")
+        gain.append(_arrondi(sur_place * ENERGIE_PRIX_ACHAT + v * ENERGIE_PRIX_REVENTE) if prix else "")
+    n = ENERGIE_VUES_BILAN[vue] if vue != "mois_civil" else calendar.monthrange(debut.year, debut.month)[1]
+    assert all(len(liste) == n for liste in (vente, achat, gain, prod, conso)), f"{vue} : créneaux"
+    for c, valeurs in (("vente", vente), ("achat", achat), ("gain", gain), ("prod", prod), ("conso", conso)):
         for v in valeurs:
             _nombre_ou_vide(c, v)
             assert v in ("", "nan") or float(v) >= 0, f"{vue} : {c} négatif {v!r}"
+    if vue == "annee_civile" and not prix:
+        champs = ["", "", "", ""]   # aucune estimation sur l'année, aucun prix
+    else:
+        champs = [ENERGIE_DEVISE if prix else "", ";".join(vente), ";".join(achat), ";".join(gain) if prix else ""]
     assert len(ENERGIE_DEVISE.encode("utf-8")) <= 7, "devise : 7 octets au plus"
-    payload = "|".join([ENERGIE_DEVISE, ";".join(vente), ";".join(achat), ";".join(gain)])
-    assert payload.count("|") == 3 and "|" not in "".join(vente + achat + gain)
+    payload = "|".join(champs + [";".join(prod), ";".join(conso), estime])
+    assert payload.count("|") == 6
     return {"vue": vue, "debut": debut.isoformat(), "payload": payload}
+
+
+def vues_bilan(vues) -> tuple:
+    """Vues du bilan que pousse HA pour des vues demandées (packages/tab5_energie.yaml) : les
+    heures si la vue des heures est demandée, le mois civil toujours (la « Batterie réseau »
+    le lit), l'année civile avec la vue des mois."""
+    return (("heures",) if "heures" in vues else ()) + ("mois_civil",) + \
+        (("annee_civile",) if "mois" in vues else ())
 
 
 # ---------------------------------------------------------------------------
