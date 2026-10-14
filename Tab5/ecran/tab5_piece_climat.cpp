@@ -6,8 +6,9 @@
  *       val_temp_salon à gauche, icon_serre / current_serre à droite) montre, en mode HA,
  *       la température et l'humidité de la pièce affichée quand le blueprint en a déclaré
  *       une ; le salon et la serre sinon. Aussi la clé « pR » de tab5_maj_emplacements (lue
- *       par piece_climat_lire, Tab5/socle/tab5_parse.h), la clé du popup Température d'un appui long, et la pièce dont la tuile − / + règle la
- *       clim (piece_climat_clim, lue par tab5_reglables.cpp).
+ *       par piece_climat_lire, Tab5/socle/tab5_parse.h) et la clé du popup Température d'un appui
+ *       long. La clim de la pièce que règle la tuile − / + : clim_ref_ici (tab5_clim.cpp),
+ *       depuis le 14/10/2026 (avant : piece_climat_clim, ici).
  * @architecture_constraint Seul écrivain de ces quatre widgets depuis l'ADR-0040 : les
  *       capteurs du salon et de la serre (tab5-sensors-domotique.yaml) passent par
  *       accueil_salon_* / accueil_serre_*, qui gardent la valeur et ne peignent que quand la
@@ -124,7 +125,7 @@ bool piece_climat_recu(const char* cle, size_t n_cle, const char* reste, size_t 
     if (avait_clim && !p.clim) clim_piece_oublier(r);
     if (r == tuiles_piece_mode_ha()) {
         accueil_temperatures_ui();
-        reglables_clim_changee();  // la tuile − / + suit la clim de la pièce
+        reglables_clim_changee();  // la tuile − / + suit la clim d'ici (clim_ref_ici)
     }
     return true;
 }
@@ -198,8 +199,3 @@ const char* accueil_historique_cle(bool droite) {
 }
 
 bool piece_climat_a_temperature(int r) { return r >= 0 && r < kPieces && s_pieces[r].temperature; }
-
-int piece_climat_clim() {
-    const int r = piece_montree();
-    return (r >= 0 && s_pieces[r].clim && clim_piece_connue(r)) ? r : -1;
-}

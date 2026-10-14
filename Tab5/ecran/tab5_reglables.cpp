@@ -19,9 +19,16 @@
  *       « auto », la clim et les appareils du blueprint se relaient seuls, calés sur la
  *       carte centrale (reglables_tour), sans écrire la NVS ; un geste remet le compte à
  *       zéro.
- *       En mode HA, sur une pièce qui a sa clim (ADR-0040, piece_climat_clim()), la tuile
- *       règle cette clim à la place du choix, sans le changer : − / + par clim_piece_pas(),
- *       la consigne ouvre le popup clim sur elle (clim_afficher_piece, tab5_clim.cpp).
+ *       La ligne « Clim » est la clim « d'ici » (clim_ref_ici, tab5_clim.cpp ; 14/10/2026,
+ *       discussion #278, décision d'Axel) : la seule de la maison quand il n'y en a qu'une,
+ *       sur toutes les pièces ; avec plusieurs, celle de la pièce affichée en mode HA (sa
+ *       clim propre, ADR-0040, sinon la première de ses tuiles cli), sinon celle du
+ *       blueprint, sinon pas de ligne « Clim » sur cette pièce. Une clim de tuile ou de
+ *       pièce se peint comme un appareil (vue_clim_ref), − / + par clim_ref_pas(), la valeur
+ *       ouvre le carrousel sur elle ; celle du blueprint garde son chemin (clim_target). Un
+ *       autre appareil choisi reste choisi sur toutes les pièces (même NVS « RGC1 »).
+ *       Jusqu'au 14/10/2026, la clim propre de la pièce passait avant le choix : la liste
+ *       s'ouvrait mais choisir un volet ou le son de la tablette n'y changeait rien.
  * @architecture_constraint Push-only et événements seuls (ADR-0001, ADR-0025) : la
  *       tablette envoie esphome.tab5_action (rN / regler / valeur, ou consigne pour une
  *       clim) ; le blueprint borne la valeur et choisit l'action par le domaine de
@@ -174,12 +181,15 @@ int nb_ha() {
     return n;
 }
 
-bool clim_presente() { return !zone_absente(Zone::CLIM); }
+// La clim d'ici (clim_ref_ici, tab5_clim.cpp) : la ligne « Clim » de la liste existe.
+bool clim_ici() {
+    ClimRef c;
+    return clim_ref_ici(c);
+}
 
-// La tuile − / + existe avec une clim ou au moins un appareil du blueprint ; sans rien
+// La tuile − / + existe avec une clim d'ici ou au moins un appareil du blueprint ; sans rien
 // des deux, elle reste masquée comme avant (le volume de la tablette seul ne la montre pas).
-// Aussi quand la pièce affichée en mode HA a sa clim (ADR-0040) : elle la règle alors.
-bool tuile_visible() { return clim_presente() || nb_ha() > 0 || piece_climat_clim() >= 0; }
+bool tuile_visible() { return clim_ici() || nb_ha() > 0; }
 
 // Entrées de la liste, dans l'ordre affiché : clim, appareils du blueprint, tablette.
 enum class Sorte : uint8_t { CLIM, HA, TABLETTE };
@@ -190,7 +200,7 @@ struct Entree {
 
 int lister(Entree out[kReglablesLignes]) {
     int n = 0;
-    if (clim_presente()) out[n++] = {Sorte::CLIM, -1};
+    if (clim_ici()) out[n++] = {Sorte::CLIM, -1};
     for (int i = 0; i < kHA; i++)
         if (s_m.d[i].type != static_cast<uint8_t>(Type::VIDE)) out[n++] = {Sorte::HA, static_cast<int8_t>(i)};
     out[n++] = {Sorte::TABLETTE, -1};
@@ -227,6 +237,11 @@ Entree entree_choisie() {
     const int n = lister(l);
     return l[choisie(l, n)];
 }
+
+// La clim de tuile ou de pièce que tient la ligne « Clim » quand `en` est cette ligne
+// (clim_ref_ici) ; faux pour un autre appareil et pour la clim du blueprint (sa consigne
+// clim_target, ses globals clim_*, son popup par climate_card.yaml).
+bool clim_autre(const Entree& en, ClimRef& c) { return en.sorte == Sorte::CLIM && clim_ref_ici(c) && c.r >= 0; }
 
 Type type_de(const Def& d) {
     return d.type < kNbTypes ? static_cast<Type>(d.type) : Type::VIDE;
@@ -311,11 +326,31 @@ struct Vue {
     char nom[kNom + 24];
 };
 
+// Une clim de tuile ou de pièce (clim_autre) : son icône et sa consigne comme la clim du
+// blueprint (clim_ref_carte), son nom comme dans la roue et le popup (clim_tete : celui de
+// HA, sinon la pièce, sinon « Climatisation »).
+void vue_clim_ref(const ClimRef& c, Vue& v) {
+    v.icone = tuile_icone("clim", true, nullptr);
+    v.couleur_icone = clim_ref_carte(c, v.valeur, sizeof(v.valeur), v.couleur_valeur);
+    if (!est(v.valeur, "--")) {
+        const size_t k = std::strlen(v.valeur);
+        snprintf(v.valeur + k, sizeof(v.valeur) - k, " \xC2\xB0");
+    }
+    ClimTete t;
+    clim_tete(c.r, c.t, t);
+    snprintf(v.nom, sizeof(v.nom), "%s", t.nom);
+}
+
 void vue(const Entree& en, Vue& v) {
     v.couleur_valeur = UIColor.TEXT_PRIMARY;
     v.nom[0] = '\0';
     switch (en.sorte) {
         case Sorte::CLIM: {
+            ClimRef c;
+            if (clim_autre(en, c)) {
+                vue_clim_ref(c, v);
+                return;
+            }
             v.icone = tuile_icone("clim", true, nullptr);
             v.couleur_icone = clim_carte_valeur(v.valeur, sizeof(v.valeur), v.couleur_valeur);
             if (!est(v.valeur, "--")) {
@@ -356,18 +391,6 @@ void vue(const Entree& en, Vue& v) {
             return;
         }
     }
-}
-
-// La clim de la pièce R (ADR-0040), quand la zone des températures montre la pièce : son
-// icône et sa consigne comme la clim du blueprint (tab5_clim.cpp, clim_piece_carte).
-void vue_piece(int r, Vue& v) {
-    v.icone = tuile_icone("clim", true, nullptr);
-    v.couleur_icone = clim_piece_carte(r, v.valeur, sizeof(v.valeur), v.couleur_valeur);
-    if (!est(v.valeur, "--")) {
-        const size_t k = std::strlen(v.valeur);
-        snprintf(v.valeur + k, sizeof(v.valeur) - k, " \xC2\xB0");
-    }
-    v.nom[0] = '\0';
 }
 
 // ─── Dessin ─────────────────────────────────────────────────────────────────────────
@@ -413,17 +436,16 @@ void peindre_carte() {
     if (u.zone == nullptr) return;
     consigne_icone_suivre();
     ui_hidden(u.zone, !tuile_visible());
-    // La pièce affichée a sa clim (ADR-0040) : elle passe avant le choix de la liste, qui
-    // revient hors du mode HA ou sur une pièce sans clim.
-    const int piece = piece_climat_clim();
+    // La clim du blueprint choisie : sa consigne clim_target. Une clim de tuile ou de pièce
+    // (la clim d'ici, clim_autre) ou un autre appareil : la rangée icône + valeur.
     const Entree en = entree_choisie();
-    const bool clim = piece < 0 && en.sorte == Sorte::CLIM;
+    ClimRef c;
+    const bool clim = en.sorte == Sorte::CLIM && !clim_autre(en, c);
     ui_hidden(u.consigne_clim, !clim);
     ui_hidden(u.consigne_icone, !clim);
     ui_hidden(u.rangee, clim);
     Vue v;
-    if (piece >= 0) vue_piece(piece, v);
-    else vue(en, v);
+    vue(en, v);
     if (clim) {
         // La clim aussi a son icône, à gauche de sa consigne (09/10/2026, lot A : les
         // minutes passent d'un appareil à l'autre sans dérouler la liste, l'icône dit
@@ -591,23 +613,24 @@ void reglables_appliquer_ui() {
 
 bool reglables_clim_choisie() {
     charger();
-    // La clim de la pièce affichée (ADR-0040) n'est pas celle du blueprint : − / + et la
-    // consigne passent par reglables_pas() et reglables_valeur_appui().
-    if (piece_climat_clim() >= 0) return false;
-    return entree_choisie().sorte == Sorte::CLIM;
+    // Une clim de tuile ou de pièce (la clim d'ici) n'est pas celle du blueprint : − / + et
+    // la consigne passent par reglables_pas() et reglables_valeur_appui().
+    const Entree en = entree_choisie();
+    ClimRef c;
+    return en.sorte == Sorte::CLIM && !clim_autre(en, c);
 }
 
 void reglables_pas(int sens) {
     charger();
     s_tours = 0;  // un geste : l'appareil réglé reste une durée entière (défilement auto)
     const ReglablesUI& u = g_reglables_ui;
-    const int piece = piece_climat_clim();
-    if (piece >= 0) {
+    const Entree en = entree_choisie();
+    ClimRef c;
+    if (clim_autre(en, c)) {
         envoyer_attente();  // un geste sur un appareil de la liste part d'abord
-        clim_piece_pas(piece, sens);  // repeint la tuile (reglables_clim_changee)
+        clim_ref_pas(c, sens);  // repeint la tuile (reglables_clim_changee)
         return;
     }
-    const Entree en = entree_choisie();
     if (en.sorte == Sorte::TABLETTE) {
         const float v = volume_tablette_pct();
         if (std::isnan(v) || u.volume_regler == nullptr) return;
@@ -641,13 +664,13 @@ void reglables_envoyer_attente() {
 
 void reglables_valeur_appui() {
     charger();
-    // La clim de la pièce affichée (ADR-0040) : le popup clim, sur elle.
-    const int piece = piece_climat_clim();
-    if (piece >= 0) {
-        if (clim_afficher_piece(piece) && g_clim_ui.popup != nullptr) animate_popup_open(g_clim_ui.popup);
+    // Une clim de tuile ou de pièce (la clim d'ici) : le carrousel du popup clim, sur elle.
+    const Entree en = entree_choisie();
+    ClimRef c;
+    if (clim_autre(en, c)) {
+        clim_carrousel_ouvrir_sur(c);
         return;
     }
-    const Entree en = entree_choisie();
     if (en.sorte != Sorte::HA) return;  // la clim : son popup (climate_card.yaml) ; la tablette : rien
     const Def& d = s_m.d[en.i];
     // Le popup de la tuile qui porte la même entité (ce que fait son appui long, ou son
@@ -699,12 +722,12 @@ void reglables_choisir(int ligne) {
 // defilement_tours_clim() tours, l'appareil suivant de la liste — la clim et ceux du
 // blueprint, pas le volume de la tablette (il se choisit à la main) —, sans écrire la NVS
 // ni dérouler la liste. Rien tant que la liste est ouverte ou qu'une valeur attend son
-// envoi : le compte repart, l'appareil qu'on règle ne s'en va pas sous le doigt. Rien non
-// plus quand la tuile règle la clim de la pièce affichée (ADR-0040) : le choix, caché,
-// changerait sans que rien ne bouge à l'écran.
+// envoi : le compte repart, l'appareil qu'on règle ne s'en va pas sous le doigt. La ligne
+// « Clim » du relais est la clim d'ici (clim_ref_ici) ; jusqu'au 14/10/2026, la tuile
+// restait sur la clim propre de la pièce et le choix tournait sans se voir.
 void reglables_tour() {
     if (!s_charge || !defilement_auto(Defilement::CLIM) || !tuile_visible() || liste_ouverte() ||
-        s_attente.cle[0] != '\0' || piece_climat_clim() >= 0) {
+        s_attente.cle[0] != '\0') {
         s_tours = 0;
         return;
     }
