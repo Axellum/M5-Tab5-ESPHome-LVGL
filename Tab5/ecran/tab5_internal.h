@@ -265,8 +265,8 @@ void reglables_rejouer_theme();
 // ce que fait son appui long, ou son appui pour une clim). Faux si elle n'en a pas.
 bool tuile_ouvrir_popup(int r, int t);
 // tab5_clim.cpp, pour la liste de la tuile − / + : nom de la clim du blueprint (vide
-// tant que HA ne l'a pas donné) ; sa consigne écrite comme sur la carte (« 21.5 »,
-// « -- ») et sa couleur (bleu en froid, rouge en chaud), et la couleur de son icône.
+// tant que HA ne l'a pas donné) ; sa consigne écrite comme sur la carte (« 21.5 ° »,
+// « -- » ; clim_consigne_zone, le même format pour toutes les clims) et sa couleur (bleu en froid, rouge en chaud), et la couleur de son icône.
 const char* clim_nom();
 uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 
@@ -557,7 +557,7 @@ bool clim_ref_choisir(ClimRef& out);
 // suite, envoi par tab5_debounce_clim_tuile (« tRT » ou « cpR »). Consigne inconnue : rien.
 void clim_ref_pas(const ClimRef& c, int sens);
 // tab5_reglables.cpp, la tuile − / + et sa liste : consigne d'une clim de tuile ou de pièce
-// écrite comme sur la carte (« 21.5 », « -- ») et sa couleur ; renvoie la couleur de
+// écrite comme sur la carte (« 21.5 ° », « -- » ; clim_consigne_zone) et sa couleur ; renvoie la couleur de
 // l'icône (comme clim_carte_valeur).
 uint32_t clim_ref_carte(const ClimRef& c, char* buf, size_t n, uint32_t& couleur_valeur);
 // Le carrousel (popup clim, ADR-0038) ouvert sur la clim `c` : « Détails » de sa roue, ou

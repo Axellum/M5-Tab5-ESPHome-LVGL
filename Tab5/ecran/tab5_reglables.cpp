@@ -331,11 +331,7 @@ struct Vue {
 // HA, sinon la pièce, sinon « Climatisation »).
 void vue_clim_ref(const ClimRef& c, Vue& v) {
     v.icone = tuile_icone("clim", true, nullptr);
-    v.couleur_icone = clim_ref_carte(c, v.valeur, sizeof(v.valeur), v.couleur_valeur);
-    if (!est(v.valeur, "--")) {
-        const size_t k = std::strlen(v.valeur);
-        snprintf(v.valeur + k, sizeof(v.valeur) - k, " \xC2\xB0");
-    }
+    v.couleur_icone = clim_ref_carte(c, v.valeur, sizeof(v.valeur), v.couleur_valeur);  // « 22.0 ° »
     ClimTete t;
     clim_tete(c.r, c.t, t);
     snprintf(v.nom, sizeof(v.nom), "%s", t.nom);
@@ -352,11 +348,7 @@ void vue(const Entree& en, Vue& v) {
                 return;
             }
             v.icone = tuile_icone("clim", true, nullptr);
-            v.couleur_icone = clim_carte_valeur(v.valeur, sizeof(v.valeur), v.couleur_valeur);
-            if (!est(v.valeur, "--")) {
-                const size_t k = std::strlen(v.valeur);
-                snprintf(v.valeur + k, sizeof(v.valeur) - k, " \xC2\xB0");
-            }
+            v.couleur_icone = clim_carte_valeur(v.valeur, sizeof(v.valeur), v.couleur_valeur);  // « 20.0 ° »
             const char* nom = clim_nom();
             snprintf(v.nom, sizeof(v.nom), "%s", (nom != nullptr && nom[0] != '\0') ? nom : tr("Climatisation"));
             return;

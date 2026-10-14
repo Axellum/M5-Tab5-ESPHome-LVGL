@@ -227,6 +227,17 @@ void clim_format_consigne(const ClimReglages& r, char* buf, size_t n, float t) {
     else snprintf(buf, n, clim_pas_entier(r) ? "%.0f" : "%.1f", t);
 }
 
+// La consigne d'une clim sur la tuile − / + et dans sa liste (ADR-0033), la même pour
+// toutes les clims : « 21.5 ° », « -- » inconnue. Règle produit : « ° » toujours ; avant le
+// 14/10/2026, la clim du blueprint (clim_target) s'écrivait « 20.0 » quand les autres
+// avaient « 22.0 ° ». Le popup garde clim_format_consigne (son unité est à côté).
+void clim_consigne_zone(const ClimReglages& r, char* buf, size_t n, float t) {
+    clim_format_consigne(r, buf, n, t);
+    if (std::isnan(t)) return;
+    const size_t k = std::strlen(buf);
+    snprintf(buf + k, n - k, " \xC2\xB0");
+}
+
 // Un pas de plus (sens > 0) ou de moins, borné aux limites de l'appareil.
 float consigne_suivante(const ClimReglages& r, float t, int sens) {
     float v = t + (sens < 0 ? -r.pas : r.pas);
@@ -378,10 +389,11 @@ void vue_verifier() {
     popup_peindre();
 }
 
-// Carte de l'accueil : la cible de la clim du blueprint, au format de son pas.
+// Carte de l'accueil (la tuile − / +) : la cible de la clim du blueprint, au format de son
+// pas, avec « ° » comme les autres clims.
 void carte_consigne_ui(float t) {
     char buf[16];
-    clim_format_consigne(s_clim, buf, sizeof(buf), t);
+    clim_consigne_zone(s_clim, buf, sizeof(buf), t);
     ui_text(g_clim_ui.consigne_carte, buf);
 }
 
@@ -584,7 +596,7 @@ uint32_t clim_ref_carte(const ClimRef& ref, char* buf, size_t n, uint32_t& coule
     const ClimTuile* c = ref.r < 0 ? nullptr : ref_clim(ref.r, ref.t);
     static const std::string kSansMode;
     const ClimReglages& g = c != nullptr ? c->reglages : s_clim;
-    clim_format_consigne(g, buf, n, c != nullptr ? c->etat.consigne : NAN);
+    clim_consigne_zone(g, buf, n, c != nullptr ? c->etat.consigne : NAN);
     const std::string& mode = c != nullptr ? c->etat.mode : kSansMode;
     couleur_valeur = couleur_consigne(mode);
     return couleur_icone_carte(mode);
@@ -845,7 +857,7 @@ void update_clim_target_ui(lv_obj_t* lbl_target, lv_obj_t* arc, float target) {
     if (lbl_target == nullptr) return;
     s_clim_consigne = target;
     char buf[16];
-    clim_format_consigne(s_clim, buf, sizeof(buf), target);
+    clim_consigne_zone(s_clim, buf, sizeof(buf), target);
     ui_text(lbl_target, buf);
     if (!std::isfinite(target)) return;
     if (arc != nullptr)
@@ -871,7 +883,7 @@ void clim_blueprint_recu(float consigne, float piece) {
 const char* clim_nom() { return s_clim.nom; }
 
 uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur) {
-    clim_format_consigne(s_clim, buf, n, s_clim_consigne);
+    clim_consigne_zone(s_clim, buf, n, s_clim_consigne);
     static const std::string kSansMode;
     const std::string& mode = g_clim_ui.mode_bp != nullptr ? *g_clim_ui.mode_bp : kSansMode;
     couleur_valeur = couleur_consigne(mode);

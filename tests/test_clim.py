@@ -499,6 +499,24 @@ def test_carte_de_l_accueil_reste_la_clim_du_blueprint():
     assert "if (vue_tuile()) return;" in _corps_fonction(cartes, "clim_reglages_recu")
 
 
+def test_la_consigne_de_la_tuile_moins_plus_a_son_degre_pour_toutes_les_clims():
+    """Règle produit « ° » toujours (14/10/2026, PR #471) : sur la tuile − / + et dans sa
+    liste, la clim du blueprint (clim_target) s'écrivait « 20.0 » quand une clim de tuile
+    ou de pièce avait « 22.0 ° ». Un seul format, clim_consigne_zone, pour les quatre
+    écritures ; tab5_reglables.cpp n'ajoute plus rien."""
+    cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
+    zone = _corps_fonction(cartes, "clim_consigne_zone")
+    assert "clim_format_consigne(r, buf, n, t);" in zone
+    assert "if (std::isnan(t)) return;" in zone  # « -- » reste « -- »
+    assert 'snprintf(buf + k, n - k, " \\xC2\\xB0");' in zone
+    for f in ("carte_consigne_ui", "update_clim_target_ui", "clim_carte_valeur", "clim_ref_carte"):
+        corps = _corps_fonction(cartes, f)
+        assert "clim_consigne_zone(" in corps and "clim_format_consigne(" not in corps, f
+    reglables = _lire("Tab5", "ecran", "tab5_reglables.cpp")
+    assert "\\xC2\\xB0" not in _corps_fonction(reglables, "vue_clim_ref")
+    assert "\\xC2\\xB0\");" not in _corps_fonction(reglables, "vue").split("case Sorte::TABLETTE", 1)[0]
+
+
 def test_ouverture_et_fermeture_du_popup():
     tuiles = "\n".join(_lire(source(f)) for f in ("tab5_tuiles_priv.h", "tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp"))
     # Le corps de l'appui d'une tuile (tuile_appui le passe à la pièce courante, le popup
