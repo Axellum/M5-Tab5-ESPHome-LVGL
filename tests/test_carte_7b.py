@@ -85,7 +85,7 @@ def test_valeurs_des_deux_cartes():
     assert geometrie("tab5") == {"carte_ecran_l": "1280", "carte_ecran_h": "720", "carte_dalle_l": "720",
                                  "carte_dalle_h": "1280", "carte_rotation": "270", "carte_police_echelle": "1"}
     assert geometrie("waveshare-7b") == {"carte_ecran_l": "1024", "carte_ecran_h": "600", "carte_dalle_l": "1024",
-                                         "carte_dalle_h": "600", "carte_rotation": "0", "carte_police_echelle": "0.82"}
+                                         "carte_dalle_h": "600", "carte_rotation": "180", "carte_police_echelle": "0.82"}
 
 
 def test_la_racine_choisit_la_carte_et_l_imu():
@@ -136,6 +136,15 @@ def test_toucher_recopie():
     t, w = _par_id(_tab5()["touchscreen"], "touch"), _par_id(_b7()["touchscreen"], "touch")
     for cle in ("on_touch", "on_release"):
         assert w.get(cle) == t.get(cle), cle
+
+
+def test_toucher_de_la_7b_essaye_sur_la_carte():
+    """Reset GPIO23 et inversion X/Y avec LVGL à 180° : réglages essayés sur la carte le
+    14/10/2026 (sans eux, le tactile ne répondait presque plus)."""
+    w = _par_id(_b7()["touchscreen"], "touch")
+    assert w["reset_pin"] == "GPIO23"
+    assert w["transform"] == {"swap_xy": False, "mirror_x": True, "mirror_y": True}
+    assert geometrie("waveshare-7b")["carte_rotation"] == "180"
 
 
 def test_audio_memes_reglages():
