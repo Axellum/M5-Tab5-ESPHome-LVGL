@@ -11,8 +11,9 @@
 
 # L'écran : un affichage en mémoire (plateforme host), même taille que la dalle de la
 # carte et même rotation côté LVGL (tab5-styles.yaml) : 720×1280 tournée de 270° pour le
-# Tab5, 1024×600 sans rotation pour la Waveshare 7B (Tab5/paquets/geometrie-<carte>.yaml,
-# ADR-0061). snapshot.take écrit un BMP de la dalle.
+# Tab5, 1024×600 tournée de 180° pour la Waveshare 7B (Tab5/paquets/geometrie-<carte>.yaml,
+# ADR-0061). snapshot.take écrit un BMP de la dalle, remis à l'endroit par
+# tools/rendu/capturer.py (--carte).
 display:
   - platform: snapshot
     id: tab5_display

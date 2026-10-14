@@ -21,7 +21,7 @@ name: Rendu hors tablette
 # passé en artefact aux neuf tâches « rendu », qui le recompilaient chacune (~2 min de
 # runner par tâche) ; les paquets pip d'ESPHome sont gardés en cache par version.
 # Tâche « rendu-7b » (ADR-0061) : le même rendu compilé pour la Waveshare 7B
-# (`-s tab5_carte waveshare-7b`, dalle virtuelle 1024×600 sans rotation), scènes et écrans
+# (`-s tab5_carte waveshare-7b`, dalle virtuelle 1024×600 tournée de 180°), scènes et écrans
 # en français, artefact « rendu-1024x600 » à part (pas dans la comparaison des captures
 # du Tab5). INFORMATIF : l'interface n'est pas encore adaptée à cette taille, les appuis
 # gardent les coordonnées du Tab5 (beaucoup d'écrans ne s'ouvrent pas) ; la tâche n'échoue
@@ -361,7 +361,7 @@ jobs:
           faketime -f "$DEPART" "$prog" > "captures/rendu-7b.log" 2>&1 &
           pid=$!
           sleep 8
-          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures | sed 's/^::warning[^:]*::/alerte : /'
+          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures --carte waveshare-7b | sed 's/^::warning[^:]*::/alerte : /'
           pkill -f "$prog" 2>/dev/null || true
           kill "$pid" 2>/dev/null || true
       - name: Taille des captures (1024×600)

@@ -850,8 +850,9 @@ lvgl:
   # NE PAS retirer cet id, et NE PAS changer `rotation: 270` : c'est l'état de
   # repos du dashboard, celui que Pinball::close() rétablit.
   # Depuis l'ADR-0061, la valeur vient de la carte (`carte_rotation`,
-  # Tab5/paquets/geometrie-<carte>.yaml) : 270 sur le Tab5 (dalle portrait), 0 sur la
-  # Waveshare 7B (paysage natif) ; le flipper revient à la même (kRotationRepos).
+  # Tab5/paquets/geometrie-<carte>.yaml) : 270 sur le Tab5 (dalle portrait), 180 sur la
+  # Waveshare 7B (dalle paysage montée à l'envers) ; le flipper revient à la même
+  # (kRotationRepos).
   id: tab5_lvgl
   # [AI-WARNING] `rotation:` doit rester présent ici même si le jeu la surcharge
   # à chaud : ESPHome ne compile le support de rotation (rotation_type_ =

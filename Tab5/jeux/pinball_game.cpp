@@ -684,7 +684,7 @@ static lv_obj_t* mk_arc(lv_obj_t* parent, float cx, float cy, float r,
 // [AI-CONTEXT] Voir le bloc ORIENTATION en tete de fichier. `portrait=false`
 // remet EXACTEMENT la rotation de repos du dashboard, jamais autre chose : 270 sur le
 // Tab5, celle de la carte en general (kRotationRepos, tab5_geometrie.h, ADR-0061). Sur
-// une carte paysage native (Waveshare 7B, repos 0), le portrait n'est pas encore fait.
+// une carte paysage native (Waveshare 7B, repos 180), le portrait n'est pas encore fait.
 
 // Dernier point de chaque entree pointeur ramene dans la resolution courante (voir
 // ORIENTATION en tete de fichier). Doigt leve, ce point ne declenche rien : seule
