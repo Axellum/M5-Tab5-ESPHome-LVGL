@@ -75,10 +75,13 @@ esp32:
 
 # Wi-Fi par l'ESP32-C6 en SDIO. Le BSP ne le décrit pas : broches par défaut d'esp_hosted
 # pour le P4, celles de la démo Wi-Fi de Waveshare et du schéma (GPIO14-19 près du C6,
-# GPIO54 relié par 0 Ω à C6_CHIP_PU : reset actif à l'état bas).
+# GPIO54 relié par 0 Ω à C6_CHIP_PU). active_high: true comme le Tab5 (même câblage) :
+# essayé sur la carte le 14/10/2026, false donne « sdmmc_card_init failed » et pas de Wi-Fi.
+# Il faut aussi ESPHome 2026.9.1 au moins : 2026.9.0 plante au démarrage de l'écran sur
+# un P4 v3 (horloge DSI « legacy », esphome#18984).
 esp32_hosted:
   variant: esp32c6
-  active_high: false
+  active_high: true
   clk_pin: GPIO18
   cmd_pin: GPIO19
   d0_pin: GPIO14
