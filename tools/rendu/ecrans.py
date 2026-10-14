@@ -27,7 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
 from scenarios import (JOURS_FR, NABU, NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,  # noqa: E402
                        PIECES, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES, HeureForecast, JourForecast, Piece,
-                       Tuile, build_alerte_payload, build_climat_pieces, build_etats_tuiles,
+                       Tuile, build_alerte_payload, build_climat_pieces, build_energie_bilan, build_etats_tuiles,
                        build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
                        build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
                        build_zones_absentes, code_pluie)
@@ -592,6 +592,10 @@ ENERGIE_VERS_BILAN = (ENERGIE_PAGE_PRECEDENTE,)   # Flux → Bilan : la page d'a
 ENERGIE_RETOUR_AUJOURDHUI = (ENERGIE_PAGE_PRECEDENTE,)
 ENERGIE_RETOUR_PRODUCTION = (ENERGIE_PAGE_PRECEDENTE,) * 2
 ENERGIE_RETOUR_BILAN = (ENERGIE_PAGE_SUIVANTE,)
+# Page Bilan (ADR-0062) : carte du graphique de 768 × 598 à x 458 de la carte modale (posée à
+# 15 px des bords), y 87-685 à l'écran ; mêmes boutons de vue que la page Production (150 × 48
+# à 18, 178 et 338 px de son bord droit, x 1241), 10 px sous son haut.
+ENERGIE_BILAN_VUES = {"heures": (828, 121), "jours": (988, 121), "mois": (1148, 121)}
 # Popup Réglages (reglages_popup.yaml), quatre pages depuis le 08/10/2026. Noms des pages
 # en haut : 200 × 44 à x 318 + 210 × i de la carte modale (posée à 15 px des bords), sur
 # la ligne du titre. Cartes des pages Écran et Apparence à (39, 87) à l'écran, 1202 de
@@ -620,6 +624,12 @@ REGLAGES_CURSEUR_A_100 = Glisser(400, 215, 1270, 215, dans_popup=True)
 SALON_TEMP = (954, 158)
 TEMPERATURE_VUES = {"jour": (828, 287), "semaine": (988, 287), "mois": (1148, 287)}
 MOMENT_DES_CAPTURES = _dt.datetime(2026, 6, 16, 7, 45)
+# Bilan du mois civil (ADR-0062) de la démo, avec compteurs et prix, puis tel que la scène
+# le pousse (estimé, sans prix).
+BILAN_AVEC_PRIX = Service("tab5_maj_energie_bilan", tuple(
+    build_energie_bilan("mois_civil", MOMENT_DES_CAPTURES.date(), prix=True).items()))
+BILAN_SANS_PRIX = Service("tab5_maj_energie_bilan", tuple(
+    build_energie_bilan("mois_civil", MOMENT_DES_CAPTURES.date()).items()))
 # Onglets du popup (ADR-0047) : une page par température connue — le salon, les pièces de
 # la démo qui ont une température (Entrée p1, Bureau p3), la serre —, 200 × 44 calés à
 # droite jusqu'à x 1148 de la carte modale, soit les places des pages des Réglages.
@@ -1273,6 +1283,17 @@ ECRANS: tuple[Ecran, ...] = (
           ENERGIE_RETOUR_PRODUCTION),
     Ecran("energie-mois", (Aller("Énergie"),) + ENERGIE_VERS_PRODUCTION + (Toucher(*ENERGIE_VUES["mois"]),),
           ENERGIE_RETOUR_PRODUCTION),
+    # Bilan en kWh (ADR-0062) : la « Batterie réseau » de juin à gauche, le net par jour du
+    # mois civil puis par mois de l'année à droite (une maison sans compteur d'achat ni de
+    # vente : estimés, sans prix) ; puis la même maison avec ses compteurs et un prix
+    # (« Économies » en euros), poussée par-dessus et rendue à la fin.
+    Ecran("energie-bilan-jours", (Aller("Énergie"),) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES["jours"]),),
+          (Toucher(*ENERGIE_BILAN_VUES["heures"]),) + ENERGIE_RETOUR_BILAN),
+    Ecran("energie-bilan-mois", (Aller("Énergie"),) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES["mois"]),),
+          (Toucher(*ENERGIE_BILAN_VUES["heures"]),) + ENERGIE_RETOUR_BILAN),
+    Ecran("energie-bilan-prix", (Aller("Énergie"),) + ENERGIE_VERS_BILAN + (Toucher(*ENERGIE_BILAN_VUES["jours"]),
+                                                                            BILAN_AVEC_PRIX),
+          (BILAN_SANS_PRIX, Toucher(*ENERGIE_BILAN_VUES["heures"])) + ENERGIE_RETOUR_BILAN),
     # Température (ADR-0032) : la pièce sur 24 h ; la seconde température, une serre avec
     # la prévision de dehors à part, sur les trois vues ; puis dehors (case du blueprint
     # cochée), la prévision qui prolonge la courbe.

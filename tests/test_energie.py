@@ -125,15 +125,41 @@ def test_demo_dans_le_format():
         assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", h["debut"])
     assert scenarios.build_energie_historique("jours", aujourd_hui)["debut"] == "2026-05-18"
     assert scenarios.build_energie_historique("mois", aujourd_hui)["debut"] == "2025-07-01"
-    # ADR-0058 : dix champs pour le soleil (24 valeurs de prévision et de ciel clair), quatre pour
-    # le bilan (autant de créneaux que la production de la même vue).
+    # ADR-0058 : dix champs pour le soleil (24 valeurs de prévision et de ciel clair).
     soleil = scenarios.build_energie_soleil().split("|")
     assert len(soleil) == 10 and all(len(soleil[i].split(";")) == 24 for i in (8, 9))
-    for vue, n in scenarios.ENERGIE_VUES.items():
-        b = scenarios.build_energie_bilan(vue, aujourd_hui)
-        devise, *series = b["payload"].split("|")
-        assert devise == "€" and len(series) == 3 and all(len(s.split(";")) == n for s in series), vue
-        assert b["debut"] == scenarios.build_energie_historique(vue, aujourd_hui)["debut"]
+    # ADR-0062 : sept champs pour le bilan, vues civiles (24 heures, les 30 jours de juin,
+    # 12 mois), à venir vides ; sans prix ni compteur d'achat ou de vente, estimé.
+    attendus = {"heures": ("2026-06-16", 24, 8), "mois_civil": ("2026-06-01", 30, 16),
+                "annee_civile": ("2026-01-01", 12, 6)}
+    for vue, (debut, n, connus) in attendus.items():
+        for prix in (False, True):
+            b = scenarios.build_energie_bilan(vue, aujourd_hui, prix)
+            assert b["vue"] == vue and b["debut"] == debut
+            devise, vente, achat, gain, prod, conso, estime = b["payload"].split("|")
+            assert len(prod.split(";")) == len(conso.split(";")) == n, vue
+            assert sum(1 for x in prod.split(";") if x) == connus, vue
+            assert (devise, estime) == (("€", "") if prix else ("", "1")), vue
+            assert (gain != "") == prix, vue
+            # L'année n'a d'estimation qu'avec des compteurs (variante avec prix).
+            assert (vente != "") == (prix or vue != "annee_civile"), vue
+    # Les trois vues disent la même chose : aujourd'hui = la somme des heures, juin = la
+    # somme de ses jours, et la production des jours passés est celle de l'historique.
+    def serie(vue, champ, prix=False):
+        i = ("devise", "vente", "achat", "gain", "prod", "conso", "estime").index(champ)
+        return [float(x) for x in scenarios.build_energie_bilan(vue, aujourd_hui, prix)["payload"].split("|")[i].split(";") if x]
+    for champ in ("prod", "conso", "vente", "achat"):
+        assert abs(sum(serie("heures", champ)) - serie("mois_civil", champ)[-1]) < 0.02, champ
+        assert abs(sum(serie("mois_civil", champ)) - serie("annee_civile", champ, prix=True)[-1]) < 0.2, champ
+    assert serie("mois_civil", "prod")[:-1] == [float(x) for x in scenarios.ENERGIE_HISTORIQUE["jours"][14:29]]
+    assert serie("mois_civil", "prod")[-1] == float(scenarios.ENERGIE_INSTANTANE["jour"])
+    # Une maison en compensation : des jours en surplus et en déficit, un mois positif.
+    net = [p - c for p, c in zip(serie("mois_civil", "prod"), serie("mois_civil", "conso"))]
+    assert min(net[:-1]) < 0 < max(net) and sum(net) > 0
+    # HA pousse le mois civil à chaque passage, les heures et l'année avec leur vue.
+    assert scenarios.vues_bilan(("heures",)) == ("heures", "mois_civil")
+    assert scenarios.vues_bilan(("jours",)) == ("mois_civil",)
+    assert scenarios.vues_bilan(("mois",)) == ("mois_civil", "annee_civile")
     # Falsifiable : un créneau qui n'est pas la meilleure plage, une série trop courte se voient.
     import pytest
     with pytest.raises(AssertionError):
@@ -221,7 +247,8 @@ class Passe:
     """Un passage de la boucle de script.tab5_energie, réponses de get_statistics fournies."""
 
     def __init__(self, capteurs, etats, vue="heures", cinq=None, longues=None, index=1,
-                 cinq_r=None, longues_r=None, trente=None, horaires=None):
+                 cinq_r=None, bilan_jours=None, bilan_horaire=None, bilan_annee=None, trente=None,
+                 horaires=None):
         script = _script()
         self.env = _env(etats, {"tablette_1": ["sensor.tab5_ha_hmi_ecran_courant", "sensor.tab5_ha_hmi_uptime"]})
         self.ctx = {"appareil": "tablette_1", "tablette": "tab5_ha_hmi", "vue": vue, "capteurs": capteurs}
@@ -239,7 +266,9 @@ class Passe:
         for nom, v in _etape_variables("instantane").items():
             self.ctx[nom] = _rendre(self.env, v, self.ctx)
         self.longues = longues
-        self.longues_r = longues_r
+        self.bilan_jours = bilan_jours
+        self.bilan_horaire = bilan_horaire
+        self.bilan_annee = bilan_annee
         self.trente = trente
         self.horaires = horaires
 
@@ -302,31 +331,79 @@ class Passe:
         r = {k: _rendre(self.env, v, self.ctx) for k, v in data.items()}
         return r["vue"], str(r["debut"]), [_nombre(x) for x in str(r["valeurs"]).split(";")]
 
-    def bilan(self):
-        """(vue, debut, devise, vente, achat, gain) poussés par le bilan de la vue ; None si
-        aucun (pas de compteur d'achat ni de vente, ou pas d'historique à ce passage)."""
-        branche, interne = self._branche_historique()
-        if not _rendre(self.env, branche["if"], self.ctx):
-            return None
-        if _rendre(self.env, interne["if"], self.ctx):
-            suite = interne["then"][1]
-        else:
-            self._rendre_vue_longue()
-            suite = interne["else"][5]
-        if not _rendre(self.env, suite["if"], self.ctx):
-            return None
-        etapes = suite["then"]
-        if etapes[0].get("action") == "recorder.get_statistics":
-            if self.longues_r is not None:
-                self.ctx["longues_r"] = self.longues_r
-            etapes = etapes[1:]
-        for nom, v in etapes[0]["variables"].items():
-            self.ctx[nom] = _rendre(self.env, v, self.ctx)
-        assert etapes[1]["action"] == "esphome.{{ tablette }}_tab5_maj_energie_bilan"
-        assert etapes[1]["continue_on_error"] is True
-        r = {k: _rendre(self.env, v, self.ctx) for k, v in etapes[1]["data"].items() if k != "payload"}
-        devise, vente, achat, gain = str(self.ctx["bilan_payload"]).split("|")
-        return r["vue"], str(r["debut"]), devise, _liste(vente), _liste(achat), _liste(gain)
+    def _bloc_bilan(self):
+        seq = self.boucle["sequence"]
+        i = next(i for i, etape in enumerate(seq) if "bilan_vues" in (etape.get("variables") or {}))
+        return seq[i], seq[i + 1]["repeat"]
+
+    def bilan_vues(self):
+        etape, _ = self._bloc_bilan()
+        return _rendre(self.env, etape["variables"]["bilan_vues"], self.ctx)
+
+    def _parcourir_bilan(self, rappel):
+        """Rejoue la boucle for_each du bilan : pour chaque vue, `rappel(vue, etape)` sur les
+        demandes au recorder qui partent ; renvoie les poussées (vue, debut, champs)."""
+        etape, boucle = self._bloc_bilan()
+        vues = _rendre(self.env, etape["variables"]["bilan_vues"], self.ctx)
+        assert boucle["for_each"] == "{{ bilan_vues }}"
+        externe = self.ctx["repeat"]
+        sortie = []
+        for j, vue in enumerate(vues):
+            self.ctx["repeat"] = {"item": vue, "index": j + 1}
+            for pas in boucle["sequence"]:
+                if "if" in pas:
+                    if not _rendre(self.env, pas["if"], self.ctx):
+                        continue
+                    for action in pas["then"]:
+                        if "if" in action:
+                            if not _rendre(self.env, action["if"], self.ctx):
+                                continue
+                            action = action["then"][0]
+                        assert action["action"] == "recorder.get_statistics"
+                        rappel(vue, action)
+                elif "variables" in pas:
+                    for nom, v in pas["variables"].items():
+                        self.ctx[nom] = _rendre(self.env, v, self.ctx)
+                else:
+                    assert pas["action"] == "esphome.{{ tablette }}_tab5_maj_energie_bilan"
+                    assert pas["continue_on_error"] is True
+                    r = {k: _rendre(self.env, v, self.ctx) for k, v in pas["data"].items() if k != "payload"}
+                    champs = str(self.ctx["bilan_payload"]).split("|")
+                    assert len(champs) == 7, champs
+                    noms = ("devise", "vente", "achat", "gain", "prod", "conso", "estime")
+                    d = dict(zip(noms, champs))
+                    for k in ("vente", "achat", "gain", "prod", "conso"):
+                        d[k] = _liste(d[k])
+                    sortie.append((r["vue"], str(r["debut"]), d))
+        self.ctx["repeat"] = externe
+        return sortie
+
+    def bilans(self):
+        """Les bilans poussés à ce passage (ADR-0062), dans l'ordre : une liste de
+        (vue, debut, champs), champs = {devise, vente, achat, gain, prod, conso, estime}
+        (listes de nombres, None pour un créneau vide, [] pour un champ vide)."""
+        reponses = {"bilan_jours": self.bilan_jours, "bilan_horaire": self.bilan_horaire,
+                    "bilan_annee": self.bilan_annee}
+
+        def repondre(_vue, action):
+            nom = action["response_variable"]
+            assert action["continue_on_error"] is True
+            if reponses.get(nom) is not None:
+                self.ctx[nom] = reponses[nom]
+        return self._parcourir_bilan(repondre)
+
+    def bilan_de(self, vue):
+        """Le bilan d'une vue poussé à ce passage (vue, debut, champs) ; None s'il ne part pas."""
+        return next((b for b in self.bilans() if b[0] == vue), None)
+
+    def demandes_bilan(self):
+        """Les get_statistics du bilan de chaque vue poussée, rendues : {vue: [data…]}."""
+        sortie = {}
+
+        def noter(vue, action):
+            sortie.setdefault(vue, []).append({k: _rendre_tout(self.env, v, self.ctx) for k, v in action["data"].items()})
+        self._parcourir_bilan(noter)
+        return sortie
 
     def _bloc_soleil(self):
         etape = _chercher(self.boucle["sequence"], lambda d: "soleil_cle != cle_heure" in str(d.get("if", "")))
@@ -1412,7 +1489,8 @@ def test_les_deux_nouvelles_actions_continuent_en_cas_d_echec():
             for v in noeud:
                 parcourir(v)
     parcourir(_script()["sequence"])
-    assert len(trouvees) == 3 and all(n.get("continue_on_error") is True for n in trouvees)
+    # Le soleil, et le bilan (une action dans la boucle de ses vues, ADR-0062).
+    assert len(trouvees) == 2 and all(n.get("continue_on_error") is True for n in trouvees)
     for appel in trouvees:    # appelées sans lire la réponse
         assert "response_variable" not in appel
 
@@ -1429,11 +1507,14 @@ def test_heures_poussees_au_premier_tour_quelle_que_soit_la_vue():
         assert Passe(CAPTEURS, _maison(), vue=vue, cinq=_reponse(lignes), index=2).historique() is None
 
 
-# ─── Bilan : achat, vente, prix, gains ───────────────────────────────────────
+# ─── Bilan : production, maison, achat, vente, prix (ADR-0058, ADR-0062) ─────
 
 ACHAT = "sensor.reseau_energie_achetee"
 VENTE = "sensor.reseau_energie_vendue"
+CONSO = "sensor.maison_energie"
 TARIF = "sensor.tarif_kwh"
+DEBUT_MOIS = MAINTENANT.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+AUJOURD_HUI = MAINTENANT.day - 1    # le créneau du jour dans le mois civil (15)
 
 
 def _vente_5min(t):
@@ -1444,6 +1525,11 @@ def _vente_5min(t):
 def _achat_5min(t):
     h = t.hour + t.minute / 60
     return 0.015 if (h < 6 or h >= 18) else (0.004 if h < 10 else 0.0)
+
+
+def _conso_5min(t):
+    """La maison : 0,6 kWh par heure, 1 kWh le soir (18 h - 21 h)."""
+    return 0.0833 if 18 <= t.hour < 21 else 0.05
 
 
 def _lignes_compteur(f, depart):
@@ -1460,23 +1546,48 @@ def _lignes_compteur(f, depart):
     return lignes
 
 
-PARTIEL_ACHAT, PARTIEL_VENTE = 0.011, 0.006
+PARTIEL_ACHAT, PARTIEL_VENTE, PARTIEL_CONSO = 0.011, 0.006, 0.02
 
 
-def _bilan_des_heures(capteurs, **surcharges):
+def _installation(achat=True, vente=True, conso=False, **surcharges):
+    """États et réponses de 5 minutes de la production et des compteurs choisis."""
     prod = _lignes_5min()
-    achat, vente = _lignes_compteur(_achat_5min, 300.0), _lignes_compteur(_vente_5min, 80.0)
-    etats = _maison(**{
-        ACHAT: EtatHA(ACHAT, str(round(achat[-1]["state"] + PARTIEL_ACHAT, 4)), unit_of_measurement="kWh"),
-        VENTE: EtatHA(VENTE, str(round((vente[-1]["state"] + PARTIEL_VENTE) * 1000, 1)), unit_of_measurement="Wh"),
-        TARIF: EtatHA(TARIF, "0.2516", unit_of_measurement="EUR/kWh"),
-        **surcharges})
-    cinq_r = {"statistics": {ACHAT: achat, VENTE: vente}}
-    return Passe(capteurs, etats, cinq=_reponse(prod), cinq_r=cinq_r), prod, achat, vente
+    lignes = {}
+    etats = {}
+    if achat:
+        lignes[ACHAT] = _lignes_compteur(_achat_5min, 300.0)
+        etats[ACHAT] = EtatHA(ACHAT, str(round(lignes[ACHAT][-1]["state"] + PARTIEL_ACHAT, 4)), unit_of_measurement="kWh")
+    if vente:
+        lignes[VENTE] = _lignes_compteur(_vente_5min, 80.0)
+        # Le compteur de vente est en Wh : converti en kWh.
+        etats[VENTE] = EtatHA(VENTE, str(round((lignes[VENTE][-1]["state"] + PARTIEL_VENTE) * 1000, 1)),
+                              unit_of_measurement="Wh")
+    if conso:
+        lignes[CONSO] = _lignes_compteur(_conso_5min, 5000.0)
+        etats[CONSO] = EtatHA(CONSO, str(round(lignes[CONSO][-1]["state"] + PARTIEL_CONSO, 4)), unit_of_measurement="kWh")
+    etats[TARIF] = EtatHA(TARIF, "0.2516", unit_of_measurement="EUR/kWh")
+    etats.update(surcharges)
+    return _maison(**etats), prod, lignes
+
+
+def _passe_bilan(capteurs, vue="heures", achat=True, vente=True, conso=False, index=1, surcharges=None, **reponses):
+    etats, prod, lignes = _installation(achat, vente, conso, **(surcharges or {}))
+    p = Passe(capteurs, etats, vue=vue, cinq=_reponse(prod), cinq_r={"statistics": lignes}, index=index, **reponses)
+    return p, prod, lignes
 
 
 CAPTEURS_BILAN = dict(CAPTEURS, compteur_achat=ACHAT, compteur_vente=VENTE, prix_achat=0.2, prix_revente=0.1,
                       devise="€")
+CAPTEURS_ESTIME = dict(CAPTEURS, consommation=CONSO)
+PARTIELS = {ACHAT: PARTIEL_ACHAT, VENTE: PARTIEL_VENTE, CONSO: PARTIEL_CONSO}
+
+
+def _heures_de(lignes, compteur):
+    return _attendu_heures(lignes[compteur], lignes[compteur][-1]["state"] + PARTIELS[compteur])
+
+
+def _jour_de(lignes, compteur):
+    return sum(r["change"] for r in lignes[compteur]) + PARTIELS[compteur]
 
 
 def _attendu_gains(production, vente, prix_achat, prix_revente):
@@ -1485,200 +1596,345 @@ def _attendu_gains(production, vente, prix_achat, prix_revente):
 
 
 def test_bilan_des_heures():
-    p, prod, achat, vente = _bilan_des_heures(CAPTEURS_BILAN)
-    vue, debut, devise, v, a, g = p.bilan()
-    assert (vue, debut, devise) == ("heures", "2026-06-16", "€")
-    att_vente = _attendu_heures(vente, vente[-1]["state"] + PARTIEL_VENTE)
-    att_achat = _attendu_heures(achat, achat[-1]["state"] + PARTIEL_ACHAT)
-    _proche(v, att_vente)       # le compteur de vente est en Wh : converti en kWh
-    _proche(a, att_achat)
+    p, prod, lignes = _passe_bilan(CAPTEURS_BILAN)
+    vue, debut, b = p.bilan_de("heures")
+    assert (vue, debut, b["devise"], b["estime"]) == ("heures", "2026-06-16", "€", "")
+    att_vente, att_achat = _heures_de(lignes, VENTE), _heures_de(lignes, ACHAT)
+    _proche(b["vente"], att_vente)
+    _proche(b["achat"], att_achat)
     att_prod = _attendu_heures(prod, prod[-1]["state"] + PARTIEL)
-    _proche(g, _attendu_gains(att_prod, att_vente, 0.2, 0.1))
-    assert g[15] is None and v[15] is None and g[12] is not None
+    _proche(b["prod"], att_prod)
+    assert b["conso"] == []
+    _proche(b["gain"], _attendu_gains(att_prod, att_vente, 0.2, 0.1))
+    assert b["gain"][15] is None and b["vente"][15] is None and b["gain"][12] is not None
     # À la main : 3 h, rien produit, rien vendu : 0 de gain.
-    assert g[3] == 0 and v[3] == 0 and a[3] > 0
+    assert b["gain"][3] == 0 and b["vente"][3] == 0 and b["achat"][3] > 0
 
 
 def test_bilan_le_prix_d_un_capteur_l_emporte():
     capteurs = dict(CAPTEURS_BILAN, prix_achat_entite=TARIF, prix_revente_entite="sensor.inexistant")
-    p, prod, achat, vente = _bilan_des_heures(capteurs)
-    _, _, devise, v, _, g = p.bilan()
-    att_vente = _attendu_heures(vente, vente[-1]["state"] + PARTIEL_VENTE)
+    p, prod, lignes = _passe_bilan(capteurs)
+    b = p.bilan_de("heures")[2]
+    att_vente = _heures_de(lignes, VENTE)
     att_prod = _attendu_heures(prod, prod[-1]["state"] + PARTIEL)
     # Achat : le capteur (0,2516) ; revente : le capteur n'existe pas, le nombre (0,1).
-    _proche(g, _attendu_gains(att_prod, att_vente, 0.2516, 0.1))
+    _proche(b["gain"], _attendu_gains(att_prod, att_vente, 0.2516, 0.1))
     # Un capteur indisponible : le nombre.
-    p, *_ = _bilan_des_heures(capteurs, **{TARIF: EtatHA(TARIF, "unavailable")})
-    _proche(p.bilan()[5], _attendu_gains(att_prod, att_vente, 0.2, 0.1))
+    p, *_ = _passe_bilan(capteurs, surcharges={TARIF: EtatHA(TARIF, "unavailable")})
+    _proche(p.bilan_de("heures")[2]["gain"], _attendu_gains(att_prod, att_vente, 0.2, 0.1))
 
 
 @pytest.mark.parametrize("devise, attendu", [("", "€"), ("CHF", "CHF"), ("$", "$"), ("EURO!", "EUR"), ("a|b;c", "abc"),
                                              ("  £ ", "£")])
 def test_bilan_la_devise(devise, attendu):
-    p, *_ = _bilan_des_heures(dict(CAPTEURS_BILAN, devise=devise))
-    assert p.bilan()[2] == attendu
+    p, *_ = _passe_bilan(dict(CAPTEURS_BILAN, devise=devise))
+    assert p.bilan_de("heures")[2]["devise"] == attendu
 
 
 def test_bilan_sans_prix_pas_de_devise_ni_de_gain():
-    p, prod, achat, vente = _bilan_des_heures(dict(CAPTEURS_BILAN, prix_achat=0, prix_revente=0))
-    _, _, devise, v, a, g = p.bilan()
-    assert devise == "" and g == [] and len(v) == 24 and len(a) == 24
+    p, prod, lignes = _passe_bilan(dict(CAPTEURS_BILAN, prix_achat=0, prix_revente=0))
+    b = p.bilan_de("heures")[2]
+    assert b["devise"] == "" and b["gain"] == [] and len(b["vente"]) == 24 and len(b["achat"]) == 24
     # Un seul prix suffit : la vente seule, par exemple.
-    p, *_ = _bilan_des_heures(dict(CAPTEURS_BILAN, prix_achat=0))
-    _, _, devise, v, _, g = p.bilan()
+    p, *_ = _passe_bilan(dict(CAPTEURS_BILAN, prix_achat=0))
+    b = p.bilan_de("heures")[2]
     att_prod = _attendu_heures(prod, prod[-1]["state"] + PARTIEL)
-    att_vente = _attendu_heures(vente, vente[-1]["state"] + PARTIEL_VENTE)
-    assert devise == "€"
-    _proche(g, _attendu_gains(att_prod, att_vente, 0, 0.1))
+    assert b["devise"] == "€"
+    _proche(b["gain"], _attendu_gains(att_prod, _heures_de(lignes, VENTE), 0, 0.1))
 
 
 def test_bilan_un_seul_compteur():
     # Vente seule : le champ achat est vide, les gains comptent tout ce qui n'est pas vendu.
-    p, prod, achat, vente = _bilan_des_heures(dict(CAPTEURS_BILAN, compteur_achat=""))
-    _, _, devise, v, a, g = p.bilan()
-    assert a == [] and len(v) == 24 and devise == "€"
+    p, *_ = _passe_bilan(dict(CAPTEURS_BILAN, compteur_achat=""))
+    b = p.bilan_de("heures")[2]
+    assert b["achat"] == [] and len(b["vente"]) == 24 and b["devise"] == "€" and b["estime"] == ""
     # Achat seul : pas de vente, les gains valent la production au prix d'achat.
-    p, prod, *_ = _bilan_des_heures(dict(CAPTEURS_BILAN, compteur_vente=""))
-    _, _, devise, v, a, g = p.bilan()
-    assert v == [] and len(a) == 24
+    p, prod, _ = _passe_bilan(dict(CAPTEURS_BILAN, compteur_vente=""))
+    b = p.bilan_de("heures")[2]
+    assert b["vente"] == [] and len(b["achat"]) == 24
     att_prod = _attendu_heures(prod, prod[-1]["state"] + PARTIEL)
-    _proche(g, [None if x is None else x * 0.2 for x in att_prod])
+    _proche(b["gain"], [None if x is None else x * 0.2 for x in att_prod])
 
 
 def test_bilan_un_compteur_inexistant_est_ignore():
-    p, *_ = _bilan_des_heures(dict(CAPTEURS_BILAN, compteur_vente="sensor.n_existe_pas"))
-    _, _, _, v, a, _ = p.bilan()
-    assert v == [] and len(a) == 24
+    p, *_ = _passe_bilan(dict(CAPTEURS_BILAN, compteur_vente="sensor.n_existe_pas"))
+    b = p.bilan_de("heures")[2]
+    assert b["vente"] == [] and len(b["achat"]) == 24
 
 
 def test_bilan_rien_sans_compteur_ni_pour_un_blueprint_plus_ancien():
     # Blueprint d'avant l'ADR-0058 : aucune des clés. Tout continue comme avant.
     p = Passe(CAPTEURS, _maison(), cinq=_reponse(_lignes_5min()))
-    assert p["reseau_ids"] == {"achat": "", "vente": ""} and p["compteurs_reseau"] == []
-    assert p["devise"] == "" and p.bilan() is None
+    assert p["bilan_ids"] == {"achat": "", "vente": "", "conso": ""} and p["compteurs_bilan"] == []
+    assert p["devise"] == "" and p.bilans() == [] and p["bilan_estime"] is False
     assert p.historique()[0] == "heures"
     # Les prix sans compteur n'y changent rien.
     p = Passe(dict(CAPTEURS, prix_achat=0.2, devise="€"), _maison(), cinq=_reponse(_lignes_5min()))
-    assert p.bilan() is None
+    assert p.bilans() == []
     # Le soleil, lui, se calcule sans aucune des clés (pas de prévision externe).
     c = _passe_soleil().soleil()
     assert len(c) == 10 and c[SOURCE] == "a"
 
 
+def test_bilan_rien_sans_production():
+    """La maison seule ne fait pas de bilan : il faut la production (ADR-0062)."""
+    p, *_ = _passe_bilan(dict(CAPTEURS_ESTIME, production=""), achat=False, vente=False, conso=True)
+    assert p["productions"] == [] and p.bilans() == []
+
+
 def test_bilan_les_statistiques_des_compteurs_sont_demandees():
-    p, *_ = _bilan_des_heures(CAPTEURS_BILAN)
+    p, *_ = _passe_bilan(CAPTEURS_BILAN)
     demandes = [d for d in p.demandes_statistiques() if d]
     cinq_r = next(d for d in demandes if d["statistic_ids"] == [ACHAT, VENTE] and d["period"] == "5minute")
     assert set(cinq_r["types"]) == {"change", "state"} and cinq_r["units"] == {"energy": "kWh"}
     assert dt.datetime.fromisoformat(cinq_r["start_time"]) == MAINTENANT.replace(hour=0, minute=0, second=0, microsecond=0)
+    # Avec la maison aussi : les trois compteurs en une demande.
+    p, *_ = _passe_bilan(dict(CAPTEURS_BILAN, consommation=CONSO), conso=True)
+    assert p["compteurs_bilan"] == [ACHAT, VENTE, CONSO] and p["bilan_estime"] is False
     # Sans compteur, pas de demande en plus au recorder pour le bilan.
     sans = Passe(CAPTEURS, _maison(), cinq=_reponse(_lignes_5min()))
-    assert sans["compteurs_reseau"] == []
+    assert sans["compteurs_bilan"] == []
 
 
-def _longues_reseau(premier, jours):
-    """Lignes day ou month d'achat et de vente (kWh), quelques créneaux sans ligne."""
-    def debut(i):
-        if jours:
-            return (premier + dt.timedelta(days=i)).astimezone(dt.timezone.utc).isoformat()
-        m = premier.month - 1 + i
-        return dt.datetime(premier.year + m // 12, m % 12 + 1, 1, tzinfo=PARIS).astimezone(dt.timezone.utc).isoformat()
-    nb = 30 if jours else 12
-    valeurs_a = {i: round(6 + 0.3 * i, 3) for i in range(nb) if i not in (4, 20)}
-    valeurs_v = {i: round(2 + 0.2 * i, 3) for i in range(nb) if i != 7}
-    return valeurs_a, valeurs_v, {"statistics": {
-        ACHAT: [{"start": debut(i), "change": v} for i, v in valeurs_a.items()],
-        VENTE: [{"start": debut(i), "change": v} for i, v in valeurs_v.items()]}}
+@pytest.mark.parametrize("vue, index, attendu", [
+    ("heures", 1, ["heures", "mois_civil"]), ("heures", 2, ["heures"]),
+    ("jours", 1, ["mois_civil"]), ("jours", 2, []),
+    ("mois", 1, ["mois_civil", "annee_civile"]), ("mois", 2, []),
+])
+def test_bilan_les_vues_poussees(vue, index, attendu):
+    """Le mois civil part au premier passage quelle que soit la vue (carte « Batterie
+    réseau ») ; l'année avec la vue « mois » ; les heures à chaque passage de leur vue."""
+    p, *_ = _passe_bilan(CAPTEURS_BILAN, vue=vue, index=index, bilan_jours=_reponse([]), bilan_annee=_reponse([]))
+    assert p.bilan_vues() == attendu
+    assert [b[0] for b in p.bilans()] == attendu
 
 
-def test_bilan_des_jours():
-    premier = MAINTENANT.replace(hour=0, minute=0, second=0, microsecond=0) - dt.timedelta(days=29)
-    prod_debuts = [premier + dt.timedelta(days=i) for i in range(29) if i != 10]
-    prod_vals = [round(10 + i * 0.7, 3) for i in range(len(prod_debuts))]
-    longues = _reponse(_lignes_longues(prod_debuts, prod_vals))
-    va, vv, longues_r = _longues_reseau(premier, True)
-    prod, achat, vente = _lignes_5min(), _lignes_compteur(_achat_5min, 300.0), _lignes_compteur(_vente_5min, 80.0)
-    etats = _maison(**{ACHAT: EtatHA(ACHAT, str(round(achat[-1]["state"] + PARTIEL_ACHAT, 4)), unit_of_measurement="kWh"),
-                       VENTE: EtatHA(VENTE, str(round(vente[-1]["state"] + PARTIEL_VENTE, 4)), unit_of_measurement="kWh")})
-    p = Passe(CAPTEURS_BILAN, etats, vue="jours", cinq=_reponse(prod), longues=longues,
-              cinq_r={"statistics": {ACHAT: achat, VENTE: vente}}, longues_r=longues_r)
-    vue, debut, devise, v, a, g = p.bilan()
-    assert (vue, debut, devise) == ("jours", "2026-05-18", "€")
-    # Aujourd'hui (dernier créneau) : lignes de 5 minutes + partiel, comme la production.
-    jour_a = sum(r["change"] for r in achat) + PARTIEL_ACHAT
-    jour_v = sum(r["change"] for r in vente) + PARTIEL_VENTE
-    att_a = [va.get(i) for i in range(29)] + [jour_a]
-    att_v = [vv.get(i) for i in range(29)] + [jour_v]
-    _proche(a, att_a)
-    _proche(v, att_v)
-    att_prod = [None] * 30
-    for d, x in zip(prod_debuts, prod_vals):
-        att_prod[(d.date() - premier.date()).days] = x
-    att_prod[29] = _attendu_jour(prod, prod[-1]["state"] + PARTIEL)
-    _proche(g, _attendu_gains(att_prod, att_v, 0.2, 0.1))
-    assert g[10] is None and g[7] is None, "production ou vente sans ligne : pas de gain"
-    assert a[4] is None and v[7] is None
-    # Le compteur d'achat n'entre pas dans les gains : seul ce qui est produit et vendu.
-    assert g[5] == pytest.approx(max(att_prod[5] - att_v[5], 0) * 0.2 + att_v[5] * 0.1, abs=0.005)
-    longue = _longue(p)
-    assert longue["period"] == "day"
-    demandes = [d for d in p.demandes_statistiques() if d and d["statistic_ids"] == [ACHAT, VENTE] and d["period"] == "day"]
-    assert demandes and dt.datetime.fromisoformat(demandes[0]["start_time"]) == premier
+def _debut_jour(i):
+    return (DEBUT_MOIS + dt.timedelta(days=i)).astimezone(dt.timezone.utc).isoformat()
 
 
-def test_bilan_des_mois():
-    premier = dt.datetime(2025, 7, 1, tzinfo=PARIS)
-    prod_debuts = [dt.datetime(2025 + (6 + m) // 12, (6 + m) % 12 + 1, 1, tzinfo=PARIS) for m in range(12)]
-    prod_vals = [round(400 + 30 * m, 1) for m in range(12)]
-    longues = _reponse(_lignes_longues(prod_debuts, prod_vals))
-    va, vv, longues_r = _longues_reseau(premier, False)
-    prod, achat, vente = _lignes_5min(), _lignes_compteur(_achat_5min, 300.0), _lignes_compteur(_vente_5min, 80.0)
-    etats = _maison(**{ACHAT: EtatHA(ACHAT, str(round(achat[-1]["state"] + PARTIEL_ACHAT, 4)), unit_of_measurement="kWh"),
-                       VENTE: EtatHA(VENTE, str(round(vente[-1]["state"] + PARTIEL_VENTE, 4)), unit_of_measurement="kWh")})
-    p = Passe(CAPTEURS_BILAN, etats, vue="mois", cinq=_reponse(prod), longues=longues,
-              cinq_r={"statistics": {ACHAT: achat, VENTE: vente}}, longues_r=longues_r)
-    vue, debut, devise, v, a, g = p.bilan()
-    assert (vue, debut) == ("mois", "2025-07-01")
+def _debut_mois(m):
+    return dt.datetime(MAINTENANT.year, m + 1, 1, tzinfo=PARIS).astimezone(dt.timezone.utc).isoformat()
+
+
+# Lignes day du mois civil (jours 0 à 14 passés, 15 aujourd'hui), quelques jours sans ligne ;
+# la ligne d'aujourd'hui (partielle) est remplacée par la production du jour.
+PROD_JOURS = {i: round(10 + i * 0.7, 3) for i in range(15) if i != 10}
+ACHAT_JOURS = {i: round(6 + 0.3 * i, 3) for i in range(15) if i != 4}
+VENTE_JOURS = {i: round(2 + 0.2 * i, 3) for i in range(15) if i != 7}
+CONSO_JOURS = {i: round(14 + 0.1 * i, 3) for i in range(15) if i != 2}
+
+
+def _reponse_jours(**compteurs):
+    stats = {}
+    for compteur, valeurs in compteurs.items():
+        lignes = [{"start": _debut_jour(i), "change": v} for i, v in valeurs.items()]
+        lignes.append({"start": _debut_jour(AUJOURD_HUI), "change": 999.0})   # poison : jamais lue
+        stats[compteur] = lignes
+    return {"statistics": stats}
+
+
+def test_bilan_du_mois_civil():
+    longues = _reponse_jours(**{PROD: PROD_JOURS, ACHAT: ACHAT_JOURS, VENTE: VENTE_JOURS})
+    p, prod, lignes = _passe_bilan(CAPTEURS_BILAN, vue="jours", bilan_jours=longues)
+    vue, debut, b = p.bilan_de("mois_civil")
+    assert (vue, debut, b["devise"], b["estime"]) == ("mois_civil", "2026-06-01", "€", "")
+    nb = 30   # juin
+    reste = [None] * (nb - AUJOURD_HUI - 1)
+    att_prod = [PROD_JOURS.get(i) for i in range(AUJOURD_HUI)] + [_attendu_jour(prod, prod[-1]["state"] + PARTIEL)] + reste
+    att_a = [ACHAT_JOURS.get(i) for i in range(AUJOURD_HUI)] + [_jour_de(lignes, ACHAT)] + reste
+    att_v = [VENTE_JOURS.get(i) for i in range(AUJOURD_HUI)] + [_jour_de(lignes, VENTE)] + reste
+    _proche(b["prod"], att_prod)
+    _proche(b["achat"], att_a)
+    _proche(b["vente"], att_v)
+    assert b["conso"] == []
+    _proche(b["gain"], _attendu_gains(att_prod, att_v, 0.2, 0.1))
+    assert b["gain"][10] is None and b["gain"][7] is None, "production ou vente sans ligne : pas de gain"
+    assert b["achat"][4] is None and b["prod"][20] is None
+    # Une demande day depuis le 1er, la production et les compteurs ensemble.
+    demandes = p.demandes_bilan()["mois_civil"]
+    assert len(demandes) == 1 and demandes[0]["period"] == "day"
+    assert dt.datetime.fromisoformat(demandes[0]["start_time"]) == DEBUT_MOIS
+    assert demandes[0]["statistic_ids"] == [PROD, ACHAT, VENTE]
+
+
+def test_bilan_du_mois_civil_compte_les_jours_du_mois(monkeypatch):
+    """Février d'une année non bissextile : 28 créneaux ; décembre : 31."""
+    for quand, nb in ((dt.datetime(2026, 2, 10, 12, 0, tzinfo=PARIS), 28),
+                      (dt.datetime(2026, 12, 31, 23, 50, tzinfo=PARIS), 31)):
+        p, *_ = _passe_bilan(CAPTEURS_BILAN, vue="jours", bilan_jours=_reponse([]))
+        p.env.globals["now"] = lambda q=quand: q
+        _, debut, b = p.bilan_de("mois_civil")
+        assert debut == quand.strftime("%Y-%m-01") and len(b["prod"]) == nb, quand
+
+
+def test_bilan_de_l_annee_civile():
+    prod_mois = {m: round(300 + 40 * m, 1) for m in range(6)}
+    achat_mois = {m: round(150 - 10 * m, 1) for m in range(6) if m != 2}
+    vente_mois = {m: round(50 + 20 * m, 1) for m in range(6)}
+    annee = {"statistics": {
+        PROD: [{"start": _debut_mois(m), "change": v} for m, v in prod_mois.items()],
+        ACHAT: [{"start": _debut_mois(m), "change": v} for m, v in achat_mois.items()],
+        VENTE: [{"start": _debut_mois(m), "change": v} for m, v in vente_mois.items()]}}
+    p, prod, lignes = _passe_bilan(CAPTEURS_BILAN, vue="mois", bilan_jours=_reponse([]), bilan_annee=annee)
+    vue, debut, b = p.bilan_de("annee_civile")
+    assert (vue, debut) == ("annee_civile", "2026-01-01")
     heure = MAINTENANT.replace(minute=0, second=0, microsecond=0)
-    # Mois en cours : la ligne du mois + les 5 minutes de l'heure en cours + le partiel.
-    cette_heure_a = sum(r["change"] for r in achat if dt.datetime.fromisoformat(r["start"]) >= heure)
-    cette_heure_v = sum(r["change"] for r in vente if dt.datetime.fromisoformat(r["start"]) >= heure)
-    att_a = [va.get(i) for i in range(11)] + [va[11] + cette_heure_a + PARTIEL_ACHAT]
-    att_v = [vv.get(i) for i in range(11)] + [vv[11] + cette_heure_v + PARTIEL_VENTE]
-    _proche(a, att_a)
-    _proche(v, att_v)
-    att_prod = prod_vals[:11] + [prod_vals[11] + sum(r["change"] for r in prod if dt.datetime.fromisoformat(r["start"]) >= heure)
-                                 + PARTIEL]
-    _proche(g, _attendu_gains(att_prod, att_v, 0.2, 0.1))
+
+    def cette_heure(l):
+        return sum(r["change"] for r in l if dt.datetime.fromisoformat(r["start"]) >= heure)
+    # Mois en cours (juin, 5) : sa ligne + les 5 minutes de l'heure en cours + le partiel.
+    att_prod = [prod_mois[m] for m in range(5)] + [prod_mois[5] + cette_heure(prod) + PARTIEL] + [None] * 6
+    att_a = [achat_mois.get(m) for m in range(5)] + [achat_mois[5] + cette_heure(lignes[ACHAT]) + PARTIEL_ACHAT] + [None] * 6
+    att_v = [vente_mois[m] for m in range(5)] + [vente_mois[5] + cette_heure(lignes[VENTE]) + PARTIEL_VENTE] + [None] * 6
+    _proche(b["prod"], att_prod)
+    _proche(b["achat"], att_a)
+    _proche(b["vente"], att_v)
+    _proche(b["gain"], _attendu_gains(att_prod, att_v, 0.2, 0.1))
+    demandes = p.demandes_bilan()["annee_civile"]
+    assert len(demandes) == 1 and demandes[0]["period"] == "month"
+    assert dt.datetime.fromisoformat(demandes[0]["start_time"]) == dt.datetime(2026, 1, 1, tzinfo=PARIS)
 
 
 def test_bilan_sans_reponse_du_recorder():
-    prod = _lignes_5min()
-    p = Passe(CAPTEURS_BILAN, _maison(**{ACHAT: EtatHA(ACHAT, "300", unit_of_measurement="kWh"),
-                                         VENTE: EtatHA(VENTE, "80", unit_of_measurement="kWh")}),
-              vue="jours", cinq=_reponse(prod), longues=_reponse([]))
-    vue, debut, devise, v, a, g = p.bilan()
-    assert len(v) == 30 and all(x is None for x in v) and all(x is None for x in a)
-    assert all(x is None for x in g)
+    """Le recorder n'a pas répondu (ou n'a rien) : les jours passés sont vides, aujourd'hui
+    vient des lignes de 5 minutes."""
+    for reponse in (None, _reponse([])):
+        p, prod, lignes = _passe_bilan(CAPTEURS_BILAN, vue="jours", bilan_jours=reponse)
+        b = p.bilan_de("mois_civil")[2]
+        assert len(b["vente"]) == 30 and all(x is None for i, x in enumerate(b["vente"]) if i != AUJOURD_HUI)
+        assert all(x is None for i, x in enumerate(b["achat"]) if i != AUJOURD_HUI)
+        assert b["achat"][AUJOURD_HUI] == pytest.approx(_jour_de(lignes, ACHAT), abs=0.002)
 
 
 def test_bilan_un_creneau_de_vente_vide_donne_un_gain_vide():
     """Compteur de vente choisi mais sans ligne pour un jour : pas de gain inventé."""
-    premier = MAINTENANT.replace(hour=0, minute=0, second=0, microsecond=0) - dt.timedelta(days=29)
-    debuts = [premier + dt.timedelta(days=i) for i in range(29)]
-    longues = _reponse(_lignes_longues(debuts, [5.0] * 29))
-    _, _, longues_r = _longues_reseau(premier, True)
-    p = Passe(CAPTEURS_BILAN, _maison(**{ACHAT: EtatHA(ACHAT, "300", unit_of_measurement="kWh"),
-                                         VENTE: EtatHA(VENTE, "80", unit_of_measurement="kWh")}),
-              vue="jours", cinq=_reponse(_lignes_5min()), longues=longues, longues_r=longues_r)
-    g = p.bilan()[5]
+    longues = _reponse_jours(**{PROD: {i: 5.0 for i in range(15)}, VENTE: VENTE_JOURS, ACHAT: ACHAT_JOURS})
+    p, *_ = _passe_bilan(CAPTEURS_BILAN, vue="jours", bilan_jours=longues)
+    g = p.bilan_de("mois_civil")[2]["gain"]
     assert g[7] is None and g[8] is not None
+
+
+# ─── Bilan estimé : la production et la maison seules (ADR-0062) ─────────────
+
+def _estime(p, m):
+    """(vente, achat) d'une heure : la maison sans valeur = inconnue ; production sans
+    valeur = 0 (la nuit, un onduleur sans ligne)."""
+    if m is None:
+        return None, None
+    p = p or 0.0
+    return max(p - m, 0.0), max(m - p, 0.0)
+
+
+def test_bilan_estime_heure_par_heure():
+    capteurs = dict(CAPTEURS_ESTIME, prix_achat=0.2, prix_revente=0.1)
+    p, prod, lignes = _passe_bilan(capteurs, achat=False, vente=False, conso=True)
+    assert p["bilan_estime"] is True and p["compteurs_bilan"] == [CONSO]
+    b = p.bilan_de("heures")[2]
+    assert b["estime"] == "1" and b["devise"] == "€"
+    att_prod = _attendu_heures(prod, prod[-1]["state"] + PARTIEL)
+    att_conso = _heures_de(lignes, CONSO)
+    _proche(b["prod"], att_prod)
+    _proche(b["conso"], att_conso)
+    att = [_estime(x, m) for x, m in zip(att_prod, att_conso)]
+    _proche(b["vente"], [v for v, _ in att])
+    _proche(b["achat"], [a for _, a in att])
+    # À la main : 13 h, le soleil dépasse la maison (vente) ; 3 h, la maison achète tout.
+    assert b["vente"][13] > 0 and b["achat"][13] == 0
+    assert b["vente"][3] == 0 and b["achat"][3] == pytest.approx(0.6, abs=0.002)
+    # Les gains suivent la vente estimée.
+    _proche(b["gain"], _attendu_gains(att_prod, [v for v, _ in att], 0.2, 0.1))
+
+
+def _horaires_du_mois():
+    """Lignes hour de la production et de la maison, jours 0 à 14 du mois, et quelques
+    heures d'aujourd'hui (jamais lues : aujourd'hui vient des 5 minutes). Trous : une heure
+    de la maison (jour 3, 12 h : l'heure ne compte pas), une de la production (jour 5,
+    13 h : elle compte pour 0)."""
+    prod, maison = [], []
+    for i in range(AUJOURD_HUI + 1):
+        for h in range(24 if i < AUJOURD_HUI else 10):
+            debut = (DEBUT_MOIS + dt.timedelta(days=i)).replace(hour=h)
+            u = debut.astimezone(dt.timezone.utc).isoformat()
+            x = sum(_prod_5min(debut.replace(minute=5 * k)) for k in range(12)) * (1 + 0.02 * i)
+            m = 1.0 if 18 <= h < 21 else 0.6
+            if i == AUJOURD_HUI:
+                x, m = 50.0, 50.0
+            if (i, h) != (5, 13):
+                prod.append({"start": u, "change": round(x, 4)})
+            if (i, h) != (3, 12):
+                maison.append({"start": u, "change": m})
+    return {"statistics": {PROD: prod, CONSO: maison}}
+
+
+def test_bilan_estime_du_mois_civil():
+    horaire = _horaires_du_mois()
+    jours = _reponse_jours(**{PROD: PROD_JOURS, CONSO: CONSO_JOURS})
+    p, prod, lignes = _passe_bilan(CAPTEURS_ESTIME, vue="jours", achat=False, vente=False, conso=True,
+                                   bilan_jours=jours, bilan_horaire=horaire)
+    vue, debut, b = p.bilan_de("mois_civil")
+    assert (vue, debut, b["estime"], b["devise"], b["gain"]) == ("mois_civil", "2026-06-01", "1", "", [])
+    # Calcul indépendant : heure par heure, jour par jour.
+    par_heure = {}
+    for compteur, l in horaire["statistics"].items():
+        for r in l:
+            s = dt.datetime.fromisoformat(r["start"]).astimezone(PARIS)
+            par_heure[(compteur, s.day - 1, s.hour)] = r["change"]
+    att_v, att_a = [], []
+    for i in range(30):
+        if i < AUJOURD_HUI:
+            heures = [_estime(par_heure.get((PROD, i, h)), par_heure.get((CONSO, i, h))) for h in range(24)]
+        elif i == AUJOURD_HUI:
+            heures = [_estime(x, m) for x, m in zip(_attendu_heures(prod, prod[-1]["state"] + PARTIEL),
+                                                    _heures_de(lignes, CONSO))]
+        else:
+            heures = []
+        connues = [x for x in heures if x[0] is not None]
+        att_v.append(sum(v for v, _ in connues) if connues else None)
+        att_a.append(sum(a for _, a in connues) if connues else None)
+    _proche(b["vente"], att_v)
+    _proche(b["achat"], att_a)
+    assert b["vente"][AUJOURD_HUI + 1] is None and b["achat"][0] > 0
+    # Le compteur de la maison est le consommé du jour : ses lignes day, aujourd'hui ses 5 minutes.
+    att_conso = [CONSO_JOURS.get(i) for i in range(AUJOURD_HUI)] + [_jour_de(lignes, CONSO)] + [None] * 14
+    _proche(b["conso"], att_conso)
+    # Deux demandes : day, puis hour (production et maison), depuis le 1er.
+    demandes = p.demandes_bilan()["mois_civil"]
+    assert [d["period"] for d in demandes] == ["day", "hour"]
+    assert demandes[1]["statistic_ids"] == [PROD, CONSO]
+    assert dt.datetime.fromisoformat(demandes[1]["start_time"]) == DEBUT_MOIS
+    # Avec un vrai compteur, l'horaire n'est pas demandé.
+    p, *_ = _passe_bilan(dict(CAPTEURS_BILAN, consommation=CONSO), vue="jours", conso=True, bilan_jours=jours)
+    assert [d["period"] for d in p.demandes_bilan()["mois_civil"]] == ["day"]
+
+
+def test_bilan_estime_l_annee_n_a_que_son_net():
+    """L'année n'a pas d'estimation d'achat ni de vente (ni de gain) : la tablette n'en lit
+    que le net (production − maison)."""
+    annee = {"statistics": {
+        PROD: [{"start": _debut_mois(m), "change": 300.0 + m} for m in range(6)],
+        CONSO: [{"start": _debut_mois(m), "change": 280.0} for m in range(6)]}}
+    capteurs = dict(CAPTEURS_ESTIME, prix_achat=0.2)
+    p, *_ = _passe_bilan(capteurs, vue="mois", achat=False, vente=False, conso=True, bilan_jours=_reponse([]),
+                         bilan_annee=annee)
+    b = p.bilan_de("annee_civile")[2]
+    assert (b["vente"], b["achat"], b["gain"], b["estime"]) == ([], [], [], "1")
+    assert len(b["prod"]) == 12 and len(b["conso"]) == 12 and b["conso"][0] == 280.0 and b["conso"][6] is None
+
+
+def test_bilan_avec_compteurs_et_maison_mesures():
+    """Achat, vente et maison : rien d'estimé, la maison part telle quelle."""
+    p, prod, lignes = _passe_bilan(dict(CAPTEURS_BILAN, consommation=CONSO), conso=True)
+    b = p.bilan_de("heures")[2]
+    assert b["estime"] == ""
+    _proche(b["conso"], _heures_de(lignes, CONSO))
+    _proche(b["vente"], _heures_de(lignes, VENTE))
 
 
 # ─── Blueprint : les entrées de l'ADR-0058 ───────────────────────────────────
 
-NOUVELLES_CLES = {"compteur_achat", "compteur_vente", "prix_achat", "prix_achat_entite", "prix_revente",
-                  "prix_revente_entite", "devise", "prevision_jour", "prevision_demain"}
+NOUVELLES_CLES = {"compteur_achat", "compteur_vente", "consommation", "prix_achat", "prix_achat_entite",
+                  "prix_revente", "prix_revente_entite", "devise", "prevision_jour", "prevision_demain"}
 
 
 def _blueprint_etendu():
@@ -1686,6 +1942,7 @@ def _blueprint_etendu():
         *_maison_bp(),
         Etat(ACHAT, "300", friendly_name="Achat", unit_of_measurement="kWh", device_class="energy"),
         Etat(VENTE, "80", friendly_name="Vente", unit_of_measurement="kWh", device_class="energy"),
+        Etat(CONSO, "5000", friendly_name="Maison", unit_of_measurement="kWh", device_class="energy"),
         Etat(TARIF, "0.25", friendly_name="Tarif", unit_of_measurement="EUR/kWh"),
         Etat(PREV_JOUR, "17.8", friendly_name="Prévision", unit_of_measurement="kWh", device_class="energy"),
         Etat(PREV_DEMAIN, "12.1", friendly_name="Prévision", unit_of_measurement="kWh", device_class="energy"),
@@ -1693,7 +1950,8 @@ def _blueprint_etendu():
 
 
 def test_blueprint_envoie_les_nouvelles_entrees():
-    entrees = dict(REMPLIE, energie_compteur_achat=ACHAT, energie_compteur_vente=VENTE, energie_prix_achat=0.2,
+    entrees = dict(REMPLIE, energie_compteur_achat=ACHAT, energie_compteur_vente=VENTE, energie_consommation=CONSO,
+                   energie_prix_achat=0.2,
                    energie_prix_revente=0.1, energie_prix_achat_entite=TARIF, energie_devise="CHF",
                    energie_prevision_jour=PREV_JOUR, energie_prevision_demain=PREV_DEMAIN)
     p = Passage(entrees, _blueprint_etendu(), _evenement("energie", vue="jours", device_id="tablette_1"))
@@ -1701,6 +1959,7 @@ def test_blueprint_envoie_les_nouvelles_entrees():
     capteurs = _capteurs_envoyes(p)
     assert set(capteurs) == set(CAPTEURS) | {"solaires", "productions"} | NOUVELLES_CLES
     assert capteurs["compteur_achat"] == ACHAT and capteurs["compteur_vente"] == VENTE
+    assert capteurs["consommation"] == CONSO
     assert capteurs["prix_achat"] == 0.2 and capteurs["prix_revente"] == 0.1
     assert capteurs["prix_achat_entite"] == TARIF and capteurs["prix_revente_entite"] == ""
     assert capteurs["devise"] == "CHF"
@@ -1713,8 +1972,8 @@ def test_blueprint_nouvelles_entrees_vides_par_defaut():
     p = Passage(REMPLIE, _maison_bp(), _evenement("energie", vue="heures", device_id="tablette_1"))
     p.etats.d["script.tab5_energie"] = Etat("script.tab5_energie", "off")
     capteurs = _capteurs_envoyes(p)
-    for cle in ("compteur_achat", "compteur_vente", "prix_achat_entite", "prix_revente_entite", "devise",
-                "prevision_jour", "prevision_demain"):
+    for cle in ("compteur_achat", "compteur_vente", "consommation", "prix_achat_entite", "prix_revente_entite",
+                "devise", "prevision_jour", "prevision_demain"):
         assert capteurs[cle] == "", cle
     assert capteurs["prix_achat"] == 0 and capteurs["prix_revente"] == 0
     # Seuls ces compteurs, sans solaire ni réseau, ne rendent pas le popup « rempli ».
@@ -1729,7 +1988,8 @@ def test_blueprint_les_entrees_et_les_cles_du_script_concordent():
     assert NOUVELLES_CLES <= lues
     assert lues <= set(CAPTEURS) | {"solaires", "productions"} | NOUVELLES_CLES
     entrees = _lire(BLUEPRINT)
-    for nom in ("energie_compteur_achat", "energie_compteur_vente", "energie_prix_achat", "energie_prix_achat_entite",
+    for nom in ("energie_compteur_achat", "energie_compteur_vente", "energie_consommation", "energie_prix_achat",
+                "energie_prix_achat_entite",
                 "energie_prix_revente", "energie_prix_revente_entite", "energie_devise", "energie_prevision_jour",
                 "energie_prevision_demain"):
         assert f"        {nom}:\n" in entrees and f"!input {nom}" in entrees, nom
