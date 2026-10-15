@@ -454,7 +454,9 @@ def test_un_etat_pousse_repeint_la_roue():
     choix courants, moyeu), la famille dépliée gardée."""
     assert "roue_tuile_etat(r, t);" in _fonction(_tuiles(), "peindre_tuile")
     corps = _fonction(_tuiles(), "roue_tuile_etat")
-    assert "roue_actions_ouverte() && s_rt.r == r && s_rt.t == t" in corps and "roue_tuile_rejouer();" in corps
+    # Seulement la roue de cette tuile : pas celle de la navigation ni d'un volet de la
+    # tuile − / + ouverte depuis (roue_ouverte_par, 16/10/2026).
+    assert "roue_ouverte_par(roue_tuile_rejouer) && s_rt.r == r && s_rt.t == t" in corps and "roue_tuile_rejouer();" in corps
     assert "if (!roue_tuile_peindre(rt, true)) roue_actions_fermer();" in _fonction(_tuiles(), "roue_tuile_rejouer")
     assert "b[s.famille].icone == s.bouton[s.famille].icone" in _fonction(_roue(), "roue_ouvrir")
 

@@ -721,6 +721,8 @@ void roue_actions_fermer() {
 
 bool roue_actions_ouverte() { return ouverte(); }
 
+bool roue_ouverte_par(void (*rejouer)()) { return ouverte() && s_roue.rappels.rejouer == rejouer; }
+
 void roue_rejouer_theme() {
     if (ouverte() && s_roue.rappels.rejouer != nullptr) s_roue.rappels.rejouer();
 }
