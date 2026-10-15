@@ -418,8 +418,8 @@ sensor:
   # Tension de la batterie (INA226, présent en 0x41 sur la tablette de l'auteur le
   # 26/09/2026 ; 0x40, défaut d'ESPHome, est l'ES7210). Shunt et max_current de la
   # config de référence ESPHome, utiles au seul courant. Publiée à 50 mV
-  # près ou toutes les 15 min (50 mV : 0,5 à 15 % du niveau selon la zone de la courbe
-  # de décharge, le plus sur le plateau 30-50 %). Sans batterie, chargeur allumé, elle lit le
+  # près ou toutes les 15 min (50 mV : 1 à 20 % du niveau selon la zone de la courbe
+  # de décharge, le plus sur le plateau 8,00-8,05 V, 62-81 %). Sans batterie, chargeur allumé, elle lit le
   # chargeur : 4,2 V (husyildiz), 4,2 ↔ 8,39 V ou 5,71 V stable (tablette de l'auteur,
   # 03 et 04/10/2026) ; chargeur coupé, 1,83 à 1,94 V (08/10/2026). D'où
   # disabled_by_default, et « Tab5 Batterie détectée ».
@@ -481,10 +481,10 @@ sensor:
             id(batterie_consommation_w).publish_state(batterie_consommation(x, economie_sur_batterie()));
         - script.execute: tab5_economie_appliquer
 
-  # Niveau d'après la tension, courbe de décharge Li-ion par élément (14/10/2026,
-  # discussion #278 ; avant, la droite 6,0 → 8,23 V de la référence ESPHome) : 6,6 V = 0 %,
-  # 8,36 V = 100 % ; trop haut pendant la charge (batterie_niveau_pct, source de la table
-  # dans tab5_batterie.h). Inconnu (pas 0 ni 100 %) tant que la batterie n'est pas détectée :
+  # Niveau d'après la tension, courbe de décharge mesurée sur un Tab5 (15/10/2026,
+  # discussion #278 ; avant, la droite 6,0 → 8,23 V de la référence ESPHome, puis la table
+  # Samsung de la 3.9.0-rc.2) : 6,6 V = 0 %, 8,35 V = 100 % ; trop haut pendant la charge
+  # (batterie_niveau_pct, mesure et limites de la table dans tab5_batterie.h). Inconnu (pas 0 ni 100 %) tant que la batterie n'est pas détectée :
   # sans batterie, le 8,39 V du chargeur donnait 100 % et le 5,71 V 0 %.
   - platform: copy
     source_id: batterie_tension
