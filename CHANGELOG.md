@@ -14,6 +14,10 @@ courbe lithium-ion et sortie du mode économie à 60 % (#468), bas des cartes en
 sombre (#467), tuile − / + : la clim de la pièce et le choix respecté partout (#471). La
 tablette d'abord, puis `packages/tab5_energie.yaml` et le blueprint.
 
+[v3.9.0-rc.3](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.9.0-rc.3)
+le 16/10/2026 : niveau de batterie selon une courbe de décharge mesurée sur un Tab5 (#473).
+Firmware seul, rien à changer dans Home Assistant.
+
 Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
 le confronte à la matrice) :
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
