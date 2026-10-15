@@ -599,7 +599,7 @@ void roue_tuile_rejouer() {
 // HA a poussé un état de la tuile tRT (peindre_tuile) : la roue ouverte sur elle suit
 // (bouton et choix de l'état courant, moyeu, jauge) ; elle se ferme si la tuile n'en a plus.
 void roue_tuile_etat(int r, int t) {
-    if (roue_actions_ouverte() && s_rt.r == r && s_rt.t == t) roue_tuile_rejouer();
+    if (roue_ouverte_par(roue_tuile_rejouer) && s_rt.r == r && s_rt.t == t) roue_tuile_rejouer();
 }
 
 }  // namespace tuiles
@@ -609,7 +609,7 @@ using namespace tuiles;
 // HA a poussé les réglages ou l'état d'une clim, ou elle est oubliée (tab5_clim.cpp) : la
 // roue ouverte sur une clim (tuile cli, roue d'une clim) suit, ou se ferme.
 void roue_clim_changee() {
-    if (roue_actions_ouverte() && vise_une_clim(s_rt)) roue_tuile_rejouer();
+    if (roue_ouverte_par(roue_tuile_rejouer) && vise_une_clim(s_rt)) roue_tuile_rejouer();
 }
 
 // Ancre de la roue d'une clim (ADR-0048). La température de la pièce est trop haute (centre
@@ -627,7 +627,10 @@ constexpr int32_t kClimAncreY = 460;
 constexpr int32_t kClimAncreXMin = 480;
 constexpr int32_t kClimAncreXMax = 800;
 lv_obj_t* s_clim_ancre = nullptr;
+}  // namespace
 
+// Aussi l'ancre de la roue d'un volet de la tuile − / + qui n'est la tuile d'aucune pièce
+// (reglables_valeur_appui, 16/10/2026) : la tuile − / + est sous la température.
 lv_obj_t* clim_ancre_basse(lv_obj_t* zone) {
     if (zone == s_clim_ancre) return zone;  // « Clims ▸ » : la roue rouvre au même endroit
     if (s_clim_ancre == nullptr) {
@@ -643,7 +646,6 @@ lv_obj_t* clim_ancre_basse(lv_obj_t* zone) {
     ui_y(s_clim_ancre, kClimAncreY);
     return s_clim_ancre;
 }
-}  // namespace
 
 bool clim_roue_ouvrir(const ClimRef& c, lv_obj_t* ancre) {
     charger();

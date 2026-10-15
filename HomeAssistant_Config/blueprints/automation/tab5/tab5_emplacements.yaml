@@ -775,7 +775,8 @@ blueprint:
     # déroule à l'appui long sur la valeur entre − et + (au toucher de la température du
     # salon avant le carrousel des clims, ADR-0038). Clés rN de tab5_maj_tuiles
     # (définitions) et de tab5_maj_emplacements (états) ; un firmware plus ancien les
-    # ignore (la clim seule, comme avant). Seules ces entités-là reçoivent « regler ».
+    # ignore (la clim seule, comme avant). Seules ces entités-là reçoivent « regler »
+    # (et « ouvrir », « fermer », « arreter » pour un volet ou une vanne, 16/10/2026).
     tuile_reglage:
       name: Tuile − / + · − / + tile
       icon: mdi:plus-minus-variant
@@ -786,14 +787,16 @@ blueprint:
         firmware 3.8.0-rc.3 : toucher la température de la pièce) : la clim, ces
         appareils, puis le volume de la tablette ; le choix reste, même après un
         redémarrage. Toucher la valeur entre − et + ouvre la fenêtre de l'appareil quand il
-        en a une.
+        en a une ; un volet qui n'est la tuile d'aucune pièce ouvre sa roue Ouvrir / Stop /
+        Fermer (firmware 3.9 ou plus récent).
 
 
         Other devices to adjust with the − / + buttons of the home page (firmware 3.7 or
         newer). A long press on the value between − and + unfolds the list (up to firmware
         3.8.0-rc.3: touching the room temperature): the climate, these devices, then the
         tablet's volume; the choice stays, even after a restart. Touching the value
-        between − and + opens the device's window when it has one.
+        between − and + opens the device's window when it has one; a shutter that is not a
+        tile of any room opens its Open / Stop / Close wheel (firmware 3.9 or newer).
       input:
         reglables:
           name: Appareils · Devices
@@ -4585,14 +4588,22 @@ actions:
                   - action: "{{ t_domaine }}.{{ {'basculer': 'toggle', 'allumer': 'turn_on', 'eteindre': 'turn_off'}[t_commande] }}"
                     target:
                       entity_id: "{{ t_entite }}"
-              - alias: "Tuile : ouvrir, fermer, arrêter (vol)"
-                conditions: "{{ t_commande in ['ouvrir', 'fermer', 'arreter'] and t_domaine in ['cover', 'valve'] }}"
+              # Aussi un volet ou une vanne de la tuile − / + (rN, ADR-0033) qui n'est la
+              # tuile d'aucune pièce : la roue que son toucher ouvre (16/10/2026, discussion
+              # #278). La liste reglables reste sa liste blanche (r_entite).
+              - alias: "Tuile : ouvrir, fermer, arrêter (vol, et volet de la tuile − / +)"
+                conditions: >-
+                  {{ (t_commande in ['ouvrir', 'fermer', 'arreter'] and t_domaine in ['cover', 'valve'])
+                     or (commande in ['ouvrir', 'fermer', 'arreter'] and r_domaine in ['cover', 'valve']) }}
                 sequence:
                   - variables:
-                      sens: "{{ {'ouvrir': 'open', 'fermer': 'close', 'arreter': 'stop'}[t_commande] }}"
+                      o_tuile: "{{ t_domaine in ['cover', 'valve'] }}"
+                      o_entite: "{{ t_entite if o_tuile else r_entite }}"
+                      o_domaine: "{{ t_domaine if o_tuile else r_domaine }}"
+                      sens: "{{ {'ouvrir': 'open', 'fermer': 'close', 'arreter': 'stop'}[t_commande if o_tuile else commande] }}"
                   - choose:
                       - alias: "Volet suivi par le package (course simulée)"
-                        conditions: "{{ t_entite == volet_suivi }}"
+                        conditions: "{{ o_entite == volet_suivi }}"
                         sequence:
                           # script.turn_on : sans attendre la fin de la course (26 s). Appelé
                           # directement, le script retenait l'automatisation (mode queued) : la
@@ -4605,9 +4616,9 @@ actions:
                               variables:
                                 action: "{{ sens }}"
                     default:
-                      - action: "{{ t_domaine }}.{{ sens }}_{{ t_domaine }}"
+                      - action: "{{ o_domaine }}.{{ sens }}_{{ o_domaine }}"
                         target:
-                          entity_id: "{{ t_entite }}"
+                          entity_id: "{{ o_entite }}"
               # Popup du volet (05/10/2026, discussion #278) : le curseur envoie la position
               # 0-100 au relâcher (un nombre, sinon rien : jamais « 0 » = fermer par défaut).
               # Seulement à une entité qui sait la régler (bit 4, SET_POSITION, des
