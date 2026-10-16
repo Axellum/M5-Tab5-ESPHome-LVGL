@@ -597,6 +597,7 @@ views:
                         ('select.tab5_agenda_des_vacances_scolaires', 'Vacances scolaires', 'School holidays'),
                         ('select.tab5_telephone', 'Téléphone', 'Phone'),
                         ('select.tab5_capteur_de_presence', 'Capteur de présence', 'Presence sensor'),
+                        ('select.tab5_extinction_de_nuit', 'Extinction de nuit', 'Night screen off'),
                         ('select.tab5_tv_samsung', 'TV Samsung', 'Samsung TV'),
                         ('select.tab5_volet_a_course_simulee', 'Volet', 'Shutter'),
                         ('select.tab5_pipeline_de_discussion', 'Mode « Discu »', 'Discu mode')] %}
@@ -707,6 +708,21 @@ views:
 {%- if T.extinction %}
           - type: heading
             heading: "{{ t('Délai sans toucher ; jamais pendant le réveil, la voix ou un jeu', 'Time without a touch; never while the alarm rings, during voice or a game') }}"
+            heading_style: subtitle
+{%- endif %}
+{#- Extinction de nuit (16/10/2026, packages/tab5_reglages.yaml) : plage choisie dans HA,
+    appliquée par « Tab5 Nuit (écran éteint) » du firmware (tab5_push.yaml). #}
+{%- if 'select.tab5_extinction_de_nuit' in present %}
+          - type: tile
+            entity: select.tab5_extinction_de_nuit
+            name: "{{ t('Extinction de nuit', 'Night screen off') }}"
+            icon: mdi:weather-night
+            features_position: inline
+            features:
+              - type: select-options
+                style: dropdown
+          - type: heading
+            heading: "{{ t('Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Aucune » : jamais', 'During the window: off after 1 min without a touch, back on at the end; « Aucune »: never') }}"
             heading_style: subtitle
 {%- endif %}
 {%- for cle, fr_, en_, icone in [('extinction_batterie', 'Extinction sur batterie seulement', 'Auto-off on battery only', 'mdi:battery-clock'),
@@ -2181,6 +2197,18 @@ views:
     'es': 'Tiempo sin tocar; nunca mientras suena la alarma, con la voz o en un juego',
     'it': 'Tempo senza tocco; mai mentre suona la sveglia, con la voce o in un gioco',
     'tr': 'Dokunmadan geçen süre; alarm çalarken, sesli asistanda veya oyunda asla'},
+  'Extinction de nuit': {
+    'de': 'Nachtabschaltung',
+    'nl': 'Nachtuitschakeling',
+    'es': 'Apagado nocturno',
+    'it': 'Spegnimento notturno',
+    'tr': 'Gece ekran kapatma'},
+  'Pendant la plage : éteint après 1 min sans toucher, rallumé à la fin ; « Aucune » : jamais': {
+    'de': 'Im Zeitfenster: aus nach 1 Min. ohne Berührung, am Ende wieder an; « Aucune »: nie',
+    'nl': 'Tijdens het venster: uit na 1 min zonder aanraking, aan het einde weer aan; « Aucune »: nooit',
+    'es': 'Durante la franja: apagada tras 1 min sin tocar, encendida al final; « Aucune »: nunca',
+    'it': 'Durante la fascia: spento dopo 1 min senza tocco, riacceso alla fine; « Aucune »: mai',
+    'tr': 'Aralık boyunca: 1 dk dokunulmazsa kapanır, sonunda yeniden açılır; « Aucune »: asla'},
   'Extinction sur batterie seulement': {
     'de': 'Automatisch aus nur im Akkubetrieb',
     'nl': 'Automatisch uit alleen op batterij',

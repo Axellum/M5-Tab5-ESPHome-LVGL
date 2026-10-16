@@ -8,7 +8,8 @@
 #       l'écran à Okay Nabu », lu par tab5-assist.yaml), qui passent chacun par une
 #       fonction C++ nommée (règle 2), rechargement du calendrier, et l'extinction
 #       automatique de l'écran (select « Tab5 Extinction auto de l'écran » + son
-#       interval de 10 s : réveil, assistant vocal, jeu et OTA l'empêchent).
+#       interval de 10 s : réveil, assistant vocal, jeu et OTA l'empêchent), et sa nuit
+#       (« Tab5 Nuit (écran éteint) », tenu par HA d'après « Tab5 · extinction de nuit »).
 # @architecture_constraint Ce fichier ne construit AUCUN widget LVGL. La navigation
 #       (« Écran courant », « Aller à l'écran », tab5_ecran_ouvrir, registre des
 #       fenêtres) est dans tab5-navigation.yaml depuis le 08/10/2026.
@@ -115,7 +116,8 @@ switch:
   # portée dans la maison, 1,74 W écran allumé contre 1,23 W éteint). Allumé, le délai
   # du select « Tab5 Extinction auto de l'écran » ne s'applique que quand la tablette
   # tire sur sa batterie (economie_sur_batterie(), le courant de l'INA226, comme le
-  # mode économie) ; sur secteur, l'écran reste allumé. Éteint par défaut : rien ne
+  # mode économie) ; sur secteur, l'écran reste allumé (sauf la nuit, « Tab5 Nuit (écran
+  # éteint) » plus bas). Éteint par défaut : rien ne
   # change pour qui ne choisit rien (tests/test_extinction_auto.py).
   - platform: template
     id: tab5_extinction_sur_batterie
@@ -124,6 +126,33 @@ switch:
     entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
+
+  # Nuit de l'écran (16/10/2026, audit anti-casse : une image fixe 24 h/24 marque une dalle,
+  # les fabricants conseillent de l'éteindre aux heures creuses). Tenu par Home Assistant
+  # d'après la liste « Tab5 · extinction de nuit » (packages/tab5_reglages.yaml et
+  # tab5_push.yaml, « Tab5 — extinction de nuit ») : allumé au début de la plage, éteint à la
+  # fin, et à chaque connexion. Allumé, l'écran s'éteint après 1 min sans toucher, quel que
+  # soit « Tab5 Extinction auto de l'écran » (un délai plus court reste), sur secteur comme
+  # sur batterie, avec les mêmes exceptions (réveil, vocal, jeu, mise à jour) ; un toucher le
+  # rallume comme d'habitude. Éteint par la nuit, il se rallume seul quand elle finit.
+  # Éteint au démarrage (ALWAYS_OFF) : HA le renvoie à la connexion ; sans HA, pas de nuit.
+  - platform: template
+    id: tab5_nuit_ecran
+    name: "Tab5 Nuit (écran éteint)"
+    icon: mdi:weather-night
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_off:
+      - if:
+          condition:
+            lambda: 'return id(ecran_eteint_par_nuit) && !id(backlight).remote_values.is_on();'
+          then:
+            - logger.log:
+                level: INFO
+                format: "Fin de la nuit : ecran rallume"
+            - light.turn_on: backlight
+      - globals.set: { id: ecran_eteint_par_nuit, value: 'false' }
 
   # Batterie de la tablette montée (04/10/2026) : montre son icône dans le bandeau
   # d'état, en dernier (niveau, charge et tension : tab5-sensors-diagnostics.yaml).
@@ -252,7 +281,8 @@ interval:
   #   - une mise à jour du firmware (`ota_en_cours`).
   # Pas avant la fin du démarrage (`boot_complete`). Avec « Tab5 Extinction auto sur
   # batterie seulement », pas sur secteur non plus (après la liste : le mode économie
-  # la lit telle quelle).
+  # la lit telle quelle). La nuit (« Tab5 Nuit (écran éteint) », tenu par HA), 1 min sans
+  # toucher suffit, même sur « Jamais » ou sur secteur ; les exceptions restent.
   # Cette liste sert aussi au mode économie (tab5-economie.yaml), qui n'assombrit pas
   # l'écran pour les mêmes raisons : la condition la range dans `ecran_veille_permise`
   # avant de regarder le délai, que l'extinction auto soit choisie ou pas.
@@ -271,17 +301,25 @@ interval:
               // Délai de chaque option du select, dans le même ordre (0 = « Jamais »).
               constexpr uint32_t DELAIS_MIN[] = {0, 1, 2, 5, 10, 30};
               constexpr size_t NB_DELAIS = sizeof(DELAIS_MIN) / sizeof(DELAIS_MIN[0]);
-              const auto choix = id(tab5_extinction_auto).active_index();
-              if (!choix.has_value() || *choix == 0 || *choix >= NB_DELAIS) return false;
+              // Nuit (« Tab5 Nuit (écran éteint) », tenu par HA) : 1 min, ou moins si choisi.
+              constexpr uint32_t NUIT_MIN = 1;
               if (!permise) return false;
-              // « Sur batterie seulement » : sur secteur, pas d'extinction.
-              if (id(tab5_extinction_sur_batterie).state && !economie_sur_batterie()) return false;
+              const auto choix = id(tab5_extinction_auto).active_index();
+              uint32_t delai_min = 0;
+              if (choix.has_value() && *choix != 0 && *choix < NB_DELAIS) delai_min = DELAIS_MIN[*choix];
+              // « Sur batterie seulement » : sur secteur, pas d'extinction (sauf la nuit).
+              if (id(tab5_extinction_sur_batterie).state && !economie_sur_batterie()) delai_min = 0;
+              if (id(tab5_nuit_ecran).state) delai_min = delai_min != 0 ? std::min(delai_min, NUIT_MIN) : NUIT_MIN;
+              if (delai_min == 0) return false;
               const uint32_t depuis_allumage = millis() - id(ecran_allume_ms);
               const uint32_t inactif = std::min(ui_idle_ms(), depuis_allumage);
-              return inactif >= DELAIS_MIN[*choix] * 60000u;
+              return inactif >= delai_min * 60000u;
           then:
             # [AI-DEBUG] « Pourquoi l'écran s'est éteint ? » : cette ligne le dit.
             - logger.log:
                 level: INFO
-                format: "Extinction auto de l'ecran (inactivite)"
+                format: "Extinction auto de l'ecran (inactivite%s)"
+                args: ['id(tab5_nuit_ecran).state ? ", nuit" : ""']
+            # La nuit, l'écran se rallumera quand elle finit (tab5_nuit_ecran).
+            - lambda: 'if (id(tab5_nuit_ecran).state) id(ecran_eteint_par_nuit) = true;'
             - light.turn_off: backlight

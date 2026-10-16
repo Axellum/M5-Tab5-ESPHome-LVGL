@@ -160,6 +160,14 @@ logger:
     then:
       - lambda: 'journal_log_message(level, tag, message);'
 
+# Écran éteint = dalle éteinte (16/10/2026, ADR-0064) : voile noir et commandes DCS, appelés
+# par la lumière `backlight` et les `ota:` (plus bas). Listés ici et dans
+# carte-waveshare-7b.yaml, pas à la racine : le rendu hors tablette n'a pas d'écran DSI.
+esphome:
+  includes:
+    - Tab5/ecran/tab5_dalle.h
+    - Tab5/ecran/tab5_dalle.cpp
+
 psram:
   mode: hex
   speed: 200MHz
@@ -191,12 +199,17 @@ ota:
     # (tab5-ha-controls.yaml) attend la fin. Une OTA réussie redémarre (rien à
     # remettre) ; une OTA ratée ou coupée rend la main. Même bloc dans
     # publication-commune.yaml pour l'OTA lancée depuis HA.
+    # Dalle éteinte pendant la mise à jour sur la carte qui le demande (script
+    # tab5_dalle_ota plus bas : la 7B seule, rien sur le Tab5).
     on_begin:
       - globals.set: { id: ota_en_cours, value: 'true' }
+      - script.execute: { id: tab5_dalle_ota, debut: true }
     on_abort:
       - globals.set: { id: ota_en_cours, value: 'false' }
+      - script.execute: { id: tab5_dalle_ota, debut: false }
     on_error:
       - globals.set: { id: ota_en_cours, value: 'false' }
+      - script.execute: { id: tab5_dalle_ota, debut: false }
 
 safe_mode:
   num_attempts: 10
@@ -289,9 +302,19 @@ light:
     name: "Display Backlight"
     id: backlight
     restore_mode: RESTORE_DEFAULT_ON
+    # Premier démarrage (rien de gardé en mémoire) : 75 % plutôt que 100 % (audit anti-casse
+    # du 16/10/2026) : moins de courant et de chaleur, des LED qui durent plus, moins de
+    # brownouts sur une alimentation juste (celui du 08/10/2026 était à 100 %). Une
+    # luminosité déjà choisie est gardée telle quelle.
+    initial_state:
+      brightness: 75%
     default_transition_length: 250ms
     on_turn_on:
-      - lvgl.resume:
+      # Dalle réveillée et voile noir retiré, puis LVGL reprend (script plus bas).
+      - script.execute: tab5_dalle_rallumer
+      # Nuit de l'écran (tab5-ha-controls.yaml) : un écran rallumé n'est plus « éteint par la
+      # nuit » ; s'il l'est à nouveau, l'extinction auto le redira.
+      - globals.set: { id: ecran_eteint_par_nuit, value: 'false' }
       # Extinction auto de l'écran (tab5-ha-controls.yaml) : le délai repart de cet
       # allumage, quelle qu'en soit la source (toucher, tape, HA, réveil, démarrage),
       # sans toucher à l'horloge d'inactivité de LVGL (voir ecran_allume_ms).
@@ -301,7 +324,52 @@ light:
     on_turn_off:
       # Écran éteint : la roue d'actions rapides se ferme (ADR-0036), comme sous un popup.
       - lambda: 'roue_actions_fermer();'
+      # Dalle vraiment éteinte (Tab5/ecran/tab5_dalle.cpp) : voile noir dessiné tout de
+      # suite, puis les commandes DCS que tient la dalle, avant que LVGL se fige.
+      - lambda: 'dalle_eteindre(id(tab5_display));'
       - lvgl.pause:
+
+# Dalle éteinte avec le rétroéclairage (Tab5/ecran/tab5_dalle.cpp, audit anti-casse du
+# 16/10/2026). Recopiés dans carte-waveshare-7b.yaml (tests/test_carte_7b.py).
+script:
+  # Rallumage : « sleep out » si la dalle dormait, 120 ms (norme DCS), « display on » et
+  # voile retiré, puis LVGL reprend et redessine l'écran entier. Rien si la lumière s'est
+  # rééteinte pendant l'attente (remote_values : la lumière demandée, pas sa transition),
+  # ni si une OTA a noirci la dalle entre-temps (7B : elle la rallume si elle échoue).
+  # restart : un rallumage pendant l'attente repart du début.
+  - id: tab5_dalle_rallumer
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return dalle_reveiller(id(tab5_display));'
+          then:
+            - delay: 120ms
+      - if:
+          condition:
+            lambda: 'return id(backlight).remote_values.is_on() && !(dalle_noire_pendant_ota() && id(ota_en_cours));'
+          then:
+            - lambda: 'dalle_rallumer(id(tab5_display));'
+            - lvgl.resume:
+  # Mise à jour du firmware (les deux `ota:`) : la Waveshare 7B éteint sa dalle pendant
+  # l'écriture de la flash, qui la faisait scintiller (carte_dalle_noire_ota), et la
+  # rallume si la mise à jour échoue ; une mise à jour réussie redémarre. Écran déjà éteint :
+  # rien. Le Tab5 n'a pas ce défaut : rien.
+  - id: tab5_dalle_ota
+    parameters:
+      debut: bool
+    then:
+      - if:
+          condition:
+            lambda: 'return dalle_noire_pendant_ota() && id(backlight).remote_values.is_on();'
+          then:
+            - if:
+                condition:
+                  lambda: 'return debut;'
+                then:
+                  - lambda: 'dalle_eteindre(id(tab5_display));'
+                else:
+                  - script.execute: tab5_dalle_rallumer
 
 
 i2s_audio:

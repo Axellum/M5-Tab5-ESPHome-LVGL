@@ -14,15 +14,20 @@
 # certificat HTTPS n'est pas vérifié (`verify_ssl: false`, tab5-assist.yaml) : c'est la
 # signature qui garantit l'origine de l'image.
 # Mise à jour en cours : même `ota_en_cours` que l'OTA `esphome` (tab5-hardware.yaml),
-# lu par l'extinction auto de l'écran (tab5-ha-controls.yaml), qui attend la fin.
+# lu par l'extinction auto de l'écran (tab5-ha-controls.yaml), qui attend la fin. Et même
+# dalle éteinte pendant la mise à jour sur la carte qui le demande (script tab5_dalle_ota du
+# fichier de la carte : la 7B seule).
 ota:
   - platform: http_request
     on_begin:
       - globals.set: { id: ota_en_cours, value: 'true' }
+      - script.execute: { id: tab5_dalle_ota, debut: true }
     on_abort:
       - globals.set: { id: ota_en_cours, value: 'false' }
+      - script.execute: { id: tab5_dalle_ota, debut: false }
     on_error:
       - globals.set: { id: ota_en_cours, value: 'false' }
+      - script.execute: { id: tab5_dalle_ota, debut: false }
 
 update:
   - platform: http_request
