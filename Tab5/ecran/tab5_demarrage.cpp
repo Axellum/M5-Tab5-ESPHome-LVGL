@@ -74,7 +74,8 @@ const MarqueConstructeurs s_marque_constructeurs;
  * Mesure (tablette virtuelle, même runner, branche essai/mesure-demarrage-avant-apres
  * jamais mergée, 16/10/2026) : 14 549 M instructions dans setup() (callgrind), 1 308 M
  * avec les deux remèdes ci-dessous ; 1,5 s puis 0,18 s en natif. Le vidage seul (branche
- * essai/mesure-demarrage) était plus lent qu'aucun remède : 2,6 s contre 1,5 s.
+ * essai/mesure-demarrage) était plus lent qu'aucun remède : 2,6 s contre 1,5 s. Sur la
+ * Waveshare 7B (même jour) : première image à 5,6 s au lieu de 20,7 s.
  *
  * Remèdes, appelés une fois, juste après la création de l'affichage et avant les widgets,
  * par la lambda du premier style (style_repere_demarrage, tab5-styles.yaml : ESPHome
