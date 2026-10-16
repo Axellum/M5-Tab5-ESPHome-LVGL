@@ -16,6 +16,8 @@
  *       depuis le lancement de l'ordonnanceur : « ordo » donne l'écart (millis = valeur -
  *       ordo). La liste des étapes, où chacune est marquée et comment la lire :
  *       docs/performance.md, « Chronologie du démarrage ».
+ *       Le même module prépare LVGL avant les widgets (demarrage_preparer_lvgl, 16/10/2026,
+ *       défini dans Tab5/ecran/tab5_demarrage.cpp).
  * @architecture_constraint Aucune dépendance ESPHome ni LVGL : ce fichier se compile sur PC
  *       (tools/test_tab5_socle.cpp, g++ en CI). Observer sans retarder : marquer = une
  *       lecture d'horloge et une écriture en mémoire ; rien n'est journalisé ni publié
@@ -178,3 +180,9 @@ inline size_t demarrage_texte(PartieChrono p, char* buf, size_t n) {
 uint32_t demarrage_horloge_ms();                     // ms depuis l'initialisation d'esp_timer
 bool demarrage_marquer(EtapeDemarrage e);            // l'étape, à demarrage_horloge_ms()
 bool demarrage_noter_ordo(uint32_t millis_maintenant);  // ORDO, avec millis() lu par l'appelant
+
+// Défini dans Tab5/ecran/tab5_demarrage.cpp (16/10/2026, [AI-WARNING] là-bas) : la taille
+// finale de l'affichage et le vidage des abonnements des labels, avant les widgets, sans
+// quoi setup() est quadratique en nombre de labels. Une fois, par la lambda du premier
+// style (style_repere_demarrage, tab5-styles.yaml).
+void demarrage_preparer_lvgl();
