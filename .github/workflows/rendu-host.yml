@@ -162,7 +162,7 @@ jobs:
           bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
           sudo apt-get install -y --no-install-recommends faketime
       - name: Rendu compilé par la tâche « compiler »
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: rendu-programme
           path: rendu-programme
@@ -420,13 +420,13 @@ jobs:
         with:
           python-version: "3.13"
       - name: Bilan du Tab5 (tâche « fr »)
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         continue-on-error: true
         with:
           name: rendu-captures-fr
           path: tab5
       - name: Bilan de la 7B
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         continue-on-error: true
         with:
           name: rendu-1024x600
@@ -452,7 +452,7 @@ jobs:
           python-version: "3.13"
       - run: bash tools/ci/pip_reessai.sh pillow
       - name: Réunir les captures des sept langues
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           pattern: rendu-captures-*
           merge-multiple: true
