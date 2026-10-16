@@ -678,6 +678,22 @@ automation:
       - condition: template
         value_template: "{{ nuit != '' and states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
     actions:
+      # Tablette connectée : au démarrage de HA, ou quand l'appareil vient d'apparaître,
+      # l'interrupteur existe avant la liaison API et l'appel finissait en « Not
+      # connected » (test « Installation dans un HA neuf », 16/10/2026). Comme la
+      # poussée complète : sur tab5_connected, la liaison peut ne pas être prête, on
+      # l'attend 10 s ; sinon on s'arrête sans erreur, la connexion relancera ce passage.
+      - if:
+          - condition: trigger
+            id: tab5_connected
+        then:
+          - wait_template: &theme_tablette_connectee >-
+              {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+              {{ tab5_connectee() == 'oui' }}
+            timeout: "00:00:10"
+            continue_on_timeout: true
+      - condition: template
+        value_template: *theme_tablette_connectee
       - action: "switch.turn_{{ 'on' if is_state('sun.sun', 'below_horizon') else 'off' }}"
         target:
           entity_id: "{{ nuit }}"
