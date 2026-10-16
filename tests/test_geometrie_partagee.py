@@ -10,12 +10,18 @@ ESPHome) : ce test la tient égale des deux côtés (audit des conteneurs du 01/
 - Géométrie partagée du C++ (Tab5/socle/tab5_geometrie.h, lot L5 de l'audit du 07/10/2026) :
   carte modale égale aux jetons, corps des popups Énergie et Température égal à leur
   YAML, et aucune copie locale de ces constantes ni des littéraux 1280 / 1250.
+- Une taille d'écran par carte (ADR-0061) : l'écran et la carte modale du C++ (drapeaux
+  -DTAB5_… de chaque carte) égaux aux jetons calculés pour cette carte, pour CHAQUE carte ;
+  les défauts de l'en-tête sont ceux du Tab5. Le reste (calendrier, corps des popups à
+  cartes) est au pixel pour 1280×720 : vérifié pour le Tab5 seulement.
 """
 import os
 import re
 
 import yaml
-from tests.commun import ChargeurSansBalises as _Chargeur, lire as _lire, source
+import pytest
+from tests.commun import (CARTES, DRAPEAUX_CARTE, ChargeurSansBalises as _Chargeur, geometrie, geometrie_cpp,
+                          jeton, lire as _lire, source)
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
@@ -42,11 +48,9 @@ GEOMETRIE_UTILISATEURS = ("tab5_energie.cpp", "tab5_historique.cpp", "tab5_maiso
                           "tab5_tuiles_priv.h", "tab5_roue.cpp", "tab5_clim.cpp", "tab5_lecteur.cpp")
 
 
-def _geometrie():
-    valeurs = {}
-    for nom, expr in re.findall(r"constexpr\s+int(?:32_t)?\s+(\w+)\s*=\s*([^;]+);", _lire(source(GEOMETRIE))):
-        valeurs[nom] = int(eval(expr, {}, dict(valeurs)))   # expressions du fichier, déjà vérifiées
-    return valeurs
+def _geometrie(carte=None):
+    """Constantes de tab5_geometrie.h : défauts de l'en-tête, ou drapeaux de la carte."""
+    return geometrie_cpp(carte)
 
 
 def _widgets(liste):
@@ -89,7 +93,7 @@ def test_grille_du_calendrier_centree_dans_la_carte():
     x0 = _constante("tab5_calendar.cpp", "kCalColX0")
     pas = _constante("tab5_calendar.cpp", "kCalColPas")
     w = _constante("tab5_calendar.cpp", "kCalColW")
-    carte = int(_jetons()["modal_card_w"])
+    carte = jeton("modal_card_w")
     assert pas > w, "les cases se chevauchent"
     droite = carte - (x0 + 6 * pas + w)
     assert droite == x0, f"grille décentrée : {x0} px à gauche, {droite} px à droite"
@@ -100,11 +104,7 @@ def test_grille_du_calendrier_centree_dans_la_carte():
 def test_geometrie_partagee_egale_aux_jetons_et_aux_popups():
     g = _geometrie()
     assert set(GEOMETRIE_NOMS) <= set(g), set(GEOMETRIE_NOMS) - set(g)
-    j = _jetons()
-    assert (g["kCarteL"], g["kCarteH"], g["kCorpsY"]) == (
-        int(j["modal_card_w"]), int(j["modal_card_h"]), int(j["modal_body_y"]))
-    # La carte est centrée dans l'écran : 15 px de chaque côté (commentaire des jetons).
-    assert (g["kEcranL"] - g["kCarteL"]) // 2 == (g["kEcranH"] - g["kCarteH"]) // 2 == 15
+    assert g == _geometrie("tab5"), "défauts de tab5_geometrie.h ≠ Tab5/paquets/geometrie-tab5.yaml"
     # Corps des popups à cartes et zone de leur graphique, comme leur YAML.
     for popup, zone in (("energie_popup.yaml", "energie_zone"), ("historique_popup.yaml", "historique_zone")):
         widgets = list(_widgets([yaml.load(_lire("Tab5", "ui_components", popup), Loader=_Chargeur)]))
@@ -114,12 +114,36 @@ def test_geometrie_partagee_egale_aux_jetons_et_aux_popups():
         assert len(zones) == 1 and zones[0].get("width") == g["kGraphiqueL"], f"{popup} : {zone}"
     # Carte du popup Musique (ADR-0050) : égale à ses jetons, centrée, plus petite que la
     # carte modale, et le popup la prend par ses jetons.
-    assert (g["kLecteurCarteL"], g["kLecteurCarteH"]) == (int(j["lecteur_card_w"]), int(j["lecteur_card_h"]))
+    assert (g["kLecteurCarteL"], g["kLecteurCarteH"]) == (jeton("lecteur_card_w"), jeton("lecteur_card_h"))
     assert g["kLecteurCarteL"] < g["kCarteL"] and g["kLecteurCarteH"] < g["kCarteH"]
     popup = _lire("Tab5", "ui_components", "lecteur_popup.yaml")
     assert "width: ${lecteur_card_w}" in popup and "height: ${lecteur_card_h}" in popup
     # Pièces et tuiles : cinq de chaque, comme le blueprint (ADR-0023).
     assert g["kPieces"] == g["kTuiles"] == 5
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_ecran_et_carte_modale_egaux_aux_jetons_de_chaque_carte(carte):
+    g = _geometrie(carte)
+    assert (g["kEcranL"], g["kEcranH"]) == (int(geometrie(carte)["carte_ecran_l"]), int(geometrie(carte)["carte_ecran_h"]))
+    assert (g["kCarteL"], g["kCarteH"], g["kCorpsY"]) == (
+        jeton("modal_card_w", carte), jeton("modal_card_h", carte), jeton("modal_body_y", carte))
+    # La carte est centrée dans l'écran : 15 px de chaque côté (commentaire des jetons).
+    assert (g["kEcranL"] - g["kCarteL"]) // 2 == (g["kEcranH"] - g["kCarteH"]) // 2 == 15
+    # La grille du calendrier suit la hauteur de la carte.
+    assert jeton("cal_grid_h", carte) == jeton("modal_card_h", carte) - 162
+
+
+def test_drapeaux_de_la_carte_dans_les_deux_configurations():
+    """Le C++ ne voit la carte que par ses -DTAB5_… : les deux configurations (tablette et
+    rendu hors tablette) les passent, chacun égal à sa substitution `carte_*`."""
+    for config in ("tab5-ha-hmi.yaml", "tab5-rendu-host.yaml"):
+        texte = _lire(config)
+        for drapeau, substitution in DRAPEAUX_CARTE.items():
+            assert texte.count(f"-D{drapeau}=") == 1 and f"- -D{drapeau}=${{{substitution}}}" in texte, (config, drapeau)
+    entete = _lire(source(GEOMETRIE))
+    for drapeau in DRAPEAUX_CARTE:
+        assert re.search(rf"#ifndef {drapeau}\s+#define {drapeau} -?\d+\s+#endif", entete), drapeau
 
 
 def test_aucune_copie_locale_de_la_geometrie():

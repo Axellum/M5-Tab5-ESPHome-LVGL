@@ -155,7 +155,8 @@ def test_ci_sans_secrets_factices():
     ci = _lire(".github", "workflows", "esphome-tab5.yml")
     assert "secrets.yaml" not in ci.replace("plus de secrets.yaml", "")
     assert "api_encryption_key" not in ci
-    assert ci.count("openssl genrsa -out tab5_signature.pem 3072") == 3
+    # build, build-min, build-revisions et build-carte-7b (ADR-0061) : une clé jetable chacun.
+    assert ci.count("openssl genrsa -out tab5_signature.pem 3072") == 4
 
 
 def _config_ha(tmp_path, entrees):

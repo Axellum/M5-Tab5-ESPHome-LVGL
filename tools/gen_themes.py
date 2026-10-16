@@ -644,6 +644,14 @@ def _slug(texte: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", texte.lower()).strip("_")
 
 
+def taille_carte(taille: int) -> str:
+    """Taille d'une police d'affichage d'un thème, en expression ESPHome (ADR-0061) : la
+    taille mesurée pour le Tab5 (_polices.yaml) fois `carte_police_echelle` de la carte
+    (Tab5/paquets/geometrie-<carte>.yaml), arrondie ; 1 sur le Tab5, la taille d'avant.
+    Même forme que les grosses Roboto de tab5-styles.yaml (tests/commun.py, taille_police)."""
+    return f"${{ ({taille} * (carte_police_echelle | float)) | round | int }}"
+
+
 def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[str, str] | None = None
                    ) -> tuple[list[str], list[str], list[str]]:
     """(bloc `font:` YAML, lambda YAML de theme_polices, table C++ kPolices)."""
@@ -712,7 +720,7 @@ def rendre_polices(themes: list[Theme], mesures: dict | None = None, jeux: dict[
             ttf = _police_theme().fichier(f["famille"], f["graisse"]).relative_to(REPO).as_posix()
             font_yaml += [f'  - file: "{ttf}"',
                           f"    id: {f['id']}",
-                          f"    size: {f['taille']}",
+                          f"    size: {taille_carte(f['taille'])}",
                           "    bpp: 2",
                           f"    glyphs: '{glyphes}'"]
     lambda_yaml = [

@@ -1,0 +1,29 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file geometrie-tab5.yaml
+# @role Taille de l'écran du M5Stack Tab5 (ADR-0061) : la seule source de la taille
+#       de l'interface, de la dalle et de la rotation LVGL pour cette carte. Inclus par
+#       carte-tab5.yaml (firmware) et par tab5-rendu-host.yaml (rendu hors tablette,
+#       `-s tab5_carte tab5`, le défaut).
+# @architecture_constraint Les mêmes clés dans chaque geometrie-<carte>.yaml :
+#       - carte_ecran_l / carte_ecran_h : l'interface vue par LVGL (paysage), d'où
+#         viennent les jetons de Tab5/paquets/tab5-ui-tokens.yaml (carte modale…) et,
+#         par les build_flags de tab5-ha-hmi.yaml et tab5-rendu-host.yaml (TAB5_ECRAN_L,
+#         TAB5_ECRAN_H), les constantes kEcranL / kEcranH du C++ (Tab5/socle/tab5_geometrie.h) ;
+#       - carte_dalle_l / carte_dalle_h : la dalle telle que le pilote la voit (le Tab5
+#         est une dalle PORTRAIT 720×1280 tournée par LVGL) ;
+#       - carte_rotation : `lvgl: rotation:` (tab5-styles.yaml) et le retour au repos du
+#         flipper (TAB5_ROTATION, kRotationRepos) ;
+#       - carte_police_echelle : facteur des grosses polices (horloge, date, températures,
+#         titres ; tab5-styles.yaml et les polices des thèmes de tab5-themes.yaml).
+#       tests/test_geometrie_partagee.py tient le C++ égal à ces valeurs, carte par carte.
+# @ai_instruction Valeurs du Tab5 : celles d'avant ce fichier, à ne pas changer (la mise en
+#       page de tous les écrans est au pixel pour 1280×720).
+# ============================================================================
+substitutions:
+  carte_ecran_l: "1280"
+  carte_ecran_h: "720"
+  carte_dalle_l: "720"
+  carte_dalle_h: "1280"
+  carte_rotation: "270"
+  carte_police_echelle: "1"

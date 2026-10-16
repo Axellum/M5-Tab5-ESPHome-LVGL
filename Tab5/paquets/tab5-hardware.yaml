@@ -223,12 +223,13 @@ esp_ldo:
 # par la substitution `tab5_ecran` (tab5-ha-hmi.yaml, st7123 par défaut) : le fichier
 # de révision étend les deux entrées ci-dessous par `!extend tab5_display` /
 # `!extend touch` — ne pas renommer ces id. Les broches sont les mêmes sur les trois
-# révisions (docs/hardware.md, « Hardware revisions »).
+# révisions (docs/hardware.md, « Hardware revisions »). Dimensions de la dalle (portrait
+# 720×1280) et calibration du tactile : geometrie-tab5.yaml (ADR-0061), mêmes valeurs.
 display:
   - id: tab5_display
     dimensions:
-      height: 1280
-      width: 720
+      height: ${carte_dalle_h}
+      width: ${carte_dalle_l}
     reset_pin:
       pi4ioe5v6408: pi4ioe1
       number: 4
@@ -245,9 +246,9 @@ touchscreen:
       number: 5
     calibration:
       x_min: 0
-      x_max: 720
+      x_max: ${carte_dalle_l}
       y_min: 0
-      y_max: 1280
+      y_max: ${carte_dalle_h}
     # Mode économie (tab5-economie.yaml) : un écran assombri faute de toucher reprend sa
     # luminosité dès le doigt posé. L'activité est notée tout de suite : LVGL ne lit le
     # toucher qu'à son prochain tour, le script la verrait sinon encore ancienne.

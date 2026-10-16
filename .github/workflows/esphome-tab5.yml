@@ -27,6 +27,10 @@ name: ESPHome Tab5 Compilation
 #     aucun appareil : la CI garantit seulement qu'elles compilent encore. Lancé
 #     quand l'écran, le matériel, l'entrée ou ce workflow changent ; check NON requis.
 #     Les deux révisions en parallèle, 5 à 8 min. `build-min` : ~6 min.
+#   - build-carte-7b : la même compilation pour la carte Waveshare ESP32-P4-WIFI6-Touch-
+#     LCD-7B (`tab5_carte: waveshare-7b`, ADR-0061), EXPÉRIMENTALE : jamais lancée sur une
+#     vraie carte, interface pas encore adaptée à 1024×600. Mêmes déclencheurs que
+#     `build` ; check NON requis.
 #
 # Les autres workflows (rendu hors tablette, sanitizers, installation dans un HA neuf,
 # intégration HACS, site, publication) ne sont pas requis : docs/INVENTAIRE_CONFIGS_TESTS.md.
@@ -88,6 +92,8 @@ jobs:
             ecrans:
               - 'tab5-ha-hmi.yaml'
               - 'Tab5/paquets/tab5-hardware.yaml'
+              - 'Tab5/paquets/carte-tab5.yaml'
+              - 'Tab5/paquets/geometrie-tab5.yaml'
               - 'Tab5/paquets/ecran-*.yaml'
               - '.github/workflows/esphome-tab5.yml'
 
@@ -344,6 +350,38 @@ jobs:
           mkdir -p "$RUNNER_TEMP/ccache"
           printf 'max_size = 2G\ncompiler_check = content\n' > "$RUNNER_TEMP/ccache/ccache.conf"
       - name: Build ESPHome Firmware (révision ${{ matrix.ecran }})
+        uses: esphome/build-action@ae5408cdbc4f70692bf8e345c4982bca05a93667 # v8.1.0
+        with:
+          yaml-file: tab5-ha-hmi.yaml
+
+  # Carte Waveshare 7B (ADR-0061, Tab5/paquets/carte-waveshare-7b.yaml) : on vérifie qu'elle
+  # compile entièrement. Même compilation que `build` (image `latest`), la carte ajoutée au
+  # user_entities.yaml factice, comme une révision. Cache de `build` restauré, jamais
+  # sauvegardé ; pas d'artefact (clé de signature jetable, carte jamais testée).
+  build-carte-7b:
+    needs: changes
+    if: needs.changes.outputs.firmware == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: user_entities.yaml (carte waveshare-7b) et clé de signature jetable
+        run: |
+          cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
+          printf '\ntab5_carte: waveshare-7b\n' >> Tab5/user_entities.yaml
+          # Firmware sans secret (lot 6b, ADR-0020) : clé de signature JETABLE.
+          openssl genrsa -out tab5_signature.pem 3072
+      - name: Cache ccache (restauré depuis build, jamais sauvegardé)
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ccache-esp32p4-${{ github.run_id }}
+          restore-keys: ccache-esp32p4-
+      - name: Configuration ccache
+        run: |
+          echo "CCACHE_DIR=$RUNNER_TEMP/ccache" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/ccache"
+          printf 'max_size = 2G\ncompiler_check = content\n' > "$RUNNER_TEMP/ccache/ccache.conf"
+      - name: Build ESPHome Firmware (carte waveshare-7b)
         uses: esphome/build-action@ae5408cdbc4f70692bf8e345c4982bca05a93667 # v8.1.0
         with:
           yaml-file: tab5-ha-hmi.yaml

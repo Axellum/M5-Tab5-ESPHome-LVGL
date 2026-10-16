@@ -11,9 +11,13 @@
 #       modal_header.yaml + 20 px d'air). Voir ADR-0009.
 # ============================================================================
 substitutions:
-  # Carte modale — 15 px des bords de l'écran 1280×720
-  modal_card_w: "1250"
-  modal_card_h: "690"
+  # Carte modale — 15 px des bords de l'écran : 1250×690 sur le Tab5 (1280×720). La
+  # taille de l'écran vient de la carte (carte_ecran_l / carte_ecran_h,
+  # Tab5/paquets/geometrie-<carte>.yaml, ADR-0061) ; ESPHome 2026.9 calcule l'expression
+  # Jinja (vérifié le 12/10/2026). Le C++ fait le même calcul (kCarteL / kCarteH,
+  # Tab5/socle/tab5_geometrie.h) : tests/test_geometrie_partagee.py compare, carte par carte.
+  modal_card_w: ${ carte_ecran_l | int - 30 }
+  modal_card_h: ${ carte_ecran_h | int - 30 }
   # Carte du popup Musique (ADR-0050) : centrée et plus petite, le tableau de bord voilé
   # reste visible autour. Le C++ la reprend (kLecteurCarteL/H, Tab5/socle/tab5_geometrie.h) :
   # tests/test_geometrie_partagee.py tient les deux égales.
@@ -31,8 +35,9 @@ substitutions:
   cal_grid_y: "102"
   # Hauteur réservée à la grille, jusqu'à 10 px au-dessus de la légende (posée
   # à ${modal_bottom_y} du bas de la carte). cal_render_month() y répartit les
-  # 4 à 6 semaines du mois et centre le tout.
-  cal_grid_h: "528"
+  # 4 à 6 semaines du mois et centre le tout. 528 sur le Tab5 : la carte modale moins
+  # 162 px (102 au-dessus, 60 pour la légende et son air), suit la carte (ADR-0061).
+  cal_grid_h: ${ modal_card_h | int - 162 }
   # Carte "Réponse" de l'assistant vocal : sous la carte "Votre demande"
   # (modal_body_y + 104 px de haut + 12 px de respiration). Si modal_body_y
   # change, recalculer cette valeur à la main (ESPHome ne fait pas d'arithmétique

@@ -1,0 +1,19 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-imu-absente.yaml
+# @role À la place de tab5-imu.yaml sur une carte sans IMU (ADR-0061 ; aujourd'hui la
+#       Waveshare 7B), choisi par tab5-ha-hmi.yaml d'après `tab5_carte`. Fournit
+#       seulement l'interrupteur « Tab5 Tap-to-Wake » (id tab5_tap_to_wake) que le popup
+#       Réglages lit et écrit (« Rallumer l'écran d'une tape ») : sans capteur, il ne
+#       rallume rien. Les consoles ne reçoivent ni inclinaison ni secousse
+#       (GameRegistry::dispatch_imu n'est jamais appelé).
+# @architecture_constraint Même id et mêmes réglages que dans tab5-imu.yaml, sans nom : pas
+#       d'entité dans Home Assistant pour une fonction qui n'existe pas sur la carte.
+# ============================================================================
+switch:
+  - platform: template
+    id: tab5_tap_to_wake
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      - script.execute: tab5_reglages_sync_ui

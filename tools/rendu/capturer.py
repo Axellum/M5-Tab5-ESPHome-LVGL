@@ -8,7 +8,9 @@ appels que le mode démo, pièces comprises quand le rendu a l'action tab5_maj_t
 ADR-0023) et lui demande une capture (action `rendu_capture`). Les BMP
 sont écrits par le rendu dans ESPHOME_SNAPSHOT_DIR ; avec Pillow, ce script en fait
 des PNG en paysage (la dalle du Tab5 est en portrait, LVGL tourne l'image de 270°,
-vérifié sur les premières captures). Neon Apron, en portrait, n'est pas tourné.
+vérifié sur les premières captures). Neon Apron, en portrait, n'est pas tourné. Une
+dalle déjà en paysage est tournée de la rotation de sa carte (Waveshare 7B, 1024×600,
+dalle montée à l'envers, LVGL à 180° : `--carte waveshare-7b`, ADR-0061).
 
 Après les scènes, chaque écran de tools/rendu/ecrans.py (fenêtres, sous-fenêtres,
 sélecteur Arcade et jeux) est ouvert comme sur la dalle, par le doigt virtuel du rendu
@@ -56,6 +58,7 @@ import argparse
 import asyncio
 import hashlib
 import logging
+import re
 import sys
 import unicodedata
 from pathlib import Path
@@ -116,9 +119,31 @@ def _portrait(nom_fichier: str) -> bool:
     return any(nom_fichier == p or nom_fichier.startswith(p + "-") for p in PORTRAITS)
 
 
-def en_png(dossier: Path) -> list[Path]:
+def rotation_carte(carte: str) -> int:
+    """`carte_rotation` de Tab5/paquets/geometrie-<carte>.yaml (ADR-0061) : la rotation
+    de LVGL avec laquelle le rendu de cette carte est compilé."""
+    texte = (RACINE.parent / "Tab5" / "paquets" / f"geometrie-{carte}.yaml").read_text(encoding="utf-8")
+    trouve = re.search(r'^\s*carte_rotation:\s*"(\d+)"', texte, re.MULTILINE)
+    if not trouve:
+        raise SystemExit(f"carte_rotation absente de geometrie-{carte}.yaml")
+    return int(trouve.group(1))
+
+
+def angle_png(nom_fichier: str, largeur: int, hauteur: int, rotation: int = 270) -> int:
+    """Le BMP est la dalle, LVGL y dessine tourné de `rotation` : angle (sens de Pillow)
+    qui remet la capture à l'endroit. Tab5 : dalle portrait 720×1280, 270. Waveshare 7B :
+    dalle paysage montée à l'envers, 180. Neon Apron, en portrait, jamais tourné (le jeu
+    remet LVGL à 0) ; une dalle portrait seulement si l'image l'est encore."""
+    if _portrait(nom_fichier):
+        return 0
+    if rotation in (90, 270):
+        return rotation if hauteur > largeur else 0
+    return rotation
+
+
+def en_png(dossier: Path, rotation: int = 270) -> list[Path]:
     """Chaque BMP du dossier devient un PNG à l'endroit (Pillow requis), puis le BMP
-    (2,7 Mo, ~330 par run) est supprimé."""
+    (2,7 Mo, ~330 par run) est supprimé. `rotation` : celle de la carte (rotation_carte)."""
     try:
         from PIL import Image
     except ImportError:
@@ -128,7 +153,8 @@ def en_png(dossier: Path) -> list[Path]:
     for bmp in sorted(dossier.glob("*.bmp")):
         png = bmp.with_suffix(".png")
         with Image.open(bmp) as image:
-            (image if _portrait(bmp.stem) else image.rotate(270, expand=True)).save(png, optimize=True)
+            angle = angle_png(bmp.stem, image.width, image.height, rotation)
+            (image.rotate(angle, expand=True) if angle else image).save(png, optimize=True)
         bmp.unlink()
         pngs.append(png)
     return pngs
@@ -326,6 +352,8 @@ def main() -> int:
                         help="avec la galerie : choisit ce thème à la fin et enregistre les préférences")
     parser.add_argument("--preparer", action="store_true",
                         help="aucune capture : seulement --puis-theme / --puis-mode-theme")
+    parser.add_argument("--carte", default="tab5",
+                        help="carte du rendu (tab5, waveshare-7b) : rotation des PNG (ADR-0061)")
     parser.add_argument("--liste-galerie", action="store_true",
                         help="écrit « nom|fichier|mode » de chaque capture de la galerie et s'arrête")
     args = parser.parse_args()
@@ -340,7 +368,7 @@ def main() -> int:
                                    args.galerie, args.galerie_un, args.puis_theme, args.preparer))
     if args.langue or args.preparer:
         return 0
-    pngs = en_png(args.dossier)
+    pngs = en_png(args.dossier, rotation_carte(args.carte))
     logger.info("%d captures PNG dans %s", len(pngs), args.dossier)
     for texte in alertes:
         print(f"::warning title=Captures::{texte}")

@@ -280,3 +280,15 @@ def test_pages_du_reveil():
     geste = ecrans.REVEIL_GLISSER_DEPUIS_UN_BOUTON
     assert geste.dans_popup and geste.y1 == geste.y2 and geste.x2 < geste.x1, geste
     assert 15 + 24 + x < geste.x1 < 15 + 24 + x + w and 15 + 72 + y < geste.y1 < 15 + 72 + y + 60, geste
+
+
+def test_captures_remises_a_l_endroit_selon_la_carte():
+    """Le BMP est la dalle (ADR-0061) : Tab5 tourné de 270°, Waveshare 7B de 180° (dalle
+    montée à l'envers), Neon Apron jamais ; la rotation vient de geometrie-<carte>.yaml."""
+    import capturer
+
+    assert capturer.rotation_carte("tab5") == 270
+    assert capturer.rotation_carte("waveshare-7b") == 180
+    assert capturer.angle_png("0-accueil", 720, 1280, 270) == 270
+    assert capturer.angle_png("0-accueil", 1024, 600, 180) == 180
+    assert capturer.angle_png(next(iter(capturer.PORTRAITS)), 720, 1280, 270) == 0

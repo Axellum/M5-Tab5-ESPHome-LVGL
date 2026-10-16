@@ -13,18 +13,42 @@
  *       tab5_internal.h) ; listé dans les `includes:` des deux configurations pour être
  *       copié dans le build. Une valeur de plus ici = sa vérification dans
  *       tests/test_geometrie_partagee.py.
+ * @carte Taille de l'écran par carte (ADR-0061) : TAB5_ECRAN_L, TAB5_ECRAN_H et
+ *       TAB5_ROTATION viennent des build_flags de tab5-ha-hmi.yaml et de
+ *       tab5-rendu-host.yaml, écrits d'après Tab5/paquets/geometrie-<carte>.yaml. Sans eux
+ *       (tests compilés sur PC), les valeurs du Tab5. La carte modale en dérive ; le reste
+ *       (corps des popups, graphiques) est encore au pixel pour 1280×720.
  */
 #pragma once
 #include <cstdint>
 
-// Écran (paysage).
-constexpr int32_t kEcranL = 1280;
-constexpr int32_t kEcranH = 720;
+#ifndef TAB5_ECRAN_L
+#define TAB5_ECRAN_L 1280
+#endif
+#ifndef TAB5_ECRAN_H
+#define TAB5_ECRAN_H 720
+#endif
+#ifndef TAB5_ROTATION
+#define TAB5_ROTATION 270
+#endif
+
+// Écran (paysage), celui de la carte.
+constexpr int32_t kEcranL = TAB5_ECRAN_L;
+constexpr int32_t kEcranH = TAB5_ECRAN_H;
+
+// La mise en page (positions et tailles des widgets) est encore dessinée au pixel pour
+// 1280 × 720 (ADR-0061) : une vérification de mise en page au pixel ne vaut que sur un écran
+// au moins aussi grand, `static_assert(!kMiseEnPageTab5 || …)`. Toujours vraie sur le Tab5.
+constexpr bool kMiseEnPageTab5 = kEcranL >= 1280 && kEcranH >= 720;
+
+// Rotation de repos de LVGL (`lvgl: rotation:`, tab5-styles.yaml) : celle que Neon Apron
+// remet en quittant son portrait (pinball_game.cpp).
+constexpr int kRotationRepos = TAB5_ROTATION;
 
 // Carte modale (tab5-ui-tokens.yaml : modal_card_w, modal_card_h, modal_body_y) : 15 px
 // des bords de l'écran, corps sous la barre de titre de modal_header.yaml.
-constexpr int32_t kCarteL = 1250;
-constexpr int32_t kCarteH = 690;
+constexpr int32_t kCarteL = kEcranL - 30;
+constexpr int32_t kCarteH = kEcranH - 30;
 constexpr int32_t kCorpsY = 72;
 
 // Carte du popup Musique (tab5-ui-tokens.yaml : lecteur_card_w, lecteur_card_h ;

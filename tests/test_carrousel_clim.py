@@ -109,9 +109,8 @@ def test_pastilles_du_popup():
     # bordure), masquée au démarrage (une seule clim).
     cadre = _bloc_yaml(POPUP, "clim_pastilles", "widgets:")
     assert "align: BOTTOM_MID" in cadre and "hidden: true" in cadre
-    tokens = _lire("Tab5", "paquets", "tab5-ui-tokens.yaml")
-    carte_h = int(re.search(r'modal_card_h: "(\d+)"', tokens).group(1))
-    corps_y = int(re.search(r'modal_body_y: "(\d+)"', tokens).group(1))
+    carte_h = jeton("modal_card_h")
+    corps_y = jeton("modal_body_y")
     hauteurs = {int(h) for h in re.findall(r"y: \$\{modal_body_y\}\n\s+width: \d+\n\s+height: (\d+)", POPUP)}
     assert len(hauteurs) == 1
     bas_cartes = corps_y + hauteurs.pop()

@@ -131,16 +131,20 @@ font:
   # Poursuite (İnönü, Jōmon Sugi, Dvořák ; 27/09/2026) et Ğ ğ ı Ş ş du turc (avec İ et
   # le Latin-1 : ç ö ü â î û ; 02/10/2026), 224 glyphes. Déclarée une fois
   # ici (ancre &latin1), reprise par *latin1 dans roboto_45_b et roboto_22.
+  # Grosses polices (titres 32, horloge 130, températures 55, date 45 ; ADR-0061) : leur
+  # taille suit la carte, `carte_police_echelle` de Tab5/paquets/geometrie-<carte>.yaml
+  # (1 sur le Tab5 : les tailles de l'id ; 0,82 sur la Waveshare 7B), arrondie. L'id garde
+  # la taille du Tab5. tests/commun.py (taille_police) lit la même expression.
   - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_32_b
-    size: 32
+    size: ${ (32 * (carte_police_echelle | float)) | round | int }
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
              # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: &latin1 ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿİōřĞğıŞş'
   # Chiffres de l'horloge et de l'écran de sonnerie : rien d'autre.
   - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_130_b
-    size: 130
+    size: ${ (130 * (carte_police_echelle | float)) | round | int }
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
              # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: '0123456789:'
@@ -153,12 +157,12 @@ font:
   # ADR-0062).
   - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_55_b
-    size: 55
+    size: ${ (55 * (carte_police_echelle | float)) | round | int }
     bpp: 4
     glyphs: '+-0123456789: °C.%—'
   - file: "Tab5/fonts/roboto_700.ttf"
     id: roboto_45_b
-    size: 45
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
     bpp: 2   # 4 niveaux de lissage au lieu de 16 (essai D8, 26/09/2026) :
              # bitmaps divisés par deux, validé à l'œil par Axel
     glyphs: *latin1
@@ -845,6 +849,10 @@ lvgl:
   # portrait 720×1280 le temps d'une partie, puis restaurer le paysage.
   # NE PAS retirer cet id, et NE PAS changer `rotation: 270` : c'est l'état de
   # repos du dashboard, celui que Pinball::close() rétablit.
+  # Depuis l'ADR-0061, la valeur vient de la carte (`carte_rotation`,
+  # Tab5/paquets/geometrie-<carte>.yaml) : 270 sur le Tab5 (dalle portrait), 180 sur la
+  # Waveshare 7B (dalle paysage montée à l'envers) ; le flipper revient à la même
+  # (kRotationRepos).
   id: tab5_lvgl
   # [AI-WARNING] `rotation:` doit rester présent ici même si le jeu la surcharge
   # à chaud : ESPHome ne compile le support de rotation (rotation_type_ =
@@ -853,7 +861,7 @@ lvgl:
   # ESP_LOGW « rotation cannot be changed unless rotation was enabled during
   # setup » et le flipper resterait en paysage (vérifié dans
   # esphome/components/lvgl/lvgl_esphome.cpp, LvglComponent::set_rotation).
-  rotation: 270
+  rotation: ${carte_rotation}
   color_depth: 16
   byte_order: little_endian
   buffer_size: 100%

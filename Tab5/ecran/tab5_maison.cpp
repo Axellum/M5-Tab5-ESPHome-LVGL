@@ -60,8 +60,9 @@ constexpr int32_t kLignesY = kCorpsY + kEnteteH + kLigneEcart;
 constexpr int32_t kTexteX = 80;
 constexpr int32_t kTexteFin = 12;
 constexpr int32_t kPlusPlace = 36 + 12 + 8;
-// Hauteur de la carte (kCarteH) : la dernière ligne y tient.
-static_assert(kLignesY + kTuiles * kLigneH + (kTuiles - 1) * kLigneEcart <= kCarteH - kMarge,
+// Hauteur de la carte (kCarteH) : la dernière ligne y tient (sur un écran de la taille du
+// Tab5 : la mise en page n'est pas encore adaptée aux plus petits, ADR-0061).
+static_assert(!kMiseEnPageTab5 || kLignesY + kTuiles * kLigneH + (kTuiles - 1) * kLigneEcart <= kCarteH - kMarge,
               "les cinq lignes d'une pièce tiennent dans la carte");
 
 // Largeur des colonnes de la dernière disposition (les textes d'une ligne en dépendent).

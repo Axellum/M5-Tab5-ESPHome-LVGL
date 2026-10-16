@@ -679,7 +679,10 @@ interval:
   # première fois dans les 5 s qui suivent le setup (décalage aléatoire du planificateur
   # d'ESPHome) : pas besoin de toucher à on_boot. Ensuite, une fois par jour, sans effet
   # tant que l'heure système est valide.
+  # `id` (ADR-0061) : une carte sans RX8130 (carte-waveshare-7b.yaml) retire cet interval
+  # par `!remove` et garde seulement fuseau_restaurer(). Sans effet sur le Tab5.
   - interval: 24h
+    id: tab5_rtc_demarrage
     then:
       - lambda: |-
           // Fuseau du dernier passage de HA (lot 6b), avant de lire l'horloge. N'agit
