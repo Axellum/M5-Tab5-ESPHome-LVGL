@@ -205,6 +205,30 @@ script:
                 commande: consigne
                 valeur: !lambda 'return clim_tuile_attente_texte();'
 
+  # Prévisions gardées en NVS (16/10/2026, previsions_relire, tab5_forecast.cpp) : pose
+  # les slots des tuiles météo et relit les dernières prévisions, une fois, avant la
+  # première image (lancé par tab5_zones_apply, comme tab5_tuiles_ui). Les slots sont
+  # aussi posés par l'on_boot de tab5-ha-hmi.yaml (qu'on ne modifie pas sans Axel), mais
+  # seulement après l'attente de HA : mêmes lignes, tenues égales par
+  # tests/test_previsions_nvs.py. Aucun lv_* ici.
+  - id: tab5_previsions_relire
+    then:
+      - lambda: |-
+          // Slots meteo jour (D2 : plus de duplication dans chaque lambda).
+          g_day_slots[0] = {id(j0_day), id(j0_max), id(j0_min), id(j0_icon_layer1), id(j0_icon_layer2), id(btn_j0_action), id(icon_card_pc), nullptr, nullptr};
+          g_day_slots[1] = {id(j1_day), id(j1_max), id(j1_min), id(j1_icon_layer1), id(j1_icon_layer2), id(btn_j1_action), id(icon_card_shutter1), id(icon_card_shutter_arrow), id(btn_j1_dir)};
+          g_day_slots[2] = {id(j2_day), id(j2_max), id(j2_min), id(j2_icon_layer1), id(j2_icon_layer2), id(btn_j2_action), id(icon_card_lit_j2), id(icon_card_light_j2), nullptr};
+          g_day_slots[3] = {id(j3_day), id(j3_max), id(j3_min), id(j3_icon_layer1), id(j3_icon_layer2), id(btn_j3_action), id(icon_card_salon_j3), id(icon_card_light_j3), nullptr};
+          g_day_slots[4] = {id(j4_day), id(j4_max), id(j4_min), id(j4_icon_layer1), id(j4_icon_layer2), id(btn_j4_action), id(icon_card_led_j4), id(icon_card_light_j4), nullptr};
+          // Slots meteo heure.
+          g_hour_slots[0] = {id(h4_time), id(h4_temp), id(h4_prob), id(h4_icon_layer1), id(h4_icon_layer2)};
+          g_hour_slots[1] = {id(h3_time), id(h3_temp), id(h3_prob), id(h3_icon_layer1), id(h3_icon_layer2)};
+          g_hour_slots[2] = {id(h2_time), id(h2_temp), id(h2_prob), id(h2_icon_layer1), id(h2_icon_layer2)};
+          g_hour_slots[3] = {id(h1_time), id(h1_temp), id(h1_prob), id(h1_icon_layer1), id(h1_icon_layer2)};
+          g_hour_slots[4] = {id(h0_time), id(h0_temp), id(h0_prob), id(h0_icon_layer1), id(h0_icon_layer2)};
+          previsions_relire(g_day_slots, g_hour_slots, id(font_meteo_card), id(font_meteo_card_small),
+                            id(previsions_perimees), id(lbl_previsions_perimees));
+
   # Widgets de la clim (ADR-0026, ADR-0027) posés dans g_clim_ui : ceux que les réglages
   # de l'appareil adaptent (bornes de l'arc, unité, titre, boutons gérés, sections des
   # options), ceux que clim_recolorer() colore (icônes des modes et options, libellé

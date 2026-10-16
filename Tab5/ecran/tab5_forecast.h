@@ -68,6 +68,16 @@ bool accept_heures_bulk(const std::string& payload, int forecast_page);
 void previsions_recues(lv_obj_t* zone, lv_obj_t* lbl, int il_y_a_min = 0);
 void previsions_fraicheur_tick(lv_obj_t* zone, lv_obj_t* lbl);
 
+// Prévisions gardées en NVS (16/10/2026) : chaque poussée qui change les jours ou un bloc
+// d'heures est gardée telle quelle, avec la date du jour 0 et l'heure de la dernière
+// poussée. previsions_relire() les relit une fois, avant la première image (script
+// tab5_previsions_relire, lancé par tab5_zones_apply) : les tuiles de la page affichée,
+// le popup Météo, le graphique à gauche de l'horloge et le réveil repartent des
+// dernières prévisions, la mention « prévisions périmées » dit leur âge. Rien de gardé :
+// rien ne change. Appels suivants : sans effet.
+void previsions_relire(WeatherDaySlot jours[], WeatherHourSlot heures[],
+                       esphome::font::Font* f_card, esphome::font::Font* f_card_s, lv_obj_t* zone, lv_obj_t* lbl);
+
 // Tableaux globaux des slots meteo (initialises au boot, fixes car ids LVGL constants).
 // Evite la reconstruction identique dans chaque lambda YAML (D2).
 extern WeatherDaySlot g_day_slots[5];

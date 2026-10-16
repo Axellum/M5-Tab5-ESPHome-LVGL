@@ -16,8 +16,10 @@
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"
+#include "alarm_clock.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <esp_attr.h>
 #include <cmath>
 #include <ctime>
 #include <cstring>
@@ -161,18 +163,105 @@ uint32_t get_temperature_color(float t) {
 // Centralise le parsing du payload serialise et la mise a jour LVGL
 // =============================================================================
 
+// =============================================================================
+// Prévisions gardées en NVS (16/10/2026, demande d'Axel : avant la première poussée de
+// HA, les tuiles montraient « Journée », « -- / -- ° » et aucune icône pendant 7 à 10 s,
+// 20,5 s → 27,4 s sur la 7B le 16/10). Les payloads sont gardés tels que HA les envoie,
+// seulement quand ils changent, et relus avant la première image par le même lecteur
+// (tab5_parse.cpp, testé sur PC et fuzzé). Le jour 0 garde la date de SA poussée
+// (cal_jours_anchor_day), l'heure de la dernière poussée aussi : la mention
+// « prévisions périmées » dit leur âge dès que l'horloge est réglée.
+// ESPHome n'écrit une préférence que si son contenu a changé (is_changed, à chaque
+// flash_write_interval) : les jours changent quelques fois par jour, les heures chaque
+// heure, l'heure de réception à chaque poussée (16 octets, toutes les 10 min).
+// =============================================================================
+namespace {
+constexpr uint32_t kMagicJours = 0x50524A31;     // « PRJ1 »
+constexpr uint32_t kPrefKeyJours = 0x70726A72;   // « prjr »
+constexpr uint32_t kMagicHeures = 0x50524831;    // « PRH1 »
+constexpr uint32_t kPrefKeyHeures = 0x70726872;  // « prhr »
+constexpr uint32_t kMagicRecues = 0x50525231;    // « PRR1 »
+constexpr uint32_t kPrefKeyRecues = 0x70727272;  // « prrr »
+// Un bloc horaire de HA tient en ~250 octets (cinq « idx|HH:MM|condition|temp|pluie ») ;
+// plus long, il n'est pas gardé (son bloc est vidé : rien de faux à la relecture).
+constexpr size_t kHeuresBlocSauve = 512;
+constexpr int kBlocsHeures = 3;
+
+struct JoursSauves {
+    uint32_t magic;
+    int32_t ancre;  // cal_jours_anchor_day du lot (-1 : reçu avant l'heure réglée)
+    uint16_t n;
+    char p[kPrevisionsMax + 1];  // + le zéro final
+};
+struct HeuresSauvees {
+    uint32_t magic;
+    uint16_t n[kBlocsHeures];
+    char p[kBlocsHeures][kHeuresBlocSauve + 1];
+};
+struct RecuesSauvee {
+    uint32_t magic;
+    int64_t t;  // g_previsions_recues (epoch), 0 = aucune
+};
+
+EXT_RAM_BSS_ATTR JoursSauves s_jours_nvs;
+EXT_RAM_BSS_ATTR HeuresSauvees s_heures_nvs;
+esphome::ESPPreferenceObject s_pref_jours, s_pref_heures, s_pref_recues;
+bool s_prefs_ouvertes = false;
+
+void prefs_ouvrir() {
+    if (s_prefs_ouvertes) return;
+    s_prefs_ouvertes = true;
+    s_pref_jours = esphome::global_preferences->make_preference<JoursSauves>(kPrefKeyJours);
+    s_pref_heures = esphome::global_preferences->make_preference<HeuresSauvees>(kPrefKeyHeures);
+    s_pref_recues = esphome::global_preferences->make_preference<RecuesSauvee>(kPrefKeyRecues);
+}
+
+// Copie exacte (fin du tampon à zéro, zéro final compris : `cap` = la taille du tampon) :
+// la comparaison d'ESPHome reste fiable et la relecture lit une chaîne terminée.
+void copier_payload(char* dst, size_t cap, uint16_t& n, const std::string& payload) {
+    std::memset(dst, 0, cap);
+    n = 0;
+    if (payload.size() >= cap) return;
+    std::memcpy(dst, payload.data(), payload.size());
+    n = static_cast<uint16_t>(payload.size());
+}
+
+void garder_jours(const std::string& payload) {
+    prefs_ouvrir();
+    s_jours_nvs.magic = kMagicJours;
+    s_jours_nvs.ancre = cal_jours_anchor_day;
+    copier_payload(s_jours_nvs.p, sizeof(s_jours_nvs.p), s_jours_nvs.n, payload);
+    s_pref_jours.save(&s_jours_nvs);
+}
+
+void garder_heures(int bloc, const std::string& payload) {
+    if (bloc < 0 || bloc >= kBlocsHeures) return;
+    prefs_ouvrir();
+    // Les autres blocs gardent leur dernière valeur, relue ou reçue.
+    if (s_heures_nvs.magic != kMagicHeures) s_heures_nvs = HeuresSauvees{};
+    s_heures_nvs.magic = kMagicHeures;
+    copier_payload(s_heures_nvs.p[bloc], sizeof(s_heures_nvs.p[bloc]), s_heures_nvs.n[bloc], payload);
+    if (s_heures_nvs.n[bloc] == 0 && !payload.empty())
+        ESP_LOGW("tab5.forecast", "heures : bloc %d de %u octets, trop long pour la NVS (%u) : pas gardé",
+                 bloc, (unsigned) payload.size(), (unsigned) kHeuresBlocSauve);
+    s_pref_heures.save(&s_heures_nvs);
+}
+}  // namespace
+
 // Lecture des payloads : previsions_heures_lire() / previsions_jours_lire()
 // (Tab5/socle/tab5_parse.h, lot F de l'audit du 30/09/2026), testées sur PC.
-static void parse_and_update_heures_bulk(const std::string& payload) {
-    if (payload.empty()) return;
-    if (payload_trop_long("tab5.forecast", payload.size(), kPrevisionsMax)) return;  // tampon de pile
+// Renvoie vrai si chaque créneau a été lu : seul un bloc entier est gardé en NVS.
+static bool parse_and_update_heures_bulk(const std::string& payload) {
+    if (payload.empty()) return false;
+    if (payload_trop_long("tab5.forecast", payload.size(), kPrevisionsMax)) return false;  // tampon de pile
     ESP_LOGD("tab5.forecast", "Received heures bulk payload length: %d", payload.length());
     // Créneaux à l'index ou au nombre illisible (« nan », « inf »…) : ignorés, le créneau
     // garde ce qu'il avait ; une ligne de journal par payload, comme l'historique des alertes.
-    if (previsions_heures_lire(payload.c_str(), cal_heures_data) > 0)
-        payload_refuse("tab5.forecast", "heures : créneau(x) illisible(s) ignoré(s)", payload.size());
+    const bool lisible = previsions_heures_lire(payload.c_str(), cal_heures_data) == 0;
+    if (!lisible) payload_refuse("tab5.forecast", "heures : créneau(x) illisible(s) ignoré(s)", payload.size());
     meteo_donnees_changees();  // popup Météo affiché : repeint (ADR-0043)
     zone_gauche_donnees_changees();  // graphique à gauche de l'horloge (ADR-0051)
+    return lisible;
 }
 
 bool accept_heures_bulk(const std::string& payload, int forecast_page) {
@@ -186,7 +275,7 @@ bool accept_heures_bulk(const std::string& payload, int forecast_page) {
     const int bloc = premier / 5;
     const auto canal = static_cast<PushChannel>(static_cast<int>(PushChannel::HEURES_0) + bloc);
     if (push_unchanged(canal, payload)) return false;
-    parse_and_update_heures_bulk(payload);
+    if (parse_and_update_heures_bulk(payload)) garder_heures(bloc, payload);
     // Rendu inutile quand le calque horaire est masqué : apply_forecast_page()
     // repeint depuis cal_heures_data au changement de page.
     return forecast_page < 2 && bloc == 1 - forecast_page;
@@ -198,8 +287,11 @@ void parse_and_update_jours_bulk(const std::string& payload) {
     ESP_LOGD("tab5.forecast", "Received jours bulk payload length: %d", payload.length());
     // Le jour 0 date le lot : cal_jours_anchor_day (tab5_core.h). Jours illisibles : ignorés
     // et journalisés une fois, comme les heures.
+    // Gardé en NVS seulement s'il a été lu en entier : un lot abîmé n'écrase pas le bon.
     if (previsions_jours_lire(payload.c_str(), cal_jours_data, cal_jours_anchor_day) > 0)
         payload_refuse("tab5.forecast", "jours : jour(s) illisible(s) ignoré(s)", payload.size());
+    else
+        garder_jours(payload);
     meteo_donnees_changees();
 }
 
@@ -221,8 +313,9 @@ namespace {
 // 30 min = trois poussées manquées de suite : un passage abandonné ou un
 // redémarrage de HA (quelques minutes, repoussé au démarrage) ne l'affichent pas.
 // Pas 60 : sans aucun client API, la tablette redémarre au bout de 60 min
-// (api: reboot_timeout) et perd ses prévisions — à 60, la mention n'apparaîtrait
-// presque jamais pendant une panne de HA.
+// (api: reboot_timeout) — à 60, la mention n'apparaîtrait presque jamais pendant une
+// panne de HA. Depuis le 16/10/2026, ce redémarrage garde les prévisions et l'heure de
+// leur dernière poussée (NVS, plus haut) : la mention revient dès l'heure réglée.
 constexpr int kPrevisionsPerimeesMin = 30;
 
 // Dernière poussée des jours ou des heures, l'heure étant valide ; 0 = aucune.
@@ -232,7 +325,67 @@ time_t g_previsions_recues = 0;
 void previsions_recues(lv_obj_t* zone, lv_obj_t* lbl, int il_y_a_min) {
     const time_t now = tab5_time_source(nullptr);
     // Heure pas encore réglée (avant SNTP et RX8130) : pas de date à retenir.
-    if (tab5_heure_valide(now)) g_previsions_recues = now - (time_t) il_y_a_min * 60;
+    if (tab5_heure_valide(now)) {
+        g_previsions_recues = now - (time_t) il_y_a_min * 60;
+        prefs_ouvrir();
+        RecuesSauvee r{};  // remplissage compris : ESPHome compare les octets
+        r.magic = kMagicRecues;
+        r.t = static_cast<int64_t>(g_previsions_recues);
+        s_pref_recues.save(&r);
+    }
+    previsions_fraicheur_tick(zone, lbl);
+}
+
+void previsions_relire(WeatherDaySlot jours[], WeatherHourSlot heures[],
+                       esphome::font::Font* f_card, esphome::font::Font* f_card_s, lv_obj_t* zone, lv_obj_t* lbl) {
+    static bool fait = false;
+    if (fait) return;
+    fait = true;
+    prefs_ouvrir();
+    bool heures_lues[kBlocsHeures] = {};
+    int n_heures = 0;
+    bool jours_lus = false;
+    if (s_pref_jours.load(&s_jours_nvs) && s_jours_nvs.magic == kMagicJours && s_jours_nvs.n > 0 &&
+        s_jours_nvs.n < sizeof(s_jours_nvs.p)) {
+        s_jours_nvs.p[s_jours_nvs.n] = '\0';
+        int32_t ancre = -1;
+        previsions_jours_lire(s_jours_nvs.p, cal_jours_data, ancre);
+        // La date de la poussée d'origine, pas celle de la relecture (l'heure n'est
+        // d'ailleurs pas encore réglée) : le réveil et le bandeau planning recalent les
+        // cases sur aujourd'hui comme avant le redémarrage.
+        cal_jours_anchor_day = s_jours_nvs.ancre;
+        jours_lus = true;
+    } else {
+        s_jours_nvs = JoursSauves{};
+    }
+    if (s_pref_heures.load(&s_heures_nvs) && s_heures_nvs.magic == kMagicHeures) {
+        for (int b = 0; b < kBlocsHeures; b++) {
+            const uint16_t n = s_heures_nvs.n[b];
+            if (n == 0 || n >= sizeof(s_heures_nvs.p[b])) continue;
+            s_heures_nvs.p[b][n] = '\0';
+            previsions_heures_lire(s_heures_nvs.p[b], cal_heures_data);
+            heures_lues[b] = true;
+            n_heures++;
+        }
+    } else {
+        s_heures_nvs = HeuresSauvees{};
+    }
+    if (!jours_lus && n_heures == 0) return;
+    // L'heure de la dernière poussée, seulement avec des prévisions à dater.
+    RecuesSauvee r{};
+    if (s_pref_recues.load(&r) && r.magic == kMagicRecues && r.t > 0)
+        g_previsions_recues = static_cast<time_t>(r.t);
+    ESP_LOGI("tab5.forecast", "Prévisions relues de la NVS : jours %s, %d bloc(s) d'heures",
+             jours_lus ? "oui" : "non", n_heures);
+    meteo_donnees_changees();
+    zone_gauche_donnees_changees();
+    alarm_invalidate();
+    // La page affichée (l'accueil au démarrage), si ses données ont été relues : sinon
+    // ses tuiles gardent « -- » plutôt que « 0 / 0 ° ». Les autres pages se peignent à
+    // leur tour depuis cal_jours_data / cal_heures_data (apply_forecast_page).
+    const int fp = g_central_ctx.forecast_page;
+    if (fp >= 2 && jours_lus) refresh_daily_forecast(jours, fp - 2, f_card, f_card_s);
+    else if (fp < 2 && heures_lues[1 - fp]) refresh_hourly_forecast(heures, 1 - fp, f_card, f_card_s);
     previsions_fraicheur_tick(zone, lbl);
 }
 
