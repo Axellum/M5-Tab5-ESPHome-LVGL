@@ -33,7 +33,7 @@ Own an ST7121 or ILI9881C unit and willing to try? Say how it went in [Discussio
 
 ## Waveshare ESP32-P4 7B (experimental)
 
-🧪 **Runs on the author's board since 2026-10-14.** The firmware can also be built for the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600, the same ESP32-P4 and ESP32-C6 as the Tab5): add `tab5_carte: waveshare-7b` to `Tab5/user_entities.yaml` and build with ESPHome 2026.9.1 or newer ([ADR-0061](decisions/0061-board-and-screen-size.md)). The home screen and the popups follow its screen size; it has no battery, no motion sensor and no clock chip. Its hardware, pins, install steps and the problems met when it arrived have their own page: [Waveshare ESP32-P4 7B](waveshare-7b.md). The rest of this page is about the Tab5.
+🧪 **Runs on the author's board since 2026-10-14.** The firmware can also be built for the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600, the same ESP32-P4 and ESP32-C6 as the Tab5): add `tab5_carte: waveshare-7b` to `Tab5/user_entities.yaml` and build with ESPHome 2026.9.1 or newer ([ADR-0061](decisions/0061-board-and-screen-size.md)). The home screen and the popups follow its screen size; it has no motion sensor, no clock chip and no battery gauge (a battery connector, which this firmware does not use yet). Its hardware, pins, install steps and the problems met when it arrived have their own page: [Waveshare ESP32-P4 7B](waveshare-7b.md). The rest of this page is about the Tab5.
 
 ---
 
@@ -222,7 +222,7 @@ Vous avez un Tab5 ST7121 ou ILI9881C et vous voulez bien essayer ? Racontez ce q
 
 ## Waveshare ESP32-P4 7B (expérimentale)
 
-🧪 **Tourne sur la carte de l'auteur depuis le 14/10/2026.** Le firmware peut aussi être compilé pour la Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600, les mêmes ESP32-P4 et ESP32-C6 que le Tab5) : ajoutez `tab5_carte: waveshare-7b` dans `Tab5/user_entities.yaml` et compilez avec ESPHome 2026.9.1 ou plus récent ([ADR-0061](decisions/0061-board-and-screen-size.md)). L'accueil et les popups suivent la taille de son écran ; elle n'a ni batterie, ni capteur de mouvement, ni puce d'horloge. Son matériel, ses broches, son installation et les problèmes rencontrés à son arrivée ont leur page : [Waveshare ESP32-P4 7B](waveshare-7b.md#version-française). Le reste de cette page parle du Tab5.
+🧪 **Tourne sur la carte de l'auteur depuis le 14/10/2026.** Le firmware peut aussi être compilé pour la Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600, les mêmes ESP32-P4 et ESP32-C6 que le Tab5) : ajoutez `tab5_carte: waveshare-7b` dans `Tab5/user_entities.yaml` et compilez avec ESPHome 2026.9.1 ou plus récent ([ADR-0061](decisions/0061-board-and-screen-size.md)). L'accueil et les popups suivent la taille de son écran ; elle n'a ni capteur de mouvement, ni puce d'horloge, ni jauge de batterie (un connecteur de batterie, dont ce firmware ne se sert pas encore). Son matériel, ses broches, son installation et les problèmes rencontrés à son arrivée ont leur page : [Waveshare ESP32-P4 7B](waveshare-7b.md#version-française). Le reste de cette page parle du Tab5.
 
 ---
 
