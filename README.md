@@ -21,7 +21,7 @@
 
 ---
 
-**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, solar energy, TV remote, alarm clock — and 8 offline games, in seven languages. Twenty-one themes, light or dark, chosen from Home Assistant. It is my everyday screen, shared in case it is useful to someone.
+**A Home Assistant wall screen that runs natively on the M5Stack Tab5 (ESP32-P4).** No browser, no polling: Home Assistant pushes what changed, and the screen redraws only that, in C++ with LVGL. Local "Okay Nabu" wake word, 15-day forecast, climate, lights, plants, energy, music, cameras, TV remote, alarm clock — and 8 offline games, in seven languages. Twenty-one themes, light or dark, chosen from Home Assistant. It is my everyday screen, shared in case it is useful to someone. It also runs, as an experiment, on a 7-inch Waveshare board.
 
 ![The author's M5Stack Tab5 held in one hand on its stand, screen in French: the time, two temperatures, a climate setpoint, the work-hours banner and a 5-day forecast with thunderstorm, rain and sun](docs/images/tab5_hero_4x3.jpg)
 
@@ -32,16 +32,17 @@
 ## Why this one
 
 - **Push-only, zero polling.** Home Assistant sends only what changed; the tablet never asks for anything ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
+- **Set up with the mouse, in Home Assistant.** After the install, rooms, tiles, sensors, cameras, what each zone shows and what each gesture does are picked in one blueprint, and changing a device needs no flash ([your devices](docs/installation/devices.md)).
 - **Voice starts on the device.** "Okay Nabu" and a "Stop" word for the roller shutter are detected on the tablet; audio leaves it only after the wake word.
 - **Seven languages, down to the details.** French, English, German, Dutch, Spanish, Italian and Turkish, switched from Home Assistant: menus, games, dates, the texts Home Assistant sends and the spoken alarm briefing. Translated by an AI; the author only checked the French ([translations](docs/translations.md)).
 - **Twenty-one themes, light or dark.** Colours, shapes and the fonts of the clock change at once, without a restart, from Home Assistant or the tablet's console; « Auto » turns light at sunrise and dark at sunset ([themes](docs/installation/settings.md#theme-light-or-dark)).
 - **Keeps working when Home Assistant doesn't.** Clock, alarm clock, games and the diagnostics console stay usable on their own.
-- **Documented and tested like a product.** 61 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome.
-- **Runs on the ST7123 and ST7121 revisions, and builds for the original ILI9881C**, while most published Tab5 examples only cover the original one.
+- **Lots of notes and tests.** 61 [architecture decision records](docs/decisions/README.md), host tests for the C++ game and alarm engines, and a CI that compiles the firmware against both the minimum and the latest ESPHome. All written with AI, and tried on real screens one at a time.
+- **Runs on the ST7123 and ST7121 revisions of the Tab5**, builds for the original ILI9881C, and runs, as an experiment, on the 7-inch [Waveshare ESP32-P4 7B](docs/waveshare-7b.md).
 
 ## What it does
 
-A single 1280×720 page: windows open with a tap, a long press or a swipe — each of them is in the [user manual](docs/notice/README.md).
+A single page (1280×720 on the Tab5, 1024×600 on the Waveshare 7B): windows open with a tap, a long press or a swipe — each of them is in the [user manual](docs/notice/README.md).
 
 - **Weather** — rain in the next hour, hourly and 15-day forecast, weather warnings ([below](#rain-in-the-next-hour-weather-warnings)).
 - **Central card** — every 8 s: work hours, rain graph, warnings, a 3-day calendar recap and up to 4 banners pushed by Home Assistant, the alerts you subscribed to; a tap dismisses a banner, a long press shows the 20 latest alerts ([home screen](docs/notice/home.md), [alerts](docs/notice/alerts.md)).
@@ -54,8 +55,11 @@ A single 1280×720 page: windows open with a tap, a long press or a swipe — ea
 - **TV remote** — a full-screen Samsung remote: power, pad, volume, channels, playback, mute, through Home Assistant ([TV remote](docs/notice/tv.md)).
 - **Voice** — "Okay Nabu" detected on the tablet, or a tap on the microphone; two assistants chosen from the screen, home control or a conversation ([voice](docs/notice/voice.md)).
 - **Calendar and alarm clock** — a monthly calendar computed on the tablet, with work hours, holidays and appointments; an alarm clock with a spoken briefing ([calendar](docs/notice/calendar.md), [alarm clock](docs/notice/alarm.md)).
-- **Solar energy** (optional) — solar, home, grid and home battery right now, and the production per hour, day and month ([energy](docs/notice/energy.md)).
+- **Energy** (optional) — what flows between the sun, the home, the grid and a home battery right now, the day's sun and a production forecast learned from your panels, the production per hour, day and month, and the month's balance in kWh, as if the grid were a battery ([energy](docs/notice/energy.md)).
 - **Temperature history** — a long press on a temperature: its curve over 24 hours, 7 or 30 days, with the weather forecast for the second one ([temperature](docs/notice/temperature.md)).
+- **Music** — any media player of Home Assistant: cover, title, position, playback and volume; a compact player can sit left of the clock ([music](docs/notice/music.md)).
+- **Cameras** — a still image of each camera, refreshed while the window is open, grouped by room; no video ([cameras](docs/notice/cameras.md)).
+- **Tracking, fridges, AI server** — up to six sensors you follow (a share price, a power…) with their 24-hour curve; fridges and freezers checked against their norm, with an alert; the dashboard of a local LLM server ([tracking](docs/notice/tracking.md), [fridges](docs/notice/fridge.md), [AI server](docs/notice/ai-server.md)).
 - **Diagnostics console** — memory, Wi-Fi, uptime, volume, theme; reload automations, restart Home Assistant or the tablet behind a confirmation ([system console](docs/notice/console.md)).
 - **Settings** — brightness, auto screen off, theme, light or dark, language, without opening Home Assistant ([settings](docs/notice/settings.md)).
 - **8 offline games** — experimental: chess, draughts, Go, breakout, pinball, Lode Runner, a marble roguelite and a quiz ([Arcade](docs/notice/arcade.md)).
@@ -76,8 +80,8 @@ What the screen was first made for: seeing at a glance whether rain is coming be
 
 ## Before you start
 
-- A Tab5: the **ST7123** display chip is the one used every day; the ST7121 runs on another user's unit, the original ILI9881C is built but untested — see [hardware compatibility](#hardware-compatibility).
-- Home Assistant 2026.8 or later. A ready-made, signed firmware installs from the browser; to build your own, ESPHome **≥ 2026.9.0**.
+- A Tab5: the **ST7123** display chip is the author's; the ST7121 runs on another user's unit, the original ILI9881C is built but untested — see [hardware compatibility](#hardware-compatibility). Or a **Waveshare ESP32-P4 7B** (7-inch, 1024×600): experimental, and you build its firmware yourself ([Waveshare 7B](docs/waveshare-7b.md)).
+- Home Assistant 2026.8 or later. A ready-made, signed firmware installs from the browser; to build your own, ESPHome **≥ 2026.9.0** (2026.9.1 for the Waveshare).
 - The screen speaks French, English, German, Dutch, Spanish, Italian or Turkish, switched from Home Assistant — all written by an AI like the rest of the project; the author checked the French, the others are not reviewed yet. Only the quiz questions stay in French ([translations](docs/translations.md)).
 - The layout started from the author's home. You pick your devices in Home Assistant with the mouse (a blueprint), and what you don't have disappears from the screen. The tiles at the bottom are rooms; the other zones have a single place each: the climate card, the TV, the phone, two temperatures, up to 5 plants ([adapt to your home](docs/installation/adapt-to-your-home.md)).
 - The rain graph and the warnings are made for France first (Météo-France); elsewhere the rain comes from Open-Meteo by itself, and other services are picked in Home Assistant ([weather providers](docs/installation/weather.md)).
@@ -94,6 +98,10 @@ Without compiling, since 3.0: a Tab5, a USB-C cable that carries data, Chrome or
 6. [Your devices](docs/installation/devices.md): the automation made from the blueprint, with the mouse; changing a device needs no flash.
 7. [A dashboard](docs/installation/dashboard.md) (optional): one line in the template tool of Home Assistant writes a dashboard for the tablet, with its settings and its health.
 
+**Where things are set.** Once the tablet is in Home Assistant (step 4), everything is done there with the mouse, in two places. The « Tab5 · » lists hold your sources: weather, calendars, phone, music players, tracked sensors (step 5). **One automation made from the blueprint** holds your home: the rooms and their tiles, the climate, the temperatures, the energy sensors, the cameras, what the zones of the home screen show and what each tap and long press does (step 6). Every field is optional, with a help sentence in French and English, and a change reaches the screen at once, without a flash. The tablet's own settings (theme, language, brightness, alarm clock) are on the tablet and on its device page.
+
+![The screen slots automation in the Home Assistant editor: the blueprint and its sections, Room 1 open](docs/images/installation/ha_blueprint_en.png)
+
 Updates then go through Home Assistant, in this order: the Home Assistant files first (in one click with HACS, otherwise by hand), then the firmware, from its « Firmware » entity ([updates](docs/installation/updates.md)). Over the air, the tablet only accepts a firmware signed with the project key. Every setting — theme, light or dark, language, alarm clock, screen to show: [tablet settings](docs/installation/settings.md). To change the firmware yourself: [build your own](docs/installation/build.md).
 
 Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes demo data to a flashed tablet with a small script: no Home Assistant, nothing left to clean up.
@@ -105,6 +113,7 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 | **ST7123** | 14 Oct 2025 → 28 Apr 2026 | ✅ Supported — the author's device, in daily use (default) |
 | **ST7121** | from 28 Apr 2026 | ✅ Runs on another user's unit since October 2026: display, touch and wake word ([Discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)); the author has none — add `tab5_ecran: st7121` to `Tab5/user_entities.yaml` |
 | **ILI9881C** + GT911 touch | 9 May 2025 → 14 Oct 2025 | 🧪 Compiles, untested — add `tab5_ecran: ili9881c` to `Tab5/user_entities.yaml` |
+| **Waveshare ESP32-P4 7B** (another board: 7-inch, 1024×600) | — | 🧪 Experimental — runs on the author's board since 14 Oct 2026, the inside of most popups not adapted to its screen yet; build it yourself with `tab5_carte: waveshare-7b` and ESPHome 2026.9.1 ([Waveshare 7B](docs/waveshare-7b.md)) |
 
 "Compiles, untested": the CI builds this variant on every display change, and the install page offers it, but this firmware has not been run on that chip yet. The ST7121 is built the same way, and has run on a user's unit since October 2026. How to identify your unit, and the ST7121 reports: [hardware revisions](docs/hardware.md#hardware-revisions). Tried one? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
@@ -118,9 +127,9 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 
 ![Six themes of the M5Stack Tab5 home screen drawn by the firmware: Pixel dark with a kitchen leak alert, Bonbon light with the living room's devices, Sorbet dark with a weather warning, Béton brut light with a low battery alert, Zen Sumi dark with the garden's devices and Capsule light with rain in 10 minutes](docs/images/tab5_themes_en.jpg)
 
-**Solar energy** (optional): solar, home, grid and home battery right now, and the production of the last 30 days, from the sensors picked in the blueprint ([solar energy](docs/installation/adapt-to-your-home.md#solar-energy-optional)). Render with demo data; not tried with a real solar installation yet.
+**Energy** (optional): up to four pages from the sensors picked in the blueprint ([solar energy](docs/installation/adapt-to-your-home.md#solar-energy-optional)). Here the flows right now, the line as thick as the power; then the day's sun and forecast, the production, and the month's balance in kWh. Render with demo data; it runs at a user's home with real panels.
 
-![Energy popup of the M5Stack Tab5: solar, home, grid and battery cards, and the solar production of the last 30 days as bars](docs/images/tab5_energie_en.png)
+![Energy popup of the M5Stack Tab5, Flow page: solar, home, grid and battery as circles joined by lines as thick as the power flowing](docs/images/notice/energie-flux-en.webp)
 
 **The tablet in Home Assistant** — the dashboard written for your entities by [step 7](docs/installation/dashboard.md):
 
@@ -207,7 +216,7 @@ If something in the code is weird, it might be an AI quirk. If something works s
 > **Cette page est aussi l'accueil du site**, avec un menu, une recherche et chaque page en français ou en anglais : **[axellum.github.io/M5-Tab5-ESPHome-LVGL/fr/](https://axellum.github.io/M5-Tab5-ESPHome-LVGL/fr/)**.
 <!-- /hors-site -->
 
-**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, énergie solaire, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues. Vingt et un thèmes, clairs ou sombres, au choix depuis Home Assistant. C'est mon écran de tous les jours, partagé au cas où il serve à quelqu'un.
+**Un écran mural Home Assistant qui tourne nativement sur le M5Stack Tab5 (ESP32-P4).** Pas de navigateur, pas de polling : Home Assistant pousse ce qui a changé, et l'écran ne redessine que ça, en C++ avec LVGL. Mot d'activation « Okay Nabu » en local, prévisions à 15 jours, clim, lumières, plantes, énergie, musique, caméras, télécommande TV, réveil — et 8 jeux hors ligne, en sept langues. Vingt et un thèmes, clairs ou sombres, au choix depuis Home Assistant. C'est mon écran de tous les jours, partagé au cas où il serve à quelqu'un. Il tourne aussi, à l'essai, sur une carte Waveshare de 7 pouces.
 
 ![La M5Stack Tab5 de l'auteur tenue à la main sur son socle : l'heure, deux températures, la consigne de la clim, le bandeau des horaires de travail et les prévisions à 5 jours avec orage, pluie et soleil](docs/images/tab5_hero_4x3.jpg)
 
@@ -218,16 +227,17 @@ If something in the code is weird, it might be an AI quirk. If something works s
 ## Pourquoi celui-ci
 
 - **Push uniquement, zéro polling.** Home Assistant n'envoie que ce qui a changé ; la tablette ne demande jamais rien ([ADR-0001](docs/decisions/0001-push-only-zero-polling.md)).
+- **Se règle à la souris, dans Home Assistant.** Après l'installation, pièces, tuiles, capteurs, caméras, ce que montre chaque zone et ce que fait chaque geste se choisissent dans un seul blueprint, et changer d'appareil ne demande pas de flash ([vos appareils](docs/installation/devices.md#version-française)).
 - **La voix démarre sur l'appareil.** « Okay Nabu » et un mot « Stop » pour le volet roulant sont détectés sur la tablette ; l'audio n'en sort qu'après le mot d'activation.
 - **Sept langues, jusque dans les détails.** Français, anglais, allemand, néerlandais, espagnol, italien et turc, au choix depuis Home Assistant : menus, jeux, dates, textes envoyés par Home Assistant et briefing parlé du réveil. Traduites par une IA ; l'auteur n'a relu que le français ([traductions](docs/translations.md#version-française)).
 - **Vingt et un thèmes, clairs ou sombres.** Couleurs, formes et polices de l'horloge changent aussitôt, sans redémarrer, depuis Home Assistant ou la console de la tablette ; « Auto » passe en clair au lever du soleil et en sombre à son coucher ([thèmes](docs/installation/settings.md#thème-clair-ou-sombre)).
 - **Continue de marcher quand Home Assistant ne marche plus.** Horloge, réveil, jeux et console de diagnostic restent utilisables seuls.
-- **Documenté et testé comme un produit.** 61 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome.
-- **Tourne sur les révisions ST7123 et ST7121, et compile pour l'ILI9881C d'origine**, alors que la plupart des exemples Tab5 publiés ne couvrent que celle d'origine.
+- **Beaucoup de notes et de tests.** 61 [décisions d'architecture](docs/decisions/README.md) (ADR), des tests hôte pour les moteurs C++ des jeux et du réveil, et une CI qui compile le firmware avec la version minimale et la dernière version d'ESPHome. Le tout écrit avec l'IA, et essayé sur de vrais écrans, un à la fois.
+- **Tourne sur les révisions ST7123 et ST7121 du Tab5**, compile pour l'ILI9881C d'origine, et tourne, à l'essai, sur la [Waveshare ESP32-P4 7B](docs/waveshare-7b.md#version-française) de 7 pouces.
 
 ## Ce que ça fait
 
-Une seule page de 1280×720 : les fenêtres s'ouvrent d'un appui, d'un appui long ou d'un glissement — chacune est dans la [notice d'utilisation](docs/notice/README.md#version-française).
+Une seule page (1280×720 sur le Tab5, 1024×600 sur la Waveshare 7B) : les fenêtres s'ouvrent d'un appui, d'un appui long ou d'un glissement — chacune est dans la [notice d'utilisation](docs/notice/README.md#version-française).
 
 - **Météo** — pluie dans l'heure, prévisions horaires et à 15 jours, vigilances ([plus bas](#pluie-dans-lheure-vigilances)).
 - **Carte centrale** — toutes les 8 s : horaires, graphe de pluie, vigilances, récap du calendrier sur 3 jours et jusqu'à 4 bandeaux poussés par Home Assistant, les alertes auxquelles vous êtes abonné ; un appui masque un bandeau, un appui long montre les 20 dernières alertes ([écran d'accueil](docs/notice/home.md#version-française), [alertes](docs/notice/alerts.md#version-française)).
@@ -240,8 +250,11 @@ Une seule page de 1280×720 : les fenêtres s'ouvrent d'un appui, d'un appui lon
 - **Télécommande TV** — une télécommande Samsung plein écran : marche, croix, volume, chaînes, lecture, muet, par Home Assistant ([télécommande TV](docs/notice/tv.md#version-française)).
 - **Voix** — « Okay Nabu » détecté sur la tablette, ou un appui sur le micro ; deux assistants au choix depuis l'écran, la domotique ou la discussion ([voix](docs/notice/voice.md#version-française)).
 - **Calendrier et réveil** — un calendrier du mois calculé sur la tablette, avec horaires, fériés, vacances et rendez-vous ; un réveil avec un briefing parlé ([calendrier](docs/notice/calendar.md#version-française), [réveil](docs/notice/alarm.md#version-française)).
-- **Énergie solaire** (facultatif) — solaire, maison, réseau et batterie de la maison en direct, et la production par heure, jour et mois ([énergie](docs/notice/energy.md#version-française)).
+- **Énergie** (facultatif) — ce qui circule en direct entre le soleil, la maison, le réseau et une batterie de la maison, le soleil du jour et une prévision de production apprise sur vos panneaux, la production par heure, jour et mois, et le bilan du mois en kWh, comme si le réseau était une batterie ([énergie](docs/notice/energy.md#version-française)).
 - **Historique des températures** — un appui long sur une température : sa courbe sur 24 heures, 7 ou 30 jours, avec la prévision de la météo pour la seconde ([température](docs/notice/temperature.md#version-française)).
+- **Musique** — n'importe quel lecteur de Home Assistant : pochette, titre, position, lecture et volume ; un lecteur compact peut se placer à gauche de l'horloge ([musique](docs/notice/music.md#version-française)).
+- **Caméras** — une image fixe de chaque caméra, rafraîchie tant que la fenêtre est ouverte, rangée par pièce ; pas de vidéo ([caméras](docs/notice/cameras.md#version-française)).
+- **Suivi, frigos, serveur IA** — jusqu'à six capteurs suivis (une action en bourse, une puissance…) avec leur courbe sur 24 heures ; les frigos et congélateurs comparés à leur norme, avec une alerte ; le tableau de bord d'un serveur de LLM local ([suivi](docs/notice/tracking.md#version-française), [frigos](docs/notice/fridge.md#version-française), [serveur IA](docs/notice/ai-server.md#version-française)).
 - **Console de diagnostic** — mémoire, Wi-Fi, temps de marche, volume, thème ; recharger les automatisations, redémarrer Home Assistant ou la tablette, après confirmation ([console système](docs/notice/console.md#version-française)).
 - **Réglages** — luminosité, extinction automatique, thème, clair ou sombre, langue, sans ouvrir Home Assistant ([réglages](docs/notice/settings.md#version-française)).
 - **8 jeux hors ligne** — expérimentaux : échecs, dames, go, casse-briques, flipper, Lode Runner, un roguelite de bille et un quiz ([Arcade](docs/notice/arcade.md#version-française)).
@@ -262,8 +275,8 @@ Ce pour quoi l'écran a d'abord été fait : voir d'un coup d'œil s'il va pleuv
 
 ## Avant de commencer
 
-- Une Tab5 : la puce écran **ST7123** est celle utilisée tous les jours ; la ST7121 tourne chez un autre utilisateur, l'ILI9881C d'origine est compilée mais pas essayée — voir la [compatibilité matérielle](#compatibilité-matérielle).
-- Home Assistant 2026.8 ou plus récent. Un firmware prêt à l'emploi et signé s'installe depuis le navigateur ; pour compiler le vôtre, ESPHome **≥ 2026.9.0**.
+- Une Tab5 : la puce écran **ST7123** est celle de l'auteur ; la ST7121 tourne chez un autre utilisateur, l'ILI9881C d'origine est compilée mais pas essayée — voir la [compatibilité matérielle](#compatibilité-matérielle). Ou une **Waveshare ESP32-P4 7B** (7 pouces, 1024×600) : expérimentale, et son firmware se compile soi-même ([Waveshare 7B](docs/waveshare-7b.md#version-française)).
+- Home Assistant 2026.8 ou plus récent. Un firmware prêt à l'emploi et signé s'installe depuis le navigateur ; pour compiler le vôtre, ESPHome **≥ 2026.9.0** (2026.9.1 pour la Waveshare).
 - L'écran parle français, anglais, allemand, néerlandais, espagnol, italien ou turc, au choix depuis Home Assistant — toutes écrites par une IA comme le reste du projet ; l'auteur a relu le français, les autres ne sont pas encore relues. Seules les questions du quiz restent en français ([traductions](docs/translations.md#version-française)).
 - La disposition est partie de la maison de l'auteur. Vous choisissez vos appareils dans Home Assistant, à la souris (un blueprint), et ce que vous n'avez pas disparaît de l'écran. Les tuiles du bas sont des pièces ; les autres zones ont une seule place chacune : la carte clim, la TV, le téléphone, deux températures, jusqu'à 5 plantes ([adapter à sa maison](docs/installation/adapt-to-your-home.md#version-française)).
 - Le graphe de pluie et les vigilances sont d'abord faits pour la France (Météo-France) ; ailleurs, la pluie vient toute seule d'Open-Meteo, et d'autres services se choisissent dans Home Assistant ([fournisseurs météo](docs/installation/weather.md#version-française)).
@@ -280,6 +293,10 @@ Sans compiler, depuis la 3.0 : une Tab5, un câble USB-C qui transmet les donné
 6. [Vos appareils](docs/installation/devices.md#version-française) : l'automatisation créée depuis le blueprint, à la souris ; changer d'appareil ne demande pas de flash.
 7. [Un tableau de bord](docs/installation/dashboard.md#version-française) (facultatif) : une ligne dans l'outil Modèle de Home Assistant écrit un tableau de bord pour la tablette, avec ses réglages et sa santé.
 
+**Où se règle quoi.** Une fois la tablette dans Home Assistant (étape 4), tout se fait là, à la souris, en deux endroits. Les listes « Tab5 · » gardent vos sources : météo, agendas, téléphone, lecteurs de musique, capteurs suivis (étape 5). **Une automatisation créée depuis le blueprint** garde votre maison : les pièces et leurs tuiles, la clim, les températures, les capteurs d'énergie, les caméras, ce que montrent les zones de l'accueil et ce que fait chaque appui et appui long (étape 6). Tous les champs sont facultatifs, avec une phrase d'aide en français et en anglais, et un changement arrive aussitôt à l'écran, sans flash. Les réglages de la tablette elle-même (thème, langue, luminosité, réveil) sont sur la tablette et sur sa page d'appareil.
+
+![L'automatisation des emplacements dans l'éditeur de Home Assistant : le blueprint et ses sections, Pièce 1 ouverte](docs/images/installation/ha_blueprint_fr.png)
+
 Les mises à jour passent ensuite par Home Assistant, dans cet ordre : les fichiers Home Assistant d'abord (en un clic avec HACS, sinon à la main), puis le firmware, par son entité « Firmware » ([mises à jour](docs/installation/updates.md#version-française)). Par le réseau, la tablette n'accepte qu'un firmware signé par la clé du projet. Chaque réglage — thème, clair ou sombre, langue, réveil, écran à afficher : [réglages de la tablette](docs/installation/settings.md#version-française). Pour modifier le firmware vous-même : [compiler le vôtre](docs/installation/build.md#version-française).
 
 Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-française) pousse des données de démonstration vers une tablette flashée avec un petit script : sans Home Assistant, rien à nettoyer ensuite.
@@ -291,6 +308,7 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 | **ST7123** | du 14/10/2025 au 28/04/2026 | ✅ Prise en charge — la tablette de l'auteur, utilisée tous les jours (défaut) |
 | **ST7121** | depuis le 28/04/2026 | ✅ Tourne chez un autre utilisateur depuis octobre 2026 : écran, tactile et mot d'activation ([discussion #278](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/278)) ; l'auteur n'en a pas — ajouter `tab5_ecran: st7121` dans `Tab5/user_entities.yaml` |
 | **ILI9881C** + tactile GT911 | du 09/05/2025 au 14/10/2025 | 🧪 Compile, non testée — ajouter `tab5_ecran: ili9881c` dans `Tab5/user_entities.yaml` |
+| **Waveshare ESP32-P4 7B** (une autre carte : 7 pouces, 1024×600) | — | 🧪 Expérimentale — tourne sur la carte de l'auteur depuis le 14/10/2026, l'intérieur de la plupart des popups pas encore adapté à son écran ; à compiler soi-même avec `tab5_carte: waveshare-7b` et ESPHome 2026.9.1 ([Waveshare 7B](docs/waveshare-7b.md#version-française)) |
 
 « Compile, non testée » : la CI compile cette variante à chaque changement de l'écran, et la page d'installation la propose, mais ce firmware n'a encore jamais tourné sur cette puce. La ST7121 est compilée de la même façon, et tourne chez un utilisateur depuis octobre 2026. Comment identifier votre appareil, et les retours sur la ST7121 : [révisions matérielles](docs/hardware.md#révisions-matérielles). Vous en avez essayé une ? → [Discussions](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility).
 
@@ -304,9 +322,9 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 
 ![Six thèmes de l'accueil de la M5Stack Tab5 dessinés par le firmware : Pixel sombre avec une alerte de fuite en cuisine, Bonbon clair avec les appareils du salon, Sorbet sombre avec une vigilance météo, Béton brut clair avec une alerte de pile faible, Zen Sumi sombre avec les appareils du jardin et Capsule clair avec de la pluie dans 10 minutes](docs/images/tab5_themes.jpg)
 
-**Énergie solaire** (facultatif) : solaire, maison, réseau et batterie de la maison en direct, et la production des 30 derniers jours, d'après les capteurs choisis dans le blueprint ([énergie solaire](docs/installation/adapt-to-your-home.md#énergie-solaire-facultatif)). Rendu avec des données de démonstration ; pas encore essayé avec une vraie installation solaire.
+**Énergie** (facultatif) : jusqu'à quatre pages, d'après les capteurs choisis dans le blueprint ([énergie solaire](docs/installation/adapt-to-your-home.md#énergie-solaire-facultatif)). Ici les flux en direct, chaque ligne aussi épaisse que la puissance ; puis le soleil et la prévision du jour, la production, et le bilan du mois en kWh. Rendu avec des données de démonstration ; il tourne chez un utilisateur avec de vrais panneaux.
 
-![Popup Énergie de la M5Stack Tab5 : solaire, maison, réseau et batterie en direct, et la production solaire des 30 derniers jours en barres](docs/images/tab5_energie.png)
+![Popup Énergie de la M5Stack Tab5, page des flux : solaire, maison, réseau et batterie en cercles, reliés par des lignes aussi épaisses que la puissance qui passe](docs/images/notice/energie-flux-fr.webp)
 
 **La tablette dans Home Assistant** — le tableau de bord écrit pour vos entités par l'[étape 7](docs/installation/dashboard.md#version-française) :
 
