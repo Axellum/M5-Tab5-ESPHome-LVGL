@@ -54,14 +54,9 @@ NON_MONTREES = {
     "lumieres-salon": "lumieres-chambre montre la même fenêtre, lumière allumée",
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
     "energie-mois": "energie-jours montre la même fenêtre ; les vues sont décrites",
-    # Pages Flux, Aujourd'hui et Bilan du popup Énergie (ADR-0058, 10/10/2026) : images à tirer du
-    # rendu de la PR (elles ne peuvent pas être capturées avant que le firmware existe), puis citées.
-    "energie-flux": "page Flux (ADR-0058) ; image à tirer du rendu de la PR",
-    "energie-aujourdhui": "page Aujourd'hui (ADR-0058) ; image à tirer du rendu de la PR",
-    "energie-bilan": "page Bilan (ADR-0058) ; image à tirer du rendu de la PR",
     # Vues Jours et Mois du Bilan en kWh et variante avec prix (ADR-0062), décrites dans
     # energy.md : images à tirer du rendu de la PR, puis citées.
-    "energie-bilan-jours": "page Bilan, mois civil (ADR-0062) ; image à tirer du rendu de la PR",
+    "energie-bilan-jours": "energie-bilan montre la même page ; la vue des jours est décrite",
     "energie-bilan-mois": "energie-bilan-jours montre la même page ; la vue des mois est décrite",
     "energie-bilan-prix": "energie-bilan-jours montre la même page ; les économies sont décrites",
     "console-confirmer-redemarrage-ha": "même confirmation que console-confirmer-reboot",
@@ -83,7 +78,6 @@ NON_MONTREES = {
     # du rendu de la PR, puis citées.
     "telecommande-plusieurs": "télécommande à plusieurs pages, décrite dans tv.md ; image à tirer du rendu",
     "telecommande-boitier": "page d'un boîtier (Apple TV), décrite dans tv.md ; image à tirer du rendu",
-    "roue-lampe": "roue d'actions rapides (ADR-0036), décrite dans tiles.md ; image à tirer du rendu",
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     # Tuile − / + pièce par pièce (14/10/2026, discussion #278) : écrans de vérification,
     # réunis par tools/rendu/planche_reglables.py ; la règle est décrite dans home.md.
@@ -104,8 +98,7 @@ NON_MONTREES = {
     "roue-navigation-agenda": "roue-navigation montre la même roue ; les familles sont décrites dans home.md",
     "roue-navigation-bureau": "accueil-ha-piece-4 montre la même pièce ; le choix d'une pièce est décrit dans home.md",
     "aller-lumieres": "lumieres-chambre montre la même fenêtre ; l'ouverture par la roue est décrite dans home.md",
-    "maison": "image à tirer du rendu de la PR du popup Maison, puis citer dans house.md",
-    "maison-2-pieces": "maison montrera la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
+    "maison-2-pieces": "maison montre la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
     "maison-roue": "roue d'actions rapides (ADR-0036) devant le popup Maison, décrite dans house.md",
     # Lumières et Volets en pages (ADR-0046, 09/10/2026) : décrits dans lights.md et
@@ -118,25 +111,20 @@ NON_MONTREES = {
     "volets-une-piece": "aller-volet montre la même fenêtre ; une seule pièce, décrite dans shutters.md",
     # Popup Météo (ADR-0043, 09/10/2026), décrit dans weather.md : images à tirer du rendu
     # de la PR, puis citées.
-    "meteo-aujourdhui": "page Aujourd'hui du popup Météo, décrite dans weather.md ; image à tirer du rendu",
     "meteo-jours": "page 10 jours du popup Météo, décrite dans weather.md ; image à tirer du rendu",
     "meteo-details": "page Détails du popup Météo, décrite dans weather.md ; image à tirer du rendu",
     # Popup Musique (ADR-0050, 10/10/2026), décrit dans music.md : images à tirer du rendu
     # de la PR, puis citées.
-    "musique": "popup Musique, décrit dans music.md ; image à tirer du rendu",
     "musique-vide": "musique montre la même fenêtre ; l'attente de Home Assistant est décrite dans music.md",
     "musique-eteint": "musique montre la même fenêtre ; « Lecteur éteint » et « Allumer » sont décrits dans music.md",
     # Popup Suivi (ADR-0054, 10/10/2026), décrit dans tracking.md : images à tirer du rendu
     # de la PR, puis citées.
-    "suivi": "popup Suivi, décrit dans tracking.md ; image à tirer du rendu",
     "suivi-vide": "suivi montre la même fenêtre ; l'attente de Home Assistant est décrite dans tracking.md",
     # Popup Froid (ADR-0055, 10/10/2026), décrit dans fridge.md : images à tirer du rendu
     # de la PR, puis citées.
-    "froid": "popup Froid, décrit dans fridge.md ; image à tirer du rendu",
     "froid-vide": "froid montre la même fenêtre ; l'attente de Home Assistant est décrite dans fridge.md",
     # Popup Serveur IA (ADR-0059, 10/10/2026), décrit dans ai-server.md : images à tirer
     # du rendu de la PR, puis citées.
-    "serveur-ia": "popup Serveur IA, décrit dans ai-server.md ; image à tirer du rendu",
     "serveur-ia-hors-ligne": "serveur-ia montre la même fenêtre ; « Hors ligne » et « — » sont décrits dans ai-server.md",
     "serveur-ia-vide": "serveur-ia montre la même fenêtre ; « Aucun » partout est décrit dans ai-server.md",
     # Boutons d'action (ADR-0060), décrits dans ai-server.md : images à tirer du rendu de la PR.

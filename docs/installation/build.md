@@ -40,6 +40,8 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 
 **Tab5 revision:** if the display chip on your sticker is not the ST7123, add `tab5_ecran: st7121` or `tab5_ecran: ili9881c` to this file (see [hardware revisions](../hardware.md#hardware-revisions)). Leave it out for the ST7123.
 
+**Several screens:** keep the default name (`tab5-ha-hmi`) for the first one and give each other screen its own, `tab5_nom: salon-7b` (lower case, digits and dashes; `tab5_nom_affiche` for the name shown in Home Assistant), or `-s tab5_nom salon-7b` on the command line. Home Assistant pushes the same display to every connected screen, nothing to set there ([ADR-0063](../decisions/0063-several-screens.md)). Do not rename a tablet already installed.
+
 **Your devices (lights, climate, plants, TV…) are not set here any more (since 3.0)**: you pick them in Home Assistant with the mouse, see [step 6](devices.md) and [adapt to your home](adapt-to-your-home.md); old `entity_light_…` keys in an existing file are simply ignored. The entry point `tab5-ha-hmi.yaml` includes this file via `substitutions: !include Tab5/user_entities.yaml`. No entity key is left: Home Assistant finds the tablet's own entities (voice satellite, media player, pipeline select) and those of the « MAJ Écran » button by itself ([ADR-0025](../decisions/0025-events-only.md)); old `entity_tab5_…`, `entity_primary_active` and `entity_push_automation` lines are ignored.
 
 ## 3. Create your firmware signing key
@@ -121,6 +123,8 @@ cp Tab5/user_entities.example.yaml Tab5/user_entities.yaml
 **Fuseau horaire :** rien à régler depuis la 3.0. La tablette prend celui de Home Assistant et garde le dernier reçu : le réveil reste juste quand HA manque après une coupure de courant. Une ancienne ligne `tab5_fuseau` est ignorée.
 
 **Révision du Tab5 :** si la puce écran de votre autocollant n'est pas la ST7123, ajoutez `tab5_ecran: st7121` ou `tab5_ecran: ili9881c` dans ce fichier (voir [révisions matérielles](../hardware.md#révisions-matérielles)). Pour la ST7123, ne mettez rien.
+
+**Plusieurs écrans :** gardez le nom par défaut (`tab5-ha-hmi`) pour le premier et donnez le sien à chaque autre écran, `tab5_nom: salon-7b` (minuscules, chiffres et tirets ; `tab5_nom_affiche` pour le nom montré dans Home Assistant), ou `-s tab5_nom salon-7b` sur la ligne de commande. Home Assistant pousse le même affichage à chaque écran connecté, rien à y régler ([ADR-0063](../decisions/0063-several-screens.md)). Ne renommez pas une tablette déjà installée.
 
 **Vos appareils (lumières, clim, plantes, TV…) ne se règlent plus ici (depuis la 3.0)** : vous les choisissez dans Home Assistant, à la souris, voir l'[étape 6](devices.md#version-française) et [adapter à sa maison](adapt-to-your-home.md#version-française) ; les anciennes clés `entity_light_…` d'un fichier existant sont simplement ignorées. Le point d'entrée `tab5-ha-hmi.yaml` les charge via `substitutions: !include Tab5/user_entities.yaml`. Il ne reste aucune clé d'entité : Home Assistant retrouve seul les entités de la tablette (satellite vocal, lecteur média, select de pipeline) et celles du bouton « MAJ Écran » ([ADR-0025](../decisions/0025-events-only.md)) ; d'anciennes lignes `entity_tab5_…`, `entity_primary_active` et `entity_push_automation` sont ignorées.
 

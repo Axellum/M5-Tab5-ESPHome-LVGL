@@ -274,3 +274,15 @@ class CacheJinja(jinja2.BytecodeCache):
         if code is None:
             code = self._codes[("texte", texte)] = env.compile(texte)
         return env.template_class.from_code(env, code, env.make_globals(None))
+
+
+def envoi_tablettes(etape):
+    """L'envoi d'une étape mise en boucle sur les tablettes (ADR-0063, plusieurs écrans) :
+    `repeat: for_each` dont la séquence pose `tablette` puis appelle `esphome.{{ tablette }}_…` ;
+    renvoie cette action. Toute autre étape est rendue telle quelle."""
+    boucle = etape.get("repeat") if isinstance(etape, dict) else None
+    if isinstance(boucle, dict) and "for_each" in boucle:
+        for e in boucle.get("sequence") or []:
+            if isinstance(e, dict) and str(e.get("action", "")).startswith("esphome."):
+                return e
+    return etape

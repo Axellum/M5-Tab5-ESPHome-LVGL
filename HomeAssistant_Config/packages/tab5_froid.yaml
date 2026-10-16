@@ -374,7 +374,14 @@ script:
         value_template: >-
           {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
           {{ tab5_connectee() == 'oui' }}
-      - action: esphome.tab5_ha_hmi_tab5_maj_froid
-        continue_on_error: true
-        data:
-          payload: "{{ payload }}"
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_froid"
+              continue_on_error: true
+              data:
+                payload: "{{ payload }}"

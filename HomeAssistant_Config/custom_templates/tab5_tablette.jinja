@@ -26,6 +26,13 @@
       entity_id du capteur « HA API Status » d'une tablette : la dernière connectée s'il y
       en a une, sinon la première trouvée ; '' sans tablette. Ses autres entités se
       trouvent par device_entities(device_id(…)) (packages/tab5_reglages.yaml).
+  tab5_prefixe(device_id), tab5_destinataires(appareil)
+      Plusieurs écrans (ADR-0063) : le préfixe des actions d'une tablette (son capteur
+      « Préfixe des actions »), et la liste des préfixes à qui envoyer, séparés par des
+      virgules : la tablette `appareil` si c'en est une, sinon chaque tablette connectée.
+      Chaque poussée boucle dessus :
+        {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+        {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
 
   Une macro rend toujours du texte : 'oui' ou '' comme couvre() de tab5_calendar.jinja.
   Une condition compare donc : `{{ tab5_connectee() == 'oui' }}` (un « oui » nu ne vaut
@@ -57,5 +64,38 @@
     {{- 'oui' if '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' else '' -}}
   {%- else -%}
     {{- 'oui' -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_prefixe(d) -%}
+  {#- Préfixe des actions de l'appareil d (ADR-0063) : l'état de son capteur « Tab5
+      Préfixe des actions » ; « tab5_ha_hmi » pour un firmware qui ne l'a pas (avant
+      plusieurs écrans : il porte toujours ce nom) ; '' tant que ce capteur n'a pas de
+      valeur lisible (rien n'est envoyé plutôt qu'à un mauvais nom). -#}
+  {%- set capteurs = device_entities(d | string) | select('match', 'sensor[.].*_prefixe_des_actions$') | list -%}
+  {%- if not capteurs -%}
+    {{- 'tab5_ha_hmi' -}}
+  {%- else -%}
+    {{- capteurs | map('states') | select('match', '^[a-z0-9_]+$') | first | default('') -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_destinataires(appareil) -%}
+  {#- Préfixes à qui envoyer, séparés par des virgules (ADR-0063, plusieurs écrans ; lire
+      avec `.split(',') | select | list`, du Jinja pur, sans filtre propre à HA) : la tablette `appareil` (device_id de l'événement qui demande une
+      réponse : un mois du calendrier, une vue d'un popup) si c'en est une ; sinon chaque
+      tablette connectée (même affichage partout). '' : aucune. -#}
+  {%- set d = appareil | default('', true) | string -%}
+  {%- if d and '.' not in d and device_attr(d, 'model') == 'tab5-ha-hmi' -%}
+    {{- tab5_prefixe(d) -}}
+  {%- else -%}
+    {%- set ns = namespace(l=[]) -%}
+    {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') | select('is_state', 'on') -%}
+      {%- if device_attr(e, 'model') == 'tab5-ha-hmi' -%}
+        {%- set p = tab5_prefixe(device_id(e)) -%}
+        {%- if p and p not in ns.l -%}
+          {%- set ns.l = ns.l + [p] -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{- ns.l | join(',') -}}
   {%- endif -%}
 {%- endmacro -%}

@@ -41,7 +41,7 @@ from tests.test_tuiles_blueprint import (
     _rendre,
     _tablette,
 )
-from tests.commun import CARTES, _jetons as jetons_resolus, constantes_cpp, contrat, lire as _lire, resoudre, source
+from tests.commun import envoi_tablettes, CARTES, _jetons as jetons_resolus, constantes_cpp, contrat, lire as _lire, resoudre, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ADR = os.path.join(REPO, "docs", "decisions", "0026-climate-from-device.md")
@@ -267,17 +267,18 @@ def test_climr_part_avant_l_etat_de_la_clim():
     actions = _blueprint()["actions"]
     # Poussée complète : dans le même bloc que tab5_maj_clim, juste avant.
     bloc = _chercher(actions, lambda d: "tout_pousser and clim != ''" in str(d.get("if", "")))
-    etapes = [str(e.get("action", "")) for e in bloc["then"]]
+    envois = [envoi_tablettes(e) for e in bloc["then"]]
+    etapes = [str(e.get("action", "")) for e in envois]
     i_clim = next(i for i, a in enumerate(etapes) if a.endswith("_tab5_maj_clim"))
     assert etapes[i_clim - 1].endswith("_tab5_maj_emplacements")
-    assert bloc["then"][i_clim - 1]["data"]["payload"] == "{{ clim_reglages }}"
+    assert envois[i_clim - 1]["data"]["payload"] == "{{ clim_reglages }}"
     # Changement de la clim : climr (s'il a pu changer), puis l'état.
     branche = _chercher(actions, lambda d: d.get("alias") == "Clim : son état a changé")
-    seq = branche["sequence"]
+    seq = [envoi_tablettes(e) for e in branche["sequence"]]
     i_si = next(i for i, e in enumerate(seq) if "clim_reglages" in str(e.get("if", "")))
     i_clim = next(i for i, e in enumerate(seq) if str(e.get("action", "")).endswith("_tab5_maj_clim"))
     assert i_si < i_clim
-    assert seq[i_si]["then"][0]["data"]["payload"] == "{{ clim_reglages }}"
+    assert envoi_tablettes(seq[i_si]["then"][0])["data"]["payload"] == "{{ clim_reglages }}"
 
 
 @pytest.mark.parametrize("avant, apres, attendu", [
@@ -446,7 +447,8 @@ def test_champs_de_ce_dans_l_ordre_de_tab5_maj_clim():
         ["target", "current", "mode", "preset", "fan", "swing"]
     # Ce que le blueprint envoie à tab5_maj_clim, champ par champ…
     branche = _chercher(_blueprint()["actions"], lambda d: d.get("alias") == "Clim : son état a changé")
-    donnees = next(e for e in branche["sequence"] if str(e.get("action", "")).endswith("_tab5_maj_clim"))["data"]
+    donnees = next(e for e in map(envoi_tablettes, branche["sequence"])
+                   if str(e.get("action", "")).endswith("_tab5_maj_clim"))["data"]
     attendu = []
     for champ in ("target", "current", "mode", "preset", "fan", "swing"):
         m = re.search(r"state_attr\(clim, '(\w+)'\)(.*?)\}\}", donnees[champ])
@@ -627,7 +629,7 @@ def test_clims_des_tuiles_a_la_connexion():
     # Une seule poussée, au protocole 2 : réglages, puis tRT, puis ce.
     bloc = _bloc_envoi(p)
     assert p.modele(bloc["if"]) is True
-    assert bloc["then"][0]["data"]["payload"] == "{{ reglages_tuiles ~ etats_tuiles ~ etats_clims }}"
+    assert envoi_tablettes(bloc["then"][0])["data"]["payload"] == "{{ reglages_tuiles ~ etats_tuiles ~ etats_clims }}"
     # Protocole 1 (firmware 3.0/3.1) : rien.
     p1, *_ = _poussee(_evenement("connexion"), tablettes=_tablette("3.1.0 (ESPHome 2026.9.0)"))
     assert p1.modele(_bloc_envoi(p1)["if"]) is False
@@ -769,7 +771,7 @@ def test_le_pipeline_change_renvoie_les_zones():
     assert p.conditions(), "le passage continue (tablette connectée)"
     branche = _chercher(p.corps["actions"], lambda d: d.get("alias") == "La tablette demande quelles zones sont absentes")
     assert p.modele(branche["conditions"]) is True
-    assert branche["sequence"][0]["action"].endswith("_tab5_maj_zones")
+    assert envoi_tablettes(branche["sequence"][0])["action"].endswith("_tab5_maj_zones")
     # Ni emplacement, ni tuile, ni définition à pousser pour ce déclencheur.
     assert p["cles"] == [] and p["tuiles_a_pousser"] == [] and p["redefinir"] is False
 

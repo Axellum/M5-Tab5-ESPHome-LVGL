@@ -35,6 +35,7 @@ HA_DIR = REPO / "HomeAssistant_Config"
 # Entités du firmware volontairement sans carte : (domaine, slug du nom) → raison.
 SANS_CARTE = {
     ("number", "volume"): "doublon du volume du lecteur multimédia (« inconnu » tant qu'il n'a pas bougé)",
+    ("sensor", "tab5_prefixe_des_actions"): "lu par les poussées de HA (ADR-0063), rien à régler ni à surveiller",
 }
 # Aides de l'auteur hors packages : une carte seulement si elles existent.
 HORS_PACKAGES = {"input_text.tab5_annonce_vocale", "script.tab5_annonce_vocale"}

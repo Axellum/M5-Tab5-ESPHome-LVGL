@@ -25,7 +25,7 @@ import re
 import pytest
 import yaml
 
-from tests.commun import lire as _lire
+from tests.commun import envoi_tablettes, lire as _lire
 from tests.test_appuis import _fonction
 from tests.test_historique import EtatHA, _env as _env_historique, _rendre
 
@@ -124,8 +124,8 @@ def _pousser(etats, choix, stats=None):
         ctx["stats"] = stats
     for nom, v in seq[3]["variables"].items():
         ctx[nom] = _rendre(env, v, ctx)
-    pousse = seq[4]
-    assert pousse["action"] == "esphome.tab5_ha_hmi_tab5_maj_suivi" and pousse["continue_on_error"] is True
+    pousse = envoi_tablettes(seq[4])
+    assert pousse["action"] == "esphome.{{ tablette }}_tab5_maj_suivi" and pousse["continue_on_error"] is True
     return demande, str(_rendre(env, pousse["data"]["payload"], ctx))
 
 

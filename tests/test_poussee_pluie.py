@@ -20,12 +20,12 @@ import jinja2
 import pytest
 import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
-from tests.commun import ChargeurSansBalises as _Chargeur
+from tests.commun import envoi_tablettes, ChargeurSansBalises as _Chargeur
 
 RACINE = Path(__file__).resolve().parents[1]
 PUSH = RACINE / "HomeAssistant_Config" / "packages" / "tab5_push.yaml"
 CAPTEUR = "sensor.tab5_pluie_dans_l_heure"
-SERVICE = "esphome.tab5_ha_hmi_tab5_maj_pluie_1h_bulk"
+SERVICE = "esphome.{{ tablette }}_tab5_maj_pluie_1h_bulk"
 
 
 def _paquet():
@@ -63,7 +63,7 @@ def test_un_seul_endroit_pour_les_barres():
     appels = [n for n in _parcourir(paquet) if n.get("action") == SERVICE]
     assert len(appels) == 1
     script = paquet["script"]["tab5_push_pluie"]
-    assert appels[0] in script["sequence"]
+    assert appels[0] in [envoi_tablettes(e) for e in script["sequence"]]
     # Même payload qu'avant le 07/10/2026 : l'attribut, sinon 9 barres vides.
     assert appels[0]["data"]["payload"].strip() == (
         "{{ state_attr('sensor.tab5_pluie_dans_l_heure', 'barres') or "

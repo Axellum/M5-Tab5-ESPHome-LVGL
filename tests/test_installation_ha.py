@@ -274,16 +274,18 @@ def test_passage_de_la_meteo_reconnu_a_son_declencheur():
 
 def test_la_tablette_virtuelle_porte_le_nom_de_la_vraie():
     tablette = _lire("tab5-ha-hmi.yaml")
-    nom = re.search(r"^  name: (\S+)$", tablette, re.M).group(1)
-    affiche = re.search(r"^  friendly_name: (.+)$", tablette, re.M).group(1).strip()
+    # Les défauts de `tab5_nom` et `tab5_nom_affiche` (ADR-0063) : le nom livré.
+    nom = re.search(r"^  name: \$\{ tab5_nom \| default\('([^']+)'\) \}$", tablette, re.M).group(1)
+    affiche = re.search(r"^  friendly_name: \$\{ tab5_nom_affiche \| default\('([^']+)'\) \}$", tablette, re.M).group(1)
     workflow = _lire(".github", "workflows", "installation-ha.yml")
     assert f'-s rendu_nom {nom} -s rendu_nom_affiche "{affiche}"' in workflow
     assert f".esphome/build/{nom} " in workflow
     assert "name: ${rendu_nom}" in _lire("tab5-rendu-host.yaml")
     assert verifier.PREFIXE_ACTIONS == nom.replace("-", "_")
     assert verifier.PREFIXE_ENTITES == re.sub(r"\W+", "_", affiche.lower())
-    # Le préfixe écrit en dur dans les packages et par défaut dans le blueprint.
-    assert f"esphome.{verifier.PREFIXE_ACTIONS}_tab5_maj_" in _lire("HomeAssistant_Config", "packages", "tab5_push.yaml")
+    # Le préfixe d'une tablette sans capteur « Préfixe des actions » (tab5_prefixe,
+    # ADR-0063) et le défaut du blueprint.
+    assert f"'{verifier.PREFIXE_ACTIONS}'" in _lire("HomeAssistant_Config", "custom_templates", "tab5_tablette.jinja")
     assert f"default: {verifier.PREFIXE_ACTIONS}" in _lire(
         "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
 

@@ -24,6 +24,14 @@ le confronte à la matrice) :
 
 ### Ajouté
 
+- **Plusieurs écrans dans la même maison, même affichage partout** ([ADR-0063](docs/decisions/0063-several-screens.md)) :
+  - un nom par écran à la compilation : `tab5_nom` et `tab5_nom_affiche` (`Tab5/user_entities.yaml` ou `-s tab5_nom salon-7b`), `tab5-ha-hmi` par défaut : une tablette déjà installée ne change pas ;
+  - nouveau capteur de diagnostic « Tab5 Préfixe des actions » : le préfixe des actions de l'écran, lu par Home Assistant ;
+  - chaque poussée des packages et du blueprint part vers chaque tablette connectée (`tab5_destinataires()` dans `custom_templates/tab5_tablette.jinja`), un mois ou un jour du calendrier vers l'écran qui l'a demandé ; un firmware plus ancien est toujours servi sous `tab5_ha_hmi` ;
+  - l'entrée « tablette » du blueprint laissée à `tab5_ha_hmi` veut dire désormais « toutes les tablettes » ;
+  - suivent encore une seule tablette : écran allumé, réveil en cours, nuit du thème, vue Santé, micro, pipeline « Discu » (`sensor.tab5_tablette`) ;
+  - mise à jour : `custom_templates/tab5_tablette.jinja` rechargé avant les packages et le blueprint ; firmware et HA dans n'importe quel ordre.
+
 - **Carte et taille de l'écran paramétrables** ([ADR-0061](docs/decisions/0061-board-and-screen-size.md)) :
   - nouvelle substitution `tab5_carte` (`tab5` par défaut) qui choisit `Tab5/paquets/carte-<carte>.yaml` : le matériel, l'écran et la géométrie de la carte (`geometrie-<carte>.yaml` : taille de l'écran, de la dalle, rotation de LVGL, échelle des grosses polices) ;
   - la taille n'est plus écrite qu'une fois : les jetons de `tab5-ui-tokens.yaml` en dérivent, le C++ la reçoit par `-DTAB5_ECRAN_L`, `-DTAB5_ECRAN_H` et `-DTAB5_ROTATION` (`tab5_geometrie.h`, défauts du Tab5) ; `tests/test_geometrie_partagee.py` vérifie l'égalité C++ / YAML pour chaque carte ;
@@ -43,6 +51,7 @@ le confronte à la matrice) :
   - **Blueprint** : entrée facultative « Énergie consommée par la maison · Home energy consumption ». Sans compteur d'achat ni de vente, HA estime vente = max(0, production − consommation) et achat = max(0, consommation − production) heure par heure, et l'écran le dit.
   - **Contrat** : trois champs en fin de payload de `tab5_maj_energie_bilan` (`prod`, `conso`, `estime`) et trois vues civiles (`heures`, `mois_civil`, `annee_civile`) ; signature inchangée (contrat 1.2.0). Calculs dans `Tab5/socle/tab5_parse.*` (tests g++ et fuzz), démo, rendu hors tablette (`energie-bilan-jours`, `energie-bilan-mois`, `energie-bilan-prix`).
   - **Ordre de mise à jour : la tablette d'abord, puis `packages/tab5_energie.yaml` et le blueprint.** Un firmware d'avant refuse les vues `mois_civil` et `annee_civile` (appel sauté, `continue_on_error`) ; le nouveau firmware lit encore l'ancien payload.
+- **Documentation** : page [Waveshare ESP32-P4 7B](docs/waveshare-7b.md) (statut, installation, problèmes rencontrés à l'arrivée de la carte et leur correction, ce qui reste, matériel, broches vérifiées par `tests/test_doc_broches.py` comme celles du Tab5) ; README : musique, caméras, suivi, frigos, serveur IA, énergie en quatre pages, « où se règle quoi » (listes « Tab5 · » et un seul blueprint) avec sa capture, la 7B dans la compatibilité ; notice : images des pages Flux, Aujourd'hui et Bilan de l'énergie, de la musique, du suivi, des frigos, du serveur IA, de la maison, de la météo et de la roue d'une lumière, toutes refaites depuis le rendu ; `tools/site/images_notice.py` lit de nouveau les positions de l'accueil (jetons du lot 3) ; réglages : les « depuis la prochaine version » publiés en 3.8.0, seuil de présence de la batterie à 5,5 V.
 
 ### Corrigé
 
