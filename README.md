@@ -143,15 +143,15 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 
 | Quick-action wheel (Néon calme, dark) | Lights (Bonbon, light) |
 |:-:|:-:|
-| <img src="docs/images/galerie/roue-en.webp" width="400" loading="lazy" alt="Quick-action wheel of the M5Stack Tab5 opened by a long press on a lamp: brightness steps, power and more around the finger"> | <img src="docs/images/galerie/lumieres-en.webp" width="400" loading="lazy" alt="Light popup of the M5Stack Tab5: the room's lights, a brightness arc with shortcuts, 3 whites and 12 colours"> |
+| <img src="docs/images/galerie/roue-en.webp" width="400" loading="lazy" alt="Quick-action wheel of the M5Stack Tab5 opened by a long press on the floor lamp: brightness steps, power, colours and details around the finger"> | <img src="docs/images/galerie/lumieres-en.webp" width="400" loading="lazy" alt="Light popup of the M5Stack Tab5: the room's lights, a brightness arc with shortcuts, 3 whites and 12 colours"> |
 
 | Climate (Platine et or, dark) | Shutters (Terre cuite, light) |
 |:-:|:-:|
 | <img src="docs/images/galerie/climatisation-en.webp" width="400" loading="lazy" alt="Climate popup of the M5Stack Tab5: modes, a thermostat arc set to 20 °C, presets, fan speed and airflow"> | <img src="docs/images/galerie/volet-en.webp" width="400" loading="lazy" alt="Shutter popup of the M5Stack Tab5: the shutter drawn at 45 % while it moves, with Open, Stop and Close"> |
 
-| Plant sensors (Sorbet, light) | Solar energy (Ultraviolet, dark) |
+| Plant sensors (Sorbet, light) | Energy, the flows right now (Ultraviolet, dark) |
 |:-:|:-:|
-| <img src="docs/images/galerie/plantes-en.webp" width="400" loading="lazy" alt="Plants popup of the M5Stack Tab5: five pots with soil moisture, fertility, light, temperature and battery, one of them needs water"> | <img src="docs/images/galerie/energie-en.webp" width="400" loading="lazy" alt="Energy popup of the M5Stack Tab5: solar, home, grid and battery cards, and the solar production of the last 30 days as bars"> |
+| <img src="docs/images/galerie/plantes-en.webp" width="400" loading="lazy" alt="Plants popup of the M5Stack Tab5: five pots with soil moisture, fertility, light, temperature and battery, one of them needs water"> | <img src="docs/images/galerie/energie-en.webp" width="400" loading="lazy" alt="Energy popup of the M5Stack Tab5, Flow page: solar, home, grid and battery linked by live power lines"> |
 
 | Temperature history (Almanach imprimé, light) | Monthly calendar (Zen Sumi, dark) |
 |:-:|:-:|
@@ -159,11 +159,19 @@ Just want to see it running first? The [demo mode](docs/demo_mode.md) pushes dem
 
 | Alarm clock (Graphite, dark) | Voice assistant (Obsidienne, dark) |
 |:-:|:-:|
-| <img src="docs/images/galerie/reveil-en.webp" width="400" loading="lazy" alt="Alarm clock popup of the M5Stack Tab5: a fixed time, the days, the mode, the ringtone and its volume, snooze and the next appointment"> | <img src="docs/images/galerie/assistant-en.webp" width="400" loading="lazy" alt="Voice assistant popup of the M5Stack Tab5: its settings, the request and a formatted reply with a list and a table"> |
+| <img src="docs/images/galerie/reveil-en.webp" width="400" loading="lazy" alt="Alarm clock popup of the M5Stack Tab5: the alarm time on rolling digits, its tabs (days, shift start, ringtone, announcements) and a test button"> | <img src="docs/images/galerie/assistant-en.webp" width="400" loading="lazy" alt="Voice assistant popup of the M5Stack Tab5: its settings, the request and a formatted reply with a list and a table"> |
 
 | TV remote (Signalisation, light) | Settings (Capsule, light) |
 |:-:|:-:|
-| <img src="docs/images/galerie/telecommande-tv-en.webp" width="400" loading="lazy" alt="TV remote of the M5Stack Tab5: power, source, menu, a direction pad, volume, playback and app shortcuts"> | <img src="docs/images/galerie/reglages-en.webp" width="400" loading="lazy" alt="Settings popup of the M5Stack Tab5: brightness, auto screen off, wake options, theme, light or dark, night mode and language"> |
+| <img src="docs/images/galerie/telecommande-tv-en.webp" width="400" loading="lazy" alt="TV remote of the M5Stack Tab5: power, source, menu, a direction pad, volume, playback and app shortcuts"> | <img src="docs/images/galerie/reglages-en.webp" width="400" loading="lazy" alt="Settings popup of the M5Stack Tab5, Screen page: brightness, auto screen off and wake options"> |
+
+| Music (Almanach, light) | Cameras, a still image each (Craie et ardoise, dark) |
+|:-:|:-:|
+| <img src="docs/images/galerie/musique-en.webp" width="400" loading="lazy" alt="Music popup of the M5Stack Tab5: the paused track with its progress, playback controls, volume and three players to pick from"> | <img src="docs/images/galerie/cameras-en.webp" width="400" loading="lazy" alt="Cameras popup of the M5Stack Tab5: seven cameras sorted by room, four of them in a mosaic (test pattern of the render instead of real pictures)"> |
+
+| Tracked sensors (Béton brut, light) | Local AI server (Ardoise, dark) |
+|:-:|:-:|
+| <img src="docs/images/galerie/suivi-en.webp" width="400" loading="lazy" alt="Tracking popup of the M5Stack Tab5: four followed sensors, each with its value, its change and a 24-hour curve"> | <img src="docs/images/galerie/serveur-ia-en.webp" width="400" loading="lazy" alt="AI server popup of the M5Stack Tab5: a local LLM server online, its model, tokens per second over time, VRAM, GPU temperature, RAM and power"> |
 
 | Arcade: the game menu (Pixel, dark) | Roi Noir: chess with an engine on the tablet |
 |:-:|:-:|
@@ -334,35 +342,43 @@ Envie de le voir tourner d'abord ? Le [mode démo](docs/demo_mode.md#version-fra
 
 | Accueil : la pluie dans l'heure (Bento, clair) | Toute la maison (Relief doux, clair) |
 |:-:|:-:|
-| <img src="docs/images/galerie/accueil-pluie-fr.webp" width="400" loading="lazy" alt="Accueil de la M5Stack Tab5 dans le thème Bento clair : les barres de pluie de l'heure à venir et « Pluie modérée dans 10 mn » sur la carte centrale, prévisions à 5 jours pluvieuses"> | <img src="docs/images/galerie/maison-fr.webp" width="400" loading="lazy" alt="Popup Maison de la M5Stack Tab5 : cinq pièces en colonnes, chaque appareil avec son état, et un bouton pour tout éteindre"> |
+| <img src="docs/images/galerie/accueil-pluie-fr.webp" width="400" loading="lazy" alt="Accueil de la M5Stack Tab5 en thème Bento clair : les barres de pluie de l'heure et « Pluie modérée dans 10 mn » sur la carte centrale, prévisions pluvieuses sur 5 jours"> | <img src="docs/images/galerie/maison-fr.webp" width="400" loading="lazy" alt="Popup Maison de la M5Stack Tab5 : cinq pièces en colonnes, chaque appareil avec son état, et un bouton Éteindre les lumières"> |
 
 | Roue d'actions (Néon calme, sombre) | Lumières (Bonbon, clair) |
 |:-:|:-:|
-| <img src="docs/images/galerie/roue-fr.webp" width="400" loading="lazy" alt="Roue d'actions de la M5Stack Tab5 ouverte par un appui long sur une lampe : paliers de luminosité, marche-arrêt et plus, autour du doigt"> | <img src="docs/images/galerie/lumieres-fr.webp" width="400" loading="lazy" alt="Popup lumières de la M5Stack Tab5 : les lumières de la pièce, un arc de luminosité avec raccourcis, 3 blancs et 12 couleurs"> |
+| <img src="docs/images/galerie/roue-fr.webp" width="400" loading="lazy" alt="Roue d'actions rapides de la M5Stack Tab5 ouverte par un appui long sur la lampe d'ambiance : paliers de luminosité, marche, couleurs et détails autour du doigt"> | <img src="docs/images/galerie/lumieres-fr.webp" width="400" loading="lazy" alt="Popup Lumières de la M5Stack Tab5 : les lampes de la pièce, un arc de luminosité avec raccourcis, 3 blancs et 12 couleurs"> |
 
 | Clim (Platine et or, sombre) | Volets (Terre cuite, clair) |
 |:-:|:-:|
-| <img src="docs/images/galerie/climatisation-fr.webp" width="400" loading="lazy" alt="Popup clim de la M5Stack Tab5 : modes, arc de thermostat réglé à 20 °C, préréglages, ventilation et flux d'air"> | <img src="docs/images/galerie/volet-fr.webp" width="400" loading="lazy" alt="Popup volet de la M5Stack Tab5 : le volet dessiné à 45 % pendant qu'il bouge, avec Ouvrir, Stop et Fermer"> |
+| <img src="docs/images/galerie/climatisation-fr.webp" width="400" loading="lazy" alt="Popup Climatisation de la M5Stack Tab5 : modes, un arc de consigne à 20 °C, presets, ventilation et flux d'air"> | <img src="docs/images/galerie/volet-fr.webp" width="400" loading="lazy" alt="Popup Volets de la M5Stack Tab5 : le volet dessiné à 45 % en mouvement, avec Ouvrir, Stop et Fermer"> |
 
-| Capteurs de plantes (Sorbet, clair) | Énergie solaire (Ultraviolet, sombre) |
+| Capteurs de plantes (Sorbet, clair) | Énergie, les flux en direct (Ultraviolet, sombre) |
 |:-:|:-:|
-| <img src="docs/images/galerie/plantes-fr.webp" width="400" loading="lazy" alt="Popup plantes de la M5Stack Tab5 : cinq pots avec humidité du sol, fertilité, lumière, température et batterie, l'un d'eux a soif"> | <img src="docs/images/galerie/energie-fr.webp" width="400" loading="lazy" alt="Popup Énergie de la M5Stack Tab5 : solaire, maison, réseau et batterie en direct, et la production solaire des 30 derniers jours en barres"> |
+| <img src="docs/images/galerie/plantes-fr.webp" width="400" loading="lazy" alt="Popup Mes plantes de la M5Stack Tab5 : cinq pots avec humidité, fertilité, lumière, température et batterie, l'un est à arroser"> | <img src="docs/images/galerie/energie-fr.webp" width="400" loading="lazy" alt="Popup Énergie de la M5Stack Tab5, page Flux : solaire, maison, réseau et batterie reliés par leurs puissances en direct"> |
 
 | Historique des températures (Almanach imprimé, clair) | Calendrier du mois (Zen Sumi, sombre) |
 |:-:|:-:|
-| <img src="docs/images/galerie/temperature-fr.webp" width="400" loading="lazy" alt="Popup Température de la M5Stack Tab5 : maintenant, minimum, maximum et prévision dehors, et la courbe de la serre sur 7 jours avec la prévision"> | <img src="docs/images/galerie/calendrier-fr.webp" width="400" loading="lazy" alt="Calendrier du mois de la M5Stack Tab5 avec horaires de travail, jour férié, vacances scolaires, rendez-vous et anniversaires"> |
+| <img src="docs/images/galerie/temperature-fr.webp" width="400" loading="lazy" alt="Popup Température de la M5Stack Tab5 : actuelle, minimum, maximum et prévision dehors, et la courbe de la serre sur 7 jours avec la prévision"> | <img src="docs/images/galerie/calendrier-fr.webp" width="400" loading="lazy" alt="Calendrier du mois de la M5Stack Tab5 : horaires de travail, férié, vacances scolaires, rendez-vous et anniversaires"> |
 
 | Réveil (Graphite, sombre) | Assistant vocal (Obsidienne, sombre) |
 |:-:|:-:|
-| <img src="docs/images/galerie/reveil-fr.webp" width="400" loading="lazy" alt="Popup réveil de la M5Stack Tab5 : heure fixe, jours, mode, sonnerie et volume, répétition et prochain rendez-vous"> | <img src="docs/images/galerie/assistant-fr.webp" width="400" loading="lazy" alt="Popup de l'assistant vocal de la M5Stack Tab5 : ses réglages, la demande et une réponse mise en forme, avec une liste et un tableau"> |
+| <img src="docs/images/galerie/reveil-fr.webp" width="400" loading="lazy" alt="Popup Réveil de la M5Stack Tab5 : l'heure du réveil sur des chiffres à faire défiler, ses onglets (jours, ouverture, sonnerie, annonces) et un bouton Tester"> | <img src="docs/images/galerie/assistant-fr.webp" width="400" loading="lazy" alt="Popup Assistant vocal de la M5Stack Tab5 : ses réglages, la demande et une réponse mise en forme avec liste et tableau"> |
 
 | Télécommande TV (Signalisation, clair) | Réglages (Capsule, clair) |
 |:-:|:-:|
-| <img src="docs/images/galerie/telecommande-tv-fr.webp" width="400" loading="lazy" alt="Télécommande TV de la M5Stack Tab5 : marche, source, menu, croix, volume, lecture et raccourcis d'applications"> | <img src="docs/images/galerie/reglages-fr.webp" width="400" loading="lazy" alt="Popup Réglages de la M5Stack Tab5 : luminosité, extinction auto, réveil de l'écran, thème, clair ou sombre, nuit et langue"> |
+| <img src="docs/images/galerie/telecommande-tv-fr.webp" width="400" loading="lazy" alt="Télécommande TV de la M5Stack Tab5 : marche, source, menu, pavé directionnel, volume, lecture et raccourcis d'applis"> | <img src="docs/images/galerie/reglages-fr.webp" width="400" loading="lazy" alt="Popup Réglages de la M5Stack Tab5, page Écran : luminosité, extinction auto et options de réveil de l'écran"> |
+
+| Musique (Almanach, clair) | Caméras, une image fixe chacune (Craie et ardoise, sombre) |
+|:-:|:-:|
+| <img src="docs/images/galerie/musique-fr.webp" width="400" loading="lazy" alt="Popup Musique de la M5Stack Tab5 : le morceau en pause et sa progression, les commandes de lecture, le volume et trois lecteurs au choix"> | <img src="docs/images/galerie/cameras-fr.webp" width="400" loading="lazy" alt="Popup Caméras de la M5Stack Tab5 : sept caméras rangées par pièce, quatre d'entre elles en mosaïque (mire du rendu à la place des vraies images)"> |
+
+| Capteurs suivis (Béton brut, clair) | Serveur IA local (Ardoise, sombre) |
+|:-:|:-:|
+| <img src="docs/images/galerie/suivi-fr.webp" width="400" loading="lazy" alt="Popup Suivi de la M5Stack Tab5 : quatre capteurs suivis, chacun avec sa valeur, sa variation et sa courbe sur 24 h"> | <img src="docs/images/galerie/serveur-ia-fr.webp" width="400" loading="lazy" alt="Popup Serveur IA de la M5Stack Tab5 : un serveur LLM local en ligne, son modèle, les jetons par seconde dans le temps, VRAM, température GPU, RAM et puissance"> |
 
 | Arcade : le menu des jeux (Pixel, sombre) | Roi Noir : des échecs avec un moteur sur la tablette |
 |:-:|:-:|
-| <img src="docs/images/galerie/arcade-fr.webp" width="400" loading="lazy" alt="Menu Arcade de la M5Stack Tab5 avec huit jeux hors ligne dessinés avec LVGL"> | <img src="docs/images/galerie/roi-noir-fr.webp" width="400" loading="lazy" alt="Jeu d'échecs Roi Noir sur la M5Stack Tab5 ESP32-P4, avec son moteur embarqué"> |
+| <img src="docs/images/galerie/arcade-fr.webp" width="400" loading="lazy" alt="Menu Arcade de la M5Stack Tab5 avec huit jeux hors ligne dessinés avec LVGL"> | <img src="docs/images/galerie/roi-noir-fr.webp" width="400" loading="lazy" alt="Échecs Roi Noir sur la M5Stack Tab5 ESP32-P4, avec son moteur embarqué"> |
 
 | Coureur d'Or : façon Lode Runner | Arcanoïde : un casse-briques joué en inclinant la tablette |
 |:-:|:-:|
