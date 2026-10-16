@@ -153,8 +153,13 @@ def test_automatisation_tient_l_interrupteur():
     miroir = next(t for t in auto["triggers"] if t.get("entity_id") == "binary_sensor.tab5_nuit_de_l_ecran")
     assert "to" in miroir and miroir["to"] is None, "tout changement d'état, indisponible compris"
     assert any(t.get("event_type") == "esphome.tab5_connected" for t in auto["triggers"])
+    # Pas de déclencheur sur l'attribut de la tablette : il part pendant l'ajout, liaison pas prête.
+    assert not any(t.get("entity_id") == "sensor.tab5_tablette" for t in auto["triggers"])
+    attente = auto["actions"][0]
+    assert "tab5_connectee()" in attente["wait_template"] and "nuit_ecran" in attente["wait_template"]
     action = auto["actions"][-1]
     assert action["action"] == "switch.turn_{{ 'on' if is_state('binary_sensor.tab5_nuit_de_l_ecran', 'on') else 'off' }}"
-    assert action["target"] == {"entity_id": "{{ nuit }}"}
+    assert action["target"] == {"entity_id": "{{ state_attr('sensor.tab5_tablette', 'nuit_ecran') }}"}
+    assert action["continue_on_error"] is True
     attribut = _modele("sensor", "Tab5 · tablette")["attributes"]["nuit_ecran"]
     assert "_nuit_ecran_eteint$" in attribut, "fin de l'entity_id de « Tab5 Nuit (écran éteint) »"
