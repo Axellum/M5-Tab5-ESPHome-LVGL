@@ -46,6 +46,9 @@ packages:
 esphome:
   includes:
     - Tab5/ecran/carte_7b_version.h
+    # Redémarrage du P4 quand le lien SDIO du C6 ne monte pas (esp32_hosted, plus bas).
+    - Tab5/ecran/tab5_lien_c6.h
+    - Tab5/ecran/tab5_lien_c6.cpp
 
 # ─── 1. Matériel de la 7B ────────────────────────────────────────────────────
 
@@ -100,6 +103,17 @@ esp32_hosted:
   slot: 1
   sdio_frequency: 20MHz
   use_psram: true
+
+# Boucle de redémarrages du 16/10/2026 : après un redémarrage logiciel, le C6 redémarre
+# mais le lien SDIO ne monte pas ; ESP-Hosted le réinitialise une 2e fois après ~11,5 s
+# puis redémarre le P4 par esp_restart (cœurs seuls), et ça recommence jusqu'au mode sans
+# échec. Seule une coupure de courant débloquait. Tab5/ecran/tab5_lien_c6.cpp remplace ce
+# redémarrage (C6 tenu en reset, puis reset complet de la puce au 2e échec d'affilée) ;
+# ce global l'appelle dans setup(), avant les composants.
+globals:
+  - id: lien_c6_branche
+    type: bool
+    initial_value: 'lien_c6_demarrage()'
 
 # Recopié de tab5-hardware.yaml (journal des démarrages, voir là-bas).
 logger:
