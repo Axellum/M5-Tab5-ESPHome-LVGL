@@ -14,7 +14,8 @@
 #          backlight_pwm / backlight_plafonne / backlight, bus I2S mic_bus, micro
 #          tab5_microphone, haut-parleur tab5_speaker, lecteur speaker_player, bouton
 #          btn_restart) : déclaré ici avec les broches de la 7B. Ce qui ne dépend pas de la
-#          carte (logger, ota, safe_mode, psram, light, lecteur, toucher, options d'ESP-IDF…)
+#          carte (logger, ota, safe_mode, psram, light, lecteur, toucher, options d'ESP-IDF,
+#          reset CORE des redémarrages logiciels…)
 #          est RECOPIÉ de tab5-hardware.yaml : tests/test_carte_7b.py exige les mêmes
 #          valeurs. Une modification là-bas se reporte ici.
 #       2. Matériel absent (expandeurs PI4IOE, INA226, RX8130, CHG_STAT ; ES8388 remplacé
@@ -46,7 +47,8 @@ packages:
 esphome:
   includes:
     - Tab5/ecran/carte_7b_version.h
-    # Redémarrage logiciel en reset CORE, pour le lien SDIO du C6 (esp32_hosted, plus bas).
+    # Redémarrage logiciel en reset CORE, pour le lien SDIO du C6 (esp32_hosted, plus bas) :
+    # recopié de tab5-hardware.yaml (tests/test_carte_7b.py), comme le global plus bas.
     - Tab5/ecran/tab5_lien_c6.h
     - Tab5/ecran/tab5_lien_c6.cpp
 
@@ -108,7 +110,7 @@ esp32_hosted:
 # logiciel, le lien SDIO du C6 peut ne plus monter, et chaque esp_restart() suivant (reset
 # des seuls CPU) échoue pareil jusqu'au mode sans échec ; un reset CORE (USB) ou une coupure
 # débloque. Tab5/ecran/tab5_lien_c6.cpp fait de tout redémarrage logiciel un reset CORE ;
-# ce global l'appelle dans setup(), avant les composants.
+# ce global l'appelle dans setup(), avant les composants. Recopié de tab5-hardware.yaml.
 globals:
   - id: lien_c6_branche
     type: bool
