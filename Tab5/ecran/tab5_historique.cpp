@@ -103,15 +103,19 @@ constexpr int32_t kMargeTexte = 44;         // 22 px de chaque côté
 // Carte du graphique : titre à gauche jusqu'aux boutons de vue (3 × 150 + 2 × 10, à 18 px
 // du bord droit).
 constexpr int32_t kTitreW = kCorpsW - 22 - 488 - 24;
-// Zone du tracé (historique_zone, kGraphiqueL × 344) : graduations à gauche, tracé, axe des
-// temps (libellés de kAxeLibelleL px, texte centré), légende.
+// Zone du tracé (historique_zone, kGraphiqueL × kZoneH, 344 sur le Tab5) : graduations à
+// gauche, tracé, axe des temps (libellés de kAxeLibelleL px, texte centré), légende. Sur une
+// autre carte (lot 4 du portage), les cartes chiffrées et le haut de la carte du graphique
+// sont ramenés au corps (hauteur_carte) : la zone prend le reste, comme son YAML
+// (tests/test_historique.py), et le bas du tracé, l'axe et la légende la suivent.
+constexpr int32_t kZoneH = kCorpsH - hauteur_carte(150) - 16 - hauteur_carte(72) - 16;
 constexpr int32_t kGradW = 52;              // libellés des degrés, alignés à droite
 constexpr int32_t kTraceX0 = 64;
 constexpr int32_t kTraceX1 = kGraphiqueL - 20;
 constexpr int32_t kTraceY0 = 30;
-constexpr int32_t kTraceY1 = 266;
-constexpr int32_t kAxeY = 276;
-constexpr int32_t kLegendeY = 312;
+constexpr int32_t kTraceY1 = kZoneH - 78;   // 266 sur le Tab5
+constexpr int32_t kAxeY = kZoneH - 68;      // 276
+constexpr int32_t kLegendeY = kZoneH - 32;  // 312
 constexpr int32_t kPoint = 14;              // pastille de la valeur actuelle
 // Humidité (ADR-0047) : le tracé s'arrête plus tôt, ses graduations « 60 % » à droite.
 constexpr int32_t kHumGradW = 74;

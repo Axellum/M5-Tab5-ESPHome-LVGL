@@ -12,6 +12,12 @@
 #       recharge automations ; redémarrage HA, reboot tablette : 2 rangées de
 #       2 boutons 266x107, pas de 117 px ; le thème est passé dans le popup
 #       Réglages le 06/10/2026).
+#       Sur une autre carte (lot 4 du portage 1024×600, ADR-0061) : les titres (22 px) et
+#       les lignes de 32 px (ramenées comme les grandes polices) ne tiennent pas par simple
+#       proportion. Les cartes du bas (SYSTÈME, GESTION), les plus remplies, perdent un
+#       tiers de la hauteur qui manque (250 px sur la 7B), celles du haut le reste (210) ;
+#       dans chaque carte, ce qui suit le titre (y 42) est ramené au corps, le volume reste
+#       posé depuis le bas de sa carte. Sur le Tab5 : 290 et 290, comme avant.
 # @data_contract Les ids `lbl_sys_*` / `bar_sys_*` sont remplis par
 #       tab5-sensors-diagnostics.yaml (interval 2s + capteurs 60s, garde #T222 :
 #       reglages_page_visible(REGLAGES_PAGE_SYSTEME), rien tant que la page n'est pas
@@ -60,20 +66,20 @@ obj:
         x: 24
         y: 0
         width: ${demi_w}
-        height: 290
+        height: ${ corps_h | int - 18 - (290 - (598 - corps_h | int) // 3) }
         styles: style_glass_card
         scrollable: false
         widgets:
           - label: { text: "MÉMOIRE", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-          - label: { text: "SRAM", align: TOP_LEFT, x: 22, y: 46, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_sram_val, text: "--", align: TOP_RIGHT, x: -22, y: 54, styles: style_text_console_value }
+          - label: { text: "SRAM", align: TOP_LEFT, x: 22, y: "${ 42 + 4 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_sram_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 12 * (corps_h | int) // 598 }", styles: style_text_console_value }
           - bar:
               id: bar_sys_sram
               align: TOP_LEFT
               x: 22
-              y: 90
-              width: 545
+              y: ${ 42 + 48 * (corps_h | int) // 598 }
+              width: ${ demi_w | int - 44 }
               height: 16
               min_value: 0
               max_value: 100
@@ -84,14 +90,14 @@ obj:
                 styles: style_bg_success
                 radius: 8
 
-          - label: { text: "PSRAM", align: TOP_LEFT, x: 22, y: 120, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_psram_val, text: "--", align: TOP_RIGHT, x: -22, y: 128, styles: style_text_console_value }
+          - label: { text: "PSRAM", align: TOP_LEFT, x: 22, y: "${ 42 + 78 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_psram_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 86 * (corps_h | int) // 598 }", styles: style_text_console_value }
           - bar:
               id: bar_sys_psram
               align: TOP_LEFT
               x: 22
-              y: 164
-              width: 545
+              y: ${ 42 + 122 * (corps_h | int) // 598 }
+              width: ${ demi_w | int - 44 }
               height: 16
               min_value: 0
               max_value: 100
@@ -102,11 +108,13 @@ obj:
                 styles: style_bg_success
                 radius: 8
 
-          - label: { text: "Bloc max", align: TOP_LEFT, x: 22, y: 216, styles: style_text_console_label }
+          - label: { text: "Bloc max", align: TOP_LEFT, x: 22, y: "${ 42 + 174 * (corps_h | int) // 598 }", styles: style_text_console_label }
           # x 145 : « Max. Block » (allemand, 108 px depuis x 22) collait la valeur à x 130.
-          - label: { id: lbl_sys_frag_val, text: "--", align: TOP_LEFT, x: 145, y: 216, styles: style_text_console_value }
-          - label: { text: "Flash", align: TOP_LEFT, x: 369, y: 216, styles: style_text_console_label }
-          - label: { id: lbl_sys_flash_val, text: "--", align: TOP_LEFT, x: 439, y: 216, styles: style_text_console_value }
+          - label: { id: lbl_sys_frag_val, text: "--", align: TOP_LEFT, x: 145, y: "${ 42 + 174 * (corps_h | int) // 598 }", styles: style_text_console_value }
+          - label: { text: "Flash", align: TOP_LEFT, x: "${ 369 * (corps_w | int) // 1202 }", y: "${ 42 + 174 * (corps_h | int) // 598 }", styles: style_text_console_label }
+          # La valeur 70 px après « Flash » (roboto_22 ne rétrécit pas : ramenée au corps,
+          # elle le touchait sur la 7B) ; x 439 sur le Tab5.
+          - label: { id: lbl_sys_flash_val, text: "--", align: TOP_LEFT, x: "${ 369 * (corps_w | int) // 1202 + 70 }", y: "${ 42 + 174 * (corps_h | int) // 598 }", styles: style_text_console_value }
 
     # ═══ CARTE RÉSEAU (haut droite) ═══
     - obj:
@@ -114,33 +122,33 @@ obj:
         x: ${demi_x}
         y: 0
         width: ${demi_w}
-        height: 290
+        height: ${ corps_h | int - 18 - (290 - (598 - corps_h | int) // 3) }
         styles: style_glass_card
         scrollable: false
         widgets:
           - label: { text: "RÉSEAU", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-          - label: { text: "Wi-Fi", align: TOP_LEFT, x: 22, y: 50, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_ssid_val, text: "--", align: TOP_RIGHT, x: -22, y: 50, text_font: roboto_32_b, styles: style_text_console_value }
+          - label: { text: "Wi-Fi", align: TOP_LEFT, x: 22, y: "${ 42 + 8 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_ssid_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 8 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_value }
 
-          - label: { text: "Adresse IP", align: TOP_LEFT, x: 22, y: 102, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_ip_val, text: "--", align: TOP_RIGHT, x: -22, y: 102, text_font: roboto_32_b, styles: style_text_console_value }
+          - label: { text: "Adresse IP", align: TOP_LEFT, x: 22, y: "${ 42 + 60 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_ip_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 60 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_value }
 
-          - label: { text: "Signal", align: TOP_LEFT, x: 22, y: 154, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_rssi_val, text: "--", align: TOP_RIGHT, x: -22, y: 154, text_font: roboto_32_b, styles: style_text_console_value }
+          - label: { text: "Signal", align: TOP_LEFT, x: 22, y: "${ 42 + 112 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_rssi_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 112 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_value }
 
           # État connexion HA — mis à jour par l'interval 2 s de tab5-sensors-diagnostics.yaml
           # et à l'ouverture de la console (btn_control_console, tab5-lvgl.yaml)
-          - label: { text: "Home Assistant", align: TOP_LEFT, x: 22, y: 206, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_ha_val, text: "--", align: TOP_RIGHT, x: -22, y: 206, text_font: roboto_32_b, styles: style_text_dim }
+          - label: { text: "Home Assistant", align: TOP_LEFT, x: 22, y: "${ 42 + 164 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_ha_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 164 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_dim }
 
     # ═══ CARTE SYSTÈME (bas gauche) ═══
     - obj:
         align: TOP_LEFT
         x: 24
-        y: 308
+        y: ${ corps_h | int - (290 - (598 - corps_h | int) // 3) }
         width: ${demi_w}
-        height: 290
+        height: ${ 290 - (598 - corps_h | int) // 3 }
         styles: style_glass_card
         scrollable: false
         widgets:
@@ -154,33 +162,33 @@ obj:
           - label: { text: "Temps actif", align: TOP_LEFT, x: 22, y: 42, text_font: roboto_32_b, styles: style_text_console_label }
           - label: { id: lbl_sys_uptime_val, text: "--", align: TOP_RIGHT, x: -22, y: 42, text_font: roboto_32_b, styles: style_text_console_value }
 
-          - label: { text: "Temp. CPU", align: TOP_LEFT, x: 22, y: 81, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_temp_val, text: "--", align: TOP_RIGHT, x: -22, y: 81, text_font: roboto_32_b, styles: style_text_console_value }
+          - label: { text: "Temp. CPU", align: TOP_LEFT, x: 22, y: "${ 42 + 39 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_temp_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 39 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_value }
 
           # Charge de chaque cœur, « cœur 0 · cœur 1 » (discussion #278, 06/10/2026) :
           # update_console_cpu_ui (tab5_console.cpp), interval 2 s console ouverte.
-          - label: { text: "Charge CPU", align: TOP_LEFT, x: 22, y: 120, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_cpu_val, text: "--", align: TOP_RIGHT, x: -22, y: 120, text_font: roboto_32_b, styles: style_text_console_value }
+          - label: { text: "Charge CPU", align: TOP_LEFT, x: 22, y: "${ 42 + 78 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_cpu_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 78 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_value }
 
-          - label: { text: "Temps de boucle", align: TOP_LEFT, x: 22, y: 159, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_loop_val, text: "--", align: TOP_RIGHT, x: -22, y: 159, text_font: roboto_32_b, styles: style_text_console_value }
+          - label: { text: "Temps de boucle", align: TOP_LEFT, x: 22, y: "${ 42 + 117 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_loop_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 117 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_value }
 
           # Batterie de la tablette (discussion #278, 06/10/2026) : niveau et tension, ou
           # « Sur USB » / « Non montée » (update_console_batterie_ui, tab5_zones.cpp).
           # L'icône est celle du bandeau ; le C++ la pose à gauche de la valeur.
-          - label: { text: "Batterie", align: TOP_LEFT, x: 22, y: 198, text_font: roboto_32_b, styles: style_text_console_label }
-          - label: { id: lbl_sys_batterie_icone, text: "\U000F0091", align: TOP_RIGHT, x: -160, y: 201, text_font: mdi_font_32, styles: style_text_console_label, hidden: true }
-          - label: { id: lbl_sys_batterie_val, text: "--", align: TOP_RIGHT, x: -22, y: 198, text_font: roboto_32_b, styles: style_text_console_value }
+          - label: { text: "Batterie", align: TOP_LEFT, x: 22, y: "${ 42 + 156 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_label }
+          - label: { id: lbl_sys_batterie_icone, text: "\U000F0091", align: TOP_RIGHT, x: -160, y: "${ 42 + 159 * (corps_h | int) // 598 }", text_font: mdi_font_32, styles: style_text_console_label, hidden: true }
+          - label: { id: lbl_sys_batterie_val, text: "--", align: TOP_RIGHT, x: -22, y: "${ 42 + 156 * (corps_h | int) // 598 }", text_font: roboto_32_b, styles: style_text_console_value }
 
           # Volume (le label % est mis à jour par le slider lui-même)
-          - label: { text: "\U000F0581", align: TOP_LEFT, x: 22, y: 236, text_font: mdi_font_32, styles: style_text_console_label }
-          - label: { id: lbl_sys_vol_val, text: "100%", align: TOP_RIGHT, x: -22, y: 240, styles: style_text_console_value }
+          - label: { text: "\U000F0581", align: TOP_LEFT, x: 22, y: "${ 290 - (598 - corps_h | int) // 3 - 54 }", text_font: mdi_font_32, styles: style_text_console_label }
+          - label: { id: lbl_sys_vol_val, text: "100%", align: TOP_RIGHT, x: -22, y: "${ 290 - (598 - corps_h | int) // 3 - 50 }", styles: style_text_console_value }
           - slider:
               id: slider_volume
               align: TOP_LEFT
               x: 70
-              y: 242
-              width: 369
+              y: ${ 290 - (598 - corps_h | int) // 3 - 48 }
+              width: ${ demi_w | int - 220 }
               height: 24
               min_value: 0
               max_value: 100
@@ -200,15 +208,15 @@ obj:
                     id: tab5_volume_apply
                     vol: !lambda 'return x / 100.0f;'
                     push_device: true
-          - label: { text: "\U000F057E", align: TOP_LEFT, x: 455, y: 236, text_font: mdi_font_32, styles: style_text_console_label }
+          - label: { text: "\U000F057E", align: TOP_LEFT, x: "${ demi_w | int - 134 }", y: "${ 290 - (598 - corps_h | int) // 3 - 54 }", text_font: mdi_font_32, styles: style_text_console_label }
 
     # ═══ CARTE GESTION (bas droite) ═══
     - obj:
         align: TOP_LEFT
         x: ${demi_x}
-        y: 308
+        y: ${ corps_h | int - (290 - (598 - corps_h | int) // 3) }
         width: ${demi_w}
-        height: 290
+        height: ${ 290 - (598 - corps_h | int) // 3 }
         styles: style_glass_card
         scrollable: false
         widgets:
@@ -224,40 +232,40 @@ obj:
               align: TOP_LEFT
               x: 22
               y: 46
-              width: 266
-              height: 107
+              width: ${ (demi_w | int - 56) // 2 }
+              height: ${ 107 * (corps_h | int) // 598 }
               styles: style_clim_btn
               on_short_click:
                 - homeassistant.event:
                     event: esphome.tab5_maj_ecran
               widgets:
-                - label: { text: "\U000F0379", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_info }
-                - label: { text: "MAJ Écran", align: CENTER, y: 16 }
+                - label: { text: "\U000F0379", align: CENTER, y: "${ 0 - 14 * (corps_h | int) // 598 }", text_font: mdi_font_32, styles: style_text_info }
+                - label: { text: "MAJ Écran", align: CENTER, y: "${ 16 * (corps_h | int) // 598 }" }
 
           # Recharge les automations HA (après édition YAML côté Freebox)
           - button:
               id: btn_reload_autos
               align: TOP_LEFT
-              x: 300
+              x: ${ 22 + (demi_w | int - 56) // 2 + 12 }
               y: 46
-              width: 266
-              height: 107
+              width: ${ (demi_w | int - 56) // 2 }
+              height: ${ 107 * (corps_h | int) // 598 }
               styles: style_clim_btn
               on_short_click:
                 - homeassistant.event:
                     event: esphome.tab5_recharger_automatisations
               widgets:
-                - label: { text: "\U000F0450", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_info }
-                - label: { text: "Recharger autos", align: CENTER, y: 16 }
+                - label: { text: "\U000F0450", align: CENTER, y: "${ 0 - 14 * (corps_h | int) // 598 }", text_font: mdi_font_32, styles: style_text_info }
+                - label: { text: "Recharger autos", align: CENTER, y: "${ 16 * (corps_h | int) // 598 }" }
 
           # Redémarre le serveur HA — confirmation via overlay dédié
           - button:
               id: btn_restart_ha
               align: TOP_LEFT
               x: 22
-              y: 163
-              width: 266
-              height: 107
+              y: ${ 46 + 117 * (corps_h | int) // 598 }
+              width: ${ (demi_w | int - 56) // 2 }
+              height: ${ 107 * (corps_h | int) // 598 }
               styles: [style_clim_btn, style_border_error]
               border_opa: 45%
               on_short_click:
@@ -266,17 +274,17 @@ obj:
                     lv_obj_remove_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);
                     lv_obj_move_to_index(id(overlay_confirm_ha), -1);
               widgets:
-                - label: { text: "\U000F07D0", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_error }
-                - label: { text: "Redémarrer HA", align: CENTER, y: 16 }
+                - label: { text: "\U000F07D0", align: CENTER, y: "${ 0 - 14 * (corps_h | int) // 598 }", text_font: mdi_font_32, styles: style_text_error }
+                - label: { text: "Redémarrer HA", align: CENTER, y: "${ 16 * (corps_h | int) // 598 }" }
 
           # Reboot de la tablette — confirmation via overlay dédié
           - button:
               id: btn_reboot_sys
               align: TOP_LEFT
-              x: 300
-              y: 163
-              width: 266
-              height: 107
+              x: ${ 22 + (demi_w | int - 56) // 2 + 12 }
+              y: ${ 46 + 117 * (corps_h | int) // 598 }
+              width: ${ (demi_w | int - 56) // 2 }
+              height: ${ 107 * (corps_h | int) // 598 }
               styles: [style_clim_btn, style_border_error]
               border_opa: 45%
               on_short_click:
@@ -285,8 +293,8 @@ obj:
                     lv_obj_remove_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);
                     lv_obj_move_to_index(id(overlay_confirm_reboot), -1);
               widgets:
-                - label: { text: "\U000F0425", align: CENTER, y: -14, text_font: mdi_font_32, styles: style_text_error }
-                - label: { text: "Reboot tablette", align: CENTER, y: 16 }
+                - label: { text: "\U000F0425", align: CENTER, y: "${ 0 - 14 * (corps_h | int) // 598 }", text_font: mdi_font_32, styles: style_text_error }
+                - label: { text: "Reboot tablette", align: CENTER, y: "${ 16 * (corps_h | int) // 598 }" }
 
           # ── Overlay confirmation : redémarrage Home Assistant ──
           - obj:
@@ -295,7 +303,7 @@ obj:
               x: 0
               y: 0
               width: ${demi_w}
-              height: 290
+              height: ${ 290 - (598 - corps_h | int) // 3 }
               hidden: true
               scrollable: false
               styles: [style_bg_console_bg, style_border_error]
@@ -308,10 +316,10 @@ obj:
                 - label: { text: "Le serveur sera indisponible ~1 minute.", align: CENTER, y: -24, styles: style_text_dim }
                 - button:
                     align: CENTER
-                    x: -118
-                    y: 52
-                    width: 212
-                    height: 72
+                    x: ${ 0 - 118 * (corps_w | int) // 1202 }
+                    y: ${ 52 * (corps_h | int) // 598 }
+                    width: ${ 212 * (corps_w | int) // 1202 }
+                    height: ${ 72 * (corps_h | int) // 598 }
                     styles: style_clim_btn
                     on_short_click:
                       - lambda: 'lv_obj_add_flag(id(overlay_confirm_ha), LV_OBJ_FLAG_HIDDEN);'
@@ -319,10 +327,10 @@ obj:
                       - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
                 - button:
                     align: CENTER
-                    x: 118
-                    y: 52
-                    width: 212
-                    height: 72
+                    x: ${ 118 * (corps_w | int) // 1202 }
+                    y: ${ 52 * (corps_h | int) // 598 }
+                    width: ${ 212 * (corps_w | int) // 1202 }
+                    height: ${ 72 * (corps_h | int) // 598 }
                     styles: [style_clim_btn, style_border_error]
                     border_opa: 60%
                     on_short_click:
@@ -346,7 +354,7 @@ obj:
               x: 0
               y: 0
               width: ${demi_w}
-              height: 290
+              height: ${ 290 - (598 - corps_h | int) // 3 }
               hidden: true
               scrollable: false
               styles: [style_bg_console_bg, style_border_error]
@@ -359,10 +367,10 @@ obj:
                 - label: { text: "L'écran redémarre immédiatement.", align: CENTER, y: -24, styles: style_text_dim }
                 - button:
                     align: CENTER
-                    x: -118
-                    y: 52
-                    width: 212
-                    height: 72
+                    x: ${ 0 - 118 * (corps_w | int) // 1202 }
+                    y: ${ 52 * (corps_h | int) // 598 }
+                    width: ${ 212 * (corps_w | int) // 1202 }
+                    height: ${ 72 * (corps_h | int) // 598 }
                     styles: style_clim_btn
                     on_short_click:
                       - lambda: 'lv_obj_add_flag(id(overlay_confirm_reboot), LV_OBJ_FLAG_HIDDEN);'
@@ -370,10 +378,10 @@ obj:
                       - label: { text: "Annuler", align: CENTER, text_font: roboto_32_b }
                 - button:
                     align: CENTER
-                    x: 118
-                    y: 52
-                    width: 212
-                    height: 72
+                    x: ${ 118 * (corps_w | int) // 1202 }
+                    y: ${ 52 * (corps_h | int) // 598 }
+                    width: ${ 212 * (corps_w | int) // 1202 }
+                    height: ${ 72 * (corps_h | int) // 598 }
                     styles: [style_clim_btn, style_border_error]
                     border_opa: 60%
                     on_short_click:

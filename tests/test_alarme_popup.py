@@ -17,8 +17,9 @@ voit pas.
 """
 import re
 
+import pytest
 import yaml
-from tests.commun import BaseChargeur, _jetons, lire, resoudre
+from tests.commun import CARTES, BaseChargeur, _jetons, geometrie_cpp, lire, resoudre
 
 CARTE_L, CARTE_H = 1250, 690          # ${modal_card_w} × ${modal_card_h}
 CROIX_X = CARTE_L - 10 - 80            # modal_header.yaml : croix de 80 px à 10 px du bord
@@ -161,58 +162,69 @@ def test_bornes_des_rouleaux_egales_aux_entites():
 
 # --- Au pixel près ----------------------------------------------------------------------
 
-GABARITS = {  # gabarit : (vars de largeur, de hauteur, valeurs fixes)
-    "rouleau.yaml": ("w", "h", None),
-    "choix_btn.yaml": ("w", "h", (None, 60)),
-    "alarm_day_chip.yaml": (None, None, (160, 70)),
-    "reglages_rangee.yaml": ("w", None, (None, 40)),
+# Gabarit : (x, y, largeur, hauteur) de sa boîte, depuis ses vars, comme il les pose. Ceux
+# du Réveil ramènent au corps de la carte les nombres du Tab5 (lot 4 du portage) ; y compté
+# depuis le titre de rangée, 40 px au-dessus (choix_btn.yaml, alarm_day_chip.yaml).
+GABARITS = {
+    "rouleau.yaml": lambda v, L, H: (v["x"], v["y"], v["w"], v["h"]),
+    "choix_btn.yaml": lambda v, L, H: (L(v["x"]), H(v["y"] - 40) + 40, L(v["w"]), H(v.get("h", 60))),
+    "alarm_day_chip.yaml": lambda v, L, H: (L(v["x"]), H(v["y"] - 40) + 40, L(160), H(70)),
+    "reglages_rangee.yaml": lambda v, L, H: (L(v.get("x", 17)), H(v["y"]), L(v["w"]), 40),
 }
 
 
-def _boite(widget):
+def _n(valeur, carte="tab5"):
+    """Un nombre du YAML, littéral ou expression (`${corps_h}`, `${ 60 * (corps_h | int) // 598 }`…),
+    calculé pour la carte."""
+    return int(resoudre(valeur, _jetons(carte)))
+
+
+def _boite(widget, carte):
     """(x, y, l, h) d'un enfant posé en TOP_LEFT, gabarits compris ; None sinon."""
+    g = geometrie_cpp(carte)
+    L = lambda v: v * g["kCorpsW"] // 1202  # noqa: E731 — largeur_carte(), tab5_geometrie.h
+    H = lambda v: v * g["kCorpsH"] // 598   # noqa: E731 — hauteur_carte()
     inc = widget.get("!include") if isinstance(widget, dict) else None
     if inc:
         regle = GABARITS.get(inc.get("file"))
         if regle is None:
             return None
-        v = inc.get("vars") or {}
-        lv, hv, fixe = regle
-        largeur = v.get(lv) if lv else fixe[0]
-        hauteur = v.get(hv) if hv and hv in v else (fixe[1] if fixe else None)
-        x = 17 if inc["file"] == "reglages_rangee.yaml" else v.get("x")
-        return _n(x), _n(v["y"]), _n(largeur), _n(hauteur)
+        v = {k: _n(x, carte) for k, x in (inc.get("vars") or {}).items() if k in ("x", "y", "w", "h")}
+        return regle(v, L, H)
     (_, props), = widget.items()
     if not isinstance(props, dict) or props.get("align") != "TOP_LEFT":
         return None
-    if not all(isinstance(props.get(k), int) for k in ("x", "y", "width", "height")):
+    try:
+        return tuple(_n(props[k], carte) for k in ("x", "y", "width", "height"))
+    except (KeyError, TypeError, ValueError):
         return None
-    return props["x"], props["y"], props["width"], props["height"]
 
 
-def _n(valeur):
-    """Un nombre du YAML, littéral ou jeton (`${corps_h}`, `${demi_w}`…), pour le Tab5."""
-    return int(resoudre(valeur, _jetons("tab5")))
-
-
-def test_tout_tient_dans_sa_carte():
+@pytest.mark.parametrize("carte", CARTES)
+def test_tout_tient_dans_sa_carte(carte):
+    """Sur chaque carte : marges de 16 px (côtés) et 14 px (haut, bas) dans sa carte, ramenées
+    au corps sur une carte plus petite que le Tab5."""
+    g = geometrie_cpp(carte)
+    carte_l, carte_h = _n("${modal_card_w}", carte), _n("${modal_card_h}", carte)
+    mx, my = 16 * g["kCorpsW"] // 1202, 14 * g["kCorpsH"] // 598
     cartes = 0
     for page in _popup()["obj"]["widgets"][1]["obj"]["widgets"]:
         props = page.get("obj") if isinstance(page, dict) else None
         if not props or not str(props.get("id", "")).startswith("alarm_page_"):
             continue
-        assert props["y"] == "${modal_body_y}" and CORPS_Y + _n(props["height"]) <= CARTE_H - 20, props["id"]
-        for carte in props["widgets"]:
-            c = carte["obj"]
-            assert _n(c["x"]) + _n(c["width"]) <= CARTE_L - 24 and _n(c["height"]) == _n(props["height"]), props["id"]
+        hauteur_page = _n(props["height"], carte)
+        assert props["y"] == "${modal_body_y}" and CORPS_Y + hauteur_page <= carte_h - 20, props["id"]
+        for c in (w["obj"] for w in props["widgets"]):
+            largeur_c, hauteur_c = _n(c["width"], carte), _n(c["height"], carte)
+            assert _n(c["x"], carte) + largeur_c <= carte_l - 24 and hauteur_c == hauteur_page, props["id"]
             cartes += 1
             for enfant in c["widgets"]:
-                boite = _boite(enfant)
+                boite = _boite(enfant, carte)
                 if boite is None:
                     continue
                 x, y, largeur, hauteur = boite
-                assert x >= 16 and y >= 14, (props["id"], enfant)
-                assert x + largeur <= _n(c["width"]) - 16 and y + hauteur <= _n(c["height"]) - 14, (props["id"], enfant)
+                assert x >= mx and y >= my, (carte, props["id"], enfant, boite)
+                assert x + largeur <= largeur_c - mx and y + hauteur <= hauteur_c - my, (carte, props["id"], enfant, boite)
     assert cartes == 8, "Heure, Sonnerie, Annonces : deux cartes ; Jours, Ouverture : une"
 
 

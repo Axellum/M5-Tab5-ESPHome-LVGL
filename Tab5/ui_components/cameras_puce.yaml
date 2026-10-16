@@ -24,5 +24,6 @@ button:
   on_short_click:
     - lambda: 'if (!ui_appui_glisse()) cameras_puce(${n});'
   widgets:
-    - label: { text: "", align: LEFT_MID, x: 16, width: 168, long_mode: DOT, text_font: roboto_22, styles: style_text_soft }
+    # Nom : la largeur de la colonne moins 70 px (168 sur le Tab5, 152 sur la 7B), le nombre à droite.
+    - label: { text: "", align: LEFT_MID, x: 16, width: "${ modal_card_w | int - 48 - cameras_cadre_l | int - 70 }", long_mode: DOT, text_font: roboto_22, styles: style_text_soft }
     - label: { text: "", align: RIGHT_MID, x: -16, width: 40, text_align: RIGHT, text_font: roboto_22, styles: style_text_dim }

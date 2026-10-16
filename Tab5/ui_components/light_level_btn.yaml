@@ -11,9 +11,9 @@
 button:
   align: TOP_LEFT
   x: ${x}
-  y: 452
-  width: 80
-  height: 72
+  y: ${ 452 * (corps_h | int) // 598 }
+  width: ${ 80 * (corps_w | int) // 1202 }
+  height: ${ 72 * (corps_h | int) // 598 }
   styles: style_clim_btn
   on_short_click:
     - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: luminosite_pct, valeur: "${pct}" }

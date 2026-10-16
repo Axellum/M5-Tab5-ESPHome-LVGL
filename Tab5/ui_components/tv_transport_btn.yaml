@@ -8,14 +8,15 @@
 #        previous, skip_backward, play_pause, skip_forward, next), icon (glyphe MDI en
 #        mdi_font_45 : il doit figurer dans la liste `glyphs` de mdi_font_45), icon_style
 #        (style de rôle style_text_*), text (le mot sous l'icône).
-# 221 × 102 : la géométrie des boutons d'applications (tv_app_btn.yaml), à la même place.
+# 221 × 102 : la géométrie des boutons d'applications (tv_app_btn.yaml), à la même place
+# (ramenée au corps de la carte en largeur comme eux, lot 4 du portage).
 # Jusqu'à l'ADR-0056, ce gabarit faisait la rangée Lecture / Pause / Retour / Accueil
 # (121 × 100) sous le pavé ; ces quatre touches sont passées à droite du pavé
 # (tv_touche.yaml).
 # ═══════════════════════════════════════════════════════
 button:
-  x: ${x}
-  width: 221
+  x: ${ (x | int) * (corps_w | int) // 1202 }
+  width: ${ (1170 * (corps_w | int) // 1202 - 4 * (16 * (corps_w | int) // 1202)) // 5 }
   height: 102
   radius: 18
   styles: style_clim_btn

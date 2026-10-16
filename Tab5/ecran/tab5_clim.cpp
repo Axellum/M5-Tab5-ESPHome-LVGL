@@ -193,18 +193,19 @@ float vue_consigne_base() {
 }
 
 // Titre du popup : de x = 52 (modal_header.yaml) à la croix (80 px à 10 px du bord de la
-// carte de 1250), avec de l'air.
-constexpr int32_t kLargeurTitreClim = 1080;
+// carte, 1250 sur le Tab5), avec de l'air : 1080 sur le Tab5.
+constexpr int32_t kLargeurTitreClim = kCarteL - 170;
 
 // Positions de la carte OPTIONS (climate_popup.yaml, tout affiché) : titre de section,
 // son contenu 26 px dessous ; rangée des préréglages 92 px, bouton 88 px, 10 px entre deux
-// boutons, 24 px entre deux sections.
+// boutons, 24 px entre deux sections (sur le Tab5 ; hauteurs ramenées au corps de la carte,
+// lot 4 du portage — le titre, en roboto_22, garde ses 26 px).
 constexpr int32_t kOptionsY0 = 50;
 constexpr int32_t kOptionsSousTitre = 26;
-constexpr int32_t kOptionsRangee = 92;
-constexpr int32_t kOptionsBouton = 88;
-constexpr int32_t kOptionsEntreBoutons = 10;
-constexpr int32_t kOptionsEntreSections = 24;
+constexpr int32_t kOptionsRangee = hauteur_carte(92);
+constexpr int32_t kOptionsBouton = hauteur_carte(88);
+constexpr int32_t kOptionsEntreBoutons = hauteur_carte(10);
+constexpr int32_t kOptionsEntreSections = hauteur_carte(24);
 
 // Un bouton que la clim affichée sait faire (lettre du tableau de l'ADR-0026).
 bool clim_capacite(char lettre) {

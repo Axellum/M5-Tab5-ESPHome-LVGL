@@ -138,8 +138,9 @@ bool pieces_calculer(P& p, bool (*garde)(int, int), int r, int t) {
 
 // Une ligne (piece_ligne.yaml) : la tuile tRT avec les mots, l'icône et les couleurs de sa
 // carte du mode HA, la ligne choisie entourée d'accent. Enfants lus ici : 0 la pastille
-// (son enfant 0 : l'icône), 1 le nom, 2 l'état. Texte : 342 − 86 (pastille) − 12 de marge.
-constexpr int32_t kLigneTexte = 244;
+// (son enfant 0 : l'icône), 1 le nom, 2 l'état. Texte : la ligne (kPieceLigneL, 342 sur le
+// Tab5) − 86 (pastille) − 12 de marge.
+constexpr int32_t kLigneTexte = kPieceLigneL - 98;
 void ligne_peindre(lv_obj_t* b, int r, int t, bool choisie) {
     if (b == nullptr) return;
     lv_obj_t* pastille = lv_obj_get_child(b, 0);
@@ -310,15 +311,17 @@ PopupVolet s_pv;
 
 // Géométrie (volet_popup.yaml) : à droite du volet dessiné (x 392..796 de la carte), le
 // nom en haut (y 56), la position (y 104, chiffres de 130 px), l'état dessous, ou seul
-// entre le nom et les commandes (y 404) quand la position n'est pas connue.
-constexpr int32_t kVoletEtatSous = 280;
-constexpr int32_t kVoletEtatSeul = 200;
-constexpr int32_t kVoletNomLargeur = 380;
+// entre le nom et les commandes (y 404) quand la position n'est pas connue. Valeurs du
+// Tab5, ramenées au corps de la carte (lot 4 du portage, tab5_geometrie.h).
+constexpr int32_t kVoletEtatSous = 56 + hauteur_carte(224);
+constexpr int32_t kVoletEtatSeul = 56 + hauteur_carte(144);
+constexpr int32_t kVoletNomLargeur = largeur_carte(380);
 // Volet dessiné : hauteur de la fenêtre et du tablier (volet_fenetre, volet_tablier de
-// volet_popup.yaml, tests/test_tuiles_firmware.py compare), lames de 38 px.
-constexpr int32_t kVoletFenetreH = 456;
-constexpr int32_t kVoletLameH = 38;
-constexpr int kVoletLames = kVoletFenetreH / kVoletLameH;
+// volet_popup.yaml, tests/test_tuiles_firmware.py compare) : 12 lames entières dans le
+// corps moins 142 px (y 56, coffre et bas du cadre, 32 px d'air) ; 38 px sur le Tab5.
+constexpr int kVoletLames = 12;
+constexpr int32_t kVoletLameH = (kCorpsH - 142) / kVoletLames;
+constexpr int32_t kVoletFenetreH = kVoletLames * kVoletLameH;
 static_assert(kVoletLames * kVoletLameH == kVoletFenetreH, "les lames couvrent la fenêtre");
 // Un doigt qui bouge de moins que ça n'a pas glissé : un toucher n'envoie rien (pas
 // d'ordre de plus à un volet en route).
@@ -605,11 +608,12 @@ PopupAppareil s_pa;
 // Géométrie (appareil_popup.yaml) : titre = la barre d'en-tête moins l'icône et la
 // croix ; textes de la carte ÉTAT (800 px) et de la carte COMMANDE (386 px) ; grand
 // bouton de 380 px, rempli à moitié (allumé : en haut ; éteint : en bas) ou en entier
-// (scène, script, bouton).
-constexpr int32_t kAppareilTitreLargeur = 1000;
-constexpr int32_t kAppareilTexteLargeur = 740;
-constexpr int32_t kAppareilActionLargeur = 350;
-constexpr int32_t kAppareilBoutonHauteur = 380;
+// (scène, script, bouton). Valeurs du Tab5, ramenées au corps de la carte (lot 4 du
+// portage, ADR-0061 ; tests/test_appareil_popup.py les compare au YAML).
+constexpr int32_t kAppareilTitreLargeur = largeur_carte(1000);
+constexpr int32_t kAppareilTexteLargeur = largeur_carte(800) - 60;
+constexpr int32_t kAppareilActionLargeur = kCorpsW - largeur_carte(816) - 36;
+constexpr int32_t kAppareilBoutonHauteur = hauteur_carte(380);
 
 // La tuile du popup a-t-elle toujours ce popup ? (les définitions peuvent changer popup
 // ouvert ; kGestes : int, act, med sans l'option t ; option r : jamais ; le mode héritage

@@ -64,7 +64,7 @@ obj:
               align: TOP_LEFT
               x: 24
               y: ${modal_body_y}
-              width: 386
+              width: ${ 386 * (corps_w | int) // 1202 }
               height: ${corps_h}
               styles: style_glass_card
               scrollable: false
@@ -87,7 +87,7 @@ obj:
                     align: TOP_LEFT
                     x: 22
                     y: ${ corps_h | int - 82 }   # 516 sur le Tab5, sous la 5e ligne sur toute carte
-                    width: 342
+                    width: ${piece_ligne_l}
                     height: 68
                     styles: style_clim_btn
                     on_short_click:
@@ -99,9 +99,9 @@ obj:
           # ═══ CARTE LUMINOSITÉ (centre) : arc + % live + raccourcis ═══
           - obj:
               align: TOP_LEFT
-              x: 426
+              x: ${ 24 + 402 * (corps_w | int) // 1202 }
               y: ${modal_body_y}
-              width: 398
+              width: ${ 398 * (corps_w | int) // 1202 }
               height: ${corps_h}
               styles: style_glass_card
               scrollable: false
@@ -113,8 +113,8 @@ obj:
                     id: arc_light_brightness
                     align: TOP_MID
                     y: 56
-                    width: 320
-                    height: 320
+                    width: ${ [320 * (corps_w | int) // 1202, 320 * (corps_h | int) // 598] | min }
+                    height: ${ [320 * (corps_w | int) // 1202, 320 * (corps_h | int) // 598] | min }
                     min_value: 0
                     max_value: 255
                     value: 128
@@ -147,21 +147,21 @@ obj:
                     id: lbl_light_brightness_val
                     text: "-- %"
                     align: TOP_MID
-                    y: 192
+                    y: ${ 56 + [320 * (corps_w | int) // 1202, 320 * (corps_h | int) // 598] | min // 2 - 24 }   # 192 : au milieu de l'arc
                     styles: style_police_date
 
                 # Raccourcis de niveau (gabarit light_level_btn.yaml : arc = pct × 255 / 100, arrondi)
                 - !include { file: light_level_btn.yaml, vars: { x: 22, pct: "10", arc: 26 } }
-                - !include { file: light_level_btn.yaml, vars: { x: 112, pct: "35", arc: 89 } }
-                - !include { file: light_level_btn.yaml, vars: { x: 202, pct: "65", arc: 166 } }
-                - !include { file: light_level_btn.yaml, vars: { x: 292, pct: "100", arc: 255 } }
+                - !include { file: light_level_btn.yaml, vars: { x: "${ 22 + 90 * (corps_w | int) // 1202 }", pct: "35", arc: 89 } }
+                - !include { file: light_level_btn.yaml, vars: { x: "${ 22 + 180 * (corps_w | int) // 1202 }", pct: "65", arc: 166 } }
+                - !include { file: light_level_btn.yaml, vars: { x: "${ 22 + 270 * (corps_w | int) // 1202 }", pct: "100", arc: 255 } }
 
           # ═══ CARTE COULEURS (droite) : blancs nommés + pastilles rondes ═══
           - obj:
               align: TOP_LEFT
-              x: 840
+              x: ${ 24 + 816 * (corps_w | int) // 1202 }
               y: ${modal_body_y}
-              width: 386
+              width: ${ corps_w | int - 816 * (corps_w | int) // 1202 }   # jusqu'au bord du corps
               height: ${corps_h}
               styles: style_glass_card
               scrollable: false
@@ -171,16 +171,16 @@ obj:
                 # Blancs nommés (température de blanc via color_name) — gabarit light_white_btn.yaml ;
                 # teintes : lampe_teinte() (tab5_tuiles_roue.cpp, la même liste que la roue, UI-8)
                 - !include { file: light_white_btn.yaml, vars: { x: 22, color_name: "warmwhite", name: "Chaud" } }
-                - !include { file: light_white_btn.yaml, vars: { x: 140, color_name: "navajowhite", name: "Crème" } }
-                - !include { file: light_white_btn.yaml, vars: { x: 258, color_name: "white", name: "Froid" } }
+                - !include { file: light_white_btn.yaml, vars: { x: "${ 22 + 118 * (corps_w | int) // 1202 }", color_name: "navajowhite", name: "Crème" } }
+                - !include { file: light_white_btn.yaml, vars: { x: "${ 22 + 236 * (corps_w | int) // 1202 }", color_name: "white", name: "Froid" } }
 
                 # Grille 4×3 de pastilles couleur (factorisées #T164, chaudes → froides)
                 - obj:
                     align: TOP_LEFT
                     x: 22
-                    y: 156
-                    width: 342
-                    height: 396
+                    y: ${ 50 + 106 * (corps_h | int) // 598 }   # 156 : 14 px sous les blancs
+                    width: ${ 342 * (corps_w | int) // 1202 }
+                    height: ${ 396 * (corps_h | int) // 598 }
                     styles: style_transparent
                     scrollable: false
                     layout:
