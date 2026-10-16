@@ -27,7 +27,11 @@
 #       768 × 598 à x 458 (zone 764 × 530 à x 0, y 64, sous le titre et les boutons).
 #       Aujourd'hui : carte de 846 × 598 à x 24 (zone 810 × 570 à x 18, y 14) et
 #       carte de 340 × 598 à x 886 (zone 304 × 570). Flux : zone des traits sur toute la
-#       page, cercles de 190 px placés par le C++.
+#       page, cercles de 200 px placés par le C++.
+#       Sur une autre carte (lot 4 du portage 1024×600, ADR-0061) : ces nombres sont ceux du
+#       Tab5, ramenés au corps (`v * corps_w // 1202`, `v * corps_h // 598`), le graphique et
+#       les zones prennent le reste du corps ; tab5_energie.cpp fait le même calcul (kZoneH,
+#       kSolZoneL, kInfosL, centre_carte() pour les cercles du Flux, qui gardent leur taille).
 # @ai_instruction Un widget de plus = son champ dans EnergieUI (tab5_energie.h) et sa
 #       ligne dans le script tab5_energie_ouvrir (tab5-energie.yaml).
 # ═══════════════════════════════════════════════════════
@@ -110,7 +114,7 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 846
+                    width: ${ 846 * (corps_w | int) // 1202 }
                     height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
@@ -120,16 +124,16 @@ obj:
                           align: TOP_LEFT
                           x: 18
                           y: 14
-                          width: 810
-                          height: 570
+                          width: ${ 846 * (corps_w | int) // 1202 - 36 }
+                          height: ${ corps_h | int - 28 }
                           styles: style_transparent
                           scrollable: false
                 # Produit, prévu, demain, meilleur créneau, source de la prévision.
                 - obj:
                     align: TOP_LEFT
-                    x: 886
+                    x: ${ 24 + 862 * (corps_w | int) // 1202 }
                     y: 0
-                    width: 340
+                    width: ${ corps_w | int - 862 * (corps_w | int) // 1202 }
                     height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
@@ -139,8 +143,8 @@ obj:
                           align: TOP_LEFT
                           x: 18
                           y: 14
-                          width: 304
-                          height: 570
+                          width: ${ corps_w | int - 862 * (corps_w | int) // 1202 - 36 }
+                          height: ${ corps_h | int - 28 }
                           styles: style_transparent
                           scrollable: false
 
@@ -169,15 +173,15 @@ obj:
                     id: energie_graphique
                     align: TOP_LEFT
                     x: 24
-                    y: 226
+                    y: ${ 210 * (corps_h | int) // 598 + 16 }
                     width: ${corps_w}
-                    height: 372
+                    height: ${ corps_h | int - 210 * (corps_h | int) // 598 - 16 }
                     hidden: true
                     styles: style_glass_card
                     scrollable: false
                     widgets:
                       # « Aujourd'hui · 12.4 kWh », « 30 derniers jours · … », « 12 derniers mois · … »
-                      - label: { id: energie_titre, text: "", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
+                      - label: { id: energie_titre, text: "", align: TOP_LEFT, x: 22, y: "${ 18 * (corps_h | int) // 598 }", text_font: roboto_32_b }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "0", x_pos: "-338", label_text: "Heures" } }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "1", x_pos: "-178", label_text: "Jours" } }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie, n: "2", x_pos: "-18", label_text: "Mois" } }
@@ -186,9 +190,9 @@ obj:
                           id: energie_zone
                           align: TOP_LEFT
                           x: 18
-                          y: 72
+                          y: ${ 72 * (corps_h | int) // 598 }
                           width: ${graphique_l}
-                          height: 286
+                          height: ${ corps_h | int - 210 * (corps_h | int) // 598 - 16 - 72 * (corps_h | int) // 598 - 14 }
                           styles: style_transparent
                           scrollable: false
 
@@ -233,7 +237,7 @@ obj:
                     scrollable: false
                     widgets:
                       # « Octobre », « Aujourd'hui », « 2026 » (coupé avant les boutons).
-                      - label: { id: energie_bilan_titre, text: "", align: TOP_LEFT, x: 22, y: 18, text_font: roboto_32_b }
+                      - label: { id: energie_bilan_titre, text: "", align: TOP_LEFT, x: 22, y: "${ 18 * (corps_h | int) // 598 }", text_font: roboto_32_b }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "0", x_pos: "-338", label_text: "Heures" } }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "1", x_pos: "-178", label_text: "Jours" } }
                       - !include { file: vue_btn.yaml, vars: { prefixe: energie_bilan, n: "2", x_pos: "-18", label_text: "Mois" } }
@@ -242,8 +246,8 @@ obj:
                           id: energie_bilan_zone
                           align: TOP_LEFT
                           x: 0
-                          y: 64
+                          y: ${ 64 * (corps_h | int) // 598 }
                           width: ${ corps_w | int - 438 }
-                          height: ${ corps_h | int - 68 }
+                          height: ${ corps_h | int - 64 * (corps_h | int) // 598 - 4 }
                           styles: style_transparent
                           scrollable: false

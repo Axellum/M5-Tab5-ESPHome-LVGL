@@ -5,8 +5,8 @@
 # (ecran/tab5_clim.cpp) ; le mode et la commande vont à la clim affichée (ADR-0027).
 button:
   id: popup_btn_clim_${suffix}
-  width: 342
-  height: 88
+  width: ${ 386 * (corps_w | int) // 1202 - 44 }
+  height: ${ 88 * (corps_h | int) // 598 }
   radius: 18
   styles: style_clim_btn
   on_short_click:
@@ -16,5 +16,5 @@ button:
     - lambda: 'clim_popup_mode("${hvac_mode}");'
     - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: mode, valeur: "${hvac_mode}" }
   widgets:
-    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 20, text_font: mdi_font_45, styles: style_text_dim }
-    - label: { id: "popup_lbl_clim_${suffix}", text: "${label_text}", align: LEFT_MID, x: 88, text_font: roboto_32_b }
+    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: "${ 20 * (corps_w | int) // 1202 }", text_font: mdi_font_45, styles: style_text_dim }
+    - label: { id: "popup_lbl_clim_${suffix}", text: "${label_text}", align: LEFT_MID, x: "${ 88 * (corps_w | int) // 1202 }", text_font: roboto_32_b }

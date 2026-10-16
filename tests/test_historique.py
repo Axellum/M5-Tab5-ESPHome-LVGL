@@ -33,6 +33,7 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 from tests.test_tuiles_blueprint import Etat, Passage, _chercher, _evenement
+from tests.commun import CARTES, _jetons as jetons_resolus, constantes_cpp, resoudre
 from tests.commun import lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -811,3 +812,27 @@ def test_appuis_longs_et_registre():
     assert "id(tab5_historique_ouvrir).execute(std::string(cle));" in ligne.group(1)
     yaml_hist = _lire(os.path.join(REPO, "Tab5", "paquets", "tab5-historique.yaml"))
     assert "esphome.tab5_historique" in yaml_hist and "cle: !lambda" in yaml_hist and "vue: !lambda" in yaml_hist
+
+# ─── Mise en page sur une autre carte (lot 4 du portage, ADR-0061) ─────────────
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_zone_du_trace_egale_a_son_yaml(carte):
+    """La hauteur de historique_zone (YAML, ramenée au corps de la carte) est celle que le
+    C++ calcule (kZoneH) : le bas du tracé, l'axe et la légende en dépendent. Sur le Tab5,
+    les valeurs dessinées au pixel (344, 266, 276, 312) ; partout, la légende dans la zone
+    et la carte du graphique dans le corps."""
+    popup = _lire(os.path.join(REPO, "Tab5", "ui_components", "historique_popup.yaml"))
+    jetons = jetons_resolus(carte)
+    zone = re.search(r"id: historique_zone\s+align: TOP_LEFT\s+x: 18\s+y: (.+)\s+width: .+\s+height: (.+)", popup)
+    carte_graphique = re.search(r"x: 24\s+y: (\$\{ modal_body_y.+)\s+width: \$\{corps_w\}\s+height: (.+)", popup)
+    assert zone and carte_graphique, "historique_popup.yaml : zone ou carte du graphique introuvable"
+    zone_y, zone_h = (resoudre(v.strip(), jetons) for v in zone.groups())
+    carte_y, carte_h = (resoudre(v.strip(), jetons) for v in carte_graphique.groups())
+    k = constantes_cpp(_lire(CPP), carte)
+    assert k["kZoneH"] == zone_h, f"kZoneH {k['kZoneH']} ≠ hauteur de historique_zone {zone_h} ({carte})"
+    assert zone_y + zone_h + 16 == carte_h, "16 px sous la zone, dans la carte du graphique"
+    assert carte_y + carte_h == int(jetons["modal_body_y"]) + int(jetons["corps_h"]), "bas de la carte = bas du corps"
+    assert k["kTraceY0"] < k["kTraceY1"] < k["kAxeY"] < k["kLegendeY"] < k["kZoneH"]
+    if carte == "tab5":
+        assert (carte_y, carte_h, zone_y, zone_h) == (238, 432, 72, 344)
+        assert (k["kTraceY1"], k["kAxeY"], k["kLegendeY"]) == (266, 276, 312)

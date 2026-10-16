@@ -16,7 +16,7 @@ chaînes au contrat ; ce fichier lit le C++ et le YAML, comme les autres tests s
 import os
 import re
 from pathlib import Path
-from tests.commun import lire as _lire, source
+from tests.commun import CARTES, _jetons as jetons_resolus, constantes_cpp, lire as _lire, resoudre, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -572,18 +572,26 @@ def test_geometrie_du_volet_dessine():
     """La fenêtre et le tablier du YAML ont la hauteur du C++ ; les lames la couvrent ;
     le toucher arrive au cadre (fenêtre et tablier non cliquables)."""
     popup = _lire("Tab5", "ui_components", "volet_popup.yaml")
-    h = int(_constexpr("kVoletFenetreH"))
-    lame = int(_constexpr("kVoletLameH"))
-    assert h % lame == 0
+    # Mise en page ramenée au corps de chaque carte (lot 4 du portage) : le C++ et le YAML
+    # calculés pour la carte ; sur le Tab5, les valeurs au pixel d'avant (456, 38).
+    for carte in CARTES:
+        c = constantes_cpp(_cpp(), carte)
+        h, lame = c["kVoletFenetreH"], c["kVoletLameH"]
+        assert h % lame == 0 and h // lame == 12, carte
+        if carte == "tab5":
+            assert (h, lame) == (456, 38)
+        for ident in ("volet_fenetre", "volet_tablier"):
+            bloc = popup.split(f"id: {ident}\n", 1)[1].split("widgets:", 1)[0]
+            haut = re.search(r"\n\s+height: (.+)\n", bloc).group(1).strip()
+            assert resoudre(haut, jetons_resolus(carte)) == h, (carte, ident)
     for ident in ("volet_fenetre", "volet_tablier"):
         bloc = popup.split(f"id: {ident}\n", 1)[1].split("widgets:", 1)[0]
-        assert re.search(rf"\n\s+height: {h}\n", bloc), ident
         assert "clickable: false" in bloc, ident
         assert "scrollable: false" in bloc, ident
     cadre = popup.split("id: volet_cadre\n", 1)[1].split("widgets:", 1)[0]
     assert "clickable: false" not in cadre
     # Le tablier remplit la fenêtre (même largeur), qui le rogne.
-    largeurs = [re.search(r"\n\s+width: (\d+)\n", popup.split(f"id: {i}\n", 1)[1]).group(1)
+    largeurs = [re.search(r"\n\s+width: (.+)\n", popup.split(f"id: {i}\n", 1)[1]).group(1).strip()
                 for i in ("volet_fenetre", "volet_tablier")]
     assert largeurs[0] == largeurs[1]
     # Pastille des boutons : pas cliquable, sinon elle prend l'appui du bouton.

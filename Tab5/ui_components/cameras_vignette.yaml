@@ -6,7 +6,7 @@
 #       la case en grand (cameras_vignette(n), tab5_cameras.cpp) ; un tap au bout d'un
 #       glissement (page suivante) ne fait rien.
 # @architecture_constraint 476 × 266 (le contenu du cadre, 960 × 540, en quatre, 8 px
-#       d'écart) ; disposer() de tab5_cameras.cpp la place (deux, trois ou quatre cases) et
+#       d'écart ; 356 × 198 sur la 7B, lot 4 du portage : kCaseL / kCaseH) ; disposer() de tab5_cameras.cpp la place (deux, trois ou quatre cases) et
 #       l'affiche. Enfants, dans l'ordre : le nom de la caméra (pastille de verre en bas à
 #       gauche, coupé par texte_ha_coupe), le message (« Chargement... », « Hors ligne »…).
 #       L'image est créée en C++ sous eux (une source fixe ne conviendrait pas, comme le
@@ -16,8 +16,8 @@
 # ═══════════════════════════════════════════════════════
 button:
   align: TOP_LEFT
-  width: 476
-  height: 266
+  width: ${ (cameras_cadre_l | int - 12) // 2 }
+  height: ${ (cameras_cadre_h | int - 12) // 2 }
   radius: 8    # = kCaseRayon (tab5_cameras.cpp) : petits exprès, voir là-bas
   pad_all: 0   # positions exactes : le thème ajoutait ~21 px
   hidden: true

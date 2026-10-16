@@ -13,14 +13,16 @@
 # Piège ESPHome : la substitution garde le type de la variable. Un paramètre de script
 # (`n`) doit être passé en nombre NON quoté dans `vars` (`n: 3`, pas `"3"`),
 # sinon il part en chaîne ('3') au lieu d'un entier.
+# Taille (lot 4 du portage, ADR-0061) : x, y, 160 × 70 sont ceux du Tab5, ramenés au corps de
+# la carte comme choix_btn.yaml (y compté depuis le titre de rangée, 40 px au-dessus).
 # ═══════════════════════════════════════════════════════
 button:
   id: btn_alarm_day_${n}
   align: TOP_LEFT
-  x: ${x}
-  y: ${y}
-  width: 160
-  height: 70
+  x: ${ (x | int) * (corps_w | int) // 1202 }
+  y: ${ ((y | int) - 40) * (corps_h | int) // 598 + 40 }
+  width: ${ 160 * (corps_w | int) // 1202 }
+  height: ${ 70 * (corps_h | int) // 598 }
   radius: 16
   pad_all: 0   # positions exactes : le thème ajoutait ~21 px
   styles: style_clim_btn

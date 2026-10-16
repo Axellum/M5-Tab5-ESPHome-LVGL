@@ -6,8 +6,8 @@
 # clim affichée (clim_popup_preset, ADR-0027), icône recolorée par clim_recolorer().
 button:
   id: popup_btn_clim_${suffix}
-  width: 164
-  height: 88
+  width: ${ (386 * (corps_w | int) // 1202 - 58) // 2 }
+  height: ${ 88 * (corps_h | int) // 598 }
   radius: 18
   styles: style_clim_btn
   on_short_click:
@@ -15,6 +15,10 @@ button:
     # puis envoie ce qu'elle vient de poser (évite un double-toggle inversé).
     - lambda: 'clim_popup_preset("${preset_name}");'
     - script.execute: { id: tab5_action, emplacement: !lambda 'return clim_affichee_cle();', commande: preset, valeur: !lambda 'return clim_affichee_preset();' }
+  # Icône et mot ramenés au corps de la carte (lot 4 du portage), puis décalés ensemble vers la
+  # gauche si le mot sortait du bouton : « Boost » fait 56 px en roboto_22, qui ne rétrécit pas,
+  # et le thème met 20 px de marge (+ 1 de bordure) à gauche du contenu ; le mot doit finir à
+  # 6 px du bord droit. 0 sur le Tab5 (bouton de 164), 17 px sur la 7B (bouton de 122).
   widgets:
-    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: 14, text_font: mdi_font_45, styles: style_text_dim }
-    - label: { text: "${label_text}", align: LEFT_MID, x: 72 }
+    - label: { id: "popup_icon_clim_${suffix}", text: "${icon}", align: LEFT_MID, x: "${ 14 * (corps_w | int) // 1202 - ([0, 83 + 72 * (corps_w | int) // 1202 - (386 * (corps_w | int) // 1202 - 58) // 2] | max) }", text_font: mdi_font_45, styles: style_text_dim }
+    - label: { text: "${label_text}", align: LEFT_MID, x: "${ 72 * (corps_w | int) // 1202 - ([0, 83 + 72 * (corps_w | int) // 1202 - (386 * (corps_w | int) // 1202 - 58) // 2] | max) }" }

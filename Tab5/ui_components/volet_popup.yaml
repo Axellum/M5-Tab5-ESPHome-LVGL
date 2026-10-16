@@ -31,6 +31,11 @@
 #       et « position » (0-100), événement esphome.tab5_action, emplacement tRT ; le
 #       blueprint « Tab5 — emplacements » les applique à l'entité de CETTE tuile.
 #       Corps : x 24..1226, y 72..670 (cartes de 386 et 800 px, 16 px d'écart).
+#       Sur une autre carte (lot 4 du portage, ADR-0061) : la même disposition ramenée au
+#       corps (largeurs × corps_w / 1202, hauteurs × corps_h / 598, arrondies en dessous) ;
+#       les marges de 22 px des cartes et le haut du volet dessiné (y 56, aligné sur le
+#       nom) ne bougent pas, le volet dessiné prend la hauteur qui reste (88 px de moins
+#       que le corps, comme les 510 du Tab5), en 12 lames entières.
 #       Ne pas renommer volet_popup / volet_nom / volet_nombre / volet_position /
 #       volet_etat / volet_cadre / volet_tablier / volet_ligne_N / vol_onglet_N : posés
 #       dans g_tuiles_ui (tab5-tuiles.yaml). Le cadre n'a pas d'événement ici : glisser et
@@ -82,7 +87,7 @@ obj:
               align: TOP_LEFT
               x: 24
               y: ${modal_body_y}
-              width: 386
+              width: ${ 386 * (corps_w | int) // 1202 }
               height: ${corps_h}
               styles: style_glass_card
               scrollable: false
@@ -100,16 +105,17 @@ obj:
 
                 # Toute la pièce affichée d'un coup : la commande de chacun de ses volets
                 # listés (popup_volets_tout, une action par volet, comme sa tuile). À 88 px
-                # du bas de la carte (y 510 sur le Tab5).
-                - !include { file: volet_btn.yaml, vars: { x: 22, y: "${ corps_h | int - 88 }", w: 163, h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: ouvrir, icon: "\U000F005D", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout ouvrir" } }
-                - !include { file: volet_btn.yaml, vars: { x: 201, y: "${ corps_h | int - 88 }", w: 163, h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: fermer, icon: "\U000F0045", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout fermer" } }
+                # du bas de la carte (y 510 sur le Tab5), côte à côte sous les lignes (163 px
+                # de large sur le Tab5, 16 px entre eux).
+                - !include { file: volet_btn.yaml, vars: { x: 22, y: "${ corps_h | int - 88 }", w: "${ (piece_ligne_l | int - 16) // 2 }", h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: ouvrir, icon: "\U000F005D", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout ouvrir" } }
+                - !include { file: volet_btn.yaml, vars: { x: "${ 22 + (piece_ligne_l | int - 16) // 2 + 16 }", y: "${ corps_h | int - 88 }", w: "${ (piece_ligne_l | int - 16) // 2 }", h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: fermer, icon: "\U000F0045", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout fermer" } }
 
           # ═══ CARTE POSITION (droite) : le volet choisi, dessiné, sa position, ses commandes ═══
           - obj:
               align: TOP_LEFT
-              x: 426
+              x: ${ 24 + 402 * (corps_w | int) // 1202 }
               y: ${modal_body_y}
-              width: 800
+              width: ${ corps_w | int - 402 * (corps_w | int) // 1202 }   # jusqu'au bord du corps
               height: ${corps_h}
               styles: style_glass_card
               scrollable: false
@@ -120,14 +126,16 @@ obj:
                 # tient la fenêtre ; dans la fenêtre, le tablier glisse verticalement
                 # (y = −position × 456 / 100) et la fenêtre le rogne : à 100 % il est
                 # rentré dans le coffre, à 0 % il couvre toute la vitre. Haut et bas du
-                # cadre (y 56..566) alignés sur le nom et le bas des commandes.
+                # cadre (y 56..566) alignés sur le nom et le bas des commandes. Hauteur :
+                # 12 lames entières (38 px sur le Tab5) dans ce qui reste du corps sous
+                # y 56 et au-dessus de 32 px d'air, plus le coffre et le bas (54 px).
                 - obj:
                     id: volet_cadre
                     align: TOP_LEFT
-                    x: 56
+                    x: ${ 56 * (corps_w | int) // 1202 }
                     y: 56
-                    width: 336
-                    height: 510
+                    width: ${ 336 * (corps_w | int) // 1202 }
+                    height: ${ 12 * ((corps_h | int - 142) // 12) + 54 }
                     styles: [style_bg_arc_track, style_border_glass_rim]
                     bg_opa: COVER
                     border_width: 2
@@ -144,8 +152,8 @@ obj:
                           align: TOP_LEFT
                           x: 10
                           y: 40
-                          width: 312
-                          height: 456
+                          width: ${ 336 * (corps_w | int) // 1202 - 24 }
+                          height: ${ 12 * ((corps_h | int - 142) // 12) }
                           styles: style_bg_accent
                           bg_opa: 15%
                           border_width: 0
@@ -160,8 +168,8 @@ obj:
                                 align: TOP_LEFT
                                 x: 0
                                 y: 0
-                                width: 312
-                                height: 456
+                                width: ${ 336 * (corps_w | int) // 1202 - 24 }
+                                height: ${ 12 * ((corps_h | int - 142) // 12) }
                                 styles: style_transparent
                                 clickable: false
                                 scrollable: false
@@ -172,7 +180,7 @@ obj:
                     id: volet_nom
                     text: ""
                     align: TOP_MID
-                    x: 196
+                    x: ${ 196 * (corps_w | int) // 1202 }
                     y: 56
                     text_font: roboto_32_b
 
@@ -181,8 +189,8 @@ obj:
                 - obj:
                     id: volet_position
                     align: TOP_MID
-                    x: 196
-                    y: 104
+                    x: ${ 196 * (corps_w | int) // 1202 }
+                    y: ${ 56 + 48 * (corps_h | int) // 598 }
                     width: SIZE_CONTENT
                     height: SIZE_CONTENT
                     styles: style_transparent
@@ -204,12 +212,12 @@ obj:
                     id: volet_etat
                     text: "--"
                     align: TOP_MID
-                    x: 196
-                    y: 200
+                    x: ${ 196 * (corps_w | int) // 1202 }
+                    y: ${ 56 + 144 * (corps_h | int) // 598 }
                     styles: style_police_date
 
                 # Ouvrir / Stop / Fermer du volet choisi, côte à côte, le bas aligné sur
-                # celui du volet dessiné (566).
-                - !include { file: volet_btn.yaml, vars: { x: 402, y: 404, w: 120, h: 162, pastille: 80, rayon: 40, pastille_y: 24, texte_y: -22, appel: popup_volet_commande, commande: ouvrir, icon: "\U000F005D", icon_font: mdi_font_45, icon_style: style_text_accent, text: "Ouvrir" } }
-                - !include { file: volet_btn.yaml, vars: { x: 534, y: 404, w: 120, h: 162, pastille: 80, rayon: 40, pastille_y: 24, texte_y: -22, appel: popup_volet_commande, commande: arreter, icon: "\U000F04DB", icon_font: mdi_font_45, icon_style: style_text_warning, text: "Stop" } }
-                - !include { file: volet_btn.yaml, vars: { x: 666, y: 404, w: 120, h: 162, pastille: 80, rayon: 40, pastille_y: 24, texte_y: -22, appel: popup_volet_commande, commande: fermer, icon: "\U000F0045", icon_font: mdi_font_45, icon_style: style_text_accent, text: "Fermer" } }
+                # celui du volet dessiné (566 sur le Tab5 : y 404, 162 de haut).
+                - !include { file: volet_btn.yaml, vars: { x: "${ 402 * (corps_w | int) // 1202 }", y: "${ 56 + 12 * ((corps_h | int - 142) // 12) + 54 - 162 * (corps_h | int) // 598 }", w: "${ 120 * (corps_w | int) // 1202 }", h: "${ 162 * (corps_h | int) // 598 }", pastille: "${ [80 * (corps_w | int) // 1202, 80 * (corps_h | int) // 598] | min }", rayon: "${ [80 * (corps_w | int) // 1202, 80 * (corps_h | int) // 598] | min // 2 }", pastille_y: "${ 24 * (corps_h | int) // 598 }", texte_y: "${ 0 - 22 * (corps_h | int) // 598 }", appel: popup_volet_commande, commande: ouvrir, icon: "\U000F005D", icon_font: mdi_font_45, icon_style: style_text_accent, text: "Ouvrir" } }
+                - !include { file: volet_btn.yaml, vars: { x: "${ 534 * (corps_w | int) // 1202 }", y: "${ 56 + 12 * ((corps_h | int - 142) // 12) + 54 - 162 * (corps_h | int) // 598 }", w: "${ 120 * (corps_w | int) // 1202 }", h: "${ 162 * (corps_h | int) // 598 }", pastille: "${ [80 * (corps_w | int) // 1202, 80 * (corps_h | int) // 598] | min }", rayon: "${ [80 * (corps_w | int) // 1202, 80 * (corps_h | int) // 598] | min // 2 }", pastille_y: "${ 24 * (corps_h | int) // 598 }", texte_y: "${ 0 - 22 * (corps_h | int) // 598 }", appel: popup_volet_commande, commande: arreter, icon: "\U000F04DB", icon_font: mdi_font_45, icon_style: style_text_warning, text: "Stop" } }
+                - !include { file: volet_btn.yaml, vars: { x: "${ 666 * (corps_w | int) // 1202 }", y: "${ 56 + 12 * ((corps_h | int - 142) // 12) + 54 - 162 * (corps_h | int) // 598 }", w: "${ 120 * (corps_w | int) // 1202 }", h: "${ 162 * (corps_h | int) // 598 }", pastille: "${ [80 * (corps_w | int) // 1202, 80 * (corps_h | int) // 598] | min }", rayon: "${ [80 * (corps_w | int) // 1202, 80 * (corps_h | int) // 598] | min // 2 }", pastille_y: "${ 24 * (corps_h | int) // 598 }", texte_y: "${ 0 - 22 * (corps_h | int) // 598 }", appel: popup_volet_commande, commande: fermer, icon: "\U000F0045", icon_font: mdi_font_45, icon_style: style_text_accent, text: "Fermer" } }

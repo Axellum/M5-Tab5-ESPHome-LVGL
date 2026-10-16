@@ -23,6 +23,7 @@ clim du blueprint et pour une clim de tuile. La Daikin de l'auteur (ses attribut
 dans Home Assistant le 29/09/2026) doit recevoir exactement ce que l'ancien blueprint lui
 envoyait : la valeur de l'écran telle quelle, froid quand elle est éteinte."""
 import datetime as dt
+import functools
 import os
 import re
 
@@ -40,7 +41,7 @@ from tests.test_tuiles_blueprint import (
     _rendre,
     _tablette,
 )
-from tests.commun import contrat, lire as _lire, source
+from tests.commun import CARTES, _jetons as jetons_resolus, constantes_cpp, contrat, lire as _lire, resoudre, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ADR = os.path.join(REPO, "docs", "decisions", "0026-climate-from-device.md")
@@ -159,17 +160,24 @@ def test_plus_de_pas_ni_de_bornes_en_dur_dans_les_boutons():
     assert re.search(r"min_value: 16\n", arc) and re.search(r"max_value: 30\n", arc)
 
 
-def _y_yaml(texte, ident):
-    m = re.search(rf"id: {ident}\b[^\n]*?\by: (\d+)", texte) or \
-        re.search(rf"id: {ident}\n(?:[^\n]*\n)*?\s+y: (\d+)\n", texte)
+def _y_yaml_carte(texte, ident, carte="tab5"):
+    """y d'un widget du popup, calculé pour la carte (mise en page ramenée au corps, lot 4)."""
+    m = re.search(rf"id: {ident}\b[^\n]*?\by: (\d+|\"[^\"]+\")", texte) or \
+        re.search(rf"id: {ident}\n(?:[^\n]*\n)*?\s+y: ([^\n]+)\n", texte)
     assert m, f"y de {ident} introuvable"
-    return int(m.group(1))
+    return int(resoudre(m.group(1).strip().strip('"'), jetons_resolus(carte)))
 
 
-def test_positions_des_options_egales_aux_constantes_du_cpp():
+@pytest.mark.parametrize("carte", CARTES)
+def test_positions_des_options_egales_aux_constantes_du_cpp(carte):
     cartes = _lire("Tab5", "ecran", "tab5_clim.cpp")
-    k = {n: int(v) for n, v in re.findall(r"constexpr int32_t (kOptions\w+) = (\d+);", cartes)}
+    k = {n: v for n, v in constantes_cpp(cartes, carte).items() if n.startswith("kOptions")}
+    assert len(k) == 6, k
+    if carte == "tab5":
+        assert k == {"kOptionsY0": 50, "kOptionsSousTitre": 26, "kOptionsRangee": 92, "kOptionsBouton": 88,
+                     "kOptionsEntreBoutons": 10, "kOptionsEntreSections": 24}
     popup = _lire("Tab5", "ui_components", "climate_popup.yaml")
+    _y_yaml = functools.partial(_y_yaml_carte, carte=carte)
     y = k["kOptionsY0"]
     assert _y_yaml(popup, "clim_titre_presets") == y
     assert _y_yaml(popup, "clim_rangee_presets") == y + k["kOptionsSousTitre"]

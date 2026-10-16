@@ -16,7 +16,7 @@ import re
 
 import pytest
 from tests import test_tuiles_blueprint as tb
-from tests.commun import lire, source
+from tests.commun import CARTES, _jetons as jetons_resolus, lire, resoudre, source
 from tests.test_tuiles_blueprint import Etat, Passage, _chercher, _evenement, _rendre
 
 POPUP = ("Tab5", "ui_components", "tv_remote_popup.yaml")
@@ -119,7 +119,8 @@ def test_chaque_touche_traduite_pour_un_boitier():
     assert sans == {"KEY_MUTE", "KEY_SOURCE"}, sans
     assert set(table) <= _touches_firmware(), "une traduction qu'aucune touche n'envoie"
     popup = lire(*POPUP)
-    source_ = popup.split("id: tv_touche_source,", 1)[1].split("}", 1)[0]
+    # La ligne de l'include (ses vars contiennent des `${ … }` depuis le lot 4 du portage).
+    source_ = popup.split("id: tv_touche_source,", 1)[1].split("\n", 1)[0]
     assert 'touche: "KEY_SOURCE"' in source_
     muet = popup.split("id: tv_touche_muet\n", 1)[1].split("- label:", 1)[0]
     assert 'touche: "KEY_MUTE"' in muet
@@ -261,3 +262,22 @@ def test_une_branche_par_commande_du_popup():
     assert alias == ["Télécommande : marche / arrêt", "Télécommande : touche",
                      "Télécommande : application (script tab5_tv_app, package tab5_tv.yaml)"]
     assert not any((b.get("alias") or "").startswith("TV : ") for b in branches)
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_marche_arret_dans_sa_touche(carte):
+    """« Marche / Arrêt » (142 px en roboto_22, qui ne rétrécit pas) : taille au contenu sur
+    le Tab5, comme avant le portage ; sur une carte plus petite, il va à la ligne dans la
+    touche (lot 4, ADR-0061), sans qu'un de ses deux morceaux (« Marche / » 87 px) déborde."""
+    jetons = jetons_resolus(carte)
+    texte = lire(*POPUP).replace("\r\n", "\n")
+    bouton = re.search(r"# ── Colonne des commandes.*?\n\s+width: ([^\n]+)\n", texte, re.S)
+    mot = re.search(r'text: "Marche / Arrêt"\n\s+align: LEFT_MID\n\s+x: "(.+)"\n\s+width: "(.+)"\n', texte)
+    assert bouton and mot
+    touche_l = int(resoudre(bouton.group(1), jetons))
+    x, largeur = int(resoudre(mot.group(1), jetons)), resoudre(mot.group(2), jetons)
+    if carte == "tab5":
+        assert (touche_l, x, largeur) == (290, 82, "SIZE_CONTENT")
+        assert x + 142 <= touche_l - 42
+    else:
+        assert 87 <= largeur and x + largeur <= touche_l - 42

@@ -32,7 +32,7 @@ button:
   align: TOP_LEFT
   x: 22
   y: ${ 50 + idx * (piece_ligne_pas | int) }
-  width: 342
+  width: ${piece_ligne_l}   # 342 sur le Tab5 : la carte de gauche moins 2 × 22 (lot 4)
   height: ${piece_ligne_h}
   pad_all: 0   # positions exactes des enfants (le thème ajoutait sa marge)
   hidden: true

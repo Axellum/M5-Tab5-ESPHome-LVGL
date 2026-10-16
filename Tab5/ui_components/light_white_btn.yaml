@@ -7,16 +7,19 @@
 #        lampe_teinte() (tab5_tuiles_roue.cpp, la même liste que la roue, UI-8).
 # Cible id(current_light_slot) (global partagé, pas une entité en dur).
 # Sorti de light_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
+# Sur une carte plus petite (lot 4 du portage), le bouton est ramené au corps mais l'icône
+# et le mot gardent leur taille : chacun se rapproche du bord de la moitié de la hauteur
+# perdue (le rembourrage du thème ne change pas), pour garder l'écart du Tab5 entre eux.
 # ═══════════════════════════════════════════════════════
 button:
   align: TOP_LEFT
   x: ${x}
   y: 50
-  width: 106
-  height: 92
+  width: ${ 106 * (corps_w | int) // 1202 }
+  height: ${ 92 * (corps_h | int) // 598 }
   styles: style_clim_btn
   on_short_click:
     - script.execute: { id: tab5_action, emplacement: !lambda 'return id(current_light_slot);', commande: couleur, valeur: "${color_name}" }
   widgets:
-    - label: { text: "\U000F0335", align: TOP_MID, y: 8, text_font: mdi_font_32, text_color: !lambda 'return lv_color_hex(lampe_teinte("${color_name}"));' }
-    - label: { text: "${name}", align: BOTTOM_MID, y: -8, styles: style_text_dim }
+    - label: { text: "\U000F0335", align: TOP_MID, y: "${ 8 - (92 - 92 * (corps_h | int) // 598) // 2 }", text_font: mdi_font_32, text_color: !lambda 'return lv_color_hex(lampe_teinte("${color_name}"));' }
+    - label: { text: "${name}", align: BOTTOM_MID, y: "${ (92 - 92 * (corps_h | int) // 598) // 2 - 8 }", styles: style_text_dim }

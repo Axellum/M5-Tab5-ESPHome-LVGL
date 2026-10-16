@@ -28,6 +28,11 @@
 #       La disposition de la page montrée vient de HA (clé « telecommandes » de
 #       tab5_maj_emplacements, écran tv ou boitier) ; peindre() (tab5_telecommande.cpp) montre Source
 #       ou Stop, Muet ou l'icône du volume, les applications ou la rangée de lecture.
+#       Sur une autre carte (lot 4 du portage 1024×600, ADR-0061) : la rangée basse garde ses
+#       102 px (textes et icônes de taille fixe), la zone principale prend le reste du corps
+#       moins l'air ramené ; largeurs ramenées au corps, le disque et le volume à la plus
+#       petite des deux échelles (un disque reste rond), la colonne des commandes prend ce
+#       qui reste ; touches posées en haut, au milieu et en bas comme ici.
 # @architecture_constraint Les touches envoient un code de touche Samsung (KEY_UP…),
 #       le vocabulaire commun : le blueprint le traduit pour un boîtier Apple TV (up,
 #       select, top_menu, play_pause…), et un blueprint plus ancien le passe tel quel à la
@@ -90,8 +95,8 @@ obj:
           - obj:
               align: TOP_MID
               y: ${modal_body_y}
-              width: 1170
-              height: 472
+              width: ${ 1170 * (corps_w | int) // 1202 }
+              height: ${ (corps_h | int - 102 - 24 * (corps_h | int) // 598) }
               styles: style_transparent
               scrollable: false
               widgets:
@@ -106,18 +111,27 @@ obj:
                     align: TOP_LEFT
                     x: 0
                     y: 0
-                    width: 290
-                    height: 128
+                    width: ${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) }
+                    height: ${ 128 * (corps_h | int) // 598 }
                     radius: 18
                     styles: style_clim_btn
                     on_short_click:
                       - script.execute: { id: tab5_action, emplacement: !lambda 'return telecommande_cle();', commande: alimentation, valeur: "" }
                     widgets:
-                      - label: { text: "\U000F0425", align: LEFT_MID, x: 22, text_font: mdi_font_45, styles: style_text_error }
-                      - label: { text: "Marche / Arrêt", align: LEFT_MID, x: 82 }
-                - !include { file: tv_touche.yaml, vars: { id: tv_touche_source, x: 0, y: 172, w: 290, h: 128, touche: "KEY_SOURCE", icon: "\U000F0379", icon_style: "style_text_info", text: "Source" } }
-                - !include { file: tv_touche.yaml, vars: { id: tv_touche_stop, x: 0, y: 172, w: 290, h: 128, touche: "KEY_STOP", icon: "\U000F04DB", icon_style: "style_text_warning", text: "Stop", hidden: "true" } }
-                - !include { file: tv_touche.yaml, vars: { id: tv_touche_menu, x: 0, y: 344, w: 290, h: 128, touche: "KEY_MENU", icon: "\U000F035C", icon_style: "style_text_dim", text: "Menu" } }
+                      - label: { text: "\U000F0425", align: LEFT_MID, x: "${ 22 * (corps_w | int) // 1202 }", text_font: mdi_font_45, styles: style_text_error }
+                      # Le mot 60 px après l'icône (mdi_font_45 ne rétrécit pas). Sur une carte
+                      # plus petite, la place qui reste à sa droite (touche − 2 × 21 de marge et
+                      # bordure du thème − x du mot) passe sous les 166 px du Tab5 : « Marche /
+                      # Arrêt » (142 px en roboto_22) va à la ligne dans la touche au lieu d'en
+                      # sortir (112 px sur la 7B). Sur le Tab5, taille au contenu, comme avant.
+                      - label:
+                          text: "Marche / Arrêt"
+                          align: LEFT_MID
+                          x: "${ 22 * (corps_w | int) // 1202 + 60 }"
+                          width: "${ 'SIZE_CONTENT' if (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) - 42 - (22 * (corps_w | int) // 1202 + 60) >= 166 else (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) - 42 - (22 * (corps_w | int) // 1202 + 60) }"
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_source, x: "${ 0 }", y: "${ ((corps_h | int - 102 - 24 * (corps_h | int) // 598) - 128 * (corps_h | int) // 598) // 2 }", w: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) }", h: "${ 128 * (corps_h | int) // 598 }", touche: "KEY_SOURCE", icon: "\U000F0379", icon_style: "style_text_info", text: "Source" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_stop, x: "${ 0 }", y: "${ ((corps_h | int - 102 - 24 * (corps_h | int) // 598) - 128 * (corps_h | int) // 598) // 2 }", w: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) }", h: "${ 128 * (corps_h | int) // 598 }", touche: "KEY_STOP", icon: "\U000F04DB", icon_style: "style_text_warning", text: "Stop", hidden: "true" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_menu, x: "${ 0 }", y: "${ (corps_h | int - 102 - 24 * (corps_h | int) // 598) - 128 * (corps_h | int) // 598 }", w: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) }", h: "${ 128 * (corps_h | int) // 598 }", touche: "KEY_MENU", icon: "\U000F035C", icon_style: "style_text_dim", text: "Menu" } }
 
                 # ── Pavé directionnel (disque de 400, centré verticalement) ──
                 # [AI-WARNING] Les flèches (150 × 110 / 110 × 150, coins arrondis à 36)
@@ -129,24 +143,24 @@ obj:
                 # Avant l'ADR-0056 : disque de 360, flèches 138 × 100 à 18 px.
                 - obj:
                     align: TOP_LEFT
-                    x: 314
-                    y: 36
-                    width: 400
-                    height: 400
-                    radius: 200
+                    x: ${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) + (24 * (corps_w | int) // 1202) }
+                    y: ${ ((corps_h | int - 102 - 24 * (corps_h | int) // 598) - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min)) // 2 }
+                    width: ${ ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) }
+                    height: ${ ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) }
+                    radius: ${ ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) // 2 }
                     styles: style_meteo_card
                     scrollable: false
                     widgets:
                       # Flèches ↑ ↓ ← → : gabarit tv_pad_btn.yaml (un seul décalage par flèche, sur `axis`)
-                      - !include { file: tv_pad_btn.yaml, vars: { align: TOP_MID, axis: "y", offset: 20, w: 150, h: 110, touche: "KEY_UP", icon: "\U000F005D" } }
-                      - !include { file: tv_pad_btn.yaml, vars: { align: BOTTOM_MID, axis: "y", offset: -20, w: 150, h: 110, touche: "KEY_DOWN", icon: "\U000F0045" } }
-                      - !include { file: tv_pad_btn.yaml, vars: { align: LEFT_MID, axis: "x", offset: 20, w: 110, h: 150, touche: "KEY_LEFT", icon: "\U000F004D" } }
-                      - !include { file: tv_pad_btn.yaml, vars: { align: RIGHT_MID, axis: "x", offset: -20, w: 110, h: 150, touche: "KEY_RIGHT", icon: "\U000F0054" } }
+                      - !include { file: tv_pad_btn.yaml, vars: { align: TOP_MID, axis: "y", offset: "${ ([20 * (corps_w | int) // 1202, 20 * (corps_h | int) // 598] | min) }", w: "${ ([150 * (corps_w | int) // 1202, 150 * (corps_h | int) // 598] | min) }", h: "${ ([110 * (corps_w | int) // 1202, 110 * (corps_h | int) // 598] | min) }", touche: "KEY_UP", icon: "\U000F005D" } }
+                      - !include { file: tv_pad_btn.yaml, vars: { align: BOTTOM_MID, axis: "y", offset: "${ 0 - ([20 * (corps_w | int) // 1202, 20 * (corps_h | int) // 598] | min) }", w: "${ ([150 * (corps_w | int) // 1202, 150 * (corps_h | int) // 598] | min) }", h: "${ ([110 * (corps_w | int) // 1202, 110 * (corps_h | int) // 598] | min) }", touche: "KEY_DOWN", icon: "\U000F0045" } }
+                      - !include { file: tv_pad_btn.yaml, vars: { align: LEFT_MID, axis: "x", offset: "${ ([20 * (corps_w | int) // 1202, 20 * (corps_h | int) // 598] | min) }", w: "${ ([110 * (corps_w | int) // 1202, 110 * (corps_h | int) // 598] | min) }", h: "${ ([150 * (corps_w | int) // 1202, 150 * (corps_h | int) // 598] | min) }", touche: "KEY_LEFT", icon: "\U000F004D" } }
+                      - !include { file: tv_pad_btn.yaml, vars: { align: RIGHT_MID, axis: "x", offset: "${ 0 - ([20 * (corps_w | int) // 1202, 20 * (corps_h | int) // 598] | min) }", w: "${ ([110 * (corps_w | int) // 1202, 110 * (corps_h | int) // 598] | min) }", h: "${ ([150 * (corps_w | int) // 1202, 150 * (corps_h | int) // 598] | min) }", touche: "KEY_RIGHT", icon: "\U000F0054" } }
                       - button:
                           align: CENTER
-                          width: 160
-                          height: 160
-                          radius: 80
+                          width: ${ ([160 * (corps_w | int) // 1202, 160 * (corps_h | int) // 598] | min) }
+                          height: ${ ([160 * (corps_w | int) // 1202, 160 * (corps_h | int) // 598] | min) }
+                          radius: ${ ([160 * (corps_w | int) // 1202, 160 * (corps_h | int) // 598] | min) // 2 }
                           styles: style_pill_accent
                           pressed:
                             bg_opa: 45%
@@ -159,28 +173,28 @@ obj:
                 # [AI-CONTEXT] Avant l'ADR-0056 c'était une rangée de 4 × 121 × 100 sous le
                 # pavé, à 8 px des applications : à côté du pavé, chaque touche fait 258 ×
                 # 100 (plus du double) avec son icône et son mot côte à côte.
-                - !include { file: tv_touche.yaml, vars: { id: tv_touche_lecture, x: 738, y: 0, w: 258, h: 100, touche: "KEY_PLAY", icon: "\U000F040A", icon_style: "style_text_success", text: "Lecture" } }
-                - !include { file: tv_touche.yaml, vars: { id: tv_touche_pause, x: 738, y: 124, w: 258, h: 100, touche: "KEY_PAUSE", icon: "\U000F03E4", icon_style: "style_text_soft", text: "Pause" } }
-                - !include { file: tv_touche.yaml, vars: { id: tv_touche_retour, x: 738, y: 248, w: 258, h: 100, touche: "KEY_RETURN", icon: "\U000F054C", icon_style: "style_text_dim", text: "Retour" } }
-                - !include { file: tv_touche.yaml, vars: { id: tv_touche_accueil, x: 738, y: 372, w: 258, h: 100, touche: "KEY_HOME", icon: "\U000F02DC", icon_style: "style_text_dim", text: "Accueil" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_lecture, x: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) + (24 * (corps_w | int) // 1202) + ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) + (24 * (corps_w | int) // 1202) }", y: "${ 0 }", w: "${ (258 * (corps_w | int) // 1202) }", h: "${ 100 * (corps_h | int) // 598 }", touche: "KEY_PLAY", icon: "\U000F040A", icon_style: "style_text_success", text: "Lecture" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_pause, x: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) + (24 * (corps_w | int) // 1202) + ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) + (24 * (corps_w | int) // 1202) }", y: "${ ((corps_h | int - 102 - 24 * (corps_h | int) // 598) - 100 * (corps_h | int) // 598) // 3 }", w: "${ (258 * (corps_w | int) // 1202) }", h: "${ 100 * (corps_h | int) // 598 }", touche: "KEY_PAUSE", icon: "\U000F03E4", icon_style: "style_text_soft", text: "Pause" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_retour, x: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) + (24 * (corps_w | int) // 1202) + ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) + (24 * (corps_w | int) // 1202) }", y: "${ 2 * ((corps_h | int - 102 - 24 * (corps_h | int) // 598) - 100 * (corps_h | int) // 598) // 3 }", w: "${ (258 * (corps_w | int) // 1202) }", h: "${ 100 * (corps_h | int) // 598 }", touche: "KEY_RETURN", icon: "\U000F054C", icon_style: "style_text_dim", text: "Retour" } }
+                - !include { file: tv_touche.yaml, vars: { id: tv_touche_accueil, x: "${ (1170 * (corps_w | int) // 1202 - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - (258 * (corps_w | int) // 1202) - (150 * (corps_w | int) // 1202) - 3 * (24 * (corps_w | int) // 1202)) + (24 * (corps_w | int) // 1202) + ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) + (24 * (corps_w | int) // 1202) }", y: "${ (corps_h | int - 102 - 24 * (corps_h | int) // 598) - 100 * (corps_h | int) // 598 }", w: "${ (258 * (corps_w | int) // 1202) }", h: "${ 100 * (corps_h | int) // 598 }", touche: "KEY_HOME", icon: "\U000F02DC", icon_style: "style_text_dim", text: "Accueil" } }
 
                 # ── Volume (150 × 400, centré verticalement) ──
                 - obj:
                     align: TOP_LEFT
-                    x: 1020
-                    y: 36
-                    width: 150
-                    height: 400
-                    radius: 75
+                    x: ${ 1170 * (corps_w | int) // 1202 - (150 * (corps_w | int) // 1202) }
+                    y: ${ ((corps_h | int - 102 - 24 * (corps_h | int) // 598) - ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min)) // 2 }
+                    width: ${ (150 * (corps_w | int) // 1202) }
+                    height: ${ ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) }
+                    radius: ${ (150 * (corps_w | int) // 1202) // 2 }
                     styles: style_meteo_card
                     scrollable: false
                     widgets:
                       - button:
                           align: TOP_MID
                           y: 0
-                          width: 150
-                          height: 150
-                          radius: 75
+                          width: ${ (150 * (corps_w | int) // 1202) }
+                          height: ${ (150 * (corps_w | int) // 1202) }
+                          radius: ${ (150 * (corps_w | int) // 1202) // 2 }
                           styles: [style_invisible, style_bg_accent]
                           pressed:
                             bg_opa: 25%
@@ -191,15 +205,16 @@ obj:
                       # [AI-WARNING] Hauteur 100 px IMPOSÉE : les deux touches de volume font
                       # 150 × 150 dans un conteneur de 400 de haut, il reste 400 - 300 = 100 px
                       # au centre. Plus grand => recouvrement des touches. (60 px avant
-                      # l'ADR-0056, dans un conteneur de 360.)
+                      # l'ADR-0056, dans un conteneur de 360.) Sur une autre carte (lot 4 du
+                      # portage) : la même règle, écrite telle quelle (conteneur − 2 touches).
                       # Muet : TV seulement (un Apple TV n'a pas de commande muet) ; un boîtier
                       # montre à sa place l'icône du volume, sans action (tv_volume_icone).
                       - button:
                           id: tv_touche_muet
                           align: CENTER
-                          width: 150
-                          height: 100
-                          radius: 30
+                          width: ${ (150 * (corps_w | int) // 1202) }
+                          height: ${ ([400 * (corps_w | int) // 1202, 400 * (corps_h | int) // 598] | min) - 2 * (150 * (corps_w | int) // 1202) }
+                          radius: ${ ([30 * (corps_w | int) // 1202, 30 * (corps_h | int) // 598] | min) }
                           styles: [style_invisible, style_bg_accent]
                           pressed:
                             bg_opa: 25%
@@ -211,9 +226,9 @@ obj:
                       - button:
                           align: BOTTOM_MID
                           y: 0
-                          width: 150
-                          height: 150
-                          radius: 75
+                          width: ${ (150 * (corps_w | int) // 1202) }
+                          height: ${ (150 * (corps_w | int) // 1202) }
+                          radius: ${ (150 * (corps_w | int) // 1202) // 2 }
                           styles: [style_invisible, style_bg_accent]
                           pressed:
                             bg_opa: 25%
@@ -242,7 +257,7 @@ obj:
               id: tv_rangee_applis
               align: BOTTOM_MID
               y: ${modal_bottom_y}
-              width: 1170
+              width: ${ 1170 * (corps_w | int) // 1202 }
               height: 102
               styles: style_transparent
               scrollable: false
@@ -271,7 +286,7 @@ obj:
               id: tv_rangee_lecture
               align: BOTTOM_MID
               y: ${modal_bottom_y}
-              width: 1170
+              width: ${ 1170 * (corps_w | int) // 1202 }
               height: 102
               hidden: true
               styles: style_transparent
