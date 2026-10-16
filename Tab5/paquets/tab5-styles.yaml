@@ -902,6 +902,12 @@ lvgl:
     - id: style_repere_demarrage
       text_letter_space: !lambda |-
         demarrage_marquer(EtapeDemarrage::OBJETS);
+        #ifdef MESURE_DRAIN
+        mesure::drainer_installer();
+        #endif
+        #ifdef MESURE_RESOLUTION
+        lv_display_set_resolution(lv_display_get_default(), TAB5_ECRAN_L, TAB5_ECRAN_H);
+        #endif
         return 0;
     # --- Carte meteo / tuiles dashboard ---
     # ESSAI C 16/07 : même décoration que les boutons Domo (style_clim_btn) —
