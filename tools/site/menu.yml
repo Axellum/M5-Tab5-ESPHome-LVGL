@@ -186,6 +186,9 @@
     - en: Hardware
       fr: Matériel
       page: docs/hardware.md
+    - en: Waveshare 7B board (experimental)
+      fr: Carte Waveshare 7B (expérimentale)
+      page: docs/waveshare-7b.md
     - en: User interface (LVGL)
       fr: Interface (LVGL)
       page: docs/ui_design.md

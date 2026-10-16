@@ -37,15 +37,19 @@ ACCUEIL = "1-journee-ensoleillee"
 QUALITE_WEBP = 88
 
 sys.path.insert(0, str(RACINE / "tools" / "rendu"))
+sys.path.insert(0, str(RACINE / "tools"))  # tab5_sources, lu par tests/commun.py
+sys.path.insert(0, str(RACINE))
 import ecrans  # noqa: E402
+from tests.commun import avec_jetons  # noqa: E402  (les jetons de géométrie, comme ESPHome)
 
 
 def centre_du_widget(ident: str) -> tuple[int, int]:
     """Centre d'un widget placé en TOP_LEFT dans tab5-lvgl.yaml (x, y, width, height
-    écrits après son id)."""
+    écrits après son id, en pixels ou en jetons de tab5-ui-tokens.yaml calculés pour le
+    Tab5 depuis le lot 3 de l'ADR-0061)."""
     texte = LVGL.read_text(encoding="utf-8")
     debut = texte.index(f"id: {ident}\n")
-    bloc = texte[debut:debut + 600]
+    bloc = avec_jetons(texte[debut:debut + 600])
     valeurs = {cle: int(re.search(rf"\n\s+{cle}: (\d+)\n", bloc).group(1))
                for cle in ("x", "y", "width", "height")}
     return valeurs["x"] + valeurs["width"] // 2, valeurs["y"] + valeurs["height"] // 2

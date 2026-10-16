@@ -33,11 +33,7 @@ Own an ST7121 or ILI9881C unit and willing to try? Say how it went in [Discussio
 
 ## Waveshare ESP32-P4 7B (experimental)
 
-🧪 **Compiles, never tested.** Since October 2026 the firmware can be built for a second board, the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600, landscape panel, ESP32-P4 revision 3, 32 MB flash) — [ADR-0061](decisions/0061-board-and-screen-size.md). Add `tab5_carte: waveshare-7b` to `Tab5/user_entities.yaml`; without it, the firmware is built for the Tab5. The CI compiles it on every firmware change, and the off-device render produces its screens at 1024×600, but nobody has run it on a board yet.
-
-- **The interface is not adapted yet:** the screen size, the modal card, the calendar grid and the large fonts (×0.82) follow the board, but the layout itself is still drawn for 1280×720, so popups and the home screen overflow or get cut off at 1024×600.
-- **Hardware:** everything is in `Tab5/paquets/carte-waveshare-7b.yaml` (pins taken from a first trial of that board): `mipi_dsi` model `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B`, GT911 touch, ES8311 DAC and ES7210 ADC, ESP32-C6 over SDIO. The pin table below is the Tab5's only.
-- **What it does not have:** no IMU (the tilt games get no input, `tab5-imu-absente.yaml`), no battery gauge, no RTC, no switchable power rails: their entities stay in the firmware as stubs, with no effect.
+🧪 **Runs on the author's board since 2026-10-14.** The firmware can also be built for the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7-inch, 1024×600, the same ESP32-P4 and ESP32-C6 as the Tab5): add `tab5_carte: waveshare-7b` to `Tab5/user_entities.yaml` and build with ESPHome 2026.9.1 or newer ([ADR-0061](decisions/0061-board-and-screen-size.md)). The home screen and the popups follow its screen size; it has no battery, no motion sensor and no clock chip. Its hardware, pins, install steps and the problems met when it arrived have their own page: [Waveshare ESP32-P4 7B](waveshare-7b.md). The rest of this page is about the Tab5.
 
 ---
 
@@ -226,11 +222,7 @@ Vous avez un Tab5 ST7121 ou ILI9881C et vous voulez bien essayer ? Racontez ce q
 
 ## Waveshare ESP32-P4 7B (expérimentale)
 
-🧪 **Compile, jamais testée.** Depuis octobre 2026, le firmware peut être compilé pour une deuxième carte, la Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600, dalle en paysage, ESP32-P4 révision 3, flash de 32 Mo) — [ADR-0061](decisions/0061-board-and-screen-size.md). Ajoutez `tab5_carte: waveshare-7b` dans `Tab5/user_entities.yaml` ; sans cette ligne, le firmware est compilé pour le Tab5. La CI la compile à chaque changement du firmware et le rendu hors tablette produit ses écrans en 1024×600, mais personne ne l'a encore lancée sur une carte.
-
-- **L'interface n'est pas encore adaptée :** la taille de l'écran, la carte modale, la grille du calendrier et les grosses polices (×0,82) suivent la carte, mais la mise en page elle-même est toujours dessinée pour 1280×720 : en 1024×600, les popups et l'accueil débordent ou sont coupés.
-- **Matériel :** tout est dans `Tab5/paquets/carte-waveshare-7b.yaml` (broches reprises d'un premier essai de cette carte) : modèle `mipi_dsi` `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B`, tactile GT911, DAC ES8311 et ADC ES7210, ESP32-C6 en SDIO. Le tableau des broches ci-dessous est celui du Tab5 seulement.
-- **Ce qu'elle n'a pas :** pas d'IMU (les jeux à l'inclinaison ne reçoivent rien, `tab5-imu-absente.yaml`), pas de jauge de batterie, pas de RTC, pas d'alimentations commutables : leurs entités restent dans le firmware sous forme de bouchons, sans effet.
+🧪 **Tourne sur la carte de l'auteur depuis le 14/10/2026.** Le firmware peut aussi être compilé pour la Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7 pouces, 1024×600, les mêmes ESP32-P4 et ESP32-C6 que le Tab5) : ajoutez `tab5_carte: waveshare-7b` dans `Tab5/user_entities.yaml` et compilez avec ESPHome 2026.9.1 ou plus récent ([ADR-0061](decisions/0061-board-and-screen-size.md)). L'accueil et les popups suivent la taille de son écran ; elle n'a ni batterie, ni capteur de mouvement, ni puce d'horloge. Son matériel, ses broches, son installation et les problèmes rencontrés à son arrivée ont leur page : [Waveshare ESP32-P4 7B](waveshare-7b.md#version-française). Le reste de cette page parle du Tab5.
 
 ---
 
