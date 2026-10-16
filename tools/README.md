@@ -59,6 +59,8 @@ Le test C++ fait foi. Un miroir Python ne prouve le C++ que s'il est tenu à jou
 | `improv_serie.py` | règle le Wi-Fi d'une tablette par Improv sur l'USB |
 | `migrer_vers_3.py` | passe une tablette 2.x à la 3.0 par le réseau (seul outil qui lit encore un ancien `secrets.yaml`) |
 | `mesure_conso.py` | consommation sur batterie, scénario par scénario (écran 100 / 50 / 10 % ou éteint, micro, haut-parleur), par l'API REST de Home Assistant et un jeton longue durée ; écrit un CSV et remet les réglages à la fin ; une lecture par minute |
+| `fnb58.py` | lit le testeur USB FNIRSI FNB58 par son port micro-USB « PC » (HID, paquet `hidapi`) : 100 échantillons/s, résumé ou CSV ; décodage testé par `tests/test_fnb58.py` |
+| `campagne_mesures.py` | consommation d'un écran alimenté par USB, au FNB58, pendant qu'il est piloté par son API : rétroéclairage, chaque écran, redémarrages ; remet l'état de départ ; `--analyser` résume une campagne (docs/consumption.md, Waveshare 7B) |
 
 ## Sous-dossiers
 

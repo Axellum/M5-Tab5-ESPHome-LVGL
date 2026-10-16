@@ -59,6 +59,68 @@ A day with the screen lit for **6 hours** and off the other 18 (an assumption, t
 
 The eco profile uses about **half** of the always-lit reference. In money, multiply the kWh by your price: at 0.25 €/kWh (an example, not a quote), 11.9 kWh is about 3 € a year, and the reference about 5.75 €. The savings are real but small in euros: the point of the profile is the heat, the battery wear and the ease of living with a wall screen that dims itself.
 
+## Waveshare 7B, at the USB input (2026-10-16)
+
+The second board of the firmware ([Waveshare 7B](waveshare-7b.md), 7 inches, 1024×600, no battery) measured by the author, the board powered by a computer's USB port.
+
+### How it was measured
+
+- A **FNIRSI FNB58** USB tester between the supply and the board, read by the computer through its micro-USB « PC » port: 100 samples per second (about 37 new values per second, the others repeat), voltage and current to 0.01 mV / 0.01 mA. The power is measured **at the board's USB input**, so it includes its regulators; the Tab5 figures above are at its battery. The tester's accuracy is not given by its maker.
+- The board is driven by its own API while the tester records ([`tools/campagne_mesures.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/campagne_mesures.py), reader [`tools/fnb58.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/fnb58.py)): 20 s per backlight level after 6 s to settle; for each of the 20 screens of the « Aller à l'écran » select, the first 3 s (opening) then 15 s once open; three restarts with the « Redémarrage Système » button, 50 s each. No measure falls within −5 s / +30 s of a minute that is a multiple of 5, when Home Assistant sends its grouped updates. Everything is put back at the end.
+- Firmware `main` 46ad7f03, theme Ardoise douce in dark mode, full animations, Okay Nabu and the speaker on, Wi-Fi eco off, the home screen. One board, one run (156,988 samples). Inside a segment, the power varies by about ±0.08 W (median to 95th percentile): **a difference of a few hundredths of a watt between two segments means nothing**.
+
+### Results
+
+| Case | Average | Current at ~5 V |
+|---|---|---|
+| Home screen, backlight 189/255 (74 %, the author's setting) | 1.96 W | 393 mA |
+| Backlight 100 % | 3.14 W | 645 mA |
+| Backlight 75 % | 1.98 W | 397 mA |
+| Backlight 50 % | 1.47 W | 293 mA |
+| Backlight 25 % | 1.28 W | 252 mA |
+| Backlight 10 % | 1.25 W | 246 mA |
+| Backlight 5 % | 1.24 W | 246 mA |
+| Backlight 1 % | 1.24 W | 245 mA |
+| Backlight off | 1.24 W | 245 mA |
+| Each of the 20 screens and popups, open (at 74 %) | 1.945 to 1.958 W | 390 to 393 mA |
+| Opening a screen (first 3 s) | 1.957 to 1.987 W, peak 2.28 W | |
+| A restart (50 s from the button) | 1.93 W on average, 26.7 mWh | |
+
+A restart, second by second: the board stops about 2 s after the button, drops to about 1.1 W for 1.5 s (the chip resets, lowest sample 0.78 W), runs at about 1.8 W while it builds the screen, about 2.0 W once the Wi-Fi starts (around 7 s), and is back to 1.96 W after about 14 s; highest sample 2.57 W. Two restarts gave the same curve to ±0.02 W. The third one did not finish: the Wi-Fi chip did not come back, see [the 7B page](waveshare-7b.md).
+
+### What it tells
+
+1. **The last quarter of the backlight costs the most.** From 75 % to 100 % the board draws 1.16 W more; from off to 75 %, only 0.74 W. The light given out was not measured (no light meter): whether 100 % looks much brighter than 75 % is for the eye to judge.
+2. **Below 25 %, nothing more to gain**: 25 % draws 0.04 W more than the backlight off. On the Tab5 the same floor started below 50 %.
+3. **Drawing costs nothing measurable.** Every screen and popup, open, draws the same as the home screen (within 0.013 W, the noise); opening one adds at most 0.03 W over 3 s. Choosing a lighter screen for power saving makes no sense.
+4. **A restart costs nothing either**: 1.93 W on average over the 50 s, less than a lit screen, because the backlight is off while the chip resets.
+5. **The board's floor is 1.24 W** with the backlight off (processor, Wi-Fi through the ESP32-C6, microphone and speaker on): the same as the Tab5 at its battery (1.23 W), by chance or not.
+6. **The USB voltage sags at full brightness**: 4.87 V at 645 mA through the tester and a computer port, against 5.06 V with the backlight off. Not a problem here, but a long or thin cable or a weak supply leaves less margin at 100 %.
+
+### Tab5 and 7B side by side
+
+Not the same measuring point (battery for the Tab5, USB input for the 7B), not the same screen size (5 and 7 inches): an order of magnitude, not a contest.
+
+| | Tab5 (at the battery, 2026-10-10) | Waveshare 7B (at the USB input, 2026-10-16) |
+|---|---|---|
+| Backlight 100 % | 2.63 W | 3.14 W |
+| Backlight 50 % | 1.74 W | 1.47 W |
+| Screen off | 1.23 W | 1.24 W |
+| No gain below | 50 % | 25 % |
+| First image after a restart | about 21 s (before [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478); not measured since, the Tab5 is out of order) | 5.6-5.8 s (with #478) |
+
+### Over a year, 7B
+
+| State, all year | Power | kWh per year |
+|---|---|---|
+| Backlight 74 % | 1.96 W | 17.2 |
+| Backlight 50 % | 1.47 W | 12.9 |
+| Backlight off | 1.24 W | 10.9 |
+| 74 % for 6 h, then off | 1.42 W | 12.4 |
+| 50 % for 6 h, then off | 1.30 W | 11.4 |
+
+USB supply losses not included (they were not measured).
+
 ## What to do with it
 
 Settings that already exist: **Brightness** (50 % is the sweet spot), **Auto screen off** (5 min), **Power saving** (« On battery » is the default), **Charge limit** 80 % for a tablet that stays plugged in, **Wake the screen on « Okay Nabu »** and **with a tap** to get it back.
@@ -145,6 +207,68 @@ Une journée avec l'écran allumé **6 heures** et éteint les 18 autres (une hy
 | 50 % pendant 6 h, puis éteint (le profil « éco ») | 1,36 W | 11,9 |
 
 Le profil éco consomme environ **moitié moins** que la référence toujours allumée. En euros, multipliez les kWh par votre tarif : à 0,25 €/kWh (un exemple, pas un tarif), 11,9 kWh font environ 3 € par an, et la référence environ 5,75 €. L'économie est réelle mais petite en euros : l'intérêt du profil, c'est la chaleur, l'usure de la batterie et le confort d'un écran mural qui baisse tout seul.
+
+## Waveshare 7B, à l'entrée USB (16/10/2026)
+
+La deuxième carte du firmware ([Waveshare 7B](waveshare-7b.md), 7 pouces, 1024×600, sans batterie), mesurée par l'auteur, alimentée par un port USB d'ordinateur.
+
+### Comment c'est mesuré
+
+- Un testeur USB **FNIRSI FNB58** entre l'alimentation et la carte, lu par l'ordinateur par son port micro-USB « PC » : 100 échantillons par seconde (environ 37 valeurs nouvelles par seconde, les autres répètent), tension et courant au 0,01 mV / 0,01 mA près. La puissance est mesurée **à l'entrée USB de la carte**, régulateurs compris ; les chiffres du Tab5 ci-dessus sont pris à sa batterie. Le fabricant du testeur ne donne pas sa précision.
+- La carte est pilotée par sa propre API pendant l'enregistrement ([`tools/campagne_mesures.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/campagne_mesures.py), lecteur [`tools/fnb58.py`](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/tools/fnb58.py)) : 20 s par niveau de rétroéclairage après 6 s de stabilisation ; pour chacun des 20 écrans du select « Aller à l'écran », les 3 premières secondes (ouverture) puis 15 s une fois ouvert ; trois redémarrages par le bouton « Redémarrage Système », 50 s chacun. Aucune mesure ne tombe entre −5 s et +30 s autour d'une minute multiple de 5, quand Home Assistant envoie ses mises à jour groupées. Tout est remis en place à la fin.
+- Firmware `main` 46ad7f03, thème Ardoise douce en mode sombre, animations complètes, Okay Nabu et haut-parleur actifs, Wi-Fi éco désactivé, écran d'accueil. Une carte, un passage (156 988 échantillons). Dans un segment, la puissance varie d'environ ±0,08 W (de la médiane au 95e centile) : **quelques centièmes de watt d'écart entre deux segments ne veulent rien dire**.
+
+### Résultats
+
+| Cas | Moyenne | Courant sous ~5 V |
+|---|---|---|
+| Accueil, rétroéclairage 189/255 (74 %, le réglage de l'auteur) | 1,96 W | 393 mA |
+| Rétroéclairage 100 % | 3,14 W | 645 mA |
+| Rétroéclairage 75 % | 1,98 W | 397 mA |
+| Rétroéclairage 50 % | 1,47 W | 293 mA |
+| Rétroéclairage 25 % | 1,28 W | 252 mA |
+| Rétroéclairage 10 % | 1,25 W | 246 mA |
+| Rétroéclairage 5 % | 1,24 W | 246 mA |
+| Rétroéclairage 1 % | 1,24 W | 245 mA |
+| Rétroéclairage éteint | 1,24 W | 245 mA |
+| Chacun des 20 écrans et popups, ouvert (à 74 %) | 1,945 à 1,958 W | 390 à 393 mA |
+| Ouverture d'un écran (3 premières secondes) | 1,957 à 1,987 W, pointe 2,28 W | |
+| Un redémarrage (50 s depuis le bouton) | 1,93 W en moyenne, 26,7 mWh | |
+
+Un redémarrage, seconde par seconde : la carte s'arrête environ 2 s après le bouton, descend vers 1,1 W pendant 1,5 s (la puce redémarre, plus bas échantillon 0,78 W), tourne vers 1,8 W pendant qu'elle construit l'écran, vers 2,0 W dès que le Wi-Fi démarre (vers 7 s), et retrouve 1,96 W après environ 14 s ; plus haut échantillon 2,57 W. Deux redémarrages ont donné la même courbe à ±0,02 W près. Le troisième n'a pas abouti : la puce Wi-Fi n'est pas revenue, voir [la page de la 7B](waveshare-7b.md).
+
+### Ce qu'on en tire
+
+1. **Le dernier quart du rétroéclairage coûte le plus.** De 75 % à 100 %, la carte consomme 1,16 W de plus ; d'éteint à 75 %, seulement 0,74 W. La lumière émise n'a pas été mesurée (pas de luxmètre) : à l'œil de dire si 100 % paraît beaucoup plus lumineux que 75 %.
+2. **Sous 25 %, plus rien à gagner** : 25 % consomme 0,04 W de plus que le rétroéclairage éteint. Sur le Tab5, le même plancher commençait sous 50 %.
+3. **Dessiner ne coûte rien de mesurable.** Chaque écran et chaque popup, ouvert, consomme comme l'accueil (à 0,013 W près, le bruit) ; en ouvrir un ajoute au plus 0,03 W sur 3 s. Choisir un écran plus léger pour économiser n'a pas de sens.
+4. **Un redémarrage ne coûte rien non plus** : 1,93 W en moyenne sur les 50 s, moins qu'un écran allumé, parce que le rétroéclairage est éteint pendant que la puce redémarre.
+5. **Le plancher de la carte est 1,24 W** rétroéclairage éteint (processeur, Wi-Fi par l'ESP32-C6, micro et haut-parleur actifs) : autant que le Tab5 à sa batterie (1,23 W), par hasard ou non.
+6. **La tension USB baisse à pleine luminosité** : 4,87 V à 645 mA à travers le testeur et un port d'ordinateur, contre 5,06 V rétroéclairage éteint. Sans conséquence ici, mais un câble long ou fin ou une alimentation faible laisse moins de marge à 100 %.
+
+### Tab5 et 7B côte à côte
+
+Pas le même point de mesure (batterie pour le Tab5, entrée USB pour la 7B), pas la même taille d'écran (5 et 7 pouces) : un ordre de grandeur, pas un match.
+
+| | Tab5 (à la batterie, 10/10/2026) | Waveshare 7B (à l'entrée USB, 16/10/2026) |
+|---|---|---|
+| Rétroéclairage 100 % | 2,63 W | 3,14 W |
+| Rétroéclairage 50 % | 1,74 W | 1,47 W |
+| Écran éteint | 1,23 W | 1,24 W |
+| Plus de gain sous | 50 % | 25 % |
+| Première image après un redémarrage | environ 21 s (avant [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478) ; pas remesuré depuis, le Tab5 est en panne) | 5,6-5,8 s (avec #478) |
+
+### Sur une année, 7B
+
+| État, toute l'année | Puissance | kWh par an |
+|---|---|---|
+| Rétroéclairage 74 % | 1,96 W | 17,2 |
+| Rétroéclairage 50 % | 1,47 W | 12,9 |
+| Rétroéclairage éteint | 1,24 W | 10,9 |
+| 74 % pendant 6 h, puis éteint | 1,42 W | 12,4 |
+| 50 % pendant 6 h, puis éteint | 1,30 W | 11,4 |
+
+Pertes de l'alimentation USB non comprises (elles n'ont pas été mesurées).
 
 ## Quoi en faire
 

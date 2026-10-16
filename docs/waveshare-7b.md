@@ -62,7 +62,15 @@ Two things learnt along the way:
 - **Not checked on the board:** the microphone and the wake word, the cameras popup (JPEG decoding), every game, a power cut without network.
 - **Not adapted to 1024×600 yet:** the games (the next lot of [ADR-0061](decisions/0061-board-and-screen-size.md)), and the « Balance » page of the Energy popup, which came after the popups were adapted and runs past the bottom edge. For every other screen, the render counts on each change what runs past its area: about as much as on the Tab5 itself, mostly the shutters, alarm clock and cameras popups, which do the same there.
 - Reported by others on this board, not seen here: a faint glow with the backlight at 0 %, a distorted speaker.
-- Start-up takes about 20 s before the first image, like the Tab5.
+- After a software restart, the C6 Wi-Fi chip once did not come back (2026-10-16, third restart in a row): « ESP-Hosted link not yet up », a restart every ~17 s, then ESPHome's safe mode with a frozen screen, until the power was cut for 15 s. Being investigated.
+
+## Measured on the board (2026-10-16)
+
+Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.md#waveshare-7b-at-the-usb-input-2026-10-16).
+
+- **Start-up**: first image at 5.6-5.8 s, Wi-Fi at 10.4-11.7 s, Home Assistant connected at 11.5-12.7 s (4 starts, read on the board's « Boot timeline » sensors). It used to be about 20 s before the first image, like the Tab5; [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478) removed the cost of creating the labels.
+- **The clock can show up late**: the board has no real-time clock, so the time is only known once the Wi-Fi is up and the time is received (10 s or more after power-up); the first image comes before it.
+- **Power at the USB input**: 1.96 W on the home screen at the usual brightness, 3.14 W at 100 %, 1.24 W with the backlight off. Popups and pages cost nothing measurable.
 
 ## Hardware
 
@@ -173,7 +181,15 @@ Deux choses apprises en route :
 - **Pas vérifié sur la carte :** le micro et le mot d'activation, le popup Caméras (décodage JPEG), chacun des jeux, une coupure de courant sans réseau.
 - **Pas encore adapté au 1024×600 :** les jeux (le prochain lot de l'[ADR-0061](decisions/0061-board-and-screen-size.md)), et la page « Bilan » du popup Énergie, arrivée après l'adaptation des popups, qui dépasse du bas. Pour tous les autres écrans, le rendu compte à chaque changement ce qui dépasse de sa zone : à peu près autant que sur le Tab5 lui-même, surtout dans les popups Volets, Réveil et Caméras, qui font pareil là-bas.
 - Signalé par d'autres sur cette carte, pas vu ici : une faible lueur avec le rétroéclairage à 0 %, un haut-parleur qui sature.
-- Le démarrage prend une vingtaine de secondes avant la première image, comme sur le Tab5.
+- Après un redémarrage logiciel, la puce Wi-Fi C6 n'est pas revenue une fois (16/10/2026, troisième redémarrage d'affilée) : « ESP-Hosted link not yet up », un redémarrage toutes les ~17 s, puis le mode sans échec d'ESPHome avec l'écran figé, jusqu'à une coupure du courant de 15 s. En cours d'analyse.
+
+## Mesuré sur la carte (16/10/2026)
+
+Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md#waveshare-7b-à-lentrée-usb-16102026).
+
+- **Démarrage** : première image à 5,6-5,8 s, Wi-Fi à 10,4-11,7 s, Home Assistant connecté à 11,5-12,7 s (4 démarrages, lus sur les capteurs « Chronologie du démarrage » de la carte). Avant, il fallait une vingtaine de secondes avant la première image, comme sur le Tab5 ; [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478) a supprimé le coût de la création des textes.
+- **L'horloge peut s'afficher en retard** : la carte n'a pas d'horloge temps réel, l'heure n'est connue qu'une fois le Wi-Fi monté et l'heure reçue (10 s ou plus après la mise sous tension) ; la première image arrive avant.
+- **Puissance à l'entrée USB** : 1,96 W sur l'accueil à la luminosité habituelle, 3,14 W à 100 %, 1,24 W rétroéclairage éteint. Les popups et les pages ne coûtent rien de mesurable.
 
 ## Matériel
 

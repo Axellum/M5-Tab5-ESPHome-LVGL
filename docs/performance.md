@@ -79,6 +79,8 @@ The screen holds **1,593 LVGL objects**, and every `lv_obj_report_style_change()
 
 Restart from the « Redémarrage Système » button, 3 runs per theme. In Ardoise (the compiled palette, nothing to repaint) the first « Loop Time » published after the restart is 10,450 ms and the API is reachable again after 17.2-17.4 s; in another theme (Capsule, repainted at boot) 13,401 ms and 18.9-19.1 s. **Any theme other than Ardoise adds ~2.95 s of blocked loop at boot**, and the API comes back 1.7 s later — the same repaint as the theme switch. These times do not compare with the boot table of 2026-10-01 below (another time zero, another method).
 
+On the **Waveshare 7B** (2026-10-16, `main` 46ad7f03, after [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478)), read on the boot timeline sensors over 4 starts: first image at 5.56-5.83 s, Wi-Fi at 10.42-11.70 s, API at 11.53-12.69 s. The `on_boot` still waits 1 s (`avant1s` → `apres1s`), a wait made for the Tab5's display expander, which the 7B does not have. Power during a restart: [consumption](consumption.md#waveshare-7b-at-the-usb-input-2026-10-16).
+
 ### Resources
 
 | Resource | Used | Free |
@@ -298,6 +300,8 @@ L'écran compte **1 593 objets LVGL**, et chaque `lv_obj_report_style_change()` 
 ### Démarrage
 
 Redémarrage par le bouton « Redémarrage Système », 3 passes par thème. En Ardoise (la palette compilée, rien à repeindre), la première « Loop Time » publiée après le redémarrage vaut 10 450 ms et l'API est de nouveau joignable après 17,2 à 17,4 s ; dans un autre thème (Capsule, repeint au démarrage), 13 401 ms et 18,9 à 19,1 s. **Tout thème autre qu'Ardoise ajoute ~2,95 s de boucle bloquée au démarrage**, et l'API revient 1,7 s plus tard — la même repeinture que la bascule. Ces durées ne se comparent pas au tableau du démarrage du 01/10/2026 plus bas (autre origine, autre méthode).
+
+Sur la **Waveshare 7B** (16/10/2026, `main` 46ad7f03, après [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478)), lu sur les capteurs de chronologie du démarrage sur 4 démarrages : première image à 5,56-5,83 s, Wi-Fi à 10,42-11,70 s, API à 11,53-12,69 s. L'`on_boot` attend toujours 1 s (`avant1s` → `apres1s`), une attente faite pour l'expandeur de l'écran du Tab5, que la 7B n'a pas. Puissance pendant un redémarrage : [consommation](consumption.md#waveshare-7b-à-lentrée-usb-16102026).
 
 ### Ressources
 
