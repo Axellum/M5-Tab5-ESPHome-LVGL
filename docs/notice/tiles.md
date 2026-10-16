@@ -70,6 +70,8 @@ A long press on a light, a shutter or a climate opens a wheel on the card. In th
 
 The current state glows in the card's colour. A tap on a command or a choice sends it and closes the wheel. A tap elsewhere, or on the device in the middle, folds the second ring, then closes the wheel. It also closes by itself after a while. A light set to *on only* has no « off ».
 
+![The quick-action wheel of a light: the lamp in the middle, a ring of round buttons above it](../images/notice/roue-lampe-en.webp)
+
 ## Device window
 
 A long press on a switch, a plug, a fan, a scene, a script or a button opens its window, like the « more info » window of a Home Assistant dashboard. Title: the card's name.
@@ -154,6 +156,8 @@ Un appui long sur une lumière, un volet ou une clim ouvre une roue sur la carte
 | Clim | arrêt | mode (chaud, froid, sec, ventilation : ceux de l'appareil) ; consigne (l'actuelle et deux pas de chaque côté) ; options (Éco, Boost, Silence, Oscillation, Brise : celles de l'appareil) |
 
 L'état actuel brille de la couleur de la carte. Un tap sur une commande ou un choix l'envoie et ferme la roue. Un tap ailleurs, ou sur l'appareil au centre, replie le second anneau, puis ferme la roue. Elle se ferme aussi toute seule au bout d'un moment. Une lumière réglée sur *allumer seulement* n'a pas « éteindre ».
+
+![La roue d'actions rapides d'une lumière : la lampe au centre, un anneau de boutons ronds au-dessus](../images/notice/roue-lampe-fr.webp)
 
 ## Fenêtre de l'appareil
 
