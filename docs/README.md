@@ -20,7 +20,7 @@ Firmware that turns the M5Stack Tab5 into a Home Assistant wall screen, built wi
 | follow a local AI server (Ollama, llama.cpp, LM Studio) | [Local AI server](serveur-ia.md) |
 | choose the icon of a tile | [Tile icons](tiles_icons.md) |
 | fix something that went wrong | [Known incidents](troubleshooting.md), then [Debugging](debugging.md) |
-| understand how it is built | [Architecture](architecture.md), [Hardware](hardware.md), [Design decisions](decisions/README.md) |
+| understand how it is built | [Architecture](architecture.md), [Hardware](hardware.md), [Waveshare 7B board](waveshare-7b.md), [Design decisions](decisions/README.md) |
 
 The source code, the issues and the discussions are on [GitHub](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL).
 
@@ -46,6 +46,6 @@ Un firmware qui fait de la M5Stack Tab5 un écran mural Home Assistant, construi
 | suivre un serveur IA local (Ollama, llama.cpp, LM Studio) | [Serveur IA local](serveur-ia.md#version-française) |
 | choisir l'icône d'une tuile | [Icônes des tuiles](tiles_icons.md#version-française) |
 | réparer ce qui ne marche pas | [Incidents connus](troubleshooting.md#version-française), puis [Diagnostiquer](debugging.md#version-française) |
-| comprendre comment il est fait | [Architecture](architecture.md#version-française), [Matériel](hardware.md#version-française), [Décisions d'architecture](decisions/README.md) (en anglais) |
+| comprendre comment il est fait | [Architecture](architecture.md#version-française), [Matériel](hardware.md#version-française), [Carte Waveshare 7B](waveshare-7b.md#version-française), [Décisions d'architecture](decisions/README.md) (en anglais) |
 
 Le code source, les tickets et les discussions sont sur [GitHub](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL).
