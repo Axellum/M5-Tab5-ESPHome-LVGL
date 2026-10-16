@@ -19,7 +19,7 @@ from tests.commun import ChargeurSansBalises as _Chargeur
 
 RACINE = Path(__file__).resolve().parents[1]
 PUSH = RACINE / "HomeAssistant_Config" / "packages" / "tab5_push.yaml"
-SERVICE = "esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk"
+SERVICE = "esphome.{{ tablette }}_tab5_maj_alertes_ha_bulk"
 
 
 def _etapes(sequence):
@@ -30,6 +30,9 @@ def _etapes(sequence):
                 yield from _etapes(etape[cle])
         for branche in etape.get("choose", []) or []:
             yield from _etapes(branche.get("sequence"))
+        # Envoi en boucle sur les tablettes (ADR-0063).
+        if isinstance(etape.get("repeat"), dict):
+            yield from _etapes(etape["repeat"].get("sequence"))
 
 
 def _modele_payload() -> str:

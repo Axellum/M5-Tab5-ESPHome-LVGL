@@ -9,6 +9,7 @@ cas dans tools/test_parse.cpp) ; un firmware d'avant lit « nom|image » et igno
 ce que vérifie test_lisible_par_un_firmware_d_avant."""
 import datetime as dt
 
+from tests.commun import envoi_tablettes
 from tests.test_tuiles_blueprint import MAINTENANT, Etat, Passage, _chercher, _evenement
 
 ALIAS = "La tablette demande ses caméras"
@@ -22,7 +23,7 @@ def _reponse(etats, cameras, adresse=""):
     p.env.tests["list"] = lambda v: isinstance(v, list)   # test « is list » de HA
     branche = _chercher(p.corps["actions"], lambda d: d.get("alias") == ALIAS)
     assert branche, f"branche « {ALIAS} » introuvable"
-    action = branche["sequence"][0]
+    action = envoi_tablettes(branche["sequence"][0])
     assert action["action"].endswith("_tab5_maj_cameras")
     return {k: str(p.modele(v)) for k, v in action["data"].items()}
 

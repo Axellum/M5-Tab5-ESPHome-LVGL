@@ -32,7 +32,7 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 from tests.test_tuiles_blueprint import Etat, Passage, _chercher, _defs, _evenement
-from tests.commun import CARTES, BaseChargeur, _jetons as jetons_resolus, constantes_cpp, lire as _lire, resoudre
+from tests.commun import envoi_tablettes, CARTES, BaseChargeur, _jetons as jetons_resolus, constantes_cpp, lire as _lire, resoudre
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PACKAGE = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_energie.yaml")
@@ -967,8 +967,8 @@ def test_blueprint_section_vide_rien_ne_change():
     assert p.modele(branche["conditions"])
     etape = branche["sequence"][0]
     assert p.modele(etape["if"]) is True
-    assert etape["then"][0]["action"] == "esphome.{{ tablette }}_tab5_maj_energie"
-    assert etape["then"][0]["data"]["payload"] == "|" * 7
+    assert envoi_tablettes(etape["then"][0])["action"] == "esphome.{{ tablette }}_tab5_maj_energie"
+    assert envoi_tablettes(etape["then"][0])["data"]["payload"] == "|" * 7
 
 
 def test_blueprint_section_remplie():

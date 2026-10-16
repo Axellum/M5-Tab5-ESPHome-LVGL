@@ -212,11 +212,18 @@ script:
               {{- '|' }}{{ state_attr(a, 'repeat') if state_attr(a, 'repeat') in ['off', 'all', 'one'] else '' }}
               {{- '|' }}{{ lettres }}|{{ (state_attr(a, 'entity_picture') or '') | string | replace('|', '%7C') | replace(' ', '%20') }}
             {%- endif -%}
-      - action: esphome.tab5_ha_hmi_tab5_maj_lecteur
-        continue_on_error: true
-        data:
-          lecteurs: "{{ lecteurs }}"
-          etat: "{{ etat }}"
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_lecteur"
+              continue_on_error: true
+              data:
+                lecteurs: "{{ lecteurs }}"
+                etat: "{{ etat }}"
 
   tab5_lecteur_commande:
     alias: "Tab5 — lecteur de musique : commande de la tablette"

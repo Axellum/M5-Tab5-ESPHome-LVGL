@@ -27,7 +27,7 @@ import re
 import pytest
 import yaml
 
-from tests.commun import lire as _lire
+from tests.commun import envoi_tablettes, lire as _lire
 from tests.test_alertes_ha import Etat, _env as _env_alertes
 from tests.test_historique import EtatHA, _env as _env_historique, _rendre
 
@@ -182,8 +182,8 @@ class Maison:
         self.memoire = {"niveau": _rendre(tenv, capteur["state"], {"trigger": trig}),
                         "appareils": _rendre(tenv, capteur["attributes"]["appareils"], {"trigger": trig})}
         assert seq[5]["condition"] == "template" and "tab5_connectee() == 'oui'" in seq[5]["value_template"]
-        pousse = seq[6]
-        assert pousse["action"] == "esphome.tab5_ha_hmi_tab5_maj_froid" and pousse["continue_on_error"] is True
+        pousse = envoi_tablettes(seq[6])
+        assert pousse["action"] == "esphome.{{ tablette }}_tab5_maj_froid" and pousse["continue_on_error"] is True
         return demandes, str(_rendre(env, pousse["data"]["payload"], ctx))
 
     def appareil(self, entite=FRIGO):

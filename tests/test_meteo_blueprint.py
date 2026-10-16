@@ -126,7 +126,7 @@ def _chaine(etats_bp):
     cibles = [_rendre_paquet(env, n["target"]["entity_id"], contexte) for n in _parcourir(auto["actions"])
               if n.get("action") == "weather.get_forecasts"]
     actuelle = next(n for n in _parcourir(_paquet("tab5_push.yaml"))
-                    if n.get("action") == "esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle")
+                    if n.get("action") == "esphome.{{ tablette }}_tab5_maj_meteo_actuelle")
     return {"meteo": contexte["meteo"], "cibles": cibles, "actuelle": _rendre_paquet(env, actuelle["data"]),
             "pluie": pluie, "vigilance": vigilance}
 

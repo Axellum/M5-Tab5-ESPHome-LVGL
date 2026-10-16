@@ -21,7 +21,7 @@ import pytest
 
 from tests.test_clim import DAIKIN, METEO_C, _executer
 from tests.test_tuiles_blueprint import Etat, Passage, _blueprint, _declencheur, _defs, _evenement, _tablette
-from tests.commun import lire as _lire, source
+from tests.commun import envoi_tablettes, lire as _lire, source
 
 import scenarios  # noqa: E402
 
@@ -112,8 +112,8 @@ def test_toutes_les_pieces_a_la_connexion():
     assert p.modele(bloc["if"]) is True
     envoi = bloc["then"][1]
     assert p.modele(envoi["if"]) is True
-    assert envoi["then"][0]["action"].endswith("_tab5_maj_emplacements")
-    assert envoi["then"][0]["data"] == {"payload": "{{ climat_pieces }}"}
+    assert envoi_tablettes(envoi["then"][0])["action"].endswith("_tab5_maj_emplacements")
+    assert envoi_tablettes(envoi["then"][0])["data"] == {"payload": "{{ climat_pieces }}"}
 
 
 def test_rien_pour_un_firmware_d_avant():

@@ -28,6 +28,15 @@
 #     docs/hardware.md et docs/decisions/0061-board-and-screen-size.md. ---
 # tab5_carte: tab5
 
+# --- Plusieurs écrans dans la même maison (ADR-0063) : un nom par écran, en minuscules,
+#     chiffres et tirets. tab5-ha-hmi (défaut si la ligne reste commentée) pour le
+#     premier : ne pas renommer une tablette déjà installée. Home Assistant pousse
+#     le même affichage à chaque écran connecté. tab5_nom_affiche : le nom montré
+#     dans Home Assistant. Pour compiler un autre écran sans changer ce fichier :
+#     python -m esphome -s tab5_nom salon-7b … compile tab5-ha-hmi.yaml ---
+# tab5_nom: tab5-ha-hmi
+# tab5_nom_affiche: M5Stack Tab5 Home Assistant HMI
+
 # --- Langue de l'écran au PREMIER démarrage : « Français » (défaut), « English »,
 #     « Deutsch », « Nederlands », « Español », « Italiano » ou « Türkçe ».
 #     Ensuite, elle se change depuis Home Assistant (select « Langue » de la

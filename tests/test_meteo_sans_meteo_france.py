@@ -271,7 +271,7 @@ def test_six_jours_de_met_no_puis_des_jours_vides():
     marqués passés (« -- » estompé sur la tablette, tab5_forecast.cpp)."""
     etats, env = _maison()[:2]
     auto, contexte = _poussee(etats, env)
-    payload = _rendre(env, _action(auto["actions"], "esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk")["data"]["payload"], contexte)
+    payload = _rendre(env, _action(auto["actions"], "esphome.{{ tablette }}_tab5_maj_previsions_jours_bulk")["data"]["payload"], contexte)
     entrees = _entrees(payload)
     assert len(entrees) == 15
     noms = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
@@ -292,7 +292,7 @@ def test_six_jours_de_met_no_puis_des_jours_vides():
 def test_dix_heures_de_met_no_a_l_heure_locale():
     etats, env = _maison()[:2]
     auto, contexte = _poussee(etats, env)
-    action = _action(auto["actions"], "esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk")
+    action = _action(auto["actions"], "esphome.{{ tablette }}_tab5_maj_previsions_heures_bulk")
     entrees = []
     for index in (1, 2):
         entrees += _entrees(_rendre(env, action["data"]["payload"], dict(contexte, repeat={"index": index})))
@@ -308,7 +308,7 @@ def test_dix_heures_de_met_no_a_l_heure_locale():
 def test_meteo_du_moment_et_probabilites():
     etats, env = _maison()[:2]
     paquet = _paquet("tab5_push.yaml")
-    actuelle = _rendre(env, _action(paquet, "esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle")["data"])
+    actuelle = _rendre(env, _action(paquet, "esphome.{{ tablette }}_tab5_maj_meteo_actuelle")["data"])
     assert actuelle == {"condition": "rainy", "temperature": 16.5, "humidite": 76.0}
-    probabilites = _rendre(env, _action(paquet, "esphome.tab5_ha_hmi_tab5_maj_probabilites")["data"])
+    probabilites = _rendre(env, _action(paquet, "esphome.{{ tablette }}_tab5_maj_probabilites")["data"])
     assert probabilites == {"uv": 0, "gel": 0, "neige": 0}

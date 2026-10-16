@@ -10,8 +10,15 @@
 substitutions: !include Tab5/user_entities.yaml
 
 esphome:
-  name: tab5-ha-hmi
-  friendly_name: M5Stack Tab5 Home Assistant HMI
+  # Nom de l'appareil (ADR-0063, plusieurs écrans) : un par écran quand plusieurs
+  # tournent ensemble (`tab5_nom: ecran-cuisine` dans Tab5/user_entities.yaml, ou
+  # `-s tab5_nom …`). Il donne le nom réseau (mDNS), le dossier de build et le préfixe
+  # des actions que HA appelle (`esphome.ecran_cuisine_tab5_maj_…`), publié par le
+  # capteur « Tab5 Préfixe des actions ». Défaut inchangé : une tablette déjà installée
+  # garde son nom, ses entités et ses actions. Le modèle de l'appareil (le `name` du bloc project, plus bas)
+  # ne change pas : c'est lui qui fait reconnaître la tablette par HA.
+  name: ${ tab5_nom | default('tab5-ha-hmi') }
+  friendly_name: ${ tab5_nom_affiche | default('M5Stack Tab5 Home Assistant HMI') }
   # Identité du firmware (lot 6b, ADR-0020) : HA l'affiche dans la fiche de l'appareil,
   # et le manifeste de mise à jour (lot 6c, ADR-0022) porte ce même `name`. La version
   # suit le CHANGELOG ; « -dev » pour une compilation locale. Un firmware publié reçoit
