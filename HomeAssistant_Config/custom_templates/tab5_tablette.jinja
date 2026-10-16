@@ -68,15 +68,15 @@
 {%- endmacro -%}
 {%- macro tab5_prefixe(d) -%}
   {#- Préfixe des actions de l'appareil d (ADR-0063) : l'état de son capteur « Tab5
-      Préfixe des actions » ; « tab5_ha_hmi » pour un firmware qui ne l'a pas (avant
-      plusieurs écrans : il porte toujours ce nom) ; '' tant que ce capteur n'a pas de
-      valeur lisible (rien n'est envoyé plutôt qu'à un mauvais nom). -#}
-  {%- set capteurs = device_entities(d | string) | select('match', 'sensor[.].*_prefixe_des_actions$') | list -%}
-  {%- if not capteurs -%}
-    {{- 'tab5_ha_hmi' -}}
-  {%- else -%}
-    {{- capteurs | map('states') | select('match', '^[a-z0-9_]+$') | first | default('') -}}
-  {%- endif -%}
+      Préfixe des actions » ; « tab5_ha_hmi », le nom par défaut, pour un firmware qui ne
+      l'a pas (avant plusieurs écrans : il porte toujours ce nom) et tant que ce capteur
+      n'a pas de valeur lisible. Juste après un démarrage, la tablette se connecte (et
+      demande sa poussée complète) avant d'avoir publié son préfixe : le capteur vaut
+      alors « unknown » ou « unavailable », qui passent le filtre des noms (16/10/2026,
+      poussée envoyée à esphome.unknown_… et perdue). -#}
+  {%- set lisibles = device_entities(d | string) | select('match', 'sensor[.].*_prefixe_des_actions$')
+        | map('states') | reject('in', ['unknown', 'unavailable', 'none']) | select('match', '^[a-z0-9_]+$') | list -%}
+  {{- lisibles | first | default('tab5_ha_hmi', true) -}}
 {%- endmacro -%}
 {%- macro tab5_destinataires(appareil) -%}
   {#- Préfixes à qui envoyer, séparés par des virgules (ADR-0063, plusieurs écrans ; lire
