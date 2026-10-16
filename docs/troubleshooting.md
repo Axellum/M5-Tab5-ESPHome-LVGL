@@ -135,6 +135,26 @@ Those three lines repeat ~50 times per second. The black screen is a *consequenc
 
 ---
 
+### Waveshare 7B: boot loop after a software reboot, Wi-Fi link down (2026-10-16)
+
+**Symptom:** after a reboot from Home Assistant (« Redémarrage Système »), an OTA or any software reboot, the board restarts every ~17 s, never reaches Wi-Fi, and after 10 boots ESPHome enters safe mode (frozen screen). Rebooting again does not help.
+
+**What the serial console shows** (COM port of the board, `tools/capture_serie.py --mac …`, no reset): each boot gets past `ESP-Hosted link not yet up` (harmless, printed on every boot), then the SDIO reads from the C6 time out and the P4 restarts by itself, `rst:0xc (SW_CPU_RESET)`, with no panic:
+
+```
+[I][esp-idf:000]: E (2513) H_API: ESP-Hosted link not yet up
+[I][esp-idf:000][sdio_read]: E (11640) sdmmc_req: sdmmc_host_wait_for_event returned 0x107
+[I][esp-idf:000][sdio_read]: E (14146) H_SDIO_DRV: sdio_read_task: Failed to read data - -1 838860 838860
+...
+rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
+```
+
+**Cause:** the faulty state is on the **P4** side and survives `esp_restart()`, which on the ESP32-P4 only resets the two CPU cores (`rst:0xc`): GPIO, peripherals and their configuration keep their state. Reproduced on 2026-10-16 on the author's board: the loop came back on the 8th reboot of a series through the API (and on the 3rd of an earlier series); a reset over USB, which is a reset of the whole digital core (« USB peripheral ») and does not touch the C6, brought Wi-Fi back at once; so does a power cut. The C6 does not look at fault: it is reset by GPIO 54 on every boot and the current curve (USB meter, 100 samples/s) shows it restarting each time, and the board cannot cut its power in software (the C6 shares the 3.3 V rail of the P4). Which part of the P4 keeps the bad state is not established.
+
+**Fix (firmware):** every software reboot of the 7B ends with a reset of the whole digital core (`esp_rom_software_reset_system()`, the reset ESP-IDF's bootloader uses) instead of a CPU reset: `Tab5/ecran/tab5_lien_c6.cpp`. ESP-IDF still reports it as a software reboot, so « Raison du redémarrage » and the boot journal do not change.
+
+**If it happens anyway:** a reset over USB from a PC (`esptool --port COM<n> --before default-reset --after hard-reset chip-id`), or unplugging the board for a few seconds.
+
 ### `Tab5 Uptime` stuck at `unavailable` after the update to the boot-time firmware (2026-09-26)
 
 **Symptom:** after flashing a firmware from 2026-09-26 or later over an older one, every entity comes back except `Tab5 Uptime`, which stays `unavailable`. The Home Assistant log shows `ValueError: Sensor sensor.…_tab5_uptime has a unit of measurement and thus indicating it has a numeric value; however, it has the non-numeric device class: timestamp`.
@@ -314,6 +334,26 @@ Ces trois lignes se répètent ~50 fois par seconde. L'écran noir est une *cons
 **Pas essayé (une supposition) :** puisqu'une impulsion de reset n'a très probablement pas suffi, couper puis remettre l'alimentation du C6 par logiciel (`wifi_power`, PI4IOE 0x44, P0, que le firmware ne fait qu'allumer au démarrage) pourrait rattraper la panne sans débrancher le câble. Rien ne le prouve.
 
 **Piège de diagnostic, appris le même jour :** ouvrir *et refermer* le port série USB pour lire les logs peut réinitialiser la puce. Un reboot inexpliqué pile à la fin d'une session `esphome logs --device COM<n>`, c'est la session de logs elle-même, pas une instabilité. Une fois l'appareil revenu sur le WiFi, le surveiller via ses entités de diagnostic Home Assistant.
+
+### Waveshare 7B : boucle de redémarrages après un redémarrage logiciel, lien Wi-Fi absent (16/10/2026)
+
+**Symptôme :** après un redémarrage depuis Home Assistant (« Redémarrage Système »), une OTA ou tout redémarrage logiciel, la carte redémarre toutes les ~17 s, n'atteint jamais le Wi-Fi, et au bout de 10 démarrages ESPHome passe en mode sans échec (écran figé). La redémarrer encore n'y change rien.
+
+**Ce que montre la console série** (port COM de la carte, `tools/capture_serie.py --mac …`, sans reset) : chaque démarrage passe `ESP-Hosted link not yet up` (sans conséquence, écrit à chaque démarrage), puis les lectures SDIO du C6 partent en timeout et le P4 redémarre de lui-même, `rst:0xc (SW_CPU_RESET)`, sans panique :
+
+```
+[I][esp-idf:000]: E (2513) H_API: ESP-Hosted link not yet up
+[I][esp-idf:000][sdio_read]: E (11640) sdmmc_req: sdmmc_host_wait_for_event returned 0x107
+[I][esp-idf:000][sdio_read]: E (14146) H_SDIO_DRV: sdio_read_task: Failed to read data - -1 838860 838860
+...
+rst:0xc (SW_CPU_RESET),boot:0xf (SPI_FAST_FLASH_BOOT)
+```
+
+**Cause :** l'état fautif est côté **P4** et survit à `esp_restart()`, qui sur l'ESP32-P4 ne remet à zéro que les deux CPU (`rst:0xc`) : GPIO, périphériques et leurs réglages gardent leur état. Reproduit le 16/10/2026 sur la carte de l'auteur : la boucle est revenue au 8e redémarrage d'une série par l'API (et au 3e d'une série précédente) ; un reset par l'USB, qui remet à zéro tout le cœur numérique (« USB peripheral ») sans toucher au C6, a rendu le Wi-Fi aussitôt ; une coupure de courant aussi. Le C6 ne semble pas en cause : il est réinitialisé par le GPIO 54 à chaque démarrage et la courbe de courant (wattmètre USB, 100 mesures/s) le montre redémarrer à chaque fois, et la carte ne peut pas couper son alimentation par logiciel (le C6 partage le 3,3 V du P4). Quelle partie du P4 garde le mauvais état : pas établi.
+
+**Correctif (firmware) :** tout redémarrage logiciel de la 7B finit par un reset de tout le cœur numérique (`esp_rom_software_reset_system()`, le reset du chargeur d'amorçage d'ESP-IDF) au lieu d'un reset des CPU : `Tab5/ecran/tab5_lien_c6.cpp`. ESP-IDF le rapporte toujours comme un redémarrage logiciel : « Raison du redémarrage » et le journal des démarrages ne changent pas.
+
+**Si ça arrive quand même :** un reset par l'USB depuis un PC (`esptool --port COM<n> --before default-reset --after hard-reset chip-id`), ou débrancher la carte quelques secondes.
 
 ### `Tab5 Uptime` bloqué à `unavailable` après la mise à jour vers le firmware à heure de démarrage (26/09/2026)
 
