@@ -19,6 +19,9 @@
 #                          entre les boutons du haut (y 110) et la tuile (y 236), alignées
 #                          sur le bord gauche du − et le bord droit du +. Valeurs et consigne
 #                          dans la police de la date du thème (style_police_date).
+#                          Valeurs du Tab5 : depuis le lot 3 du portage 1024×600 (ADR-0061),
+#                          chacune est un jeton acc_* de tab5-ui-tokens.yaml, ramené à
+#                          l'écran de la carte.
 # @architecture_constraint `current_serre`/`val_temp_salon` sont mis à jour par
 #                          tab5_piece_climat.cpp (capteurs temp_salon / temp_serre de
 #                          tab5-sensors-domotique.yaml, clé « pR » de tab5_maj_emplacements). `clim_target` est aussi poussé par
@@ -55,10 +58,10 @@
 # ═══════════════════════════════════════════════════════
 obj:
   id: climate_card
-  x: 855
-  y: 110
-  width: 405
-  height: 198
+  x: ${acc_droite_x}
+  y: ${acc_clim_y}
+  width: ${acc_col_l}
+  height: ${acc_clim_h}
   styles: style_transparent
   scrollbar_mode: "OFF"
   pad_all: 0
@@ -75,8 +78,8 @@ obj:
     # touchent pas. Une valeur masquée (zones_apply_ui) sort de la rangée (flex).
     - obj:
         align: LEFT_MID
-        x: 14
-        y: -36
+        x: ${acc_temp_x}
+        y: ${acc_temp_y}
         width: SIZE_CONTENT
         height: SIZE_CONTENT
         styles: style_transparent
@@ -91,8 +94,8 @@ obj:
           - label: { id: val_temp_salon, text: "-- °", styles: [style_police_date, style_text_temp_max] }
     - obj:
         align: RIGHT_MID
-        x: -14
-        y: -36
+        x: -${acc_temp_x}
+        y: ${acc_temp_y}
         width: SIZE_CONTENT
         height: SIZE_CONTENT
         styles: style_transparent
@@ -122,10 +125,10 @@ obj:
     - button:
         id: btn_serre_games
         align: TOP_RIGHT
-        x: -6
-        y: 31
-        width: 200
-        height: 64
+        x: ${acc_serre_x}
+        y: ${acc_temp_zone_y}
+        width: ${acc_serre_l}
+        height: ${acc_temp_zone_h}
         styles: style_invisible
         on_short_click:
           - lambda: 'if (!ui_appui_glisse()) zone_gauche_suivante();'
@@ -154,10 +157,10 @@ obj:
     - button:
         id: btn_reglables_liste
         align: TOP_LEFT
-        x: 4
-        y: 31
-        width: 192
-        height: 64
+        x: ${acc_salon_x}
+        y: ${acc_temp_zone_y}
+        width: ${acc_salon_l}
+        height: ${acc_temp_zone_h}
         styles: style_invisible
         on_short_click:
           - lambda: 'if (!clim_temperature_ouvrir(id(btn_reglables_liste))) reglables_liste_basculer();'
@@ -173,7 +176,7 @@ obj:
         id: climate_controls_zone
         align: BOTTOM_MID
         y: 0
-        width: 405
+        width: ${acc_col_l}
         height: ${cadre_bas_h}
         styles: style_clim_carte_page
         scrollbar_mode: "OFF"
@@ -230,7 +233,7 @@ obj:
               # 200 : couvre la valeur d'un autre appareil (icône + texte, jusqu'à 243 px)
               # sans toucher − (14 à 66) ni + (339 à 391) ; toute la hauteur de la tuile
               # dans sa bordure.
-              width: 200
+              width: ${acc_consigne_l}
               height: ${ligne_zone_h}
               styles: style_invisible
               on_short_click:
@@ -259,10 +262,10 @@ obj:
               # 09/10/2026). Pas plus grand ni plus près du bord : en gélule (thème Capsule,
               # rayon 36, bordure de 4 px), un coin y serait rogné par l'arrondi (vu au rendu
               # avec 56 px à 8 px du bord) ; tests/test_nabu.py le calcule dans les 21 thèmes.
-              x: 13
-              width: 52
-              height: 52
-              radius: 12
+              x: ${acc_pas_x}
+              width: ${acc_pas_l}
+              height: ${acc_pas_l}
+              radius: ${acc_pas_rayon}
               styles: style_clim_btn
               pressed:
                 bg_opa: 30%
@@ -291,10 +294,10 @@ obj:
           - button:
               id: btn_clim_plus
               align: RIGHT_MID
-              x: -13
-              width: 52
-              height: 52
-              radius: 12
+              x: -${acc_pas_x}
+              width: ${acc_pas_l}
+              height: ${acc_pas_l}
+              radius: ${acc_pas_rayon}
               styles: style_clim_btn
               pressed:
                 bg_opa: 30%

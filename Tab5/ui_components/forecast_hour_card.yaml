@@ -9,17 +9,17 @@
 # (ADR-0043, meteo_tuile_libre), jamais au bout d'un glissement (ui_appui_glisse).
 obj:
   x: ${x_pos}
-  y: ${meteo_cell_y}
-  width: ${meteo_cell_width}
-  height: ${meteo_cell_height}
+  y: ${acc_tuile_cell_y}
+  width: ${acc_tuile_l}
+  height: ${acc_tuile_h}
   styles: style_transparent
   scrollbar_mode: "OFF"
   widgets:
     # Corps Sombre
     - obj:
-        y: 35
-        width: 230
-        height: 205
+        y: ${acc_h_carte_y}
+        width: ${acc_tuile_l}
+        height: ${acc_h_carte_h}
         styles: style_meteo_card_page
         scrollbar_mode: "OFF"
         on_long_press:
@@ -31,8 +31,8 @@ obj:
               id: "btn_h${idx}_action"
               align: CENTER
               y: 0
-              width: 140
-              height: 130
+              width: ${acc_t_bouton_l}
+              height: ${acc_t_bouton_h}
               hidden: true
               styles: style_invisible
               on_short_click:
@@ -43,9 +43,9 @@ obj:
     # Onglet Titre
     - obj:
         align: TOP_MID
-        y: 7
-        width: 130
-        height: 46
+        y: ${acc_t_onglet_y}
+        width: ${acc_t_onglet_l}
+        height: ${acc_t_onglet_h}
         border_width: 0
         styles: style_meteo_card_page
         scrollbar_mode: "OFF"
@@ -57,16 +57,16 @@ obj:
               text_font: roboto_32_b
     # Épaules de l'appareil de la tuile, de part et d'autre de l'onglet titre (comme les
     # tuiles journalières) : icône à gauche, ampoule ou flèche du volet à droite.
-    - label: { id: "icon_card_h${idx}_g", text: "\U000F0335", hidden: true, align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-    - label: { id: "icon_card_h${idx}_d", text: "\U000F0335", hidden: true, align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
+    - label: { id: "icon_card_h${idx}_g", text: "\U000F0335", hidden: true, align: TOP_LEFT, x: "${acc_t_epaule_x}", y: "${acc_t_epaule_y}", text_font: mdi_font_32, styles: style_text_dim }
+    - label: { id: "icon_card_h${idx}_d", text: "\U000F0335", hidden: true, align: TOP_RIGHT, x: "-${acc_t_epaule_x}", y: "${acc_t_epaule_y}", text_font: mdi_font_32, styles: style_text_dim }
     # Onglet Température & Pluie. 210 px : pictogramme (x 5) + « 0.5mm » (101 px, x 34)
     # + « -12° » (61 px) en Roboto 32 gras ; à 140, la pluie recouvrait la température
     # (rendu hors tablette, 27/09/2026).
     - obj:
         align: BOTTOM_MID
         y: 0
-        width: 210
-        height: 51
+        width: ${acc_h_bas_l}
+        height: ${acc_t_bas_h}
         border_width: 0
         styles: style_meteo_card_page
         scrollbar_mode: "OFF"
@@ -75,23 +75,23 @@ obj:
               id: h${idx}_p_icon
               text: "\U000F0596"
               align: BOTTOM_LEFT
-              x: 5
-              y: -14
+              x: ${acc_h_goutte_x}
+              y: ${acc_h_goutte_y}
               text_font: mdi_font_26
               styles: style_text_temp_min
           - label:
               id: h${idx}_prob
               text: "-- %"
               align: BOTTOM_LEFT
-              x: 34
-              y: -7
+              x: ${acc_h_pluie_x}
+              y: ${acc_t_texte_y}
               text_font: roboto_32_b
               styles: style_text_temp_min
           - label:
               id: h${idx}_temp
               text: "-- °"
               align: BOTTOM_RIGHT
-              x: -5
-              y: -7
+              x: ${acc_h_temp_x}
+              y: ${acc_t_texte_y}
               text_font: roboto_32_b
               styles: style_text_temp_max

@@ -118,7 +118,9 @@ def test_aucune_entite_a_regler_pour_un_binaire_publie():
     toujours les définir)."""
     assert not [k for k in (_yaml("Tab5", "paquets", "tab5-scripts.yaml").get("substitutions") or {})
                 if k.startswith("entity_")]
-    modele = _yaml("Tab5", "user_entities.example.yaml")
+    # Sans clé active depuis le lot 3 du portage 1024×600 (que des commentaires) : vide, accepté
+    # par ESPHome (`esphome config` passe avec un user_entities.yaml sans clé).
+    modele = _yaml("Tab5", "user_entities.example.yaml") or {}
     actives = sorted(k for k in modele if k.startswith("entity_"))
     assert actives == [], f"clé active inutile dans le modèle : {actives}"
 

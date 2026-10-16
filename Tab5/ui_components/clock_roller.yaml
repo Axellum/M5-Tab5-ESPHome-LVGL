@@ -24,9 +24,9 @@ obj:
   id: clock_roll_${d}
   align: TOP_LEFT
   x: ${x}
-  y: 17
-  width: 75
-  height: 104
+  y: ${hor_cadre_y}
+  width: ${hor_cadre_l}
+  height: ${hor_cadre_h}
   styles: style_transparent
   scrollable: false
   widgets:
@@ -34,11 +34,11 @@ obj:
         id: lbl_time_${d}_a
         text: ""
         align: TOP_MID
-        y: -23
+        y: ${hor_label_y}
         styles: [style_police_horloge, style_horloge_text_soft]
     - label:
         id: lbl_time_${d}_b
         text: ""
         align: TOP_MID
-        y: -23
+        y: ${hor_label_y}
         styles: [style_police_horloge, style_horloge_text_soft]

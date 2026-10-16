@@ -19,7 +19,7 @@ import re
 import pytest
 
 from tests import test_tuiles_blueprint as bp  # noqa: E402
-from tests.commun import lire as _lire
+from tests.commun import avec_jetons, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 import ecrans  # noqa: E402
@@ -283,7 +283,7 @@ def test_le_rendu_capture_les_lignes_et_revient_a_la_premiere():
         appuis = [e for e in ecran.etapes + ecran.fermer if e == ecrans.Toucher(*ecrans.SOUS_HORLOGE)]
         assert len(ecran.etapes) == n - 1 and len(appuis) == lignes, ecran
     # La zone touchée est celle de btn_rangee (tab5-lvgl.yaml : TOP_MID, y 244, 401 × 70).
-    lvgl = _lire("Tab5", "paquets", "tab5-lvgl.yaml")
+    lvgl = avec_jetons(_lire("Tab5", "paquets", "tab5-lvgl.yaml"))   # jetons acc_* (lot 3)
     bloc = lvgl.split("id: btn_rangee", 1)[1].split("\n          - ", 1)[0]
     y, largeur, hauteur = (int(re.search(rf"{c}: (\d+)", bloc).group(1)) for c in ("y", "width", "height"))
     x0 = 640 - largeur // 2

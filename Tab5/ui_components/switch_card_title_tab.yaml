@@ -8,9 +8,9 @@
 # le 27/09/2026) ; la carte fait 230.
 obj:
   align: TOP_MID
-  y: 166
-  width: 214
-  height: 40
+  y: ${acc_sw_nom_y}
+  width: ${acc_sw_nom_l}
+  height: ${acc_sw_nom_h}
   styles: style_transparent
   scrollable: false
   widgets:

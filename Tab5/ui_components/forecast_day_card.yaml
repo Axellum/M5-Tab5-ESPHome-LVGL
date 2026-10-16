@@ -10,9 +10,9 @@
 # tools/check_tab5_code_rules.py les retrouve par ces vars (palette des tuiles).
 obj:
   x: ${x}
-  y: ${meteo_cell_y}
-  width: ${meteo_cell_width}
-  height: ${meteo_cell_height}
+  y: ${acc_tuile_cell_y}
+  width: ${acc_tuile_l}
+  height: ${acc_tuile_h}
   styles: style_transparent
   scrollbar_mode: "OFF"
   overflow_visible: true  # ombre des cartes d'un thème (formes, lot 3) : pas coupée à droite
@@ -20,8 +20,8 @@ obj:
     # Corps sombre (recouvre les onglets)
     - !include { file: forecast_day_body.yaml, vars: { n: "${n}", btn_w: "${btn_w}" } }
     # Icônes latérales (épaules), de part et d'autre de l'onglet titre
-    - label: { id: "${gauche_id}", text: "${gauche}", align: TOP_LEFT, x: 10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
-    - label: { id: "${droite_id}", text: "${droite}", hidden: "${droite_masquee}", align: TOP_RIGHT, x: -10, y: 9, text_font: mdi_font_32, styles: style_text_dim }
+    - label: { id: "${gauche_id}", text: "${gauche}", align: TOP_LEFT, x: "${acc_t_epaule_x}", y: "${acc_t_epaule_y}", text_font: mdi_font_32, styles: style_text_dim }
+    - label: { id: "${droite_id}", text: "${droite}", hidden: "${droite_masquee}", align: TOP_RIGHT, x: "-${acc_t_epaule_x}", y: "${acc_t_epaule_y}", text_font: mdi_font_32, styles: style_text_dim }
     # Onglet Titre + Onglet Température (#T164)
     - !include { file: forecast_day_title_tab.yaml, vars: { idx: "${n}", day_label: "${day_label}" } }
     - !include { file: forecast_day_temp_tab.yaml, vars: { idx: "${n}", toggle_width: "${temp_w}" } }

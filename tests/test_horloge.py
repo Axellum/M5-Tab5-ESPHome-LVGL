@@ -14,12 +14,21 @@ avec fontTools le 01/10/2026 dans le fichier que télécharge ESPHome. Arrondis 
 FreeType, celui d'ESPHome : ascendante au pixel supérieur, haut de l'encre au pixel
 supérieur, bas de l'encre au pixel inférieur, avance au plus proche. Contrôlé sur la
 tablette : son journal de démarrage donnait ligne de base 121, avance 75 et 37.
+
+Depuis le lot 3 du portage 1024×600 (ADR-0061), positions et tailles de la tuile sont des
+jetons `${acc_…}` / `${hor_…}` (Tab5/paquets/tab5-ui-tokens.yaml) qui suivent la police de
+la carte : chaque test est joué pour chaque carte, jetons résolus et police à sa taille.
+Hors du Tab5, chaque valeur est celle du Tab5 réduite et arrondie (police_px), pas
+recalculée des unités de la police : un écart de 1 px (largeur d'un cadre, pas entre deux
+chiffres, centrage) y est admis (`_proche`) ; l'encre, elle, reste dans son cadre.
 """
 import math
 import os
+import re
 
+import pytest
 import yaml
-from tests.commun import BaseChargeur, taille_police
+from tests.commun import CARTES, BaseChargeur, avec_jetons, taille_police
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -50,9 +59,31 @@ _Chargeur.add_constructor("!include", _inclusion)
 _Chargeur.add_multi_constructor("!", lambda chargeur, suffixe, noeud: None)
 
 
+# Carte dont les jetons sont résolus (fixture `_carte`, chaque test pour chaque carte).
+_CARTE = ["tab5"]
+
+
+@pytest.fixture(autouse=True, params=CARTES)
+def _carte(request):
+    _CARTE[0] = request.param
+    yield request.param
+    _CARTE[0] = "tab5"
+
+
+def _resolu(texte):
+    """Jetons résolus pour la carte ; un nombre entre guillemets (`y: "${hor_dp_y}"`)
+    redevient un nombre, comme ESPHome le lit."""
+    return re.sub(r'"(-?\d+)"', r"\1", avec_jetons(texte, _CARTE[0]))
+
+
+def _proche(a, b):
+    """Égaux sur le Tab5 ; à 1 px près sur une autre carte (valeurs réduites, voir l'en-tête)."""
+    return a == b if _CARTE[0] == "tab5" else abs(a - b) <= 1
+
+
 def _charger(*chemin):
     with open(os.path.join(REPO, *chemin), encoding="utf-8") as f:
-        return yaml.load(f, Loader=_Chargeur)
+        return yaml.load(_resolu(f.read()), Loader=_Chargeur)
 
 
 def _marquer(noeud, dossier):
@@ -80,7 +111,7 @@ def _deplier(entree):
         texte = f.read()
     for nom, valeur in (entree.get("vars") or {}).items():
         texte = texte.replace("${%s}" % nom, str(valeur))
-    contenu = yaml.load(texte, Loader=_Chargeur)
+    contenu = yaml.load(_resolu(texte), Loader=_Chargeur)
     _marquer(contenu, os.path.dirname(chemin))
     return contenu
 
@@ -114,7 +145,7 @@ def _styles():
 
 def _px():
     polices, _ = _styles()
-    taille = taille_police(polices["roboto_130_b"]["size"])   # Tab5 (ADR-0061)
+    taille = taille_police(polices["roboto_130_b"]["size"], _CARTE[0])   # ADR-0061
     e = taille / UNITES_EM
     asc = math.ceil(ASCENDANTE * e)
     return {
@@ -180,7 +211,7 @@ def test_chaque_cadre_contient_l_encre_des_chiffres():
     for r in _enfants(_tuile())[0]:
         assert r["align"] == "TOP_LEFT" and r["styles"] == "style_transparent"
         assert r["scrollable"] is False
-        assert r["width"] == px["chiffre"], f"{r['id']} : largeur ≠ avance d'un chiffre"
+        assert _proche(r["width"], px["chiffre"]), f"{r['id']} : largeur ≠ avance d'un chiffre"
         ys = {l["label"]["y"] for l in r["widgets"]}
         assert len(ys) == 1, f"{r['id']} : les deux labels du rouleau à des hauteurs différentes"
         y_label = ys.pop()
@@ -208,12 +239,13 @@ def test_hhmm_centre_dans_la_tuile():
     largeur_utile = tuile["width"] - 2 * bordure
     x = [r["x"] for r in rouleaux]
     w = px["chiffre"]
-    assert x[1] == x[0] + w and x[3] == x[2] + w, "les deux chiffres d'un groupe doivent se toucher"
+    assert _proche(x[1], x[0] + w) and _proche(x[3], x[2] + w), "les deux chiffres d'un groupe doivent se toucher"
     avant = deux_points["x"] - (x[1] + w)
     apres = x[2] - (deux_points["x"] + px["deux_points"])
-    assert avant == apres >= 0, f"« : » décentré entre les heures et les minutes ({avant} / {apres} px)"
+    assert _proche(avant, apres) and min(avant, apres) >= 0, (
+        f"« : » décentré entre les heures et les minutes ({avant} / {apres} px)")
     gauche, droite = x[0], largeur_utile - (x[3] + w)
-    assert abs(gauche - droite) <= 1, f"HH:MM décentré dans la tuile ({gauche} / {droite} px)"
+    assert abs(gauche - droite) <= (1 if _CARTE[0] == "tab5" else 2), f"HH:MM décentré dans la tuile ({gauche} / {droite} px)"
 
 
 def test_deux_points_a_la_hauteur_des_chiffres():
@@ -245,9 +277,14 @@ def test_marges_egales_dans_la_tuile():
     bordure = styles[tuile["styles"]]["border_width"]
     y_label = rouleaux[0]["widgets"][0]["label"]["y"]
     haut = bordure + rouleaux[0]["y"] + y_label + px["encre_haut"] + RANGEE_VIDE_HAUT
-    bas = tuile["height"] - (bordure + date["y"] + ASCENDANTE_45 + JAMBAGE_45)
-    assert haut == bas, f"marges inégales : {haut} px en haut, {bas} px en bas"
-    e = taille_police(_styles()[0]["roboto_130_b"]["size"]) / UNITES_EM
+    # Police de la date à la taille de la carte (45 px sur le Tab5) : ascendante calculée,
+    # jambage réduit dans le même rapport.
+    t_date = taille_police(_styles()[0]["roboto_45_b"]["size"], _CARTE[0])
+    ascendante = math.ceil(ASCENDANTE * t_date / UNITES_EM)
+    assert t_date != 45 or ascendante == ASCENDANTE_45
+    bas = tuile["height"] - (bordure + date["y"] + ascendante + round(JAMBAGE_45 * t_date / 45))
+    assert _proche(haut, bas), f"marges inégales : {haut} px en haut, {bas} px en bas"
+    e = taille_police(_styles()[0]["roboto_130_b"]["size"], _CARTE[0]) / UNITES_EM
     gauche = bordure + rouleaux[0]["x"] + math.floor(CHIFFRE_0_X[0] * e)
     droite = tuile["width"] - (bordure + rouleaux[3]["x"] + math.ceil(CHIFFRE_0_X[1] * e))
     assert abs(gauche - droite) <= 1 and gauche >= haut, (gauche, droite, haut)

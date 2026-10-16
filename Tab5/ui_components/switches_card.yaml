@@ -27,17 +27,17 @@
 obj:
   id: layer_switches
   x: 0
-  y: 430
-  width: 1280
-  height: 290
+  y: ${acc_tuiles_y}
+  width: ${carte_ecran_l}
+  height: ${acc_tuiles_h}
   styles: style_transparent
   scrollbar_mode: "OFF"
   hidden: true
 
   widgets:
     # Tuiles 0 à 4 : glyphe, nom et état d'avant la première image (repeints par le C++).
-    - !include { file: switch_card.yaml, vars: { n: "0", x: "25", icone: "\U000F0379", title: "PC Bureau", state_text: "Éteint" } }
-    - !include { file: switch_card.yaml, vars: { n: "1", x: "275", icone: "\U000F111E", title: "Volet", state_text: "Fermé" } }
-    - !include { file: switch_card.yaml, vars: { n: "2", x: "525", icone: "\U000F02E3", title: "Chambre", state_text: "Éteint" } }
-    - !include { file: switch_card.yaml, vars: { n: "3", x: "775", icone: "\U000F04B9", title: "Salon", state_text: "Éteint" } }
-    - !include { file: switch_card.yaml, vars: { n: "4", x: "1025", icone: "\U000F1051", title: "LEDs", state_text: "Éteint" } }
+    - !include { file: switch_card.yaml, vars: { n: "0", x: "${acc_tuile_x0}", icone: "\U000F0379", title: "PC Bureau", state_text: "Éteint" } }
+    - !include { file: switch_card.yaml, vars: { n: "1", x: "${acc_tuile_x1}", icone: "\U000F111E", title: "Volet", state_text: "Fermé" } }
+    - !include { file: switch_card.yaml, vars: { n: "2", x: "${acc_tuile_x2}", icone: "\U000F02E3", title: "Chambre", state_text: "Éteint" } }
+    - !include { file: switch_card.yaml, vars: { n: "3", x: "${acc_tuile_x3}", icone: "\U000F04B9", title: "Salon", state_text: "Éteint" } }
+    - !include { file: switch_card.yaml, vars: { n: "4", x: "${acc_tuile_x4}", icone: "\U000F1051", title: "LEDs", state_text: "Éteint" } }

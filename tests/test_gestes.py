@@ -26,6 +26,7 @@ import re
 import pytest
 import yaml
 
+from tests.commun import CARTES, avec_jetons, jeton
 from tests.commun import lire as _lire
 from tests.test_appuis import ACTIONS, ACTIONS_APRES, CODES, ECRANS_APRES, ECRANS_FIN, ROUE_CODES, _codes_firmware, _fonction
 from tests.test_tuiles_blueprint import Passage, _evenement
@@ -199,27 +200,34 @@ def test_plus_de_zone_unique_sur_l_horloge():
 
 # ─── Les trois zones de l'horloge ─────────────────────────────────────────────
 
-def _zones():
+def _zones(carte="tab5"):
+    """Les trois zones tactiles de l'horloge, jetons de géométrie résolus pour la carte
+    (lot 3 du portage 1024×600 : positions et tailles en `${acc_…}` / `${hor_…}`)."""
     zones = {}
-    for ligne in re.findall(r"^.*file: \.\./ui_components/horloge_zone\.yaml, vars: \{(.*)\} \}$", _lire(LVGL), re.M):
-        v = dict(re.findall(r'(\w+): "?(\w+)"?', ligne))
+    for ligne in re.findall(r"^.*file: \.\./ui_components/horloge_zone\.yaml, vars: \{(.*)\} \}$",
+                            avec_jetons(_lire(LVGL), carte), re.M):
+        v = dict(re.findall(r'(\w+): "?(-?\w+)"?', ligne))
         zones[v["id"]] = (int(v["x"]), int(v["y"]), int(v["largeur"]), int(v["hauteur"]), v["court"], v["long_appui"])
     return zones
 
 
-def _tuile():
-    bloc = _lire(LVGL).split("id: clock_tile", 1)[1]
+def _tuile(carte="tab5"):
+    texte = avec_jetons(_lire(LVGL), carte)
+    bloc = texte.split("id: clock_tile", 1)[1]
     g = {k: int(re.search(rf"^\s+{k}: (\d+)$", bloc, re.M).group(1)) for k in ("y", "width", "height")}
-    assert "align: TOP_MID" in _lire(LVGL).split("id: clock_tile", 1)[0].rsplit("- obj:", 1)[1] + bloc[:80]
-    x = 1280 // 2 - g["width"] // 2  # TOP_MID, x 0 : pw / 2 - w / 2 (lv_obj_pos.c de LVGL 9.5)
+    assert "align: TOP_MID" in texte.split("id: clock_tile", 1)[0].rsplit("- obj:", 1)[1] + bloc[:80]
+    # TOP_MID, x 0 : pw / 2 - w / 2 (lv_obj_pos.c de LVGL 9.5)
+    x = jeton("carte_ecran_l", carte) // 2 - g["width"] // 2
     return x, g["y"], g["width"], g["height"]
 
 
-def test_trois_zones_couvrent_la_tuile():
-    zones = _zones()
+@pytest.mark.parametrize("carte", CARTES)
+def test_trois_zones_couvrent_la_tuile(carte):
+    zones = _zones(carte)
     assert set(zones) == {"btn_horloge_heures", "btn_horloge_minutes", "btn_horloge_date"}
-    tx, ty, tw, th = _tuile()
-    assert (tx, ty, tw, th) == (440, 20, 401, 210)
+    tx, ty, tw, th = _tuile(carte)
+    if carte == "tab5":
+        assert (tx, ty, tw, th) == (440, 20, 401, 210)
     couverts = {}
     for ident, (x, y, w, h, _, _) in zones.items():
         for px in range(x, x + w):

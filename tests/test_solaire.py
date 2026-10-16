@@ -20,7 +20,7 @@ import re
 import pytest
 
 from tests.test_tuiles_blueprint import Etat, Passage, _evenement
-from tests.commun import contrat, lire as _lire
+from tests.commun import avec_jetons, contrat, lire as _lire
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BLUEPRINT = os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5", "tab5_emplacements.yaml")
@@ -58,7 +58,7 @@ def test_icone_du_bandeau_branchee():
     noms = re.findall(r"\b(BANDEAU_\w+)", enum)
     assert "BANDEAU_SOLAIRE" in noms and noms[-1] == "BANDEAU_NB"
     assert "u.bandeau[BANDEAU_SOLAIRE] = id(icon_solaire);" in _lire(ZONES_YAML)
-    label = re.search(r"- label: \{ id: icon_solaire,[^}]*\}", _lire(LVGL)).group(0)
+    label = re.search(r"- label: \{ id: icon_solaire,[^}]*\}", avec_jetons(_lire(LVGL))).group(0)
     assert "hidden: true" in label, "l'icône doit rester masquée tant que HA n'a rien envoyé"
     assert "text_font: mdi_font_26" in label
 

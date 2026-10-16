@@ -25,6 +25,7 @@
  *       tools/gen_themes.py (`--check` échoue en CI si elles sont périmées).
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "tab5_themes_data.h"  // THEMES[], THEME_COUNT (générés, tools/gen_themes.py)
 #include "esphome/core/application.h"
 #include "lvgl_private.h"  // lv_obj_t::styles / style_cnt (theme_formes : porteurs d'un style)
@@ -2457,17 +2458,25 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
     const int32_t dd = tuile ? 1 - lv_obj_get_style_space_right(tuile, LV_PART_MAIN) : 0;
     // Rouleaux : l'encre des chiffres centrée dans le cadre de 75 × 104 (y du label), le
     // cadre (parent du label) posé dans la tuile ; « : » centré entre heures et minutes.
+    // La table est écrite pour la police de 130 px du Tab5 : sur une autre carte, chaque
+    // valeur suit l'échelle de ses polices (police_px) et le tout est centré dans sa tuile
+    // (kHorlogeDx, kHorlogeDy), comme les jetons hor_* du YAML (lot 3 du portage, ADR-0061).
+    // Sur le Tab5, police_px(v) = v et les décalages valent 0.
     for (int i = 0; i < 8; i++) {
-        if (horloge[i] != nullptr) lv_obj_set_y(horloge[i], p.y);
+        if (horloge[i] != nullptr) lv_obj_set_y(horloge[i], police_px(p.y));
     }
     for (int i = 0; i < 4; i++) {
         if (horloge[2 * i] == nullptr) continue;
-        lv_obj_set_pos(lv_obj_get_parent(horloge[2 * i]), kCadreX[i] + p.dx + dg, p.cadre_y + dh);
+        lv_obj_set_pos(lv_obj_get_parent(horloge[2 * i]), police_px(kCadreX[i] + p.dx) + kHorlogeDx + dg,
+                       police_px(p.cadre_y) + kHorlogeDy + dh);
     }
-    if (horloge[8] != nullptr) lv_obj_set_pos(horloge[8], p.x_deux_points + dg, p.y_deux_points + dh);
+    if (horloge[8] != nullptr) {
+        lv_obj_set_pos(horloge[8], police_px(p.x_deux_points) + kHorlogeDx + dg,
+                       police_px(p.y_deux_points) + kHorlogeDy + dh);
+    }
     // Date : centrée sur la tuile (TOP_MID se règle sur le contenu, décalé par une bordure
     // d'un seul côté), ligne de base à 32 px du bas ; l'ascendante change d'une police à l'autre.
-    if (date != nullptr) lv_obj_align(date, LV_ALIGN_TOP_MID, (dg - dd) / 2, p.y_date + dh);
+    if (date != nullptr) lv_obj_align(date, LV_ALIGN_TOP_MID, (dg - dd) / 2, police_px(p.y_date) + kHorlogeDy + dh);
 }
 
 void theme_rejouer_ui() {

@@ -299,7 +299,9 @@ def date_glyph_coverage(tab5: Path = TAB5) -> list[str]:
     core_src = strip_cpp_comments(core.read_text(encoding="utf-8"))
     m_days = re.search(r"fr_day_short_utf8\(int wday\)\s*\{.*?days\[\] = \{(.*?)\};", core_src, re.S)
     m_months = re.search(r"clock_month_short_utf8\(int month\)\s*\{.*?months\[\] = \{(.*?)\};", core_src, re.S)
-    m_initial = re.search(r"id: lbl_date, text: \"([^\"]*)\"([^}\n]*)", lvgl.read_text(encoding="utf-8"))
+    # Le reste du label : une substitution `${…}` (y de la date, lot 3 du portage) n'en est
+    # pas la fin.
+    m_initial = re.search(r"id: lbl_date, text: \"([^\"]*)\"((?:\$\{[^}\n]*\}|[^}\n])*)", lvgl.read_text(encoding="utf-8"))
     font = "?"
     if m_initial:
         # Police posée sur le label, ou par un de ses styles (style_police_date depuis
