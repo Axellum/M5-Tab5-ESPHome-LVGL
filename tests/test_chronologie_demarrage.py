@@ -176,10 +176,19 @@ def test_lvgl_prepare_avant_les_widgets():
     [AI-WARNING] de tab5_demarrage.cpp) : sans cet appel, setup() redevient quadratique
     en nombre de labels."""
     lvgl = _yaml(source("tab5-styles.yaml"))["lvgl"]
-    assert "demarrage_preparer_lvgl();" in str(lvgl["style_definitions"][0]["text_letter_space"])
+    lambda_ = str(lvgl["style_definitions"][0]["text_letter_space"])
+    # Après la marque « objets » : la chronologie reste comparable à celle d'avant.
+    assert lambda_.index("demarrage_marquer(EtapeDemarrage::OBJETS);") < lambda_.index("demarrage_preparer_lvgl();")
     appels = [nom for nom, t in _yaml_firmware().items() if "demarrage_preparer_lvgl" in t]
     assert appels == ["tab5-styles.yaml"]
-    assert source("tab5_demarrage.cpp").read_text(encoding="utf-8").count("void demarrage_preparer_lvgl()") == 1
+    cpp = source("tab5_demarrage.cpp").read_text(encoding="utf-8")
+    corps = cpp[cpp.index("void demarrage_preparer_lvgl() {"):]
+    assert cpp.count("void demarrage_preparer_lvgl() {") == 1
+    assert "lv_display_set_resolution(disp, kEcranL, kEcranH);" in corps
+    assert "lv_display_add_event_cb(disp, vider_abonnements, LV_EVENT_REFR_REQUEST, disp);" in corps
+    # Retiré à la première image : rien ne change ensuite.
+    assert "lv_display_add_event_cb(disp, fin_du_vidage, LV_EVENT_REFR_START, disp);" in corps
+    assert "lv_display_remove_event_cb_with_user_data(disp, vider_abonnements, disp);" in cpp
 
 
 def test_capteurs_et_script():

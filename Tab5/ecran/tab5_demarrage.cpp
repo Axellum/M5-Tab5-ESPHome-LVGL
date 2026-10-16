@@ -54,14 +54,16 @@ const MarqueConstructeurs s_marque_constructeurs;
  * [AI-WARNING] LVGL préparé avant les widgets (16/10/2026) — ne pas retirer sans mesurer.
  *
  * Pourquoi. L'écran restait noir ~21 s au démarrage (Tab5, 10/10/2026) : LVGL ne dessine
- * qu'après setup(), et ~90 % du calcul de setup() partait dans deux parcours de LVGL 9.5 :
+ * qu'après setup(), et ~90 % du calcul de setup() partait dans deux parcours de LVGL 9.5
+ * (vérifié sur 9.5.0 ; à relire dans lv_label.c et lv_theme_default.c si LVGL change) :
  *  1. Chaque label dont le texte est à recalculer s'abonne à l'affichage
  *     (lv_label_mark_need_refr_text, lv_label.c : lv_display_add_event_cb(…,
  *     LV_EVENT_UPDATE_LAYOUT_COMPLETED, label)) et ne se désabonne qu'à la fin d'une mise
- *     en page. Aucune n'a lieu avant la première image : ~1 300 labels s'abonnent l'un
- *     après l'autre. Or chaque lv_obj_mark_layout_as_dirty() (création d'un objet, style
- *     changé) envoie LV_EVENT_REFR_REQUEST à ce même affichage, dont l'envoi parcourt
- *     toute la liste : coût quadratique.
+ *     en page (lv_obj_update_layout). Avant la première image il n'y en a presque pas
+ *     (seuls quelques appels de lv_image.c ou lv_obj_align_to() en font une) : ~1 300
+ *     labels s'abonnent l'un après l'autre. Or chaque objet créé, restylé ou invalidé
+ *     (lv_obj_mark_layout_as_dirty, lv_inv_area) envoie LV_EVENT_REFR_REQUEST à ce même
+ *     affichage, dont l'envoi parcourt toute la liste : coût quadratique.
  *  2. ESPHome crée l'affichage en 240 × 240 (constructeur de LvglComponent,
  *     lvgl_esphome.cpp) et ne lui donne la taille de l'écran que dans son setup(), une
  *     fois les ~1 800 widgets construits : update_resolution (lv_display.c) marque la
@@ -69,13 +71,14 @@ const MarqueConstructeurs s_marque_constructeurs;
  *     par défaut de LVGL (resolution_change_event_cb, lv_theme_default.c : 240 px = petit
  *     écran, 1 024 ou 1 280 = grand), qui refait le style de tous les objets
  *     (lv_obj_report_style_change(NULL)) : encore un REFR_REQUEST par objet.
- * Mesure (tablette virtuelle sous callgrind, branche essai/mesure-demarrage jamais mergée,
- * 16/10/2026) : 14 548 M instructions dans setup(), 1 290 M avec les deux remèdes
- * ci-dessous ; le vidage seul était plus lent qu'aucun remède (2,6 s contre 1,5 s en natif).
+ * Mesure (tablette virtuelle, même runner, branche essai/mesure-demarrage-avant-apres
+ * jamais mergée, 16/10/2026) : 14 549 M instructions dans setup() (callgrind), 1 308 M
+ * avec les deux remèdes ci-dessous ; 1,5 s puis 0,18 s en natif. Le vidage seul (branche
+ * essai/mesure-demarrage) était plus lent qu'aucun remède : 2,6 s contre 1,5 s.
  *
- * Remèdes, appelés une fois, juste après la création de l'affichage et avant les widgets
- * (lambda du premier style, style_repere_demarrage de tab5-styles.yaml : le seul point
- * d'ESPHome entre les deux) :
+ * Remèdes, appelés une fois, juste après la création de l'affichage et avant les widgets,
+ * par la lambda du premier style (style_repere_demarrage, tab5-styles.yaml : ESPHome
+ * évalue le `theme:` puis les styles entre les deux) :
  *  1. la taille finale tout de suite (kEcranL × kEcranH, celle que LvglComponent::setup()
  *     calcule d'après la dalle et `lvgl: rotation:`) : le thème se réinitialise sur un
  *     affichage presque vide, et setup() trouve la même taille (lv_display_set_resolution
@@ -85,16 +88,24 @@ const MarqueConstructeurs s_marque_constructeurs;
  *     nous-mêmes LV_EVENT_UPDATE_LAYOUT_COMPLETED : les labels recalculent leur texte et se
  *     désabonnent, ce que LVGL fait à chaque mise en page. Retiré au premier
  *     LV_EVENT_REFR_START : LVGL met alors en page à chaque image et vide la liste
- *     lui-même, comme avant ce correctif.
+ *     lui-même, comme avant ce correctif. Si LVGL cessait un jour d'abonner les labels,
+ *     la liste resterait courte et ce rappel ne ferait rien.
  * L'écran n'en change pas : un texte recalculé avant la mise en page l'est de nouveau
  * après si la taille ou le style du label changent (LV_EVENT_SIZE_CHANGED et
  * LV_EVENT_STYLE_CHANGED le réabonnent, lv_label_event) ; le thème ne choisit ses styles
- * selon la taille de l'écran que pour lv_keyboard, absent du firmware. Preuve : le rendu
- * de tous les écrans « identique aux références » (job comparer de rendu-host.yml).
+ * selon la taille de l'écran que pour lv_keyboard, absent du firmware. À prouver à chaque
+ * changement par le rendu de tous les écrans (job comparer de rendu-host.yml, « identique
+ * aux références ») : fait pour la PR #478.
+ * Affichage : lv_display_get_default(), le premier créé (lv_display_create) ; ESPHome n'en
+ * crée qu'un, celui de LvglComponent.
  */
 namespace {
 constexpr uint32_t kAbonnesMax = 64;
-bool s_vidage_en_cours = false;  // le vidage envoie des REFR_REQUEST : pas de réentrée
+// Garde indispensable : le vidage envoie lui-même des REFR_REQUEST (labels recalculés), et
+// lv_display_get_event_count() compte encore les abonnés retirés tant que l'envoi le plus
+// extérieur n'est pas fini (lv_event.c ne les libère qu'à ce moment) : sans elle, chaque
+// REFR_REQUEST imbriqué relancerait un vidage.
+bool s_vidage_en_cours = false;
 
 void vider_abonnements(lv_event_t* e) {
     if (s_vidage_en_cours) return;

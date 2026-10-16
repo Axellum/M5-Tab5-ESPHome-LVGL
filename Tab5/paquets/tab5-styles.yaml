@@ -901,8 +901,8 @@ lvgl:
     # widget, il ne change rien à l'écran. Garder ce style EN PREMIER.
     # [AI-WARNING] (16/10/2026) Sa lambda prépare aussi LVGL avant les widgets
     # (demarrage_preparer_lvgl, Tab5/ecran/tab5_demarrage.cpp) : taille finale de
-    # l'affichage, vidage des abonnements des labels. C'est le seul point d'ESPHome entre
-    # la création de l'affichage et celle des widgets ; sans cet appel, setup() redevient
+    # l'affichage, vidage des abonnements des labels. ESPHome évalue cette lambda après la
+    # création de l'affichage et avant celle des widgets ; sans cet appel, setup() redevient
     # quadratique en nombre de labels (~90 % du calcul du démarrage, écran noir plus long).
     - id: style_repere_demarrage
       text_letter_space: !lambda |-
