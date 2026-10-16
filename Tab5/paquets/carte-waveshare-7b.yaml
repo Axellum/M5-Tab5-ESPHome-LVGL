@@ -49,6 +49,9 @@ esphome:
     # Redémarrage logiciel en reset CORE, pour le lien SDIO du C6 (esp32_hosted, plus bas).
     - Tab5/ecran/tab5_lien_c6.h
     - Tab5/ecran/tab5_lien_c6.cpp
+    # Dalle passée au noir avec le rétroéclairage (light, plus bas).
+    - Tab5/ecran/tab5_dalle_7b.h
+    - Tab5/ecran/tab5_dalle_7b.cpp
 
 # ─── 1. Matériel de la 7B ────────────────────────────────────────────────────
 
@@ -224,13 +227,18 @@ light:
     id: backlight
     restore_mode: RESTORE_DEFAULT_ON
     default_transition_length: 250ms
+    # 7B seule : la dalle passe au noir avec le rétroéclairage (DCS display off / on), qui ne
+    # s'éteint pas tout à fait (gradation analogique, tab5_dalle_7b.cpp). Le reste est recopié
+    # du Tab5 (tests/test_carte_7b.py retire ces deux lignes avant de comparer).
     on_turn_on:
+      - lambda: 'dalle_afficher(id(tab5_display), true);'
       - lvgl.resume:
       - lambda: 'id(ecran_allume_ms) = millis();'
       - script.execute: tab5_economie_appliquer
     on_turn_off:
       - lambda: 'roue_actions_fermer();'
       - lvgl.pause:
+      - lambda: 'dalle_afficher(id(tab5_display), false);'
 
 # Audio : un seul bus I2S pour le micro et le haut-parleur, comme le Tab5 (ADR-0010).
 # Broches du BSP : MCLK 13, SCLK 12, LRCK 10, DOUT 9, DIN 11.
