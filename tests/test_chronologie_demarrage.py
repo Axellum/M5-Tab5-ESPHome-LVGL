@@ -171,6 +171,17 @@ def test_style_repere_en_premier():
     assert "style_repere_demarrage" not in corpus
 
 
+def test_lvgl_prepare_avant_les_widgets():
+    """La même lambda, et elle seule, prépare LVGL avant les widgets (16/10/2026,
+    [AI-WARNING] de tab5_demarrage.cpp) : sans cet appel, setup() redevient quadratique
+    en nombre de labels."""
+    lvgl = _yaml(source("tab5-styles.yaml"))["lvgl"]
+    assert "demarrage_preparer_lvgl();" in str(lvgl["style_definitions"][0]["text_letter_space"])
+    appels = [nom for nom, t in _yaml_firmware().items() if "demarrage_preparer_lvgl" in t]
+    assert appels == ["tab5-styles.yaml"]
+    assert source("tab5_demarrage.cpp").read_text(encoding="utf-8").count("void demarrage_preparer_lvgl()") == 1
+
+
 def test_capteurs_et_script():
     diag = _yaml(source(DIAG))
     capteurs = {t.get("id"): t for t in diag["text_sensor"]}

@@ -899,9 +899,15 @@ lvgl:
     # les styles dans main(), juste après l'initialisation de LVGL et avant les ~1 800
     # widgets ; sa lambda, évaluée une fois à ce moment, marque « objets ». Posé sur aucun
     # widget, il ne change rien à l'écran. Garder ce style EN PREMIER.
+    # [AI-WARNING] (16/10/2026) Sa lambda prépare aussi LVGL avant les widgets
+    # (demarrage_preparer_lvgl, Tab5/ecran/tab5_demarrage.cpp) : taille finale de
+    # l'affichage, vidage des abonnements des labels. C'est le seul point d'ESPHome entre
+    # la création de l'affichage et celle des widgets ; sans cet appel, setup() redevient
+    # quadratique en nombre de labels (~90 % du calcul du démarrage, écran noir plus long).
     - id: style_repere_demarrage
       text_letter_space: !lambda |-
         demarrage_marquer(EtapeDemarrage::OBJETS);
+        demarrage_preparer_lvgl();
         return 0;
     # --- Carte meteo / tuiles dashboard ---
     # ESSAI C 16/07 : même décoration que les boutons Domo (style_clim_btn) —
