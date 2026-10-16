@@ -293,6 +293,21 @@ text_sensor:
       if (++essais >= 3) return std::string("inconnue");
       return {};
 
+  # Préfixe des actions de CETTE tablette (ADR-0063, plusieurs écrans) : HA appelle
+  # `esphome.<préfixe>_tab5_maj_…`, où le préfixe est le nom ESPHome de l'appareil
+  # (`tab5_nom`, « - » remplacés par « _ »). HA ne lit pas ce nom (sa fiche d'appareil
+  # n'a que le nom affiché et l'adresse MAC) : la tablette le donne ici, et
+  # custom_templates/tab5_tablette.jinja (tab5_destinataires) l'y lit. Une valeur fixe,
+  # publiée dans les 5 s qui suivent le démarrage (premier passage d'un intervalle,
+  # esphome/core/scheduler.cpp), puis lue par HA à chaque abonnement.
+  - platform: template
+    id: sys_prefixe_actions
+    name: "Tab5 Préfixe des actions"
+    icon: "mdi:tag-outline"
+    entity_category: diagnostic
+    update_interval: 24h
+    lambda: 'return std::string("${ (tab5_nom | default(''tab5-ha-hmi'')) | replace(''-'', ''_'') }");'
+
   # Chronologie du démarrage (10/10/2026, demande d'Axel ; Tab5/socle/tab5_demarrage.h),
   # en deux textes de moins de 255 caractères (limite d'un état de Home Assistant) :
   # « ctor=…; objets=…; setup=…; … zones=… » jusqu'à la fin de setup(), puis
