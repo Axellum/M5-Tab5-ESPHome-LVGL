@@ -2233,12 +2233,16 @@ blueprint:
         tablette:
           name: Nom de la tablette dans ESPHome · Tablet name in ESPHome
           description: >-
-            Le nom de la tablette dans ESPHome, les « - » remplacés par des « _ ». À changer
-            seulement si vous avez renommé la tablette.
+            Laissé à « tab5_ha_hmi » : toutes les tablettes reçoivent le même écran, chacune
+            sous son nom, même renommée (firmware 3.9 et plus). Un autre nom (celui de la
+            tablette dans ESPHome, les « - » remplacés par des « _ ») : cette tablette
+            seule, pour un écran différent par tablette (une automatisation chacune).
 
 
-            The tablet's name in ESPHome, with « _ » instead of « - ». Change it only if you
-            renamed the tablet.
+            Left at « tab5_ha_hmi »: every tablet gets the same screen, each under its own
+            name, even renamed (firmware 3.9 and later). Another name (the tablet's name
+            in ESPHome, with « _ » instead of « - »): that tablet only, for a different
+            screen on each tablet (one automation each).
           default: tab5_ha_hmi
           selector:
             text:
@@ -2633,7 +2637,22 @@ variables:
     valve.gas: vanne
     valve.water: vanne
   # <<< icones
-  tablette: !input tablette
+  # À qui envoyer (ADR-0063, plusieurs écrans). Entrée « tablette » laissée au défaut
+  # (tab5_ha_hmi) : la tablette dont vient l'événement (une demande : ses zones, ses
+  # caméras, un popup, sa connexion), sinon chaque tablette connectée, même affichage
+  # partout (tab5_destinataires, custom_templates/tab5_tablette.jinja). Un autre nom :
+  # cette tablette seule, comme avant (une automatisation par tablette). Chaque envoi
+  # est une boucle sur `tablettes` qui pose `tablette` ; hors des boucles, `tablette`
+  # est la première (celle qui demande), passée aux scripts Énergie et Température.
+  tablette_choisie: !input tablette
+  tablettes: >-
+    {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+    {%- if (tablette_choisie | default('', true) | string) not in ['', 'tab5_ha_hmi'] -%}
+      {{ [tablette_choisie | string] }}
+    {%- else -%}
+      {{ tab5_destinataires(trigger.event.data.device_id | default('', true) if (trigger.platform | default('')) == 'event' else '').split(',') | select | list }}
+    {%- endif -%}
+  tablette: "{{ tablettes[0] if tablettes else (tablette_choisie | default('tab5_ha_hmi', true)) }}"
   choix:
     lumiere_1: !input lumiere_1
     lumiere_2: !input lumiere_2
@@ -4116,10 +4135,15 @@ actions:
         sequence:
           - if: "{{ energie_capteurs | count == 0 }}"
             then:
-              - action: "esphome.{{ tablette }}_tab5_maj_energie"
-                data:
-                  payload: "|||||||"
-                continue_on_error: true
+              - repeat:
+                  for_each: "{{ tablettes }}"
+                  sequence:
+                    - variables:
+                        tablette: "{{ repeat.item }}"
+                    - action: "esphome.{{ tablette }}_tab5_maj_energie"
+                      data:
+                        payload: "|||||||"
+                      continue_on_error: true
             else:
               - if: "{{ states['script.tab5_energie'] is not none }}"
                 then:
@@ -4154,24 +4178,29 @@ actions:
       - alias: "La tablette demande ses caméras"
         conditions: "{{ trigger.id == 'cameras' }}"
         sequence:
-          - action: "esphome.{{ tablette }}_tab5_maj_cameras"
-            data:
-              adresse: "{{ cameras_adresse | default('', true) | string | trim }}"
-              cameras: >-
-                {%- set l = cameras_liste if cameras_liste is list else ([cameras_liste] if cameras_liste else []) -%}
-                {%- set ns = namespace(r=[]) -%}
-                {%- for c in l if c is string and states[c] is not none -%}
-                  {%- set image = state_attr(c, 'entity_picture') or '' -%}
-                  {%- set hors = states(c) == 'unavailable' -%}
-                  {%- if image or hors -%}
-                    {%- set nom = (state_attr(c, 'friendly_name') or c) | string | replace('|', '/') | replace(';', ',') -%}
-                    {%- set piece = (area_name(c) or '') | string | replace('|', '/') | replace(';', ',') -%}
-                    {%- set depuis = (as_timestamp(states[c].last_changed, 0) | int(0)) if hors else '' -%}
-                    {%- set ns.r = ns.r + [nom ~ '|' ~ image ~ '|' ~ piece ~ '|' ~ depuis] -%}
-                  {%- endif -%}
-                {%- endfor -%}
-                {{ ns.r[:16] | join(';') }}
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_cameras"
+                  data:
+                    adresse: "{{ cameras_adresse | default('', true) | string | trim }}"
+                    cameras: >-
+                      {%- set l = cameras_liste if cameras_liste is list else ([cameras_liste] if cameras_liste else []) -%}
+                      {%- set ns = namespace(r=[]) -%}
+                      {%- for c in l if c is string and states[c] is not none -%}
+                        {%- set image = state_attr(c, 'entity_picture') or '' -%}
+                        {%- set hors = states(c) == 'unavailable' -%}
+                        {%- if image or hors -%}
+                          {%- set nom = (state_attr(c, 'friendly_name') or c) | string | replace('|', '/') | replace(';', ',') -%}
+                          {%- set piece = (area_name(c) or '') | string | replace('|', '/') | replace(';', ',') -%}
+                          {%- set depuis = (as_timestamp(states[c].last_changed, 0) | int(0)) if hors else '' -%}
+                          {%- set ns.r = ns.r + [nom ~ '|' ~ image ~ '|' ~ piece ~ '|' ~ depuis] -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {{ ns.r[:16] | join(';') }}
+                  continue_on_error: true
 
       # Popup Température (ADR-0032) : la tablette dit quelle température (salon, serre) et
       # quelle vue (jour, semaine, mois) elle montre ; le script du package tab5_historique
@@ -4245,10 +4274,15 @@ actions:
       - alias: "La tablette demande quelles zones sont absentes"
         conditions: "{{ trigger.id in ['zones', 'pipeline_discussion'] }}"
         sequence:
-          - action: "esphome.{{ tablette }}_tab5_maj_zones"
-            data:
-              absentes: "{{ absentes }}"
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_zones"
+                  data:
+                    absentes: "{{ absentes }}"
+                  continue_on_error: true
 
       - alias: "Commande d'un bouton de l'écran"
         conditions: "{{ trigger.id == 'action' }}"
@@ -4783,34 +4817,49 @@ actions:
           # change). Pas à chaque degré de la pièce.
           - if: "{{ clim_reglages != '' and reglages_changes }}"
             then:
-              - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
-                data:
-                  payload: "{{ clim_reglages }}"
-                continue_on_error: true
+              - repeat:
+                  for_each: "{{ tablettes }}"
+                  sequence:
+                    - variables:
+                        tablette: "{{ repeat.item }}"
+                    - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+                      data:
+                        payload: "{{ clim_reglages }}"
+                      continue_on_error: true
           # Ancre &maj_clim : la même action part dans la poussée complète (default, plus
           # bas, *maj_clim). Un champ ajouté ici part donc dans les deux (audit du
           # 07/10/2026, HA-8 : le bloc était recopié).
-          - &maj_clim
-            action: "esphome.{{ tablette }}_tab5_maj_clim"
-            data:
-              target: "{{ state_attr(clim, 'temperature') | float(20) }}"
-              current: "{{ state_attr(clim, 'current_temperature') | float(20) }}"
-              mode: "{{ states(clim) }}"
-              preset: "{{ state_attr(clim, 'preset_mode') | default('none', true) }}"
-              fan: "{{ state_attr(clim, 'fan_mode') | default('auto', true) }}"
-              swing: "{{ state_attr(clim, 'swing_mode') | default('stop', true) }}"
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - &maj_clim
+                  action: "esphome.{{ tablette }}_tab5_maj_clim"
+                  data:
+                    target: "{{ state_attr(clim, 'temperature') | float(20) }}"
+                    current: "{{ state_attr(clim, 'current_temperature') | float(20) }}"
+                    mode: "{{ states(clim) }}"
+                    preset: "{{ state_attr(clim, 'preset_mode') | default('none', true) }}"
+                    fan: "{{ state_attr(clim, 'fan_mode') | default('auto', true) }}"
+                    swing: "{{ state_attr(clim, 'swing_mode') | default('stop', true) }}"
+                  continue_on_error: true
 
       # Aussi quand la liste du package ne nomme plus ce volet (volet_choisi) : son état
       # réel revient à l'écran.
       - alias: "Volet qui signale sa course : son état a changé"
         conditions: "{{ trigger.id in ['volet', 'volet_choisi'] and volet != '' and not volet_par_package }}"
         sequence:
-          - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
-            data:
-              etat_physique: >-
-                {{ {'opening': 'En_mouvement', 'closing': 'En_mouvement', 'open': 'Ouvert', 'closed': 'Ferme'}.get(states(volet), states(volet)) }}
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
+                  data:
+                    etat_physique: >-
+                      {{ {'opening': 'En_mouvement', 'closing': 'En_mouvement', 'open': 'Ouvert', 'closed': 'Ferme'}.get(states(volet), states(volet)) }}
+                  continue_on_error: true
 
     # Connexion ou changement d'un emplacement : ses valeurs ; à la connexion, aussi la
     # clim et le volet (sans package), à la suite, sans pause (retirée le 01/10/2026 :
@@ -4818,35 +4867,60 @@ actions:
     default:
       - if: "{{ payload != '' }}"
         then:
-          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
-            data:
-              payload: "{{ payload }}"
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+                  data:
+                    payload: "{{ payload }}"
+                  continue_on_error: true
       - if: "{{ tout_pousser and clim != '' }}"
         then:
           # Réglages de la clim (clé climr, ADR-0026) avant son état : bornes, pas et
           # unité sont en place quand la consigne arrive.
-          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
-            data:
-              payload: "{{ clim_reglages }}"
-            continue_on_error: true
-          - *maj_clim
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+                  data:
+                    payload: "{{ clim_reglages }}"
+                  continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - *maj_clim
       - if: "{{ tout_pousser and volet != '' and not volet_par_package }}"
         then:
-          - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
-            data:
-              etat_physique: >-
-                {{ {'opening': 'En_mouvement', 'closing': 'En_mouvement', 'open': 'Ouvert', 'closed': 'Ferme'}.get(states(volet), states(volet)) }}
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
+                  data:
+                    etat_physique: >-
+                      {{ {'opening': 'En_mouvement', 'closing': 'En_mouvement', 'open': 'Ouvert', 'closed': 'Ferme'}.get(states(volet), states(volet)) }}
+                  continue_on_error: true
       # Après un rechargement, les zones aussi : un emplacement vidé ou rempli dans
       # l'automatisation doit disparaître ou revenir sans attendre que la tablette les
       # redemande (elle ne le fait qu'à sa connexion, ADR-0018).
       - if: "{{ trigger.id in ['rechargement', 'maj_ecran'] }}"
         then:
-          - action: "esphome.{{ tablette }}_tab5_maj_zones"
-            data:
-              absentes: "{{ absentes }}"
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_zones"
+                  data:
+                    absentes: "{{ absentes }}"
+                  continue_on_error: true
 
   # ---- Tuiles des pièces (ADR-0023) ----
   # Définitions : un instantané complet (ce qui n'y est pas est vide), avant les états.
@@ -4985,10 +5059,15 @@ actions:
             {{ ns.r }}
       - if: "{{ protocole == 2 }}"
         then:
-          - action: "esphome.{{ tablette }}_tab5_maj_tuiles"
-            data:
-              payload: "{{ definitions }}"
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_tuiles"
+                  data:
+                    payload: "{{ definitions }}"
+                  continue_on_error: true
   # États : « tRT|état|valeur|couleur; » (ADR-0023). Valeur = luminosité 0-255 (lum),
   # position (vol), la mesure (cap), la température de la pièce (cli), nan sinon ;
   # couleur = « RRGGBB » d'une lumière allumée qui donne rgb_color. Dans la même
@@ -5055,10 +5134,15 @@ actions:
             {{ ns.r }}
       - if: "{{ protocole == 2 and (reglages_tuiles ~ etats_tuiles ~ etats_clims) != '' }}"
         then:
-          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
-            data:
-              payload: "{{ reglages_tuiles ~ etats_tuiles ~ etats_clims }}"
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+                  data:
+                    payload: "{{ reglages_tuiles ~ etats_tuiles ~ etats_clims }}"
+                  continue_on_error: true
   # Tuile − / + au choix (ADR-0033) : « rN|état|valeur; », valeur dans l'unité de sa
   # définition : volume, luminosité, vitesse et position en % (0 pour une lampe ou un
   # ventilateur éteint ; 0 / 100 pour un volet sans position, fermé / ouvert), consigne
@@ -5110,10 +5194,15 @@ actions:
             {{ ns.r }}
       - if: "{{ etats_reglables != '' }}"
         then:
-          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
-            data:
-              payload: "{{ etats_reglables }}"
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+                  data:
+                    payload: "{{ etats_reglables }}"
+                  continue_on_error: true
   # Climat des pièces (ADR-0040), pièce par pièce, dans cet ordre : réglages de sa clim
   # « crpR|min|max|pas|unité|capacités|nom; » (ceux de climr : reglages_clims) avec les
   # définitions ou quand ils ont pu changer ; « pR|température|humidité|clim; » (champ vide :
@@ -5146,7 +5235,12 @@ actions:
             {{ ns.r }}
       - if: "{{ climat_pieces != '' }}"
         then:
-          - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
-            data:
-              payload: "{{ climat_pieces }}"
-            continue_on_error: true
+          - repeat:
+              for_each: "{{ tablettes }}"
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_emplacements"
+                  data:
+                    payload: "{{ climat_pieces }}"
+                  continue_on_error: true

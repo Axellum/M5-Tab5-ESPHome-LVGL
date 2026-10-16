@@ -278,92 +278,99 @@ automation:
           - condition: template
             value_template: "{{ not meteo_en_panne }}"
         then:
-          - action: esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk
-            continue_on_error: true
-            data:
-              payload: >
-                {% from 'tab5_calendar.jinja' import couvre, ev_start, ev_end, ev_summary %}
-                {% set brut = daily_var.get(meteo, {}).get('forecast', []) if daily_var is defined else [] %}
-                {% if type_jours in ['twice_daily', 'hourly'] %}
-                  {# Regroupement par date locale (lot 4c-3) : max des températures, min des
-                     minimales (ou des températures, la nuit NWS n'a que `temperature`),
-                     condition de la période de jour (is_daytime, NWS), sinon d'un créneau de 12 h à 18 h,
-                     sinon du premier du jour.
-                     On s'arrête au premier jour sans données : la suite reste « passée ». #}
-                  {% set agg = namespace(l=[], fini=false) %}
-                  {% for j in range(15) %}
-                    {% set d = (now() + timedelta(days=j)).strftime('%Y-%m-%d') %}
-                    {% set jn = namespace(tmax=none, tmin=none, cond=none, cond_pm=none, cond_jour=none) %}
-                    {% for e in brut %}
-                      {% set dt = e.get('datetime') | as_datetime %}
-                      {% if dt is not none and (dt | as_local).strftime('%Y-%m-%d') == d %}
-                        {% set tt = e.get('temperature') %}
-                        {% set tl = e.get('templow') if e.get('templow') is not none else tt %}
-                        {% if tt is not none and (jn.tmax is none or tt > jn.tmax) %}{% set jn.tmax = tt %}{% endif %}
-                        {% if tl is not none and (jn.tmin is none or tl < jn.tmin) %}{% set jn.tmin = tl %}{% endif %}
-                        {% if jn.cond is none %}{% set jn.cond = e.get('condition') %}{% endif %}
-                        {% if jn.cond_pm is none and 12 <= (dt | as_local).hour < 18 %}{% set jn.cond_pm = e.get('condition') %}{% endif %}
-                        {% if jn.cond_jour is none and e.get('is_daytime') == true %}{% set jn.cond_jour = e.get('condition') %}{% endif %}
+          - repeat:
+              for_each: >-
+                {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+                {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+              sequence:
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - action: "esphome.{{ tablette }}_tab5_maj_previsions_jours_bulk"
+                  continue_on_error: true
+                  data:
+                    payload: >
+                      {% from 'tab5_calendar.jinja' import couvre, ev_start, ev_end, ev_summary %}
+                      {% set brut = daily_var.get(meteo, {}).get('forecast', []) if daily_var is defined else [] %}
+                      {% if type_jours in ['twice_daily', 'hourly'] %}
+                        {# Regroupement par date locale (lot 4c-3) : max des températures, min des
+                           minimales (ou des températures, la nuit NWS n'a que `temperature`),
+                           condition de la période de jour (is_daytime, NWS), sinon d'un créneau de 12 h à 18 h,
+                           sinon du premier du jour.
+                           On s'arrête au premier jour sans données : la suite reste « passée ». #}
+                        {% set agg = namespace(l=[], fini=false) %}
+                        {% for j in range(15) %}
+                          {% set d = (now() + timedelta(days=j)).strftime('%Y-%m-%d') %}
+                          {% set jn = namespace(tmax=none, tmin=none, cond=none, cond_pm=none, cond_jour=none) %}
+                          {% for e in brut %}
+                            {% set dt = e.get('datetime') | as_datetime %}
+                            {% if dt is not none and (dt | as_local).strftime('%Y-%m-%d') == d %}
+                              {% set tt = e.get('temperature') %}
+                              {% set tl = e.get('templow') if e.get('templow') is not none else tt %}
+                              {% if tt is not none and (jn.tmax is none or tt > jn.tmax) %}{% set jn.tmax = tt %}{% endif %}
+                              {% if tl is not none and (jn.tmin is none or tl < jn.tmin) %}{% set jn.tmin = tl %}{% endif %}
+                              {% if jn.cond is none %}{% set jn.cond = e.get('condition') %}{% endif %}
+                              {% if jn.cond_pm is none and 12 <= (dt | as_local).hour < 18 %}{% set jn.cond_pm = e.get('condition') %}{% endif %}
+                              {% if jn.cond_jour is none and e.get('is_daytime') == true %}{% set jn.cond_jour = e.get('condition') %}{% endif %}
+                            {% endif %}
+                          {% endfor %}
+                          {% if jn.tmax is none %}{% set agg.fini = true %}{% endif %}
+                          {% if not agg.fini %}
+                            {% set agg.l = agg.l + [{'condition': jn.cond_jour or jn.cond_pm or jn.cond, 'temperature': jn.tmax, 'templow': jn.tmin}] %}
+                          {% endif %}
+                        {% endfor %}
+                        {% set fcasts = agg.l %}
+                      {% else %}
+                        {% set fcasts = brut %}
                       {% endif %}
-                    {% endfor %}
-                    {% if jn.tmax is none %}{% set agg.fini = true %}{% endif %}
-                    {% if not agg.fini %}
-                      {% set agg.l = agg.l + [{'condition': jn.cond_jour or jn.cond_pm or jn.cond, 'temperature': jn.tmax, 'templow': jn.tmin}] %}
-                    {% endif %}
-                  {% endfor %}
-                  {% set fcasts = agg.l %}
-                {% else %}
-                  {% set fcasts = brut %}
-                {% endif %}
-                {% set days_names = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] %}
-                {% set ns = namespace(result="") %}
-                {% for i in range(15) %}
-                  {% set target_dt = now() + timedelta(days=i) %}
-                  {% set target_date = target_dt.strftime('%Y-%m-%d') %}
-                  {# Jour seul, SANS date : la page d'accueil (aujourd'hui + 4 jours) l'affiche
-                     tel quel ; les deux pages suivantes (jours 5 à 14) calculent elles-mêmes
-                     « Lun 05 » via SNTP (tab5_forecast.cpp, format_short_day_label). #}
-                  {% if i == 0 %}
-                    {% set nom_jour = "Auj" %}
-                  {% else %}
-                    {% set nom_jour = days_names[target_dt.strftime('%w') | int] %}
-                  {% endif %}
-                  {# .get() et jamais fcasts[i].cle : Météo-France omet des clés en fin de
-                     plage (templow absent du 15e jour le 18/09/2026) et un accès direct lève
-                     UndefinedError AVANT le | float(0) — payload jamais rendu, action sautée
-                     en silence par continue_on_error, icônes figées. #}
-                  {% set condition = fcasts[i].get('condition') | default('unknown', true) if i < fcasts|length else 'unknown' %}
-                  {% set tmin = fcasts[i].get('templow') | float(0) if i < fcasts|length else 0 %}
-                  {% set tmax = fcasts[i].get('temperature') | float(0) if i < fcasts|length else 0 %}
-                  {% set est_passe = 'false' if i < fcasts|length else 'true' %}
-                  {% set est_dimanche = target_dt.strftime('%w') == '0' %}
-                  {# Jour travaillé : la macro couvre() du calendrier (custom_templates/
-                     tab5_calendar.jinja, audit du 07/10/2026, HA-3), la même que le popup
-                     calendrier : jour du début pour un événement horodaté, [début, fin[ pour une
-                     journée entière (le jour de fin est exclu, comme le rend HA). Avant, un
-                     test de sous-chaîne sur le début OU la fin comptait aussi le lendemain
-                     d'une journée entière et le jour de fin d'un horodaté, et oubliait les
-                     jours du milieu d'un événement de plusieurs jours. Heures : inchangées,
-                     celles du dernier événement de travail qui COMMENCE ce jour-là. #}
-                  {% set ns_travail = namespace(found=false, heures="") %}
-                  {% if agenda_events is defined and agenda in agenda_events %}
-                    {% for event in agenda_events[agenda].events %}
-                      {% set debut_ev = ev_start(event) %}
-                      {% set ev_msg = ev_summary(event) %}
-                      {% if couvre(event, target_date) and (mots_travail | count == 0 or mots_travail | select('in', ev_msg | lower) | list | count > 0) %}
-                        {% set ns_travail.found = true %}
-                        {% if debut_ev[:10] == target_date %}
-                          {% set start_dt = debut_ev | as_datetime %}
-                          {% set end_dt = ev_end(event) | as_datetime %}
-                          {% set ns_travail.heures = start_dt.strftime('%H:%M') ~ "-" ~ end_dt.strftime('%H:%M') %}
+                      {% set days_names = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] %}
+                      {% set ns = namespace(result="") %}
+                      {% for i in range(15) %}
+                        {% set target_dt = now() + timedelta(days=i) %}
+                        {% set target_date = target_dt.strftime('%Y-%m-%d') %}
+                        {# Jour seul, SANS date : la page d'accueil (aujourd'hui + 4 jours) l'affiche
+                           tel quel ; les deux pages suivantes (jours 5 à 14) calculent elles-mêmes
+                           « Lun 05 » via SNTP (tab5_forecast.cpp, format_short_day_label). #}
+                        {% if i == 0 %}
+                          {% set nom_jour = "Auj" %}
+                        {% else %}
+                          {% set nom_jour = days_names[target_dt.strftime('%w') | int] %}
                         {% endif %}
-                      {% endif %}
-                    {% endfor %}
-                  {% endif %}
-                  {% set est_repos = not ns_travail.found %}
-                  {% set ns.result = ns.result ~ i ~ "|" ~ nom_jour ~ "|" ~ condition ~ "|" ~ tmin ~ "|" ~ tmax ~ "|" ~ ("1" if est_repos else "0") ~ "|" ~ ("1" if est_dimanche else "0") ~ "|" ~ ("1" if est_passe == 'true' else "0") ~ "|" ~ ns_travail.heures ~ ";" %}
-                {% endfor %}
-                {{ ns.result }}
+                        {# .get() et jamais fcasts[i].cle : Météo-France omet des clés en fin de
+                           plage (templow absent du 15e jour le 18/09/2026) et un accès direct lève
+                           UndefinedError AVANT le | float(0) — payload jamais rendu, action sautée
+                           en silence par continue_on_error, icônes figées. #}
+                        {% set condition = fcasts[i].get('condition') | default('unknown', true) if i < fcasts|length else 'unknown' %}
+                        {% set tmin = fcasts[i].get('templow') | float(0) if i < fcasts|length else 0 %}
+                        {% set tmax = fcasts[i].get('temperature') | float(0) if i < fcasts|length else 0 %}
+                        {% set est_passe = 'false' if i < fcasts|length else 'true' %}
+                        {% set est_dimanche = target_dt.strftime('%w') == '0' %}
+                        {# Jour travaillé : la macro couvre() du calendrier (custom_templates/
+                           tab5_calendar.jinja, audit du 07/10/2026, HA-3), la même que le popup
+                           calendrier : jour du début pour un événement horodaté, [début, fin[ pour une
+                           journée entière (le jour de fin est exclu, comme le rend HA). Avant, un
+                           test de sous-chaîne sur le début OU la fin comptait aussi le lendemain
+                           d'une journée entière et le jour de fin d'un horodaté, et oubliait les
+                           jours du milieu d'un événement de plusieurs jours. Heures : inchangées,
+                           celles du dernier événement de travail qui COMMENCE ce jour-là. #}
+                        {% set ns_travail = namespace(found=false, heures="") %}
+                        {% if agenda_events is defined and agenda in agenda_events %}
+                          {% for event in agenda_events[agenda].events %}
+                            {% set debut_ev = ev_start(event) %}
+                            {% set ev_msg = ev_summary(event) %}
+                            {% if couvre(event, target_date) and (mots_travail | count == 0 or mots_travail | select('in', ev_msg | lower) | list | count > 0) %}
+                              {% set ns_travail.found = true %}
+                              {% if debut_ev[:10] == target_date %}
+                                {% set start_dt = debut_ev | as_datetime %}
+                                {% set end_dt = ev_end(event) | as_datetime %}
+                                {% set ns_travail.heures = start_dt.strftime('%H:%M') ~ "-" ~ end_dt.strftime('%H:%M') %}
+                              {% endif %}
+                            {% endif %}
+                          {% endfor %}
+                        {% endif %}
+                        {% set est_repos = not ns_travail.found %}
+                        {% set ns.result = ns.result ~ i ~ "|" ~ nom_jour ~ "|" ~ condition ~ "|" ~ tmin ~ "|" ~ tmax ~ "|" ~ ("1" if est_repos else "0") ~ "|" ~ ("1" if est_dimanche else "0") ~ "|" ~ ("1" if est_passe == 'true' else "0") ~ "|" ~ ns_travail.heures ~ ";" %}
+                      {% endfor %}
+                      {{ ns.result }}
       # ====== 6 + X. VOLET : seulement à la (re)connexion (ou au démarrage de HA) ======
       # Au changement : tab5_volet_updater (volet_serre_tracking.yaml). La clim et
       # les appareils de la maison sont poussés par le blueprint « Tab5 —
@@ -403,68 +410,75 @@ automation:
             value_template: "{{ not meteo_en_panne }}"
         then:
           - repeat:
-              count: 3
+              for_each: >-
+                {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+                {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
               sequence:
-                - action: esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk
-                  continue_on_error: true
-                  data:
-                    payload: >
-                      {% set base = (repeat.index - 1) * 5 %}
-                      {% set fcasts = hourly_var_tab5.get(meteo, {}).get('forecast', []) if hourly_var_tab5 is defined and heures_ok else [] %}
-                      {# Icônes de nuit (discussion #278, 03/10/2026) : Met.no range « beau » et
-                         « peu nuageux » de nuit sous partlycloudy (met/const.py de HA), les
-                         états de HA n'ont pas de « peu nuageux de nuit » : la tuile de 2 h
-                         montrait un soleil. Un créneau de nuit reçoit la variante que la
-                         tablette sait déjà dessiner (kMeteoIcons, tab5_forecast.cpp).
-                         Jour ou nuit, par créneau : is_daytime s'il est fourni ; sinon sun.sun,
-                         d'après le dernier événement avant le début du créneau (lever = jour,
-                         coucher = nuit), les prochains lever et coucher reportés de 24 h en
-                         24 h (quelques minutes d'écart par jour) — vrai après minuit et le
-                         lendemain. Lever ou coucher à plus de 26 h (nuit ou jour polaire) :
-                         l'état de sun.sun vaut pour tous les créneaux. Sans sun.sun : condition
-                         brute. Calcul indépendant : tests/test_meteo_icones_nuit.py. #}
-                      {% set variante_nuit = {'partlycloudy': 'partlycloudy-night', 'sunny': 'clear-night', 'Clear': 'clear-night'} %}
-                      {% set soleil = states('sun.sun') %}
-                      {% set lever = as_timestamp(state_attr('sun.sun', 'next_rising'), none) %}
-                      {% set coucher = as_timestamp(state_attr('sun.sun', 'next_setting'), none) %}
-                      {% set instant = as_timestamp(now()) %}
-                      {% set cycle_ok = lever is not none and coucher is not none and lever - instant < 93600 and coucher - instant < 93600 %}
-                      {% set ns = namespace(result="") %}
-                      {% for i in range(base, base + 5) %}
-                        {% if i < fcasts|length %}
-                          {# as_local : Météo-France date ses créneaux en UTC ; sans conversion,
-                             la tuile affichait l'heure UTC (2 h de retard l'été, vu le
-                             27/09/2026 : « 09:00 » pour le créneau de 11:00). #}
-                          {% set dt = fcasts[i].datetime | as_datetime %}
-                          {% set heure_texte = (dt | as_local).strftime('%H:00') if dt else '00:00' %}
-                          {# .get() : au-delà de ~48 h Météo-France n'envoie plus
-                             `precipitation` (constaté le 25/09/2026) — cf. prévisions jours. #}
-                          {% set condition = fcasts[i].get('condition') | default('unknown', true) %}
-                          {% set temp = fcasts[i].get('temperature') | float(0) %}
-                          {% set pluvio = fcasts[i].get('precipitation') | float(0) %}
-                          {% set de_jour = fcasts[i].get('is_daytime') %}
-                          {% if de_jour is not boolean %}
-                            {% set debut = as_timestamp(fcasts[i].get('datetime'), none) %}
-                            {% if debut is none or soleil not in ['above_horizon', 'below_horizon'] %}
-                              {% set de_jour = none %}
-                            {% elif cycle_ok %}
-                              {% set de_jour = (debut - lever) % 86400 < (debut - coucher) % 86400 %}
-                            {% else %}
-                              {% set de_jour = soleil == 'above_horizon' %}
-                            {% endif %}
-                          {% endif %}
-                          {% if de_jour == false %}
-                            {% set condition = variante_nuit.get(condition, condition) %}
-                          {% endif %}
-                        {% else %}
-                          {% set heure_texte = '00:00' %}
-                          {% set condition = 'unknown' %}
-                          {% set temp = 0 %}
-                          {% set pluvio = 0 %}
-                        {% endif %}
-                        {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
-                      {% endfor %}
-                      {{ ns.result }}
+                - variables:
+                    tablette: "{{ repeat.item }}"
+                - repeat:
+                    count: 3
+                    sequence:
+                      - action: "esphome.{{ tablette }}_tab5_maj_previsions_heures_bulk"
+                        continue_on_error: true
+                        data:
+                          payload: >
+                            {% set base = (repeat.index - 1) * 5 %}
+                            {% set fcasts = hourly_var_tab5.get(meteo, {}).get('forecast', []) if hourly_var_tab5 is defined and heures_ok else [] %}
+                            {# Icônes de nuit (discussion #278, 03/10/2026) : Met.no range « beau » et
+                               « peu nuageux » de nuit sous partlycloudy (met/const.py de HA), les
+                               états de HA n'ont pas de « peu nuageux de nuit » : la tuile de 2 h
+                               montrait un soleil. Un créneau de nuit reçoit la variante que la
+                               tablette sait déjà dessiner (kMeteoIcons, tab5_forecast.cpp).
+                               Jour ou nuit, par créneau : is_daytime s'il est fourni ; sinon sun.sun,
+                               d'après le dernier événement avant le début du créneau (lever = jour,
+                               coucher = nuit), les prochains lever et coucher reportés de 24 h en
+                               24 h (quelques minutes d'écart par jour) — vrai après minuit et le
+                               lendemain. Lever ou coucher à plus de 26 h (nuit ou jour polaire) :
+                               l'état de sun.sun vaut pour tous les créneaux. Sans sun.sun : condition
+                               brute. Calcul indépendant : tests/test_meteo_icones_nuit.py. #}
+                            {% set variante_nuit = {'partlycloudy': 'partlycloudy-night', 'sunny': 'clear-night', 'Clear': 'clear-night'} %}
+                            {% set soleil = states('sun.sun') %}
+                            {% set lever = as_timestamp(state_attr('sun.sun', 'next_rising'), none) %}
+                            {% set coucher = as_timestamp(state_attr('sun.sun', 'next_setting'), none) %}
+                            {% set instant = as_timestamp(now()) %}
+                            {% set cycle_ok = lever is not none and coucher is not none and lever - instant < 93600 and coucher - instant < 93600 %}
+                            {% set ns = namespace(result="") %}
+                            {% for i in range(base, base + 5) %}
+                              {% if i < fcasts|length %}
+                                {# as_local : Météo-France date ses créneaux en UTC ; sans conversion,
+                                   la tuile affichait l'heure UTC (2 h de retard l'été, vu le
+                                   27/09/2026 : « 09:00 » pour le créneau de 11:00). #}
+                                {% set dt = fcasts[i].datetime | as_datetime %}
+                                {% set heure_texte = (dt | as_local).strftime('%H:00') if dt else '00:00' %}
+                                {# .get() : au-delà de ~48 h Météo-France n'envoie plus
+                                   `precipitation` (constaté le 25/09/2026) — cf. prévisions jours. #}
+                                {% set condition = fcasts[i].get('condition') | default('unknown', true) %}
+                                {% set temp = fcasts[i].get('temperature') | float(0) %}
+                                {% set pluvio = fcasts[i].get('precipitation') | float(0) %}
+                                {% set de_jour = fcasts[i].get('is_daytime') %}
+                                {% if de_jour is not boolean %}
+                                  {% set debut = as_timestamp(fcasts[i].get('datetime'), none) %}
+                                  {% if debut is none or soleil not in ['above_horizon', 'below_horizon'] %}
+                                    {% set de_jour = none %}
+                                  {% elif cycle_ok %}
+                                    {% set de_jour = (debut - lever) % 86400 < (debut - coucher) % 86400 %}
+                                  {% else %}
+                                    {% set de_jour = soleil == 'above_horizon' %}
+                                  {% endif %}
+                                {% endif %}
+                                {% if de_jour == false %}
+                                  {% set condition = variante_nuit.get(condition, condition) %}
+                                {% endif %}
+                              {% else %}
+                                {% set heure_texte = '00:00' %}
+                                {% set condition = 'unknown' %}
+                                {% set temp = 0 %}
+                                {% set pluvio = 0 %}
+                              {% endif %}
+                              {% set ns.result = ns.result ~ i ~ "|" ~ heure_texte ~ "|" ~ condition ~ "|" ~ temp ~ "|" ~ pluvio ~ ";" %}
+                            {% endfor %}
+                            {{ ns.result }}
 
 
   # ============================================================================
@@ -699,14 +713,21 @@ script:
       # complète, section 0).
       - condition: template
         value_template: *tab5_connectee
-      - action: esphome.tab5_ha_hmi_tab5_maj_alerte_meteo_france
-        continue_on_error: true
-        data:
-          payload: >-
-            {%- set pluie = states('sensor.tab5_pluie_dans_l_heure') -%}
-            {%- set globale = states('sensor.tab5_vigilance') -%}
-            {%- set phen = state_attr('sensor.tab5_vigilance', 'phenomenes') or (['Vert'] * 11) | join('|') -%}
-            {{ pluie if pluie.startswith('@') else '@-1,0' }}|{{ globale if globale in ['Vert', 'Jaune', 'Orange', 'Rouge'] else 'Vert' }}|{{ phen }}
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_alerte_meteo_france"
+              continue_on_error: true
+              data:
+                payload: >-
+                  {%- set pluie = states('sensor.tab5_pluie_dans_l_heure') -%}
+                  {%- set globale = states('sensor.tab5_vigilance') -%}
+                  {%- set phen = state_attr('sensor.tab5_vigilance', 'phenomenes') or (['Vert'] * 11) | join('|') -%}
+                  {{ pluie if pluie.startswith('@') else '@-1,0' }}|{{ globale if globale in ['Vert', 'Jaune', 'Orange', 'Rouge'] else 'Vert' }}|{{ phen }}
       - alias: "Changement du code de pluie : pas de relevé santé HA"
         condition: template
         value_template: "{{ not (vigilance_seule | default(false)) }}"
@@ -718,49 +739,63 @@ script:
           vigi: >-
             {%- set v = alertes | selectattr('s', 'eq', 'vigilance') | list -%}
             {{ v[0] if v else {'i': '', 'g': ''} }}
-      - action: esphome.tab5_ha_hmi_tab5_maj_info_texte
-        continue_on_error: true
-        data:
-          # Code composé par la tablette dans sa langue (lot 4c) :
-          # @ha|nb MAJ|titre de la MAJ s'il n'y en a qu'une|nb erreurs|nb indispo|jaune 0/1|vigilance
-          # Depuis les alertes du 06/10/2026, les MAJ, erreurs et indisponibles sont des
-          # bandeaux d'alerte (section 7b) : ce bandeau ne dit plus que la vigilance à
-          # lire (rouge ou orange : bannière ; jaune : « Vigilance Jaune »), vide sinon.
-          texte: >-
-            {%- set niveau = vigi.g | lower -%}
-            @ha|0||0|0|{{ 1 if niveau == 'jaune' else 0 }}|{{ niveau if niveau in ['rouge', 'orange'] else '' }}
-          couleur: >-
-            {{ 'Rouge' if vigi.g == 'Rouge' else ('Orange' if vigi.g in ['Orange', 'Jaune'] else 'Blanc') }}
-          meteo_id: "{{ vigi.i }}"
-      - action: esphome.tab5_ha_hmi_tab5_maj_alertes_ha_bulk
-        continue_on_error: true
-        data:
-          # Les quatre premières (déjà rangées : rouge, orange, jaune, puis la plus
-          # ancienne). Au-delà, un en-tête « @n:total » : la tablette affiche le rang de
-          # chaque bandeau, « 2/6 ». Un jeton sans « | » : un firmware d'avant l'ignore.
-          # Taille bornée (audit du 07/10/2026, DO-6) : la tablette refuse TOUT payload de
-          # plus de 1024 octets (parse_and_update_ha_alerts_bulk, Tab5/ecran/tab5_central.cpp),
-          # et les quatre bandeaux restaient alors sur les anciennes alertes. Le libellé
-          # est coupé à 100 caractères (Jinja coupe par caractère, jamais au milieu d'un
-          # caractère UTF-8) et débarrassé des deux séparateurs « | » et « ; » ; puis une
-          # alerte n'est ajoutée que si le tout reste sous 1024 octets, comptés en UTF-8
-          # (longueur du base64, filtre base64_encode de HA). Quatre alertes aux ids et
-          # libellés longs y tiennent (tests/test_alertes_ecran.py) ; seul un cas extrême
-          # (libellés tout en emoji) en laisse une dehors, au lieu de toutes les refuser.
-          payload: >-
-            {%- macro octets(x) -%}
-              {%- set b = x | base64_encode -%}{{ (b | length) // 4 * 3 - ((b | length) - (b.rstrip('=') | length)) }}
-            {%- endmacro -%}
-            {%- set autres = alertes | rejectattr('s', 'eq', 'vigilance') | list -%}
-            {%- set ns = namespace(r=['@n:' ~ (autres | count)] if autres | count > 4 else []) -%}
-            {%- for a in autres[:4] -%}
-            {%- set texte = (a.t | string | replace('|', '/') | replace(';', ','))[:100] -%}
-            {%- set jeton = a.i ~ '|' ~ ('Rouge' if a.g == 'Rouge' else 'Orange') ~ '|' ~ texte -%}
-            {%- if octets((ns.r + [jeton]) | join(';')) | int <= 1024 -%}
-            {%- set ns.r = ns.r + [jeton] -%}
-            {%- endif -%}
-            {%- endfor -%}
-            {{- ns.r | join(';') -}}
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_info_texte"
+              continue_on_error: true
+              data:
+                # Code composé par la tablette dans sa langue (lot 4c) :
+                # @ha|nb MAJ|titre de la MAJ s'il n'y en a qu'une|nb erreurs|nb indispo|jaune 0/1|vigilance
+                # Depuis les alertes du 06/10/2026, les MAJ, erreurs et indisponibles sont des
+                # bandeaux d'alerte (section 7b) : ce bandeau ne dit plus que la vigilance à
+                # lire (rouge ou orange : bannière ; jaune : « Vigilance Jaune »), vide sinon.
+                texte: >-
+                  {%- set niveau = vigi.g | lower -%}
+                  @ha|0||0|0|{{ 1 if niveau == 'jaune' else 0 }}|{{ niveau if niveau in ['rouge', 'orange'] else '' }}
+                couleur: >-
+                  {{ 'Rouge' if vigi.g == 'Rouge' else ('Orange' if vigi.g in ['Orange', 'Jaune'] else 'Blanc') }}
+                meteo_id: "{{ vigi.i }}"
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_alertes_ha_bulk"
+              continue_on_error: true
+              data:
+                # Les quatre premières (déjà rangées : rouge, orange, jaune, puis la plus
+                # ancienne). Au-delà, un en-tête « @n:total » : la tablette affiche le rang de
+                # chaque bandeau, « 2/6 ». Un jeton sans « | » : un firmware d'avant l'ignore.
+                # Taille bornée (audit du 07/10/2026, DO-6) : la tablette refuse TOUT payload de
+                # plus de 1024 octets (parse_and_update_ha_alerts_bulk, Tab5/ecran/tab5_central.cpp),
+                # et les quatre bandeaux restaient alors sur les anciennes alertes. Le libellé
+                # est coupé à 100 caractères (Jinja coupe par caractère, jamais au milieu d'un
+                # caractère UTF-8) et débarrassé des deux séparateurs « | » et « ; » ; puis une
+                # alerte n'est ajoutée que si le tout reste sous 1024 octets, comptés en UTF-8
+                # (longueur du base64, filtre base64_encode de HA). Quatre alertes aux ids et
+                # libellés longs y tiennent (tests/test_alertes_ecran.py) ; seul un cas extrême
+                # (libellés tout en emoji) en laisse une dehors, au lieu de toutes les refuser.
+                payload: >-
+                  {%- macro octets(x) -%}
+                    {%- set b = x | base64_encode -%}{{ (b | length) // 4 * 3 - ((b | length) - (b.rstrip('=') | length)) }}
+                  {%- endmacro -%}
+                  {%- set autres = alertes | rejectattr('s', 'eq', 'vigilance') | list -%}
+                  {%- set ns = namespace(r=['@n:' ~ (autres | count)] if autres | count > 4 else []) -%}
+                  {%- for a in autres[:4] -%}
+                  {%- set texte = (a.t | string | replace('|', '/') | replace(';', ','))[:100] -%}
+                  {%- set jeton = a.i ~ '|' ~ ('Rouge' if a.g == 'Rouge' else 'Orange') ~ '|' ~ texte -%}
+                  {%- if octets((ns.r + [jeton]) | join(';')) | int <= 1024 -%}
+                  {%- set ns.r = ns.r + [jeton] -%}
+                  {%- endif -%}
+                  {%- endfor -%}
+                  {{- ns.r | join(';') -}}
 
   # Historique des alertes (lot 4, popup « Alertes » de la tablette) : les 20 dernières
   # alertes abonnées, à la demande (événement esphome.tab5_alertes_historique, émis à
@@ -780,11 +815,18 @@ script:
     sequence:
       - condition: template
         value_template: *tab5_connectee
-      - action: esphome.tab5_ha_hmi_tab5_maj_alertes_historique
-        continue_on_error: true
-        data:
-          payload: >-
-            {% from 'tab5_alertes.jinja' import tab5_alertes_historique %}{{ tab5_alertes_historique('payload') }}
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_alertes_historique"
+              continue_on_error: true
+              data:
+                payload: >-
+                  {% from 'tab5_alertes.jinja' import tab5_alertes_historique %}{{ tab5_alertes_historique('payload') }}
 
   tab5_push_pluie:
     alias: "Tab5 — pousser les barres de pluie dans l'heure"
@@ -802,11 +844,18 @@ script:
       # Payload « idx|intensité;… » (ADR-0003), construit par le capteur normalisé
       # (attribut `barres`, packages/tab5_meteo_sources.yaml) selon la source choisie.
       # Sans capteur : 9 barres vides, pour ne pas laisser les anciennes à l'écran.
-      - action: esphome.tab5_ha_hmi_tab5_maj_pluie_1h_bulk
-        continue_on_error: true
-        data:
-          payload: >
-            {{ state_attr('sensor.tab5_pluie_dans_l_heure', 'barres') or '0|0;1|0;2|0;3|0;4|0;5|0;6|0;7|0;8|0;' }}
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_pluie_1h_bulk"
+              continue_on_error: true
+              data:
+                payload: >
+                  {{ state_attr('sensor.tab5_pluie_dans_l_heure', 'barres') or '0|0;1|0;2|0;3|0;4|0;5|0;6|0;7|0;8|0;' }}
 
   tab5_push_meteo:
     alias: "Tab5 — pousser la météo actuelle et les probabilités"
@@ -828,18 +877,32 @@ script:
         value_template: >-
           {{ (state_attr('sensor.tab5_meteo', 'entite_effective') or '') != ''
              or (state_attr('sensor.tab5_meteo', 'entite') or '') == '' }}
-      - action: esphome.tab5_ha_hmi_tab5_maj_meteo_actuelle
-        continue_on_error: true
-        data:
-          condition: "{{ states('sensor.tab5_meteo') }}"
-          temperature: "{{ state_attr('sensor.tab5_meteo', 'temperature') | float(0) }}"
-          humidite: "{{ state_attr('sensor.tab5_meteo', 'humidite') | float(0) }}"
-      - action: esphome.tab5_ha_hmi_tab5_maj_probabilites
-        continue_on_error: true
-        data:
-          uv: "{{ state_attr('sensor.tab5_meteo', 'uv') | int(0) }}"
-          gel: "{{ state_attr('sensor.tab5_meteo', 'gel') | int(0) }}"
-          neige: "{{ state_attr('sensor.tab5_meteo', 'neige') | int(0) }}"
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_meteo_actuelle"
+              continue_on_error: true
+              data:
+                condition: "{{ states('sensor.tab5_meteo') }}"
+                temperature: "{{ state_attr('sensor.tab5_meteo', 'temperature') | float(0) }}"
+                humidite: "{{ state_attr('sensor.tab5_meteo', 'humidite') | float(0) }}"
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_probabilites"
+              continue_on_error: true
+              data:
+                uv: "{{ state_attr('sensor.tab5_meteo', 'uv') | int(0) }}"
+                gel: "{{ state_attr('sensor.tab5_meteo', 'gel') | int(0) }}"
+                neige: "{{ state_attr('sensor.tab5_meteo', 'neige') | int(0) }}"
 
   tab5_push_volet:
     alias: "Tab5 — pousser l'état du volet de la serre"
@@ -860,11 +923,18 @@ script:
         value_template: >-
           {%- set v = states('select.tab5_volet_a_course_simulee') -%}
           {{ v.startswith('cover.') and expand(v) | count > 0 and states['script.tab5_volet_action'] is not none }}
-      - action: esphome.tab5_ha_hmi_tab5_maj_volet_etat
-        continue_on_error: true
-        data:
-          etat_physique: >-
-            {{ 'En_mouvement' if is_state('input_boolean.volet_serre_mouvement', 'on') else states('input_text.volet_serre_etat') }}
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_volet_etat"
+              continue_on_error: true
+              data:
+                etat_physique: >-
+                  {{ 'En_mouvement' if is_state('input_boolean.volet_serre_mouvement', 'on') else states('input_text.volet_serre_etat') }}
 
 # Le capteur « Tab5 Pluie dans l'heure » (code « @niveau,début ») vit depuis le
 # lot 4c-2 dans packages/tab5_meteo_sources.yaml, avec « Tab5 Vigilance » : même

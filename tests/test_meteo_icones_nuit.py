@@ -23,8 +23,8 @@ from tests.test_meteo_sans_meteo_france import (
     ISTANBUL, Etat, _action, _entrees, _maison, _poussee, _rendre,
 )
 
-ACTION_HEURES = "esphome.tab5_ha_hmi_tab5_maj_previsions_heures_bulk"
-ACTION_JOURS = "esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk"
+ACTION_HEURES = "esphome.{{ tablette }}_tab5_maj_previsions_heures_bulk"
+ACTION_JOURS = "esphome.{{ tablette }}_tab5_maj_previsions_jours_bulk"
 UTC = dt.timezone.utc
 
 # Lever et coucher du 30/09 au 07/10/2026 (heure d'Istanbul) : le lever recule d'une

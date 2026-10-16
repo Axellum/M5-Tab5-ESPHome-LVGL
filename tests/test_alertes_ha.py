@@ -679,7 +679,7 @@ def test_l_historique_part_a_la_demande_de_la_tablette():
     jamais appelée (« Action not found » arrête un script, continue_on_error n'y peut rien)."""
     push = _charger("packages", "tab5_push.yaml")
     script = json.dumps(push["script"]["tab5_push_alertes_historique"]["sequence"], ensure_ascii=False)
-    assert "esphome.tab5_ha_hmi_tab5_maj_alertes_historique" in script
+    assert "esphome.{{ tablette }}_tab5_maj_alertes_historique" in script
     assert "tab5_alertes_historique('payload')" in script
     auto = next(a for a in push["automation"] if a["id"] == "tab5_ha_hmi_alertes_historique_push")
     assert {"entity_id": "sensor.tab5_alertes", "attribute": "historique"}.items() <= auto["triggers"][0].items()

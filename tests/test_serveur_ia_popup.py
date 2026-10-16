@@ -27,7 +27,7 @@ import re
 import pytest
 import yaml
 
-from tests.commun import lire as _lire
+from tests.commun import envoi_tablettes, lire as _lire
 from tests.test_appuis import _fonction
 from tests.test_historique import EtatHA, _env as _env_historique, _rendre
 
@@ -326,9 +326,10 @@ def test_script_de_poussee():
     script = _paquet()["script"]["tab5_serveur_ia_pousser"]
     seq = script["sequence"]
     assert seq[0]["condition"] == "template" and "tab5_connectee() == 'oui'" in seq[0]["value_template"]
-    assert seq[1]["action"] == "esphome.tab5_ha_hmi_tab5_maj_serveur_ia" and seq[1]["continue_on_error"] is True
-    assert list(seq[1]["data"]) == ["payload"]
-    assert "state_attr('sensor.tab5_poussee_serveur_ia', 'payload')" in seq[1]["data"]["payload"]
+    envoi = envoi_tablettes(seq[1])
+    assert envoi["action"] == "esphome.{{ tablette }}_tab5_maj_serveur_ia" and envoi["continue_on_error"] is True
+    assert list(envoi["data"]) == ["payload"]
+    assert "state_attr('sensor.tab5_poussee_serveur_ia', 'payload')" in envoi["data"]["payload"]
 
 
 def test_seuils_a_un_seul_endroit():

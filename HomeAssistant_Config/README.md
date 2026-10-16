@@ -294,7 +294,7 @@ Not a package: a Jinja macro that **writes** a Home Assistant dashboard for the 
 | Tab5 · volet à course simulée | `optionnel/volet_serre_tracking` | the shutter whose travel is simulated |
 | Tab5 · course du volet (number) | `optionnel/volet_serre_tracking` | its full travel time, in seconds (26 by default) |
 
-The action names (`esphome.tab5_ha_hmi_…`) still follow the ESPHome device name `tab5-ha-hmi` set by the firmware.
+The action names follow the ESPHome name of each screen (`esphome.tab5_ha_hmi_…` for the default `tab5-ha-hmi`): every push loops over the connected tablets and reads each one's prefix from its « Préfixe des actions » sensor (`tab5_destinataires()` in `custom_templates/tab5_tablette.jinja`, [ADR-0063](../docs/decisions/0063-several-screens.md)). Several screens show the same display; nothing to set.
 
 **Contributors.** `python tools/render_ha_config.py` now only copies the public files into `HomeAssistant_Config/rendered/`. `--check` is still the leak guard (pre-commit, and CI with the `HA_PLACEHOLDERS` secret): it fails if a value listed in your gitignored `placeholders.yaml` (your real entity IDs, one `name: value` per line, template `placeholders.example.yaml`) or a `VOTRE_…` placeholder appears in a public file, and never prints the value. The release archive is built by `tools/publication/archive_ha.py`.
 
@@ -318,7 +318,7 @@ ESPHome receives the service call (Tab5/paquets/tab5-api-logic.yaml)
 C++ parse_and_update_jours_bulk() runs, updates the LVGL labels in one pass
 ```
 
-The service name seen by HA is `esphome.<device_name>_<service>` — with the stock `name: tab5-ha-hmi`, `tab5_maj_previsions_jours_bulk` becomes `esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk`. Rename the device and every call in the automation has to follow.
+The service name seen by HA is `esphome.<device_name>_<service>` — with the stock `name: tab5-ha-hmi`, `tab5_maj_previsions_jours_bulk` becomes `esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk`. Give each screen its own name (`tab5_nom`, [ADR-0063](../docs/decisions/0063-several-screens.md)): the packages call `esphome.{{ tablette }}_…` once per connected tablet, the prefix read from the tablet itself.
 
 The device never polls. It only receives. When nothing changes in HA, the device uses near-zero CPU.
 
@@ -620,7 +620,7 @@ Pas un package : une macro Jinja qui **écrit** un tableau de bord Home Assistan
 | Tab5 · volet à course simulée | `optionnel/volet_serre_tracking` | le volet dont la course est simulée |
 | Tab5 · course du volet (nombre) | `optionnel/volet_serre_tracking` | la durée de sa course complète, en secondes (26 par défaut) |
 
-Les noms d'actions (`esphome.tab5_ha_hmi_…`) suivent toujours le nom d'appareil ESPHome `tab5-ha-hmi` donné par le firmware.
+Les noms d'actions suivent le nom ESPHome de chaque écran (`esphome.tab5_ha_hmi_…` pour le `tab5-ha-hmi` par défaut) : chaque poussée boucle sur les tablettes connectées et lit le préfixe de chacune sur son capteur « Préfixe des actions » (`tab5_destinataires()` dans `custom_templates/tab5_tablette.jinja`, [ADR-0063](../docs/decisions/0063-several-screens.md)). Plusieurs écrans montrent le même affichage ; rien à régler.
 
 **Contributeurs.** `python tools/render_ha_config.py` ne fait plus que copier les fichiers publics dans `HomeAssistant_Config/rendered/`. `--check` reste le garde-fou de fuite (pre-commit, et la CI avec le secret `HA_PLACEHOLDERS`) : il échoue si une valeur de votre `placeholders.yaml` gitignoré (vos identifiants réels, une ligne `nom: valeur`, modèle `placeholders.example.yaml`) ou un placeholder `VOTRE_…` apparaît dans un fichier public, sans jamais afficher la valeur. L'archive des releases est construite par `tools/publication/archive_ha.py`.
 
@@ -644,6 +644,6 @@ ESPHome reçoit l'appel de service (Tab5/paquets/tab5-api-logic.yaml)
 La fonction C++ parse_and_update_jours_bulk() s'exécute et met à jour tous les labels LVGL en une passe
 ```
 
-Le nom vu par HA est `esphome.<nom_appareil>_<service>` — avec le `name: tab5-ha-hmi` livré, `tab5_maj_previsions_jours_bulk` devient `esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk`. Renommez l'appareil et tous les appels de l'automatisation doivent suivre.
+Le nom vu par HA est `esphome.<nom_appareil>_<service>` — avec le `name: tab5-ha-hmi` livré, `tab5_maj_previsions_jours_bulk` devient `esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk`. Donnez à chaque écran son nom (`tab5_nom`, [ADR-0063](../docs/decisions/0063-several-screens.md)) : les packages appellent `esphome.{{ tablette }}_…` une fois par tablette connectée, le préfixe lu sur la tablette elle-même.
 
 L'appareil ne poll jamais. Il reçoit seulement. Quand rien ne change dans HA, l'appareil utilise un CPU quasi nul.

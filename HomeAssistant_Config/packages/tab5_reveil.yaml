@@ -100,41 +100,48 @@ script:
             target:
               entity_id: "{{ agendas }}"
             response_variable: ev
-      - action: esphome.tab5_ha_hmi_tab5_maj_rdv_prochains
-        continue_on_error: true
-        data:
-          payload: >-
-            {% from 'tab5_calendar.jinja' import ev_start, ev_summary %}
-            {% set fam = ev[ag_rdv].events if ev is defined and ag_rdv in ev and ag_rdv != ag_travail else [] %}
-            {% set boulo = ev[ag_travail].events if ev is defined and ag_travail in ev else [] %}
-            {% set ns = namespace(rows=[]) %}
-            {% for e in (fam + boulo) %}
-              {% set st = ev_start(e) %}
-              {% set summ = ev_summary(e) %}
-              {# 'T' dans le début = événement horodaté. Une journée entière n'a
-                 pas d'heure à annoncer, on la saute. #}
-              {% if 'T' in st and not (mots_travail | count == 0 or mots_travail | select('in', summ | lower) | list | count > 0) %}
-                {% set ts = st | as_datetime | as_timestamp | int(0) %}
-                {% if ts > 0 %}
-                  {# Titre nettoyé des trois séparateurs du protocole, puis
-                     tronqué : la ligne de bandeau du Tab5 fait 1180 px, et
-                     rdv_due() travaille sur un tampon de 192 octets. #}
-                  {% set txt = summ | replace('|', '/') | replace('~', '-') | replace(';', ',') %}
-                  {# Epoch zéro-padded sur 11 chiffres : le tri lexicographique
-                     ci-dessous devient un tri chronologique, sans passer par
-                     sort(attribute=...) sur des tuples (fragile en Jinja). #}
-                  {% set ns.rows = ns.rows + ['%011d|%s' | format(ts, txt[:64])] %}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
-            {# Troncature à 8 entrées : SLICE [:8], surtout pas `| first(8)` —
-               `first` est un filtre Jinja SANS paramètre (do_first(env, seq)),
-               lui passer un argument lève « sync_do_first() takes 2 positional
-               arguments but 3 were given » et casse TOUT le rendu du payload
-               (le script s'arrête, `continue_on_error` ne couvre pas le rendu
-               d'un template). Bug resté invisible du 05/08 au 06/08 : la liste
-               des RDV n'a jamais été poussée une seule fois. #}
-            {{ (ns.rows | sort | unique | list)[:8] | join('~') }}
+      - repeat:
+          for_each: >-
+            {%- from 'tab5_tablette.jinja' import tab5_destinataires -%}
+            {{ tab5_destinataires(appareil | default('')).split(',') | select | list }}
+          sequence:
+            - variables:
+                tablette: "{{ repeat.item }}"
+            - action: "esphome.{{ tablette }}_tab5_maj_rdv_prochains"
+              continue_on_error: true
+              data:
+                payload: >-
+                  {% from 'tab5_calendar.jinja' import ev_start, ev_summary %}
+                  {% set fam = ev[ag_rdv].events if ev is defined and ag_rdv in ev and ag_rdv != ag_travail else [] %}
+                  {% set boulo = ev[ag_travail].events if ev is defined and ag_travail in ev else [] %}
+                  {% set ns = namespace(rows=[]) %}
+                  {% for e in (fam + boulo) %}
+                    {% set st = ev_start(e) %}
+                    {% set summ = ev_summary(e) %}
+                    {# 'T' dans le début = événement horodaté. Une journée entière n'a
+                       pas d'heure à annoncer, on la saute. #}
+                    {% if 'T' in st and not (mots_travail | count == 0 or mots_travail | select('in', summ | lower) | list | count > 0) %}
+                      {% set ts = st | as_datetime | as_timestamp | int(0) %}
+                      {% if ts > 0 %}
+                        {# Titre nettoyé des trois séparateurs du protocole, puis
+                           tronqué : la ligne de bandeau du Tab5 fait 1180 px, et
+                           rdv_due() travaille sur un tampon de 192 octets. #}
+                        {% set txt = summ | replace('|', '/') | replace('~', '-') | replace(';', ',') %}
+                        {# Epoch zéro-padded sur 11 chiffres : le tri lexicographique
+                           ci-dessous devient un tri chronologique, sans passer par
+                           sort(attribute=...) sur des tuples (fragile en Jinja). #}
+                        {% set ns.rows = ns.rows + ['%011d|%s' | format(ts, txt[:64])] %}
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                  {# Troncature à 8 entrées : SLICE [:8], surtout pas `| first(8)` —
+                     `first` est un filtre Jinja SANS paramètre (do_first(env, seq)),
+                     lui passer un argument lève « sync_do_first() takes 2 positional
+                     arguments but 3 were given » et casse TOUT le rendu du payload
+                     (le script s'arrête, `continue_on_error` ne couvre pas le rendu
+                     d'un template). Bug resté invisible du 05/08 au 06/08 : la liste
+                     des RDV n'a jamais été poussée une seule fois. #}
+                  {{ (ns.rows | sort | unique | list)[:8] | join('~') }}
 
   tab5_reveil_annonce:
     alias: "Tab5 — briefing parlé du réveil"
