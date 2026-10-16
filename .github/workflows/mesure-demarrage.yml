@@ -1,0 +1,114 @@
+name: Mesure du démarrage (essai, jamais mergé)
+
+# Branche essai/mesure-demarrage (16/10/2026) : la tablette virtuelle chronométrée bande par
+# bande (tools/mesure/variante_demarrage.py), trois démarrages normaux puis un sous callgrind
+# avec un profil par bande.
+
+on:
+  push:
+    branches: [essai/mesure-demarrage]
+
+permissions:
+  contents: read
+
+jobs:
+  mesure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Version plancher d'ESPHome
+        id: version
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          echo "esphome=$v" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/pip
+          key: pip-esphome-${{ steps.version.outputs.esphome }}-py3.13
+      - name: ESPHome, Pillow, valgrind
+        env:
+          ESPHOME_VERSION: ${{ steps.version.outputs.esphome }}
+        run: |
+          bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
+          sudo apt-get update -q && sudo apt-get install -y -q valgrind
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.platformio
+          key: pio-host-${{ steps.version.outputs.esphome }}
+      - name: Compiler la tablette virtuelle chronométrée
+        env:
+          TZ: Europe/Paris
+          TAB5_SAN_CCFLAGS: "-g -fno-omit-frame-pointer"
+          TAB5_SAN_LINKFLAGS: ""
+        run: |
+          python tools/mesure/variante_demarrage.py tab5-mesure.yaml
+          set +e
+          esphome compile tab5-mesure.yaml > build.log 2>&1
+          code=$?
+          set -e
+          if [ "$code" -ne 0 ]; then tail -n 80 build.log; exit "$code"; fi
+          prog=$(find .esphome/build/tab5-rendu -name program -type f | head -n 1)
+          echo "PROG=$prog" >> "$GITHUB_ENV"
+          nproc | sed 's/^/CPU : /' >> "$GITHUB_STEP_SUMMARY"
+      - name: Trois démarrages normaux
+        env:
+          TZ: Europe/Paris
+        run: |
+          mkdir -p resultats
+          for n in 1 2 3; do
+            rm -rf "$RUNNER_TEMP/prefs" && mkdir -p "$RUNNER_TEMP/prefs" "$RUNNER_TEMP/captures"
+            ESPHOME_PREFDIR="$RUNNER_TEMP/prefs" ESPHOME_SNAPSHOT_DIR="$RUNNER_TEMP/captures" \
+              "$PROG" > "resultats/natif_$n.log" 2>&1 &
+            pid=$!
+            for _ in $(seq 1 120); do grep -q 'boucle_1s' "resultats/natif_$n.log" && break; sleep 0.5; done
+            kill "$pid" || true
+            wait "$pid" 2>/dev/null || true
+          done
+          {
+            echo "## Démarrages normaux (ms depuis les constructeurs)"
+            echo '```'
+            for n in 1 2 3; do echo "--- $n"; grep '\[mesure\]' "resultats/natif_$n.log"; done
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Un démarrage sous callgrind, un profil par bande
+        env:
+          TZ: Europe/Paris
+        run: |
+          rm -rf "$RUNNER_TEMP/prefs" && mkdir -p "$RUNNER_TEMP/prefs" resultats/callgrind
+          ESPHOME_PREFDIR="$RUNNER_TEMP/prefs" ESPHOME_SNAPSHOT_DIR="$RUNNER_TEMP/captures" \
+            valgrind --tool=callgrind --callgrind-out-file=resultats/callgrind/cg.out.%p "$PROG" \
+            > resultats/callgrind.log 2>&1 &
+          pid=$!
+          for _ in $(seq 1 1800); do grep -q 'boucle_1s' resultats/callgrind.log && break; sleep 1; done
+          sleep 2
+          kill "$pid" || true
+          wait "$pid" 2>/dev/null || true
+          {
+            echo "## Sous callgrind"
+            echo '```'; grep '\[mesure\]' resultats/callgrind.log; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          for f in resultats/callgrind/cg.out.*; do
+            nom=$(sed -n 's/^desc: Trigger: Client Request: //p' "$f" | head -n 1)
+            [ -n "$nom" ] || nom=$(basename "$f")
+            total=$(sed -n 's/^summary: //p;s/^totals: //p' "$f" | head -n 1)
+            callgrind_annotate --inclusive=yes "$f" 2>/dev/null | head -n 70 > "resultats/callgrind/incl_$nom.txt" || true
+            callgrind_annotate "$f" 2>/dev/null | head -n 50 > "resultats/callgrind/excl_$nom.txt" || true
+            {
+              echo "### $nom — $total instructions"
+              echo '<details><summary>inclusif</summary>'; echo; echo '```'
+              sed -n '1,60p' "resultats/callgrind/incl_$nom.txt"
+              echo '```'; echo '</details>'
+            } >> "$GITHUB_STEP_SUMMARY"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: mesure-demarrage
+          path: |
+            resultats/
+            build.log
+          retention-days: 14
