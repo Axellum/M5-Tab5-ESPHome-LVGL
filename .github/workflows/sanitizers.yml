@@ -160,7 +160,7 @@ jobs:
             echo '```'; cat resultats/ecrans/rapports.txt; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           [ "$cap" -eq 0 ] && [ "$vivante" = oui ] && [ "$san" -eq 0 ]
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: sanitizers
@@ -221,7 +221,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           python tools/sanitizers/rapports.py fuzz/fuzz.log
           [ "$code" -eq 0 ]
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: failure()
         with:
           name: fuzz-parseurs

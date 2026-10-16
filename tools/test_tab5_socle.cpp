@@ -18,6 +18,7 @@
  * Le poste de dev n'a qu'un cross-compilateur RISC-V ; vérif locale possible :
  *   riscv32-esp-elf-g++ -std=c++17 -fsyntax-only -Wall -Wextra -I Tab5/socle tools/test_tab5_socle.cpp
  */
+#include "tab5_barre.h"
 #include "tab5_batterie.h"
 #include "tab5_champs.h"
 #include "tab5_core.h"
@@ -373,6 +374,79 @@ static void test_niveau_batterie() {
     expect(sans_saut, "niveau : pas de saut d'un millivolt à l'autre");
 }
 
+// ── Barre de chargement du démarrage (tab5_barre.h, 16/10/2026) ─────────────
+static void test_barre_demarrage() {
+    expect(barre::rgb565(0xFFFFFF) == 0xFFFF && barre::rgb565(0x000000) == 0, "barre : blanc et noir en RGB565");
+    expect(barre::rgb565(0xFF0000) == 0xF800 && barre::rgb565(0x00FF00) == 0x07E0 && barre::rgb565(0x0000FF) == 0x001F,
+           "barre : rouge, vert, bleu en RGB565");
+    const barre::Rect g = barre::geometrie(1280, 720);
+    expect(g.x == 384 && g.y == 354 && g.l == 512 && g.h == 12, "barre : 512 × 12 centrée sur le Tab5");
+    const barre::Rect g7 = barre::geometrie(1024, 600);
+    expect(g7.l == 409 && g7.h == 10 && g7.x == 307 && g7.y == 295, "barre : 409 × 10 centrée en 1024 × 600");
+
+    // Rotation : chaque point de l'interface arrive où LVGL l'enverrait (draw_buffer_ d'ESPHome).
+    const int rotations[] = {0, 90, 180, 270};
+    for (int rot : rotations) {
+        const bool couche = rot == 90 || rot == 270;
+        const int dl = couche ? 720 : 1280, dh = couche ? 1280 : 720;  // la dalle
+        const barre::Rect ui{100, 50, 7, 3};
+        const barre::Rect d = barre::rect_dalle(ui, rot, dl, dh);
+        uint16_t src[21], dst[21];
+        for (int i = 0; i < 21; i++) src[i] = static_cast<uint16_t>(i + 1);
+        barre::tourner(src, dst, ui.l, ui.h, rot);
+        bool juste = d.l * d.h == 21 && d.x >= 0 && d.y >= 0 && d.x + d.l <= dl && d.y + d.h <= dh;
+        for (int r = 0; r < ui.h && juste; r++) {
+            for (int c = 0; c < ui.l; c++) {
+                const int u = ui.x + c, v = ui.y + r;
+                int xn = u, yn = v;  // 0°
+                if (rot == 270) {
+                    xn = v;
+                    yn = dh - 1 - u;
+                } else if (rot == 180) {
+                    xn = dl - 1 - u;
+                    yn = dh - 1 - v;
+                } else if (rot == 90) {
+                    xn = dl - 1 - v;
+                    yn = u;
+                }
+                const int i = (yn - d.y) * d.l + (xn - d.x);
+                if (xn < d.x || yn < d.y || xn >= d.x + d.l || yn >= d.y + d.h || dst[i] != src[r * ui.l + c]) juste = false;
+            }
+        }
+        char msg[64];
+        std::snprintf(msg, sizeof msg, "barre : rotation %d, chaque pixel à sa place", rot);
+        expect(juste, msg);
+    }
+
+    // Dessin : piste, partie pleine, bords arrondis (coins au fond).
+    constexpr int L = 64, H = 12;
+    uint16_t buf[L * H];
+    const uint32_t fond = 0x101010, piste = 0x404040, plein = 0x20A0FF;
+    barre::peindre(buf, L, H, barre::remplis(0.5f, L), fond, piste, plein);
+    expect(barre::remplis(0.5f, L) == 32 && barre::remplis(0.0f, L) == 0 && barre::remplis(1.5f, L) == L,
+           "barre : pixels remplis bornés");
+    expect(buf[0] == barre::rgb565(fond) && buf[L - 1] == barre::rgb565(fond), "barre : coins arrondis au fond");
+    expect(buf[(H / 2) * L + 16] == barre::rgb565(plein), "barre : la moitié gauche pleine");
+    expect(buf[(H / 2) * L + 48] == barre::rgb565(piste), "barre : la moitié droite en piste");
+    barre::peindre(buf, L, H, 0, fond, piste, plein);
+    expect(buf[(H / 2) * L + 16] == barre::rgb565(piste), "barre : vide = piste seule");
+
+    // Progression : part de la fraction montrée, avance, ne dépasse pas la cible.
+    expect(barre::progression(0.2f, 0.5f, 0, 6000) == 0.2f, "barre : au départ, la fraction montrée");
+    float avant = 0.2f;
+    bool monte = true;
+    for (uint32_t t = 100; t <= 60000; t += 100) {
+        const float f = barre::progression(0.2f, 0.5f, t, 6000);
+        if (f < avant || f > 0.5f) monte = false;
+        avant = f;
+    }
+    expect(monte, "barre : croissante, jamais au-delà de la cible");
+    expect(barre::progression(0.2f, 0.5f, 18000, 6000) < 0.5f, "barre : toujours sous la cible à trois fois la durée");
+    expect(barre::progression(0.0f, 1.0f, 6000, 6000) > 0.85f, "barre : 86 % du chemin à la durée typique");
+    expect(barre::progression(0.6f, 0.5f, 1000, 6000) == 0.6f, "barre : ne recule jamais");
+    expect(barre::kEtapes == 3 && barre::kJalons[barre::kEtapes - 1].cible == 1.0f, "barre : la dernière étape va au bout");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -389,6 +463,7 @@ int main() {
     test_clim_ici();
     test_chronologie();
     test_niveau_batterie();
+    test_barre_demarrage();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

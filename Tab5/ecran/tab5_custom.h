@@ -57,6 +57,7 @@
 #include "tab5_maison.h"
 #include "tab5_piece_climat.h"
 #include "tab5_theme.h"
+#include "tab5_barre_demarrage.h"  // barre de chargement du démarrage (16/10/2026)
 
 // Données calendrier/prévisions, dates locales, jours et mois en toutes lettres :
 // logique PURE, déclarée dans tab5_core.h (compilable et testable sur PC).
