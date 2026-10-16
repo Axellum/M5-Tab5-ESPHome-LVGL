@@ -9,7 +9,7 @@
  *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert ;
  *   - la chronologie du démarrage (Tab5/socle/tab5_demarrage.h, 10/10/2026) ;
  *   - le niveau de la batterie d'après sa tension (Tab5/socle/tab5_batterie.h, courbe de
- *     décharge Li-ion, 14/10/2026).
+ *     décharge mesurée sur un Tab5, 15/10/2026).
  *
  * Build & run (CI, job `python` de .github/workflows/esphome-tab5.yml) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o test_tab5_socle \
@@ -322,33 +322,35 @@ static void test_chronologie() {
            "chronologie : ordo = horloge - millis(), jamais négatif");
 }
 
-// ── Niveau de la batterie d'après sa tension (tab5_batterie.h, 14/10/2026) ──
-// Courbe de décharge Li-ion par élément (table Samsung du noyau Linux), batterie 2S :
-// la droite 6,0 → 8,23 V qu'elle remplace donnait 63 % à 7,4 V (discussion #278).
+// ── Niveau de la batterie d'après sa tension (tab5_batterie.h, 15/10/2026) ──
+// Courbe de décharge par élément mesurée sur un Tab5 (deux nuits à 1,2 W, discussion #278),
+// batterie 2S : la droite 6,0 → 8,23 V de la 3.9.0-rc.1 donnait 63 % à 7,4 V, la table
+// Samsung de la rc.2 19 %, la mesure 7 %.
 static bool proche(float a, float b) { return std::fabs(a - b) < 0.05f; }
 
 static void test_niveau_batterie() {
-    // Bornes : 2 × 3,300 V = 0 %, 2 × 4,178 V = 100 %, borné au-delà.
-    expect(kBatterieVideV == 6.6f && kBatteriePleineV == 8.356f, "niveau : bornes de la table pour 2 éléments");
+    // Bornes : 2 × 3,300 V = 0 %, 2 × 4,175 V = 100 %, borné au-delà.
+    expect(kBatterieVideV == 6.6f && kBatteriePleineV == 8.35f, "niveau : bornes de la table pour 2 éléments");
     expect(batterie_niveau_pct(6.6f) == 0.0f && batterie_niveau_pct(6.0f) == 0.0f &&
                batterie_niveau_pct(0.0f) == 0.0f && batterie_niveau_pct(-3.0f) == 0.0f,
            "niveau : 0 % à 6,6 V et dessous");
-    expect(batterie_niveau_pct(8.356f) == 100.0f && batterie_niveau_pct(8.4f) == 100.0f &&
+    expect(batterie_niveau_pct(8.35f) == 100.0f && batterie_niveau_pct(8.4f) == 100.0f &&
                batterie_niveau_pct(12.0f) == 100.0f,
-           "niveau : 100 % à 8,356 V et au-dessus");
+           "niveau : 100 % à 8,35 V et au-dessus");
     expect(std::isnan(batterie_niveau_pct(NAN)) && std::isnan(batterie_niveau_pct(INFINITY)) &&
                std::isnan(batterie_niveau_pct(-INFINITY)),
            "niveau : tension non finie, NAN");
     // Points de la table (tension d'un élément × 2) : valeur exacte, aux arrondis près.
-    expect(proche(batterie_niveau_pct(7.782f), 65.0f), "niveau : 3,891 V par élément = 65 %");
-    expect(proche(batterie_niveau_pct(7.596f), 50.0f), "niveau : 3,798 V par élément = 50 %");
-    expect(proche(batterie_niveau_pct(7.422f), 20.0f), "niveau : 3,711 V par élément = 20 %");
-    expect(proche(batterie_niveau_pct(7.324f), 10.0f), "niveau : 3,662 V par élément = 10 %");
+    expect(proche(batterie_niveau_pct(8.0f), 62.0f), "niveau : 4,000 V par élément = 62 %");
+    expect(proche(batterie_niveau_pct(7.7f), 30.0f), "niveau : 3,850 V par élément = 30 %");
+    expect(proche(batterie_niveau_pct(7.6f), 18.0f), "niveau : 3,800 V par élément = 18 %");
+    expect(proche(batterie_niveau_pct(7.4f), 7.0f), "niveau : 7,4 V = 7 % (la droite disait 63 %, la rc.2 19 %)");
+    expect(proche(batterie_niveau_pct(8.2f), 97.0f), "niveau : 8,2 V = 97 %");
+    expect(proche(batterie_niveau_pct(7.0f), 2.0f), "niveau : 7,0 V = 2 %");
     // Entre deux points : interpolation linéaire.
-    expect(proche(batterie_niveau_pct(7.4f), 18.9f), "niveau : 7,4 V ≈ 19 % (la droite disait 63 %)");
-    expect(proche(batterie_niveau_pct(7.8f), 66.55f), "niveau : 7,8 V ≈ 67 %");
-    expect(proche(batterie_niveau_pct(8.2f), 94.44f), "niveau : 8,2 V ≈ 94 %");
-    expect(proche(batterie_niveau_pct(7.0f), 4.09f), "niveau : 7,0 V ≈ 4 %");
+    expect(proche(batterie_niveau_pct(8.03f), 73.4f), "niveau : 8,03 V ≈ 73 % (sur le plateau)");
+    expect(proche(batterie_niveau_pct(7.81f), 47.8f), "niveau : 7,81 V ≈ 48 %");
+    expect(proche(batterie_niveau_pct(7.3f), 4.5f), "niveau : 7,3 V ≈ 4,5 %");
     // Table croissante (tension et capacité), puis courbe monotone et continue, mV par mV.
     bool table_croissante = true;
     for (int i = 1; i < kCourbePoints; i++)
@@ -362,7 +364,7 @@ static void test_niveau_batterie() {
     for (int mv = 6001; mv <= 8600; mv++) {
         const float p = batterie_niveau_pct(mv / 1000.0f);
         if (!(p >= avant) || p < 0.0f || p > 100.0f) monotone = false;
-        // Le plus raide : 3 % pour 5 mV par élément (12 → 15 %), soit 0,3 % par mV de la
+        // Le plus raide : 19 % pour 25 mV par élément (62 → 81 %), soit 0,38 % par mV de la
         // batterie entière ; au-delà de 1 %, ce serait un saut.
         if (p - avant > 1.0f) sans_saut = false;
         avant = p;

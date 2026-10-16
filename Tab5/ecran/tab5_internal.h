@@ -371,8 +371,16 @@ struct RoueRappels {
 // est toujours la même famille. Faux, et rien d'ouvert, sans widgets.
 bool roue_ouvrir(lv_obj_t* ancre, const RoueTete& tete, const RoueBouton* b, int n, const RoueRappels& r,
                  bool garder);
+// La roue ouverte est-elle celle dont `rejouer` est le rappel (RoueRappels::rejouer) ? Un
+// état poussé ne repeint que sa propre roue : celle d'une tuile ne remplace pas la roue de
+// navigation ni celle d'un appareil de la tuile − / + ouverte entre-temps.
+bool roue_ouverte_par(void (*rejouer)());
 // theme_rejouer_ui (tab5_theme.cpp) : roue ouverte repeinte dans la nouvelle palette.
 void roue_rejouer_theme();
+// tab5_tuiles_roue.cpp (ADR-0048) : l'ancre basse d'une roue ouverte depuis la carte clim
+// (température de la pièce, tuile − / +), à la verticale de `zone` ramenée entre
+// kClimAncreXMin et kClimAncreXMax : l'éventail tient entier au-dessus.
+lv_obj_t* clim_ancre_basse(lv_obj_t* zone);
 // tab5_tuiles_roue.cpp : la roue de la tuile tRT, autour de `ancre` (pastille d'une carte du
 // mode HA, bouton d'une tuile météo, ou tout autre widget : une ligne d'une liste ;
 // `depuis_maison` : sans le lien « Maison »). Faux, et rien d'ouvert, quand la tuile n'en
