@@ -6,17 +6,17 @@
 
 The same firmware also runs on a second board, the **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B**: a 7-inch, 1024×600 touch screen built around the same chips as the Tab5 (an ESP32-P4, an ESP32-C6 for Wi-Fi, an ES7210 for the microphones). It is a cheaper and bigger screen, with less on board: no battery, no motion sensor, no clock chip.
 
-**Status: experimental.** The author's board has been the daily screen of their home since 2026-10-14: display, touch, backlight, sound and Wi-Fi work, and Home Assistant sees it like a Tab5. One board only, though, and the inside of most popups is not laid out for its smaller screen yet ([what is left](#what-is-not-done-yet)). If you try it, say how it went in [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility): it helps a lot.
+**Status: experimental.** The author's board has been the daily screen of their home since 2026-10-14: display, touch, backlight, sound and Wi-Fi work, and Home Assistant sees it like a Tab5. One board only, though, and the games and one energy page are not adapted to its screen yet ([what is left](#what-is-not-done-yet)). If you try it, say how it went in [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility): it helps a lot.
 
 The choice of the board is one line at build time ([ADR-0061](decisions/0061-board-and-screen-size.md)); on the Tab5, nothing changes.
 
 ## What changes on screen
 
-The home screen is the Tab5's layout brought to 1024×600: same places, same proportions, smaller. The large fonts are scaled by 0.82 (about 1024 / 1280 and 600 / 720), the small ones keep their size so they stay readable. Every popup gets the same frame, sized to the screen; what is inside is still drawn for the Tab5 in most of them, and runs past the right or bottom edge.
+The home screen is the Tab5's layout brought to 1024×600: same places, same proportions, smaller. The large fonts are scaled by 0.82 (about 1024 / 1280 and 600 / 720), the small ones keep their size so they stay readable. The popups do the same: each keeps the Tab5's layout, smaller. Where a fixed-size text no longer fitted, it moves a little instead (the plant rows lose some margin, a rain amount drops its « mm » in a narrow weather column, the « On / Off » key of the remote wraps onto two lines); the camera pictures are asked at 720 × 405 instead of 960 × 540. The details are in [ADR-0061](decisions/0061-board-and-screen-size.md).
 
-| Home screen | Music (fits) | Lights (not adapted yet) |
+| Home screen | Lights | Energy |
 |---|---|---|
-| ![The home screen on the 7B at 1024×600, in French: clock, Ok Nabu frame, centre card and the five forecast cards](images/waveshare/7b-accueil.webp) | ![The Music popup on the 7B, in French: cover, title, buttons and volume, all inside the screen](images/waveshare/7b-musique.webp) | ![The Lights popup on the 7B, in French: the colour column is cut at the right edge and the scene buttons at the bottom](images/waveshare/7b-lumieres.webp) |
+| ![The home screen on the 7B at 1024×600, in French: clock, Ok Nabu frame, centre card and the five forecast cards](images/waveshare/7b-accueil.webp) | ![The Lights popup on the 7B, in French: bulbs, brightness ring and colours, all inside the screen](images/waveshare/7b-lumieres.webp) | ![The Energy popup on the 7B, Today page, in French: the sun's course, the production bars and the best window](images/waveshare/7b-energie.webp) |
 
 These pictures come from the off-device render (the firmware running on a PC, [debugging](debugging.md)), which draws every screen at 1024×600 on each firmware change; they are the same pixels as on the board, without the touch. The render of this board is in French only.
 
@@ -60,7 +60,7 @@ Two things learnt along the way:
 ## What is not done yet
 
 - **Not checked on the board:** the microphone and the wake word, the cameras popup (JPEG decoding), every game, a power cut without network.
-- **Not adapted to 1024×600 yet:** the inside of most popups (lights, shutters, climate, temperature, weather, energy, plants, settings, alarm clock, TV remote, cameras, Arcade): usable, but cut at the right or bottom edge. Already fitting: music, house, calendar, alerts, tracking, fridges, AI server. The games are not adapted either. These are the next lots of [ADR-0061](decisions/0061-board-and-screen-size.md); the render counts what runs past the edge for every screen, on every change.
+- **Not adapted to 1024×600 yet:** the games (the next lot of [ADR-0061](decisions/0061-board-and-screen-size.md)), and the « Balance » page of the Energy popup, which came after the popups were adapted and runs past the bottom edge. For every other screen, the render counts on each change what runs past its area: about as much as on the Tab5 itself, mostly the shutters, alarm clock and cameras popups, which do the same there.
 - Reported by others on this board, not seen here: a faint glow with the backlight at 0 %, a distorted speaker.
 - Start-up takes about 20 s before the first image, like the Tab5.
 
@@ -117,17 +117,17 @@ Sources: Waveshare's board support package and schematic, ESPHome's display mode
 
 Le même firmware tourne aussi sur une deuxième carte, la **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B** : un écran tactile de 7 pouces en 1024×600, construit autour des mêmes puces que le Tab5 (un ESP32-P4, un ESP32-C6 pour le Wi-Fi, un ES7210 pour les micros). Un écran moins cher et plus grand, avec moins de choses à bord : pas de batterie, pas de capteur de mouvement, pas de puce d'horloge.
 
-**Statut : expérimental.** La carte de l'auteur est l'écran de tous les jours de sa maison depuis le 14/10/2026 : écran, tactile, rétroéclairage, son et Wi-Fi marchent, et Home Assistant la voit comme un Tab5. Une seule carte, cela dit, et l'intérieur de la plupart des popups n'est pas encore dessiné pour son écran plus petit ([ce qui reste](#ce-qui-reste-à-faire)). Si vous l'essayez, racontez ce que ça a donné dans [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility) : ça aide beaucoup.
+**Statut : expérimental.** La carte de l'auteur est l'écran de tous les jours de sa maison depuis le 14/10/2026 : écran, tactile, rétroéclairage, son et Wi-Fi marchent, et Home Assistant la voit comme un Tab5. Une seule carte, cela dit, et les jeux et une page de l'énergie ne sont pas encore adaptés à son écran ([ce qui reste](#ce-qui-reste-à-faire)). Si vous l'essayez, racontez ce que ça a donné dans [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility) : ça aide beaucoup.
 
 Le choix de la carte tient en une ligne à la compilation ([ADR-0061](decisions/0061-board-and-screen-size.md)) ; sur le Tab5, rien ne change.
 
 ## Ce qui change à l'écran
 
-L'accueil reprend la mise en page du Tab5, ramenée à 1024×600 : mêmes places, mêmes proportions, en plus petit. Les grosses polices sont réduites à 0,82 (à peu près 1024 / 1280 et 600 / 720), les petites gardent leur taille pour rester lisibles. Chaque popup reçoit le même cadre, à la taille de l'écran ; ce qu'il y a dedans est encore dessiné pour le Tab5 dans la plupart d'entre eux, et dépasse du bord droit ou du bas.
+L'accueil reprend la mise en page du Tab5, ramenée à 1024×600 : mêmes places, mêmes proportions, en plus petit. Les grosses polices sont réduites à 0,82 (à peu près 1024 / 1280 et 600 / 720), les petites gardent leur taille pour rester lisibles. Les popups font de même : chacun garde la mise en page du Tab5, en plus petit. Là où un texte de taille fixe ne tenait plus, il se décale un peu (les lignes des plantes perdent un peu de marge, une quantité de pluie perd son « mm » dans une colonne météo étroite, la touche « Marche / Arrêt » de la télécommande passe sur deux lignes) ; les images des caméras sont demandées en 720 × 405 au lieu de 960 × 540. Le détail est dans l'[ADR-0061](decisions/0061-board-and-screen-size.md).
 
-| Accueil | Musique (adapté) | Lumières (pas encore adapté) |
+| Accueil | Lumières | Énergie |
 |---|---|---|
-| ![L'accueil sur la 7B en 1024×600 : horloge, cadre Ok Nabu, carte centrale et les cinq cartes de prévisions](images/waveshare/7b-accueil.webp) | ![Le popup Musique sur la 7B : pochette, titre, boutons et volume, tout dans l'écran](images/waveshare/7b-musique.webp) | ![Le popup Lumières sur la 7B : la colonne des couleurs est coupée au bord droit, les boutons de scène en bas](images/waveshare/7b-lumieres.webp) |
+| ![L'accueil sur la 7B en 1024×600 : horloge, cadre Ok Nabu, carte centrale et les cinq cartes de prévisions](images/waveshare/7b-accueil.webp) | ![Le popup Lumières sur la 7B : ampoules, anneau de luminosité et couleurs, tout dans l'écran](images/waveshare/7b-lumieres.webp) | ![Le popup Énergie sur la 7B, page Aujourd'hui : la course du soleil, les barres de production et le meilleur créneau](images/waveshare/7b-energie.webp) |
 
 Ces images viennent du rendu hors tablette (le firmware qui tourne sur un PC, [diagnostiquer](debugging.md#version-française)), qui dessine chaque écran en 1024×600 à chaque changement du firmware : ce sont les mêmes pixels que sur la carte, sans le tactile. Le rendu de cette carte n'existe qu'en français.
 
@@ -171,7 +171,7 @@ Deux choses apprises en route :
 ## Ce qui reste à faire
 
 - **Pas vérifié sur la carte :** le micro et le mot d'activation, le popup Caméras (décodage JPEG), chacun des jeux, une coupure de courant sans réseau.
-- **Pas encore adapté au 1024×600 :** l'intérieur de la plupart des popups (lumières, volets, clim, température, météo, énergie, plantes, réglages, réveil, télécommande, caméras, Arcade) : utilisables, mais coupés au bord droit ou en bas. Déjà à la bonne taille : musique, maison, calendrier, alertes, suivi, frigos, serveur IA. Les jeux non plus ne sont pas adaptés. Ce sont les lots suivants de l'[ADR-0061](decisions/0061-board-and-screen-size.md) ; le rendu compte, pour chaque écran et à chaque changement, ce qui dépasse du bord.
+- **Pas encore adapté au 1024×600 :** les jeux (le prochain lot de l'[ADR-0061](decisions/0061-board-and-screen-size.md)), et la page « Bilan » du popup Énergie, arrivée après l'adaptation des popups, qui dépasse du bas. Pour tous les autres écrans, le rendu compte à chaque changement ce qui dépasse de sa zone : à peu près autant que sur le Tab5 lui-même, surtout dans les popups Volets, Réveil et Caméras, qui font pareil là-bas.
 - Signalé par d'autres sur cette carte, pas vu ici : une faible lueur avec le rétroéclairage à 0 %, un haut-parleur qui sature.
 - Le démarrage prend une vingtaine de secondes avant la première image, comme sur le Tab5.
 
