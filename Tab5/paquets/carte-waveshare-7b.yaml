@@ -40,6 +40,13 @@
 packages:
   geometrie: !include geometrie-waveshare-7b.yaml
 
+# Plancher d'ESPHome de la 7B : 2026.9.1 (voir esp32_hosted plus bas). Vérifié à la
+# compilation par un static_assert : un `min_version:` ici serait écrasé par celui de
+# tab5-ha-hmi.yaml (2026.9.0, plancher du Tab5) à la fusion des packages.
+esphome:
+  includes:
+    - Tab5/ecran/carte_7b_version.h
+
 # ─── 1. Matériel de la 7B ────────────────────────────────────────────────────
 
 esp32:

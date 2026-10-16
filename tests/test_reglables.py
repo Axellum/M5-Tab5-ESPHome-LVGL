@@ -20,6 +20,7 @@ import yaml
 
 from tests import test_tuiles_blueprint as bp  # noqa: E402
 from tests.commun import avec_jetons, contrat, lire as _lire, sources
+from tests.test_tuiles_firmware import _fonction
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -342,6 +343,7 @@ def test_consigne_d_une_clim_de_la_liste():
     ("t00", "regler", "20"),     # une tuile ne connaît pas « regler »
     ("r0", "regler", "fort"),    # pas un nombre
     ("r0", "basculer", ""),      # une clé rN ne connaît que « regler » et « consigne »
+    ("r0", "ouvrir", ""),        # (et ouvrir / fermer / arreter pour un volet ou une vanne)
 ])
 def test_rien_hors_de_la_liste_blanche(emplacement, action, valeur):
     assert _regler(emplacement, action, valeur) is None
@@ -358,6 +360,72 @@ def test_volet_du_package_par_son_script():
     etape = branche["sequence"][0]
     assert etape["action"] == "script.turn_on" and etape["target"]["entity_id"] == "script.tab5_volet_action"
     assert bp._rendre(p.env, etape["data"], p.ctx) == {"variables": {"action": "open"}}
+
+
+def _ouvrir_fermer(emplacement, action, entrees=None):
+    """(alias, action, entité, données) de ouvrir / fermer / arreter, ou None."""
+    p = _passage(bp._evenement("action", emplacement=emplacement, action=action, valeur=""), entrees=entrees)
+    alias, sequence = p.aiguillage()
+    if alias is None:
+        return None
+    for cle, v in sequence[0]["variables"].items():
+        p.ctx[cle] = bp._rendre(p.env, v, p.ctx)
+    choix = sequence[1]["choose"]
+    branche = next((b["sequence"] for b in choix if p.modele(b["conditions"])), sequence[1].get("default"))
+    etape = branche[0]
+    return (alias, p.modele(etape["action"]), p.modele(etape["target"]["entity_id"]),
+            bp._rendre(p.env, etape.get("data", {}), p.ctx))
+
+
+@pytest.mark.parametrize("emplacement, action, attendu", [
+    ("r6", "ouvrir", ("cover.open_cover", "cover.store")),
+    ("r6", "fermer", ("cover.close_cover", "cover.store")),
+    ("r6", "arreter", ("cover.stop_cover", "cover.store")),
+    ("r7", "arreter", ("valve.stop_valve", "valve.arrosage")),
+])
+def test_volet_de_la_liste_ouvrir_fermer_arreter(emplacement, action, attendu):
+    """La roue d'un volet de la liste qui n'est la tuile d'aucune pièce (16/10/2026,
+    discussion #278) : la branche des tuiles vol, sur l'entité de la clé rN."""
+    rendu = _ouvrir_fermer(emplacement, action)
+    assert rendu is not None and rendu[0].startswith("Tuile : ouvrir, fermer, arrêter"), rendu
+    assert rendu[1:3] == attendu and rendu[3] == {}
+
+
+def test_volet_de_la_liste_du_package_par_son_script():
+    rendu = _ouvrir_fermer("r0", "arreter", {**bp.ENTREES, "reglables": ["cover.volet_serre"]})
+    assert rendu == ("Tuile : ouvrir, fermer, arrêter (vol, et volet de la tuile − / +)", "script.turn_on",
+                     "script.tab5_volet_action", {"variables": {"action": "stop"}})
+
+
+@pytest.mark.parametrize("emplacement", ["r1", "r2", "r5", "r8"])
+def test_ouvrir_rien_qu_aux_volets_de_la_liste(emplacement):
+    assert _ouvrir_fermer(emplacement, "ouvrir") is None
+
+
+def _fonction_cpp(nom):
+    return _fonction(CPP, nom)
+
+
+def test_roue_d_un_volet_sans_tuile():
+    """Toucher la valeur d'un volet de la liste : le popup de sa tuile (lien), sinon la
+    télécommande (TV), sinon sa roue ; Ouvrir / Stop / Fermer, Position s'il en a une
+    réglable, rien d'autre que les commandes que le blueprint accepte pour une clé rN."""
+    appui = _fonction_cpp("reglables_valeur_appui")
+    assert (appui.index("tuile_ouvrir_popup(d.lien_r, d.lien_t)") < appui.index("telecommande_ouvrir(0);")
+            < appui.index("if (roue_reglable_vol(en.i)) roue_reglable_peindre(en.i, false);"))
+    assert "bool roue_reglable_vol(int i) { return i >= 0 && i < kHA && type_de(s_m.d[i]) == Type::VOL; }" in CPP
+    envoyees = set(re.findall(r'roue_reglable_envoyer\([^,]+, "(\w+)"', CPP))
+    assert envoyees == {"ouvrir", "arreter", "fermer", "regler"}
+    # Position : seulement réglable (pas < 100, ADR-0033) et connue ; les choix de la roue
+    # d'une tuile vol.
+    assert "d.pas < 100.0f" in _fonction_cpp("roue_position_connue")
+    assert re.search(r"kRouePositionsReg\[\] = \{25, 50, 75\};", CPP)
+    # La roue suit un état ou des définitions reçus, sans repeindre celle d'un autre.
+    assert "if (s_rr.i == i) roue_reglable_suivre();" in _fonction_cpp("reglables_etat_recu")
+    assert "roue_reglable_suivre();" in _fonction_cpp("reglables_definir")
+    assert "if (roue_ouverte_par(roue_reglable_rejouer)) roue_reglable_rejouer();" in _fonction_cpp(
+        "roue_reglable_suivre")
+    assert "clim_ancre_basse(g_reglables_ui.zone)" in _fonction_cpp("roue_reglable_peindre")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

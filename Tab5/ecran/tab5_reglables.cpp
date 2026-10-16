@@ -29,6 +29,9 @@
  *       autre appareil choisi reste choisi sur toutes les pièces (même NVS « RGC1 »).
  *       Jusqu'au 14/10/2026, la clim propre de la pièce passait avant le choix : la liste
  *       s'ouvrait mais choisir un volet ou le son de la tablette n'y changeait rien.
+ *       Toucher la valeur : le popup de la tuile qui porte la même entité, sinon la
+ *       télécommande (TV), sinon, pour un volet ou une vanne, sa roue Ouvrir / Stop /
+ *       Fermer / Position (16/10/2026, discussion #278, amendement de l'ADR-0033).
  * @architecture_constraint Push-only et événements seuls (ADR-0001, ADR-0025) : la
  *       tablette envoie esphome.tab5_action (rN / regler / valeur, ou consigne pour une
  *       clim) ; le blueprint borne la valeur et choisit l'action par le domaine de
@@ -543,6 +546,143 @@ void lire_def(const char* s, size_t n, Def& d) {
     texte_ha_copier(d.nom, kNom, f[8].p, f[8].n);
 }
 
+// ─── Roue d'un volet qui n'est la tuile d'aucune pièce (16/10/2026, discussion #278) ──
+//
+// Un volet (une vanne) de la liste n'a de popup que par la tuile qui porte la même entité
+// (lien) ; sans elle, toucher sa valeur ne faisait rien et seuls − / + le réglaient. Le
+// toucher ouvre alors la roue d'actions (tab5_roue.cpp) : Ouvrir, Stop, Fermer comme celle
+// d'une tuile vol, et « Position ▸ » (25, 50, 75 %) quand il en a une réglable (pas < 100,
+// ADR-0033). Ni « Maison » ni « Détails » : il n'a pas de popup. Commandes rN / ouvrir,
+// fermer, arreter (branche « ouvrir, fermer, arrêter » du blueprint, qui accepte les clés
+// rN depuis ce jour) et rN / regler / position (celle de − / +). Aucune mise à jour
+// optimiste, comme la roue d'une tuile.
+
+// clang-format off
+enum class RoueReg : uint8_t { OUVRIR, ARRETER, FERMER, POSITION };
+// clang-format on
+constexpr uint8_t kRouePositionsReg[] = {25, 50, 75};  // celles de la roue d'une tuile vol
+constexpr int kRoueRegBoutons = 4;
+
+struct RoueReglable {
+    int i = -1;  // case de s_m.d
+    int n = 0;
+    RoueReg action[kRoueRegBoutons] = {};
+};
+RoueReglable s_rr;
+
+bool roue_reglable_vol(int i) { return i >= 0 && i < kHA && type_de(s_m.d[i]) == Type::VOL; }
+
+// Position réglable et connue (0-100) : de quoi marquer un choix et dessiner la jauge.
+bool roue_position_connue(const Def& d, const Etat& e) {
+    return d.pas < 100.0f && !hors_ligne(e) && !std::isnan(e.valeur) && e.valeur >= 0.0f && e.valeur <= 100.0f;
+}
+
+// Boutons du premier anneau du volet i (0 : ce n'est plus un volet). Ouvert jusqu'en haut
+// (ou sans position) : Ouvrir marqué ; fermé : Fermer marqué.
+int roue_reglable_composer(int i, RoueBouton b[kRoueRegBoutons], RoueReglable& rr) {
+    rr.n = 0;
+    if (!roue_reglable_vol(i)) return 0;
+    const Def& d = s_m.d[i];
+    const Etat& e = s_etats[i];
+    auto ajouter = [&](RoueReg a, RoueIcone ic, RoueGenre g, bool courant) {
+        b[rr.n] = RoueBouton{ic, g, courant, nullptr};
+        rr.action[rr.n++] = a;
+    };
+    const bool partiel = !std::isnan(e.valeur) && e.valeur > 0.0f && e.valeur < 100.0f;
+    ajouter(RoueReg::OUVRIR, RoueIcone::OUVRIR, RoueGenre::ACTION, !hors_ligne(e) && est(e.brut, "open") && !partiel);
+    ajouter(RoueReg::ARRETER, RoueIcone::STOP, RoueGenre::ACTION, false);
+    ajouter(RoueReg::FERMER, RoueIcone::FERMER, RoueGenre::ACTION, !hors_ligne(e) && est(e.brut, "closed"));
+    if (roue_position_connue(d, e)) ajouter(RoueReg::POSITION, RoueIcone::POSITION, RoueGenre::FAMILLE, false);
+    return rr.n;
+}
+
+void roue_reglable_envoyer(int i, const char* commande, const char* valeur) {
+    if (g_reglables_ui.envoyer == nullptr) return;
+    envoyer_attente();  // un − / + en attente part d'abord
+    const char cle[3] = {'r', static_cast<char>('0' + i), '\0'};
+    g_reglables_ui.envoyer(cle, commande, valeur);
+}
+
+void roue_reglable_choisir(int k) {
+    charger();
+    const RoueReglable rr = s_rr;
+    if (k < 0 || k >= rr.n || !roue_reglable_vol(rr.i)) return;
+    switch (rr.action[k]) {
+        case RoueReg::OUVRIR: roue_reglable_envoyer(rr.i, "ouvrir", ""); return;
+        case RoueReg::ARRETER: roue_reglable_envoyer(rr.i, "arreter", ""); return;
+        case RoueReg::FERMER: roue_reglable_envoyer(rr.i, "fermer", ""); return;
+        default: return;
+    }
+}
+
+int roue_reglable_famille(int k, RoueChoix* c) {
+    charger();
+    const RoueReglable& rr = s_rr;
+    if (k < 0 || k >= rr.n || rr.action[k] != RoueReg::POSITION || !roue_reglable_vol(rr.i)) return 0;
+    const Def& d = s_m.d[rr.i];
+    const Etat& e = s_etats[rr.i];
+    if (!roue_position_connue(d, e)) return 0;  // perdue roue ouverte
+    const long position = std::lround(e.valeur);
+    int m = 0;
+    for (uint8_t p : kRouePositionsReg) {
+        c[m] = RoueChoix{};
+        c[m].courant = position == p;
+        snprintf(c[m].texte, sizeof(c[m].texte), "%u %%", static_cast<unsigned>(p));
+        m++;
+    }
+    return m;
+}
+
+void roue_reglable_choisir_choix(int k, int j) {
+    charger();
+    RoueChoix c[kRoueChoix];
+    const int m = roue_reglable_famille(k, c);
+    if (j < 0 || j >= m) return;
+    char valeur[8];
+    snprintf(valeur, sizeof(valeur), "%u", static_cast<unsigned>(kRouePositionsReg[j]));
+    roue_reglable_envoyer(s_rr.i, "regler", valeur);
+}
+
+void roue_reglable_rejouer();
+
+// Moyeu (icône, valeur, nom, jauge de la position) et boutons du volet i, autour de la
+// zone − / + (ancre basse de la roue d'une clim). Faux sans roue.
+bool roue_reglable_peindre(int i, bool garder) {
+    RoueBouton b[kRoueRegBoutons];
+    RoueReglable rr;
+    rr.i = i;
+    if (roue_reglable_composer(i, b, rr) == 0 || g_reglables_ui.zone == nullptr) return false;
+    Vue v;
+    vue(Entree{Sorte::HA, static_cast<int8_t>(i)}, v);
+    const Def& d = s_m.d[i];
+    const Etat& e = s_etats[i];
+    RoueTete tete;
+    tete.icone = v.icone;
+    tete.valeur = v.valeur;
+    tete.nom = v.nom;
+    tete.couleur = v.couleur_icone;
+    tete.jauge = roue_position_connue(d, e) ? static_cast<int>(std::lround(e.valeur)) : -1;
+    RoueRappels rappels;
+    rappels.choisir = roue_reglable_choisir;
+    rappels.famille = roue_reglable_famille;
+    rappels.choisir_choix = roue_reglable_choisir_choix;
+    rappels.rejouer = roue_reglable_rejouer;
+    s_rr = rr;
+    return roue_ouvrir(clim_ancre_basse(g_reglables_ui.zone), tete, b, rr.n, rappels, garder);
+}
+
+// Thème, état ou définitions changés roue ouverte : la même roue repeinte ; plus un volet,
+// elle se ferme.
+void roue_reglable_rejouer() {
+    charger();
+    if (!roue_reglable_peindre(s_rr.i, true)) roue_actions_fermer();
+}
+
+// Un état ou des définitions reçus : la roue ouverte sur un volet de la liste suit.
+void roue_reglable_suivre() {
+    if (roue_ouverte_par(roue_reglable_rejouer)) roue_reglable_rejouer();
+}
+
 }  // namespace
 
 // ─── API (tab5_custom.h, tab5_internal.h) ───────────────────────────────────────────
@@ -581,6 +721,7 @@ bool reglables_definir(const std::string& payload) {
     s_pref.save(&s_m);
     ESP_LOGI("tab5.reglables", "Tuile -/+ : %d appareil(s) du blueprint", nb_ha());
     repeindre();
+    roue_reglable_suivre();
     return true;
 }
 
@@ -599,6 +740,7 @@ bool reglables_etat_recu(const char* cle, size_t n_cle, const char* reste, size_
     if (s_attente.cle[0] == 'r' && s_attente.cle[1] == '0' + i) e.valeur = s_attente.valeur;
     e.recu = true;
     repeindre();
+    if (s_rr.i == i) roue_reglable_suivre();
     return true;
 }
 
@@ -670,9 +812,14 @@ void reglables_valeur_appui() {
     if (en.sorte != Sorte::HA) return;  // la clim : son popup (climate_card.yaml) ; la tablette : rien
     const Def& d = s_m.d[en.i];
     // Le popup de la tuile qui porte la même entité (ce que fait son appui long, ou son
-    // appui pour une clim) ; sinon la télécommande de la TV du blueprint.
+    // appui pour une clim) ; sinon la télécommande de la TV du blueprint ; sinon, un volet :
+    // sa roue (16/10/2026, discussion #278).
     if (d.lien_r >= 0 && tuile_ouvrir_popup(d.lien_r, d.lien_t)) return;
-    if (d.tv) telecommande_ouvrir(0);  // la page de la TV (ADR-0056)
+    if (d.tv) {
+        telecommande_ouvrir(0);  // la page de la TV (ADR-0056)
+        return;
+    }
+    if (roue_reglable_vol(en.i)) roue_reglable_peindre(en.i, false);
 }
 
 void reglables_liste_basculer() {
