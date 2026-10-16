@@ -7,7 +7,7 @@
 # MAJEURE si un fichier HA d'avant peut casser (action retirée, variable ajoutée, retirée
 # ou de type changé, événement ou champ plus émis), MINEURE pour un ajout pur (action,
 # événement ou champ nouveau). tests/test_contrat_versions.py le vérifie.
-version: 1.2.0
+version: 1.3.0
 services:
   tab5_assist_reponse:
     image_url: string
@@ -120,6 +120,7 @@ evenements:
   esphome.tab5_recharger_automatisations: []
   esphome.tab5_redemarrage_ha_confirme: []
   esphome.tab5_reveil_annonce: []
+  esphome.tab5_securite_chargeur: [cause, mesure, verrouille]
   esphome.tab5_serveur_ia_action: [action]
   esphome.tab5_voix_stop: []
   esphome.tab5_zones: [zones]
