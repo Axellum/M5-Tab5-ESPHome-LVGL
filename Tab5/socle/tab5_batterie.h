@@ -103,52 +103,56 @@ constexpr uint32_t kChargeurSondeMaxMs = 30u * 1000u;        // sonde sans lectu
 // est peut-être branchée ; le mode économie l'ignore (chargeur_en_sonde).
 constexpr uint32_t kChargeurSondeFinMs = 2u * 1000u;
 
-// ─── Niveau d'après la tension : courbe de décharge Li-ion (14/10/2026, discussion #278) ───
-// Avant : une droite 6,0 V = 0 % / 8,23 V = 100 % (battery-percentage.yaml, config de
-// référence ESPHome du Tab5). Une batterie lithium n'est pas linéaire : un long plateau
-// vers 3,7-3,8 V par élément, puis un effondrement. Chez husyildiz (14/10/2026), le niveau
-// descendait de 100 à ~65 % en 11 h, puis de 65 à 0 % en ~1 h : la droite donnait 63 % à
-// 7,4 V, là où la courbe ci-dessous en donne 19.
-// Table : tension à vide (OCV, 25 °C) d'UN élément lithium-ion 4,2 V → capacité restante,
-// `samsung_ocv_cap_eb535151vu` du noyau Linux (drivers/power/supply/samsung-sdi-battery.c,
-// commit b5289ba57a27, « Data from vendor boardfile board-janice-bm.c » : batterie Samsung
-// EB535151VU, 1500 mAh, charge à 4,2 V). Recopiée telle quelle, points en mV, croissants.
-// Ce n'est PAS la courbe mesurée de la batterie du Tab5 (2S, 7,4 V, 2000 mAh ; aucune
-// courbe publiée par M5Stack trouvée le 14/10/2026). M5Unified (Power_Class.inl, commit
-// a98dc51d2071) reste linéaire pour le Tab5 : demi-tension, 3,30 V = 0 %, 4,15 V ≈ 100 %.
+// ─── Niveau d'après la tension : courbe de décharge MESURÉE sur un Tab5 (15/10/2026) ───
+// Historique : jusqu'à la 3.9.0-rc.1, une droite 6,0 V = 0 % / 8,23 V = 100 %
+// (battery-percentage.yaml, config de référence ESPHome) ; en 3.9.0-rc.2, la table à vide
+// d'une autre batterie (Samsung EB535151VU, noyau Linux, #468). Toutes deux faisaient
+// tenir le niveau des heures puis s'effondrer (rc.2 chez husyildiz, discussion #278 :
+// 85 % de 21 h à 2 h, puis 58 → 7 % en deux heures).
+// Table : la batterie d'origine du Tab5 de husyildiz (ST7121, 2S), deux décharges complètes
+// à charge constante, écran éteint (≈ 0,17 A, 1,2 W, « Tab5 Courant batterie »), lues dans
+// l'historique de Home Assistant (CSV joints à la discussion #278 le 15/10/2026) :
+//   - nuit du 12 au 13/10 : débranchée à 20 h 19 (8,35 V), coupure de la protection à 9 h 42
+//     (5,11 V), 13 h 23 de décharge. Capacité restante = temps restant jusqu'à la coupure
+//     (charge constante), au premier passage sous chaque tension, tous les 25 mV par élément ;
+//   - nuit du 14 au 15/10, contre-épreuve : chaque tension franchie à moins de 5 min de la
+//     première nuit (8,10 à 7,20 V) ; la table prédit son niveau, heure par heure, à 3 points
+//     près au plus.
+// Ramenée à 0 % à 3,30 V par élément (6,60 V : il restait 1,5 % du temps, ≈ 12 min à
+// 1,2 W) et 100 % à 4,175 V (8,35 V, juste après la charge) ; points en double retirés.
 // Limites, connues :
-//   - tension À VIDE : sur batterie, l'INA226 lit la tension sous charge, un peu plus basse
-//     (résistance interne) : le niveau est plutôt sous-estimé, d'autant plus que la
-//     tablette consomme ;
-//   - pendant la charge, la tension lue est plus haute qu'au repos : le niveau lit trop haut
-//     (la limite à 80 % s'arrête avant 80 % réels) ;
-//   - 0 % dès 3,30 V par élément (6,60 V) : la courbe Samsung s'arrête là. Plus bas, il
-//     reste peu de chose (1 % entre 3,30 et 3,35 V sur cette courbe) ;
-//   - sur le plateau (30 à 50 %), 34 mV par élément séparent 30 et 50 % : le niveau y bouge
-//     par sauts (la tension est publiée à 50 mV près, filtre de « Tab5 Tension batterie »).
+//   - tension SOUS CHARGE légère (1,2 W), ce que l'INA226 lit en usage : écran allumé, la
+//     tension baisse un peu plus (résistance interne) et le niveau lit un peu bas ;
+//   - pendant la charge, la tension lue est plus haute : le niveau lit trop haut (la limite
+//     à 80 % s'arrête avant 80 % réels) ;
+//   - une seule batterie mesurée, à une température (intérieur) ;
+//   - plateau de 8,00 à 8,05 V (62 → 81 %) : la tension est publiée à 50 mV près (filtre de
+//     « Tab5 Tension batterie »), le niveau peut y sauter d'un coup de ~20 %.
 constexpr int kBatterieElements = 2;   // 2S
 struct PointDecharge {
-    uint16_t mv;     // tension à vide d'un élément (mV)
+    uint16_t mv;     // tension d'un élément sous charge légère (mV)
     uint8_t pct;     // capacité restante (%)
 };
-// Huit points par ligne : 29 lignes d'un point se reliraient mal.
+// Huit points par ligne : 25 lignes d'un point se reliraient mal.
 // clang-format off
 constexpr PointDecharge kCourbeDecharge[] = {
-    {3300, 0},  {3352, 1},  {3405, 2},  {3497, 4},  {3566, 6},  {3593, 7},  {3638, 9},  {3662, 10},
-    {3680, 12}, {3685, 15}, {3691, 18}, {3711, 20}, {3743, 25}, {3764, 30}, {3778, 40}, {3798, 50},
-    {3816, 55}, {3839, 59}, {3874, 62}, {3891, 65}, {3920, 70}, {3962, 77}, {3988, 82}, {4013, 85},
-    {4057, 89}, {4078, 92}, {4105, 95}, {4148, 99}, {4178, 100},
+    {3300, 0},  {3350, 1},  {3500, 2},  {3550, 3},  {3625, 4},  {3675, 5},  {3700, 7},  {3725, 11},
+    {3750, 13}, {3775, 15}, {3800, 18}, {3825, 22}, {3850, 30}, {3875, 41}, {3900, 47}, {3925, 51},
+    {3950, 53}, {3975, 57}, {4000, 62}, {4025, 81}, {4050, 90}, {4075, 95}, {4100, 97}, {4125, 98},
+    {4175, 100},
 };
 // clang-format on
 constexpr int kCourbePoints = sizeof(kCourbeDecharge) / sizeof(kCourbeDecharge[0]);
-// Bornes de la table, pour la batterie entière (2S) : 6,60 V = 0 %, 8,356 V = 100 %.
+// Bornes de la table, pour la batterie entière (2S) : 6,60 V = 0 %, 8,35 V = 100 %.
 constexpr float kBatterieVideV = kBatterieElements * kCourbeDecharge[0].mv / 1000.0f;
 constexpr float kBatteriePleineV = kBatterieElements * kCourbeDecharge[kCourbePoints - 1].mv / 1000.0f;
 
 // ─── Limite de charge à 80 % ───
 // Le niveau lit trop haut pendant la charge : l'arrêt se fait un peu avant 80 % réels.
-// Avec la courbe (14/10/2026) : arrêt vers 7,96 V lus (7,78 V avec la droite), reprise
-// vers 7,84 V lus chargeur coupé (7,56 V avec la droite).
+// Avec la courbe mesurée (15/10/2026) : arrêt vers 8,05 V lus, reprise vers 8,02 V lus
+// chargeur coupé (7,96 / 7,84 V avec la table Samsung, 7,78 / 7,56 V avec la droite).
+// Les deux sont sur le plateau, 26 mV d'écart : kChargePauseMinMs évite le va-et-vient.
+// Non mesuré sur une tablette.
 constexpr float kChargeArretPct = 80.0f;
 constexpr float kChargeReprisePct = 70.0f;
 constexpr uint32_t kChargePauseMinMs = 10u * 60u * 1000u;   // arrêt d'au moins 10 min

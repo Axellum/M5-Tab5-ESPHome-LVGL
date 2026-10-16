@@ -101,7 +101,7 @@ def test_une_clim_poussee_repeint_la_roue():
     for f in ("clim_blueprint_recu", "clim_reglages_recu", "clim_tuile_recu", "clim_tuile_oublier",
               "clim_piece_oublier"):
         assert "roue_clim_changee();" in _fonction(CLIM, f), f
-    assert "if (roue_actions_ouverte() && vise_une_clim(s_rt)) roue_tuile_rejouer();" in _fonction(
+    assert "if (roue_ouverte_par(roue_tuile_rejouer) && vise_une_clim(s_rt)) roue_tuile_rejouer();" in _fonction(
         ROUE, "roue_clim_changee")
 
 
