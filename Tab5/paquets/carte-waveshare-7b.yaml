@@ -46,6 +46,9 @@ packages:
 esphome:
   includes:
     - Tab5/ecran/carte_7b_version.h
+    # Redémarrage logiciel en reset CORE, pour le lien SDIO du C6 (esp32_hosted, plus bas).
+    - Tab5/ecran/tab5_lien_c6.h
+    - Tab5/ecran/tab5_lien_c6.cpp
 
 # ─── 1. Matériel de la 7B ────────────────────────────────────────────────────
 
@@ -100,6 +103,16 @@ esp32_hosted:
   slot: 1
   sdio_frequency: 20MHz
   use_psram: true
+
+# Boucle de redémarrages du 16/10/2026 (docs/troubleshooting.md) : après un redémarrage
+# logiciel, le lien SDIO du C6 peut ne plus monter, et chaque esp_restart() suivant (reset
+# des seuls CPU) échoue pareil jusqu'au mode sans échec ; un reset CORE (USB) ou une coupure
+# débloque. Tab5/ecran/tab5_lien_c6.cpp fait de tout redémarrage logiciel un reset CORE ;
+# ce global l'appelle dans setup(), avant les composants.
+globals:
+  - id: lien_c6_branche
+    type: bool
+    initial_value: 'lien_c6_demarrage()'
 
 # Recopié de tab5-hardware.yaml (journal des démarrages, voir là-bas).
 logger:
