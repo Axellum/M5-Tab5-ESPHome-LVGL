@@ -192,7 +192,7 @@ def test_degrade_et_pluie_lisibles():
 
 
 def test_repeint_aux_previsions_et_au_theme():
-    forecast = _fonction(_lire(TAB5, "ecran", "tab5_forecast.cpp"), "static void parse_and_update_heures_bulk(")
+    forecast = _fonction(_lire(TAB5, "ecran", "tab5_forecast.cpp"), "static bool parse_and_update_heures_bulk(")
     assert "zone_gauche_donnees_changees();" in forecast
     theme = _fonction(_lire(TAB5, "ecran", "tab5_theme.cpp"), "void theme_rejouer_ui()")
     assert "zone_gauche_rejouer_theme();" in theme
