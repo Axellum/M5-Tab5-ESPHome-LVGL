@@ -24,6 +24,14 @@ le confronte à la matrice) :
 
 ### Ajouté
 
+- **Plusieurs écrans dans la même maison, même affichage partout** ([ADR-0063](docs/decisions/0063-several-screens.md)) :
+  - un nom par écran à la compilation : `tab5_nom` et `tab5_nom_affiche` (`Tab5/user_entities.yaml` ou `-s tab5_nom salon-7b`), `tab5-ha-hmi` par défaut : une tablette déjà installée ne change pas ;
+  - nouveau capteur de diagnostic « Tab5 Préfixe des actions » : le préfixe des actions de l'écran, lu par Home Assistant ;
+  - chaque poussée des packages et du blueprint part vers chaque tablette connectée (`tab5_destinataires()` dans `custom_templates/tab5_tablette.jinja`), un mois ou un jour du calendrier vers l'écran qui l'a demandé ; un firmware plus ancien est toujours servi sous `tab5_ha_hmi` ;
+  - l'entrée « tablette » du blueprint laissée à `tab5_ha_hmi` veut dire désormais « toutes les tablettes » ;
+  - suivent encore une seule tablette : écran allumé, réveil en cours, nuit du thème, vue Santé, micro, pipeline « Discu » (`sensor.tab5_tablette`) ;
+  - mise à jour : `custom_templates/tab5_tablette.jinja` rechargé avant les packages et le blueprint ; firmware et HA dans n'importe quel ordre.
+
 - **Carte et taille de l'écran paramétrables** ([ADR-0061](docs/decisions/0061-board-and-screen-size.md)) :
   - nouvelle substitution `tab5_carte` (`tab5` par défaut) qui choisit `Tab5/paquets/carte-<carte>.yaml` : le matériel, l'écran et la géométrie de la carte (`geometrie-<carte>.yaml` : taille de l'écran, de la dalle, rotation de LVGL, échelle des grosses polices) ;
   - la taille n'est plus écrite qu'une fois : les jetons de `tab5-ui-tokens.yaml` en dérivent, le C++ la reçoit par `-DTAB5_ECRAN_L`, `-DTAB5_ECRAN_H` et `-DTAB5_ROTATION` (`tab5_geometrie.h`, défauts du Tab5) ; `tests/test_geometrie_partagee.py` vérifie l'égalité C++ / YAML pour chaque carte ;
