@@ -180,6 +180,12 @@ def geometrie_cpp(carte: str | None = None) -> dict[str, int]:
         macros.update({m: int(g[s]) for m, s in DRAPEAUX_CARTE.items()})
     valeurs = dict(macros)
     for nom, expr in re.findall(r"constexpr\s+int(?:32_t)?\s+(\w+)\s*=\s*([^;]+);", texte):
+        # Un `a ? b : c` (un seul, le minimum d'une valeur du Tab5 et d'une autre) en Python.
+        ternaire = re.fullmatch(r"([^?]+)\?([^:]+):(.+)", expr.strip())
+        if ternaire:
+            expr = "({1}) if ({0}) else ({2})".format(*ternaire.groups())
+        # Division entière, comme en C++ (valeurs positives : tronquer = arrondir en dessous).
+        expr = expr.replace("/", "//")
         valeurs[nom] = int(eval(expr, {"__builtins__": {}}, dict(valeurs)))   # expressions du fichier
     return {k: v for k, v in valeurs.items() if k not in macros}
 

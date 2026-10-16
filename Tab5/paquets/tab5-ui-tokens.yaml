@@ -31,25 +31,53 @@ substitutions:
   modal_body_y: "72"
   # Offset bas standard pour les barres d'action / légendes (BOTTOM_MID)
   modal_bottom_y: "-20"
+  # ─── Corps des popups (lot 2 du portage 1024×600, ADR-0061) ───────────────────────────
+  # Ce que les popups ont en commun suit la carte modale ; le C++ fait les mêmes calculs
+  # (Tab5/socle/tab5_geometrie.h : kCorpsW, kCorpsH, kGraphiqueL, kDemiL, kDemiX,
+  # kOngletsFin…) et tests/test_geometrie_partagee.py compare, carte par carte. Valeurs du
+  # Tab5 entre parenthèses.
+  # Corps : x 24 de la carte, toute sa largeur moins 24 px de chaque côté (1202), de
+  # ${modal_body_y} à 20 px du bas (598).
+  corps_w: ${ modal_card_w | int - 48 }
+  corps_h: ${ modal_card_h | int - 92 }
+  # Zone d'un graphique dans une carte pleine largeur, 18 px de marge de chaque côté (1166).
+  graphique_l: ${ corps_w | int - 36 }
+  # Deux demi-cartes côte à côte, 24 px entre elles : largeur (589) et x de la seconde (637).
+  demi_w: ${ (corps_w | int - 24) // 2 }
+  demi_x: ${ 24 + (corps_w | int - 24) // 2 + 24 }
+  # Onglets d'en-tête (reglages_onglet.yaml) : fin de leur zone, 8 px avant la croix (1148),
+  # et la largeur de cette zone depuis x 196, plafonnée à celle du Tab5 (952) — les places
+  # du Tab5 sont réduites de onglets_zone / 952 depuis la croix (onglet_x(), tab5_geometrie.h).
+  onglets_fin: ${ modal_card_w | int - 102 }
+  onglets_zone: ${ [modal_card_w | int - 298, 952] | min }
+  # Colonnes du calendrier (kCalColPas, kCalColW, kCalColX0) : pas (172), case (168), x de
+  # la première (25), grille centrée dans la carte.
+  cal_col_pas: ${ (modal_card_w | int - 46) // 7 }
+  cal_col_w: ${ cal_col_pas | int - 4 }
+  cal_col_x0: ${ (modal_card_w | int - 7 * (cal_col_pas | int) + 4) // 2 }
+  # Lignes d'une pièce, popups Lumières et Volets (piece_ligne.yaml) : pas (92) et hauteur
+  # (84) ; cinq lignes à partir de y 50 de leur carte, les boutons de la pièce au-dessous.
+  piece_ligne_pas: ${ [92, (corps_h | int - 130) // 5] | min }
+  piece_ligne_h: ${ piece_ligne_pas | int - 8 }
   # Première ligne de la grille calendrier (modal_body_y + 30 px d'en-tête jours)
-  cal_grid_y: "102"
+  cal_grid_y: ${ modal_body_y | int + 30 }
   # Hauteur réservée à la grille, jusqu'à 10 px au-dessus de la légende (posée
   # à ${modal_bottom_y} du bas de la carte). cal_render_month() y répartit les
   # 4 à 6 semaines du mois et centre le tout. 528 sur le Tab5 : la carte modale moins
   # 162 px (102 au-dessus, 60 pour la légende et son air), suit la carte (ADR-0061).
   cal_grid_h: ${ modal_card_h | int - 162 }
   # Carte "Réponse" de l'assistant vocal : sous la carte "Votre demande"
-  # (modal_body_y + 104 px de haut + 12 px de respiration). Si modal_body_y
-  # change, recalculer cette valeur à la main (ESPHome ne fait pas d'arithmétique
-  # dans les substitutions) — sinon "Réponse" chevauche "Votre demande" sans
-  # qu'aucun garde-fou ne le détecte.
-  assist_resp_y: "188"
-  # Largeur des panneaux de la carte centrale (central_card, tab5-lvgl.yaml : 1198 px
-  # utiles = 1240 - 2 × 20 de marge - 2 × 1 de bordure) : boutons invisibles d'appui
-  # des panneaux (tab5-lvgl.yaml, ha_alert_panel.yaml) et réponse vocale longue. Le C++
-  # la reprend (kLargeurPanneauCentral, tab5_central.cpp) : tests/test_geometrie_partagee.py
-  # vérifie que les deux restent égales.
-  central_w: "1180"
+  # (modal_body_y + 104 px de haut + 12 px de respiration : 188). ESPHome 2026.9 calcule
+  # l'expression (lot 2 du portage) : elle suit modal_body_y.
+  assist_resp_y: ${ modal_body_y | int + 116 }
+  # Carte centrale de l'accueil (central_card, tab5-lvgl.yaml : x 20, 20 px des bords de
+  # l'écran, 1240 sur le Tab5) et largeur de ses panneaux (1180 : 1198 px utiles = 1240 -
+  # 2 × 20 de marge - 2 × 1 de bordure, arrondi) : boutons invisibles d'appui des panneaux
+  # (tab5-lvgl.yaml, central_bouton.yaml) et réponse vocale longue. Le C++ les reprend
+  # (kCentralCarteL, kPanneauCentralL, tab5_geometrie.h) : tests/test_geometrie_partagee.py
+  # vérifie que les deux côtés restent égaux.
+  central_carte_w: ${ carte_ecran_l | int - 40 }
+  central_w: ${ central_carte_w | int - 60 }
   # Accueil, cadres « Ok Nabu » (btn_ok_nabu, tab5-lvgl.yaml) et − / + (climate_controls_zone,
   # climate_card.yaml), en miroir, bas à y 308 (09/10/2026, demande d'Axel : 90 px, le
   # texte « nageait » dedans). Leur intérieur est une ligne de zone (ligne_zone_h) : la

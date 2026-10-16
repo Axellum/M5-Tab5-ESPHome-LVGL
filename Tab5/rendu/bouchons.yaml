@@ -141,6 +141,11 @@ text_sensor:
     id: sys_wifi_ip
     internal: true
     lambda: 'return {"127.0.0.1"};'
+  # Mesure de chaque capture (action rendu_capture), lue par tools/rendu/capturer.py.
+  - platform: template
+    id: rendu_mesure
+    name: "Rendu mesure"
+    update_interval: never
 
 button:
   - platform: template
@@ -197,6 +202,26 @@ api:
         - snapshot.take:
             id: tab5_display
             filename: !lambda 'return fichier;'
+        # Ce que montre la capture (Tab5/rendu/rendu_mesure.h, lot 2 du portage 1024×600) :
+        # « fichier|écran|coupés|hors écran ». L'écran est nommé comme « Écran courant »
+        # (tab5-navigation.yaml) ; un popup ouvert est mesuré seul.
+        - lambda: |-
+            if (!ModalRegistry::ready()) id(tab5_modal_registry_init).execute();
+            char ecran[64];
+            lv_obj_t* racine = nullptr;
+            if (!id(page_main)->is_showing()) {
+              const char* jeu = GameRegistry::open_name();
+              if (jeu != nullptr) snprintf(ecran, sizeof ecran, "Jeu · %s", jeu);
+              else snprintf(ecran, sizeof ecran, "Arcade");
+            } else {
+              const char* modal = ModalRegistry::visible_name();
+              snprintf(ecran, sizeof ecran, "%s", modal != nullptr ? modal : "Accueil");
+              if (modal != nullptr) racine = ModalRegistry::find(modal);
+            }
+            const RenduCoupes r = rendu_mesurer(racine);
+            char texte[160];
+            snprintf(texte, sizeof texte, "%s|%s|%d|%d", fichier.c_str(), ecran, r.coupes, r.hors);
+            id(rendu_mesure).publish_state(texte);
     # La carte centrale change de panneau toutes les 8 s (tab5_central_rotator_auto) :
     # une capture tombait parfois dans le fondu de 190 ms entre deux panneaux, ou sur
     # un autre panneau selon le nombre de tours déjà faits (vu le 27/09/2026, scène 2
@@ -299,6 +324,18 @@ api:
       description: "Rendu hors tablette : écrit tout de suite les préférences (choix gardés)."
       then:
         - lambda: 'global_preferences->sync();'
+    # Ouverture d'un écran sans le toucher (lot 2 du portage 1024×600, ADR-0061) : le même
+    # chemin que « Aller à l'écran » (tab5_ecran_ouvrir, la valeur de l'enum Ecran), mais
+    # aussi pour l'Arcade, qui n'est pas une option du select. tools/rendu/ecrans.py s'en
+    # sert sur une carte dont l'accueil cache le bouton qui ouvre l'écran (pour_carte).
+    - service: rendu_ecran
+      description: "Rendu hors tablette : ouvre l'écran `ecran` (valeur de l'enum Ecran, Arcade comprise)."
+      variables:
+        ecran: int
+      then:
+        - script.execute:
+            id: tab5_ecran_ouvrir
+            ecran: !lambda 'return ecran;'
     - service: rendu_glisser
       description: "Rendu hors tablette : geste de (x1, y1) à (x2, y2), en 10 pas de 30 ms."
       variables:

@@ -34,8 +34,8 @@ obj:
   id: roue_actions
   x: 0
   y: 0
-  width: 1280
-  height: 720
+  width: ${carte_ecran_l}
+  height: ${carte_ecran_h}
   hidden: true
   styles: style_invisible
   scrollable: false

@@ -65,7 +65,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               scrollable: false
               styles: style_invisible
               widgets:
@@ -75,7 +75,7 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 1202
+                    width: ${corps_w}
                     height: 150
                     styles: style_glass_card
                     scrollable: false
@@ -103,7 +103,7 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 166
-                    width: 1202
+                    width: ${corps_w}
                     height: 432
                     styles: style_glass_card
                     scrollable: false
@@ -113,7 +113,7 @@ obj:
                           align: TOP_LEFT
                           x: 18
                           y: 14
-                          width: 1166
+                          width: ${graphique_l}
                           height: 404
                           styles: style_transparent
                           scrollable: false
@@ -127,7 +127,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               hidden: true
               scrollable: false
               styles: style_invisible
@@ -136,8 +136,8 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 1202
-                    height: 598
+                    width: ${corps_w}
+                    height: ${corps_h}
                     styles: style_glass_card
                     scrollable: false
                     widgets:
@@ -147,7 +147,7 @@ obj:
                           align: TOP_LEFT
                           x: 18
                           y: 9
-                          width: 1166
+                          width: ${graphique_l}
                           height: 580
                           styles: style_transparent
                           scrollable: false
@@ -161,7 +161,7 @@ obj:
               x: 0
               y: ${modal_body_y}
               width: 100%
-              height: 598
+              height: ${corps_h}
               hidden: true
               scrollable: false
               styles: style_invisible
@@ -172,7 +172,7 @@ obj:
                     align: TOP_LEFT
                     x: 24
                     y: 0
-                    width: 1202
+                    width: ${corps_w}
                     height: 372
                     styles: style_glass_card
                     scrollable: false
@@ -184,7 +184,7 @@ obj:
                           align: TOP_LEFT
                           x: 18
                           y: 70
-                          width: 1166
+                          width: ${graphique_l}
                           height: 290
                           styles: style_transparent
                           scrollable: false

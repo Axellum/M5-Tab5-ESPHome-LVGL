@@ -65,19 +65,20 @@ obj:
               x: 24
               y: ${modal_body_y}
               width: 386
-              height: 598
+              height: ${corps_h}
               styles: style_glass_card
               scrollable: false
               widgets:
                 - label: { text: "AMPOULES", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-                # Une ligne par lumière de la pièce, 5 au plus (ADR-0023), 84 px tous les 92 :
+                # Une ligne par lumière de la pièce, 5 au plus (ADR-0023), 84 px tous les 92
+                # sur le Tab5 (jetons piece_ligne_h / piece_ligne_pas : à la carte ailleurs) :
                 # icône, nom, état, surbrillance et affichage posés par tab5_tuiles_popups.cpp.
-                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_0, icone_id: icon_light_sel_0, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 0, y: 50 } }
-                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_1, icone_id: icon_light_sel_1, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 1, y: 142 } }
-                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_2, icone_id: icon_light_sel_2, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 2, y: 234 } }
-                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_3, icone_id: icon_light_sel_3, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 3, y: 326 } }
-                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_4, icone_id: icon_light_sel_4, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 4, y: 418 } }
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_0, icone_id: icon_light_sel_0, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 0 } }
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_1, icone_id: icon_light_sel_1, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 1 } }
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_2, icone_id: icon_light_sel_2, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 2 } }
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_3, icone_id: icon_light_sel_3, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 3 } }
+                - !include { file: piece_ligne.yaml, vars: { id: btn_light_sel_4, icone_id: icon_light_sel_4, choisir: popup_lumiere_choisir, appui: popup_lumiere_ligne_appui, idx: 4 } }
 
                 # Tout éteindre — les lumières de la pièce affichée d'un coup (coucher) :
                 # pR / eteindre (ADR-0023), lumieres / eteindre en mode héritage (le
@@ -85,7 +86,7 @@ obj:
                 - button:
                     align: TOP_LEFT
                     x: 22
-                    y: 516
+                    y: ${ corps_h | int - 82 }   # 516 sur le Tab5, sous la 5e ligne sur toute carte
                     width: 342
                     height: 68
                     styles: style_clim_btn
@@ -101,7 +102,7 @@ obj:
               x: 426
               y: ${modal_body_y}
               width: 398
-              height: 598
+              height: ${corps_h}
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -161,7 +162,7 @@ obj:
               x: 840
               y: ${modal_body_y}
               width: 386
-              height: 598
+              height: ${corps_h}
               styles: style_glass_card
               scrollable: false
               widgets:

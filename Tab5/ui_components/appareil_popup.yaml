@@ -64,7 +64,7 @@ obj:
               x: 24
               y: ${modal_body_y}
               width: 800
-              height: 598
+              height: ${corps_h}
               styles: style_glass_card
               scrollable: false
               widgets:
@@ -118,7 +118,7 @@ obj:
               x: 840
               y: ${modal_body_y}
               width: 386
-              height: 598
+              height: ${corps_h}
               styles: style_glass_card
               scrollable: false
               widgets:

@@ -179,6 +179,8 @@ esphome:
     - Tab5/ecran/alarm_render.cpp
     # Doigt virtuel des captures (actions rendu_toucher / rendu_glisser des bouchons).
     - Tab5/rendu/rendu_doigt.h
+    # Mesure de chaque capture (action rendu_capture : écran affiché, objets coupés).
+    - Tab5/rendu/rendu_mesure.h
 
   # Ce que l'on_boot de tab5-ha-hmi.yaml fait pour l'INTERFACE, sans le matériel (délai
   # de l'expander, rétroéclairage, ampli, attente de HA, mot de réveil). Les lambdas

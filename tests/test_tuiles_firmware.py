@@ -481,7 +481,7 @@ def test_commandes_du_popup_du_volet_dans_le_contrat():
     adr = _commandes_de_l_adr()
     # Boutons : les commandes de tuile d'un volet, rien d'autre.
     popup = _lire("Tab5", "ui_components", "volet_popup.yaml")
-    boutons = re.findall(r"file: volet_btn\.yaml, vars: \{[^}]*appel: (\w+), commande: (\w+)", popup)
+    boutons = re.findall(r"file: volet_btn\.yaml, vars: \{[^\n]*?appel: (\w+), commande: (\w+)", popup)
     assert sorted(c for a, c in boutons if a == "popup_volet_commande") == ["arreter", "fermer", "ouvrir"]
     # Tout ouvrir / Tout fermer (ADR-0046) : la commande à chaque volet de la page.
     assert sorted(c for a, c in boutons if a == "popup_volets_tout") == ["fermer", "ouvrir"]

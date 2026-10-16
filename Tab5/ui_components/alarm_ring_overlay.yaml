@@ -49,7 +49,7 @@ obj:
     - label: { id: icon_alarm_ring, text: "\U000F0020", align: CENTER, y: -230, text_font: mdi_font_70, styles: style_text_accent }
     - label: { id: lbl_alarm_ring_time, text: "00:00", align: CENTER, y: -90, styles: style_police_horloge }
     - label: { id: lbl_alarm_ring_title, text: "Réveil", align: CENTER, y: 20, styles: [style_police_date, style_text_accent] }
-    - label: { id: lbl_alarm_ring_sub, text: "", align: CENTER, y: 75, width: 1100, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
+    - label: { id: lbl_alarm_ring_sub, text: "", align: CENTER, y: 75, width: "${ carte_ecran_l | int - 180 }", text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim }
 
     # ARRÊTER — action franche, glyphe teinté « erreur » pour être reconnue sans
     # lire, posée à gauche (là où tombe la main qui tape en premier).

@@ -192,7 +192,9 @@ def test_colonnes_dans_l_ordre_des_pieces_et_geometrie():
     assert geometrie["kCarteH"] == _jeton("modal_card_h")
     assert geometrie["kCorpsY"] == _jeton("modal_body_y")
     ligne = _lire("Tab5", "ui_components", "maison_ligne.yaml")
-    assert f"height: {_constexpr(cpp, 'kLigneH')}" in ligne.split("widgets:", 1)[0]
+    # Hauteur du YAML = celle du Tab5 ; disposer() la ramène à la carte (ADR-0061).
+    assert f"height: {_constexpr(cpp, 'kLigneHTab5')}" in ligne.split("widgets:", 1)[0]
+    assert "hauteur(ligne, kLigneH);" in disposer
     assert re.search(rf"x: {_constexpr(cpp, 'kTexteX')}, y: -15", ligne)
     plus = ligne.split("\n    - button:", 1)[1]
     assert "width: 36" in plus and "x: -12" in plus and "kPlusPlace = 36 + 12 + 8;" in cpp

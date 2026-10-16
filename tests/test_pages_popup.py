@@ -13,7 +13,9 @@ On vérifie :
   plus aucune copie dans les Réglages."""
 import re
 
-from tests.commun import TAB5, lire
+import pytest
+
+from tests.commun import CARTES, TAB5, geometrie_cpp, jeton, lire
 
 PAGES = TAB5 / "ecran" / "tab5_pages.cpp"
 
@@ -63,11 +65,22 @@ def test_geste_curseur_arc_et_lever_du_doigt():
     assert "lv_anim" not in _cpp()
 
 
-def _x_onglets(n: int) -> list[int]:
-    debut, fin = _constante("kOngletsDebut"), _constante("kOngletsFin")
+def _echelle(v: int, g: dict) -> int:
+    """onglet_echelle() de tab5_geometrie.h, pour la carte de `g`."""
+    zone = g["kOngletsFin"] - g["kOngletsDebutTab5"]
+    if zone >= g["kOngletsZoneTab5"]:
+        return v
+    return (v * zone + g["kOngletsZoneTab5"] // 2) // g["kOngletsZoneTab5"]
+
+
+def _x_onglets(n: int, carte: str = "tab5") -> tuple[list[int], int]:
+    """Places et largeur des onglets de n pages (pages_onglets), sur la carte."""
+    g = geometrie_cpp(carte)
+    debut, fin = _constante("kOngletsDebut"), g["kOngletsFinTab5"]
     ecart, largeur = _constante("kOngletEcart"), _constante("kOngletL")
-    w = min(largeur, (fin - debut - (n - 1) * ecart) // n)
-    return [fin - (n - i) * w - (n - 1 - i) * ecart for i in range(n)], w
+    w5 = min(largeur, (fin - debut - (n - 1) * ecart) // n)
+    xs5 = [fin - (n - i) * w5 - (n - 1 - i) * ecart for i in range(n)]
+    return [g["kOngletsFin"] - _echelle(fin - x, g) for x in xs5], _echelle(w5, g)
 
 
 def test_onglets_a_la_place_des_noms_des_reglages():
@@ -78,14 +91,32 @@ def test_onglets_a_la_place_des_noms_des_reglages():
     xs, w = _x_onglets(4)
     assert xs == reglages and w == 200
     # Largeur par défaut de reglages_onglet.yaml (le Réveil passe la sienne, `w`).
-    largeur = int(re.search(r"\n  width: \$\{ w \| default\((\d+)\) \}\n",
+    largeur = int(re.search(r"\n  width: \$\{ \(\(w \| default\((\d+)\) \| int\)",
                             lire(TAB5 / "ui_components" / "reglages_onglet.yaml")).group(1))
     assert largeur == w
     xs, w = _x_onglets(5)
-    assert xs[0] >= _constante("kOngletsDebut") and xs[-1] + w == _constante("kOngletsFin")
+    assert xs[0] >= _constante("kOngletsDebut") and xs[-1] + w == geometrie_cpp("tab5")["kOngletsFin"]
     assert w >= 150, "cinq noms de pièce lisibles"
-    # La croix (modal_header.yaml) : 80 px à 10 px du bord droit de la carte de 1250 px.
-    assert _constante("kOngletsFin") <= 1250 - 10 - 80 - 8
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_onglets_dans_la_carte(carte):
+    """Sur chaque carte (ADR-0061), les onglets finissent 8 px avant la croix (modal_header.yaml :
+    80 px à 10 px du bord droit de la carte) et ne passent pas sous le titre (x 196 au
+    moins sur le Tab5, réduit comme eux) ; sur le Tab5, rien ne bouge."""
+    g = geometrie_cpp(carte)
+    assert g["kOngletsFin"] == g["kCarteL"] - 10 - 80 - 12
+    debut = g["kOngletsFin"] - _echelle(g["kOngletsFinTab5"] - g["kOngletsDebutTab5"], g)
+    for n in (2, 3, 4, 5):
+        xs, w = _x_onglets(n, carte)
+        assert xs[-1] + w <= g["kOngletsFin"], (carte, n)
+        assert xs[0] >= debut, (carte, n)
+        assert w >= 100, (carte, n, "nom lisible")
+    if carte == "tab5":
+        assert g["kOngletsFin"] == g["kOngletsFinTab5"]
+    # Le YAML fait le même calcul (reglages_onglet.yaml : onglets_fin, onglets_zone).
+    assert jeton("onglets_fin", carte) == g["kOngletsFin"]
+    assert jeton("onglets_zone", carte) == min(g["kOngletsFin"] - g["kOngletsDebutTab5"], g["kOngletsZoneTab5"])
 
 
 def test_reglages_par_la_brique():

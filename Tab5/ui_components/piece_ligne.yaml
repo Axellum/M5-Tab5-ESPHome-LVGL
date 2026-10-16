@@ -16,7 +16,11 @@
 #        check_tab5_code_rules.py y retrouve la palette des tuiles, mdi_font_45), choisir et
 #        appui (fonctions de tab5_tuiles.h, sans parenthèses : popup_lumiere_choisir /
 #        popup_lumiere_ligne_appui, popup_volet_choisir / popup_volet_ligne_appui), idx (0-4,
-#        rang de la ligne, nombre NON quoté), y (position dans la carte).
+#        rang de la ligne, nombre NON quoté : il donne aussi sa place dans la carte).
+# Taille (lot 2 du portage 1024×600, ADR-0061) : lignes de ${piece_ligne_h} au pas de
+#   ${piece_ligne_pas} depuis y 50 (84 et 92 sur le Tab5, tab5-ui-tokens.yaml ; 61 et 69 sur
+#   la Waveshare 7B), pastille et textes ramenés à la hauteur de la ligne ; sur le Tab5 :
+#   les valeurs d'avant (pastille 60, textes à -15 et +21).
 # @architecture_constraint L'ORDRE des enfants est lu par tab5_tuiles_popups.cpp
 #   (ligne_widgets) : 0 pastille (son enfant 0 : l'icône), 1 nom, 2 état. Position,
 #   textes, couleurs, surbrillance et affichage : posés par le C++.
@@ -27,9 +31,9 @@ button:
   id: ${id}
   align: TOP_LEFT
   x: 22
-  y: ${y}
+  y: ${ 50 + idx * (piece_ligne_pas | int) }
   width: 342
-  height: 84
+  height: ${piece_ligne_h}
   pad_all: 0   # positions exactes des enfants (le thème ajoutait sa marge)
   hidden: true
   scrollable: false
@@ -43,9 +47,9 @@ button:
     - obj:
         align: LEFT_MID
         x: 12
-        width: 60
-        height: 60
-        radius: 30
+        width: ${ [60, piece_ligne_h | int - 8] | min }
+        height: ${ [60, piece_ligne_h | int - 8] | min }
+        radius: ${ [60, piece_ligne_h | int - 8] | min // 2 }
         styles: style_bg_dim
         bg_opa: 20%
         border_width: 0
@@ -59,5 +63,5 @@ button:
         widgets:
           - label: { id: "${icone_id}", text: "", align: CENTER, text_font: mdi_font_45, styles: style_text_dim }
     # 1 — nom (coupé avec « … »), 2 — état dans sa couleur.
-    - label: { text: "", align: LEFT_MID, x: 86, y: -15, text_font: roboto_32_b }
-    - label: { text: "", align: LEFT_MID, x: 86, y: 21, text_font: roboto_22, styles: style_text_dim }
+    - label: { text: "", align: LEFT_MID, x: 86, y: "${ 0 - ((piece_ligne_h | int) * 15 / 84) | round | int }", text_font: roboto_32_b }
+    - label: { text: "", align: LEFT_MID, x: 86, y: "${ ((piece_ligne_h | int) * 21 / 84) | round | int }", text_font: roboto_22, styles: style_text_dim }

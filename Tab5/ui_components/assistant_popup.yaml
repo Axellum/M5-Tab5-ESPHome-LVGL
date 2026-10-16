@@ -281,7 +281,7 @@ obj:
           - obj:
               align: BOTTOM_MID
               y: ${modal_bottom_y}
-              width: 1202
+              width: ${corps_w}
               height: 84
               styles: style_transparent
               scrollable: false

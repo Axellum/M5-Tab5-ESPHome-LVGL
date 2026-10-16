@@ -16,8 +16,12 @@
  * @carte Taille de l'écran par carte (ADR-0061) : TAB5_ECRAN_L, TAB5_ECRAN_H et
  *       TAB5_ROTATION viennent des build_flags de tab5-ha-hmi.yaml et de
  *       tab5-rendu-host.yaml, écrits d'après Tab5/paquets/geometrie-<carte>.yaml. Sans eux
- *       (tests compilés sur PC), les valeurs du Tab5. La carte modale en dérive ; le reste
- *       (corps des popups, graphiques) est encore au pixel pour 1280×720.
+ *       (tests compilés sur PC), les valeurs du Tab5. La carte modale en dérive, et depuis
+ *       le lot 2 du portage ce que les popups ont en commun : corps, graphiques, demi-cartes,
+ *       onglets d'en-tête, colonnes du calendrier, lignes des pièces, panneaux de la carte
+ *       centrale. La mise en page propre de chaque popup reste au pixel pour 1280×720.
+ *       Expressions : de l'arithmétique entière et au plus un `a ? b : c` par constante
+ *       (tests/commun.py les recalcule en Python, carte par carte).
  */
 #pragma once
 #include <cstdint>
@@ -56,14 +60,62 @@ constexpr int32_t kCorpsY = 72;
 constexpr int32_t kLecteurCarteL = 940;
 constexpr int32_t kLecteurCarteH = 536;
 
-// Corps des popups à cartes (energie_popup.yaml, historique_popup.yaml) : x 24..1226,
-// cartes séparées de 16 px ; zone de graphique de leur carte du bas (1166 px, 18 px de
-// marge de chaque côté) et largeur d'un libellé de son axe, texte centré.
+// Corps des popups (tab5-ui-tokens.yaml : corps_w, corps_h, graphique_l, demi_w, demi_x) :
+// x 24..1226 et y 72..670 sur le Tab5 (20 px d'air sous le corps), cartes séparées de 16 px ;
+// zone de graphique d'une carte pleine largeur (1166 px, 18 px de marge de chaque côté) et
+// largeur d'un libellé de son axe, texte centré ; deux demi-cartes côte à côte (589 px à
+// x 24 et 637, 24 px entre elles : Réglages, Réveil, console). Tout suit la carte modale
+// (lot 2 du portage 1024×600, ADR-0061).
 constexpr int32_t kCorpsX = 24;
 constexpr int32_t kCorpsW = kCarteL - 2 * kCorpsX;
+constexpr int32_t kCorpsH = kCarteH - kCorpsY - 20;
 constexpr int32_t kCartesEcart = 16;
-constexpr int32_t kGraphiqueL = 1166;
+constexpr int32_t kGraphiqueL = kCorpsW - 2 * 18;
 constexpr int32_t kAxeLibelleL = 120;
+constexpr int32_t kDemiL = (kCorpsW - 24) / 2;
+constexpr int32_t kDemiX = kCorpsX + kDemiL + 24;
+
+// Onglets d'en-tête (noms des pages, pages_onglet.yaml et reglages_onglet.yaml, ADR-0046) :
+// sur la ligne du titre, jusqu'à 8 px avant la croix (modal_header.yaml : 80 px à 10 px du
+// bord). Leur mise en page est celle du Tab5 (x 318 à 1148 ; le Réveil commence à 196) ;
+// sur une carte plus étroite, places et largeurs sont réduites du rapport des deux zones
+// (de 196 à la croix), à partir de la croix : onglet_x(), onglet_echelle(). Le YAML fait le
+// même calcul (onglets_fin, onglets_zone de tab5-ui-tokens.yaml). Sur le Tab5 : inchangés.
+constexpr int32_t kOngletsFin = kCarteL - 102;
+constexpr int32_t kOngletsFinTab5 = 1148;
+constexpr int32_t kOngletsDebutTab5 = 196;
+constexpr int32_t kOngletsZoneTab5 = kOngletsFinTab5 - kOngletsDebutTab5;
+
+// Une longueur de la mise en page des onglets du Tab5, ramenée à la carte (arrondie).
+constexpr int32_t onglet_echelle(int32_t v) {
+    return kOngletsFin - kOngletsDebutTab5 >= kOngletsZoneTab5
+               ? v
+               : (v * (kOngletsFin - kOngletsDebutTab5) + kOngletsZoneTab5 / 2) / kOngletsZoneTab5;
+}
+// Le x d'un onglet posé à `x_tab5` sur le Tab5, sur la carte : sa distance à la croix réduite.
+constexpr int32_t onglet_x(int32_t x_tab5) { return kOngletsFin - onglet_echelle(kOngletsFinTab5 - x_tab5); }
+
+// Colonnes de la grille du calendrier (cal_grid_build, tab5_calendar.cpp ; en-têtes « Lun »…
+// « Dim » de calendar_popup.yaml, jetons cal_col_*) : sept colonnes au pas de 172 px, cases de
+// 168, grille centrée dans la carte (x 25 sur le Tab5).
+constexpr int32_t kCalColPas = (kCarteL - 46) / 7;
+constexpr int32_t kCalColW = kCalColPas - 4;
+constexpr int32_t kCalColX0 = (kCarteL - 7 * kCalColPas + 4) / 2;
+
+// Lignes d'une pièce des popups Lumières et Volets (piece_ligne.yaml, ADR-0046 ; jetons
+// piece_ligne_*) : cinq au plus, à y 50 de leur carte, au pas de 92 (lignes de 84) sur le
+// Tab5 ; au-dessous, les boutons de la pièce (88 px du bas de la carte). Plus courtes si la
+// carte est moins haute.
+constexpr int32_t kPieceLignePasTab5 = 92;
+constexpr int32_t kPieceLignePasMax = (kCorpsH - 88 - 50 + 8) / 5;
+constexpr int32_t kPieceLignePas = kPieceLignePasMax < kPieceLignePasTab5 ? kPieceLignePasMax : kPieceLignePasTab5;
+constexpr int32_t kPieceLigneH = kPieceLignePas - 8;
+
+// Panneaux de la carte centrale de l'accueil (central_card, tab5-lvgl.yaml : x 20, 20 px
+// des bords de l'écran ; jetons central_carte_w et central_w) : largeur utile des panneaux,
+// 1180 sur le Tab5 (1240 - 2 × 20 de marge - 2 × 1 de bordure, arrondi).
+constexpr int32_t kCentralCarteL = kEcranL - 40;
+constexpr int32_t kPanneauCentralL = kCentralCarteL - 60;
 
 // Pièces (pages du bas) et tuiles par pièce (ADR-0023) : le blueprint en envoie autant.
 constexpr int kPieces = 5;

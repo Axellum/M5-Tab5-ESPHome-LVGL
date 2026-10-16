@@ -17,6 +17,7 @@
 #include "tab5_custom.h"
 #include "tab5_internal.h"
 #include "tab5_registry.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <array>
@@ -32,10 +33,10 @@
 
 static constexpr int32_t FORECAST_SWIPE_Y_MIN = 333;  // haut de central_card (tab5-lvgl.yaml)
 
-// Largeur des panneaux de la carte centrale : ${central_w} de tab5-ui-tokens.yaml,
-// recopiée ici (le C++ ne lit pas les substitutions) et tenue égale par
-// tests/test_geometrie_partagee.py.
-static constexpr int32_t kLargeurPanneauCentral = 1180;
+// Largeur des panneaux de la carte centrale : ${central_w} de tab5-ui-tokens.yaml, calculée
+// de même par kPanneauCentralL (tab5_geometrie.h, suit l'écran de la carte, ADR-0061) et
+// tenue égale par tests/test_geometrie_partagee.py.
+static constexpr int32_t kLargeurPanneauCentral = kPanneauCentralL;
 
 // Page de repos des previsions : journalier J0-J4, celle du boot
 // (CentralPanelCtx::forecast_page = 2) et celle ou la carte centrale reprend

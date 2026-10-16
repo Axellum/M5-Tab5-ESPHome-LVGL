@@ -14,6 +14,7 @@
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
 #include <ctime>
@@ -146,12 +147,10 @@ struct CalCellUI {
 static CalCellUI s_cal_cells[42] = {};
 static void (*s_cal_on_tap)(int) = nullptr;
 // Colonnes de la grille, lundi en tête : case c à x = kCalColX0 + c × kCalColPas, large
-// de kCalColW. Les en-têtes « Lun »…« Dim » de calendar_popup.yaml sont écrits sur les
-// mêmes colonnes (x et width en clair) : tests/test_geometrie_partagee.py vérifie qu'ils
-// restent alignés sur ces trois valeurs.
-static constexpr int32_t kCalColX0 = 25;
-static constexpr int32_t kCalColPas = 172;
-static constexpr int32_t kCalColW = 168;
+// de kCalColW (tab5_geometrie.h : 25, 172 et 168 sur le Tab5, à la taille de la carte
+// ailleurs, ADR-0061). Les en-têtes « Lun »…« Dim » de calendar_popup.yaml sont posés sur
+// les mêmes colonnes (jetons cal_col_*) : tests/test_geometrie_partagee.py vérifie, carte
+// par carte, qu'ils restent alignés sur ces trois valeurs.
 // Zone de la grille (${cal_grid_y} / ${cal_grid_h}) : cal_render_month() y répartit
 // les semaines du mois affiché.
 static int32_t s_cal_grid_y = 0;

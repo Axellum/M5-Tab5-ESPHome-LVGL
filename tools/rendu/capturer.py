@@ -71,6 +71,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from demo_pusher import _appeler, _donner_une_cle, _lire_cle_demo, _pousser_scene  # noqa: E402
 from ecrans import ECRANS, PORTRAITS, Aller, Attendre, Choisir, Glisser, Service, Toucher  # noqa: E402
 from scenarios import SCENES, build_zones_absentes  # noqa: E402
+from vers_carte import adapter  # noqa: E402
 
 logger = logging.getLogger("capturer")
 
@@ -160,12 +161,26 @@ def en_png(dossier: Path, rotation: int = 270) -> list[Path]:
     return pngs
 
 
+def lire_mesure(texte: str) -> tuple[str, dict] | None:
+    """« fichier|écran|coupés|hors » du capteur « Rendu mesure » (action rendu_capture,
+    Tab5/rendu/rendu_mesure.h) → (fichier, {ecran, coupes, hors}). Les noms d'écran (registre
+    des fenêtres, consoles) n'ont pas de « | ». Un texte mal formé : None."""
+    champs = texte.split("|")
+    if len(champs) != 4:
+        return None
+    fichier, ecran, coupes, hors = champs
+    try:
+        return fichier, {"ecran": ecran, "coupes": int(coupes), "hors": int(hors)}
+    except ValueError:
+        return None
+
+
 class Rendu:
     """Connexion au rendu : services, selects, captures et contrôle des doublons."""
 
     def __init__(self, client, entites, services, dossier: Path, suffixe: str,
                  bascule: str | None = None):
-        from aioesphomeapi import SelectInfo
+        from aioesphomeapi import SelectInfo, TextSensorInfo
 
         self.client = client
         self.services = {s.name: s for s in services}
@@ -175,6 +190,19 @@ class Rendu:
         self.bascule = bascule
         self.empreintes: dict[str, str] = {}
         self.alertes: list[str] = []
+        # Ce que chaque capture montre (écran affiché, objets coupés), publié par le rendu
+        # juste après la capture ; et la capture identique qui la précède, s'il y en a une.
+        self.ordre: list[str] = []
+        self.mesures: dict[str, dict] = {}
+        self.doublons: dict[str, str] = {}
+        cle = next((e.key for e in entites if isinstance(e, TextSensorInfo) and e.name == "Rendu mesure"), None)
+        if cle is not None:
+            def recevoir(etat) -> None:
+                if getattr(etat, "key", None) == cle and getattr(etat, "state", ""):
+                    lu = lire_mesure(etat.state)
+                    if lu:
+                        self.mesures[lu[0]] = lu[1]
+            client.subscribe_states(recevoir)
 
     async def appeler(self, nom: str, **data) -> None:
         await _appeler(self.client, self.services, nom, **data)
@@ -184,6 +212,7 @@ class Rendu:
 
     async def capturer(self, nom: str) -> None:
         fichier = f"{nom}-{self.suffixe}" if self.suffixe else nom
+        self.ordre.append(fichier)
         if self.bascule:
             self.choisir(SELECT_MODE_THEME, self.bascule)
             await asyncio.sleep(ATTENTE_BASCULE)
@@ -199,7 +228,18 @@ class Rendu:
         empreinte = hashlib.sha256(bmp.read_bytes()).hexdigest()
         if empreinte in self.empreintes:
             self.alerter(f"{fichier} : identique à {self.empreintes[empreinte]} (l'appui n'a rien ouvert ?)")
+            self.doublons[fichier] = self.empreintes[empreinte]
         self.empreintes.setdefault(empreinte, fichier)
+
+    def ecrire_bilan(self, chemin: Path) -> None:
+        """Une entrée par capture : écran affiché, objets coupés et hors écran (None si le
+        rendu ne l'a pas publié) et la capture identique qui la précède (tools/rendu/bilan_carte.py)."""
+        import json
+
+        bilan = {n: {**self.mesures.get(n, {"ecran": None, "coupes": None, "hors": None}),
+                     "doublon_de": self.doublons.get(n)} for n in self.ordre}
+        chemin.write_text(json.dumps(bilan, ensure_ascii=False, indent=1), encoding="utf-8")
+        logger.info("Bilan des captures : %s (%d)", chemin, len(bilan))
 
     def alerter(self, texte: str) -> None:
         logger.warning(texte)
@@ -249,7 +289,7 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
                    seulement: set[str] | None, langue: str | None = None,
                    bascule: str | None = None, puis_mode_theme: str | None = None,
                    sans_jeux: bool = False, galerie: bool = False, galerie_un: str | None = None,
-                   puis_theme: str | None = None, preparer: bool = False) -> list[str]:
+                   puis_theme: str | None = None, preparer: bool = False, carte: str = "tab5") -> list[str]:
     from aioesphomeapi import APIClient
 
     cle = _lire_cle_demo() or await _donner_une_cle(hote)
@@ -305,13 +345,19 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
             if sans_jeux and ecran.nom.startswith("jeu-"):
                 continue
             logger.info("Écran : %s", ecran.nom)
-            for etape in ecran.etapes:
+            # Sur une autre carte que le Tab5, les mêmes gestes ramenés à son écran
+            # (tools/rendu/vers_carte.py) ; sur le Tab5, les étapes telles quelles.
+            etapes, fermer, retirees = adapter(ecran, carte)
+            for etape in retirees:
+                logger.warning("%s : %r hors de l'écran de la carte, retiré", ecran.nom, etape)
+            for etape in etapes:
                 await rendu.jouer(etape)
             await asyncio.sleep(ecran.attente)
             await rendu.capturer(ecran.nom)
-            for etape in ecran.fermer:
+            for etape in fermer:
                 await rendu.jouer(etape)
             await rendu.accueil()
+        rendu.ecrire_bilan(dossier / (f"ecrans-{carte}" + (f"-{suffixe}" if suffixe else "") + ".json"))
         if puis_mode_theme:
             logger.info("Thème -> %s, préférences enregistrées", puis_mode_theme)
             rendu.choisir(SELECT_MODE_THEME, puis_mode_theme)
@@ -352,10 +398,11 @@ def main() -> int:
                         help="avec la galerie : choisit ce thème à la fin et enregistre les préférences")
     parser.add_argument("--preparer", action="store_true",
                         help="aucune capture : seulement --puis-theme / --puis-mode-theme")
-    parser.add_argument("--carte", default="tab5",
-                        help="carte du rendu (tab5, waveshare-7b) : rotation des PNG (ADR-0061)")
     parser.add_argument("--liste-galerie", action="store_true",
                         help="écrit « nom|fichier|mode » de chaque capture de la galerie et s'arrête")
+    parser.add_argument("--carte", default="tab5",
+                        help="carte du rendu (tab5, waveshare-7b ; `-s tab5_carte` de sa compilation),"
+                             " qui fixe aussi la rotation des PNG (ADR-0061)")
     args = parser.parse_args()
 
     if args.liste_galerie:
@@ -365,7 +412,7 @@ def main() -> int:
     alertes = asyncio.run(capturer(args.host, args.dossier, args.suffixe, args.puis_langue,
                                    set(args.seulement) if args.seulement else None, args.langue,
                                    args.bascule, args.puis_mode_theme, args.sans_jeux,
-                                   args.galerie, args.galerie_un, args.puis_theme, args.preparer))
+                                   args.galerie, args.galerie_un, args.puis_theme, args.preparer, args.carte))
     if args.langue or args.preparer:
         return 0
     pngs = en_png(args.dossier, rotation_carte(args.carte))

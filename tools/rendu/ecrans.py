@@ -304,10 +304,11 @@ def roue_dessous(ya: int) -> bool:
 
 
 def _roue_disposer(xa: int, ya: int, n: int, rayon: int, pas: int, centre: int, r: int,
-                   dessous: bool) -> list[tuple[int, int, int]]:
+                   dessous: bool, ecran: tuple[int, int] = ROUE_ECRAN) -> list[tuple[int, int, int]]:
     """(x, y, angle) des n boutons, dans le sens horaire (de gauche à droite tant que
-    l'éventail n'a pas pivoté) : disposer() de tab5_roue.cpp."""
-    largeur, hauteur = ROUE_ECRAN
+    l'éventail n'a pas pivoté) : disposer() de tab5_roue.cpp. `ecran` : celui de la carte
+    (tools/rendu/vers_carte.py), le Tab5 par défaut."""
+    largeur, hauteur = ecran
     decalage = 0
     for _ in range(180 // ROUE_PIVOT + 1):
         centres = []
@@ -332,18 +333,19 @@ def _roue_disposer(xa: int, ya: int, n: int, rayon: int, pas: int, centre: int, 
              min(max(y, ROUE_MARGE + r), hauteur - ROUE_MARGE - r), a) for x, y, a in centres]
 
 
-def roue_centres(xa: int, ya: int, n: int) -> list[tuple[int, int]]:
+def roue_centres(xa: int, ya: int, n: int, ecran: tuple[int, int] = ROUE_ECRAN) -> list[tuple[int, int]]:
     """Centres des n boutons du premier anneau autour de l'ancre (xa, ya)."""
     return [(x, y) for x, y, _ in _roue_disposer(xa, ya, n, ROUE_RAYON, ROUE_PAS_ANGLE, 90,
-                                                  ROUE_DIAMETRE // 2, roue_dessous(ya))]
+                                                  ROUE_DIAMETRE // 2, roue_dessous(ya), ecran)]
 
 
-def roue_choix_centres(xa: int, ya: int, n: int, famille: int, m: int) -> list[tuple[int, int]]:
+def roue_choix_centres(xa: int, ya: int, n: int, famille: int, m: int,
+                       ecran: tuple[int, int] = ROUE_ECRAN) -> list[tuple[int, int]]:
     """Centres des m choix du second anneau, déplié au-dessus du bouton `famille` des n du
     premier."""
-    a = _roue_disposer(xa, ya, n, ROUE_RAYON, ROUE_PAS_ANGLE, 90, ROUE_DIAMETRE // 2, roue_dessous(ya))[famille][2]
+    a = _roue_disposer(xa, ya, n, ROUE_RAYON, ROUE_PAS_ANGLE, 90, ROUE_DIAMETRE // 2, roue_dessous(ya), ecran)[famille][2]
     return [(x, y) for x, y, _ in _roue_disposer(xa, ya, m, ROUE_RAYON2, ROUE_PAS_ANGLE2, a,
-                                                  ROUE_DIAMETRE2 // 2, roue_dessous(ya))]
+                                                  ROUE_DIAMETRE2 // 2, roue_dessous(ya), ecran)]
 
 
 def roue_reglages(tuile: tuple[int, int], n: int) -> Toucher:

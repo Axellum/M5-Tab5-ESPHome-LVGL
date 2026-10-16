@@ -30,6 +30,7 @@
  *       pages (vu sur le carrousel des clims dans le rendu du 09/10/2026).
  */
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "lvgl.h"
 
 #include <algorithm>
@@ -37,13 +38,20 @@
 namespace {
 
 // Onglets d'en-tête (pages_onglet.yaml, reglages_onglet.yaml) : sur la ligne du titre de
-// la carte modale, de x = 318 (après l'icône et le titre) à 1148 (8 px avant la croix,
-// modal_header.yaml), 10 px entre deux, 200 px au plus ; le nom à 8 px des bords.
+// la carte modale du Tab5, de x = 318 (après l'icône et le titre) à 1148 (8 px avant la
+// croix, modal_header.yaml), 10 px entre deux, 200 px au plus ; le nom à 8 px des bords.
+// Sur une carte plus étroite, ces places sont ramenées à la carte depuis la croix
+// (onglet_x, onglet_echelle : tab5_geometrie.h, ADR-0061), comme celles des Réglages.
 constexpr int32_t kOngletsDebut = 318;
-constexpr int32_t kOngletsFin = 1148;
 constexpr int32_t kOngletEcart = 10;
 constexpr int32_t kOngletL = 200;
 constexpr int32_t kOngletMarge = 8;
+
+// Largeur d'un onglet de n pages, sur la carte du Tab5.
+int32_t largeur_tab5(int n) {
+    if (n < 1) return kOngletL;
+    return std::min(kOngletL, (kOngletsFinTab5 - kOngletsDebut - (n - 1) * kOngletEcart) / n);
+}
 
 // LV_EVENT_GESTURE du popup (pages_brancher). LVGL l'émet pendant l'appui, dès que le
 // doigt a parcouru gesture_min_distance (lv_indev.c, indev_gesture), comme pour les
@@ -101,22 +109,20 @@ void choix_peindre(lv_obj_t* const* boutons, int n, int actif) {
     }
 }
 
-int32_t pages_onglet_largeur(int n) {
-    if (n < 1) return kOngletL;
-    return std::min(kOngletL, (kOngletsFin - kOngletsDebut - (n - 1) * kOngletEcart) / n);
-}
+int32_t pages_onglet_largeur(int n) { return onglet_echelle(largeur_tab5(n)); }
 
 void pages_onglets(lv_obj_t* const* onglets, int max, const char* const* noms, int n, int courante) {
     const bool montres = n >= 2;
-    const int32_t w = pages_onglet_largeur(n);
+    const int32_t w5 = largeur_tab5(n);
+    const int32_t w = onglet_echelle(w5);
     for (int i = 0; i < max; i++) {
         lv_obj_t* const b = onglets[i];
         const bool visible = montres && i < n;
         ui_hidden(b, !visible);
         if (!visible || b == nullptr) continue;
         // Collés à la croix, de droite à gauche : quatre pages tombent sur les noms des
-        // Réglages ; cinq se partagent la place (158 px).
-        ui_x(b, kOngletsFin - (n - i) * w - (n - 1 - i) * kOngletEcart);
+        // Réglages ; cinq se partagent la place (158 px sur le Tab5).
+        ui_x(b, onglet_x(kOngletsFinTab5 - (n - i) * w5 - (n - 1 - i) * kOngletEcart));
         lv_obj_set_width(b, w);  // LVGL 9.5.0 compare lui-même (lv_obj_pos.c)
         if (noms != nullptr && noms[i] != nullptr) texte_ha_coupe(lv_obj_get_child(b, 0), noms[i], w - 2 * kOngletMarge);
     }

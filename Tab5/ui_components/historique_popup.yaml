@@ -60,7 +60,7 @@ obj:
               align: TOP_LEFT
               x: 24
               y: 238
-              width: 1202
+              width: ${corps_w}
               height: 432
               styles: style_glass_card
               scrollable: false
@@ -77,7 +77,7 @@ obj:
                     align: TOP_LEFT
                     x: 18
                     y: 72
-                    width: 1166
+                    width: ${graphique_l}
                     height: 344
                     styles: style_transparent
                     scrollable: false

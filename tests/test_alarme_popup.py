@@ -18,7 +18,7 @@ voit pas.
 import re
 
 import yaml
-from tests.commun import BaseChargeur, lire
+from tests.commun import BaseChargeur, _jetons, lire, resoudre
 
 CARTE_L, CARTE_H = 1250, 690          # ${modal_card_w} × ${modal_card_h}
 CROIX_X = CARTE_L - 10 - 80            # modal_header.yaml : croix de 80 px à 10 px du bord
@@ -181,7 +181,7 @@ def _boite(widget):
         largeur = v.get(lv) if lv else fixe[0]
         hauteur = v.get(hv) if hv and hv in v else (fixe[1] if fixe else None)
         x = 17 if inc["file"] == "reglages_rangee.yaml" else v.get("x")
-        return int(x), int(v["y"]), int(largeur), int(hauteur)
+        return _n(x), _n(v["y"]), _n(largeur), _n(hauteur)
     (_, props), = widget.items()
     if not isinstance(props, dict) or props.get("align") != "TOP_LEFT":
         return None
@@ -190,16 +190,21 @@ def _boite(widget):
     return props["x"], props["y"], props["width"], props["height"]
 
 
+def _n(valeur):
+    """Un nombre du YAML, littéral ou jeton (`${corps_h}`, `${demi_w}`…), pour le Tab5."""
+    return int(resoudre(valeur, _jetons("tab5")))
+
+
 def test_tout_tient_dans_sa_carte():
     cartes = 0
     for page in _popup()["obj"]["widgets"][1]["obj"]["widgets"]:
         props = page.get("obj") if isinstance(page, dict) else None
         if not props or not str(props.get("id", "")).startswith("alarm_page_"):
             continue
-        assert props["y"] == "${modal_body_y}" and CORPS_Y + props["height"] <= CARTE_H - 20, props["id"]
+        assert props["y"] == "${modal_body_y}" and CORPS_Y + _n(props["height"]) <= CARTE_H - 20, props["id"]
         for carte in props["widgets"]:
             c = carte["obj"]
-            assert c["x"] + c["width"] <= CARTE_L - 24 and c["height"] == props["height"], props["id"]
+            assert _n(c["x"]) + _n(c["width"]) <= CARTE_L - 24 and _n(c["height"]) == _n(props["height"]), props["id"]
             cartes += 1
             for enfant in c["widgets"]:
                 boite = _boite(enfant)
@@ -207,7 +212,7 @@ def test_tout_tient_dans_sa_carte():
                     continue
                 x, y, largeur, hauteur = boite
                 assert x >= 16 and y >= 14, (props["id"], enfant)
-                assert x + largeur <= c["width"] - 16 and y + hauteur <= c["height"] - 14, (props["id"], enfant)
+                assert x + largeur <= _n(c["width"]) - 16 and y + hauteur <= _n(c["height"]) - 14, (props["id"], enfant)
     assert cartes == 8, "Heure, Sonnerie, Annonces : deux cartes ; Jours, Ouverture : une"
 
 
