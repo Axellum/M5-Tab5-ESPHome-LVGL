@@ -28,10 +28,11 @@ If you introduce a new non-obvious constraint, add or extend the relevant `[AI-C
 ## Build & verify
 
 ```bash
-# Compile — must succeed before any commit. Toolchain is cached locally (~20-45s).
+# Compile — must succeed before any commit. Toolchain is cached locally (about 1-3 min incremental, about 5 min after a clean).
 python -m esphome compile tab5-ha-hmi.yaml
 ```
 
+- **Second board, the Waveshare ESP32-P4 7B** (1024×600, experimental, [ADR-0061](docs/decisions/0061-board-and-screen-size.md), [`docs/waveshare-7b.md`](docs/waveshare-7b.md)): `python -m esphome -s tab5_carte waveshare-7b compile tab5-ha-hmi.yaml`, ESPHome **2026.9.1** at least (a `static_assert` in `Tab5/ecran/carte_7b_version.h` stops an older one). First flash over USB, not from the install page. Its off-device render is the `rendu-1024x600` artifact (job `rendu-7b`): its JSON counts, per screen, the objects cut by or outside the screen (compare with the Tab5's own counts: some popups clip on both); the games and the Energy « Bilan » page are not laid out for 1024×600 yet.
 - If you modified a file included via `!include` (anything in `Tab5/ui_components/`), run `esphome clean` before the next `esphome run` — stale build cache is a known ESPHome trap.
 - Compare the reported `config_hash` before/after a refactor that should be behavior-neutral — identical hash is the standard proof of "no functional change" used across this project's PR history.
 - OTA-flashing the real device is a deliberate, human-authorized action, not a default step of a coding task — only do it if explicitly asked. If you do: confirm afterward via the device's own diagnostic entities (`ha_api_status`, boot time on `Tab5 Uptime` unchanged after the flash's own reboot, no reboot) rather than assuming success.
@@ -111,6 +112,9 @@ Not enforced by a test, but every change is judged against them on the real scre
 - **Voice and screen say short sentences**, never an entity ID, a code or a raw HA state.
 - The screen must come back on by itself after an OTA or a reboot.
 - **Single source**: one reused component or builder rather than N copies (rule 5).
+- **Set from Home Assistant, with the mouse**: a new choice goes into the blueprint or a « Tab5 · » list, with a help sentence, rather than a substitution to compile.
+- **Wheels and pages**: a quick action goes on a wheel ([ADR-0036](docs/decisions/0036-quick-action-wheel.md)), a popup with several views gets pages swiped left / right ([ADR-0046](docs/decisions/0046-popups-a-pages.md)).
+- **Prettier first**: a visible improvement wins over a small performance gain; measure before trading one for the other.
 
 ## Boundaries — do not
 
