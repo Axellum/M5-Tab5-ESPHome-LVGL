@@ -13,7 +13,8 @@ le câblage YAML hors tablette : ce fichier le relit.
 - la séquence on_boot de tab5-ha-hmi.yaml ([AI-WARNING-CRITICAL], ADR-0005) ne reçoit que
   des marques (accord d'Axel du 10/10/2026) : la lambda du delay(1000) reste seule et
   telle quelle, les trois entrées d'origine gardent leur priorité et leur rang, les
-  entrées ajoutées ne font que marquer, à des priorités qu'aucune autre n'a ;
+  entrées ajoutées ne font que marquer, à des priorités qu'aucune autre n'a, sauf la
+  barre de chargement (accord d'Axel du 16/10/2026), appelée après la marque ;
 - les capteurs sont des text_sensor de diagnostic, publiés par un seul script."""
 import re
 
@@ -29,6 +30,9 @@ HORS_YAML = {"CTOR": "tab5_demarrage.cpp", "ORDO": RACINE}
 # rétroéclairage, qui peuvent tomber dans une attente de setup()) ne publient pas.
 PUBLIENT = {"IMAGE", "TARD", "WIFI", "API", "FIN600", "CHARGEUR"}
 HA_MAX = 255
+# Barre de chargement (16/10/2026, accord d'Axel) : seul autre appel admis dans les entrées
+# de la chronologie, toujours APRÈS leur marque (test_barre_de_chargement_dans_l_on_boot).
+BARRE = re.compile(r"^(?:if \()?barre_demarrage_\w+\(")
 
 
 def _yaml(chemin):
@@ -116,7 +120,8 @@ def test_on_boot_des_marques_seulement():
 
     def sans_marques(actions):
         return [a for a in actions
-                if not ("lambda" in a and all(marque.match(l.strip()) for l in str(a["lambda"]).strip().splitlines()))]
+                if not ("lambda" in a and (all(marque.match(l.strip()) for l in str(a["lambda"]).strip().splitlines())
+                                           or BARRE.match(str(a["lambda"]).strip())))]
 
     # La lambda bloquante reste seule et telle quelle ; marques avant et après.
     p700 = entrees[0]["then"]
@@ -134,11 +139,28 @@ def test_on_boot_des_marques_seulement():
     # Une marque d'on_boot = une ligne qui marque, et au plus la publication.
     for e in entrees:
         for a in e["then"]:
-            if "lambda" in a and "demarrage_" in str(a["lambda"]):
+            if "lambda" in a and re.search(r"(?<!\w)demarrage_", str(a["lambda"])):
                 for ligne in str(a["lambda"]).strip().splitlines():
                     ligne = ligne.strip()
                     assert marque.match(ligne), ligne
                     assert "id(" not in ligne or ligne.endswith(f") {PUBLIER}"), ligne
+
+
+def test_barre_de_chargement_dans_l_on_boot():
+    """La barre s'ouvre à 500 (dalle prête), avance à 399 puis 249, se ferme au début de
+    -100 : avant la première image de LVGL, qui suit setup(). Chaque appel après la marque."""
+    par_priorite = {e["priority"]: [str(a.get("lambda", "")).strip() for a in e["then"]] for e in _on_boot()}
+    appels = {p: [l for l in ls if BARRE.match(l)] for p, ls in par_priorite.items()}
+    assert {p: len(a) for p, a in appels.items() if a} == {500: 1, 399: 1, 249: 1, -100: 1}, appels
+    assert appels[500][0].startswith("if (barre_demarrage_ouvrir(id(tab5_display))) {")
+    assert appels[399] == ["barre_demarrage_etape(1);"]
+    assert appels[249] == ["barre_demarrage_etape(2);"]
+    assert par_priorite[-100][:2] == ["demarrage_marquer(EtapeDemarrage::FIN);", "barre_demarrage_fermer();"]
+    for p in (500, 399, 249):
+        assert par_priorite[p][0].startswith("demarrage_marquer("), p
+    # Deux étapes de plus que l'ouverture : autant que de jalons (Tab5/socle/tab5_barre.h).
+    jalons = re.search(r"kJalons\[\]\s*=\s*\{(.*?)\n\};", source("tab5_barre.h").read_text(encoding="utf-8"), re.S)
+    assert jalons and len(re.findall(r"^\s*\{", jalons.group(1), re.M)) == 3
 
 
 def test_marques_de_setup_sans_publication():
