@@ -126,12 +126,12 @@ def test_esp_idf_recopie():
     assert (w["variant"], w["engineering_sample"], w["flash_size"]) == ("esp32p4", False, "32MB")
 
 
-DALLE_ALLUMEE = {"lambda": "dalle_afficher(id(tab5_display), true);"}
-DALLE_ETEINTE = {"lambda": "dalle_afficher(id(tab5_display), false);"}
+DALLE_ALLUMEE = {"lambda": "dalle_noire(false);"}
+DALLE_ETEINTE = {"lambda": "dalle_noire(true);"}
 
 
 def _sans_dalle(entree):
-    """Le rétroéclairage de la 7B, sans les deux commandes de sa dalle (tab5_dalle_7b.cpp)."""
+    """Le rétroéclairage de la 7B, sans les deux lignes de son voile noir (tab5_dalle_7b.cpp)."""
     copie = dict(entree)
     for cle in ("on_turn_on", "on_turn_off"):
         copie[cle] = [a for a in copie.get(cle, []) if a not in (DALLE_ALLUMEE, DALLE_ETEINTE)]
@@ -148,15 +148,16 @@ def test_entrees_recopiees(composant, cid):
 
 
 def test_dalle_de_la_7b_suit_le_retroeclairage():
-    # Allumée avant que LVGL reprenne, éteinte après sa pause : jamais d'image sur une dalle éteinte.
+    # Voile dessiné juste avant que LVGL se fige (sinon la dernière image reste visible), retiré
+    # avant qu'il reprenne.
     lumiere = _par_id(_b7()["light"], "backlight")
     assert lumiere["on_turn_on"][0] == DALLE_ALLUMEE
-    assert lumiere["on_turn_off"][-1] == DALLE_ETEINTE
-    assert lumiere["on_turn_off"][-2] == {"lvgl.pause": None}
+    assert lumiere["on_turn_off"][-1] == {"lvgl.pause": None}
+    assert lumiere["on_turn_off"][-2] == DALLE_ETEINTE
     inclus = _b7()["esphome"]["includes"]
     assert "Tab5/ecran/tab5_dalle_7b.h" in inclus and "Tab5/ecran/tab5_dalle_7b.cpp" in inclus
     # Le Tab5 n'en sait rien.
-    assert "dalle_afficher" not in lire("Tab5", "paquets", "tab5-hardware.yaml")
+    assert "dalle_noire" not in lire("Tab5", "paquets", "tab5-hardware.yaml")
 
 
 def test_toucher_recopie():
