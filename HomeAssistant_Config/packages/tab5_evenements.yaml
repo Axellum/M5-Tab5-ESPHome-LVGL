@@ -175,6 +175,7 @@ automation:
                       variables:
                         annee: "{{ trigger.event.data.annee | default('') | string }}"
                         mois: "{{ trigger.event.data.mois | default('') | string }}"
+                        appareil: "{{ trigger.event.data.device_id | default('', true) | string }}"
 
           - alias: "Calendrier : un jour (réponse tab5_maj_calendrier_jour)"
             conditions:
@@ -189,6 +190,7 @@ automation:
                     data:
                       variables:
                         date: "{{ trigger.event.data.date | default('') | string }}"
+                        appareil: "{{ trigger.event.data.device_id | default('', true) | string }}"
 
           - alias: "Alerte lue (bandeau info ou alerte HA touché à l'écran)"
             conditions:

@@ -20,7 +20,7 @@ from tests.test_meteo_sans_meteo_france import (
     ISTANBUL, MAINTENANT, _action, _entrees, _maison, _paquet, _poussee, _rendre)
 
 AGENDA = "calendar.travail"
-JOURS = "esphome.tab5_ha_hmi_tab5_maj_previsions_jours_bulk"
+JOURS = "esphome.{{ tablette }}_tab5_maj_previsions_jours_bulk"
 
 EVENEMENTS = [
     # Journée entière du 03 seul : le 04 (sa fin) n'est PAS travaillé.
@@ -82,7 +82,7 @@ def test_reveil_lit_les_evenements_par_les_macros():
     sautée, événement de travail exclu."""
     etats, env = _maison()[:2]
     script = _paquet("tab5_reveil.yaml")["script"]["tab5_rdv_prochains"]
-    modele = _action(script["sequence"], "esphome.tab5_ha_hmi_tab5_maj_rdv_prochains")["data"]["payload"]
+    modele = _action(script["sequence"], "esphome.{{ tablette }}_tab5_maj_rdv_prochains")["data"]["payload"]
     rdv = "calendar.famille"
     ev = {rdv: {"events": [
         {"start": "2026-10-03T09:15:00+03:00", "end": "2026-10-03T10:00:00+03:00", "summary": "Dentiste | contrôle"},
