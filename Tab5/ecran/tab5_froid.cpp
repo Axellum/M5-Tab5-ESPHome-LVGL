@@ -386,8 +386,10 @@ void peindre_popup() {
     ui_hidden(u.attente, !vide);
     ui_hidden(u.conseil, !(s_recu && s_n == 0));
     if (vide) ui_text(u.attente, s_recu ? tr("Aucun appareil déclaré") : tr("En attente de Home Assistant"));
+    // Le chemin des menus de HA, pour qui n'a pas le tableau de bord du projet (17/10/2026) :
+    // « > » et non « → », absent des polices.
     if (s_recu && s_n == 0) {
-        ui_text(u.conseil, tr("Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."));
+        ui_text(u.conseil, tr("Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs »."));
     }
     for (int i = s_n; i < kFroidCartes; i++) ui_hidden(u.carte[i], true);
     if (vide) return;
