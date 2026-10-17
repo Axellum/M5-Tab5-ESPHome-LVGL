@@ -85,5 +85,7 @@ void cal_show_day_detail_loading(lv_obj_t* day_popup, lv_obj_t* lbl_title,
 void cal_render_day_detail(const std::string& payload, lv_obj_t* lbl_status,
     CalDetailLineUI lines[6]);
 
-// Styles partagés des cases du calendrier (créés à la construction de la grille).
+// Styles partagés des cases du calendrier (créés à la construction de la grille) : leurs
+// couleurs seules, sans rafraîchir les cases ; le redessin est celui de la bascule de thème
+// (theme_bascule_debut, tab5_theme.cpp).
 void cal_styles_repeindre();
