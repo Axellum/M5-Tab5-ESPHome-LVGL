@@ -57,6 +57,19 @@ esphome:
   # (le job CI build-min compile à ce plancher). Pas cherché si une version plus
   # ancienne les connaît tous.
   min_version: 2026.9.0
+  # Une macro de LV_DEFINES (que lv_conf.h, écrit par ESPHome, met sinon à 0) passe par
+  # ICI : ESPHome 2026.9.0 ne lit que platformio_options pour l'écarter de lv_conf.h
+  # (esphome: build_flags seulement depuis 2026.9.1, #19743). Clé dépréciée, retirée en
+  # 2026.12.0 : avant, plancher à 2026.9.1 et ligne déplacée dans build_flags ci-dessous
+  # (un #error de tab5_cameras.cpp arrête le build si elle se perd).
+  platformio_options:
+    build_flags:
+      # Images RGB565 réduites ou recolorées (17/10/2026, discussion #278) : caméras
+      # (cadre et vignettes plus petits que l'image de HA, vignette appuyée), pochettes
+      # du lecteur en COVER. lv_draw_sw_transform les convertit en RGB565A8 ; ESPHome
+      # ne l'active que pour une `image:` RGB565 transparente, et sans lui LVGL écrit
+      # « Color format 0x12 is not enabled » et dessine un tampon non initialisé.
+      - -DLV_DRAW_SW_SUPPORT_RGB565A8=1
   # Réglages LVGL : ESPHome compile LVGL avec -DLV_KCONFIG_IGNORE, donc un
   # CONFIG_LV_* du sdkconfig n'a aucun effet ; une macro absente de ses LV_DEFINES
   # passe par ici.
@@ -78,6 +91,12 @@ esphome:
     - -DTAB5_ECRAN_H=${carte_ecran_h}
     - -DTAB5_ROTATION=${carte_rotation}
     - -DTAB5_POLICE_PCT=${police_pct}
+    # Extinction de la dalle avec le rétroéclairage (Tab5/ecran/tab5_dalle.cpp, audit
+    # anti-casse du 16/10/2026) : commandes DCS que tient la dalle (0 voile seul, 1 + display
+    # off, 2 + sleep in) et dalle noire pendant une OTA, selon la carte ou la révision de dalle
+    # (substitutions carte_dalle_* de carte-waveshare-7b.yaml et des Tab5/paquets/ecran-*.yaml).
+    - -DTAB5_DALLE_EXTINCTION=${carte_dalle_extinction}
+    - -DTAB5_DALLE_NOIRE_OTA=${carte_dalle_noire_ota}
   includes:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
     # les deux jeux qui en ont besoin (25/09/2026, audit lot 8a).
