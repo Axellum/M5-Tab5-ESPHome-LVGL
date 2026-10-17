@@ -348,6 +348,13 @@ media_player:
   - platform: speaker
     name: tab5_media_player
     id: speaker_player
+    # Seule différence avec le Tab5 : l'ES8311 de la 7B reçoit le volume tel quel en REG32
+    # (es8311.cpp d'ESPHome : 0,75 = 0xBF = 0 dB, 1,0 = 0xFF = +32 dB de gain numérique),
+    # alors que l'ES8388 du Tab5 plafonne à 0 dB. Au volume 100 % de l'écran ou de HA, le
+    # haut-parleur saturait complètement (essai d'Axel à l'oreille le 17/10/2026 : 100 %
+    # sature, 80 % encore un peu, 75 % propre). ESPHome ramène chaque volume dans
+    # [volume_min, volume_max] avant le codec (speaker_media_player.cpp) : 100 % = 0 dB.
+    volume_max: 75%
     announcement_pipeline:
       speaker: tab5_speaker
       format: FLAC

@@ -65,6 +65,7 @@ le confronte à la matrice) :
 
 ### Corrigé
 
+- **Waveshare 7B : le haut-parleur ne sature plus au volume maximal** : le pilote ES8311 d'ESPHome met 0 dB à 0,75 et +32 dB de gain numérique à 1,0, et le volume 100 % saturait complètement (essai à l'oreille le 17/10/2026 : 100 % et 80 % saturaient, 75 % était propre). Le lecteur de la 7B a maintenant `volume_max: 75%` : 100 % à l'écran ou dans Home Assistant vaut 0 dB. Rien ne change sur le Tab5 (son ES8388 s'arrête à 0 dB) ni dans Home Assistant.
 - **Waveshare 7B : plus de gel d'1 s après le démarrage** : la demande de version du co-processeur Wi-Fi (capteur « Tab5 C6 Version ») restait sans réponse sur la 7B et figeait l'écran 1 s à chaque essai, 3 à 4 fois dans les premières minutes (mesuré le 16/10/2026 : « Loop Time » à 1 021 ms). Chaque carte dit si son C6 répond (`carte_c6_version`) ; sur la 7B, le capteur dit « inconnue » sans demander. Rien ne change sur le Tab5 ni dans Home Assistant.
 - Home Assistant : « Tab5 — thème jour/nuit » et « Tab5 — extinction de nuit » n'appellent plus la tablette pendant qu'on l'ajoute (liaison pas prête, erreur « Not connected » dans le journal) : plus de déclencheur sur l'attribut de `sensor.tab5_tablette`, attente de la liaison et de l'interrupteur à chaque connexion.
 - **Chargeur de la batterie : plus aucune charge dans le vide, verrous visibles** (Tab5 ; après la Tab5 perdue le 11/10/2026, très probablement par une charge sans batterie) :
