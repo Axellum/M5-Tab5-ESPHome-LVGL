@@ -395,6 +395,19 @@ def test_sans_tablette():
     assert sortie.startswith("# Tablette introuvable") and yaml.safe_load(sortie) is None
 
 
+def test_entites_suffixees_par_ha():
+    """Entity_id déjà pris par un autre appareil : HA ajoute « _2 » (un écran qui en remplace un
+    resté dans HA, la Waveshare 7B chez l'auteur le 17/10/2026). Chaque entité a encore sa carte."""
+    etats = _tablette()["tab5"]
+    for e in etats:
+        e.entity_id += "_2"
+    maison = _maison({"tab5": etats})
+    references = verifier.entites_du_tableau(yaml.safe_load(_rendre(maison)))
+    tablette = {e.entity_id for e in etats}
+    sans = {e for e in tablette if any(e.startswith(f"{d}.") and e.endswith(f"_{s}_2") for d, s in SANS_CARTE)}
+    assert tablette - sans <= references, sorted(tablette - sans - references)
+
+
 def test_deux_tablettes_celle_qui_est_connectee():
     """Deux tablettes du même modèle : celle dont la liaison avec HA est active."""
     tablettes = {**_tablette("tab5", connectee=False), **_tablette("deux", connectee=True)}
