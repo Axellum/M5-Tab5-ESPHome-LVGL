@@ -192,7 +192,7 @@ Restart from the « Redémarrage Système » button, 3 runs per theme. In Ardois
 
 The first image comes about 15 s earlier. On the **virtual tablet** (`tab5-rendu-host.yaml`, before and after built on the same CI runner, run [38885536123](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/runs/38885536123)): 14,549 → 1,308 million instructions in `setup()` (callgrind, −91 %), 1.53-1.58 s → 0.18 s of native time. Not measured on a Tab5 yet.
 
-After #478 the 7B reaches Wi-Fi at 10.42-11.70 s. The `on_boot` still waits 1 s (`avant1s` → `apres1s`), a wait made for the Tab5's display expander, which the 7B does not have. Power during a restart: [consumption](consumption.md#waveshare-7b-at-the-usb-input-2026-10-16).
+After #478 the 7B reaches Wi-Fi at 10.42-11.70 s. Its `on_boot` waited 1 s more (`avant1s` → `apres1s`), a wait made for the Tab5's display expander, which the 7B does not have: gone since 2026-10-17 ([ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md), `carte_attente_ecran_ms`), every step after it comes 1 s earlier (10 restarts: first image 4.78-4.84 s, Wi-Fi 9.38-9.44 s). Power during a restart: [consumption](consumption.md#waveshare-7b-at-the-usb-input-2026-10-16).
 
 ### Resources
 
@@ -310,7 +310,7 @@ How ESPHome boots, to read the gaps: its `main()` builds every object (the ~1,80
 | `setup` | `on_boot` priority 2000, the first `setup()` | **construction of the LVGL widgets** (and of the remaining objects) |
 | `bus` | `on_boot` 801 | I²C bus, 2.5 V LDO, preferences (1000), the two I/O expanders (900) |
 | `expandeur` | USB power switch (`usb_5v_power`, expander 0x44 P3), hardware band (800) | first part of the 800 band: globals and selects restored from NVS, switches… in registration order |
-| `avant1s` / `apres1s` | `on_boot` 700, before / after the blocking `delay(1000)` (`[AI-WARNING-CRITICAL]`, left as it is) | `avant1s`: rest of the 800 band and the backlight light (799); `apres1s`: the 1 s wait itself |
+| `avant1s` / `apres1s` | `on_boot` 700, before / after the blocking wait (`[AI-WARNING-CRITICAL]`, left as it is; `carte_attente_ecran_ms`: 1000 on the Tab5, 0 on the Waveshare 7B since 2026-10-17) | `avant1s`: rest of the 800 band and the backlight light (799); `apres1s`: the wait itself (1 s on the Tab5, none on the 7B) |
 | `p600` | first action of `on_boot` 600 | nothing (registered before the display) |
 | `donnees` | `on_boot` 500 | **the whole 600 band**: display (MIPI-DSI, reset through the expander), touch, ES7210, microphone, ES8388, INA226, IMU, sensors, and the start of `on_boot` 600 (`lvgl.resume`, backlight on). They share priority 600: no mark can split them without changing a priority |
 | `lvgl` | `on_boot` 399 | 400 band, in this order: speaker (I²S), **LVGL's `setup()`**, media player |
@@ -527,7 +527,7 @@ Redémarrage par le bouton « Redémarrage Système », 3 passes par thème. En 
 
 La première image arrive environ 15 s plus tôt. Sur la **tablette virtuelle** (`tab5-rendu-host.yaml`, avant et après compilés sur le même runner de la CI, run [38885536123](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/runs/38885536123)) : 14 549 → 1 308 millions d'instructions dans `setup()` (callgrind, −91 %), 1,53-1,58 s → 0,18 s en natif. Pas encore mesuré sur un Tab5.
 
-Après #478, la 7B rejoint le Wi-Fi à 10,42-11,70 s. L'`on_boot` attend toujours 1 s (`avant1s` → `apres1s`), une attente faite pour l'expandeur de l'écran du Tab5, que la 7B n'a pas. Puissance pendant un redémarrage : [consommation](consumption.md#waveshare-7b-à-lentrée-usb-16102026).
+Après #478, la 7B rejoint le Wi-Fi à 10,42-11,70 s. Son `on_boot` attendait encore 1 s (`avant1s` → `apres1s`), une attente faite pour l'expandeur de l'écran du Tab5, que la 7B n'a pas : supprimée le 17/10/2026 ([ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md), `carte_attente_ecran_ms`), chaque étape qui suit arrive 1 s plus tôt (10 redémarrages : première image 4,78-4,84 s, Wi-Fi 9,38-9,44 s). Puissance pendant un redémarrage : [consommation](consumption.md#waveshare-7b-à-lentrée-usb-16102026).
 
 ### Ressources
 
@@ -645,7 +645,7 @@ Comment ESPHome démarre, pour lire les écarts : son `main()` construit tous le
 | `setup` | `on_boot` priorité 2000, le premier `setup()` | **construction des widgets LVGL** (et des objets restants) |
 | `bus` | `on_boot` 801 | bus I²C, LDO 2,5 V, préférences (1000), les deux expandeurs (900) |
 | `expandeur` | interrupteur d'alimentation USB (`usb_5v_power`, expandeur 0x44 P3), bande matérielle (800) | début de la bande 800 : globals et selects relus en NVS, interrupteurs… dans l'ordre d'enregistrement |
-| `avant1s` / `apres1s` | `on_boot` 700, avant / après le `delay(1000)` bloquant (`[AI-WARNING-CRITICAL]`, laissé tel quel) | `avant1s` : reste de la bande 800 et la lumière du rétroéclairage (799) ; `apres1s` : l'attente de 1 s elle-même |
+| `avant1s` / `apres1s` | `on_boot` 700, avant / après l'attente bloquante (`[AI-WARNING-CRITICAL]`, laissée telle quelle ; `carte_attente_ecran_ms` : 1000 sur le Tab5, 0 sur la Waveshare 7B depuis le 17/10/2026) | `avant1s` : reste de la bande 800 et la lumière du rétroéclairage (799) ; `apres1s` : l'attente elle-même (1 s sur le Tab5, aucune sur la 7B) |
 | `p600` | première action de l'`on_boot` 600 | rien (enregistré avant l'écran) |
 | `donnees` | `on_boot` 500 | **toute la bande 600** : écran (MIPI-DSI, reset par l'expandeur), tactile, ES7210, micro, ES8388, INA226, centrale inertielle, capteurs, et le début de l'`on_boot` 600 (`lvgl.resume`, rétroéclairage allumé). Même priorité 600 : aucune marque ne peut les séparer sans changer une priorité |
 | `lvgl` | `on_boot` 399 | bande 400, dans cet ordre : haut-parleur (I²S), **`setup()` de LVGL**, lecteur |

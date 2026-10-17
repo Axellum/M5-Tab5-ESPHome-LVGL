@@ -16,7 +16,7 @@ Format: **Symptom → Root cause → Fix**. Entries are chronological, most rece
 
 **Root cause:** the display's `reset_pin` is wired through the `PI4IOE5V6408` I2C GPIO expander, not a native ESP32 GPIO. Right after boot, the expander itself needs a short settle time before it reliably drives its output pins — toggling `reset_pin` too early is a no-op from the display's point of view.
 
-**Fix:** a blocking `delay(1000)` was added in `on_boot: priority: 700` in `tab5-hardware.yaml`, right before the display reset sequence. Confirmed root cause on 2026-07-06 after 5 live reboot tests with the developer watching the screen. This is marked `[AI-WARNING]` in the file — **do not remove this delay** to "optimize boot time" without re-testing across several reboots; a previous permissive `logger: level: VERY_VERBOSE` workaround (kept for weeks as a correlation-only mitigation) was replaced by this confirmed fix.
+**Fix:** a blocking `delay(1000)` was added in `on_boot: priority: 700` in `tab5-hardware.yaml`, right before the display reset sequence. Confirmed root cause on 2026-07-06 after 5 live reboot tests with the developer watching the screen. This is marked `[AI-WARNING]` in the file — **do not remove this delay** to "optimize boot time" without re-testing across several reboots; a previous permissive `logger: level: VERY_VERBOSE` workaround (kept for weeks as a correlation-only mitigation) was replaced by this confirmed fix. Since 2026-10-17 the length comes from the board (`carte_attente_ecran_ms`, [ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md)): 1 s on the Tab5, none on the Waveshare 7B, whose display reset is a pin of the P4 itself.
 
 ---
 
@@ -249,7 +249,7 @@ Format : **Symptôme → Cause racine → Correctif**.
 
 **Cause racine :** le `reset_pin` de l'écran passe par l'expander GPIO I2C `PI4IOE5V6408`, pas un GPIO natif ESP32. Juste après le boot, l'expander a lui-même besoin d'un court délai de stabilisation avant de piloter ses sorties de façon fiable — actionner `reset_pin` trop tôt est un no-op du point de vue de l'écran.
 
-**Correctif :** un `delay(1000)` bloquant a été ajouté dans `on_boot: priority: 700` (`tab5-hardware.yaml`), juste avant la séquence de reset écran. Cause racine confirmée le 06/07/2026 après 5 tests de reboot en direct. Marqué `[AI-WARNING]` dans le fichier — **ne pas retirer ce délai** sans re-tester sur plusieurs reboots.
+**Correctif :** un `delay(1000)` bloquant a été ajouté dans `on_boot: priority: 700` (`tab5-hardware.yaml`), juste avant la séquence de reset écran. Cause racine confirmée le 06/07/2026 après 5 tests de reboot en direct. Marqué `[AI-WARNING]` dans le fichier — **ne pas retirer ce délai** sans re-tester sur plusieurs reboots. Depuis le 17/10/2026, sa durée vient de la carte (`carte_attente_ecran_ms`, [ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md)) : 1 s sur le Tab5, aucune sur la Waveshare 7B, dont le reset de l'écran est une broche du P4 lui-même.
 
 ### Météo / planning / clim absents alors que l'appareil est en ligne
 

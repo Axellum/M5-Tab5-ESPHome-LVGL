@@ -14,7 +14,7 @@ Format: **Context / Decision / Consequences**. One page max. Add a new one whene
 | [0002](0002-single-page-swipe-navigation.md) | Single LVGL page + swipe navigation instead of a multi-page tab bar |
 | [0003](0003-data-packing-delimited-strings.md) | Delimited-string payloads instead of one service call per data point |
 | [0004](0004-no-alpha-png-prebaked-backgrounds.md) | No PNG alpha channel — pre-baked opaque backgrounds |
-| [0005](0005-boot-delay-gpio-expander-reset.md) | Blocking boot delay before the display reset sequence |
+| [0005](0005-boot-delay-gpio-expander-reset.md) | Blocking boot delay before the display reset sequence: 1 s on the Tab5 (display reset behind an I/O expander), none on the Waveshare 7B since 2026-10-17 (`carte_attente_ecran_ms`) |
 | [0006](0006-centralize-lvgl-logic-in-cpp.md) | All non-trivial LVGL logic centralized in C++, never inline in sensor lambdas |
 | [0007](0007-climate-popup-not-factorized.md) | `climate_popup.yaml` deliberately left un-factorized |
 | [0008](0008-single-ha-instance.md) | Single Home Assistant instance (Freebox) instead of a Deck failover |

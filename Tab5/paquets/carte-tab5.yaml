@@ -17,8 +17,13 @@
 # ============================================================================
 # Le C6 du Tab5 répond à la demande de version (1.4.1) : capteur « Tab5 C6 Version »
 # (tab5-sensors-diagnostics.yaml). La Waveshare 7B met false.
+# Attente bloquante avant l'écran ([AI-WARNING-CRITICAL] de l'on_boot 700 de
+# tab5-ha-hmi.yaml, ADR-0005) : le reset de la dalle passe par l'expandeur PI4IOE5V6408,
+# qui a besoin d'une seconde après le démarrage (écran noir après un redémarrage logiciel
+# sans elle, 06/07/2026). NE PAS BAISSER. La Waveshare 7B met 0.
 substitutions:
   carte_c6_version: "true"
+  carte_attente_ecran_ms: "1000"
 
 packages:
   geometrie: !include geometrie-tab5.yaml
