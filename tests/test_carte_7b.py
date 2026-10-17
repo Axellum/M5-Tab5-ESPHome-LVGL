@@ -125,10 +125,14 @@ def test_esp_idf_recopie():
     t, w = _tab5()["esp32"], _b7()["esp32"]
     # Tout pareil, sauf la fréquence du processeur : 360 MHz sur le Tab5 (P4 v1.x, sa limite),
     # 400 MHz sur la 7B (P4 v3 : ESP-IDF 5.5 n'y offre pas 360, ses options étaient ignorées
-    # et le build tournait déjà à 400, audit anti-casse du 16/10/2026).
+    # et le build tournait déjà à 400, audit anti-casse du 16/10/2026), et la flash : QIO sur la
+    # 7B, avec le journal du bootloader en WARN pour qu'il tienne avant 0x8000 (17/10/2026).
     options_t = dict(t["framework"]["sdkconfig_options"])
     assert (options_t.pop(FREQ_360[0]), options_t.pop(FREQ_360[1])) == ("y", "360")
-    assert {**t["framework"], "sdkconfig_options": options_t} == w["framework"]
+    options_w = dict(w["framework"]["sdkconfig_options"])
+    assert options_w.pop("CONFIG_BOOTLOADER_LOG_LEVEL_WARN") == "y"
+    assert {**t["framework"], "sdkconfig_options": options_t} == {**w["framework"], "sdkconfig_options": options_w}
+    assert (w["flash_mode"], t.get("flash_mode")) == ("qio", None)
     assert not set(FREQ_360) & set(w["framework"]["sdkconfig_options"])
     assert w["cpu_frequency"] == "400MHz"
     assert (w["variant"], w["engineering_sample"], w["flash_size"]) == ("esp32p4", False, "32MB")

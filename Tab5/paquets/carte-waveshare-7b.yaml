@@ -87,6 +87,17 @@ esp32:
   # (esphome#13425) vise les échantillons d'avant la v3 ; le Tab5 (P4 v1.x) reste à 360.
   cpu_frequency: 400MHz
   flash_size: 32MB
+  # Flash en QIO (4 lignes de données) au lieu de DIO, le défaut (17/10/2026) : au démarrage,
+  # le bootloader relit toute l'appli (~4,7 Mo, ~630 ms en DIO) pour la vérifier, puis
+  # l'appli la recopie en PSRAM (execute_from_psram) ; après, plus rien ne s'exécute depuis
+  # la flash. Puce de la carte de l'auteur : GigaDevice GD25Q256 (esptool flash-id : c8 /
+  # 4019), QIO prévu par sa fiche et par ESP-IDF (bit QE du registre d'état 2). Mesuré sur
+  # 10 redémarrages, console USB : de la ROM à l'appli prête 1,049 s au lieu de 1,262 s.
+  # C'est le code du BOOTLOADER qui passe la lecture en QIO (l'en-tête reste « DIO », celui
+  # que lit la ROM) : le gain ne vient qu'après un flash par USB (page d'installation,
+  # esptool). Une OTA ne remplace que l'appli : bootloader DIO + appli QIO démarre et écrit la
+  # flash normalement, sans le gain (essayé le 17/10/2026 : 5 démarrages, une OTA).
+  flash_mode: qio
   # Recopié de tab5-hardware.yaml (tests/test_carte_7b.py) : mêmes réglages d'ESP-IDF,
   # mêmes raisons (code en PSRAM, -O2, pile de 16 Ko, firmware signé, cache L2…), sauf la
   # fréquence du processeur (ci-dessus) : pas d'options 360 MHz, sans effet sur un P4 v3.
@@ -109,6 +120,12 @@ esp32:
       CONFIG_LWIP_DHCP_DOES_ARP_CHECK: "n"
       CONFIG_LWIP_DHCP_DOES_NOT_CHECK_OFFERED_IP: "y"
       CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS: "y"
+      # Propre à la 7B (flash en QIO, plus haut) : le bootloader QIO fait 25 504 octets, la
+      # place avant la table de partitions (0x2000 → 0x8000) est de 24 576 (« Bootloader
+      # binary size 0x63a0 bytes is too large », 17/10/2026). Journal du bootloader en WARN,
+      # comme les exemples QIO de Waveshare : ses lignes INFO (table, segments) disparaissent
+      # de la console USB ; celles de la ROM (« rst: ») et de l'appli restent.
+      CONFIG_BOOTLOADER_LOG_LEVEL_WARN: "y"
 
 # Wi-Fi par l'ESP32-C6 en SDIO. Le BSP ne le décrit pas : broches par défaut d'esp_hosted
 # pour le P4, celles de la démo Wi-Fi de Waveshare et du schéma (GPIO14-19 près du C6,
