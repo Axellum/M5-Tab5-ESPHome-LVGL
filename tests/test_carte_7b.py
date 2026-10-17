@@ -7,7 +7,7 @@
   `tab5_hardware`, et l'IMU selon la carte ;
 - `carte-waveshare-7b.yaml` recopie de tab5-hardware.yaml ce qui ne dépend pas de la carte
   (logger, OTA, safe_mode, options d'ESP-IDF, rétroéclairage plafonné, lumière, toucher,
-  lecteur, bouton) : mêmes valeurs, pour qu'une correction faite au Tab5 ne s'y perde pas ;
+  lecteur, bouton, reset CORE des redémarrages logiciels) : mêmes valeurs, pour qu'une correction faite au Tab5 ne s'y perde pas ;
 - ses bouchons (`!extend` / `!remove`) visent des id que le firmware du Tab5 déclare, et elle
   ne charge aucun composant du matériel du Tab5 qu'elle n'a pas ;
 - la CI la compile (build-carte-7b) et rend ses écrans en 1024×600 (rendu-7b), à part.
@@ -163,6 +163,16 @@ def test_audio_memes_reglages():
     mic_t, mic_w = _par_id(t["microphone"], "tab5_microphone"), _par_id(w["microphone"], "tab5_microphone")
     assert {k: v for k, v in mic_w.items() if k != "i2s_din_pin"} == {k: v for k, v in mic_t.items() if k != "i2s_din_pin"}
     assert _par_id(w["display"], "tab5_display")["dimensions"] == _par_id(t["display"], "tab5_display")["dimensions"]
+
+
+def test_reset_core_sur_les_deux_cartes():
+    """Tout redémarrage logiciel en reset CORE (tab5_lien_c6.cpp, boucle du lien C6 de la 7B
+    du 16/10/2026) : sur le Tab5 aussi, même lien C6. Le global garde le .cpp dans le binaire."""
+    fichiers = ["Tab5/ecran/tab5_lien_c6.h", "Tab5/ecran/tab5_lien_c6.cpp"]
+    for carte in (_tab5(), _b7()):
+        assert all(f in carte["esphome"]["includes"] for f in fichiers)
+    assert _par_id(_b7()["globals"], "lien_c6_branche") == _par_id(_tab5()["globals"], "lien_c6_branche") == {
+        "id": "lien_c6_branche", "type": "bool", "initial_value": "lien_c6_demarrage()"}
 
 
 # ─── Bouchons du matériel absent ─────────────────────────────────────────────

@@ -104,6 +104,27 @@ esp32_hosted:
   sdio_frequency: 20MHz
   use_psram: true             # [2026.6.0] Buffers SDIO en PSRAM: evite crash mempool + libere SRAM interne
 
+# Tout redémarrage logiciel en reset CORE (rst:0x3) au lieu du reset des seuls CPU
+# (rst:0xc), pour que le lien SDIO du C6 remonte au démarrage suivant : correctif de la
+# boucle de la Waveshare 7B du 16/10/2026 (docs/troubleshooting.md), même lien C6 que le
+# Tab5, dont l'écran noir après OTA du 05/08/2026 ne s'était réglé que par une coupure.
+# Recopié dans carte-waveshare-7b.yaml (tests/test_carte_7b.py) ; le global appelle
+# lien_c6_demarrage() dans setup(), avant les composants, et garde le .cpp dans le binaire.
+esphome:
+  includes:
+    - Tab5/ecran/tab5_lien_c6.h
+    - Tab5/ecran/tab5_lien_c6.cpp
+    # Écran éteint = dalle éteinte (16/10/2026, ADR-0064) : voile noir et commandes DCS, appelés
+    # par la lumière `backlight` et les `ota:` (plus bas). Listés ici et dans
+    # carte-waveshare-7b.yaml, pas à la racine : le rendu hors tablette n'a pas d'écran DSI.
+    - Tab5/ecran/tab5_dalle.h
+    - Tab5/ecran/tab5_dalle.cpp
+
+globals:
+  - id: lien_c6_branche
+    type: bool
+    initial_value: 'lien_c6_demarrage()'
+
 logger:
   # ═══════════════════════════════════════════════════════════════════════
   # [06/07/2026] CAUSE RACINE CONFIRMEE — ecran noir apres reboot logiciel.
@@ -159,14 +180,6 @@ logger:
     level: INFO
     then:
       - lambda: 'journal_log_message(level, tag, message);'
-
-# Écran éteint = dalle éteinte (16/10/2026, ADR-0064) : voile noir et commandes DCS, appelés
-# par la lumière `backlight` et les `ota:` (plus bas). Listés ici et dans
-# carte-waveshare-7b.yaml, pas à la racine : le rendu hors tablette n'a pas d'écran DSI.
-esphome:
-  includes:
-    - Tab5/ecran/tab5_dalle.h
-    - Tab5/ecran/tab5_dalle.cpp
 
 psram:
   mode: hex
