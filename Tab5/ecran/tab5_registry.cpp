@@ -147,10 +147,13 @@ static void garer(Slot& s, bool garee) {
 
 // À chaque rafraîchissement, AVANT la mise en page et le dessin (lv_refr.c) : gare ce
 // qui vient d'être caché, remet ce qui vient d'être montré, quel que soit le chemin.
+// Les SUBWINDOW jamais : roue_ouvrir() place la roue d'après les coordonnées de son voile
+// (roue_actions) pendant qu'il est encore caché (tab5_roue.cpp), et les autres vivent
+// dans un popup déjà garé quand il est fermé.
 static void garage_rafraichir(lv_event_t*) {
     for (int i = 0; i < g_nb; i++) {
         Slot& s = g_slots[i];
-        if (s.obj == nullptr) continue;
+        if (s.obj == nullptr || s.kind == SUBWINDOW) continue;
         const bool cachee = lv_obj_has_flag(s.obj, LV_OBJ_FLAG_HIDDEN);
         if (cachee != s.garee) garer(s, cachee);
     }
