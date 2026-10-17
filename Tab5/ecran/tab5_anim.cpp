@@ -240,7 +240,7 @@ struct VoileCarte {
     lv_obj_t* popup = nullptr;
     lv_obj_t* carte = nullptr;
 };
-VoileCarte s_voiles[2];
+VoileCarte s_voiles[8];
 int s_nb_voiles = 0;
 decoupe::Zone s_couverte;    // vide hors de la fenêtre REFR_START → RENDER_START d'un popup ouvert
 bool s_voile_coupe = false;  // les morceaux repassent par lv_inv_area : ne pas les recouper
@@ -256,6 +256,15 @@ lv_area_t area_de(const decoupe::Zone& z) {
     return a;
 }
 
+// Affiché : ni l'objet ni un de ses parents masqué (le sous-popup du jour garde son drapeau
+// quand le calendrier qui le contient se ferme seul).
+bool affiche(lv_obj_t* o) {
+    for (; o != nullptr; o = lv_obj_get_parent(o)) {
+        if (lv_obj_has_flag(o, LV_OBJ_FLAG_HIDDEN)) return false;
+    }
+    return true;
+}
+
 // Part couverte de la carte du popup à voile ouvert sur l'écran actif (decoupe::couverte,
 // alignée sur le draw_rounding d'ESPHome) ; vide si aucun ne l'est, ou si la carte ne la
 // couvre pas selon LVGL lui-même (LV_EVENT_COVER_CHECK : un thème au fond translucide) — la
@@ -263,8 +272,7 @@ lv_area_t area_de(const decoupe::Zone& z) {
 decoupe::Zone voile_part_couverte(lv_display_t* d) {
     for (int i = 0; i < s_nb_voiles; i++) {
         const VoileCarte& v = s_voiles[i];
-        if (lv_obj_has_flag(v.popup, LV_OBJ_FLAG_HIDDEN) ||
-            lv_obj_get_screen(v.popup) != lv_display_get_screen_active(d))
+        if (lv_obj_get_screen(v.popup) != lv_display_get_screen_active(d) || !affiche(v.popup))
             continue;
         auto* lvgl = static_cast<esphome::lvgl::LvglComponent*>(lv_display_get_user_data(d));
         const int32_t n = (lvgl != nullptr && lvgl->draw_rounding > 0) ? (int32_t) lvgl->draw_rounding : 1;
