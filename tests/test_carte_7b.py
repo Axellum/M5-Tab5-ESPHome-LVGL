@@ -118,15 +118,24 @@ def test_blocs_recopies(bloc):
     assert _b7()[bloc] == _tab5()[bloc], f"{bloc} : recopier tab5-hardware.yaml dans {CARTE_7B}"
 
 
+FREQ_360 = ("CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360", "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ")
+
+
 def test_esp_idf_recopie():
     t, w = _tab5()["esp32"], _b7()["esp32"]
-    assert w["framework"] == t["framework"]
-    # 360 MHz comme le Tab5 (posé là par les options d'ESP-IDF, recopiées ci-dessus).
-    assert w["cpu_frequency"] == "360MHz" and t["framework"]["sdkconfig_options"]["CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ"] == "360"
+    # Tout pareil, sauf la fréquence du processeur : 360 MHz sur le Tab5 (P4 v1.x, sa limite),
+    # 400 MHz sur la 7B (P4 v3 : ESP-IDF 5.5 n'y offre pas 360, ses options étaient ignorées
+    # et le build tournait déjà à 400, audit anti-casse du 16/10/2026).
+    options_t = dict(t["framework"]["sdkconfig_options"])
+    assert (options_t.pop(FREQ_360[0]), options_t.pop(FREQ_360[1])) == ("y", "360")
+    assert {**t["framework"], "sdkconfig_options": options_t} == w["framework"]
+    assert not set(FREQ_360) & set(w["framework"]["sdkconfig_options"])
+    assert w["cpu_frequency"] == "400MHz"
     assert (w["variant"], w["engineering_sample"], w["flash_size"]) == ("esp32p4", False, "32MB")
 
 
 @pytest.mark.parametrize("composant, cid", [("output", "backlight_plafonne"), ("light", "backlight"),
+                                            ("script", "tab5_dalle_rallumer"), ("script", "tab5_dalle_ota"),
                                             ("media_player", "speaker_player"), ("button", "btn_restart")])
 def test_entrees_recopiees(composant, cid):
     assert _par_id(_b7()[composant], cid) == _par_id(_tab5()[composant], cid), f"{composant} {cid}"

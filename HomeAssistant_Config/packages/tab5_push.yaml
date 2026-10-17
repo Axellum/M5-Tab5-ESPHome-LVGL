@@ -698,6 +698,58 @@ automation:
         target:
           entity_id: "{{ nuit }}"
 
+  - id: tab5_extinction_nuit
+    alias: "Tab5 — extinction de nuit"
+    # Extinction de nuit de l'écran (16/10/2026, audit anti-casse) : tient l'interrupteur
+    # « Tab5 Nuit (écran éteint) » de la tablette d'après la plage choisie dans « Tab5 ·
+    # extinction de nuit » (tab5_reglages.yaml, lue sur son miroir « Tab5 · nuit de
+    # l'écran ») : allumé dans la plage, éteint hors de la plage, au changement de plage, à
+    # chaque connexion de la tablette (l'interrupteur repart éteint à son démarrage ; une
+    # tablette qu'on ajoute se connecte aussi) et au démarrage de HA. Pas de déclencheur sur
+    # l'attribut de sensor.tab5_tablette, contrairement au thème : il part pendant l'ajout de
+    # l'appareil, quand la liaison bascule encore (« Not connected », test « Installation
+    # dans un HA neuf » du 16/10/2026). La tablette fait le reste : écran éteint après 1 min sans toucher
+    # pendant la nuit, rallumé à la fin s'il a été éteint par la nuit. « Aucune » : le
+    # miroir est indisponible, l'interrupteur est éteint (même en pleine nuit).
+    description: "Allume l'interrupteur « Tab5 Nuit (écran éteint) » de la tablette pendant la plage de « Tab5 · extinction de nuit », l'éteint à la fin"
+    mode: queued
+    max: 3
+    max_exceeded: silent
+    triggers:
+      # Tout changement d'état, indisponible compris (« Aucune » choisi en pleine nuit).
+      - trigger: state
+        entity_id: binary_sensor.tab5_nuit_de_l_ecran
+        to: ~
+      - trigger: event
+        event_type: esphome.tab5_connected
+        id: tab5_connected
+      - trigger: homeassistant
+        event: start
+    conditions:
+      # Garde d'origine (comme la poussée complète) : tab5_connected ne
+      # compte que venant d'une tablette. tests/test_garde_origine.py.
+      - alias: "tab5_connected : seulement depuis une tablette (modele tab5-ha-hmi)"
+        condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
+    actions:
+      # Sur tab5_connected, la liaison et l'interrupteur détecté (sensor.tab5_tablette, mis à
+      # jour par le même événement) peuvent arriver un peu après : on les attend 10 s ; sinon
+      # on s'arrête sans erreur, la connexion suivante relancera ce passage.
+      - wait_template: &nuit_prete >-
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' and (state_attr('sensor.tab5_tablette', 'nuit_ecran') or '') != '' }}
+        timeout: "00:00:10"
+        continue_on_timeout: true
+      - condition: template
+        value_template: *nuit_prete
+      # Une liaison qui tombe pendant l'appel n'arrête rien : la prochaine connexion renvoie l'état.
+      - action: "switch.turn_{{ 'on' if is_state('binary_sensor.tab5_nuit_de_l_ecran', 'on') else 'off' }}"
+        continue_on_error: true
+        target:
+          entity_id: "{{ state_attr('sensor.tab5_tablette', 'nuit_ecran') }}"
+
 script:
   # ─────────────────────────────────────────────────────────────────────────────
   # Scripts de POUSSÉE vers le Tab5 (26/09/2026) — appelés par les automatisations
