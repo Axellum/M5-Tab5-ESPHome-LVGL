@@ -483,3 +483,25 @@ void journal_mark_delivered() {
     }
 #endif
 }
+
+bool ha_evenement_envoyer(const char* evenement) {
+#ifdef USE_API_HOMEASSISTANT_SERVICES
+    auto* api = esphome::api::global_api_server;
+    if (api == nullptr) return false;
+    esphome::api::HomeassistantActionRequest evt;
+    evt.service = esphome::StringRef(evenement);
+    evt.is_event = true;
+    bool envoye = false;
+    for (const auto& client : api->active_clients()) {
+        // Nom donné par le client à la connexion : « Home Assistant 2026.x » pour HA,
+        // « ESPHome Logs », ou ce que choisit un outil (même filtre que on_client_connected).
+        const char* nom = client->get_name();
+        if (nom == nullptr || std::strstr(nom, "Home Assistant") == nullptr) continue;
+        envoye |= client->send_homeassistant_action(evt);
+    }
+    return envoye;
+#else
+    (void) evenement;
+    return false;
+#endif
+}
