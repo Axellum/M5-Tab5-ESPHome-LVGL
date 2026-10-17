@@ -136,9 +136,19 @@ def test_esp_idf_recopie():
 
 @pytest.mark.parametrize("composant, cid", [("output", "backlight_plafonne"), ("light", "backlight"),
                                             ("script", "tab5_dalle_rallumer"), ("script", "tab5_dalle_ota"),
-                                            ("media_player", "speaker_player"), ("button", "btn_restart")])
+                                            ("button", "btn_restart")])
 def test_entrees_recopiees(composant, cid):
     assert _par_id(_b7()[composant], cid) == _par_id(_tab5()[composant], cid), f"{composant} {cid}"
+
+
+def test_lecteur_recopie_au_plafond_pres():
+    """Le lecteur de la 7B est celui du Tab5, plus `volume_max: 75%` : son ES8311 met 0 dB à
+    0,75 et +32 dB à 1,0 (essai à l'oreille du 17/10/2026 : 100 % saturait, 75 % propre)."""
+    w = dict(_par_id(_b7()["media_player"], "speaker_player"))
+    assert w.pop("volume_max") == "75%"
+    t = _par_id(_tab5()["media_player"], "speaker_player")
+    assert "volume_max" not in t
+    assert w == t
 
 
 def test_toucher_recopie():
