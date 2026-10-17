@@ -3,23 +3,31 @@ name: Mesure du parcours des invalidations (essai, jamais mergé)
 # Branche essai/mesure-invalidation (17/10/2026) : la tablette virtuelle en 1024×600 (la
 # Waveshare 7B), mesurée par fenêtres d'actions courantes (tools/mesure/piloter_actions.py :
 # repos avec la carte centrale qui tourne, glisser des prévisions, poussée de HA, popups,
-# curseur de luminosité), avant puis après avoir ouvert les 20 écrans. Trois variantes de
-# LVGL 9.5.0 compilées sur le même runner (tools/mesure/patch_lvgl.py) : avant (tel quel),
-# caches (blur_walk_cb saute les objets cachés), sans (plus de parcours : LVGL 9.6.0 sans
-# flou). Trois passes natives par variante, puis une sous callgrind (un profil par fenêtre).
+# curseur de luminosité), avant puis après avoir ouvert les 20 écrans. Variantes compilées
+# sur le même runner :
+# - avant  : la branche telle quelle (origin/main + les outils de mesure) ;
+# - caches : LVGL 9.5.0 dont blur_walk_cb saute les objets cachés (tools/mesure/patch_lvgl.py) ;
+# - sans   : LVGL 9.5.0 sans parcours après une invalidation (LVGL 9.6.0 sans flou) ;
+# - garage : LVGL tel quel, le dossier Tab5/ de la branche du remède (fenêtres fermées garées
+#            hors de l'écran, ModalRegistry).
+# Trois passes natives par variante, dans l'ordre avant, caches, sans, garage à chaque tour.
+# Run 39031518689 : passes et callgrind arrêtés par la fenêtre d'appairage fermée (millis() de
+# la plateforme host = horloge monotone du système) ; d'où la graine de préférences.
 
 on:
   push:
     branches: [essai/mesure-invalidation]
-  workflow_dispatch:
 
 permissions:
   contents: read
 
+env:
+  REMEDE: claude/popups-gares
+
 jobs:
   mesure:
     runs-on: ubuntu-latest
-    timeout-minutes: 170
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -34,26 +42,32 @@ jobs:
         with:
           path: ~/.cache/pip
           key: pip-esphome-${{ steps.version.outputs.esphome }}-py3.13
-      - name: ESPHome, Pillow, valgrind
+      - name: ESPHome, Pillow
         env:
           ESPHOME_VERSION: ${{ steps.version.outputs.esphome }}
-        run: |
-          bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
-          sudo apt-get update -q && sudo apt-get install -y -q valgrind
+        run: bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.platformio
           key: pio-host-${{ steps.version.outputs.esphome }}
-      - name: Compiler les trois variantes de LVGL
+      - name: Compiler les quatre variantes
         env:
           TZ: Europe/Paris
           TAB5_SAN_LINKFLAGS: ""
           TAB5_SAN_CCFLAGS: "-g -fno-omit-frame-pointer"
         run: |
+          git fetch -q origin "$REMEDE"
+          echo "garage = Tab5/ de origin/$REMEDE ($(git rev-parse --short FETCH_HEAD))"
           mkdir -p programmes
           python tools/mesure/variante_actions.py tab5-mesure.yaml
-          for v in avant caches sans; do
-            if [ "$v" != avant ]; then python tools/mesure/patch_lvgl.py "$v"; fi
+          for v in avant caches sans garage; do
+            git checkout HEAD -- Tab5
+            case "$v" in
+              caches|sans) python tools/mesure/patch_lvgl.py "$v" ;;
+              garage) python tools/mesure/patch_lvgl.py avant
+                      git checkout FETCH_HEAD -- Tab5
+                      git diff --stat HEAD -- Tab5 ;;
+            esac
             touch repere
             set +e
             esphome -s tab5_carte waveshare-7b compile tab5-mesure.yaml > "build_$v.log" 2>&1
@@ -63,18 +77,32 @@ jobs:
             prog=$(find .esphome/build -name program -type f -newer repere | head -n 1)
             if [ -z "$prog" ]; then echo "::error::$v : programme pas recompilé"; exit 1; fi
             cp "$prog" "programmes/$v"
-            grep -c "lv_obj_pos.c" "build_$v.log" || true
           done
-          python tools/mesure/patch_lvgl.py avant
+          git checkout HEAD -- Tab5
           sha256sum programmes/*
+      - name: Graine de préférences (clé API donnée une fois)
+        env:
+          TZ: Europe/Paris
+        run: |
+          rm -f tools/demo/cle_demo.txt
+          mkdir -p "$RUNNER_TEMP/graine" "$RUNNER_TEMP/captures"
+          ESPHOME_PREFDIR="$RUNNER_TEMP/graine" ESPHOME_SNAPSHOT_DIR="$RUNNER_TEMP/captures" \
+            programmes/avant > graine.log 2>&1 &
+          pid=$!
+          python tools/mesure/graine_cle.py
+          sleep 5
+          kill "$pid" || true
+          wait "$pid" 2>/dev/null || true
+          ls -la "$RUNNER_TEMP/graine"
+          test -s tools/demo/cle_demo.txt
       - name: Trois passes natives par variante
         env:
           TZ: Europe/Paris
         run: |
           mkdir -p resultats
           for n in 1 2 3; do
-            for v in avant caches sans; do
-              rm -rf "$RUNNER_TEMP/prefs" tools/demo/cle_demo.txt && mkdir -p "$RUNNER_TEMP/prefs" "$RUNNER_TEMP/captures"
+            for v in avant caches sans garage; do
+              rm -rf "$RUNNER_TEMP/prefs" && cp -r "$RUNNER_TEMP/graine" "$RUNNER_TEMP/prefs"
               cmd="$RUNNER_TEMP/cmd_${v}_$n"
               MESURE_CMD="$cmd" ESPHOME_PREFDIR="$RUNNER_TEMP/prefs" ESPHOME_SNAPSHOT_DIR="$RUNNER_TEMP/captures" \
                 "programmes/$v" > "resultats/natif_${v}_$n.log" 2>&1 &
@@ -83,45 +111,23 @@ jobs:
                 > "resultats/pilote_natif_${v}_$n.log" 2>&1 || echo "::warning::pilote $v $n en échec"
               kill "$pid" || true
               wait "$pid" 2>/dev/null || true
+              echo "$v $n : $(grep -c '\[mesure\] fenetre' "resultats/natif_${v}_$n.log") fenêtres"
             done
-          done
-      - name: Sous callgrind, un profil par fenêtre
-        env:
-          TZ: Europe/Paris
-        run: |
-          for v in avant caches sans; do
-            rm -rf "$RUNNER_TEMP/prefs" tools/demo/cle_demo.txt && mkdir -p "$RUNNER_TEMP/prefs" "resultats/callgrind_$v"
-            cmd="$RUNNER_TEMP/cmd_cg_$v"
-            MESURE_CMD="$cmd" ESPHOME_PREFDIR="$RUNNER_TEMP/prefs" ESPHOME_SNAPSHOT_DIR="$RUNNER_TEMP/captures" \
-              valgrind --tool=callgrind --instr-atstart=no --callgrind-out-file="resultats/callgrind_$v/cg.out.%p" \
-              "programmes/$v" > "resultats/callgrind_$v.log" 2>&1 &
-            pid=$!
-            python tools/mesure/piloter_actions.py --cmd "$cmd" --facteur 5 \
-              > "resultats/pilote_callgrind_$v.log" 2>&1 || echo "::warning::pilote callgrind $v en échec"
-            sleep 2
-            kill "$pid" || true
-            wait "$pid" 2>/dev/null || true
           done
       - name: Bilan
         if: always()
         run: |
           {
             echo "## Parcours des invalidations, tablette virtuelle 1024×600"
+            echo "garage = Tab5/ de origin/$REMEDE"
             python tools/mesure/bilan_actions.py resultats
           } >> "$GITHUB_STEP_SUMMARY"
-          for v in avant caches sans; do
-            for f in resultats/callgrind_$v/cg.out.*; do
-              [ -f "$f" ] || continue
-              nom=$(sed -n 's/^desc: Trigger: Client Request: //p' "$f" | head -n 1)
-              [ -n "$nom" ] || continue
-              callgrind_annotate --inclusive=yes "$f" 2>/dev/null | head -n 80 > "resultats/callgrind_$v/incl_$nom.txt" || true
-            done
-          done
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
-          name: mesure-invalidation
+          name: mesure-invalidation-garage
           path: |
             resultats/
             build_*.log
+            graine.log
           retention-days: 14
