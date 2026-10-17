@@ -299,6 +299,10 @@ text_sensor:
   # pas à jour : celle installée en usine tant que personne ne l'a reflashé. Lue une
   # fois, Wi-Fi connecté (la requête passe par le C6). Chaque essai peut bloquer la
   # boucle jusqu'à 1 s si le C6 ne répond pas : 3 essais au plus, puis « inconnue ».
+  # `carte_c6_version` (carte-*.yaml) : false quand le C6 de la carte ne répond jamais à
+  # cette requête (Waveshare 7B, firmware d'usine) : « inconnue » tout de suite, sans
+  # requête. Mesuré sur la 7B le 16/10/2026 : 3 à 4 essais après chaque démarrage, chacun
+  # « template.text_sensor took 1001 ms » (Loop Time à 1 021 ms), l'écran figé pendant ce temps.
   - platform: template
     id: sys_c6_version
     name: "Tab5 C6 Version"
@@ -307,7 +311,9 @@ text_sensor:
     update_interval: 60s
     lambda: |-
       static uint8_t essais = 0;
-      if (essais >= 3 || !network::is_connected()) return {};
+      if (essais >= 3) return {};
+      if (!${carte_c6_version}) { essais = 3; return std::string("inconnue"); }
+      if (!network::is_connected()) return {};
       char buf[16];
       if (read_c6_firmware_version(buf, sizeof(buf))) { essais = 3; return std::string(buf); }
       if (++essais >= 3) return std::string("inconnue");
