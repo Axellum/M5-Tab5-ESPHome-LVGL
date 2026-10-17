@@ -5,7 +5,7 @@
 Lit, pour chaque variante V : resultats/natif_V.log (lignes « [pilote] » du script
 ouvrir_popups.py et « [mesure] » du programme, dans l'ordre), resultats/cg_V.log et les
 profils resultats/cg_V/cg.out.* (un par image : « desc: Trigger: Client Request: image_N_… »).
-Imprime un tableau Markdown : image de l'ouverture (médiane des passes, µs en natif),
+Imprime un tableau Markdown : image de l'ouverture et de la fermeture (médiane des passes, ms en natif),
 instructions (callgrind), objets redessinés (appels de lv_obj_redraw), surface et zones.
 """
 
@@ -22,17 +22,24 @@ MESURE = re.compile(r"\[mesure\] image (\d+) us (\d+) px (\d+) zones (\d+) ecran
 DESC = "desc: Trigger: Client Request: "
 
 
-def ouvertures(journal: Path) -> dict[tuple[str, str], list[dict]]:
-    """(thème, popup) → une entrée par passe : la première image qui montre ce popup."""
-    res: dict[tuple[str, str], list[dict]] = defaultdict(list)
-    attendu = None
+def ouvertures(journal: Path) -> dict[tuple[str, str, str], list[dict]]:
+    """(thème, popup, geste) → une entrée par passe : « ouvrir » = la première image qui montre
+    ce popup après la ligne du pilote, « fermer » = l'image « Accueil » qui la suit."""
+    res: dict[tuple[str, str, str], list[dict]] = defaultdict(list)
+    attendu, geste = None, None
     for ligne in journal.read_text(encoding="utf-8", errors="replace").splitlines():
         if m := PILOTE.search(ligne):
-            attendu = (m.group(1), m.group(2))
-        elif (m := MESURE.search(ligne)) and attendu and m.group(5).strip() == attendu[1]:
-            res[attendu].append({"n": int(m.group(1)), "us": int(m.group(2)),
-                                 "px": int(m.group(3)), "zones": int(m.group(4))})
-            attendu = None
+            attendu, geste = (m.group(1), m.group(2)), "ouvrir"
+        elif (m := MESURE.search(ligne)) and attendu:
+            cible = attendu[1] if geste == "ouvrir" else "Accueil"
+            if m.group(5).strip() != cible:
+                continue
+            res[(*attendu, geste)].append({"n": int(m.group(1)), "us": int(m.group(2)),
+                                           "px": int(m.group(3)), "zones": int(m.group(4))})
+            if geste == "ouvrir":
+                geste = "fermer"
+            else:
+                attendu = None
     return res
 
 
@@ -69,8 +76,8 @@ def main() -> int:
     cg_ouv = {v: ouvertures(dossier / f"cg_{v}.log") for v in variantes}
     cg = {v: profils(dossier / f"cg_{v}") for v in variantes}
     cles = sorted({k for v in variantes for k in natif[v]} | {k for v in variantes for k in cg_ouv[v]})
-    print("| Thème | Popup | Variante | Image (ms, natif, médiane) | Instructions (M) | Objets redessinés | px | zones |")
-    print("|---|---|---|---:|---:|---:|---:|---:|")
+    print("| Thème | Popup | Geste | Variante | Image (ms, natif, médiane) | Instructions (M) | Objets redessinés | px | zones |")
+    print("|---|---|---|---|---:|---:|---:|---:|---:|")
     for cle in cles:
         for v in variantes:
             n = natif[v].get(cle, [])
@@ -81,7 +88,7 @@ def main() -> int:
             redraw = f"{statistics.median(x['redraw'] for x in c):.0f}" if c else "—"
             px = n[0]["px"] if n else "—"
             zones = n[0]["zones"] if n else "—"
-            print(f"| {cle[0]} | {cle[1]} | {v} | {ms} | {instr} | {redraw} | {px} | {zones} |")
+            print(f"| {cle[0]} | {cle[1]} | {cle[2]} | {v} | {ms} | {instr} | {redraw} | {px} | {zones} |")
     return 0
 
 
