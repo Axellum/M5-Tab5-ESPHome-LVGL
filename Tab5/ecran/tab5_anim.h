@@ -52,11 +52,13 @@ void animate_popup_open(lv_obj_t* card);
 void animate_popup_close(lv_obj_t* card);
 
 // Popup à voile translucide (Musique, ADR-0050 : le tableau de bord se devine autour de
-// sa carte) : tant qu'il est ouvert, une zone à redessiner qui chevauche sa carte opaque est
-// coupée entre la part que la carte couvre, que LVGL dessine à partir de la carte, et le
-// reste, dessiné comme avant (tableau de bord, voile, bord de la carte). Même image au pixel
-// près, sans redessiner le tableau de bord sous la carte. À appeler avant chaque ouverture :
-// seul le premier appel par popup compte (deux popups au plus).
+// sa carte ; détail du jour, voile à 60 % sur le calendrier) : tant qu'il est ouvert, une
+// zone à redessiner qui chevauche sa carte opaque est coupée entre la part que la carte
+// couvre, que LVGL dessine à partir de la carte, et le reste, dessiné comme avant (ce que le
+// voile laisse voir, le voile, le bord de la carte). Même image au pixel près, sans
+// redessiner ce que la carte cache. À appeler avant chaque ouverture : seul le premier appel
+// par popup compte (deux popups au plus). Pas pour un popup à voile opaque : LVGL y part
+// déjà du voile, et la coupe y coûte plus qu'elle ne gagne (mesuré, tab5_anim.cpp).
 void popup_voile_carte(lv_obj_t* popup, lv_obj_t* carte);
 
 // Fondu croisé pur (sans glissement) entre deux calques plein cadre —

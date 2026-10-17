@@ -208,10 +208,16 @@ def test_lvgl_prepare_avant_les_widgets():
     corps = cpp[cpp.index("void demarrage_preparer_lvgl() {"):]
     assert cpp.count("void demarrage_preparer_lvgl() {") == 1
     assert "lv_display_set_resolution(disp, kEcranL, kEcranH);" in corps
-    assert "lv_display_add_event_cb(disp, vider_abonnements, LV_EVENT_REFR_REQUEST, disp);" in corps
-    # Retiré à la première image : rien ne change ensuite.
+    # Le vidage est demandé par lvgl_vidage_abonnes(), partagé avec la bascule de thème
+    # (17/10/2026) : compté, branché à la première demande, retiré à la dernière fin.
+    assert "lvgl_vidage_abonnes(true);" in corps
+    vidage = cpp[cpp.index("void lvgl_vidage_abonnes(bool actif) {"):]
+    assert "lv_display_add_event_cb(disp, vider_abonnements, LV_EVENT_REFR_REQUEST, disp);" in vidage
+    assert "lv_display_remove_event_cb_with_user_data(disp, vider_abonnements, disp);" in vidage
+    # Rendu à la première image : rien ne change ensuite (sauf une bascule de thème en cours).
     assert "lv_display_add_event_cb(disp, fin_du_vidage, LV_EVENT_REFR_START, disp);" in corps
-    assert "lv_display_remove_event_cb_with_user_data(disp, vider_abonnements, disp);" in cpp
+    fin = cpp[cpp.index("void fin_du_vidage(lv_event_t* e) {"):]
+    assert "lvgl_vidage_abonnes(false);" in fin[:fin.index("\n}\n")]
 
 
 def test_capteurs_et_script():
