@@ -43,6 +43,7 @@ script:
       - lambda: |-
           LecteurUI& u = g_lecteur_ui;
           if (u.popup != nullptr) return;
+          u.carte = id(lecteur_carte);
           u.nom = id(lecteur_popup_titre);
           u.app = id(lecteur_app);
           u.app_texte = id(lecteur_app_texte);
