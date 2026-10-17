@@ -163,3 +163,21 @@ def test_automatisation_tient_l_interrupteur():
     assert action["continue_on_error"] is True
     attribut = _modele("sensor", "Tab5 · tablette")["attributes"]["nuit_ecran"]
     assert "_nuit_ecran_eteint$" in attribut, "fin de l'entity_id de « Tab5 Nuit (écran éteint) »"
+
+
+@pytest.mark.parametrize("ident, attribut", [("tab5_theme_jour_nuit", "theme_nuit"), ("tab5_extinction_nuit", "nuit_ecran")])
+def test_aucun_appel_pendant_l_ajout_de_la_tablette(ident, attribut):
+    """Les deux automatisations qui tiennent un interrupteur de la tablette (17/10/2026, test
+    « Installation dans un HA neuf », HA 2026.9.4) : un déclencheur sur l'attribut de
+    sensor.tab5_tablette partait pendant l'ajout de l'appareil, liaison pas prête, et l'appel
+    finissait en « Not connected ». Elles attendent la liaison et l'interrupteur, et l'appel
+    garde continue_on_error."""
+    push = yaml.load((HA / "packages" / "tab5_push.yaml").read_text(encoding="utf-8"), Loader=_Chargeur)
+    auto = next(a for a in push["automation"] if a["id"] == ident)
+    assert not any(t.get("entity_id") == "sensor.tab5_tablette" for t in auto["triggers"])
+    assert any(t.get("event_type") == "esphome.tab5_connected" for t in auto["triggers"])
+    attente = auto["actions"][0]["wait_template"]
+    assert "tab5_connectee()" in attente and attribut in attente
+    action = auto["actions"][-1]
+    assert action["continue_on_error"] is True
+    assert action["target"] == {"entity_id": f"{{{{ state_attr('sensor.tab5_tablette', '{attribut}') }}}}"}
