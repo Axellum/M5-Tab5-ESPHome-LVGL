@@ -96,7 +96,15 @@ The other steps (glass buttons, alarm clock, assistant) take less than 3 ms.
 | Theme change / light ↔ dark | ~33 / ~29 ms | ~4 / 0.6 ms |
 | Next frame (layout and full redraw) | 50.0 ms | 43.9 ms |
 
-Not measured on the 7B yet (estimate: ~90 ms for a theme change, ~15 ms for light ↔ dark, instead of 731). The Tab5 reached 657 ms at most on 2026-10-08 ([Theme switch](#theme-switch) below, another method).
+**Measured on the 7B** (2026-10-17, same method as the table above: each step timed on the board; measuring builds of `main` without and with #501, one run each, 50 switches per run, Ardoise douce in dark mode at the start):
+
+| Median | Before | After |
+|---|---:|---:|
+| Just after a restart (2,290 objects): theme change / light ↔ dark | 310 / 271 ms | 43 / 6 ms |
+| After opening the 20 screens (3,263 objects): theme change / light ↔ dark | 761 / 675 ms | 65 / 10 ms (theme: 35 to 68) |
+| Of which, theme change after the 20 screens: shapes / fonts / calendar / C++ modules | 139 / 149 / 60 / 412 ms | 28 / 28 / 0 / 7 ms |
+
+What is left of a theme change is the shapes and fonts that really change (a theme with another geometry or another font). Like the table above, these figures cover the switch script only, not the frame drawn after it. The Tab5 reached 657 ms at most on 2026-10-08 ([Theme switch](#theme-switch) below, another method).
 
 ### Restarts (10 from the « Redémarrage Système » button)
 
@@ -446,7 +454,15 @@ Les autres étapes (boutons verre, réveil, assistant) prennent moins de 3 ms.
 | Changement de thème / clair ↔ sombre | ~33 / ~29 ms | ~4 / 0,6 ms |
 | Image suivante (mise en page et écran entier) | 50,0 ms | 43,9 ms |
 
-Pas encore mesuré sur la 7B (estimation : ~90 ms pour un changement de thème, ~15 ms pour clair ↔ sombre, au lieu de 731). Le Tab5 atteignait 657 ms au pire le 08/10/2026 ([Bascule de thème](#bascule-de-thème) plus bas, autre méthode).
+**Mesuré sur la 7B** (17/10/2026, même méthode que le tableau plus haut : chaque étape chronométrée sur la carte ; builds de mesure de `main` sans et avec #501, un passage chacun, 50 bascules par passage, Ardoise douce en sombre au départ) :
+
+| Médiane | Avant | Après |
+|---|---:|---:|
+| Juste après un redémarrage (2 290 objets) : changement de thème / clair ↔ sombre | 310 / 271 ms | 43 / 6 ms |
+| Après l'ouverture des 20 écrans (3 263 objets) : changement de thème / clair ↔ sombre | 761 / 675 ms | 65 / 10 ms (thème : 35 à 68) |
+| Dont, changement de thème après les 20 écrans : formes / polices / calendrier / modules C++ | 139 / 149 / 60 / 412 ms | 28 / 28 / 0 / 7 ms |
+
+Ce qui reste d'un changement de thème, ce sont les formes et les polices qui changent vraiment (un thème à la géométrie ou à la police différente). Comme le tableau plus haut, ces chiffres couvrent le script de bascule seul, pas l'image dessinée ensuite. Le Tab5 atteignait 657 ms au pire le 08/10/2026 ([Bascule de thème](#bascule-de-thème) plus bas, autre méthode).
 
 ### Redémarrages (10 par le bouton « Redémarrage Système »)
 
