@@ -42,10 +42,13 @@ jobs:
         with:
           path: ~/.cache/pip
           key: pip-esphome-${{ steps.version.outputs.esphome }}-py3.13
-      - name: ESPHome, Pillow
+      - name: ESPHome, Pillow, en-têtes de valgrind
         env:
           ESPHOME_VERSION: ${{ steps.version.outputs.esphome }}
-        run: bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
+        # valgrind/callgrind.h : mesure_actions.h l'inclut (macros sans effet hors valgrind).
+        run: |
+          bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
+          sudo apt-get update -q && sudo apt-get install -y -q valgrind
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.platformio
