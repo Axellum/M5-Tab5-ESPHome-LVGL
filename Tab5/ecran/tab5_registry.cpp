@@ -133,11 +133,15 @@ static int g_nb = 0;
 // que soient la carte et l'orientation.
 constexpr int32_t kGarageY = 10000;
 
+// Coordonnées justes tout de suite (lv_obj_refr_pos : la racine et ses enfants déplacés,
+// la nouvelle zone invalidée), pas à la prochaine mise en page : le code qui lit la carte
+// d'un popup à LV_EVENT_REFR_START, avant elle, la trouve déjà à sa place.
 static void garer(Slot& s, bool garee) {
     if (garee)
         lv_obj_set_style_translate_y(s.obj, kGarageY, LV_PART_MAIN);
     else
         lv_obj_remove_local_style_prop(s.obj, LV_STYLE_TRANSLATE_Y, LV_PART_MAIN);
+    lv_obj_refr_pos(s.obj);
     s.garee = garee;
 }
 
