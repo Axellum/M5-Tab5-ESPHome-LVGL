@@ -4,7 +4,9 @@
  * @role Animations LVGL : transitions de widgets, ouverture/fermeture des popups, swipe
  *       horizontal, entrée des alertes, fondu de calques ; retour automatique à l'écran
  *       principal (inactivité, UIIdle) ; rouleau d'icône météo ; horloge à rouleau
- *       (layout, chiffres) et date ; styles pressed des boutons verre.
+ *       (layout, chiffres) et date ; styles pressed des boutons verre ; popup à voile
+ *       translucide dont la carte se dessine sans le tableau de bord caché
+ *       (popup_voile_carte, 17/10/2026, découpe pure dans Tab5/socle/tab5_decoupe.h).
  *       Unité de compilation issue de la scission de tab5_custom.cpp (lot (e) de
  *       l'audit du 06/09/2026, faite le 08/09/2026) : mêmes fonctions, même ordre,
  *       aucune logique modifiée.
@@ -18,7 +20,10 @@
 #include "tab5_internal.h"
 #include "tab5_registry.h"   // retour automatique : jeux ouverts, fenêtres modales
 #include "lvgl.h"
+#include "lvgl_private.h"  // popup_voile_carte : lv_cover_check_info_t, lv_inv_area, inv_areas (hors de lvgl.h en 9.5)
+#include "tab5_decoupe.h"  // popup_voile_carte : la découpe, partie pure (Tab5/socle/)
 #include "esphome/components/lvgl/lvgl_esphome.h"
+#include <algorithm>
 #include <cmath>
 #include <ctime>
 #include <cstring>
@@ -208,6 +213,130 @@ void animate_popup_close(lv_obj_t* card) {
     if (!card) return;
     lv_anim_delete(card, anim_opa_cb);
     lv_obj_add_flag(card, LV_OBJ_FLAG_HIDDEN);
+}
+
+// =============================================================================
+// Popup à voile translucide : sa carte dessinée sans ce qu'elle cache (17/10/2026)
+// =============================================================================
+// Un voile opaque couvre tout l'écran : LVGL commence l'image par lui et ne dessine pas le
+// tableau de bord caché (lv_refr_get_top_obj, essai D7 du 26/09/2026). Le voile à 70 % du
+// popup Musique (ADR-0050) ne couvre rien : son ouverture invalide l'écran d'une seule
+// zone, et LVGL redessinait tout le tableau de bord, puis le voile, puis la carte, même
+// sous la carte opaque (110 ms sur la Waveshare 7B contre 37 à 69 pour les autres popups,
+// nuit du 16 au 17/10/2026). LVGL cherche l'objet du dessus zone par zone : il suffit de
+// couper la zone. Au début de chaque image où le popup est ouvert (LV_EVENT_REFR_START),
+// les zones retenues repassent par lv_inv_area ; l'événement LV_EVENT_INVALIDATE_AREA de
+// l'affichage, qui laisse modifier la zone avant qu'elle soit retenue, la réduit à la part
+// que la carte couvre et renvoie le reste en morceaux (decoupe::couper, tab5_decoupe.h).
+// LVGL dessine la première à partir de la carte, comme il le fait déjà pour toute mise à
+// jour à l'intérieur de la carte, et les autres comme avant : aucun pixel ne change. Les
+// morceaux ne se chevauchent pas, et lv_refr_join_area ne fusionne que des zones qui se
+// chevauchent. La coupe s'arrête au début du dessin (LV_EVENT_RENDER_START : LVGL envoie
+// alors LV_EVENT_INVALIDATE_AREA pour arrondir ses bandes, get_max_row) et entre deux images
+// (un popup qui se ferme invalide l'écran avant de se masquer, lv_obj_add_flag : tout le
+// tableau de bord se redessine, une zone entière suffit).
+namespace {
+struct VoileCarte {
+    lv_obj_t* popup = nullptr;
+    lv_obj_t* carte = nullptr;
+};
+VoileCarte s_voiles[2];
+int s_nb_voiles = 0;
+decoupe::Zone s_couverte;    // vide hors de la fenêtre REFR_START → RENDER_START d'un popup ouvert
+bool s_voile_coupe = false;  // les morceaux repassent par lv_inv_area : ne pas les recouper
+
+decoupe::Zone zone_de(const lv_area_t& a) { return {a.x1, a.y1, a.x2, a.y2}; }
+
+lv_area_t area_de(const decoupe::Zone& z) {
+    lv_area_t a;
+    a.x1 = z.x1;
+    a.y1 = z.y1;
+    a.x2 = z.x2;
+    a.y2 = z.y2;
+    return a;
+}
+
+// Part couverte de la carte du popup à voile ouvert sur l'écran actif (decoupe::couverte,
+// alignée sur le draw_rounding d'ESPHome) ; vide si aucun ne l'est, ou si la carte ne la
+// couvre pas selon LVGL lui-même (LV_EVENT_COVER_CHECK : un thème au fond translucide) — la
+// zone reste alors entière, comme avant.
+decoupe::Zone voile_part_couverte(lv_display_t* d) {
+    for (int i = 0; i < s_nb_voiles; i++) {
+        const VoileCarte& v = s_voiles[i];
+        if (lv_obj_has_flag(v.popup, LV_OBJ_FLAG_HIDDEN) ||
+            lv_obj_get_screen(v.popup) != lv_display_get_screen_active(d))
+            continue;
+        auto* lvgl = static_cast<esphome::lvgl::LvglComponent*>(lv_display_get_user_data(d));
+        const int32_t n = (lvgl != nullptr && lvgl->draw_rounding > 0) ? (int32_t) lvgl->draw_rounding : 1;
+        lv_area_t k;
+        lv_obj_get_coords(v.carte, &k);
+        const decoupe::Zone c = decoupe::couverte(zone_de(k), lv_obj_get_style_radius(v.carte, LV_PART_MAIN), n);
+        if (c.vide()) return {};
+        const lv_area_t ca = area_de(c);
+        lv_cover_check_info_t info;
+        info.res = LV_COVER_RES_COVER;
+        info.area = &ca;
+        lv_obj_send_event(v.carte, LV_EVENT_COVER_CHECK, &info);
+        return info.res == LV_COVER_RES_COVER ? c : decoupe::Zone{};
+    }
+    return {};
+}
+
+// LV_EVENT_INVALIDATE_AREA, dans la fenêtre : la zone qui chevauche la part couverte s'y
+// réduit, le reste repart en morceaux.
+void voile_invalidation(lv_event_t* e) {
+    if (s_voile_coupe || s_couverte.vide()) return;
+    auto* a = static_cast<lv_area_t*>(lv_event_get_param(e));
+    auto* d = static_cast<lv_display_t*>(lv_event_get_user_data(e));
+    if (a == nullptr || d == nullptr) return;
+    decoupe::Zone dans;
+    decoupe::Zone morceaux[4];
+    const int n = decoupe::couper(zone_de(*a), s_couverte, dans, morceaux);
+    if (n < 0) return;
+    s_voile_coupe = true;
+    for (int i = 0; i < n; i++) {
+        const lv_area_t m = area_de(morceaux[i]);
+        lv_inv_area(d, &m);
+    }
+    s_voile_coupe = false;
+    *a = area_de(dans);
+}
+
+// LV_EVENT_REFR_START : le popup est ouvert ou fermé pour cette image. Ouvert : les zones
+// retenues depuis l'image précédente (l'écran entier à l'ouverture) repartent par
+// lv_inv_area, qui les coupe ; la mise en page qui suit passe par la même coupe.
+void voile_debut_image(lv_event_t* e) {
+    auto* d = static_cast<lv_display_t*>(lv_event_get_user_data(e));
+    s_couverte = voile_part_couverte(d);
+    if (s_couverte.vide() || d->inv_p == 0) return;
+    lv_area_t zones[LV_INV_BUF_SIZE];
+    const uint32_t nb = d->inv_p;
+    for (uint32_t i = 0; i < nb; i++) zones[i] = d->inv_areas[i];
+    lv_inv_area(d, nullptr);
+    for (uint32_t i = 0; i < nb; i++) lv_inv_area(d, &zones[i]);
+}
+
+// LV_EVENT_RENDER_START et LV_EVENT_REFR_READY : fin de la fenêtre.
+void voile_fin_fenetre(lv_event_t*) { s_couverte = {}; }
+}  // namespace
+
+void popup_voile_carte(lv_obj_t* popup, lv_obj_t* carte) {
+    if (popup == nullptr || carte == nullptr) return;
+    for (int i = 0; i < s_nb_voiles; i++) {
+        if (s_voiles[i].popup == popup) return;
+    }
+    if (s_nb_voiles >= (int) (sizeof(s_voiles) / sizeof(s_voiles[0]))) return;
+    lv_display_t* d = lv_obj_get_display(popup);
+    if (d == nullptr) return;
+    if (s_nb_voiles == 0) {
+        lv_display_add_event_cb(d, voile_debut_image, LV_EVENT_REFR_START, d);
+        lv_display_add_event_cb(d, voile_invalidation, LV_EVENT_INVALIDATE_AREA, d);
+        lv_display_add_event_cb(d, voile_fin_fenetre, LV_EVENT_RENDER_START, d);
+        lv_display_add_event_cb(d, voile_fin_fenetre, LV_EVENT_REFR_READY, d);
+    }
+    s_voiles[s_nb_voiles].popup = popup;
+    s_voiles[s_nb_voiles].carte = carte;
+    s_nb_voiles++;
 }
 
 // =============================================================================

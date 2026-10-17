@@ -50,6 +50,7 @@ constexpr int kLecteurPuces = 6;  // = kLecteursMax (tab5_parse.h), une pastille
 // réception ou ouverture : id() n'existe que dans une lambda YAML.
 struct LecteurUI {
     lv_obj_t* popup = nullptr;                    // lecteur_popup
+    lv_obj_t* carte = nullptr;                    // lecteur_carte (popup_voile_carte, tab5_anim.h)
     lv_obj_t* nom = nullptr;                      // lecteur_popup_titre (en-tête : le lecteur)
     lv_obj_t* app = nullptr;                      // lecteur_app (pastille de l'application)
     lv_obj_t* app_texte = nullptr;                // lecteur_app_texte

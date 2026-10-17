@@ -5,6 +5,9 @@
 #        scrim_opa (opacité SANS le %, "100" pour un popup de premier niveau —
 #        opaque depuis l'essai D7 du 26/09/2026 : LVGL ne redessine plus le tableau
 #        de bord caché —, "60" pour un sous-popup empilé sur un voile déjà présent).
+#        Exception : "70" pour Musique (ADR-0050, le tableau de bord se devine autour de
+#        sa carte) ; popup_voile_carte() (tab5_anim.cpp) y garde la carte sans le
+#        tableau de bord caché dessous.
 # ═══════════════════════════════════════════════════════
 button:
   align: CENTER

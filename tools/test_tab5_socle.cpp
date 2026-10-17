@@ -9,7 +9,10 @@
  *   - la géométrie partagée (Tab5/socle/tab5_geometrie.h), par des static_assert ;
  *   - la chronologie du démarrage (Tab5/socle/tab5_demarrage.h, 10/10/2026) ;
  *   - le niveau de la batterie d'après sa tension (Tab5/socle/tab5_batterie.h, courbe de
- *     décharge mesurée sur un Tab5, 15/10/2026).
+ *     décharge mesurée sur un Tab5, 15/10/2026) ;
+ *   - la découpe d'une zone à redessiner autour d'une carte opaque (Tab5/socle/tab5_decoupe.h,
+ *     popup Musique, 17/10/2026) : part couverte alignée, morceaux disjoints dont l'union est
+ *     la zone, pixel par pixel.
  *
  * Build & run (CI, job `python` de .github/workflows/esphome-tab5.yml) :
  *   g++ -std=c++17 -O2 -Wall -Wextra -I Tab5/socle -o test_tab5_socle \
@@ -22,6 +25,7 @@
 #include "tab5_batterie.h"
 #include "tab5_champs.h"
 #include "tab5_core.h"
+#include "tab5_decoupe.h"
 #include "tab5_demarrage.h"
 #include "tab5_geometrie.h"
 #include "tab5_modele_ha.h"
@@ -447,6 +451,92 @@ static void test_barre_demarrage() {
     expect(barre::kEtapes == 3 && barre::kJalons[barre::kEtapes - 1].cible == 1.0f, "barre : la dernière étape va au bout");
 }
 
+// ── Découpe autour d'une carte opaque (tab5_decoupe.h, popup Musique) ──────
+static bool dans_zone(const decoupe::Zone& z, int32_t x, int32_t y) {
+    return x >= z.x1 && x <= z.x2 && y >= z.y1 && y <= z.y2;
+}
+
+// Chaque pixel de `a` est dans exactement une des zones rendues, et aucun pixel hors de `a`.
+static bool partition_exacte(const decoupe::Zone& a, const decoupe::Zone& dans, const decoupe::Zone* m, int n,
+                             int32_t l, int32_t h) {
+    for (int32_t y = -1; y <= h; y++) {
+        for (int32_t x = -1; x <= l; x++) {
+            int fois = dans_zone(dans, x, y) ? 1 : 0;
+            for (int i = 0; i < n; i++) fois += dans_zone(m[i], x, y) ? 1 : 0;
+            if (fois != (dans_zone(a, x, y) ? 1 : 0)) return false;
+        }
+    }
+    return true;
+}
+
+static void test_decoupe_carte() {
+    using decoupe::Zone;
+    // Carte du popup Musique (940 × 536) centrée sur la 7B (1024 × 600), rayon 24, arrondi 2.
+    const Zone carte = {42, 32, 981, 567};
+    const Zone c = decoupe::couverte(carte, 24, 2);
+    expect(c == Zone{44, 58, 979, 541}, "decoupe : part couverte de la carte Musique sur la 7B");
+    Zone dans;
+    Zone m[4];
+    expect(decoupe::couper(Zone{0, 0, 1023, 599}, c, dans, m) == 4 && dans == c,
+           "decoupe : l'écran entier donne la part couverte et quatre morceaux");
+    expect(m[0] == Zone{0, 0, 1023, 57} && m[1] == Zone{0, 542, 1023, 599} && m[2] == Zone{0, 58, 43, 541} &&
+               m[3] == Zone{980, 58, 1023, 541},
+           "decoupe : dessus, dessous, gauche, droite");
+    expect(decoupe::couper(Zone{100, 100, 200, 200}, c, dans, m) == -1, "decoupe : zone déjà dans la carte, rien");
+    expect(decoupe::couper(Zone{0, 0, 30, 20}, c, dans, m) == -1, "decoupe : zone hors de la carte, rien");
+    expect(decoupe::couper(Zone{0, 0, 1, 599}, c, dans, m) == -1, "decoupe : bande d'arrondi de LVGL (x 0..1), rien");
+    expect(decoupe::couper(Zone{5, 5, 4, 9}, c, dans, m) == -1, "decoupe : zone vide, rien");
+    expect(decoupe::couverte(Zone{10, 10, 40, 40}, 0x7FFF, 1).vide(), "decoupe : cercle (rayon maximal), rien de sûr");
+    expect(decoupe::couverte(Zone{-5, 10, 40, 40}, 0, 1).vide(), "decoupe : carte hors de l'écran, rien");
+    expect(decoupe::couverte(Zone{10, 10, 12, 60}, 0, 4).vide(), "decoupe : carte plus étroite que l'arrondi, rien");
+
+    // Part couverte : dans la carte, hors des coins, alignée, et la plus grande ainsi.
+    bool ok = true;
+    for (int32_t n = 1; n <= 4; n++) {
+        for (int32_t r = 0; r <= 45; r += 3) {
+            for (int32_t x1 = 0; x1 < 6; x1++) {
+                for (int32_t y1 = 0; y1 < 6; y1++) {
+                    const Zone k = {x1, y1, x1 + 200 + 3 * r, y1 + 120 + r};
+                    const Zone z = decoupe::couverte(k, r, n);
+                    if (z.vide()) {
+                        ok = false;
+                        continue;
+                    }
+                    ok = ok && z.x1 >= k.x1 + 1 && z.x2 <= k.x2 - 1 && z.y1 >= k.y1 + r + 1 && z.y2 <= k.y2 - r - 1;
+                    ok = ok && z.x1 % n == 0 && z.y1 % n == 0 && (z.x2 + 1) % n == 0 && (z.y2 + 1) % n == 0;
+                    ok = ok && z.x1 - (k.x1 + 1) < n && z.y1 - (k.y1 + r + 1) < n && (k.x2 - 1) - z.x2 < n &&
+                         (k.y2 - r - 1) - z.y2 < n;
+                }
+            }
+        }
+    }
+    expect(ok, "decoupe : part couverte dans la carte, hors des coins, alignée, au plus près");
+
+    // Partition exacte, pixel par pixel, sur un petit écran (64 × 40) et des zones pseudo-aléatoires.
+    const Zone p = {10, 8, 49, 29};
+    uint32_t s = 12345;
+    auto alea = [&s](int32_t borne) {
+        s = s * 1103515245u + 12345u;
+        return static_cast<int32_t>((s >> 16) % static_cast<uint32_t>(borne));
+    };
+    bool part = true;
+    int coupes = 0;
+    for (int i = 0; i < 2000; i++) {
+        const int32_t xa = alea(64), xb = alea(64), ya = alea(40), yb = alea(40);
+        const Zone a = {std::min(xa, xb), std::min(ya, yb), std::max(xa, xb), std::max(ya, yb)};
+        const int n = decoupe::couper(a, p, dans, m);
+        if (n < 0) {
+            const Zone inter = {std::max(a.x1, p.x1), std::max(a.y1, p.y1), std::min(a.x2, p.x2), std::min(a.y2, p.y2)};
+            part = part && (inter.vide() || inter == a);
+            continue;
+        }
+        coupes++;
+        part = part && n >= 1 && n <= 4 && !dans.vide() && partition_exacte(a, dans, m, n, 64, 40);
+        for (int j = 0; j < n; j++) part = part && !m[j].vide();
+    }
+    expect(part && coupes > 500, "decoupe : morceaux disjoints, union exacte, aucun vide (2 000 zones)");
+}
+
 int main() {
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);  // Europe/Paris, comme le firmware
     tzset();
@@ -464,6 +554,7 @@ int main() {
     test_chronologie();
     test_niveau_batterie();
     test_barre_demarrage();
+    test_decoupe_carte();
 
     std::printf("=== %s (%d OK, %d FAIL) ===\n", g_fail ? "FAILED" : "ALL PASSED", g_ok, g_fail);
     return g_fail ? 1 : 0;

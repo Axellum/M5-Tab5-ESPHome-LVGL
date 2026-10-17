@@ -555,6 +555,8 @@ void lecteur_recu(const std::string& lecteurs, const std::string& etat) {
 }
 
 void lecteur_ouvrir(const std::string& cle) {
+    // Voile à 70 % (ADR-0050) : la carte se dessine sans ce qu'elle cache (une seule fois).
+    popup_voile_carte(ui().popup, ui().carte);
     peindre();
     if (ui().envoyer != nullptr) ui().envoyer("ouvrir", cle.c_str(), "");
 }
