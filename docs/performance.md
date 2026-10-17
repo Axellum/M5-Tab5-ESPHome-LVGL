@@ -99,6 +99,7 @@ The other steps (glass buttons, alarm clock, assistant) take less than 3 ms. Red
 - No boot loop and no USB rescue: the fix of [#483](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/483) held over 10 restarts and 3 updates.
 - At each restart, the `esphome.tab5_connected` event was lost: the measuring script connected before Home Assistant, and the tablet sent the event to the first client, which does not listen to events. Fixed by [#495](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/495).
 - The backlight comes on at 2.0 s, almost 4 s before the first image: the author saw a blue screen for a moment. Not fixed yet.
+- These are the times before [#502](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/502): since 2026-10-17 the 7B no longer waits 1 s before its display, and every step comes 1 s earlier (10 restarts: first image 4.78-4.84 s, Wi-Fi 9.38-9.44 s; [the 7B page](waveshare-7b.md)).
 
 ### A night left alone (23:31 → 06:15, 6 h 43 min)
 
@@ -434,6 +435,7 @@ Les autres étapes (boutons verre, réveil, assistant) prennent moins de 3 ms. U
 - Aucune boucle de redémarrages, aucun secours par l'USB : le correctif de [#483](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/483) a tenu sur 10 redémarrages et 3 mises à jour.
 - À chaque redémarrage, l'événement `esphome.tab5_connected` s'est perdu : le script de mesure se connectait avant Home Assistant, et la tablette envoyait l'événement au premier client, qui n'écoute pas les événements. Corrigé par [#495](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/495).
 - Le rétroéclairage s'allume à 2,0 s, presque 4 s avant la première image : l'auteur a vu un écran bleu un instant. Pas encore corrigé.
+- Ce sont les temps d'avant [#502](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/502) : depuis le 17/10/2026, la 7B n'attend plus 1 s avant son écran, et chaque étape arrive 1 s plus tôt (10 redémarrages : première image 4,78-4,84 s, Wi-Fi 9,38-9,44 s ; [la page de la 7B](waveshare-7b.md)).
 
 ### Une nuit sans y toucher (23 h 31 → 6 h 15, 6 h 43 min)
 
