@@ -218,3 +218,16 @@ def test_ci_compile_et_rend_la_7b():
     rendu = lire(".github", "workflows", "rendu-host.yml")
     assert "  rendu-7b:" in rendu and "-s tab5_carte waveshare-7b" in rendu
     assert "name: rendu-1024x600" in rendu
+
+
+@pytest.mark.parametrize("carte, attendu", [("tab5", "true"), ("waveshare-7b", "false")])
+def test_version_du_c6_selon_la_carte(carte, attendu):
+    """Le C6 de la 7B ne répond pas à la demande de version : chaque demande figeait la
+    boucle 1 s, 3 à 4 fois après chaque démarrage (mesuré le 16/10/2026). Chaque carte dit
+    si on la demande ; le capteur répond « inconnue » sans requête quand c'est non."""
+    texte = lire("Tab5", "paquets", f"carte-{carte}.yaml")
+    assert re.search(rf'^\s+carte_c6_version: "{attendu}"$', texte, re.M), carte
+    capteur = lire("Tab5", "paquets", "tab5-sensors-diagnostics.yaml")
+    bloc = capteur[capteur.index("id: sys_c6_version"):capteur.index("id: sys_prefixe_actions")]
+    assert 'if (!${carte_c6_version}) { essais = 3; return std::string("inconnue"); }' in bloc
+    assert bloc.index("${carte_c6_version}") < bloc.index("read_c6_firmware_version("), "pas de requête avant"

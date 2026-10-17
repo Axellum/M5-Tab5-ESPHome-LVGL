@@ -52,6 +52,11 @@ packages:
 substitutions:
   carte_dalle_extinction: "2"
   carte_dalle_noire_ota: "1"
+  # Le C6 d'usine de la 7B ne répond pas à la demande de version d'ESP-Hosted (rien depuis
+  # le 14/10/2026) et chaque demande figeait la boucle 1 s (capteur « Tab5 C6 Version »,
+  # tab5-sensors-diagnostics.yaml) : plus de demande. À remettre à true après une mise à
+  # jour du C6 (docs/waveshare-7b.md).
+  carte_c6_version: "false"
 
 # Plancher d'ESPHome de la 7B : 2026.9.1 (voir esp32_hosted plus bas). Vérifié à la
 # compilation par un static_assert : un `min_version:` ici serait écrasé par celui de
