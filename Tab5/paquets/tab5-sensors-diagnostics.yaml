@@ -13,10 +13,13 @@
 #           Chargeur géré (08/10/2026, tab5_batterie.h) : allumé au démarrage, il était
 #           laissé allumé sans batterie, chargeait dans le vide et faisait un léger
 #           souffle. L'interval de 1 s plus bas le commande d'après chargeur_pas() :
-#           présence lue chargeur coupé (sous 3,0 V = pas de batterie ; 1,9 V mesurés
+#           présence lue chargeur coupé (sous 5,5 V = pas de batterie ; 1,9 V mesurés
 #           sans), coupé sans batterie, « Tab5 Limite de charge » (100 % ou 80 %) avec.
-#           Démarrage (10/10/2026) : CHG_EN coupé au setup ; pas de réveil de 30 s si le
-#           démarrage précédent n'a vu aucune batterie (tab5_batterie_memoire, en NVS).
+#           Démarrage (16/10/2026) : CHG_EN coupé au setup, une sonde d'abord ; réveil de
+#           30 s seulement si elle ne voit rien, que le démarrage précédent a vu une
+#           batterie (tab5_batterie_memoire, en NVS) et que le redémarrage est normal.
+#           Sécurité (16/10/2026) : verrous thermique et électrique (tab5_batterie.h),
+#           « Tab5 Sécurité chargeur » et l'événement esphome.tab5_securite_chargeur.
 #           Batterie détectée : chaque lecture de l'INA226 passe par batterie_tension_ui
 #           (on_raw_value). Publiée par « Tab5 Batterie détectée » (activée par défaut) ;
 #           « Tab5 Batterie » vaut inconnu sans elle. Sur batterie : « Tab5
@@ -115,9 +118,9 @@ switch:
   # Charge de la batterie d'origine (discussion #278, 03/10/2026) : sans CHG_EN (P7) à 1,
   # rien ne lance le chargeur. M5Unified (Power_Class.inl, OUT_SET de 0x44) et la config
   # de référence ESPHome (PR #1396 de devices.esphome.io) le mettent à 1 au démarrage :
-  # 30 s pour réveiller une batterie dont la protection a coupé (ici depuis le 10/10/2026 :
-  # au premier pas de l'interval, et pas si le démarrage précédent n'a vu aucune batterie,
-  # voir plus bas). Ensuite, commandé par
+  # 30 s pour réveiller une batterie dont la protection a coupé (ici depuis le 16/10/2026 :
+  # seulement après une sonde qui ne voit rien, si le démarrage précédent a vu une
+  # batterie et que le redémarrage est normal, voir plus bas). Ensuite, commandé par
   # l'interval de 1 s plus bas (chargeur_pas, tab5_batterie.h) : coupé sans batterie
   # (08/10/2026 : allumé dans le vide, il soufflait), selon « Tab5 Limite de charge » avec.
   # [AI-WARNING] Ne pas le remettre allumé en permanence : c'est le souffle continu
@@ -125,8 +128,13 @@ switch:
   # [AI-WARNING] COUPÉ au setup depuis le 10/10/2026 (demande d'Axel), plus ALWAYS_ON :
   # sans batterie, ces 30 s de charge dans le vide pendant le démarrage (8,39 V lus)
   # faisaient un pic de consommation. Le premier pas de l'interval (fin de setup()) décide
-  # (chargeur_demarrer, tab5_batterie.h) : réveil de 30 s comme avant, sauf si le
-  # démarrage précédent n'a vu aucune batterie (globals tab5_batterie_memoire, en NVS).
+  # (chargeur_demarrer, tab5_batterie.h) : depuis le 16/10/2026 (panne du 11/10), une sonde
+  # chargeur coupé d'abord ; CHG_EN ne s'allume qu'après une lecture ≥ 5,5 V, ou pour le
+  # réveil de 30 s si rien n'est vu, que le démarrage précédent a vu une batterie
+  # (globals tab5_batterie_memoire, en NVS) et que le redémarrage n'est pas anormal
+  # (journal_demarrage_anormal : une boucle de plantages ne rallume plus le chargeur).
+  # [AI-WARNING] Ne pas remettre le réveil avant la sonde : premier démarrage sans
+  # batterie (modèle vendu sans) et boucles de redémarrages chargeaient dans le vide.
   # Batterie neuve ou totalement plate posée sur une tablette qui n'en avait pas : allumer
   # « Tab5 Batterie montée » la réveille (docs/hardware.md, Battery).
   - platform: gpio
@@ -228,6 +236,18 @@ binary_sensor:
     id: batterie_detectee
     name: "Tab5 Batterie détectée"
     icon: mdi:battery-check
+    entity_category: diagnostic
+
+  # Sécurité du chargeur (16/10/2026, après la panne du 11/10) : allumé quand un verrou
+  # coupe le chargeur (tab5_batterie.h) : thermique (CPU ≥ 55 °C, gardé en NVS) ou
+  # électrique (tension trop haute ou aucun courant de charge, deux fois dans l'heure :
+  # jusqu'au redémarrage). Publié par l'interval du chargeur ; chaque coupure part aussi
+  # dans l'événement esphome.tab5_securite_chargeur (garde (h) de packages/tab5_health.yaml).
+  - platform: template
+    id: chargeur_securite
+    name: "Tab5 Sécurité chargeur"
+    device_class: problem
+    icon: mdi:battery-alert-variant-outline
     entity_category: diagnostic
 
   - platform: status
@@ -488,8 +508,11 @@ sensor:
         - or:
             - throttle: 15min
             - delta: 0.05
+      # Verrou électrique (16/10/2026) : chargeur allumé, un courant nul pendant 30 s est la
+      # signature d'une charge dans le vide (chargeur_courant, tab5_batterie.h).
       on_raw_value:
         - lambda: |-
+            chargeur_courant(x, millis());
             if (chargeur_sonde_en_cours(millis())) return;
             economie_courant(x, batterie_presente(), id(batterie_en_charge).state);
             id(tab5_sur_batterie).publish_state(economie_sur_batterie());
@@ -727,12 +750,22 @@ interval:
   # M5Unified (setChargeCurrent : P7 puis P5).
   # Démarrage (10/10/2026) : le premier pas lit tab5_batterie_memoire (une batterie vue au
   # démarrage précédent ?) ; la mémoire n'est réécrite (NVS) que quand elle change.
+  # Sécurité (16/10/2026) : le premier pas sait si le redémarrage est anormal (pas de
+  # réveil du chargeur) ; chaque pas publie « Tab5 Sécurité chargeur » au changement et
+  # envoie la coupure de sécurité à HA, une fois (chargeur_securite_signal).
   # [AI-DEBUG] Chaque commande est journalisée (tag tab5.batterie) avec sa raison.
   - interval: 1s
     then:
       - lambda: |-
           const auto a = chargeur_pas(id(tab5_limite_charge).active_index().value_or(0),
-                                      id(tab5_batterie_montee).state, id(tab5_batterie_memoire), millis());
+                                      id(tab5_batterie_montee).state, id(tab5_batterie_memoire),
+                                      journal_demarrage_anormal(), millis());
+          const bool securite = chargeur_securite_active();
+          if (!id(chargeur_securite).has_state() || id(chargeur_securite).state != securite)
+            id(chargeur_securite).publish_state(securite);
+          const SignalSecurite coupure = chargeur_securite_signal();
+          if (coupure.cause != CauseSecurite::AUCUNE)
+            id(tab5_securite_chargeur).execute(cause_securite_texte(coupure.cause), coupure.mesure, coupure.verrouille);
           if (a.allumer != id(charge_enable).state) {
             if (a.allumer) {
               id(charge_enable).turn_on();
@@ -866,6 +899,28 @@ script:
           data:
             niveau: !lambda 'return niveau;'
             seuil: !lambda 'return seuil;'
+
+  # Coupure de sécurité du chargeur (16/10/2026) : événement (ADR-0025), cause
+  # (« thermique », « tension », « courant »), mesure (°C, V ou A, en texte) et verrouille
+  # (« oui » : chargeur bloqué jusqu'au redémarrage). Côté HA, la garde (h) de
+  # packages/tab5_health.yaml en fait une notification persistante et sur le téléphone.
+  - id: tab5_securite_chargeur
+    mode: queued
+    max_runs: 3
+    parameters:
+      cause: string
+      mesure: float
+      verrouille: bool
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_securite_chargeur
+          data:
+            cause: !lambda 'return cause;'
+            mesure: !lambda |-
+              char b[16];
+              snprintf(b, sizeof(b), cause == "thermique" ? "%.1f" : cause == "tension" ? "%.2f" : "%.3f", mesure);
+              return std::string(b);
+            verrouille: !lambda 'return verrouille ? std::string("oui") : std::string("non");'
 
   - id: tab5_journal_envoi
     mode: restart
