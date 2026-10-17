@@ -2783,7 +2783,7 @@ variables:
   # qu'une tablette n'a pas).
   protocole: >-
     {%- set ns = namespace(p=0) -%}
-    {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
+    {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') -%}
       {%- if device_attr(e, 'model') == 'tab5-ha-hmi' -%}
         {%- set m = (device_attr(e, 'sw_version') or '') | string | regex_findall('^ *([0-9]+)[.]([0-9]+)[.]([0-9]+)') -%}
         {%- set p = 2 if m and (m[0][0] | int(0)) * 1000000 + (m[0][1] | int(0)) * 1000 + (m[0][2] | int(0)) >= 3002000 else 1 -%}

@@ -18,9 +18,10 @@ MACROS = REPO / "HomeAssistant_Config" / "custom_templates"
 CAPTEUR = "sensor.salon_tab5_prefixe_des_actions"
 
 
-def _rendre(appel, etat_capteur, avec_capteur=True):
-    entites = {"appareil_tab5": ["binary_sensor.salon_ha_api_status"] + ([CAPTEUR] if avec_capteur else [])}
-    etats = {"binary_sensor.salon_ha_api_status": "on", CAPTEUR: etat_capteur}
+def _rendre(appel, etat_capteur, avec_capteur=True, suffixe=""):
+    api, capteur = "binary_sensor.salon_ha_api_status" + suffixe, CAPTEUR + suffixe
+    entites = {"appareil_tab5": [api] + ([capteur] if avec_capteur else [])}
+    etats = {api: "on", capteur: etat_capteur}
     env = ImmutableSandboxedEnvironment(undefined=jinja2.StrictUndefined,
                                         loader=jinja2.FileSystemLoader(str(MACROS)))
     def device_id(e):
@@ -49,6 +50,13 @@ def test_un_prefixe_illisible_retombe_sur_le_nom_par_defaut(etat):
 def test_un_prefixe_lisible_est_pris():
     assert _rendre("{{ tab5_prefixe('appareil_tab5') }}", "salon_7b") == "salon_7b"
     assert _rendre("{{ tab5_destinataires('appareil_tab5') }}", "salon_7b") == "salon_7b"
+
+
+def test_entites_suffixees_par_ha():
+    """Entity_id déjà pris par un autre appareil : HA ajoute « _2 » (Waveshare 7B de
+    l'auteur, 17/10/2026). La tablette reste trouvée, son préfixe aussi."""
+    assert _rendre("{{ tab5_prefixe('appareil_tab5') }}", "salon_7b", suffixe="_2") == "salon_7b"
+    assert _rendre("{{ tab5_destinataires('') }}", "salon_7b", suffixe="_2") == "salon_7b"
 
 
 def test_un_firmware_sans_capteur_garde_le_nom_par_defaut():
