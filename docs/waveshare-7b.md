@@ -73,6 +73,7 @@ Two things learnt along the way:
 Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.md#waveshare-7b-at-the-usb-input-2026-10-16).
 
 - **Start-up**: first image at 5.6-5.8 s, Wi-Fi at 10.4-11.7 s, Home Assistant connected at 11.5-12.7 s (4 starts, read on the board's « Boot timeline » sensors). It used to be about 20 s before the first image, like the Tab5; [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478) removed the cost of creating the labels.
+- **One second less at every start (2026-10-17)**: the boot waited 1 s before the display, a wait made for the Tab5, whose display reset goes through an I/O expander; the 7B has none, its panel reset is a pin of the P4 ([ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md), `carte_attente_ecran_ms: "0"`). Over 10 restarts from the « Redémarrage Système » button, against the 10 of the night of 2026-10-16: backlight on at 0.97 s (2.02 s), first image at 4.78-4.84 s (5.84-5.90 s), Wi-Fi at 9.38-9.44 s (10.37-10.43 s); every other step keeps its length, and the screen comes back on with its picture (seen by the author).
 - **The clock can show up late**: the board has no real-time clock, so the time is only known once the Wi-Fi is up and the time is received (10 s or more after power-up); the first image comes before it.
 - **Power at the USB input**: 1.96 W on the home screen at the usual brightness, 3.14 W at 100 %, 1.24 W with the backlight off. Popups and pages cost nothing measurable.
 
@@ -203,6 +204,7 @@ Deux choses apprises en route :
 Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md#waveshare-7b-à-lentrée-usb-16102026).
 
 - **Démarrage** : première image à 5,6-5,8 s, Wi-Fi à 10,4-11,7 s, Home Assistant connecté à 11,5-12,7 s (4 démarrages, lus sur les capteurs « Chronologie du démarrage » de la carte). Avant, il fallait une vingtaine de secondes avant la première image, comme sur le Tab5 ; [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478) a supprimé le coût de la création des textes.
+- **Une seconde de moins à chaque démarrage (17/10/2026)** : le démarrage attendait 1 s avant l'écran, une attente faite pour le Tab5, dont le reset de l'écran passe par un expandeur ; la 7B n'en a pas, le reset de sa dalle est une broche du P4 ([ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md), `carte_attente_ecran_ms: "0"`). Sur 10 redémarrages par le bouton « Redémarrage Système », contre les 10 de la nuit du 16/10/2026 : rétroéclairage allumé à 0,97 s (2,02 s), première image à 4,78-4,84 s (5,84-5,90 s), Wi-Fi à 9,38-9,44 s (10,37-10,43 s) ; les autres étapes gardent leur durée, et l'écran revient avec son image (vu par l'auteur).
 - **L'horloge peut s'afficher en retard** : la carte n'a pas d'horloge temps réel, l'heure n'est connue qu'une fois le Wi-Fi monté et l'heure reçue (10 s ou plus après la mise sous tension) ; la première image arrive avant.
 - **Puissance à l'entrée USB** : 1,96 W sur l'accueil à la luminosité habituelle, 3,14 W à 100 %, 1,24 W rétroéclairage éteint. Les popups et les pages ne coûtent rien de mesurable.
 
