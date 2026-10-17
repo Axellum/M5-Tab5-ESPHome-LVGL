@@ -132,11 +132,6 @@ script:
           ModalRegistry::add(id(reglages_confirmation),  nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(reglables_liste),        nullptr,            ModalRegistry::SUBWINDOW);
           ModalRegistry::add(id(roue_actions),           nullptr,            ModalRegistry::SUBWINDOW);
-          // ESSAI DE MESURE (branche essai/mesure-popups-decoupe, jamais mergée) : trois popups à
-          // voile opaque, carte = 2e enfant (modal_scrim.yaml en premier).
-          popup_voile_carte(id(clim_options_popup), lv_obj_get_child(id(clim_options_popup), 1));
-          popup_voile_carte(id(energie_popup), lv_obj_get_child(id(energie_popup), 1));
-          popup_voile_carte(id(alarm_popup), lv_obj_get_child(id(alarm_popup), 1));
 
   # Un geste de l'accueil (09/10/2026, lot A, ADR-0039) : tap court ou appui long sur une
   # des trois zones de l'horloge (ui_components/horloge_zone.yaml) ou un des trois boutons

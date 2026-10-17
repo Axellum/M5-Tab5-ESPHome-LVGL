@@ -3,8 +3,8 @@ name: Mesure de la découpe des popups avant / après (essai, jamais mergé)
 # Branche essai/mesure-popups-decoupe (17/10/2026) : la tablette virtuelle en 1024×600 (Waveshare
 # 7B, rotation 0 comme la 7B de la maison), compilée deux fois sur le même runner :
 # « avant » = les fichiers repris de la branche de la PR #500 (découpe du popup Musique seul),
-# « apres » = la branche telle quelle (découpe aussi pour le jour du calendrier et, essai seul,
-# Climatisation, Énergie et Réveil). Chaque variante ouvre Musique, Climatisation, Énergie, Réveil,
+# « apres » = la branche telle quelle (découpe aussi pour le jour du calendrier ; code final,
+# Climatisation, Énergie et Réveil sans découpe). Chaque variante ouvre Musique, Climatisation, Énergie, Réveil,
 # Calendrier puis le jour du calendrier (Zen Sumi puis Relief doux) : en natif (5 passes, captures
 # BMP comparées au pixel), puis sous callgrind (2 passes, un profil par image ;
 # tools/mesure/bilan_popup.py).
