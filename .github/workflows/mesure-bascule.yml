@@ -16,12 +16,17 @@ on:
       apres:
         description: "Branche dont le dossier Tab5/ fait la variante « apres » (vide : avant seulement)"
         default: ""
+      variantes:
+        description: "Variantes « apres » (apres, apres_sans_vidage, apres_sans_coupure)"
+        default: "apres"
 
 permissions:
   contents: read
 
 env:
   APRES: ${{ inputs.apres || 'claude/perf-bascule-theme-562efc' }}
+  # Premier run (39025145802) : les quatre variantes en natif ; ensuite avant / après, avec callgrind.
+  VARIANTES_APRES: ${{ inputs.variantes || 'apres' }}
 
 jobs:
   mesure:
@@ -62,7 +67,7 @@ jobs:
           mkdir -p programmes
           VARIANTES="avant"
           if [ -n "$APRES" ] && git rev-parse --verify -q "origin/$APRES" > /dev/null; then
-            VARIANTES="avant apres apres_sans_vidage apres_sans_coupure"
+            VARIANTES="avant $VARIANTES_APRES"
           fi
           echo "VARIANTES=$VARIANTES" >> "$GITHUB_ENV"
           for v in $VARIANTES; do
@@ -114,7 +119,7 @@ jobs:
               valgrind --tool=callgrind --instr-atstart=no --callgrind-out-file="resultats/callgrind_$v/cg.out.%p" \
               "programmes/$v" > "resultats/callgrind_$v.log" 2>&1 &
             pid=$!
-            python tools/mesure/piloter_bascule.py --journal "resultats/callgrind_$v.log" --facteur 8 \
+            python tools/mesure/piloter_bascule.py --journal "resultats/callgrind_$v.log" --facteur 5 \
               > "resultats/pilote_callgrind_$v.log" 2>&1 || echo "::warning::pilote callgrind $v en échec"
             sleep 2
             kill "$pid" || true
