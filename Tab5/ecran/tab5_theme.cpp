@@ -53,6 +53,47 @@ bool theme_selectionner(int theme, int mode, bool nuit) {
 
 bool theme_ui_pret() { return esphome::App.is_setup_complete(); }
 
+// --- Bascule sans invalidations ni abonnés (17/10/2026) -----------------------
+// [AI-WARNING] Ne pas retirer sans mesurer. Dans LVGL 9.5, chaque objet invalidé
+// (lv_obj_invalidate → lv_inv_area : LV_EVENT_INVALIDATE_AREA) ou remis en page
+// (lv_obj_mark_layout_as_dirty : LV_EVENT_REFR_REQUEST) envoie un événement à l'affichage,
+// dont l'envoi parcourt deux fois toute sa liste de rappels ; et chaque label au texte à
+// recalculer s'y abonne jusqu'à la mise en page suivante (lv_label_mark_need_refr_text,
+// lv_label.c). Pendant une bascule, des centaines de labels s'abonnent l'un après l'autre et
+// chaque écriture suivante parcourt leur liste : coût quadratique, le même que celui du
+// démarrage (tab5_demarrage.cpp). Entre theme_bascule_debut() et theme_bascule_fin() :
+// - tout l'écran est invalidé une fois, puis l'invalidation est coupée
+//   (lv_display_enable_invalidation) : les objets repeints seront redessinés par cette
+//   invalidation-là, qui couvre aussi les calques du dessus ;
+// - les abonnements des labels sont vidés dès qu'il y en a 64 (lvgl_vidage_abonnes).
+// Ce qui change d'un objet à l'autre n'en dépend pas : couleurs, textes, tailles et places
+// sont écrits comme avant, et la mise en page de l'image suivante reste celle de LVGL. Les
+// deux appels encadrent des lambdas sans attente (jamais un wait_until ni un delay entre
+// eux, tests/test_themes.py) ; si la fin manquait, le début de l'image suivante
+// (LV_EVENT_REFR_START) la ferait : l'écran ne peut pas rester figé.
+static bool s_bascule = false;
+
+static void bascule_garde(lv_event_t*) { theme_bascule_fin(); }
+
+void theme_bascule_debut() {
+    lv_display_t* disp = lv_display_get_default();
+    if (disp == nullptr || s_bascule) return;
+    lv_obj_invalidate(lv_screen_active());
+    lv_display_enable_invalidation(disp, false);
+    lvgl_vidage_abonnes(true);
+    lv_display_add_event_cb(disp, bascule_garde, LV_EVENT_REFR_START, nullptr);
+    s_bascule = true;
+}
+
+void theme_bascule_fin() {
+    if (!s_bascule) return;
+    s_bascule = false;
+    lv_display_t* disp = lv_display_get_default();
+    lv_display_remove_event_cb_with_user_data(disp, bascule_garde, nullptr);
+    lvgl_vidage_abonnes(false);
+    lv_display_enable_invalidation(disp, true);
+}
+
 // --- Formes (rayons, bordures, dégradés, ombres) ------------------------------
 // Une propriété d'un style : nombre (rayon, largeur, côtés, opacité…), couleur
 // littérale, rôle de la palette du style, ou retirée (le style ne la portait pas).
@@ -2440,6 +2481,13 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
         if (index[role] >= 3) {
             const_cast<lv_font_t*>(police->get_lv_font())->fallback = polices[role]->get_lv_font();
         }
+        // Même police qu'avant (Clair ↔ Sombre d'un thème, deux thèmes en Roboto) : rien à
+        // rafraîchir. Chaque lv_obj_report_style_change parcourt tous les objets et refait la
+        // mise en page du texte de chaque porteur et de ses descendants (17/10/2026).
+        lv_style_value_t avant;
+        if (lv_style_get_prop(styles[role], LV_STYLE_TEXT_FONT, &avant) == LV_STYLE_RES_FOUND &&
+            avant.ptr == police->get_lv_font())
+            continue;
         lv_style_set_text_font(styles[role], police->get_lv_font());
         lv_obj_report_style_change(styles[role]);
     }

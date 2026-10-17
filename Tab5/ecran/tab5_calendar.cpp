@@ -243,6 +243,12 @@ static void cal_styles_init() {
 
 // Thèmes (ADR-0029) : les couleurs des styles des cases, en place (les cases gardent leurs
 // styles) ; cal_render_month() repeint ensuite ce qu'il pose en local.
+// [AI-WARNING] Couleurs seules, sans lv_obj_report_style_change (17/10/2026) : appelée
+// seulement par tab5_theme_repeindre, entre theme_bascule_debut() et theme_bascule_fin(),
+// qui redessinent tout l'écran. LVGL lit ces couleurs au dessin (LV_OBJ_STYLE_CACHE à 0,
+// garde dans tab5_theme.cpp) ; les cinq rafraîchissements parcouraient chacun tous les
+// objets et recalculaient les 84 libellés des cases (60 ms sur la Waveshare 7B, 16/10/2026).
+// Une propriété de taille ou de place posée ici resterait sans effet : couleurs seulement.
 void cal_styles_repeindre() {
     if (s_cal_cells[0].cell == nullptr) return;
     lv_style_set_bg_color(&s_cal_style_case, lv_color_hex(UIColor.GLASS_RIM));
@@ -251,9 +257,6 @@ void cal_styles_repeindre() {
     lv_style_set_text_color(&s_cal_style_sub, lv_color_hex(UIColor.TEXT_SOFT));
     lv_style_set_bg_color(&s_cal_style_pastille_rdv, lv_color_hex(UIColor.GOLD));
     lv_style_set_bg_color(&s_cal_style_pastille_anniv, lv_color_hex(UIColor.WARM_PINK));
-    for (lv_style_t* st : {&s_cal_style_case, &s_cal_style_num, &s_cal_style_sub, &s_cal_style_pastille_rdv,
-                           &s_cal_style_pastille_anniv})
-        lv_obj_report_style_change(st);
 }
 
 // Pastille masquée tant que le rendu ne l'allume pas.

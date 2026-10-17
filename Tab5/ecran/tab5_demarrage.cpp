@@ -107,6 +107,9 @@ constexpr uint32_t kAbonnesMax = 64;
 // extérieur n'est pas fini (lv_event.c ne les libère qu'à ce moment) : sans elle, chaque
 // REFR_REQUEST imbriqué relancerait un vidage.
 bool s_vidage_en_cours = false;
+// Demandes en cours (démarrage, bascule de thème) : le rappel reste branché jusqu'à la
+// dernière fin, une bascule pendant le démarrage ne le retire pas avant la première image.
+int s_vidage_demandes = 0;
 
 void vider_abonnements(lv_event_t* e) {
     if (s_vidage_en_cours) return;
@@ -121,15 +124,25 @@ void vider_abonnements(lv_event_t* e) {
 // libéré à la fin de l'envoi), comme le fait chaque label qui se désabonne.
 void fin_du_vidage(lv_event_t* e) {
     auto* disp = static_cast<lv_display_t*>(lv_event_get_user_data(e));
-    lv_display_remove_event_cb_with_user_data(disp, vider_abonnements, disp);
     lv_display_remove_event_cb_with_user_data(disp, fin_du_vidage, disp);
+    lvgl_vidage_abonnes(false);
 }
 }  // namespace
+
+void lvgl_vidage_abonnes(bool actif) {
+    lv_display_t* disp = lv_display_get_default();
+    if (disp == nullptr) return;
+    if (actif) {
+        if (s_vidage_demandes++ == 0) lv_display_add_event_cb(disp, vider_abonnements, LV_EVENT_REFR_REQUEST, disp);
+    } else if (s_vidage_demandes > 0 && --s_vidage_demandes == 0) {
+        lv_display_remove_event_cb_with_user_data(disp, vider_abonnements, disp);
+    }
+}
 
 void demarrage_preparer_lvgl() {
     lv_display_t* disp = lv_display_get_default();
     if (disp == nullptr) return;
     lv_display_set_resolution(disp, kEcranL, kEcranH);
-    lv_display_add_event_cb(disp, vider_abonnements, LV_EVENT_REFR_REQUEST, disp);
+    lvgl_vidage_abonnes(true);
     lv_display_add_event_cb(disp, fin_du_vidage, LV_EVENT_REFR_START, disp);
 }
