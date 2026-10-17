@@ -221,6 +221,30 @@ def test_bascule_rapide_ne_coupe_le_rafraichissement_que_pour_des_couleurs():
         assert prop and prop.group(1) in COULEURS_SANS_GEOMETRIE, f"pendant la coupure : {ligne}"
 
 
+def test_bascule_sans_invalidation_jamais_coupee_pendant_une_attente():
+    """theme_bascule_debut() coupe l'invalidation de LVGL jusqu'à theme_bascule_fin()
+    (tab5_theme.cpp, 17/10/2026). Une attente entre les deux (wait_until au démarrage,
+    delay, script lancé qui attendrait) laisserait LVGL dessiner sans rien invalider :
+    chaque début est suivi de sa fin avant toute action autre qu'une lambda, et le script
+    finit hors de la coupure. Le début précède les couleurs générées (il invalide tout
+    l'écran avant elles)."""
+    texte = THEMES_YAML.read_text(encoding="utf-8")
+    script = re.search(r"- id: tab5_theme_repeindre\n(.*?)(?:\n  - id: |\Z)", texte, re.S).group(1)
+    assert script.count("theme_bascule_debut();") == script.count("theme_bascule_fin();") == 2
+    assert script.index("theme_bascule_debut();") < script.index("# >>> styles")
+    dedans = False
+    for ligne in script.splitlines():
+        if "theme_bascule_debut();" in ligne:
+            assert not dedans, "deux débuts de suite"
+            dedans = True
+        elif "theme_bascule_fin();" in ligne:
+            assert dedans, "une fin sans début"
+            dedans = False
+        elif dedans and re.match(r"\s*- (?!lambda:)", ligne):
+            assert ligne.strip() == "- lvgl.theme.update:", f"pendant la coupure : {ligne.strip()}"
+    assert not dedans, "le script finit avec l'invalidation coupée"
+
+
 def test_premier_theme_sombre_est_la_palette_des_jeux():
     texte = TOKENS.read_text(encoding="utf-8")
     assert "inline constexpr Palette PALETTE_SOMBRE = {" in texte
@@ -258,6 +282,21 @@ def test_tables_du_theme_liees_a_theme_count():
     assert "static_assert(sizeof(kFormesDebut) / sizeof(kFormesDebut[0]) == 2 * THEME_COUNT + 1" in bloc
     assert "static_assert(kFormesDebut[2 * THEME_COUNT] + 1 == sizeof(kFormes) / sizeof(kFormes[0])" in bloc
     assert f"static_assert(THEME_COUNT == {len(gen_themes.charger())}," in THEMES_DATA.read_text(encoding="utf-8")
+
+
+def test_etat_compile_des_formes_couvre_chaque_forme_d_un_theme():
+    """theme_formes() ne rafraîchit que les porteurs d'un style dont la géométrie change, et
+    compare pour cela les propriétés de kFormesDefaut avant et après (17/10/2026) : chaque
+    (style, propriété) qu'un thème pose doit y être, sinon un changement passerait inaperçu
+    (et la propriété resterait au thème suivant)."""
+    texte = (TAB5 / "ecran" / "tab5_theme.cpp").read_text(encoding="utf-8")
+
+    def paires(nom: str) -> set[tuple[str, str]]:
+        bloc = re.search(rf"static constexpr Forme {nom}\[\] = \{{(.*?)\n\}};", texte, re.S).group(1)
+        return {(s, p) for s, p in re.findall(r"\{(\d+), (LV_STYLE_\w+), FORME_", bloc)}
+
+    formes, defaut = paires("kFormes"), paires("kFormesDefaut")
+    assert formes and formes <= defaut, sorted(formes - defaut)
 
 
 def test_options_du_select_dans_l_ordre_des_themes():

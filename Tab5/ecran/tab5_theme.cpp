@@ -2426,7 +2426,9 @@ static void poser_forme(lv_style_t* const styles[], const Forme& f) {
 // ci-dessous) ; l'écran entier est redessiné par tab5_theme_repeindre. Preuve : même
 // géométrie qu'avec les 12 appels sur 5 thèmes (empreinte des coordonnées, 07/10/2026),
 // et les tâches « clair » et « galerie » du rendu hors tablette (rendu-host.yml) comparent
-// la bascule à chaud au démarrage à froid, au pixel près.
+// la bascule à chaud au démarrage à froid, au pixel près. Depuis le 17/10/2026, seuls les
+// porteurs d'un style dont une propriété géométrique a changé sont rafraîchis (aucun pour
+// Clair ↔ Sombre d'un même thème, sauf Béton brut).
 #if LV_OBJ_STYLE_CACHE
 #error "theme_formes et tab5_theme_repeindre supposent LV_OBJ_STYLE_CACHE à 0 (couleurs lues au dessin)"
 #endif
@@ -2449,19 +2451,55 @@ static lv_obj_tree_walk_res_t rafraichir_porteur(lv_obj_t* o, void* donnees) {
     return LV_OBJ_TREE_WALK_NEXT;
 }
 
+// Ce que rafraichir_porteur() fait recalculer : mise en page (BORDER_WIDTH) et zone de dessin
+// hors cadre (ombre, contour), plus BORDER_SIDE, sans drapeau mais qui déplace le contenu.
+// Le reste (rayon, couleurs, dégradés, opacité de la bordure) est lu au dessin.
+static bool forme_geometrie(lv_style_prop_t prop) {
+    return prop == LV_STYLE_BORDER_SIDE ||
+           lv_style_prop_has_flag(prop, LV_STYLE_PROP_FLAG_LAYOUT_UPDATE | LV_STYLE_PROP_FLAG_EXT_DRAW_UPDATE);
+}
+
+struct ValeurForme {
+    lv_style_res_t res;
+    int32_t num;
+};
+
+static ValeurForme lire_forme(lv_style_t* const styles[], const Forme& f) {
+    lv_style_value_t v{};
+    const lv_style_res_t res = lv_style_get_prop(styles[f.style], f.prop, &v);
+    return {res, res == LV_STYLE_RES_FOUND ? v.num : 0};
+}
+
 void theme_formes(lv_style_t* const styles[], int n) {
     if (n != kStylesFormes) {
         ESP_LOGE("tab5.theme", "theme_formes : %d styles reçus, %d attendus (tables périmées)", n, kStylesFormes);
         return;
     }
+    // Géométrie d'avant, sur toutes les propriétés qu'un thème peut poser (kFormesDefaut les
+    // remet toutes à l'état compilé) : 20 thèmes sur 21 ont la même en clair et en sombre, et
+    // la bascule jour / nuit du mode Auto n'a alors aucun porteur à rafraîchir (17/10/2026).
+    ValeurForme avant[kNbFormesDefaut];
+    for (int i = 0; i < kNbFormesDefaut; i++) avant[i] = lire_forme(styles, kFormesDefaut[i]);
     // L'état compilé d'abord (un thème précédent a pu changer une propriété que celui-ci
     // ne touche pas), puis les formes du thème.
     for (int i = 0; i < kNbFormesDefaut; i++) poser_forme(styles, kFormesDefaut[i]);
     const int rangee = s_theme * 2 + (s_clair ? 1 : 0);
     for (int i = kFormesDebut[rangee]; i < kFormesDebut[rangee + 1]; i++) poser_forme(styles, kFormes[i]);
+    bool change[kStylesFormes] = {};
+    for (int i = 0; i < kNbFormesDefaut; i++) {
+        const Forme& f = kFormesDefaut[i];
+        if (!forme_geometrie(f.prop)) continue;
+        const ValeurForme apres = lire_forme(styles, f);
+        if (apres.res != avant[i].res || apres.num != avant[i].num) change[f.style] = true;
+    }
+    lv_style_t* changes[kStylesFormes];
+    int nb = 0;
+    for (int k = 0; k < kStylesFormes; k++)
+        if (change[k]) changes[nb++] = styles[k];
+    if (nb == 0) return;
     // nullptr : tous les écrans, comme lv_obj_report_style_change (pages des jeux et
     // calques du dessus, popups compris).
-    PorteursFormes porteurs{styles, n};
+    PorteursFormes porteurs{changes, nb};
     lv_obj_tree_walk(nullptr, rafraichir_porteur, &porteurs);
 }
 
