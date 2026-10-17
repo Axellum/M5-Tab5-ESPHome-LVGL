@@ -231,3 +231,16 @@ def test_version_du_c6_selon_la_carte(carte, attendu):
     bloc = capteur[capteur.index("id: sys_c6_version"):capteur.index("id: sys_prefixe_actions")]
     assert 'if (!${carte_c6_version}) { essais = 3; return std::string("inconnue"); }' in bloc
     assert bloc.index("${carte_c6_version}") < bloc.index("read_c6_firmware_version("), "pas de requête avant"
+
+
+@pytest.mark.parametrize("carte, attendu", [("tab5", "1000"), ("waveshare-7b", "0")])
+def test_attente_avant_l_ecran_selon_la_carte(carte, attendu):
+    """L'attente bloquante de l'on_boot 700 ([AI-WARNING-CRITICAL], ADR-0005) laisse à
+    l'expandeur du Tab5 le temps de se stabiliser avant le reset de sa dalle : 1000 ms, la
+    lambda résolue du Tab5 reste `delay(1000);`. La 7B n'a pas d'expandeur (reset de l'EK79007
+    sur GPIO33) : 0 ms, 1 s de moins à chaque démarrage (17/10/2026)."""
+    texte = lire("Tab5", "paquets", f"carte-{carte}.yaml")
+    assert re.search(rf'^\s+carte_attente_ecran_ms: "{attendu}"$', texte, re.M), carte
+    p700 = yaml.load(lire("tab5-ha-hmi.yaml"), Loader=_Chargeur)["esphome"]["on_boot"][0]
+    assert p700["priority"] == 700
+    assert {"lambda": "delay(${carte_attente_ecran_ms});"} in p700["then"]
