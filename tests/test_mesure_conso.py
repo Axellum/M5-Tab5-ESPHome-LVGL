@@ -52,7 +52,8 @@ def test_interrupteur_de_mesure_fine():
 
 def test_le_script_retrouve_des_entites_du_firmware():
     texte = PACKAGE.read_text(encoding="utf-8")
-    cherchees = re.findall(r"select\('match', '(\w+)\[\.\]\.\*_(\w+)\$'\)", texte)
+    # « (_[0-9]+)? » : le « _2 » de HA (tests/test_entites_suffixees.py).
+    cherchees = re.findall(r"select\('match', '(\w+)\[\.\]\.\*_(\w+)\(_\[0-9\]\+\)\?\$'\)", texte)
     assert len(cherchees) >= 13, cherchees
     firmware = _entites_du_firmware()
     absentes = [(d, f) for d, f in cherchees

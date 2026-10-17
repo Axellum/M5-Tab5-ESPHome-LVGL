@@ -144,7 +144,7 @@ script:
       # « Écran courant » de LA tablette qui a demandé : fin de la boucle quand il quitte
       # « Énergie ». Sans lui (entité désactivée), un seul passage.
       ecran: >-
-        {{ (device_entities(appareil) | select('match', 'sensor[.].*_ecran_courant$') | first | default(''))
+        {{ (device_entities(appareil) | select('match', 'sensor[.].*_ecran_courant(_[0-9]+)?$') | first | default(''))
            if appareil is string and appareil else '' }}
       # Plusieurs sources solaires (discussion #278, 05/10/2026) : solaire et production
       # (une entité, ce qu'envoie un blueprint plus ancien) plus solaires et productions

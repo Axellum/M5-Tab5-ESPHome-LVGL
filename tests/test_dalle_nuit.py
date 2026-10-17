@@ -162,7 +162,8 @@ def test_automatisation_tient_l_interrupteur():
     assert action["target"] == {"entity_id": "{{ state_attr('sensor.tab5_tablette', 'nuit_ecran') }}"}
     assert action["continue_on_error"] is True
     attribut = _modele("sensor", "Tab5 · tablette")["attributes"]["nuit_ecran"]
-    assert "_nuit_ecran_eteint$" in attribut, "fin de l'entity_id de « Tab5 Nuit (écran éteint) »"
+    # « (_[0-9]+)? » : le « _2 » de HA (tests/test_entites_suffixees.py).
+    assert "_nuit_ecran_eteint(_[0-9]+)?$" in attribut, "fin de l'entity_id de « Tab5 Nuit (écran éteint) »"
 
 
 @pytest.mark.parametrize("ident, attribut", [("tab5_theme_jour_nuit", "theme_nuit"), ("tab5_extinction_nuit", "nuit_ecran")])
