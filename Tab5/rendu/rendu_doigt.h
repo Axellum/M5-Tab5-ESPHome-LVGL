@@ -13,6 +13,16 @@
  *       1280×720, portrait 720×1280 pour Neon Apron) : ESPHome donne à LVGL la
  *       résolution déjà tournée et ne tourne que les points de SON écran tactile
  *       (LVTouchListener) ; ce pointeur-ci n'en a pas besoin.
+ *
+ * [AI-WARNING] Doigt LEVÉ : le point rendu à LVGL est ramené dans la résolution
+ *       courante. Neon Apron passe l'écran en portrait (720 de large) juste après
+ *       l'appui sur sa carte du sélecteur, en x = 797 : sans ce recadrage, LVGL
+ *       écrivait « indev_pointer_proc: X is 797 which is greater than hor. res » à
+ *       chaque lecture (~33 ms) tant qu'aucun autre appui ne venait (568 lignes par
+ *       langue dans le journal du rendu, 17/10/2026). Même principe que
+ *       recadrer_dernier_point() du flipper pour l'écran tactile de la tablette : levé,
+ *       le point ne déclenche rien. Doigt POSÉ, le point reste tel quel : une étape de
+ *       tools/rendu/ecrans.py hors de l'écran garde son avertissement.
  */
 #pragma once
 #include "esphome.h"
@@ -29,12 +39,18 @@ inline RenduDoigt& rendu_doigt() {
     return d;
 }
 
-// Lu par LVGL à chaque période de son minuteur d'entrée (~33 ms).
-inline void rendu_doigt_lire(lv_indev_t*, lv_indev_data_t* data) {
+// Lu par LVGL à chaque période de son minuteur d'entrée (~33 ms). Doigt levé : point
+// recadré dans la résolution courante (voir [AI-WARNING]).
+inline void rendu_doigt_lire(lv_indev_t* indev, lv_indev_data_t* data) {
     const RenduDoigt& d = rendu_doigt();
     data->point.x = d.x;
     data->point.y = d.y;
     data->state = d.appuye ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
+    if (!d.appuye) {
+        lv_display_t* disp = lv_indev_get_display(indev);
+        data->point.x = LV_CLAMP(0, d.x, lv_display_get_horizontal_resolution(disp) - 1);
+        data->point.y = LV_CLAMP(0, d.y, lv_display_get_vertical_resolution(disp) - 1);
+    }
 }
 
 // Pose (ou déplace) le doigt. Le pointeur est créé au premier appui : LVGL est prêt
