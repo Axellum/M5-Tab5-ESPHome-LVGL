@@ -18,6 +18,13 @@ tablette d'abord, puis `packages/tab5_energie.yaml` et le blueprint.
 le 16/10/2026 : niveau de batterie selon une courbe de décharge mesurée sur un Tab5 (#473).
 Firmware seul, rien à changer dans Home Assistant.
 
+[v3.9.0-rc.4](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.9.0-rc.4)
+le 17/10/2026 : volet de la tuile − / + sans tuile ouvert par sa roue (#475), images de la caméra et pochettes réduites ou appuyées dessinées (#491), chargeur
+sondé avant tout allumage (#489), écran éteint = dalle noire et extinction de nuit (#490),
+démarrage plus rapide avec barre de chargement (#476, #478, #480), plusieurs écrans (#479),
+`tab5_connected` à Home Assistant seulement (#495), Waveshare 7B expérimentale (#459 à #497).
+Firmware et packages dans n'importe quel ordre ; `custom_templates` rechargé d'abord.
+
 Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
 le confronte à la matrice) :
 **Contrat HA ↔ firmware** : compatible dans les deux sens (depuis v3.8.0).
