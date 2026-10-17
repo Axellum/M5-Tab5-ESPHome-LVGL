@@ -1,0 +1,141 @@
+name: Mesure de la bascule de thème (essai, jamais mergé)
+
+# Branche essai/mesure-bascule-theme (17/10/2026) : la tablette virtuelle en 1024×600 (la
+# Waveshare 7B), chronométrée pendant la bascule de thème (tools/mesure/variante_bascule.py :
+# étapes du script tab5_theme_repeindre et modules de theme_rejouer_ui), pilotée par
+# tools/mesure/piloter_bascule.py : bascules avant puis après avoir ouvert les 20 écrans.
+# « avant » = la branche telle quelle (origin/main + les outils de mesure) ; « apres » = le
+# dossier Tab5/ de la branche APRES (si elle est donnée), compilée sur le même runner.
+# Trois passes natives par variante, puis une sous callgrind (un profil par étape).
+
+on:
+  push:
+    branches: [essai/mesure-bascule-theme]
+  workflow_dispatch:
+    inputs:
+      apres:
+        description: "Branche dont le dossier Tab5/ fait la variante « apres » (vide : avant seulement)"
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  APRES: ${{ inputs.apres || 'claude/perf-bascule-theme-562efc' }}
+
+jobs:
+  mesure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Version plancher d'ESPHome
+        id: version
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          echo "esphome=$v" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/pip
+          key: pip-esphome-${{ steps.version.outputs.esphome }}-py3.13
+      - name: ESPHome, Pillow, valgrind
+        env:
+          ESPHOME_VERSION: ${{ steps.version.outputs.esphome }}
+        run: |
+          bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
+          sudo apt-get update -q && sudo apt-get install -y -q valgrind
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.platformio
+          key: pio-host-${{ steps.version.outputs.esphome }}
+      - name: Compiler avant et après
+        env:
+          TZ: Europe/Paris
+          TAB5_SAN_LINKFLAGS: ""
+          TAB5_SAN_CCFLAGS: "-g -fno-omit-frame-pointer"
+        run: |
+          mkdir -p programmes
+          VARIANTES="avant"
+          if [ -n "$APRES" ] && git rev-parse --verify -q "origin/$APRES" > /dev/null; then VARIANTES="avant apres"; fi
+          echo "VARIANTES=$VARIANTES" >> "$GITHUB_ENV"
+          for v in $VARIANTES; do
+            git checkout HEAD -- Tab5
+            if [ "$v" = apres ]; then
+              git checkout "origin/$APRES" -- Tab5
+              echo "--- apres = Tab5/ de origin/$APRES ($(git rev-parse --short "origin/$APRES"))"
+              git diff --stat HEAD -- Tab5
+            fi
+            python tools/mesure/variante_bascule.py tab5-mesure.yaml
+            set +e
+            esphome -s tab5_carte waveshare-7b compile tab5-mesure.yaml > "build_$v.log" 2>&1
+            code=$?
+            set -e
+            if [ "$code" -ne 0 ]; then tail -n 80 "build_$v.log"; exit "$code"; fi
+            prog=$(find .esphome/build -name program -type f -newer tab5-mesure.yaml | head -n 1)
+            cp "$prog" "programmes/$v"
+          done
+          git checkout HEAD -- Tab5
+      - name: Trois passes natives par variante
+        env:
+          TZ: Europe/Paris
+        run: |
+          mkdir -p resultats
+          for v in $VARIANTES; do
+            for n in 1 2 3; do
+              rm -rf "$RUNNER_TEMP/prefs" tools/demo/cle_demo.txt && mkdir -p "$RUNNER_TEMP/prefs" "$RUNNER_TEMP/captures"
+              ESPHOME_PREFDIR="$RUNNER_TEMP/prefs" ESPHOME_SNAPSHOT_DIR="$RUNNER_TEMP/captures" \
+                "programmes/$v" > "resultats/natif_${v}_$n.log" 2>&1 &
+              pid=$!
+              python tools/mesure/piloter_bascule.py --journal "resultats/natif_${v}_$n.log" \
+                > "resultats/pilote_natif_${v}_$n.log" 2>&1 || echo "::warning::pilote $v $n en échec"
+              kill "$pid" || true
+              wait "$pid" 2>/dev/null || true
+            done
+          done
+      - name: Sous callgrind, un profil par étape
+        env:
+          TZ: Europe/Paris
+        run: |
+          for v in $VARIANTES; do
+            rm -rf "$RUNNER_TEMP/prefs" tools/demo/cle_demo.txt && mkdir -p "$RUNNER_TEMP/prefs" "resultats/callgrind_$v"
+            ESPHOME_PREFDIR="$RUNNER_TEMP/prefs" ESPHOME_SNAPSHOT_DIR="$RUNNER_TEMP/captures" \
+              valgrind --tool=callgrind --instr-atstart=no --callgrind-out-file="resultats/callgrind_$v/cg.out.%p" \
+              "programmes/$v" > "resultats/callgrind_$v.log" 2>&1 &
+            pid=$!
+            python tools/mesure/piloter_bascule.py --journal "resultats/callgrind_$v.log" --facteur 8 \
+              > "resultats/pilote_callgrind_$v.log" 2>&1 || echo "::warning::pilote callgrind $v en échec"
+            sleep 2
+            kill "$pid" || true
+            wait "$pid" 2>/dev/null || true
+          done
+      - name: Bilan
+        if: always()
+        run: |
+          {
+            echo "## Bascule de thème, tablette virtuelle 1024×600"
+            echo "Variantes : $VARIANTES (apres = Tab5/ de origin/$APRES)"
+            python tools/mesure/bilan_bascule.py resultats
+          } >> "$GITHUB_STEP_SUMMARY"
+          for v in $VARIANTES; do
+            for f in resultats/callgrind_$v/cg.out.*; do
+              [ -f "$f" ] || continue
+              nom=$(sed -n 's/^desc: Trigger: Client Request: //p' "$f" | head -n 1)
+              [ -n "$nom" ] || continue
+              callgrind_annotate --inclusive=yes "$f" 2>/dev/null | head -n 120 > "resultats/callgrind_$v/incl_$nom.txt" || true
+              callgrind_annotate "$f" 2>/dev/null | head -n 60 > "resultats/callgrind_$v/self_$nom.txt" || true
+              callgrind_annotate --tree=caller "$f" 2>/dev/null > "resultats/callgrind_$v/arbre_$nom.txt" || true
+            done
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: mesure-bascule-theme
+          path: |
+            resultats/
+            build_*.log
+          retention-days: 14
