@@ -81,7 +81,7 @@ Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.
 
 | | Waveshare ESP32-P4-WIFI6-Touch-LCD-7B |
 |---|---|
-| Main processor | ESP32-P4 (ESP32-P4NRW32), revision **v3.2** on the author's board, run at 360 MHz like the Tab5 (400 MHz is « experimental » for ESPHome) |
+| Main processor | ESP32-P4 (ESP32-P4NRW32), revision **v3.2** on the author's board, run at 400 MHz, its normal speed (ESP-IDF offers 360 MHz only to chips older than v3: the 360 MHz asked until 2026-10-16 were ignored; ESPHome's « experimental » warning is about those older chips) |
 | Memory | 32 MB PSRAM (hex mode, 200 MHz), 32 MB flash |
 | Display | 7 inches, 1024×600, landscape panel, EK79007 controller over MIPI-DSI (2 lanes), ESPHome model `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B` |
 | Touch | GT911, I2C at 0x5D, polled every 50 ms (no interrupt) |
@@ -212,7 +212,7 @@ Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md
 
 | | Waveshare ESP32-P4-WIFI6-Touch-LCD-7B |
 |---|---|
-| Processeur principal | ESP32-P4 (ESP32-P4NRW32), révision **v3.2** sur la carte de l'auteur, à 360 MHz comme le Tab5 (400 MHz est « expérimental » pour ESPHome) |
+| Processeur principal | ESP32-P4 (ESP32-P4NRW32), révision **v3.2** sur la carte de l'auteur, à 400 MHz, sa fréquence normale (ESP-IDF ne propose 360 MHz qu'aux puces d'avant la v3 : les 360 MHz demandés jusqu'au 16/10/2026 étaient ignorés ; l'avertissement « expérimental » d'ESPHome vise ces anciennes puces) |
 | Mémoire | 32 Mo de PSRAM (mode hex, 200 MHz), 32 Mo de flash |
 | Écran | 7 pouces, 1024×600, dalle en paysage, contrôleur EK79007 en MIPI-DSI (2 voies), modèle ESPHome `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B` |
 | Tactile | GT911, I2C en 0x5D, interrogé toutes les 50 ms (sans interruption) |
