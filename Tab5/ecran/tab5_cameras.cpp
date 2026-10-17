@@ -63,6 +63,17 @@
 #include "tab5_parse.h"
 #include "lvgl.h"
 #include "lvgl_private.h"  // lv_image_cache_drop() (cache d'images, hors de lvgl.h en 9.5)
+
+// [AI-WARNING] Une image RGB565 réduite (lv_image_set_scale, COVER), ou arrondie ET
+// recolorée (une vignette appuyée : le thème LVGL assombrit le bouton par `recolor`, que
+// l'image hérite du calque), passe par lv_draw_sw_transform, qui convertit en RGB565A8.
+// Sans LV_DRAW_SW_SUPPORT_RGB565A8, LVGL écrit « Color format 0x12 is not enabled » et
+// dessine un tampon non initialisé (discussion #278, 17/10/2026 : 38 lignes par appui).
+// ESPHome ne l'active que pour une image `image:` RGB565 transparente : le drapeau est
+// posé par build_flags (tab5-ha-hmi.yaml, tab5-rendu-host.yaml). Sans lui, pas de build.
+#if !LV_DRAW_SW_SUPPORT_RGB565A8
+#error "LV_DRAW_SW_SUPPORT_RGB565A8 = 0 : images RGB565 reduites ou recolorees mal dessinees (build_flags de tab5-ha-hmi.yaml)"
+#endif
 #include <esp_attr.h>
 #include <cstdio>
 #include <cstring>

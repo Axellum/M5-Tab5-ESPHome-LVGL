@@ -14,6 +14,13 @@
 #       écran, tactile, mot d'activation) ; l'auteur n'a pas de ST7121.
 # ============================================================================
 
+# Extinction de la dalle (Tab5/ecran/tab5_dalle.cpp) : voile noir seul, comme la ST7123
+# (puce écran + tactile, « sleep in » arrêterait sans doute le tactile). Passer à 1 ou 2
+# seulement après un essai sur une tablette de cette révision.
+substitutions:
+  carte_dalle_extinction: "0"
+  carte_dalle_noire_ota: "0"
+
 display:
   - id: !extend tab5_display
     platform: mipi_dsi

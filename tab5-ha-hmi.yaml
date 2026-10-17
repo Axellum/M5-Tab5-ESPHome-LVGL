@@ -57,6 +57,19 @@ esphome:
   # (le job CI build-min compile à ce plancher). Pas cherché si une version plus
   # ancienne les connaît tous.
   min_version: 2026.9.0
+  # Une macro de LV_DEFINES (que lv_conf.h, écrit par ESPHome, met sinon à 0) passe par
+  # ICI : ESPHome 2026.9.0 ne lit que platformio_options pour l'écarter de lv_conf.h
+  # (esphome: build_flags seulement depuis 2026.9.1, #19743). Clé dépréciée, retirée en
+  # 2026.12.0 : avant, plancher à 2026.9.1 et ligne déplacée dans build_flags ci-dessous
+  # (un #error de tab5_cameras.cpp arrête le build si elle se perd).
+  platformio_options:
+    build_flags:
+      # Images RGB565 réduites ou recolorées (17/10/2026, discussion #278) : caméras
+      # (cadre et vignettes plus petits que l'image de HA, vignette appuyée), pochettes
+      # du lecteur en COVER. lv_draw_sw_transform les convertit en RGB565A8 ; ESPHome
+      # ne l'active que pour une `image:` RGB565 transparente, et sans lui LVGL écrit
+      # « Color format 0x12 is not enabled » et dessine un tampon non initialisé.
+      - -DLV_DRAW_SW_SUPPORT_RGB565A8=1
   # Réglages LVGL : ESPHome compile LVGL avec -DLV_KCONFIG_IGNORE, donc un
   # CONFIG_LV_* du sdkconfig n'a aucun effet ; une macro absente de ses LV_DEFINES
   # passe par ici.
@@ -78,6 +91,12 @@ esphome:
     - -DTAB5_ECRAN_H=${carte_ecran_h}
     - -DTAB5_ROTATION=${carte_rotation}
     - -DTAB5_POLICE_PCT=${police_pct}
+    # Extinction de la dalle avec le rétroéclairage (Tab5/ecran/tab5_dalle.cpp, audit
+    # anti-casse du 16/10/2026) : commandes DCS que tient la dalle (0 voile seul, 1 + display
+    # off, 2 + sleep in) et dalle noire pendant une OTA, selon la carte ou la révision de dalle
+    # (substitutions carte_dalle_* de carte-waveshare-7b.yaml et des Tab5/paquets/ecran-*.yaml).
+    - -DTAB5_DALLE_EXTINCTION=${carte_dalle_extinction}
+    - -DTAB5_DALLE_NOIRE_OTA=${carte_dalle_noire_ota}
   includes:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
     # les deux jeux qui en ont besoin (25/09/2026, audit lot 8a).
@@ -331,34 +350,28 @@ esphome:
             volume: 1.0
         # Allumer l'ampli APRES le media_player pour eviter le bruit I2S
         - switch.turn_on: speaker_enable
-        # Attendre Home Assistant lui-même, abonné aux états : `api.connected` nu
-        # s'ouvre au premier client venu (HA à peine connecté, ou `esphome logs`),
-        # et l'événement partait alors avant l'abonnement de HA — perdu 2 boots sur 3
-        # le 25/09/2026 (écran sans agenda ni météo jusqu'au cycle HA /10 min, réveil
-        # en repli sur l'heure fixe). Même garde que on_client_connected
-        # (tab5-api-logic.yaml), qui ne tire pas au boot (boot_complete encore faux).
-        # Plus de `delay: 2s` ici (01/10/2026, accord d'Axel) : l'événement part dès
-        # l'abonnement. HA (≥ 2025.9, plancher du projet 2026.8) envoie l'abonnement aux
-        # états ET aux actions dans un seul paquet (aioesphomeapi,
-        # subscribe_home_assistant_states_and_services) et l'API d'ESPHome lit jusqu'à
-        # 10 messages par passage de boucle : quand l'abonnement aux états est vu,
-        # celui aux actions l'est aussi. Au démarrage, aucune ancienne connexion ne
-        # peut fausser la garde (on_client_connected garde ses 2 s pour ce cas).
-        # Un événement perdu se verrait au journal : « Home Assistant event
-        # 'esphome.tab5_connected' dropped; client has not subscribed to actions (yet) ».
+        # L'événement qui déclenche la poussée complète de HA, envoyé à HA lui-même dès
+        # qu'il écoute les actions : ha_evenement_envoyer() (tab5_journal.cpp) ne l'envoie
+        # qu'à un client « Home Assistant » abonné aux actions, et rend faux sans rien
+        # envoyer tant qu'il n'y en a pas ; wait_until la rappelle à chaque passage de
+        # boucle, l'événement part donc une fois. Avant (17/10/2026) : garde
+        # `api.connected: state_subscription_only`, vraie dès qu'UN client est abonné aux
+        # états — un outil aioesphomeapi passé avant HA la levait et l'événement était
+        # jeté, aux 10 redémarrages de la nuit du 16/10/2026 (écran sans météo ni agenda
+        # jusqu'aux poussées périodiques). Plus tôt, `api.connected` nu : perdu 2 boots sur
+        # 3 le 25/09/2026. on_client_connected (tab5-api-logic.yaml) ne tire pas au boot
+        # (boot_complete encore faux). Un événement perdu se verrait au journal :
+        # « HA injoignable au boot (timeout 30s) ».
         - wait_until:
             condition:
-              api.connected:
-                state_subscription_only: true
+              lambda: |-
+                if (!id(boot_evt_connecte)) id(boot_evt_connecte) = ha_evenement_envoyer("esphome.tab5_connected");
+                return id(boot_evt_connecte);
             timeout: 30s
         - if:
             condition:
-              api.connected:
-                state_subscription_only: true
+              lambda: 'return !id(boot_evt_connecte);'
             then:
-              - homeassistant.event:
-                  event: esphome.tab5_connected
-            else:
               - logger.log: "HA injoignable au boot (timeout 30s) - interface locale disponible quand meme"
         - globals.set:
             id: boot_complete

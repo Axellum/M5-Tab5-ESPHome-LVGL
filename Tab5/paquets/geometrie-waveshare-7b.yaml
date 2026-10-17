@@ -4,8 +4,12 @@
 # @role Taille de l'écran de la Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (ADR-0061) :
 #       1024×600, dalle en paysage montée à l'envers : LVGL tourne l'image de 180°
 #       (constaté sur la carte le 14/10/2026, comme agillis/esphome-modular-lvgl-buttons,
-#       HomeTiles et le fil HA t/945864 ; le tactile suit par son transform,
-#       carte-waveshare-7b.yaml). Inclus par
+#       HomeTiles et le fil HA t/945864). Le tactile suit seul : ESPHome tourne les
+#       appuis avec l'image (LvglComponent::rotate_coordinates) ; le transform du GT911
+#       (carte-waveshare-7b.yaml) ne fait que caler la dalle tactile sur l'écran, quelle
+#       que soit la rotation. Carte montée à l'envers : `carte_rotation: "0"` dans
+#       Tab5/user_entities.yaml (plus de rotation logicielle : ~69 ms au lieu de ~83 ms par
+#       écran entier, mesuré le 16/10/2026). Inclus par
 #       carte-waveshare-7b.yaml (firmware) et par tab5-rendu-host.yaml
 #       (`-s tab5_carte waveshare-7b`, captures en 1024×600).
 # @architecture_constraint Mêmes clés que geometrie-tab5.yaml (voir son en-tête).

@@ -55,25 +55,25 @@ api:
   # le 25/09/2026 (tab5-ha-hmi.yaml, audit lot 3). Au boot, on_boot émet déjà
   # l'événement et boot_complete est encore faux quand HA se connecte : pas de doublon.
   # Filtre client_info : `esphome logs` (« ESPHome Logs … ») ne relance pas le push.
-  # 2 s + api.connected(state_subscription_only) : laisser HA finir son abonnement,
-  # sinon l'événement part dans le vide. Ces 2 s restent ici (le démarrage n'en a plus,
-  # tab5-ha-hmi.yaml) : à une reconnexion, une ancienne connexion pas encore fermée
-  # (coupure Wi-Fi) peut déjà être abonnée, et un `wait_until` passerait avant que la
-  # nouvelle le soit. Côté HA, l'automation ne laisse passer
-  # tab5_connected que si la liaison est `on` depuis moins de 3 min — vrai ici.
+  # 2 s, puis l'événement envoyé à HA seulement, dès qu'un client « Home Assistant » écoute
+  # les actions (ha_evenement_envoyer(), tab5_journal.cpp ; 10 s au plus). Les 2 s restent
+  # (le démarrage n'en a plus, tab5-ha-hmi.yaml) : à une reconnexion, une ancienne
+  # connexion de HA pas encore fermée (coupure Wi-Fi) peut encore être abonnée, et
+  # l'événement partirait vers elle avant que la nouvelle le soit. Avant le 17/10/2026 :
+  # garde `api.connected: state_subscription_only`, levée par n'importe quel client abonné
+  # aux états (un outil aioesphomeapi), l'événement était alors jeté. Côté HA,
+  # l'automation ne laisse passer tab5_connected que si la liaison est `on` depuis moins
+  # de 3 min — vrai ici.
   on_client_connected:
     - if:
         condition:
           lambda: 'return id(boot_complete) && client_info.find("Home Assistant") != std::string::npos;'
         then:
           - delay: 2s
-          - if:
+          - wait_until:
               condition:
-                api.connected:
-                  state_subscription_only: true
-              then:
-                - homeassistant.event:
-                    event: esphome.tab5_connected
+                lambda: 'return ha_evenement_envoyer("esphome.tab5_connected");'
+              timeout: 10s
     # Journal des démarrages et des coupures (Tab5/ecran/tab5_journal.cpp) : à chaque
     # connexion de HA, boot compris (d'où l'absence de boot_complete ici).
     - if:

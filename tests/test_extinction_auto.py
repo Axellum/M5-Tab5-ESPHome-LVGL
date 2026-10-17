@@ -67,7 +67,7 @@ def test_delais_dans_l_ordre_des_options():
     delais = [int(v) for v in m.group(1).split(",")]
     attendus = [0] + [int(o.split()[0]) for o in OPTIONS[1:]]
     assert delais == attendus, f"{delais} ≠ {attendus} (options {OPTIONS})"
-    assert re.search(r"\*choix\s*==\s*0", code), "« Jamais » (index 0) n'éteint jamais"
+    assert re.search(r"\*choix\s*!=\s*0", code), "« Jamais » (index 0) ne donne aucun délai"
 
 
 def test_exclusions():
@@ -93,7 +93,31 @@ def test_eteint_comme_ha_et_compte_depuis_l_allumage():
     lumiere = next(l for l in _yaml("tab5-hardware.yaml")["light"] if l.get("id") == "backlight")
     allumage = yaml.safe_dump(lumiere["on_turn_on"], allow_unicode=True)
     assert "id(ecran_allume_ms) = millis();" in allumage
-    assert "lvgl.resume" in allumage
+    # LVGL reprend par le script qui rallume la dalle (tab5_dalle.cpp), lancé en premier.
+    assert lumiere["on_turn_on"][0] == {"script.execute": "tab5_dalle_rallumer"}
+    rallumer = next(x for x in _yaml("tab5-hardware.yaml")["script"] if x["id"] == "tab5_dalle_rallumer")
+    assert "lvgl.resume" in yaml.safe_dump(rallumer, allow_unicode=True)
+
+
+def test_nuit_tenue_par_ha():
+    """« Tab5 Nuit (écran éteint) » (16/10/2026) : tenu par HA d'après « Tab5 · extinction de
+    nuit », éteint au démarrage (HA le renvoie à la connexion). Allumé, 1 min sans toucher
+    éteint l'écran même sur « Jamais » ou sur secteur, avec les mêmes exceptions ; l'écran
+    éteint par la nuit se rallume quand elle finit."""
+    s = next(s for s in _yaml("tab5-ha-controls.yaml")["switch"] if s.get("id") == "tab5_nuit_ecran")
+    assert s["name"] == "Tab5 Nuit (écran éteint)"
+    assert s["restore_mode"] == "ALWAYS_OFF" and s["optimistic"] is True
+    fin = yaml.safe_dump(s["on_turn_off"], allow_unicode=True)
+    assert "id(ecran_eteint_par_nuit)" in fin and "light.turn_on: backlight" in fin
+    code, actions = _condition()
+    code = _sans_commentaires(code)
+    assert re.search(r"NUIT_MIN\s*=\s*1;", code)
+    nuit = code.index("id(tab5_nuit_ecran).state")
+    assert code.index("economie_sur_batterie()") < nuit, "la nuit passe après « sur batterie seulement »"
+    assert code.index("if (!permise) return false;") < nuit, "la nuit garde les exceptions"
+    assert any("id(ecran_eteint_par_nuit) = true" in str(a) for a in actions)
+    ids = {g["id"]: g for g in _yaml("tab5-globals.yaml")["globals"]}
+    assert ids["ecran_eteint_par_nuit"]["restore_value"] is False
 
 
 def test_globals_declares():
@@ -138,6 +162,7 @@ def test_sur_batterie_seulement():
     assert s["name"] == "Tab5 Extinction auto sur batterie seulement"
     assert s["restore_mode"] == "RESTORE_DEFAULT_OFF" and s["entity_category"] == "config"
     code = _sans_commentaires(_condition()[0])
-    garde = re.search(r"id\(tab5_extinction_sur_batterie\)\.state\s*&&\s*!economie_sur_batterie\(\)\)\s*return false", code)
+    # Sur secteur : aucun délai du select (la nuit peut en redonner un, test_nuit_tenue_par_ha).
+    garde = re.search(r"id\(tab5_extinction_sur_batterie\)\.state\s*&&\s*!economie_sur_batterie\(\)\)\s*delai_min\s*=\s*0;", code)
     assert garde, "garde « sur batterie seulement » absente de l'extinction auto"
     assert code.index("id(ecran_veille_permise) = permise") < garde.start()

@@ -7,7 +7,7 @@
   `tab5_hardware`, et l'IMU selon la carte ;
 - `carte-waveshare-7b.yaml` recopie de tab5-hardware.yaml ce qui ne dépend pas de la carte
   (logger, OTA, safe_mode, options d'ESP-IDF, rétroéclairage plafonné, lumière, toucher,
-  lecteur, bouton) : mêmes valeurs, pour qu'une correction faite au Tab5 ne s'y perde pas ;
+  lecteur, bouton, reset CORE des redémarrages logiciels) : mêmes valeurs, pour qu'une correction faite au Tab5 ne s'y perde pas ;
 - ses bouchons (`!extend` / `!remove`) visent des id que le firmware du Tab5 déclare, et elle
   ne charge aucun composant du matériel du Tab5 qu'elle n'a pas ;
 - la CI la compile (build-carte-7b) et rend ses écrans en 1024×600 (rendu-7b), à part.
@@ -118,15 +118,24 @@ def test_blocs_recopies(bloc):
     assert _b7()[bloc] == _tab5()[bloc], f"{bloc} : recopier tab5-hardware.yaml dans {CARTE_7B}"
 
 
+FREQ_360 = ("CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360", "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ")
+
+
 def test_esp_idf_recopie():
     t, w = _tab5()["esp32"], _b7()["esp32"]
-    assert w["framework"] == t["framework"]
-    # 360 MHz comme le Tab5 (posé là par les options d'ESP-IDF, recopiées ci-dessus).
-    assert w["cpu_frequency"] == "360MHz" and t["framework"]["sdkconfig_options"]["CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ"] == "360"
+    # Tout pareil, sauf la fréquence du processeur : 360 MHz sur le Tab5 (P4 v1.x, sa limite),
+    # 400 MHz sur la 7B (P4 v3 : ESP-IDF 5.5 n'y offre pas 360, ses options étaient ignorées
+    # et le build tournait déjà à 400, audit anti-casse du 16/10/2026).
+    options_t = dict(t["framework"]["sdkconfig_options"])
+    assert (options_t.pop(FREQ_360[0]), options_t.pop(FREQ_360[1])) == ("y", "360")
+    assert {**t["framework"], "sdkconfig_options": options_t} == w["framework"]
+    assert not set(FREQ_360) & set(w["framework"]["sdkconfig_options"])
+    assert w["cpu_frequency"] == "400MHz"
     assert (w["variant"], w["engineering_sample"], w["flash_size"]) == ("esp32p4", False, "32MB")
 
 
 @pytest.mark.parametrize("composant, cid", [("output", "backlight_plafonne"), ("light", "backlight"),
+                                            ("script", "tab5_dalle_rallumer"), ("script", "tab5_dalle_ota"),
                                             ("media_player", "speaker_player"), ("button", "btn_restart")])
 def test_entrees_recopiees(composant, cid):
     assert _par_id(_b7()[composant], cid) == _par_id(_tab5()[composant], cid), f"{composant} {cid}"
@@ -154,6 +163,16 @@ def test_audio_memes_reglages():
     mic_t, mic_w = _par_id(t["microphone"], "tab5_microphone"), _par_id(w["microphone"], "tab5_microphone")
     assert {k: v for k, v in mic_w.items() if k != "i2s_din_pin"} == {k: v for k, v in mic_t.items() if k != "i2s_din_pin"}
     assert _par_id(w["display"], "tab5_display")["dimensions"] == _par_id(t["display"], "tab5_display")["dimensions"]
+
+
+def test_reset_core_sur_les_deux_cartes():
+    """Tout redémarrage logiciel en reset CORE (tab5_lien_c6.cpp, boucle du lien C6 de la 7B
+    du 16/10/2026) : sur le Tab5 aussi, même lien C6. Le global garde le .cpp dans le binaire."""
+    fichiers = ["Tab5/ecran/tab5_lien_c6.h", "Tab5/ecran/tab5_lien_c6.cpp"]
+    for carte in (_tab5(), _b7()):
+        assert all(f in carte["esphome"]["includes"] for f in fichiers)
+    assert _par_id(_b7()["globals"], "lien_c6_branche") == _par_id(_tab5()["globals"], "lien_c6_branche") == {
+        "id": "lien_c6_branche", "type": "bool", "initial_value": "lien_c6_demarrage()"}
 
 
 # ─── Bouchons du matériel absent ─────────────────────────────────────────────
@@ -199,3 +218,16 @@ def test_ci_compile_et_rend_la_7b():
     rendu = lire(".github", "workflows", "rendu-host.yml")
     assert "  rendu-7b:" in rendu and "-s tab5_carte waveshare-7b" in rendu
     assert "name: rendu-1024x600" in rendu
+
+
+@pytest.mark.parametrize("carte, attendu", [("tab5", "true"), ("waveshare-7b", "false")])
+def test_version_du_c6_selon_la_carte(carte, attendu):
+    """Le C6 de la 7B ne répond pas à la demande de version : chaque demande figeait la
+    boucle 1 s, 3 à 4 fois après chaque démarrage (mesuré le 16/10/2026). Chaque carte dit
+    si on la demande ; le capteur répond « inconnue » sans requête quand c'est non."""
+    texte = lire("Tab5", "paquets", f"carte-{carte}.yaml")
+    assert re.search(rf'^\s+carte_c6_version: "{attendu}"$', texte, re.M), carte
+    capteur = lire("Tab5", "paquets", "tab5-sensors-diagnostics.yaml")
+    bloc = capteur[capteur.index("id: sys_c6_version"):capteur.index("id: sys_prefixe_actions")]
+    assert 'if (!${carte_c6_version}) { essais = 3; return std::string("inconnue"); }' in bloc
+    assert bloc.index("${carte_c6_version}") < bloc.index("read_c6_firmware_version("), "pas de requête avant"

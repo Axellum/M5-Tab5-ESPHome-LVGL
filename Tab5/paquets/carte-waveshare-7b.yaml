@@ -14,7 +14,8 @@
 #          backlight_pwm / backlight_plafonne / backlight, bus I2S mic_bus, micro
 #          tab5_microphone, haut-parleur tab5_speaker, lecteur speaker_player, bouton
 #          btn_restart) : déclaré ici avec les broches de la 7B. Ce qui ne dépend pas de la
-#          carte (logger, ota, safe_mode, psram, light, lecteur, toucher, options d'ESP-IDF…)
+#          carte (logger, ota, safe_mode, psram, light, lecteur, toucher, options d'ESP-IDF,
+#          reset CORE des redémarrages logiciels…)
 #          est RECOPIÉ de tab5-hardware.yaml : tests/test_carte_7b.py exige les mêmes
 #          valeurs. Une modification là-bas se reporte ici.
 #       2. Matériel absent (expandeurs PI4IOE, INA226, RX8130, CHG_STAT ; ES8388 remplacé
@@ -43,15 +44,33 @@
 packages:
   geometrie: !include geometrie-waveshare-7b.yaml
 
+# Extinction de la dalle (Tab5/ecran/tab5_dalle.cpp, audit anti-casse du 16/10/2026) : voile
+# noir, « display off » (0x28) et « sleep in » (0x10) à l'EK79007, tactile GT911 à part ; le
+# rétroéclairage analogique ne s'éteint pas tout à fait (l'image restait visible à 0 %). Et
+# dalle éteinte pendant une mise à jour du firmware, qui la faisait scintiller (forum HA,
+# fil « 7B working config »). 0x28 seul : essayé le 16/10/2026, sans effet visible (PR #487).
+substitutions:
+  carte_dalle_extinction: "2"
+  carte_dalle_noire_ota: "1"
+  # Le C6 d'usine de la 7B ne répond pas à la demande de version d'ESP-Hosted (rien depuis
+  # le 14/10/2026) et chaque demande figeait la boucle 1 s (capteur « Tab5 C6 Version »,
+  # tab5-sensors-diagnostics.yaml) : plus de demande. À remettre à true après une mise à
+  # jour du C6 (docs/waveshare-7b.md).
+  carte_c6_version: "false"
+
 # Plancher d'ESPHome de la 7B : 2026.9.1 (voir esp32_hosted plus bas). Vérifié à la
 # compilation par un static_assert : un `min_version:` ici serait écrasé par celui de
 # tab5-ha-hmi.yaml (2026.9.0, plancher du Tab5) à la fusion des packages.
 esphome:
   includes:
     - Tab5/ecran/carte_7b_version.h
-    # Redémarrage logiciel en reset CORE, pour le lien SDIO du C6 (esp32_hosted, plus bas).
+    # Redémarrage logiciel en reset CORE, pour le lien SDIO du C6 (esp32_hosted, plus bas) :
+    # recopié de tab5-hardware.yaml (tests/test_carte_7b.py), comme le global plus bas.
     - Tab5/ecran/tab5_lien_c6.h
     - Tab5/ecran/tab5_lien_c6.cpp
+    # Écran éteint = dalle éteinte (lumière et `ota:` plus bas), comme tab5-hardware.yaml.
+    - Tab5/ecran/tab5_dalle.h
+    - Tab5/ecran/tab5_dalle.cpp
 
 # ─── 1. Matériel de la 7B ────────────────────────────────────────────────────
 
@@ -59,12 +78,18 @@ esp32:
   variant: esp32p4
   # P4 v3 (de série) : ce que visent les démos Waveshare (CONFIG_ESP32P4_REV_MIN_300).
   engineering_sample: false
-  # 400 MHz, défaut d'ESPHome sur un P4 v3 : « experimental and may not boot »
-  # (esphome#13425). 360 MHz comme le Tab5.
-  cpu_frequency: 360MHz
+  # 400 MHz : la fréquence normale d'un P4 v3 (guide Espressif de la révision v3.x), et la
+  # seule possible. ESP-IDF 5.5 n'offre 360 MHz qu'à un P4 d'avant la v3
+  # (esp_system/port/soc/esp32p4/Kconfig.cpu : ESP_DEFAULT_CPU_FREQ_MHZ_360 dépend de
+  # ESP32P4_SELECTS_REV_LESS_V3) : les 360 MHz demandés jusqu'au 16/10/2026 étaient ignorés,
+  # la carte a toujours tourné à 400 (sdkconfig du build : CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ=400).
+  # L'avertissement d'ESPHome « 400MHz on ESP32-P4 is experimental and may not boot »
+  # (esphome#13425) vise les échantillons d'avant la v3 ; le Tab5 (P4 v1.x) reste à 360.
+  cpu_frequency: 400MHz
   flash_size: 32MB
   # Recopié de tab5-hardware.yaml (tests/test_carte_7b.py) : mêmes réglages d'ESP-IDF,
-  # mêmes raisons (code en PSRAM, -O2, pile de 16 Ko, firmware signé, cache L2…).
+  # mêmes raisons (code en PSRAM, -O2, pile de 16 Ko, firmware signé, cache L2…), sauf la
+  # fréquence du processeur (ci-dessus) : pas d'options 360 MHz, sans effet sur un P4 v3.
   framework:
     type: esp-idf
     advanced:
@@ -77,8 +102,6 @@ esp32:
         signing_scheme: rsa3072
     sdkconfig_options:
       CONFIG_SPI_FLASH_YIELD_DURING_ERASE: "y"
-      CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360: "y"
-      CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ: "360"
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "15"
       CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: "y"
       CONFIG_CACHE_L2_CACHE_256KB: "y"
@@ -111,7 +134,7 @@ esp32_hosted:
 # logiciel, le lien SDIO du C6 peut ne plus monter, et chaque esp_restart() suivant (reset
 # des seuls CPU) échoue pareil jusqu'au mode sans échec ; un reset CORE (USB) ou une coupure
 # débloque. Tab5/ecran/tab5_lien_c6.cpp fait de tout redémarrage logiciel un reset CORE ;
-# ce global l'appelle dans setup(), avant les composants.
+# ce global l'appelle dans setup(), avant les composants. Recopié de tab5-hardware.yaml.
 globals:
   - id: lien_c6_branche
     type: bool
@@ -133,15 +156,19 @@ psram:
   speed: 200MHz
 
 # Recopié de tab5-hardware.yaml : en LISTE (publication-commune.yaml y ajoute
-# http_request), sans `encryption:` ni `password:`, ota_en_cours pour l'extinction auto.
+# http_request), sans `encryption:` ni `password:`, ota_en_cours pour l'extinction auto,
+# dalle éteinte pendant la mise à jour (script tab5_dalle_ota : ici, carte_dalle_noire_ota).
 ota:
   - platform: esphome
     on_begin:
       - globals.set: { id: ota_en_cours, value: 'true' }
+      - script.execute: { id: tab5_dalle_ota, debut: true }
     on_abort:
       - globals.set: { id: ota_en_cours, value: 'false' }
+      - script.execute: { id: tab5_dalle_ota, debut: false }
     on_error:
       - globals.set: { id: ota_en_cours, value: 'false' }
+      - script.execute: { id: tab5_dalle_ota, debut: false }
 
 safe_mode:
   num_attempts: 10
@@ -226,14 +253,51 @@ light:
     name: "Display Backlight"
     id: backlight
     restore_mode: RESTORE_DEFAULT_ON
+    initial_state:
+      brightness: 75%
     default_transition_length: 250ms
     on_turn_on:
-      - lvgl.resume:
+      - script.execute: tab5_dalle_rallumer
+      - globals.set: { id: ecran_eteint_par_nuit, value: 'false' }
       - lambda: 'id(ecran_allume_ms) = millis();'
       - script.execute: tab5_economie_appliquer
     on_turn_off:
       - lambda: 'roue_actions_fermer();'
+      - lambda: 'dalle_eteindre(id(tab5_display));'
       - lvgl.pause:
+
+# Recopiés de tab5-hardware.yaml : rallumage de la dalle et dalle éteinte pendant une OTA
+# (Tab5/ecran/tab5_dalle.cpp ; ici « sleep in » et OTA, carte_dalle_* en haut du fichier).
+script:
+  - id: tab5_dalle_rallumer
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return dalle_reveiller(id(tab5_display));'
+          then:
+            - delay: 120ms
+      - if:
+          condition:
+            lambda: 'return id(backlight).remote_values.is_on() && !(dalle_noire_pendant_ota() && id(ota_en_cours));'
+          then:
+            - lambda: 'dalle_rallumer(id(tab5_display));'
+            - lvgl.resume:
+  - id: tab5_dalle_ota
+    parameters:
+      debut: bool
+    then:
+      - if:
+          condition:
+            lambda: 'return dalle_noire_pendant_ota() && id(backlight).remote_values.is_on();'
+          then:
+            - if:
+                condition:
+                  lambda: 'return debut;'
+                then:
+                  - lambda: 'dalle_eteindre(id(tab5_display));'
+                else:
+                  - script.execute: tab5_dalle_rallumer
 
 # Audio : un seul bus I2S pour le micro et le haut-parleur, comme le Tab5 (ADR-0010).
 # Broches du BSP : MCLK 13, SCLK 12, LRCK 10, DOUT 9, DIN 11.

@@ -53,6 +53,12 @@ globals:
     type: bool
     initial_value: 'false'
     restore_value: false
+  # esphome.tab5_connected du démarrage parti vers Home Assistant (on_boot de
+  # tab5-ha-hmi.yaml, ha_evenement_envoyer()) : une fois par démarrage.
+  - id: boot_evt_connecte
+    type: bool
+    initial_value: 'false'
+    restore_value: false
   # Page des prévisions (0-4, 2 = accueil) : g_central_ctx.forecast_page, seule source
   # depuis le 28/09/2026 (le global forecast_page_index la recopiait).
   - id: conversation_mode
@@ -216,6 +222,14 @@ globals:
   # (tab5-hardware.yaml, publication-commune.yaml), faux sur `on_abort` / `on_error` ;
   # une OTA réussie redémarre la tablette. L'écran ne s'éteint pas seul pendant une OTA.
   - id: ota_en_cours
+    type: bool
+    initial_value: 'false'
+    restore_value: false
+  # Écran éteint par la nuit (« Tab5 Nuit (écran éteint) », tab5-ha-controls.yaml) : posé
+  # quand l'extinction auto éteint pendant la nuit, remis à faux à chaque allumage
+  # (on_turn_on de `backlight`), il fait rallumer l'écran à la fin de la nuit ; un écran
+  # éteint par HA ou par l'extinction auto du jour reste éteint.
+  - id: ecran_eteint_par_nuit
     type: bool
     initial_value: 'false'
     restore_value: false

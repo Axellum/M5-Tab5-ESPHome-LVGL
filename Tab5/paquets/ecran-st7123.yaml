@@ -11,6 +11,14 @@
 #       Choix de la révision : `tab5_ecran:` dans Tab5/user_entities.yaml (docs/hardware.md).
 # ============================================================================
 
+# Extinction de la dalle (Tab5/ecran/tab5_dalle.cpp) : voile noir seul, jamais essayé
+# autrement. Le ST7123 est une puce écran + tactile : « sleep in » (2) arrêterait sans doute
+# aussi le tactile qui rallume l'écran. Passer à 1 ou 2 seulement après un essai sur une
+# tablette de cette révision (lueur à 0 %, rallumage au toucher, après une OTA).
+substitutions:
+  carte_dalle_extinction: "0"
+  carte_dalle_noire_ota: "0"
+
 display:
   - id: !extend tab5_display
     platform: mipi_dsi

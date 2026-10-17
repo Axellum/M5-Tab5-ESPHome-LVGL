@@ -111,6 +111,12 @@ input_text:
     name: "Tab5 · mémoire · congélateurs"
     icon: mdi:content-save-outline
     max: 255
+  # Plage de l'extinction de nuit, « HH:MM-HH:MM » ou « Aucune » ; une plage écrite ici à
+  # la main (même format) devient une option de la liste.
+  tab5_choix_extinction_nuit:
+    name: "Tab5 · mémoire · extinction de nuit"
+    icon: mdi:content-save-outline
+    max: 255
   # Réglé à la main (pas une mémoire de liste). Mots qui font d'un événement de
   # l'agenda de travail un événement de TRAVAIL (horaires du planning, heure du
   # réveil) : séparés par des virgules, sans casse, cherchés dans le titre. Vide =
@@ -487,6 +493,37 @@ template:
             data:
               value: "{{ option }}"
 
+  # Extinction de nuit de l'écran (16/10/2026, audit anti-casse : une image fixe 24 h/24
+  # marque une dalle, les fabricants conseillent de l'éteindre aux heures creuses). Pendant
+  # la plage, l'écran s'éteint après 1 min sans toucher (un toucher le rallume) et se
+  # rallume seul à la fin (packages/tab5_push.yaml, « Tab5 — extinction de nuit », qui tient
+  # l'interrupteur « Tab5 Nuit (écran éteint) » de la tablette). Modèle ORDINAIRE : il ne lit
+  # que sa mémoire et celle du capteur de présence. Proposée par défaut (liste jamais
+  # réglée) : 00:00-06:00, sauf pour qui a choisi un capteur de présence, qui éteint déjà
+  # l'écran d'une pièce vide : « Aucune », son écran se comporte comme avant.
+  - select:
+      - name: "Tab5 · extinction de nuit · night screen off"
+        unique_id: tab5_extinction_de_nuit
+        default_entity_id: select.tab5_extinction_de_nuit
+        icon: mdi:weather-night
+        options: >-
+          {%- set plages = ['00:00-06:00', '00:00-07:00', '23:00-06:00', '23:00-07:00', '22:00-06:00', '22:00-07:00', '01:00-07:00'] -%}
+          {%- set m = states('input_text.tab5_choix_extinction_nuit') | trim -%}
+          {{ plages + ([m] if m is match('^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]$') and m not in plages else []) + ['Aucune'] }}
+        state: >-
+          {%- set m = states('input_text.tab5_choix_extinction_nuit') | trim -%}
+          {%- if m == 'Aucune' or m is match('^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]$') -%}
+            {{ m }}
+          {%- else -%}
+            {{ 'Aucune' if states('input_text.tab5_choix_presence').startswith('binary_sensor.') else '00:00-06:00' }}
+          {%- endif %}
+        select_option:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.tab5_choix_extinction_nuit
+            data:
+              value: "{{ option }}"
+
   # ──────────────────────────────────────────────────────────────────────────
   # 2. La tablette, détectée par le modèle de son appareil
   # ──────────────────────────────────────────────────────────────────────────
@@ -535,6 +572,9 @@ template:
           # Interrupteur « Nuit (thème auto) » du firmware : mode Auto du thème de
           # l'écran, réglé d'après le soleil (tab5_push.yaml, « Tab5 — thème jour/nuit »).
           theme_nuit: "{{ entites | select('match', 'switch[.].*_nuit_theme_auto$') | first | default('') }}"
+          # Interrupteur « Tab5 Nuit (écran éteint) » du firmware (16/10/2026), tenu d'après
+          # « Tab5 · extinction de nuit » (tab5_push.yaml, « Tab5 — extinction de nuit »).
+          nuit_ecran: "{{ entites | select('match', 'switch[.].*_nuit_ecran_eteint$') | first | default('') }}"
           # Select de pipeline de la tablette (AssistPipelineSelect de HA : ses options
           # commencent par « preferred ») ; depuis HA 2025.10, un second (« Assistant
           # 2 ») a les mêmes options : le premier par ordre d'entity_id, comme
@@ -574,6 +614,18 @@ template:
         device_class: connectivity
         state: "{{ is_state(state_attr('sensor.tab5_tablette', 'api') or '', 'on') }}"
         availability: "{{ (state_attr('sensor.tab5_tablette', 'api') or '') != '' }}"
+      # Dans la plage de « Tab5 · extinction de nuit » (heure locale, plage à cheval sur
+      # minuit comprise ; début = fin : jamais). Recalculé chaque minute (now()) : son
+      # changement fait partir « Tab5 — extinction de nuit » (tab5_push.yaml).
+      # Indisponible sur « Aucune ».
+      - name: "Tab5 · nuit de l'écran"
+        unique_id: tab5_nuit_de_l_ecran
+        icon: mdi:weather-night
+        state: >-
+          {%- set p = states('select.tab5_extinction_de_nuit').split('-') -%}
+          {%- set h = now().strftime('%H:%M') -%}
+          {{ p | count == 2 and ((p[0] <= h < p[1]) if p[0] < p[1] else (h >= p[0] or h < p[1]) if p[0] > p[1] else false) }}
+        availability: "{{ states('select.tab5_extinction_de_nuit') is match('^[0-9]{2}:[0-9]{2}-[0-9]{2}:[0-9]{2}$') }}"
     sensor:
       - name: "Tab5 · téléphone suivi"
         unique_id: tab5_telephone_suivi

@@ -296,6 +296,16 @@ jobs:
             --titre "Galerie des thèmes, bascule à chaud contre démarrage à froid" || code=$?
           [ -d chaud/diff ] && cp -r chaud/diff captures/diff-bascule
           exit "$code"
+      - name: Formats de couleur de LVGL
+        # Un format que lv_conf.h n'active pas (LV_DRAW_SW_SUPPORT_*) : LVGL l'écrit au
+        # journal et dessine des pixels non initialisés (vignette de caméra appuyée,
+        # discussion #278, 17/10/2026). Drapeaux : build_flags de tab5-ha-hmi.yaml.
+        if: always()
+        run: |
+          if grep -ah "is not enabled" captures/rendu-*.log | sed 's/^\[[0-9:]*\]//' | sort | uniq -c | grep .; then
+            echo "::error::LVGL : un format de couleur n'est pas activé (journal du rendu ci-dessus)"
+            exit 1
+          fi
       - name: Journaux du rendu
         if: always()
         run: tail -n 80 captures/rendu-*.log || true
@@ -390,6 +400,15 @@ jobs:
           if set(tailles) != {(1024, 600)}:
               sys.exit(f"Captures pas toutes en 1024×600 : {sorted(tailles)}")
           EOF
+      - name: Formats de couleur de LVGL (1024×600)
+        # Comme la tâche « rendu » : ici, les images des caméras sont réduites (cadre et
+        # cases plus petits que les images de HA), le chemin de la transformation.
+        if: always()
+        run: |
+          if grep -ah "is not enabled" captures/rendu-7b.log | sed 's/^\[[0-9:]*\]//' | sort | uniq -c | grep .; then
+            echo "::error::LVGL : un format de couleur n'est pas activé (journal du rendu ci-dessus)"
+            exit 1
+          fi
       - name: Journal du rendu
         if: always()
         run: tail -n 80 captures/rendu-7b.log || true

@@ -15,6 +15,11 @@
 # @ai_instruction FICHIER CRITIQUE par ce qu'il inclut : aucune broche, fréquence I2C ni
 #       séquence de démarrage ne change ici sans l'accord d'Axel (tab5-hardware.yaml).
 # ============================================================================
+# Le C6 du Tab5 répond à la demande de version (1.4.1) : capteur « Tab5 C6 Version »
+# (tab5-sensors-diagnostics.yaml). La Waveshare 7B met false.
+substitutions:
+  carte_c6_version: "true"
+
 packages:
   geometrie: !include geometrie-tab5.yaml
   tab5_hardware: !include tab5-hardware.yaml

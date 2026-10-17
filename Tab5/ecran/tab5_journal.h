@@ -38,3 +38,12 @@ std::string journal_raison_ha(const std::string& raison);
 std::string journal_boot_count();   // démarrages depuis le dernier envoi
 std::string journal_report_text();  // lignes en attente, une par ligne
 void journal_mark_delivered();      // vide le journal (et sa copie NVS)
+
+// Événement vers Home Assistant SEULEMENT, et seulement quand HA l'écoute (17/10/2026) :
+// envoyé à chaque client « Home Assistant » abonné aux actions ; faux, et rien d'envoyé,
+// si aucun ne l'est encore. À rappeler jusqu'au vrai (wait_until). `homeassistant.event`
+// part vers tout client abonné aux actions, après une garde `api.connected` vraie dès qu'UN
+// client est abonné aux états : un outil aioesphomeapi passé avant HA la levait, et
+// l'événement était jeté (« dropped; client has not subscribed to actions (yet) »), aux
+// 10 redémarrages de la nuit du 16/10/2026.
+bool ha_evenement_envoyer(const char* evenement);
