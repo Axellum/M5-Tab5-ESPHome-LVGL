@@ -121,6 +121,32 @@ Not the same measuring point (battery for the Tab5, USB input for the 7B), not t
 
 USB supply losses not included (they were not measured).
 
+### Settings and themes, 7B (night of 2026-10-16)
+
+Same tester, same board, the night of the [speed measurements](performance.md#waveshare-7b-night-of-2026-10-16) (21:45 → 06:16, 3,065,400 samples, no gap): a measuring build of `main` 3293d4e1, backlight 189/255 (74 %), the home screen, 60 s per case (20 s per theme). The reference is Ardoise douce in dark mode, full animations, Okay Nabu and the speaker on, Eco Wi-Fi off.
+
+| Case | Average | vs reference |
+|---|---|---|
+| Reference, start / end of the night | 1.956 / 1.957 W | |
+| Each of the 21 themes, dark | 1.944 to 1.968 W | none |
+| Each of the 21 themes, light | 1.995 to 2.013 W | about +0.05 W (+2.5 %) |
+| Obsidienne, dark / light | 1.955 / 2.003 W | light +2.5 % |
+| Animations « None » / « Essential » | 1.950 / 1.959 W | none |
+| Power saving « Always » | 1.238 W | −37 % |
+| Eco Wi-Fi « Always » | 1.781 W | −9 % |
+| Okay Nabu off | 1.938 W | −1 % |
+| Speaker off | 1.946 W | −0.5 % |
+| Microphone and speaker off | 1.905 W | −2.6 % |
+| A restart (10 restarts, 40 s each from the button) | 1.920 to 1.931 W | |
+| The night, screen off (23:32 → 00:02) | 1.235 W | |
+| The night, screen on (00:03 → 06:15) | 1.957 W | |
+
+1. **Neither the theme nor the animations change the power.** The 21 dark themes are within 0.024 W of each other (the noise); light mode adds about 0.05 W, whatever the theme.
+2. **Power saving « Always » brings the board to its floor**: 1.238 W, the same as the backlight at 1 % or off. On a home screen left alone, this mode lowers the brightness to the minimum after 30 s without a touch ([settings](notice/settings.md)). Whether the screen stayed readable was not checked.
+3. **Eco Wi-Fi « Always » saves 0.18 W** (−9 %), about 1.5 kWh a year if left on all the time; answers may come a little later, which was not measured.
+4. **The microphone and the speaker cost little**: 0.05 W for both.
+5. **No drift over the night**: 12.79 Wh in 6 h 43 min (1.90 W on average, half an hour of it with the screen off); with the screen on, the hourly average stayed between 1.956 and 1.958 W.
+
 ## What to do with it
 
 Settings that already exist: **Brightness** (50 % is the sweet spot), **Auto screen off** (5 min), **Power saving** (« On battery » is the default), **Charge limit** 80 % for a tablet that stays plugged in, **Wake the screen on « Okay Nabu »** and **with a tap** to get it back.
@@ -269,6 +295,32 @@ Pas le même point de mesure (batterie pour le Tab5, entrée USB pour la 7B), pa
 | 50 % pendant 6 h, puis éteint | 1,30 W | 11,4 |
 
 Pertes de l'alimentation USB non comprises (elles n'ont pas été mesurées).
+
+### Réglages et thèmes, 7B (nuit du 16/10/2026)
+
+Même testeur, même carte, la nuit des [mesures de vitesse](performance.md#waveshare-7b-nuit-du-16102026) (21 h 45 → 6 h 16, 3 065 400 échantillons, aucun trou) : un build de mesure de `main` 3293d4e1, rétroéclairage 189/255 (74 %), l'accueil, 60 s par cas (20 s par thème). La référence : Ardoise douce en sombre, animations complètes, Ok Nabu et le haut-parleur allumés, Wi-Fi éco coupé.
+
+| Cas | Moyenne | Par rapport à la référence |
+|---|---|---|
+| Référence, début / fin de nuit | 1,956 / 1,957 W | |
+| Chacun des 21 thèmes, sombre | 1,944 à 1,968 W | aucun |
+| Chacun des 21 thèmes, clair | 1,995 à 2,013 W | environ +0,05 W (+2,5 %) |
+| Obsidienne, sombre / clair | 1,955 / 2,003 W | clair +2,5 % |
+| Animations « Aucune » / « Essentielles » | 1,950 / 1,959 W | aucun |
+| Économie d'énergie « Toujours » | 1,238 W | −37 % |
+| Wi-Fi éco « Toujours » | 1,781 W | −9 % |
+| Ok Nabu coupé | 1,938 W | −1 % |
+| Haut-parleur coupé | 1,946 W | −0,5 % |
+| Micro et haut-parleur coupés | 1,905 W | −2,6 % |
+| Un redémarrage (10 redémarrages, 40 s chacun depuis le bouton) | 1,920 à 1,931 W | |
+| La nuit, écran éteint (23 h 32 → 0 h 02) | 1,235 W | |
+| La nuit, écran allumé (0 h 03 → 6 h 15) | 1,957 W | |
+
+1. **Ni le thème ni les animations ne changent la puissance.** Les 21 thèmes sombres tiennent dans 0,024 W (le bruit) ; le mode clair ajoute environ 0,05 W, quel que soit le thème.
+2. **L'économie d'énergie « Toujours » ramène la carte à son plancher** : 1,238 W, comme le rétroéclairage à 1 % ou éteint. Sur un accueil laissé seul, ce mode baisse la luminosité au minimum après 30 s sans toucher ([réglages](notice/settings.md)). L'écran restait-il lisible ? Pas vérifié.
+3. **Le Wi-Fi éco « Toujours » économise 0,18 W** (−9 %), environ 1,5 kWh par an s'il reste toujours actif ; les réponses peuvent arriver un peu plus tard, ce qui n'est pas mesuré.
+4. **Le micro et le haut-parleur coûtent peu** : 0,05 W pour les deux.
+5. **Aucune dérive sur la nuit** : 12,79 Wh en 6 h 43 min (1,90 W en moyenne, dont une demi-heure écran éteint) ; écran allumé, la moyenne de chaque heure est restée entre 1,956 et 1,958 W.
 
 ## Quoi en faire
 

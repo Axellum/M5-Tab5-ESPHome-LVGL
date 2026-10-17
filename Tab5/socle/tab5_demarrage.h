@@ -186,3 +186,8 @@ bool demarrage_noter_ordo(uint32_t millis_maintenant);  // ORDO, avec millis() l
 // quoi setup() est quadratique en nombre de labels. Une fois, par la lambda du premier
 // style (style_repere_demarrage, tab5-styles.yaml).
 void demarrage_preparer_lvgl();
+// Le même vidage des abonnements des labels, demandé (vrai) puis rendu (faux) : par
+// demarrage_preparer_lvgl() jusqu'à la première image, et par la bascule de thème
+// (theme_bascule_debut / theme_bascule_fin, tab5_theme.cpp). Branché tant qu'une demande
+// reste en cours.
+void lvgl_vidage_abonnes(bool actif);

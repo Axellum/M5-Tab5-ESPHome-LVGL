@@ -11,8 +11,9 @@ le câblage YAML hors tablette : ce fichier le relit.
 - chaque texte tient sous 255 caractères (état texte de Home Assistant) au pire ;
 - observer sans retarder : les marques de setup() ne publient rien ;
 - la séquence on_boot de tab5-ha-hmi.yaml ([AI-WARNING-CRITICAL], ADR-0005) ne reçoit que
-  des marques (accord d'Axel du 10/10/2026) : la lambda du delay(1000) reste seule et
-  telle quelle, les trois entrées d'origine gardent leur priorité et leur rang, les
+  des marques (accord d'Axel du 10/10/2026) : la lambda de l'attente reste seule et
+  telle quelle (sa durée vient de la carte depuis le 17/10/2026, `carte_attente_ecran_ms` :
+  1000 sur le Tab5, test_attente_avant_l_ecran_selon_la_carte), les trois entrées d'origine gardent leur priorité et leur rang, les
   entrées ajoutées ne font que marquer, à des priorités qu'aucune autre n'a, sauf la
   barre de chargement (accord d'Axel du 16/10/2026), appelée après la marque ;
 - les capteurs sont des text_sensor de diagnostic, publiés par un seul script."""
@@ -125,7 +126,7 @@ def test_on_boot_des_marques_seulement():
 
     # La lambda bloquante reste seule et telle quelle ; marques avant et après.
     p700 = entrees[0]["then"]
-    assert sans_marques(p700) == [{"lambda": "delay(1000);"}]
+    assert sans_marques(p700) == [{"lambda": "delay(${carte_attente_ecran_ms});"}]
     assert str(p700[0]["lambda"]).strip() == "demarrage_marquer(EtapeDemarrage::AVANT1S);"
     assert str(p700[-1]["lambda"]).strip() == "demarrage_marquer(EtapeDemarrage::APRES1S);"
     assert str(entrees[1]["then"][0]["lambda"]).strip() == "demarrage_marquer(EtapeDemarrage::P600);"
@@ -207,10 +208,16 @@ def test_lvgl_prepare_avant_les_widgets():
     corps = cpp[cpp.index("void demarrage_preparer_lvgl() {"):]
     assert cpp.count("void demarrage_preparer_lvgl() {") == 1
     assert "lv_display_set_resolution(disp, kEcranL, kEcranH);" in corps
-    assert "lv_display_add_event_cb(disp, vider_abonnements, LV_EVENT_REFR_REQUEST, disp);" in corps
-    # Retiré à la première image : rien ne change ensuite.
+    # Le vidage est demandé par lvgl_vidage_abonnes(), partagé avec la bascule de thème
+    # (17/10/2026) : compté, branché à la première demande, retiré à la dernière fin.
+    assert "lvgl_vidage_abonnes(true);" in corps
+    vidage = cpp[cpp.index("void lvgl_vidage_abonnes(bool actif) {"):]
+    assert "lv_display_add_event_cb(disp, vider_abonnements, LV_EVENT_REFR_REQUEST, disp);" in vidage
+    assert "lv_display_remove_event_cb_with_user_data(disp, vider_abonnements, disp);" in vidage
+    # Rendu à la première image : rien ne change ensuite (sauf une bascule de thème en cours).
     assert "lv_display_add_event_cb(disp, fin_du_vidage, LV_EVENT_REFR_START, disp);" in corps
-    assert "lv_display_remove_event_cb_with_user_data(disp, vider_abonnements, disp);" in cpp
+    fin = cpp[cpp.index("void fin_du_vidage(lv_event_t* e) {"):]
+    assert "lvgl_vidage_abonnes(false);" in fin[:fin.index("\n}\n")]
 
 
 def test_capteurs_et_script():
