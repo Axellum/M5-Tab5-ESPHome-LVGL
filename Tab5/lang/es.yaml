@@ -1500,7 +1500,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Réfrigérateur": "Nevera"
 "Congélateur": "Congelador"
 "Aucun appareil déclaré": "Ningún aparato declarado"
-"Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs ».": "Decláralos en Home Assistant: listas «Tab5 · réfrigérateurs · neveras» y «Tab5 · congélateurs · congeladores»."
+"Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs ».": "En Home Assistant: Configuración > Dispositivos y servicios > Entidades, busca «Tab5 · réfrigérateurs · fridges» o «Tab5 · congélateurs · freezers»."
 "Conforme": "Conforme"
 "Trop chaud": "Demasiado caliente"
 "Trop chaud depuis %s": "Demasiado caliente desde %s"

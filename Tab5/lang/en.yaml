@@ -1416,7 +1416,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Réfrigérateur": "Fridge"
 "Congélateur": "Freezer"
 "Aucun appareil déclaré": "No appliance declared"
-"Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs ».": "Declare them in Home Assistant: lists “Tab5 · réfrigérateurs · fridges” and “Tab5 · congélateurs · freezers”."
+"Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs ».": "In Home Assistant: Settings > Devices & services > Entities, search for “Tab5 · réfrigérateurs · fridges” or “Tab5 · congélateurs · freezers”."
 "Conforme": "Within norm"
 "Trop chaud": "Too warm"
 "Trop chaud depuis %s": "Too warm since %s"
