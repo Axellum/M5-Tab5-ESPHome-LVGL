@@ -201,6 +201,9 @@ def fichier_api(a: Arbre) -> str:
     return chemin
 
 
+ENVOI_HA = re.compile(r'ha_evenement_envoyer\(\s*"(esphome\.[a-z_0-9]+)"')
+
+
 def champs_emis(a: Arbre) -> dict[str, frozenset]:
     """{événement: champs} des `homeassistant.event` du firmware. Un même événement émis
     à plusieurs endroits porte partout les mêmes champs."""
@@ -209,6 +212,12 @@ def champs_emis(a: Arbre) -> dict[str, frozenset]:
     emis, ou = {}, {}
     for chemin in fichiers:
         texte = a.lire(chemin)
+        # Sans champ, envoyé à Home Assistant seulement quand il écoute (17/10/2026) :
+        # `ha_evenement_envoyer("esphome.…")` dans une lambda (Tab5/ecran/tab5_journal.cpp).
+        for nom in ENVOI_HA.findall(texte):
+            if nom in emis and emis[nom] != frozenset():
+                raise ErreurContrat(f"{nom} : sans champ dans {chemin}, {sorted(emis[nom])} dans {ou[nom]}")
+            emis[nom], ou[nom] = frozenset(), chemin
         if "homeassistant.event" not in texte:
             continue
         for d in parcourir(charger(texte)):

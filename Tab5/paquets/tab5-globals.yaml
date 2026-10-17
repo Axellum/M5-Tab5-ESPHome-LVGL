@@ -53,6 +53,12 @@ globals:
     type: bool
     initial_value: 'false'
     restore_value: false
+  # esphome.tab5_connected du démarrage parti vers Home Assistant (on_boot de
+  # tab5-ha-hmi.yaml, ha_evenement_envoyer()) : une fois par démarrage.
+  - id: boot_evt_connecte
+    type: bool
+    initial_value: 'false'
+    restore_value: false
   # Page des prévisions (0-4, 2 = accueil) : g_central_ctx.forecast_page, seule source
   # depuis le 28/09/2026 (le global forecast_page_index la recopiait).
   - id: conversation_mode
