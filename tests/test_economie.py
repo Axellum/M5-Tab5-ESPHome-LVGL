@@ -132,7 +132,7 @@ def test_l_extinction_range_ses_raisons_avant_son_delai():
     else:
         raise AssertionError("interval de l'extinction auto introuvable")
     pose = code.index("id(ecran_veille_permise) = permise;")
-    assert pose < code.index("*choix == 0"), "le mode économie lit la liste même extinction sur « Jamais »"
+    assert pose < code.index("*choix != 0"), "le mode économie lit la liste même extinction sur « Jamais »"
     assert re.search(r"if \(!permise\) return false;", code)
     globals_ = {g["id"]: g for g in _yaml("tab5-globals.yaml")["globals"]}
     assert globals_["ecran_veille_permise"]["restore_value"] is False

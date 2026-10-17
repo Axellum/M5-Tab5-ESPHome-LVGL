@@ -10,6 +10,14 @@
 #       interruption GPIO23), GT911 sans scrutation (update_interval: never).
 # ============================================================================
 
+# Extinction de la dalle (Tab5/ecran/tab5_dalle.cpp) : voile noir seul. L'ILI9881C tient
+# « display off » et « sleep in » (norme DCS, tactile GT911 à part) : passer à 2 après un
+# essai sur une tablette de cette révision (lueur à 0 %, rallumage au toucher, après une
+# OTA) ; une dalle qui ne se réveillerait pas resterait noire jusqu'au redémarrage.
+substitutions:
+  carte_dalle_extinction: "0"
+  carte_dalle_noire_ota: "0"
+
 display:
   - id: !extend tab5_display
     platform: mipi_dsi

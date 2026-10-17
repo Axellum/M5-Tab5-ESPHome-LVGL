@@ -91,6 +91,12 @@ esphome:
     - -DTAB5_ECRAN_H=${carte_ecran_h}
     - -DTAB5_ROTATION=${carte_rotation}
     - -DTAB5_POLICE_PCT=${police_pct}
+    # Extinction de la dalle avec le rétroéclairage (Tab5/ecran/tab5_dalle.cpp, audit
+    # anti-casse du 16/10/2026) : commandes DCS que tient la dalle (0 voile seul, 1 + display
+    # off, 2 + sleep in) et dalle noire pendant une OTA, selon la carte ou la révision de dalle
+    # (substitutions carte_dalle_* de carte-waveshare-7b.yaml et des Tab5/paquets/ecran-*.yaml).
+    - -DTAB5_DALLE_EXTINCTION=${carte_dalle_extinction}
+    - -DTAB5_DALLE_NOIRE_OTA=${carte_dalle_noire_ota}
   includes:
     # Jetons sans dépendance (UIColor/UIAnim/UIIdle), inclus par tab5_custom.h et par
     # les deux jeux qui en ont besoin (25/09/2026, audit lot 8a).

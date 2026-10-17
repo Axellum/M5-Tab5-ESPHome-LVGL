@@ -219,6 +219,14 @@ globals:
     type: bool
     initial_value: 'false'
     restore_value: false
+  # Écran éteint par la nuit (« Tab5 Nuit (écran éteint) », tab5-ha-controls.yaml) : posé
+  # quand l'extinction auto éteint pendant la nuit, remis à faux à chaque allumage
+  # (on_turn_on de `backlight`), il fait rallumer l'écran à la fin de la nuit ; un écran
+  # éteint par HA ou par l'extinction auto du jour reste éteint.
+  - id: ecran_eteint_par_nuit
+    type: bool
+    initial_value: 'false'
+    restore_value: false
   # Rien ne retient l'écran tel qu'il est : écran allumé, démarrage fini, ni réveil qui
   # sonne, ni assistant vocal, ni jeu, ni mise à jour. Calculé toutes les 10 s par
   # l'extinction auto (tab5-ha-controls.yaml), lu par le mode économie
