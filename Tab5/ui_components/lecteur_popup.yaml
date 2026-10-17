@@ -15,7 +15,9 @@
 #       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Musique » dans
 #       tab5_modal_registry_init). Carte de ${lecteur_card_w} × ${lecteur_card_h}
 #       (tab5-ui-tokens.yaml, kLecteurCarteL/H de tab5_geometrie.h) : voile à 70 % au lieu
-#       de 100, le tableau de bord reste visible autour (ADR-0050). Coordonnées dans la
+#       de 100, le tableau de bord reste visible autour (ADR-0050). Ce voile ne couvre
+#       rien pour LVGL : sans popup_voile_carte() (tab5_anim.cpp), tout le tableau de bord
+#       se redessinait sous la carte à l'ouverture. Coordonnées dans la
 #       carte (940 × 536) : pochette x 24..384, y 72..432 ; colonne de droite x 408..916
 #       (508 px, kTexteL de tab5_lecteur.cpp) ; pastilles y 456..512. Tout ce qui bouge
 #       (textes, glyphes, masquages, couleurs d'état, pastilles) est écrit par
@@ -35,7 +37,10 @@ obj:
     # Voile à 70 % : le tableau de bord se devine autour de la carte (ADR-0050).
     - !include { file: modal_scrim.yaml, vars: { scrim_opa: "70", popup_id: lecteur_popup } }
 
+    # La carte, opaque : ce qu'elle couvre se dessine sans le tableau de bord ni le voile
+    # (popup_voile_carte(), tab5_anim.cpp, 17/10/2026).
     - obj:
+        id: lecteur_carte
         align: CENTER
         width: ${lecteur_card_w}
         height: ${lecteur_card_h}

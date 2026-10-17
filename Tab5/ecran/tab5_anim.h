@@ -51,6 +51,14 @@ void animate_popup_open(lv_obj_t* card);
 // Fermeture d'un popup : masquage instantané (LV_OBJ_FLAG_HIDDEN).
 void animate_popup_close(lv_obj_t* card);
 
+// Popup à voile translucide (Musique, ADR-0050 : le tableau de bord se devine autour de
+// sa carte) : tant qu'il est ouvert, une zone à redessiner qui chevauche sa carte opaque est
+// coupée entre la part que la carte couvre, que LVGL dessine à partir de la carte, et le
+// reste, dessiné comme avant (tableau de bord, voile, bord de la carte). Même image au pixel
+// près, sans redessiner le tableau de bord sous la carte. À appeler avant chaque ouverture :
+// seul le premier appel par popup compte (deux popups au plus).
+void popup_voile_carte(lv_obj_t* popup, lv_obj_t* carte);
+
 // Fondu croisé pur (sans glissement) entre deux calques plein cadre —
 // bascule prévisions <-> switches HA (bouton « HA »). Le calque sortant est
 // masqué à la fin. Durée UIAnim::SWIPE_DUR.
