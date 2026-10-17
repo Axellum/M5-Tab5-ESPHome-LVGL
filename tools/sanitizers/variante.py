@@ -26,11 +26,17 @@ def variante(texte: str, script: Path = SCRIPT) -> str:
         i = next(n for n, ligne in enumerate(lignes) if ligne.rstrip() == "esphome:")
     except StopIteration:
         raise SystemExit("bloc « esphome: » introuvable dans tab5-rendu-host.yaml") from None
-    ajout = (
-        "  platformio_options:\n"
-        "    extra_scripts:\n"
-        f"      - pre:{script.as_posix()}\n"
-    )
+    script_ligne = f"      - pre:{script.as_posix()}\n"
+    # Un `platformio_options:` déjà là (les drapeaux de LVGL, 17/10/2026) : le script va
+    # dessous, une seconde clé du même nom serait un doublon refusé par ESPHome.
+    for n in range(i + 1, len(lignes)):
+        ligne = lignes[n]
+        if ligne.strip() and not ligne.startswith(" "):
+            break   # fin du bloc esphome:
+        if ligne.rstrip() == "  platformio_options:":
+            ajout = "    extra_scripts:\n" + script_ligne
+            return "".join(lignes[: n + 1]) + ajout + "".join(lignes[n + 1:])
+    ajout = "  platformio_options:\n    extra_scripts:\n" + script_ligne
     return "".join(lignes[: i + 1]) + ajout + "".join(lignes[i + 1:])
 
 

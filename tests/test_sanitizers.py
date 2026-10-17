@@ -125,8 +125,15 @@ def test_variante_branche_le_script_sous_esphome():
     source = "substitutions:\n  a: b\nesphome:\n  name: tab5-rendu\n"
     texte = variante.variante(source, Path("/depot/tools/sanitizers/pio_drapeaux.py"))
     assert "esphome:\n  platformio_options:\n    extra_scripts:\n      - pre:/depot/tools/sanitizers/pio_drapeaux.py\n  name: tab5-rendu\n" in texte
+    # Un platformio_options déjà là : le script va dessous, pas dans une seconde clé.
+    deja = "esphome:\n  name: tab5-rendu\n  platformio_options:\n    build_flags:\n      - -DX=1\nlogger:\n"
+    texte = variante.variante(deja, Path("/depot/tools/sanitizers/pio_drapeaux.py"))
+    assert texte.count("platformio_options:") == 1
+    assert "  platformio_options:\n    extra_scripts:\n      - pre:/depot/tools/sanitizers/pio_drapeaux.py\n" \
+        "    build_flags:\n" in texte
     # Sur le vrai fichier : le bloc existe, sinon le job compilerait sans sanitizers.
-    assert "extra_scripts" in variante.variante(variante.SOURCE.read_text(encoding="utf-8"))
+    vrai = variante.variante(variante.SOURCE.read_text(encoding="utf-8"))
+    assert "extra_scripts" in vrai and vrai.count("\n  platformio_options:\n") == 1
 
 
 def test_cas_cibles_au_contrat_du_firmware():
