@@ -161,8 +161,11 @@ obj:
           # Voile local, moins opaque : il s'empile sur le voile du calendrier
           - !include { file: modal_scrim.yaml, vars: { scrim_opa: "60", popup_id: cal_day_popup } }
           # Sous-popup imbriqué : garde sa taille 780×540 (pas une fenêtre de
-          # premier niveau), mais la MÊME barre de titre que les autres.
+          # premier niveau), mais la MÊME barre de titre que les autres. Opaque : ce qu'elle
+          # couvre se dessine sans le calendrier ni les deux voiles (popup_voile_carte(),
+          # tab5_anim.cpp, appelé par tab5_cal_day_tap).
           - obj:
+              id: cal_day_carte
               align: CENTER
               width: 780
               height: 540
