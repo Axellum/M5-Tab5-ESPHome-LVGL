@@ -53,6 +53,50 @@ bool theme_selectionner(int theme, int mode, bool nuit) {
 
 bool theme_ui_pret() { return esphome::App.is_setup_complete(); }
 
+// --- Bascule sans invalidations ni abonnés (17/10/2026) -----------------------
+// [AI-WARNING] Ne pas retirer sans mesurer. Dans LVGL 9.5, chaque objet visible invalidé
+// (lv_obj_invalidate → obj_invalidate_area_internal, lv_obj_pos.c) parcourt l'écran actif et
+// les calques à la recherche d'un widget flouté sur la zone (blur_walk_cb) : tous les objets
+// qui la recouvrent, popups fermés compris (cachés, mais parcourus quand même). Une bascule
+// invalide des milliers d'objets alors que tout l'écran l'est déjà : 97 % des instructions de
+// theme_rejouer_ui() partaient dans lv_obj_invalidate, dont 68 % dans ce parcours (callgrind,
+// tablette virtuelle, 17/10/2026), et chaque popup construit l'allonge. En plus, chaque
+// invalidation ou remise en page envoie un événement à l'affichage, dont l'envoi parcourt deux
+// fois sa liste de rappels, où chaque label au texte à recalculer s'abonne jusqu'à la mise en
+// page suivante (lv_label_mark_need_refr_text) : le coût quadratique du démarrage
+// (tab5_demarrage.cpp). Entre theme_bascule_debut() et theme_bascule_fin() :
+// - tout l'écran est invalidé une fois, puis l'invalidation est coupée
+//   (lv_display_enable_invalidation) : les objets repeints seront redessinés par cette
+//   invalidation-là, qui couvre aussi les calques du dessus ;
+// - les abonnements des labels sont vidés dès qu'il y en a 64 (lvgl_vidage_abonnes).
+// Ce qui change d'un objet à l'autre n'en dépend pas : couleurs, textes, tailles et places
+// sont écrits comme avant, et la mise en page de l'image suivante reste celle de LVGL. Les
+// deux appels encadrent des lambdas sans attente (jamais un wait_until ni un delay entre
+// eux, tests/test_themes.py) ; si la fin manquait, le début de l'image suivante
+// (LV_EVENT_REFR_START) la ferait : l'écran ne peut pas rester figé.
+static bool s_bascule = false;
+
+static void bascule_garde(lv_event_t*) { theme_bascule_fin(); }
+
+void theme_bascule_debut() {
+    lv_display_t* disp = lv_display_get_default();
+    if (disp == nullptr || s_bascule) return;
+    lv_obj_invalidate(lv_screen_active());
+    lv_display_enable_invalidation(disp, false);
+    lvgl_vidage_abonnes(true);
+    lv_display_add_event_cb(disp, bascule_garde, LV_EVENT_REFR_START, nullptr);
+    s_bascule = true;
+}
+
+void theme_bascule_fin() {
+    if (!s_bascule) return;
+    s_bascule = false;
+    lv_display_t* disp = lv_display_get_default();
+    lv_display_remove_event_cb_with_user_data(disp, bascule_garde, nullptr);
+    lvgl_vidage_abonnes(false);
+    lv_display_enable_invalidation(disp, true);
+}
+
 // --- Formes (rayons, bordures, dégradés, ombres) ------------------------------
 // Une propriété d'un style : nombre (rayon, largeur, côtés, opacité…), couleur
 // littérale, rôle de la palette du style, ou retirée (le style ne la portait pas).
@@ -2385,7 +2429,9 @@ static void poser_forme(lv_style_t* const styles[], const Forme& f) {
 // ci-dessous) ; l'écran entier est redessiné par tab5_theme_repeindre. Preuve : même
 // géométrie qu'avec les 12 appels sur 5 thèmes (empreinte des coordonnées, 07/10/2026),
 // et les tâches « clair » et « galerie » du rendu hors tablette (rendu-host.yml) comparent
-// la bascule à chaud au démarrage à froid, au pixel près.
+// la bascule à chaud au démarrage à froid, au pixel près. Depuis le 17/10/2026, seuls les
+// porteurs d'un style dont une propriété géométrique a changé sont rafraîchis (aucun pour
+// Clair ↔ Sombre d'un même thème, sauf Béton brut).
 #if LV_OBJ_STYLE_CACHE
 #error "theme_formes et tab5_theme_repeindre supposent LV_OBJ_STYLE_CACHE à 0 (couleurs lues au dessin)"
 #endif
@@ -2408,19 +2454,55 @@ static lv_obj_tree_walk_res_t rafraichir_porteur(lv_obj_t* o, void* donnees) {
     return LV_OBJ_TREE_WALK_NEXT;
 }
 
+// Ce que rafraichir_porteur() fait recalculer : mise en page (BORDER_WIDTH) et zone de dessin
+// hors cadre (ombre, contour), plus BORDER_SIDE, sans drapeau mais qui déplace le contenu.
+// Le reste (rayon, couleurs, dégradés, opacité de la bordure) est lu au dessin.
+static bool forme_geometrie(lv_style_prop_t prop) {
+    return prop == LV_STYLE_BORDER_SIDE ||
+           lv_style_prop_has_flag(prop, LV_STYLE_PROP_FLAG_LAYOUT_UPDATE | LV_STYLE_PROP_FLAG_EXT_DRAW_UPDATE);
+}
+
+struct ValeurForme {
+    lv_style_res_t res;
+    int32_t num;
+};
+
+static ValeurForme lire_forme(lv_style_t* const styles[], const Forme& f) {
+    lv_style_value_t v{};
+    const lv_style_res_t res = lv_style_get_prop(styles[f.style], f.prop, &v);
+    return {res, res == LV_STYLE_RES_FOUND ? v.num : 0};
+}
+
 void theme_formes(lv_style_t* const styles[], int n) {
     if (n != kStylesFormes) {
         ESP_LOGE("tab5.theme", "theme_formes : %d styles reçus, %d attendus (tables périmées)", n, kStylesFormes);
         return;
     }
+    // Géométrie d'avant, sur toutes les propriétés qu'un thème peut poser (kFormesDefaut les
+    // remet toutes à l'état compilé) : 20 thèmes sur 21 ont la même en clair et en sombre, et
+    // la bascule jour / nuit du mode Auto n'a alors aucun porteur à rafraîchir (17/10/2026).
+    ValeurForme avant[kNbFormesDefaut];
+    for (int i = 0; i < kNbFormesDefaut; i++) avant[i] = lire_forme(styles, kFormesDefaut[i]);
     // L'état compilé d'abord (un thème précédent a pu changer une propriété que celui-ci
     // ne touche pas), puis les formes du thème.
     for (int i = 0; i < kNbFormesDefaut; i++) poser_forme(styles, kFormesDefaut[i]);
     const int rangee = s_theme * 2 + (s_clair ? 1 : 0);
     for (int i = kFormesDebut[rangee]; i < kFormesDebut[rangee + 1]; i++) poser_forme(styles, kFormes[i]);
+    bool change[kStylesFormes] = {};
+    for (int i = 0; i < kNbFormesDefaut; i++) {
+        const Forme& f = kFormesDefaut[i];
+        if (!forme_geometrie(f.prop)) continue;
+        const ValeurForme apres = lire_forme(styles, f);
+        if (apres.res != avant[i].res || apres.num != avant[i].num) change[f.style] = true;
+    }
+    lv_style_t* changes[kStylesFormes];
+    int nb = 0;
+    for (int k = 0; k < kStylesFormes; k++)
+        if (change[k]) changes[nb++] = styles[k];
+    if (nb == 0) return;
     // nullptr : tous les écrans, comme lv_obj_report_style_change (pages des jeux et
     // calques du dessus, popups compris).
-    PorteursFormes porteurs{styles, n};
+    PorteursFormes porteurs{changes, nb};
     lv_obj_tree_walk(nullptr, rafraichir_porteur, &porteurs);
 }
 
@@ -2440,6 +2522,13 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
         if (index[role] >= 3) {
             const_cast<lv_font_t*>(police->get_lv_font())->fallback = polices[role]->get_lv_font();
         }
+        // Même police qu'avant (Clair ↔ Sombre d'un thème, deux thèmes en Roboto) : rien à
+        // rafraîchir. Chaque lv_obj_report_style_change parcourt tous les objets et refait la
+        // mise en page du texte de chaque porteur et de ses descendants (17/10/2026).
+        lv_style_value_t avant;
+        if (lv_style_get_prop(styles[role], LV_STYLE_TEXT_FONT, &avant) == LV_STYLE_RES_FOUND &&
+            avant.ptr == police->get_lv_font())
+            continue;
         lv_style_set_text_font(styles[role], police->get_lv_font());
         lv_obj_report_style_change(styles[role]);
     }

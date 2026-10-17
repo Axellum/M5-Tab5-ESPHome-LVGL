@@ -82,7 +82,29 @@ The author's board is mounted upside down, so it runs with `carte_rotation: "0"`
 | Calendar styles (once the calendar is built) | 0.1 ms | 60 ms |
 | Colours of the shared styles and `lvgl.theme.update` | 0.2 ms | 0.2 ms |
 
-The other steps (glass buttons, alarm clock, assistant) take less than 3 ms. Reducing the switch is being studied. The Tab5 reached 657 ms at most on 2026-10-08 ([Theme switch](#theme-switch) below, another method).
+The other steps (glass buttons, alarm clock, assistant) take less than 3 ms.
+
+**Why it grows with the popups, and the fix ([#501](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/501), 2026-10-17).** Profiled on the virtual tablet: in LVGL 9.5, every visible object that is invalidated walks all the objects overlapping its area, closed popups included, looking for a blur (`blur_walk_cb` in `lv_obj_pos.c`); the switch invalidated thousands of objects although the whole screen already was (97 % of the instructions of the module repaint in `lv_obj_invalidate`, 68 % in that walk), and every built popup makes the walk longer. On top of it, the labels waiting for their text subscribe to the display's callback list, walked at every display event. [#501](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/501) turns invalidation off and drains those subscriptions during the switch, and skips fonts and shapes that do not change. Virtual tablet at 1024 × 600, after opening the 20 screens (3,271 objects), native time, median of 24 switches:
+
+| | Before | After |
+|---|---:|---:|
+| Shapes | 7.6 ms | 1.7 ms |
+| Display fonts | 7.7 ms | 1.0 ms |
+| Calendar | 3.2 ms | 0 |
+| C++ modules | 14.0 ms | 0.3 ms |
+| **Whole script** | **32.6 ms** (247 M instructions) | **3.1 ms** (22 M) |
+| Theme change / light ↔ dark | ~33 / ~29 ms | ~4 / 0.6 ms |
+| Next frame (layout and full redraw) | 50.0 ms | 43.9 ms |
+
+**Measured on the 7B** (2026-10-17, same method as the table above: each step timed on the board; measuring builds of `main` without and with #501, one run each, 50 switches per run, Ardoise douce in dark mode at the start):
+
+| Median | Before | After |
+|---|---:|---:|
+| Just after a restart (2,290 objects): theme change / light ↔ dark | 310 / 271 ms | 43 / 6 ms |
+| After opening the 20 screens (3,263 objects): theme change / light ↔ dark | 761 / 675 ms | 65 / 10 ms (theme: 35 to 68) |
+| Of which, theme change after the 20 screens: shapes / fonts / calendar / C++ modules | 139 / 149 / 60 / 412 ms | 28 / 28 / 0 / 7 ms |
+
+What is left of a theme change is the shapes and fonts that really change (a theme with another geometry or another font). Like the table above, these figures cover the switch script only, not the frame drawn after it. The Tab5 reached 657 ms at most on 2026-10-08 ([Theme switch](#theme-switch) below, another method).
 
 ### Restarts (10 from the « Redémarrage Système » button)
 
@@ -418,7 +440,29 @@ La carte de l'auteur est montée à l'envers : elle tourne avec `carte_rotation:
 | Styles du calendrier (une fois le calendrier construit) | 0,1 ms | 60 ms |
 | Couleurs des styles partagés et `lvgl.theme.update` | 0,2 ms | 0,2 ms |
 
-Les autres étapes (boutons verre, réveil, assistant) prennent moins de 3 ms. Un allègement de la bascule est à l'étude. Le Tab5 atteignait 657 ms au pire le 08/10/2026 ([Bascule de thème](#bascule-de-thème) plus bas, autre méthode).
+Les autres étapes (boutons verre, réveil, assistant) prennent moins de 3 ms.
+
+**Pourquoi elle grandit avec les popups, et le correctif ([#501](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/501), 17/10/2026).** Profilé sur la tablette virtuelle : dans LVGL 9.5, chaque objet visible qu'on invalide parcourt tous les objets qui recouvrent sa zone, popups fermés compris, à la recherche d'un flou (`blur_walk_cb` de `lv_obj_pos.c`) ; la bascule invalidait des milliers d'objets alors que tout l'écran l'était déjà (97 % des instructions de la repeinture des modules dans `lv_obj_invalidate`, 68 % dans ce parcours), et chaque popup construit allonge le parcours. En plus, les labels en attente de leur texte s'abonnent à la liste des rappels de l'affichage, parcourue à chaque événement de l'affichage. [#501](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/501) coupe l'invalidation et vide ces abonnements pendant la bascule, et saute les polices et les formes qui ne changent pas. Tablette virtuelle en 1024 × 600, après l'ouverture des 20 écrans (3 271 objets), temps natif, médiane de 24 bascules :
+
+| | Avant | Après |
+|---|---:|---:|
+| Formes | 7,6 ms | 1,7 ms |
+| Polices d'affichage | 7,7 ms | 1,0 ms |
+| Calendrier | 3,2 ms | 0 |
+| Modules C++ | 14,0 ms | 0,3 ms |
+| **Script entier** | **32,6 ms** (247 M d'instructions) | **3,1 ms** (22 M) |
+| Changement de thème / clair ↔ sombre | ~33 / ~29 ms | ~4 / 0,6 ms |
+| Image suivante (mise en page et écran entier) | 50,0 ms | 43,9 ms |
+
+**Mesuré sur la 7B** (17/10/2026, même méthode que le tableau plus haut : chaque étape chronométrée sur la carte ; builds de mesure de `main` sans et avec #501, un passage chacun, 50 bascules par passage, Ardoise douce en sombre au départ) :
+
+| Médiane | Avant | Après |
+|---|---:|---:|
+| Juste après un redémarrage (2 290 objets) : changement de thème / clair ↔ sombre | 310 / 271 ms | 43 / 6 ms |
+| Après l'ouverture des 20 écrans (3 263 objets) : changement de thème / clair ↔ sombre | 761 / 675 ms | 65 / 10 ms (thème : 35 à 68) |
+| Dont, changement de thème après les 20 écrans : formes / polices / calendrier / modules C++ | 139 / 149 / 60 / 412 ms | 28 / 28 / 0 / 7 ms |
+
+Ce qui reste d'un changement de thème, ce sont les formes et les polices qui changent vraiment (un thème à la géométrie ou à la police différente). Comme le tableau plus haut, ces chiffres couvrent le script de bascule seul, pas l'image dessinée ensuite. Le Tab5 atteignait 657 ms au pire le 08/10/2026 ([Bascule de thème](#bascule-de-thème) plus bas, autre méthode).
 
 ### Redémarrages (10 par le bouton « Redémarrage Système »)
 

@@ -36,6 +36,11 @@ void theme_polices(lv_style_t* st_horloge, lv_style_t* st_date, lv_style_t* st_t
 // Vrai une fois le démarrage fini (tous les setup et les on_boot synchrones) : les
 // modules ont leurs widgets et peuvent repeindre.
 bool theme_ui_pret();
+// Encadrent chaque suite de lambdas sans attente de tab5_theme_repeindre (17/10/2026) :
+// tout l'écran invalidé une fois, puis l'invalidation coupée et les abonnements des labels
+// vidés jusqu'à la fin (pourquoi : tab5_theme.cpp). Sans effet si déjà dans cet état.
+void theme_bascule_debut();
+void theme_bascule_fin();
 // Après une bascule : chaque module C++ repeint les couleurs qu'il a posées lui-même,
 // depuis son dernier état (les styles partagés sont repeints par tab5-themes.yaml ;
 // les fonctions de chaque module : tab5_internal.h).

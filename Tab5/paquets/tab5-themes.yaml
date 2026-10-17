@@ -31,7 +31,9 @@
 # - [AI-WARNING] Bascule rapide (08/10/2026) : les couleurs sont reposées avec le
 #   rafraîchissement des styles COUPÉ (lv_obj_enable_style_refresh), puis l'écran entier
 #   est redessiné une fois ; theme_formes ne rafraîchit que les porteurs de ses styles
-#   (restent 3 lv_obj_report_style_change pour les polices, 5 pour le calendrier).
+#   (polices : 3 lv_obj_report_style_change, si elles changent). Depuis le 17/10/2026,
+#   theme_bascule_debut/fin encadrent chaque suite d'étapes sans attente : invalidation
+#   coupée, abonnements des labels vidés (parcours de LVGL 9.5 à chaque invalidation : tab5_theme.cpp).
 #   Avant : un par style, 3,2 s de boucle bloquée à chaque changement de thème ou de
 #   mode (mesuré le 07/10/2026 ; prototype : ~0,2 s). Le bloc des couleurs ne doit donc
 #   changer que des couleurs : une propriété de taille, de place ou de zone de dessin y
@@ -358,6 +360,7 @@ script:
       # apply_pressed_scale_to_tree, 2 s après le démarrage) les reconnaît à leur rayon de
       # 18, qu'un thème peut changer. Ils sont marqués ici, une fois, dans l'état compilé.
       - lambda: 'boutons_verre_marquer(id(page_main)->obj);'
+      - lambda: 'theme_bascule_debut();'
       # >>> styles (généré par tools/gen_themes.py depuis tab5-styles.yaml, ne pas éditer)
       - lambda: |-
           // Couleurs seules, sans rafraîchir les objets un style après l'autre : voir
@@ -463,10 +466,12 @@ script:
           // des cases du calendrier (s'il est construit).
           lv_obj_set_style_bg_color(id(page_main)->obj, lv_color_hex(UIColor.BG), LV_PART_MAIN);
           cal_styles_repeindre();
+          theme_bascule_fin();
       - wait_until:
           condition:
             lambda: 'return theme_ui_pret();'
       - lambda: |-
+          theme_bascule_debut();
           // Couleurs posées par les modules C++ (tab5_theme.cpp).
           theme_rejouer_ui();
           forecast_rejouer_theme(id(font_meteo_card), id(font_meteo_card_small));
@@ -489,6 +494,7 @@ script:
           // événement vers HA).
           highlight_button_border(id(btn_mode_domo), !id(conversation_mode), UIColor.INFO);
           highlight_button_border(id(btn_mode_discu), id(conversation_mode), UIColor.SUCCESS);
+          theme_bascule_fin();
       # Réveil (réglages, icône d'état) et assistant (boutons, mot d'activation, muet).
       - script.execute: tab5_alarm_sync_ui
       - script.execute: tab5_assist_sync_settings
