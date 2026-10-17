@@ -55,6 +55,9 @@ REDEMARRAGE = "esphome.tab5_redemarrage_ha_confirme"
 
 APPEL_ACTION = re.compile(r"homeassistant\.(?:service|action)\s*:")
 EMISSION = re.compile(r"homeassistant\.event:\s*\n\s*event:\s*['\"]?(esphome\.[a-z_0-9]+)")
+# Sans champ, envoyé à Home Assistant seulement quand il écoute (17/10/2026,
+# Tab5/ecran/tab5_journal.cpp) : `ha_evenement_envoyer("esphome.…")` dans une lambda.
+ENVOI_HA = re.compile(r'ha_evenement_envoyer\(\s*"(esphome\.[a-z_0-9]+)"')
 
 
 def _fichiers_firmware():
@@ -70,10 +73,11 @@ def _sans_commentaires(texte):
 
 
 def _emissions():
-    """{événement: [fichiers]} des `homeassistant.event` du firmware."""
+    """{événement: [fichiers]} des `homeassistant.event` (et `ha_evenement_envoyer`) du firmware."""
     trouves = {}
     for chemin in _fichiers_firmware():
-        for evt in EMISSION.findall(_sans_commentaires(chemin.read_text(encoding="utf-8"))):
+        texte = _sans_commentaires(chemin.read_text(encoding="utf-8"))
+        for evt in EMISSION.findall(texte) + ENVOI_HA.findall(texte):
             trouves.setdefault(evt, []).append(chemin.relative_to(REPO).as_posix())
     return trouves
 
