@@ -54,14 +54,17 @@ bool theme_selectionner(int theme, int mode, bool nuit) {
 bool theme_ui_pret() { return esphome::App.is_setup_complete(); }
 
 // --- Bascule sans invalidations ni abonnés (17/10/2026) -----------------------
-// [AI-WARNING] Ne pas retirer sans mesurer. Dans LVGL 9.5, chaque objet invalidé
-// (lv_obj_invalidate → lv_inv_area : LV_EVENT_INVALIDATE_AREA) ou remis en page
-// (lv_obj_mark_layout_as_dirty : LV_EVENT_REFR_REQUEST) envoie un événement à l'affichage,
-// dont l'envoi parcourt deux fois toute sa liste de rappels ; et chaque label au texte à
-// recalculer s'y abonne jusqu'à la mise en page suivante (lv_label_mark_need_refr_text,
-// lv_label.c). Pendant une bascule, des centaines de labels s'abonnent l'un après l'autre et
-// chaque écriture suivante parcourt leur liste : coût quadratique, le même que celui du
-// démarrage (tab5_demarrage.cpp). Entre theme_bascule_debut() et theme_bascule_fin() :
+// [AI-WARNING] Ne pas retirer sans mesurer. Dans LVGL 9.5, chaque objet visible invalidé
+// (lv_obj_invalidate → obj_invalidate_area_internal, lv_obj_pos.c) parcourt l'écran actif et
+// les calques à la recherche d'un widget flouté sur la zone (blur_walk_cb) : tous les objets
+// qui la recouvrent, popups fermés compris (cachés, mais parcourus quand même). Une bascule
+// invalide des milliers d'objets alors que tout l'écran l'est déjà : 97 % des instructions de
+// theme_rejouer_ui() partaient dans lv_obj_invalidate, dont 68 % dans ce parcours (callgrind,
+// tablette virtuelle, 17/10/2026), et chaque popup construit l'allonge. En plus, chaque
+// invalidation ou remise en page envoie un événement à l'affichage, dont l'envoi parcourt deux
+// fois sa liste de rappels, où chaque label au texte à recalculer s'abonne jusqu'à la mise en
+// page suivante (lv_label_mark_need_refr_text) : le coût quadratique du démarrage
+// (tab5_demarrage.cpp). Entre theme_bascule_debut() et theme_bascule_fin() :
 // - tout l'écran est invalidé une fois, puis l'invalidation est coupée
 //   (lv_display_enable_invalidation) : les objets repeints seront redessinés par cette
 //   invalidation-là, qui couvre aussi les calques du dessus ;

@@ -33,7 +33,7 @@
 #   est redessiné une fois ; theme_formes ne rafraîchit que les porteurs de ses styles
 #   (polices : 3 lv_obj_report_style_change, si elles changent). Depuis le 17/10/2026,
 #   theme_bascule_debut/fin encadrent chaque suite d'étapes sans attente : invalidation
-#   coupée, abonnements des labels vidés (coût quadratique de LVGL 9.5 : tab5_theme.cpp).
+#   coupée, abonnements des labels vidés (parcours de LVGL 9.5 à chaque invalidation : tab5_theme.cpp).
 #   Avant : un par style, 3,2 s de boucle bloquée à chaque changement de thème ou de
 #   mode (mesuré le 07/10/2026 ; prototype : ~0,2 s). Le bloc des couleurs ne doit donc
 #   changer que des couleurs : une propriété de taille, de place ou de zone de dessin y
