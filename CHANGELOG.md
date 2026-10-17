@@ -27,7 +27,8 @@ Firmware et packages dans n'importe quel ordre ; `custom_templates` rechargé d'
 
 [v3.9.0-rc.5](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/releases/tag/v3.9.0-rc.5)
 le 17/10/2026 : changement de thème bien plus court (#501), popup Musique et détail du jour du
-calendrier plus rapides à s'ouvrir (#500, #504), Waveshare 7B : démarrage 1 s plus rapide (#502),
+calendrier plus rapides à s'ouvrir (#500, #504), popups fermés garés hors de l'écran, chaque
+mise à jour de l'écran moins chère (#505), Waveshare 7B : démarrage 1 s plus rapide (#502),
 entités de la tablette suffixées « _2 » reconnues par les packages, le blueprint et le tableau
 de bord (#506, #508), nom des capteurs dans les listes à plusieurs choix et chemin de HA dans
 la fenêtre Froid (#507), mesures de la 7B (#499). Firmware et packages dans n'importe quel
