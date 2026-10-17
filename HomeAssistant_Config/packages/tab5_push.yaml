@@ -646,8 +646,12 @@ automation:
     # Mode « Auto » du thème de l'écran (ADR-0029) : la tablette passe en clair le jour,
     # en sombre la nuit, d'après son interrupteur « Nuit (thème auto) », que cette
     # automatisation tient à jour sur sun.sun : au lever et au coucher, à chaque
-    # connexion de la tablette et au démarrage de HA. Sans effet hors du mode Auto
-    # (select « Clair ou sombre » de la tablette), et sans sun.sun : rien ne part.
+    # connexion de la tablette (une tablette qu'on ajoute se connecte aussi) et au
+    # démarrage de HA. Sans effet hors du mode Auto (select « Clair ou sombre » de la
+    # tablette), et sans sun.sun : rien ne part. Plus de déclencheur sur l'attribut
+    # theme_nuit de sensor.tab5_tablette (17/10/2026) : il partait pendant l'ajout de
+    # l'appareil, quand la liaison bascule encore (nouvelle clé), et l'appel finissait en
+    # « Not connected » malgré la garde (test « Installation dans un HA neuf », HA 2026.9.4).
     description: "Allume l'interrupteur « Nuit (thème auto) » de la tablette quand le soleil est couché, l'éteint quand il est levé"
     mode: queued
     max: 3
@@ -659,14 +663,8 @@ automation:
       - trigger: event
         event_type: esphome.tab5_connected
         id: tab5_connected
-      # Tablette ajoutée à HA (ou remplacée) : l'interrupteur vient d'être détecté.
-      - trigger: state
-        entity_id: sensor.tab5_tablette
-        attribute: theme_nuit
       - trigger: homeassistant
         event: start
-    variables:
-      nuit: "{{ state_attr('sensor.tab5_tablette', 'theme_nuit') or '' }}"
     conditions:
       # Garde d'origine (comme la poussée complète) : tab5_connected ne
       # compte que venant d'une tablette. tests/test_garde_origine.py.
@@ -676,27 +674,23 @@ automation:
           {%- from 'tab5_tablette.jinja' import tab5_origine -%}
           {{ tab5_origine(trigger) == 'oui' }}
       - condition: template
-        value_template: "{{ nuit != '' and states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
+        value_template: "{{ states('sun.sun') in ['above_horizon', 'below_horizon'] }}"
     actions:
-      # Tablette connectée : au démarrage de HA, ou quand l'appareil vient d'apparaître,
-      # l'interrupteur existe avant la liaison API et l'appel finissait en « Not
-      # connected » (test « Installation dans un HA neuf », 16/10/2026). Comme la
-      # poussée complète : sur tab5_connected, la liaison peut ne pas être prête, on
-      # l'attend 10 s ; sinon on s'arrête sans erreur, la connexion relancera ce passage.
-      - if:
-          - condition: trigger
-            id: tab5_connected
-        then:
-          - wait_template: &theme_tablette_connectee >-
-              {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
-              {{ tab5_connectee() == 'oui' }}
-            timeout: "00:00:10"
-            continue_on_timeout: true
+      # Comme « Tab5 — extinction de nuit » : la liaison et l'interrupteur détecté
+      # (sensor.tab5_tablette, mis à jour par le même tab5_connected) peuvent arriver un peu
+      # après ; on les attend 10 s, sinon on s'arrête sans erreur (la connexion suivante
+      # relancera ce passage). Une liaison qui tombe pendant l'appel n'arrête rien.
+      - wait_template: &theme_pret >-
+          {%- from 'tab5_tablette.jinja' import tab5_connectee -%}
+          {{ tab5_connectee() == 'oui' and (state_attr('sensor.tab5_tablette', 'theme_nuit') or '') != '' }}
+        timeout: "00:00:10"
+        continue_on_timeout: true
       - condition: template
-        value_template: *theme_tablette_connectee
+        value_template: *theme_pret
       - action: "switch.turn_{{ 'on' if is_state('sun.sun', 'below_horizon') else 'off' }}"
+        continue_on_error: true
         target:
-          entity_id: "{{ nuit }}"
+          entity_id: "{{ state_attr('sensor.tab5_tablette', 'theme_nuit') }}"
 
   - id: tab5_extinction_nuit
     alias: "Tab5 — extinction de nuit"
