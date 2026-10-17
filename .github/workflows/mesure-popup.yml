@@ -1,0 +1,143 @@
+name: Mesure des popups avant / après (essai, jamais mergé)
+
+# Branche essai/mesure-popup-musique (17/10/2026) : la tablette virtuelle en 1024×600 (Waveshare
+# 7B, rotation 0 comme la 7B de la maison), compilée trois fois sur le même runner :
+# « avant » = les fichiers du correctif repris de origin/main, « voile100 » = avant avec le
+# voile du popup Musique opaque (preuve de la cause, change l'aspect), « apres » = la branche
+# telle quelle. Chaque variante ouvre Musique, Climatisation et Énergie (Zen Sumi puis Relief
+# doux) : en natif (5 passes, captures BMP comparées au pixel), puis sous callgrind (2 passes,
+# un profil par image ; tools/mesure/bilan_popup.py).
+
+on:
+  push:
+    branches: [essai/mesure-popup-musique]
+
+permissions:
+  contents: read
+
+jobs:
+  mesure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Version plancher d'ESPHome
+        id: version
+        run: |
+          v=$(sed -n 's/^[[:space:]]*min_version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' tab5-ha-hmi.yaml | head -n 1)
+          echo "esphome=$v" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/pip
+          key: pip-esphome-${{ steps.version.outputs.esphome }}-py3.13
+      - name: ESPHome, Pillow, faketime, valgrind
+        env:
+          ESPHOME_VERSION: ${{ steps.version.outputs.esphome }}
+        run: |
+          bash tools/ci/pip_reessai.sh "esphome==$ESPHOME_VERSION" pillow
+          sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends faketime valgrind
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.platformio
+          key: pio-host-${{ steps.version.outputs.esphome }}
+      - name: Compiler avant, voile100 et après
+        env:
+          TZ: Europe/Paris
+          TAB5_SAN_LINKFLAGS: ""
+          TAB5_SAN_CCFLAGS: "-g -fno-omit-frame-pointer"
+        run: |
+          FICHIERS="Tab5/ecran/tab5_anim.cpp Tab5/ecran/tab5_anim.h Tab5/ecran/tab5_lecteur.cpp Tab5/ecran/tab5_lecteur.h Tab5/paquets/tab5-lecteur.yaml Tab5/ui_components/lecteur_popup.yaml"
+          mkdir -p programmes
+          for v in avant voile100 apres; do
+            git checkout HEAD -- $FICHIERS
+            if [ "$v" != apres ]; then git checkout origin/main -- $FICHIERS; fi
+            if [ "$v" = voile100 ]; then
+              sed -i 's/scrim_opa: "70", popup_id: lecteur_popup/scrim_opa: "100", popup_id: lecteur_popup/' Tab5/ui_components/lecteur_popup.yaml
+            fi
+            echo "--- $v"; git diff --stat HEAD -- $FICHIERS
+            python tools/mesure/variante_popup.py tab5-mesure.yaml
+            set +e
+            esphome -s tab5_carte waveshare-7b -s carte_rotation 0 -s rendu_nom tab5-rendu-7b compile tab5-mesure.yaml > "build_$v.log" 2>&1
+            code=$?
+            set -e
+            if [ "$code" -ne 0 ]; then tail -n 80 "build_$v.log"; exit "$code"; fi
+            src=.esphome/build/tab5-rendu-7b/src
+            echo "$v : voile_invalidation dans tab5_anim.cpp = $(grep -c voile_invalidation $src/tab5_anim.cpp || true), lecteur_carte dans main.cpp = $(grep -c lecteur_carte $src/main.cpp || true), voile : $(grep -o 'scrim_opa: "[0-9]*", popup_id: lecteur_popup' Tab5/ui_components/lecteur_popup.yaml)"
+            prog=$(find .esphome/build/tab5-rendu-7b -name program -type f | head -n 1)
+            cp "$prog" "programmes/$v"
+          done
+          git checkout HEAD -- $FICHIERS
+      - name: En natif, 5 passes, captures
+        env:
+          TZ: Europe/Paris
+          DEPART: "2026-06-16 07:45:00"
+          FAKETIME_DONT_FAKE_MONOTONIC: "1"
+        run: |
+          mkdir -p resultats
+          for v in avant voile100 apres; do
+            rm -rf "$RUNNER_TEMP/prefs" && mkdir -p "$RUNNER_TEMP/prefs" "captures_$v"
+            prog="$PWD/programmes/$v"
+            ESPHOME_PREFDIR="$RUNNER_TEMP/prefs" ESPHOME_SNAPSHOT_DIR="$PWD/captures_$v" \
+              faketime -f "$DEPART" "$prog" >> "resultats/natif_$v.log" 2>&1 &
+            for _ in $(seq 1 120); do grep -q 'mesure\] branch' "resultats/natif_$v.log" && break; sleep 0.5; done
+            sleep 3
+            faketime -f "$DEPART" python tools/mesure/ouvrir_popups.py --passes 5 --attente 1.0 \
+              --captures "captures_$v" >> "resultats/natif_$v.log" 2>&1
+            pkill -f "$prog" || true
+            for _ in $(seq 1 20); do pgrep -f "$prog" >/dev/null || break; sleep 1; done
+            pkill -9 -f "$prog" || true
+            grep -c '\[mesure\] image' "resultats/natif_$v.log" || true
+          done
+          {
+            echo "## Captures : après contre avant (même image ?)"
+            for f in captures_avant/*.bmp; do
+              b=$(basename "$f")
+              if cmp -s "$f" "captures_apres/$b"; then echo "- $b : identique"; else echo "- $b : DIFFÉRENT"; fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Sous callgrind, 2 passes, un profil par image
+        env:
+          TZ: Europe/Paris
+        run: |
+          for v in avant voile100 apres; do
+            rm -rf "$RUNNER_TEMP/prefs" && mkdir -p "$RUNNER_TEMP/prefs" "resultats/cg_$v"
+            prog="$PWD/programmes/$v"
+            ESPHOME_PREFDIR="$RUNNER_TEMP/prefs" ESPHOME_SNAPSHOT_DIR="$RUNNER_TEMP" \
+              valgrind --tool=callgrind --callgrind-out-file="resultats/cg_$v/cg.out.%p" "$prog" \
+              >> "resultats/cg_$v.log" 2>&1 &
+            for _ in $(seq 1 900); do grep -q 'mesure\] branch' "resultats/cg_$v.log" && break; sleep 1; done
+            sleep 20
+            python tools/mesure/ouvrir_popups.py --passes 2 --attente 8 >> "resultats/cg_$v.log" 2>&1 || echo "pilote en échec ($v)"
+            pkill -f "$prog" || true
+            for _ in $(seq 1 60); do pgrep -f "$prog" >/dev/null || break; sleep 1; done
+            pkill -9 -f "$prog" || true
+            ls "resultats/cg_$v" | wc -l
+          done
+      - name: Bilan
+        if: always()
+        run: |
+          {
+            echo "## Ouverture des popups (1024×600, rotation 0)"
+            python tools/mesure/bilan_popup.py resultats avant voile100 apres
+          } >> "$GITHUB_STEP_SUMMARY"
+          for v in avant voile100 apres; do
+            for f in resultats/cg_$v/cg.out.*; do
+              nom=$(sed -n 's/^desc: Trigger: Client Request: //p' "$f" | head -n 1)
+              case "$nom" in *Musique*) ;; *) continue ;; esac
+              callgrind_annotate --inclusive=yes "$f" 2>/dev/null | head -n 60 > "resultats/cg_$v/incl_$nom.txt" || true
+            done
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: mesure-popup-musique
+          path: |
+            resultats/
+            captures_*/
+            build_*.log
+          retention-days: 14
