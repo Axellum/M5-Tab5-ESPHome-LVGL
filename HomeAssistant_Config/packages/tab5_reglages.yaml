@@ -24,12 +24,16 @@
 #       `states('select.tab5_…')` et vérifient l'existence (`expand(x) | count > 0`,
 #       qui ne lève jamais d'erreur, contrairement à `states[x]` sur « Aucun »).
 #       « Tab5 · lecteurs de musique » (ADR-0050) est une liste à PLUSIEURS choix : son
-#       état est un résumé (« 2 choisi(s) · 2 chosen »), ses options « ✓ media_player.x »
-#       (choisi : le toucher le retire) et « ○ media_player.x » (le toucher l'ajoute, 6 au
-#       plus) ; la mémoire input_text.tab5_choix_lecteurs garde les entity_id séparés par
+#       état est un résumé (« 2 choisi(s) · 2 chosen »), ses options « ✓ Salon · media_player.x »
+#       (choisi : le toucher le retire) et « ○ Salon · media_player.x » (le toucher l'ajoute, 6
+#       au plus) ; la mémoire input_text.tab5_choix_lecteurs garde les entity_id séparés par
 #       des virgules, dans l'ordre du choix : c'est elle que lit packages/tab5_lecteur.yaml.
-#       « Tab5 · capteurs suivis » (ADR-0054) marche de même (options « ✓ sensor.x » /
-#       « ○ sensor.x », 6 au plus, mémoire input_text.tab5_choix_suivis lue par
+#       Le nom de l'entité vient avant son entity_id (17/10/2026 : sans le tableau de bord
+#       du projet, une liste d'entity_id bruts ne disait pas quel capteur est le
+#       congélateur) ; l'entity_id est le DERNIER mot de l'option (il n'a pas d'espace),
+#       c'est lui que relit select_option. Sans nom, l'option reste « ○ media_player.x ».
+#       « Tab5 · capteurs suivis » (ADR-0054) marche de même (options « ✓ Nom · sensor.x » /
+#       « ○ Nom · sensor.x », 6 au plus, mémoire input_text.tab5_choix_suivis lue par
 #       packages/tab5_suivi.yaml) ; ne propose que les capteurs à state_class measurement
 #       (ceux qui ont des statistiques, donc une courbe).
 #       « Tab5 · réfrigérateurs » et « Tab5 · congélateurs » (ADR-0055) aussi (mémoires
@@ -348,12 +352,16 @@ template:
         default_entity_id: select.tab5_lecteurs_de_musique
         icon: mdi:music-box-multiple
         options: >-
-          {{ [lecteurs_resume] + (lecteurs_choisis | map('regex_replace', '^', '✓ ') | list)
-             + (lecteurs_ha | reject('in', lecteurs_choisis) | map('regex_replace', '^', '○ ') | list) }}
+          {%- set ns = namespace(o=[lecteurs_resume]) -%}
+          {%- for e in lecteurs_choisis + (lecteurs_ha | reject('in', lecteurs_choisis) | list) -%}
+            {%- set n = state_attr(e, 'friendly_name') -%}
+            {%- set ns.o = ns.o + [('✓ ' if e in lecteurs_choisis else '○ ') ~ ((n ~ ' · ') if n and n != e else '') ~ e] -%}
+          {%- endfor -%}
+          {{ ns.o }}
         state: "{{ lecteurs_resume }}"
         select_option:
           - variables:
-              entite: "{{ option[2:] | trim }}"
+              entite: "{{ option.split(' ') | last }}"
               liste: >-
                 {%- set choisis = states('input_text.tab5_choix_lecteurs').split(',') | map('trim')
                      | select('match', 'media_player[.]') | unique | list -%}
@@ -377,12 +385,16 @@ template:
         default_entity_id: select.tab5_capteurs_suivis
         icon: mdi:chart-line
         options: >-
-          {{ [suivis_resume] + (suivis_choisis | map('regex_replace', '^', '✓ ') | list)
-             + (suivis_ha | reject('in', suivis_choisis) | map('regex_replace', '^', '○ ') | list) }}
+          {%- set ns = namespace(o=[suivis_resume]) -%}
+          {%- for e in suivis_choisis + (suivis_ha | reject('in', suivis_choisis) | list) -%}
+            {%- set n = state_attr(e, 'friendly_name') -%}
+            {%- set ns.o = ns.o + [('✓ ' if e in suivis_choisis else '○ ') ~ ((n ~ ' · ') if n and n != e else '') ~ e] -%}
+          {%- endfor -%}
+          {{ ns.o }}
         state: "{{ suivis_resume }}"
         select_option:
           - variables:
-              entite: "{{ option[2:] | trim }}"
+              entite: "{{ option.split(' ') | last }}"
               liste: >-
                 {%- set choisis = states('input_text.tab5_choix_suivis').split(',') | map('trim')
                      | select('match', 'sensor[.]') | unique | list -%}
@@ -407,13 +419,16 @@ template:
         default_entity_id: select.tab5_refrigerateurs
         icon: mdi:fridge-outline
         options: >-
-          {{ [frigos_resume] + (frigos_choisis | map('regex_replace', '^', '✓ ') | list)
-             + (froid_ha | reject('in', frigos_choisis + congelateurs_choisis)
-                | map('regex_replace', '^', '○ ') | list) }}
+          {%- set ns = namespace(o=[frigos_resume]) -%}
+          {%- for e in frigos_choisis + (froid_ha | reject('in', frigos_choisis + congelateurs_choisis) | list) -%}
+            {%- set n = state_attr(e, 'friendly_name') -%}
+            {%- set ns.o = ns.o + [('✓ ' if e in frigos_choisis else '○ ') ~ ((n ~ ' · ') if n and n != e else '') ~ e] -%}
+          {%- endfor -%}
+          {{ ns.o }}
         state: "{{ frigos_resume }}"
         select_option:
           - variables:
-              entite: "{{ option[2:] | trim }}"
+              entite: "{{ option.split(' ') | last }}"
               autres: >-
                 {{ states('input_text.tab5_choix_congelateurs').split(',') | map('trim')
                    | select('match', 'sensor[.]') | unique | list }}
@@ -438,13 +453,16 @@ template:
         default_entity_id: select.tab5_congelateurs
         icon: mdi:snowflake-thermometer
         options: >-
-          {{ [congelateurs_resume] + (congelateurs_choisis | map('regex_replace', '^', '✓ ') | list)
-             + (froid_ha | reject('in', frigos_choisis + congelateurs_choisis)
-                | map('regex_replace', '^', '○ ') | list) }}
+          {%- set ns = namespace(o=[congelateurs_resume]) -%}
+          {%- for e in congelateurs_choisis + (froid_ha | reject('in', frigos_choisis + congelateurs_choisis) | list) -%}
+            {%- set n = state_attr(e, 'friendly_name') -%}
+            {%- set ns.o = ns.o + [('✓ ' if e in congelateurs_choisis else '○ ') ~ ((n ~ ' · ') if n and n != e else '') ~ e] -%}
+          {%- endfor -%}
+          {{ ns.o }}
         state: "{{ congelateurs_resume }}"
         select_option:
           - variables:
-              entite: "{{ option[2:] | trim }}"
+              entite: "{{ option.split(' ') | last }}"
               autres: >-
                 {{ states('input_text.tab5_choix_frigos').split(',') | map('trim')
                    | select('match', 'sensor[.]') | unique | list }}
@@ -532,7 +550,10 @@ template:
   # connecté s'il y en a plusieurs), puis les entités de CET appareil par la fin de
   # leur entity_id, qui vient des noms du firmware (jamais traduits). Le préfixe,
   # lui, dépend du nom de l'appareil dans HA (« salon_… » chez l'auteur pour une
-  # partie des entités) : il n'est plus écrit nulle part.
+  # partie des entités) : il n'est plus écrit nulle part. « (_[0-9]+)? » : le « _2 »
+  # que HA ajoute à un entity_id déjà pris (second écran, ou écran qui en remplace un ;
+  # custom_templates/tab5_tablette.jinja). Sans lui, le 17/10/2026, la Waveshare 7B
+  # n'avait ni « ecran » ni « demarrage » ni « micro » ici.
   - triggers:
       - trigger: homeassistant
         event: start
@@ -559,22 +580,22 @@ template:
         state: "{{ (device_attr(api, 'name_by_user') or device_attr(api, 'name')) if api else 'absente' }}"
         attributes:
           api: "{{ api }}"
-          ecran: "{{ entites | select('match', 'light[.].*_display_backlight$') | first | default('') }}"
-          reveil_en_cours: "{{ entites | select('match', 'binary_sensor[.].*_reveil_en_cours$') | first | default('') }}"
-          raison: "{{ entites | select('match', 'sensor[.].*_raison_du_redemarrage$') | first | default('') }}"
-          demarrage: "{{ entites | select('match', 'sensor[.].*_uptime$') | first | default('') }}"
-          micro: "{{ entites | select('match', 'switch[.].*_wake_word_active$') | first | default('') }}"
+          ecran: "{{ entites | select('match', 'light[.].*_display_backlight(_[0-9]+)?$') | first | default('') }}"
+          reveil_en_cours: "{{ entites | select('match', 'binary_sensor[.].*_reveil_en_cours(_[0-9]+)?$') | first | default('') }}"
+          raison: "{{ entites | select('match', 'sensor[.].*_raison_du_redemarrage(_[0-9]+)?$') | first | default('') }}"
+          demarrage: "{{ entites | select('match', 'sensor[.].*_uptime(_[0-9]+)?$') | first | default('') }}"
+          micro: "{{ entites | select('match', 'switch[.].*_wake_word_active(_[0-9]+)?$') | first | default('') }}"
           satellite: "{{ entites | select('match', 'assist_satellite[.]') | first | default('') }}"
-          rdv_avant: "{{ entites | select('match', 'number[.].*_rendez_vous_annoncer_avant$') | first | default('') }}"
+          rdv_avant: "{{ entites | select('match', 'number[.].*_rendez_vous_annoncer_avant(_[0-9]+)?$') | first | default('') }}"
           # Select « Langue » du firmware (Français, English, Deutsch…) : langue du
           # briefing parlé du réveil (tab5_reveil.yaml).
-          langue: "{{ entites | select('match', 'select[.].*_langue$') | first | default('') }}"
+          langue: "{{ entites | select('match', 'select[.].*_langue(_[0-9]+)?$') | first | default('') }}"
           # Interrupteur « Nuit (thème auto) » du firmware : mode Auto du thème de
           # l'écran, réglé d'après le soleil (tab5_push.yaml, « Tab5 — thème jour/nuit »).
-          theme_nuit: "{{ entites | select('match', 'switch[.].*_nuit_theme_auto$') | first | default('') }}"
+          theme_nuit: "{{ entites | select('match', 'switch[.].*_nuit_theme_auto(_[0-9]+)?$') | first | default('') }}"
           # Interrupteur « Tab5 Nuit (écran éteint) » du firmware (16/10/2026), tenu d'après
           # « Tab5 · extinction de nuit » (tab5_push.yaml, « Tab5 — extinction de nuit »).
-          nuit_ecran: "{{ entites | select('match', 'switch[.].*_nuit_ecran_eteint$') | first | default('') }}"
+          nuit_ecran: "{{ entites | select('match', 'switch[.].*_nuit_ecran_eteint(_[0-9]+)?$') | first | default('') }}"
           # Select de pipeline de la tablette (AssistPipelineSelect de HA : ses options
           # commencent par « preferred ») ; depuis HA 2025.10, un second (« Assistant
           # 2 ») a les mêmes options : le premier par ordre d'entity_id, comme

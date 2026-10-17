@@ -64,7 +64,7 @@
 
 {#- ── La tablette, trouvée par le modèle de son appareil ─────────────────────── -#}
 {%- set ns = namespace(api='', t={}, a={}, p=[], m=[], v=[], e='', e_id='') -%}
-{%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
+{%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') -%}
   {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
     {%- set ns.api = e -%}
   {%- endif -%}
@@ -121,8 +121,12 @@
   ('batterie_detectee', 'binary_sensor', 'tab5_batterie_detectee'),
   ('securite_chargeur', 'binary_sensor', 'tab5_securite_chargeur'),
 ] -%}
+{#- « (_[0-9]+)? » : HA ajoute « _2 », « _3 »… à l'entity_id déjà pris par un autre appareil.
+    Un second écran (ADR-0063), ou un écran qui en remplace un resté dans HA, a des entités
+    « …_tab5_uptime_2 » (Waveshare 7B chez l'auteur, 17/10/2026 : sans lui, ses tuiles de
+    rétroéclairage, micro, Wi-Fi, RAM, température… manquaient). -#}
 {%- for cle, domaine, fin in ENTITES -%}
-  {%- set motif = domaine ~ '[.]' ~ ('.*_' ~ fin ~ '$' if fin else '') -%}
+  {%- set motif = domaine ~ '[.]' ~ ('.*_' ~ fin ~ '(_[0-9]+)?$' if fin else '') -%}
   {%- set ns.t = dict(ns.t, **{cle: tab | select('match', motif) | first | default('')}) -%}
 {%- endfor -%}
 {#- Selects créés par l'intégration ESPHome de HA, pas par le firmware : leur entity_id suit la

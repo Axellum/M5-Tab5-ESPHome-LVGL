@@ -6,6 +6,12 @@
 
   La tablette est reconnue au MODÈLE de son appareil, `tab5-ha-hmi` (bloc `project:` du
   firmware), jamais à son nom : il dépend du nom donné à l'appareil dans HA.
+  Ses entités se cherchent par la fin de leur entity_id SUIVIE d'un suffixe facultatif
+  « (_[0-9]+)? » : HA ajoute « _2 » à un entity_id déjà pris par un autre appareil (un
+  second écran, ADR-0063, ou un écran qui en remplace un resté dans HA). Le 17/10/2026,
+  la Waveshare 7B de l'auteur avait 19 entités en « _2 » (…_display_backlight_2,
+  …_tab5_uptime_2, …_wake_word_active_2) : l'écran ne suivait plus la présence.
+  Toute nouvelle recherche fait de même (tests/test_entites_suffixees.py).
 
   tab5_connectee()
       'oui' si le capteur « HA API Status » d'une tablette est `on` (liaison API
@@ -46,7 +52,7 @@
 -#}
 {%- macro tab5_api() -%}
   {%- set ns = namespace(api='') -%}
-  {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') -%}
+  {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') -%}
     {%- if device_attr(e, 'model') == 'tab5-ha-hmi' and (ns.api == '' or is_state(e, 'on')) -%}
       {%- set ns.api = e -%}
     {%- endif -%}
@@ -54,7 +60,7 @@
   {{- ns.api -}}
 {%- endmacro -%}
 {%- macro tab5_connectee() -%}
-  {{- 'oui' if integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$')
+  {{- 'oui' if integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$')
        | select('is_state', 'on') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
        | list | count > 0 else '' -}}
 {%- endmacro -%}
@@ -74,7 +80,7 @@
       demande sa poussée complète) avant d'avoir publié son préfixe : le capteur vaut
       alors « unknown » ou « unavailable », qui passent le filtre des noms (16/10/2026,
       poussée envoyée à esphome.unknown_… et perdue). -#}
-  {%- set lisibles = device_entities(d | string) | select('match', 'sensor[.].*_prefixe_des_actions$')
+  {%- set lisibles = device_entities(d | string) | select('match', 'sensor[.].*_prefixe_des_actions(_[0-9]+)?$')
         | map('states') | reject('in', ['unknown', 'unavailable', 'none']) | select('match', '^[a-z0-9_]+$') | list -%}
   {{- lisibles | first | default('tab5_ha_hmi', true) -}}
 {%- endmacro -%}
@@ -88,7 +94,7 @@
     {{- tab5_prefixe(d) -}}
   {%- else -%}
     {%- set ns = namespace(l=[]) -%}
-    {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status$') | select('is_state', 'on') -%}
+    {%- for e in integration_entities('esphome') | select('match', 'binary_sensor[.].*_ha_api_status(_[0-9]+)?$') | select('is_state', 'on') -%}
       {%- if device_attr(e, 'model') == 'tab5-ha-hmi' -%}
         {%- set p = tab5_prefixe(device_id(e)) -%}
         {%- if p and p not in ns.l -%}

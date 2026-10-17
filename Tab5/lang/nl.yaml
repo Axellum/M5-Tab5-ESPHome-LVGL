@@ -1417,7 +1417,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Réfrigérateur": "Koelkast"
 "Congélateur": "Vriezer"
 "Aucun appareil déclaré": "Geen apparaat opgegeven"
-"Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs ».": "Geef ze op in Home Assistant: lijsten „Tab5 · réfrigérateurs · koelkasten” en „Tab5 · congélateurs · vriezers”."
+"Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs ».": "In Home Assistant: Instellingen > Apparaten en diensten > Entiteiten, zoek „Tab5 · réfrigérateurs · fridges” of „Tab5 · congélateurs · freezers”."
 "Conforme": "In orde"
 "Trop chaud": "Te warm"
 "Trop chaud depuis %s": "Te warm sinds %s"

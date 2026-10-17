@@ -545,7 +545,7 @@ automation:
     conditions:
       - condition: template
         value_template: >-
-          {{ integration_entities('esphome') | select('match', 'sensor[.].*_ecran_courant$')
+          {{ integration_entities('esphome') | select('match', 'sensor[.].*_ecran_courant(_[0-9]+)?$')
              | select('is_state', 'Alertes') | map('device_attr', 'model') | select('eq', 'tab5-ha-hmi')
              | list | count > 0 }}
     actions:
