@@ -26,6 +26,18 @@
  *     `close_all()` — seuls tab5_alarm_stop / _snooze_now le referment.
  *   - « Neon Apron » est le DERNIER de `kGames` : sa fermeture restaure la
  *     rotation paysage 270 (ADR-0012), elle doit avoir le dernier mot.
+ *   - GARAGE (17/10/2026) : une fenêtre inscrite et cachée est « garée » loin sous
+ *     l'écran (translate_y de kGarageY), remise à sa place dès qu'elle se montre.
+ *     LVGL 9.5 parcourt, après CHAQUE invalidation, tous les objets qui recouvrent
+ *     la zone, cachés compris (blur_walk_cb de lv_obj_pos.c, à la recherche d'un
+ *     flou que ce firmware n'a pas) : les ~1 000 objets des popups fermés
+ *     rallongeaient chaque invalidation de l'interface. Une racine hors de la zone
+ *     est sautée avec tous ses enfants. Le contrôle se fait à LV_EVENT_REFR_START
+ *     (avant la mise en page et le dessin : une fenêtre montrée par n'importe quel
+ *     chemin est remise en place avant sa première image) ; animate_popup_open()
+ *     la remet aussi tout de suite (degarer()), pour le code qui lit ses
+ *     coordonnées dans le même tour de boucle. Inutile avec LVGL 9.6 (parcours
+ *     sauté sans flou) : à retirer quand ESPHome l'aura.
  *
  * @ai_instruction Ne JAMAIS recopier une liste de jeux ou de popups dans un
  *       YAML : passer par ces fonctions. Le garde-fou
@@ -117,5 +129,9 @@ lv_obj_t* find(const char* name);
 // Masque les SUBWINDOW puis referme les POPUP visibles (fondu via
 // close_popup_if_open). Les LAYER sont laissés tels quels.
 void close_all();
+
+// Remet tout de suite à sa place une fenêtre garée (voir GARAGE plus haut) ;
+// rien si elle n'est pas inscrite ou pas garée. Appelée par animate_popup_open().
+void degarer(lv_obj_t* obj);
 
 }  // namespace ModalRegistry

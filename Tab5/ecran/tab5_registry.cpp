@@ -123,14 +123,50 @@ struct Slot {
     const char* name;
     Kind kind;
     Ouvreur ouvreur;
+    bool garee;  // cachée et décalée de kGarageY (voir GARAGE, tab5_registry.h)
 };
 
 static Slot g_slots[MAX];
 static int g_nb = 0;
 
+// Assez loin pour qu'aucune fenêtre garée, ombre comprise, ne touche l'écran, quelles
+// que soient la carte et l'orientation.
+constexpr int32_t kGarageY = 10000;
+
+static void garer(Slot& s, bool garee) {
+    if (garee)
+        lv_obj_set_style_translate_y(s.obj, kGarageY, LV_PART_MAIN);
+    else
+        lv_obj_remove_local_style_prop(s.obj, LV_STYLE_TRANSLATE_Y, LV_PART_MAIN);
+    s.garee = garee;
+}
+
+// À chaque rafraîchissement, AVANT la mise en page et le dessin (lv_refr.c) : gare ce
+// qui vient d'être caché, remet ce qui vient d'être montré, quel que soit le chemin.
+static void garage_rafraichir(lv_event_t*) {
+    for (int i = 0; i < g_nb; i++) {
+        Slot& s = g_slots[i];
+        if (s.obj == nullptr) continue;
+        const bool cachee = lv_obj_has_flag(s.obj, LV_OBJ_FLAG_HIDDEN);
+        if (cachee != s.garee) garer(s, cachee);
+    }
+}
+
+void degarer(lv_obj_t* obj) {
+    if (obj == nullptr) return;
+    for (int i = 0; i < g_nb; i++) {
+        Slot& s = g_slots[i];
+        if (s.obj == obj && s.garee) garer(s, false);
+    }
+}
+
 bool ready() { return g_nb > 0; }
 
 void add(lv_obj_t* obj, const char* name, Kind kind, Ouvreur ouvreur) {
+    if (g_nb == 0) {
+        lv_display_t* d = lv_display_get_default();
+        if (d != nullptr) lv_display_add_event_cb(d, garage_rafraichir, LV_EVENT_REFR_START, nullptr);
+    }
     if (g_nb >= MAX) {
         ESP_LOGE(TAG, "ModalRegistry plein (%d) : '%s' ignore", MAX, name ? name : "?");
         return;
@@ -141,7 +177,7 @@ void add(lv_obj_t* obj, const char* name, Kind kind, Ouvreur ouvreur) {
         // testent le pointeur.
         ESP_LOGW(TAG, "ModalRegistry : '%s' enregistre sans widget", name ? name : "?");
     }
-    g_slots[g_nb++] = Slot{obj, name, kind, ouvreur};
+    g_slots[g_nb++] = Slot{obj, name, kind, ouvreur, false};
 }
 
 bool ouvrir(lv_obj_t* obj) {
