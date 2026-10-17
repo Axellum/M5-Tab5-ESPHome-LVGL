@@ -4,7 +4,7 @@
 
 ---
 
-The same firmware also runs on a second board, the **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B**: a 7-inch, 1024×600 touch screen built around the same chips as the Tab5 (an ESP32-P4, an ESP32-C6 for Wi-Fi, an ES7210 for the microphones). It is a cheaper and bigger screen, with less on board: no battery, no motion sensor, no clock chip.
+The same firmware also runs on a second board, the **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B**: a 7-inch, 1024×600 touch screen built around the same chips as the Tab5 (an ESP32-P4, an ESP32-C6 for Wi-Fi, an ES7210 for the microphones). It is a cheaper and bigger screen, with less on board: no motion sensor, no clock chip, no battery gauge (it does have a battery connector, which this firmware does not use yet).
 
 **Status: experimental.** The author's board has been the daily screen of their home since 2026-10-14: display, touch, backlight, sound and Wi-Fi work, and Home Assistant sees it like a Tab5. One board only, though, and the games and one energy page are not adapted to its screen yet ([what is left](#what-is-not-done-yet)). If you try it, say how it went in [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility): it helps a lot.
 
@@ -23,8 +23,8 @@ These pictures come from the off-device render (the firmware running on a PC, [d
 What the board does not have, and what it means on screen:
 
 - **No motion sensor (IMU):** the games played by tilting (Fil d'Or, Arcanoïde, Coureur d'Or, Neon Apron) get no input; the others work with touch.
-- **No battery and no battery gauge:** the battery icon, the charging settings and the battery entities stay, without effect (« Tab5 Batterie » stays unknown). Energy saving « on battery » never triggers.
-- **No clock chip:** the time comes from the network at each start. After a power cut, the alarm clock waits for Wi-Fi. (The board has a coin-cell holder for the P4's own clock; this firmware does not use it.)
+- **A battery connector, but no battery gauge, and nothing read by this firmware:** Waveshare's schematic shows a connector for a one-cell lithium battery (J4, MX1.25), a charger (ETA6098), a converter that raises the battery to 5 V and an ON/OFF switch. There is no gauge: the battery voltage only reaches the P4 through a divider (200 kΩ / 100 kΩ, a third of the voltage) on GPIO 20, and this firmware does not read it yet. So the battery icon, the charging settings and the battery entities stay, without effect (« Tab5 Batterie » stays unknown), and energy saving « on battery » never triggers. Nothing on this page was tried with a battery.
+- **No clock chip:** the time comes from the network at each start. After a power cut, the alarm clock waits for Wi-Fi. (The board has a 1220 coin-cell holder for the P4's own clock; this firmware does not use it. The board charges that cell: fit only a rechargeable ML1220, never a CR1220, which is not made to be charged. Waveshare's wiki also says rechargeable cells only.)
 - **No headphone jack detection, no switchable power rails:** their switches are kept so Home Assistant finds the same entities, and do nothing.
 
 ## Install it
@@ -63,7 +63,7 @@ Two things learnt along the way:
 - **Not checked on the board:** the microphone and the wake word, the cameras popup (JPEG decoding), every game, a power cut without network.
 - **Not adapted to 1024×600 yet:** the games (the next lot of [ADR-0061](decisions/0061-board-and-screen-size.md)), and the « Balance » page of the Energy popup, which came after the popups were adapted and runs past the bottom edge. For every other screen, the render counts on each change what runs past its area: about as much as on the Tab5 itself, mostly the shutters, alarm clock and cameras popups, which do the same there.
 - Reported by others on this board, not seen here: a faint glow with the backlight at 0 %, a distorted speaker.
-- After a software restart, the C6 Wi-Fi chip once did not come back (2026-10-16, third restart in a row): « ESP-Hosted link not yet up », a restart every ~17 s, then ESPHome's safe mode with a frozen screen, until the power was cut for 15 s. Being investigated.
+- The firmware version of the C6 Wi-Fi chip cannot be read on this board (« Tab5 Version du C6 » stays unknown since 2026-10-14, while the Tab5 answers 1.4.1): its factory firmware may be older than the ESP-Hosted library of the P4 (2.12.12 with ESPHome 2026.9.1). Updating it is possible, from ESPHome (`update:` with `platform: esp32_hosted`, the firmware sent over the SDIO link) or over the C6's own serial port on the H4 connector (TXD, RXD, GND, IO9 = BOOT). **Not done, by choice:** a failed update would leave the screen without Wi-Fi, and Wi-Fi works as it is.
 
 ## Measured on the board (2026-10-16)
 
@@ -84,9 +84,16 @@ Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.
 | Backlight | AP3032 LED driver, analog dimming from GPIO 32 (LEDC, 5 kHz, inverted) |
 | Sound out | ES8311 DAC (0x18), NS4150B amplifier enabled by GPIO 53, a two-pin speaker connector |
 | Microphones | two, through an ES7210 ADC (0x40), 16 kHz / 16-bit like the Tab5 |
-| Wi-Fi and Bluetooth | ESP32-C6-MINI-1 over SDIO (ESP-Hosted), reset on GPIO 54 |
-| Not on this board | battery and gauge, motion sensor, clock chip, I/O expanders, headphone jack |
-| Also on the board, not used | microSD slot, MIPI-CSI camera connector, USB-A, I2C / UART / CAN / RS485 connectors |
+| Wi-Fi and Bluetooth | ESP32-C6-MINI-1 over SDIO (ESP-Hosted), reset on GPIO 54; Wi-Fi in 2.4 GHz only |
+| ESP32-C6 serial connector | « C6-UART », 4 pins (TXD, RXD, GND, IO9; IO9 to ground = download mode), to flash the C6 directly |
+| USB | USB-C « USB » (the P4's own USB Serial/JTAG), USB-C « USB TO UART » (CH343P bridge to the P4's UART0, GPIO 37 TX / GPIO 38 RX, with automatic reset and boot), USB-A host |
+| Power | the two USB-C ports; a one-cell lithium battery connector (J4, MX1.25) with an ETA6098 charger, a 5 V boost converter and an ON/OFF switch; no gauge, the battery voltage divided by three on GPIO 20 (not read by this firmware) |
+| Clock backup cell | 1220 holder on the P4's own clock, charged by the board: rechargeable ML1220 only, never a CR1220 (not used by this firmware) |
+| Free GPIO | 17, on two 12-pin PH2.0 headers: GPIO 2-5, 28-31, 34 and 36 on P3, GPIO 46-52 on P1 |
+| Not on this board | battery gauge, motion sensor, clock chip, I/O expanders, headphone jack |
+| Also on the board, not used | microSD slot, MIPI-CSI camera connector, USB-A, I2C / UART / CAN / RS485 connectors, battery input |
+
+The Wi-Fi band, the power, USB, coin-cell and free-pin rows come from Waveshare's schematic and wiki; they were not tried on the author's board.
 
 Everything the firmware sets for this board is in `Tab5/paquets/carte-waveshare-7b.yaml`, its screen size in `Tab5/paquets/geometrie-waveshare-7b.yaml`. What does not depend on the board (logger, OTA, energy saving, media player…) is copied from the Tab5's file, and `tests/test_carte_7b.py` keeps both equal.
 
@@ -124,7 +131,7 @@ Sources: Waveshare's board support package and schematic, ESPHome's display mode
 
 ---
 
-Le même firmware tourne aussi sur une deuxième carte, la **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B** : un écran tactile de 7 pouces en 1024×600, construit autour des mêmes puces que le Tab5 (un ESP32-P4, un ESP32-C6 pour le Wi-Fi, un ES7210 pour les micros). Un écran moins cher et plus grand, avec moins de choses à bord : pas de batterie, pas de capteur de mouvement, pas de puce d'horloge.
+Le même firmware tourne aussi sur une deuxième carte, la **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B** : un écran tactile de 7 pouces en 1024×600, construit autour des mêmes puces que le Tab5 (un ESP32-P4, un ESP32-C6 pour le Wi-Fi, un ES7210 pour les micros). Un écran moins cher et plus grand, avec moins de choses à bord : pas de capteur de mouvement, pas de puce d'horloge, pas de jauge de batterie (elle a bien un connecteur de batterie, dont ce firmware ne se sert pas encore).
 
 **Statut : expérimental.** La carte de l'auteur est l'écran de tous les jours de sa maison depuis le 14/10/2026 : écran, tactile, rétroéclairage, son et Wi-Fi marchent, et Home Assistant la voit comme un Tab5. Une seule carte, cela dit, et les jeux et une page de l'énergie ne sont pas encore adaptés à son écran ([ce qui reste](#ce-qui-reste-à-faire)). Si vous l'essayez, racontez ce que ça a donné dans [Discussions → Hardware compatibility](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/discussions/categories/hardware-compatibility) : ça aide beaucoup.
 
@@ -143,8 +150,8 @@ Ces images viennent du rendu hors tablette (le firmware qui tourne sur un PC, [d
 Ce que la carte n'a pas, et ce que ça donne à l'écran :
 
 - **Pas de capteur de mouvement (IMU) :** les jeux qui se jouent en inclinant (Fil d'Or, Arcanoïde, Coureur d'Or, Neon Apron) ne reçoivent rien ; les autres se jouent au doigt.
-- **Pas de batterie ni de jauge :** l'icône de batterie, les réglages de charge et les entités de batterie restent, sans effet (« Tab5 Batterie » reste inconnue). L'économie d'énergie « sur batterie » ne se déclenche jamais.
-- **Pas de puce d'horloge :** l'heure vient du réseau à chaque démarrage. Après une coupure de courant, le réveil attend le Wi-Fi. (La carte a un support de pile pour l'horloge propre du P4 ; ce firmware ne s'en sert pas.)
+- **Un connecteur de batterie, mais pas de jauge, et rien de lu par ce firmware :** le schéma de Waveshare montre un connecteur pour une batterie lithium d'un élément (J4, MX1.25), un chargeur (ETA6098), un convertisseur qui remonte la batterie à 5 V et un interrupteur ON/OFF. Pas de jauge : la tension de la batterie n'arrive au P4 que par un pont diviseur (200 kΩ / 100 kΩ, un tiers de la tension) sur GPIO 20, et ce firmware ne la lit pas encore. L'icône de batterie, les réglages de charge et les entités de batterie restent donc, sans effet (« Tab5 Batterie » reste inconnue), et l'économie d'énergie « sur batterie » ne se déclenche jamais. Rien de cette page n'a été essayé avec une batterie.
+- **Pas de puce d'horloge :** l'heure vient du réseau à chaque démarrage. Après une coupure de courant, le réveil attend le Wi-Fi. (La carte a un support de pile 1220 pour l'horloge propre du P4 ; ce firmware ne s'en sert pas. La carte recharge cette pile : n'y mettre qu'une ML1220 rechargeable, jamais une CR1220, qui n'est pas faite pour être chargée. Le wiki de Waveshare dit aussi : piles rechargeables seulement.)
 - **Pas de détection de prise casque, pas d'alimentations commutables :** leurs interrupteurs sont gardés pour que Home Assistant retrouve les mêmes entités, et ne font rien.
 
 ## L'installer
@@ -170,6 +177,7 @@ Ce qui s'est passé sur la carte de l'auteur à son arrivée (14/10/2026), dans 
 | Une trentaine de « lcd.dsi underrun » par seconde (premier firmware d'essai) | la PSRAM tournait à sa vitesse par défaut | `psram: speed: 200MHz` |
 | Tactile presque mort : un appui reconnu en 5 minutes, le curseur de luminosité figé | la dalle est montée à l'envers par rapport au défaut du pilote, et le contrôleur tactile n'était jamais réinitialisé (le code de Waveshare dit que sa broche de reset n'est pas reliée) | `rotation: 180` dans LVGL, le GT911 inversé en X et en Y, et son reset sur GPIO 23, comme dans les autres configurations publiques qui marchent sur cette carte : depuis, chaque appui tombe au bon endroit |
 | Le premier son n'était qu'un claquement | le micro gardait le bus I2S que le haut-parleur partage avec lui ; la cause exacte du claquement n'a pas été établie | le haut-parleur à 48 kHz comme les autres configurations, la règle du bus partagé du Tab5 ([ADR-0010](decisions/0010-shared-i2s-bus-mic-speaker.md)) : le son marche depuis ce soir-là |
+| Redémarrages en boucle après un redémarrage logiciel (16/10/2026, après quelques redémarrages depuis Home Assistant), Wi-Fi jamais revenu, puis mode sans échec ; seule une coupure débloquait | le lien SDIO avec le C6 tombait, et le mauvais état, côté P4, survivait à `esp_restart()`, qui ne remet à zéro que les CPU | chaque redémarrage logiciel finit par un reset de tout le cœur numérique (`Tab5/ecran/tab5_lien_c6.cpp`, [dépannage](troubleshooting.md#waveshare-7b--boucle-de-redémarrages-après-un-redémarrage-logiciel-lien-wi-fi-absent-16102026)) |
 | La carte redémarrait toutes les 15 minutes tant que Home Assistant ne la connaissait pas | le `reboot_timeout` par défaut d'ESPHome sans client de l'API (premier firmware d'essai) | le firmware complet attend 60 minutes, comme le Tab5 |
 
 Deux choses apprises en route :
@@ -182,7 +190,7 @@ Deux choses apprises en route :
 - **Pas vérifié sur la carte :** le micro et le mot d'activation, le popup Caméras (décodage JPEG), chacun des jeux, une coupure de courant sans réseau.
 - **Pas encore adapté au 1024×600 :** les jeux (le prochain lot de l'[ADR-0061](decisions/0061-board-and-screen-size.md)), et la page « Bilan » du popup Énergie, arrivée après l'adaptation des popups, qui dépasse du bas. Pour tous les autres écrans, le rendu compte à chaque changement ce qui dépasse de sa zone : à peu près autant que sur le Tab5 lui-même, surtout dans les popups Volets, Réveil et Caméras, qui font pareil là-bas.
 - Signalé par d'autres sur cette carte, pas vu ici : une faible lueur avec le rétroéclairage à 0 %, un haut-parleur qui sature.
-- Après un redémarrage logiciel, la puce Wi-Fi C6 n'est pas revenue une fois (16/10/2026, troisième redémarrage d'affilée) : « ESP-Hosted link not yet up », un redémarrage toutes les ~17 s, puis le mode sans échec d'ESPHome avec l'écran figé, jusqu'à une coupure du courant de 15 s. En cours d'analyse.
+- La version du firmware de la puce Wi-Fi C6 est illisible sur cette carte (« Tab5 Version du C6 » reste inconnue depuis le 14/10/2026, alors que le Tab5 répond 1.4.1) : son firmware d'usine est peut-être plus ancien que la bibliothèque ESP-Hosted du P4 (2.12.12 avec ESPHome 2026.9.1). Le mettre à jour est possible, depuis ESPHome (`update:` avec `platform: esp32_hosted`, le firmware envoyé par le lien SDIO) ou par le port série du C6 lui-même sur le connecteur H4 (TXD, RXD, GND, IO9 = BOOT). **Pas fait, par choix :** une mise à jour ratée laisserait l'écran sans Wi-Fi, et le Wi-Fi marche tel quel.
 
 ## Mesuré sur la carte (16/10/2026)
 
@@ -203,9 +211,16 @@ Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md
 | Rétroéclairage | pilote de LED AP3032, gradation analogique depuis GPIO 32 (LEDC, 5 kHz, inversé) |
 | Son | DAC ES8311 (0x18), ampli NS4150B activé par GPIO 53, un connecteur deux broches pour le haut-parleur |
 | Micros | deux, par un ADC ES7210 (0x40), 16 kHz / 16 bits comme le Tab5 |
-| Wi-Fi et Bluetooth | ESP32-C6-MINI-1 en SDIO (ESP-Hosted), reset sur GPIO 54 |
-| Absent de cette carte | batterie et jauge, capteur de mouvement, puce d'horloge, expandeurs d'E/S, prise casque |
-| Présent, pas utilisé | lecteur microSD, connecteur de caméra MIPI-CSI, USB-A, connecteurs I2C / UART / CAN / RS485 |
+| Wi-Fi et Bluetooth | ESP32-C6-MINI-1 en SDIO (ESP-Hosted), reset sur GPIO 54 ; Wi-Fi en 2,4 GHz seulement |
+| Connecteur série de l'ESP32-C6 | « C6-UART », 4 broches (TXD, RXD, GND, IO9 ; IO9 à la masse = mode téléchargement), pour flasher le C6 directement |
+| USB | USB-C « USB » (l'USB Serial/JTAG du P4 lui-même), USB-C « USB TO UART » (pont CH343P vers l'UART0 du P4, GPIO 37 TX / GPIO 38 RX, avec reset et boot automatiques), USB-A hôte |
+| Alimentation | les deux ports USB-C ; un connecteur de batterie lithium d'un élément (J4, MX1.25) avec un chargeur ETA6098, un survolteur 5 V et un interrupteur ON/OFF ; pas de jauge, la tension de la batterie divisée par trois sur GPIO 20 (pas lue par ce firmware) |
+| Pile de l'horloge | support 1220 sur l'horloge propre du P4, rechargé par la carte : ML1220 rechargeable seulement, jamais une CR1220 (pas utilisée par ce firmware) |
+| GPIO libres | 17, sur deux connecteurs PH2.0 de 12 broches : GPIO 2-5, 28-31, 34 et 36 sur P3, GPIO 46-52 sur P1 |
+| Absent de cette carte | jauge de batterie, capteur de mouvement, puce d'horloge, expandeurs d'E/S, prise casque |
+| Présent, pas utilisé | lecteur microSD, connecteur de caméra MIPI-CSI, USB-A, connecteurs I2C / UART / CAN / RS485, entrée batterie |
+
+La bande du Wi-Fi et les lignes alimentation, USB, pile et GPIO libres viennent du schéma et du wiki de Waveshare ; elles n'ont pas été essayées sur la carte de l'auteur.
 
 Tout ce que le firmware règle pour cette carte est dans `Tab5/paquets/carte-waveshare-7b.yaml`, la taille de son écran dans `Tab5/paquets/geometrie-waveshare-7b.yaml`. Ce qui ne dépend pas de la carte (journal, OTA, économie d'énergie, lecteur…) est recopié du fichier du Tab5, et `tests/test_carte_7b.py` garde les deux égaux.
 
