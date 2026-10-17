@@ -27,6 +27,9 @@ void journal_tick();
 bool journal_has_report();          // autre chose qu'un démarrage normal
 bool journal_is_serious();          // plantage, erreur ou démarrage sans HA
 std::string journal_reset_reason(); // raison du dernier démarrage, en clair (+ code ROM si chien de garde)
+// Chargeur (tab5_batterie.h, 16/10/2026) : ce démarrage suit un reset anormal (plantage, baisse
+// de tension, chien de garde avec rapport de plantage) : pas de réveil du chargeur.
+bool journal_demarrage_anormal();
 // Filtre du capteur « Tab5 Raison du redémarrage » : premier démarrage après une
 // installation par l'USB (flash effacée) → « First boot after install (…) » ; chien de
 // garde sans rapport de plantage (bouton d'alimentation, 06/10/2026) → « Power button or
