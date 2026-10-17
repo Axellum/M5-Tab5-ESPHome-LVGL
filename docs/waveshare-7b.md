@@ -37,6 +37,8 @@ There is no install page for this board yet: you build the firmware yourself. It
 
 Before the first flash, if you care about the factory demo, back up the flash with `esptool read-flash`: on the author's board, each read restarts the board, and a 4 KB block at 0x37C000 could not be read (filled with zeros in the backup).
 
+**Board mounted the other way round?** The panel is mounted upside down compared with its driver's default, so the firmware turns the picture by 180° in software, on every frame. If you mount the board upside down, add `carte_rotation: "0"` to `Tab5/user_entities.yaml` (or `-s carte_rotation 0`): the picture comes out the right way without that step, and a full-screen redraw takes about 69 ms instead of 83 ms (4 runs each on the author's board, 2026-10-16). Nothing else to change: ESPHome turns the touch points with the picture, so the touch follows by itself.
+
 The board announces itself in Home Assistant with the Tab5's name and model (`tab5-ha-hmi`): the packages and the blueprint find it with nothing to change. **Replacing a Tab5 in the same Home Assistant?** Disable the Tab5's ESPHome entry first. Otherwise Home Assistant keeps both, gives the new board's entities a `_2` suffix, and the pushes keep going to the old one.
 
 ## Problems met, and how they were solved
@@ -163,6 +165,8 @@ Pas encore de page d'installation pour cette carte : on compile le firmware soi-
 3. **Premier flash par l'USB** : branchez sur l'ordinateur le port USB-C de l'ESP32-P4, puis `esphome run tab5-ha-hmi.yaml`. Le Wi-Fi exactement comme sur le Tab5 : le réseau ouvert **« Tab5 Fallback AP »** avec un téléphone, ou Improv depuis [ESPHome Web](https://web.esphome.io). Les mises à jour suivantes passent par le Wi-Fi. <!-- pragma: allowlist secret -->
 
 Avant le premier flash, si vous tenez à la démo d'usine, sauvegardez la flash avec `esptool read-flash` : sur la carte de l'auteur, chaque lecture redémarre la carte, et un bloc de 4 Ko à 0x37C000 n'a pas pu être lu (rempli de zéros dans la sauvegarde).
+
+**Carte montée dans l'autre sens ?** La dalle est montée à l'envers par rapport au réglage par défaut de son pilote : le firmware tourne donc l'image de 180° en logiciel, à chaque image. Si vous montez la carte à l'envers, ajoutez `carte_rotation: "0"` dans `Tab5/user_entities.yaml` (ou `-s carte_rotation 0`) : l'image sort à l'endroit sans cette étape, et redessiner tout l'écran prend environ 69 ms au lieu de 83 ms (4 passes de chaque, sur la carte de l'auteur, le 16/10/2026). Rien d'autre à changer : ESPHome tourne les appuis avec l'image, le tactile suit tout seul.
 
 La carte s'annonce dans Home Assistant avec le nom et le modèle du Tab5 (`tab5-ha-hmi`) : les packages et le blueprint la trouvent sans rien changer. **Elle remplace un Tab5 dans le même Home Assistant ?** Désactivez d'abord l'entrée ESPHome du Tab5. Sinon Home Assistant garde les deux, ajoute un suffixe `_2` aux entités de la nouvelle carte, et les envois continuent de partir vers l'ancienne.
 

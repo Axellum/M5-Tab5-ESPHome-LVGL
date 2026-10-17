@@ -24,6 +24,7 @@ le confronte à la matrice) :
 
 ### Ajouté
 
+- **Waveshare 7B montée à l'envers** : `carte_rotation: "0"` dans `Tab5/user_entities.yaml` retire la rotation logicielle de 180° ; redessiner tout l'écran prend alors ~69 ms au lieu de ~83 ms (mesuré sur la carte de l'auteur, le 16/10/2026). Le tactile suit tout seul. Documenté dans [docs/waveshare-7b.md](docs/waveshare-7b.md).
 - **Plusieurs écrans dans la même maison, même affichage partout** ([ADR-0063](docs/decisions/0063-several-screens.md)) :
   - un nom par écran à la compilation : `tab5_nom` et `tab5_nom_affiche` (`Tab5/user_entities.yaml` ou `-s tab5_nom salon-7b`), `tab5-ha-hmi` par défaut : une tablette déjà installée ne change pas ;
   - nouveau capteur de diagnostic « Tab5 Préfixe des actions » : le préfixe des actions de l'écran, lu par Home Assistant ;
