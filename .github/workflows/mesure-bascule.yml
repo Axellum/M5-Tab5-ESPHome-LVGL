@@ -61,15 +61,22 @@ jobs:
         run: |
           mkdir -p programmes
           VARIANTES="avant"
-          if [ -n "$APRES" ] && git rev-parse --verify -q "origin/$APRES" > /dev/null; then VARIANTES="avant apres"; fi
+          if [ -n "$APRES" ] && git rev-parse --verify -q "origin/$APRES" > /dev/null; then
+            VARIANTES="avant apres apres_sans_vidage apres_sans_coupure"
+          fi
           echo "VARIANTES=$VARIANTES" >> "$GITHUB_ENV"
           for v in $VARIANTES; do
             git checkout HEAD -- Tab5
-            if [ "$v" = apres ]; then
+            case "$v" in apres*)
               git checkout "origin/$APRES" -- Tab5
-              echo "--- apres = Tab5/ de origin/$APRES ($(git rev-parse --short "origin/$APRES"))"
-              git diff --stat HEAD -- Tab5
-            fi
+              echo "--- $v = Tab5/ de origin/$APRES ($(git rev-parse --short "origin/$APRES"))"
+              git diff --stat HEAD -- Tab5 ;;
+            esac
+            # Un remède retiré à la fois (tools/mesure/variante_bascule.py --sans).
+            case "$v" in
+              apres_sans_vidage) python tools/mesure/variante_bascule.py --sans vidage ;;
+              apres_sans_coupure) python tools/mesure/variante_bascule.py --sans coupure ;;
+            esac
             python tools/mesure/variante_bascule.py tab5-mesure.yaml
             set +e
             esphome -s tab5_carte waveshare-7b compile tab5-mesure.yaml > "build_$v.log" 2>&1

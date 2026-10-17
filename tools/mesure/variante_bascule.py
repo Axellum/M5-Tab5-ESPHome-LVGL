@@ -1,6 +1,10 @@
 """Branche essai/mesure-bascule-theme (JAMAIS MERGÉE) : tablette virtuelle chronométrée pendant la bascule de thème.
 
     python tools/mesure/variante_bascule.py tab5-mesure.yaml
+    python tools/mesure/variante_bascule.py --sans vidage|coupure   # avant la ligne ci-dessus
+
+`--sans` retire un remède de la branche « apres » (tab5_theme.cpp) : le vidage des
+abonnements (lvgl_vidage_abonnes) ou la coupure de l'invalidation (lv_display_enable_invalidation).
 
 Écrit tab5-mesure.yaml (tab5-rendu-host.yaml + l'en-tête Tab5/rendu/mesure_bascule.h + le
 script PlatformIO des sanitizers pour les drapeaux TAB5_SAN_CCFLAGS / TAB5_SAN_LINKFLAGS),
@@ -98,7 +102,26 @@ def variante(texte: str) -> str:
     return "".join(lignes)
 
 
+SANS = {
+    "vidage": ["    lvgl_vidage_abonnes(true);\n", "    lvgl_vidage_abonnes(false);\n"],
+    "coupure": ["    lv_display_enable_invalidation(disp, false);\n", "    lv_display_enable_invalidation(disp, true);\n"],
+}
+
+
+def sans(remede: str) -> None:
+    texte = THEME_CPP.read_text(encoding="utf-8")
+    for ligne in SANS[remede]:
+        if texte.count(ligne) != 1:
+            raise SystemExit(f"--sans {remede} : « {ligne.strip()} » trouvée {texte.count(ligne)} fois (1 attendue)")
+        texte = texte.replace(ligne, "    // retiré pour la mesure : " + ligne.lstrip())
+    THEME_CPP.write_text(texte, encoding="utf-8")
+    print(f"tab5_theme.cpp : remède « {remede} » retiré")
+
+
 def main() -> int:
+    if len(sys.argv) == 3 and sys.argv[1] == "--sans":
+        sans(sys.argv[2])
+        return 0
     if len(sys.argv) != 2:
         raise SystemExit(__doc__)
     (RACINE / sys.argv[1]).write_text(variante(SOURCE.read_text(encoding="utf-8")), encoding="utf-8")

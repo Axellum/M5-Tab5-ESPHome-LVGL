@@ -17,7 +17,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-VARIANTES = ("avant", "apres")
+ORDRE = ("avant", "apres", "apres_sans_vidage", "apres_sans_coupure")
 ETAPES = ["1_boutons_verre", "2_couleurs_styles", "3_theme_update_refresh", "4_formes", "5_polices",
           "6_fond_calendrier", "7_wait_until", "8_rejouer_ui", "9_assist_sync"]
 RE_PHASE = re.compile(r"\[pilote\] b(\d+) phase (\w+)")
@@ -47,8 +47,10 @@ def natif(dossier: Path, v: str):
     modules: dict = defaultdict(lambda: defaultdict(list))
     objets: dict = defaultdict(list)
     abonnes: dict = defaultdict(lambda: defaultdict(list))
-    for journal in sorted(dossier.glob(f"natif_{v}_*.log")):
-        n = journal.stem.rsplit("_", 1)[1]
+    for journal in sorted(dossier.glob("natif_*.log")):
+        variante, n = journal.stem.removeprefix("natif_").rsplit("_", 1)
+        if variante != v:
+            continue
         ph = phases(dossier / f"pilote_natif_{v}_{n}.log")
         texte = journal.read_text(encoding="utf-8", errors="replace")
         for m in RE_DEBUT.finditer(texte):
@@ -84,6 +86,8 @@ def callgrind(dossier: Path, v: str) -> dict:
 
 def main() -> int:
     dossier = Path(sys.argv[1])
+    trouvees = {f.stem.removeprefix("natif_").rsplit("_", 1)[0] for f in dossier.glob("natif_*.log")}
+    VARIANTES = [v for v in ORDRE if v in trouvees] + sorted(trouvees - set(ORDRE))
     donnees = {v: natif(dossier, v) for v in VARIANTES}
     cg = {v: callgrind(dossier, v) for v in VARIANTES}
     for phase in ("demarrage", "ecrans"):
@@ -113,7 +117,7 @@ def main() -> int:
         print("| module | " + " | ".join(VARIANTES) + " |")
         print("|---|" + "---:|" * len(VARIANTES))
         noms = sorted({m for v in VARIANTES for m in donnees[v][1][phase]},
-                      key=lambda m: -(med(donnees["avant"][1][phase].get(m, [])) or 0))
+                      key=lambda m: -(med(donnees[VARIANTES[0]][1][phase].get(m, [])) or 0))
         for m in noms:
             print(f"| {m} | " + " | ".join(fmt(med(donnees[v][1][phase].get(m, [])), 3) for v in VARIANTES) + " |")
     return 0
