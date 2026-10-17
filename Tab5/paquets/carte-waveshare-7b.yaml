@@ -33,8 +33,11 @@
 #       hors dépôt), reprises de l'essai compilé essais/waveshare-p4-7b.yaml (branche
 #       feat/essais-ecrans-waveshare). À confirmer carte en main : le lien SDIO du C6
 #       (broches par défaut d'esp_hosted, reset GPIO54), la PSRAM à 200 MHz, le tactile.
-#       Pas d'IMU, pas de batterie ni de jauge, pas d'expandeur, pas de RTC (pile sur le
-#       VBAT du P4), caméra non branchée.
+#       Pas d'IMU, pas de jauge de batterie, pas d'expandeur, pas de RTC (support de pile
+#       1220 sur le VBAT du P4, rechargé par la carte : ML1220 rechargeable seulement,
+#       jamais CR1220), caméra non branchée. Batterie (schéma) : connecteur J4 (MX1.25,
+#       un élément lithium), chargeur ETA6098, survolteur 5 V, interrupteur ON/OFF ;
+#       tension lisible sur GPIO20 par un pont 200k/100k (÷ 3), pas lue par ce fichier.
 # @ai_instruction Ne pas changer une broche sans la relire dans le BSP ou sur le schéma.
 # ============================================================================
 packages:
@@ -388,8 +391,9 @@ switch:
     platform: template
     pin: !remove
     optimistic: true
-  # Chargeur de la batterie (CHG_EN, nCHG_QC_EN) : pas de batterie sur la 7B. L'interval
-  # du chargeur continue de les commander, sans effet.
+  # Chargeur de la batterie du Tab5 (CHG_EN, nCHG_QC_EN, sur son expandeur) : absents de
+  # la 7B, dont le chargeur (ETA6098, connecteur J4) n'est pas commandé par ce firmware.
+  # L'interval du chargeur continue de les commander, sans effet.
   - id: !extend charge_enable
     platform: template
     pin: !remove

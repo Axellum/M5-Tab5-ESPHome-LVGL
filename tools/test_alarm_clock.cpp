@@ -501,111 +501,188 @@ static void test_chargeur() {
     constexpr uint32_t S = 1000u;
     constexpr uint32_t MIN = 60u * S;
     using P = PresenceBatterie;
+    constexpr uint8_t AUCUNE = static_cast<uint8_t>(MemoireBatterie::AUCUNE);
+    constexpr uint8_t VUE = static_cast<uint8_t>(MemoireBatterie::VUE);
+    constexpr uint8_t INCONNUE = static_cast<uint8_t>(MemoireBatterie::INCONNUE);
     {
-        // Démarrage sans batterie (la tablette de l'auteur).
+        // Premier démarrage sans batterie (modèle vendu sans, mémoire vide) : depuis le
+        // 16/10/2026, une sonde d'abord, CHG_EN jamais allumé.
         EtatChargeur c;
-        bool allume = true;
-        tic_jusqua(c, 0, false, 0, 29 * S, &allume, nullptr, nullptr);
-        expect(allume && c.presence == P::INCONNUE, "démarrage : chargeur allumé 30 s (réveil d'une batterie)");
-        expect(!chargeur_lecture(c, 5.71f, 20 * S) && c.presence == P::INCONNUE,
-               "lecture chargeur allumé : rien de décidé (5,71 V du chargeur)");
-        expect(!chargeur_tick(c, 0, false, 30 * S).allumer && c.sonde, "30 s : sonde, chargeur coupé");
+        chargeur_demarrer(c, INCONNUE, false, false, false, 0);
+        expect(!c.allume && c.sonde && !c.reveil, "démarrage : CHG_EN coupé, sonde d'abord");
         int lectures = 0;
         bool coupe = true;
-        tic_jusqua(c, 0, false, 31 * S, 37 * S, nullptr, &coupe, &lectures);
+        tic_jusqua(c, 0, false, 0, 7 * S, nullptr, &coupe, &lectures);
         expect(coupe && lectures == 0, "repos de la sonde : coupé, pas encore de lecture");
-        expect(!chargeur_lecture(c, 4.0f, 35 * S) && c.presence == P::INCONNUE,
+        expect(!chargeur_lecture(c, 4.0f, 5 * S) && c.presence == P::INCONNUE,
                "lecture 5 s après la coupure : trop tôt pour décider");
-        const ActionChargeur a = chargeur_tick(c, 0, false, 38 * S);
-        expect(!a.allumer && a.lire, "8 s après la coupure : une lecture demandée");
-        expect(!chargeur_tick(c, 0, false, 39 * S).lire, "une seule lecture demandée par sonde");
-        expect(chargeur_en_sonde(c, 39 * S), "sonde en cours : le courant lu est ignoré");
-        expect(chargeur_lecture(c, 1.9f, 39 * S) && c.presence == P::ABSENTE, "1,9 V chargeur coupé : pas de batterie");
+        const ActionChargeur a = chargeur_tick(c, 0, false, 8 * S);
+        expect(!a.allumer && a.lire, "8 s de repos : une lecture demandée");
+        expect(!chargeur_tick(c, 0, false, 9 * S).lire, "une seule lecture demandée par sonde");
+        expect(chargeur_en_sonde(c, 9 * S), "sonde en cours : le courant lu est ignoré");
+        expect(chargeur_lecture(c, 1.9f, 9 * S) && c.presence == P::ABSENTE, "1,9 V chargeur coupé : pas de batterie");
         expect(std::isnan(c.niveau), "sans batterie : niveau inconnu");
-        expect(chargeur_en_sonde(c, 40 * S) && !chargeur_en_sonde(c, 41 * S),
+        expect(chargeur_en_sonde(c, 10 * S) && !chargeur_en_sonde(c, 11 * S),
                "courant ignoré 2 s encore après la fin de la sonde");
         coupe = true;
-        tic_jusqua(c, 0, false, 40 * S, 3 * 60 * MIN, nullptr, &coupe, nullptr);
-        expect(coupe, "sans batterie : chargeur coupé pendant 3 h (plus de souffle)");
+        tic_jusqua(c, 0, false, 10 * S, 3 * 60 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "premier démarrage sans batterie : chargeur jamais allumé (ni réveil ni souffle)");
+        expect(batterie_memoire_suivante(c, INCONNUE) == AUCUNE, "mémoire : aucune batterie");
         expect(!chargeur_lecture(c, 1.83f, 3 * 60 * MIN) && c.presence == P::ABSENTE, "lecture suivante : toujours absente");
-        // Batterie glissée tablette allumée : vue à la lecture suivante, chargeur rallumé.
+        // Batterie glissée tablette allumée : vue à la lecture suivante, chargeur allumé.
         expect(chargeur_lecture(c, 7.4f, 3 * 60 * MIN + MIN) && c.presence == P::PRESENTE,
                "batterie glissée : présente à la lecture suivante");
-        expect(chargeur_tick(c, 0, false, 3 * 60 * MIN + MIN + S).allumer, "batterie : chargeur rallumé");
+        expect(chargeur_tick(c, 0, false, 3 * 60 * MIN + MIN + S).allumer, "batterie lue ≥ 5,5 V : chargeur allumé");
     }
     {
-        // Démarrage avec une batterie, puis retirée pendant la charge.
+        // Démarrage avec une batterie : chargée seulement après la lecture de la sonde,
+        // puis retirée pendant la charge.
         EtatChargeur c;
-        tic_jusqua(c, 0, false, 0, 38 * S, nullptr, nullptr, nullptr);
-        expect(chargeur_lecture(c, 7.2f, 38 * S) && c.presence == P::PRESENTE, "7,2 V chargeur coupé : batterie");
+        chargeur_demarrer(c, VUE, false, false, false, 0);
+        bool coupe = true;
+        tic_jusqua(c, 0, false, 0, 8 * S, nullptr, &coupe, nullptr);
+        expect(coupe, "batterie : CHG_EN coupé tant que rien n'est lu");
+        expect(chargeur_lecture(c, 7.2f, 8 * S) && c.presence == P::PRESENTE, "7,2 V chargeur coupé : batterie");
         expect(std::fabs(c.niveau - 3.67f) < 0.1f, "niveau d'après la courbe mesurée (7,2 V ≈ 4 %)");
-        expect(!chargeur_en_sonde(c, 38 * S + 2 * S), "fin de sonde + 2 s : le courant compte de nouveau");
+        expect(!chargeur_en_sonde(c, 8 * S + 2 * S), "fin de sonde + 2 s : le courant compte de nouveau");
         bool allume = true;
-        // Fin de la sonde à 38 s : la suivante tombe à 38 s + 10 min.
-        tic_jusqua(c, 0, false, 39 * S, 38 * S + 10 * MIN - S, &allume, nullptr, nullptr);
+        // Fin de la sonde à 8 s : la suivante tombe à 8 s + 10 min.
+        tic_jusqua(c, 0, false, 9 * S, 8 * S + 10 * MIN - S, &allume, nullptr, nullptr);
         expect(allume, "batterie, limite 100 % : chargeur allumé jusqu'à la sonde suivante");
-        expect(!chargeur_tick(c, 0, false, 38 * S + 10 * MIN).allumer && c.sonde, "sonde toutes les 10 min");
-        chargeur_tick(c, 0, false, 38 * S + 10 * MIN + 8 * S);
-        expect(!chargeur_lecture(c, 7.3f, 38 * S + 10 * MIN + 8 * S) && c.presence == P::PRESENTE, "sonde : toujours là");
-        expect(chargeur_tick(c, 0, false, 38 * S + 10 * MIN + 9 * S).allumer, "après la sonde : rallumé");
+        expect(!c.reveil, "batterie vue par la sonde : pas de réveil");
+        expect(!chargeur_tick(c, 0, false, 8 * S + 10 * MIN).allumer && c.sonde, "sonde toutes les 10 min");
+        chargeur_tick(c, 0, false, 8 * S + 10 * MIN + 8 * S);
+        expect(!chargeur_lecture(c, 7.3f, 8 * S + 10 * MIN + 8 * S) && c.presence == P::PRESENTE, "sonde : toujours là");
+        expect(chargeur_tick(c, 0, false, 8 * S + 10 * MIN + 9 * S).allumer, "après la sonde : rallumé");
         // Retirée : le chargeur lit le vide (5,71 V), sous 6 V : sonde sans attendre.
         const uint32_t t0 = 20 * MIN;
         expect(!chargeur_lecture(c, 5.71f, t0), "lecture basse chargeur allumé : rien de décidé encore");
         expect(!chargeur_tick(c, 0, false, t0 + S).allumer && c.sonde, "lecture basse : sonde tout de suite");
         chargeur_tick(c, 0, false, t0 + 9 * S);
         expect(chargeur_lecture(c, 1.9f, t0 + 9 * S) && c.presence == P::ABSENTE, "batterie retirée : absente");
-        bool coupe = true;
+        coupe = true;
         tic_jusqua(c, 0, false, t0 + 10 * S, t0 + 30 * MIN, nullptr, &coupe, nullptr);
         expect(coupe, "batterie retirée : chargeur coupé");
+        expect(batterie_memoire_suivante(c, VUE) == VUE, "vue pendant ce démarrage : mémoire « vue »");
     }
     {
-        // Sonde sans lecture (INA226 muet) : abandonnée après 30 s, chargeur rallumé.
+        // INA226 muet : la sonde est abandonnée après 30 s et le chargeur reste COUPÉ
+        // (16/10/2026 : jamais allumé à l'aveugle), jusqu'à une lecture.
         EtatChargeur c;
-        tic_jusqua(c, 0, false, 0, 59 * S, nullptr, nullptr, nullptr);
+        chargeur_demarrer(c, VUE, false, false, false, 0);
+        tic_jusqua(c, 0, false, 0, 29 * S, nullptr, nullptr, nullptr);
         expect(c.sonde, "sonde sans lecture : en cours jusqu'à 30 s");
-        expect(chargeur_tick(c, 0, false, 60 * S).allumer, "présence inconnue : chargeur rallumé");
-        expect(!c.sonde && c.presence == P::INCONNUE, "sonde sans lecture : abandonnée après 30 s");
-        expect(!chargeur_tick(c, 0, false, 60 * S + 10 * MIN).allumer && c.sonde, "nouvelle sonde 10 min après");
-        expect(!chargeur_lecture(c, NAN, 60 * S + 10 * MIN + 9 * S) && c.sonde, "lecture ratée : sonde toujours en cours");
+        expect(!chargeur_tick(c, 0, false, 30 * S).allumer, "présence inconnue : chargeur coupé");
+        expect(!c.sonde && c.presence == P::INCONNUE && !c.reveil, "sonde abandonnée, ni présence ni réveil");
+        bool coupe = true;
+        tic_jusqua(c, 0, false, 31 * S, 20 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "INA226 muet : coupé tout du long");
+        expect(!chargeur_lecture(c, NAN, 20 * MIN) && c.presence == P::INCONNUE, "lecture ratée : rien ne change");
+        expect(chargeur_lecture(c, 7.4f, 21 * MIN) && c.presence == P::PRESENTE, "l'INA226 répond : batterie");
+        expect(chargeur_tick(c, 0, false, 21 * MIN + S).allumer, "puis chargée");
+    }
+    {
+        // Réveil de 30 s (batterie dont la protection a coupé) : seulement après une sonde
+        // vide, mémoire « vue » et redémarrage normal.
+        EtatChargeur c;
+        chargeur_demarrer(c, VUE, false, false, false, 0);
+        expect(c.reveil_apres_sonde, "mémoire « vue », démarrage normal : réveil prévu après la sonde");
+        chargeur_tick(c, 0, false, 8 * S);
+        expect(chargeur_lecture(c, 0.4f, 8 * S) && c.presence == P::ABSENTE, "sonde : rien vu");
+        expect(chargeur_tick(c, 0, false, 9 * S).allumer && c.reveil, "puis le réveil");
+        bool allume = true;
+        tic_jusqua(c, 0, false, 10 * S, 38 * S, &allume, nullptr, nullptr);
+        expect(allume, "réveil : allumé 30 s");
+        expect(!chargeur_tick(c, 0, false, 39 * S).allumer && c.sonde, "puis une sonde");
+        expect(chargeur_tick(c, 0, false, 47 * S).lire, "lecture de la sonde");
+        expect(chargeur_lecture(c, 6.3f, 47 * S) && c.presence == P::PRESENTE, "batterie réveillée : présente");
+        expect(chargeur_tick(c, 0, false, 48 * S).allumer, "puis chargée");
+        // Pas de batterie après le réveil : coupé, et la mémoire passe à « aucune ».
+        EtatChargeur d;
+        chargeur_demarrer(d, VUE, false, false, false, 0);
+        chargeur_tick(d, 0, false, 8 * S);
+        chargeur_lecture(d, 1.9f, 8 * S);
+        tic_jusqua(d, 0, false, 9 * S, 46 * S, nullptr, nullptr, nullptr);
+        expect(d.sonde && chargeur_tick(d, 0, false, 47 * S).lire, "réveil vide : sonde");
+        chargeur_lecture(d, 1.9f, 47 * S);
+        bool coupe = true;
+        tic_jusqua(d, 0, false, 48 * S, 3 * 60 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe && d.presence == P::ABSENTE, "réveil vide : coupé ensuite, plus de réveil");
+        expect(batterie_memoire_suivante(d, VUE) == AUCUNE, "mémoire : aucune (pas de réveil au suivant)");
+    }
+    for (const uint8_t memoire : {AUCUNE, INCONNUE, static_cast<uint8_t>(7)}) {
+        // Mémoire « aucune », vide ou illisible : une sonde vide, et c'est tout.
+        EtatChargeur c;
+        chargeur_demarrer(c, memoire, false, false, false, 0);
+        chargeur_tick(c, 0, false, 8 * S);
+        chargeur_lecture(c, 0.4f, 8 * S);
+        bool coupe = true;
+        tic_jusqua(c, 0, false, 9 * S, 60 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "mémoire autre que « vue » : aucun réveil au démarrage");
+    }
+    {
+        // Redémarrage anormal (plantage, baisse de tension) : jamais de réveil, même si une
+        // batterie était vue. Boucle de 20 redémarrages de 20 s : CHG_EN jamais allumé.
+        bool coupe = true;
+        for (int tour = 0; tour < 20; tour++) {
+            EtatChargeur c;
+            chargeur_demarrer(c, VUE, false, true, false, 0);
+            expect(!c.reveil_apres_sonde, "redémarrage anormal : pas de réveil prévu");
+            tic_jusqua(c, 0, false, 0, 7 * S, nullptr, &coupe, nullptr);
+            chargeur_tick(c, 0, false, 8 * S);
+            chargeur_lecture(c, 1.7f, 8 * S);
+            tic_jusqua(c, 0, false, 9 * S, 20 * S, nullptr, &coupe, nullptr);
+        }
+        expect(coupe, "boucle de redémarrages anormaux : CHG_EN jamais allumé");
+        // Boucle de redémarrages normaux : le premier tour fait le réveil, la mémoire
+        // « aucune » est décidée dès la sonde (8 s) et coupe les suivants.
+        EtatChargeur c;
+        chargeur_demarrer(c, VUE, false, false, false, 0);
+        chargeur_tick(c, 0, false, 8 * S);
+        chargeur_lecture(c, 1.9f, 8 * S);
+        expect(batterie_memoire_suivante(c, VUE) == AUCUNE, "sonde vide : mémoire « aucune » dès 8 s");
     }
     {
         // Batterie montée mais pas vue (protection coupée) : un réveil par heure.
         EtatChargeur c;
-        tic_jusqua(c, 0, true, 0, 38 * S, nullptr, nullptr, nullptr);
-        chargeur_lecture(c, 0.4f, 38 * S);
+        chargeur_demarrer(c, AUCUNE, true, false, false, 0);
+        chargeur_tick(c, 0, true, 8 * S);
+        chargeur_lecture(c, 0.4f, 8 * S);
         bool coupe = true;
-        tic_jusqua(c, 0, true, 39 * S, 30 * S + 60 * MIN - S, nullptr, &coupe, nullptr);
+        tic_jusqua(c, 0, true, 9 * S, 60 * MIN - S, nullptr, &coupe, nullptr);
         expect(coupe && c.presence == P::ABSENTE, "absente : coupé pendant une heure");
-        expect(chargeur_tick(c, 0, true, 30 * S + 60 * MIN).allumer && c.reveil, "« montée » : réveil au bout d'une heure");
+        expect(chargeur_tick(c, 0, true, 60 * MIN).allumer && c.reveil, "« montée » : réveil au bout d'une heure");
         bool allume = true;
-        tic_jusqua(c, 0, true, 31 * S + 60 * MIN, 59 * S + 60 * MIN, &allume, nullptr, nullptr);
+        tic_jusqua(c, 0, true, 60 * MIN + S, 60 * MIN + 29 * S, &allume, nullptr, nullptr);
         expect(allume, "réveil : allumé 30 s");
-        expect(!chargeur_tick(c, 0, true, 60 * S + 60 * MIN).allumer && c.sonde, "puis une sonde");
-        chargeur_tick(c, 0, true, 68 * S + 60 * MIN);
-        expect(chargeur_lecture(c, 6.3f, 68 * S + 60 * MIN) && c.presence == P::PRESENTE, "batterie réveillée : présente");
+        expect(!chargeur_tick(c, 0, true, 60 * MIN + 30 * S).allumer && c.sonde, "puis une sonde");
+        chargeur_tick(c, 0, true, 60 * MIN + 38 * S);
+        expect(chargeur_lecture(c, 6.3f, 60 * MIN + 38 * S) && c.presence == P::PRESENTE, "batterie réveillée : présente");
         EtatChargeur d;
-        tic_jusqua(d, 0, false, 0, 38 * S, nullptr, nullptr, nullptr);
-        chargeur_lecture(d, 1.9f, 38 * S);
+        chargeur_demarrer(d, AUCUNE, false, false, false, 0);
+        chargeur_tick(d, 0, false, 8 * S);
+        chargeur_lecture(d, 1.9f, 8 * S);
         coupe = true;
-        tic_jusqua(d, 0, false, 39 * S, 5 * 60 * MIN, nullptr, &coupe, nullptr);
+        tic_jusqua(d, 0, false, 9 * S, 5 * 60 * MIN, nullptr, &coupe, nullptr);
         expect(coupe, "interrupteur « montée » éteint : jamais de réveil (pas de souffle)");
     }
     {
         // Limite 80 % : arrêt à 80 %, reprise à 70 % après au moins 10 min d'arrêt.
         constexpr uint8_t L80 = static_cast<uint8_t>(LimiteCharge::QUATRE_VINGTS);
         EtatChargeur c;
-        tic_jusqua(c, L80, false, 0, 38 * S, nullptr, nullptr, nullptr);
-        chargeur_lecture(c, 8.10f, 38 * S);  // 90 % (courbe mesurée)
+        chargeur_demarrer(c, VUE, false, false, false, 0);
+        chargeur_tick(c, L80, false, 8 * S);
+        chargeur_lecture(c, 8.10f, 8 * S);  // 90 % (courbe mesurée)
         bool coupe = true;
-        tic_jusqua(c, L80, false, 39 * S, 4 * MIN, nullptr, &coupe, nullptr);
+        tic_jusqua(c, L80, false, 9 * S, 4 * MIN, nullptr, &coupe, nullptr);
         expect(coupe, "80 % : batterie à 90 % au démarrage, chargeur coupé");
-        chargeur_lecture(c, 8.0f, 5 * MIN);  // 62 % (4,000 V par élément), chargeur coupé depuis 30 s
+        chargeur_lecture(c, 8.0f, 5 * MIN);  // 62 % (4,000 V par élément)
         expect(c.presence == P::PRESENTE && std::fabs(c.niveau - 62.0f) < 0.1f, "chargeur coupé : niveau relu");
         expect(!chargeur_tick(c, L80, false, 5 * MIN + S).allumer, "62 % après 5 min d'arrêt : pas encore (10 min)");
         expect(chargeur_tick(c, L80, false, 11 * MIN).allumer, "62 % après 10 min d'arrêt : reprise");
         // La règle seule (sans les sondes périodiques du chargeur allumé).
         EtatChargeur r;
-        r.reveil = false;
+        r.sonde = false;
         r.presence = P::PRESENTE;
         r.allume = true;
         r.niveau = batterie_niveau_pct(8.04f);  // ≈ 77 % (courbe mesurée)
@@ -620,90 +697,49 @@ static void test_chargeur() {
         expect(!chargeur_voulu(r, L80, 40 * MIN), "niveau inconnu : décision gardée");
         expect(chargeur_voulu(r, 0, 40 * MIN), "limite à 100 % : charge tout de suite");
         expect(chargeur_voulu(r, 9, 40 * MIN), "index inconnu : 100 %");
+        r.presence = P::INCONNUE;
+        expect(!chargeur_voulu(r, 0, 40 * MIN), "présence inconnue : jamais de charge");
     }
     {
-        // Démarrage (10/10/2026) : CHG_EN coupé au setup, le premier pas (fin de setup(),
-        // ~8 s) décide d'après la mémoire du démarrage précédent.
-        constexpr uint8_t AUCUNE = static_cast<uint8_t>(MemoireBatterie::AUCUNE);
-        constexpr uint8_t VUE = static_cast<uint8_t>(MemoireBatterie::VUE);
-        constexpr uint8_t INCONNUE = static_cast<uint8_t>(MemoireBatterie::INCONNUE);
+        // Batterie posée tablette éteinte, après un démarrage sans : vue par la sonde.
         const uint32_t t0 = 8 * S;
-        {
-            // Aucune batterie vue la dernière fois (la tablette de l'auteur) : jamais allumé.
-            EtatChargeur c;
-            chargeur_demarrer(c, AUCUNE, false, t0);
-            bool coupe = true;
-            int lectures = 0;
-            tic_jusqua(c, 0, false, t0, t0 + 7 * S, nullptr, &coupe, &lectures);
-            expect(coupe && c.sonde && lectures == 0, "aucune batterie au démarrage précédent : coupé, sonde");
-            expect(!chargeur_lecture(c, 1.9f, t0 + 5 * S) && c.presence == P::INCONNUE,
-                   "sonde de démarrage : rien de décidé avant 8 s de repos");
-            const ActionChargeur a = chargeur_tick(c, 0, false, t0 + 8 * S);
-            expect(!a.allumer && a.lire, "sonde de démarrage : lecture demandée 8 s après le premier pas");
-            expect(chargeur_lecture(c, 1.9f, t0 + 8 * S) && c.presence == P::ABSENTE, "1,9 V : pas de batterie");
-            coupe = true;
-            tic_jusqua(c, 0, false, t0 + 9 * S, 3 * 60 * MIN, nullptr, &coupe, nullptr);
-            expect(coupe, "aucune batterie : chargeur jamais allumé de tout le démarrage (pas de pic)");
-            expect(batterie_memoire_suivante(c, AUCUNE) == AUCUNE, "mémoire gardée : aucune");
-        }
-        {
-            // Batterie posée tablette éteinte, après un démarrage sans : vue par la sonde.
-            EtatChargeur c;
-            chargeur_demarrer(c, AUCUNE, false, t0);
-            expect(batterie_memoire_suivante(c, AUCUNE) == AUCUNE, "rien de décidé : mémoire d'avant");
-            chargeur_tick(c, 0, false, t0 + 8 * S);
-            expect(chargeur_lecture(c, 7.4f, t0 + 8 * S) && c.presence == P::PRESENTE,
-                   "batterie posée tablette éteinte : vue par la sonde de démarrage");
-            expect(chargeur_tick(c, 0, false, t0 + 9 * S).allumer, "puis chargée");
-            expect(batterie_memoire_suivante(c, AUCUNE) == VUE, "mémoire : batterie vue");
-            // Retirée ensuite : la mémoire reste « vue » pour ce démarrage (réveil au suivant).
-            const uint32_t t1 = 20 * MIN;
-            chargeur_lecture(c, 5.71f, t1);
-            chargeur_tick(c, 0, false, t1 + S);
-            chargeur_tick(c, 0, false, t1 + 9 * S);
-            expect(chargeur_lecture(c, 1.9f, t1 + 9 * S) && c.presence == P::ABSENTE, "retirée : absente");
-            expect(batterie_memoire_suivante(c, VUE) == VUE, "vue pendant ce démarrage : réveil au suivant");
-        }
-        for (const uint8_t memoire : {VUE, INCONNUE, static_cast<uint8_t>(7)}) {
-            // Batterie vue, mémoire vide (premier démarrage) ou illisible : réveil de 30 s.
-            EtatChargeur c;
-            chargeur_demarrer(c, memoire, false, t0);
-            expect(!c.allume, "démarrage : CHG_EN coupé au setup (ALWAYS_OFF)");
-            bool allume = true;
-            tic_jusqua(c, 0, false, t0, t0 + 29 * S, &allume, nullptr, nullptr);
-            expect(allume, "batterie vue ou mémoire inconnue : allumé 30 s dès le premier pas");
-            expect(!chargeur_tick(c, 0, false, t0 + 30 * S).allumer && c.sonde, "puis la sonde, comme avant");
-        }
-        {
-            // Le moyen manuel : allumer « Tab5 Batterie montée » réveille tout de suite.
-            EtatChargeur c;
-            chargeur_demarrer(c, AUCUNE, false, t0);
-            chargeur_tick(c, 0, false, t0 + 8 * S);
-            chargeur_lecture(c, 0.4f, t0 + 8 * S);  // batterie neuve, protection coupée
-            expect(c.presence == P::ABSENTE, "batterie plate : vue absente");
-            expect(!chargeur_tick(c, 0, false, t0 + 2 * MIN).allumer, "interrupteur éteint : coupé");
-            expect(chargeur_tick(c, 0, true, t0 + 2 * MIN + S).allumer && c.reveil,
-                   "« montée » allumé : réveil tout de suite, sans attendre l'heure");
-            bool allume = true;
-            tic_jusqua(c, 0, true, t0 + 2 * MIN + 2 * S, t0 + 2 * MIN + 30 * S, &allume, nullptr, nullptr);
-            expect(allume, "réveil manuel : allumé 30 s");
-            expect(!chargeur_tick(c, 0, true, t0 + 2 * MIN + 31 * S).allumer && c.sonde, "puis une sonde");
-            // Interrupteur déjà allumé au démarrage : pas un réveil immédiat, celui de l'heure.
-            EtatChargeur d;
-            chargeur_demarrer(d, AUCUNE, true, t0);
-            chargeur_tick(d, 0, true, t0 + 8 * S);
-            chargeur_lecture(d, 1.9f, t0 + 8 * S);
-            bool coupe = true;
-            tic_jusqua(d, 0, true, t0 + 9 * S, t0 + 60 * MIN - S, nullptr, &coupe, nullptr);
-            expect(coupe, "« montée » restauré allumé : pas de réveil avant l'heure");
-            expect(chargeur_tick(d, 0, true, t0 + 60 * MIN).allumer && d.reveil, "réveil au bout d'une heure");
-        }
+        EtatChargeur c;
+        chargeur_demarrer(c, AUCUNE, false, false, false, t0);
+        expect(batterie_memoire_suivante(c, AUCUNE) == AUCUNE, "rien de décidé : mémoire d'avant");
+        chargeur_tick(c, 0, false, t0 + 8 * S);
+        expect(chargeur_lecture(c, 7.4f, t0 + 8 * S) && c.presence == P::PRESENTE,
+               "batterie posée tablette éteinte : vue par la sonde de démarrage");
+        expect(chargeur_tick(c, 0, false, t0 + 9 * S).allumer, "puis chargée");
+        expect(batterie_memoire_suivante(c, AUCUNE) == VUE, "mémoire : batterie vue");
+        // Le moyen manuel : allumer « Tab5 Batterie montée » réveille tout de suite.
+        EtatChargeur m;
+        chargeur_demarrer(m, AUCUNE, false, false, false, t0);
+        chargeur_tick(m, 0, false, t0 + 8 * S);
+        chargeur_lecture(m, 0.4f, t0 + 8 * S);  // batterie neuve, protection coupée
+        expect(m.presence == P::ABSENTE, "batterie plate : vue absente");
+        expect(!chargeur_tick(m, 0, false, t0 + 2 * MIN).allumer, "interrupteur éteint : coupé");
+        expect(chargeur_tick(m, 0, true, t0 + 2 * MIN + S).allumer && m.reveil,
+               "« montée » allumé : réveil tout de suite, sans attendre l'heure");
+        bool allume = true;
+        tic_jusqua(m, 0, true, t0 + 2 * MIN + 2 * S, t0 + 2 * MIN + 30 * S, &allume, nullptr, nullptr);
+        expect(allume, "réveil manuel : allumé 30 s");
+        expect(!chargeur_tick(m, 0, true, t0 + 2 * MIN + 31 * S).allumer && m.sonde, "puis une sonde");
+        // Interrupteur déjà allumé au démarrage : pas un réveil immédiat, celui de l'heure.
+        EtatChargeur d;
+        chargeur_demarrer(d, AUCUNE, true, false, false, t0);
+        chargeur_tick(d, 0, true, t0 + 8 * S);
+        chargeur_lecture(d, 1.9f, t0 + 8 * S);
+        bool coupe = true;
+        tic_jusqua(d, 0, true, t0 + 9 * S, t0 + 60 * MIN - S, nullptr, &coupe, nullptr);
+        expect(coupe, "« montée » restauré allumé : pas de réveil avant l'heure");
+        expect(chargeur_tick(d, 0, true, t0 + 60 * MIN).allumer && d.reveil, "réveil au bout d'une heure");
         expect(AUCUNE == 1 && VUE == 2 && INCONNUE == 0, "valeurs gardées en NVS : 0 inconnue, 1 aucune, 2 vue");
     }
     {
         // millis() reboucle après 49 jours : les durées se comptent quand même.
         EtatChargeur c;
-        c.reveil = false;
+        c.sonde = false;
+        c.allume = true;
         c.presence = P::PRESENTE;
         const uint32_t base = 0xFFFFFFFFu - 3 * S;
         c.sonde_fin_ms = base - 10 * MIN;
@@ -714,18 +750,27 @@ static void test_chargeur() {
     expect(kBatterieSeuilV == 5.5f && kBatterieBasseV == 6.0f && kChargeurReposMs == 8u * S,
            "seuils : 5,5 V chargeur coupé (évite faux positif tension résiduelle), 6,0 V chargeur allumé, 8 s de repos");
 
-    // Sécurité thermique anti-surchauffe (11/10/2026, ADR-0061)
+    // Une batterie chargée normalement, prête pour les verrous (lue à 7,6 V, ≈ 18 %).
+    const auto batterie_en_charge = [](EtatChargeur& c, uint32_t t) {
+        chargeur_demarrer(c, VUE, false, false, false, t);
+        chargeur_tick(c, 0, false, t + 8 * S);
+        chargeur_lecture(c, 7.6f, t + 8 * S);
+        chargeur_tick(c, 0, false, t + 9 * S);
+    };
+
+    // Sécurité thermique anti-surchauffe (11/10/2026, ADR-0061 ; NVS et NAN le 16/10/2026)
     {
         EtatChargeur c;
-        c.reveil = false;
-        c.presence = P::PRESENTE;
-        c.allume = true;
-        c.niveau = 50.0f;
-        expect(chargeur_tick(c, 0, false, 0).allumer, "charge normale autorisée");
+        batterie_en_charge(c, 0);
+        expect(c.allume, "charge normale autorisée");
 
         // Montée à 55 °C : verrouillage thermique immédiat
         expect(chargeur_surveillance_thermique(c, 55.5f, 10 * S), "déclenchement verrouillage thermique à 55,5 °C");
-        expect(c.verrou_thermique, "verrou thermique actif");
+        expect(c.verrou_thermique && chargeur_securite_posee(c), "verrou thermique actif (« Tab5 Sécurité chargeur »)");
+        const SignalSecurite s = chargeur_signal_prendre(c);
+        expect(s.cause == CauseSecurite::THERMIQUE && std::fabs(s.mesure - 55.5f) < 0.01f && !s.verrouille,
+               "signalé à HA : thermique, 55,5 °C");
+        expect(chargeur_signal_prendre(c).cause == CauseSecurite::AUCUNE, "signalé une seule fois");
         expect(!chargeur_tick(c, 0, false, 11 * S).allumer, "chargeur immédiatement coupé et verrouillé");
         expect(!chargeur_voulu(c, 0, 11 * S), "chargeur refusé tant que verrouillé");
 
@@ -737,10 +782,152 @@ static void test_chargeur() {
         chargeur_surveillance_thermique(c, 46.0f, 16 * MIN);
         expect(!chargeur_tick(c, 0, false, 16 * MIN).allumer, "toujours coupé si CPU > 44 °C");
 
-        // 16 min après et température redescendue à 40 °C : réarmement
-        chargeur_surveillance_thermique(c, 40.0f, 16 * MIN + 10 * S);
-        expect(chargeur_tick(c, 0, false, 16 * MIN + 10 * S).allumer, "réarmement après refroidissement sous 44 °C");
-        expect(!c.verrou_thermique, "verrou thermique levé");
+        // Température illisible : le verrou ne se lève pas (16/10/2026).
+        chargeur_surveillance_thermique(c, NAN, 17 * MIN);
+        bool coupe = true;
+        tic_jusqua(c, 0, false, 17 * MIN, 60 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe && c.verrou_thermique, "température NAN : verrou gardé, chargeur coupé");
+
+        // Température redescendue à 40 °C : réarmement
+        chargeur_surveillance_thermique(c, 40.0f, 60 * MIN + 10 * S);
+        expect(chargeur_tick(c, 0, false, 60 * MIN + 10 * S).allumer, "réarmement après refroidissement sous 44 °C");
+        expect(!c.verrou_thermique && !chargeur_securite_posee(c), "verrou thermique levé");
+    }
+    {
+        // Verrou thermique gardé en NVS : le démarrage suivant le retrouve posé, chargeur
+        // coupé au moins 15 min puis jusqu'à une température lue saine.
+        EtatChargeur c;
+        chargeur_demarrer(c, VUE, false, false, true, 0);
+        expect(c.verrou_thermique && chargeur_securite_posee(c), "verrou thermique restauré au démarrage");
+        bool coupe = true;
+        for (uint32_t t = 0; t < 15 * MIN; t += 10 * S) {
+            chargeur_surveillance_thermique(c, 40.0f, t);
+            if (t == 10 * S) chargeur_lecture(c, 7.6f, t);
+            if (chargeur_tick(c, 0, false, t).allumer) coupe = false;
+        }
+        expect(coupe && c.presence == P::PRESENTE, "verrou restauré : batterie vue mais coupé 15 min");
+        expect(chargeur_signal_prendre(c).cause == CauseSecurite::AUCUNE, "verrou restauré : pas de nouvel événement");
+        chargeur_surveillance_thermique(c, 40.0f, 15 * MIN);
+        expect(chargeur_tick(c, 0, false, 15 * MIN).allumer, "15 min et 40 °C lus : chargeur rendu");
+        // Sans aucune température lue : jamais levé.
+        EtatChargeur d;
+        chargeur_demarrer(d, VUE, false, false, true, 0);
+        chargeur_lecture(d, 7.6f, 10 * S);
+        coupe = true;
+        tic_jusqua(d, 0, false, 0, 3 * 60 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "verrou restauré, aucune température lue : coupé 3 h");
+    }
+
+    // Verrou électrique : la signature d'une charge dans le vide (16/10/2026).
+    {
+        // Tension au-dessus d'une 2S pleine, chargeur allumé : coupé, sonde immédiate.
+        EtatChargeur c;
+        batterie_en_charge(c, 0);
+        expect(!chargeur_lecture(c, 8.45f, 1 * MIN) && c.allume, "8,45 V : pas encore au-dessus du seuil");
+        chargeur_lecture(c, 8.47f, 2 * MIN);
+        expect(!c.allume && c.sonde, "8,47 V chargeur allumé : coupé, sonde immédiate");
+        expect(!chargeur_tick(c, 0, false, 2 * MIN + S).allumer, "pendant la sonde : coupé");
+        expect(chargeur_signal_prendre(c).cause == CauseSecurite::AUCUNE, "rien de signalé avant la fin de la sonde");
+        chargeur_tick(c, 0, false, 2 * MIN + 8 * S);
+        chargeur_lecture(c, 7.9f, 2 * MIN + 8 * S);
+        SignalSecurite s = chargeur_signal_prendre(c);
+        expect(s.cause == CauseSecurite::TENSION && std::fabs(s.mesure - 8.47f) < 0.001f && !s.verrouille,
+               "signalé : tension, 8,47 V, pas encore verrouillé");
+        expect(chargeur_tick(c, 0, false, 2 * MIN + 9 * S).allumer && !chargeur_securite_posee(c),
+               "un déclenchement : la charge reprend");
+        // Deuxième dans l'heure : verrouillé jusqu'au redémarrage.
+        chargeur_lecture(c, 8.50f, 40 * MIN);
+        chargeur_tick(c, 0, false, 40 * MIN + 8 * S);
+        chargeur_lecture(c, 7.9f, 40 * MIN + 8 * S);
+        s = chargeur_signal_prendre(c);
+        expect(s.cause == CauseSecurite::TENSION && s.verrouille, "deuxième dans l'heure : signalé « verrouillé »");
+        expect(c.verrou_electrique && chargeur_securite_posee(c), "chargeur verrouillé (« Tab5 Sécurité chargeur »)");
+        bool coupe = true;
+        tic_jusqua(c, 0, true, 40 * MIN + 9 * S, 6 * 60 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "verrouillé : coupé 5 h, ni charge ni réveil");
+        // Deux déclenchements à plus d'une heure d'écart : pas de verrou.
+        EtatChargeur d;
+        batterie_en_charge(d, 0);
+        chargeur_lecture(d, 8.5f, 1 * MIN);
+        chargeur_tick(d, 0, false, 1 * MIN + 8 * S);
+        chargeur_lecture(d, 7.9f, 1 * MIN + 8 * S);
+        chargeur_tick(d, 0, false, 1 * MIN + 9 * S);
+        chargeur_lecture(d, 8.5f, 70 * MIN);
+        chargeur_tick(d, 0, false, 70 * MIN + 8 * S);
+        chargeur_lecture(d, 7.9f, 70 * MIN + 8 * S);
+        expect(!d.verrou_electrique && chargeur_tick(d, 0, false, 70 * MIN + 9 * S).allumer,
+               "deux déclenchements à 69 min d'écart : pas de verrou");
+    }
+    {
+        // Aucun courant de charge, chargeur allumé (une fausse présence, la panne du 11/10) :
+        // coupé au bout de 30 s, et la sonde tranche.
+        EtatChargeur c;
+        chargeur_demarrer(c, VUE, false, false, false, 0);
+        chargeur_tick(c, 0, false, 8 * S);
+        chargeur_lecture(c, 5.6f, 8 * S);  // fausse présence (au-dessus du seuil)
+        expect(chargeur_tick(c, 0, false, 9 * S).allumer, "présence lue : chargeur allumé");
+        chargeur_lecture_courant(c, -0.002f, 10 * S);
+        expect(c.courant_faible && c.allume, "premier courant nul : on attend 30 s");
+        expect(!chargeur_tick(c, 0, false, 39 * S).lire, "29 s : pas encore de relecture");
+        expect(chargeur_tick(c, 0, false, 40 * S).lire, "30 s : relecture du courant sans attendre la minute");
+        expect(!chargeur_tick(c, 0, false, 41 * S).lire, "une seule relecture");
+        chargeur_lecture_courant(c, 0.001f, 41 * S);
+        expect(!c.allume && c.sonde, "toujours nul : coupé, sonde immédiate");
+        chargeur_tick(c, 0, false, 49 * S);
+        chargeur_lecture(c, 5.6f, 49 * S);
+        const SignalSecurite s = chargeur_signal_prendre(c);
+        expect(s.cause == CauseSecurite::COURANT && !s.verrouille, "signalé : courant, pas encore verrouillé");
+        expect(chargeur_tick(c, 0, false, 50 * S).allumer, "rallumé une fois");
+        chargeur_lecture_courant(c, 0.0f, 51 * S);
+        chargeur_lecture_courant(c, 0.0f, 81 * S);
+        chargeur_tick(c, 0, false, 89 * S);
+        chargeur_lecture(c, 5.6f, 89 * S);
+        expect(c.verrou_electrique && chargeur_signal_prendre(c).verrouille,
+               "deuxième courant nul dans l'heure : verrouillé jusqu'au redémarrage");
+        bool coupe = true;
+        tic_jusqua(c, 0, false, 90 * S, 3 * 60 * MIN, nullptr, &coupe, nullptr);
+        expect(coupe, "chargeur verrouillé 3 h");
+        // Vraie batterie qui charge (courant négatif) ou qui alimente la tablette : rien.
+        EtatChargeur b;
+        batterie_en_charge(b, 0);
+        for (uint32_t t = 10 * S; t < 30 * MIN; t += MIN) chargeur_lecture_courant(b, -0.45f, t);
+        chargeur_lecture_courant(b, 0.17f, 30 * MIN);
+        expect(b.allume && !b.sonde && !b.courant_faible, "batterie qui charge ou alimente : aucun déclenchement");
+        // Pendant le réveil (30 s, sonde ensuite de toute façon) : ignoré.
+        EtatChargeur r;
+        chargeur_demarrer(r, VUE, false, false, false, 0);
+        chargeur_tick(r, 0, false, 8 * S);
+        chargeur_lecture(r, 0.4f, 8 * S);
+        chargeur_tick(r, 0, false, 9 * S);
+        chargeur_lecture_courant(r, 0.0f, 10 * S);
+        chargeur_lecture_courant(r, 0.0f, 38 * S);
+        expect(r.reveil && !r.courant_faible, "réveil : courant nul ignoré");
+        expect(chargeur_tick(r, 0, false, 39 * S).allumer == false && r.securite_sonde == CauseSecurite::AUCUNE,
+               "fin du réveil : sonde ordinaire, pas de déclenchement");
+    }
+    {
+        // Batterie pleine : la charge s'arrête, le courant est nul. La sonde lit une batterie
+        // pleine (≥ 95 %) : ni événement ni compte, le détecteur se tait jusqu'à 90 %.
+        EtatChargeur c;
+        batterie_en_charge(c, 0);
+        chargeur_lecture_courant(c, -0.004f, 1 * MIN);
+        chargeur_lecture_courant(c, -0.003f, 2 * MIN);
+        expect(c.sonde && !c.allume, "fin de charge : courant nul, sonde");
+        chargeur_tick(c, 0, false, 2 * MIN + 8 * S);
+        chargeur_lecture(c, 8.30f, 2 * MIN + 8 * S);
+        expect(c.charge_terminee && chargeur_signal_prendre(c).cause == CauseSecurite::AUCUNE && !c.electrique_vu,
+               "batterie pleine : charge terminée, rien de signalé, rien de compté");
+        expect(chargeur_tick(c, 0, false, 2 * MIN + 9 * S).allumer, "batterie pleine : chargeur laissé allumé, comme avant");
+        for (uint32_t t = 3 * MIN; t < 12 * MIN; t += MIN) chargeur_lecture_courant(c, 0.0f, t);
+        expect(c.allume && !c.sonde, "charge terminée : le courant nul ne déclenche plus");
+        // Sonde périodique : la batterie est redescendue à 62 % : détecteur réarmé.
+        tic_jusqua(c, 0, false, 2 * MIN + 10 * S, 12 * MIN + 16 * S, nullptr, nullptr, nullptr);
+        chargeur_lecture(c, 8.0f, 12 * MIN + 16 * S);
+        expect(!c.charge_terminee, "niveau sous 90 % : détecteur de courant réarmé");
+        // Le verrou de tension, lui, reste armé batterie pleine.
+        chargeur_tick(c, 0, false, 12 * MIN + 17 * S);
+        chargeur_lecture(c, 8.6f, 13 * MIN);
+        expect(c.sonde && !c.allume, "tension trop haute : déclenché même batterie pleine");
     }
 
     // Mode de charge (09/10/2026, ADR-0045) : la charge rapide seulement chargeur allumé.
@@ -751,13 +938,16 @@ static void test_chargeur() {
         expect(charge_rapide_voulue(RAPIDE, true), "mode de charge « Rapide », chargeur allumé : charge rapide");
         expect(!charge_rapide_voulue(RAPIDE, false), "« Rapide », chargeur coupé (sans batterie, sonde, 80 %) : arrêtée");
         expect(!charge_rapide_voulue(5, true), "mode de charge : index inconnu = « Classique »");
-        // Avec le chargeur réel : sans batterie, il se coupe après le réveil, la charge
-        // rapide avec lui.
+        // Avec le chargeur réel : coupé pendant la sonde du démarrage, la charge rapide
+        // avec lui ; allumée seulement avec la batterie lue.
         EtatChargeur c;
-        const ActionChargeur reveil = chargeur_tick(c, 0, false, 0);
-        expect(reveil.allumer && charge_rapide_voulue(RAPIDE, reveil.allumer), "réveil du démarrage : rapide si choisie");
-        const ActionChargeur sonde = chargeur_tick(c, 0, false, 30 * S);
-        expect(!sonde.allumer && !charge_rapide_voulue(RAPIDE, sonde.allumer), "sonde : chargeur coupé, rapide coupée");
+        chargeur_demarrer(c, VUE, false, false, false, 0);
+        const ActionChargeur sonde = chargeur_tick(c, 0, false, 0);
+        expect(!sonde.allumer && !charge_rapide_voulue(RAPIDE, sonde.allumer), "sonde du démarrage : rapide coupée");
+        chargeur_tick(c, 0, false, 8 * S);
+        chargeur_lecture(c, 7.4f, 8 * S);
+        const ActionChargeur charge = chargeur_tick(c, 0, false, 9 * S);
+        expect(charge.allumer && charge_rapide_voulue(RAPIDE, charge.allumer), "batterie lue : rapide si choisie");
     }
 
     // Niveau (courbe mesurée, 15/10/2026 : cas détaillés dans tools/test_tab5_socle.cpp), consommation.
