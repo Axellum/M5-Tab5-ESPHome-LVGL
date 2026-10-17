@@ -1622,6 +1622,7 @@ static const char* const kI18nKeys[] = {
     "DIFFICULTÉ",
     "Dames internationales — dames volantes",
     "Damier",
+    "Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs ».",
     "De %s à %s%s",
     "Dehors, prévu",
     "Dem.",
@@ -1650,7 +1651,6 @@ static const char* const kI18nKeys[] = {
     "Déc",
     "Décharge",
     "Décharger",
-    "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs ».",
     "Découverte",
     "Dédale",
     "Délai",
@@ -2875,6 +2875,7 @@ static const char* const kI18n_en[] = {
     "DIFFICULTY",  // "DIFFICULTÉ"
     "International draughts — flying kings",  // "Dames internationales — dames volantes"
     "Checkerboard",  // "Damier"
+    "In Home Assistant: Settings > Devices & services > Entities, search for “Tab5 · réfrigérateurs · fridges” or “Tab5 · congélateurs · freezers”.",  // "Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs »."
     "From %s to %s%s",  // "De %s à %s%s"
     "Outdoors, forecast",  // "Dehors, prévu"
     "Tmrw.",  // "Dem."
@@ -2903,7 +2904,6 @@ static const char* const kI18n_en[] = {
     "Dec",  // "Déc"
     "Discharging",  // "Décharge"
     "Unload",  // "Décharger"
-    "Declare them in Home Assistant: lists “Tab5 · réfrigérateurs · fridges” and “Tab5 · congélateurs · freezers”.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Discovery",  // "Découverte"
     "Maze",  // "Dédale"
     "Lead time",  // "Délai"
@@ -4128,6 +4128,7 @@ static const char* const kI18n_de[] = {
     "SCHWIERIGKEIT",  // "DIFFICULTÉ"
     "Internationale Dame — fliegende Damen",  // "Dames internationales — dames volantes"
     "Schachbrett",  // "Damier"
+    "In Home Assistant: Einstellungen > Geräte & Dienste > Entitäten, nach „Tab5 · réfrigérateurs · fridges“ oder „Tab5 · congélateurs · freezers“ suchen.",  // "Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs »."
     "Von %s bis %s%s",  // "De %s à %s%s"
     "Draußen, Prognose",  // "Dehors, prévu"
     "Morg.",  // "Dem."
@@ -4156,7 +4157,6 @@ static const char* const kI18n_de[] = {
     "Dez",  // "Déc"
     "Entlädt",  // "Décharge"
     "Entladen",  // "Décharger"
-    "Lege sie in Home Assistant fest: Listen „Tab5 · réfrigérateurs · Kühlschränke“ und „Tab5 · congélateurs · Gefrierschränke“.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Entdeckung",  // "Découverte"
     "Gewirr",  // "Dédale"
     "Vorlauf",  // "Délai"
@@ -5381,6 +5381,7 @@ static const char* const kI18n_nl[] = {
     "MOEILIJKHEID",  // "DIFFICULTÉ"
     "Internationaal dammen — vliegende dammen",  // "Dames internationales — dames volantes"
     "Dambord",  // "Damier"
+    "In Home Assistant: Instellingen > Apparaten en diensten > Entiteiten, zoek „Tab5 · réfrigérateurs · fridges” of „Tab5 · congélateurs · freezers”.",  // "Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs »."
     "Van %s tot %s%s",  // "De %s à %s%s"
     "Buiten, verwacht",  // "Dehors, prévu"
     "Morg.",  // "Dem."
@@ -5409,7 +5410,6 @@ static const char* const kI18n_nl[] = {
     "Dec",  // "Déc"
     "Ontladen",  // "Décharge"
     "Ontladen",  // "Décharger"
-    "Geef ze op in Home Assistant: lijsten „Tab5 · réfrigérateurs · koelkasten” en „Tab5 · congélateurs · vriezers”.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Ontdekking",  // "Découverte"
     "Doolhof",  // "Dédale"
     "Marge",  // "Délai"
@@ -6634,6 +6634,7 @@ static const char* const kI18n_es[] = {
     "DIFICULTAD",  // "DIFFICULTÉ"
     "Damas internacionales — damas voladoras",  // "Dames internationales — dames volantes"
     "Damero",  // "Damier"
+    "En Home Assistant: Configuración > Dispositivos y servicios > Entidades, busca «Tab5 · réfrigérateurs · fridges» o «Tab5 · congélateurs · freezers».",  // "Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs »."
     "De %s a %s%s",  // "De %s à %s%s"
     "Fuera, prevista",  // "Dehors, prévu"
     "Mañana",  // "Dem."
@@ -6662,7 +6663,6 @@ static const char* const kI18n_es[] = {
     "Dic",  // "Déc"
     "Descarga",  // "Décharge"
     "Descargar",  // "Décharger"
-    "Decláralos en Home Assistant: listas «Tab5 · réfrigérateurs · neveras» y «Tab5 · congélateurs · congeladores».",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Hallazgo",  // "Découverte"
     "Laberinto",  // "Dédale"
     "Antelación",  // "Délai"
@@ -7887,6 +7887,7 @@ static const char* const kI18n_it[] = {
     "DIFFICOLTÀ",  // "DIFFICULTÉ"
     "Dama internazionale — dame volanti",  // "Dames internationales — dames volantes"
     "Scacchiera",  // "Damier"
+    "In Home Assistant: Impostazioni > Dispositivi e servizi > Entità, cerca «Tab5 · réfrigérateurs · fridges» o «Tab5 · congélateurs · freezers».",  // "Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs »."
     "Dalle %s alle %s%s",  // "De %s à %s%s"
     "Fuori, prevista",  // "Dehors, prévu"
     "Domani",  // "Dem."
@@ -7915,7 +7916,6 @@ static const char* const kI18n_it[] = {
     "Dic",  // "Déc"
     "Scarica",  // "Décharge"
     "Scarica",  // "Décharger"
-    "Dichiarali in Home Assistant: elenchi «Tab5 · réfrigérateurs · frigoriferi» e «Tab5 · congélateurs · congelatori».",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Scoperta",  // "Découverte"
     "Dedalo",  // "Dédale"
     "Anticipo",  // "Délai"
@@ -9140,6 +9140,7 @@ static const char* const kI18n_tr[] = {
     "ZORLUK",  // "DIFFICULTÉ"
     "Uluslararası dama — uçan damalar",  // "Dames internationales — dames volantes"
     "Damalı",  // "Damier"
+    "Home Assistant'ta: Ayarlar > Cihazlar ve hizmetler > Varlıklar, “Tab5 · réfrigérateurs · fridges” veya “Tab5 · congélateurs · freezers” arayın.",  // "Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs »."
     "%s – %s%s",  // "De %s à %s%s"
     "Dışarı, tahmin",  // "Dehors, prévu"
     "Yarın",  // "Dem."
@@ -9168,7 +9169,6 @@ static const char* const kI18n_tr[] = {
     "Ara",  // "Déc"
     "Deşarj",  // "Décharge"
     "Boşalt",  // "Décharger"
-    "Home Assistant'ta tanımlayın: “Tab5 · réfrigérateurs · buzdolapları” ve “Tab5 · congélateurs · dondurucular” listeleri.",  // "Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs »."
     "Keşif",  // "Découverte"
     "Labirent",  // "Dédale"
     "Ön süre",  // "Délai"

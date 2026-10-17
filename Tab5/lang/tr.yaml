@@ -1466,7 +1466,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Réfrigérateur": "Buzdolabı"
 "Congélateur": "Dondurucu"
 "Aucun appareil déclaré": "Tanımlı cihaz yok"
-"Déclarez-les dans Home Assistant : listes « Tab5 · réfrigérateurs » et « Tab5 · congélateurs ».": "Home Assistant'ta tanımlayın: “Tab5 · réfrigérateurs · buzdolapları” ve “Tab5 · congélateurs · dondurucular” listeleri."
+"Dans Home Assistant : Paramètres > Appareils et services > Entités, cherchez « Tab5 · réfrigérateurs » ou « Tab5 · congélateurs ».": "Home Assistant'ta: Ayarlar > Cihazlar ve hizmetler > Varlıklar, “Tab5 · réfrigérateurs · fridges” veya “Tab5 · congélateurs · freezers” arayın."
 "Conforme": "Uygun"
 "Trop chaud": "Çok sıcak"
 "Trop chaud depuis %s": "%s beri çok sıcak"
