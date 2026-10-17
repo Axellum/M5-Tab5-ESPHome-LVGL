@@ -2,12 +2,13 @@
 # [AI-CONTEXT]
 # @file packages/tab5_health.yaml
 # @role Package HA de surveillance santé du Tab5 (aucun nom d'entité à adapter
-#       depuis le 28/09/2026 : voir « ENTITÉS DE LA TABLETTE »). Six gardes : reboot
+#       depuis le 28/09/2026 : voir « ENTITÉS DE LA TABLETTE »). Sept gardes : reboot
 #       inattendu (b, nouvel horodatage de démarrage), API ESPHome
 #       déconnectée (c), erreur de rendu d'un template dans une poussée écran (d),
 #       journal des démarrages et coupures envoyé par le Tab5 (e), fichiers HA plus
 #       anciens que le firmware (f, 29/09/2026), batterie faible quand la tablette
-#       tourne sur sa batterie (g, 08/10/2026). Et trois capteurs à statistiques
+#       tourne sur sa batterie (g, 08/10/2026), coupure de sécurité du chargeur
+#       (h, 16/10/2026). Et trois capteurs à statistiques
 #       longues (lot K, 09/10/2026) : redémarrages, redémarrages inattendus (comptés
 #       par la garde b) et fonctionnement continu en heures.
 # @architecture_constraint L'écran est push-only (cf. docs/decisions/0001) : si
@@ -478,6 +479,57 @@ automation:
           notification_id: tab5_health_batterie
           title: "{{ titre }}"
           message: "La tablette tourne sur sa batterie : {{ niveau }} %. Branchez-la."
+
+  # ==========================================================================
+  # (h) Coupure de sécurité du chargeur, envoyée par le Tab5 (16/10/2026)
+  # --------------------------------------------------------------------------
+  # Après la panne du 11/10/2026 (une Tab5 perdue, très probablement par une
+  # charge dans le vide : chargeur allumé sans batterie), le firmware coupe le
+  # chargeur quand le CPU chauffe (≥ 55 °C), quand la tension dépasse celle
+  # d'une batterie 2S pleine, ou quand aucun courant de charge ne passe pendant
+  # 30 s. Il émet alors `esphome.tab5_securite_chargeur`. Données : cause
+  # (« thermique », « tension », « courant »), mesure (°C, V ou A, en texte) et
+  # verrouille (« oui » : deuxième coupure dans l'heure, chargeur bloqué jusqu'au
+  # prochain redémarrage). « Tab5 Sécurité chargeur » reste allumé tant qu'un
+  # verrou est posé. Une seule notification persistante (même id), téléphone à
+  # chaque coupure. Message court, sans entité ni code.
+  # ==========================================================================
+  - id: tab5_health_securite_chargeur
+    alias: "Tab5 — santé : sécurité du chargeur"
+    description: >-
+      Prévient quand la tablette coupe son chargeur par sécurité (surchauffe,
+      tension anormale, charge sans batterie).
+    mode: queued
+    triggers:
+      - trigger: event
+        event_type: esphome.tab5_securite_chargeur
+    # Garde d'origine, comme la garde (g). tests/test_garde_origine.py.
+    conditions:
+      - condition: template
+        value_template: >-
+          {%- from 'tab5_tablette.jinja' import tab5_origine -%}
+          {{ tab5_origine(trigger) == 'oui' }}
+    variables:
+      cause: "{{ trigger.event.data.cause | default('', true) | string }}"
+      mesure: "{{ trigger.event.data.mesure | default('?', true) | string | replace('.', ',') }}"
+      verrouille: "{{ (trigger.event.data.verrouille | default('non', true) | string) == 'oui' }}"
+      raison: >-
+        {%- if cause == 'thermique' -%}
+          la tablette chauffe ({{ mesure }} °C). Il reprendra une fois refroidie
+        {%- elif cause == 'tension' -%}
+          tension anormale ({{ mesure }} V). Batterie absente ou inadaptée ?
+        {%- elif cause == 'courant' -%}
+          il ne chargeait rien. Batterie absente ?
+        {%- else -%}
+          raison inconnue
+        {%- endif -%}
+    actions:
+      - action: script.tab5_health_notify
+        data:
+          notification_id: tab5_health_chargeur
+          title: "⚠️ Tab5 : chargeur coupé par sécurité"
+          message: >-
+            Chargeur coupé : {{ raison }}.{{ ' Bloqué jusqu’au prochain redémarrage de la tablette.' if verrouille else '' }}
 
 template:
   # Version de ces fichiers : « dépôt » dans le dépôt, remplacée par la version de la

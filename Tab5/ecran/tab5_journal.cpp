@@ -402,6 +402,13 @@ bool journal_is_serious() {
     return (s_j.anomalie & (kPlantage | kWifi)) != 0;
 }
 
+// Reset anormal de CE démarrage (reset_anormal(), comme kPlantage) ; le premier démarrage
+// après une installation n'en est pas un.
+bool journal_demarrage_anormal() {
+    ouvrir_session();
+    return reset_anormal(s_raison, s_rapport_plantage) && !s_installation;
+}
+
 std::string journal_reset_reason() {
     ouvrir_session();
     char texte[kTexte];
