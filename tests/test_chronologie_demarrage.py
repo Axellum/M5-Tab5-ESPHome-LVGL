@@ -11,8 +11,9 @@ le câblage YAML hors tablette : ce fichier le relit.
 - chaque texte tient sous 255 caractères (état texte de Home Assistant) au pire ;
 - observer sans retarder : les marques de setup() ne publient rien ;
 - la séquence on_boot de tab5-ha-hmi.yaml ([AI-WARNING-CRITICAL], ADR-0005) ne reçoit que
-  des marques (accord d'Axel du 10/10/2026) : la lambda du delay(1000) reste seule et
-  telle quelle, les trois entrées d'origine gardent leur priorité et leur rang, les
+  des marques (accord d'Axel du 10/10/2026) : la lambda de l'attente reste seule et
+  telle quelle (sa durée vient de la carte depuis le 17/10/2026, `carte_attente_ecran_ms` :
+  1000 sur le Tab5, test_attente_avant_l_ecran_selon_la_carte), les trois entrées d'origine gardent leur priorité et leur rang, les
   entrées ajoutées ne font que marquer, à des priorités qu'aucune autre n'a, sauf la
   barre de chargement (accord d'Axel du 16/10/2026), appelée après la marque ;
 - les capteurs sont des text_sensor de diagnostic, publiés par un seul script."""
@@ -125,7 +126,7 @@ def test_on_boot_des_marques_seulement():
 
     # La lambda bloquante reste seule et telle quelle ; marques avant et après.
     p700 = entrees[0]["then"]
-    assert sans_marques(p700) == [{"lambda": "delay(1000);"}]
+    assert sans_marques(p700) == [{"lambda": "delay(${carte_attente_ecran_ms});"}]
     assert str(p700[0]["lambda"]).strip() == "demarrage_marquer(EtapeDemarrage::AVANT1S);"
     assert str(p700[-1]["lambda"]).strip() == "demarrage_marquer(EtapeDemarrage::APRES1S);"
     assert str(entrees[1]["then"][0]["lambda"]).strip() == "demarrage_marquer(EtapeDemarrage::P600);"

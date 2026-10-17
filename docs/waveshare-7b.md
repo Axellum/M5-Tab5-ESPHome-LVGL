@@ -73,6 +73,7 @@ Two things learnt along the way:
 Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.md#waveshare-7b-at-the-usb-input-2026-10-16).
 
 - **Start-up**: first image at 5.6-5.8 s, Wi-Fi at 10.4-11.7 s, Home Assistant connected at 11.5-12.7 s (4 starts, read on the board's « Boot timeline » sensors). It used to be about 20 s before the first image, like the Tab5; [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478) removed the cost of creating the labels.
+- **One second less at every start (2026-10-17)**: the boot waited 1 s before the display, a wait made for the Tab5, whose display reset goes through an I/O expander; the 7B has none, its panel reset is a pin of the P4 ([ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md), `carte_attente_ecran_ms: "0"`). Over 10 restarts from the « Redémarrage Système » button, against the 10 of the night of 2026-10-16: backlight on at 0.97 s (2.02 s), first image at 4.78-4.84 s (5.84-5.90 s), Wi-Fi at 9.38-9.44 s (10.37-10.43 s); every other step keeps its length, and the screen comes back on with its picture (seen by the author).
 - **The clock can show up late**: the board has no real-time clock, so the time is only known once the Wi-Fi is up and the time is received (10 s or more after power-up); the first image comes before it.
 - **Power at the USB input**: 1.96 W on the home screen at the usual brightness, 3.14 W at 100 %, 1.24 W with the backlight off. Popups and pages cost nothing measurable.
 
@@ -80,7 +81,7 @@ Firmware `main` 46ad7f03, details and method in [Power consumption](consumption.
 
 | | Waveshare ESP32-P4-WIFI6-Touch-LCD-7B |
 |---|---|
-| Main processor | ESP32-P4 (ESP32-P4NRW32), revision **v3.2** on the author's board, run at 360 MHz like the Tab5 (400 MHz is « experimental » for ESPHome) |
+| Main processor | ESP32-P4 (ESP32-P4NRW32), revision **v3.2** on the author's board, run at 400 MHz, its normal speed (ESP-IDF offers 360 MHz only to chips older than v3: the 360 MHz asked until 2026-10-16 were ignored; ESPHome's « experimental » warning is about those older chips) |
 | Memory | 32 MB PSRAM (hex mode, 200 MHz), 32 MB flash |
 | Display | 7 inches, 1024×600, landscape panel, EK79007 controller over MIPI-DSI (2 lanes), ESPHome model `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B` |
 | Touch | GT911, I2C at 0x5D, polled every 50 ms (no interrupt) |
@@ -203,6 +204,7 @@ Deux choses apprises en route :
 Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md#waveshare-7b-à-lentrée-usb-16102026).
 
 - **Démarrage** : première image à 5,6-5,8 s, Wi-Fi à 10,4-11,7 s, Home Assistant connecté à 11,5-12,7 s (4 démarrages, lus sur les capteurs « Chronologie du démarrage » de la carte). Avant, il fallait une vingtaine de secondes avant la première image, comme sur le Tab5 ; [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478) a supprimé le coût de la création des textes.
+- **Une seconde de moins à chaque démarrage (17/10/2026)** : le démarrage attendait 1 s avant l'écran, une attente faite pour le Tab5, dont le reset de l'écran passe par un expandeur ; la 7B n'en a pas, le reset de sa dalle est une broche du P4 ([ADR-0005](decisions/0005-boot-delay-gpio-expander-reset.md), `carte_attente_ecran_ms: "0"`). Sur 10 redémarrages par le bouton « Redémarrage Système », contre les 10 de la nuit du 16/10/2026 : rétroéclairage allumé à 0,97 s (2,02 s), première image à 4,78-4,84 s (5,84-5,90 s), Wi-Fi à 9,38-9,44 s (10,37-10,43 s) ; les autres étapes gardent leur durée, et l'écran revient avec son image (vu par l'auteur).
 - **L'horloge peut s'afficher en retard** : la carte n'a pas d'horloge temps réel, l'heure n'est connue qu'une fois le Wi-Fi monté et l'heure reçue (10 s ou plus après la mise sous tension) ; la première image arrive avant.
 - **Puissance à l'entrée USB** : 1,96 W sur l'accueil à la luminosité habituelle, 3,14 W à 100 %, 1,24 W rétroéclairage éteint. Les popups et les pages ne coûtent rien de mesurable.
 
@@ -210,7 +212,7 @@ Firmware `main` 46ad7f03, détail et méthode dans [Consommation](consumption.md
 
 | | Waveshare ESP32-P4-WIFI6-Touch-LCD-7B |
 |---|---|
-| Processeur principal | ESP32-P4 (ESP32-P4NRW32), révision **v3.2** sur la carte de l'auteur, à 360 MHz comme le Tab5 (400 MHz est « expérimental » pour ESPHome) |
+| Processeur principal | ESP32-P4 (ESP32-P4NRW32), révision **v3.2** sur la carte de l'auteur, à 400 MHz, sa fréquence normale (ESP-IDF ne propose 360 MHz qu'aux puces d'avant la v3 : les 360 MHz demandés jusqu'au 16/10/2026 étaient ignorés ; l'avertissement « expérimental » d'ESPHome vise ces anciennes puces) |
 | Mémoire | 32 Mo de PSRAM (mode hex, 200 MHz), 32 Mo de flash |
 | Écran | 7 pouces, 1024×600, dalle en paysage, contrôleur EK79007 en MIPI-DSI (2 voies), modèle ESPHome `WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B` |
 | Tactile | GT911, I2C en 0x5D, interrogé toutes les 50 ms (sans interruption) |
