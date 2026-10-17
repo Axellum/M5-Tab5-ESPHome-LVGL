@@ -326,12 +326,12 @@ esphome:
     - priority: 700
       then:
         - lambda: 'demarrage_marquer(EtapeDemarrage::AVANT1S);'
-        # [AI-WARNING-CRITICAL] INTERDICTION FORMELLE DE SUPPRIMER CE DELAI
-        # [06/07/2026] FIX CONFIRME pour le bug "ecran noir apres reboot logiciel".
-        # Le GPIO expander I2C (PI4IOE5V6408) a besoin d'une seconde pour se stabiliser
-        # avant l'init de l'écran DSI. CE DOIT RESTER UN LAMBDA C++ BLOQUANT, PAS UN `delay:` ESPHome.
+        # [AI-WARNING-CRITICAL] INTERDICTION FORMELLE DE SUPPRIMER CE DELAI (Tab5 : 1000 ms, ADR-0005)
+        # [06/07/2026] FIX CONFIRME du bug "ecran noir apres reboot logiciel" : le GPIO expander I2C
+        # du Tab5 (PI4IOE5V6408) a besoin d'1 s avant l'init de l'écran DSI ; durée par carte, 0 sur la 7B
+        # (carte-*.yaml). CE DOIT RESTER UN LAMBDA C++ BLOQUANT, PAS UN `delay:` ESPHome.
         - lambda: |-
-            delay(1000);
+            delay(${carte_attente_ecran_ms});
         - lambda: 'demarrage_marquer(EtapeDemarrage::APRES1S);'
     - priority: 600
       then:
