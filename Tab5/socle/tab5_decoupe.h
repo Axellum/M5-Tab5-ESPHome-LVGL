@@ -4,9 +4,11 @@
  * @role Découpe d'une zone à redessiner autour d'une carte opaque (17/10/2026), partie pure de
  *       popup_voile_carte() (Tab5/ecran/tab5_anim.cpp) : la part d'une carte arrondie que son
  *       fond couvre à coup sûr (couverte()), et une zone coupée entre cette part et le reste
- *       (couper()). Pourquoi : le popup Musique a un voile à 70 % (ADR-0050) ; pour LVGL il ne
- *       couvre rien, et une zone d'un seul tenant qui déborde de la carte se dessine depuis le
- *       tableau de bord. Coupée, la part couverte se dessine à partir de la carte seule.
+ *       (couper()). Pourquoi : le popup Musique a un voile à 70 % (ADR-0050), le détail du jour
+ *       un voile à 60 % sur le calendrier ; pour LVGL un voile translucide ne couvre rien, et
+ *       une zone d'un seul tenant qui déborde de la carte se dessine depuis ce qu'il laisse voir
+ *       (tableau de bord, calendrier). Coupée, la part couverte se dessine à partir de la carte
+ *       seule.
  * @architecture_constraint Aucune dépendance ESPHome ni LVGL : ce fichier se compile sur PC
  *       (tools/test_tab5_socle.cpp, g++ en CI). Zones à bornes comprises (x2, y2 inclus), comme
  *       lv_area_t ; tab5_anim.cpp passe de l'une à l'autre.

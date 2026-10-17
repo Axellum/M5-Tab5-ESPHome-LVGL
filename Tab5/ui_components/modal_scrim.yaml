@@ -7,7 +7,8 @@
 #        de bord caché —, "60" pour un sous-popup empilé sur un voile déjà présent).
 #        Exception : "70" pour Musique (ADR-0050, le tableau de bord se devine autour de
 #        sa carte) ; popup_voile_carte() (tab5_anim.cpp) y garde la carte sans le
-#        tableau de bord caché dessous.
+#        tableau de bord caché dessous, et celle du détail du jour (60 %) sans le
+#        calendrier. Inutile sous un voile opaque (mesuré le 17/10/2026, tab5_anim.cpp).
 # ═══════════════════════════════════════════════════════
 button:
   align: CENTER

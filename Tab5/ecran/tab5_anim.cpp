@@ -5,8 +5,9 @@
  *       horizontal, entrée des alertes, fondu de calques ; retour automatique à l'écran
  *       principal (inactivité, UIIdle) ; rouleau d'icône météo ; horloge à rouleau
  *       (layout, chiffres) et date ; styles pressed des boutons verre ; popup à voile
- *       translucide dont la carte se dessine sans le tableau de bord caché
- *       (popup_voile_carte, 17/10/2026, découpe pure dans Tab5/socle/tab5_decoupe.h).
+ *       translucide dont la carte se dessine sans ce qu'elle cache (popup_voile_carte,
+ *       17/10/2026 : Musique, détail du jour du calendrier ; découpe pure dans
+ *       Tab5/socle/tab5_decoupe.h).
  *       Unité de compilation issue de la scission de tab5_custom.cpp (lot (e) de
  *       l'audit du 06/09/2026, faite le 08/09/2026) : mêmes fonctions, même ordre,
  *       aucune logique modifiée.
@@ -217,6 +218,7 @@ void animate_popup_close(lv_obj_t* card) {
 
 // =============================================================================
 // Popup à voile translucide : sa carte dessinée sans ce qu'elle cache (17/10/2026)
+// Musique (voile à 70 %) et détail du jour du calendrier (voile à 60 % sur le calendrier)
 // =============================================================================
 // Un voile opaque couvre tout l'écran : LVGL commence l'image par lui et ne dessine pas le
 // tableau de bord caché (lv_refr_get_top_obj, essai D7 du 26/09/2026). Le voile à 70 % du
@@ -235,12 +237,19 @@ void animate_popup_close(lv_obj_t* card) {
 // alors LV_EVENT_INVALIDATE_AREA pour arrondir ses bandes, get_max_row) et entre deux images
 // (un popup qui se ferme invalide l'écran avant de se masquer, lv_obj_add_flag : tout le
 // tableau de bord se redessine, une zone entière suffit).
+// Le détail du jour (voile à 60 %) s'empile sur le calendrier : sans la coupe, tout le
+// calendrier se redessinait sous sa carte (28,3 → 14,1 M d'instructions en Zen Sumi, 33,3 →
+// 23,2 en Relief doux, tablette virtuelle 1024 × 600, 17/10/2026). Essayée aussi sur les
+// popups à voile opaque (Climatisation, Énergie, Réveil), la coupe n'y gagne rien en Zen
+// Sumi (−1,6 à +0,3 %) et coûte en Relief doux (+6 à +15 %) : elle n'y épargne que le
+// remplissage du voile sous la carte, et les objets à cheval sur deux morceaux (barre de
+// titre, ombres) se dessinent deux fois. Ne pas l'y étendre sans mesure.
 namespace {
 struct VoileCarte {
     lv_obj_t* popup = nullptr;
     lv_obj_t* carte = nullptr;
 };
-VoileCarte s_voiles[2];
+VoileCarte s_voiles[2];  // Musique, détail du jour
 int s_nb_voiles = 0;
 decoupe::Zone s_couverte;    // vide hors de la fenêtre REFR_START → RENDER_START d'un popup ouvert
 bool s_voile_coupe = false;  // les morceaux repassent par lv_inv_area : ne pas les recouper
@@ -256,6 +265,15 @@ lv_area_t area_de(const decoupe::Zone& z) {
     return a;
 }
 
+// Affiché : ni l'objet ni un de ses parents masqué (le sous-popup du jour garde son drapeau
+// quand le calendrier qui le contient se ferme seul).
+bool affiche(lv_obj_t* o) {
+    for (; o != nullptr; o = lv_obj_get_parent(o)) {
+        if (lv_obj_has_flag(o, LV_OBJ_FLAG_HIDDEN)) return false;
+    }
+    return true;
+}
+
 // Part couverte de la carte du popup à voile ouvert sur l'écran actif (decoupe::couverte,
 // alignée sur le draw_rounding d'ESPHome) ; vide si aucun ne l'est, ou si la carte ne la
 // couvre pas selon LVGL lui-même (LV_EVENT_COVER_CHECK : un thème au fond translucide) — la
@@ -263,8 +281,7 @@ lv_area_t area_de(const decoupe::Zone& z) {
 decoupe::Zone voile_part_couverte(lv_display_t* d) {
     for (int i = 0; i < s_nb_voiles; i++) {
         const VoileCarte& v = s_voiles[i];
-        if (lv_obj_has_flag(v.popup, LV_OBJ_FLAG_HIDDEN) ||
-            lv_obj_get_screen(v.popup) != lv_display_get_screen_active(d))
+        if (lv_obj_get_screen(v.popup) != lv_display_get_screen_active(d) || !affiche(v.popup))
             continue;
         auto* lvgl = static_cast<esphome::lvgl::LvglComponent*>(lv_display_get_user_data(d));
         const int32_t n = (lvgl != nullptr && lvgl->draw_rounding > 0) ? (int32_t) lvgl->draw_rounding : 1;
