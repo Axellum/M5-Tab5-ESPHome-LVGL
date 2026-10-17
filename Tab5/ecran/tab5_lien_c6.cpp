@@ -4,7 +4,10 @@
  * @role Tout redémarrage logiciel du P4 devient un reset du cœur numérique entier (niveau
  *       CORE), pour que le lien SDIO avec le co-processeur Wi-Fi (ESP32-C6) remonte au
  *       démarrage suivant ; et trace des pannes de ce lien (16/10/2026, boucle de
- *       redémarrages de la Waveshare 7B).
+ *       redémarrages de la Waveshare 7B). Compilé pour les deux cartes (tab5-hardware.yaml,
+ *       carte-waveshare-7b.yaml) : même lien C6 sur le Tab5, dont l'écran noir après OTA du
+ *       05/08/2026 (lien jamais remonté, réglé par une coupure seule) est de la même famille.
+ *       Sur le Tab5, essayé par compilation seulement (tablette au SAV le 16/10/2026).
  * @architecture_constraint Constat sur la 7B (capture série, docs/troubleshooting.md) : après
  *       quelques redémarrages logiciels, un démarrage voit le lien SDIO tomber (lectures en
  *       timeout, 0x107) ; le P4 redémarre alors par `esp_restart()`, et chaque démarrage
@@ -75,7 +78,7 @@ __attribute__((constructor)) void brancher_lien_c6() {
 
 }  // namespace
 
-// Valeur initiale du global `lien_c6_branche` (carte-waveshare-7b.yaml), évaluée dans
+// Valeur initiale du global `lien_c6_branche` (tab5-hardware.yaml, carte-waveshare-7b.yaml), évaluée dans
 // setup() avant les composants. Elle garde aussi ce fichier dans le binaire : les sources
 // d'ESPHome sont liées en bibliothèque statique, un objet dont rien n'est appelé serait
 // jeté avec son constructeur.
