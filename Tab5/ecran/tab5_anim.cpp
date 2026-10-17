@@ -204,6 +204,7 @@ void animate_popup_open(lv_obj_t* card) {
     // Un popup qui s'ouvre referme la roue d'actions rapides (ADR-0036, tab5_roue.cpp).
     roue_actions_fermer();
     lv_anim_delete(card, anim_opa_cb);
+    ModalRegistry::degarer(card);  // fenêtre fermée garée hors de l'écran (tab5_registry.h)
     lv_obj_remove_flag(card, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_style_opa(card, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_move_to_index(card, -1);  // dernier enfant = dessiné par-dessus
