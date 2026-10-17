@@ -61,7 +61,7 @@ The eco profile uses about **half** of the always-lit reference. In money, multi
 
 ## Waveshare 7B, at the USB input (2026-10-16)
 
-The second board of the firmware ([Waveshare 7B](waveshare-7b.md), 7 inches, 1024×600, no battery) measured by the author, the board powered by a computer's USB port.
+The second board of the firmware ([Waveshare 7B](waveshare-7b.md), 7 inches, 1024×600) measured by the author, the board powered by a computer's USB port.
 
 ### How it was measured
 
@@ -210,7 +210,7 @@ Le profil éco consomme environ **moitié moins** que la référence toujours al
 
 ## Waveshare 7B, à l'entrée USB (16/10/2026)
 
-La deuxième carte du firmware ([Waveshare 7B](waveshare-7b.md), 7 pouces, 1024×600, sans batterie), mesurée par l'auteur, alimentée par un port USB d'ordinateur.
+La deuxième carte du firmware ([Waveshare 7B](waveshare-7b.md), 7 pouces, 1024×600), mesurée par l'auteur, alimentée par un port USB d'ordinateur.
 
 ### Comment c'est mesuré
 

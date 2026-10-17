@@ -119,6 +119,7 @@
   ('casque', 'binary_sensor', 'headphone_detect'), ('batterie', 'sensor', 'tab5_batterie'),
   ('tension', 'sensor', 'tab5_tension_batterie'), ('en_charge', 'binary_sensor', 'tab5_batterie_en_charge'),
   ('batterie_detectee', 'binary_sensor', 'tab5_batterie_detectee'),
+  ('securite_chargeur', 'binary_sensor', 'tab5_securite_chargeur'),
 ] -%}
 {%- for cle, domaine, fin in ENTITES -%}
   {%- set motif = domaine ~ '[.]' ~ ('.*_' ~ fin ~ '$' if fin else '') -%}
@@ -1338,6 +1339,15 @@ views:
           - type: tile
             entity: {{ T.batterie_detectee }}
             name: "{{ t('Batterie détectée', 'Battery detected') }}"
+            grid_options:
+              columns: 6
+{%- endif %}
+{#- Sécurité du chargeur (firmware du 16/10/2026) : toujours montrée, allumée quand un verrou
+    (surchauffe, tension, charge sans batterie) coupe le chargeur. #}
+{%- if T.securite_chargeur %}
+          - type: tile
+            entity: {{ T.securite_chargeur }}
+            name: "{{ t('Sécurité chargeur', 'Charger safety') }}"
             grid_options:
               columns: 6
 {%- endif %}
@@ -3051,6 +3061,12 @@ views:
     'es': 'Batería detectada',
     'it': 'Batteria rilevata',
     'tr': 'Pil algılandı'},
+  'Sécurité chargeur': {
+    'de': 'Ladegerät-Schutz',
+    'nl': 'Laderbeveiliging',
+    'es': 'Seguridad del cargador',
+    'it': 'Sicurezza caricatore',
+    'tr': 'Şarj cihazı güvenliği'},
   'Tension': {
     'de': 'Spannung',
     'nl': 'Spanning',
