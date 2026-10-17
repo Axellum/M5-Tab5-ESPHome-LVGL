@@ -79,7 +79,16 @@ The screen holds **1,593 LVGL objects**, and every `lv_obj_report_style_change()
 
 Restart from the « Redémarrage Système » button, 3 runs per theme. In Ardoise (the compiled palette, nothing to repaint) the first « Loop Time » published after the restart is 10,450 ms and the API is reachable again after 17.2-17.4 s; in another theme (Capsule, repainted at boot) 13,401 ms and 18.9-19.1 s. **Any theme other than Ardoise adds ~2.95 s of blocked loop at boot**, and the API comes back 1.7 s later — the same repaint as the theme switch. These times do not compare with the boot table of 2026-10-01 below (another time zero, another method).
 
-On the **Waveshare 7B** (2026-10-16, `main` 46ad7f03, after [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478)), read on the boot timeline sensors over 4 starts: first image at 5.56-5.83 s, Wi-Fi at 10.42-11.70 s, API at 11.53-12.69 s. The `on_boot` still waits 1 s (`avant1s` → `apres1s`), a wait made for the Tab5's display expander, which the 7B does not have. Power during a restart: [consumption](consumption.md#waveshare-7b-at-the-usb-input-2026-10-16).
+**Before / after [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478)** (2026-10-16). The screen stays black until ESPHome's `setup()` ends, and most of `setup()` went into LVGL 9.5: every label waiting for its text subscribed to the display, and each new object walked that whole list; the screen size also came after the widgets were built, which restyled them all. On the **Waveshare 7B**, read on the boot timeline sensors:
+
+| Waveshare 7B | Before #478 (`3.8.1-7b-barre`, 3 starts) | After #478 (`main` 46ad7f03, 4 starts) |
+|---|---:|---:|
+| First image | 20.68-21.59 s | **5.56-5.83 s** |
+| API (Home Assistant connected) | 26.87-31.87 s | **11.53-12.69 s** |
+
+The first image comes about 15 s earlier. On the **virtual tablet** (`tab5-rendu-host.yaml`, before and after built on the same CI runner, run [38885536123](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/runs/38885536123)): 14,549 → 1,308 million instructions in `setup()` (callgrind, −91 %), 1.53-1.58 s → 0.18 s of native time. Not measured on a Tab5 yet.
+
+After #478 the 7B reaches Wi-Fi at 10.42-11.70 s. The `on_boot` still waits 1 s (`avant1s` → `apres1s`), a wait made for the Tab5's display expander, which the 7B does not have. Power during a restart: [consumption](consumption.md#waveshare-7b-at-the-usb-input-2026-10-16).
 
 ### Resources
 
@@ -301,7 +310,16 @@ L'écran compte **1 593 objets LVGL**, et chaque `lv_obj_report_style_change()` 
 
 Redémarrage par le bouton « Redémarrage Système », 3 passes par thème. En Ardoise (la palette compilée, rien à repeindre), la première « Loop Time » publiée après le redémarrage vaut 10 450 ms et l'API est de nouveau joignable après 17,2 à 17,4 s ; dans un autre thème (Capsule, repeint au démarrage), 13 401 ms et 18,9 à 19,1 s. **Tout thème autre qu'Ardoise ajoute ~2,95 s de boucle bloquée au démarrage**, et l'API revient 1,7 s plus tard — la même repeinture que la bascule. Ces durées ne se comparent pas au tableau du démarrage du 01/10/2026 plus bas (autre origine, autre méthode).
 
-Sur la **Waveshare 7B** (16/10/2026, `main` 46ad7f03, après [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478)), lu sur les capteurs de chronologie du démarrage sur 4 démarrages : première image à 5,56-5,83 s, Wi-Fi à 10,42-11,70 s, API à 11,53-12,69 s. L'`on_boot` attend toujours 1 s (`avant1s` → `apres1s`), une attente faite pour l'expandeur de l'écran du Tab5, que la 7B n'a pas. Puissance pendant un redémarrage : [consommation](consumption.md#waveshare-7b-à-lentrée-usb-16102026).
+**Avant / après [#478](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/478)** (16/10/2026). L'écran reste noir jusqu'à la fin du `setup()` d'ESPHome, et l'essentiel de `setup()` partait dans LVGL 9.5 : chaque label en attente de son texte s'abonnait à l'affichage, et chaque nouvel objet parcourait toute cette liste ; la taille de l'écran arrivait en plus après la création des widgets, ce qui refaisait leur style à tous. Sur la **Waveshare 7B**, lu sur les capteurs de chronologie du démarrage :
+
+| Waveshare 7B | Avant #478 (`3.8.1-7b-barre`, 3 démarrages) | Après #478 (`main` 46ad7f03, 4 démarrages) |
+|---|---:|---:|
+| Première image | 20,68-21,59 s | **5,56-5,83 s** |
+| API (Home Assistant connecté) | 26,87-31,87 s | **11,53-12,69 s** |
+
+La première image arrive environ 15 s plus tôt. Sur la **tablette virtuelle** (`tab5-rendu-host.yaml`, avant et après compilés sur le même runner de la CI, run [38885536123](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/actions/runs/38885536123)) : 14 549 → 1 308 millions d'instructions dans `setup()` (callgrind, −91 %), 1,53-1,58 s → 0,18 s en natif. Pas encore mesuré sur un Tab5.
+
+Après #478, la 7B rejoint le Wi-Fi à 10,42-11,70 s. L'`on_boot` attend toujours 1 s (`avant1s` → `apres1s`), une attente faite pour l'expandeur de l'écran du Tab5, que la 7B n'a pas. Puissance pendant un redémarrage : [consommation](consumption.md#waveshare-7b-à-lentrée-usb-16102026).
 
 ### Ressources
 
