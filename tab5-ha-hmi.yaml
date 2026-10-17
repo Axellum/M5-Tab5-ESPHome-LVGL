@@ -57,6 +57,19 @@ esphome:
   # (le job CI build-min compile à ce plancher). Pas cherché si une version plus
   # ancienne les connaît tous.
   min_version: 2026.9.0
+  # Une macro de LV_DEFINES (que lv_conf.h, écrit par ESPHome, met sinon à 0) passe par
+  # ICI : ESPHome 2026.9.0 ne lit que platformio_options pour l'écarter de lv_conf.h
+  # (esphome: build_flags seulement depuis 2026.9.1, #19743). Clé dépréciée, retirée en
+  # 2026.12.0 : avant, plancher à 2026.9.1 et ligne déplacée dans build_flags ci-dessous
+  # (un #error de tab5_cameras.cpp arrête le build si elle se perd).
+  platformio_options:
+    build_flags:
+      # Images RGB565 réduites ou recolorées (17/10/2026, discussion #278) : caméras
+      # (cadre et vignettes plus petits que l'image de HA, vignette appuyée), pochettes
+      # du lecteur en COVER. lv_draw_sw_transform les convertit en RGB565A8 ; ESPHome
+      # ne l'active que pour une `image:` RGB565 transparente, et sans lui LVGL écrit
+      # « Color format 0x12 is not enabled » et dessine un tampon non initialisé.
+      - -DLV_DRAW_SW_SUPPORT_RGB565A8=1
   # Réglages LVGL : ESPHome compile LVGL avec -DLV_KCONFIG_IGNORE, donc un
   # CONFIG_LV_* du sdkconfig n'a aucun effet ; une macro absente de ses LV_DEFINES
   # passe par ici.

@@ -296,8 +296,13 @@ size_t camera_psram_libre() { return heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 
 // Une mire calculée à la place de l'image (ADR-0057) : la capture du rendu montre la mise
 // en page avec des images (pièces, mosaïque, caméra hors ligne grisée) sans réseau. Taille
-// = width × height de l'URL (bornée à 960 × 540), 640 × 360 sans ; teinte tirée du chemin
-// de l'image (sans le jeton) : chaque caméra a la sienne, la même d'une image à l'autre.
+// = celle que HA renverrait pour une caméra 1920 × 1080 : la plus petite réduction en
+// huitièmes qui couvre width × height de l'URL (camera_proxy, jamais sous la demande),
+// 640 × 360 sans. Sur le Tab5, les demandes tombent juste (960 × 540, 480 × 270) ; sur
+// la 7B, une vignette arrive en 480 × 270 pour une case de 356 × 198 : le rendu passe
+// par la réduction de l'image (LV_DRAW_SW_SUPPORT_RGB565A8, build_flags), comme la
+// carte. Teinte tirée du chemin de l'image (sans le jeton) : chaque caméra a la sienne,
+// la même d'une image à l'autre.
 namespace {
 
 CameraCharge s_etat_hote = CameraCharge::LIBRE;
@@ -316,8 +321,17 @@ CameraCharge camera_charge_etat() { return s_etat_hote; }
 
 bool camera_charge_lancer(const char* url) {
     if (s_etat_hote == CameraCharge::EN_COURS) return false;
-    const int l = parametre(url, "width=", 640, 960);
-    const int h = parametre(url, "height=", 360, 540);
+    int l = parametre(url, "width=", 0, 1920);
+    int h = parametre(url, "height=", 0, 1080);
+    if (l == 0 || h == 0) {
+        l = 640;
+        h = 360;
+    } else {
+        int huitiemes = 1;
+        while (huitiemes < 8 && (240 * huitiemes < l || 135 * huitiemes < h)) huitiemes++;
+        l = 240 * huitiemes;
+        h = 135 * huitiemes;
+    }
     uint32_t graine = 2166136261u;   // FNV-1a du chemin, jusqu'au « ? »
     for (const char* p = url; *p != '\0' && *p != '?'; p++) graine = (graine ^ static_cast<uint8_t>(*p)) * 16777619u;
     const size_t octets = static_cast<size_t>(l) * static_cast<size_t>(h) * 2;

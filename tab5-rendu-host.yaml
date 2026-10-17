@@ -34,6 +34,12 @@ esphome:
     version: 3.2.0-rendu
   # Taille de l'écran de la carte (ADR-0061), comme tab5-ha-hmi.yaml : le rendu se compile
   # aussi en 1024×600 (`-s tab5_carte waveshare-7b`, job « rendu-7b » de rendu-host.yml).
+  # Formats de couleur de LVGL : les mêmes que la tablette (platformio_options de
+  # tab5-ha-hmi.yaml, où est la raison). tools/sanitizers/variante.py ajoute son script
+  # sous cette clé.
+  platformio_options:
+    build_flags:
+      - -DLV_DRAW_SW_SUPPORT_RGB565A8=1
   build_flags:
     - -DTAB5_ECRAN_L=${carte_ecran_l}
     - -DTAB5_ECRAN_H=${carte_ecran_h}

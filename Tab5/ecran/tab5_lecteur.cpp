@@ -574,7 +574,9 @@ void lecteur_image_prete(const lv_image_dsc_t* dsc) {
     // Même descripteur, pixels neufs : LVGL ne doit rien garder de l'image d'avant. COVER :
     // l'image garde ses proportions et remplit le cadre (360 × 360, vignette de 56 × 56,
     // pochette du lecteur compact),
-    // une pochette qui n'est pas carrée est rognée au lieu d'être bordée de noir.
+    // une pochette qui n'est pas carrée est rognée au lieu d'être bordée de noir. Réduite
+    // (vignette, lecteur compact) : chemin de la transformation, RGB565A8 requis
+    // (build_flags de tab5-ha-hmi.yaml, [AI-WARNING] de tab5_cameras.cpp).
     lv_image_cache_drop(dsc);
     for (lv_obj_t* img : {u.pochette, u.mini_pochette, u.zone_pochette}) {
         if (img == nullptr) continue;
