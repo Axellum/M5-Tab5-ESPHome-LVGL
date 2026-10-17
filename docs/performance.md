@@ -4,11 +4,115 @@
 
 ---
 
-Measured on the author's tablet (Tab5, ST7123 screen, ESP32-P4 revision v1.3 at 360 MHz). Newest campaign first; the older numbers are kept, dated, for comparison.
+Measured on the author's boards: the Tab5 (ST7123 screen, ESP32-P4 revision v1.3 at 360 MHz) and, since 2026-10-16, the [Waveshare 7B](waveshare-7b.md) (1024×600, ESP32-P4 revision v3.2 at 400 MHz). Newest campaign first; the older numbers are kept, dated, for comparison.
+
+## Waveshare 7B, night of 2026-10-16
+
+Measured on the author's 7B from 21:45 to 06:16, nobody touching it, on a measuring build of `main` 3293d4e1 that logs every frame of 2 ms or more and times each step of a theme switch (never committed). Same method as the Tab5 campaigns below: driven through the native API, whole screen = backlight off then on, popups through the « Aller à l'écran » select, the number kept is the longest frame, median of the runs. Power was recorded at the same time at the USB input: [consumption](consumption.md#settings-and-themes-7b-night-of-2026-10-16).
+
+The author's board is mounted upside down, so it runs with `carte_rotation: "0"` (no rotation). At the default 180°, a whole screen takes about 13 ms more: 82.6 against 69.4 ms (4 runs each, same board, same evening, builds identical except the rotation).
+
+### Whole screen, per theme (5 runs)
+
+| Theme | Dark (ms) | Light (ms) |
+|---|---|---|
+| Relief plat | 89.9 | 90.4 |
+| Bonbon | 82.8 | 81.5 |
+| Relief doux | 82.7 | 81.9 |
+| Sorbet | 71.0 | 70.1 |
+| Béton brut | 70.4 | 73.4 |
+| Ardoise | 69.2 | 69.2 |
+| Ardoise douce | 69.1 | 69.8 |
+| Craie et ardoise | 68.8 | 69.3 |
+| Platine et or | 68.2 | 68.9 |
+| Bento | 68.0 | 67.2 |
+| Graphite | 67.7 | 68.1 |
+| Almanach | 67.5 | 68.5 |
+| Capsule | 67.5 | 67.6 |
+| Ultraviolet | 67.5 | 68.4 |
+| Almanach imprimé | 66.7 | 66.2 |
+| Signalisation | 66.7 | 65.4 |
+| Néon calme | 65.9 | 66.4 |
+| Obsidienne | 65.9 | 66.0 |
+| Pixel | 62.7 | 62.8 |
+| Terre cuite | 62.4 | 62.6 |
+| Zen Sumi | 62.2 | 61.9 |
+
+- 18 themes of 21 redraw the whole screen in **62 to 73 ms**. The three slower ones are the shadows, as on the Tab5: from Ardoise, Relief plat +21 ms, Relief doux and Bonbon +14 ms. Light mode stays within 3 ms of dark.
+- **About half the Tab5's time** (2026-10-07, 3.8.0-rc.1, older code): Zen Sumi 62 against 126 ms, Relief plat 90 against 168 ms. The 7B has a third fewer pixels (614,400 against 921,600), no rotation here, and runs at 400 MHz instead of 360; the share of each was not measured.
+
+### Popups (10 runs in Zen Sumi, 5 in Relief doux)
+
+| Popup | Zen Sumi, dark (ms) | Relief doux, dark (ms) |
+|---|---|---|
+| Music | 109.7 | 136.3 |
+| Lights | 69.0 | 84.9 |
+| Climate | 67.5 | 79.3 |
+| Alarm clock | 67.1 | 77.5 |
+| TV remote | 66.8 | 95.8 |
+| Weather | 66.5 | 70.8 |
+| Shutter | 66.0 | 77.7 |
+| System console | 65.5 | 76.3 |
+| Temperature | 63.5 | 71.1 |
+| Tracking | 62.8 | 66.1 |
+| Plants | 62.8 | 70.5 |
+| Settings | 62.4 | 71.9 |
+| Calendar | 60.6 | 64.2 |
+| House | 59.2 | 71.9 |
+| Voice assistant | 56.7 | 64.6 |
+| Alerts | 47.5 | 50.6 |
+| Cameras | 44.4 | 46.6 |
+| Fridges and freezers | 38.8 | 39.5 |
+| AI server | 37.6 | 39.5 |
+| Energy | 37.0 | 38.7 |
+
+- Each opening is a single frame, except the system console (3: it refreshes itself) and Temperature (2). Closing a popup redraws the whole screen: 61-62 ms in Zen Sumi, 81-83 ms in Relief doux.
+- **Music is the slowest, about twice the others** (37 to 69 ms). Finding out why is under way.
+
+### Theme switch on the 7B
+
+57 switches, each step timed on the board. The cost depends on how many popups have been built: a popup is built the first time it opens, and a switch repaints it even when it is closed.
+
+| Step | Just after a restart (2,317 LVGL objects, 2 switches) | After opening the 20 screens once (3,294 objects, 55 switches) |
+|---|---|---|
+| **Whole switch** | **291 ms** (276-305) | **731 ms** (506-793) |
+| Colours set by the C++ modules (`theme_rejouer_ui()`) | 149 ms | 389 ms |
+| Display fonts | 73 ms | 147 ms |
+| Shapes | 64 ms | 129 ms |
+| Calendar styles (once the calendar is built) | 0.1 ms | 60 ms |
+| Colours of the shared styles and `lvgl.theme.update` | 0.2 ms | 0.2 ms |
+
+The other steps (glass buttons, alarm clock, assistant) take less than 3 ms. Reducing the switch is being studied. The Tab5 reached 657 ms at most on 2026-10-08 ([Theme switch](#theme-switch) below, another method).
+
+### Restarts (10 from the « Redémarrage Système » button)
+
+10 restarts out of 10, read on the [boot timeline](#boot-timeline-read-in-home-assistant-next-version) (time from ESP-IDF's start):
+
+| Step | Fastest | Slowest |
+|---|---|---|
+| Backlight on (`retro`) | 2.015 s | 2.019 s |
+| First image (`image`) | 5.84 s | 5.90 s |
+| Wi-Fi connected (`wifi`) | 10.35 s | 10.43 s |
+| Home Assistant connected (`api`) | 10.54 s | 10.92 s |
+| API back, seen from the computer, from the button | 14.59 s | 14.70 s |
+
+- No boot loop and no USB rescue: the fix of [#483](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/483) held over 10 restarts and 3 updates.
+- At each restart, the `esphome.tab5_connected` event was lost: the measuring script connected before Home Assistant, and the tablet sent the event to the first client, which does not listen to events. Fixed by [#495](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/495).
+- The backlight comes on at 2.0 s, almost 4 s before the first image: the author saw a blue screen for a moment. Not fixed yet.
+
+### A night left alone (23:31 → 06:15, 6 h 43 min)
+
+- **Memory**: free internal RAM 203,388 → 203,200 bytes (lowest 194,416), free PSRAM 24.14 → 24.15 MB, largest free blocks unchanged: **no leak**. Main loop stack: 10,608 bytes free at the lowest.
+- **Wi-Fi**: −36 to −58 dBm (median −38), the API never disconnected.
+- **Processor temperature**: 29.5 to 32.5 °C.
+- **Loop Time**: median 50 ms, highest 1,021 ms: the request for the ESP32-C6's version, which blocked the loop 1 s per try and is gone since [#494](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/494).
+- **Draw Max**: median 6.9 ms, highest 70.2 ms (the screen turned back on at 00:02); 24,138 frames of 2 ms or more, about one a second (the clock and the rotating panel).
+- **Touch**: 4 touches, all at 00:02, 150 to 200 ms each, in different places, while a setting changed at the same moment: a real person. **No phantom touch** the rest of the night.
+- **Log**: 3 « no answer on the SDIO link » (the C6 version, see above), 3 « api took a long time », 1 « template.text_sensor took a long time » (1,001 ms); no error.
 
 ## Results
 
-Latest campaign: measured on **2026-10-07** between 22:30 and 00:05, on the published **3.8.0-rc.1** and on measuring builds of the same code (commit `45a0c34`) that were never committed: they log every frame of 2 ms or more (duration, pixels, areas), and one of them also times each step of a theme switch and logs the free internal RAM and PSRAM every 60 s. Driven through the native API (`aioesphomeapi`), never in a minute where the blueprint pushes its 5-minute measurements; whole screen = backlight off then on; popups through the « Aller à l'écran » select; the number kept is the longest frame, median of the runs. Alerts were showing, so the rotating panel of the centre card was turning: idle numbers only compare at equal content, full frames do not depend on it.
+Latest campaign on the Tab5: measured on **2026-10-07** between 22:30 and 00:05, on the published **3.8.0-rc.1** and on measuring builds of the same code (commit `45a0c34`) that were never committed: they log every frame of 2 ms or more (duration, pixels, areas), and one of them also times each step of a theme switch and logs the free internal RAM and PSRAM every 60 s. Driven through the native API (`aioesphomeapi`), never in a minute where the blueprint pushes its 5-minute measurements; whole screen = backlight off then on; popups through the « Aller à l'écran » select; the number kept is the longest frame, median of the runs. Alerts were showing, so the rotating panel of the centre card was turning: idle numbers only compare at equal content, full frames do not depend on it.
 
 ### Whole screen, per theme (dark mode, 5 runs)
 
@@ -73,7 +177,7 @@ Changing the theme or the light/dark mode, including the day/night switch of the
 | Colours set by the C++ modules | 0.16 s |
 | Alarm clock, assistant | 0.02 s |
 
-The screen holds **1,593 LVGL objects**, and every `lv_obj_report_style_change()` walks them all and refreshes the whole subtree of each object that carries the style. It is the repaint code, not the theme. **An improvement is being studied** (not part of 3.8.0-rc.1).
+The screen holds **1,593 LVGL objects**, and every `lv_obj_report_style_change()` walks them all and refreshes the whole subtree of each object that carries the style. It is the repaint code, not the theme. **Since [#383](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/383) (3.8.0)**, the colours are set without refreshing each style and the shapes are refreshed in a single walk of the tree: on 2026-10-08, four theme switches in 6 s gave a longest « Loop Time » of **657 ms** (before: 3.17 s or more). The 7B's switch, step by step: [above](#theme-switch-on-the-7b).
 
 ### Boot
 
@@ -235,11 +339,115 @@ The marks of the first text never publish: both texts are published at the first
 
 ## Version française
 
-Mesuré sur la tablette de l'auteur (Tab5, écran ST7123, ESP32-P4 révision v1.3 à 360 MHz). La campagne la plus récente d'abord ; les anciens chiffres restent, datés, pour comparer.
+Mesuré sur les cartes de l'auteur : le Tab5 (écran ST7123, ESP32-P4 révision v1.3 à 360 MHz) et, depuis le 16/10/2026, la [Waveshare 7B](waveshare-7b.md) (1024×600, ESP32-P4 révision v3.2 à 400 MHz). La campagne la plus récente d'abord ; les anciens chiffres restent, datés, pour comparer.
+
+## Waveshare 7B, nuit du 16/10/2026
+
+Mesuré sur la 7B de l'auteur de 21 h 45 à 6 h 16, sans personne pour y toucher, sur un build de mesure de `main` 3293d4e1 qui écrit au journal chaque image de 2 ms ou plus et chronomètre chaque étape d'une bascule de thème (jamais commité). Même méthode que les campagnes du Tab5 plus bas : pilotage par l'API native, écran entier = rétroéclairage éteint puis rallumé, popups par le select « Aller à l'écran », chiffre retenu = image la plus longue, en médiane des passes. La puissance était relevée en même temps à l'entrée USB : [consommation](consumption.md#réglages-et-thèmes-7b-nuit-du-16102026).
+
+La carte de l'auteur est montée à l'envers : elle tourne avec `carte_rotation: "0"` (sans rotation). Avec les 180° d'origine, un écran entier prend environ 13 ms de plus : 82,6 contre 69,4 ms (4 passes chacun, même carte, même soir, builds identiques à la rotation près).
+
+### Écran entier, par thème (5 passes)
+
+| Thème | Sombre (ms) | Clair (ms) |
+|---|---|---|
+| Relief plat | 89,9 | 90,4 |
+| Bonbon | 82,8 | 81,5 |
+| Relief doux | 82,7 | 81,9 |
+| Sorbet | 71,0 | 70,1 |
+| Béton brut | 70,4 | 73,4 |
+| Ardoise | 69,2 | 69,2 |
+| Ardoise douce | 69,1 | 69,8 |
+| Craie et ardoise | 68,8 | 69,3 |
+| Platine et or | 68,2 | 68,9 |
+| Bento | 68,0 | 67,2 |
+| Graphite | 67,7 | 68,1 |
+| Almanach | 67,5 | 68,5 |
+| Capsule | 67,5 | 67,6 |
+| Ultraviolet | 67,5 | 68,4 |
+| Almanach imprimé | 66,7 | 66,2 |
+| Signalisation | 66,7 | 65,4 |
+| Néon calme | 65,9 | 66,4 |
+| Obsidienne | 65,9 | 66,0 |
+| Pixel | 62,7 | 62,8 |
+| Terre cuite | 62,4 | 62,6 |
+| Zen Sumi | 62,2 | 61,9 |
+
+- 18 thèmes sur 21 redessinent l'écran entier en **62 à 73 ms**. Les trois plus lents, ce sont les ombres, comme sur le Tab5 : depuis Ardoise, Relief plat +21 ms, Relief doux et Bonbon +14 ms. Le mode clair reste à 3 ms du sombre.
+- **Environ la moitié du temps du Tab5** (07/10/2026, 3.8.0-rc.1, code plus ancien) : Zen Sumi 62 contre 126 ms, Relief plat 90 contre 168 ms. La 7B a un tiers de pixels en moins (614 400 contre 921 600), pas de rotation ici, et tourne à 400 MHz au lieu de 360 ; la part de chacun n'est pas mesurée.
+
+### Popups (10 passes en Zen Sumi, 5 en Relief doux)
+
+| Popup | Zen Sumi, sombre (ms) | Relief doux, sombre (ms) |
+|---|---|---|
+| Musique | 109,7 | 136,3 |
+| Lumières | 69,0 | 84,9 |
+| Climatisation | 67,5 | 79,3 |
+| Réveil | 67,1 | 77,5 |
+| Télécommande TV | 66,8 | 95,8 |
+| Météo | 66,5 | 70,8 |
+| Volet | 66,0 | 77,7 |
+| Console système | 65,5 | 76,3 |
+| Température | 63,5 | 71,1 |
+| Suivi | 62,8 | 66,1 |
+| Plantes | 62,8 | 70,5 |
+| Réglages | 62,4 | 71,9 |
+| Calendrier | 60,6 | 64,2 |
+| Maison | 59,2 | 71,9 |
+| Assistant vocal | 56,7 | 64,6 |
+| Alertes | 47,5 | 50,6 |
+| Caméras | 44,4 | 46,6 |
+| Frigos et congélateurs | 38,8 | 39,5 |
+| Serveur IA | 37,6 | 39,5 |
+| Énergie | 37,0 | 38,7 |
+
+- Chaque ouverture tient en une image, sauf la console système (3 : elle se rafraîchit) et Température (2). Fermer un popup redessine l'écran entier : 61-62 ms en Zen Sumi, 81-83 ms en Relief doux.
+- **Musique est le plus lent, environ deux fois les autres** (37 à 69 ms). La recherche de la cause est en cours.
+
+### Bascule de thème sur la 7B
+
+57 bascules, chaque étape chronométrée sur la carte. Le coût dépend du nombre de popups déjà construits : un popup est construit à sa première ouverture, et une bascule le repeint même fermé.
+
+| Étape | Juste après un redémarrage (2 317 objets LVGL, 2 bascules) | Après avoir ouvert une fois les 20 écrans (3 294 objets, 55 bascules) |
+|---|---|---|
+| **Bascule entière** | **291 ms** (276-305) | **731 ms** (506-793) |
+| Couleurs posées par les modules C++ (`theme_rejouer_ui()`) | 149 ms | 389 ms |
+| Polices d'affichage | 73 ms | 147 ms |
+| Formes | 64 ms | 129 ms |
+| Styles du calendrier (une fois le calendrier construit) | 0,1 ms | 60 ms |
+| Couleurs des styles partagés et `lvgl.theme.update` | 0,2 ms | 0,2 ms |
+
+Les autres étapes (boutons verre, réveil, assistant) prennent moins de 3 ms. Un allègement de la bascule est à l'étude. Le Tab5 atteignait 657 ms au pire le 08/10/2026 ([Bascule de thème](#bascule-de-thème) plus bas, autre méthode).
+
+### Redémarrages (10 par le bouton « Redémarrage Système »)
+
+10 redémarrages réussis sur 10, lus sur la [chronologie du démarrage](#chronologie-du-démarrage-lue-dans-home-assistant-prochaine-version) (temps depuis le démarrage d'ESP-IDF) :
+
+| Étape | Le plus rapide | Le plus lent |
+|---|---|---|
+| Rétroéclairage allumé (`retro`) | 2,015 s | 2,019 s |
+| Première image (`image`) | 5,84 s | 5,90 s |
+| Wi-Fi connecté (`wifi`) | 10,35 s | 10,43 s |
+| Home Assistant connecté (`api`) | 10,54 s | 10,92 s |
+| API revenue, vue du PC, depuis le bouton | 14,59 s | 14,70 s |
+
+- Aucune boucle de redémarrages, aucun secours par l'USB : le correctif de [#483](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/483) a tenu sur 10 redémarrages et 3 mises à jour.
+- À chaque redémarrage, l'événement `esphome.tab5_connected` s'est perdu : le script de mesure se connectait avant Home Assistant, et la tablette envoyait l'événement au premier client, qui n'écoute pas les événements. Corrigé par [#495](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/495).
+- Le rétroéclairage s'allume à 2,0 s, presque 4 s avant la première image : l'auteur a vu un écran bleu un instant. Pas encore corrigé.
+
+### Une nuit sans y toucher (23 h 31 → 6 h 15, 6 h 43 min)
+
+- **Mémoire** : RAM interne libre 203 388 → 203 200 octets (au plus bas 194 416), PSRAM libre 24,14 → 24,15 Mo, plus grands blocs libres inchangés : **pas de fuite**. Pile de la boucle principale : 10 608 octets libres au plus bas.
+- **Wi-Fi** : −36 à −58 dBm (médiane −38), l'API ne s'est jamais déconnectée.
+- **Température du processeur** : 29,5 à 32,5 °C.
+- **Loop Time** : médiane 50 ms, au plus 1 021 ms : la demande de version de l'ESP32-C6, qui bloquait la boucle 1 s par essai et a disparu avec [#494](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/494).
+- **Draw Max** : médiane 6,9 ms, au plus 70,2 ms (écran rallumé à 0 h 02) ; 24 138 images de 2 ms ou plus, environ une par seconde (l'horloge et le panneau tournant).
+- **Toucher** : 4 appuis, tous à 0 h 02, de 150 à 200 ms chacun, à des endroits différents, pendant qu'un réglage changeait au même moment : une vraie personne. **Aucun appui fantôme** le reste de la nuit.
+- **Journal** : 3 « pas de réponse sur le lien SDIO » (la version du C6, voir plus haut), 3 « api took a long time », 1 « template.text_sensor took a long time » (1 001 ms) ; aucune erreur.
 
 ## Résultats
 
-Dernière campagne : mesurée le **07/10/2026** entre 22 h 30 et 0 h 05, sur la **3.8.0-rc.1** publiée et sur des builds de mesure du même code (commit `45a0c34`), jamais commités : ils écrivent au journal chaque image de 2 ms ou plus (durée, pixels, zones), et l'un d'eux chronomètre aussi chaque étape d'une bascule de thème et relève la RAM interne et la PSRAM libres toutes les 60 s. Pilotage par l'API native (`aioesphomeapi`), jamais dans une minute où le blueprint pousse ses mesures de 5 minutes ; écran entier = rétroéclairage éteint puis rallumé ; popups par le select « Aller à l'écran » ; chiffre retenu = image la plus longue, en médiane des passes. Des alertes étaient affichées, donc le panneau tournant de la carte centrale tournait : les chiffres au repos ne se comparent qu'à contenu égal, les images pleines n'en dépendent pas.
+Dernière campagne sur le Tab5 : mesurée le **07/10/2026** entre 22 h 30 et 0 h 05, sur la **3.8.0-rc.1** publiée et sur des builds de mesure du même code (commit `45a0c34`), jamais commités : ils écrivent au journal chaque image de 2 ms ou plus (durée, pixels, zones), et l'un d'eux chronomètre aussi chaque étape d'une bascule de thème et relève la RAM interne et la PSRAM libres toutes les 60 s. Pilotage par l'API native (`aioesphomeapi`), jamais dans une minute où le blueprint pousse ses mesures de 5 minutes ; écran entier = rétroéclairage éteint puis rallumé ; popups par le select « Aller à l'écran » ; chiffre retenu = image la plus longue, en médiane des passes. Des alertes étaient affichées, donc le panneau tournant de la carte centrale tournait : les chiffres au repos ne se comparent qu'à contenu égal, les images pleines n'en dépendent pas.
 
 ### Écran entier, par thème (mode sombre, 5 passes)
 
@@ -304,7 +512,7 @@ Changer de thème ou de mode clair/sombre, y compris la bascule jour/nuit du mod
 | Couleurs posées par les modules C++ | 0,16 s |
 | Réveil, assistant | 0,02 s |
 
-L'écran compte **1 593 objets LVGL**, et chaque `lv_obj_report_style_change()` les parcourt tous et rafraîchit tout le sous-arbre de chaque objet qui porte le style. C'est le code de la repeinture, pas le thème. **Une amélioration est à l'étude** (hors 3.8.0-rc.1).
+L'écran compte **1 593 objets LVGL**, et chaque `lv_obj_report_style_change()` les parcourt tous et rafraîchit tout le sous-arbre de chaque objet qui porte le style. C'est le code de la repeinture, pas le thème. **Depuis [#383](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/383) (3.8.0)**, les couleurs sont posées sans rafraîchir chaque style et les formes sont rafraîchies en un seul parcours de l'arbre : le 08/10/2026, quatre bascules de thème en 6 s ont donné une « Loop Time » de **657 ms** au plus (avant : 3,17 s ou plus). La bascule de la 7B, étape par étape : [plus haut](#bascule-de-thème-sur-la-7b).
 
 ### Démarrage
 
