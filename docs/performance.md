@@ -73,7 +73,20 @@ Changing the theme or the light/dark mode, including the day/night switch of the
 | Colours set by the C++ modules | 0.16 s |
 | Alarm clock, assistant | 0.02 s |
 
-The screen holds **1,593 LVGL objects**, and every `lv_obj_report_style_change()` walks them all and refreshes the whole subtree of each object that carries the style. It is the repaint code, not the theme. **An improvement is being studied** (not part of 3.8.0-rc.1).
+The screen holds **1,593 LVGL objects**, and every `lv_obj_report_style_change()` walks them all and refreshes the whole subtree of each object that carries the style. It is the repaint code, not the theme. **Since #383 (2026-10-08)** the colours are set without refreshing the objects, then the screen is redrawn once: 657 ms at worst on the Tab5 (« Loop Time » of the minute, 4 themes).
+
+**Waveshare 7B, night of 2026-10-16** (`main` @ 3293d4e1, steps timed on the device): 291 ms (median) right after boot (2,317 objects), **731 ms once the 20 screens have been opened** (3,294 objects, 55 switches): C++ modules 389 ms, display fonts 147 ms, shapes 129 ms, calendar 60 ms. Every repainted object invalidated itself although the whole screen already was, each invalidation walking the display's callback list, and every label waiting for its text subscribed to that list. [#501](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/501) (2026-10-17) turns invalidation off and drains those subscriptions during the switch, and skips fonts and shapes that do not change. Virtual tablet at 1024 × 600, 3,271 objects, native time, median of 24 switches:
+
+| | Before | After |
+|---|---:|---:|
+| Shapes | 7.5 ms | 2.3 ms |
+| Display fonts | 7.2 ms | 1.1 ms |
+| Calendar | 3.0 ms | 0 |
+| C++ modules | 13.2 ms | 0.3 ms |
+| **Whole script** | **31.1 ms** | **3.8 ms** |
+| Next frame (layout and full redraw) | 48.2 ms | 43.3 ms |
+
+Not measured on the 7B yet (estimate: 70 to 90 ms instead of 731).
 
 ### Boot
 
@@ -304,7 +317,20 @@ Changer de thème ou de mode clair/sombre, y compris la bascule jour/nuit du mod
 | Couleurs posées par les modules C++ | 0,16 s |
 | Réveil, assistant | 0,02 s |
 
-L'écran compte **1 593 objets LVGL**, et chaque `lv_obj_report_style_change()` les parcourt tous et rafraîchit tout le sous-arbre de chaque objet qui porte le style. C'est le code de la repeinture, pas le thème. **Une amélioration est à l'étude** (hors 3.8.0-rc.1).
+L'écran compte **1 593 objets LVGL**, et chaque `lv_obj_report_style_change()` les parcourt tous et rafraîchit tout le sous-arbre de chaque objet qui porte le style. C'est le code de la repeinture, pas le thème. **Depuis #383 (08/10/2026)**, les couleurs sont reposées sans rafraîchir les objets, puis l'écran est redessiné une fois : 657 ms au pire sur le Tab5 (« Loop Time » de la minute, 4 thèmes).
+
+**Waveshare 7B, nuit du 16/10/2026** (`main` @ 3293d4e1, étapes chronométrées sur l'appareil) : 291 ms en médiane juste après le démarrage (2 317 objets), **731 ms une fois les 20 écrans ouverts** (3 294 objets, 55 bascules) : modules C++ 389 ms, polices 147 ms, formes 129 ms, calendrier 60 ms. Chaque objet repeint s'invalidait alors que tout l'écran l'était déjà, chaque invalidation parcourant la liste des rappels de l'affichage, et chaque label en attente de son texte s'abonnait à cette liste. [#501](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/pull/501) (17/10/2026) coupe l'invalidation et vide ces abonnements pendant la bascule, et saute les polices et les formes qui ne changent pas. Tablette virtuelle en 1024 × 600, 3 271 objets, temps natif, médiane de 24 bascules :
+
+| | Avant | Après |
+|---|---:|---:|
+| Formes | 7,5 ms | 2,3 ms |
+| Polices d'affichage | 7,2 ms | 1,1 ms |
+| Calendrier | 3,0 ms | 0 |
+| Modules C++ | 13,2 ms | 0,3 ms |
+| **Script entier** | **31,1 ms** | **3,8 ms** |
+| Image suivante (mise en page et écran entier) | 48,2 ms | 43,3 ms |
+
+Pas encore mesuré sur la 7B (estimation : 70 à 90 ms au lieu de 731).
 
 ### Démarrage
 
