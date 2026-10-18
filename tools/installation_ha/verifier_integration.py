@@ -182,6 +182,7 @@ PIECES_CI = {
 }
 CACHEE = "light.ci_cachee"
 PIECES_ATTENDUES = {
+    "nombre_pieces": 2,  # les pièces choisies (ADR-0066)
     "piece_1_nom": "Salon CI",
     "piece_1_tuiles": ["light.ci_applique", "light.ci_plafonnier", "switch.ci_prise"],
     "piece_1_temperature": "sensor.ci_temperature_salon",
@@ -492,8 +493,8 @@ async def assistant(ha: HA, dossier: Path, entree: str, rapport: Rapport) -> Non
     vues = await suivre(ha, options, etape, [dehors, None, {"mettre_a_jour": True}])
     rapport.verifier(vues[-1].get("type") == "create_entry", "1 bis. options : mise à jour validée", str(vues[-1])[:300])
     nos = automatisations_tab5(dossier)
-    attendu = ({k: v for k, v in PIECES_ATTENDUES.items() if k.startswith("piece_1_")} | maison
-               | {"piece_1_nom": "Séjour CI", "serre_exterieure": False})
+    attendu = ({"nombre_pieces": 1} | {k: v for k, v in PIECES_ATTENDUES.items() if k.startswith("piece_1_")}
+               | maison | {"piece_1_nom": "Séjour CI", "serre_exterieure": False})
     rapport.verifier(len(nos) == 1 and nos[0]["use_blueprint"].get("input") == attendu,
                      "1 bis. mise à jour : la même automatisation, ses pièces remplacées (pièce 2 retirée), "
                      "la case « dehors » décochée écrite", str(nos)[:600])

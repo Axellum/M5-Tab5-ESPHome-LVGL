@@ -171,17 +171,28 @@ EMPLACEMENTS = {
 }
 # Pièces (ADR-0023) : la pièce 1 reste vide, l'accueil est donc construit depuis les
 # entrées 3.x ci-dessus (t00 = PC, t01 = volet, t02..t04 = lumières) ; les pièces 2 et 3
-# sont choisies (la 2 a six appareils : le sixième n'a pas de tuile) ; 4 et 5 vides.
+# sont choisies (la 2 a six appareils : le sixième est t15, ADR-0066) ; 4 et 5 vides.
 # « Kitchen » est retiré des noms (« Kitchen Lights » → « Lights »). Une même entité
 # (kitchen_lights) est dans deux tuiles. Deux clims de l'intégration demo : Hvac, la clim
 # du blueprint (t14, option m), et HeatPump, une clim de tuile (t24, ADR-0027).
+# Nombre de pièces (ADR-0066) : 6. La pièce 6 a onze appareils (t50 … t59, puis t5a) ; la
+# pièce 7, au-delà du nombre, ne part pas (ni définition ni état).
 PIECES = {
+    "nombre_pieces": 6,
     "piece_2_nom": "Kitchen",
     "piece_2_tuiles": ["light.kitchen_lights", "cover.kitchen_window", "sensor.outside_temperature",
                        "lock.front_door", "climate.hvac", "valve.front_garden"],
     "piece_3_tuiles": ["media_player.living_room", "binary_sensor.movement_backyard",
                        "light.office_rgbw_lights", "button.push", "climate.heatpump"],
+    "piece_6_nom": "Annex CI",
+    "piece_6_tuiles": ["light.bed_light", "light.ceiling_lights", "light.kitchen_lights", "light.office_rgbw_lights",
+                       "cover.kitchen_window", "sensor.outside_temperature", "lock.front_door",
+                       "valve.front_garden", "media_player.living_room", "binary_sensor.movement_backyard",
+                       "button.push"],
+    "piece_7_tuiles": ["light.bed_light", "lock.front_door"],
 }
+# Clés des éléments d'une pièce (ADR-0066) : T = 0 … 9 puis a … j.
+LETTRES = "0123456789abcdefghij"
 PERSONNALISATION = [
     {"entite": "light.office_rgbw_lights", "nom": "Bureau | CI; test", "icone": "mdi:led-strip-variant",
      "comportement": "confirmer"},
@@ -202,16 +213,16 @@ RANGEE = {
     "nabu_duree": 24,
 }
 # Tuile − / + (ADR-0033) : la TV du blueprint (option t, sa tuile t20), la clim du
-# blueprint (sautée : la tablette la met déjà en tête), une lampe (t03, lumiere_2), la
-# clim de tuile (t24), un volet (t11), la vanne (sixième de sa pièce : sans tuile ni
-# lien) et la serrure (sans type : sautée).
+# blueprint (sautée : la tablette la met déjà en tête), une lampe (t03, lumiere_2, aussi
+# t51 : le lien reste la clé qu'un firmware 3.9 lit), la clim de tuile (t24), un volet
+# (t11), la vanne (sixième de sa pièce : t15, ADR-0066) et la serrure (sans type : sautée).
 REGLABLES = {
     "reglables": ["media_player.living_room", "climate.hvac", "light.ceiling_lights", "climate.heatpump",
                   "cover.kitchen_window", "valve.front_garden", "lock.front_door"],
 }
 # (clé, type, options, lien) que le blueprint doit décrire.
 REGLABLES_ATTENDUS = [("r0", "son", "t", "t20"), ("r1", "lum", "", "t03"), ("r2", "cli", "", "t24"),
-                      ("r3", "vol", "", "t11"), ("r4", "vol", "", "")]
+                      ("r3", "vol", "", "t11"), ("r4", "vol", "", "t15")]
 # Ce que le blueprint doit calculer pour la rangée (champs : complement, classe).
 RANGEE_DETAILS = {
     "h00": {"complement": "°C", "classe": "temperature"},
@@ -434,18 +445,23 @@ def protocole_de(version: str | None) -> int:
     return 2 if m and tuple(int(x) for x in m.groups()) >= (3, 2, 0) else 1
 
 
+def nombre_de_pieces() -> int:
+    """« Nombre de pièces » des entrées (ADR-0066), 5 sans elle."""
+    return int(PIECES.get("nombre_pieces", 5))
+
+
 def tuiles_attendues() -> list[tuple[str, str]]:
     """(clé, type) des tuiles que le blueprint doit décrire pour ces entrées : la pièce 1
-    depuis les entrées 3.x (places fixes), puis les cinq premières entités de chaque
-    pièce choisie."""
+    depuis les entrées 3.x (places fixes), puis les vingt premières entités de chaque
+    pièce choisie jusqu'au nombre de pièces (ADR-0066)."""
     tuiles = []
     premiere = "pc" if EMPLACEMENTS.get("pc") else "tv"
     for t, source in enumerate([premiere, "volet", "lumiere_1", "lumiere_2", "lumiere_3"]):
         if entite := EMPLACEMENTS.get(source):
             tuiles.append((f"t0{t}", TYPES_PAR_DOMAINE[entite.split(".")[0]]))
-    for n in range(2, 6):
-        for t, entite in enumerate(PIECES.get(f"piece_{n}_tuiles", [])[:5]):
-            tuiles.append((f"t{n - 1}{t}", TYPES_PAR_DOMAINE[entite.split(".")[0]]))
+    for n in range(2, nombre_de_pieces() + 1):
+        for t, entite in enumerate(PIECES.get(f"piece_{n}_tuiles", [])[:len(LETTRES)]):
+            tuiles.append((f"t{n - 1}{LETTRES[t]}", TYPES_PAR_DOMAINE[entite.split(".")[0]]))
     return tuiles
 
 
@@ -470,7 +486,10 @@ def juger_definitions(definitions: str, icones_mdi: dict[str, str]) -> list[str]
     """Écarts entre les définitions calculées par le blueprint et ce qu'on attend."""
     problemes = []
     entrees = entrees_de(definitions)
-    pieces = {e[0]: e for e in entrees if e[0].startswith("p")}
+    nombre = [e for e in entrees if e[0] == "pn"]
+    if [e[1:] for e in nombre] != [[str(nombre_de_pieces())]] or entrees[:1] != nombre[:1]:
+        problemes.append(f"« pn » {nombre} au lieu de pn|{nombre_de_pieces()} en tête (ADR-0066)")
+    pieces = {e[0]: e for e in entrees if e[0].startswith("p") and e[0] != "pn"}
     tuiles = {e[0]: e for e in entrees if e[0].startswith("t")}
     rangee = {e[0]: e for e in entrees if re.fullmatch(r"[hn][0-4][0-4]", e[0])}
     reglages = {e[0]: e for e in entrees if e[0] in ("hp", "hd", "np", "nd")}
@@ -1304,7 +1323,8 @@ async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rappor
     tuiles = [cle for cle, _ in tuiles_attendues()]
     rapport.verifier(not problemes,
                      f"pièces : définitions conformes ({len(tuiles)} tuiles ; pièce 1 depuis les entrées 3.x, "
-                     "pièces 2 et 3 choisies, cinq tuiles au plus, nom de pièce retiré, personnalisation)",
+                     "pièces 2, 3 et 6 choisies, vingt éléments au plus, pièce 7 au-delà du nombre de pièces "
+                     "absente, nom de pièce retiré, personnalisation)",
                      " ; ".join(problemes))
     rapport.info(f"définitions : {definitions}")
     etats = variables.get("etats_tuiles") or ""
@@ -1337,7 +1357,7 @@ async def verifier_tuiles(ha: HA, cree: float, connexion: float, rapport: Rappor
         # Et les états tRT ne partent pas non plus, ni les clims des tuiles (crRT, ceRT).
         trt = [a for _, trace in traces.items() for a in appels_de_trace(trace)
                if str(a.get("service", "")).endswith("_tab5_maj_emplacements")
-               and re.search(r"(^|;)((t|cr|ce|h)[0-4][0-4]|r[0-7])[|]",
+               and re.search(r"(^|;)((t|cr|ce|h)[0-9][0-9a-j]|r[0-7])[|]",
                              str((a.get("service_data") or {}).get("payload", "")))]
         rapport.verifier(not trt, "protocole 1 : aucun état de tuile (tRT, crRT, ceRT), de la rangée (hLI) ni de "
                          "la tuile − / + (rN) poussé", f"{len(trt)} poussée(s)")

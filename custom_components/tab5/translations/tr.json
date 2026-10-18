@@ -38,7 +38,7 @@
           "pieces": "Tabletin odaları"
         },
         "data_description": {
-          "pieces": "En fazla beş, alt sıradaki sayfaların sırasıyla: ilki ana ekranda, sonrakiler kaydırarak."
+          "pieces": "En fazla on, alt sıradaki sayfaların sırasıyla: ilki ana ekranda, sonrakiler kaydırarak."
         }
       },
       "piece": {
@@ -53,7 +53,7 @@
         },
         "data_description": {
           "nom": "Boş: cihazlarının ortak alan adı.",
-          "tuiles": "En fazla beş, soldan sağa.",
+          "tuiles": "En fazla yirmi, soldan sağa. Beşten fazlası için kutucuklar ikiye, sonra dörde bölünür.",
           "temperature": "İsteğe bağlı. Bu oda ekrandayken ana ekranda gösterilir.",
           "humidite": "İsteğe bağlı, sıcaklıkla birlikte.",
           "clim": "İsteğe bağlı, sıcaklıkla birlikte: ana ekrandaki − / + düğmeleri onu ayarlar."
@@ -129,8 +129,8 @@
     },
     "error": {
       "aucune_piece_choisie": "En az bir oda seçin.",
-      "trop_de_pieces": "En fazla beş oda.",
-      "trop_de_tuiles": "En fazla beş kutucuk."
+      "trop_de_pieces": "En fazla on oda.",
+      "trop_de_tuiles": "En fazla yirmi kutucuk."
     }
   },
   "issues": {
@@ -186,7 +186,7 @@
               "pieces": "Tabletin odaları"
             },
             "data_description": {
-              "pieces": "En fazla beş, alt sıradaki sayfaların sırasıyla: ilki ana ekranda, sonrakiler kaydırarak."
+              "pieces": "En fazla on, alt sıradaki sayfaların sırasıyla: ilki ana ekranda, sonrakiler kaydırarak."
             }
           },
           "piece": {
@@ -201,7 +201,7 @@
             },
             "data_description": {
               "nom": "Boş: cihazlarının ortak alan adı.",
-              "tuiles": "En fazla beş, soldan sağa.",
+              "tuiles": "En fazla yirmi, soldan sağa. Beşten fazlası için kutucuklar ikiye, sonra dörde bölünür.",
               "temperature": "İsteğe bağlı. Bu oda ekrandayken ana ekranda gösterilir.",
               "humidite": "İsteğe bağlı, sıcaklıkla birlikte.",
               "clim": "İsteğe bağlı, sıcaklıkla birlikte: ana ekrandaki − / + düğmeleri onu ayarlar."
@@ -277,8 +277,8 @@
         },
         "error": {
           "aucune_piece_choisie": "En az bir oda seçin.",
-          "trop_de_pieces": "En fazla beş oda.",
-          "trop_de_tuiles": "En fazla beş kutucuk."
+          "trop_de_pieces": "En fazla on oda.",
+          "trop_de_tuiles": "En fazla yirmi kutucuk."
         }
       }
     }

@@ -4,8 +4,11 @@
 # @role Blueprint HA (lot 6a de l'audit « ouverture », ADR-0019 ; pièces, ADR-0023) :
 #       choisir à la souris les appareils de l'écran du M5Stack Tab5. Une automatisation
 #       par tablette. Elle :
-#       - décrit les pièces (firmware 3.2 et plus, ADR-0023) : jusqu'à 5 pièces de 5
-#         tuiles, une par page de la rangée du bas. Définitions (tab5_maj_tuiles :
+#       - décrit les pièces (firmware 3.2 et plus, ADR-0023) : jusqu'à 10 pièces de 20
+#         éléments depuis l'ADR-0066 (« Nombre de pièces », 5 par défaut ; clés tRT, T =
+#         0-9 puis a-j ; « pn|N » en tête, les pièces R ≥ N jamais envoyées ; un firmware
+#         plus ancien lit les 5 × 5 premières clés et ignore le reste), une par page de la
+#         rangée du bas. Définitions (tab5_maj_tuiles :
 #         type, icône, options, complément, nom) à la connexion, au rechargement des
 #         automatisations, au démarrage de HA et à la demande des zones ; puis états
 #         « tRT|état|valeur|couleur » par tab5_maj_emplacements : tous après les
@@ -119,17 +122,19 @@ blueprint:
   # changent pas (des automatisations existantes les référencent).
   name: "Tab5 — emplacements de l'écran · screen slots"
   description: >-
-    Choisissez les appareils de l'écran du M5Stack Tab5 : jusqu'à cinq pièces de cinq
-    appareils, une par page de la rangée du bas (l'accueil, puis les pages atteintes d'un
-    glissement). Le nom, l'icône et le type de chaque tuile viennent de Home Assistant.
+    Choisissez les appareils de l'écran du M5Stack Tab5 : jusqu'à dix pièces de vingt
+    appareils (un firmware plus ancien en montre cinq de cinq), une par page de la rangée
+    du bas (l'accueil, puis les pages atteintes d'un glissement). Le nom, l'icône et le
+    type de chaque tuile viennent de Home Assistant.
     Tout est facultatif : ce qui reste vide disparaît de l'écran, avec ses boutons. Une
     seule automatisation par tablette. Un changement part tout de suite ; les mesures
     (températures, plantes, capteurs) sont mises à jour toutes les 5 minutes. Pas à pas :
     [étape 6 de l'installation](https://github.com/Axellum/M5-Tab5-ESPHome-LVGL/blob/main/docs/installation/devices.md#version-française).
 
 
-    Pick the devices of the M5Stack Tab5 screen: up to five rooms of five devices, one per
-    page of the bottom row (the home page, then the pages a swipe reaches). Each tile's
+    Pick the devices of the M5Stack Tab5 screen: up to ten rooms of twenty devices (an
+    older firmware shows five of five), one per page of the bottom row (the home page,
+    then the pages a swipe reaches). Each tile's
     name, icon and kind come from Home Assistant. Everything is optional: what you leave
     empty disappears from the screen, with its buttons. One automation per tablet. A
     change is sent at once; measurements (temperatures, plants, sensors) are updated every
@@ -144,17 +149,47 @@ blueprint:
     # réordonnables (2025.8), relevés dans l'historique de homeassistant/helpers/selector.py.
     min_version: 2026.8.0
   input:
+    # >>> entrées des pièces (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)
     # Pièce n ↔ page de la rangée du bas, dans l'ordre où un glissement les atteint
-    # depuis l'accueil (ADR-0023) : R = n − 1.
+    # depuis l'accueil (ADR-0023, ADR-0066) : R = n − 1. Seules les « Nombre de
+    # pièces » premières comptent.
+    pieces:
+      name: Pièces · Rooms
+      icon: mdi:floor-plan
+      description: >-
+        Combien de pièces la tablette montre ; chacune a sa section ci-dessous.
+
+
+        How many rooms the tablet shows; each has its section below.
+      input:
+        nombre_pieces:
+          name: Nombre de pièces · Number of rooms
+          description: >-
+            De 1 à 10 : les sections « Pièce n » au-delà sont ignorées (rien n'en part vers
+            la tablette). Les pièces 1 à 5 suivent les pages de la météo, les suivantes
+            ont chacune une page après J+10 → J+14. Un firmware plus ancien en montre cinq au
+            plus.
+
+
+            From 1 to 10: the « Room n » sections beyond are ignored (nothing of them is sent
+            to the tablet). Rooms 1 to 5 follow the weather pages, the next ones each
+            get a page after day 10 → 14. An older firmware shows five at most.
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 10
+              step: 1
+              mode: slider
     piece_1:
       name: "Pièce 1 — accueil (aujourd'hui → J+4) · Room 1 — home (today → day 4)"
       icon: mdi:home
       description: >-
-        Les cinq tuiles de l'accueil. Laissée vide, l'accueil garde les appareils de la
-        section « Ancien accueil », tout en bas.
+        Les tuiles de l'accueil. Laissée vide, l'accueil garde les appareils de la section
+        « Ancien accueil », tout en bas.
 
 
-        The five tiles of the home page. Left empty, the home page keeps the devices of the
+        The tiles of the home page. Left empty, the home page keeps the devices of the
         « Former home page » section, at the bottom.
       input:
         piece_1_nom:
@@ -172,12 +207,17 @@ blueprint:
         piece_1_tuiles:
           name: Appareils · Devices
           description: >-
-            Cinq au plus, dans l'ordre des tuiles (de gauche à droite). Lumières,
-            interrupteurs, volets, lecteurs, scènes et scripts, capteurs, climatisation.
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
+            Lumières, interrupteurs, volets, lecteurs, scènes et scripts, capteurs, climatisation.
 
 
-            Five at most, in tile order (left to right). Lights, switches, covers, media
-            players, scenes and scripts, sensors, climate.
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
+            Lights, switches, covers, media players, scenes and scripts, sensors, climate.
           default: []
           selector:
             entity:
@@ -255,9 +295,11 @@ blueprint:
       icon: mdi:home-outline
       description: >-
         Un glissement vers la gauche depuis l'accueil.
+        Comptée si « Nombre de pièces » vaut au moins 2.
 
 
         One swipe left from the home page.
+        Used when « Number of rooms » is at least 2.
       collapsed: true
       input:
         piece_2_nom:
@@ -275,10 +317,15 @@ blueprint:
         piece_2_tuiles:
           name: Appareils · Devices
           description: >-
-            Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
 
 
-            Five at most, in tile order (left to right).
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
           default: []
           selector:
             entity:
@@ -335,9 +382,11 @@ blueprint:
       icon: mdi:home-outline
       description: >-
         Deux glissements vers la gauche depuis l'accueil.
+        Comptée si « Nombre de pièces » vaut au moins 3.
 
 
         Two swipes left from the home page.
+        Used when « Number of rooms » is at least 3.
       collapsed: true
       input:
         piece_3_nom:
@@ -355,10 +404,15 @@ blueprint:
         piece_3_tuiles:
           name: Appareils · Devices
           description: >-
-            Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
 
 
-            Five at most, in tile order (left to right).
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
           default: []
           selector:
             entity:
@@ -415,9 +469,11 @@ blueprint:
       icon: mdi:home-outline
       description: >-
         Un glissement vers la droite depuis l'accueil.
+        Comptée si « Nombre de pièces » vaut au moins 4.
 
 
         One swipe right from the home page.
+        Used when « Number of rooms » is at least 4.
       collapsed: true
       input:
         piece_4_nom:
@@ -435,10 +491,15 @@ blueprint:
         piece_4_tuiles:
           name: Appareils · Devices
           description: >-
-            Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
 
 
-            Five at most, in tile order (left to right).
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
           default: []
           selector:
             entity:
@@ -495,9 +556,11 @@ blueprint:
       icon: mdi:home-outline
       description: >-
         Deux glissements vers la droite depuis l'accueil.
+        Comptée si « Nombre de pièces » vaut au moins 5.
 
 
         Two swipes right from the home page.
+        Used when « Number of rooms » is at least 5.
       collapsed: true
       input:
         piece_5_nom:
@@ -515,10 +578,15 @@ blueprint:
         piece_5_tuiles:
           name: Appareils · Devices
           description: >-
-            Cinq au plus, dans l'ordre des tuiles (de gauche à droite).
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
 
 
-            Five at most, in tile order (left to right).
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
           default: []
           selector:
             entity:
@@ -570,6 +638,442 @@ blueprint:
             entity:
               filter:
                 - domain: climate
+    piece_6:
+      name: "Pièce 6 — sa page · Room 6 — its own page"
+      icon: mdi:home-outline
+      description: >-
+        Trois glissements vers la gauche depuis l'accueil, après J+10 → J+14 : une page à elle, sans météo. Un firmware plus ancien ne montre que les pièces 1 à 5.
+        Comptée si « Nombre de pièces » vaut au moins 6.
+
+
+        Three swipes left from the home page, after day 10 → 14: a page of its own, without weather. An older firmware shows rooms 1 to 5 only.
+        Used when « Number of rooms » is at least 6.
+      collapsed: true
+      input:
+        piece_6_nom:
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 6 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 6 ».
+          default: ""
+          selector:
+            text:
+        piece_6_tuiles:
+          name: Appareils · Devices
+          description: >-
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
+
+
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_tuiles
+        piece_6_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_6_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_6_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
+    piece_7:
+      name: "Pièce 7 — sa page · Room 7 — its own page"
+      icon: mdi:home-outline
+      description: >-
+        Quatre glissements vers la gauche depuis l'accueil, après J+10 → J+14 : une page à elle, sans météo. Un firmware plus ancien ne montre que les pièces 1 à 5.
+        Comptée si « Nombre de pièces » vaut au moins 7.
+
+
+        Four swipes left from the home page, after day 10 → 14: a page of its own, without weather. An older firmware shows rooms 1 to 5 only.
+        Used when « Number of rooms » is at least 7.
+      collapsed: true
+      input:
+        piece_7_nom:
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 7 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 7 ».
+          default: ""
+          selector:
+            text:
+        piece_7_tuiles:
+          name: Appareils · Devices
+          description: >-
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
+
+
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_tuiles
+        piece_7_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_7_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_7_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
+    piece_8:
+      name: "Pièce 8 — sa page · Room 8 — its own page"
+      icon: mdi:home-outline
+      description: >-
+        Cinq glissements vers la gauche depuis l'accueil, après J+10 → J+14 : une page à elle, sans météo. Un firmware plus ancien ne montre que les pièces 1 à 5.
+        Comptée si « Nombre de pièces » vaut au moins 8.
+
+
+        Five swipes left from the home page, after day 10 → 14: a page of its own, without weather. An older firmware shows rooms 1 to 5 only.
+        Used when « Number of rooms » is at least 8.
+      collapsed: true
+      input:
+        piece_8_nom:
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 8 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 8 ».
+          default: ""
+          selector:
+            text:
+        piece_8_tuiles:
+          name: Appareils · Devices
+          description: >-
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
+
+
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_tuiles
+        piece_8_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_8_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_8_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
+    piece_9:
+      name: "Pièce 9 — sa page · Room 9 — its own page"
+      icon: mdi:home-outline
+      description: >-
+        Six glissements vers la gauche depuis l'accueil, après J+10 → J+14 : une page à elle, sans météo. Un firmware plus ancien ne montre que les pièces 1 à 5.
+        Comptée si « Nombre de pièces » vaut au moins 9.
+
+
+        Six swipes left from the home page, after day 10 → 14: a page of its own, without weather. An older firmware shows rooms 1 to 5 only.
+        Used when « Number of rooms » is at least 9.
+      collapsed: true
+      input:
+        piece_9_nom:
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 9 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 9 ».
+          default: ""
+          selector:
+            text:
+        piece_9_tuiles:
+          name: Appareils · Devices
+          description: >-
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
+
+
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_tuiles
+        piece_9_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_9_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_9_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
+    piece_10:
+      name: "Pièce 10 — sa page · Room 10 — its own page"
+      icon: mdi:home-outline
+      description: >-
+        Sept glissements vers la gauche depuis l'accueil, après J+10 → J+14 : une page à elle, sans météo. Un firmware plus ancien ne montre que les pièces 1 à 5.
+        Comptée si « Nombre de pièces » vaut au moins 10.
+
+
+        Seven swipes left from the home page, after day 10 → 14: a page of its own, without weather. An older firmware shows rooms 1 to 5 only.
+        Used when « Number of rooms » is at least 10.
+      collapsed: true
+      input:
+        piece_10_nom:
+          name: Nom de la pièce · Room name
+          description: >-
+            Vide = l'aire de ses appareils, s'ils en ont une seule (et au moins la moitié
+            l'a), sinon « Pièce 10 ».
+
+
+            Empty = the area of its devices, if they share one (and at least half have
+            it), else « Pièce 10 ».
+          default: ""
+          selector:
+            text:
+        piece_10_tuiles:
+          name: Appareils · Devices
+          description: >-
+            Vingt au plus, dans l'ordre (de gauche à droite). Jusqu'à cinq, une tuile
+            chacun ; au-delà, les dernières tuiles sont coupées en deux (haut, bas), puis en
+            quatre. Plus de vingt : les vingt premiers. Un firmware plus ancien montre les
+            cinq premiers.
+
+
+            Twenty at most, in order (left to right). Up to five, one tile each; beyond, the
+            last tiles are cut in two (top, bottom), then in four. More than twenty: the first
+            twenty. An older firmware shows the first five.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              reorder: true
+              filter:
+                - domain: *domaines_tuiles
+        piece_10_temperature:
+          name: Température de la pièce · Room temperature
+          description: >-
+            Facultatif. En mode « HA » sur cette pièce, elle remplace la température du
+            salon en haut de l'accueil ; un appui long montre son historique.
+
+
+            Optional. In « HA » mode on this room, it replaces the living-room temperature
+            at the top of the home page; a long press shows its history.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+        piece_10_humidite:
+          name: Humidité de la pièce · Room humidity
+          description: >-
+            Facultatif, avec la température : elle prend la place de la seconde
+            température (serre) et colore l'icône de la pièce.
+
+
+            Optional, with the temperature: it takes the place of the second temperature
+            (greenhouse) and colours the room's icon.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: humidity
+        piece_10_clim:
+          name: Climatisation de la pièce · Room climate
+          description: >-
+            Facultatif, avec la température : les boutons − / + de l'accueil la règlent
+            sur cette pièce, et toucher sa consigne ouvre sa fenêtre.
+
+
+            Optional, with the temperature: the home page's − / + buttons adjust it on this
+            room, and touching its setpoint opens its window.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: climate
+    # <<< entrées des pièces
     personnaliser:
       name: Personnaliser des tuiles · Customise tiles
       icon: mdi:palette-outline
@@ -2700,19 +3204,32 @@ variables:
     pot_4: !input pot_4
     pot_5: !input pot_5
     planning: !input agenda_travail
-  # Pièces (ADR-0023) : pieces[n] = entités de la pièce n + 1, dans l'ordre choisi.
+  # >>> variables des pièces (généré par tools/gen_blueprint_emplacements.py, ne pas éditer)
+  # Pièces (ADR-0023, ADR-0066) : pieces[n] = entités de la pièce n + 1, dans l'ordre
+  # choisi, pour les 10 sections ; nombre_pieces (plus bas) dit combien comptent.
+  nombre_pieces_choisi: !input nombre_pieces
   pieces:
     - !input piece_1_tuiles
     - !input piece_2_tuiles
     - !input piece_3_tuiles
     - !input piece_4_tuiles
     - !input piece_5_tuiles
+    - !input piece_6_tuiles
+    - !input piece_7_tuiles
+    - !input piece_8_tuiles
+    - !input piece_9_tuiles
+    - !input piece_10_tuiles
   noms_saisis:
     - !input piece_1_nom
     - !input piece_2_nom
     - !input piece_3_nom
     - !input piece_4_nom
     - !input piece_5_nom
+    - !input piece_6_nom
+    - !input piece_7_nom
+    - !input piece_8_nom
+    - !input piece_9_nom
+    - !input piece_10_nom
   # Climat des pièces (ADR-0040) : sonde de température, d'humidité et clim de chaque
   # section « Pièce n », toutes facultatives.
   pieces_climat_choix:
@@ -2731,6 +3248,25 @@ variables:
     - temperature: !input piece_5_temperature
       humidite: !input piece_5_humidite
       clim: !input piece_5_clim
+    - temperature: !input piece_6_temperature
+      humidite: !input piece_6_humidite
+      clim: !input piece_6_clim
+    - temperature: !input piece_7_temperature
+      humidite: !input piece_7_humidite
+      clim: !input piece_7_clim
+    - temperature: !input piece_8_temperature
+      humidite: !input piece_8_humidite
+      clim: !input piece_8_clim
+    - temperature: !input piece_9_temperature
+      humidite: !input piece_9_humidite
+      clim: !input piece_9_clim
+    - temperature: !input piece_10_temperature
+      humidite: !input piece_10_humidite
+      clim: !input piece_10_clim
+  # <<< variables des pièces
+  # Nombre de pièces (ADR-0066), borné à 1 … le nombre de sections ; une automatisation
+  # d'avant cette entrée (ou un nombre illisible) : 5, les pages de la météo.
+  nombre_pieces: "{{ [[nombre_pieces_choisi | int(5), 1] | max, pieces | count] | min }}"
   personnalisation: !input personnalisation
   # Rangée sous l'horloge (ADR-0031) : lignes choisies, place des plantes, durée.
   # Les lignes des deux zones à lignes : la rangée sous l'horloge (0 à 2, clés h…) puis
@@ -2820,19 +3356,22 @@ variables:
     {%- endfor -%}
     {{ ns.p if ns.p else 1 }}
   # Tuiles : [{cle: 'tRT', r: R, e: entité, type, s: entrée 3.x d'origine ou ''}].
-  # Les cinq premières entités de chaque pièce qui existent et dont le domaine a un
-  # type, dans l'ordre choisi. Pièce 1 vide : les entrées 3.x, à leurs places
-  # (t00 = PC, à défaut TV ; t01 = volet ; t02..t04 = lumières 1 à 3). Une même
-  # entité peut être dans plusieurs tuiles.
+  # Les vingt premières entités (ADR-0066) de chacune des nombre_pieces premières pièces
+  # qui existent et dont le domaine a un type, dans l'ordre choisi : T = 0 … 9 puis a … j
+  # (un firmware plus ancien ne lit que 0 … 4, et les pièces 0 … 4). Une pièce au-delà de
+  # nombre_pieces n'a aucune tuile : ni définition, ni état, ni commande (liste blanche).
+  # Pièce 1 vide : les entrées 3.x, à leurs places (t00 = PC, à défaut TV ; t01 = volet ;
+  # t02..t04 = lumières 1 à 3). Une même entité peut être dans plusieurs tuiles.
   tuiles: >-
     {%- set ns = namespace(l=[], t=0) -%}
-    {%- for n in range(5) -%}
+    {%- set lettres = '0123456789abcdefghij' -%}
+    {%- for n in range(nombre_pieces) -%}
       {%- set brut = pieces[n] -%}
       {%- set liste = [brut] if brut is string else (brut if brut else []) -%}
       {%- set ns.t = 0 -%}
       {%- for e in liste -%}
-        {%- if ns.t < 5 and e is string and e.split('.')[0] in types_par_domaine and states[e] is not none -%}
-          {%- set ns.l = ns.l + [{'cle': 't' ~ n ~ ns.t, 'r': n, 'e': e, 'type': types_par_domaine[e.split('.')[0]], 's': ''}] -%}
+        {%- if ns.t < lettres | length and e is string and e.split('.')[0] in types_par_domaine and states[e] is not none -%}
+          {%- set ns.l = ns.l + [{'cle': 't' ~ n ~ lettres[ns.t], 'r': n, 'e': e, 'type': types_par_domaine[e.split('.')[0]], 's': ''}] -%}
           {%- set ns.t = ns.t + 1 -%}
         {%- endif -%}
       {%- endfor -%}
@@ -2875,10 +3414,11 @@ variables:
   # entrée par pièce, chaque champ l'entité choisie si elle existe (et, pour la clim, si
   # c'est une clim), '' sinon. La tablette montre la pièce en mode HA quand temperature
   # est rempli. `cle` : l'emplacement des commandes de sa clim — la liste blanche des
-  # commandes « cpR » (seule une clim déclarée ici en reçoit).
+  # commandes « cpR » (seule une clim déclarée ici en reçoit). Les nombre_pieces premières
+  # pièces seulement (ADR-0066).
   pieces_climat: >-
     {%- set ns = namespace(l=[]) -%}
-    {%- for n in range(5) -%}
+    {%- for n in range(nombre_pieces) -%}
       {%- set choix = pieces_climat_choix[n] if pieces_climat_choix[n] is mapping else {} -%}
       {%- set v = namespace(d={'r': n, 'cle': 'cp' ~ n}) -%}
       {%- for k, domaine in [('temperature', 'sensor.'), ('humidite', 'sensor.'), ('clim', 'climate.')] -%}
@@ -3156,7 +3696,8 @@ variables:
       {%- if not ns.vu -%}
         {{ [] }}
       {%- elif trigger.id.startswith('piece_') -%}
-        {{ tuiles | selectattr('r', 'eq', trigger.id[6] | int - 1) | selectattr('e', 'eq', trigger.entity_id)
+        {#- piece_n… : n de 1 à 10 (ADR-0066), lu jusqu'au « _ » suivant. -#}
+        {{ tuiles | selectattr('r', 'eq', trigger.id.split('_')[1] | int - 1) | selectattr('e', 'eq', trigger.entity_id)
            | selectattr('type', 'in', types_immediats) | map(attribute='cle') | list }}
       {%- else -%}
         {{ tuiles | selectattr('s', 'eq', trigger.id) | selectattr('type', 'in', types_immediats) | map(attribute='cle') | list }}
@@ -3200,7 +3741,7 @@ variables:
       {{ ns.l }}
     {%- elif trigger.from_state is defined and trigger.id.startswith('piece_')
           and (trigger.id.endswith('_clim') or trigger.id.endswith('_clim_consigne')) -%}
-      {{ pieces_climat | selectattr('r', 'eq', trigger.id[6] | int - 1) | selectattr('clim', 'eq', trigger.entity_id)
+      {{ pieces_climat | selectattr('r', 'eq', trigger.id.split('_')[1] | int - 1) | selectattr('clim', 'eq', trigger.entity_id)
          | map(attribute='r') | list }}
     {%- else -%}
       {{ [] }}
@@ -3806,6 +4347,221 @@ triggers:
     not_from: [null]
     not_to: [null]
     id: piece_5_clim_consigne
+  - trigger: state
+    entity_id: !input piece_6_tuiles
+    to: *etats_visibles
+    id: piece_6
+  - trigger: state
+    entity_id: !input piece_6_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_6_sortie
+  - trigger: state
+    entity_id: !input piece_6_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_6_luminosite
+  - trigger: state
+    entity_id: !input piece_6_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_6_couleur
+  - trigger: state
+    entity_id: !input piece_6_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_6_position
+  - trigger: state
+    entity_id: !input piece_6_tuiles
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_6_consigne
+  - trigger: state
+    entity_id: !input piece_6_clim
+    to: ~
+    id: piece_6_clim
+  - trigger: state
+    entity_id: !input piece_6_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_6_clim_consigne
+  - trigger: state
+    entity_id: !input piece_7_tuiles
+    to: *etats_visibles
+    id: piece_7
+  - trigger: state
+    entity_id: !input piece_7_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_7_sortie
+  - trigger: state
+    entity_id: !input piece_7_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_7_luminosite
+  - trigger: state
+    entity_id: !input piece_7_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_7_couleur
+  - trigger: state
+    entity_id: !input piece_7_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_7_position
+  - trigger: state
+    entity_id: !input piece_7_tuiles
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_7_consigne
+  - trigger: state
+    entity_id: !input piece_7_clim
+    to: ~
+    id: piece_7_clim
+  - trigger: state
+    entity_id: !input piece_7_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_7_clim_consigne
+  - trigger: state
+    entity_id: !input piece_8_tuiles
+    to: *etats_visibles
+    id: piece_8
+  - trigger: state
+    entity_id: !input piece_8_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_8_sortie
+  - trigger: state
+    entity_id: !input piece_8_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_8_luminosite
+  - trigger: state
+    entity_id: !input piece_8_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_8_couleur
+  - trigger: state
+    entity_id: !input piece_8_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_8_position
+  - trigger: state
+    entity_id: !input piece_8_tuiles
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_8_consigne
+  - trigger: state
+    entity_id: !input piece_8_clim
+    to: ~
+    id: piece_8_clim
+  - trigger: state
+    entity_id: !input piece_8_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_8_clim_consigne
+  - trigger: state
+    entity_id: !input piece_9_tuiles
+    to: *etats_visibles
+    id: piece_9
+  - trigger: state
+    entity_id: !input piece_9_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_9_sortie
+  - trigger: state
+    entity_id: !input piece_9_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_9_luminosite
+  - trigger: state
+    entity_id: !input piece_9_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_9_couleur
+  - trigger: state
+    entity_id: !input piece_9_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_9_position
+  - trigger: state
+    entity_id: !input piece_9_tuiles
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_9_consigne
+  - trigger: state
+    entity_id: !input piece_9_clim
+    to: ~
+    id: piece_9_clim
+  - trigger: state
+    entity_id: !input piece_9_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_9_clim_consigne
+  - trigger: state
+    entity_id: !input piece_10_tuiles
+    to: *etats_visibles
+    id: piece_10
+  - trigger: state
+    entity_id: !input piece_10_tuiles
+    from: *etats_visibles
+    not_to: *etats_visibles
+    id: piece_10_sortie
+  - trigger: state
+    entity_id: !input piece_10_tuiles
+    attribute: brightness
+    not_from: [null]
+    not_to: [null]
+    id: piece_10_luminosite
+  - trigger: state
+    entity_id: !input piece_10_tuiles
+    attribute: rgb_color
+    not_from: [null]
+    not_to: [null]
+    id: piece_10_couleur
+  - trigger: state
+    entity_id: !input piece_10_tuiles
+    attribute: current_position
+    not_from: [null]
+    not_to: [null]
+    id: piece_10_position
+  - trigger: state
+    entity_id: !input piece_10_tuiles
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_10_consigne
+  - trigger: state
+    entity_id: !input piece_10_clim
+    to: ~
+    id: piece_10_clim
+  - trigger: state
+    entity_id: !input piece_10_clim
+    attribute: temperature
+    not_from: [null]
+    not_to: [null]
+    id: piece_10_clim_consigne
   # <<< déclencheurs des pièces
   # Rangée sous l'horloge (ADR-0031) : l'état seulement, comme piece_n et piece_n_sortie
   # (une mesure part avec les mesures lentes) ; elle ne montre ni luminosité ni position.
@@ -4780,7 +5536,7 @@ actions:
                     data:
                       color_name: "{{ valeur }}"
               - alias: "Pièce : tout éteindre (ses lumières)"
-                conditions: "{{ emplacement is match('^p[0-4]$') and commande == 'eteindre' }}"
+                conditions: "{{ emplacement is match('^p[0-9]$') and commande == 'eteindre' }}"
                 sequence:
                   - variables:
                       # Épargnées : « allumer seulement » (jamais éteinte depuis l'écran),
@@ -5012,7 +5768,7 @@ actions:
           # appareils, vu chez l'auteur le 28/09), sinon vide (la tablette écrit « Pièce n »).
           noms_pieces: >-
             {%- set ns = namespace(l=[]) -%}
-            {%- for n in range(5) -%}
+            {%- for n in range(nombre_pieces) -%}
               {%- set saisi = (noms_saisis[n] or '') | string | trim -%}
               {%- set es = tuiles | selectattr('r', 'eq', n) | map(attribute='e') | list -%}
               {%- set avec = es | map('area_name') | reject('none') | list -%}
@@ -5021,31 +5777,34 @@ actions:
               {%- set ns.l = ns.l + [saisi if saisi else commune] -%}
             {%- endfor -%}
             {{ ns.l }}
-          # « pR|nom; » puis « tRT|type|icône|options|complément|nom; » (ADR-0023) ; puis la
-          # rangée sous l'horloge (ADR-0031) : « hp|place des plantes; » (0 à 2, « - » :
-          # masquées), « hd|secondes d'une ligne; », « hLI|type|icône|options|complément|
-          # nom|classe; » (classe d'appareil : la couleur de la valeur) ; puis le panneau
-          # Ok Nabu (ADR-0041), au même format : « np|place de l'écoute; », « nd|…; »,
-          # « nLI|…; ». n = 5 : la rangée, n = 6 : le panneau, avec la même traduction que
-          # les tuiles.
+          # « pn|nombre de pièces; » en tête (ADR-0066 ; un firmware plus ancien ignore
+          # l'entrée), puis pour chaque pièce « pR|nom; » et « tRT|type|icône|options|
+          # complément|nom; » (ADR-0023) ; puis la rangée sous l'horloge (ADR-0031) :
+          # « hp|place des plantes; » (0 à 2, « - » : masquées), « hd|secondes d'une
+          # ligne; », « hLI|type|icône|options|complément|nom|classe; » (classe d'appareil :
+          # la couleur de la valeur) ; puis le panneau Ok Nabu (ADR-0041), au même format :
+          # « np|place de l'écoute; », « nd|…; », « nLI|…; ». Groupes : les pièces (un
+          # nombre R), puis les deux zones à lignes (la lettre 'h' ou 'n'), avec la même
+          # traduction que les tuiles.
           definitions: >-
-            {%- set ns = namespace(r='') -%}
-            {%- for n in range(7) -%}
-              {%- set dans = (tuiles | selectattr('r', 'eq', n) | list) if n < 5
-                             else (rangee | selectattr('z', 'eq', 'h' if n == 5 else 'n') | list) -%}
-              {%- if n == 5 -%}
+            {%- set ns = namespace(r='pn|' ~ nombre_pieces ~ ';') -%}
+            {%- for g in range(nombre_pieces) | list + ['h', 'n'] -%}
+              {%- set zone = g is string -%}
+              {%- set dans = (rangee | selectattr('z', 'eq', g) | list) if zone
+                             else (tuiles | selectattr('r', 'eq', g) | list) -%}
+              {%- if g == 'h' -%}
                 {%- set piece = '' -%}
                 {%- set ns.r = ns.r ~ 'hp|' ~ ('-' if rangee_plantes not in ['0', '1', '2'] else rangee_plantes)
                               ~ ';hd|' ~ (rangee_duree | float(32) | round(0) | int) ~ ';' -%}
-              {%- elif n == 6 -%}
+              {%- elif g == 'n' -%}
                 {%- set piece = '' -%}
                 {%- set ns.r = ns.r ~ 'np|' ~ ('-' if nabu_ecoute not in ['0', '1', '2'] else nabu_ecoute)
                               ~ ';nd|' ~ (nabu_duree | float(32) | round(0) | int) ~ ';' -%}
               {%- endif -%}
               {%- if dans | count > 0 -%}
-                {%- if n < 5 -%}
-                  {%- set piece = noms_pieces[n] | string -%}
-                  {%- set ns.r = ns.r ~ 'p' ~ n ~ '|' ~ (piece | replace('|', '/') | replace(';', ',')) ~ ';' -%}
+                {%- if not zone -%}
+                  {%- set piece = noms_pieces[g] | string -%}
+                  {%- set ns.r = ns.r ~ 'p' ~ g ~ '|' ~ (piece | replace('|', '/') | replace(';', ',')) ~ ';' -%}
                 {%- endif -%}
                 {%- for t in dans -%}
                   {%- set dom = t.e.split('.')[0] -%}
@@ -5105,7 +5864,7 @@ actions:
                   {%- set ns.r = ns.r ~ t.cle ~ '|' ~ t.type ~ '|' ~ icone ~ '|' ~ options ~ '|'
                                 ~ (complement | replace('|', '/') | replace(';', ',')) ~ '|'
                                 ~ (nom.s | replace('|', '/') | replace(';', ','))
-                                ~ (('|' ~ (classe | replace('|', '/') | replace(';', ','))) if n >= 5 else '') ~ ';' -%}
+                                ~ (('|' ~ (classe | replace('|', '/') | replace(';', ','))) if zone else '') ~ ';' -%}
                 {%- endfor -%}
               {%- endif -%}
             {%- endfor -%}
@@ -5122,7 +5881,10 @@ actions:
               {%- set defaut = icones_defaut.get(dom ~ '.' ~ classe, icones_defaut.get(dom, '')) if classe else icones_defaut.get(dom, '') -%}
               {%- set mdi = (p.get('icone') or state_attr(g.e, 'icon') or '') | string -%}
               {%- set icone = icones_mdi.get(mdi, defaut) if mdi else defaut -%}
-              {%- set lien = tuiles | selectattr('e', 'eq', g.e) | map(attribute='cle') | first | default('') -%}
+              {#- Lien : d'abord une tuile qu'un firmware d'avant l'ADR-0066 sait lire (pièce
+                  et place de 0 à 4), puis les autres (t05, t1a…). -#}
+              {%- set liens = tuiles | selectattr('e', 'eq', g.e) | map(attribute='cle') | list -%}
+              {%- set lien = ((liens | select('match', '^t[0-4][0-4]$') | list) + liens) | first | default('') -%}
               {%- set b = reglables_bornes.get(g.cle, [0, 100, 1, '']) -%}
               {%- set nom = (p.get('nom') or state_attr(g.e, 'friendly_name') or g.e) | string | trim -%}
               {#- Option t (la TV du blueprint) : hors du motif des options des tuiles, que
