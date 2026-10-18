@@ -36,6 +36,14 @@ def test_tab5_inchange():
         assert etapes is ecran.etapes and fermer is ecran.fermer and retirees == [], ecran.nom
 
 
+def test_boutons_des_roues_inchanges_a_la_taille_du_tab5():
+    """Les boutons des roues recalculés pour une carte (V._roues) redonnent, à la taille du
+    Tab5, ceux d'ecrans.py : un mauvais index (le Bureau de la roue de navigation pris pour
+    la première pièce, 18/10/2026) changeait de bouton sur la 7B sans que rien ne le dise."""
+    for etape, (nouvelle, _ouvre) in V._roues(V.Carte(V.TAB5)).items():
+        assert (nouvelle.x, nouvelle.y) == (etape.x, etape.y), etape
+
+
 @pytest.mark.parametrize("carte", CARTES)
 def test_taille_de_la_carte(carte):
     g = geometrie(carte)

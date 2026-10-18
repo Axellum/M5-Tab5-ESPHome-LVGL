@@ -143,7 +143,10 @@ def _roues(c: Carte) -> dict:
         roues[E.nav(i)] = (E.Toucher(*nav[i]), i == E.NAV_ALERTES)
     choix = E.roue_choix_centres(*ancre(E.CARTE_CENTRALE), E.ROUE_NAVIGATION, E.NAV_PIECES,
                                  1 + len(E.PIECES_OCCUPEES), ecran=ecran)
-    roues[E.NAV_BUREAU] = (E.Toucher(*choix[1]), False)
+    # Le Bureau : le bouton de sa pièce dans la famille Pièces (Maison d'abord), comme
+    # NAV_BUREAU d'ecrans.py. Le premier (choix[1]) mettait la 7B sur la pièce 1, et le
+    # retour laissait les prévisions sur la page 3 jusqu'à « energie-flux » (18/10/2026).
+    roues[E.NAV_BUREAU] = (E.Toucher(*choix[1 + E.PIECES_OCCUPEES.index(E.PIECE_CLIMAT)]), False)
     salon = ancre(E.SALON)
     xmin, xmax = (c.acc_x(v) for v in CLIM_ANCRE_X)
     clim = E.roue_centres(min(max(salon[0], xmin), xmax), c.acc_y(CLIM_ANCRE_Y), E.ROUE_CLIM_TEMPERATURE, ecran=ecran)
