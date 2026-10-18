@@ -631,8 +631,9 @@ bool zone_degrade_peindre(lv_obj_t* image, const lv_point_precise_t* pts, int np
                           int32_t base, void (*perdu)());
 
 // --- tab5_central.cpp, pour les pièces ---
-// Page atteinte par un swipe depuis `page` (bouclage volontaire, [AI-WARNING] de
-// handle_swipe_gesture) : gauche 0→1→2→3→4→2, droite 4→3→2→1→0→2.
+// Page des prévisions atteinte par un swipe depuis `page` (bouclage volontaire,
+// [AI-WARNING] de handle_swipe_gesture) : gauche 0→1→2→3→4→2, droite 4→3→2→1→0→2. Météo
+// seulement : le mode HA passe d'une pièce à l'autre en rouleau (tuiles_swipe_ha, 18/10/2026).
 int forecast_page_suivante(int page, bool gauche);
 // Pastilles de pagination : la page courante large et opaque, les autres étroites et
 // pâles ; n pastilles (5 pour les pages, 3 pour la rangée sous l'horloge).

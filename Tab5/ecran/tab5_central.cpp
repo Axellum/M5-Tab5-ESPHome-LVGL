@@ -909,7 +909,9 @@ void pagination_afficher(lv_obj_t* const* pbars, int n, int page) {
 // Pages 0-1 = horaire, 2-4 = journalier. LEFT boucle sur 2/3/4 une fois
 // dans le journalier (ne revient pas seul vers l'horaire) ; RIGHT traverse
 // tout vers le bas et boucle 0->2 (retour au debut du journalier, pas un
-// tour complet vers 4). Le mode HA (pièces, ADR-0023) suit le même ordre.
+// tour complet vers 4). Météo seulement : depuis le 18/10/2026, le mode HA (pièces,
+// ADR-0023) a son propre rouleau dans l'ordre des pièces (tuiles_swipe_ha, demande
+// d'Axel, qui garde cet ordre-ci pour la météo).
 int forecast_page_suivante(int page, bool gauche) {
     if (gauche) return page >= 4 ? 2 : page + 1;
     return page <= 0 ? 2 : page - 1;
