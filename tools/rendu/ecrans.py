@@ -794,6 +794,60 @@ LECTEUR_INACTIF = Service("tab5_maj_lecteur", (
 ))
 
 
+# Musique de toute la maison (ADR-0067, musique_calques.yaml) : au format de
+# packages/tab5_musique.yaml. Avec Music Assistant, six lecteurs : le salon montré mène un
+# groupe avec la cuisine (muette), la chambre en pause, le bureau allumé, la TV éteinte,
+# l'Apple TV indisponible ; douze titres dans la file, le suivant connu.
+MUSIQUE_PIECES_MA = Service("tab5_maj_musique_pieces", (
+    ("pieces", "Salon|e|j|45|0|0|vmogst|Le vent du large — Les Marées;"
+               "Cuisine|e|j|30|1|0|vmgt|Le vent du large — Les Marées;"
+               "Chambre|e|p|20|0|-1|vmgst|Sous la pluie — Clara Lune;"
+               "Bureau|a|r|60|0|-1|vmgst|;"
+               "TV Samsung|t|e||0|-1|o|;"
+               "Apple TV|t|i||0|-1|vmot|"),
+    ("contexte", "1|0|12|Sous la pluie — Clara Lune"),
+))
+# La plus petite installation à plusieurs lecteurs, sans Music Assistant : trois lecteurs de
+# « Tab5 · lecteurs de musique », aucun groupe, ni transfert ni bibliothèque.
+MUSIQUE_PIECES_SANS_MA = Service("tab5_maj_musique_pieces", (
+    ("pieces", "Salon|e|j|45|0|-1|vmos|Le vent du large — Les Marées;Apple TV|t|r|30|0|-1|vmo|;Freebox|x|e||0|-1|o|"),
+    ("contexte", "0|0|0|"),
+))
+# Après chaque capture : plus aucune pièce, le popup retrouve sa page unique.
+MUSIQUE_PIECES_AUCUNE = Service("tab5_maj_musique_pieces", (("pieces", ""), ("contexte", "0|-1|0|")))
+# Une page de favoris, un élément de chaque genre (pochettes demandées : le rendu ne
+# télécharge rien, l'icône du genre reste), une page suivante.
+MUSIQUE_FAVORIS = Service("tab5_maj_musique_liste", (
+    ("contexte", "fav|Favoris|0|1|0"),
+    ("elements", "Carnets de voyage|Les Marées|a|library://album/12|http://192.0.2.10:8095/imageproxy/a1?size=160&fmt=png;"
+                 "Les Marées|Artiste|r|library://artist/3|;"
+                 "Chill du soir|12 titres|p|library://playlist/4|;"
+                 "FIP|Radio France|d|library://radio/2|https://upload.wikimedia.org/fip.png;"
+                 "Science ouverte|Podcast|o|library://podcast/3|;"
+                 "Le vent du large|Les Marées|t|library://track/7|;"
+                 "Épisode 12 : la mer|Science ouverte|o|library://podcast_episode/40|;"
+                 "Le Petit Prince|Livre audio|l|library://audiobook/1|;"
+                 "Jazz du dimanche|Playlist|p|ytmusic://playlist/PLx|;"
+                 "Radio Nova|Radio|d|library://radio/5|"),
+))
+# Les sources d'une pièce (sa roue → Source), avec le bouton retour.
+MUSIQUE_SOURCES = Service("tab5_maj_musique_liste", (
+    ("contexte", "src|Salon · sources|0|0|1"),
+    ("elements", "Music Assistant||s|0|;HDMI 1||s|1|;Bluetooth||s|2|;Optique||s|3|"),
+))
+# Page suivante : un glissement vers la gauche dans la rangée vide entre les deux rangées de
+# cartes de la page Pièces (y 410..422 de l'écran du Tab5), sur la pochette de la page
+# Lecture : rien de touchable, le geste remonte au popup (tab5_pages.cpp).
+MUSIQUE_PAGE_SUIVANTE = Glisser(560, 416, 240, 416, dans_popup=True)
+# Page précédente : le même glissement vers la droite.
+MUSIQUE_PAGE_PRECEDENTE = Glisser(240, 416, 560, 416, dans_popup=True)
+# Icône de la première carte de la page Pièces (le salon, le lecteur montré) : la carte en
+# (24, 128) de la carte du lecteur (940 × 536, centrée en 170, 92), l'icône à (14, 14).
+MUSIQUE_SALON_ICONE = (226, 252)
+# Sa roue : Source, Muet, Séparer (le lecteur montré n'a pas « Musique ici »). Sur une
+# autre carte, tools/rendu/vers_carte.py la recalcule autour de la même ancre de la carte.
+MUSIQUE_ROUE_SALON = 3
+MUSIQUE_SOURCE = Toucher(*roue_centres(*MUSIQUE_SALON_ICONE, MUSIQUE_ROUE_SALON)[0])
 # Playlists favorites du popup Musique (ADR-0068) : la clé « playlists|nom|… » que le
 # blueprint pousse avec tous les états (les noms seuls, aucun lien), et la liste vide. Six
 # noms : deux colonnes ; le dernier, long, coupé avec « … ».
@@ -1342,12 +1396,48 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("musique-vide", (Aller("Musique"),), (LECTEUR_VOILE,)),
     Ecran("musique", (LECTEUR_EN_PAUSE, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
     Ecran("musique-eteint", (LECTEUR_ETEINT, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
+    # Musique de toute la maison (ADR-0067) : la page Lecture avec Music Assistant (noms des
+    # pages, « + 1 », « À suivre »), Pièces avec un groupe, Bibliothèque en attente puis avec
+    # ses favoris, les sources d'une pièce, la petite installation sans Music Assistant.
+    Ecran("musique-ma", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique")),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-pieces", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-bibliotheque-chargement",
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-bibliotheque",
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_SUIVANTE,
+           MUSIQUE_FAVORIS),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-sources",
+          (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE, Long(*MUSIQUE_SALON_ICONE),
+           MUSIQUE_SOURCE, MUSIQUE_SOURCES),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-pieces-sans-ma", (LECTEUR_EN_PAUSE, MUSIQUE_PIECES_SANS_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, LECTEUR_AUCUN)),
     # Playlists favorites (ADR-0068) : les noms des pages contre la croix sur la page Lecture,
     # puis la page Playlists (deux colonnes de boutons).
     Ecran("musique-avec-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Musique")),
           (LECTEUR_VOILE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Musique"), PLAYLISTS_PAGE),
           (LECTEUR_VOILE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    # Les quatre pages ensemble (ADR-0067 et ADR-0068, une seule brique de pages) : leurs
+    # noms sur la ligne du titre de la page Lecture, puis Playlists et Pièces par glissements.
+    Ecran("musique-quatre-pages", (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique")),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-quatre-pages-playlists",
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-quatre-pages-pieces",
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE,
+           MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    # Retour sur Playlists depuis Pièces, qui avait masqué la pochette et les pastilles.
+    Ecran("musique-quatre-pages-retour",
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE,
+           MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_PRECEDENTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("accueil-musique", (LECTEUR_EN_PAUSE,), (LECTEUR_AUCUN,)),
     # Lecteur compact dans la zone à gauche de l'horloge (ADR-0051, lot 2) : en pause (la
     # barre « en lecture » se masque, le cadre Ok Nabu reste), allumé sans rien en lecture,

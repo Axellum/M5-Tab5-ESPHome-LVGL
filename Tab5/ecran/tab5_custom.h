@@ -48,6 +48,7 @@
 #include "tab5_meteo.h"
 #include "tab5_zone_gauche.h"
 #include "tab5_lecteur.h"
+#include "tab5_musique.h"
 #include "tab5_cameras.h"
 #include "tab5_suivi.h"
 #include "tab5_froid.h"

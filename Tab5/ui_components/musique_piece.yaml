@@ -1,0 +1,103 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file musique_piece.yaml
+# @role Carte d'une pièce (un lecteur de la maison) de la page Pièces du popup Musique
+#       (ADR-0067, musique_calques.yaml, 8 fois : kMusiquePieces). Le genre en icône, le nom,
+#       le morceau ou l'état, le volume (curseur 0 à 100, envoyé au relâcher) et jusqu'à trois
+#       boutons : grouper au lecteur montré / l'en séparer, y envoyer la musique, marche.
+#       Toucher : ce lecteur devient le lecteur montré, page Lecture ; appui long : sa roue
+#       (source, muet, musique ici, séparer ; ADR-0036).
+# @architecture_constraint Place, textes, glyphes (glyphe_piece, glyphe_son, glyphe_lien :
+#       MDI_CODE_TARGETS, règle 7), masquages, couleurs d'état et bord du lecteur montré
+#       (accent) ou de son groupe (accent plus fin) : tab5_musique.cpp (peindre_piece).
+#       Rayon 18 du verre (style_clim_btn) : l'effet d'appui des boutons (tab5_anim.cpp).
+# vars : n (0 à 7)
+# ═══════════════════════════════════════════════════════
+button:
+  id: musique_piece_${n}
+  align: TOP_LEFT
+  x: 0
+  y: 128
+  width: 214
+  height: 188
+  pad_all: 0
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn
+  on_short_click:
+    - lambda: 'musique_piece_appui(${n});'
+  on_long_press:
+    - lambda: 'musique_piece_long(${n});'
+  widgets:
+    - label: { id: "musique_piece_icone_${n}", text: "\U000F04C3", align: TOP_LEFT, x: 14, y: 14, text_font: mdi_font_32, styles: style_text_soft }
+    - label: { id: "musique_piece_nom_${n}", text: "", align: TOP_LEFT, x: 54, y: 17, width: 146, long_mode: CLIP, text_font: roboto_22 }
+    - label: { id: "musique_piece_etat_${n}", text: "", align: TOP_LEFT, x: 14, y: 54, width: 186, long_mode: CLIP, text_font: roboto_22, styles: style_text_dim }
+    # Volume : l'icône dit le son ou le muet (glyphe_son), le curseur le règle.
+    - label: { id: "musique_piece_son_${n}", text: "\U000F057E", align: TOP_LEFT, x: 12, y: 86, text_font: mdi_font_32, styles: style_text_dim, hidden: true }
+    - slider:
+        id: musique_piece_volume_${n}
+        align: TOP_LEFT
+        x: 56
+        y: 96
+        width: 140
+        height: 12
+        min_value: 0
+        max_value: 100
+        value: 0
+        hidden: true
+        styles: style_bg_arc_track
+        radius: 6
+        indicator:
+          styles: style_bg_accent
+          radius: 6
+        knob:
+          styles: style_bg_soft
+        on_value:
+          - lambda: 'musique_piece_volume(${n}, false);'
+        on_release:
+          - lambda: 'musique_piece_volume(${n}, true);'
+    # Grouper au lecteur montré, ou l'en séparer (icône posée par glyphe_lien).
+    - button:
+        id: musique_piece_btn_${n}_0
+        align: TOP_LEFT
+        x: 14
+        y: 126
+        width: 56
+        height: 48
+        pad_all: 0
+        hidden: true
+        styles: style_clim_btn
+        on_short_click:
+          - lambda: 'musique_piece_bouton(${n}, MUSIQUE_PIECE_GROUPE);'
+        widgets:
+          - label: { id: "musique_piece_lien_${n}", text: "\U000F0339", align: CENTER, text_font: mdi_font_32, styles: style_text_soft }
+    # Y envoyer la musique du lecteur montré (Music Assistant : transfert de la file).
+    - button:
+        id: musique_piece_btn_${n}_1
+        align: TOP_LEFT
+        x: 80
+        y: 126
+        width: 56
+        height: 48
+        pad_all: 0
+        hidden: true
+        styles: style_clim_btn
+        on_short_click:
+          - lambda: 'musique_piece_bouton(${n}, MUSIQUE_PIECE_TRANSFERT);'
+        widgets:
+          - label: { text: "\U000F04E1", align: CENTER, text_font: mdi_font_32, styles: style_text_soft }
+    # Marche / arrêt (sa couleur : accent allumé, tab5_musique.cpp).
+    - button:
+        id: musique_piece_btn_${n}_2
+        align: TOP_LEFT
+        x: 144
+        y: 126
+        width: 56
+        height: 48
+        pad_all: 0
+        hidden: true
+        styles: style_clim_btn
+        on_short_click:
+          - lambda: 'musique_piece_bouton(${n}, MUSIQUE_PIECE_MARCHE);'
+        widgets:
+          - label: { text: "\U000F0425", align: CENTER, text_font: mdi_font_32, styles: style_text_dim }

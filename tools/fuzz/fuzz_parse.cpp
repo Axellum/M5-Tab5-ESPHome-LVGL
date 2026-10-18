@@ -186,6 +186,56 @@ void lecteur(const std::string& p) {
     lecteur_fonctions_lire(Champ{p.data(), p.size()});
 }
 
+// Musique de toute la maison (ADR-0067) : les deux variables de chaque service séparées
+// par un saut de ligne, comme lecteur() ; ce que l'écran lit ensuite (groupes, jouer ou
+// ouvrir, URL de la pochette avec la base tirée du payload).
+void musique_pieces(const std::string& p) {
+    const size_t saut = p.find('\n');
+    const std::string pieces = p.substr(0, saut);
+    const std::string contexte = saut == std::string::npos ? std::string() : p.substr(saut + 1);
+    MusiquePiecesLues lu;
+    const int n = musique_pieces_lire(Champ{pieces.data(), pieces.size()}, Champ{contexte.data(), contexte.size()}, lu);
+    for (int i = 0; i < n; i++) {
+        const std::string nom(lu.pieces[i].nom.p, lu.pieces[i].nom.n);  // ce que texte_ha_copier recevrait
+        const std::string titre(lu.pieces[i].titre.p, lu.pieces[i].titre.n);
+        (void) nom;
+        (void) titre;
+        musique_membres(lu, lu.pieces[i].index);
+        for (int j = 0; j < n; j++) musique_meme_groupe(lu, lu.pieces[i].index, lu.pieces[j].index);
+    }
+    musique_membres(lu, lu.montre);
+    const std::string suivant(lu.suivant.p, lu.suivant.n);
+    (void) suivant;
+    musique_fonctions_lire(Champ{p.data(), p.size()});
+}
+
+void musique_liste(const std::string& p) {
+    const size_t saut = p.find('\n');
+    const std::string contexte = p.substr(0, saut);
+    const std::string elements = saut == std::string::npos ? std::string() : p.substr(saut + 1);
+    MusiqueListeLue lu;
+    const int n = musique_liste_lire(Champ{contexte.data(), contexte.size()}, Champ{elements.data(), elements.size()}, lu);
+    char base[64];
+    ha_base_depuis_hote(contexte.c_str(), base, sizeof(base));
+    for (int i = 0; i < n; i++) {
+        const MusiqueElementLu& e = lu.elements[i];
+        const std::string nom(e.nom.p, e.nom.n);
+        const std::string sous(e.sous.p, e.sous.n);
+        const std::string ref(e.ref.p, e.ref.n);  // ce que l'événement renverrait
+        (void) nom;
+        (void) sous;
+        (void) ref;
+        musique_element_jouable(e);
+        musique_element_conteneur(e);
+        musique_ref_valide(e.ref, e.genre);
+        char url[kLecteurUrlMax];
+        ha_image_url(e.image, base, url, sizeof(url));
+    }
+    musique_vue_code(lu.vue);
+    musique_vue_categorie(lu.vue);
+    musique_vue_lire(Champ{p.data(), p.size()});
+}
+
 // Popup Caméras : les deux variables du service (adresse, cameras) séparées par un saut de
 // ligne, comme temperature(). L'URL de chaque caméra est construite avec l'adresse donnée,
 // puis avec la base tirée du payload pris comme adresse de client (on_client_connected).
@@ -351,6 +401,8 @@ constexpr Parseur kParseurs[] = {
     serveur_ia,       // '?' tab5_maj_serveur_ia
     energie_soleil,   // '@' tab5_maj_energie_soleil
     energie_bilan,    // 'A' tab5_maj_energie_bilan
+    musique_pieces,   // 'B' tab5_maj_musique_pieces
+    musique_liste,    // 'C' tab5_maj_musique_liste
 };
 constexpr size_t kNbParseurs = sizeof(kParseurs) / sizeof(kParseurs[0]);
 

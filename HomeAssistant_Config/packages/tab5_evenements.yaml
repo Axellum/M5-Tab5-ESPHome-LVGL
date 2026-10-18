@@ -27,6 +27,11 @@
 #                                            blueprint écoute aussi « ouvrir » d'une tuile
 #                                            et « playlist » (ADR-0068, le lien est à
 #                                            lui ; le script l'ignore)
+#       tab5_musique (action, piece,       → script.tab5_musique_commande (tab5_musique.yaml,
+#                     valeur)                ADR-0067) : pages Pièces et Bibliothèque ;
+#                                            n'agit que sur une pièce de la liste (index)
+#                                            ou sur le lecteur montré, répond à la seule
+#                                            tablette qui a demandé
 #       tab5_serveur_ia_action (action)    → script.tab5_serveur_ia_action (tab5_llm.yaml,
 #                                            ADR-0060) : decharger / reveiller / redemarrer,
 #                                            seulement si le package l'offre à cet instant
@@ -113,6 +118,9 @@ automation:
       - trigger: event
         event_type: esphome.tab5_lecteur
         id: lecteur
+      - trigger: event
+        event_type: esphome.tab5_musique
+        id: musique
       - trigger: event
         event_type: esphome.tab5_serveur_ia_action
         id: serveur_ia_action
@@ -321,6 +329,27 @@ automation:
                         commande: "{{ trigger.event.data.action | default('') | string }}"
                         lecteur: "{{ trigger.event.data.lecteur | default('') | string }}"
                         valeur: "{{ trigger.event.data.valeur | default('') | string }}"
+
+          # Musique de la maison (ADR-0067) : pages Pièces et Bibliothèque. Le script ne
+          # touche qu'une pièce de la liste (un index) ou le lecteur montré, et vérifie
+          # chaque valeur (ref, mode, index de source) ; les listes repartent vers la seule
+          # tablette qui a demandé (device_id).
+          - alias: "Musique de la maison : commande des pages Pièces et Bibliothèque"
+            conditions:
+              - condition: trigger
+                id: musique
+            sequence:
+              - if: "{{ states['script.tab5_musique_commande'] is not none }}"
+                then:
+                  - action: script.turn_on
+                    target:
+                      entity_id: script.tab5_musique_commande
+                    data:
+                      variables:
+                        commande: "{{ trigger.event.data.action | default('') | string }}"
+                        piece: "{{ trigger.event.data.piece | default('') | string }}"
+                        valeur: "{{ trigger.event.data.valeur | default('') | string }}"
+                        appareil: "{{ trigger.event.data.device_id | default('', true) | string }}"
 
           # Serveur IA (ADR-0060) : un code seulement, jamais un modèle, une adresse ou une
           # entité ; le script ne fait que ce que sensor.tab5_serveur_ia_actions offre, et

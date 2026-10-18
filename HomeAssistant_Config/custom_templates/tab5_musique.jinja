@@ -1,0 +1,227 @@
+{#-
+  La musique de toute la maison vue de Home Assistant (ADR-0067, 18/10/2026) : les pages
+  « Pièces » et « Bibliothèque » du popup Musique, par Music Assistant quand il est là.
+  UNE seule liste des pièces, ici : la poussée (packages/tab5_musique.yaml, script
+  tab5_musique_pieces_pousser) et la commande (script tab5_musique_commande) la lisent
+  toutes les deux, un index désigne donc la même pièce des deux côtés. Importées par :
+    {%- from 'tab5_musique.jinja' import tab5_musique_entites, tab5_musique_pieces -%}
+
+  tab5_musique_ma()
+      '1' quand l'intégration music_assistant a au moins un media_player (Music Assistant
+      installé et relié à HA), '0' sinon.
+  tab5_musique_config()
+      config_entry_id de l'intégration (trouvé, jamais écrit dans un fichier), '' sans elle.
+  tab5_musique_entites()
+      Les pièces dans l'ordre poussé, séparées par des virgules (lire avec
+      `.split(',') | select | list`) : avec Music Assistant, ses media_player triés par nom
+      (8 au plus) ; sans, la liste « Tab5 · lecteurs de musique » (packages/tab5_reglages.yaml,
+      input_text.tab5_choix_lecteurs, 6 au plus) dans son ordre, celui des pastilles.
+  tab5_musique_montre()
+      Index dans tab5_musique_entites() du lecteur montré (sensor.tab5_lecteur_montre,
+      ADR-0050) ; à défaut la pièce Music Assistant qui l'enveloppe (fournisseur « Home
+      Assistant MediaPlayers » : sa file porte l'entity_id du lecteur d'origine) ; sinon -1.
+  tab5_musique_pieces()
+      Le champ `pieces` de l'action tab5_maj_musique_pieces : « nom|genre|etat|volume|muet|
+      groupe|fonctions|titre » séparés par « ; » (lettres et longueurs : ADR-0067).
+  tab5_musique_texte(v, n)
+      Un texte de HA pour la tablette : « | » → « / », « ; » → « , », sauts de ligne et
+      tabulations → espace, n caractères au plus.
+  tab5_musique_image(url)
+      Une image petite : adresse du proxy de Music Assistant → size=160, adresse
+      googleusercontent « =wN-hN » → « =w160-h160 », les autres telles quelles ; « ; » →
+      %3B, « | » → %7C, espace → %20. '' pour ce qui n'est pas http(s) ou dépasse 512
+      caractères (couper une adresse la casserait ; 10 × 512 laisse la marge des 16 Kio).
+  tab5_musique_genre(uri, defaut)
+      Lettre du genre d'un élément lue dans son URI (…://track/…, album, artist, playlist,
+      radio, podcast, podcast_episode, audiobook), sinon defaut.
+  tab5_musique_element(nom, sous, genre, ref, image)
+      Une entrée de `elements` (tab5_maj_musique_liste) : « nom|sous|genre|ref|image ».
+      '' quand ref n'a pas la forme que la commande accepte au retour
+      (^[a-z0-9_-]+://[^|;\s]+$, 160 caractères au plus) : un élément qu'on ne pourrait pas
+      jouer n'est pas montré. Une source (genre s) a pour ref son index.
+  tab5_musique_item(it), tab5_musique_enfant(c)
+      L'entrée d'un élément de music_assistant.get_library (name, version, artists, uri,
+      image) ou d'un enfant de media_player.browse_media (title « artiste - titre » pour
+      un morceau, media_content_id, media_class, thumbnail).
+  tab5_musique_recents(avant)
+      La mémoire « Récents » (sensor.tab5_musique_recente) : ce que jouent les pièces
+      Music Assistant maintenant, puis `avant` (le texte précédent, une entrée par ligne)
+      sans doublon de ref, 20 au plus. Music Assistant ne donne pas à HA ce qu'il a joué
+      (son « last_played » ne suit pas les radios : vérifié le 18/10/2026) et son API
+      exige un jeton : HA retient donc ce qu'il voit jouer.
+
+  Déploiement : ce fichier va dans config/custom_templates/, puis
+  homeassistant.reload_custom_templates — AVANT de recharger packages/tab5_musique.yaml,
+  qui l'importe (comme tab5_tablette.jinja).
+-#}
+{%- macro tab5_musique_ma() -%}
+  {{- '1' if integration_entities('music_assistant') | select('match', 'media_player[.]') | list | count > 0 else '0' -}}
+{%- endmacro -%}
+{%- macro tab5_musique_config() -%}
+  {{- integration_entities('music_assistant') | map('config_entry_id') | select | first | default('', true) -}}
+{%- endmacro -%}
+{%- macro tab5_musique_entites() -%}
+  {%- set ma = integration_entities('music_assistant') | select('match', 'media_player[.]') | list -%}
+  {%- if ma -%}
+    {{- (expand(ma) | sort(attribute='name,entity_id') | map(attribute='entity_id') | list)[:8] | join(',') -}}
+  {%- else -%}
+    {{- (states('input_text.tab5_choix_lecteurs').split(',') | map('trim') | select('match', 'media_player[.]') | unique | list)[:6] | join(',') -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_musique_montre() -%}
+  {%- set l = tab5_musique_entites().split(',') | select | list -%}
+  {%- set m = states('sensor.tab5_lecteur_montre') -%}
+  {%- set ns = namespace(i=-1) -%}
+  {%- if m in l -%}
+    {%- set ns.i = l.index(m) -%}
+  {%- elif m.startswith('media_player.') -%}
+    {%- for e in l -%}
+      {%- if ns.i < 0 and state_attr(e, 'active_queue') == m -%}
+        {%- set ns.i = loop.index0 -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+  {{- ns.i -}}
+{%- endmacro -%}
+{%- macro tab5_musique_texte(v, n) -%}
+  {%- set k = n | int(0) -%}
+  {{- ((v if v is not none else '') | string | replace('|', '/') | replace(';', ',') | replace('\r', ' ')
+       | replace('\n', ' ') | replace('\t', ' ') | trim)[:k] | trim -}}
+{%- endmacro -%}
+{%- macro tab5_musique_image(url) -%}
+  {%- set u = (url if url is not none else '') | string | trim -%}
+  {%- if u.startswith('http://') or u.startswith('https://') -%}
+    {%- if '/imageproxy/' in u -%}
+      {%- set u = u | regex_replace('size=[0-9]+', 'size=160') -%}
+      {%- if 'size=160' not in u -%}
+        {%- set u = u ~ ('&' if '?' in u else '?') ~ 'size=160' -%}
+      {%- endif -%}
+    {%- elif 'googleusercontent.com/' in u -%}
+      {%- set u = u | regex_replace('=w[0-9]+-h[0-9]+', '=w160-h160') -%}
+    {%- endif -%}
+    {%- set u = u | replace(';', '%3B') | replace('|', '%7C') | replace(' ', '%20') -%}
+    {{- u if u | length <= 512 else '' -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_musique_genre(uri, defaut) -%}
+  {%- set k = (((uri if uri is not none else '') | string | regex_findall('^[a-z0-9_-]+://([a-z_]+)/')) + ['']) | first -%}
+  {{- {'track': 't', 'album': 'a', 'artist': 'r', 'playlist': 'p', 'radio': 'd', 'podcast': 'o',
+       'podcast_episode': 'o', 'episode': 'o', 'audiobook': 'l'}.get(k, defaut) -}}
+{%- endmacro -%}
+{%- macro tab5_musique_element(nom, sous, genre, ref, image) -%}
+  {%- set r = (ref if ref is not none else '') | string | trim -%}
+  {%- if genre == 's' or (r | length <= 160 and r is match('^[a-z0-9_-]+://[^|;\\s]+$')) -%}
+    {{- tab5_musique_texte(nom, 40) }}|{{ tab5_musique_texte(sous, 40) }}|{{ genre }}|{{ r }}|{{ tab5_musique_image(image) -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_musique_item(it) -%}
+  {%- if it is mapping -%}
+    {%- set g = {'track': 't', 'album': 'a', 'artist': 'r', 'playlist': 'p', 'radio': 'd', 'podcast': 'o',
+                 'podcast_episode': 'o', 'audiobook': 'l'}.get(it.get('media_type') | string, '')
+                 or tab5_musique_genre(it.get('uri'), 'x') -%}
+    {%- set ar = it.get('artists') -%}
+    {%- set ar = ar if ar is sequence and ar is not string else [] -%}
+    {%- set ns = namespace(n=[]) -%}
+    {%- for a in ar if a is mapping and a.get('name') -%}
+      {%- set ns.n = ns.n + [a.get('name') | string] -%}
+    {%- endfor -%}
+    {%- set v = it.get('version') or '' -%}
+    {%- set nom = (it.get('name') or '') | string -%}
+    {{- tab5_musique_element(nom ~ ((' (' ~ v ~ ')') if v else ''), ns.n | join(', '), g, it.get('uri'), it.get('image')) -}}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_musique_enfant(c) -%}
+  {#- Dans un script, browse_media répond par des objets BrowseMedia, pas des
+      dictionnaires (vérifié le 18/10/2026 : `is mapping` faux, `| string` donne
+      « <BrowseMedia …> ») : lus par attributs, ce qui vaut aussi pour un dictionnaire. -#}
+  {%- if c is defined and c is not none and c.media_content_id is defined -%}
+    {%- set ref = (c.media_content_id if c.media_content_id is not none else '') | string -%}
+    {%- set classe = (c.media_class if c.media_class is defined and c.media_class is not none else '') | string -%}
+    {%- set g = tab5_musique_genre(ref, {'track': 't', 'album': 'a', 'artist': 'r', 'playlist': 'p',
+                 'podcast': 'o', 'episode': 'o'}.get(classe, 'x')) -%}
+    {%- set titre = (c.title if c.title is defined and c.title is not none else '') | string -%}
+    {%- set image = c.thumbnail if c.thumbnail is defined else none -%}
+    {%- if g in ['t', 'a'] and ' - ' in titre -%}
+      {%- set parts = titre.split(' - ', 1) -%}
+      {{- tab5_musique_element(parts[1], parts[0], g, ref, image) -}}
+    {%- else -%}
+      {{- tab5_musique_element(titre, '', g, ref, image) -}}
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro tab5_musique_pieces() -%}
+  {%- set l = tab5_musique_entites().split(',') | select | list -%}
+  {%- set ns = namespace(l=[]) -%}
+  {%- for e in l -%}
+    {%- set s = states(e) -%}
+    {%- set f = state_attr(e, 'supported_features') | int(0) -%}
+    {%- set type = state_attr(e, 'mass_player_type') -%}
+    {%- set classe = state_attr(e, 'device_class') -%}
+    {%- set nom = state_attr(e, 'friendly_name') -%}
+    {%- set mots = ((nom or '') ~ ' ' ~ (device_attr(e, 'model') or '')) | string -%}
+    {#- Genre (l'icône) : un groupe de Music Assistant ; une TV ou un boîtier TV ; un écran
+        (la tablette, un réveil, un écran connecté) ; une enceinte ; autre chose. Un
+        lecteur Music Assistant dit toujours device_class speaker : le nom et le modèle
+        de son appareil départagent. -#}
+    {%- if type == 'group' -%}
+      {%- set g = 'g' -%}
+    {%- elif classe == 'tv' or mots is match('(?i).*(\\btv\\b|t[eé]l[eé]|freebox|shield)') -%}
+      {%- set g = 't' -%}
+    {%- elif device_attr(e, 'model') == 'tab5-ha-hmi' or mots is match('(?i).*(tablet|tab5|clock|r[eé]veil|display|[eé]cran|echo show|nest hub|ipad)') -%}
+      {%- set g = 'a' -%}
+    {%- elif classe in ['speaker', 'receiver'] or type == 'player' -%}
+      {%- set g = 'e' -%}
+    {%- else -%}
+      {%- set g = 'x' -%}
+    {%- endif -%}
+    {%- set et = {'playing': 'j', 'buffering': 'j', 'paused': 'p', 'on': 'r', 'idle': 'r',
+                  'off': 'e', 'standby': 'e'}.get(s, 'i') -%}
+    {%- set vol = state_attr(e, 'volume_level') -%}
+    {%- set gm = state_attr(e, 'group_members') -%}
+    {%- set gm = gm if gm is sequence and gm is not string else [] -%}
+    {%- set grp = l.index(gm[0]) if type != 'group' and gm | count > 1 and gm[0] in l else -1 -%}
+    {%- set src = state_attr(e, 'source_list') -%}
+    {%- set fn = ('v' if f | bitwise_and(4) else '') ~ ('m' if f | bitwise_and(8) else '')
+         ~ ('o' if f | bitwise_and(128) or f | bitwise_and(256) else '')
+         ~ ('g' if f | bitwise_and(524288) else '')
+         ~ ('s' if f | bitwise_and(2048) and src is sequence and src is not string and src | count > 0 else '')
+         ~ ('t' if type in ['player', 'group'] else '') -%}
+    {%- set ti = state_attr(e, 'media_title') -%}
+    {%- set ar = state_attr(e, 'media_artist') or state_attr(e, 'media_album_artist') -%}
+    {%- set titre = ((ti ~ (' — ' ~ ar if ar else '')) if ti else (ar or '')) if et in ['j', 'p'] else '' -%}
+    {%- set ns.l = ns.l + [tab5_musique_texte(nom, 40) ~ '|' ~ g ~ '|' ~ et
+         ~ '|' ~ ((([0, [100, (vol * 100) | round(0) | int] | min] | max) | string) if vol is number else '')
+         ~ '|' ~ ('1' if state_attr(e, 'is_volume_muted') else '0') ~ '|' ~ grp ~ '|' ~ fn
+         ~ '|' ~ tab5_musique_texte(titre, 60)] -%}
+  {%- endfor -%}
+  {{- ns.l | join(';') -}}
+{%- endmacro -%}
+{%- macro tab5_musique_recents(avant) -%}
+  {%- set ns = namespace(l=[], refs=[]) -%}
+  {%- if tab5_musique_ma() == '1' -%}
+    {%- for e in tab5_musique_entites().split(',') | select -%}
+      {%- set ref = (state_attr(e, 'media_content_id') or '') | string -%}
+      {%- if is_state(e, 'playing') and ref and ref not in ns.refs -%}
+        {%- set g = tab5_musique_genre(ref, 'x') -%}
+        {%- set album = state_attr(e, 'media_album_name') -%}
+        {#- Une radio : son nom, pas le morceau du moment (Music Assistant le met dans le
+            titre quand la station l'annonce). -#}
+        {%- set nom = album if g == 'd' and album else state_attr(e, 'media_title') -%}
+        {%- set sous = '' if g == 'd' else (state_attr(e, 'media_artist') or state_attr(e, 'media_album_artist') or '') -%}
+        {%- set el = tab5_musique_element(nom, sous, g, ref, state_attr(e, 'entity_picture')) -%}
+        {%- if el -%}
+          {%- set ns.l = ns.l + [el] -%}
+          {%- set ns.refs = ns.refs + [ref] -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+  {%- for el in ((avant if avant is not none else '') | string | replace('\r', '')).split('\n') if el -%}
+    {%- set ref = (el.split('|') + ['', '', '', ''])[3] -%}
+    {%- if ref and ref not in ns.refs and ns.l | count < 20 -%}
+      {%- set ns.l = ns.l + [el] -%}
+      {%- set ns.refs = ns.refs + [ref] -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {{- ns.l[:20] | join('\n') -}}
+{%- endmacro -%}
