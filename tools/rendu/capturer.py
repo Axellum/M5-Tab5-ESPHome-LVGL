@@ -162,15 +162,15 @@ def en_png(dossier: Path, rotation: int = 270) -> list[Path]:
 
 
 def lire_mesure(texte: str) -> tuple[str, dict] | None:
-    """« fichier|écran|coupés|hors » du capteur « Rendu mesure » (action rendu_capture,
-    Tab5/rendu/rendu_mesure.h) → (fichier, {ecran, coupes, hors}). Les noms d'écran (registre
-    des fenêtres, consoles) n'ont pas de « | ». Un texte mal formé : None."""
+    """« fichier|écran|coupés|hors|barres » du capteur « Rendu mesure » (action rendu_capture,
+    Tab5/rendu/rendu_mesure.h) → (fichier, {ecran, coupes, hors, barres}). Les noms d'écran
+    (registre des fenêtres, consoles) n'ont pas de « | ». Un texte mal formé : None."""
     champs = texte.split("|")
-    if len(champs) != 4:
+    if len(champs) != 5:
         return None
-    fichier, ecran, coupes, hors = champs
+    fichier, ecran, coupes, hors, barres = champs
     try:
-        return fichier, {"ecran": ecran, "coupes": int(coupes), "hors": int(hors)}
+        return fichier, {"ecran": ecran, "coupes": int(coupes), "hors": int(hors), "barres": int(barres)}
     except ValueError:
         return None
 
@@ -232,11 +232,12 @@ class Rendu:
         self.empreintes.setdefault(empreinte, fichier)
 
     def ecrire_bilan(self, chemin: Path) -> None:
-        """Une entrée par capture : écran affiché, objets coupés et hors écran (None si le
-        rendu ne l'a pas publié) et la capture identique qui la précède (tools/rendu/bilan_carte.py)."""
+        """Une entrée par capture : écran affiché, objets coupés et hors écran, barres de
+        défilement (None si le rendu ne l'a pas publié) et la capture identique qui la précède
+        (tools/rendu/bilan_carte.py)."""
         import json
 
-        bilan = {n: {**self.mesures.get(n, {"ecran": None, "coupes": None, "hors": None}),
+        bilan = {n: {**self.mesures.get(n, {"ecran": None, "coupes": None, "hors": None, "barres": None}),
                      "doublon_de": self.doublons.get(n)} for n in self.ordre}
         chemin.write_text(json.dumps(bilan, ensure_ascii=False, indent=1), encoding="utf-8")
         logger.info("Bilan des captures : %s (%d)", chemin, len(bilan))

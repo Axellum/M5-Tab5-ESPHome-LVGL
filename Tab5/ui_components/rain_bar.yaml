@@ -5,7 +5,11 @@
 # collée en bas, prend la hauteur et la couleur de l'intensité, posées par
 # update_rain_bar_ui() (tab5_services.cpp).
 # vars : n (0-8 — suffixe des ids rb_${n} et rb_${n}_in), w (largeur : 25 px pour les
-#        6 tranches de 5 min, 55 px pour les 3 tranches de 10 min).
+#        6 tranches de 5 min, 55 px pour les 3 tranches de 10 min sur le Tab5 ; jetons
+#        acc_pluie_5mn_l / acc_pluie_10mn_l, à la taille de la carte).
+# La barre intérieure n'a ni marge ni défilement (18/10/2026) : la marge du thème LVGL,
+# plus large qu'elle, la rendait défilable, et LVGL dessinait une barre de défilement dans
+# chaque barre de pluie (le petit trait clair, vu au rendu sur les deux cartes).
 # Sorti de tab5-lvgl.yaml le 01/10/2026 (audit des conteneurs, règle 5) : 9 copies.
 # ═══════════════════════════════════════════════════════
 obj:
@@ -24,3 +28,5 @@ obj:
         styles: style_bandeau_bg_bar_inactive
         border_width: 0
         radius: 0
+        pad_all: 0
+        scrollable: false
