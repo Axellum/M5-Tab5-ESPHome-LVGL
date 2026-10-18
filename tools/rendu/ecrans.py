@@ -801,9 +801,11 @@ PLAYLISTS = Service("tab5_maj_emplacements", (
     ("payload", "playlists|Jazz du dimanche|Rock des années 80|Cuisine en musique|Chill du soir|"
                 "Réveil en douceur|Les grands classiques de la chanson française;"),))
 PLAYLISTS_AUCUNE = Service("tab5_maj_emplacements", (("payload", "playlists|;"),))
-# Page « Playlists » : un glissement vers la gauche parti de la pochette (rien n'y est
-# touchable ; le geste remonte au popup, tab5_pages.cpp).
-PLAYLISTS_PAGE = Glisser(540, 330, 220, 330, dans_popup=True)
+# Page « Playlists » : un glissement vers la gauche parti du milieu de la pochette (rien
+# n'y est touchable ; le geste remonte au popup, tab5_pages.cpp). Parti de x 540, ramené
+# sur la 7B (vers_carte.py) il tombait à x 433, hors de la pochette (427) : la page ne
+# changeait pas (capture « doublon » du rendu 1024×600, 18/10/2026).
+PLAYLISTS_PAGE = Glisser(470, 346, 150, 346, dans_popup=True)
 
 
 # Capteurs suivis (ADR-0054, suivi_popup.yaml et suivi_zone.yaml) : quatre capteurs au
