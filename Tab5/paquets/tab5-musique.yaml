@@ -1,0 +1,248 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-musique.yaml
+# @role Musique de toute la maison (ADR-0067, 18/10/2026) : pose les widgets que
+#       tab5_musique.cpp peint (g_musique_ui), les pochettes de la bibliothèque et
+#       l'événement des commandes.
+#         - tab5_musique_lier : widgets et rappels dans g_musique_ui, une fois (appelé par
+#           les deux poussées, tab5-api-logic.yaml, et à l'ouverture du popup Musique,
+#           tab5_lecteur_ouvrir de tab5-lecteur.yaml) ;
+#         - tab5_musique_evenement : événement esphome.tab5_musique (action, piece, valeur).
+#           HomeAssistant_Config/packages/tab5_evenements.yaml le confie à
+#           script.tab5_musique_commande (packages/tab5_musique.yaml), qui retrouve la pièce
+#           par son rang et n'accepte qu'une ref « schéma://… » : aucune entité ni action ne
+#           vient de la tablette ;
+#         - les dix pochettes : musique_pochette.yaml, une image et son script chacune.
+# @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025). Chargé APRÈS
+#       tab5_lvgl (il référence des widgets) et après tab5_assist (client HTTP des images).
+#       Aucun lv_* ici. Les commandes sont des lambdas SANS capture (pointeurs de fonction).
+# @ai_instruction Un widget de plus = son champ dans MusiqueUI (tab5_musique.h) et sa ligne
+#       dans tab5_musique_lier.
+# ============================================================================
+
+# Les dix pochettes de la grille (règle 5 : un package paramétré inclus dix fois).
+packages:
+  musique_pochette_0: !include { file: musique_pochette.yaml, vars: { n: 0 } }
+  musique_pochette_1: !include { file: musique_pochette.yaml, vars: { n: 1 } }
+  musique_pochette_2: !include { file: musique_pochette.yaml, vars: { n: 2 } }
+  musique_pochette_3: !include { file: musique_pochette.yaml, vars: { n: 3 } }
+  musique_pochette_4: !include { file: musique_pochette.yaml, vars: { n: 4 } }
+  musique_pochette_5: !include { file: musique_pochette.yaml, vars: { n: 5 } }
+  musique_pochette_6: !include { file: musique_pochette.yaml, vars: { n: 6 } }
+  musique_pochette_7: !include { file: musique_pochette.yaml, vars: { n: 7 } }
+  musique_pochette_8: !include { file: musique_pochette.yaml, vars: { n: 8 } }
+  musique_pochette_9: !include { file: musique_pochette.yaml, vars: { n: 9 } }
+
+script:
+  - id: tab5_musique_lier
+    then:
+      - lambda: |-
+          MusiqueUI& u = g_musique_ui;
+          if (u.calque != nullptr) return;
+          u.onglet[0] = id(musique_onglet_0);
+          u.onglet[1] = id(musique_onglet_1);
+          u.onglet[2] = id(musique_onglet_2);
+          u.onglet[3] = id(musique_onglet_3);
+          u.groupe = id(musique_groupe);
+          u.groupe_texte = id(musique_groupe_texte);
+          u.suivant = id(musique_suivant);
+          u.file = id(musique_file);
+          u.pieces = id(musique_pieces);
+          u.conseil = id(musique_pieces_conseil);
+          u.tout_ici = id(musique_btn_0);
+          u.tout_separer = id(musique_btn_1);
+          u.piece[0] = id(musique_piece_0);
+          u.piece_icone[0] = id(musique_piece_icone_0);
+          u.piece_nom[0] = id(musique_piece_nom_0);
+          u.piece_etat[0] = id(musique_piece_etat_0);
+          u.piece_son[0] = id(musique_piece_son_0);
+          u.piece_volume[0] = id(musique_piece_volume_0);
+          u.piece_btn[0][0] = id(musique_piece_btn_0_0);
+          u.piece_btn[0][1] = id(musique_piece_btn_0_1);
+          u.piece_btn[0][2] = id(musique_piece_btn_0_2);
+          u.piece_lien[0] = id(musique_piece_lien_0);
+          u.piece[1] = id(musique_piece_1);
+          u.piece_icone[1] = id(musique_piece_icone_1);
+          u.piece_nom[1] = id(musique_piece_nom_1);
+          u.piece_etat[1] = id(musique_piece_etat_1);
+          u.piece_son[1] = id(musique_piece_son_1);
+          u.piece_volume[1] = id(musique_piece_volume_1);
+          u.piece_btn[1][0] = id(musique_piece_btn_1_0);
+          u.piece_btn[1][1] = id(musique_piece_btn_1_1);
+          u.piece_btn[1][2] = id(musique_piece_btn_1_2);
+          u.piece_lien[1] = id(musique_piece_lien_1);
+          u.piece[2] = id(musique_piece_2);
+          u.piece_icone[2] = id(musique_piece_icone_2);
+          u.piece_nom[2] = id(musique_piece_nom_2);
+          u.piece_etat[2] = id(musique_piece_etat_2);
+          u.piece_son[2] = id(musique_piece_son_2);
+          u.piece_volume[2] = id(musique_piece_volume_2);
+          u.piece_btn[2][0] = id(musique_piece_btn_2_0);
+          u.piece_btn[2][1] = id(musique_piece_btn_2_1);
+          u.piece_btn[2][2] = id(musique_piece_btn_2_2);
+          u.piece_lien[2] = id(musique_piece_lien_2);
+          u.piece[3] = id(musique_piece_3);
+          u.piece_icone[3] = id(musique_piece_icone_3);
+          u.piece_nom[3] = id(musique_piece_nom_3);
+          u.piece_etat[3] = id(musique_piece_etat_3);
+          u.piece_son[3] = id(musique_piece_son_3);
+          u.piece_volume[3] = id(musique_piece_volume_3);
+          u.piece_btn[3][0] = id(musique_piece_btn_3_0);
+          u.piece_btn[3][1] = id(musique_piece_btn_3_1);
+          u.piece_btn[3][2] = id(musique_piece_btn_3_2);
+          u.piece_lien[3] = id(musique_piece_lien_3);
+          u.piece[4] = id(musique_piece_4);
+          u.piece_icone[4] = id(musique_piece_icone_4);
+          u.piece_nom[4] = id(musique_piece_nom_4);
+          u.piece_etat[4] = id(musique_piece_etat_4);
+          u.piece_son[4] = id(musique_piece_son_4);
+          u.piece_volume[4] = id(musique_piece_volume_4);
+          u.piece_btn[4][0] = id(musique_piece_btn_4_0);
+          u.piece_btn[4][1] = id(musique_piece_btn_4_1);
+          u.piece_btn[4][2] = id(musique_piece_btn_4_2);
+          u.piece_lien[4] = id(musique_piece_lien_4);
+          u.piece[5] = id(musique_piece_5);
+          u.piece_icone[5] = id(musique_piece_icone_5);
+          u.piece_nom[5] = id(musique_piece_nom_5);
+          u.piece_etat[5] = id(musique_piece_etat_5);
+          u.piece_son[5] = id(musique_piece_son_5);
+          u.piece_volume[5] = id(musique_piece_volume_5);
+          u.piece_btn[5][0] = id(musique_piece_btn_5_0);
+          u.piece_btn[5][1] = id(musique_piece_btn_5_1);
+          u.piece_btn[5][2] = id(musique_piece_btn_5_2);
+          u.piece_lien[5] = id(musique_piece_lien_5);
+          u.piece[6] = id(musique_piece_6);
+          u.piece_icone[6] = id(musique_piece_icone_6);
+          u.piece_nom[6] = id(musique_piece_nom_6);
+          u.piece_etat[6] = id(musique_piece_etat_6);
+          u.piece_son[6] = id(musique_piece_son_6);
+          u.piece_volume[6] = id(musique_piece_volume_6);
+          u.piece_btn[6][0] = id(musique_piece_btn_6_0);
+          u.piece_btn[6][1] = id(musique_piece_btn_6_1);
+          u.piece_btn[6][2] = id(musique_piece_btn_6_2);
+          u.piece_lien[6] = id(musique_piece_lien_6);
+          u.piece[7] = id(musique_piece_7);
+          u.piece_icone[7] = id(musique_piece_icone_7);
+          u.piece_nom[7] = id(musique_piece_nom_7);
+          u.piece_etat[7] = id(musique_piece_etat_7);
+          u.piece_son[7] = id(musique_piece_son_7);
+          u.piece_volume[7] = id(musique_piece_volume_7);
+          u.piece_btn[7][0] = id(musique_piece_btn_7_0);
+          u.piece_btn[7][1] = id(musique_piece_btn_7_1);
+          u.piece_btn[7][2] = id(musique_piece_btn_7_2);
+          u.piece_lien[7] = id(musique_piece_lien_7);
+          u.biblio = id(musique_biblio);
+          u.categorie[0] = id(musique_cat_0);
+          u.categorie[1] = id(musique_cat_1);
+          u.categorie[2] = id(musique_cat_2);
+          u.categorie[3] = id(musique_cat_3);
+          u.categorie[4] = id(musique_cat_4);
+          u.categorie[5] = id(musique_cat_5);
+          u.categorie[6] = id(musique_cat_6);
+          u.retour = id(musique_btn_2);
+          u.titre = id(musique_biblio_titre);
+          u.precedents = id(musique_btn_3);
+          u.suivants = id(musique_btn_4);
+          u.message = id(musique_biblio_message);
+          u.element[0] = id(musique_element_0);
+          u.element_cadre[0] = id(musique_element_cadre_0);
+          u.element_icone[0] = id(musique_element_icone_0);
+          u.element_img[0] = id(musique_element_img_0);
+          u.element_nom[0] = id(musique_element_nom_0);
+          u.element_sous[0] = id(musique_element_sous_0);
+          u.element[1] = id(musique_element_1);
+          u.element_cadre[1] = id(musique_element_cadre_1);
+          u.element_icone[1] = id(musique_element_icone_1);
+          u.element_img[1] = id(musique_element_img_1);
+          u.element_nom[1] = id(musique_element_nom_1);
+          u.element_sous[1] = id(musique_element_sous_1);
+          u.element[2] = id(musique_element_2);
+          u.element_cadre[2] = id(musique_element_cadre_2);
+          u.element_icone[2] = id(musique_element_icone_2);
+          u.element_img[2] = id(musique_element_img_2);
+          u.element_nom[2] = id(musique_element_nom_2);
+          u.element_sous[2] = id(musique_element_sous_2);
+          u.element[3] = id(musique_element_3);
+          u.element_cadre[3] = id(musique_element_cadre_3);
+          u.element_icone[3] = id(musique_element_icone_3);
+          u.element_img[3] = id(musique_element_img_3);
+          u.element_nom[3] = id(musique_element_nom_3);
+          u.element_sous[3] = id(musique_element_sous_3);
+          u.element[4] = id(musique_element_4);
+          u.element_cadre[4] = id(musique_element_cadre_4);
+          u.element_icone[4] = id(musique_element_icone_4);
+          u.element_img[4] = id(musique_element_img_4);
+          u.element_nom[4] = id(musique_element_nom_4);
+          u.element_sous[4] = id(musique_element_sous_4);
+          u.element[5] = id(musique_element_5);
+          u.element_cadre[5] = id(musique_element_cadre_5);
+          u.element_icone[5] = id(musique_element_icone_5);
+          u.element_img[5] = id(musique_element_img_5);
+          u.element_nom[5] = id(musique_element_nom_5);
+          u.element_sous[5] = id(musique_element_sous_5);
+          u.element[6] = id(musique_element_6);
+          u.element_cadre[6] = id(musique_element_cadre_6);
+          u.element_icone[6] = id(musique_element_icone_6);
+          u.element_img[6] = id(musique_element_img_6);
+          u.element_nom[6] = id(musique_element_nom_6);
+          u.element_sous[6] = id(musique_element_sous_6);
+          u.element[7] = id(musique_element_7);
+          u.element_cadre[7] = id(musique_element_cadre_7);
+          u.element_icone[7] = id(musique_element_icone_7);
+          u.element_img[7] = id(musique_element_img_7);
+          u.element_nom[7] = id(musique_element_nom_7);
+          u.element_sous[7] = id(musique_element_sous_7);
+          u.element[8] = id(musique_element_8);
+          u.element_cadre[8] = id(musique_element_cadre_8);
+          u.element_icone[8] = id(musique_element_icone_8);
+          u.element_img[8] = id(musique_element_img_8);
+          u.element_nom[8] = id(musique_element_nom_8);
+          u.element_sous[8] = id(musique_element_sous_8);
+          u.element[9] = id(musique_element_9);
+          u.element_cadre[9] = id(musique_element_cadre_9);
+          u.element_icone[9] = id(musique_element_icone_9);
+          u.element_img[9] = id(musique_element_img_9);
+          u.element_nom[9] = id(musique_element_nom_9);
+          u.element_sous[9] = id(musique_element_sous_9);
+          u.envoyer = [](const char* action, const char* piece, const char* valeur) {
+            id(tab5_musique_evenement).execute(std::string(action), std::string(piece), std::string(valeur));
+          };
+          u.telecharger = [](int n, const char* url) {
+            const std::string adresse(url);
+            switch (n) {
+              case 0: id(tab5_musique_image_0).execute(adresse); break;
+              case 1: id(tab5_musique_image_1).execute(adresse); break;
+              case 2: id(tab5_musique_image_2).execute(adresse); break;
+              case 3: id(tab5_musique_image_3).execute(adresse); break;
+              case 4: id(tab5_musique_image_4).execute(adresse); break;
+              case 5: id(tab5_musique_image_5).execute(adresse); break;
+              case 6: id(tab5_musique_image_6).execute(adresse); break;
+              case 7: id(tab5_musique_image_7).execute(adresse); break;
+              case 8: id(tab5_musique_image_8).execute(adresse); break;
+              case 9: id(tab5_musique_image_9).execute(adresse); break;
+              default: break;
+            }
+          };
+          // En dernier : le C++ ne peint rien tant que calque est nul.
+          u.calque = id(musique_calque);
+
+  - id: tab5_musique_evenement
+    mode: queued
+    max_runs: 8
+    parameters:
+      action: string
+      piece: string
+      valeur: string
+    then:
+      - homeassistant.event:
+          event: esphome.tab5_musique
+          data:
+            action: !lambda 'return action;'
+            piece: !lambda 'return piece;'
+            valeur: !lambda 'return valeur;'
+
+# « Chargement... » qui dure plus de 8 s devient une phrase courte (tab5_musique.cpp).
+interval:
+  - interval: 1s
+    then:
+      - lambda: 'musique_tic();'

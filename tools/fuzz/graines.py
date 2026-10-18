@@ -40,6 +40,8 @@ FAMILLES = [
     ("?", "tab5_maj_serveur_ia", "payload"),
     ("@", "tab5_maj_energie_soleil", "payload"),
     ("A", "tab5_maj_energie_bilan", ("vue", "debut", "payload")),
+    ("B", "tab5_maj_musique_pieces", ("pieces", "contexte")),
+    ("C", "tab5_maj_musique_liste", ("contexte", "elements")),
 ]
 
 
@@ -82,6 +84,14 @@ LIMITES = [
     # hors ligne sans image, horodatages illisible, négatif et trop grand, plus de 16 caméras.
     ("<", "cameras_pieces", "\nA|/a||;B|/b|Jardin|x;C||jardin|1760000000;D|/d|Jardin|-1;E|/e|É|99999999999;"
      + ";".join(f"C{i}|/c{i}|P{i % 5}" for i in range(20))),
+    # Musique (ADR-0067) : rangs vides, meneur et lecteur montré absents ou négatifs, volume
+    # non fini, titre avec « | », plus de huit pièces ; refs refusées (espace, schéma en
+    # majuscules, trop longue), source hors bornes, page négative, plus de dix éléments.
+    ("B", "musique_pieces_bornes", "A|e|j|nan|2|9|vmogstx|t|x;;B|g|p|1e99|1|-1||;"
+     + ";".join(f"P{i}|e|r|{i}" for i in range(12)) + "\n1|-1|-4|suivant|avec|barres"),
+    ("C", "musique_liste_bornes", "det|T|-3|1|1\nA||t|library://a b|;B||a|Library://x|;C||s|1234|;"
+     + "D||o|library://podcast_episode/1|http://x/a|b;E||r|library://" + "a" * 200 + "|;"
+     + ";".join(f"E{i}||t|library://track/{i}|" for i in range(12))),
     # Serveur IA (ADR-0059) : nombres négatifs, non finis, hors bornes, champs de trop, un
     # second serveur ignoré.
     ("?", "serveur_ia_bornes", ";A|x||-1|-1|1e99|-2|inf|101|nan|9|-5|1e9|en trop;B|1|m|1|1|1|1|1|1|1|1|1|1"),

@@ -143,11 +143,14 @@ def test_entrees_recopiees(composant, cid):
 
 def test_lecteur_recopie_au_plafond_pres():
     """Le lecteur de la 7B est celui du Tab5, plus `volume_max: 75%` : son ES8311 met 0 dB à
-    0,75 et +32 dB à 1,0 (essai à l'oreille du 17/10/2026 : 100 % saturait, 75 % propre)."""
+    0,75 et +32 dB à 1,0 (essai à l'oreille du 17/10/2026 : 100 % saturait, 75 % propre) ; et
+    `volume_min: 40%` : à 0 par défaut, le bas de la course était inaudible (≈ −76 dB à 0,2,
+    mesuré le 18/10/2026)."""
     w = dict(_par_id(_b7()["media_player"], "speaker_player"))
     assert w.pop("volume_max") == "75%"
+    assert w.pop("volume_min") == "40%"
     t = _par_id(_tab5()["media_player"], "speaker_player")
-    assert "volume_max" not in t
+    assert "volume_max" not in t and "volume_min" not in t
     assert w == t
 
 

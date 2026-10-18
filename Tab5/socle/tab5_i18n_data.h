@@ -8,9 +8,43 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1249;
+static const uint16_t kI18nKeyCount = 1284;
 
 static const char* const kI18nCtx[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -1239,6 +1273,7 @@ static const char* const kI18nCtx[] = {
     "echecs",
     "echecs",
     "energie",
+    "lecteur",
     "nudge",
     "nudge",
     "nudge",
@@ -1345,6 +1380,7 @@ static const char* const kI18nKeys[] = {
     "1 MAJ · %s",
     "1 erreur",
     "1 min",
+    "1 titre",
     "1 à 6 équipes",
     "10 jours",
     "10 min",
@@ -1402,6 +1438,7 @@ static const char* const kI18nKeys[] = {
     "Aimant mineur",
     "Air humide",
     "Air sec",
+    "Albums",
     "Alerte Météo Orange en cours ! Restez prudent.",
     "Alerte Météo Rouge en cours ! Restez prudent.",
     "Alertes",
@@ -1436,6 +1473,7 @@ static const char* const kI18nKeys[] = {
     "Après la première sonnerie, Home Assistant annonce la météo et le planning.",
     "Argent",
     "Arrêter",
+    "Artistes",
     "Arts",
     "Arts & Littérature",
     "Assistant",
@@ -1452,6 +1490,7 @@ static const char* const kI18nKeys[] = {
     "Aucun capteur suivi",
     "Aucun déplacement possible — au suivant.",
     "Aucun effet actif",
+    "Aucun favori pour l'instant",
     "Aucun historique",
     "Aucun incident",
     "Aucun jour retenu dans les 8 prochains",
@@ -1491,6 +1530,7 @@ static const char* const kI18nKeys[] = {
     "BILLE PERDUE",
     "Batterie",
     "Batterie montée",
+    "Bibliothèque",
     "Bientôt sec",
     "Bilan",
     "Bilan contre le Tab (par variante et niveau)",
@@ -1677,9 +1717,12 @@ static const char* const kI18nKeys[] = {
     "En attente de Home Assistant",
     "En charge",
     "En cours",
+    "En fin de file",
+    "En lecture",
     "En ligne",
     "En mode Fixe, seuls les jours cochés comptent.",
     "En mouvement",
+    "En pause",
     "Ensoleillé",
     "Entre %d et %d %%",
     "Envoyé",
@@ -1697,6 +1740,7 @@ static const char* const kI18nKeys[] = {
     "Faciles + moyennes",
     "Faible",
     "Faux chemin",
+    "Favoris",
     "Fermer",
     "Fermé",
     "Fertilité",
@@ -1747,6 +1791,7 @@ static const char* const kI18nKeys[] = {
     "Heures",
     "Histoire",
     "Home Assistant hors ligne",
+    "Home Assistant ne répond pas",
     "Hors du top %d",
     "Hors ligne",
     "Hors ligne depuis %02d:%02d",
@@ -1771,6 +1816,7 @@ static const char* const kI18nKeys[] = {
     "Indice UV",
     "Indice affiché",
     "Indice en recharge",
+    "Indisponible",
     "Insistante",
     "Internationales 10×10",
     "Internationales 10×10\nPrise majoritaire · rafles",
@@ -1867,6 +1913,7 @@ static const char* const kI18nKeys[] = {
     "Lever",
     "Lever et coucher du soleil inconnus",
     "Limite de charge",
+    "Lire",
     "Lode Runner 1983\nCreuse · grimpe · fuis",
     "Luminosité",
     "Lumière",
@@ -1921,8 +1968,13 @@ static const char* const kI18nKeys[] = {
     "Moyen",
     "Moyenne",
     "Moyennes + difficiles",
+    "Muet",
     "Mur plein",
+    "Music Assistant n'est pas installé.",
+    "Music Assistant ne répond pas",
+    "Music Assistant ne répond pas.",
     "Musique",
+    "Musique ici",
     "MÉMOIRE",
     "Mélodie",
     "Météo",
@@ -2028,6 +2080,7 @@ static const char* const kI18nKeys[] = {
     "Pièce : %s",
     "Pièces",
     "Plantes",
+    "Playlists",
     "Pluie",
     "Pluie dans l'heure",
     "Pluie et neige",
@@ -2036,6 +2089,7 @@ static const char* const kI18nKeys[] = {
     "Pluie sur %d h",
     "Plume de suie",
     "Plus d'image depuis %02d:%02d:%02d",
+    "Podcasts",
     "Points neutres (dame) : %d",
     "Portail ouvert !",
     "Porte mal fermée",
@@ -2087,6 +2141,8 @@ static const char* const kI18nKeys[] = {
     "Quiz rétro-salon\n1 à 6 équipes",
     "RDV",
     "RECORD %s",
+    "Radio",
+    "Radios",
     "Rallumer l'écran d'une tape",
     "Rallumer l'écran à « Okay Nabu »",
     "Ramasse tout l'or, échappe aux gardes, grimpe en haut.",
@@ -2143,6 +2199,7 @@ static const char* const kI18nKeys[] = {
     "Rien de prévu ce jour",
     "Rien en lecture",
     "Rien à annuler",
+    "Rien à montrer ici",
     "Roguelite de bille\n6 salles · à l'inclinaison",
     "Runes %d/%u",
     "Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d",
@@ -2153,6 +2210,7 @@ static const char* const kI18nKeys[] = {
     "RÉSEAU",
     "Règle des 50 coups",
     "Règles du jeu",
+    "Récents",
     "Réflexion  %d %%",
     "Réflexion...",
     "Réfrigérateur",
@@ -2220,6 +2278,7 @@ static const char* const kI18nKeys[] = {
     "Signal",
     "Silence",
     "Sombre",
+    "Son",
     "Son de la tablette",
     "Sonne avant l'ouverture lue dans le calendrier.",
     "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}.",
@@ -2228,6 +2287,8 @@ static const char* const kI18nKeys[] = {
     "Sonnerie",
     "Sortie de chaque jeu : hub, puis « Quitter »",
     "Sortie ouverte ! Grimpe tout en haut.",
+    "Source",
+    "Sources",
     "Sous la norme",
     "Sports",
     "Sports & Loisirs",
@@ -2239,6 +2300,7 @@ static const char* const kI18nKeys[] = {
     "Sur batterie",
     "Synchronisation...",
     "Système",
+    "Séparer",
     "TEMPS DE RÉPONSE",
     "TEMPÉRATURE",
     "TOUS LES NIVEAUX !",
@@ -2273,6 +2335,7 @@ static const char* const kI18nKeys[] = {
     "Top 10 local",
     "Top 10 local (NVS)",
     "Top 10 local - conservé en NVS, survit aux reboots et aux OTA.",
+    "Toucher : sa lecture · Appui long : plus de choix",
     "Toucher le bandeau du haut pendant la partie ouvre le menu de pause.",
     "Toucher pour changer",
     "Toucher une ligne pour changer sa valeur",
@@ -2292,9 +2355,11 @@ static const char* const kI18nKeys[] = {
     "Tous les jours",
     "Tout est enregistré et survit au redémarrage.",
     "Tout fermer",
+    "Tout ici",
     "Tout le Top 10 local, meilleur score compris.",
     "Tout marquer comme lu",
     "Tout ouvrir",
+    "Tout séparer",
     "Tout vivant",
     "Tout éteindre",
     "Toutes",
@@ -2362,6 +2427,7 @@ static const char* const kI18nKeys[] = {
     "Volets",
     "Volume",
     "Volume progressif",
+    "Volume {v} %",
     "Votre couleur",
     "Vous",
     "Vous jouez %s",
@@ -2450,8 +2516,11 @@ static const char* const kI18nKeys[] = {
     "{jour} : repos",
     "{jour} : {horaire}",
     "{jour} {quantieme} {mois}",
+    "{n} titres",
     "À %s de lancer le dé",
     "À arroser !",
+    "À la suite",
+    "À suivre · {titre}",
     "À vous",
     "À vérifier",
     "ÉCHEC !",
@@ -2491,6 +2560,7 @@ static const char* const kI18nKeys[] = {
     "Roi",
     "Tour",
     "RÉSEAU",
+    "Lecture",
     "Douce",
     "Normale",
     "Très douce",
@@ -2598,6 +2668,7 @@ static const char* const kI18n_en[] = {
     "1 update · %s",  // "1 MAJ · %s"
     "1 error",  // "1 erreur"
     "1 min",  // "1 min"
+    "1 track",  // "1 titre"
     "1 to 6 teams",  // "1 à 6 équipes"
     "10 days",  // "10 jours"
     "10 min",  // "10 min"
@@ -2655,6 +2726,7 @@ static const char* const kI18n_en[] = {
     "Minor Magnet",  // "Aimant mineur"
     "Humid air",  // "Air humide"
     "Dry air",  // "Air sec"
+    "Albums",  // "Albums"
     "Orange weather warning in progress! Stay safe.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Red weather warning in progress! Stay safe.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Alerts",  // "Alertes"
@@ -2689,6 +2761,7 @@ static const char* const kI18n_en[] = {
     "After the first ring, Home Assistant announces the weather and the schedule.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Silver",  // "Argent"
     "Stop",  // "Arrêter"
+    "Artists",  // "Artistes"
     "Arts",  // "Arts"
     "Arts & Literature",  // "Arts & Littérature"
     "Assistant",  // "Assistant"
@@ -2705,6 +2778,7 @@ static const char* const kI18n_en[] = {
     "No tracked sensor",  // "Aucun capteur suivi"
     "No move possible — next team.",  // "Aucun déplacement possible — au suivant."
     "No active effect",  // "Aucun effet actif"
+    "No favorites yet",  // "Aucun favori pour l'instant"
     "No history",  // "Aucun historique"
     "No incident",  // "Aucun incident"
     "No day selected in the next 8",  // "Aucun jour retenu dans les 8 prochains"
@@ -2744,6 +2818,7 @@ static const char* const kI18n_en[] = {
     "BALL LOST",  // "BILLE PERDUE"
     "Battery",  // "Batterie"
     "Battery fitted",  // "Batterie montée"
+    "Library",  // "Bibliothèque"
     "Drying soon",  // "Bientôt sec"
     "Balance",  // "Bilan"
     "Record vs Tab (by variant / level)",  // "Bilan contre le Tab (par variante et niveau)"
@@ -2930,9 +3005,12 @@ static const char* const kI18n_en[] = {
     "Waiting for Home Assistant",  // "En attente de Home Assistant"
     "Charging",  // "En charge"
     "Running",  // "En cours"
+    "Add to end",  // "En fin de file"
+    "Playing",  // "En lecture"
     "Online",  // "En ligne"
     "In Fixed mode, only the checked days count.",  // "En mode Fixe, seuls les jours cochés comptent."
     "Moving",  // "En mouvement"
+    "Paused",  // "En pause"
     "Sunny",  // "Ensoleillé"
     "Between %d and %d %%",  // "Entre %d et %d %%"
     "Sent",  // "Envoyé"
@@ -2950,6 +3028,7 @@ static const char* const kI18n_en[] = {
     "Easy + medium",  // "Faciles + moyennes"
     "Light",  // "Faible"
     "False Trail",  // "Faux chemin"
+    "Favorites",  // "Favoris"
     "Close",  // "Fermer"
     "Closed",  // "Fermé"
     "Fertility",  // "Fertilité"
@@ -3000,6 +3079,7 @@ static const char* const kI18n_en[] = {
     "Hours",  // "Heures"
     "History",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
+    "Home Assistant is not responding",  // "Home Assistant ne répond pas"
     "Not in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
     "Offline since %02d:%02d",  // "Hors ligne depuis %02d:%02d"
@@ -3024,6 +3104,7 @@ static const char* const kI18n_en[] = {
     "UV index",  // "Indice UV"
     "Hint shown",  // "Indice affiché"
     "Hint recharging",  // "Indice en recharge"
+    "Unavailable",  // "Indisponible"
     "Insistent",  // "Insistante"
     "Intl 10x10",  // "Internationales 10×10"
     "International 10×10\nMax capture · multi-jumps",  // "Internationales 10×10\nPrise majoritaire · rafles"
@@ -3120,6 +3201,7 @@ static const char* const kI18n_en[] = {
     "Sunrise",  // "Lever"
     "Sunrise and sunset unknown",  // "Lever et coucher du soleil inconnus"
     "Charge limit",  // "Limite de charge"
+    "Play",  // "Lire"
     "Lode Runner 1983\nDig · climb · run",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Brightness",  // "Luminosité"
     "Light",  // "Lumière"
@@ -3174,8 +3256,13 @@ static const char* const kI18n_en[] = {
     "Medium",  // "Moyen"
     "Average",  // "Moyenne"
     "Medium + hard",  // "Moyennes + difficiles"
+    "Mute",  // "Muet"
     "Solid wall",  // "Mur plein"
+    "Music Assistant is not installed.",  // "Music Assistant n'est pas installé."
+    "Music Assistant is not responding",  // "Music Assistant ne répond pas"
+    "Music Assistant is not responding.",  // "Music Assistant ne répond pas."
     "Music",  // "Musique"
+    "Music here",  // "Musique ici"
     "MEMORY",  // "MÉMOIRE"
     "Melody",  // "Mélodie"
     "Weather",  // "Météo"
@@ -3281,6 +3368,7 @@ static const char* const kI18n_en[] = {
     "Room: %s",  // "Pièce : %s"
     "Rooms",  // "Pièces"
     "Plants",  // "Plantes"
+    "Playlists",  // "Playlists"
     "Rain",  // "Pluie"
     "Rain in the next hour",  // "Pluie dans l'heure"
     "Sleet",  // "Pluie et neige"
@@ -3289,6 +3377,7 @@ static const char* const kI18n_en[] = {
     "Rain over %d h",  // "Pluie sur %d h"
     "Soot Feather",  // "Plume de suie"
     "No image since %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Podcasts",  // "Podcasts"
     "Neutral points (dame): %d",  // "Points neutres (dame) : %d"
     "Portal open!",  // "Portail ouvert !"
     "Door not closed",  // "Porte mal fermée"
@@ -3340,6 +3429,8 @@ static const char* const kI18n_en[] = {
     "Retro party quiz\n1 to 6 teams · in French",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Appt",  // "RDV"
     "BEST %s",  // "RECORD %s"
+    "Radio",  // "Radio"
+    "Radios",  // "Radios"
     "Wake the screen with a tap",  // "Rallumer l'écran d'une tape"
     "Wake the screen on “Okay Nabu”",  // "Rallumer l'écran à « Okay Nabu »"
     "Grab all the gold, dodge the guards, climb to the top.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
@@ -3396,6 +3487,7 @@ static const char* const kI18n_en[] = {
     "Nothing planned this day",  // "Rien de prévu ce jour"
     "Nothing playing",  // "Rien en lecture"
     "Nothing to undo",  // "Rien à annuler"
+    "Nothing to show here",  // "Rien à montrer ici"
     "Marble roguelite\n6 rooms · tilt to steer",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Runes %d/%u",  // "Runes %d/%u"
     "Runs started: %u\nWins: %u\nDeepest room: %u/6\nBest time: %s\nTotal level: %u\nSouls available: %u\nItems discovered: %d/%d",  // "Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d"
@@ -3406,6 +3498,7 @@ static const char* const kI18n_en[] = {
     "NETWORK",  // "RÉSEAU"
     "50-move rule",  // "Règle des 50 coups"
     "Game rules",  // "Règles du jeu"
+    "Recent",  // "Récents"
     "Thinking  %d %%",  // "Réflexion  %d %%"
     "Thinking...",  // "Réflexion..."
     "Fridge",  // "Réfrigérateur"
@@ -3473,6 +3566,7 @@ static const char* const kI18n_en[] = {
     "Signal",  // "Signal"
     "Quiet",  // "Silence"
     "Dark",  // "Sombre"
+    "Sound",  // "Son"
     "Tablet volume",  // "Son de la tablette"
     "Rings before the shift start read from the calendar.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Rings {avance} before the shift start in the calendar, never before {avant} or after {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
@@ -3481,6 +3575,8 @@ static const char* const kI18n_en[] = {
     "Ringtone",  // "Sonnerie"
     "To leave a game: hub, then “Quit”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Exit open! Climb to the very top.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Source",  // "Source"
+    "Sources",  // "Sources"
     "Below the norm",  // "Sous la norme"
     "Sports",  // "Sports"
     "Sports & Leisure",  // "Sports & Loisirs"
@@ -3492,6 +3588,7 @@ static const char* const kI18n_en[] = {
     "On battery",  // "Sur batterie"
     "Syncing...",  // "Synchronisation..."
     "System",  // "Système"
+    "Ungroup",  // "Séparer"
     "ANSWER TIME",  // "TEMPS DE RÉPONSE"
     "TEMPERATURE",  // "TEMPÉRATURE"
     "ALL LEVELS CLEARED!",  // "TOUS LES NIVEAUX !"
@@ -3526,6 +3623,7 @@ static const char* const kI18n_en[] = {
     "Local top 10",  // "Top 10 local"
     "Local top 10 (NVS)",  // "Top 10 local (NVS)"
     "Local top 10 - kept in NVS, survives reboots and OTA updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Tap: see what's playing · Long press: more",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tap the top bar during a game to open the pause menu.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tap to change",  // "Toucher pour changer"
     "Tap a row to change its value",  // "Toucher une ligne pour changer sa valeur"
@@ -3545,9 +3643,11 @@ static const char* const kI18n_en[] = {
     "Every day",  // "Tous les jours"
     "Everything is saved and survives a restart.",  // "Tout est enregistré et survit au redémarrage."
     "Close all",  // "Tout fermer"
+    "All here",  // "Tout ici"
     "The whole local top 10, best score included.",  // "Tout le Top 10 local, meilleur score compris."
     "Mark all as read",  // "Tout marquer comme lu"
     "Open all",  // "Tout ouvrir"
+    "Ungroup all",  // "Tout séparer"
     "All alive",  // "Tout vivant"
     "All off",  // "Tout éteindre"
     "All",  // "Toutes"
@@ -3615,6 +3715,7 @@ static const char* const kI18n_en[] = {
     "Shutters",  // "Volets"
     "Volume",  // "Volume"
     "Gradual volume",  // "Volume progressif"
+    "Volume {v} %",  // "Volume {v} %"
     "Your color",  // "Votre couleur"
     "You",  // "Vous"
     "You play %s",  // "Vous jouez %s"
@@ -3703,8 +3804,11 @@ static const char* const kI18n_en[] = {
     "{jour}: day off",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
     "{jour}, {mois} {quantieme}",  // "{jour} {quantieme} {mois}"
+    "{n} tracks",  // "{n} titres"
     "%s, roll the die",  // "À %s de lancer le dé"
     "Needs water!",  // "À arroser !"
+    "Play next",  // "À la suite"
+    "Up next · {titre}",  // "À suivre · {titre}"
     "Your move",  // "À vous"
     "To check",  // "À vérifier"
     "CHECK!",  // "ÉCHEC !"
@@ -3744,6 +3848,7 @@ static const char* const kI18n_en[] = {
     "King",  // "echecs|Roi"
     "Rook",  // "echecs|Tour"
     "GRID",  // "energie|RÉSEAU"
+    "Now playing",  // "lecteur|Lecture"
     "Low",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
     "Very low",  // "nudge|Très douce"
@@ -3851,6 +3956,7 @@ static const char* const kI18n_de[] = {
     "1 Update · %s",  // "1 MAJ · %s"
     "1 Fehler",  // "1 erreur"
     "1 min",  // "1 min"
+    "1 Titel",  // "1 titre"
     "1 bis 6 Teams",  // "1 à 6 équipes"
     "10 Tage",  // "10 jours"
     "10 min",  // "10 min"
@@ -3908,6 +4014,7 @@ static const char* const kI18n_de[] = {
     "Kleiner Magnet",  // "Aimant mineur"
     "Feuchte Luft",  // "Air humide"
     "Trockene Luft",  // "Air sec"
+    "Alben",  // "Albums"
     "Unwetterwarnung Orange aktiv! Bleib vorsichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Unwetterwarnung Rot aktiv! Bleib vorsichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Warnungen",  // "Alertes"
@@ -3942,6 +4049,7 @@ static const char* const kI18n_de[] = {
     "Nach dem ersten Klingeln sagt Home Assistant Wetter und Planung an.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Silber",  // "Argent"
     "Stopp",  // "Arrêter"
+    "Künstler",  // "Artistes"
     "Kunst",  // "Arts"
     "Kunst & Literatur",  // "Arts & Littérature"
     "Assistent",  // "Assistant"
@@ -3958,6 +4066,7 @@ static const char* const kI18n_de[] = {
     "Kein Sensor verfolgt",  // "Aucun capteur suivi"
     "Kein Zug möglich — nächstes Team.",  // "Aucun déplacement possible — au suivant."
     "Kein aktiver Effekt",  // "Aucun effet actif"
+    "Noch keine Favoriten",  // "Aucun favori pour l'instant"
     "Kein Verlauf",  // "Aucun historique"
     "Kein Vorfall",  // "Aucun incident"
     "Kein Tag in den nächsten 8 gewählt",  // "Aucun jour retenu dans les 8 prochains"
@@ -3997,6 +4106,7 @@ static const char* const kI18n_de[] = {
     "BALL VERLOREN",  // "BILLE PERDUE"
     "Batterie",  // "Batterie"
     "Akku eingebaut",  // "Batterie montée"
+    "Bibliothek",  // "Bibliothèque"
     "Bald trocken",  // "Bientôt sec"
     "Bilanz",  // "Bilan"
     "Bilanz vs Tab (nach Variante / Stufe)",  // "Bilan contre le Tab (par variante et niveau)"
@@ -4183,9 +4293,12 @@ static const char* const kI18n_de[] = {
     "Warte auf Home Assistant",  // "En attente de Home Assistant"
     "Lädt",  // "En charge"
     "Läuft",  // "En cours"
+    "Ans Ende",  // "En fin de file"
+    "Läuft",  // "En lecture"
     "Online",  // "En ligne"
     "Im Modus „Fest“ zählen nur die gewählten Tage.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In Bewegung",  // "En mouvement"
+    "Pausiert",  // "En pause"
     "Sonnig",  // "Ensoleillé"
     "Zwischen %d und %d %%",  // "Entre %d et %d %%"
     "Gesendet",  // "Envoyé"
@@ -4203,6 +4316,7 @@ static const char* const kI18n_de[] = {
     "Leicht + mittel",  // "Faciles + moyennes"
     "Leicht",  // "Faible"
     "Holzweg",  // "Faux chemin"
+    "Favoriten",  // "Favoris"
     "Schließen",  // "Fermer"
     "Zu",  // "Fermé"
     "Nährstoffe",  // "Fertilité"
@@ -4253,6 +4367,7 @@ static const char* const kI18n_de[] = {
     "Stunden",  // "Heures"
     "Geschichte",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
+    "Home Assistant antwortet nicht",  // "Home Assistant ne répond pas"
     "Nicht in Top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
     "Offline seit %02d:%02d",  // "Hors ligne depuis %02d:%02d"
@@ -4277,6 +4392,7 @@ static const char* const kI18n_de[] = {
     "UV-Index",  // "Indice UV"
     "Tipp angezeigt",  // "Indice affiché"
     "Tipp lädt nach",  // "Indice en recharge"
+    "Nicht verfügbar",  // "Indisponible"
     "Hartnäckig",  // "Insistante"
     "Int. 10x10",  // "Internationales 10×10"
     "Int. Dame 10×10\nMaximalschlag · Ketten",  // "Internationales 10×10\nPrise majoritaire · rafles"
@@ -4373,6 +4489,7 @@ static const char* const kI18n_de[] = {
     "Aufgang",  // "Lever"
     "Sonnenauf- und -untergang unbekannt",  // "Lever et coucher du soleil inconnus"
     "Ladegrenze",  // "Limite de charge"
+    "Abspielen",  // "Lire"
     "Lode Runner 1983\nGraben · klettern · fliehen",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Helligkeit",  // "Luminosité"
     "Licht",  // "Lumière"
@@ -4427,8 +4544,13 @@ static const char* const kI18n_de[] = {
     "Mittel",  // "Moyen"
     "Mittel",  // "Moyenne"
     "Mittel + schwer",  // "Moyennes + difficiles"
+    "Stumm",  // "Muet"
     "Volle Mauer",  // "Mur plein"
+    "Music Assistant ist nicht installiert.",  // "Music Assistant n'est pas installé."
+    "Music Assistant antwortet nicht",  // "Music Assistant ne répond pas"
+    "Music Assistant antwortet nicht.",  // "Music Assistant ne répond pas."
     "Musik",  // "Musique"
+    "Musik hierher",  // "Musique ici"
     "SPEICHER",  // "MÉMOIRE"
     "Melodie",  // "Mélodie"
     "Wetter",  // "Météo"
@@ -4534,6 +4656,7 @@ static const char* const kI18n_de[] = {
     "Raum: %s",  // "Pièce : %s"
     "Räume",  // "Pièces"
     "Pflanzen",  // "Plantes"
+    "Playlists",  // "Playlists"
     "Regen",  // "Pluie"
     "Regen in der nächsten Stunde",  // "Pluie dans l'heure"
     "Schneeregen",  // "Pluie et neige"
@@ -4542,6 +4665,7 @@ static const char* const kI18n_de[] = {
     "Regen in %d Std.",  // "Pluie sur %d h"
     "Rußfeder",  // "Plume de suie"
     "Kein Bild seit %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Podcasts",  // "Podcasts"
     "Neutrale Punkte (Dame): %d",  // "Points neutres (dame) : %d"
     "Portal offen!",  // "Portail ouvert !"
     "Tür nicht richtig zu",  // "Porte mal fermée"
@@ -4593,6 +4717,8 @@ static const char* const kI18n_de[] = {
     "Retro-Partyquiz\n1–6 Teams · Französisch",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Termin",  // "RDV"
     "REKORD %s",  // "RECORD %s"
+    "Radio",  // "Radio"
+    "Radios",  // "Radios"
     "Bildschirm durch Antippen einschalten",  // "Rallumer l'écran d'une tape"
     "Bildschirm bei „Okay Nabu“ einschalten",  // "Rallumer l'écran à « Okay Nabu »"
     "Sammle alles Gold, entkomme den Wachen, klettere hoch.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
@@ -4649,6 +4775,7 @@ static const char* const kI18n_de[] = {
     "Nichts geplant an diesem Tag",  // "Rien de prévu ce jour"
     "Nichts wird abgespielt",  // "Rien en lecture"
     "Noch kein Zug",  // "Rien à annuler"
+    "Hier gibt es nichts zu sehen",  // "Rien à montrer ici"
     "Kugel-Roguelite\n6 Räume · per Neigung",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Runen %d/%u",  // "Runes %d/%u"
     "Gestartete Runs: %u\nSiege: %u\nTiefster Raum: %u/6\nBestzeit: %s\nGesamtstufe: %u\nVerfügbare Seelen: %u\nEntdeckte Gegenstände: %d/%d",  // "Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d"
@@ -4659,6 +4786,7 @@ static const char* const kI18n_de[] = {
     "NETZWERK",  // "RÉSEAU"
     "50-Züge-Regel",  // "Règle des 50 coups"
     "Spielregeln",  // "Règles du jeu"
+    "Zuletzt",  // "Récents"
     "Denke  %d %%",  // "Réflexion  %d %%"
     "Denke nach...",  // "Réflexion..."
     "Kühlschrank",  // "Réfrigérateur"
@@ -4726,6 +4854,7 @@ static const char* const kI18n_de[] = {
     "Signal",  // "Signal"
     "Leise",  // "Silence"
     "Dunkel",  // "Sombre"
+    "Ton",  // "Son"
     "Tablet-Lautstärke",  // "Son de la tablette"
     "Klingelt vor Schichtbeginn laut Kalender.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Klingelt {avance} vor Schichtbeginn laut Kalender, nie vor {avant} und nie nach {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
@@ -4734,6 +4863,8 @@ static const char* const kI18n_de[] = {
     "Klingelton",  // "Sonnerie"
     "Spiel verlassen: Hub, dann „Beenden“",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Ausgang offen! Klettere ganz nach oben.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Quelle",  // "Source"
+    "Quellen",  // "Sources"
     "Unter der Norm",  // "Sous la norme"
     "Sport",  // "Sports"
     "Sport & Freizeit",  // "Sports & Loisirs"
@@ -4745,6 +4876,7 @@ static const char* const kI18n_de[] = {
     "Akkubetrieb",  // "Sur batterie"
     "Synchronisiere...",  // "Synchronisation..."
     "System",  // "Système"
+    "Trennen",  // "Séparer"
     "ANTWORTZEIT",  // "TEMPS DE RÉPONSE"
     "TEMPERATUR",  // "TEMPÉRATURE"
     "ALLE LEVEL GESCHAFFT!",  // "TOUS LES NIVEAUX !"
@@ -4779,6 +4911,7 @@ static const char* const kI18n_de[] = {
     "Lokale Top 10",  // "Top 10 local"
     "Lokale Top 10 (NVS)",  // "Top 10 local (NVS)"
     "Lokale Top 10 - in NVS gespeichert, übersteht Neustarts und OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Tippen: Wiedergabe · Lang drücken: mehr",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Obere Leiste im Spiel antippen öffnet das Pausenmenü.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Antippen zum Ändern",  // "Toucher pour changer"
     "Zeile antippen, um den Wert zu ändern",  // "Toucher une ligne pour changer sa valeur"
@@ -4798,9 +4931,11 @@ static const char* const kI18n_de[] = {
     "Jeden Tag",  // "Tous les jours"
     "Alles wird gespeichert und übersteht Neustarts.",  // "Tout est enregistré et survit au redémarrage."
     "Alle schließen",  // "Tout fermer"
+    "Alle hier",  // "Tout ici"
     "Die ganze lokale Top 10, inkl. Highscore.",  // "Tout le Top 10 local, meilleur score compris."
     "Alle als gelesen markieren",  // "Tout marquer comme lu"
     "Alle öffnen",  // "Tout ouvrir"
+    "Alle trennen",  // "Tout séparer"
     "Alles lebt",  // "Tout vivant"
     "Alle aus",  // "Tout éteindre"
     "Alle",  // "Toutes"
@@ -4868,6 +5003,7 @@ static const char* const kI18n_de[] = {
     "Rollläden",  // "Volets"
     "Lautstärke",  // "Volume"
     "Ansteigende Lautstärke",  // "Volume progressif"
+    "Lautst. {v} %",  // "Volume {v} %"
     "Deine Farbe",  // "Votre couleur"
     "Du",  // "Vous"
     "Du spielst %s",  // "Vous jouez %s"
@@ -4956,8 +5092,11 @@ static const char* const kI18n_de[] = {
     "{jour}: frei",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
     "{jour}, {quantieme}. {mois}",  // "{jour} {quantieme} {mois}"
+    "{n} Titel",  // "{n} titres"
     "%s ist dran: würfeln",  // "À %s de lancer le dé"
     "Gießen!",  // "À arroser !"
+    "Als Nächstes",  // "À la suite"
+    "Als Nächstes · {titre}",  // "À suivre · {titre}"
     "Dein Zug",  // "À vous"
     "Prüfen",  // "À vérifier"
     "SCHACH!",  // "ÉCHEC !"
@@ -4997,6 +5136,7 @@ static const char* const kI18n_de[] = {
     "König",  // "echecs|Roi"
     "Turm",  // "echecs|Tour"
     "NETZ",  // "energie|RÉSEAU"
+    "Wiedergabe",  // "lecteur|Lecture"
     "Gering",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
     "Sehr gering",  // "nudge|Très douce"
@@ -5104,6 +5244,7 @@ static const char* const kI18n_nl[] = {
     "1 update · %s",  // "1 MAJ · %s"
     "1 fout",  // "1 erreur"
     "1 min",  // "1 min"
+    "1 nummer",  // "1 titre"
     "1 tot 6 teams",  // "1 à 6 équipes"
     "10 dagen",  // "10 jours"
     "10 min",  // "10 min"
@@ -5161,6 +5302,7 @@ static const char* const kI18n_nl[] = {
     "Kleine magneet",  // "Aimant mineur"
     "Vochtige lucht",  // "Air humide"
     "Droge lucht",  // "Air sec"
+    "Albums",  // "Albums"
     "Weeralarm code oranje! Wees voorzichtig.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Weeralarm code rood! Wees voorzichtig.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Meldingen",  // "Alertes"
@@ -5195,6 +5337,7 @@ static const char* const kI18n_nl[] = {
     "Na de eerste keer afgaan meldt Home Assistant het weer en de planning.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Zilver",  // "Argent"
     "Stop",  // "Arrêter"
+    "Artiesten",  // "Artistes"
     "Kunst",  // "Arts"
     "Kunst & Literatuur",  // "Arts & Littérature"
     "Assistent",  // "Assistant"
@@ -5211,6 +5354,7 @@ static const char* const kI18n_nl[] = {
     "Geen sensor gevolgd",  // "Aucun capteur suivi"
     "Geen zet mogelijk — volgende team.",  // "Aucun déplacement possible — au suivant."
     "Geen actief effect",  // "Aucun effet actif"
+    "Nog geen favorieten",  // "Aucun favori pour l'instant"
     "Geen geschiedenis",  // "Aucun historique"
     "Geen incident",  // "Aucun incident"
     "Geen dag gekozen in de komende 8",  // "Aucun jour retenu dans les 8 prochains"
@@ -5250,6 +5394,7 @@ static const char* const kI18n_nl[] = {
     "BAL KWIJT",  // "BILLE PERDUE"
     "Batterij",  // "Batterie"
     "Batterij geplaatst",  // "Batterie montée"
+    "Bibliotheek",  // "Bibliothèque"
     "Bijna droog",  // "Bientôt sec"
     "Balans",  // "Bilan"
     "Resultaten vs Tab (per variant / niveau)",  // "Bilan contre le Tab (par variante et niveau)"
@@ -5436,9 +5581,12 @@ static const char* const kI18n_nl[] = {
     "Wachten op Home Assistant",  // "En attente de Home Assistant"
     "Laden",  // "En charge"
     "Bezig",  // "En cours"
+    "Achteraan",  // "En fin de file"
+    "Speelt",  // "En lecture"
     "Online",  // "En ligne"
     "In de modus Vast tellen alleen de aangevinkte dagen.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In beweging",  // "En mouvement"
+    "Gepauzeerd",  // "En pause"
     "Zonnig",  // "Ensoleillé"
     "Tussen %d en %d %%",  // "Entre %d et %d %%"
     "Verzonden",  // "Envoyé"
@@ -5456,6 +5604,7 @@ static const char* const kI18n_nl[] = {
     "Simpel + normaal",  // "Faciles + moyennes"
     "Licht",  // "Faible"
     "Dwaalspoor",  // "Faux chemin"
+    "Favorieten",  // "Favoris"
     "Sluiten",  // "Fermer"
     "Dicht",  // "Fermé"
     "Voeding",  // "Fertilité"
@@ -5506,6 +5655,7 @@ static const char* const kI18n_nl[] = {
     "Uren",  // "Heures"
     "Historie",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
+    "Home Assistant reageert niet",  // "Home Assistant ne répond pas"
     "Niet in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
     "Offline sinds %02d:%02d",  // "Hors ligne depuis %02d:%02d"
@@ -5530,6 +5680,7 @@ static const char* const kI18n_nl[] = {
     "UV-index",  // "Indice UV"
     "Hint getoond",  // "Indice affiché"
     "Hint laadt op",  // "Indice en recharge"
+    "Niet beschikbaar",  // "Indisponible"
     "Dringend",  // "Insistante"
     "Intl 10x10",  // "Internationales 10×10"
     "Internationaal 10×10\nMaximumslag · meerslagen",  // "Internationales 10×10\nPrise majoritaire · rafles"
@@ -5626,6 +5777,7 @@ static const char* const kI18n_nl[] = {
     "Opkomst",  // "Lever"
     "Zonsopkomst en -ondergang onbekend",  // "Lever et coucher du soleil inconnus"
     "Laadlimiet",  // "Limite de charge"
+    "Afspelen",  // "Lire"
     "Lode Runner 1983\nGraaf · klim · vlucht",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Helderheid",  // "Luminosité"
     "Licht",  // "Lumière"
@@ -5680,8 +5832,13 @@ static const char* const kI18n_nl[] = {
     "Normaal",  // "Moyen"
     "Gemiddeld",  // "Moyenne"
     "Normaal + moeilijk",  // "Moyennes + difficiles"
+    "Dempen",  // "Muet"
     "Volle muur",  // "Mur plein"
+    "Music Assistant ontbreekt.",  // "Music Assistant n'est pas installé."
+    "Music Assistant reageert niet",  // "Music Assistant ne répond pas"
+    "Music Assistant reageert niet.",  // "Music Assistant ne répond pas."
     "Muziek",  // "Musique"
+    "Muziek hier",  // "Musique ici"
     "GEHEUGEN",  // "MÉMOIRE"
     "Melodie",  // "Mélodie"
     "Weer",  // "Météo"
@@ -5787,6 +5944,7 @@ static const char* const kI18n_nl[] = {
     "Kamer: %s",  // "Pièce : %s"
     "Kamers",  // "Pièces"
     "Planten",  // "Plantes"
+    "Afspeellijsten",  // "Playlists"
     "Regen",  // "Pluie"
     "Regen het komende uur",  // "Pluie dans l'heure"
     "Natte sneeuw",  // "Pluie et neige"
@@ -5795,6 +5953,7 @@ static const char* const kI18n_nl[] = {
     "Regen in %d u",  // "Pluie sur %d h"
     "Roetveer",  // "Plume de suie"
     "Geen beeld sinds %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Podcasts",  // "Podcasts"
     "Neutrale punten (dame): %d",  // "Points neutres (dame) : %d"
     "Portaal open!",  // "Portail ouvert !"
     "Deur niet goed dicht",  // "Porte mal fermée"
@@ -5846,6 +6005,8 @@ static const char* const kI18n_nl[] = {
     "Retro-partyquiz\n1 tot 6 teams · Franstalig",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Afspr.",  // "RDV"
     "RECORD %s",  // "RECORD %s"
+    "Radio",  // "Radio"
+    "Radio's",  // "Radios"
     "Scherm aan met een tik",  // "Rallumer l'écran d'une tape"
     "Scherm aan bij „Okay Nabu”",  // "Rallumer l'écran à « Okay Nabu »"
     "Pak al het goud, ontwijk de bewakers, klim naar boven.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
@@ -5902,6 +6063,7 @@ static const char* const kI18n_nl[] = {
     "Niets gepland op deze dag",  // "Rien de prévu ce jour"
     "Er speelt niets",  // "Rien en lecture"
     "Geen vorige zet",  // "Rien à annuler"
+    "Hier valt niets te zien",  // "Rien à montrer ici"
     "Knikker-roguelite\n6 kamers · kantelbesturing",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Runen %d/%u",  // "Runes %d/%u"
     "Gestarte runs: %u\nZeges: %u\nDiepste kamer: %u/6\nBeste tijd: %s\nTotaal level: %u\nBeschikbare zielen: %u\nOntdekte voorwerpen: %d/%d",  // "Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d"
@@ -5912,6 +6074,7 @@ static const char* const kI18n_nl[] = {
     "NETWERK",  // "RÉSEAU"
     "50-zettenregel",  // "Règle des 50 coups"
     "Spelregels",  // "Règles du jeu"
+    "Recent",  // "Récents"
     "Denkt na  %d %%",  // "Réflexion  %d %%"
     "Denkt na...",  // "Réflexion..."
     "Koelkast",  // "Réfrigérateur"
@@ -5979,6 +6142,7 @@ static const char* const kI18n_nl[] = {
     "Signaal",  // "Signal"
     "Stil",  // "Silence"
     "Donker",  // "Sombre"
+    "Geluid aan",  // "Son"
     "Tabletvolume",  // "Son de la tablette"
     "Gaat af vóór het werkbegin uit de agenda.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Gaat {avance} vóór het werkbegin uit de agenda af, nooit vóór {avant} of na {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
@@ -5987,6 +6151,8 @@ static const char* const kI18n_nl[] = {
     "Wekgeluid",  // "Sonnerie"
     "Een spel verlaten: hub, dan “Afsluiten”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Uitgang open! Klim helemaal naar boven.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Bron",  // "Source"
+    "Bronnen",  // "Sources"
     "Onder de norm",  // "Sous la norme"
     "Sport",  // "Sports"
     "Sport & Ontspanning",  // "Sports & Loisirs"
@@ -5998,6 +6164,7 @@ static const char* const kI18n_nl[] = {
     "Op batterij",  // "Sur batterie"
     "Synchroniseren...",  // "Synchronisation..."
     "Systeem",  // "Système"
+    "Splitsen",  // "Séparer"
     "ANTWOORDTIJD",  // "TEMPS DE RÉPONSE"
     "TEMPERATUUR",  // "TEMPÉRATURE"
     "ALLE LEVELS GEHAALD!",  // "TOUS LES NIVEAUX !"
@@ -6032,6 +6199,7 @@ static const char* const kI18n_nl[] = {
     "Lokale top 10",  // "Top 10 local"
     "Lokale top 10 (NVS)",  // "Top 10 local (NVS)"
     "Lokale top 10 - bewaard in NVS, overleeft herstarts en OTA-updates.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Tik: weergave bekijken · Lang drukken: meer",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tik tijdens de partij op de bovenbalk voor het pauzemenu.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tik om te wijzigen",  // "Toucher pour changer"
     "Tik op een regel om de waarde te wijzigen",  // "Toucher une ligne pour changer sa valeur"
@@ -6051,9 +6219,11 @@ static const char* const kI18n_nl[] = {
     "Elke dag",  // "Tous les jours"
     "Alles wordt bewaard, ook na een herstart.",  // "Tout est enregistré et survit au redémarrage."
     "Alles dicht",  // "Tout fermer"
+    "Alles hier",  // "Tout ici"
     "De hele lokale top 10, inclusief beste score.",  // "Tout le Top 10 local, meilleur score compris."
     "Alles als gelezen markeren",  // "Tout marquer comme lu"
     "Alles open",  // "Tout ouvrir"
+    "Alles splitsen",  // "Tout séparer"
     "Alles levend",  // "Tout vivant"
     "Alles uit",  // "Tout éteindre"
     "Alle",  // "Toutes"
@@ -6121,6 +6291,7 @@ static const char* const kI18n_nl[] = {
     "Rolluiken",  // "Volets"
     "Volume",  // "Volume"
     "Oplopend volume",  // "Volume progressif"
+    "Volume {v} %",  // "Volume {v} %"
     "Jouw kleur",  // "Votre couleur"
     "Jij",  // "Vous"
     "Jij speelt %s",  // "Vous jouez %s"
@@ -6209,8 +6380,11 @@ static const char* const kI18n_nl[] = {
     "{jour}: vrij",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
     "{jour} {quantieme} {mois}",  // "{jour} {quantieme} {mois}"
+    "{n} nummers",  // "{n} titres"
     "%s mag dobbelen",  // "À %s de lancer le dé"
     "Water geven!",  // "À arroser !"
+    "Hierna",  // "À la suite"
+    "Hierna · {titre}",  // "À suivre · {titre}"
     "Jouw zet",  // "À vous"
     "Controleren",  // "À vérifier"
     "SCHAAK!",  // "ÉCHEC !"
@@ -6250,6 +6424,7 @@ static const char* const kI18n_nl[] = {
     "Koning",  // "echecs|Roi"
     "Toren",  // "echecs|Tour"
     "NET",  // "energie|RÉSEAU"
+    "Nu speelt",  // "lecteur|Lecture"
     "Laag",  // "nudge|Douce"
     "Normaal",  // "nudge|Normale"
     "Zeer laag",  // "nudge|Très douce"
@@ -6357,6 +6532,7 @@ static const char* const kI18n_es[] = {
     "1 actualización · %s",  // "1 MAJ · %s"
     "1 error",  // "1 erreur"
     "1 min",  // "1 min"
+    "1 tema",  // "1 titre"
     "1 a 6 equipos",  // "1 à 6 équipes"
     "10 días",  // "10 jours"
     "10 min",  // "10 min"
@@ -6414,6 +6590,7 @@ static const char* const kI18n_es[] = {
     "Imán menor",  // "Aimant mineur"
     "Aire húmedo",  // "Air humide"
     "Aire seco",  // "Air sec"
+    "Álbumes",  // "Albums"
     "¡Alerta meteorológica naranja! Ten cuidado.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "¡Alerta meteorológica roja! Ten cuidado.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Alertas",  // "Alertes"
@@ -6448,6 +6625,7 @@ static const char* const kI18n_es[] = {
     "Tras el primer timbre, Home Assistant anuncia el tiempo y la agenda.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Plata",  // "Argent"
     "Detener",  // "Arrêter"
+    "Artistas",  // "Artistes"
     "Arte",  // "Arts"
     "Arte y Literatura",  // "Arts & Littérature"
     "Asistente",  // "Assistant"
@@ -6464,6 +6642,7 @@ static const char* const kI18n_es[] = {
     "Ningún sensor seguido",  // "Aucun capteur suivi"
     "Sin movimiento posible — turno del siguiente.",  // "Aucun déplacement possible — au suivant."
     "Sin efecto activo",  // "Aucun effet actif"
+    "Aún no hay favoritos",  // "Aucun favori pour l'instant"
     "Sin historial",  // "Aucun historique"
     "Sin incidentes",  // "Aucun incident"
     "Ningún día elegido en los próximos 8",  // "Aucun jour retenu dans les 8 prochains"
@@ -6503,6 +6682,7 @@ static const char* const kI18n_es[] = {
     "BOLA PERDIDA",  // "BILLE PERDUE"
     "Batería",  // "Batterie"
     "Batería instalada",  // "Batterie montée"
+    "Biblioteca",  // "Bibliothèque"
     "Casi seca",  // "Bientôt sec"
     "Balance",  // "Bilan"
     "Balance vs Tab (por variante y nivel)",  // "Bilan contre le Tab (par variante et niveau)"
@@ -6689,9 +6869,12 @@ static const char* const kI18n_es[] = {
     "Esperando a Home Assistant",  // "En attente de Home Assistant"
     "Cargando",  // "En charge"
     "En curso",  // "En cours"
+    "Al final",  // "En fin de file"
+    "Reproduciendo",  // "En lecture"
     "En línea",  // "En ligne"
     "En modo Fija, solo cuentan los días marcados.",  // "En mode Fixe, seuls les jours cochés comptent."
     "En movimiento",  // "En mouvement"
+    "En pausa",  // "En pause"
     "Soleado",  // "Ensoleillé"
     "Entre %d y %d %%",  // "Entre %d et %d %%"
     "Enviado",  // "Envoyé"
@@ -6709,6 +6892,7 @@ static const char* const kI18n_es[] = {
     "Fáciles + medias",  // "Faciles + moyennes"
     "Débil",  // "Faible"
     "Camino falso",  // "Faux chemin"
+    "Favoritos",  // "Favoris"
     "Cerrar",  // "Fermer"
     "Cerrada",  // "Fermé"
     "Fertilidad",  // "Fertilité"
@@ -6759,6 +6943,7 @@ static const char* const kI18n_es[] = {
     "Horas",  // "Heures"
     "Historia",  // "Histoire"
     "Home Assistant sin conexión",  // "Home Assistant hors ligne"
+    "Home Assistant no responde",  // "Home Assistant ne répond pas"
     "Fuera del top %d",  // "Hors du top %d"
     "Sin conexión",  // "Hors ligne"
     "Sin conexión desde las %02d:%02d",  // "Hors ligne depuis %02d:%02d"
@@ -6783,6 +6968,7 @@ static const char* const kI18n_es[] = {
     "Índice UV",  // "Indice UV"
     "Pista mostrada",  // "Indice affiché"
     "Pista recargándose",  // "Indice en recharge"
+    "No disponible",  // "Indisponible"
     "Insistente",  // "Insistante"
     "Int. 10x10",  // "Internationales 10×10"
     "Internacionales 10×10\nCaptura máxima · cadenas",  // "Internationales 10×10\nPrise majoritaire · rafles"
@@ -6879,6 +7065,7 @@ static const char* const kI18n_es[] = {
     "Salida",  // "Lever"
     "Salida y puesta del sol desconocidas",  // "Lever et coucher du soleil inconnus"
     "Límite de carga",  // "Limite de charge"
+    "Reproducir",  // "Lire"
     "Lode Runner 1983\nCava · trepa · huye",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Brillo",  // "Luminosité"
     "Luz",  // "Lumière"
@@ -6933,8 +7120,13 @@ static const char* const kI18n_es[] = {
     "Media",  // "Moyen"
     "Media",  // "Moyenne"
     "Medias + difíciles",  // "Moyennes + difficiles"
+    "Silenciar",  // "Muet"
     "Muro sólido",  // "Mur plein"
+    "Music Assistant no está instalado.",  // "Music Assistant n'est pas installé."
+    "Music Assistant no responde",  // "Music Assistant ne répond pas"
+    "Music Assistant no responde.",  // "Music Assistant ne répond pas."
     "Música",  // "Musique"
+    "Música aquí",  // "Musique ici"
     "MEMORIA",  // "MÉMOIRE"
     "Melodía",  // "Mélodie"
     "Tiempo",  // "Météo"
@@ -7040,6 +7232,7 @@ static const char* const kI18n_es[] = {
     "Estancia: %s",  // "Pièce : %s"
     "Estancias",  // "Pièces"
     "Plantas",  // "Plantes"
+    "Playlists",  // "Playlists"
     "Lluvia",  // "Pluie"
     "Lluvia en la próxima hora",  // "Pluie dans l'heure"
     "Aguanieve",  // "Pluie et neige"
@@ -7048,6 +7241,7 @@ static const char* const kI18n_es[] = {
     "Lluvia en %d h",  // "Pluie sur %d h"
     "Pluma de hollín",  // "Plume de suie"
     "Sin imagen desde las %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Podcasts",  // "Podcasts"
     "Puntos neutrales (dame): %d",  // "Points neutres (dame) : %d"
     "¡Portal abierto!",  // "Portail ouvert !"
     "Puerta mal cerrada",  // "Porte mal fermée"
@@ -7099,6 +7293,8 @@ static const char* const kI18n_es[] = {
     "Quiz retro de salón\n1 a 6 equipos · en francés",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Cita",  // "RDV"
     "RÉCORD %s",  // "RECORD %s"
+    "Radio",  // "Radio"
+    "Radios",  // "Radios"
     "Encender la pantalla con un toque",  // "Rallumer l'écran d'une tape"
     "Encender la pantalla con «Okay Nabu»",  // "Rallumer l'écran à « Okay Nabu »"
     "Recoge todo el oro, esquiva a los guardias, trepa arriba.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
@@ -7155,6 +7351,7 @@ static const char* const kI18n_es[] = {
     "Nada previsto este día",  // "Rien de prévu ce jour"
     "No se reproduce nada",  // "Rien en lecture"
     "Nada que deshacer",  // "Rien à annuler"
+    "Nada que mostrar aquí",  // "Rien à montrer ici"
     "Roguelite de canica\n6 salas · por inclinación",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Runas %d/%u",  // "Runes %d/%u"
     "Runs iniciadas: %u\nVictorias: %u\nSala más profunda: %u/6\nMejor tiempo: %s\nNivel total: %u\nAlmas disponibles: %u\nObjetos descubiertos: %d/%d",  // "Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d"
@@ -7165,6 +7362,7 @@ static const char* const kI18n_es[] = {
     "RED",  // "RÉSEAU"
     "Regla de 50 jugadas",  // "Règle des 50 coups"
     "Reglas del juego",  // "Règles du jeu"
+    "Recientes",  // "Récents"
     "Pensando  %d %%",  // "Réflexion  %d %%"
     "Pensando...",  // "Réflexion..."
     "Nevera",  // "Réfrigérateur"
@@ -7232,6 +7430,7 @@ static const char* const kI18n_es[] = {
     "Señal",  // "Signal"
     "Silencio",  // "Silence"
     "Oscuro",  // "Sombre"
+    "Sonido",  // "Son"
     "Sonido de la tableta",  // "Son de la tablette"
     "Suena antes del turno leído en el calendario.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Suena {avance} antes del turno del calendario, nunca antes de las {avant} ni después de las {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
@@ -7240,6 +7439,8 @@ static const char* const kI18n_es[] = {
     "Tono",  // "Sonnerie"
     "Para salir de un juego: hub y luego «Salir»",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "¡Salida abierta! Trepa hasta arriba.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Fuente",  // "Source"
+    "Fuentes",  // "Sources"
     "Por debajo de la norma",  // "Sous la norme"
     "Deportes",  // "Sports"
     "Deportes y Ocio",  // "Sports & Loisirs"
@@ -7251,6 +7452,7 @@ static const char* const kI18n_es[] = {
     "Con batería",  // "Sur batterie"
     "Sincronizando...",  // "Synchronisation..."
     "Sistema",  // "Système"
+    "Separar",  // "Séparer"
     "TIEMPO DE RESPUESTA",  // "TEMPS DE RÉPONSE"
     "TEMPERATURA",  // "TEMPÉRATURE"
     "¡TODOS LOS NIVELES!",  // "TOUS LES NIVEAUX !"
@@ -7285,6 +7487,7 @@ static const char* const kI18n_es[] = {
     "Top 10 local",  // "Top 10 local"
     "Top 10 local (NVS)",  // "Top 10 local (NVS)"
     "Top 10 local - guardado en NVS, sobrevive a reinicios y OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Tocar: ver reproducción · Pulsación larga: más",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tocar la barra superior durante la partida abre el menú de pausa.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Toca para cambiar",  // "Toucher pour changer"
     "Toca una fila para cambiar su valor",  // "Toucher une ligne pour changer sa valeur"
@@ -7304,9 +7507,11 @@ static const char* const kI18n_es[] = {
     "Todos los días",  // "Tous les jours"
     "Todo se guarda y sobrevive al reinicio.",  // "Tout est enregistré et survit au redémarrage."
     "Cerrar todo",  // "Tout fermer"
+    "Todo aquí",  // "Tout ici"
     "Todo el Top 10 local, récord incluido.",  // "Tout le Top 10 local, meilleur score compris."
     "Marcar todo como leído",  // "Tout marquer comme lu"
     "Abrir todo",  // "Tout ouvrir"
+    "Separar todo",  // "Tout séparer"
     "Todo vivo",  // "Tout vivant"
     "Apagar todo",  // "Tout éteindre"
     "Todas",  // "Toutes"
@@ -7374,6 +7579,7 @@ static const char* const kI18n_es[] = {
     "Persianas",  // "Volets"
     "Volumen",  // "Volume"
     "Volumen progresivo",  // "Volume progressif"
+    "Volumen {v} %",  // "Volume {v} %"
     "Tu color",  // "Votre couleur"
     "Tú",  // "Vous"
     "Juegas: %s",  // "Vous jouez %s"
@@ -7462,8 +7668,11 @@ static const char* const kI18n_es[] = {
     "{jour}: libre",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
     "{jour} {quantieme} de {mois}",  // "{jour} {quantieme} {mois}"
+    "{n} temas",  // "{n} titres"
     "%s, tira el dado",  // "À %s de lancer le dé"
     "¡Regar!",  // "À arroser !"
+    "A continuación",  // "À la suite"
+    "A continuación · {titre}",  // "À suivre · {titre}"
     "Tu turno",  // "À vous"
     "Revisar",  // "À vérifier"
     "¡JAQUE!",  // "ÉCHEC !"
@@ -7503,6 +7712,7 @@ static const char* const kI18n_es[] = {
     "Rey",  // "echecs|Roi"
     "Torre",  // "echecs|Tour"
     "RED",  // "energie|RÉSEAU"
+    "Reproducción",  // "lecteur|Lecture"
     "Baja",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
     "Muy baja",  // "nudge|Très douce"
@@ -7610,6 +7820,7 @@ static const char* const kI18n_it[] = {
     "1 aggiorn. · %s",  // "1 MAJ · %s"
     "1 errore",  // "1 erreur"
     "1 min",  // "1 min"
+    "1 brano",  // "1 titre"
     "1–6 squadre",  // "1 à 6 équipes"
     "10 giorni",  // "10 jours"
     "10 min",  // "10 min"
@@ -7667,6 +7878,7 @@ static const char* const kI18n_it[] = {
     "Magnete minore",  // "Aimant mineur"
     "Aria umida",  // "Air humide"
     "Aria secca",  // "Air sec"
+    "Album",  // "Albums"
     "Allerta meteo arancione in corso! Fai attenzione.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Allerta meteo rossa in corso! Fai attenzione.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Avvisi",  // "Alertes"
@@ -7701,6 +7913,7 @@ static const char* const kI18n_it[] = {
     "Dopo il primo squillo, Home Assistant annuncia meteo e programma.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Argento",  // "Argent"
     "Ferma",  // "Arrêter"
+    "Artisti",  // "Artistes"
     "Arte",  // "Arts"
     "Arte & Letteratura",  // "Arts & Littérature"
     "Assistente",  // "Assistant"
@@ -7717,6 +7930,7 @@ static const char* const kI18n_it[] = {
     "Nessun sensore monitorato",  // "Aucun capteur suivi"
     "Nessuna mossa possibile — passa la mano.",  // "Aucun déplacement possible — au suivant."
     "Nessun effetto attivo",  // "Aucun effet actif"
+    "Ancora nessun preferito",  // "Aucun favori pour l'instant"
     "Nessuno storico",  // "Aucun historique"
     "Nessun incidente",  // "Aucun incident"
     "Nessun giorno scelto nei prossimi 8",  // "Aucun jour retenu dans les 8 prochains"
@@ -7756,6 +7970,7 @@ static const char* const kI18n_it[] = {
     "PALLA PERSA",  // "BILLE PERDUE"
     "Batteria",  // "Batterie"
     "Batteria montata",  // "Batterie montée"
+    "Libreria",  // "Bibliothèque"
     "Quasi secco",  // "Bientôt sec"
     "Bilancio",  // "Bilan"
     "Bilancio vs Tab (per variante e livello)",  // "Bilan contre le Tab (par variante et niveau)"
@@ -7942,9 +8157,12 @@ static const char* const kI18n_it[] = {
     "In attesa di Home Assistant",  // "En attente de Home Assistant"
     "In carica",  // "En charge"
     "In corso",  // "En cours"
+    "In coda",  // "En fin de file"
+    "In riproduzione",  // "En lecture"
     "Online",  // "En ligne"
     "In modalità Fissa contano solo i giorni selezionati.",  // "En mode Fixe, seuls les jours cochés comptent."
     "In movimento",  // "En mouvement"
+    "In pausa",  // "En pause"
     "Soleggiato",  // "Ensoleillé"
     "Tra %d e %d %%",  // "Entre %d et %d %%"
     "Inviato",  // "Envoyé"
@@ -7962,6 +8180,7 @@ static const char* const kI18n_it[] = {
     "Facili + medie",  // "Faciles + moyennes"
     "Debole",  // "Faible"
     "Falsa pista",  // "Faux chemin"
+    "Preferiti",  // "Favoris"
     "Chiudi",  // "Fermer"
     "Chiusa",  // "Fermé"
     "Nutrienti",  // "Fertilité"
@@ -8012,6 +8231,7 @@ static const char* const kI18n_it[] = {
     "Ore",  // "Heures"
     "Storia",  // "Histoire"
     "Home Assistant offline",  // "Home Assistant hors ligne"
+    "Home Assistant non risponde",  // "Home Assistant ne répond pas"
     "Non in top %d",  // "Hors du top %d"
     "Offline",  // "Hors ligne"
     "Offline dalle %02d:%02d",  // "Hors ligne depuis %02d:%02d"
@@ -8036,6 +8256,7 @@ static const char* const kI18n_it[] = {
     "Indice UV",  // "Indice UV"
     "Suggerimento mostrato",  // "Indice affiché"
     "Suggerimento in ricarica",  // "Indice en recharge"
+    "Non disponibile",  // "Indisponible"
     "Insistente",  // "Insistante"
     "Internaz. 10x10",  // "Internationales 10×10"
     "Internazionale 10×10\nPresa massima · a catena",  // "Internationales 10×10\nPrise majoritaire · rafles"
@@ -8132,6 +8353,7 @@ static const char* const kI18n_it[] = {
     "Alba",  // "Lever"
     "Alba e tramonto sconosciuti",  // "Lever et coucher du soleil inconnus"
     "Limite di carica",  // "Limite de charge"
+    "Riproduci",  // "Lire"
     "Lode Runner 1983\nScava · sali · fuggi",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Luminosità",  // "Luminosité"
     "Luce",  // "Lumière"
@@ -8186,8 +8408,13 @@ static const char* const kI18n_it[] = {
     "Medio",  // "Moyen"
     "Media",  // "Moyenne"
     "Medie + difficili",  // "Moyennes + difficiles"
+    "Muto",  // "Muet"
     "Muro pieno",  // "Mur plein"
+    "Music Assistant non è installato.",  // "Music Assistant n'est pas installé."
+    "Music Assistant non risponde",  // "Music Assistant ne répond pas"
+    "Music Assistant non risponde.",  // "Music Assistant ne répond pas."
     "Musica",  // "Musique"
+    "Musica qui",  // "Musique ici"
     "MEMORIA",  // "MÉMOIRE"
     "Melodia",  // "Mélodie"
     "Meteo",  // "Météo"
@@ -8293,6 +8520,7 @@ static const char* const kI18n_it[] = {
     "Stanza: %s",  // "Pièce : %s"
     "Stanze",  // "Pièces"
     "Piante",  // "Plantes"
+    "Playlist",  // "Playlists"
     "Pioggia",  // "Pluie"
     "Pioggia nella prossima ora",  // "Pluie dans l'heure"
     "Pioggia e neve",  // "Pluie et neige"
@@ -8301,6 +8529,7 @@ static const char* const kI18n_it[] = {
     "Pioggia in %d h",  // "Pluie sur %d h"
     "Piuma di fuliggine",  // "Plume de suie"
     "Nessuna immagine dalle %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Podcast",  // "Podcasts"
     "Punti neutri (dame): %d",  // "Points neutres (dame) : %d"
     "Portale aperto!",  // "Portail ouvert !"
     "Porta chiusa male",  // "Porte mal fermée"
@@ -8352,6 +8581,8 @@ static const char* const kI18n_it[] = {
     "Quiz retrò da salotto\n1-6 squadre · in francese",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Appunt.",  // "RDV"
     "RECORD %s",  // "RECORD %s"
+    "Radio",  // "Radio"
+    "Radio",  // "Radios"
     "Riaccendi lo schermo con un tocco",  // "Rallumer l'écran d'une tape"
     "Riaccendi lo schermo con «Okay Nabu»",  // "Rallumer l'écran à « Okay Nabu »"
     "Raccogli tutto l'oro, sfuggi alle guardie, sali in cima.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
@@ -8408,6 +8639,7 @@ static const char* const kI18n_it[] = {
     "Nessun evento quel giorno",  // "Rien de prévu ce jour"
     "Niente in riproduzione",  // "Rien en lecture"
     "Niente da annullare",  // "Rien à annuler"
+    "Niente da mostrare qui",  // "Rien à montrer ici"
     "Roguelite con biglia\n6 stanze · a inclinazione",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Rune %d/%u",  // "Runes %d/%u"
     "Run iniziate: %u\nVittorie: %u\nStanza più profonda: %u/6\nTempo migliore: %s\nLivello totale: %u\nAnime disponibili: %u\nOggetti scoperti: %d/%d",  // "Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d"
@@ -8418,6 +8650,7 @@ static const char* const kI18n_it[] = {
     "RETE",  // "RÉSEAU"
     "Regola 50 mosse",  // "Règle des 50 coups"
     "Regole",  // "Règles du jeu"
+    "Recenti",  // "Récents"
     "Calcolo  %d %%",  // "Réflexion  %d %%"
     "Elaboro...",  // "Réflexion..."
     "Frigorifero",  // "Réfrigérateur"
@@ -8485,6 +8718,7 @@ static const char* const kI18n_it[] = {
     "Segnale",  // "Signal"
     "Silenzioso",  // "Silence"
     "Scuro",  // "Sombre"
+    "Audio",  // "Son"
     "Volume del tablet",  // "Son de la tablette"
     "Suona prima dell'inizio turno letto nel calendario.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Suona {avance} prima dell'inizio turno del calendario, mai prima delle {avant} né dopo le {apres}.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
@@ -8493,6 +8727,8 @@ static const char* const kI18n_it[] = {
     "Suoneria",  // "Sonnerie"
     "Per uscire da un gioco: hub, poi «Esci»",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Uscita aperta! Sali fino in cima.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Sorgente",  // "Source"
+    "Sorgenti",  // "Sources"
     "Sotto la norma",  // "Sous la norme"
     "Sport",  // "Sports"
     "Sport & Tempo libero",  // "Sports & Loisirs"
@@ -8504,6 +8740,7 @@ static const char* const kI18n_it[] = {
     "A batteria",  // "Sur batterie"
     "Sincronizzo...",  // "Synchronisation..."
     "Sistema",  // "Système"
+    "Separa",  // "Séparer"
     "TEMPO DI RISPOSTA",  // "TEMPS DE RÉPONSE"
     "TEMPERATURA",  // "TEMPÉRATURE"
     "TUTTI I LIVELLI!",  // "TOUS LES NIVEAUX !"
@@ -8538,6 +8775,7 @@ static const char* const kI18n_it[] = {
     "Top 10 locale",  // "Top 10 local"
     "Top 10 locale (NVS)",  // "Top 10 local (NVS)"
     "Top 10 locale - salvata in NVS, resiste a riavvii e OTA.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Tocca: riproduzione · Tieni premuto: altro",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Tocca la barra in alto durante la partita per il menu di pausa.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Tocca per cambiare",  // "Toucher pour changer"
     "Tocca una riga per cambiarne il valore",  // "Toucher une ligne pour changer sa valeur"
@@ -8557,9 +8795,11 @@ static const char* const kI18n_it[] = {
     "Tutti i giorni",  // "Tous les jours"
     "Tutto viene salvato e resta dopo un riavvio.",  // "Tout est enregistré et survit au redémarrage."
     "Chiudi tutto",  // "Tout fermer"
+    "Tutto qui",  // "Tout ici"
     "Tutta la Top 10 locale, record compreso.",  // "Tout le Top 10 local, meilleur score compris."
     "Segna tutto come letto",  // "Tout marquer comme lu"
     "Apri tutto",  // "Tout ouvrir"
+    "Separa tutto",  // "Tout séparer"
     "Tutti vivi",  // "Tout vivant"
     "Spegni tutto",  // "Tout éteindre"
     "Tutte",  // "Toutes"
@@ -8627,6 +8867,7 @@ static const char* const kI18n_it[] = {
     "Tapparelle",  // "Volets"
     "Volume",  // "Volume"
     "Volume progressivo",  // "Volume progressif"
+    "Volume {v} %",  // "Volume {v} %"
     "Il tuo colore",  // "Votre couleur"
     "Tu",  // "Vous"
     "Giochi col %s",  // "Vous jouez %s"
@@ -8715,8 +8956,11 @@ static const char* const kI18n_it[] = {
     "{jour}: riposo",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
     "{jour} {quantieme} {mois}",  // "{jour} {quantieme} {mois}"
+    "{n} brani",  // "{n} titres"
     "%s, tira il dado",  // "À %s de lancer le dé"
     "Da annaffiare!",  // "À arroser !"
+    "Di seguito",  // "À la suite"
+    "Di seguito · {titre}",  // "À suivre · {titre}"
     "Tocca a te",  // "À vous"
     "Da controllare",  // "À vérifier"
     "SCACCO!",  // "ÉCHEC !"
@@ -8756,6 +9000,7 @@ static const char* const kI18n_it[] = {
     "Re",  // "echecs|Roi"
     "Torre",  // "echecs|Tour"
     "RETE",  // "energie|RÉSEAU"
+    "In ascolto",  // "lecteur|Lecture"
     "Bassa",  // "nudge|Douce"
     "Normale",  // "nudge|Normale"
     "Molto bassa",  // "nudge|Très douce"
@@ -8863,6 +9108,7 @@ static const char* const kI18n_tr[] = {
     "1 güncelleme · %s",  // "1 MAJ · %s"
     "1 hata",  // "1 erreur"
     "1 dk",  // "1 min"
+    "1 parça",  // "1 titre"
     "1-6 takım",  // "1 à 6 équipes"
     "10 gün",  // "10 jours"
     "10 dk",  // "10 min"
@@ -8920,6 +9166,7 @@ static const char* const kI18n_tr[] = {
     "Küçük Mıknatıs",  // "Aimant mineur"
     "Nemli hava",  // "Air humide"
     "Kuru hava",  // "Air sec"
+    "Albümler",  // "Albums"
     "Turuncu hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Orange en cours ! Restez prudent."
     "Kırmızı hava uyarısı sürüyor! Dikkatli ol.",  // "Alerte Météo Rouge en cours ! Restez prudent."
     "Uyarılar",  // "Alertes"
@@ -8954,6 +9201,7 @@ static const char* const kI18n_tr[] = {
     "İlk çalmadan sonra Home Assistant hava durumunu ve planı duyurur.",  // "Après la première sonnerie, Home Assistant annonce la météo et le planning."
     "Gümüş",  // "Argent"
     "Durdur",  // "Arrêter"
+    "Sanatçılar",  // "Artistes"
     "Sanat",  // "Arts"
     "Sanat & Edebiyat",  // "Arts & Littérature"
     "Asistan",  // "Assistant"
@@ -8970,6 +9218,7 @@ static const char* const kI18n_tr[] = {
     "Takip edilen sensör yok",  // "Aucun capteur suivi"
     "Hamle yok — sıra sonrakinde.",  // "Aucun déplacement possible — au suivant."
     "Etkin efekt yok",  // "Aucun effet actif"
+    "Henüz favori yok",  // "Aucun favori pour l'instant"
     "Geçmiş yok",  // "Aucun historique"
     "Olay yok",  // "Aucun incident"
     "Önümüzdeki 8 günde seçili gün yok",  // "Aucun jour retenu dans les 8 prochains"
@@ -9009,6 +9258,7 @@ static const char* const kI18n_tr[] = {
     "BİLYE KAYBOLDU",  // "BILLE PERDUE"
     "Pil",  // "Batterie"
     "Pil takılı",  // "Batterie montée"
+    "Kitaplık",  // "Bibliothèque"
     "Kurumak üzere",  // "Bientôt sec"
     "Bilanço",  // "Bilan"
     "Tab'a karşı sonuçlar (varyant ve seviyeye göre)",  // "Bilan contre le Tab (par variante et niveau)"
@@ -9195,9 +9445,12 @@ static const char* const kI18n_tr[] = {
     "Home Assistant bekleniyor",  // "En attente de Home Assistant"
     "Şarj oluyor",  // "En charge"
     "Çalışıyor",  // "En cours"
+    "Sona ekle",  // "En fin de file"
+    "Çalıyor",  // "En lecture"
     "Çevrimiçi",  // "En ligne"
     "Sabit modda yalnızca işaretli günler geçerlidir.",  // "En mode Fixe, seuls les jours cochés comptent."
     "Hareket ediyor",  // "En mouvement"
+    "Duraklatıldı",  // "En pause"
     "Güneşli",  // "Ensoleillé"
     "%d ile %d %% arası",  // "Entre %d et %d %%"
     "Gönderildi",  // "Envoyé"
@@ -9215,6 +9468,7 @@ static const char* const kI18n_tr[] = {
     "Kolay + orta",  // "Faciles + moyennes"
     "Hafif",  // "Faible"
     "Yanlış Yol",  // "Faux chemin"
+    "Favoriler",  // "Favoris"
     "Kapat",  // "Fermer"
     "Kapalı",  // "Fermé"
     "Besin",  // "Fertilité"
@@ -9265,6 +9519,7 @@ static const char* const kI18n_tr[] = {
     "Saatler",  // "Heures"
     "Tarih",  // "Histoire"
     "Home Assistant çevrimdışı",  // "Home Assistant hors ligne"
+    "Home Assistant yanıt vermiyor",  // "Home Assistant ne répond pas"
     "İlk %d dışında",  // "Hors du top %d"
     "Çevrimdışı",  // "Hors ligne"
     "Son çevrimiçi: %02d:%02d",  // "Hors ligne depuis %02d:%02d"
@@ -9289,6 +9544,7 @@ static const char* const kI18n_tr[] = {
     "UV indeksi",  // "Indice UV"
     "İpucu gösterildi",  // "Indice affiché"
     "İpucu hazırlanıyor",  // "Indice en recharge"
+    "Kullanılamıyor",  // "Indisponible"
     "Israrlı",  // "Insistante"
     "Uluslararası 10x10",  // "Internationales 10×10"
     "Uluslararası 10×10\nÇoğunluk alma · zincir",  // "Internationales 10×10\nPrise majoritaire · rafles"
@@ -9385,6 +9641,7 @@ static const char* const kI18n_tr[] = {
     "Gün doğumu",  // "Lever"
     "Gün doğumu ve batımı bilinmiyor",  // "Lever et coucher du soleil inconnus"
     "Şarj sınırı",  // "Limite de charge"
+    "Çal",  // "Lire"
     "Lode Runner 1983\nKaz · tırman · kaç",  // "Lode Runner 1983\nCreuse · grimpe · fuis"
     "Parlaklık",  // "Luminosité"
     "Işık",  // "Lumière"
@@ -9439,8 +9696,13 @@ static const char* const kI18n_tr[] = {
     "Orta",  // "Moyen"
     "Ortalama",  // "Moyenne"
     "Orta + zor",  // "Moyennes + difficiles"
+    "Sessiz",  // "Muet"
     "Düz duvar",  // "Mur plein"
+    "Music Assistant yüklü değil.",  // "Music Assistant n'est pas installé."
+    "Music Assistant yanıt vermiyor",  // "Music Assistant ne répond pas"
+    "Music Assistant yanıt vermiyor.",  // "Music Assistant ne répond pas."
     "Müzik",  // "Musique"
+    "Müzik buraya",  // "Musique ici"
     "BELLEK",  // "MÉMOIRE"
     "Melodi",  // "Mélodie"
     "Hava durumu",  // "Météo"
@@ -9546,6 +9808,7 @@ static const char* const kI18n_tr[] = {
     "Oda: %s",  // "Pièce : %s"
     "Odalar",  // "Pièces"
     "Bitkiler",  // "Plantes"
+    "Çalma listeleri",  // "Playlists"
     "Yağmur",  // "Pluie"
     "Önümüzdeki saatte yağmur",  // "Pluie dans l'heure"
     "Karla karışık yağmur",  // "Pluie et neige"
@@ -9554,6 +9817,7 @@ static const char* const kI18n_tr[] = {
     "%d saatte yağmur",  // "Pluie sur %d h"
     "Kurum Tüyü",  // "Plume de suie"
     "Son görsel: %02d:%02d:%02d",  // "Plus d'image depuis %02d:%02d:%02d"
+    "Podcast'ler",  // "Podcasts"
     "Nötr noktalar (dame): %d",  // "Points neutres (dame) : %d"
     "Portal açık!",  // "Portail ouvert !"
     "Kapı tam kapanmadı",  // "Porte mal fermée"
@@ -9605,6 +9869,8 @@ static const char* const kI18n_tr[] = {
     "Retro salon yarışması\n1-6 takım · Fransızca",  // "Quiz rétro-salon\n1 à 6 équipes"
     "Randevu",  // "RDV"
     "REKOR %s",  // "RECORD %s"
+    "Radyo",  // "Radio"
+    "Radyolar",  // "Radios"
     "Dokununca ekranı aç",  // "Rallumer l'écran d'une tape"
     "«Okay Nabu» ile ekranı aç",  // "Rallumer l'écran à « Okay Nabu »"
     "Tüm altını topla, muhafızlardan kaç, tepeye tırman.",  // "Ramasse tout l'or, échappe aux gardes, grimpe en haut."
@@ -9661,6 +9927,7 @@ static const char* const kI18n_tr[] = {
     "O gün için plan yok",  // "Rien de prévu ce jour"
     "Çalan bir şey yok",  // "Rien en lecture"
     "Geri alınacak bir şey yok",  // "Rien à annuler"
+    "Burada gösterilecek bir şey yok",  // "Rien à montrer ici"
     "Bilyeli roguelite\n6 oda · eğerek yönlendir",  // "Roguelite de bille\n6 salles · à l'inclinaison"
     "Rünler %d/%u",  // "Runes %d/%u"
     "Başlatılan sefer: %u\nZafer: %u\nEn derin oda: %u/6\nEn iyi süre: %s\nToplam seviye: %u\nKullanılabilir ruh: %u\nKeşfedilen eşya: %d/%d",  // "Runs lancées : %u\nVictoires : %u\nSalle la plus profonde : %u/6\nMeilleur temps : %s\nNiveau total : %u\nÂmes disponibles : %u\nObjets découverts : %d/%d"
@@ -9671,6 +9938,7 @@ static const char* const kI18n_tr[] = {
     "AĞ",  // "RÉSEAU"
     "50 hamle kuralı",  // "Règle des 50 coups"
     "Oyun kuralları",  // "Règles du jeu"
+    "Geçmiş",  // "Récents"
     "Düşünme  %d %%",  // "Réflexion  %d %%"
     "Düşünüyor...",  // "Réflexion..."
     "Buzdolabı",  // "Réfrigérateur"
@@ -9738,6 +10006,7 @@ static const char* const kI18n_tr[] = {
     "Sinyal",  // "Signal"
     "Sessiz",  // "Silence"
     "Koyu",  // "Sombre"
+    "Ses",  // "Son"
     "Tablet ses düzeyi",  // "Son de la tablette"
     "Takvimden okunan mesai başından önce çalar.",  // "Sonne avant l'ouverture lue dans le calendrier."
     "Takvimdeki mesai başından {avance} önce çalar; asla {avant} öncesinde ya da {apres} sonrasında değil.",  // "Sonne {avance} avant l'ouverture lue dans le calendrier, jamais avant {avant} ni après {apres}."
@@ -9746,6 +10015,8 @@ static const char* const kI18n_tr[] = {
     "Zil sesi",  // "Sonnerie"
     "Oyundan çıkış: merkez, sonra “Çık”",  // "Sortie de chaque jeu : hub, puis « Quitter »"
     "Çıkış açık! En tepeye tırman.",  // "Sortie ouverte ! Grimpe tout en haut."
+    "Kaynak",  // "Source"
+    "Kaynaklar",  // "Sources"
     "Normun altında",  // "Sous la norme"
     "Spor",  // "Sports"
     "Spor & Hobi",  // "Sports & Loisirs"
@@ -9757,6 +10028,7 @@ static const char* const kI18n_tr[] = {
     "Pilde",  // "Sur batterie"
     "Eşitleniyor...",  // "Synchronisation..."
     "Sistem",  // "Système"
+    "Ayır",  // "Séparer"
     "YANIT SÜRESİ",  // "TEMPS DE RÉPONSE"
     "SICAKLIK",  // "TEMPÉRATURE"
     "TÜM SEVİYELER!",  // "TOUS LES NIVEAUX !"
@@ -9791,6 +10063,7 @@ static const char* const kI18n_tr[] = {
     "Yerel ilk 10",  // "Top 10 local"
     "Yerel ilk 10 (NVS)",  // "Top 10 local (NVS)"
     "Yerel ilk 10 - NVS'de saklanır, yeniden başlatma ve OTA'da korunur.",  // "Top 10 local - conservé en NVS, survit aux reboots et aux OTA."
+    "Dokun: çalanı gör · Uzun bas: daha fazla",  // "Toucher : sa lecture · Appui long : plus de choix"
     "Oyun sırasında üst banda dokunmak duraklatma menüsünü açar.",  // "Toucher le bandeau du haut pendant la partie ouvre le menu de pause."
     "Değiştirmek için dokun",  // "Toucher pour changer"
     "Değerini değiştirmek için bir satıra dokun",  // "Toucher une ligne pour changer sa valeur"
@@ -9810,9 +10083,11 @@ static const char* const kI18n_tr[] = {
     "Her gün",  // "Tous les jours"
     "Her şey kaydedilir, yeniden başlatmada korunur.",  // "Tout est enregistré et survit au redémarrage."
     "Tümünü kapat",  // "Tout fermer"
+    "Hepsi burada",  // "Tout ici"
     "Yerel ilk 10'un tamamı, en iyi skor dahil.",  // "Tout le Top 10 local, meilleur score compris."
     "Tümünü okundu işaretle",  // "Tout marquer comme lu"
     "Tümünü aç",  // "Tout ouvrir"
+    "Hepsini ayır",  // "Tout séparer"
     "Hepsi canlı",  // "Tout vivant"
     "Hepsini kapat",  // "Tout éteindre"
     "Tümü",  // "Toutes"
@@ -9880,6 +10155,7 @@ static const char* const kI18n_tr[] = {
     "Panjurlar",  // "Volets"
     "Ses düzeyi",  // "Volume"
     "Kademeli ses",  // "Volume progressif"
+    "Ses {v} %",  // "Volume {v} %"
     "Rengin",  // "Votre couleur"
     "Sen",  // "Vous"
     "Oynadığın taş: %s",  // "Vous jouez %s"
@@ -9968,8 +10244,11 @@ static const char* const kI18n_tr[] = {
     "{jour}: izin",  // "{jour} : repos"
     "{jour}: {horaire}",  // "{jour} : {horaire}"
     "{quantieme} {mois} {jour}",  // "{jour} {quantieme} {mois}"
+    "{n} parça",  // "{n} titres"
     "Zarı atma sırası: %s",  // "À %s de lancer le dé"
     "Sulanmalı!",  // "À arroser !"
+    "Sıradaki",  // "À la suite"
+    "Sıradaki · {titre}",  // "À suivre · {titre}"
     "Sıra sende",  // "À vous"
     "Kontrol et",  // "À vérifier"
     "ŞAH!",  // "ÉCHEC !"
@@ -10009,6 +10288,7 @@ static const char* const kI18n_tr[] = {
     "Şah",  // "echecs|Roi"
     "Kale",  // "echecs|Tour"
     "ŞEBEKE",  // "energie|RÉSEAU"
+    "Çalıyor",  // "lecteur|Lecture"
     "Düşük",  // "nudge|Douce"
     "Normal",  // "nudge|Normale"
     "Çok düşük",  // "nudge|Très douce"

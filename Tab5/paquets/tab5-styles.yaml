@@ -235,6 +235,14 @@ font:
       - "\U000F111E"  # window-shutter-open
       - "\U000F1382"  # compass-rose (tap : roue de navigation, ADR-0042)
       - "\U000F14C9"  # plus-minus-variant (tap : appareil suivant de la tuile − / +)
+      - "\U000F0025"  # album (pochette absente de la bibliothèque, ADR-0067)
+      - "\U000F0803"  # account-music (pochette absente de la bibliothèque, ADR-0067)
+      - "\U000F0CB8"  # playlist-music (pochette absente de la bibliothèque, ADR-0067)
+      - "\U000F0439"  # radio (pochette absente de la bibliothèque, ADR-0067)
+      - "\U000F0994"  # podcast (pochette absente de la bibliothèque, ADR-0067)
+      - "\U000F0067"  # book-music (pochette absente de la bibliothèque, ADR-0067)
+      - "\U000F02FA"  # import (pochette absente de la bibliothèque, ADR-0067)
+      - "\U000F0387"  # music-note (pochette absente de la bibliothèque, ADR-0067)
       # >>> tuiles
       # Palette des tuiles de pièce (ADR-0023), sauf les glyphes déjà listés au-dessus.
       - "\U000F001B"  # air-conditioner (clim)
@@ -403,6 +411,15 @@ font:
       - "\U000F1903"  # home-lightning-bolt (popup Énergie, maison)
       - "\U000F192C"  # transmission-tower-export (popup Énergie, vente)
       - "\U000F192D"  # transmission-tower-import (popup Énergie, achat)
+      - "\U000F0D38"  # speaker-multiple (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
+      - "\U000F0387"  # music-note (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
+      - "\U000F0025"  # album (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
+      - "\U000F0803"  # account-music (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
+      - "\U000F0CB8"  # playlist-music (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
+      - "\U000F0439"  # radio (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
+      - "\U000F0994"  # podcast (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
+      - "\U000F0067"  # book-music (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
+      - "\U000F02FA"  # import (moyeu de la roue d'une pièce ou d'un élément, ADR-0067)
       # >>> tuiles
       # Palette des tuiles de pièce (ADR-0023), sauf les glyphes déjà listés au-dessus.
       - "\U000F001B"  # air-conditioner (clim)
@@ -583,6 +600,11 @@ font:
       - "\U000F1056"  # party-popper
       - "\U000F111C"  # window-shutter
       - "\U000F111E"  # window-shutter-open
+      - "\U000F0D38"  # speaker-multiple (popup Musique, page Pièces / Bibliothèque, ADR-0067)
+      - "\U000F0339"  # link-variant (popup Musique, page Pièces / Bibliothèque, ADR-0067)
+      - "\U000F033A"  # link-variant-off (popup Musique, page Pièces / Bibliothèque, ADR-0067)
+      - "\U000F04E1"  # swap-horizontal (popup Musique, page Pièces / Bibliothèque, ADR-0067)
+      - "\U000F004D"  # arrow-left (popup Musique, page Pièces / Bibliothèque, ADR-0067)
       # >>> tuiles
       # Palette des tuiles de pièce (ADR-0023), sauf les glyphes déjà listés au-dessus.
       - "\U000F001B"  # air-conditioner (clim)
@@ -792,6 +814,16 @@ font:
       - "\U000F146D"  # fan-chevron-down (Silence)
       - "\U000F14DE"  # rocket-launch (Boost)
       - "\U000F1542"  # tune-variant (lien « Détails » de la roue)
+      - "\U000F02FA"  # import (roues du popup Musique, ADR-0067)
+      - "\U000F0581"  # volume-off (roues du popup Musique, ADR-0067)
+      - "\U000F057E"  # volume-high (roues du popup Musique, ADR-0067)
+      - "\U000F04E1"  # swap-horizontal (roues du popup Musique, ADR-0067)
+      - "\U000F033A"  # link-variant-off (roues du popup Musique, ADR-0067)
+      - "\U000F040A"  # play (roues du popup Musique, ADR-0067)
+      - "\U000F0411"  # playlist-play (roues du popup Musique, ADR-0067)
+      - "\U000F0412"  # playlist-plus (roues du popup Musique, ADR-0067)
+      - "\U000F0439"  # radio (roues du popup Musique, ADR-0067)
+      - "\U000F0279"  # format-list-bulleted (roues du popup Musique, ADR-0067)
 
   # Icônes météo des tuiles seulement (120 px, calque 2 réduit à 80 px). Les
   # tailles 270 et 190 px (font_meteo_main / _small) sont retirées le 25/09/2026 :

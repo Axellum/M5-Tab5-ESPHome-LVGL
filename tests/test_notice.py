@@ -46,6 +46,10 @@ APPUIS_LONGS = {
     "forecast_day_body.yaml": "tiles.md",
     "forecast_hour_card.yaml": "tiles.md",
     "switch_card.yaml": "tiles.md",
+    # Une carte de la page Pièces et un élément de la Bibliothèque du popup Musique
+    # (ADR-0067) : leur roue.
+    "musique_piece.yaml": "music.md",
+    "musique_element.yaml": "music.md",
 }
 
 # Fenêtres du rendu que la notice ne montre pas, exprès.
@@ -117,6 +121,14 @@ NON_MONTREES = {
     # de la PR, puis citées.
     "musique-vide": "musique montre la même fenêtre ; l'attente de Home Assistant est décrite dans music.md",
     "musique-eteint": "musique montre la même fenêtre ; « Lecteur éteint » et « Allumer » sont décrits dans music.md",
+    # Musique de toute la maison (ADR-0067, 18/10/2026), décrite dans music.md : images à
+    # tirer du rendu de la PR, puis citées.
+    "musique-ma": "musique montre la même fenêtre ; les noms des pages, « + n » et « À suivre » sont décrits dans music.md",
+    "musique-pieces": "page Pièces du popup Musique, décrite dans music.md ; image à tirer du rendu",
+    "musique-pieces-sans-ma": "musique-pieces montre la même page ; sans Music Assistant, décrite dans music.md",
+    "musique-bibliotheque": "page Bibliothèque du popup Musique, décrite dans music.md ; image à tirer du rendu",
+    "musique-bibliotheque-chargement": "musique-bibliotheque montre la même page ; « Chargement... » est décrit",
+    "musique-sources": "musique-bibliotheque montre la même grille ; les sources sont décrites dans music.md",
     # Popup Suivi (ADR-0054, 10/10/2026), décrit dans tracking.md : images à tirer du rendu
     # de la PR, puis citées.
     "suivi-vide": "suivi montre la même fenêtre ; l'attente de Home Assistant est décrite dans tracking.md",

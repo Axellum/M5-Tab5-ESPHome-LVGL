@@ -36,10 +36,21 @@ ordre ; `custom_templates` rechargé d'abord.
 
 Ordre de mise à jour depuis les dernières versions publiées (`tests/test_contrat_versions.py`
 le confronte à la matrice) :
-**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.0).
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.8.1).
+
+**Contrat HA ↔ firmware** : le firmware d'abord (depuis v3.9.0-rc.5).
 
 ### Ajouté
 
+- **Musique de toute la maison dans le popup Musique, par Music Assistant** ([ADR-0067](docs/decisions/0067-hifi-music-assistant.md), demande d'Axel) — côté firmware ; la même carte de 940 × 536 sur les deux cartes, d'autres pages par la brique des popups à pages (un seul glissement, noms des pages sur la ligne du titre) :
+  - **Lecture** : avec Music Assistant, « À suivre · titre — artiste » et le nombre de titres de la file sous l'album ; la puce « + n » après le nom du lecteur quand il mène un groupe ;
+  - **Pièces** (dès deux lecteurs) : une carte par lecteur de la maison, huit au plus — genre, nom, morceau ou état, volume (envoyé au relâcher), grouper au lecteur montré ou l'en séparer, marche, « y envoyer la musique » ; un toucher montre le lecteur sur la page Lecture, un appui long ouvre sa roue (source, muet, musique ici, séparer) ; « Tout ici » et « Tout séparer » avec Music Assistant ;
+  - **Bibliothèque** (Music Assistant seulement) : Favoris, Playlists, Albums, Artistes, Radios, Podcasts, Récents, puis une grille de 5 × 2 pochettes ; un toucher joue (titre, radio, épisode, livre audio) ou ouvre (artiste, album, playlist, podcast, avec retour) ; un appui long propose maintenant, à la suite, en fin de file ou en radio ; pages suivantes et précédentes ; « Chargement... » puis une phrase courte après 8 s sans réponse ; les sources d'un lecteur dans la même grille (« Sources » sans Music Assistant) ;
+  - sans Music Assistant et avec un seul lecteur, le popup reste celui d'avant ;
+  - contrat 1.3.0 → **1.4.0** : actions `tab5_maj_musique_pieces(pieces, contexte)` et `tab5_maj_musique_liste(contexte, elements)`, événement `esphome.tab5_musique` (`action`, `piece`, `valeur`), lus en C++ pur (`Tab5/socle/tab5_parse.*`, section 9 bis, testés et fuzzés sur PC) ; la tablette ne nomme aucune entité : elle dit « la pièce de rang i » et renvoie la ref que Home Assistant lui a donnée ;
+  - pochettes : dix `online_image` de 160 × 160 (RGB565 opaque, ≈ 50 Kio chacune dans la PSRAM), téléchargées une à la fois, page montrée ; une pochette absente garde l'icône de son genre ;
+  - **ordre de mise à jour : le firmware d'abord**, puis `packages/tab5_musique.yaml` ; des fichiers HA neufs avec un firmware d'avant : les deux poussées échouent sans rien arrêter (`continue_on_error`) ; un HA d'avant avec ce firmware : ni Pièces ni Bibliothèque (rien n'est poussé). Pas essayé sur une tablette.
+- **Waveshare 7B : le bas de la course du volume s'entend** : `volume_min: 40%` (mesuré le 18/10/2026 : l'ES8311 prend le volume tel quel, 0,5 dB par pas ; à 0 par défaut, un volume HA de 0,2 donnait ≈ −76 dB, rien d'audible) : ≈ −44 dB en bas de course, 0 dB en haut ; valeur à juger à l'oreille après un flash. Le Tab5 ne change pas.
 - **Musique de toute la maison, côté Home Assistant** ([ADR-0067](docs/decisions/0067-hifi-music-assistant.md)) : le nouveau package `packages/tab5_musique.yaml` et le modèle `custom_templates/tab5_musique.jinja` servent les pages « Pièces » et « Bibliothèque » du popup Musique, de la plus petite maison à la plus grande, sans rien régler :
   - **Music Assistant facultatif** : trouvé par son intégration (`integration_entities('music_assistant')`, `config_entry_id()`), jamais écrit ; avec lui, les pièces sont ses lecteurs (huit au plus, triés par nom) ; sans lui, la liste « Tab5 · lecteurs de musique » (six) ;
   - **une seule liste des pièces** (`tab5_musique_entites()`), lue par la poussée et par les commandes : un index est la même pièce des deux côtés ;

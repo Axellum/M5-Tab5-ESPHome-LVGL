@@ -120,6 +120,8 @@ script:
       cle: string
     then:
       - script.execute: tab5_lecteur_lier
+      # Pages Pièces et Bibliothèque (ADR-0067, tab5-musique.yaml).
+      - script.execute: tab5_musique_lier
       - lambda: |-
           lecteur_ouvrir(cle);
           animate_popup_open(id(lecteur_popup));

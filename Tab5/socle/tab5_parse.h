@@ -551,6 +551,165 @@ bool ha_base_depuis_hote(const char* hote, char* out, size_t n);
 // contrôle, ou si elle ne tient pas dans `n`.
 bool ha_image_url(const Champ& image, const char* base, char* out, size_t n);
 
+// ─── 9 bis. Musique de toute la maison (ADR-0067, sur le lecteur de la section 9) ───
+// Deux actions, poussées par packages/tab5_musique.yaml (Music Assistant ou la liste
+// « Tab5 · lecteurs de musique ») ; « | » et « ; » des textes remplacés par HA (« / »,
+// « , »), « ; » d'une URL écrit %3B.
+//   tab5_maj_musique_pieces(pieces, contexte), toujours poussée, même vide :
+//     contexte « ma|montre|file|suivant » : ma 1 avec Music Assistant ; montre l'index dans
+//              `pieces` du lecteur montré (ADR-0050), -1 absent ; file le nombre de titres
+//              de sa file (0 inconnu) ; suivant « titre — artiste » du titre suivant, en
+//              dernier : il prend le reste.
+//     pieces   kMusiquePiecesMax « nom|genre|état|volume|muet|groupe|fonctions|titre » au
+//              plus, séparés par « ; » : genre t TV, e enceinte, a écran / tablette, g
+//              groupe, x autre ; état j lecture, p pause, r allumé, e éteint / veille, i
+//              indisponible ; volume 0-100 (vide inconnu) ; muet 1 / 0 ; groupe l'index du
+//              meneur de son groupe (le sien s'il mène), -1 seul ; fonctions v volume, m
+//              muet, o marche, g grouper, s sources, t transfert ; titre en dernier.
+//              L'index d'une pièce est son RANG dans `pieces` : c'est lui que l'événement
+//              esphome.tab5_musique renvoie, et HA refait la même liste pour le lire.
+//   tab5_maj_musique_liste(contexte, elements), en réponse à un événement seulement :
+//     contexte « vue|titre|page|suite|retour » : vue fav pl alb art rad pod rec det src
+//              rech err (err : titre = la phrase à montrer) ; page depuis 0 ; suite 1 s'il
+//              y a une page de plus ; retour 1 pour le bouton retour.
+//     elements kMusiqueElementsMax « nom|sous|genre|ref|image » au plus, séparés par « ; » :
+//              genre t titre, a album, r artiste, p playlist, d radio, o podcast ou
+//              épisode, l livre audio, s source, x autre ; ref une URI de Music Assistant
+//              (160 caractères au plus) ou, pour s, le rang de la source ; image une URL
+//              http(s), en dernier (elle prend le reste), vide sans pochette.
+// Rien en NVS : HA repousse tout à la connexion et à l'ouverture du popup.
+constexpr int kMusiquePiecesMax = 8;
+constexpr int kMusiqueElementsMax = 10;
+// Tailles en octets (zéro final non compris) des textes copiés par l'écran : HA coupe à
+// 40, 60 et 48 caractères, deux octets au plus chacun dans les polices (Latin-1).
+constexpr size_t kMusiqueNomMax = 80;          // nom d'une pièce, d'un élément, sa 2e ligne
+constexpr size_t kMusiqueTitreMax = 120;       // « titre — artiste » d'une pièce, le suivant
+constexpr size_t kMusiqueListeTitreMax = 96;   // titre d'une liste, phrase d'erreur
+constexpr size_t kMusiqueRefMax = 160;         // URI de Music Assistant (ASCII)
+
+enum class MusiqueGenre : uint8_t {
+    AUTRE,     // x, ou inconnu
+    TV,        // t
+    ENCEINTE,  // e
+    ECRAN,     // a : écran, tablette
+    GROUPE,    // g : un groupe de lecteurs
+};
+enum class MusiqueEtat : uint8_t {
+    INDISPONIBLE,  // i, ou inconnu
+    ETEINT,        // e : éteint ou en veille
+    ALLUME,        // r : allumé, rien en lecture
+    PAUSE,         // p
+    LECTURE,       // j
+};
+// Lettres de `fonctions` → bits ; une autre lettre est ignorée.
+enum : uint8_t {
+    MUSIQUE_F_VOLUME = 1u << 0,     // v
+    MUSIQUE_F_MUET = 1u << 1,       // m
+    MUSIQUE_F_MARCHE = 1u << 2,     // o
+    MUSIQUE_F_GROUPE = 1u << 3,     // g
+    MUSIQUE_F_SOURCE = 1u << 4,     // s
+    MUSIQUE_F_TRANSFERT = 1u << 5,  // t
+};
+uint8_t musique_fonctions_lire(const Champ& c);
+
+struct MusiquePieceLue {
+    int index = -1;  // rang dans `pieces` (enregistrements vides comptés) : celui de l'événement
+    Champ nom{nullptr, 0};
+    MusiqueGenre genre = MusiqueGenre::AUTRE;
+    MusiqueEtat etat = MusiqueEtat::INDISPONIBLE;
+    int volume = -1;  // 0 à 100, -1 inconnu
+    int8_t muet = -1;  // 1, 0, -1 inconnu
+    int groupe = -1;  // index (rang) du meneur de son groupe, -1 seule
+    uint8_t fonctions = 0;
+    Champ titre{nullptr, 0};
+};
+struct MusiquePiecesLues {
+    bool ma = false;  // Music Assistant chargé dans HA
+    int montre = -1;  // index (rang) du lecteur montré, -1 absent
+    int file = 0;     // titres de sa file, 0 inconnu
+    Champ suivant{nullptr, 0};
+    int n = 0;
+    MusiquePieceLue pieces[kMusiquePiecesMax];
+};
+// Lit les deux variables ; renvoie le nombre de pièces (out.n). Un enregistrement vide
+// (« ;; », le « ; » final) est sauté mais garde son rang ; au-delà du rang
+// kMusiquePiecesMax - 1, la fin est ignorée. Un index (montre, groupe) qui ne désigne
+// aucune pièce lue vaut -1 ; un nombre illisible, non fini ou hors bornes vaut inconnu ;
+// un contexte vide ou illisible : sans Music Assistant, rien de montré.
+int musique_pieces_lire(const Champ& pieces, const Champ& contexte, MusiquePiecesLues& out);
+// Pièces du groupe que mène la pièce de rang `index`, elle exceptée (« + n » de l'en-tête) ;
+// 0 si elle ne mène pas de groupe.
+int musique_membres(const MusiquePiecesLues& p, int index);
+// Les pièces de rangs a et b sont-elles dans le même groupe (a != b) ?
+bool musique_meme_groupe(const MusiquePiecesLues& p, int a, int b);
+// La pièce de rang `index`, nullptr si aucune.
+const MusiquePieceLue* musique_piece(const MusiquePiecesLues& p, int index);
+
+enum class MusiqueVue : uint8_t {
+    INCONNUE,
+    FAVORIS,    // fav
+    PLAYLISTS,  // pl
+    ALBUMS,     // alb
+    ARTISTES,   // art
+    RADIOS,     // rad
+    PODCASTS,   // pod
+    RECENTS,    // rec
+    DETAIL,     // det : le contenu d'un artiste, d'un album, d'une playlist, d'un podcast
+    SOURCES,    // src : les sources d'une pièce
+    RECHERCHE,  // rech (lot suivant)
+    ERREUR,     // err : titre = la phrase à montrer
+    NB
+};
+// Codes de l'événement (« parcourir » : vue|page) et de la poussée, lus par HA : jamais
+// traduits.
+constexpr const char* kMusiqueVueCodes[static_cast<int>(MusiqueVue::NB)] = {
+    "", "fav", "pl", "alb", "art", "rad", "pod", "rec", "det", "src", "rech", "err"};
+MusiqueVue musique_vue_lire(const Champ& c);
+const char* musique_vue_code(MusiqueVue v);
+// Les sept catégories de la bibliothèque (FAVORIS à RECENTS) : celles qu'on parcourt.
+bool musique_vue_categorie(MusiqueVue v);
+
+enum class MusiqueElementGenre : uint8_t {
+    AUTRE,     // x
+    TITRE,     // t
+    ALBUM,     // a
+    ARTISTE,   // r
+    PLAYLIST,  // p
+    RADIO,     // d
+    PODCAST,   // o : podcast ou épisode (l'URI le dit, musique_element_jouable)
+    LIVRE,     // l : livre audio
+    SOURCE,    // s : une source de la pièce (ref = son rang)
+};
+struct MusiqueElementLu {
+    Champ nom{nullptr, 0};
+    Champ sous{nullptr, 0};
+    MusiqueElementGenre genre = MusiqueElementGenre::AUTRE;
+    Champ ref{nullptr, 0};  // vide si refusée (musique_ref_valide)
+    Champ image{nullptr, 0};
+};
+struct MusiqueListeLue {
+    MusiqueVue vue = MusiqueVue::INCONNUE;
+    Champ titre{nullptr, 0};
+    int page = 0;
+    bool suite = false;
+    bool retour = false;
+    int n = 0;
+    MusiqueElementLu elements[kMusiqueElementsMax];
+};
+// Lit les deux variables ; renvoie le nombre d'éléments (out.n). Un enregistrement vide est
+// sauté (la ref de l'élément revient à HA, pas son rang) ; au-delà de kMusiqueElementsMax,
+// la fin est ignorée. Une page illisible ou négative vaut 0.
+int musique_liste_lire(const Champ& contexte, const Champ& elements, MusiqueListeLue& out);
+// Une ref que la tablette peut renvoyer : pour une source, son rang (1 à 3 chiffres) ;
+// sinon « schéma://reste » (schéma en a-z, 0-9, « _ », « - » ; reste sans « | », « ; », espace
+// ni caractère de contrôle), kMusiqueRefMax octets au plus — la même règle que HA.
+bool musique_ref_valide(const Champ& ref, MusiqueElementGenre g);
+// Ce que fait le toucher d'un élément : jouer (titre, radio, livre, épisode, autre) ou
+// ouvrir (album, artiste, playlist, podcast). Un épisode est un « o » dont l'URI contient
+// « episode » (library://podcast_episode/…). Une source : ni l'un ni l'autre.
+bool musique_element_jouable(const MusiqueElementLu& e);
+bool musique_element_conteneur(const MusiqueElementLu& e);
+
 // ─── 10. Popup Caméras (tab5_maj_cameras, ADR-0049, ADR-0057) ───
 // Variable cameras : « nom|image|pièce|hors_ligne;… » dans l'ordre du blueprint :
 //   nom        friendly_name (HA remplace « | » et « ; ») ;

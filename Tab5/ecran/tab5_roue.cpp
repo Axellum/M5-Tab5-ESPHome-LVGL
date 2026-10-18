@@ -208,6 +208,17 @@ const char* glyphe_roue(RoueIcone i) {
         case RoueIcone::CAMERAS: return "\U000F07AE";      // cctv (popup Caméras, ADR-0049)
         case RoueIcone::FROID: return "\U000F0290";        // fridge (en-tête du popup Froid, ADR-0055)
         case RoueIcone::SERVEUR_IA: return "\U000F048B";   // server (en-tête du popup Serveur IA, ADR-0059)
+        // Popup Musique (ADR-0067) : roue d'une pièce, puis d'un élément de la bibliothèque.
+        case RoueIcone::SOURCE: return "\U000F02FA";       // import
+        case RoueIcone::MUET: return "\U000F0581";         // volume-off
+        case RoueIcone::SON: return "\U000F057E";          // volume-high
+        case RoueIcone::TRANSFERT: return "\U000F04E1";    // swap-horizontal (musique ici)
+        case RoueIcone::SEPARER: return "\U000F033A";      // link-variant-off
+        case RoueIcone::LIRE: return "\U000F040A";         // play
+        case RoueIcone::A_LA_SUITE: return "\U000F0411";   // playlist-play
+        case RoueIcone::EN_FIN: return "\U000F0412";       // playlist-plus
+        case RoueIcone::RADIO: return "\U000F0439";        // radio
+        case RoueIcone::LISTE: return "\U000F0279";        // format-list-bulleted (ouvrir)
         default: return "";
     }
 }
