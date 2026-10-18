@@ -62,6 +62,13 @@ BORD = 15
 ACCUEIL, POPUP, ARCADE, JEU = "accueil", "popup", "arcade", "jeu"
 
 
+def jeux_compiles(carte: str) -> bool:
+    """Le rendu de cette carte a-t-il les jeux ? `tab5_jeux` par défaut (ADR-0065) : oui sur
+    le Tab5 seulement, non sur une carte sans IMU (tests/test_module_jeux.py compare avec
+    l'expression de tab5-rendu-host.yaml). Sans eux, ni l'Arcade ni les consoles."""
+    return carte == "tab5"
+
+
 def taille_carte(carte: str) -> tuple[int, int]:
     """Écran logique (paysage) de la carte : Tab5/paquets/geometrie-<carte>.yaml."""
     texte = (RACINE / "Tab5" / "paquets" / f"geometrie-{carte}.yaml").read_text(encoding="utf-8")

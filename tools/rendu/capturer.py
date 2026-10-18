@@ -71,7 +71,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from demo_pusher import _appeler, _donner_une_cle, _lire_cle_demo, _pousser_scene  # noqa: E402
 from ecrans import ECRANS, PORTRAITS, Aller, Attendre, Choisir, Glisser, Service, Toucher  # noqa: E402
 from scenarios import SCENES, build_zones_absentes  # noqa: E402
-from vers_carte import adapter  # noqa: E402
+from vers_carte import adapter, jeux_compiles  # noqa: E402
 
 logger = logging.getLogger("capturer")
 
@@ -339,11 +339,15 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
             await asyncio.sleep(ATTENTE_PANNEAU)
             if seulement is None:
                 await rendu.capturer(nom_de(index, scene.nom))
-        # Les écrans s'ouvrent sur la dernière scène, carte centrale arrêtée.
+        # Les écrans s'ouvrent sur la dernière scène, carte centrale arrêtée. Une carte
+        # compilée sans les jeux (ADR-0065, jeux_compiles) n'a ni Arcade ni console.
+        jeux = jeux_compiles(carte)
         for ecran in ECRANS:
             if seulement is not None and ecran.nom not in seulement:
                 continue
-            if sans_jeux and ecran.nom.startswith("jeu-"):
+            if (sans_jeux or not jeux) and ecran.nom.startswith("jeu-"):
+                continue
+            if not jeux and ecran.nom == "arcade":
                 continue
             logger.info("Écran : %s", ecran.nom)
             # Sur une autre carte que le Tab5, les mêmes gestes ramenés à son écran

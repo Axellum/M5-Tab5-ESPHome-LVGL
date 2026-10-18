@@ -460,7 +460,9 @@ interval:
 
           // Ce qui se ferme et quand : retour_auto_tick() (tab5_anim.cpp). Ici, ce qui
           // demande un id() : la page LVGL et les widgets des prévisions.
-          const bool arcade = id(tab5_lvgl)->get_current_page() == id(page_arcade)->index;
+          // Hors de page_main : le sélecteur ou une console (pages du module des jeux,
+          // ADR-0065 ; une console ouverte, retour_auto_tick ne ferme rien).
+          const bool arcade = !id(page_main)->is_showing();
           switch (retour_auto_tick(arcade)) {
             case RetourAuto::QUITTER_ARCADE:
               id(tab5_lvgl)->show_page(0, LV_SCREEN_LOAD_ANIM_NONE, 0);
