@@ -339,9 +339,9 @@ font:
       - "\U000F0238"  # fire (feux de forêt, alertes MeteoAlarm — lot 4c)
 
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
-  # réveil, en-tête de la sélection des consoles, cartes du popup Énergie ; températures
-  # de l'accueil (salon, serre ; en mode HA, thermomètre et goutte de la pièce, ADR-0040) ;
-  # moyeu de la roue de navigation (rose des vents, ADR-0042).
+  # réveil, en-tête de la sélection des consoles, cartes du popup Énergie ; icône de la
+  # tuile − / + de l'accueil ; moyeu de la roue de navigation (rose des vents, ADR-0042).
+  # Les températures de l'accueil sont en mdi_font_temp depuis le 18/10/2026.
   - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_45
     size: 45
@@ -350,7 +350,6 @@ font:
       - "\U000F0020"  # alarm
       - "\U000F0021"  # alarm-check
       - "\U000F0023"  # alarm-off
-      - "\U000F002D"  # greenhouse
       - "\U000F0045"  # arrow-down
       - "\U000F004D"  # arrow-left
       - "\U000F0054"  # arrow-right
@@ -383,7 +382,6 @@ font:
       - "\U000F04B9"  # sofa
       - "\U000F04DB"  # stop
       - "\U000F054C"  # undo
-      - "\U000F056C"  # view-carousel (seconde température absente : son tap change la zone à gauche de l'horloge, ADR-0051)
       - "\U000F057E"  # volume-high (télécommande d'un boîtier : à la place de Muet, ADR-0056)
       - "\U000F0581"  # volume-off
       - "\U000F058E"  # water-percent
@@ -480,6 +478,30 @@ font:
       - "\U000F1B22"  # pump-off (pompe)
       - "\U000F1C01"  # robot-vacuum-off (aspirateur)
       # <<< tuiles
+
+  # Températures de l'accueil (climate_card.yaml : salon, serre ; en mode HA, thermomètre et
+  # goutte de la pièce, ADR-0040 ; view-carousel sans seconde température, ADR-0051) et − / +
+  # de la tuile en dessous : 45 et 56 px sur le Tab5, à la taille de la carte ailleurs
+  # (carte_police_echelle, 18/10/2026, demande d'Axel), comme la valeur qu'elles bordent.
+  # Sur la 7B, une icône restée à 45 px laissait 4 px entre le « ° » du salon et l'icône de
+  # la serre, et le − de 56 px remplissait presque son bouton de 40.
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_font_temp
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
+    bpp: 1
+    glyphs:
+      - "\U000F002D"  # greenhouse
+      - "\U000F04B9"  # sofa
+      - "\U000F050F"  # thermometer (pièce du mode HA)
+      - "\U000F056C"  # view-carousel (seconde température absente : son tap change la zone à gauche de l'horloge, ADR-0051)
+      - "\U000F058E"  # water-percent (humidité de la pièce du mode HA)
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_font_pas
+    size: ${ (56 * (carte_police_echelle | float)) | round | int }
+    bpp: 1
+    glyphs:
+      - "\U000F0374"  # minus
+      - "\U000F0415"  # plus
 
   # 56 px — cartes du popup plantes, boutons -/+ de la clim, tuiles des consoles. (Le
   # « power » du bouton On / Off du popup lumière est parti avec lui le 09/10/2026, ADR-0046.)

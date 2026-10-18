@@ -203,7 +203,8 @@ api:
             id: tab5_display
             filename: !lambda 'return fichier;'
         # Ce que montre la capture (Tab5/rendu/rendu_mesure.h, lot 2 du portage 1024×600) :
-        # « fichier|écran|coupés|hors écran ». L'écran est nommé comme « Écran courant »
+        # « fichier|écran|coupés|hors écran|barres de défilement » (barres : 18/10/2026).
+        # L'écran est nommé comme « Écran courant »
         # (tab5-navigation.yaml) ; un popup ouvert est mesuré seul.
         - lambda: |-
             if (!ModalRegistry::ready()) id(tab5_modal_registry_init).execute();
@@ -218,9 +219,9 @@ api:
               snprintf(ecran, sizeof ecran, "%s", modal != nullptr ? modal : "Accueil");
               if (modal != nullptr) racine = ModalRegistry::find(modal);
             }
-            const RenduCoupes r = rendu_mesurer(racine);
+            const RenduCoupes r = rendu_mesurer(racine, fichier.c_str());
             char texte[160];
-            snprintf(texte, sizeof texte, "%s|%s|%d|%d", fichier.c_str(), ecran, r.coupes, r.hors);
+            snprintf(texte, sizeof texte, "%s|%s|%d|%d|%d", fichier.c_str(), ecran, r.coupes, r.hors, r.barres);
             id(rendu_mesure).publish_state(texte);
     # La carte centrale change de panneau toutes les 8 s (tab5_central_rotator_auto) :
     # une capture tombait parfois dans le fondu de 190 ms entre deux panneaux, ou sur

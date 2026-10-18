@@ -4,7 +4,8 @@
 tools/rendu/capturer.py écrit, pour chaque capture, ce que le rendu en dit lui-même
 (Tab5/rendu/rendu_mesure.h) : l'écran affiché (« Accueil », un popup, « Arcade »,
 « Jeu · … »), les objets COUPÉS (qui dessinent et ne tiennent pas dans leur zone
-visible) et, parmi eux, ceux HORS de l'écran, plus la capture identique qui la précède.
+visible) et, parmi eux, ceux HORS de l'écran, les BARRES de défilement dessinées
+(18/10/2026), plus la capture identique qui la précède.
 Un fichier par carte : `ecrans-tab5.json` (tâche « fr ») et `ecrans-waveshare-7b.json`
 (tâche « rendu-7b »).
 
@@ -12,7 +13,8 @@ Un écran de la carte est OUVERT quand il montre le même écran que sur le Tab5
 pas une copie d'une capture précédente (sauf si celle du Tab5 en est une aussi : « aller-
 volet » montre le même popup que « volet »). Le bilan, en Markdown pour le résumé du
 job : écrans ouverts / attendus (popups et accueil d'un côté, consoles de jeu de l'autre),
-puis les objets coupés des popups ouverts, carte contre Tab5. `--avant` : un bilan
+puis les objets coupés des popups ouverts, carte contre Tab5, et les captures qui montrent
+une barre de défilement (le journal du rendu dit où : « Barre de défilement »). `--avant` : un bilan
 précédent de la carte, pour l'écart. Informatif : le code de sortie ne dépend que de la
 lecture des fichiers.
 
@@ -80,6 +82,18 @@ def coupes_popups(tab5: dict[str, dict], carte: dict[str, dict]) -> list[tuple[s
     return lignes
 
 
+def barres(tab5: dict[str, dict], carte: dict[str, dict]) -> list[tuple[str, str, int | None, int]]:
+    """(nom, écran, barres Tab5, barres carte) des captures de la carte qui montrent au moins
+    une barre de défilement, consoles de jeu exceptées. None : pas mesuré sur le Tab5."""
+    lignes = []
+    for nom, vu in carte.items():
+        if (vu.get("barres") or 0) <= 0 or famille(vu.get("ecran")) == "jeux":
+            continue
+        ref = tab5.get(nom) or {}
+        lignes.append((nom, vu["ecran"], ref.get("barres"), vu["barres"]))
+    return lignes
+
+
 def bilan(tab5: dict[str, dict], carte: dict[str, dict], titre: str, avant: dict[str, dict] | None = None) -> str:
     comptes = compter(tab5, carte)
     lignes = [f"### {titre}", ""]
@@ -109,6 +123,10 @@ def bilan(tab5: dict[str, dict], carte: dict[str, dict], titre: str, avant: dict
                 lignes.append(f"Sur les {len(communs)} popups ouverts avant et après : "
                               f"{sum(avant_c[c[0]][3] for c in communs)} → {sum(c[3] for c in communs)} coupés, "
                               f"{sum(avant_c[c[0]][4] for c in communs)} → {sum(c[4] for c in communs)} hors écran.")
+    avec_barres = barres(tab5, carte)
+    if any("barres" in m for m in carte.values()):
+        lignes += ["", f"Barres de défilement (jeux exceptés) : **{len(avec_barres)}** captures de la carte "
+                   "en montrent au moins une."]
     rates = [n for n in attendus(tab5) if not ouvert(n, tab5, carte)]
     if rates:
         lignes += ["", "<details><summary>Écrans pas ouverts sur la carte "
@@ -124,6 +142,11 @@ def bilan(tab5: dict[str, dict], carte: dict[str, dict], titre: str, avant: dict
         lignes += ["", "<details><summary>Objets coupés par popup ouvert</summary>", "",
                    "| Capture | Écran | Tab5 | Carte | dont hors écran |", "|---|---|---|---|---|"]
         lignes += [f"| {n} | {e} | {a} | {b} | {h} |" for n, e, a, b, h in coupes]
+        lignes += ["", "</details>"]
+    if avec_barres:
+        lignes += ["", "<details><summary>Captures avec une barre de défilement</summary>", "",
+                   "| Capture | Écran | Tab5 | Carte |", "|---|---|---|---|"]
+        lignes += [f"| {n} | {e} | {'—' if a is None else a} | {b} |" for n, e, a, b in avec_barres]
         lignes += ["", "</details>"]
     return "\n".join(lignes) + "\n"
 

@@ -17,7 +17,8 @@ On vérifie :
 - les trois zones de l'horloge couvrent la tuile sans trou ni recouvrement, coupées entre
   les chiffres et la date dans les 21 thèmes ; le rendu les touche ;
 - la NVS : nouvelle préférence, taille de SauvegardeAppuis inchangée ;
-- l'icône de la clim, à gauche de sa consigne restée au centre, tient avant − dans les 21 thèmes ;
+- l'icône de la clim et sa consigne, centrées ensemble, tiennent entre − et + dans les 21 thèmes,
+  sur chaque carte ; les deux températures au-dessus ne se touchent pas ;
 - au rendu des VRAIS modèles Jinja du blueprint : défauts, choix, valeurs inconnues, quand
   la clé part."""
 import os
@@ -281,40 +282,98 @@ def test_le_rendu_touche_chaque_zone():
 
 # ─── Tuile − / + : l'icône de la clim tient entre − et + ─────────────────────
 
-def test_icone_de_la_clim_entre_moins_et_plus():
-    """La consigne reste au centre exact de la zone − / + (66..339 : 273 px depuis la
-    tuile de 72 px du 09/10/2026, 255 avant), comme avant ;
-    l'icône de 45 px est posée à 8 px à sa gauche (align_to, puis suivie en C++ à chaque
-    changement de taille). Avec la consigne la plus large (« 88.8 ° », un °F à décimale) dans
-    la police de date de chaque thème, la moitié gauche (demi-consigne, 8 px, icône) laisse
-    au moins 10 px d'air avant −."""
+def _taille_carte(taille_tab5: int, carte: str) -> int:
+    """Taille sur `carte` d'une police de `taille_tab5` px sur le Tab5 qui suit la carte
+    (`${ (t * (carte_police_echelle | float)) | round | int }`, ADR-0061)."""
+    from tests.commun import taille_police
+    return taille_police("${ (%d * (carte_police_echelle | float)) | round | int }" % taille_tab5, carte)
+
+
+def _largeurs_date(textes):
+    """{thème: {texte: (police, taille sur le Tab5)}} : de quoi mesurer chaque texte dans la
+    police de date de chaque thème."""
     import gen_themes
     import police_theme
-    carte = _lire(CLIM_CARTE)
-    zone = carte.split("id: climate_controls_zone", 1)[1].split("id: reglable_rangee", 1)[0]
-    assert "clim_consigne_rangee" not in carte
+    mesures = gen_themes.lire_polices()
+    ref_cle = police_theme.REFERENCE
+    chars = "".join(sorted(set("".join(textes))))
+    ref = police_theme.mesurer(police_theme.fichier(*ref_cle.rsplit("@", 1)), chars)
+    for theme in gen_themes.charger():
+        cle = theme.polices.get("date", ref_cle)
+        m = police_theme.mesurer(police_theme.fichier(*cle.rsplit("@", 1)), chars)
+        yield theme.fichier, (lambda texte, carte, m=m, t=mesures[cle]["date"]["taille"]:
+                              police_theme.largeur(m, texte, _taille_carte(t, carte), ref))
+
+
+def _entre_moins_et_plus(carte: str) -> int:
+    """Largeur libre entre − et + dans la tuile (66..339 : 273 px sur le Tab5) : la tuile, sa
+    bordure de 1 px, puis de chaque côté l'écart et le bouton."""
+    return jeton("acc_col_l", carte) - 2 * (1 + jeton("acc_pas_x", carte) + jeton("acc_pas_l", carte))
+
+
+def test_icone_de_la_clim_entre_moins_et_plus():
+    """L'icône de 45 px est posée à 8 px à gauche de la consigne, et les deux sont centrées
+    ensemble entre − et + (18/10/2026, demande d'Axel : la consigne seule au centre laissait
+    le groupe 27 px à gauche ; align_to, puis suivies en C++ à chaque changement de taille).
+    Avec la consigne la plus large (« 88.8 ° », un °F à décimale) dans la police de date de
+    chaque thème, à la taille de chaque carte, le groupe laisse au moins 10 px d'air de chaque
+    côté (273 px entre − et + sur le Tab5, 222 sur la 7B)."""
+    carte_yaml = _lire(CLIM_CARTE)
+    zone = carte_yaml.split("id: climate_controls_zone", 1)[1].split("id: reglable_rangee", 1)[0]
+    assert "clim_consigne_rangee" not in carte_yaml
     cible = zone.split("id: clim_target\n", 1)[1].split("- label:", 1)[0]
     assert "align: CENTER" in cible and "styles: style_police_date" in cible
     icone = zone.split("id: clim_consigne_icone\n", 1)[1].split("\n\n", 1)[0]
     assert "text_font: mdi_font_45" in icone
     assert "align_to: { id: clim_target, align: OUT_LEFT_MID, x: -8 }" in icone
     placer = _fonction(_lire(os.path.join(TAB5, "ecran", "tab5_reglables.cpp")), "void consigne_icone_placer(")
-    assert "lv_obj_align(u.consigne_icone, LV_ALIGN_CENTER, -(w / 2) - kEcartIconeConsigne - wi + wi / 2, 0);" in placer
+    assert "const int32_t dx = wi > 0 ? (wi + kEcartIconeConsigne) / 2 : 0;" in placer
+    assert "lv_obj_align(u.consigne_clim, LV_ALIGN_CENTER, dx, 0);" in placer
+    assert "lv_obj_align(u.consigne_icone, LV_ALIGN_CENTER, dx - (w / 2) - kEcartIconeConsigne - wi + wi / 2, 0);" in placer
     suivre = _fonction(_lire(os.path.join(TAB5, "ecran", "tab5_reglables.cpp")), "void consigne_icone_suivre(")
     assert suivre.count("LV_EVENT_SIZE_CHANGED") == 2
-    mesures = gen_themes.lire_polices()
-    ref_cle = police_theme.REFERENCE
+    # Le groupe centré : icône, écart et consigne de part et d'autre du centre de la tuile.
+    for w, wi in ((97, 45), (60, 45), (97, 0)):
+        dx = (wi + 8) // 2 if wi > 0 else 0
+        gauche, droite = dx - w // 2 - (8 + wi if wi > 0 else 0), dx - w // 2 + w
+        assert abs(gauche + droite) <= 1, (w, wi, gauche, droite)
     # « ° » après la consigne depuis le 14/10/2026 (clim_consigne_zone, PR #471).
     textes = ("88.8 °", "--")
-    chars = "".join(sorted(set("".join(textes))))
-    ref = police_theme.mesurer(police_theme.fichier(*ref_cle.rsplit("@", 1)), chars)
-    for theme in gen_themes.charger():
-        cle = theme.polices.get("date", ref_cle)
-        m = police_theme.mesurer(police_theme.fichier(*cle.rsplit("@", 1)), chars)
-        taille = mesures[cle]["date"]["taille"]
-        texte = max(police_theme.largeur(m, t, taille, ref) for t in textes)
-        gauche = texte // 2 + 8 + 45
-        assert gauche <= 273 // 2 - 10, f"{theme.fichier} : {gauche} px à gauche du centre, entre − et +"
+    for carte in CARTES:
+        libre = _entre_moins_et_plus(carte)
+        for fichier, largeur in _largeurs_date(textes):
+            groupe = max(largeur(t, carte) for t in textes) + 8 + 45
+            assert groupe <= libre - 2 * 10, f"{carte}, {fichier} : {groupe} px entre − et + ({libre})"
+
+
+# ─── Températures au-dessus de la tuile − / + : ne se touchent pas ─────────────
+
+def test_temperatures_du_salon_et_de_la_serre_ne_se_touchent_pas():
+    """Les deux rangées (icône, écart, valeur) partent des bords du − et du + (acc_temp_x) ;
+    l'icône (mdi_font_temp) et l'écart (acc_temp_ecart) suivent la carte comme la valeur
+    (18/10/2026, demande d'Axel : sur la 7B, l'icône restée à 45 px laissait 4 px entre le
+    « ° » du salon et la serre). Dans la police de date de chaque thème : 12 px d'air au moins
+    avec des valeurs courantes (« 21.4 ° » et « 22.1 ° »), et pas de chevauchement avec un
+    salon à « 29.9 ° » et une serre à « -9.9 ° ». Sur le Tab5, rien ne se touche non plus avec
+    la serre à « -12.5 ° » (le cas d'avant le 18/10/2026)."""
+    from tests.commun import charger, taille_police
+    carte_yaml = _lire(CLIM_CARTE)
+    rangees = carte_yaml.split("# ═══ Températures pièces", 1)[1].split("# Zone tactile sur la température serre", 1)[0]
+    assert rangees.count("pad_column: ${acc_temp_ecart}") == 2
+    assert rangees.count("text_font: mdi_font_temp") == 2 and "mdi_font_45" not in rangees
+    assert "x: ${acc_temp_x}" in rangees and "x: -${acc_temp_x}" in rangees
+    polices = {p["id"]: p for p in charger("Tab5", "paquets", "tab5-styles.yaml")["font"]}
+    cas = [(("21.4 °", "22.1 °"), 12), (("29.9 °", "-9.9 °"), 0)]
+    for carte in CARTES:
+        libre = jeton("acc_col_l", carte) - 2 * jeton("acc_temp_x", carte)
+        icone = taille_police(polices["mdi_font_temp"]["size"], carte)  # glyphes MDI : 1 em d'avance
+        ecart = jeton("acc_temp_ecart", carte)
+        essais = cas + ([(("29.9 °", "-12.5 °"), 0)] if carte == "tab5" else [])
+        for fichier, largeur in _largeurs_date([t for (textes, _) in essais for t in textes]):
+            for (salon, serre), air in essais:
+                rangees_l = 2 * (icone + ecart) + largeur(salon, carte) + largeur(serre, carte)
+                assert libre - rangees_l >= air, (
+                    f"{carte}, {fichier} : « {salon} » et « {serre} » laissent {libre - rangees_l} px ({air} voulus)")
 
 
 # ─── Blueprint : rendu des vrais modèles ─────────────────────────────────────
