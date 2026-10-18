@@ -217,8 +217,8 @@ def test_definitions_avec_celles_des_tuiles():
         ["r5", "ven", icone(p.bp, domaine="fan"), "", lien["fan.ventilo"], "0", "100", "10", "%",
          "Ventilateur chambre"],
         ["r6", "vol", icone(p.bp, domaine="cover"), "", lien["cover.store"], "0", "100", "10", "%", "Store salon"],
-        # La vanne est la sixième tuile de sa pièce (cinq au plus) : sans tuile, sans lien.
-        ["r7", "vol", icone(p.bp, domaine="valve"), "", "", "0", "100", "100", "%", "Arrosage"],
+        # La vanne est la sixième tuile de sa pièce : t35 depuis l'ADR-0066 (vingt éléments).
+        ["r7", "vol", icone(p.bp, domaine="valve"), "", "t35", "0", "100", "100", "%", "Arrosage"],
     ]
     # Neuf champs après la clé, lus par lire_def() (tab5_reglables.cpp).
     assert all(len(d) == 10 for d in reglables) and "Champ f[9];" in CPP

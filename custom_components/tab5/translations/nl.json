@@ -38,7 +38,7 @@
           "pieces": "Kamers van de tablet"
         },
         "data_description": {
-          "pieces": "Maximaal vijf, in de volgorde van de pagina's van de onderste rij: de eerste op het startscherm, de volgende met een veeg."
+          "pieces": "Maximaal tien, in de volgorde van de pagina's van de onderste rij: de eerste op het startscherm, de volgende met een veeg."
         }
       },
       "piece": {
@@ -53,7 +53,7 @@
         },
         "data_description": {
           "nom": "Leeg: de gemeenschappelijke ruimtenaam van de apparaten.",
-          "tuiles": "Maximaal vijf, van links naar rechts.",
+          "tuiles": "Maximaal twintig, van links naar rechts. Boven de vijf worden tegels in tweeën en daarna in vieren gedeeld.",
           "temperature": "Optioneel. Getoond op het startscherm wanneer deze kamer in beeld is.",
           "humidite": "Optioneel, samen met de temperatuur.",
           "clim": "Optioneel, samen met de temperatuur: de knoppen − / + van het startscherm regelen hem."
@@ -129,8 +129,8 @@
     },
     "error": {
       "aucune_piece_choisie": "Kies minstens één kamer.",
-      "trop_de_pieces": "Maximaal vijf kamers.",
-      "trop_de_tuiles": "Maximaal vijf tegels."
+      "trop_de_pieces": "Maximaal tien kamers.",
+      "trop_de_tuiles": "Maximaal twintig tegels."
     }
   },
   "issues": {
@@ -186,7 +186,7 @@
               "pieces": "Kamers van de tablet"
             },
             "data_description": {
-              "pieces": "Maximaal vijf, in de volgorde van de pagina's van de onderste rij: de eerste op het startscherm, de volgende met een veeg."
+              "pieces": "Maximaal tien, in de volgorde van de pagina's van de onderste rij: de eerste op het startscherm, de volgende met een veeg."
             }
           },
           "piece": {
@@ -201,7 +201,7 @@
             },
             "data_description": {
               "nom": "Leeg: de gemeenschappelijke ruimtenaam van de apparaten.",
-              "tuiles": "Maximaal vijf, van links naar rechts.",
+              "tuiles": "Maximaal twintig, van links naar rechts. Boven de vijf worden tegels in tweeën en daarna in vieren gedeeld.",
               "temperature": "Optioneel. Getoond op het startscherm wanneer deze kamer in beeld is.",
               "humidite": "Optioneel, samen met de temperatuur.",
               "clim": "Optioneel, samen met de temperatuur: de knoppen − / + van het startscherm regelen hem."
@@ -277,8 +277,8 @@
         },
         "error": {
           "aucune_piece_choisie": "Kies minstens één kamer.",
-          "trop_de_pieces": "Maximaal vijf kamers.",
-          "trop_de_tuiles": "Maximaal vijf tegels."
+          "trop_de_pieces": "Maximaal tien kamers.",
+          "trop_de_tuiles": "Maximaal twintig tegels."
         }
       }
     }

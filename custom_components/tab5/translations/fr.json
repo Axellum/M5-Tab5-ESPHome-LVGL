@@ -38,7 +38,7 @@
           "pieces": "Pièces de la tablette"
         },
         "data_description": {
-          "pieces": "Cinq au plus, dans l'ordre des pages de la rangée du bas : la première sur l'accueil, les suivantes d'un glissement."
+          "pieces": "Dix au plus, dans l'ordre des pages de la rangée du bas : la première sur l'accueil, les suivantes d'un glissement."
         }
       },
       "piece": {
@@ -53,7 +53,7 @@
         },
         "data_description": {
           "nom": "Vide : le nom de la pièce commune à ses appareils.",
-          "tuiles": "Cinq au plus, de gauche à droite.",
+          "tuiles": "Vingt au plus, de gauche à droite. Au-delà de cinq, des tuiles sont coupées en deux, puis en quatre.",
           "temperature": "Facultatif. Affichée sur l'accueil quand cette pièce est à l'écran.",
           "humidite": "Facultatif, avec la température.",
           "clim": "Facultatif, avec la température : les boutons − / + de l'accueil la règlent."
@@ -129,8 +129,8 @@
     },
     "error": {
       "aucune_piece_choisie": "Choisissez au moins une pièce.",
-      "trop_de_pieces": "Cinq pièces au plus.",
-      "trop_de_tuiles": "Cinq tuiles au plus."
+      "trop_de_pieces": "Dix pièces au plus.",
+      "trop_de_tuiles": "Vingt tuiles au plus."
     }
   },
   "issues": {
@@ -186,7 +186,7 @@
               "pieces": "Pièces de la tablette"
             },
             "data_description": {
-              "pieces": "Cinq au plus, dans l'ordre des pages de la rangée du bas : la première sur l'accueil, les suivantes d'un glissement."
+              "pieces": "Dix au plus, dans l'ordre des pages de la rangée du bas : la première sur l'accueil, les suivantes d'un glissement."
             }
           },
           "piece": {
@@ -201,7 +201,7 @@
             },
             "data_description": {
               "nom": "Vide : le nom de la pièce commune à ses appareils.",
-              "tuiles": "Cinq au plus, de gauche à droite.",
+              "tuiles": "Vingt au plus, de gauche à droite. Au-delà de cinq, des tuiles sont coupées en deux, puis en quatre.",
               "temperature": "Facultatif. Affichée sur l'accueil quand cette pièce est à l'écran.",
               "humidite": "Facultatif, avec la température.",
               "clim": "Facultatif, avec la température : les boutons − / + de l'accueil la règlent."
@@ -277,8 +277,8 @@
         },
         "error": {
           "aucune_piece_choisie": "Choisissez au moins une pièce.",
-          "trop_de_pieces": "Cinq pièces au plus.",
-          "trop_de_tuiles": "Cinq tuiles au plus."
+          "trop_de_pieces": "Dix pièces au plus.",
+          "trop_de_tuiles": "Vingt tuiles au plus."
         }
       }
     }

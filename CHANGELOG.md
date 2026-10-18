@@ -40,6 +40,12 @@ le confronte à la matrice) :
 
 ### Ajouté
 
+- **Nombre de pièces et vingt appareils par pièce, côté Home Assistant** ([ADR-0066](docs/decisions/0066-rooms-count-cut-tiles.md), lot C ; les lots A et B, le firmware, suivent) :
+  - blueprint « Tab5 — emplacements » : nouvelle section « Pièces · Rooms » avec « Nombre de pièces » (1 à 10, 5 par défaut), sections « Pièce 6 » à « Pièce 10 » (mêmes entrées que les pièces 1 à 5, repliées), jusqu'à 20 appareils par pièce (au-delà, les 20 premiers) ; les entrées et les déclencheurs des dix pièces sont écrits par `tools/gen_blueprint_emplacements.py` ;
+  - ce qui part vers la tablette : « pn|N » en tête des définitions, les pièces au-delà du nombre jamais envoyées (ni nom, ni tuile, ni état, ni climat, ni commande), les clés `tRT` avec T = 0-9 puis a-j dans les définitions, les états, les clims des tuiles (`crRT` / `ceRT`) et les commandes de l'écran ;
+  - assistant de l'intégration : jusqu'à dix pièces et vingt tuiles par pièce (cinq proposées d'office), il écrit « Nombre de pièces » ;
+  - **compatibilité** : un firmware qui ne connaît pas encore ces clés les ignore et montre les cinq premières pièces et leurs cinq premiers appareils, comme avant ; une maison de cinq pièces de cinq appareils reçoit exactement les mêmes charges qu'avant, à « pn|5; » près (`tests/test_nombre_de_pieces.py`, et le même calcul fait par le Home Assistant de l'auteur sur sa vraie automatisation). **Ordre de mise à jour indifférent** (firmware ou blueprint d'abord).
+
 - **Jeux en module, absents par défaut de la Waveshare 7B** ([ADR-0065](docs/decisions/0065-games-optional-module.md), demande d'Axel : la 7B n'a pas d'IMU, la moitié des consoles se jouent en inclinant) :
   - nouvelle substitution `tab5_jeux` (`oui` / `non`, `Tab5/user_entities.yaml` ou `-s tab5_jeux …`) : `oui` par défaut sur le Tab5, `non` sur une carte sans IMU ;
   - sans les jeux, ni code, ni pages, ni couleurs, ni police d'échecs dans le firmware : pas d'Arcade, pas de « Jeux » dans la roue de navigation, et le tap « auto » du bouton manette ouvre le lecteur audio (popup Musique), son appui long restant la télécommande (les deux se changent dans le blueprint) ;

@@ -614,7 +614,7 @@ def test_clims_des_tuiles_a_la_connexion():
     p, reglages, etats, clims = _poussee(_evenement("connexion"))
     # La Daikin (t00) a l'option m : climr et tab5_maj_clim, ni cr ni ce.
     assert [t["cle"] for t in p["tuiles_clim"]] == ["t01", "t10"]
-    assert _defs(p.definitions())[1:3] == [["t00", "cli", "clim", "m", "", "Clim"],
+    assert _defs(p.definitions())[2:4] == [["t00", "cli", "clim", "m", "", "Clim"],  # après pn, p0
                                            ["t01", "cli", "clim", "", "", "Clim chambre"]]
     assert _defs(reglages) == [
         ["cr01", "17.0", "30.0", "1.0", "°C", "chdfebqs", "Clim chambre"],

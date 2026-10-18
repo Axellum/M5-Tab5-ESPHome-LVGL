@@ -209,7 +209,7 @@ def test_definitions_de_la_rangee():
 ])
 def test_reglages_de_la_rangee(plantes, duree, attendu):
     p = _passage(entrees={"rangee_plantes": plantes, "rangee_duree": duree})
-    assert p.definitions().split(";")[:2] == attendu
+    assert p.definitions().split(";")[1:3] == attendu  # après « pn|5 » (ADR-0066)
 
 
 def test_etats_de_la_rangee_avec_ceux_des_tuiles():

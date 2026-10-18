@@ -38,7 +38,7 @@
           "pieces": "Stanze del tablet"
         },
         "data_description": {
-          "pieces": "Al massimo cinque, nell'ordine delle pagine della fila in basso: la prima nella schermata iniziale, le successive con uno scorrimento."
+          "pieces": "Al massimo dieci, nell'ordine delle pagine della fila in basso: la prima nella schermata iniziale, le successive con uno scorrimento."
         }
       },
       "piece": {
@@ -53,7 +53,7 @@
         },
         "data_description": {
           "nom": "Vuoto: il nome dell'area comune ai suoi dispositivi.",
-          "tuiles": "Al massimo cinque, da sinistra a destra.",
+          "tuiles": "Al massimo venti, da sinistra a destra. Oltre cinque, i riquadri vengono divisi in due, poi in quattro.",
           "temperature": "Facoltativo. Mostrata nella schermata iniziale quando questa stanza è sullo schermo.",
           "humidite": "Facoltativo, insieme alla temperatura.",
           "clim": "Facoltativo, insieme alla temperatura: i pulsanti − / + della schermata iniziale lo regolano."
@@ -129,8 +129,8 @@
     },
     "error": {
       "aucune_piece_choisie": "Scegli almeno una stanza.",
-      "trop_de_pieces": "Al massimo cinque stanze.",
-      "trop_de_tuiles": "Al massimo cinque riquadri."
+      "trop_de_pieces": "Al massimo dieci stanze.",
+      "trop_de_tuiles": "Al massimo venti riquadri."
     }
   },
   "issues": {
@@ -186,7 +186,7 @@
               "pieces": "Stanze del tablet"
             },
             "data_description": {
-              "pieces": "Al massimo cinque, nell'ordine delle pagine della fila in basso: la prima nella schermata iniziale, le successive con uno scorrimento."
+              "pieces": "Al massimo dieci, nell'ordine delle pagine della fila in basso: la prima nella schermata iniziale, le successive con uno scorrimento."
             }
           },
           "piece": {
@@ -201,7 +201,7 @@
             },
             "data_description": {
               "nom": "Vuoto: il nome dell'area comune ai suoi dispositivi.",
-              "tuiles": "Al massimo cinque, da sinistra a destra.",
+              "tuiles": "Al massimo venti, da sinistra a destra. Oltre cinque, i riquadri vengono divisi in due, poi in quattro.",
               "temperature": "Facoltativo. Mostrata nella schermata iniziale quando questa stanza è sullo schermo.",
               "humidite": "Facoltativo, insieme alla temperatura.",
               "clim": "Facoltativo, insieme alla temperatura: i pulsanti − / + della schermata iniziale lo regolano."
@@ -277,8 +277,8 @@
         },
         "error": {
           "aucune_piece_choisie": "Scegli almeno una stanza.",
-          "trop_de_pieces": "Al massimo cinque stanze.",
-          "trop_de_tuiles": "Al massimo cinque riquadri."
+          "trop_de_pieces": "Al massimo dieci stanze.",
+          "trop_de_tuiles": "Al massimo venti riquadri."
         }
       }
     }
