@@ -7,12 +7,13 @@
 #        pourcentage : 26 / 89 / 166 / 255).
 # Cible id(current_light_slot) (global partagé, pas une entité en dur).
 # Sorti de light_popup.yaml le 26/09/2026 (audit, lot 7.3), rendu inchangé.
+# Largeur : jeton lum_niveau_l (80 px sur le Tab5 ; 67 sur la 7B, où « 100 % » touchait les bords).
 # ═══════════════════════════════════════════════════════
 button:
   align: TOP_LEFT
   x: ${x}
   y: ${ 452 * (corps_h | int) // 598 }
-  width: ${ 80 * (corps_w | int) // 1202 }
+  width: ${lum_niveau_l}
   height: ${ 72 * (corps_h | int) // 598 }
   styles: style_clim_btn
   on_short_click:

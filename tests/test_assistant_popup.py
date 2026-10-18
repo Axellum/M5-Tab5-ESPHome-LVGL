@@ -73,6 +73,11 @@ def test_boutons_du_panneau_dans_le_panneau(carte):
         assert boites[a]["y"] + boites[a]["height"] < boites[b]["y"], (a, b)
     assert boites["btn_assist_pipe_domo"]["x"] + boites["btn_assist_pipe_domo"]["width"] < boites["btn_assist_pipe_discu"]["x"]
     assert boites["btn_assist_mute"]["x"] + boites["btn_assist_mute"]["width"] < boites["slider_assist_volume"]["x"]
+    # Le bouton rond du curseur (16 px de rayon) déborde du bout de la piste : il garde de
+    # l'air avant le bord du panneau (il le touchait sur le Tab5 et y était coupé sur la 7B,
+    # 18/10/2026).
+    curseur = boites["slider_assist_volume"]
+    assert curseur["x"] + curseur["width"] + 16 <= panneau["width"] - 12, carte
     if carte == "tab5":
         assert boites["btn_assist_mute"] == {"x": 16, "y": 422, "width": 80, "height": 60}
-        assert boites["slider_assist_volume"] == {"x": 112, "y": 442, "width": 252, "height": 20}
+        assert curseur == {"x": 112, "y": 442, "width": 236, "height": 20}
