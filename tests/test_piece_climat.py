@@ -210,15 +210,13 @@ def test_cles_de_l_historique_partout_les_memes():
     assert tuple(cles) == ("salon", "serre") + pieces and "NB_CLES = 12" in cpp
     piece = _lire(source("tab5_piece_climat.cpp"))
     assert tuple(re.findall(r'"(p\d)"', re.search(r"kClesHistorique\[kPiecesMax\] = \{([^}]*)\}", piece).group(1))) == pieces
-    # Côté Home Assistant, la liste des clés acceptées : celle des cinq pièces tant que le lot
-    # C de l'ADR-0066 (blueprint, package) n'a pas ajouté p5 à p9, puis les dix — jamais une
-    # clé que le firmware ne demande pas.
-    cinq = "['salon', 'serre', 'p0', 'p1', 'p2', 'p3', 'p4']"
+    # Côté Home Assistant, la liste des clés acceptées : les mêmes douze (sans p5 à p9, le
+    # blueprint ne lançait pas l'historique d'une pièce 6 à 10).
     dix = str(["salon", "serre", *pieces])
     for fichier in (PACKAGE_HISTORIQUE, os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5",
                                                     "tab5_emplacements.yaml")):
         texte = _lire(fichier)
-        assert cinq in texte or dix in texte, fichier
+        assert dix in texte and "'p4']" not in texte, fichier
 
 
 # ─── Firmware ────────────────────────────────────────────────────────────────

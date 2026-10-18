@@ -53,8 +53,8 @@ le confronte à la matrice) :
   - popups Lumières et Volets : un onglet par pièce qui en a ; popup Maison : cinq colonnes au plus, au-delà des pages qu'on glisse ([ADR-0046](docs/decisions/0046-popups-a-pages.md)) avec leurs noms en haut (« Pièces 1 à 4 ») ; famille « Pièces » de la roue de navigation : au-delà de six pièces, un choix « Suite » mène aux autres, « Retour » revient ; clims des pièces, popup Température (fenêtre de sept onglets) et lien de la tuile − / + vont jusqu'à la pièce 10 ;
   - les définitions gardées en mémoire passent de 1 608 à 3 208 octets (partition NVS de 448 Ko) : au premier démarrage du nouveau firmware, l'ancienne copie n'est plus lue et l'écran attend la poussée suivante de Home Assistant (au plus quelques secondes après la connexion) ;
   - rendu hors tablette : huit pièces poussées (captures « pieces-8-… ») ;
-  - **connu** : la liste des clés d'historique de Home Assistant (`packages/tab5_historique.yaml`, blueprint) s'arrête encore à p4 ; la courbe de température d'une pièce 6 à 10 montre celle du salon tant qu'elle n'est pas étendue ;
-  - mise à jour : firmware et blueprint dans n'importe quel ordre (un blueprint d'avant n'envoie pas « pn » : cinq pièces).
+  - Home Assistant : les clés d'historique acceptées par `packages/tab5_historique.yaml` et le blueprint vont jusqu'à `p9` (la courbe de température d'une pièce 6 à 10 ; jusqu'ici, le blueprint ne lançait pas l'historique de ces pièces) ;
+  - mise à jour : firmware, package et blueprint dans n'importe quel ordre (un blueprint d'avant n'envoie pas « pn » : cinq pièces ; un firmware d'avant ne demande pas `p5` à `p9`).
 
 - **Jeux en module, absents par défaut de la Waveshare 7B** ([ADR-0065](docs/decisions/0065-games-optional-module.md), demande d'Axel : la 7B n'a pas d'IMU, la moitié des consoles se jouent en inclinant) :
   - nouvelle substitution `tab5_jeux` (`oui` / `non`, `Tab5/user_entities.yaml` ou `-s tab5_jeux …`) : `oui` par défaut sur le Tab5, `non` sur une carte sans IMU ;
