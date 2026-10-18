@@ -960,9 +960,9 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
     const int page = forecast_page_suivante(old_page, dir == LV_DIR_LEFT);
 
     apply_forecast_page(old_page, page, dir,
-        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
-        f_card, f_card_s,
-        page_title_wrap, lbl_page_title, ctx);
+                        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
+                        f_card, f_card_s,
+                        page_title_wrap, lbl_page_title, ctx);
 }
 
 void reset_forecast_to_main_page(
@@ -982,16 +982,16 @@ void reset_forecast_to_main_page(
     const lv_dir_t dir = (old_page < FORECAST_MAIN_PAGE) ? LV_DIR_LEFT : LV_DIR_RIGHT;
 
     apply_forecast_page(old_page, FORECAST_MAIN_PAGE, dir,
-        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
-        f_card, f_card_s,
-        page_title_wrap, lbl_page_title, ctx);
+                        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
+                        f_card, f_card_s,
+                        page_title_wrap, lbl_page_title, ctx);
 }
 
 void meteo_page_accueil() {
     const TuilesUI& u = g_tuiles_ui;
     if (g_central_ctx.ha_mode || u.calque_jours == nullptr || u.calque_heures == nullptr) return;
     reset_forecast_to_main_page(u.calque_jours, u.calque_heures, g_day_slots, g_hour_slots,
-        u.police_meteo, u.police_meteo_petite, u.titre_cadre, u.titre, g_central_ctx);
+                                u.police_meteo, u.police_meteo_petite, u.titre_cadre, u.titre, g_central_ctx);
 }
 
 

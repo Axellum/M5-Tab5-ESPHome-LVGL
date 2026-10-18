@@ -85,7 +85,7 @@ enum Cle : int { SALON = 0,
 constexpr const char* kCles[NB_CLES] = {"salon", "serre", "p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"};
 static_assert(NB_CLES == PIECE_0 + kPiecesMax, "une clé par pièce");
 // Ordre des onglets : la pièce de l'accueil, les pièces, puis la seconde température.
-constexpr int kOrdreOnglets[NB_CLES] = {SALON,       PIECE_0,     PIECE_0 + 1, PIECE_0 + 2, PIECE_0 + 3, PIECE_0 + 4,
+constexpr int kOrdreOnglets[NB_CLES] = {SALON, PIECE_0, PIECE_0 + 1, PIECE_0 + 2, PIECE_0 + 3, PIECE_0 + 4,
                                         PIECE_0 + 5, PIECE_0 + 6, PIECE_0 + 7, PIECE_0 + 8, PIECE_0 + 9, SERRE};
 enum Carte : int { MAINTENANT = 0,
                    MINIMUM = 1,
