@@ -6,9 +6,14 @@
  *       d'œil, pièce par pièce, comme un tableau de bord Home Assistant, sans passer
  *       les cinq pièces une à une au doigt.
  *         - Une colonne par pièce qui a au moins un appareil, dans l'ordre du blueprint
- *           (Pièce 1 → 5 : l'index R, pas l'ordre des pages), largeur
+ *           (Pièce 1 → N : l'index R, pas l'ordre des pages), largeur
  *           (1250 − 24 − 12 × (n − 1)) / n ; un en-tête (le nom de la pièce, « Pièce n »
  *           sans nom), puis une ligne par tuile non vide, dans l'ordre des tuiles.
+ *         - Plus de cinq pièces (ADR-0066, jusqu'à dix) : des pages de cinq colonnes au
+ *           plus, réparties (sept pièces : 4 + 3, pages_repartir), même largeur de colonne
+ *           sur chaque page ; glissement gauche / droite (pages_brancher, ADR-0046) et
+ *           onglets « Pièces 1 à 4 » à côté du titre. Les widgets sont des places (colonne
+ *           C, ligne K) : s_place dit quelle tuile tRT chacune montre sur la page affichée.
  *         - Une ligne = la carte du mode HA de sa tuile, couchée : pastille ronde de
  *           l'icône dans la couleur de l'état, nom, ligne d'état (tuile_peindre_ligne,
  *           tab5_tuiles.cpp : les mêmes mots et couleurs), et « ⋯ » quand la tuile a un
@@ -38,6 +43,7 @@
 #include "tab5_internal.h"
 #include "tab5_geometrie.h"
 #include "lvgl.h"
+#include <algorithm>
 #include <cstdio>
 
 MaisonUI g_maison_ui;
@@ -45,7 +51,7 @@ MaisonUI g_maison_ui;
 namespace {
 
 // Géométrie (maison_popup.yaml, tab5-ui-tokens.yaml) : carte modale de kCarteL px, corps à
-// y = kCorpsY sous la barre de titre (ADR-0009 ; kPieces, kTuiles, kCarteL, kCarteH,
+// y = kCorpsY sous la barre de titre (ADR-0009 ; kPiecesMax, kTuiles, kCarteL, kCarteH,
 // kCorpsY : tab5_geometrie.h), marges et écarts de 12 px entre colonnes.
 constexpr int32_t kMarge = 12;
 constexpr int32_t kEcart = 12;
@@ -71,8 +77,36 @@ static_assert(kLignesY + kTuiles * kLigneH + (kTuiles - 1) * kLigneEcart <= kCar
 static_assert(kLigneH >= 72, "une ligne de la Maison garde sa pastille et ses deux textes");
 static_assert(!kMiseEnPageTab5 || kLigneH == kLigneHTab5, "Tab5 : lignes de 104 px");
 
+// Onglets des pages (pages_onglet.yaml, ADR-0046) : sur la ligne du titre, à la place des
+// onglets des Réglages (x 318 sur le Tab5, ramenée à la carte par onglet_x), jusqu'au
+// bouton « Éteindre les lumières » (320 px à 100 px du bord droit, maison_popup.yaml) moins
+// 10 px ; 200 px au plus, 10 px entre deux, le nom à 8 px des bords. Le bouton garde sa
+// largeur sur une carte plus étroite : quand la place manque (Waveshare 7B, rendu du
+// 18/10/2026 : « Pièces 1 à… »), les onglets commencent plus tôt, jusqu'au début de la zone
+// des onglets (kOngletsDebutTab5, après le titre), au lieu de rétrécir.
+constexpr int32_t kOngletsX = onglet_x(318);
+constexpr int32_t kOngletsXMin = kOngletsDebutTab5;
+constexpr int32_t kOngletsFinMaison = kCarteL - 100 - 320 - 10;
+constexpr int32_t kOngletEcart = 10;
+constexpr int32_t kOngletMarge = 8;
+static_assert(kMaisonColonnes == 5 && kMaisonLignes == kTuiles, "les places : cinq colonnes, une ligne par tuile");
+static_assert(kMaisonPagesMax * kMaisonColonnes >= kPiecesMax, "toutes les pièces ont une page");
+
 // Largeur des colonnes de la dernière disposition (les textes d'une ligne en dépendent).
 int32_t s_colonne = 0;
+
+// Pages (ADR-0066) : les pièces qui ont un appareil, dans l'ordre du blueprint, réparties
+// en pages de cinq colonnes au plus (pages_repartir, tab5_core.cpp : sept pièces = 4 + 3).
+int s_pieces[kPiecesMax] = {};  // pièce de chaque colonne, toutes pages confondues
+int s_nb = 0;                   // colonnes (pièces occupées)
+PagesRepartition s_rep;
+int s_page = 0;                 // page affichée
+// La tuile que montre chaque place de la page affichée ({-1, -1} : aucune).
+struct Place {
+    int r = -1;
+    int t = -1;
+};
+Place s_place[kMaisonColonnes][kMaisonLignes];
 
 bool affiche() {
     const lv_obj_t* p = g_maison_ui.popup;
@@ -105,88 +139,169 @@ void dessiner_ligne(lv_obj_t* ligne, int r, int t, bool agit, bool appui_long) {
     tuile_peindre_ligne(r, t, {pastille, enfant(pastille, 0), enfant(ligne, 1), enfant(ligne, 2)}, texte);
 }
 
-// Un état arrivé : relit les gestes de la tuile (une seule fois) puis la redessine.
+// Un état arrivé : la place qui montre la tuile tRT (s'il y en a une sur la page affichée),
+// ses gestes relus une seule fois, puis son dessin.
 void peindre_ligne(int r, int t) {
-    lv_obj_t* ligne = g_maison_ui.ligne[r][t];
-    bool agit = false, appui_long = false;
-    if (ligne != nullptr && tuile_gestes(r, t, agit, appui_long)) dessiner_ligne(ligne, r, t, agit, appui_long);
+    for (int c = 0; c < kMaisonColonnes; c++)
+        for (int k = 0; k < kMaisonLignes; k++) {
+            if (s_place[c][k].r != r || s_place[c][k].t != t) continue;
+            lv_obj_t* ligne = g_maison_ui.ligne[c][k];
+            bool agit = false, appui_long = false;
+            if (ligne != nullptr && tuile_gestes(r, t, agit, appui_long)) dessiner_ligne(ligne, r, t, agit, appui_long);
+            return;
+        }
 }
 
-// Colonnes, en-têtes et lignes d'après les définitions, puis tout le dessin.
+// Première et dernière pièce (numéros du blueprint) de la page `p`.
+void page_bornes(int p, int& premiere, int& derniere) {
+    const int debut = p * s_rep.par_page;
+    const int fin = std::min(s_nb, debut + s_rep.par_page) - 1;
+    premiere = debut < s_nb ? s_pieces[debut] + 1 : 0;
+    derniere = fin >= debut ? s_pieces[fin] + 1 : 0;
+}
+
+// Onglets des pages, à côté du titre : aucun sous deux pages ; « Pièces 1 à 5 », celui de
+// la page affichée en accent (choix_peindre, tab5_pages.cpp).
+void peindre_onglets() {
+    const MaisonUI& u = g_maison_ui;
+    const int n = s_rep.pages >= 2 ? s_rep.pages : 0;
+    const int32_t w =
+        n > 0 ? std::min<int32_t>(200, (kOngletsFinMaison - kOngletsXMin - (n - 1) * kOngletEcart) / n) : 0;
+    const int32_t x0 = std::min<int32_t>(kOngletsX, kOngletsFinMaison - n * w - (n - 1) * kOngletEcart);
+    char nom[48];
+    for (int p = 0; p < kMaisonPagesMax; p++) {
+        lv_obj_t* const b = u.onglet[p];
+        ui_hidden(b, p >= n);
+        if (p >= n || b == nullptr) continue;
+        ui_x(b, x0 + p * (w + kOngletEcart));
+        lv_obj_set_width(b, w);  // LVGL 9.5.0 compare lui-même (lv_obj_pos.c)
+        int premiere = 0, derniere = 0;
+        page_bornes(p, premiere, derniere);
+        snprintf(nom, sizeof(nom), tr("Pièces %d à %d"), premiere, derniere);
+        texte_ha_coupe(lv_obj_get_child(b, 0), nom, w - 2 * kOngletMarge);
+    }
+    if (n > 0) choix_peindre(u.onglet, n, s_page);
+}
+
+// Pièces occupées et pages d'après les définitions (la page affichée gardée si elle existe
+// toujours), puis la page : colonnes, en-têtes, lignes et tout le dessin.
 void disposer() {
     MaisonUI& u = g_maison_ui;
-    char titres[kPieces][48];
-    bool occupee[kPieces];
-    int n = 0;
-    for (int r = 0; r < kPieces; r++) {
-        occupee[r] = tuiles_piece_titre(r, titres[r], sizeof(titres[r]));
-        if (occupee[r]) n++;
-    }
-    s_colonne = n > 0 ? (kCarteL - 2 * kMarge - (n - 1) * kEcart) / n : 0;
-    ui_hidden(u.vide, n > 0);
+    s_nb = 0;
     bool lumieres = false;
-    int c = 0;
-    for (int r = 0; r < kPieces; r++) {
+    char titre[48];
+    for (int r = 0; r < tuiles_pieces_nombre(); r++) {
+        if (!tuiles_piece_titre(r, titre, sizeof(titre))) continue;
+        s_pieces[s_nb++] = r;
+        lumieres = lumieres || tuiles_piece_a_lumieres(r);
+    }
+    s_rep = pages_repartir(s_nb, kMaisonColonnes);
+    if (s_page >= s_rep.pages) s_page = 0;
+    const int debut = s_page * s_rep.par_page;
+    const int n = std::min(s_nb - debut, s_rep.par_page);  // colonnes de cette page
+    // Même largeur sur toutes les pages (celle d'une page pleine) : les colonnes restent
+    // alignées d'une page à l'autre ; la dernière page peut en avoir une de moins.
+    s_colonne = s_rep.par_page > 0 ? (kCarteL - 2 * kMarge - (s_rep.par_page - 1) * kEcart) / s_rep.par_page : 0;
+    ui_hidden(u.vide, s_nb > 0);
+    for (int c = 0; c < kMaisonColonnes; c++) {
+        const bool occupee = c < n;
+        const int r = occupee ? s_pieces[debut + c] : -1;
         const int32_t x = kMarge + c * (s_colonne + kEcart);
-        lv_obj_t* entete = u.entete[r];
-        ui_hidden(entete, !occupee[r]);
-        if (occupee[r] && entete != nullptr) {
+        lv_obj_t* entete = u.entete[c];
+        ui_hidden(entete, !occupee);
+        if (occupee && entete != nullptr && tuiles_piece_titre(r, titre, sizeof(titre))) {
             const lv_font_t* f = lv_obj_get_style_text_font(entete, LV_PART_MAIN);
             const int32_t h = f != nullptr ? lv_font_get_line_height(f) : 0;
             ui_x(entete, x + kEnteteX);
             ui_y(entete, kCorpsY + (kEnteteH - h) / 2);
-            texte_ha_coupe(entete, titres[r], s_colonne - 2 * kEnteteX);
-            lumieres = lumieres || tuiles_piece_a_lumieres(r);
+            texte_ha_coupe(entete, titre, s_colonne - 2 * kEnteteX);
         }
         int k = 0;  // rang de la ligne : les tuiles vides ne laissent pas de trou
-        for (int t = 0; t < kTuiles; t++) {
-            lv_obj_t* ligne = u.ligne[r][t];
+        for (int t = 0; t < kTuiles && k < kMaisonLignes && occupee; t++) {
             bool agit = false, appui_long = false;
-            const bool presente = occupee[r] && tuile_gestes(r, t, agit, appui_long);
-            ui_hidden(ligne, !presente);
-            if (!presente || ligne == nullptr) continue;
-            ui_x(ligne, x);
-            ui_y(ligne, kLignesY + k * (kLigneH + kLigneEcart));
-            largeur(ligne, s_colonne);
-            hauteur(ligne, kLigneH);
-            dessiner_ligne(ligne, r, t, agit, appui_long);
+            if (!tuile_gestes(r, t, agit, appui_long)) continue;
+            s_place[c][k] = Place{r, t};
+            lv_obj_t* ligne = u.ligne[c][k];
+            ui_hidden(ligne, false);
+            if (ligne != nullptr) {
+                ui_x(ligne, x);
+                ui_y(ligne, kLignesY + k * (kLigneH + kLigneEcart));
+                largeur(ligne, s_colonne);
+                hauteur(ligne, kLigneH);
+                dessiner_ligne(ligne, r, t, agit, appui_long);
+            }
             k++;
         }
-        if (occupee[r]) c++;
+        for (; k < kMaisonLignes; k++) {
+            s_place[c][k] = Place{};
+            ui_hidden(u.ligne[c][k], true);
+        }
     }
+    peindre_onglets();
     ui_hidden(u.eteindre, !lumieres);
 }
+
+// Pages du popup pour la brique commune (pages_brancher, tab5_pages.cpp) : gauche = page
+// suivante, droite = précédente, en boucle ; une seule page : pas de glissement.
+int nombre_pages() { return s_rep.pages; }
+int page_courante() { return s_page; }
+void afficher_page(int p) {
+    if (p < 0 || p >= s_rep.pages || p == s_page) return;
+    s_page = p;
+    disposer();
+    ui_mark_activity();
+}
+PagesPopup s_pages;
 
 }  // namespace
 
 void maison_ouvrir() {
     MaisonUI& u = g_maison_ui;
     if (u.popup == nullptr) return;
+    s_pages.popup = u.popup;
+    s_pages.nombre = nombre_pages;
+    s_pages.courante = page_courante;
+    s_pages.afficher = afficher_page;
+    pages_brancher(&s_pages);  // rappelé à chaque ouverture : sans effet de plus
+    // La page de la pièce montrée (un tap sur son titre, mode HA ou page de pièce de la
+    // météo), sinon la première.
+    s_page = 0;
     disposer();
+    const int r_ha = tuiles_piece_montree();
+    for (int i = 0; i < s_nb && s_rep.par_page > 0; i++) {
+        if (s_pieces[i] != r_ha || i / s_rep.par_page == s_page) continue;
+        s_page = i / s_rep.par_page;
+        disposer();
+    }
     animate_popup_open(u.popup);
     ui_mark_activity();
 }
 
 bool maison_titre_appui_valide() {
-    if (!g_central_ctx.ha_mode) return false;
+    // Mode HA, ou une page de pièce de la météo (ADR-0066) : le titre est celui d'une pièce.
+    if (!g_central_ctx.ha_mode && g_central_ctx.forecast_page < kPagesMeteo) return false;
     // Un tap au bout d'un glissement (swipe des pièces) : rien, comme l'appui long qui
     // ouvre les alertes (alertes_ouvrir).
     return !ui_appui_glisse();
 }
 
-void maison_ligne_appui(int r, int t, bool long_appui) {
-    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
-    lv_obj_t* ligne = g_maison_ui.ligne[r][t];
-    tuile_appui_maison(r, t, long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);
+void maison_ligne_appui(int c, int k, bool long_appui) {
+    if (c < 0 || c >= kMaisonColonnes || k < 0 || k >= kMaisonLignes) return;
+    const Place pl = s_place[c][k];
+    if (pl.r < 0) return;
+    lv_obj_t* ligne = g_maison_ui.ligne[c][k];
+    tuile_appui_maison(pl.r, pl.t, long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);
 }
 
+void maison_page(int page) { afficher_page(page); }
+
 void maison_eteindre_lumieres() {
-    for (int r = 0; r < kPieces; r++)
+    for (int r = 0; r < tuiles_pieces_nombre(); r++)
         if (tuiles_piece_a_lumieres(r)) tuiles_piece_eteindre(r);
 }
 
 void maison_tuile_changee(int r, int t) {
-    if (!affiche() || r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
+    if (!affiche() || r < 0 || r >= kPiecesMax || t < 0 || t >= kTuiles) return;
     peindre_ligne(r, t);
 }
 

@@ -131,8 +131,16 @@ OPTIONS_DU_TYPE = {"d": "lum", "c": "lum", "t": "med", "m": "cli", "e": "cap"}
 NOM_OCTETS_GARDES = 24
 UNITE_OCTETS_MAX = 7
 # Pièce R ↔ page de la rangée du bas, dans l'ordre où un geste les atteint depuis
-# l'accueil (page 2) : 3 et 4 vers la gauche, 1 et 0 vers la droite.
+# l'accueil (page 2) : 3 et 4 vers la gauche, 1 et 0 vers la droite. Les pièces 5 à 9
+# (ADR-0066, « pn|N ») ont la page 5 à 9, après les jours 10-14 : page_de_la_piece().
 PAGE_DE_LA_PIECE = {0: 2, 1: 3, 2: 4, 3: 1, 4: 0}
+PIECES_MAX = 10  # kPiecesMax (Tab5/socle/tab5_geometrie.h)
+
+
+def page_de_la_piece(r: int) -> int:
+    """Page de la météo de la pièce R (page_de_piece, Tab5/socle/tab5_core.cpp)."""
+    assert 0 <= r < PIECES_MAX, r
+    return PAGE_DE_LA_PIECE.get(r, r)
 
 _CODE_ICONE = re.compile(r"[a-z0-9_]{0,15}")
 _CLASSE_APPAREIL = re.compile(r"[a-z_]+")
@@ -233,6 +241,34 @@ PIECES: dict = {
     }),
 }
 
+# Huit pièces (ADR-0066, rendu hors tablette) : la maison de la démo et trois pièces de
+# plus, chacune avec une lumière (le popup Lumières a six pages) ; le Garage et l'Atelier
+# ont un volet (Volets : quatre pages). Poussées avec « pn|8 » ; huit pièces occupées, le
+# popup Maison a deux pages de quatre colonnes, et la famille Pièces de la roue de
+# navigation deux pages (Maison, six pièces, « Suite » ; « Retour », deux pièces).
+PIECES_HUIT: dict = {
+    **PIECES,
+    5: Piece("Garage", {
+        0: Tuile("vol", "Porte du garage", "garage", etat="closed", valeur="0"),
+        1: Tuile("lum", "Néon", "plafonnier", etat="off"),
+        2: Tuile("bin", "Porte latérale", "porte", complement="door"),
+    }),
+    6: Piece("Buanderie", {
+        0: Tuile("int", "Lave-linge", "lave_linge", etat="on"),
+        1: Tuile("cap", "Humidité", "humidite", complement="%", etat="62", valeur="62"),
+        2: Tuile("lum", "Plafonnier", "plafonnier", "d", etat="on", valeur="200"),
+        3: Tuile("int", "Chauffe-eau", "chauffe_eau", etat="off"),
+    }),
+    7: Piece("Atelier", {
+        0: Tuile("lum", "Établi", "lampe_bureau", "d", etat="on", valeur="255"),
+        1: Tuile("vol", "Volet de l'atelier", "volet", etat="open", valeur="100"),
+        2: Tuile("int", "Compresseur", "prise", etat="off"),
+        3: Tuile("cap", "Température", "thermometre", complement="°C", etat="16.4", valeur="16.4"),
+        4: Tuile("int", "Aspirateur", "aspirateur", etat="unavailable"),
+    }),
+}
+PIECES_HUIT_NOMBRE = 8
+
 # `--maison-minimale` : ses appareils (le PC et deux lampes) dans une seule pièce, sans
 # nom (« Pièce 1 » à l'écran), aux places qu'ils ont en 3.x. Glisser en mode HA ne
 # change rien : il n'y a pas d'autre pièce.
@@ -316,7 +352,7 @@ def _tuiles_de(pieces: dict):
     """(clé « tRT », tuile) vérifiée, pièce par pièce dans l'ordre de R, tuiles dans
     l'ordre de T."""
     for r, piece in sorted(pieces.items()):
-        assert r in PAGE_DE_LA_PIECE, f"pièce {r} : R va de 0 à 4"
+        assert 0 <= r < PIECES_MAX, f"pièce {r} : R va de 0 à 9"
         assert piece.tuiles, f"pièce {r} sans appareil : ne pas la déclarer"
         for t, tuile in sorted(piece.tuiles.items()):
             assert 0 <= t <= 4, f"pièce {r} : T va de 0 à 4"
@@ -325,14 +361,18 @@ def _tuiles_de(pieces: dict):
 
 
 def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None, reglables: tuple = (),
-                         nabu: "Rangee | None" = None) -> str:
+                         nabu: "Rangee | None" = None, nombre: int | None = None) -> str:
     """tab5_maj_tuiles : « pR|nom;tRT|type|icône|options|complément|nom;… » (ADR-0023).
     Instantané complet : une tuile ou une pièce absente est vide. Une pièce sans nom n'a
     pas d'entrée « p » (la tablette écrit « Pièce n »). `rangee` : la rangée sous
     l'horloge à la suite (build_rangee_payload, ADR-0031) ; `nabu` : le panneau Ok Nabu,
     au même format (clés n…, ADR-0041) ; `reglables` : les appareils de la tuile − / +
-    (build_reglables_payload, ADR-0033)."""
+    (build_reglables_payload, ADR-0033). `nombre` : le nombre de pièces (« pn|N » en tête,
+    ADR-0066 ; None : pas d'entrée, la tablette en compte cinq comme un blueprint d'avant)."""
     entrees = []
+    if nombre is not None:
+        assert 1 <= nombre <= PIECES_MAX and all(r < nombre for r in pieces), "pn : les pièces R < N"
+        entrees.append(f"pn|{nombre}")
     for r, piece in sorted(pieces.items()):
         if piece.nom:
             entrees.append(f"p{r}|{echapper(piece.nom)}")
@@ -939,8 +979,9 @@ def vues_bilan(vues) -> tuple:
 # température est dehors : la case du blueprint).
 # ---------------------------------------------------------------------------
 
-# salon, serre, puis la température de la pièce R en mode HA (ADR-0040) : pR.
-HISTORIQUE_CLES = ("salon", "serre", "p0", "p1", "p2", "p3", "p4")
+# salon, serre, puis la température de la pièce R en mode HA (ADR-0040) : pR, dix pièces au
+# plus (ADR-0066).
+HISTORIQUE_CLES = ("salon", "serre") + tuple(f"p{r}" for r in range(10))
 # vue : (minutes par créneau, créneaux complets avant celui en cours)
 HISTORIQUE_VUES = {"jour": (60, 24), "semaine": (180, 56), "mois": (1440, 30)}
 HISTORIQUE_PREV_MAX = 48     # kHistoriquePrevMax de Tab5/socle/tab5_parse.h

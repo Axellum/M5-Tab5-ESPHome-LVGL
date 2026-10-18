@@ -470,17 +470,14 @@ interval:
             case RetourAuto::POPUPS_FERMES:
               id(assist_popup_open) = false;
               break;
-            case RetourAuto::PREVISIONS: {
-              lv_obj_t* pbars[] = {id(pbar_0), id(pbar_1), id(pbar_2), id(pbar_3), id(pbar_4)};
+            case RetourAuto::PREVISIONS:
               reset_forecast_to_main_page(
                   id(layer_forecast_daily), id(layer_forecast_hourly),
                   g_day_slots, g_hour_slots,
                   id(font_meteo_card), id(font_meteo_card_small),
-                  pbars,
                   id(page_title_wrapper), id(lbl_page_title),
                   g_central_ctx);
               break;
-            }
             case RetourAuto::RIEN:
               break;
           }

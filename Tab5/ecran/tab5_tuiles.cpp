@@ -36,11 +36,17 @@
  *           les fonctions de la fin de ce fichier (tuile_gestes, tuile_peindre_ligne :
  *           même dessin que les cartes du mode HA, peindre_vue_sur ; tuile_appui_maison :
  *           le geste de la tuile). peindre_tuile et tuiles_appliquer_ui le préviennent.
- * @architecture_constraint Pièce R ↔ page du bas dans l'ordre où un swipe de la météo les
- *       atteint depuis l'accueil : R0 = page 2 (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0. En
- *       mode HA, le swipe suit l'ordre des pièces, en rouleau (R0 → R1 → … → R4 → R0, 18/10/2026,
- *       tuiles_swipe_ha), et les pastilles aussi (une par pièce, pastilles_peindre). Tuile T =
- *       position visuelle, 0 = gauche (sur les pages horaires, l'objet h(4−T)).
+ * @architecture_constraint Nombre de pièces N choisi dans HA (« pn|N », 1 à kPiecesMax,
+ *       ADR-0066 lot A ; 5 sans pn) : une pièce R ≥ N n'existe nulle part à l'écran
+ *       (tuile_presente). Mode météo : pièce R ↔ page du bas dans l'ordre où un swipe les
+ *       atteint depuis l'accueil (piece_de_page, tab5_core.cpp) : R0 = page 2 (accueil),
+ *       R1 = 3, R2 = 4, R3 = 1, R4 = 0, puis R5 … RN−1 = pages 5 … N−1 après les jours 10-14,
+ *       où les cartes de la pièce remplacent les prévisions (pages_meteo, cartes_affichees).
+ *       Mode HA : la pièce a son propre index (s_piece_ha) ; le swipe suit l'ordre des
+ *       pièces en rouleau (R0 → R1 → … → RN−1 → R0, 18/10/2026, tuiles_swipe_ha) et les
+ *       pastilles aussi (une par pièce, pastilles_peindre) ; forecast_page suit la page de
+ *       la pièce (les lambdas qui lisent « page 2 » gardent leur sens). Tuile T = position
+ *       visuelle, 0 = gauche (sur les pages horaires, l'objet h(4−T)).
  * @ai_instruction Interrupteur « Tab5 Appareils sur la météo » (05/10/2026) : éteint, le
  *       mode météo ne montre aucun appareil (s_appareils_meteo, lu par peindre_epaules,
  *       tuile_appui et tuile_titre_appui) ; le mode HA ne le lit pas.
@@ -68,9 +74,8 @@ using namespace tuiles;
 
 namespace tuiles {
 
-// kPieces et kTuiles : tab5_geometrie.h. Pièce de chaque page du bas (index = g_central_ctx.forecast_page) : R0 = page 2 (accueil),
-// R1 = 3, R2 = 4, R3 = 1, R4 = 0 — l'ordre où un swipe les atteint depuis l'accueil.
-constexpr int kPieceDePage[kPieces] = {4, 3, 0, 1, 2};
+// kPiecesMax, kPiecesDefaut, kPagesMeteo et kTuiles : tab5_geometrie.h. Pièce de chaque
+// page du bas et l'inverse : piece_de_page(), page_de_piece() (tab5_core.cpp, testées sur PC).
 
 // Types de tuile (ADR-0023) : Type, les options OPT_*, Def, Modele, Etat, Heritage, Vue,
 // Minuterie, Gestes et ClimCible sont dans tab5_tuiles_priv.h (partagés avec les popups et
@@ -84,7 +89,11 @@ constexpr uint8_t SENS_INCONNU = 0;
 constexpr uint8_t SENS_OUVRIR = 1;
 constexpr uint8_t SENS_FERMER = 2;
 
-constexpr uint32_t kMagic = 0x54554931;    // « TUI1 »
+// « TU » + la taille du modèle (lot B de l'ADR-0066, même ligne dans le lot A) : toute mise en
+// page nouvelle (10 pièces, 20 éléments) change la magie d'elle-même, et les définitions
+// gardées sont oubliées une fois au lieu d'être lues de travers. Avant : « TUI1 ».
+static_assert(sizeof(Modele) < 0x10000, "la taille du modèle tient dans la magie");
+constexpr uint32_t kMagic = 0x54550000u | static_cast<uint32_t>(sizeof(Modele));
 constexpr uint32_t kPrefKey = 0x7475696C;  // « tuil »
 
 // Rangée sous l'horloge (ADR-0031) : trois lignes de quatre éléments, décrits comme des
@@ -123,11 +132,12 @@ constexpr uint32_t kPrefKeyRangee[RANGEE_NB] = {0x72616E67, 0x6E616275};  // « 
 constexpr uint8_t kToursDefaut = 4;
 constexpr uint8_t kToursMax = 15;
 
-// ~2,3 Ko lus au dessin et aux poussées seulement : en PSRAM (BSS externe, remise à zéro
-// au démarrage, CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY), pas dans les ~226 Ko de
-// RAM interne libre. La rangée et le panneau Ok Nabu (~1,2 Ko chacun avec leurs états) aussi.
+// ~4,5 Ko (dix pièces, ADR-0066) lus au dessin et aux poussées seulement : en PSRAM (BSS
+// externe, remise à zéro au démarrage, CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY), pas
+// dans les ~226 Ko de RAM interne libre. La rangée et le panneau Ok Nabu (~1,2 Ko chacun
+// avec leurs états) aussi.
 EXT_RAM_BSS_ATTR Modele s_m;
-EXT_RAM_BSS_ATTR Etat s_etats[kPieces][kTuiles];
+EXT_RAM_BSS_ATTR Etat s_etats[kPiecesMax][kTuiles];
 EXT_RAM_BSS_ATTR ModeleRangee s_rg[RANGEE_NB];
 EXT_RAM_BSS_ATTR Etat s_etats_rg[RANGEE_NB][kLignes][kElements];
 bool s_charge = false;
@@ -166,11 +176,14 @@ void charger() {
     for (auto& piece : s_etats)
         for (Etat& e : piece) etat_vider(e);
     s_pref = esphome::global_preferences->make_preference<Modele>(kPrefKey);
-    Modele m{};
-    if (s_pref.load(&m) && m.magic == kMagic) {
-        s_m = m;
-        ESP_LOGI("tab5.tuiles", "Définitions des pièces relues de la NVS");
+    // Lu dans le tas, pas sur la pile (~2,4 Ko à dix pièces ; la pile de la boucle fait 8 Ko).
+    std::unique_ptr<Modele> m(new Modele());
+    if (s_pref.load(m.get()) && m->magic == kMagic) {
+        s_m = *m;
+        ESP_LOGI("tab5.tuiles", "Définitions des pièces relues de la NVS (%d pièce(s))", pieces_nombre());
     } else {
+        // Rien de gardé, ou un modèle d'une autre taille (firmware d'avant l'ADR-0066) : le
+        // mode héritage jusqu'à l'instantané que HA renvoie à la connexion.
         s_m = Modele{};
         s_m.magic = kMagic;
     }
@@ -333,13 +346,18 @@ void lire_entree_rangee(const Champ* f, int nf, ModeleRangee& g) {
 
 // Une entrée de tab5_maj_tuiles dans `m` (pièces) ou `g` (zones à lignes : rangée sous
 // l'horloge, clés h…, et panneau Ok Nabu, clés n…, mêmes champs) ; une clé inconnue est
-// ignorée.
+// ignorée. « pn|N » : le nombre de pièces (ADR-0066), que la 3.9 ignorait (« n » n'est pas
+// un chiffre de pièce, tests/test_tuiles_firmware.py le garde) ; pièces R de 0 à 9.
 void lire_entree(const char* s, size_t n, Modele& m, ModeleRangee (&zones)[RANGEE_NB]) {
     Champ f[7];
     const int nf = decouper(s, n, f, 7);
     if (nf < 2) return;
     int r = 0, t = 0;
-    if (f[0].n == 2 && f[0].p[0] == 'p' && chiffre_0_4(f[0].p[1], r)) {
+    if (f[0].n == 2 && f[0].p[0] == 'p' && f[0].p[1] == 'n') {
+        m.pieces_n = static_cast<uint8_t>(pieces_nombre_lire(f[1].p, f[1].n));
+        return;
+    }
+    if (f[0].n == 2 && f[0].p[0] == 'p' && piece_index(f[0].p[1], r)) {
         copier_texte(m.pieces[r], kNom, f[1].p, f[1].n);
         return;
     }
@@ -348,7 +366,7 @@ void lire_entree(const char* s, size_t n, Modele& m, ModeleRangee (&zones)[RANGE
         lire_entree_rangee(f, nf, zones[z]);
         return;
     }
-    if (f[0].n != 3 || f[0].p[0] != 't' || !chiffre_0_4(f[0].p[1], r) || !chiffre_0_4(f[0].p[2], t)) return;
+    if (f[0].n != 3 || f[0].p[0] != 't' || !piece_index(f[0].p[1], r) || !chiffre_0_4(f[0].p[2], t)) return;
     lire_def(f, nf, m.tuiles[r][t]);
 }
 
@@ -358,10 +376,15 @@ Heritage s_h;
 
 bool heritage() { return s_m.recues == 0; }
 
-// Tuile présente : un appareil défini — en mode héritage, un emplacement 3.x que HA n'a
-// pas déclaré absent (zones, ADR-0018), dans la pièce 0 seulement.
+int pieces_nombre() {
+    if (heritage() || s_m.pieces_n < 1) return kPiecesDefaut;
+    return std::min<int>(s_m.pieces_n, kPiecesMax);
+}
+
+// Tuile présente : un appareil défini dans une des N pièces — en mode héritage, un
+// emplacement 3.x que HA n'a pas déclaré absent (zones, ADR-0018), dans la pièce 0 seulement.
 bool tuile_presente(int r, int t) {
-    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return false;
+    if (r < 0 || r >= pieces_nombre() || t < 0 || t >= kTuiles) return false;
     if (heritage()) return r == 0 && !zone_tuile_absente(t);
     return s_m.tuiles[r][t].type != static_cast<uint8_t>(Type::VIDE);
 }
@@ -372,38 +395,38 @@ bool piece_non_vide(int r) {
     return false;
 }
 
-bool aucun_appareil() {
-    for (int r = 0; r < kPieces; r++)
-        if (piece_non_vide(r)) return false;
-    return true;
+// Pièces qui ont des appareils, bit R (page_non_vide_proche, tab5_core.cpp).
+uint32_t pieces_occupees() {
+    uint32_t m = 0;
+    for (int r = 0; r < pieces_nombre(); r++)
+        if (piece_non_vide(r)) m |= 1u << r;
+    return m;
 }
+
+bool aucun_appareil() { return pieces_occupees() == 0; }
+
+// Pièce du mode HA (ADR-0066) : son propre index, plus dérivé de la page de la météo.
+int s_piece_ha = 0;
+
+// Pages de la météo : les cinq des prévisions, plus une par pièce au-delà de la cinquième
+// (ADR-0066) — aucune quand « Tab5 Appareils sur la météo » est éteint (le mode météo ne
+// montre alors aucun appareil) ni en mode héritage.
+int pages_meteo() {
+    if (!s_appareils_meteo || heritage()) return kPagesMeteo;
+    return std::max(kPagesMeteo, pieces_nombre());
+}
+
+// Une page de pièce de la météo (5 et plus) : les cartes de la pièce à la place des
+// prévisions, dessinées comme en mode HA.
+bool page_de_pieces(int page) { return page >= kPagesMeteo; }
+
+// Les cartes du mode HA sont à l'écran : mode HA, ou page de pièce de la météo.
+bool cartes_affichees() { return g_central_ctx.ha_mode || page_de_pieces(g_central_ctx.forecast_page); }
 
 int piece_courante() {
-    const int p = g_central_ctx.forecast_page;
-    return (p >= 0 && p < kPieces) ? kPieceDePage[p] : 0;
-}
-
-// La page de la pièce r (kPieceDePage lu à l'envers) ; -1 hors de 0..kPieces-1.
-static int page_de_piece(int r) {
-    for (int p = 0; p < kPieces; p++)
-        if (kPieceDePage[p] == r) return p;
-    return -1;
-}
-
-// Page la plus proche de `page` dont la pièce a des appareils (à égalité, la plus proche
-// de l'accueil) ; -1 s'il n'y en a aucune.
-int page_non_vide_proche(int page) {
-    int choix = -1, d_choix = 99, h_choix = 99;
-    for (int p = 0; p < kPieces; p++) {
-        if (!piece_non_vide(kPieceDePage[p])) continue;
-        const int d = std::abs(p - page), h = std::abs(p - 2);
-        if (d < d_choix || (d == d_choix && h < h_choix)) {
-            choix = p;
-            d_choix = d;
-            h_choix = h;
-        }
-    }
-    return choix;
+    if (g_central_ctx.ha_mode) return s_piece_ha;
+    const int r = piece_de_page(g_central_ctx.forecast_page);
+    return r >= 0 ? r : 0;
 }
 
 // ─── Glyphes posés d'ici (règle 7 : MDI_CODE_TARGETS de check_tab5_code_rules.py) ────
@@ -918,11 +941,12 @@ void peindre_carte(int r, int t) {
     peindre_vue_sur(v, {u.carte_pastille[t], u.carte_icone[t], u.carte_nom[t], u.carte_etat[t]}, kLargeurCarteTexte);
 }
 
-// Cartes du mode HA : la pièce de la page courante, cartes vides masquées et les autres
-// centrées (formule des zones, ADR-0018 : pas de 250 px sur le Tab5, kAccTuilePas).
+// Cartes du mode HA : la pièce affichée, cartes vides masquées et les autres centrées
+// (formule des zones, ADR-0018 : pas de 250 px sur le Tab5, kAccTuilePas). Les pages de
+// pièce de la météo (ADR-0066) passent par ici aussi : le même dessin.
 void peindre_cartes() {
     const TuilesUI& u = g_tuiles_ui;
-    if (!g_central_ctx.ha_mode) return;
+    if (!cartes_affichees()) return;
     const int r = piece_courante();
     int n = 0;
     for (int t = 0; t < kTuiles; t++)
@@ -970,9 +994,10 @@ void widgets_meteo(int t, lv_obj_t*& gauche, lv_obj_t*& droite, lv_obj_t*& bouto
 }
 
 // Mode météo : les appareils de la pièce de la page courante (ADR-0023). Sur un calque
-// masqué (mode HA), rien à faire : la sortie du mode HA repeint.
+// masqué (mode HA, page de pièce), rien à faire : la sortie du mode HA ou le retour sur
+// une page de prévisions repeint.
 void peindre_meteo() {
-    if (g_central_ctx.ha_mode) return;
+    if (cartes_affichees()) return;
     const int r = piece_courante();
     for (int t = 0; t < kTuiles; t++) {
         lv_obj_t *g, *d, *b;
@@ -985,14 +1010,14 @@ void peindre_meteo() {
 
 // Une tuile a changé (état, minuterie) : la repeindre là où elle est affichée.
 void peindre_tuile(int r, int t) {
-    if (r < 0 || r >= kPieces || t < 0 || t >= kTuiles) return;
+    if (r < 0 || r >= kPiecesMax || t < 0 || t >= kTuiles) return;
     popup_lumiere_etat(r, t);
     popup_volet_etat(r, t);
     popup_appareil_etat(r, t);
     roue_tuile_etat(r, t);
     maison_tuile_changee(r, t);  // popup Maison (ADR-0037) : sa ligne, s'il est affiché
     if (r != piece_courante()) return;
-    if (g_central_ctx.ha_mode) {
+    if (cartes_affichees()) {
         if (tuile_presente(r, t)) peindre_carte(r, t);
         return;
     }
@@ -1025,20 +1050,25 @@ void bouton_ha_peindre() {
         lv_obj_remove_local_style_prop(u.bouton_ha, p, LV_PART_MAIN);
 }
 
-// Pastilles sous la carte centrale (pbar_0 … 4, partagées avec la météo) : en mode HA, une
+// Pastilles sous la carte centrale (pbar_0 … 9, partagées avec la météo) : en mode HA, une
 // par pièce dans l'ordre des pièces, celle du rouleau (18/10/2026) ; sinon une par page de
-// prévisions. Repeintes à chaque entrée et sortie du mode HA : la page ne change pas
-// forcément, la pastille allumée si.
+// la météo, 5 + (N − 5) (ADR-0066). Repeintes à chaque entrée et sortie du mode HA (la page
+// ne change pas forcément, la pastille allumée si) et quand le nombre de pages change.
 static void pastilles_peindre() {
     const CentralPanelCtx& ctx = g_central_ctx;
-    pagination_afficher(g_tuiles_ui.pastilles, ctx.ha_mode ? piece_courante() : ctx.forecast_page);
+    const TuilesUI& u = g_tuiles_ui;
+    const int n = ctx.ha_mode ? pieces_nombre() : pages_meteo();
+    for (int i = 0; i < kPiecesMax; i++) ui_hidden(u.pastilles[i], i >= n);
+    pagination_afficher(u.pastilles, n, ctx.ha_mode ? piece_courante() : ctx.forecast_page);
 }
 
-// Change de page sans toucher aux calques météo (mode HA) : contexte (seule source de la
-// page depuis le 28/09/2026), pastilles.
-void aller_page(int page) {
-    if (page < 0 || page >= kPieces) return;
-    g_central_ctx.forecast_page = page;
+// Mode HA : va sur la pièce `r` sans toucher aux calques météo — son index, la page de la
+// météo qui lui correspond (forecast_page, que les lambdas lisent : « page 2 » reste la
+// pièce 0) et les pastilles.
+void aller_piece_ha(int r) {
+    if (r < 0 || r >= pieces_nombre()) return;
+    s_piece_ha = r;
+    g_central_ctx.forecast_page = page_de_piece(r);
     pastilles_peindre();
 }
 
@@ -1139,6 +1169,7 @@ bool tuiles_definir(const std::string& payload) {
     std::unique_ptr<Modele> neuf(new Modele());
     neuf->magic = kMagic;
     neuf->recues = 1;
+    neuf->pieces_n = kPiecesDefaut;  // un blueprint sans « pn » : les cinq pièces d'avant
     // La rangée sous l'horloge aussi (ADR-0031) et le panneau Ok Nabu (lot 3) : sans clé
     // h (n), les plantes (l'écoute) seules, en première ligne — un blueprint plus ancien
     // garde l'écran d'avant.
@@ -1154,12 +1185,18 @@ bool tuiles_definir(const std::string& payload) {
         lire_entree(payload.data() + debut, fin - debut, *neuf, rangees->z);
         debut = fin + 1;
     }
+    // Une pièce R ≥ N n'existe pas (ADR-0066), même si des tuiles ont été envoyées pour elle
+    // (le blueprint n'en envoie pas ; « pn » peut aussi arriver après elles).
+    for (int r = neuf->pieces_n; r < kPiecesMax; r++) {
+        std::memset(neuf->pieces[r], 0, sizeof(neuf->pieces[r]));
+        for (Def& d : neuf->tuiles[r]) d = Def{};
+    }
     bool rangee_changee = false;
     for (int z = 0; z < RANGEE_NB; z++) rangee_changee |= rangee_definir(z, rangees->z[z]);
     if (std::memcmp(neuf.get(), &s_m, sizeof(Modele)) == 0) return rangee_changee || reglables_changes;
     // Une tuile qui change d'appareil repart grisée : l'état reçu était celui de l'ancien.
     // Sa clim aussi est oubliée (ADR-0027) : le blueprint renvoie ses réglages juste après.
-    for (int r = 0; r < kPieces; r++)
+    for (int r = 0; r < kPiecesMax; r++)
         for (int t = 0; t < kTuiles; t++)
             if (std::memcmp(&neuf->tuiles[r][t], &s_m.tuiles[r][t], sizeof(Def)) != 0) {
                 etat_vider(s_etats[r][t]);
@@ -1172,7 +1209,7 @@ bool tuiles_definir(const std::string& payload) {
     for (const auto& piece : s_m.tuiles)
         for (const Def& d : piece)
             if (d.type != static_cast<uint8_t>(Type::VIDE)) n++;
-    ESP_LOGI("tab5.tuiles", "Définitions reçues : %d appareil(s)%s", n,
+    ESP_LOGI("tab5.tuiles", "Définitions reçues : %d pièce(s), %d appareil(s)%s", pieces_nombre(), n,
              premiere ? " (fin du mode héritage)" : "");
     // Une minuterie peut viser une tuile qui n'existe plus.
     minuterie_arreter(s_confirmation);
@@ -1202,7 +1239,7 @@ bool tuiles_etat_recu(const char* cle, size_t n_cle, const char* reste, size_t n
         rangee_element_change(z, r, t);
         return true;
     }
-    if (cle[0] != 't' || !chiffre_0_4(cle[1], r) || !chiffre_0_4(cle[2], t)) return false;
+    if (cle[0] != 't' || !piece_index(cle[1], r) || !chiffre_0_4(cle[2], t)) return false;
     charger();
     Etat& e = s_etats[r][t];
     etat_lire(e, reste, n_reste);
@@ -1291,12 +1328,27 @@ void tuiles_appliquer_ui() {
             tuiles_mode_ha(false);
             return;
         }
-        // Une pièce vide reste affichée (« Aucun appareil ») : le swipe passe par les cinq
-        // pages (28/09, demande d'Axel, une seule pièce configurée = swipe muet sinon).
+        // Moins de pièces qu'avant (ADR-0066) : la pièce affichée n'existe plus, la plus
+        // proche qui a des appareils la remplace.
+        if (s_piece_ha >= pieces_nombre()) {
+            const int page = page_non_vide_proche(ctx.forecast_page, kPiecesMax, pieces_occupees());
+            aller_piece_ha(std::max(0, piece_de_page(page)));
+            accueil_temperatures_ui();
+            reglables_clim_changee();
+        }
+    } else if (ctx.forecast_page >= pages_meteo()) {
+        // Une page de pièce qui n'existe plus (moins de pièces) : l'accueil, par le chemin du
+        // retour automatique (calques, pastilles, carte centrale).
+        meteo_page_accueil();
+    }
+    if (cartes_affichees()) {
+        // Une pièce vide reste affichée (« Aucun appareil ») : le swipe passe par toutes les
+        // pièces (28/09, demande d'Axel, une seule pièce configurée = swipe muet sinon).
         peindre_cartes();
         // Titre (nom ou nombre de pièces changé) ; une réponse vocale garde la carte.
         if (!ctx.vocal_shown) update_central_forecast_page_ui(ctx.forecast_page, u.titre_cadre, u.titre, ctx);
     }
+    pastilles_peindre();  // leur nombre suit celui des pièces
     peindre_meteo();
     bouton_ha_peindre();
 }
@@ -1304,6 +1356,18 @@ void tuiles_appliquer_ui() {
 void tuiles_peindre_meteo() {
     charger();
     peindre_meteo();
+    peindre_cartes();  // une page de pièce de la météo (ADR-0066)
+    pastilles_peindre();
+}
+
+int tuiles_pages_meteo() {
+    charger();
+    return pages_meteo();
+}
+
+int tuiles_pieces_nombre() {
+    charger();
+    return pieces_nombre();
 }
 
 // Thèmes (ADR-0029) : tuiles, cartes, bouton « HA » (sa garde au changement forcée),
@@ -1326,8 +1390,12 @@ void tuiles_appareils_meteo(bool montres) {
     s_appareils_meteo = montres;
     ESP_LOGI("tab5.tuiles", "Appareils sur la météo : %s", montres ? "oui" : "non");
     // Restauré au setup, avant le premier dessin : tuiles_appliquer_ui() lira le réglage.
-    // Ensuite, tout de suite : les épaules de la page courante (rien en mode HA).
-    if (s_charge) peindre_meteo();
+    // Ensuite, tout de suite : les épaules de la page courante (rien en mode HA), les pages
+    // de pièce de la météo (ADR-0066 : aucune quand il est éteint) et leurs pastilles.
+    if (!s_charge) return;
+    if (!g_central_ctx.ha_mode && g_central_ctx.forecast_page >= pages_meteo()) meteo_page_accueil();
+    peindre_meteo();
+    pastilles_peindre();
 }
 
 void tuiles_mode_ha(bool actif) {
@@ -1336,34 +1404,49 @@ void tuiles_mode_ha(bool actif) {
     const TuilesUI& u = g_tuiles_ui;
     if (actif == ctx.ha_mode) return;
     if (u.calque_ha == nullptr || u.calque_jours == nullptr || u.calque_heures == nullptr) return;
-    const int page = ctx.forecast_page;
-    lv_obj_t* meteo = page >= 2 ? u.calque_jours : u.calque_heures;
-    lv_obj_t* autre = page >= 2 ? u.calque_heures : u.calque_jours;
+    // Le calque d'une page de la météo : heures (0-1), jours (2-4), cartes (pièces 5+).
+    auto calque_de = [&u](int p) {
+        return p >= kPagesMeteo ? u.calque_ha : (p >= 2 ? u.calque_jours : u.calque_heures);
+    };
+    // Le calque montré : les cartes en mode HA (forecast_page y suit la page de la pièce,
+    // qui n'est pas le calque affiché), sinon celui de la page de la météo.
+    lv_obj_t* const avant = ctx.ha_mode ? u.calque_ha : calque_de(ctx.forecast_page);
     if (actif) {
-        // Page sans appareil : la pièce la plus proche qui en a.
-        const int cible = page_non_vide_proche(page);
+        // Page sans appareil : la pièce la plus proche qui en a (toutes les pièces comptent,
+        // chacune à sa page, ADR-0066).
+        const int cible = page_non_vide_proche(ctx.forecast_page, kPiecesMax, pieces_occupees());
         if (cible < 0) return;  // aucun appareil : le bouton est masqué
         ctx.ha_mode = true;
-        aller_page(cible);  // même page comprise : les pastilles passent à l'ordre des pièces
+        aller_piece_ha(piece_de_page(cible));  // même page comprise : les pastilles passent à l'ordre des pièces
         peindre_cartes();
     } else {
         ctx.ha_mode = false;
-        pastilles_peindre();  // de nouveau une par page de prévisions
+        // La page de la pièce quittée ; une page de pièce que la météo n'a pas (« Tab5
+        // Appareils sur la météo » éteint) : l'accueil.
+        if (ctx.forecast_page >= pages_meteo()) ctx.forecast_page = 2;
+        pastilles_peindre();  // de nouveau une par page de la météo
         // La météo de la page courante : on a pu changer de pièce en mode HA.
+        const int page = ctx.forecast_page;
         g_forecast_roll_suppress = true;
-        if (page >= 2) refresh_daily_forecast(g_day_slots, page - 2, u.police_meteo, u.police_meteo_petite);
-        else refresh_hourly_forecast(g_hour_slots, 1 - page, u.police_meteo, u.police_meteo_petite);
+        if (page >= 2 && page < kPagesMeteo) refresh_daily_forecast(g_day_slots, page - 2, u.police_meteo, u.police_meteo_petite);
+        else if (page < 2) refresh_hourly_forecast(g_hour_slots, 1 - page, u.police_meteo, u.police_meteo_petite);
         g_forecast_roll_suppress = false;
         peindre_meteo();
+        peindre_cartes();  // une page de pièce de la météo garde les cartes
     }
-    // L'autre calque météo : animation coupée, remis en place et masqué (un swipe en cours
-    // continuerait sinon sous HIDDEN et polluerait le prochain affichage).
-    lv_anim_delete(autre, nullptr);
-    lv_obj_set_x(autre, 0);
-    lv_obj_set_style_opa(autre, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_add_flag(autre, LV_OBJ_FLAG_HIDDEN);
-    if (actif) animate_crossfade_layers(meteo, u.calque_ha);
-    else animate_crossfade_layers(u.calque_ha, meteo);
+    lv_obj_t* const apres = actif ? u.calque_ha : calque_de(ctx.forecast_page);
+    // Les calques de la météo qui ne sont ni l'un ni l'autre : animation coupée, remis en
+    // place et masqués (un swipe en cours continuerait sinon sous HIDDEN et polluerait le
+    // prochain affichage).
+    for (lv_obj_t* autre : {u.calque_jours, u.calque_heures}) {
+        if (autre == avant || autre == apres) continue;
+        lv_anim_delete(autre, nullptr);
+        lv_obj_set_x(autre, 0);
+        lv_obj_set_style_opa(autre, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_add_flag(autre, LV_OBJ_FLAG_HIDDEN);
+    }
+    // Rien ne bouge si les deux sont les cartes (une page de pièce de la météo).
+    animate_crossfade_layers(avant, apres);
     central_mode_ha(u.titre_cadre, u.titre, ctx);
     bouton_ha_peindre();
     // Zone des températures et tuile − / + : la pièce (sa température déclarée, sa clim)
@@ -1372,10 +1455,10 @@ void tuiles_mode_ha(bool actif) {
     reglables_clim_changee();
 }
 
-// Mode HA : la pièce de la page `page` — cartes, titre de la carte centrale, zone des
-// températures et tuile − / + (ADR-0040). Le swipe et la roue de navigation.
-static void montrer_page_ha(int page) {
-    aller_page(page);
+// Mode HA : la pièce `r` — cartes, titre de la carte centrale, zone des températures et
+// tuile − / + (ADR-0040). Le swipe et la roue de navigation.
+static void montrer_piece_ha(int r) {
+    aller_piece_ha(r);
     peindre_cartes();
     central_mode_ha(g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, g_central_ctx);
     accueil_temperatures_ui();  // la nouvelle pièce, ou le salon et la serre (ADR-0040)
@@ -1383,27 +1466,24 @@ static void montrer_page_ha(int page) {
 }
 
 // Mode HA : un rouleau des pièces (18/10/2026, demande d'Axel) — vers la gauche la pièce
-// suivante, vers la droite la précédente, et après la pièce 5 revient la 1 (avant : l'ordre
-// des pages météo, qui ne parcourait que trois pièces dans chaque sens, discussion #278).
-// La météo garde son ordre et son bouclage (forecast_page_suivante, [AI-WARNING]). Pièce
-// vide comprise (elle dit « Aucun appareil ») : avant le 28/09, les pièces vides étaient
-// sautées, et avec une seule pièce configurée le swipe ne faisait rien.
+// suivante, vers la droite la précédente, et après la dernière (la N-ième, ADR-0066) revient
+// la 1 (avant : l'ordre des pages météo, qui ne parcourait que trois pièces dans chaque sens,
+// discussion #278). La météo garde son ordre et son bouclage (forecast_page_suivante,
+// [AI-WARNING]). Pièce vide comprise (elle dit « Aucun appareil ») : avant le 28/09, les
+// pièces vides étaient sautées, et avec une seule pièce configurée le swipe ne faisait rien.
 void tuiles_swipe_ha(bool gauche) {
     charger();
-    const int page = page_de_piece(reglages_page_voisine(piece_courante(), kPieces, gauche));
-    if (page >= 0) montrer_page_ha(page);
+    montrer_piece_ha(reglages_page_voisine(piece_courante(), pieces_nombre(), gauche));
 }
 
 bool tuiles_aller_piece(int r) {
     charger();
-    if (r < 0 || r >= kPieces || !piece_non_vide(r)) return false;
-    const int page = page_de_piece(r);
-    if (page < 0) return false;
+    if (r < 0 || r >= pieces_nombre() || !piece_non_vide(r)) return false;
     // D'abord le mode HA par son seul chemin (calques, bouton « HA ») : il se pose sur la
     // pièce non vide la plus proche de la page affichée, puis on va sur celle demandée.
     if (!g_central_ctx.ha_mode) tuiles_mode_ha(true);
     if (!g_central_ctx.ha_mode) return false;
-    if (g_central_ctx.forecast_page != page) montrer_page_ha(page);
+    if (s_piece_ha != r) montrer_piece_ha(r);
     return true;
 }
 
@@ -1415,7 +1495,7 @@ bool tuiles_aller_piece(int r) {
 static bool tuile_de_ecran(Ecran e, int& r_out, int& t_out) {
     charger();
     const int premiere = piece_courante();
-    for (int i = -1; i < kPieces; i++) {
+    for (int i = -1; i < pieces_nombre(); i++) {
         const int r = i < 0 ? premiere : i;
         if (i == premiere) continue;  // déjà vue
         for (int t = 0; t < kTuiles; t++) {
@@ -1442,14 +1522,12 @@ void tuiles_ecran_ouvrir(Ecran e) {
     else popup_volet_ouvrir(r, t);
 }
 
-// « Pièce n/5 » (n = numéro de la pièce dans le blueprint), puis son nom, « Pièce n »
-// sans nom, ou « Aucun appareil » pour une pièce vide.
-bool tuiles_titre_piece(std::string& chapeau, std::string& titre) {
+// Le nom de la pièce, « Pièce n » sans nom (n = numéro de la pièce dans le blueprint), ou
+// « Aucun appareil » pour une pièce vide. Plus de « Pièce n/N » au-dessus (18/10/2026).
+bool tuiles_titre_piece(std::string& titre) {
     charger();
     const int r = piece_courante();
     char buf[48];
-    snprintf(buf, sizeof(buf), tr("Pièce %d/%d"), r + 1, kPieces);
-    chapeau = buf;
     if (!piece_non_vide(r)) {
         titre = tr("Aucun appareil");
     } else if (!heritage() && s_m.pieces[r][0] != '\0') {
@@ -1643,7 +1721,7 @@ void tuiles_piece_eteindre(int r) {
         envoyer("lumieres", "eteindre");
         return;
     }
-    if (r < 0 || r >= kPieces) return;
+    if (r < 0 || r >= pieces_nombre()) return;
     envoyer(piece_cle(r).s, "eteindre");
 }
 
@@ -1680,9 +1758,15 @@ int tuiles_piece_mode_ha() {
     return piece_courante();
 }
 
+int tuiles_piece_montree() {
+    charger();
+    if (!cartes_affichees() || heritage()) return -1;
+    return piece_courante();
+}
+
 bool tuiles_piece_titre(int r, char* out, size_t n) {
     charger();
-    if (r < 0 || r >= kPieces || out == nullptr || n == 0 || !piece_non_vide(r)) return false;
+    if (r < 0 || r >= pieces_nombre() || out == nullptr || n == 0 || !piece_non_vide(r)) return false;
     // Comme le titre de la carte centrale en mode HA (tuiles_titre_piece).
     if (!heritage() && s_m.pieces[r][0] != '\0') snprintf(out, n, "%s", s_m.pieces[r]);
     else snprintf(out, n, tr("Pièce %d"), r + 1);

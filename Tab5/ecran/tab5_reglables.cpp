@@ -537,9 +537,11 @@ void lire_def(const char* s, size_t n, Def& d) {
     if (d.type == 0) return;
     copier_icone(d.icone, f[1].p, f[1].n);
     d.tv = std::memchr(f[2].p, 't', f[2].n) != nullptr ? 1 : 0;
-    if (f[3].n == 3 && f[3].p[0] == 't' && f[3].p[1] >= '0' && f[3].p[1] <= '4' && f[3].p[2] >= '0' &&
+    // Lien « tRT » : pièce R de 0 à 9 (ADR-0066), tuile T de 0 à 4.
+    int lien_r = 0;
+    if (f[3].n == 3 && f[3].p[0] == 't' && modele_ha::piece_index(f[3].p[1], lien_r) && f[3].p[2] >= '0' &&
         f[3].p[2] <= '4') {
-        d.lien_r = static_cast<int8_t>(f[3].p[1] - '0');
+        d.lien_r = static_cast<int8_t>(lien_r);
         d.lien_t = static_cast<int8_t>(f[3].p[2] - '0');
     }
     d.min = champ_nombre(f[4], 0.0f);

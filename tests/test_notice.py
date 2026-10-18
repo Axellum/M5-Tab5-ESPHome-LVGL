@@ -109,6 +109,16 @@ NON_MONTREES = {
     "maison-2-pieces": "maison montre la même fenêtre ; deux colonnes plus larges, décrites dans house.md",
     "maison-par-le-titre": "maison montre la même fenêtre ; ce tap est décrit dans house.md",
     "maison-roue": "roue d'actions rapides (ADR-0036) devant le popup Maison, décrite dans house.md",
+    # Huit pièces (ADR-0066, lot A) : contrôles du rendu à plus de cinq pièces, décrits dans
+    # tiles.md et house.md ; images à tirer du rendu une fois la maison de la démo arrêtée.
+    "pieces-8-ha-atelier": "accueil-ha-piece-1 montre le même mode ; « Pièce 8/8 » est décrit dans tiles.md",
+    "pieces-8-meteo-garage": "page d'une pièce 6+ en mode météo, décrite dans tiles.md ; image à tirer du rendu",
+    "pieces-8-lumieres": "aller-lumieres montre la même fenêtre ; un onglet par pièce, décrit dans lights.md",
+    "pieces-8-volets": "aller-volet montre la même fenêtre ; un onglet par pièce, décrit dans shutters.md",
+    "pieces-8-maison": "maison montre la même fenêtre ; les pages au-delà de cinq pièces sont décrites dans house.md",
+    "pieces-8-maison-page-2": "pieces-8-maison montre la même fenêtre, page suivante (house.md)",
+    "pieces-8-roue": "roue-navigation-pieces montre la même famille ; « Suite » est décrit dans home.md",
+    "pieces-8-roue-suite": "pieces-8-roue montre la même roue, page « Retour »",
     # Lumières et Volets en pages (ADR-0046, 09/10/2026) : décrits dans lights.md et
     # shutters.md ; images à tirer du rendu de la PR, puis citées.
     "lumieres-page-suivante": "aller-lumieres montre la même fenêtre ; le glissement est décrit dans lights.md",

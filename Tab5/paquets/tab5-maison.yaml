@@ -22,6 +22,8 @@ script:
           if (u.popup == nullptr) {
             u.vide = id(maison_vide);
             u.eteindre = id(btn_maison_eteindre);
+            u.onglet[0] = id(maison_onglet_0);
+            u.onglet[1] = id(maison_onglet_1);
             u.entete[0] = id(maison_entete_0);
             u.entete[1] = id(maison_entete_1);
             u.entete[2] = id(maison_entete_2);

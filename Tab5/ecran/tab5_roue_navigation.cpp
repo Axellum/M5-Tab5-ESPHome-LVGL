@@ -14,6 +14,9 @@
  *       vide disparaît, les autres boutons se resserrent. Appareils ▸ : Températures,
  *       Clims, Lumières, Volets, Énergie, Plantes, Musique, TV (les deux dernières le
  *       10/10/2026, demande d'Axel : « ajoute musique et tv dans appareils »).
+ *       Pièces ▸ : Maison puis chaque pièce occupée ; plus de sept (dix au plus, ADR-0066),
+ *       deux pages de la même famille : Maison, six pièces et « Suite » (»), puis « Retour »
+ *       («) et les autres ; la roue se rouvre sur l'autre page, son aspect ne change pas.
  * @architecture_constraint Aucun moteur de roue ici : ce fichier compose les boutons et dit
  *       ce que fait un toucher (RoueRappels). Un écran s'ouvre par la routine unique
  *       tab5_ecran_ouvrir (RoueUI::ouvrir_ecran, ADR-0013) ; une pièce par le mode HA
@@ -114,7 +117,11 @@ static_assert(kNbPremier <= kRoueBoutons, "premier anneau : kRoueBoutons boutons
 static_assert(sizeof(kAppareils) / sizeof(kAppareils[0]) <= kRoueChoix, "une famille : kRoueChoix choix au plus");
 static_assert(sizeof(kAgenda) / sizeof(kAgenda[0]) <= kRoueChoix, "une famille : kRoueChoix choix au plus");
 static_assert(sizeof(kTablette) / sizeof(kTablette[0]) <= kRoueChoix, "une famille : kRoueChoix choix au plus");
-static_assert(1 + kPieces <= kRoueChoix, "Pièces : Maison et chaque pièce");
+// Pièces : Maison et chaque pièce occupée ; plus de kRoueChoix − 1 pièces (dix au plus,
+// ADR-0066) : deux pages de la même famille, la première finit par « Suite » (»), la
+// seconde commence par « Retour » («) — l'aspect de la roue ne change pas.
+constexpr int kPiecesPage1 = kRoueChoix - 2;  // Maison, six pièces, « Suite »
+static_assert(1 + (kPiecesMax - kPiecesPage1) <= kRoueChoix, "Pièces : la seconde page tient dans l'anneau");
 
 // Rose des vents du moyeu (mdi_font_45, règle 9 : MDI_CODE_TARGETS de
 // check_tab5_code_rules.py la rattache à roue_moyeu_icone).
@@ -129,7 +136,8 @@ struct Navigation {
     int premier[kRoueBoutons] = {};
 };
 Navigation s_nav;
-char s_noms[kPieces][40];
+char s_noms[kPiecesMax][40];
+int s_page_pieces = 0;  // page de la famille Pièces (plus de sept pièces, ADR-0066)
 
 // Un écran d'une famille est-il proposé ? Ce que la maison a (ecran_disponible) ; Froid
 // (ADR-0055), pas quand HA a dit qu'aucun appareil n'est déclaré (froid_disponible) ; Serveur
@@ -146,8 +154,19 @@ bool propose(Ecran e) {
     return e != Ecran::MUSIQUE || lecteur_zone_disponible();
 }
 
-// Cible d'un choix : un écran (sa valeur, > 0) ou une pièce R (-1 - R).
+// Cible d'un choix : un écran (sa valeur, > 0), une pièce R (-1 - R, R de 0 à 9) ou l'autre
+// page de la famille Pièces (ADR-0066).
 constexpr int cible_piece(int r) { return -1 - r; }
+constexpr int kCibleSuite = -100;
+constexpr int kCibleRetour = -101;
+
+// Pièces occupées, dans l'ordre du blueprint (leurs noms dans s_noms) ; leur nombre.
+int pieces_occupees(int* out) {
+    int n = 0;
+    for (int r = 0; r < tuiles_pieces_nombre() && r < kPiecesMax; r++)
+        if (tuiles_piece_titre(r, s_noms[r], sizeof(s_noms[r]))) out[n++] = r;
+    return n;
+}
 
 // Choix de la famille `p`, dans `c` (kRoueChoix au plus), et leurs cibles ; 0 : famille
 // vide. Recalculés à chaque dépliage, repeint et toucher : ils suivent la maison (zones,
@@ -157,22 +176,41 @@ int choix_de(const Premier& p, RoueChoix* c, int* cible) {
     if (p.genre == Genre::ECRAN) return 0;
     if (p.genre == Genre::PIECES) {
         // Maison (ADR-0037) d'abord, puis les pièces dans l'ordre du blueprint, leur numéro
-        // dans le bouton (celui du titre « Pièce n/5 ») et leur nom dessous ; celle que le
-        // mode HA montre est l'état courant.
-        c[m] = RoueChoix{};
-        c[m].icone = RoueIcone::MAISON;
-        c[m].legende = tr("Maison");
-        cible[m++] = static_cast<int>(Ecran::MAISON);
-        const int montree = tuiles_piece_mode_ha();
-        for (int r = 0; r < kPieces && m < kRoueChoix; r++) {
-            if (!tuiles_piece_titre(r, s_noms[r], sizeof(s_noms[r]))) continue;
+        // dans le bouton (leur rang dans le blueprint) et leur nom dessous ; celle que le
+        // mode HA montre est l'état courant. Plus de sept pièces : deux pages (« Suite »).
+        int pieces[kPiecesMax];
+        const int n = pieces_occupees(pieces);
+        if (n == 0) return 0;  // Maison seule : aucune pièce, aucune famille
+        const bool deux_pages = 1 + n > kRoueChoix;
+        if (!deux_pages) s_page_pieces = 0;
+        auto lien = [&](const char* texte, const char* legende, int vers) {
+            c[m] = RoueChoix{};
+            snprintf(c[m].texte, sizeof(c[m].texte), "%s", texte);
+            c[m].legende = legende;
+            cible[m++] = vers;
+        };
+        int debut = 0, fin = n;
+        if (s_page_pieces == 0) {
+            c[m] = RoueChoix{};
+            c[m].icone = RoueIcone::MAISON;
+            c[m].legende = tr("Maison");
+            cible[m++] = static_cast<int>(Ecran::MAISON);
+            if (deux_pages) fin = kPiecesPage1;
+        } else {
+            lien("\xC2\xAB", tr("Retour"), kCibleRetour);  // « (Latin-1, roboto_22)
+            debut = kPiecesPage1;
+        }
+        const int montree = tuiles_piece_montree();
+        for (int i = debut; i < fin && m < kRoueChoix; i++) {
+            const int r = pieces[i];
             c[m] = RoueChoix{};
             snprintf(c[m].texte, sizeof(c[m].texte), "%d", r + 1);
             c[m].legende = s_noms[r];
             c[m].courant = r == montree;
             cible[m++] = cible_piece(r);
         }
-        return m > 1 ? m : 0;  // Maison seule : aucune pièce, aucune famille
+        if (deux_pages && s_page_pieces == 0) lien("\xC2\xBB", tr("Suite"), kCibleSuite);  // »
+        return m;
     }
     for (int k = 0; k < p.n && m < kRoueChoix; k++) {
         const Destination& d = p.liste[k];
@@ -188,6 +226,15 @@ int choix_de(const Premier& p, RoueChoix* c, int* cible) {
 // Choix de la famille du bouton i de la roue ouverte.
 int choix(int i, RoueChoix* c, int* cible) {
     return (i >= 0 && i < s_nav.n) ? choix_de(kPremier[s_nav.premier[i]], c, cible) : 0;
+}
+
+bool peindre(bool garder);
+
+// L'autre page de la famille Pièces : la roue (fermée par le toucher) se rouvre, la famille
+// du bouton `i` dépliée sur cette page — rien n'est dessiné entre les deux.
+void pieces_page(int i, int page) {
+    s_page_pieces = page;
+    if (peindre(false)) roue_actions_choisir(i);
 }
 
 void ouvrir_cible(int cible) {
@@ -211,7 +258,9 @@ void choisir_choix(int i, int j) {
     RoueChoix c[kRoueChoix];
     int cible[kRoueChoix];
     const int m = choix(i, c, cible);
-    if (j >= 0 && j < m) ouvrir_cible(cible[j]);
+    if (j < 0 || j >= m) return;
+    if (cible[j] == kCibleSuite || cible[j] == kCibleRetour) pieces_page(i, cible[j] == kCibleSuite ? 1 : 0);
+    else ouvrir_cible(cible[j]);
 }
 
 // Une alerte est-elle à l'écran (vigilance, bandeau d'alerte de HA) ? Le bouton Alertes
@@ -276,5 +325,12 @@ void rejouer() {
 void roue_navigation_ouvrir() {
     // Un appui long au bout d'un glissement (swipe des prévisions ou des pièces) : rien.
     if (ui_appui_glisse()) return;
+    // Famille Pièces sur deux pages (ADR-0066) : celle de la pièce montrée, sinon la première.
+    int pieces[kPiecesMax];
+    const int n = pieces_occupees(pieces);
+    const int montree = tuiles_piece_montree();
+    s_page_pieces = 0;
+    for (int i = kPiecesPage1; i < n && 1 + n > kRoueChoix; i++)
+        if (pieces[i] == montree) s_page_pieces = 1;
     peindre(false);
 }

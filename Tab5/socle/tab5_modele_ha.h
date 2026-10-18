@@ -72,6 +72,16 @@ inline CleTuile piece_cle(int r) {
     return c;
 }
 
+// Chiffre de la pièce dans une clé (« pR », « tRT », « crpR », « cepR », lien « tRT » de la
+// tuile − / +) : '0' à '9' depuis l'ADR-0066 (lot A, 18/10/2026), '0' à '4' avant. Faux,
+// `r` intact, pour tout autre caractère. Le nombre de pièces choisi dans HA (« pn ») borne
+// ensuite ce que l'écran montre, pas ce qui est lu.
+inline bool piece_index(char c, int& r) {
+    if (c < '0' || c > '9') return false;
+    r = c - '0';
+    return true;
+}
+
 // Emplacement des commandes de la clim de la pièce R (ADR-0040) : « cpR ». Pas « pR »
 // + action : « pR » / « eteindre » est déjà « Pièce : tout éteindre ».
 inline CleTuile clim_piece_cle(int r) {

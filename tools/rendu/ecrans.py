@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "demo"))
 from scenarios import (JOURS_FR, NABU, NABU_TROIS_LIGNES, NABU_UNE_LIGNE, PAGE_DE_LA_PIECE,  # noqa: E402
-                       PIECES, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES, HeureForecast, JourForecast, Piece,
+                       PIECES, PIECES_HUIT, PIECES_HUIT_NOMBRE, RANGEE, REGLABLES, SCENES, SERVEUR_IA_SCENES, HeureForecast, JourForecast, Piece,
                        Tuile, build_alerte_payload, build_climat_pieces, build_energie_bilan, build_etats_tuiles,
                        build_heures_bulk_payload, build_historique, build_jours_bulk_payload,
                        build_pluie_1h_bulk_payload, build_serveur_ia_payload, build_tuiles_payload,
@@ -541,6 +541,9 @@ ALLER_PIECE_CLIMAT, RETOUR_PIECE_CLIMAT = vers_la_piece(PIECES, PIECE_CLIMAT)
 # des appareils, dans l'ordre du blueprint ; toucher le Bureau y met le mode HA, d'un coup.
 # Retour : celui de vers_la_piece (« HA », puis les gestes météo jusqu'à l'accueil).
 PIECES_OCCUPEES = sorted(r for r, p in PIECES.items() if p.tuiles)
+# Huit pièces occupées (ADR-0066) : la famille Pièces a deux pages ; la première montre
+# Maison, six pièces et « Suite », au bout de l'éventail (huit choix).
+NAV_PIECES_SUITE = Toucher(*roue_choix_centres(*CARTE_CENTRALE, ROUE_NAVIGATION, NAV_PIECES, 8)[7])
 NAV_BUREAU = Toucher(*roue_choix_centres(*CARTE_CENTRALE, ROUE_NAVIGATION, NAV_PIECES, 1 + len(PIECES_OCCUPEES))
                      [1 + PIECES_OCCUPEES.index(PIECE_CLIMAT)])
 
@@ -656,6 +659,25 @@ MAISON_DEUX_PIECES = Service("tab5_maj_tuiles", (("payload", build_tuiles_payloa
 MAISON_LAMPE = (104, 412)
 MAISON_DE_LA_DEMO = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
                      Service("tab5_maj_emplacements", (("payload", build_etats_tuiles(RETIREES)),)))
+
+# Huit pièces (ADR-0066, lot A) : la maison de la démo et trois pièces de plus (Garage,
+# Buanderie, Atelier ; PIECES_HUIT), poussées avec « pn|8 », puis leurs états. Captures
+# « pieces-8-… » : le mode HA sur l'Atelier (pièce 8 : un geste vers la droite depuis la
+# pièce 1, en rouleau), la page du Garage en mode météo (trois gestes vers la gauche depuis
+# l'accueil : jours 5-9, jours 10-14, puis la pièce), les popups Lumières (six pièces),
+# Volets (quatre), Maison (deux pages de quatre colonnes) et la famille Pièces de la roue
+# de navigation (deux pages : « Suite »). `fermer` repousse la maison de la démo, sans
+# « pn » : cinq pièces, les trois de plus disparaissent ; les cinq autres gardent leurs
+# définitions, donc leurs états.
+HUIT_PIECES = (
+    Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES_HUIT, RANGEE, REGLABLES,
+                                                                  nombre=PIECES_HUIT_NOMBRE)),)),
+    Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({r: PIECES_HUIT[r] for r in (5, 6, 7)})),)),
+)
+CINQ_PIECES = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),)
+assert len(PIECES_HUIT) == PIECES_HUIT_NOMBRE and all(p.tuiles for p in PIECES_HUIT.values())
+# Popup Maison, page suivante : un geste dans le corps (sur les lignes), arrêté au popup.
+MAISON_PAGE_SUIVANTE = Glisser(1150, 400, 450, 400, dans_popup=True)
 
 # Carrousel des clims (ADR-0038) : la démo n'a que la clim du blueprint (une page, ni
 # pastilles ni glisse). Trois pages : deux clims de tuile sans l'option m au Bureau (pièce
@@ -1336,6 +1358,19 @@ ECRANS: tuple[Ecran, ...] = (
     # Maison qui reste derrière : la lampe d'ambiance du Salon (variateur), ancrée sur la
     # pastille de sa ligne, sans le lien « Maison ». Toucher ailleurs ne ferme que la roue.
     Ecran("maison-roue", (Aller("Maison"), Long(*MAISON_LAMPE)), (ROUE_FERMER,)),
+    # Huit pièces (ADR-0066) : voir HUIT_PIECES.
+    Ecran("pieces-8-ha-atelier", HUIT_PIECES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE),
+          (Toucher(*BOUTON_HA), VERS_LA_GAUCHE) + CINQ_PIECES),
+    Ecran("pieces-8-meteo-garage", HUIT_PIECES + (VERS_LA_GAUCHE,) * 3, (VERS_LA_DROITE,) * 3 + CINQ_PIECES),
+    Ecran("pieces-8-lumieres", HUIT_PIECES + (Aller("Lumières"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
+    Ecran("pieces-8-volets", HUIT_PIECES + (Aller("Volet"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
+    Ecran("pieces-8-maison", HUIT_PIECES + (Aller("Maison"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
+    Ecran("pieces-8-maison-page-2", HUIT_PIECES + (Aller("Maison"), MAISON_PAGE_SUIVANTE),
+          (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
+    Ecran("pieces-8-roue", HUIT_PIECES + (Long(*CARTE_CENTRALE), nav(NAV_PIECES)),
+          (ROUE_FERMER, ROUE_FERMER) + CINQ_PIECES),
+    Ecran("pieces-8-roue-suite", HUIT_PIECES + (Long(*CARTE_CENTRALE), nav(NAV_PIECES), NAV_PIECES_SUITE),
+          (ROUE_FERMER, ROUE_FERMER) + CINQ_PIECES),
     Ecran("plantes", (Long(*SOUS_HORLOGE),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis
     # les vues Jours et Mois par « Aller à l'écran ». Données : la scène (demo_pusher,

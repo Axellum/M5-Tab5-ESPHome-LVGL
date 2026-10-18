@@ -420,7 +420,7 @@ bool mesure_lire(const Champ& f, float& v) {
 }  // namespace
 
 bool piece_climat_lire(const Champ& cle, const Champ& reste, PieceClimatLu& out) {
-    if (cle.n != 2 || cle.p[0] != 'p' || cle.p[1] < '0' || cle.p[1] >= '0' + kPieces) return false;
+    if (cle.n != 2 || cle.p[0] != 'p' || cle.p[1] < '0' || cle.p[1] >= '0' + kPiecesMax) return false;
     Champ f[3] = {};
     const int k = champs_decouper(reste.p, reste.n, '|', f, 3);
     out.piece = cle.p[1] - '0';

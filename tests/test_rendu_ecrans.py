@@ -72,24 +72,46 @@ def test_portraits():
 # Pages des prévisions et mode HA (ADR-0023). Modèle du contrat :
 # - mode météo, handle_swipe_gesture (tab5_central.cpp) : vers la gauche 0→1→2→3→4, et
 #   4 revient à 2 ; vers la droite 4→3→2→1→0, et 0 revient à 2 ; geste compté si le
-#   doigt est à y ≥ FORECAST_SWIPE_Y_MIN ;
+#   doigt est à y ≥ FORECAST_SWIPE_Y_MIN. Avec N > 5 pièces (« pn|N », ADR-0066), la
+#   gauche continue de 4 sur les pages de pièce 5 … N − 1 avant de revenir à 2 ;
 # - mode HA, tuiles_swipe_ha (tab5_tuiles.cpp, 18/10/2026) : pièce suivante (gauche) ou
-#   précédente (droite) en rouleau, la 5 revient à la 1, pièces vides comprises ; « HA »
-#   bascule le mode ; « Aller à l'écran → Accueil » le quitte ; une pièce choisie dans la
-#   roue de navigation (ADR-0042, NAV_BUREAU) y met le mode HA.
+#   précédente (droite) en rouleau, la N-ième revient à la 1, pièces vides comprises ;
+#   « HA » bascule le mode (en sortant, la page de la pièce) ; « Aller à l'écran →
+#   Accueil » le quitte ; une pièce choisie dans la roue de navigation (ADR-0042,
+#   NAV_BUREAU) y met le mode HA.
 # ---------------------------------------------------------------------------
 
 PIECE_DE_LA_PAGE = {p: r for r, p in PAGE_DE_LA_PIECE.items()}
+
+
+def _piece_de_la_page(page):
+    return PIECE_DE_LA_PAGE.get(page, page)  # pages 5 et plus : page = pièce (ADR-0066)
+
+
+def _page_de_la_piece(r):
+    return PAGE_DE_LA_PIECE.get(r, r)
+
+
+def _nombre_pousse(etape, n):
+    """Nombre de pièces après une poussée de tab5_maj_tuiles (« pn|N » en tête ; sans lui,
+    cinq), inchangé après une autre étape."""
+    if isinstance(etape, Service) and etape.nom == "tab5_maj_tuiles":
+        payload = dict(etape.donnees)["payload"]
+        m = re.match(r"pn\|(\d+);", payload)
+        return int(m.group(1)) if m else 5
+    return n
 # Haut de la carte centrale du Tab5 (kAccCentraleY de tab5_geometrie.h, lot 3 du portage).
 assert "FORECAST_SWIPE_Y_MIN = kAccCentraleY;" in _lire("Tab5", "ecran", "tab5_central.cpp")
 Y_MIN_GESTE = geometrie_cpp("tab5")["kAccCentraleY"]
 
 
-def _jouer(etapes, page=2, ha=False):
-    """Page et mode HA après chaque étape : [(étape, page, ha avant l'étape)], page, ha."""
+def _jouer(etapes, page=2, ha=False, n=5):
+    """Page et mode HA après chaque étape : [(étape, page, ha avant l'étape)], page, ha.
+    `n` : nombre de pièces (« pn|N » d'une poussée de tab5_maj_tuiles, ADR-0066)."""
     trace = []
     for etape in etapes:
         trace.append((etape, page, ha))
+        n = _nombre_pousse(etape, n)
         if isinstance(etape, Toucher) and (etape.x, etape.y) == BOUTON_HA:
             ha = not ha
         elif isinstance(etape, Aller) and etape.option == "Accueil":
@@ -100,12 +122,13 @@ def _jouer(etapes, page=2, ha=False):
               and etape.x1 != etape.x2):
             gauche = etape.x2 < etape.x1
             if ha:
-                n = len(PAGE_DE_LA_PIECE)
-                page = PAGE_DE_LA_PIECE[(PIECE_DE_LA_PAGE[page] + (1 if gauche else n - 1)) % n]
+                page = _page_de_la_piece((_piece_de_la_page(page) + (1 if gauche else n - 1)) % n)
             elif gauche:
-                page = 2 if page >= 4 else page + 1
+                page = 2 if page >= max(5, n) - 1 else page + 1
             else:
                 page = 2 if page <= 0 else page - 1
+        if not ha and page >= max(5, n):
+            page = 2  # une page de pièce disparue (moins de pièces) : l'accueil
     return trace, page, ha
 
 
@@ -143,13 +166,32 @@ def test_un_ecran_en_mode_ha_par_piece_de_la_demo():
         # (ADR-0040), ouvertes en mode HA sur elle, et la roue de sa clim (ADR-0048).
         # La pièce choisie dans la roue de navigation (ADR-0042) l'est aussi par un swipe.
         # La tuile − / + pièce par pièce (« reglables-… », 14/10/2026) a ses propres maisons.
+        # Les huit pièces (« pieces-8-… », ADR-0066) ont leurs propres captures.
         if ha and not ecran.nom.startswith(("maison-", "climatisation-", "roue-clim-temperature",
-                                            "roue-navigation-", "reglables-")) \
+                                            "roue-navigation-", "reglables-", "pieces-8-")) \
                 and ecran.nom not in POPUPS_EN_MODE_HA:
             assert page not in obtenues, (ecran.nom, obtenues.get(page))
             obtenues[page] = ecran.nom
     assert obtenues == attendues
     assert len(PIECES) >= 4, "la démo montre au moins quatre pièces"
+
+
+def test_huit_pieces():
+    """ADR-0066 (lot A) : huit pièces poussées avec « pn|8 » ; le mode HA sur la huitième par
+    un geste vers la droite depuis la première (rouleau), la page de la sixième en mode
+    météo après les jours 10-14 ; chaque écran remet la maison de la démo (cinq pièces)."""
+    huit = [e for e in ECRANS if e.nom.startswith("pieces-8-")]
+    assert len(huit) >= 6
+    for ecran in huit:
+        assert ecran.etapes[:len(ecrans.HUIT_PIECES)] == ecrans.HUIT_PIECES, ecran.nom
+        assert ecran.fermer[-len(ecrans.CINQ_PIECES):] == ecrans.CINQ_PIECES, ecran.nom
+        assert dict(ecran.etapes[0].donnees)["payload"].startswith("pn|8;"), ecran.nom
+        assert not dict(ecran.fermer[-1].donnees)["payload"].startswith("pn|"), ecran.nom
+    trace, page, ha = _jouer(next(e for e in huit if e.nom == "pieces-8-ha-atelier").etapes)
+    assert ha and _piece_de_la_page(page) == 7 and page == 7
+    _, page, ha = _jouer(next(e for e in huit if e.nom == "pieces-8-meteo-garage").etapes)
+    assert not ha and page == 5 and _piece_de_la_page(page) == 5
+    assert ecrans.PIECES_HUIT[5].nom == "Garage" and ecrans.PIECES_HUIT[7].nom == "Atelier"
 
 
 def test_la_tuile_moins_plus_piece_par_piece():

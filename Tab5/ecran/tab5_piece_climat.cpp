@@ -41,11 +41,11 @@ struct PieceClimat {
     float t = NAN;
     float h = NAN;
 };
-PieceClimat s_pieces[kPieces];
+PieceClimat s_pieces[kPiecesMax];
 
 // Clés du popup Température pour la pièce R (kCles de tab5_historique.cpp, et ce que le
-// blueprint accepte ; tests/test_piece_climat.py compare).
-constexpr const char* kClesHistorique[kPieces] = {"p0", "p1", "p2", "p3", "p4"};
+// blueprint accepte ; tests/test_piece_climat.py compare). Dix pièces au plus (ADR-0066).
+constexpr const char* kClesHistorique[kPiecesMax] = {"p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"};
 
 // Dernières valeurs du salon et de la serre (capteurs temp_salon, hum_salon, temp_serre).
 // `*_recu` : une valeur est arrivée (même NaN) ; sinon le label garde « -- ° » et la
@@ -63,7 +63,7 @@ Accueil s_accueil;
 // Pièce que la zone montre : celle du mode HA, si elle a une température déclarée.
 int piece_montree() {
     const int r = tuiles_piece_mode_ha();
-    return (r >= 0 && r < kPieces && s_pieces[r].temperature) ? r : -1;
+    return (r >= 0 && r < kPiecesMax && s_pieces[r].temperature) ? r : -1;
 }
 
 bool zone_prete() {
@@ -199,4 +199,7 @@ const char* accueil_historique_cle(bool droite) {
     return zone_absente(Zone::SALON) ? nullptr : "salon";
 }
 
-bool piece_climat_a_temperature(int r) { return r >= 0 && r < kPieces && s_pieces[r].temperature; }
+// Une pièce R ≥ N (nombre de pièces choisi dans HA, ADR-0066) n'existe pas à l'écran.
+bool piece_climat_a_temperature(int r) {
+    return r >= 0 && r < tuiles_pieces_nombre() && s_pieces[r].temperature;
+}

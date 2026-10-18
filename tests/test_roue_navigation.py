@@ -142,7 +142,7 @@ def test_familles_vides_omises_et_ecrans_disponibles():
     assert "if (!propose(d.ecran)) continue;" in nav
     assert "if (p.genre == Genre::ECRAN && !ecran_disponible(p.ecran)) continue;" in nav
     assert "if (choix_de(p, c, cible) == 0) continue;" in nav
-    assert "return m > 1 ? m : 0;" in nav
+    assert "if (n == 0) return 0;  // Maison seule : aucune pièce, aucune famille" in nav
     # Les trois écrans nouveaux ont leur règle de disponibilité.
     zones = lire(source("tab5_zones.cpp"))
     for e in ("LUMIERES", "VOLET", "TEMPERATURE"):
