@@ -1,6 +1,6 @@
 # ADR-0067: Whole-home HiFi in the Music popup — rooms, library and outputs through Music Assistant, pushed by Home Assistant
 
-**Status:** Proposed (2026-10-18, asked for by the author; contract written before the code, not tried on a tablet when written). Extends the music popup of [ADR-0050](0050-music-player.md) and the favourite playlists page of ADR-0068 (its own pull request, #515).
+**Status:** Proposed (2026-10-18, asked for by the author; contract written before the code, not tried on a tablet when written). Extends the music popup of [ADR-0050](0050-music-player.md) and the favourite playlists page of [ADR-0068](0068-favourite-playlists.md) (its own pull request, #515).
 **Date:** 2026-10-18
 
 ## Context
@@ -25,7 +25,7 @@ Verified on the author's Home Assistant on 2026-10-18 (HAOS 18.3, aarch64 VM, Co
 Same card, same chrome, same swipe; the popup always opens on « Lecture ». Pages, in this order, each only when it has something to show:
 
 1. **Lecture** (ADR-0050), plus, with Music Assistant, one line under the album: « À suivre · <title — artist> » and « n titres » (the queue), and a chip « + n » after the player's name when it leads a group.
-2. **Playlists** (ADR-0068, favourite playlists), unchanged.
+2. **Playlists** ([ADR-0068](0068-favourite-playlists.md), favourite playlists): its grid, its return to « Lecture » 600 ms after a tap and its button in the accent colour for 30 s are unchanged; since both were merged (2026-10-18), its page, its name on the title line and its swipe are those of this popup's single page brick (`tab5_musique.cpp`), no longer a second one in `tab5_lecteur.cpp`.
 3. **Pièces** — every output of the home, eight at most, a grid of 4 × 2 cards: the kind's icon, the name, the title playing or the state, the volume (slider 0-100, sent on release), and up to three buttons each shown only when the player can: link / unlink to the shown player's group (`g`), power (`o`), « send the music here » (`t`, not on the shown one). A tap shows that player on « Lecture »; a long press opens the wheel ([ADR-0036](0036-quick-action-wheel.md)): source (`s`), mute (`m`), transfer (`t`), unlink. On the title line, « Tout ici » (group every available player with the shown one) and « Tout séparer », with Music Assistant only. The shown player's card has the accent border, its group's cards a thinner one.
 4. **Bibliothèque** — with Music Assistant only. A row of categories (Favoris, Playlists, Albums, Artistes, Radios, Podcasts, Récents), then a grid of 5 × 2 items: cover (or the kind's icon), name, second line. A tap plays a playable item (track, radio, episode, audiobook) on the shown player — replacing the queue — and opens a container (artist → albums, album / playlist → tracks, podcast → episodes) with a back button; a long press opens the wheel: play now, play next, add to the queue, radio mode, open. « Suivants » / « Précédents » when there are more. The sources of a player (from its wheel) show in the same grid.
 
