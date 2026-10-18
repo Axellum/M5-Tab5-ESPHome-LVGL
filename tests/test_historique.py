@@ -67,7 +67,7 @@ def test_vues_cles_et_limites_du_firmware():
     vues = re.findall(r'"(\w+)"', re.search(r"kVues\[NB_VUES\] = \{([^}]*)\}", cpp).group(1))
     cles = re.findall(r'"(\w+)"', re.search(r"kCles\[NB_CLES\] = \{([^}]*)\}", cpp).group(1))
     assert tuple(vues) == tuple(scenarios.HISTORIQUE_VUES) == ("jour", "semaine", "mois")
-    assert tuple(cles) == scenarios.HISTORIQUE_CLES == ("salon", "serre", "p0", "p1", "p2", "p3", "p4")
+    assert tuple(cles) == scenarios.HISTORIQUE_CLES == ("salon", "serre") + tuple(f"p{r}" for r in range(10))
     # Plafonds de la lecture (historique_lire, tab5_parse.h), ceux de l'écran.
     parse = _lire(PARSE)
     assert "kMesuresMax = kHistoriqueMesuresMax;" in cpp and "kPrevMax = kHistoriquePrevMax;" in cpp

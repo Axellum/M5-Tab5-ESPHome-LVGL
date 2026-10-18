@@ -61,6 +61,7 @@
 #include "tab5_geometrie.h"
 #include "esp_heap_caps.h"
 #include "lvgl.h"
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -74,15 +75,18 @@ namespace {
 
 enum Vue : int { JOUR = 0, SEMAINE = 1, MOIS = 2, NB_VUES = 3 };
 constexpr const char* kVues[NB_VUES] = {"jour", "semaine", "mois"};
-// salon et serre : les deux températures de l'accueil ; p0 à p4 : la température d'une
-// pièce en mode HA (ADR-0040, tab5_piece_climat.cpp), comme le salon (pas de prévision).
+// salon et serre : les deux températures de l'accueil ; p0 à p9 : la température d'une
+// pièce en mode HA (ADR-0040, tab5_piece_climat.cpp ; dix pièces depuis l'ADR-0066), comme
+// le salon (pas de prévision).
 enum Cle : int { SALON = 0,
                  SERRE = 1,
                  PIECE_0 = 2,
-                 NB_CLES = 7 };
-constexpr const char* kCles[NB_CLES] = {"salon", "serre", "p0", "p1", "p2", "p3", "p4"};
+                 NB_CLES = 12 };
+constexpr const char* kCles[NB_CLES] = {"salon", "serre", "p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"};
+static_assert(NB_CLES == PIECE_0 + kPiecesMax, "une clé par pièce");
 // Ordre des onglets : la pièce de l'accueil, les pièces, puis la seconde température.
-constexpr int kOrdreOnglets[NB_CLES] = {SALON, PIECE_0, PIECE_0 + 1, PIECE_0 + 2, PIECE_0 + 3, PIECE_0 + 4, SERRE};
+constexpr int kOrdreOnglets[NB_CLES] = {SALON, PIECE_0, PIECE_0 + 1, PIECE_0 + 2, PIECE_0 + 3, PIECE_0 + 4,
+                                        PIECE_0 + 5, PIECE_0 + 6, PIECE_0 + 7, PIECE_0 + 8, PIECE_0 + 9, SERRE};
 enum Carte : int { MAINTENANT = 0,
                    MINIMUM = 1,
                    MAXIMUM = 2,
@@ -126,7 +130,10 @@ constexpr int32_t kPointHumidite = 12;
 // (80 px à 10 px du bord, modal_header.yaml), 200 px au plus et 10 px d'écart, calés à
 // droite : quatre onglets tombent aux places de ceux des Réglages (x 318 à 1148 sur le
 // Tab5). La fin, kOngletsFin, est celle de toutes les cartes (tab5_geometrie.h).
-constexpr int kOngletsMax = NB_CLES;
+// Sept onglets au plus (historique_onglet_0 … 6) : avec plus de pages (dix pièces,
+// ADR-0066), une fenêtre de sept noms autour de la page affichée ; le glissement les
+// parcourt toutes.
+constexpr int kOngletsMax = 7;
 constexpr int32_t kOngletL = 200;
 constexpr int32_t kOngletEcart = 10;
 constexpr int32_t kTitrePopupX = 52;        // x du titre (modal_header.yaml)
@@ -147,8 +154,9 @@ struct Memoire {
 Memoire* s_mem = nullptr;
 int s_cle = -1;
 int s_vue = JOUR;
-int s_onglets[kOngletsMax] = {};            // clés des onglets, dans l'ordre affiché
+int s_onglets[NB_CLES] = {};                // clés des pages, dans l'ordre des onglets
 int s_nb_onglets = 0;
+int s_premier_onglet = 0;                   // page du premier onglet montré
 
 lv_obj_t* s_fond_prev = nullptr;            // teinte de la partie prévue
 lv_obj_t* s_grille[kGrilleMax] = {};
@@ -897,7 +905,10 @@ int rang_courant() {
 // page des Réglages (choix_peindre, tab5_pages.cpp).
 void peindre_onglets() {
     const HistoriqueUI& u = g_historique_ui;
-    const int n = s_nb_onglets >= 2 ? s_nb_onglets : 0;
+    const int n = s_nb_onglets >= 2 ? std::min(s_nb_onglets, kOngletsMax) : 0;
+    // Plus de pages que d'onglets : la fenêtre autour de la page affichée.
+    const int haut = s_nb_onglets - n;
+    s_premier_onglet = std::max(0, std::min(rang_courant() - n / 2, haut));
     int32_t debut = fin_du_titre() + 24;
     int32_t w = n > 0 ? (kOngletsFin - debut - (n - 1) * kOngletEcart) / n : 0;
     if (w > kOngletL) w = kOngletL;
@@ -913,10 +924,10 @@ void peindre_onglets() {
         ui_x(b, debut + i * (w + kOngletEcart));
         lv_obj_t* const l = lv_obj_get_child(b, 0);
         if (l != nullptr && lv_obj_get_style_width(l, LV_PART_MAIN) != w - 10) lv_obj_set_width(l, w - 10);
-        nom_onglet(s_onglets[i], nom, sizeof(nom));
+        nom_onglet(s_onglets[s_premier_onglet + i], nom, sizeof(nom));
         ui_text(l, nom);
     }
-    if (n > 0) choix_peindre(u.onglet, n, rang_courant());
+    if (n > 0) choix_peindre(u.onglet, n, rang_courant() - s_premier_onglet);
 }
 
 void demander() {
@@ -1119,8 +1130,9 @@ void historique_choisir_vue(int vue) {
 }
 
 void historique_onglet(int n) {
-    if (n < 0 || n >= s_nb_onglets) return;
-    montrer_cle(s_onglets[n]);
+    const int page = s_premier_onglet + n;
+    if (n < 0 || n >= kOngletsMax || page >= s_nb_onglets) return;
+    montrer_cle(s_onglets[page]);
 }
 
 // Thèmes (ADR-0029) : ce que construire() a peint une fois, puis le popup s'il est

@@ -203,16 +203,20 @@ def test_liste_blanche_des_clims_de_piece():
 # ─── Clés du popup Température ───────────────────────────────────────────────
 
 def test_cles_de_l_historique_partout_les_memes():
-    pieces = tuple(f"p{r}" for r in range(5))
+    # Dix pièces depuis l'ADR-0066 (lot A) : le firmware demande p0 à p9.
+    pieces = tuple(f"p{r}" for r in range(10))
     cpp = _lire(source("tab5_historique.cpp"))
     cles = re.findall(r'"(\w+)"', re.search(r"kCles\[NB_CLES\] = \{([^}]*)\}", cpp).group(1))
-    assert tuple(cles) == ("salon", "serre") + pieces and "NB_CLES = 7" in cpp
+    assert tuple(cles) == ("salon", "serre") + pieces and "NB_CLES = 12" in cpp
     piece = _lire(source("tab5_piece_climat.cpp"))
-    assert tuple(re.findall(r'"(p\d)"', re.search(r"kClesHistorique\[kPieces\] = \{([^}]*)\}", piece).group(1))) == pieces
-    liste = "['salon', 'serre', 'p0', 'p1', 'p2', 'p3', 'p4']"
-    assert liste in _lire(PACKAGE_HISTORIQUE)
-    assert liste in _lire(os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5",
-                                       "tab5_emplacements.yaml"))
+    assert tuple(re.findall(r'"(p\d)"', re.search(r"kClesHistorique\[kPiecesMax\] = \{([^}]*)\}", piece).group(1))) == pieces
+    # Côté Home Assistant, la liste des clés acceptées : les mêmes douze (sans p5 à p9, le
+    # blueprint ne lançait pas l'historique d'une pièce 6 à 10).
+    dix = str(["salon", "serre", *pieces])
+    for fichier in (PACKAGE_HISTORIQUE, os.path.join(REPO, "HomeAssistant_Config", "blueprints", "automation", "tab5",
+                                                    "tab5_emplacements.yaml")):
+        texte = _lire(fichier)
+        assert dix in texte and "'p4']" not in texte, fichier
 
 
 # ─── Firmware ────────────────────────────────────────────────────────────────
@@ -236,25 +240,25 @@ def test_routage_des_cles():
     # La lecture est celle de Tab5/socle/tab5_parse (testée par tools/test_parse.cpp, fuzzée).
     assert "if (!piece_climat_lire(Champ{cle, n_cle}, Champ{reste, n_reste}, lu)) return false;" in piece
     lire = _fonction(_lire(source("tab5_parse.cpp")), "piece_climat_lire")
-    assert "cle.p[1] >= '0' + kPieces) return false;" in lire
+    assert "cle.p[1] >= '0' + kPiecesMax) return false;" in lire
     assert "champs_decouper(reste.p, reste.n, '|', f, 3)" in lire
     assert 'champ_est(f[2], "1")' in lire
     clim = _lire(source("tab5_clim.cpp"))
     recu = _fonction(clim, "clim_tuile_recu")
     assert "const bool piece = cle[2] == kPrefixePiece;" in recu and "kCasesTuiles + r" in recu
-    assert "constexpr int kCases = kCasesTuiles + kPieces;" in clim
+    assert "constexpr int kCases = kCasesTuiles + kPiecesMax;" in clim
     # Emplacement des commandes : « cpR », écrit une seule fois.
     assert "c.s[0] = 'c';\n    c.s[1] = 'p';" in _lire(source("tab5_modele_ha.h")).replace("\r\n", "\n")
 
 
 def test_repeint_quand_la_piece_change():
     tuiles = _lire(source("tab5_tuiles.cpp"))
-    for f in ("tuiles_mode_ha", "montrer_page_ha"):
+    for f in ("tuiles_mode_ha", "montrer_piece_ha"):
         corps = _fonction(tuiles, f)
         assert "accueil_temperatures_ui();" in corps and "reglables_clim_changee();" in corps, f
-    # Le swipe et la roue de navigation (ADR-0042) changent de pièce par montrer_page_ha.
+    # Le swipe et la roue de navigation (ADR-0042) changent de pièce par montrer_piece_ha.
     for f in ("tuiles_swipe_ha", "tuiles_aller_piece"):
-        assert "montrer_page_ha(" in _fonction(tuiles, f), f
+        assert "montrer_piece_ha(" in _fonction(tuiles, f), f
     theme = _lire(source("tab5_theme.cpp"))
     assert theme.index("cartes_rejouer_theme();") < theme.index("accueil_temperatures_ui();"), \
         "la pièce après les cartes : update_temp_ui du salon ne repeint pas par-dessus"
@@ -267,7 +271,7 @@ def test_repeint_quand_la_piece_change():
 def test_le_carrousel_liste_les_clims_des_pieces():
     """ADR-0038 + ADR-0040 : la clim propre de chaque pièce a sa page, après les tuiles."""
     clim = _lire(source("tab5_clim.cpp"))
-    assert "constexpr int kClimsConnues = 1 + kPieces * kTuilesMax + kPieces;" in clim
+    assert "constexpr int kClimsConnues = 1 + kPiecesMax * kTuilesMax + kPiecesMax;" in clim
     liste = _fonction(clim, "clims_enumerer")
     tuiles = liste.index("const ClimTuile* c = tuile_clim(r, t, false);")
     pieces = liste.index("const ClimTuile* c = piece_clim(r, false);")

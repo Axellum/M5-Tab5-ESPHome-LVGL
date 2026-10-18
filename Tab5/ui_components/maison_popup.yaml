@@ -57,9 +57,10 @@ obj:
               widgets:
                 - label: { text: "Éteindre les lumières", align: CENTER, width: 300, long_mode: DOT, text_align: CENTER, text_font: roboto_22 }
 
-          # Noms des pages (ADR-0066 : cinq lignes par colonne et par page) : « 1–5 »,
-          # « 6–10 »… entre le titre et « Éteindre les lumières », posés par tab5_maison.cpp
-          # (peindre_onglets), aucun sous deux pages.
+          # Onglets des pages (ADR-0066) : un par groupe de colonnes (« Pièces 1 à 5 », plus
+          # de cinq pièces) ou, avec un seul groupe, un par tranche de cinq lignes (« 1–5 »,
+          # « 6–10 »…, plus de cinq éléments dans une pièce) ; sur la ligne du titre, posés et
+          # montrés par tab5_maison.cpp (peindre_onglets), aucun sous deux pages.
           - !include { file: pages_onglet.yaml, vars: { id: maison_onglet_0, page: 0, choisir: maison_page } }
           - !include { file: pages_onglet.yaml, vars: { id: maison_onglet_1, page: 1, choisir: maison_page } }
           - !include { file: pages_onglet.yaml, vars: { id: maison_onglet_2, page: 2, choisir: maison_page } }
@@ -69,35 +70,35 @@ obj:
           - label: { id: maison_vide, text: "Aucun appareil", align: CENTER, y: 36, hidden: true, styles: style_text_dim }
 
           # ═══ EN-TÊTES : le nom de chaque pièce ═══
-          - !include { file: maison_entete.yaml, vars: { r: "0" } }
-          - !include { file: maison_entete.yaml, vars: { r: "1" } }
-          - !include { file: maison_entete.yaml, vars: { r: "2" } }
-          - !include { file: maison_entete.yaml, vars: { r: "3" } }
-          - !include { file: maison_entete.yaml, vars: { r: "4" } }
+          - !include { file: maison_entete.yaml, vars: { c: "0" } }
+          - !include { file: maison_entete.yaml, vars: { c: "1" } }
+          - !include { file: maison_entete.yaml, vars: { c: "2" } }
+          - !include { file: maison_entete.yaml, vars: { c: "3" } }
+          - !include { file: maison_entete.yaml, vars: { c: "4" } }
 
-          # ═══ LIGNES : la K-ième ligne de la pièce R sur la page affichée (maison_ligne_RK) ═══
-          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "0" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "1" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "2" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "3" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "0", t: "4" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "0" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "1" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "2" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "3" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "1", t: "4" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "0" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "1" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "2" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "3" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "2", t: "4" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "0" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "1" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "2" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "3" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "3", t: "4" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "0" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "1" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "2" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "3" } }
-          - !include { file: maison_ligne.yaml, vars: { r: "4", t: "4" } }
+          # ═══ LIGNES : la place (colonne C, ligne K) de la page affichée (maison_ligne_CK) ═══
+          - !include { file: maison_ligne.yaml, vars: { c: "0", k: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "0", k: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "0", k: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "0", k: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "0", k: "4" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "1", k: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "1", k: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "1", k: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "1", k: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "1", k: "4" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "2", k: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "2", k: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "2", k: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "2", k: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "2", k: "4" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "3", k: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "3", k: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "3", k: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "3", k: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "3", k: "4" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "4", k: "0" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "4", k: "1" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "4", k: "2" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "4", k: "3" } }
+          - !include { file: maison_ligne.yaml, vars: { c: "4", k: "4" } }

@@ -1,7 +1,8 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_tuiles_cases.cpp
- * @role Cases des tuiles coupées du mode HA (ADR-0066, lot B, 18/10/2026) : au-delà de cinq
+ * @role Cases des tuiles coupées (mode HA et pages de pièce de la météo, qui dessinent sur le
+ *       même calque ; ADR-0066, lot B, 18/10/2026) : au-delà de cinq
  *       éléments, les dernières places de la pièce sont coupées en deux (haut / bas) puis en
  *       quatre (Tab5/socle/tab5_disposition.h). Une case = un élément, sa propre cible :
  *         - une moitié (230 × 135 sur le Tab5), façon carte « tile » de HA couchée : l'icône
@@ -201,10 +202,11 @@ disposition::Rect rect_case(Coupe coupe, int k) {
     return disposition::case_rect(coupe, k, kAccTuileL, kAccTuileH, kAccCaseEcart);
 }
 
-// Toucher d'une case : l'élément de cette case dans la pièce affichée (mode HA), par le
+// Toucher d'une case : l'élément de cette case dans la pièce affichée (mode HA, ou page de pièce
+// de la météo, ADR-0066 lot A : le même calque), par le
 // chemin d'une tuile entière (même commande, même confirmation, même roue, même popup).
 void case_appui(int p, int k, bool long_appui) {
-    if (!g_central_ctx.ha_mode || p < 0 || p >= kPlacesTuiles || k < 0 || k >= disposition::kCasesMax) return;
+    if (!cartes_affichees() || p < 0 || p >= kPlacesTuiles || k < 0 || k >= disposition::kCasesMax) return;
     const int r = piece_courante();
     const disposition::Place& pl = disposition_piece(r, false).place[p];
     if (k >= disposition::cases_de(pl.coupe) || pl.coupe == Coupe::ENTIERE || pl.element[k] < 0) return;

@@ -20,10 +20,11 @@ namespace esphome { namespace font { class Font; } }
 
 // =============================================================================
 // Pièces et tuiles génériques (tab5_tuiles.cpp, ADR-0023) : chaque page du bas est une
-// pièce de vingt appareils au plus (ADR-0066), décrits par Home Assistant. Pièce R ↔ page :
-// R0 = 2 (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0 ; élément T = son rang dans la liste du
-// blueprint. Cinq places (0 = gauche) : jusqu'à cinq éléments, une tuile chacun ; au-delà,
-// les dernières places coupées en deux puis en quatre (Tab5/socle/tab5_disposition.h).
+// pièce de vingt appareils au plus (ADR-0066, lot B), décrits par Home Assistant ; N pièces
+// (1 à 10, « pn », ADR-0066, lot A). Pièce R ↔ page de la météo : R0 = 2 (accueil), R1 = 3,
+// R2 = 4, R3 = 1, R4 = 0, R5 … = 5 … ; élément T = son rang dans la liste du blueprint. Cinq
+// places (0 = gauche) : jusqu'à cinq éléments, une tuile chacun ; au-delà, les dernières
+// places coupées en deux puis en quatre (Tab5/socle/tab5_disposition.h).
 // Tant qu'aucune définition n'est arrivée (drapeau en NVS), la pièce 0 est construite
 // depuis les emplacements 3.x (mode héritage).
 // =============================================================================
@@ -39,7 +40,7 @@ struct TuilesUI {
     lv_obj_t* calque_jours = nullptr;     // layer_forecast_daily
     lv_obj_t* calque_heures = nullptr;    // layer_forecast_hourly
     lv_obj_t* calque_ha = nullptr;        // layer_switches
-    lv_obj_t* pastilles[5] = {};          // pbar_0 … pbar_4
+    lv_obj_t* pastilles[kPiecesMax] = {};  // pbar_0 … pbar_9 (une par page de la météo ou par pièce, ADR-0066)
     lv_obj_t* titre_cadre = nullptr;      // page_title_wrapper
     lv_obj_t* titre = nullptr;            // lbl_page_title
     lv_obj_t* bouton_ha = nullptr;        // btn_control_ha
@@ -86,14 +87,14 @@ struct TuilesUI {
     // Popup Lumières (light_popup.yaml).
     lv_obj_t* lum_popup = nullptr;        // light_options_popup
     lv_obj_t* lum_ligne[kPlacesTuiles] = {};  // btn_light_sel_N
-    lv_obj_t* lum_onglet[kPieces] = {};   // lum_onglet_N
+    lv_obj_t* lum_onglet[kPiecesMax] = {};  // lum_onglet_N
     lv_obj_t* lum_arc = nullptr;          // arc_light_brightness
     lv_obj_t* lum_pct = nullptr;          // lbl_light_brightness_val
     std::string* lum_cle = nullptr;       // &id(current_light_slot) : cible des commandes
     // Popup Volets (volet_popup.yaml, 05/10/2026) : le volet choisi, dessiné, à droite.
     lv_obj_t* vol_popup = nullptr;        // volet_popup
     lv_obj_t* vol_ligne[kPlacesTuiles] = {};  // volet_ligne_N
-    lv_obj_t* vol_onglet[kPieces] = {};   // vol_onglet_N
+    lv_obj_t* vol_onglet[kPiecesMax] = {};  // vol_onglet_N
     lv_obj_t* vol_nom = nullptr;          // volet_nom : le nom du volet choisi
     lv_obj_t* vol_position = nullptr;     // volet_position : rangée « 45 % »
     lv_obj_t* vol_nombre = nullptr;       // volet_nombre : chiffres (police de l'horloge)

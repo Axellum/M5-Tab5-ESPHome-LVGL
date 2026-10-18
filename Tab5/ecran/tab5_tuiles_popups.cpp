@@ -65,7 +65,7 @@ struct PopupTuile {
     bool montre(int r, int t) const { return ouvert() && r == piece && t == tuile; }
 
     // Sa tuile est dans la grille, hors mode héritage (qui n'ouvre ni volet ni appareil).
-    bool en_grille() const { return piece >= 0 && piece < kPieces && tuile >= 0 && tuile < kTuilesMax && !heritage(); }
+    bool en_grille() const { return piece >= 0 && piece < kPiecesMax && tuile >= 0 && tuile < kTuilesMax && !heritage(); }
 };
 
 // Ouvre le popup `p` sur la tuile tRT : son état remis à zéro, peint, puis montré. Rien
@@ -104,19 +104,19 @@ void popup_tuile_revalider(const P&, bool valide, void (*peindre)()) {
 
 // Pages au plus : chaque pièce, de cinq lignes en cinq (vingt éléments = quatre pages).
 constexpr int kPagesParPiece = (kTuilesMax + kPlacesTuiles - 1) / kPlacesTuiles;
-constexpr int kPagesMax = kPieces * kPagesParPiece;
+constexpr int kPagesMax = kPiecesMax * kPagesParPiece;
 
 template <lv_obj_t* TuilesUI::* C>
 struct PopupPieces : PopupTuile<C> {
-    int nb = 0;                      // pages : les pièces qui ont au moins une ligne, de cinq en cinq
-    int pieces[kPagesMax] = {};      // pièce de chaque page, dans l'ordre du blueprint
-    int debuts[kPagesMax] = {};      // rang, parmi les lignes de sa pièce, de la première de la page
-    int page = 0;                    // page affichée : piece = pieces[page]
-    int n = 0;                       // lignes de la page affichée
-    int tuiles[kPlacesTuiles] = {};  // tuile de chaque ligne, dans l'ordre des tuiles
-    int choix = 0;                   // ligne choisie : tuile = tuiles[choix]
-    int nb_onglets = 0;              // noms en haut (onglets_peindre)
-    int page_onglet[kPieces] = {};   // page qu'ouvre le tap sur chaque nom
+    int nb = 0;                       // pages : les pièces qui ont au moins une ligne, de cinq en cinq
+    int pieces[kPagesMax] = {};       // pièce de chaque page, dans l'ordre du blueprint
+    int debuts[kPagesMax] = {};       // rang, parmi les lignes de sa pièce, de la première de la page
+    int page = 0;                     // page affichée : piece = pieces[page]
+    int n = 0;                        // lignes de la page affichée
+    int tuiles[kPlacesTuiles] = {};   // tuile de chaque ligne, dans l'ordre des tuiles
+    int choix = 0;                    // ligne choisie : tuile = tuiles[choix]
+    int nb_onglets = 0;               // noms en haut (onglets_peindre)
+    int page_onglet[kPiecesMax] = {};  // page qu'ouvre le tap sur chaque nom
 };
 
 // Pages et lignes de `p` : les pièces qui ont au moins une tuile `garde`, de cinq lignes en
@@ -129,7 +129,7 @@ bool pieces_calculer(P& p, bool (*garde)(int, int), int r, int t) {
     p.nb = p.n = p.page = p.choix = 0;
     p.piece = p.tuile = -1;
     int page_r = -1, page_t = -1;
-    for (int i = 0; i < kPieces; i++) {
+    for (int i = 0; i < kPiecesMax; i++) {
         int k = 0;  // lignes de la pièce i
         for (int j = 0; j < kTuilesMax; j++) {
             if (!garde(i, j)) continue;
@@ -193,17 +193,17 @@ void ligne_de_la_tuile(const P& p, lv_obj_t* const* lignes, int t) {
 // (« Salon 1/2 », « Salon 2/2 »), sinon il n'y aurait rien en haut.
 template <class P>
 void onglets_peindre(P& p, lv_obj_t* const* onglets) {
-    char noms[kPieces][48];   // un nom de HA (kNom) ou « Pièce n » traduit
-    char pages[kPieces][25];  // « n/m », gardé entier quand le nom se coupe (25 : deux int au pire)
-    const char* ptr[kPieces] = {};
-    const char* sfx[kPieces] = {};
+    char noms[kPiecesMax][48];   // un nom de HA (kNom) ou « Pièce n » traduit
+    char pages[kPiecesMax][25];  // « n/m », gardé entier quand le nom se coupe (25 : deux int au pire)
+    const char* ptr[kPiecesMax] = {};
+    const char* sfx[kPiecesMax] = {};
     int pieces = 0;
     for (int i = 0; i < p.nb; i++)
         if (i == 0 || p.pieces[i] != p.pieces[i - 1]) pieces++;
     const bool par_page = pieces == 1 && p.nb > 1;
     int courant = 0;
     p.nb_onglets = 0;
-    for (int i = 0; i < p.nb && p.nb_onglets < kPieces; i++) {
+    for (int i = 0; i < p.nb && p.nb_onglets < kPiecesMax; i++) {
         const int r = p.pieces[i];
         const bool premiere = i == 0 || r != p.pieces[i - 1];
         if (!par_page && !premiere) continue;
@@ -223,7 +223,7 @@ void onglets_peindre(P& p, lv_obj_t* const* onglets) {
         p.page_onglet[o] = par_page ? i : debut;
         ptr[o] = nom;
     }
-    pages_onglets(onglets, kPieces, ptr, p.nb_onglets, courant, sfx);
+    pages_onglets(onglets, kPiecesMax, ptr, p.nb_onglets, courant, sfx);
 }
 
 // La page qu'ouvre le tap sur le nom `onglet` ; -1 s'il n'y en a pas.

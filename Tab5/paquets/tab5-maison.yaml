@@ -22,8 +22,7 @@ script:
           if (u.popup == nullptr) {
             u.vide = id(maison_vide);
             u.eteindre = id(btn_maison_eteindre);
-            u.titre = id(maison_popup_titre);
-            // Noms des pages (ADR-0066 : cinq lignes par colonne et par page).
+            // Onglets des pages (ADR-0066) : un par groupe de colonnes, ou par tranche de lignes.
             u.onglet[0] = id(maison_onglet_0);
             u.onglet[1] = id(maison_onglet_1);
             u.onglet[2] = id(maison_onglet_2);

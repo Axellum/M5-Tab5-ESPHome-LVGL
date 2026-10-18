@@ -13,9 +13,10 @@
  *       (tab5-ha-hmi.yaml, tab5-rendu-host.yaml) pour être copié à côté des .cpp, donc
  *       inclus aussi dans main.cpp : rien que des types, des constantes et des
  *       déclarations, tout dans `tuiles`, aucun `using namespace`.
- *       Def, Modele et Etat sont gardés tels quels en NVS (magie « TU » + taille du modèle
- *       depuis l'ADR-0066, « RAN1 ») : ne changer ni leurs champs ni leur ordre sans savoir
- *       que les définitions gardées seront oubliées une fois (HA les renvoie à la connexion).
+ *       Def, Modele et Etat sont gardés tels quels en NVS (magie du modèle = « TU » + sa
+ *       taille depuis l'ADR-0066, « RAN1 ») : un champ de plus ou un tableau plus grand
+ *       change la magie, les définitions gardées sont oubliées une fois (HA les renvoie à
+ *       chaque connexion).
  * @ai_instruction Une fonction d'un fichier des tuiles appelée par un autre : sa
  *       déclaration ici, sous le fichier qui la définit. Une fonction pour le reste du
  *       firmware : tab5_custom.h (lambdas YAML) ou tab5_internal.h (C++).
@@ -59,15 +60,17 @@ struct Def {
     char nom[modele_ha::kNom];
 };
 
-// Exactement ce qui part en NVS : tout en octets, sans bourrage (memcmp fiable). Jusqu'à
-// vingt éléments par pièce depuis l'ADR-0066 (5 × 20 Def, ~6 Ko) : la magie suit la taille
-// (kMagic, tab5_tuiles.cpp), un modèle d'une autre mise en page n'est jamais relu.
+// Exactement ce qui part en NVS : tout en octets, sans bourrage (memcmp fiable). Dimensionné
+// sur kPiecesMax pièces (ADR-0066, lot A) de kTuilesMax éléments (lot B), 10 × 20 Def, ~12 Ko :
+// sa magie suit sa taille (kMagic, tab5_tuiles.cpp), un modèle d'une autre mise en page n'est
+// jamais relu.
 struct Modele {
     uint32_t magic;
     uint8_t recues;       // 1 dès la première tab5_maj_tuiles : fin du mode héritage
-    uint8_t reserve[3];
-    char pieces[kPieces][modele_ha::kNom];
-    Def tuiles[kPieces][kTuilesMax];
+    uint8_t pieces_n;     // nombre de pièces (« pn|N », 1 à kPiecesMax ; kPiecesDefaut sans pn)
+    uint8_t reserve[2];
+    char pieces[kPiecesMax][modele_ha::kNom];
+    Def tuiles[kPiecesMax][kTuilesMax];
 };
 
 struct Etat {
@@ -150,15 +153,19 @@ struct ClimCible {
 // ─── tab5_tuiles.cpp ────────────────────────────────────────────────────────────────
 
 extern Modele s_m;
-extern Etat s_etats[kPieces][kTuilesMax];
+extern Etat s_etats[kPiecesMax][kTuilesMax];
 extern Heritage s_h;
 extern Minuterie s_confirmation;
 extern Minuterie s_ok;
 
 void charger();
 bool heritage();
+// Nombre de pièces à l'écran (ADR-0066) : « pn » reçu, kPiecesDefaut en mode héritage.
+int pieces_nombre();
 bool tuile_presente(int r, int t);
 int piece_courante();
+// Les cartes des appareils sont à l'écran : mode HA, ou page de pièce de la météo (ADR-0066).
+bool cartes_affichees();
 bool minuterie_sur(const Minuterie& m, int r, int t);
 bool vol_mouvement(const char* s);
 Gestes gestes(const Def& d, bool clim_connue);

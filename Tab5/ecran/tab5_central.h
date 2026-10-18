@@ -34,10 +34,6 @@ struct CentralPanelCtx {
     lv_obj_t* alert_cont = nullptr;
     lv_obj_t* info_wrap = nullptr;
     lv_obj_t* ha_wrap[4] = {};
-    // Ligne "chapeau" du titre de page en mode pieces de HA (lbl_page_title_sub) : logee ici
-    // plutot qu'ajoutee aux signatures deja passees en parametre (page_title_wrap /
-    // lbl_page_title), qui traversent 3 fonctions et 2 sites d'appel YAML.
-    lv_obj_t* page_title_sub = nullptr;
     bool has_rain = false;
     bool has_mf_alerts = false;
     bool has_info = false;
@@ -65,15 +61,15 @@ struct CentralPanelCtx {
 extern CentralPanelCtx g_central_ctx;
 
 // Gestion du geste de swipe (page_main.on_gesture) : pagination previsions
-// horaires/journalieres (0-4) dans la bande centrale+basse (y >= 333). Console diag :
-// uniquement par appui long sur btn_control_console (plus de swipe haut/bas). En mode HA (ADR-0023) :
-// pièce suivante / précédente qui a des appareils, les calques météo restent masqués.
-// La page courante est ctx.forecast_page.
+// horaires/journalieres (0-4) dans la bande centrale+basse (y >= 333), puis les pages de
+// pièce (5 et plus, ADR-0066). Console diag : uniquement par appui long sur
+// btn_control_console (plus de swipe haut/bas). En mode HA (ADR-0023) : pièce suivante /
+// précédente, en rouleau, les calques météo restent masqués. La page courante est
+// ctx.forecast_page ; les pastilles sont celles des tuiles (g_tuiles_ui.pastilles, pbar_0 … 9).
 void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
-    lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx);
 
@@ -86,7 +82,6 @@ void reset_forecast_to_main_page(
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
-    lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx);
 

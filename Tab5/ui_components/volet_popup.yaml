@@ -81,6 +81,11 @@ obj:
           - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_2, page: 2, choisir: popup_volet_page } }
           - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_3, page: 3, choisir: popup_volet_page } }
           - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_4, page: 4, choisir: popup_volet_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_5, page: 5, choisir: popup_volet_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_6, page: 6, choisir: popup_volet_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_7, page: 7, choisir: popup_volet_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_8, page: 8, choisir: popup_volet_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: vol_onglet_9, page: 9, choisir: popup_volet_page } }
 
           # ═══ CARTE VOLETS (gauche) : les volets de la pièce + Tout ouvrir / Tout fermer ═══
           - obj:

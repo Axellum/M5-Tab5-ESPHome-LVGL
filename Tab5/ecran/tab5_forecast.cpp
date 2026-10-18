@@ -16,6 +16,7 @@
  */
 #include "tab5_custom.h"
 #include "tab5_internal.h"
+#include "tab5_geometrie.h"
 #include "alarm_clock.h"
 #include "lvgl.h"
 #include "esphome/components/lvgl/lvgl_esphome.h"
@@ -394,9 +395,10 @@ void previsions_fraicheur_tick(lv_obj_t* zone, lv_obj_t* lbl) {
     const time_t recues = g_previsions_recues;
     const time_t now = tab5_time_source(nullptr);
     // Rien jamais reçu, heure invalide ou horloge revenue en arrière : rien à dire
-    // (le cas « pas encore de données » a déjà son affichage). Mode HA : les tuiles
-    // montrent les appareils, pas les prévisions.
+    // (le cas « pas encore de données » a déjà son affichage). Mode HA ou page de pièce
+    // de la météo (ADR-0066) : les tuiles montrent les appareils, pas les prévisions.
     const bool perimees = recues != 0 && tab5_heure_valide(now) && !g_central_ctx.ha_mode &&
+                          g_central_ctx.forecast_page < kPagesMeteo &&
                           now - recues > (time_t) kPrevisionsPerimeesMin * 60;
     if (perimees) {
         struct tm r {}, n {};

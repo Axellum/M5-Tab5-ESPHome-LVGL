@@ -16,6 +16,8 @@ chaînes au contrat ; ce fichier lit le C++ et le YAML, comme les autres tests s
 import os
 import re
 from pathlib import Path
+
+import pytest
 from tests.commun import CARTES, _jetons as jetons_resolus, constantes_cpp, lire as _lire, resoudre, source
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -99,8 +101,14 @@ def test_piece_de_chaque_page_selon_l_adr():
     for ligne in texte.splitlines()[2:]:
         r, p = (int(x) for x in re.findall(r"^\|\s*(\d)\s*\|\s*(\d)\s*\|", ligne.strip())[0])
         page_de[r] = p
-    kPieceDePage = [int(x) for x in re.findall(r"\d", _constexpr("kPieceDePage"))]
+    # La table vit dans le socle depuis l'ADR-0066 (piece_de_page, testée sur PC) ; les pages 5
+    # et plus (une par pièce au-delà de la cinquième) : page = pièce.
+    core = _lire("Tab5", "socle", "tab5_core.cpp")
+    table = re.search(r"constexpr int kPieceDePage\[kPagesMeteo\] = \{([^}]*)\};", core).group(1)
+    kPieceDePage = [int(x) for x in re.findall(r"\d", table)]
     assert kPieceDePage == [r for p in range(5) for r, pp in page_de.items() if pp == p]
+    assert "return page < kPagesMeteo ? kPieceDePage[page] : page;" in core
+    assert "kPieceDePage" not in _cpp(), "une seule table, celle du socle"
     # La tablette et le blueprint dans le même ordre que le rendu (tools/rendu/ecrans.py).
     assert "PAGE_DE_LA_PIECE" in _lire("tools", "rendu", "ecrans.py")
 
@@ -127,13 +135,128 @@ def test_noms_filtres_aux_glyphes_des_polices():
     assert {ord(c) for c in polices["roboto_32_b"]} == garde
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Nombre de pièces (ADR-0066, lot A)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Dernière version publiée avant l'ADR-0066 : son parseur doit ignorer les clés nouvelles.
+TAG_AVANT_PN = "v3.9.0-rc.5"
+
+
+def _cle_lue_par_3_9(cle):
+    """Miroir de lire_entree de la 3.9 (tab5_tuiles.cpp à TAG_AVANT_PN, relu par le test
+    ci-dessous) : « pR » et « tRT » avec des chiffres de 0 à 4 (chiffre_0_4), « h… » et
+    « n… » pour les zones à lignes ; tout le reste est ignoré."""
+    if len(cle) == 2 and cle[0] == "p" and "0" <= cle[1] <= "4":
+        return "piece"
+    if cle[0] in "hn" and len(cle) in (2, 3):
+        return "zone"
+    if len(cle) == 3 and cle[0] == "t" and "0" <= cle[1] <= "4" and "0" <= cle[2] <= "4":
+        return "tuile"
+    return None
+
+
+def test_le_firmware_3_9_ignore_les_cles_des_dix_pieces():
+    """ADR-0066, compatibilité : un blueprint récent sur une tablette en 3.9 garde l'écran
+    d'avant. « pn|N », les pièces 5 à 9 (« p5 », « t5x ») et les tuiles de rang 5 et plus
+    (« t0a », lot B) ne sont lus ni comme une pièce, ni comme une tuile, ni comme une zone."""
+    import contrat_api as ca
+    if TAG_AVANT_PN not in ca.tags_publies():
+        if os.environ.get("GITHUB_ACTIONS"):
+            pytest.fail(f"tag {TAG_AVANT_PN} absent du clone de la CI")
+        pytest.skip(f"tag {TAG_AVANT_PN} absent de ce clone (`git fetch --tags`)")
+    ancien = ca.arbre(TAG_AVANT_PN).lire("Tab5/ecran/tab5_tuiles.cpp").replace("\r\n", "\n")
+    # Le miroir est fidèle : les conditions de la 3.9, telles qu'elles sont écrites.
+    assert "if (c < '0' || c > '4') return false;" in _fonction(ancien, "chiffre_0_4")
+    lire = _fonction(ancien, "lire_entree")
+    assert "if (f[0].n == 2 && f[0].p[0] == 'p' && chiffre_0_4(f[0].p[1], r)) {" in lire
+    assert "if (z >= 0 && (f[0].n == 2 || f[0].n == 3)) {" in lire
+    assert ("if (f[0].n != 3 || f[0].p[0] != 't' || !chiffre_0_4(f[0].p[1], r) || !chiffre_0_4(f[0].p[2], t)) return;"
+            in lire)
+    assert "constexpr char kLettreZone[RANGEE_NB] = {'h', 'n'};" in ancien
+    nouvelles = ["pn"] + [f"p{r}" for r in range(5, 10)] + [f"t{r}{t}" for r in range(5, 10) for t in "0123456789abcdefghij"]
+    nouvelles += [f"t{r}{t}" for r in range(5) for t in "56789abcdefghij"]
+    assert all(_cle_lue_par_3_9(c) is None for c in nouvelles)
+    # Les clés des cinq pièces d'avant restent lues : la 3.9 garde ses cinq pièces.
+    assert all(_cle_lue_par_3_9(f"p{r}") == "piece" for r in range(5))
+    assert all(_cle_lue_par_3_9(f"t{r}{t}") == "tuile" for r in range(5) for t in range(5))
+
+
+def test_nombre_de_pieces_lu_et_borne():
+    """« pn|N » : lu avant les pièces (sans lui, cinq), borné à 1 .. 10 (pieces_nombre_lire,
+    tab5_core.cpp, testée sur PC) ; une pièce R ≥ N n'existe nulle part (tuile_presente) et
+    ses définitions sont effacées de l'instantané."""
+    lire = _fonction(_cpp(), "lire_entree")
+    assert "m.pieces_n = static_cast<uint8_t>(pieces_nombre_lire(f[1].p, f[1].n));" in lire
+    assert lire.index("f[0].p[1] == 'n'") < lire.index("piece_index(f[0].p[1], r)"), "pn avant le chiffre de pièce"
+    assert "neuf->pieces_n = kPiecesDefaut;" in _fonction(_cpp(), "tuiles_definir")
+    assert "for (int r = neuf->pieces_n; r < kPiecesMax; r++) {" in _fonction(_cpp(), "tuiles_definir")
+    assert "r >= pieces_nombre()" in _fonction(_cpp(), "tuile_presente")
+    assert "if (heritage() || s_m.pieces_n < 1) return kPiecesDefaut;" in _fonction(_cpp(), "pieces_nombre")
+    regle = _fonction(_lire("Tab5", "socle", "tab5_core.cpp"), "pieces_nombre_lire")
+    assert "return v < 1 ? 1 : (v > kPiecesMax ? kPiecesMax : v);" in regle
+    # Plus de ligne « Pièce n/N » au-dessus du nom de la pièce (18/10/2026, demande d'Axel) :
+    # ni le texte, ni l'étiquette qui le portait, ni ses jetons de position.
+    titre = _fonction(_cpp(), "tuiles_titre_piece")
+    assert "Pièce %d/%d" not in titre and 'tr("Pièce %d"), r + 1);' in titre
+    for chemin in (("Tab5", "ecran", "tab5_central.cpp"), ("Tab5", "ecran", "tab5_central.h"),
+                   ("Tab5", "paquets", "tab5-lvgl.yaml"), ("Tab5", "paquets", "tab5-tuiles.yaml"),
+                   ("Tab5", "paquets", "tab5-ui-tokens.yaml"), ("Tab5", "socle", "tab5_geometrie.h"),
+                   ("tab5-ha-hmi.yaml",), ("tab5-rendu-host.yaml",)):
+        texte = _lire(*chemin)
+        for mort in ("page_title_sub", "lbl_page_title_sub", "acc_titre_sous_y", "acc_titre_y2", "kAccTitreY2"):
+            assert mort not in texte, (chemin, mort)
+    for code in ("en", "de", "nl", "es", "it", "tr"):
+        assert '"Pièce %d/%d"' not in _lire("Tab5", "lang", f"{code}.yaml"), code
+
+
+def test_pages_de_piece_de_la_meteo():
+    """ADR-0066 : en mode météo, les pièces 5 à N − 1 ont chacune une page après les jours
+    10-14, dessinée comme en mode HA (peindre_cartes), avec le titre de la pièce ; aucune
+    quand « Appareils sur la météo » est éteint ; le retour à l'accueil après 25 s les quitte
+    (retour_auto_tick ne regarde que la page 2)."""
+    assert "return std::max(kPagesMeteo, pieces_nombre());" in _fonction(_cpp(), "pages_meteo")
+    assert "if (!s_appareils_meteo || heritage()) return kPagesMeteo;" in _fonction(_cpp(), "pages_meteo")
+    assert "if (!cartes_affichees()) return;" in _fonction(_cpp(), "peindre_cartes")
+    assert "if (cartes_affichees()) return;" in _fonction(_cpp(), "peindre_meteo")
+    central = _lire("Tab5", "ecran", "tab5_central.cpp")
+    appliquer = _fonction(central, "apply_forecast_page")
+    assert "g_tuiles_ui.calque_ha" in appliquer and "tuiles_peindre_meteo();" in appliquer
+    assert "pagination_afficher" not in appliquer, "les pastilles : celles des tuiles (pastilles_peindre)"
+    titre = _fonction(central, "set_forecast_page_title_text")
+    assert "const bool piece = ctx.ha_mode || forecast_page >= kPagesMeteo;" in titre
+    assert "if (g_central_ctx.forecast_page == 2) return RetourAuto::RIEN;" in _lire("Tab5", "ecran", "tab5_anim.cpp")
+    # Ce qui suit les cartes et non le mode HA (relecture du lot A) : sortie du mode HA
+    # depuis le calque des cartes, ancre de la roue d'une tuile, pièce montrée (Maison,
+    # roue de navigation), mention « Prévisions de … » et titre après une réponse vocale.
+    assert "lv_obj_t* const avant = ctx.ha_mode ? u.calque_ha : calque_de(ctx.forecast_page);" in \
+        _fonction(_cpp(), "tuiles_mode_ha")
+    roue = _lire("Tab5", "ecran", "tab5_tuiles_roue.cpp")
+    assert "const bool cartes = cartes_affichees();" in roue
+    assert "return tuile_roue_ouvrir(r, t, entiere ? g_tuiles_ui.carte_pastille[p] : case_ancre(p, d.case_de[t]));" in roue
+    assert "if (!cartes_affichees() || heritage()) return -1;" in _fonction(_cpp(), "tuiles_piece_montree")
+    assert "tuiles_piece_mode_ha()" not in _lire("Tab5", "ecran", "tab5_maison.cpp")
+    assert "tuiles_piece_mode_ha()" not in _lire("Tab5", "ecran", "tab5_roue_navigation.cpp")
+    assert "g_central_ctx.forecast_page < kPagesMeteo &&" in _lire("Tab5", "ecran", "tab5_forecast.cpp")
+    assert "if (ctx.ha_mode || ctx.forecast_page >= kPagesMeteo) {" in central
+    # Dix pastilles, posées une fois ; celles de trop masquées.
+    tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
+    lvgl = _lire("Tab5", "paquets", "tab5-lvgl.yaml")
+    for i in range(10):
+        assert f"u.pastilles[{i}] = id(pbar_{i});" in tuiles and f"id: pbar_{i}," in lvgl
+    assert "lv_obj_t* pbars[]" not in lvgl and "lv_obj_t* pbars[]" not in _lire("Tab5", "paquets", "tab5-scripts.yaml")
+
+
 def test_magie_nvs_des_definitions():
-    # « TU » + la taille du modèle (ADR-0066) : une autre mise en page change la magie d'elle-même
-    # (« TUI1 » jusqu'à la 3.9, cinq tuiles par pièce).
+    # « TU » + la taille du modèle (ADR-0066, lots A et B : la même ligne) : une mise en page
+    # nouvelle change la magie d'elle-même (« TUI1 » jusqu'à la 3.9, cinq pièces de cinq
+    # tuiles). Dix pièces de vingt éléments : 8 + 10 × 25 + 200 × 59 octets.
     assert _constexpr("kMagic") == "0x54550000u | static_cast<uint32_t>(sizeof(Modele))"
     assert 'static_assert(sizeof(Modele) < 0x10000, "la taille du modèle tient dans la magie");' in _cpp()
-    assert "Def tuiles[kPieces][kTuilesMax];" in _cpp()
-    # Relu dans le tas (le modèle fait ~6 Ko, la pile de la boucle 8 Ko).
+    modele = re.search(r"struct Modele \{(.*?)\};", _cpp(), re.S).group(1)
+    assert "char pieces[kPiecesMax][modele_ha::kNom];" in modele and "Def tuiles[kPiecesMax][kTuilesMax];" in modele
+    assert "uint8_t pieces_n;" in modele and "uint8_t reserve[2];" in modele, "pn pris sur la réserve"
+    # Relu dans le tas (le modèle fait ~12 Ko, la pile de la boucle 8 Ko).
     charger = _fonction(_cpp(), "charger")
     assert "std::unique_ptr<Modele> m(new Modele());" in charger and "Modele m{};" not in charger
     definir = _fonction(_cpp(), "tuiles_definir")
@@ -484,18 +607,28 @@ def test_rouleau_des_pieces_en_mode_ha():
     en rouleau (la 5 revient à la 1, pièces vides comprises) ; les pastilles suivent l'ordre
     des pièces. La météo garde son ordre et son bouclage volontaire ([AI-WARNING])."""
     swipe = _fonction(_cpp(), "tuiles_swipe_ha")
-    assert "reglages_page_voisine(piece_courante(), kPieces, gauche)" in swipe
+    # Les N pièces choisies dans HA (ADR-0066), en rouleau.
+    assert "reglages_page_voisine(piece_courante(), pieces_nombre(), gauche)" in swipe
     assert "forecast_page_suivante" not in swipe and "piece_non_vide" not in swipe
-    # Pastilles : la pièce en mode HA, la page sinon ; repeintes à l'entrée et à la sortie.
-    assert "ctx.ha_mode ? piece_courante() : ctx.forecast_page" in _fonction(_cpp(), "pastilles_peindre")
-    assert "pastilles_peindre();" in _fonction(_cpp(), "aller_page")
+    # Pastilles : la pièce en mode HA (une par pièce), la page sinon (une par page de la météo) ;
+    # repeintes à l'entrée et à la sortie.
+    pastilles = _fonction(_cpp(), "pastilles_peindre")
+    assert "ctx.ha_mode ? piece_courante() : ctx.forecast_page" in pastilles
+    assert "const int n = ctx.ha_mode ? pieces_nombre() : pages_meteo();" in pastilles
+    assert "pastilles_peindre();" in _fonction(_cpp(), "aller_piece_ha")
+    # La pièce du mode HA a son propre index ; forecast_page suit sa page.
+    assert "if (g_central_ctx.ha_mode) return s_piece_ha;" in _fonction(_cpp(), "piece_courante")
+    assert "g_central_ctx.forecast_page = page_de_piece(r);" in _fonction(_cpp(), "aller_piece_ha")
     mode = _fonction(_cpp(), "tuiles_mode_ha")
-    assert "aller_page(cible);" in mode and "if (cible != page) aller_page" not in mode
+    assert "aller_piece_ha(piece_de_page(cible));" in mode
     assert mode.index("ctx.ha_mode = false;") < mode.index("pastilles_peindre();")
-    # La météo, inchangée : gauche 0→1→2→3→4→2, droite 4→3→2→1→0→2.
+    # La météo : droite 4→3→2→1→0→2 inchangée ; gauche 0→1→2→3→4→2, ou →5→…→N−1→2 avec les
+    # pages de pièce (ADR-0066, décision d'Axel du 18/10/2026 : le côté gauche seul).
     central = _lire("Tab5", "ecran", "tab5_central.cpp")
     meteo = _fonction(central, "forecast_page_suivante")
-    assert "if (gauche) return page >= 4 ? 2 : page + 1;" in meteo and "return page <= 0 ? 2 : page - 1;" in meteo
+    assert "return meteo_page_suivante(page, gauche, tuiles_pages_meteo());" in meteo
+    regle = _fonction(_lire("Tab5", "socle", "tab5_core.cpp"), "meteo_page_suivante")
+    assert "if (gauche) return page >= pages - 1 ? 2 : page + 1;" in regle and "return page <= 0 ? 2 : page - 1;" in regle
     assert "forecast_page_suivante(old_page, dir == LV_DIR_LEFT)" in _fonction(central, "handle_swipe_gesture")
 
 

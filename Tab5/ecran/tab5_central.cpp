@@ -546,26 +546,22 @@ void central_tout_marquer_lu(HaAlertSlotUI slots[4], lv_obj_t* lbl_info, const s
 }
 
 // Pose le titre sans rien decider de la visibilite, dans la police de la date
-// (style_police_date, tab5-lvgl.yaml). Pages de previsions : une ligne, la plage des
-// tuiles. Mode HA : chapeau discret (roboto_22 attenue, « Pièce n/N ») + nom de la
-// piece dessous ; sans nom, le chapeau prend la ligne principale et se recentre.
-// Renvoie false quand la page n'a pas de titre (accueil) : rien n'est ecrit.
+// (style_police_date, tab5-lvgl.yaml), sur une ligne : la plage des tuiles (pages de
+// previsions) ou le nom de la piece (mode HA, page de piece de la meteo). Plus de ligne
+// « Pièce n/N » au-dessus du nom (18/10/2026, demande d'Axel : mieux sans ; les pastilles
+// disent deja la piece). Renvoie false quand la page n'a pas de titre (accueil) : rien
+// n'est ecrit.
 static bool set_forecast_page_title_text(int forecast_page, lv_obj_t* lbl_page_title,
                                          CentralPanelCtx& ctx) {
-    std::string chapeau, plage;
-    // Mode HA : « Pièce n/N » et le nom de la pièce (tab5_tuiles.cpp), sur toutes les pages.
-    const bool a_titre = ctx.ha_mode ? tuiles_titre_piece(chapeau, plage)
-                                     : forecast_page_title_parts(forecast_page, plage);
+    std::string plage;
+    // Mode HA et page de pièce de la météo (5 et plus, ADR-0066) : le nom de la pièce
+    // (tab5_tuiles.cpp), sur toutes les pages.
+    const bool piece = ctx.ha_mode || forecast_page >= kPagesMeteo;
+    const bool a_titre = piece ? tuiles_titre_piece(plage) : forecast_page_title_parts(forecast_page, plage);
     if (!a_titre) return false;
 
-    const bool deux_lignes = !chapeau.empty() && !plage.empty();
-    if (ctx.page_title_sub) {
-        lv_label_set_recolor(ctx.page_title_sub, false);
-        ui_text(ctx.page_title_sub, deux_lignes ? chapeau.c_str() : "");
-    }
     lv_label_set_recolor(lbl_page_title, false);
-    ui_text(lbl_page_title, plage.empty() ? chapeau.c_str() : plage.c_str());
-    lv_obj_align(lbl_page_title, LV_ALIGN_CENTER, 0, deux_lignes ? kAccTitreY2 : 0);
+    ui_text(lbl_page_title, plage.c_str());
     return true;
 }
 
@@ -834,57 +830,57 @@ static void liberer_carte(CentralPanelCtx& ctx) {
     terminer_reponse_vocale(ctx);
 }
 
+// Calque d'une page de la météo : 0 horaire (pages 0-1), 1 journalier (2-4), 2 les cartes
+// d'une pièce (pages 5 et plus, ADR-0066 : le calque du mode HA, layer_switches).
+static int genre_de_page(int page) { return page >= kPagesMeteo ? 2 : (page >= 2 ? 1 : 0); }
+
 // Applique une page de previsions : donnees, calque, pastilles, carte centrale.
 // Factorise entre les deux seules facons de changer de page — le swipe manuel
 // (handle_swipe_gesture) et le retour automatique d'inactivite
 // (reset_forecast_to_main_page) — pour qu'elles laissent l'ecran dans
 // exactement le meme etat. `dir` ne sert qu'a l'animation de changement de
-// calque (horaire <-> journalier).
+// calque (horaire <-> journalier <-> cartes d'une piece).
 static void apply_forecast_page(int old_page, int page, lv_dir_t dir,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
-    lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
 
         liberer_carte(ctx);
         ctx.forecast_page = page;
 
-        // Detection de changement de layer (horaire <-> journalier).
+        // Detection de changement de layer (horaire <-> journalier <-> cartes).
         // L'animation de swipe horizontal n'a de sens que lors d'un changement de layer.
-        bool old_is_daily = (old_page >= 2);
-        bool new_is_daily = (page >= 2);
+        const int old_genre = genre_de_page(old_page);
+        const int new_genre = genre_de_page(page);
+        lv_obj_t* const calques[3] = {layer_forecast_hourly, layer_forecast_daily, g_tuiles_ui.calque_ha};
 
-        if (old_is_daily != new_is_daily) {
-            // Changement de layer : refresh des donnees AVANT l'animation,
-            // puis animation du glissement horizontal + fondu croise.
-            // Le calque entier glisse deja : pas de rouleau d'icone en plus
-            // (deux animations sur la meme zone = bruit visuel + repaint double).
-            g_forecast_roll_suppress = true;
-            if (new_is_daily) {
+        // Donnees de la nouvelle page AVANT l'animation ; une page de piece : ses cartes,
+        // peintes plus bas par tuiles_peindre_meteo. Au changement de calque, le calque
+        // entier glisse deja : pas de rouleau d'icone en plus (deux animations sur la meme
+        // zone = bruit visuel + repaint double).
+        if (new_genre != 2) {
+            g_forecast_roll_suppress = old_genre != new_genre;
+            if (new_genre == 1) {
                 refresh_daily_forecast(day_slots, page - 2, f_card, f_card_s);
             } else {
                 refresh_hourly_forecast(hour_slots, 1 - page, f_card, f_card_s);
             }
             g_forecast_roll_suppress = false;
-            lv_obj_t* out_layer = old_is_daily ? layer_forecast_daily : layer_forecast_hourly;
-            lv_obj_t* in_layer  = new_is_daily ? layer_forecast_daily : layer_forecast_hourly;
-            animate_swipe_horizontal(out_layer, in_layer, dir);
-        } else {
-            // Meme layer (page intra-journalier ou intra-horaire) : refresh instantane.
-            lv_obj_set_flag(layer_forecast_daily, LV_OBJ_FLAG_HIDDEN, !new_is_daily);
-            lv_obj_set_flag(layer_forecast_hourly, LV_OBJ_FLAG_HIDDEN, new_is_daily);
-            if (new_is_daily) {
-                refresh_daily_forecast(day_slots, page - 2, f_card, f_card_s);
-            } else {
-                refresh_hourly_forecast(hour_slots, 1 - page, f_card, f_card_s);
-            }
         }
 
-        pagination_afficher(pbars, page);
+        if (old_genre != new_genre) {
+            // Changement de layer : glissement horizontal + fondu croise.
+            animate_swipe_horizontal(calques[old_genre], calques[new_genre], dir);
+        } else {
+            // Meme layer (intra-journalier, intra-horaire, d'une piece a l'autre) : instantane.
+            for (int g = 0; g < 3; g++)
+                if (calques[g] != nullptr) lv_obj_set_flag(calques[g], LV_OBJ_FLAG_HIDDEN, g != new_genre);
+        }
 
-        // Épaules et boutons des appareils de la pièce de cette page (ADR-0023).
+        // Épaules et boutons des appareils de la pièce de cette page (ADR-0023), ou ses
+        // cartes sur une page de pièce (ADR-0066) ; pastilles, une par page de la météo.
         tuiles_peindre_meteo();
 
         update_central_forecast_page_ui(page, page_title_wrap, lbl_page_title, ctx);
@@ -912,9 +908,12 @@ void pagination_afficher(lv_obj_t* const* pbars, int n, int page) {
 // tour complet vers 4). Météo seulement : depuis le 18/10/2026, le mode HA (pièces,
 // ADR-0023) a son propre rouleau dans l'ordre des pièces (tuiles_swipe_ha, demande
 // d'Axel, qui garde cet ordre-ci pour la météo).
+// Amendé le 18/10/2026 (ADR-0066, décision d'Axel), côté GAUCHE seulement : avec plus de
+// cinq pièces, LEFT continue après 4 sur une page par pièce (5 … N−1) avant de revenir à 2
+// (2 → 3 → 4 → 5 → … → N−1 → 2). RIGHT ne change pas. La règle : meteo_page_suivante
+// (tab5_core.cpp, testée sur PC par tools/test_tab5_socle.cpp).
 int forecast_page_suivante(int page, bool gauche) {
-    if (gauche) return page >= 4 ? 2 : page + 1;
-    return page <= 0 ? 2 : page - 1;
+    return meteo_page_suivante(page, gauche, tuiles_pages_meteo());
 }
 
 void central_mode_ha(lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title, CentralPanelCtx& ctx) {
@@ -928,7 +927,6 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
-    lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
 
@@ -956,16 +954,15 @@ void handle_swipe_gesture(lv_dir_t dir, int32_t pt_y,
     const int page = forecast_page_suivante(old_page, dir == LV_DIR_LEFT);
 
     apply_forecast_page(old_page, page, dir,
-        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
-        f_card, f_card_s, pbars,
-        page_title_wrap, lbl_page_title, ctx);
+                        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
+                        f_card, f_card_s,
+                        page_title_wrap, lbl_page_title, ctx);
 }
 
 void reset_forecast_to_main_page(
     lv_obj_t* layer_forecast_daily, lv_obj_t* layer_forecast_hourly,
     WeatherDaySlot day_slots[5], WeatherHourSlot hour_slots[5],
     esphome::font::Font* f_card, esphome::font::Font* f_card_s,
-    lv_obj_t* pbars[5],
     lv_obj_t* page_title_wrap, lv_obj_t* lbl_page_title,
     CentralPanelCtx& ctx) {
 
@@ -974,13 +971,21 @@ void reset_forecast_to_main_page(
 
     // Sens de l'animation : depuis l'horaire (0/1) le calque journalier arrive
     // par la droite, comme un swipe vers la gauche ; depuis 3/4 on recule, donc
-    // swipe vers la droite (sans effet visible : meme calque, refresh direct).
+    // swipe vers la droite (sans effet visible : meme calque, refresh direct) ; depuis une
+    // page de pièce (5 et plus, ADR-0066), on recule aussi.
     const lv_dir_t dir = (old_page < FORECAST_MAIN_PAGE) ? LV_DIR_LEFT : LV_DIR_RIGHT;
 
     apply_forecast_page(old_page, FORECAST_MAIN_PAGE, dir,
-        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
-        f_card, f_card_s, pbars,
-        page_title_wrap, lbl_page_title, ctx);
+                        layer_forecast_daily, layer_forecast_hourly, day_slots, hour_slots,
+                        f_card, f_card_s,
+                        page_title_wrap, lbl_page_title, ctx);
+}
+
+void meteo_page_accueil() {
+    const TuilesUI& u = g_tuiles_ui;
+    if (g_central_ctx.ha_mode || u.calque_jours == nullptr || u.calque_heures == nullptr) return;
+    reset_forecast_to_main_page(u.calque_jours, u.calque_heures, g_day_slots, g_hour_slots,
+                                u.police_meteo, u.police_meteo_petite, u.titre_cadre, u.titre, g_central_ctx);
 }
 
 
@@ -1180,8 +1185,9 @@ void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPa
     if (vocal_wrap) lv_obj_add_flag(vocal_wrap, LV_OBJ_FLAG_HIDDEN);
     ctx.vocal_shown = false;
 
-    // Mode HA : la réponse avait masqué le titre de la pièce, il revient.
-    if (ctx.ha_mode) {
+    // Mode HA ou page de pièce de la météo (ADR-0066) : la réponse avait masqué le titre
+    // de la pièce, il revient.
+    if (ctx.ha_mode || ctx.forecast_page >= kPagesMeteo) {
         update_central_forecast_page_ui(ctx.forecast_page, g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, ctx);
         return;
     }
