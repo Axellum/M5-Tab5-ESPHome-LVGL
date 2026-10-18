@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """Garde-fou du registre unique des consoles et des fenêtres modales (ADR-0013).
 
-Depuis le 08/09/2026, la liste des 8 consoles vit dans `Tab5/ecran/tab5_registry.cpp`
-(`GameRegistry::kGames`) et la liste des fenêtres modales dans le script
+Depuis le 08/09/2026, la liste des 8 consoles vit dans `GameRegistry::kGames` — dans
+`Tab5/jeux/jeux_registre.cpp`, le module des jeux, depuis le 18/10/2026 (ADR-0065 ;
+`Tab5/ecran/tab5_registry.cpp` avant) — et la liste des fenêtres modales dans le script
 `tab5_modal_registry_init` de `Tab5/paquets/tab5-navigation.yaml` (de `tab5-scripts.yaml`
 jusqu'au 08/10/2026), avec le select « Aller à l'écran ». Ce script vérifie que
 personne ne recopie une liste ailleurs et qu'aucune console ni popup n'est
 oubliée :
 
   1. chaque `Tab5/jeux/*_game.h` (namespace avec `bool is_open();`) figure dans
-     `kGames`, et réciproquement ;
+     `kGames`, et réciproquement ; le socle (`tab5_registry.cpp`) et la table vide d'un
+     firmware sans jeux (`jeux_absents.cpp`) n'en nomment aucun ;
   2. aucun YAML de `Tab5/` n'interroge un jeu directement (`X::is_open()`),
      n'appelle `X::close()` hors du script d'ouverture du jeu, ni ne dispatche
      l'IMU jeu par jeu (`X::on_imu(`) : tout passe par `GameRegistry` ;
@@ -40,7 +42,10 @@ import tab5_sources  # noqa: E402
 REPO = Path(__file__).resolve().parent.parent
 TAB5 = REPO / "Tab5"
 UI = TAB5 / "ui_components"
-REGISTRY_CPP = TAB5 / "ecran" / "tab5_registry.cpp"
+# La table des consoles : le module des jeux (ADR-0065).
+REGISTRY_CPP = TAB5 / "jeux" / "jeux_registre.cpp"
+# Ce qui ne doit nommer aucun jeu : le registre du socle et la table vide sans le module.
+SANS_JEU_CPP = (Path("ecran") / "tab5_registry.cpp", Path("jeux") / "jeux_absents.cpp")
 # Registre des fenêtres et select « Aller à l'écran » (même fichier depuis le 08/10/2026).
 NAVIGATION_YAML = TAB5 / "paquets" / "tab5-navigation.yaml"
 
@@ -120,7 +125,7 @@ def select_options(navigation: Path = NAVIGATION_YAML) -> list[str]:
 def scan(tab5: Path = TAB5) -> list[str]:
     problems: list[str] = []
     ui_dir = tab5 / "ui_components"
-    registry_cpp = tab5 / "ecran" / "tab5_registry.cpp"
+    registry_cpp = tab5 / "jeux" / "jeux_registre.cpp"
     navigation_yaml = tab5 / "paquets" / "tab5-navigation.yaml"
 
     for required in (registry_cpp, navigation_yaml):
@@ -134,6 +139,13 @@ def scan(tab5: Path = TAB5) -> list[str]:
         problems.append(f"{headers[ns]} : namespace {ns} absent de GameRegistry::kGames ({registry_cpp.name})")
     for ns in sorted(in_registry - set(headers)):
         problems.append(f"{registry_cpp.name} : {ns} dans kGames sans en-tête *_game.h correspondant")
+    for rel in SANS_JEU_CPP:
+        if not (tab5 / rel).is_file():
+            problems.append(f"fichier introuvable : {tab5 / rel}")
+            continue
+        for ns in sorted(games_from_registry(tab5 / rel) & set(headers)):
+            problems.append(f"{rel.name} : nomme la console {ns} — la liste des jeux n'est que dans "
+                            f"{registry_cpp.name} (module des jeux, ADR-0065)")
 
     # 2 + 3 + 4. aucune liste recopiée dans les YAML
     game_names = "|".join(sorted(headers)) or "NO_GAME"

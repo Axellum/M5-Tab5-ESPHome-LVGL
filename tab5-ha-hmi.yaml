@@ -257,56 +257,9 @@ esphome:
     - Tab5/ecran/tab5_serveur_ia.cpp
     # Télécommandes : une page par télécommande du blueprint (ADR-0056).
     - Tab5/ecran/tab5_telecommande.cpp
-    # Helpers partagés par les 8 consoles (mk_rect/mk_label, show/set_bg/…, xorshift32,
-    # NvsSlot<T>) — lot (f), ADR-0014. Header-only.
-    - Tab5/jeux/game_common.h
-    # Jeu « Fil d'Or » (overlay plein écran) — sous-module isolé du HMI.
-    - Tab5/jeux/marble_game.h
-    - Tab5/jeux/marble_game.cpp
-    # Jeu « Arcanoïde » (casse-briques rétro) — sous-module isolé du HMI.
-    - Tab5/jeux/arkanoid_game.h
-    - Tab5/jeux/arkanoid_game.cpp
-    # Jeu « Coureur d'Or » (Lode Runner) — sous-module isolé du HMI.
-    - Tab5/jeux/lode_game.h
-    - Tab5/jeux/lode_game.cpp
-    # Jeu « Roi Noir » (échiquier FIDE + IA embarquée) — sous-module isolé du HMI.
-    # chess_ai.* = moteur pur (aucun LVGL) ; chess_game.* = UI et machine à états.
-    - Tab5/jeux/chess_ai.h
-    - Tab5/jeux/chess_ai.cpp
-    - Tab5/jeux/chess_game.h
-    - Tab5/jeux/chess_game.cpp
-    # Jeu « Go Tab » — sous-module isolé (moteur + IA + UI).
-    - Tab5/jeux/go_engine.h
-    - Tab5/jeux/go_engine.cpp
-    - Tab5/jeux/go_ai.h
-    - Tab5/jeux/go_ai.cpp
-    - Tab5/jeux/go_game.h
-    - Tab5/jeux/go_game.cpp
-    # Jeu « Trial Poursuite » (Trivial Pursuit rétro-salon) — sous-module isolé.
-    # trivia_questions.h est inclus par trivia_game.cpp : il DOIT figurer ici,
-    # sinon ESPHome ne le copie pas dans le dossier de build et la compilation
-    # échoue sur un « No such file or directory ».
-    - Tab5/jeux/trivia_game.h
-    - Tab5/jeux/trivia_questions.h
-    - Tab5/jeux/trivia_game.cpp
-    # Jeu « Dames » (dames internationales / anglaises) — sous-module isolé.
-    # draughts_engine.* = moteur pur (aucun LVGL, testé sur PC) ; draughts_ai.* = IA ;
-    # draughts_game.* = UI et machine à états.
-    - Tab5/jeux/draughts_engine.h
-    - Tab5/jeux/draughts_engine.cpp
-    - Tab5/jeux/draughts_ai.h
-    - Tab5/jeux/draughts_ai.cpp
-    - Tab5/jeux/draughts_game.h
-    - Tab5/jeux/draughts_game.cpp
-    # Jeu « Neon Apron » (flipper PORTRAIT) — sous-module isolé du HMI.
-    # Seule console qui bascule l'écran : elle passe LVGL en 720×1280 le temps
-    # d'une partie puis restaure `rotation: 270`. Voir le bloc [AI-CONTEXT]
-    # ORIENTATION en tête de pinball_game.cpp avant d'y toucher.
-    - Tab5/jeux/pinball_game.h
-    - Tab5/jeux/pinball_game.cpp
-    # Registre unique des consoles (GameRegistry::kGames) et des fenêtres
-    # modales (ModalRegistry) — ADR-0013. Le .cpp inclut lui-même les 8
-    # *_game.h : garder ces deux lignes APRÈS les consoles.
+    # Registre unique des consoles (GameRegistry) et des fenêtres modales
+    # (ModalRegistry) — ADR-0013. Sa table des consoles vient du module des jeux
+    # (tab5-arcade.yaml, ADR-0065), vide sans lui (tab5-arcade-absente.yaml).
     - Tab5/ecran/tab5_registry.h
     - Tab5/ecran/tab5_registry.cpp
     # Réveil matin + annonce des rendez-vous — moteur PUR (dates, calendrier,
@@ -446,11 +399,9 @@ esphome:
         # les textes posés par le YAML, en fin de setup, AVANT la première image.
         # Sans effet en français. La langue est déjà réglée : le select « Langue »
         # (restore_value) a publié sa valeur pendant son propre setup.
-        - lambda: |-
-            i18n_apply_boot({id(page_main)->obj, id(page_arcade)->obj, id(page_marble)->obj,
-                             id(page_arkanoid)->obj, id(page_pinball)->obj, id(page_lode)->obj,
-                             id(page_go)->obj, id(page_trivia)->obj, id(page_chess)->obj,
-                             id(page_draughts)->obj});
+        - lambda: 'i18n_apply_boot({id(page_main)->obj});'
+        # Les pages du module des jeux (ADR-0065) : traduites par lui, rien sans lui.
+        - script.execute: tab5_jeux_traduire
         - lambda: 'demarrage_marquer(EtapeDemarrage::I18N);'
         # Zones optionnelles (lot 5, 27/09/2026 — ajout autorisé par Axel) : masque les
         # zones absentes mémorisées, AVANT la première image (pas de clignotement).
@@ -550,7 +501,12 @@ packages:
   tab5_lvgl: !include Tab5/paquets/tab5-lvgl.yaml
   # Un package par fonctionnalité (audit du 25/09/2026, lot 8c), APRÈS tab5_lvgl
   # comme tab5_alarm : leurs scripts référencent des pages et des widgets LVGL.
-  tab5_arcade: !include Tab5/paquets/tab5-arcade.yaml
+  # Jeux : un module (ADR-0065). `tab5_jeux:` dans Tab5/user_entities.yaml (ou
+  # `-s tab5_jeux …`) = oui ou non ; par défaut oui sur le Tab5, non sur une carte sans
+  # IMU (Waveshare 7B : la moitié des consoles se jouent en inclinant). Non =
+  # tab5-arcade-absente.yaml : ni code, ni pages, ni couleurs des jeux, l'Arcade n'est
+  # plus un écran. APRÈS tab5_lvgl : ses pages suivent page_main (l'index 0).
+  tab5_arcade: !include Tab5/paquets/tab5-arcade${ '' if (tab5_jeux | default('oui' if (tab5_carte | default('tab5') | lower) == 'tab5' else 'non') | lower) == 'oui' else '-absente' }.yaml
   tab5_calendar: !include Tab5/paquets/tab5-calendar.yaml
   tab5_assist: !include Tab5/paquets/tab5-assist.yaml
   # IMU (BMI270) : le Tab5 seulement (tab5-imu.yaml). Une carte sans IMU prend

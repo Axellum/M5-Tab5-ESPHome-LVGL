@@ -696,80 +696,24 @@ lvgl:
         - !include ../ui_components/calendar_popup.yaml
         - !include ../ui_components/assistant_popup.yaml
         - !include ../ui_components/alarm_popup.yaml
+        # [AI-WARNING] Amorce du widget ligne : ne pas supprimer. ESPHome ne pose
+        # `#define LV_USE_LINE 1` dans le lv_conf.h généré que si un widget `line:` est
+        # dans la config. Les courbes et les traits dessinés en C++ (ui_ligne(),
+        # tab5_anim.cpp ; Énergie, Température, Froid, Suivi, Météo, Serveur IA, zone
+        # à gauche de l'horloge) en ont besoin. Jusqu'au 18/10/2026, l'amorce du flipper
+        # (pinball_game.yaml) suffisait ; sans le module des jeux (ADR-0065), la
+        # compilation échouait sur « lv_line_create was not declared ». Vide, masqué :
+        # il ne coûte rien au rendu.
+        - line:
+            id: lvgl_line_probe
+            hidden: true
+            points:
+              - [0, 0]
+              - [1, 0]
         # EN DERNIER, volontairement : l'ordre de déclaration est l'ordre de
         # dessin LVGL, et l'écran de sonnerie doit couvrir toutes les fenêtres
         # ci-dessus. `lv_obj_move_to_index(…, -1)` le confirme à chaque affichage,
         # mais partir déjà au bon rang évite un cadre de clignotement.
         - !include ../ui_components/alarm_ring_overlay.yaml
-        # ═══ Les 8 jeux + le sélecteur arcade vivent désormais dans leurs
-        # propres pages LVGL (page_arcade, page_marble, … page_pinball).
-        # Voir ci-dessous. ═══
-
-    # ═══════════════════════════════════════════════════════════════
-    # PAGES GAMING — chacune est un écran LVGL autonome (skip: true
-    # empêche le swipe gesture de naviguer vers/depuis ces pages).
-    # Navigation : lvgl.page.show (YAML) ou lv_screen_load (C++).
-    # ═══════════════════════════════════════════════════════════════
-
-    # ─── Sélecteur arcade (grille 8 consoles) ───
-    - id: page_arcade
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/game_selector.yaml
-
-    # ─── Fil d'Or (marble) ───
-    - id: page_marble
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/marble_game.yaml
-
-    # ─── Arcanoïde (arkanoid) ───
-    - id: page_arkanoid
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/arkanoid_game.yaml
-
-    # ─── Neon Apron (pinball — PORTRAIT 720×1280) ───
-    - id: page_pinball
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/pinball_game.yaml
-
-    # ─── Coureur d'Or (lode) ───
-    - id: page_lode
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/lode_game.yaml
-
-    # ─── Go Tab ───
-    - id: page_go
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/go_game.yaml
-
-    # ─── Trial Poursuite (trivia) ───
-    - id: page_trivia
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/trivia_game.yaml
-
-    # ─── Roi Noir (chess) ───
-    - id: page_chess
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/chess_game.yaml
-
-    # ─── Dames Tab (draughts) ───
-    - id: page_draughts
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/draughts_game.yaml
+        # Les 8 jeux et le sélecteur arcade ont leurs propres pages LVGL, déclarées par
+        # le module des jeux (Tab5/paquets/tab5-arcade.yaml, ADR-0065), après celle-ci.
