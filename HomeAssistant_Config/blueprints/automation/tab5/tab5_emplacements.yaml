@@ -62,6 +62,11 @@
 #         script.tab5_lecteur_montrer (packages/tab5_lecteur.yaml) avec le media_player de la
 #         tuile : le popup montre ce lecteur. Le reste du lecteur (liste, commandes) est au
 #         package, pas ici ;
+#       - playlists favorites du popup Musique (ADR-0068, 18/10/2026), entrée facultative
+#         « Nom | lien » par ligne : les NOMS partent avec tous les états (clé
+#         « playlists|nom|…; » de tab5_maj_emplacements) ; à l'événement esphome.tab5_lecteur
+#         « playlist » (valeur = rang), lance script.tab5_lecteur_playlist
+#         (packages/tab5_lecteur.yaml) avec le lien de la ligne de ce rang ;
 #       - section « Sous l'horloge » (ADR-0031, 06/10/2026), facultative : la rangée sous
 #         l'horloge de l'accueil, jusqu'à trois lignes de quatre éléments plus celle des
 #         plantes. Définitions « hp » (place des plantes), « hd » (durée d'une ligne) et
@@ -674,6 +679,29 @@ blueprint:
               multiple: true
               filter:
                 - domain: remote
+        playlists:
+          name: Playlists favorites · Favourite playlists
+          description: >-
+            Jusqu'à huit playlists YouTube ou YouTube Music, une par ligne : « Nom | lien ».
+            Le lien se copie dans YouTube ou YouTube Music (Partager → Copier le lien) ; il
+            doit contenir « list= ». Le popup Musique gagne une page « Playlists » : un
+            bouton par ligne, qui lance la playlist sur votre Apple TV (appli YouTube),
+            celle que montre le popup si c'en est une, sinon la première de la liste
+            « Tab5 · lecteurs de musique ». Vide : pas de page Playlists. Exemple :
+            « Jazz du dimanche | https://music.youtube.com/playlist?list=… ».
+
+
+            Up to eight YouTube or YouTube Music playlists, one per line: « Name | link ».
+            Copy the link in YouTube or YouTube Music (Share → Copy link); it must contain
+            « list= ». The Music popup gets a « Playlists » page: one button per line, which
+            starts the playlist on your Apple TV (YouTube app), the one the popup shows if
+            it is one, otherwise the first one of the « Tab5 · lecteurs de musique » list.
+            Empty: no Playlists page. Example:
+            « Sunday jazz | https://music.youtube.com/playlist?list=… ».
+          default: ""
+          selector:
+            text:
+              multiline: true
         telephone:
           name: Batterie du téléphone · Phone battery
           description: >-
@@ -3443,6 +3471,33 @@ variables:
       {%- set ns.l = ns.l + [('boitier' if e in boitiers else 'tv'), nom.s | replace('|', '/') | replace(';', ',')] -%}
     {%- endfor -%}
     telecommandes|{{ ns.l | join('|') }};
+  # Playlists favorites du popup Musique (ADR-0068, 18/10/2026) : une par ligne,
+  # « Nom | lien » (le nom avant le DERNIER « | »), ou le lien seul ; une ligne vide, sans
+  # lien ou commençant par « # » est sautée ; 8 au plus (kPlaylistsMax de
+  # Tab5/socle/tab5_parse.h). Le rang dans cette liste est l'index que la tablette renvoie
+  # (événement esphome.tab5_lecteur, action « playlist ») : la poussée et la commande
+  # lisent la même liste. Un nom vide devient « Playlist N ». Le lien n'est jamais poussé.
+  playlists_texte: !input playlists
+  playlists: >-
+    {%- set ns = namespace(l=[]) -%}
+    {%- for brut in ((playlists_texte or '') | string).replace('\r', '\n').split('\n') -%}
+      {%- set ligne = brut | trim -%}
+      {%- if ligne and not ligne.startswith('#') and ns.l | count < 8 -%}
+        {%- set i = ligne.rfind('|') -%}
+        {%- set nom = (ligne[:i] if i >= 0 else '') | trim -%}
+        {%- set lien = (ligne[i + 1:] if i >= 0 else ligne) | trim -%}
+        {%- if lien -%}
+          {%- set nom = (nom or ('Playlist ' ~ (ns.l | count + 1))) | replace('|', '/') | replace(';', ',') -%}
+          {%- set ns.l = ns.l + [{'nom': nom[:40] | trim, 'lien': lien}] -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{ ns.l }}
+  # « playlists|nom|nom|…; » : les noms seuls (lus par playlists_lire(), tab5_parse.h).
+  # Poussée avec tous les états, même vide (une liste vidée retire la page) ; un firmware
+  # plus ancien ignore la clé.
+  playlists_pousse: >-
+    playlists|{{ playlists | map(attribute='nom') | join('|') }};
   # Touches de l'écran (codes KEY_* d'une TV Samsung, le vocabulaire commun) → commandes de
   # l'intégration Apple TV (méthodes RemoteControl de pyatv, vérifiées le 10/10/2026 dans
   # homeassistant/components/apple_tv/remote.py : tout nom passe par getattr, sauf
@@ -3992,11 +4047,12 @@ actions:
         {%- endfor -%}
         {#- Gestes de l'horloge et des boutons du haut (variables appuis, puis gestes),
             défilement au choix (variable defil) et zone à gauche de l'horloge (variable
-            gauche, ADR-0051) et télécommandes du popup (variable telecommandes_pousse,
-            ADR-0056), avec tous les états. Un firmware sans ces choix ignore les clés (clé
+            gauche, ADR-0051), télécommandes du popup (variable telecommandes_pousse,
+            ADR-0056) et playlists favorites du popup Musique (variable playlists_pousse,
+            ADR-0068), avec tous les états. Un firmware sans ces choix ignore les clés (clé
             inconnue). -#}
         {%- if tout_pousser -%}
-          {%- set ns.r = ns.r ~ appuis ~ gestes ~ defil ~ gauche ~ telecommandes_pousse -%}
+          {%- set ns.r = ns.r ~ appuis ~ gestes ~ defil ~ gauche ~ telecommandes_pousse ~ playlists_pousse -%}
         {%- endif -%}
         {#- Icône solaire du bandeau : « solaire|pourcentage; » (voir solaire_a_pousser). Un
             firmware sans cette icône ignore la clé (clé inconnue). -#}
@@ -4249,9 +4305,30 @@ actions:
       # rien de neuf (le package pousse alors le lecteur courant). Les autres actions de
       # l'événement (commandes, choix d'un lecteur) sont au package : rien ici, et
       # l'événement s'arrête dans cette branche (jamais dans la branche par défaut).
+      # Page Playlists (ADR-0068) : la tablette envoie le RANG d'une playlist (valeur) ; le
+      # lien vient de la ligne de même rang de l'entrée « Playlists favorites » (variable
+      # playlists), jamais de l'événement. Un rang hors de la liste (liste changée depuis
+      # la poussée) ne lance rien. script.tab5_lecteur_commande (tab5_evenements.yaml)
+      # l'ignore. Dans cette branche, pas dans une branche à elle : la condition
+      # « trigger.id == 'lecteur' » seule dit le déclencheur (tools/contrat_api.py).
       - alias: "La tablette ouvre le lecteur de musique depuis une tuile"
         conditions: "{{ trigger.id == 'lecteur' }}"
         sequence:
+          - alias: "La tablette lance une playlist favorite"
+            if: "{{ (trigger.event.data.action | default('') | string) == 'playlist' }}"
+            then:
+              - variables:
+                  pl_rang: "{{ (trigger.event.data.valeur | default('') | string) | int(-1) }}"
+                  pl_lien: "{{ playlists[pl_rang].lien if 0 <= pl_rang < playlists | count else '' }}"
+              - if: "{{ states['script.tab5_lecteur_playlist'] is not none and pl_lien != '' }}"
+                then:
+                  - action: script.turn_on
+                    target:
+                      entity_id: script.tab5_lecteur_playlist
+                    data:
+                      variables:
+                        lien: "{{ pl_lien }}"
+          # « ouvrir » d'une tuile seulement (l_cle vide pour toute autre action).
           - variables:
               l_cle: >-
                 {{ (trigger.event.data.lecteur | default('') | string)
