@@ -458,7 +458,7 @@ lvgl:
                           flex_flow: ROW
                           flex_align_main: CENTER
                           flex_align_cross: CENTER
-                          pad_column: 15
+                          pad_column: ${acc_pluie_ecart}
                         widgets:
                           - label: { id: icon_rain_predict, text: "\U000F0597", text_font: mdi_font_alert, styles: style_bandeau_text_temp_min }
                           - obj:
@@ -472,19 +472,25 @@ lvgl:
                                 flex_align_main: CENTER
                                 flex_align_cross: END
                               widgets:
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 0, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 1, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 2, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 3, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 4, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 5, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 6, w: 55 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 7, w: 55 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 8, w: 55 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 0, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 1, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 2, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 3, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 4, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 5, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 6, w: "${acc_pluie_10mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 7, w: "${acc_pluie_10mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 8, w: "${acc_pluie_10mn_l}" } }
+                          # Textes de la pluie, posés en bas (flex END) avec leur air dessous :
+                          # plus hauts que la rangée (icône, barres), ils débordaient en haut et
+                          # la boîte montrait une barre de défilement à droite du texte (vue au
+                          # rendu sur les deux cartes, 18/10/2026). Ni défilement ni barre.
                           - obj:
                               width: SIZE_CONTENT
                               height: 100%
                               styles: style_transparent
+                              scrollable: false
+                              scrollbar_mode: "OFF"
                               layout:
                                 type: FLEX
                                 flex_flow: ROW
@@ -545,6 +551,13 @@ lvgl:
                   width: SIZE_CONTENT
                   height: 100%
                   styles: style_transparent
+                  # Ni défilement ni barre (18/10/2026, demande d'Axel) : les boîtes de ligne
+                  # des deux titres (le haut vide de « Pièce n/N », le bas des jambages du nom)
+                  # dépassent de 2 à 3 px, plus selon la police du thème, et la boîte montrait
+                  # une barre de défilement à droite du titre de la pièce (vue au rendu sur le
+                  # Tab5 et la 7B). L'encre tient dans la carte. Marge nulle : style_transparent.
+                  scrollable: false
+                  scrollbar_mode: "OFF"
                   hidden: true
                   widgets:
                     - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: "${acc_titre_sous_y}", styles: style_bandeau_text_dim }

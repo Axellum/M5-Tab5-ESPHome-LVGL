@@ -18,7 +18,8 @@
  *       « -- ° » et la couleur des styles si rien n'est encore arrivé.
  * @ai_instruction Couleurs : UIColor et les dégradés de tab5_forecast (règle 1) ; une
  *       couleur locale ôtée rend la main aux styles du label (style_text_dim,
- *       style_text_temp_max). Glyphes de icon_salon et icon_serre : dans mdi_font_45 et
+ *       style_text_temp_max). Glyphes de icon_salon et icon_serre : dans mdi_font_temp (à
+ *       la taille de la carte, 18/10/2026) et
  *       posés seulement par accueil_temperatures_ui (MDI_CODE_TARGETS de
  *       tools/check_tab5_code_rules.py). Rien de traduit ici : « % » et « ° » seulement.
  */
