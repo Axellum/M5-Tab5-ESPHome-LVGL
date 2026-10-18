@@ -196,12 +196,15 @@ static lv_style_t s_cal_style_sub;
 static lv_style_t s_cal_style_pastille_rdv;
 static lv_style_t s_cal_style_pastille_anniv;
 
-// Pastille 14 px en haut à droite (décalée de x depuis le bord droit).
+// Pastille 14 px en haut à droite (décalée de x depuis le bord droit). Marge nulle : celle
+// du thème LVGL (plus grande que la pastille) la rendait défilable, et LVGL dessinait une
+// barre de défilement dedans (vue au rendu le 18/10/2026, rendu_mesure.h).
 static void cal_style_pastille(lv_style_t* st, int32_t x, uint32_t color) {
     lv_style_init(st);
     lv_style_set_align(st, LV_ALIGN_TOP_RIGHT);
     lv_style_set_bg_color(st, lv_color_hex(color));
     lv_style_set_border_width(st, 0);
+    lv_style_set_pad_all(st, 0);
     lv_style_set_height(st, 14);
     lv_style_set_radius(st, 7);
     lv_style_set_width(st, 14);
@@ -264,6 +267,7 @@ static lv_obj_t* cal_dot_create(lv_obj_t* cell, const lv_style_t* style) {
     lv_obj_t* d = lv_obj_create(cell);
     lv_obj_add_style(d, style, LV_PART_MAIN);
     lv_obj_add_flag(d, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(d, LV_OBJ_FLAG_SCROLLABLE);
     // Plus de bouton par-dessus : une pastille cliquable garderait le tap pour
     // elle, et le jour ne s'ouvrirait pas.
     lv_obj_remove_flag(d, LV_OBJ_FLAG_CLICKABLE);
