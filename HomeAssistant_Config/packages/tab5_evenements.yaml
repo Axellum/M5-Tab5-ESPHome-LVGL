@@ -25,6 +25,8 @@
 #                     valeur)                ADR-0050) : n'agit que sur un lecteur de la
 #                                            liste choisie ou sur le lecteur montré ; le
 #                                            blueprint écoute aussi « ouvrir » d'une tuile
+#                                            et « playlist » (ADR-0068, le lien est à
+#                                            lui ; le script l'ignore)
 #       tab5_musique (action, piece,       → script.tab5_musique_commande (tab5_musique.yaml,
 #                     valeur)                ADR-0067) : pages Pièces et Bibliothèque ;
 #                                            n'agit que sur une pièce de la liste (index)

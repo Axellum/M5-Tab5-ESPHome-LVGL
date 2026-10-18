@@ -1787,3 +1787,11 @@ EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, flo
         f.maison = f.solaire_maison + f.reseau_maison + f.batterie_maison;
     return f;
 }
+
+// ─── 16. Playlists favorites (ADR-0068) ───
+// Comme telecommandes_lire (section 13) : des champs « | », vides gardés à leur place.
+
+int playlists_lire(const char* valeur, size_t n, Champ out[kPlaylistsMax]) {
+    if (valeur == nullptr || n == 0) return 0;
+    return champs_decouper(valeur, n, '|', out, kPlaylistsMax);
+}

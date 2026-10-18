@@ -78,6 +78,7 @@ GRAINES: dict[str, dict[str, str]] = {
                                          "gestes|auto|reveil|appareil_suivant|auto|rangee_suivante|calendrier|"
                                          "mode_domo|auto|reglages|auto|ecoute|tv;defil|auto|fixe|auto|32;"
                                          "gauche|graphique|vocal|graphique;"
+                                         "playlists|Rock des années 80||Jazz du dimanche;"
                                          "h00|21.4|21.4|;h01|on|180|FFB347;n00|612|612|;n01|off|nan|;"
                                          "r0|on|35;r1|on|128;"},
     "tab5_maj_tuiles": {"payload": "p0|Salon;t00|lum|lampadaire|d||Lampadaire;t01|vol||||Volet;t02|cap|thermometre||°C|Température;"

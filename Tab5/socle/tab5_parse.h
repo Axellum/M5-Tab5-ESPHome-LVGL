@@ -1178,3 +1178,19 @@ struct EnergieFlux {
     float maison = NAN;
 };
 EnergieFlux energie_flux_calculer(float solaire, float maison, float reseau, float batterie);
+
+// ─── 16. Playlists favorites (clé « playlists » de tab5_maj_emplacements, ADR-0068) ───
+// « playlists|nom|nom|… » : les NOMS des playlists écrites dans le blueprint (entrée
+// « Playlists favorites », une ligne « Nom | lien » chacune), kPlaylistsMax au plus, dans
+// l'ordre. Leur rang est la valeur de l'événement esphome.tab5_lecteur (action
+// « playlist ») : le blueprint, qui seul garde les liens, retrouve la ligne. Aucun lien ni
+// aucune entité ne vient jusqu'à la tablette. Un nom vide garde sa place (l'écran écrit
+// « Playlist N ») ; vide (« playlists| ») : aucune playlist, le popup Musique garde sa page
+// unique — une seule playlist au nom vide se confond donc avec la liste vide : le
+// blueprint écrit « Playlist N » pour un nom absent. Rien en NVS, comme les télécommandes (section 13) : le blueprint repousse la
+// liste avec tous les états, à chaque connexion.
+constexpr int kPlaylistsMax = 8;
+constexpr size_t kPlaylistNomMax = 48;  // octets, zéro final non compris ; l'écran coupe avec « … »
+// Renvoie le nombre de playlists lues (0 à kPlaylistsMax) ; out[i] pointe dans `valeur`
+// (copié par l'écran, texte_ha_copier). Au-delà de kPlaylistsMax, la fin est ignorée.
+int playlists_lire(const char* valeur, size_t n, Champ out[kPlaylistsMax]);

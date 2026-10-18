@@ -635,6 +635,8 @@ bool lecteur_zone_disponible();
 // tab5_lecteur.cpp, pour tab5_musique.cpp : repeint le popup Musique (en-tête et page
 // Lecture), après un changement de page ou une poussée des pièces.
 void lecteur_popup_repeindre();
+// Nombre de playlists favorites poussées (ADR-0068) : la page Playlists n'existe qu'avec une.
+int lecteur_playlists_nb();
 
 // --- Musique de toute la maison (tab5_musique.cpp, ADR-0067), pour le popup Musique ---
 // Bord droit de la pastille de l'application sans onglet (lecteur_popup.yaml : alignée en
@@ -646,6 +648,15 @@ void musique_ouvrir();
 // La page Lecture est-elle montrée ? Faux : le lecteur cache son morceau (pochette,
 // colonne de droite, pastilles), la page de tab5_musique.cpp prend la carte.
 bool musique_page_lecture();
+// La page Playlists (ADR-0068) est-elle montrée ? Vrai : le lecteur montre sa grille de
+// playlists à la place du morceau, la pochette et les pastilles restent.
+bool musique_page_playlists();
+// lecteur_playlists_recu : une page qui n'a plus rien à montrer (Playlists sans playlist)
+// laisse la place à la page Lecture.
+void musique_pages_revoir();
+// lecteur_playlist : la playlist touchée a été vue en accent, la page Lecture revient après
+// kRetourMs (600 ms) ; un changement de page avant l'annule.
+void musique_retour_lecture();
 // Noms des pages contre la croix, de droite à gauche, chacun à la largeur de son nom
 // (aucun sous deux pages) ; renvoie le bord droit de ce qui reste à leur gauche
 // (kLecteurAppFinX sans onglet) : la pastille de l'application et le nom s'y rangent.

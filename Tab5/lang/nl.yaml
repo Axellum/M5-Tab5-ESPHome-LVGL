@@ -1389,6 +1389,7 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lecteur {n}": "Speler {n}"
 "lecteur|Lecture": "Nu speelt"
 "Playlists": "Afspeellijsten"
+"Playlist {n}": "Afspeellijst {n}"
 # Popup Caméras (ADR-0049, 09/10/2026).
 "Caméras": "Camera's"
 "Aucune caméra choisie": "Geen camera gekozen"

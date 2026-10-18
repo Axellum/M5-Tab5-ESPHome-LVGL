@@ -128,6 +128,12 @@ void emplacements(const std::string& p) {
             (void) nom;
             telecommande_emplacement(i);
         }
+        Champ pl[kPlaylistsMax];  // « playlists|… » (ADR-0068)
+        const int np = playlists_lire(e.reste.p, e.reste.n, pl);
+        for (int i = 0; i < np; i++) {
+            const std::string nom(pl[i].p, pl[i].n);  // ce que texte_ha_copier recevrait
+            (void) nom;
+        }
     }
 }
 

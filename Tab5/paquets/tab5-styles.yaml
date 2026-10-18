@@ -470,6 +470,7 @@ font:
       - "\U000F0290"  # fridge (titre du popup Froid, ADR-0055)
       - "\U000F048B"  # server (titre du popup Serveur IA, ADR-0059)
       - "\U000F075A"  # music (titre du popup Musique, ADR-0050)
+      - "\U000F0CB8"  # playlist-music (popup Musique : boutons des playlists, ADR-0068)
       - "\U000F12A1"  # battery-low
       - "\U000F12A2"  # battery-medium
       - "\U000F12A6"  # battery-charging-high (Réglages : mode de charge)

@@ -8,9 +8,10 @@
 static const uint8_t kI18nLangCount = 7;
 static const char* const kI18nLangNames[] = {"Français", "English", "Deutsch", "Nederlands", "Español", "Italiano", "Türkçe"};
 static const char* const kI18nLangCodes[] = {"fr", "en", "de", "nl", "es", "it", "tr"};
-static const uint16_t kI18nKeyCount = 1284;
+static const uint16_t kI18nKeyCount = 1285;
 
 static const char* const kI18nCtx[] = {
+    "",
     "",
     "",
     "",
@@ -2080,6 +2081,7 @@ static const char* const kI18nKeys[] = {
     "Pièce : %s",
     "Pièces",
     "Plantes",
+    "Playlist {n}",
     "Playlists",
     "Pluie",
     "Pluie dans l'heure",
@@ -3368,6 +3370,7 @@ static const char* const kI18n_en[] = {
     "Room: %s",  // "Pièce : %s"
     "Rooms",  // "Pièces"
     "Plants",  // "Plantes"
+    "Playlist {n}",  // "Playlist {n}"
     "Playlists",  // "Playlists"
     "Rain",  // "Pluie"
     "Rain in the next hour",  // "Pluie dans l'heure"
@@ -4656,6 +4659,7 @@ static const char* const kI18n_de[] = {
     "Raum: %s",  // "Pièce : %s"
     "Räume",  // "Pièces"
     "Pflanzen",  // "Plantes"
+    "Playlist {n}",  // "Playlist {n}"
     "Playlists",  // "Playlists"
     "Regen",  // "Pluie"
     "Regen in der nächsten Stunde",  // "Pluie dans l'heure"
@@ -5944,6 +5948,7 @@ static const char* const kI18n_nl[] = {
     "Kamer: %s",  // "Pièce : %s"
     "Kamers",  // "Pièces"
     "Planten",  // "Plantes"
+    "Afspeellijst {n}",  // "Playlist {n}"
     "Afspeellijsten",  // "Playlists"
     "Regen",  // "Pluie"
     "Regen het komende uur",  // "Pluie dans l'heure"
@@ -7232,6 +7237,7 @@ static const char* const kI18n_es[] = {
     "Estancia: %s",  // "Pièce : %s"
     "Estancias",  // "Pièces"
     "Plantas",  // "Plantes"
+    "Playlist {n}",  // "Playlist {n}"
     "Playlists",  // "Playlists"
     "Lluvia",  // "Pluie"
     "Lluvia en la próxima hora",  // "Pluie dans l'heure"
@@ -8520,6 +8526,7 @@ static const char* const kI18n_it[] = {
     "Stanza: %s",  // "Pièce : %s"
     "Stanze",  // "Pièces"
     "Piante",  // "Plantes"
+    "Playlist {n}",  // "Playlist {n}"
     "Playlist",  // "Playlists"
     "Pioggia",  // "Pluie"
     "Pioggia nella prossima ora",  // "Pluie dans l'heure"
@@ -9808,6 +9815,7 @@ static const char* const kI18n_tr[] = {
     "Oda: %s",  // "Pièce : %s"
     "Odalar",  // "Pièces"
     "Bitkiler",  // "Plantes"
+    "Çalma listesi {n}",  // "Playlist {n}"
     "Çalma listeleri",  // "Playlists"
     "Yağmur",  // "Pluie"
     "Önümüzdeki saatte yağmur",  // "Pluie dans l'heure"

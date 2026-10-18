@@ -8,7 +8,8 @@
  *         - les pages et leurs noms sur la ligne du titre : la brique des popups à pages
  *           (tab5_pages.cpp, ADR-0046 : un seul glissement, pages_brancher), chaque page
  *           seulement quand elle a quelque chose à montrer — Lecture toujours ; Playlists
- *           (ADR-0068) ; Pièces dès deux pièces ; Bibliothèque avec Music Assistant (ou,
+ *           dès une playlist favorite (ADR-0068, la grille peinte par tab5_lecteur.cpp, le
+ *           retour à Lecture 600 ms après un appui) ; Pièces dès deux pièces ; Bibliothèque avec Music Assistant (ou,
  *           sans lui, le temps d'y choisir une source : « Sources ») ;
  *         - Pièces : une carte par lecteur (8 au plus, 4 × 2), volume (envoyé au relâcher),
  *           grouper au lecteur montré / l'en séparer, marche, « y envoyer la musique » ;
@@ -198,6 +199,7 @@ bool s_sans_reponse = false;  // kAttenteMs passées sans réponse
 bool s_biblio_a_jour = false;  // demandée depuis l'ouverture du popup
 int s_lance = -1;              // élément touché, en accent jusqu'au retour
 lv_timer_t* s_retour = nullptr;
+Page s_retour_depuis = Page::BIBLIOTHEQUE;  // la page qui doit encore être montrée
 Page s_retour_page = Page::LECTURE;
 
 // Pochettes : l'URL demandée par emplacement, prête ou en échec, le téléchargement en cours.
@@ -296,8 +298,7 @@ void envoyer(const char* action, int piece, const char* valeur = "") {
 bool page_disponible(Page p) {
     switch (p) {
         case Page::LECTURE: return true;
-        // ADR-0068 (sa propre branche) : vrai quand le blueprint a poussé des playlists.
-        case Page::PLAYLISTS: return false;
+        case Page::PLAYLISTS: return lecteur_playlists_nb() > 0;  // ADR-0068
         case Page::PIECES: return s_p.n >= 2;
         case Page::BIBLIOTHEQUE: return s_p.ma || s_sources;
         default: return false;
@@ -839,24 +840,30 @@ void retour_arreter() {
 }
 
 // Après un élément joué ou une source choisie : l'élément en accent a été vu, la page
-// suivante (Lecture, ou Pièces pour une source).
+// suivante (Lecture, ou Pièces pour une source) ; après une playlist (ADR-0068) : Lecture.
 void retour_fin(lv_timer_t*) {
     s_retour = nullptr;  // un seul tour : LVGL supprime le timer après ce rappel
     s_lance = -1;
-    if (popup_ouvert() && s_page == Page::BIBLIOTHEQUE) {
+    if (popup_ouvert() && s_page == s_retour_depuis) {
         afficher(s_retour_page);
     } else {
         peindre_biblio();
     }
 }
 
-void lancer_retour(int k, Page vers) {
-    s_lance = k;
+// La page `vers` dans kRetourMs, si `depuis` est encore montrée (afficher() l'annule).
+void retour_programmer(Page depuis, Page vers) {
+    s_retour_depuis = depuis;
     s_retour_page = vers;
-    peindre_biblio();
     retour_arreter();
     s_retour = lv_timer_create(retour_fin, kRetourMs, nullptr);
     lv_timer_set_repeat_count(s_retour, 1);
+}
+
+void lancer_retour(int k, Page vers) {
+    s_lance = k;
+    peindre_biblio();
+    retour_programmer(Page::BIBLIOTHEQUE, vers);
 }
 
 void jouer(int k, char mode) {
@@ -916,6 +923,14 @@ void afficher(Page p) {
     ui_mark_activity();
 }
 
+// Une page qui n'a plus rien à montrer (Playlists sans playlist, Pièces sous deux pièces,
+// Bibliothèque sans MA) : retour à la page Lecture.
+void pages_revoir() {
+    if (page_disponible(s_page)) return;
+    if (popup_ouvert()) afficher(Page::LECTURE);
+    else s_page = Page::LECTURE;
+}
+
 }  // namespace
 
 // ─── Pour le popup Musique (tab5_lecteur.cpp) ───
@@ -942,6 +957,12 @@ void musique_ouvrir() {
 }
 
 bool musique_page_lecture() { return s_page == Page::LECTURE; }
+
+bool musique_page_playlists() { return s_page == Page::PLAYLISTS; }
+
+void musique_pages_revoir() { pages_revoir(); }
+
+void musique_retour_lecture() { retour_programmer(Page::PLAYLISTS, Page::LECTURE); }
 
 int32_t musique_onglets_peindre() {
     const MusiqueUI& u = ui();
@@ -1042,12 +1063,7 @@ void musique_pieces_recu(const std::string& pieces, const std::string& contexte)
         p.lu.nom = p.lu.titre = Champ{nullptr, 0};
     }
     ESP_LOGD(kTag, "%d pièce(s), Music Assistant %s", s_p.n, s_p.ma ? "oui" : "non");
-    // Une page qui n'a plus rien à montrer (Pièces sous deux pièces, Bibliothèque sans MA) :
-    // retour à la page Lecture.
-    if (!page_disponible(s_page)) {
-        if (popup_ouvert()) afficher(Page::LECTURE);
-        else s_page = Page::LECTURE;
-    }
+    pages_revoir();
     if (s_roue_piece >= s_p.n) s_roue_piece = -1;
     if (!lie()) return;
     peindre_pieces();
