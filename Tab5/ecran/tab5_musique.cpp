@@ -894,6 +894,7 @@ void choisir_element(int i) {
 // ─── Affichage d'une page ───
 
 void afficher(Page p) {
+    ESP_LOGI(kTag, "ESSAI afficher %d (dispo %d)", static_cast<int>(p), page_disponible(p) ? 1 : 0);
     if (!page_disponible(p)) p = Page::LECTURE;
     // Quitter les sources (sans MA, la page « Sources » disparaît avec elles).
     if (p != Page::BIBLIOTHEQUE && s_sources) {
@@ -928,6 +929,20 @@ void musique_ouvrir() {
         s_sources = false;
         s_liste_recue = false;
         if (s_attendu == MusiqueVue::SOURCES) attente_oublier();
+    }
+    if (g_lecteur_ui.popup != nullptr) {
+        lv_obj_t* scr = lv_obj_get_screen(g_lecteur_ui.popup);
+        ESP_LOGI(kTag, "ESSAI ouvrir pages=%p ecran g=%d d=%d h=%d b=%d defile=%d carte g=%d d=%d",
+                 static_cast<void*>(s_pages.popup), (int)lv_obj_get_scroll_left(scr), (int)lv_obj_get_scroll_right(scr),
+                 (int)lv_obj_get_scroll_top(scr), (int)lv_obj_get_scroll_bottom(scr),
+                 lv_obj_has_flag(scr, LV_OBJ_FLAG_SCROLLABLE) ? 1 : 0,
+                 (int)lv_obj_get_scroll_left(g_lecteur_ui.popup), (int)lv_obj_get_scroll_right(g_lecteur_ui.popup));
+        static bool s_essai = false;
+        if (!s_essai) {
+            s_essai = true;
+            lv_obj_add_event_cb(scr, [](lv_event_t* e) { ESP_LOGI("tab5.musique", "ESSAI defilement de l'ecran"); }, LV_EVENT_SCROLL_BEGIN, nullptr);
+            lv_obj_add_event_cb(g_lecteur_ui.popup, [](lv_event_t* e) { ESP_LOGI("tab5.musique", "ESSAI defilement du popup"); }, LV_EVENT_SCROLL_BEGIN, nullptr);
+        }
     }
     if (s_pages.popup == nullptr && g_lecteur_ui.popup != nullptr) {
         s_pages.popup = g_lecteur_ui.popup;

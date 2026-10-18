@@ -32,6 +32,7 @@
 #include "tab5_internal.h"
 #include "tab5_geometrie.h"
 #include "lvgl.h"
+#include "esphome/core/log.h"  // ESSAI temporaire
 
 #include <algorithm>
 
@@ -64,6 +65,8 @@ void geste_rappel(lv_event_t* e) {
     if (p == nullptr || indev == nullptr || p->nombre == nullptr || p->courante == nullptr || p->afficher == nullptr)
         return;
     const lv_dir_t dir = lv_indev_get_gesture_dir(indev);
+    ESP_LOGI("tab5.pages", "ESSAI geste %d sur %p, actif %p, n=%d", (int)dir, static_cast<void*>(p->popup),
+             static_cast<void*>(lv_indev_get_active_obj()), p->nombre());
     if (dir != LV_DIR_LEFT && dir != LV_DIR_RIGHT) return;
     // Un curseur, un arc ou un rouleau glissé de côté : c'est son réglage, pas une page. Un
     // rouleau (lv_roller, réveil, 09/10/2026) se glisse de haut en bas, mais un doigt en
