@@ -718,6 +718,18 @@ HUIT_PIECES = (
 )
 CINQ_PIECES = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),)
 assert len(PIECES_HUIT) == PIECES_HUIT_NOMBRE and all(p.tuiles for p in PIECES_HUIT.values())
+# Les deux lots ensemble (ADR-0066, A et B) : après HUIT_PIECES, le Garage (pièce 6) reçoit
+# les onze premiers ELEMENTS_COUPES (places coupées en deux et en quatre). Captures
+# « pieces-8-…-garage-11-elements » : en mode HA (trois gestes vers la droite depuis le
+# Salon, en rouleau) et sur sa page de la météo, que dessinent les cartes du mode HA : ses
+# cases y paraissent aussi. `fermer` comme les autres « pieces-8-… » (CINQ_PIECES).
+GARAGE_ONZE = {**PIECES_HUIT, 5: Piece(PIECES_HUIT[5].nom, dict(enumerate(ELEMENTS_COUPES[:11])))}
+GARAGE_COUPE = (
+    Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(GARAGE_ONZE, RANGEE, REGLABLES,
+                                                                  nombre=PIECES_HUIT_NOMBRE)),)),
+    Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({5: GARAGE_ONZE[5]})),)),
+)
+assert PIECES_HUIT[5].climat is None, "le Garage n'a pas de climat à garder"
 # Popup Maison, page suivante : un geste dans le corps (sur les lignes), arrêté au popup.
 MAISON_PAGE_SUIVANTE = Glisser(1150, 400, 450, 400, dans_popup=True)
 
@@ -1413,6 +1425,12 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("pieces-8-ha-atelier", HUIT_PIECES + (Toucher(*BOUTON_HA), HA_VERS_LA_DROITE),
           (Toucher(*BOUTON_HA), VERS_LA_GAUCHE) + CINQ_PIECES),
     Ecran("pieces-8-meteo-garage", HUIT_PIECES + (VERS_LA_GAUCHE,) * 3, (VERS_LA_DROITE,) * 3 + CINQ_PIECES),
+    # Les deux lots ensemble : voir GARAGE_COUPE.
+    Ecran("pieces-8-ha-garage-11-elements",
+          HUIT_PIECES + GARAGE_COUPE + (Toucher(*BOUTON_HA),) + (HA_VERS_LA_DROITE,) * 3,
+          (Toucher(*BOUTON_HA),) + (VERS_LA_DROITE,) * 3 + CINQ_PIECES),
+    Ecran("pieces-8-meteo-garage-11-elements", HUIT_PIECES + GARAGE_COUPE + (VERS_LA_GAUCHE,) * 3,
+          (VERS_LA_DROITE,) * 3 + CINQ_PIECES),
     Ecran("pieces-8-lumieres", HUIT_PIECES + (Aller("Lumières"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
     Ecran("pieces-8-volets", HUIT_PIECES + (Aller("Volet"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),
     Ecran("pieces-8-maison", HUIT_PIECES + (Aller("Maison"),), (Toucher(*FERMER_POPUP),) + CINQ_PIECES),

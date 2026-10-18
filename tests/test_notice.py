@@ -64,6 +64,9 @@ NON_MONTREES = {
     # house.md : images à tirer du rendu de la PR, puis citées.
     "maison-11-elements": "maison montre la même fenêtre ; les pages d'une pièce chargée sont décrites",
     "maison-11-elements-page-2": "maison montre la même fenêtre ; les pages d'une pièce chargée sont décrites",
+    # Les deux lots de l'ADR-0066 ensemble : une pièce 6+ de onze éléments, contrôle du rendu.
+    "pieces-8-ha-garage-11-elements": "accueil-ha-11-elements montre les mêmes cases ; décrites dans tiles.md",
+    "pieces-8-meteo-garage-11-elements": "pieces-8-meteo-garage montre la même page ; ses cases sont décrites",
     "assistant": "assistant-reponse montre la même fenêtre, avec une réponse",
     "lumieres-salon": "lumieres-chambre montre la même fenêtre, lumière allumée",
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
