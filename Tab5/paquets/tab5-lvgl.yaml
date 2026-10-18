@@ -458,7 +458,7 @@ lvgl:
                           flex_flow: ROW
                           flex_align_main: CENTER
                           flex_align_cross: CENTER
-                          pad_column: 15
+                          pad_column: ${acc_pluie_ecart}
                         widgets:
                           - label: { id: icon_rain_predict, text: "\U000F0597", text_font: mdi_font_alert, styles: style_bandeau_text_temp_min }
                           - obj:
@@ -472,19 +472,25 @@ lvgl:
                                 flex_align_main: CENTER
                                 flex_align_cross: END
                               widgets:
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 0, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 1, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 2, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 3, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 4, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 5, w: 25 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 6, w: 55 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 7, w: 55 } }
-                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 8, w: 55 } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 0, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 1, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 2, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 3, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 4, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 5, w: "${acc_pluie_5mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 6, w: "${acc_pluie_10mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 7, w: "${acc_pluie_10mn_l}" } }
+                                - !include { file: ../ui_components/rain_bar.yaml, vars: { n: 8, w: "${acc_pluie_10mn_l}" } }
+                          # Textes de la pluie, posés en bas (flex END) avec leur air dessous :
+                          # plus hauts que la rangée (icône, barres), ils débordaient en haut et
+                          # la boîte montrait une barre de défilement à droite du texte (vue au
+                          # rendu sur les deux cartes, 18/10/2026). Ni défilement ni barre.
                           - obj:
                               width: SIZE_CONTENT
                               height: 100%
                               styles: style_transparent
+                              scrollable: false
+                              scrollbar_mode: "OFF"
                               layout:
                                 type: FLEX
                                 flex_flow: ROW
@@ -545,6 +551,13 @@ lvgl:
                   width: SIZE_CONTENT
                   height: 100%
                   styles: style_transparent
+                  # Ni défilement ni barre (18/10/2026, demande d'Axel) : les boîtes de ligne
+                  # des deux titres (le haut vide de « Pièce n/N », le bas des jambages du nom)
+                  # dépassent de 2 à 3 px, plus selon la police du thème, et la boîte montrait
+                  # une barre de défilement à droite du titre de la pièce (vue au rendu sur le
+                  # Tab5 et la 7B). L'encre tient dans la carte. Marge nulle : style_transparent.
+                  scrollable: false
+                  scrollbar_mode: "OFF"
                   hidden: true
                   widgets:
                     - label: { id: lbl_page_title_sub, text: "", align: CENTER, y: "${acc_titre_sous_y}", styles: style_bandeau_text_dim }
@@ -683,80 +696,24 @@ lvgl:
         - !include ../ui_components/calendar_popup.yaml
         - !include ../ui_components/assistant_popup.yaml
         - !include ../ui_components/alarm_popup.yaml
+        # [AI-WARNING] Amorce du widget ligne : ne pas supprimer. ESPHome ne pose
+        # `#define LV_USE_LINE 1` dans le lv_conf.h généré que si un widget `line:` est
+        # dans la config. Les courbes et les traits dessinés en C++ (ui_ligne(),
+        # tab5_anim.cpp ; Énergie, Température, Froid, Suivi, Météo, Serveur IA, zone
+        # à gauche de l'horloge) en ont besoin. Jusqu'au 18/10/2026, l'amorce du flipper
+        # (pinball_game.yaml) suffisait ; sans le module des jeux (ADR-0065), la
+        # compilation échouait sur « lv_line_create was not declared ». Vide, masqué :
+        # il ne coûte rien au rendu.
+        - line:
+            id: lvgl_line_probe
+            hidden: true
+            points:
+              - [0, 0]
+              - [1, 0]
         # EN DERNIER, volontairement : l'ordre de déclaration est l'ordre de
         # dessin LVGL, et l'écran de sonnerie doit couvrir toutes les fenêtres
         # ci-dessus. `lv_obj_move_to_index(…, -1)` le confirme à chaque affichage,
         # mais partir déjà au bon rang évite un cadre de clignotement.
         - !include ../ui_components/alarm_ring_overlay.yaml
-        # ═══ Les 8 jeux + le sélecteur arcade vivent désormais dans leurs
-        # propres pages LVGL (page_arcade, page_marble, … page_pinball).
-        # Voir ci-dessous. ═══
-
-    # ═══════════════════════════════════════════════════════════════
-    # PAGES GAMING — chacune est un écran LVGL autonome (skip: true
-    # empêche le swipe gesture de naviguer vers/depuis ces pages).
-    # Navigation : lvgl.page.show (YAML) ou lv_screen_load (C++).
-    # ═══════════════════════════════════════════════════════════════
-
-    # ─── Sélecteur arcade (grille 8 consoles) ───
-    - id: page_arcade
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/game_selector.yaml
-
-    # ─── Fil d'Or (marble) ───
-    - id: page_marble
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/marble_game.yaml
-
-    # ─── Arcanoïde (arkanoid) ───
-    - id: page_arkanoid
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/arkanoid_game.yaml
-
-    # ─── Neon Apron (pinball — PORTRAIT 720×1280) ───
-    - id: page_pinball
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/pinball_game.yaml
-
-    # ─── Coureur d'Or (lode) ───
-    - id: page_lode
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/lode_game.yaml
-
-    # ─── Go Tab ───
-    - id: page_go
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/go_game.yaml
-
-    # ─── Trial Poursuite (trivia) ───
-    - id: page_trivia
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/trivia_game.yaml
-
-    # ─── Roi Noir (chess) ───
-    - id: page_chess
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/chess_game.yaml
-
-    # ─── Dames Tab (draughts) ───
-    - id: page_draughts
-      skip: true
-      scrollbar_mode: "OFF"
-      widgets:
-        - !include ../ui_components/draughts_game.yaml
+        # Les 8 jeux et le sélecteur arcade ont leurs propres pages LVGL, déclarées par
+        # le module des jeux (Tab5/paquets/tab5-arcade.yaml, ADR-0065), après celle-ci.

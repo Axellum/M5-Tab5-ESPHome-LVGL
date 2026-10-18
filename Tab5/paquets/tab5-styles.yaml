@@ -1,7 +1,8 @@
 # [AI-CONTEXT]
 # @file tab5-styles.yaml
-# @role Styles LVGL partagés (verre, styles de rôle, thème des widgets), polices, et
-#       couleurs des jeux.
+# @role Styles LVGL partagés (verre, styles de rôle, thème des widgets) et polices. Les
+#       couleurs des jeux et la police d'échecs sont dans leur module (tab5-arcade.yaml,
+#       ADR-0065).
 # @ai_instruction Aucune couleur de l'interface dans ce fichier : elles vivent dans la
 #       palette C++ (`Palette`, Tab5/socle/tab5_tokens.h ; thèmes : ADR-0029). Un style lit la
 #       palette active par une lambda (`!lambda 'return lv_color_hex(UIColor.X);'`), et un
@@ -20,100 +21,6 @@
 #   - liseré fin lumineux (border_opa) = arête de verre
 #   - ombre portee douce = profondeur / flottement
 # =============================================================================
-# Couleurs des JEUX et du sélecteur arcade seulement : ils restent sombres, avec leurs
-# palettes locales (ADR-0014, ADR-0029). Les couleurs de l'interface ont quitté cette
-# section le 04/10/2026 (lot 1 des thèmes) : un `color:` ESPHome est figé à la
-# compilation (ESPHome écrit lv_color_make(r, g, b) dans main.cpp), un thème ne pourrait
-# pas le changer.
-color:
-  # --- Jeu « Fil d'Or » (marble_game) : miroir des tokens Marble::Pal::* ---
-  # Seuls les 3 fonds des conteneurs vivent ici ; toutes les autres couleurs du
-  # jeu sont posees en C++ (marble_game.cpp) et n'ont donc pas de token YAML.
-  - id: color_marble_void
-    hex: "080C14"          # fond hors terrain (miroir Marble::Pal::VOID)
-  - id: color_marble_floor
-    hex: "111A28"          # sol jouable (miroir Marble::Pal::FLOOR)
-  - id: color_marble_hud
-    hex: "0C1220"          # bandeau HUD (miroir Marble::Pal::HUD_BG)
-  # --- Jeu « Arcanoïde » (arkanoid_game) : miroir des tokens Arkanoid::Pal::* ---
-  # Seuls les 3 fonds des conteneurs vivent ici ; toutes les autres couleurs du
-  # jeu sont posées en C++ (arkanoid_game.cpp) et n'ont donc pas de token YAML.
-  - id: color_arkanoid_void
-    hex: "0A0A0F"          # fond hors terrain (miroir Arkanoid::Pal::VOID)
-  - id: color_arkanoid_floor
-    hex: "111118"          # sol jouable (miroir Arkanoid::Pal::FLOOR)
-  - id: color_arkanoid_hud
-    hex: "0D0D14"          # bandeau HUD (miroir Arkanoid::Pal::HUD_BG)
-  # --- Jeu « Trial Poursuite » (trivia_game) ---------------------------------
-  # trivia_game.yaml référençait ces 3 tokens sans qu'ils existent : la
-  # compilation ESPHome échouait sur « Couldn't find ID 'color_trivia_void' ».
-  # Contrairement aux 3 jeux ci-dessus, trivia_game.cpp ne pose PAS les fonds de
-  # ses conteneurs en C++ — ils doivent donc bien vivre ici.
-  # Teintes accordées à la carte Trivia du sélecteur arcade (accent
-  # color_arcade_trivia_accent, plus bas).
-  - id: color_trivia_void
-    hex: "100A16"          # fond hors plateau
-  - id: color_trivia_floor
-    hex: "1A1028"          # plateau de jeu
-  - id: color_trivia_hud
-    hex: "150E22"          # bandeau HUD
-  # --- Jeu « Neon Apron » (pinball_game) : miroir des tokens Pinball::Pal::* ---
-  # Comme Marble et Arcanoïde : seuls les fonds des 4 conteneurs vivent ici, tout
-  # le reste de la palette est posé en C++ (pinball_game.cpp).
-  - id: color_pinball_void
-    hex: "05070E"          # fond hors table (miroir Pinball::Pal::VOID)
-  - id: color_pinball_felt
-    hex: "121C2E"          # haut du sol (miroir Pinball::Pal::FELT_HI)
-  - id: color_pinball_hud
-    hex: "080C16"          # fronton / DMD (miroir Pinball::Pal::HUD_BG)
-  # --- Sélecteur arcade (ui_components/game_selector.yaml) --------------------
-  # Chaque carte = un fond (`_card`) + un accent (`_accent`, bordure et icône).
-  # Les fonds des cartes Fil d'Or, Arcanoïde et Trial Poursuite réutilisent le
-  # sol du jeu (color_marble_floor / color_arkanoid_floor / color_trivia_floor)
-  # et les titres le texte de la palette sombre (PALETTE_SOMBRE.TEXT_SOFT, posé
-  # sur le label : le sélecteur reste sombre) ; tout le reste vit ici — plus aucun hex en dur dans
-  # le sélecteur (audit du 06/09/2026, §4.1 point 11).
-  - id: color_arcade_bg
-    hex: "080810"          # fond de la page arcade
-  - id: color_arcade_title
-    hex: "FFDD22"          # icône + titre « ARCADE »
-  - id: color_arcade_subtitle
-    hex: "8595AD"          # sous-titre et descriptions des cartes (même gris que le rôle CONSOLE_LABEL de la palette sombre)
-  - id: color_arcade_footer
-    hex: "4A5568"          # pied de page
-  - id: color_arcade_close_bg
-    hex: "222233"          # croix de fermeture : fond
-  - id: color_arcade_close_border
-    hex: "445566"          # croix de fermeture : bordure
-  - id: color_arcade_close_icon
-    hex: "AABBCC"          # croix de fermeture : glyphe
-  - id: color_arcade_marble_accent
-    hex: "E8B44A"
-  - id: color_arcade_arkanoid_accent
-    hex: "44DDDD"
-  - id: color_arcade_pinball_card
-    hex: "0D1420"
-  - id: color_arcade_pinball_accent
-    hex: "35E6FF"
-  - id: color_arcade_lode_card
-    hex: "0A0A12"
-  - id: color_arcade_lode_accent
-    hex: "FFC61A"
-  - id: color_arcade_go_card
-    hex: "1A150E"
-  - id: color_arcade_go_accent
-    hex: "C4A574"
-  - id: color_arcade_trivia_accent
-    hex: "FF9800"
-  - id: color_arcade_draughts_card
-    hex: "241810"
-  - id: color_arcade_draughts_accent
-    hex: "D4B896"
-  - id: color_arcade_chess_card
-    hex: "121A16"
-  - id: color_arcade_chess_accent
-    hex: "8FBF6A"
-
 # =============================================================================
 # FONTS — polices embarquées en flash
 # =============================================================================
@@ -339,9 +246,9 @@ font:
       - "\U000F0238"  # fire (feux de forêt, alertes MeteoAlarm — lot 4c)
 
   # 45 px — boutons des popups : télécommande TV, clim (modes, préréglages), lumière,
-  # réveil, en-tête de la sélection des consoles, cartes du popup Énergie ; températures
-  # de l'accueil (salon, serre ; en mode HA, thermomètre et goutte de la pièce, ADR-0040) ;
-  # moyeu de la roue de navigation (rose des vents, ADR-0042).
+  # réveil, en-tête de la sélection des consoles, cartes du popup Énergie ; icône de la
+  # tuile − / + de l'accueil ; moyeu de la roue de navigation (rose des vents, ADR-0042).
+  # Les températures de l'accueil sont en mdi_font_temp depuis le 18/10/2026.
   - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
     id: mdi_font_45
     size: 45
@@ -350,7 +257,6 @@ font:
       - "\U000F0020"  # alarm
       - "\U000F0021"  # alarm-check
       - "\U000F0023"  # alarm-off
-      - "\U000F002D"  # greenhouse
       - "\U000F0045"  # arrow-down
       - "\U000F004D"  # arrow-left
       - "\U000F0054"  # arrow-right
@@ -383,7 +289,6 @@ font:
       - "\U000F04B9"  # sofa
       - "\U000F04DB"  # stop
       - "\U000F054C"  # undo
-      - "\U000F056C"  # view-carousel (seconde température absente : son tap change la zone à gauche de l'horloge, ADR-0051)
       - "\U000F057E"  # volume-high (télécommande d'un boîtier : à la place de Muet, ADR-0056)
       - "\U000F0581"  # volume-off
       - "\U000F058E"  # water-percent
@@ -480,6 +385,30 @@ font:
       - "\U000F1B22"  # pump-off (pompe)
       - "\U000F1C01"  # robot-vacuum-off (aspirateur)
       # <<< tuiles
+
+  # Températures de l'accueil (climate_card.yaml : salon, serre ; en mode HA, thermomètre et
+  # goutte de la pièce, ADR-0040 ; view-carousel sans seconde température, ADR-0051) et − / +
+  # de la tuile en dessous : 45 et 56 px sur le Tab5, à la taille de la carte ailleurs
+  # (carte_police_echelle, 18/10/2026, demande d'Axel), comme la valeur qu'elles bordent.
+  # Sur la 7B, une icône restée à 45 px laissait 4 px entre le « ° » du salon et l'icône de
+  # la serre, et le − de 56 px remplissait presque son bouton de 40.
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_font_temp
+    size: ${ (45 * (carte_police_echelle | float)) | round | int }
+    bpp: 1
+    glyphs:
+      - "\U000F002D"  # greenhouse
+      - "\U000F04B9"  # sofa
+      - "\U000F050F"  # thermometer (pièce du mode HA)
+      - "\U000F056C"  # view-carousel (seconde température absente : son tap change la zone à gauche de l'horloge, ADR-0051)
+      - "\U000F058E"  # water-percent (humidité de la pièce du mode HA)
+  - file: "Tab5/fonts/materialdesignicons-webfont.ttf"
+    id: mdi_font_pas
+    size: ${ (56 * (carte_police_echelle | float)) | round | int }
+    bpp: 1
+    glyphs:
+      - "\U000F0374"  # minus
+      - "\U000F0415"  # plus
 
   # 56 px — cartes du popup plantes, boutons -/+ de la clim, tuiles des consoles. (Le
   # « power » du bouton On / Off du popup lumière est parti avec lui le 09/10/2026, ADR-0046.)
@@ -826,22 +755,6 @@ font:
     size: 32
     bpp: 2
     glyphs: "\U0000F00B\U0000F00F"
-
-  # --- Jeu « Roi Noir » : pièces d'échecs -----------------------------------
-  # ChessPieces.ttf est un SOUS-ENSEMBLE (12 glyphes, 16 Ko) taillé dans DejaVu
-  # Sans, exactement comme IconeMeteo.ttf : on n'embarque que ce qu'on affiche.
-  # U+2654–2659 = pièces « blanches » (contour creux), U+265A–265F = « noires »
-  # (silhouette pleine). chess_game.cpp superpose les deux pour dessiner une
-  # pièce blanche (corps ivoire + contour sombre) — d'où les 12 glyphes et pas 6.
-  # size 80 : encre 72×60 px dans une case de 84 (calibré, aucun débordement).
-  # bpp 4 obligatoire : en bpp 1 les contours fins (couronne, crinière) crénellent.
-  - file: "Tab5/fonts/ChessPieces.ttf"
-    id: chess_pieces_80
-    size: 80
-    bpp: 4
-    # Échappements plutôt que glyphes littéraux : même convention que les polices
-    # MDI ci-dessus, et aucune dépendance à l'encodage de l'éditeur.
-    glyphs: "\u2654\u2655\u2656\u2657\u2658\u2659\u265A\u265B\u265C\u265D\u265E\u265F"
 
 # =============================================================================
 # LVGL — Glassmorphism "Slate"

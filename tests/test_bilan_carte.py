@@ -50,9 +50,28 @@ def test_coupes_des_popups_ouverts_et_ecart_avec_un_bilan_precedent():
 
 
 def test_lecture_de_la_mesure_publiee_par_le_rendu():
-    assert capturer.lire_mesure("reglages|Réglages|12|0") == ("reglages", {"ecran": "Réglages", "coupes": 12, "hors": 0})
-    assert capturer.lire_mesure("jeu-go|Jeu · Go|3|1")[1]["ecran"] == "Jeu · Go"
+    assert capturer.lire_mesure("reglages|Réglages|12|0|2") == (
+        "reglages", {"ecran": "Réglages", "coupes": 12, "hors": 0, "barres": 2})
+    assert capturer.lire_mesure("jeu-go|Jeu · Go|3|1|0")[1]["ecran"] == "Jeu · Go"
     assert capturer.lire_mesure("") is None
-    assert capturer.lire_mesure("a|b|c|d") is None
+    assert capturer.lire_mesure("a|b|c|d|e") is None
+    # L'ancien format, sans les barres, n'est plus celui du rendu.
+    assert capturer.lire_mesure("reglages|Réglages|12|0") is None
     # Même format que l'action rendu_capture (Tab5/rendu/bouchons.yaml).
-    assert '"%s|%s|%d|%d", fichier.c_str(), ecran, r.coupes, r.hors' in lire("Tab5", "rendu", "bouchons.yaml")
+    assert ('"%s|%s|%d|%d|%d", fichier.c_str(), ecran, r.coupes, r.hors, r.barres'
+            in lire("Tab5", "rendu", "bouchons.yaml"))
+
+
+def test_captures_avec_une_barre_de_defilement():
+    """Les barres de défilement (18/10/2026) : chaque capture de la carte qui en montre, avec
+    le compte du Tab5 pour le même écran ; les consoles de jeu n'y sont pas."""
+    tab5 = {**TAB5, "reglages": {**TAB5["reglages"], "barres": 1}, "volet": {**TAB5["volet"], "barres": 0}}
+    carte = {**CARTE, "reglages": {**CARTE["reglages"], "barres": 1}, "volet": {**CARTE["volet"], "barres": 2},
+             "jeu-go": {**CARTE["jeu-go"], "ecran": "Jeu · Go", "barres": 4},
+             "1-journee-ensoleillee": {**CARTE["1-journee-ensoleillee"], "barres": 0}}
+    assert bilan_carte.barres(tab5, carte) == [("reglages", "Réglages", 1, 1), ("volet", "Volet", 0, 2)]
+    texte = bilan_carte.bilan(tab5, carte, "Essai")
+    assert "**2** captures de la carte en montrent au moins une" in texte
+    assert "| volet | Volet | 0 | 2 |" in texte
+    # Un bilan d'avant les barres n'en parle pas.
+    assert "Barres de défilement" not in bilan_carte.bilan(TAB5, CARTE, "Essai")

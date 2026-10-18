@@ -1,10 +1,30 @@
 # Arcade — les 8 consoles du Tab5
 
-> Déplacé de [`Tab5/README.md`](../Tab5/README.md) le 25/09/2026 (audit, lot 7) : les jeux faisaient ≈ 80 % de ce README, que [`AGENTS.md`](../AGENTS.md) impose de lire avant toute modification. À lire ici **avant de toucher un jeu** ; le reste du firmware n'en dépend pas. Les chemins cités (`tab5-lvgl.yaml`, `ui_components/…`, `tab5_registry.cpp`) sont relatifs à `Tab5/`.
+> Déplacé de [`Tab5/README.md`](../Tab5/README.md) le 25/09/2026 (audit, lot 7) : les jeux faisaient ≈ 80 % de ce README, que [`AGENTS.md`](../AGENTS.md) impose de lire avant toute modification. À lire ici **avant de toucher un jeu** ; le reste du firmware n'en dépend pas. Les chemins cités (`tab5-arcade.yaml`, `ui_components/…`, `jeux_registre.cpp`) sont relatifs à `Tab5/`.
+
+## Un module, absent par défaut sans IMU
+
+Depuis le 18/10/2026 ([ADR-0065](decisions/0065-games-optional-module.md)), les jeux sont un
+**module** : `Tab5/paquets/tab5-arcade.yaml` apporte tout ce qu'ils ajoutent au firmware —
+leurs fichiers C++ (`esphome: includes:`, dont la table des consoles
+`Tab5/jeux/jeux_registre.cpp`), leurs couleurs et la police d'échecs, leurs 9 pages LVGL,
+les scripts d'ouverture et la traduction de leurs pages au démarrage. La substitution
+`tab5_jeux` (`oui` / `non`, dans `Tab5/user_entities.yaml` ou `-s tab5_jeux …`) le choisit :
+**oui par défaut sur le Tab5, non sur une carte sans IMU** (la Waveshare 7B : la moitié des
+consoles se jouent en inclinant). Sans lui, `tab5-arcade-absente.yaml` donne au reste du
+firmware les mêmes prises, vides (scripts `tab5_arcade_open` et `tab5_jeux_traduire`, table de
+consoles vide `jeux_absents.cpp`) : l'Arcade n'est plus un écran, « Jeux » quitte la roue de
+navigation et le tap « auto » de la manette ouvre le lecteur audio (popup Musique ; l'appui
+long reste la télécommande). Le reste du firmware ne nomme
+aucun jeu : il passe par `GameRegistry` (`tab5_registry.h`) ; `tests/test_module_jeux.py`
+le vérifie, et la CI compile le Tab5 avec les jeux (`build`) et la 7B sans eux
+(`build-carte-7b`).
+
+## Architecture commune
 
 Toutes les consoles suivent la **même architecture** : chacune est sa **propre
 page LVGL** plein écran 1280×720 (`page_marble`, `page_chess`… déclarées
-`skip: true` dans `tab5-lvgl.yaml`, pour que le swipe ne puisse pas y naviguer)
+`skip: true` dans `tab5-arcade.yaml`, pour que le swipe ne puisse pas y naviguer)
 — et non un overlay empilé sur `page_main`, comme c'était le cas avant la
 migration en pages (`cbfe8d1`). Exception ADR-0009 : pas de chrome modal. YAML
 réduit à des conteneurs vides, tout le contenu construit en C++, `lv_timer` créé
@@ -60,24 +80,27 @@ Chaque carte fait **trois** choses, dans cet ordre :
 3. `script.execute: tab5_<jeu>_open` — construit et ouvre la console.
 
 Ne pas recopier la liste des fermetures dans les cartes : elle vit dans
-`GameRegistry::kGames` (`tab5_registry.cpp`), que `tab5_games_close_all`
-(`tab5-arcade.yaml`) se contente d'appeler — un seul endroit à maintenir.
+`GameRegistry::kGames` (`jeux_registre.cpp`), que `tab5_games_close_all`
+(`tab5-navigation.yaml`) se contente d'appeler — un seul endroit à maintenir.
 
 ## Règles à respecter pour ajouter une 9ᵉ console
 
 Une console n'est **intégrée** que si les sept points suivants sont faits. Un seul
-oubli et le jeu est invisible, ou le firmware ne compile pas :
+oubli et le jeu est invisible, ou le firmware ne compile pas. Tout se passe dans le
+module (`tab5-arcade.yaml`, `Tab5/jeux/`, ses composants `ui_components/`) : le reste du
+firmware ne change pas, et ne doit nommer ni la page, ni le script, ni le namespace du jeu
+(`tests/test_module_jeux.py`), sinon le firmware sans jeux ne compile plus :
 
-1. `tab5-ha-hmi.yaml` → `includes:` : **tous** les `.h` et `.cpp`, y compris les
+1. `tab5-arcade.yaml` → `includes:` : **tous** les `.h` et `.cpp`, y compris les
    en-têtes de données inclus par le `.cpp` (c'est ce qui manquait pour
    `trivia_questions.h`, et la compilation échouait dessus) ;
-2. `tab5-lvgl.yaml` → une nouvelle entrée sous `pages:` : `- id: page_<jeu>` avec
+2. `tab5-arcade.yaml` → une nouvelle entrée sous `lvgl: pages:` : `- id: page_<jeu>` avec
    `skip: true` et `scrollbar_mode: "OFF"`, dont l'unique widget est
    `!include ui_components/<jeu>_game.yaml`. Le `skip: true` n'est pas
    cosmétique : sans lui, un swipe sur le dashboard peut atterrir sur la page du
    jeu, timer non démarré et pointeurs non injectés ;
 3. `tab5-arcade.yaml` → script `tab5_<jeu>_open` qui injecte les pointeurs LVGL ;
-4. `tab5_registry.cpp` → une ligne dans **`GameRegistry::kGames`** (libellé,
+4. `jeux_registre.cpp` → une ligne dans **`GameRegistry::kGames`** (libellé,
    `is_open`, `close`, `on_imu`, et `imu_fast` à `true` **uniquement** si le jeu
    pilote à l'inclinaison). C'est la **seule** liste : la fermeture globale
    (`tab5_games_close_all`), le poll IMU 1/10/30 Hz, le dispatch des 3 axes et le
@@ -98,12 +121,14 @@ oubli et le jeu est invisible, ou le firmware ne compile pas :
 7. **Langue** (lot 4b, 27/09/2026) : chaque texte affiché passe par `tr("…")`
    (`tr_noop("…")` dans une table, puis `tr(table[i])` à l'affichage), avec sa ligne
    dans `Tab5/lang/en.yaml` ; la page du jeu s'ajoute à la liste d'`i18n_apply_boot()`
-   (`tab5-ha-hmi.yaml`, `on_boot` -100) pour les textes posés par son YAML. Le nom de
+   du script `tab5_jeux_traduire` (`tab5-arcade.yaml`, lancé par l'`on_boot` -100) pour les
+   textes posés par son YAML. Le nom de
    la console ne se traduit pas : c'est aussi le libellé « Écran courant » lu par HA.
    Voir [`translations.md`](translations.md).
 
-Les icônes MDI utilisées doivent en outre figurer dans la liste `glyphs` de
-`mdi_font_56` / `mdi_font_45` (`tab5-styles.yaml`) : une icône absente de la
+Ses couleurs (`color_<jeu>_*`, `color_arcade_<jeu>_accent`) vont dans le `color:` de
+`tab5-arcade.yaml`. Les icônes MDI utilisées doivent en outre figurer dans la liste `glyphs` de
+`mdi_font_56` / `mdi_font_45` (`tab5-styles.yaml`, polices partagées) : une icône absente de la
 sous-police ne s'affiche **pas du tout**, sans le moindre message d'erreur. La
 règle 7 de `tools/check_tab5_code_rules.py` (pytest) l'attrape : icône affichée
 sans son glyphe, glyphe déclaré jamais affiché, ou icône posée depuis une fonction

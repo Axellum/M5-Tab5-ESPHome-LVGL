@@ -403,13 +403,15 @@ constexpr int32_t kLargeurNom = acc_x(520) - 110 - kLargeurValeurLigne;
 // et son écart (8) ; ramenée à l'écran de la carte comme la tuile.
 constexpr int32_t kLargeurValeurCarte = acc_x(190);
 
-// L'icône de la clim contre sa consigne (09/10/2026, lot A) : la consigne reste au centre
-// exact de la tuile, l'icône à 8 px à sa gauche. align_to (climate_card.yaml) ne place
-// qu'une fois ; la largeur de la consigne change avec son texte et la police du thème,
-// alors l'icône suit chaque changement de taille de l'une ou de l'autre. lv_obj_align()
-// reste en vigueur aux mises en page suivantes (centre de la tuile + décalage), même
-// quand ce rappel tombe pendant une mise en page (la position de la consigne n'y est pas
-// encore recalculée, sa largeur si).
+// L'icône de la clim contre sa consigne (09/10/2026, lot A), à 8 px à sa gauche, le groupe
+// centré dans la tuile (18/10/2026, demande d'Axel : la consigne seule au centre laissait
+// l'icône et la consigne 27 px à gauche, serrées contre le − sur la 7B). align_to
+// (climate_card.yaml) ne place qu'une fois ; la largeur de la consigne change avec son
+// texte et la police du thème, alors les deux suivent chaque changement de taille de l'une
+// ou de l'autre. lv_obj_align() reste en vigueur aux mises en page suivantes (centre de la
+// tuile + décalage), même quand ce rappel tombe pendant une mise en page (la position de la
+// consigne n'y est pas encore recalculée, sa largeur si). Déplacer ne change aucune taille :
+// pas de nouveau rappel.
 constexpr int32_t kEcartIconeConsigne = 8;
 bool s_icone_suivie = false;
 
@@ -418,8 +420,11 @@ void consigne_icone_placer(lv_event_t*) {
     if (u.consigne_clim == nullptr || u.consigne_icone == nullptr) return;
     const int32_t w = lv_obj_get_width(u.consigne_clim);
     const int32_t wi = lv_obj_get_width(u.consigne_icone);
-    // Consigne centrée : x1 = c − w/2 ; bord droit de l'icône = x1 − écart.
-    lv_obj_align(u.consigne_icone, LV_ALIGN_CENTER, -(w / 2) - kEcartIconeConsigne - wi + wi / 2, 0);
+    // Groupe icône + écart + consigne centré : la consigne décalée à droite de la moitié de
+    // l'icône et de l'écart (rien sans icône) ; bord droit de l'icône = x1 de la consigne − écart.
+    const int32_t dx = wi > 0 ? (wi + kEcartIconeConsigne) / 2 : 0;
+    lv_obj_align(u.consigne_clim, LV_ALIGN_CENTER, dx, 0);
+    lv_obj_align(u.consigne_icone, LV_ALIGN_CENTER, dx - (w / 2) - kEcartIconeConsigne - wi + wi / 2, 0);
 }
 
 void consigne_icone_suivre() {

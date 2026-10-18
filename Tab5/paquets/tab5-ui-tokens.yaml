@@ -162,10 +162,11 @@ substitutions:
   acc_clim_y: ${ (110 * (carte_ecran_h | int) + 360) // 720 }
   acc_clim_h: ${ (acc_cadre_bas | int) - (acc_clim_y | int) }
   # Dans la zone des températures (climate_card.yaml) : rangées à 14 px des côtés et 36 px
-  # au-dessus du milieu ; zones tactiles à y 31, 64 de haut (serre : 200 de large à 6 px du
-  # bord droit ; salon : 192 à x 4) ; dans la tuile − / + : − et + à 13 px des côtés, 10 px
-  # d'air en haut et en bas (52), rayon 12 ; valeur touchable sur 200 px.
+  # au-dessus du milieu, 8 px entre icône et valeur ; zones tactiles à y 31, 64 de haut (serre :
+  # 200 de large à 6 px du bord droit ; salon : 192 à x 4) ; dans la tuile − / + : − et + à
+  # 13 px des côtés, 10 px d'air en haut et en bas (52), rayon 12 ; valeur touchable sur 200 px.
   acc_temp_x: ${ (14 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_temp_ecart: ${ (8 * (carte_ecran_l | int) + 640) // 1280 }
   acc_temp_y: ${ -((36 * (carte_ecran_h | int) + 360) // 720) }
   acc_temp_zone_y: ${ (31 * (carte_ecran_h | int) + 360) // 720 }
   acc_temp_zone_h: ${ (64 * (carte_ecran_h | int) + 360) // 720 }
@@ -204,10 +205,14 @@ substitutions:
   acc_centrale_y: ${ (333 * (carte_ecran_h | int) + 360) // 720 }
   acc_centrale_h: ${ (84 * (carte_ecran_h | int) + 360) // 720 }
   acc_centrale_bouton_h: ${ (acc_centrale_h | int) - 4 }
-  # Dans la carte centrale : barres de pluie (50 de haut), air sous les textes de la pluie
-  # (15 ; 10 sous la valeur), chapeau « Pièce n/N » à y −26 et nom de la pièce à y +13 du
-  # milieu (kAccTitreY2, tab5_central.cpp).
+  # Dans la carte centrale : barres de pluie (50 de haut ; 25 de large pour les tranches de
+  # 5 min, 55 pour celles de 10 min, 15 px entre l'icône, les barres et le texte), air sous les
+  # textes de la pluie (15 ; 10 sous la valeur), chapeau « Pièce n/N » à y −26 et nom de la
+  # pièce à y +13 du milieu (kAccTitreY2, tab5_central.cpp).
   acc_pluie_h: ${ (50 * (carte_ecran_h | int) + 360) // 720 }
+  acc_pluie_5mn_l: ${ (25 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_pluie_10mn_l: ${ (55 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_pluie_ecart: ${ (15 * (carte_ecran_l | int) + 640) // 1280 }
   acc_pluie_pad: ${ (15 * (carte_ecran_h | int) + 360) // 720 }
   acc_pluie_pad_val: ${ (10 * (carte_ecran_h | int) + 360) // 720 }
   acc_titre_sous_y: ${ -((26 * (carte_ecran_h | int) + 360) // 720) }
