@@ -352,6 +352,24 @@ api:
                   rendu_doigt_poser(x1 + (x2 - x1) * (int32_t) iteration / 10,
                                     y1 + (y2 - y1) * (int32_t) iteration / 10);
               - delay: 30ms
+        - lambda: |-
+            // ESSAI : qui a pris le glissement ?
+            lv_indev_t* i = rendu_doigt().indev;
+            lv_obj_t* s = lv_indev_get_scroll_obj(i);
+            ESP_LOGI("tab5.rendu", "ESSAI glisser %d,%d -> %d,%d : geste %d, defile %p", x1, y1, x2, y2,
+                     (int) lv_indev_get_gesture_dir(i), (void*) s);
+            lv_point_t pt = {x1, y1};
+            lv_obj_t* o = lv_indev_search_obj(lv_layer_top(), &pt);
+            if (o == nullptr) o = lv_indev_search_obj(lv_screen_active(), &pt);
+            for (int n = 0; o != nullptr && n < 12; n++, o = lv_obj_get_parent(o)) {
+              lv_area_t a;
+              lv_obj_get_coords(o, &a);
+              ESP_LOGI("tab5.rendu", "ESSAI   %p %d,%d %dx%d defilable %d bulle %d sl %d sr %d st %d sb %d%s", (void*) o,
+                       (int) a.x1, (int) a.y1, (int) (a.x2 - a.x1 + 1), (int) (a.y2 - a.y1 + 1),
+                       (int) lv_obj_has_flag(o, LV_OBJ_FLAG_SCROLLABLE), (int) lv_obj_has_flag(o, LV_OBJ_FLAG_GESTURE_BUBBLE),
+                       (int) lv_obj_get_scroll_left(o), (int) lv_obj_get_scroll_right(o),
+                       (int) lv_obj_get_scroll_top(o), (int) lv_obj_get_scroll_bottom(o), o == s ? " <- defile" : "");
+            }
         - lambda: 'rendu_doigt_lever();'
 
 script:
