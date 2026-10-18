@@ -674,6 +674,7 @@ bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison) {
 // (tuile_appui_piece). Sans place à l'écran (élément d'une autre pièce, popup ouvert
 // d'ailleurs) : pas d'ancre, pas de roue.
 bool tuiles::roue_de_la_tuile(int r, int t) {
+    if (r != piece_courante()) return false;
     const bool cartes = cartes_affichees();
     const disposition::Disposition d = disposition_piece(r, !cartes);
     const int p = (t >= 0 && t < kTuilesMax) ? d.place_de[t] : -1;

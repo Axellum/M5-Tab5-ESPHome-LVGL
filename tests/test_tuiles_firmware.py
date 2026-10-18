@@ -256,6 +256,10 @@ def test_magie_nvs_des_definitions():
     modele = re.search(r"struct Modele \{(.*?)\};", _cpp(), re.S).group(1)
     assert "char pieces[kPiecesMax][modele_ha::kNom];" in modele and "Def tuiles[kPiecesMax][kTuilesMax];" in modele
     assert "uint8_t pieces_n;" in modele and "uint8_t reserve[2];" in modele, "pn pris sur la réserve"
+    # Le bourrage final écrit (memcmp de tuiles_definir) : 8 + 250 + 11 800 = 12 058, plus 2.
+    assert "uint8_t fin[4 - kModeleUtile % 4];" in modele
+    assert 'static_assert(sizeof(Modele) == kModeleUtile + sizeof(Modele::fin), "Modele sans bourrage implicite");' \
+        in _cpp()
     # Relu dans le tas (le modèle fait ~12 Ko, la pile de la boucle 8 Ko).
     charger = _fonction(_cpp(), "charger")
     assert "std::unique_ptr<Modele> m(new Modele());" in charger and "Modele m{};" not in charger

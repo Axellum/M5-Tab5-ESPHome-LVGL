@@ -63,7 +63,9 @@ struct Def {
 // Exactement ce qui part en NVS : tout en octets, sans bourrage (memcmp fiable). Dimensionné
 // sur kPiecesMax pièces (ADR-0066, lot A) de kTuilesMax éléments (lot B), 10 × 20 Def, ~12 Ko :
 // sa magie suit sa taille (kMagic, tab5_tuiles.cpp), un modèle d'une autre mise en page n'est
-// jamais relu.
+// jamais relu. Son bourrage final est un champ (`fin`) : aucun octet implicite, que
+// memcmp lirait sans qu'une copie le garantisse.
+constexpr size_t kModeleUtile = 8 + kPiecesMax * modele_ha::kNom + kPiecesMax * kTuilesMax * sizeof(Def);
 struct Modele {
     uint32_t magic;
     uint8_t recues;       // 1 dès la première tab5_maj_tuiles : fin du mode héritage
@@ -71,7 +73,9 @@ struct Modele {
     uint8_t reserve[2];
     char pieces[kPiecesMax][modele_ha::kNom];
     Def tuiles[kPiecesMax][kTuilesMax];
+    uint8_t fin[4 - kModeleUtile % 4];  // jusqu'au multiple de 4 (alignement de magic)
 };
+static_assert(sizeof(Modele) == kModeleUtile + sizeof(Modele::fin), "Modele sans bourrage implicite");
 
 struct Etat {
     char brut[modele_ha::kEtat];  // état HA ("" tant que rien n'est reçu)

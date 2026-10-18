@@ -263,10 +263,6 @@ def test_textes_traduits():
     assert 'tr("Pièce %d")' in _fonction(_tuiles(), "tuiles_piece_titre")
 
 
-if __name__ == "__main__":
-    sys.exit(subprocess.run([sys.executable, "-m", "pytest", "-q", __file__], check=False).returncode)
-
-
 def test_pages_de_pieces_par_la_brique():
     """Plus de cinq pièces (ADR-0066) : des pages de cinq colonnes au plus, au glissement de la
     brique commune (ADR-0046) et par les onglets à côté du titre, la page de la pièce du mode
@@ -315,3 +311,7 @@ def test_roue_devant_le_popup_maison():
     assert "const bool repeinte = garder && ouverte();" in ouvrir
     assert "if (!repeinte) lv_obj_move_to_index(u.fond, -1);" in ouvrir
     assert ouvrir.index("lv_obj_move_to_index(u.fond, -1);") < ouvrir.index("ui_hidden(u.fond, false);")
+
+
+if __name__ == "__main__":
+    sys.exit(subprocess.run([sys.executable, "-m", "pytest", "-q", __file__], check=False).returncode)
