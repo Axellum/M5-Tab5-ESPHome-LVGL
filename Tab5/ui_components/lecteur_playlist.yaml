@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file lecteur_playlist.yaml
+# @role Bouton d'une playlist favorite (ADR-0068, 18/10/2026), sur la page « Playlists » du
+#       popup Musique (lecteur_popup.yaml, 8 fois : kLecteurPlaylists), dans la grille de la
+#       colonne de droite (lecteur_playlists). Toucher : lecteur_playlist(n), événement
+#       esphome.tab5_lecteur (action « playlist », valeur n) ; le blueprint « Tab5 —
+#       emplacements » retrouve la ligne n de son entrée « Playlists favorites » et lance
+#       script.tab5_lecteur_playlist avec son lien.
+# @architecture_constraint Position, taille, nom (coupé avec « … ») et couleur de la
+#       playlist demandée posés par tab5_lecteur.cpp (peindre_playlists : une colonne
+#       jusqu'à quatre playlists, deux au-delà ; choix_peindre pour l'accent). Le nom est le
+#       PREMIER enfant (choix_peindre le colore). L'icône playlist-music est fixe (glyphe du
+#       YAML, mdi_font_32, règle 9). Masqué au-delà du nombre de playlists poussées.
+# vars : n (0 à 7)
+# ═══════════════════════════════════════════════════════
+button:
+  id: lecteur_pl_${n}
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: 508
+  height: 81
+  pad_all: 0
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn
+  on_short_click:
+    - lambda: 'lecteur_playlist(${n});'
+  widgets:
+    - label: { id: "lecteur_pl_nom_${n}", text: "", align: LEFT_MID, x: 60, width: 434, long_mode: CLIP, text_font: roboto_22, styles: style_text_soft }
+    - label: { text: "\U000F0CB8", align: LEFT_MID, x: 16, text_font: mdi_font_32, styles: style_text_accent }

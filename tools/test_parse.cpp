@@ -1499,6 +1499,22 @@ static void test_telecommandes() {
            "télécommandes : emplacements tv, tv1… ; hors bornes = tv");
 }
 
+// Playlists favorites (ADR-0068) : « playlists|nom|nom|… », 8 au plus, vides gardés.
+static int playlists(const char* s, Champ p[kPlaylistsMax]) { return playlists_lire(s, std::strlen(s), p); }
+
+static void test_playlists() {
+    Champ p[kPlaylistsMax];
+    expect(playlists("", p) == 0 && playlists_lire(nullptr, 4, p) == 0, "playlists : vide = aucune");
+    expect(playlists("Rock des années 80|Jazz du dimanche", p) == 2 && champ_est(p[0], "Rock des années 80") &&
+               champ_est(p[1], "Jazz du dimanche"),
+           "playlists : deux, dans l'ordre");
+    expect(playlists("A|B|C|D|E|F|G|H|I|J", p) == kPlaylistsMax && champ_est(p[7], "H"),
+           "playlists : huit au plus, la fin ignorée");
+    expect(playlists("|Jazz", p) == 2 && p[0].n == 0 && champ_est(p[1], "Jazz"),
+           "playlists : un nom vide garde sa place (l'index reste celui du blueprint)");
+    expect(playlists("Seule", p) == 1 && champ_est(p[0], "Seule"), "playlists : une seule");
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // 14. Serveur IA (ADR-0059)
 // ════════════════════════════════════════════════════════════════════════════
@@ -1871,6 +1887,7 @@ int main() {
     test_froid_lire();
     test_froid_textes();
     test_telecommandes();
+    test_playlists();
     test_serveur_ia_lire();
     test_serveur_ia_actions();
     test_serveur_ia_textes();

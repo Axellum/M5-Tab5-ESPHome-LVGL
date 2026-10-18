@@ -1437,6 +1437,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lecteur indisponible": "Oynatıcı kullanılamıyor"
 "Rien en lecture": "Çalan bir şey yok"
 "Lecteur {n}": "Oynatıcı {n}"
+"lecteur|Lecture": "Çalıyor"
+"Playlists": "Çalma listeleri"
+"Playlist {n}": "Çalma listesi {n}"
 # Popup Caméras (ADR-0049, 09/10/2026).
 "Caméras": "Kameralar"
 "Aucune caméra choisie": "Kamera seçilmedi"

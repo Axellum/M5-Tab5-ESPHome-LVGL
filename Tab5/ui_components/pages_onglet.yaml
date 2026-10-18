@@ -1,7 +1,9 @@
 # ═══════════════════════════════════════════════════════
 # [AI-CONTEXT] Nom d'une page d'un popup à pages (ADR-0046, 09/10/2026), réutilisé 10 fois
 # par light_popup.yaml et 10 fois par volet_popup.yaml (dix pièces au plus, ADR-0066) : le
-# nom d'une pièce, en haut, sur la ligne du titre. Un tap montre sa page (`choisir`, une fonction de tab5_tuiles.h) ; un tap
+# nom d'une pièce, en haut, sur la ligne du titre ; 2 fois par maison_popup.yaml (pages de
+# pièces, ADR-0066, placés par tab5_maison.cpp) ; 2 fois par lecteur_popup.yaml (« Lecture », « Playlists », ADR-0068,
+# placés par tab5_lecteur.cpp : sa carte n'est pas la carte modale). Un tap montre sa page (`choisir`, une fonction de tab5_tuiles.h) ; un tap
 # au bout d'un glissement ne fait rien (ui_appui_glisse).
 # Position, largeur, nom (coupé avec « … »), affichage et couleur d'accent de la page
 # affichée : posés par pages_onglets() (tab5_pages.cpp) — collés à la croix, 200 px au

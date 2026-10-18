@@ -1409,6 +1409,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lecteur indisponible": "Player nicht verfügbar"
 "Rien en lecture": "Nichts wird abgespielt"
 "Lecteur {n}": "Player {n}"
+"lecteur|Lecture": "Wiedergabe"
+"Playlists": "Playlists"
+"Playlist {n}": "Playlist {n}"
 # Popup Caméras (ADR-0049, 09/10/2026).
 "Caméras": "Kameras"
 "Aucune caméra choisie": "Keine Kamera gewählt"
