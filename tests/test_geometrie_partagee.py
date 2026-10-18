@@ -147,6 +147,32 @@ def test_en_tetes_du_calendrier_sur_les_colonnes_des_cases(carte):
 
 
 @pytest.mark.parametrize("carte", CARTES)
+def test_en_tete_du_calendrier_sans_chevauchement(carte):
+    """‹, le mois, › et « Aujourd'hui » côte à côte sur la ligne du titre, sans se couvrir :
+    sur la 7B, › était caché sous « Aujourd'hui » (rendu du 18/10/2026). Sur le Tab5 : 278
+    et 420, comme avant."""
+    g = _geometrie(carte)
+    popup = yaml.load(_lire("Tab5", "ui_components", "calendar_popup.yaml"), Loader=_Chargeur)
+    par_id = {p.get("id"): p for _t, p in _widgets([popup]) if p.get("id")}
+    milieu = g["kCarteL"] // 2
+
+    def boite(nom):
+        p = par_id[nom]
+        x, w = _resolu(p["x"], carte), _resolu(p["width"], carte)
+        if p["align"] == "TOP_MID":
+            return milieu + x - w // 2, milieu + x - w // 2 + w
+        assert p["align"] == "TOP_RIGHT", nom
+        return g["kCarteL"] + x - w, g["kCarteL"] + x
+
+    ordre = [boite(n) for n in ("btn_cal_prev", "lbl_cal_month", "btn_cal_next", "btn_cal_today")]
+    for (g1, d1), (g2, d2) in zip(ordre, ordre[1:]):
+        assert d1 + 16 <= g2, f"en-tête du calendrier : {ordre} ({carte})"
+    assert ordre[0][0] >= 200, f"‹ trop près du titre « Calendrier » ({carte})"
+    if carte == "tab5":
+        assert (jeton("cal_nav_x"), jeton("cal_mois_l")) == (278, 420)
+
+
+@pytest.mark.parametrize("carte", CARTES)
 def test_grille_du_calendrier_centree_dans_la_carte(carte):
     g = _geometrie(carte)
     x0, pas, w = g["kCalColX0"], g["kCalColPas"], g["kCalColW"]

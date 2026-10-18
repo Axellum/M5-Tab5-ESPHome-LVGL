@@ -99,6 +99,9 @@ obj:
               height: ${ (corps_h | int - 102 - 24 * (corps_h | int) // 598) }
               styles: style_transparent
               scrollable: false
+              # Ombres des touches du bord (volume à droite, Menu et Accueil en bas) : pas
+              # coupées par la zone, qu'elles touchent (18/10/2026, Tab5 et 7B).
+              overflow_visible: true
               widgets:
 
                 # ── Colonne des commandes (290) ──
@@ -261,6 +264,7 @@ obj:
               height: 102
               styles: style_transparent
               scrollable: false
+              overflow_visible: true  # ombre des touches (bas, dernière à droite) : pas coupée
               widgets:
                 - !include { file: tv_app_btn.yaml, vars: { x: 0, app: "netflix", text: "Netflix", style: "style_text_error" } }
                 # « Prime » et non « Prime Video » : en roboto_32_b le nom
@@ -291,6 +295,7 @@ obj:
               hidden: true
               styles: style_transparent
               scrollable: false
+              overflow_visible: true  # ombre des touches (bas, dernière à droite) : pas coupée
               widgets:
                 - !include { file: tv_transport_btn.yaml, vars: { x: 0, touche: "KEY_PREV", icon: "\U000F04AE", icon_style: "style_text_dim", text: "Précédent" } }
                 - !include { file: tv_transport_btn.yaml, vars: { x: 237, touche: "KEY_REWIND", icon: "\U000F045F", icon_style: "style_text_soft", text: "Reculer" } }

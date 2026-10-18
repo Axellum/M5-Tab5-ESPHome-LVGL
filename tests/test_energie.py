@@ -2062,6 +2062,13 @@ def test_mise_en_page_ramenee_au_corps(carte):
     assert k["kMidiY"] + 27 <= k["kArcHaut"] < k["kHorizonY"] < k["kLeverY"] < k["kSolMaxY"] < k["kSolHaut"] < k["kSolBas"]
     assert k["kSolBas"] < k["kSolAxeY"] < k["kLegendeY"] and k["kLegendeY"] + 27 <= k["kSolZoneH"]
     assert k["kSolBord"] + 4 * k["kLegendePas"] <= k["kSolZoneL"] + 30, "quatre légendes dans la zone"
+    # « 00:00 » centré sous 00:30 (sol_x) : sa boîte de kSolAxeL ne sort pas de plus de 4 px
+    # à gauche de la zone (le texte, 57 px, tient alors entier ; 7 px sur la 7B avant le
+    # 18/10/2026, le zéro coupé). Le Tab5 garde ses 12 px de bord.
+    kSolL = k["kSolZoneL"] - 2 * k["kSolBord"]
+    assert k["kSolBord"] + round(30 * kSolL / 1440) - k["kSolAxeL"] // 2 >= -4, carte
+    if carte == "tab5":
+        assert k["kSolBord"] == 12
     assert 3 * k["kInfosLigne"] <= k["kCadreY"] and k["kCadreY"] + k["kCadreH"] < k["kSourceY"]
     assert k["kSourceY"] + 27 <= k["kSolZoneH"] and 52 + 38 <= k["kCadreH"] + 1
     # Flux : centres ramenés à la page (centre_carte) ; les cercles gardent leur taille, ne se

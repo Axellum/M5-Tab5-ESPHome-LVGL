@@ -198,7 +198,10 @@ obj:
                     x: ${ 112 * (corps_w | int) // 1202 }
                     # Centrée sur le bouton Muet (sa hauteur reste 20 px).
                     y: ${ 422 * (corps_h | int) // 598 + (60 * (corps_h | int) // 598 - 20) // 2 }
-                    width: ${ 252 * (corps_w | int) // 1202 }
+                    # Le bouton rond (16 px de rayon) déborde du bout de la piste : 16 px de
+                    # moins, il s'arrête à la marge du panneau (comme le bouton Muet à gauche)
+                    # au lieu de toucher son bord (Tab5) ou d'y être coupé (7B), 18/10/2026.
+                    width: ${ 252 * (corps_w | int) // 1202 - 16 }
                     height: 20
                     min_value: 0
                     max_value: 100

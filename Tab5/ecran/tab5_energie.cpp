@@ -175,7 +175,13 @@ enum Anneau : int { A_PISTE,
 // bas de la zone ; les libellés gardent leur taille (energie_popup.yaml, même calcul).
 constexpr int32_t kSolZoneL = largeur_carte(846) - 36;
 constexpr int32_t kSolZoneH = kCorpsH - 28;
-constexpr int32_t kSolBord = 12;
+// Bords de la zone des heures : 12 px sur le Tab5. « 00:00 » (57 px en roboto_22, qui ne
+// rétrécit pas), centré sous 00:30 sur kSolAxeL, perd la gauche de son premier zéro si 00:30
+// tombe avant x 28 : sur une zone plus étroite, le bord grandit d'autant (16 px sur la 7B,
+// où ce zéro était coupé à moitié, rendu du 18/10/2026).
+constexpr int32_t kSolBordMin = 12;
+constexpr int32_t kSolBordLibelle = (28 * 1440 - 30 * kSolZoneL + 1379) / 1380;
+constexpr int32_t kSolBord = kSolBordLibelle > kSolBordMin ? kSolBordLibelle : kSolBordMin;
 constexpr int32_t kSolL = kSolZoneL - 2 * kSolBord;
 constexpr int kArcPoints = 29;              // points de l'arc, lever et coucher compris
 constexpr int32_t kArcPoint = 6;
