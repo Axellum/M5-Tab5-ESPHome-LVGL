@@ -281,3 +281,41 @@ def test_marche_arret_dans_sa_touche(carte):
         assert x + 142 <= touche_l - 42
     else:
         assert 87 <= largeur and x + largeur <= touche_l - 42
+
+
+def _ombre_max(style):
+    """Plus grande marge de dessin qu'un des thèmes donne à `style` : demi-largeur + 1,
+    étalement et plus grand décalage, comme lv_obj_calculate_ext_draw_size() de LVGL 9.5."""
+    import gen_themes
+    compiles = gen_themes.styles_compiles()
+    plus = 0
+    for theme in gen_themes.charger():
+        for formes in gen_themes.formes_resolues(theme, compiles).values():
+            f = {k: v[1] for k, v in formes.get(style, {}).items()}
+            if f.get("shadow_width"):
+                plus = max(plus, f["shadow_width"] // 2 + 1 + f.get("shadow_spread", 0)
+                           + max(abs(f.get("shadow_ofs_x", 0)), abs(f.get("shadow_ofs_y", 0))))
+    return plus
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_ombres_des_touches_du_bord_pas_coupees(carte):
+    """Le volume (à droite), Menu et Accueil (en bas), la dernière touche de la rangée basse :
+    LVGL 9.5 coupe leur ombre au bord de leur conteneur, même en overflow_visible (coupée net
+    sur le Tab5 comme sur la 7B jusqu'au 18/10/2026). Les conteneurs ont des marges
+    intérieures, au moins l'ombre la plus large d'un thème, et restent dans la carte."""
+    jetons = jetons_resolus(carte)
+    bouton, carte_l = int(jetons["ombre_bouton_max"]), int(jetons["ombre_carte_max"])
+    assert bouton >= _ombre_max("style_clim_btn") and carte_l >= _ombre_max("style_meteo_card")
+    texte = lire(*POPUP).replace("\r\n", "\n")
+    zone = texte.split("# ═══ ZONE PRINCIPALE", 1)[1].split("widgets:", 1)[0]
+    assert "pad_left: ${ombre_carte_max}\n" in zone and "pad_right: ${ombre_carte_max}\n" in zone
+    assert "pad_bottom: ${ombre_bouton_max}\n" in zone
+    largeur = int(resoudre(re.search(r"width: (.+)\n", zone).group(1), jetons))
+    assert largeur - 2 * carte_l == 1170 * int(jetons["corps_w"]) // 1202  # touches à leur place
+    assert largeur <= int(jetons["modal_card_w"]) - 4
+    for rangee in ("tv_rangee_applis", "tv_rangee_lecture"):
+        bloc = texte.split(f"id: {rangee}\n", 1)[1].split("widgets:", 1)[0]
+        for cote in ("left", "right", "bottom"):
+            assert f"pad_{cote}: ${{ombre_bouton_max}}\n" in bloc, (rangee, cote)
+        assert int(resoudre(re.search(r"y: (.+)\n", bloc).group(1), jetons)) <= -2  # dans la carte
