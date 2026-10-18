@@ -40,6 +40,7 @@ le confronte à la matrice) :
 
 ### Ajouté
 
+- **Waveshare 7B : le bas de la course du volume s'entend** : `volume_min: 40%` (mesuré le 18/10/2026 : l'ES8311 prend le volume tel quel, 0,5 dB par pas ; à 0 par défaut, un volume HA de 0,2 donnait ≈ −76 dB, rien d'audible) : ≈ −44 dB en bas de course, 0 dB en haut ; valeur à juger à l'oreille après un flash. Le Tab5 ne change pas.
 - **Waveshare 7B montée à l'envers** : `carte_rotation: "0"` dans `Tab5/user_entities.yaml` retire la rotation logicielle de 180° ; redessiner tout l'écran prend alors ~69 ms au lieu de ~83 ms (mesuré sur la carte de l'auteur, le 16/10/2026). Le tactile suit tout seul. Documenté dans [docs/waveshare-7b.md](docs/waveshare-7b.md).
 - **Écran éteint = dalle noire, et extinction de nuit** ([ADR-0064](docs/decisions/0064-screen-really-off-night.md), audit anti-casse du 16/10/2026 : une image fixe tenue des heures marque une dalle LCD) :
   - écran éteint, un voile noir couvre tout l'écran avant que LVGL se fige (la dalle ne garde plus la dernière image) ; la Waveshare 7B met en plus sa dalle en veille (DCS « display off » puis « sleep in », réveil 120 ms avant l'image) et l'éteint pendant une mise à jour, qui la faisait scintiller ; les trois dalles du Tab5 gardent le voile seul tant qu'aucune tablette de la révision ne l'a essayé (`carte_dalle_extinction` dans `Tab5/paquets/ecran-*.yaml`) ;
