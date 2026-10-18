@@ -420,7 +420,8 @@ def test_definitions_du_panneau_au_format_de_la_rangee():
 ])
 def test_reglages_du_panneau(ecoute, duree, attendu):
     p = _passage(entrees={"nabu_ecoute": ecoute, "nabu_duree": duree})
-    assert p.definitions().split(";")[2:4] == attendu
+    # Après « pn|5 » (ADR-0066), « hp » et « hd » (aucune tuile ici).
+    assert p.definitions().split(";")[3:5] == attendu
 
 
 def test_etats_et_declencheurs_du_panneau():

@@ -439,7 +439,9 @@ def test_chaque_commande_de_l_adr_a_sa_branche():
                          "luminosite", "luminosite_pct", "couleur", "position"}
     for c in commandes:
         assert re.search(rf"t_commande (== |in \[[^\]]*)'{c}'", texte), f"commande {c} sans branche de tuile"
-    assert "emplacement is match('^p[0-4]$') and commande == 'eteindre'" in texte
+    # Pièces 0 à 9 (ADR-0066) : une clé pR d'une pièce au-delà de « Nombre de pièces » n'a
+    # aucune tuile, la boucle de la branche ne trouve rien à éteindre.
+    assert "emplacement is match('^p[0-9]$') and commande == 'eteindre'" in texte
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -450,12 +452,14 @@ def test_entrees_des_pieces_et_sections():
     bp = _blueprint()
     sections = bp["blueprint"]["input"]
     noms = list(sections)
-    assert noms[:5] == [f"piece_{n}" for n in range(1, 6)]
+    # « Pièces » (Nombre de pièces, ADR-0066) puis les dix sections de pièce.
+    assert noms[:11] == ["pieces"] + [f"piece_{n}" for n in range(1, 11)]
+    assert list(sections["pieces"]["input"]) == ["nombre_pieces"]
     assert "collapsed" not in sections["piece_1"], "la pièce 1 (accueil) est ouverte"
-    for n in range(2, 6):
+    for n in range(2, 11):
         assert sections[f"piece_{n}"]["collapsed"] is True
     assert sections["piece_1"]["name"].startswith("Pièce 1 — accueil")
-    for n in range(1, 6):
+    for n in range(1, 11):
         # Température, humidité et clim de la pièce : ADR-0040.
         assert list(sections[f"piece_{n}"]["input"]) == [f"piece_{n}_{c}" for c in (
             "nom", "tuiles", "temperature", "humidite", "clim")]
@@ -470,13 +474,14 @@ def test_entrees_des_pieces_et_sections():
 
 
 def test_editeur_lisible():
-    """Relecture du 07/10/2026 : toutes les sections repliées sauf la pièce 1, une phrase
+    """Relecture du 07/10/2026 : toutes les sections repliées sauf « Pièces » (ADR-0066) et
+    la pièce 1, une phrase
     d'aide (français puis anglais) sur chaque entrée, l'Énergie en trois sections. Les
     sections ne changent pas où HA range les valeurs (à plat sous use_blueprint.input,
     Blueprint.inputs de homeassistant/components/blueprint/models.py)."""
     sections = _blueprint()["blueprint"]["input"]
     for nom, s in sections.items():
-        assert s.get("collapsed") is (None if nom == "piece_1" else True), f"section {nom}"
+        assert s.get("collapsed") is (None if nom in ("pieces", "piece_1") else True), f"section {nom}"
     for nom, e in _entrees(_blueprint()).items():
         assert "\n\n" in e.get("description", ""), f"entrée {nom} : description FR puis EN"
     energie = [n for n in sections if n.startswith("energie")]
@@ -527,8 +532,9 @@ def test_declencheurs_des_pieces():
     bp = _blueprint()
     ids = [t["id"] for t in bp["triggers"]]
     assert len(ids) == len(set(ids)), "identifiants de déclencheurs en double"
-    for n in range(1, 6):
-        mes = [t for t in bp["triggers"] if t["id"].startswith(f"piece_{n}")
+    for n in range(1, 11):
+        # « piece_1 » sans attraper « piece_10… » (ADR-0066 : dix pièces).
+        mes = [t for t in bp["triggers"] if re.fullmatch(rf"piece_{n}(_.*)?", t["id"])
                and not t["id"].startswith(f"piece_{n}_clim")]
         assert [t["id"] for t in mes] == [f"piece_{n}", f"piece_{n}_sortie", f"piece_{n}_luminosite",
                                          f"piece_{n}_couleur", f"piece_{n}_position", f"piece_{n}_consigne"]
@@ -609,14 +615,17 @@ def test_definitions_de_toutes_les_pieces():
     bp = p.bp
     defs = _defs(p.definitions())
     attendu = [
-        # Pièce 1 : cinq premières entités qui existent et ont un type (agenda et entité
-        # absente sautés) ; aires Chambre, Bureau, Salon : pas de nom commun.
+        # Nombre de pièces (ADR-0066) en tête : le défaut, 5.
+        ["pn", "5"],
+        # Pièce 1 : les entités qui existent et ont un type (agenda et entité absente
+        # sautés), vingt au plus (ADR-0066) ; aires Chambre, Bureau, Salon : pas de nom commun.
         ["p0", ""],
         ["t00", "lum", _icone(bp, domaine="light"), "dc", "", "Lampe Chambre"],
         ["t01", "lum", _icone(bp, domaine="light"), "d", "", "Plafonnier de la chambre"],
         ["t02", "lum", _icone(bp, "mdi:led-strip-variant", "light"), "o", "", "Sapin / Noël, 2026"],
         ["t03", "int", _icone(bp, "mdi:icone-hors-palette", "switch"), "k", "", "Prise PC"],
         ["t04", "vol", _icone(bp, domaine="cover"), "", "", "Store salon"],
+        ["t05", "cap", _icone(bp, domaine="sensor", classe="temperature"), "", "°C", "Température salon"],
         # Pièce 2 : nom saisi, retiré des noms (mot entier, casse ignorée, « du » final).
         ["p1", "Salon"],
         ["t10", "med", _icone(bp, domaine="media_player"), "t", "", "Télé"],
@@ -629,13 +638,14 @@ def test_definitions_de_toutes_les_pieces():
         ["t20", "lum", _icone(bp, domaine="light"), "dc", "", "Lampe"],
         ["t21", "lum", _icone(bp, domaine="light"), "d", "", "Plafonnier"],
         ["t22", "int", _icone(bp, domaine="fan"), "", "", "Ventilateur"],
-        # Pièce 4 : cinq au plus (la vanne, sixième, n'y est pas).
+        # Pièce 4 : la vanne, sixième, en t35 (un firmware 3.9 ne lit que t30 à t34).
         ["p3", ""],
         ["t30", "bin", _icone(bp, domaine="person"), "", "presence", "Alice"],
         ["t31", "bin", _icone(bp, domaine="lock"), "", "lock", "Serrure"],
         ["t32", "act", _icone(bp, domaine="scene"), "", "", "Soirée"],
         ["t33", "act", _icone(bp, domaine="script"), "", "", "Café"],
         ["t34", "act", _icone(bp, domaine="button"), "", "", "Sonnette"],
+        ["t35", "vol", _icone(bp, domaine="valve"), "", "", "Arrosage"],
         # Pièce 5 : nom saisi nettoyé ; unité coupée à 7 octets ; « | » et « ; » remplacés.
         ["p4", "Garage"],
         ["t40", "cap", _icone(bp, domaine="sensor"), "r", "kWh/100", "Conso / voiture, électrique"],
@@ -656,20 +666,20 @@ def test_nom_de_piece_par_l_aire_seulement_si_elle_est_unique():
     etats = _maison()
     # light.guirlande n'a pas d'aire : les autres (Chambre) décident.
     entrees = {"piece_1_tuiles": ["light.chevet", "light.guirlande", "fan.ventilo"]}
-    assert _defs(_passage(entrees=entrees, etats=etats).definitions())[0] == ["p0", "Chambre"]
+    assert _defs(_passage(entrees=entrees, etats=etats).definitions())[1] == ["p0", "Chambre"]
     entrees = {"piece_1_tuiles": ["light.chevet", "switch.prise_pc"]}
-    assert _defs(_passage(entrees=entrees, etats=etats).definitions())[0] == ["p0", ""]
+    assert _defs(_passage(entrees=entrees, etats=etats).definitions())[1] == ["p0", ""]
     # Une seule aire, mais sur un appareil de trois seulement : pas de nom (cas vu chez
     # l'auteur le 28/09 : la seule lampe rangée dans « Chambre » nommait tout l'accueil).
     entrees = {"piece_1_tuiles": ["light.chevet", "light.guirlande", "person.alice"]}
-    assert _defs(_passage(entrees=entrees, etats=etats).definitions())[0] == ["p0", ""]
+    assert _defs(_passage(entrees=entrees, etats=etats).definitions())[1] == ["p0", ""]
 
 
 def test_nom_de_tuile_sans_la_piece():
     def nom(friendly, piece):
         etats = [Etat("light.x", "off", friendly_name=friendly, supported_color_modes=["onoff"])]
         defs = _defs(_passage(entrees={"piece_1_nom": piece, "piece_1_tuiles": ["light.x"]}, etats=etats).definitions())
-        return defs[1][5]
+        return defs[2][5]  # après « pn » et « p0 »
 
     assert nom("Lampe du salon", "Salon") == "Lampe"
     assert nom("Salon - lampe", "Salon") == "lampe"
@@ -694,7 +704,8 @@ def test_sans_piece_1_l_accueil_vient_des_entrees_3x():
         # t04 : lumiere_3 n'existe pas, la place reste vide.
     ]
     defs = _defs(p.definitions())
-    assert defs[:5] == [
+    assert defs[:6] == [
+        ["pn", "5"],
         ["p0", ""],
         # Tuile PC du réglage 3.x : une icône hors palette retombe sur l'écran de la 3.1.
         ["t00", "int", "ordinateur", "k", "", "Prise PC"],
@@ -714,7 +725,7 @@ def test_sans_piece_1_l_accueil_vient_des_entrees_3x():
 def test_rien_de_choisi():
     p = _passage(entrees={})
     # Seuls les réglages de la rangée partent (leurs défauts, ceux du firmware).
-    assert p["tuiles"] == [] and p["rangee"] == [] and p.definitions() == "hp|0;hd|32;np|0;nd|32;"
+    assert p["tuiles"] == [] and p["rangee"] == [] and p.definitions() == "pn|5;hp|0;hd|32;np|0;nd|32;"
     assert p["tuiles_a_pousser"] == []
 
 
@@ -750,7 +761,7 @@ def test_les_definitions_partent_seulement_au_protocole_2(protocole_version):
     p = _passage(_evenement("rechargement"), tablettes=_tablette(protocole_version))
     assert p.conditions()
     # Calculées dans les deux cas (la trace les montre) ; l'envoi est gardé par protocole.
-    assert p.definitions().startswith("p0|")
+    assert p.definitions().startswith("pn|5;p0|")
 
 
 DEMARRAGE_HA = {"id": "demarrage_ha", "platform": "homeassistant", "event": "start"}
@@ -855,7 +866,8 @@ def test_un_capteur_ne_part_qu_avec_les_mesures():
         if e.entity_id in ("sensor.temp_salon", "climate.clim"):
             e.last_changed = e.last_updated = MAINTENANT - dt.timedelta(seconds=100)
     p = _passage({"id": "mesures", "platform": "time_pattern"}, etats=etats)
-    assert sorted(p["tuiles_a_pousser"]) == ["t12", "t13"]
+    # La température du salon est aussi le sixième élément de la pièce 1 (t05, ADR-0066).
+    assert sorted(p["tuiles_a_pousser"]) == ["t05", "t12", "t13"]
     # Rien de changé : rien.
     assert _passage({"id": "mesures", "platform": "time_pattern"})["tuiles_a_pousser"] == []
 
@@ -877,7 +889,7 @@ def test_une_entite_qui_apparait_redefinit_tout():
     p = _passage(_declencheur("piece_1", None, nouvelle, "light.chevet"))
     assert p["redefinir"] is True and p.conditions()
     assert p["tuiles_a_pousser"] == [t["cle"] for t in p["tuiles"]]
-    assert p.definitions().startswith("p0|")
+    assert p.definitions().startswith("pn|5;p0|")
     # Au protocole 1, rien.
     p = _passage(_declencheur("piece_1", None, nouvelle, "light.chevet"), tablettes=_tablette("3.1.0"))
     assert p["redefinir"] is False and not p.conditions()

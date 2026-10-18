@@ -40,6 +40,12 @@ le confronte à la matrice) :
 
 ### Ajouté
 
+- **Nombre de pièces et vingt appareils par pièce, côté Home Assistant** ([ADR-0066](docs/decisions/0066-rooms-count-cut-tiles.md), lot C ; les lots A et B, le firmware, suivent) :
+  - blueprint « Tab5 — emplacements » : nouvelle section « Pièces · Rooms » avec « Nombre de pièces » (1 à 10, 5 par défaut), sections « Pièce 6 » à « Pièce 10 » (mêmes entrées que les pièces 1 à 5, repliées), jusqu'à 20 appareils par pièce (au-delà, les 20 premiers) ; les entrées et les déclencheurs des dix pièces sont écrits par `tools/gen_blueprint_emplacements.py` ;
+  - ce qui part vers la tablette : « pn|N » en tête des définitions, les pièces au-delà du nombre jamais envoyées (ni nom, ni tuile, ni état, ni climat, ni commande), les clés `tRT` avec T = 0-9 puis a-j dans les définitions, les états, les clims des tuiles (`crRT` / `ceRT`) et les commandes de l'écran ;
+  - assistant de l'intégration : jusqu'à dix pièces et vingt tuiles par pièce (cinq proposées d'office), il écrit « Nombre de pièces » ;
+  - **compatibilité** : un firmware qui ne connaît pas encore ces clés les ignore et montre les cinq premières pièces et leurs cinq premiers appareils, comme avant ; une maison de cinq pièces de cinq appareils reçoit exactement les mêmes charges qu'avant, à « pn|5; » près (`tests/test_nombre_de_pieces.py`, et le même calcul fait par le Home Assistant de l'auteur sur sa vraie automatisation). **Ordre de mise à jour indifférent** (firmware ou blueprint d'abord).
+
 - **Waveshare 7B montée à l'envers** : `carte_rotation: "0"` dans `Tab5/user_entities.yaml` retire la rotation logicielle de 180° ; redessiner tout l'écran prend alors ~69 ms au lieu de ~83 ms (mesuré sur la carte de l'auteur, le 16/10/2026). Le tactile suit tout seul. Documenté dans [docs/waveshare-7b.md](docs/waveshare-7b.md).
 - **Écran éteint = dalle noire, et extinction de nuit** ([ADR-0064](docs/decisions/0064-screen-really-off-night.md), audit anti-casse du 16/10/2026 : une image fixe tenue des heures marque une dalle LCD) :
   - écran éteint, un voile noir couvre tout l'écran avant que LVGL se fige (la dalle ne garde plus la dernière image) ; la Waveshare 7B met en plus sa dalle en veille (DCS « display off » puis « sleep in », réveil 120 ms avant l'image) et l'éteint pendant une mise à jour, qui la faisait scintiller ; les trois dalles du Tab5 gardent le voile seul tant qu'aucune tablette de la révision ne l'a essayé (`carte_dalle_extinction` dans `Tab5/paquets/ecran-*.yaml`) ;

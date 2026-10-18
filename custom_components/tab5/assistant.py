@@ -4,15 +4,17 @@
 [AI-CONTEXT]
 @role Le cœur de l'assistant de l'intégration « Tab5 » (ADR-0052), sans Home Assistant :
       1. propose, d'après les registres de HA (pièces, appareils, entités), jusqu'à
-         MAX_PIECES pièces et, pour chacune, ses tuiles (MAX_TUILES entités des domaines
-         DOMAINES_AUTO, dans cet ordre), son capteur de température, d'humidité et sa clim
-         (entrées piece_n_temperature / _humidite / _clim, ADR-0040) ;
+         MAX_PIECES pièces et, pour chacune, ses tuiles (TUILES_PROPOSEES entités des
+         domaines DOMAINES_AUTO, dans cet ordre ; l'utilisateur va jusqu'à MAX_TUILES, ADR-0066),
+         son capteur de température, d'humidité et sa clim (entrées piece_n_temperature /
+         _humidite / _clim, ADR-0040) ;
       2. propose les entrées de la maison (celles qui ne dépendent pas d'une pièce,
          CHAMPS_MAISON) quand il n'y a pas d'ambiguïté, et les choix des listes
          « Tab5 · … » de packages/tab5_reglages.yaml (LISTES : les règles du package pour
          celles qu'il devine, une proposition plausible pour les quatre qu'il ne devine
          jamais) ;
-      2 bis. construit les entrées du blueprint tab5_emplacements à partir des choix ;
+      2 bis. construit les entrées du blueprint tab5_emplacements à partir des choix, dont
+         « Nombre de pièces » (nombre_pieces, ADR-0066) : le nombre de pièces choisies ;
       3. lit et écrit automations.yaml : une automatisation `use_blueprint` ajoutée, ou les
          pièces d'une automatisation existante remplacées (seulement sur demande
          explicite), sauvegarde d'abord, écriture atomique, relecture qui vérifie le
@@ -38,8 +40,13 @@ from typing import Any
 
 import yaml
 
-MAX_PIECES = 5
-MAX_TUILES = 5
+# ADR-0066 : jusqu'à dix pièces de vingt éléments (PIECES et ELEMENTS_MAX de
+# tools/gen_blueprint_emplacements.py ; tests/test_assistant_tab5.py compare au blueprint).
+MAX_PIECES = 10
+MAX_TUILES = 20
+# Tuiles proposées d'office dans une pièce : cinq, une tuile entière chacune. Au-delà, l'écran
+# coupe les dernières en deux puis en quatre : une pièce chargée est le choix de l'utilisateur.
+TUILES_PROPOSEES = 5
 # Domaines proposés d'office comme tuiles, dans cet ordre (lumières d'abord). Le formulaire
 # accepte tous ceux du blueprint (DOMAINES_TUILES), l'utilisateur en ajoute s'il veut.
 DOMAINES_AUTO = ("light", "cover", "switch", "fan", "media_player")
@@ -61,9 +68,11 @@ FICHIER = "automations.yaml"
 SAUVEGARDES = "tab5_sauvegardes/automatisations"
 GARDER = 5
 TEMPORAIRE = ".tab5-tmp"
-# Les entrées d'une pièce dans le blueprint ; une mise à jour les remplace toutes.
+# Les entrées d'une pièce dans le blueprint, et leur nombre (ADR-0066) ; une mise à jour les
+# remplace toutes (piece_10_* compris).
 CHAMPS_PIECE = ("nom", "tuiles", "temperature", "humidite", "clim")
-ENTREE_PIECE = re.compile(r"^piece_[1-9]_(?:%s)$" % "|".join(CHAMPS_PIECE))
+NOMBRE_PIECES = "nombre_pieces"
+ENTREE_PIECE = re.compile(r"^(?:%s|piece_[1-9][0-9]*_(?:%s))$" % (NOMBRE_PIECES, "|".join(CHAMPS_PIECE)))
 # `automation: !include automations.yaml` (ou `automation ui:` …) au premier niveau.
 INCLUSION = re.compile(r"^automation(?:\s+[^:#\n]+)?:\s*!include\s+automations\.yaml\s*(?:#.*)?$", re.M)
 
@@ -161,7 +170,7 @@ def proposer_piece(zone: Zone, entites: list[Entite]) -> Piece:
     """La proposition pour une pièce : son nom, ses tuiles dans l'ordre de DOMAINES_AUTO
     (par nom dans un domaine), le premier capteur de température et d'humidité, la
     première clim."""
-    tuiles = [e.entity_id for d in DOMAINES_AUTO for e in entites if e.domaine == d][:MAX_TUILES]
+    tuiles = [e.entity_id for d in DOMAINES_AUTO for e in entites if e.domaine == d][:TUILES_PROPOSEES]
     clim = next((e.entity_id for e in entites if e.domaine == "climate"), None)
     return Piece(zone=zone.id, nom=zone.nom, tuiles=tuple(tuiles),
                  temperature=_capteur(entites, "temperature"), humidite=_capteur(entites, "humidity"),
@@ -380,11 +389,12 @@ def changements(choix: dict[str, str], actuels: dict[str, str]) -> dict[str, str
 # ─── Entrées du blueprint ────────────────────────────────────────────────────
 
 def entrees_blueprint(pieces: list[Piece]) -> dict[str, Any]:
-    """Les entrées piece_n_* (n = 1 à 5, dans l'ordre des pièces) ; un champ vide est omis,
-    le blueprint lui donne sa valeur par défaut."""
+    """« Nombre de pièces » (le nombre de pièces choisies, ADR-0066), puis les entrées
+    piece_n_* (n = 1 à 10, dans l'ordre des pièces) ; un champ vide est omis, le blueprint
+    lui donne sa valeur par défaut."""
     if len(pieces) > MAX_PIECES:
         raise ValueError(f"{len(pieces)} pièces, {MAX_PIECES} au plus")
-    entrees: dict[str, Any] = {}
+    entrees: dict[str, Any] = {NOMBRE_PIECES: len(pieces)} if pieces else {}
     for n, p in enumerate(pieces, 1):
         if len(p.tuiles) > MAX_TUILES:
             raise ValueError(f"pièce {n} : {len(p.tuiles)} tuiles, {MAX_TUILES} au plus")
@@ -399,8 +409,8 @@ def entrees_blueprint(pieces: list[Piece]) -> dict[str, Any]:
 
 
 def fusionner(anciennes: dict[str, Any] | None, nouvelles: dict[str, Any]) -> dict[str, Any]:
-    """Les entrées d'une automatisation existante : ses pièces toutes remplacées par celles
-    de `nouvelles`, ses autres entrées remplacées seulement par une valeur de `nouvelles`
+    """Les entrées d'une automatisation existante : ses pièces (et leur nombre) toutes
+    remplacées par celles de `nouvelles`, ses autres entrées remplacées seulement par une valeur de `nouvelles`
     (maison) ; tout le reste (énergie, gestes…) gardé tel quel."""
     gardees = {k: v for k, v in (anciennes or {}).items() if not ENTREE_PIECE.match(k) and k not in nouvelles}
     return {**nouvelles, **gardees}

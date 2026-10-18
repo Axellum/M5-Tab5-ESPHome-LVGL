@@ -38,7 +38,7 @@
           "pieces": "Räume des Tablets"
         },
         "data_description": {
-          "pieces": "Höchstens fünf, in der Reihenfolge der Seiten der unteren Reihe: der erste auf dem Startbildschirm, die weiteren per Wischen."
+          "pieces": "Höchstens zehn, in der Reihenfolge der Seiten der unteren Reihe: der erste auf dem Startbildschirm, die weiteren per Wischen."
         }
       },
       "piece": {
@@ -53,7 +53,7 @@
         },
         "data_description": {
           "nom": "Leer: der gemeinsame Bereichsname seiner Geräte.",
-          "tuiles": "Höchstens fünf, von links nach rechts.",
+          "tuiles": "Höchstens zwanzig, von links nach rechts. Ab dem sechsten werden Kacheln halbiert, dann geviertelt.",
           "temperature": "Optional. Wird auf dem Startbildschirm angezeigt, wenn dieser Raum zu sehen ist.",
           "humidite": "Optional, zusammen mit der Temperatur.",
           "clim": "Optional, zusammen mit der Temperatur: Die Tasten − / + des Startbildschirms regeln sie."
@@ -129,8 +129,8 @@
     },
     "error": {
       "aucune_piece_choisie": "Wählen Sie mindestens einen Raum.",
-      "trop_de_pieces": "Höchstens fünf Räume.",
-      "trop_de_tuiles": "Höchstens fünf Kacheln."
+      "trop_de_pieces": "Höchstens zehn Räume.",
+      "trop_de_tuiles": "Höchstens zwanzig Kacheln."
     }
   },
   "issues": {
@@ -186,7 +186,7 @@
               "pieces": "Räume des Tablets"
             },
             "data_description": {
-              "pieces": "Höchstens fünf, in der Reihenfolge der Seiten der unteren Reihe: der erste auf dem Startbildschirm, die weiteren per Wischen."
+              "pieces": "Höchstens zehn, in der Reihenfolge der Seiten der unteren Reihe: der erste auf dem Startbildschirm, die weiteren per Wischen."
             }
           },
           "piece": {
@@ -201,7 +201,7 @@
             },
             "data_description": {
               "nom": "Leer: der gemeinsame Bereichsname seiner Geräte.",
-              "tuiles": "Höchstens fünf, von links nach rechts.",
+              "tuiles": "Höchstens zwanzig, von links nach rechts. Ab dem sechsten werden Kacheln halbiert, dann geviertelt.",
               "temperature": "Optional. Wird auf dem Startbildschirm angezeigt, wenn dieser Raum zu sehen ist.",
               "humidite": "Optional, zusammen mit der Temperatur.",
               "clim": "Optional, zusammen mit der Temperatur: Die Tasten − / + des Startbildschirms regeln sie."
@@ -277,8 +277,8 @@
         },
         "error": {
           "aucune_piece_choisie": "Wählen Sie mindestens einen Raum.",
-          "trop_de_pieces": "Höchstens fünf Räume.",
-          "trop_de_tuiles": "Höchstens fünf Kacheln."
+          "trop_de_pieces": "Höchstens zehn Räume.",
+          "trop_de_tuiles": "Höchstens zwanzig Kacheln."
         }
       }
     }

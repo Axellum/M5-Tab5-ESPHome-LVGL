@@ -7,9 +7,9 @@
         fichiers sont actifs et qu'aucune automatisation du blueprint tab5_emplacements
         n'existe : c'est la proposition faite à la première installation ;
       - les options de l'intégration (config_flow.py), case « Assistant » : relançable.
-      Étapes : `pieces` (jusqu'à 5 pièces de HA, pré-choisies par assistant.classer_zones),
-      `piece` une fois par pièce choisie (nom, tuiles, température, humidité, clim,
-      pré-remplis par assistant.proposer_piece), `maison` (les entrées qui ne dépendent pas
+      Étapes : `pieces` (jusqu'à 10 pièces de HA, ADR-0066, pré-choisies par
+      assistant.classer_zones), `piece` une fois par pièce choisie (nom, tuiles jusqu'à 20,
+      température, humidité, clim, pré-remplis par assistant.proposer_piece), `maison` (les entrées qui ne dépendent pas
       d'une pièce, assistant.proposer_maison ; celles d'une automatisation existante
       d'abord), `agendas` (les listes « Tab5 · … » de packages/tab5_reglages.yaml,
       assistant.proposer_liste ; sautée si le package n'est pas chargé), `recapitulatif`
@@ -225,7 +225,7 @@ class AssistantFlux:
         return self.async_show_form(  # type: ignore[attr-defined]
             step_id="piece", data_schema=schema, errors=erreurs,
             description_placeholders={"numero": str(n + 1), "total": str(len(self._choisies)),
-                                      "zone": zone.nom, "max": str(assistant.MAX_TUILES)})
+                                      "zone": zone.nom, "max": str(assistant.TUILES_PROPOSEES)})
 
     async def async_step_maison(self, user_input: dict[str, Any] | None = None) -> Any:
         if user_input is not None:

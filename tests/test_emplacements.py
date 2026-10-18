@@ -64,7 +64,9 @@ def test_le_blueprint_se_lit_et_tout_est_facultatif():
             # Pareil pour le panneau Ok Nabu et le défilement au choix (lot 3, ADR-0041 ;
             # tests/test_nabu.py) : l'écran d'avant le choix. Zone à gauche de l'horloge
             # (ADR-0051, tests/test_zone_gauche.py) : le vocal au départ, comme avant.
+            # Nombre de pièces (ADR-0066) : non rempli, les cinq pages de la météo.
             defauts = {"rangee_plantes": "0", "rangee_duree": 32, "nabu_ecoute": "0", "nabu_duree": 32,
+                       "nombre_pieces": 5,
                        "rangee_defilement": "auto", "nabu_defilement": "fixe",
                        "reglables_defilement": "fixe", "reglables_duree": 32,
                        "gauche_depart": "vocal", "gauche_cycle": ["vocal", "graphique", "lecteur", "capteur"]}
