@@ -106,6 +106,10 @@ substitutions:
   # (modal_body_y + 104 px de haut + 12 px de respiration : 188). ESPHome 2026.9 calcule
   # l'expression (lot 2 du portage) : elle suit modal_body_y.
   assist_resp_y: ${ modal_body_y | int + 116 }
+  # Boutons de vue de la page Bilan d'Énergie (vue_btn.yaml) : 150 px sur le Tab5 ; sur une
+  # carte du graphique (corps_w − 434) où le titre n'aurait plus 184 px devant eux, plus étroits
+  # (96 sur la 7B, où « Aujourd'hui » était caché sous eux). kBilVueL de tab5_energie.cpp.
+  bil_vue_l: ${ [150, (corps_w | int - 434 - 222) // 3] | min }
   # ─── Accueil (lot 3 du portage 1024×600, ADR-0061) ────────────────────────────────────
   # La mise en page de l'accueil est celle du Tab5, ramenée à l'écran de la carte : un x ou
   # une largeur v du Tab5 devient (v × carte_ecran_l + 640) // 1280, un y ou une hauteur

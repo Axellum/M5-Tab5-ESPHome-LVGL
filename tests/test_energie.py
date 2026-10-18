@@ -32,7 +32,7 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
 from tests.test_tuiles_blueprint import Etat, Passage, _chercher, _defs, _evenement
-from tests.commun import envoi_tablettes, CARTES, BaseChargeur, _jetons as jetons_resolus, constantes_cpp, lire as _lire, resoudre
+from tests.commun import envoi_tablettes, CARTES, BaseChargeur, _jetons as jetons_resolus, constantes_cpp, geometrie_cpp, lire as _lire, resoudre
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PACKAGE = os.path.join(REPO, "HomeAssistant_Config", "packages", "tab5_energie.yaml")
@@ -2020,6 +2020,11 @@ def test_popup_au_registre_et_au_select():
 
 # ─── Mise en page sur une autre carte (lot 4 du portage 1024×600, ADR-0061) ─────
 
+def police_px_carte(v: int, carte: str) -> int:
+    """police_px() de tab5_geometrie.h sur la carte : une longueur qui suit les polices ramenées."""
+    return (v * geometrie_cpp(carte)["kPolicePct"] + 50) // 100
+
+
 def _nombres_carte(motif: str, texte: str, jetons: dict) -> list[tuple[int, ...]]:
     trouves = [m if isinstance(m, tuple) else (m,) for m in re.findall(motif, texte)]
     return [tuple(int(resoudre(v.strip(), jetons)) for v in m) for m in trouves]
@@ -2045,13 +2050,35 @@ def test_mise_en_page_ramenee_au_corps(carte):
         assert gy == h_carte + 16 and gy + gh == corps_h
         assert zh == k["kZoneH"] and zy + zh + 14 == gh
     # Bilan (ADR-0062, page refaite par main le 14/10/2026) : carte « Batterie réseau » de
-    # 420 px sur toute la hauteur, graphique à droite jusqu'au bord du corps. Son C++
-    # (kBilZoneL, kBil*, kHeros*) reste au pixel du Tab5 : pas encore ramené à la carte.
+    # 420 px sur toute la hauteur, graphique à droite jusqu'au bord du corps. Depuis le
+    # 18/10/2026, son C++ suit la carte : zone égale au YAML, hauteurs de la carte de gauche
+    # ramenées, bas du graphique posé depuis le bas de sa zone ; le Tab5 au pixel d'avant.
     (bx, bl, bh), = _nombres_carte(r"x: (458)\s+y: 0\s+width: (.+)\s+height: (.+)", popup, jetons)
     (bzy, bzl, bzh), = _nombres_carte(r"id: energie_bilan_zone\s+align: TOP_LEFT\s+x: 0\s+y: (.+)\s+width: (.+)\s+height: (.+)", popup, jetons)
     assert bx + bl == 24 + corps_w and bh == corps_h and bzl == bl - 4 and bzy + bzh + 4 == corps_h
+    assert (bzl, bzh) == (k["kBilZoneL"], k["kBilZoneH"]) and k["kBilCarteL"] == bl
+    assert k["kBilVueL"] == int(jetons["bil_vue_l"]) and k["kBilTitreL"] >= 150, "titre devant les boutons de vue"
+    # Carte de gauche : l'anneau (trois lignes au-dessus, économies comprises) tient dans la
+    # carte ; le net, sa phrase, la jauge, son échelle et la fin du mois ne se chevauchent pas.
+    assert k["kHerosGrandY"] + police_px_carte(53, carte) <= k["kHerosSousY"]
+    assert k["kHerosSousY"] + 26 <= k["kJaugeY"] and k["kJaugeY"] + k["kJaugeH"] <= k["kEchelleY"]
+    assert k["kEchelleY"] + 26 <= k["kFinY"] and k["kFinY"] + police_px_carte(38, carte) <= k["kSep1Y"]
+    bas_anneau = k["kLigneY"] + 3 * k["kLignePas"] + 6 + 14 + k["kAnneauBilanD"]
+    assert bas_anneau <= corps_h - 8, f"anneau du Bilan coupé ({carte})"
+    # Graphique : axe, légendes (une ou deux lignes) et note dans la zone, sans chevauchement.
+    lignes_legende = -(-3 // k["kBilLegendesLigne"])
+    assert k["kBilLegendeX"] + k["kBilLegendesLigne"] * k["kBilLegendePas"] <= k["kBilZoneL"]
+    assert k["kBilY1"] < k["kBilAxeY"] and k["kBilAxeY"] + 26 < k["kBilLegendeY"]
+    assert k["kBilLegendeY"] + (lignes_legende - 1) * k["kBilLegendeRangee"] + 26 < k["kBilNoteY"]
+    assert k["kBilNoteY"] + 26 <= k["kBilZoneH"] and k["kBilNoteL"] <= k["kBilZoneL"] - 2 * k["kBilLegendeX"]
+    assert k["kBilY1"] - k["kBilY0"] >= 200, "graphique du Bilan trop bas"
     if carte == "tab5":
         assert (bl, bzy, bzl, bzh) == (768, 64, k["kBilZoneL"], 530)
+        assert (k["kBilX1"], k["kBilY1"], k["kBilAxeY"], k["kBilLegendeY"], k["kBilNoteY"], k["kBilNoteL"],
+                k["kBilTitreL"], k["kBilVueL"], k["kBilLegendesLigne"]) == (696, 400, 408, 452, 488, 600, 248, 150, 3)
+        assert (k["kHerosTitreY"], k["kHerosGrandY"], k["kHerosUniteDy"], k["kHerosSousY"], k["kJaugeY"], k["kJaugeH"],
+                k["kEchelleY"], k["kFinY"], k["kSep1Y"], k["kLigneY"], k["kLignePas"], k["kAnneauBilanD"]) == (
+                    22, 50, 21, 124, 168, 80, 254, 288, 336, 346, 38, 92)
     assert k["kBarresHaut"] < k["kBarresBas"] < k["kAxeY"] and k["kAxeY"] + 27 <= k["kZoneH"]
     # Aujourd'hui : deux cartes côte à côte, zones égales au C++.
     (sz_l, sz_h), = _nombres_carte(r"id: energie_soleil_zone\s+align: TOP_LEFT\s+x: 18\s+y: 14\s+width: (.+)\s+height: (.+)", popup, jetons)
@@ -2062,6 +2089,13 @@ def test_mise_en_page_ramenee_au_corps(carte):
     assert k["kMidiY"] + 27 <= k["kArcHaut"] < k["kHorizonY"] < k["kLeverY"] < k["kSolMaxY"] < k["kSolHaut"] < k["kSolBas"]
     assert k["kSolBas"] < k["kSolAxeY"] < k["kLegendeY"] and k["kLegendeY"] + 27 <= k["kSolZoneH"]
     assert k["kSolBord"] + 4 * k["kLegendePas"] <= k["kSolZoneL"] + 30, "quatre légendes dans la zone"
+    # « 00:00 » centré sous 00:30 (sol_x) : sa boîte de kSolAxeL ne sort pas de plus de 4 px
+    # à gauche de la zone (le texte, 57 px, tient alors entier ; 7 px sur la 7B avant le
+    # 18/10/2026, le zéro coupé). Le Tab5 garde ses 12 px de bord.
+    kSolL = k["kSolZoneL"] - 2 * k["kSolBord"]
+    assert k["kSolBord"] + round(30 * kSolL / 1440) - k["kSolAxeL"] // 2 >= -4, carte
+    if carte == "tab5":
+        assert k["kSolBord"] == 12
     assert 3 * k["kInfosLigne"] <= k["kCadreY"] and k["kCadreY"] + k["kCadreH"] < k["kSourceY"]
     assert k["kSourceY"] + 27 <= k["kSolZoneH"] and 52 + 38 <= k["kCadreH"] + 1
     # Flux : centres ramenés à la page (centre_carte) ; les cercles gardent leur taille, ne se
