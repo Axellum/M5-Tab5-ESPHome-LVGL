@@ -839,6 +839,20 @@ LECTEUR_INACTIF = Service("tab5_maj_lecteur", (
 ))
 
 
+# Playlists favorites du popup Musique (ADR-0068) : la clé « playlists|nom|… » que le
+# blueprint pousse avec tous les états (les noms seuls, aucun lien), et la liste vide. Six
+# noms : deux colonnes ; le dernier, long, coupé avec « … ».
+PLAYLISTS = Service("tab5_maj_emplacements", (
+    ("payload", "playlists|Jazz du dimanche|Rock des années 80|Cuisine en musique|Chill du soir|"
+                "Réveil en douceur|Les grands classiques de la chanson française;"),))
+PLAYLISTS_AUCUNE = Service("tab5_maj_emplacements", (("payload", "playlists|;"),))
+# Page « Playlists » : un glissement vers la gauche parti du milieu de la pochette (rien
+# n'y est touchable ; le geste remonte au popup, tab5_pages.cpp). Parti de x 540, ramené
+# sur la 7B (vers_carte.py) il tombait à x 433, hors de la pochette (427) : la page ne
+# changeait pas (capture « doublon » du rendu 1024×600, 18/10/2026).
+PLAYLISTS_PAGE = Glisser(470, 346, 150, 346, dans_popup=True)
+
+
 # Capteurs suivis (ADR-0054, suivi_popup.yaml et suivi_zone.yaml) : quatre capteurs au
 # format de packages/tab5_suivi.yaml (script tab5_suivi_pousser) — un cours en hausse
 # du jour (change_pct), une température en baisse sur 24 h (écart, deux heures sans
@@ -1381,6 +1395,12 @@ ECRANS: tuple[Ecran, ...] = (
     Ecran("musique-vide", (Aller("Musique"),), (LECTEUR_VOILE,)),
     Ecran("musique", (LECTEUR_EN_PAUSE, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
     Ecran("musique-eteint", (LECTEUR_ETEINT, Aller("Musique")), (LECTEUR_VOILE, LECTEUR_AUCUN)),
+    # Playlists favorites (ADR-0068) : les noms des pages contre la croix sur la page Lecture,
+    # puis la page Playlists (deux colonnes de boutons).
+    Ecran("musique-avec-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Musique")),
+          (LECTEUR_VOILE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Musique"), PLAYLISTS_PAGE),
+          (LECTEUR_VOILE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("accueil-musique", (LECTEUR_EN_PAUSE,), (LECTEUR_AUCUN,)),
     # Lecteur compact dans la zone à gauche de l'horloge (ADR-0051, lot 2) : en pause (la
     # barre « en lecture » se masque, le cadre Ok Nabu reste), allumé sans rien en lecture,

@@ -25,6 +25,8 @@
 #                     valeur)                ADR-0050) : n'agit que sur un lecteur de la
 #                                            liste choisie ou sur le lecteur montré ; le
 #                                            blueprint écoute aussi « ouvrir » d'une tuile
+#                                            et « playlist » (ADR-0068, le lien est à
+#                                            lui ; le script l'ignore)
 #       tab5_serveur_ia_action (action)    → script.tab5_serveur_ia_action (tab5_llm.yaml,
 #                                            ADR-0060) : decharger / reveiller / redemarrer,
 #                                            seulement si le package l'offre à cet instant
