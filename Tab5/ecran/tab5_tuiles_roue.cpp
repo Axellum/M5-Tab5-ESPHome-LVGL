@@ -668,10 +668,11 @@ bool tuile_roue_ouvrir(int r, int t, lv_obj_t* ancre, bool depuis_maison) {
     return roue_tuile_peindre(rt, false);
 }
 
-// Ancre de la tuile T de la page courante : la pastille de sa carte (mode HA), le bouton
-// au centre de sa tuile météo sinon. Appui long d'une tuile (tuile_appui_piece).
+// Ancre de la tuile T de la page courante : la pastille de sa carte (mode HA ou page de
+// pièce de la météo, ADR-0066), le bouton au centre de sa tuile météo sinon. Appui long
+// d'une tuile (tuile_appui_piece).
 bool tuiles::roue_de_la_tuile(int r, int t) {
-    if (g_central_ctx.ha_mode) return tuile_roue_ouvrir(r, t, g_tuiles_ui.carte_pastille[t]);
+    if (cartes_affichees()) return tuile_roue_ouvrir(r, t, g_tuiles_ui.carte_pastille[t]);
     lv_obj_t *g, *d, *b;
     widgets_meteo(t, g, d, b);
     return tuile_roue_ouvrir(r, t, b);

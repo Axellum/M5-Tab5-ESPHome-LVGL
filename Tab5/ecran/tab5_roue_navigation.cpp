@@ -200,7 +200,7 @@ int choix_de(const Premier& p, RoueChoix* c, int* cible) {
             lien("\xC2\xAB", tr("Retour"), kCibleRetour);  // « (Latin-1, roboto_22)
             debut = kPiecesPage1;
         }
-        const int montree = tuiles_piece_mode_ha();
+        const int montree = tuiles_piece_montree();
         for (int i = debut; i < fin && m < kRoueChoix; i++) {
             const int r = pieces[i];
             c[m] = RoueChoix{};
@@ -325,10 +325,10 @@ void rejouer() {
 void roue_navigation_ouvrir() {
     // Un appui long au bout d'un glissement (swipe des prévisions ou des pièces) : rien.
     if (ui_appui_glisse()) return;
-    // Famille Pièces sur deux pages (ADR-0066) : celle de la pièce du mode HA, sinon la première.
+    // Famille Pièces sur deux pages (ADR-0066) : celle de la pièce montrée, sinon la première.
     int pieces[kPiecesMax];
     const int n = pieces_occupees(pieces);
-    const int montree = tuiles_piece_mode_ha();
+    const int montree = tuiles_piece_montree();
     s_page_pieces = 0;
     for (int i = kPiecesPage1; i < n && 1 + n > kRoueChoix; i++)
         if (pieces[i] == montree) s_page_pieces = 1;

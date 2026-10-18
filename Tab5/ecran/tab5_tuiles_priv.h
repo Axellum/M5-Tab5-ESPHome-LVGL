@@ -157,6 +157,8 @@ bool heritage();
 int pieces_nombre();
 bool tuile_presente(int r, int t);
 int piece_courante();
+// Les cartes des appareils sont à l'écran : mode HA, ou page de pièce de la météo (ADR-0066).
+bool cartes_affichees();
 bool minuterie_sur(const Minuterie& m, int r, int t);
 bool vol_mouvement(const char* s);
 Gestes gestes(const Def& d, bool clim_connue);

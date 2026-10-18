@@ -582,6 +582,10 @@ bool clim_carrousel_ouvrir_sur(const ClimRef& c);
 // tab5_tuiles.cpp : la pièce affichée en mode HA (ADR-0023), -1 en mode météo ou en mode
 // héritage (aucune pièce reçue).
 int tuiles_piece_mode_ha();
+// La pièce dont les cartes sont à l'écran : celle du mode HA, ou celle d'une page de pièce
+// de la météo (ADR-0066) ; -1 sinon. Pour ce qui marque « la pièce montrée » (Maison,
+// roue de navigation), pas pour ce qui suit le mode HA (zone des températures, clims).
+int tuiles_piece_montree();
 
 // --- Popup Météo (tab5_meteo.cpp, ADR-0043) ---
 // Les prévisions (heures, jours), la pluie dans l'heure ou sa phrase viennent de changer :

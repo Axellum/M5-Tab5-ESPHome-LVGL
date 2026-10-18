@@ -93,7 +93,8 @@ constexpr char kPrefixePiece = 'p';
 constexpr int kCasesTuiles = kPiecesMax * kTuiles;
 constexpr int kCases = kCasesTuiles + kPiecesMax;
 
-// 30 cases (≈ 5,4 Ko) en PSRAM, allouées à la première clé cr/ce : rien tant qu'aucune
+// kCases cases (60 depuis l'ADR-0066 : 10 pièces × 5 tuiles + 10 pièces, deux fois les
+// ≈ 5,4 Ko des 30 d'avant) en PSRAM, allouées à la première clé cr/ce : rien tant qu'aucune
 // tuile ni aucune pièce n'a sa clim, rien en RAM interne. Pas d'EXT_RAM_BSS_ATTR : ces
 // cases ont des valeurs initiales (constructeurs), et une BSS externe n'en garde aucune.
 ClimTuile* s_ct = nullptr;

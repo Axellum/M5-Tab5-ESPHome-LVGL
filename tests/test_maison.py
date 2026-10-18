@@ -266,7 +266,7 @@ def test_pages_de_pieces_par_la_brique():
     HA d'abord ; un état repeint la place qui montre sa tuile, sur la page affichée."""
     cpp = _maison()
     ouvrir = _fonction(cpp, "maison_ouvrir")
-    assert "pages_brancher(&s_pages);" in ouvrir and "tuiles_piece_mode_ha()" in ouvrir
+    assert "pages_brancher(&s_pages);" in ouvrir and "tuiles_piece_montree()" in ouvrir
     assert "LV_EVENT_GESTURE" not in cpp, "le geste : la brique (tab5_pages.cpp)"
     onglets = _fonction(cpp, "peindre_onglets")
     assert 'tr("Pièces %d à %d")' in onglets and "choix_peindre(u.onglet, n, s_page);" in onglets

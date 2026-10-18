@@ -1408,7 +1408,9 @@ void tuiles_mode_ha(bool actif) {
     auto calque_de = [&u](int p) {
         return p >= kPagesMeteo ? u.calque_ha : (p >= 2 ? u.calque_jours : u.calque_heures);
     };
-    lv_obj_t* const avant = calque_de(ctx.forecast_page);
+    // Le calque montré : les cartes en mode HA (forecast_page y suit la page de la pièce,
+    // qui n'est pas le calque affiché), sinon celui de la page de la météo.
+    lv_obj_t* const avant = ctx.ha_mode ? u.calque_ha : calque_de(ctx.forecast_page);
     if (actif) {
         // Page sans appareil : la pièce la plus proche qui en a (toutes les pièces comptent,
         // chacune à sa page, ADR-0066).
@@ -1755,6 +1757,12 @@ void tuiles_heritage_volet_sens() {
 int tuiles_piece_mode_ha() {
     charger();
     if (!g_central_ctx.ha_mode || heritage()) return -1;
+    return piece_courante();
+}
+
+int tuiles_piece_montree() {
+    charger();
+    if (!cartes_affichees() || heritage()) return -1;
     return piece_courante();
 }
 

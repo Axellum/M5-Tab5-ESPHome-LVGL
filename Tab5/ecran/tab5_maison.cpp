@@ -258,10 +258,11 @@ void maison_ouvrir() {
     s_pages.courante = page_courante;
     s_pages.afficher = afficher_page;
     pages_brancher(&s_pages);  // rappelé à chaque ouverture : sans effet de plus
-    // La page de la pièce du mode HA (un tap sur son titre), sinon la première.
+    // La page de la pièce montrée (un tap sur son titre, mode HA ou page de pièce de la
+    // météo), sinon la première.
     s_page = 0;
     disposer();
-    const int r_ha = tuiles_piece_mode_ha();
+    const int r_ha = tuiles_piece_montree();
     for (int i = 0; i < s_nb && s_rep.par_page > 0; i++) {
         if (s_pieces[i] != r_ha || i / s_rep.par_page == s_page) continue;
         s_page = i / s_rep.par_page;

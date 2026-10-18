@@ -1191,8 +1191,9 @@ void hide_vocal_response_ui(lv_obj_t* vocal_wrap, lv_obj_t* lbl_vocal, CentralPa
     if (vocal_wrap) lv_obj_add_flag(vocal_wrap, LV_OBJ_FLAG_HIDDEN);
     ctx.vocal_shown = false;
 
-    // Mode HA : la réponse avait masqué le titre de la pièce, il revient.
-    if (ctx.ha_mode) {
+    // Mode HA ou page de pièce de la météo (ADR-0066) : la réponse avait masqué le titre
+    // de la pièce, il revient.
+    if (ctx.ha_mode || ctx.forecast_page >= kPagesMeteo) {
         update_central_forecast_page_ui(ctx.forecast_page, g_tuiles_ui.titre_cadre, g_tuiles_ui.titre, ctx);
         return;
     }

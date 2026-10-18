@@ -215,6 +215,18 @@ def test_pages_de_piece_de_la_meteo():
     titre = _fonction(central, "set_forecast_page_title_text")
     assert "const bool piece = ctx.ha_mode || forecast_page >= kPagesMeteo;" in titre
     assert "if (g_central_ctx.forecast_page == 2) return RetourAuto::RIEN;" in _lire("Tab5", "ecran", "tab5_anim.cpp")
+    # Ce qui suit les cartes et non le mode HA (relecture du lot A) : sortie du mode HA
+    # depuis le calque des cartes, ancre de la roue d'une tuile, pièce montrée (Maison,
+    # roue de navigation), mention « Prévisions de … » et titre après une réponse vocale.
+    assert "lv_obj_t* const avant = ctx.ha_mode ? u.calque_ha : calque_de(ctx.forecast_page);" in \
+        _fonction(_cpp(), "tuiles_mode_ha")
+    roue = _lire("Tab5", "ecran", "tab5_tuiles_roue.cpp")
+    assert "if (cartes_affichees()) return tuile_roue_ouvrir(r, t, g_tuiles_ui.carte_pastille[t]);" in roue
+    assert "if (!cartes_affichees() || heritage()) return -1;" in _fonction(_cpp(), "tuiles_piece_montree")
+    assert "tuiles_piece_mode_ha()" not in _lire("Tab5", "ecran", "tab5_maison.cpp")
+    assert "tuiles_piece_mode_ha()" not in _lire("Tab5", "ecran", "tab5_roue_navigation.cpp")
+    assert "g_central_ctx.forecast_page < kPagesMeteo &&" in _lire("Tab5", "ecran", "tab5_forecast.cpp")
+    assert "if (ctx.ha_mode || ctx.forecast_page >= kPagesMeteo) {" in central
     # Dix pastilles, posées une fois ; celles de trop masquées.
     tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
     lvgl = _lire("Tab5", "paquets", "tab5-lvgl.yaml")
