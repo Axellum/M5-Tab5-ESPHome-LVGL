@@ -192,7 +192,9 @@ void batterie_texte_console(char* buf, size_t n, bool montee, PresenceBatterie p
 // Page affichée après un geste dans le popup Réglages (`nb` pages) : vers la gauche la
 // suivante, vers la droite la précédente, en boucle aux deux bouts comme les prévisions
 // (qui bouclent aussi, forecast_page_suivante dans tab5_central.cpp). Page hors de
-// 0..nb-1 : la première. Pure, testée par tools/test_alarm_clock.cpp.
+// 0..nb-1 : la première. Sert aussi aux popups à pages (tab5_pages.cpp), au carrousel des
+// clims et, depuis le 18/10/2026, au rouleau des pièces du mode HA (tuiles_swipe_ha).
+// Pure, testée par tools/test_alarm_clock.cpp.
 int reglages_page_voisine(int page, int nb, bool gauche);
 
 // ─── Rouleaux du popup Réveil (09/10/2026, demande d'Axel) ───

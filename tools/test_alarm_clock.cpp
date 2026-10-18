@@ -1037,6 +1037,18 @@ static void test_reglages_pages_et_batterie() {
     expect(reglages_page_voisine(0, 0, true) == 0, "aucune page : 0");
     expect(reglages_page_voisine(4, 5, true) == 0 && reglages_page_voisine(0, 5, false) == 4,
            "Réveil (5 pages) : Annonces → Heure et Heure → Annonces, en boucle");
+    // Rouleau des pièces du mode HA (18/10/2026, tuiles_swipe_ha) : cinq gestes dans le même
+    // sens passent par les cinq pièces, dans l'ordre, et reviennent à la première.
+    int gauche = 0, droite = 0;
+    char vues_g[6] = {}, vues_d[6] = {};
+    for (int i = 0; i < 5; i++) {
+        gauche = reglages_page_voisine(gauche, 5, true);
+        droite = reglages_page_voisine(droite, 5, false);
+        vues_g[i] = static_cast<char>('1' + gauche);
+        vues_d[i] = static_cast<char>('1' + droite);
+    }
+    expect(std::strcmp(vues_g, "23451") == 0, "pièces, vers la gauche : 2, 3, 4, 5 puis la 1");
+    expect(std::strcmp(vues_d, "54321") == 0, "pièces, vers la droite : 5, 4, 3, 2 puis la 1");
 
     using P = PresenceBatterie;
     expect_str(batterie_etat_texte(P::INCONNUE, true, true), "Mesure en cours", "avant la première décision");
