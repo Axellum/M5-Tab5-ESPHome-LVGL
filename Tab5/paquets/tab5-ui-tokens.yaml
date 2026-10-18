@@ -95,6 +95,10 @@ substitutions:
   lum_niveau_l: ${ [80 * (corps_w | int) // 1202, [70, (398 * (corps_w | int) // 1202 - 42) // 4] | min] | max }
   lum_niveau_pas: ${ 90 * (corps_w | int) // 1202 if (lum_niveau_l | int) == 80 * (corps_w | int) // 1202 else (lum_niveau_l | int) + 6 }
   lum_niveau_x: ${ 22 if (lum_niveau_l | int) == 80 * (corps_w | int) // 1202 else (398 * (corps_w | int) // 1202 - 3 * (lum_niveau_pas | int) - (lum_niveau_l | int)) // 2 }
+  # Boutons de vue de la page Bilan d'Énergie (vue_btn.yaml) : 150 px sur le Tab5 ; sur une
+  # carte du graphique (corps_w − 434) où le titre n'aurait plus 184 px devant eux, plus étroits
+  # (96 sur la 7B, où « Aujourd'hui » était caché sous eux). kBilVueL de tab5_energie.cpp.
+  bil_vue_l: ${ [150, (corps_w | int - 434 - 222) // 3] | min }
   # Hauteur d'une ligne de Roboto Bold (roboto_700.ttf : ascendante 1900, descendante 500
   # sur 2048, arrondies vers le haut comme FreeType) à la taille de la carte (polices
   # × carte_police_echelle) : le pas des rouleaux du Réveil (rouleau.yaml) et ses lignes

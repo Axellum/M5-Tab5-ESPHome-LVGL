@@ -213,15 +213,22 @@ constexpr int32_t kSourceY = kSolZoneH - 30;       // 540
 // texte de kHerosX à kHerosX + kHerosW ; mesures en Roboto 700 le 13/10/2026 (fonttools) :
 // « +888.8 » 172 px en 55, « kWh » 63 px et « 8888 kWh » 144 px en 32 ; titre du graphique :
 // « 30 derniers jours » 244 px en 32 (place : 248 px avant les boutons de vue).
+// Sur une autre carte (18/10/2026, la page n'était pas mise en page pour la 7B : bas de la
+// carte de gauche et du graphique coupés, titre sous les boutons, axe de droite et légende
+// hors de la carte) : la carte de gauche garde ses 420 px de large (ses phrases en roboto_22,
+// qui ne rétrécit pas, y tiennent), ses hauteurs sont ramenées au corps (hauteur_carte) et ce
+// qui suit une police ramenée l'est comme elle (police_px : pas des lignes, anneau) ; le
+// graphique prend le reste de la largeur, son bas (note, légende, axe) posé depuis le bas de
+// sa zone. Sur le Tab5, chaque valeur reste la même.
 constexpr int32_t kHerosX = 24;
 constexpr int32_t kHerosW = 372;
-constexpr int32_t kHerosTitreY = 22;
-constexpr int32_t kHerosGrandY = 50;        // net du mois (police_grande)
-constexpr int32_t kHerosUniteDy = 21;       // « kWh » sur la même ligne de base
-constexpr int32_t kHerosSousY = 124;
-constexpr int32_t kJaugeY = 168;
+constexpr int32_t kHerosTitreY = hauteur_carte(22);
+constexpr int32_t kHerosGrandY = hauteur_carte(50);  // net du mois (police_grande)
+constexpr int32_t kHerosUniteDy = police_px(21);     // « kWh » sur la même ligne de base
+constexpr int32_t kHerosSousY = hauteur_carte(124);
+constexpr int32_t kJaugeY = hauteur_carte(168);
 constexpr int32_t kJaugeL = 330;
-constexpr int32_t kJaugeH = 80;
+constexpr int32_t kJaugeH = hauteur_carte(80);
 constexpr int32_t kJaugeBord = 3;
 constexpr int32_t kJaugeJeu = 8;            // entre le bord et le remplissage
 constexpr int32_t kJaugeBoutL = 12;         // le « + » de la pile, à droite
@@ -229,41 +236,54 @@ constexpr int32_t kJaugeBoutH = 30;
 constexpr int32_t kJaugeDedans = kJaugeBord + kJaugeJeu;
 constexpr int32_t kJaugeDemi = (kJaugeL - 2 * kJaugeDedans) / 2;
 constexpr int32_t kJaugeZeroX = kHerosX + kJaugeDedans + kJaugeDemi;
-constexpr int32_t kEchelleY = 254;
-constexpr int32_t kFinY = 288;              // « Fin du mois (…) » à gauche, valeur à droite
+constexpr int32_t kEchelleY = hauteur_carte(254);
+constexpr int32_t kFinY = hauteur_carte(288);  // « Fin du mois (…) » à gauche, valeur à droite
 constexpr int32_t kFinEcart = 8;            // entre les deux (la valeur prend sa largeur :
                                             // « ~ +37 » 83 px, le titre français 272 px)
-constexpr int32_t kSep1Y = 336;
-constexpr int32_t kLigneY = 346;            // produit, consommé, économies
-constexpr int32_t kLignePas = 38;
+constexpr int32_t kSep1Y = hauteur_carte(336);
+constexpr int32_t kLigneY = hauteur_carte(346);  // produit, consommé, économies
+constexpr int32_t kLignePas = police_px(38);
 constexpr int32_t kLigneValeurL = 190;
-constexpr int32_t kAnneauBilanD = 92;
+constexpr int32_t kAnneauBilanD = police_px(92);
 constexpr int32_t kAnneauBilanL = 12;
 constexpr int kHerosLignes = 3;
 // Graphique (energie_bilan_zone, kBilZoneL × 530 sous le titre et les boutons) : barres et
 // courbe de kBilX0 à kBilX1 et de kBilY0 à kBilY1 ; graduations du net à gauche, du cumul
 // à droite ; axe, légende, puis la note de l'estimation.
-constexpr int32_t kBilZoneL = 764;
+// Zone : energie_bilan_zone (corps_w − 438 × corps_h − 64 ramené − 4, energie_popup.yaml),
+// 764 × 530 sur le Tab5, 508 × 423 sur la 7B. Trois légendes sur une ligne si elles y
+// tiennent (240 px chacune), sinon la troisième (le cumul) sur une seconde ligne.
+constexpr int kBilanLegendes = 3;
+constexpr int32_t kBilZoneL = kCorpsW - 438;
+constexpr int32_t kBilZoneH = kCorpsH - hauteur_carte(64) - 4;
 constexpr int32_t kBilUniteY = 4;           // « kWh / jour », « cumul »
 constexpr int32_t kBilX0 = 60;
-constexpr int32_t kBilX1 = 696;
+constexpr int32_t kBilX1 = kBilZoneL - 68;  // 696 ; les graduations du cumul à droite
 constexpr int32_t kBilY0 = 48;
-constexpr int32_t kBilY1 = 400;
-constexpr int32_t kBilAxeY = 408;
 constexpr int32_t kBilAxeL = 64;
 constexpr int32_t kBilLegendeX = 20;
-constexpr int32_t kBilLegendeY = 452;
 constexpr int32_t kBilLegendePas = 240;
-constexpr int32_t kBilNoteY = 488;
-constexpr int32_t kBilNoteL = 600;
+constexpr int kBilLegendesLigne = kBilLegendeX + kBilanLegendes * kBilLegendePas <= kBilZoneL ? kBilanLegendes : 2;
+constexpr int32_t kBilLegendeRangee = 32;   // de la première ligne de légendes à la seconde
+constexpr int32_t kBilLegendeEnPlus = kBilLegendesLigne < kBilanLegendes ? kBilLegendeRangee : 0;
+constexpr int32_t kBilNoteY = kBilZoneH - 42;                         // 488
+constexpr int32_t kBilLegendeY = kBilNoteY - 36 - kBilLegendeEnPlus;  // 452
+constexpr int32_t kBilAxeY = kBilLegendeY - 44;                       // 408
+constexpr int32_t kBilY1 = kBilAxeY - 8;                              // 400
+constexpr int32_t kBilNoteL = kBilZoneL - 2 * kBilLegendeX < 600 ? kBilZoneL - 2 * kBilLegendeX : 600;
 constexpr int32_t kBulleL = 150;            // la bulle du dernier créneau connu
 constexpr int32_t kBulleH = 40;
 constexpr int32_t kPointD = 18;             // son point sur la courbe
 constexpr int32_t kProjD = 6;               // un point de la projection
 constexpr int32_t kFinL = 300;              // « ~ +37 fin du mois »
-constexpr int32_t kBilTitreL = 248;         // titre du graphique, avant les boutons de vue
+// Boutons de vue de la carte du graphique (vue_btn.yaml, jeton bil_vue_l) : 150 px sur le
+// Tab5, 10 px entre eux, le dernier à 18 px du bord ; plus étroits sur une carte où le titre
+// n'aurait plus 184 px (« Aujourd'hui »). Le titre va jusqu'à 10 px du premier (248 sur le Tab5).
+constexpr int32_t kBilCarteL = kBilZoneL + 4;
+constexpr int32_t kBilVueLMax = (kBilCarteL - 18 - 2 * 10 - 184) / 3;
+constexpr int32_t kBilVueL = kBilVueLMax < 150 ? kBilVueLMax : 150;
+constexpr int32_t kBilTitreL = kBilCarteL - 18 - 3 * kBilVueL - 2 * 10 - 22 - 10;
 constexpr int kGrille = 8;                  // graduations de chaque axe, au plus
-constexpr int kBilanLegendes = 3;
 
 struct Mesure {
     bool choisi = false;
@@ -1388,10 +1408,13 @@ void titre_bilan(const Bilan& b, char* out, size_t n) {
 // connu (heures 00:00, 03:00… ; jours 1, 6, 11… et le dernier du mois, ou tous les cinq
 // en finissant par le dernier dans une fenêtre glissante ; tous les mois).
 void axe_bilan(const Bilan& b, int n, int k, char* out, size_t taille, bool& regulier) {
+    // Pas d'un créneau : sur un graphique étroit (7B, 18/10/2026), une heure sur six et un
+    // mois sur deux, sinon les libellés (roboto_22, qui ne rétrécit pas) se chevauchaient.
+    const float pas = n > 0 ? static_cast<float>(kBilX1 - kBilX0) / static_cast<float>(n) : 0.0f;
     switch (s_vue) {
         case HEURES:
             snprintf(out, taille, "%02d:00", k);
-            regulier = k % 3 == 0;
+            regulier = k % (pas * 3.0f >= 72.0f ? 3 : 6) == 0;
             return;
         case JOURS: {
             int a, m, j;
@@ -1402,7 +1425,7 @@ void axe_bilan(const Bilan& b, int n, int k, char* out, size_t taille, bool& reg
         }
         default:
             snprintf(out, taille, "%s", month_short_utf8(((b.mois - 1 + k) % 12 + 12) % 12 + 1));
-            regulier = true;
+            regulier = pas >= 52.0f || k % 2 == 0;
             return;
     }
 }
@@ -1906,13 +1929,16 @@ void construire_bilan() {
     o.fin = libelle(z, u.police, kFinL, LV_TEXT_ALIGN_RIGHT);
     for (lv_obj_t*& a : o.axe) a = libelle(z, u.police, kBilAxeL, LV_TEXT_ALIGN_CENTER);
     for (int i = 0; i < kBilanLegendes; i++) {
-        const int32_t x = kBilLegendeX + i * kBilLegendePas;
+        // Au-delà de kBilLegendesLigne, sur la ligne suivante, depuis la gauche.
+        const int col = i % kBilLegendesLigne;
+        const int32_t x = kBilLegendeX + col * kBilLegendePas;
+        const int32_t y = kBilLegendeY + (i / kBilLegendesLigne) * kBilLegendeRangee;
         o.marque[i] = ui_rectangle(z, LV_OPA_COVER, i == 2 ? 2 : 4);
-        if (i == 2) ui_poser(o.marque[i], x, kBilLegendeY + 11, kLegendeMarque, 4);
-        else ui_poser(o.marque[i], x, kBilLegendeY + 4, kLegendeMarque, kLegendeMarque);
+        if (i == 2) ui_poser(o.marque[i], x, y + 11, kLegendeMarque, 4);
+        else ui_poser(o.marque[i], x, y + 4, kLegendeMarque, kLegendeMarque);
         ui_hidden(o.marque[i], true);
         o.legende[i] = libelle(z, u.police, 0);
-        lv_obj_set_pos(o.legende[i], x + kLegendeMarque + 8, kBilLegendeY);
+        lv_obj_set_pos(o.legende[i], x + kLegendeMarque + 8, y);
     }
     o.note = libelle(z, u.police, kBilNoteL, LV_TEXT_ALIGN_RIGHT);
     lv_obj_set_pos(o.note, kBilZoneL - kBilLegendeX - kBilNoteL, kBilNoteY);
