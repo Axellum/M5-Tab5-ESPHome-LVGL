@@ -194,7 +194,7 @@ void ligne_de_la_tuile(const P& p, lv_obj_t* const* lignes, int t) {
 template <class P>
 void onglets_peindre(P& p, lv_obj_t* const* onglets) {
     char noms[kPieces][48];   // un nom de HA (kNom) ou « Pièce n » traduit
-    char pages[kPieces][12];  // « n/m », gardé entier quand le nom se coupe
+    char pages[kPieces][25];  // « n/m », gardé entier quand le nom se coupe (25 : deux int au pire)
     const char* ptr[kPieces] = {};
     const char* sfx[kPieces] = {};
     int pieces = 0;
