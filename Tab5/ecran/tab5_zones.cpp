@@ -459,9 +459,11 @@ bool est_long(int g) { return (g % 2) == 1; }
 BoutonHaut bouton_de(int g) { return static_cast<BoutonHaut>((g - GESTE_MAISON_COURT) / 2); }
 
 // « auto » du geste g (kGestesAuto). Sans jeux (module absent, ADR-0065 : carte sans IMU),
-// le tap de la manette ouvre la roue de navigation à la place de l'Arcade.
+// le tap de la manette ouvre le lecteur audio (popup Musique) à la place de l'Arcade (choix
+// d'Axel du 18/10/2026) ; son appui long reste la télécommande (kEcranAuto). Les deux se
+// changent dans le blueprint.
 const char* geste_auto(int g) {
-    if (g == GESTE_MANETTE_COURT && !GameRegistry::disponibles()) return "roue";
+    if (g == GESTE_MANETTE_COURT && !GameRegistry::disponibles()) return "musique";
     return kGestesAuto[g];
 }
 
@@ -554,7 +556,7 @@ const char* tap_glyphe(BoutonHaut b) {
     switch (b) {
         case BOUTON_MAISON: return "\U000F07D0";     // home-assistant
         case BOUTON_ENGRENAGE: return "\U000F0493";  // cog
-        // Sans jeux, le tap « auto » de la manette ouvre la roue (geste_auto) : sa boussole.
+        // Sans jeux, le tap « auto » de la manette ouvre le lecteur audio (geste_auto) : sa note.
         default: return GameRegistry::disponibles() ? "\U000F0297"  // gamepad-variant
                                                     : code_glyphe(code_index(geste_auto(GESTE_MANETTE_COURT)));
     }

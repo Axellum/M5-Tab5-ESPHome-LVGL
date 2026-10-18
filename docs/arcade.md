@@ -14,7 +14,8 @@ les scripts d'ouverture et la traduction de leurs pages au démarrage. La substi
 consoles se jouent en inclinant). Sans lui, `tab5-arcade-absente.yaml` donne au reste du
 firmware les mêmes prises, vides (scripts `tab5_arcade_open` et `tab5_jeux_traduire`, table de
 consoles vide `jeux_absents.cpp`) : l'Arcade n'est plus un écran, « Jeux » quitte la roue de
-navigation et le tap « auto » de la manette ouvre la roue. Le reste du firmware ne nomme
+navigation et le tap « auto » de la manette ouvre le lecteur audio (popup Musique ; l'appui
+long reste la télécommande). Le reste du firmware ne nomme
 aucun jeu : il passe par `GameRegistry` (`tab5_registry.h`) ; `tests/test_module_jeux.py`
 le vérifie, et la CI compile le Tab5 avec les jeux (`build`) et la 7B sans eux
 (`build-carte-7b`).

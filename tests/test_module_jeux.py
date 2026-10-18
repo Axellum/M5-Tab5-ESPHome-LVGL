@@ -71,6 +71,15 @@ def test_le_rendu_sait_quelle_carte_a_les_jeux():
         assert vers_carte.jeux_compiles(carte) == attendu, carte
 
 
+def test_sans_jeux_la_manette_ouvre_le_lecteur():
+    """Choix d'Axel (18/10/2026) : sans jeux, le tap « auto » de la manette ouvre le lecteur
+    audio (popup Musique), son appui long reste la télécommande ; le blueprint les change."""
+    zones = lire("Tab5", "ecran", "tab5_zones.cpp")
+    assert 'if (g == GESTE_MANETTE_COURT && !GameRegistry::disponibles()) return "musique";' in zones
+    assert '{"musique", Ecran::MUSIQUE, GesteAction::ECRAN}' in zones
+    assert re.search(r"kEcranAuto\[BOUTON_HAUT_NB\] = \{[^}]*, Ecran::TV\};", zones)
+
+
 def _scripts(chemin):
     return {s["id"] for s in charger(*chemin).get("script", [])}
 

@@ -91,7 +91,7 @@ enum Geste : uint8_t {
     GESTE_MAISON_LONG,      // auto : la clé appuis, sinon Énergie (avec la production solaire)
     GESTE_ENGRENAGE_COURT,  // auto : Réglages (page Écran)
     GESTE_ENGRENAGE_LONG,   // auto : la clé appuis, sinon la console système
-    GESTE_MANETTE_COURT,    // auto : Arcade (sans jeux, ADR-0065 : la roue de navigation)
+    GESTE_MANETTE_COURT,    // auto : Arcade (sans jeux, ADR-0065 : le lecteur audio, popup Musique)
     GESTE_MANETTE_LONG,     // auto : la clé appuis, sinon la télécommande TV
     GESTE_NB
 };

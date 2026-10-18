@@ -42,7 +42,7 @@ le confronte à la matrice) :
 
 - **Jeux en module, absents par défaut de la Waveshare 7B** ([ADR-0065](docs/decisions/0065-games-optional-module.md), demande d'Axel : la 7B n'a pas d'IMU, la moitié des consoles se jouent en inclinant) :
   - nouvelle substitution `tab5_jeux` (`oui` / `non`, `Tab5/user_entities.yaml` ou `-s tab5_jeux …`) : `oui` par défaut sur le Tab5, `non` sur une carte sans IMU ;
-  - sans les jeux, ni code, ni pages, ni couleurs, ni police d'échecs dans le firmware : pas d'Arcade, pas de « Jeux » dans la roue de navigation, et le tap « auto » du bouton manette ouvre la roue de navigation (un choix fait dans le blueprint passe avant) ;
+  - sans les jeux, ni code, ni pages, ni couleurs, ni police d'échecs dans le firmware : pas d'Arcade, pas de « Jeux » dans la roue de navigation, et le tap « auto » du bouton manette ouvre le lecteur audio (popup Musique), son appui long restant la télécommande (les deux se changent dans le blueprint) ;
   - `Tab5/paquets/tab5-arcade.yaml` porte tout ce que les jeux ajoutent (fichiers C++, couleurs, police d'échecs, 9 pages, scripts) ; `tab5-arcade-absente.yaml` donne au reste du firmware les mêmes prises, vides ; la table des consoles passe de `tab5_registry.cpp` à `Tab5/jeux/jeux_registre.cpp` ; nouveau garde-fou `tests/test_module_jeux.py` ; le rendu de la 7B saute l'Arcade et les consoles ;
   - **sur le Tab5, rien ne change à l'écran** (mêmes jeux) ; le `config_hash` change (listes fusionnées dans un autre ordre) ; firmware seul, rien à changer dans Home Assistant.
 

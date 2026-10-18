@@ -30,7 +30,8 @@
 
 # --- Jeux (ADR-0065) : oui (défaut sur le Tab5) ou non (défaut sur une carte sans IMU,
 #     la Waveshare 7B : la moitié des consoles se jouent en inclinant). Non : ni Arcade,
-#     ni « Jeux » dans la roue de navigation, et le tap de la manette ouvre la roue. ---
+#     ni « Jeux » dans la roue de navigation, et le tap de la manette ouvre le lecteur
+#     audio (son appui long reste la télécommande). ---
 # tab5_jeux: oui
 
 # --- Plusieurs écrans dans la même maison (ADR-0063) : un nom par écran, en minuscules,
