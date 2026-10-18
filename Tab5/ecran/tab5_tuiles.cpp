@@ -380,10 +380,12 @@ Heritage s_h;
 bool heritage() { return s_m.recues == 0; }
 
 // Tuile présente : un appareil défini — en mode héritage, un emplacement 3.x que HA n'a
-// pas déclaré absent (zones, ADR-0018), dans la pièce 0 seulement.
+// pas déclaré absent (zones, ADR-0018), dans la pièce 0 et ses cinq emplacements seulement
+// (zone_tuile_absente() ne connaît pas les éléments 5 à 19 : sans la borne, ils seraient
+// « présents » et liraient les tableaux de l'héritage hors de leurs bornes).
 bool tuile_presente(int r, int t) {
     if (r < 0 || r >= kPieces || t < 0 || t >= kTuilesMax) return false;
-    if (heritage()) return r == 0 && !zone_tuile_absente(t);
+    if (heritage()) return r == 0 && t < kTuilesHeritage && !zone_tuile_absente(t);
     return s_m.tuiles[r][t].type != static_cast<uint8_t>(Type::VIDE);
 }
 
@@ -866,34 +868,57 @@ void vue(int r, int t, Vue& v) {
 // ─── Dessin ─────────────────────────────────────────────────────────────────────────
 
 // Texte sur une ligne, coupé avec « … » s'il dépasse `largeur` px dans la police du label.
-void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) {
+void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur, const char* suffixe) {
     if (lbl == nullptr || txt == nullptr) return;
+    // Le suffixe (« 2/3 » d'un nom de pièce sur plusieurs pages) reste entier : c'est le
+    // texte devant lui qui se coupe (ADR-0066).
+    const char* sfx = suffixe != nullptr ? suffixe : "";
+    const size_t l_sfx = std::strlen(sfx);
+    char buf[96];
     const lv_font_t* f = lv_obj_get_style_text_font(lbl, LV_PART_MAIN);
     if (f == nullptr) {
-        ui_text(lbl, txt);
+        if (l_sfx == 0) {
+            ui_text(lbl, txt);
+        } else {
+            snprintf(buf, sizeof(buf), "%s%s", txt, sfx);
+            ui_text(lbl, buf);
+        }
         return;
     }
     const int32_t esp = lv_obj_get_style_text_letter_space(lbl, LV_PART_MAIN);
     const int32_t w_points = lv_font_get_glyph_width(f, 0x2026, 0) + esp;
+    int32_t w_sfx = 0;
+    for (const char *p = sfx, *fin = sfx + l_sfx; p < fin;) {
+        const uint32_t cp = utf8_suivant(p, fin);
+        const char* q = p;
+        w_sfx += lv_font_get_glyph_width(f, cp, q < fin ? utf8_suivant(q, fin) : 0) + esp;
+    }
     const char* fin = txt + std::strlen(txt);
     const char* p = txt;
-    const char* coupe = txt;  // dernière coupure où le texte et « … » tiennent encore
+    const char* coupe = txt;  // dernière coupure où le texte, « … » et le suffixe tiennent encore
     int32_t w = 0;
     while (p < fin) {
         const uint32_t cp = utf8_suivant(p, fin);
         const char* q = p;
         const uint32_t suivant = q < fin ? utf8_suivant(q, fin) : 0;
         w += lv_font_get_glyph_width(f, cp, suivant) + esp;
-        if (w + w_points <= largeur) coupe = p;
+        if (w + w_points + w_sfx <= largeur) coupe = p;
     }
-    if (w <= largeur) {
-        ui_text(lbl, txt);
+    if (w + w_sfx <= largeur) {
+        if (l_sfx == 0) {
+            ui_text(lbl, txt);
+        } else {
+            snprintf(buf, sizeof(buf), "%s%s", txt, sfx);
+            ui_text(lbl, buf);
+        }
         return;
     }
-    char buf[64];
-    const size_t n = std::min<size_t>(static_cast<size_t>(coupe - txt), sizeof(buf) - 4);
+    // Place du texte coupé : le tampon moins « … » (3 octets), le suffixe et le zéro final.
+    const size_t place = sizeof(buf) - 4 - std::min(l_sfx, sizeof(buf) - 4);
+    const size_t n = std::min<size_t>(static_cast<size_t>(coupe - txt), place);
     std::memcpy(buf, txt, n);
-    std::memcpy(buf + n, "\xE2\x80\xA6", 4);  // « … » et le zéro final
+    std::memcpy(buf + n, "\xE2\x80\xA6", 3);  // « … »
+    snprintf(buf + n + 3, sizeof(buf) - n - 3, "%s", sfx);
     ui_text(lbl, buf);
 }
 
@@ -1183,7 +1208,9 @@ TuilesUI g_tuiles_ui;
 // Pour les autres unités (titre du popup clim, ADR-0026) : un nom venu de HA suit les
 // mêmes règles que ceux des tuiles. Déclarées dans tab5_internal.h.
 void texte_ha_copier(char* dst, size_t cap, const char* src, size_t n) { copier_texte(dst, cap, src, n); }
-void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur) { ui_texte_coupe(lbl, txt, largeur); }
+void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur, const char* suffixe) {
+    ui_texte_coupe(lbl, txt, largeur, suffixe);
+}
 
 bool tuiles_definir(const std::string& payload) {
     charger();

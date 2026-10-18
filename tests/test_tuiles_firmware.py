@@ -143,6 +143,17 @@ def test_magie_nvs_des_definitions():
     assert "tuiles_appliquer_ui();" in _fonction(_lire("Tab5", "ecran", "tab5_zones.cpp"), "zones_apply_ui")
 
 
+def test_mode_heritage_borne_a_ses_cinq_emplacements():
+    # Le mode héritage (aucune définition reçue : premier démarrage après la mise à jour, blueprint
+    # 3.x) n'a que les cinq emplacements de la 3.x ; zone_tuile_absente() ne connaît pas les
+    # éléments 5 à 19 : sans la borne, ils seraient présents et liraient s_h.lum[t - 2] et
+    # kHeritageLumieres[t - 2] hors de leurs tableaux (relecture du lot B, ADR-0066).
+    assert _constexpr("kTuilesHeritage") == "5"
+    assert "bool lum[3] = {};" in _cpp() and "kHeritageLumieres[3]" in _cpp()
+    presente = _fonction(_cpp(), "tuile_presente")
+    assert "if (heritage()) return r == 0 && t < kTuilesHeritage && !zone_tuile_absente(t);" in presente
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Commandes émises
 # ─────────────────────────────────────────────────────────────────────────────

@@ -225,12 +225,16 @@ void cases_peindre_place(int p, const disposition::Place& pl, int32_t x, int r) 
         const Case& c = pc.c[k];
         const bool montree = k < n && pl.element[k] >= 0;
         ui_hidden(c.cadre, !montree);
-        if (!montree) continue;
+        if (k >= n) continue;
         const disposition::Rect rc = rect_case(pl.coupe, k);
+        // Toutes les cases de la coupe, même vides : le dernier quart d'une pièce de 19
+        // éléments se remplit à 20 (ou dans une autre pièce de même coupe) sans que la
+        // coupe change, et il doit déjà avoir ses polices et ses alignements.
+        if (nouvelle) mettre_en_page(c, pl.coupe, rc.w);
+        if (!montree) continue;
         ui_x(c.cadre, x + rc.x);
         ui_y(c.cadre, kAccTuileY + rc.y);
         lv_obj_set_size(c.cadre, rc.w, rc.h);  // LVGL 9.5.0 compare lui-même (lv_obj_pos.c)
-        if (nouvelle) mettre_en_page(c, pl.coupe, rc.w);
         peindre(c, pl.coupe, rc.w, rc.h, r, pl.element[k]);
     }
 }

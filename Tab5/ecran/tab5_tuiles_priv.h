@@ -91,6 +91,9 @@ struct Heritage {
     int8_t volet_ouvert = -1;    // dernier état connu hors mouvement : 1 ouvert, 0 fermé
 };
 
+// Le mode héritage a les cinq emplacements de la 3.x (PC/TV, volet, trois lumières), jamais
+// plus : ses tableaux (lum[3], kHeritageLumieres) s'arrêtent à la tuile 4 (ADR-0066).
+constexpr int kTuilesHeritage = 5;
 // Commandes 3.x des trois lumières (tuiles 2 à 4), comme les boutons de la 3.1.
 constexpr const char* kHeritageLumieres[3] = {"lumiere_1", "lumiere_2", "lumiere_3"};
 
@@ -162,7 +165,7 @@ Gestes gestes(const Def& d, bool clim_connue);
 ClimCible clim_cible(const Def& d, int r, int t);
 void vue_def(const Def& d, const Etat& e, int r, int t, Vue& v);
 void vue(int r, int t, Vue& v);
-void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
+void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur, const char* suffixe = nullptr);
 void ui_fond(lv_obj_t* obj, uint32_t hex);
 void widgets_meteo(int place, lv_obj_t*& gauche, lv_obj_t*& droite, lv_obj_t*& bouton);
 // Disposition de la pièce R sur les cinq places (Tab5/socle/tab5_disposition.h, ADR-0066) :

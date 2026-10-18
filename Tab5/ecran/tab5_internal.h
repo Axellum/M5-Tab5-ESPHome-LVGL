@@ -173,9 +173,10 @@ void tuiles_swipe_ha(bool gauche);
 // clim, ADR-0026 ; libellés des alertes, bandeaux et historique). texte_ha_copier : UTF-8
 // valide, sans les caractères que les polices n'ont pas, coupé sur une frontière de
 // caractère (`cap` octets, zéro final compris).
-// texte_ha_coupe : une ligne, coupée avec « … » au-delà de `largeur` px (60 octets au plus).
+// texte_ha_coupe : une ligne, coupée avec « … » au-delà de `largeur` px (60 octets au plus) ;
+// `suffixe`, s'il est donné, reste entier après le texte coupé (« Salon de mus… 2/3 »).
 void texte_ha_copier(char* dst, size_t cap, const char* src, size_t n);
-void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
+void texte_ha_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur, const char* suffixe = nullptr);
 
 // --- Payload refusé (audit du 07/10/2026, lot L5) ---
 // Tout récepteur de service qui refuse un payload, ou une partie, le dit : une ligne
@@ -484,7 +485,9 @@ void pages_brancher(PagesPopup* p);
 // Onglets d'en-tête (pages_onglet.yaml) : les `n` premiers montrés quand il y a au moins
 // deux pages (aucun sinon), collés à la croix, `noms[i]` coupé avec « … », celui de
 // `courante` en accent ; les autres masqués. `max` : onglets posés par le YAML.
-void pages_onglets(lv_obj_t* const* onglets, int max, const char* const* noms, int n, int courante);
+// `suffixes[i]` (facultatif) reste entier après le nom coupé (« Salon 2/3 », ADR-0066).
+void pages_onglets(lv_obj_t* const* onglets, int max, const char* const* noms, int n, int courante,
+                   const char* const* suffixes = nullptr);
 // Largeur d'un onglet pour `n` pages (200 px au plus, 158 à cinq).
 int32_t pages_onglet_largeur(int n);
 // Une rangée de boutons à choix : celui d'index `actif` en accent (bordure et texte, premier

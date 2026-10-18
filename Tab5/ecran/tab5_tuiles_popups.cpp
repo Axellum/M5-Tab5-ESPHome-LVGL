@@ -193,8 +193,10 @@ void ligne_de_la_tuile(const P& p, lv_obj_t* const* lignes, int t) {
 // (« Salon 1/2 », « Salon 2/2 »), sinon il n'y aurait rien en haut.
 template <class P>
 void onglets_peindre(P& p, lv_obj_t* const* onglets) {
-    char noms[kPieces][48];  // un nom de HA (kNom) ou « Pièce n » traduit, et « n/m »
+    char noms[kPieces][48];   // un nom de HA (kNom) ou « Pièce n » traduit
+    char pages[kPieces][12];  // « n/m », gardé entier quand le nom se coupe
     const char* ptr[kPieces] = {};
+    const char* sfx[kPieces] = {};
     int pieces = 0;
     for (int i = 0; i < p.nb; i++)
         if (i == 0 || p.pieces[i] != p.pieces[i - 1]) pieces++;
@@ -214,14 +216,14 @@ void onglets_peindre(P& p, lv_obj_t* const* onglets) {
         // La page dont le nom dit « n/m » : la sienne (un nom par page), sinon celle affichée.
         const int montree = par_page ? i : (r == p.piece ? p.page : -1);
         if (fin > debut && montree >= 0) {
-            const size_t l = std::strlen(nom);
-            snprintf(nom + l, sizeof(noms[o]) - l, " %d/%d", montree - debut + 1, fin - debut + 1);
+            snprintf(pages[o], sizeof(pages[o]), " %d/%d", montree - debut + 1, fin - debut + 1);
+            sfx[o] = pages[o];
         }
         if (par_page ? i == p.page : r == p.piece) courant = o;
         p.page_onglet[o] = par_page ? i : debut;
         ptr[o] = nom;
     }
-    pages_onglets(onglets, kPieces, ptr, p.nb_onglets, courant);
+    pages_onglets(onglets, kPieces, ptr, p.nb_onglets, courant, sfx);
 }
 
 // La page qu'ouvre le tap sur le nom `onglet` ; -1 s'il n'y en a pas.
