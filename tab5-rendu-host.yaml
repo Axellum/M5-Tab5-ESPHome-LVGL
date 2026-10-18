@@ -99,6 +99,7 @@ esphome:
     - Tab5/ecran/tab5_meteo.h
     - Tab5/ecran/tab5_zone_gauche.h
     - Tab5/ecran/tab5_lecteur.h
+    - Tab5/ecran/tab5_musique.h
     - Tab5/ecran/tab5_cameras.h
     - Tab5/ecran/tab5_suivi.h
     - Tab5/ecran/tab5_cameras_charge.h
@@ -150,6 +151,7 @@ esphome:
     - Tab5/ecran/tab5_meteo.cpp
     - Tab5/ecran/tab5_zone_gauche.cpp
     - Tab5/ecran/tab5_lecteur.cpp
+    - Tab5/ecran/tab5_musique.cpp
     - Tab5/ecran/tab5_cameras.cpp
     - Tab5/ecran/tab5_suivi.cpp
     - Tab5/ecran/tab5_cameras_charge.cpp
@@ -270,6 +272,7 @@ packages:
   tab5_maison: !include Tab5/paquets/tab5-maison.yaml
   tab5_meteo: !include Tab5/paquets/tab5-meteo.yaml
   tab5_lecteur: !include Tab5/paquets/tab5-lecteur.yaml
+  tab5_musique: !include Tab5/paquets/tab5-musique.yaml
   tab5_cameras: !include Tab5/paquets/tab5-cameras.yaml
   tab5_suivi: !include Tab5/paquets/tab5-suivi.yaml
   tab5_froid: !include Tab5/paquets/tab5-froid.yaml

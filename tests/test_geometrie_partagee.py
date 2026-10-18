@@ -133,6 +133,42 @@ def test_largeur_des_panneaux_centraux():
         assert not re.search(r"^\s*width: (1180|1240)\s*$", texte, re.M), "/".join(chemin)
 
 
+def _largeur_roboto_22(texte):
+    """Largeur d'un texte en roboto_22 (Tab5/fonts/roboto_700.ttf, 22 px, qui ne rétrécit pas
+    avec la carte) : la somme des avances, comme lv_text_get_size sans crénage."""
+    from fontTools.ttLib import TTFont
+    police = TTFont(os.path.join(REPO, "Tab5", "fonts", "roboto_700.ttf"))
+    cmap, hmtx = police.getBestCmap(), police["hmtx"]
+    return round(sum(hmtx[cmap[ord(c)]][0] for c in texte) * 22 / police["head"].unitsPerEm)
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_tout_ouvrir_tout_fermer_dans_leurs_boutons(carte):
+    """Volets : « Tout ouvrir » et « Tout fermer » gardent 8 px d'air de chaque côté dans leur
+    bouton, les deux boutons côte à côte dans la carte de gauche (sur la 7B, le mot touchait
+    les bords d'un bouton de 121 px jusqu'au 18/10/2026). Sur le Tab5 : 163 px à x 22, 16 entre."""
+    j = jetons_resolus(carte)
+    l, x, e = (int(j[n]) for n in ("volet_tout_l", "volet_tout_x", "volet_tout_ecart"))
+    for mot in ("Tout ouvrir", "Tout fermer"):
+        assert _largeur_roboto_22(mot) + 16 <= l, (mot, l, carte)
+    assert e >= 10 and x >= 8 and x + 2 * l + e <= 386 * int(j["corps_w"]) // 1202 - 8, (x, l, e, carte)
+    if carte == "tab5":
+        assert (l, x, e) == (163, 22, 16)
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_raccourcis_de_luminosite_dans_leurs_boutons(carte):
+    """Lumières : « 100 % » garde 3 px d'air de chaque côté dans son bouton (il touchait les
+    bords d'un bouton de 62 px sur la 7B jusqu'au 18/10/2026), les quatre boutons dans la carte
+    du milieu (398 px ramenés au corps). Sur le Tab5 : 80 px au pas de 90 depuis x 22."""
+    j = jetons_resolus(carte)
+    l, pas, x = (int(j[n]) for n in ("lum_niveau_l", "lum_niveau_pas", "lum_niveau_x"))
+    assert _largeur_roboto_22("100 %") + 6 <= l, (l, carte)
+    assert pas - l >= 6 and x >= 8 and x + 3 * pas + l <= 398 * int(j["corps_w"]) // 1202 - 8, (x, l, pas, carte)
+    if carte == "tab5":
+        assert (l, pas, x) == (80, 90, 22)
+
+
 @pytest.mark.parametrize("carte", CARTES)
 def test_en_tetes_du_calendrier_sur_les_colonnes_des_cases(carte):
     g = _geometrie(carte)

@@ -7,7 +7,7 @@ emplacements » garde les liens et lance script.tab5_lecteur_playlist
 (packages/tab5_lecteur.yaml). Aucun compilateur ne compare ces chaînes ; ce fichier le fait :
 
 - à la lecture : nombre de playlists, nom de la clé et action égaux entre le firmware et le
-  blueprint ; la page par la brique commune des popups à pages (ADR-0046) ; aucun lien
+  blueprint ; la page par la seule brique de pages du popup Musique (ADR-0046, ADR-0067) ; aucun lien
   ni aucune entité vers la tablette ;
 - au rendu (les vrais modèles du blueprint et du package, tests/test_tuiles_blueprint.py) :
   les lignes lues, la clé poussée, l'aiguillage de l'événement et le lien de YouTube
@@ -58,12 +58,24 @@ def test_l_ecran_envoie_le_rang_jamais_un_lien():
 
 
 def test_pages_par_la_brique_commune():
+    """Une seule brique de pages pour le popup Musique (ADR-0067) : Lecture, Playlists,
+    Pièces, Bibliothèque. La page Playlists existe dès une playlist ; le lecteur n'a ni
+    glissement ni noms de pages à lui, il peint la grille et demande le retour à Lecture."""
+    musique = lire(source("tab5_musique.cpp"))
+    assert "case Page::PLAYLISTS: return lecteur_playlists_nb() > 0;" in musique
+    assert musique.count("pages_brancher(&s_pages);") == 1
+    assert "constexpr uint32_t kRetourMs = 600;" in musique
+    assert "void musique_retour_lecture() { retour_programmer(Page::PLAYLISTS, Page::LECTURE); }" in musique
     cpp = lire(source("tab5_lecteur.cpp"))
-    assert "pages_brancher(&s_pages);" in cpp and "choix_peindre(u.onglet, kLecteurPages, s_page);" in cpp
+    assert "pages_brancher(" not in cpp and "PagesPopup" not in cpp
     assert "LV_EVENT_GESTURE" not in cpp and "lv_anim" not in cpp
-    popup = lire(*POPUP)
-    for i in (0, 1):
-        assert f"file: pages_onglet.yaml, vars: {{ id: lecteur_onglet_{i}, page: {i}, choisir: lecteur_page }}" in popup
+    assert "constexpr uint32_t kPlaylistEnCoursMs = 30u * 1000u;" in cpp
+    playlist = cpp[cpp.index("void lecteur_playlist(int i)"):]
+    assert "musique_retour_lecture();" in playlist[:playlist.index("\n}\n")]
+    assert "lecteur_onglet" not in lire(*POPUP)
+    calques = lire("Tab5", "ui_components", "musique_calques.yaml")
+    for i in range(4):
+        assert f"file: pages_onglet.yaml, vars: {{ id: musique_onglet_{i}, page: {i}, choisir: musique_onglet }}" in calques
 
 
 def test_le_script_de_commande_ignore_la_playlist():

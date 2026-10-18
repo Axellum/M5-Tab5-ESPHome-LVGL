@@ -1,0 +1,35 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file musique_bouton.yaml
+# @role Un bouton des pages du popup Musique (ADR-0067, musique_calques.yaml, 5 fois : les
+#       MusiqueBouton de tab5_musique.h) : « Tout ici » et « Tout séparer » (icône et mot) sur
+#       la page Pièces ; retour, page précédente et page suivante (icône seule) sur la page
+#       Bibliothèque. Toucher : musique_bouton(n).
+# @architecture_constraint Masquage et mot (traduit, coupé avec « … ») posés par
+#       tab5_musique.cpp ; l'icône est le premier enfant, le mot le second (vide pour une icône
+#       seule). Rayon 18 du verre (style_clim_btn) : l'effet d'appui des boutons.
+# vars : n (MusiqueBouton), x, w (largeur), icone (glyphe de mdi_font_32), icone_align
+#        (LEFT_MID avec un mot, CENTER seule), icone_x
+# ═══════════════════════════════════════════════════════
+button:
+  id: musique_btn_${n}
+  align: TOP_LEFT
+  x: ${x}
+  y: 72
+  width: ${w}
+  height: 44
+  pad_all: 0
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn
+  on_short_click:
+    - lambda: 'musique_bouton(${n});'
+  widgets:
+    # Hors d'un { … } : une substitution non citée y casserait la lecture du YAML.
+    - label:
+        text: "${icone}"
+        align: "${icone_align}"
+        x: ${icone_x}
+        text_font: mdi_font_32
+        styles: style_text_soft
+    - label: { text: "", align: LEFT_MID, x: 50, text_font: roboto_22 }  # kActionTexteX de tab5_musique.cpp
