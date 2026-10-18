@@ -133,6 +133,11 @@ NON_MONTREES = {
     "musique-bibliotheque": "page Bibliothèque du popup Musique, décrite dans music.md ; image à tirer du rendu",
     "musique-bibliotheque-chargement": "musique-bibliotheque montre la même page ; « Chargement... » est décrit",
     "musique-sources": "musique-bibliotheque montre la même grille ; les sources sont décrites dans music.md",
+    # Les quatre pages ensemble (ADR-0067 et ADR-0068) : écrans de vérification des noms.
+    "musique-quatre-pages": "musique-ma montre la même fenêtre ; les quatre pages sont décrites dans music.md",
+    "musique-quatre-pages-playlists": "musique-playlists montre la même page ; les quatre noms sont décrits",
+    "musique-quatre-pages-pieces": "musique-pieces montre la même page ; les quatre noms sont décrits",
+    "musique-quatre-pages-retour": "musique-playlists montre la même page ; vérification du retour depuis Pièces",
     # Popup Suivi (ADR-0054, 10/10/2026), décrit dans tracking.md : images à tirer du rendu
     # de la PR, puis citées.
     "suivi-vide": "suivi montre la même fenêtre ; l'attente de Home Assistant est décrite dans tracking.md",

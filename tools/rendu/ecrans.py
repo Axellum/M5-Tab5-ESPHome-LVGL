@@ -839,6 +839,8 @@ MUSIQUE_SOURCES = Service("tab5_maj_musique_liste", (
 # cartes de la page Pièces (y 410..422 de l'écran du Tab5), sur la pochette de la page
 # Lecture : rien de touchable, le geste remonte au popup (tab5_pages.cpp).
 MUSIQUE_PAGE_SUIVANTE = Glisser(560, 416, 240, 416, dans_popup=True)
+# Page précédente : le même glissement vers la droite.
+MUSIQUE_PAGE_PRECEDENTE = Glisser(240, 416, 560, 416, dans_popup=True)
 # Icône de la première carte de la page Pièces (le salon, le lecteur montré) : la carte en
 # (24, 128) de la carte du lecteur (940 × 536, centrée en 170, 92), l'icône à (14, 14).
 MUSIQUE_SALON_ICONE = (226, 252)
@@ -1420,6 +1422,22 @@ ECRANS: tuple[Ecran, ...] = (
           (LECTEUR_VOILE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("musique-playlists", (LECTEUR_EN_PAUSE, PLAYLISTS, Aller("Musique"), PLAYLISTS_PAGE),
           (LECTEUR_VOILE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    # Les quatre pages ensemble (ADR-0067 et ADR-0068, une seule brique de pages) : leurs
+    # noms sur la ligne du titre de la page Lecture, puis Playlists et Pièces par glissements.
+    Ecran("musique-quatre-pages", (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique")),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-quatre-pages-playlists",
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    Ecran("musique-quatre-pages-pieces",
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE,
+           MUSIQUE_PAGE_SUIVANTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
+    # Retour sur Playlists depuis Pièces, qui avait masqué la pochette et les pastilles.
+    Ecran("musique-quatre-pages-retour",
+          (LECTEUR_EN_PAUSE, PLAYLISTS, MUSIQUE_PIECES_MA, Aller("Musique"), MUSIQUE_PAGE_SUIVANTE,
+           MUSIQUE_PAGE_SUIVANTE, MUSIQUE_PAGE_PRECEDENTE),
+          (LECTEUR_VOILE, MUSIQUE_PIECES_AUCUNE, PLAYLISTS_AUCUNE, LECTEUR_AUCUN)),
     Ecran("accueil-musique", (LECTEUR_EN_PAUSE,), (LECTEUR_AUCUN,)),
     # Lecteur compact dans la zone à gauche de l'horloge (ADR-0051, lot 2) : en pause (la
     # barre « en lecture » se masque, le cadre Ok Nabu reste), allumé sans rien en lecture,
