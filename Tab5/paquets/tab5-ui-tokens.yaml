@@ -68,6 +68,18 @@ substitutions:
   cal_col_pas: ${ (modal_card_w | int - 46) // 7 }
   cal_col_w: ${ cal_col_pas | int - 4 }
   cal_col_x0: ${ (modal_card_w | int - 7 * (cal_col_pas | int) + 4) // 2 }
+  # En-tête du calendrier (calendar_popup.yaml) : ‹ et › (80 px) à cal_nav_x du milieu de
+  # la carte (278), le mois entre eux (cal_mois_l, 420). Sur une carte plus étroite, › garde
+  # 16 px d'air avant « Aujourd'hui » (150 px, à 100 px du bord droit) et le mois 16 px de
+  # chaque côté : 191 et 270 sur la 7B, où › était caché sous « Aujourd'hui » (18/10/2026).
+  cal_nav_x: ${ [278, (modal_card_w | int) // 2 - 306] | min }
+  cal_mois_l: ${ [420, 2 * ([278, (modal_card_w | int) // 2 - 306] | min) - 112] | min }
+  # Rangées du popup Réglages (reglages_rangee.yaml avec fixe: 46, reglages_choix_btn.yaml) :
+  # chaque commande 40 px sous le titre de sa rangée, quelle que soit la carte ; les titres
+  # se répartissent donc sur le corps moins 46 px (552 sur le Tab5, y × reglages_h / 552) et
+  # la dernière commande garde son air au-dessus du bas de la carte : 19 px sur le Tab5,
+  # 16 sur la 7B (elle en avait 3 avec y × corps_h / 598, rendu du 18/10/2026).
+  reglages_h: ${ corps_h | int - 46 }
   # Lignes d'une pièce, popups Lumières et Volets (piece_ligne.yaml) : pas (92) et hauteur
   # (84) ; cinq lignes à partir de y 50 de leur carte, les boutons de la pièce au-dessous.
   piece_ligne_pas: ${ [92, (corps_h | int - 130) // 5] | min }
