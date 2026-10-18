@@ -73,12 +73,13 @@ def test_portraits():
 # - mode météo, handle_swipe_gesture (tab5_central.cpp) : vers la gauche 0→1→2→3→4, et
 #   4 revient à 2 ; vers la droite 4→3→2→1→0, et 0 revient à 2 ; geste compté si le
 #   doigt est à y ≥ FORECAST_SWIPE_Y_MIN ;
-# - mode HA : pièce suivante (gauche) ou précédente (droite) qui a un appareil, sans
-#   boucler ; « HA » bascule le mode ; « Aller à l'écran → Accueil » le quitte ; une pièce
-#   choisie dans la roue de navigation (ADR-0042, NAV_BUREAU) y met le mode HA.
+# - mode HA, tuiles_swipe_ha (tab5_tuiles.cpp, 18/10/2026) : pièce suivante (gauche) ou
+#   précédente (droite) en rouleau, la 5 revient à la 1, pièces vides comprises ; « HA »
+#   bascule le mode ; « Aller à l'écran → Accueil » le quitte ; une pièce choisie dans la
+#   roue de navigation (ADR-0042, NAV_BUREAU) y met le mode HA.
 # ---------------------------------------------------------------------------
 
-PAGES_OCCUPEES = sorted(PAGE_DE_LA_PIECE[r] for r, p in PIECES.items() if p.tuiles)
+PIECE_DE_LA_PAGE = {p: r for r, p in PAGE_DE_LA_PIECE.items()}
 # Haut de la carte centrale du Tab5 (kAccCentraleY de tab5_geometrie.h, lot 3 du portage).
 assert "FORECAST_SWIPE_Y_MIN = kAccCentraleY;" in _lire("Tab5", "ecran", "tab5_central.cpp")
 Y_MIN_GESTE = geometrie_cpp("tab5")["kAccCentraleY"]
@@ -99,9 +100,8 @@ def _jouer(etapes, page=2, ha=False):
               and etape.x1 != etape.x2):
             gauche = etape.x2 < etape.x1
             if ha:
-                autres = [p for p in PAGES_OCCUPEES if (p > page if gauche else p < page)]
-                if autres:
-                    page = min(autres) if gauche else max(autres)
+                n = len(PAGE_DE_LA_PIECE)
+                page = PAGE_DE_LA_PIECE[(PIECE_DE_LA_PAGE[page] + (1 if gauche else n - 1)) % n]
             elif gauche:
                 page = 2 if page >= 4 else page + 1
             else:

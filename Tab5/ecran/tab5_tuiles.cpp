@@ -36,9 +36,11 @@
  *           les fonctions de la fin de ce fichier (tuile_gestes, tuile_peindre_ligne :
  *           même dessin que les cartes du mode HA, peindre_vue_sur ; tuile_appui_maison :
  *           le geste de la tuile). peindre_tuile et tuiles_appliquer_ui le préviennent.
- * @architecture_constraint Pièce R ↔ page du bas dans l'ordre où un swipe les atteint depuis
- *       l'accueil : R0 = page 2 (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0. Tuile T = position
- *       visuelle, 0 = gauche (sur les pages horaires, l'objet h(4−T)).
+ * @architecture_constraint Pièce R ↔ page du bas dans l'ordre où un swipe de la météo les
+ *       atteint depuis l'accueil : R0 = page 2 (accueil), R1 = 3, R2 = 4, R3 = 1, R4 = 0. En
+ *       mode HA, le swipe suit l'ordre des pièces, en rouleau (R0 → R1 → … → R4 → R0, 18/10/2026,
+ *       tuiles_swipe_ha), et les pastilles aussi (une par pièce, pastilles_peindre). Tuile T =
+ *       position visuelle, 0 = gauche (sur les pages horaires, l'objet h(4−T)).
  * @ai_instruction Interrupteur « Tab5 Appareils sur la météo » (05/10/2026) : éteint, le
  *       mode météo ne montre aucun appareil (s_appareils_meteo, lu par peindre_epaules,
  *       tuile_appui et tuile_titre_appui) ; le mode HA ne le lit pas.
@@ -379,6 +381,13 @@ bool aucun_appareil() {
 int piece_courante() {
     const int p = g_central_ctx.forecast_page;
     return (p >= 0 && p < kPieces) ? kPieceDePage[p] : 0;
+}
+
+// La page de la pièce r (kPieceDePage lu à l'envers) ; -1 hors de 0..kPieces-1.
+static int page_de_piece(int r) {
+    for (int p = 0; p < kPieces; p++)
+        if (kPieceDePage[p] == r) return p;
+    return -1;
 }
 
 // Page la plus proche de `page` dont la pièce a des appareils (à égalité, la plus proche
@@ -1016,13 +1025,21 @@ void bouton_ha_peindre() {
         lv_obj_remove_local_style_prop(u.bouton_ha, p, LV_PART_MAIN);
 }
 
+// Pastilles sous la carte centrale (pbar_0 … 4, partagées avec la météo) : en mode HA, une
+// par pièce dans l'ordre des pièces, celle du rouleau (18/10/2026) ; sinon une par page de
+// prévisions. Repeintes à chaque entrée et sortie du mode HA : la page ne change pas
+// forcément, la pastille allumée si.
+static void pastilles_peindre() {
+    const CentralPanelCtx& ctx = g_central_ctx;
+    pagination_afficher(g_tuiles_ui.pastilles, ctx.ha_mode ? piece_courante() : ctx.forecast_page);
+}
+
 // Change de page sans toucher aux calques météo (mode HA) : contexte (seule source de la
 // page depuis le 28/09/2026), pastilles.
 void aller_page(int page) {
-    const TuilesUI& u = g_tuiles_ui;
     if (page < 0 || page >= kPieces) return;
     g_central_ctx.forecast_page = page;
-    pagination_afficher(u.pastilles, page);
+    pastilles_peindre();
 }
 
 // ─── Commandes ──────────────────────────────────────────────────────────────────────
@@ -1327,10 +1344,11 @@ void tuiles_mode_ha(bool actif) {
         const int cible = page_non_vide_proche(page);
         if (cible < 0) return;  // aucun appareil : le bouton est masqué
         ctx.ha_mode = true;
-        if (cible != page) aller_page(cible);
+        aller_page(cible);  // même page comprise : les pastilles passent à l'ordre des pièces
         peindre_cartes();
     } else {
         ctx.ha_mode = false;
+        pastilles_peindre();  // de nouveau une par page de prévisions
         // La météo de la page courante : on a pu changer de pièce en mode HA.
         g_forecast_roll_suppress = true;
         if (page >= 2) refresh_daily_forecast(g_day_slots, page - 2, u.police_meteo, u.police_meteo_petite);
@@ -1364,20 +1382,22 @@ static void montrer_page_ha(int page) {
     reglables_clim_changee();
 }
 
-// Mode HA : la page suivante dans l'ordre de la météo, pièce vide comprise (elle dit
-// « Aucun appareil ») — comme les cinq pages de prévisions. Avant le 28/09, les pièces
-// vides étaient sautées : avec une seule pièce configurée, le swipe ne faisait rien.
+// Mode HA : un rouleau des pièces (18/10/2026, demande d'Axel) — vers la gauche la pièce
+// suivante, vers la droite la précédente, et après la pièce 5 revient la 1 (avant : l'ordre
+// des pages météo, qui ne parcourait que trois pièces dans chaque sens, discussion #278).
+// La météo garde son ordre et son bouclage (forecast_page_suivante, [AI-WARNING]). Pièce
+// vide comprise (elle dit « Aucun appareil ») : avant le 28/09, les pièces vides étaient
+// sautées, et avec une seule pièce configurée le swipe ne faisait rien.
 void tuiles_swipe_ha(bool gauche) {
     charger();
-    montrer_page_ha(forecast_page_suivante(g_central_ctx.forecast_page, gauche));
+    const int page = page_de_piece(reglages_page_voisine(piece_courante(), kPieces, gauche));
+    if (page >= 0) montrer_page_ha(page);
 }
 
 bool tuiles_aller_piece(int r) {
     charger();
     if (r < 0 || r >= kPieces || !piece_non_vide(r)) return false;
-    int page = -1;
-    for (int p = 0; p < kPieces; p++)
-        if (kPieceDePage[p] == r) page = p;
+    const int page = page_de_piece(r);
     if (page < 0) return false;
     // D'abord le mode HA par son seul chemin (calques, bouton « HA ») : il se pose sur la
     // pièce non vide la plus proche de la page affichée, puis on va sur celle demandée.
