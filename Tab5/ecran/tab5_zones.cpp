@@ -101,6 +101,11 @@ constexpr char kCleDefilement[] = "defil";
 // Poussée par le blueprint avec les gestes ; un firmware plus ancien l'ignore. Codes lus par
 // le blueprint : ni traduits ni renommés sans lui (tests/test_telecommandes.py).
 constexpr char kCleTelecommandes[] = "telecommandes";
+// Playlists favorites du popup Musique (18/10/2026, ADR-0068) : « playlists|nom|nom|… »,
+// lue par playlists_lire() (Tab5/socle/tab5_parse.cpp) et gardée par tab5_lecteur.cpp. Les
+// noms seuls : le blueprint garde les liens. Poussée avec tous les états ; un firmware plus
+// ancien l'ignore (tests/test_playlists.py).
+constexpr char kClePlaylists[] = "playlists";
 struct CodeGeste {
     const char* code;
     Ecran ecran;  // l'écran ouvert (action ECRAN), AUCUN sinon
@@ -684,6 +689,12 @@ int emplacements_appliquer(const std::string& payload, const EmplacementCible* c
         // Télécommandes du popup (ADR-0056) : « telecommandes|écran|nom|… ».
         if (champ_est(e.cle, kCleTelecommandes)) {
             telecommandes_recu(e.reste.p, e.reste.n);
+            appliquees++;
+            continue;
+        }
+        // Playlists favorites du popup Musique (ADR-0068) : « playlists|nom|… ».
+        if (champ_est(e.cle, kClePlaylists)) {
+            lecteur_playlists_recu(e.reste.p, e.reste.n);
             appliquees++;
             continue;
         }
