@@ -95,10 +95,16 @@ obj:
           - obj:
               align: TOP_MID
               y: ${modal_body_y}
-              width: ${ 1170 * (corps_w | int) // 1202 }
-              height: ${ (corps_h | int - 102 - 24 * (corps_h | int) // 598) }
+              width: ${ 1170 * (corps_w | int) // 1202 + 2 * (ombre_carte_max | int) }
+              height: ${ (corps_h | int - 102 - 24 * (corps_h | int) // 598) + (ombre_bouton_max | int) }
               styles: style_transparent
               scrollable: false
+              # Les touches sont posées dans la zone sans ses marges, à la même place ; les
+              # marges laissent l'ombre d'un thème aux touches du bord (volume à droite,
+              # Menu et Accueil en bas), coupée net avant (18/10/2026, Tab5 et 7B).
+              pad_left: ${ombre_carte_max}
+              pad_right: ${ombre_carte_max}
+              pad_bottom: ${ombre_bouton_max}
               widgets:
 
                 # ── Colonne des commandes (290) ──
@@ -256,11 +262,16 @@ obj:
           - obj:
               id: tv_rangee_applis
               align: BOTTOM_MID
-              y: ${modal_bottom_y}
-              width: ${ 1170 * (corps_w | int) // 1202 }
-              height: 102
+              y: ${ (modal_bottom_y | int) + (ombre_bouton_max | int) }
+              width: ${ 1170 * (corps_w | int) // 1202 + 2 * (ombre_bouton_max | int) }
+              height: ${ 102 + (ombre_bouton_max | int) }
               styles: style_transparent
               scrollable: false
+              # Touches à la même place, dans les marges : l'ombre de la dernière (à droite)
+              # et celle du bas ne sont plus coupées par la rangée (18/10/2026).
+              pad_left: ${ombre_bouton_max}
+              pad_right: ${ombre_bouton_max}
+              pad_bottom: ${ombre_bouton_max}
               widgets:
                 - !include { file: tv_app_btn.yaml, vars: { x: 0, app: "netflix", text: "Netflix", style: "style_text_error" } }
                 # « Prime » et non « Prime Video » : en roboto_32_b le nom
@@ -285,12 +296,17 @@ obj:
           - obj:
               id: tv_rangee_lecture
               align: BOTTOM_MID
-              y: ${modal_bottom_y}
-              width: ${ 1170 * (corps_w | int) // 1202 }
-              height: 102
+              y: ${ (modal_bottom_y | int) + (ombre_bouton_max | int) }
+              width: ${ 1170 * (corps_w | int) // 1202 + 2 * (ombre_bouton_max | int) }
+              height: ${ 102 + (ombre_bouton_max | int) }
               hidden: true
               styles: style_transparent
               scrollable: false
+              # Touches à la même place, dans les marges : l'ombre de la dernière (à droite)
+              # et celle du bas ne sont plus coupées par la rangée (18/10/2026).
+              pad_left: ${ombre_bouton_max}
+              pad_right: ${ombre_bouton_max}
+              pad_bottom: ${ombre_bouton_max}
               widgets:
                 - !include { file: tv_transport_btn.yaml, vars: { x: 0, touche: "KEY_PREV", icon: "\U000F04AE", icon_style: "style_text_dim", text: "Précédent" } }
                 - !include { file: tv_transport_btn.yaml, vars: { x: 237, touche: "KEY_REWIND", icon: "\U000F045F", icon_style: "style_text_soft", text: "Reculer" } }

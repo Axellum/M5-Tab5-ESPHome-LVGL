@@ -361,6 +361,15 @@ media_player:
     # sature, 80 % encore un peu, 75 % propre). ESPHome ramène chaque volume dans
     # [volume_min, volume_max] avant le codec (speaker_media_player.cpp) : 100 % = 0 dB.
     volume_max: 75%
+    # [AI-WARNING] Bas de course (mesuré le 18/10/2026 sur la 7B) : REG32 = volume × 255, pas
+    # de 0,5 dB, 0xBF = 0 dB. Avec volume_min à 0 (le défaut), un volume HA de 0,2 donnait
+    # ≈ −76 dB : rien d'audible alors que le lecteur était « playing » ; 0,8 donnait ≈ −19 dB,
+    # entendu. Les curseurs de volume (popup Musique, page Pièces) étaient muets sur 60 % de
+    # leur course. À 40 % : ≈ −44 dB en bas de course, 0 dB en haut ; le volume 0 reste
+    # muet (set_volume_ de speaker_media_player.cpp : sous 0,001, sourdine). Valeur à juger à
+    # l'oreille par Axel après un flash ; ne pas la recopier sur le Tab5 (ES8388, une autre
+    # courbe, pas mesurée).
+    volume_min: 40%
     announcement_pipeline:
       speaker: tab5_speaker
       format: FLAC

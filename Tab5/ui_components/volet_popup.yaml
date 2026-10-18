@@ -111,9 +111,10 @@ obj:
                 # Toute la pièce affichée d'un coup : la commande de chacun de ses volets
                 # listés (popup_volets_tout, une action par volet, comme sa tuile). À 88 px
                 # du bas de la carte (y 510 sur le Tab5), côte à côte sous les lignes (163 px
-                # de large sur le Tab5, 16 px entre eux).
-                - !include { file: volet_btn.yaml, vars: { x: 22, y: "${ corps_h | int - 88 }", w: "${ (piece_ligne_l | int - 16) // 2 }", h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: ouvrir, icon: "\U000F005D", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout ouvrir" } }
-                - !include { file: volet_btn.yaml, vars: { x: "${ 22 + (piece_ligne_l | int - 16) // 2 + 16 }", y: "${ corps_h | int - 88 }", w: "${ (piece_ligne_l | int - 16) // 2 }", h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: fermer, icon: "\U000F0045", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout fermer" } }
+                # de large sur le Tab5, 16 px entre eux ; jetons volet_tout_* : plus larges que
+                # les lignes sur une carte où le mot n'y tiendrait pas).
+                - !include { file: volet_btn.yaml, vars: { x: "${volet_tout_x}", y: "${ corps_h | int - 88 }", w: "${volet_tout_l}", h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: ouvrir, icon: "\U000F005D", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout ouvrir" } }
+                - !include { file: volet_btn.yaml, vars: { x: "${ (volet_tout_x | int) + (volet_tout_l | int) + (volet_tout_ecart | int) }", y: "${ corps_h | int - 88 }", w: "${volet_tout_l}", h: 76, pastille: 36, rayon: 18, pastille_y: 6, texte_y: -6, appel: popup_volets_tout, commande: fermer, icon: "\U000F0045", icon_font: mdi_font_32, icon_style: style_text_accent, text: "Tout fermer" } }
 
           # ═══ CARTE POSITION (droite) : le volet choisi, dessiné, sa position, ses commandes ═══
           - obj:

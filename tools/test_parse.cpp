@@ -1140,6 +1140,152 @@ static void test_ha_image_url() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// 9 bis. Musique de toute la maison (ADR-0067)
+// ════════════════════════════════════════════════════════════════════════════
+
+static void test_musique_pieces() {
+    MusiquePiecesLues p;
+    // Le format de packages/tab5_musique.yaml : Music Assistant, le salon montré mène un
+    // groupe avec la cuisine, la TV éteinte seule.
+    int n = musique_pieces_lire(ch("Salon|e|j|45|0|0|vmogst|Le vent du large — Les Marées;"
+                                   "Cuisine|e|j|30|1|0|vmgt|Le vent du large — Les Marées;"
+                                   "TV Samsung|t|e||0|-1|o|"),
+                                ch("1|0|12|Sous la pluie — Les Marées"), p);
+    expect(n == 3 && p.ma && p.montre == 0 && p.file == 12 && vaut(p.suivant, "Sous la pluie — Les Marées"),
+           "pièces : contexte");
+    expect(p.pieces[0].index == 0 && vaut(p.pieces[0].nom, "Salon") && p.pieces[0].genre == MusiqueGenre::ENCEINTE &&
+               p.pieces[0].etat == MusiqueEtat::LECTURE && p.pieces[0].volume == 45 && p.pieces[0].muet == 0 &&
+               p.pieces[0].groupe == 0 && vaut(p.pieces[0].titre, "Le vent du large — Les Marées"),
+           "pièces : la première");
+    expect(p.pieces[0].fonctions == (MUSIQUE_F_VOLUME | MUSIQUE_F_MUET | MUSIQUE_F_MARCHE | MUSIQUE_F_GROUPE |
+                                     MUSIQUE_F_SOURCE | MUSIQUE_F_TRANSFERT),
+           "pièces : fonctions");
+    // Lettres en double ou inconnues ignorées, majuscules comprises ; vide ou absent = aucune.
+    expect(musique_fonctions_lire(ch("ttxVg")) == (MUSIQUE_F_TRANSFERT | MUSIQUE_F_GROUPE) &&
+               musique_fonctions_lire(ch("")) == 0 && musique_fonctions_lire(Champ{nullptr, 3}) == 0,
+           "pièces : fonctions inconnues ignorées");
+    expect(p.pieces[1].muet == 1 && p.pieces[2].genre == MusiqueGenre::TV && p.pieces[2].etat == MusiqueEtat::ETEINT &&
+               p.pieces[2].volume == -1 && p.pieces[2].groupe == -1 && p.pieces[2].fonctions == MUSIQUE_F_MARCHE &&
+               p.pieces[2].titre.n == 0,
+           "pièces : volume inconnu, seule, éteinte");
+    expect(musique_membres(p, 0) == 1 && musique_membres(p, 1) == 0 && musique_membres(p, 2) == 0 &&
+               musique_membres(p, 7) == 0 && musique_membres(p, -1) == 0,
+           "pièces : « + 1 » pour le meneur seulement");
+    expect(musique_meme_groupe(p, 0, 1) && musique_meme_groupe(p, 1, 0) && !musique_meme_groupe(p, 0, 2) &&
+               !musique_meme_groupe(p, 2, 2) && !musique_meme_groupe(p, 0, 0),
+           "pièces : même groupe");
+    expect(musique_piece(p, 2) == &p.pieces[2] && musique_piece(p, 3) == nullptr && musique_piece(p, -1) == nullptr,
+           "pièces : par index");
+
+    // Le titre en dernier prend le reste ; les enregistrements vides gardent leur rang.
+    n = musique_pieces_lire(ch("A|e|j|||||x|y;;B|g|p"), ch("0|2"), p);
+    expect(n == 2 && vaut(p.pieces[0].titre, "x|y") && p.pieces[1].index == 2 && vaut(p.pieces[1].nom, "B") &&
+               p.pieces[1].genre == MusiqueGenre::GROUPE && p.pieces[1].etat == MusiqueEtat::PAUSE && !p.ma &&
+               p.montre == 2 && p.file == 0 && p.suivant.n == 0,
+           "pièces : titre avec « | », rang gardé, contexte court");
+    // Huit rangs au plus ; un meneur ou un lecteur montré qui n'existe pas vaut -1.
+    n = musique_pieces_lire(ch("a;b;c;d;e;f;g;h;i;j"), ch("1|9|x|"), p);
+    expect(n == kMusiquePiecesMax && vaut(p.pieces[7].nom, "h") && p.montre == -1 && p.file == 0,
+           "pièces : huit au plus, index hors bornes");
+    n = musique_pieces_lire(ch("A|e|r|50|0|1|v;;C|e|r|50|0|5|v"), ch("1|1"), p);
+    expect(n == 2 && p.pieces[0].groupe == -1 && p.pieces[1].groupe == -1 && p.montre == -1,
+           "pièces : meneur absent ou rang vide = -1");
+    // Inconnus : lettres, nombres illisibles, non finis, hors bornes.
+    musique_pieces_lire(ch("X|z|q|101|2|-1|xyz|;Y|TV|J|nan|1|abc|vv|;Z|e|i|49.6|0|3|v|"), ch("2|-1|-4"), p);
+    expect(p.pieces[0].genre == MusiqueGenre::AUTRE && p.pieces[0].etat == MusiqueEtat::INDISPONIBLE &&
+               p.pieces[0].volume == -1 && p.pieces[0].muet == -1 && p.pieces[0].groupe == -1 &&
+               p.pieces[0].fonctions == 0 && p.pieces[1].genre == MusiqueGenre::AUTRE &&
+               p.pieces[1].etat == MusiqueEtat::INDISPONIBLE && p.pieces[1].volume == -1 &&
+               p.pieces[1].fonctions == MUSIQUE_F_VOLUME && p.pieces[2].volume == 50 && p.pieces[2].groupe == -1,
+           "pièces : champs inconnus");
+    expect(!p.ma && p.montre == -1 && p.file == 0, "pièces : contexte illisible");
+    // Vide : aucune pièce, sans Music Assistant.
+    expect(musique_pieces_lire(ch(""), ch(""), p) == 0 && !p.ma && p.montre == -1 &&
+               musique_pieces_lire(Champ{nullptr, 0}, Champ{nullptr, 0}, p) == 0,
+           "pièces : vide");
+    expect(musique_pieces_lire(ch(";"), ch("1|-1|0|"), p) == 0 && p.ma, "pièces : aucune, Music Assistant présent");
+}
+
+static void test_musique_liste() {
+    MusiqueListeLue l;
+    int n = musique_liste_lire(
+        ch("alb|Albums|1|1|0"),
+        ch("Carnets de voyage|Les Marées|a|library://album/12|http://192.0.2.10:8095/imageproxy/ab?size=160&fmt=png;"
+           "Le vent du large|Les Marées|t|library://track/7|;"
+           "Radio Jazz||d|library://radio/2|https://upload.wikimedia.org/a%3Bb.png"),
+        l);
+    expect(n == 3 && l.vue == MusiqueVue::ALBUMS && vaut(l.titre, "Albums") && l.page == 1 && l.suite && !l.retour,
+           "liste : contexte");
+    expect(vaut(l.elements[0].nom, "Carnets de voyage") && vaut(l.elements[0].sous, "Les Marées") &&
+               l.elements[0].genre == MusiqueElementGenre::ALBUM && vaut(l.elements[0].ref, "library://album/12") &&
+               vaut(l.elements[0].image, "http://192.0.2.10:8095/imageproxy/ab?size=160&fmt=png"),
+           "liste : un album");
+    expect(l.elements[1].genre == MusiqueElementGenre::TITRE && l.elements[1].image.n == 0 &&
+               l.elements[2].genre == MusiqueElementGenre::RADIO && l.elements[2].sous.n == 0 &&
+               vaut(l.elements[2].image, "https://upload.wikimedia.org/a%3Bb.png"),
+           "liste : un titre sans pochette, une radio");
+    expect(!musique_element_jouable(l.elements[0]) && musique_element_conteneur(l.elements[0]) &&
+               musique_element_jouable(l.elements[1]) && !musique_element_conteneur(l.elements[1]) &&
+               musique_element_jouable(l.elements[2]),
+           "liste : jouer ou ouvrir");
+
+    // Image en dernier : elle prend le reste ; vides sautés ; dix au plus.
+    n = musique_liste_lire(ch("det|Les Marées|0|0|1"), ch(";;A||t|library://track/1|http://x/a|b;;"), l);
+    expect(n == 1 && l.vue == MusiqueVue::DETAIL && l.retour && !l.suite && vaut(l.elements[0].image, "http://x/a|b"),
+           "liste : image avec « | », vides sautés");
+    n = musique_liste_lire(ch("fav"), ch("a;b;c;d;e;f;g;h;i;j;k;l"), l);
+    expect(n == kMusiqueElementsMax && vaut(l.elements[9].nom, "j") && l.vue == MusiqueVue::FAVORIS && l.titre.n == 0 &&
+               l.page == 0 && l.elements[9].genre == MusiqueElementGenre::AUTRE && l.elements[9].ref.n == 0,
+           "liste : dix au plus, contexte court");
+
+    // Podcasts : un podcast s'ouvre, un épisode se joue.
+    musique_liste_lire(ch("pod|Podcasts|0|0|0"),
+                       ch("Science||o|library://podcast/3|;Épisode 12||o|library://podcast_episode/40|"), l);
+    expect(musique_element_conteneur(l.elements[0]) && !musique_element_jouable(l.elements[0]) &&
+               musique_element_jouable(l.elements[1]) && !musique_element_conteneur(l.elements[1]),
+           "liste : podcast et épisode");
+    // Sources : le rang ; ni jouer ni ouvrir (la tablette envoie « source »).
+    musique_liste_lire(ch("src|Salon|0|0|1"), ch("HDMI 1||s|0|;Bluetooth||s|12|;Trop||s|1234|;Lettre||s|a|"), l);
+    expect(l.vue == MusiqueVue::SOURCES && vaut(l.elements[1].ref, "12") && l.elements[2].ref.n == 0 &&
+               l.elements[3].ref.n == 0 && !musique_element_jouable(l.elements[0]) &&
+               !musique_element_conteneur(l.elements[0]),
+           "liste : sources");
+    // Erreur : la phrase dans le titre.
+    n = musique_liste_lire(ch("err|Music Assistant ne répond pas|0|0|0"), ch(""), l);
+    expect(n == 0 && l.vue == MusiqueVue::ERREUR && vaut(l.titre, "Music Assistant ne répond pas"), "liste : erreur");
+    // Inconnus et vides.
+    musique_liste_lire(ch("zz|T|-3|2|x"), ch(""), l);
+    expect(l.vue == MusiqueVue::INCONNUE && l.page == 0 && !l.suite && !l.retour, "liste : contexte illisible");
+    expect(musique_liste_lire(Champ{nullptr, 0}, Champ{nullptr, 0}, l) == 0 && l.vue == MusiqueVue::INCONNUE,
+           "liste : vide");
+}
+
+static void test_musique_refs() {
+    auto ok = [](const char* r) { return musique_ref_valide(ch(r), MusiqueElementGenre::ALBUM); };
+    expect(ok("library://album/12") && ok("ytmusic://playlist/PLabc-_x") && ok("spotify_2://track/a.b%20c") &&
+               ok("a://b"),
+           "ref : URI de Music Assistant");
+    expect(!ok("") && !ok("library:/album") && !ok("://x") && !ok("Library://x") && !ok("library://") &&
+               !ok("library://a b") && !ok("library://a|b") && !ok("library://a;b") && !ok("library://a\tb") &&
+               !ok("http//x"),
+           "ref : refusées (la règle de HA)");
+    const std::string longue = "library://" + std::string(kMusiqueRefMax, 'a');
+    expect(!musique_ref_valide(Champ{longue.data(), longue.size()}, MusiqueElementGenre::TITRE) &&
+               musique_ref_valide(Champ{longue.data(), kMusiqueRefMax}, MusiqueElementGenre::TITRE),
+           "ref : 160 octets au plus");
+    expect(musique_ref_valide(ch("0"), MusiqueElementGenre::SOURCE) &&
+               musique_ref_valide(ch("999"), MusiqueElementGenre::SOURCE) &&
+               !musique_ref_valide(ch("library://x"), MusiqueElementGenre::SOURCE) &&
+               !musique_ref_valide(ch("-1"), MusiqueElementGenre::SOURCE),
+           "ref : rang d'une source");
+    expect(std::strcmp(musique_vue_code(MusiqueVue::ARTISTES), "art") == 0 &&
+               musique_vue_lire(ch("rec")) == MusiqueVue::RECENTS && musique_vue_lire(ch("")) == MusiqueVue::INCONNUE &&
+               musique_vue_categorie(MusiqueVue::FAVORIS) && musique_vue_categorie(MusiqueVue::RECENTS) &&
+               !musique_vue_categorie(MusiqueVue::DETAIL) && !musique_vue_categorie(MusiqueVue::INCONNUE),
+           "vues : codes de l'événement");
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // 10. Popup Caméras (tab5_maj_cameras, ADR-0049)
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -1879,6 +2025,9 @@ int main() {
     test_lecteur_temps();
     test_ha_base_depuis_hote();
     test_ha_image_url();
+    test_musique_pieces();
+    test_musique_liste();
+    test_musique_refs();
     test_cameras_lire();
     test_cameras_pieces();
     test_camera_url();

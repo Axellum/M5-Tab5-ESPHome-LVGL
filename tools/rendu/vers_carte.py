@@ -19,8 +19,11 @@ Les étapes d'ecrans.py sont écrites pour l'écran du Tab5 (1280×720). Sur une
    de la carte (lot 3, jetons acc_* de tab5-ui-tokens.yaml : x × l / 1280, y × h / 720,
    arrondis) ; dans un popup, la croix est collée au bord droit de la carte modale, les noms
    des pages réduits depuis elle (onglet_x de tab5_geometrie.h), le corps ramené à la taille
-   du corps (kCorpsW × kCorpsH) ; le sélecteur de l'Arcade est centré en largeur, les
-   consoles restent au pixel. Un point qui reste hors de l'écran arrête l'écran là (ses
+   du corps (kCorpsW × kCorpsH) ; le popup Musique (« Aller à l'écran → Musique ») n'est
+   pas la carte modale : sa carte (lecteur_card_w × lecteur_card_h, 940 × 536) est la même
+   sur toutes les cartes, centrée, et un point y garde sa place dans elle (ADR-0067 : sur la
+   7B, x − 128, y − 60), roues de ses pages comprises ; le sélecteur de l'Arcade est centré
+   en largeur, les consoles restent au pixel. Un point qui reste hors de l'écran arrête l'écran là (ses
    étapes suivantes ne sont pas jouées) : il ne s'ouvrira pas, le bilan
    (tools/rendu/bilan_carte.py) le compte. `fermer` garde alors ses étapes qui ne sont pas
    des gestes (le thème remis, une option rétablie) : sans elles, l'écran suivant hériterait
@@ -58,8 +61,12 @@ CLIM_ANCRE_X, CLIM_ANCRE_Y = (480, 800), 460
 ECRAN_ARCADE = 22
 # Marge des points ramenés dans l'écran (gestes, toucher qui ferme une roue).
 BORD = 15
-# Où le doigt touche (adapter) : l'accueil, un popup, le sélecteur de l'Arcade, une console.
-ACCUEIL, POPUP, ARCADE, JEU = "accueil", "popup", "arcade", "jeu"
+# Carte du popup Musique (tab5-ui-tokens.yaml : lecteur_card_w, lecteur_card_h), centrée,
+# la même sur toutes les cartes (ADR-0050, ADR-0067).
+LECTEUR_CARTE = (940, 536)
+# Où le doigt touche (adapter) : l'accueil, un popup, le popup Musique, le sélecteur de
+# l'Arcade, une console.
+ACCUEIL, POPUP, LECTEUR, ARCADE, JEU = "accueil", "popup", "lecteur", "arcade", "jeu"
 
 
 def jeux_compiles(carte: str) -> bool:
@@ -114,6 +121,11 @@ class Carte:
             cy = CORPS_Y + round((cy - CORPS_Y) * self.corps[1] / self.corps_tab5[1])
         return cx + MARGE_CARTE, cy + MARGE_CARTE
 
+    def lecteur(self, x: int, y: int) -> tuple[int, int]:
+        """Popup Musique : la même place dans sa carte, centrée sur les deux écrans."""
+        l, h = LECTEUR_CARTE
+        return x - (TAB5[0] - l) // 2 + (self.l - l) // 2, y - (TAB5[1] - h) // 2 + (self.h - h) // 2
+
     def arcade(self, x: int, y: int) -> tuple[int, int]:
         """Sélecteur de l'Arcade : la grille des consoles centrée en largeur, au pixel en
         hauteur (capture arcade.png de la 7B, lot 1)."""
@@ -152,6 +164,10 @@ def _roues(c: Carte) -> dict:
     clim = E.roue_centres(min(max(salon[0], xmin), xmax), c.acc_y(CLIM_ANCRE_Y), E.ROUE_CLIM_TEMPERATURE, ecran=ecran)
     roues[E.ROUE_CLIM_DETAILS] = (E.Toucher(*clim[-1]), True)
     roues[E.ROUE_CLIM_CLIMS] = (E.Toucher(*clim[E.ROUE_CLIMS]), False)
+    # Roue d'une carte de la page Pièces du popup Musique (ADR-0067) : son ancre garde sa
+    # place dans la carte Musique ; le bouton reste dans le popup.
+    musique = E.roue_centres(*c.lecteur(*E.MUSIQUE_SALON_ICONE), E.MUSIQUE_ROUE_SALON, ecran=ecran)
+    roues[E.MUSIQUE_SOURCE] = (E.Toucher(*musique[0]), False)
     return roues
 
 
@@ -206,12 +222,12 @@ def adapter(ecran: E.Ecran, carte: str = "tab5", taille: tuple[int, int] | None 
     retirees: list = []
 
     def regle(m: str):
-        return {ACCUEIL: c.accueil, POPUP: c.popup, ARCADE: c.arcade}.get(m, lambda x, y: (x, y))
+        return {ACCUEIL: c.accueil, POPUP: c.popup, LECTEUR: c.lecteur, ARCADE: c.arcade}.get(m, lambda x, y: (x, y))
 
     def une(etape):
         nonlocal mode
         if isinstance(etape, E.Aller):
-            mode = ACCUEIL if etape.option == "Accueil" else POPUP
+            mode = {"Accueil": ACCUEIL, "Musique": LECTEUR}.get(etape.option, POPUP)
             return etape
         if isinstance(etape, E.Service) and etape.nom == "rendu_ecran":
             mode = ARCADE
@@ -245,7 +261,7 @@ def adapter(ecran: E.Ecran, carte: str = "tab5", taille: tuple[int, int] | None 
                 mode = JEU
             return replace(etape, x=x, y=y, selon_langue=autres)
         if isinstance(etape, E.Glisser):
-            r = c.popup if etape.dans_popup else regle(mode)
+            r = c.popup if etape.dans_popup and mode != LECTEUR else regle(mode)
             x1, y1 = c.borner(*r(etape.x1, etape.y1))
             x2, y2 = c.borner(*r(etape.x2, etape.y2))
             return replace(etape, x1=x1, y1=y1, x2=x2, y2=y2)

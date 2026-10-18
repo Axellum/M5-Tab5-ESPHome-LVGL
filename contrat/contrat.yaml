@@ -7,7 +7,7 @@
 # MAJEURE si un fichier HA d'avant peut casser (action retirée, variable ajoutée, retirée
 # ou de type changé, événement ou champ plus émis), MINEURE pour un ajout pur (action,
 # événement ou champ nouveau). tests/test_contrat_versions.py le vérifie.
-version: 1.3.0
+version: 1.4.0
 services:
   tab5_assist_reponse:
     image_url: string
@@ -70,6 +70,12 @@ services:
     condition: string
     humidite: string
     temperature: string
+  tab5_maj_musique_liste:
+    contexte: string
+    elements: string
+  tab5_maj_musique_pieces:
+    contexte: string
+    pieces: string
   tab5_maj_planning:
     ligne1: string
     ligne2: string
@@ -117,6 +123,7 @@ evenements:
   esphome.tab5_lecteur: [action, lecteur, valeur]
   esphome.tab5_maj_ecran: []
   esphome.tab5_mode_assistant: [option]
+  esphome.tab5_musique: [action, piece, valeur]
   esphome.tab5_recharger_automatisations: []
   esphome.tab5_redemarrage_ha_confirme: []
   esphome.tab5_reveil_annonce: []

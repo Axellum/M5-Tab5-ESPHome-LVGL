@@ -2,8 +2,9 @@
 # [AI-CONTEXT] Nom d'une page d'un popup à pages (ADR-0046, 09/10/2026), réutilisé 10 fois
 # par light_popup.yaml et 10 fois par volet_popup.yaml (dix pièces au plus, ADR-0066) : le
 # nom d'une pièce, en haut, sur la ligne du titre ; 2 fois par maison_popup.yaml (pages de
-# pièces, ADR-0066, placés par tab5_maison.cpp) ; 2 fois par lecteur_popup.yaml (« Lecture », « Playlists », ADR-0068,
-# placés par tab5_lecteur.cpp : sa carte n'est pas la carte modale). Un tap montre sa page (`choisir`, une fonction de tab5_tuiles.h) ; un tap
+# pièces, ADR-0066, placés par tab5_maison.cpp) ; 4 fois par musique_calques.yaml (les pages
+# du popup Musique : Lecture, Playlists, Pièces, Bibliothèque, ADR-0067 et ADR-0068, placées
+# par tab5_musique.cpp : sa carte n'est pas la carte modale). Un tap montre sa page (`choisir`) ; un tap
 # au bout d'un glissement ne fait rien (ui_appui_glisse).
 # Position, largeur, nom (coupé avec « … »), affichage et couleur d'accent de la page
 # affichée : posés par pages_onglets() (tab5_pages.cpp) — collés à la croix, 200 px au
@@ -12,7 +13,7 @@
 # (y = 4, hauteur 44), comme les noms des pages des Réglages (reglages_onglet.yaml, aux
 # positions fixes : leurs noms sont traduits au démarrage, pas posés par le C++).
 # vars : id, page (0 à 9, en nombre NON quoté), choisir (nom de la fonction C++, sans
-#        parenthèses : popup_lumiere_page, popup_volet_page).
+#        parenthèses : popup_lumiere_page, popup_volet_page, maison_page, musique_onglet).
 # @architecture_constraint Le nom est le PREMIER enfant (lu par pages_onglets et
 #        choix_peindre).
 # ═══════════════════════════════════════════════════════

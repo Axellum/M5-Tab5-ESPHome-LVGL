@@ -1,0 +1,60 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file musique_element.yaml
+# @role Un élément de la grille de la page Bibliothèque du popup Musique (ADR-0067,
+#       musique_calques.yaml, 10 fois : kMusiqueElements, 5 × 2) : la pochette (ou l'icône
+#       de son genre), le nom, la 2e ligne. Toucher : jouer (titre, radio, épisode, livre),
+#       ouvrir (artiste, album, playlist, podcast) ou choisir (une source) ; appui long : la
+#       roue (maintenant, à la suite, en fin de file, radio, ouvrir ; ADR-0036).
+# @architecture_constraint Place, textes, glyphe (glyphe_element : MDI_CODE_TARGETS, règle 7),
+#       image et accent du cadre : tab5_musique.cpp (peindre_element). La pochette (image
+#       musique_image_${n}, musique_pochette.yaml : 160 × 160) est montrée à sa taille,
+#       centrée dans le cadre de 144 px qui la rogne (clip_corner) : aucune mise à l'échelle.
+#       Le cadre et les textes ne sont pas cliquables : le bouton reçoit l'appui.
+# vars : n (0 à 9)
+# ═══════════════════════════════════════════════════════
+button:
+  id: musique_element_${n}
+  align: TOP_LEFT
+  x: 0
+  y: 124
+  width: 168
+  height: 196
+  pad_all: 0
+  hidden: true
+  scrollable: false
+  styles: style_transparent
+  on_short_click:
+    - lambda: 'musique_element_appui(${n});'
+  on_long_press:
+    - lambda: 'musique_element_long(${n});'
+  widgets:
+    # Cadre de la pochette : fond uni (ARC_TRACK), bord GLASS_RIM dessiné après les enfants
+    # (border_post), coins découpés (clip_corner), comme celle de la page Lecture.
+    - obj:
+        id: musique_element_cadre_${n}
+        align: TOP_MID
+        x: 0
+        y: 0
+        width: 144
+        height: 144
+        pad_all: 0
+        radius: 16
+        bg_opa: 100%
+        border_width: 2
+        border_opa: 100%
+        border_post: true
+        clip_corner: true
+        shadow_width: 0
+        scrollable: false
+        clickable: false
+        styles: [style_bg_arc_track, style_border_glass_rim]
+        widgets:
+          - label: { id: "musique_element_icone_${n}", text: "\U000F0387", align: CENTER, text_font: mdi_font_70, styles: style_text_dim }
+          - image:
+              id: musique_element_img_${n}
+              src: musique_image_${n}
+              align: CENTER
+              hidden: true
+    - label: { id: "musique_element_nom_${n}", text: "", align: TOP_MID, x: 0, y: 146, width: 160, long_mode: CLIP, text_align: CENTER, text_font: roboto_22 }
+    - label: { id: "musique_element_sous_${n}", text: "", align: TOP_MID, x: 0, y: 170, width: 160, long_mode: CLIP, text_align: CENTER, text_font: roboto_22, styles: style_text_dim, hidden: true }

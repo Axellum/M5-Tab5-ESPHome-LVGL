@@ -9,10 +9,11 @@
 #       de musique »), l'actif en accent. Dans l'en-tête : le nom du lecteur et
 #       l'application qu'il montre.
 #       Playlists favorites (ADR-0068, 18/10/2026) : quand le blueprint en pousse au moins
-#       une, une seconde page « Playlists » (glissement gauche / droite et noms des pages
-#       contre la croix, la brique des popups à pages, ADR-0046) : la pochette et les
-#       pastilles restent, la colonne de droite montre un bouton par playlist
-#       (lecteur_playlist.yaml). Sans playlist, le popup reste celui d'avant.
+#       une, la page « Playlists » : la pochette et les pastilles restent, la colonne de
+#       droite montre un bouton par playlist (lecteur_playlist.yaml). Les pages du popup
+#       (Lecture, Playlists, Pièces, Bibliothèque), leurs noms contre la croix et leur
+#       glissement : tab5_musique.cpp et musique_calques.yaml (ADR-0067, une seule brique
+#       des popups à pages, ADR-0046).
 #       Ouvert par l'appui long d'une tuile med sans option t, la mini-barre « en lecture »
 #       de l'accueil (lecteur_mini.yaml), un geste de l'accueil (code « musique ») ou
 #       « Aller à l'écran → Musique ».
@@ -75,12 +76,6 @@ obj:
               styles: style_glass_card
               widgets:
                 - label: { id: lecteur_app_texte, text: "", align: CENTER, text_font: roboto_22, styles: style_text_soft }
-
-          # Noms des pages (ADR-0068) : « Lecture » et « Playlists », masqués sans playlist.
-          # Place, largeur, nom et accent de la page montrée : tab5_lecteur.cpp
-          # (peindre_onglets) ; la pastille de l'application passe à leur gauche.
-          - !include { file: pages_onglet.yaml, vars: { id: lecteur_onglet_0, page: 0, choisir: lecteur_page } }
-          - !include { file: pages_onglet.yaml, vars: { id: lecteur_onglet_1, page: 1, choisir: lecteur_page } }
 
           # ═══ POCHETTE (360 × 360, coins arrondis) ═══
           # Fond uni (rôle ARC_TRACK, pas le dégradé du verre qui traçait une bande), bord
@@ -278,3 +273,8 @@ obj:
           - !include { file: lecteur_puce.yaml, vars: { n: "3" } }
           - !include { file: lecteur_puce.yaml, vars: { n: "4" } }
           - !include { file: lecteur_puce.yaml, vars: { n: "5" } }
+
+          # ═══ PAGES PIÈCES ET BIBLIOTHÈQUE (ADR-0067) : un calque sur toute la carte ═══
+          #     Noms des pages, puce « + n », ligne « À suivre » et les deux pages
+          #     (musique_calques.yaml), peints par tab5_musique.cpp. En dernier : au-dessus.
+          - !include musique_calques.yaml

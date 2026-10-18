@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file musique_categorie.yaml
+# @role Une catégorie de la page Bibliothèque du popup Musique (ADR-0067,
+#       musique_calques.yaml, 7 fois : kMusiqueCategories) : Favoris, Playlists, Albums,
+#       Artistes, Radios, Podcasts, Récents. Toucher : sa première page (musique_categorie(n),
+#       événement « parcourir »).
+# @architecture_constraint Place, largeur (celle de son nom, la rangée partagée sinon), nom
+#       traduit (tr) et accent de la catégorie montrée (choix_peindre) : tab5_musique.cpp
+#       (peindre_rangee). Le nom est le PREMIER enfant (lu par choix_peindre).
+# vars : n (0 à 6)
+# ═══════════════════════════════════════════════════════
+button:
+  id: musique_cat_${n}
+  align: TOP_LEFT
+  x: 24
+  y: 72
+  width: 120
+  height: 44
+  radius: 14
+  pad_all: 0   # positions exactes : le thème ajoutait ~21 px
+  hidden: true
+  scrollable: false
+  styles: style_clim_btn
+  pressed: { bg_opa: 30% }
+  on_short_click:
+    - lambda: 'musique_categorie(${n});'
+  widgets:
+    - label: { text: "", align: CENTER, text_font: roboto_22, styles: style_text_soft }

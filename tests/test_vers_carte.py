@@ -177,6 +177,29 @@ def test_arcade_puis_console(carte):
 
 
 @pytest.mark.parametrize("carte", AUTRES)
+def test_popup_musique_au_meme_endroit_de_sa_carte(carte):
+    """Rendu du 18/10/2026 (ADR-0067) : sur la 7B, les gestes du popup Musique, ramenés comme
+    dans la carte modale, ne changeaient pas de page (même image que la page Lecture). Sa
+    carte est la même sur toutes les cartes, centrée : un point y garde sa place."""
+    jetons = charger("Tab5", "paquets", "tab5-ui-tokens.yaml")["substitutions"]
+    assert V.LECTEUR_CARTE == (int(jetons["lecteur_card_w"]), int(jetons["lecteur_card_h"]))
+    l, h = V.taille_carte(carte)
+    dx = (V.TAB5[0] - V.LECTEUR_CARTE[0]) // 2 - (l - V.LECTEUR_CARTE[0]) // 2
+    dy = (V.TAB5[1] - V.LECTEUR_CARTE[1]) // 2 - (h - V.LECTEUR_CARTE[1]) // 2
+    if carte == "waveshare-7b":
+        assert (dx, dy) == (128, 60)
+    (glisser,) = [e for e in V.adapter(_ecran("musique-pieces"), carte)[0] if isinstance(e, E.Glisser)]
+    s = E.MUSIQUE_PAGE_SUIVANTE
+    assert (glisser.x1, glisser.y1, glisser.x2, glisser.y2) == (s.x1 - dx, s.y1 - dy, s.x2 - dx, s.y2 - dy)
+    gestes = [e for e in V.adapter(_ecran("musique-sources"), carte)[0] if isinstance(e, (E.Glisser, E.Toucher))]
+    assert len(gestes) == 3
+    long, roue = gestes[1], gestes[2]
+    ancre = (E.MUSIQUE_SALON_ICONE[0] - dx, E.MUSIQUE_SALON_ICONE[1] - dy)
+    assert (long.x, long.y, long.duree) == (*ancre, 1200)
+    assert (roue.x, roue.y) == E.roue_centres(*ancre, E.MUSIQUE_ROUE_SALON, ecran=(l, h))[0]
+
+
+@pytest.mark.parametrize("carte", AUTRES)
 def test_onglets_des_reglages_sur_ceux_de_la_carte(carte):
     g = geometrie_cpp(carte)
     c = V.Carte(V.taille_carte(carte))
