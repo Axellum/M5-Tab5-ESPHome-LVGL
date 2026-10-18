@@ -78,6 +78,10 @@ NON_MONTREES = {
     # du rendu de la PR, puis citées.
     "telecommande-plusieurs": "télécommande à plusieurs pages, décrite dans tv.md ; image à tirer du rendu",
     "telecommande-boitier": "page d'un boîtier (Apple TV), décrite dans tv.md ; image à tirer du rendu",
+    # Playlists favorites du popup Musique (ADR-0068, 18/10/2026), décrites dans music.md :
+    # images à tirer du rendu de la PR, puis citées.
+    "musique-avec-playlists": "musique montre la même fenêtre ; les noms des pages sont décrits dans music.md",
+    "musique-playlists": "page Playlists, décrite dans music.md ; image à tirer du rendu",
     "roue-lampe-couleurs": "roue-lampe montre la même roue ; les couleurs sont décrites dans tiles.md",
     # Tuile − / + pièce par pièce (14/10/2026, discussion #278) : écrans de vérification,
     # réunis par tools/rendu/planche_reglables.py ; la règle est décrite dans home.md.

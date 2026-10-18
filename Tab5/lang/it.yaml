@@ -1440,6 +1440,9 @@ _statut: complet   # couvre tout ce que l'écran affiche (tests/test_i18n.py)
 "Lecteur indisponible": "Lettore non disponibile"
 "Rien en lecture": "Niente in riproduzione"
 "Lecteur {n}": "Lettore {n}"
+"lecteur|Lecture": "In ascolto"
+"Playlists": "Playlist"
+"Playlist {n}": "Playlist {n}"
 # Popup Caméras (ADR-0049, 09/10/2026).
 "Caméras": "Telecamere"
 "Aucune caméra choisie": "Nessuna telecamera scelta"
