@@ -91,7 +91,7 @@ enum Geste : uint8_t {
     GESTE_MAISON_LONG,      // auto : la clé appuis, sinon Énergie (avec la production solaire)
     GESTE_ENGRENAGE_COURT,  // auto : Réglages (page Écran)
     GESTE_ENGRENAGE_LONG,   // auto : la clé appuis, sinon la console système
-    GESTE_MANETTE_COURT,    // auto : Arcade
+    GESTE_MANETTE_COURT,    // auto : Arcade (sans jeux, ADR-0065 : la roue de navigation)
     GESTE_MANETTE_LONG,     // auto : la clé appuis, sinon la télécommande TV
     GESTE_NB
 };
@@ -228,7 +228,8 @@ bool batterie_tension_ui(float tension, uint32_t maintenant_ms);
 bool solaire_present();
 // Écran dont la zone est absente de cette maison (clim, plantes sans aucun pot, TV ;
 // Lumières et Volets sans aucune tuile de ce genre, ADR-0046) : sa fenêtre n'aurait rien
-// à montrer ni à piloter. Lu par tab5_ecran_ouvrir.
+// à montrer ni à piloter. Et l'Arcade d'un firmware sans jeux (module absent, ADR-0065).
+// Lu par tab5_ecran_ouvrir.
 bool ecran_sans_zone(Ecran e);
 // Écran qu'un geste peut ouvrir : sa zone est là et, pour Énergie, la production
 // solaire est reçue (la condition de l'appui long du bouton « HA » depuis le 06/10/2026).

@@ -1,0 +1,31 @@
+# ============================================================================
+# [AI-CONTEXT]
+# @file tab5-arcade-absente.yaml
+# @role À la place de tab5-arcade.yaml quand le firmware n'a pas de jeux (ADR-0065) :
+#       `tab5_jeux: non`, la valeur par défaut d'une carte sans IMU (aujourd'hui la
+#       Waveshare 7B). Choisi par tab5-ha-hmi.yaml et tab5-rendu-host.yaml. Ni code, ni
+#       pages, ni couleurs des jeux : seulement les PRISES que le socle appelle, vides —
+#       une table de consoles vide pour GameRegistry (jeux_absents.cpp :
+#       GameRegistry::disponibles() faux, l'Arcade n'est plus un écran, ecran_sans_zone),
+#       et les deux scripts du module.
+# @architecture_constraint Mêmes ids de scripts que dans tab5-arcade.yaml. Une prise de
+#       plus dans le module = la même ici, vide (le build de la 7B, build-carte-7b en CI,
+#       échoue sinon).
+# ============================================================================
+esphome:
+  includes:
+    - Tab5/jeux/jeux_absents.cpp
+
+script:
+  # Jamais lancé : tab5_ecran_ouvrir refuse l'Arcade avant (ecran_sans_zone). Le journal
+  # dit pourquoi si un futur chemin l'appelait quand même.
+  - id: tab5_arcade_open
+    mode: single
+    then:
+      - lambda: 'ESP_LOGI("tab5.jeux", "Pas de jeux dans ce firmware (tab5_jeux: non)");'
+
+  # Lancé par l'on_boot -100 : aucune page à traduire.
+  - id: tab5_jeux_traduire
+    mode: single
+    then:
+      - lambda: '// Le module des jeux est absent : aucune page.'

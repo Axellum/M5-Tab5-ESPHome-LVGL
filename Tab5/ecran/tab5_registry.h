@@ -9,9 +9,11 @@
  *       (Trivia manquait dans 5 cartes sur 8 avant `tab5_games_close_all`).
  *
  * @architecture_constraint
- *   - JEUX : la table vit dans tab5_registry.cpp, en C++ pur (les namespaces
- *     Marble, Arkanoid… sont de simples fonctions, aucun `id()` ESPHome).
- *     Ajouter une 9ᵉ console = UNE ligne dans `kGames`.
+ *   - JEUX : la table vit dans le module des jeux, Tab5/jeux/jeux_registre.cpp, en
+ *     C++ pur (les namespaces Marble, Arkanoid… sont de simples fonctions, aucun
+ *     `id()` ESPHome). Ajouter une 9ᵉ console = UNE ligne dans `kGames`. Le module
+ *     est optionnel (ADR-0065, `tab5_jeux`) : sans lui, Tab5/jeux/jeux_absents.cpp
+ *     fournit une table vide, et ces fonctions répondent « aucun jeu ».
  *   - MODALES : les `lv_obj_t*` ne sont accessibles que par `id()` dans une
  *     lambda YAML. La liste est donc remplie UNE fois par le script
  *     `tab5_modal_registry_init` (tab5-navigation.yaml), idempotent, que chaque
@@ -64,6 +66,15 @@ struct Entry {
     void (*on_imu)(float ax, float ay, float az);
     bool imu_fast;                           // pilotage à l'inclinaison → IMU 30 Hz
 };
+
+// La table des consoles : définie par le module des jeux (jeux_registre.cpp) ou, sans
+// lui, vide (jeux_absents.cpp, kJeux nullptr) ; un seul des deux est compilé
+// (tab5-arcade.yaml ou tab5-arcade-absente.yaml).
+extern const Entry* const kJeux;
+extern const int kNbJeux;
+
+// true si ce firmware a des jeux (module compilé) : l'Arcade est un écran de la tablette.
+bool disponibles();
 
 // true si une partie est en cours, quelle que soit la console.
 bool any_open();

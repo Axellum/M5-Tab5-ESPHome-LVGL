@@ -658,7 +658,11 @@ def mdi_glyph_coverage(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
 def palette_colors(tab5: Path = TAB5, entry: Path = ENTRY) -> list[str]:
     """Règle 8 : les couleurs de l'interface passent par la palette (`Palette`, tab5_tokens.h)."""
     problems: list[str] = []
-    declared = set(RE_YAML_COLOR_DECL.findall((tab5 / "paquets" / "tab5-styles.yaml").read_text(encoding="utf-8")))
+    # Les couleurs `color:` du YAML sont celles des jeux, dans leur module (tab5-arcade.yaml,
+    # ADR-0065 ; tab5-styles.yaml jusqu'au 18/10/2026, relu au cas où une y reviendrait).
+    declared = set()
+    for nom in ("tab5-arcade.yaml", "tab5-styles.yaml"):
+        declared |= set(RE_YAML_COLOR_DECL.findall((tab5 / "paquets" / nom).read_text(encoding="utf-8")))
     for path in firmware_sources(tab5, entry):
         game = bool(RE_GAME_SOURCE.search(path.name))
         text = path.read_text(encoding="utf-8")
