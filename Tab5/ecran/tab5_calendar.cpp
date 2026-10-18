@@ -239,6 +239,10 @@ static void cal_styles_init() {
     // travail en bas de la case.
     cal_style_libelle(&s_cal_style_num, LV_ALIGN_TOP_MID, 4);
     cal_style_libelle(&s_cal_style_sub, LV_ALIGN_BOTTOM_MID, -6);
+    // « 09:00-17:30 » en roboto_22 (qui ne rétrécit pas) fait 123 px : dans une case de
+    // moins de 140 (131 sur la Waveshare 7B), il touchait la bordure du jour. Lettres
+    // serrées d'un pixel : 113 px. Sur le Tab5 (168), inchangé (18/10/2026).
+    if (kCalColW < 140) lv_style_set_text_letter_space(&s_cal_style_sub, -1);
     // Pastille RDV (dorée), pastille anniversaire (rose) à sa gauche.
     cal_style_pastille(&s_cal_style_pastille_rdv, -8, UIColor.GOLD);
     cal_style_pastille(&s_cal_style_pastille_anniv, -28, UIColor.WARM_PINK);

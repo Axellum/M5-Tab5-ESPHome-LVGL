@@ -10,8 +10,10 @@
 #        vide pour les langues, dont reglages_preparer() écrit le nom natif).
 # Taille (lot 4 du portage 1024×600, ADR-0061) : x, y et w sont ceux du Tab5, ramenés ici au
 #        corps de la carte : x et w × corps_w / 1202 ; le bouton reste 40 px sous le titre de sa
-#        rangée (reglages_rangee.yaml, y × corps_h / 598) : y − 40 est ramené, puis + 40 ;
-#        hauteur 56 × corps_h / 598.
+#        rangée (reglages_rangee.yaml avec fixe: 46, y × reglages_h / 552) : y − 40 est ramené,
+#        puis + 40 ; hauteur 56 × corps_h / 598. Ces 40 px ne rétrécissent pas : les rangées se
+#        répartissent sur reglages_h (corps_h − 46, 552 sur le Tab5) pour que la dernière garde
+#        son air au-dessus du bas de la carte (16 px sur la 7B, 19 sur le Tab5).
 # Piège ESPHome (comme bouton_pas.yaml) : `reglage` et `valeur` doivent rester
 # des nombres NON quotés dans les vars, sinon ils partent en chaîne.
 # ═══════════════════════════════════════════════════════
@@ -19,7 +21,7 @@ button:
   id: ${id}
   align: TOP_LEFT
   x: ${ (x | int) * (corps_w | int) // 1202 }
-  y: ${ ((y | int) - 40) * (corps_h | int) // 598 + 40 }
+  y: ${ ((y | int) - 40) * (reglages_h | int) // 552 + 40 }
   width: ${ (w | int) * (corps_w | int) // 1202 }
   height: ${ 56 * (corps_h | int) // 598 }
   radius: 14
