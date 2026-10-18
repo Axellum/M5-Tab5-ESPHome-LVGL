@@ -9,7 +9,9 @@
 # @architecture_constraint Chrome modal partagé (ADR-0009 : modal_scrim + modal_header,
 #       corps à y = ${modal_body_y}), registre unique (ADR-0013 : « Maison » dans
 #       tab5_modal_registry_init). Corps : x 12..1238, y 72..672 — colonnes de
-#       (1226 − 12 × (n − 1)) / n px, en-têtes de 40 px, lignes de 104 px tous les 112.
+#       (1226 − 12 × (n − 1)) / n px, en-têtes de 40 px, lignes de 104 px tous les 112,
+#       cinq par colonne et par page (ADR-0066 : une pièce de plus de cinq éléments donne
+#       des pages, glissement et noms « 1–5 », « 6–10 »… sur la ligne du titre).
 #       Position, largeur, textes et couleurs : tab5_maison.cpp (disposer) ; aucune
 #       valeur posée ici que celles d'avant la première ouverture. L'icône de la barre de
 #       titre (home) vient de la palette des tuiles de mdi_font_32. Le bouton est 10 px à
@@ -55,6 +57,14 @@ obj:
               widgets:
                 - label: { text: "Éteindre les lumières", align: CENTER, width: 300, long_mode: DOT, text_align: CENTER, text_font: roboto_22 }
 
+          # Noms des pages (ADR-0066 : cinq lignes par colonne et par page) : « 1–5 »,
+          # « 6–10 »… entre le titre et « Éteindre les lumières », posés par tab5_maison.cpp
+          # (peindre_onglets), aucun sous deux pages.
+          - !include { file: pages_onglet.yaml, vars: { id: maison_onglet_0, page: 0, choisir: maison_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: maison_onglet_1, page: 1, choisir: maison_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: maison_onglet_2, page: 2, choisir: maison_page } }
+          - !include { file: pages_onglet.yaml, vars: { id: maison_onglet_3, page: 3, choisir: maison_page } }
+
           # Aucune pièce n'a d'appareil (« Aller à l'écran → Maison » sur une tablette vide).
           - label: { id: maison_vide, text: "Aucun appareil", align: CENTER, y: 36, hidden: true, styles: style_text_dim }
 
@@ -65,7 +75,7 @@ obj:
           - !include { file: maison_entete.yaml, vars: { r: "3" } }
           - !include { file: maison_entete.yaml, vars: { r: "4" } }
 
-          # ═══ LIGNES : la tuile tRT (pièce R, tuile T) ═══
+          # ═══ LIGNES : la K-ième ligne de la pièce R sur la page affichée (maison_ligne_RK) ═══
           - !include { file: maison_ligne.yaml, vars: { r: "0", t: "0" } }
           - !include { file: maison_ligne.yaml, vars: { r: "0", t: "1" } }
           - !include { file: maison_ligne.yaml, vars: { r: "0", t: "2" } }

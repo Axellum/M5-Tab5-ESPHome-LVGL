@@ -657,6 +657,51 @@ MAISON_LAMPE = (104, 412)
 MAISON_DE_LA_DEMO = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
                      Service("tab5_maj_emplacements", (("payload", build_etats_tuiles(RETIREES)),)))
 
+# Tuiles coupées (ADR-0066, lot B, 18/10/2026) : le Salon (pièce 0, l'accueil) avec 6, 8, 11
+# et 20 éléments, tous les types ; au-delà de cinq, les dernières places de la bande du bas
+# sont coupées en deux (haut / bas) puis en quatre (table de l'ADR, tab5_disposition.h). En
+# mode HA (cartes et cases), à 8 aussi en mode météo (une place coupée n'a pas d'épaules),
+# et dans le popup Maison (cinq lignes par colonne et par page : à 11, trois pages).
+# `fermer` : le mode météo (« HA ») s'il y était, puis le Salon de la démo (définitions et
+# états ; aucune clim du blueprint parmi ses tuiles).
+ELEMENTS_COUPES = (
+    Tuile("lum", "Plafonnier", "plafonnier", "d", etat="on", valeur="200"),
+    Tuile("lum", "Lampe d'ambiance", "canape", "dc", etat="on", valeur="180", couleur="FF8C1A"),
+    Tuile("vol", "Volet du salon", "volet", etat="open", valeur="45"),
+    Tuile("med", "Télévision", "tv", "t"),
+    Tuile("act", "Soirée cinéma", "scene", etat="2026-06-15T20:45:00+00:00"),
+    Tuile("cap", "Température", "thermometre", complement="°C", etat="21.4", valeur="21.4"),
+    Tuile("cap", "Humidité", "humidite", complement="%", etat="48", valeur="48"),
+    Tuile("bin", "Fenêtre", "fenetre", complement="window", etat="on"),
+    Tuile("int", "Prise du bureau", "prise", etat="on"),
+    Tuile("lum", "Lampadaire", "lampadaire"),
+    Tuile("cap", "Consommation", "energie", complement="W", etat="1250", valeur="1250"),
+    Tuile("bin", "Mouvement", "mouvement", complement="motion"),
+    Tuile("med", "Enceinte", "enceinte", etat="playing"),
+    Tuile("int", "Ventilateur", "ventilateur"),
+    Tuile("lum", "Guirlande", "guirlande", "dc", etat="on", valeur="255", couleur="4B0082"),
+    Tuile("vol", "Store", "store", etat="closed", valeur="0"),
+    Tuile("cap", "CO2", "co2", complement="ppm", etat="640", valeur="640"),
+    Tuile("bin", "Porte d'entrée", "porte", complement="door"),
+    Tuile("act", "Je pars", "script", "k"),
+    Tuile("cli", "Clim du salon", "clim", etat="cool", valeur="23.5"),
+)
+assert len(ELEMENTS_COUPES) == 20 and not any("m" in t.options for t in ELEMENTS_COUPES)
+NOMBRES_COUPES = (6, 8, 11, 20)
+
+
+def salon_de(n: int) -> tuple:
+    """Définitions et états d'une maison dont le Salon a les `n` premiers ELEMENTS_COUPES."""
+    maison = {**PIECES, 0: Piece(PIECES[0].nom, dict(enumerate(ELEMENTS_COUPES[:n])))}
+    return (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(maison, RANGEE, REGLABLES)),)),
+            Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({0: maison[0]})),)))
+
+
+SALON_DE_LA_DEMO = (Service("tab5_maj_tuiles", (("payload", build_tuiles_payload(PIECES, RANGEE, REGLABLES)),)),
+                    Service("tab5_maj_emplacements", (("payload", build_etats_tuiles({0: PIECES[0]})),)))
+# Page suivante du popup Maison : un glissement dans la carte, sur les lignes.
+MAISON_SUIVANTE = Glisser(1100, 400, 450, 400, dans_popup=True)
+
 # Carrousel des clims (ADR-0038) : la démo n'a que la clim du blueprint (une page, ni
 # pastilles ni glisse). Trois pages : deux clims de tuile sans l'option m au Bureau (pièce
 # 3, page 1), T2 « Clim du bureau » en chauffage (toutes les capacités) et T3, que HA
@@ -1067,6 +1112,11 @@ ECRANS: tuple[Ecran, ...] = (
     # Mode HA : les cartes de chaque pièce (remplace « accueil-interrupteurs », les cinq
     # cartes fixes d'avant la 3.2, devenu « accueil-ha-piece-1 »).
     *ecrans_des_pieces(PIECES),
+    # Tuiles coupées (ADR-0066) : le Salon à 6, 8, 11 et 20 éléments, en mode HA ; à 8, la
+    # météo (places coupées sans épaules).
+    *(Ecran(f"accueil-ha-{n}-elements", salon_de(n) + (Toucher(*BOUTON_HA),), (Toucher(*BOUTON_HA),) + SALON_DE_LA_DEMO)
+      for n in NOMBRES_COUPES),
+    Ecran("accueil-8-elements-meteo", salon_de(8), SALON_DE_LA_DEMO),
     Ecran("accueil-mode-discussion", (Toucher(*DISCU),), (Toucher(*DOMO),)),
     Ecran("accueil-vigilance",
           (Service("tab5_maj_alerte_meteo_france", (("payload", VIGILANCE_ORANGE),)), _panneau(2)),
@@ -1268,6 +1318,9 @@ ECRANS: tuple[Ecran, ...] = (
     # Maison qui reste derrière : la lampe d'ambiance du Salon (variateur), ancrée sur la
     # pastille de sa ligne, sans le lien « Maison ». Toucher ailleurs ne ferme que la roue.
     Ecran("maison-roue", (Aller("Maison"), Long(*MAISON_LAMPE)), (ROUE_FERMER,)),
+    # Un Salon de onze éléments (ADR-0066) : trois pages de cinq lignes, « 1–5 » puis « 6–10 ».
+    Ecran("maison-11-elements", salon_de(11) + (Aller("Maison"),), SALON_DE_LA_DEMO),
+    Ecran("maison-11-elements-page-2", salon_de(11) + (Aller("Maison"), MAISON_SUIVANTE), SALON_DE_LA_DEMO),
     Ecran("plantes", (Long(*SOUS_HORLOGE),)),
     # Énergie (ADR-0028) : ouvert par la tuile solaire de la démo (vue des heures), puis
     # les vues Jours et Mois par « Aller à l'écran ». Données : la scène (demo_pusher,

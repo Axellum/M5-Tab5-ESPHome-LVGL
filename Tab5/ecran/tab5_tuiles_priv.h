@@ -1,10 +1,11 @@
 /**
  * [AI-CONTEXT]
  * @file tab5_tuiles_priv.h
- * @role Ce que les trois fichiers des tuiles partagent (découpe du 08/10/2026, lot L7 de
+ * @role Ce que les fichiers des tuiles partagent (découpe du 08/10/2026, lot L7 de
  *       l'audit du 07/10/2026) : tab5_tuiles.cpp (modèle, NVS, dessin, gestes),
- *       tab5_tuiles_popups.cpp (popups lumière, volet et appareil) et tab5_tuiles_roue.cpp
- *       (roue d'actions rapides d'une tuile, teintes des lampes). Les types du modèle,
+ *       tab5_tuiles_popups.cpp (popups lumière, volet et appareil), tab5_tuiles_roue.cpp
+ *       (roue d'actions rapides d'une tuile, teintes des lampes) et tab5_tuiles_cases.cpp
+ *       (cases des tuiles coupées en deux ou en quatre, ADR-0066). Les types du modèle,
  *       l'état partagé et les fonctions appelées d'un fichier à l'autre, dans le namespace
  *       `tuiles`. Le reste de chaque fichier lui reste propre.
  * @architecture_constraint Privé aux tuiles : aucun autre fichier ne l'inclut (le reste du
@@ -12,8 +13,9 @@
  *       (tab5-ha-hmi.yaml, tab5-rendu-host.yaml) pour être copié à côté des .cpp, donc
  *       inclus aussi dans main.cpp : rien que des types, des constantes et des
  *       déclarations, tout dans `tuiles`, aucun `using namespace`.
- *       Def, Modele et Etat sont gardés tels quels en NVS (magie « TUI1 », « RAN1 ») : ne
- *       changer ni leurs champs ni leur ordre.
+ *       Def, Modele et Etat sont gardés tels quels en NVS (magie « TU » + taille du modèle
+ *       depuis l'ADR-0066, « RAN1 ») : ne changer ni leurs champs ni leur ordre sans savoir
+ *       que les définitions gardées seront oubliées une fois (HA les renvoie à la connexion).
  * @ai_instruction Une fonction d'un fichier des tuiles appelée par un autre : sa
  *       déclaration ici, sous le fichier qui la définit. Une fonction pour le reste du
  *       firmware : tab5_custom.h (lambdas YAML) ou tab5_internal.h (C++).
@@ -21,6 +23,7 @@
 #pragma once
 
 #include "tab5_internal.h"
+#include "tab5_disposition.h"
 #include "tab5_geometrie.h"
 #include "tab5_modele_ha.h"
 #include "lvgl.h"
@@ -56,13 +59,15 @@ struct Def {
     char nom[modele_ha::kNom];
 };
 
-// Exactement ce qui part en NVS : tout en octets, sans bourrage (memcmp fiable).
+// Exactement ce qui part en NVS : tout en octets, sans bourrage (memcmp fiable). Jusqu'à
+// vingt éléments par pièce depuis l'ADR-0066 (5 × 20 Def, ~6 Ko) : la magie suit la taille
+// (kMagic, tab5_tuiles.cpp), un modèle d'une autre mise en page n'est jamais relu.
 struct Modele {
     uint32_t magic;
     uint8_t recues;       // 1 dès la première tab5_maj_tuiles : fin du mode héritage
     uint8_t reserve[3];
     char pieces[kPieces][modele_ha::kNom];
-    Def tuiles[kPieces][kTuiles];
+    Def tuiles[kPieces][kTuilesMax];
 };
 
 struct Etat {
@@ -142,7 +147,7 @@ struct ClimCible {
 // ─── tab5_tuiles.cpp ────────────────────────────────────────────────────────────────
 
 extern Modele s_m;
-extern Etat s_etats[kPieces][kTuiles];
+extern Etat s_etats[kPieces][kTuilesMax];
 extern Heritage s_h;
 extern Minuterie s_confirmation;
 extern Minuterie s_ok;
@@ -159,7 +164,11 @@ void vue_def(const Def& d, const Etat& e, int r, int t, Vue& v);
 void vue(int r, int t, Vue& v);
 void ui_texte_coupe(lv_obj_t* lbl, const char* txt, int32_t largeur);
 void ui_fond(lv_obj_t* obj, uint32_t hex);
-void widgets_meteo(int t, lv_obj_t*& gauche, lv_obj_t*& droite, lv_obj_t*& bouton);
+void widgets_meteo(int place, lv_obj_t*& gauche, lv_obj_t*& droite, lv_obj_t*& bouton);
+// Disposition de la pièce R sur les cinq places (Tab5/socle/tab5_disposition.h, ADR-0066) :
+// ses éléments présents ; `meteo` garde l'élément T sur la place T jusqu'à cinq éléments
+// d'index < 5 (positions fixes), le mode HA les centre.
+disposition::Disposition disposition_piece(int r, bool meteo);
 void envoyer(const char* emplacement, const char* action);
 void envoyer_tuile(int r, int t, const char* action);
 void tuile_appui_piece(int r, int t, bool long_appui);
@@ -180,6 +189,18 @@ void popup_appareil_etat(int r, int t);
 void popup_volet_etat_pousse(int r, int t);
 void popups_revalider();
 void popups_rejouer_theme();
+
+// ─── tab5_tuiles_cases.cpp ──────────────────────────────────────────────────────────
+
+// Mode HA : les cases de la place `p` (calque du mode HA, x = `x`), coupée comme `pl`, aux
+// éléments de la pièce `r` ; créées à la première coupe de cette place. Les autres places
+// (entières, vides) : cases_masquer.
+void cases_peindre_place(int p, const disposition::Place& pl, int32_t x, int r);
+void cases_masquer(int p);
+// Une case `k` de la place `p` montre l'élément tRT : repeinte (un état a changé).
+void case_peindre(int p, int k, int r, int t);
+// Ancre de la roue d'actions rapides d'une case (son icône) ; nullptr si elle n'existe pas.
+lv_obj_t* case_ancre(int p, int k);
 
 // ─── tab5_tuiles_roue.cpp ───────────────────────────────────────────────────────────
 

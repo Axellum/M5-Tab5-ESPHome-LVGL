@@ -107,6 +107,13 @@ script:
           u.carte_etat[2] = id(lbl_sw2_state);
           u.carte_etat[3] = id(lbl_sw3_state);
           u.carte_etat[4] = id(lbl_sw4_state);
+          // Cases des tuiles coupées (ADR-0066, tab5_tuiles_cases.cpp) : le style des cartes
+          // et les polices d'une moitié (icône 45, valeur 32) et d'un quart (icône 32, 22).
+          u.style_case = id(style_meteo_card_page);
+          u.police_icone_45 = id(mdi_font_45);
+          u.police_icone_32 = id(mdi_font_32);
+          u.police_valeur = id(roboto_32_b);
+          u.police_petite = id(roboto_22);
           u.popup_clim = id(clim_options_popup);
           // Popup Lumières : une page par pièce (ADR-0046), ses lignes et les noms des pièces.
           u.lum_popup = id(light_options_popup);

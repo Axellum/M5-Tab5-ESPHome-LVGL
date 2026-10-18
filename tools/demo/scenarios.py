@@ -133,6 +133,16 @@ UNITE_OCTETS_MAX = 7
 # Pièce R ↔ page de la rangée du bas, dans l'ordre où un geste les atteint depuis
 # l'accueil (page 2) : 3 et 4 vers la gauche, 1 et 0 vers la droite.
 PAGE_DE_LA_PIECE = {0: 2, 1: 3, 2: 4, 3: 1, 4: 0}
+# Éléments d'une pièce (ADR-0066) : T = 0 … 19, le caractère de la clé « tRT » (et « crRT »,
+# « ceRT ») « 0 » … « 9 » puis « a » … « j » (modele_ha::tuile_car, tab5_modele_ha.h).
+CARS_TUILE = "0123456789abcdefghij"
+TUILES_MAX = len(CARS_TUILE)
+
+
+def cle_tuile(r: int, t: int) -> str:
+    """Clé « tRT » de l'élément T de la pièce R (ADR-0023, ADR-0066)."""
+    assert 0 <= t < TUILES_MAX, f"pièce {r} : T va de 0 à {TUILES_MAX - 1}"
+    return f"t{r}{CARS_TUILE[t]}"
 
 _CODE_ICONE = re.compile(r"[a-z0-9_]{0,15}")
 _CLASSE_APPAREIL = re.compile(r"[a-z_]+")
@@ -171,7 +181,8 @@ class ClimatPiece:
 @dataclass(frozen=True)
 class Piece:
     nom: str      # '' : pas d'entrée « p », la tablette écrit « Pièce n » dans sa langue
-    tuiles: dict  # position T (0 = gauche … 4 = droite, sur toutes les pages) -> Tuile
+    tuiles: dict  # élément T (son rang dans la liste, 0 … 19, ADR-0066) -> Tuile ; jusqu'à cinq
+                  # d'index < 5, T = position (0 = gauche … 4 = droite) en mode météo
     climat: ClimatPiece | None = None  # ADR-0040 ; None : l'écran d'avant en mode HA
 
 
@@ -319,9 +330,9 @@ def _tuiles_de(pieces: dict):
         assert r in PAGE_DE_LA_PIECE, f"pièce {r} : R va de 0 à 4"
         assert piece.tuiles, f"pièce {r} sans appareil : ne pas la déclarer"
         for t, tuile in sorted(piece.tuiles.items()):
-            assert 0 <= t <= 4, f"pièce {r} : T va de 0 à 4"
-            verifier_definition(f"t{r}{t}", tuile)
-            yield f"t{r}{t}", tuile
+            cle = cle_tuile(r, t)
+            verifier_definition(cle, tuile)
+            yield cle, tuile
 
 
 def build_tuiles_payload(pieces: dict, rangee: "Rangee | None" = None, reglables: tuple = (),

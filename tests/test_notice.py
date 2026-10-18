@@ -27,6 +27,12 @@ ANNOTE = "accueil-annote"
 
 # Appui long → page qui le décrit. Clé : l'id du widget dans tab5-lvgl.yaml, le nom du
 # fichier pour un composant de Tab5/ui_components/ (ses ids sont des modèles).
+# Appuis longs posés en C++ (objets créés en C++, pas de `on_long_press:`) → page qui les décrit.
+APPUIS_LONGS_CPP = {
+    # Cases des tuiles coupées en deux ou en quatre (ADR-0066).
+    "tab5_tuiles_cases.cpp": "tiles.md",
+}
+
 APPUIS_LONGS = {
     "btn_assist_trigger": "voice.md",
     # Les trois zones de l'horloge (heures, minutes, date) : un gabarit (09/10/2026, lot A).
@@ -50,6 +56,10 @@ APPUIS_LONGS = {
 
 # Fenêtres du rendu que la notice ne montre pas, exprès.
 NON_MONTREES = {
+    # Pages du popup Maison d'une pièce de plus de cinq éléments (ADR-0066), décrites dans
+    # house.md : images à tirer du rendu de la PR, puis citées.
+    "maison-11-elements": "maison montre la même fenêtre ; les pages d'une pièce chargée sont décrites",
+    "maison-11-elements-page-2": "maison montre la même fenêtre ; les pages d'une pièce chargée sont décrites",
     "assistant": "assistant-reponse montre la même fenêtre, avec une réponse",
     "lumieres-salon": "lumieres-chambre montre la même fenêtre, lumière allumée",
     "energie-heures": "energie-jours montre la même fenêtre ; les vues sont décrites",
@@ -242,9 +252,13 @@ def test_chaque_appui_long_est_decrit():
     for page in set(APPUIS_LONGS.values()):
         anglais, francais = _moities(NOTICE / page)
         assert "long press" in anglais.lower() and "appui long" in francais.lower(), page
-    # Un appui long en C++ (un jeu) passerait sous ce test : il n'y en a pas.
-    cpp = [f.name for f in TAB5.rglob("*.cpp") if "LV_EVENT_LONG_PRESSED" in f.read_text(encoding="utf-8")]
-    assert not cpp, f"appui long en C++, à décrire dans docs/notice/ : {cpp}"
+    # Un appui long posé en C++ passerait sous ce test : seul celui des cases des tuiles
+    # coupées (ADR-0066, objets créés en C++), décrit avec les tuiles.
+    cpp = {f.name for f in TAB5.rglob("*.cpp") if "LV_EVENT_LONG_PRESSED" in f.read_text(encoding="utf-8")}
+    assert cpp == set(APPUIS_LONGS_CPP), f"appui long en C++, à décrire dans docs/notice/ : {sorted(cpp)}"
+    for page in set(APPUIS_LONGS_CPP.values()):
+        anglais, francais = _moities(NOTICE / page)
+        assert "long press" in anglais.lower() and "appui long" in francais.lower(), page
 
 
 def test_le_glissement_est_decrit():

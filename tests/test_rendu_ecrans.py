@@ -142,9 +142,11 @@ def test_un_ecran_en_mode_ha_par_piece_de_la_demo():
         # n'est pas l'écran d'une pièce. De même les fenêtres du climat d'une pièce
         # (ADR-0040), ouvertes en mode HA sur elle, et la roue de sa clim (ADR-0048).
         # La pièce choisie dans la roue de navigation (ADR-0042) l'est aussi par un swipe.
-        # La tuile − / + pièce par pièce (« reglables-… », 14/10/2026) a ses propres maisons.
+        # La tuile − / + pièce par pièce (« reglables-… », 14/10/2026) a ses propres maisons,
+        # comme les tuiles coupées (« accueil-ha-<n>-elements », ADR-0066 : le Salon chargé).
         if ha and not ecran.nom.startswith(("maison-", "climatisation-", "roue-clim-temperature",
                                             "roue-navigation-", "reglables-")) \
+                and not re.fullmatch(r"accueil-ha-\d+-elements", ecran.nom) \
                 and ecran.nom not in POPUPS_EN_MODE_HA:
             assert page not in obtenues, (ecran.nom, obtenues.get(page))
             obtenues[page] = ecran.nom

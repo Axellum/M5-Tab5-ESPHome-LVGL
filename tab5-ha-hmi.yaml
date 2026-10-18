@@ -130,6 +130,9 @@ esphome:
     # Découpe d'une zone autour d'une carte opaque (popup_voile_carte, tab5_anim.cpp,
     # 17/10/2026) : en-tête seul et pur.
     - Tab5/socle/tab5_decoupe.h
+    # Disposition des éléments d'une pièce sur les cinq places, tuiles coupées en deux ou en
+    # quatre (ADR-0066, 18/10/2026) : en-tête seul et pur.
+    - Tab5/socle/tab5_disposition.h
     # Ce que les tuiles de pièce et la tuile - / + ont en commun (tailles, état hors
     # ligne, code d'icône) : en-tête seul et pur (lot L5).
     - Tab5/socle/tab5_modele_ha.h
@@ -194,6 +197,8 @@ esphome:
     - Tab5/ecran/tab5_tuiles.cpp
     - Tab5/ecran/tab5_tuiles_popups.cpp
     - Tab5/ecran/tab5_tuiles_roue.cpp
+    # Cases des tuiles coupées en deux ou en quatre du mode HA (ADR-0066, 18/10/2026).
+    - Tab5/ecran/tab5_tuiles_cases.cpp
     # Rangée sous l'horloge : plantes et lignes de capteurs qui se relaient (ADR-0031, 06/10/2026).
     - Tab5/ecran/tab5_rangee.cpp
     # Tuile − / + au choix : clim, appareils du blueprint, volume de la tablette (ADR-0033, 06/10/2026).

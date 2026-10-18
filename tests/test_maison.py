@@ -143,7 +143,9 @@ def test_gestes_d_une_ligne_ceux_de_la_tuile():
     assert "maison_ligne_appui(${r}, ${t}, true);" in plus and "on_long_press" not in plus
     # La roue (ADR-0036) s'ancre sur la pastille de la ligne (enfant 0).
     ligne_appui = _fonction(_maison(), "maison_ligne_appui")
-    assert "tuile_appui_maison(r, t, long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);" in ligne_appui
+    # La ligne [R][K] de la page affichée montre l'élément s_elements[R][K] (ADR-0066).
+    assert ("tuile_appui_maison(r, s_elements[r][k], long_appui, ligne != nullptr ? enfant(ligne, 0) : nullptr);"
+            in ligne_appui)
     # Appui long (et « ⋯ ») : la roue de la tuile d'abord (sans son lien « Maison »), sinon
     # le répartiteur des tuiles (popup de la tuile), jamais une commande à part.
     appui = _fonction(_tuiles(), "tuile_appui_maison")

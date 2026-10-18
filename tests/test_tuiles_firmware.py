@@ -128,7 +128,14 @@ def test_noms_filtres_aux_glyphes_des_polices():
 
 
 def test_magie_nvs_des_definitions():
-    assert int(_constexpr("kMagic"), 16) == int.from_bytes(b"TUI1", "big")
+    # « TU » + la taille du modèle (ADR-0066) : une autre mise en page change la magie d'elle-même
+    # (« TUI1 » jusqu'à la 3.9, cinq tuiles par pièce).
+    assert _constexpr("kMagic") == "0x54550000u | static_cast<uint32_t>(sizeof(Modele))"
+    assert 'static_assert(sizeof(Modele) < 0x10000, "la taille du modèle tient dans la magie");' in _cpp()
+    assert "Def tuiles[kPieces][kTuilesMax];" in _cpp()
+    # Relu dans le tas (le modèle fait ~6 Ko, la pile de la boucle 8 Ko).
+    charger = _fonction(_cpp(), "charger")
+    assert "std::unique_ptr<Modele> m(new Modele());" in charger and "Modele m{};" not in charger
     definir = _fonction(_cpp(), "tuiles_definir")
     # Écrites seulement si elles changent, comparées octet par octet.
     assert definir.index("memcmp") < definir.index("s_pref.save")
@@ -290,8 +297,16 @@ def test_cles_des_commandes_de_tuile():
     cpp = _cpp()
     assert "envoyer(tuile_cle(r, t).s, action);" in _fonction(cpp, "envoyer_tuile")
     cle = _fonction(_lire("Tab5", "socle", "tab5_modele_ha.h"), "tuile_cle")
-    assert ("c.s[0] = 't';\n    c.s[1] = static_cast<char>('0' + r);\n    c.s[2] = static_cast<char>('0' + t);"
+    assert ("c.s[0] = 't';\n    c.s[1] = static_cast<char>('0' + r);\n    c.s[2] = tuile_car(t);"
             in cle.replace("\r\n", "\n"))
+    # T = 0 … 19 (ADR-0066) : « 0 » … « 9 » puis « a » … « j », lu par tuile_index partout où
+    # une clé de tuile arrive (états, définitions, clims, lien de la tuile − / +).
+    modele = _lire("Tab5", "socle", "tab5_modele_ha.h")
+    assert 'constexpr char kCarsTuile[] = "0123456789abcdefghij";' in modele
+    assert "!tuile_index(cle[2], t) || t >= kTuilesMax" in _fonction(cpp, "tuiles_etat_recu")
+    assert "!tuile_index(f[0].p[2], t)" in _fonction(cpp, "lire_entree")
+    assert "modele_ha::tuile_index(cle[3], t) || t >= kTuilesMax" in _lire(source("tab5_clim.cpp"))
+    assert "tuile_index(f[3].p[2], lien_t) && lien_t < kTuilesMax" in _lire(source("tab5_reglables.cpp"))
     # Écrite une seule fois : plus de clé « tRT » montée à la main dans le C++ des tuiles et des clims.
     for fichier in ("tab5_tuiles.cpp", "tab5_tuiles_popups.cpp", "tab5_tuiles_roue.cpp", "tab5_clim.cpp"):
         assert "static_cast<char>('0' + " not in _lire(source(fichier)), fichier
@@ -344,7 +359,7 @@ def test_action_tab5_maj_tuiles_et_son_exemple():
         if re.fullmatch(r"[hn][0-2][0-3]", champs[0]):
             assert len(champs) == 7 and re.fullmatch(r"[a-z0-9_]{0,15}", champs[6]), entree
             champs = champs[:6]
-        assert re.fullmatch(r"[thn][0-4][0-4]", champs[0]) and len(champs) == 6, entree
+        assert re.fullmatch(r"t[0-4][0-9a-j]|[hn][0-4][0-4]", champs[0]) and len(champs) == 6, entree
         assert champs[1] in types and re.fullmatch(r"[a-z0-9_]{0,15}", champs[2]), entree
         assert set(champs[3]) <= lettres, entree
 
@@ -420,7 +435,8 @@ def test_cartes_du_mode_ha_facon_carte_tile():
     ronde de la couleur de l'état, le bouton sur la pastille, le nom dans un cadre
     cliquable (sens d'un volet), sans onglet."""
     tuiles = _lire("Tab5", "paquets", "tab5-tuiles.yaml")
-    # Une carte = switch_card.yaml, incluse pour n = 0 à 4 (08/10/2026, audit YML-3).
+    # Une carte = switch_card.yaml, incluse pour n = 0 à 4 (08/10/2026, audit YML-3) : la
+    # place n (ADR-0066 : l'élément entier de cette place, tuile_appui → element_de_place).
     carte = _lire("Tab5", "ui_components", "switch_card.yaml")
     for t in range(5):
         assert f"u.carte_pastille[{t}] = id(sw_pastille_{t});" in tuiles
@@ -430,8 +446,9 @@ def test_cartes_du_mode_ha_facon_carte_tile():
     assert "tuile_appui(${n}, false);" in bouton and "tuile_appui(${n}, true);" in bouton
     # Dessin partagé avec les lignes du popup Maison (ADR-0037) : peindre_vue_sur.
     assert "ui_fond(w.pastille, v.couleur_carte);" in _fonction(_cpp(), "peindre_vue_sur")
-    carte = "peindre_vue_sur(v, {u.carte_pastille[t], u.carte_icone[t], u.carte_nom[t], u.carte_etat[t]},"
+    carte = "peindre_vue_sur(v, {u.carte_pastille[p], u.carte_icone[p], u.carte_nom[p], u.carte_etat[p]},"
     assert carte in _fonction(_cpp(), "peindre_carte")
+    assert "const int t = element_de_place(place);" in _fonction(_cpp(), "tuile_appui")
     titre = _lire("Tab5", "ui_components", "switch_card_title_tab.yaml")
     assert titre.split("\nobj:", 1)[1].count("widgets:") == 1, "le nom garde son cadre (parent cliquable)"
 
@@ -503,12 +520,13 @@ def test_commandes_du_popup_du_volet_dans_le_contrat():
     popup = _lire("Tab5", "ui_components", "volet_popup.yaml")
     boutons = re.findall(r"file: volet_btn\.yaml, vars: \{[^\n]*?appel: (\w+), commande: (\w+)", popup)
     assert sorted(c for a, c in boutons if a == "popup_volet_commande") == ["arreter", "fermer", "ouvrir"]
-    # Tout ouvrir / Tout fermer (ADR-0046) : la commande à chaque volet de la page.
+    # Tout ouvrir / Tout fermer (ADR-0046) : la commande à chaque volet de la pièce (toutes ses
+    # pages depuis l'ADR-0066).
     assert sorted(c for a, c in boutons if a == "popup_volets_tout") == ["fermer", "ouvrir"]
     assert len(boutons) == 5
     assert "${appel}(\"${commande}\");" in _lire("Tab5", "ui_components", "volet_btn.yaml")
     tout = _fonction(cpp, "popup_volets_tout")
-    assert "if (est_volet(s_pv.piece, s_pv.tuiles[i])) envoyer_tuile(s_pv.piece, s_pv.tuiles[i], action);" in tout
+    assert "if (est_volet(s_pv.piece, t)) envoyer_tuile(s_pv.piece, t, action);" in tout
     assert "envoyer_tuile(s_pv.piece, s_pv.tuile, action);" in _fonction(cpp, "popup_volet_commande")
     # Volet dessiné : « position » (dans le tableau de l'ADR), 0-100, à la tuile du popup,
     # et jamais sans position connue (même si elle s'est perdue pendant le geste).
@@ -689,7 +707,7 @@ def test_le_bouton_du_popup_fait_le_toucher_de_la_tuile():
     # Ni lecture seule, ni mode héritage, ni type sans popup (définitions changées popup ouvert).
     valide = _fonction(cpp, "popup_appareil_valide")
     assert "s_pa.en_grille() && gestes(" in valide
-    assert "tuile >= 0 && tuile < kTuiles && !heritage(); }" in cpp
+    assert "tuile >= 0 && tuile < kTuilesMax && !heritage(); }" in cpp
     assert "(d.options & OPT_R)) return g;" in _fonction(cpp, "gestes")
     # Popup refermé quand sa tuile ne l'a plus, repeint sinon (et au changement de thème).
     assert "popups_revalider();" in _fonction(cpp, "tuiles_definir")

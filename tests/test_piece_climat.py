@@ -267,10 +267,11 @@ def test_repeint_quand_la_piece_change():
 def test_le_carrousel_liste_les_clims_des_pieces():
     """ADR-0038 + ADR-0040 : la clim propre de chaque pièce a sa page, après les tuiles."""
     clim = _lire(source("tab5_clim.cpp"))
-    assert "constexpr int kClimsConnues = 1 + kPieces * kTuiles + kPieces;" in clim
+    assert "constexpr int kClimsConnues = 1 + kPieces * kTuilesMax + kPieces;" in clim
     liste = _fonction(clim, "clims_enumerer")
-    tuiles = liste.index("ajouter(r, t, r, s_ct[r * kTuiles + t].reglages.nom)")
-    pieces = liste.index("ajouter(r, -1, r, s_ct[kCasesTuiles + r].reglages.nom)")
+    tuiles = liste.index("const ClimTuile* c = tuile_clim(r, t, false);")
+    pieces = liste.index("const ClimTuile* c = piece_clim(r, false);")
+    assert liste.count("if (c != nullptr && c->reglages.recu) ajouter(") == 2
     assert tuiles < pieces
     assert "if (c.t < 0) return clim_afficher_piece(c.r);" in _fonction(clim, "clim_ref_afficher")
     assert "c.t < 0 ? piece_clim(c.r, false)" in _fonction(clim, "ref_nom")

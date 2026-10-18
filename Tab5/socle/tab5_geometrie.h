@@ -161,11 +161,17 @@ constexpr int32_t kAccHorlogeL = kEcranL - 2 * kAccMarge - 2 * kAccColL - 2 * ((
 constexpr int32_t kAccLigneL = kAccHorlogeL < kAccColL - 4 ? kAccHorlogeL : kAccColL - 4;
 constexpr int32_t kAccHorlogeH = (210 * kEcranH + 360) / 720;
 
-// Tuiles du bas (prévisions, cartes du mode HA ; acc_tuile_l, acc_tuile_pas) : 230 px au
-// pas de 250, centrées ; texte d'une carte du mode HA (206 px, sous sa pastille).
+// Tuiles du bas (prévisions, cartes du mode HA ; acc_tuile_l, acc_tuile_pas, acc_tuile_h,
+// acc_tuile_cell_y) : 230 × 275 px au pas de 250, centrées, à y 5 de leur calque ; texte d'une carte du mode HA (206 px, sous sa
+// pastille).
 constexpr int32_t kAccTuileL = (230 * kEcranL + 640) / 1280;
 constexpr int32_t kAccTuilePas = (250 * kEcranL + 640) / 1280;
+constexpr int32_t kAccTuileH = (275 * kEcranH + 360) / 720;
+constexpr int32_t kAccTuileY = (5 * kEcranH + 360) / 720;  // y des cartes dans leur calque (acc_tuile_cell_y)
 constexpr int32_t kAccCarteTexteL = (206 * kEcranL + 640) / 1280;
+// Écart entre deux cases d'une tuile coupée en deux ou en quatre (ADR-0066 : moitiés de
+// 230 × 135 et quarts de 113 × 135 sur le Tab5, disposition::case_rect).
+constexpr int32_t kAccCaseEcart = (4 * kEcranL + 640) / 1280;
 
 // Horloge (clock_tile) : sa géométrie intérieure suit la police des chiffres, réduite de
 // carte_police_echelle (TAB5_POLICE_PCT, en pour cent ; jeton police_pct), puis centrée
@@ -176,6 +182,12 @@ constexpr int32_t police_px(int32_t v) { return v >= 0 ? (v * kPolicePct + 50) /
 constexpr int32_t kHorlogeDx = (kAccHorlogeL - 2 - (399 * kPolicePct + 50) / 100) / 2;
 constexpr int32_t kHorlogeDy = (kAccHorlogeH - (210 * kPolicePct + 50) / 100) / 2;
 
-// Pièces (pages du bas) et tuiles par pièce (ADR-0023) : le blueprint en envoie autant.
+// Pièces (pages du bas, ADR-0023) ; éléments d'une pièce, jusqu'à vingt (ADR-0066 : l'index T
+// de la liste du blueprint, clés « tRT », T = 0 … 9 puis a … j) ; places de la bande du bas,
+// cinq tuiles que la disposition coupe en deux ou en quatre au-delà de cinq éléments
+// (Tab5/socle/tab5_disposition.h). Lignes d'une page des popups à une ligne par élément
+// (Lumières, Volets, Maison) : kPlacesTuiles aussi, une pièce de plus de lignes prend plus de
+// pages.
 constexpr int kPieces = 5;
-constexpr int kTuiles = 5;
+constexpr int kTuilesMax = 20;
+constexpr int kPlacesTuiles = 5;
