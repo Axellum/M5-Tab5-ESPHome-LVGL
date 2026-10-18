@@ -842,8 +842,10 @@ MUSIQUE_PAGE_SUIVANTE = Glisser(560, 416, 240, 416, dans_popup=True)
 # Icône de la première carte de la page Pièces (le salon, le lecteur montré) : la carte en
 # (24, 128) de la carte du lecteur (940 × 536, centrée en 170, 92), l'icône à (14, 14).
 MUSIQUE_SALON_ICONE = (226, 252)
-# Sa roue : Source, Muet, Séparer (le lecteur montré n'a pas « Musique ici »).
-MUSIQUE_SOURCE = Toucher(*roue_centres(*MUSIQUE_SALON_ICONE, 3)[0])
+# Sa roue : Source, Muet, Séparer (le lecteur montré n'a pas « Musique ici »). Sur une
+# autre carte, tools/rendu/vers_carte.py la recalcule autour de la même ancre de la carte.
+MUSIQUE_ROUE_SALON = 3
+MUSIQUE_SOURCE = Toucher(*roue_centres(*MUSIQUE_SALON_ICONE, MUSIQUE_ROUE_SALON)[0])
 
 
 # Capteurs suivis (ADR-0054, suivi_popup.yaml et suivi_zone.yaml) : quatre capteurs au

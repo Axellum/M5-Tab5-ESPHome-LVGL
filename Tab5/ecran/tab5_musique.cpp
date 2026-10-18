@@ -534,7 +534,9 @@ void peindre_rangee() {
     const bool fleches_apres = !s_attente && s_liste_recue && s_l.suite;
     ui_hidden(u.precedents, !fleches_avant);
     ui_hidden(u.suivants, !fleches_apres);
-    const int32_t fleches = (fleches_avant || fleches_apres) ? kFlechesL + kCategorieEcart : 0;
+    // Place des flèches montrées : « précédente » (x 812) prend les deux places, « suivante »
+    // seule (x 868, la première page) une seule.
+    const int32_t fleches = fleches_avant ? kFlechesL + kCategorieEcart : (fleches_apres ? kFlecheL + kCategorieEcart : 0);
     // Catégories.
     if (cats) {
         int32_t largeurs[kMusiqueCategories];
