@@ -20,7 +20,7 @@ The home page shows today and the next four days.
 
 ![A tap on Wednesday's temperatures: its schedule in the central card](../images/notice/accueil-planning-du-jour-en.webp)
 
-**Your devices on the weather.** Each page of the weather is also a room. A card that holds a device shows it in its two top corners: on the left, its icon in the colour of its state; on the right, a bulb for a light, or for a shutter the arrow of its next move (pause while it moves). The large weather icon then works as the device's button: tap and long press as in the table below. To keep the weather alone, turn off the device switch « Tab5 Appareils sur la météo ».
+**Your devices on the weather.** Each page of the weather is also a room. A card that holds a device shows it in its two top corners: on the left, its icon in the colour of its state; on the right, a bulb for a light, or for a shutter the arrow of its next move (pause while it moves). The large weather icon then works as the device's button: tap and long press as in the table below. With more than five rooms, rooms 6 and beyond each get one more page after days 11 to 15, further to the left, before the home page comes back: its cards show the room's devices as in device mode, and the central card the room's name (a tap on it opens the [House](house.md) window); one dot more per room. To keep the weather alone, turn off the device switch « Tab5 Appareils sur la météo » (then no room page either).
 
 ## Your devices
 
@@ -108,7 +108,7 @@ La page d'accueil montre aujourd'hui et les quatre jours suivants.
 
 ![Un tap sur les températures de mercredi : son planning dans la carte centrale](../images/notice/accueil-planning-du-jour-fr.webp)
 
-**Vos appareils sur la météo.** Chaque page de la météo est aussi une pièce. Une carte qui porte un appareil le montre dans ses deux coins du haut : à gauche, son icône dans la couleur de son état ; à droite, une ampoule pour une lumière, ou pour un volet la flèche de son prochain mouvement (pause pendant qu'il bouge). La grande icône météo sert alors de bouton à l'appareil : tap et appui long comme dans le tableau plus bas. Pour garder la météo seule, éteignez l'interrupteur « Tab5 Appareils sur la météo » de l'appareil.
+**Vos appareils sur la météo.** Chaque page de la météo est aussi une pièce. Une carte qui porte un appareil le montre dans ses deux coins du haut : à gauche, son icône dans la couleur de son état ; à droite, une ampoule pour une lumière, ou pour un volet la flèche de son prochain mouvement (pause pendant qu'il bouge). La grande icône météo sert alors de bouton à l'appareil : tap et appui long comme dans le tableau plus bas. Au-delà de cinq pièces, les pièces 6 et suivantes ont chacune une page de plus après les jours 11 à 15, plus loin vers la gauche, avant le retour à l'accueil : ses cartes montrent les appareils de la pièce comme en mode appareils, et la carte centrale le nom de la pièce (un tap dessus ouvre la fenêtre [Maison](house.md#version-française)) ; un point de plus par pièce. Pour garder la météo seule, éteignez l'interrupteur « Tab5 Appareils sur la météo » de l'appareil (plus de page de pièce non plus).
 
 ## Vos appareils
 
