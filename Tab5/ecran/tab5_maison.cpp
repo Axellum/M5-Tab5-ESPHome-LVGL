@@ -80,8 +80,12 @@ static_assert(!kMiseEnPageTab5 || kLigneH == kLigneHTab5, "Tab5 : lignes de 104 
 // Onglets des pages (pages_onglet.yaml, ADR-0046) : sur la ligne du titre, à la place des
 // onglets des Réglages (x 318 sur le Tab5, ramenée à la carte par onglet_x), jusqu'au
 // bouton « Éteindre les lumières » (320 px à 100 px du bord droit, maison_popup.yaml) moins
-// 10 px ; 200 px au plus (onglet_echelle), 10 px entre deux, le nom à 8 px des bords.
+// 10 px ; 200 px au plus, 10 px entre deux, le nom à 8 px des bords. Le bouton garde sa
+// largeur sur une carte plus étroite : quand la place manque (Waveshare 7B, rendu du
+// 18/10/2026 : « Pièces 1 à… »), les onglets commencent plus tôt, jusqu'au début de la zone
+// des onglets (kOngletsDebutTab5, après le titre), au lieu de rétrécir.
 constexpr int32_t kOngletsX = onglet_x(318);
+constexpr int32_t kOngletsXMin = kOngletsDebutTab5;
 constexpr int32_t kOngletsFinMaison = kCarteL - 100 - 320 - 10;
 constexpr int32_t kOngletEcart = 10;
 constexpr int32_t kOngletMarge = 8;
@@ -162,13 +166,14 @@ void peindre_onglets() {
     const MaisonUI& u = g_maison_ui;
     const int n = s_rep.pages >= 2 ? s_rep.pages : 0;
     const int32_t w =
-        n > 0 ? std::min<int32_t>(onglet_echelle(200), (kOngletsFinMaison - kOngletsX - (n - 1) * kOngletEcart) / n) : 0;
+        n > 0 ? std::min<int32_t>(200, (kOngletsFinMaison - kOngletsXMin - (n - 1) * kOngletEcart) / n) : 0;
+    const int32_t x0 = std::min<int32_t>(kOngletsX, kOngletsFinMaison - n * w - (n - 1) * kOngletEcart);
     char nom[48];
     for (int p = 0; p < kMaisonPagesMax; p++) {
         lv_obj_t* const b = u.onglet[p];
         ui_hidden(b, p >= n);
         if (p >= n || b == nullptr) continue;
-        ui_x(b, kOngletsX + p * (w + kOngletEcart));
+        ui_x(b, x0 + p * (w + kOngletEcart));
         lv_obj_set_width(b, w);  // LVGL 9.5.0 compare lui-même (lv_obj_pos.c)
         int premiere = 0, derniere = 0;
         page_bornes(p, premiere, derniere);

@@ -273,6 +273,18 @@ def test_pages_de_pieces_par_la_brique():
     assert "const int n = s_rep.pages >= 2 ? s_rep.pages : 0;" in onglets, "aucun onglet sous deux pages"
     # Les onglets s'arrêtent avant « Éteindre les lumières » (320 px à 100 px du bord droit).
     assert "constexpr int32_t kOngletsFinMaison = kCarteL - 100 - 320 - 10;" in cpp
+    # Le bouton garde ses 320 px : sur une carte plus étroite, les onglets commencent plus tôt
+    # (jusqu'à kOngletsDebutTab5) au lieu de rétrécir — « Pièces 1 à 4 » entier sur la 7B.
+    assert "constexpr int32_t kOngletsXMin = kOngletsDebutTab5;" in cpp
+    assert "std::min<int32_t>(200, (kOngletsFinMaison - kOngletsXMin - (n - 1) * kOngletEcart) / n)" in onglets
+    assert "std::min<int32_t>(kOngletsX, kOngletsFinMaison - n * w - (n - 1) * kOngletEcart);" in onglets
+    for carte_l, x_attendu, w_attendu in ((1250, 318, 200), (994, 196, 179)):  # Tab5, 7B (kCarteL)
+        fin_onglets = carte_l - 102  # onglet_x() de tab5_geometrie.h
+        zone = fin_onglets - 196
+        x318 = fin_onglets - (830 if zone >= 952 else (830 * zone + 476) // 952)
+        fin, n = carte_l - 100 - 320 - 10, 2
+        w = min(200, (fin - 196 - (n - 1) * 10) // n)
+        assert (min(x318, fin - n * w - (n - 1) * 10), w) == (x_attendu, w_attendu)
     assert "s_place[c][k].r != r || s_place[c][k].t != t" in _fonction(cpp, "peindre_ligne")
     for code in ("en", "de", "nl", "es", "it", "tr"):
         assert '"Pièces %d à %d":' in _lire("Tab5", "lang", f"{code}.yaml"), code
