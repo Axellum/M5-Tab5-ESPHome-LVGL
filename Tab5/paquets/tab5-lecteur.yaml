@@ -12,7 +12,8 @@
 #         - tab5_lecteur_evenement : événement esphome.tab5_lecteur (action, lecteur,
 #           valeur). HomeAssistant_Config/packages/tab5_evenements.yaml le traduit en
 #           actions media_player sur les lecteurs choisis seulement ; le blueprint
-#           « Tab5 — emplacements » traduit « ouvrir » d'une tuile en son media_player ;
+#           « Tab5 — emplacements » traduit « ouvrir » d'une tuile en son media_player et
+#           « playlist » (index d'une playlist favorite, ADR-0068) en son lien ;
 #         - tab5_lecteur_image : la pochette (online_image.set_url), ou sa libération.
 # @architecture_constraint Push-only, events-only (ADR-0001, ADR-0025) : la tablette ne
 #       nomme aucune entité, elle dit « l'index i de la liste » ou « la tuile tRT ». Chargé
@@ -89,6 +90,26 @@ script:
           u.puce_nom[3] = id(lecteur_puce_nom_3);
           u.puce_nom[4] = id(lecteur_puce_nom_4);
           u.puce_nom[5] = id(lecteur_puce_nom_5);
+          // Page « Playlists » (ADR-0068) : noms des pages, grille, boutons et leurs noms.
+          u.onglet[LECTEUR_PAGE_LECTURE] = id(lecteur_onglet_0);
+          u.onglet[LECTEUR_PAGE_PLAYLISTS] = id(lecteur_onglet_1);
+          u.playlists = id(lecteur_playlists);
+          u.playlist[0] = id(lecteur_pl_0);
+          u.playlist[1] = id(lecteur_pl_1);
+          u.playlist[2] = id(lecteur_pl_2);
+          u.playlist[3] = id(lecteur_pl_3);
+          u.playlist[4] = id(lecteur_pl_4);
+          u.playlist[5] = id(lecteur_pl_5);
+          u.playlist[6] = id(lecteur_pl_6);
+          u.playlist[7] = id(lecteur_pl_7);
+          u.playlist_nom[0] = id(lecteur_pl_nom_0);
+          u.playlist_nom[1] = id(lecteur_pl_nom_1);
+          u.playlist_nom[2] = id(lecteur_pl_nom_2);
+          u.playlist_nom[3] = id(lecteur_pl_nom_3);
+          u.playlist_nom[4] = id(lecteur_pl_nom_4);
+          u.playlist_nom[5] = id(lecteur_pl_nom_5);
+          u.playlist_nom[6] = id(lecteur_pl_nom_6);
+          u.playlist_nom[7] = id(lecteur_pl_nom_7);
           u.mini = id(lecteur_mini);
           u.mini_pochette = id(lecteur_mini_img);
           u.mini_vide = id(lecteur_mini_vide);

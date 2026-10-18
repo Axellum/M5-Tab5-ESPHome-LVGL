@@ -10,12 +10,15 @@
 #        s'affiche vide, règle 9), label_text (traduit au démarrage).
 # Taille (lot 4 du portage 1024×600, ADR-0061) : x, y et w sont ceux du Tab5, ramenés ici au
 #        corps de la carte (× corps_w / 1202, × corps_h / 598) ; la hauteur (40) ne change
-#        pas : l'icône et le libellé gardent leur taille.
+#        pas : l'icône et le libellé gardent leur taille. `fixe` (facultatif, 0 par défaut) :
+#        les pixels du Tab5 qui ne rétrécissent pas avec la carte, y = y × (corps_h − fixe) /
+#        (598 − fixe). Les Réglages passent 46 (jeton reglages_h) : leurs commandes restent
+#        40 px sous leur titre, et la dernière gardait 3 px d'air sur la 7B (18/10/2026).
 # ═══════════════════════════════════════════════════════
 obj:
   align: TOP_LEFT
   x: ${ (x | default(17) | int) * (corps_w | int) // 1202 }
-  y: ${ (y | int) * (corps_h | int) // 598 }
+  y: ${ (y | int) * (corps_h | int - (fixe | default(0) | int)) // (598 - (fixe | default(0) | int)) }
   width: ${ (w | int) * (corps_w | int) // 1202 }
   height: 40
   styles: style_invisible

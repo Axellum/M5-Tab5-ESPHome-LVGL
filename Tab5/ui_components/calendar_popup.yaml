@@ -49,11 +49,13 @@ obj:
           - !include { file: modal_header.yaml, vars: { icon: "\U000F0E17", icon_style: "style_text_accent", title: "Calendrier", title_id: "popup_cal_title", close_btn_id: "btn_cal_close", close_lambda: "animate_popup_close(id(cal_day_popup)); animate_popup_close(id(calendar_popup));" } }
 
           # Options d'en-tête : frères de la barre, alignés sur sa ligne (y=4, hauteur 44)
-          # Navigation mois : ◀  mois  ▶
+          # Navigation mois : ◀  mois  ▶, à ${cal_nav_x} du milieu de la carte (278 sur le
+          # Tab5) : sur une carte plus étroite, ▶ reste à gauche de « Aujourd'hui »
+          # (tab5-ui-tokens.yaml, tests/test_geometrie_partagee.py).
           - button:
               id: btn_cal_prev
               align: TOP_MID
-              x: -278
+              x: ${ 0 - (cal_nav_x | int) }
               y: 4
               width: 80
               height: 44
@@ -68,14 +70,14 @@ obj:
               align: TOP_MID
               x: 0
               y: 4
-              width: 420
+              width: ${cal_mois_l}
               height: 44
               text_align: CENTER
               text_font: roboto_32_b
           - button:
               id: btn_cal_next
               align: TOP_MID
-              x: 278
+              x: ${cal_nav_x}
               y: 4
               width: 80
               height: 44

@@ -150,11 +150,12 @@ obj:
                     y: ${ 56 + [320 * (corps_w | int) // 1202, 320 * (corps_h | int) // 598] | min // 2 - 24 }   # 192 : au milieu de l'arc
                     styles: style_police_date
 
-                # Raccourcis de niveau (gabarit light_level_btn.yaml : arc = pct × 255 / 100, arrondi)
-                - !include { file: light_level_btn.yaml, vars: { x: 22, pct: "10", arc: 26 } }
-                - !include { file: light_level_btn.yaml, vars: { x: "${ 22 + 90 * (corps_w | int) // 1202 }", pct: "35", arc: 89 } }
-                - !include { file: light_level_btn.yaml, vars: { x: "${ 22 + 180 * (corps_w | int) // 1202 }", pct: "65", arc: 166 } }
-                - !include { file: light_level_btn.yaml, vars: { x: "${ 22 + 270 * (corps_w | int) // 1202 }", pct: "100", arc: 255 } }
+                # Raccourcis de niveau (gabarit light_level_btn.yaml : arc = pct × 255 / 100, arrondi ;
+                # place et largeur : jetons lum_niveau_*, 80 px au pas de 90 depuis x 22 sur le Tab5)
+                - !include { file: light_level_btn.yaml, vars: { x: "${lum_niveau_x}", pct: "10", arc: 26 } }
+                - !include { file: light_level_btn.yaml, vars: { x: "${ (lum_niveau_x | int) + (lum_niveau_pas | int) }", pct: "35", arc: 89 } }
+                - !include { file: light_level_btn.yaml, vars: { x: "${ (lum_niveau_x | int) + 2 * (lum_niveau_pas | int) }", pct: "65", arc: 166 } }
+                - !include { file: light_level_btn.yaml, vars: { x: "${ (lum_niveau_x | int) + 3 * (lum_niveau_pas | int) }", pct: "100", arc: 255 } }
 
           # ═══ CARTE COULEURS (droite) : blancs nommés + pastilles rondes ═══
           - obj:

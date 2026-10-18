@@ -31,6 +31,13 @@ substitutions:
   modal_body_y: "72"
   # Offset bas standard pour les barres d'action / légendes (BOTTOM_MID)
   modal_bottom_y: "-20"
+  # Ombre la plus large qu'un thème donne à un bouton (style_clim_btn) et à une carte
+  # (style_meteo_card) : Relief plat, 13 et 26 px. Marge intérieure d'un conteneur dont les
+  # touches touchent le bord : LVGL 9.5 coupe l'ombre d'un enfant au bord de son parent,
+  # même en overflow_visible (seulement à la marge de dessin du parent, 0 s'il est
+  # transparent). tests/test_telecommandes.py relit les thèmes.
+  ombre_bouton_max: "13"
+  ombre_carte_max: "26"
   # ─── Corps des popups (lot 2 du portage 1024×600, ADR-0061) ───────────────────────────
   # Ce que les popups ont en commun suit la carte modale ; le C++ fait les mêmes calculs
   # (Tab5/socle/tab5_geometrie.h : kCorpsW, kCorpsH, kGraphiqueL, kDemiL, kDemiX,
@@ -61,6 +68,18 @@ substitutions:
   cal_col_pas: ${ (modal_card_w | int - 46) // 7 }
   cal_col_w: ${ cal_col_pas | int - 4 }
   cal_col_x0: ${ (modal_card_w | int - 7 * (cal_col_pas | int) + 4) // 2 }
+  # En-tête du calendrier (calendar_popup.yaml) : ‹ et › (80 px) à cal_nav_x du milieu de
+  # la carte (278), le mois entre eux (cal_mois_l, 420). Sur une carte plus étroite, › garde
+  # 16 px d'air avant « Aujourd'hui » (150 px, à 100 px du bord droit) et le mois 16 px de
+  # chaque côté : 191 et 270 sur la 7B, où › était caché sous « Aujourd'hui » (18/10/2026).
+  cal_nav_x: ${ [278, (modal_card_w | int) // 2 - 306] | min }
+  cal_mois_l: ${ [420, 2 * ([278, (modal_card_w | int) // 2 - 306] | min) - 112] | min }
+  # Rangées du popup Réglages (reglages_rangee.yaml avec fixe: 46, reglages_choix_btn.yaml) :
+  # chaque commande 40 px sous le titre de sa rangée, quelle que soit la carte ; les titres
+  # se répartissent donc sur le corps moins 46 px (552 sur le Tab5, y × reglages_h / 552) et
+  # la dernière commande garde son air au-dessus du bas de la carte : 19 px sur le Tab5,
+  # 16 sur la 7B (elle en avait 3 avec y × corps_h / 598, rendu du 18/10/2026).
+  reglages_h: ${ corps_h | int - 46 }
   # Lignes d'une pièce, popups Lumières et Volets (piece_ligne.yaml) : pas (92) et hauteur
   # (84) ; cinq lignes à partir de y 50 de leur carte, les boutons de la pièce au-dessous.
   piece_ligne_pas: ${ [92, (corps_h | int - 130) // 5] | min }
@@ -68,6 +87,22 @@ substitutions:
   # Largeur d'une ligne (342) : la carte de gauche de ces popups (386 sur le Tab5, ramenée
   # au corps : kPieceLigneL) moins 22 px de marge de chaque côté (lot 4 du portage).
   piece_ligne_l: ${ 386 * (corps_w | int) // 1202 - 44 }
+  # Tout ouvrir / Tout fermer du popup Volets (volet_popup.yaml) : côte à côte sous les lignes,
+  # à leurs bords (163 px, 16 px entre eux, x 22 sur le Tab5). Le mot (roboto_22, qui ne
+  # rétrécit pas : « Tout fermer » 118 px) veut 134 px de bouton ; sur une carte trop étroite,
+  # les boutons gagnent sur la marge de la carte, 10 px entre eux : 134 px à x 12 sur la 7B,
+  # où le mot touchait les bords d'un bouton de 121 (rendu du 18/10/2026).
+  volet_tout_l: ${ [(piece_ligne_l | int - 16) // 2, [134, (386 * (corps_w | int) // 1202 - 34) // 2] | min] | max }
+  volet_tout_ecart: ${ 16 if (volet_tout_l | int) == (piece_ligne_l | int - 16) // 2 else 10 }
+  volet_tout_x: ${ (386 * (corps_w | int) // 1202 - 2 * (volet_tout_l | int) - (volet_tout_ecart | int)) // 2 }
+  # Raccourcis de luminosité du popup Lumières (light_level_btn.yaml) : quatre boutons de 80 px
+  # au pas de 90 depuis x 22 sur le Tab5. « 100 % » (roboto_22) fait 60 px : sur une carte où
+  # le bouton ramené n'aurait pas 5 px d'air de chaque côté (70 px), les boutons prennent la
+  # carte, 6 px entre eux, centrés : 67 px à x 13 sur la 7B (3 px d'air), où le texte touchait
+  # les bords d'un bouton de 62.
+  lum_niveau_l: ${ [80 * (corps_w | int) // 1202, [70, (398 * (corps_w | int) // 1202 - 42) // 4] | min] | max }
+  lum_niveau_pas: ${ 90 * (corps_w | int) // 1202 if (lum_niveau_l | int) == 80 * (corps_w | int) // 1202 else (lum_niveau_l | int) + 6 }
+  lum_niveau_x: ${ 22 if (lum_niveau_l | int) == 80 * (corps_w | int) // 1202 else (398 * (corps_w | int) // 1202 - 3 * (lum_niveau_pas | int) - (lum_niveau_l | int)) // 2 }
   # Hauteur d'une ligne de Roboto Bold (roboto_700.ttf : ascendante 1900, descendante 500
   # sur 2048, arrondies vers le haut comme FreeType) à la taille de la carte (polices
   # × carte_police_echelle) : le pas des rouleaux du Réveil (rouleau.yaml) et ses lignes

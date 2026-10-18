@@ -131,6 +131,42 @@ def test_largeur_des_panneaux_centraux():
         assert not re.search(r"^\s*width: (1180|1240)\s*$", texte, re.M), "/".join(chemin)
 
 
+def _largeur_roboto_22(texte):
+    """Largeur d'un texte en roboto_22 (Tab5/fonts/roboto_700.ttf, 22 px, qui ne rétrécit pas
+    avec la carte) : la somme des avances, comme lv_text_get_size sans crénage."""
+    from fontTools.ttLib import TTFont
+    police = TTFont(os.path.join(REPO, "Tab5", "fonts", "roboto_700.ttf"))
+    cmap, hmtx = police.getBestCmap(), police["hmtx"]
+    return round(sum(hmtx[cmap[ord(c)]][0] for c in texte) * 22 / police["head"].unitsPerEm)
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_tout_ouvrir_tout_fermer_dans_leurs_boutons(carte):
+    """Volets : « Tout ouvrir » et « Tout fermer » gardent 8 px d'air de chaque côté dans leur
+    bouton, les deux boutons côte à côte dans la carte de gauche (sur la 7B, le mot touchait
+    les bords d'un bouton de 121 px jusqu'au 18/10/2026). Sur le Tab5 : 163 px à x 22, 16 entre."""
+    j = jetons_resolus(carte)
+    l, x, e = (int(j[n]) for n in ("volet_tout_l", "volet_tout_x", "volet_tout_ecart"))
+    for mot in ("Tout ouvrir", "Tout fermer"):
+        assert _largeur_roboto_22(mot) + 16 <= l, (mot, l, carte)
+    assert e >= 10 and x >= 8 and x + 2 * l + e <= 386 * int(j["corps_w"]) // 1202 - 8, (x, l, e, carte)
+    if carte == "tab5":
+        assert (l, x, e) == (163, 22, 16)
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_raccourcis_de_luminosite_dans_leurs_boutons(carte):
+    """Lumières : « 100 % » garde 3 px d'air de chaque côté dans son bouton (il touchait les
+    bords d'un bouton de 62 px sur la 7B jusqu'au 18/10/2026), les quatre boutons dans la carte
+    du milieu (398 px ramenés au corps). Sur le Tab5 : 80 px au pas de 90 depuis x 22."""
+    j = jetons_resolus(carte)
+    l, pas, x = (int(j[n]) for n in ("lum_niveau_l", "lum_niveau_pas", "lum_niveau_x"))
+    assert _largeur_roboto_22("100 %") + 6 <= l, (l, carte)
+    assert pas - l >= 6 and x >= 8 and x + 3 * pas + l <= 398 * int(j["corps_w"]) // 1202 - 8, (x, l, pas, carte)
+    if carte == "tab5":
+        assert (l, pas, x) == (80, 90, 22)
+
+
 @pytest.mark.parametrize("carte", CARTES)
 def test_en_tetes_du_calendrier_sur_les_colonnes_des_cases(carte):
     g = _geometrie(carte)
@@ -144,6 +180,61 @@ def test_en_tetes_du_calendrier_sur_les_colonnes_des_cases(carte):
         assert props["align"] == "TOP_LEFT", jour
         assert _resolu(props["x"], carte) == x0 + c * pas, f"« {jour} » décalé de sa colonne ({carte})"
         assert _resolu(props["width"], carte) == w, f"« {jour} » plus large ou plus étroit que sa case ({carte})"
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_en_tete_du_calendrier_sans_chevauchement(carte):
+    """‹, le mois, › et « Aujourd'hui » côte à côte sur la ligne du titre, sans se couvrir :
+    sur la 7B, › était caché sous « Aujourd'hui » (rendu du 18/10/2026). Sur le Tab5 : 278
+    et 420, comme avant."""
+    g = _geometrie(carte)
+    popup = yaml.load(_lire("Tab5", "ui_components", "calendar_popup.yaml"), Loader=_Chargeur)
+    par_id = {p.get("id"): p for _t, p in _widgets([popup]) if p.get("id")}
+    milieu = g["kCarteL"] // 2
+
+    def boite(nom):
+        p = par_id[nom]
+        x, w = _resolu(p["x"], carte), _resolu(p["width"], carte)
+        if p["align"] == "TOP_MID":
+            return milieu + x - w // 2, milieu + x - w // 2 + w
+        assert p["align"] == "TOP_RIGHT", nom
+        return g["kCarteL"] + x - w, g["kCarteL"] + x
+
+    ordre = [boite(n) for n in ("btn_cal_prev", "lbl_cal_month", "btn_cal_next", "btn_cal_today")]
+    for (g1, d1), (g2, d2) in zip(ordre, ordre[1:]):
+        assert d1 + 16 <= g2, f"en-tête du calendrier : {ordre} ({carte})"
+    assert ordre[0][0] >= 200, f"‹ trop près du titre « Calendrier » ({carte})"
+    if carte == "tab5":
+        assert (jeton("cal_nav_x"), jeton("cal_mois_l")) == (278, 420)
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_reglages_derniere_commande_au_dessus_du_bas(carte):
+    """Réglages : chaque bouton de choix (reglages_choix_btn.yaml) reste 40 px sous le titre de
+    sa rangée (reglages_rangee.yaml, fixe: 46), et le plus bas garde 16 px au-dessus du bas
+    du corps (3 sur la 7B avant le 18/10/2026). Sur le Tab5, les y d'avant."""
+    texte = _lire("Tab5", "ui_components", "reglages_popup.yaml")
+    rangees = re.findall(r"file: reglages_rangee\.yaml, vars: \{([^}]*)\}", texte)
+    assert rangees and all("fixe: 46," in r for r in rangees)
+    titres = {int(y) for y in re.findall(r"file: reglages_rangee\.yaml, vars: \{[^}]*\by: (\d+),", texte)}
+    boutons = [int(y) for y in re.findall(r"file: reglages_choix_btn\.yaml, vars: \{[^}]*\by: (\d+),", texte)]
+    assert boutons and all(y - 40 in titres for y in boutons)
+    jetons = jetons_resolus(carte)
+    rangee = yaml.load(_lire("Tab5", "ui_components", "reglages_rangee.yaml"), Loader=_Chargeur)["obj"]
+    bouton = yaml.load(_lire("Tab5", "ui_components", "reglages_choix_btn.yaml"), Loader=_Chargeur)["button"]
+
+    def y_rangee(y):
+        return int(resoudre(rangee["y"], dict(jetons, y=str(y), fixe="46")))
+
+    def y_bouton(y):
+        return int(resoudre(bouton["y"], dict(jetons, y=str(y))))
+
+    for y in boutons:
+        assert y_bouton(y) == y_rangee(y - 40) + 40, (y, carte)
+    bas = max(y_bouton(y) for y in boutons) + int(resoudre(bouton["height"], jetons))
+    assert bas <= int(jetons["corps_h"]) - 16, f"dernier bouton des Réglages à {bas} ({carte})"
+    if carte == "tab5":
+        assert [y_bouton(y) for y in boutons] == boutons and jeton("reglages_h") == 552
 
 
 @pytest.mark.parametrize("carte", CARTES)
