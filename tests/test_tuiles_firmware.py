@@ -451,6 +451,26 @@ def test_mode_ha_seule_source_et_swipe_par_piece():
     assert "tuiles_mode_ha(!g_central_ctx.ha_mode);" in _lire("Tab5", "paquets", "tab5-navigation.yaml")
 
 
+def test_rouleau_des_pieces_en_mode_ha():
+    """Mode HA (18/10/2026, demande d'Axel) : le swipe passe à la pièce suivante ou précédente,
+    en rouleau (la 5 revient à la 1, pièces vides comprises) ; les pastilles suivent l'ordre
+    des pièces. La météo garde son ordre et son bouclage volontaire ([AI-WARNING])."""
+    swipe = _fonction(_cpp(), "tuiles_swipe_ha")
+    assert "reglages_page_voisine(piece_courante(), kPieces, gauche)" in swipe
+    assert "forecast_page_suivante" not in swipe and "piece_non_vide" not in swipe
+    # Pastilles : la pièce en mode HA, la page sinon ; repeintes à l'entrée et à la sortie.
+    assert "ctx.ha_mode ? piece_courante() : ctx.forecast_page" in _fonction(_cpp(), "pastilles_peindre")
+    assert "pastilles_peindre();" in _fonction(_cpp(), "aller_page")
+    mode = _fonction(_cpp(), "tuiles_mode_ha")
+    assert "aller_page(cible);" in mode and "if (cible != page) aller_page" not in mode
+    assert mode.index("ctx.ha_mode = false;") < mode.index("pastilles_peindre();")
+    # La météo, inchangée : gauche 0→1→2→3→4→2, droite 4→3→2→1→0→2.
+    central = _lire("Tab5", "ecran", "tab5_central.cpp")
+    meteo = _fonction(central, "forecast_page_suivante")
+    assert "if (gauche) return page >= 4 ? 2 : page + 1;" in meteo and "return page <= 0 ? 2 : page - 1;" in meteo
+    assert "forecast_page_suivante(old_page, dir == LV_DIR_LEFT)" in _fonction(central, "handle_swipe_gesture")
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Popup du volet (05/10/2026, discussion #278)
 # ─────────────────────────────────────────────────────────────────────────────
