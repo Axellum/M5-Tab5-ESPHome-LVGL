@@ -2591,6 +2591,8 @@ void theme_rejouer_ui() {
     zone_gauche_rejouer_theme();
     // Lecteur de musique (ADR-0050) : pastille active, aléatoire et répétition actifs, muet.
     lecteur_rejouer_theme();
+    // Musique de toute la maison (ADR-0067) : cartes des pièces, catégories, accents.
+    musique_rejouer_theme();
     // Capteurs suivis (ADR-0054) : couleurs des variations, courbes, dégradé de la zone.
     suivi_rejouer_theme();
     // Froid (ADR-0055) : températures, statuts, courbes et norme du popup s'il est ouvert.

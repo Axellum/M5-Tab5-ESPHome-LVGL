@@ -424,6 +424,14 @@ MDI_CODE_TARGETS: dict[tuple[str, str], tuple[str, ...]] = {
     ("tab5_lecteur.cpp", "glyphe_repetition"): ("lecteur_ico_4",),
     ("tab5_lecteur.cpp", "glyphe_volume"): ("lecteur_ico_muet",),
     ("tab5_lecteur.cpp", "glyphe_genre"): ("lecteur_puce_icone_*",),
+    # Musique de toute la maison (ADR-0067) : genre de chaque carte de la page Pièces
+    # (musique_piece.yaml, mdi_font_32) et d'une pochette absente de la Bibliothèque
+    # (musique_element.yaml, mdi_font_70), tous deux aussi dans le moyeu de leur roue
+    # (mdi_font_45) ; son / muet et grouper / séparer d'une carte (mdi_font_32).
+    ("tab5_musique.cpp", "glyphe_piece"): ("musique_piece_icone_*", "roue_moyeu_icone"),
+    ("tab5_musique.cpp", "glyphe_element"): ("musique_element_icone_*", "roue_moyeu_icone"),
+    ("tab5_musique.cpp", "glyphe_son"): ("musique_piece_son_*",),
+    ("tab5_musique.cpp", "glyphe_lien"): ("musique_piece_lien_*",),
     # Capteurs suivis (ADR-0054) : flèche de tendance de chaque carte du popup
     # (suivi_carte.yaml) et de la carte de la zone gauche (suivi_zone.yaml), mdi_font_32.
     ("tab5_suivi.cpp", "glyphe_tendance"): ("suivi_fleche_*", "suivi_zone_fleche"),

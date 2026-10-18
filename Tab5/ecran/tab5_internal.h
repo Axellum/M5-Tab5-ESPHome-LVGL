@@ -82,6 +82,16 @@ inline bool ui_appui_glisse() {
     lv_indev_t* indev = lv_indev_active();
     return indev != nullptr && (lv_indev_get_press_moved(indev) || lv_indev_get_gesture_dir(indev) != LV_DIR_NONE);
 }
+// Largeur en px de `txt` sur une ligne, dans la police et l'espacement du label (0 sans
+// label, police ou texte) : la largeur naturelle d'un nom, avant texte_ha_coupe().
+inline int32_t ui_largeur_texte(lv_obj_t* lbl, const char* txt) {
+    const lv_font_t* f = lbl != nullptr ? lv_obj_get_style_text_font(lbl, LV_PART_MAIN) : nullptr;
+    if (f == nullptr || txt == nullptr) return 0;
+    lv_point_t p;
+    lv_text_get_size(&p, txt, f, lv_obj_get_style_text_letter_space(lbl, LV_PART_MAIN), 0, LV_COORD_MAX,
+                     LV_TEXT_FLAG_NONE);
+    return p.x;
+}
 
 // --- Tracés construits en C++ (tab5_anim.cpp, 09/10/2026) ---
 // Briques d'un tracé (popups Température et Météo) : un rectangle sans style (opacité,
@@ -274,6 +284,9 @@ uint32_t clim_carte_valeur(char* buf, size_t n, uint32_t& couleur_valeur);
 // Icône d'un bouton (glyphe_roue, mdi_font_36) ; AUCUNE : un texte ou une pastille. Après
 // REGLAGES : celles de la roue de navigation (ADR-0042), familles puis destinations ;
 // METEO (popup Météo, ADR-0043) puis CAMERAS (popup Caméras, ADR-0049) en dernier.
+// Après SERVEUR_IA : les roues du popup Musique (ADR-0067), d'une pièce (SOURCE à SEPARER)
+// puis d'un élément de la bibliothèque (LIRE à LISTE). Pas de commentaire dans l'enum :
+// tests/test_roue.py le lit comme une liste.
 enum class RoueIcone : uint8_t {
     AUCUNE,
     ETEINDRE,
@@ -322,6 +335,16 @@ enum class RoueIcone : uint8_t {
     TV,
     FROID,
     SERVEUR_IA,
+    SOURCE,
+    MUET,
+    SON,
+    TRANSFERT,
+    SEPARER,
+    LIRE,
+    A_LA_SUITE,
+    EN_FIN,
+    RADIO,
+    LISTE,
 };
 // Bouton du premier anneau : une commande, une famille (son toucher déplie le second
 // anneau au-dessus de lui) ou un lien (« Maison », « Détails » : une fenêtre).
@@ -609,6 +632,34 @@ void zone_gauche_donnees_changees();
 // (tab5_roue_navigation.cpp, « Appareils ▸ ») lit la même réponse pour proposer Musique.
 void lecteur_zone_montrer(bool montre);
 bool lecteur_zone_disponible();
+// tab5_lecteur.cpp, pour tab5_musique.cpp : repeint le popup Musique (en-tête et page
+// Lecture), après un changement de page ou une poussée des pièces.
+void lecteur_popup_repeindre();
+
+// --- Musique de toute la maison (tab5_musique.cpp, ADR-0067), pour le popup Musique ---
+// Bord droit de la pastille de l'application sans onglet (lecteur_popup.yaml : alignée en
+// haut à droite à x -100).
+constexpr int32_t kLecteurAppFinX = kLecteurCarteL - 100;
+// lecteur_ouvrir (tab5_lecteur.cpp) : le popup s'ouvre sur sa page Lecture, le glissement
+// des pages est branché, HA est prié de pousser les pièces (événement « ouvrir »).
+void musique_ouvrir();
+// La page Lecture est-elle montrée ? Faux : le lecteur cache son morceau (pochette,
+// colonne de droite, pastilles), la page de tab5_musique.cpp prend la carte.
+bool musique_page_lecture();
+// Noms des pages contre la croix, de droite à gauche, chacun à la largeur de son nom
+// (aucun sous deux pages) ; renvoie le bord droit de ce qui reste à leur gauche
+// (kLecteurAppFinX sans onglet) : la pastille de l'application et le nom s'y rangent.
+int32_t musique_onglets_peindre();
+// Place que prend la puce « + n » après le nom du lecteur montré quand il mène un groupe
+// (0 sinon) ; musique_entete_peindre() la pose derrière le texte du label `nom`.
+int32_t musique_entete_reserve();
+void musique_entete_peindre(lv_obj_t* nom);
+// Page Lecture peinte (`morceau` : un titre est montré) : la ligne « À suivre · … » et
+// « n titres » sous l'album avec Music Assistant, le morceau remonté pour elle ; rien
+// (et le morceau à sa place d'avant) sinon, ou sur une autre page.
+void musique_lecture_peindre(bool morceau);
+// theme_rejouer_ui (tab5_theme.cpp) : les pages Pièces et Bibliothèque dans la palette.
+void musique_rejouer_theme();
 // tab5_suivi.cpp, pour la zone à gauche de l'horloge (capteur suivi, ADR-0054) : montre ou
 // masque la carte (repeinte si elle a changé cachée), et dit si elle a quelque chose à
 // montrer (faux seulement quand HA a dit qu'aucun capteur n'est choisi).

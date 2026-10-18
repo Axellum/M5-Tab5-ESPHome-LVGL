@@ -1,0 +1,128 @@
+# ═══════════════════════════════════════════════════════
+# [AI-CONTEXT]
+# @file musique_calques.yaml
+# @role Musique de toute la maison (ADR-0067, 18/10/2026) : ce que les pages ajoutent à la
+#       carte du popup Musique (lecteur_popup.yaml, inclus UNE fois, en dernier : au-dessus
+#       de la page Lecture) — les noms des pages sur la ligne du titre (pages_onglet.yaml ×4 :
+#       Lecture, Playlists, Pièces, Bibliothèque), la puce « + n » après le nom du lecteur
+#       quand il mène un groupe, la ligne « À suivre » sous l'album, la page Pièces (une carte
+#       par lecteur, musique_piece.yaml ×8) et la page Bibliothèque (catégories,
+#       musique_categorie.yaml ×7 ; grille de musique_element.yaml ×10).
+# @architecture_constraint Un calque transparent, NON cliquable, de la taille de la carte :
+#       un toucher hors de ses widgets passe à la page Lecture dessous (lv_indev_search_obj
+#       ignore un objet non cliquable), un glissement remonte au popup (tab5_pages.cpp). Mêmes
+#       coordonnées que les widgets de lecteur_popup.yaml (carte de 940 × 536 sur les deux
+#       cartes, ADR-0061 : la carte du lecteur ne change pas). Tout ce qui bouge (places,
+#       textes, glyphes, masquages, couleurs d'état, accents) est écrit par tab5_musique.cpp.
+# @ai_instruction Un widget de plus = son champ dans MusiqueUI (tab5_musique.h) et sa ligne
+#       dans le script tab5_musique_lier (tab5-musique.yaml).
+# ═══════════════════════════════════════════════════════
+obj:
+  id: musique_calque
+  align: TOP_LEFT
+  x: 0
+  y: 0
+  width: ${lecteur_card_w}
+  height: ${lecteur_card_h}
+  pad_all: 0
+  clickable: false
+  scrollable: false
+  styles: style_transparent
+  widgets:
+    # ═══ NOMS DES PAGES, contre la croix (tab5_musique.cpp, musique_onglets_peindre) ═══
+    - !include { file: pages_onglet.yaml, vars: { id: musique_onglet_0, page: 0, choisir: musique_onglet } }
+    - !include { file: pages_onglet.yaml, vars: { id: musique_onglet_1, page: 1, choisir: musique_onglet } }
+    - !include { file: pages_onglet.yaml, vars: { id: musique_onglet_2, page: 2, choisir: musique_onglet } }
+    - !include { file: pages_onglet.yaml, vars: { id: musique_onglet_3, page: 3, choisir: musique_onglet } }
+
+    # « + n » : le lecteur montré mène un groupe de n autres pièces. x posé derrière le nom.
+    - obj:
+        id: musique_groupe
+        align: TOP_LEFT
+        x: 300
+        y: 8
+        width: SIZE_CONTENT
+        height: 36
+        pad_left: 12
+        pad_right: 12
+        pad_top: 0
+        pad_bottom: 0
+        hidden: true
+        clickable: false
+        scrollable: false
+        styles: style_glass_card
+        widgets:
+          - label: { id: musique_groupe_texte, text: "", align: CENTER, text_font: roboto_22, styles: style_text_accent }
+
+    # ═══ PAGE LECTURE : « À suivre · titre — artiste » et « n titres », sous l'album ═══
+    #     Colonne de droite (x 408..916) ; le morceau remonte pour lui faire place.
+    - label: { id: musique_suivant, text: "", align: TOP_LEFT, x: 408, y: 176, width: 508, long_mode: CLIP, text_font: roboto_22, styles: style_text_dim, hidden: true }
+    - label: { id: musique_file, text: "", align: TOP_RIGHT, x: -24, y: 176, text_font: roboto_22, styles: style_text_dim, hidden: true }
+
+    # ═══ PAGE PIÈCES : les lecteurs de la maison, 4 × 2 cartes de 214 × 188 ═══
+    - obj:
+        id: musique_pieces
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: ${lecteur_card_w}
+        height: ${lecteur_card_h}
+        pad_all: 0
+        hidden: true
+        clickable: false
+        scrollable: false
+        styles: style_transparent
+        widgets:
+          # Ce que fait un toucher, en une ligne ; « Tout ici » et « Tout séparer » à droite
+          # (Music Assistant seulement).
+          - label: { id: musique_pieces_conseil, text: "", align: TOP_LEFT, x: 24, y: 82, width: 476, long_mode: CLIP, text_font: roboto_22, styles: style_text_dim }
+          - !include { file: musique_bouton.yaml, vars: { n: "0", x: "512", w: "196", icone: "\U000F0339", icone_align: LEFT_MID, icone_x: "10" } }
+          - !include { file: musique_bouton.yaml, vars: { n: "1", x: "720", w: "196", icone: "\U000F033A", icone_align: LEFT_MID, icone_x: "10" } }
+          - !include { file: musique_piece.yaml, vars: { n: "0" } }
+          - !include { file: musique_piece.yaml, vars: { n: "1" } }
+          - !include { file: musique_piece.yaml, vars: { n: "2" } }
+          - !include { file: musique_piece.yaml, vars: { n: "3" } }
+          - !include { file: musique_piece.yaml, vars: { n: "4" } }
+          - !include { file: musique_piece.yaml, vars: { n: "5" } }
+          - !include { file: musique_piece.yaml, vars: { n: "6" } }
+          - !include { file: musique_piece.yaml, vars: { n: "7" } }
+
+    # ═══ PAGE BIBLIOTHÈQUE : catégories (ou retour + titre), flèches, grille de 5 × 2 ═══
+    - obj:
+        id: musique_biblio
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        width: ${lecteur_card_w}
+        height: ${lecteur_card_h}
+        pad_all: 0
+        hidden: true
+        clickable: false
+        scrollable: false
+        styles: style_transparent
+        widgets:
+          - !include { file: musique_categorie.yaml, vars: { n: "0" } }
+          - !include { file: musique_categorie.yaml, vars: { n: "1" } }
+          - !include { file: musique_categorie.yaml, vars: { n: "2" } }
+          - !include { file: musique_categorie.yaml, vars: { n: "3" } }
+          - !include { file: musique_categorie.yaml, vars: { n: "4" } }
+          - !include { file: musique_categorie.yaml, vars: { n: "5" } }
+          - !include { file: musique_categorie.yaml, vars: { n: "6" } }
+          # Retour au niveau d'avant (un artiste, un album ouverts ; les sources d'une pièce).
+          - !include { file: musique_bouton.yaml, vars: { n: "2", x: "24", w: "48", icone: "\U000F004D", icone_align: CENTER, icone_x: "0" } }
+          - label: { id: musique_biblio_titre, text: "", align: TOP_LEFT, x: 84, y: 82, width: 700, long_mode: CLIP, text_font: roboto_22, hidden: true }
+          # Page précédente / suivante de la liste (dix éléments par page).
+          - !include { file: musique_bouton.yaml, vars: { n: "3", x: "812", w: "48", icone: "\U000F0141", icone_align: CENTER, icone_x: "0" } }
+          - !include { file: musique_bouton.yaml, vars: { n: "4", x: "868", w: "48", icone: "\U000F0142", icone_align: CENTER, icone_x: "0" } }
+          # « Chargement... », une réponse qui ne vient pas, une erreur de HA, une liste vide.
+          - label: { id: musique_biblio_message, text: "", align: TOP_LEFT, x: 24, y: 290, width: 892, long_mode: WRAP, text_align: CENTER, text_font: roboto_32_b, styles: style_text_dim, hidden: true }
+          - !include { file: musique_element.yaml, vars: { n: "0" } }
+          - !include { file: musique_element.yaml, vars: { n: "1" } }
+          - !include { file: musique_element.yaml, vars: { n: "2" } }
+          - !include { file: musique_element.yaml, vars: { n: "3" } }
+          - !include { file: musique_element.yaml, vars: { n: "4" } }
+          - !include { file: musique_element.yaml, vars: { n: "5" } }
+          - !include { file: musique_element.yaml, vars: { n: "6" } }
+          - !include { file: musique_element.yaml, vars: { n: "7" } }
+          - !include { file: musique_element.yaml, vars: { n: "8" } }
+          - !include { file: musique_element.yaml, vars: { n: "9" } }

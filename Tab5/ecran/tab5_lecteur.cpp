@@ -44,6 +44,7 @@ constexpr const char* kTag = "tab5.lecteur";
 constexpr int32_t kTexteL = 508;          // colonne de droite du popup
 constexpr int32_t kNomL = 520;            // en-tête, à côté de la pastille de l'application
 constexpr int32_t kNomSeulL = 740;        // en-tête sans pastille
+constexpr int32_t kNomMinL = 160;         // nom le plus court qui garde la pastille (onglets, ADR-0067)
 constexpr int32_t kAppL = 180;            // pastille de l'application
 // Pastilles des lecteurs : chacune à la largeur de son nom (icône de 32 px à 12 px du
 // bord, nom à 48 px, 16 px de marge à droite), entre kPuceMinL et la part de la rangée
@@ -325,15 +326,38 @@ void peindre_puces() {
     }
 }
 
+// Pages Pièces et Bibliothèque (ADR-0067, tab5_musique.cpp) : rien du morceau, la page
+// prend la carte. Le cadre de la pochette est le parent de sa note.
+void masquer_morceau() {
+    const LecteurUI& u = ui();
+    if (u.pochette_vide != nullptr) ui_hidden(lv_obj_get_parent(u.pochette_vide), true);
+    for (lv_obj_t* o : {u.titre, u.artiste, u.album, u.message, u.conseil, u.lecture, u.btn[LECTEUR_BTN_ALLUMER]})
+        ui_hidden(o, true);
+    for (lv_obj_t* o : u.puce) ui_hidden(o, true);
+}
+
 void peindre_popup() {
     const LecteurUI& u = ui();
     if (u.popup == nullptr) return;
-    // En-tête : le lecteur, et l'application qu'il montre.
-    const bool app = s_e.app[0] != '\0' && allume();
+    // En-tête : le lecteur, l'application qu'il montre et, avec plusieurs pages (ADR-0067,
+    // tab5_musique.cpp), leurs noms contre la croix ; la pastille et le nom se rangent à
+    // leur gauche, la puce « + n » d'un groupe après le nom (retraits nuls sans eux). Sans
+    // la place d'un nom lisible, la pastille de l'application s'efface.
+    const int32_t fin = musique_onglets_peindre();
+    const int32_t retrait = kLecteurAppFinX - fin + musique_entete_reserve();
+    const bool app = s_e.app[0] != '\0' && allume() && kNomL - retrait >= kNomMinL;
     ui_hidden(u.app, !app);
+    ui_x(u.app, fin - kLecteurCarteL);  // alignée en haut à droite : x compté depuis le bord droit
     if (app) texte_ha_coupe(u.app_texte, s_e.app, kAppL);
     const char* nom = s_e.nom[0] != '\0' ? s_e.nom : tr("Musique");
-    texte_ha_coupe(u.nom, nom, app ? kNomL : kNomSeulL);
+    texte_ha_coupe(u.nom, nom, (app ? kNomL : kNomSeulL) - retrait);
+    musique_entete_peindre(u.nom);
+    if (!musique_page_lecture()) {
+        masquer_morceau();
+        musique_lecture_peindre(false);
+        return;
+    }
+    if (u.pochette_vide != nullptr) ui_hidden(lv_obj_get_parent(u.pochette_vide), false);
 
     const char* msg = message();
     const bool morceau = msg[0] == '\0';
@@ -363,6 +387,7 @@ void peindre_popup() {
         peindre_volume();
     }
     peindre_puces();
+    musique_lecture_peindre(morceau);  // « À suivre » sous l'album (ADR-0067)
 }
 
 // Mini-barre : en lecture, ou dans les 5 min qui suivent une pause.
@@ -557,6 +582,8 @@ void lecteur_recu(const std::string& lecteurs, const std::string& etat) {
 void lecteur_ouvrir(const std::string& cle) {
     // Voile à 70 % (ADR-0050) : la carte se dessine sans ce qu'elle cache (une seule fois).
     popup_voile_carte(ui().popup, ui().carte);
+    // Pages (ADR-0067) : la page Lecture d'abord ; HA repousse les pièces.
+    musique_ouvrir();
     peindre();
     if (ui().envoyer != nullptr) ui().envoyer("ouvrir", cle.c_str(), "");
 }
@@ -692,6 +719,8 @@ void lecteur_rejouer_theme() {
     if (ui().popup == nullptr && ui().mini == nullptr && ui().zone == nullptr) return;
     peindre();
 }
+
+void lecteur_popup_repeindre() { peindre_popup(); }
 
 void lecteur_zone_montrer(bool montre) {
     if (montre == s_zone_montre && !(montre && s_zone_sale)) return;

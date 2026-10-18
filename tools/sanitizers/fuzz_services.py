@@ -108,6 +108,17 @@ GRAINES: dict[str, dict[str, str]] = {
     "tab5_maj_lecteur": {"lecteurs": "Salon|tv;Cuisine|speaker;Tablette|",
                          "etat": "1|Cuisine|speaker|playing|Bohemian Rhapsody|Queen|A Night at the Opera|Spotify|"
                                  "83|354|42|0|1|all|lspnvmar|/api/media_player_proxy/media_player.cuisine?token=x&cache=1"},
+    # Musique de toute la maison (ADR-0067) : les pièces de Music Assistant (le salon montré
+    # mène un groupe avec la cuisine) et une page d'albums, au format de
+    # packages/tab5_musique.yaml.
+    "tab5_maj_musique_pieces": {"pieces": "Salon|e|j|45|0|0|vmogst|Le vent du large — Les Marées;"
+                                          "Cuisine|e|j|30|1|0|vmgt|Le vent du large — Les Marées;"
+                                          "TV Samsung|t|e||0|-1|o|",
+                                "contexte": "1|0|12|Sous la pluie — Les Marées"},
+    "tab5_maj_musique_liste": {"contexte": "alb|Albums|0|1|0",
+                               "elements": "Carnets de voyage|Les Marées|a|library://album/12|"
+                                           "http://192.0.2.10:8095/imageproxy/ab?size=160&fmt=png;"
+                                           "Radio Jazz||d|library://radio/2|https://upload.wikimedia.org/a%3Bb.png"},
     # Caméras (ADR-0049) : la liste que le blueprint pousse à l'ouverture du popup.
     "tab5_maj_cameras": {"adresse": "http://homeassistant.local:8123",
                          "cameras": "Entrée|/api/camera_proxy/camera.entree?token=abc123|Entrée|;"
