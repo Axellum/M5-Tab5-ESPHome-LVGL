@@ -362,12 +362,14 @@ jobs:
       - name: Lancer le rendu et capturer scènes et écrans (1024×600)
         # Mêmes réglages que la tâche « fr » (date figée, préférences neuves). Les alertes de
         # capturer.py (« identique à … : l'appui n'a rien ouvert ? ») sont attendues ici :
-        # gardées dans le journal, pas en annotations de la PR.
+        # gardées dans le journal, pas en annotations de la PR. `seulement` (lancement à la
+        # main) vaut aussi ici : la mise au point d'un popup de la 7B en quelques minutes.
         env:
           TZ: Europe/Paris
           DEPART: "2026-06-16 07:45:00"
           FAKETIME_DONT_FAKE_MONOTONIC: "1"
           ESPHOME_PREFDIR: ${{ runner.temp }}/prefs
+          SEULEMENT: ${{ inputs.seulement }}
         run: |
           set -o pipefail
           prog="$PWD/rendu-programme/program"
@@ -377,7 +379,9 @@ jobs:
           faketime -f "$DEPART" "$prog" > "captures/rendu-7b.log" 2>&1 &
           pid=$!
           sleep 8
-          faketime -f "$DEPART" python tools/rendu/capturer.py --dossier captures --carte waveshare-7b \
+          args=(--dossier captures --carte waveshare-7b)
+          [ -n "$SEULEMENT" ] && args+=(--seulement $SEULEMENT)
+          faketime -f "$DEPART" python tools/rendu/capturer.py "${args[@]}" \
             | sed 's/^::warning[^:]*::/alerte : /'
           pkill -f "$prog" 2>/dev/null || true
           kill "$pid" 2>/dev/null || true

@@ -183,7 +183,12 @@ def test_pieces_du_job_et_protocole():
                              ("rendu (ESPHome 2026.9.0)", 1), (None, 1), ("3.10.0", 2)):
         assert verifier.protocole_de(version) == attendu, version
     cles = [c for c, _ in verifier.tuiles_attendues()]
-    assert cles[:5] == ["t00", "t01", "t02", "t03", "t04"] and "t15" not in cles
+    # ADR-0066 : la sixième place (t15) et les clés à lettre (t5a) partent ; une pièce
+    # au-delà du nombre de pièces, jamais.
+    assert cles[:5] == ["t00", "t01", "t02", "t03", "t04"] and {"t15", "t59", "t5a"} <= set(cles)
+    nombre = verifier.nombre_de_pieces()
+    assert 5 < nombre < 10 and verifier.PIECES.get(f"piece_{nombre + 1}_tuiles"), "une pièce au-delà du nombre"
+    assert not [c for c in cles if int(c[1]) >= nombre]
 
 
 def test_ce_que_le_job_attend_est_ce_que_calcule_le_blueprint():
@@ -222,7 +227,8 @@ def test_ce_que_le_job_attend_est_ce_que_calcule_le_blueprint():
                                           ("h20", "cap"), ("n10", "cap"), ("n11", "bin")]
     assert "np|-;nd|24;n10|cap|" in definitions
     assert verifier.juger_definitions(definitions.replace("np|-;", "np|0;"), icones)
-    # Tuile − / + (ADR-0033) : la clim du blueprint et la serrure sautées, la vanne sans lien.
+    # Tuile − / + (ADR-0033) : la clim du blueprint et la serrure sautées, la vanne liée à sa
+    # sixième place (t15, ADR-0066).
     assert [(r["cle"], r["e"]) for r in passage["reglables"]] == [
         ("r0", "media_player.living_room"), ("r1", "light.ceiling_lights"), ("r2", "climate.heatpump"),
         ("r3", "cover.kitchen_window"), ("r4", "valve.front_garden")]

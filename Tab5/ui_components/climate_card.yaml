@@ -76,6 +76,10 @@ obj:
     # bord gauche du − et le bord droit du + ; 8 px entre icône et valeur : au pire
     # (police la plus large, serre à -12.5 °) salon 14..192 et serre 193..391 ne se
     # touchent pas. Une valeur masquée (zones_apply_ui) sort de la rangée (flex).
+    # Autre carte (18/10/2026) : l'icône (mdi_font_temp) et l'écart (acc_temp_ecart) suivent
+    # sa taille comme la valeur ; sur la 7B, 37 px et 6 px dans les 302 px entre les bords
+    # du − et du + (l'icône restée à 45 px laissait 4 px entre le « ° » du salon et la serre,
+    # rien selon le thème). tests/test_gestes.py le calcule pour chaque carte et chaque thème.
     - obj:
         align: LEFT_MID
         x: ${acc_temp_x}
@@ -88,9 +92,9 @@ obj:
           type: FLEX
           flex_flow: ROW
           flex_align_cross: CENTER
-          pad_column: 8
+          pad_column: ${acc_temp_ecart}
         widgets:
-          - label: { id: icon_salon, text: "\U000F04B9", text_font: mdi_font_45, styles: style_text_dim }
+          - label: { id: icon_salon, text: "\U000F04B9", text_font: mdi_font_temp, styles: style_text_dim }
           - label: { id: val_temp_salon, text: "-- °", styles: [style_police_date, style_text_temp_max] }
     - obj:
         align: RIGHT_MID
@@ -104,9 +108,9 @@ obj:
           type: FLEX
           flex_flow: ROW
           flex_align_cross: CENTER
-          pad_column: 8
+          pad_column: ${acc_temp_ecart}
         widgets:
-          - label: { id: icon_serre, text: "\U000F002D", text_font: mdi_font_45, styles: style_text_dim }
+          - label: { id: icon_serre, text: "\U000F002D", text_font: mdi_font_temp, styles: style_text_dim }
           - label: { id: current_serre, text: "-- °", styles: [style_police_date, style_text_temp_max] }
     # Zone tactile sur la température serre → appui court : le contenu suivant de la zone à
     # gauche de l'horloge (ADR-0051, 10/10/2026, demande d'Axel : le vocal, le graphique des
@@ -191,14 +195,16 @@ obj:
               styles: style_police_date
           # Clim choisie : son icône (palette des tuiles, couleur du mode) à gauche de sa
           # consigne (09/10/2026, lot A : on sait toujours ce que règle la tuile, même quand
-          # les minutes de l'horloge font passer d'un appareil à l'autre). La consigne reste
-          # au centre exact de la tuile, comme avant ; l'icône est posée contre elle, à
-          # 8 px. align_to ne place qu'une fois, après le setup (ESPHome) : la largeur de la
-          # consigne change avec le texte et la police du thème, alors tab5_reglables.cpp
-          # replace l'icône à chaque changement de taille (consigne_icone_placer). Vide,
-          # l'icône ne décale rien. Tient entre − et + dans les 21 thèmes
-          # (tests/test_gestes.py). Peinte par tab5_reglables.cpp, la consigne par
-          # tab5_clim.cpp.
+          # les minutes de l'horloge font passer d'un appareil à l'autre). L'icône est posée
+          # contre la consigne, à 8 px, et les deux sont centrées ensemble entre − et +
+          # (18/10/2026, demande d'Axel : la consigne seule au centre laissait le groupe
+          # 27 px à gauche ; sur la 7B, 15 px d'air après le − et 63 avant le +). align_to
+          # ne place qu'une fois, après le setup (ESPHome) : la largeur de la consigne change
+          # avec le texte et la police du thème, alors tab5_reglables.cpp replace l'icône et
+          # la consigne à chaque changement de taille de l'une ou de l'autre
+          # (consigne_icone_placer). Vide, l'icône ne décale rien. Tient entre − et + dans
+          # les 21 thèmes, sur chaque carte (tests/test_gestes.py). Peinte par
+          # tab5_reglables.cpp, la consigne par tab5_clim.cpp.
           - label:
               id: clim_consigne_icone
               text: ""
@@ -289,7 +295,9 @@ obj:
                     else:
                       - lambda: 'reglables_pas(-1);'
               widgets:
-                - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_56 }
+                # 56 px sur le Tab5, à la taille de la carte ailleurs (mdi_font_pas, 46 sur
+                # la 7B : à 56 dans le bouton de 40 px, le trait du − en prenait 33).
+                - label: { text: "\U000F0374", align: CENTER, text_font: mdi_font_pas }
 
           - button:
               id: btn_clim_plus
@@ -315,4 +323,4 @@ obj:
                     else:
                       - lambda: 'reglables_pas(+1);'
               widgets:
-                - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_56 }
+                - label: { text: "\U000F0415", align: CENTER, text_font: mdi_font_pas }

@@ -147,6 +147,61 @@ def test_en_tetes_du_calendrier_sur_les_colonnes_des_cases(carte):
 
 
 @pytest.mark.parametrize("carte", CARTES)
+def test_en_tete_du_calendrier_sans_chevauchement(carte):
+    """‹, le mois, › et « Aujourd'hui » côte à côte sur la ligne du titre, sans se couvrir :
+    sur la 7B, › était caché sous « Aujourd'hui » (rendu du 18/10/2026). Sur le Tab5 : 278
+    et 420, comme avant."""
+    g = _geometrie(carte)
+    popup = yaml.load(_lire("Tab5", "ui_components", "calendar_popup.yaml"), Loader=_Chargeur)
+    par_id = {p.get("id"): p for _t, p in _widgets([popup]) if p.get("id")}
+    milieu = g["kCarteL"] // 2
+
+    def boite(nom):
+        p = par_id[nom]
+        x, w = _resolu(p["x"], carte), _resolu(p["width"], carte)
+        if p["align"] == "TOP_MID":
+            return milieu + x - w // 2, milieu + x - w // 2 + w
+        assert p["align"] == "TOP_RIGHT", nom
+        return g["kCarteL"] + x - w, g["kCarteL"] + x
+
+    ordre = [boite(n) for n in ("btn_cal_prev", "lbl_cal_month", "btn_cal_next", "btn_cal_today")]
+    for (g1, d1), (g2, d2) in zip(ordre, ordre[1:]):
+        assert d1 + 16 <= g2, f"en-tête du calendrier : {ordre} ({carte})"
+    assert ordre[0][0] >= 200, f"‹ trop près du titre « Calendrier » ({carte})"
+    if carte == "tab5":
+        assert (jeton("cal_nav_x"), jeton("cal_mois_l")) == (278, 420)
+
+
+@pytest.mark.parametrize("carte", CARTES)
+def test_reglages_derniere_commande_au_dessus_du_bas(carte):
+    """Réglages : chaque bouton de choix (reglages_choix_btn.yaml) reste 40 px sous le titre de
+    sa rangée (reglages_rangee.yaml, fixe: 46), et le plus bas garde 16 px au-dessus du bas
+    du corps (3 sur la 7B avant le 18/10/2026). Sur le Tab5, les y d'avant."""
+    texte = _lire("Tab5", "ui_components", "reglages_popup.yaml")
+    rangees = re.findall(r"file: reglages_rangee\.yaml, vars: \{([^}]*)\}", texte)
+    assert rangees and all("fixe: 46," in r for r in rangees)
+    titres = {int(y) for y in re.findall(r"file: reglages_rangee\.yaml, vars: \{[^}]*\by: (\d+),", texte)}
+    boutons = [int(y) for y in re.findall(r"file: reglages_choix_btn\.yaml, vars: \{[^}]*\by: (\d+),", texte)]
+    assert boutons and all(y - 40 in titres for y in boutons)
+    jetons = jetons_resolus(carte)
+    rangee = yaml.load(_lire("Tab5", "ui_components", "reglages_rangee.yaml"), Loader=_Chargeur)["obj"]
+    bouton = yaml.load(_lire("Tab5", "ui_components", "reglages_choix_btn.yaml"), Loader=_Chargeur)["button"]
+
+    def y_rangee(y):
+        return int(resoudre(rangee["y"], dict(jetons, y=str(y), fixe="46")))
+
+    def y_bouton(y):
+        return int(resoudre(bouton["y"], dict(jetons, y=str(y))))
+
+    for y in boutons:
+        assert y_bouton(y) == y_rangee(y - 40) + 40, (y, carte)
+    bas = max(y_bouton(y) for y in boutons) + int(resoudre(bouton["height"], jetons))
+    assert bas <= int(jetons["corps_h"]) - 16, f"dernier bouton des Réglages à {bas} ({carte})"
+    if carte == "tab5":
+        assert [y_bouton(y) for y in boutons] == boutons and jeton("reglages_h") == 552
+
+
+@pytest.mark.parametrize("carte", CARTES)
 def test_grille_du_calendrier_centree_dans_la_carte(carte):
     g = _geometrie(carte)
     x0, pas, w = g["kCalColX0"], g["kCalColPas"], g["kCalColW"]
@@ -225,12 +280,13 @@ ACCUEIL_TAB5 = {
     "acc_horloge_h": 210, "acc_bandeau_y": 10, "ligne_zone_h": 70, "cadre_bas_h": 72, "acc_cadre_bas": 308,
     "acc_cadre_y": 236, "acc_ligne_l": 401, "acc_rangee_y": 244, "acc_pastilles_y": 319, "acc_zone_y": 42,
     "acc_zone_h": 184, "acc_vocal_h": 230, "acc_micro_x": 162, "acc_micro_y": 78, "acc_micro_l": 120,
-    "acc_domo_y": 90, "acc_clim_y": 110, "acc_clim_h": 198, "acc_temp_x": 14, "acc_temp_y": -36,
+    "acc_domo_y": 90, "acc_clim_y": 110, "acc_clim_h": 198, "acc_temp_x": 14, "acc_temp_ecart": 8, "acc_temp_y": -36,
     "acc_temp_zone_y": 31, "acc_temp_zone_h": 64, "acc_serre_x": -6, "acc_serre_l": 200, "acc_salon_x": 4,
     "acc_salon_l": 192, "acc_pas_x": 13, "acc_pas_l": 52, "acc_pas_rayon": 12, "acc_consigne_l": 200, "acc_reglables_x": 740, "acc_reglables_l": 520, "acc_reglable_h": 52,
     "acc_mini_vignette": 56, "acc_mini_texte_x": 76, "acc_mini_titre_y": 10, "acc_mini_artiste_y": 38,
     "acc_lect_btn": 52, "acc_lect_lecture": 60, "central_carte_w": 1240, "central_w": 1180,
     "acc_centrale_y": 333, "acc_centrale_h": 84, "acc_centrale_bouton_h": 80, "acc_pluie_h": 50,
+    "acc_pluie_5mn_l": 25, "acc_pluie_10mn_l": 55, "acc_pluie_ecart": 15,
     "acc_pluie_pad": 15, "acc_pluie_pad_val": 10, "acc_titre_sous_y": -26, "acc_titre_y2": 13,
     "acc_pagination_x": 480, "acc_pagination_y": 420, "acc_pagination_l": 310, "acc_perimees_x": 800,
     "acc_perimees_y": 416, "acc_perimees_l": 455, "acc_perimees_h": 26, "acc_tuiles_y": 430, "acc_tuiles_h": 290,

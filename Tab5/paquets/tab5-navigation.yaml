@@ -171,6 +171,24 @@ script:
             zone_gauche_suivante();  // le tap de la seconde température (ADR-0051)
           }
 
+  # Ferme TOUS les jeux ouverts. Un seul overlay de jeu peut vivre à la fois :
+  # sans ça, ouvrir un jeu par-dessus un autre laisse le timer du précédent
+  # tourner et son overlay sous celui du nouveau.
+  # [AI-CONTEXT] Point d'entrée UNIQUE : le sélecteur arcade appelle ce script
+  # avant chaque ouverture, au lieu de recopier la liste dans 8 lambdas (c'était
+  # la source des oublis — Trivia manquait dans 5 cartes sur 8).
+  # La liste des consoles ne vit pas ici mais dans `GameRegistry::kGames`
+  # (jeux_registre.cpp) : une 9ᵉ console s'ajoute LÀ, une seule fois. L'ordre
+  # de fermeture est celui de la table (« Neon Apron » en dernier : sa fermeture
+  # restaure la rotation 270 du dashboard, ADR-0012).
+  # Dans le socle, pas dans le module (ADR-0065) : le socle l'appelle (ci-dessous, réveil),
+  # et sans jeux GameRegistry::close_all() ne fait rien.
+  - id: tab5_games_close_all
+    mode: single
+    then:
+      - lambda: |-
+          GameRegistry::close_all();
+
   # Ouverture d'un écran (07/10/2026) : la routine UNIQUE du select « Aller à l'écran »
   # (plus bas), des gestes de l'accueil (script tab5_geste ci-dessus, écran choisi dans
   # le blueprint, geste_cible()) et de la roue de navigation (ADR-0042,

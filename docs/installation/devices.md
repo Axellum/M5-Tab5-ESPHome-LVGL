@@ -24,12 +24,13 @@ With the HACS integration, its setup assistant can create it for you from your H
 
 ## The sections
 
-Every section opens folded except Room 1: click its title to open it. Each field has a help sentence under it.
+Every section opens folded except Rooms and Room 1: click its title to open it. Each field has a help sentence under it.
 
 | Section | What you pick | More |
 |---|---|---|
-| Pièce 1 — accueil · Room 1 — home | a name and up to five devices: the tiles of the home page, left to right | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
-| Pièce 2 to 5 · Room 2 to 5 | the rooms one or two swipes away; in every room, optionally, its temperature, humidity and climate (shown in HA mode) | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
+| Pièces · Rooms | « Nombre de pièces · Number of rooms »: how many rooms the tablet has, 1 to 10 (5 by default) | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
+| Pièce 1 — accueil · Room 1 — home | a name and up to twenty devices: the tiles of the home page, left to right (beyond five, the last tiles are cut in two, then in four) | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
+| Pièce 2 to 10 · Room 2 to 10 | the rooms a swipe away (rooms 6 to 10: a page each, after days 10-14); in every room, optionally, its temperature, humidity and climate (shown in HA mode) | [rooms](adapt-to-your-home.md#rooms-firmware-32-and-later) |
 | Personnaliser des tuiles · Customise tiles | another name, icon or behaviour for a tile (on only, confirm, read only) | [tile icons](../tiles_icons.md) |
 | TV, téléphone · TV, phone | the TV, its remote, the phone battery | [other zones](adapt-to-your-home.md#other-zones) |
 | Températures · Temperatures | room temperature and humidity, a second temperature (greenhouse) and whether it is outdoors | [temperature history](adapt-to-your-home.md#temperature-history) |
@@ -81,12 +82,13 @@ Avec l'intégration HACS, son assistant de configuration peut la créer pour vou
 
 ## Les sections
 
-Toutes les sections s'ouvrent repliées, sauf la pièce 1 : cliquez sur un titre pour l'ouvrir. Chaque champ a une phrase d'aide dessous.
+Toutes les sections s'ouvrent repliées, sauf « Pièces » et la pièce 1 : cliquez sur un titre pour l'ouvrir. Chaque champ a une phrase d'aide dessous.
 
 | Section | Ce que vous choisissez | Plus |
 |---|---|---|
-| Pièce 1 — accueil · Room 1 — home | un nom et jusqu'à cinq appareils : les tuiles de l'accueil, de gauche à droite | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
-| Pièce 2 à 5 · Room 2 to 5 | les pièces à un ou deux glissements ; dans chaque pièce, en option, sa température, son humidité et sa clim (montrées en mode HA) | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
+| Pièces · Rooms | « Nombre de pièces · Number of rooms » : combien de pièces a la tablette, 1 à 10 (5 par défaut) | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
+| Pièce 1 — accueil · Room 1 — home | un nom et jusqu'à vingt appareils : les tuiles de l'accueil, de gauche à droite (au-delà de cinq, les dernières tuiles sont coupées en deux, puis en quatre) | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
+| Pièce 2 à 10 · Room 2 to 10 | les pièces à un glissement ou plus (pièces 6 à 10 : une page chacune, après J+10 à J+14) ; dans chaque pièce, en option, sa température, son humidité et sa clim (montrées en mode HA) | [pièces](adapt-to-your-home.md#pièces-firmware-32-et-plus) |
 | Personnaliser des tuiles · Customise tiles | un autre nom, une autre icône ou un comportement pour une tuile (allumer seulement, confirmer, lecture seule) | [icônes des tuiles](../tiles_icons.md#version-française) |
 | TV, téléphone · TV, phone | la TV, sa télécommande, la batterie du téléphone | [autres zones](adapt-to-your-home.md#autres-zones) |
 | Températures · Temperatures | température et humidité de la pièce, une seconde température (serre) et si elle est dehors | [historique des températures](adapt-to-your-home.md#historique-des-températures) |

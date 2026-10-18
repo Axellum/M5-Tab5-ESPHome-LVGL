@@ -38,7 +38,7 @@
           "pieces": "Habitaciones de la tableta"
         },
         "data_description": {
-          "pieces": "Cinco como máximo, en el orden de las páginas de la fila inferior: la primera en la pantalla de inicio, las siguientes deslizando."
+          "pieces": "Diez como máximo, en el orden de las páginas de la fila inferior: la primera en la pantalla de inicio, las siguientes deslizando."
         }
       },
       "piece": {
@@ -53,7 +53,7 @@
         },
         "data_description": {
           "nom": "Vacío: el nombre del área común a sus dispositivos.",
-          "tuiles": "Cinco como máximo, de izquierda a derecha.",
+          "tuiles": "Veinte como máximo, de izquierda a derecha. Más de cinco: los mosaicos se dividen en dos y luego en cuatro.",
           "temperature": "Opcional. Se muestra en la pantalla de inicio cuando esta habitación está en pantalla.",
           "humidite": "Opcional, junto con la temperatura.",
           "clim": "Opcional, junto con la temperatura: los botones − / + de la pantalla de inicio la regulan."
@@ -129,8 +129,8 @@
     },
     "error": {
       "aucune_piece_choisie": "Elija al menos una habitación.",
-      "trop_de_pieces": "Cinco habitaciones como máximo.",
-      "trop_de_tuiles": "Cinco mosaicos como máximo."
+      "trop_de_pieces": "Diez habitaciones como máximo.",
+      "trop_de_tuiles": "Veinte mosaicos como máximo."
     }
   },
   "issues": {
@@ -186,7 +186,7 @@
               "pieces": "Habitaciones de la tableta"
             },
             "data_description": {
-              "pieces": "Cinco como máximo, en el orden de las páginas de la fila inferior: la primera en la pantalla de inicio, las siguientes deslizando."
+              "pieces": "Diez como máximo, en el orden de las páginas de la fila inferior: la primera en la pantalla de inicio, las siguientes deslizando."
             }
           },
           "piece": {
@@ -201,7 +201,7 @@
             },
             "data_description": {
               "nom": "Vacío: el nombre del área común a sus dispositivos.",
-              "tuiles": "Cinco como máximo, de izquierda a derecha.",
+              "tuiles": "Veinte como máximo, de izquierda a derecha. Más de cinco: los mosaicos se dividen en dos y luego en cuatro.",
               "temperature": "Opcional. Se muestra en la pantalla de inicio cuando esta habitación está en pantalla.",
               "humidite": "Opcional, junto con la temperatura.",
               "clim": "Opcional, junto con la temperatura: los botones − / + de la pantalla de inicio la regulan."
@@ -277,8 +277,8 @@
         },
         "error": {
           "aucune_piece_choisie": "Elija al menos una habitación.",
-          "trop_de_pieces": "Cinco habitaciones como máximo.",
-          "trop_de_tuiles": "Cinco mosaicos como máximo."
+          "trop_de_pieces": "Diez habitaciones como máximo.",
+          "trop_de_tuiles": "Veinte mosaicos como máximo."
         }
       }
     }

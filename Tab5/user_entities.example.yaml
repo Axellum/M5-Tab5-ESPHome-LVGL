@@ -28,6 +28,12 @@
 #     docs/hardware.md et docs/decisions/0061-board-and-screen-size.md. ---
 # tab5_carte: tab5
 
+# --- Jeux (ADR-0065) : oui (défaut sur le Tab5) ou non (défaut sur une carte sans IMU,
+#     la Waveshare 7B : la moitié des consoles se jouent en inclinant). Non : ni Arcade,
+#     ni « Jeux » dans la roue de navigation, et le tap de la manette ouvre le lecteur
+#     audio (son appui long reste la télécommande). ---
+# tab5_jeux: oui
+
 # --- Plusieurs écrans dans la même maison (ADR-0063) : un nom par écran, en minuscules,
 #     chiffres et tirets. tab5-ha-hmi (défaut si la ligne reste commentée) pour le
 #     premier : ne pas renommer une tablette déjà installée. Home Assistant pousse

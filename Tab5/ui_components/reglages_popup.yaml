@@ -104,13 +104,13 @@ obj:
 
                       # Luminosité du rétroéclairage (lumière « Display Backlight »). 10 % au
                       # moins : à 0, la lumière s'éteindrait (et LVGL avec elle).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 1168, icon: "\U000F00DF", label_text: "Luminosité" } }
-                      - label: { id: reglages_lum_valeur, text: "100 %", align: TOP_RIGHT, x: -22, y: "${ 60 * (corps_h | int) // 598 - 2 }", text_font: roboto_32_b }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 60, w: 1168, icon: "\U000F00DF", label_text: "Luminosité" } }
+                      - label: { id: reglages_lum_valeur, text: "100 %", align: TOP_RIGHT, x: -22, y: "${ 60 * (reglages_h | int) // 552 - 2 }", text_font: roboto_32_b }
                       - slider:
                           id: reglages_lum_slider
                           align: TOP_LEFT
                           x: ${ 30 * (corps_w | int) // 1202 }
-                          y: ${ 60 * (corps_h | int) // 598 + 58 }
+                          y: ${ 60 * (reglages_h | int) // 552 + 58 }
                           width: ${ 1142 * (corps_w | int) // 1202 }
                           height: 20
                           min_value: 10
@@ -136,7 +136,7 @@ obj:
 
                       # Extinction auto : options du select « Tab5 Extinction auto de l'écran »,
                       # dans son ordre (tab5-ha-controls.yaml).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 201, w: 1168, icon: "\U000F0D90", label_text: "Extinction auto" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 201, w: 1168, icon: "\U000F0D90", label_text: "Extinction auto" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_0, x: 17, y: 241, w: 188, reglage: 0, valeur: 0, label_text: "Jamais" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_1, x: 213, y: 241, w: 188, reglage: 0, valeur: 1, label_text: "1 min" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_2, x: 409, y: 241, w: 188, reglage: 0, valeur: 2, label_text: "2 min" } }
@@ -145,12 +145,12 @@ obj:
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_extinction_5, x: 997, y: 241, w: 188, reglage: 0, valeur: 5, label_text: "30 min" } }
 
                       # « Okay Nabu » rallume l'écran (« Tab5 Rallumer l'écran à Okay Nabu »).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 342, w: 1168, icon: "\U000F05CB", label_text: "Rallumer l'écran à « Okay Nabu »" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 342, w: 1168, icon: "\U000F05CB", label_text: "Rallumer l'écran à « Okay Nabu »" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_okay_nabu_oui, x: 17, y: 382, w: 579, reglage: 1, valeur: 1, label_text: "Oui" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_okay_nabu_non, x: 606, y: 382, w: 579, reglage: 1, valeur: 0, label_text: "Non" } }
 
                       # Une tape sur la tablette rallume l'écran (« Tab5 Tap-to-Wake », tab5-imu.yaml).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 483, w: 1168, icon: "\U000F0741", label_text: "Rallumer l'écran d'une tape" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 483, w: 1168, icon: "\U000F0741", label_text: "Rallumer l'écran d'une tape" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_tape_oui, x: 17, y: 523, w: 579, reglage: 2, valeur: 1, label_text: "Oui" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_tape_non, x: 606, y: 523, w: 579, reglage: 2, valeur: 0, label_text: "Non" } }
 
@@ -181,21 +181,21 @@ obj:
 
                       # Thème : précédent / suivant, en boucle (select « Thème »). Le nom est un
                       # nom propre, écrit par reglages_peindre() comme dans HA.
-                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 1168, icon: "\U000F03D8", label_text: "Thème" } }
-                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_prec", x: "${ 17 * (corps_w | int) // 1202 }", y: "${ 60 * (corps_h | int) // 598 + 40 }", w: "${ 72 * (corps_w | int) // 1202 }", h: "${ 56 * (corps_h | int) // 598 }", r: "14", icon: "\U000F0141", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: -1 } ] } }
-                      - label: { id: reglages_theme_nom, text: "--", align: TOP_LEFT, x: "${ 97 * (corps_w | int) // 1202 }", y: "${ 60 * (corps_h | int) // 598 + 49 }", width: "${ 1008 * (corps_w | int) // 1202 }", text_align: CENTER, long_mode: DOT, text_font: roboto_32_b }
-                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_suiv", x: "${ 1113 * (corps_w | int) // 1202 }", y: "${ 60 * (corps_h | int) // 598 + 40 }", w: "${ 72 * (corps_w | int) // 1202 }", h: "${ 56 * (corps_h | int) // 598 }", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: 1 } ] } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 60, w: 1168, icon: "\U000F03D8", label_text: "Thème" } }
+                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_prec", x: "${ 17 * (corps_w | int) // 1202 }", y: "${ 60 * (reglages_h | int) // 552 + 40 }", w: "${ 72 * (corps_w | int) // 1202 }", h: "${ 56 * (corps_h | int) // 598 }", r: "14", icon: "\U000F0141", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: -1 } ] } }
+                      - label: { id: reglages_theme_nom, text: "--", align: TOP_LEFT, x: "${ 97 * (corps_w | int) // 1202 }", y: "${ 60 * (reglages_h | int) // 552 + 49 }", width: "${ 1008 * (corps_w | int) // 1202 }", text_align: CENTER, long_mode: DOT, text_font: roboto_32_b }
+                      - !include { file: bouton_pas.yaml, vars: { id: "btn_reglages_theme_suiv", x: "${ 1113 * (corps_w | int) // 1202 }", y: "${ 60 * (reglages_h | int) // 552 + 40 }", w: "${ 72 * (corps_w | int) // 1202 }", h: "${ 56 * (corps_h | int) // 598 }", r: "14", icon: "\U000F0142", appui: [ script.execute: { id: tab5_reglages_choisir, reglage: 3, valeur: 1 } ] } }
 
                       # Clair ou sombre : options du select « Clair ou sombre », dans son ordre.
                       # Moitié gauche depuis le 10/10/2026 : le fond de l'horloge à droite.
-                      - !include { file: reglages_rangee.yaml, vars: { y: 179, w: 574, icon: "\U000F050E", label_text: "Clair ou sombre" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 179, w: 574, icon: "\U000F050E", label_text: "Clair ou sombre" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_0, x: 17, y: 219, w: 184, reglage: 4, valeur: 0, label_text: "Sombre" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_1, x: 211, y: 219, w: 185, reglage: 4, valeur: 1, label_text: "Clair" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_2, x: 406, y: 219, w: 185, reglage: 4, valeur: 2, label_text: "Auto" } }
 
                       # Fond de la tuile de l'horloge (10/10/2026) : interrupteur « Tab5 Fond de l'horloge » ;
                       # Non = la tuile n'a ni dégradé ni fond, sa bordure reste.
-                      - !include { file: reglages_rangee.yaml, vars: { x: 611, y: 179, w: 574, icon: "\U000F0150", label_text: "Fond de l'horloge" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, x: 611, y: 179, w: 574, icon: "\U000F0150", label_text: "Fond de l'horloge" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_horloge_fond_oui, x: 611, y: 219, w: 282, reglage: 13, valeur: 1, label_text: "Oui" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_horloge_fond_non, x: 903, y: 219, w: 282, reglage: 13, valeur: 0, label_text: "Non" } }
 
@@ -203,21 +203,21 @@ obj:
                       # (packages/tab5_push.yaml), au coucher, au lever et à chaque connexion de la
                       # tablette ; la changer ici vaut jusque-là. Sans effet hors du mode Auto.
                       # Moitié gauche depuis le 09/10/2026 : les animations à droite.
-                      - !include { file: reglages_rangee.yaml, vars: { y: 298, w: 574, icon: "\U000F0594", label_text: "Nuit (mode Auto)" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 298, w: 574, icon: "\U000F0594", label_text: "Nuit (mode Auto)" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_oui, x: 17, y: 338, w: 282, reglage: 5, valeur: 1, label_text: "Oui" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_nuit_non, x: 309, y: 338, w: 282, reglage: 5, valeur: 0, label_text: "Non" } }
 
                       # Animations (09/10/2026, ADR-0045) : options du select « Tab5 Animations »
                       # (tab5-economie.yaml), dans son ordre (ChoixAnimations, tab5_economie.h).
                       # Le mode économie actif impose « Aucune » sans changer le choix montré ici.
-                      - !include { file: reglages_rangee.yaml, vars: { x: 611, y: 298, w: 574, icon: "\U000F093A", label_text: "Animations" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, x: 611, y: 298, w: 574, icon: "\U000F093A", label_text: "Animations" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_animations_0, x: 611, y: 338, w: 185, reglage: 12, valeur: 0, label_text: "Complètes" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_animations_1, x: 806, y: 338, w: 184, reglage: 12, valeur: 1, label_text: "Essentielles" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_animations_2, x: 1000, y: 338, w: 185, reglage: 12, valeur: 2, label_text: "Aucune" } }
 
                       # Langue : une pastille par langue de Tab5/lang/, dans l'ordre du select
                       # « Langue » (noms natifs écrits par reglages_preparer()).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 417, w: 1168, icon: "\U000F05CA", label_text: "Langue" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 417, w: 1168, icon: "\U000F05CA", label_text: "Langue" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_0, x: 17, y: 457, w: 286, reglage: 6, valeur: 0, label_text: "" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_1, x: 311, y: 457, w: 286, reglage: 6, valeur: 1, label_text: "" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_langue_2, x: 605, y: 457, w: 286, reglage: 6, valeur: 2, label_text: "" } }
@@ -299,27 +299,27 @@ obj:
                       # tab5_batterie.h). Ce que fait « 80 % » : arrêt à 80 %, reprise à 70 %
                       # (expliqué sur le tableau de bord de HA ; la phrase de cette carte a laissé
                       # sa place aux rangées du 09/10/2026).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 272, icon: "\U000F0084", label_text: "Limite de charge" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 60, w: 272, icon: "\U000F0084", label_text: "Limite de charge" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_limite_0, x: 17, y: 100, w: 131, reglage: 7, valeur: 0, label_text: "100 %" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_limite_1, x: 158, y: 100, w: 131, reglage: 7, valeur: 1, label_text: "80 %" } }
 
                       # Mode de charge (moitié droite, 09/10/2026, ADR-0045) : options du select
                       # « Tab5 Mode de charge » (tab5-sensors-diagnostics.yaml), dans son ordre
                       # (ModeCharge, tab5_batterie.h). Rapide = nCHG_QC_EN, chargeur allumé seulement.
-                      - !include { file: reglages_rangee.yaml, vars: { x: 300, y: 60, w: 272, icon: "\U000F12A6", label_text: "Mode de charge" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, x: 300, y: 60, w: 272, icon: "\U000F12A6", label_text: "Mode de charge" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_charge_0, x: 300, y: 100, w: 131, reglage: 10, valeur: 0, label_text: "Classique" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_mode_charge_1, x: 441, y: 100, w: 131, reglage: 10, valeur: 1, label_text: "Rapide" } }
 
                       # Économie d'énergie : options du select « Tab5 Économie d'énergie »
                       # (tab5-economie.yaml), dans son ordre (ChoixEconomie, tab5_economie.h).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 201, w: 555, icon: "\U000F032A", label_text: "Économie d'énergie" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 201, w: 555, icon: "\U000F032A", label_text: "Économie d'énergie" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_economie_0, x: 17, y: 241, w: 178, reglage: 8, valeur: 0, label_text: "Jamais" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_economie_1, x: 205, y: 241, w: 178, reglage: 8, valeur: 1, label_text: "Sur batterie" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_economie_2, x: 394, y: 241, w: 178, reglage: 8, valeur: 2, label_text: "Toujours" } }
 
                       # Wi-Fi éco (09/10/2026, ADR-0045) : options du select « Tab5 Wi-Fi éco »
                       # (tab5-sensors-diagnostics.yaml), les mêmes que l'économie d'énergie.
-                      - !include { file: reglages_rangee.yaml, vars: { y: 342, w: 555, icon: "\U000F05A9", label_text: "Wi-Fi éco" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 342, w: 555, icon: "\U000F05A9", label_text: "Wi-Fi éco" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_wifi_eco_0, x: 17, y: 382, w: 178, reglage: 11, valeur: 0, label_text: "Jamais" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_wifi_eco_1, x: 205, y: 382, w: 178, reglage: 11, valeur: 1, label_text: "Sur batterie" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_wifi_eco_2, x: 394, y: 382, w: 178, reglage: 11, valeur: 2, label_text: "Toujours" } }
@@ -327,7 +327,7 @@ obj:
                       # Batterie montée (« Tab5 Batterie montée », tab5-ha-controls.yaml) : Oui
                       # montre l'icône de la batterie dans le bandeau d'état (une prise quand la
                       # tension dit qu'il n'y en a pas).
-                      - !include { file: reglages_rangee.yaml, vars: { y: 483, w: 555, icon: "\U000F0079", label_text: "Batterie montée" } }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 483, w: 555, icon: "\U000F0079", label_text: "Batterie montée" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_montee_oui, x: 17, y: 523, w: 272, reglage: 9, valeur: 1, label_text: "Oui" } }
                       - !include { file: reglages_choix_btn.yaml, vars: { id: reglages_montee_non, x: 300, y: 523, w: 272, reglage: 9, valeur: 0, label_text: "Non" } }
 
@@ -343,17 +343,17 @@ obj:
                     widgets:
                       - label: { text: "ÉTAT", align: TOP_LEFT, x: 22, y: 14, styles: style_text_accent }
 
-                      - !include { file: reglages_rangee.yaml, vars: { y: 60, w: 555, icon: "\U000F06A5", label_text: "État" } }
-                      - label: { id: reglages_batt_etat, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 60 * (corps_h | int) // 598 + 49 }", width: "${ 555 * (corps_w | int) // 1202 - 40 }", long_mode: DOT, text_font: roboto_32_b, styles: style_text_console_value }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 60, w: 555, icon: "\U000F06A5", label_text: "État" } }
+                      - label: { id: reglages_batt_etat, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 60 * (reglages_h | int) // 552 + 49 }", width: "${ 555 * (corps_w | int) // 1202 - 40 }", long_mode: DOT, text_font: roboto_32_b, styles: style_text_console_value }
 
-                      - !include { file: reglages_rangee.yaml, vars: { y: 201, w: 555, icon: "\U000F12A2", label_text: "Niveau" } }
-                      - label: { id: reglages_batt_niveau, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 201 * (corps_h | int) // 598 + 49 }", text_font: roboto_32_b, styles: style_text_console_value }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 201, w: 555, icon: "\U000F12A2", label_text: "Niveau" } }
+                      - label: { id: reglages_batt_niveau, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 201 * (reglages_h | int) // 552 + 49 }", text_font: roboto_32_b, styles: style_text_console_value }
 
-                      - !include { file: reglages_rangee.yaml, vars: { y: 342, w: 555, icon: "\U000F0241", label_text: "Tension" } }
-                      - label: { id: reglages_batt_tension, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 342 * (corps_h | int) // 598 + 49 }", text_font: roboto_32_b, styles: style_text_console_value }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 342, w: 555, icon: "\U000F0241", label_text: "Tension" } }
+                      - label: { id: reglages_batt_tension, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 342 * (reglages_h | int) // 552 + 49 }", text_font: roboto_32_b, styles: style_text_console_value }
 
-                      - !include { file: reglages_rangee.yaml, vars: { y: 483, w: 555, icon: "\U000F029A", label_text: "Consommation" } }
-                      - label: { id: reglages_batt_conso, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 483 * (corps_h | int) // 598 + 49 }", text_font: roboto_32_b, styles: style_text_console_value }
+                      - !include { file: reglages_rangee.yaml, vars: { fixe: 46, y: 483, w: 555, icon: "\U000F029A", label_text: "Consommation" } }
+                      - label: { id: reglages_batt_conso, text: "--", align: TOP_LEFT, x: "${ 17 * (corps_w | int) // 1202 + 40 }", y: "${ 483 * (reglages_h | int) // 552 + 49 }", text_font: roboto_32_b, styles: style_text_console_value }
 
           # ═══════════════════════════════════════════════════════════════════
           # PAGE SYSTÈME (l'ancienne console système)

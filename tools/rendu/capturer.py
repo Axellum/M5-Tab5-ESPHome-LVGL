@@ -71,7 +71,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from demo_pusher import _appeler, _donner_une_cle, _lire_cle_demo, _pousser_scene  # noqa: E402
 from ecrans import ECRANS, PORTRAITS, Aller, Attendre, Choisir, Glisser, Service, Toucher  # noqa: E402
 from scenarios import SCENES, build_zones_absentes  # noqa: E402
-from vers_carte import adapter  # noqa: E402
+from vers_carte import adapter, jeux_compiles  # noqa: E402
 
 logger = logging.getLogger("capturer")
 
@@ -162,15 +162,15 @@ def en_png(dossier: Path, rotation: int = 270) -> list[Path]:
 
 
 def lire_mesure(texte: str) -> tuple[str, dict] | None:
-    """« fichier|écran|coupés|hors » du capteur « Rendu mesure » (action rendu_capture,
-    Tab5/rendu/rendu_mesure.h) → (fichier, {ecran, coupes, hors}). Les noms d'écran (registre
-    des fenêtres, consoles) n'ont pas de « | ». Un texte mal formé : None."""
+    """« fichier|écran|coupés|hors|barres » du capteur « Rendu mesure » (action rendu_capture,
+    Tab5/rendu/rendu_mesure.h) → (fichier, {ecran, coupes, hors, barres}). Les noms d'écran
+    (registre des fenêtres, consoles) n'ont pas de « | ». Un texte mal formé : None."""
     champs = texte.split("|")
-    if len(champs) != 4:
+    if len(champs) != 5:
         return None
-    fichier, ecran, coupes, hors = champs
+    fichier, ecran, coupes, hors, barres = champs
     try:
-        return fichier, {"ecran": ecran, "coupes": int(coupes), "hors": int(hors)}
+        return fichier, {"ecran": ecran, "coupes": int(coupes), "hors": int(hors), "barres": int(barres)}
     except ValueError:
         return None
 
@@ -232,11 +232,12 @@ class Rendu:
         self.empreintes.setdefault(empreinte, fichier)
 
     def ecrire_bilan(self, chemin: Path) -> None:
-        """Une entrée par capture : écran affiché, objets coupés et hors écran (None si le
-        rendu ne l'a pas publié) et la capture identique qui la précède (tools/rendu/bilan_carte.py)."""
+        """Une entrée par capture : écran affiché, objets coupés et hors écran, barres de
+        défilement (None si le rendu ne l'a pas publié) et la capture identique qui la précède
+        (tools/rendu/bilan_carte.py)."""
         import json
 
-        bilan = {n: {**self.mesures.get(n, {"ecran": None, "coupes": None, "hors": None}),
+        bilan = {n: {**self.mesures.get(n, {"ecran": None, "coupes": None, "hors": None, "barres": None}),
                      "doublon_de": self.doublons.get(n)} for n in self.ordre}
         chemin.write_text(json.dumps(bilan, ensure_ascii=False, indent=1), encoding="utf-8")
         logger.info("Bilan des captures : %s (%d)", chemin, len(bilan))
@@ -338,11 +339,15 @@ async def capturer(hote: str, dossier: Path, suffixe: str, puis_langue: str | No
             await asyncio.sleep(ATTENTE_PANNEAU)
             if seulement is None:
                 await rendu.capturer(nom_de(index, scene.nom))
-        # Les écrans s'ouvrent sur la dernière scène, carte centrale arrêtée.
+        # Les écrans s'ouvrent sur la dernière scène, carte centrale arrêtée. Une carte
+        # compilée sans les jeux (ADR-0065, jeux_compiles) n'a ni Arcade ni console.
+        jeux = jeux_compiles(carte)
         for ecran in ECRANS:
             if seulement is not None and ecran.nom not in seulement:
                 continue
-            if sans_jeux and ecran.nom.startswith("jeu-"):
+            if (sans_jeux or not jeux) and ecran.nom.startswith("jeu-"):
+                continue
+            if not jeux and ecran.nom == "arcade":
                 continue
             logger.info("Écran : %s", ecran.nom)
             # Sur une autre carte que le Tab5, les mêmes gestes ramenés à son écran

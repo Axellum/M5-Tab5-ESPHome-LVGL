@@ -61,6 +61,18 @@ substitutions:
   cal_col_pas: ${ (modal_card_w | int - 46) // 7 }
   cal_col_w: ${ cal_col_pas | int - 4 }
   cal_col_x0: ${ (modal_card_w | int - 7 * (cal_col_pas | int) + 4) // 2 }
+  # En-tête du calendrier (calendar_popup.yaml) : ‹ et › (80 px) à cal_nav_x du milieu de
+  # la carte (278), le mois entre eux (cal_mois_l, 420). Sur une carte plus étroite, › garde
+  # 16 px d'air avant « Aujourd'hui » (150 px, à 100 px du bord droit) et le mois 16 px de
+  # chaque côté : 191 et 270 sur la 7B, où › était caché sous « Aujourd'hui » (18/10/2026).
+  cal_nav_x: ${ [278, (modal_card_w | int) // 2 - 306] | min }
+  cal_mois_l: ${ [420, 2 * ([278, (modal_card_w | int) // 2 - 306] | min) - 112] | min }
+  # Rangées du popup Réglages (reglages_rangee.yaml avec fixe: 46, reglages_choix_btn.yaml) :
+  # chaque commande 40 px sous le titre de sa rangée, quelle que soit la carte ; les titres
+  # se répartissent donc sur le corps moins 46 px (552 sur le Tab5, y × reglages_h / 552) et
+  # la dernière commande garde son air au-dessus du bas de la carte : 19 px sur le Tab5,
+  # 16 sur la 7B (elle en avait 3 avec y × corps_h / 598, rendu du 18/10/2026).
+  reglages_h: ${ corps_h | int - 46 }
   # Lignes d'une pièce, popups Lumières et Volets (piece_ligne.yaml) : pas (92) et hauteur
   # (84) ; cinq lignes à partir de y 50 de leur carte, les boutons de la pièce au-dessous.
   piece_ligne_pas: ${ [92, (corps_h | int - 130) // 5] | min }
@@ -162,10 +174,11 @@ substitutions:
   acc_clim_y: ${ (110 * (carte_ecran_h | int) + 360) // 720 }
   acc_clim_h: ${ (acc_cadre_bas | int) - (acc_clim_y | int) }
   # Dans la zone des températures (climate_card.yaml) : rangées à 14 px des côtés et 36 px
-  # au-dessus du milieu ; zones tactiles à y 31, 64 de haut (serre : 200 de large à 6 px du
-  # bord droit ; salon : 192 à x 4) ; dans la tuile − / + : − et + à 13 px des côtés, 10 px
-  # d'air en haut et en bas (52), rayon 12 ; valeur touchable sur 200 px.
+  # au-dessus du milieu, 8 px entre icône et valeur ; zones tactiles à y 31, 64 de haut (serre :
+  # 200 de large à 6 px du bord droit ; salon : 192 à x 4) ; dans la tuile − / + : − et + à
+  # 13 px des côtés, 10 px d'air en haut et en bas (52), rayon 12 ; valeur touchable sur 200 px.
   acc_temp_x: ${ (14 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_temp_ecart: ${ (8 * (carte_ecran_l | int) + 640) // 1280 }
   acc_temp_y: ${ -((36 * (carte_ecran_h | int) + 360) // 720) }
   acc_temp_zone_y: ${ (31 * (carte_ecran_h | int) + 360) // 720 }
   acc_temp_zone_h: ${ (64 * (carte_ecran_h | int) + 360) // 720 }
@@ -204,10 +217,14 @@ substitutions:
   acc_centrale_y: ${ (333 * (carte_ecran_h | int) + 360) // 720 }
   acc_centrale_h: ${ (84 * (carte_ecran_h | int) + 360) // 720 }
   acc_centrale_bouton_h: ${ (acc_centrale_h | int) - 4 }
-  # Dans la carte centrale : barres de pluie (50 de haut), air sous les textes de la pluie
-  # (15 ; 10 sous la valeur), chapeau « Pièce n/N » à y −26 et nom de la pièce à y +13 du
-  # milieu (kAccTitreY2, tab5_central.cpp).
+  # Dans la carte centrale : barres de pluie (50 de haut ; 25 de large pour les tranches de
+  # 5 min, 55 pour celles de 10 min, 15 px entre l'icône, les barres et le texte), air sous les
+  # textes de la pluie (15 ; 10 sous la valeur), chapeau « Pièce n/N » à y −26 et nom de la
+  # pièce à y +13 du milieu (kAccTitreY2, tab5_central.cpp).
   acc_pluie_h: ${ (50 * (carte_ecran_h | int) + 360) // 720 }
+  acc_pluie_5mn_l: ${ (25 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_pluie_10mn_l: ${ (55 * (carte_ecran_l | int) + 640) // 1280 }
+  acc_pluie_ecart: ${ (15 * (carte_ecran_l | int) + 640) // 1280 }
   acc_pluie_pad: ${ (15 * (carte_ecran_h | int) + 360) // 720 }
   acc_pluie_pad_val: ${ (10 * (carte_ecran_h | int) + 360) // 720 }
   acc_titre_sous_y: ${ -((26 * (carte_ecran_h | int) + 360) // 720) }

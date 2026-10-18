@@ -62,8 +62,13 @@ def test_entrees_des_pieces_dans_le_blueprint():
         for champ in A.CHAMPS_PIECE:
             assert f"piece_{n}_{champ}" in entrees, f"piece_{n}_{champ} absente du blueprint"
         assert A.ENTREE_PIECE.match(f"piece_{n}_tuiles")
-    assert not any(A.ENTREE_PIECE.match(c) for c in entrees if not c.startswith("piece_")), \
-        "seules les entrées des pièces sont remplacées par une mise à jour"
+    assert f"piece_{A.MAX_PIECES + 1}_nom" not in entrees, "autant de pièces que le blueprint"
+    # « Nombre de pièces » (ADR-0066) : ses bornes sont celles de l'assistant.
+    nombre = entrees[A.NOMBRE_PIECES]["selector"]["number"]
+    assert (nombre["min"], nombre["max"]) == (1, A.MAX_PIECES) and A.ENTREE_PIECE.match(A.NOMBRE_PIECES)
+    assert A.MAX_TUILES == 20 and A.TUILES_PROPOSEES == 5
+    assert not any(A.ENTREE_PIECE.match(c) for c in entrees if not c.startswith("piece_") and c != A.NOMBRE_PIECES), \
+        "seules les entrées des pièces (et leur nombre) sont remplacées par une mise à jour"
     filtre = entrees["piece_1_tuiles"]["selector"]["entity"]["filter"][0]["domain"]
     assert tuple(filtre) == A.DOMAINES_TUILES, "même liste de domaines que le sélecteur des tuiles"
     assert set(A.DOMAINES_AUTO) <= set(A.DOMAINES_TUILES)
@@ -155,22 +160,28 @@ def test_entrees_blueprint():
     pieces = [A.Piece("salon", " Salon ", ("light.a", "cover.b"), "sensor.t", None, "climate.c"),
               A.Piece("chambre", "", (), None, "sensor.h", None)]
     assert A.entrees_blueprint(pieces) == {
+        "nombre_pieces": 2,
         "piece_1_nom": "Salon", "piece_1_tuiles": ["light.a", "cover.b"], "piece_1_temperature": "sensor.t",
         "piece_1_clim": "climate.c", "piece_2_humidite": "sensor.h"}
+    # Dix pièces de vingt tuiles au plus (ADR-0066).
+    dix = A.entrees_blueprint([A.Piece(nom=f"P{n}", tuiles=tuple(f"light.{i}" for i in range(20))) for n in range(10)])
+    assert dix["nombre_pieces"] == 10 and dix["piece_10_nom"] == "P9" and len(dix["piece_10_tuiles"]) == 20
     with pytest.raises(ValueError):
-        A.entrees_blueprint([A.Piece()] * 6)
+        A.entrees_blueprint([A.Piece()] * 11)
     with pytest.raises(ValueError):
-        A.entrees_blueprint([A.Piece(tuiles=tuple(f"light.{i}" for i in range(6)))])
+        A.entrees_blueprint([A.Piece(tuiles=tuple(f"light.{i}" for i in range(21)))])
     assert all(A.ENTREE_PIECE.match(c) for c in A.entrees_blueprint(pieces))
 
 
 def test_fusionner_ne_remplace_que_les_pieces():
+    # Les pièces 6 à 10 et leur nombre (ADR-0066) sont des pièces aussi : remplacés.
     anciennes = {"piece_1_nom": "Séjour", "piece_4_tuiles": ["light.x"], "piece_5_clim": "climate.y",
-                 "meteo_entite": "weather.maison", "gestes": ["auto"], "piece_10_nom": "pas une pièce"}
-    nouvelles = {"piece_1_nom": "Salon", "piece_2_tuiles": ["light.a"]}
+                 "meteo_entite": "weather.maison", "gestes": ["auto"], "piece_10_nom": "Grenier",
+                 "nombre_pieces": 10, "pieces_favorites": "pas une pièce"}
+    nouvelles = {"nombre_pieces": 2, "piece_1_nom": "Salon", "piece_2_tuiles": ["light.a"]}
     assert A.fusionner(anciennes, nouvelles) == {
-        "piece_1_nom": "Salon", "piece_2_tuiles": ["light.a"], "meteo_entite": "weather.maison",
-        "gestes": ["auto"], "piece_10_nom": "pas une pièce"}
+        "nombre_pieces": 2, "piece_1_nom": "Salon", "piece_2_tuiles": ["light.a"], "meteo_entite": "weather.maison",
+        "gestes": ["auto"], "pieces_favorites": "pas une pièce"}
     assert A.fusionner(None, nouvelles) == nouvelles
 
 

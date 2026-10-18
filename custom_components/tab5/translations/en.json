@@ -38,7 +38,7 @@
           "pieces": "Rooms of the tablet"
         },
         "data_description": {
-          "pieces": "Five at most, in the order of the bottom row's pages: the first on the home page, the next ones a swipe away."
+          "pieces": "Ten at most, in the order of the bottom row's pages: the first on the home page, the next ones a swipe away."
         }
       },
       "piece": {
@@ -53,7 +53,7 @@
         },
         "data_description": {
           "nom": "Empty: the area its devices share.",
-          "tuiles": "Five at most, left to right.",
+          "tuiles": "Twenty at most, left to right. Beyond five, tiles are cut in two, then in four.",
           "temperature": "Optional. Shown on the home page while this room is on screen.",
           "humidite": "Optional, with the temperature.",
           "clim": "Optional, with the temperature: the home page's − / + buttons adjust it."
@@ -129,8 +129,8 @@
     },
     "error": {
       "aucune_piece_choisie": "Pick at least one room.",
-      "trop_de_pieces": "Five rooms at most.",
-      "trop_de_tuiles": "Five tiles at most."
+      "trop_de_pieces": "Ten rooms at most.",
+      "trop_de_tuiles": "Twenty tiles at most."
     }
   },
   "issues": {
@@ -186,7 +186,7 @@
               "pieces": "Rooms of the tablet"
             },
             "data_description": {
-              "pieces": "Five at most, in the order of the bottom row's pages: the first on the home page, the next ones a swipe away."
+              "pieces": "Ten at most, in the order of the bottom row's pages: the first on the home page, the next ones a swipe away."
             }
           },
           "piece": {
@@ -201,7 +201,7 @@
             },
             "data_description": {
               "nom": "Empty: the area its devices share.",
-              "tuiles": "Five at most, left to right.",
+              "tuiles": "Twenty at most, left to right. Beyond five, tiles are cut in two, then in four.",
               "temperature": "Optional. Shown on the home page while this room is on screen.",
               "humidite": "Optional, with the temperature.",
               "clim": "Optional, with the temperature: the home page's − / + buttons adjust it."
@@ -277,8 +277,8 @@
         },
         "error": {
           "aucune_piece_choisie": "Pick at least one room.",
-          "trop_de_pieces": "Five rooms at most.",
-          "trop_de_tuiles": "Five tiles at most."
+          "trop_de_pieces": "Ten rooms at most.",
+          "trop_de_tuiles": "Twenty tiles at most."
         }
       }
     }
